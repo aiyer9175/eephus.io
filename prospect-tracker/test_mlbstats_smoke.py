@@ -346,12 +346,12 @@ def test_rotation_charts_view_renders():
 
 def _hrow(mlbam, name, team, hem, pa, hr=20, sb=5, qualified=True):
     return ('{"key":"%d","name":"%s","team":"%s","mlbam":%d,"hem_plus":%d,"hem_plus_3yr":%d,'
-            '"hem_plus_3yr_pct":88,"hem_plus_3yr_tag":"established","xhem_plus":%d,"luck_gap":%d,'
+            '"hem_plus_3yr_pct":88,"hem_plus_3yr_tag":"established","xhem_plus":%d,"luck_gap":%.3f,'
             '"xwoba":0.375,"qualified":%s,'
             '"tier":"Above-avg","pa":%d,"ab":%d,"hr":%d,"bb":50,"sb":%d,"woba":0.360,'
             '"woba_raw":0.365,"avg":0.280,"obp":0.360,"slg":0.480,"ops":0.840,"iso":0.200,'
             '"bb_pct":0.09,"k_pct":0.20,"babip":0.300}'
-            % (mlbam, name, team, mlbam, hem, hem - 3, hem + 4, 4, "true" if qualified else "false",
+            % (mlbam, name, team, mlbam, hem, hem - 3, hem + 4, 0.015, "true" if qualified else "false",
                pa, pa - 70, hr, sb))
 
 _HIT_ROWS = ",".join(

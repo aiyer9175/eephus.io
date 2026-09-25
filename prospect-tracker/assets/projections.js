@@ -2424,9 +2424,11 @@
     if (!h) return "";
     const ruler = rulerHTML([
       { label: "HEM+", v: h.hemPlus, gl: "hem_plus" },
-      // luckGap is xHEM+ minus HEM+ (hitter_export), so + means results BELOW
-      // the contact. Said as the difference it is, not as "luck".
-      { label: "xHEM+", v: h.xhemPlus, gl: "xhem_plus", note: h.luckGap != null ? `${signed(h.luckGap, 0)} vs HEM+` : "" },
+      // The note is the plain difference of the two dots on this ruler,
+      // computed here. It is NOT the board's Luck column: that is xwOBA
+      // minus wOBA in wOBA points since 2026-09-24, because HEM+ is shrunk
+      // and xHEM+ is not, so this difference partly measures the shrink.
+      { label: "xHEM+", v: h.xhemPlus, gl: "xhem_plus", note: (h.xhemPlus != null && h.hemPlus != null) ? `${signed(h.xhemPlus - h.hemPlus, 0)} vs HEM+` : "" },
       { label: "xHEM+ Blend", v: h.fwdhemPlus, gl: "fwdhem_plus" },
       { label: "wRC+", v: h.wrcPlus, gl: "wrc_plus" },
       { label: "HEM+ 3yr", v: h.hemPlus3yr, gl: "hem_plus_3yr" },

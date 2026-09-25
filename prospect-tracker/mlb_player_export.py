@@ -481,7 +481,11 @@ def _skill_index() -> dict[int, dict]:
             "season": h_season,
             "hemPlus": r.get("hem_plus"), "hemPlus3yr": r.get("hem_plus_3yr"),
             "xhemPlus": r.get("xhem_plus"), "tier": r.get("tier"),
-            "qualified": bool(r.get("qualified")), "luckGap": r.get("luck_gap"),
+            # luckGap (the board's luck_gap) is no longer baked: it is xwOBA
+            # minus wOBA in wOBA points since 2026-09-24, the card's Statcast
+            # block already carries Savant's wOBA-xwOBA row, and the xHEM+
+            # tile's "vs HEM+" note is computed client-side from the two dots.
+            "qualified": bool(r.get("qualified")),
             # Baked 2026-07-30 (Lane B): every one of these was computed and served
             # on /mlbstats/ but absent from the player card, so a reader had to open
             # a different module to see the same player's own numbers.

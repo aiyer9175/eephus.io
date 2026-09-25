@@ -478,12 +478,12 @@
             '" title="Mechanics trend: per-season Swing+ (Will Cahoon) moved ' + md + " from " +
             esc(mt.from) + " to " + esc(mt.to) + '. Context only - never part of this ranking.">mech trend ' + md + "</span>";
         }
-        // Hitter luck_gap is a plus-stat (0 decimals); pitcher luck is in wOBA
-        // points (~0.03), so render 3 decimals or it collapses to "0".
+        // Both sides are in wOBA points (hitters xwOBA minus wOBA, pitchers
+        // wOBA minus xwOBA allowed), so both render 3 decimals.
         return "<tr><td class=\"ff-nm\">" + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) + chip + "</td><td>" + esc(p.pos || "") +
-          '</td><td class="ff-sc ' + cls + '">' + (gap > 0 ? "+" : "") + num(gap, isHit ? 0 : 3) + "</td></tr>";
+          '</td><td class="ff-sc ' + cls + '">' + (gap > 0 ? "+" : "") + num(gap, 3) + "</td></tr>";
       }).join("");
-      return '<div class="fantasy-half"><h3>' + label + '</h3><table class="fantasy-table"><thead><tr><th>Player</th><th>Pos</th><th>Luck gap</th></tr></thead><tbody>' + rows + "</tbody></table></div>";
+      return '<div class="fantasy-half"><h3>' + label + '</h3><table class="fantasy-table"><thead><tr><th>Player</th><th>Pos</th><th>Luck gap (wOBA)</th></tr></thead><tbody>' + rows + "</tbody></table></div>";
     }
     var sec = S.data.sections || {};
     // Copy contract (2026-08-19, test_fantasy_claims.py): the registry row
@@ -491,7 +491,7 @@
     // large luck gap regresses rather than persists. So this note states the
     // gap direction and stops: no "due to improve", no luck causality in the
     // column headers. The screen posture line mirrors the registry row.
-    return '<div class="fantasy-note">Regression screen from the expected-stat gaps (hitters: xHEM+ − HEM+; pitchers: xERA/xwOBA vs actual). A positive gap means results sit behind the expected stats (buy-low screen); negative means results sit ahead (sell-high screen). Whether a gap closes or persists is unmeasured: this is a screen, it reorders nothing served elsewhere and prices nothing. A mech trend chip flags a 5+ point move in per-season Swing+ (Will Cahoon) - swing-mechanics context only, never part of the ranking.</div>' +
+    return '<div class="fantasy-note">Regression screen from the expected-stat gaps, in wOBA points (hitters: xwOBA minus wOBA; pitchers: wOBA minus xwOBA allowed). A positive gap means results sit behind the expected stats (buy-low screen); negative means results sit ahead (sell-high screen). Whether a gap closes or persists is unmeasured: this is a screen, it reorders nothing served elsewhere and prices nothing. A mech trend chip flags a 5+ point move in per-season Swing+ (Will Cahoon) - swing-mechanics context only, never part of the ranking.</div>' +
       '<div class="fantasy-cols">' + col(sec.buy_low, "Buy-Low (behind x-stats)", "ff-pos") + col(sec.sell_high, "Sell-High (ahead of x-stats)", "ff-neg") + "</div>";
   }
   // ALREADY A CARD GRID: 30 team cards of 5 arms each. Untouched.

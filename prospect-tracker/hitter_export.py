@@ -410,10 +410,24 @@ def _join_wrc_plus(hitters: list[dict], season: int) -> dict:
 
 def _join_xhem_plus(hitters: list[dict], season: int) -> int:
     """Stamp xhem_plus (the HEM+ ratio scale on Savant xwOBA -- 'deserved offense')
-    + luck_gap (xHEM+ minus HEM+) onto tracked hitters. xwOBA forward-predicts next-
-    year wOBA better than actual wOBA (validated: tools/xhem_plus_lab.py), so this is
-    a companion 'deserved-offense' read. MLB-only + min-BBE gated, so it stamps only
-    the tracked subset; missing -> fields absent (column blank). Best-effort."""
+    + luck_gap (Savant xwOBA minus Savant wOBA, in wOBA points) onto tracked
+    hitters. xwOBA forward-predicts next-year wOBA better than actual wOBA
+    (validated: tools/xhem_plus_lab.py), so this is a companion 'deserved-offense'
+    read. MLB-only + min-BBE gated, so it stamps only the tracked subset; missing
+    -> fields absent (column blank). Best-effort.
+
+    LUCK IS READ IN wOBA POINTS, BOTH SIDES UNSHRUNK (2026-09-24). luck_gap used
+    to be xHEM+ minus HEM+. HEM+ is EB-shrunk toward the pool and xHEM+ is not,
+    so the difference mostly measured how far shrinkage pulled a hitter toward
+    100: on the 2026-09-24 board it disagreed in sign with Savant xwOBA minus
+    wOBA on 126 of 460 hitters (Ha-Seong Kim read -43 with his xwOBA .046 above
+    his wOBA), and the good hitters all read unlucky. It is now Savant's own
+    est_woba minus Savant's own woba off the same leaderboard row, the pitcher
+    boards' convention (starter_export / bullpen_export `luck`) with the sign
+    set so + still means results below the contact. `luck_gap_woba` (Savant's
+    wOBA, the other leg of the difference) rides the row so luck_gap is
+    checkable against the served numbers; the luck_gap_ prefix keeps it inside
+    the luck_gap family the multi-year window spec already explains."""
     try:
         import mlb_player_export as mpe
         rows = mpe._savant("expected", int(season), "batter")
@@ -424,6 +438,7 @@ def _join_xhem_plus(hitters: list[dict], season: int) -> int:
     # real Savant PA sample. xwOBA is already de-luck'd, so no further shrink.
     _XHEM_MIN_PA = 100.0
     xw = {}
+    woba_by: dict[int, float] = {}
     for r in rows:
         try:
             mid = int(r["player_id"]); ew = float(r["est_woba"]); pa = float(r["pa"])
@@ -431,6 +446,10 @@ def _join_xhem_plus(hitters: list[dict], season: int) -> int:
             continue
         if pa >= _XHEM_MIN_PA and ew > 0:
             xw[mid] = (ew, pa)
+            try:
+                woba_by[mid] = float(r["woba"])
+            except (TypeError, ValueError, KeyError):
+                pass
     if not xw:
         return 0
     # PA-weighted pool mean xwOBA anchors the ratio so the tracked pool averages 100.
@@ -444,11 +463,13 @@ def _join_xhem_plus(hitters: list[dict], season: int) -> int:
         if not ent:
             continue
         # Same widened scale as HEM+ (hem_plus.HEM_SPREAD_GAIN), so xHEM+ and HEM+
-        # are on ONE ruler and luck_gap = xHEM+ - HEM+ stays meaningful.
+        # sit on ONE ruler. Luck is NOT their difference (see the docstring).
         h["xhem_plus"] = int(round(100.0 + hem_plus.HEM_SPREAD_GAIN * (100.0 * ent[0] / pool - 100.0)))
         h["xwoba"] = round(ent[0], 3)
-        if h.get("hem_plus") is not None:
-            h["luck_gap"] = h["xhem_plus"] - h["hem_plus"]   # + = under-performing his contact
+        wo = woba_by.get(int(h["mlbam"]))
+        if wo is not None:
+            h["luck_gap_woba"] = round(wo, 3)
+            h["luck_gap"] = round(ent[0] - wo, 3)   # + = results below his contact
         n += 1
     return n
 

@@ -3331,14 +3331,19 @@
         var cls = "vt vt-fam-pctile " + (p == null ? "vt-avg" : p >= 90 ? "vt-elite" : p >= 70 ? "vt-good" : p >= 25 ? "vt-avg" : "vt-below");
         return '<span class="rem-plus ' + cls + '" data-gl="pwoba">' + f3(r.pwoba) + "</span>";
       } },
-    { key: "luck_gap", label: "Luck (pts)", num: true, desc: true,
-      title: "xHEM+ minus HEM+, in index points. Positive: results below his contact quality; negative: above it.",
+    // Savant xwOBA minus Savant wOBA, in wOBA points (hitter_export). It was
+    // xHEM+ minus HEM+ until 2026-09-24, which subtracted a SHRUNK index from
+    // an unshrunk one and so mostly measured the shrinkage: it disagreed in
+    // sign with xwOBA minus wOBA on 126 of 460 hitters. Same unit, precision
+    // and colour steps as the pitcher boards' Luck (wOBA) column.
+    { key: "luck_gap", label: "Luck (wOBA)", num: true, desc: true,
+      title: "xwOBA minus wOBA (Savant). Positive: results below his contact quality; negative: above it.",
       get: function (r) { return r.luck_gap; },
       cell: function (r) {
         if (r.luck_gap == null) return "";
         var v = r.luck_gap;
-        var col = v >= 13 ? "var(--up)" : v <= -13 ? "var(--down)" : "var(--text-tertiary)";
-        return '<span style="color:' + col + ';font-variant-numeric:tabular-nums;">' + (v > 0 ? "+" : "") + fInt(v) + "</span>";
+        var col = v >= 0.02 ? "var(--up)" : v <= -0.02 ? "var(--down)" : "var(--text-tertiary)";
+        return '<span style="color:' + col + ';font-variant-numeric:tabular-nums;">' + (v > 0 ? "+" : "") + v.toFixed(3) + "</span>";
       } },
     { key: "war", label: "eWAR", term: "ewar", fmt: f1, num: true, ewar: true,
       title: "Position-player eWAR this season; the WAR/PA+ numerator." },

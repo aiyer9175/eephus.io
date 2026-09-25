@@ -7,9 +7,11 @@
 Covers the two data-shape/scoring fixes:
   * _name_from_links: player_links.json is {generated_at, byKey, byMlbam}; the
     mlbam->entry map is nested (string-keyed) under byMlbam, NOT at the top level.
-  * _buy_sell: hitter luck_gap (~+/-50) and pitcher luck (~+/-0.05) are ~500x
-    apart, so each side is scaled by its own spread before the combined sort;
-    otherwise pitchers never reach either top-N list."""
+  * _buy_sell: each side is scaled by its own spread before the combined
+    sort. Hitter luck_gap was xHEM+ minus HEM+ (~+/-50) until 2026-09-24,
+    ~500x wider than pitcher luck (~+/-0.05), and pitchers never reached
+    either top-N list; both are wOBA points now, but the per-side scaling
+    stays and the synthetic pools below still pin it on unequal scales."""
 from __future__ import annotations
 
 import json

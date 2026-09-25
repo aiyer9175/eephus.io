@@ -92,7 +92,7 @@ DETAIL = json.dumps({"players": {
             {"label": "xwOBA", "value": ".390", "pct": 95},
             {"label": "Luck (wOBA-xwOBA)", "value": "+0.031", "pct": 99}]},
         "skills": {
-            "hem": {"season": 2026, "hemPlus": 113, "xhemPlus": 108, "luckGap": 5,
+            "hem": {"season": 2026, "hemPlus": 113, "xhemPlus": 108,
                     "wrcPlus": 121, "qualified": True, "pa": 610, "warPaPlus": 113,
                     "warPaPlusPct": 90},
             "lev": {"kind": "bat", "season": 2026, "wpa": 1.234, "wpaLi": 0.8, "pli": 1.02,
@@ -517,10 +517,13 @@ def test_two_way_keeps_both_sides():
 
 
 def test_luck_gap_is_said_as_the_difference_it_is():
-    """luck_gap is xHEM+ minus HEM+ (hitter_export.py), so +5 means results
-    BELOW the contact. The retired hero tooltip said the reverse."""
+    """The xHEM+ tile note is the plain difference of the two dots, computed
+    client-side (xHEM+ 108 minus HEM+ 113). The card no longer reads a baked
+    luckGap: the board's luck_gap is xwOBA minus wOBA in wOBA points since
+    2026-09-24. The retired hero tooltip said the reverse sign."""
     idx = _section(_render("#player=vet_guy"), "hitting-index")
-    assert "+5 vs HEM+" in idx
+    assert "-5 vs HEM+" in idx
+    assert "luckGap" not in JS
     assert "HEM+ minus xHEM+" not in JS
 
 

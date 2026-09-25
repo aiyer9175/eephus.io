@@ -693,18 +693,15 @@
             '" title="Per-season Swing+ ' + md + ", " + esc(mt.from) + " to " + esc(mt.to) +
             '. Not in the ranking.">mech trend ' + md + "</span>";
         }
-        // TWO SCALES, TWO COLUMNS. Hitter luck_gap is xHEM+ minus HEM+, a
-        // plus-stat delta whose pool spread is roughly +/-50; pitcher luck is
-        // wOBA minus xwOBA, in wOBA points, spread roughly +/-0.05. They sit
-        // about 500x apart (fantasy_export._buy_sell scales each side by its
-        // own std before the combined sort for exactly that reason), and
-        // stacking them under one "Luck gap" heading produced a column that
-        // read +18, +0.041, +14, +0.038 down the page: non-monotonic, and
-        // inviting a reader to compare a number to one 500 times its size.
-        // Each row now fills the column for ITS scale and dashes the other, so
-        // every column is internally comparable and the heading names its unit.
+        // TWO ARITHMETICS, TWO COLUMNS. Hitter luck_gap is xwOBA minus wOBA;
+        // pitcher luck is wOBA minus xwOBA allowed. Both are wOBA points and
+        // both read + when results sit behind the expected stats, but they are
+        // computed the opposite way round, so each row fills the column for
+        // ITS side and dashes the other, and each heading names its arithmetic.
+        // (Until 2026-09-24 the hitter side was xHEM+ minus HEM+, a plus-stat
+        // delta about 500x wider, which is why the columns were split.)
         var val = '<span class="rd-sc ' + cls + '">' + (gap > 0 ? "+" : "") +
-          num(gap, isHit ? 0 : 3) + "</span>";
+          num(gap, 3) + "</span>";
         var blank = '<span class="rd-dim">-</span>';
         return '<tr><td class="rd-nm">' + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) + offTag(p) + chip + "</td><td>" +
           esc(p.pos || "") + "</td><td>" + (isHit ? val : blank) + "</td><td>" +
@@ -724,10 +721,10 @@
       return '<div class="rd-half"><h3>' + label + '</h3>' +
         '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table mlbstats-table">' +
         '<thead><tr><th class="rd-nm">Player</th><th>Pos</th>' +
-        '<th title="Hitters: xHEM+ minus HEM+, plus-stat points.">Luck gap<br>' +
-        gl("xHEM+", "xhem_plus") + " pts</th>" +
-        '<th title="Pitchers: wOBA minus xwOBA, wOBA points.">Luck gap<br>' +
-        gl("wOBA", "woba") + " pts</th>" +
+        '<th title="Hitters: xwOBA minus wOBA, wOBA points.">Luck gap<br>' +
+        gl("xwOBA", "xwoba") + " - wOBA</th>" +
+        '<th title="Pitchers: wOBA minus xwOBA allowed, wOBA points.">Luck gap<br>' +
+        gl("wOBA", "woba") + " - xwOBA</th>" +
         "</tr></thead><tbody>" + rows + "</tbody></table></div></div>";
     }
     var sec = S.data.sections || {};
@@ -736,9 +733,9 @@
     // gap regresses rather than persists, so the note states the gap direction
     // and stops. No luck causality in the headers.
     return filterBar(null) +
-      '<div class="rd-note">Screen on expected-stat gaps: hitters ' + gl("xHEM+", "xhem_plus") +
-      " minus " + gl("HEM+", "hem_plus") + ", pitchers " + gl("wOBA", "woba") + " minus " +
-      gl("xwOBA", "xwoba") + ". One column per scale (about 500x apart). Positive: results behind " +
+      '<div class="rd-note">Screen on expected-stat gaps in wOBA points: hitters ' + gl("xwOBA", "xwoba") +
+      " minus " + gl("wOBA", "woba") + ", pitchers " + gl("wOBA", "woba") + " minus " +
+      gl("xwOBA", "xwoba") + " allowed. One column per side. Positive: results behind " +
       "the expected stats; negative: ahead. Whether a gap closes or persists is unmeasured. " +
       "mech trend: a 5+ point move in per-season " + gl("Swing+", "swing_plus") +
       " (Will Cahoon), context only, not in the ranking.</div>" +

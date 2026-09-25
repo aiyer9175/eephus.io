@@ -612,8 +612,9 @@ def _lb_index(fname: str, key: str) -> dict:
 
 
 def _player_luck(p: dict):
-    """Raw regression-candidate luck for a player: hitter luck_gap (xHEM+ - HEM+,
-    a plus-stat delta) or pitcher luck (wOBA - xwOBA, in wOBA points)."""
+    """Raw regression-candidate luck for a player: hitter luck_gap (Savant
+    xwOBA - wOBA) or pitcher luck (wOBA - xwOBA allowed), both in wOBA points
+    and both signed so + means results behind the expected stats."""
     s = p.get("skill") or {}
     return s.get("luck_gap") if p.get("side") == "hit" else s.get("luck")
 
@@ -630,12 +631,14 @@ def _buy_sell(players: list[dict], n: int = 50,
     were empty. Dividing by `share` puts the gate back on the player, not the
     calendar, the same move the pool floors made.
 
-    Hitter luck_gap (plus-stat units, spread ~+/-50) and pitcher luck (wOBA
-    points, spread ~+/-0.05) sit ~500x apart, so a raw combined sort buries
-    pitchers in the middle and fills both top-N lists with hitters only. Scale
-    each side's luck by its own pool spread (population std) onto a common axis
-    before the combined sort. Scaling by std (not mean-centering) preserves the
-    sign, so a buy row keeps a positive gap and a sell row a negative one."""
+    Hitter luck_gap and pitcher luck are both in wOBA points since 2026-09-24
+    (the hitter side used to be xHEM+ minus HEM+, a plus-stat delta ~500x
+    wider, which is why this scaling exists). On one unit the per-side scale
+    is a small correction (board pool sd about .023 hitters vs .024 pitchers
+    on 2026-09-24), kept so a spread change on one side cannot tilt both
+    lists toward the other. Scale each side's luck by its own pool spread
+    (population std) onto a common axis before the combined sort. Scaling by
+    std (not mean-centering) preserves the sign, so a buy row keeps a positive gap and a sell row a negative one."""
     import statistics
     share = share if (share and share > 0) else 1.0
     luckable = [p for p in players
@@ -1243,10 +1246,10 @@ def build_sections(payload: dict) -> dict:
         "ros_rp": rank(rps, 180),
     }
 
-    # Buy-Low / Sell-High. Hitters by luck_gap (xHEM+ - HEM+; + = unlucky = buy),
-    # pitchers by `luck` (xERA/xwOBA vs actual). Positive residual = due to
-    # regress up. The two luck scales are ~500x apart, so _buy_sell normalizes
-    # each side by its own spread before the combined sort (see _buy_sell).
+    # Buy-Low / Sell-High. Hitters by luck_gap (Savant xwOBA - wOBA), pitchers
+    # by `luck` (wOBA - xwOBA allowed), both in wOBA points and both + when
+    # results sit behind the expected stats. _buy_sell normalizes each side by
+    # its own spread before the combined sort (see _buy_sell).
     sections["buy_low"], sections["sell_high"] = _buy_sell(
         players, share=_line_share(payload))
 

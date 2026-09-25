@@ -397,7 +397,9 @@ def test_the_relabelled_and_new_columns():
     heads = {k: tag for _, k, tag in _heads(hit)}
     assert 'data-export-text="wOBA"' in heads["woba_raw"] and 'data-gl="woba"' in hit
     assert 'data-export-text="Shrunk wOBA"' in heads["woba"]
-    assert 'data-export-text="Luck (pts)"' in heads["luck_gap"]
+    # Hitter Luck is xwOBA minus wOBA in wOBA points (2026-09-24), the same
+    # unit as the pitcher boards, not xHEM+ minus HEM+ index points.
+    assert 'data-export-text="Luck (wOBA)"' in heads["luck_gap"]
     assert ">.365<" in hit                                 # the recorded wOBA, served
     lev = smoke._render_leverage("#section=leverage&lview=starters")
     lheads = {k: tag for _, k, tag in _heads(lev)}

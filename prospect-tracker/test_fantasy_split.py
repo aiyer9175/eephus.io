@@ -73,7 +73,7 @@ def _fantasy_fixture() -> dict:
     fraction. Everything dfs_export reads and nothing it does not."""
     def hit(mid, name, team, pa, hr, sb):
         return {"mlbam": mid, "name": name, "side": "hit", "pos": "H", "team": team,
-                "elig": ["OF"], "skill": {"hem_plus": 120, "luck_gap": 3.0},
+                "elig": ["OF"], "skill": {"hem_plus": 120, "luck_gap": 0.003},
                 "fpts_fgp": 200.0,
                 "ros": {"pa": pa, "ab": pa * 0.9, "h": pa * 0.25, "single": pa * 0.16,
                         "double": pa * 0.05, "triple": pa * 0.005, "hr": hr,
@@ -805,17 +805,17 @@ PARITY_PAYLOAD = json.dumps({
         {"id": "4x4", "kind": "roto", "label": "Ottoneu Classic (4x4)"}],
     "players": [
         {"mlbam": 660271, "name": "Shohei Ohtani", "side": "hit", "pos": "DH", "team": "LAD",
-         "elig": ["UTIL"], "fpts_fgp": 284.8, "skill": {"hem_plus": 168, "luck_gap": 11.0},
+         "elig": ["UTIL"], "fpts_fgp": 284.8, "skill": {"hem_plus": 168, "luck_gap": 0.011},
          "ros": {"pa": 260, "ab": 224, "h": 66, "double": 13, "triple": 1, "hr": 28,
                  "bb": 33, "hbp": 3, "sb": 9, "cs": 2, "r": 48, "rbi": 60,
                  "avg": 0.295, "obp": 0.402, "slg": 0.611}},
         {"mlbam": 592450, "name": "Aaron Judge", "side": "hit", "pos": "RF", "team": "NYY",
-         "elig": ["OF"], "fpts_fgp": 260.0, "skill": {"hem_plus": 175, "luck_gap": -6.0},
+         "elig": ["OF"], "fpts_fgp": 260.0, "skill": {"hem_plus": 175, "luck_gap": -0.006},
          "ros": {"pa": 270, "ab": 226, "h": 71, "double": 15, "triple": 0, "hr": 25,
                  "bb": 41, "hbp": 3, "sb": 3, "cs": 1, "r": 52, "rbi": 65,
                  "avg": 0.314, "obp": 0.440, "slg": 0.628}},
         {"mlbam": 665742, "name": "Juan Soto", "side": "hit", "pos": "LF", "team": "NYM",
-         "elig": ["OF"], "fpts_fgp": 240.0, "skill": {"hem_plus": 160, "luck_gap": 2.0},
+         "elig": ["OF"], "fpts_fgp": 240.0, "skill": {"hem_plus": 160, "luck_gap": 0.002},
          "ros": {"pa": 255, "ab": 205, "h": 60, "double": 12, "triple": 1, "hr": 18,
                  "bb": 46, "hbp": 2, "sb": 5, "cs": 2, "r": 45, "rbi": 50,
                  "avg": 0.293, "obp": 0.436, "slg": 0.541}},
@@ -2171,7 +2171,10 @@ def test_card_renders_a_hitter_with_the_luck_and_buy_signal():
     c.eval('__go("#section=ros_hitter&player=660271")')
     html = _card_html(c)
     assert "Shohei Ohtani" in html
-    assert 'data-gl="hem_plus"' in html and 'data-gl="xhem_plus"' in html
+    assert 'data-gl="hem_plus"' in html
+    # The luck chip is xwOBA minus wOBA in wOBA points (2026-09-24), linked to
+    # the xwOBA term at three decimals, no longer an xHEM+ plus-stat gap.
+    assert 'data-gl="xwoba"' in html and "+0.011" in html
     assert "buy low" in html
     # The two POINTS formats agree on a hitter, which is the same Ottoneu fact
     # the board note states. Seeing it on the card is the point of the row.

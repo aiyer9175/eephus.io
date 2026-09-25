@@ -318,16 +318,13 @@
     if (rec.side === "pit" && sk.sem_plus != null) out.push(chip(gl("SEM+", "sem_plus"), num(sk.sem_plus, 0)));
     if (rec.side === "pit" && sk.rem_plus != null) out.push(chip(gl("REM+", "rem_plus"), num(sk.rem_plus, 0)));
     if (sk.gmli != null) out.push(chip(gl("gmLI", "gmli"), num(sk.gmli, 2)));
-    // TWO SCALES, NEVER ONE CHIP. Hitter luck_gap is xHEM+ minus HEM+ in
-    // plus-stat points; pitcher luck is wOBA minus xwOBA in wOBA points. They
-    // sit about 500x apart, so each side gets its own label and its own
-    // precision rather than a shared "luck" number a reader would compare.
+    // ONE UNIT, TWO ARITHMETICS. Hitter luck_gap is xwOBA minus wOBA and
+    // pitcher luck is wOBA minus xwOBA allowed, both in wOBA points and both
+    // + when results sit behind the expected stats. (The hitter side was
+    // xHEM+ minus HEM+ in plus-stat points until 2026-09-24.)
     var luck = rec.side === "hit" ? sk.luck_gap : sk.luck;
     if (luck != null) {
-      var lbl = rec.side === "hit"
-        ? (gl("xHEM+", "xhem_plus") + " gap")
-        : (gl("xwOBA", "xwoba") + " gap");
-      out.push(chip(lbl, (luck > 0 ? "+" : "") + num(luck, rec.side === "hit" ? 0 : 3),
+      out.push(chip(gl("xwOBA", "xwoba") + " gap", (luck > 0 ? "+" : "") + num(luck, 3),
                     luck > 0 ? "fc-good" : "fc-bad"));
     }
     if (inList(sections().buy_low, rec.mlbam)) out.push(chip("Signal", "buy low", "fc-good"));

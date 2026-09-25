@@ -5749,10 +5749,10 @@
     "Luck (offense)"
    ],
    "priority": 22,
-   "definition": "A hitter's DESERVED offensive rate on the HEM+ scale: HEM+ computed from Savant expected wOBA (xwOBA) instead of results, so it reads contact quality rather than where the balls fell. Luck = xHEM+ minus HEM+. Coloured on the value ruler at 130 / 120 / 112 / 100 / 88.",
-   "methodology": "xHEM+ = 100 x the hitter's Savant xwOBA / the PA-weighted pool average, on the HEM+ scale. xwOBA is built from each batted ball's launch conditions (exit velocity and angle), which strips BABIP and sequencing luck. Forward-chained over eight season-pairs 2016-2025 (ex-2020, 1871 pairs), xwOBA predicts next-year wOBA at a Spearman correlation of 0.45 against 0.41 for actual wOBA, gap confidence floor above zero. A companion for tracked hitters (Statcast is MLB-only; 100+ tracked PA), not the population-complete HEM+. Luck > 0: under-performing his contact; < 0: over-performing. Accountability artifact: data/xhem_plus_eval.json.",
-   "formula": "xHEM+ = 100 x player xwOBA / PA-weighted tracked-pool xwOBA (tracked hitters, 100+ Savant PA)\nLuck = xHEM+ - HEM+",
-   "example": "A .360 xwOBA against a .320 tracked pool reads xHEM+ 113. With HEM+ 104, Luck is +9: his contact deserved more.",
+   "definition": "A hitter's DESERVED offensive rate on the HEM+ scale: HEM+ computed from Savant expected wOBA (xwOBA) instead of results, so it reads contact quality rather than where the balls fell. Luck = Savant xwOBA minus wOBA, in wOBA points. Coloured on the value ruler at 130 / 120 / 112 / 100 / 88.",
+   "methodology": "xHEM+ = 100 x the hitter's Savant xwOBA / the PA-weighted pool average, on the HEM+ scale. xwOBA is built from each batted ball's launch conditions (exit velocity and angle), which strips BABIP and sequencing luck. Forward-chained over eight season-pairs 2016-2025 (ex-2020, 1871 pairs), xwOBA predicts next-year wOBA at a Spearman correlation of 0.45 against 0.41 for actual wOBA, gap confidence floor above zero. A companion for tracked hitters (Statcast is MLB-only; 100+ tracked PA), not the population-complete HEM+. Luck > 0: under-performing his contact; < 0: over-performing. Luck is read on the unshrunk pair, not as xHEM+ minus HEM+: HEM+ is shrunk toward the pool and xHEM+ is not, so that difference partly measured the shrink and disagreed in sign with xwOBA minus wOBA for 126 of 460 hitters on 2026-09-24. Accountability artifact: data/xhem_plus_eval.json.",
+   "formula": "xHEM+ = 100 + 2.28 x (100 x player xwOBA / PA-weighted tracked-pool xwOBA - 100) (tracked hitters, 100+ Savant PA)\nLuck = Savant xwOBA - Savant wOBA, in wOBA points",
+   "example": "A .352 xwOBA against a .320 tracked pool reads xHEM+ 123. With an actual wOBA of .322, Luck is +.030: his contact deserved more.",
    "seeAlso": [
     "hem_plus",
     "statcast_plus",

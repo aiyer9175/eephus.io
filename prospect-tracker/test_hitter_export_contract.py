@@ -206,3 +206,58 @@ def test_qualified_split_reconciles_with_the_rows():
     n_qual = sum(1 for r in rows if r.get("qualified"))
     assert n_qual == d["pool"]["n_qualified"], (n_qual, d["pool"]["n_qualified"])
     assert (d["pool"]["n_qualified"] + d["pool"]["n_provisional"]) == len(rows)
+
+
+def _ranks(xs: list[float]) -> list[float]:
+    """Average ranks (ties share the mean rank), for a dependency-free Spearman."""
+    order = sorted(range(len(xs)), key=lambda i: xs[i])
+    out = [0.0] * len(xs)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and xs[order[j + 1]] == xs[order[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            out[order[k]] = (i + j) / 2.0
+        i = j + 1
+    return out
+
+
+def _spearman(a: list[float], b: list[float]) -> float:
+    ra, rb = _ranks(a), _ranks(b)
+    n = len(ra)
+    ma, mb = sum(ra) / n, sum(rb) / n
+    cov = sum((x - ma) * (y - mb) for x, y in zip(ra, rb))
+    va = sum((x - ma) ** 2 for x in ra) ** 0.5
+    vb = sum((y - mb) ** 2 for y in rb) ** 0.5
+    return cov / (va * vb)
+
+
+def test_luck_gap_is_xwoba_minus_woba_in_woba_points():
+    """luck_gap is Savant xwOBA minus Savant wOBA (hitter_export._join_xhem_plus),
+    both unshrunk, in wOBA points: the pitcher boards' convention, signed so +
+    means results below the contact.
+
+    It used to be xHEM+ minus HEM+. HEM+ is EB-shrunk and xHEM+ is not, so the
+    difference mostly measured the shrink: on the 2026-09-24 board it disagreed
+    in sign with xwOBA minus wOBA on 126 of 460 hitters and ran POSITIVELY with
+    HEM+ (Spearman +0.28), so the best hitters all read unlucky. Three pins:
+    the served difference reconciles row by row, its sign matches the raw gap
+    wherever the gap clears rounding, and it no longer tracks the hitter's own
+    level upward.
+
+    Tolerance: xwoba, luck_gap_woba and luck_gap are each rounded to 3dp, so the
+    served identity holds to 3 x 0.0005."""
+    d = _doc()
+    rows = [r for r in d["hitters"] if r.get("luck_gap") is not None]
+    assert len(rows) > 100, f"only {len(rows)} rows carry luck_gap"
+    for r in rows:
+        assert r.get("xwoba") is not None and r.get("luck_gap_woba") is not None, r["name"]
+        raw = r["xwoba"] - r["luck_gap_woba"]
+        assert abs(r["luck_gap"] - raw) <= 0.0015 + 1e-9, (
+            r["name"], r["luck_gap"], r["xwoba"], r["luck_gap_woba"])
+        if abs(raw) >= 0.005:
+            assert (r["luck_gap"] > 0) == (raw > 0), (r["name"], r["luck_gap"], raw)
+    with_hem = [r for r in rows if r.get("hem_plus") is not None]
+    rho = _spearman([r["luck_gap"] for r in with_hem], [r["hem_plus"] for r in with_hem])
+    assert rho < 0.2, f"luck_gap tracks HEM+ upward (Spearman {rho:+.3f})"
