@@ -269,6 +269,9 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
         "status": "built",
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "produced_by": "mgmt_bunt.price",
+        # which corpus this was priced from, so the page can say whether it is
+        # the one the decision ledger's through-dates describe
+        "corpus_built_at": _corpus_built_at(corpus),
         "seasons": seasons_seen,
         "n_plate_appearances": int(len(df)),
         "n_bunts_priced": n_bunt_priced,
@@ -306,6 +309,14 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
             "per-club column would be a ranking of noise a reader could not "
             "recognise as one. It needs its own split-half before it can ship."),
     }
+
+
+def _corpus_built_at(corpus: Path):
+    try:
+        m = json.loads((Path(corpus) / "manifest.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return m.get("built_at")
 
 
 def _base_label(b: int) -> str:

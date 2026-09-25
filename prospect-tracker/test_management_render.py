@@ -124,6 +124,24 @@ def test_the_sacrifice_bunt_family_is_drawn():
     assert "-75.3 wins" in html and "NOT SOLVED, STATED." in html
 
 
+def test_the_running_and_bunt_blocks_print_their_corpus_vintage():
+    """M10-05. Neither tab said when its data stopped. The line reads the ledger's
+    through-date only when the block was priced from the same corpus build."""
+    d = json.loads(json.dumps(SAMPLE))
+    same = {"corpus_built_at": "2026-09-25T10:00:00+00:00", "same_corpus_as_ledger": True,
+            "newest_season": 2026, "through": "2026-09-24"}
+    d["running_game"]["vintage"] = same
+    d["sections"]["sacrifice_bunt"]["vintage"] = same
+    html = _render("running", d)
+    assert html.count("Play corpus through 2026-09-24 (2026 season); built 2026-09-25") == 2
+    d["running_game"]["vintage"] = {"corpus_built_at": "2026-09-06T07:04:19+00:00",
+                                    "same_corpus_as_ledger": False, "newest_season": None,
+                                    "through": None}
+    html = _render("running", d)
+    assert "Priced from the play corpus built 2026-09-06, not the build behind the decision ledger" in html
+    assert "Play corpus through" not in _render("running")
+
+
 def test_the_bunt_moves_to_its_own_tab_once_the_shell_has_one():
     assert "The sacrifice bunt" not in _render("running", bunt_tab=True)
     assert "Bunting cost 127 wins." in _render("bunt", bunt_tab=True)

@@ -204,6 +204,21 @@ def test_per_play_wpa_identity_holds_and_games_start_at_fifty_and_end_at_zero_or
             assert cb["games_not_terminal"] == 0, season
 
 
+def test_a_season_still_being_played_is_partial_whatever_its_game_count(art, tmp_path):
+    """M10-05. PARTIAL_GAMES alone untagged every 2026 club once a rebuilt corpus put
+    them past 150 games with the season still open. A season whose ledger stops
+    before its cached regular-season end date is partial on every row."""
+    (tmp_path / "season_2099.json").write_text(json.dumps({"seasons": [
+        {"seasonId": "2099", "regularSeasonEndDate": "2099-09-27"}]}), encoding="utf-8")
+    assert MD.regular_season_end_on_disk(2099, cache_dir=tmp_path) == "2099-09-27"
+    assert MD.regular_season_end_on_disk(2098, cache_dir=tmp_path) is None
+    for season, through in (art.get("through_by_season") or {}).items():
+        end = MD.regular_season_end_on_disk(int(season))
+        if end and through and through < end:
+            rows = [r for r in art["clubs"]["rows"] if r["season"] == int(season)]
+            assert rows and all(r["partial"] for r in rows), season
+
+
 def test_the_chain_break_share_is_published(art, board):
     """3.04 percent of 2025 plays do not chain at a 1e-9 tolerance; the share is
     tolerance-dependent, so the constant travels beside it."""

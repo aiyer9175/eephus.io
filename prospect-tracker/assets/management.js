@@ -261,6 +261,21 @@
   }
 
   // ---- the running game ----------------------------------------------------
+  // Which play corpus a hand-built block was priced from (mgmt_export._vintage).
+  // The through-date is the decision ledger's, so it is printed only when the
+  // block and the ledger share one corpus build; otherwise the block's own build
+  // date is printed and the difference is said.
+  function vintageLine(v) {
+    if (!v || !v.corpus_built_at) return "";
+    var built = esc(String(v.corpus_built_at).slice(0, 10));
+    if (v.same_corpus_as_ledger && v.through) {
+      return '<p class="mgmt-count">Play corpus through ' + esc(v.through) + " (" +
+        esc(v.newest_season) + " season); built " + built + "</p>";
+    }
+    return '<p class="mgmt-count">Priced from the play corpus built ' + built +
+      ", not the build behind the decision ledger</p>";
+  }
+
   function renderRunning() {
     var h = DATA.headline, r = DATA.running_game, bt = r.by_target;
     var order = ["2B", "3B", "HOME"];
@@ -299,7 +314,7 @@
     // note are not drawn: the first belongs to the steal_break_even glossary
     // entry, and the second describes two-out attempts, which are excluded.
     return '<section class="mgmt-block">' +
-      '<p class="mgmt-lede">' + esc(h.sentence) + "</p>" +
+      '<p class="mgmt-lede">' + esc(h.sentence) + "</p>" + vintageLine(r.vintage) +
       '<div class="mgmt-cards">' + cards + "</div>" +
       '<p class="mgmt-note">' + esc(h.games) + " games: net " +
       signed(h.net_dv_all_seasons_wins) + " wins to the league; " +
@@ -339,7 +354,7 @@
     var ic = b.independent_control || {};
     var fam = (((DATA.decisions || {}).families) || {}).bunt;
     return '<section class="mgmt-block"><h2>The sacrifice bunt</h2>' +
-      '<p class="mgmt-lede">' + esc(b.sentence) + "</p>" +
+      '<p class="mgmt-lede">' + esc(b.sentence) + "</p>" + vintageLine(b.vintage) +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' +
       "<th>Bases</th><th>Outs</th><th>Bunts</th><th>" + gl("DV", "decision_value") +
       " per bunt</th><th>DV total</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +

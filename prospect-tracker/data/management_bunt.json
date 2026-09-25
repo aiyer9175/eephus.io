@@ -1,7 +1,8 @@
 {
  "status": "built",
- "generated_at": "2026-09-11T01:07:22Z",
+ "generated_at": "2026-09-25T09:52:20Z",
  "produced_by": "mgmt_bunt.price",
+ "corpus_built_at": "2026-09-25T09:51:13+00:00",
  "seasons": [
   2018,
   2019,
@@ -12,153 +13,153 @@
   2025,
   2026
  ],
- "n_plate_appearances": 982773,
- "n_bunts_priced": 6825,
+ "n_plate_appearances": 996176,
+ "n_bunts_priced": 6937,
  "min_cell": 25,
  "excluded": {
-  "two_outs": 466194,
+  "two_outs": 472640,
   "unpriceable_state": 0,
   "thin_cell": 16
  },
- "total_decision_value_wins": -127.198,
- "dv_per_bunt_mean": -0.01864,
+ "total_decision_value_wins": -129.392,
+ "dv_per_bunt_mean": -0.01865,
  "cells": [
   {
    "outs": 0,
    "base": 0,
    "bases": "empty",
-   "n_bunt": 804,
-   "n_alt": 352640,
-   "e_dwe_bunt": -0.02514,
-   "e_dwe_alt": 0.0,
-   "dv_per_bunt": -0.02514,
-   "dv_total": -20.211
+   "n_bunt": 816,
+   "n_alt": 357419,
+   "e_dwe_bunt": -0.02507,
+   "e_dwe_alt": -0.0,
+   "dv_per_bunt": -0.02507,
+   "dv_total": -20.4571
   },
   {
    "outs": 0,
    "base": 1,
    "bases": "1B",
-   "n_bunt": 1914,
-   "n_alt": 82198,
-   "e_dwe_bunt": -0.02252,
+   "n_bunt": 1946,
+   "n_alt": 83327,
+   "e_dwe_bunt": -0.02249,
    "e_dwe_alt": 9e-05,
-   "dv_per_bunt": -0.02261,
-   "dv_total": -43.277
+   "dv_per_bunt": -0.02258,
+   "dv_total": -43.9346
   },
   {
    "outs": 0,
    "base": 2,
    "bases": "2B",
-   "n_bunt": 1013,
-   "n_alt": 21966,
-   "e_dwe_bunt": -0.01998,
-   "e_dwe_alt": 0.00304,
-   "dv_per_bunt": -0.02302,
-   "dv_total": -23.3238
+   "n_bunt": 1028,
+   "n_alt": 22255,
+   "e_dwe_bunt": -0.02008,
+   "e_dwe_alt": 0.00306,
+   "dv_per_bunt": -0.02314,
+   "dv_total": -23.7882
   },
   {
    "outs": 0,
    "base": 3,
    "bases": "1B+2B",
-   "n_bunt": 1213,
-   "n_alt": 19965,
-   "e_dwe_bunt": -0.0105,
-   "e_dwe_alt": -0.00034,
-   "dv_per_bunt": -0.01016,
-   "dv_total": -12.3289
+   "n_bunt": 1239,
+   "n_alt": 20245,
+   "e_dwe_bunt": -0.01064,
+   "e_dwe_alt": -0.00027,
+   "dv_per_bunt": -0.01037,
+   "dv_total": -12.8511
   },
   {
    "outs": 0,
    "base": 5,
    "bases": "1B+3B",
-   "n_bunt": 94,
-   "n_alt": 7136,
-   "e_dwe_bunt": -0.00555,
-   "e_dwe_alt": 0.00156,
-   "dv_per_bunt": -0.00711,
-   "dv_total": -0.6686
+   "n_bunt": 95,
+   "n_alt": 7229,
+   "e_dwe_bunt": -0.00609,
+   "e_dwe_alt": 0.0016,
+   "dv_per_bunt": -0.00769,
+   "dv_total": -0.7303
   },
   {
    "outs": 1,
    "base": 0,
    "bases": "empty",
-   "n_bunt": 476,
-   "n_alt": 256528,
-   "e_dwe_bunt": -0.01768,
+   "n_bunt": 486,
+   "n_alt": 259999,
+   "e_dwe_bunt": -0.01761,
    "e_dwe_alt": 0.00016,
-   "dv_per_bunt": -0.01784,
-   "dv_total": -8.4921
+   "dv_per_bunt": -0.01777,
+   "dv_total": -8.6374
   },
   {
    "outs": 1,
    "base": 1,
    "bases": "1B",
-   "n_bunt": 736,
-   "n_alt": 103190,
-   "e_dwe_bunt": -0.01956,
-   "e_dwe_alt": 0.00033,
-   "dv_per_bunt": -0.0199,
-   "dv_total": -14.6447
+   "n_bunt": 741,
+   "n_alt": 104634,
+   "e_dwe_bunt": -0.01949,
+   "e_dwe_alt": 0.00034,
+   "dv_per_bunt": -0.01983,
+   "dv_total": -14.6916
   },
   {
    "outs": 1,
    "base": 2,
    "bases": "2B",
-   "n_bunt": 61,
-   "n_alt": 34765,
-   "e_dwe_bunt": -0.02995,
-   "e_dwe_alt": 0.00059,
-   "dv_per_bunt": -0.03054,
-   "dv_total": -1.8627
+   "n_bunt": 62,
+   "n_alt": 35225,
+   "e_dwe_bunt": -0.03011,
+   "e_dwe_alt": 0.00058,
+   "dv_per_bunt": -0.03069,
+   "dv_total": -1.9027
   },
   {
    "outs": 1,
    "base": 3,
    "bases": "1B+2B",
    "n_bunt": 181,
-   "n_alt": 36285,
+   "n_alt": 36775,
    "e_dwe_bunt": -0.02791,
-   "e_dwe_alt": -0.00101,
-   "dv_per_bunt": -0.0269,
-   "dv_total": -4.8695
+   "e_dwe_alt": -0.0011,
+   "dv_per_bunt": -0.02681,
+   "dv_total": -4.8528
   },
   {
    "outs": 1,
    "base": 4,
    "bases": "3B",
-   "n_bunt": 49,
-   "n_alt": 10559,
-   "e_dwe_bunt": 0.02744,
-   "e_dwe_alt": 0.00376,
-   "dv_per_bunt": 0.02367,
-   "dv_total": 1.1599
+   "n_bunt": 50,
+   "n_alt": 10707,
+   "e_dwe_bunt": 0.02736,
+   "e_dwe_alt": 0.004,
+   "dv_per_bunt": 0.02336,
+   "dv_total": 1.1678
   },
   {
    "outs": 1,
    "base": 5,
    "bases": "1B+3B",
-   "n_bunt": 256,
-   "n_alt": 15667,
-   "e_dwe_bunt": 0.00566,
-   "e_dwe_alt": 0.0017,
-   "dv_per_bunt": 0.00396,
-   "dv_total": 1.0142
+   "n_bunt": 264,
+   "n_alt": 15887,
+   "e_dwe_bunt": 0.00558,
+   "e_dwe_alt": 0.00189,
+   "dv_per_bunt": 0.0037,
+   "dv_total": 0.9759
   },
   {
    "outs": 1,
    "base": 6,
    "bases": "2B+3B",
-   "n_bunt": 28,
-   "n_alt": 10056,
-   "e_dwe_bunt": 0.01208,
-   "e_dwe_alt": 0.00113,
-   "dv_per_bunt": 0.01095,
-   "dv_total": 0.3067
+   "n_bunt": 29,
+   "n_alt": 10204,
+   "e_dwe_bunt": 0.01169,
+   "e_dwe_alt": 0.00098,
+   "dv_per_bunt": 0.01071,
+   "dv_total": 0.3106
   }
  ],
  "independent_control": {
   "source": "StatsAPI wp_home_before / wpa_home, converted to the batting team's frame and divided by 100 (those columns are percentage points, not probabilities)",
-  "total_wins": -75.33,
+  "total_wins": -76.715,
   "is_realized_wpa": true,
   "why_it_is_not_the_metric": "it is the REALIZED win-probability change of the plays that happened, so it carries outcome variance the decision did not choose. It is here to check the sign and the size of the modelled number against a win-expectancy model this repo did not build."
  },

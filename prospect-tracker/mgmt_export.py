@@ -241,6 +241,22 @@ def _bunt_sentence(d: dict) -> str:
             f"{abs(d.get('dv_per_bunt_mean') or 0):.4f} wins each. " + tail)
 
 
+def _vintage(artifact_corpus_built_at, dec: dict) -> dict:
+    """Which corpus a hand-built artifact (the running game, the bunt family) was
+    priced from, and, when it is the corpus the decision ledger was built from,
+    the ledger's through-date for the newest season. Nothing is inferred across
+    two corpora: a different build prints its own build date and says so."""
+    seasons = [int(x) for x in (dec.get("seasons") or [])]
+    newest = max(seasons) if seasons else None
+    same = bool(artifact_corpus_built_at) and artifact_corpus_built_at == dec.get("corpus_built_at")
+    through = ((dec.get("through_by_season") or {}).get(str(newest))
+               if (same and newest is not None) else None)
+    return {"corpus_built_at": artifact_corpus_built_at,
+            "same_corpus_as_ledger": same,
+            "newest_season": newest if same else None,
+            "through": through}
+
+
 def _bunt_section() -> dict:
     """The sacrifice-bunt family, read off its artifact.
 
@@ -262,6 +278,7 @@ def _bunt_section() -> dict:
         "live": True,
         "plus_metric": False,
         "eval_artifact": "data/management_bunt.json",
+        "corpus_built_at": d.get("corpus_built_at"),
         "n_bunts_priced": d.get("n_bunts_priced"),
         "seasons": d.get("seasons"),
         "total_decision_value_wins": d.get("total_decision_value_wins"),
@@ -506,6 +523,8 @@ def build(*, corpus=None, teams=True) -> dict:
     _bunt = _bunt_section()
     blocks = _decision_blocks()
     _dec = blocks["decisions"]
+    if _bunt.get("live"):
+        _bunt["vintage"] = _vintage(_bunt.get("corpus_built_at"), _dec)
     _n_realized = len([f for f, v in (_dec.get("families") or {}).items() if v.get("has_window")])
 
     return {
@@ -521,13 +540,16 @@ def build(*, corpus=None, teams=True) -> dict:
             "sum_dv_wins_second": bt["2B"]["sum_dv_wins"],
             "sum_dv_wins_third": bt["3B"]["sum_dv_wins"],
             "sum_dv_wins_home": bt["HOME"]["sum_dv_wins"],
+            # Read off the running artifact whose cards this line sits under
+            # (audit M10-05); the frozen gate eval's figures describe the gate's
+            # own corpus and fall back only for an artifact that predates them.
             "net_dv_all_seasons_wins": _r(
-                gate["headline"]["net_dv_all_seasons_wins"], 2),
+                run.get("net_dv_wins", gate["headline"]["net_dv_all_seasons_wins"]), 2),
             "redistributable_pool_abs_dv_wins": _r(
-                gate["headline"]["redistributable_pool_abs_dv_wins"], 2),
-            "games": gate["team_attribution"]["games"],
+                run.get("sum_abs_dv_wins", gate["headline"]["redistributable_pool_abs_dv_wins"]), 2),
+            "games": run.get("games_in_corpus") or gate["team_attribution"]["games"],
             "sentence": _headline_sentence(
-                bt, gate["headline"]["net_dv_all_seasons_wins"],
+                bt, run.get("net_dv_wins", gate["headline"]["net_dv_all_seasons_wins"]),
                 len(run.get("by_season") or {})),
         },
 
@@ -545,6 +567,7 @@ def build(*, corpus=None, teams=True) -> dict:
             "third_out_handling": run["third_out_handling"],
             "why_execution_residual_does_not_sum_to_zero":
                 run["why_execution_residual_does_not_sum_to_zero"],
+            "vintage": _vintage(run.get("corpus_built_at"), _dec),
         },
 
         "gate": {

@@ -98,6 +98,36 @@ def test_the_style_board_and_the_club_rows_share_one_club_code(d):
     assert ts == cs, (sorted(ts - cs), sorted(cs - ts))
 
 
+def test_the_running_and_bunt_blocks_carry_the_corpus_they_were_priced_from(d):
+    """M10-05. The Running Game and Bunt tabs printed no date. Each block now carries
+    its artifact's corpus build; the through-date is the ledger's, and only when the
+    two share one build."""
+    dec = d.get("decisions") or {}
+    for blk in (d["running_game"], d["sections"]["sacrifice_bunt"]):
+        v = blk.get("vintage")
+        assert v is not None and v["corpus_built_at"], "the block does not say which corpus priced it"
+        if v["same_corpus_as_ledger"]:
+            newest = str(max(int(s) for s in dec["seasons"]))
+            assert v["through"] == dec["through_by_season"][newest]
+        else:
+            assert v["through"] is None
+
+
+def test_the_headline_totals_sum_the_attempts_on_the_cards(d):
+    """M10-05. The headline's net and pool were read off the frozen gate eval, so a
+    corpus rebuild left "net -0.69 wins" beside cards summing to -0.39. They are read
+    off the running artifact; on the gate's own corpus the two agree to the digit
+    (-0.6922524899426303 and 47.504259623449755, re-measured 2026-09-25)."""
+    h, bt = d["headline"], d["running_game"]["by_target"]
+    cards = sum(v["sum_dv_wins"] for v in bt.values())
+    assert abs(h["net_dv_all_seasons_wins"] - cards) < 0.02, (h["net_dv_all_seasons_wins"], cards)
+    run = json.loads((ROOT / "data" / "management_running.json").read_text(encoding="utf-8"))
+    if "net_dv_wins" in run:
+        assert h["net_dv_all_seasons_wins"] == round(run["net_dv_wins"], 2)
+        assert h["redistributable_pool_abs_dv_wins"] == round(run["sum_abs_dv_wins"], 2)
+        assert h["games"] == run["games_in_corpus"]
+
+
 def test_the_payload_says_why_there_is_no_plus_metric(d):
     s = d["sections"]["team_style"]
     assert s["plus_metric"] is False

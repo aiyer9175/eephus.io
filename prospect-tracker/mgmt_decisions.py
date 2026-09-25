@@ -376,6 +376,25 @@ def names_map(war_daily: Path | None = None, links: Path | None = None) -> dict:
 _START_RE = re.compile(r'"startTime"\s*:\s*"(\d{4}-\d{2}-\d{2}T[0-9:.]+Z)"')
 
 
+SEASON_CALENDAR = ROOT / ".cache" / "fantasy_schedule"
+
+
+def regular_season_end_on_disk(season, *, cache_dir: Path | None = None) -> str | None:
+    """regularSeasonEndDate for `season` from the cached StatsAPI /seasons payload
+    (fantasy_schedule.regular_season_dates writes it), or None. Read from disk
+    only: this module fetches nothing."""
+    p = Path(cache_dir or SEASON_CALENDAR) / f"season_{int(season)}.json"
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    for row in (data or {}).get("seasons") or []:
+        if str((row or {}).get("seasonId")) == str(int(season)):
+            end = row.get("regularSeasonEndDate")
+            return str(end) if end else None
+    return None
+
+
 def game_dates(game_pks, *, win_prob: Path | None = None, cache: Path | None = None) -> dict:
     """game_pk -> local calendar date (America/New_York) of the first play, read from
     the head of the raw win_prob feed. No schedule cache exists offline for 2018-2025;
@@ -1525,6 +1544,14 @@ def build(*, corpus: Path | None = None, seasons=None, shards: bool = True,
         ds = ledger.loc[ledger["season"] == s, "date"].dropna()
         through[str(s)] = str(ds.max()) if len(ds) else None
         complete[s] = bool(((manifest.get("seasons") or {}).get(str(s)) or {}).get("complete", True))
+        # The manifest's "complete" means an uncapped build, not a finished
+        # season. A season whose ledger stops before its regular-season end date
+        # is still being played, and its club rows are partial however many
+        # games they carry (audit M10-05: a corpus rebuilt on 2026-09-25 put
+        # every club past PARTIAL_GAMES with the season still open).
+        end = regular_season_end_on_disk(s)
+        if end and through[str(s)] and through[str(s)] < end:
+            complete[s] = False
     gate = gate_status_by_family()
     ej_named = sum(m["ejections"]["managers_with_id"] for m in meta_by_season.values())
     removed = {"rows_with_field": 0, "field_names_lineup_occupant": 0,

@@ -583,12 +583,40 @@ def summarize(df) -> dict:
     }
 
 
+def corpus_built_at(corpus: Path | None = None):
+    """The play corpus manifest's built_at, or None.
+
+    Stamped on the artifact so /management/ can say which corpus the Running
+    Game tab was priced from, and whether it is the corpus the decision ledger
+    (which carries the per-season through-dates) was built from.
+    """
+    try:
+        m = json.loads((Path(corpus or CORPUS) / "manifest.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return m.get("built_at")
+
+
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     logging.basicConfig(level=logging.INFO, stream=sys.stdout,
                         format="%(asctime)s %(levelname)s: %(message)s")
     df = attempts()
     art = summarize(df)
+    art["corpus_built_at"] = corpus_built_at()
+    # The league totals the page's headline prints, on THIS artifact's attempts.
+    # They were read off the frozen gate eval, which is right only while the gate
+    # and this file share a corpus; after a corpus rebuild the headline would
+    # sum a different set of attempts from the cards beside it.
+    ok = df[df["dv"].notna()]
+    art["net_dv_wins"] = float(ok["dv"].sum())
+    art["sum_abs_dv_wins"] = float(ok["dv"].abs().sum())
+    try:
+        _m = json.loads((CORPUS / "manifest.json").read_text(encoding="utf-8"))
+        art["games_in_corpus"] = int(sum(int(v.get("games") or 0)
+                                         for v in (_m.get("seasons") or {}).values()))
+    except (OSError, ValueError):
+        art["games_in_corpus"] = None
     if "--dry-run" not in argv:
         OUT.write_text(json.dumps(art, indent=1) + "\n", encoding="utf-8")
     print(f"priced attempts: {art['n_attempts_priced']:,}  "
