@@ -794,8 +794,8 @@ const PROSPECT_COLS_HIT = [
   { key: "bb_pct", label: "BB%", get: (x) => x.box && x.box.bb_pct, t: "pct", hb: true },
   { key: "k_pct", label: "K%", get: (x) => x.box && x.box.k_pct, t: "pct", hb: false },
   { key: "pa", label: "PA", get: (x) => x.box && x.box.pa, t: "raw", hb: true },
-  { key: "proj_k", label: "Proj A K%", get: (x) => (x.proj && x.proj.k_pct ? x.proj.k_pct.exp : null), t: "pctval", hb: false },
-  { key: "proj_bb", label: "Proj A BB%", get: (x) => (x.proj && x.proj.bb_pct ? x.proj.bb_pct.exp : null), t: "pctval", hb: true },
+  { key: "proj_k", label: "Proj A K%", leg: "box_k", get: (x) => (x.proj && x.proj.k_pct ? x.proj.k_pct.exp : null), t: "pctval", hb: false },
+  { key: "proj_bb", label: "Proj A BB%", leg: "box_bb", get: (x) => (x.proj && x.proj.bb_pct ? x.proj.bb_pct.exp : null), t: "pctval", hb: true },
 ];
 
 function renderProspects() {
@@ -825,10 +825,12 @@ function renderProspects() {
     if (bn) return -1;
     return dir * (av - bv);
   });
+  const TE = (window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {};
+  const flagOf = (c) => (c.leg ? legFlag(TE, c.leg) : "");
   const head = cols.map((c) => {
     const on = c.key === sortKey;
     const caret = on ? (dir < 0 ? " ▾" : " ▴") : "";
-    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-psort="${c.key}" title="Sort by ${c.label}">${c.label}${caret}</th>`;
+    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-psort="${c.key}" title="Sort by ${c.label}">${legHead(c.label, flagOf(c))}${caret}</th>`;
   }).join("");
   const body = list.map((x, i) => {
     const nameCell = x.cs
@@ -839,7 +841,7 @@ function renderProspects() {
     const schoolHtml = x.school
       ? `<a class="cs-college-link" href="/prospx/#college=${encodeURIComponent(x.school)}" title="${escapeHtml(x.school)} on PROSPX">${escapeHtml(x.school)}</a>`
       : "";
-    const cells = cols.map((c) => `<td class="tt-col${c.key === sortKey ? " is-sorted" : ""}">${fmt(c.t, c.get(x))}</td>`).join("");
+    const cells = cols.map((c) => `<td class="tt-col${c.key === sortKey ? " is-sorted" : ""}"${flagOf(c) ? MUTED_CELL : ""}>${fmt(c.t, c.get(x))}</td>`).join("");
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${nameCell}<span class="tt-n">${schoolHtml}${x.pos ? " · " + escapeHtml(x.pos) : ""}</span></td>
       ${cells}</tr>`;
@@ -852,7 +854,7 @@ function renderProspects() {
       </select>
     </section>
     <div class="panel-title"><span>Draft Prospects in college</span><span>${list.length} hitter prospect${list.length === 1 ? "" : "s"} · conventional college stats, click a column to sort</span></div>
-    <p class="trans-note">Draft-eligible hitters carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no TrackMan tracking. FV is the consensus board grade, rounded up. Proj A K% / BB% project a Single-A line straight from the college box via a matched-pair model. ${trustSentence((window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {}, [["box_k", "box K%"], ["box_bb", "box BB%"]], { unflagged: true })} Names link to a player's CollegeSavant page when they have tracking data.</p>
+    <p class="trans-note">Draft-eligible hitters carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no TrackMan tracking. FV is the consensus board grade, rounded up. Proj A K% / BB% project a Single-A line straight from the college box via a matched-pair model. ${trustSentence((window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {}, [["box_k", "box K%"], ["box_bb", "box BB%"]])} Names link to a player's CollegeSavant page when they have tracking data.</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th>${head}</tr></thead>
       <tbody>${body || `<tr><td colspan="${cols.length + 2}" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
@@ -885,6 +887,22 @@ function lowSignalR2() {
 function isLowSignal(f) {
   return !f || f.r2 == null || f.r2 < lowSignalR2();
 }
+
+// Board column flag for one translation leg, the same tiers the "How accurate
+// is this" table prints: below r2 0.05 "not predictive", below the low-signal
+// line "low signal". The boards print every leg's expected value, so a leg
+// the backtest does not support carries its flag in the column header and
+// its cells are muted (census M03-05).
+function legFlag(E, k) {
+  const f = E && E[k];
+  if (!f || f.r2 == null) return "";
+  if (f.r2 < 0.05) return "not predictive";
+  return f.r2 < lowSignalR2() ? "low signal" : "";
+}
+function legHead(label, flag) {
+  return flag ? `${label} <span class="trans-flag">${flag}</span>` : label;
+}
+const MUTED_CELL = ' style="opacity:0.55"';
 
 function joinWords(xs) {
   return xs.length < 3 ? xs.join(" and ") : xs.slice(0, -1).join(", ") + ", and " + xs[xs.length - 1];
@@ -961,15 +979,16 @@ function renderProjections() {
     .filter((x) => x.t && x.t.single_a)
     .sort((a, b) => (b.cs ?? -Infinity) - (a.cs ?? -Infinity))
     .slice(0, LEADERBOARD_LIMIT);
+  const fk = legFlag(E, "hit_k"), fb = legFlag(E, "hit_bb"), fo = legFlag(E, "hit_ops");
   const body = list.map((x, i) => {
     const sa = x.t.single_a;
     const logo = TEAM_LOGOS[x.p.team] ? `<img class="tt-logo" src="${TEAM_LOGOS[x.p.team]}" alt="" loading="lazy" onerror="this.remove()">` : "";
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${logo}<a class="proj-name" href="#/player/${x.p.year}/${x.p.slug}">${escapeHtml(displayName(x.p.hitter_name))}</a></td>
       <td class="tt-col">${plusPill(x.cs, "CS+")}</td>
-      <td class="tt-col">${pband(sa.k_pct)}</td>
-      <td class="tt-col">${pband(sa.bb_pct)}</td>
-      <td class="tt-col">${pband(sa.ops, true)}</td></tr>`;
+      <td class="tt-col"${fk ? MUTED_CELL : ""}>${pband(sa.k_pct)}</td>
+      <td class="tt-col"${fb ? MUTED_CELL : ""}>${pband(sa.bb_pct)}</td>
+      <td class="tt-col"${fo ? MUTED_CELL : ""}>${pband(sa.ops, true)}</td></tr>`;
   }).join("");
   app.innerHTML = `
     <section class="toolbar">${renderYearSelect()}</section>
@@ -989,7 +1008,7 @@ function renderProjections() {
     <p class="trans-note">Coverage near 80% means the P10-P90 bands are sized to the data. Rows below r² ${lowSignalR2().toFixed(2)} are flagged and shown for context. Not adjusted for schedule strength or park (no conference / park table held). Stuff and tracked skills are descriptive (the CS+ index), not pro outcome forecasts.</p>
     <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} hitters with a projection · ranked by CS+ (pro profile)</span></div>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
-      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th><th class="tt-col">CS+</th><th class="tt-col">Proj A K%</th><th class="tt-col">Proj A BB%</th><th class="tt-col">Proj A OPS</th></tr></thead>
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th><th class="tt-col">CS+</th><th class="tt-col">${legHead("Proj A K%", fk)}</th><th class="tt-col">${legHead("Proj A BB%", fb)}</th><th class="tt-col">${legHead("Proj A OPS", fo)}</th></tr></thead>
       <tbody>${body || `<tr><td colspan="6" class="note-line">No projections for this year.</td></tr>`}</tbody>
     </table></div></section>`;
   const ys = app.querySelector(".year-select");

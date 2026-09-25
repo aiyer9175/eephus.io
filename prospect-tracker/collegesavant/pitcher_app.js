@@ -1206,6 +1206,12 @@ function renderProjections() {
         <td class="tt-col">${cov}</td><td class="tt-col">${f.n ?? " - "}</td></tr>`;
     }).join("");
   const pband = (b) => b == null ? " - " : b.exp.toFixed(1) + "%";
+  // A leg below the low-signal line (the table's own flag) carries the flag in
+  // the board header and its cells are muted (census M03-05).
+  const legFlag = (k) => (E[k] && E[k].r2 != null && E[k].r2 < lowSignalR2()) ? "low signal" : "";
+  const legHead = (label, flag) => flag ? `${label} <span class="trans-flag">${flag}</span>` : label;
+  const MUTED = ' style="opacity:0.55"';
+  const fk = legFlag("pit_k"), fb = legFlag("pit_bb");
   const list = state.pitchers
     .map((p) => ({ p, t: T[p.slug], cs: state.csPlus && state.csPlus.get(p.slug) }))
     .filter((x) => x.t && x.t.single_a)
@@ -1217,8 +1223,8 @@ function renderProjections() {
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${logo}<a class="proj-name" href="#/player/${x.p.year}/${x.p.slug}">${escapeHtml(displayName(x.p.pitcher_name))}</a></td>
       <td class="tt-col">${plusPill(x.cs, "CS+")}</td>
-      <td class="tt-col">${pband(sa.k_pct)}</td>
-      <td class="tt-col">${pband(sa.bb_pct)}</td></tr>`;
+      <td class="tt-col"${fk ? MUTED : ""}>${pband(sa.k_pct)}</td>
+      <td class="tt-col"${fb ? MUTED : ""}>${pband(sa.bb_pct)}</td></tr>`;
   }).join("");
   app.innerHTML = `
     <section class="toolbar">${renderYearSelect()}</section>
@@ -1237,7 +1243,7 @@ function renderProjections() {
     </table></div></section>
     <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} pitchers with a projection · ranked by CS+ (pro profile)</span></div>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
-      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Pitcher</th><th class="tt-col">CS+</th><th class="tt-col">Proj A K%</th><th class="tt-col">Proj A BB%</th></tr></thead>
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Pitcher</th><th class="tt-col">CS+</th><th class="tt-col">${legHead("Proj A K%", fk)}</th><th class="tt-col">${legHead("Proj A BB%", fb)}</th></tr></thead>
       <tbody>${body || `<tr><td colspan="5" class="note-line">No projections for this year.</td></tr>`}</tbody>
     </table></div></section>`;
   const ys = app.querySelector(".year-select");
