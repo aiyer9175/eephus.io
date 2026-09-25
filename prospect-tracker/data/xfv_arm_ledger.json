@@ -1,17 +1,20 @@
 {
- "generated_at": "2026-09-06T07:41:40+00:00",
+ "generated_at": "2026-09-25T19:55:25+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
- "n_arms": 48,
+ "n_arms": 59,
  "by_lane": {
   "free _vec keys (D-1)": 26,
   "tools_json _extras arms (D-2)": 13,
+  "admission rule (DS-06)": 11,
   "pre-registered pairs": 5,
   "handedness sidecar": 2,
   "stolen-base rate": 1,
   "wRC+ add arm": 1
  },
  "by_verdict": {
-  "NO_STORED_VERDICT": 48
+  "NO_STORED_VERDICT": 48,
+  "REFUSED": 8,
+  "ADMITTED": 3
  },
  "n_without_stored_verdict": 48,
  "sweeps": [
@@ -551,15 +554,507 @@
    "verdict": "NO_STORED_VERDICT",
    "delta_rho": -0.00143,
    "generated_at": "2026-08-07T18:24:56Z"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:hit.skill.contact",
+   "verdict": "REFUSED",
+   "delta_rho": null,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2018": 1,
+    "2019": 1,
+    "2020": 1,
+    "2021": 1,
+    "2022": -1,
+    "2023": 1,
+    "2024": 1
+   },
+   "mean_abs_t": 1.1982,
+   "n_valid_vintages": 7,
+   "admitted": false,
+   "head": "skill",
+   "reason": "sign flipped between training vintages"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:hit.skill.is_college",
+   "verdict": "REFUSED",
+   "delta_rho": null,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2018": 1,
+    "2019": 1,
+    "2020": -1,
+    "2021": 1,
+    "2022": 1,
+    "2023": 1,
+    "2024": -1
+   },
+   "mean_abs_t": 1.3103,
+   "n_valid_vintages": 7,
+   "admitted": false,
+   "head": "skill",
+   "reason": "sign flipped between training vintages"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:hit.skill.level_rank",
+   "verdict": "REFUSED",
+   "delta_rho": null,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2018": 1,
+    "2019": -1,
+    "2020": -1,
+    "2021": -1,
+    "2022": -1,
+    "2023": 1,
+    "2024": -1
+   },
+   "mean_abs_t": 1.0447,
+   "n_valid_vintages": 7,
+   "admitted": false,
+   "head": "skill",
+   "reason": "sign flipped between training vintages"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:hit.skill.obp_rel",
+   "verdict": "REFUSED",
+   "delta_rho": null,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2018": 1,
+    "2019": 1,
+    "2020": 1,
+    "2021": -1,
+    "2022": -1,
+    "2023": 1,
+    "2024": 1
+   },
+   "mean_abs_t": 1.0158,
+   "n_valid_vintages": 7,
+   "admitted": false,
+   "head": "skill",
+   "reason": "sign flipped between training vintages"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:hit.skill.tool_hit",
+   "verdict": "ADMITTED",
+   "delta_rho": null,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2018": 1,
+    "2019": 1,
+    "2020": 1,
+    "2021": 1,
+    "2022": 1,
+    "2023": 1,
+    "2024": 1
+   },
+   "mean_abs_t": 1.4797,
+   "n_valid_vintages": 7,
+   "admitted": true,
+   "head": "skill",
+   "reason": "sign held in every training vintage and mean |t| cleared"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:hit.skill.tool_speed",
+   "verdict": "REFUSED",
+   "delta_rho": null,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2018": 1,
+    "2019": 1,
+    "2020": -1,
+    "2021": 1,
+    "2022": 1,
+    "2023": 1,
+    "2024": 1
+   },
+   "mean_abs_t": 1.134,
+   "n_valid_vintages": 7,
+   "admitted": false,
+   "head": "skill",
+   "reason": "sign flipped between training vintages"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:hit.timing.age_rel_level",
+   "verdict": "REFUSED",
+   "delta_rho": null,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2018": -1,
+    "2019": -1,
+    "2020": -1,
+    "2021": -1,
+    "2022": 1,
+    "2023": 1,
+    "2024": 1
+   },
+   "mean_abs_t": 2.3445,
+   "n_valid_vintages": 7,
+   "admitted": false,
+   "head": "timing",
+   "reason": "sign flipped between training vintages"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:hit.timing.level_rank",
+   "verdict": "ADMITTED",
+   "delta_rho": null,
+   "side": "hit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2018": 1,
+    "2019": 1,
+    "2020": 1,
+    "2021": 1,
+    "2022": 1,
+    "2023": 1,
+    "2024": 1
+   },
+   "mean_abs_t": 9.886,
+   "n_valid_vintages": 7,
+   "admitted": true,
+   "head": "timing",
+   "reason": "sign held in every training vintage and mean |t| cleared"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:pit.skill.k_rel",
+   "verdict": "REFUSED",
+   "delta_rho": null,
+   "side": "pit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2019": 1,
+    "2020": 1,
+    "2021": 1,
+    "2022": 1,
+    "2023": 1,
+    "2024": -1
+   },
+   "mean_abs_t": 1.2752,
+   "n_valid_vintages": 6,
+   "admitted": false,
+   "head": "skill",
+   "reason": "sign flipped between training vintages"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:pit.timing.age_rel_level",
+   "verdict": "REFUSED",
+   "delta_rho": null,
+   "side": "pit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2019": -1,
+    "2020": -1,
+    "2021": 1,
+    "2022": 1,
+    "2023": 1,
+    "2024": 1
+   },
+   "mean_abs_t": 2.2586,
+   "n_valid_vintages": 6,
+   "admitted": false,
+   "head": "timing",
+   "reason": "sign flipped between training vintages"
+  },
+  {
+   "lane": "admission rule (DS-06)",
+   "artifact": "xfv_driver_admission.json",
+   "arm": "DS-06:pit.timing.level_rank",
+   "verdict": "ADMITTED",
+   "delta_rho": null,
+   "side": "pit",
+   "floor_rho": null,
+   "cleared_own_floor": null,
+   "generated_at": "2026-09-25T19:55:18+00:00",
+   "per_vintage_signs": {
+    "2019": 1,
+    "2020": 1,
+    "2021": 1,
+    "2022": 1,
+    "2023": 1,
+    "2024": 1
+   },
+   "mean_abs_t": 5.5104,
+   "n_valid_vintages": 6,
+   "admitted": true,
+   "head": "timing",
+   "reason": "sign held in every training vintage and mean |t| cleared"
   }
  ],
+ "probes": [
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.acq_unknown_at_v:hit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.1741,
+    -0.084
+   ],
+   "partial": -0.1261
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.acq_unknown_at_v:pit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.2748,
+    -0.1773
+   ],
+   "partial": -0.2248
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.age_prev_missing:hit",
+   "verdict": "BALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.1015,
+    0.0237
+   ],
+   "partial": -0.0397
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.age_prev_missing:pit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.1438,
+    -0.026
+   ],
+   "partial": -0.0849
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.id_unresolved:hit",
+   "verdict": "BALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.1038,
+    0.0324
+   ],
+   "partial": -0.0381
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.id_unresolved:pit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.1824,
+    -0.0443
+   ],
+   "partial": -0.1145
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.leaky_level_missing:hit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.2782,
+    -0.2035
+   ],
+   "partial": -0.2445
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.leaky_level_missing:pit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.3002,
+    -0.2241
+   ],
+   "partial": -0.2643
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.level_prev_missing:hit",
+   "verdict": "BALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.1053,
+    0.0271
+   ],
+   "partial": -0.0397
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.level_prev_missing:pit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.1439,
+    -0.0252
+   ],
+   "partial": -0.0849
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.milb_absent:hit",
+   "verdict": "BALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.0753,
+    0.0575
+   ],
+   "partial": -0.0101
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.milb_absent:pit",
+   "verdict": "BALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.1244,
+    0.0081
+   ],
+   "partial": -0.0621
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.record_birth_missing:hit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.162,
+    -0.0754
+   ],
+   "partial": -0.1206
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.record_birth_missing:pit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.2382,
+    -0.1483
+   ],
+   "partial": -0.1912
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.record_id_missing:hit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.1715,
+    -0.0764
+   ],
+   "partial": -0.125
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:balance.record_id_missing:pit",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "ci95": [
+    -0.2414,
+    -0.1514
+   ],
+   "partial": -0.1951
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:h1.leaky_reference",
+   "verdict": "CI95_ABOVE_ZERO",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "delta_vs_consensus": 0.0257,
+   "ci95": [
+    0.0073,
+    0.0445
+   ]
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:h1.outcome_blind",
+   "verdict": "CI95_SPANS_ZERO",
+   "generated_at": "2026-09-25T19:46:42+00:00",
+   "delta_vs_consensus": -0.0079,
+   "ci95": [
+    -0.0244,
+    0.0083
+   ]
+  }
+ ],
+ "n_probes": 18,
+ "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
- "expected_spurious_passes_at_nominal_5pct": 2.4,
+ "expected_spurious_passes_at_nominal_5pct": 3.0,
  "n_scoreable_against_a_floor": 39,
  "n_cleared_own_floor": 0,
  "cleared_own_floor": [],
  "cleared_is_the_weakest_bar": "`cleared_own_floor` compares the point delta to the lane's recorded rho floor and nothing else. It is not a verdict: a verdict needs the Holm correction across that lane's family, and for anything gated after 2026-09-06 the co-primary contributor-AUC leg as well. It is published because the count of arms that reached even this bar is the honest way to describe the program's yield.",
- "reading": "48 arms have been adjudicated across 6 lanes, 39 of them scoreable against a recorded floor, and 0 reached that floor on the point estimate. At a nominal 5% per arm, pure noise alone would be expected to produce about 2.4 passes across 48 arms. Fewer arms cleared than noise alone would produce, which says the per-lane floors are, if anything, conservative, and that the program's run of nulls is a real result rather than a reporting artifact. Every lane's own Holm correction is correct and controls the error rate WITHIN that lane; nothing has ever controlled it across lanes, because until now nothing counted them. Read any survivor against this denominator.",
+ "reading": "59 arms have been adjudicated across 7 lanes, 39 of them scoreable against a recorded floor, and 0 reached that floor on the point estimate. At a nominal 5% per arm, pure noise alone would be expected to produce about 3.0 passes across 59 arms. Fewer arms cleared than noise alone would produce, which says the per-lane floors are, if anything, conservative, and that the program's run of nulls is a real result rather than a reporting artifact. Every lane's own Holm correction is correct and controls the error rate WITHIN that lane; nothing has ever controlled it across lanes, because until now nothing counted them. Read any survivor against this denominator.",
  "this_is_not_a_correction": "no program-wide Holm is applied and none should be. The arms were gated on different frames, pools and label definitions, so a retrospective joint family would imply a structure that never existed. The count makes the denominator visible; the reserved 2025 fold is what actually buys confirmation.",
  "reserved_fold": {
   "cohort": "2025 base year",

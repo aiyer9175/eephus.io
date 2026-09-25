@@ -52,7 +52,22 @@ SOURCES: tuple[tuple[str, str, str], ...] = (
     ("xfv_driver_handedness.json", "arms", "handedness sidecar"),
     ("xfv_driver_sb_rate.json", None, "stolen-base rate"),
     ("xfv_driver_wrc.json", None, "wRC+ add arm"),
+    # Driver System V2 (docs/efv-v2/DRIVER_SYSTEM_V2.md s5 DS-06): every candidate
+    # driver the admission rule checked, with its per-vintage signs.
+    ("xfv_driver_admission.json", "arms", "admission rule (DS-06)"),
 )
+
+#: Development probes that are NOT feature arms: validity reads (a label-balance
+#: screen, a leak regression). Counted and listed apart, like sweeps, and never summed
+#: into the arm count, because they test the frame rather than a driver.
+PROBES: tuple[tuple[str, str, str], ...] = (
+    ("efv_identity_balance.json", "probes", "identity balance probes (DS-03)"),
+)
+
+#: Fields an arm may carry that the ledger copies through unchanged, so a driver's
+#: per-vintage signs sit next to its gate (DS-06).
+PASS_THROUGH = ("per_vintage_signs", "mean_abs_t", "n_valid_vintages", "admitted",
+                "head", "reason", "delta_vs_consensus", "ci95", "partial")
 
 #: Lanes whose artifact holds sweeps rather than arms. Counted separately and
 #: NEVER pooled with the arm count: a sweep over a continuous knob is not the
@@ -158,6 +173,7 @@ def collect() -> dict:
                                       else bool(rho >= floor)),
                 "generated_at": stamp,
             })
+            rows[-1].update({k: arm[k] for k in PASS_THROUGH if k in arm})
 
     sweeps = []
     for name, label in SWEEPS:
@@ -171,6 +187,20 @@ def collect() -> dict:
             n += len(v) if isinstance(v, dict) else 1
         sweeps.append({"lane": label, "artifact": name, "settings": n,
                        "generated_at": doc.get("generated_at")})
+
+    probes = []
+    for name, key, label in PROBES:
+        doc, why = _load(name)
+        if doc is None:
+            missing.append({"artifact": name, "why": why, "lane": label})
+            continue
+        for tag, pr in sorted((doc.get(key) or {}).items()):
+            if isinstance(pr, dict):
+                probes.append({"lane": label, "artifact": name,
+                               "probe": pr.get("tag") or tag,
+                               "verdict": _verdict_of(pr),
+                               "generated_at": doc.get("generated_at"),
+                               **{k: pr[k] for k in PASS_THROUGH if k in pr}})
 
     by_lane: dict = {}
     by_verdict: dict = {}
@@ -198,6 +228,11 @@ def collect() -> dict:
             "as an independent feature arm; the two are reported apart and must "
             "not be summed"),
         "arms": rows,
+        "probes": probes,
+        "n_probes": len(probes),
+        "probes_are_not_arms": (
+            "a validity probe tests the frame or the resolver, not a driver; probes "
+            "are listed and counted apart and never summed into the arm count"),
         "sources_missing": missing,
         "expected_spurious_passes_at_nominal_5pct": expected_false,
         "n_scoreable_against_a_floor": len(scored),
@@ -259,6 +294,7 @@ def main(argv=None) -> int:
           f"{led['n_scoreable_against_a_floor']} scoreable"
           + (f"  {led['cleared_own_floor']}" if led["cleared_own_floor"] else ""))
     print(f"sweeps (not arms): {[(s['lane'], s['settings']) for s in led['sweeps']]}")
+    print(f"validity probes (not arms): {led['n_probes']}")
     if led["sources_missing"]:
         print("MISSING SOURCES (the count is a lower bound):")
         for m in led["sources_missing"]:
