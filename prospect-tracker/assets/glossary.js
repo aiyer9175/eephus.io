@@ -3309,9 +3309,264 @@ function _scxGfxBarHTML() {
   return `<div class="filter-bar" style="margin:2px 0 10px;">${window.EEPHUS_GFX.chipHTML("gl-scx-gfx", "Generate GFX")}</div>`;
 }
 
+// ---- eFV progress ledger (EV-00, docs/efv-v2/PROGRAM.md s5.3) ---------------
+// The owner asked on 2026-09-24 to watch, on this page, whether the eFV redo is
+// beating PROSPX consensus and the industry. The ledger artifact is written by
+// efv_progress.py, append-only, and every number in it is copied from a named
+// key of the backtest or the scoreboard. Nothing below computes a statistic:
+// the renderers print the row's own numbers, and the verdict word is the
+// row's. Same lazy idiom as _loadScoreboard; an absent artifact drops the
+// section and never the view.
+function _loadProgress() {
+  if (_S.progress || _S.progressLoading) return;
+  _S.progressLoading = true;
+  const rerender = () => { if (_S.view === "source-comparison") renderSourceComparison(); };
+  fetch("/data/efv_progress.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _S.progress = j || { __error: true }; rerender(); })
+    .catch(() => { _S.progress = { __error: true }; rerender(); });
+}
+
+// Frames a chart series may hold. Tilted frames never, whatever the artifact
+// lists: they are timing, not skill (PROGRAM.md s7 item 1).
+const _PROG_CHART_FRAMES = ["vm", "lv_dev", "lv_res", "vm_pros"];
+
+function _progRows(prog) {
+  return (prog && !prog.__error && Array.isArray(prog.rows)) ? prog.rows : [];
+}
+
+function _progSeriesRows(prog) {
+  const allowed = ((prog && prog.chart && prog.chart.series_frames) || _PROG_CHART_FRAMES)
+    .filter(f => _PROG_CHART_FRAMES.includes(f));
+  return _progRows(prog).filter(r => r.role !== "tilted" && r.tilted !== true
+    && r.role !== "secondary" && allowed.includes(r.frame)
+    && _progConsLeg(r) && _progConsLeg(r).delta != null);
+}
+
+function _progConsLeg(r) {
+  return ((r && r.deltas && r.deltas.vs_prospx_consensus) || {}).spearman || null;
+}
+
+function _progFrameLabel(prog, fid) {
+  const f = (prog && prog.frames && prog.frames[fid]) || {};
+  return f.label || fid;
+}
+
+function _progLatestHeadline(prog) {
+  const head = prog && prog.headline_frame;
+  const rows = _progRows(prog).filter(r => r.frame === head && r.role !== "tilted");
+  return rows.length ? rows[rows.length - 1] : null;
+}
+
+function _progFmt(v, d) {
+  return (v == null || isNaN(Number(v))) ? "-" : Number(v).toFixed(d);
+}
+
+function _progSigned(v, d) {
+  if (v == null || isNaN(Number(v))) return "-";
+  const n = Number(v);
+  return (n > 0 ? "+" : "") + n.toFixed(d);
+}
+
+function _progCi(ci, d) {
+  return (Array.isArray(ci) && ci.length === 2 && ci[0] != null && ci[1] != null)
+    ? `${_progSigned(ci[0], d)} to ${_progSigned(ci[1], d)}` : "not recomputable";
+}
+
+function _methProgressLedger(prog, bt) {
+  const row = _progLatestHeadline(prog);
+  if (!row) return "";
+  const rt = row.raters || {};
+  const efv = (rt.efv || {}).spearman, cons = (rt.prospx_consensus || {}).spearman;
+  const leg = _progConsLeg(row) || {};
+  const ciTxt = Array.isArray(leg.ci95) ? `, 95% CI ${_progCi(leg.ci95, 3)}` : "";
+  const floorTxt = leg.mde95 != null
+    ? `, noise floor ${_progFmt(leg.mde95, 3)}${leg.mde95_estimator ? " (" + escapeHtml(leg.mde95_estimator) + ")" : ""}` : "";
+  const stale = !!(bt && bt.generated_at && row.last_verified_at
+    && String(row.last_verified_at) < String(bt.generated_at));
+  const chip = stale
+    ? ` <span class="sacc-chip-warn" title="the backtest was regenerated after this row was last verified">stale: backtest ${escapeHtml(String(bt.generated_at).slice(0, 10))} is newer</span>`
+    : ` <span class="sacc-chip-ok">verified ${escapeHtml(String(row.last_verified_at || row.date || "").slice(0, 10))}</span>`;
+  const resolvable = row.resolvable === true;
+  return `<div class="meth-chart scx-progress-head">
+    <div class="meth-chart-title">eFV progress ledger <span class="meth-sub">the dated record of eFV against PROSPX consensus and the industry</span></div>
+    <p class="meth-window"><strong>Latest, ${escapeHtml(row.date || "")}:</strong> on the ${escapeHtml(_progFrameLabel(prog, row.frame).toLowerCase())} frame (n ${Number(row.n || 0).toLocaleString()}), eFV ${_progFmt(efv, 3)} against PROSPX consensus ${_progFmt(cons, 3)}, delta ${_progSigned(leg.delta, 4)}${ciTxt}${floorTxt}: <span class="${resolvable ? "sacc-verdict-win" : "sacc-verdict-null"}">${escapeHtml(row.verdict || "")}</span>.${chip}</p>
+  </div>`;
+}
+
+function _progDateLabel(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+  if (!m) return String(iso || "");
+  const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(m[2]) - 1] || m[2];
+  return `${mon} ${Number(m[3])}`;
+}
+
+function _methProgressChart(prog) {
+  const rows = _progSeriesRows(prog);
+  if (!rows.length) return "";
+  // A phone gets a narrower drawing rather than a shrunken wide one, so the
+  // axis labels stay legible at 390px.
+  const narrow = (window.innerWidth || 1024) < 600;
+  const W = narrow ? 340 : 580, H = narrow ? 240 : 250, ML = narrow ? 46 : 52, MR = narrow ? 10 : 16, MT = 16, MB = 40;
+  const iW = W - ML - MR, iH = H - MT - MB;
+  const legs = rows.map(r => _progConsLeg(r));
+  const last = _progLatestHeadline(prog);
+  const floor = last && _progConsLeg(last) ? _progConsLeg(last).mde95 : null;
+  const vals = [];
+  legs.forEach(l => {
+    vals.push(Number(l.delta));
+    if (Array.isArray(l.ci95) && l.ci95[0] != null) vals.push(Number(l.ci95[0]), Number(l.ci95[1]));
+  });
+  if (floor != null) vals.push(Number(floor), -Number(floor));
+  vals.push(0);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = (hi - lo) * 0.12 || 0.01;
+  lo -= pad; hi += pad;
+  const ts = rows.map(r => Date.parse(String(r.date) + "T00:00:00Z"));
+  const t0 = Math.min(...ts), t1 = Math.max(...ts);
+  // An inner pad keeps the first and last marks off the axes.
+  const PX = 18;
+  const sx = t => (t1 === t0 ? ML + iW / 2 : ML + PX + ((t - t0) / (t1 - t0)) * (iW - 2 * PX));
+  const sy = v => MT + iH - ((v - lo) / (hi - lo)) * iH;
+  // Round tick steps (1, 2 or 5 times a power of ten) so the axis reads in
+  // plain hundredths rather than at arbitrary fractions of the range.
+  const raw = (hi - lo) / 6, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const yStep = [1, 2, 5, 10].map(k => k * mag).find(s => s >= raw) || raw;
+  const dec = Math.max(0, -Math.floor(Math.log10(yStep)));
+  const grid = [];
+  for (let v = Math.ceil(lo / yStep) * yStep; v <= hi + yStep / 1000; v += yStep) {
+    const y = sy(v).toFixed(1);
+    grid.push(`<line x1="${ML}" y1="${y}" x2="${ML + iW}" y2="${y}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,3"/>`,
+      `<text x="${ML - 6}" y="${y}" dy="3" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${_progSigned(Math.abs(v) < yStep / 1000 ? 0 : v, dec)}</text>`);
+  }
+  const band = floor != null
+    ? `<rect x="${ML}" y="${sy(Number(floor)).toFixed(1)}" width="${iW}" height="${(sy(-Number(floor)) - sy(Number(floor))).toFixed(1)}" fill="var(--text-tertiary)" fill-opacity="0.12"/>`
+    : "";
+  const zero = `<line x1="${ML}" y1="${sy(0).toFixed(1)}" x2="${ML + iW}" y2="${sy(0).toFixed(1)}" stroke="var(--text-secondary)" stroke-width="1" stroke-dasharray="4,3"/>`;
+  const col = _raterMeta("xfv").color;
+  const marks = rows.map((r, i) => {
+    const l = legs[i], x = sx(ts[i]), y = sy(Number(l.delta));
+    const ci = Array.isArray(l.ci95) && l.ci95[0] != null
+      ? `<line x1="${x.toFixed(1)}" y1="${sy(Number(l.ci95[0])).toFixed(1)}" x2="${x.toFixed(1)}" y2="${sy(Number(l.ci95[1])).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`
+        + [l.ci95[0], l.ci95[1]].map(v => `<line x1="${(x - 4).toFixed(1)}" y1="${sy(Number(v)).toFixed(1)}" x2="${(x + 4).toFixed(1)}" y2="${sy(Number(v)).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`).join("")
+      : "";
+    const tip = `<title>${escapeHtml(r.date)}: ${escapeHtml(_progFrameLabel(prog, r.frame))}, n ${r.n}, delta ${_progSigned(l.delta, 4)}, CI ${escapeHtml(_progCi(l.ci95, 4))}, ${escapeHtml(r.verdict || "")}</title>`;
+    let mark;
+    if (r.trigger === "look") {
+      mark = `<path d="M ${x.toFixed(1)},${(y - 6).toFixed(1)} L ${(x + 6).toFixed(1)},${y.toFixed(1)} L ${x.toFixed(1)},${(y + 6).toFixed(1)} L ${(x - 6).toFixed(1)},${y.toFixed(1)} Z" fill="${col}" stroke="var(--bg-secondary)" stroke-width="1">${tip}</path>`;
+    } else if (r.role === "development") {
+      mark = `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="var(--bg-secondary)" stroke="${col}" stroke-width="2">${tip}</circle>`;
+    } else {
+      mark = `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="var(--bg-secondary)" stroke-width="1">${tip}</circle>`;
+    }
+    return ci + mark;
+  }).join("");
+  const uniq = [...new Set(ts)].sort((a, b) => a - b);
+  // Date labels never collide: walk right to left from the newest date and
+  // keep a label only when it clears the last one kept by a label's width.
+  const kept = [];
+  uniq.slice().reverse().forEach(t => {
+    if (!kept.length || sx(kept[kept.length - 1]) - sx(t) >= 56) kept.push(t);
+  });
+  const ticks = kept.reverse().map(t =>
+    `<text x="${sx(t).toFixed(1)}" y="${MT + iH + 16}" text-anchor="middle" font-size="10" fill="var(--text-secondary)" font-weight="600">${escapeHtml(_progDateLabel(new Date(t).toISOString()))}</text>`).join("");
+  const hasDev = rows.some(r => r.role === "development");
+  const hasLook = rows.some(r => r.trigger === "look");
+  const legend = [
+    `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};border-radius:50%;"></span>${escapeHtml(_progFrameLabel(prog, prog.headline_frame || "vm"))} frame (headline)</span>`,
+    hasDev ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};border-radius:50%;"></span>development frame, spent, not a claim</span>` : "",
+    hasLook ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};transform:rotate(45deg);"></span>reserved-frame look</span>` : "",
+    floor != null ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);opacity:.35;"></span>plus or minus the noise floor (${_progFmt(floor, 3)})</span>` : "",
+  ].filter(Boolean).join("");
+  return `<div class="meth-chart">
+    <div class="meth-chart-title">eFV minus PROSPX consensus, over time <span class="meth-sub">Spearman ρ against realized WAR, identical rows; whiskers are the 95% CI where the row carries one</span></div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="eFV minus PROSPX consensus Spearman, by ledger date, with confidence intervals and the noise floor band">
+      ${band}${grid.join("")}${zero}
+      <line x1="${ML}" y1="${MT + iH}" x2="${ML + iW}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
+      <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
+      ${marks}${ticks}
+    </svg>
+    <div class="meth-legend">${legend}</div>
+    <p class="meth-note">A point above zero is eFV ordering realized WAR better than the consensus on the same players. Inside the shaded band the difference is smaller than this sample can resolve, so no point inside it is a lead or a deficit. Rows backfilled from the committed history carry no interval, because one cannot be recomputed from a committed number. Tilted frames are never plotted.</p>
+  </div>`;
+}
+
+function _progRaterCell(r, name) {
+  const x = (r.raters || {})[name];
+  if (!x || (x.spearman == null && x.auc == null)) return `<td>-</td>`;
+  return `<td>${_progFmt(x.spearman, 3)}${x.auc != null ? ` / ${_progFmt(x.auc, 3)}` : ""}</td>`;
+}
+
+function _progRowHtml(prog, r) {
+  const leg = _progConsLeg(r);
+  const mv = r.model_version || {};
+  const model = `${escapeHtml(r.model_id || "")}${mv.commit ? ` <span class="meth-sub">${escapeHtml(mv.commit)}</span>` : ""}${r.trigger ? `<br><span class="meth-sub">${escapeHtml(r.trigger)}</span>` : ""}`;
+  const chipCls = r.role === "headline" ? "sacc-chip-ok" : "sacc-chip-warn";
+  const frame = `${escapeHtml(_progFrameLabel(prog, r.frame))}${r.frame_version ? ` <span class="meth-sub">${escapeHtml(r.frame_version)}</span>` : ""}<br><span class="${chipCls}">${escapeHtml(r.role || "")}</span>`;
+  let deltaCell;
+  if (r.share && r.share.efv_right_share != null) {
+    const ci = Array.isArray(r.share.ci95) ? ` (CI ${_progFmt(r.share.ci95[0] * 100, 0)}% to ${_progFmt(r.share.ci95[1] * 100, 0)}%)` : "";
+    deltaCell = `eFV closer on ${_progFmt(r.share.efv_right_share * 100, 1)}%${ci}`;
+  } else if (leg) {
+    deltaCell = `${_progSigned(leg.delta, 4)}<br><span class="meth-sub">${escapeHtml(_progCi(leg.ci95, 3))}</span>`;
+  } else {
+    deltaCell = "-";
+  }
+  const floorCell = leg && leg.mde95 != null ? _progFmt(leg.mde95, 4) : "-";
+  // Only a headline or reserved-frame row can carry a win colour; a tilted or
+  // secondary row prints its verdict in the neutral style, whatever it says.
+  const claimable = r.role === "headline" || r.role === "reserved";
+  const verdictCls = (claimable && r.resolvable === true) ? "sacc-verdict-win" : "sacc-verdict-null";
+  return `<tr>
+    <td>${escapeHtml(r.date || "")}</td><td>${model}</td><td>${frame}</td>
+    <td>${r.n != null ? Number(r.n).toLocaleString() : "-"}</td>
+    ${_progRaterCell(r, "efv")}${_progRaterCell(r, "prospx_consensus")}${_progRaterCell(r, "mlb_pipeline")}${_progRaterCell(r, "fangraphs")}
+    <td>${deltaCell}</td><td>${floorCell}</td>
+    <td><span class="${verdictCls}">${escapeHtml(r.verdict || "-")}</span></td>
+    <td class="meth-sub">${escapeHtml(r.note || "")}</td>
+  </tr>`;
+}
+
+function _methProgressTable(prog) {
+  const rows = _progRows(prog);
+  if (!rows.length) return "";
+  const head = `<thead><tr><th>Date</th><th>Model</th><th>Frame</th><th>n</th><th>eFV ρ / AUC</th><th>Consensus</th><th>Pipeline</th><th>FanGraphs</th><th>Delta vs consensus (CI95)</th><th>Floor</th><th>Verdict</th><th>Note</th></tr></thead>`;
+  const main = rows.filter(r => r.role !== "tilted" && r.tilted !== true && r.role !== "secondary").slice().reverse();
+  const tilted = rows.filter(r => r.role === "tilted" || r.tilted === true).slice().reverse();
+  const secondary = rows.filter(r => r.role === "secondary" && r.tilted !== true).slice().reverse();
+  const mainHtml = main.length
+    ? `<div class="table-scroll-x"><table class="meth-table">${head}<tbody>${main.map(r => _progRowHtml(prog, r)).join("")}</tbody></table></div>` : "";
+  const tiltedHtml = tilted.length
+    ? `<details class="scx-progress-tilted"><summary>Tilted frames (not evidence of skill), ${tilted.length} row${tilted.length === 1 ? "" : "s"}</summary>
+        <p class="meth-note">Each of these frames hands one grader an information edge, so a lead on one is timing and not skill. The note on each row is the artifact's own statement of which way it tilts.</p>
+        <div class="table-scroll-x"><table class="meth-table">${head}<tbody>${tilted.map(r => _progRowHtml(prog, r)).join("")}</tbody></table></div>
+      </details>` : "";
+  const secondaryHtml = secondary.length
+    ? `<details class="scx-progress-secondary"><summary>Secondary measures (not the headline), ${secondary.length} row${secondary.length === 1 ? "" : "s"}</summary>
+        <p class="meth-note">Measured on a different population or read than the headline frame. Each row's note says which.</p>
+        <div class="table-scroll-x"><table class="meth-table">${head}<tbody>${secondary.map(r => _progRowHtml(prog, r)).join("")}</tbody></table></div>
+      </details>` : "";
+  return `<div class="meth-chart">
+    <div class="meth-table-title">Every ledger row, newest first</div>
+    ${mainHtml}${tiltedHtml}${secondaryHtml}
+    <p class="meth-note">Rows are appended when a frame's measured numbers change and are never edited. Each row names the artifact it was copied from. Pipeline and FanGraphs cells are descriptive: no correction for testing several sources is applied, so a CI clear of zero on one of them is not a claimed win.</p>
+  </div>`;
+}
+
+function _methProgressSection(bt) {
+  const prog = _S.progress;
+  if (!prog || prog.__error || !_progRows(prog).length) return "";
+  return `<h2 class="meth-h">Is eFV pulling ahead? The progress ledger</h2>
+    ${_methProgressLedger(prog, bt)}
+    ${_methProgressChart(prog)}
+    ${_methProgressTable(prog)}`;
+}
+
 function renderSourceComparison() {
   const el = document.getElementById("source-comparison-body");
   if (!el) return;
+  // eFV progress ledger (same lazy idiom).
+  _loadProgress();
   // The calibration cross-link tile shows the live tripwire status when the
   // shared reliability artifact is available (same guard as Methodology).
   _loadReliability();
@@ -3345,6 +3600,7 @@ function renderSourceComparison() {
     const od = bt.outcome_defs || {};
     backtestHTML = `
       ${_methHeroBanner(bt)}
+      ${_methProgressSection(bt)}
       ${_scxGfxBarHTML()}
       <h2 class="meth-h">The full head-to-head</h2>
       <p class="meth-window">eFV is the primary grade, our outcome-grounded model. The test: a leakage-free, forward-chained backtest of eFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} ${_excludedSourcesClause(bt)}</p>

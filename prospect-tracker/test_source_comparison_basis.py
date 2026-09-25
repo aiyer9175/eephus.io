@@ -99,6 +99,49 @@ def test_methodology_ad_card_stars_no_auc_and_gates_spearman():
 
 
 # ---------------------------------------------------------------------------
+# EV-00 progress ledger (docs/efv-v2/PROGRAM.md s5.3, s5.4)
+
+# A literal that could only be a rho, an AUC or a delta: three or more decimal
+# places, or a bare 0.2 to 0.9 value. Layout constants (pixels, a 0.12 pad, a
+# 0.01 fallback span) do not match.
+_STAT_LITERAL = re.compile(r"(?<![\w.])\d*\.\d{3,}(?![\w.])|(?<![\w.])0?\.[2-9]\d*(?![\w.])")
+
+
+@pytest.mark.parametrize("name", ["_methProgressLedger", "_methProgressChart",
+                                  "_progSeriesRows", "_methProgressTable"])
+def test_progress_renderers_carry_no_statistic_literal(name):
+    code = _fn_code(_js(), name)
+    # Static markup attributes (stroke widths, opacities) are layout; a claim
+    # typed into copy or code is not an attribute, so it stays in scope.
+    code = re.sub(r'[\w-]+="[^"$]*"', "", code)
+    hits = _STAT_LITERAL.findall(code)
+    assert not hits, f"{name} carries a numeric literal that reads as a statistic: {hits}"
+
+
+def test_progress_chart_series_excludes_tilted_frames():
+    js = _js()
+    series = _fn_code(js, "_progSeriesRows")
+    assert 'r.role !== "tilted"' in series and "r.tilted !== true" in series
+    assert "_PROG_CHART_FRAMES.includes(f)" in series, (
+        "the series filter trusts the artifact's frame list without the local whitelist")
+    m = re.search(r"const _PROG_CHART_FRAMES = \[([^\]]*)\]", js)
+    assert m, "_PROG_CHART_FRAMES not found"
+    frames = set(re.findall(r'"(\w+)"', m.group(1)))
+    assert not frames & {"predebut", "all_vintages", "disagreement"}
+    chart = _fn_code(js, "_methProgressChart")
+    assert "_progSeriesRows(prog)" in chart, "the chart builds its own series"
+
+
+def test_progress_section_reads_the_ledger_row_not_the_backtest():
+    """The ledger line prints the row's own numbers and verdict word; the
+    backtest is read only for its generated_at (the stale chip)."""
+    code = _fn_code(_js(), "_methProgressLedger")
+    assert "row.verdict" in code
+    assert not re.search(r"bt\.accuracy", code)
+    assert "bt.generated_at" in code
+
+
+# ---------------------------------------------------------------------------
 # Rendered layer
 
 def _artifact():

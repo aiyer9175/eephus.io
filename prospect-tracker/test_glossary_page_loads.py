@@ -189,6 +189,54 @@ def test_all_four_views_render(server, browser):
         "source accuracy missing the zero-weights tile"
 
 
+def test_progress_ledger_fetch_resolves_and_renders(server, browser):
+    """EV-00: /data/efv_progress.json resolves on the served path and the
+    Source Comparison view renders the ledger section from it (headline line,
+    chart, dated table), with the tilted frames collapsed and never charted."""
+    led = ROOT / "data" / "efv_progress.json"
+    if not led.exists():
+        pytest.skip("data/efv_progress.json not built")
+    doc = json.loads(led.read_text(encoding="utf-8"))
+    page_errors: list[str] = []
+    page = _browser_page(browser, page_errors)
+    try:
+        page.goto(server + "glossary/index.html#view=source-comparison",
+                  wait_until="load", timeout=15_000)
+        status = page.evaluate(
+            "() => fetch('/data/efv_progress.json', {cache: 'no-cache'})"
+            ".then(r => r.status)")
+        page.wait_for_function(
+            "() => { const e = document.getElementById('source-comparison-body');"
+            " return !!e && e.innerHTML.indexOf('progress ledger') !== -1; }",
+            timeout=15_000)
+        out = page.evaluate("""() => {
+          const el = document.getElementById('source-comparison-body');
+          const svg = [...el.querySelectorAll('.meth-chart svg')].find(s =>
+            /eFV minus PROSPX consensus/.test(s.getAttribute('aria-label') || ''));
+          const det = el.querySelector('details.scx-progress-tilted');
+          return {
+            marks: svg ? svg.querySelectorAll('circle, path[d$="Z"]').length : -1,
+            tilted: det ? det.querySelectorAll('tbody tr').length : 0,
+            open: det ? det.open : null,
+            text: el.innerText,
+          };
+        }""")
+    finally:
+        page.close()
+    assert status == 200
+    assert not page_errors, "JS errors: " + " | ".join(page_errors)
+    rows = doc["rows"]
+    charted = [r for r in rows if r.get("role") not in ("tilted", "secondary")
+               and r.get("frame") in ("vm", "lv_dev", "lv_res", "vm_pros")]
+    assert out["marks"] == len(charted), (out["marks"], len(charted))
+    tilted = [r for r in rows if r.get("role") == "tilted"]
+    assert out["tilted"] == len(tilted) and out["open"] in (False, None)
+    head = [r for r in rows if r["frame"] == doc["headline_frame"]][-1]
+    assert f"n {int(head['n']):,}" in out["text"]
+    assert head["verdict"] in out["text"]
+    assert f"{head['raters']['efv']['spearman']:.3f}" in out["text"]
+
+
 def test_source_accuracy_subtabs_render(server, browser):
     """Every one of the six sub-tabs renders real content, the verdict column
     is three-valued (a source name only where the artifact says the cell is
