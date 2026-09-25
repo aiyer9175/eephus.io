@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-05",
+ "generated_at": "2026-09-25",
  "vintage_years": [
   2018,
   2019,
@@ -9,16 +9,16 @@
   2023
  ],
  "accounting": {
-  "listed": 9059,
-  "excluded_post_debut": 645,
+  "listed": 9061,
+  "excluded_post_debut": 648,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3406,
-  "level_from_statsapi": 3488,
-  "level_from_career_stats": 1520,
-  "debuted": 4205,
-  "censored_active": 2304,
+  "no_level_age_fallback": 3402,
+  "level_from_statsapi": 3494,
+  "level_from_career_stats": 1517,
+  "debuted": 4221,
+  "censored_active": 2285,
   "washed_out": 708,
-  "overdue": 906
+  "overdue": 900
  },
  "conventions": {
   "vintage_fv": "median of each source's earliest same-year snapshot",
@@ -28,42 +28,42 @@
   "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
  },
  "champion_heuristic": {
-  "n": 4205,
-  "mae": 1.423,
+  "n": 4221,
+  "mae": 1.424,
   "bias": 0.991,
-  "within_1y": 0.589,
+  "within_1y": 0.588,
   "exact": 0.219
  },
  "baseline_naive_level_table": {
-  "n": 3500,
-  "mae": 1.972,
-  "bias": 1.742,
+  "n": 3508,
+  "mae": 1.974,
+  "bias": 1.748,
   "within_1y": 0.381,
   "exact": 0.169
  },
  "champion_on_baseline_rows": {
-  "n": 3500,
-  "mae": 1.431,
-  "bias": 1.069,
+  "n": 3508,
+  "mae": 1.432,
+  "bias": 1.07,
   "within_1y": 0.584,
   "exact": 0.215
  },
  "challenger_empirical_table_forward_chained": {
-  "n": 2954,
-  "mae": 0.868,
-  "bias": 0.166,
-  "within_1y": 0.812,
-  "exact": 0.368
+  "n": 2965,
+  "mae": 0.869,
+  "bias": 0.164,
+  "within_1y": 0.811,
+  "exact": 0.366
  },
  "challenger_km_recalibrated_heuristic": {
-  "n": 2859,
+  "n": 2870,
   "mae": 1.475,
-  "bias": 1.141,
+  "bias": 1.139,
   "within_1y": 0.568,
   "exact": 0.198
  },
  "v38_frozen_on_km_rows": {
-  "n": 2859,
+  "n": 2870,
   "mae": 1.986,
   "bias": 1.814,
   "within_1y": 0.414,
@@ -93,9 +93,9 @@
   "DSL": 7.5
  },
  "overdue_v38_vs_km": {
-  "v38": 802,
-  "km_recalibrated": 892,
-  "censored_n": 2304
+  "v38": 797,
+  "km_recalibrated": 886,
+  "censored_n": 2285
  },
  "ship_decision": {
   "date": "2026-06-11",
@@ -120,150 +120,150 @@
  },
  "by_level": {
   "DSL": {
-   "n": 63,
-   "mae": 3.54,
-   "bias": 3.508,
-   "within_1y": 0.127,
-   "exact": 0.032
+   "n": 68,
+   "mae": 3.529,
+   "bias": 3.5,
+   "within_1y": 0.118,
+   "exact": 0.029
   },
   "CPX": {
    "n": 334,
-   "mae": 1.581,
-   "bias": 1.156,
-   "within_1y": 0.542,
-   "exact": 0.222
+   "mae": 1.563,
+   "bias": 1.132,
+   "within_1y": 0.548,
+   "exact": 0.225
   },
   "A": {
-   "n": 937,
+   "n": 941,
    "mae": 1.569,
-   "bias": 1.157,
-   "within_1y": 0.537,
-   "exact": 0.188
+   "bias": 1.154,
+   "within_1y": 0.538,
+   "exact": 0.187
   },
   "A+": {
-   "n": 728,
-   "mae": 1.614,
-   "bias": 1.361,
+   "n": 730,
+   "mae": 1.612,
+   "bias": 1.355,
    "within_1y": 0.489,
-   "exact": 0.161
+   "exact": 0.162
   },
   "AA": {
    "n": 919,
-   "mae": 1.222,
-   "bias": 0.861,
-   "within_1y": 0.657,
+   "mae": 1.223,
+   "bias": 0.862,
+   "within_1y": 0.656,
    "exact": 0.224
   },
   "AAA": {
-   "n": 519,
-   "mae": 0.946,
-   "bias": 0.518,
-   "within_1y": 0.755,
-   "exact": 0.341
+   "n": 516,
+   "mae": 0.942,
+   "bias": 0.527,
+   "within_1y": 0.758,
+   "exact": 0.343
   }
  },
  "by_vintage": {
   "2018": {
-   "n": 651,
-   "mae": 1.253,
-   "bias": 0.584,
-   "within_1y": 0.636,
-   "exact": 0.275
+   "n": 648,
+   "mae": 1.25,
+   "bias": 0.59,
+   "within_1y": 0.637,
+   "exact": 0.276
   },
   "2019": {
    "n": 777,
-   "mae": 1.282,
-   "bias": 0.625,
+   "mae": 1.281,
+   "bias": 0.624,
    "within_1y": 0.645,
    "exact": 0.252
   },
   "2020": {
-   "n": 736,
-   "mae": 1.228,
-   "bias": 0.734,
-   "within_1y": 0.662,
+   "n": 739,
+   "mae": 1.229,
+   "bias": 0.731,
+   "within_1y": 0.66,
    "exact": 0.25
   },
   "2021": {
-   "n": 714,
-   "mae": 1.927,
-   "bias": 1.647,
+   "n": 718,
+   "mae": 1.923,
+   "bias": 1.636,
    "within_1y": 0.409,
    "exact": 0.104
   },
   "2022": {
-   "n": 720,
-   "mae": 1.462,
+   "n": 726,
+   "mae": 1.468,
    "bias": 1.196,
-   "within_1y": 0.576,
+   "within_1y": 0.574,
    "exact": 0.212
   },
   "2023": {
-   "n": 607,
-   "mae": 1.384,
-   "bias": 1.196,
-   "within_1y": 0.606,
-   "exact": 0.219
+   "n": 613,
+   "mae": 1.388,
+   "bias": 1.199,
+   "within_1y": 0.605,
+   "exact": 0.22
   }
  },
  "residual_by_level": {
   "DSL": {
-   "n": 63,
-   "mean": 3.508,
-   "median": 4
+   "n": 68,
+   "mean": 3.5,
+   "median": 3.5
   },
   "CPX": {
    "n": 334,
-   "mean": 1.156,
+   "mean": 1.132,
    "median": 1.0
   },
   "A": {
-   "n": 937,
-   "mean": 1.157,
+   "n": 941,
+   "mean": 1.154,
    "median": 1
   },
   "A+": {
-   "n": 728,
-   "mean": 1.361,
+   "n": 730,
+   "mean": 1.355,
    "median": 1.0
   },
   "AA": {
    "n": 919,
-   "mean": 0.861,
+   "mean": 0.862,
    "median": 1
   },
   "AAA": {
-   "n": 519,
-   "mean": 0.518,
-   "median": 1
+   "n": 516,
+   "mean": 0.527,
+   "median": 1.0
   }
  },
  "bias_corrected_forward_chained": {
   "champion_rescore": {
-   "n": 3500,
-   "mae": 1.431,
-   "bias": 1.069,
+   "n": 3508,
+   "mae": 1.432,
+   "bias": 1.07,
    "within_1y": 0.584,
    "exact": 0.215
   },
   "bias_corrected": {
-   "n": 3500,
+   "n": 3508,
    "mae": 1.235,
-   "bias": 0.728,
+   "bias": 0.73,
    "within_1y": 0.658,
    "exact": 0.263
   },
   "overdue": {
-   "champion": 350,
-   "bias_corrected": 452
+   "champion": 349,
+   "bias_corrected": 451
   },
   "shippable_level_bias_adj": {
-   "AAA": 0.5,
-   "AA": 0.5,
+   "A": 0.5,
    "DSL": 0.5,
    "CPX": 0.5,
    "A+": 0.5,
-   "A": 0.5
+   "AAA": 0.5,
+   "AA": 0.5
   },
   "cap": 0.5,
   "shrink_k": 10,
@@ -271,26 +271,26 @@
   "note": "conservative -0.5 final shave at every minor level (eta.LEVEL_BIAS_ADJ), applied by the live caller (storage.py); champion backtest UNtouched. MAE/within-1y improve; overdue +~99 (in line with the accepted KM +101)."
  },
  "censoring": {
-  "censored_active": 2304,
-  "overdue_rate": 0.393,
+  "censored_active": 2285,
+  "overdue_rate": 0.394,
   "washed_out": 708,
   "washed_out_share_of_listed": 0.098
  },
  "empirical_tables_by_vintage": {
   "2019": {
    "A+": 2.0,
-   "A": 3,
+   "A": 3.0,
    "AA": 1,
-   "CPX": 4,
+   "CPX": 4.0,
    "DSL": 4,
-   "AAA": 0.0
+   "AAA": 0
   },
   "2020": {
    "A": 3.0,
    "A+": 2,
    "AA": 1.0,
    "CPX": 4.0,
-   "AAA": 0.0,
+   "AAA": 0,
    "DSL": 4
   },
   "2021": {
@@ -298,40 +298,40 @@
    "A+": 2.0,
    "AA": 1.0,
    "CPX": 4,
-   "AAA": 0.0,
+   "AAA": 0,
    "DSL": 4.0
   },
   "2022": {
-   "A": 2,
+   "A": 2.0,
    "A+": 2,
    "AA": 1.0,
    "CPX": 3,
-   "AAA": 0.0,
+   "AAA": 0,
    "DSL": 4
   },
   "2023": {
-   "A": 2.0,
+   "A": 2,
    "A+": 1,
    "AA": 1,
-   "CPX": 3.0,
-   "AAA": 0.0,
-   "DSL": 3
+   "CPX": 3,
+   "AAA": 0,
+   "DSL": 4
   }
  },
  "km_survival_by_level": {
   "AAA": [
-   0.3977,
-   0.2393,
-   0.1749,
-   0.1535,
-   0.1411,
-   0.1379,
-   0.1379,
-   0.1379,
-   0.1379
+   0.3964,
+   0.2371,
+   0.1741,
+   0.1526,
+   0.1426,
+   0.1393,
+   0.1393,
+   0.1393,
+   0.1393
   ],
   "AA": [
-   0.6533,
+   0.6524,
    0.372,
    0.2622,
    0.2169,
@@ -342,48 +342,48 @@
    0.1869
   ],
   "A+": [
-   0.9022,
-   0.6923,
-   0.5159,
-   0.4373,
-   0.3987,
-   0.3801,
-   0.3759,
-   0.3759,
-   0.3759
+   0.9023,
+   0.6928,
+   0.5167,
+   0.4382,
+   0.3976,
+   0.3791,
+   0.3749,
+   0.3749,
+   0.3749
   ],
   "A": [
-   0.9698,
-   0.8224,
-   0.6161,
-   0.448,
-   0.3284,
-   0.2703,
-   0.2451,
-   0.2324,
-   0.2324
+   0.9691,
+   0.8213,
+   0.6154,
+   0.4471,
+   0.328,
+   0.2689,
+   0.2438,
+   0.2312,
+   0.2312
   ],
   "CPX": [
-   0.9899,
-   0.9332,
-   0.8016,
-   0.6053,
-   0.3397,
-   0.2134,
-   0.1423,
-   0.1368,
-   0.1311
+   0.9919,
+   0.9371,
+   0.8053,
+   0.6065,
+   0.3388,
+   0.2129,
+   0.1419,
+   0.1364,
+   0.1308
   ],
   "DSL": [
    0.9952,
-   0.9807,
-   0.9324,
-   0.8357,
-   0.6686,
-   0.6067,
-   0.5515,
-   0.5515,
-   0.5362
+   0.9809,
+   0.933,
+   0.823,
+   0.6448,
+   0.5851,
+   0.5319,
+   0.5319,
+   0.5171
   ]
  },
  "empirical_table_gate_2026_08_19": {

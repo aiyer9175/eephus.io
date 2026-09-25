@@ -532,12 +532,22 @@
     "headline": [
      {
       "label": "Realized career eWAR, top overall pick vs late-round (picks 301-500) bucket",
-      "champion": 29.5,
+      "champion": 29.51,
       "baseline": 0.29,
       "better": "higher",
       "baseline_label": "picks 301-500"
      }
-    ]
+    ],
+    "derived_from": {
+     "n": "accounting.scored",
+     "digits": 2,
+     "headline": [
+      {
+       "champion": "realized_career_by_bucket_2005_14.1.mean_war",
+       "baseline": "realized_career_by_bucket_2005_14.500.mean_war"
+      }
+     ]
+    }
    }
   },
   {
@@ -703,7 +713,7 @@
    "predicts": "years to MLB debut",
    "champion": "heuristic v39 (Kaplan-Meier recalibrated level bases + age/perf/FV adjustments)",
    "baseline": "naive level->years table + the v38 hand-set bases (both measured)",
-   "metric": "debut-year MAE / within-1y, vintages 2018-2023 (n=4,111 debuted; censoring + washout accounted)",
+   "metric": "debut-year MAE / within-1y, vintages 2018-2023 (censoring + washout accounted)",
    "eval_artifact": "data/eta_eval.json",
    "verdict": "validated",
    "notes": "Phase 4b WS-8 (2026-06-11): FIRST scoring vs actual debuts. v38 hand-set bases ran ~1.5y LATE on debuted players; bases recalibrated to censoring-aware KM medians (washed-out players never leave the risk set - NOT survivor medians). Forward-chained on identical rows: MAE 1.448 vs 1.993, within-1y .571 vs .405. DISCLOSED trade: overdue censored-actives 803->904 of 2,345. DSL base stays hand-set (debut curve never crosses 50%). Live signals (SC+/health/org-tendency nudges) not reconstructable per vintage - unscored. Reruns monthly. LEVEL-NORM PARK ADJUSTMENT DEFERRED (documented): needs full-season AAA/AA ball-by-ball exports that are not on disk; export_aaa_ball_by_ball.py exists, the season-scale fetch is the lift. PER-LEVEL BIAS SHAVE SHIPPED (2026-06-25): the KM recalibration cut the global bias 1.85->1.03 but left the heuristic running ~1yr LATE on debuted players (residual_by_level: A+ +2, DSL +4). New eta.LEVEL_BIAS_ADJ applies a conservative shrunk forward-chained -0.5yr final shave at every minor level (estimate_eta level_bias_adj hook; passed by the live caller storage.py, NOT the backtest champion so the gate stays apples-to-apples). Gate-validated (eta_eval bias_corrected_forward_chained): debuted MAE 1.439->1.232, within-1y 0.578->0.659, bias 1.09->0.75, exact 0.21->0.26. OVERDUE GUARDRAIL (the survivor-bias check): the shave pulls censored-active ETAs earlier so 'overdue' rose +99 (328->427) - in line with the previously-ACCEPTED KM trade (+101); the aggressive cap-1.0 (+207) and level-differentiated (+171) variants over-corrected and were rejected for cap-0.5. Live ETAs update on the next run_monthly (storage regenerates them).\n\nKM REFIT RE-ADJUDICATED 2026-08-04: NO SHIP, BASE_YEARS HELD AT v39. The nightly regen moved the KM artifact under the hand-set table (A+ 3.0 vs refit 3.25, CPX 4.25 vs 4.5 - TWO cells, not the one the test names). Both are rounding-boundary crossings driven by cohort accounting, not new evidence: debuted rose only +5 while censored_active rose +144, so fresh still-active non-debuted rows entered the risk set and pushed the survival curve later. Scored on identical rows (n=3,454 debuted) through the live estimate_eta path, the refit LOSES BOTH legs of the criterion v39 shipped on: MAE 1.440 -> 1.490 and within-1y 0.579 -> 0.561, paired bootstrap P(refit better) = 0.000 on each, and of the 253 rows it moves 212 get WORSE and 41 better. Each disputed cell also loses on its own, so it is not a joint artifact. NOTE the overdue guardrail did NOT refuse it and could not have: the refit pushes ETAs LATER so overdue FALLS 345 -> 331, and that guardrail exists for the opposite hazard. It is refused purely on accuracy.\n\nEMPIRICAL-TABLE GATE 2026-08-19: NO SHIP, v39 HELD. The forward-chained survivor-median table (eta_eval challenger_empirical_table_forward_chained) wins the row-matched debuted frame decisively (MAE 0.869 vs 1.471, dMAE +0.602 = 12x the player-clustered MDE95 of 0.050; pooled challenger+fallback 0.998 vs champion 1.422) but FAILS the overdue guardrail 4x over (censored-active overdue 902 -> 1355 of 2,311, +453 vs the frozen +110 limit; v39 precedent +101): it is fit on debuted players only and prices every still-active prospect as a survivor. Refused on the unconditional leg, exactly the hazard the KM v39 bases were built to avoid. Loss block: data/eta_eval.json empirical_table_gate_2026_08_19; gate doc docs/eta-2026-08-19/ETA_EMPIRICAL_TABLE_GATE.md; lab tools/eta_empirical_gate.py. Do not re-run without a cure-aware refit. NOTE: eta_backtest.run() rebuilds data/eta_eval.json and does not yet carry the gate block forward; the pinned test in test_eta_backtest.py goes red at the next monthly rerun as the signal to add the carry-forward.",
@@ -711,24 +721,38 @@
    "stale": false,
    "artifact_age_days": 0,
    "card": {
-    "n": 4159,
-    "window": "graduate cohort, forward-chained",
+    "n": 3508,
+    "window": "graduate cohort, forward-chained, both arms on the same rows",
     "headline": [
      {
       "label": "ETA error (years, MAE)",
-      "champion": 1.43,
-      "baseline": 1.98,
+      "champion": 1.432,
+      "baseline": 1.974,
       "better": "lower",
       "baseline_label": "naive level-to-years table"
      },
      {
       "label": "Within one year",
-      "champion": 0.585,
-      "baseline": 0.378,
+      "champion": 0.584,
+      "baseline": 0.381,
       "better": "higher",
       "baseline_label": "naive level-to-years table"
      }
-    ]
+    ],
+    "derived_from": {
+     "n": "champion_on_baseline_rows.n",
+     "digits": 3,
+     "headline": [
+      {
+       "champion": "champion_on_baseline_rows.mae",
+       "baseline": "baseline_naive_level_table.mae"
+      },
+      {
+       "champion": "champion_on_baseline_rows.within_1y",
+       "baseline": "baseline_naive_level_table.within_1y"
+      }
+     ]
+    }
    }
   },
   {
@@ -823,9 +847,21 @@
       "champion": 9.69,
       "baseline": 11.12,
       "better": "lower",
-      "baseline_label": "nearest-comps median"
+      "baseline_label": "nearest-comps median",
+      "resolvable": true
      }
-    ]
+    ],
+    "derived_from": {
+     "n": "pooled.guarantee.n",
+     "digits": 2,
+     "headline": [
+      {
+       "champion": "pooled.guarantee.mae_model",
+       "baseline": "pooled.guarantee.mae_base",
+       "resolvable": "gates.guarantee"
+      }
+     ]
+    }
    }
   },
   {
@@ -1033,7 +1069,16 @@
       "better": "higher",
       "baseline_label": "prospect count"
      }
-    ]
+    ],
+    "derived_from": {
+     "digits": 3,
+     "headline": [
+      {
+       "champion": "mean_spearman.sum_surplus_mm",
+       "baseline": "mean_spearman.count"
+      }
+     ]
+    }
    }
   },
   {
@@ -1264,7 +1309,7 @@
    "metric": "forward-chained Spearman Y->Y+1 wOBA, 3yr vs 1yr on the same set (seeded bootstrap CI on the gap)",
    "eval_artifact": "data/hem_plus_multiyear_eval.json",
    "verdict": "validated",
-   "notes": "SHIPPED 2026-07-05 (X-H2) as a companion column to single-season HEM+ (same skill scale, longer window). Forward-chained OOS (2012-2024 ex-2020, 2382 hitter pairs): 3-year HEM+ forward-predicts next-year wOBA at rho 0.4548 vs single-season HEM+ 0.4275 on the same set; the bootstrap same-set gap CI clears zero (lo95 +0.0062), so it ships VALIDATED (stronger than the SEM+ 3yr case, which was provisional -- hitters carry larger, steadier PA samples). Joined into hitter_leaderboards.json by MLBAM from proposed_values (hitter_export._join_hem_plus_3yr), like sem_plus_3yr. Hitters need 2+ seasons and 600+ PA over the trailing 2024-2026 window for an established tag. Harness tools/hem_plus_lab.py.",
+   "notes": "SHIPPED 2026-07-05 (X-H2) as a companion column to single-season HEM+ (same skill scale, longer window). Forward-chained OOS (2012-2024 ex-2020, 2382 hitter pairs): 3-year HEM+ forward-predicts next-year wOBA at rho 0.4546 vs single-season HEM+ 0.4278 on the same set; the bootstrap same-set gap CI clears zero (lo95 +0.0045), so it ships VALIDATED (stronger than the SEM+ 3yr case, which was provisional -- hitters carry larger, steadier PA samples). Joined into hitter_leaderboards.json by MLBAM from proposed_values (hitter_export._join_hem_plus_3yr), like sem_plus_3yr. Hitters need 2+ seasons and 600+ PA over the trailing 2024-2026 window for an established tag. Harness tools/hem_plus_lab.py.",
    "last_checked": "2026-09-24",
    "stale": false,
    "artifact_age_days": 25,
@@ -1277,9 +1322,23 @@
       "champion": 0.455,
       "baseline": 0.428,
       "better": "higher",
-      "baseline_label": "single-season HEM+"
+      "baseline_label": "single-season HEM+",
+      "resolvable": true
      }
-    ]
+    ],
+    "derived_from": {
+     "n": "n_forward_pairs",
+     "digits": 3,
+     "headline": [
+      {
+       "champion": "hem_3yr_forward_rho",
+       "baseline": "hem_1yr_forward_rho_on_3yr_set",
+       "resolvable": {
+        "above_zero": "gap_ci_3yr_minus_1yr.lo95"
+       }
+      }
+     ]
+    }
    }
   },
   {
@@ -1506,7 +1565,17 @@
       "better": "higher",
       "baseline_label": "MiLB-stats ridge"
      }
-    ]
+    ],
+    "derived_from": {
+     "n": "baseline_pooled_oos.n",
+     "digits": 3,
+     "headline": [
+      {
+       "champion": "baseline_pooled_oos.spearman",
+       "baseline": "challenger_pooled_oos.spearman"
+      }
+     ]
+    }
    }
   },
   {

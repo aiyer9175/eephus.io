@@ -2,9 +2,10 @@
 
 Part 1, Model Report Cards v0. The card blocks put proof numbers on the
 Models & Proofs view, so the load-bearing risk is a card number drifting from
-its eval artifact. These tests are the anti-drift fence: every champion/baseline
-must trace to a value in the row's committed artifact (within display rounding),
-the card schema must validate, and the number must survive refresh_stamps().
+its eval artifact. These tests are the anti-drift fence: every card names the
+artifact path of each number it prints (card.derived_from) and equals that
+path's value exactly, the card schema must validate, and the number must
+survive refresh_stamps().
 
 Part 2, the /models/ accountability hub (build_site.build_models). The risk
 there is different and worse: the page's whole claim is that its verdicts are
@@ -30,21 +31,6 @@ def _cards():
     return [m for m in reg["models"] if m.get("card")]
 
 
-def _flatten_numbers(obj):
-    out = []
-    if isinstance(obj, dict):
-        for v in obj.values():
-            out += _flatten_numbers(v)
-    elif isinstance(obj, list):
-        for v in obj:
-            out += _flatten_numbers(v)
-    elif isinstance(obj, bool):
-        pass
-    elif isinstance(obj, (int, float)):
-        out.append(float(obj))
-    return out
-
-
 def test_at_least_the_flagship_cards_exist():
     ids = {m["model_id"] for m in _cards()}
     assert {"fa_projection_marcel", "eta", "consensus_fv", "sem_plus"} <= ids
@@ -54,21 +40,31 @@ def test_registry_validates_with_cards():
     assert mr.validate() == []
 
 
-def test_card_numbers_trace_to_artifact():
-    """Each headline champion/baseline is a display-rounding of some value in
-    the row's eval artifact (abs tol max(0.02, 2% of value))."""
-    problems = []
-    for m in _cards():
-        art = HERE / m["eval_artifact"]
-        nums = _flatten_numbers(json.loads(art.read_text(encoding="utf-8")))
-        for h in m["card"]["headline"]:
-            for role in ("champion", "baseline"):
-                target = float(h[role])
-                tol = max(0.02, abs(target) * 0.02)
-                if not any(abs(target - x) <= tol for x in nums):
-                    problems.append(
-                        f"{m['model_id']} card {role}={target} not found in {m['eval_artifact']}")
-    assert not problems, "\n".join(problems)
+def test_every_card_is_derived():
+    """Census X01-04 (2026-09-25). The old fence accepted a typed number within
+    max(0.02, 2 percent) of ANY leaf of the artifact: the FA card's 0.63 matched
+    13 leaves (among them the artifact's own baseline 0.6242) and the ETA card's
+    0.585 matched a DSL survival point. A card now names the path of every
+    number it prints, and test_derived_cards_equal_their_artifact_exactly holds
+    it to that path exactly."""
+    literal = [m["model_id"] for m in _cards() if not m["card"].get("derived_from")]
+    assert not literal, (
+        f"cards with typed numbers: {literal}; give each a card.derived_from spec")
+
+
+def test_eta_card_scores_both_arms_on_the_same_rows():
+    """The ETA card compared the champion on every debuted row (n 4,159) with
+    the naive table on the subset it covers (3,508 today). It reads the
+    champion_on_baseline_rows block now, whose n equals the baseline's."""
+    row = next(m for m in _cards() if m["model_id"] == "eta")
+    spec = row["card"]["derived_from"]
+    assert spec["n"] == "champion_on_baseline_rows.n"
+    for hs in spec["headline"]:
+        assert hs["champion"].startswith("champion_on_baseline_rows.")
+        assert hs["baseline"].startswith("baseline_naive_level_table.")
+    art = json.loads((HERE / "data" / "eta_eval.json").read_text(encoding="utf-8"))
+    assert art["champion_on_baseline_rows"]["n"] == art["baseline_naive_level_table"]["n"]
+    assert row["card"]["n"] == art["baseline_naive_level_table"]["n"]
 
 
 def test_refresh_stamps_preserves_card(tmp_path, monkeypatch):
@@ -103,11 +99,10 @@ def test_refresh_stamps_preserves_card(tmp_path, monkeypatch):
 # of each number (card.derived_from) and refresh_stamps() re-reads it.
 #
 # Artifacts run_monthly regenerates on every run, whose cards therefore cannot
-# hold typed numbers. data/eta_eval.json is regenerated too and its card is
-# still a literal that has drifted slightly from it; converting that card is an
-# open follow-up (which of its two champion blocks the card quotes is a
-# judgement call), so it is not listed here yet.
-REGENERATED_CARD_ARTIFACTS = {"data/source_backtest.json"}
+# hold typed numbers. The ETA card quotes the row-matched champion block
+# (champion_on_baseline_rows), not champion_heuristic, so both arms are scored
+# on the same rows.
+REGENERATED_CARD_ARTIFACTS = {"data/source_backtest.json", "data/eta_eval.json"}
 
 
 def _derived_cards():
@@ -196,12 +191,17 @@ def test_a_validated_derived_card_shows_a_resolved_win():
     """`validated` means the champion beats its stated baseline. When a
     derived card is the proof, at least one headline must be a strict win on a
     leg the artifact resolves. If a regeneration moves every leg inside its
-    floor the verdict needs an owner look, and this is where that surfaces."""
+    floor the verdict needs an owner look, and this is where that surfaces.
+    An artifact that states no resolvability for any leg (eta_eval.json and
+    draft_slot_curve.json carry no interval) cannot resolve one, so such a card
+    needs a strict win on the plain comparison, as a typed card did."""
     problems = []
     for m in _derived_cards():
         if m["verdict"] != "validated":
             continue
-        if not any(h.get("resolvable") is True and _champ_beats(h)
+        declares = any("resolvable" in hs
+                       for hs in m["card"]["derived_from"]["headline"])
+        if not any(_champ_beats(h) and (h.get("resolvable") is True or not declares)
                    for h in m["card"]["headline"]):
             problems.append(f"{m['model_id']}: validated, but its derived card "
                             "shows no resolved win")
