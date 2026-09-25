@@ -3,22 +3,22 @@
   {
    "chunk": 1,
    "rc": 0,
-   "seconds": 9.0,
+   "seconds": 29.2,
    "files": [
     "test_active_pool_recency.py",
     "test_age.py",
     "test_age_level.py",
     "test_amateur_venues.py",
     "test_anthro_position_claims.py",
+    "test_arb_board_dom.py",
     "test_arb_dataset.py",
-    "test_arb_export.py",
-    "test_arb_gatec_verify.py"
+    "test_arb_export.py"
    ],
    "tail": [
-    "0.01s setup    test_age.py::TestAgeInExport::test_age_emitted_with_birth_date",
-    "",
-    "(14 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "102 passed in 7.19s"
+    "0.01s setup    test_arb_export.py::test_the_champion_never_sees_a_counting_stat",
+    "0.01s call     test_arb_export.py::test_gate_c_runs_last_in_the_vet_builder",
+    "0.01s teardown test_arb_export.py::test_the_status_tables_never_grow_the_contract_set",
+    "101 passed in 25.66s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -26,22 +26,22 @@
   {
    "chunk": 2,
    "rc": 0,
-   "seconds": 22.7,
+   "seconds": 10.3,
    "files": [
+    "test_arb_gate_c2_registration.py",
+    "test_arb_gatec_verify.py",
+    "test_arb_history_render.py",
     "test_arb_ingest.py",
-    "test_arbitration_scaffold.py",
-    "test_archetype_comps_export.py",
-    "test_arsenal_statcast.py",
-    "test_artifact_invalidation.py",
-    "test_asset_versioning.py",
-    "test_atomic_artifact_write.py",
-    "test_audit_fixes.py"
+    "test_arb_model_downstream_gates.py",
+    "test_arb_path_gate.py",
+    "test_arb_team_view_dom.py",
+    "test_arbitration_scaffold.py"
    ],
    "tail": [
-    "0.01s call     test_archetype_comps_export.py::test_written_artifact_is_small_and_matches_build",
-    "",
-    "(6 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "79 passed, 2 skipped in 22.03s"
+    "0.01s teardown test_arb_ingest.py::test_service_time_is_years_and_days_not_a_float",
+    "0.01s teardown test_arb_ingest.py::test_millions_and_thousands_both_parse",
+    "0.01s teardown test_arb_history_render.py::test_history_renders_every_row_and_filters_by_season",
+    "57 passed, 11 skipped in 9.43s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -49,70 +49,68 @@
   {
    "chunk": 3,
    "rc": 0,
-   "seconds": 11.6,
+   "seconds": 11.8,
    "files": [
-    "test_auto_graduation.py",
-    "test_ba_era_basis.py",
-    "test_backfill_vintages.py",
-    "test_backtest.py",
-    "test_baseballamerica_csv.py",
-    "test_bayes.py",
-    "test_bayes_kalman_gain.py",
-    "test_bayes_trade_value_policy.py"
+    "test_archetype_comps_export.py",
+    "test_arm_ledger.py",
+    "test_arsenal_statcast.py",
+    "test_artifact_invalidation.py",
+    "test_asset_versioning.py",
+    "test_atomic_artifact_write.py",
+    "test_audit_fixes.py",
+    "test_auto_graduation.py"
    ],
    "tail": [
-    "0.08s setup    test_auto_graduation.py::TestLevelOrder::test_mlb_at_top_of_order",
-    "0.05s call     test_bayes.py::test_sv_credible_interval_brackets_point_and_widens",
-    "0.05s call     test_bayes.py::test_intervals_widen_for_thin_cells",
-    "347 passed in 10.57s"
+    "0.01s teardown test_auto_graduation.py::TestAutoGraduation::test_auto_graduate_idempotent",
+    "0.01s setup    test_atomic_artifact_write.py::test_a_brief_collision_is_ridden_out",
+    "0.01s teardown test_atomic_artifact_write.py::test_a_concurrent_reader_never_sees_a_partial_document",
+    "74 passed, 2 skipped in 10.71s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
   },
   {
    "chunk": 4,
-   "rc": 1,
-   "seconds": 3.6,
+   "rc": 0,
+   "seconds": 363.8,
    "files": [
-    "test_betting.py",
-    "test_betting_close_job.py",
-    "test_betting_clv_sidecar.py",
-    "test_betting_copy_sentinel.py",
-    "test_betting_dispersion.py",
-    "test_betting_dispersion_exclusion.py",
-    "test_betting_event_match.py",
-    "test_betting_learning.py"
+    "test_ba_era_basis.py",
+    "test_backfill_vintages.py",
+    "test_backtest.py",
+    "test_baseballamerica_csv.py",
+    "test_bayes.py",
+    "test_bayes_kalman_gain.py",
+    "test_bayes_trade_value_policy.py",
+    "test_bench_lineup_cards.py"
    ],
    "tail": [
-    "0.01s call     test_betting.py::test_the_longshot_slot_takes_the_long_price_by_ev",
-    "=========================== short test summary info ===========================",
-    "FAILED test_betting_dispersion.py::test_eval_artifact_carries_the_dispersion_block_and_its_verdict",
-    "1 failed, 321 passed in 3.14s"
+    "0.47s teardown test_bench_lineup_cards.py::test_served_bench_holds_no_pitcher_and_no_regular_out",
+    "0.46s setup    test_backfill_vintages.py::test_commit_history_reads_the_commit_date_and_not_the_blob",
+    "0.45s setup    test_backfill_vintages.py::test_the_whole_tool_keys_on_the_commit_date_end_to_end",
+    "359 passed in 362.19s (0:06:02)"
    ],
-   "failed_nodes": [
-    "FAILED test_betting_dispersion.py::test_eval_artifact_carries_the_dispersion_block_and_its_verdict"
-   ],
+   "failed_nodes": [],
    "stderr_tail": []
   },
   {
    "chunk": 5,
    "rc": 0,
-   "seconds": 2.9,
+   "seconds": 13.1,
    "files": [
-    "test_betting_line_consistency.py",
-    "test_betting_market_gate.py",
-    "test_betting_merge_on_signin.py",
-    "test_betting_platt.py",
-    "test_betting_props.py",
-    "test_betting_publish_hygiene.py",
-    "test_betting_results_refresh.py",
-    "test_betting_shadow.py"
+    "test_betting.py",
+    "test_betting_ballpark.py",
+    "test_betting_close_job.py",
+    "test_betting_clv_sidecar.py",
+    "test_betting_copy_sentinel.py",
+    "test_betting_dispersion.py",
+    "test_betting_dispersion_exclusion.py",
+    "test_betting_dugout.py"
    ],
    "tail": [
-    "0.01s call     test_betting_shadow.py::test_a_tie_on_the_total_is_a_push_and_leaves_the_stake",
-    "0.01s call     test_betting_market_gate.py::test_one_worse_evaluation_does_not_close",
-    "0.01s call     test_betting_shadow.py::test_the_gate_reads_the_ledger_when_no_rows_are_handed_in",
-    "156 passed in 2.49s"
+    "0.03s call     test_betting_ballpark.py::test_the_snapshot_captures_the_schema5_block",
+    "0.03s call     test_betting.py::test_the_headline_slot_takes_confidence_not_the_longest_price",
+    "0.02s call     test_betting.py::test_a_slot_row_is_the_board_row_plus_context_only",
+    "361 passed in 12.24s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -120,22 +118,22 @@
   {
    "chunk": 6,
    "rc": 0,
-   "seconds": 79.2,
+   "seconds": 15.1,
    "files": [
-    "test_betting_slate_date.py",
-    "test_board_basis_coherence.py",
-    "test_board_card_typography.py",
-    "test_boom_bust.py",
-    "test_breakout_removed.py",
-    "test_bulk_season_stats.py",
-    "test_bullpen_export.py",
-    "test_calibration_vintage.py"
+    "test_betting_dugout_render.py",
+    "test_betting_event_match.py",
+    "test_betting_graded_span.py",
+    "test_betting_learning.py",
+    "test_betting_line_consistency.py",
+    "test_betting_lineup_job.py",
+    "test_betting_market_gate.py",
+    "test_betting_merge_on_signin.py"
    ],
    "tail": [
-    "1.65s call     test_board_card_typography.py::test_nav_link_strip_fits_without_scrolling[models/-1366]",
-    "1.11s call     test_calibration_vintage.py::test_all_surplus_artifacts_agree_on_the_calibration",
-    "1.10s call     test_calibration_vintage.py::test_stamped_artifacts_match_the_live_config",
-    "125 passed, 1 xfailed in 78.51s (0:01:18)"
+    "0.02s call     test_betting_lineup_job.py::TheGateIsThisJobsOwn::test_a_slate_hours_old_is_an_error_not_a_quiet_day",
+    "0.02s call     test_betting_learning.py::test_graded_bets_conditions_on_the_tag_instead_of_pooling",
+    "0.02s call     test_betting_lineup_job.py::TheOfflineChecks::test_selfcheck_is_nonzero_after_a_loud_decision",
+    "205 passed in 14.31s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -143,22 +141,22 @@
   {
    "chunk": 7,
    "rc": 0,
-   "seconds": 4.6,
+   "seconds": 17.9,
    "files": [
-    "test_card_market.py",
-    "test_cards_client.py",
-    "test_career_war_ewar_funnel.py",
-    "test_claims_freshness.py",
-    "test_clemens_reconciliation.py",
-    "test_college_stats.py",
-    "test_collegesavant_nav_in_sync.py",
-    "test_collegesavant_payload_split.py"
+    "test_betting_mgmt_fence.py",
+    "test_betting_mgmt_policy_registration.py",
+    "test_betting_min_edge_tripwires.py",
+    "test_betting_platt.py",
+    "test_betting_policy_copy.py",
+    "test_betting_props.py",
+    "test_betting_props_dark.py",
+    "test_betting_props_pmf.py"
    ],
    "tail": [
-    "0.03s setup    test_card_market.py::test_unparseable_rows_are_dropped_not_guessed",
-    "0.03s setup    test_card_market.py::test_payload_carries_screen_true_and_no_raw_comps",
-    "0.03s setup    test_card_market.py::test_written_payload_file_has_no_comp_fields",
-    "94 passed in 4.10s"
+    "0.01s call     test_betting_props.py::test_props_canonical_games_dedup_on_player_not_only_game",
+    "0.01s setup    test_betting_min_edge_tripwires.py::test_the_census_accounts_for_every_sweepable_row",
+    "0.01s call     test_betting_props.py::test_calibration_logs_props_sides_as_distinct_markets",
+    "169 passed in 16.37s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -166,22 +164,22 @@
   {
    "chunk": 8,
    "rc": 0,
-   "seconds": 17.9,
+   "seconds": 8.4,
    "files": [
-    "test_collegesavant_smoke.py",
-    "test_collegesavant_stats.py",
-    "test_config_base_verification.py",
-    "test_consensus.py",
-    "test_consensus_delta_honesty.py",
-    "test_consensus_synthetic_anchor.py",
-    "test_copy_gates.py",
-    "test_daily_statcast_refresh.py"
+    "test_betting_publish_hygiene.py",
+    "test_betting_results_refresh.py",
+    "test_betting_runline_tie_atom.py",
+    "test_betting_shadow.py",
+    "test_betting_sidecar_isolation.py",
+    "test_betting_slate_date.py",
+    "test_betting_slate_open_share.py",
+    "test_betting_slate_runline_guards.py"
    ],
    "tail": [
-    "0.05s setup    test_config_base_verification.py::test_discount_and_haircut_match_reference",
-    "0.05s setup    test_config_base_verification.py::test_training_rows_sum_to_one[pitcher]",
-    "0.05s setup    test_config_base_verification.py::test_malformed_config_raises[<lambda>4]",
-    "164 passed in 17.29s"
+    "0.01s call     test_betting_slate_runline_guards.py::test_the_freshest_document_wins",
+    "0.01s call     test_betting_shadow.py::test_a_settled_result_cannot_be_revised",
+    "0.01s call     test_betting_sidecar_isolation.py::test_the_census_actually_covers_the_modules_that_write",
+    "208 passed in 7.51s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -189,22 +187,22 @@
   {
    "chunk": 9,
    "rc": 0,
-   "seconds": 6.4,
+   "seconds": 18.4,
    "files": [
-    "test_data_cache_stamps.py",
-    "test_data_catalog.py",
-    "test_debuted.py",
-    "test_denoised_baseline_lab.py",
-    "test_design_tokens.py",
-    "test_dfs_history.py",
-    "test_diamond_gating_contract.py",
-    "test_diamond_scaffold.py"
+    "test_betting_slot_lock.py",
+    "test_betting_slot_market_policy.py",
+    "test_betting_starting_nine.py",
+    "test_betting_subledgers.py",
+    "test_betting_total_dispersion.py",
+    "test_betting_total_level.py",
+    "test_betting_usage.py",
+    "test_betting_weather.py"
    ],
    "tail": [
-    "0.05s setup    test_debuted.py::test_remaining_distribution_two_component_coherent",
-    "0.05s setup    test_debuted.py::test_no_underflow_discontinuity",
-    "0.05s setup    test_debuted.py::test_debuted_none_for_bad_fv",
-    "200 passed in 5.84s"
+    "0.04s call     test_betting_weather.py::test_backfill_first_write_wins_and_only_the_unwritten_game_is_retried",
+    "0.03s call     test_betting_slot_lock.py::test_todays_ledger_refuses_nothing",
+    "0.03s call     test_betting_weather.py::test_backfilled_rows_never_start_the_live_clock",
+    "276 passed in 17.61s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -212,9 +210,147 @@
   {
    "chunk": 10,
    "rc": 0,
-   "seconds": 18.1,
+   "seconds": 80.0,
    "files": [
-    "test_dispersion_epoch.py",
+    "test_blend_basis.py",
+    "test_board_basis_coherence.py",
+    "test_board_card_typography.py",
+    "test_board_evaluator_price_parity.py",
+    "test_board_rank_rebake.py",
+    "test_boom_bust.py",
+    "test_breakout_removed.py",
+    "test_bulk_season_stats.py"
+   ],
+   "tail": [
+    "1.71s call     test_board_rank_rebake.py::test_homepage_top_prospects_are_the_first_five_baked_ranks",
+    "1.70s call     test_board_rank_rebake.py::test_served_overall_rank_is_on_the_served_efv_file",
+    "0.42s setup    test_blend_basis.py::test_the_eval_blend_is_the_raw_ridge",
+    "103 passed, 2 skipped, 1 xfailed in 79.04s (0:01:19)"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 11,
+   "rc": 0,
+   "seconds": 27.4,
+   "files": [
+    "test_bullpen_export.py",
+    "test_bust_inclusive_frame.py",
+    "test_calibration_vintage.py",
+    "test_candidate_year_ledger.py",
+    "test_career_war_ewar_funnel.py",
+    "test_claims_freshness.py",
+    "test_clemens_reconciliation.py",
+    "test_college_stats.py"
+   ],
+   "tail": [
+    "0.10s call     test_calibration_vintage.py::test_the_same_player_is_worth_the_same_on_every_surface",
+    "0.10s call     test_calibration_vintage.py::test_the_parity_check_catches_a_row_wearing_another_humans_price",
+    "0.10s call     test_claims_freshness.py::test_the_forward_bans_actually_fire",
+    "103 passed, 1 xfailed in 26.58s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 12,
+   "rc": 0,
+   "seconds": 27.2,
+   "files": [
+    "test_collegesavant_board_flags.py",
+    "test_collegesavant_nav_in_sync.py",
+    "test_collegesavant_payload_split.py",
+    "test_collegesavant_smoke.py",
+    "test_collegesavant_stats.py",
+    "test_collegesavant_year_pool.py",
+    "test_config_base_verification.py",
+    "test_consensus.py"
+   ],
+   "tail": [
+    "0.09s setup    test_config_base_verification.py::test_fitted_curve_monotone_and_normalized[True]",
+    "0.09s setup    test_config_base_verification.py::test_real_config_validates",
+    "0.09s setup    test_config_base_verification.py::test_plus_grade_axis_resolves_to_half_step_value[False]",
+    "164 passed in 25.80s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 13,
+   "rc": 0,
+   "seconds": 585.2,
+   "files": [
+    "test_consensus_delta_honesty.py",
+    "test_consensus_synthetic_anchor.py",
+    "test_control_theme_site.py",
+    "test_control_window.py",
+    "test_control_window_dom.py",
+    "test_copy_gates.py",
+    "test_daily_statcast_refresh.py",
+    "test_data_cache_stamps.py"
+   ],
+   "tail": [
+    "0.03s call     test_control_window.py::test_prospects_have_no_control_end",
+    "0.03s call     test_control_window.py::test_an_open_window_never_names_an_end",
+    "0.03s call     test_control_window.py::test_every_control_reason_is_one_of_the_named_five",
+    "95 passed in 584.29s (0:09:44)"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 14,
+   "rc": 0,
+   "seconds": 16.0,
+   "files": [
+    "test_data_catalog.py",
+    "test_debuted.py",
+    "test_debuted_mlb_cell.py",
+    "test_defense_boundaries.py",
+    "test_defense_export_contract.py",
+    "test_dem_plus.py",
+    "test_denoised_baseline_lab.py",
+    "test_dependency_lock.py"
+   ],
+   "tail": [
+    "0.07s setup    test_debuted.py::test_true_talent_tracks_observed_with_sample",
+    "0.06s setup    test_debuted.py::test_continuity_zero_sample_equals_prospect[False-50]",
+    "0.06s call     test_debuted.py::test_continuity_zero_sample_equals_prospect[False-50]",
+    "99 passed in 14.66s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 15,
+   "rc": 0,
+   "seconds": 7.3,
+   "files": [
+    "test_design_tokens.py",
+    "test_dfs_anchors.py",
+    "test_dfs_history.py",
+    "test_dfs_served_counts.py",
+    "test_diamond_gating_contract.py",
+    "test_diamond_scaffold.py",
+    "test_disagreement_floor.py",
+    "test_dispersion_epoch.py"
+   ],
+   "tail": [
+    "0.01s call     test_dfs_served_counts.py::test_the_client_says_a_refused_market_was_refused",
+    "0.01s setup    test_diamond_scaffold.py::test_bets_are_owner_only_and_never_public_read",
+    "0.01s call     test_dfs_served_counts.py::test_the_client_keeps_the_old_label_on_an_old_payload",
+    "202 passed, 1 skipped in 6.01s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 16,
+   "rc": 0,
+   "seconds": 43.7,
+   "files": [
+    "test_draft_board_scope_rank.py",
     "test_draft_bonus.py",
     "test_draft_csv.py",
     "test_draft_export_polish.py",
@@ -224,110 +360,135 @@
     "test_draft_promotion.py"
    ],
    "tail": [
-    "0.01s call     test_draft_bonus.py::test_2024_slot_present_and_full_within_slotted_rounds",
-    "0.01s call     test_draft_bonus.py::test_2024_signing_bonus_high_rate",
-    "0.01s call     test_draft_promotion.py::SeedSignedDraftees::test_never_seeds_an_already_tracked_identity",
-    "100 passed in 17.43s"
+    "0.08s call     test_draft_promotion.py::PromotionIdempotency::test_all_promoted_have_acquisition_records",
+    "0.07s call     test_draft_promotion.py::SeedSignedDraftees::test_never_seeds_an_already_tracked_identity",
+    "0.04s call     test_draft_bonus.py::test_2016_is_the_pre_coverage_boundary",
+    "98 passed in 42.53s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
   },
   {
-   "chunk": 11,
+   "chunk": 17,
    "rc": 0,
-   "seconds": 4.8,
+   "seconds": 11.3,
    "files": [
     "test_draft_results.py",
+    "test_draft_upcoming_class.py",
     "test_dvm_disparity_penalty.py",
     "test_dvm_tail_weight.py",
     "test_dynasty_rank_basis.py",
     "test_editorial_flags.py",
     "test_efv_age_penalty.py",
-    "test_efv_age_pipeline.py",
-    "test_efv_board_scale.py"
+    "test_efv_age_pipeline.py"
    ],
    "tail": [
-    "0.01s call     test_editorial_flags.py::test_flags_persist_with_control_bands",
+    "0.01s setup    test_dvm_disparity_penalty.py::TestPenaltyOnLiveData::test_disparity_report_carries_meaningful_signals",
     "",
-    "(13 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "46 passed, 1 skipped in 2.82s"
+    "(1 durations < 0.005s hidden.  Use -vv to show these durations.)",
+    "42 passed in 7.47s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
   },
   {
-   "chunk": 12,
-   "rc": 0,
-   "seconds": 6.3,
+   "chunk": 18,
+   "rc": 1,
+   "seconds": 26.5,
    "files": [
+    "test_efv_board_scale.py",
     "test_efv_delta_chip_display.py",
     "test_efv_dist_recalibration.py",
+    "test_efv_drivers.py",
+    "test_efv_encompassing.py",
     "test_efv_export.py",
     "test_efv_factor_groups.py",
-    "test_efv_healthy_counterfactual.py",
-    "test_efv_levers.py",
-    "test_efv_model.py",
-    "test_efv_pace_and_healthy.py"
+    "test_efv_healthy_counterfactual.py"
    ],
    "tail": [
-    "0.01s call     test_efv_dist_recalibration.py::test_provisional_rows_never_enter_a_fold",
-    "",
-    "(8 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "118 passed in 5.64s"
+    "0.02s call     test_efv_factor_groups.py::test_group_is_shown_or_hidden_whole_and_reports_the_net",
+    "=========================== short test summary info ===========================",
+    "FAILED test_efv_export.py::test_xfv_golden_fingerprint - AssertionError: data...",
+    "1 failed, 90 passed, 1 skipped in 20.38s"
+   ],
+   "failed_nodes": [
+    "FAILED test_efv_export.py::test_xfv_golden_fingerprint - AssertionError: data..."
+   ],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 19,
+   "rc": 0,
+   "seconds": 6.8,
+   "files": [
+    "test_efv_levers.py",
+    "test_efv_model.py",
+    "test_efv_pace_and_healthy.py",
+    "test_efv_progress.py",
+    "test_efv_progress_backfill.py",
+    "test_efv_proxy.py",
+    "test_efv_rookie_window.py",
+    "test_efv_score.py"
+   ],
+   "tail": [
+    "0.01s teardown test_efv_score.py::test_the_cut_list_is_ordered_biggest_first_so_the_remainder_is_the_small_end",
+    "0.01s teardown test_efv_rookie_window.py::test_the_drivers_are_explained_from_the_debut_anchor",
+    "0.01s teardown test_efv_rookie_window.py::test_the_wag_baseline_is_pinned_to_the_at_debut_grade",
+    "103 passed in 5.57s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
   },
   {
-   "chunk": 13,
+   "chunk": 20,
    "rc": 0,
-   "seconds": 3.8,
+   "seconds": 23.0,
    "files": [
-    "test_efv_proxy.py",
-    "test_efv_rookie_window.py",
-    "test_efv_score.py",
     "test_efv_sff_crosswalk.py",
     "test_efv_sign_declarations.py",
     "test_efv_stale_anchor.py",
     "test_efv_stale_anchor_basis.py",
-    "test_efv_tool_gate_margins.py"
+    "test_efv_tool_gate_margins.py",
+    "test_efv_v2_model.py",
+    "test_efv_vintage_frame.py",
+    "test_efv_war_tilt.py"
    ],
    "tail": [
-    "0.03s call     test_efv_sign_declarations.py::test_provisional_features_are_declared[pit]",
-    "",
-    "(9 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "87 passed in 3.09s"
+    "0.05s call     test_efv_v2_model.py::test_offset_only_reproduces_consensus_order_synthetic",
+    "0.04s call     test_efv_sign_declarations.py::test_provisional_features_are_declared[hit]",
+    "0.04s call     test_efv_sign_declarations.py::test_flagship_fitted_signs_match_declarations[pit]",
+    "109 passed in 17.16s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
   },
   {
-   "chunk": 14,
+   "chunk": 21,
    "rc": 0,
-   "seconds": 2.8,
+   "seconds": 5.1,
    "files": [
-    "test_efv_war_tilt.py",
     "test_empirical_anchors.py",
     "test_eta.py",
     "test_eta_backtest.py",
     "test_ewar_fielding_blend.py",
+    "test_exposure_matched_label.py",
     "test_fa_band_decile.py",
     "test_fa_calibration.py",
     "test_fa_cba.py"
    ],
    "tail": [
-    "0.01s call     test_fa_band_decile.py::test_gate_doc_records_loss",
+    "0.01s setup    test_fa_cba.py::test_qo_acceptances_filter",
     "",
-    "(12 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "108 passed in 2.32s"
+    "(8 durations < 0.005s hidden.  Use -vv to show these durations.)",
+    "121 passed in 4.47s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
   },
   {
-   "chunk": 15,
+   "chunk": 22,
    "rc": 0,
-   "seconds": 2.2,
+   "seconds": 3.9,
    "files": [
     "test_fa_class.py",
     "test_fa_comps_anchor.py",
@@ -339,171 +500,10 @@
     "test_fa_events.py"
    ],
    "tail": [
+    "0.01s teardown test_fa_events.py::test_qo_offered_fires_once_on_publication",
+    "0.01s call     test_fa_events.py::test_option_inference_gated_outside_winter_window",
     "0.01s call     test_fa_class.py::test_ufa_is_locked",
-    "0.01s call     test_fa_edges.py::test_shipped_overrides_file_parses",
-    "0.01s call     test_fa_comps_anchor.py::test_kernel_anchor_is_monotone_across_the_cliff",
-    "74 passed in 1.74s"
-   ],
-   "failed_nodes": [],
-   "stderr_tail": []
-  },
-  {
-   "chunk": 16,
-   "rc": 0,
-   "seconds": 14.8,
-   "files": [
-    "test_fa_fit.py",
-    "test_fa_fit_gate.py",
-    "test_fa_ident_half_index.py",
-    "test_fa_market.py",
-    "test_fa_penter_guard.py",
-    "test_fa_projection.py",
-    "test_fa_ptier_gate.py",
-    "test_fa_readonly_prospx.py"
-   ],
-   "tail": [
-    "0.02s setup    test_fa_penter_guard.py::test_quarantine_leaves_in_window_rows_alone",
-    "0.02s setup    test_fa_penter_guard.py::test_revalidation_never_touches_valid_rows",
-    "0.02s setup    test_fa_penter_guard.py::test_genuine_window_observation_revalidates",
-    "66 passed in 14.10s"
-   ],
-   "failed_nodes": [],
-   "stderr_tail": []
-  },
-  {
-   "chunk": 17,
-   "rc": 0,
-   "seconds": 4.8,
-   "files": [
-    "test_fa_smoke.py",
-    "test_fa_sources.py",
-    "test_fa_teamfit_conditional.py",
-    "test_fa_tier1.py",
-    "test_fangraphs_csv.py",
-    "test_fantasy_cards.py",
-    "test_fantasy_claims.py",
-    "test_fantasy_export.py"
-   ],
-   "tail": [
-    "0.01s call     test_fantasy_cards.py::test_card_renders_the_next7_strip_keyed_by_the_players_club",
-    "",
-    "(3 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "179 passed, 1 skipped in 2.84s"
-   ],
-   "failed_nodes": [],
-   "stderr_tail": []
-  },
-  {
-   "chunk": 18,
-   "rc": 0,
-   "seconds": 5.4,
-   "files": [
-    "test_fantasy_scoring.py",
-    "test_fantasy_split.py",
-    "test_fantasy_two_start.py",
-    "test_farm_grade_history.py",
-    "test_farm_grades.py",
-    "test_farm_grading_v4.py",
-    "test_farm_movement.py",
-    "test_farm_rolling.py"
-   ],
-   "tail": [
-    "0.01s call     test_fantasy_split.py::test_the_client_normalizes_its_own_half_and_the_prefix_survives",
-    "0.01s call     test_farm_grade_history.py::TestSnapshotFarmGrades::test_loader_survives_missing_table",
-    "0.01s call     test_fantasy_split.py::test_dfs_filters_reset_the_pagination",
-    "296 passed in 3.37s"
-   ],
-   "failed_nodes": [],
-   "stderr_tail": []
-  },
-  {
-   "chunk": 19,
-   "rc": 0,
-   "seconds": 10.6,
-   "files": [
-    "test_farm_tree.py",
-    "test_feed_cache.py",
-    "test_fielding_census_asof.py",
-    "test_fielding_position_resolution.py",
-    "test_flag_notes_no_emdash.py",
-    "test_fv_correctness.py",
-    "test_fv_tape.py",
-    "test_fv_tape_render.py"
-   ],
-   "tail": [
-    "0.01s call     test_feed_cache.py::TestGetGameFeed::test_first_call_fetches_then_second_is_cached",
-    "",
-    "(12 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "128 passed in 8.56s"
-   ],
-   "failed_nodes": [],
-   "stderr_tail": []
-  },
-  {
-   "chunk": 20,
-   "rc": 0,
-   "seconds": 19.9,
-   "files": [
-    "test_generated_docs_in_sync.py",
-    "test_generated_notes_no_emdash.py",
-    "test_gfx_chip_layout.py",
-    "test_glossary_page_loads.py",
-    "test_glossary_provenance.py",
-    "test_grade_norm_asof.py",
-    "test_grade_norm_era_floor.py",
-    "test_grade_norm_flip_coverage.py"
-   ],
-   "tail": [
-    "0.03s call     test_generated_notes_no_emdash.py::test_storage_generated_notes_have_no_dash_chars",
-    "0.03s call     test_gfx_chip_layout.py::test_unnormalised_rows_are_loud",
-    "0.02s call     test_gfx_chip_layout.py::test_rows_list_has_a_geometry_gated_photo_well",
-    "202 passed in 19.45s"
-   ],
-   "failed_nodes": [],
-   "stderr_tail": []
-  },
-  {
-   "chunk": 21,
-   "rc": 0,
-   "seconds": 14.4,
-   "files": [
-    "test_grade_normalization.py",
-    "test_grade_system.py",
-    "test_graduation_rules.py",
-    "test_grpo_retrain_skip.py",
-    "test_headtohead_frame.py",
-    "test_hem_plus.py",
-    "test_history_snapshots.py",
-    "test_hitter_export_contract.py"
-   ],
-   "tail": [
-    "0.04s call     test_history_snapshots.py::TestMetricSnapshots::test_idempotent_upsert_by_date",
-    "0.04s call     test_history_snapshots.py::TestMetricSnapshots::test_capture_and_load",
-    "0.04s call     test_history_snapshots.py::TestILHistory::test_placement_then_activation",
-    "120 passed in 13.55s"
-   ],
-   "failed_nodes": [],
-   "stderr_tail": []
-  },
-  {
-   "chunk": 22,
-   "rc": 0,
-   "seconds": 24.9,
-   "files": [
-    "test_hitter_wrc_plus.py",
-    "test_identity_collisions.py",
-    "test_identity_residue_2026_08_19.py",
-    "test_ifa_export.py",
-    "test_index_html_loads.py",
-    "test_ingest_health.py",
-    "test_injected_sheet_tokens.py",
-    "test_intl_amateur.py"
-   ],
-   "tail": [
-    "0.01s call     test_ingest_health.py::TJStatsStatusIsLegible::test_a_crash_is_reported_not_raised",
-    "0.01s call     test_hitter_wrc_plus.py::test_rounds_to_nearest_not_ceiling",
-    "0.01s call     test_hitter_wrc_plus.py::test_frontend_mirrors_the_bands",
-    "96 passed in 24.39s"
+    "83 passed in 3.20s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -511,22 +511,22 @@
   {
    "chunk": 23,
    "rc": 0,
-   "seconds": 6.6,
+   "seconds": 54.5,
    "files": [
-    "test_jensen_kernel.py",
-    "test_job_heartbeat.py",
-    "test_label_arms.py",
-    "test_leaderboard_vintages.py",
-    "test_level_blend.py",
-    "test_lottery_extra_fields.py",
-    "test_methodology_freshness.py",
-    "test_metrics_audit.py"
+    "test_fa_fit.py",
+    "test_fa_fit_gate.py",
+    "test_fa_ident_half_index.py",
+    "test_fa_market.py",
+    "test_fa_meta_gate_parity.py",
+    "test_fa_penter_guard.py",
+    "test_fa_penter_snapshot.py",
+    "test_fa_projection.py"
    ],
    "tail": [
-    "0.03s call     test_lottery_extra_fields.py::test_an_older_scraper_build_cannot_blank_stored_values",
-    "0.03s call     test_lottery_extra_fields.py::test_historical_rows_read_back_as_null",
-    "0.02s call     test_lottery_extra_fields.py::test_migration_is_idempotent",
-    "116 passed, 5 skipped in 4.98s"
+    "0.05s call     test_fa_projection.py::test_league_average_player_projects_near_100_wrc",
+    "0.05s setup    test_fa_penter_guard.py::test_genuine_window_observation_revalidates",
+    "0.05s setup    test_fa_penter_guard.py::test_qo_offered_gated_outside_window",
+    "65 passed in 53.30s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -534,22 +534,22 @@
   {
    "chunk": 24,
    "rc": 0,
-   "seconds": 3.4,
+   "seconds": 32.0,
    "files": [
-    "test_milb_translation.py",
-    "test_mlb_leverage.py",
-    "test_mlb_pipeline_live.py",
-    "test_mlb_player_pages.py",
-    "test_mlbam_key_collision.py",
-    "test_mlbam_negative_cache_ttl.py",
-    "test_mlbstats_smoke.py",
-    "test_mock_draft.py"
+    "test_fa_ptier_gate.py",
+    "test_fa_quadrature.py",
+    "test_fa_readonly_prospx.py",
+    "test_fa_smoke.py",
+    "test_fa_sources.py",
+    "test_fa_table_fit.py",
+    "test_fa_teamfit_conditional.py",
+    "test_fa_tier1.py"
    ],
    "tail": [
-    "0.01s call     test_mlbstats_smoke.py::test_hitter_team_lineups_render",
-    "0.01s call     test_mlbstats_smoke.py::test_starter_board_renders_via_section_hash",
-    "0.01s call     test_milb_translation.py::TestPitcherIpGate::test_ip_gate_boundary",
-    "107 passed, 1 skipped in 2.70s"
+    "0.03s call     test_fa_readonly_prospx.py::test_prospx_app_carries_no_fa_code",
+    "0.03s call     test_fa_tier1.py::test_simulation_reproduces_the_served_marginals",
+    "0.02s call     test_fa_tier1.py::test_sigma_clip_is_per_model_not_global",
+    "92 passed, 1 skipped in 31.28s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -557,22 +557,22 @@
   {
    "chunk": 25,
    "rc": 0,
-   "seconds": 9.3,
+   "seconds": 12.6,
    "files": [
-    "test_mock_draft_eval.py",
-    "test_model_class_readjudication.py",
-    "test_model_registry.py",
-    "test_model_report_cards.py",
-    "test_movement_engine.py",
-    "test_movement_genuine.py",
-    "test_news_page.py",
-    "test_no_draft_in_milb.py"
+    "test_fa_verdict_tooltip.py",
+    "test_fangraphs_csv.py",
+    "test_fantasy_cards.py",
+    "test_fantasy_claims.py",
+    "test_fantasy_export.py",
+    "test_fantasy_scoring.py",
+    "test_fantasy_split.py",
+    "test_fantasy_two_start.py"
    ],
    "tail": [
-    "0.02s call     test_no_draft_in_milb.py::test_no_new_draft_board_intervals_in_snapshots",
-    "0.01s call     test_model_report_cards.py::test_every_registry_row_is_on_the_page",
-    "0.01s call     test_model_report_cards.py::test_the_deploy_rule_the_page_encodes_still_matches_the_deploy_scripts",
-    "88 passed, 12 skipped in 7.43s"
+    "0.01s call     test_fantasy_split.py::test_the_client_normalizes_its_own_half_and_the_prefix_survives",
+    "0.01s call     test_fantasy_split.py::test_dfs_csv_import_matches_by_name_and_reports_misses",
+    "0.01s call     test_fantasy_split.py::test_dfs_optimizer_finds_the_best_legal_lineup",
+    "348 passed in 9.08s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -580,22 +580,22 @@
   {
    "chunk": 26,
    "rc": 0,
-   "seconds": 14.0,
+   "seconds": 12.5,
    "files": [
-    "test_no_hardcoded_colors.py",
-    "test_no_overseas_in_milb.py",
-    "test_no_undefined_names.py",
-    "test_number_format_parity.py",
-    "test_opportunity_lab.py",
-    "test_org_authority.py",
-    "test_org_tendencies.py",
-    "test_overseas_csv.py"
+    "test_farm_finances_surplus.py",
+    "test_farm_finances_weights.py",
+    "test_farm_grade_history.py",
+    "test_farm_grades.py",
+    "test_farm_grading_v4.py",
+    "test_farm_header_counts.py",
+    "test_farm_movement.py",
+    "test_farm_rolling.py"
    ],
    "tail": [
-    "0.01s call     test_opportunity_lab.py::test_the_arms_that_the_gate_registers_are_the_arms_that_ran",
-    "",
-    "(14 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "63 passed in 13.62s"
+    "0.01s teardown test_farm_grading_v4.py::IfaRoi::test_computes_ratio_from_per_grad_bonus",
+    "0.01s teardown test_farm_rolling.py::TestCompositeWeights::test_big_four_still_majority",
+    "0.01s teardown test_farm_grading_v4.py::ConvictionLeaf::test_clears_when_neither_threshold_met",
+    "116 passed in 6.86s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -603,22 +603,22 @@
   {
    "chunk": 27,
    "rc": 0,
-   "seconds": 2.5,
+   "seconds": 21.1,
    "files": [
-    "test_overseas_regression.py",
-    "test_overseas_stats.py",
-    "test_overseas_translation.py",
-    "test_pairwise_basis.py",
-    "test_pal_conversion.py",
-    "test_pal_export_prospect_watch.py",
-    "test_pal_smoke.py",
-    "test_per_season_shrink.py"
+    "test_farm_tree.py",
+    "test_feed_cache.py",
+    "test_fg_leaderboards.py",
+    "test_fielding_census_asof.py",
+    "test_fielding_innings_refresh.py",
+    "test_fielding_position_resolution.py",
+    "test_flag_notes_no_emdash.py",
+    "test_franchise_export.py"
    ],
    "tail": [
-    "0.01s call     test_pal_smoke.py::test_tier_chip_is_coloured_by_TIER_not_by_direction",
-    "",
-    "(11 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "77 passed in 2.09s"
+    "0.02s setup    test_franchise_export.py::test_thirty_clubs_and_only_canonical_codes",
+    "0.02s call     test_franchise_export.py::test_roster_leaf_ladders_are_the_family_mlbstats_applies",
+    "0.02s call     test_feed_cache.py::TestGetGameFeed::test_nonfinal_feed_under_final_ttl_is_refetched_until_final",
+    "182 passed in 16.54s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -626,22 +626,22 @@
   {
    "chunk": 28,
    "rc": 0,
-   "seconds": 6.4,
+   "seconds": 19.4,
    "files": [
-    "test_phase4b_evals.py",
-    "test_pipeline_archive_gate.py",
-    "test_pipeline_artifact_diff.py",
-    "test_pipeline_org_backfill.py",
-    "test_pipeline_vintage.py",
-    "test_pitcher_roles.py",
-    "test_pitcher_stuff_clock.py",
-    "test_player_images.py"
+    "test_franchise_render.py",
+    "test_franchise_spine.py",
+    "test_futures_board.py",
+    "test_futures_ledger.py",
+    "test_fv_correctness.py",
+    "test_fv_tape.py",
+    "test_fv_tape_render.py",
+    "test_fwar_frame.py"
    ],
    "tail": [
-    "0.05s setup    test_pitcher_roles.py::test_debuted_zero_sample_continuity_all_roles[55-None]",
-    "0.05s setup    test_pitcher_roles.py::test_debuted_zero_sample_continuity_all_roles[60-None]",
-    "0.05s setup    test_pitcher_roles.py::test_debuted_reliever_monotone_with_sample[60]",
-    "117 passed in 5.75s"
+    "0.04s call     test_franchise_render.py::test_letters_print_in_neutral_ink_and_only_scores_are_tiered",
+    "0.03s call     test_fv_tape.py::test_needs_four_points",
+    "0.03s call     test_fwar_frame.py::test_the_nightly_writes_the_artifact_and_its_carry_only_and_never_the_eval",
+    "122 passed in 18.37s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -649,116 +649,117 @@
   {
    "chunk": 29,
    "rc": 0,
-   "seconds": 3.4,
+   "seconds": 12.5,
    "files": [
-    "test_portfolio.py",
-    "test_position_role_phase5.py",
-    "test_position_source_priority.py",
-    "test_positional_fit.py",
-    "test_positional_ladder_identification.py",
-    "test_positional_ladder_sum.py",
-    "test_prearb_pricing.py",
-    "test_proj_current.py"
+    "test_fwar_label_epoch_registration.py",
+    "test_generated_docs_in_sync.py",
+    "test_generated_notes_no_emdash.py",
+    "test_gfx_chip_layout.py",
+    "test_glossary_management_ids.py",
+    "test_glossary_page_loads.py",
+    "test_glossary_provenance.py",
+    "test_glossary_slugs_resolve.py"
    ],
    "tail": [
-    "0.01s call     test_prearb_pricing.py::PreArbWindowSelection::test_a_recent_debut_is_priced",
-    "0.01s call     test_positional_ladder_sum.py::test_the_equal_weight_sums_are_reported_and_are_not_zero",
-    "0.01s call     test_prearb_pricing.py::PreArbNoInversion::test_the_comparison_above_is_not_vacuous",
-    "143 passed in 2.88s"
+    "0.03s call     test_gfx_chip_layout.py::test_list_layouts_carry_no_surplus_or_dvm",
+    "0.03s call     test_generated_notes_no_emdash.py::test_storage_generated_notes_have_no_dash_chars",
+    "0.02s call     test_glossary_management_ids.py::test_every_data_gl_hook_on_the_page_resolves",
+    "221 passed in 11.80s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
   },
   {
    "chunk": 30,
-   "rc": 1,
-   "seconds": 6.2,
+   "rc": 0,
+   "seconds": 73.0,
    "files": [
-    "test_proj_eval.py",
-    "test_proj_export.py",
-    "test_proj_ml.py",
-    "test_proj_rowmatch.py",
-    "test_proj_team_join.py",
-    "test_projections_smoke.py",
-    "test_props_grader.py",
-    "test_prospect_greeks.py"
+    "test_grade_norm_asof.py",
+    "test_grade_norm_era_floor.py",
+    "test_grade_norm_flip_coverage.py",
+    "test_grade_normalization.py",
+    "test_grade_system.py",
+    "test_graduation_rules.py",
+    "test_grpo_retrain_skip.py",
+    "test_headtohead_frame.py"
    ],
    "tail": [
-    "0.01s call     test_proj_ml.py::test_ml_config_gate_defaults_off_until_shipped",
-    "=========================== short test summary info ===========================",
-    "FAILED test_proj_export.py::test_vet_surplus_only_on_contracted_seasons - Ass...",
-    "1 failed, 72 passed in 5.70s"
+    "0.37s setup    test_grade_norm_asof.py::test_thin_cell_pools_no_pair_from_a_later_year",
+    "0.27s teardown test_headtohead_frame.py::test_vm2_rows_drop_a_mismatched_or_out_of_window_pin",
+    "0.09s call     test_graduation_rules.py::TestRevalidateAutoGraduations::test_keeps_legitimately_exhausted_player",
+    "119 passed in 67.14s (0:01:07)"
    ],
-   "failed_nodes": [
-    "FAILED test_proj_export.py::test_vet_surplus_only_on_contracted_seasons - Ass..."
-   ],
+   "failed_nodes": [],
    "stderr_tail": []
   },
   {
    "chunk": 31,
    "rc": 0,
-   "seconds": 16.8,
+   "seconds": 16.4,
    "files": [
-    "test_prospect_savant.py",
-    "test_prospx_board_paints_rows.py",
-    "test_prospx_sort_a11y.py",
-    "test_prune_cache.py",
-    "test_publish_manifest.py",
-    "test_published_payload_hygiene.py",
-    "test_rank_movement.py",
-    "test_reliability_surface.py"
+    "test_hem_plus.py",
+    "test_hem_riv_regate_2026_09_18.py",
+    "test_history_snapshots.py",
+    "test_hitter_export_contract.py",
+    "test_hitter_wrc_plus.py",
+    "test_hof_bakeoff.py",
+    "test_hof_ballot_ingest.py",
+    "test_hof_data.py"
    ],
    "tail": [
-    "0.01s call     test_prospect_savant.py::test_loads_and_attaches_prospect_savant_csv",
-    "",
-    "(10 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "51 passed in 16.34s"
+    "0.02s call     test_hitter_wrc_plus.py::test_frontend_mirrors_the_bands",
+    "0.01s call     test_hitter_wrc_plus.py::test_artifact_join_hit_rate_floor",
+    "0.01s call     test_hitter_export_contract.py::test_hem_plus_is_the_served_woba_deviation",
+    "170 passed in 15.42s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
   },
   {
    "chunk": 32,
-   "rc": 0,
-   "seconds": 4.7,
+   "rc": 1,
+   "seconds": 67.5,
    "files": [
-    "test_rem_plus.py",
-    "test_repair_espn_ghost_rows.py",
-    "test_report_cards_render.py",
-    "test_report_cleaner.py",
-    "test_rest_of_season_control.py",
-    "test_role_usage.py",
-    "test_rolling_page_capture.py",
-    "test_rps_scales.py"
+    "test_hof_export.py",
+    "test_hof_labels.py",
+    "test_hof_ledger.py",
+    "test_hof_merit.py",
+    "test_hof_point_in_time.py",
+    "test_home_fantasy_card_empty.py",
+    "test_home_movers_floor.py",
+    "test_identity_collisions.py"
    ],
    "tail": [
-    "0.01s call     test_rest_of_season_control.py::test_expiring_vet_with_a_priced_remainder_is_not_called_unpriceable",
-    "",
-    "(6 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "111 passed, 1 skipped in 4.21s"
+    "=========================== short test summary info ===========================",
+    "FAILED test_identity_collisions.py::test_no_new_merged_identity_on_the_active_board",
+    "FAILED test_identity_collisions.py::test_no_new_merged_identity_anywhere - As...",
+    "2 failed, 136 passed in 66.28s (0:01:06)"
    ],
-   "failed_nodes": [],
+   "failed_nodes": [
+    "FAILED test_identity_collisions.py::test_no_new_merged_identity_on_the_active_board",
+    "FAILED test_identity_collisions.py::test_no_new_merged_identity_anywhere - As..."
+   ],
    "stderr_tail": []
   },
   {
    "chunk": 33,
    "rc": 0,
-   "seconds": 2.4,
+   "seconds": 21.7,
    "files": [
-    "test_sabermetrics_stints.py",
-    "test_salary_discount.py",
-    "test_savant_arm.py",
-    "test_savant_sprint.py",
-    "test_schema3_builders.py",
-    "test_score_archives.py",
-    "test_scout_chunk_parity.py",
-    "test_scout_report_history.py"
+    "test_identity_residue_2026_08_19.py",
+    "test_ifa_export.py",
+    "test_ifa_floor_display.py",
+    "test_il_staleness.py",
+    "test_index_html_loads.py",
+    "test_ingest_health.py",
+    "test_injected_sheet_tokens.py",
+    "test_intl_amateur.py"
    ],
    "tail": [
-    "0.01s call     test_savant_sprint.py::test_landed_covers_2015_through_the_current_season",
-    "0.01s call     test_schema3_builders.py::test_build_star_out_with_only_stale_caches_is_a_stated_null",
-    "0.01s call     test_schema3_builders.py::test_build_lineup_strength_joins_vets_year1_woba",
-    "89 passed in 1.88s"
+    "0.01s call     test_ingest_health.py::TJStatsStatusIsLegible::test_a_crash_is_reported_not_raised",
+    "0.01s teardown test_intl_amateur.py::test_attach_routes_matched_and_reports_unmatched",
+    "0.01s setup    test_ingest_health.py::test_healthy_run_has_no_red",
+    "75 passed in 20.82s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -766,22 +767,22 @@
   {
    "chunk": 34,
    "rc": 0,
-   "seconds": 5.1,
+   "seconds": 126.1,
    "files": [
-    "test_scrape_lottery_spotrac.py",
-    "test_scraper_writeups.py",
-    "test_scrapers_financial.py",
-    "test_sdr_intake.py",
-    "test_sem_plus.py",
-    "test_side_calibration_lab.py",
-    "test_sitemap_diamond_sync.py",
-    "test_sortino_surplus.py"
+    "test_jensen_kernel.py",
+    "test_job_heartbeat.py",
+    "test_label_arms.py",
+    "test_leaderboard_vintages.py",
+    "test_leaderboard_window_obp.py",
+    "test_leaderboard_window_scope.py",
+    "test_league_constants.py",
+    "test_ledger_export.py"
    ],
    "tail": [
-    "0.01s call     test_sdr_intake.py::test_contract_comes_from_wills_file_not_a_restatement",
-    "",
-    "(2 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "100 passed, 1 skipped in 4.51s"
+    "0.26s call     test_ledger_export.py::test_graduate_control_is_current_not_at_debut",
+    "0.26s setup    test_ledger_export.py::test_every_shard_is_under_160_kb_names_its_club_and_the_index_matches_disk",
+    "0.25s call     test_ledger_export.py::test_ledger_is_in_nav_items_and_the_static_copies",
+    "198 passed in 122.42s (0:02:02)"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -789,22 +790,22 @@
   {
    "chunk": 35,
    "rc": 0,
-   "seconds": 66.7,
+   "seconds": 17.1,
    "files": [
-    "test_source_articles.py",
-    "test_source_calibration.py",
-    "test_source_cohort_accuracy.py",
-    "test_source_disagreement.py",
-    "test_source_track_record.py",
-    "test_spotlights.py",
-    "test_spotlights_three_buckets.py",
-    "test_spotlights_v6.py"
+    "test_ledger_render.py",
+    "test_level_blend.py",
+    "test_lottery_extra_fields.py",
+    "test_management_render.py",
+    "test_management_running.py",
+    "test_methodology_freshness.py",
+    "test_metrics_audit.py",
+    "test_mgmt_baseline.py"
    ],
    "tail": [
-    "0.01s call     test_source_disagreement.py::test_mean_exactly_preserved[45-False-OF]",
-    "0.01s call     test_source_disagreement.py::test_no_dispersion_reproduces_plain_distribution",
-    "0.01s call     test_source_disagreement.py::test_dispersion_cap_binds",
-    "141 passed in 63.33s (0:01:03)"
+    "0.06s call     test_lottery_extra_fields.py::test_draft_export_emits_the_documented_field_names",
+    "0.06s call     test_lottery_extra_fields.py::test_historical_rows_read_back_as_null",
+    "0.06s setup    test_mgmt_baseline.py::test_dvs_sums_to_zero_over_all_league_windows_in_every_cell",
+    "128 passed, 5 skipped in 14.11s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -812,22 +813,22 @@
   {
    "chunk": 36,
    "rc": 0,
-   "seconds": 5.7,
+   "seconds": 16.2,
    "files": [
-    "test_stabilization_constants.py",
-    "test_star_odds.py",
-    "test_starter_export_contract.py",
-    "test_starter_smoke.py",
-    "test_statcast_aaa_hitters.py",
-    "test_statcast_gamelog_extras.py",
-    "test_statcast_metrics.py",
-    "test_statcast_metrics_cache.py"
+    "test_mgmt_bunt.py",
+    "test_mgmt_decisions.py",
+    "test_mgmt_export.py",
+    "test_mgmt_feeds_2026.py",
+    "test_mgmt_gate.py",
+    "test_mgmt_managers.py",
+    "test_mgmt_style.py",
+    "test_milb_translation.py"
    ],
    "tail": [
-    "0.01s setup    test_statcast_metrics_cache.py::test_corrupt_cache_is_refetched",
-    "0.01s call     test_statcast_metrics_cache.py::test_write_is_atomic_no_leftover_tmp",
-    "0.01s call     test_starter_smoke.py::test_bullpen_section_unaffected",
-    "54 passed in 4.85s"
+    "0.01s call     test_milb_translation.py::TestPitcherIpGate::test_appearances_do_not_qualify_a_pitcher",
+    "0.01s call     test_mgmt_gate.py::test_the_document_names_all_three_heuristic_policies",
+    "0.01s setup    test_milb_translation.py::TestPitcherIpGate::test_appearances_do_not_qualify_a_pitcher",
+    "136 passed in 15.42s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -835,22 +836,22 @@
   {
    "chunk": 37,
    "rc": 0,
-   "seconds": 18.0,
+   "seconds": 22.2,
    "files": [
-    "test_statcast_org.py",
-    "test_statcast_overlay.py",
-    "test_statcast_plus.py",
-    "test_statcast_splits.py",
-    "test_stf_plus.py",
-    "test_storage_export.py",
-    "test_stuff_plus_aaa.py",
-    "test_synthetic_anchor_partition.py"
+    "test_mlb_leverage.py",
+    "test_mlb_pipeline_live.py",
+    "test_mlb_player_detail_skills.py",
+    "test_mlb_player_pages.py",
+    "test_mlbam_key_collision.py",
+    "test_mlbam_negative_cache_ttl.py",
+    "test_mlbp_css_contract.py",
+    "test_mlbstats_control_theme.py"
    ],
    "tail": [
-    "0.01s call     test_statcast_splits.py::test_js_dual_chip_keys_off_stints_with_single_fallback",
-    "0.01s call     test_statcast_org.py::test_js_stat_row_has_row_aware_org_meta_helper",
-    "0.01s call     test_stuff_plus_aaa.py::test_sidecar_shape",
-    "97 passed in 15.06s"
+    "0.01s call     test_mlb_player_pages.py::test_position_games_keys_by_mlbam_and_stamps_the_feed_date",
+    "0.01s call     test_mlb_player_pages.py::test_prospx_swing_plus_wiring",
+    "0.01s setup    test_mlbam_negative_cache_ttl.py::test_bulk_resolver_respects_a_fresh_miss",
+    "71 passed in 20.96s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -858,22 +859,22 @@
   {
    "chunk": 38,
    "rc": 0,
-   "seconds": 7.9,
+   "seconds": 318.2,
    "files": [
-    "test_team_outlook_calibration.py",
-    "test_timemachine_org.py",
-    "test_tj_surgery.py",
-    "test_tjstats.py",
-    "test_tool_dev.py",
-    "test_trade_board_coverage.py",
-    "test_trade_forward_backtest.py",
-    "test_trade_grade_parity.py"
+    "test_mlbstats_ewar_join.py",
+    "test_mlbstats_fit.py",
+    "test_mlbstats_history_ewar.py",
+    "test_mlbstats_smoke.py",
+    "test_mlbstats_views.py",
+    "test_mlbstats_windows.py",
+    "test_mlbstats_windows_page.py",
+    "test_mlbx_css_scope.py"
    ],
    "tail": [
-    "0.01s call     test_team_outlook_calibration.py::test_team_outlook_multiyear_recenter",
-    "0.01s call     test_team_outlook_calibration.py::test_team_outlook_first_season_matches_byyear",
-    "0.01s call     test_team_outlook_calibration.py::test_vets_carry_champion_path_for_multiyear",
-    "73 passed in 4.89s"
+    "0.16s call     test_mlbstats_windows.py::test_the_overall_window_league_is_summed_unrounded",
+    "0.15s call     test_mlbstats_windows.py::test_every_served_history_payload_carries_ewar",
+    "0.13s call     test_mlbstats_history_ewar.py::test_every_history_export_serves_its_own_side_and_its_own_season[bullpen]",
+    "401 passed in 317.09s (0:05:17)"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -881,22 +882,22 @@
   {
    "chunk": 39,
    "rc": 0,
-   "seconds": 4.0,
+   "seconds": 23.5,
    "files": [
-    "test_trade_machine_backtest.py",
-    "test_trades.py",
-    "test_transactions.py",
-    "test_ungraded_orphan_routing.py",
-    "test_upgrade_option.py",
-    "test_vaa.py",
-    "test_valuation_curve_surface.py",
-    "test_valuation_reports.py"
+    "test_mock_draft.py",
+    "test_mock_draft_eval.py",
+    "test_model_class_readjudication.py",
+    "test_model_registry.py",
+    "test_model_report_cards.py",
+    "test_movement_engine.py",
+    "test_movement_genuine.py",
+    "test_news_page.py"
    ],
    "tail": [
-    "0.01s call     test_valuation_reports.py::test_default_set_restored_after_report_pricing",
-    "",
-    "(16 durations < 0.005s hidden.  Use -vv to show these durations.)",
-    "72 passed in 3.46s"
+    "0.03s call     test_model_report_cards.py::test_every_registry_row_is_on_the_page",
+    "0.02s call     test_model_registry.py::test_the_routing_row_agrees_with_the_flag_that_ships_it",
+    "0.01s call     test_model_report_cards.py::test_derived_cards_equal_their_artifact_exactly",
+    "123 passed, 13 skipped in 19.44s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -904,22 +905,22 @@
   {
    "chunk": 40,
    "rc": 0,
-   "seconds": 7.4,
+   "seconds": 7.6,
    "files": [
-    "test_valuation_sets.py",
-    "test_value_framework.py",
-    "test_value_framework_integration.py",
-    "test_verified_bugfixes.py",
-    "test_wag.py",
-    "test_wag_stress.py",
-    "test_wag_validation.py",
-    "test_war_cohort_diagnostic.py"
+    "test_no_draft_in_milb.py",
+    "test_no_hardcoded_colors.py",
+    "test_no_orphan_pages.py",
+    "test_no_overseas_in_milb.py",
+    "test_no_undefined_names.py",
+    "test_number_format_parity.py",
+    "test_odds_open_cron.py",
+    "test_opportunity_lab.py"
    ],
    "tail": [
-    "0.05s call     test_wag.py::test_regressed_band_widens_for_thin_samples",
-    "0.05s call     test_wag.py::test_rate_vs_counting_rank_injured_good_vs_healthy_compiler",
-    "0.05s call     test_valuation_sets.py::test_prospx_current_table_mode_matches_production[True-60-60.0]",
-    "208 passed in 6.81s"
+    "0.01s call     test_opportunity_lab.py::test_the_arms_that_the_gate_registers_are_the_arms_that_ran",
+    "0.01s teardown test_number_format_parity.py::test_money_keeps_the_minus_and_drops_the_plus",
+    "0.01s teardown test_number_format_parity.py::test_the_mirrors_are_identical",
+    "69 passed in 6.88s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
@@ -927,34 +928,563 @@
   {
    "chunk": 41,
    "rc": 0,
-   "seconds": 11.3,
+   "seconds": 32.4,
    "files": [
+    "test_org_authority.py",
+    "test_org_identity.py",
+    "test_org_tendencies.py",
+    "test_org_tendencies_trades.py",
+    "test_outcome_fan_display.py",
+    "test_overseas_csv.py",
+    "test_overseas_regression.py",
+    "test_overseas_stats.py"
+   ],
+   "tail": [
+    "0.01s call     test_org_identity.py::test_a_missing_park_and_a_neutral_park_are_the_same_number",
+    "",
+    "(2 durations < 0.005s hidden.  Use -vv to show these durations.)",
+    "64 passed in 31.70s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 42,
+   "rc": 0,
+   "seconds": 5.6,
+   "files": [
+    "test_overseas_translation.py",
+    "test_pairwise_basis.py",
+    "test_pal_conversion.py",
+    "test_pal_conversion_history.py",
+    "test_pal_defects.py",
+    "test_pal_export_prospect_watch.py",
+    "test_pal_smoke.py",
+    "test_parks_method_policy.py"
+   ],
+   "tail": [
+    "0.01s call     test_pal_smoke.py::test_tier_cuts_are_read_from_the_payload_per_direction",
+    "0.01s call     test_pal_smoke.py::test_default_tab_is_the_direction_whose_gate_passes",
+    "0.01s call     test_pal_smoke.py::test_prospect_watch_renders_a_severity_chip_from_the_payload_cuts",
+    "94 passed in 4.65s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 43,
+   "rc": 0,
+   "seconds": 28.3,
+   "files": [
+    "test_pbp_corpus.py",
+    "test_per_season_shrink.py",
+    "test_phase4b_evals.py",
+    "test_pipeline_archive_gate.py",
+    "test_pipeline_artifact_diff.py",
+    "test_pipeline_org_backfill.py",
+    "test_pipeline_vintage.py",
+    "test_pitch_plot_baseline.py"
+   ],
+   "tail": [
+    "0.01s call     test_phase4b_evals.py::test_prospect_path_not_dispatched",
+    "0.01s call     test_pipeline_artifact_diff.py::test_volatile_fields_ignored",
+    "0.01s call     test_pipeline_artifact_diff.py::test_content_change_detected",
+    "100 passed in 27.07s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 44,
+   "rc": 0,
+   "seconds": 14.1,
+   "files": [
+    "test_pitcher_roles.py",
+    "test_pitcher_stuff_clock.py",
+    "test_platoon_split_hem.py",
+    "test_player_images.py",
+    "test_portfolio.py",
+    "test_position_role_phase5.py",
+    "test_position_source_priority.py",
+    "test_positional_fit.py"
+   ],
+   "tail": [
+    "0.09s setup    test_pitcher_roles.py::test_debuted_reliever_monotone_with_sample[50]",
+    "0.09s setup    test_pitcher_roles.py::test_role_split_bust_matches_bucket_model[55]",
+    "0.09s setup    test_pitcher_roles.py::test_apply_position_mult_false_preserves_role_tag",
+    "180 passed in 12.69s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 45,
+   "rc": 0,
+   "seconds": 30.3,
+   "files": [
+    "test_positional_ladder_identification.py",
+    "test_positional_ladder_sum.py",
+    "test_prearb_pricing.py",
+    "test_proj_current.py",
+    "test_proj_eval.py",
+    "test_proj_export.py",
+    "test_proj_label_sides.py",
+    "test_proj_ml.py"
+   ],
+   "tail": [
+    "0.04s call     test_proj_current.py::test_the_win_total_distribution_is_contiguous_and_sums",
+    "0.04s call     test_proj_current.py::test_the_bracket_can_be_turned_off_without_changing_the_six_original_keys",
+    "0.04s call     test_proj_current.py::test_mc_bracket_invariant",
+    "134 passed, 1 skipped in 29.23s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 46,
+   "rc": 0,
+   "seconds": 30.4,
+   "files": [
+    "test_proj_rowmatch.py",
+    "test_proj_team_join.py",
+    "test_projections_salary_path_fit.py",
+    "test_projections_smoke.py",
+    "test_projections_table_fit.py",
+    "test_props_grader.py",
+    "test_prospect_greeks.py",
+    "test_prospect_savant.py"
+   ],
+   "tail": [
+    "0.03s call     test_projections_smoke.py::test_game_context_renders_the_baked_leverage_block",
+    "0.03s call     test_projections_smoke.py::test_unknown_sort_key_falls_back_and_dir_round_trips",
+    "0.03s call     test_projections_smoke.py::test_a_deal_past_the_horizon_never_calls_its_surplus_the_control_window",
+    "90 passed, 1 skipped in 29.59s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 47,
+   "rc": 0,
+   "seconds": 29.4,
+   "files": [
+    "test_prospx_alevel_pill_note.py",
+    "test_prospx_board_csv.py",
+    "test_prospx_board_paints_rows.py",
+    "test_prospx_breakout_gate_copy.py",
+    "test_prospx_consensus_sort.py",
+    "test_prospx_debuted_surplus_lead.py",
+    "test_prospx_efv_fan_basis.py",
+    "test_prospx_era_minus_labels.py"
+   ],
+   "tail": [
+    "0.07s setup    test_prospx_breakout_gate_copy.py::test_window_path_prints_the_window_bar",
+    "0.04s call     test_prospx_era_minus_labels.py::test_the_model_reads_of_the_field_are_untouched",
+    "0.04s call     test_prospx_era_minus_labels.py::test_the_label_has_a_tooltip_that_says_what_it_is_and_is_not",
+    "41 passed in 26.15s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 48,
+   "rc": 0,
+   "seconds": 52.1,
+   "files": [
+    "test_prospx_prov_pool_dedupe.py",
+    "test_prospx_rank_order.py",
+    "test_prospx_sort_a11y.py",
+    "test_prospx_surplus_card_basis.py",
+    "test_provisional_efv_copy.py",
+    "test_prune_cache.py",
+    "test_publish_manifest.py",
+    "test_published_payload_hygiene.py"
+   ],
+   "tail": [
+    "0.10s call     test_prospx_rank_order.py::test_rank_chip_equals_board_position",
+    "0.09s call     test_prospx_prov_pool_dedupe.py::test_the_four_formerly_bare_surfaces_read_the_one_pool",
+    "0.09s call     test_prospx_prov_pool_dedupe.py::test_no_pool_concatenates_the_provisional_list_directly",
+    "60 passed in 48.70s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 49,
+   "rc": 0,
+   "seconds": 5.6,
+   "files": [
+    "test_rank_movement.py",
+    "test_rater_scale_view.py",
+    "test_reliability_surface.py",
+    "test_rem_plus.py",
+    "test_repair_espn_ghost_rows.py",
+    "test_repo_root_hygiene.py",
+    "test_report_cards_render.py",
+    "test_report_cleaner.py"
+   ],
+   "tail": [
+    "0.04s call     test_rater_scale_view.py::test_no_served_surface_reads_the_scale_view",
+    "",
+    "(19 durations < 0.005s hidden.  Use -vv to show these durations.)",
+    "64 passed in 4.95s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 50,
+   "rc": 0,
+   "seconds": 4.3,
+   "files": [
+    "test_rest_of_season_control.py",
+    "test_role_usage.py",
+    "test_rolling_page_capture.py",
+    "test_roster_aware_charts.py",
+    "test_rps_scales.py",
+    "test_saber_feed.py",
+    "test_sabermetrics_stints.py",
+    "test_salary_discount.py"
+   ],
+   "tail": [
+    "0.01s call     test_rolling_page_capture.py::JBRollingCapture::test_label_is_date_stamped_when_the_board_changed",
+    "0.01s call     test_rps_scales.py::test_active_tbs_branch_has_no_dead_rps_local",
+    "0.01s call     test_rps_scales.py::test_active_tbs_weights_frozen_at_pre_change_values",
+    "116 passed, 1 skipped in 3.69s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 51,
+   "rc": 0,
+   "seconds": 34.6,
+   "files": [
+    "test_salary_path.py",
+    "test_salary_path_must_not_move.py",
+    "test_savant_arm.py",
+    "test_savant_catcher.py",
+    "test_savant_leaderboards.py",
+    "test_savant_sprint.py",
+    "test_schema3_builders.py",
+    "test_schema5_builders.py"
+   ],
+   "tail": [
+    "0.01s setup    test_schema5_builders.py::test_no_tallied_game_is_a_stated_null",
+    "0.01s setup    test_schema5_builders.py::test_the_write_and_live_paths_reduce_the_same_four",
+    "0.01s setup    test_schema5_builders.py::test_the_memo_means_a_tallied_game_never_reopens_its_feed",
+    "161 passed in 33.91s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 52,
+   "rc": 0,
+   "seconds": 10.4,
+   "files": [
+    "test_score_archives.py",
+    "test_scoreboard_h2h_frame.py",
+    "test_scout_chunk_parity.py",
+    "test_scout_report_history.py",
+    "test_scrape_lottery_spotrac.py",
+    "test_scraper_writeups.py",
+    "test_scrapers_financial.py",
+    "test_sdr_intake.py"
+   ],
+   "tail": [
+    "0.01s call     test_sdr_intake.py::test_range_only_blend_is_refused_with_the_clause_named",
+    "0.01s call     test_scraper_writeups.py::test_espn_2026_midseason_layout",
+    "0.01s call     test_sdr_intake.py::test_duplicate_primary_key_is_refused",
+    "93 passed, 1 skipped in 9.51s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 53,
+   "rc": 0,
+   "seconds": 15.6,
+   "files": [
+    "test_sem_plus.py",
+    "test_serve_census.py",
+    "test_served_control_window_coherence.py",
+    "test_served_invariants.py",
+    "test_served_population.py",
+    "test_side_calibration_lab.py",
+    "test_sitemap_diamond_sync.py",
+    "test_skill_fip_label.py"
+   ],
+   "tail": [
+    "0.02s call     test_served_invariants.py::test_mutation_a_broken_decision_identity_is_caught",
+    "0.02s call     test_served_invariants.py::test_the_win_band_brackets_the_mean",
+    "0.02s call     test_served_control_window_coherence.py::test_the_control_end_is_the_max_of_the_two_facts_on_every_row",
+    "127 passed, 1 skipped in 14.95s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 54,
+   "rc": 0,
+   "seconds": 100.5,
+   "files": [
+    "test_snapshot_modern_signals.py",
+    "test_sort_header_a11y.py",
+    "test_sortino_surplus.py",
+    "test_source_articles.py",
+    "test_source_calibration.py",
+    "test_source_cohort_accuracy.py",
+    "test_source_comparison_basis.py",
+    "test_source_disagreement.py"
+   ],
+   "tail": [
+    "0.34s teardown test_source_comparison_basis.py::test_star_branches",
+    "0.31s call     test_source_disagreement.py::test_widening_monotone_at_low_fv_both_roles",
+    "0.26s call     test_source_comparison_basis.py::test_bars_print_the_verdict_block_and_star_only_past_a_floor",
+    "93 passed in 99.62s (0:01:39)"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 55,
+   "rc": 0,
+   "seconds": 139.9,
+   "files": [
+    "test_source_track_record.py",
+    "test_sources_attribution.py",
+    "test_spotlights.py",
+    "test_spotlights_eval_disclosure.py",
+    "test_spotlights_three_buckets.py",
+    "test_spotlights_v6.py",
+    "test_stabilization_constants.py",
+    "test_standout_ribbon.py"
+   ],
+   "tail": [
+    "0.01s teardown test_spotlights_v6.py::TestRPRebounderGate::test_24yo_mirp_does_not_rebound",
+    "0.01s teardown test_spotlights_v6.py::TestPitcherRole::test_sirp_classified_as_rp",
+    "0.01s teardown test_stabilization_constants.py::test_module_sits_at_the_bottom_of_the_import_graph",
+    "99 passed in 127.90s (0:02:07)"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 56,
+   "rc": 0,
+   "seconds": 12.6,
+   "files": [
+    "test_star_odds.py",
+    "test_starter_export_contract.py",
+    "test_starter_smoke.py",
+    "test_statcast_aaa_hitters.py",
+    "test_statcast_gamelog_extras.py",
+    "test_statcast_metrics.py",
+    "test_statcast_metrics_cache.py",
+    "test_statcast_org.py"
+   ],
+   "tail": [
+    "0.01s call     test_starter_smoke.py::test_bullpen_section_unaffected",
+    "0.01s call     test_star_odds.py::test_star_label_view_artifact",
+    "0.01s call     test_statcast_metrics_cache.py::test_corrupt_cache_is_refetched",
+    "57 passed in 11.06s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 57,
+   "rc": 0,
+   "seconds": 34.8,
+   "files": [
+    "test_statcast_overlay.py",
+    "test_statcast_plus.py",
+    "test_statcast_splits.py",
+    "test_stf_plus.py",
+    "test_storage_export.py",
+    "test_storage_identity_joins.py",
+    "test_stuff_plus_aaa.py",
+    "test_synthetic_anchor_partition.py"
+   ],
+   "tail": [
+    "0.01s teardown test_stf_plus.py::TestNullInputs::test_no_norms_returns_none",
+    "0.01s call     test_statcast_overlay.py::test_baked_sidecar_matches_exporter_constants",
+    "0.01s setup    test_storage_export.py::TestToolsSourceHistoryEmitted::test_three_fg_intervals_yield_three_entries",
+    "105 passed in 28.62s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 58,
+   "rc": 0,
+   "seconds": 32.3,
+   "files": [
+    "test_team_basis_coverage.py",
+    "test_team_outlook_calibration.py",
+    "test_team_picker.py",
+    "test_text_token_contrast.py",
+    "test_theme_tokens.py",
+    "test_tilt_census.py",
+    "test_timemachine_org.py",
+    "test_tj_surgery.py"
+   ],
+   "tail": [
+    "0.03s call     test_tj_surgery.py::test_mlbamid_fill_rate_above_95pct",
+    "0.03s call     test_team_basis_coverage.py::test_the_disclosure_counts_what_the_reader_sees",
+    "0.03s call     test_team_basis_coverage.py::test_a_history_board_says_the_history_thing",
+    "84 passed in 27.49s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 59,
+   "rc": 0,
+   "seconds": 22.5,
+   "files": [
+    "test_tjstats.py",
+    "test_tool_dev.py",
+    "test_trade_audit_basis.py",
+    "test_trade_board_coverage.py",
+    "test_trade_board_default_order.py",
+    "test_trade_board_identity.py",
+    "test_trade_forward_backtest.py",
+    "test_trade_grade_parity.py"
+   ],
+   "tail": [
+    "0.06s call     test_trade_board_coverage.py::test_projection_only_rows_price_on_the_projection_basis",
+    "0.05s call     test_trade_board_coverage.py::test_existing_rows_are_never_duplicated",
+    "0.05s call     test_trade_board_identity.py::ASlugHeldByTwoHumans::test_board_keys_stay_unique",
+    "74 passed, 2 skipped in 18.55s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 60,
+   "rc": 0,
+   "seconds": 42.8,
+   "files": [
+    "test_trade_machine_backtest.py",
+    "test_trades.py",
+    "test_transactions.py",
+    "test_two_way_card_only.py",
+    "test_ungraded_orphan_routing.py",
+    "test_upgrade_option.py",
+    "test_vaa.py",
+    "test_valuation_curve_surface.py"
+   ],
+   "tail": [
+    "0.01s teardown test_upgrade_option.py::test_surplus_payload_carries_opt_pct",
+    "0.01s call     test_upgrade_option.py::test_eval_artifact_present_and_gate_passes",
+    "0.01s setup    test_valuation_curve_surface.py::test_valuation_curve_artifact_is_not_excluded_so_it_ships",
+    "85 passed in 40.94s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 61,
+   "rc": 1,
+   "seconds": 146.2,
+   "files": [
+    "test_valuation_reports.py",
+    "test_valuation_sets.py",
+    "test_value_framework.py",
+    "test_value_framework_integration.py",
+    "test_value_ruler.py",
+    "test_value_ruler_render.py",
+    "test_verified_bugfixes.py",
+    "test_wag.py"
+   ],
+   "tail": [
+    "=========================== short test summary info ===========================",
+    "FAILED test_value_ruler.py::test_the_prospect_ladder_is_the_war_ladder_on_its_own_pool",
+    "FAILED test_value_ruler_render.py::test_the_default_board_is_not_one_colour",
+    "2 failed, 211 passed in 145.10s (0:02:25)"
+   ],
+   "failed_nodes": [
+    "FAILED test_value_ruler.py::test_the_prospect_ladder_is_the_war_ladder_on_its_own_pool",
+    "FAILED test_value_ruler_render.py::test_the_default_board_is_not_one_colour"
+   ],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 62,
+   "rc": 0,
+   "seconds": 8.3,
+   "files": [
+    "test_wag_career_exposure.py",
+    "test_wag_farm_copy.py",
+    "test_wag_l13_repairs.py",
+    "test_wag_sentinel_floor.py",
+    "test_wag_stress.py",
+    "test_wag_unified_flag.py",
+    "test_wag_validation.py",
+    "test_war_board_export_contract.py"
+   ],
+   "tail": [
+    "0.03s call     test_wag_l13_repairs.py::test_the_client_refuses_the_fv0_sentinel",
+    "0.03s call     test_war_board_export_contract.py::test_no_rate_board_row_carries_a_summed_ewar",
+    "0.02s call     test_wag_validation.py::test_wag_sign_and_weight_match_posterior",
+    "98 passed in 7.02s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 63,
+   "rc": 0,
+   "seconds": 11.8,
+   "files": [
+    "test_war_cohort_diagnostic.py",
     "test_war_rate_plus.py",
     "test_war_room_render.py",
     "test_war_source.py",
     "test_war_source_ewar.py",
     "test_war_stint_last_good.py",
-    "test_wire_fv_dates.py",
+    "test_win_expectancy.py",
+    "test_wire_fv_dates.py"
+   ],
+   "tail": [
+    "0.03s call     test_war_source_ewar.py::test_batting_stint_frame_does_not_move_at_fielding_weight_zero",
+    "0.03s call     test_war_source_ewar.py::test_the_side_map_receipt_counts_a_revision_only_past_its_threshold",
+    "0.03s call     test_war_source.py::test_side_war_by_season_identical_to_mlb_player_export",
+    "140 passed in 10.47s"
+   ],
+   "failed_nodes": [],
+   "stderr_tail": []
+  },
+  {
+   "chunk": 64,
+   "rc": 0,
+   "seconds": 8.5,
+   "files": [
     "test_wrc_plus_level.py",
     "test_zone_metrics.py"
    ],
    "tail": [
-    "0.01s call     test_war_source_ewar.py::test_batting_stint_frame_does_not_move_at_fielding_weight_zero",
-    "0.01s call     test_war_source.py::test_name_index_identical_to_fa_ident",
-    "0.01s call     test_war_source_ewar.py::test_career_war_bulk_bwar_is_byte_exact_over_the_raw_frames",
-    "75 passed in 10.31s"
+    "0.01s teardown test_wrc_plus_level.py::test_the_new_chip_is_a_different_number_from_the_old_one",
+    "",
+    "(17 durations < 0.005s hidden.  Use -vv to show these durations.)",
+    "12 passed in 7.50s"
    ],
    "failed_nodes": [],
    "stderr_tail": []
   }
  ],
- "n_ok": 39,
- "n_fail": 2,
+ "n_ok": 61,
+ "n_fail": 3,
  "n_crash": 0,
  "unexpected_failures": [
-  "FAILED test_betting_dispersion.py::test_eval_artifact_carries_the_dispersion_block_and_its_verdict"
+  "FAILED test_identity_collisions.py::test_no_new_merged_identity_on_the_active_board",
+  "FAILED test_identity_collisions.py::test_no_new_merged_identity_anywhere - As...",
+  "FAILED test_value_ruler.py::test_the_prospect_ladder_is_the_war_ladder_on_its_own_pool",
+  "FAILED test_value_ruler_render.py::test_the_default_board_is_not_one_colour"
  ],
  "baseline_reds_hit": [
-  "FAILED test_proj_export.py::test_vet_surplus_only_on_contracted_seasons - Ass..."
+  "FAILED test_efv_export.py::test_xfv_golden_fingerprint - AssertionError: data..."
  ]
 }
