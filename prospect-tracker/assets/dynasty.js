@@ -300,7 +300,8 @@
       get: function (d) { return d.surplus; },
       cell: function (d) { return d.surplus == null ? "-" : "$" + num(d.surplus, 0) + "M"; } },
     { key: "keep", label: "Keep by", where: "tape",
-      title: "Earliest keeper round whose pick number reaches his rank, under your Keeper Calculator settings.",
+      title: "Earliest keeper round whose pick number reaches his board rank in a prospects-only draft, " +
+        "under your Keeper Calculator settings.",
       get: function (d) { return breakEvenRound(d.rank); },
       cell: function (d) {
         var r = breakEvenRound(d.rank);
@@ -560,10 +561,18 @@
       field("dyn-k-window", "Your contention window, in years", k.window, 1, 12) +
       '<button type="button" class="dyn-btn" id="dyn-k-reset">Reset</button>' +
       "</div>";
+    // THE BASIS (2026-09-25). The board ranks prospects only, so the verdict is
+    // a prospects-only (farm or minors) draft verdict. It used to say "costs
+    // pick 54 overall", which read as the main draft, where a prospect goes far
+    // later than his prospect rank; no combined MLB-plus-prospect rank is served
+    // here, so the page states the basis instead of implying the other one.
     var explain =
-      '<div class="dyn-note">Pick spent against board rank. No dynasty dollar curve is fit, so no dollar value ' +
-      "is shown. With " + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
-      " keeper costs pick <b>" + costPick() + "</b> overall. Settings stay in this browser.</div>";
+      '<div class="dyn-note">Pick spent against board rank in a prospects-only draft (a farm or minors ' +
+      "draft). The board ranks prospects only, so in a draft that also holds MLB players a prospect goes " +
+      "later than his board rank, and this tool does not price that. No dynasty dollar curve is fit, so no " +
+      "dollar value is shown. With " + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
+      " keeper costs pick <b>" + costPick() + "</b> of that draft. The window only marks whether the ETA " +
+      "lands inside it; the verdict does not read it. Settings stay in this browser.</div>";
     if (!list.length) {
       return explain + form + '<div class="dyn-note">No board rows yet. The pick math above still updates.</div>';
     }
@@ -599,8 +608,8 @@
         "</tr>";
     }).join("");
     return explain + form + filterBar(null, false) +
-      '<div class="dyn-note">Edge = pick spent minus board rank; positive means keep. Keep by: earliest round ' +
-      "where edge is 0 or more.</div>" +
+      '<div class="dyn-note">Edge = pick spent minus board rank; positive means keep in a prospects-only ' +
+      "draft. Keep by: earliest round where edge is 0 or more.</div>" +
       '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th><th class="dyn-nm">Prospect</th><th>Pos</th>' +
       "<th>" + glossLbl({ label: "eFV", term: "xfv" }) + "</th>" +

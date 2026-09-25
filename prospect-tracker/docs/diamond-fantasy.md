@@ -335,7 +335,14 @@ clone was caught decaying ETA at 0.25 against this module's 0.18.
 
 Pure client arithmetic over the served rank, persisted to `localStorage` and
 sent nowhere. Four inputs: teams, your first-round slot, the round the keeper
-costs, your contention window.
+costs, your contention window. The window only tags whether the ETA lands
+inside it; the verdict does not read it.
+
+The board ranks prospects only, so the verdict is for a prospects-only draft
+(a farm or minors draft), and the page says so. Until 2026-09-25 it said a
+round 5 keeper "costs pick 54 overall", which read as the main draft, where a
+prospect goes far later than his prospect rank (M11-06). A combined MLB plus
+prospect rank for the main draft is not served here.
 
 ```
 pick you spend keeping in round R = teams * (R - 1) + your slot

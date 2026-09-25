@@ -464,7 +464,7 @@
         chip("Outlook", (band[0] != null && band[1] != null)
           ? ("$" + num(band[0], 0) + "-" + num(band[1], 0) + "M") : null) +
         (HOST && typeof HOST.keeperRound === "function"
-          ? chip("Keep by", "R" + HOST.keeperRound(d.rank)) : "") +
+          ? chip("Keep by (farm draft)", "R" + HOST.keeperRound(d.rank)) : "") +
         "</div>";
     }
     if (cw) {

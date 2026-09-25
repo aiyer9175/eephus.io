@@ -103,6 +103,12 @@ FANTASY_REQUIRED_DISCLOSURES = (
      "player card dynasty block: the rank is a display blend"),
     ("assets/dynasty.js", "display ranking over served efv numbers, not a separate model",
      "dynasty board blend disclosure on the served Dynasty board"),
+    # M11-06 (2026-09-25): the keeper verdict compares a PROSPECT rank with a
+    # pick, so it is a prospects-only draft verdict and must say so.
+    ("assets/dynasty.js", "pick spent against board rank in a prospects-only draft",
+     "keeper calculator basis: the board ranks prospects only"),
+    ("assets/fantasy-card.js", "keep by (farm draft)",
+     "player card keeper chip names the draft its round is for"),
 )
 
 
@@ -145,3 +151,13 @@ def test_fantasy_required_disclosures_present():
     assert not problems, (
         "required fantasy disclosure(s) gone: " + "; ".join(problems)
     )
+
+
+def test_dynasty_masthead_claims_only_what_ships():
+    """The Dynasty masthead said prospects and MLB players "share one ranking"
+    (0 of 300 board rows are MLB players) and that the keeper calculator
+    "prices years of control" (the window input never reaches the verdict)."""
+    for rel in ("build_site.py", "fantasy/index.html"):
+        text = _read_text(rel).lower()
+        for frag in ("share one ranking", "prices years of control"):
+            assert frag not in text, f"{rel}: {frag!r}"

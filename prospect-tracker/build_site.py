@@ -4290,9 +4290,10 @@ def build_fantasy() -> str:
         "redraft-board", True)
     dynasty = _fantasy_panel(
         "dynasty",
-        f"Dynasty and keeper value: prospects on {_gl('xfv', 'eFV')}, blended with ETA and "
-        "surplus so prospects and MLB players share one ranking. Call-up Watch flags who is next; "
-        "the keeper calculator prices years of control against redraft cost.",
+        f"Dynasty and keeper value: prospects ranked on {_gl('xfv', 'eFV')}, blended with star "
+        "odds, bust risk, ETA and surplus. The board ranks prospects only. Call-up Watch flags who "
+        "is next; the keeper calculator compares a prospect's board rank with the pick a keeper "
+        "costs in a prospects-only draft.",
         # dynasty.js fills this with the LENS control (board order / contending
         # / rebuilding), not a scoring selector: this board is graded and
         # ranked, it has no scoring formats. The class stays as-is because
