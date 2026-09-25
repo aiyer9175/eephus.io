@@ -321,6 +321,53 @@ GLOSSARY_CLAIMS = (
      "data/college_translation_eval.json", ("factors", "pit_k", "loo", "mae"), "abs", 0.01),
     ("single_a_equivalent", "pitcher K% null MAE", r"pitcher K% r2 0\.\d+ \(\d+\.\d+ against (\d+\.\d+)\)",
      "data/college_translation_eval.json", ("factors", "pit_k", "loo", "null_mae"), "abs", 0.01),
+    # Census X07-04 (2026-09-25): four entries had drifted from their
+    # artifacts while unpinned (sem_plus_3yr 0.414 / 0.392 against 0.4252 /
+    # 0.4098; rem_plus_3yr 0.237 / 0.232 against 0.2615 / 0.252; m_guarantee
+    # MAE 10.06 / 11.19 against 9.690 / 11.120; m_years 0.441 / 0.485 against
+    # 0.4329 / 0.4871). They and the neighbouring forward-test entries that
+    # still agreed (hem_plus, hem_plus_3yr, xhem_plus, pwoba) are held to
+    # their artifacts from here. Copy rounds to the quoted decimals.
+    ("sem_plus_3yr", "3yr forward rho", r"three-year forward Spearman (0\.\d+) against",
+     "data/sem_plus_multiyear_eval.json", ("sem_3yr_forward_rho",), "abs", 0.005),
+    ("sem_plus_3yr", "1yr forward rho, same set", r"three-year forward Spearman 0\.\d+ against (0\.\d+) for one year",
+     "data/sem_plus_multiyear_eval.json", ("sem_1yr_forward_rho_on_3yr_set",), "abs", 0.005),
+    ("rem_plus_3yr", "3yr forward rho", r"three-year forward Spearman (0\.\d+) against",
+     "data/rem_plus_multiyear_eval.json", ("rem_3yr_forward_rho",), "abs", 0.005),
+    ("rem_plus_3yr", "1yr forward rho, same set", r"three-year forward Spearman 0\.\d+ against (0\.\d+) for one year",
+     "data/rem_plus_multiyear_eval.json", ("rem_1yr_forward_rho_on_3yr_set",), "abs", 0.005),
+    ("m_guarantee", "Gate 2 guarantee MAE model", r"guarantee MAE (\d+\.\d+) against comps",
+     "data/fa_gate2_eval.json", ("pooled", "guarantee", "mae_model"), "abs", 0.005),
+    ("m_guarantee", "Gate 2 guarantee MAE comps", r"guarantee MAE \d+\.\d+ against comps (\d+\.\d+)",
+     "data/fa_gate2_eval.json", ("pooled", "guarantee", "mae_base"), "abs", 0.005),
+    ("m_years", "Gate 2 years MAE model", r"comps baseline (0\.\d+) against",
+     "data/fa_gate2_eval.json", ("pooled", "years", "mae_model"), "abs", 0.0005),
+    ("m_years", "Gate 2 years MAE comps", r"comps baseline 0\.\d+ against (0\.\d+) MAE",
+     "data/fa_gate2_eval.json", ("pooled", "years", "mae_base"), "abs", 0.0005),
+    ("hem_plus", "forward rho HEM+", r"next-year wOBA at a Spearman correlation of (0\.\d+), beating",
+     "data/hem_plus_eval.json", ("forward_spearman_vs_wOBA_next", "hem_plus"), "abs", 0.005),
+    ("hem_plus", "forward rho AVG", r"beating batting average \((0\.\d+)",
+     "data/hem_plus_eval.json", ("forward_spearman_vs_wOBA_next", "avg"), "abs", 0.005),
+    ("hem_plus", "forward rho raw wOBA", r"raw-wOBA parent \((0\.\d+)\)",
+     "data/hem_plus_eval.json", ("forward_spearman_vs_wOBA_next", "raw_woba"), "abs", 0.005),
+    ("hem_plus", "forward rho OPS", r"with OPS \((0\.\d+)\)",
+     "data/hem_plus_eval.json", ("forward_spearman_vs_wOBA_next", "ops"), "abs", 0.005),
+    ("hem_plus_3yr", "3yr forward rho", r"Spearman correlation of (0\.\d+) against",
+     "data/hem_plus_multiyear_eval.json", ("hem_3yr_forward_rho",), "abs", 0.005),
+    ("hem_plus_3yr", "1yr forward rho, same set", r"against (0\.\d+) for one season",
+     "data/hem_plus_multiyear_eval.json", ("hem_1yr_forward_rho_on_3yr_set",), "abs", 0.005),
+    ("xhem_plus", "n forward pairs", r"ex-2020, (\d+) pairs\)",
+     "data/xhem_plus_eval.json", ("n_forward_pairs",), "abs", 0.5),
+    ("xhem_plus", "forward rho xwOBA", r"xwOBA predicts next-year wOBA at a Spearman correlation of (0\.\d+)",
+     "data/xhem_plus_eval.json", ("forward_spearman_vs_wOBA_next", "xwoba"), "abs", 0.005),
+    ("xhem_plus", "forward rho actual wOBA", r"against (0\.\d+) for actual wOBA",
+     "data/xhem_plus_eval.json", ("forward_spearman_vs_wOBA_next", "actual_woba"), "abs", 0.005),
+    ("pwoba", "n gate pairs", r"\((\d+) out-of-sample pairs\)",
+     "data/phem_marcel_lite_eval.json", ("hitters", "n_gate"), "abs", 0.5),
+    ("pwoba", "gate rho projected wOBA", r"Spearman correlation of (0\.\d+) against",
+     "data/phem_marcel_lite_eval.json", ("hitters", "gate_rhos_v1", "fa_projection"), "abs", 0.00005),
+    ("pwoba", "gate rho incumbent", r"against (0\.\d+) for the best trailing-average incumbent",
+     "data/phem_marcel_lite_eval.json", ("hitters", "gate_rhos_v1", "incumbent_3yr_flat"), "abs", 0.00005),
 )
 
 # ---------------------------------------------------------------------------
