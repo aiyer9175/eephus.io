@@ -30314,9 +30314,10 @@ function getCurrentLevelForDebut(player) {
   return _rosterLevelCache[player.player_key] || null;
 }
 
-// Current-season MLB defensive usage sidecar. Used on player detail overview
-// pages to show compact position:games played breakdowns, e.g.
-// "1B:49 · 3B:28 · 2B:6 · DH:8".
+// Current-season MLB defensive usage sidecar, from the nightly fielding feed and
+// keyed by MLBAM id. Used on player detail overview pages to show compact
+// position:games played breakdowns, e.g. "1B:49 · 3B:28 · 2B:6 · DH:8". It used
+// to read a June snapshot keyed by name slug that nothing refreshed.
 let _fieldingUsageData = null;
 let _fieldingUsageLoading = false;
 function _ensureFieldingUsageForDetail(playerKey) {
@@ -30325,7 +30326,7 @@ function _ensureFieldingUsageForDetail(playerKey) {
   const base = (typeof DATA_BASE !== "undefined" ? DATA_BASE : "/data/");
   const vp = (typeof _dataVersion !== "undefined" && _dataVersion)
     ? "?v=" + encodeURIComponent(_dataVersion) : "";
-  fetch(base + "mlb_fielding_positions.json" + vp, { cache: "no-cache" })
+  fetch(base + "mlb_position_games.json" + vp, { cache: "no-cache" })
     .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(d => {
       _fieldingUsageData = d || {};
@@ -30336,27 +30337,28 @@ function _ensureFieldingUsageForDetail(playerKey) {
     })
     .catch(() => { _fieldingUsageData = { players: {} }; _fieldingUsageLoading = false; });
 }
-function _positionGamesSummary(playerKey) {
-  const entry = _fieldingUsageData && _fieldingUsageData.players && _fieldingUsageData.players[playerKey];
-  const positions = entry && entry.positions;
+function _positionGamesSummary(p) {
+  const mid = p && (p.mlbam_id || (p.statline || {}).mlbam_id);
+  const positions = mid && _fieldingUsageData && _fieldingUsageData.players && _fieldingUsageData.players[String(mid)];
   if (!positions) return "";
   const rows = Object.entries(positions)
     .map(([pos, row]) => ({
       pos,
-      games: Number(row && row.games),
-      starts: Number(row && row.games_started),
-      innings: Number(row && row.innings),
+      games: Number(row && row[0]),
+      starts: row && row[1] != null ? Number(row[1]) : NaN,
+      innings: row && row[2] != null ? Number(row[2]) : NaN,
     }))
     .filter(r => Number.isFinite(r.games) && r.games > 0)
     .sort((a, b) => (b.games - a.games) || (b.innings - a.innings) || a.pos.localeCompare(b.pos));
   if (!rows.length) return "";
   const year = _fieldingUsageData.season || "current";
+  const asOf = _fieldingUsageData.as_of ? String(_fieldingUsageData.as_of).slice(0, 10) : "";
   const chips = rows.map(r => {
     const title = `${r.pos}: ${r.games} games${Number.isFinite(r.starts) ? `, ${r.starts} starts` : ""}${Number.isFinite(r.innings) ? `, ${r.innings} innings` : ""}`;
     return `<span class="position-usage-chip" title="${escapeHtml(title)}"><span>${escapeHtml(r.pos)}</span>:${escapeHtml(String(r.games))}</span>`;
   }).join("");
   return `<div class="position-usage-strip" title="${escapeHtml(String(year))} MLB games by position">
-    <span class="position-usage-label">${escapeHtml(String(year))} usage</span>${chips}
+    <span class="position-usage-label">${escapeHtml(String(year))} usage</span>${chips}${asOf ? ` <span style="color:var(--text-tertiary)">as of ${escapeHtml(asOf)}</span>` : ""}
   </div>`;
 }
 
@@ -50506,7 +50508,7 @@ function renderPlayerDetail(key) {
   // its tab where applicable.
   const summaryGridHtml = `
     <div class="detail-title flush">Summary</div>
-    ${_positionGamesSummary(p.player_key)}
+    ${_positionGamesSummary(p)}
     <div class="overview-tile-grid">
       ${_ovTile(_ovHealth,    "health")}
       ${_ovTile(_ovSurplus,   null)}

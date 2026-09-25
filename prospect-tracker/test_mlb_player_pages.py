@@ -157,3 +157,38 @@ def test_mlb_detail_carries_origin():
     org = [p for p in d["players"].values() if p.get("origin")]
     assert len(org) > 500
     assert all(p["origin"].get("prospx") for p in org[:10])
+
+
+# ---------------------------------------------------------------------------
+# Games-by-position strip (M05-07, 2026-09-24): the nightly fielding feed,
+# keyed by MLBAM id, replaces a June snapshot keyed by name slug.
+# ---------------------------------------------------------------------------
+
+def test_position_games_keys_by_mlbam_and_stamps_the_feed_date(tmp_path, monkeypatch):
+    import mlb_player_export as mpe
+    (tmp_path / "fielding_innings.json").write_text(json.dumps({
+        "generated_at": "2026-09-23",
+        "seasons": {"2025": {"1": {"SS": {"g": 150, "gs": 150, "inn": 1300.0}}},
+                    "2026": {"571970": {"3B": {"g": 141, "gs": 128, "inn": 1123.0}},
+                             "691777": {"3B": {"g": 56, "gs": 51, "inn": 444.7},
+                                        "DH": {"g": 0, "gs": 0, "inn": 0.0}}}}}),
+        encoding="utf-8")
+    monkeypatch.setattr(mpe, "DATA_DIR", tmp_path)
+    out = mpe.build_position_games()
+    assert out["season"] == 2026 and out["as_of"] == "2026-09-23"
+    assert out["players"] == {"571970": {"3B": [141, 128, 1123.0]},
+                              "691777": {"3B": [56, 51, 444.7]}}
+    mpe._export_position_games()   # writes under the redirected DATA_DIR
+    assert json.loads((tmp_path / "mlb_position_games.json").read_text(encoding="utf-8"))["players"]
+
+
+def test_served_position_games_match_the_nightly_feed():
+    pg = _load("data/mlb_position_games.json")
+    fi = _load("data/fielding_innings.json")
+    assert pg["as_of"] == fi["generated_at"]
+    feed = fi["seasons"][str(pg["season"])]
+    assert len(pg["players"]) > 1000
+    for mid, rows in pg["players"].items():
+        for pos, (g, gs, inn) in rows.items():
+            src = feed[mid][pos]
+            assert (g, gs, inn) == (src["g"], src["gs"], src["inn"]), (mid, pos)

@@ -230,7 +230,7 @@
   let PTAB_FOR = null;
   let DETAIL = null;            // data/mlb_player_detail.json, lazy
   let DETAIL_LOADING = false;
-  let FIELDING = null;          // data/mlb_fielding_positions.json, lazy
+  let FIELDING = null;          // games by position, nightly, keyed by MLBAM id; lazy
   let FIELDING_LOADING = false;
   let PITCHLB = null;           // {byMlbam:{...}} from the /mlbstats/ leaderboards, lazy
   let PITCHLB_LOADING = false;
@@ -1130,9 +1130,10 @@
     return v == null || !Number.isFinite(Number(v)) ? EM_DASH : (Number(v) * 100).toFixed(0) + "%";
   }
 
-  // Team win totals - the retro backtest per season (cohort-recentered roll-up
-  // vs the prior-wins carry-forward baseline) + the player-level pooled read,
-  // the ship gate, and the still-pending forward gate.
+  // Team win totals - the retro backtest per season for the arm that serves
+  // (served_arm, picked by the ship decision) beside the prior-wins
+  // carry-forward, MAE and r both, + the player-level pooled read, the ship
+  // gate, and the still-pending forward gate.
   function teamWinsTable(tw) {
     if (!tw || !(tw.per_season || []).length) return "";
     const rows = tw.per_season.map(s => `<tr>
@@ -1141,18 +1142,28 @@
       <td class="proj-acct-key">${_num(s.mae)}</td>
       <td>${_num(s.r)}</td>
       <td class="fa-sub">${_num(s.baseline_mae)}</td>
+      <td class="fa-sub">${_num(s.baseline_r)}</td>
     </tr>`).join("");
     const fg = tw.forward_gate || {};
     const pooled = tw.player_pooled || {};
     const sd = tw.ship_decision || {};
     const hm = sd.holdout_mae || {};
+    const armLabel = tw.served_arm === "cohort_recentered"
+      ? "cohort intercepts + recentering" : "uniform recentering";
+    const gate = sd.holdout_season
+      ? ` Ship gate on the ${sd.holdout_season} holdout: cohort intercepts ${_num(hm.cohort_recentered)} vs uniform recentering ${_num(hm.recentered)}; `
+        + (sd.challenger_wins ? "intercepts serve." : "uniform recentering serves, intercepts not served.")
+        + ` Prior-wins carry-forward ${_num(hm.baseline_prior_wins)}.`
+      : "";
+    const vintage = tw.retro_generated_at ? ` Retro backtest run ${esc(String(tw.retro_generated_at))}.` : "";
     return `<table class="detail-table proj-table proj-acct-table">
       <thead><tr><th>Season</th><th title="Players assigned to their actual season team">Roster n</th>
-        <th title="Mean absolute error in projected team wins, cohort-recentered roll-up (lower is better)"><span data-gl="mae">MAE</span> (wins)</th>
-        <th title="Correlation of projected vs actual wins">r</th>
-        <th title="Prior-season wins carry-forward baseline MAE">Baseline</th></tr></thead>
+        <th title="Mean absolute error in projected team wins, ${armLabel} roll-up (the served arm; lower is better)"><span data-gl="mae">MAE</span> (wins)</th>
+        <th title="Correlation of projected vs actual wins, ${armLabel} roll-up">r</th>
+        <th title="Prior-season wins carry-forward baseline MAE">Baseline</th>
+        <th title="Prior-season wins carry-forward baseline correlation with actual wins">Baseline r</th></tr></thead>
       <tbody>${rows}</tbody></table>
-      <div class="fa-sub proj-acct-foot">Player-level engine pooled bias ${_signed(pooled.bias_act_minus_pred)} WAR, MAE ${_num(pooled.mae)} (n=${pooled.n ?? "?"}).${sd.holdout_season ? ` Ship gate on the ${sd.holdout_season} holdout: cohort-recentered ${_num(hm.cohort_recentered)} vs prior-wins baseline ${_num(hm.baseline_prior_wins)}; ${sd.challenger_wins ? "shipped" : "baseline retained"}.` : ""}</div>
+      <div class="fa-sub proj-acct-foot">Rows score the served roll-up (${armLabel}). Player-level engine pooled bias ${_signed(pooled.bias_act_minus_pred)} WAR, MAE ${_num(pooled.mae)} (n=${pooled.n ?? "?"}).${gate}${vintage}</div>
       <div class="fa-note proj-acct-foot"><span data-gl="forward_gate">Forward gate</span>: ${esc(fg.status || "pending")}; ${esc(fg.scope || "first season only")}; first scoreable ${esc(fg.first_scoreable || "end of the 2027 season")}. ${esc(fg.metric || "")}</div>`;
   }
 
@@ -2807,7 +2818,7 @@
   function ensureFielding() {
     if (FIELDING || FIELDING_LOADING) return;
     FIELDING_LOADING = true;
-    fetch("/data/mlb_fielding_positions.json", { cache: "no-cache" })
+    fetch("/data/mlb_position_games.json", { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => {
         FIELDING = d || {};
@@ -2878,25 +2889,27 @@
     if (!pillsHtml && !reportHtml) return "";
     return section("scouting", "Scouting", "consensus 20-80 tools · latest report · via PROSPX", pillsHtml + reportHtml);
   }
-  // Games by position from data/mlb_fielding_positions.json, stamped with the
-  // file's own date: the season label alone would read as current when the
-  // file is not.
+  // Games by position from the nightly fielding feed, joined on the card's
+  // MLBAM id (a name-slug join showed one Max Muncy's line on the other's
+  // page) and stamped with the feed's own date: the season label alone would
+  // read as current when the feed is not.
   function positionGamesSummary(key) {
-    const entry = FIELDING && FIELDING.players && FIELDING.players[key];
-    const positions = entry && entry.positions;
+    const card = DETAIL && (DETAIL.players || {})[key];
+    const mid = card && card.mlbam;
+    const positions = mid != null && FIELDING && FIELDING.players && FIELDING.players[String(mid)];
     if (!positions) return "";
     const rows = Object.entries(positions)
       .map(([pos, row]) => ({
         pos,
-        games: Number(row && row.games),
-        starts: Number(row && row.games_started),
-        innings: Number(row && row.innings),
+        games: Number(row && row[0]),
+        starts: row && row[1] != null ? Number(row[1]) : NaN,
+        innings: row && row[2] != null ? Number(row[2]) : NaN,
       }))
       .filter(r => Number.isFinite(r.games) && r.games > 0)
       .sort((a, b) => (b.games - a.games) || (b.innings - a.innings) || a.pos.localeCompare(b.pos));
     if (!rows.length) return "";
     const season = FIELDING.season || "current";
-    const asOf = FIELDING.generated_at ? String(FIELDING.generated_at).slice(0, 10) : "";
+    const asOf = FIELDING.as_of ? String(FIELDING.as_of).slice(0, 10) : "";
     return `<div class="position-usage-strip">
       <span class="position-usage-label">${esc(String(season))} games by position</span>
       ${rows.map(r => {

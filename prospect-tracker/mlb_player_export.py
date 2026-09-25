@@ -930,6 +930,54 @@ def _export_links(payload: dict) -> None:
              len(by_key), n_prospects, len(by_mlbam))
 
 
+def build_position_games() -> dict:
+    """The games-by-position strip on /projections/ and PROSPX player pages:
+    the latest season of fielding_innings (the nightly StatsAPI fielding feed,
+    refreshed at d9b1 just before this export), keyed by MLBAM id.
+
+    Both pages used to read a June snapshot keyed by name slug that nothing
+    refreshed (owner decision 24 repointed /dfs/ and /redraft/ off it on
+    2026-09-11). The slug key also crossed players who share a name: the
+    Dodgers' Max Muncy showed the A's Max Muncy's line and the infielder Jose
+    Fermin showed the pitcher's. MLBAM keys cannot collide that way.
+
+    Rows are [games, games started, innings] per position; innings are decimal
+    (fielding_innings converts baseball thirds at ingest). as_of is the feed's
+    own date, so a stale feed reads as stale on the page. Empty players when
+    the feed is unreadable; the strip then renders nothing."""
+    try:
+        fi = json.loads((DATA_DIR / "fielding_innings.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        fi = {}
+    seasons = fi.get("seasons") or {}
+    season = max((int(s) for s in seasons if str(s).isdigit()), default=None)
+    players: dict[str, dict] = {}
+    latest = seasons.get(str(season)) if season is not None else None
+    for mid, positions in (latest or {}).items():
+        rows = {}
+        for pos, r in (positions or {}).items():
+            g = (r or {}).get("g")
+            if not isinstance(g, (int, float)) or g <= 0:
+                continue
+            rows[pos] = [int(g), (r or {}).get("gs"), (r or {}).get("inn")]
+        if rows:
+            players[str(mid)] = rows
+    return {"generated_at": date.today().isoformat(),
+            "as_of": fi.get("generated_at"),
+            "season": season,
+            "source": "fielding_innings.json (StatsAPI season fielding, sportId=1)",
+            "row": ["g", "gs", "inn"],
+            "players": players}
+
+
+def _export_position_games() -> None:
+    out = build_position_games()
+    (DATA_DIR / "mlb_position_games.json").write_text(
+        json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    log.info("position games: %d players, season %s, feed as of %s",
+             len(out["players"]), out["season"], out["as_of"])
+
+
 _PAYLOAD_SOFT_BUDGET = 6 * 1024 * 1024   # 6MB - lazy-fetched on first player view
 
 
@@ -938,6 +986,7 @@ def export() -> int:
     raw = json.dumps(payload, separators=(",", ":"))
     OUT_PATH.write_text(raw, encoding="utf-8")
     _export_links(payload)
+    _export_position_games()
     if len(raw) > _PAYLOAD_SOFT_BUDGET:
         log.warning("mlb player detail: payload %.1fMB exceeds the %dMB soft "
                     "budget (lazy-fetched on first player view) - consider "

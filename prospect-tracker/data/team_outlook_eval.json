@@ -1,19 +1,19 @@
 {
- "generated_at": "2026-09-05",
+ "generated_at": "2026-09-24",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 936.6,
-  "remainder_recenter_wins_per_team": -0.0,
-  "roster_war_sum_y1": 936.6,
+  "roster_war_sum": 963.0,
+  "remainder_recenter_wins_per_team": -0.67,
+  "roster_war_sum_y1": 963.0,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 2367.5,
-  "raw_wins_sum_y1": 2367.5,
+  "raw_wins_sum": 2393.7,
+  "raw_wins_sum_y1": 2393.7,
   "target_wins_sum": 2430,
   "depth_pool": {
-   "n_depth_players": 423,
-   "depth_war_y1": 62.5,
-   "depth_war_5y": 218.8,
+   "n_depth_players": 409,
+   "depth_war_y1": 56.5,
+   "depth_war_5y": 198.3,
    "n_unassigned": 0,
    "war_unassigned_y1": 0.0,
    "war_unassigned_5y": 0.0
@@ -21,33 +21,33 @@
   "by_season": [
    {
     "season": 2027,
-    "roster_war_sum": 936.6,
-    "wins_sum": 2429.7,
-    "remainder_recenter_wins_per_team": -0.0
+    "roster_war_sum": 963.0,
+    "wins_sum": 2430.3,
+    "remainder_recenter_wins_per_team": -0.67
    },
    {
     "season": 2028,
-    "roster_war_sum": 548.2,
-    "wins_sum": 2429.7,
-    "remainder_recenter_wins_per_team": 13.36
+    "roster_war_sum": 574.2,
+    "wins_sum": 2430.2,
+    "remainder_recenter_wins_per_team": 12.68
    },
    {
     "season": 2029,
-    "roster_war_sum": 434.8,
-    "wins_sum": 2430.2,
-    "remainder_recenter_wins_per_team": 17.34
+    "roster_war_sum": 458.3,
+    "wins_sum": 2429.9,
+    "remainder_recenter_wins_per_team": 16.72
    },
    {
     "season": 2030,
-    "roster_war_sum": 363.1,
-    "wins_sum": 2430.2,
-    "remainder_recenter_wins_per_team": 19.99
+    "roster_war_sum": 379.2,
+    "wins_sum": 2430.4,
+    "remainder_recenter_wins_per_team": 19.55
    },
    {
     "season": 2031,
-    "roster_war_sum": 286.1,
-    "wins_sum": 2429.9,
-    "remainder_recenter_wins_per_team": 22.88
+    "roster_war_sum": 297.6,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 22.53
    }
   ],
   "coverage_decomposition_2025": {
@@ -58,7 +58,8 @@
   }
  },
  "calibration": {
-  "kind": "v2: per-team sub-floor depth pool + cohort intercepts (side x age band, retro-backtest-fit 2022-24, holdout-gated) + small uniform remainder to the 2,430-win league sum, applied per season",
+  "kind": "v2: per-team sub-floor depth pool + uniform remainder to the 2,430-win league sum, applied per season; the cohort intercepts (side x age band, retro-backtest-fit 2022-24) lost their holdout gate and are not applied",
+  "cohort_intercepts_applied": false,
   "limitations": [
    "depth-pool team assignment needs a contract row; unassigned depth WAR rides the uniform remainder",
    "spread stays projection-compressed (correct for a mean projection; bands carry the uncertainty)"
@@ -302,23 +303,23 @@
   "display_metric": "the surface shows year-1 W-L + WAR plus lockedPct = WAR-weighted control share (controlled / everyone-stays WAR over 2027-31); aging cancels, so it isolates cost control",
   "limitations": [
    "only the first season (2027) is forward-gateable; out-years (2028+) are a controlled-core competitive trajectory, NOT scored against actual standings",
-   "control window = Spotrac signed_through where present, else an age-based proxy (no service time in the pipeline)",
+   "the cliff is Spotrac signed_through where present, else an age-based proxy (no service time in the pipeline). It is NOT the club control window on the players board, which is the salary path's own end (ctrlThru)",
    "cohort intercepts were fit on year-1 residuals; out-year application re-bands by age but is an approximation"
   ]
  },
  "window_alignment": {
-  "kind": "surplus-weighted farm ETA (etaMean) vs the controlled-core WAR center (coreCenter); etaAlignYears = etaMean - coreCenter, <= 0 = farm arrives inside the control window (aligned)",
+  "kind": "surplus-weighted farm ETA (etaMean) vs the controlled-core WAR center (coreCenter); etaAlignYears = etaMean - coreCenter, <= 0 = farm arrives inside the controlled-core window (aligned). That window is the age-proxy cliff (_last_controlled_season), not the club control window the players board prints",
   "weight": "expected surplus $ (value_mm), floored at 0; count-weight fallback",
   "eta_coverage_orgs": 30,
   "align_coverage_orgs": 30,
   "eta_mean_range": [
-   2027.43,
-   2029.08
+   2027.45,
+   2028.95
   ],
   "align_median": -0.4,
   "align_range": [
-   -1.12,
-   0.81
+   -1.1,
+   0.68
   ],
   "aligned_org_count": 27,
   "limitations": [
@@ -332,6 +333,8 @@
   "holdout_mae_served_recentered": 7.18,
   "holdout_mae_recentered": 7.21,
   "flag": false,
+  "vector_serving": false,
+  "vector_note": "the cohort-intercept vector does not serve; served_recentered scores the vector as it stood when proj_backtest last ran (2026-08-04), and the live roll-up is the plain recentered arm",
   "source": "retro_backtest.ship_decision.holdout_mae (proj_backtest.py; preserved across re-exports; flag is None when the block is absent)"
  }
 }

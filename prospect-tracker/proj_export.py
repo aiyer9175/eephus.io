@@ -1507,10 +1507,9 @@ def _prospect_rows(dpw: float) -> list[dict]:
 
 def _cohort_intercepts() -> dict[str, float]:
     """side:ageband -> additive year-1 WAR intercept, from the committed
-    retro backtest (proj_backtest.py, fit on 2022-24 residuals, won the
-    2025 holdout 7.71 vs 7.76 team-MAE). Applied at the TEAM ROLL-UP only
-    - the per-player display keeps the engine's mean (the gate validated
-    the team-level improvement, nothing finer). Missing artifact = no-op.
+    retro backtest (proj_backtest.py, fit on 2022-24 residuals, gated on
+    the 2025 holdout). Applied at the TEAM ROLL-UP only - the per-player
+    display keeps the engine's mean. Missing artifact = no-op.
 
     GATED on the artifact's own ship_decision (added 2026-07-31). Until now
     this read the intercepts unconditionally, so re-running proj_backtest.py
@@ -1518,9 +1517,9 @@ def _cohort_intercepts() -> dict[str, float]:
     That is not hypothetical: re-fitting on the post-E3 paths yields
     cohort_recentered 7.29 against plain recentered 7.19, i.e. the intercepts
     become actively harmful, and the old code would have shipped them the
-    moment anyone regenerated the artifact. challenger_wins is True on the
-    committed 2026-06-12 fit, so this guard is a no-op TODAY and changes no
-    served number; it exists so the next refit cannot ship itself."""
+    moment anyone regenerated the artifact. The 2026-08-04 proj_backtest run
+    persisted challenger_wins False, so this returns {} and the served roll-up
+    is plain uniform recentering (the retro block's `recentered` arm)."""
     # CONSERVATIVE-DIRECTION GUARD, verified 2026-08-07 (silent-empty sweep).
     # Empty here means DO NOT APPLY THE CHALLENGER: the roll-up keeps the
     # engine's own mean, which is the arm the gate validated. An unreadable
@@ -1983,6 +1982,10 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
         payload = json.loads((DATA_DIR / "team_outlook_eval.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         payload = {}
+    # Whether the cohort-intercept vector serves, read through the same gate
+    # the roll-up uses, so the calibration text below and the tripwire never
+    # describe a vector the roll-up did not apply.
+    vector_serving = bool(_cohort_intercepts())
     by_season = []
     for t in range(HORIZON):
         seas = [r["byYear"][t] for r in rows if t < len(r.get("byYear") or [])]
@@ -2017,10 +2020,16 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
                         "was the exposure-floor universe (see retro_backtest)"},
         },
         "calibration": {
-            "kind": "v2: per-team sub-floor depth pool + cohort intercepts "
-                    "(side x age band, retro-backtest-fit 2022-24, holdout-gated) "
-                    "+ small uniform remainder to the 2,430-win league sum, "
-                    "applied per season",
+            "kind": ("v2: per-team sub-floor depth pool + cohort intercepts "
+                     "(side x age band, retro-backtest-fit 2022-24, holdout-gated) "
+                     "+ small uniform remainder to the 2,430-win league sum, "
+                     "applied per season"
+                     if vector_serving else
+                     "v2: per-team sub-floor depth pool + uniform remainder to "
+                     "the 2,430-win league sum, applied per season; the cohort "
+                     "intercepts (side x age band, retro-backtest-fit 2022-24) "
+                     "lost their holdout gate and are not applied"),
+            "cohort_intercepts_applied": vector_serving,
             "limitations": [
                 "depth-pool team assignment needs a contract row; unassigned depth WAR rides the uniform remainder",
                 "spread stays projection-compressed (correct for a mean projection; bands carry the uncertainty)"],
@@ -2099,6 +2108,17 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
         "holdout_mae_served_recentered": _srv,
         "holdout_mae_recentered": _plain,
         "flag": _flag,
+        # served_recentered scores the vector proj_backtest read when it last
+        # ran. When the gate has since switched the vector off, that arm
+        # describes a vector this export does not apply, and the tripwire
+        # says so instead of implying it meters the live roll-up.
+        "vector_serving": vector_serving,
+        "vector_note": (None if vector_serving else
+                        "the cohort-intercept vector does not serve; "
+                        "served_recentered scores the vector as it stood when "
+                        "proj_backtest last ran ("
+                        + str((payload.get("retro_backtest") or {}).get("generated_at"))
+                        + "), and the live roll-up is the plain recentered arm"),
         "source": ("retro_backtest.ship_decision.holdout_mae "
                    "(proj_backtest.py; preserved across re-exports; "
                    "flag is None when the block is absent)"),
@@ -2559,14 +2579,24 @@ def _accountability_block() -> dict:
     # ship decision, and the still-pending forward gate.
     to = _read_data_json("team_outlook_eval.json")
     retro = to.get("retro_backtest") or {}
+    # The table scores the arm that SERVES, chosen by the same ship decision
+    # _cohort_intercepts() gates on: the cohort-intercept arm only when the
+    # challenger won its holdout, plain uniform recentering otherwise. It used
+    # to read cohort_recentered unconditionally, so after the 2026-08-04 gate
+    # loss the card printed an arm the roll-up no longer applies.
+    served_arm = ("cohort_recentered"
+                  if (retro.get("ship_decision") or {}).get("challenger_wins")
+                  else "recentered")
     team_wins = {
         "design": retro.get("design"),
+        "served_arm": served_arm,
+        "retro_generated_at": retro.get("generated_at"),
         "per_season": [
             {"season": s.get("season"),
              "n_assigned_players": s.get("n_assigned_players"),
              "is_holdout": s.get("is_holdout"),
-             "mae": (s.get("cohort_recentered") or {}).get("mae"),
-             "r": (s.get("cohort_recentered") or {}).get("r"),
+             "mae": (s.get(served_arm) or {}).get("mae"),
+             "r": (s.get(served_arm) or {}).get("r"),
              "baseline_mae": (s.get("baseline_prior_wins") or {}).get("mae"),
              "baseline_r": (s.get("baseline_prior_wins") or {}).get("r")}
             for s in (retro.get("team_level_per_season") or [])

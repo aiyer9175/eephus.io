@@ -465,3 +465,86 @@ def test_site_carries_projections_surface():
     if page.exists():
         src = page.read_text(encoding="utf-8")
         assert "projections.js" in src and "proj-rows" in src
+
+
+# ---------------------------------------------------------------------------
+# Team Win Totals card (M05-02, 2026-09-24). The table used to print the
+# cohort-intercept challenger arm unconditionally, so after the 2026-08-04 gate
+# loss the card scored an arm the roll-up no longer applies, beside a registry
+# metric line that said the served arm won and a foot that read "baseline
+# retained". One card, three holdout outcomes.
+# ---------------------------------------------------------------------------
+
+def _team_outlook_eval() -> dict:
+    p = ROOT / "data" / "team_outlook_eval.json"
+    if not p.exists():
+        pytest.skip("team_outlook_eval.json not present on this machine")
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def test_team_wins_table_prints_the_arm_the_ship_decision_serves():
+    retro = _team_outlook_eval().get("retro_backtest") or {}
+    if not retro.get("team_level_per_season"):
+        pytest.skip("retro_backtest block absent")
+    arm = ("cohort_recentered" if (retro.get("ship_decision") or {}).get("challenger_wins")
+           else "recentered")
+    # the arm printed is the arm the roll-up applies
+    assert (arm == "cohort_recentered") == bool(pe._cohort_intercepts())
+    tw = pe._accountability_block()["backtests"]["data/team_outlook_eval.json"]
+    assert tw["served_arm"] == arm
+    assert tw["retro_generated_at"] == retro.get("generated_at")
+    for row, s in zip(tw["per_season"], retro["team_level_per_season"]):
+        assert row["season"] == s["season"]
+        assert row["mae"] == s[arm]["mae"] and row["r"] == s[arm]["r"], row
+        assert row["baseline_mae"] == s["baseline_prior_wins"]["mae"]
+        assert row["baseline_r"] == s["baseline_prior_wins"]["r"]
+
+
+def test_team_wins_arm_follows_the_ship_decision(monkeypatch):
+    """Mutation: flip challenger_wins and the printed arm must follow."""
+    def fake(name):
+        if name != "team_outlook_eval.json":
+            return {}
+        return {"retro_backtest": {
+            "ship_decision": {"challenger_wins": flag},
+            "team_level_per_season": [{"season": 2025, "is_holdout": True,
+                                       "recentered": {"mae": 1.0, "r": 0.1},
+                                       "cohort_recentered": {"mae": 2.0, "r": 0.2},
+                                       "baseline_prior_wins": {"mae": 3.0, "r": 0.3}}]}}
+    monkeypatch.setattr(pe, "_read_data_json", fake)
+    for flag, mae in ((False, 1.0), (True, 2.0)):
+        tw = pe._accountability_block()["backtests"]["data/team_outlook_eval.json"]
+        assert tw["per_season"][0]["mae"] == mae, (flag, tw)
+
+
+def test_team_wins_registry_prose_carries_no_unbacked_figure():
+    """Every decimal in the registry's metric and baseline lines for this card
+    must appear in its eval artifact (DNR 9: accuracy claims derive from an
+    artifact). The predicts line's one decimal is the replacement-wins constant."""
+    import re
+    from rate_stabilization import REPLACEMENT_WINS
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    row = next(m for m in reg["models"] if m["model_id"] == "team_win_projections")
+    art = (ROOT / "data" / "team_outlook_eval.json").read_text(encoding="utf-8")
+    for field in ("metric", "baseline"):
+        for num in re.findall(r"\d+\.\d+", row[field]):
+            assert num in art, (field, num)
+    assert [float(x) for x in re.findall(r"\d+\.\d+", row["predicts"])] == [REPLACEMENT_WINS]
+    assert "bWAR roll-up" not in row["predicts"] and "none yet" not in row["baseline"]
+
+
+def test_team_wins_foot_reads_the_gate_from_the_artifact():
+    src = (ROOT / "assets" / "projections.js").read_text(encoding="utf-8")
+    body = src[src.index("function teamWinsTable("):src.index("function vetHorizonsTable(")]
+    assert "baseline retained" not in body
+    assert "hm.recentered" in body and "hm.cohort_recentered" in body
+    assert "s.baseline_r" in body and "tw.served_arm" in body
+
+
+def test_team_outlook_eval_says_whether_the_vector_serves():
+    ev = _team_outlook_eval()
+    on = bool(pe._cohort_intercepts())
+    assert (ev.get("serve_vector_tripwire") or {}).get("vector_serving") is on
+    cal = ev.get("calibration") or {}
+    assert cal.get("cohort_intercepts_applied") is on
+    assert ("not applied" in cal.get("kind", "")) is (not on)

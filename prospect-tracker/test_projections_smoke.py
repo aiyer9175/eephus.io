@@ -139,8 +139,12 @@ DETAIL = json.dumps({"players": {
         "skills": {"hem": {"hemPlus": 170, "qualified": True}}},
 }})
 
-FIELDING = json.dumps({"season": 2026, "generated_at": "2026-06-22T21:29:00Z", "players": {
-    "vet_guy": {"positions": {"SS": {"games": 120, "games_started": 118, "innings": 1030.3}}}}})
+# The nightly games-by-position file: keyed by MLBAM id, rows [g, gs, inn],
+# stamped with the fielding feed's own date (as_of). The "vet_guy" slug row is a
+# decoy: the strip joins on the card's mlbam, so a slug join would print its P.
+FIELDING = json.dumps({"season": 2026, "as_of": "2026-09-23", "generated_at": "2026-09-24",
+                       "players": {"545361": {"SS": [120, 118, 1030.3]},
+                                   "vet_guy": {"P": [18, 0, 20.0]}}})
 
 
 def _prelude(hash_: str, fail_fetch: bool = False) -> str:
@@ -151,7 +155,7 @@ def _prelude(hash_: str, fail_fetch: bool = False) -> str:
         if fail_fetch else
         "var __payloads={'/data/mlb_projections.json':BOARD,"
         "'/data/mlb_player_detail.json':DETAIL,"
-        "'/data/mlb_fielding_positions.json':FIELDING};"
+        "'/data/mlb_position_games.json':FIELDING};"
         "var fetch=function(url){var p=__payloads[url];"
         "if(p===undefined)return {then:function(){return this;},"
         "catch:function(cb){cb(new Error('HTTP 404'));return this;}};"
@@ -344,7 +348,8 @@ def test_ptab_deep_link_keeps_its_panel_after_the_async_fill():
     # the fielding fixture landed (synchronous stub fetch) ...
     usage = out.get("mlbp-slot-usage", "")
     assert "position-usage-chip" in usage and "SS" in usage, "usage fill never landed"
-    assert "as of 2026-06-22" in usage             # the file's own vintage, stamped
+    assert "as of 2026-09-23" in usage             # the feed's own vintage, stamped
+    assert "<span>P</span>" not in usage           # joined on mlbam, never the slug
     # ... into its slot, without re-rendering the page back to the first tab
     assert _visible_panels(html) == ["defense"]
     assert [t for t, sel in _tabs(html) if sel == "true"] == ["defense"]
@@ -748,3 +753,15 @@ def test_eyebrow_names_the_active_sort():
     assert "sorted by 5y WAR ▾" in _render("")
     assert "sorted by AAV ▴" in _render("#sort=aav&dir=asc")
     assert "sorted by 2027 FIP" in _render("#cells=fip&sort=y1")
+
+
+def test_position_strip_reads_the_nightly_mlbam_keyed_file():
+    """The strip used to read a June snapshot keyed by name slug that nothing
+    refreshed; owner decision 24 (2026-09-11) repointed /dfs/ and /redraft/ off
+    it and /projections/ was missed. Neither player page may fetch it again."""
+    src = (ROOT / "assets" / "projections.js").read_text(encoding="utf-8")
+    assert "mlb_fielding_positions.json" not in src
+    assert '"/data/mlb_position_games.json"' in src
+    prospx = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    assert "mlb_fielding_positions.json" not in prospx
+    assert '"mlb_position_games.json"' in prospx
