@@ -133,18 +133,46 @@ def _mlb_detail_players() -> dict:
                 nk = _name_key((row or {}).get("name"))
                 if nk:
                     out.setdefault(nk, row)
+                mid = _mlbam_int((row or {}).get("mlbam"))
+                if mid is not None:
+                    out.setdefault(f"#mlbam:{mid}", row)   # never a slug
             _MLB_DETAIL_CACHE = out
         except Exception:
             _MLB_DETAIL_CACHE = {}
     return _MLB_DETAIL_CACHE
 
 
+def _mlbam_int(v) -> int | None:
+    """An mlbam id as an int, or None for a missing or unreadable one."""
+    try:
+        return int(v) if v is not None and str(v).strip() != "" else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _same_human(player: dict, entry: dict | None) -> bool:
+    """False only when BOTH sides carry an mlbam id and the ids differ.
+
+    A key or a name is a slug, and a slug can name two humans: max_muncy is the
+    36-year-old LAD veteran (571970) in mlb_player_detail and the 24-year-old
+    ATH infielder (691777) on the board. Where either id is missing the join
+    stays as it was, because refusing it would unprice rows on a missing field
+    rather than on evidence of a second human."""
+    if not entry:
+        return False
+    a, b = _mlbam_int(player.get("mlbam_id")), _mlbam_int(entry.get("mlbam"))
+    return a is None or b is None or a == b
+
+
 def _mlb_projection_entry(player: dict) -> dict | None:
     players = _mlb_detail_players()
     key = player.get("player_key")
-    if key in players:
-        return players[key]
-    return players.get(_name_key(player.get("player_name")))
+    entry = players[key] if key in players else players.get(_name_key(player.get("player_name")))
+    if entry is None or _same_human(player, entry):
+        return entry
+    # The slug found a different human. Only then is the id consulted, so a row
+    # whose slug join was right is priced exactly as before.
+    return players.get(f"#mlbam:{_mlbam_int(player.get('mlbam_id'))}")
 
 
 def _proj_value_usd(v: dict) -> float | None:
@@ -3812,6 +3840,10 @@ def bayesian_trade_value(
 
     return {
         "player_key":            player_key,
+        # The human behind the key. apply_platform_surplus joins the projection
+        # artifacts on this, not on player_key: a key names a slug, and 200
+        # slugs name more than one human (identity_collisions.json).
+        "mlbam_id":              _mlbam_int(player.get("mlbam_id")),
         "player_name":           player.get("player_name"),
         "position":              position,
         "org":                   player.get("org"),
@@ -4816,11 +4848,16 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     det = (_load("mlb_player_detail.json") or {}).get("players", {}) or {}
 
     proj_sur, proj_rows, ages = {}, {}, {}
+    proj_mlbam, proj_key_by_mlbam = {}, {}
     for grp in ("vets", "prospects"):
         for r in (mp.get(grp) or []):
             k = r.get("key")
             if not k:
                 continue
+            _mid = _mlbam_int(r.get("mlbam"))
+            if _mid is not None:
+                proj_mlbam[k] = _mid
+                proj_key_by_mlbam.setdefault(_mid, k)
             _pv = _proj_value_usd(r)
             if _pv is not None:
                 proj_sur[k] = _pv / 1e6               # raw $ in the artifact; board surplus is $M
@@ -4878,11 +4915,21 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     for r in records:
         pk = r.get("player_key")
         is_pros = r.get("status") == "active"
+        # THE PROJECTION JOIN IS ON THE HUMAN, NOT THE SLUG. `pk` keeps every
+        # board-side join (xfv, debuts, roster); `ppk` is the key this record's
+        # human carries in mlb_projections. They differ only where the slug is
+        # held by a different mlbam id there: max_muncy was the ATH infielder
+        # (691777) on the board and the LAD veteran (571970) in projections, so
+        # the board quoted a 24-year-old at the veteran's $54.3M and the veteran
+        # had no row. See _projection_key_for.
+        ppk = _projection_key_for(r, proj_mlbam, proj_key_by_mlbam)
+        if ppk != pk:
+            r["proj_key"] = ppk
         # Resolve age up front (backfilled from the projection artifacts) - the
         # backgrade temper below reads it.
         age = r.get("age")
-        if age is None and pk in ages:
-            age = ages[pk]
+        if age is None and ppk in ages:
+            age = ages[ppk]
             r["age"] = age
             stats["age_backfilled"] += 1
 
@@ -4892,7 +4939,7 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         # dropped, and neither are players the projection system still models (an
         # injured star with a forward projection stays). trade_value_mm=None ->
         # the board's null filter omits them.
-        if not is_pros and pk not in proj_sur and pk in roster and current_season is not None \
+        if not is_pros and ppk not in proj_sur and pk in roster and current_season is not None \
                 and roster[pk][0] <= current_season - 2:
             r["trade_value_mm"] = None
             r["posterior_surplus_mm"] = None
@@ -4925,8 +4972,8 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             if x_sur is not None:
                 new, src = x_sur, "xfv"
         else:
-            if pk in proj_sur:
-                new, src = proj_sur[pk], "projection"
+            if ppk in proj_sur:
+                new, src = proj_sur[ppk], "projection"
             elif x_sur is not None and _has_control_window(r):
                 # Temper the prospect-era backgrade toward realized MLB outcomes
                 # for established debuted players (a busted former top prospect
@@ -5078,6 +5125,12 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     # the board.
     added = _append_projection_only_rows(records, {**proj_sur, **prearb_sur},
                                          ages, det, dd, prearb=prearb_meta)
+    # Board rows whose slug names a different human in mlb_projections, and
+    # vets seeded under slug__mlbam because a different human holds the slug.
+    stats["projection_key_rejoined"] = sum(
+        1 for r in records if "proj_key" in r and r.get("board_entry") != "projection_only")
+    stats["projection_only_rekeyed"] = sum(
+        1 for r in records if "proj_key" in r and r.get("board_entry") == "projection_only")
     stats["projection_only_added"] = added
     stats[_PREARB_SOURCE] = sum(1 for r in records
                                 if r.get("surplus_source") == _PREARB_SOURCE)
@@ -5103,7 +5156,7 @@ def _stamp_projection_bands(records: list, proj_rows: dict,
     for r in records:
         if r.get("surplus_source") not in ("projection", _PREARB_SOURCE):
             continue
-        v = proj_rows.get(r.get("player_key")) or {}
+        v = proj_rows.get(_proj_key_of(r)) or {}
         lo, hi = _projection_band_mm(v, dpw, disc)
         r["trade_value_lo"] = lo
         r["trade_value_hi"] = hi
@@ -5210,7 +5263,18 @@ def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
     a pre-arb player who reaches the board through the seeder and one who was
     already on it must be the same row."""
     prearb = prearb or {}
+    # Who is ALREADY on the board, by human. A vet is seeded unless his own
+    # mlbam id is present, or (for a board row that carries no id) his slug is.
+    # The slug test alone skipped every veteran whose slug a prospect held, so
+    # Max Muncy (LAD), Jose Ramirez (CLE) and Jose Fermin (STL) had no row.
     present = {r.get("player_key") for r in records if r.get("player_key")}
+    # A row the loop dropped (inactive, identity collision) does not publish,
+    # so it cannot stand in for the human: brent_honeywell (641703) is dropped
+    # as inactive while his projection row brent_honeywell_jr prices him.
+    present_mlbam = {_mlbam_int(r.get("mlbam_id")) for r in records
+                     if r.get("surplus_source") not in _EXCLUDED_SOURCES} - {None}
+    slug_mlbam = {r.get("player_key"): _mlbam_int(r.get("mlbam_id"))
+                  for r in records if r.get("player_key")}
     try:
         proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -5218,11 +5282,27 @@ def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
     n = 0
     for v in (proj.get("vets") or []):
         pk = v.get("key")
-        if not pk or pk in present or pk not in proj_sur:
+        if not pk or pk not in proj_sur:
             continue
+        mid = _mlbam_int(v.get("mlbam"))
+        if mid is not None and mid in present_mlbam:
+            continue                                   # this human has a row
+        row_key = pk
+        if pk in present:
+            held_by = slug_mlbam.get(pk)
+            if mid is None or held_by is None or held_by == mid:
+                continue                               # no evidence of a second human
+            # The slug belongs to someone else on the board. Seed under the
+            # platform's collision form (slug__mlbam, the form proj_export gives
+            # the second human) and carry the projection key, which is what
+            # /projections/ and the evaluator's detail lookup key on.
+            row_key = f"{pk}__{mid}"
+            if row_key in present:
+                continue
         mm = round(float(proj_sur[pk]), 1)
         row = {
-            "player_key": pk,
+            "player_key": row_key,
+            "mlbam_id": mid,
             "player_name": v.get("name"),
             "position": v.get("pos"),
             "org": v.get("team"),
@@ -5245,6 +5325,8 @@ def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
             # leaving a reader to wonder why a star appeared from nowhere.
             "board_entry": "projection_only",
         }
+        if row_key != pk:
+            row["proj_key"] = pk
         if pk in prearb:
             row["prearb"] = dict(prearb[pk])       # the salary assumption travels
         thru, aav = v.get("thru"), v.get("aav")
@@ -5255,8 +5337,43 @@ def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
                 "fa_year": (thru + 1) if thru is not None else None,
             })
         records.append(row)
+        present.add(row_key)
+        if mid is not None:
+            present_mlbam.add(mid)
         n += 1
     return n
+
+
+def _proj_key_of(r: dict):
+    """The mlb_projections key of a board row's human: `proj_key` where the row
+    carries one (its slug names someone else there; None when the projection
+    system does not model him at all), else its own player_key."""
+    return r["proj_key"] if "proj_key" in r else r.get("player_key")
+
+
+def _projection_key_for(r: dict, proj_mlbam: dict, proj_key_by_mlbam: dict):
+    """The key this board record's human carries in mlb_projections.
+
+      - the record's own slug when the projection row under it is the same
+        human, or when the record carries no mlbam id (no evidence either way,
+        so the join stays as it always was);
+      - the human's own projection key when the slug is not a projection key
+        at all but the id is (rafael_flores_jr on the board is rafael_flores in
+        projections: one human, who used to reach the board twice, once per
+        key, at two different prices);
+      - when the slug IS a projection key but for a DIFFERENT id, the human's
+        own projection key by id, or None when the projection system does not
+        model him. The other human's row is never borrowed."""
+    pk = r.get("player_key")
+    mid = _mlbam_int(r.get("mlbam_id"))
+    if mid is None:
+        return pk
+    held = proj_mlbam.get(pk)
+    if held == mid:
+        return pk
+    if held is None:
+        return proj_key_by_mlbam.get(mid, pk)
+    return proj_key_by_mlbam.get(mid)
 
 
 def _clean_contract(d: dict) -> dict:
@@ -5353,8 +5470,10 @@ def _projection_coverage(records: list, data_dir) -> dict:
     than folded into `unpriceable_priced_elsewhere`, because "priced by the eFV
     backgrade" and "priced at the league minimum" are different claims and a
     census that cannot tell them apart cannot be used to check either."""
-    on_board = {r.get("player_key") for r in records
-                if r.get("player_key") and r.get("trade_value_mm") is not None}
+    # Keyed by the PROJECTION key of each row's human (_proj_key_of), so a
+    # prospect holding a veteran's slug no longer counts the veteran as covered.
+    on_board = {_proj_key_of(r) for r in records
+                if _proj_key_of(r) and r.get("trade_value_mm") is not None}
     try:
         proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -5368,7 +5487,7 @@ def _projection_coverage(records: list, data_dir) -> dict:
     # priced him": ~100 of the pre-arb-eligible vets already price through the
     # eFV backgrade and keep it, and a census that credited this lane for those
     # rows would be measuring the wrong thing.
-    prearb_on_board = {r.get("player_key") for r in records
+    prearb_on_board = {_proj_key_of(r) for r in records
                        if r.get("surplus_source") == _PREARB_SOURCE
                        and r.get("trade_value_mm") is not None}
     # D4 (2026-08-03): this census and the `unpriced` ledger shipped different
@@ -5567,8 +5686,8 @@ def export_trade_values_json(
         # A.J. Minter into the code.
         "unpriced":      _unpriced_vets(
             out_path.parent,
-            {r.get("player_key") for r in results
-             if r.get("trade_value_mm") is not None}),
+            {_proj_key_of(r) for r in results
+             if r.get("trade_value_mm") is not None} - {None}),
         # Rows that DID reach the board and then failed every pricing basis, with
         # the reason (identity collisions and rows the roster feed could not date).
         # `unpriced` above is the other half of the same question: players the

@@ -223,6 +223,34 @@ def _canon(raw):
     return canonical_org(raw) if raw else None
 
 
+def _mlbam(v):
+    try:
+        return int(v) if v is not None and str(v).strip() != "" else None
+    except (TypeError, ValueError):
+        return None
+
+
+def graduate_vet(g: dict, vets_by_key: dict, vets_by_mlbam: dict):
+    """The projections vet row for a debuts_lite graduate, joined on the HUMAN.
+
+    A player_key is a slug and a slug can name two humans: the CLE graduate
+    jose_ramirez is a 2004-born arm (802064) while the projections vet under
+    that slug is the 34-year-old third baseman (608070). A graduate with an
+    mlbam id joins on it and nothing else; only a graduate without one falls
+    back to the slug."""
+    m = _mlbam(g.get("mlbam_id"))
+    if m is not None:
+        return vets_by_mlbam.get(m)
+    return vets_by_key.get(g.get("player_key"))
+
+
+def trade_row_projection_key(p: dict):
+    """The mlb_projections key of a trade_values row's human: the row's
+    `proj_key` where bayes_trade_value stamped one (its own slug names a
+    different human there, or none), else its player_key."""
+    return p["proj_key"] if "proj_key" in p else p.get("player_key")
+
+
 def _pct_str(rate: float) -> str:
     return f"{rate * 100:g} pct"
 
@@ -665,6 +693,11 @@ def build_all() -> tuple:
     # trade values (31 org values; non-club values dropped after the join)
     tv_by_club: dict = defaultdict(list)
     tv_by_key: dict = {}
+    # The same rows keyed by the PROJECTION key of their human, for every join
+    # that starts from a projections vet (contract options, contract paths).
+    # Keying those on player_key handed the LAD veteran max_muncy the ATH
+    # infielder's board row.
+    tv_by_proj_key: dict = {}
     tv_orgs_in = set()
     for p in tv.get("players") or []:
         tv_orgs_in.add(p.get("org"))
@@ -673,6 +706,9 @@ def build_all() -> tuple:
             tv_by_club[c].append(p)
         if p.get("player_key"):
             tv_by_key[p["player_key"]] = p
+        _pkp = trade_row_projection_key(p)
+        if _pkp:
+            tv_by_proj_key[_pkp] = p
     tv_dropped = sorted(o for o in tv_orgs_in if _canon(o) not in clubs)
 
     # arbitration board and history
@@ -888,7 +924,7 @@ def build_all() -> tuple:
             if not v.get("salOpt"):
                 for y in co.get("player_options") or []:
                     opts.append([y, "player", None])
-            tvc = (tv_by_key.get(v.get("key")) or {}).get("contract") or {}
+            tvc = (tv_by_proj_key.get(v.get("key")) or {}).get("contract") or {}
             if not opts:
                 for y in tvc.get("player_opt_years") or []:
                     opts.append([y, "player", None])
@@ -1235,7 +1271,7 @@ def build_all() -> tuple:
             # prints it), else the projections vet row's ctrlThru; blank when neither
             # carries the player. debuted_value.remaining_control_years is the at-debut
             # window the engine priced (7 on every row) and is not served here.
-            vr = vets_by_key.get(key) or {}
+            vr = graduate_vet(g, vets_by_key, vets_by_mlbam) or {}
             if tv_deb.get("control_thru") is not None:
                 ctrl_thru, ctrl_why = tv_deb.get("control_thru"), tv_deb.get("control_why")
             elif vr.get("ctrlThru") is not None:
@@ -1249,7 +1285,7 @@ def build_all() -> tuple:
                 tv_deb.get("trade_value_mm"), tv_deb.get("surplus_source"),
                 (g.get("roster_status") or {}).get("service_phase"),
                 (g.get("career_war") or {}).get("career_war"),
-                (dv.get("wag") or {}).get("boom_label"), key in vets_by_key])
+                (dv.get("wag") or {}).get("boom_label"), bool(vr)])
         farm["n_graduates"] = len(grad_rows)
         # draft picks by year: joined on (draft_year, pick_overall), never on name
         picks: dict = {}
@@ -1310,7 +1346,7 @@ def build_all() -> tuple:
         n_re = n_opt_rows = n_opt_seasons = 0
         for v in sorted(priced, key=lambda x: -(x.get("aav") or 0)):
             key = v.get("key")
-            tvr = tv_by_key.get(key) or {}
+            tvr = tv_by_proj_key.get(key) or {}
             strip = v.get("sur") if isinstance(v.get("sur"), list) else [None] * len(HORIZON)
             tvmm, src, st = tvr.get("trade_value_mm"), tvr.get("surplus_source"), v.get("surTotal")
             re_ = bool(src == "projection" and tvmm is not None and st is not None

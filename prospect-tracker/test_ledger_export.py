@@ -838,7 +838,15 @@ def tv():
     if not p.exists():
         pytest.skip("trade_values.json absent")
     doc = json.loads(p.read_text(encoding="utf-8"))
-    return {"doc": doc, "by_key": {r["player_key"]: r for r in doc["players"] if r.get("player_key")}}
+    # by_proj_key: the row of each projections vet's HUMAN. A row carries
+    # proj_key only where its own slug names a different human in projections.
+    by_proj = {}
+    for r in doc["players"]:
+        k = r["proj_key"] if "proj_key" in r else r.get("player_key")
+        if k:
+            by_proj[k] = r
+    return {"doc": doc, "by_key": {r["player_key"]: r for r in doc["players"] if r.get("player_key")},
+            "by_proj_key": by_proj}
 
 
 def _col(d, key, name):
@@ -1223,18 +1231,35 @@ def test_graduate_control_is_current_not_at_debut(d, shards, tv, proj):
     """The Control column is the current window (the trade board's control_thru,
     else the projections vet ctrlThru), never debuted_value's at-debut window,
     which is 7 on every priced row. A graduate neither source carries prints
-    blank, so a 2010 debut can no longer read seven years of control."""
+    blank, so a 2010 debut can no longer read seven years of control.
+
+    The vet is the graduate's own HUMAN: joined on the debuts_lite mlbam id
+    where the graduate has one, and on the slug only where he does not. The
+    slug join gave the ATH graduate max_muncy (691777) the LAD veteran's
+    (571970) control window and in_vets flag."""
     G = "farm.graduates"
     assert "dv_remaining_control_years" not in d["columns"][G]
-    k_i, th_i, why_i, dd_i = [_col(d, G, k) for k in ("key", "control_thru", "control_why", "debut_date")]
+    k_i, th_i, why_i, dd_i, iv_i = [_col(d, G, k) for k in
+                                    ("key", "control_thru", "control_why", "debut_date", "in_vets")]
     vets = {v["key"]: v for v in proj.get("vets") or [] if v.get("key")}
-    n = n_set = n_old = 0
+    vets_by_id = {int(v["mlbam"]): v for v in proj.get("vets") or [] if v.get("mlbam") is not None}
+    dl = ROOT / "data" / "debuts_lite.json"
+    if not dl.exists():
+        pytest.skip("debuts_lite.json absent")
+    dl_rows = json.loads(dl.read_text(encoding="utf-8"))
+    dl_rows = dl_rows if isinstance(dl_rows, list) else (dl_rows.get("players") or [])
+    grad_id = {g["player_key"]: g.get("mlbam_id") for g in dl_rows if g.get("player_key")}
+    n = n_set = n_old = n_split = 0
     for c in d["clubs"]:
         for r in _rows(shards[c], G):
             n += 1
             t = tv["by_key"].get(r[k_i]) or {}
             t = t if t.get("status") == "debuted" else {}
-            v = vets.get(r[k_i]) or {}
+            gid = grad_id.get(r[k_i])
+            v = (vets_by_id.get(int(gid)) if gid is not None else vets.get(r[k_i])) or {}
+            if gid is not None and r[k_i] in vets and int(vets[r[k_i]]["mlbam"]) != int(gid):
+                n_split += 1
+                assert r[iv_i] is bool(v), (c, r[k_i], "a different human's vet row is not this graduate's")
             if t.get("control_thru") is not None:
                 want = (t["control_thru"], t.get("control_why"))
             elif v.get("ctrlThru") is not None:
@@ -1248,6 +1273,7 @@ def test_graduate_control_is_current_not_at_debut(d, shards, tv, proj):
                 n_old += 1
                 assert r[th_i] is None or r[th_i] == want[0], (c, r[k_i])
     assert n and 0 < n_set < n and n_old
+    assert n_split, "the served graduates carry slugs a different vet holds; the join is exercised"
     assert "never the at-debut" in d["field_key"][G]
 
 
@@ -1539,7 +1565,9 @@ def test_the_trade_value_matches_sur_total_on_projection_rows_or_is_flagged_rean
         n_re_c = 0
         for r in rows:
             if r[tv_i] is not None:
-                t = tv["by_key"][r[k_i]]
+                # joined on the projections key of the board row's human, never
+                # on a slug another human holds on the board
+                t = tv["by_proj_key"][r[k_i]]
                 assert r[tv_i] == t["trade_value_mm"] and r[src_i] == t["surplus_source"], (c, r[k_i])
             if r[src_i] == "projection" and r[tv_i] is not None and r[t_i] is not None:
                 n_proj += 1

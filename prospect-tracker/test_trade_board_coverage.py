@@ -85,7 +85,10 @@ def test_no_unpriceable_vet_leaked_into_the_valued_board():
     tv = _artifact("trade_values.json")
     if "unpriced" not in tv:
         pytest.xfail("trade_values.json predates the unpriced block")
-    board = {p["player_key"] for p in tv["players"] if p.get("player_key")}
+    # `unpriced` is keyed by projections key, so the board is compared on the
+    # projections key of each row's HUMAN: the DET prospect wilmer_flores and
+    # the unpriced SFG veteran wilmer_flores are two people sharing one slug.
+    board = {btv._proj_key_of(p) for p in tv["players"]} - {None}
     for r in tv["unpriced"]:
         assert r["key"] not in board, f"{r['key']} is both unpriced and on the board"
 

@@ -2875,6 +2875,16 @@ def _scatter_teaser(players: list | None = None) -> str:
             f'<span>Any X/Y metric · color &amp; size encodings · brush-to-zoom</span></div>'
             f'<span class="st-go">Scatterplots →</span></a>')
 
+def _tm_seed_key(p: dict) -> str:
+    """The key a /trademachine/#tm= seed carries for one trade_values row. An MLB
+    row seeds on the projections key of its human (`proj_key`, stamped only
+    where the row's own slug names a different human there); a prospect row
+    seeds on its player_key, which is the PROSPX key."""
+    if p.get("status") in ("graduated", "debuted") and p.get("proj_key"):
+        return p["proj_key"]
+    return p["player_key"]
+
+
 def _cross_module_strip() -> str:
     """Across eephus.io - the homepage's window into the non-PROSPX
     modules (cohesion: every module surfaces on the front page). Reads
@@ -2933,7 +2943,8 @@ def _cross_module_strip() -> str:
         rows = "".join(
             f'<a class="xmod-row" href="/trademachine/#tm='
             f'{"mlb" if p.get("status") in ("graduated", "debuted") else "prospect"}:'
-            f'{html.escape(p["player_key"])}">'
+            # an MLB seed resolves on the projections key of the row's human
+            f'{html.escape(_tm_seed_key(p))}">'
             f'<span class="xmod-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="xmod-sub">{html.escape(p.get("position") or "")} · {html.escape(p.get("org") or "")}</span>'
             f'<span class="xmod-val">${p["trade_value_mm"]:.0f}M</span></a>'

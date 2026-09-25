@@ -538,6 +538,18 @@ const _TB_POS_BUCKETS = {
 function _tbIsMlb(p) {
   return p && (p.status === "graduated" || p.status === "debuted");
 }
+// Where a board row goes when clicked. A row carries `proj_key` only when its
+// own player_key names a DIFFERENT human (or nobody) on /projections/: the ATH
+// infielder Max Muncy holds the slug max_muncy on the board while
+// /projections/#player=max_muncy is the LAD veteran. proj_key null means the
+// projection system does not model this human, so an MLB row falls back to
+// his PROSPX page instead of opening someone else's.
+function _tbNavTarget(p, isMlb) {
+  if (!p || !p.player_key) return null;
+  if (!isMlb) return { key: p.player_key, mlb: false };
+  if (!("proj_key" in p)) return { key: p.player_key, mlb: true };
+  return p.proj_key ? { key: p.proj_key, mlb: true } : { key: p.player_key, mlb: false };
+}
 function _tbPrimaryPos(pos) {
   const s = String(pos || "").toUpperCase().trim();
   if (!s) return "";
@@ -1056,11 +1068,12 @@ function _renderTBRows() {
     // stays clickable as a convenience, but the player name is a REAL anchor so
     // keyboard and screen-reader users can reach the player page too (the row
     // onclick preventDefaults the anchor and routes to the same destination).
-    const href = p.player_key
-      ? (isMlb ? "/projections/#player=" : "/prospx/#player=") + encodeURIComponent(p.player_key)
+    const nav = _tbNavTarget(p, isMlb);
+    const href = nav
+      ? (nav.mlb ? "/projections/#player=" : "/prospx/#player=") + encodeURIComponent(nav.key)
       : "";
-    const rowClick = p.player_key
-      ? `onclick="event.preventDefault();_tmNavPlayer('${escapeHtml(p.player_key)}',${isMlb});" style="cursor:pointer;"`
+    const rowClick = nav
+      ? `onclick="event.preventDefault();_tmNavPlayer('${escapeHtml(nav.key)}',${nav.mlb});" style="cursor:pointer;"`
       : "";
 
     // Signals: status badge + ceiling flag + injury warning + GRPO breakout badge.
@@ -1370,10 +1383,12 @@ function _tbShowGroup(playerKey) {
     // therefore valued on the board and findable NOWHERE, including Jose
     // Quintana, Yoan Moncada, Gleyber Torres and Gavin Lux. The board is the
     // authority on whether a player has a price, so let it answer.
+    // Keyed by the projection key where the row carries one, so the search's
+    // de-duplication against mlb_player_detail compares one human to himself.
     DATA.mlbBoard = (d.players || [])
       .filter(p => p && _tbIsMlb(p) && p.posterior_surplus_mm != null)
       .map(p => ({
-        player_key: p.player_key, player_name: p.player_name,
+        player_key: (p.proj_key || p.player_key), player_name: p.player_name,
         position: p.position, org: p.org,
         mm: p.posterior_surplus_mm, source: p.surplus_source || null
       }));
