@@ -2854,6 +2854,9 @@ def build_payload() -> dict:
     except Exception:                                          # noqa: BLE001
         log.warning("current-season overlay skipped (best-effort)", exc_info=True)
     cfg = vf._config()
+    # One read of the escalation knob: the payload field and the dollars note
+    # both say what _season_value_usd actually applied (0.0 in production).
+    _dpw_infl = float(cfg.get("dollars_per_war_inflation", 0.05))
     re_anchor = (cfg["dollars_per_war"].get("_fa_reanchor") or {})
     return {
         "generated_at": date.today().isoformat(),
@@ -2874,7 +2877,7 @@ def build_payload() -> dict:
         # row's de-aging was unresolved; see ROS_TALENT_BASIS.
         "ros_talent_basis": ROS_TALENT_BASIS,
         "dpw_usd": int(dpw),
-        "dpw_infl": float(cfg.get("dollars_per_war_inflation", 0.05)),
+        "dpw_infl": _dpw_infl,
         "dpw_reanchor": re_anchor or None,
         "n_vets": len(vets), "n_prospects": len(prospects),
         # Where each veteran's `team` came from (resolve_current_club), and how
@@ -2886,9 +2889,11 @@ def build_payload() -> dict:
         "mc_schedule_source": mc_schedule_source,
         "accountability": _accountability_block(),
         "notes": [
-            "veterans: the FA module's Gate-1-validated Marcel engine; bands = Gate-1 empirical year-1 residual quantiles decayed along the fitted aging curves",
+            "veterans: proj_lgbm_v1 quantile heads (horizons 1-5) stacked on the FA module's Marcel champion; war = the median head lifted toward the quantile-implied mean where it sits below it, bands = the P10/P90 heads; warChamp = the champion mean path (the FA pricing path and the Team Outlook sum basis); rows the heads cannot score fall back to the champion with Gate-1 residual-quantile bands",
             "prospects: P(bucket|FV) x calibrated per-bucket WAR trajectories from projected debut age, starting at the PROSPX ETA; floor/ceiling = 10th/90th-percentile OUTCOME buckets",
-            f"dollars: convex tier pricing at the {FIRST_SEASON} ex-ante FA $/WAR level, escalated per season; veteran surplus over the control window: contracted seasons at their salary, pre-arbitration seasons at the league minimum, arbitration seasons at the projected award, discounted at the platform rate",
+            f"dollars: convex tier pricing at the {FIRST_SEASON} ex-ante FA $/WAR level, "
+            + (f"escalated {_dpw_infl * 100:.1f}%/yr" if _dpw_infl else "flat across seasons")
+            + "; veteran surplus over the control window: contracted seasons at their salary, pre-arbitration seasons at the league minimum, arbitration seasons at the projected award, discounted at the platform rate",
             "two-way players project BOTH sides, summed per season (per-side paths in warHit/warPit; bands combine at assumed cross-side correlation rho=0.5 - documented)",
             f"veteran universe: >= {MIN_PA} PA or >= {MIN_IP} IP in one of the last three seasons",
             f"rest-of-season leg: talent basis '{ROS_TALENT_BASIS}' - " + (

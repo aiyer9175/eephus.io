@@ -1087,3 +1087,60 @@ def test_dpw_tier_rates_match_the_valuation_set():
                  for raw in re.findall(r"\$(\d+\.\d\d)m\b", every)
                  if not any(abs(float(raw) - a) <= 0.005 for a in allowed)]
     assert not problems, "dpw_tier rate drift: " + "; ".join(problems)
+
+
+# ---------------------------------------------------------------------------
+# M05-09 (2026-09-25): the /projections/ methodology copy described an engine
+# that does not serve (the Marcel engine for veterans, escalating $/WAR,
+# empirical residual-quantile bands), the accountability banner printed the
+# registry's schema date as if it dated the verdicts, and the prospect-path
+# registry row quoted a calibration shift, slope, bias and MAE the eval
+# artifact no longer reads (0.2673 / 0.726 / +0.11 / 1.384 against 0.1924 /
+# 0.633 / 0.037 / 1.362).
+
+def test_projection_copy_describes_the_served_engine():
+    import value_framework
+
+    e = _glossary_entry("mlb_projections")
+    text = _entry_text(e) + " " + (e.get("formula") or "")
+    assert "same Marcel engine" not in text
+    assert "proj_lgbm_v1" in text, "the served veteran engine is not named"
+    if not float(value_framework._config().get("dollars_per_war_inflation", 0.05)):
+        assert "escalating per season" not in text
+        assert "escalated per season" not in _read_text("proj_export.py")
+    js = _read_text("assets/projections.js")
+    assert "empirical residual quantiles" not in js
+    assert "model registry ${" not in js, "the registry schema date is not a verdict date"
+    assert "Gate-1-validated Marcel engine" not in _read_text("proj_export.py")
+
+
+def _numbers(obj, out):
+    if isinstance(obj, bool):
+        return out
+    if isinstance(obj, (int, float)):
+        out.append(float(obj))
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            _numbers(v, out)
+    elif isinstance(obj, list):
+        for v in obj:
+            _numbers(v, out)
+    return out
+
+
+def test_prospect_path_registry_row_quotes_only_artifact_figures():
+    """Every decimal the row's prose quotes must be a number in its eval
+    artifact at the quoted precision. The row is rendered on the Model
+    Accountability card, so a figure the artifact does not carry is a served
+    claim nothing backs."""
+    row = _registry_row("mlb_projections_prospects")
+    have = _numbers(_read_json(row["eval_artifact"]), [])
+    text = " ".join(str(row.get(k) or "") for k in
+                    ("predicts", "champion", "baseline", "metric", "notes"))
+    orphans = []
+    for tok in re.findall(r"(?<![\w.])[-+]?\d*\.\d+", text):
+        v = float(tok)
+        half = 0.5 * 10 ** -len(tok.split(".")[1])
+        if not any(abs(abs(v) - abs(h)) <= half + 1e-9 for h in have):
+            orphans.append(tok)
+    assert not orphans, f"figures with no source in {row['eval_artifact']}: {orphans}"

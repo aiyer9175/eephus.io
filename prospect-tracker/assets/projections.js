@@ -1253,11 +1253,12 @@
       ] };
     });
     const acct = DATA.accountability || {};
+    const checked = lastChecked(acct);
     return {
       kind: "board", module: "MLB Projections", accentToken: "--accent-cyan",
       title: "MLB Projections · Model Accountability",
       subtitle: `${models.length} projection models`
-        + (acct.registry_version ? ` · registry ${acct.registry_version}` : ""),
+        + (checked ? ` · verdicts checked ${checked}` : ""),
       url: "eephus.io/projections", filenameBase: "eephus-projections-accountability",
       caption: "Model registry verdicts · receipts from the committed eval artifacts",
       board: { defaultCount: 25, counts: [10, 25, 50], legend: "verdict per model_registry", columns: [
@@ -1267,6 +1268,15 @@
         { label: "Verdict", frac: 0.14 },
       ], rows },
     };
+  }
+
+  // The registry's `version` is the date its schema was cut (2026-06-11), not
+  // when a verdict was last read, so printing it beside "as of" told a reader
+  // the verdicts were three months old (M05-09). The date a reader needs is the
+  // newest last_checked across the rows this view shows.
+  function lastChecked(acct) {
+    const ds = (acct.models || []).map(m => m.last_checked).filter(Boolean).map(String).sort();
+    return ds.length ? ds[ds.length - 1] : null;
   }
 
   function renderAccountability() {
@@ -1283,7 +1293,7 @@
         ? ` &middot; ${window.EEPHUS_GFX.chipHTML("proj-acct-gfx", "Generate GFX")}` : "";
       banner.innerHTML = `<div class="fa-note fa-sources">
         Held-out <span data-gl="backtest">backtests</span> and registry <span data-gl="model_verdict">verdicts</span>
-        ${acct.registry_version ? `&middot; model registry ${esc(String(acct.registry_version))}` : ""}${acct.generated_at ? ` &middot; as of ${esc(String(acct.generated_at))}` : ""}${acctGfxChip}</div>`;
+        ${lastChecked(acct) ? `&middot; verdicts last checked ${esc(lastChecked(acct))}` : ""}${acct.generated_at ? ` &middot; as of ${esc(String(acct.generated_at))}` : ""}${acctGfxChip}</div>`;
     }
     const models = acct.models || [];
     if (!models.length) {
@@ -3031,7 +3041,7 @@
   function pageFoot(p) {
     const sk = p.skills || {};
     return [
-      `${term("fa_projection_engine", "Projection engine")} proj_lgbm_v1, bands = empirical residual quantiles`,
+      `${term("fa_projection_engine", "Projection engine")} proj_lgbm_v1, bands = its P10 / P90 quantile heads`,
       "Statcast percentiles vs the season's qualified MLB pool",
       p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)" : "",
       p.aaaStuffPlus != null ? "aStuff+: in-house AAA pitch model, latest tracked AAA season" : "",
