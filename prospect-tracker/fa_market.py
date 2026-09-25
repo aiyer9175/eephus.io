@@ -801,7 +801,10 @@ def winter_dpw(dpw_series: dict[int, float], class_year: int) -> float:
     """The winter's $/WAR level, EX-ANTE — a test winter never sees its
     own prices. Methods (config market_model.dpw_forecast.method, chosen
     by the forward-chained eval in data/dpw_forecast_eval.json):
-      flat5      most recent PRIOR winter escalated 5%/yr (the v1 carry)
+      flat5      most recent PRIOR winter carried forward at _destale_rate,
+                 the series' own trend (0.0416 for the 2027 class), NOT 5%:
+                 the name is the v1 carry's; tools/fit_dpw_forecast.py still
+                 scores this form at a fixed 5% (audit X02-03)
       trend      log-linear trend fit on PRIOR winters
       trend_cbt  trend + log CBT-threshold covariate (thresholds for
                  future winters are dated CBA records — known ex-ante)

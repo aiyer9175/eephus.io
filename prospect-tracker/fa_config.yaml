@@ -30,7 +30,9 @@ market_model:
   # (data/dpw_forecast_eval.json, forward-chained one-winter-ahead on the
   # NPV-basis series): flat5 MAPE 0.102 beat trend (0.122) and trend_cbt
   # (0.132) — the fitted forecasts LOST to the flat carry at this n, so
-  # the incumbent assumption retains. Candidates stay implemented in
+  # the incumbent assumption retains. The eval scored the carry at a fixed
+  # 5%; the served flat5 carries at the series' own trend rate
+  # (fa_market._destale_rate, 0.0416 for the 2027 class). Candidates stay implemented in
   # fa_market.winter_dpw; re-run the eval as winters accumulate.
   dpw_forecast: { method: flat5 }
   # Regime breaks for $/WAR estimation — dated records, not code.
