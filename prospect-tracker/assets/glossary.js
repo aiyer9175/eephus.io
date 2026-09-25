@@ -3377,8 +3377,13 @@ function _progSeriesRows(prog) {
 // A row appended by a fix to how eFV is scored (DS-01), never by a model
 // change. Drawn and labelled apart so a reader never takes it for progress.
 function _progIsCorrection(prog, r) {
-  const trig = (prog && Array.isArray(prog.correction_triggers)) ? prog.correction_triggers : ["harness_correction"];
+  const trig = (prog && Array.isArray(prog.correction_triggers)) ? prog.correction_triggers : ["harness_correction", "data_correction"];
   return !!(r && trig.includes(r.trigger));
+}
+
+// "harness correction" or "data correction", from the row's own trigger.
+function _progCorrectionName(r) {
+  return String((r && r.trigger) || "correction").replace(/_/g, " ");
 }
 
 function _progConsLeg(r) {
@@ -3434,14 +3439,14 @@ function _methProgressLedger(prog, bt) {
     : ` <span class="sacc-chip-ok">verified ${escapeHtml(String(row.last_verified_at || row.date || "").slice(0, 10))}</span>`;
   const resolvable = row.resolvable === true;
   const corrTxt = _progIsCorrection(prog, row)
-    ? ` <span class="sacc-chip-warn" title="${escapeHtml(row.note || "")}">harness correction, not model progress</span>` : "";
+    ? ` <span class="sacc-chip-warn" title="${escapeHtml(row.note || "")}">${escapeHtml(_progCorrectionName(row))}, not model progress</span>` : "";
   // A headline candidate (EV-01 vm2) prints on its own line, in the neutral
   // style: it is not the claim until the owner has seen it.
   const cand = _progLatestCandidate(prog);
   let candTxt = "";
   if (cand) {
     const crt = cand.raters || {}, cleg = _progConsLeg(cand) || {};
-    candTxt = `<p class="meth-window"><strong>${escapeHtml(_progFrameLabel(prog, cand.frame))}, ${escapeHtml(cand.date || "")} <span class="sacc-chip-warn">${escapeHtml(String(cand.role || "").replace(/_/g, " "))}</span>:</strong> n ${Number(cand.n || 0).toLocaleString()}, eFV ${_progFmt((crt.efv || {}).spearman, 3)} against PROSPX consensus ${_progFmt((crt.prospx_consensus || {}).spearman, 3)}, delta ${_progSigned(cleg.delta, 4)}${Array.isArray(cleg.ci95) ? `, 95% CI ${_progCi(cleg.ci95, 3)}` : ""}: <span class="sacc-verdict-null">${escapeHtml(cand.verdict || "")}</span>.${_progIsCorrection(prog, cand) ? ` <span class="sacc-chip-warn">harness correction, not model progress</span>` : ""} ${escapeHtml(cand.note || "")}</p>`;
+    candTxt = `<p class="meth-window"><strong>${escapeHtml(_progFrameLabel(prog, cand.frame))}, ${escapeHtml(cand.date || "")} <span class="sacc-chip-warn">${escapeHtml(String(cand.role || "").replace(/_/g, " "))}</span>:</strong> n ${Number(cand.n || 0).toLocaleString()}, eFV ${_progFmt((crt.efv || {}).spearman, 3)} against PROSPX consensus ${_progFmt((crt.prospx_consensus || {}).spearman, 3)}, delta ${_progSigned(cleg.delta, 4)}${Array.isArray(cleg.ci95) ? `, 95% CI ${_progCi(cleg.ci95, 3)}` : ""}: <span class="sacc-verdict-null">${escapeHtml(cand.verdict || "")}</span>.${_progIsCorrection(prog, cand) ? ` <span class="sacc-chip-warn">${escapeHtml(_progCorrectionName(cand))}, not model progress</span>` : ""} ${escapeHtml(cand.note || "")}</p>`;
   }
   return `<div class="meth-chart scx-progress-head">
     <div class="meth-chart-title">eFV progress ledger <span class="meth-sub">the dated record of eFV against PROSPX consensus and the industry</span></div>
@@ -3550,7 +3555,7 @@ function _methProgressChart(prog) {
     candRow ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};"></span>${escapeHtml(_progFrameLabel(prog, candRow.frame))} (headline candidate, not yet the claim)</span>` : "",
     hasDev ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};border-radius:50%;"></span>development frame, spent, not a claim</span>` : "",
     hasLook ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};transform:rotate(45deg);"></span>reserved-frame look</span>` : "",
-    hasCorr ? `<span class="meth-legend-key"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M 6,1 L 11,10.5 L 1,10.5 Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="1.6"/></svg>harness correction: a fix to how eFV is scored, not model progress</span>` : "",
+    hasCorr ? `<span class="meth-legend-key"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M 6,1 L 11,10.5 L 1,10.5 Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="1.6"/></svg>correction: a fix to how eFV is scored or to the rows it is trained and scored on, not model progress</span>` : "",
     floor != null ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);opacity:.35;"></span>plus or minus the noise floor (${_progFmt(floor, 3)})</span>` : "",
   ].filter(Boolean).join("");
   return `<div class="meth-chart">
@@ -3562,7 +3567,7 @@ function _methProgressChart(prog) {
       ${marks}${ticks}
     </svg>
     <div class="meth-legend">${legend}</div>
-    <p class="meth-note">A point above zero is eFV ordering realized WAR better than the consensus on the same players. Inside the shaded band the difference is smaller than this sample can resolve, so no point inside it is a lead or a deficit. Rows backfilled from the committed history carry no interval, because one cannot be recomputed from a committed number. Tilted frames are never plotted.${hasCorr ? " An open triangle is the same model rescored after a fix to the scoring harness, so the step it shows is a correction and not progress." : ""}</p>
+    <p class="meth-note">A point above zero is eFV ordering realized WAR better than the consensus on the same players. Inside the shaded band the difference is smaller than this sample can resolve, so no point inside it is a lead or a deficit. Rows backfilled from the committed history carry no interval, because one cannot be recomputed from a committed number. Tilted frames are never plotted.${hasCorr ? " An open triangle is the same model specification rescored after a correction (to the scoring harness or to the rows), so the step it shows is a correction and not progress." : ""}</p>
   </div>`;
 }
 
@@ -3585,7 +3590,7 @@ function _progRowHtml(prog, r) {
   const leg = _progConsLeg(r);
   const mv = r.model_version || {};
   const trigTxt = _progIsCorrection(prog, r)
-    ? `<br><span class="sacc-chip-warn">harness correction</span>`
+    ? `<br><span class="sacc-chip-warn">${escapeHtml(_progCorrectionName(r))}</span>`
     : (r.trigger ? `<br><span class="meth-sub">${escapeHtml(r.trigger)}</span>` : "");
   const model = `${escapeHtml(r.model_id || "")}${mv.commit ? ` <span class="meth-sub">${escapeHtml(mv.commit)}</span>` : ""}${trigTxt}`;
   const chipCls = r.role === "headline" ? "sacc-chip-ok" : "sacc-chip-warn";

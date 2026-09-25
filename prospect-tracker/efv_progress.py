@@ -72,11 +72,14 @@ DEV_DELTAS = (("vs_prospx_consensus", "h0_vs_prospx_consensus"),
 
 SCHEMA = 1
 MODEL_ID = "efv_v1"
-TRIGGERS = ("nightly", "efv_change", "look", "backfill", "harness_correction")
-#: A trigger whose rows record a fix to how eFV is SCORED, never a change to the
-#: model. The page marks them apart from model progress (DS-01, bug B1 in
-#: docs/efv-v2/DRIVER_SYSTEM_V2.md).
-CORRECTION_TRIGGERS = ("harness_correction",)
+TRIGGERS = ("nightly", "efv_change", "look", "backfill", "harness_correction",
+            "data_correction")
+#: Triggers whose rows record a CORRECTION, never a change to the model's
+#: specification: a fix to how eFV is scored (harness_correction, DS-01, bug B1
+#: in docs/efv-v2/DRIVER_SYSTEM_V2.md) or to the rows it is trained and scored
+#: on (data_correction, DS-12 and DS-13). The page marks them apart from model
+#: progress.
+CORRECTION_TRIGGERS = ("harness_correction", "data_correction")
 REGEN_CMD = ("python -c \"import efv_progress as P; P.update(trigger='efv_change')\" "
              "(nightly: run_monthly after the 9g scoreboard refresh and after "
              "run_source_backtest; by hand: tools/efv_scoreboard.py)")

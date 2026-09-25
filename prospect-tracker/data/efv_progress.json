@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-09-25T18:43:28Z",
+ "generated_at": "2026-09-25T19:07:29Z",
  "headline_frame": "vm",
  "frames": {
   "vm": {
@@ -83,7 +83,8 @@
   "pit"
  ],
  "correction_triggers": [
-  "harness_correction"
+  "harness_correction",
+  "data_correction"
  ],
  "regen_cmd": "python -c \"import efv_progress as P; P.update(trigger='efv_change')\" (nightly: run_monthly after the 9g scoreboard refresh and after run_source_backtest; by hand: tools/efv_scoreboard.py)",
  "rule": "append-only; a row is added when a frame's measured content changes and otherwise only its last_verified_at moves; every number is copied from the artifact key named in the row",
@@ -1123,7 +1124,7 @@
     }
    ],
    "note": "development frame, spent, not a claim",
-   "last_verified_at": "2026-09-25T18:43:28Z",
+   "last_verified_at": "2026-09-25T19:07:29Z",
    "content_hash": "1ce13465b106abd12b48cfe67e0664b5ecad2f19556de78d16a6d2ee34683dc6"
   },
   {
@@ -1331,7 +1332,7 @@
     }
    ],
    "note": "development frame, spent, not a claim",
-   "last_verified_at": "2026-09-25T18:43:28Z",
+   "last_verified_at": "2026-09-25T19:07:29Z",
    "content_hash": "0ab5d2f252c78b76a367447860d2cf23117d38173097a1c758aeeae2b0559d43"
   },
   {
@@ -1785,6 +1786,508 @@
    "note": "Harness correction DS-01 (bug B1): eFV is now scored on its raw out-of-sample score instead of a remap onto the consensus grade grid that tied distinct scores; same model, not model progress. every base year including post-debut consensus reads; tilted TOWARD the consensus, which sees major league performance on those rows",
    "last_verified_at": "2026-09-25T18:43:28Z",
    "content_hash": "997de179e14db3cfe4a2db496d4a5537dc958dcc48e9df77865e3c8c8c40fc4a"
+  },
+  {
+   "run_id": "2026-09-25T19:06:26Z|vm|51bcbfa9",
+   "date": "2026-09-25",
+   "trigger": "data_correction",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "c1ce18db",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "vm",
+   "frame_version": "vm1",
+   "role": "headline",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 806,
+   "n_by_side": {
+    "hit": 389,
+    "pit": 417
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3998,
+     "auc": 0.7489,
+     "n": 806
+    },
+    "prospx_consensus": {
+     "spearman": 0.4122,
+     "auc": 0.7485,
+     "n": 806
+    },
+    "mlb_pipeline": {
+     "spearman": 0.4113,
+     "auc": 0.7388,
+     "n": 806
+    },
+    "fangraphs": {
+     "spearman": 0.3649,
+     "auc": 0.7144,
+     "n": 806
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.0124,
+      "ci95": [
+       -0.0413,
+       0.0166
+      ],
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": "E_cond, player-clustered",
+      "resolvable": false,
+      "key": "accuracy.head_to_head_verdict"
+     },
+     "auc": {
+      "delta": 0.0004,
+      "ci95": [
+       -0.0176,
+       0.0179
+      ],
+      "mde95": 0.0149,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.0115,
+      "ci95": [
+       -0.0451,
+       0.0233
+      ],
+      "mde95": 0.0289,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": 0.0101,
+      "ci95": [
+       -0.0101,
+       0.03
+      ],
+      "mde95": 0.0167,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.0349,
+      "ci95": [
+       -0.0069,
+       0.0767
+      ],
+      "mde95": 0.0355,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.0345,
+      "ci95": [
+       0.0096,
+       0.0592
+      ],
+      "mde95": 0.021,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources.sources.fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T19:06:26Z",
+     "sha256": "de5657a431b91078dfac6304d0ecd7fb2327cdddbb22b3a8c36e723414923b51"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "ba39ce91d38346fa3b56b5ff8f4eddf13f37354dc9644c26706a093eb8f49ab2"
+    }
+   ],
+   "note": "Data correction DS-12 (bug B7): 131 eFV training rows whose debut day was a synthesized July 1 placeholder now read the real debut day from the StatsAPI people record; same model specification, not model progress.",
+   "last_verified_at": "2026-09-25T19:07:29Z",
+   "content_hash": "51bcbfa93516ff30c36fc0d8b946a5536db30d59e9d1e6e4ad10b97071ea6dbc"
+  },
+  {
+   "run_id": "2026-09-25T19:06:26Z|vm2|fe6afb4b",
+   "date": "2026-09-25",
+   "trigger": "data_correction",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "c1ce18db",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "vm2",
+   "frame_version": "vm2",
+   "role": "headline_candidate",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 803,
+   "n_by_side": {
+    "hit": 388,
+    "pit": 415
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3929,
+     "auc": 0.748,
+     "n": 803
+    },
+    "prospx_consensus": {
+     "spearman": 0.4129,
+     "auc": 0.7492,
+     "n": 803
+    },
+    "mlb_pipeline": {
+     "spearman": 0.4116,
+     "auc": 0.7392,
+     "n": 803
+    },
+    "fangraphs": {
+     "spearman": 0.3662,
+     "auc": 0.7153,
+     "n": 803
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.02,
+      "ci95": [
+       -0.0468,
+       0.0091
+      ],
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": "E_cond, player-clustered",
+      "resolvable": false,
+      "key": "accuracy.head_to_head_verdict_vm2"
+     },
+     "auc": {
+      "delta": -0.0012,
+      "ci95": [
+       -0.0173,
+       0.0158
+      ],
+      "mde95": 0.0141,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.0187,
+      "ci95": [
+       -0.0514,
+       0.0173
+      ],
+      "mde95": 0.029,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": 0.0088,
+      "ci95": [
+       -0.0098,
+       0.0289
+      ],
+      "mde95": 0.0165,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.0267,
+      "ci95": [
+       -0.0136,
+       0.0705
+      ],
+      "mde95": 0.0354,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.0327,
+      "ci95": [
+       0.0082,
+       0.057
+      ],
+      "mde95": 0.0203,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T19:06:26Z",
+     "sha256": "de5657a431b91078dfac6304d0ecd7fb2327cdddbb22b3a8c36e723414923b51"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "ba39ce91d38346fa3b56b5ff8f4eddf13f37354dc9644c26706a093eb8f49ab2"
+    }
+   ],
+   "note": "Data correction DS-12 (bug B7): 131 eFV training rows whose debut day was a synthesized July 1 placeholder now read the real debut day from the StatsAPI people record; same model specification, not model progress. timing-pinned: eFV's consensus input is the raters' own preseason read; becomes the headline once the owner has seen it",
+   "last_verified_at": "2026-09-25T19:07:29Z",
+   "content_hash": "fe6afb4b5ce30d9fcd3aca9809d60af8cf191de587357441e321e69067e66483"
+  },
+  {
+   "run_id": "2026-09-25T19:06:26Z|predebut|750d2bc9",
+   "date": "2026-09-25",
+   "trigger": "data_correction",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "c1ce18db",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "predebut",
+   "frame_version": null,
+   "role": "tilted",
+   "tilted": true,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 2693,
+   "n_by_side": {
+    "hit": 1374,
+    "pit": 1319
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3685,
+     "auc": 0.7638,
+     "n": 2693
+    },
+    "prospx_consensus": {
+     "spearman": 0.2933,
+     "auc": 0.7118,
+     "n": 2693
+    },
+    "mlb_pipeline": {
+     "spearman": 0.2983,
+     "auc": 0.7017,
+     "n": 2693
+    },
+    "fangraphs": {
+     "spearman": 0.2533,
+     "auc": 0.6729,
+     "n": 2693
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.0752,
+      "ci95": [
+       0.0332,
+       0.1154
+      ],
+      "ci95_estimator": "E_cond, player-clustered",
+      "mde95": 0.0372,
+      "mde95_estimator": "E_refit",
+      "resolvable": true,
+      "key": "accuracy.head_to_head_by_frame.predebut"
+     }
+    }
+   },
+   "resolvable": true,
+   "verdict": "beats consensus",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T19:06:26Z",
+     "sha256": "de5657a431b91078dfac6304d0ecd7fb2327cdddbb22b3a8c36e723414923b51"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "ba39ce91d38346fa3b56b5ff8f4eddf13f37354dc9644c26706a093eb8f49ab2"
+    }
+   ],
+   "note": "Data correction DS-12 (bug B7): 131 eFV training rows whose debut day was a synthesized July 1 placeholder now read the real debut day from the StatsAPI people record; same model specification, not model progress. post-debut consensus reads removed, all remaining base years kept; tilted TOWARD eFV, which is graded at the decision year while the retained earlier reads are not",
+   "last_verified_at": "2026-09-25T19:07:29Z",
+   "content_hash": "750d2bc996bea74dfb02bc0502f3696fc6f5a166c4e650ef87b5ea8a18c948e5"
+  },
+  {
+   "run_id": "2026-09-25T19:06:26Z|all_vintages|d5514af8",
+   "date": "2026-09-25",
+   "trigger": "data_correction",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "c1ce18db",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "all_vintages",
+   "frame_version": null,
+   "role": "tilted",
+   "tilted": true,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 3255,
+   "n_by_side": {
+    "hit": 1610,
+    "pit": 1645
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3564,
+     "auc": 0.752,
+     "n": 3255
+    },
+    "prospx_consensus": {
+     "spearman": 0.3161,
+     "auc": 0.7214,
+     "n": 3255
+    },
+    "mlb_pipeline": {
+     "spearman": 0.317,
+     "auc": 0.7074,
+     "n": 3255
+    },
+    "fangraphs": {
+     "spearman": 0.2758,
+     "auc": 0.6835,
+     "n": 3255
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.0403,
+      "ci95": [
+       -0.0002,
+       0.0777
+      ],
+      "ci95_estimator": "E_cond, player-clustered",
+      "mde95": 0.0352,
+      "mde95_estimator": "E_refit",
+      "resolvable": true,
+      "key": "accuracy.head_to_head_by_frame.all_vintages"
+     }
+    }
+   },
+   "resolvable": true,
+   "verdict": "beats consensus",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T19:06:26Z",
+     "sha256": "de5657a431b91078dfac6304d0ecd7fb2327cdddbb22b3a8c36e723414923b51"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "ba39ce91d38346fa3b56b5ff8f4eddf13f37354dc9644c26706a093eb8f49ab2"
+    }
+   ],
+   "note": "Data correction DS-12 (bug B7): 131 eFV training rows whose debut day was a synthesized July 1 placeholder now read the real debut day from the StatsAPI people record; same model specification, not model progress. every base year including post-debut consensus reads; tilted TOWARD the consensus, which sees major league performance on those rows",
+   "last_verified_at": "2026-09-25T19:07:29Z",
+   "content_hash": "d5514af88552cc5617937aad25c53faa34a14b6798b83d8f02c17e6d9e2a0cbd"
+  },
+  {
+   "run_id": "2026-09-25T19:06:26Z|disagreement|7ce289ce",
+   "date": "2026-09-25",
+   "trigger": "data_correction",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "c1ce18db",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "disagreement",
+   "frame_version": null,
+   "role": "secondary",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 284,
+   "n_by_side": null,
+   "raters": {},
+   "deltas": {},
+   "resolvable": false,
+   "verdict": "eFV is closer on 56% of the 284 resolved disagreements, 95% CI 50% to 61%. The interval CONTAINS 50%, so on this sample the share is not distinguishable from a coin flip and must not be presented as an edge.",
+   "share": {
+    "efv_right_share": 0.556,
+    "ci95": [
+     0.4999,
+     0.6127
+    ],
+    "null": 0.5,
+    "key": "disagreement_receipts"
+   },
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T19:06:26Z",
+     "sha256": "de5657a431b91078dfac6304d0ecd7fb2327cdddbb22b3a8c36e723414923b51"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "ba39ce91d38346fa3b56b5ff8f4eddf13f37354dc9644c26706a093eb8f49ab2"
+    }
+   ],
+   "note": "Data correction DS-12 (bug B7): 131 eFV training rows whose debut day was a synthesized July 1 placeholder now read the real debut day from the StatsAPI people record; same model specification, not model progress. latest pre-debut consensus read",
+   "last_verified_at": "2026-09-25T19:07:29Z",
+   "content_hash": "7ce289ce5bf3e0ae7f74358c6b33d5b650f68f36f0d7de8cab2ecc8ca324be81"
   }
  ],
  "backfill": {

@@ -166,7 +166,9 @@ def effective_debut(rec: dict, seasons: dict[int, float] | None
     """(debut_year, label_date, status). status: 'ok', 'not_reached',
     'identity_conflict'. label_date is what efv_dataset._label_6yr reads."""
     s = seasons or {}
-    dd = str(rec.get("debut_date") or "")[:10]
+    # DS-12: the re-dated day where one exists; a placeholder day is no label date.
+    _dd, _dd_placeholder, _ = D.resolved_debut_date(rec)
+    dd = str(_dd or "")[:10]
     first_line = first_mlb_line(rec.get("mlbam_id"))
     if not s and first_line is None:
         return None, None, "not_reached"
@@ -175,7 +177,7 @@ def effective_debut(rec: dict, seasons: dict[int, float] | None
         return first, None, "ok"
     dy = int(dd[:4])
     if dy == first:
-        return dy, dd, "ok"
+        return dy, (None if _dd_placeholder else dd), "ok"
     if dy > first:
         # The published date is LATER than the first MLB season. When the id-matched
         # sport-1 line says so, the date is the placeholder kind (many read YYYY-07-01)

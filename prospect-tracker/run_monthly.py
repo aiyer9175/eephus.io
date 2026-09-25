@@ -5447,7 +5447,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         debut_backfill_keys_by_id: dict[int, str] = {}
         for p in timeseries:
             rs = roster_status_by_key.get(p.player_key) or {}
-            if rs.get("mlb_debut_date"):
+            # DS-12 (bug B7): a date that is only the first contract selection
+            # and falls in the offseason (a Rule 5 protection add) is not a game
+            # date. storage rolls it forward to a {year}-07-01 placeholder, which
+            # the eFV matrix then reads as the debut day. Ask /people/{id} first.
+            _d = rs.get("mlb_debut_date") or ""
+            _offseason_selection = (rs.get("mlb_debut_date_source") == "selection"
+                                    and _d[5:7] in ("11", "12", "01", "02"))
+            if rs.get("mlb_debut_date") and not _offseason_selection:
                 continue
             mid = ids_by_key.get(p.player_key)
             if not mid:
@@ -5470,6 +5477,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 if key:
                     rs = roster_status_by_key.setdefault(key, {})
                     rs["mlb_debut_date"] = debut
+                    rs["mlb_debut_date_source"] = "api_people"
 
         if roster_status_by_key:
             upsert_roster_status(roster_status_by_key)

@@ -133,7 +133,7 @@ def test_harness_correction_is_a_ledger_trigger(tmp_path):
                    now=datetime(2026, 9, 25, tzinfo=timezone.utc))
     assert res["status"] == "ok" and res["appended"]
     doc = json.loads((d / "efv_progress.json").read_text(encoding="utf-8"))
-    assert doc["correction_triggers"] == ["harness_correction"]
+    assert doc["correction_triggers"] == ["harness_correction", "data_correction"]
     for r in doc["rows"]:
         assert r["trigger"] == "harness_correction"
         assert r["note"].startswith(note)
@@ -163,7 +163,8 @@ def test_served_correction_rows_keep_the_model_they_rescored():
 def test_the_page_marks_correction_rows_apart():
     js = GLOSSARY_JS.read_text(encoding="utf-8")
     assert "function _progIsCorrection(" in js
-    assert "harness correction, not model progress" in js
+    assert "function _progCorrectionName(" in js
+    assert ", not model progress</span>" in js
     # the chart draws a correction with its own mark before any other branch
     chart = js[js.index("function _methProgressChart("):js.index("function _progRaterCell(")]
     assert chart.index("_progIsCorrection(prog, r)") < chart.index('r.trigger === "look"')

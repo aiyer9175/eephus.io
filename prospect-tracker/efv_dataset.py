@@ -422,6 +422,67 @@ def report_path(side: str = "hit"):
 
 
 # ---------------------------------------------------------------------------
+# DS-12 (docs/efv-v2/DRIVER_SYSTEM_V2.md, bug B7): the debut DAY
+# ---------------------------------------------------------------------------
+# storage rolls an offseason 40-man selection forward to a synthesized
+# {first MLB season}-07-01, and falls back to {first MLB season}-04-01 when
+# nothing else is known. The matrix reads the day twice (the consensus input
+# cutoff and the MiLB feature cutoff), so a July 1 placeholder on a real April
+# debut admits post-debut reads. tools/redate_placeholder_debuts.py asks the
+# StatsAPI people record for the real day and writes data/debut_redates.json;
+# this applies it until debuts.json itself carries the real day. A day that is
+# still a placeholder after that is never read as a debut day: the row's
+# cutoff moves to the season start (SEASON_START_MMDD), the day storage uses
+# when it knows only the season, and the label reads no date.
+REDATES_PATH = DATA_DIR / "debut_redates.json"
+SEASON_START_MMDD = "-04-01"
+_REDATES: dict | None = None
+
+
+def _debut_redates() -> dict:
+    """{player_key: (placeholder_day, real_day or None)} from the re-date map."""
+    global _REDATES
+    if _REDATES is None:
+        _REDATES = {}
+        try:
+            doc = json.loads(REDATES_PATH.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            doc = {}
+        for pk, r in ((doc or {}).get("rows") or {}).items():
+            if r.get("placeholder_date"):
+                _REDATES[pk] = (r["placeholder_date"],
+                                r.get("debut_date") if r.get("status") == "redated" else None)
+    return _REDATES
+
+
+def resolved_debut_date(rec: dict) -> tuple[str | None, bool, str | None]:
+    """(debut day to read, is_placeholder, redated_from) for one debuts.json record.
+
+    The real day replaces a placeholder only when it falls in the same season, so
+    the debut YEAR (and with it every label) never moves."""
+    dd = rec.get("debut_date")
+    if not dd:
+        return dd, False, None
+    day = str(dd)[:10]
+    rd = _debut_redates().get(rec.get("player_key"))
+    if rd and day == rd[0]:
+        if rd[1] and rd[1][:4] == day[:4]:
+            return rd[1], False, day
+        return dd, True, None
+    return dd, bool(rec.get("debut_date_is_placeholder")), None
+
+
+def debut_day_for_cutoff(rec: dict) -> tuple[str | None, bool, str | None]:
+    """resolved_debut_date, with a still-placeholder day moved back to the season
+    start so no row reads a synthesized day as its debut."""
+    dd, ph, frm = resolved_debut_date(rec)
+    if dd and ph:
+        start = f"{str(dd)[:4]}{SEASON_START_MMDD}"
+        dd = min(str(dd)[:10], start)
+    return dd, ph, frm
+
+
+# ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
 
@@ -1259,7 +1320,8 @@ def build_matrix(side: str = "hit"):
     # --- debuted ---
     for rec in debuts:
         acct["debuted_seen"] += 1
-        pk, dd, mlbam = rec.get("player_key"), rec.get("debut_date"), rec.get("mlbam_id")
+        pk, mlbam = rec.get("player_key"), rec.get("mlbam_id")
+        dd, dd_placeholder, dd_redated_from = debut_day_for_cutoff(rec)
         if not (pk and dd):
             continue
         dy = int(dd[:4])
@@ -1288,8 +1350,9 @@ def build_matrix(side: str = "hit"):
         #     season - re-date a Sept/Oct debut to the first WAR season.
         #     A gap of MORE than one year is a data hole (e.g. the
         #     career_war sliding-window decay), not a postseason debut: drop.
-        label_date = dd
-        if min(seasons) == dy + 1 and dd[5:7] >= "09":
+        # A placeholder day is not a date: the service-window arm must not read it.
+        label_date = None if dd_placeholder else dd
+        if min(seasons) == dy + 1 and dd[5:7] >= "09" and not dd_placeholder:
             dy = min(seasons)
             if dy not in DEBUT_YEARS:
                 continue
@@ -1307,10 +1370,13 @@ def build_matrix(side: str = "hit"):
         t_res, t_cens, cflag, w, n_obs = _label_6yr(seasons, dy, label_date)
         row = {"player_key": pk, "kind": "debuted", "debut_year": dy,
                "is_pitcher": is_pit, "cutoff": dd,
+               "debut_date_is_placeholder": bool(dd_placeholder),
                "target_resolved": t_res, "target_censored": t_cens,
                "censored": cflag, "weight": w, "observed_seasons": n_obs,
                "mlbam_id": mlbam, "birth_date": rec.get("birth_date"),
                "position": rec.get("position")}
+        if dd_redated_from:
+            row["debut_date_redated_from"] = dd_redated_from
         row.update(_prior_features(rec, pt, side))
         row["milb"] = _milb_features(mlbam, dy, rec.get("birth_date"), side, cutoff=dd)
         # AUDIT FIX 2026-07-14: distinguish "no pro track record" from "data
@@ -1372,7 +1438,10 @@ def build_matrix(side: str = "hit"):
                            "censored": cflag, "weight": w, "observed_seasons": n_obs,
                            "mlbam_id": mlbam, "birth_date": rec.get("birth_date"),
                            "position": rec.get("position"),
-                           "rerouted_from_bust": True}
+                           "rerouted_from_bust": True,
+                           # DS-12: no debut day is known; the cutoff is the
+                           # season start and no label reads a date.
+                           "debut_date_is_placeholder": True}
                     row.update(_prior_features(rec, rpt, side))
                     row["milb"] = _milb_features(mlbam, dy, rec.get("birth_date"),
                                                 side, cutoff=cutoff)

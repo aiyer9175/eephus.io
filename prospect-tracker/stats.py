@@ -2988,10 +2988,13 @@ def derive_roster_status(transactions: list[dict],
     # date to render as a "debut" in the transaction history.
     if api_debut_date:
         debut_date = api_debut_date
+        debut_date_source = "api"
     elif selection_date and has_mlb_activity:
         debut_date = selection_date
+        debut_date_source = "selection"
     else:
         debut_date = None
+        debut_date_source = None
 
     # Rookie / prospect status is lost when the player crosses any of:
     #   * 130 career MLB at-bats          (hitters)
@@ -3051,6 +3054,12 @@ def derive_roster_status(transactions: list[dict],
 
     return {
         "mlb_debut_date":         debut_date,
+        # DS-12 (docs/efv-v2/DRIVER_SYSTEM_V2.md, bug B7): where the date came
+        # from. "selection" is the first contract selection, which for a
+        # November Rule 5 protection add is NOT a game date; run_monthly asks
+        # /people/{id} for those before storage would roll them forward to a
+        # {year}-07-01 placeholder.
+        "mlb_debut_date_source":  debut_date_source,
         "on_40_man":              bool(on_40_man),
         "options_used":           options_used,
         "options_used_years":     sorted(options_seasons),

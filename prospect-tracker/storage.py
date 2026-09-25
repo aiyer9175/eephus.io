@@ -5002,6 +5002,13 @@ def _fv_to_points(fv: float | int | None) -> float:
 #               resolves to exactly the raw grade and nothing moves.
 BOARD_GRADE_FIELD = "xfv_grade"
 
+#: DS-12 (docs/efv-v2/DRIVER_SYSTEM_V2.md, bug B7): debut-date bases that are a
+#: synthesized day rather than a game date. "rule5_rollforward_placeholder" is the
+#: {year}-07-01 anchor _safe_in_year_placeholder puts on an offseason 40-man add;
+#: "opening_day_placeholder" is {first MLB season}-04-01 when nothing else is known.
+PLACEHOLDER_DEBUT_BASES = frozenset({"rule5_rollforward_placeholder",
+                                     "opening_day_placeholder"})
+
 # The SUB-DECIMAL tiebreak that orders rows INSIDE an exact board-grade tie (see
 # _board_sort_key in the serializer). Order-only, never displayed, never a grade.
 # The sentinel is the value a row with no key sorts at: it must be lower than any
@@ -9927,8 +9934,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     org_promotion_tendencies = _compute_org_promotion_tendencies()
 
     def _derived_graduation_date(p: PlayerTimeseries) -> str | None:
+        """The debut date alone; see _derived_graduation_date_with_basis."""
+        return _derived_graduation_date_with_basis(p)[0]
+
+    def _derived_graduation_date_with_basis(
+            p: PlayerTimeseries) -> tuple[str | None, str | None]:
         """
-        Resolve a player's debut date (formerly "graduation_date").
+        Resolve a player's debut date (formerly "graduation_date") and the
+        basis it rests on (DS-12, bug B7 in docs/efv-v2/DRIVER_SYSTEM_V2.md).
+        A basis in PLACEHOLDER_DEBUT_BASES is a synthesized day, not a game
+        date: the export flags it `debut_date_is_placeholder` so no consumer
+        that reads the DAY (the eFV matrix input cutoff, a service-window
+        arm) takes it for a debut.
 
         v24 — Restores the fallback chain that v21 ripped out (which
         had collapsed to mlb_debut_date-only and left 48 FG-flagged
@@ -9958,16 +9975,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         )
 
         # 1. Trust mlbDebutDate, with the Rule 5 protection rollforward.
+        src = rs.get("mlb_debut_date_source") or "roster_status"
         if api_debut:
             try:
                 api_d = date.fromisoformat(api_debut)
             except ValueError:
-                return api_debut
+                return api_debut, src
             if (api_d.month >= 11
                     and mlb_years and mlb_years[0] > api_d.year):
-                return _safe_in_year_placeholder(
-                    p.player_key, mlb_years[0], rows)
-            return api_debut
+                return (_safe_in_year_placeholder(p.player_key, mlb_years[0], rows),
+                        "rule5_rollforward_placeholder")
+            return api_debut, src
 
         # 2. Earliest outright transaction date.
         _tx_rows = (transactions_by_player or {}).get(p.player_key) or []
@@ -9977,17 +9995,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             and tx.get("date")
         ])
         if _outrights:
-            return _outrights[0]
+            return _outrights[0], "outright"
 
         # 3. consensus.py's snapshot-derived debut_date (FG-flagged path).
         if getattr(p, "debut_date", None):
-            return p.debut_date
+            return p.debut_date, "snapshot"
 
         # 4. Opening Day of the earliest MLB season we have on file.
         if mlb_years:
-            return f"{min(mlb_years)}-04-01"
+            return f"{min(mlb_years)}-04-01", "opening_day_placeholder"
 
-        return None
+        return None, None
 
     def _safe_in_year_placeholder(player_key: str, year: int,
                                   rows: list[dict]) -> str:
@@ -10056,6 +10074,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         humanized "Sept 2023") has a single insertion point.
         """
         return _derived_graduation_date(p)
+
+    def _display_graduation_basis(p: PlayerTimeseries) -> str | None:
+        return _derived_graduation_date_with_basis(p)[1]
 
     # Org rebrand pairs that look like cross-org trades but aren't —
     # the Athletics dropped their "Oakland" prefix mid-2024, which made
@@ -11771,6 +11792,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # flag and keeps the walk only as a fallback for pre-v47 artifacts.
         if _top100_pedigree:
             payload["top100_pedigree"] = True
+
+        # DS-12 (bug B7): a graduate's debut-date basis, and whether the day is
+        # a synthesized placeholder rather than a game date. Graduates only.
+        if p.status == "debuted":
+            _dd_basis = _display_graduation_basis(p)
+            payload["debut_date_basis"] = _dd_basis
+            payload["debut_date_is_placeholder"] = _dd_basis in PLACEHOLDER_DEBUT_BASES
 
         # ── position_observed (2026-07-30, owner decision). The most-played non-DH
         # MiLB position, published BESIDE `position` and never instead of it. See the

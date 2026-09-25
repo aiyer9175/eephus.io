@@ -202,7 +202,8 @@ def frame_row(rec: dict, side: str, vintage: int, *, excl: frozenset[str] | None
     if excl is None:
         non_rater, constant = _real_sources()
         excl = frozenset(non_rater | constant)
-    dd = rec.get("debut_date")
+    # DS-12: a placeholder debut day is never read as one (efv_dataset).
+    dd = D.debut_day_for_cutoff(rec)[0]
     lo, hi = window_bounds(V, dd)
     if dd and str(dd)[:10] < lo:
         return None                          # debuted before the window opened
