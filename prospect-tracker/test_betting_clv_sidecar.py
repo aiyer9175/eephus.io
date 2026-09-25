@@ -478,7 +478,7 @@ def test_a_missing_close_snapshot_blocks_publication(without_close):
     assert "CLV-graded" in close["reason"]
 
 
-def test_retiring_clv_does_not_silently_arm_the_public_record():
+def test_retiring_clv_does_not_silently_arm_the_public_record(monkeypatch):
     """THE DEFECT THIS PINS, which actually happened on 2026-09-07.
 
     Retiring `close_snapshot` left the pre-registered list four-for-four open
@@ -487,16 +487,26 @@ def test_retiring_clv_does_not_silently_arm_the_public_record():
     pre-registered list that arms itself when one of its own entries is
     withdrawn is not pre-registered, so the withdrawal is represented by an
     explicit decision entry instead of by a gap.
+
+    ARMED 2026-09-25 by the owner, in writing. The pin keeps both halves: the
+    flag is the owner's literal decision (never derived from the other
+    blockers), and with the flag off the list still refuses and says why.
     """
     if be.SERVE_CLV:
         return
-    bl = be.record_publish_blockers(payload={"slate_date": DAY, "status": {}},
-                                    rows=[], evald={}, health={"n_slates": 0},
-                                    settlement={})
+    kw = dict(payload={"slate_date": DAY, "status": {}}, rows=[], evald={},
+              health={"n_slates": 0}, settlement={})
+    bl = be.record_publish_blockers(**kw)
     armed = next(b for b in bl if b["id"] == "publish_armed")
     assert armed["open"] is be.RECORD_PUBLISH_ARMED
-    assert be.RECORD_PUBLISH_ARMED is False, (
-        "the record must not ship armed by default; arming it is an owner call")
+    assert be.RECORD_PUBLISH_ARMED is True, (
+        "the owner armed the record on 2026-09-25; disarming it is also an owner call")
+    assert "owner decision" in armed["reason"]
+    # the defect this pins stays pinned: with the flag off, nothing arms it
+    monkeypatch.setattr(be, "RECORD_PUBLISH_ARMED", False)
+    bl = be.record_publish_blockers(**kw)
+    armed = next(b for b in bl if b["id"] == "publish_armed")
+    assert armed["open"] is False
     assert be.record_publish_ok(bl) is False
     # and the reason says WHY, naming the retirement rather than shrugging
     assert "close_snapshot" in armed["reason"]

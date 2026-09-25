@@ -1246,7 +1246,13 @@ SERVE_CLV = False
 #: Set this True to publish, knowing what it means: with SERVE_CLV off, rows are
 #: graded on REALIZED RESULTS alone, which is a noisier instrument than closing
 #: line value, on a model whose own gate still reads unvalidated.
-RECORD_PUBLISH_ARMED = False
+#:
+#: ARMED 2026-09-25 BY THE OWNER, in writing ("You can push the branch and arm
+#: the public betting record, I give you permission to do both"; also the
+#: final-pass decisions batch 1, "Arm now"). The per-slot record guard (R4-1b,
+#: one row per slate and slot) landed before this flip, so arming does not open
+#: the double-headline defect. Turning it back off is also an owner decision.
+RECORD_PUBLISH_ARMED = True
 
 CLV_PATH = DATA_DIR / "betting_clv.json"
 

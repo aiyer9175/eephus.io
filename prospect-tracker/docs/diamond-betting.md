@@ -5860,7 +5860,9 @@ when a capture lands. Phase 2 reprices nothing.
   `(slate_date, slot)` already has one, naming the reason. This is in addition to
   today's bet-identity check. The test builds a slate, changes one input so the slot
   moves, builds again, and asserts one record row per slot. The defect is latent today
-  only because `RECORD_PUBLISH_ARMED` is False.
+  only because `RECORD_PUBLISH_ARMED` is False. (2026-09-25: the guard is built and
+  tested in `test_betting_slot_lock.py`, and the owner armed the record in writing the
+  same day, so `RECORD_PUBLISH_ARMED` is now True.)
 - **Ledgers.** Shadow `board_all` rows written by an intraday pass carry
   `pricing_basis` (to be built; `constructed` or `posted`) and are never pooled across
   bases (the 7a tag rule). Calibration rows from an intraday reprice go under their own
