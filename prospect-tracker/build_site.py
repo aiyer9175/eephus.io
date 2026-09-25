@@ -1380,6 +1380,25 @@ def _genuine_mover_step(p: dict) -> int | None:
     step = _round_half_up(st["delta"])   # eFV-basis step -> half-up, like the JS
     return step if abs(step) >= 2 else None
 
+
+def _mover_at_floor(p: dict) -> bool:
+    """True when an eFV-basis move has an endpoint on the model floor (eFV 20.0).
+
+    Such a step is the player reaching or leaving the floor route, not a
+    re-grade: on the 2026-09-23 board 316 of the 322 steps of 15 or more were
+    this kind. The predicate is efv_alerts._at_floor, imported so the feed and
+    the home page split the two event types the same way. It is applied at the
+    home call sites and NOT inside _genuine_mover_step, because efv_alerts uses
+    that gate too and deliberately keeps floor rows under a share cap."""
+    st = p.get("stock") or {}
+    return st.get("basis") == "xfv" and efv_alerts._at_floor(st)
+
+
+def _mover_unit(p: dict) -> str:
+    """The grade a mover step is measured in: eFV on the xfv basis, FV on the
+    consensus fallback."""
+    return "eFV" if (p.get("stock") or {}).get("basis") == "xfv" else "FV"
+
 def _row_mover(p: dict, d: int) -> str:
     up = d > 0
     # Mini FV-history sparkline - reinforces the stock-chart identity. Colored
@@ -1643,7 +1662,12 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
                     chg = (str(raw[0])[:10], raw[1], raw[2])
         if chg:
             d_first = _wire_fv_first_seen(fv_ledger, key, chg[2], chg[0])
-            fv_items.append((d_first, chg[1], nm, key, org))
+            # The row names the grade that moved: eFV on the xfv basis, FV on
+            # the consensus fallbacks. A step with an endpoint on the eFV floor
+            # is the player reaching or leaving the floor, so it reads as that
+            # event and not as a signed grade step.
+            fv_items.append((d_first, chg[1], nm, key, org,
+                             _mover_unit(p), _mover_at_floor(p)))
         for lc in (p.get("level_changes") or []):
             if lc.get("kind") in ("promotion", "demotion"):
                 promo = lc["kind"] == "promotion"
@@ -1693,13 +1717,20 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
     for it in fv_items:
         by_day.setdefault(it[0], []).append(it)
     for day, items in by_day.items():
-        items.sort(key=lambda t: -abs(t[1]))
-        for d8, step, nm, key, org in items[:_WIRE_MAX_FV_PER_DAY]:
+        # Re-grades lead the day's slots; floor steps follow, so a 20-point
+        # floor crossing never pushes a real re-grade out of the per-day cap.
+        items.sort(key=lambda t: (t[6], -abs(t[1])))
+        for d8, step, nm, key, org, unit, floor in items[:_WIRE_MAX_FV_PER_DAY]:
             up = step > 0
-            val = f'{"+" if up else ""}{step} FV'
+            if floor:
+                val = "off eFV floor" if up else "to eFV floor"
+                weight = 1
+            else:
+                val = f'{"+" if up else ""}{step} {unit}'
+                weight = abs(step)
             add(d8, "up" if up else "down", "▲" if up else "▼",
                 f'{nm} {"▲" if up else "▼"} {val}', key, org,
-                name=nm, val=val, weight=abs(step))
+                name=nm, val=val, weight=weight)
     ev.sort(key=lambda e: (e[0], e[8]), reverse=True)
     return [e[:8] for e in ev]
 
@@ -1928,7 +1959,7 @@ _NEWS_GFX_JS = """<script>
   var el=document.getElementById('news-gfx-data'),evs=[];
   try{evs=JSON.parse(el?el.textContent:'[]')||[];}catch(e){}
   var TYPE={debut:'Debut',trade:'Trade',promo:'Promo',demo:'Demo',il:'IL',
-            up:'FV up',down:'FV down',signing:'Signing'};
+            up:'Grade up',down:'Grade down',signing:'Signing'};
   var CLR={up:'pos',down:'neg',il:'neg',debut:'accent'};
   var CDN='https://img.mlbstatic.com/mlb-photos/image/upload/';
   // SQUARE face crop, 2026-08-05. renderNewsDay (eephus-gfx.js) draws this into
@@ -2026,7 +2057,7 @@ def build_news(data: dict | None = None) -> str:
     feed = _news_feed_html(events, pmap)
     recent = _news_recent_events(events)
     chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
-                 ("move", "Moves"), ("il", "IL"), ("fv", "FV"), ("signing", "Signings")]
+                 ("move", "Moves"), ("il", "IL"), ("fv", "Grades"), ("signing", "Signings")]
     chips = "".join(
         f'<button class="chip{" active" if c == "all" else ""}" '
         f'data-news-filter="{c}">{html.escape(lbl)}</button>'
@@ -2034,10 +2065,10 @@ def build_news(data: dict | None = None) -> str:
     body = (
         '<div class="news-app">'
         '<div class="section-head"><h1>Prospect News</h1>'
-        '<span class="section-sub">debuts, trades, level moves, IL, FV changes and FA signings</span>'
+        '<span class="section-sub">debuts, trades, level moves, IL, eFV changes and FA signings</span>'
         f'{_gfx_chip_html("news-gfx-chip")}</div>'
         f'<p class="news-intro">The {_gl("wire_ticker", "wire")}, last ~30 days, newest first. '
-        'FV rows are real grade changes only. A date header opens Time Machine on that date.</p>'
+        'Grade rows show eFV moves of 2 or more; a row reading &quot;to eFV floor&quot; or &quot;off eFV floor&quot; is the player reaching or leaving the model floor, not a re-grade. A date header opens Time Machine on that date.</p>'
         f'<div class="filter-bar" id="news-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
         f'<div class="sb-feed news-feed" id="news-feed">{feed}</div>'
         '</div>'
@@ -2054,7 +2085,7 @@ def build_news(data: dict | None = None) -> str:
         + f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
     )
     return page("Prospect News - eephus.io", "news", body,
-                "The eephus.io prospect wire: debuts, trades, promotions, IL moves, FV grade "
+                "The eephus.io prospect wire: debuts, trades, promotions, IL moves, eFV grade "
                 "changes and Free Agency signings, filterable by type.",
                 url=f"{SITE_ORIGIN}/news/")
 
@@ -2106,8 +2137,10 @@ def _spotlight_html(players: list, spotlights: dict | None = None) -> str:
 
     Slot 1 (Top Riser) and slot 2 (Top Faller) come from `_genuine_mover_step` -
     the de-noised genuine grade move, the same selector the Top Movers module
-    uses - so the "+N FV" / "-N FV" caption stays a true FV statement and the
-    hero card never disagrees with the movers list or the per-player stock chips.
+    uses - so the "+N eFV" / "-N eFV" caption (FV on the consensus fallback)
+    names the grade that moved and the hero card never disagrees with the
+    movers list or the per-player stock chips. Floor crossings are left out,
+    as on Top Movers (_mover_at_floor).
     Slot 3 (Hot Sample) is the engine's own performance bucket
     (timeseries.spotlights.hot, the alias of `risers` guarded by
     test_spotlights_three_buckets), captioned with that entry's published stat
@@ -2119,7 +2152,8 @@ def _spotlight_html(players: list, spotlights: dict | None = None) -> str:
     rather than an empty rail. Returns "" only when NO slot fills."""
     steps = [(d, p) for p in players
              if p.get("status") != "debuted"
-             and (d := _genuine_mover_step(p)) is not None]
+             and (d := _genuine_mover_step(p)) is not None
+             and not _mover_at_floor(p)]
     chip_style = "font-family:var(--font-retro-mono);font-size:12px;white-space:nowrap;"
     slots: list[tuple[str, dict, str, str]] = []
 
@@ -2127,14 +2161,14 @@ def _spotlight_html(players: list, spotlights: dict | None = None) -> str:
     if risers:
         d, p = max(risers, key=lambda t: t[0])
         slots.append(("Spotlight - Top Riser", p,
-                      f'<span class="row-delta up" style="{chip_style}">▲ +{d} FV</span>',
+                      f'<span class="row-delta up" style="{chip_style}">▲ +{d} {_mover_unit(p)}</span>',
                       "var(--accent-green)"))
     fallers = [t for t in steps if t[0] < 0]
     if fallers:
         d, p = min(fallers, key=lambda t: t[0])
         # d is already negative, so it carries its own sign - never print "+-3".
         slots.append(("Spotlight - Top Faller", p,
-                      f'<span class="row-delta down" style="{chip_style}">▼ {d} FV</span>',
+                      f'<span class="row-delta down" style="{chip_style}">▼ {d} {_mover_unit(p)}</span>',
                       "var(--accent-red)"))
 
     # Hot sample: the top entry of the engine's performance bucket that still
@@ -3499,9 +3533,13 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # year so the homepage stays a "moving now" surface, matching the FV
     # sparkline beside each row. The driver-chip view lives on the PROSPX
     # spotlights tab this module links to.
+    # A step with an endpoint on the eFV floor is a floor crossing, not a
+    # re-grade, and is left out here (it still reads on the wire as "to eFV
+    # floor" / "off eFV floor"); see _mover_at_floor.
     mv = [(d, p) for p in players
           if p.get("status") != "debuted"
-          and (d := _genuine_mover_step(p)) is not None]
+          and (d := _genuine_mover_step(p)) is not None
+          and not _mover_at_floor(p)]
     # Top 5 movers: 3 biggest risers + 2 biggest fallers (the module shows both
     # directions; the spotlights tab it links to carries the full list).
     risers = sorted((t for t in mv if t[0] > 0), key=lambda t: -t[0])[:3]
