@@ -888,7 +888,7 @@ def test_validated_late_pitcher_is_separate_from_command_risk() -> None:
 
 
 def test_multiposition_bonus_rewards_meaningful_defensive_usage(monkeypatch) -> None:
-    def fake_usage(player_key):
+    def fake_usage(player_key, mlbam_id=None):
         assert player_key == "sal_stewart"
         return {
             "1B": {"games": 49, "games_started": 43, "innings": 368.2},
@@ -915,7 +915,7 @@ def test_multiposition_bonus_rewards_meaningful_defensive_usage(monkeypatch) -> 
 
 
 def test_multiposition_bonus_ignores_one_off_cameos(monkeypatch) -> None:
-    def fake_usage(_player_key):
+    def fake_usage(_player_key, mlbam_id=None):
         return {
             "1B": {"games": 49, "games_started": 43, "innings": 368.2},
             "3B": {"games": 1, "games_started": 0, "innings": 2.0},

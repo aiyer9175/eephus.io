@@ -566,6 +566,7 @@ def multiposition_bonus_mm(
     is_mlb_player: bool = False,
     remaining_years: float | None = None,
     posterior_surplus_mm: float | None = None,
+    mlbam_id: int | None = None,
 ) -> tuple[float, dict]:
     """Additive value for demonstrated MLB defensive flexibility.
 
@@ -577,7 +578,7 @@ def multiposition_bonus_mm(
         return 0.0, {"positions": {}, "meaningful_positions": []}
     try:
         from fielding import position_usage
-        usage = position_usage(player_key)
+        usage = position_usage(player_key, mlbam_id=mlbam_id)
     except Exception:
         usage = {}
     if not usage:
@@ -2816,13 +2817,18 @@ def bayesian_trade_value(
     _is_mlb_status_for_pos = (player.get("status") or "active") in ("debuted", "graduated")
     _pos_source = "db"
     # Resolve actual current position from fielding data / overrides
+    _pos_mlbam = player.get("mlbam_id")
     try:
         from fielding import resolve_position as _rp
-        _mlbam = None
-        from storage import connect as _conn
-        with _conn() as _c:
-            _row = _c.execute("SELECT mlbam_id FROM player_photos WHERE player_key=?", (player_key,)).fetchone()
-            if _row: _mlbam = _row[0]
+        # The record's own id first (the fielding feed is keyed by mlbam, so a
+        # slug two players share must not borrow the other's innings).
+        _mlbam = player.get("mlbam_id")
+        if not _mlbam:
+            from storage import connect as _conn
+            with _conn() as _c:
+                _row = _c.execute("SELECT mlbam_id FROM player_photos WHERE player_key=?", (player_key,)).fetchone()
+                if _row: _mlbam = _row[0]
+        _pos_mlbam = _mlbam
         position, _pos_source = _rp(player_key, _mlbam, _db_position, _is_mlb_status_for_pos)
         if position != _db_position and _pos_source != "db":
             _log.debug("fielding override: %s %s→%s (%s)", player_key, _db_position, position, _pos_source)
@@ -3671,6 +3677,7 @@ def bayesian_trade_value(
         is_mlb_player=is_mlb_player,
         remaining_years=remaining_ctrl if is_mlb_player else None,
         posterior_surplus_mm=float(posterior_surplus_mm),
+        mlbam_id=_pos_mlbam,
     )
     if multi_pos_mm > 0:
         inputs_available.append("multiposition_bonus")

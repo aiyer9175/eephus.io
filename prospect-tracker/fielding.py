@@ -19,7 +19,7 @@ Two data sources:
 
 Resolution priority:
   1. position_overrides.json  (highest confidence for MLB players)
-  2. mlb_fielding_positions.json current-season usage primary
+  2. fielding_innings.json current-season usage primary (by mlbam id)
   3. mlb_player_detail.json   (current MLB player-page / projection position)
   4. milb_fielding.parquet    (good for active prospects)
   5. Player's DB position     (fallback)
@@ -119,36 +119,44 @@ def _load_mlb_detail_positions() -> dict[str, str]:
 
 
 @lru_cache(maxsize=1)
-def _load_mlb_fielding_usage() -> dict[str, dict[str, dict]]:
-    """Return current MLB fielding usage keyed by player_key and position.
+def _load_mlb_fielding_usage() -> dict[int, dict[str, dict]]:
+    """Return current-season MLB fielding usage keyed by mlbam id and position.
 
     Shape:
-      {player_key: {position: {games, games_started, innings}}}
+      {mlbam: {position: {games, games_started, innings}}}
 
-    Populated by data/mlb_fielding_positions.json. We keep this as a sidecar so
-    the trade-value export does not make thousands of live API calls.
+    Read from data/fielding_innings.json, the nightly StatsAPI fielding feed
+    (fielding_innings.py), at its latest season. Until 2026-09-25 this read
+    data/mlb_fielding_positions.json, a June 22 snapshot keyed by name slug that
+    nothing refreshed (155 of 650 non-pitcher veterans absent); the owner chose
+    the nightly feed (decision L5, 2026-09-17). Kept as a local sidecar so the
+    trade-value export makes no live API calls.
     """
-    path = _HERE / "data" / "mlb_fielding_positions.json"
+    path = _HERE / "data" / "fielding_innings.json"
     if not path.exists():
         return {}
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        players = data.get("players") or {}
-        out: dict[str, dict[str, dict]] = {}
-        for key, row in players.items():
-            by_pos = (row or {}).get("positions") or {}
+        seasons = data.get("seasons") or {}
+        season = str(data.get("last_season") or max(seasons, default=""))
+        players = seasons.get(season) or {}
+        out: dict[int, dict[str, dict]] = {}
+        for mid, by_pos in players.items():
             clean: dict[str, dict] = {}
-            for raw_pos, usage in by_pos.items():
+            for raw_pos, usage in (by_pos or {}).items():
                 pos = str(raw_pos).upper()
                 if not _valid_position(pos):
                     continue
                 clean[pos] = {
-                    "games": float((usage or {}).get("games") or (usage or {}).get("games_played") or 0.0),
-                    "games_started": float((usage or {}).get("games_started") or 0.0),
-                    "innings": float((usage or {}).get("innings") or 0.0),
+                    "games": float((usage or {}).get("g") or 0.0),
+                    "games_started": float((usage or {}).get("gs") or 0.0),
+                    "innings": float((usage or {}).get("inn") or 0.0),
                 }
             if clean:
-                out[str(key)] = clean
+                try:
+                    out[int(mid)] = clean
+                except (TypeError, ValueError):
+                    continue
         return out
     except Exception as e:
         _log.warning("fielding: could not load MLB fielding usage: %s", e)
@@ -208,8 +216,8 @@ def resolve_position(player_key: str | None,
         return overrides[player_key], "override"
 
     # 2. Direct current-season MLB fielding usage, when populated.
-    if is_mlb_player and player_key:
-        usage_primary = _primary_from_usage(_load_mlb_fielding_usage().get(player_key) or {})
+    if is_mlb_player and mlbam_id:
+        usage_primary = _primary_from_usage(_load_mlb_fielding_usage().get(int(mlbam_id)) or {})
         if usage_primary:
             return usage_primary, "mlb_fielding"
 
@@ -236,8 +244,12 @@ def resolve_position(player_key: str | None,
     return None, "unknown"
 
 
-def position_usage(player_key: str | None) -> dict[str, dict]:
-    """Return known current MLB fielding usage for a player."""
-    if not player_key:
+def position_usage(player_key: str | None, mlbam_id: int | None = None) -> dict[str, dict]:
+    """Return known current MLB fielding usage for a player, by mlbam id (the
+    feed has no name key; a row without an id gets nothing)."""
+    if not mlbam_id:
         return {}
-    return dict(_load_mlb_fielding_usage().get(player_key) or {})
+    try:
+        return dict(_load_mlb_fielding_usage().get(int(mlbam_id)) or {})
+    except (TypeError, ValueError):
+        return {}
