@@ -537,6 +537,14 @@ def build(season: int, *, log=print) -> dict:
             continue
         h, p = hit_by.get(int(mid)), pit_by.get(int(mid))
         src = h or p
+        # THE CLUB comes from the pitching line whenever there is one. A
+        # pitcher's hitting line is the club he last BATTED for, which for a
+        # reliever traded after an interleague at-bat is his old club: Luke
+        # Weaver served NYM here while the bullpen board, the pitching line and
+        # /projections/ all said PIT (audit X03-02). Position players who
+        # pitched mop-up have no pitching line (the P/TWP filter), so they keep
+        # the hitting line's club.
+        club_src = p if p is not None else h
         if src is None:
             n_no_line += 1
         pa = _num((h or {}).get("PA"))
@@ -560,7 +568,7 @@ def build(season: int, *, log=print) -> dict:
         row = {
             "mlbam": int(mid),
             "name": (src or {}).get("name") or name_fallback.get(int(mid)) or "",
-            "team": (src or {}).get("team") or "",
+            "team": (club_src or {}).get("team") or "",
             "role": role,
             "pos": pos,
             "qualified": bool((pa or 0.0) >= QUAL_MIN_PA or (ip or 0.0) >= QUAL_MIN_IP),
@@ -588,8 +596,8 @@ def build(season: int, *, log=print) -> dict:
         # the served 1dp cells would carry one rounding error per player.
         row["_bat"], row["_pit"] = bat, pit
         players.append(row)
-        if src is not None:
-            basis_rows.append(src)
+        if club_src is not None:
+            basis_rows.append(club_src)
     players.sort(key=lambda r: (-(r["war"] if r["war"] is not None else -99),
                                 r["name"]))
 

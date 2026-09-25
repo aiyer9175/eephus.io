@@ -4849,6 +4849,11 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
 
     proj_sur, proj_rows, ages = {}, {}, {}
     proj_mlbam, proj_key_by_mlbam = {}, {}
+    # The club each MLB veteran is counted under on /projections/ (proj_export's
+    # current-club resolver: transaction feed, then this season's club, then
+    # the contract club). An MLB player's board org is taken from it below.
+    vet_club = {r["key"]: r["team"] for r in (mp.get("vets") or [])
+                if r.get("key") and r.get("team")}
     for grp in ("vets", "prospects"):
         for r in (mp.get(grp) or []):
             k = r.get("key")
@@ -4911,7 +4916,8 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     stats = {"xfv": 0, "projection": 0, "xfv_backgrade": 0, "unchanged": 0,
              "no_control_window": 0,
              "age_backfilled": 0, "inactive_dropped": 0, "backgrade_tempered": 0,
-             "excluded_unpriceable": 0, _PREARB_SOURCE: 0}
+             "excluded_unpriceable": 0, _PREARB_SOURCE: 0,
+             "org_current_club": 0}
     for r in records:
         pk = r.get("player_key")
         is_pros = r.get("status") == "active"
@@ -4925,6 +4931,15 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         ppk = _projection_key_for(r, proj_mlbam, proj_key_by_mlbam)
         if ppk != pk:
             r["proj_key"] = ppk
+        # ONE CLUB PER HUMAN (audit X03-02). A debuted player's org came from
+        # the scouting side, which trails MLB moves: Ernie Clement read ATH here
+        # while the transaction feed, his season line and /projections/ all
+        # said TOR. When the projection models him as a veteran, his club is
+        # the projection's current club. Tracked prospects keep the org the
+        # farm pages use.
+        if not is_pros and vet_club.get(ppk) and vet_club[ppk] != r.get("org"):
+            r["org"] = vet_club[ppk]
+            stats["org_current_club"] += 1
         # Resolve age up front (backfilled from the projection artifacts) - the
         # backgrade temper below reads it.
         age = r.get("age")

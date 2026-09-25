@@ -333,24 +333,39 @@ def _base_key(key: str) -> str:
 
 
 _TEAM_BY_MLBAM: dict[int, str] | None = None
+_TEAM_SEEN_BY_MLBAM: dict[int, tuple[str, int]] | None = None
+_FEED_ORG_BY_MLBAM: dict[int, tuple[str, str]] | None = None
 
 
 def _team_by_mlbam(lookback: int = 4) -> dict[int, str]:
     """{mlbam: org code} - the club each player was last seen playing for.
+    The season-free view of `_team_seen_by_mlbam`."""
+    global _TEAM_BY_MLBAM
+    if _TEAM_BY_MLBAM is None:
+        _TEAM_BY_MLBAM = {m: org for m, (org, _s)
+                          in _team_seen_by_mlbam(lookback).items()}
+    return _TEAM_BY_MLBAM
+
+
+def _team_seen_by_mlbam(lookback: int = 4) -> dict[int, tuple[str, int]]:
+    """{mlbam: (org code, season)} - the club each player was last seen playing
+    for, and the season he was seen there.
 
     Reads the StatsAPI season-stat splits the corpus build already caches (no
     new ingest); later seasons overwrite earlier ones, so the map reads as
-    "most recent club seen". Best-effort: an unavailable cache leaves this
+    "most recent club seen". StatsAPI's season row for a traded player carries
+    the club he played for LAST, so on the in-progress season this is the
+    club that holds him now. Best-effort: an unavailable cache leaves this
     empty and every join falls back to exactly the pre-fix behaviour."""
-    global _TEAM_BY_MLBAM
-    if _TEAM_BY_MLBAM is not None:
-        return _TEAM_BY_MLBAM
-    out: dict[int, str] = {}
+    global _TEAM_SEEN_BY_MLBAM
+    if _TEAM_SEEN_BY_MLBAM is not None:
+        return _TEAM_SEEN_BY_MLBAM
+    out: dict[int, tuple[str, int]] = {}
     try:
         import fa_sources
         from trades import canonical_org
     except ImportError:                                        # noqa: BLE001
-        _TEAM_BY_MLBAM = out
+        _TEAM_SEEN_BY_MLBAM = out
         return out
     for season in range(FIRST_SEASON - lookback, FIRST_SEASON):
         for group in ("hitting", "pitching"):
@@ -370,10 +385,110 @@ def _team_by_mlbam(lookback: int = 4) -> dict[int, str]:
                     continue
                 org = canonical_org(name)
                 if org:
-                    out[int(pid)] = org
-    _TEAM_BY_MLBAM = out
+                    out[int(pid)] = (org, season)
+    _TEAM_SEEN_BY_MLBAM = out
     log.info("team map: %d mlbam -> org from statsapi season splits", len(out))
     return out
+
+
+def _feed_org_by_mlbam() -> dict[int, tuple[str, str]]:
+    """{mlbam: (canonical org, event date)} from MLB's transaction feed, the
+    same resolver the /mlbstats/ boards repoint `team` with
+    (bullpen_export.apply_current_team). Best-effort: an absent table or DB
+    leaves it empty and the resolver below falls through to the stats club."""
+    global _FEED_ORG_BY_MLBAM
+    if _FEED_ORG_BY_MLBAM is not None:
+        return _FEED_ORG_BY_MLBAM
+    out: dict[int, tuple[str, str]] = {}
+    try:
+        from storage import authoritative_org_by_mlbam
+        from trades import canonical_org
+        for mid, (org, when) in (authoritative_org_by_mlbam() or {}).items():
+            code = canonical_org(org) if org else None
+            if code and when:
+                out[int(mid)] = (code, str(when))
+    except Exception:                                          # noqa: BLE001
+        log.warning("club resolver: transaction feed unavailable; "
+                    "serving the stats and contract clubs", exc_info=True)
+        out = {}
+    _FEED_ORG_BY_MLBAM = out
+    log.info("club resolver: %d mlbam -> org from the transaction feed", len(out))
+    return out
+
+
+# CURRENT CLUB, NOT CONTRACT CLUB (2026-09-24, audit X03-02). `team` used to be
+# the Spotrac contract club first, on the reading that the contract club is the
+# paying club. It is only until the player is traded: the contract moves with
+# him, and the monthly Spotrac scrape keeps the old club until the next pass.
+# Measured on the served artifact before this change: 134 of the 1,129 vets
+# the eWAR board also carries sat on a different club (Tarik Skubal DET on
+# /projections/, LAD on /mlbstats/), 104 of them confirmed by MLB's transaction
+# feed and the other 30 by StatsAPI's in-progress season row (numTeams 2+). The
+# FA class 'from' column, the player links, the trade board org, the Team
+# Outlook sums and the ledger's club rows all read this field.
+#
+# Order, newest evidence first:
+#   1. feed         MLB's transaction feed, when the event falls in the current
+#                   season or later (the same feed the /mlbstats/ boards use).
+#   2. season       the club StatsAPI shows him playing for this season.
+#   3. contract     the Spotrac contract club.
+#   4. feed_prior   an older feed event, when it is no older than the last
+#                   season he was seen playing.
+#   5. last_seen    the club he was last seen playing for in an earlier season.
+CLUB_SOURCES = ("feed", "season", "contract", "feed_prior", "last_seen")
+
+
+def resolve_current_club(feed: tuple[str, str] | None,
+                         seen: tuple[str, int] | None,
+                         contract_club: str | None,
+                         season_now: int) -> tuple[str | None, str | None]:
+    """(org, source) for one player; pure, so the precedence is testable.
+
+    `feed` is (org, ISO date) from the transaction feed, `seen` is (org,
+    season) from StatsAPI, `contract_club` is the Spotrac club and
+    `season_now` is the in-progress season."""
+    feed_year = None
+    if feed and feed[0]:
+        try:
+            feed_year = int(str(feed[1])[:4])
+        except (TypeError, ValueError):
+            feed_year = None
+    if feed_year is not None and feed_year >= season_now:
+        return feed[0], "feed"
+    if seen and seen[0] and seen[1] >= season_now:
+        return seen[0], "season"
+    if contract_club:
+        return contract_club, "contract"
+    if feed_year is not None and (not seen or feed_year >= seen[1]):
+        return feed[0], "feed_prior"
+    if seen and seen[0]:
+        return seen[0], "last_seen"
+    return None, None
+
+
+def _current_club(mlbam, ct: dict | None) -> tuple[str | None, str | None]:
+    """resolve_current_club over the module's cached maps."""
+    try:
+        mid = int(mlbam)
+    except (TypeError, ValueError):
+        return (ct or {}).get("team_code"), ("contract" if (ct or {}).get("team_code") else None)
+    return resolve_current_club(_feed_org_by_mlbam().get(mid),
+                                _team_seen_by_mlbam().get(mid),
+                                (ct or {}).get("team_code"), FIRST_SEASON - 1)
+
+
+# Per-run disclosure of where each veteran's `team` came from; reset by
+# _veteran_rows and published as the payload's `team_basis` block.
+# {mlbam: (source, contract club or None)}.
+_TEAM_BASIS_CENSUS: dict = {}
+
+
+def _vet_club(mlbam, ct: dict | None) -> str | None:
+    """_current_club for a veteran row, recorded for the `team_basis` block."""
+    club, src = _current_club(mlbam, ct)
+    if mlbam is not None:
+        _TEAM_BASIS_CENSUS[mlbam] = (src, (ct or {}).get("team_code"))
+    return club
 
 
 def _resolve_contracts(mlbams, names: dict[int, str], contracts: dict[str, dict],
@@ -490,6 +605,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             _k = normalize_key(_nm)
             _name_counts[_k] = _name_counts.get(_k, 0) + 1
     _teams = _team_by_mlbam()
+    _TEAM_BASIS_CENSUS.clear()
     _ct_by_mlbam, _contested = _resolve_contracts(_vet_ids, names, contracts, _teams)
     _contested_by_mlbam = {m: ck for ck, ms in _contested.items() for m in ms}
 
@@ -524,8 +640,12 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         collision-winner award so both paths price identically."""
         if not m.get("twoWay") and _valid_pos(ct.get("position")):
             m["pos"] = ct["position"].strip().upper()
-        if ct.get("team_code"):
-            m["team"] = ct["team_code"]
+        # The club is re-resolved WITH this contract (the post-loop collision
+        # award reaches here with a row built contract-less): a contract club
+        # only wins when neither the feed nor this season's stats place him.
+        _club = _vet_club(m.get("mlbam"), ct)
+        if _club:
+            m["team"] = _club
         sal = {int(y): int(v) for y, v in (ct.get("salary_by_year") or {}).items()}
         if ct.get("signed_through") is not None:
             m["thru"] = ct["signed_through"]
@@ -793,9 +913,10 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             "mlbam": mlbam,
             "src": "vet", "twoWay": True if two_way else None,
             "pos": "TWP" if two_way else ((ct or {}).get("position") or path["role"]),
-            # Contract club first (it is the paying club); the observed club is the
-            # fallback that keeps un-contracted vets on a roster instead of dropped.
-            "team": (ct or {}).get("team_code") or _teams.get(mlbam),
+            # The club that holds him NOW (resolve_current_club): the feed and
+            # this season's stats outrank the monthly contract club, which is
+            # stale for every player traded since the last Spotrac pass.
+            "team": _vet_club(mlbam, ct),
             "war": war_arr,
             # Champion MEAN path (5y) - the SUM basis for the Team Outlook
             # multi-year roll-up (warChamp[0] == warY1Champ below).
@@ -1651,7 +1772,6 @@ def _depth_pool(corpus: dict, names: dict[int, str],
         if _nm:
             _k = normalize_key(_nm)
             _dp_name_counts[_k] = _dp_name_counts.get(_k, 0) + 1
-    _dp_teams = _team_by_mlbam()
     for mlbam in (set(by_player["hit"]) | set(by_player["pit"])) - vet_mlbams:
         champ = [0.0] * HORIZON
         age_any = None
@@ -1680,9 +1800,9 @@ def _depth_pool(corpus: dict, names: dict[int, str],
         name = names.get(mlbam)
         _dk = normalize_key(name) if name else None
         ct = (contracts.get(_dk) if (_dk and _dp_name_counts.get(_dk, 0) == 1) else None)
-        # Same fallback the vet rows use: the depth pool is nearly all pre-arb
+        # Same resolver the vet rows use: the depth pool is nearly all pre-arb
         # players, exactly the population Spotrac's contract pages omit.
-        org = (ct or {}).get("team_code") or _dp_teams.get(mlbam)
+        org = _current_club(mlbam, ct)[0]
         last_ctrl = _last_controlled_season(
             {"src": "vet", "thru": (ct or {}).get("signed_through"), "age": age_any})
         bucket = team_war[org] if org else war_unassigned
@@ -2680,6 +2800,31 @@ def _accountability_block() -> dict:
     }
 
 
+def _team_basis_block(vets: list[dict]) -> dict:
+    """The disclosure for the club every veteran row is counted under, read
+    from the census _vet_club kept while the rows were built."""
+    from collections import Counter
+    by_src: Counter = Counter()
+    n_off_contract = 0
+    for v in vets:
+        src, ct_club = _TEAM_BASIS_CENSUS.get(v.get("mlbam"), (None, None))
+        by_src[src or "none"] += 1
+        if ct_club and v.get("team") and ct_club != v["team"]:
+            n_off_contract += 1
+    return {
+        "basis": "current_club",
+        "order": list(CLUB_SOURCES),
+        "n_rows": len(vets),
+        "by_source": {k: by_src.get(k, 0) for k in (*CLUB_SOURCES, "none")},
+        "n_off_contract_club": n_off_contract,
+        "note": ("The club that holds the player today: MLB's transaction feed for "
+                 "a move this season, then the club StatsAPI shows him playing for "
+                 "this season, then the Spotrac contract club, then his last "
+                 "club seen. A traded player's contract moves with him, so the "
+                 "contract club is used only when neither newer source places him."),
+    }
+
+
 def build_payload() -> dict:
     corpus = fp.build_corpus()
     names = _display_names()
@@ -2732,6 +2877,9 @@ def build_payload() -> dict:
         "dpw_infl": float(cfg.get("dollars_per_war_inflation", 0.05)),
         "dpw_reanchor": re_anchor or None,
         "n_vets": len(vets), "n_prospects": len(prospects),
+        # Where each veteran's `team` came from (resolve_current_club), and how
+        # many rows sit on a club other than their Spotrac contract club.
+        "team_basis": _team_basis_block(vets),
         "vets": vets, "prospects": prospects,
         "team_outlook": team_outlook,
         "current_season": (FIRST_SEASON - 1) if mc_schedule_source else None,

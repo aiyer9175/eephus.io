@@ -552,14 +552,17 @@ _CONTRACT_ORGS: dict[str, str] | None = None
 
 
 def _contract_orgs() -> dict[str, str]:
-    """player_key -> club, taken from the contract-derived projection artifact.
+    """player_key -> club, taken from the projection artifact's `team`.
 
     The FA availability page is a per-class scrape and its club column is not
-    trustworthy: A.J. Minter's 2027 row carried "MIN" because a Twins token sat
-    in the Mets' row, so the FA board published a Mets reliever as a Twin while
-    every contract-derived surface correctly said NYM. proj_export builds `team`
-    from each club's OWN roster page, which cannot make that mistake, and it
-    runs before this module in both the monthly and daily chains.
+    trustworthy, so 'from' reads the club proj_export resolves instead, which
+    runs before this module in both the monthly and daily chains. That club is
+    the one holding the player TODAY (proj_export.resolve_current_club: the
+    transaction feed, then this season's club, then the Spotrac contract club).
+    It used to be the contract club first, which is stale for every deadline
+    trade: 48 of 236 'from' cells named the club a player had left (Tarik Skubal
+    DET after his move to LAD). A.J. Minter, once cited here as a scrape error
+    for reading MIN, was in fact traded to Minnesota; his season line says so.
 
     Best effort by design: a missing or unreadable artifact leaves the scraped
     value in place rather than blanking the column.

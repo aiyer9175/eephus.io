@@ -176,6 +176,23 @@ def test_a_two_way_player_carries_both_sides_and_the_feed_role(monkeypatch):
     assert row["pa"] == 596 and row["gs"] == 14
 
 
+def test_a_pitchers_club_is_his_pitching_lines_club(monkeypatch):
+    """A pitcher's hitting line is the club he last BATTED for. Luke Weaver
+    batted for the Mets before his trade and pitched for Pittsburgh after it,
+    and this board served NYM while the bullpen board, his pitching line and
+    /projections/ all said PIT (audit X03-02). The club comes from the
+    pitching line whenever there is one; a hitter keeps his hitting line's."""
+    _stub(monkeypatch,
+          sides={596133: {SEASON: {"pit": 0.8, "bat": 0.0}},
+                 33: {SEASON: {"bat": 1.2}}},
+          hitting=[_hit(596133, "Luke Weaver", "NYM", 1),
+                   _hit(33, "Plain Bat", "SEA", 400)],
+          pitching=[_pit(596133, "Luke Weaver", "PIT", "55.0", 55, 0)])
+    rows = {r["mlbam"]: r for r in wbe.build(SEASON, log=lambda *a: None)["players"]}
+    assert rows[596133]["team"] == "PIT"
+    assert rows[33]["team"] == "SEA"
+
+
 def test_a_swingman_is_on_this_board_with_role_sw(monkeypatch):
     """A 30-game arm with 8 starts is on NEITHER pitcher board: too many starts
     for rem_plus.MAX_START_SHARE, too few for sem_plus.MIN_START_SHARE. He is

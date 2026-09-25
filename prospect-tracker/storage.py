@@ -8662,7 +8662,12 @@ def authoritative_org_map(
     scouting org rather than acquiring a wrong one.
     """
     import json as _json
+    from trades import ORG_ALIASES as _ALIASES
     from trades import canonical_org as _canon
+    # The 30 parent clubs. The feed also carries national-team events (a WBC
+    # roster resolves to "Cuba", four characters, so the length guard below let
+    # it through) and those are not a club: five players were placed on "Cuba".
+    _clubs = frozenset(_ALIASES.values())
 
     out: dict[str, tuple[str, str]] = {}
     try:
@@ -8689,8 +8694,8 @@ def authoritative_org_map(
             # signal; assignments/status changes name the affiliate, which
             # resolves only when it carries the parent's nickname.
             org = _canon(ev.get("to_team_name"))
-            if not org or len(org) > 4:
-                continue                          # unresolvable affiliate
+            if not org or org not in _clubs:
+                continue                          # unresolvable affiliate / not a club
             if best is None or when >= best[0]:
                 best = (when, org)
         if best is not None:
