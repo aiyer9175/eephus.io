@@ -14,10 +14,12 @@ shape from S, decision or not:
 
 The non-decision windows are: for the pitching change, every stint start (any pitcher's
 first plate appearance in a half-inning, and every mid-inning pitcher change) to the end
-of that stint; for the pinch hit, the bunt and the steal, every plate appearance; for the
+of that stint; for the pinch hit and the bunt, every plate appearance; for the
 pinch run, every half-inning remainder from a state with a runner on; for the intentional
 walk, every two-plate-appearance span whose first plate appearance was pitched to; for the
-defensive sub, every rest-of-game span. MIN_CELL on the baseline side; thin cells are
+defensive sub, every rest-of-game span. The steal has no baseline: its realized value is
+the steal itself on the house win expectancy table (mgmt_decisions.MODEL_REALIZED), not a
+feed window, and its value above holding is its DV. MIN_CELL on the baseline side; thin cells are
 published as excluded, exactly as mgmt_bunt does.
 
 WHAT DVS REMOVES: the level of the state, so a club that faced many high-leverage spots
@@ -59,7 +61,7 @@ SCORE_BUCKETS = ("<=-4", "-3", "-2", "-1", "0", "+1", "+2", "+3", ">=+4")
 #: Which computed cell table each family reads. Single-plate-appearance families
 #: share one table: every plate appearance from the state is the league window.
 CELL_SOURCE = {"pitching_change": "pitching_change", "pinch_hit": "single_pa",
-               "bunt": "single_pa", "steal": "single_pa", "pinch_run": "pinch_run",
+               "bunt": "single_pa", "pinch_run": "pinch_run",
                "intentional_walk": "intentional_walk", "defensive_sub": "defensive_sub"}
 
 SELECTION_CAVEAT = {
@@ -71,11 +73,12 @@ SELECTION_CAVEAT = {
                   "population of hitters from the ones lifted. Stated, not solved."),
 }
 SINGLE_PA_CAVEAT = (
-    "for the single-plate-appearance families the baseline is the league mean realized "
-    "change over every plate appearance from the same state, which a calibrated win model "
-    "puts near zero, so DVS there is mWPA plus the feed model's local miscalibration and "
-    "is NOT an independent second number; it differs materially only for the stint-length "
-    "windows (pitching change, pinch run, intentional walk).")
+    "for the single-plate-appearance families (pinch hit, bunt) the baseline is the league "
+    "mean realized change over every plate appearance from the same state, which a "
+    "calibrated win model puts near zero, so DVS there is mWPA plus the feed model's local "
+    "miscalibration and is NOT an independent second number; it differs materially only "
+    "for the stint-length windows (pitching change, pinch run, intentional walk). The "
+    "steal has no DVS.")
 
 
 def inning_bucket(inning: int) -> str:
@@ -130,7 +133,7 @@ def _keys(ctx, idx):
 def season_cells(ctx) -> dict:
     """The league windows of every shape for one season, from a mgmt_decisions.SeasonCtx.
     Returns {family: {cell: {n, mean_mwpa, thin}}} with the shared single-PA table
-    aliased under pinch_hit, bunt and steal, and the per-table identity under
+    aliased under pinch_hit and bunt, and the per-table identity under
     the "_meta" key."""
     import numpy as np
     n = ctx.n

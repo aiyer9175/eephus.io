@@ -484,6 +484,20 @@ def test_club_rows_carry_per_family_mwpa_and_no_cross_family_total(d):
     assert "realized" in d["clubs"]["realized_header_tag"]
 
 
+def test_the_census_steal_sum_is_the_running_game_decomposition(d):
+    """Audit MH-01. The League census Steals row and the Running Game tab price the
+    same attempts, so per season the realized sum equals DV + ER. It read 2024 -9.95
+    against +3.20 while the column carried the feed's plate-appearance figure."""
+    dec = _ledger(d)
+    sums = dec["families"]["steal"]["league_sum_mwpa_by_season"]
+    by = d["running_game"]["by_season"]
+    common = sorted(set(sums) & set(by))
+    assert len(common) >= 5
+    for s in common:
+        want = by[s]["sum_dv_wins"] + by[s]["sum_er_wins"]
+        assert abs(sums[s] - want) < 0.03, (s, sums[s], want)
+
+
 def test_the_dark_section_narrowed_to_what_is_still_dark(d):
     """bullpen_and_lineup used to say the bullpen call and the pinch hit were not
     measured. Their REALIZED value now ships; what stays dark is their DECISION

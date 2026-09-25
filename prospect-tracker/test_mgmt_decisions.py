@@ -369,17 +369,72 @@ def test_the_realized_sentence_says_not_skill_verbatim(art, board):
     assert board["decisions"]["no_cross_family_total"] is True
 
 
-def test_two_realized_estimators_ship_side_by_side_on_steals_and_bunts(shard, art):
+def test_the_steal_row_is_valued_on_the_steal_itself(shard, art):
+    """Audit MH-01. The steal happens between two plays; the feed's plate-appearance
+    row starts after it, so that row's endpoint difference is the batter's result with
+    the steal left out. The steal's realized value is realized_delta (DV + ER), it has
+    no play window and no DVS, and the payload no longer calls the feed figure a second
+    estimator of the same quantity."""
     steals = [r for r in shard["rows"] if r["family"] == "steal"]
     assert steals, "no steal rows in the shard"
     for r in steals:
         assert "dv" in r and "er" in r and "realized_delta" in r and "mwpa" in r
         assert abs(r["dv"] + r["er"] - r["realized_delta"]) < 1e-3
+        assert abs(r["mwpa"] - r["realized_delta"]) < 6e-5, r
+        assert r.get("dvs") is None and not r.get("window") and r["win_len"] == 0
     bunts = [r for r in shard["rows"] if r["family"] == "bunt"]
     assert any("dv_cell" in r for r in bunts), "no bunt row carries the league DV cell"
     assert all("mwpa" in r for r in bunts)
-    est = art["families"]["steal"]["two_realized_estimators"]
-    assert "never averaged" in est["note"]
+    fam = art["families"]["steal"]
+    assert "two_realized_estimators" not in fam
+    assert "realized_delta" in fam["realized_source"]["mwpa"]
+    assert "plate appearance" not in fam["window_rule"].split(";")[0]
+    assert "two estimators" not in fam["counterfactual_sentence"]
+    assert "steal" not in art["single_pa_caveat"].split(". ")[0]
+
+
+def test_a_steal_is_priced_from_its_attempt_not_from_the_feed_row(ctx):
+    """Synthetic: the feed row at ab 4 moves +1 point for the home club, the attempt's
+    realized change is -0.05. The row must carry -0.05, the attempt's figure."""
+    import pandas as pd
+    att = pd.DataFrame([{"season": 2099, "game_pk": 1, "at_bat_index": 4, "target": "2B",
+                         "success": False, "dv": 0.004, "er": -0.054,
+                         "realized_delta": -0.05, "breakeven_p": 0.7}])
+    rows = MD.finalise(ctx, MD.detect_steals(ctx, att), NAMES, {1: "2099-04-01"})
+    assert len(rows) == 1
+    r = rows[0]
+    assert r["mwpa"] == pytest.approx(-0.05)
+    assert r["mwpa"] != pytest.approx(ctx.mwpa(ctx.pos[(1, 4)], ctx.pos[(1, 4)], True))
+    assert r["win_len"] == 0 and r.get("window") in (None, [])
+
+
+def test_steal_mwpa_tracks_the_steal_on_every_shard(art):
+    """Over every served shard: the steal column agrees with the steal's own change
+    (it was Pearson -0.011, sign agreement 0.49, with successes averaging a loss)."""
+    import mgmt_shards
+    idx = (art.get("shards") or {}).get("index") or []
+    if not idx:
+        pytest.skip("no shards on this build")
+    mw, rd, ok = [], [], []
+    for e in idx:
+        p = SHARDS / f"{e['season']}-{e['club']}.json"
+        if not p.exists():
+            continue
+        for r in mgmt_shards.expand(json.loads(p.read_text(encoding="utf-8"))):
+            if r["family"] == "steal" and r.get("mwpa") is not None:
+                mw.append(r["mwpa"])
+                rd.append(r["realized_delta"])
+                ok.append(bool(r.get("success")))
+    assert len(mw) > 1000
+    n = len(mw)
+    mx, my = sum(mw) / n, sum(rd) / n
+    sxy = sum((a - mx) * (b - my) for a, b in zip(mw, rd))
+    sxx = sum((a - mx) ** 2 for a in mw)
+    syy = sum((b - my) ** 2 for b in rd)
+    assert sxy / math.sqrt(sxx * syy) > 0.99
+    succ = [a for a, s in zip(mw, ok) if s]
+    caught = [a for a, s in zip(mw, ok) if not s]
+    assert sum(succ) / len(succ) > 0 and sum(caught) / len(caught) < 0
 
 
 def test_pre_play_score_and_notna_bases_are_used(ctx):

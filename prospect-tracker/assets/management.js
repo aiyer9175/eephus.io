@@ -933,7 +933,7 @@
       (steal ? miniTable([["Attempts (priced)", esc(steal.attempts)], ["Success", pct(steal.success_rate)],
         ["Share to 2B / 3B", pct(steal.share_2B) + " / " + pct(steal.share_3B)],
         ["Mean break-even faced", pct(steal.mean_breakeven_faced)],
-        ["Realized mWPA, summed", row.mwpa_steal == null ? " - " : '<span class="' + signCls(row.mwpa_steal) + '">' + signed(row.mwpa_steal, 2) + "</span>"]])
+        ["Realized, the steal itself, summed", row.mwpa_steal == null ? " - " : '<span class="' + signCls(row.mwpa_steal) + '">' + signed(row.mwpa_steal, 2) + "</span>"]])
         : '<p class="mgmt-note">No priced steal row for this club-season.</p>');
     // timeline: one family, one line
     var sf = state.spark && fams[state.spark] && fams[state.spark].summed ? state.spark : "pitching_change";
@@ -972,8 +972,8 @@
       ["Situation", esc(situation(r)) + (r.li == null ? "" : ", LI " + num(r.li, 2))],
       ["Game", esc(r.date || "") + ", " + (r.home ? "vs " : "at ") + esc(r.opp || "")],
       ["Realized " + gl("mWPA", "realized_mwpa"), r.mwpa == null ? "not valued" : '<span class="' + signCls(r.mwpa) + '">' + signed(r.mwpa, 4) + "</span> wins, realized"],
-      [gl("DVS", "dvs"), r.dvs == null ? (r.mwpa == null ? "" : "thin cell") : '<span class="' + signCls(r.dvs) + '">' + signed(r.dvs, 4) + "</span> wins above state"],
-      ["Window", esc(r.win_len || 0) + " plays"],
+      [gl("DVS", "dvs"), r.dvs == null ? (r.mwpa == null ? "" : (r.family === "steal" ? "none: a steal's value above holding is its DV, below" : "thin cell")) : '<span class="' + signCls(r.dvs) + '">' + signed(r.dvs, 4) + "</span> wins above state"],
+      ["Window", r.family === "steal" ? "the steal itself, between two plays, on the house win expectancy table" : esc(r.win_len || 0) + " plays"],
       ["Flags", (r.flags || []).map(function (f) { return '<span class="mgmt-flag">' + esc(f.replace(/_/g, " ")) + "</span>"; }).join(" ") || "none"]
     ];
     if (r.family === "pitching_change") pairs.push(["Removed pitcher", esc(r.out_name || "") + (r.pitch_count == null ? "" : ", " + esc(r.pitch_count) + " pitches, time through the order " + esc(r.tto))],

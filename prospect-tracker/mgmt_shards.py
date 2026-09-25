@@ -65,10 +65,11 @@ SCHEMA_NOTE = (
     "(the plays governed, each [event index into events, wp_after] or [event, wp_after, "
     "wp_before] where the feed's chain breaks, the first play always carrying wp_before, wp in "
     "percentage points; the play's ab is the row's ab plus its offset; win_len is the window's "
-    "length, 0 for a counted family). Family extras ride beside: pitch_count and tto of the "
-    "removed pitcher, inherited runners and inherited_scored (derived), first_pa_mwpa, "
-    "walk_only_mwpa, the steal's model dv / er / realized_delta beside the feed's mwpa, the "
-    "bunt's league dv_cell beside its realized figure.")
+    "length, 0 for a counted family and for the steal, which happens between plays). Family "
+    "extras ride beside: pitch_count and tto of the removed pitcher, inherited runners and "
+    "inherited_scored (derived), first_pa_mwpa, walk_only_mwpa, the steal's model dv / er / "
+    "realized_delta (its mwpa is that realized_delta, the steal itself, and it has no dvs), "
+    "the bunt's league dv_cell beside its realized figure.")
 
 #: Family order, the detection order of mgmt_decisions.build_season: rows that tie on
 #: the sort key (a steal and a bunt in one plate appearance, both idx -1) resolve in

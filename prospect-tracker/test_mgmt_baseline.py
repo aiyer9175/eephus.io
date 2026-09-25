@@ -68,9 +68,11 @@ def test_thin_cells_are_excluded_and_counted(base):
     idx = [e for e in art["shards"]["index"] if e["season"] == 2025] or art["shards"]["index"]
     if not idx:
         pytest.skip("no shards")
+    import mgmt_shards
     sh = json.loads((SHARDS / f"{idx[0]['season']}-{idx[0]['club']}.json").read_text(encoding="utf-8"))
     checked = 0
-    for r in sh["rows"]:
+    # schema 2 shards carry coded families, not rows; read them through the one reader
+    for r in mgmt_shards.expand(sh):
         if r["family"] != "pitching_change" or "mwpa" not in r:
             continue
         sd_home = r["score_diff"] if r["home"] else -r["score_diff"]

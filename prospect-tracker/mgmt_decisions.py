@@ -27,6 +27,15 @@ journey. The realized value of a window is therefore
 with s = +1 for the home club and -1 for the away club, wp in percentage points. The
 share of plays where the chain breaks is measured at CHAIN_TOL and published with it.
 
+THE STEAL IS THE ONE FAMILY THE FEED CANNOT PRICE. A steal is an in-PA event, so its
+win-probability move sits in the chain break before the plate appearance's row, and
+the row's own endpoint difference is the batter's result from the post-steal state
+with the steal left out (audit MH-01: over 13,973 steals that figure correlated
+-0.011 with the steal's own change and summed to -33.5 wins against +3.2). The steal's
+realized value is therefore the model's realized change of the steal itself,
+management.py's realized_delta = WE(after the attempt) - WE(hold) on the house win
+expectancy table, which is DV + ER exactly. It has no play window and no DVS.
+
 THE STATE THE MANAGER DECIDED FROM IS PRE-PLAY. The corpus score columns are POST-play
 (audit F07-02); the pre-play score comes from win_expectancy.pre_play_score_diff. Base
 occupancy is notna() on on_first / on_second / on_third (float ids, NaN empty;
@@ -85,6 +94,10 @@ WINDOW_FAMILIES = ("pitching_change", "pinch_hit", "pinch_run", "defensive_sub",
 SUMMED_FAMILIES = ("pitching_change", "pinch_hit", "pinch_run", "intentional_walk",
                    "bunt", "steal")
 COUNTED_ONLY = ("mound_visit", "ejection")
+#: Families whose realized value is not a feed window. The steal happens between
+#: two plays, where the feed carries no win probability, so its realized value is
+#: management.py's realized_delta (DV + ER) and it has no play window and no DVS.
+MODEL_REALIZED = ("steal",)
 
 LABEL = {"pitching_change": "Pitching changes", "pinch_hit": "Pinch hitters",
          "pinch_run": "Pinch runners", "defensive_sub": "Defensive subs",
@@ -113,7 +126,9 @@ WINDOW_RULE = {
     "intentional_walk": ("the walk plus the on-deck plate appearance, or the half's last "
                          "play if it ends sooner"),
     "bunt": "the plate appearance",
-    "steal": "the plate appearance",
+    "steal": ("the steal itself: the state before the attempt to the state after it, on "
+              "the house win expectancy table (management.py); the feed carries no win "
+              "probability between plays, so the steal has no play window"),
     "mound_visit": "none; counted only",
     "ejection": "none; counted only",
 }
@@ -136,8 +151,9 @@ COUNTERFACTUAL = {
              "(mgmt_bunt.py), a different quantity from the realized figure beside it; "
              "the bunt sign is not observable and the attempt is a proxy."),
     "steal": ("The hold is priced with a league-average runner as the steal DV "
-              "(management.py); the model's realized change and the feed's realized "
-              "mWPA are two estimators of one quantity and both ship."),
+              "(management.py). The realized figure is the model's realized change of "
+              "the steal itself (DV + ER), not the feed's plate appearance, whose win "
+              "probability is measured after the steal and leaves it out."),
     "mound_visit": "Counted, never valued: a visit governs no play of its own.",
     "ejection": "Counted, never valued.",
 }
@@ -159,12 +175,14 @@ STYLE_SENTENCE = (
     "season, sign as measured. Not an index, no ladder, no plus sign; a frequency has no "
     "good direction, and these repeat because they are policy.")
 SINGLE_PA_CAVEAT = (
-    "For the single-plate-appearance families (pinch hit, bunt, steal) the league "
+    "For the single-plate-appearance families (pinch hit, bunt) the league "
     "baseline is the mean realized change over every plate appearance from the same "
     "state, which a calibrated win model puts near zero, so value above state there is "
     "the realized figure plus the feed model's local miscalibration and is not an "
     "independent second number. It differs materially only for the stint-length windows "
-    "(pitching change, pinch run, intentional walk).")
+    "(pitching change, pinch run, intentional walk). The steal has no value above "
+    "state: its realized figure is the steal itself, and its value above holding is "
+    "its DV.")
 OVERLAP_NOTE = (
     "No cross-family total exists on any row. The family windows overlap: a club's "
     "intentional-walk window sits inside its own reliever's stint window, a pinch-hit "
@@ -922,8 +940,9 @@ def detect_bunts(ctx: SeasonCtx, cells: dict | None = None) -> list:
 
 
 def detect_steals(ctx: SeasonCtx, attempts) -> list:
-    """The priced rows of management.attempts() for this season, as-is, plus the feed's
-    realized mWPA of the play as a second, labelled realized number."""
+    """The priced rows of management.attempts() for this season, as-is. The row's
+    realized value is the attempt's realized_delta (finalise), never the feed's
+    plate-appearance figure, which is measured after the steal."""
     rows = []
     if attempts is None or len(attempts) == 0:
         return rows
@@ -1088,7 +1107,12 @@ def finalise(ctx: SeasonCtx, rows: list, names: dict, dates: dict, with_window: 
             if club is None:
                 continue
         st = ctx.state(i)
-        mw = ctx.mwpa(i, int(j), is_home) if j is not None else None
+        if d["family"] in MODEL_REALIZED:
+            # the steal itself, DV + ER; the feed's row is the batter's result after it
+            mw = d.get("realized_delta")
+            j = None
+        else:
+            mw = ctx.mwpa(i, int(j), is_home) if j is not None else None
         sd_club = st["sd_home"] if is_home else -st["sd_home"]
         g = int(ctx.gp[i])
         row = {
@@ -1360,10 +1384,13 @@ def families_block(ledger, baseline: dict | None, gate_status: dict, thin_by_fam
             for k in ("unattributed", "unpositioned", "no_role_word"):
                 out[f][k] = int(sum(int((m or {}).get(k, 0)) for m in ejection_meta.values()))
         if f == "steal":
-            out[f]["two_realized_estimators"] = {
-                "model": "realized_delta (management.py: DV + ER)",
-                "feed": "mwpa (StatsAPI wp columns, endpoint difference)",
-                "note": "two estimators of one quantity; both ship, never averaged"}
+            out[f]["realized_source"] = {
+                "mwpa": "realized_delta (management.py: DV + ER), the steal itself",
+                "why_not_the_feed": (
+                    "the steal happens between two plays; the feed's plate-appearance "
+                    "row starts after it, so its endpoint difference is the batter's "
+                    "result with the steal left out"),
+                "dvs": None}
         if f == "bunt":
             out[f]["kinds"] = {str(k): int(n) for k, n in g.groupby("kind").size().items()}
             out[f]["sign_note"] = ("the bunt sign is not observable; an attempt with a runner "
@@ -1453,7 +1480,7 @@ def build(*, corpus: Path | None = None, seasons=None, shards: bool = True,
         n_thin_hits = {}
         for r in rows:
             f = r["family"]
-            if f not in WINDOW_FAMILIES or r.get("mwpa") is None:
+            if f not in WINDOW_FAMILIES or f in MODEL_REALIZED or r.get("mwpa") is None:
                 continue
             cell = (mgmt_baseline.cell_key(season, r["inning"], r["half"], r["outs"], r["base"],
                                             r["score_diff"] if r["home"] else -r["score_diff"]))
@@ -1551,7 +1578,9 @@ def build(*, corpus: Path | None = None, seasons=None, shards: bool = True,
         "li_note": LI_NOTE,
         "no_cross_family_total": True,
         "plus_metric": False,
-        "units": {"mwpa": "wins, realized value, not skill (wp percentage points divided by 100)",
+        "units": {"mwpa": ("wins, realized value, not skill (wp percentage points divided by "
+                           "100; the steal's is the house win expectancy change of the "
+                           "steal itself)"),
                   "dvs": "wins above state, realized, selection not removed",
                   "li": "leverage index, MLB feed basis; null on the leadoff plate appearance",
                   "z": "signed style z-score, not an index, not skill"},
