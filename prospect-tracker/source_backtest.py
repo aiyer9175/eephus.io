@@ -2185,14 +2185,51 @@ _H2H_SOURCE_LABELS = {CONSENSUS_KEY: "PROSPX consensus",
 VM2_BASIS = "pooled_efv_common_vintage_matched_vm2"
 
 
+def _attach_raw_efv(common_by_year, years, xfv_oos):
+    """Put eFV's RAW out-of-sample score on every common row it covers.
+
+    DS-01 (docs/efv-v2/DRIVER_SYSTEM_V2.md, bug B1). The scored column is the
+    raw score itself. Until 2026-09-25 this block then overwrote it with a rank
+    remap onto the common-set consensus-FV values rounded to 0.1, on the stated
+    ground that a monotone remap leaves Spearman and AUC unchanged. It does not:
+    806 distinct raw scores on the vintage-matched frame collapsed onto about
+    100 grid values, and the ties cost eFV 0.0015 to 0.0018 of Spearman on every
+    head-to-head cell. The 20-80 view of eFV that the tier table needs is built
+    separately, over its own pool (cohorts["xfv"]), and never scored.
+
+    Returns (rows_x, raw_vm1, n_xfv): the covered rows in common-set order, their
+    raw scores in the same order, and the count."""
+    n_xfv = 0
+    if not xfv_oos:
+        return [], [], 0
+    for y in years:
+        for c in common_by_year[y]:
+            g = xfv_oos.get(c["key"])
+            if g is not None:
+                c["grades"]["xfv"] = g
+                n_xfv += 1
+    rows_x = [c for y in years for c in common_by_year[y] if "xfv" in c["grades"]]
+    return rows_x, [c["grades"]["xfv"] for c in rows_x], n_xfv
+
+
+def _scored_column_receipt(rows, raw_by_row):
+    """The DS-01 check, published: the scored eFV column equals the raw score on
+    every row, so the distinct count is preserved."""
+    scored = [c["grades"].get("xfv") for c in rows]
+    return {"n_rows": len(rows),
+            "n_distinct_raw": len(set(raw_by_row)),
+            "n_distinct_scored": len(set(scored)),
+            "scored_equals_raw": scored == list(raw_by_row)}
+
+
 def _vm2_frame_rows(rows_x, raw_vm1, xfv_oos_vm2, receipts, is_vintage_matched):
     """The vintage-matched rows with eFV graded from the timing-pinned scores.
 
-    `rows_x` are the eFV-covered common rows after the vm1 remap and `raw_vm1`
-    their raw vm1 scores in the same order. The remap onto the consensus grade
-    grid is re-run exactly as vm1 runs it, over the same population, with each
-    player's raw score replaced by his pinned score where one exists, so vm1 and
-    vm2 differ only in the consensus input. A vintage-matched row enters vm2 only
+    `rows_x` are the eFV-covered common rows and `raw_vm1` their raw vm1 scores
+    in the same order. Each row is scored on the player's RAW pinned score where
+    one exists (DS-01: no remap onto the consensus grade grid, which tied the
+    scores before they were scored), so vm1 and vm2 differ only in the consensus
+    input. A vintage-matched row enters vm2 only
     when its pinned read is dated inside the preseason window of the row's own
     base year. Rows are shallow copies carrying `xfv_input` (the receipt);
     nothing in `rows_x` is modified. Returns (rows, timing receipt)."""
@@ -2207,13 +2244,7 @@ def _vm2_frame_rows(rows_x, raw_vm1, xfv_oos_vm2, receipts, is_vintage_matched):
                         "the same point _rater_grades_for_year reads")}
     if not (m and xfv_oos_vm2 and len(raw_vm1) == m):
         return [], receipt
-    raw2 = [xfv_oos_vm2.get(c["key"], raw_vm1[i]) for i, c in enumerate(rows_x)]
-    order = sorted(range(m), key=lambda i: raw2[i])
-    cons_sorted = sorted(c["grades"][CONSENSUS_KEY] for c in rows_x)
-    grade2 = [None] * m
-    for rank_pos, i in enumerate(order):
-        pp = rank_pos / (m - 1) if m > 1 else 0.0
-        grade2[i] = round(cons_sorted[min(m - 1, int(round(pp * (m - 1))))], 1)
+    grade2 = [xfv_oos_vm2.get(c["key"], raw_vm1[i]) for i, c in enumerate(rows_x)]
     out = []
     for i, c in enumerate(rows_x):
         if not is_vintage_matched(c):
@@ -3046,10 +3077,11 @@ def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
         vintage = frames.get("vintage_matched") or []
         combined = []
         for c in vintage:
-            # RAW out-of-sample eFV, not the remapped grade. The common set's
-            # xfv values were rewritten IN PLACE onto the consensus-FV
-            # distribution, so reading them here would put a remapped number on
-            # the debuted half and a raw one on the bust half.
+            # RAW out-of-sample eFV on both halves. Since DS-01 (2026-09-25)
+            # the common set's xfv values are the raw score too; before it they
+            # were remapped IN PLACE onto the consensus-FV distribution, and
+            # reading them here would have put a remapped number on the
+            # debuted half and a raw one on the bust half.
             k = c.get("key")
             raw = raw_xfv.get(k) if raw_xfv else None
             if raw is None:
@@ -3110,10 +3142,11 @@ def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
                 "orders the failures among themselves; it is whether it still "
                 "orders outcomes once the failures are in the pool."),
             "both_halves_use_the_same_grade": (
-                "raw out-of-sample eFV on BOTH halves. The common set's stored "
+                "raw out-of-sample eFV on BOTH halves. Since DS-01 (2026-09-25) "
+                "the common set scores the raw eFV as well; before it, its stored "
                 "xfv values were remapped in place onto the consensus-FV "
-                "distribution, so using them for the debuted half would compare "
-                "a remapped number against a raw one."),
+                "distribution, and using them for the debuted half would have "
+                "compared a remapped number against a raw one."),
             "why_this_frame_exists": (
                 "the flagship head-to-head frame requires a debut year, so a "
                 "prospect who never reached the majors CANNOT enter it. Not "
@@ -3139,9 +3172,9 @@ def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
             "changes_no_published_number": True,
             "blast_radius": (
                 "these rows are scored in their own frame and are never added "
-                "to the common set. The eFV remap re-derives its grid from "
-                "whatever population it is handed, so admitting them would "
-                "re-bin the ties for every existing row."),
+                "to the common set, so admitting them cannot move any existing "
+                "common-set cell (before DS-01 the in-place eFV remap also "
+                "re-derived its grid from that population)."),
         }
 
     # (a3) A-CLAIM-3, THE EXPOSURE-MATCHED LABEL. Two cuts, as registered: the
@@ -3556,29 +3589,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     except Exception:
         log.exception("eFV timing-pinned OOS grades unavailable; vm2 frame skipped")
         xfv_oos_vm2, vm2_receipts = {}, {}
-    rows_x: list[dict] = []
-    raw_vm1: list[float] = []
-    n_xfv = 0
-    if xfv_oos:
-        for y in years:
-            for c in common_by_year[y]:
-                g = xfv_oos.get(c["key"])
-                if g is not None:
-                    c["grades"]["xfv"] = g          # raw rank-war score (for now)
-                    n_xfv += 1
-        # Remap the raw eFV score onto a 20-80 grade via the common-set consensus-FV
-        # distribution, so eFV can be tier-binned + read on the familiar scale. Spearman/AUC
-        # are rank-based, so this monotone remap leaves the head-to-head numbers unchanged,
-        # but it lets eFV join the FV-tier graphs + cohort tables + archetype breakdown.
-        rows_x = [c for y in years for c in common_by_year[y] if "xfv" in c["grades"]]
-        raw_vm1 = [c["grades"]["xfv"] for c in rows_x]
-        if rows_x:
-            order = sorted(range(len(rows_x)), key=lambda i: rows_x[i]["grades"]["xfv"])
-            cons_sorted = sorted(c["grades"][CONSENSUS_KEY] for c in rows_x)
-            m = len(rows_x)
-            for rank_pos, i in enumerate(order):
-                pp = rank_pos / (m - 1) if m > 1 else 0.0
-                rows_x[i]["grades"]["xfv"] = round(cons_sorted[min(m - 1, int(round(pp * (m - 1))))], 1)
+    rows_x, raw_vm1, n_xfv = _attach_raw_efv(common_by_year, years, xfv_oos)
     disp_raters = raters + (["xfv"] if n_xfv >= 30 else [])
 
     def _acc(common_rows: list[dict]) -> dict:
@@ -3922,6 +3933,19 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                            "verdict; it becomes the headline once the owner has seen it."),
         })
         accuracy["head_to_head_verdict_vm2"] = _hv2
+    # DS-01 receipt: what column every eFV head-to-head cell above scored.
+    accuracy["efv_scored_column"] = {
+        "basis": "raw out-of-sample eFV score (efv_model.oos_grades), no remap",
+        "since": "2026-09-25 (DS-01, bug B1 in docs/efv-v2/DRIVER_SYSTEM_V2.md)",
+        "replaced": ("a rank remap onto the common-set consensus-FV values rounded to "
+                     "0.1, which tied distinct scores before they were scored"),
+        "common_efv": _scored_column_receipt(rows_x, raw_vm1),
+        "vintage_matched": _scored_column_receipt(
+            efv_common_vintage, [xfv_oos[c["key"]] for c in efv_common_vintage]),
+        "vintage_matched_vm2": _scored_column_receipt(
+            efv_common_vintage_vm2,
+            [xfv_oos_vm2[c["key"]] for c in efv_common_vintage_vm2]),
+    }
     # Does the consensus beat its best individual input on each metric? Each leg
     # carries its own measured floor (CONSENSUS_VS_INPUTS_MDE95) because the two do
     # not have the same precision: on this vintage the AUC leg clears its floor by
@@ -3957,10 +3981,8 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     # A-CLAIM-4. THE BLAST-RADIUS RULE, and it is the one thing here that could
     # silently move a published number. The bust rows are assembled and scored
     # in their OWN frame and are NEVER added to common_by_year, pooled_common,
-    # efv_common or efv_common_vintage. The in-place eFV remap above re-derives
-    # its grid from whatever population it is handed, so enlarging that
-    # population would re-bin the ties for every existing row and move cells
-    # this lane is not entitled to touch.
+    # efv_common or efv_common_vintage. Enlarging that population would move
+    # every common-set cell, which this lane is not entitled to touch.
     _busts, _bust_excl = _load_bust_universe(data_dir, universe)
     # THE SAME OUT-OF-SAMPLE OBJECT THE FLAGSHIP FRAME SCORES, not the
     # backgraded value on the served board. `xfv_oos` is the leakage-clean grade

@@ -72,7 +72,11 @@ DEV_DELTAS = (("vs_prospx_consensus", "h0_vs_prospx_consensus"),
 
 SCHEMA = 1
 MODEL_ID = "efv_v1"
-TRIGGERS = ("nightly", "efv_change", "look", "backfill")
+TRIGGERS = ("nightly", "efv_change", "look", "backfill", "harness_correction")
+#: A trigger whose rows record a fix to how eFV is SCORED, never a change to the
+#: model. The page marks them apart from model progress (DS-01, bug B1 in
+#: docs/efv-v2/DRIVER_SYSTEM_V2.md).
+CORRECTION_TRIGGERS = ("harness_correction",)
 REGEN_CMD = ("python -c \"import efv_progress as P; P.update(trigger='efv_change')\" "
              "(nightly: run_monthly after the 9g scoreboard refresh and after "
              "run_source_backtest; by hand: tools/efv_scoreboard.py)")
@@ -522,6 +526,7 @@ def _doc(rows: list[dict], sb: dict | None, now_iso: str, prev: dict | None) -> 
                   "y": "eFV minus PROSPX consensus, Spearman rho",
                   "band": "plus and minus the row's mde95 around zero"},
         "strata": list(STRATA),
+        "correction_triggers": list(CORRECTION_TRIGGERS),
         "regen_cmd": REGEN_CMD,
         "rule": ("append-only; a row is added when a frame's measured content "
                  "changes and otherwise only its last_verified_at moves; every "
@@ -584,8 +589,11 @@ def commit_rows(new_rows: list[dict], *, data_dir=None, out_path=None,
 
 def update(data_dir=None, trigger: str = "nightly", *, out_path=None,
            ledger_path=None, now: datetime | None = None,
-           model_version: dict | None = None) -> dict:
-    """Read the artifacts, build candidate rows, append what changed."""
+           model_version: dict | None = None, note: str | None = None) -> dict:
+    """Read the artifacts, build candidate rows, append what changed.
+
+    `note` is prefixed to every candidate row's note; a harness correction
+    names the fix there. It is not part of the content hash."""
     data_dir, out, led = _paths(data_dir, out_path, ledger_path)
     sb_path, sc_path = data_dir / SB_NAME, data_dir / SC_NAME
     sb = _load_json(sb_path)
@@ -609,6 +617,9 @@ def update(data_dir=None, trigger: str = "nightly", *, out_path=None,
             dev, sources=[{"path": _rel(dev_path), "generated_at": dev.get("generated_at"),
                            "sha256": _sha256(dev_path)}],
             date=now_dt.date().isoformat(), trigger=trigger, now_iso=now_iso)
+    if note:
+        for c in cands:
+            c["note"] = f"{note} {c.get('note') or ''}".strip()
     res = commit_rows(cands, data_dir=data_dir, out_path=out, ledger_path=led,
                       sb=sb, now_iso=now_iso)
     res["status"] = "ok"

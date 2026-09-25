@@ -12,8 +12,9 @@ beside them, on the two DEVELOPMENT frames and nothing else:
              the raters' preseason read of the debut year), window from
              source_backtest._resolved_years (2017 to 2023 today). Rows are rebuilt
              exactly as source_backtest.run_source_backtest builds them, in the same
-             order, and both eFV legs are carried onto the consensus grade grid by the
-             same rank remap, so the v1 leg reproduces the served vm2 numbers (receipt
+             order, and both eFV legs are scored on their RAW pinned scores exactly as
+             source_backtest scores them since DS-01 (no remap onto the consensus
+             grade grid), so the v1 leg reproduces the served vm2 numbers (receipt
              under frames.vm_dev.parity). Outcome: career WAR to date; contributor at
              source_backtest.CONTRIBUTOR_WAR.
     lv_dev   the list-vintage frame F-LV on development vintages 2011 to 2019
@@ -79,18 +80,6 @@ def _guards() -> dict:
     return {"reserved_lv": sorted(F.RESERVED_LV),
             "r_vm_first_debut_year": F.R_VM_FIRST_DEBUT_YEAR,
             "reserved_vm_pins": pins}
-
-
-def _remap(raw: list[float], cons: list[float]) -> list[float]:
-    """source_backtest's rank remap onto the consensus grade grid (vm1 and vm2)."""
-    m = len(raw)
-    order = sorted(range(m), key=lambda i: raw[i])
-    cons_sorted = sorted(cons)
-    out = [0.0] * m
-    for rank_pos, i in enumerate(order):
-        pp = rank_pos / (m - 1) if m > 1 else 0.0
-        out[i] = round(cons_sorted[min(m - 1, int(round(pp * (m - 1))))], 1)
-    return out
 
 
 def _rater_stats(rows: list[dict]) -> dict:
@@ -203,10 +192,9 @@ def vm_dev(data_dir: Path) -> tuple[list[dict], dict]:
             side_of.setdefault(r["player_key"], s)
     rows_x = [c for y in years for c in common_by_year[y] if c["key"] in v1]
     missing_h0 = sum(1 for c in rows_x if c["key"] not in h0)
-    cons_x = [c["grades"][CONS] for c in rows_x]
-    g_v1 = _remap([v1_pin.get(c["key"], v1[c["key"]]) for c in rows_x], cons_x)
-    g_h0 = _remap([h0_pin.get(c["key"], h0.get(c["key"], float("-inf"))) for c in rows_x],
-                  cons_x)
+    # DS-01 (bug B1): the scored columns are the raw scores, as in source_backtest.
+    g_v1 = [v1_pin.get(c["key"], v1[c["key"]]) for c in rows_x]
+    g_h0 = [h0_pin.get(c["key"], h0.get(c["key"], float("-inf"))) for c in rows_x]
     frame, raw_h0, raw_off, pin_fv = [], [], [], []
     for i, c in enumerate(rows_x):
         dy = (c["outcome"] or {}).get("debut_year")

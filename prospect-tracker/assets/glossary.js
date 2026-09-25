@@ -3374,6 +3374,13 @@ function _progSeriesRows(prog) {
     && _progConsLeg(r) && _progConsLeg(r).delta != null);
 }
 
+// A row appended by a fix to how eFV is scored (DS-01), never by a model
+// change. Drawn and labelled apart so a reader never takes it for progress.
+function _progIsCorrection(prog, r) {
+  const trig = (prog && Array.isArray(prog.correction_triggers)) ? prog.correction_triggers : ["harness_correction"];
+  return !!(r && trig.includes(r.trigger));
+}
+
 function _progConsLeg(r) {
   return ((r && r.deltas && r.deltas.vs_prospx_consensus) || {}).spearman || null;
 }
@@ -3426,17 +3433,19 @@ function _methProgressLedger(prog, bt) {
     ? ` <span class="sacc-chip-warn" title="the backtest was regenerated after this row was last verified">stale: backtest ${escapeHtml(String(bt.generated_at).slice(0, 10))} is newer</span>`
     : ` <span class="sacc-chip-ok">verified ${escapeHtml(String(row.last_verified_at || row.date || "").slice(0, 10))}</span>`;
   const resolvable = row.resolvable === true;
+  const corrTxt = _progIsCorrection(prog, row)
+    ? ` <span class="sacc-chip-warn" title="${escapeHtml(row.note || "")}">harness correction, not model progress</span>` : "";
   // A headline candidate (EV-01 vm2) prints on its own line, in the neutral
   // style: it is not the claim until the owner has seen it.
   const cand = _progLatestCandidate(prog);
   let candTxt = "";
   if (cand) {
     const crt = cand.raters || {}, cleg = _progConsLeg(cand) || {};
-    candTxt = `<p class="meth-window"><strong>${escapeHtml(_progFrameLabel(prog, cand.frame))}, ${escapeHtml(cand.date || "")} <span class="sacc-chip-warn">${escapeHtml(String(cand.role || "").replace(/_/g, " "))}</span>:</strong> n ${Number(cand.n || 0).toLocaleString()}, eFV ${_progFmt((crt.efv || {}).spearman, 3)} against PROSPX consensus ${_progFmt((crt.prospx_consensus || {}).spearman, 3)}, delta ${_progSigned(cleg.delta, 4)}${Array.isArray(cleg.ci95) ? `, 95% CI ${_progCi(cleg.ci95, 3)}` : ""}: <span class="sacc-verdict-null">${escapeHtml(cand.verdict || "")}</span>. ${escapeHtml(cand.note || "")}</p>`;
+    candTxt = `<p class="meth-window"><strong>${escapeHtml(_progFrameLabel(prog, cand.frame))}, ${escapeHtml(cand.date || "")} <span class="sacc-chip-warn">${escapeHtml(String(cand.role || "").replace(/_/g, " "))}</span>:</strong> n ${Number(cand.n || 0).toLocaleString()}, eFV ${_progFmt((crt.efv || {}).spearman, 3)} against PROSPX consensus ${_progFmt((crt.prospx_consensus || {}).spearman, 3)}, delta ${_progSigned(cleg.delta, 4)}${Array.isArray(cleg.ci95) ? `, 95% CI ${_progCi(cleg.ci95, 3)}` : ""}: <span class="sacc-verdict-null">${escapeHtml(cand.verdict || "")}</span>.${_progIsCorrection(prog, cand) ? ` <span class="sacc-chip-warn">harness correction, not model progress</span>` : ""} ${escapeHtml(cand.note || "")}</p>`;
   }
   return `<div class="meth-chart scx-progress-head">
     <div class="meth-chart-title">eFV progress ledger <span class="meth-sub">the dated record of eFV against PROSPX consensus and the industry</span></div>
-    <p class="meth-window"><strong>Latest, ${escapeHtml(row.date || "")}:</strong> on the ${escapeHtml(_progFrameLabel(prog, row.frame).toLowerCase())} frame (n ${Number(row.n || 0).toLocaleString()}), eFV ${_progFmt(efv, 3)} against PROSPX consensus ${_progFmt(cons, 3)}, delta ${_progSigned(leg.delta, 4)}${ciTxt}${floorTxt}: <span class="${resolvable ? "sacc-verdict-win" : "sacc-verdict-null"}">${escapeHtml(row.verdict || "")}</span>.${chip}</p>
+    <p class="meth-window"><strong>Latest, ${escapeHtml(row.date || "")}:</strong> on the ${escapeHtml(_progFrameLabel(prog, row.frame).toLowerCase())} frame (n ${Number(row.n || 0).toLocaleString()}), eFV ${_progFmt(efv, 3)} against PROSPX consensus ${_progFmt(cons, 3)}, delta ${_progSigned(leg.delta, 4)}${ciTxt}${floorTxt}: <span class="${resolvable ? "sacc-verdict-win" : "sacc-verdict-null"}">${escapeHtml(row.verdict || "")}</span>.${corrTxt}${chip}</p>
     ${candTxt}
   </div>`;
 }
@@ -3471,8 +3480,10 @@ function _methProgressChart(prog) {
   lo -= pad; hi += pad;
   const ts = rows.map(r => Date.parse(String(r.date) + "T00:00:00Z"));
   const t0 = Math.min(...ts), t1 = Math.max(...ts);
-  // An inner pad keeps the first and last marks off the axes.
-  const PX = 18;
+  // An inner pad keeps the first and last marks off the axes; correction rows
+  // sit right of their frame's same-date row, so they need a wider pad.
+  const anyCorr = rows.some(r => _progIsCorrection(prog, r));
+  const PX = anyCorr ? 34 : 18;
   const sx = t => (t1 === t0 ? ML + iW / 2 : ML + PX + ((t - t0) / (t1 - t0)) * (iW - 2 * PX));
   const sy = v => MT + iH - ((v - lo) / (hi - lo)) * iH;
   // Round tick steps (1, 2 or 5 times a power of ten) so the axis reads in
@@ -3493,11 +3504,13 @@ function _methProgressChart(prog) {
   const col = _raterMeta("xfv").color;
   const marks = rows.map((r, i) => {
     // A headline-candidate row sits a few pixels right of the same-date
-    // headline row, and development rows a few pixels left, so the whiskers
-    // do not overprint.
+    // headline row, development rows a few pixels left, and correction rows
+    // further right, so the whiskers do not overprint.
     const cand = r.role === "headline_candidate";
     const dev = r.role === "development";
-    const dx = cand ? 9 : (dev ? (r.frame === "lv_dev" ? -18 : -9) : 0);
+    const dx = _progIsCorrection(prog, r)
+      ? (cand ? 27 : 18)
+      : (cand ? 9 : (dev ? (r.frame === "lv_dev" ? -18 : -9) : 0));
     const l = legs[i], x = sx(ts[i]) + dx, y = sy(Number(l.delta));
     const ci = Array.isArray(l.ci95) && l.ci95[0] != null
       ? `<line x1="${x.toFixed(1)}" y1="${sy(Number(l.ci95[0])).toFixed(1)}" x2="${x.toFixed(1)}" y2="${sy(Number(l.ci95[1])).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`
@@ -3505,7 +3518,10 @@ function _methProgressChart(prog) {
       : "";
     const tip = `<title>${escapeHtml(r.date)}: ${escapeHtml(_progFrameLabel(prog, r.frame))}, n ${r.n}, delta ${_progSigned(l.delta, 4)}, CI ${escapeHtml(_progCi(l.ci95, 4))}, ${escapeHtml(r.verdict || "")}</title>`;
     let mark;
-    if (r.trigger === "look") {
+    if (_progIsCorrection(prog, r)) {
+      // A scoring fix: an open triangle, whatever the frame.
+      mark = `<path d="M ${x.toFixed(1)},${(y - 5.5).toFixed(1)} L ${(x + 5.5).toFixed(1)},${(y + 4.5).toFixed(1)} L ${(x - 5.5).toFixed(1)},${(y + 4.5).toFixed(1)} Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="2">${tip}</path>`;
+    } else if (r.trigger === "look") {
       mark = `<path d="M ${x.toFixed(1)},${(y - 6).toFixed(1)} L ${(x + 6).toFixed(1)},${y.toFixed(1)} L ${x.toFixed(1)},${(y + 6).toFixed(1)} L ${(x - 6).toFixed(1)},${y.toFixed(1)} Z" fill="${col}" stroke="var(--bg-secondary)" stroke-width="1">${tip}</path>`;
     } else if (cand) {
       mark = `<path d="M ${(x - 4.5).toFixed(1)},${(y - 4.5).toFixed(1)} L ${(x + 4.5).toFixed(1)},${(y - 4.5).toFixed(1)} L ${(x + 4.5).toFixed(1)},${(y + 4.5).toFixed(1)} L ${(x - 4.5).toFixed(1)},${(y + 4.5).toFixed(1)} Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="2">${tip}</path>`;
@@ -3528,11 +3544,13 @@ function _methProgressChart(prog) {
   const hasDev = rows.some(r => r.role === "development");
   const candRow = rows.find(r => r.role === "headline_candidate");
   const hasLook = rows.some(r => r.trigger === "look");
+  const hasCorr = anyCorr;
   const legend = [
     `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};border-radius:50%;"></span>${escapeHtml(_progFrameLabel(prog, prog.headline_frame || "vm"))} frame (headline)</span>`,
     candRow ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};"></span>${escapeHtml(_progFrameLabel(prog, candRow.frame))} (headline candidate, not yet the claim)</span>` : "",
     hasDev ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};border-radius:50%;"></span>development frame, spent, not a claim</span>` : "",
     hasLook ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};transform:rotate(45deg);"></span>reserved-frame look</span>` : "",
+    hasCorr ? `<span class="meth-legend-key"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M 6,1 L 11,10.5 L 1,10.5 Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="1.6"/></svg>harness correction: a fix to how eFV is scored, not model progress</span>` : "",
     floor != null ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);opacity:.35;"></span>plus or minus the noise floor (${_progFmt(floor, 3)})</span>` : "",
   ].filter(Boolean).join("");
   return `<div class="meth-chart">
@@ -3544,7 +3562,7 @@ function _methProgressChart(prog) {
       ${marks}${ticks}
     </svg>
     <div class="meth-legend">${legend}</div>
-    <p class="meth-note">A point above zero is eFV ordering realized WAR better than the consensus on the same players. Inside the shaded band the difference is smaller than this sample can resolve, so no point inside it is a lead or a deficit. Rows backfilled from the committed history carry no interval, because one cannot be recomputed from a committed number. Tilted frames are never plotted.</p>
+    <p class="meth-note">A point above zero is eFV ordering realized WAR better than the consensus on the same players. Inside the shaded band the difference is smaller than this sample can resolve, so no point inside it is a lead or a deficit. Rows backfilled from the committed history carry no interval, because one cannot be recomputed from a committed number. Tilted frames are never plotted.${hasCorr ? " An open triangle is the same model rescored after a fix to the scoring harness, so the step it shows is a correction and not progress." : ""}</p>
   </div>`;
 }
 
@@ -3566,7 +3584,10 @@ function _progEfvCell(r) {
 function _progRowHtml(prog, r) {
   const leg = _progConsLeg(r);
   const mv = r.model_version || {};
-  const model = `${escapeHtml(r.model_id || "")}${mv.commit ? ` <span class="meth-sub">${escapeHtml(mv.commit)}</span>` : ""}${r.trigger ? `<br><span class="meth-sub">${escapeHtml(r.trigger)}</span>` : ""}`;
+  const trigTxt = _progIsCorrection(prog, r)
+    ? `<br><span class="sacc-chip-warn">harness correction</span>`
+    : (r.trigger ? `<br><span class="meth-sub">${escapeHtml(r.trigger)}</span>` : "");
+  const model = `${escapeHtml(r.model_id || "")}${mv.commit ? ` <span class="meth-sub">${escapeHtml(mv.commit)}</span>` : ""}${trigTxt}`;
   const chipCls = r.role === "headline" ? "sacc-chip-ok" : "sacc-chip-warn";
   const frame = `${escapeHtml(_progFrameLabel(prog, r.frame))}${r.frame_version ? ` <span class="meth-sub">${escapeHtml(r.frame_version)}</span>` : ""}<br><span class="${chipCls}">${escapeHtml(String(r.role || "").replace(/_/g, " "))}</span>`;
   let deltaCell;
