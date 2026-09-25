@@ -334,6 +334,12 @@ def build_ledger(classes: dict[int, dict], war_by_key: dict[str, dict],
                 if s.get("mlb_deal") and cw is None:
                     skipped += 1
                 continue
+            # M04-04: which WAR the realized figures read, and when the row
+            # was built. Rows built before 2026-09-25 carry neither; the
+            # Archive treats them as the bWAR build they were.
+            if (cw or {}).get("source"):
+                led["war_basis"] = cw["source"]
+            led["built"] = date.today().isoformat()
             rows.append({**s, "ledger": led})
     if skipped:
         log.warning("fa ledger: %d MLB-deal signings skipped (no WAR resolution)", skipped)

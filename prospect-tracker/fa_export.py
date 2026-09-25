@@ -1116,6 +1116,19 @@ def serve_alignment_diagnostics(class_year: int = CLASS_YEAR) -> dict:
     }
 
 
+# M04-04. A realized-ledger row with no war_basis was built before
+# 2026-09-25, and every such row was built from the war_daily frames in June
+# 2026, before the 2026-09-03 eWAR label epoch: it is bWAR. (Measured
+# 2026-09-25 against data/ewar.json: warTd equals the elapsed-season bWAR sum
+# on 1,429 of 1,429 rows to 0.1, and differs from eWAR by a mean 0.64 WAR on
+# 809 SP/RP deals.)
+LEGACY_LEDGER_WAR_BASIS = "bwar"
+
+
+def _ledger_war_basis(led: dict) -> str:
+    return led.get("war_basis") or LEGACY_LEDGER_WAR_BASIS
+
+
 def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> dict:
     try:
         series = json.loads((DATA_DIR / "fa_dpw_series.json").read_text(encoding="utf-8"))
@@ -1123,11 +1136,17 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
     except (OSError, ValueError, KeyError):
         dpw_by = {}
     winters = []
+    bases: Counter = Counter()
+    built: set = set()
     for year in range(first, last + 1):
         rows = []
         spend = 0
         for s in storage.load_fa_signings(year).values():
             led = s.get("ledger") or {}
+            if led:
+                bases[_ledger_war_basis(led)] += 1
+                if led.get("built"):
+                    built.add(led["built"])
             rows.append(_clean({
                 "key": s.get("player_key"), "name": s["player_name"],
                 "pos": s.get("position"), "from": s.get("from_team"),
@@ -1156,7 +1175,14 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
             "qo_offered": fa_cba.qo_offered_count(year),
             "signings": rows,
         })
-    return {"generated_at": date.today().isoformat(), "winters": winters}
+    return {"generated_at": date.today().isoformat(),
+            # M04-04: the WAR the realized columns read. "mixed" only while a
+            # partial rebuild is in progress; the counts say how mixed.
+            "warBasis": (next(iter(bases)) if len(bases) == 1 else
+                         ("mixed" if bases else None)),
+            "warBasisCounts": dict(bases) or None,
+            "ledgerBuilt": max(built) if built else None,
+            "winters": winters}
 
 
 def _source_freshness(class_year: int | None = None) -> dict:
@@ -1476,9 +1502,13 @@ def _dpw_pricing_block(cls_payload: dict) -> dict | None:
 def export_all() -> dict[str, int]:
     sizes = {}
     cls_payload = build_fa_class_payload()
+    arc_payload = build_fa_archive_payload()
+    meta_payload = build_fa_meta_payload(pricing=_dpw_pricing_block(cls_payload))
+    # M04-04: the $/WAR view's realized series is built from the same ledger.
+    meta_payload["archive_war_basis"] = arc_payload.get("warBasis")
     exports = [("fa_class.json", cls_payload),
-               ("fa_archive.json", build_fa_archive_payload()),
-               ("fa_meta.json", build_fa_meta_payload(pricing=_dpw_pricing_block(cls_payload)))]
+               ("fa_archive.json", arc_payload),
+               ("fa_meta.json", meta_payload)]
     for y in FUTURE_CLASS_YEARS:
         try:
             exports.append((f"fa_class_{y}.json", build_fa_class_payload(y)))

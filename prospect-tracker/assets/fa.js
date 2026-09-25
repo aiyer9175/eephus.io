@@ -629,7 +629,7 @@
       title: `MLB Free Agency · ${yy} Archive`,
       subtitle: `${w.n} signings · ${money(w.spend_usd)} guaranteed · implied $/WAR ${money(w.dpw_usd)}`,
       url: "eephus.io/fa", filenameBase: `fa-archive-${yy}`,
-      caption: "realized eWAR and surplus to date",
+      caption: `realized ${realizedWar()} and surplus to date`,
       board: { defaultCount: 25, counts: [10, 25, 50], legend: "realized through today", columns: [
         { label: "#", frac: 0.05 },
         { label: "Player", frac: 0.34 },
@@ -1314,7 +1314,7 @@
       .sort((a, b) => dir * (get(a) - get(b))).slice(0, 6);
     const warRows = sign(w.signings || [], s => s.warTd, -1).map(s =>
       `<div class="fa-rail-row">${teamLogo(s.to)}<span>${esc(s.name)}</span>
-        <span class="fa-rail-num" title="Realized eWAR over the contract's elapsed seasons">${formatMetric(s.warTd, "war")}</span></div>`).join("");
+        <span class="fa-rail-num" title="Realized ${realizedWar()} over the contract's elapsed seasons">${formatMetric(s.warTd, "war")}</span></div>`).join("");
     const surRows = sign(w.signings || [], s => s.surplusTd, -1).map(s =>
       `<div class="fa-rail-row">${teamLogo(s.to)}<span>${esc(s.name)}</span>
         <span class="fa-rail-num ${s.surplusTd >= 0 ? "fa-pos" : "fa-neg"}">${formatMetric(s.surplusTd / 1e6, "surplusM")}</span></div>`).join("");
@@ -1324,8 +1324,8 @@
     // width, which is exactly what that winter looked like before.
     if (!warRows && !surRows) return "";
     return `<aside class="fa-board-rail">
-      ${railMod("Realized WAR leaders", warRows, "Realized eWAR on this winter's contracts to date")}
-      ${railMod("Best realized surplus", surRows, "eWAR delivered x that season's $/WAR, minus money paid to date")}
+      ${railMod("Realized WAR leaders", warRows, `Realized ${realizedWar()} on this winter's contracts to date`)}
+      ${railMod("Best realized surplus", surRows, `${realizedWar()} delivered x that season's $/WAR, minus money paid to date`)}
     </aside>`;
   }
 
@@ -1830,6 +1830,19 @@
     };
   }
 
+  // M04-04: the realized ledger names the WAR it was built on
+  // (fa_archive.warBasis). The June 2026 build predates the eWAR label and
+  // reads bWAR; the labels follow the payload instead of assuming eWAR.
+  function realizedWar() {
+    const b = (D.fa_archive || {}).warBasis;
+    return b === "bwar" ? "bWAR" : b === "ewar_v2" ? "eWAR" : "WAR";
+  }
+  function realizedWarNote() {
+    const arc = D.fa_archive || {};
+    if (arc.warBasis !== "bwar") return "";
+    return `Realized WAR and surplus read bWAR: the ledger was last built before the eWAR label and has not been rebuilt${arc.ledgerBuilt ? " (built " + esc(arc.ledgerBuilt) + ")" : ""}.`;
+  }
+
   function renderArchive(rows) {
     const arc = D.fa_archive;
     if (!arc || !arc.winters || !arc.winters.length) {
@@ -1847,15 +1860,16 @@
         <td>${s.years ?? EM_DASH}</td>
         <td>${s.milb ? "MiLB deal" : money(s.guar)}</td>
         <td>${money(s.aav)}</td>
-        <td title="Realized eWAR over the contract's elapsed seasons">${s.warTd != null ? formatMetric(s.warTd, "war") : EM_DASH}</td>
-        <td title="eWAR delivered x that season's $/WAR, minus money paid to date">${s.surplusTd != null ? formatMetric(s.surplusTd / 1e6, "surplusM") : EM_DASH}</td>
+        <td title="Realized ${realizedWar()} over the contract's elapsed seasons">${s.warTd != null ? formatMetric(s.warTd, "war") : EM_DASH}</td>
+        <td title="${realizedWar()} delivered x that season's $/WAR, minus money paid to date">${s.surplusTd != null ? formatMetric(s.surplusTd / 1e6, "surplusM") : EM_DASH}</td>
         <td>${s.done ? "complete" : (s.warTd != null ? "running" : EM_DASH)}</td>
       </tr>`).join("");
+    const basisNote = realizedWarNote();
     const arcGfx = (window.EEPHUS_GFX && w.signings.length)
       ? ` &middot; ${window.EEPHUS_GFX.chipHTML("fa-archive-gfx")}` : "";
     const archiveMain = `<table class="detail-table">
       <thead><tr><th>Player</th><th title="From = club holding his rights at signing (a deadline rental shows the acquiring club)">From &rarr; To</th><th>Yrs</th><th>Guarantee</th><th>AAV</th><th>WAR to date</th><th>Surplus to date</th><th>Status</th></tr></thead>
-      <tbody>${body}</tbody></table>`;
+      <tbody>${body}</tbody></table>${basisNote ? `<p class="fa-note">${basisNote}</p>` : ""}`;
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Winter</span>${chips}</div>
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${state.winter - 1}-${String(state.winter).slice(2)} winter</span>
       <span class="newsprint-eyebrow-meta">${w.n} signings &middot; ${money(w.spend_usd)} guaranteed &middot; implied $/WAR ${money(w.dpw_usd)}${w.qo_offered != null ? ` &middot; ${w.qo_offered} qualifying offers` : ""}${arcGfx}</span></div>

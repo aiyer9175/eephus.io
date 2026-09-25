@@ -31,6 +31,7 @@
   const STYLE_ID = "fa-dpw-style";
   let DATA = null;
   let PRICING = null;
+  let REALIZED_WAR = null;
   let loading = null;
 
   // ---- palette --------------------------------------------------------------
@@ -288,8 +289,9 @@
 
       <div class="dpw-panel">
         <h3>Implied vs realized</h3>
-        <p class="dpw-note">Realized: money paid over <span data-gl="ewar">eWAR</span> banked
-          to date. Recent winters have unfinished terms and are not comparable to old ones;
+        <p class="dpw-note">Realized: money paid over ${REALIZED_WAR === "bwar" ? "bWAR"
+          : `<span data-gl="ewar">eWAR</span>`} banked
+          to date${REALIZED_WAR === "bwar" ? " (the realized ledger predates the eWAR label and has not been rebuilt)" : ""}. Recent winters have unfinished terms and are not comparable to old ones;
           points under 90% elapsed are hollow.</p>
         <div class="dpw-legend">${legend}</div>
         ${lineChart(series, { xs, aria: "Implied and realized dollars per WAR by winter" })}
@@ -349,7 +351,11 @@
           if (!r.ok) continue;
           const j = await r.json();
           const s = j.dpw_series || j;
-          if (s && s.usd_per_war_by_winter) { DATA = s; PRICING = j.dpw_pricing || null; return DATA; }
+          if (s && s.usd_per_war_by_winter) {
+            DATA = s; PRICING = j.dpw_pricing || null;
+            REALIZED_WAR = j.archive_war_basis || null;
+            return DATA;
+          }
         } catch (e) { /* try the next source */ }
       }
       return null;

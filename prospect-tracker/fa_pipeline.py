@@ -115,9 +115,13 @@ def _resolve_signed_via_war_daily(classes: dict[int, dict],
                 continue
             mid = plausible[0]
             resolved[key] = mid
+            # M04-04: the basis the facade served these frames on, not a
+            # hardcoded "bbref". war_source.stint_frame reads DEFAULT_PROVIDER
+            # (ewar_v2 since 2026-09-03), and build_ledger stamps this onto
+            # every ledger row so the Archive can say which WAR it realized.
             war_by_key[key] = {"seasons": {str(y): round(w, 2)
                                            for y, w in sorted(cands[mid]["war"].items())},
-                               "source": "bbref"}
+                               "source": war_source.DEFAULT_PROVIDER}
     stats = {"seen": n_seen, "resolved": len(resolved),
              "no_match": n_nomatch, "ambiguous": n_ambig}
     return resolved, war_by_key, stats

@@ -227,3 +227,39 @@ def test_every_reason_code_has_a_reader_facing_sentence():
         assert code in fa_export.NO_PROJ_REASONS
         # The sentence is served copy, and the owner's copy rule is lint-gated.
         assert "—" not in fa_export.NO_PROJ_REASONS[code]
+
+
+# ---- M04-04: the realized ledger names its WAR basis -------------------------
+
+def test_build_ledger_stamps_the_war_basis_it_was_given(monkeypatch):
+    """The Archive labelled every realized figure eWAR while the stored ledger
+    was a June 2026 bWAR build (1,429 of 1,429 rows equal the bWAR sum). A row
+    now carries the basis its WAR map came from, so the label can follow it."""
+    monkeypatch.setattr(fc, "dollars_per_war_for_season", lambda s, c=None: 10_000_000.0)
+    classes = {2024: {"signed": [_SIGNING]}}
+    wbk = {"test_player": {"seasons": {"2024": 3.0, "2025": 1.0}, "source": "ewar_v2"}}
+    rows = fc.build_ledger(classes, wbk, current_season=2026)
+    assert rows[0]["ledger"]["war_basis"] == "ewar_v2"
+    assert rows[0]["ledger"]["built"]
+
+
+def test_the_war_map_source_is_the_facade_default_not_a_literal():
+    from pathlib import Path
+    src = (Path(__file__).parent / "fa_pipeline.py").read_text(encoding="utf-8")
+    assert '"source": "bbref"' not in src
+    assert '"source": war_source.DEFAULT_PROVIDER' in src
+
+
+def test_served_archive_labels_follow_its_war_basis():
+    import json
+    from pathlib import Path
+    here = Path(__file__).parent
+    arc = json.loads((here / "data" / "fa_archive.json").read_text(encoding="utf-8"))
+    meta = json.loads((here / "data" / "fa_meta.json").read_text(encoding="utf-8"))
+    assert arc.get("warBasis") in ("bwar", "ewar_v2", "mixed")
+    assert meta.get("archive_war_basis") == arc["warBasis"]
+    js = (here / "assets" / "fa.js").read_text(encoding="utf-8")
+    assert "Realized eWAR" not in js, "a realized label is hardcoded to eWAR"
+    assert js.count("${realizedWar()}") >= 5
+    dpw = (here / "assets" / "fa_dpw.js").read_text(encoding="utf-8")
+    assert "REALIZED_WAR = j.archive_war_basis" in dpw
