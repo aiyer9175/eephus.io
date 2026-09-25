@@ -9870,7 +9870,7 @@
          idiom. -->
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">League-wide Farm System Rankings · 30 Organizations</span>
-      <span class="newsprint-eyebrow-meta">v31 composite grade · acquisition, development, financial &amp; MLB-production rollups</span>
+      <span class="newsprint-eyebrow-meta">v40 composite grade · acquisition, development, financial &amp; MLB-production rollups</span>
     </div>
     <!-- v29 - Collapsed-by-default filter accordion for farm system. -->
     <div class="filter-toggle-row">
@@ -40499,7 +40499,7 @@ function makeFarmReportCard(org) {
 
     // v31.4 - Newspaper-style ribbon at the top of the full tree so
     // it reads in the same idiom as the canopy. The ribbon labels
-    // the section + lists the column count and v31 weighting in an
+    // the section + lists the column count and v40 weighting in an
     // italic right-aligned tag.
     const _ribbon = `
       <line x1="${PAD_L}" y1="${PAD_T - 8.5}" x2="${svgW - PAD_L}" y2="${PAD_T - 8.5}"
@@ -40581,7 +40581,7 @@ function makeFarmReportCard(org) {
       <text x="${PAD_L + 4}" y="${PAD_T + 18}" text-anchor="start"
             style="font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;fill:var(--text-tertiary);">Organizational Report Card · Composite Grade Tree</text>
       <text x="${cSvgW - PAD_L - 4}" y="${PAD_T + 18}" text-anchor="end"
-            style="font-family:var(--font-serif);font-style:italic;font-size:10px;fill:var(--text-tertiary);">v31 weighting · 30-org cohort</text>
+            style="font-family:var(--font-serif);font-style:italic;font-size:10px;fill:var(--text-tertiary);">v40 weighting · 30-org cohort</text>
       <line x1="${PAD_L}" y1="${PAD_T + RIBBON_H - 1}" x2="${cSvgW - PAD_L}" y2="${PAD_T + RIBBON_H - 1}"
             stroke="var(--text-tertiary)" stroke-width="0.4" opacity="0.4"/>`;
 
@@ -41643,15 +41643,17 @@ function makeFarmFinancialComposite(org) {
   // league mean. Bar width caps at ±30 so a 130 fills the bar
   // entirely. Weight comes from FARM_LEAF_WEIGHTS.financial; weights
   // shown so the reader sees the math behind the parent.
-  // v38 - Item-7: weights mirror FARM_LEAF_WEIGHTS["financial"] (surplus +
-  // $DvM+ up, simpler ROI leaves down).
+  // Weights mirror storage.FARM_LEAF_WEIGHTS["financial"] (v40), in percent.
+  // test_farm_finances_weights.py pins the two together: this table still
+  // carried the v38 weights (42/18/18/7/8/7) after storage moved to v40
+  // (census M02-09).
   const LEAF_WEIGHTS_FIN = {
-    fin_active_surplus:        42,
-    fin_dollar_dvm:            18,
-    fin_contract_surplus:      18,
-    fin_war_per_m:              7,
-    fin_draft_pool_efficiency:  8,
-    fin_ifa_roi:                7,
+    fin_active_surplus:        68,
+    fin_dollar_dvm:            10,
+    fin_contract_surplus:      10,
+    fin_war_per_m:              4,
+    fin_draft_pool_efficiency:  4,
+    fin_ifa_roi:                4,
   };
   const LEAF_LABELS_FIN = {
     fin_active_surplus:        'Active Surplus',
@@ -41696,7 +41698,7 @@ function makeFarmFinancialComposite(org) {
       ${sub ? `<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">${sub}</div>` : ''}
     </div>`;
 
-  return `<div class="detail-title flush">Financial composite <span class="detail-title-sub">Headline $-aggregates feeding the Financial branch grade. Parent letter is a weighted blend of the 5 leaves below; each leaf's bar shows its 100-anchored score (100 = league mean) and weight share of the parent.</span></div>
+  return `<div class="detail-title flush">Financial composite <span class="detail-title-sub">Headline $-aggregates feeding the Financial branch grade. Parent letter is a weighted blend of the ${Object.keys(LEAF_WEIGHTS_FIN).length} leaves below; each leaf's bar shows its 100-anchored score (100 = league mean) and weight share of the parent.</span></div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
       <div style="background:linear-gradient(135deg,${gradeColor(parentLetter)}22,${gradeColor(parentLetter)}08);border:1px solid ${gradeColor(parentLetter)}55;border-radius:6px;padding:10px 16px;display:flex;flex-direction:column;align-items:center;min-width:96px;">
         <div style="font-size:9px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Financial</div>
@@ -53480,13 +53482,13 @@ function _renderFarmDetailBody(orgCode, org, root) {
          <tbody>
            <tr><td>WAR per $M (bonus)</td>
              <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtRoi(_warPerM)}</td>
-             <td style="color:var(--text-tertiary);font-size:11px;">Career WAR per $M signing bonus across all debuts with bonus on file</td></tr>
+             <td style="color:var(--text-tertiary);font-size:11px;">Career WAR per $M signing bonus across every debut with a bonus on file, all years (the tree's Draft $ / IFA $ channels split this same pool)</td></tr>
            <tr><td>Draft Pool Efficiency</td>
              <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtRoi(_draftPoolEff)}</td>
              <td style="color:var(--text-tertiary);font-size:11px;">Trailing-3yr WAR per $M of MLB-published draft pool</td></tr>
            <tr><td>IFA ROI (v7)</td>
              <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtRoi(_ifaRoi)}</td>
-             <td style="color:var(--text-tertiary);font-size:11px;">11yr window · per-grad bonus sum (T-12 to T-2)</td></tr>
+             <td style="color:var(--text-tertiary);font-size:11px;">IFA signings only, 11-yr window (signed T-12 to T-2) · per-grad bonus sum; a different window and pool than the tree's IFA $ channel, so the two can disagree</td></tr>
            <tr><td>Grad-Contract Surplus</td>
              <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_surplusLeaf != null ? '$' + (_surplusLeaf / 1_000_000).toFixed(1) + 'M/yr' : ' - '}</td>
              <td style="color:var(--text-tertiary);font-size:11px;">Mean per-year cost-controlled surplus across qualifying debuts</td></tr>
