@@ -120,6 +120,23 @@ BANNED_CLAIM_FRAGMENTS = (
     "k% is the reliable output",
     "k% is the most reliable",
     "r-squared about 0.47",
+    # Census X07-01 (2026-09-24). The riv_plus glossary methodology said RIV+
+    # tracked relief free-agent pay at least as closely as REM+ (0.58 against
+    # 0.51 over 271 name-matched signings). The 2026-09-18 re-gate
+    # (data/riv_market_regate_eval.json B1_primary) read 0.5733 against 0.5665
+    # on 232 matched signings, gap 0.0052 against an in-run MDE95 of 0.0862,
+    # and deprecated the row. The copy now quotes that reading, pinned below.
+    "at least as closely as rem+",
+    # Census X07-07 (2026-09-24). The fv definition called FV the prospect's
+    # projected MLB ceiling while its own methodology, and the FanGraphs scale
+    # it maps onto, treat FV 50 as the likely outcome of an average regular.
+    "projected mlb ceiling",
+    # Census X07-02 (2026-09-24). The /sources/ lede and the glossary
+    # attribution note said no source's reports were republished wholesale
+    # while the served scout_reports chunks carry 27,461 full write-ups from
+    # five sources. The copy now states what the payload carries; see
+    # test_sources_copy_names_every_republished_report_source.
+    "reports are republished wholesale",
 )
 
 # Copy surfaces the ratchet scans. content/*.json is globbed at test time.
@@ -129,6 +146,8 @@ CLAIM_SURFACES = (
     "index.html",
     "collegesavant/app.js",
     "collegesavant/pitcher_app.js",
+    "build_site.py",
+    "sources/index.html",
 )
 
 # ---------------------------------------------------------------------------
@@ -244,6 +263,19 @@ GLOSSARY_CLAIMS = (
      "data/riv_plus_eval.json", ("forward_stability_check", "riv_plus_y_to_y1_rho"), "abs", 0.005),
     ("riv_plus", "REM+ year-to-year rho", r"rank correlation is 0\.\d+ against (0\.\d+) for REM\+",
      "data/riv_plus_eval.json", ("forward_stability_check", "rem_plus_y_to_y1_rho"), "abs", 0.005),
+    # Census X07-01 (2026-09-24): the market sentence quotes the 2026-09-18
+    # re-gate (B1 primary, v1 convention, the pre-declared primary). Three
+    # decimals, so abs 0.0005; the signing count is an integer.
+    ("riv_plus", "market n signings", r"on (\d+) matched reliever signings",
+     "data/riv_market_regate_eval.json", ("B1_primary", "n_matched_signings"), "abs", 0.5),
+    ("riv_plus", "market rho RIV+", r"rank correlation with AAV is (0\.\d+) for RIV\+",
+     "data/riv_market_regate_eval.json", ("B1_primary", "v1", "rho_primary"), "abs", 0.0005),
+    ("riv_plus", "market rho REM+", r"for RIV\+ against (0\.\d+) for REM\+",
+     "data/riv_market_regate_eval.json", ("B1_primary", "v1", "rho_baseline"), "abs", 0.0005),
+    ("riv_plus", "market gap", r"a gap of (0\.\d+) inside",
+     "data/riv_market_regate_eval.json", ("B1_primary", "v1", "gap_ci", "mean"), "abs", 0.0005),
+    ("riv_plus", "market noise floor", r"noise floor of (0\.\d+)",
+     "data/riv_market_regate_eval.json", ("B1_primary", "v1", "mde95_in_run"), "abs", 0.0005),
     ("fv_to_war_table", "EV anchor FV 40", r"FV 40 (\d\.\d+)",
      "data/value_framework_fitted.json", ("empirical_anchors", "anchors", "40"), "abs", 0.0005),
     ("fv_to_war_table", "EV anchor FV 50", r"FV 50 (\d\.\d+)",
@@ -405,6 +437,77 @@ def test_glossary_numbers_match_artifacts():
                     f"{'/'.join(keypath)} = {actual} (tol {tol_mode} {tol})"
                 )
     assert not problems, "glossary claim drift: " + "; ".join(problems)
+
+
+def test_riv_plus_market_gap_sits_inside_its_noise_floor():
+    """Census X07-01: the riv_plus copy says the RIV+ minus REM+ market gap is
+    inside the noise floor. That wording holds only while the re-gate's gap
+    stays inside its in-run MDE95 and resolves neither way."""
+    text = _entry_text(_glossary_entry("riv_plus"))
+    assert "inside a noise floor" in text, "riv_plus market sentence changed shape"
+    v1 = _dig(_read_json("data/riv_market_regate_eval.json"), ("B1_primary", "v1"))
+    assert abs(v1["gap_ci"]["mean"]) < v1["mde95_in_run"]
+    assert not v1["lo95_gt_0"] and not v1["hi95_lt_0"]
+
+
+# Payload source key -> the label the copy uses (census X07-02, 2026-09-24).
+_REPORT_SOURCE_LABELS = {
+    "fangraphs": "FanGraphs",
+    "mlb_pipeline": "MLB Pipeline",
+    "baseballamerica": "Baseball America",
+    "espn": "ESPN",
+    "just_baseball": "Just Baseball",
+}
+_DRAFT_REPORT_SOURCE_LABELS = {
+    "fangraphs": "FanGraphs",
+    "mlb_pipeline_draft": "MLB Pipeline",
+    "baseballamerica_draft": "Baseball America",
+}
+
+
+def test_sources_copy_names_every_republished_report_source():
+    """Census X07-02: the /sources/ lede and the glossary attribution note
+    name every source whose full report text the served payloads carry, and
+    no source whose text they do not. The payloads are pipeline outputs
+    (gitignored), so a checkout without them skips."""
+    chunks = sorted(p for p in (ROOT / "data").glob("scout_reports_*.json")
+                    if p.stem.rsplit("_", 1)[-1].isdigit())
+    draft_path = ROOT / "data" / "draft_timeseries.json"
+    if not chunks or not draft_path.is_file():
+        pytest.skip("scout report chunks or draft board payload not built here")
+    served = set()
+    for path in chunks:
+        with open(path, encoding="utf-8") as fh:
+            for per_source in json.load(fh).values():
+                for key, reports in per_source.items():
+                    if key.startswith("_") or not isinstance(reports, list):
+                        continue
+                    if any(isinstance(r, dict) and r.get("text") for r in reports):
+                        served.add(key)
+    unknown = served - set(_REPORT_SOURCE_LABELS)
+    assert not unknown, f"report text from an unlabelled source: {sorted(unknown)}"
+    with open(draft_path, encoding="utf-8") as fh:
+        draft = json.load(fh)
+    draft_served = set()
+    for cls in draft.get("classes", []):
+        for prospect in cls.get("prospects", []):
+            for point in prospect.get("points", []):
+                extras = (point.get("tools") or {}).get("_extras") or {}
+                if isinstance(extras, dict) and extras.get("report"):
+                    draft_served.add(point.get("source"))
+    unknown = draft_served - set(_DRAFT_REPORT_SOURCE_LABELS)
+    assert not unknown, f"draft report text from an unlabelled source: {sorted(unknown)}"
+
+    import build_site as B
+    assert set(B.SCOUT_REPORT_SOURCES) == {_REPORT_SOURCE_LABELS[k] for k in served}
+    assert set(B.DRAFT_REPORT_SOURCES) == {_DRAFT_REPORT_SOURCE_LABELS[k] for k in draft_served}
+    prospect_names = B._name_series(B.SCOUT_REPORT_SOURCES)
+    draft_names = B._name_series(B.DRAFT_REPORT_SOURCES)
+    page = B.build_sources()
+    glossary_js = _read_text("assets/glossary.js")
+    for surface, text in (("/sources/", page), ("assets/glossary.js", glossary_js)):
+        assert prospect_names in text, f"{surface} does not name {prospect_names}"
+        assert draft_names in text, f"{surface} does not name {draft_names}"
 
 
 def test_single_a_equivalent_example_matches_live_factor():

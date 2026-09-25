@@ -1078,15 +1078,15 @@ function _methProseHTML() {
     </ul>
 
     <h2 class="meth-h">Data sources &amp; attribution</h2>
-    <p class="meth-note">PROSPX grades are a consensus built across seven independent industry sources - the value added is the aggregation, calibration, and track-record audit, not any single list. No source's rankings or reports are republished wholesale; excerpts appear with attribution in the spirit of commentary and analysis. All trademarks and data remain the property of their owners. The full attribution page lives at <a href="/sources/">/sources/</a>.</p>
+    <p class="meth-note">PROSPX grades are a consensus built across seven independent industry sources - the value added is the aggregation, calibration, and track-record audit, not any single list. Player cards carry the full text of the scouting reports FanGraphs, MLB Pipeline, Baseball America, ESPN and Just Baseball have published, each labelled with its source and publication date, and the draft board carries the full draft reports from FanGraphs, MLB Pipeline and Baseball America. All trademarks, data and report text remain the property of their owners. The full attribution page lives at <a href="/sources/">/sources/</a>.</p>
     <div class="article-grid">
       ${[
-        ["FanGraphs", "https://www.fangraphs.com/", "Prospect rankings, FV + tool grades, scouting reports (consensus input); league stats and park factors."],
-        ["MLB Pipeline", "https://www.mlb.com/prospects", "Prospect rankings and grades (consensus input); draft bonus pools and slot values."],
-        ["Baseball America", "https://www.baseballamerica.com/", "Prospect rankings and grades (consensus input)."],
-        ["ESPN", "https://www.espn.com/mlb/", "Prospect rankings (consensus input); team logo imagery on internal surfaces."],
+        ["FanGraphs", "https://www.fangraphs.com/", "Prospect rankings, FV + tool grades, prospect and draft scouting reports (consensus input); league stats and park factors."],
+        ["MLB Pipeline", "https://www.mlb.com/prospects", "Prospect rankings, grades, and prospect and draft scouting reports (consensus input); draft bonus pools and slot values."],
+        ["Baseball America", "https://www.baseballamerica.com/", "Prospect rankings, grades, and prospect and draft scouting reports (consensus input)."],
+        ["ESPN", "https://www.espn.com/mlb/", "Prospect rankings and scouting reports (consensus input); team logo imagery on internal surfaces."],
         ["The Athletic", "https://www.nytimes.com/athletic/", "Prospect rankings (consensus input)."],
-        ["Just Baseball", "https://www.justbaseball.com/", "Prospect rankings (consensus input)."],
+        ["Just Baseball", "https://www.justbaseball.com/", "Prospect rankings and scouting reports (consensus input)."],
         ["TJStats", "https://x.com/TJStats", "Prospect rankings (consensus input) and movers wire."],
         ["MLB Stats API / Baseball Savant", "https://baseballsavant.mlb.com/", "Game logs, transactions, rosters, Statcast tracking data, and player headshots."],
         ["Baseball-Reference", "https://www.baseball-reference.com/", "war_daily (bWAR): the run frame the served eWAR is built on, plus historical player pages."],

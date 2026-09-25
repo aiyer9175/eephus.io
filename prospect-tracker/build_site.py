@@ -5918,29 +5918,49 @@ def _sources_api_section() -> str:
     )
 
 
+# The sources whose full scouting-report text the site serves today: the
+# prospect cards read the scout_reports chunks, the draft cards read the
+# draft board payload. The /sources/ lede names them so the attribution page
+# says what is republished (census X07-02, 2026-09-24); test_claims_freshness
+# holds both tuples to the payloads.
+SCOUT_REPORT_SOURCES = ("FanGraphs", "MLB Pipeline", "Baseball America", "ESPN",
+                        "Just Baseball")
+DRAFT_REPORT_SOURCES = ("FanGraphs", "MLB Pipeline", "Baseball America")
+
+
+def _name_series(names) -> str:
+    """'A, B and C' for a short list of names."""
+    names = list(names)
+    if len(names) <= 1:
+        return "".join(names)
+    return ", ".join(names[:-1]) + " and " + names[-1]
+
+
 def build_sources() -> str:
     """/sources/ - data sources and attribution, plus the published-data catalog.
 
     Trust page for the Open Beta: names every upstream the platform reads, what
-    it's used for, and the editorial stance (consensus across sources; no single
-    list republished). The second half (anchor #api) is the other direction of
+    it's used for, and the editorial stance (consensus across sources; the lede
+    names whose full report text the cards carry). The second half (anchor #api) is the other direction of
     the same question: which artifacts the platform PUBLISHES, on what cadence,
     and how stable each one is. See _sources_api_section for why the catalog
     lives on this route."""
     rows = [
         ("FanGraphs", "https://www.fangraphs.com/",
-         "Prospect rankings, FV grades, tool grades, and scouting reports (one of the "
-         "seven PROSPX consensus inputs); league stats and park factors."),
+         "Prospect rankings, FV grades, tool grades, and prospect and draft scouting reports "
+         "(one of the seven PROSPX consensus inputs); league stats and park factors."),
         ("MLB Pipeline", "https://www.mlb.com/prospects",
-         "Prospect rankings and grades (consensus input); draft bonus pools and slot values."),
+         "Prospect rankings, grades, and prospect and draft scouting reports (consensus "
+         "input); draft bonus pools and slot values."),
         ("Baseball America", "https://www.baseballamerica.com/",
-         "Prospect rankings and grades (consensus input)."),
+         "Prospect rankings, grades, and prospect and draft scouting reports (consensus input)."),
         ("ESPN", "https://www.espn.com/mlb/",
-         "Prospect rankings (consensus input); team logo imagery on internal surfaces."),
+         "Prospect rankings and scouting reports (consensus input); team logo imagery on "
+         "internal surfaces."),
         ("The Athletic", "https://www.nytimes.com/athletic/",
          "Prospect rankings (consensus input)."),
         ("Just Baseball", "https://www.justbaseball.com/",
-         "Prospect rankings (consensus input)."),
+         "Prospect rankings and scouting reports (consensus input)."),
         ("TJStats", "https://x.com/TJStats",
          "Prospect rankings (consensus input) and movers wire."),
         ("MLB Stats API / Baseball Savant", "https://baseballsavant.mlb.com/",
@@ -5965,9 +5985,12 @@ def build_sources() -> str:
         '<div class="section-head"><h1>Data: sources, attribution and what we publish</h1>'
         '<span class="section-sub">upstreams we read, artifacts we publish</span></div>'
         '<div class="gl-intro">'
-        "<p>PROSPX grades are a consensus of seven industry sources. No source's rankings or "
-        "reports are republished wholesale; excerpts carry attribution. Trademarks and data "
-        "belong to their owners.</p>"
+        "<p>PROSPX grades are a consensus of seven industry sources. A player's card shows "
+        "each source's own FV grade beside the consensus, and it carries the full text "
+        f"of the scouting reports {_name_series(SCOUT_REPORT_SOURCES)} have published on that "
+        "player, each labelled with its source and publication date. The draft board "
+        f"carries the full draft reports from {_name_series(DRAFT_REPORT_SOURCES)}. Trademarks, "
+        "data and report text belong to their owners.</p>"
         "<p>Sources with a question or concern: "
         '<a href="mailto:arkndjl@gmail.com">arkndjl@gmail.com</a>.</p>'
         '<p>Building on the data: <a href="#api">the data we publish</a>.</p>'
