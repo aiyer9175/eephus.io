@@ -31750,6 +31750,17 @@ function oneRowActivePool() {
 // One org's slice of that pool, graded rows first then provisional, each in source
 // order (exactly the order the old per-org concat produced). A fresh array every call,
 // because callers sort it in place.
+// FARM POOL COUNTS (census M02-12, 2026-09-25). The farm pool is graded rows plus
+// provisional rows, but org.total_fv sums the GRADED rows only (org.count of them), so a
+// header printing the pool length beside total_fv mixed two denominators (LAD: 273
+// tracked beside a total FV built on 156). Every farm header names both counts and says
+// which pool the total sums; the GFX card uses the same words.
+function farmPoolCountsText(org, nTracked) {
+  const graded = (org && org.count != null) ? org.count : null;
+  if (graded == null) return (nTracked != null ? nTracked : " - ") + " prospects tracked";
+  if (nTracked == null || nTracked <= graded) return graded + " graded prospects";
+  return graded + " graded · " + nTracked + " tracked (" + (nTracked - graded) + " provisional)";
+}
 function oneRowOrgPool(org) {
   const pool = oneRowActivePool();
   if (_ONE_ROW_BY_ORG === null) {
@@ -35670,7 +35681,7 @@ function buildFarmCard(snap) {
         <div style="display:flex;align-items:center;justify-content:center;height:64px;min-width:64px;">${logo}</div>
         <div style="min-width:0;">
           <div style="font-family:var(--font-retro);font-size:${_gfxFitNamePx(orgName, 40, 20)}px;font-weight:700;line-height:1.02;color:${P.text};overflow-wrap:anywhere;">${escapeHtml(orgName)} <span style="font-size:21px;color:${P.text3};font-weight:700;">Farm System</span></div>
-          <div style="font-family:var(--font-mono);font-size:16px;color:${P.text2};margin-top:8px;">Farm rank #${escapeHtml(String(meta.farmRank != null ? meta.farmRank : (farmWindowRank(org) != null ? farmWindowRank(org) : " - ")))} of 30 · ${escapeHtml(String(org.count != null ? org.count : (meta.gradedCount || " - ")))} prospects tracked</div>
+          <div style="font-family:var(--font-mono);font-size:16px;color:${P.text2};margin-top:8px;">Farm rank #${escapeHtml(String(meta.farmRank != null ? meta.farmRank : (farmWindowRank(org) != null ? farmWindowRank(org) : " - ")))} of 30 · ${escapeHtml(farmPoolCountsText(org.count != null ? org : { count: meta.gradedCount != null ? meta.gradedCount : null }, org.org ? oneRowOrgPool(org.org).length : null))}</div>
         </div>
       </div>
       <div style="text-align:center;flex:none;">
@@ -51961,7 +51972,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Farm System Report · ${escapeHtml(org.org)} · #${farmWindowRank(org) ?? ' - '} of 30</span>
-      <span class="newsprint-eyebrow-meta">${rosterPlayersAll.length} prospects tracked · ${org.total_fv != null ? org.total_fv.toFixed(0) + " total FV" : " - "}</span>
+      <span class="newsprint-eyebrow-meta">${farmPoolCountsText(org, rosterPlayersAll.length)} · ${org.total_fv != null ? org.total_fv.toFixed(0) + " total FV (graded)" : " - "}</span>
     </div>
     <div class="detail-page-header" style="${orgStripe(org.org)}">
       <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0;">
@@ -51970,7 +51981,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           <div class="player-display-name">${escapeHtml(fullOrgName(org.org))}</div>
           <div class="player-display-meta">
             <span style="font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;font-weight:600;">${escapeHtml(org.org)}</span>
-            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition">#${farmWindowRank(org)}</strong> of 30 · ${rosterPlayersAll.length} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : " - "}</strong>
+            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition">#${farmWindowRank(org)}</strong> of 30 · ${farmPoolCountsText(org, rosterPlayersAll.length)} · Total FV of graded <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : " - "}</strong>
           </div>
         </div>
       </div>
@@ -55483,7 +55494,7 @@ function makeFarmCompareSideBySide(farms) {
           <div class="csbs-name" onclick="closeCompareAndGoFarm('${escapeHtml(o.org)}');">${escapeHtml(fullOrgName(o.org))}
             <span style="margin-left:6px;font-family:var(--font-mono);color:${gradeColor(grade)};font-weight:700;">${escapeHtml(grade)}</span>
           </div>
-          <div class="csbs-meta">#${farmWindowRank(o) ?? " - "} of 30 · ${o.count ?? 0} tracked · Total FV ${o.total_fv != null ? o.total_fv.toFixed(1) : " - "}</div>
+          <div class="csbs-meta">#${farmWindowRank(o) ?? " - "} of 30 · ${o.count ?? 0} graded · Total FV ${o.total_fv != null ? o.total_fv.toFixed(1) : " - "}</div>
           ${tpHtml}
         </div>
       </div>
