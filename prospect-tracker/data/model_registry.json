@@ -2012,11 +2012,11 @@
    "surface": "PROSPX spotlights + WIRE flags",
    "predicts": "risers/rebounders/fallers (implicit claim: movement persists)",
    "champion": "movement_engine v19 (hand-tuned gates)",
-   "baseline": "fv-band matched controls (editorial_eval.py, 5x controls per flag)",
+   "baseline": "fv-band controls (editorial_eval.py: the first 5 unflagged players by player key per flag, not a random matched draw)",
    "metric": "30/60-day matched-control hit rate with Wilson CIs",
    "eval_artifact": "data/editorial_eval.json",
    "verdict": "provisional",
-   "notes": "Phase 5 WS-10 (2026-06-11): scoring machinery SHIPPED (editorial_eval.py - 30/60-day windows, config-defined hits, fv-band matched controls, Wilson CIs, kill rule = fails-to-clear-control after 2 matured cohorts) and wired into run_monthly. The artifact was WITHHELD until the first cohort matured. FIRST MATURED SCORING 2026-07-14 (306 flags matured, 2189 pending): SPLIT verdict per the pre-registered kill rule. RISER clears control at h30 (hit 3.17% n=189 vs control 0.95% n=945, CI clears) -> keep-measuring. FALLER (0/87 vs 0/435) and REBOUND (0/30 vs 2% controls) are ELIGIBLE and FAIL to clear -> the artifact recommends deprecating those two flag types. Registered PROVISIONAL: the surface is one model row but only the riser leg has evidence; owner should either disable/de-emphasize faller+rebound spotlight flags or accept them as editorial-only (not predictive) copy. Verdict moves again as the 2189 pending flags mature (h60 legs are still empty).",
+   "notes": "Scoring machinery: editorial_eval.py (30/60-day windows, config-defined hits, fv-band controls, Wilson CIs, kill rule = fails to clear control after 2 matured cohorts), wired into run_monthly; the per-type rates and verdicts live in data/editorial_eval.json, not here. AUDIT 2026-09-25 (census M02-04, two verifiers CONFIRMED): flags are scored from the stored flag FV and controls from the median of source snapshots (two bases), the controls are the first unflagged players by key (4,827 faller h30 draws from 37 players), every ever-flagged key is excluded from controls (look-ahead), and the snapshots basis is not point-in-time (upserts rewrite snapshot_date). An audit re-score on one basis with random controls moved the rebound and riser verdicts, so the artifact's verdicts are not reliable; the corrected eval (metric_snapshots basis, random in-cell controls, player-clustered CIs) and any kill-rule change are held for the owner. Verdict stays provisional.",
    "last_checked": "2026-09-24",
    "stale": false,
    "artifact_age_days": 0

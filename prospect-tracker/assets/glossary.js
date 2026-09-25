@@ -503,7 +503,7 @@
       spotlights: {
         art: "/data/editorial_eval.json",
         estimand: "Do the editorial flags predict real consensus movement, or just narrate it?",
-        baseline: "matched unflagged players in the same FV band and window",
+        baseline: "unflagged players in the same FV band on the emit date (the first five by player key, not a random draw), scored over the same window",
         read: j => {
           const t = j.by_flag_type || {};
           const rows = [];
@@ -522,6 +522,7 @@
           });
           return rows.length ? rows : null;
         },
+        note: () => "Method caveat (audit 2026-09-25): a flag is scored from the FV stored when it was emitted, a control from the median of the sources' snapshots, and the controls are the first unflagged players by key rather than a random matched draw, so these rates are not a like-for-like comparison. The verdicts below can change once both legs are scored on one basis; the corrected eval awaits the owner's review.",
       },
       fa_projection_engine: {
         art: "/data/fa_gate1_eval.json",
