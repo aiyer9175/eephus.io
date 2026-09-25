@@ -1916,18 +1916,88 @@
     // The bar is read off the served gate's own need string; no number is
     // typed here, so a bar that moves server-side moves this chip with it.
     var bar = gateNeedValue(gateById(v, "out_of_sample_skill"), v).n;
+    var lad = ladderPosition();
+    var homeLine = "The vintage backtest " + verb + " &quot;always take the home team&quot;";
     return '<div class="bt-headline bt-headline-warn">' +
-      '<div class="bt-headline-hd">The vintage backtest ' + verb +
-      " &quot;always take the home team&quot;</div>" +
+      '<div class="bt-headline-hd">' + (lad ? lad.head : homeLine) + "</div>" +
       '<div class="bt-pick-nums">' +
       chip("Games", n) + chip("Brier", num(b.brier, 5)) +
       chip("Home base", num(b.brier_home_base, 5)) +
       chip("Accuracy", pct(b.accuracy, 2)) +
       chip("Skill", signed(d, 6)) + chip("t", num(sk.t, 3)) +
       (bar == null ? "" : chip("t bar", num(bar, 3))) + "</div>" +
+      (lad ? "<p>" + homeLine + "." + lad.market + "</p>" : "") +
       "<p>Out of sample, paired per game. Lower " + gl("Brier", "brier_score") +
       " is better. This gate decides whether anything is published as a " +
-      selNoun() + ".</p></div>";
+      selNoun() + ".</p>" + pricerLine() + "</div>";
+  }
+
+  // THE HEADLINE LEADS WITH THE LADDER (M12-09, 2026-09-25). It used to lead
+  // with the one baseline the model beats, always-home, while the benchmark
+  // panel further down the same tab ranks a zero-parameter literature Elo
+  // above the model on the same games and the de-vigged market open above
+  // every tier on the games it covers. The position is read off the eval
+  // artifact's own benchmarks block, sorted by measured Brier over the
+  // full-window tiers exactly as benchmarkPanel sorts them, so no rank or
+  // number here is typed.
+  var TIER_NAMES = {
+    model_vintage: "the model", elo_literature: "a literature Elo",
+    home_constant: "always home", market_open_devig: "the de-vigged market open",
+    market_close_devig: "the de-vigged market close"
+  };
+  function tierName(k) { return TIER_NAMES[k] || String(k).replace(/_/g, " "); }
+  function ladderPosition() {
+    var bm = (aux("evald") || {}).benchmarks;
+    if (!bm || !bm.tiers || !bm.tiers.model_vintage) return null;
+    var w = bm.window || {};
+    var full = [], sub = [];
+    Object.keys(bm.tiers).forEach(function (k) {
+      var t = bm.tiers[k] || {};
+      if (!t.n || t.brier == null) return;
+      if (w.n != null && t.n < w.n) sub.push({ key: k, t: t });
+      else full.push({ key: k, brier: t.brier });
+    });
+    full.sort(function (a, c) { return a.brier - c.brier; });
+    var pos = -1;
+    full.forEach(function (r, i) { if (r.key === "model_vintage") pos = i; });
+    if (pos < 0) return null;
+    var ahead = full.slice(0, pos).map(function (r) { return tierName(r.key); });
+    var head = "Vintage backtest" + (w.n != null ? " on " + w.n + " games" : "") +
+      ": the model ranks " + (pos + 1) + " of " + full.length + " measured tiers" +
+      (ahead.length ? ", behind " + esc(ahead.join(" and ")) : "");
+    // A subsample tier never ranks in the headline (the artifact's claim
+    // rule); it is compared only inside its own same-games block.
+    var market = sub.map(function (r) {
+      var sg = r.t.same_games || {};
+      if (sg.model == null) return "";
+      var better = r.t.brier < sg.model;
+      return " On the " + r.t.n + " of " + (w.n == null ? "-" : w.n) + " games it covers, " +
+        esc(tierName(r.key)) + " scores " + num(r.t.brier, 5) + " against the model's " +
+        num(sg.model, 5) + (better ? ", better than the model." : ".");
+    }).join("");
+    return { head: head, market: market };
+  }
+
+  // WHICH PRICER THE BACKTEST GRADES (M12-09, 2026-09-25). The vintage grade
+  // is of coefficients fitted once on the fit window and scored forward; the
+  // board serves a season-to-date fit. Both coefficient sets are served (the
+  // eval artifact's vintage block, fetched as evald, and the payload's model
+  // block), so the line
+  // prints both offense slopes rather than letting one Brier stand for both.
+  function pricerLine() {
+    var ev = (aux("evald") || {}).vintage || {};
+    var gc = ev.coefficients || null;
+    var sc = (S.data && S.data.model && S.data.model.coefficients) || null;
+    var fw = ev.fit_window || {};
+    if (!gc || !sc || gc.b1 == null || sc.b1 == null) return "";
+    return "<p>The graded pricer's coefficients were fitted once on " +
+      (gc.n_rows == null ? "its fit window" : gc.n_rows + " team-game rows") +
+      (fw.first_date ? " (" + esc(fw.first_date) + " to " + esc(fw.last_date || "-") + ")" : "") +
+      " and scored forward; the board serves a season-to-date fit on " +
+      (sc.n_rows == null ? "every row to date" : sc.n_rows + " rows") +
+      ". Runs per sigma of offense: " + num(gc.b1, 3) + " graded, " + num(sc.b1, 3) +
+      " served. This result grades that method, not the exact pricer on the board; " +
+      "a grade of the served pricer is pre-registered and has not run.</p>";
   }
 
   function clockA() {

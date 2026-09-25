@@ -684,3 +684,63 @@ def test_a_bounded_scrollport_still_holds_its_sticky_header(width):
         pytest.skip("no bounded scrollport on this checkout's board")
     for offset in res["ports"]:
         assert abs(offset) <= 2,             f"a sticky table header came unstuck at {width}: offset {offset}"
+
+
+# ---------------------------------------------------------------------------
+# 6. the validation headline leads with the ladder (M12-09, 2026-09-25)
+# ---------------------------------------------------------------------------
+BENCHMARKS = {
+    "window": {"n": 722, "first_date": "2026-08-01", "last_date": "2026-09-24"},
+    "tiers": {
+        "model_vintage": {"n": 722, "brier": 0.24266},
+        "home_constant": {"n": 722, "brier": 0.24791},
+        "elo_literature": {"n": 722, "brier": 0.24237},
+        "market_open_devig": {"n": 406, "brier": 0.22659,
+                              "same_games": {"model": 0.24316, "home_constant": 0.24706,
+                                             "elo_literature": 0.24158}},
+        "market_close_devig": {"n": 0, "brier": None},
+    },
+}
+VINTAGE_FIT = {
+    "coefficients": {"b1": -0.0372, "n_rows": 610},
+    "fit_window": {"n_games": 305, "first_date": "2026-07-06", "last_date": "2026-07-31"},
+}
+
+
+def _served_coefficients() -> dict:
+    d = _base()
+    d["model"]["coefficients"] = {"b1": 0.239, "n_rows": 4748, "source": "fitted"}
+    return d
+
+
+def test_the_headline_names_the_ladder_position_read_off_the_artifact():
+    """The headline used to lead with always-home, the one baseline the model
+    beats, while a literature Elo ranks above it on the same games. The rank,
+    the tier ahead and the subsample line are all read off the benchmarks
+    block; the always-home result stays, one line down.
+
+    MUTATION: drop ladderPosition() from honestResult. This fails."""
+    copy = _text(_validation(evald={"benchmarks": BENCHMARKS, "vintage": VINTAGE_FIT},
+                             payload=_served_coefficients()))
+    assert "Vintage backtest on 722 games: the model ranks 2 of 3 measured tiers, behind a literature Elo" in copy
+    assert "&quot;always take the home team&quot;" in copy or "always take the home team" in copy
+    assert ("On the 406 of 722 games it covers, the de-vigged market open scores 0.22659 "
+            "against the model's 0.24316, better than the model.") in copy
+    # the unmeasured close tier never ranks
+    assert "market close" not in copy
+
+
+def test_the_headline_says_which_pricer_it_grades():
+    copy = _text(_validation(evald={"benchmarks": BENCHMARKS, "vintage": VINTAGE_FIT},
+                             payload=_served_coefficients()))
+    assert "fitted once on 610 team-game rows (2026-07-06 to 2026-07-31)" in copy
+    assert "season-to-date fit on 4748 rows" in copy
+    assert "Runs per sigma of offense: -0.037 graded, 0.239 served." in copy
+    assert "not the exact pricer on the board" in copy
+
+
+def test_without_the_benchmarks_block_the_old_headline_stands():
+    copy = _text(_validation(evald={"starter_basis": STARTER_BASIS}))
+    assert "measured tiers" not in copy
+    assert "Runs per sigma of offense" not in copy
+    assert "always take the home team" in copy
