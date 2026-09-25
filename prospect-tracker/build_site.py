@@ -4146,6 +4146,30 @@ def build_mlbstats() -> str:
                 "fielders, WPA leverage, and team Bullpen+, Rotation+, Offense+ and DEM+.",
                 url=f"{SITE_ORIGIN}/mlbstats/")
 
+_PAL_REVERSED_LABEL = {
+    "neg_era_pre": "high pre-season ERA",
+    "kbb_pre": "low pre-season K-BB%",
+    "index_pre": "a low pre-season quality index",
+}
+
+
+def _pal_gate_clause(gate: dict, key: str) -> str:
+    """One masthead clause per direction, derived from the gate block that
+    pal_export carries out of data/pal_eval.json. Mirrors pal.js verdictPhrase:
+    a failing direction is a screen, a passing one is validated unless the
+    reversed (regression-to-the-mean) read of a registered baseline beats FIT,
+    in which case the clause says the gate passed and names that read."""
+    d = ((gate or {}).get("per_direction") or {}).get(key) or {}
+    if not isinstance(d.get("pass"), bool):
+        return "has no gate verdict in this build"
+    if not d["pass"]:
+        return "is a screen, not a ranking"
+    if d.get("reversed_beats_fit") is True:
+        lab = _PAL_REVERSED_LABEL.get(d.get("reversed_baseline"), str(d.get("reversed_baseline")))
+        return f"passed its gate, though a sort on {html.escape(lab)} ranks the same events higher"
+    return "is validated"
+
+
 def build_pal() -> str:
     """The /pal/ Alchemy Lab - role-conversion evaluation for MLB players.
     Both halves of the surface now ship. Pitcher role conversion:
@@ -4162,13 +4186,18 @@ def build_pal() -> str:
     arsenal / velocity / platoon Statcast data, the validated REM+ model, and
     PROSPX prospect role history. Styles ride the .fa-app block plus the
     .mlbstats-app / .pal-app extensions in site.css."""
+    # The masthead verdicts are READ from data/pal.json backtest.gate (final
+    # pass M07-01): the line was static text, the one validity word on /pal/
+    # that could not move with the gate artifact.
+    gate = (_cached_data_json("pal.json").get("backtest") or {}).get("gate") or {}
     body = (
         '<div class="fa-app mlbstats-app pal-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">β beta</span></h1></div>'
         f'<span class="section-sub">Role and position {_gl("pal_conversion", "conversions")}. '
-        f'{_gl("sp_rp_fit", "SP to RP")} is validated; {_gl("rp_sp_fit", "RP to SP")} is a screen, not a '
-        'ranking; position fit is validated for the size of a move, not for which players clubs move.</span></div>'
+        f'{_gl("sp_rp_fit", "SP to RP")} {_pal_gate_clause(gate, "SP->RP")}; '
+        f'{_gl("rp_sp_fit", "RP to SP")} {_pal_gate_clause(gate, "RP->SP")}; '
+        'position fit is validated for the size of a move, not for which players clubs move.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="PAL sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-palsection="rp2sp" role="tab" aria-selected="true" aria-controls="pal-section">RP&rarr;SP Candidates</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="sp2rp" role="tab" aria-selected="false" aria-controls="pal-section">SP&rarr;RP Candidates</button>'

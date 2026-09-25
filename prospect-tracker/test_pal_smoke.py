@@ -511,3 +511,75 @@ def test_prospect_card_without_efv_prints_the_consensus_ceiling_alone():
     assert "FV 40" in html
     assert 'data-gl="xfv"' not in html
     assert "scale floor" not in html
+
+
+# ---------------------------------------------------------------------------
+# M07-01 (final pass 2026-09-25): the SP->RP pass rests on baselines that are
+# all signed "a better pre-season means a bigger gain", while war_delta pays
+# out on a BAD pre-season. Read the other way, the gate's own negated-ERA
+# baseline (-0.62) ranks the 61 events at +0.62 against FIT's +0.2916. The
+# verdict word stays (no re-gate here); the caveat rides beside it, and the
+# masthead that printed "SP to RP is validated" as static text is derived.
+# ---------------------------------------------------------------------------
+
+def _with_reversed(beats: bool) -> str:
+    d = json.loads(SAMPLE)
+    g = d["backtest"]["gate"]["per_direction"]["SP->RP"]
+    g.update({"baseline_rho_war_delta": {"kbb_pre": -0.097, "neg_era_pre": -0.62, "index_pre": -0.4434},
+              "reversed_baseline": "neg_era_pre", "reversed_baseline_rho": 0.62,
+              "reversed_beats_fit": beats})
+    return json.dumps(d)
+
+
+def test_passing_gate_carries_the_regression_to_the_mean_caveat():
+    html = _render_payload("#sp2rp", _with_reversed(True))
+    assert "Gate: validated" in html
+    assert "regression to the mean" in html
+    assert "high pre-season ERA ranks the same events at 0.62, above FIT" in html
+    card = _render_payload("#history", _with_reversed(True))
+    assert "a sort on high pre-season ERA ranks the same events higher (0.62)" in card
+
+
+def test_caveat_is_silent_when_the_reversed_read_does_not_beat_fit():
+    for payload in (_with_reversed(False), SAMPLE):
+        html = _render_payload("#sp2rp", payload)
+        assert "Gate: validated" in html
+        assert "regression to the mean" not in html
+
+
+def test_masthead_clause_is_derived_from_the_gate_block():
+    import build_site as B
+    gate = json.loads(SAMPLE)["backtest"]["gate"]
+    assert B._pal_gate_clause(gate, "SP->RP") == "is validated"
+    assert B._pal_gate_clause(gate, "RP->SP") == "is a screen, not a ranking"
+    assert B._pal_gate_clause({}, "SP->RP") == "has no gate verdict in this build"
+    rev = json.loads(_with_reversed(True))["backtest"]["gate"]
+    assert B._pal_gate_clause(rev, "SP->RP") == (
+        "passed its gate, though a sort on high pre-season ERA ranks the same events higher")
+
+
+def test_served_masthead_matches_the_served_gate():
+    page = ROOT / "pal" / "index.html"
+    payload = ROOT / "data" / "pal.json"
+    if not (page.exists() and payload.exists()):
+        pytest.skip("pal page or payload not built in this tree")
+    import build_site as B
+    gate = (json.loads(payload.read_text(encoding="utf-8")).get("backtest") or {}).get("gate") or {}
+    html = page.read_text(encoding="utf-8")
+    for key in ("SP->RP", "RP->SP"):
+        assert B._pal_gate_clause(gate, key) in html, key
+
+
+def test_export_carries_the_reversed_baseline_read_off_the_eval_artifact():
+    import pal_export as P
+    if not P.EVAL_PATH.exists():
+        pytest.skip("pal_eval.json not in this tree")
+    ev = json.loads(P.EVAL_PATH.read_text(encoding="utf-8"))["per_direction"]
+    gate = P._eval_gate("ewar_v2")
+    for key, row in gate["per_direction"].items():
+        bl = ev[key]["baseline_rho_war_delta"]
+        assert row["baseline_rho_war_delta"] == bl
+        want = max(bl, key=lambda k: -bl[k])
+        assert row["reversed_baseline"] == want
+        assert row["reversed_baseline_rho"] == round(-bl[want], 4)
+        assert row["reversed_beats_fit"] is (row["reversed_baseline_rho"] > row["rho_fit_war_delta"])

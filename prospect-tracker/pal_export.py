@@ -500,6 +500,27 @@ def _war_basis(war_by_year: dict, stamped: str) -> dict:
     }
 
 
+def _reversed_baseline(d: dict) -> dict:
+    """The regression-to-the-mean read of a gate row (final pass M07-01,
+    2026-09-25). Every registered baseline is signed so that a BETTER
+    pre-season predicts a bigger gain (K-BB%, negated ERA, the quality index),
+    while the outcome, post WAR minus pre WAR, pays out on a BAD pre-season.
+    The Spearman rho of a negated ranker is exactly minus the rho, so the
+    reversed read comes straight off the artifact's own numbers: nothing is
+    re-scored. On SP->RP the reversed ERA sort ranks the 61 gate events at
+    +0.62 against FIT's +0.2916. The gate never tested that reading, so this
+    is a disclosure beside the verdict, not a new verdict."""
+    bl = d.get("baseline_rho_war_delta") or {}
+    if not bl:
+        return {"reversed_baseline": None, "reversed_baseline_rho": None,
+                "reversed_beats_fit": None}
+    key = max(bl, key=lambda k: -bl[k])
+    rho = round(-bl[key], 4)
+    fit = d.get("rho_fit_war_delta")
+    return {"reversed_baseline": key, "reversed_baseline_rho": rho,
+            "reversed_beats_fit": (None if fit is None else bool(rho > fit))}
+
+
 def _eval_gate(live_provider: Optional[str]) -> Optional[dict]:
     """The PRE-REGISTERED per-direction gate verdict, carried out of
     data/pal_eval.json into the served payload.
@@ -536,14 +557,18 @@ def _eval_gate(live_provider: Optional[str]) -> Optional[dict]:
         g = v.get("gate") or {}
         rule = rule or g.get("rule")
         best = v.get("best_baseline")
+        bl = v.get("baseline_rho_war_delta") or {}
         out_dirs[d] = {
             "pass": g.get("pass"),
             "n_gate": v.get("n_gate"),
             "rho_fit_war_delta": v.get("rho_fit_war_delta"),
             "best_baseline": best,
-            "best_baseline_rho": (v.get("baseline_rho_war_delta") or {}).get(best),
+            "best_baseline_rho": bl.get(best),
             "gap_lo95": (v.get("gap_ci_vs_best") or {}).get("lo95"),
+            "baseline_rho_war_delta": {k: bl[k] for k in bl
+                                        if isinstance(bl[k], (int, float))},
         }
+        out_dirs[d].update(_reversed_baseline(out_dirs[d]))
     if not out_dirs:
         return None
     return {

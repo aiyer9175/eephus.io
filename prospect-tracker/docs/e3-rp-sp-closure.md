@@ -58,6 +58,19 @@ gate machinery are all shared between the two directions, so SP-to-RP passing on
 the same pipeline rules out a harness defect as the explanation for RP-to-SP
 failing. What is left is the model.
 
+**Caveat added 2026-09-25 (final pass M07-01).** The SP-to-RP pass above is
+weaker evidence than this section reads. Every registered baseline (K-BB%,
+negated ERA, SEM+) is signed so a better pre-season predicts a bigger gain,
+while war_delta pays out on a bad pre-season. Read the other way, the negated
+ERA baseline ranks the legacy 61 events at +0.62 (data/pal_eval.json -0.62)
+and the expanded 100 at +0.6828 (data/pal_gamelog_eval.json -0.6828), above
+FIT both times, and FIT scales with starter ERA through its conversion-need
+term. So "one direction works" holds against quality reads, not against
+regression to the mean, and the harness-defect argument rests on the same
+pass. Nothing here was re-gated; a need-direction re-gate is a new
+pre-registration (owner sign-off, after the fWAR season-close epoch), and the
+RP-to-SP closed-event set stays closed.
+
 ## Status
 
 **Lane E3 is closed as a NO-SHIP for RP to SP.** Nothing was shipped, and the

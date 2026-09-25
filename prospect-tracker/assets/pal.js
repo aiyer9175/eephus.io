@@ -679,6 +679,25 @@
     var g = btBlock().gate;
     return g ? seriesShort(g.basis_series || g.basis_provider) : null;
   }
+  // The regression-to-the-mean caveat on a PASSING gate (final pass M07-01).
+  // Every registered baseline assumes a better pre-season means a bigger gain;
+  // a WAR change pays out on a bad one. pal_export carries the reversed read
+  // straight off the eval artifact (minus each baseline's rho). When that read
+  // beats FIT the verdict word stays, and the caveat rides beside it. Null when
+  // the payload predates the field or the direction does not pass.
+  var REVERSED_LABEL = {
+    neg_era_pre: "high pre-season ERA",
+    kbb_pre: "low pre-season K-BB%",
+    index_pre: "a low pre-season quality index"
+  };
+  function reversedCaveat(key) {
+    var d = btGate(key);
+    if (!d || !d.pass || d.reversed_beats_fit !== true || d.reversed_baseline_rho == null) return null;
+    return {
+      label: REVERSED_LABEL[d.reversed_baseline] || String(d.reversed_baseline),
+      rho: d.reversed_baseline_rho
+    };
+  }
   // true / false / null(unknown) - the ONLY source of a validity word.
   function dirValidates(key) {
     var d = btGate(key);
@@ -691,16 +710,22 @@
     if (v === null) return '<span class="proj-dim">gate verdict not in this payload</span>';
     var d = btGate(key);
     var basis = gateSeriesShort();
+    var cav = reversedCaveat(key);
     return '<span class="' + (v ? "pal-hit" : "pal-miss") + '">'
       + (v ? "validated vs baselines" : "does not validate ranking") + "</span>"
       + '<span class="proj-dim"> (gate' + (d.n_gate == null ? "" : " n=" + esc(d.n_gate))
-      + (basis ? ", " + esc(basis) + " basis" : "") + ")</span>";
+      + (basis ? ", " + esc(basis) + " basis" : "") + ")"
+      + (cav ? "; a sort on " + esc(cav.label) + " ranks the same events higher ("
+          + esc(cav.rho) + ")" : "") + "</span>";
   }
   // PLAIN TEXT (callers esc() it for HTML; the GFX captions need it raw).
   // One short clause for the banner and the shareable-board captions.
   function verdictPhrase(key) {
     var v = dirValidates(key);
     if (v === null) return "backtest verdict unavailable";
+    if (v && reversedCaveat(key)) {
+      return "passed its backtest gate; a sort on " + reversedCaveat(key).label + " ranks higher";
+    }
     return v ? "backtest-validated ranking" : "structural screen, ranking not backtest-validated";
   }
   // PLAIN TEXT. The long form for the section notes: the verdict, the gate's
@@ -716,9 +741,16 @@
       + (d.best_baseline ? " vs best same-event baseline " + d.best_baseline
           + (d.best_baseline_rho == null ? "" : " " + d.best_baseline_rho) : "")
       + ")";
+    var cav = reversedCaveat(key);
+    var caveat = cav
+      ? " Caveat: every registered baseline assumes a better pre-season means a bigger gain, "
+        + "while a WAR change pays out on a bad one (regression to the mean). A sort on "
+        + cav.label + " ranks the same events at " + cav.rho + ", above FIT. The gate never "
+        + "tested that reading, so the pass is owed a re-gate."
+      : "";
     return v
-      ? "Gate: validated; pre-conversion FIT out-ranked every same-event baseline on realized "
-        + "WAR change" + where + "."
+      ? "Gate: validated; pre-conversion FIT out-ranked every registered same-event baseline on realized "
+        + "WAR change" + where + "." + caveat
       : "Gate: structural screen; the ranking is not validated on realized WAR change" + where + ".";
   }
 
