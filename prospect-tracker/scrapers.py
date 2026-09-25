@@ -1154,6 +1154,16 @@ def _cache_ttl_for_key(cache_key: str) -> int:
     # network; 6h keeps every nightly probe live and a same-day re-run cached.
     if cache_key.startswith(("espn_news_feed", "espn_search_")):
         return 6 * 3600
+    # Same trap for the Spotrac free-agent class pages the daily d10 step
+    # re-scrapes Oct-Mar: under a 24h TTL about every other night read the
+    # cache, and an option decision's first-seen date (what the frozen P(enter)
+    # eval scores against) landed a day late (M04-05, 2026-09-25). Current
+    # and future classes only: a past winter's page is history and keeps the
+    # long cache below.
+    if cache_key.startswith(("spotrac_fa_avail_", "spotrac_fa_class_")):
+        m_sp = _re_local.search(r"(20\d{2})", cache_key)
+        if m_sp and int(m_sp.group(1)) >= _date_local.today().year:
+            return 6 * 3600
     m = _re_local.search(r"(20\d{2})", cache_key)
     if m:
         try:

@@ -3475,12 +3475,16 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             # the latest row's last_verified_at. Best-effort.
             _efv_progress_update(out_dir, "daily")
 
-        # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
+        # --- 10. FA signing-window tracker (Oct-Mar). ----------------------
         # In-winter the class moves daily (signings, option decisions, QO
         # acceptances), so the daily job re-scrapes the current class and
         # re-exports the fa_* sidecars. Outside the window the FA refresh
-        # rides the monthly run only — June payrolls don't move daily.
-        if date.today().month in (11, 12, 1, 2, 3):
+        # rides the monthly run only; June payrolls don't move daily. The
+        # months are fa_pipeline.DAILY_SCRAPE_MONTHS (the Oct-Jan option and
+        # QO window plus Feb-Mar), so an October decision is first seen the
+        # night after it posts, not on Nov 1 (M04-05).
+        from fa_pipeline import DAILY_SCRAPE_MONTHS as _FA_DAILY_MONTHS
+        if date.today().month in _FA_DAILY_MONTHS:
             with _step("d10. FA signing-window refresh", log):
                 try:
                     import fa_pipeline
@@ -3512,6 +3516,21 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     _export_fa()
                 except Exception:
                     log.exception("daily: FA re-export failed — continuing")
+
+        # --- d10p. Served P(enter) snapshot (M04-05, 2026-09-25) -----------
+        # The frozen P(enter) decision eval scores the LAST served value before
+        # each option decision, read from snapshots; the file is rewritten
+        # nightly, so this records what d10 / d10b just served, one row per
+        # pending_option member per night (upsert by date, last write wins).
+        # Runs after BOTH branches so every night is covered. Best-effort: a
+        # failed snapshot costs one night of record, never the build.
+        with _step("d10p. FA P(enter) served snapshot", log):
+            try:
+                from fa_export import snapshot_served_penter
+                log.info("fa penter snapshot: %d pending-option rows recorded",
+                         snapshot_served_penter())
+            except Exception:
+                log.exception("daily: P(enter) snapshot failed - continuing")
 
         # --- d10c. TJStats SECOND Live capture of the day -----------------
         # The owner's Franklin Arias complaint was NOT a broken scraper: it

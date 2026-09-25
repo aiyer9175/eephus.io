@@ -1481,6 +1481,35 @@ def _keep_previous(name: str, payload: dict) -> bool:
     return True
 
 
+def snapshot_served_penter(path: Path | None = None) -> int:
+    """M04-05. Record tonight's served P(enter) for every pending_option
+    member of the current class, READ BACK from the fa_class.json on disk
+    (never recomputed), into storage.fa_penter_served_history. Called by
+    run_monthly after the night's last FA export; the date is today and
+    cannot be set, so nothing is ever back-filled. Returns rows written."""
+    import socket
+    import subprocess
+    p = Path(path) if path else DATA_DIR / "fa_class.json"
+    try:
+        cls = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("penter snapshot: %s unreadable; nothing recorded", p.name)
+        return 0
+    rows = [m for m in cls.get("members") or [] if m.get("status") == "pending_option"]
+    try:
+        sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=Path(__file__).parent,
+                             capture_output=True, text=True, timeout=10).stdout.strip() or None
+    except Exception:                                       # noqa: BLE001
+        sha = None
+    try:
+        host = socket.gethostname()
+    except Exception:                                       # noqa: BLE001
+        host = None
+    return storage.snapshot_fa_penter(cls.get("class_year") or CLASS_YEAR, rows,
+                                      generated_at=cls.get("generated_at"),
+                                      host=host, git_sha=sha)
+
+
 def _dpw_pricing_block(cls_payload: dict) -> dict | None:
     """The class board's own $/WAR basis for fa_meta (M04-08): the in-run
     series, the ex-ante level it carries to, the escalator, and the rate

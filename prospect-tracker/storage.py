@@ -1284,6 +1284,36 @@ CREATE TABLE IF NOT EXISTS trade_value_history (
 );
 CREATE INDEX IF NOT EXISTS idx_tradeval_date ON trade_value_history(snapshot_date);
 
+-- M04-05 (2026-09-25). One row per (class_year, player_key, snapshot date):
+-- the P(enter) the /fa/ board SERVED that night for every pending_option
+-- member, read back from the fa_class.json the export just wrote. The frozen
+-- docs/fa-2026-08-19/PENTER_DECISION_EVAL_PREREG.md scores "the LAST served
+-- value before" each decision, "read from artifact snapshots", and nothing
+-- kept them: the file is rewritten nightly and the box's nightly checkout
+-- reverts the tracked copy. Cannot be back-filled; the record begins the
+-- first night this runs on the serving box. Upsert-by-date, last write wins
+-- (the night's final export is the served one). host and git_sha say which
+-- machine and code wrote a row, so a dev-to-box DB re-seed cannot pass dev
+-- rows off as served ones.
+CREATE TABLE IF NOT EXISTS fa_penter_served_history (
+    class_year            INTEGER NOT NULL,
+    player_key            TEXT NOT NULL,
+    snapshot_date         TEXT NOT NULL,
+    fa_type               TEXT,
+    status                TEXT,
+    opt_price_usd         REAL,
+    enter_prob            REAL,
+    enter_prob_src        TEXT,
+    proj_aav_usd          REAL,
+    proj_aav_p10_usd      REAL,
+    proj_aav_p90_usd      REAL,
+    fa_class_generated_at TEXT,
+    host                  TEXT,
+    git_sha               TEXT,
+    inserted_at           TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (class_year, player_key, snapshot_date)
+);
+
 -- One row per (org, snapshot calendar date): the composite farm-system rank
 -- and the farm_score it sorts on. Sibling to metric_snapshots, but at the ORG
 -- grain rather than the player grain — metric_snapshots never stored the
@@ -4028,6 +4058,47 @@ def snapshot_board_metrics(players: Iterable[dict], snapshot_date: str | None = 
                  p.get("status"),
                  1 if (p.get("position") or "").upper() in ("SP", "RP", "P", "SIRP", "MIRP", "RHP", "LHP") else 0,
                  p.get("age"), json.dumps(payload)),
+            )
+            n += 1
+    return n
+
+
+def snapshot_fa_penter(class_year: int, rows: Iterable[dict], *,
+                       generated_at: str | None, host: str | None,
+                       git_sha: str | None) -> int:
+    """Write tonight's served P(enter) rows (M04-05). The date is TODAY and is
+    not a parameter: a served value can only be recorded on the night it was
+    served, so there is no way to back-fill a past date from a current file.
+    Idempotent within a date (the last write of the night wins)."""
+    snapshot_date = date.today().isoformat()
+    n = 0
+    with connect() as con:
+        for r in rows:
+            key = r.get("key")
+            if not key:
+                continue
+            con.execute(
+                """INSERT INTO fa_penter_served_history
+                     (class_year, player_key, snapshot_date, fa_type, status,
+                      opt_price_usd, enter_prob, enter_prob_src, proj_aav_usd,
+                      proj_aav_p10_usd, proj_aav_p90_usd, fa_class_generated_at,
+                      host, git_sha, inserted_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                   ON CONFLICT(class_year, player_key, snapshot_date) DO UPDATE SET
+                     fa_type=excluded.fa_type, status=excluded.status,
+                     opt_price_usd=excluded.opt_price_usd,
+                     enter_prob=excluded.enter_prob,
+                     enter_prob_src=excluded.enter_prob_src,
+                     proj_aav_usd=excluded.proj_aav_usd,
+                     proj_aav_p10_usd=excluded.proj_aav_p10_usd,
+                     proj_aav_p90_usd=excluded.proj_aav_p90_usd,
+                     fa_class_generated_at=excluded.fa_class_generated_at,
+                     host=excluded.host, git_sha=excluded.git_sha,
+                     inserted_at=excluded.inserted_at""",
+                (int(class_year), key, snapshot_date, r.get("type"), r.get("status"),
+                 r.get("optPrice"), r.get("enterProb"), r.get("enterProbSrc"),
+                 r.get("projAav"), r.get("projAavP10"), r.get("projAavP90"),
+                 generated_at, host, git_sha),
             )
             n += 1
     return n

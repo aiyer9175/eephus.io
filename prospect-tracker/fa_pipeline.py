@@ -287,16 +287,34 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
                     "inference skipped (page failure, not 77 exercises)",
                     class_year)
     else:
-        for key, p in prior.items():
-            if p.get("status") != "pending_option":
-                continue
+        # MASS-DROP HOLD (M04-05, 2026-09-25). The daily scrape now runs
+        # through October too, so the disappearance heuristic gets ~30 more
+        # looks a winter. The 2026-06-12 failure dropped EVERY pending row
+        # at once with nothing re-listed; a real decision day always
+        # re-lists some declined options as locked free agents. When at
+        # least MASS_DROP_MIN_PENDING rows are pending, none is re-listed,
+        # and MASS_DROP_SHARE of them vanished in one scrape, the vanished
+        # rows stamp nothing and the night logs a warning; the next scrape
+        # decides them. Declines (re-listed rows) are never held.
+        pend = {k: p for k, p in prior.items() if p.get("status") == "pending_option"}
+        vanished = [k for k in pend if k not in avail_by_key and k not in signing_keys]
+        relisted = [k for k in pend
+                    if (avail_by_key.get(k) or {}).get("status") == "locked"]
+        mass_drop = (len(pend) >= MASS_DROP_MIN_PENDING and not relisted
+                     and len(vanished) >= MASS_DROP_SHARE * len(pend))
+        if mass_drop:
+            log.warning("fa events %d: %d of %d pending options vanished in one "
+                        "scrape with none re-listed - option_exercised held for "
+                        "this scrape (page restructure signature, 2026-06-12)",
+                        class_year, len(vanished), len(pend))
+        for key, p in pend.items():
             now = avail_by_key.get(key)
             base = {"player_name": p.get("player_name"), "position": p.get("position"),
                     "option_price_usd": p.get("option_price_usd")}
             if now is not None and now.get("status") == "locked":
                 events.append({"player_key": key, "event_type": "option_declined",
                                "payload": base})
-            elif now is None and key not in signing_keys:
+            elif now is None and key not in signing_keys and not mass_drop:
                 events.append({"player_key": key, "event_type": "option_exercised",
                                "payload": base})
 
@@ -343,6 +361,14 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
 # --------------------------------------------------------------------------- #
 
 QO_WINDOW_MONTHS = (10, 11, 12, 1)
+# Months the daily job re-scrapes the class (run_monthly d10). It is the
+# option / QO inference window plus the signing tail through March, derived
+# here so the scrape window and the inference window cannot drift apart
+# again: d10 used to run Nov-Mar while inference opened Oct 1, so an October
+# decision was first seen on Nov 1 (M04-05, 2026-09-25).
+DAILY_SCRAPE_MONTHS = tuple(sorted(set(QO_WINDOW_MONTHS) | {2, 3}))
+MASS_DROP_MIN_PENDING = 10
+MASS_DROP_SHARE = 0.9
 QO_INVALID_REASON = ("qo_offered stamped outside the Oct-Jan QO window "
                      "(no window guard at stamp time; guard shipped "
                      "2026-08-19). Prior-winter QO flag misread as a fresh "

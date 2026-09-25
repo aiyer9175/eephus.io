@@ -45,6 +45,7 @@ happen inside the called module, so this file alone cannot split them).
 | 9g. eFV scoreboard refresh (xfv_scoreboard_eval.json) | efv_progress.json, xfv_scoreboard_eval.json |
 | d10. FA signing-window refresh | mlb_projections.json |
 | d10b. FA re-export off fresh projections | - |
+| d10p. FA P(enter) served snapshot | - |
 | d10c. TJStats Live second capture | - |
 | d10d. ESPN new-article probe | ledger_board.json |
 | d10e. Club Ledger board (ledger_board.json) | ledger_board.json |
