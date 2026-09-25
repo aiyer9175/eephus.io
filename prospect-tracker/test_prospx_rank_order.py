@@ -19,6 +19,13 @@ Contract pinned here:
   * on the rendered default board, getEfvRank(row i) == i + 1 for every row;
   * getEfvOrgRank equals the row's index in its org pool under the roster's sort;
   * every printed rank chip, page by page, reads its row position.
+
+Census M01-04 (display half). storage bakes overall_rank over graded rows only; the live
+board also ranks the provisional pool, so the baked rank differed from the chip on 4,493
+of 4,679 graded rows and the "Last board #N" pill (detail header, GFX card) read as a fall
+that never happened. The pill is retired, and the leaderboard rank caps and the scatter
+rank axis read the rank the chip prints (boardRankOf). Re-basing the baked rank itself is
+an owner question (canonical pool) and is not pinned here.
 """
 from __future__ import annotations
 
@@ -160,3 +167,40 @@ def test_printed_chips_read_in_order_on_every_page(booted_page):
     assert out["bad"] == 0, (
         f"{out['bad']} of {out['seen']} printed rank chips differ from their row position; "
         f"first at page/row/chip {out['firstBad']}")
+
+
+def test_last_board_pill_is_retired():
+    src = _src()
+    assert 'rankPill("Last board"' not in src
+    assert "`Last board #" not in src
+
+
+def test_rank_caps_read_the_printed_rank():
+    src = _src()
+    assert "Number(p.overall_rank) <= rankCap" not in src
+    assert "Number(p.overall_rank) <= _rankCap" not in src
+    assert src.count("boardRankOf(p) <= rankCap") == 1
+    assert src.count("boardRankOf(p) <= _rankCap") == 1
+
+
+def test_detail_header_prints_one_overall_rank(booted_page):
+    page, errs = booted_page
+    key = page.evaluate("""() => {
+      const f = getFilteredActives();
+      const g = f.find(p => !p._is_provisional && p.overall_rank != null
+                        && getEfvRank(p) != null && getEfvRank(p) - p.overall_rank >= 10);
+      return g ? g.player_key : null;
+    }""")
+    if not key:
+        pytest.skip("no graded row whose baked and live ranks differ; the pill could not fire")
+    page.evaluate(f"() => {{ location.hash = 'player={key}'; }}")
+    page.wait_for_function(
+        "() => { const b = document.getElementById('player-detail-body');"
+        " return b && /Overall eFV/i.test(b.innerText); }", timeout=30_000)
+    txt = page.evaluate("() => document.getElementById('player-detail-body').innerText")
+    live = page.evaluate(f"() => getEfvRank(DATA.players.find(p => p.player_key === '{key}'))")
+    page.evaluate("() => { location.hash = ''; }")
+    assert not re.search(r"Last board", txt, re.I), (
+        f"{key}: the detail header still prints a Last board pill beside #{live}")
+    assert f"#{live}" in txt
+    assert not errs, "JS errors: " + " | ".join(errs)

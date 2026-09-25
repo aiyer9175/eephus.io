@@ -18826,7 +18826,7 @@ const CHART_AXES = {
   prospects: [
     { key: "age",            label: "Age",                getter: p => p.age,                                fmt: v => v.toFixed(1) },
     { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => fvCeil(v).toString() },
-    { key: "overall_rank",   label: "Overall rank",       getter: p => p.overall_rank,                       fmt: v => "#" + v },
+    { key: "overall_rank",   label: "Overall rank",       getter: p => boardRankOf(p),                       fmt: v => "#" + v },
     { key: "rps_plus",       label: "RPS+",               getter: p => _rpsPlusValue(p), fmt: v => formatMetric(v, 'plus') },   // 2026-07-29: this axis used to substitute ops_plus_level when the (always-empty) baked rps_plus was missing, i.e. an axis LABELLED RPS+ that plotted a different metric than the RPS+ pill. Now on the one shared RPS+ (_rpsPlusValue), which also covers pitchers.
     { key: "tool",           label: "Tool",               getter: p => p.tool,                               fmt: v => fvCeil(v).toString() },
     { key: "height_in",      label: "Height (in)",        getter: p => _getPhysicalProfile(p).height_in,  fmt: v => v.toFixed(0) + '"' },
@@ -19915,7 +19915,7 @@ function _lbWindowPool(cfg, statKey, opt) {
     if (pos !== "all" && !positionMatches(bucket, pos)) continue;
     if (org !== "all" && p.org !== org) continue;
     if (ageCap != null && !(p.age != null && p.age <= ageCap)) continue;
-    if (rankCap != null && !(p.overall_rank != null && Number(p.overall_rank) <= rankCap)) continue;
+    if (rankCap != null && !(boardRankOf(p) != null && boardRankOf(p) <= rankCap)) continue;
     const games = [];
     for (const g of (entry.games || [])) {
       if (g.d < win.from || g.d > win.to) continue;
@@ -20458,7 +20458,7 @@ function renderLeaderboards() {
       if (pos !== "all" && !positionMatches(bucket, pos)) continue;
       if (org !== "all" && p.org !== org) continue;
       if (_ageCap != null && !(p.age != null && p.age <= _ageCap)) continue;
-      if (_rankCap != null && !isDebut && !(p.overall_rank != null && Number(p.overall_rank) <= _rankCap)) continue;
+      if (_rankCap != null && !isDebut && !(boardRankOf(p) != null && boardRankOf(p) <= _rankCap)) continue;
       if (boardSide !== "all" && cfg.side !== boardSide) continue;
     // v44 - Getter-based "+" index stats (ISO+/RPS+/SC+/POW+/PD+/pStuff+/$DvM+).
     // These are JS-derived from the player's current statline (not baked per
@@ -32822,6 +32822,15 @@ function getEfvRank(p) {
   if (_EFV_RANK == null) buildEfvRankMap();
   return (p && _EFV_RANK) ? (_EFV_RANK[p.player_key] || null) : null;
 }
+// The rank a reader sees on the board row: the live rank, with the baked overall_rank only
+// where the live map has no row. Filters and axes that say "rank" read this, so a Top-250
+// cap admits exactly the players whose printed chip is #250 or better (census M01-04: the
+// baked rank ranks graded rows only and differed from the chip on 4,493 of 4,679 rows).
+function boardRankOf(p) {
+  if (!p) return null;
+  const r = getEfvRank(p);
+  return r != null ? r : (p.overall_rank != null ? Number(p.overall_rank) : null);
+}
 // Canonical ORG rank: the player's position within their org's pool (graded +
 // provisional) under the SAME eFV ordering as the roster tab / farm preview /
 // main board. Replaces the baked p.org_rank (one run stale, realized-grade
@@ -35221,13 +35230,12 @@ function buildProspectCard(snap) {
       if (_or) return `#${_or.rank} of ${_or.total} ${p.org}`;
       return (p.org_rank != null && p.org) ? `#${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""} ${p.org}` : null;
     })(),
-    // p.overall_rank is the BAKED board rank, not a consensus rank -- it is the same
-    // raw-eFV ordering as the live rank, one build behind (storage bakes it before
-    // xfv.json is regenerated). Labelled by what it is: the last published board.
-    // No longer gated on the Rank-by toggle: the lead rank above is the live board rank
-    // in both modes, so the stale-vs-live comparison is meaningful in both modes too.
-    (_cardXr != null && p.overall_rank != null && p.overall_rank !== _cardXr)
-      ? `Last board #${p.overall_rank}` : null,
+    // The "Last board #N" bit is retired (census M01-04, 2026-09-24). It printed the baked
+    // p.overall_rank whenever it differed from the live rank, as if the baked rank were the
+    // same ordering one build behind. Since storage.rebake_board_ranks runs after the eFV
+    // regen it is never behind; it differs because it ranks graded rows only while the live
+    // board also ranks the provisional pool, so the bit showed on 96% of graded cards and
+    // read as a fall that never happened (Andrew Bolivar: #3711 live, "Last board #2501").
   ].filter(Boolean).join("  ·  ");
   const rankLine = rankBits
     ? `<div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${P.text2};margin-top:6px;">${escapeHtml(rankBits)}</div>` : "";
@@ -47555,10 +47563,10 @@ function renderPlayerDetail(key) {
   // still see their overall board rank + their place within their farm system.
   // The canonical board rank is the eFV rank (getEfvRank -> buildEfvRankMap: efvRankValue,
   // i.e. the raw-grade board number -> fvCmpDesc -> TBS), IDENTICAL to the active list, so
-  // the detail page NEVER disagrees with the board. The baked p.overall_rank is the SAME
-  // ordering computed server-side one build earlier (storage.py _board_grade); it is shown
-  // as a secondary "Last board" pill when the lag makes them differ, and it is emphatically
-  // NOT a consensus rank. Works for provisional prospects too (ranked client-side).
+  // the detail page NEVER disagrees with the board. The baked p.overall_rank ranks graded
+  // rows only (storage.rebake_board_ranks), so it is shown only as the fallback when the
+  // live map has no row; the secondary "Last board" pill that printed it beside the live
+  // rank is retired (census M01-04). Works for provisional prospects too (ranked client-side).
   const _efvOverall = (typeof getEfvRank === "function") ? getEfvRank(p) : null;
   // Org pill on the CANONICAL eFV org rank (same ordering as the roster tab),
   // baked org_rank / provisional map as fallbacks only.
@@ -47568,7 +47576,6 @@ function renderPlayerDetail(key) {
     ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
         ${_efvOverall != null ? rankPill("Overall eFV", "#" + _efvOverall, "var(--neon-violet)")
           : (p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : "")}
-        ${(_efvOverall != null && p.overall_rank != null && p.overall_rank !== _efvOverall) ? rankPill("Last board", "#" + p.overall_rank, "var(--text-tertiary)") : ""}
         ${liveRankPill}
         ${_efvOrg ? rankPill(escapeHtml(p.org || "?"), "#" + _efvOrg.rank + " of " + _efvOrg.total, "var(--neon-cyan)")
           : p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)")
