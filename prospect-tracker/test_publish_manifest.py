@@ -202,6 +202,43 @@ def test_excluded_data_is_not_fetched_by_any_page():
                         "remove it from the exclude list or drop the fetch")
 
 
+# Name shapes that carry the label side of a fit: the eFV training matrices
+# (canonical, live and any suffixed arm like xfv_hitter_matrix__E0.json), the
+# scored frames and the star label view. The withhold list matches exact names,
+# so a new file of one of these shapes at data/ depth one ships by default.
+_WITHHELD_SHAPES = ("xfv_*matrix*", "*_matrix__*", "xfv_scored*", "star_label*")
+
+
+def test_label_shaped_data_is_withheld_or_absent():
+    """Every top-level data/*.json whose name has a withheld shape is on
+    deploy/data_exclude.txt. Both deploy consumers ship data/*.json at depth
+    one, so an unlisted label file (the E0 arm matrix, found 2026-09-24) goes
+    to the webroot. Arm and lab matrices belong under data/_labs/, which
+    neither consumer ships."""
+    from fnmatch import fnmatch
+    excluded = set(_excluded_data_files())
+    shipped = sorted(p.name for p in (ROOT / "data").glob("*.json")
+                     if p.is_file() and p.name not in excluded)
+    leaks = [n for n in shipped
+             if any(fnmatch(n, pat) for pat in _WITHHELD_SHAPES)]
+    assert not leaks, (
+        f"label-shaped data files ship to the webroot: {leaks}. Add each to "
+        "deploy/data_exclude.txt, or move it under data/_labs/")
+
+
+def test_labs_dir_ships_in_neither_deploy_consumer():
+    """data/_labs/ is where arm matrices live because it never ships: the
+    rsync takes /data/*.json plus named subdirs, the workflow copies
+    data/*.json at maxdepth 1 plus named subdirs. Neither may name _labs."""
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    workflow = (ROOT.parent / ".github" / "workflows"
+                / "deploy-prospect-tracker.yml").read_text(encoding="utf-8")
+    assert "_labs" not in nightly and "_labs" not in workflow
+    assert "--include='/data/*.json'" in nightly
+    assert "find data -maxdepth 1" in workflow
+    assert "data/_labs" not in _manifest_paths()
+
+
 def test_excluded_data_is_not_a_registry_artifact():
     """model_registry.json eval artifacts are publicly hyperlinked from the
     glossary Models & Proofs table (assets/glossary.js renders <a href>

@@ -541,9 +541,12 @@ Consequences, stated plainly:
 - The bWAR label survives regardless, which is what clause (b) required: `seasons_bwar`
   is written beside `seasons` on every rebased row, and the lab reads the bWAR label from
   the table itself. Clause (b) is unaffected.
-- One genuine piece of luck: `data/xfv_hitter_matrix__E0.json` was built at 13:48, seven
-  minutes before the refetch, so a true pre-nightly hitter label exists on disk and is
-  what the 107-row hitter trace above was measured against.
+- One genuine piece of luck: `data/_labs/xfv_hitter_matrix__E0.json` was built at 13:48,
+  seven minutes before the refetch, so a true pre-nightly hitter label exists on disk and
+  is what the 107-row hitter trace above was measured against. (It was written to
+  `data/xfv_hitter_matrix__E0.json` and moved, byte for byte, to `data/_labs/` on
+  2026-09-24: at data/ depth one it shipped to the webroot, and it holds the label side
+  of the fit.)
 
 The rebase was then applied with `--reapply` (the flag step C names for exactly this case)
 at 15:30, taking `prospects.db.bak-ewar-2026-09-04` first. Post-state: 2,666 rows, 2,531 on

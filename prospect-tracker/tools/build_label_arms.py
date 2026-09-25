@@ -19,9 +19,11 @@ the candidate served frame. Each arm is the SAME build with a named difference: 
 flags are `efv_dataset.SERVICE_ALIGNED_WINDOW` (audit F03) and
 `efv_model.NEUTRAL_MILB_IMPUTE` (audit F04), both default False.
 
-WHAT THIS WRITES. One matrix per arm per side, under a suffixed name
-(data/xfv_hitter_matrix__E1.json and so on), so no arm overwrites another and NONE of
-them overwrites the canonical data/xfv_hitter_matrix.json. It calls
+WHAT THIS WRITES. One matrix per arm per side, under a suffixed name in data/_labs/
+(data/_labs/xfv_hitter_matrix__E1.json and so on), so no arm overwrites another and
+NONE of them overwrites the canonical data/xfv_hitter_matrix.json. The arms carry the
+label side of the fit, so they sit one level below data/: both deploy consumers ship
+data/*.json at depth one only (pinned by test_publish_manifest.py). It calls
 efv_dataset.build_matrix directly and never efv_dataset.run, which is the function that
 would write the canonical path.
 
@@ -66,10 +68,14 @@ _LABEL_KEYS = ("target_resolved", "target_censored", "weight", "observed_seasons
                "censored")
 
 
+LABS_DIR = "_labs"
+
+
 def arm_path(side: str, arm: str) -> Path:
-    """Suffixed sibling of the canonical matrix path. Never the canonical path itself."""
+    """Suffixed copy of the canonical matrix name under data/_labs/. Never the canonical
+    path itself, and never data/ depth one, which ships to the webroot."""
     p = ed.matrix_path(side)
-    return p.with_name(f"{p.stem}__{arm}{p.suffix}")
+    return p.parent / LABS_DIR / f"{p.stem}__{arm}{p.suffix}"
 
 
 def build_arm(side: str, arm: str):
@@ -190,6 +196,7 @@ def main(argv=None) -> int:
                     rc = 1
         if not a.no_write:
             out = arm_path(a.side, arm)
+            out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(json.dumps(rows, indent=0), encoding="utf-8")
             print(f"wrote {out} ({len(rows)} rows)")
         _print_census(census(rows, acct, a.side, arm,

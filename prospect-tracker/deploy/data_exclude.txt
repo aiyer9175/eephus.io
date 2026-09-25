@@ -8,6 +8,13 @@
 #
 # NOTE data/*_eval.json artifacts ship on purpose (accountability
 # surface); do not add them here.
+#
+# Do NOT list a file here to retract one that already shipped: rsync runs
+# --delete without --delete-excluded, so an exclude protects the webroot
+# copy forever. Move it out of data/ depth one instead (data/_labs/ ships
+# in neither consumer) and the next nightly deletes it; that is how the
+# E0 label-arm matrix was retracted on 2026-09-24. Label-shaped names
+# at depth one are pinned by test_publish_manifest.py.
 xfv_hitter_matrix.json
 xfv_pitcher_matrix.json
 xfv_live_hitter_matrix.json

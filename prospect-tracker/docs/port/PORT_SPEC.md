@@ -432,6 +432,10 @@ plus client `fetch()` of static JSON.
 - **B3.** The **30 withheld paths return 404.** This is an assertion, not an absence.
   Explicitly include `star_label_view.json`, `identity_collisions.json`, `scout_reports.json`,
   `grpo_scores.json`, all four `xfv_*_matrix`, all four `xfv_scored*`, and `comps.json`.
+  Also assert 404 on `data/xfv_hitter_matrix__E0.json`: it shipped until 2026-09-24, when
+  it moved to `data/_labs/` (which neither consumer ships) and the next nightly `--delete`
+  removes the webroot copy. Label-shaped names at data/ depth one are pinned by
+  `test_publish_manifest.py::test_label_shaped_data_is_withheld_or_absent`.
 - **B4.** No path under `data/baseballamerica_imports/` or any derived BA artifact is
   reachable. **Baseball America is licensed and must never be published.** Enforced twice
   today, by `.gitignore` and by the rsync shipping `data/*.json` at depth 1 only. A new

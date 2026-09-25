@@ -330,7 +330,8 @@ def test_arm_table_and_paths_never_touch_the_canonical_matrix():
         canon = ed.matrix_path(side)
         paths = {d.arm_path(side, a) for a in d.ARMS}
         assert canon not in paths and len(paths) == 4
-        assert all(p.parent == canon.parent for p in paths)
+        # one level below data/: data/*.json at depth one ships to the webroot
+        assert all(p.parent == canon.parent / "_labs" for p in paths)
 
 
 def test_build_arm_sets_both_flags_and_restores_them_even_on_failure(monkeypatch):
