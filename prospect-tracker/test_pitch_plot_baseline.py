@@ -59,29 +59,12 @@ PROSPX = ROOT / "prospx" / "index.html"
 # rebuilds every stored row. A set is pinned so a shrink is visible and a
 # substitution (one offender fixed, a new one fetched) is never silently
 # tolerated the way a `<= 22` count would.
-UNLABELLED_OFFENDERS = frozenset({
-    'braden_nett.json',
-    'bryce_hubbart.json',
-    'calvin_ziegler.json',
-    'cameron_foster.json',
-    'cesar_aquino.json',
-    'claudio_estelie.json',
-    'cory_lewis.json',
-    'danny_flatt.json',
-    'dominic_perachi.json',
-    'dominic_pipkin.json',
-    'franklin_sanchez.json',
-    'gerardo_lopez.json',
-    'jarod_bayless.json',
-    'joe_miller.json',
-    'joel_diaz.json',
-    'jose_atencio.json',
-    'juan_amarante.json',
-    'luis_r_rodriguez.json',
-    'michael_walsh.json',
-    'ryan_jensen.json',
-    'win_scott.json',
-})
+#
+# EMPTIED 2026-09-25: the pitch-plot export of 2026-09-24 15:35 left 0 of the 21
+# pinned entries unlabelled (each now carries a scored stuff_baseline on its top
+# view and every level split; 1,795 of 1,797 served entries do), so the debt is
+# paid and any entry that shows the signature again is a NEW offender.
+UNLABELLED_OFFENDERS = frozenset()
 
 
 def _row(pitch_type, velo, **kw):
