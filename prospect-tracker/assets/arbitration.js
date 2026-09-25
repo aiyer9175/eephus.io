@@ -32,6 +32,8 @@
   var TEAM_NARROW_RE = /(?:^#|[#&])team=([A-Z]{2,3})\b/;
   var teamNarrow = "";
   var sort = { key: "tot", dir: -1 };
+  // History season filter. "all" shows every row the artifact carries.
+  var histSeason = "all";
 
   /* ---------------------------------------------------------------- css */
 
@@ -99,6 +101,8 @@
     ".arb-app .arb-tiledef{font-size:11px;line-height:1.5;color:var(--text-secondary);margin:5px 0 0}",
     ".arb-app .arb-note{margin:10px 0}",
     ".arb-app .arb-note p,.arb-app .arb-note li{font-size:12px;line-height:1.6;color:var(--text-secondary)}",
+    /* The History count line reads as a caption under the season chips. */
+    ".arb-app .arb-histcount{font-size:12px;color:var(--text-secondary);margin:4px 0 8px}",
     ".arb-app .arb-row{border:1px solid var(--border);background:var(--bg-secondary);margin:0 0 6px;padding:8px 12px}",
     ".arb-app .arb-sum{cursor:pointer;font:700 12px/1.5 var(--font-retro-mono)}",
     ".arb-app .arb-vd{display:inline-block;font:700 9px/1.4 var(--font-retro-mono);letter-spacing:.1em;padding:1px 5px;border:1px solid var(--border);margin-right:6px}",
@@ -396,10 +400,37 @@
       '<th class="arb-gs">vs Market<small>actual minus model</small></th>' +
       '<th>vs Value<small>actual minus eWAR &times; $/WAR</small></th></tr>';
 
-    var maxOu = 1;
-    rows.forEach(function (r) { if (r[9] != null) maxOu = Math.max(maxOu, Math.abs(r[9])); });
+    // EVERY ROW RENDERS. This table used to print rows.slice(0, 400) of a
+    // season-descending list with no count, so 372 of 772 rows were hidden,
+    // including every 2023 row and 254 of the 282 MLBTR figures the Model tab
+    // cites. A season filter narrows it instead, and the count line says how
+    // many rows show and how many carry an MLBTR figure.
+    var bySeason = {};
+    rows.forEach(function (r) {
+      var b = bySeason[r[0]] || (bySeason[r[0]] = { n: 0, sw: 0 });
+      b.n++;
+      if (r[7] != null) b.sw++;
+    });
+    var seasons = Object.keys(bySeason).sort().reverse();
+    if (histSeason !== "all" && !bySeason[histSeason]) histSeason = "all";
+    var shown = histSeason === "all" ? rows
+      : rows.filter(function (r) { return String(r[0]) === histSeason; });
+    var nSw = 0;
+    shown.forEach(function (r) { if (r[7] != null) nSw++; });
+    var chips = '<button type="button" class="chip' + (histSeason === "all" ? " active" : "") +
+      '" data-hseason="all">All seasons <span class="arb-caveatn">(' + rows.length + ")</span></button>" +
+      seasons.map(function (y) {
+        return '<button type="button" class="chip' + (histSeason === y ? " active" : "") +
+          '" data-hseason="' + esc(y) + '">' + esc(y) +
+          ' <span class="arb-caveatn">(' + bySeason[y].n + ")</span></button>";
+      }).join("");
+    var countLine = '<p class="arb-histcount">Showing ' + shown.length + " of " + rows.length +
+      " settled seasons. " + nSw + " of them carry an MLBTR projection.</p>";
 
-    var body = rows.slice(0, 400).map(function (r, i) {
+    var maxOu = 1;
+    shown.forEach(function (r) { if (r[9] != null) maxOu = Math.max(maxOu, Math.abs(r[9])); });
+
+    var body = shown.map(function (r, i) {
       var ouM = r[8], ouW = r[9];
       var bar = ouW == null ? "" :
         '<span class="arb-oubar" style="width:' +
@@ -416,8 +447,12 @@
     }).join("");
 
     root.innerHTML = note +
+      '<div class="filter-bar">' + chips + "</div>" + countLine +
       '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead>' +
       head + "</thead><tbody>" + body + "</tbody></table></div>";
+    root.querySelectorAll("[data-hseason]").forEach(function (b) {
+      b.onclick = function () { histSeason = b.getAttribute("data-hseason"); renderHistory(); };
+    });
     wireGl(root);
   }
 
