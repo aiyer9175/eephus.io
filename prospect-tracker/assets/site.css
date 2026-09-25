@@ -3077,11 +3077,6 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .gl-app .meth-caveats ul { margin: 0; padding-left: 18px; }
 .gl-app .meth-caveats li { font-family: var(--font-serif); font-size: 13px; line-height: 1.5;
       color: var(--text-secondary); margin: 4px 0; }
-@media (max-width: 640px) {.gl-app /* rank | photo | logo | name | slot | fv (pos hidden) */
-      .tm-row { grid-template-columns: 26px 18px 20px minmax(0,1fr) auto auto; gap: 6px; }.gl-app .tm-pos { display: none; }.gl-app .tm-date-readout { min-width: 0; }.gl-app /* Keep the width-fair WAR/yr + graduation marker; drop the wider
-         cumulative-WAR and WAG chips so the row never overflows on phones. */
-      .tm-outcome { gap: 5px; }.gl-app .tm-stat-war, .gl-app .tm-stat-wag { display: none; }
-    }
 .gl-app .g-term {
       cursor: help;
       text-decoration: underline dotted var(--text-tertiary);

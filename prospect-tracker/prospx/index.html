@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=299cf8b0">
+  <link rel="stylesheet" href="/assets/site.css?v=ff63a6bf">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -4847,6 +4847,35 @@
     .tm-changelog { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 18px 24px; }
     .tm-change-group { min-width: 0; }
+    /* Compare mode: a graduate's outcome chips (debut, WAR, /yr, WAG) take a second
+       line under the name instead of widening the row; at 1440 px they pushed the
+       page 59 px past the viewport (census M02-10). */
+    .tm-change-group .tm-row .tm-outcome { grid-column: 4 / -1; grid-row: 2;
+      justify-self: start; flex-wrap: wrap; row-gap: 2px; min-width: 0; }
+    .tm-change-group .tm-row { row-gap: 2px; }
+    /* Phones (census M02-10): the hindsight grid's fixed tracks (416 px plus gaps)
+       left the name track 0 px wide at 390 and scrolled the page sideways. Row 1
+       keeps rank, photo, logo, name and eFV; row 2 carries debut, WAR, /yr and WAG,
+       each value with its own unit, so all four receipts stay on screen. Every
+       selector sits under .tm-board so the Trade Machine's .tm-row is untouched. */
+    @media (max-width: 640px) {
+      .tm-date-readout { min-width: 0; }
+      .tm-board .tm-row, .tm-board .tm-board-head {
+        grid-template-columns: 26px 18px 20px minmax(0,1fr) auto auto; gap: 6px; }
+      .tm-board .tm-pos, .tm-board .tm-h-pos { display: none; }
+      .tm-board--hind .tm-row, .tm-board--hind .tm-board-head {
+        grid-template-columns: 26px 18px 20px minmax(0,1fr) 48px 48px 52px 44px;
+        column-gap: 6px; row-gap: 2px; }
+      .tm-board--hind .tm-name, .tm-board--hind .tm-board-head .tm-h-player { grid-column: 4 / 8; grid-row: 1; }
+      .tm-board--hind .tm-fv, .tm-board--hind .tm-board-head .tm-h-fv { grid-column: 8; grid-row: 1; }
+      .tm-board--hind .tm-board-head .tm-h-stat { display: none; }
+      .tm-board--hind .tm-cell { grid-row: 2; }
+      .tm-board--hind .tm-cell:empty { display: none; }
+      .tm-board--hind .tm-cell-debut { grid-column: 1 / 5; text-align: left; }
+      .tm-board--hind .tm-cell-war { grid-column: 5; }
+      .tm-board--hind .tm-cell-yr { grid-column: 6; }
+      .tm-board--hind .tm-cell-wag { grid-column: 7; }
+    }
     .tm-change-title {
       display: flex; align-items: center; gap: 8px; margin: 0 0 4px;
       font-family: var(--font-sans); font-size: 12px; font-weight: 700;
@@ -21089,7 +21118,7 @@ function _tmHitMissHTML(board) {
 function _tmBoardHeadHTML(slotLabel) {
   return `<div class="tm-board-head" aria-hidden="true">
       <span class="tm-h-rank">#</span><span></span><span></span>
-      <span>Player</span><span>Pos</span>
+      <span class="tm-h-player">Player</span><span class="tm-h-pos">Pos</span>
       <span class="tm-h-out">${slotLabel || ""}</span>
       <span class="tm-h-fv">eFV</span>
     </div>`;
@@ -21101,7 +21130,7 @@ function _tmBoardHeadHTML(slotLabel) {
 function _tmHindHeadHTML() {
   return `<div class="tm-board-head" aria-hidden="true">
       <span class="tm-h-rank">#</span><span></span><span></span>
-      <span>Player</span><span>Pos</span>
+      <span class="tm-h-player">Player</span><span class="tm-h-pos">Pos</span>
       <span class="tm-h-stat">Debut</span><span class="tm-h-stat">WAR</span>
       <span class="tm-h-stat">/yr</span><span class="tm-h-stat">WAG</span>
       <span class="tm-h-fv">eFV</span>
@@ -21272,8 +21301,11 @@ function _tmRenderBody() {
     const board = (tmQuery
       ? full.filter(r => (r.name || r.player_name || "").toLowerCase().includes(tmQuery)).slice(0, 60)
       : full.slice(0, state.tmTopN));
-    const hind = state.tmHindsight !== false;
+    const hindOn = state.tmHindsight !== false;
     const gradN = board.filter(r => r.debutDate).length;
+    // With no row debuted since this date the hindsight columns would all be blank
+    // (0 of 100 at the latest snapshot), so the plain board renders and says why.
+    const hind = hindOn && gradN > 0;
     if (tmQuery && !board.length) {
       el.innerHTML = `
         <div class="tm-asof-head">
@@ -21285,9 +21317,9 @@ function _tmRenderBody() {
     el.innerHTML = `
       <div class="tm-asof-head">
         <span class="tm-asof-title">${tmQuery ? `Matches for “${escapeHtml(state.search)}”` : `Top ${state.tmTopN}`} as of ${_tmFmtDate(state.tmDate)}</span>
-        <span class="tm-asof-sub">${board.length} ${tmQuery ? (board.length === 1 ? "match" : "matches") : "ranked"}${gradN ? ` · ${gradN} since debuted` : ""}</span>
+        <span class="tm-asof-sub">${board.length} ${tmQuery ? (board.length === 1 ? "match" : "matches") : "ranked"}${gradN ? ` · ${gradN} since debuted` : (hindOn ? " · no prospect on this board has debuted since this date" : "")}</span>
         <label class="tm-hind-toggle" title="Annotate since-debuted prospects with their realized outcomes (WAR / WAR-yr / WAG). Off = the board purely as it appeared then.">
-          <input type="checkbox" id="tm-hindsight"${hind ? " checked" : ""}> Hindsight outcomes
+          <input type="checkbox" id="tm-hindsight"${hindOn ? " checked" : ""}> Hindsight outcomes
         </label>
       </div>
       ${hind ? _tmHitMissHTML(board) : ""}

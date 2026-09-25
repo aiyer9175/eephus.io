@@ -21,6 +21,11 @@ ROUTES = [
     ("/",                              ".spotlight, .home-module"),
     ("/prospx/",                       ".player-row"),
     ("/prospx/#tab=farm",              ".farm-row, .farm-card, .rd-card"),
+    # Time Machine (census M02-10): the as-of board at the latest date, a past date
+    # whose board is 99 of 100 since-debuted (the hindsight grid), and Compare.
+    ("/prospx/#tab=timemachine",       ".tm-board .tm-row"),
+    ("/prospx/#tab=timemachine&tmd=2019-01-22", ".tm-board--hind .tm-row"),
+    ("/prospx/#tab=timemachine&tmmode=diff", ".tm-change-group .tm-row"),
     ("/fantasy/",                      ".fantasy-mod, .rd-card, tbody tr"),
     ("/fantasy/#m=dynasty",            ".fantasy-mod"),
     ("/fantasy/#m=dfs",                ".fantasy-mod"),
@@ -71,6 +76,13 @@ def main() -> int:
                         failures.append(f"{label} {route}: LOAD FAILED {exc}")
                         continue
                     bad = list(errs)
+                    # a Time Machine name track must not collapse on a phone
+                    if "timemachine" in route and width == 390:
+                        thin = pg.evaluate(
+                            "[...document.querySelectorAll('.tm-board .tm-name')]"
+                            ".filter(e => e.offsetParent && e.getBoundingClientRect().width < 80).length")
+                        if thin:
+                            failures.append(f"{label} {route}: {thin} player names under 80px wide")
                     if not found:
                         failures.append(f"{label} {route}: no content matching {sel!r}")
                     if bad:
