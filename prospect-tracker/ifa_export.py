@@ -130,7 +130,8 @@ def _lookup_tracked(players_by_key: dict, key: str | None) -> dict | None:
     return players_by_key.get(base) if base != key else None
 
 
-def _enrich(signing: dict, tp: dict | None, xfv_grade: float | None = None) -> dict:
+def _enrich(signing: dict, tp: dict | None, xfv_grade: float | None = None,
+            xfv_is_floor: bool = False) -> dict:
     """Merge one Spotrac signing with the tracked-prospect record (if we
     have one). Signing-team `org` always comes from Spotrac (the signing
     period's team); the tracked record only adds FV / rank / headshot and
@@ -139,7 +140,14 @@ def _enrich(signing: dict, tp: dict | None, xfv_grade: float | None = None) -> d
     The displayed CURRENT grade is eFV (the platform-primary, outcome-grounded
     grade) when we have one for this player, falling back to consensus FV
     otherwise - so the IFA list matches the grade every other PROSPX surface
-    shows. `fv_basis` records which was used."""
+    shows. `fv_basis` records which was used.
+
+    `fv_is_floor` is True when the eFV grade is the outcome map's floor
+    (xfv.json xfv_grade_is_floor): the map returns its first knot, 20.0, for
+    every non-positive projection, so the number is the bottom of the scale
+    and not a resolved level. The page shows such a row as a floor, with no
+    movement from the signing grade, and keeps it out of FV sums (census
+    M03-12). The eFV scale and floor mechanics are unchanged."""
     out = {
         "player_name": signing.get("player_name"),
         "player_key":  signing.get("player_key"),
@@ -152,6 +160,7 @@ def _enrich(signing: dict, tp: dict | None, xfv_grade: float | None = None) -> d
         "fv":          None,
         "fv_label":    None,
         "fv_basis":    None,
+        "fv_is_floor": False,
         "fv_signing":  None,
         "fv_signing_label": None,
         "age_at_signing": None,
@@ -179,6 +188,7 @@ def _enrich(signing: dict, tp: dict | None, xfv_grade: float | None = None) -> d
             "fv_label":     (str(int(math.floor(fv + 0.5))) if (use_xfv and fv is not None)
                              else _fv_label(fv, bool(tp.get("fv_close_plus")) and not use_xfv)),
             "fv_basis":     "xfv" if use_xfv else "consensus",
+            "fv_is_floor":  bool(use_xfv and xfv_is_floor),
             # FV at signing ≈ the earliest grade we have on file (fv_open).
             "fv_signing":       fv_open,
             "fv_signing_label": _fv_label(fv_open, False),
@@ -227,7 +237,8 @@ def _build_class(year: int, rows: list[dict], players_by_key: dict,
         # key. ONE basis, resolved through _board_grade - see the BASIS REPAIR
         # block at the top of this module for why there is no chain here.
         xrec = (xfv_by_key.get(tp["player_key"]) or {}) if tp else {}
-        return _enrich(r, tp, _board_grade(xrec))
+        return _enrich(r, tp, _board_grade(xrec),
+                       xfv_is_floor=xrec.get("xfv_grade_is_floor") is True)
 
     signings = [_enrich_row(r) for r in rows]
     # Bonus-desc, then tracked-first, then name - deterministic.
@@ -280,7 +291,7 @@ def _build_class(year: int, rows: list[dict], players_by_key: dict,
         pos_split[s["position"] or " - "] += 1
     biggest = [
         {k: s[k] for k in ("player_name", "player_key", "org", "country",
-                           "bonus_usd", "is_tracked", "fv_label")}
+                           "bonus_usd", "is_tracked", "fv_label", "fv_is_floor")}
         for s in signings[:15] if s["bonus_usd"]
     ]
 

@@ -156,3 +156,46 @@ def test_generational_suffix_signing_is_enriched():
     assert s["is_tracked"] is True
     assert s["fv"] == 40.0 and s["fv_label"] == "40+"
     assert s["overall_rank"] == 465 and s["mlbam_id"] == 836585
+
+
+def test_efv_floor_flag_rides_through():
+    # Census M03-12: an eFV at the outcome map's floor (xfv_grade_is_floor) is
+    # the bottom of the scale, not a resolved level. The row must say so, or
+    # the page reads "35 -> 20" as a collapse and divides $/FV by 20.
+    xfv = {"luis_star": {"xfv_grade": 20.0, "xfv_grade_is_floor": True}}
+    out = build_ifa_export(SIGNINGS, PLAYERS, today=_today(), xfv_by_key=xfv)
+    luis = next(s for s in out["classes"][0]["signings"] if s["player_key"] == "luis_star")
+    assert luis["fv_basis"] == "xfv" and luis["fv"] == 20.0
+    assert luis["fv_is_floor"] is True
+    big = next(b for b in out["classes"][0]["trends"]["biggest_signings"]
+               if b["player_key"] == "luis_star")
+    assert big["fv_is_floor"] is True
+    # A resolved eFV grade, and every consensus or untracked row, is not a floor.
+    xfv2 = {"luis_star": {"xfv_grade": 20.0, "xfv_grade_is_floor": False}}
+    out2 = build_ifa_export(SIGNINGS, PLAYERS, today=_today(), xfv_by_key=xfv2)
+    assert all(s["fv_is_floor"] is False for c in out2["classes"] for s in c["signings"])
+    out3 = _build()
+    assert all(s["fv_is_floor"] is False for c in out3["classes"] for s in c["signings"])
+
+
+def test_served_artifact_marks_every_floor_row():
+    import json
+    from pathlib import Path
+    import pytest
+    d = Path(__file__).parent / "data"
+    try:
+        ifa = json.loads((d / "ifa_timeseries.json").read_text(encoding="utf-8"))
+        xfv = json.loads((d / "xfv.json").read_text(encoding="utf-8"))["by_player"]
+    except (OSError, ValueError, KeyError):
+        pytest.skip("ifa_timeseries.json / xfv.json not built")
+    bad = []
+    for c in ifa.get("classes") or []:
+        for s in c.get("signings") or []:
+            if s.get("fv_basis") != "xfv":
+                assert not s.get("fv_is_floor"), s["player_key"]
+                continue
+            tp_key = s["player_key"]
+            rec = xfv.get(tp_key) or xfv.get(ifa_export._GEN_SUFFIX.sub("", tp_key)) or {}
+            if bool(rec.get("xfv_grade_is_floor") is True) != bool(s.get("fv_is_floor")):
+                bad.append((c["year"], tp_key))
+    assert not bad, bad[:10]

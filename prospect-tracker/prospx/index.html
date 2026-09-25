@@ -25884,9 +25884,16 @@ function _ifaOrgLink(org, { logoOnly = false } = {}) {
 // `fv_signing_label` are ALWAYS consensus - they come from fv_open, the earliest
 // snapshot grade - so a signee on the eFV basis has a mixed-basis pair.
 function _ifaIsEfv(s) { return !!(s && s.fv_basis === "xfv"); }
+// fv_is_floor: the eFV grade is the outcome map's floor (xfv_grade_is_floor),
+// the 20.0 it returns for every non-positive projection. It is the bottom of
+// the scale, not a resolved level, so it prints as a floor, shows no movement
+// from the signing grade and stays out of FV sums and $/FV.
+function _ifaIsFloor(s) { return !!(s && s.fv_is_floor && _ifaIsEfv(s)); }
+const _IFA_FLOOR_TIP = "eFV at the scale floor, not a resolved level: the outcome curve returns its lowest knot for every non-positive projection, so no movement from the signing grade is shown.";
 // Display label for the CURRENT grade: prefer the exported label (ifa_export
 // already applied the basis-correct rounding), else round here on the basis.
 function _ifaCurLabel(s) {
+  if (_ifaIsFloor(s)) return "≤20";
   if (s && s.fv_label != null) return String(s.fv_label);
   const v = s ? s.fv : null;
   if (v == null || !isFinite(v)) return null;
@@ -25913,6 +25920,11 @@ function _ifaFvProgHTML(s) {
                         : `font-size:10px;padding:1px 5px;`;
     return `<span class="fv-badge ${fvClass(String(label))}" style="${style}">${escapeHtml(String(label))}</span>`;
   };
+  if (_ifaIsFloor(s)) {
+    const fl = `<span class="fv-badge fv-20" style="font-size:10px;padding:0 4px;background:transparent;border:1px dashed var(--text-tertiary);color:var(--text-tertiary);" title="${escapeHtml(_IFA_FLOOR_TIP)}">${escapeHtml(curLbl)} floor</span>`;
+    return sig == null ? fl
+      : `<span style="display:inline-flex;align-items:center;gap:4px;" title="${escapeHtml(`consensus FV at signing ${sigLbl}. ` + _IFA_FLOOR_TIP)}">${badge(sigLbl, true)}${fl}</span>`;
+  }
   if (sig == null) return badge(curLbl, false);
   if (cur == null) return badge(sigLbl, true);
   const _sigTip = `consensus FV at signing ${sigLbl}`;
@@ -28656,9 +28668,10 @@ function _countryAggregate(classes, opts) {
       const a = byC[name] || (byC[name] = { name, n: 0, tracked: 0, sumFv: 0, nFv: 0, top: 0, sumBonus: 0, nBonus: 0, topBonus: 0, deltaSum: 0, nDelta: 0, orgs: {}, pos: {}, topSigning: null });
       a.n++; totN++;
       if (s.is_tracked) a.tracked++;
-      if (s.fv != null) { a.sumFv += +s.fv; a.nFv++; sumFvAll += +s.fv; nFvAll++; if (+s.fv >= 50) a.top++; }
+      const _fvOk = s.fv != null && !_ifaIsFloor(s);   // an eFV floor is not a level
+      if (_fvOk) { a.sumFv += +s.fv; a.nFv++; sumFvAll += +s.fv; nFvAll++; if (+s.fv >= 50) a.top++; }
       if (s.bonus_usd != null) { a.sumBonus += +s.bonus_usd; a.nBonus++; if (+s.bonus_usd > a.topBonus) a.topBonus = +s.bonus_usd; }
-      if (s.fv != null && s.fv_signing != null) { a.deltaSum += (+s.fv - +s.fv_signing); a.nDelta++; }
+      if (_fvOk && s.fv_signing != null) { a.deltaSum += (+s.fv - +s.fv_signing); a.nDelta++; }
       if (s.org) a.orgs[s.org] = (a.orgs[s.org] || 0) + 1;
       if (s.position) a.pos[s.position] = (a.pos[s.position] || 0) + 1;
       if (s.bonus_usd != null && (!a.topSigning || +s.bonus_usd > a.topSigning.bonus)) a.topSigning = { name: s.player_name, bonus: +s.bonus_usd, key: s.player_key, tracked: !!s.is_tracked };
@@ -28752,7 +28765,9 @@ function _renderIFAEfficiency(host, classes, usd) {
       const o = byOrg[s.org] || (byOrg[s.org] = { org: s.org, signings: 0, totalUsd: 0, coveredN: 0, fvPts: 0, coveredUsd: 0 });
       o.signings++;
       if (s.bonus_usd) o.totalUsd += s.bonus_usd;
-      if (s.is_tracked && s.fv != null) {   // covered = graded (carries a projected FV)
+      // covered = graded (carries a projected FV); an eFV floor row is not a
+      // resolved level, so it is not graded here.
+      if (s.is_tracked && s.fv != null && !_ifaIsFloor(s)) {
         o.coveredN++;
         o.fvPts += s.fv;
         if (s.bonus_usd) o.coveredUsd += s.bonus_usd;
@@ -28898,7 +28913,9 @@ async function renderCountryDetail(name) {
   const featured = signings.slice().sort((a, b) => (b.is_tracked ? 1 : 0) - (a.is_tracked ? 1 : 0) || (b.bonus_usd || 0) - (a.bonus_usd || 0));
   const shown = featured.slice(0, CAP);
   const sigRows = shown.map(s => {
-    const fvProg = (s.fv_signing != null || s.fv != null)
+    const fvProg = _ifaIsFloor(s)
+      ? (s.fv_signing != null ? fvCeil(s.fv_signing) + " &middot; " : "") + '<span title="' + escapeHtml(_IFA_FLOOR_TIP) + '">eFV floor</span>'
+      : (s.fv_signing != null || s.fv != null)
       ? (s.fv_signing != null ? fvCeil(s.fv_signing) : "?") + (s.fv != null && s.fv !== s.fv_signing ? " &rarr; " + fvCeil(s.fv) : (s.fv != null && s.fv_signing == null ? fvCeil(s.fv) : ""))
       : " - ";
     const nm = (s.is_tracked && s.player_key)
