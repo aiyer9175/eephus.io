@@ -78,8 +78,7 @@ def _render(app: str, data: str, route: str) -> str:
     ctx = MiniRacer()
     ctx.eval(CAP.replace("__DATA__", data).replace("__T__", TRANS)
              .replace("__E__", EVAL).replace("__P__", PROSPECTS))
-    if app == "app.js":
-        ctx.eval((CS / "team_names.js").read_text(encoding="utf-8"))
+    ctx.eval((CS / "team_names.js").read_text(encoding="utf-8"))
     ctx.eval((CS / app).read_text(encoding="utf-8"))
     ctx.eval(f"location.hash='{route}';window.location.hash=location.hash;render();")
     return ctx.eval("__html['app']||''")

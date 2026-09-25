@@ -1,8 +1,8 @@
 // CollegeSavant shared team-name resolver. Extracted from pitcher_app.js so
 // the hitter app resolves the full national set of school codes (not just the
-// ~17 Big-Ten schools its old map covered). Loaded on the hitter page before
-// app.js; the pitcher page keeps its own copy. Consolidating both onto this
-// file is a later cleanup. Generated, do not hand-edit the dicts.
+// ~17 Big-Ten schools its old map covered). Loaded on both pages before
+// app.js / pitcher_app.js (the pitcher page's duplicate copy was removed).
+// Generated, do not hand-edit the dicts.
 
 const TEAM_CODE_NAMES = {
   ALV_CCO: "Alvin Community College",
@@ -295,22 +295,27 @@ const MASCOT_NAMES = {
   YEL: "Yellow Jackets",
 };
 
-function titleCaseCode(value) {
-  return String(value || "")
-    .replace(/[0-9]+$/g, "")
-    .split(/[_\s-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join(" ");
+// A name is printed only when every part of the code is a known name: the full
+// code in TEAM_CODE_NAMES, or a school part in SCHOOL_NAMES plus (when present)
+// a mascot part in MASCOT_NAMES. Any other code prints as the code itself,
+// spaced and upper-cased ("LEH MOU"): title-casing an unknown fragment invented
+// schools ("Hig Panthers", "Cla Cla", "Georgia Sou" for Georgia Southern) on
+// 281 of the 518 codes in the hitter and pitcher payloads (census M03-11).
+function isMappedTeam(team) {
+  const code = String(team || "").trim();
+  if (!code) return false;
+  if (TEAM_CODE_NAMES[code]) return true;
+  const [schoolCode, mascotCode] = code.split("_");
+  return !!SCHOOL_NAMES[schoolCode] && (!mascotCode || !!MASCOT_NAMES[mascotCode]);
 }
 
 function formatTeamName(team) {
   const code = String(team || "").trim();
   if (!code) return "Team";
   if (TEAM_CODE_NAMES[code]) return TEAM_CODE_NAMES[code];
-
+  if (!isMappedTeam(code)) return code.replace(/_/g, " ").toUpperCase();
   const [schoolCode, mascotCode] = code.split("_");
-  const school = SCHOOL_NAMES[schoolCode] || titleCaseCode(schoolCode);
-  const mascot = MASCOT_NAMES[mascotCode] || titleCaseCode(mascotCode);
+  const school = SCHOOL_NAMES[schoolCode];
+  const mascot = mascotCode ? MASCOT_NAMES[mascotCode] : "";
   return mascot ? `${school} ${mascot}` : school;
 }

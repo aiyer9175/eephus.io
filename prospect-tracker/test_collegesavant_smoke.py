@@ -90,9 +90,9 @@ def _prelude(kind: str) -> str:
 @pytest.mark.parametrize("app,kind", [("app.js", "hitter"), ("pitcher_app.js", "pitcher")])
 def test_collegesavant_app_loads_and_renders(app, kind):
     ctx = MiniRacer()
-    shared = ""
-    if kind == "hitter":
-        shared = (CS / "team_names.js").read_text(encoding="utf-8") + "\n"
+    # Both pages load the shared team resolver before their app (the pitcher
+    # page's duplicate copy was removed, census M03-11).
+    shared = (CS / "team_names.js").read_text(encoding="utf-8") + "\n"
     code = _prelude(kind) + shared + (CS / app).read_text(encoding="utf-8")
     # Load + init() must not throw (catches TDZ / undefined-reference crashes).
     ctx.eval(code)
@@ -169,8 +169,40 @@ def test_shared_team_resolver_resolves_codes():
     ctx.eval((CS / "team_names.js").read_text(encoding="utf-8"))
     assert ctx.eval('formatTeamName("TEX_LON")') == "Texas Longhorns"
     assert ctx.eval('formatTeamName("OSU_BUC")') == "Ohio State Buckeyes"
-    # Unknown codes fall back to a clean title-case, never a raw underscore code.
-    assert "_" not in ctx.eval('formatTeamName("ZZZ_QQQ")')
+    # An unknown code prints as the code, spaced and upper-cased: never a raw
+    # underscore code and never an invented title-cased school (census M03-11).
+    assert ctx.eval('formatTeamName("ZZZ_QQQ")') == "ZZZ QQQ"
+    assert ctx.eval('formatTeamName("HIG_PAN")') == "HIG PAN"      # was "Hig Panthers"
+    assert ctx.eval('formatTeamName("CLA_CLA")') == "CLA CLA"      # was "Cla Cla"
+
+
+def test_every_payload_code_is_named_or_printed_as_code():
+    """No served team code renders a title-cased fragment: every code either
+    resolves through the dictionaries or prints as the code itself."""
+    import re as _re
+    ctx = MiniRacer()
+    ctx.eval((CS / "team_names.js").read_text(encoding="utf-8"))
+    codes = set()
+    for f in ("hitter_year_data.js", "pitcher_data.js"):
+        p = CS / f
+        if p.exists():
+            codes |= set(_re.findall(r'"team":"([^"]+)"', p.read_text(encoding="utf-8")))
+    if not codes:
+        pytest.skip("no CollegeSavant payload on disk")
+    bad = []
+    for code in sorted(codes):
+        name = ctx.eval(f"formatTeamName({code!r})")
+        mapped = ctx.eval(f"isMappedTeam({code!r})")
+        if not mapped and name != code.replace("_", " ").upper():
+            bad.append((code, name))
+    assert not bad, bad[:10]
+    assert len(codes) > 100
+
+
+def test_pitcher_page_loads_shared_resolver_first():
+    html = (CS / "pitcher_index.html").read_text(encoding="utf-8")
+    assert html.index('<script src="team_names.js') < html.index('<script src="pitcher_app.js')
+    assert "const TEAM_CODE_NAMES" not in (CS / "pitcher_app.js").read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -204,7 +236,8 @@ var navigator={userAgent:'smoke'};
 def test_pitcher_app_missing_payload_renders_error_state():
     # No window.PITCHER_DATA at all (pitcher_data.js failed to load).
     ctx = MiniRacer()
-    ctx.eval(_CAP_PRELUDE + (CS / "pitcher_app.js").read_text(encoding="utf-8"))
+    ctx.eval(_CAP_PRELUDE + (CS / "team_names.js").read_text(encoding="utf-8") + "\n"
+             + (CS / "pitcher_app.js").read_text(encoding="utf-8"))
     html = ctx.eval("__html['app'] || ''")
     assert "Data failed to load" in html
     assert "nightly build is mid-run" in html
@@ -278,7 +311,7 @@ def test_cold_load_on_deep_link_does_not_hit_dead_zone(app, kind, route):
         # PITCH_SHAPES_2025 is left unset to exercise that loader at boot.
         data = ("window.PITCHER_DATA=" + _rows_for_years(PITCHER_ROWS, [2025, 2026]) + ";"
                 " window.PITCHER_PITCH_DATA_2025=[]; window.PITCHER_PITCH_DATA_2026=[];")
-        shared = ""
+        shared = (CS / "team_names.js").read_text(encoding="utf-8") + chr(10)
     ctx.eval(prelude + data + chr(10) + shared + (CS / app).read_text(encoding="utf-8"))
     html = ctx.eval("__html['app'] || ''")
     assert "before initialization" not in html, f"{app} {route}: {html[:200]}"
