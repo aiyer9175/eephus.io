@@ -204,3 +204,39 @@ def test_detail_header_prints_one_overall_rank(booted_page):
         f"{key}: the detail header still prints a Last board pill beside #{live}")
     assert f"#{live}" in txt
     assert not errs, "JS errors: " + " | ".join(errs)
+
+
+def test_cold_deep_link_prints_the_board_rank(booted_page):
+    """A shared player link never loaded the provisional pool, so its header printed a
+    graded-only rank (Andrew Bolivar #2511 on the link, #3728 on the board)."""
+    import json
+    board, _ = booted_page
+    ts = ROOT / "data" / "timeseries.json"
+    if not ts.exists():
+        pytest.skip("data/timeseries.json not built")
+    players = json.loads(ts.read_text(encoding="utf-8")).get("players") or []
+    deep = [p for p in players if p.get("player_key") and (p.get("overall_rank") or 0) > 1500
+            and p.get("status") != "debuted"]
+    if not deep:
+        pytest.skip("no graded row deep enough to sit below provisional rows")
+    key = deep[0]["player_key"]
+    base = board.url.split("#")[0]
+    page = board.context.browser.new_page()   # fresh page, nothing loaded: a shared link
+    page.add_init_script(
+        "try{localStorage.setItem('prospect-tracker.gate-unlocked','1')}catch(e){}")
+    try:
+        page.goto(base + "#player=" + key, wait_until="load", timeout=60_000)
+        page.wait_for_function(
+            "() => typeof provPlayers === 'function' && provPlayers().length > 0",
+            timeout=60_000)
+        page.wait_for_function(
+            "(k) => { const b = document.getElementById('player-detail-body');"
+            " const p = DATA.players.find(q => q.player_key === k);"
+            " return b && p && b.innerText.includes('#' + getEfvRank(p)); }",
+            arg=key, timeout=30_000)
+        live, baked = page.evaluate(
+            "(k) => { const p = DATA.players.find(q => q.player_key === k);"
+            " return [getEfvRank(p), p.overall_rank]; }", key)
+    finally:
+        page.close()
+    assert live != baked, "this row's live and baked ranks agree; the check proved nothing"

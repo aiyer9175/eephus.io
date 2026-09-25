@@ -32787,6 +32787,11 @@ function buildEfvRankMap() {
   _EFV_RANK = {};
   _EFV_PREV_RANK = {};
   if (!DATA || !Array.isArray(DATA.players)) return;
+  // The rank is over graded + provisional rows, so start the provisional load wherever a
+  // rank is read. A cold deep link to a player page never loaded it, and printed a
+  // graded-only rank (Andrew Bolivar #2511 on the link, #3728 on the board); when the file
+  // lands ensureEfvUngraded clears these maps and re-renders.
+  if (typeof ensureEfvUngraded === "function") ensureEfvUngraded();
   // Provisional (source-ungraded) prospects are first-class members of the active pool: they
   // ALWAYS rank among the graded board by their eFV grade (no toggle). provPlayers() is empty
   // until the ungraded file lands, at which point the rank map rebuilds with them folded in.
@@ -32839,6 +32844,7 @@ let _EFV_ORG_RANK = null;
 function buildEfvOrgRankMap() {
   _EFV_ORG_RANK = {};
   if (!DATA || !Array.isArray(DATA.players)) return;
+  if (typeof ensureEfvUngraded === "function") ensureEfvUngraded();   // same pool as the board
   const byOrg = {};
   _dedupeProvPool(DATA.players.filter(p => p && p.player_key), provPlayers()).forEach(p => {
     const o = p.org || "?";

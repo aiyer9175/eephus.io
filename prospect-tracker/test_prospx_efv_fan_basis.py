@@ -72,15 +72,27 @@ def booted_page():
         page.goto(base + "prospx/index.html", wait_until="load", timeout=60_000)
         page.wait_for_function(
             "() => document.querySelectorAll('#rows .player-row').length > 5", timeout=120_000)
+        # Let the provisional pool land first: its arrival re-renders the view.
+        try:
+            page.wait_for_function(
+                "() => typeof provPlayers === 'function' && provPlayers().length > 0",
+                timeout=60_000)
+        except Exception:
+            pass
+        page.wait_for_timeout(800)
         yield page, errs
         browser.close()
 
 
 def _open(page, key):
+    name = page.evaluate(
+        f"() => (DATA.players.find(p => p.player_key === '{key}') || {{}}).player_name || ''")
     page.evaluate(f"() => {{ location.hash = 'player={key}'; }}")
+    # Wait for THIS player's page, not a previous one still in the body.
     page.wait_for_function(
-        "() => { const b = document.getElementById('player-detail-body');"
-        " return b && /Surplus value/.test(b.innerText); }", timeout=30_000)
+        "(nm) => { const b = document.getElementById('player-detail-body');"
+        " return b && /Surplus value/.test(b.innerText) && b.innerText.includes(nm); }",
+        arg=name, timeout=30_000)
     return page.evaluate(
         "() => { const n = document.querySelector('#player-detail-body .efv-basis-note');"
         " return n ? n.innerText : null; }")
@@ -103,7 +115,5 @@ def test_conflicting_cards_carry_the_note_and_agreeing_cards_do_not(booted_page)
     assert note and "Two bases" in note and "P(bust)" in note, (
         f"{keys['bad'][0]}: the fan contradicts P(bust) and the card does not say why")
     if keys["ok"]:
-        page.evaluate("() => { location.hash = ''; }")
-        page.wait_for_timeout(300)
         assert _open(page, keys["ok"][0]) is None
     assert not errs, "JS errors: " + " | ".join(errs)
