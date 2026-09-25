@@ -67,6 +67,7 @@ def _export(tmp_path, monkeypatch, splits, admit):
                             splits, season, positions))
     monkeypatch.setattr(se, "_active_mlbam_ids", lambda season: None)
     monkeypatch.setattr(se, "_join_xsem_plus", lambda starters, season: 0)
+    monkeypatch.setattr(se, "_join_savant_custom", lambda starters, season: {})
     monkeypatch.setattr(se, "_join_war_ip_plus", lambda starters, season: {})
     monkeypatch.setattr(se, "_join_war_ip_plus_3yr", lambda starters: {})
     monkeypatch.setattr(se, "_war_source_vintage", lambda as_of=None: {})

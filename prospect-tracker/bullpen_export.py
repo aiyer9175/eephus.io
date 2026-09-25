@@ -842,6 +842,19 @@ def _join_rem_plus_3yr(relievers: list[dict]) -> dict:
 _XREM_MIN_PA = 80.0   # min Savant batters-faced for a stable xwOBA-allowed read
 
 
+def _join_savant_custom(relievers: list[dict], season: int) -> dict:
+    """Stamp the Savant custom-leaderboard DISPLAY columns (X05-01) onto the
+    board rows by mlbam and return their provenance block. No score on this
+    board reads them. SwStr% is NOT derived here: this board keeps its
+    Baseball-Reference SwStr%, a different count. Fail-soft: any error serves an unavailable block
+    and blank columns."""
+    try:
+        import savant_leaderboards as _sl
+        return _sl.join(relievers, int(season), "pitcher")
+    except Exception as e:   # noqa: BLE001 - a display join must not take a board down
+        return {"available": False, "reason": f"savant_leaderboards unavailable ({type(e).__name__})"}
+
+
 def _join_xrem_plus(relievers: list[dict], season: int) -> int:
     """Stamp xREM+ (deserved run prevention on Savant expected wOBA-allowed) + Luck
     onto tracked relievers.
@@ -1522,6 +1535,11 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         log(f"  bullpen: 3-year REM+ joined for {r3_meta['n_stamped']} relievers "
             f"(frozen lab vintage {r3_meta.get('generated_at')})")
     n_xr = _join_xrem_plus(scored["relievers"], season)
+    sv_meta = _join_savant_custom(scored["relievers"], season)
+    if sv_meta.get("available"):
+        log(f"  bullpen: Savant discipline columns joined for {sv_meta['n_joined']}/"
+            f"{sv_meta['n_board']} relievers ({sv_meta['n_qualified_joined']}/"
+            f"{sv_meta['n_qualified']} qualified)")
     if n_xr:
         log(f"  bullpen: xREM+ (Savant deserved run prevention) joined for {n_xr} relievers")
     wr_meta = _join_war_ip_plus(scored["relievers"], season)
@@ -1594,6 +1612,9 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         # receipt (war_source.side_war_by_season) makes `stale` say so.
         "ewar_vintage": _war_source_vintage(as_of=today),
         "multiyear_war_rate": wr3_meta,
+        # Provenance and join coverage of the Savant discipline display columns
+        # (see _join_savant_custom).
+        "savant_custom": sv_meta,
         # Which club a row's `team` names, how many rows were repointed, and how
         # many serve a blank team (see team_basis_meta), plus the zero-rollup
         # guard's verdict for this run (see guard_nonempty_block).

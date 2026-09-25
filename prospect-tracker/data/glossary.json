@@ -3693,7 +3693,8 @@
    "term": "Chase% (O-Swing)",
    "category": "statcast",
    "module": [
-    "foundations"
+    "foundations",
+    "mlbstats"
    ],
    "aliases": [
     "Chase rate",
@@ -3721,12 +3722,11 @@
    "term": "Whiff%",
    "category": "statcast",
    "module": [
-    "foundations"
+    "foundations",
+    "mlbstats"
    ],
    "aliases": [
     "Whiff rate",
-    "SwStr%",
-    "Swinging-strike%",
     "Miss%"
    ],
    "priority": 14,
@@ -3734,6 +3734,7 @@
    "methodology": "Swinging strikes ÷ swings. For hitters, bat-to-ball skill and strikeout risk; for pitchers, stuff. Per swing (K% is per plate appearance), so it stabilizes faster. Hitter average ~24%; 30%+ induced whiff on a pitcher's primary pitch is plus.",
    "formula": "Whiff% = swinging strikes / swings × 100",
    "seeAlso": [
+    "swstr_pct",
     "k_pct",
     "csw_pct",
     "stf_plus",
@@ -3748,7 +3749,8 @@
    "term": "Z-Contact%",
    "category": "statcast",
    "module": [
-    "foundations"
+    "foundations",
+    "mlbstats"
    ],
    "aliases": [
     "Z-Contact",
@@ -8830,6 +8832,123 @@
     "devig",
     "dfs_matchup_multiplier"
    ]
+  },
+  {
+   "id": "swstr_pct",
+   "term": "SwStr%",
+   "category": "statcast",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "SwStr",
+    "Swinging-strike%",
+    "Swinging strike rate"
+   ],
+   "priority": 14,
+   "definition": "Share of all pitches that draw a swing and miss. Per pitch, where Whiff% is per swing.",
+   "methodology": "On /mlbstats/ the Starters board derives it from the Baseball Savant custom leaderboard as whiff% x swing% (whiffs per swing times swings per pitch). The Relievers board shows Baseball-Reference's count, which is not the same tally, so compare a pitcher only against his own board. Display only: no Arkmetric reads it.",
+   "formula": "SwStr% = swinging strikes / pitches x 100 (Starters board: Whiff% x Swing% / 100)",
+   "seeAlso": [
+    "whiff_pct",
+    "csw_pct",
+    "k_pct",
+    "chase_pct"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Swinging strikes per pitch from pitch tracking; the Starters board figure is Baseball Savant's, the Relievers board figure Baseball-Reference's."
+  },
+  {
+   "id": "f_strike_pct",
+   "term": "F-Strike%",
+   "category": "statcast",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "First-pitch strike%",
+    "First strike%",
+    "F-Strike"
+   ],
+   "priority": 12,
+   "definition": "Share of plate appearances that start with a strike (called, swinging, foul or put in play). Higher is better for a pitcher.",
+   "methodology": "From the Baseball Savant custom leaderboard. Display only on the /mlbstats/ pitcher boards: no Arkmetric reads it.",
+   "formula": "F-Strike% = plate appearances whose first pitch is a strike / plate appearances x 100",
+   "seeAlso": [
+    "bb_pct",
+    "chase_pct",
+    "swstr_pct"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): first-pitch strikes per plate appearance."
+  },
+  {
+   "id": "fb_velo",
+   "term": "FB velo",
+   "category": "statcast",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Fastball velocity",
+    "Fastball velo",
+    "FB velocity"
+   ],
+   "priority": 12,
+   "definition": "A pitcher's average fastball speed in mph over the season.",
+   "methodology": "From the Baseball Savant custom leaderboard (fastball_avg_speed). Display only on the /mlbstats/ pitcher boards: no Arkmetric reads it.",
+   "seeAlso": [
+    "role_velo_delta",
+    "stf_plus"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): average fastball speed."
+  },
+  {
+   "id": "sweet_spot_pct",
+   "term": "Sweet spot%",
+   "category": "statcast",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Sweet-spot%",
+    "Sweet spot rate",
+    "LA sweet spot"
+   ],
+   "priority": 12,
+   "definition": "Share of a hitter's batted balls with a launch angle of 8 to 32 degrees, the band where line drives and carrying fly balls live.",
+   "methodology": "From the Baseball Savant custom leaderboard. Display only on the /mlbstats/ Hitters board: no Arkmetric reads it.",
+   "formula": "Sweet spot% = batted balls at 8 to 32 degrees / batted balls x 100",
+   "seeAlso": [
+    "exit_velocity",
+    "pull_pct",
+    "z_contact_pct"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): batted balls in the 8 to 32 degree launch-angle band."
+  },
+  {
+   "id": "pull_pct",
+   "term": "Pull%",
+   "category": "statcast",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Pull rate",
+    "Pull"
+   ],
+   "priority": 11,
+   "definition": "Share of a hitter's batted balls hit to his pull side.",
+   "methodology": "From the Baseball Savant custom leaderboard. Display only on the /mlbstats/ Hitters board: no Arkmetric reads it.",
+   "formula": "Pull% = batted balls to the pull side / batted balls x 100",
+   "seeAlso": [
+    "sweet_spot_pct",
+    "exit_velocity"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): batted balls to the pull side."
   }
  ]
 }

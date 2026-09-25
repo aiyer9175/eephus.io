@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-18",
+ "generated_at": "2026-09-25",
  "schema": 2,
  "live_season": 2026,
  "invalidated_by": null,
@@ -137,7 +137,12 @@
     "pwoba": "A forecast of next season.",
     "hem_plus_3yr": "A frozen lab artifact with a window of its own. It shows on a one-year view.",
     "war_pa_plus_3yr": "The same frozen window.",
-    "war_pa_plus_adj": "The park and pool adjustment behind WAR/PA+ is fitted on one season's pool, so the adjusted value cannot be re-weighted across seasons."
+    "war_pa_plus_adj": "The park and pool adjustment behind WAR/PA+ is fitted on one season's pool, so the adjusted value cannot be re-weighted across seasons.",
+    "whiff_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "chase_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "z_contact_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "sweet_spot_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "pull_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled."
    }
   },
   "starters": {
@@ -201,7 +206,13 @@
     "luck": "A difference of two season-pool numbers.",
     "sem_plus_3yr": "A frozen lab artifact with a window of its own.",
     "war_ip_plus_3yr": "The same frozen window.",
-    "war_ip_plus_adj": "The adjustment behind WAR/IP+ is fitted on one season's pool."
+    "war_ip_plus_adj": "The adjustment behind WAR/IP+ is fitted on one season's pool.",
+    "swstr_pct": "Derived from two Baseball Savant season rates (whiff% x swing%) with no pitch count beside them, so it cannot be repooled.",
+    "whiff_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "chase_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "z_contact_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "f_strike_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "fb_velo": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled."
    }
   },
   "bullpen": {
@@ -270,7 +281,12 @@
     "war_ip_plus_3yr": "The same frozen window.",
     "war_ip_plus_adj": "The adjustment behind WAR/IP+ is fitted on one season's pool.",
     "role": "Role is a season fact.",
-    "luck": "A difference of two season-pool numbers."
+    "luck": "A difference of two season-pool numbers.",
+    "whiff_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "chase_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "z_contact_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "f_strike_pct": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled.",
+    "fb_velo": "A Baseball Savant season rate served without the pitch or batted-ball count behind it, so it cannot be repooled."
    }
   },
   "leverage": {
@@ -352,39 +368,39 @@
    ],
    "file": "mlbstats_window_l3.json",
    "n_rows": {
-    "overall": 2072,
-    "hitters": 587,
+    "overall": 2076,
+    "hitters": 589,
     "starters": 289,
-    "bullpen": 501,
-    "leverage": 938,
-    "defense": 568
+    "bullpen": 507,
+    "leverage": 946,
+    "defense": 571
    },
    "pool_stats": {
     "hitters": {
      "hem_plus": {
-      "n": 587,
-      "mean": 96.06,
-      "sd": 13.93,
-      "n_established": 354,
-      "n_provisional": 233,
+      "n": 589,
+      "mean": 96.02,
+      "sd": 13.98,
+      "n_established": 355,
+      "n_provisional": 234,
       "established": {
-       "n": 354,
-       "mean": 99.63,
-       "sd": 14.49
+       "n": 355,
+       "mean": 99.62,
+       "sd": 14.53
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
      },
      "war_pa_plus": {
-      "n": 581,
-      "mean": 101.05,
-      "sd": 7.11,
-      "n_established": 345,
-      "n_provisional": 236,
+      "n": 583,
+      "mean": 101.1,
+      "sd": 7.12,
+      "n_established": 346,
+      "n_provisional": 237,
       "established": {
-       "n": 345,
-       "mean": 103.28,
-       "sd": 5.66
+       "n": 346,
+       "mean": 103.32,
+       "sd": 5.67
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
@@ -393,28 +409,28 @@
     "starters": {
      "sem_plus": {
       "n": 289,
-      "mean": 99.54,
-      "sd": 12.99,
-      "n_established": 196,
-      "n_provisional": 93,
+      "mean": 99.52,
+      "sd": 12.91,
+      "n_established": 198,
+      "n_provisional": 91,
       "established": {
-       "n": 196,
+       "n": 198,
        "mean": 101.97,
-       "sd": 13.08
+       "sd": 13.09
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
      },
      "war_ip_plus": {
       "n": 284,
-      "mean": 100.47,
-      "sd": 7.89,
-      "n_established": 171,
-      "n_provisional": 113,
+      "mean": 100.4,
+      "sd": 7.96,
+      "n_established": 172,
+      "n_provisional": 112,
       "established": {
-       "n": 171,
-       "mean": 102.16,
-       "sd": 7.03
+       "n": 172,
+       "mean": 102.09,
+       "sd": 7.11
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
@@ -422,43 +438,43 @@
     },
     "bullpen": {
      "rem_plus": {
-      "n": 501,
-      "mean": 99.11,
-      "sd": 11.67,
-      "n_established": 332,
-      "n_provisional": 169,
+      "n": 507,
+      "mean": 99.18,
+      "sd": 11.76,
+      "n_established": 333,
+      "n_provisional": 174,
       "established": {
-       "n": 332,
-       "mean": 101.04,
-       "sd": 11.71
+       "n": 333,
+       "mean": 101.05,
+       "sd": 11.77
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
      },
      "riv_plus": {
-      "n": 501,
-      "mean": 101.74,
-      "sd": 9.47,
-      "n_established": 332,
-      "n_provisional": 169,
+      "n": 507,
+      "mean": 101.75,
+      "sd": 9.42,
+      "n_established": 333,
+      "n_provisional": 174,
       "established": {
-       "n": 332,
-       "mean": 103.61,
-       "sd": 9.87
+       "n": 333,
+       "mean": 103.58,
+       "sd": 9.88
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
      },
      "war_ip_plus": {
-      "n": 415,
-      "mean": 100.51,
-      "sd": 8.15,
-      "n_established": 213,
-      "n_provisional": 202,
+      "n": 420,
+      "mean": 100.48,
+      "sd": 8.12,
+      "n_established": 216,
+      "n_provisional": 204,
       "established": {
-       "n": 213,
-       "mean": 102.13,
-       "sd": 7.04
+       "n": 216,
+       "mean": 102.1,
+       "sd": 6.99
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
@@ -466,15 +482,15 @@
     },
     "defense": {
      "dem_plus": {
-      "n": 568,
-      "mean": 99.99,
-      "sd": 8.47,
+      "n": 571,
+      "mean": 100.01,
+      "sd": 8.49,
       "n_established": 367,
-      "n_provisional": 201,
+      "n_provisional": 204,
       "established": {
        "n": 367,
-       "mean": 100.63,
-       "sd": 8.39
+       "mean": 100.65,
+       "sd": 8.4
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
@@ -488,12 +504,12 @@
      2026
     ],
     "n_published": {
-     "overall": 2072,
-     "hitters": 587,
+     "overall": 2076,
+     "hitters": 589,
      "starters": 289,
-     "bullpen": 501,
-     "leverage": 938,
-     "defense": 568
+     "bullpen": 507,
+     "leverage": 946,
+     "defense": 571
     },
     "per_season": {
      "2024": {
@@ -511,17 +527,17 @@
       "lev_starters": 375
      },
      "2026": {
-      "hitters": 658,
-      "pitchers": 799,
-      "fielders": 650,
-      "lev_batters": 659,
-      "lev_starters": 373
+      "hitters": 661,
+      "pitchers": 808,
+      "fielders": 654,
+      "lev_batters": 662,
+      "lev_starters": 378
      }
     },
     "panel_built_at": {
      "2024": "2026-09-18",
      "2025": "2026-09-18",
-     "2026": "2026-09-18"
+     "2026": "2026-09-25"
     },
     "panel_complete": {
      "2024": true,
@@ -544,38 +560,38 @@
    ],
    "file": "mlbstats_window_l5.json",
    "n_rows": {
-    "overall": 2630,
-    "hitters": 746,
+    "overall": 2634,
+    "hitters": 747,
     "starters": 383,
-    "bullpen": 686,
-    "leverage": 1243,
-    "defense": 743
+    "bullpen": 692,
+    "leverage": 1250,
+    "defense": 745
    },
    "pool_stats": {
     "hitters": {
      "hem_plus": {
-      "n": 746,
-      "mean": 95.41,
-      "sd": 13.15,
-      "n_established": 482,
-      "n_provisional": 264,
+      "n": 747,
+      "mean": 95.39,
+      "sd": 13.18,
+      "n_established": 484,
+      "n_provisional": 263,
       "established": {
-       "n": 482,
-       "mean": 98.23,
-       "sd": 13.29
+       "n": 484,
+       "mean": 98.19,
+       "sd": 13.32
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
      },
      "war_pa_plus": {
-      "n": 742,
-      "mean": 100.82,
-      "sd": 6.63,
-      "n_established": 463,
+      "n": 743,
+      "mean": 100.84,
+      "sd": 6.64,
+      "n_established": 464,
       "n_provisional": 279,
       "established": {
-       "n": 463,
-       "mean": 102.6,
+       "n": 464,
+       "mean": 102.64,
        "sd": 5.44
       },
       "pct_pool": "every published row on this board, provisional rows included",
@@ -585,28 +601,28 @@
     "starters": {
      "sem_plus": {
       "n": 383,
-      "mean": 98.32,
-      "sd": 12.31,
-      "n_established": 264,
-      "n_provisional": 119,
+      "mean": 98.31,
+      "sd": 12.25,
+      "n_established": 266,
+      "n_provisional": 117,
       "established": {
-       "n": 264,
-       "mean": 101.13,
-       "sd": 12.05
+       "n": 266,
+       "mean": 101.15,
+       "sd": 12.07
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
      },
      "war_ip_plus": {
       "n": 377,
-      "mean": 99.84,
-      "sd": 7.38,
-      "n_established": 239,
-      "n_provisional": 138,
+      "mean": 99.8,
+      "sd": 7.42,
+      "n_established": 240,
+      "n_provisional": 137,
       "established": {
-       "n": 239,
-       "mean": 101.7,
-       "sd": 6.24
+       "n": 240,
+       "mean": 101.67,
+       "sd": 6.28
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
@@ -614,43 +630,43 @@
     },
     "bullpen": {
      "rem_plus": {
-      "n": 686,
-      "mean": 98.39,
-      "sd": 11.12,
-      "n_established": 481,
-      "n_provisional": 205,
+      "n": 692,
+      "mean": 98.47,
+      "sd": 11.2,
+      "n_established": 484,
+      "n_provisional": 208,
       "established": {
-       "n": 481,
-       "mean": 100.49,
-       "sd": 10.85
+       "n": 484,
+       "mean": 100.51,
+       "sd": 10.86
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
      },
      "riv_plus": {
-      "n": 686,
-      "mean": 101.1,
-      "sd": 8.71,
-      "n_established": 481,
-      "n_provisional": 205,
+      "n": 692,
+      "mean": 101.12,
+      "sd": 8.68,
+      "n_established": 484,
+      "n_provisional": 208,
       "established": {
-       "n": 481,
-       "mean": 102.86,
+       "n": 484,
+       "mean": 102.85,
        "sd": 8.86
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
      },
      "war_ip_plus": {
-      "n": 562,
-      "mean": 100.52,
-      "sd": 7.55,
-      "n_established": 327,
-      "n_provisional": 235,
+      "n": 568,
+      "mean": 100.5,
+      "sd": 7.52,
+      "n_established": 330,
+      "n_provisional": 238,
       "established": {
-       "n": 327,
-       "mean": 101.83,
-       "sd": 6.52
+       "n": 330,
+       "mean": 101.81,
+       "sd": 6.49
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
@@ -658,15 +674,15 @@
     },
     "defense": {
      "dem_plus": {
-      "n": 743,
-      "mean": 99.88,
-      "sd": 8.16,
+      "n": 745,
+      "mean": 99.89,
+      "sd": 8.19,
       "n_established": 516,
-      "n_provisional": 227,
+      "n_provisional": 229,
       "established": {
        "n": 516,
-       "mean": 100.33,
-       "sd": 8.0
+       "mean": 100.34,
+       "sd": 8.02
       },
       "pct_pool": "every published row on this board, provisional rows included",
       "note": "100 is the average of each contributing SEASON'S pool, not of this window's pool, because the value is the denominator-weighted mean of the per-season index. This block reports what the window pool actually is, and `established` reports what the established-only view's pool is."
@@ -682,12 +698,12 @@
      2026
     ],
     "n_published": {
-     "overall": 2630,
-     "hitters": 746,
+     "overall": 2634,
+     "hitters": 747,
      "starters": 383,
-     "bullpen": 686,
-     "leverage": 1243,
-     "defense": 743
+     "bullpen": 692,
+     "leverage": 1250,
+     "defense": 745
     },
     "per_season": {
      "2022": {
@@ -719,11 +735,11 @@
       "lev_starters": 375
      },
      "2026": {
-      "hitters": 658,
-      "pitchers": 799,
-      "fielders": 650,
-      "lev_batters": 659,
-      "lev_starters": 373
+      "hitters": 661,
+      "pitchers": 808,
+      "fielders": 654,
+      "lev_batters": 662,
+      "lev_starters": 378
      }
     },
     "panel_built_at": {
@@ -731,7 +747,7 @@
      "2023": "2026-09-18",
      "2024": "2026-09-18",
      "2025": "2026-09-18",
-     "2026": "2026-09-18"
+     "2026": "2026-09-25"
     },
     "panel_complete": {
      "2022": true,
@@ -798,18 +814,18 @@
     "pitching": true,
     "defense": true,
     "leverage": true,
-    "n_hitters": 658,
-    "n_pitchers": 799,
-    "n_fielders": 650,
-    "n_lev_batters": 659,
-    "n_lev_starters": 373
+    "n_hitters": 661,
+    "n_pitchers": 808,
+    "n_fielders": 654,
+    "n_lev_batters": 662,
+    "n_lev_starters": 378
    }
   },
   "substrate": {
    "file": "war_seasons.json",
-   "generated_at": "2026-09-18",
+   "generated_at": "2026-09-24",
    "basis_matches_served": true,
-   "n_player_seasons": 22181
+   "n_player_seasons": 22193
   },
   "season_share": {
    "2011": 0.9995,
@@ -827,10 +843,10 @@
    "2023": 1.0004,
    "2024": 0.9995,
    "2025": 1.0,
-   "2026": 0.9404
+   "2026": 0.9768
   }
  },
- "build_seconds": 73.2,
+ "build_seconds": 165.0,
  "reproduction": {
   "per_season": {
    "hem_plus": {
@@ -965,11 +981,11 @@
     ],
     "generated_at": "2026-08-30",
     "n_shipped": 327,
-    "n_mine": 587,
+    "n_mine": 589,
     "n_both": 327,
-    "n_equal": 115,
-    "max_abs_delta": 11,
-    "mean_abs_delta": 1.235,
+    "n_equal": 105,
+    "max_abs_delta": 12,
+    "mean_abs_delta": 1.434,
     "n_all_seasons_complete": 0,
     "max_abs_delta_all_complete": null,
     "by_window_seasons": {
@@ -977,19 +993,19 @@
       "n": 23,
       "n_equal": 4,
       "mean_abs_delta": 3.609,
-      "max_abs_delta": 11
+      "max_abs_delta": 12
      },
      "2": {
       "n": 44,
-      "n_equal": 13,
-      "mean_abs_delta": 1.5,
-      "max_abs_delta": 6
+      "n_equal": 15,
+      "mean_abs_delta": 1.75,
+      "max_abs_delta": 9
      },
      "3": {
       "n": 260,
-      "n_equal": 98,
-      "mean_abs_delta": 0.981,
-      "max_abs_delta": 7
+      "n_equal": 86,
+      "mean_abs_delta": 1.188,
+      "max_abs_delta": 9
      }
     },
     "reads": "A delta that grows as the LIVE season's share of the window grows is vintage drift against an older artifact, not a method difference. Read by_window_seasons and n_all_seasons_complete before reading n_equal."
@@ -1006,29 +1022,29 @@
     "n_shipped": 164,
     "n_mine": 289,
     "n_both": 164,
-    "n_equal": 69,
-    "max_abs_delta": 6,
-    "mean_abs_delta": 1.091,
+    "n_equal": 63,
+    "max_abs_delta": 7,
+    "mean_abs_delta": 1.323,
     "n_all_seasons_complete": 1,
     "max_abs_delta_all_complete": 0,
     "by_window_seasons": {
      "1": {
       "n": 23,
-      "n_equal": 1,
-      "mean_abs_delta": 2.304,
-      "max_abs_delta": 6
+      "n_equal": 3,
+      "mean_abs_delta": 2.87,
+      "max_abs_delta": 7
      },
      "2": {
       "n": 46,
       "n_equal": 16,
-      "mean_abs_delta": 1.348,
-      "max_abs_delta": 5
+      "mean_abs_delta": 1.565,
+      "max_abs_delta": 7
      },
      "3": {
       "n": 95,
-      "n_equal": 52,
-      "mean_abs_delta": 0.674,
-      "max_abs_delta": 6
+      "n_equal": 44,
+      "mean_abs_delta": 0.832,
+      "max_abs_delta": 7
      }
     },
     "reads": "A delta that grows as the LIVE season's share of the window grows is vintage drift against an older artifact, not a method difference. Read by_window_seasons and n_all_seasons_complete before reading n_equal."
@@ -1043,31 +1059,31 @@
     ],
     "generated_at": "2026-08-30",
     "n_shipped": 244,
-    "n_mine": 501,
+    "n_mine": 507,
     "n_both": 243,
-    "n_equal": 98,
-    "max_abs_delta": 10,
-    "mean_abs_delta": 1.325,
-    "n_all_seasons_complete": 1,
-    "max_abs_delta_all_complete": 7,
+    "n_equal": 100,
+    "max_abs_delta": 12,
+    "mean_abs_delta": 1.387,
+    "n_all_seasons_complete": 2,
+    "max_abs_delta_all_complete": 12,
     "by_window_seasons": {
      "1": {
       "n": 42,
-      "n_equal": 15,
-      "mean_abs_delta": 2.19,
-      "max_abs_delta": 10
+      "n_equal": 14,
+      "mean_abs_delta": 2.452,
+      "max_abs_delta": 9
      },
      "2": {
-      "n": 63,
-      "n_equal": 21,
-      "mean_abs_delta": 1.635,
-      "max_abs_delta": 7
+      "n": 64,
+      "n_equal": 23,
+      "mean_abs_delta": 1.672,
+      "max_abs_delta": 12
      },
      "3": {
-      "n": 138,
-      "n_equal": 62,
-      "mean_abs_delta": 0.92,
-      "max_abs_delta": 5
+      "n": 137,
+      "n_equal": 63,
+      "mean_abs_delta": 0.927,
+      "max_abs_delta": 7
      }
     },
     "reads": "A delta that grows as the LIVE season's share of the window grows is vintage drift against an older artifact, not a method difference. Read by_window_seasons and n_all_seasons_complete before reading n_equal."
@@ -1082,30 +1098,30 @@
     ],
     "generated_at": "2026-09-11",
     "n_shipped": 431,
-    "n_mine": 568,
-    "n_both": 400,
-    "n_equal": 280,
-    "max_abs_delta": 5,
-    "mean_abs_delta": 0.375,
+    "n_mine": 571,
+    "n_both": 402,
+    "n_equal": 227,
+    "max_abs_delta": 6,
+    "mean_abs_delta": 0.565,
     "n_all_seasons_complete": 0,
     "max_abs_delta_all_complete": null,
     "by_window_seasons": {
      "1": {
-      "n": 28,
-      "n_equal": 13,
-      "mean_abs_delta": 1.179,
-      "max_abs_delta": 5
+      "n": 29,
+      "n_equal": 7,
+      "mean_abs_delta": 1.655,
+      "max_abs_delta": 6
      },
      "2": {
-      "n": 58,
-      "n_equal": 28,
-      "mean_abs_delta": 0.672,
+      "n": 59,
+      "n_equal": 23,
+      "mean_abs_delta": 0.898,
       "max_abs_delta": 4
      },
      "3": {
       "n": 314,
-      "n_equal": 239,
-      "mean_abs_delta": 0.248,
+      "n_equal": 197,
+      "mean_abs_delta": 0.401,
       "max_abs_delta": 2
      }
     },

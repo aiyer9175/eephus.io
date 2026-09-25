@@ -474,6 +474,18 @@ def _join_xhem_plus(hitters: list[dict], season: int) -> int:
     return n
 
 
+def _join_savant_custom(hitters: list[dict], season: int) -> dict:
+    """Stamp the Savant custom-leaderboard DISPLAY columns (X05-01) onto the
+    board rows by mlbam and return their provenance block. No score on this
+    board reads them. Fail-soft: any error serves an unavailable block
+    and blank columns."""
+    try:
+        import savant_leaderboards as _sl
+        return _sl.join(hitters, int(season), "batter")
+    except Exception as e:   # noqa: BLE001 - a display join must not take a board down
+        return {"available": False, "reason": f"savant_leaderboards unavailable ({type(e).__name__})"}
+
+
 def _join_fwdhem_plus(hitters: list[dict], hem_raw: dict, season: int) -> int:
     """Stamp fwdhem_plus ('xHEM+ Blend') onto tracked hitters: the validated T1-3
     forward blend, 0.7 * z(Savant est_woba) + 0.3 * z(unrounded HEM+ core), z-scored
@@ -1220,6 +1232,11 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     if n_fh:
         log(f"  hitters: fwdHEM+ (xHEM+ Blend forward column) joined for {n_fh} hitters")
     n_pw = _join_pwoba(scored["hitters"], season)
+    sv_meta = _join_savant_custom(scored["hitters"], season)
+    if sv_meta.get("available"):
+        log(f"  hitters: Savant discipline columns joined for {sv_meta['n_joined']}/"
+            f"{sv_meta['n_board']} hitters ({sv_meta['n_qualified_joined']}/"
+            f"{sv_meta['n_qualified']} qualified)")
     if n_pw:
         log(f"  hitters: pWOBA (FA-engine projected next-season wOBA) joined for {n_pw} hitters")
     wr_meta = _join_war_pa_plus(scored["hitters"], season)
@@ -1279,6 +1296,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # receipt (war_source.side_war_by_season) makes `stale` say so.
         "ewar_vintage": _war_source_vintage(as_of=today),
         "multiyear_war_rate": wr3_meta,
+        # Provenance and join coverage of the Savant discipline and batted-ball
+        # display columns (see _join_savant_custom).
+        "savant_custom": sv_meta,
         # Whether the vs-LHP / vs-RHP lineup split was actually applied this run
         # (see _platoon_availability): available=false means the two hand labels
         # are NOT earned (the orders are identical), not that the lineups are

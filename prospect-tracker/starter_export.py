@@ -159,6 +159,19 @@ def _join_sem_plus_3yr(starters: list[dict]) -> dict:
 _XSEM_MIN_PA = 150.0   # min Savant batters-faced for a stable xwOBA-allowed read (starters face more)
 
 
+def _join_savant_custom(starters: list[dict], season: int) -> dict:
+    """Stamp the Savant custom-leaderboard DISPLAY columns (X05-01) onto the
+    board rows by mlbam and return their provenance block. No score on this
+    board reads them. SwStr% is derived here (whiff% x swing%), the one
+    derived column, because the Starter record carries none. Fail-soft: any error serves an unavailable block
+    and blank columns."""
+    try:
+        import savant_leaderboards as _sl
+        return _sl.join(starters, int(season), "pitcher", derive_swstr=True)
+    except Exception as e:   # noqa: BLE001 - a display join must not take a board down
+        return {"available": False, "reason": f"savant_leaderboards unavailable ({type(e).__name__})"}
+
+
 def _join_xsem_plus(starters: list[dict], season: int) -> int:
     """Stamp xSEM+ (deserved run prevention on Savant expected wOBA-allowed) + Luck
     onto tracked starters. Mirror of bullpen_export._join_xrem_plus, anchored over
@@ -334,6 +347,11 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         log(f"  starters: 3-year SEM+ joined for {s3_meta['n_stamped']} starters "
             f"(frozen lab vintage {s3_meta.get('generated_at')})")
     n_xs = _join_xsem_plus(scored["starters"], season)
+    sv_meta = _join_savant_custom(scored["starters"], season)
+    if sv_meta.get("available"):
+        log(f"  starters: Savant discipline columns joined for {sv_meta['n_joined']}/"
+            f"{sv_meta['n_board']} starters ({sv_meta['n_qualified_joined']}/"
+            f"{sv_meta['n_qualified']} qualified)")
     if n_xs:
         log(f"  starters: xSEM+ (Savant deserved run prevention) joined for {n_xs} starters")
     wr_meta = _join_war_ip_plus(scored["starters"], season)
@@ -400,6 +418,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # receipt (war_source.side_war_by_season) makes `stale` say so.
         "ewar_vintage": _war_source_vintage(as_of=today),
         "multiyear_war_rate": wr3_meta,
+        # Provenance and join coverage of the Savant discipline display columns,
+        # including the derived SwStr% formula (see _join_savant_custom).
+        "savant_custom": sv_meta,
         # Which club a row's `team` names, how many rows were repointed, and how
         # many serve a blank team (see bullpen_export.team_basis_meta), plus the
         # zero-rollup guard's verdict for this run.

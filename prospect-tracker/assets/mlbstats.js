@@ -195,6 +195,12 @@
     return "The sample-shrunk FIP " + index + " is built on: K, BB, HBP and HR rates pulled toward"
       + " the " + pool + " pool by sample size, constant solved on " + pool + "s; not the standard FIP.";
   }
+  // Header tooltip for the Savant custom-leaderboard display columns
+  // (savant_leaderboards.py). Each sentence names its denominator; none of the
+  // columns feeds a score.
+  function savantTitle(sentence) {
+    return sentence + " From the Baseball Savant custom leaderboard. Display only: no score on this board reads it.";
+  }
   function wireGlossary(el) {
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(el); } catch (e) { /* glossary optional */ }
     markFit(el);
@@ -590,7 +596,18 @@
     // the skill_fip glossary entry, never the standard `fip` one.
     { key: "fip", label: "Skill FIP", term: "skill_fip", fmt: f2, num: true, asc: true,
       title: skillFipTitle("reliever", "REM+") },
-    { key: "swstr_pct", label: "SwStr%", fmt: fPct, num: true },
+    { key: "swstr_pct", label: "SwStr%", term: "swstr_pct", fmt: fPct, num: true,
+      title: "Swinging strikes per pitch, from Baseball-Reference. The Starters board derives its SwStr% from Savant instead, a different count." },
+    { key: "whiff_pct", label: "Whiff%", term: "whiff_pct", fmt: fPct, num: true,
+      title: savantTitle("Misses per swing.") },
+    { key: "chase_pct", label: "Chase%", term: "chase_pct", fmt: fPct, num: true,
+      title: savantTitle("Swings per pitch outside Savant's strike zone.") },
+    { key: "z_contact_pct", label: "Z-Contact%", term: "z_contact_pct", fmt: fPct, num: true, asc: true,
+      title: savantTitle("Contact per swing at a pitch inside Savant's strike zone.") },
+    { key: "f_strike_pct", label: "F-Strike%", term: "f_strike_pct", fmt: fPct, num: true,
+      title: savantTitle("Share of plate appearances that start with a strike.") },
+    { key: "fb_velo", label: "FB velo", term: "fb_velo", fmt: f1, num: true,
+      title: "Average fastball speed in mph, from the Baseball Savant custom leaderboard. Display only: no score on this board reads it." },
     { key: "era", label: "ERA", term: "era", fmt: f2, num: true, asc: true },
     { key: "gmli", label: "gmLI", term: "gmli", fmt: f2, num: true },
     // Frozen the same way as REM+ 3yr (leverage_consistency_eval.json), but its
@@ -750,6 +767,9 @@
       { id: "leverage", label: "Leverage", phone: ["gmli", "saves", "riv_plus", "wpa"],
         keys: ["gmli", "gmli_3yr", "|", "saves", "holds", "sd_md", "|", "riv_plus", "wpa", "wpa_li", "|",
                "g", "ip"] },
+      { id: "discipline", label: "Discipline", phone: ["rem_plus", "swstr_pct", "chase_pct", "fb_velo"],
+        keys: ["rem_plus", "|", "k_pct", "swstr_pct", "whiff_pct", "|", "chase_pct", "z_contact_pct",
+               "f_strike_pct", "|", "fb_velo", "|", "ip"] },
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
     sp: [
@@ -762,6 +782,9 @@
       { id: "value", label: "Value", phone: ["war", "war_ip_plus", "ip", "gs"],
         keys: ["war", "war_ip_plus", "war_ip_plus_adj", "war_ip_plus_3yr", "|", "sem_plus", "|",
                "ip", "gs", "ip_per_gs"] },
+      { id: "discipline", label: "Discipline", phone: ["sem_plus", "swstr_pct", "chase_pct", "fb_velo"],
+        keys: ["sem_plus", "|", "k_pct", "swstr_pct", "whiff_pct", "|", "chase_pct", "z_contact_pct",
+               "f_strike_pct", "|", "fb_velo", "|", "ip"] },
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
     hit: [
@@ -776,6 +799,9 @@
                "|", "pa"] },
       { id: "batting", label: "Batting", phone: ["avg", "obp", "slg", "hr"],
         keys: ["pa", "hr", "sb", "|", "avg", "obp", "slg", "ops", "iso", "woba_raw", "|", "bb_pct", "k_pct"] },
+      { id: "discipline", label: "Discipline", phone: ["hem_plus", "chase_pct", "whiff_pct", "sweet_spot_pct"],
+        keys: ["hem_plus", "|", "bb_pct", "k_pct", "|", "chase_pct", "whiff_pct", "z_contact_pct", "|",
+               "sweet_spot_pct", "pull_pct", "|", "pa"] },
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
     def: [
@@ -2941,6 +2967,20 @@
       title: skillFipTitle("starter", "SEM+") },
     { key: "era", label: "ERA", term: "era", fmt: f2, num: true, asc: true },
     { key: "hr9", label: "HR/9", fmt: f2, num: true, asc: true },
+    // Savant custom leaderboard (savant_leaderboards.py), display only. SwStr%
+    // is the one derived column: Savant whiff% x swing% (whiffs per pitch).
+    { key: "swstr_pct", label: "SwStr%", term: "swstr_pct", fmt: fPct, num: true,
+      title: "Whiffs per pitch, derived from the Baseball Savant custom leaderboard as whiff% x swing%. The Relievers board's SwStr% comes from Baseball-Reference, a different count. Display only: no score on this board reads it." },
+    { key: "whiff_pct", label: "Whiff%", term: "whiff_pct", fmt: fPct, num: true,
+      title: savantTitle("Misses per swing.") },
+    { key: "chase_pct", label: "Chase%", term: "chase_pct", fmt: fPct, num: true,
+      title: savantTitle("Swings per pitch outside Savant's strike zone.") },
+    { key: "z_contact_pct", label: "Z-Contact%", term: "z_contact_pct", fmt: fPct, num: true, asc: true,
+      title: savantTitle("Contact per swing at a pitch inside Savant's strike zone.") },
+    { key: "f_strike_pct", label: "F-Strike%", term: "f_strike_pct", fmt: fPct, num: true,
+      title: savantTitle("Share of plate appearances that start with a strike.") },
+    { key: "fb_velo", label: "FB velo", term: "fb_velo", fmt: f1, num: true,
+      title: "Average fastball speed in mph, from the Baseball Savant custom leaderboard. Display only: no score on this board reads it." },
   ];
 
   // Past-season history rows carry the season-level fields but not the
@@ -2950,7 +2990,8 @@
   // a season count the history export joins per (player, season), so it is not
   // in the list, and coveredCols holds it back until a season carries it.
   var STARTER_HISTORY_DROP = { sem_plus_3yr: 1, xsem_plus: 1, luck: 1,
-    war_ip_plus: 1, war_ip_plus_adj: 1, war_ip_plus_3yr: 1 };
+    war_ip_plus: 1, war_ip_plus_adj: 1, war_ip_plus_3yr: 1,
+    swstr_pct: 1, whiff_pct: 1, chase_pct: 1, z_contact_pct: 1, f_strike_pct: 1, fb_velo: 1 };
   var STARTER_HISTORY_COLS = historyTitle(
     STARTER_COLS.filter(function (c) { return !STARTER_HISTORY_DROP[c.key]; }),
     "war", "Pitching eWAR for the season shown.");
@@ -3473,6 +3514,17 @@
     { key: "bb_pct", label: "BB%", fmt: fPct, num: true },
     { key: "k_pct", label: "K%", fmt: fPct, num: true, asc: true },
     { key: "babip", label: "BABIP", term: "babip", fmt: f3, num: true },
+    // Savant custom leaderboard (savant_leaderboards.py), display only.
+    { key: "chase_pct", label: "Chase%", term: "chase_pct", fmt: fPct, num: true, asc: true,
+      title: savantTitle("Swings per pitch outside Savant's strike zone.") },
+    { key: "whiff_pct", label: "Whiff%", term: "whiff_pct", fmt: fPct, num: true, asc: true,
+      title: savantTitle("Misses per swing.") },
+    { key: "z_contact_pct", label: "Z-Contact%", term: "z_contact_pct", fmt: fPct, num: true,
+      title: savantTitle("Contact per swing at a pitch inside Savant's strike zone.") },
+    { key: "sweet_spot_pct", label: "Sweet spot%", term: "sweet_spot_pct", fmt: fPct, num: true,
+      title: savantTitle("Share of batted balls hit at a launch angle of 8 to 32 degrees.") },
+    { key: "pull_pct", label: "Pull%", term: "pull_pct", fmt: fPct, num: true,
+      title: savantTitle("Share of batted balls hit to the pull side.") },
   ];
 
   // History rows carry the season fields but not the trailing-window HEM+ 3yr,
@@ -3485,7 +3537,8 @@
   // wRC+ still drops outright: the league feed serves it for every history
   // season, but hitter_export joins it on the live board only.
   var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, fwdhem_plus: 1, luck_gap: 1, pwoba: 1,
-    war_pa_plus: 1, war_pa_plus_adj: 1, war_pa_plus_3yr: 1, wrc_plus: 1 };
+    war_pa_plus: 1, war_pa_plus_adj: 1, war_pa_plus_3yr: 1, wrc_plus: 1,
+    chase_pct: 1, whiff_pct: 1, z_contact_pct: 1, sweet_spot_pct: 1, pull_pct: 1 };
   var HITTER_HISTORY_COLS = historyTitle(
     HITTER_COLS.filter(function (c) { return !HITTER_HISTORY_DROP[c.key]; }),
     "war", "Position-player eWAR for the season shown.");

@@ -1579,6 +1579,17 @@ def basis_moved(index_path: Path | None = None) -> bool:
                 or doc.get("ewar_generated_at") != basis.get("ewar_generated_at"))
 
 
+# The Savant custom-leaderboard display columns (savant_leaderboards.py, X05-01)
+# reach the one-season boards as season rates with no denominator beside them,
+# so a window cannot repool them. One reason, keyed per column on each board.
+_SAVANT_WINDOW_REASON = ("A Baseball Savant season rate served without the pitch "
+                         "or batted-ball count behind it, so it cannot be repooled.")
+_SAVANT_HIT_KEYS = ("whiff_pct", "chase_pct", "z_contact_pct", "sweet_spot_pct",
+                    "pull_pct")
+_SAVANT_PIT_KEYS = ("whiff_pct", "chase_pct", "z_contact_pct", "f_strike_pct",
+                    "fb_velo")
+
+
 def columns_spec() -> dict:
     """WHAT EVERY COLUMN ON A WINDOW BOARD IS, published so the page reports the
     rule instead of typing it, and so a test can assert the FORMULA rather than
@@ -1654,6 +1665,7 @@ def columns_spec() -> dict:
                                     "is fitted on one season's pool, so the "
                                     "adjusted value cannot be re-weighted across "
                                     "seasons."),
+                **{k: _SAVANT_WINDOW_REASON for k in _SAVANT_HIT_KEYS},
             },
         },
         "starters": {
@@ -1688,6 +1700,10 @@ def columns_spec() -> dict:
                 "war_ip_plus_3yr": "The same frozen window.",
                 "war_ip_plus_adj": ("The adjustment behind WAR/IP+ is fitted on "
                                     "one season's pool."),
+                "swstr_pct": ("Derived from two Baseball Savant season rates "
+                              "(whiff% x swing%) with no pitch count beside "
+                              "them, so it cannot be repooled."),
+                **{k: _SAVANT_WINDOW_REASON for k in _SAVANT_PIT_KEYS},
             },
         },
         "bullpen": {
@@ -1741,6 +1757,7 @@ def columns_spec() -> dict:
                                     "one season's pool."),
                 "role": "Role is a season fact.",
                 "luck": "A difference of two season-pool numbers.",
+                **{k: _SAVANT_WINDOW_REASON for k in _SAVANT_PIT_KEYS},
             },
         },
         "leverage": {

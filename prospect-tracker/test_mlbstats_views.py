@@ -354,9 +354,10 @@ def test_wrc_plus_sits_right_after_hem_plus_in_every_view_that_shows_both():
 
 
 @pytest.mark.parametrize("hash_,fn,n", [
-    ("#section=bullpen&rcols=all", _render_bullpen, 25),
-    ("#section=starters&scols=all", smoke._render_starters, 19),
-    ("#section=hitters&hcols=all", smoke._render_hitters, 25),
+    # +5 / +6 / +5: the Savant discipline display columns (X05-01).
+    ("#section=bullpen&rcols=all", _render_bullpen, 30),
+    ("#section=starters&scols=all", smoke._render_starters, 25),
+    ("#section=hitters&hcols=all", smoke._render_hitters, 30),
     ("#section=defense&dcols=all", smoke._render_defense, 17),
 ])
 def test_the_all_view_shows_every_column_and_wraps_only_spaced_headers(hash_, fn, n):
