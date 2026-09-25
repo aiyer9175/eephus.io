@@ -537,6 +537,10 @@ _SIDECAR_GLOBS = (
     ".cache/odds/**/*",
     ".cache/dfs_history/**/*",
     ".cache/two_start_ledger.jsonl",
+    # EV-00: the eFV progress ledger and its durable untracked copy. Both are
+    # append-only records a test must never write into.
+    "data/efv_progress.json",
+    ".cache/efv_progress/**/*",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -862,6 +866,11 @@ _SIDECAR_WRITE_TARGETS = (
      ".cache/betting/completed_games.json"),
     ("tools.dfs_park_gate", "GAMES", ".cache/betting/completed_games.json"),
     ("mgmt_teams", "GROUND_TRUTH", ".cache/betting/completed_games.json"),
+    # EV-00 progress ledger: the served file and the durable copy. update()
+    # and the backfill tool resolve both at call time, so a test that runs
+    # either against the real data dir writes the mirror.
+    ("efv_progress", "OUT_PATH", "data/efv_progress.json"),
+    ("efv_progress", "LEDGER_PATH", ".cache/efv_progress/ledger.jsonl"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands

@@ -101,6 +101,28 @@ def _fmt_duration(seconds: float) -> str:
     return f"{mins}m{int(secs):02d}s"
 
 
+def _efv_progress_update(out_dir: Path, where: str) -> None:
+    """EV-00: append the eFV progress ledger (data/efv_progress.json) from the
+    freshly written backtest and scoreboard, under the `efv_progress`
+    heartbeat. Trigger "nightly" from both the daily and the monthly hook.
+    Best-effort: a ledger failure is logged and never aborts the run."""
+    _log = logging.getLogger("efv_progress")
+    try:
+        import efv_progress
+        import job_heartbeat as _hb
+        _res = efv_progress.update(out_dir, "nightly")
+        _hb.record("efv_progress", ok=(_res.get("status") == "ok"),
+                   result=f"{where}: {efv_progress.summary_line(_res)}"[:120])
+        _log.info("efv_progress (%s): %s", where, efv_progress.summary_line(_res))
+    except Exception as _e:
+        _log.exception("efv_progress update failed (%s) - continuing", where)
+        try:
+            import job_heartbeat as _hb
+            _hb.record("efv_progress", ok=False, result=f"{where}: {_e}"[:120])
+        except Exception:
+            pass
+
+
 STEP_TIMINGS_PATH = Path(__file__).resolve().parent / "logs" / "pipeline_steps_latest.json"
 
 
@@ -3406,7 +3428,9 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 import subprocess as _sp
                 import sys as _sys
                 import job_heartbeat as _hb
-                _r = _sp.run([_sys.executable, "tools/efv_scoreboard.py"],
+                # --no-progress: the ledger update below owns the "nightly"
+                # row, so the tool's by-hand "efv_change" hook stays out of it.
+                _r = _sp.run([_sys.executable, "tools/efv_scoreboard.py", "--no-progress"],
                              capture_output=True, text=True, timeout=1800,
                              cwd=str(Path(__file__).resolve().parent))
                 _ok = _r.returncode == 0
@@ -3423,6 +3447,11 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     _hb.record("efv_scoreboard", ok=False, result=str(_e)[:120])
                 except Exception:
                     pass
+            # EV-00 progress ledger (data/efv_progress.json, the dated record
+            # the glossary Source Comparison view charts). Append-only and
+            # idempotent: a night with no change adds no row and only moves
+            # the latest row's last_verified_at. Best-effort.
+            _efv_progress_update(out_dir, "daily")
 
         # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
         # In-winter the class moves daily (signings, option decisions, QO
@@ -6111,6 +6140,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                      len(_bt["window"]["years"]), _bt["accuracy"]["common_n"])
         except Exception:
             log.exception("source_backtest failed — continuing")
+        # EV-00 progress ledger: the backtest just moved, so record it now
+        # rather than waiting for the daily 9g hook.
+        _efv_progress_update(out_dir, "monthly")
         # Cohort-conditioned source accuracy (data/source_cohort_accuracy.json,
         # served at /glossary/#view=source-accuracy). ORDER IS LOAD-BEARING and
         # is why this sits exactly here, between its two neighbours:

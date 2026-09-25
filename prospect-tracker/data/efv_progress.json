@@ -1,0 +1,778 @@
+{
+ "schema": 1,
+ "generated_at": "2026-09-25T01:44:26Z",
+ "headline_frame": "vm",
+ "frames": {
+  "vm": {
+   "basis_key": "pooled_efv_common_vintage_matched",
+   "role": "headline",
+   "tilted": false,
+   "label": "Vintage-matched",
+   "note": "identical rows, base year equals the eFV decision year; neither grader holds a timing edge"
+  },
+  "lv_dev": {
+   "role": "development",
+   "tilted": false,
+   "label": "List vintage, development",
+   "note": "development frame, spent, not a claim"
+  },
+  "lv_res": {
+   "role": "reserved",
+   "tilted": false,
+   "label": "List vintage, reserved"
+  },
+  "vm_pros": {
+   "role": "reserved",
+   "tilted": false,
+   "label": "Vintage-matched, prospective"
+  },
+  "predebut": {
+   "basis_key": "pooled_efv_common_predebut",
+   "role": "tilted",
+   "tilted": true,
+   "tilt_toward": "efv",
+   "label": "Pre-debut reads",
+   "note": "post-debut consensus reads removed, all remaining base years kept; tilted TOWARD eFV, which is graded at the decision year while the retained earlier reads are not"
+  },
+  "all_vintages": {
+   "basis_key": "pooled_efv_common",
+   "role": "tilted",
+   "tilted": true,
+   "tilt_toward": "consensus",
+   "label": "All base years",
+   "note": "every base year including post-debut consensus reads; tilted TOWARD the consensus, which sees major league performance on those rows"
+  },
+  "disagreement": {
+   "role": "secondary",
+   "tilted": false,
+   "label": "Biggest disagreements",
+   "note": "latest pre-debut consensus read"
+  }
+ },
+ "chart": {
+  "series_frames": [
+   "vm",
+   "lv_dev",
+   "lv_res",
+   "vm_pros"
+  ],
+  "excluded_roles": [
+   "tilted",
+   "secondary"
+  ],
+  "y": "eFV minus PROSPX consensus, Spearman rho",
+  "band": "plus and minus the row's mde95 around zero"
+ },
+ "strata": [
+  "hit",
+  "pit"
+ ],
+ "regen_cmd": "python -c \"import efv_progress as P; P.update(trigger='efv_change')\" (nightly: run_monthly after the 9g scoreboard refresh and after run_source_backtest; by hand: tools/efv_scoreboard.py)",
+ "rule": "append-only; a row is added when a frame's measured content changes and otherwise only its last_verified_at moves; every number is copied from the artifact key named in the row",
+ "rows": [
+  {
+   "run_id": "2026-08-07T16:37:14Z|all_vintages|1a17d233",
+   "date": "2026-08-07",
+   "trigger": "backfill",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "c7593e00",
+    "label": null,
+    "resolved_through": null
+   },
+   "frame": "all_vintages",
+   "frame_version": null,
+   "role": "tilted",
+   "tilted": true,
+   "window": null,
+   "n": 3210,
+   "n_by_side": null,
+   "raters": {
+    "efv": {
+     "spearman": 0.3511,
+     "auc": null,
+     "n": 3210
+    },
+    "prospx_consensus": {
+     "spearman": 0.3214,
+     "auc": null,
+     "n": 3210
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.0297,
+      "ci95": null,
+      "mde95": 0.0352,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": null,
+      "resolvable": false,
+      "key": "head_to_head.verdict_vs_consensus"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "commit": "c7593e00",
+     "generated_at": "2026-08-07T16:37:14Z",
+     "sha256": null
+    }
+   ],
+   "note": "published as the headline basis on 2026-08-07; classified as tilted by docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md",
+   "last_verified_at": null,
+   "content_hash": "1a17d2335f92b12b8b4dbec36b753598b87e6ba9513dfaf7179528fd5bfb315f"
+  },
+  {
+   "run_id": "2026-08-16T17:43:13Z|vm|23e07275",
+   "date": "2026-08-16",
+   "trigger": "backfill",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "bd80d4c5",
+    "label": null,
+    "resolved_through": null
+   },
+   "frame": "vm",
+   "frame_version": "vm1",
+   "role": "headline",
+   "tilted": false,
+   "window": null,
+   "n": 802,
+   "n_by_side": null,
+   "raters": {
+    "efv": {
+     "spearman": 0.3946,
+     "auc": null,
+     "n": 802
+    },
+    "prospx_consensus": {
+     "spearman": 0.3929,
+     "auc": null,
+     "n": 802
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.0017,
+      "ci95": null,
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": null,
+      "resolvable": false,
+      "key": "head_to_head.verdict_vs_consensus"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "commit": "bd80d4c5",
+     "generated_at": "2026-08-16T17:43:13Z",
+     "sha256": null
+    }
+   ],
+   "note": "",
+   "last_verified_at": null,
+   "content_hash": "23e072750fa2f900d2d51d9598866a2b6fedf9b3edc134fed13b567c33983ee2"
+  },
+  {
+   "run_id": "2026-09-04T18:52:00Z|vm|71db02bf",
+   "date": "2026-09-04",
+   "trigger": "backfill",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "69fe0fca",
+    "label": null,
+    "resolved_through": null
+   },
+   "frame": "vm",
+   "frame_version": "vm1",
+   "role": "headline",
+   "tilted": false,
+   "window": null,
+   "n": 803,
+   "n_by_side": null,
+   "raters": {
+    "efv": {
+     "spearman": 0.3979,
+     "auc": null,
+     "n": 803
+    },
+    "prospx_consensus": {
+     "spearman": 0.4116,
+     "auc": null,
+     "n": 803
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.0137,
+      "ci95": null,
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": null,
+      "resolvable": false,
+      "key": "head_to_head.verdict_vs_consensus"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "commit": "69fe0fca",
+     "generated_at": "2026-09-04T18:52:00Z",
+     "sha256": null
+    }
+   ],
+   "note": "",
+   "last_verified_at": null,
+   "content_hash": "71db02bf69a42cb24037ff99b7563db1f76873869b2919fd2bd551685a589030"
+  },
+  {
+   "run_id": "2026-09-05T16:59:55Z|vm|f8a83488",
+   "date": "2026-09-06",
+   "trigger": "backfill",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "944502c5",
+    "label": null,
+    "resolved_through": null
+   },
+   "frame": "vm",
+   "frame_version": "vm1",
+   "role": "headline",
+   "tilted": false,
+   "window": null,
+   "n": 799,
+   "n_by_side": null,
+   "raters": {
+    "efv": {
+     "spearman": 0.4012,
+     "auc": null,
+     "n": 799
+    },
+    "prospx_consensus": {
+     "spearman": 0.4128,
+     "auc": null,
+     "n": 799
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.0116,
+      "ci95": null,
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": null,
+      "resolvable": false,
+      "key": "head_to_head.verdict_vs_consensus"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "commit": "944502c5",
+     "generated_at": "2026-09-05T16:59:55Z",
+     "sha256": null
+    }
+   ],
+   "note": "",
+   "last_verified_at": null,
+   "content_hash": "f8a83488e9d5674effd699a3d6c74eb99c6620d6edc7355f29b986da2ecea04a"
+  },
+  {
+   "run_id": "2026-09-24T19:26:45Z|vm|0196806a",
+   "date": "2026-09-24",
+   "trigger": "backfill",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "8100ce49",
+    "label": null,
+    "resolved_through": null
+   },
+   "frame": "vm",
+   "frame_version": "vm1",
+   "role": "headline",
+   "tilted": false,
+   "window": null,
+   "n": 812,
+   "n_by_side": null,
+   "raters": {
+    "efv": {
+     "spearman": 0.4061,
+     "auc": 0.7536,
+     "n": 812
+    },
+    "prospx_consensus": {
+     "spearman": 0.4134,
+     "auc": 0.7505,
+     "n": 812
+    },
+    "fangraphs": {
+     "spearman": 0.3672,
+     "auc": 0.7166,
+     "n": 812
+    },
+    "mlb_pipeline": {
+     "spearman": 0.412,
+     "auc": 0.7404,
+     "n": 812
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.0073,
+      "ci95": null,
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": null,
+      "resolvable": false,
+      "key": "head_to_head.verdict_vs_consensus"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.0389,
+      "ci95": null,
+      "mde95": null,
+      "key": "head_to_head.vs.fangraphs.spearman.margin"
+     },
+     "auc": {
+      "delta": 0.037,
+      "ci95": null,
+      "mde95": null,
+      "key": "head_to_head.vs.fangraphs.auc_contributor.margin"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.0059,
+      "ci95": null,
+      "mde95": null,
+      "key": "head_to_head.vs.mlb_pipeline.spearman.margin"
+     },
+     "auc": {
+      "delta": 0.0132,
+      "ci95": null,
+      "mde95": null,
+      "key": "head_to_head.vs.mlb_pipeline.auc_contributor.margin"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "commit": "8100ce49",
+     "generated_at": "2026-09-24T19:26:45Z",
+     "sha256": null
+    }
+   ],
+   "note": "",
+   "last_verified_at": null,
+   "content_hash": "0196806aa638ca0aa47b2f08a01e4b6f3a0903431bfd446c9b554c9e6894d009"
+  },
+  {
+   "run_id": "2026-09-25T01:25:53Z|vm|e4bb234a",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "791f3028",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "vm",
+   "frame_version": "vm1",
+   "role": "headline",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 806,
+   "n_by_side": {
+    "hit": 389,
+    "pit": 417
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3973,
+     "auc": 0.7472,
+     "n": 806
+    },
+    "prospx_consensus": {
+     "spearman": 0.4122,
+     "auc": 0.7485,
+     "n": 806
+    },
+    "mlb_pipeline": {
+     "spearman": 0.4113,
+     "auc": 0.7388,
+     "n": 806
+    },
+    "fangraphs": {
+     "spearman": 0.3649,
+     "auc": 0.7144,
+     "n": 806
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.0149,
+      "ci95": [
+       -0.044,
+       0.0142
+      ],
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": "E_cond, player-clustered",
+      "resolvable": false,
+      "key": "accuracy.head_to_head_verdict"
+     },
+     "auc": {
+      "delta": -0.0013,
+      "ci95": [
+       -0.0193,
+       0.0164
+      ],
+      "mde95": 0.0149,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.014,
+      "ci95": [
+       -0.0473,
+       0.0206
+      ],
+      "mde95": 0.0288,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": 0.0084,
+      "ci95": [
+       -0.0119,
+       0.0286
+      ],
+      "mde95": 0.0167,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.0324,
+      "ci95": [
+       -0.0097,
+       0.0746
+      ],
+      "mde95": 0.0355,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.0328,
+      "ci95": [
+       0.0075,
+       0.0573
+      ],
+      "mde95": 0.021,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources.sources.fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T01:25:53Z",
+     "sha256": "7d030323a3911ca2812c8d2b273ca58d90469f4ca6f34a8b412414d60494605a"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-24",
+     "sha256": "4c9c5e7c5483354bfd3619f27eebc3c48817cd509e1e9adbe265bba2aed7c652"
+    }
+   ],
+   "note": "",
+   "last_verified_at": "2026-09-25T01:44:26Z",
+   "content_hash": "e4bb234a9282cb3229ffc0b7f74b7f0dfeb29d84bdd9a0dd022ffd33ca94195b"
+  },
+  {
+   "run_id": "2026-09-25T01:25:53Z|predebut|bcde7128",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "791f3028",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "predebut",
+   "frame_version": null,
+   "role": "tilted",
+   "tilted": true,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 2693,
+   "n_by_side": {
+    "hit": 1374,
+    "pit": 1319
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3675,
+     "auc": 0.7623,
+     "n": 2693
+    },
+    "prospx_consensus": {
+     "spearman": 0.2933,
+     "auc": 0.7118,
+     "n": 2693
+    },
+    "mlb_pipeline": {
+     "spearman": 0.2983,
+     "auc": 0.7017,
+     "n": 2693
+    },
+    "fangraphs": {
+     "spearman": 0.2533,
+     "auc": 0.6729,
+     "n": 2693
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.0742,
+      "ci95": [
+       0.032,
+       0.1144
+      ],
+      "ci95_estimator": "E_cond, player-clustered",
+      "mde95": 0.0372,
+      "mde95_estimator": "E_refit",
+      "resolvable": true,
+      "key": "accuracy.head_to_head_by_frame.predebut"
+     }
+    }
+   },
+   "resolvable": true,
+   "verdict": "beats consensus",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T01:25:53Z",
+     "sha256": "7d030323a3911ca2812c8d2b273ca58d90469f4ca6f34a8b412414d60494605a"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-24",
+     "sha256": "4c9c5e7c5483354bfd3619f27eebc3c48817cd509e1e9adbe265bba2aed7c652"
+    }
+   ],
+   "note": "post-debut consensus reads removed, all remaining base years kept; tilted TOWARD eFV, which is graded at the decision year while the retained earlier reads are not",
+   "last_verified_at": "2026-09-25T01:44:26Z",
+   "content_hash": "bcde7128410a44273155711bbef41c16cd950a8ad97b42f3dd061b92927322b4"
+  },
+  {
+   "run_id": "2026-09-25T01:25:53Z|all_vintages|5dac1b1f",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "791f3028",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "all_vintages",
+   "frame_version": null,
+   "role": "tilted",
+   "tilted": true,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 3255,
+   "n_by_side": {
+    "hit": 1610,
+    "pit": 1645
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3556,
+     "auc": 0.7507,
+     "n": 3255
+    },
+    "prospx_consensus": {
+     "spearman": 0.3161,
+     "auc": 0.7214,
+     "n": 3255
+    },
+    "mlb_pipeline": {
+     "spearman": 0.317,
+     "auc": 0.7074,
+     "n": 3255
+    },
+    "fangraphs": {
+     "spearman": 0.2758,
+     "auc": 0.6835,
+     "n": 3255
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.0395,
+      "ci95": [
+       -0.0016,
+       0.0778
+      ],
+      "ci95_estimator": "E_cond, player-clustered",
+      "mde95": 0.0352,
+      "mde95_estimator": "E_refit",
+      "resolvable": true,
+      "key": "accuracy.head_to_head_by_frame.all_vintages"
+     }
+    }
+   },
+   "resolvable": true,
+   "verdict": "beats consensus",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T01:25:53Z",
+     "sha256": "7d030323a3911ca2812c8d2b273ca58d90469f4ca6f34a8b412414d60494605a"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-24",
+     "sha256": "4c9c5e7c5483354bfd3619f27eebc3c48817cd509e1e9adbe265bba2aed7c652"
+    }
+   ],
+   "note": "every base year including post-debut consensus reads; tilted TOWARD the consensus, which sees major league performance on those rows",
+   "last_verified_at": "2026-09-25T01:44:26Z",
+   "content_hash": "5dac1b1f974efe078488c1ba5d5c20c9d479fe413cc95f1321e1594189495e65"
+  },
+  {
+   "run_id": "2026-09-25T01:25:53Z|disagreement|2d087e5e",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v1",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit",
+    "commit": "791f3028",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "disagreement",
+   "frame_version": null,
+   "role": "secondary",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 283,
+   "n_by_side": null,
+   "raters": {},
+   "deltas": {},
+   "resolvable": true,
+   "verdict": "eFV is closer on 57% of the 283 resolved disagreements, 95% CI 51% to 63%. The interval clears the 50% coin, so the edge is resolvable at this sample size.",
+   "share": {
+    "efv_right_share": 0.565,
+    "ci95": [
+     0.5088,
+     0.6254
+    ],
+    "null": 0.5,
+    "key": "disagreement_receipts"
+   },
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T01:25:53Z",
+     "sha256": "7d030323a3911ca2812c8d2b273ca58d90469f4ca6f34a8b412414d60494605a"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-24",
+     "sha256": "4c9c5e7c5483354bfd3619f27eebc3c48817cd509e1e9adbe265bba2aed7c652"
+    }
+   ],
+   "note": "latest pre-debut consensus read",
+   "last_verified_at": "2026-09-25T01:44:26Z",
+   "content_hash": "2d087e5eed707b50cbec8709ba8e91a3476d741cb0a0a26dea6ee6d37d475c5f"
+  }
+ ],
+ "backfill": {
+  "paths": {
+   "data/source_backtest.json": {
+    "versions": 0,
+    "rows": 0,
+    "versions_without_verdict": 0,
+    "note": "no committed versions: the file is gitignored and has never been committed"
+   },
+   "data/xfv_scoreboard_eval.json": {
+    "versions": 7,
+    "rows": 5,
+    "versions_without_verdict": 2,
+    "note": ""
+   }
+  },
+  "skipped_as_live": [],
+  "ran_at": "2026-09-25T01:35:55Z",
+  "rows_emitted": 5
+ }
+}

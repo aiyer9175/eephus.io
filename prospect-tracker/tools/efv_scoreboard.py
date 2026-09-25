@@ -591,7 +591,21 @@ def _strip_gen(d):
     return {k: v for k, v in d.items() if k != "generated_at"}
 
 
-def main():
+def _progress_update():
+    """EV-00: a by-hand run records the eFV progress ledger with trigger
+    efv_change (docs/efv-v2/PROGRAM.md s5.2). run_monthly passes
+    --no-progress and records its own "nightly" row. Best-effort."""
+    try:
+        import efv_progress
+        res = efv_progress.update(trigger="efv_change")
+        print(f"efv_progress: {efv_progress.summary_line(res)}")
+    except Exception as exc:                                  # noqa: BLE001
+        print(f"efv_progress: update failed ({exc})")
+
+
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    progress = "--no-progress" not in argv
     result = build()
     if OUT_PATH.exists():
         try:
@@ -601,10 +615,14 @@ def main():
         if prev and _strip_gen(prev) == _strip_gen(result):
             print(f"unchanged (compare-before-write): {OUT_PATH}")
             _print_summary(result)
+            if progress:
+                _progress_update()
             return 0
     OUT_PATH.write_text(json.dumps(result, indent=1), encoding="utf-8")
     print(f"wrote {OUT_PATH}")
     _print_summary(result)
+    if progress:
+        _progress_update()
     return 0
 
 
