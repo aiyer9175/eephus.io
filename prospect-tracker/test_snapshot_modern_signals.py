@@ -121,6 +121,20 @@ def test_a_rerun_with_no_new_data_keeps_the_bytes(tmp_path):
     assert f.read_bytes() == before and m.read_bytes() == mbefore
 
 
+def test_a_crlf_checkout_is_not_a_change(tmp_path):
+    """core.autocrlf=true rewrites tracked files to CRLF on checkout. That is
+    not new data: neither the season file nor the manifest may be rewritten."""
+    db = _db(tmp_path / "a.db", {"statlines": [_statline("a", 2026, ".800", "2026-08-01")]})
+    _run(tmp_path, db, today=date(2026, 8, 2))
+    snap = tmp_path / "snap"
+    for p in (snap / "2026" / "statlines.json", snap / S.MANIFEST):
+        p.write_bytes(p.read_bytes().replace(b"\n", b"\r\n"))
+    before = {p: p.read_bytes() for p in snap.rglob("*.json")}
+    res = _run(tmp_path, db, today=date(2026, 9, 2))
+    assert res["actions"]["2026/statlines.json"] == "unchanged"
+    assert {p: p.read_bytes() for p in snap.rglob("*.json")} == before
+
+
 def test_statcast_keeps_aggregates_and_drops_event_lists(tmp_path):
     payload = {
         "player_key": "p", "mlbam_id": 1, "season": 2026, "level": "AAA",

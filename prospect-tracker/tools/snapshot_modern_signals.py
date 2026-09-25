@@ -533,7 +533,9 @@ def _manifest(snap_dir: Path, live_season: int, taken_at: str) -> dict:
         except (OSError, ValueError):
             continue
         files[f"{p.parent.name}/{p.name}"] = {
-            "bytes": p.stat().st_size,
+            # LF bytes: core.autocrlf rewrites checkouts to CRLF, and the
+            # manifest must not churn because git touched a file
+            "bytes": len(p.read_bytes().replace(b"\r\n", b"\n")),
             "n_rows": head.get("n_rows"),
             "as_of": head.get("as_of"),
             "completeness": head.get("completeness"),
