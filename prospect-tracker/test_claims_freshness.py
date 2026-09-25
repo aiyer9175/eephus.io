@@ -1209,3 +1209,79 @@ def test_prospect_path_registry_row_quotes_only_artifact_figures():
         if not any(abs(abs(v) - abs(h)) <= half + 1e-9 for h in have):
             orphans.append(tok)
     assert not orphans, f"figures with no source in {row['eval_artifact']}: {orphans}"
+
+
+# ---------------------------------------------------------------------------
+# X02-03 (2026-09-25): five entries described the $/WAR bases wrongly. The FA
+# rational value called itself "the same NPV currency as PROSPX" while it
+# prices a win at the winter level ($17.1M) against the prospect set's flat
+# $11.74M; rational value and mGuarantee said the winter level carries at a
+# "flat 5%" while fa_export escalates at the series trend (dpw_infl 0.0416),
+# and quoted forecast MAPEs (0.122 / 0.132 against 0.102) the eval artifact no
+# longer holds; value_framework and surplus_value priced realized value as
+# career WAR x a flat $11.74M while PROSPX prices each season at its tier.
+
+def _all_text(entry):
+    return " ".join(v for v in entry.values() if isinstance(v, str))
+
+
+def _money_mm(text):
+    return [float(x) for x in re.findall(r"\$(\d+\.\d+)M", text)]
+
+
+def test_dpw_basis_copy_matches_the_served_bases():
+    import value_framework
+
+    cfg = value_framework._config()["dollars_per_war"]
+    flat = float(cfg["flat"]) / 1e6
+    tiers = [float(v) / 1e6 for v in cfg["tiered"]["rates"].values()]
+    fa = _read_json("data/fa_class.json")
+    cy = int(fa["class_year"])
+    winter = f"{cy - 1}-{cy % 100:02d} winter"
+    level = float(fa["dpw_usd"]) / 1e6
+    infl_pct = float(fa["dpw_infl"]) * 100
+    ev = _read_json("data/dpw_forecast_eval.json")["summary"]
+    problems = []
+
+    rv = _all_text(_glossary_entry("rational_value"))
+    mg = _all_text(_glossary_entry("m_guarantee"))
+    for eid, text in (("rational_value", rv), ("m_guarantee", mg)):
+        if re.search(r"flat 5%", text):
+            problems.append(f"{eid} still says the winter level carries at a flat 5%")
+        for raw in re.findall(r"\((\d+\.\d)%(?: a year)? for the ", text):
+            if abs(float(raw) - infl_pct) > 0.05:
+                problems.append(f"{eid} quotes a {raw}% carry; fa_class dpw_infl {infl_pct:.2f}%")
+        if winter not in text:
+            problems.append(f"{eid} does not name the {winter}")
+    if "Same NPV currency as PROSPX" in rv:
+        problems.append("rational_value claims the prospect surplus currency")
+    got = re.findall(r"prices a win at \$(\d+\.\d)M where prospect surplus prices at "
+                     r"the clemens_2026 set's flat \$(\d+\.\d\d)M", rv)
+    if not got:
+        problems.append("rational_value level sentence changed shape")
+    for w, f in got:
+        if abs(float(w) - level) > 0.05:
+            problems.append(f"rational_value winter level ${w}M; fa_class {level:.3f}")
+        if abs(float(f) - flat) > 0.005:
+            problems.append(f"rational_value prospect level ${f}M; engine {flat:.2f}")
+    m = re.search(r"carry[^.]*?MAPE (0\.\d+), a log-linear trend (0\.\d+) and the trend "
+                  r"with a CBT covariate (0\.\d+)", mg)
+    if not m:
+        problems.append("m_guarantee forecast sentence changed shape")
+    else:
+        for raw, key in zip(m.groups(), ("flat5", "trend", "trend_cbt")):
+            if abs(float(raw) - float(ev[key]["mape"])) > 0.0005:
+                problems.append(f"m_guarantee {key} MAPE {raw}; artifact {ev[key]['mape']}")
+
+    for eid in ("value_framework", "surplus_value"):
+        text = _all_text(_glossary_entry(eid))
+        if re.search(r"\$/WAR_overall", text):
+            problems.append(f"{eid} prices realized value at a flat $/WAR_overall")
+        allowed = tiers + [flat]
+        for v in _money_mm(text):
+            if v < 20 and not any(abs(v - a) <= 0.005 for a in allowed):
+                problems.append(f"{eid} quotes ${v}M/WAR, none of the configured rates")
+        for t in tiers:
+            if f"${t:.2f}M" not in text:
+                problems.append(f"{eid} does not state the ${t:.2f}M tier")
+    assert not problems, "$/WAR basis copy drift: " + "; ".join(problems)
