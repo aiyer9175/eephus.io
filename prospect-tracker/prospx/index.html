@@ -37267,6 +37267,23 @@ function renderBucketBar(buckets, opts) {
 // P10-P90 band, a darker P25-P75 box, a median tick and an expected-value
 // (mean) tick. Self-scaled to its own P90 (a per-row sparkline of SHAPE, not a
 // cross-row scale). opts: {height, axis (P10/median/P90 labels under the bar)}.
+// TWO BASES ON ONE eFV CARD (census M01-08, 2026-09-24). The eFV P(bust) is the
+// Platt-calibrated outcome odds (x.p_bust), while the dollar fan (x.dist) is priced by the
+// value framework from the uncalibrated outcome mix at the display grade, which gives bust
+// a much smaller share (Jesus Made: calibrated 0.349 against about 0.05 inside the fan).
+// The bust bucket prices at the $0.7M floor, so when P(bust) alone is at least 10% / 25% /
+// 50% the fan's P10 / P25 / P50 should sit on that floor if both read one mix. Where they
+// do not, the card says so instead of printing two numbers that cannot both hold. Pricing
+// the fan from the calibrated mix moves served dollars and is an owner / gate question.
+const _EFV_FAN_FLOOR_MM = 1.0;   // above the $0.7M bust floor, below any real outcome
+function efvFanBasisConflict(x) {
+  const d = x && x.dist;
+  const pb = x && x.p_bust != null ? Number(x.p_bust) : null;
+  if (!d || pb == null || !isFinite(pb)) return false;
+  const above = v => v != null && isFinite(Number(v)) && Number(v) > _EFV_FAN_FLOOR_MM;
+  return (pb >= 0.10 && above(d.p10_mm)) || (pb >= 0.25 && above(d.p25_mm))
+      || (pb >= 0.50 && above(d.p50_mm));
+}
 function renderSvDistribution(dist, opts) {
   opts = opts || {};
   if (!dist || dist.p50_mm == null || dist.p90_mm == null) return "";
@@ -48246,6 +48263,10 @@ function renderPlayerDetail(key) {
            <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;flex:none;">Surplus band <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;">${_bandFlat ? "P10 = P90" : "P10 to P90"}</span></span>
            <span style="font-family:var(--font-mono);color:var(--text-secondary);font-variant-numeric:tabular-nums;">${_bandFlat ? `80%+ at ${fmtSvMM(_bandLo)}` : `${fmtSvMM(_bandLo)} to ${fmtSvMM(_bandHi)}`}</span>
          </div>` : "";
+    // The fan and P(bust) are on different bases; say so where they visibly disagree.
+    const _efvBasisNote = (_useEfv && _efvFan && efvFanBasisConflict(_xf))
+      ? `<div class="efv-basis-note" style="margin:-4px 0 8px;font-size:10px;line-height:1.45;color:var(--text-tertiary);font-style:italic;" title="The bust bucket prices at the $700K floor. If the dollar range used the calibrated P(bust), its low end would sit on that floor.">Two bases: P(bust) ${Math.round(Number(_xf.p_bust) * 100)}% on the grade card is the calibrated outcome odds. This dollar range is priced from the model's uncalibrated outcome mix, which gives bust a smaller share, so its low end sits above the $700K bust floor.</div>`
+      : "";
     const fmtUsd = m => {
       if (m == null) return " - ";
       if (m >= 100) return `$${m.toFixed(0)}M`;
@@ -48295,7 +48316,7 @@ function renderPlayerDetail(key) {
              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${_surpSub}</div>
            </div>
            <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="${_useEfv ? `eFV expected surplus over the ${_winWords}, from the outcome-grounded grade (the model's calibrated WAR distribution priced through the value framework). ${escapeHtml(surplusTip)}` : surplusTip}">${fmtUsd(surplus)}</div>
-         </div>${_efvFan ? `<div style="margin:-2px 0 8px;">${_efvFan}</div>` : ""}${_efvBand}`
+         </div>${_efvFan ? `<div style="margin:-2px 0 8px;">${_efvFan}</div>` : ""}${_efvBand}${_efvBasisNote}`
       : "";
     // Expected market AAV - FV-derived WAR/yr × $/WAR market rate.
     // Same projection logic the WAG metric uses, surfaced as a "what
