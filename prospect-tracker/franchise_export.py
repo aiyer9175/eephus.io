@@ -647,7 +647,8 @@ def build() -> dict:
             "recent_spend": meta.get("recentSpend"), "max_guar": meta.get("maxGuar"), "n100m": meta.get("n100m"),
             "roster_surplus_ev": {"active_mm": _r(sum(act), 1), "debuted_mm": _r(sum(deb), 1),
                                   "total_mm": _r(sum(act) + sum(deb), 1), "n_active": len(act), "n_debuted": len(deb),
-                                  "basis": "sum of trade_values posterior_surplus_mm, a sum of means and never of quantiles"},
+                                  "basis": ("sum of trade_values posterior_surplus_mm, a sum of means and never of quantiles; "
+                                            "the Trade Machine currency, which overlaps the farm surplus and is never added to it")},
             "cba_banner": True,
             "basis": ("Club Ledger (ledger_export): Cost+ and space on both bases" if ledger_live
                       else "fa_meta.teams (Spotrac); Club Ledger not on disk"),
@@ -871,7 +872,7 @@ def build() -> dict:
                  leaf("space_2027", f"Space {CLASS_YEAR}", (fin_doc["space_2027"] or {}).get("spotrac_usd"), "usd_signed", None, "Spotrac basis; never a ladder", "cbt_space", links["ledger"]),
                  leaf("tax_payroll_2027", f"Tax payroll {CLASS_YEAR}", fin_doc["tax_payroll_2027"], "usd", None, "fa_meta.teams.taxPayroll (Spotrac)", "cbt_payroll", links["ledger"]),
                  leaf("payor_2027", "Payor tier", (fin_doc["payor_2027"] or {}).get("value"), "text", None, "Spotrac or derived, named on the tile", "payor_tier", links["ledger"]),
-                 leaf("roster_surplus_ev", "Roster surplus EV", fin_doc["roster_surplus_ev"]["total_mm"], "usdm", None, "sum of trade_values posterior means; never quantiles", "surplus_value", links["trade_board"]),
+                 leaf("roster_surplus_ev", "Trade currency (overlaps farm)", fin_doc["roster_surplus_ev"]["total_mm"], "usdm", None, "Trade Machine currency: sum of trade_values posterior means over prospect and debuted rows; contains the farm surplus, never added to it", "trade_machine", links["trade_board"]),
              ]},
             {"key": "market", "kind": "descriptive", "label": "MARKET", "title": BRANCH_TITLE["market"],
              "weight": None, "score": None, "rank": None, "letter": None,
@@ -1011,6 +1012,9 @@ def build() -> dict:
         "space_label_platform": (f"platform carry-forward, {cba.get('threshold_usd', 0) // 1_000_000}M" if cba.get("threshold_usd") else "platform carry-forward"),
         "fin_no_ladder": "a salary, a club surplus total and a cap-space cell never take a ladder; sign colour only",
         "surplus_ev": "a sum of posterior means (trade_values), never of quantiles",
+        "trade_currency_label": "Trade currency (overlaps farm)",
+        "trade_currency_overlap": ((ledger.get("copy") or {}).get("trade_currency_split")
+                                   or "the trade currency is the prospect rows plus the debuted rows; it overlaps the farm surplus and is never added to it"),
         "market_fits_note": "fit is a model of where a player signs, not of club quality (fa_team_fit provisional)",
         "market_realized_title": "Realized contract value to date",
         "market_realized_sentence": ("realized value, not skill: this is what the contracts returned, not how well the "

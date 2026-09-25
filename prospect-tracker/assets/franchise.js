@@ -503,12 +503,12 @@
       tile(gl("Payor tier", "payor_tier"), esc((s.payor_2027 || {}).value || ""), esc((s.payor_2027 || {}).basis || ""), "", d.links.ledger) +
       tile("$ per projected win", esc(money(s.usd_per_win)), "plain dollars, no ladder", "", d.links.ledger) +
       tile("Recent spend, 3 winters", esc(money(s.recent_spend)), "largest guarantee " + esc(money(s.max_guar)) + " &middot; " + esc(nInt(s.n100m)) + " deals of 100M+", "", d.links.fa_archive);
-    var sur = mini([[gl("Roster surplus EV", "surplus_value"), '<span class="' + signCls(ev.total_mm) + '">' + esc(moneyMM(ev.total_mm)) + "</span>"],
+    var sur = mini([[gl(copy("trade_currency_label"), "trade_machine"),'<span class="' + signCls(ev.total_mm) + '">' + esc(moneyMM(ev.total_mm)) + "</span>"],
                     ["Active prospects (" + esc(nInt(ev.n_active)) + ")", esc(moneyMM(ev.active_mm))],
                     ["Debuted (" + esc(nInt(ev.n_debuted)) + ")", esc(moneyMM(ev.debuted_mm))],
                     ["Projected " + esc(DATA.class_year) + " arbitration cost", esc(money(d.sections.arbitration.proj_2027_usd))]]);
     return banner() + '<div class="fr-tiles">' + t + "</div>" + sur +
-      '<p class="fr-count">' + esc(copy("surplus_ev")) + " " + esc(copy("fin_no_ladder")) + " " + esc(copy("fin_cost_plus_registry")) + "</p>";
+      '<p class="fr-count">' + esc(copy("trade_currency_overlap")) + ". " + esc(copy("surplus_ev")) + " " + esc(copy("fin_no_ladder")) + " " + esc(copy("fin_cost_plus_registry")) + "</p>";
   }
   function secMarket(d) {
     var s = d.sections.market;

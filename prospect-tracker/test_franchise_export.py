@@ -383,6 +383,20 @@ def test_roster_surplus_is_a_sum_of_posterior_means_not_quantiles(clubs):
             assert "p10" not in k and "p90" not in k and "lo" not in k and "hi" not in k
 
 
+def test_fin_trade_currency_is_labelled_as_overlapping_the_farm_surplus(d, clubs):
+    lg = _load("ledger_board.json")
+    assert "overlap" in d["copy"]["trade_currency_label"]
+    assert "overlaps" in d["copy"]["trade_currency_overlap"] and "never added" in d["copy"]["trade_currency_overlap"]
+    for code, c in clubs.items():
+        ev = c["sections"]["fin"]["roster_surplus_ev"]
+        assert "overlaps the farm surplus" in ev["basis"], code
+        lf = next(x for x in _branch(c, "fin")["leaves"] if x["key"] == "roster_surplus_ev")
+        assert lf["label"] == d["copy"]["trade_currency_label"] and "never added" in lf["basis"], code
+        assert "Roster surplus" not in lf["label"]
+        if code in lg.get("clubs", {}):
+            assert abs(ev["total_mm"] - lg["clubs"][code]["surplus"]["trade_currency_mm"]) < 0.11, code
+
+
 def test_arb_ou_mkt_and_ou_war_are_never_combined(d, clubs):
     ah = _load("arb_history.json")
     assert d["copy"]["never_combine"] == ah["field_key"]["never_combine"]
