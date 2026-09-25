@@ -147,7 +147,8 @@ COLUMNS = {
                        "wag_label", "in_vets"],
     "farm.picks": ["pick_overall", "round_label", "player_name", "slot_usd", "bonus_usd", "signed",
                    "over_slot_usd", "prospect_key"],
-    "farm.picks_summary": ["n_picks", "n_still_active", "n_graduated"],
+    "farm.picks_summary": ["n_picks", "n_signed", "n_on_tracker", "n_graduated", "n_not_tracked",
+                           "n_unsigned_on_tracker"],
     "farm.method": ["n", "n_with_bonus", "gross_mm", "cost_mm", "net_mm", "net_per_cost_ratio",
                     "served_net_mm", "served_cost_mm", "served_count", "served_per_fv_pt_mm"],
     "farm.trajectory_active": ["snapshot_date", "active_trade_value_mm"],
@@ -770,8 +771,10 @@ def build_all() -> tuple:
         if gc in clubs:
             grads_by_club[gc].append(g)
     grads_dropped = sorted(o for o in grads_orgs_in if _canon(o) not in clubs)
-    # league-wide pick maps for the picks summary: a pick counts as still active
-    # or graduated wherever the player is now, not only on the drafting club
+    # league-wide pick maps for the picks summary: a pick counts as on the prospect
+    # tracker or graduated wherever the player is now, not only on the drafting club.
+    # The tracker carries the ranked and graded prospects, not every signed minor
+    # leaguer, so a signed pick it does not carry is "not tracked", never "inactive".
     active_by_pick: dict = {}
     for p in ts.get("players") or []:
         a = p.get("acquisition") or {}
@@ -1293,7 +1296,7 @@ def build_all() -> tuple:
         for y in DRAFT_YEARS:
             mine = [r for r in draft_results if r.get("draft_year") == y and _canon(r.get("team")) == c]
             prow = []
-            n_act = n_grad = 0
+            n_signed = n_act = n_grad = n_unsigned_act = 0
             for r in sorted(mine, key=lambda x: x.get("pick_overall") or 0):
                 pk = (y, r.get("pick_overall"))
                 # the v1 draft_paid slotted rule: a figure only when both slot and
@@ -1302,10 +1305,19 @@ def build_all() -> tuple:
                         if (r.get("slot_usd") and r.get("bonus_usd")) else None)
                 prow.append([r.get("pick_overall"), r.get("round_label"), r.get("player_name"), r.get("slot_usd"),
                              r.get("bonus_usd"), r.get("signed"), over, pick_to_prospect.get(pk)])
-                n_act += 1 if pk in active_by_pick else 0
-                n_grad += 1 if pk in grad_by_pick else 0
+                # signed picks only, each in exactly one of three buckets:
+                # on the tracker (active prospect), graduated, not tracked
+                if r.get("signed"):
+                    n_signed += 1
+                    if pk in active_by_pick:
+                        n_act += 1
+                    elif pk in grad_by_pick:
+                        n_grad += 1
+                elif pk in active_by_pick:
+                    n_unsigned_act += 1
             picks[str(y)] = prow
-            picks_summary[str(y)] = [len(prow), n_act, n_grad]
+            picks_summary[str(y)] = [len(prow), n_signed, n_act, n_grad, n_signed - n_act - n_grad,
+                                     n_unsigned_act]
         farm["picks_summary"] = picks_summary
 
         # -- (b) arbitration: every rung, the by-season split, the realized rows ----
@@ -1848,8 +1860,12 @@ def build_all() -> tuple:
             "method_efficiency copied; net_per_cost_ratio is net_mm / cost_mm, a ratio of two served "
             "numbers, plain, no ladder; trade is always [0, 0, null, null, null, null, null, null, 0, null] "
             "today"),
-        "farm.picks_summary": ("year -> [n_picks, n_still_active, n_graduated]; a pick counts as still "
-                               "active or graduated wherever the player is now, not only on the drafting club"),
+        "farm.picks_summary": ("year -> [n_picks, n_signed, n_on_tracker, n_graduated, n_not_tracked, "
+                               "n_unsigned_on_tracker]; the middle three split the signed picks and sum to "
+                               "n_signed; a pick counts as on the tracker or graduated wherever the player is "
+                               "now, not only on the drafting club; the prospect tracker carries ranked and "
+                               "graded prospects, not every signed minor leaguer, so not tracked mixes released "
+                               "players with players the tracker never carried"),
         "farm.trajectory_active": (
             "[snapshot_date, sum of trade_value_mm over that snapshot's active-status rows]; each "
             "snapshot's own actives, gross eFV basis, no bonus netting, so it is not the leaf's series"),
@@ -2161,6 +2177,9 @@ def _assert_document(doc: dict) -> None:
         assert sum(r[1] + r[3] for r in bs.values()) == d["arbitration"]["remaining_usd"], (c, "by_season != remaining")
         assert d["surplus"]["reconciliation"]["status"] == "exact", (c, d["surplus"]["reconciliation"])
         assert d["shard"]["path"] == f"{SHARD_DIRNAME}/{c}.json", c
+        for y, ps in d["farm"]["picks_summary"].items():
+            assert len(ps) == len(COLUMNS["farm.picks_summary"]), (c, y)
+            assert ps[2] + ps[3] + ps[4] == ps[1] and ps[4] >= 0, (c, y, "signed picks split")
     for path, k in _walk_keys(doc):
         ks = str(k).lower()
         assert ks not in FORBIDDEN_KEYS, path

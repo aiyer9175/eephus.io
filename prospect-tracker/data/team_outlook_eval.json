@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-24",
+ "generated_at": "2026-09-25",
  "first_season": 2027,
  "league_sum_accounting": {
   "roster_war_sum": 962.9,
@@ -28,7 +28,7 @@
    {
     "season": 2028,
     "roster_war_sum": 574.4,
-    "wins_sum": 2430.1,
+    "wins_sum": 2429.8,
     "remainder_recenter_wins_per_team": 12.68
    },
    {

@@ -95,7 +95,8 @@ def test_thirty_clubs_and_only_canonical_codes(d, clubs):
         assert bad not in clubs, bad
     oj = d["accountability"]["org_join"]
     assert oj["war_leaderboards"][1] == 30 and oj["team_outlook"][1] == 30 and oj["org_summary"][1] == 30
-    assert oj["fa_meta"][0] > 30 and "Cuba" in oj["trade_values_dropped"]
+    assert oj["fa_meta"][0] > 30 and not set(oj["trade_values_dropped"]) & set(clubs)
+    assert oj["trade_values"][0] - oj["trade_values"][1] == len(oj["trade_values_dropped"])
     assert oj["management_teams"][0] == 31 and oj["management_teams"][1] == 30, "OAK joins ATH"
     assert oj["standings_ids"] == 30
 

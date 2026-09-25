@@ -100,7 +100,9 @@ def test_thirty_clubs_and_only_thirty_after_the_canonical_join(d):
     oj = d["accountability"]["org_join"]
     assert oj["fa_meta"][1] == 30 and oj["trade_values"][1] == 30 and oj["arb_history"][1] == 30
     assert oj["fa_meta"][0] > 30, "fa_meta carries AVERAGES and OAK before the join"
-    assert "Cuba" in oj["trade_values_dropped"], "the 31st trade_values org is Cuba and it is dropped"
+    # a non-club org (Cuba through 2026-09-24's inputs) is dropped, never made a 31st club
+    assert oj["trade_values"][0] - oj["trade_values"][1] == len(oj["trade_values_dropped"])
+    assert not set(oj["trade_values_dropped"]) & clubs
     assert d["accountability"]["n_clubs"] == 30
 
 
@@ -995,7 +997,9 @@ def test_the_new_sources_rows_and_stamps_are_published(d, shards):
         assert stamps.get(k), k
     oj = d["accountability"]["org_join"]
     assert oj["debuts_lite"][1] == 30 and oj["debuts_lite"][0] > 30
-    assert "Cuba" in oj["debuts_lite_dropped"] and "Office of the Commissioner" in oj["debuts_lite_dropped"]
+    assert oj["debuts_lite"][0] - oj["debuts_lite"][1] == len(oj["debuts_lite_dropped"])
+    assert "Office of the Commissioner" in oj["debuts_lite_dropped"]
+    assert not set(oj["debuts_lite_dropped"]) & set(d["clubs"])
     assert d["method"]["sources_stamps"] == d["copy"]["sources_stamps"]
     for c, club in d["clubs"].items():
         fr = club["farm"]["reconciliation"]
@@ -1666,3 +1670,28 @@ def test_opt_outs_are_stamped_not_priced_and_the_sentence_is_quoted(d, shards):
     assert total_rows >= 1 and total_seasons >= total_rows
     for path, k, _v in _walk(d):
         assert "opt_out_value" not in str(k) or path.startswith("sections"), path
+
+
+def test_picks_summary_splits_the_signed_picks_by_tracker_coverage(d):
+    """A 2026 pick the prospect tracker does not carry is 'not tracked', never
+    'no longer active' (M09-06: 212 of 565 signed 2026 picks are on the tracker)."""
+    cols = d["columns"]["farm.picks_summary"] if "farm.picks_summary" in d.get("columns", {}) else None
+    import ledger_export as LE
+    cols = cols or LE.COLUMNS["farm.picks_summary"]
+    assert cols == ["n_picks", "n_signed", "n_on_tracker", "n_graduated", "n_not_tracked", "n_unsigned_on_tracker"]
+    assert "not every signed minor leaguer" in d["field_key"]["farm.picks_summary"]
+    tot = {}
+    for code, c in d["clubs"].items():
+        shard = json.loads((ROOT / "data" / "ledger_clubs" / f"{code}.json").read_text(encoding="utf-8"))
+        for y, ps in c["farm"]["picks_summary"].items():
+            n_picks, n_signed, n_on, n_grad, n_not, n_unsigned_on = ps
+            rows = shard["farm"]["picks"][y]
+            assert n_picks == len(rows), (code, y)
+            assert n_signed == sum(1 for r in rows if r[5]), (code, y)
+            assert n_on + n_grad + n_not == n_signed and min(ps) >= 0, (code, y)
+            t = tot.setdefault(y, [0, 0, 0])
+            t[0] += n_signed
+            t[1] += n_on
+            t[2] += n_not
+    # the 2026 class is two months old: most of it is untracked, not gone
+    assert tot["2026"][0] > 500 and tot["2026"][2] > tot["2026"][1]

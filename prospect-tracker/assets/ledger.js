@@ -818,9 +818,9 @@
         return "<tr><td>" + esc(cv("farm.picks", r, "pick_overall")) + "</td><td>" + esc(cv("farm.picks", r, "round_label")) + "</td><td>" + (pk ? '<a href="' + esc("#section=club&team=" + state.team + "&block=prospects") + '" data-lprospect="' + esc(pk) + '">' + nm + "</a>" : nm) + "</td>" +
           "<td>" + esc(isNum(cv("farm.picks", r, "slot_usd")) ? money(cv("farm.picks", r, "slot_usd")) : "") + "</td><td>" + esc(isNum(cv("farm.picks", r, "bonus_usd")) ? money(cv("farm.picks", r, "bonus_usd")) : "") + "</td><td>" + signedMoney(cv("farm.picks", r, "over_slot_usd")) + "</td><td>" + esc(cv("farm.picks", r, "signed") ? "signed" : (cv("farm.picks", r, "signed") === 0 ? "unsigned" : "")) + "</td></tr>";
       }).join("");
-      return "<details><summary>" + esc(y) + ": " + esc(rows.length) + " picks" + (sm ? ", " + esc(cv("farm.picks_summary", sm, "n_still_active")) + " still active, " + esc(cv("farm.picks_summary", sm, "n_graduated")) + " graduated" : "") + "</summary>" +
+      return "<details><summary>" + esc(y) + ": " + esc(rows.length) + " picks" + (sm ? ", " + esc(cv("farm.picks_summary", sm, "n_signed")) + " signed: " + esc(cv("farm.picks_summary", sm, "n_on_tracker")) + " on the prospect tracker, " + esc(cv("farm.picks_summary", sm, "n_graduated")) + " graduated, " + esc(cv("farm.picks_summary", sm, "n_not_tracked")) + " not tracked" : "") + "</summary>" +
         '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Pick</th><th>Round</th><th>Player</th><th>Slot</th><th>Bonus</th><th>Over slot</th><th>Signed</th></tr></thead><tbody>' + body + "</tbody></table></div></details>";
-    }).join("") + '<p class="ledger-count">joined on draft year and overall pick, never on name; still-active and graduated counts follow the player wherever he is now</p>';
+    }).join("") + '<p class="ledger-count">joined on draft year and overall pick, never on name; the tracker and graduated counts follow the player wherever he is now. The prospect tracker carries ranked and graded prospects, not every signed minor leaguer, so not tracked mixes released players with players it never carried.</p>';
   }
   function renderFa(d) {
     var A = d.fa, R = A.realized;

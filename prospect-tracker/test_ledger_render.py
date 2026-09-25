@@ -687,7 +687,7 @@ def _sample2():
                    "preview_n": 2, "cap_bytes": 160000, "board_guard_bytes": 950000}
     c = s["clubs"]["LAD"]
     c["farm"].update({
-        "preview": [P_ONE, P_TWO], "n_prospects": 3, "n_graduates": 2, "picks_summary": {"2026": [2, 1, 0]},
+        "preview": [P_ONE, P_TWO], "n_prospects": 3, "n_graduates": 2, "picks_summary": {"2026": [3, 2, 1, 0, 1, 0]},
         "trajectory_active": [["2026-06-25", 500.0], ["2026-09-23", 514.0]],
         "reconciliation": {"leaf_mm": 455.4, "leaf_cost_mm": 57.6, "leaf_n": 3, "leaf_source": "timeseries.org_summary tree.fin_active_surplus",
                            "leaf_generated_at": "2026-09-23T18:22:28Z", "rows_gross_mm": 514.0, "rows_cost_mm": 57.62, "rows_net_mm": 456.38,
@@ -888,6 +888,14 @@ def test_an_unsigned_pick_prints_a_blank_over_slot_cell_not_a_saving():
     assert '<td>Some Pick</td><td>$1.5M</td><td>$1.2M</td><td><span class="ledger-neg">-$0.3M</span></td><td>signed</td>' in farm, "a signed under-slot pick keeps its figure"
     assert '<td>Unsigned Pick</td><td>$0.9M</td><td>$0.0M</td><td><span class=""></span></td><td>unsigned</td>' in farm, "an unsigned pick prints a blank over-slot cell"
     assert "-$0.9M" not in farm
+
+
+def test_the_picks_summary_splits_signed_picks_by_tracker_coverage_never_still_active():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
+    farm = _block(html, "farm")
+    assert "2026: 3 picks, 2 signed: 1 on the prospect tracker, 0 graduated, 1 not tracked" in farm
+    assert "still active" not in farm and "still-active" not in farm
+    assert "not every signed minor leaguer" in farm
 
 
 def test_the_war_path_strip_shows_means_and_the_expander_shows_bands():
