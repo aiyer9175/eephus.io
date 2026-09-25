@@ -223,6 +223,14 @@
     var key = t.getAttribute("data-teampick-key");
     var hadFocus = ae === sel || (key === lastFocus.id && (!ae || ae === document.body)
       && Date.now() - lastFocus.at < FOCUS_FOLLOW_MS);
+    // The trigger stands in the bar at the height the select had there
+    // (census review 2026-09-25: 24px beside 27px fields on /mlbstats/, 24 beside
+    // 25.6 on /ledger/ and /management/, 24 beside 44 on the PROSPX phone bars).
+    // Read before the select is hidden; a select painted into a hidden panel
+    // measures 0 and the trigger keeps its own height. A CSS variable rather
+    // than an inline min-height, so the coarse-pointer 44px rule still wins.
+    var nativeH = sel.getBoundingClientRect().height;
+    if (nativeH > 0) t.style.setProperty("--teampick-h", nativeH.toFixed(1) + "px");
     sel.parentNode.insertBefore(t, sel);
     inst.trigger = t;
     inst.key = null;

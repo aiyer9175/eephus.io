@@ -337,3 +337,31 @@ def test_the_panel_stays_inside_a_phone_viewport(browser, label, path, css, _):
         assert page.evaluate("() => document.documentElement.scrollWidth - document.documentElement.clientWidth") <= 0
     finally:
         ctx.close()
+
+
+# The trigger replaces a select that stood in a bar beside other fields; it
+# must stand at that height (rendered review 2026-09-25: 24px beside the 27px
+# search on /mlbstats/, 24 beside the 25.6px season select on /management/,
+# 24 beside the 44px PROSPX chart selects at phone width, and 24 beside the
+# 27px player search on /arbitration/).
+HEIGHT_CASES = [
+    ("mlbstats bullpen", "mlbstats/#section=bullpen", "#mlbstats-team", "#mlbstats-q", 1280, 900),
+    ("management clubs", "management/#section=clubs", "#mgmt-club", "#mgmt-cseason", 1280, 900),
+    ("prospx charts phone", "prospx/#tab=charts", "#chart-filter-org", "#chart-filter-level", 390, 844),
+    ("arbitration", "arbitration/", "#arb-team", "#arb-q", 1280, 900),
+]
+
+
+@pytest.mark.parametrize("label,path,css,sib,w,h", HEIGHT_CASES, ids=[c[0] for c in HEIGHT_CASES])
+def test_the_trigger_stands_at_its_bar_height(browser, label, path, css, sib, w, h):
+    base, ctx, page = _page(browser, w, h)
+    try:
+        _open(page, base, path, css)
+        got = page.evaluate("""([s, o]) => { const t = document.querySelector(s).previousElementSibling;
+            const b = document.querySelector(o); if (!t || !b) return null;
+            return {trig: t.getBoundingClientRect().height, sib: b.getBoundingClientRect().height}; }""",
+                            [css, sib])
+        assert got and got["sib"] > 0, (label, got)
+        assert abs(got["trig"] - got["sib"]) <= 1.0, (label, got)
+    finally:
+        ctx.close()

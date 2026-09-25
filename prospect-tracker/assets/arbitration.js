@@ -141,16 +141,17 @@
        inherit them. Buttons become .chip and pick up `.fa-app button.chip`
        from site.css, which is what the class chips beside them already are.
        No colour literals, no radius (the global rule zeroes it anyway). */
-    ".arb-app .filter-bar select{font-family:var(--font-retro-mono);font-size:12px;padding:6px 9px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border)}",
-    ".arb-app .filter-bar select:focus-visible{outline:2px solid var(--accent-gold);outline-offset:1px}",
+    ".arb-app .filter-bar select,.arb-app .arb-findbar select{font-family:var(--font-retro-mono);font-size:12px;padding:6px 9px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border)}",
+    ".arb-app .filter-bar select:focus-visible,.arb-app .arb-findbar select:focus-visible{outline:2px solid var(--accent-gold);outline-offset:1px}",
     /* The name search and the club picker sit on a row of their own above
        the class chips: on a phone the chip bar is a sideways scroller, and a
        search at its far end would be off screen. The field takes the site's
-       control dialect (site.css section 12 and the control-theme sweep): the
+       control dialect (site.css section 12 and the control-theme sweep) and the
+       club select's box, so the two stand at one height: the
        --text-tertiary boundary that clears 3:1 on its fill, the cyan ring,
        and 16px under a coarse pointer so iOS does not zoom on focus. */
     ".arb-app .arb-findbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 6px}",
-    ".arb-app .arb-findbar input[type=search]{font-family:var(--font-retro-mono);font-size:12px;line-height:16px;padding:3px 8px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--text-tertiary);min-width:0;width:200px;max-width:100%;box-sizing:border-box}",
+    ".arb-app .arb-findbar input[type=search]{font-family:var(--font-retro-mono);font-size:12px;padding:6px 9px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--text-tertiary);min-width:0;width:200px;max-width:100%;box-sizing:border-box}",
     ".arb-app .arb-findbar input[type=search]:hover{border-color:var(--text-secondary)}",
     ".arb-app .arb-findbar input[type=search]:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:2px}",
     "@media (pointer:coarse){.arb-app .arb-findbar input[type=search]{font-size:16px;min-height:44px}}",
