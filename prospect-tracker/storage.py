@@ -9517,7 +9517,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     from stats import compute_age_decimal
     from age_level import score_age_vs_level
     from eta import (estimate_eta, LEVEL_BIAS_ADJ as ETA_LEVEL_BIAS_ADJ,
-                     FORTYMAN_ADJ as ETA_FORTYMAN_ADJ)
+                     FORTYMAN_ADJ as ETA_FORTYMAN_ADJ, apply_fg_blend,
+                     fg_eta_year_from_per_source, live_floor_year)
+    import eta as _eta_mod
     # MLB regular-season end for this year (StatsAPI /seasons, cached a week, disk
     # fallback). Past it, eta.estimate_eta rolls a current-year ETA to next year's
     # early window (census M01-05). Unknown -> None -> only Nov/Dec roll, as before.
@@ -9887,74 +9889,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # 3 calendar years of events so the tendency reflects current
     # front-office behavior, not a decade-old pattern.
     def _compute_org_promotion_tendencies() -> dict[str, dict]:
+        # The computation lives in eta.org_promotion_tendencies (moved 2026-09-25,
+        # byte-identical) so the org keep-or-remove gate can score the SAME code
+        # point-in-time. Served: rolling window from this year minus 3, current org.
         from datetime import date as _date
-        from eta import ALL_STAR_BREAK_MONTH, ALL_STAR_BREAK_DAY
-        today = _date.today()
-        min_year = today.year - 3  # rolling 3-year window
-        # player_key → org resolution. Prefer the player's current org
-        # (roster_org_by_key) since most level changes happen at their
-        # current org; graduates that crossed orgs are rare.
-        org_h1: dict[str, int] = {}
-        org_h2: dict[str, int] = {}
-        for key, events in level_changes.items():
-            org = roster_org_by_key.get(key)
-            if not org:
-                continue
-            for ev in events or []:
-                if ev.get("kind") not in {"promotion", "debut"}:
-                    continue
-                date_str = ev.get("date") or ""
-                if len(date_str) < 10:
-                    continue
-                try:
-                    d = _date.fromisoformat(date_str[:10])
-                except ValueError:
-                    continue
-                if d.year < min_year:
-                    continue
-                # Bucket by H1 / H2 of the season the event landed in.
-                # Off-season events (Nov-Feb) are skipped — they're
-                # offseason adds, not in-season call-ups.
-                if d.month in {11, 12, 1, 2}:
-                    continue
-                if (d.month, d.day) >= (ALL_STAR_BREAK_MONTH, ALL_STAR_BREAK_DAY):
-                    org_h2[org] = org_h2.get(org, 0) + 1
-                else:
-                    org_h1[org] = org_h1.get(org, 0) + 1
-        out: dict[str, dict] = {}
-        per_org_n: dict[str, int] = {}
-        for org in set(list(org_h1) + list(org_h2)):
-            h1 = org_h1.get(org, 0)
-            h2 = org_h2.get(org, 0)
-            n = h1 + h2
-            if n < 5:
-                # Too few events to anchor a rate; skip — the player's
-                # ETA falls back to the league-default half-season adj.
-                continue
-            per_org_n[org] = n
-            out[org] = {
-                "h1_rate":   round(h1 / n, 3),
-                "h2_rate":   round(h2 / n, 3),
-                "sample_n":  n,
-            }
-        # v31.11 — Org promotion aggressiveness. Index is the org's
-        # rolling-3yr promotion+debut count divided by the league
-        # median count over that same window. >1.0 = more aggressive
-        # promoter than the median org (LAD/TBR profile), <1.0 = more
-        # conservative (PIT/CIN profile). Consumed by eta.py as a
-        # floor multiplier — aggressive orgs let quality cluster
-        # compress further; conservative orgs hold the line.
-        if per_org_n:
-            sorted_n = sorted(per_org_n.values())
-            mid = len(sorted_n) // 2
-            if len(sorted_n) % 2 == 1:
-                median_n = sorted_n[mid]
-            else:
-                median_n = (sorted_n[mid - 1] + sorted_n[mid]) / 2
-            if median_n > 0:
-                for org, n in per_org_n.items():
-                    out[org]["aggressiveness_index"] = round(n / median_n, 3)
-        return out
+        from eta import org_promotion_tendencies as _org_tendencies
+        return _org_tendencies(level_changes, roster_org_by_key,
+                               min_year=_date.today().year - 3)
 
     org_promotion_tendencies = _compute_org_promotion_tendencies()
 
@@ -10965,6 +10906,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # Live caller only: eta_backtest never passes it, so eta_eval is unmoved.
             regular_season_end=_eta_season_end,
         )
+        # FanGraphs-blend arm (eta.ETA_FG_BLEND_ARM, default None = champion served
+        # unchanged; apply_fg_blend returns the same object). Registered gate:
+        # docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md; flipping it is the owner's call.
+        if _eta_mod.ETA_FG_BLEND_ARM is not None:
+            eta = apply_fg_blend(
+                eta,
+                fg_eta_year_from_per_source(
+                    p.points[-1].per_source if p.points else None),
+                arm=_eta_mod.ETA_FG_BLEND_ARM,
+                on40=bool(rs.get("on_40_man")),
+                floor_year=live_floor_year(date.today(), _eta_season_end,
+                                           date.today().year),
+            )
         # Performance-vs-level-median enrichment. wRC+/xFIP aren't on the
         # MLB Stats API, so we compute their conceptual cousins from the
         # per-level baselines we already have:
@@ -11758,6 +11712,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # True when the calendar floor rolled a current-year ETA to next
                 # year's early window because the regular season is over.
                 "season_end_roll":   bool(getattr(eta, "season_end_roll", False)),
+                # FanGraphs-blend arm, present ONLY when eta.ETA_FG_BLEND_ARM served a
+                # blend for this prospect (absent while the flag is off).
+                **({"fg_blend_arm": eta.fg_blend_arm,
+                    "fg_eta_year": eta.fg_eta_year,
+                    "champion_year": eta.champion_eta_year}
+                   if getattr(eta, "fg_blend_arm", None) else {}),
             },
             # Per-tool lifetime delta map (first observation → latest).
             # `{hit: {delta, first, last, first_date, last_date, n_obs}, ...}`

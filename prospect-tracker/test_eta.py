@@ -322,5 +322,151 @@ class SeasonEndWiring(unittest.TestCase):
         if bt.exists():
             self.assertNotIn("regular_season_end", bt.read_text(encoding="utf-8"))
 
+class FanGraphsBlendArm(unittest.TestCase):
+    """ETA_FG_BLEND_ARM (registered 2026-09-25, docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md).
+
+    Default off, fixed constants, and the two arms' exact arithmetic."""
+
+    def test_flag_defaults_off_and_constants_are_the_registered_ones(self):
+        import eta
+        self.assertIsNone(eta.ETA_FG_BLEND_ARM)
+        self.assertEqual(eta.FG_BLEND_ARMS, ("A", "B"))
+        self.assertEqual(eta.FG_BLEND_WEIGHT, 0.5)
+        self.assertEqual(eta.FG_BLEND_FORTYMAN_SHIFT, 1)
+
+    def test_round_half_up_not_bankers(self):
+        from eta import round_half_up
+        self.assertEqual(round_half_up(2026.5), 2027)
+        self.assertEqual(round_half_up(2024.5), 2025)   # banker's round gives 2024
+        self.assertEqual(round_half_up(2025.49), 2025)
+
+    def test_arm_a_is_the_rounded_midpoint_floored(self):
+        from eta import fg_blend_eta_year
+        self.assertEqual(fg_blend_eta_year(2029, 2026, 2024, arm="A"), 2028)   # 2027.5 up
+        self.assertEqual(fg_blend_eta_year(2028, 2026, 2024, arm="A"), 2027)
+        self.assertEqual(fg_blend_eta_year(2026, 2026, 2024, arm="A"), 2026)
+        # FanGraphs later than the champion pulls later
+        self.assertEqual(fg_blend_eta_year(2025, 2028, 2024, arm="A"), 2027)
+        # never before the floor year
+        self.assertEqual(fg_blend_eta_year(2024, 2022, 2024, arm="A"), 2024)
+        # the 40-man flag does nothing in arm A
+        self.assertEqual(fg_blend_eta_year(2028, 2026, 2024, on40=True, arm="A"), 2027)
+
+    def test_arm_b_shifts_forty_man_rows_one_year_then_floors(self):
+        from eta import fg_blend_eta_year
+        self.assertEqual(fg_blend_eta_year(2028, 2026, 2024, on40=True, arm="B"), 2026)
+        self.assertEqual(fg_blend_eta_year(2028, 2026, 2024, on40=False, arm="B"), 2027)
+        self.assertEqual(fg_blend_eta_year(2025, 2024, 2024, on40=True, arm="B"), 2024)
+
+    def test_no_fangraphs_year_keeps_the_champion(self):
+        from eta import fg_blend_eta_year
+        self.assertEqual(fg_blend_eta_year(2029, None, 2024, on40=True, arm="B"), 2029)
+        self.assertIsNone(fg_blend_eta_year(None, 2026, 2024, arm="A"))
+
+    def test_unknown_arm_raises(self):
+        from eta import fg_blend_eta_year
+        with self.assertRaises(ValueError):
+            fg_blend_eta_year(2028, 2026, 2024, arm="C")
+
+    def test_fg_year_only_from_a_current_fangraphs_entry(self):
+        from eta import fg_eta_year_from_per_source as f
+        ok = {"fangraphs": {"dropped_off": False, "tools": {"_extras": {"eta_year": 2027}}}}
+        self.assertEqual(f(ok), 2027)
+        self.assertEqual(f({"fangraphs": {"tools": {"_extras": {"eta_year": "2028"}}}}), 2028)
+        self.assertEqual(f({"fangraphs": {"tools": {"_extras": {"eta_year": 2028.0}}}}), 2028)
+        dropped = {"fangraphs": {"dropped_off": True, "tools": {"_extras": {"eta_year": 2027}}}}
+        self.assertIsNone(f(dropped))
+        self.assertIsNone(f({"mlb": {"tools": {"_extras": {"eta_year": 2027}}}}))
+        self.assertIsNone(f({"fangraphs": {"tools": {"_extras": {"eta_year": ""}}}}))
+        self.assertIsNone(f({"fangraphs": {"tools": {"_extras": {"eta_year": "late"}}}}))
+        self.assertIsNone(f({"fangraphs": {"tools": {"_extras": {"eta_year": 2027.5}}}}))
+        self.assertIsNone(f({"fangraphs": {"tools": None}}))
+        self.assertIsNone(f(None))
+
+    def test_live_floor_year_rolls_after_the_season(self):
+        from eta import live_floor_year
+        self.assertEqual(live_floor_year(date(2026, 8, 1), "2026-09-27", 2026), 2026)
+        self.assertEqual(live_floor_year(date(2026, 9, 28), "2026-09-27", 2026), 2027)
+        self.assertEqual(live_floor_year(date(2026, 9, 28), None, 2026), 2026)
+        self.assertEqual(live_floor_year(date(2026, 11, 3), None, 2026), 2027)
+
+    def test_apply_is_identity_while_the_flag_is_off(self):
+        from eta import apply_fg_blend
+        r = estimate_eta("AA", 22.0, False, 50, {"ops": ".750"}, snapshot_date=date(2026, 4, 10))
+        self.assertIs(apply_fg_blend(r, 2030, arm=None, floor_year=2026), r)
+        self.assertIsNone(r.fg_blend_arm)
+        self.assertIsNone(r.champion_eta_year)
+
+    def test_apply_without_a_fangraphs_year_keeps_the_champion(self):
+        from eta import apply_fg_blend
+        r = estimate_eta("AA", 22.0, False, 50, {"ops": ".750"}, snapshot_date=date(2026, 4, 10))
+        self.assertIs(apply_fg_blend(r, None, arm="A", floor_year=2026), r)
+
+    def test_apply_serves_the_arm_and_keeps_the_champion_year(self):
+        from eta import apply_fg_blend, fg_blend_eta_year
+        r = estimate_eta("A", 20.0, False, 45, None, snapshot_date=date(2026, 4, 10))
+        fg = r.eta_year - 2
+        floor = date.today().year
+        out = apply_fg_blend(r, fg, arm="B", on40=True, floor_year=floor)
+        self.assertEqual(out.eta_year, fg_blend_eta_year(r.eta_year, fg, floor, on40=True, arm="B"))
+        self.assertEqual(out.champion_eta_year, r.eta_year)
+        self.assertEqual(out.fg_eta_year, fg)
+        self.assertEqual(out.fg_blend_arm, "B")
+        self.assertEqual(out.base_years, r.base_years)
+
+    def test_live_caller_is_guarded_by_the_flag(self):
+        from pathlib import Path
+        src = (Path(__file__).resolve().parent / "storage.py").read_text(encoding="utf-8")
+        self.assertIn("if _eta_mod.ETA_FG_BLEND_ARM is not None:", src)
+        self.assertIn("fg_eta_year_from_per_source(", src)
+        # the served JSON gains blend keys only when a blend was served
+        self.assertIn('if getattr(eta, "fg_blend_arm", None) else {})', src)
+
+
+class OrgPromotionTendencies(unittest.TestCase):
+    """eta.org_promotion_tendencies: the served computation (moved out of storage.py
+    2026-09-25) and the point-in-time filters the org keep-or-remove gate uses."""
+
+    @staticmethod
+    def _events(dates, kind="promotion"):
+        return [{"kind": kind, "date": d} for d in dates]
+
+    def test_served_rules(self):
+        from eta import org_promotion_tendencies
+        lc = {
+            "a": self._events(["2025-04-10", "2025-05-10", "2025-08-01"]),
+            "b": self._events(["2025-07-20", "2025-08-20"], kind="debut"),
+            "c": self._events(["2025-12-01", "2025-06-01"], kind="demotion"),   # skipped
+            "d": self._events(["2025-01-15"]),                                   # offseason
+        }
+        orgs = {"a": "TBR", "b": "TBR", "c": "TBR", "d": "TBR"}
+        out = org_promotion_tendencies(lc, orgs, min_year=2023)
+        self.assertEqual(out["TBR"]["sample_n"], 5)
+        self.assertEqual(out["TBR"]["h2_rate"], 0.6)
+        self.assertEqual(out["TBR"]["h1_rate"], 0.4)
+        self.assertEqual(out["TBR"]["aggressiveness_index"], 1.0)
+
+    def test_thin_orgs_and_orgless_players_are_skipped(self):
+        from eta import org_promotion_tendencies
+        lc = {"a": self._events(["2025-04-10"] * 4), "b": self._events(["2025-04-10"] * 9)}
+        out = org_promotion_tendencies(lc, {"a": "SEA"}, min_year=2023)
+        self.assertEqual(out, {})
+
+    def test_point_in_time_filters(self):
+        from eta import org_promotion_tendencies
+        lc = {"a": self._events(["2021-05-01"] * 6 + ["2022-05-01"] * 5 + ["2024-05-01"] * 7)}
+        orgs = {"a": "SEA"}
+        out = org_promotion_tendencies(lc, orgs, before="2024-03-01", seasons={2022, 2023})
+        self.assertEqual(out["SEA"]["sample_n"], 5)
+        out = org_promotion_tendencies(lc, orgs, before="2024-03-01")
+        self.assertEqual(out["SEA"]["sample_n"], 11)
+
+    def test_storage_serves_the_shared_function(self):
+        from pathlib import Path
+        src = (Path(__file__).resolve().parent / "storage.py").read_text(encoding="utf-8")
+        self.assertIn("from eta import org_promotion_tendencies as _org_tendencies", src)
+        self.assertIn("min_year=_date.today().year - 3)", src)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -96,6 +96,11 @@ LAST_FULL_SEASON = 2025
 # No professional activity in/after this season + never debuted = washed
 # out (same convention as surplus_backtest_real).
 WASHED_BEFORE = 2024
+# Registered gate blocks that their own labs write into eta_eval.json and that the
+# monthly rebuild must carry forward (see run()). 2026-09-25 adds the FanGraphs-blend
+# gate and the org promotion-timing keep-or-remove gate
+# (docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md).
+GATE_BLOCK_PREFIXES = ("empirical_table_gate_", "fg_blend_gate_", "org_timing_gate_")
 
 _LEVEL_ORDER = ["DSL", "FRk", "Rk", "ROK", "CPX", "A-", "A", "A+", "AA", "AAA"]
 # Levels the ETA model knows; historical short-season/rookie labels fold in.
@@ -597,7 +602,7 @@ def run(persist: bool = True) -> dict:
         try:
             prev = json.loads(OUT_PATH.read_text(encoding="utf-8"))
             for k, v in prev.items():
-                if k.startswith("empirical_table_gate_") and k not in out:
+                if k.startswith(GATE_BLOCK_PREFIXES) and k not in out:
                     out[k] = v
         except (FileNotFoundError, json.JSONDecodeError):
             pass

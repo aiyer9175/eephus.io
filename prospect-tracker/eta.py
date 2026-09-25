@@ -37,7 +37,8 @@ Confidence levels:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import math
+from dataclasses import dataclass, replace
 from datetime import date
 
 
@@ -148,6 +149,22 @@ LEVEL_BIAS_ADJ: dict[str, float] = {
 # Passed by storage.py ONLY for rows whose roster_status carries on_40_man; every other row
 # passes None and is byte-identical.
 FORTYMAN_ADJ: dict[str, float] = {"AAA": 0.0, "AA": 0.97, "A+": 1.0, "A": 1.0}
+
+# FanGraphs-blend arms (registered 2026-09-25, docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md).
+# DEFAULT OFF. None serves the champion unchanged; "A" or "B" serves the blend arm of that
+# name for every prospect whose CURRENT FanGraphs list entry publishes an eta_year:
+#   arm A: max(floor_year, rnd(0.5 x champion + 0.5 x FanGraphs))
+#   arm B: max(floor_year, rnd(0.5 x champion + 0.5 x FanGraphs) - on40)
+# where rnd rounds half up and on40 is 1 for a prospect already on the 40-man. Everyone
+# else keeps the champion. The weight and the one-year 40-man shift are FIXED, chosen on the
+# research lanes' development vintages (lists 2017-2019 and 2022-2023: arm A MAE 0.971 vs
+# champion 1.130, arm B 0.953, overdue +52 and +0 against the +110 guardrail). Those
+# vintages are spent; the gate's one look is on the fresh 2024 list on or after 2026-09-28.
+# Flipping this flag is the owner's call after that look, never the gate's.
+ETA_FG_BLEND_ARM: str | None = None
+FG_BLEND_ARMS = ("A", "B")
+FG_BLEND_WEIGHT = 0.5
+FG_BLEND_FORTYMAN_SHIFT = 1
 
 # v38 — Item-4 ETA rebalance: shift weight from current level onto age.
 # The level base is modestly de-weighted (×0.90 — a ~10% compression of the
@@ -325,6 +342,12 @@ class ETAResult:
     # window because the MLB regular season is over (census M01-05, 2026-09-24).
     # Appended after fortyman_adj_applied for the same reason.
     season_end_roll: bool = False
+    # FanGraphs-blend arm (ETA_FG_BLEND_ARM, default off). Set only when apply_fg_blend
+    # served a blend: the arm name, FanGraphs' published year and the champion's year
+    # before the blend. None on every champion result. Appended last, as above.
+    fg_blend_arm: str | None = None
+    fg_eta_year: int | None = None
+    champion_eta_year: int | None = None
 
 
 def _as_date(v):
@@ -380,6 +403,79 @@ def _org_promotion_phase_weight(phase: str, org_tendency: dict | None) -> float:
     if h2 >= 0.60:
         return 0.5
     return 1.0
+
+
+def org_promotion_tendencies(level_changes: dict, org_by_key: dict, *,
+                             min_year: int | None = None, before=None,
+                             seasons=None) -> dict[str, dict]:
+    """Per-org H1/H2 promotion split and aggressiveness index, the dict estimate_eta
+    takes as `org_promotion_tendency` (one org's entry).
+
+    `level_changes` maps player_key to dated events; only kinds "promotion" and "debut"
+    count, Nov-Feb events are skipped, events on or after the All-Star-break cutoff are
+    H2. Each event is credited to `org_by_key[player_key]` (players without an org are
+    skipped). An org with fewer than 5 events gets no entry. The aggressiveness index
+    is the org's event count over the median count across orgs with an entry.
+
+    storage.py serves it with `min_year` = this year minus 3 and each player's current
+    org. The point-in-time form the org keep-or-remove gate scores
+    (docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md section 7) passes `before` (events dated
+    strictly before it) and `seasons` (event years allowed), with orgs as of the list
+    date."""
+    before_d = _as_date(before)
+    org_h1: dict[str, int] = {}
+    org_h2: dict[str, int] = {}
+    for key, events in (level_changes or {}).items():
+        org = org_by_key.get(key)
+        if not org:
+            continue
+        for ev in events or []:
+            if ev.get("kind") not in {"promotion", "debut"}:
+                continue
+            date_str = ev.get("date") or ""
+            if len(date_str) < 10:
+                continue
+            try:
+                d = date.fromisoformat(date_str[:10])
+            except ValueError:
+                continue
+            if min_year is not None and d.year < min_year:
+                continue
+            if seasons is not None and d.year not in seasons:
+                continue
+            if before_d is not None and d >= before_d:
+                continue
+            if d.month in {11, 12, 1, 2}:
+                continue
+            if (d.month, d.day) >= (ALL_STAR_BREAK_MONTH, ALL_STAR_BREAK_DAY):
+                org_h2[org] = org_h2.get(org, 0) + 1
+            else:
+                org_h1[org] = org_h1.get(org, 0) + 1
+    out: dict[str, dict] = {}
+    per_org_n: dict[str, int] = {}
+    for org in set(list(org_h1) + list(org_h2)):
+        h1 = org_h1.get(org, 0)
+        h2 = org_h2.get(org, 0)
+        n = h1 + h2
+        if n < 5:
+            continue
+        per_org_n[org] = n
+        out[org] = {
+            "h1_rate":   round(h1 / n, 3),
+            "h2_rate":   round(h2 / n, 3),
+            "sample_n":  n,
+        }
+    if per_org_n:
+        sorted_n = sorted(per_org_n.values())
+        mid = len(sorted_n) // 2
+        if len(sorted_n) % 2 == 1:
+            median_n = sorted_n[mid]
+        else:
+            median_n = (sorted_n[mid - 1] + sorted_n[mid]) / 2
+        if median_n > 0:
+            for org, n in per_org_n.items():
+                out[org]["aggressiveness_index"] = round(n / median_n, 3)
+    return out
 
 
 def estimate_eta(
@@ -876,3 +972,87 @@ def estimate_eta(
         fortyman_adj_applied=round(_fortyman_applied, 2),
         season_end_roll=season_end_roll,
     )
+
+# ── FanGraphs-blend arms (default off; see ETA_FG_BLEND_ARM) ────────────────
+
+def round_half_up(x: float) -> int:
+    """floor(x + 0.5): the blend's rounding rule (never Python's banker's round)."""
+    return int(math.floor(float(x) + 0.5))
+
+
+def fg_blend_eta_year(champion_year: int | None, fg_eta_year: int | None,
+                      floor_year: int, *, on40: bool = False,
+                      arm: str = "A") -> int | None:
+    """The registered blend arm's debut year for one prospect.
+
+    `champion_year` is the served champion's year, `fg_eta_year` FanGraphs' published
+    year (None when FanGraphs publishes none), `floor_year` the earliest year the
+    forecast may name (the list year in the gate; the first open season when served).
+    Without a FanGraphs year, or without a champion year, the champion stands."""
+    if arm not in FG_BLEND_ARMS:
+        raise ValueError(f"unknown ETA blend arm {arm!r}; expected one of {FG_BLEND_ARMS}")
+    if champion_year is None or fg_eta_year is None:
+        return champion_year
+    year = round_half_up(FG_BLEND_WEIGHT * float(champion_year)
+                         + (1.0 - FG_BLEND_WEIGHT) * float(fg_eta_year))
+    if arm == "B" and on40:
+        year -= FG_BLEND_FORTYMAN_SHIFT
+    return max(int(floor_year), year)
+
+
+def fg_eta_year_from_per_source(per_source: dict | None) -> int | None:
+    """FanGraphs' published eta_year from a consensus point's per_source map.
+
+    Only a CURRENT FanGraphs entry counts: a source the consensus flags dropped_off
+    (the player fell off FanGraphs' list) returns None, as does a missing or
+    non-integer year."""
+    fg = (per_source or {}).get("fangraphs") or {}
+    if not isinstance(fg, dict) or fg.get("dropped_off"):
+        return None
+    tools = fg.get("tools") or {}
+    extras = tools.get("_extras") if isinstance(tools, dict) else None
+    if not isinstance(extras, dict):
+        return None
+    raw = extras.get("eta_year")
+    if raw is None or raw == "" or isinstance(raw, bool):
+        return None
+    try:
+        f = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if f != f or f != int(f) or not 1990 <= f <= 2100:
+        return None
+    return int(f)
+
+
+def live_floor_year(snapshot_date, regular_season_end, today_year: int) -> int:
+    """The earliest debut year a served forecast may name: this year, or next year
+    once the regular season is over (the same rule estimate_eta's calendar floor
+    applies: a snapshot past the season end, or any November/December snapshot)."""
+    d = _as_date(snapshot_date)
+    if d is not None and d.year == int(today_year) and d.month in (11, 12):
+        return int(today_year) + 1
+    if regular_season_over(snapshot_date, regular_season_end, today_year):
+        return int(today_year) + 1
+    return int(today_year)
+
+
+def apply_fg_blend(result: ETAResult, fg_eta_year: int | None, *, arm: str | None,
+                   on40: bool = False, floor_year: int) -> ETAResult:
+    """Serve the blend arm on top of a champion ETAResult.
+
+    `arm` None (the default flag) returns `result` itself, so the served path is
+    byte-identical while the flag is off. With an arm, a prospect without a
+    FanGraphs year also keeps the champion result untouched. Otherwise the year
+    becomes the arm's year and the champion's own year is kept alongside it. The
+    sub-year half keeps the champion's bucket (the gate scores whole years only),
+    except that a current-year window after the All-Star break reads "late", the
+    same calendar floor estimate_eta applies."""
+    if arm is None or result.eta_year is None or fg_eta_year is None:
+        return result
+    year = fg_blend_eta_year(result.eta_year, fg_eta_year, floor_year, on40=on40, arm=arm)
+    half = result.eta_half
+    if year == date.today().year and result.season_phase == "post_break":
+        half = "late"
+    return replace(result, eta_year=year, eta_half=half, fg_blend_arm=arm,
+                   fg_eta_year=int(fg_eta_year), champion_eta_year=result.eta_year)
