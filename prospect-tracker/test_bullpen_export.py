@@ -149,3 +149,32 @@ def test_join_leverage_consistency(tmp_path, monkeypatch):
     # Missing artifact: a clean no-op, never an exception.
     monkeypatch.setattr(be, "LEVCON_PATH", tmp_path / "nope.json")
     assert be._join_leverage_consistency(rows) == 0
+
+
+def test_the_scorecard_market_line_is_rem_plus_on_the_regate_pair_set():
+    """Census M06-01. The REM+ scorecard printed "market fit rho 0.5157 vs AAV":
+    the rho of a damping-0.5 leverage-weighted lab variant, on 271 signings
+    joined by normalized name. REM+ itself reads 0.5665 on the 2026-09-18
+    re-gate's 232 matched signings, and that stored number is the one the line
+    now copies. Nothing here computes a correlation."""
+    bt = be._backtest()
+    if not bt:
+        pytest.skip("data/rem_plus_eval.json absent")
+    try:
+        regate = json.loads(be.MARKET_PATH.read_text(encoding="utf-8"))["B1_primary"]
+    except (OSError, KeyError, ValueError):
+        pytest.skip("data/riv_market_regate_eval.json absent")
+    assert bt["market_rho"] == regate["v1"]["rho_baseline"]
+    assert bt["market_n"] == regate["n_matched_signings"]
+    old = json.loads(be.EVAL_PATH.read_text(encoding="utf-8")).get("market_check_aav") or {}
+    for k in ("rho_leverage_weighted_vs_aav", "rho_rem_plus_vs_aav"):
+        if old.get(k) is not None:
+            assert bt["market_rho"] != old[k], k
+
+
+def test_the_market_line_is_absent_when_the_regate_artifact_is(tmp_path, monkeypatch):
+    monkeypatch.setattr(be, "MARKET_PATH", tmp_path / "nope.json")
+    assert be._market_line() == {}
+    bt = be._backtest()
+    if bt:
+        assert bt["market_rho"] is None and bt["market_n"] is None

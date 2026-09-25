@@ -1086,3 +1086,31 @@ def test_the_exporters_still_write_the_block_the_page_now_reads():
     assert tb.get("note"), "the disclosure block lost its note"
     assert tb.get("basis") in ("current_roster", "stats_earned")
     assert tb.get("n_rows")
+
+
+def _render_with_backtest(bt: dict) -> str:
+    sample = json.loads(SAMPLE)
+    sample["verdict"] = "validated"
+    sample["backtest"] = bt
+    ctx = MiniRacer()
+    ctx.eval(_prelude("").replace("var SAMPLE=" + SAMPLE + ";",
+                                  "var SAMPLE=" + json.dumps(sample) + ";") + JS)
+    return ctx.eval("__html['mlbstats-app-root'] || ''")
+
+
+_BT = {"status": "validated", "n_pairs": 878, "seasons": 7, "rho_rem_plus": 0.2363,
+       "rho_fip": 0.211, "rho_era": 0.0901, "disclaimer": "d"}
+
+
+def test_the_scorecard_never_prints_a_bare_market_rho():
+    """Census M06-01. The old payload carried market_rho 0.5157 with no count:
+    the leverage-weighted lab variant on a name-matched set, printed under
+    REM+. A market number without its signing count is refused."""
+    html = _render_with_backtest(dict(_BT, market_rho=0.5157))
+    assert "mlbstats-scorecard" in html
+    assert "0.5157" not in html and "AAV" not in html
+    html = _render_with_backtest(dict(_BT, market_rho=0.5665, market_n=232,
+                                      market_as_of="2026-09-18"))
+    assert "REM+ vs next-winter AAV &rho; <b>0.5665</b>" in html
+    assert "232 signings, descriptive" in html
+    assert "market fit" not in html

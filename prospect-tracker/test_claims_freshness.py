@@ -141,6 +141,19 @@ BANNED_CLAIM_FRAGMENTS = (
     # five sources. The copy now states what the payload carries; see
     # test_sources_copy_names_every_republished_report_source.
     "reports are republished wholesale",
+    # Census M06-04 (2026-09-25). The xHEM+ Blend column header on /mlbstats/
+    # said it "Beats xwOBA alone on next-year offense out of sample" and the
+    # fwdhem_plus glossary methodology said its gap floor sat above zero. The
+    # 2026-09-18 re-gate of the SERVED column (data/xhem_served_regate_eval.json
+    # A2, rung D4) read 0.4613 against 0.4543, lo95 -0.0012 (v1) and -0.0076
+    # (v2), and demoted the row to provisional. The receipt now prints those.
+    "beats xwoba alone",
+    "gap floor above zero under the pre-registered convention",
+    "incumbent forward column",
+    # Census M06-01 (2026-09-25). The REM+ scorecard printed "market fit rho
+    # 0.5157 vs AAV": the leverage-weighted lab variant on 271 name-matched
+    # signings, under REM+'s name. It now prints REM+ on the re-gate's 232.
+    "market fit &rho;",
 )
 
 # Copy surfaces the ratchet scans. content/*.json is globbed at test time.
@@ -152,6 +165,7 @@ CLAIM_SURFACES = (
     "collegesavant/pitcher_app.js",
     "build_site.py",
     "sources/index.html",
+    "assets/mlbstats.js",
 )
 
 # ---------------------------------------------------------------------------

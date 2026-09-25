@@ -246,8 +246,9 @@
   //   - the IFA $1M step prior has no glossary entry of its own; its receipt
   //     rides the `ifa` entry. The pWOBA gate (phem_marcel_lite_eval.json,
   //     where fa_projection's projected wOBA won) rides the `pwoba` entry.
-  //   - hem_plus_3yr / sem_plus_3yr / rem_plus_3yr / fwdhem_plus / xrem_plus /
-  //     xsem_plus: no per-variant eval cell; skipped, not approximated.
+  //   - hem_plus_3yr / sem_plus_3yr / rem_plus_3yr / xrem_plus / xsem_plus: no
+  //     per-variant eval cell; skipped, not approximated. fwdhem_plus reads the
+  //     served column's cell (rung D4) of its 2026-09-18 re-gate.
 
   // The single number formatter every receipt figure passes through.
   function _rn(v, dp) {
@@ -432,6 +433,31 @@
         read: j => rateRows(j.forward_spearman_vs_wOBA_next, "xwoba", "xwOBA", [
           { label: "Spearman rho, next-season wOBA", bk: "actual_woba", bname: "actual wOBA", ci: j.gap_ci_xwoba_minus_woba },
         ], j.n_forward_pairs, "forward pairs"),
+      },
+      // The served column (ladder rung D4, integers as served), not the
+      // eval-normalized construction the 2026-07 gate scored: the re-gate
+      // demoted the row to provisional on exactly these two cells.
+      fwdhem_plus: {
+        art: "/data/xhem_served_regate_eval.json",
+        estimand: "Does the xHEM+ Blend, as the board serves it, predict next-season wOBA better than xwOBA alone?",
+        baseline: "Savant xwOBA alone, same forward pairs",
+        read: j => {
+          const d4 = ((((j.arms || {}).A2_fwdhem_plus || {}).ladder) || {}).D4 || {};
+          const n = (j.n_forward_pairs || {}).A2;
+          const cell = (v, label) => {
+            const g = (v && v.gap_ci) || {};
+            if (!v || v.rho_primary == null || v.rho_baseline == null || g.lo95 == null) return null;
+            return {
+              label: label + (n != null ? " (n=" + _rn(n, 0) + " forward pairs)" : ""),
+              mv: _rn(v.rho_primary), mname: "xHEM+ Blend", bname: "xwOBA", bv: _rn(v.rho_baseline),
+              band: "gap " + _rns(g.mean) + ", 95% CI " + _rns(g.lo95) + " to " + _rns(g.hi95),
+              verdict: _rcptCI(g.lo95, g.hi95),
+            };
+          };
+          const rows = [cell(d4.v1, "Spearman rho, next-season wOBA"),
+                        cell(d4.v2, "Same read, clustered bootstrap")].filter(Boolean);
+          return rows.length ? rows : null;
+        },
       },
       pwoba: {
         art: "/data/phem_marcel_lite_eval.json",

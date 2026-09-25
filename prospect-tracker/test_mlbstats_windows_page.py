@@ -249,9 +249,10 @@ INDEX_HELPERS = ("remCell", "runCell", "hemCell", "wrcCell", "vtCell")
 
 def test_a_window_index_never_routes_through_a_value_ruler_helper():
     """THE HEADLINE TEST. A window pool is a different pool, measured on the two
-    artifacts the page itself reads: on the served 2026 hitter board
-    (data/hitter_leaderboards.json, 658 rows) HEM+ averages 95.49 with a standard
-    deviation of 13.76 and the ruler's elite cut of 120 takes 6.1% of it; on the
+    artifacts the page itself reads: on the 2026-09-24 build of the 2026 hitter
+    board (data/hitter_leaderboards.json, 661 rows, rebuilt nightly) HEM+ averaged
+    95.3 with a standard deviation of about 14 and the ruler's elite cut of 120
+    took 6.5% of it; on the
     served Last 5 window (data/mlbstats_window_l5.json, 746 rows, the pool_stats
     block the column tooltip prints) it averages 95.41 with a standard deviation
     of 13.15 and 120 takes 4.2%. Same numeral, same word, a third fewer players.

@@ -296,3 +296,40 @@ def test_riv_row_drops_the_market_claim_and_keeps_the_frame():
         "owns the page")
     # the disclosure figures other surfaces pin are quoted, not invented
     assert "0.2023" in notes and "0.3601" in notes
+
+
+def test_the_riv_column_and_glossary_forbid_a_forward_reading():
+    """Census M06-02. The re-gate's disclosure leg forbids any forward reading
+    of the RIV+ column and says the column and glossary copy must say so. The
+    column header carried no title at all, and the glossary never said it."""
+    gl = _json(ROOT / "data" / "glossary.json")
+    entry = [e for e in gl["entries"] if e.get("id") == "riv_plus"][0]
+    assert "not a forecast" in entry["methodology"]
+    js = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
+    col = re.search(r'\{ key: "riv_plus", label: "RIV\+"[^}]*\}', js).group(0)
+    assert "title: RIV_TITLE" in col, col
+    title = re.search(r"var RIV_TITLE = (.*?);\n", js, re.S).group(1)
+    assert "not a forecast" in title
+
+
+def test_the_fwdhem_copy_follows_the_served_regate():
+    """Census M06-04. The xHEM+ Blend header said it beat xwOBA alone and the
+    glossary methodology claimed a gap floor above zero, after the re-gate of
+    the served column demoted the row to provisional. The copy now says
+    provisional and the receipt reads the served cell (A2, rung D4) instead of
+    any typed figure."""
+    gl = _json(ROOT / "data" / "glossary.json")
+    meth = [e for e in gl["entries"] if e.get("id") == "fwdhem_plus"][0]["methodology"]
+    assert "Provisional" in meth and "not separable from xwOBA alone" in meth
+    assert "0.466" not in meth and "incumbent forward column" not in meth
+    js = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
+    col = re.search(r'\{ key: "fwdhem_plus", label: "xHEM\+ Blend".*?title: "([^"]*)"', js, re.S)
+    assert "Provisional" in col.group(1) and "Beats xwOBA" not in col.group(1)
+    gjs = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
+    spec = gjs[gjs.index("      fwdhem_plus: {"):]
+    spec = spec[:spec.index("      pwoba: {")]
+    assert '"/data/xhem_served_regate_eval.json"' in spec and "A2_fwdhem_plus" in spec
+    assert ".D4" in spec and "d4.v1" in spec and "d4.v2" in spec
+    d4 = _json(R1_PATH)["arms"]["A2_fwdhem_plus"]["ladder"]["D4"]
+    for conv in ("v1", "v2"):
+        assert d4[conv]["gap_ci"]["lo95"] < 0 < d4[conv]["gap_ci"]["hi95"], conv

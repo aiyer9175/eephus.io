@@ -53,6 +53,11 @@ HISTORY_PATH = DATA_DIR / "bullpen_history.json"
 # (ex-2020 COVID short season). Cached winProbability makes the walk fast.
 HISTORY_SEASONS = [2021, 2022, 2023, 2024, 2025]
 EVAL_PATH = DATA_DIR / "rem_plus_eval.json"
+# The market line on the REM+ scorecard. It reads the 2026-09-18 re-gate's
+# REM+ baseline (one target, canonical identity), never the 271-row
+# name-matched block in rem_plus_eval.json: that block's leverage-weighted
+# rho is a lab variant no column serves, on a pair set the re-gate superseded.
+MARKET_PATH = DATA_DIR / "riv_market_regate_eval.json"
 LEVCON_PATH = DATA_DIR / "leverage_consistency_eval.json"
 MULTIYR_PATH = DATA_DIR / "rem_plus_multiyear_eval.json"
 # frozen trailing-window vintage for WAR/PA+ and WAR/IP+ (all three anchor pools
@@ -710,6 +715,28 @@ def _verdict() -> str:
         return "provisional"
 
 
+def _market_line() -> dict:
+    """REM+ against next-winter reliever AAV, read off the re-gate artifact.
+
+    This used to print rem_plus_eval.market_check_aav.rho_leverage_weighted_vs_aav
+    (0.5157) under REM+'s name: the rho of a damping-0.5 leverage-weighted lab
+    variant, on 271 signings joined by normalized name. REM+ itself read 0.5084
+    on that set and reads 0.5665 on the re-gate's 232 matched signings
+    (B1_primary.v1.rho_baseline). This copies that stored number; it computes
+    nothing, so the next market read stays on its 2027-03-01 clock. A missing
+    or unreadable artifact returns {} and the scorecard prints no market line."""
+    try:
+        j = json.loads(MARKET_PATH.read_text(encoding="utf-8"))
+        b1 = j["B1_primary"]
+        rho = b1["v1"]["rho_baseline"]
+        n = b1["n_matched_signings"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return {}
+    if rho is None or not n:
+        return {}
+    return {"rho": rho, "n": n, "as_of": j.get("generated_at")}
+
+
 def _backtest() -> dict:
     """Compact accountability card from data/rem_plus_eval.json - the forward
     chained out-of-sample backtest that earned REM+ its validated verdict. Shown
@@ -720,8 +747,8 @@ def _backtest() -> dict:
         return {}
     fs = j.get("forward_spearman_vs_RA9_next") or {}
     gap = (j.get("gap_ci_vs_RA9_next") or {}).get("vs_era") or {}
-    mk = j.get("market_check_aav") or {}
     v = j.get("verdict") or {}
+    mk = _market_line()
     return {
         "status": v.get("status") or "provisional",
         "n_pairs": j.get("n_forward_pairs"),
@@ -730,7 +757,9 @@ def _backtest() -> dict:
         "rho_fip": fs.get("raw_fip"),
         "rho_era": fs.get("era"),
         "gap_vs_era_lo95": gap.get("lo95"),
-        "market_rho": mk.get("rho_leverage_weighted_vs_aav"),
+        "market_rho": mk.get("rho"),
+        "market_n": mk.get("n"),
+        "market_as_of": mk.get("as_of"),
         "disclaimer": ("REM+ predicts next-year run prevention out of sample. Leverage (gmLI, "
                        "WPA, SD-MD) sits in the Impact columns: the manager assigns it, so it "
                        "is not skill."),

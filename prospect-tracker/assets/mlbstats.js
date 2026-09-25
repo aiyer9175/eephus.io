@@ -511,6 +511,12 @@
   // ---- column definitions (Relievers) --------------------------------------
   // Skill core first, then the Impact/leverage columns (kept distinct from the
   // REM+ talent number by design).
+  // RIV+ is a realized record. The 2026-09-18 re-gate (docs/HEM_RIV_REGATE_GATE.md)
+  // forbids any forward reading of it, and says the column copy has to say so.
+  var RIV_TITLE = "Realized value this season: 70% WPA and 30% shutdowns minus meltdowns, 100 + 10z"
+    + " over the reliever pool. A record of what happened, not a forecast: this season's REM+ predicts"
+    + " next season's RIV+ better than this season's RIV+ does. Not shown to track free-agent pay"
+    + " better than REM+.";
   var REL_COLS = [
     { key: "name", label: "Reliever", term: null, sortable: true, kind: "name", asc: true },
     { key: "rem_plus", label: "REM+", term: "rem_plus", fmt: runCell, num: true, desc: true, isRem: true },
@@ -601,7 +607,8 @@
         if (r.gmli_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 60 relief entries in the trailing window">*</span>';
         return s;
       } },
-    { key: "riv_plus", label: "RIV+", term: "riv_plus", fmt: runCell, num: true, desc: true },
+    { key: "riv_plus", label: "RIV+", term: "riv_plus", fmt: runCell, num: true, desc: true,
+      title: RIV_TITLE },
     { key: "wpa", label: "WPA", term: "wpa", fmt: fSigned, num: true },
     { key: "wpa_li", label: "WPA/LI", term: "wpa_li", fmt: fSigned, num: true },
     { key: "sd_md", label: "SD-MD", term: "shutdowns_meltdowns", fmt: fInt, num: true,
@@ -2193,7 +2200,8 @@
     var body = rows.length
       ? (function () {
           var note = '<div class="mlbstats-note">'
-            + gloss("RIV+", "riv_plus") + ": realized leverage-weighted value. gmLI, WPA, WPA/LI and SD-MD"
+            + gloss("RIV+", "riv_plus") + ": realized leverage-weighted value, a record and not a forecast."
+            + " gmLI, WPA, WPA/LI and SD-MD"
             + " are leverage context. " + gloss("WAR/IP+", "war_ip_plus_rp")
             + ": reliever-anchored, 10 points = 1 SD; not comparable with the starter board's.</div>";
           return proseFold("rel-about", rows.length + " relievers",
@@ -2234,7 +2242,7 @@
     var cap = proseFold("rel-history-about",
       esc(relSeason) + " season, " + esc(nQual) + " qualified relievers",
       '<div class="mlbstats-note">' + gloss("REM+", "rem_plus") + ": skill. "
-      + gloss("RIV+", "riv_plus") + ": realized leverage-weighted value.</div>");
+      + gloss("RIV+", "riv_plus") + ": realized leverage-weighted value, a record and not a forecast.</div>");
     var relHistCols = coveredCols(REL_HISTORY_COLS, rows);
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, relHistCols, sort, null, "rel") + "</div>"
@@ -2388,6 +2396,17 @@
       + "</summary>" + esc(tb.note) + moved + "</details>";
   }
 
+  // The market line prints only with its signing count. A payload that carries
+  // a bare market_rho is the old one, whose number was a leverage-weighted lab
+  // variant on a name-matched pair set rather than REM+, so it prints nothing.
+  function marketLine(b) {
+    if (b.market_rho == null || b.market_n == null) return "";
+    return '<span class="pal-sc-stat" title="' + esc("Descriptive, not a gate: the rank correlation between"
+        + " REM+ in a reliever's walk year and the AAV of the free-agent deal he signed that winter, on "
+        + b.market_n + " matched signings" + (b.market_as_of ? " (re-gate of " + b.market_as_of + ")" : "")
+        + ".") + '">REM+ vs next-winter AAV &rho; <b>' + esc(b.market_rho) + '</b><span class="proj-dim"> ('
+      + esc(b.market_n) + " signings, descriptive)</span></span>";
+  }
   // REM+ accountability scorecard - mirrors PAL's pattern so a validated model
   // surfaces its out-of-sample backtest to users, not just a status word.
   function scorecard() {
@@ -2399,7 +2418,7 @@
       + ", ERA " + (b.rho_era == null ? EM_DASH : b.rho_era) + "</span></span>"
       + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
       + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
-      + (b.market_rho == null ? "" : '<span class="pal-sc-stat">market fit &rho; <b>' + b.market_rho + '</b><span class="proj-dim"> vs AAV</span></span>')
+      + marketLine(b)
       + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
       + "</div>";
   }
@@ -3311,7 +3330,7 @@
       get: function (r) { return r.xhem_plus; },
       cell: function (r) { return r.xhem_plus == null ? "" : hemCell(r.xhem_plus); } },
     { key: "fwdhem_plus", label: "xHEM+ Blend", term: "fwdhem_plus", num: true, desc: true, isRem: true,
-      title: "70% xwOBA + 30% HEM+ core, HEM+ scale. Beats xwOBA alone on next-year offense out of sample. Tracked hitters only.",
+      title: "70% xwOBA + 30% HEM+ core, HEM+ scale. Provisional: as served, not separable from xwOBA alone on next-year offense at this sample (2026-09-18 re-gate). Tracked hitters only.",
       get: function (r) { return r.fwdhem_plus; },
       cell: function (r) { return r.fwdhem_plus == null ? "" : hemCell(r.fwdhem_plus); } },
     { key: "pwoba", label: "pWOBA", term: "pwoba", num: true, desc: true,
