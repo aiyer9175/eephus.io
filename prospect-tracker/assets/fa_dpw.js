@@ -30,6 +30,7 @@
   const ROOT_ID = "fa-dpw-view";
   const STYLE_ID = "fa-dpw-style";
   let DATA = null;
+  let PRICING = null;
   let loading = null;
 
   // ---- palette --------------------------------------------------------------
@@ -192,9 +193,32 @@
   }
 
   // ---- view -----------------------------------------------------------------
+  // M04-08: the class board's own pricing basis (fa_meta.dpw_pricing). The
+  // chart and table above it are the COMMITTED series; the board re-derives
+  // the series from the current corpus each run and prices on that one.
+  function pricingNote(P, head) {
+    if (!P || !P.usd_per_war_by_winter || P.winter_dpw_usd == null) return "";
+    const s = P.usd_per_war_by_winter;
+    const cy = Number(P.class_year);
+    const anchor = Object.keys(s).filter(y => Number(y) < cy).sort().pop();
+    if (!anchor) return "";
+    const carry = P.method === "flat5"
+      ? `carried forward at ${(Number(P.escalator) * 100).toFixed(1)}%/yr`
+      : `forecast by ${esc(String(P.method || "?"))}`;
+    const proj = P.projections_dpw_usd != null && Number(P.projections_first_season) === cy
+      ? ` /projections/ carries the committed series to ${money(P.projections_dpw_usd)} for the same winter and prices veteran seasons at that rate.`
+      : "";
+    return `<p class="dpw-note">The class board does not price on this committed series. It
+      re-derives the series from the current corpus each run: ${winter(anchor)} reads
+      ${money(s[anchor])} in that series against ${money(head[anchor])} in this one, ${carry} to
+      ${money(P.winter_dpw_usd)} for ${winter(cy)}.${proj} The "Board pricing" column
+      below is that series.</p>`;
+  }
+
   function render(root) {
     const bd = (DATA && DATA.breakdown) || null;
     const head = (DATA && DATA.usd_per_war_by_winter) || {};
+    const pser = (PRICING && PRICING.usd_per_war_by_winter) || null;
     const xs = Object.keys(head).sort();
     if (!xs.length) {
       root.innerHTML = `<div class="state-message">The $/WAR series is not exported yet.
@@ -247,6 +271,7 @@
       return `<tr><td>${winter(y)}</td><td>${w.n == null ? DASH : w.n}</td>
         <td>${money(w.spend)}</td><td>${w.qo_share == null ? DASH : pct(w.qo_share)}</td>
         <td>${money(head[y])}</td>
+        ${pser ? `<td>${money(pser[y])}</td>` : ""}
         <td class="${partial ? "dpw-partial" : ""}">${r.dpw == null ? DASH : money(r.dpw)}</td>
         <td class="${partial ? "dpw-partial" : ""}">${r.elapsed == null ? DASH : pct(r.elapsed)}</td></tr>`;
     }).join("");
@@ -257,7 +282,9 @@
       <h2 class="dpw-head">FA $/WAR by winter</h2>
       <p class="dpw-lede">Implied <span data-gl="winter_dpw">$/WAR</span>: each winter's
         <span data-gl="deferral_npv">deferral-adjusted</span> guarantees over the discounted
-        WAR its signings were projected to deliver. Future seasons on this site are priced from it.</p>
+        WAR its signings were projected to deliver. This is the committed series (data file
+        written by the Gate 2 run): the Archive, the Club Ledger and /projections/ read it.</p>
+      ${pricingNote(PRICING, head)}
 
       <div class="dpw-panel">
         <h3>Implied vs realized</h3>
@@ -287,7 +314,7 @@
           <span data-gl="qualifying_offer">qualifying offer</span>.</p>
         <div class="dpw-scroll"><table>
           <thead><tr><th>Winter</th><th>Deals</th><th>Spend</th><th>QO</th>
-            <th>Implied $/WAR</th><th>Realized $/WAR</th><th>Elapsed</th></tr></thead>
+            <th>Implied $/WAR</th>${pser ? "<th>Board pricing</th>" : ""}<th>Realized $/WAR</th><th>Elapsed</th></tr></thead>
           <tbody>${rows}</tbody></table></div>
         <p class="dpw-note">Method ${esc((DATA && DATA.method) || "fa_signings_implied_v1")},
           model ${esc((DATA && DATA.model_version) || "?")}. Thin winters are dropped from
@@ -322,7 +349,7 @@
           if (!r.ok) continue;
           const j = await r.json();
           const s = j.dpw_series || j;
-          if (s && s.usd_per_war_by_winter) { DATA = s; return DATA; }
+          if (s && s.usd_per_war_by_winter) { DATA = s; PRICING = j.dpw_pricing || null; return DATA; }
         } catch (e) { /* try the next source */ }
       }
       return null;

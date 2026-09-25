@@ -1365,12 +1365,20 @@
           title="Open the $/WAR by winter detail">${trendSvg}<span class="fa-dpw-cue">$/WAR by winter, in full &rarr;</span></div>`
       : yrs.slice(-6).map(y =>
         `<div class="fa-rail-row"><span>${Number(y) - 1}-${String(y).slice(2)}</span><span class="fa-rail-num">${money(series[y])}</span></div>`).join("");
+    // M04-08: the sparkline is the committed platform series; the board prices
+    // on the series this run re-derived. Both levels, named, so the eyebrow's
+    // figure can be traced to a winter a reader can see.
+    const pricing = cls.dpw_series_pricing || {};
+    const anchorY = Object.keys(pricing).filter(y => Number(y) < cls.class_year).sort().pop();
+    const basis = (anchorY && cls.dpw_usd != null)
+      ? `<div class="fa-rail-row fa-sub" title="The chart above is the committed series the Archive, the Club Ledger and /projections/ read. The board re-derives the series from the current corpus each run and prices on that one."><span>Board prices on this run's series: ${Number(anchorY) - 1}-${String(anchorY).slice(2)} ${money(pricing[anchorY])}, so ${cls.class_year - 1}-${String(cls.class_year).slice(2)} ${money(cls.dpw_usd)}</span></div>`
+      : "";
     const mod = railMod;
     return `<aside class="fa-board-rail">
       ${mod("Best projected values", values.map(railRow).join(""), "Largest projected surplus among VALUE verdicts")}
       ${mod("Projected overpays", overpays.map(railRow).join(""), "Most negative projected surplus among OVERPAY verdicts")}
       ${mod("Class supply", supply, "Projected members by position group (a market-model feature)")}
-      ${mod("FA $/WAR by winter", trend, "Signings-implied $/WAR (Gate-2 estimator)")}
+      ${mod("FA $/WAR by winter", trend ? trend + basis : "", "Signings-implied $/WAR (Gate-2 estimator), committed series")}
     </aside>`;
   }
 

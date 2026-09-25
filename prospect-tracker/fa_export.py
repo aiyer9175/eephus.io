@@ -468,6 +468,10 @@ def _load_mlb_projections() -> dict:
         vets = d.get("vets") or []
         _MLB_PROJ_CACHE = {
             "first_season": d.get("first_season"),
+            # The rate /projections/ prices veteran seasons at (the committed
+            # fa_dpw_series carried forward). Read only for the $/WAR basis
+            # disclosure on /fa/ (M04-08); nothing here prices on it.
+            "dpw_usd": d.get("dpw_usd"),
             "by_mlbam": {v["mlbam"]: v for v in vets if v.get("mlbam")},
             "by_key": {v["key"]: v for v in vets if v.get("key")},
         }
@@ -982,6 +986,13 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         "generated_at": date.today().isoformat(),
         "class_year": class_year,
         "dpw_usd": int(dpw),
+        # M04-08 (2026-09-25). The series dpw_usd was carried forward FROM:
+        # re-derived in this run from the current corpus and WAR basis, and
+        # never written anywhere else. The rail, the $/WAR view, the Archive,
+        # the Club Ledger and /projections/ read the committed
+        # data/fa_dpw_series.json instead, so without this the board's level
+        # could not be reconciled with any series a reader can see.
+        "dpw_series_pricing": {str(y): int(v) for y, v in sorted(dpw_series.items())},
         # The rate the module ACTUALLY carries dollars forward at. This used
         # to publish value_framework's dollars_per_war_inflation, which is 0.0
         # in production, while assets/fa.js printed "escalating 5%/yr" from its
@@ -1251,7 +1262,8 @@ def _war_input_divergence() -> dict:
     }
 
 
-def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
+def build_fa_meta_payload(class_year: int = CLASS_YEAR,
+                          pricing: dict | None = None) -> dict:
     def _gate(path: str):
         try:
             return json.loads((DATA_DIR / path).read_text(encoding="utf-8"))
@@ -1314,6 +1326,9 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
         # a destination is known.
         "qo_tax_by_payor_tier": _qo_tax_block(class_year),
         "dpw_series": dpw_series,
+        # M04-08: the series the class board actually prices on, beside the
+        # committed one above, so the $/WAR view can name both levels.
+        "dpw_pricing": pricing,
         "gate1": _gate("fa_gate1_eval.json"),
         "gate2": _gate("fa_gate2_eval.json"),
         "war_input_divergence": _war_input_divergence(),
@@ -1437,11 +1452,30 @@ def _keep_previous(name: str, payload: dict) -> bool:
     return True
 
 
+def _dpw_pricing_block(cls_payload: dict) -> dict | None:
+    """The class board's own $/WAR basis for fa_meta (M04-08): the in-run
+    series, the ex-ante level it carries to, the escalator, and the rate
+    /projections/ prices the same winter at. None when the class did not
+    price (no dpw_usd), so the page says nothing rather than a zero."""
+    if not cls_payload or cls_payload.get("dpw_usd") is None:
+        return None
+    return {
+        "class_year": cls_payload.get("class_year"),
+        "usd_per_war_by_winter": cls_payload.get("dpw_series_pricing") or {},
+        "winter_dpw_usd": cls_payload.get("dpw_usd"),
+        "escalator": cls_payload.get("dpw_infl"),
+        "method": fm._dpw_forecast_method(),
+        "projections_dpw_usd": (_load_mlb_projections() or {}).get("dpw_usd"),
+        "projections_first_season": (_load_mlb_projections() or {}).get("first_season"),
+    }
+
+
 def export_all() -> dict[str, int]:
     sizes = {}
-    exports = [("fa_class.json", build_fa_class_payload()),
+    cls_payload = build_fa_class_payload()
+    exports = [("fa_class.json", cls_payload),
                ("fa_archive.json", build_fa_archive_payload()),
-               ("fa_meta.json", build_fa_meta_payload())]
+               ("fa_meta.json", build_fa_meta_payload(pricing=_dpw_pricing_block(cls_payload)))]
     for y in FUTURE_CLASS_YEARS:
         try:
             exports.append((f"fa_class_{y}.json", build_fa_class_payload(y)))

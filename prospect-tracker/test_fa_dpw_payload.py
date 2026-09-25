@@ -150,3 +150,45 @@ def test_every_fetch_argument_is_root_absolute():
     code = _code_only(JS.read_text(encoding="utf-8"))
     for lit in re.findall(r"""['"`]([^'"`\s]*\.json)['"`]""", code):
         assert lit.startswith("/"), f"non-absolute json url literal: {lit!r}"
+
+
+# ---------------------------------------------------------------------------
+# 3. M04-08: the board's pricing series is served and reconciles
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("name", ["fa_class.json", "fa_class_2028.json",
+                                  "fa_class_2029.json"])
+def test_board_level_is_the_carry_forward_of_its_served_pricing_series(name):
+    """fa_class.dpw_usd (the board eyebrow, every card's $/WAR column) is
+    winter_dpw of the series the run re-derived, and that series is now in the
+    file. Before 2026-09-25 it was written nowhere, so the board's $17.1M could
+    not be traced to any winter a reader could see: the rail and the $/WAR view
+    print the committed series, whose 2025-26 winter reads $17.3M."""
+    import fa_market as fm
+    p = ROOT / "data" / name
+    if not p.exists():
+        pytest.skip(f"{name} not exported on this machine")
+    cls = json.loads(p.read_text(encoding="utf-8"))
+    if cls.get("dpw_usd") is None:
+        pytest.skip(f"{name} did not price")
+    ser = cls.get("dpw_series_pricing")
+    assert ser, f"{name} carries no dpw_series_pricing"
+    want = fm.winter_dpw({int(k): v for k, v in ser.items()}, cls["class_year"])
+    assert abs(cls["dpw_usd"] - want) <= 1, (cls["dpw_usd"], want)
+
+
+def test_fa_meta_names_the_board_pricing_basis():
+    meta, _ = _payloads()
+    cls = json.loads((ROOT / "data" / "fa_class.json").read_text(encoding="utf-8"))
+    pr = meta.get("dpw_pricing")
+    assert pr, "fa_meta.json has no dpw_pricing block"
+    assert pr["winter_dpw_usd"] == cls["dpw_usd"]
+    assert pr["usd_per_war_by_winter"] == cls["dpw_series_pricing"]
+    assert pr["class_year"] == cls["class_year"]
+
+
+def test_dpw_view_no_longer_says_every_future_season_prices_from_it():
+    src = JS.read_text(encoding="utf-8")
+    assert "Future seasons on this site are priced from it" not in src
+    assert "pricingNote(PRICING, head)" in src
+    assert "PRICING = j.dpw_pricing" in src
