@@ -414,6 +414,9 @@ def _head_to_head(sb):
             "common_n": acc.get("common_n"),
             "common_n_efv": acc.get("common_n_efv"),
             "verdict_vs_consensus": acc.get("head_to_head_verdict"),
+            # EV-01: the timing-pinned frame (vm2), carried beside the vm1 verdict
+            # the cells above are read off; it is not the headline yet.
+            "verdict_vs_consensus_vm2": acc.get("head_to_head_verdict_vm2"),
             "head_to_head_by_frame": by_frame or None,
             "vs": rivals, "by_archetype_vs_consensus": arch,
             "by_archetype_basis": ("one row per player, the latest read before debut, "

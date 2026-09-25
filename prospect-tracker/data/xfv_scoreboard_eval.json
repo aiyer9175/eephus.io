@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-24",
+ "generated_at": "2026-09-25",
  "registration": "docs/efv-2026-07-24/GATES.md section G-SCORE (Phase 0a, no gate)",
  "regen_cmd": "python tools/efv_scoreboard.py",
  "basis": {
@@ -485,6 +485,7 @@
    "margin_x_floor": 0.492,
    "xfv_beats": false,
    "verdict": "not resolvable at this power",
+   "frame_version": "vm1",
    "frame_note": "read off the vintage-matched basis. The other two frames are published in head_to_head_by_frame and each is tilted toward one of the two graders; see docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md.",
    "ci95": [
     -0.044,
@@ -493,6 +494,52 @@
    "ci95_estimator": "E_cond, player-clustered",
    "ci95_source": "accuracy.head_to_head_vs_sources.sources.prospx_consensus.spearman.ci95",
    "mde95_estimator": "E_refit"
+  },
+  "verdict_vs_consensus_vm2": {
+   "basis": "pooled_efv_common_vintage_matched_vm2",
+   "basis_note": "base year equals the eFV decision year, and eFV's consensus input is the raters' own preseason read (latest point dated Jan 1 to Apr 30 of that year), so neither side holds a timing edge; frame version vm2 (EV-01)",
+   "n": 803,
+   "xfv_spearman": 0.3916,
+   "consensus_spearman": 0.4129,
+   "delta": -0.0213,
+   "mde95": 0.0303,
+   "resolvable": false,
+   "margin_x_floor": 0.703,
+   "xfv_beats": false,
+   "verdict": "not resolvable at this power",
+   "frame_version": "vm2",
+   "role": "headline_candidate",
+   "ci95": [
+    -0.0481,
+    0.008
+   ],
+   "ci95_estimator": "E_cond, player-clustered",
+   "ci95_source": "accuracy.head_to_head_vs_sources_vm2.sources.prospx_consensus.spearman.ci95",
+   "mde95_estimator": "E_refit",
+   "mde95_note": "the vm1 frame's stored E_refit floor, carried because vm2 scores the same rows against the same consensus column; E_refit has not been re-measured on vm2",
+   "n_by_side": {
+    "hit": 388,
+    "pit": 415
+   },
+   "timing_pin": {
+    "n_pinned_scores": 1508,
+    "n_rows": 803,
+    "n_vintage_rows_without_pin": 3,
+    "n_input_date_moved": 380,
+    "n_consensus_value_moved": 40,
+    "n_outside_window": 0,
+    "n_input_equals_rater_consensus": 803,
+    "window_mmdd": [
+     "-01-01",
+     "-05-01"
+    ],
+    "rule": "eFV's consensus input on each row is the latest points[] entry dated inside the row's base-year preseason window, the same point _rater_grades_for_year reads",
+    "input_mmdd_range": [
+     "-01-22",
+     "-04-30"
+    ]
+   },
+   "frame_note": "timing-pinned vintage-matched frame (EV-01, docs/efv-v2/PROGRAM.md s3.4). Published beside the vm1 verdict; it becomes the headline once the owner has seen it."
   },
   "head_to_head_by_frame": {
    "vintage_matched": {
@@ -506,7 +553,8 @@
     "resolvable": false,
     "margin_x_floor": 0.492,
     "xfv_beats": false,
-    "verdict": "not resolvable at this power"
+    "verdict": "not resolvable at this power",
+    "frame_version": "vm1"
    },
    "predebut": {
     "basis": "pooled_efv_common_predebut",
@@ -533,6 +581,20 @@
     "margin_x_floor": 1.122,
     "xfv_beats": true,
     "verdict": "beats consensus"
+   },
+   "vintage_matched_vm2": {
+    "basis": "pooled_efv_common_vintage_matched_vm2",
+    "basis_note": "base year equals the eFV decision year, and eFV's consensus input is the raters' own preseason read (latest point dated Jan 1 to Apr 30 of that year), so neither side holds a timing edge; frame version vm2 (EV-01)",
+    "n": 803,
+    "xfv_spearman": 0.3916,
+    "consensus_spearman": 0.4129,
+    "delta": -0.0213,
+    "mde95": 0.0303,
+    "resolvable": false,
+    "margin_x_floor": 0.703,
+    "xfv_beats": false,
+    "verdict": "not resolvable at this power",
+    "frame_version": "vm2"
    }
   },
   "vs": {
@@ -827,7 +889,7 @@
  ],
  "source_backtest_freshness": {
   "reran": false,
-  "artifact_generated_at": "2026-09-25T01:25:53Z",
+  "artifact_generated_at": "2026-09-25T04:29:09Z",
   "rule": "reused (fresh within 7 days)"
  },
  "weak_cells": [

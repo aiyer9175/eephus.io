@@ -76,3 +76,27 @@ def test_a_backtest_without_the_vintage_frame_says_which_frame_it_used():
     assert h["vs_frame"] == "all_vintages"
     assert "tilted" in h["basis"]
     assert h["vs"]["prospx_consensus"]["spearman"]["n"] == 3272
+
+
+def test_the_vm2_frame_rides_beside_the_vm1_verdict_and_moves_no_cell():
+    """EV-01: a timing-pinned vm2 frame in the backtest is carried, and the
+    cells and the verdict stay on vm1 until the owner promotes it."""
+    sb = _sb()
+    acc = sb["accuracy"]
+    acc["head_to_head_verdict"]["frame_version"] = "vm1"
+    acc["head_to_head_by_frame"]["vintage_matched_vm2"] = {
+        "n": 803, "delta": -0.0213, "frame_version": "vm2",
+        "basis_note": "timing-pinned"}
+    acc["head_to_head_verdict_vm2"] = {
+        "basis": "pooled_efv_common_vintage_matched_vm2", "n": 803,
+        "delta": -0.0213, "frame_version": "vm2", "role": "headline_candidate"}
+    acc["pooled_efv_common_vintage_matched_vm2"] = {
+        "xfv": _rater(0.3916, 0.7471, 803),
+        "prospx_consensus": _rater(0.4129, 0.7492, 803)}
+    h = S._head_to_head(sb)
+    assert h["vs_frame"] == "vintage_matched" and h["vs_frame_n"] == 812
+    assert h["verdict_vs_consensus"]["frame_version"] == "vm1"
+    assert h["verdict_vs_consensus_vm2"]["frame_version"] == "vm2"
+    assert h["verdict_vs_consensus_vm2"]["role"] == "headline_candidate"
+    assert "vintage_matched_vm2" in h["head_to_head_by_frame"]
+    assert h["vs"]["prospx_consensus"]["spearman"]["n"] == 812

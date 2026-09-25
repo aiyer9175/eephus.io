@@ -881,18 +881,56 @@ def blend_lambda(side: str) -> float:
     return _WAG_LAMBDA_CACHE[side]
 
 
-def oos_grades(side: str) -> dict:
+def oos_grades(side: str, *, timing_pin: bool = False,
+               receipts: dict | None = None) -> dict:
     """{player_key: OUT-OF-SAMPLE eFV ranking score} over the full labeled pool
     (debuted + busts), forward-chained: each cohort year is scored by a model fit ONLY
     on earlier cohorts. The score is the guarded-blend rank_war (monotone in the grade),
     suitable for an apples-to-apples head-to-head against the sources on realized outcomes
-    WITHOUT the in-sample advantage a fitted model would otherwise enjoy. Leakage-free."""
+    WITHOUT the in-sample advantage a fitted model would otherwise enjoy. Leakage-free.
+
+    timing_pin=True is the EV-01 mode (frame version vm2, docs/efv-v2/PROGRAM.md s3.4).
+    Every fold is fit exactly as in the default mode; only the SCORED rows change. Each
+    debuted row of the scored cohort is scored with its prior-feature block (consensus
+    FV, spread, trend, tools) read at the raters' preseason point of its decision year
+    (efv_dataset.preseason_consensus_asof), instead of at the last snapshot before the
+    debut date. Rows with no in-window consensus read, and every bust row, are left
+    out, so the result covers only rows a vintage-matched frame can hold. When
+    `receipts` is a dict it receives {player_key: {asof_date, window, window_year,
+    consensus_fv_raw, matrix_asof_date, matrix_consensus_fv_raw}} for every scored
+    row. The default mode is unchanged and fills no receipts."""
     from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     lam = blend_lambda(side)
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
     full = [r for r in rows if not (r["kind"] == "bust" and r.get("bust_recent"))]
     data = _prep(full, "target_censored", side)
+    pinned = {}
+    if timing_pin:
+        import efv_dataset as _ed
+        recs = _ed.asof_records()
+        raw_by_key = {r["player_key"]: r for r in full}
+        for d in data:
+            if d["kind"] != "debuted":
+                continue
+            raw = raw_by_key.get(d["player_key"])
+            pre = _ed.preseason_consensus_asof(recs.get(d["player_key"]),
+                                               d["decision_year"], side)
+            if raw is None or pre is None:
+                continue
+            row = dict(raw)
+            row.update(pre)
+            row.pop("fv_effective", None)
+            pinned[d["player_key"]] = {"feats": _vec(row, side),
+                                       "fv": float(pre["consensus_fv_raw"])}
+            if receipts is not None:
+                receipts[d["player_key"]] = {
+                    "asof_date": pre.get("asof_date"),
+                    "window": list(_ed.preseason_window(d["decision_year"])),
+                    "window_year": d["decision_year"],
+                    "consensus_fv_raw": float(pre["consensus_fv_raw"]),
+                    "matrix_asof_date": raw.get("asof_date"),
+                    "matrix_consensus_fv_raw": d["fv"]}
     out = {}
     for yr in SCORED_YEARS:
         tr = [r for r in data if r["decision_year"] < yr]
@@ -909,9 +947,17 @@ def oos_grades(side: str) -> dict:
         cal = _fit_linear_calibration([(_predict(ridge, r["feats"]), r["target"]) for r in tr])
         a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
         for r in te:
+            if timing_pin:
+                pin = pinned.get(r["player_key"])
+                if pin is None:
+                    continue
+                r = dict(r, **pin)
             cons_war = max(0.0, _pred_ols(ols, r["fv"]))
             model_war = max(-2.0, a + b * _predict(ridge, r["feats"]))
             out[r["player_key"]] = (1 - lam) * cons_war + lam * model_war
+    if timing_pin and receipts is not None:
+        for k in [k for k in receipts if k in pinned and k not in out]:
+            receipts.pop(k, None)
     return out
 
 

@@ -227,7 +227,7 @@ def test_progress_ledger_fetch_resolves_and_renders(server, browser):
     assert not page_errors, "JS errors: " + " | ".join(page_errors)
     rows = doc["rows"]
     charted = [r for r in rows if r.get("role") not in ("tilted", "secondary")
-               and r.get("frame") in ("vm", "lv_dev", "lv_res", "vm_pros")]
+               and r.get("frame") in ("vm", "vm2", "lv_dev", "lv_res", "vm_pros")]
     assert out["marks"] == len(charted), (out["marks"], len(charted))
     tilted = [r for r in rows if r.get("role") == "tilted"]
     assert out["tilted"] == len(tilted) and out["open"] in (False, None)
@@ -235,6 +235,13 @@ def test_progress_ledger_fetch_resolves_and_renders(server, browser):
     assert f"n {int(head['n']):,}" in out["text"]
     assert head["verdict"] in out["text"]
     assert f"{head['raters']['efv']['spearman']:.3f}" in out["text"]
+    # EV-01: the timing-pinned headline candidate prints its own line and row.
+    cand = [r for r in rows if r.get("role") == "headline_candidate"]
+    if cand:
+        c = cand[-1]
+        assert "Vintage-matched, timing-pinned" in out["text"]
+        assert f"{c['raters']['efv']['spearman']:.3f}" in out["text"]
+        assert "headline candidate" in out["text"]
 
 
 def test_source_accuracy_subtabs_render(server, browser):

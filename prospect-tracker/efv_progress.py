@@ -72,6 +72,14 @@ FRAMES = {
            "label": "Vintage-matched",
            "note": ("identical rows, base year equals the eFV decision year; "
                     "neither grader holds a timing edge")},
+    # EV-01 (PROGRAM.md s3.4): the same frame with eFV's consensus input pinned
+    # to the raters' preseason read. A separate frame id so its rows dedupe
+    # against their own history and never displace the vm1 headline.
+    "vm2": {"basis_key": "pooled_efv_common_vintage_matched_vm2",
+            "role": "headline_candidate", "tilted": False,
+            "label": "Vintage-matched, timing-pinned",
+            "note": ("timing-pinned: eFV's consensus input is the raters' own "
+                     "preseason read; becomes the headline once the owner has seen it")},
     "lv_dev": {"role": "development", "tilted": False,
                "label": "List vintage, development",
                "note": "development frame, spent, not a claim"},
@@ -94,13 +102,14 @@ FRAMES = {
 BASIS_TO_FRAME = {v["basis_key"]: k for k, v in FRAMES.items() if v.get("basis_key")}
 #: ledger frame id -> key under accuracy.head_to_head_by_frame and
 #: claim_instruments.head_to_head_floors.
-BY_FRAME_KEY = {"vm": "vintage_matched", "predebut": "predebut",
-                "all_vintages": "all_vintages"}
-#: The frame version the vintage-matched rows carry until EV-01 re-pins the
-#: frame (vm2). Read from the artifact when the artifact says.
-DEFAULT_FRAME_VERSION = {"vm": "vm1"}
+BY_FRAME_KEY = {"vm": "vintage_matched", "vm2": "vintage_matched_vm2",
+                "predebut": "predebut", "all_vintages": "all_vintages"}
+#: The frame version each vintage-matched frame's rows carry: vm1 is the
+#: headline frame, vm2 the EV-01 timing-pinned frame beside it. Read from the
+#: artifact when the artifact says.
+DEFAULT_FRAME_VERSION = {"vm": "vm1", "vm2": "vm2"}
 #: Frames a chart series may contain. Tilted and secondary frames never.
-CHART_FRAMES = ("vm", "lv_dev", "lv_res", "vm_pros")
+CHART_FRAMES = ("vm", "vm2", "lv_dev", "lv_res", "vm_pros")
 #: The only strata a row may carry (n_by_side keys).
 STRATA = ("hit", "pit")
 #: ledger rater name -> rater key in source_backtest.
@@ -245,9 +254,8 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
                 "share": None, "sources": [dict(s) for s in sources],
                 "note": note, "last_verified_at": now_iso}
 
-    # The headline frame: the verdict itself, plus the per-source block.
-    if head:
-        row = _base(head, hv.get("n"), _by_side(floors.get(BY_FRAME_KEY.get(head, ""))))
+    def _verdict_row(frame, hv, vs, n_by_side, hv_key, vs_key, note=""):
+        row = _base(frame, hv.get("n"), n_by_side, note=note)
         if hv.get("frame_version"):
             row["frame_version"] = hv["frame_version"]
         row["raters"] = _rater_block(acc.get(hv.get("basis")))
@@ -256,7 +264,7 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
                 "mde95_estimator": hv.get("mde95_estimator") or "E_refit",
                 "ci95_estimator": hv.get("ci95_estimator"),
                 "resolvable": hv.get("resolvable"),
-                "key": "accuracy.head_to_head_verdict"}
+                "key": hv_key}
         deltas = {}
         for src in SOURCES_VS:
             cell = vs.get(src) or {}
@@ -271,7 +279,7 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
                     "mde95_estimator": leg.get("mde95_estimator"),
                     "ci95_estimator": "E_cond, player-clustered",
                     "clears_e_cond_floor": leg.get("clears_e_cond_floor"),
-                    "key": f"accuracy.head_to_head_vs_sources.sources.{src}.{metric}"}
+                    "key": f"{vs_key}.sources.{src}.{metric}"}
             if src == "prospx_consensus":
                 legs["spearman"] = cons
             if legs:
@@ -281,7 +289,25 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
         row["deltas"] = deltas
         row["resolvable"] = hv.get("resolvable")
         row["verdict"] = hv.get("verdict")
-        rows.append(row)
+        return row
+
+    # The headline frame: the verdict itself, plus the per-source block.
+    if head:
+        rows.append(_verdict_row(
+            head, hv, vs, _by_side(floors.get(BY_FRAME_KEY.get(head, ""))),
+            "accuracy.head_to_head_verdict", "accuracy.head_to_head_vs_sources"))
+
+    # EV-01: the timing-pinned vintage-matched verdict, beside the headline and
+    # never in its place (role headline_candidate).
+    hv2 = acc.get("head_to_head_verdict_vm2") or {}
+    if (hv2.get("delta") is not None and head != "vm2"
+            and BASIS_TO_FRAME.get(hv2.get("basis")) == "vm2"):
+        vs2 = ((acc.get("head_to_head_vs_sources_vm2") or {}).get("sources") or {})
+        nbs = {s: hv2["n_by_side"][s] for s in STRATA
+               if (hv2.get("n_by_side") or {}).get(s)} or None
+        rows.append(_verdict_row(
+            "vm2", hv2, vs2, nbs, "accuracy.head_to_head_verdict_vm2",
+            "accuracy.head_to_head_vs_sources_vm2", note=FRAMES["vm2"]["note"]))
 
     # Tilted frames: the by-frame cells, with the claim-instrument interval.
     for frame in ("predebut", "all_vintages"):

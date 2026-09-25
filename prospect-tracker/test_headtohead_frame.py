@@ -128,10 +128,153 @@ def test_every_frame_is_scored_on_identical_rows_within_itself():
     bt = _load(BACKTEST)
     acc = bt.get("accuracy") or {}
     for key in ("pooled_efv_common", "pooled_efv_common_predebut",
-                "pooled_efv_common_vintage_matched"):
+                "pooled_efv_common_vintage_matched",
+                "pooled_efv_common_vintage_matched_vm2"):
         blk = acc.get(key)
         if not blk:
             continue
         ns = {r: (v or {}).get("n") for r, v in blk.items() if isinstance(v, dict)}
         ns = {r: n for r, n in ns.items() if n is not None}
         assert len(set(ns.values())) == 1, f"{key} scored raters on different rows: {ns}"
+
+
+# ---------------------------------------------------------------------------
+# EV-01 (docs/efv-v2/PROGRAM.md s3.4): frame version vm2, the timing pin.
+#
+# vm1 scores eFV with its consensus input read at the last snapshot before the
+# debut DATE, which for a midseason debut is a read the raters never get (E1:
+# 247 of 812 rows read after May 1). vm2 scores the same fits with the input
+# read at the raters' own preseason point. These pins say the pin holds on
+# every row, that it is the raters' point and not merely a point in the window,
+# and that vm1 stays the verdict until the owner promotes vm2.
+
+def test_the_pin_window_is_the_raters_window():
+    import efv_dataset as ed
+    import source_backtest as sb
+    assert ed.PRESEASON_WINDOW_START_MMDD == sb._WINDOW_START_MMDD
+    assert ed.PRESEASON_WINDOW_END_MMDD == sb._WINDOW_END_MMDD
+    assert ed.preseason_window(2019) == ("2019-01-01", "2019-05-01")
+
+
+def test_the_accessor_reads_the_latest_in_window_point_only():
+    import efv_dataset as ed
+    rec = {"points": [
+        {"snapshot_date": "2018-11-01", "consensus_fv_raw": 40.0},
+        {"snapshot_date": "2019-02-01", "consensus_fv_raw": 45.0,
+         "per_source": {"fangraphs": {"fv_published": 45}}},
+        {"snapshot_date": "2019-04-30", "consensus_fv_raw": 47.5},
+        {"snapshot_date": "2019-05-01", "consensus_fv_raw": 55.0},
+        {"snapshot_date": "2019-07-15", "consensus_fv_raw": 60.0},
+    ]}
+    got = ed.preseason_consensus_asof(rec, 2019, "hit")
+    assert got["asof_date"] == "2019-04-30"
+    assert got["consensus_fv_raw"] == 47.5
+    assert got["fv_trend"] == 7.5            # history stops at the pinned point
+    assert ed.preseason_consensus_asof(rec, 2020, "hit") is None
+    # Same consensus rule as the rater: consensus_fv when the raw key is absent.
+    rec2 = {"points": [{"snapshot_date": "2021-03-01", "consensus_fv": 50.0}]}
+    assert ed.preseason_consensus_asof(rec2, 2021, "pit")["consensus_fv_raw"] == 50.0
+    rec3 = {"points": [{"snapshot_date": "2021-03-01", "consensus_fv_raw": None}]}
+    assert ed.preseason_consensus_asof(rec3, 2021, "pit") is None
+
+
+@pytest.fixture(scope="module")
+def pinned():
+    import efv_dataset as ed
+    import efv_model as em
+    for side in ("hit", "pit"):
+        if not ed.matrix_path(side).exists():
+            pytest.skip("eFV training matrices not built on this tree")
+    out = {}
+    for side in ("hit", "pit"):
+        rc: dict = {}
+        out[side] = (em.oos_grades(side), em.oos_grades(side, timing_pin=True, receipts=rc), rc)
+    return out
+
+
+def test_every_vm2_consensus_input_is_dated_inside_its_window(pinned):
+    import efv_model as em
+    n = 0
+    for side, (_v1, v2, rc) in pinned.items():
+        assert set(v2) == set(rc), f"{side}: a pinned score without its receipt"
+        for k, r in rc.items():
+            lo, hi = r["window"]
+            assert (lo, hi) == (f"{r['window_year']}-01-01", f"{r['window_year']}-05-01")
+            assert lo <= r["asof_date"] < hi, (side, k, r)
+            # No reserved vintage: SCORED_YEARS ends before the 2025 debut cohort.
+            assert r["window_year"] in em.SCORED_YEARS and r["window_year"] < 2025
+            n += 1
+    assert n > 500, "the pinned mode scored almost nothing"
+
+
+def test_the_pin_changes_only_the_scored_input(pinned):
+    """The fits are the vm1 fits: where the pinned read IS the matrix read, the
+    vm2 score equals the vm1 score exactly."""
+    same = 0
+    for side, (v1, v2, rc) in pinned.items():
+        assert set(v2) <= set(v1)
+        for k, r in rc.items():
+            if r["asof_date"] == r["matrix_asof_date"]:
+                assert v2[k] == v1[k], (side, k)
+                same += 1
+    assert same > 100
+
+
+def test_the_served_vm2_frame_carries_its_timing_receipt_and_stays_beside_vm1():
+    bt = _load(BACKTEST)
+    acc = bt.get("accuracy") or {}
+    hv2 = acc.get("head_to_head_verdict_vm2")
+    if not hv2:
+        pytest.skip("source_backtest.json predates the vm2 frame")
+    hv = acc["head_to_head_verdict"]
+    # vm1 is still the verdict the page reads.
+    assert hv["basis"] == "pooled_efv_common_vintage_matched"
+    assert hv["frame_version"] == "vm1"
+    assert acc["head_to_head_by_frame"]["vintage_matched"]["frame_version"] == "vm1"
+    assert hv2["basis"] == "pooled_efv_common_vintage_matched_vm2"
+    assert hv2["frame_version"] == "vm2" and hv2["role"] == "headline_candidate"
+    assert acc["head_to_head_by_frame"]["vintage_matched_vm2"]["frame_version"] == "vm2"
+    tp = hv2["timing_pin"]
+    assert tp["n_rows"] == hv2["n"] == acc["pooled_efv_common_vintage_matched_vm2"]["xfv"]["n"]
+    assert tp["n_outside_window"] == 0
+    # The input is the raters' own consensus read on every row, not just any
+    # point inside the window.
+    assert tp["n_input_equals_rater_consensus"] == tp["n_rows"]
+    lo, hi = tp["input_mmdd_range"]
+    assert "-01-01" <= lo and hi < "-05-01"
+    assert sum(hv2["n_by_side"].values()) == hv2["n"]
+    # A vm2 row is a vm1 row: the frame can only lose rows, never add them.
+    assert hv2["n"] <= hv["n"]
+    assert hv2["n"] + tp["n_vintage_rows_without_pin"] == hv["n"]
+    if hv2.get("xfv_beats"):
+        assert hv2["resolvable"] is True
+
+
+def test_vm2_rows_drop_a_mismatched_or_out_of_window_pin():
+    import source_backtest as sb
+    C = sb.CONSENSUS_KEY
+
+    def row(k, y, dy, cons):
+        return {"key": k, "year": y, "outcome": {"debut_year": dy},
+                "grades": {C: cons, "xfv": cons}}
+    rows = [row("a", 2019, 2019, 50.0), row("b", 2019, 2019, 45.0),
+            row("c", 2020, 2020, 40.0), row("a", 2018, 2019, 45.0)]
+    raw = [1.0, 2.0, 3.0, 1.0]
+    oos2 = {"a": 5.0, "b": 0.5, "c": 0.1}
+    rc = {"a": {"asof_date": "2019-03-01", "window_year": 2019, "consensus_fv_raw": 50.0,
+                "matrix_asof_date": "2019-07-01", "matrix_consensus_fv_raw": 52.0},
+          "b": {"asof_date": "2020-03-01", "window_year": 2020, "consensus_fv_raw": 45.0,
+                "matrix_asof_date": "2019-07-01", "matrix_consensus_fv_raw": 45.0},
+          "c": {"asof_date": "2020-06-01", "window_year": 2020, "consensus_fv_raw": 40.0,
+                "matrix_asof_date": "2020-06-01", "matrix_consensus_fv_raw": 40.0}}
+    before = json.dumps(rows, sort_keys=True)
+
+    def vm(c):
+        return c["year"] == c["outcome"]["debut_year"]
+    out, rec = sb._vm2_frame_rows(rows, raw, oos2, rc, vm)
+    assert [r["key"] for r in out] == ["a"]
+    assert rec["n_vintage_rows_without_pin"] == 1 and rec["n_outside_window"] == 1
+    assert rec["n_input_date_moved"] == 1 and rec["n_consensus_value_moved"] == 1
+    assert rec["n_input_equals_rater_consensus"] == 1
+    assert out[0]["xfv_input"]["window"] == ["2019-01-01", "2019-05-01"]
+    assert json.dumps(rows, sort_keys=True) == before, "vm1 rows were modified"

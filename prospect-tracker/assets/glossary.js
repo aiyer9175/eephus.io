@@ -3328,8 +3328,9 @@ function _loadProgress() {
 }
 
 // Frames a chart series may hold. Tilted frames never, whatever the artifact
-// lists: they are timing, not skill (PROGRAM.md s7 item 1).
-const _PROG_CHART_FRAMES = ["vm", "lv_dev", "lv_res", "vm_pros"];
+// lists: they are timing, not skill (PROGRAM.md s7 item 1). vm2 is the EV-01
+// timing-pinned vintage-matched frame, drawn as a hollow square beside vm1.
+const _PROG_CHART_FRAMES = ["vm", "vm2", "lv_dev", "lv_res", "vm_pros"];
 
 function _progRows(prog) {
   return (prog && !prog.__error && Array.isArray(prog.rows)) ? prog.rows : [];
@@ -3355,6 +3356,13 @@ function _progFrameLabel(prog, fid) {
 function _progLatestHeadline(prog) {
   const head = prog && prog.headline_frame;
   const rows = _progRows(prog).filter(r => r.frame === head && r.role !== "tilted");
+  return rows.length ? rows[rows.length - 1] : null;
+}
+
+// The latest row of a frame that is waiting to become the headline (EV-01 vm2).
+function _progLatestCandidate(prog) {
+  const rows = _progRows(prog).filter(r => r.role === "headline_candidate"
+    && r.frame !== (prog && prog.headline_frame) && r.tilted !== true);
   return rows.length ? rows[rows.length - 1] : null;
 }
 
@@ -3388,9 +3396,18 @@ function _methProgressLedger(prog, bt) {
     ? ` <span class="sacc-chip-warn" title="the backtest was regenerated after this row was last verified">stale: backtest ${escapeHtml(String(bt.generated_at).slice(0, 10))} is newer</span>`
     : ` <span class="sacc-chip-ok">verified ${escapeHtml(String(row.last_verified_at || row.date || "").slice(0, 10))}</span>`;
   const resolvable = row.resolvable === true;
+  // A headline candidate (EV-01 vm2) prints on its own line, in the neutral
+  // style: it is not the claim until the owner has seen it.
+  const cand = _progLatestCandidate(prog);
+  let candTxt = "";
+  if (cand) {
+    const crt = cand.raters || {}, cleg = _progConsLeg(cand) || {};
+    candTxt = `<p class="meth-window"><strong>${escapeHtml(_progFrameLabel(prog, cand.frame))}, ${escapeHtml(cand.date || "")} <span class="sacc-chip-warn">${escapeHtml(String(cand.role || "").replace(/_/g, " "))}</span>:</strong> n ${Number(cand.n || 0).toLocaleString()}, eFV ${_progFmt((crt.efv || {}).spearman, 3)} against PROSPX consensus ${_progFmt((crt.prospx_consensus || {}).spearman, 3)}, delta ${_progSigned(cleg.delta, 4)}${Array.isArray(cleg.ci95) ? `, 95% CI ${_progCi(cleg.ci95, 3)}` : ""}: <span class="sacc-verdict-null">${escapeHtml(cand.verdict || "")}</span>. ${escapeHtml(cand.note || "")}</p>`;
+  }
   return `<div class="meth-chart scx-progress-head">
     <div class="meth-chart-title">eFV progress ledger <span class="meth-sub">the dated record of eFV against PROSPX consensus and the industry</span></div>
     <p class="meth-window"><strong>Latest, ${escapeHtml(row.date || "")}:</strong> on the ${escapeHtml(_progFrameLabel(prog, row.frame).toLowerCase())} frame (n ${Number(row.n || 0).toLocaleString()}), eFV ${_progFmt(efv, 3)} against PROSPX consensus ${_progFmt(cons, 3)}, delta ${_progSigned(leg.delta, 4)}${ciTxt}${floorTxt}: <span class="${resolvable ? "sacc-verdict-win" : "sacc-verdict-null"}">${escapeHtml(row.verdict || "")}</span>.${chip}</p>
+    ${candTxt}
   </div>`;
 }
 
@@ -3445,7 +3462,10 @@ function _methProgressChart(prog) {
   const zero = `<line x1="${ML}" y1="${sy(0).toFixed(1)}" x2="${ML + iW}" y2="${sy(0).toFixed(1)}" stroke="var(--text-secondary)" stroke-width="1" stroke-dasharray="4,3"/>`;
   const col = _raterMeta("xfv").color;
   const marks = rows.map((r, i) => {
-    const l = legs[i], x = sx(ts[i]), y = sy(Number(l.delta));
+    // A headline-candidate row sits a few pixels right of the same-date
+    // headline row so the two whiskers do not overprint.
+    const cand = r.role === "headline_candidate";
+    const l = legs[i], x = sx(ts[i]) + (cand ? 9 : 0), y = sy(Number(l.delta));
     const ci = Array.isArray(l.ci95) && l.ci95[0] != null
       ? `<line x1="${x.toFixed(1)}" y1="${sy(Number(l.ci95[0])).toFixed(1)}" x2="${x.toFixed(1)}" y2="${sy(Number(l.ci95[1])).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`
         + [l.ci95[0], l.ci95[1]].map(v => `<line x1="${(x - 4).toFixed(1)}" y1="${sy(Number(v)).toFixed(1)}" x2="${(x + 4).toFixed(1)}" y2="${sy(Number(v)).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`).join("")
@@ -3454,6 +3474,8 @@ function _methProgressChart(prog) {
     let mark;
     if (r.trigger === "look") {
       mark = `<path d="M ${x.toFixed(1)},${(y - 6).toFixed(1)} L ${(x + 6).toFixed(1)},${y.toFixed(1)} L ${x.toFixed(1)},${(y + 6).toFixed(1)} L ${(x - 6).toFixed(1)},${y.toFixed(1)} Z" fill="${col}" stroke="var(--bg-secondary)" stroke-width="1">${tip}</path>`;
+    } else if (cand) {
+      mark = `<path d="M ${(x - 4.5).toFixed(1)},${(y - 4.5).toFixed(1)} L ${(x + 4.5).toFixed(1)},${(y - 4.5).toFixed(1)} L ${(x + 4.5).toFixed(1)},${(y + 4.5).toFixed(1)} L ${(x - 4.5).toFixed(1)},${(y + 4.5).toFixed(1)} Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="2">${tip}</path>`;
     } else if (r.role === "development") {
       mark = `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="var(--bg-secondary)" stroke="${col}" stroke-width="2">${tip}</circle>`;
     } else {
@@ -3471,9 +3493,11 @@ function _methProgressChart(prog) {
   const ticks = kept.reverse().map(t =>
     `<text x="${sx(t).toFixed(1)}" y="${MT + iH + 16}" text-anchor="middle" font-size="10" fill="var(--text-secondary)" font-weight="600">${escapeHtml(_progDateLabel(new Date(t).toISOString()))}</text>`).join("");
   const hasDev = rows.some(r => r.role === "development");
+  const candRow = rows.find(r => r.role === "headline_candidate");
   const hasLook = rows.some(r => r.trigger === "look");
   const legend = [
     `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};border-radius:50%;"></span>${escapeHtml(_progFrameLabel(prog, prog.headline_frame || "vm"))} frame (headline)</span>`,
+    candRow ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};"></span>${escapeHtml(_progFrameLabel(prog, candRow.frame))} (headline candidate, not yet the claim)</span>` : "",
     hasDev ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};border-radius:50%;"></span>development frame, spent, not a claim</span>` : "",
     hasLook ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};transform:rotate(45deg);"></span>reserved-frame look</span>` : "",
     floor != null ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);opacity:.35;"></span>plus or minus the noise floor (${_progFmt(floor, 3)})</span>` : "",
@@ -3502,7 +3526,7 @@ function _progRowHtml(prog, r) {
   const mv = r.model_version || {};
   const model = `${escapeHtml(r.model_id || "")}${mv.commit ? ` <span class="meth-sub">${escapeHtml(mv.commit)}</span>` : ""}${r.trigger ? `<br><span class="meth-sub">${escapeHtml(r.trigger)}</span>` : ""}`;
   const chipCls = r.role === "headline" ? "sacc-chip-ok" : "sacc-chip-warn";
-  const frame = `${escapeHtml(_progFrameLabel(prog, r.frame))}${r.frame_version ? ` <span class="meth-sub">${escapeHtml(r.frame_version)}</span>` : ""}<br><span class="${chipCls}">${escapeHtml(r.role || "")}</span>`;
+  const frame = `${escapeHtml(_progFrameLabel(prog, r.frame))}${r.frame_version ? ` <span class="meth-sub">${escapeHtml(r.frame_version)}</span>` : ""}<br><span class="${chipCls}">${escapeHtml(String(r.role || "").replace(/_/g, " "))}</span>`;
   let deltaCell;
   if (r.share && r.share.efv_right_share != null) {
     const ci = Array.isArray(r.share.ci95) ? ` (CI ${_progFmt(r.share.ci95[0] * 100, 0)}% to ${_progFmt(r.share.ci95[1] * 100, 0)}%)` : "";

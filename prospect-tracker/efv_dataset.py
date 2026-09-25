@@ -514,6 +514,79 @@ def _prior_features(rec, pt, side: str = "hit") -> dict:
     return out
 
 
+# --- EV-01 (docs/efv-v2/PROGRAM.md s3.4): the as-of PRESEASON consensus read ----
+# The vintage-matched head-to-head scores every rater on its preseason read of the
+# debut year: source_backtest._rater_grades_for_year takes the consensus of the
+# LATEST points[] entry dated inside [Y-01-01, Y-05-01). eFV's own consensus input
+# is the latest point strictly before the debut DATE (build_matrix), which for a
+# midseason debut is a read the raters never get. This accessor returns eFV's
+# prior-feature block (consensus FV, per-source FV, spread, trend, tools) read at
+# the raters' point instead, so efv_model.oos_grades(timing_pin=True) can score a
+# vintage-matched row on the same information the raters had (frame version vm2).
+# The window bounds MUST equal source_backtest._WINDOW_START_MMDD / _WINDOW_END_MMDD
+# (test-pinned in test_headtohead_frame.py).
+PRESEASON_WINDOW_START_MMDD = "-01-01"
+PRESEASON_WINDOW_END_MMDD = "-05-01"
+
+_ASOF_RECORDS: dict | None = None
+
+
+def preseason_window(year: int) -> tuple[str, str]:
+    """[lo, hi) ISO bounds of the raters' preseason window for `year`."""
+    return (f"{int(year)}{PRESEASON_WINDOW_START_MMDD}",
+            f"{int(year)}{PRESEASON_WINDOW_END_MMDD}")
+
+
+def asof_records(refresh: bool = False) -> dict:
+    """{player_key: record with points[]} from debuts.json, then timeseries.json
+    for keys debuts.json lacks. Cached for the process; read-only."""
+    global _ASOF_RECORDS
+    if _ASOF_RECORDS is not None and not refresh:
+        return _ASOF_RECORDS
+    recs: dict = {}
+    try:
+        deb = json.loads((DATA_DIR / "debuts.json").read_text(encoding="utf-8"))
+        for r in (deb if isinstance(deb, list) else (deb.get("players") or [])):
+            if r.get("player_key"):
+                recs.setdefault(r["player_key"], r)
+    except (OSError, ValueError):
+        log.warning("asof_records: debuts.json unreadable")
+    try:
+        ts = json.loads((DATA_DIR / "timeseries.json").read_text(encoding="utf-8"))
+        for r in (ts.get("players") or []):
+            if r.get("player_key"):
+                recs.setdefault(r["player_key"], r)
+    except (OSError, ValueError):
+        log.warning("asof_records: timeseries.json unreadable")
+    _ASOF_RECORDS = recs
+    return recs
+
+
+def preseason_consensus_asof(rec: dict | None, year: int, side: str = "hit") -> dict | None:
+    """eFV's prior-feature block read at the raters' preseason point for `year`.
+
+    The point is the latest points[] entry dated inside preseason_window(year),
+    exactly the point source_backtest._rater_grades_for_year reads the consensus
+    from, and the consensus value follows the same rule (consensus_fv_raw, else
+    consensus_fv). None when there is no in-window point or it carries no
+    consensus. The returned dict is _prior_features(...) at that point, with
+    `asof_date` the point's snapshot_date (always inside the window)."""
+    if not rec:
+        return None
+    lo, hi = preseason_window(year)
+    win = [p for p in (rec.get("points") or [])
+           if p.get("snapshot_date") and lo <= p["snapshot_date"] < hi]
+    if not win:
+        return None
+    pt = sorted(win, key=lambda p: p["snapshot_date"])[-1]
+    cons = _f(pt.get("consensus_fv_raw", pt.get("consensus_fv")))
+    if cons is None:
+        return None
+    out = _prior_features(rec, pt, side)
+    out["consensus_fv_raw"] = cons
+    return out
+
+
 # Reliability shrink: a level-relative rate is shrunk toward 0 (league average) by its
 # sample size, w = exposure / (exposure + K). A small-sample cup-of-coffee (e.g. a 3-PA
 # AAA cameo with a fluky .98 OBP) collapses to ~0 instead of reading as elite; a full

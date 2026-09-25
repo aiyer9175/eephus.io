@@ -2179,6 +2179,69 @@ _H2H_SOURCE_LABELS = {CONSENSUS_KEY: "PROSPX consensus",
                       "mlb_pipeline": "MLB Pipeline", "fangraphs": "FanGraphs"}
 
 
+#: EV-01 (docs/efv-v2/PROGRAM.md s3.4): the accuracy key of the timing-pinned
+#: vintage-matched frame, frame version vm2. vm1 keeps
+#: "pooled_efv_common_vintage_matched" and stays the verdict's basis.
+VM2_BASIS = "pooled_efv_common_vintage_matched_vm2"
+
+
+def _vm2_frame_rows(rows_x, raw_vm1, xfv_oos_vm2, receipts, is_vintage_matched):
+    """The vintage-matched rows with eFV graded from the timing-pinned scores.
+
+    `rows_x` are the eFV-covered common rows after the vm1 remap and `raw_vm1`
+    their raw vm1 scores in the same order. The remap onto the consensus grade
+    grid is re-run exactly as vm1 runs it, over the same population, with each
+    player's raw score replaced by his pinned score where one exists, so vm1 and
+    vm2 differ only in the consensus input. A vintage-matched row enters vm2 only
+    when its pinned read is dated inside the preseason window of the row's own
+    base year. Rows are shallow copies carrying `xfv_input` (the receipt);
+    nothing in `rows_x` is modified. Returns (rows, timing receipt)."""
+    m = len(rows_x)
+    receipt = {"n_pinned_scores": len(xfv_oos_vm2), "n_rows": 0,
+               "n_vintage_rows_without_pin": 0, "n_input_date_moved": 0,
+               "n_consensus_value_moved": 0, "n_outside_window": 0,
+               "n_input_equals_rater_consensus": 0,
+               "window_mmdd": [_WINDOW_START_MMDD, _WINDOW_END_MMDD],
+               "rule": ("eFV's consensus input on each row is the latest points[] "
+                        "entry dated inside the row's base-year preseason window, "
+                        "the same point _rater_grades_for_year reads")}
+    if not (m and xfv_oos_vm2 and len(raw_vm1) == m):
+        return [], receipt
+    raw2 = [xfv_oos_vm2.get(c["key"], raw_vm1[i]) for i, c in enumerate(rows_x)]
+    order = sorted(range(m), key=lambda i: raw2[i])
+    cons_sorted = sorted(c["grades"][CONSENSUS_KEY] for c in rows_x)
+    grade2 = [None] * m
+    for rank_pos, i in enumerate(order):
+        pp = rank_pos / (m - 1) if m > 1 else 0.0
+        grade2[i] = round(cons_sorted[min(m - 1, int(round(pp * (m - 1))))], 1)
+    out = []
+    for i, c in enumerate(rows_x):
+        if not is_vintage_matched(c):
+            continue
+        rec = receipts.get(c["key"]) if c["key"] in xfv_oos_vm2 else None
+        if not rec or rec.get("window_year") != c.get("year"):
+            receipt["n_vintage_rows_without_pin"] += 1
+            continue
+        lo, hi = f"{c['year']}{_WINDOW_START_MMDD}", f"{c['year']}{_WINDOW_END_MMDD}"
+        if not (lo <= (rec.get("asof_date") or "") < hi):
+            receipt["n_outside_window"] += 1
+            continue
+        receipt["n_input_date_moved"] += int(rec.get("asof_date") != rec.get("matrix_asof_date"))
+        receipt["n_consensus_value_moved"] += int(
+            rec.get("consensus_fv_raw") != rec.get("matrix_consensus_fv_raw"))
+        receipt["n_input_equals_rater_consensus"] += int(
+            rec.get("consensus_fv_raw") == c["grades"].get(CONSENSUS_KEY))
+        row = dict(c)
+        row["grades"] = dict(c["grades"], xfv=grade2[i])
+        row["xfv_input"] = {"asof_date": rec.get("asof_date"), "window": [lo, hi],
+                            "consensus_fv_raw": rec.get("consensus_fv_raw")}
+        out.append(row)
+    receipt["n_rows"] = len(out)
+    dates = sorted(r["xfv_input"]["asof_date"][4:] for r in out)
+    receipt["input_mmdd_range"] = [dates[0], dates[-1]] if dates else None
+    return out, receipt
+
+
 def _head_to_head_vs_sources(rows, block, *, frame, basis):
     """eFV against each rater on one frame, both legs, each with its paired
     player-clustered CI95 and E_cond MDE95 (EV-00, PROGRAM.md s5.1 item 2).
@@ -3480,6 +3543,21 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     except Exception:
         log.exception("eFV OOS grades unavailable for source comparison — continuing")
         xfv_oos = {}
+    # EV-01 (docs/efv-v2/PROGRAM.md s3.4), frame version vm2: the SAME forward-chained
+    # fits, each vintage-matched row scored with eFV's consensus input read at the
+    # raters' own preseason point (efv_model.oos_grades(timing_pin=True)). ADDITIVE:
+    # it is scored into its own keys below and moves no vm1 number.
+    xfv_oos_vm2: dict = {}
+    vm2_receipts: dict = {}
+    try:
+        from efv_model import oos_grades as _oos
+        for _sd in ("hit", "pit"):
+            xfv_oos_vm2.update(_oos(_sd, timing_pin=True, receipts=vm2_receipts))
+    except Exception:
+        log.exception("eFV timing-pinned OOS grades unavailable; vm2 frame skipped")
+        xfv_oos_vm2, vm2_receipts = {}, {}
+    rows_x: list[dict] = []
+    raw_vm1: list[float] = []
     n_xfv = 0
     if xfv_oos:
         for y in years:
@@ -3493,6 +3571,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         # are rank-based, so this monotone remap leaves the head-to-head numbers unchanged,
         # but it lets eFV join the FV-tier graphs + cohort tables + archetype breakdown.
         rows_x = [c for y in years for c in common_by_year[y] if "xfv" in c["grades"]]
+        raw_vm1 = [c["grades"]["xfv"] for c in rows_x]
         if rows_x:
             order = sorted(range(len(rows_x)), key=lambda i: rows_x[i]["grades"]["xfv"])
             cons_sorted = sorted(c["grades"][CONSENSUS_KEY] for c in rows_x)
@@ -3650,6 +3729,10 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         return dy is not None and (c.get("year") or 0) == dy
 
     efv_common_vintage = [c for c in efv_common if _is_vintage_matched(c)]
+    # EV-01 vm2: the vintage-matched rows again, with eFV's grade from the
+    # timing-pinned scores. Built on copies; the vm1 rows above are untouched.
+    efv_common_vintage_vm2, vm2_timing = _vm2_frame_rows(
+        rows_x, raw_vm1, xfv_oos_vm2, vm2_receipts, _is_vintage_matched)
     accuracy = {
         "capture_curve": capture_curve,
         "common_n": len(pooled_common),
@@ -3762,6 +3845,21 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
             "every base year including post-debut consensus reads; tilted TOWARD "
             "the consensus, which sees major league performance on those rows"),
     }
+    # EV-01: the timing-pinned vintage-matched frame (vm2), scored beside vm1.
+    # Its floor is the vm1 frame's stored E_refit constant (same rows, same
+    # consensus column); the in-run E_cond interval is its own.
+    accuracy["pooled_efv_common_vintage_matched_vm2"] = (
+        _acc(efv_common_vintage_vm2) if len(efv_common_vintage_vm2) >= 40 else None)
+    _frames["vintage_matched_vm2"] = _h2h_cell(
+        VM2_BASIS,
+        accuracy.get("pooled_efv_common_vintage_matched_vm2"),
+        XFV_HEADTOHEAD_VINTAGE_MDE95,
+        "base year equals the eFV decision year, and eFV's consensus input is the "
+        "raters' own preseason read (latest point dated Jan 1 to Apr 30 of that "
+        "year), so neither side holds a timing edge; frame version vm2 (EV-01)")
+    for _fk, _fv in (("vintage_matched", "vm1"), ("vintage_matched_vm2", "vm2")):
+        if _frames.get(_fk):
+            _frames[_fk]["frame_version"] = _fv
     accuracy["head_to_head_by_frame"] = {k: v for k, v in _frames.items() if v}
     if _frames.get("vintage_matched"):
         accuracy["head_to_head_verdict"] = dict(_frames["vintage_matched"])
@@ -3789,6 +3887,41 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         _hv["ci95_source"] = ("accuracy.head_to_head_vs_sources.sources."
                               f"{CONSENSUS_KEY}.spearman.ci95")
         _hv["mde95_estimator"] = "E_refit"
+    # EV-01 vm2 verdict, beside the vm1 verdict and never in its place: the page
+    # reads head_to_head_verdict (vm1) until the owner has seen vm2.
+    accuracy["head_to_head_vs_sources_vm2"] = (
+        _head_to_head_vs_sources(
+            efv_common_vintage_vm2,
+            accuracy.get("pooled_efv_common_vintage_matched_vm2"),
+            frame="vintage_matched_vm2", basis=VM2_BASIS)
+        if accuracy.get("pooled_efv_common_vintage_matched_vm2") else None)
+    accuracy["head_to_head_verdict_vm2"] = None
+    if _frames.get("vintage_matched_vm2"):
+        _hv2 = dict(_frames["vintage_matched_vm2"])
+        _leg2 = (((accuracy["head_to_head_vs_sources_vm2"] or {}).get("sources") or {})
+                 .get(CONSENSUS_KEY) or {}).get("spearman") or {}
+        _nbs: dict[str, int] = {}
+        for _c in efv_common_vintage_vm2:
+            _s = m_side.get(_c.get("key"))
+            if _s:
+                _nbs[_s] = _nbs.get(_s, 0) + 1
+        _hv2.update({
+            "role": "headline_candidate",
+            "ci95": _leg2.get("ci95"),
+            "ci95_estimator": "E_cond, player-clustered",
+            "ci95_source": ("accuracy.head_to_head_vs_sources_vm2.sources."
+                            f"{CONSENSUS_KEY}.spearman.ci95"),
+            "mde95_estimator": "E_refit",
+            "mde95_note": ("the vm1 frame's stored E_refit floor, carried because vm2 "
+                           "scores the same rows against the same consensus column; "
+                           "E_refit has not been re-measured on vm2"),
+            "n_by_side": {k: _nbs[k] for k in ("hit", "pit") if k in _nbs},
+            "timing_pin": vm2_timing,
+            "frame_note": ("timing-pinned vintage-matched frame (EV-01, "
+                           "docs/efv-v2/PROGRAM.md s3.4). Published beside the vm1 "
+                           "verdict; it becomes the headline once the owner has seen it."),
+        })
+        accuracy["head_to_head_verdict_vm2"] = _hv2
     # Does the consensus beat its best individual input on each metric? Each leg
     # carries its own measured floor (CONSENSUS_VS_INPUTS_MDE95) because the two do
     # not have the same precision: on this vintage the AUC leg clears its floor by
