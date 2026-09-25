@@ -1,10 +1,11 @@
 # eephus.io betting jobs. Install on the production box with `crontab -e`.
 #
-# THREE JOBS. Two of them bill The Odds API, and their combined spend is stated
+# FOUR JOBS. Two of them bill The Odds API, and their combined spend is stated
 # in each section below so the monthly total can be read off this file without
 # running anything: the open capture is 3 credits a day (93 in a 31-day month)
 # and the close job is 3 credits a day (93), against the free tier's 500. The
-# vintage snapshot is offline and free.
+# vintage snapshot is offline and free. The lineup-card capture calls only the
+# public StatsAPI schedule and spends no Odds API credit.
 #
 # ONE LEDGER ACROSS ALL OF THEM (betting_credits.py, added 2026-09-06). Until it
 # existed no job could see any other's spend, so whichever ran first in a month
@@ -100,6 +101,26 @@ PY=/opt/eephus/venv/bin/python                 # <- the interpreter with the dep
 # concluding anything else about the betting module.
 */15 * * * *  cd $EEPHUS && . /etc/eephus.env && $PY tools/betting_close_job.py >> logs/betting-close.log 2>&1
 
+# --- The posted lineup-card capture (5j phase 1), zero credits ------------
+# Same shape as the close job: every 15 minutes, ALL DAY, and the job decides.
+# Every window decision is made inside tools/betting_lineup_job.py against UTC
+# instants read off its own day slate, so no cron window is needed. It calls
+# only the public StatsAPI /schedule, spends no Odds API credit, computes no
+# price and imports no pricer. A posted card that nobody captured while it
+# stood cannot be rebuilt later, so a missed slate is missed permanently.
+#
+# It needs no API key, so this line does not source /etc/eephus.env: a
+# missing env file must not stop a free capture.
+#
+# Exits 0 on every legitimate no-op and stamps a heartbeat on every run. An
+# unusable slate (no_local_slate, slate_stale, fetch_failed) exits non-zero on
+# purpose, so it shows in the log rather than passing as a quiet no-op.
+#
+# AFTER INSTALLING, RUN THIS, for the same reason as the close job:
+#   $PY tools/betting_lineup_job.py --selfcheck
+# "NEVER RUN on this machine" means this entry is not installed or not firing.
+*/15 * * * *  cd $EEPHUS && $PY tools/betting_lineup_job.py >> logs/betting-lineup.log 2>&1
+
 # --- The leaderboard vintage snapshot, the validation clock -----------------
 # Offline, idempotent, about 25KB a night, costs no credits. This is the ONLY
 # thing that can ever make the betting backtest honest, and a missed night is
@@ -111,6 +132,7 @@ PY=/opt/eephus/venv/bin/python                 # <- the interpreter with the dep
 
 # --- Checks you can run by hand --------------------------------------------
 #   $PY tools/betting_close_job.py --why      today's window, spends nothing
+#   $PY tools/betting_lineup_job.py --why     the lineup gate's opinion, no call
 #   $PY -c "import betting_export as be, json; print(json.dumps(
 #            be.snapshot_health(14), indent=1, default=str))"
 #                                             per-slate open/close coverage off

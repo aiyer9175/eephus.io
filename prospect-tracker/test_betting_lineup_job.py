@@ -702,5 +702,38 @@ class TheRegistrationNote(unittest.TestCase):
             self.assertNotIn(dash, note)
 
 
+class TheCronExampleShipsTheEntry(unittest.TestCase):
+    """--selfcheck tells the box owner to install this job from
+    deploy/betting-crontab.example, so the example has to carry the line.
+    It did not until 2026-09-25: the job was armed on 2026-09-17 with no
+    entry to copy, the same shape as the close job that went weeks unrun."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = (ROOT / "deploy" / "betting-crontab.example").read_text(
+            encoding="utf-8")
+        cls.lines = [ln for ln in cls.text.splitlines()
+                     if ln.strip() and not ln.lstrip().startswith("#")
+                     and "betting_lineup_job.py" in ln]
+
+    def test_exactly_one_entry_every_fifteen_minutes_all_day(self):
+        self.assertEqual(len(self.lines), 1, repr(self.lines))
+        self.assertEqual(self.lines[0].split()[0:5], ["*/15", "*", "*", "*", "*"],
+                         "the job decides its own window; the cron line must "
+                         "not add one")
+
+    def test_the_entry_runs_under_utc_with_the_close_job_wrapper(self):
+        self.assertRegex(self.text, r"(?m)^TZ=UTC\s")
+        line = self.lines[0]
+        self.assertIn("cd $EEPHUS && ", line)
+        self.assertIn("$PY tools/betting_lineup_job.py", line)
+        self.assertIn(">> logs/betting-lineup.log 2>&1", line)
+
+    def test_the_free_capture_does_not_depend_on_the_key_file(self):
+        self.assertNotIn("/etc/eephus.env", self.lines[0],
+                         "the job spends no credit and needs no key; a missing "
+                         "env file must not stop the capture")
+
+
 if __name__ == "__main__":
     unittest.main()
