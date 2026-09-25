@@ -1287,8 +1287,11 @@ def build_sections(payload: dict) -> dict:
             sc = _start_score(sp_by_id.get(pp["mlbam"]), (g.get(opp) or {}).get("org"), teams_ctx)
             if not sc:
                 continue
+            # is_home rides the row so the client can print vs or @; until
+            # 2026-09-25 every streamer read "@" and half of them were home.
             sc.update({"mlbam": pp["mlbam"], "name": pp.get("name"), "date": g.get("date"),
                        "team": (g.get(me) or {}).get("org"), "opp_org": (g.get(opp) or {}).get("org"),
+                       "is_home": me == "home",
                        "venue": (g.get("venue") or {}).get("name")})
             streamers.append(sc)
     streamers.sort(key=lambda s: -(s.get("per_start_fgp") or -1e9))
@@ -1314,6 +1317,8 @@ def build_sections(payload: dict) -> dict:
             sc = _start_score(p, st.get("opp_org"), teams_ctx)
             leg = {"date": st.get("date"), "opp_org": st.get("opp_org"),
                    "exp_fgp": (sc or {}).get("per_start_fgp")}
+            if st.get("is_home") is not None:
+                leg["is_home"] = bool(st.get("is_home"))
             if st.get("projected"):
                 leg["projected"] = True
             legs.append(leg)

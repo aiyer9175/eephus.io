@@ -140,14 +140,14 @@
     (sections().daily_streamers || []).forEach(function (st) {
       if (String(st.mlbam) !== want) return;
       by[st.date || ""] = { date: st.date, opp: st.opp_org, venue: st.venue,
-                            pts: st.per_start_fgp, projected: false };
+                            home: st.is_home, pts: st.per_start_fgp, projected: false };
     });
     (sections().two_start || []).forEach(function (t) {
       if (String(t.mlbam) !== want) return;
       (t.legs || []).forEach(function (l) {
         if (by[l.date || ""]) return;
-        by[l.date || ""] = { date: l.date, opp: l.opp_org, pts: l.exp_fgp,
-                             projected: !!l.projected };
+        by[l.date || ""] = { date: l.date, opp: l.opp_org, home: l.is_home,
+                             pts: l.exp_fgp, projected: !!l.projected };
       });
     });
     return Object.keys(by).sort().map(function (k) { return by[k]; });
@@ -349,7 +349,8 @@
     return '<div class="fc-sec"><div class="fc-sec-h">Upcoming starts</div>' +
       '<div class="fc-rows">' + list.map(function (s) {
         return '<div class="fc-row"><span>' + esc(dayLabel(s.date)) + "</span>" +
-          "<span>@ " + esc(s.opp || "") + (s.venue ? " &middot; " + esc(s.venue) : "") +
+          "<span>" + (s.home === true ? "vs " : (s.home === false ? "@ " : "")) +
+          esc(s.opp || "") + (s.venue ? " &middot; " + esc(s.venue) : "") +
           (s.projected ? ' <span class="fc-dim">(projected)</span>' : "") + "</span>" +
           "<span>" + num(s.pts, 1) + " pts</span></div>";
       }).join("") + "</div>" +

@@ -565,6 +565,32 @@ def test_refresh_live_rekeys_an_old_corpus_to_canonical_clubs(monkeypatch, tmp_p
     assert [p["team"] for p in got["players"]] == ["ARI", "TBR", "BOS"]
 
 
+# ---- home or road on the slate sections (M11-05, 2026-09-25) --------------
+def test_streamer_rows_and_two_start_legs_say_which_side_starts(monkeypatch):
+    """Every streamer and two-start leg printed "@" because the rows carried
+    no side; half of them were home starts."""
+    _light_sections(monkeypatch)
+    sp = {"mlbam": 9, "side": "pit", "pos": "SP", "fpts_fgp": 300.0,
+          "ros": {"gs": 10.0}}
+    sched = {"games": [{"date": "2026-09-24",
+                        "home": {"org": "BOS", "probable": {"mlbam": 9}},
+                        "away": {"org": "NYY", "probable": None}},
+                       {"date": "2026-09-26",
+                        "home": {"org": "TOR", "probable": None},
+                        "away": {"org": "BOS", "probable": {"mlbam": 9}}}],
+             "two_start": {"9": [{"date": "2026-09-24", "opp_org": "NYY",
+                                  "is_home": True},
+                                 {"date": "2026-09-29", "opp_org": "TOR",
+                                  "is_home": False, "projected": True}]}}
+    sec = fe.build_sections({"players": [sp], "mode": fe.MODE_ROS,
+                             "season_fraction": 0.9, "schedule": sched})
+    by_date = {r["date"]: r for r in sec["daily_streamers"]}
+    assert by_date["2026-09-24"]["is_home"] is True
+    assert by_date["2026-09-26"]["is_home"] is False
+    legs = sec["two_start"][0]["legs"]
+    assert [leg["is_home"] for leg in legs] == [True, False]
+
+
 if __name__ == "__main__":
     import sys
     mod = sys.modules[__name__]

@@ -726,3 +726,36 @@ def test_card_without_history_renders_no_trend_block():
     html = _fcard_html(c)
     assert "fc-spark" not in html and "as of" not in html
     assert "LAD, next 7 days" in html
+
+
+def test_card_upcoming_starts_print_vs_for_a_home_start():
+    """The Upcoming starts block printed "@" for every start, so a home start
+    read "@ ATL" beside the same card's next-7 strip reading "vs ATL"."""
+    corpus = json.loads(json.dumps(FC_CORPUS))
+    corpus["sections"]["daily_streamers"] = [
+        {"mlbam": 694973, "date": "2026-08-17", "opp_org": "ATL", "is_home": True,
+         "venue": "PNC Park", "per_start_fgp": 30.1}]
+    corpus["sections"]["two_start"] = [
+        {"mlbam": 694973, "legs": [
+            {"date": "2026-08-17", "opp_org": "ATL", "is_home": True, "exp_fgp": 30.1},
+            {"date": "2026-08-22", "opp_org": "NYM", "is_home": False, "exp_fgp": 27.0,
+             "projected": True}]}]
+    c = _fcard_ctx(_fcard_payloads(), corpus)
+    c.eval("window.EEPHUS_FANTASY_CARD.open(694973)")
+    html = _fcard_html(c)
+    assert "vs ATL" in html and "@ ATL" not in html, html[:600]
+    assert "@ NYM" in html
+
+
+def test_redraft_slate_cells_read_the_side_off_the_row():
+    """Streamers, two-start legs and the streamer GFX used a literal "@"."""
+    src = (ROOT / "assets" / "redraft.js").read_text(encoding="utf-8")
+    for literal in ('"</td><td>@ " + esc(st.opp_org)', '"@" + esc(l.opp_org)',
+                    '{ t: "@ " + (x.opp_org'):
+        assert literal not in src, literal
+    fn = re.search(r"function atVs\(isHome\) \{[^\n]*\}", src)
+    assert fn, "redraft.js lost its atVs helper"
+    c = MiniRacer()
+    c.eval(fn.group(0))
+    assert json.loads(c.eval('JSON.stringify([atVs(true), atVs(false), atVs(undefined)])')) \
+        == ["vs ", "@ ", ""]

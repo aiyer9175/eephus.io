@@ -629,7 +629,7 @@
     var rows = (byDay[S.streamerDay] || []).slice(0, 40).map(function (st, i) {
       var p = rec(st.mlbam, "pit") || {}, s = p.skill || {};   // probables are pitchers
       return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="rd-nm">' +
-        nameLink(st.mlbam, st.name) + " " + teamLogo(st.team) + "</td><td>@ " + esc(st.opp_org) +
+        nameLink(st.mlbam, st.name) + " " + teamLogo(st.team) + "</td><td>" + atVs(st.is_home) + esc(st.opp_org) +
         " (Off+ " + num(st.opp_off, 0) + ')</td><td class="rd-sc">' + num(st.per_start_fgp, 1) + "</td><td>" +
         (s.sem_plus != null ? num(s.sem_plus, 0) : "-") + "</td><td>" + esc(st.venue || "") + "</td></tr>";
     }).join("");
@@ -643,6 +643,9 @@
       "<th>" + gl("SEM+", "sem_plus") + "</th><th>Park</th></tr></thead><tbody>" +
       rows + "</tbody></table></div>";
   }
+  // "vs " for a home start, "@ " for a road start, nothing when the row does
+  // not say (a payload from before 2026-09-25): never guess a side.
+  function atVs(isHome) { return isHome === true ? "vs " : (isHome === false ? "@ " : ""); }
   // STAYS A TABLE: the Matchups column is a free-text leg list that would fight
   // a fixed-height card box.
   function tableTwoStart(list) {
@@ -655,7 +658,7 @@
     }
     var rows = list.slice(0, 60).map(function (t, i) {
       var legs = (t.legs || []).map(function (l) {
-        var leg = "@" + esc(l.opp_org) + " (" + num(l.exp_fgp, 0) + ")";
+        var leg = atVs(l.is_home) + esc(l.opp_org) + " (" + num(l.exp_fgp, 0) + ")";
         return l.projected ? '<span class="rd-proj">' + leg + " (proj)</span>" : leg;
       }).join(" · ");
       return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="rd-nm">' + nameLink(t.mlbam, t.name) + " " +
@@ -859,7 +862,7 @@
         list.map(function (x, i) {
           var p = rec(x.mlbam, "pit") || {}, s = p.skill || {};
           return { cells: [{ t: i + 1 }, { t: x.name || "-", sub: x.team || undefined },
-                           { t: "@ " + (x.opp_org || "-") },
+                           { t: atVs(x.is_home) + (x.opp_org || "-") },
                            { t: num(x.per_start_fgp, 1), c: "accent" },
                            { t: s.sem_plus == null ? "-" : num(s.sem_plus, 0) },
                            { t: x.venue || "-" }] };
