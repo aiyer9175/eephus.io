@@ -4146,6 +4146,23 @@ result and, as the 2026-09-10 correction registered, warns and does not decide.
 If `2026-09-11.json` is not written, or its basis does not read available true,
 the clock starts at the first vintage that does and the look moves with it.
 
+**Correction (2026-09-25): the first qualifying vintage is `2026-09-13.json`,
+and the earliest admissible first look is 2026-10-11.** A fact about filenames
+and basis flags, recorded before the look and without reading any column value,
+game, price or outcome (5c rule 1). `2026-09-11.json` and `2026-09-12.json` were
+never written: the store holds `2026-09-10.json` (schema 4, no 5f columns) and
+then `2026-09-13.json` (schema 5, covers through 2026-09-13), whose
+`lineup_dis_vs_lhp` basis reads `platoon_splits.available True`. Under the
+paragraph above, the clock starts 2026-09-13 and the earliest admissible first
+look is **2026-10-11** (2026-09-13 plus 28 days). A look on 2026-10-09 or
+2026-10-10 would come before the floor and disqualify the candidate. By the
+resolver rule below, the 2026-09-12 and 2026-09-13 slates price off the
+pre-repair 2026-09-10 vintage, so the first informative slate is 2026-09-14,
+not 2026-09-12. The date is no longer typed anywhere it is enforced:
+`leaderboard_vintages.dark_clock("5e")` reads the start off the store and
+`dark_look_allowed("5e", date)` refuses any earlier date
+(`test_leaderboard_vintages.py`). Nothing else in this amendment moves.
+
 **What postseason inclusion does to the eval set.**
 
 - *It adds games the served backtest cannot see, and only to the eval side.*
@@ -5102,6 +5119,18 @@ n = 30 AND `park_by_hand` n >= 29, counted from the first such vintage.
 fa_meta gains the by-hand sibling only when `fa_export` next writes it, so the
 earliest admissible first look is four weeks after that night, no earlier than
 ~2026-10-10.
+
+**Correction (2026-09-25): the clock started 2026-09-13, so the earliest look
+is 2026-10-11.** Read off the basis flags alone, before any look (5c rule 1):
+the first vintage on disk meeting both conditions is `2026-09-13.json`
+(`lhb_share_vr` n 30, `park_by_hand` n 29); the one before it,
+`2026-09-10.json`, is schema 4 and carries neither column, and no vintage was
+written for 2026-09-11 or 2026-09-12. Four weeks from 2026-09-13 is
+**2026-10-11**; the "~2026-10-10" above and in the 2026-09-17 amendment below
+is one day early, and a look on it would disqualify the candidate.
+`leaderboard_vintages.dark_clock("5i-B")` derives the date from the store and
+`dark_look_allowed("5i-B", date)` refuses any earlier one. The candidate, twin,
+criteria and floor are unchanged.
 
 ### 5i-C. Park by bat side for HR and total-bases props (dark props frame)
 

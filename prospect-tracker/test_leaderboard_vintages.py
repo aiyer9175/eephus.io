@@ -925,3 +925,61 @@ def _write_fake_leaderboards(data_dir, *, offense: float, as_of: str = "2026-08-
         "relievers": [{"mlbam": 201 + i, "team": o, "rem_plus": 103 - 4 * i}
                       for i, o in enumerate(orgs)],
     }), encoding="utf-8")
+
+
+# ---- dark clocks read off the store (M12-05, 2026-09-25) -------------------
+# 5e and 5i-B were dated off an expected 2026-09-11.json that was never written.
+# The clock start is a fact about a vintage's own basis record, so it is read
+# off the store; a look before the derived date is refused.
+
+def _clock_rec(on: str, *, platoon: bool, lhb_n: int = 30, park_n: int = 29) -> dict:
+    fb = {"lineup_dis_vs_lhp": {"basis": "orders.vl; platoon_splits.available %s" % platoon,
+                                "n": 30},
+          "lhb_share_vr": {"basis": "orders.vr", "n": lhb_n},
+          "park_by_hand": {"basis": "fa_meta park_factors_by_hand", "n": park_n}}
+    return {"schema": 5, "vintage_date": on, "covers_through": on,
+            "feature_basis": fb}
+
+
+def _clock_store(tmp_path, recs: dict):
+    for on, rec in recs.items():
+        (tmp_path / f"{on}.json").write_text(json.dumps(rec), encoding="utf-8")
+    lv.reset_cache()
+    return tmp_path
+
+
+def test_a_store_missing_09_11_starts_both_clocks_on_09_13(tmp_path):
+    vdir = _clock_store(tmp_path, {
+        "2026-09-10": {"schema": 4, "vintage_date": "2026-09-10",
+                       "covers_through": "2026-09-10"},
+        "2026-09-13": _clock_rec("2026-09-13", platoon=True),
+        "2026-09-14": _clock_rec("2026-09-14", platoon=True),
+    })
+    for fam in ("5e", "5i-B"):
+        clk = lv.dark_clock(fam, vintage_dir=vdir)
+        assert clk["first_vintage"] == "2026-09-13", clk
+        assert clk["earliest_look"] == "2026-10-11", clk
+        assert not lv.dark_look_allowed(fam, "2026-10-09", vintage_dir=vdir)
+        assert not lv.dark_look_allowed(fam, "2026-10-10", vintage_dir=vdir)
+        assert lv.dark_look_allowed(fam, "2026-10-11", vintage_dir=vdir)
+
+
+def test_the_clock_waits_for_its_own_condition(tmp_path):
+    """A vintage that carries the columns but not the condition does not start
+    the clock: platoon False holds 5e, park_by_hand n 28 holds 5i-B."""
+    vdir = _clock_store(tmp_path, {
+        "2026-09-11": _clock_rec("2026-09-11", platoon=False, park_n=28),
+        "2026-09-12": _clock_rec("2026-09-12", platoon=True, park_n=28),
+        "2026-09-13": _clock_rec("2026-09-13", platoon=True, park_n=29),
+    })
+    assert lv.dark_clock("5e", vintage_dir=vdir)["first_vintage"] == "2026-09-12"
+    assert lv.dark_clock("5i-B", vintage_dir=vdir)["first_vintage"] == "2026-09-13"
+
+
+def test_an_unstarted_clock_refuses_every_look(tmp_path):
+    vdir = _clock_store(tmp_path, {"2026-09-10": {"schema": 4}})
+    clk = lv.dark_clock("5e", vintage_dir=vdir)
+    assert clk["first_vintage"] is None and clk["earliest_look"] is None
+    assert not lv.dark_look_allowed("5e", "2027-01-01", vintage_dir=vdir)
+    with pytest.raises(ValueError):
+        lv.dark_clock_condition("5x", {})

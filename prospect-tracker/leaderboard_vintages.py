@@ -2003,6 +2003,74 @@ def load_vintage(on_date: str, *, vintage_dir: Path | None = None) -> dict | Non
     return _REC_CACHE[key]
 
 
+# ---------------------------------------------------------------------------
+# DARK CLOCKS WHOSE START IS A FACT ABOUT A VINTAGE (M12-05, 2026-09-25)
+# ---------------------------------------------------------------------------
+# docs/diamond-betting.md registers two clocks that start at the first vintage
+# whose OWN basis record meets a condition, and whose earliest admissible look
+# is four weeks later. The documents dated both looks off an expected
+# 2026-09-11.json that was never written (the store holds 2026-09-10, then
+# 2026-09-13), so a look on the written date would have come two days early and
+# disqualified the candidate. The start is therefore read off the store, here,
+# never typed. Only feature_basis is read: no column value, no game, no price
+# and no outcome.
+#
+# 5e (handedness): the first vintage whose 5f hitter-column basis carries
+#   "platoon_splits.available True" (the 2026-09-10 restart rule).
+# 5i-B (park by bat side): the first vintage whose feature_basis shows
+#   lhb_share_vr n = 30 AND park_by_hand n >= 29.
+DARK_CLOCK_DAYS = 28
+DARK_CLOCK_FAMILIES = ("5e", "5i-B")
+_5E_BASIS_COLUMNS = ("lineup_dis_vs_lhp", "lineup_dis_vs_rhp",
+                     "bench_adv_vs_lhp", "bench_adv_vs_rhp")
+
+
+def _basis_n(fb: dict, col: str) -> int:
+    v = fb.get(col)
+    try:
+        return int((v or {}).get("n") or 0)
+    except (TypeError, ValueError, AttributeError):
+        return 0
+
+
+def dark_clock_condition(family: str, rec: dict | None) -> bool:
+    """Does this vintage record start `family`'s clock? Basis flags only."""
+    if family not in DARK_CLOCK_FAMILIES:
+        raise ValueError(f"unregistered dark clock family {family!r}; "
+                         f"known: {', '.join(DARK_CLOCK_FAMILIES)}")
+    fb = (rec or {}).get("feature_basis")
+    if not isinstance(fb, dict):
+        return False
+    if family == "5e":
+        return any("platoon_splits.available True" in str((fb.get(c) or {}).get("basis") or "")
+                   for c in _5E_BASIS_COLUMNS)
+    if family == "5i-B":
+        return _basis_n(fb, "lhb_share_vr") == 30 and _basis_n(fb, "park_by_hand") >= 29
+    return False
+
+
+def dark_clock(family: str, *, vintage_dir: Path | None = None) -> dict:
+    """{"family", "first_vintage", "earliest_look"} read off the store. Both
+    dates are None while no vintage qualifies: the clock has not started."""
+    first = None
+    for d in vintage_dates(vintage_dir=vintage_dir):
+        if dark_clock_condition(family, load_vintage(d, vintage_dir=vintage_dir)):
+            first = d
+            break
+    look = ((date.fromisoformat(first) + timedelta(days=DARK_CLOCK_DAYS)).isoformat()
+            if first else None)
+    return {"family": family, "first_vintage": first, "earliest_look": look,
+            "days": DARK_CLOCK_DAYS}
+
+
+def dark_look_allowed(family: str, on_date: str, *,
+                      vintage_dir: Path | None = None) -> bool:
+    """False before the store-derived earliest look, and False while the clock
+    has not started. A look harness calls this and refuses on False."""
+    look = dark_clock(family, vintage_dir=vintage_dir)["earliest_look"]
+    return bool(look) and str(on_date)[:10] >= look
+
+
 def _index(vintage_dir: Path | None = None) -> list[tuple[str, str, str | None]]:
     """[(covers_through, vintage_date, season)] for every readable record,
     ascending by cutoff. Built by reading the files: an index sidecar would be
