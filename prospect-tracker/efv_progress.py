@@ -15,8 +15,9 @@ HONEST BY CONSTRUCTION (PROGRAM.md s5.1):
 1. THIS LAYER COMPUTES NO STATISTIC. Every number in a row is copied from a
    named key of a named artifact (data/source_backtest.json,
    data/xfv_scoreboard_eval.json, and for development reads the artifacts in
-   DEV_ARTIFACTS: data/efv_v2_dev_eval.json, data/efv_overlay_oos_eval.json and
-   data/efv_v2_pbust_eval.json), and the row stores each artifact's path,
+   DEV_ARTIFACTS: data/efv_v2_dev_eval.json and its `ds16` block,
+   data/efv_overlay_oos_eval.json and data/efv_v2_pbust_eval.json), and the row
+   stores each artifact's path,
    generated_at and sha256. The only things computed here are a content hash
    and a timestamp.
 2. CIs come from the producer (source_backtest._paired_delta_ci), never from
@@ -83,11 +84,27 @@ _SAME_RATERS = (("efv", "efv"), ("efv_v1", "efv_v1"),
 _SAME_DELTAS = (("vs_prospx_consensus", "vs_prospx_consensus"),
                 ("vs_efv_v1", "vs_efv_v1"),
                 ("efv_v1_vs_prospx_consensus", "efv_v1_vs_prospx_consensus"))
+#: DS-16: the one pre-declared development read of the assembled Driver System V2
+#: (tools/efv_v2_dev_read.py --ds16), kept under the key `ds16` of the H0 artifact. Its
+#: rows carry the registered PRIMARY statistic (within (side, vintage) Spearman,
+#: docs/efv-v2/EFV_V2_GATE.md s3) in `spearman`, name it in `statistic`, and carry the
+#: pooled secondary beside it in `secondary`.
+DS16_SUBKEY = "ds16"
+V2_RATERS = (("efv", "efv_v2"), ("efv_v1", "efv_v1"),
+             ("prospx_consensus", "prospx_consensus"),
+             ("mlb_pipeline", "mlb_pipeline"), ("fangraphs", "fangraphs"))
+V2_DELTAS = (("vs_prospx_consensus", "v2_vs_prospx_consensus"),
+             ("vs_efv_v1", "v2_vs_efv_v1"),
+             ("vs_mlb_pipeline", "v2_vs_mlb_pipeline"),
+             ("vs_fangraphs", "v2_vs_fangraphs"),
+             ("efv_v1_vs_prospx_consensus", "efv_v1_vs_prospx_consensus"))
 #: Every development artifact the ledger copies from: (file, its frames, rater map,
-#: delta map). Each frame must be registered in FRAMES with role "development".
-DEV_ARTIFACTS = ((DEV_NAME, DEV_FRAMES, DEV_RATERS, DEV_DELTAS),
-                 (OVERLAY_NAME, ("vm_oos_dev",), _SAME_RATERS, _SAME_DELTAS),
-                 (PBUST_NAME, ("vm_oos_dev", "lv_dev"), _SAME_RATERS, _SAME_DELTAS))
+#: delta map, sub-document key or None). Each frame must be registered in FRAMES with
+#: role "development".
+DEV_ARTIFACTS = ((DEV_NAME, DEV_FRAMES, DEV_RATERS, DEV_DELTAS, None),
+                 (OVERLAY_NAME, ("vm_oos_dev",), _SAME_RATERS, _SAME_DELTAS, None),
+                 (PBUST_NAME, ("vm_oos_dev", "lv_dev"), _SAME_RATERS, _SAME_DELTAS, None),
+                 (DEV_NAME, DEV_FRAMES, V2_RATERS, V2_DELTAS, DS16_SUBKEY))
 
 SCHEMA = 1
 MODEL_ID = "efv_v1"
@@ -174,6 +191,8 @@ SOURCES_VS = ("prospx_consensus", "mlb_pipeline", "fangraphs")
 #: measures the same thing is the same state, not progress.
 _HASH_FIELDS = ("frame", "frame_version", "window", "n", "n_by_side", "raters",
                 "deltas", "resolvable", "verdict", "share")
+#: Hashed only when a row carries them (DS-16 development rows).
+_OPTIONAL_HASH_FIELDS = ("statistic", "secondary")
 
 
 # ---------------------------------------------------------------------------
@@ -212,6 +231,11 @@ def content_hash(row: dict) -> str:
                      "fingerprint": mv.get("fingerprint"),
                      "label": mv.get("label"),
                      "resolved_through": mv.get("resolved_through")}
+    # DS-16 rows name their statistic and carry a secondary; the fields enter the hash
+    # only when present, so every earlier row keeps its hash.
+    for k in _OPTIONAL_HASH_FIELDS:
+        if row.get(k) is not None:
+            body[k] = row.get(k)
     blob = json.dumps(body, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
@@ -403,12 +427,14 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
 
 def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger: str,
                    now_iso: str, frames=DEV_FRAMES, raters=DEV_RATERS,
-                   deltas=DEV_DELTAS) -> list[dict]:
+                   deltas=DEV_DELTAS, statistic_fields: bool = False) -> list[dict]:
     """Development rows (EV-09) copied from data/efv_v2_dev_eval.json, one per frame
     it carries. role "development", resolvable None: a development read adjudicates
     nothing. Copies only. `frames`, `raters` and `deltas` name another development
     artifact's frames and keys (DEV_ARTIFACTS); a frame's own note, when it carries
-    one, replaces the registry note."""
+    one, replaces the registry note. `statistic_fields` (the DS-16 block only) also
+    copies the frame's `statistic` and pooled `secondary`; it is off for every other
+    artifact so their existing rows keep their content hash."""
     if trigger not in TRIGGERS:
         raise ValueError(f"trigger must be one of {TRIGGERS}, not {trigger!r}")
     if not dev or dev.get("role") != "development":
@@ -462,6 +488,17 @@ def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger:
                "sources": [dict(s) for s in sources],
                "note": f.get("note") or meta.get("note") or "",
                "last_verified_at": now_iso}
+        if statistic_fields and f.get("statistic"):
+            row["statistic"] = f["statistic"]
+        if statistic_fields and isinstance(f.get("secondary"), dict):
+            sec = f["secondary"]
+            leg = (sec.get("deltas") or {})
+            row["secondary"] = {
+                "statistic": sec.get("statistic"),
+                "raters": {name: (sec.get("raters") or {}).get(key)
+                           for name, key in rater_map
+                           if (sec.get("raters") or {}).get(key) is not None},
+                "deltas": {name: leg[comp] for name, comp in delta_map if comp in leg}}
         _finish(row)
         row["run_id"] = f"{gen}|{fid}|{row['content_hash'][:8]}"
         rows.append(row)
@@ -645,16 +682,18 @@ def update(data_dir=None, trigger: str = "nightly", *, out_path=None,
     mv = model_version if model_version is not None else current_model_version()
     cands = build_rows(sb, sc, mv, sources=sources, date=now_dt.date().isoformat(),
                        trigger=trigger, now_iso=now_iso)
-    for name, fids, rmap, dmap in DEV_ARTIFACTS:
+    for name, fids, rmap, dmap, sub in DEV_ARTIFACTS:
         dev_path = data_dir / name
         dev = _load_json(dev_path)
+        if dev and sub:
+            dev = dev.get(sub) if isinstance(dev.get(sub), dict) else None
         if dev:
             cands += build_dev_rows(
                 dev, sources=[{"path": _rel(dev_path),
                                "generated_at": dev.get("generated_at"),
                                "sha256": _sha256(dev_path)}],
                 date=now_dt.date().isoformat(), trigger=trigger, now_iso=now_iso,
-                frames=fids, raters=rmap, deltas=dmap)
+                frames=fids, raters=rmap, deltas=dmap, statistic_fields=bool(sub))
     if note:
         for c in cands:
             c["note"] = f"{note} {c.get('note') or ''}".strip()

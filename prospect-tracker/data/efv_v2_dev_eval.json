@@ -1679,5 +1679,1616 @@
    ]
   }
  },
- "elapsed_s": 36.6
+ "elapsed_s": 36.6,
+ "ds16": {
+  "item": "DS-16",
+  "generated_at": "2026-09-25T21:28:38Z",
+  "model_id": "efv_v2_ds_assembled",
+  "role": "development",
+  "adjudicates": false,
+  "selects": false,
+  "note": "the one pre-declared development read of the assembled V2 on the eWAR v2 label; spent frames, not a claim; the registered development number is its re-run on the frozen fWAR label (EFV_V2_GATE.md P5)",
+  "declared_in": {
+   "doc": "docs/efv-v2/EFV_V2_GATE.md",
+   "section": "s7",
+   "commit": "0dbe3a4f113b870e93fca9a9081c74ecdc0b2e97",
+   "committed_at": "2026-09-25T17:23:18-04:00",
+   "status": "DRAFT"
+  },
+  "statistic": {
+   "primary": "within (side, vintage) Spearman, size-weighted",
+   "secondary": "pooled Spearman after the identical output map",
+   "veto": "contributor AUC after the identical output map, pooled",
+   "min_group_rows": 20,
+   "group": "(side, list vintage) on lv_dev; (side, base year) on vm_dev",
+   "map": "efv_v2_model.output_map on every rater, on the compared rows",
+   "code": "efv_v2_stat.py",
+   "code_sha256": "1da3ae57d8a63c68123112772358529d4d0b02f2e99ab283971cbaba8d45aaf7"
+  },
+  "label": {
+   "provider": "ewar_v2",
+   "resolved_through": 2025,
+   "id": "ewar_v2@2026-09-03T12:35:09"
+  },
+  "code": {
+   "commit": "0dbe3a4f",
+   "efv_v2_model_sha256": "f83c94316b701cd59eeea4914cf5f910bbd0f558b891f788dbbee50d348a4d0e",
+   "tool": "tools/efv_v2_dev_read.py --ds16"
+  },
+  "weights": {
+   "hit": {
+    "w_skill": 0.599508,
+    "w_time": 0.012287
+   },
+   "pit": {
+    "w_skill": 1.0,
+    "w_time": 0.107279
+   }
+  },
+  "assembly_sha256": "422fc5439253ad13d867320b00b634a178e62a8b291025326056377d6d4436ec",
+  "bootstrap": {
+   "B": 2000,
+   "seed": 20260906,
+   "estimator": "E_cond",
+   "unit": "player cluster"
+  },
+  "reserved_guard": {
+   "reserved_lv": [
+    2020,
+    2021
+   ],
+   "r_vm_first_debut_year": 2025,
+   "reserved_vm_pins": [],
+   "lv_folds": [
+    2017,
+    2018,
+    2019
+   ],
+   "rule_last_year": 2016,
+   "v2_first_scored_year": 2017,
+   "lv_vintages_read": [
+    2017,
+    2018,
+    2019
+   ],
+   "vm_years_read": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+   ]
+  },
+  "frames": {
+   "vm_dev": {
+    "frame_version": "vm2",
+    "window": [
+     2017,
+     2023
+    ],
+    "outcome": "career WAR to date",
+    "contributor": "career WAR >= 3.0",
+    "folds": {
+     "hit|2017": {
+      "n_scored": 43,
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": [],
+      "w_skill": 0.0,
+      "w_time": 0.0
+     },
+     "hit|2018": {
+      "n_scored": 41,
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": [],
+      "w_skill": 0.0,
+      "w_time": 0.0
+     },
+     "hit|2019": {
+      "n_scored": 65,
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": [],
+      "w_skill": 0.0,
+      "w_time": 0.0
+     },
+     "hit|2020": {
+      "n_scored": 57,
+      "consensus_only": false,
+      "skill_keys": [
+       "obp_rel",
+       "contact",
+       "tool_hit",
+       "tool_speed",
+       "is_college"
+      ],
+      "timing_keys": [
+       "age_rel_level",
+       "level_rank"
+      ],
+      "w_skill": 0.599508,
+      "w_time": 0.012287
+     },
+     "hit|2021": {
+      "n_scored": 63,
+      "consensus_only": false,
+      "skill_keys": [
+       "obp_rel",
+       "contact",
+       "tool_hit"
+      ],
+      "timing_keys": [
+       "age_rel_level",
+       "level_rank"
+      ],
+      "w_skill": 0.599508,
+      "w_time": 0.012287
+     },
+     "hit|2022": {
+      "n_scored": 110,
+      "consensus_only": false,
+      "skill_keys": [
+       "contact",
+       "tool_hit"
+      ],
+      "timing_keys": [
+       "level_rank"
+      ],
+      "w_skill": 0.599508,
+      "w_time": 0.012287
+     },
+     "hit|2023": {
+      "n_scored": 83,
+      "consensus_only": false,
+      "skill_keys": [
+       "tool_hit"
+      ],
+      "timing_keys": [
+       "level_rank"
+      ],
+      "w_skill": 0.599508,
+      "w_time": 0.012287
+     },
+     "hit|2024": {
+      "n_scored": 79,
+      "consensus_only": false,
+      "skill_keys": [
+       "tool_hit"
+      ],
+      "timing_keys": [
+       "level_rank"
+      ],
+      "w_skill": 0.599508,
+      "w_time": 0.012287
+     },
+     "pit|2017": {
+      "n_scored": 28,
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": null,
+      "w_skill": 0.0,
+      "w_time": 0.0
+     },
+     "pit|2018": {
+      "n_scored": 49,
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": null,
+      "w_skill": 0.0,
+      "w_time": 0.0
+     },
+     "pit|2019": {
+      "n_scored": 71,
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": null,
+      "w_skill": 0.0,
+      "w_time": 0.0
+     },
+     "pit|2020": {
+      "n_scored": 94,
+      "consensus_only": true,
+      "skill_keys": null,
+      "timing_keys": null,
+      "w_skill": 0.0,
+      "w_time": 0.0
+     },
+     "pit|2021": {
+      "n_scored": 89,
+      "consensus_only": false,
+      "skill_keys": [
+       "k_rel"
+      ],
+      "timing_keys": [
+       "level_rank"
+      ],
+      "w_skill": 1.0,
+      "w_time": 0.107279
+     },
+     "pit|2022": {
+      "n_scored": 87,
+      "consensus_only": false,
+      "skill_keys": [
+       "k_rel"
+      ],
+      "timing_keys": [
+       "level_rank"
+      ],
+      "w_skill": 1.0,
+      "w_time": 0.107279
+     },
+     "pit|2023": {
+      "n_scored": 114,
+      "consensus_only": false,
+      "skill_keys": [
+       "k_rel"
+      ],
+      "timing_keys": [
+       "level_rank"
+      ],
+      "w_skill": 1.0,
+      "w_time": 0.107279
+     },
+     "pit|2024": {
+      "n_scored": 107,
+      "consensus_only": false,
+      "skill_keys": [
+       "k_rel"
+      ],
+      "timing_keys": [
+       "level_rank"
+      ],
+      "w_skill": 1.0,
+      "w_time": 0.107279
+     }
+    },
+    "dropped": {
+     "no_v2_score": 0,
+     "v2_fold_year_differs": 0
+    },
+    "population_rows": 3255,
+    "n": 803,
+    "n_by_side": {
+     "pit": 415,
+     "hit": 388
+    },
+    "n_players": 803,
+    "groups": [
+     "hit|2017",
+     "hit|2018",
+     "hit|2019",
+     "hit|2020",
+     "hit|2021",
+     "hit|2022",
+     "hit|2023",
+     "pit|2017",
+     "pit|2018",
+     "pit|2019",
+     "pit|2020",
+     "pit|2021",
+     "pit|2022",
+     "pit|2023"
+    ],
+    "statistic": "within (side, vintage) Spearman, size-weighted",
+    "raters": {
+     "efv_v2": {
+      "spearman": 0.3755,
+      "auc": 0.7511,
+      "n": 803,
+      "within": 0.3755,
+      "pooled": 0.4071,
+      "within_rows": 788,
+      "within_groups": 13
+     },
+     "efv_v1": {
+      "spearman": 0.3852,
+      "auc": 0.7523,
+      "n": 803,
+      "within": 0.3852,
+      "pooled": 0.4091,
+      "within_rows": 788,
+      "within_groups": 13
+     },
+     "prospx_consensus": {
+      "spearman": 0.3813,
+      "auc": 0.7492,
+      "n": 803,
+      "within": 0.3813,
+      "pooled": 0.4129,
+      "within_rows": 788,
+      "within_groups": 13
+     },
+     "mlb_pipeline": {
+      "spearman": 0.376,
+      "auc": 0.7559,
+      "n": 803,
+      "within": 0.376,
+      "pooled": 0.4128,
+      "within_rows": 788,
+      "within_groups": 13
+     },
+     "fangraphs": {
+      "spearman": 0.3341,
+      "auc": 0.7283,
+      "n": 803,
+      "within": 0.3341,
+      "pooled": 0.3738,
+      "within_rows": 788,
+      "within_groups": 13
+     }
+    },
+    "deltas": {
+     "v2_vs_prospx_consensus": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "hit|2020",
+        "hit|2021",
+        "hit|2022",
+        "hit|2023",
+        "pit|2018",
+        "pit|2019",
+        "pit|2020",
+        "pit|2021",
+        "pit|2022",
+        "pit|2023"
+       ],
+       "rows_in_kept_groups": 788,
+       "min_group_rows": 20,
+       "a": 0.37552,
+       "b": 0.38127,
+       "delta": -0.00575,
+       "ci95": [
+        -0.0231,
+        0.0116
+       ],
+       "sd": 0.00886,
+       "mde95": 0.0146,
+       "p_gt_0": 0.2715,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.40707,
+       "b": 0.41288,
+       "delta": -0.0058,
+       "ci95": [
+        -0.0215,
+        0.0096
+       ],
+       "sd": 0.00782,
+       "mde95": 0.0129,
+       "p_gt_0": 0.2375,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.75113,
+       "b": 0.74918,
+       "delta": 0.00195,
+       "ci95": [
+        -0.0064,
+        0.0106
+       ],
+       "sd": 0.00435,
+       "mde95": 0.0072,
+       "p_gt_0": 0.689,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      }
+     },
+     "v2_vs_efv_v1": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "hit|2020",
+        "hit|2021",
+        "hit|2022",
+        "hit|2023",
+        "pit|2018",
+        "pit|2019",
+        "pit|2020",
+        "pit|2021",
+        "pit|2022",
+        "pit|2023"
+       ],
+       "rows_in_kept_groups": 788,
+       "min_group_rows": 20,
+       "a": 0.37552,
+       "b": 0.38519,
+       "delta": -0.00967,
+       "ci95": [
+        -0.0346,
+        0.0165
+       ],
+       "sd": 0.01269,
+       "mde95": 0.0209,
+       "p_gt_0": 0.234,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.40707,
+       "b": 0.40913,
+       "delta": -0.00206,
+       "ci95": [
+        -0.0233,
+        0.0187
+       ],
+       "sd": 0.01066,
+       "mde95": 0.0175,
+       "p_gt_0": 0.4235,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.75113,
+       "b": 0.7523,
+       "delta": -0.00117,
+       "ci95": [
+        -0.0135,
+        0.0106
+       ],
+       "sd": 0.0062,
+       "mde95": 0.0102,
+       "p_gt_0": 0.438,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      }
+     },
+     "efv_v1_vs_prospx_consensus": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "hit|2020",
+        "hit|2021",
+        "hit|2022",
+        "hit|2023",
+        "pit|2018",
+        "pit|2019",
+        "pit|2020",
+        "pit|2021",
+        "pit|2022",
+        "pit|2023"
+       ],
+       "rows_in_kept_groups": 788,
+       "min_group_rows": 20,
+       "a": 0.38519,
+       "b": 0.38127,
+       "delta": 0.00393,
+       "ci95": [
+        -0.0206,
+        0.0285
+       ],
+       "sd": 0.01229,
+       "mde95": 0.0202,
+       "p_gt_0": 0.6075,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.40913,
+       "b": 0.41288,
+       "delta": -0.00374,
+       "ci95": [
+        -0.0235,
+        0.0164
+       ],
+       "sd": 0.01006,
+       "mde95": 0.0166,
+       "p_gt_0": 0.3625,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.7523,
+       "b": 0.74918,
+       "delta": 0.00313,
+       "ci95": [
+        -0.0084,
+        0.0156
+       ],
+       "sd": 0.00605,
+       "mde95": 0.01,
+       "p_gt_0": 0.7045,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      }
+     },
+     "v2_vs_mlb_pipeline": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "hit|2020",
+        "hit|2021",
+        "hit|2022",
+        "hit|2023",
+        "pit|2018",
+        "pit|2019",
+        "pit|2020",
+        "pit|2021",
+        "pit|2022",
+        "pit|2023"
+       ],
+       "rows_in_kept_groups": 788,
+       "min_group_rows": 20,
+       "a": 0.37552,
+       "b": 0.376,
+       "delta": -0.00048,
+       "ci95": [
+        -0.0356,
+        0.0333
+       ],
+       "sd": 0.01725,
+       "mde95": 0.0284,
+       "p_gt_0": 0.482,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.40707,
+       "b": 0.41278,
+       "delta": -0.00571,
+       "ci95": [
+        -0.0328,
+        0.0213
+       ],
+       "sd": 0.01346,
+       "mde95": 0.0221,
+       "p_gt_0": 0.349,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.75113,
+       "b": 0.75593,
+       "delta": -0.0048,
+       "ci95": [
+        -0.0205,
+        0.0104
+       ],
+       "sd": 0.00786,
+       "mde95": 0.0129,
+       "p_gt_0": 0.2975,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      }
+     },
+     "v2_vs_fangraphs": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "hit|2020",
+        "hit|2021",
+        "hit|2022",
+        "hit|2023",
+        "pit|2018",
+        "pit|2019",
+        "pit|2020",
+        "pit|2021",
+        "pit|2022",
+        "pit|2023"
+       ],
+       "rows_in_kept_groups": 788,
+       "min_group_rows": 20,
+       "a": 0.37552,
+       "b": 0.33406,
+       "delta": 0.04146,
+       "ci95": [
+        0.0039,
+        0.0778
+       ],
+       "sd": 0.01911,
+       "mde95": 0.0314,
+       "p_gt_0": 0.9865,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 above zero"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.40707,
+       "b": 0.37379,
+       "delta": 0.03328,
+       "ci95": [
+        0.0012,
+        0.0662
+       ],
+       "sd": 0.01631,
+       "mde95": 0.0268,
+       "p_gt_0": 0.98,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 above zero"
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 803,
+       "n_clusters": 803,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.75113,
+       "b": 0.72826,
+       "delta": 0.02287,
+       "ci95": [
+        0.0048,
+        0.0424
+       ],
+       "sd": 0.00976,
+       "mde95": 0.0161,
+       "p_gt_0": 0.993,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 above zero"
+      }
+     }
+    },
+    "secondary": {
+     "statistic": "pooled Spearman after the identical output map",
+     "raters": {
+      "efv_v2": 0.4071,
+      "efv_v1": 0.4091,
+      "prospx_consensus": 0.4129,
+      "mlb_pipeline": 0.4128,
+      "fangraphs": 0.3738
+     },
+     "deltas": {
+      "v2_vs_prospx_consensus": {
+       "delta": -0.0058,
+       "ci95": [
+        -0.0215,
+        0.0096
+       ],
+       "mde95": 0.0129,
+       "reading": "development only; CI95 spans zero"
+      },
+      "v2_vs_efv_v1": {
+       "delta": -0.00206,
+       "ci95": [
+        -0.0233,
+        0.0187
+       ],
+       "mde95": 0.0175,
+       "reading": "development only; CI95 spans zero"
+      },
+      "efv_v1_vs_prospx_consensus": {
+       "delta": -0.00374,
+       "ci95": [
+        -0.0235,
+        0.0164
+       ],
+       "mde95": 0.0166,
+       "reading": "development only; CI95 spans zero"
+      },
+      "v2_vs_mlb_pipeline": {
+       "delta": -0.00571,
+       "ci95": [
+        -0.0328,
+        0.0213
+       ],
+       "mde95": 0.0221,
+       "reading": "development only; CI95 spans zero"
+      },
+      "v2_vs_fangraphs": {
+       "delta": 0.03328,
+       "ci95": [
+        0.0012,
+        0.0662
+       ],
+       "mde95": 0.0268,
+       "reading": "development only; CI95 above zero"
+      }
+     }
+    },
+    "verdict": "development only; CI95 spans zero",
+    "note": "DS-16 development read of the assembled V2 on the within (side, vintage) Spearman, the primary statistic of the DS-15 draft (EFV_V2_GATE.md s3); spent frame, not a claim"
+   },
+   "lv_dev": {
+    "frame_version": "lv1_v2",
+    "window": [
+     2017,
+     2019
+    ],
+    "outcome": "W3 (WAR over the first three MLB seasons, 0 if no debut within three seasons of V)",
+    "contributor": "W3 >= w_star_dev",
+    "w_star_dev": {
+     "w_star": 1.19,
+     "n": 3063,
+     "n_six_season_contributors": 538,
+     "six_season_contributor_share": 0.1756,
+     "w3_exceedance_share_at_w_star": 0.1766,
+     "vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+     ],
+     "six_season_threshold": 3.0,
+     "convention": "the k-th largest W3 on the rows, k = the number of six-season contributors; development convention on the eWAR v2 label, re-derived by EV-05 on the frozen label"
+    },
+    "per_vintage": [
+     {
+      "side": "hit",
+      "vintage": 2017,
+      "frame_rows": 472,
+      "n_train_v2": 1038,
+      "n_train_v1": 363,
+      "v1_status": "ok",
+      "consensus_only": false,
+      "skill_keys": [
+       "obp_rel",
+       "tool_hit",
+       "tool_speed"
+      ],
+      "timing_keys": [
+       "level_rank",
+       "on_40man",
+       "nov_add"
+      ],
+      "w_skill": 0.599508,
+      "w_time": 0.012287,
+      "n_scored": 472,
+      "reserved_vm_kept_w3_zero": 0
+     },
+     {
+      "side": "hit",
+      "vintage": 2018,
+      "frame_rows": 449,
+      "n_train_v2": 1474,
+      "n_train_v1": 473,
+      "v1_status": "ok",
+      "consensus_only": false,
+      "skill_keys": [
+       "obp_rel",
+       "tool_hit",
+       "is_college"
+      ],
+      "timing_keys": [
+       "age_rel_level",
+       "nov_add"
+      ],
+      "w_skill": 0.599508,
+      "w_time": 0.012287,
+      "n_scored": 449,
+      "reserved_vm_kept_w3_zero": 4
+     },
+     {
+      "side": "hit",
+      "vintage": 2019,
+      "frame_rows": 542,
+      "n_train_v2": 1922,
+      "n_train_v1": 646,
+      "v1_status": "ok",
+      "consensus_only": false,
+      "skill_keys": [
+       "obp_rel",
+       "tool_hit"
+      ],
+      "timing_keys": [
+       "age_rel_level",
+       "nov_add"
+      ],
+      "w_skill": 0.599508,
+      "w_time": 0.012287,
+      "n_scored": 542,
+      "reserved_vm_kept_w3_zero": 11
+     },
+     {
+      "side": "pit",
+      "vintage": 2017,
+      "frame_rows": 469,
+      "n_train_v2": 965,
+      "n_train_v1": 398,
+      "v1_status": "ok",
+      "consensus_only": false,
+      "skill_keys": [
+       "k_rel"
+      ],
+      "timing_keys": [
+       "age_rel_level",
+       "level_rank",
+       "on_40man",
+       "nov_add"
+      ],
+      "w_skill": 1.0,
+      "w_time": 0.107279,
+      "n_scored": 469,
+      "reserved_vm_kept_w3_zero": 0
+     },
+     {
+      "side": "pit",
+      "vintage": 2018,
+      "frame_rows": 440,
+      "n_train_v2": 1468,
+      "n_train_v1": 486,
+      "v1_status": "ok",
+      "consensus_only": false,
+      "skill_keys": [
+       "k_rel"
+      ],
+      "timing_keys": [
+       "age_rel_level",
+       "nov_add"
+      ],
+      "w_skill": 1.0,
+      "w_time": 0.107279,
+      "n_scored": 440,
+      "reserved_vm_kept_w3_zero": 1
+     },
+     {
+      "side": "pit",
+      "vintage": 2019,
+      "frame_rows": 490,
+      "n_train_v2": 1882,
+      "n_train_v1": 696,
+      "v1_status": "ok",
+      "consensus_only": false,
+      "skill_keys": [
+       "k_rel"
+      ],
+      "timing_keys": [
+       "age_rel_level",
+       "nov_add"
+      ],
+      "w_skill": 1.0,
+      "w_time": 0.107279,
+      "n_scored": 490,
+      "reserved_vm_kept_w3_zero": 13
+     }
+    ],
+    "reserved_vm_kept_w3_zero": 29,
+    "n": 2862,
+    "n_by_side": {
+     "hit": 1463,
+     "pit": 1399
+    },
+    "n_players": 1753,
+    "groups": [
+     "hit|2017",
+     "hit|2018",
+     "hit|2019",
+     "pit|2017",
+     "pit|2018",
+     "pit|2019"
+    ],
+    "statistic": "within (side, vintage) Spearman, size-weighted",
+    "raters": {
+     "efv_v2": {
+      "spearman": 0.1619,
+      "auc": 0.7477,
+      "n": 2862,
+      "within": 0.1619,
+      "pooled": 0.1478,
+      "within_rows": 2862,
+      "within_groups": 6
+     },
+     "efv_v1": {
+      "spearman": 0.1477,
+      "auc": 0.7388,
+      "n": 2862,
+      "within": 0.1477,
+      "pooled": 0.1375,
+      "within_rows": 2862,
+      "within_groups": 6
+     },
+     "prospx_consensus": {
+      "spearman": 0.1624,
+      "auc": 0.7476,
+      "n": 2862,
+      "within": 0.1624,
+      "pooled": 0.1496,
+      "within_rows": 2862,
+      "within_groups": 6
+     },
+     "mlb_pipeline": {
+      "spearman": 0.1914,
+      "auc": 0.7446,
+      "n": 2574,
+      "within": 0.1914,
+      "pooled": 0.1609,
+      "within_rows": 2574,
+      "within_groups": 6
+     },
+     "fangraphs": {
+      "spearman": 0.1398,
+      "auc": 0.703,
+      "n": 2370,
+      "within": 0.1398,
+      "pooled": 0.1159,
+      "within_rows": 2370,
+      "within_groups": 6
+     }
+    },
+    "deltas": {
+     "v2_vs_prospx_consensus": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 2862,
+       "n_clusters": 1753,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "pit|2017",
+        "pit|2018",
+        "pit|2019"
+       ],
+       "rows_in_kept_groups": 2862,
+       "min_group_rows": 20,
+       "a": 0.16193,
+       "b": 0.16239,
+       "delta": -0.00047,
+       "ci95": [
+        -0.0197,
+        0.0172
+       ],
+       "sd": 0.00944,
+       "mde95": 0.0155,
+       "p_gt_0": 0.478,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 2862,
+       "n_clusters": 1753,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.14782,
+       "b": 0.14962,
+       "delta": -0.0018,
+       "ci95": [
+        -0.0199,
+        0.0161
+       ],
+       "sd": 0.00937,
+       "mde95": 0.0154,
+       "p_gt_0": 0.4315,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 2862,
+       "n_clusters": 1753,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.74771,
+       "b": 0.74764,
+       "delta": 7e-05,
+       "ci95": [
+        -0.0134,
+        0.0143
+       ],
+       "sd": 0.00722,
+       "mde95": 0.0119,
+       "p_gt_0": 0.4985,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      }
+     },
+     "v2_vs_efv_v1": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 2862,
+       "n_clusters": 1753,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "pit|2017",
+        "pit|2018",
+        "pit|2019"
+       ],
+       "rows_in_kept_groups": 2862,
+       "min_group_rows": 20,
+       "a": 0.16193,
+       "b": 0.14774,
+       "delta": 0.01418,
+       "ci95": [
+        -0.0134,
+        0.0421
+       ],
+       "sd": 0.01419,
+       "mde95": 0.0233,
+       "p_gt_0": 0.8435,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 2862,
+       "n_clusters": 1753,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.14782,
+       "b": 0.13753,
+       "delta": 0.01029,
+       "ci95": [
+        -0.014,
+        0.0338
+       ],
+       "sd": 0.0124,
+       "mde95": 0.0204,
+       "p_gt_0": 0.7955,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 2862,
+       "n_clusters": 1753,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.74771,
+       "b": 0.73877,
+       "delta": 0.00894,
+       "ci95": [
+        -0.0105,
+        0.0287
+       ],
+       "sd": 0.01001,
+       "mde95": 0.0165,
+       "p_gt_0": 0.8045,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      }
+     },
+     "efv_v1_vs_prospx_consensus": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 2862,
+       "n_clusters": 1753,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "pit|2017",
+        "pit|2018",
+        "pit|2019"
+       ],
+       "rows_in_kept_groups": 2862,
+       "min_group_rows": 20,
+       "a": 0.14774,
+       "b": 0.16239,
+       "delta": -0.01465,
+       "ci95": [
+        -0.0416,
+        0.0128
+       ],
+       "sd": 0.01403,
+       "mde95": 0.0231,
+       "p_gt_0": 0.1465,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 2862,
+       "n_clusters": 1753,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.13753,
+       "b": 0.14962,
+       "delta": -0.01209,
+       "ci95": [
+        -0.0355,
+        0.0109
+       ],
+       "sd": 0.01188,
+       "mde95": 0.0196,
+       "p_gt_0": 0.156,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 2862,
+       "n_clusters": 1753,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.73877,
+       "b": 0.74764,
+       "delta": -0.00887,
+       "ci95": [
+        -0.0271,
+        0.0103
+       ],
+       "sd": 0.00953,
+       "mde95": 0.0157,
+       "p_gt_0": 0.18,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      }
+     },
+     "v2_vs_mlb_pipeline": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 2574,
+       "n_clusters": 1528,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "pit|2017",
+        "pit|2018",
+        "pit|2019"
+       ],
+       "rows_in_kept_groups": 2574,
+       "min_group_rows": 20,
+       "a": 0.16368,
+       "b": 0.19136,
+       "delta": -0.02767,
+       "ci95": [
+        -0.0558,
+        0.0014
+       ],
+       "sd": 0.01458,
+       "mde95": 0.024,
+       "p_gt_0": 0.0315,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 2574,
+       "n_clusters": 1528,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.14988,
+       "b": 0.1609,
+       "delta": -0.01101,
+       "ci95": [
+        -0.0374,
+        0.0143
+       ],
+       "sd": 0.01351,
+       "mde95": 0.0222,
+       "p_gt_0": 0.2155,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 2574,
+       "n_clusters": 1528,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.74921,
+       "b": 0.7446,
+       "delta": 0.00462,
+       "ci95": [
+        -0.015,
+        0.0248
+       ],
+       "sd": 0.01024,
+       "mde95": 0.0169,
+       "p_gt_0": 0.6675,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      }
+     },
+     "v2_vs_fangraphs": {
+      "spearman": {
+       "statistic": "within",
+       "label": "within (side, vintage) Spearman, size-weighted",
+       "n": 2370,
+       "n_clusters": 1470,
+       "groups_kept": [
+        "hit|2017",
+        "hit|2018",
+        "hit|2019",
+        "pit|2017",
+        "pit|2018",
+        "pit|2019"
+       ],
+       "rows_in_kept_groups": 2370,
+       "min_group_rows": 20,
+       "a": 0.16469,
+       "b": 0.13977,
+       "delta": 0.02492,
+       "ci95": [
+        -0.0063,
+        0.0552
+       ],
+       "sd": 0.01602,
+       "mde95": 0.0264,
+       "p_gt_0": 0.943,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 spans zero"
+      },
+      "pooled": {
+       "statistic": "pooled",
+       "label": "pooled Spearman after the identical output map",
+       "n": 2370,
+       "n_clusters": 1470,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.15373,
+       "b": 0.11586,
+       "delta": 0.03787,
+       "ci95": [
+        0.0073,
+        0.0671
+       ],
+       "sd": 0.01523,
+       "mde95": 0.0251,
+       "p_gt_0": 0.9955,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 above zero"
+      },
+      "auc": {
+       "statistic": "auc",
+       "label": "contributor AUC after the identical output map, pooled",
+       "n": 2370,
+       "n_clusters": 1470,
+       "groups_kept": null,
+       "rows_in_kept_groups": null,
+       "min_group_rows": null,
+       "a": 0.73871,
+       "b": 0.70301,
+       "delta": 0.0357,
+       "ci95": [
+        0.013,
+        0.0592
+       ],
+       "sd": 0.01165,
+       "mde95": 0.0192,
+       "p_gt_0": 0.9995,
+       "B": 2000,
+       "B_used": 2000,
+       "seed": 20260906,
+       "estimator": "E_cond",
+       "ci95_estimator": "E_cond, paired, player-clustered",
+       "status": "derived",
+       "reading": "development only; CI95 above zero"
+      }
+     }
+    },
+    "secondary": {
+     "statistic": "pooled Spearman after the identical output map",
+     "raters": {
+      "efv_v2": 0.1478,
+      "efv_v1": 0.1375,
+      "prospx_consensus": 0.1496,
+      "mlb_pipeline": 0.1609,
+      "fangraphs": 0.1159
+     },
+     "deltas": {
+      "v2_vs_prospx_consensus": {
+       "delta": -0.0018,
+       "ci95": [
+        -0.0199,
+        0.0161
+       ],
+       "mde95": 0.0154,
+       "reading": "development only; CI95 spans zero"
+      },
+      "v2_vs_efv_v1": {
+       "delta": 0.01029,
+       "ci95": [
+        -0.014,
+        0.0338
+       ],
+       "mde95": 0.0204,
+       "reading": "development only; CI95 spans zero"
+      },
+      "efv_v1_vs_prospx_consensus": {
+       "delta": -0.01209,
+       "ci95": [
+        -0.0355,
+        0.0109
+       ],
+       "mde95": 0.0196,
+       "reading": "development only; CI95 spans zero"
+      },
+      "v2_vs_mlb_pipeline": {
+       "delta": -0.01101,
+       "ci95": [
+        -0.0374,
+        0.0143
+       ],
+       "mde95": 0.0222,
+       "reading": "development only; CI95 spans zero"
+      },
+      "v2_vs_fangraphs": {
+       "delta": 0.03787,
+       "ci95": [
+        0.0073,
+        0.0671
+       ],
+       "mde95": 0.0251,
+       "reading": "development only; CI95 above zero"
+      }
+     }
+    },
+    "verdict": "development only; CI95 spans zero",
+    "note": "DS-16 development read of the assembled V2 on the within (side, vintage) Spearman, the primary statistic of the DS-15 draft (EFV_V2_GATE.md s3); spent frame, not a claim"
+   }
+  },
+  "probes": {
+   "DS-16:vm_dev.v2_vs_consensus": {
+    "tag": "DS-16:vm_dev.v2_vs_consensus",
+    "verdict": "READ",
+    "ci95": [
+     -0.0231,
+     0.0116
+    ],
+    "reason": "n 803; within delta -0.00575, pooled delta -0.0058; one frame read carrying 5 comparisons by within, pooled and AUC"
+   },
+   "DS-16:lv_dev.v2_vs_consensus": {
+    "tag": "DS-16:lv_dev.v2_vs_consensus",
+    "verdict": "READ",
+    "ci95": [
+     -0.0197,
+     0.0172
+    ],
+    "reason": "n 2862; within delta -0.00047, pooled delta -0.0018; one frame read carrying 5 comparisons by within, pooled and AUC"
+   }
+  },
+  "n_probes": 2,
+  "elapsed_s": 57.2
+ }
 }

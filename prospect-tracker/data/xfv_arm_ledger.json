@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-25T21:04:15+00:00",
+ "generated_at": "2026-09-25T21:30:42+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
  "n_arms": 80,
  "by_lane": {
@@ -1783,9 +1783,33 @@
     -0.00169,
     0.00207
    ]
+  },
+  {
+   "lane": "V2 development read (DS-16)",
+   "artifact": "efv_v2_dev_eval.json",
+   "probe": "DS-16:lv_dev.v2_vs_consensus",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:28:38Z",
+   "reason": "n 2862; within delta -0.00047, pooled delta -0.0018; one frame read carrying 5 comparisons by within, pooled and AUC",
+   "ci95": [
+    -0.0197,
+    0.0172
+   ]
+  },
+  {
+   "lane": "V2 development read (DS-16)",
+   "artifact": "efv_v2_dev_eval.json",
+   "probe": "DS-16:vm_dev.v2_vs_consensus",
+   "verdict": "READ",
+   "generated_at": "2026-09-25T21:28:38Z",
+   "reason": "n 803; within delta -0.00575, pooled delta -0.0058; one frame read carrying 5 comparisons by within, pooled and AUC",
+   "ci95": [
+    -0.0231,
+    0.0116
+   ]
   }
  ],
- "n_probes": 40,
+ "n_probes": 42,
  "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
  "expected_spurious_passes_at_nominal_5pct": 4.0,

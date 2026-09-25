@@ -71,6 +71,10 @@ PROBES: tuple[tuple[str, str, str], ...] = (
     # are counted; they test a served overlay or a calibration, not a rank driver.
     ("efv_overlay_oos_eval.json", "probes", "served overlay grades (DS-11)"),
     ("efv_v2_pbust_eval.json", "probes", "P(bust) calibration reads (DS-17)"),
+    # DS-16: the one pre-declared development read of the assembled V2, one probe per
+    # frame (each carries five comparisons by the within, pooled and AUC statistics).
+    # A dotted key names a block inside the artifact.
+    ("efv_v2_dev_eval.json", "ds16.probes", "V2 development read (DS-16)"),
 )
 
 #: Fields an arm may carry that the ledger copies through unchanged, so a driver's
@@ -202,6 +206,13 @@ def collect() -> dict:
         doc, why = _load(name)
         if doc is None:
             missing.append({"artifact": name, "why": why, "lane": label})
+            continue
+        *path, key = key.split(".")
+        for part in path:
+            doc = doc.get(part) if isinstance(doc, dict) else None
+        if not isinstance(doc, dict):
+            missing.append({"artifact": name, "why": f"no block {'.'.join(path)}",
+                            "lane": label})
             continue
         for tag, pr in sorted((doc.get(key) or {}).items()):
             if isinstance(pr, dict):

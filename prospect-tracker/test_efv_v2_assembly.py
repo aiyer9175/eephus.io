@@ -373,11 +373,19 @@ def test_registration_arms_recompute_and_stay_in_development_folds():
         assert not doc["arms"][f"V2-LV:{s}.skill.pl_rev"]["admitted"]
 
 
-def test_no_v2_score_reached_the_progress_ledger():
+def test_v2_reaches_the_progress_ledger_only_as_ds16_development_rows():
+    # The assembly itself scores nothing; the first V2 rows are DS-16's development
+    # read (tools/efv_v2_dev_read.py --ds16), and they adjudicate nothing.
     if not PROGRESS.exists():
         pytest.skip("progress ledger absent")
-    txt = PROGRESS.read_text(encoding="utf-8")
-    assert H.V2_ASSEMBLED_ID not in txt
+    doc = json.loads(PROGRESS.read_text(encoding="utf-8"))
+    rows = [r for r in doc["rows"] if r.get("model_id") == H.V2_ASSEMBLED_ID]
+    for r in rows:
+        assert r["role"] == "development" and r["resolvable"] is None, r["run_id"]
+        assert r["frame"] in ("vm_dev", "lv_dev")
+        assert "within" in (r.get("statistic") or "")
+        assert all(s["path"].endswith("efv_v2_dev_eval.json") for s in r["sources"])
+        assert (r.get("verdict") or "").startswith("development only")
 
 
 def test_ledger_counts_the_assembly():

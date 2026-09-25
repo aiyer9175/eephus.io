@@ -3462,6 +3462,19 @@ function _progDateLabel(iso) {
   return `${mon} ${Number(m[3])}`;
 }
 
+// Horizontal offset of a mark from its date, so rows that share a date do not
+// overprint: a headline candidate sits right of the headline row, correction
+// rows further right, development rows left (lv_dev further than vm_dev), and a
+// rebuilt-V2 development row (one that names its statistic) left of those.
+function _progDx(prog, r) {
+  const cand = r.role === "headline_candidate";
+  if (_progIsCorrection(prog, r)) return cand ? 27 : 18;
+  if (cand) return 9;
+  if (r.role !== "development") return 0;
+  const base = r.frame === "lv_dev" ? -18 : -9;
+  return r.statistic ? base - 18 : base;
+}
+
 function _methProgressChart(prog) {
   const rows = _progSeriesRows(prog);
   if (!rows.length) return "";
@@ -3485,10 +3498,10 @@ function _methProgressChart(prog) {
   lo -= pad; hi += pad;
   const ts = rows.map(r => Date.parse(String(r.date) + "T00:00:00Z"));
   const t0 = Math.min(...ts), t1 = Math.max(...ts);
-  // An inner pad keeps the first and last marks off the axes; correction rows
-  // sit right of their frame's same-date row, so they need a wider pad.
+  // An inner pad keeps the first and last marks off the axes; rows that share a
+  // date sit apart by a fixed offset (_progDx), so the pad follows the widest one.
   const anyCorr = rows.some(r => _progIsCorrection(prog, r));
-  const PX = anyCorr ? 34 : 18;
+  const PX = Math.max(18, ...rows.map(r => Math.abs(_progDx(prog, r)) + 16));
   const sx = t => (t1 === t0 ? ML + iW / 2 : ML + PX + ((t - t0) / (t1 - t0)) * (iW - 2 * PX));
   const sy = v => MT + iH - ((v - lo) / (hi - lo)) * iH;
   // Round tick steps (1, 2 or 5 times a power of ten) so the axis reads in
@@ -3508,20 +3521,15 @@ function _methProgressChart(prog) {
   const zero = `<line x1="${ML}" y1="${sy(0).toFixed(1)}" x2="${ML + iW}" y2="${sy(0).toFixed(1)}" stroke="var(--text-secondary)" stroke-width="1" stroke-dasharray="4,3"/>`;
   const col = _raterMeta("xfv").color;
   const marks = rows.map((r, i) => {
-    // A headline-candidate row sits a few pixels right of the same-date
-    // headline row, development rows a few pixels left, and correction rows
-    // further right, so the whiskers do not overprint.
     const cand = r.role === "headline_candidate";
     const dev = r.role === "development";
-    const dx = _progIsCorrection(prog, r)
-      ? (cand ? 27 : 18)
-      : (cand ? 9 : (dev ? (r.frame === "lv_dev" ? -18 : -9) : 0));
+    const dx = _progDx(prog, r);
     const l = legs[i], x = sx(ts[i]) + dx, y = sy(Number(l.delta));
     const ci = Array.isArray(l.ci95) && l.ci95[0] != null
       ? `<line x1="${x.toFixed(1)}" y1="${sy(Number(l.ci95[0])).toFixed(1)}" x2="${x.toFixed(1)}" y2="${sy(Number(l.ci95[1])).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`
         + [l.ci95[0], l.ci95[1]].map(v => `<line x1="${(x - 4).toFixed(1)}" y1="${sy(Number(v)).toFixed(1)}" x2="${(x + 4).toFixed(1)}" y2="${sy(Number(v)).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>`).join("")
       : "";
-    const tip = `<title>${escapeHtml(r.date)}: ${escapeHtml(_progFrameLabel(prog, r.frame))}, n ${r.n}, delta ${_progSigned(l.delta, 4)}, CI ${escapeHtml(_progCi(l.ci95, 4))}, ${escapeHtml(r.verdict || "")}</title>`;
+    const tip = `<title>${escapeHtml(r.date)}: ${escapeHtml(r.model_id || "")}, ${escapeHtml(_progFrameLabel(prog, r.frame))}, n ${r.n}${r.statistic ? `, ${escapeHtml(r.statistic)}` : ""}, delta ${_progSigned(l.delta, 4)}, CI ${escapeHtml(_progCi(l.ci95, 4))}, ${escapeHtml(r.verdict || "")}</title>`;
     let mark;
     if (_progIsCorrection(prog, r)) {
       // A scoring fix: an open triangle, whatever the frame.
@@ -3554,6 +3562,7 @@ function _methProgressChart(prog) {
     `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};border-radius:50%;"></span>${escapeHtml(_progFrameLabel(prog, prog.headline_frame || "vm"))} frame (headline)</span>`,
     candRow ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};"></span>${escapeHtml(_progFrameLabel(prog, candRow.frame))} (headline candidate, not yet the claim)</span>` : "",
     hasDev ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};border-radius:50%;"></span>development frame, spent, not a claim</span>` : "",
+    rows.some(r => r.statistic) ? `<span class="meth-legend-key">a development row that names its statistic (the rebuilt V2) reads Spearman within side and vintage, the statistic registered for the reserved reads; its pooled reading sits in the table</span>` : "",
     hasLook ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};transform:rotate(45deg);"></span>reserved-frame look</span>` : "",
     hasCorr ? `<span class="meth-legend-key"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M 6,1 L 11,10.5 L 1,10.5 Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="1.6"/></svg>correction: a fix to how eFV is scored or to the rows it is trained and scored on, not model progress</span>` : "",
     floor != null ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);opacity:.35;"></span>plus or minus the noise floor (${_progFmt(floor, 3)})</span>` : "",
@@ -3594,13 +3603,17 @@ function _progRowHtml(prog, r) {
     : (r.trigger ? `<br><span class="meth-sub">${escapeHtml(r.trigger)}</span>` : "");
   const model = `${escapeHtml(r.model_id || "")}${mv.commit ? ` <span class="meth-sub">${escapeHtml(mv.commit)}</span>` : ""}${trigTxt}`;
   const chipCls = r.role === "headline" ? "sacc-chip-ok" : "sacc-chip-warn";
-  const frame = `${escapeHtml(_progFrameLabel(prog, r.frame))}${r.frame_version ? ` <span class="meth-sub">${escapeHtml(r.frame_version)}</span>` : ""}<br><span class="${chipCls}">${escapeHtml(String(r.role || "").replace(/_/g, " "))}</span>`;
+  const frame = `${escapeHtml(_progFrameLabel(prog, r.frame))}${r.frame_version ? ` <span class="meth-sub">${escapeHtml(r.frame_version)}</span>` : ""}<br><span class="${chipCls}">${escapeHtml(String(r.role || "").replace(/_/g, " "))}</span>${r.statistic ? `<br><span class="meth-sub">${escapeHtml(r.statistic)}</span>` : ""}`;
   let deltaCell;
   if (r.share && r.share.efv_right_share != null) {
     const ci = Array.isArray(r.share.ci95) ? ` (CI ${_progFmt(r.share.ci95[0] * 100, 0)}% to ${_progFmt(r.share.ci95[1] * 100, 0)}%)` : "";
     deltaCell = `eFV closer on ${_progFmt(r.share.efv_right_share * 100, 1)}%${ci}`;
   } else if (leg) {
     deltaCell = `${_progSigned(leg.delta, 4)}<br><span class="meth-sub">${escapeHtml(_progCi(leg.ci95, 3))}</span>`;
+    const sec = r.secondary && r.secondary.deltas && r.secondary.deltas.vs_prospx_consensus;
+    if (sec && sec.delta != null) {
+      deltaCell += `<br><span class="meth-sub">pooled ${_progSigned(sec.delta, 4)} (${escapeHtml(_progCi(sec.ci95, 3))})</span>`;
+    }
   } else {
     deltaCell = "-";
   }

@@ -338,7 +338,8 @@ def test_dev_rows_copy_the_dev_artifact(arts):
     _run(arts)
     doc = _doc(arts)
     for fid in P.DEV_FRAMES:
-        rows = [r for r in doc["rows"] if r["frame"] == fid]
+        rows = [r for r in doc["rows"] if r["frame"] == fid
+                and r["model_id"] == dev["model_id"]]
         assert len(rows) == 1, fid
         r, f = rows[0], dev["frames"][fid]
         assert r["role"] == "development" and r["tilted"] is False
@@ -375,6 +376,42 @@ def test_dev_rows_append_once_and_never_displace_v1(arts):
     (arts / P.DEV_NAME).write_text(json.dumps(dev), encoding="utf-8")
     res = _run(arts, now=T0 + timedelta(days=2))
     assert [x.split("|")[1] for x in res["appended"]] == ["lv_dev"]
+
+
+def test_ds16_rows_copy_the_v2_block_with_its_statistic(arts):
+    dev = _with_dev(arts)
+    ds = dev.get(P.DS16_SUBKEY)
+    if not ds:
+        pytest.skip("no DS-16 block in data/efv_v2_dev_eval.json")
+    _run(arts)
+    doc = _doc(arts)
+    for fid in P.DEV_FRAMES:
+        rows = [r for r in doc["rows"] if r["frame"] == fid
+                and r["model_id"] == ds["model_id"]]
+        assert len(rows) == 1, fid
+        r, f = rows[0], ds["frames"][fid]
+        assert r["role"] == "development" and r["resolvable"] is None
+        assert r["model_id"] != dev["model_id"] and r["model_id"] != P.MODEL_ID
+        assert r["statistic"] == f["statistic"] and "within" in r["statistic"]
+        assert r["note"] == f["note"] and r["verdict"] == f["verdict"]
+        for name, key in P.V2_RATERS:
+            assert r["raters"][name]["spearman"] == f["raters"][key]["within"]
+        for name, comp in P.V2_DELTAS:
+            leg, src = r["deltas"][name]["spearman"], f["deltas"][comp]["spearman"]
+            assert leg["delta"] == src["delta"] and leg["ci95"] == src["ci95"]
+            assert r["secondary"]["deltas"][name]["delta"] == f["deltas"][comp]["pooled"]["delta"]
+        assert r["content_hash"] == P.content_hash(r)
+    # a rerun appends nothing, and the H0 rows of the same frames keep their place
+    assert _run(arts, now=T0 + timedelta(days=1))["appended"] == []
+    h0 = [r for r in _doc(arts)["rows"] if r["model_id"] == dev["model_id"]]
+    assert {r["frame"] for r in h0} == set(P.DEV_FRAMES)
+
+
+def test_rows_without_statistic_fields_keep_their_hash():
+    row = {"frame": "vm_dev", "n": 1, "model_id": "m", "model_version": {}}
+    h = P.content_hash(row)
+    assert P.content_hash(dict(row, statistic=None, secondary=None)) == h
+    assert P.content_hash(dict(row, statistic="within")) != h
 
 
 def test_a_non_development_artifact_yields_no_dev_row():
