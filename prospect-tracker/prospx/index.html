@@ -16025,7 +16025,7 @@ function getFilteredActives() {
     // eFV (our outcome-grounded grade) descending -- the PRIMARY board ranking.
     // efvRankValue falls back to consensus FV for players with no pro track record
     // (where eFV abstains) so they interleave by consensus instead of vanishing.
-    pool.sort((a, b) => efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b));
+    pool.sort(boardCmp);
   } else if (state.sort === "fv") {
     // Consensus FV, highest first (consensusSortCmp). Reverse flag handled inside the
     // comparator so placeholder and no-consensus rows stay pinned to the bottom in both
@@ -18766,8 +18766,7 @@ function renderWatchlist() {
     // graded player's provisional twin as the org's live top prospect, the demotion
     // _dedupeProvPool exists to prevent. Same pool as the farm list and farm detail.
     const _wlPool = oneRowOrgPool(org.org).filter(p => p && p.player_key);
-    _wlPool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
-      || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+    _wlPool.sort(boardCmp);
     const _wlTop = _wlPool[0] || null;
     const _wlGb = (_wlTop && typeof gradeBlock === "function") ? gradeBlock(_wlTop) : null;
     const tp = _wlTop
@@ -31692,7 +31691,7 @@ function provOrgRank(p) {
     const pool = _dedupeProvPool(
       (DATA.players || []).filter(q => q && q.org === p.org && q.status !== "debuted" && !q.debut_date),
       provPlayers().filter(q => q.org === p.org));
-    pool.sort((a, b) => efvRankValue(b) - efvRankValue(a));
+    pool.sort(boardCmp);
     const m = {};
     pool.forEach((q, i) => { if (q.player_key) m[q.player_key] = i + 1; });
     _PROV_ORGRANK[p.org] = { map: m, total: pool.length };
@@ -32773,6 +32772,17 @@ function efvRankValue(p) {
   if (v != null) return v;
   return (p && p.fv_close != null) ? Number(p.fv_close) : -1;
 }
+// THE board order (census M01-03, 2026-09-24): eFV board value descending, then the
+// fvCmpDesc tiebreak chain, for EVERY pair, graded or provisional. The rank maps, the
+// org-rank map, the farm roster, the farm top-3 strip, the watchlist top prospect and the
+// farm GFX top 5 all sort with this one comparator, so a printed #N always equals the
+// row's position on the default board. The maps used to return 0 for any tie that
+// involved a provisional row, which left those rows in payload key order (grouped by
+// org) while the board ordered them by the fvCmpDesc chain: 3,201 of 8,071 rank chips
+// printed a number that was not their row position.
+function boardCmp(a, b) {
+  return efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b);
+}
 function buildEfvRankMap() {
   _EFV_RANK = {};
   _EFV_PREV_RANK = {};
@@ -32781,8 +32791,7 @@ function buildEfvRankMap() {
   // ALWAYS rank among the graded board by their eFV grade (no toggle). provPlayers() is empty
   // until the ungraded file lands, at which point the rank map rebuilds with them folded in.
   let pool = _dedupeProvPool(DATA.players.filter(p => p && p.player_key), provPlayers());
-  pool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
-    || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+  pool.sort(boardCmp);
   pool.forEach((p, i) => { _EFV_RANK[p.player_key] = i + 1; });
   // TIE-BLOCK census. On the raw-grade board ~3.1k of ~4.5k rows sit on the 20.0
   // provisional floor, so for those players the rank NUMBER is decided by the tiebreak
@@ -32806,8 +32815,7 @@ function buildEfvRankMap() {
     if (pv == null) return efvRankValue(p);
     return pv;   // symmetric with efvRankValue, which no longer penalises (F2 repair)
   };
-  pool.slice().sort((a, b) => prevVal(b) - prevVal(a)
-    || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)))
+  pool.slice().sort((a, b) => prevVal(b) - prevVal(a) || fvCmpDesc(a, b))
     .forEach((p, i) => { _EFV_PREV_RANK[p.player_key] = i + 1; });
 }
 function getEfvRank(p) {
@@ -32828,8 +32836,7 @@ function buildEfvOrgRankMap() {
     (byOrg[o] = byOrg[o] || []).push(p);
   });
   for (const o in byOrg) {
-    byOrg[o].sort((a, b) => efvRankValue(b) - efvRankValue(a)
-      || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+    byOrg[o].sort(boardCmp);
     byOrg[o].forEach((p, i) => {
       _EFV_ORG_RANK[p.player_key] = { rank: i + 1, total: byOrg[o].length };
     });
@@ -43449,8 +43456,7 @@ function renderFarmSystems() {
     // the Top-3 strip can never seat the same player twice or show a twin in place of
     // his graded row.
     const _orgPool = oneRowOrgPool(org.org).filter(p => p && p.player_key);
-    _orgPool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
-      || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+    _orgPool.sort(boardCmp);
     const top3 = _orgPool.slice(0, 3);
     const topHtml = top3.length
       ? `<div class="farm-top3-stack">${top3.map(t => {
@@ -51719,7 +51725,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
       // (source-ungraded) prospects into the list properly: they carry an inline eFV grade but
       // empty points[], so the old consensus_fv_raw path scored them -1 and sank them all to the
       // bottom (past the page-size cut) - why they "weren't showing" on the roster at all.
-      return efvRankValue(b) - efvRankValue(a);
+      // boardCmp, so roster position equals getEfvOrgRank on tied rows too (M01-03).
+      return boardCmp(a, b);
     },
     avg_rank: (a, b) => {
       const ap = (a && a.points) || [];
@@ -51921,7 +51928,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // same data the page renders, so the header .gfx-card-btn graphics this org.
   {
     const _top5 = rosterPlayersAll.slice()
-      .sort((a, b) => efvRankValue(b) - efvRankValue(a))
+      .sort(boardCmp)
       .slice(0, 5)
       .map(p => {
         const lt = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
