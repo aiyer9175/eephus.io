@@ -353,22 +353,44 @@ def test_wrc_plus_sits_right_after_hem_plus_in_every_view_that_shows_both():
     assert vis[-1] == "hem_plus" and "wrc_plus" not in vis, vis
 
 
-@pytest.mark.parametrize("hash_,fn,n", [
-    # +5 / +6 / +5 / +9: the Savant display columns (X05-01 discipline, X05-02 catching).
-    ("#section=bullpen&rcols=all", _render_bullpen, 30),
-    ("#section=starters&scols=all", smoke._render_starters, 25),
-    ("#section=hitters&hcols=all", smoke._render_hitters, 30),
-    ("#section=defense&dcols=all", smoke._render_defense, 26),
+# All shows every column but the Baseball Savant display columns (allOff in
+# mlbstats.js: 5 reliever, 6 starter, 5 hitter, 9 defense), which sit on their
+# own views. With them All ran 1,249 to 1,431px against the 1,232px box at a
+# 1280 window and broke the fit budget test_mlbstats_fit.py holds it to.
+SAVANT_ALL_OFF = {
+    "rel": {"whiff_pct", "chase_pct", "z_contact_pct", "f_strike_pct", "fb_velo"},
+    "sp": {"swstr_pct", "whiff_pct", "chase_pct", "z_contact_pct", "f_strike_pct", "fb_velo"},
+    "hit": {"chase_pct", "whiff_pct", "z_contact_pct", "sweet_spot_pct", "pull_pct"},
+    "def": {"c_blk_runs", "c_blk_aa", "c_blk_pitches", "c_cs_runs", "c_cs_aa", "c_sb_att",
+            "c_pop", "c_exchange", "c_arm"},
+}
+
+
+@pytest.mark.parametrize("hash_,fn,n,board", [
+    ("#section=bullpen&rcols=all", _render_bullpen, 25, "rel"),
+    ("#section=starters&scols=all", smoke._render_starters, 19, "sp"),
+    ("#section=hitters&hcols=all", smoke._render_hitters, 25, "hit"),
+    ("#section=defense&dcols=all", smoke._render_defense, 17, "def"),
 ])
-def test_the_all_view_shows_every_column_and_wraps_only_spaced_headers(hash_, fn, n):
+def test_the_all_view_shows_every_column_and_wraps_only_spaced_headers(hash_, fn, n, board):
     html = fn(hash_)
     assert '<table class="mlbstats-table mlbstats-cv-all">' in html
     heads = _heads(html)
-    assert len(heads) == n and len(_visible(html)) == n
-    assert "mlbstats-cv-off" not in _table(html) and "mlbstats-cv-wide" not in _table(html)
+    off = {k for cls, k, _ in heads if "mlbstats-cv-off" in cls.split()}
+    assert off == SAVANT_ALL_OFF[board], sorted(off ^ SAVANT_ALL_OFF[board])
+    assert len(heads) == n + len(off) and len(_visible(html)) == n
+    assert "mlbstats-cv-wide" not in _table(html)
+    heads = [h for h in heads if h[1] not in off]
     for cls, key, tag in heads:
         label = re.search(r'data-export-text="([^"]*)"', tag).group(1)
         assert ("mlbstats-nw" in cls.split()) == (" " not in label), (key, label)
+
+
+def test_a_sort_on_a_savant_column_keeps_it_on_all():
+    """All leaves the Savant columns out, but never the column the board is
+    sorted on: a link sorted on Chase% still shows Chase% on All."""
+    vis = _visible(smoke._render_hitters("#section=hitters&hcols=all&hsort=chase_pct.d"))
+    assert "chase_pct" in vis and "whiff_pct" not in vis, vis
 
 
 def test_the_all_pill_says_it_may_scroll():
