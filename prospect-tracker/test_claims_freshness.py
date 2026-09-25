@@ -43,6 +43,10 @@ ROOT = Path(__file__).parent
 # 2026-08-19. A concurrent repair lane removed the occurrences; this ratchet
 # is the guarantee they never return. Matching is case-insensitive substring.
 BANNED_CLAIM_FRAGMENTS = (
+    # glossary forward_gate said the Team Outlook forecast "is logged now";
+    # nothing freezes it (data/mlb_projections.json is gitignored and rewritten
+    # nightly, prospects.db keeps surplus only). M05-10, 2026-09-25.
+    "the number is logged now",
     # glossary.js hero copy claimed eFV beat all public sources; the
     # vintage-matched head-to-head (2026-08-13) reads +0.0014 at 0.046x,
     # a tie. Copy may say "indistinguishable", never "better".

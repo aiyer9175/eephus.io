@@ -4857,8 +4857,8 @@
     "live gate"
    ],
    "priority": 41,
-   "definition": "The live scoreboard for a projection whose target has not happened: the number is logged now and graded against a stated baseline when the outcome lands.",
-   "methodology": "Team Outlook win totals are the standing case: only the first projected season is gated, scored as MAE against final standings (baseline = prior-season wins carried forward); out-years are a trajectory, not a scored forecast. The gate stays pending until the season ends, then the result is committed whatever it says.",
+   "definition": "The live scoreboard for a projection whose target has not happened: the number is published now and graded against a stated baseline when the outcome lands.",
+   "methodology": "Team Outlook win totals are the standing case: only the first projected season is gated, scored as MAE against final standings (baseline = prior-season wins carried forward); out-years are a trajectory, not a scored forecast. The gate stays pending until the season ends, then the result is committed whatever it says. The forecast itself is not yet frozen: the served projections file is rewritten every night, so the copy that gets graded has to be written and committed before the first game of the season it predicts.",
    "seeAlso": [
     "backtest",
     "holdout",
