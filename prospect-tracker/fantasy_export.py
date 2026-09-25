@@ -1233,6 +1233,11 @@ def build_sections(payload: dict) -> dict:
     resolves against `players`); the prospect sections (callup_watch, dynasty) are
     self-contained rows joined from timeseries.json + xfv.json; team_next7 is the
     per-club 7-day schedule strip the player card renders."""
+    # Read the eFV grades fresh on every build (2026-09-25). run_monthly builds
+    # this corpus at 6b6, then regenerates xfv.json in the chained daily run and
+    # calls refresh_live in the SAME process; the one-slot cache kept Call-up
+    # Watch on the grades from before the regen.
+    _efv_by_key.cache_clear()
     players = payload["players"]
     # Display-only Swing+ mechanics-trend chips (attached here so the daily
     # refresh_live path re-bakes them too). Never read by any section sort.
@@ -1697,9 +1702,14 @@ def refresh_live(log=print) -> int:
     pitcher schedule, and rebuild the schedule-driven sections (streamers,
     two-start). Skips the heavy build_corpus()/projection entirely, so it's safe
     on the daily path (and off the OOM-sensitive monthly build). No-op until the
-    monthly build has created data/fantasy.json."""
+    monthly build has created data/fantasy.json.
+
+    A corpus with no players still gets its sections rebuilt (2026-09-25): the
+    prospect sections (Dynasty, Call-up Watch) read timeseries.json and
+    xfv.json, not the pool, and returning early on an empty pool froze them
+    between monthly builds while PROSPX and /projections/ moved nightly."""
     payload = _load_json("fantasy.json")
-    if not isinstance(payload, dict) or not payload.get("players"):
+    if not isinstance(payload, dict) or not isinstance(payload.get("players"), list):
         if callable(log):
             log("fantasy: no monthly fantasy.json yet — skipping daily refresh")
         return 0

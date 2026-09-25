@@ -591,6 +591,48 @@ def test_streamer_rows_and_two_start_legs_say_which_side_starts(monkeypatch):
     assert [leg["is_home"] for leg in legs] == [True, False]
 
 
+# ---- prospect sections follow the eFV regen (M11-09, 2026-09-25) ----------
+def test_callup_watch_reads_the_current_xfv_on_every_build(monkeypatch):
+    """run_monthly builds the corpus, regenerates xfv.json, then calls
+    refresh_live in the same process; the one-slot cache served the old grade."""
+    ts = {"players": [{"player_key": "a", "mlbam_id": 1, "player_name": "A",
+                       "eta": 2026, "consensus_fv": 50}]}
+    xfv = {"by_player": {"a": {"xfv_grade_realized": 50.0}}}
+    monkeypatch.setattr(fe, "_load_json", lambda name: {
+        "timeseries.json": ts, "xfv.json": xfv}.get(name))
+    monkeypatch.setattr(fe, "_efv_board_value", lambda rec: None)
+    monkeypatch.setattr(fe, "_teams_context", lambda: {})
+    monkeypatch.setattr(fe, "_dynasty_prospects", lambda ts, season: [])
+    monkeypatch.setattr(fe, "_closer_depth", lambda: ({}, {}))
+    fe._efv_by_key.cache_clear()
+    base = {"players": [], "mode": fe.MODE_ROS, "season_fraction": 0.5,
+            "schedule": {}}
+    assert fe.build_sections(dict(base))["callup_watch"][0]["fvE"] == 50.0
+    xfv["by_player"]["a"]["xfv_grade_realized"] = 47.0
+    assert fe.build_sections(dict(base))["callup_watch"][0]["fvE"] == 47.0
+
+
+def test_refresh_live_rebuilds_the_sections_of_an_empty_corpus(monkeypatch, tmp_path):
+    payload = {"players": [], "mode": fe.MODE_ROS, "season_fraction": 0.99,
+               "schedule": {}, "sections": {"dynasty": [{"rank": 1, "efv": 45.7}]}}
+    monkeypatch.setattr(fe, "_load_json",
+                        lambda name: payload if name == "fantasy.json" else None)
+    monkeypatch.setattr(fe, "_active_roster_ids", lambda: None)
+    monkeypatch.setattr(fe, "_restamp_elig", lambda p, log=None: 0)
+    monkeypatch.setattr(fe, "_attach_schedule", lambda p: None)
+    monkeypatch.setattr(fe, "build_sections",
+                        lambda p: {"dynasty": [{"rank": 1, "efv": 46.7}]})
+    monkeypatch.setattr(fe, "update_two_start_ledger",
+                        lambda *a, **k: {"projected_added": 0, "grades_added": 0,
+                                         "n_rows": 0})
+    out = tmp_path / "fantasy.json"
+    monkeypatch.setattr(fe, "OUT_PATH", out)
+    assert fe.refresh_live(log=None) == 0
+    got = json.loads(out.read_text(encoding="utf-8"))
+    assert got["sections"]["dynasty"][0]["efv"] == 46.7
+    assert got["players"] == []
+
+
 if __name__ == "__main__":
     import sys
     mod = sys.modules[__name__]
