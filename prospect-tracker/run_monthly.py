@@ -2110,6 +2110,32 @@ def _ewar_nightly_step(log: logging.Logger, where: str) -> int:
     return rc
 
 
+def _rebake_mlb_player_detail(log, label: str) -> None:
+    """Re-bake data/mlb_player_detail.json (the /projections/#player= cards and
+    the Trade Machine evaluator) off the mlb_projections.json now on disk.
+
+    The card copies the board's money and control keys verbatim, so every writer
+    of the board has to be followed by this, or the card serves the previous
+    vintage (M05-08, 2026-09-24: 143 surplus rows and one control window behind
+    after a standalone --rebuild-only). Best-effort: a failed bake must not
+    abort the caller."""
+    try:
+        from mlb_player_export import export as _export_mlbp
+        _export_mlbp()
+    except Exception:
+        log.exception("%s: mlb player detail re-bake failed - continuing", label)
+
+
+def rebuild_only_cli(out_dir: Path = Path("data")) -> None:
+    """The standalone `--rebuild-only` entry point. rebuild_only() re-writes
+    mlb_projections.json and trade_values.json but never the player cards (the
+    nightly does that at d9b2), so a standalone pass re-bakes them here, after
+    rebuild_only's frame (and its in-memory timeseries) is gone: the OOM note
+    at the proj_export block is why this is not inside rebuild_only."""
+    rebuild_only(out_dir=out_dir)
+    _rebake_mlb_player_detail(logging.getLogger("rebuild_only"), label="rebuild_only")
+
+
 def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
               no_cache: bool = False, chained: bool = False) -> None:
     """DAILY fast-moving refresh — the time-sensitive subset of the pipeline.
@@ -2713,11 +2739,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 log.exception("daily: fielding innings refresh failed - continuing")
 
         with _step("d9b2. Re-bake MLB player detail (mlb_player_detail.json)", log):
-            try:
-                from mlb_player_export import export as _export_mlbp
-                _export_mlbp()
-            except Exception:
-                log.exception("daily: mlb player detail re-bake failed — continuing")
+            _rebake_mlb_player_detail(log, label="daily")
 
         # --- 9c. Headshot resolution (data/photo_ctx.json). ---------------
         # Refresh the mlbstatic photo-context map on the DAILY path too, not just
@@ -6437,7 +6459,7 @@ if __name__ == "__main__":
         run_daily(out_dir=args.out_dir, workers=args.workers, no_cache=args.no_cache)
         sys.exit(0)
     if args.rebuild_only:
-        rebuild_only(out_dir=args.out_dir)
+        rebuild_only_cli(out_dir=args.out_dir)
         sys.exit(0)
     main(force_refetch=args.force, skip_stats=args.skip_stats, out_dir=args.out_dir,
          workers=args.workers, cache_ttl=args.cache_ttl, no_cache=args.no_cache,

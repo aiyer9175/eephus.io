@@ -84,6 +84,46 @@ def test_the_control_end_is_the_max_of_the_two_facts_on_every_row():
 
 
 # ------------------------------------------------------ the player card ------
+# Every key mlb_player_export copies VERBATIM from the board row
+# (mlb_player_export.build_payload). M05-08 (2026-09-24): after a standalone
+# --rebuild-only the card sat one vintage behind the board on 143 surplus rows
+# and one control window, and a check over the four ctrl keys alone saw only
+# the one row.
+_CARD_COPY_KEYS = ("war", "warP10", "warP90", "warTotal", "warTotalP10",
+                   "warTotalP90", "sur", "surNpv", "surTotal", "surRos", "rosWar",
+                   "rosFrac", "salPath", "salThru", "salSrc", "surSalLo",
+                   "surSalHi", "salCut", "salTrunc", "salOpt", "salVintage",
+                   "ctrlThru", "ctrlOpen", "ctrlEst", "ctrlWhy", "thru", "aav",
+                   "warHit", "warPit")
+
+
+def test_the_card_copy_list_is_the_one_the_exporter_uses():
+    """The key list above has to be the exporter's list, or the agreement test
+    below silently stops covering a field the card prints."""
+    import ast
+    src = (ROOT / "mlb_player_export.py").read_text(encoding="utf-8")
+    lists = [tuple(ast.literal_eval(n)) for n in ast.walk(ast.parse(src))
+             if isinstance(n, ast.Tuple) and n.elts
+             and all(isinstance(e, ast.Constant) for e in n.elts)
+             and "surTotal" in [e.value for e in n.elts]
+             and "ctrlThru" in [e.value for e in n.elts]]
+    assert lists, "no verbatim copy tuple found in mlb_player_export.py"
+    assert set(lists[0]) == set(_CARD_COPY_KEYS)
+
+
+def test_a_standalone_rebuild_rebakes_the_player_cards(monkeypatch):
+    """`run_monthly.py --rebuild-only` re-writes the board, so it must also
+    re-bake the cards that copy it; before M05-08 only the nightly d9b2 did."""
+    import mlb_player_export
+    import run_monthly
+    calls = []
+    monkeypatch.setattr(run_monthly, "rebuild_only",
+                        lambda out_dir=None, **kw: calls.append("board"))
+    monkeypatch.setattr(mlb_player_export, "export", lambda: calls.append("cards"))
+    run_monthly.rebuild_only_cli(out_dir=Path("unused"))
+    assert calls == ["board", "cards"]
+
+
 def test_the_card_and_the_board_agree_on_every_row():
     """mlb_player_export copies the salary block VERBATIM and the control keys
     ride in the same copy list. The moment it starts deriving one, the card and
@@ -96,10 +136,12 @@ def test_the_card_and_the_board_agree_on_every_row():
         if v is None:
             continue
         pr = p.get("proj") or {}
-        for k in ("ctrlThru", "ctrlOpen", "ctrlEst", "ctrlWhy"):
+        for k in _CARD_COPY_KEYS:
             if (pr.get(k) or None) != (v.get(k) or None):
                 bad.append((key, k, pr.get(k), v.get(k)))
-    assert not bad, bad[:5]
+    assert not bad, (
+        f"{len(bad)} card keys differ from the board (a board re-bake the card "
+        f"never followed?): {bad[:5]}")
 
 
 # ------------------------------------------------------ /trademachine/ -------
