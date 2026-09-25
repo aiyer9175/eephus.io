@@ -459,6 +459,45 @@ def test_arsenal_run_value_is_coloured_from_the_pitchers_side():
     assert "positive = runs saved" in ars
 
 
+def _horizon_row(row):
+    """A nine-figure deal that runs past the five priced seasons: the salary
+    path stops at 2031, the guarantee (and so the control end) runs to 2039."""
+    row = dict(row)
+    row.update({"salPath": [[s, 51000000, 51000000, 51000000, "signed", "contract", 0]
+                            for s in range(2027, 2032)],
+                "salThru": 2031, "salSrc": "contract", "thru": 2039, "ctrlThru": 2039,
+                "ctrlWhy": "horizon", "aav": 51000000, "surNpv": 232000000,
+                "surTotal": 234000000, "surRos": 2000000})
+    return row
+
+
+def test_a_deal_past_the_horizon_never_calls_its_surplus_the_control_window():
+    """M05-01: surplus prices 2027-2031 only. On a guarantee through 2039 the
+    card must name the seasons it covers and the eight it leaves unpriced,
+    never label the number as the whole club control window."""
+    global DETAIL, BOARD
+    base_d, base_b = DETAIL, BOARD
+    try:
+        d = json.loads(base_d)
+        d["players"]["vet_guy"]["proj"] = _horizon_row(d["players"]["vet_guy"]["proj"])
+        DETAIL = json.dumps(d)
+        html = _render("#player=vet_guy&ptab=projection")
+        assert "Surplus (2027-2031)" in html
+        assert "Surplus (club control window)" not in html
+        assert "8 guaranteed seasons after 2031 not priced" in html
+        foot = html.split("data-proj-horizon-tail", 1)[1][:300]
+        assert "Surplus prices 2027-2031 only." in foot
+        assert "The 8 guaranteed seasons 2032-2039" in foot and "$408M" in foot
+        bd = json.loads(base_b)
+        bd["first_season"] = 2027
+        bd["vets"][0] = _horizon_row(bd["vets"][0])
+        BOARD = json.dumps(bd)
+        board = _render("")
+        assert "over 2027-2031 only, not the whole club control window" in board
+    finally:
+        DETAIL, BOARD = base_d, base_b
+
+
 def test_season_lines_carry_the_ewar_column_again():
     """Owner decision 20 (2026-09-11): the eWAR column is back in the season
     lines, and the Value tab keeps its bars. A two-way card shows each side's

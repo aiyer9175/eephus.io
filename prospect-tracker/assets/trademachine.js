@@ -402,7 +402,7 @@ function renderTradeMachine() {
          </div>
          <div class="tm-balrow">
            <span class="tm-balverdict ${vClass}">${vText}</span>
-           <span class="fa-sub"><span data-gl="surplus_value">surplus</span>: prospect surplus NPV + MLB club control window surplus · $${BALANCED_THRESHOLD_MM}M dead-band</span>
+           <span class="fa-sub"><span data-gl="surplus_value">surplus</span>: prospect surplus NPV + MLB club control window surplus (five projected seasons at most) · $${BALANCED_THRESHOLD_MM}M dead-band</span>
          </div>
          <div class="tm-controls">
            <button class="chip" data-tm-clear type="button">Clear</button>

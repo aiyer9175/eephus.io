@@ -338,6 +338,31 @@
     if (m.surTotal != null) return m.surTotal;
     return m.surNpv != null ? m.surNpv : null;
   }
+  // THE PRICED HORIZON (M05-01, 2026-09-25). Surplus prices the five projected
+  // seasons and nothing after them (proj_export._apply_contract). On a row whose
+  // guarantee runs past the last of them (ctrlWhy "horizon": 39 deals today, Soto
+  // through 2039) the number is a statement about those seasons, not about the
+  // club control window, so every surface that labels it names the seasons it
+  // covers and states the guaranteed seasons after them as unpriced. The seasons
+  // are read off the row's own salary path, never assumed.
+  function horizonTail(m) {
+    if (!m || m.ctrlWhy !== "horizon") return null;
+    const ct = ctrlThruOf(m);
+    let first = null, end = null;
+    (m.salPath || []).forEach(st => {
+      const s = Number(st[0]);
+      if (first == null || s < first) first = s;
+      if (end == null || s > end) end = s;
+    });
+    if (end == null || ct == null || ct <= end) return null;
+    const n = ct - end;
+    return { first, end, n, from: end + 1, to: ct,
+      committed: m.aav ? m.aav * n : null };
+  }
+  function horizonTailText(m, tl) {
+    const span = tl.n === 1 ? `guaranteed ${tl.from} season` : `${tl.n} guaranteed seasons ${tl.from}-${tl.to}`;
+    return `The ${span}${tl.committed != null ? ` (about ${money(tl.committed)} at ${money(m.aav)}/yr)` : ""} carr${tl.n === 1 ? "ies" : "y"} no price.`;
+  }
   function warAt(m, t) {
     const arr = m.war;
     if (m.src === "prospect") {
@@ -709,7 +734,7 @@
       ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${DATA.n_vets} veterans (<span data-gl="fa_projection_engine">FA projection engine</span>)
       &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
       &middot; priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons"}
-      &middot; WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window
+      &middot; WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window, through ${first + (DATA.horizon || 5) - 1} at most
       &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
     const gfxBtn = document.getElementById("proj-board-gfx");
     if (gfxBtn) gfxBtn.onclick = () => {
@@ -1602,7 +1627,9 @@
       // least", and a horizon-clamped row says nothing at all, because its
       // number is a statement about our five seasons and not about the player.
       const _ctW = ctrlThruOf(m);
-      const thruTxt = _ctW == null || m.ctrlWhy === "horizon" ? ""
+      const _tl = horizonTail(m);
+      const thruTxt = _tl ? ` (${_tl.first}-${_tl.end} only. ${horizonTailText(m, _tl)})`
+        : _ctW == null || m.ctrlWhy === "horizon" ? ""
         : ctrlOpenOf(m) ? ` (club control window through at least ${_ctW})`
         : ` (club control window through ${_ctW})`;
       const split = sv == null ? "not priced"
@@ -1665,7 +1692,7 @@
       // survives a CSV. Empty on a veteran row, which has no prime path.
       + `<th class="pc-csv" hidden data-export-text="Prime ${H}y WAR (prospects, talent anchor)"></th>`
       + th("sur", "Surplus", "pc-sur",
-          "Veterans: production value minus salary over the club control window - contracted dollars where a contract exists, the league minimum for pre-arbitration seasons, the projected award for arbitration seasons. Prospects: surplus over the 7-season valuation window from their ETA.", "Surplus")
+          `Veterans: production value minus salary over the club control window, through ${first + H - 1} at most - contracted dollars where a contract exists, the league minimum for pre-arbitration seasons, the projected award for arbitration seasons. A guarantee that runs past ${first + H - 1} is priced only through it. Prospects: surplus over the 7-season valuation window from their ETA.`, "Surplus")
       + seasons.map((s, t) => th("y" + t,
           `<span class="proj-sr-sm">${String(s).slice(0, 2)}</span>${String(s).slice(2)}`
             + (state.cells === "war" ? "" : `<span class="proj-th-unit">${esc(cellLbl)}</span>`),
@@ -1728,8 +1755,11 @@
         + (isPros ? ". Colour ranks the per-season average against the PROSPECT pool"
                   : ". Colour ranks the per-season average of the seasons shown");
       const sv = surOf(m);
+      const _tlS = isPros ? null : horizonTail(m);
       const surTip = isPros
         ? "Prospect surplus value over the 7-season valuation window from his projected ETA"
+        : _tlS
+        ? `${m.surRos != null ? "Rest of this season plus " : ""}NPV of (convex production value − salary) over ${_tlS.first}-${_tlS.end} only, not the whole club control window. ${horizonTailText(m, _tlS)}`
         : (m.surRos != null && m.surNpv == null
             ? `Rest-of-season control only: ${Math.round((m.rosFrac || 0) * 100)}% of ${first - 1} left, prorated projection minus prorated salary`
             : (m.surRos != null
@@ -2068,7 +2098,7 @@
           <tbody>${seasonRows}
             ${totRow(`${DATA.horizon}y WAR`, warShown(a), warShown(b), fmtWar)}
             ${totRow("Surplus", surOf(a), surOf(b), money)}</tbody></table>
-        <div class="fa-note proj-cmp-note">Edge = left minus right. <span data-gl="surplus_value">Surplus</span> is club control window surplus for a veteran and projected surplus over his controlled seasons for a prospect: both value above cost, not like-for-like terms.</div>
+        <div class="fa-note proj-cmp-note">Edge = left minus right. <span data-gl="surplus_value">Surplus</span> is club control window surplus for a veteran, priced through ${seasons[seasons.length - 1]} at most, and projected surplus over his controlled seasons for a prospect: both value above cost, not like-for-like terms.</div>
       </div></div>`;
     const gfx = document.getElementById("cmp-gfx");
     if (gfx) gfx.onclick = () => {
@@ -2386,8 +2416,11 @@
       : "";
     const band = (pr.surSalLo != null && pr.surSalHi != null)
       ? `<div class="fa-sub mlbp-block-foot">If the award lands at the band ends: ${money(pr.surSalLo)} to ${money(pr.surSalHi)}.</div>` : "";
+    const _tl = horizonTail(pr);
+    const tailNote = _tl
+      ? `<div class="fa-sub mlbp-block-foot" data-proj-horizon-tail>Surplus prices ${_tl.first}-${_tl.end} only. ${horizonTailText(pr, _tl)}</div>` : "";
     return section("contract-ctrl", "Contract", `${term("salary_path", "salary path")} · ${term("club_control_window", "club control window")}`,
-      `<div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>${strip}${note}${band}`);
+      `<div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>${strip}${note}${tailNote}${band}`);
   }
 
   // ---- hitting ---------------------------------------------------------------
@@ -2720,13 +2753,16 @@
       out.push(tileHTML(`${(pr.war || []).length}y WAR`, fmtWar(pr.warTotal), "", { gl: "ewar",
         sub: (p.twoWay && pr.warHit && pr.warPit) ? `hit ${fmtWar(sum(pr.warHit))} / pit ${fmtWar(sum(pr.warPit))}` : "expected" }));
     const sv = surOf(p.proj);
+    const tl = horizonTail(pr);
     if (sv != null)
       out.push(tileHTML(
         (pr.surNpv == null && pr.surRos != null) ? "Surplus (rest of season)"
+          : tl ? `Surplus (${tl.first}-${tl.end})`
           : pr.salPath ? "Surplus (club control window)" : "Surplus NPV",
         money(sv), sv >= 0 ? "proj-pos" : "proj-neg",
         { gl: "surplus_value",
-          sub: (pr.surSalLo != null && pr.surSalHi != null)
+          sub: tl ? `${tl.n} guaranteed season${tl.n === 1 ? "" : "s"} after ${tl.end} not priced`
+            : (pr.surSalLo != null && pr.surSalHi != null)
             ? `award band ${money(pr.surSalLo)} to ${money(pr.surSalHi)}` : "" }));
     const h = sk.hem, d = sk.def, s = (p.isPit || p.twoWay) ? pitchSkill(p) : null;
     const pitIdx = () => {
@@ -3140,7 +3176,7 @@
       title: `MLB Projections · ${DATA.horizon}-Year eWAR Leaders`,
       subtitle: `${DATA.n_vets} veterans + ${DATA.n_prospects} prospects · seasons ${DATA.first_season}-${DATA.first_season + DATA.horizon - 1}`,
       url: "eephus.io/projections", filenameBase: "eephus-projections-board",
-      caption: "eWAR on the expected path · prospects join at their PROSPX ETA · surplus is priced over each player's club control window",
+      caption: `eWAR on the expected path · prospects join at their PROSPX ETA · surplus is priced over each player's club control window, through ${DATA.first_season + DATA.horizon - 1} at most`,
       board: { defaultCount: 25, counts: [10, 25, 50], columns: [
         { label: "#", frac: 0.05 },
         { label: "Player", frac: 0.52 },
