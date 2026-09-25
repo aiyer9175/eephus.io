@@ -105,7 +105,6 @@
 .fr-app .fr-block h2 .fr-sec-title { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
 .fr-app .fr-block h3 { font-size: 13.5px; margin: 14px 0 4px; }
 .fr-app .fr-verdict { font-size: 10px; margin-left: 4px; vertical-align: middle; }
-.fr-app .fr-verdict-none { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
 .fr-app .fr-open { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0 8px; font-size: 11px; color: var(--text-tertiary); }
 .fr-app .fr-open a { border: 1px solid var(--border-light); padding: 2px 8px; font-size: 11.5px; white-space: nowrap; color: var(--text-primary); text-decoration: none; }
 .fr-app .fr-open a:hover { border-color: var(--text-secondary); }

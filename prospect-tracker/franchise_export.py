@@ -96,7 +96,10 @@ BRANCH_TITLE = {"roster": "The major-league club today", "outlook": "2027 to 203
 #: row and no futures row; neither is invented here.
 REGISTRY_IDS = ("ewar", "team_win_projections", "farm_grades", "org_sur_plus", "fa_team_fit",
                 "fa_market", "org_tendencies", "arb_award", "leverage_consistency",
-                "mgmt_decision_ledger", "mgmt_style_z", "prospect_surplus")
+                "mgmt_decision_ledger", "mgmt_style_z", "prospect_surplus", "playoff_odds_sim")
+
+#: The registry row the ODDS section quotes: futures.json is its eval artifact.
+ODDS_REGISTRY_ID = "playoff_odds_sim"
 
 #: Key names the writer refuses to emit anywhere in the document.
 FORBIDDEN_KEYS = {"revenue", "revenues", "valuation", "valuations", "tv_money", "rsn",
@@ -427,6 +430,7 @@ def build() -> dict:
         registry_verdicts.append({"model_id": mid, "present": bool(m), "verdict": (m or {}).get("verdict"),
                                   "surface": (m or {}).get("surface"), "eval_artifact": (m or {}).get("eval_artifact")})
     verdict_of = {r["model_id"]: r["verdict"] for r in registry_verdicts}
+    odds_registered = bool(reg_rows.get(ODDS_REGISTRY_ID))
 
     # ---- the three graded values, one per club -------------------------------
     v_roster = {c: (war_rows.get(c) or {}).get("war") for c in codes}
@@ -791,15 +795,16 @@ def build() -> dict:
             "basis": f"StatsAPI standings {STANDINGS_FIRST}-{SEASON_NOW} by team id (no spine); club bWAR by season through franchise_spine.json from {SPINE_FIRST}",
         }
 
-        # -- ODDS (descriptive, NO registry row, NO verdict chip) ----------------------------------
+        # -- ODDS (descriptive; the verdict chip reads the playoff_odds_sim registry row) ----------
         odds = {
             "proj_wins": fut.get("projWins"), "p10": fut.get("winTotalP10"), "p90": fut.get("winTotalP90"),
             "record": fut.get("record"), "playoff_pct": fut.get("playoffPct"), "division_pct": fut.get("divisionPct"),
             "bye_pct": fut.get("byePct"), "pennant_pct": fut.get("pennantPct"), "ws_pct": fut.get("wsPct"),
             "pythag_pct": cur.get("pythagPct"), "actual_pct": cur.get("actualPct"),
             "sos": cur.get("sos"), "sos_rank": cur.get("sosRank"), "il_out_60": cur.get("ilOut60"),
-            "registry_row": None, "verdict": None,
-            "basis": f"futures.json ({futures.get('sims')} sims) and the Team Outlook current overlay; no registry row, so no verdict chip",
+            "registry_row": ODDS_REGISTRY_ID if odds_registered else None,
+            "verdict": verdict_of.get(ODDS_REGISTRY_ID) if odds_registered else None,
+            "basis": f"futures.json ({futures.get('sims')} sims) and the Team Outlook current overlay",
         }
 
         # -- the tree -------------------------------------------------------------------------------
@@ -929,7 +934,7 @@ def build() -> dict:
             {"key": "odds", "kind": "descriptive", "label": "ODDS", "title": BRANCH_TITLE["odds"],
              "weight": None, "score": None, "rank": None, "letter": None,
              "headline": (f"playoffs {round(100 * fut['playoffPct'])}%" if fut.get("playoffPct") is not None else None),
-             "basis": odds["basis"], "verdict": None, "verdict_model": None,
+             "basis": odds["basis"], "verdict": odds["verdict"], "verdict_model": odds["registry_row"],
              "leaves": [
                  leaf("proj_wins", f"Projected wins {SEASON_NOW}", fut.get("projWins"), "num1", None, "futures.projWins with the P10-P90 band", None, links["betting_futures"]),
                  leaf("playoff_pct", "Playoff pct", fut.get("playoffPct"), "pct", None, "futures.playoffPct", None, links["betting_futures"]),
@@ -1044,7 +1049,6 @@ def build() -> dict:
         "odds_ledger": (f"no market captured; ledger has {((futures.get('ledger') or {}).get('n_entries'))} entries, "
                         f"{((futures.get('ledger') or {}).get('n_resolved'))} resolved"),
         "odds_win_total_basis": futures.get("win_total_basis") or "",
-        "odds_no_registry": "futures.json has no registry row, so this section lends it no verdict chip",
         "board_lede": "Thirty clubs on the Franchise Index, one column per graded branch and the headline descriptive figures; every row opens its club.",
         "board_foot": "index and branch scores are 100 + 10z across the 30 clubs and take the z ladder; every other column prints on its own scale, plain.",
         "load_error": "The Franchise Overview could not be loaded.",
@@ -1094,7 +1098,7 @@ def build() -> dict:
         "history_bwar": {"live": bool(bwar), "first_season": SPINE_FIRST,
                          "unmapped_team_ids": bwar_census.get("unmapped_team_ids")},
         "dugout_families": {"live": bool(mgmt_clubs), "blocked_on": None if mgmt_clubs else "management_board clubs block absent (D2 Wave A)"},
-        "odds": {"registry_row": None, "note": futures.get("what_the_intervals_are")},
+        "odds": {"registry_row": ODDS_REGISTRY_ID if odds_registered else None, "note": futures.get("what_the_intervals_are")},
         "arbitration_narrowing": {"live": arb_router_narrows,
                                   "note": ("arbitration.js accepts #teams&team=CODE" if arb_router_narrows
                                            else "arbitration.js accepts only #history, #teams and #model; the link is unnarrowed")},
@@ -1178,6 +1182,7 @@ def _walk_keys(obj, path=""):
 def _assert_document(doc: dict) -> None:
     assert len(doc["clubs"]) == N_CLUBS and len(doc["board"]) == N_CLUBS
     assert abs(sum(doc["weights"].values()) - 1.0) < 1e-9
+    verdict_of = {r["model_id"]: r["verdict"] for r in doc["accountability"]["registry_verdicts"]}
     for d in doc["clubs"]:
         assert d["statsapi_code"], d["code"]
         graded = [b for b in d["tree"]["branches"] if b["kind"] == "graded"]
@@ -1185,11 +1190,13 @@ def _assert_document(doc: dict) -> None:
         for b in d["tree"]["branches"]:
             if b["kind"] == "descriptive":
                 assert b["letter"] is None and b["score"] is None and not b["weight"], (d["code"], b["key"])
+            if b.get("verdict_model"):
+                assert b["verdict"] == verdict_of.get(b["verdict_model"]), (d["code"], b["key"])
             for lf in b["leaves"]:
                 assert lf["basis"] and lf["kind"], (d["code"], b["key"], lf["key"])
         for blk in ("fin", "market", "arbitration"):
             assert d["sections"][blk].get("cba_banner") is True, (d["code"], blk)
-        assert d["sections"]["odds"]["verdict"] is None and d["sections"]["odds"]["registry_row"] is None
+        assert d["sections"]["odds"]["verdict"] == verdict_of.get(d["sections"]["odds"]["registry_row"]), d["code"]
         assert d["sections"]["dugout"]["plus_metric"] is False and d["sections"]["dugout"]["letter"] is None
     for path, k in _walk_keys(doc):
         ks = str(k).lower()

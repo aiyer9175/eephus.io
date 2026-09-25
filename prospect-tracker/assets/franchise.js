@@ -24,8 +24,8 @@
 //      typed here; the weights print from DATA.weights.
 //   3. ou_mkt and ou_war are two tiles and nothing here adds them; the DUGOUT
 //      and MARKET sections carry no letter and no plus metric.
-//   4. ODDS carries no verdict chip: futures.json has no registry row and the
-//      section prints the artifact's own interval sentence instead.
+//   4. ODDS takes its verdict chip from the playoff_odds_sim registry row like
+//      every other section, and prints the artifact's own interval sentence.
 //
 // NOT ONE FIGURE IN THIS FILE IS TYPED. Every number, basis and sentence comes
 // out of the payload's own `copy`, `field_key` and per-club blocks. Colour
@@ -368,7 +368,7 @@
     var b = branchOf(d, key);
     var chip = b.verdict
       ? '<span class="eephus-beta fr-verdict" title="' + esc(b.basis) + '">' + esc(b.verdict_model) + " " + esc(b.verdict) + "</span>"
-      : (key === "odds" ? '<span class="fr-verdict-none">' + esc(copy("odds_no_registry")) + "</span>" : "");
+      : "";
     var links = (OPEN_LINKS[key] || []).map(function (p) {
       var href = d.links[p[1]];
       return href ? '<a href="' + esc(href) + '">' + esc(p[0]) + "</a>" : "";

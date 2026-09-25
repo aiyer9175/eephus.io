@@ -108,7 +108,7 @@ def test_no_figure_is_typed_into_the_page_html():
 
 def test_the_js_reads_its_copy_from_the_payload():
     for key in ("root_sentence", "cba_banner", "dugout_sentence", "market_realized_sentence", "never_combine",
-                "odds_interval", "odds_no_registry", "score_basis", "farm_score_note", "outlook_chip",
+                "odds_interval", "score_basis", "farm_score_note", "outlook_chip",
                 "park_not_tiered", "surplus_ev", "board_lede", "history_pennants", "tile_open", "arb_cost_sum"):
         assert 'copy("%s")' % key in JS, key
     assert "what_this_page_does_not_claim" not in JS or True
@@ -233,7 +233,8 @@ def test_every_section_header_has_basis_verdict_and_open_links():
         if b["verdict"]:
             assert 'class="eephus-beta fr-verdict"' in sec and b["verdict_model"] in sec, b["key"]
         if b["key"] == "odds":
-            assert "fr-verdict\"" not in sec and d["copy"]["odds_no_registry"] in sec
+            assert 'class="eephus-beta fr-verdict"' in sec and "playoff_odds_sim" in sec
+            assert "no registry row" not in sec
             assert d["copy"]["odds_interval"] in sec
     assert html.count('<section class="fr-block"') == 12
     for href in ("mlbstats_hitters", "ledger", "management_club", "fa_fits", "betting_futures"):

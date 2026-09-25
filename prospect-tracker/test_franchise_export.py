@@ -307,15 +307,34 @@ def test_fin_is_descriptive_and_space_equals_fa_meta_space_labelled_spotrac_247m
         assert d["sections_status"]["fin"]["headline"].startswith("Cost+")
 
 
-def test_odds_carries_no_verdict_chip_and_quotes_the_monte_carlo_sentence(d, clubs):
+def test_odds_quotes_the_playoff_odds_registry_row_and_the_monte_carlo_sentence(d, clubs):
     fu = _load("futures.json")
-    assert d["sections_status"]["odds"]["registry_row"] is None
+    reg = {m["model_id"]: m for m in _load("model_registry.json")["models"]}
+    row = reg["playoff_odds_sim"]
+    assert row["eval_artifact"] == "data/futures.json"
+    assert d["sections_status"]["odds"]["registry_row"] == "playoff_odds_sim"
+    assert "odds_no_registry" not in d["copy"]
     assert d["copy"]["odds_interval"] == fu["what_the_intervals_are"]
     assert "Monte Carlo" in d["copy"]["odds_interval"]
     for c in clubs.values():
         o = c["sections"]["odds"]
-        assert o["verdict"] is None and o["registry_row"] is None
-        assert _branch(c, "odds")["verdict"] is None and _branch(c, "odds")["verdict_model"] is None
+        assert o["registry_row"] == "playoff_odds_sim" and o["verdict"] == row["verdict"]
+        assert "no registry row" not in o["basis"]
+        b = _branch(c, "odds")
+        assert b["verdict"] == row["verdict"] and b["verdict_model"] == "playoff_odds_sim"
+
+
+def test_every_section_verdict_equals_its_registry_row(d, clubs):
+    reg = {m["model_id"]: m for m in _load("model_registry.json")["models"]}
+    quoted = {r["model_id"] for r in d["accountability"]["registry_verdicts"]}
+    n = 0
+    for c in clubs.values():
+        for b in c["tree"]["branches"]:
+            if b["verdict_model"]:
+                assert b["verdict_model"] in reg and b["verdict_model"] in quoted, (c["code"], b["key"])
+                assert b["verdict"] == reg[b["verdict_model"]]["verdict"], (c["code"], b["key"])
+                n += 1
+    assert n >= 30 * 8
 
 
 def test_park_factors_come_from_fa_meta_not_a_slate(clubs):

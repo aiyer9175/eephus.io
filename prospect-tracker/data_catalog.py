@@ -507,8 +507,8 @@ ARTIFACTS = (
                  "provisional team_win_projections row and the root card says so. No "
                  "HoF tile (dark with hof_export's wording), no pennants, no club "
                  "decision-quality grade, no manager skill claim, no revenue or "
-                 "valuation. futures.json has no registry row, so the ODDS section "
-                 "carries no verdict chip. The writer refuses to publish on fewer than "
+                 "valuation. The ODDS section quotes the playoff_odds_sim registry "
+                 "verdict (provisional). The writer refuses to publish on fewer than "
                  "30 clubs and leaves the previous file on disk."),
     },
     {
