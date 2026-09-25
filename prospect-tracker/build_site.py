@@ -5235,7 +5235,7 @@ _ACCT_VERDICTS = (
      "A forward-chained out-of-sample backtest is committed and the champion "
      "beats the named baseline."),
     ("provisional", "Provisional",
-     "Partly measured: a synthetic-only harness, a short window, or a descriptive "
+     "Partly measured: a backtest on synthetic data only, a short window, or a descriptive "
      "correlation instead of a forward test."),
     ("unvalidated", "Unvalidated",
      "Registered and serving, with no measurement yet. Its gate has not been run, "

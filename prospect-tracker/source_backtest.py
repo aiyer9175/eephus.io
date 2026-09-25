@@ -1,40 +1,40 @@
 """Source-vs-source predictive track record (PROSPX backtesting).
 
 Evaluates how predictive each scouting source's preseason grades have been,
-head-to-head, including the PROSPX consensus FV — the core claim a consensus
+head-to-head, including the PROSPX consensus FV - the core claim a consensus
 model has to defend: does blending the inputs beat the best individual input?
 
 Methodology (kept deliberately conservative + disclosed):
 
-  • COHORTS — for each resolved base year (preseason lists only, no in-season
+  • COHORTS - for each resolved base year (preseason lists only, no in-season
     lookahead), every prospect a rater graded that preseason is a cohort
-    member. Players who NEVER debuted stay in the cohort with outcome 0 WAR —
+    member. Players who NEVER debuted stay in the cohort with outcome 0 WAR - 
     excluding them would be survivorship bias and would flatter every source.
 
-  • OUTCOME (resolved as of the run date) — cumulative MLB WAR (Baseball-
+  • OUTCOME (resolved as of the run date) - cumulative MLB WAR (Baseball-
     Reference) to date, censored at "now". debut = reached MLB; CONTRIBUTOR =
     career WAR >= 3.0; STAR = career WAR >= 10.0. These are low-ish bars
-    because the track record is SHORT (see window) — they are stated, not hidden.
+    because the track record is SHORT (see window) - they are stated, not hidden.
 
-  • EVALUATION WINDOW — only base years old enough to have resolved outcomes
+  • EVALUATION WINDOW - only base years old enough to have resolved outcomes
     are included (>= MIN_LAG_YEARS of development). With per-source history
-    beginning 2021, that is 2021–2023 preseasons → 3–5 years of outcomes. The
+    beginning 2021, that is 2021-2023 preseasons → 3-5 years of outcomes. The
     newer sources (ESPN / TJ / Just Baseball / Baseball America) have NO
     resolved cohorts yet and are reported as "insufficient history", not scored.
 
-  • FAIRNESS — the head-to-head accuracy ranking is computed on the COMMON set
+  • FAIRNESS - the head-to-head accuracy ranking is computed on the COMMON set
     of players every compared rater graded that year (same players, same
     outcome definition, same window), so no source is advantaged by covering an
     easier slice. Per-source calibration tables use each source's full cohort
     (with n disclosed).
 
-  • METRICS — Spearman rank correlation (grade vs realized WAR — ordering
+  • METRICS - Spearman rank correlation (grade vs realized WAR - ordering
     skill) and ROC AUC (grade discriminating "became a contributor"). Both are
     nonparametric and robust to the FV→WAR scale being nonlinear.
 
 Reads the exported data/timeseries.json (active) + data/debuts.json
-(graduated) — the same per-snapshot consensus + per-source FVs + outcome WAR
-the site shows — and writes data/source_backtest.json for the Methodology tab.
+(graduated) - the same per-snapshot consensus + per-source FVs + outcome WAR
+the site shows - and writes data/source_backtest.json for the Methodology tab.
 
 CLAIM FRAME (V5 primary, V6 receipts). Every floored verdict this module
 publishes rests on a POOLED cell scored against a STORED MDE95 constant. That is
@@ -71,10 +71,10 @@ DATA_DIR = Path(__file__).parent / "data"
 # Only score base years with at least this much development lag.
 MIN_LAG_YEARS = 3
 # Candidate preseason base years (filtered to those resolved + present in data).
-# 2017-2020 added via the FanGraphs + MLB Pipeline historical backfill — these
+# 2017-2020 added via the FanGraphs + MLB Pipeline historical backfill - these
 # fully-resolved cohorts extend the evaluation window back four years.
 CANDIDATE_YEARS = (2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024)
-# Preseason window per base year: Jan 1 – Apr 30. Captures the FanGraphs
+# Preseason window per base year: Jan 1 - Apr 30. Captures the FanGraphs
 # preseason "report" + MLB Pipeline January Top-100/org lists; excludes the
 # midseason "updated" list so there is no within-season lookahead.
 _WINDOW_START_MMDD = "-01-01"
@@ -185,7 +185,7 @@ DISAGREE_GAP = 0.15
 # Outcome thresholds (cumulative career WAR, censored at run date).
 CONTRIBUTOR_WAR = 3.0
 STAR_WAR = 10.0
-# Rate-based outcomes (WAR per season, among players who debuted) — less
+# Rate-based outcomes (WAR per season, among players who debuted) - less
 # sensitive to the short censored window than cumulative totals.
 REGULAR_WPY = 1.5      # ~ everyday MLB regular pace
 ALLSTAR_WPY = 3.0      # ~ All-Star pace
@@ -707,7 +707,7 @@ def _rater_grades_for_year(p: dict, year: int) -> dict:
     if not win:
         return {}
     out: dict = {}
-    # Per-source published FV — max across the window's points (a player can
+    # Per-source published FV - max across the window's points (a player can
     # appear on both the Top-100 and their org list at the same grade).
     for src in SCORED_SOURCES:
         vals = []
@@ -3541,7 +3541,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         from efv_model import oos_grades
         xfv_oos = {**oos_grades("hit"), **oos_grades("pit")}
     except Exception:
-        log.exception("eFV OOS grades unavailable for source comparison — continuing")
+        log.exception("eFV OOS grades unavailable for source comparison - continuing")
         xfv_oos = {}
     # EV-01 (docs/efv-v2/PROGRAM.md s3.4), frame version vm2: the SAME forward-chained
     # fits, each vintage-matched row scored with eFV's consensus input read at the
@@ -4050,7 +4050,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         "window": {
             "years": years,
             "min_lag_years": MIN_LAG_YEARS,
-            "note": (f"Preseason cohorts {min(years)}–{max(years)} (no in-season lookahead), "
+            "note": (f"Preseason cohorts {min(years)}-{max(years)} (no in-season lookahead), "
                      f"outcomes resolved as of {as_of.isoformat()}."
                      if years else "No base years have resolved outcomes yet."),
         },
@@ -4108,11 +4108,11 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
 
 
 # --------------------------------------------------------------------------
-# WS-5 — accuracy-weighted consensus (model-audit Phase 4)
+# WS-5 - accuracy-weighted consensus (model-audit Phase 4)
 # --------------------------------------------------------------------------
 # Weight estimator + the vintage-disciplined A/B backtest that decides
 # whether weighting ships. VINTAGE RULE: weights usable for board-year Y
-# may only see base years RESOLVED by Y (base <= Y - MIN_LAG_YEARS) — a
+# may only see base years RESOLVED by Y (base <= Y - MIN_LAG_YEARS) - a
 # 2021 board can't know FanGraphs' 2021-cohort track record.
 WEIGHT_SHRINK_K = 150          # pseudo-n toward equal weight
 WEIGHT_CLAMP = (0.6, 1.5)      # relative-vote bounds (1.0 = equal)
@@ -4122,7 +4122,7 @@ SPEARMAN_FLOOR = 0.05          # accuracy floor so a near-zero source isn't zero
 def derive_source_weights(universe: list[dict], max_base_year: int) -> dict:
     """{source: relative vote weight} from pooled common-set Spearman over
     base years <= max_base_year. Sources without resolved history stay at
-    1.0 (equal) — new sources are never punished for being new. Weights
+    1.0 (equal) - new sources are never punished for being new. Weights
     are shrunk toward equal (k pseudo-observations) and clamped."""
     years = [y for y in CANDIDATE_YEARS if y <= max_base_year]
     rows_common: list[dict] = []
@@ -4202,7 +4202,7 @@ def run_consensus_weight_ab(data_dir: Path = DATA_DIR, write: bool = True) -> di
         vintage_max = Y - MIN_LAG_YEARS
         weights = derive_source_weights(universe, vintage_max)
         if all(abs(w - 1.0) < 1e-9 for w in weights.values()):
-            # no resolvable history before Y — weights would be flat; skip
+            # no resolvable history before Y - weights would be flat; skip
             # the year from the A/B (it can't differentiate A from B).
             continue
         rows = rows_by_year[Y]
@@ -4260,7 +4260,7 @@ def run_consensus_weight_ab(data_dir: Path = DATA_DIR, write: bool = True) -> di
         "live_weights": live_weights,
         "live_weights_vintage_max_base": as_of_year - MIN_LAG_YEARS,
         "notes": [
-            "two-source A/B: only FanGraphs + MLB Pipeline have resolvable multi-year history; all other sources stay at weight 1.0 (equal) in the live blend — new sources are never punished for being new",
+            "two-source A/B: only FanGraphs + MLB Pipeline have resolvable multi-year history; all other sources stay at weight 1.0 (equal) in the live blend - new sources are never punished for being new",
             f"weights shrunk toward equal with k={WEIGHT_SHRINK_K} pseudo-n, clamped {WEIGHT_CLAMP}",
             "ship rule (hardened 2026-07-25): weighted must beat equal by more than the gate can RESOLVE on BOTH metrics (d_rho >= 0.0068 = the measured MDE95, d_auc >= 0.0052); anything smaller is inside the noise floor and equal-weight retains",
             "cohort_ab is APPENDED from data/source_cohort_accuracy.json, not refit here: it asks whether a PER-COHORT weight can do what one global weight cannot, and all of its arms are scored against these same two gate constants",

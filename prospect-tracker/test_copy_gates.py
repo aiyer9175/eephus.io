@@ -88,3 +88,65 @@ def test_the_emdash_gate_covers_every_user_facing_page():
         f"{uncovered}\nAdd them to TARGETS in tools/strip_emdashes.py. If one "
         "genuinely must be excluded, say why there, the way the exporter "
         "exclusions are documented.")
+
+
+# ---------------------------------------------------------------------------
+# Census X07-05 (2026-09-25): the gates' own blind spots, each pinned with a
+# fixture so the gate cannot quietly go blind again.
+
+def _run_gate_on(script: str, *paths) -> subprocess.CompletedProcess:
+    env = dict(os.environ, PYTHONIOENCODING="utf-8")
+    return subprocess.run(
+        [sys.executable, str(ROOT / "tools" / script), "--check",
+         *[str(p) for p in paths]],
+        cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
+        errors="replace", env=env, timeout=120,
+    )
+
+
+def _escaped_en_dash() -> str:
+    # backslash + u2013, built without a literal backslash sequence
+    return chr(92) + "u2013"
+
+
+def test_gates_catch_an_ascii_escaped_dash_in_json(tmp_path):
+    """json.dumps(ensure_ascii=True) stores a dash as an escape sequence. It
+    renders as a dash, and a raw-text scan never saw it: data/source_backtest.json
+    served "Preseason cohorts 2017<en-dash>2023" on /glossary/ that way."""
+    bad = tmp_path / "artifact.json"
+    bad.write_text('{"note": "cohorts 2017' + _escaped_en_dash() + '2023"}',
+                   encoding="utf-8")
+    good = tmp_path / "clean.json"
+    good.write_text('{"note": "cohorts 2017-2023"}', encoding="utf-8")
+    for script in ("strip_emdashes.py", "copy_lint.py"):
+        r = _run_gate_on(script, bad)
+        assert r.returncode == 1, f"{script} missed an escaped dash:\n{r.stdout}"
+        r = _run_gate_on(script, good)
+        assert r.returncode == 0, f"{script} flagged clean JSON:\n{r.stdout}"
+
+
+def test_copy_lint_bans_the_owner_words_in_pure_copy(tmp_path):
+    """The owner's list (harness, unlock, essential, powerful, elevate,
+    underscore, the verb leverage) was missing from BAN, so five glossary
+    sentences carried "harness" through a clean gate. The baseball noun
+    (Leverage Index, high-leverage) and "elevation" stay legal."""
+    fixture = tmp_path / "glossary.json"
+    for word in ("harness", "unlocks", "essential", "powerful", "elevate",
+                 "underscores", "leveraging"):
+        fixture.write_text('{"d": "the tool ' + word + ' it"}', encoding="utf-8")
+        r = _run_gate_on("copy_lint.py", fixture)
+        assert r.returncode == 1, f"copy_lint passed {word!r} in pure copy"
+    fixture.write_text('{"d": "a high-leverage reliever by Leverage Index; '
+                       'the leverage of the moment; park elevation"}',
+                       encoding="utf-8")
+    r = _run_gate_on("copy_lint.py", fixture)
+    assert r.returncode == 0, f"copy_lint flagged baseball usage:\n{r.stdout}"
+
+
+def test_the_gate_scans_the_exporters_whose_copy_is_served():
+    """Exporters whose copy blocks land in served JSON must be on TARGETS."""
+    src = (ROOT / "tools" / "strip_emdashes.py").read_text(encoding="utf-8")
+    for exporter in ("mgmt_export.py", "hof_export.py", "arb_export.py",
+                     "betting_export.py", "war_board_export.py",
+                     "bullpen_export.py", "pal_export.py", "source_backtest.py"):
+        assert f'"{exporter}"' in src, f"{exporter} is not on TARGETS"

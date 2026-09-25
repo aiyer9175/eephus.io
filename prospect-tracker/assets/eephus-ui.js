@@ -242,7 +242,7 @@
   function gateDownvote() {
     if (!LIVE() || isStaff()) return true;
     if (myKarma() >= KARMA_DOWNVOTE) return true;
-    toast("Downvoting unlocks at " + KARMA_DOWNVOTE + " karma.", "err"); return false;
+    toast("Downvoting opens at " + KARMA_DOWNVOTE + " karma.", "err"); return false;
   }
   function renderMarkdownSafe(md, ctx) {
     ctx = ctx || {};

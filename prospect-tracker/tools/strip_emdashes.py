@@ -118,10 +118,34 @@ TARGETS: list[str] = [
     "proj_export.py",
     "fa_export.py",
     "spotlights.py",
+    # Census X07-05 (2026-09-25): exporters whose copy blocks and notes land in
+    # served JSON and that the gate had never scanned. source_backtest.py wrote
+    # an en-dash into the Source Comparison window line through an
+    # ensure_ascii dump, where no raw-text scan could see it.
+    "mgmt_export.py",
+    "hof_export.py",
+    "arb_export.py",
+    "betting_export.py",
+    "war_board_export.py",
+    "bullpen_export.py",
+    "pal_export.py",
+    "source_backtest.py",
 ]
 
 EM = "—"
 EN = "–"  # U+2013 en-dash - banned like the em-dash (usually a range)
+
+# A JSON file dumped with ensure_ascii=True stores the dash as the six-char
+# escape sequence (backslash, "u2014"), which renders as a dash but never
+# matches the raw character. Built with chr(92) so no source here carries a
+# literal backslash sequence a shell or editor could mangle.
+ESCAPES = tuple(chr(92) + "u" + cp for cp in ("2014", "2013"))
+
+
+def escaped_dash_count(text: str) -> int:
+    """Count ASCII-escaped em/en-dashes (either hex case) in a JSON text."""
+    low = text.lower()
+    return sum(low.count(e) for e in ESCAPES)
 
 
 def _strip_line(line: str) -> str:
@@ -163,31 +187,50 @@ def _files() -> list[Path]:
     return sorted(set(out))
 
 
-def main() -> int:
-    check = "--check" in sys.argv
+def _rel(p: Path) -> str:
+    try:
+        return str(p.relative_to(ROOT))
+    except ValueError:
+        return str(p)
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    check = "--check" in argv
+    # Positional paths replace TARGETS (used by the gate's own tests).
+    explicit = [Path(a).resolve() for a in argv if not a.startswith("--")]
     dirty: list[str] = []
+    escaped: list[str] = []
     changed = 0
-    for p in _files():
+    for p in (explicit or _files()):
         try:
-            text = p.read_text(encoding="utf-8")
+            # bytes in, bytes out: keeps each file's own line endings
+            text = p.read_bytes().decode("utf-8")
         except UnicodeDecodeError:
             continue
+        if p.suffix == ".json" and escaped_dash_count(text):
+            # The fix belongs in the producer (or the hand edit), not here:
+            # rewriting escapes in place would fight the next regeneration.
+            escaped.append(f"{_rel(p)} ({escaped_dash_count(text)} escaped)")
         if EM not in text and EN not in text:
             continue
         if check:
-            dirty.append(str(p.relative_to(ROOT)))
+            dirty.append(_rel(p))
             continue
-        p.write_text(strip_emdashes(text), encoding="utf-8")
+        p.write_bytes(strip_emdashes(text).encode("utf-8"))
         changed += 1
-        print(f"cleaned: {p.relative_to(ROOT)}")
+        print(f"cleaned: {_rel(p)}")
+    if escaped:
+        print("ASCII-escaped em/en-dashes (fix the writer):", *escaped, sep="\n  ")
     if check:
         if dirty:
             print("em/en-dashes remain in:", *dirty, sep="\n  ")
+        if dirty or escaped:
             return 1
         print("clean: no em/en-dashes in targeted sources")
         return 0
     print(f"{changed} files cleaned")
-    return 0
+    return 1 if escaped else 0
 
 
 if __name__ == "__main__":

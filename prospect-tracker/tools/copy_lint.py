@@ -27,13 +27,18 @@ from bisect import bisect_right
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from strip_emdashes import EM, ROOT, _files  # reuse the canonical surface list
+from strip_emdashes import EM, ROOT, _files, escaped_dash_count  # reuse the canonical surface list
 
 # Whole-word / phrase patterns. Case-insensitive. Keep this list curated; the
 # point is to catch LLM cadence, not to ban every long word.
-# NOTE: "leverage" is intentionally NOT banned - it's a core baseball term
-# (Leverage Index; high-leverage role; salary/playoff leverage). Same caution
-# applies to "showcase" (showcase circuit) - review hits in context.
+# NOTE: the NOUN "leverage" is intentionally NOT banned - it's a core baseball
+# term (Leverage Index; high-leverage role; the leverage of the moment). The
+# owner's rule bans the marketing VERB, so only its verb forms are listed
+# ("leverages", "leveraged", "leveraging"). "showcase" is banned in pure copy
+# and advisory elsewhere, where "showcase circuit" is third-party scouting prose.
+# Census X07-05 (2026-09-25) added the rest of the owner's list: essential,
+# powerful, unlock, elevate, underscore, harness. "elevation" (a park's
+# altitude) and "essentially" stay legal: the patterns are whole-word.
 BAN = [
     r"\bseamless(ly)?\b", r"\brobust(ly|ness)?\b",
     r"\bdelve[ds]?\b", r"\bcomprehensive(ly)?\b", r"\bcrucial(ly)?\b",
@@ -41,6 +46,9 @@ BAN = [
     r"in the realm of", r"a testament to", r"game-chang\w*", r"cutting-edge",
     r"\bdive into\b", r"(rich|vibrant) tapestry", r"\bmeticulous(ly)?\b",
     r"\bshowcases?\b",
+    r"\bessential\b", r"\bpowerful(ly)?\b", r"\bunlock(s|ed|ing)?\b",
+    r"\belevat(e|es|ed|ing)\b", r"\bunderscor(e|es|ed|ing)\b",
+    r"\bharness(es|ed|ing)?\b", r"\bleverag(es|ed|ing)\b",
 ]
 BAN_RE = re.compile("|".join(BAN), re.IGNORECASE)
 
@@ -58,6 +66,8 @@ _NEEDLES = (
     "myriad", "plethora", "worth noting", "in the realm of",
     "a testament to", "game-chang", "cutting-edge", "dive into",
     "tapestry", "meticulous", "showcase",
+    "essential", "powerful", "unlock", "elevat", "underscor", "harness",
+    "leverag",
 )
 
 # Files that are pure copy (no code), so a ban-list hit is real prose to fix.
@@ -129,18 +139,35 @@ def _scan(rel: str, text: str, em_hits: list[str], ban: list[str]) -> None:
                 ban.append(f"{rel}:{ln}: {m.group(0)!r}")
 
 
-def main() -> int:
-    check = "--check" in sys.argv
+def _rel(p: Path) -> str:
+    try:
+        return str(p.relative_to(ROOT)).replace("\\", "/")
+    except ValueError:
+        return str(p).replace("\\", "/")
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    check = "--check" in argv
+    # Positional paths replace the TARGETS list (the gate's own tests use it).
+    # An explicit file is judged as pure copy when its NAME is one of the
+    # pure-copy names, so a fixture glossary.json fails like the real one.
+    explicit = [Path(a).resolve() for a in argv if not a.startswith("--")]
+    pure_names = {Path(r).name for r in PURE_COPY}
     em_hits: list[str] = []
     ban_hard: list[str] = []
     ban_soft: list[str] = []
-    for p in _files():
+    for p in (explicit or _files()):
         try:
             text = p.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
-        rel = str(p.relative_to(ROOT)).replace("\\", "/")
-        _scan(rel, text, em_hits, ban_hard if _is_pure(rel) else ban_soft)
+        rel = _rel(p)
+        pure = _is_pure(rel) or (bool(explicit) and p.name in pure_names)
+        _scan(rel, text, em_hits, ban_hard if pure else ban_soft)
+        if p.suffix == ".json" and escaped_dash_count(text):
+            # ensure_ascii dumps store the dash as an escape; it still renders.
+            em_hits.append(f"{rel}: {escaped_dash_count(text)} ASCII-escaped em/en-dash(es)")
 
     if em_hits:
         print("EM-DASHES (fail):", *em_hits[:60], sep="\n  ")
