@@ -13378,8 +13378,8 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
 // H:/L: chip labels are obscured.
 function _ohlcTooltip(p) {
   if (!p) return "";
-  const h = p.fv_high != null ? p.fv_high : " - ";
-  const l = p.fv_low != null ? p.fv_low : " - ";
+  const h = (typeof p.fv_high === "number" && p.fv_high > 0) ? p.fv_high : " - ";
+  const l = (typeof p.fv_low === "number" && p.fv_low > 0) ? p.fv_low : " - ";
   if (h === " - " && l === " - ") return "";
   return `FV history · High ${h} · Low ${l}`;
 }
@@ -47654,7 +47654,10 @@ function renderPlayerDetail(key) {
       <div style="text-align:right;">
         ${efvDetailHeaderHTML(p, fvBadge)}
         ${(() => {
-          if (p.fv_high == null && p.fv_low == null && p.fv_open == null && p.fv_close == null) return "";
+          // No consensus history: the export writes null high/low (older
+          // payloads wrote 0.0 with a placeholder label), so no Range line.
+          const _fvSeen = v => typeof v === "number" && v > 0;
+          if (!_fvSeen(p.fv_high) && !_fvSeen(p.fv_low)) return "";
           const fmtFvDate = d => {
             if (!d) return "";
             const dt = new Date(d + "T00:00:00");

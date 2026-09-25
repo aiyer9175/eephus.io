@@ -326,6 +326,17 @@ class TestCandlestick:
         p = self._player([("2026-02-16", 50.0)])
         assert p.fv_high == p.fv_low == p.fv_open == p.fv_close == 50.0
 
+    def test_no_history_emits_null_range(self):
+        """Census X07-06 (2026-09-24): a player with no consensus points used
+        to carry fv_high/fv_low 0.0 with an em-dash label, which PROSPX printed
+        as a Range line on 128 inactive and 152 graduate cards. The range is
+        now null, and no placeholder glyph reaches the payload."""
+        import consensus
+        fields = consensus._candle_fields([])
+        for key in ("fv_high", "fv_high_label", "fv_low", "fv_low_label"):
+            assert fields[key] is None, key
+        assert "—" not in repr(fields)
+
     def test_walcott_pattern(self):
         """High at peak summer 2025, then back down post-TJ"""
         p = self._player([

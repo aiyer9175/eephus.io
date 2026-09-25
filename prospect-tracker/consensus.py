@@ -1127,11 +1127,14 @@ class PlayerTimeseries:
     status: str
 
     # Candlestick fields (computed in build_timeseries)
-    fv_high: float           # peak consensus_fv across this player's history
-    fv_high_label: str
+    # fv_high / fv_low and their labels are None when the player has no
+    # consensus history (census X07-06): the old 0.0 / em-dash placeholders
+    # rendered as a "Range" line on inactive and graduate cards.
+    fv_high: float | None    # peak consensus_fv across this player's history
+    fv_high_label: str | None
     fv_high_date: str
-    fv_low: float            # trough consensus_fv across this player's history
-    fv_low_label: str
+    fv_low: float | None     # trough consensus_fv across this player's history
+    fv_low_label: str | None
     fv_low_date: str
     fv_open: float           # consensus_fv at the FIRST observation (candle "open")
     fv_close: float          # consensus_fv at the LATEST observation (candle "close")
@@ -1915,8 +1918,8 @@ def _candle_fields(points: list[ConsensusPoint]) -> dict:
     """Compute high / low / open / close from the consensus_fv sequence."""
     if not points:
         return {
-            "fv_high": 0.0, "fv_high_label": "—", "fv_high_date": "",
-            "fv_low":  0.0, "fv_low_label":  "—", "fv_low_date":  "",
+            "fv_high": None, "fv_high_label": None, "fv_high_date": "",
+            "fv_low":  None, "fv_low_label":  None, "fv_low_date":  "",
             "fv_open": 0.0, "fv_close": 0.0,
             "fv_close_plus": False,
         }
@@ -2190,8 +2193,8 @@ def build_timeseries(
             position=pos, org=org,
             points=points, status=status,
             debut_date=debut_date,
-            fv_high=0.0, fv_high_label="—", fv_high_date="",
-            fv_low=0.0,  fv_low_label="—",  fv_low_date="",
+            fv_high=None, fv_high_label=None, fv_high_date="",
+            fv_low=None,  fv_low_label=None,  fv_low_date="",
             fv_open=0.0, fv_close=0.0,
             fv_total_instances=total_fv_instances,
         ))
