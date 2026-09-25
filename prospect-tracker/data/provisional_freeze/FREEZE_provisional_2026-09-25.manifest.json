@@ -1,0 +1,56 @@
+{
+ "frozen_at": "2026-09-25",
+ "spec": "Scoring spec: PROVISIONAL_V2.md section 4 (research bundle _finalpass_2026-09-24/provisional/); scorer ported to prospect-tracker/provisional_track.py (PV-04)",
+ "windows": {
+  "W6": "2027-04-15",
+  "W12": "2027-10-15"
+ },
+ "inputs": {
+  "served": {
+   "file": "data/provisional_freeze/xfv_ungraded_2026-09-24.json",
+   "sha256_artifact": "735ad6f44cce14c44ef52f5d2ad95bd5713d97d063a77907f989bf3672479c74",
+   "artifact_generated_at": "2026-09-24",
+   "file_sha256": "b048218aaf369a7b063e75e2aec7047bf55396ae530d4cd2d818df7d1e76df49"
+  },
+  "candidate": {
+   "file": "PROSPECTIVE_2026_anchor.csv (lane PG2 of the 2026-09-25 provisional research; archived under C:/Users/noah/baseball-projects/_finalpass_2026-09-24/provisional/PG2_pregrade_signals/work/, not committed)",
+   "sha256": "fc8aec4ba67cf0b4f4064e62fcc1590a0f08bfe71c6b1de17160771425bb9aa3"
+  }
+ },
+ "columns": {
+  "grade": "served xfv_ungraded grade (incumbent)",
+  "grade_recal": "a + b*grade, a b fixed below",
+  "p_g6": "PG2 FULL P(first grade any source by 2027-04-15), raw (runs ~2x low, PG2 s2)",
+  "p_g12": "PG2 FULL P(first grade any source by 2027-10-15), raw",
+  "fv_fg_pred": "PG2 FULL ridge predicted FG first FV"
+ },
+ "nulls": {
+  "ANY": 37.5,
+  "MLBP": 40.0,
+  "BA": 30.0,
+  "FG": 37.5
+ },
+ "null_note": "median first FV per label set on the spent backdated pool (n {'ANY': 97, 'MLBP': 52, 'BA': 49, 'FG': 33})",
+ "recal": {
+  "a": 33.5285,
+  "b": 0.0764,
+  "fit_on": "ANY first FV ~ served grade, backdated 2026-06-23 pool, n 97 (spent)"
+ },
+ "pre_freeze_drops": {
+  "dropped_already_opinion": 28
+ },
+ "counts": {
+  "rows": 6066,
+  "with_grade": 6048,
+  "with_p": 4163,
+  "by_basis": {
+   "graded_twin": 250,
+   "routed": 2461,
+   "pure": 3337,
+   "pg2_only": 18
+  }
+ },
+ "sha256_rows": "1bddcc1ae2ea010645647a9707cae6f6cad90ff6b2d8b31de4eb9b00d1890112",
+ "sha256_file": "39e4d46060706a529b08d36363d379201ff472037b44d21552245f8d7eef7d4f",
+ "committed_note": "The freeze file is committed byte-identical to the file built 2026-09-25; test_provisional_freeze_pin.py pins its file hash and its canonical-rows hash. Nothing regenerates it."
+}

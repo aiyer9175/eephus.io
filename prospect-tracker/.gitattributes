@@ -3,3 +3,7 @@
 # CRLF checkout would corrupt every path match, so pin LF like the scripts.
 deploy/publish_paths.txt text eol=lf
 deploy/data_exclude.txt text eol=lf
+
+# The provisional-grade freeze (2026-09-25) is pinned by sha256 in
+# test_provisional_freeze_pin.py; never let git convert its bytes.
+data/provisional_freeze/** -text
