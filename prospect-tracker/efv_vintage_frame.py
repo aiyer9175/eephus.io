@@ -1,0 +1,341 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
+"""eFV v2 list-vintage frame F-LV (docs/efv-v2/PROGRAM.md s2.2, s2.4, item EV-04).
+
+WHAT A ROW IS. One (player, list vintage V) pair: every prospect with a real-grader
+preseason read in V who had not yet debuted when that read was taken. Every input the
+row carries is dated inside the V preseason window:
+
+    window      [V-01-01, end), end = min(V-05-01, the player's debut date). The window
+                is source_backtest's own preseason window (_WINDOW_START_MMDD,
+                _WINDOW_END_MMDD), cut short at the debut for an April debut so no read
+                taken after he reached MLB can enter his row.
+    grades      source_backtest._rater_grades_for_year on the points inside the window:
+                each SCORED_SOURCES grade (max across the window) and the consensus of
+                the latest in-window point, i.e. the board as it stood.
+    prior       efv_dataset._prior_features on that same latest in-window point.
+    milb        efv_dataset._milb_features(mlbam, V, birth, side, cutoff=V-01-01), so
+                the last MiLB season read is V - 1 (its season ended before the window).
+    sidecars    IL stints strictly before V-01-01; acquisition fields only when the
+                acquisition year is before V (a July draft in V is after the window).
+
+The frame is FEATURES AND GRADES ONLY. It reads no WAR and imports no label module;
+labels live in efv_labels.py and are joined by a caller. Membership uses only facts
+known at the read: a published debut date before the window, or a MLB (sport-1) stat
+line in a season before V, removes the row. Side routing uses efv_dataset._side_match,
+the same identity rule the v1 matrices use; it is routing, not a model input.
+
+RESERVED FRAMES (PROGRAM.md s2.4). List vintages 2020 and 2021 are R-LV, read once after
+docs/efv-v2/EFV_V2_GATE.md commits. guard_score_request() RAISES for a reserved vintage
+unless it is handed the sha of a commit that is an ancestor of HEAD and carries the gate
+document; every builder here calls it, and so must every scorer that reads this frame.
+The prospective leg R-VM (the 2025 and later debut cohorts) is pinned by
+reserved_vm_pins(): source_backtest.CANDIDATE_YEARS and efv_model.SCORED_YEARS may not
+include R_VM_FIRST_DEBUT_YEAR or later until its look record exists.
+
+GATE COMPLIANCE (docs/PROSPECT_ANCHOR_GATE.md). Nothing here groups, counts, averages or
+strata rows by consensus-FV level. The only summary this module emits is row counts by
+(side, vintage). test_efv_vintage_frame.py scans the source for any such grouping.
+"""
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+from pathlib import Path
+
+import efv_dataset as D
+import milb_history as mh
+import source_backtest as SB
+
+ROOT = Path(__file__).parent
+DATA_DIR = ROOT / "data"
+
+#: R-LV: list vintages held out for the one registered look (PROGRAM.md s2.4).
+RESERVED_LV: frozenset[int] = frozenset({2020, 2021})
+#: R-VM: the first debut cohort held out for the prospective vintage-matched looks.
+R_VM_FIRST_DEBUT_YEAR: int = 2025
+#: Development vintages: spent, readable, adjudicate nothing.
+DEV_VINTAGES: tuple[int, ...] = tuple(range(2011, 2020))
+#: The registration a reserved read must cite (relative to this directory).
+GATE_DOC = "docs/efv-v2/EFV_V2_GATE.md"
+SIDES = ("hit", "pit")
+
+_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+
+
+class ReservedFrameError(RuntimeError):
+    """A read on a reserved frame without the committed gate's sha."""
+
+
+# ---------------------------------------------------------------------------
+# the reserved guard
+# ---------------------------------------------------------------------------
+
+def _git_ok(*args: str) -> bool:
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True,
+                           timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return r.returncode == 0
+
+
+def gate_sha_committed(gate_sha: str | None) -> bool:
+    """True only for a full 40-hex commit sha that is an ancestor of HEAD and whose
+    tree carries GATE_DOC. Anything else (None, a short sha, an uncommitted gate, a
+    commit on another line of history) is False."""
+    if not isinstance(gate_sha, str) or not _SHA_RE.match(gate_sha):
+        return False
+    if not _git_ok("cat-file", "-e", f"{gate_sha}^{{commit}}"):
+        return False
+    if not _git_ok("cat-file", "-e", f"{gate_sha}:./{GATE_DOC}"):
+        return False
+    return _git_ok("merge-base", "--is-ancestor", gate_sha, "HEAD")
+
+
+def guard_score_request(vintage: int, *, gate_sha: str | None = None,
+                        purpose: str = "score") -> None:
+    """Raise ReservedFrameError for any read of a reserved list vintage unless
+    `gate_sha` names the committed registration. Development vintages pass."""
+    v = int(vintage)
+    if v not in RESERVED_LV:
+        return
+    if gate_sha_committed(gate_sha):
+        return
+    raise ReservedFrameError(
+        f"list vintage {v} is reserved (R-LV, RESERVED_LV={sorted(RESERVED_LV)}); "
+        f"a {purpose} request needs the sha of the commit carrying {GATE_DOC}, "
+        f"got {gate_sha!r}. See docs/efv-v2/PROGRAM.md s2.4.")
+
+
+def reserved_vm_pins() -> list[str]:
+    """Violations of the R-VM pin: CANDIDATE_YEARS and SCORED_YEARS may not reach the
+    first reserved debut cohort. [] when clean."""
+    import efv_model
+    bad = []
+    for name, years in (("source_backtest.CANDIDATE_YEARS", SB.CANDIDATE_YEARS),
+                        ("efv_model.SCORED_YEARS", efv_model.SCORED_YEARS)):
+        hit = sorted(y for y in years if int(y) >= R_VM_FIRST_DEBUT_YEAR)
+        if hit:
+            bad.append(f"{name} includes reserved R-VM years {hit}")
+    return bad
+
+
+# ---------------------------------------------------------------------------
+# universe
+# ---------------------------------------------------------------------------
+
+_UNIVERSE_MEMO: dict[str, dict[str, dict]] = {}
+
+
+def load_universe(data_dir: Path = DATA_DIR) -> dict[str, dict]:
+    """{player_key: record} over debuts.json, inactive.json and timeseries.json, first
+    file wins on a duplicate key. Busts (inactive.json) belong to this frame: it is the
+    population the industry publishes on, every prospect every preseason."""
+    key = str(Path(data_dir).resolve())
+    if key in _UNIVERSE_MEMO:
+        return _UNIVERSE_MEMO[key]
+    out: dict[str, dict] = {}
+    for fn in ("debuts.json", "inactive.json", "timeseries.json"):
+        p = Path(data_dir) / fn
+        if not p.exists():
+            continue
+        doc = json.loads(p.read_text(encoding="utf-8"))
+        recs = doc if isinstance(doc, list) else (doc.get("players") or [])
+        for r in recs:
+            pk = r.get("player_key")
+            if pk and pk not in out:
+                out[pk] = r
+    _UNIVERSE_MEMO[key] = out
+    return out
+
+
+_MLB_BY_SEASON: dict[int, frozenset[int]] = {}
+
+
+def _mlb_ids(season: int) -> frozenset[int]:
+    """mlbam ids with a MLB (sport-1) line in `season`, cache only (offline safe)."""
+    if season not in _MLB_BY_SEASON:
+        ids: set[int] = set()
+        for group in ("hitting", "pitching"):
+            for r in mh.season_splits(1, season, group, fetch=False):
+                if r.get("mlbam"):
+                    ids.add(int(r["mlbam"]))
+        _MLB_BY_SEASON[season] = frozenset(ids)
+    return _MLB_BY_SEASON[season]
+
+
+def _real_sources() -> tuple[frozenset[str], frozenset[str]]:
+    return SB._NON_RATER_SOURCES, D._constant_anchor_sources()
+
+
+def _is_real_grader(src: str, ps: dict | None, excl: frozenset[str]) -> bool:
+    if src in excl or src.endswith("_statcast_by_age"):
+        return False
+    return (ps or {}).get("fv_published") is not None
+
+
+def window_bounds(vintage: int, debut_date: str | None) -> tuple[str, str]:
+    """[start, end) of the V preseason window for one player (see module docstring)."""
+    lo = f"{int(vintage)}{SB._WINDOW_START_MMDD}"
+    hi = f"{int(vintage)}{SB._WINDOW_END_MMDD}"
+    if debut_date and str(debut_date)[:10] < hi:
+        hi = str(debut_date)[:10]
+    return lo, hi
+
+
+# ---------------------------------------------------------------------------
+# one row
+# ---------------------------------------------------------------------------
+
+def frame_row(rec: dict, side: str, vintage: int, *, excl: frozenset[str] | None = None,
+              milb: bool = True) -> dict | None:
+    """The F-LV row for one record at vintage V, or None when he is not in the frame.
+    Callers go through build_frame, which applies the reserved guard first."""
+    V = int(vintage)
+    if not D._side_match(rec, side):
+        return None
+    if excl is None:
+        non_rater, constant = _real_sources()
+        excl = frozenset(non_rater | constant)
+    dd = rec.get("debut_date")
+    lo, hi = window_bounds(V, dd)
+    if dd and str(dd)[:10] < lo:
+        return None                          # debuted before the window opened
+    mlbam = rec.get("mlbam_id")
+    if mlbam:
+        try:
+            mid = int(mlbam)
+        except (TypeError, ValueError):
+            mid = None
+        if mid and any(mid in _mlb_ids(s) for s in range(2014, V)):
+            return None                      # a MLB line before V: not a prospect at V
+    pts = [p for p in (rec.get("points") or [])
+           if p.get("snapshot_date") and lo <= p["snapshot_date"][:10] < hi]
+    if not pts:
+        return None
+    # A real grader must have PUBLISHED inside the window. A point can carry a source's
+    # grade forward from an earlier board (per-source snapshot_date before the window);
+    # that grade is known at V and stays in `grades`, but it is not a read in V, so it
+    # cannot put the player in the frame on its own.
+    real, carried = set(), set()
+    for p in pts:
+        for s, ps in (p.get("per_source") or {}).items():
+            if not _is_real_grader(s, ps, excl):
+                continue
+            sd = str((ps or {}).get("snapshot_date") or p["snapshot_date"])[:10]
+            (real if lo <= sd < hi else carried).add(s)
+    if not real:
+        return None
+    grades = SB._rater_grades_for_year(dict(rec, points=pts), V)
+    pts.sort(key=lambda p: p["snapshot_date"])
+    asof = pts[-1]
+    # every date an in-window input carries: the point dates and each per-source
+    # publication date the grades were read from
+    src_dates = sorted({str(ps.get("snapshot_date"))[:10]
+                        for p in pts for s, ps in (p.get("per_source") or {}).items()
+                        if (ps or {}).get("snapshot_date") and _is_real_grader(s, ps, excl)})
+    row = {
+        "player_key": rec.get("player_key"),
+        "mlbam_id": mlbam,
+        "side": side,
+        "vintage": V,
+        "window": [lo, hi],
+        "debut_date": dd,
+        "birth_date": rec.get("birth_date"),
+        "position": rec.get("position"),
+        "real_sources": sorted(real),
+        "carried_sources": sorted(carried - real),
+        "grades": grades,
+        "asof_date": asof["snapshot_date"][:10],
+        "point_dates": [p["snapshot_date"][:10] for p in pts],
+        "source_dates": src_dates,
+        "prior": D._prior_features(rec, asof, side),
+        "milb": None,
+        "milb_last_season": None,
+    }
+    if milb:
+        feats = D._milb_features(mlbam, V, rec.get("birth_date"), side, cutoff=lo)
+        row["milb"] = feats
+        row["milb_last_season"] = (feats or {}).get("milb_season")
+    return row
+
+
+def _attach_sidecars(rows: list[dict]) -> None:
+    """IL stints before the window and acquisition fields known before V."""
+    keys = {r["player_key"] for r in rows if r.get("player_key")}
+    if not keys:
+        return
+    acq, il = D._load_sidecars(keys)
+    for r in rows:
+        lo = r["window"][0]
+        r.update(D._injury_features(il.get(r["player_key"]), lo))
+        r["il_cutoff"] = lo
+        a = acq.get(r["player_key"]) or {}
+        ay = a.get("year")
+        known = ay is not None and int(ay) < r["vintage"]
+        r["acq_year"] = int(ay) if ay is not None else None
+        r["acq_known_at_v"] = bool(known)
+        if known:
+            r["pick_overall"] = a.get("pick_overall")
+            r["bonus_usd"] = a.get("bonus_usd")
+            r["is_ifa"], r["is_college"] = D._cohort_flags(a.get("method"), ay,
+                                                           r.get("birth_date"))
+        else:
+            r["pick_overall"] = r["bonus_usd"] = None
+            r["is_ifa"], r["is_college"] = 0.0, 0.0
+
+
+def build_frame(side: str, vintage: int, *, gate_sha: str | None = None,
+                universe: dict[str, dict] | None = None, milb: bool = True,
+                sidecars: bool = True) -> list[dict]:
+    """Every F-LV row for (side, V). Reserved vintages raise without the gate sha."""
+    if side not in SIDES:
+        raise ValueError(f"side must be one of {SIDES}, got {side!r}")
+    guard_score_request(vintage, gate_sha=gate_sha, purpose="frame")
+    if universe is None:
+        universe = load_universe()
+    non_rater, constant = _real_sources()
+    excl = frozenset(non_rater | constant)
+    rows = []
+    for rec in universe.values():
+        r = frame_row(rec, side, vintage, excl=excl, milb=milb)
+        if r is not None:
+            rows.append(r)
+    rows.sort(key=lambda r: r["player_key"])
+    if sidecars:
+        _attach_sidecars(rows)
+    return rows
+
+
+def row_input_dates(row: dict) -> list[str]:
+    """Every date a point read on the row carries, for the timing test. Each is inside
+    [window start, window end). Per-source publication dates are in `source_dates`;
+    those can precede the window (a carried-forward grade) and never follow it."""
+    out = list(row.get("point_dates") or [])
+    if row.get("asof_date"):
+        out.append(row["asof_date"])
+    if (row.get("prior") or {}).get("asof_date"):
+        out.append(str(row["prior"]["asof_date"])[:10])
+    return out
+
+
+def frame_counts(vintages=DEV_VINTAGES, *, gate_sha: str | None = None,
+                 universe: dict[str, dict] | None = None) -> dict:
+    """Row counts per (side, vintage), and nothing else: no grade, label or score."""
+    universe = universe if universe is not None else load_universe()
+    out: dict = {}
+    for side in SIDES:
+        for v in vintages:
+            rows = build_frame(side, v, gate_sha=gate_sha, universe=universe)
+            out.setdefault(side, {})[int(v)] = {
+                "rows": len(rows),
+                "with_consensus": sum(1 for r in rows
+                                      if r["grades"].get(SB.CONSENSUS_KEY) is not None),
+                "with_milb": sum(1 for r in rows if r.get("milb")),
+            }
+    return out
