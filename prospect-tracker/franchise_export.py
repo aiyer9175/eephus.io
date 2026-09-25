@@ -822,7 +822,7 @@ def build() -> dict:
             "standings": srows, "bwar": bwar.get(c) or [],
             "best": best, "worst": worst,
             "spine": (spine.get("orgs") or {}).get(c) or [],
-            "hof": {"live": False, "blocked_on": hof_franchises.get("blocked_on") or "no franchise spine",
+            "hof": {"live": False, "blocked_on": hof_franchises.get("blocked_on") or "a frozen attribution rule for a multi-team career",
                     "why": hof_franchises.get("why")},
             "basis": f"StatsAPI standings {STANDINGS_FIRST}-{SEASON_NOW} by team id (no spine); club bWAR by season through franchise_spine.json from {SPINE_FIRST}",
         }
@@ -1127,7 +1127,7 @@ def build() -> dict:
                             "coverage_by_winter": [[w.get("year"), sum(1 for s in (w.get("signings") or []) if s.get("warTd") is not None),
                                                     len(w.get("signings") or [])] for w in winters]},
         "park_attendance": {"live": False, "blocked_on": "omitted in v1 by owner decision D11; a game-feed attendance ingest (2026 only) would light it"},
-        "history_hof": {"live": False, "blocked_on": hof_franchises.get("blocked_on") or "no franchise spine",
+        "history_hof": {"live": False, "blocked_on": hof_franchises.get("blocked_on") or "a frozen attribution rule for a multi-team career",
                         "why": hof_franchises.get("why") or ("the season frame carries no team column and a frozen "
                                                               "multi-team attribution rule is required; the spine is "
                                                               "necessary but not sufficient")},

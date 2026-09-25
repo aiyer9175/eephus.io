@@ -137,6 +137,19 @@ def test_the_watch_board_carries_no_projection(d):
         assert "projection" not in r and "odds" not in r
 
 
+def test_the_franchise_blocker_names_what_is_still_missing(d):
+    """M10-12. The section said "no franchise spine" and "no team column" while the
+    stint frame carries team_ID and the /franchise/ spine maps it from 1969 on. It
+    stays dark on the owner's frozen attribution rule and the pre-1969 spine."""
+    import json as _json
+    f = d["sections"]["franchises"]
+    assert f["live"] is False
+    assert "no franchise spine" not in f["blocked_on"] and "no team column" not in f["why"]
+    assert "attribution rule" in f["blocked_on"]
+    spine = _json.loads((Path(__file__).resolve().parent / "data" / "franchise_spine.json").read_text(encoding="utf-8"))
+    assert str(spine["first_season"]) in f["why"]
+
+
 def test_the_predictor_is_dark(d):
     assert d["sections"]["predictor"]["live"] is False
     assert d["sections"]["predictor"]["blocked_on"] == "H-PRED-3"

@@ -20,7 +20,7 @@
 //   deserved    a Hall-SIZED line needs the count of PLAYER inductions, and no
 //               field in the source says what a plaque says
 //   predictor   no merit model has passed its ship rule
-//   franchises  no franchise spine, and no frozen attribution rule
+//   franchises  no frozen attribution rule, and no franchise spine before 1969
 //
 // THE BAKE-OFF IS LIVE AND IT REPORTS A LOSS. Baseball-Reference's own HoF
 // Monitor separates the Hall better than our WAR shelf does, on every one of

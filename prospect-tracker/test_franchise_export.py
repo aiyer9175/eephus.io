@@ -519,7 +519,10 @@ def test_every_link_uses_a_key_the_target_module_reads(clubs):
 def test_dark_sections_name_their_blocker(d, clubs):
     st = d["sections_status"]
     assert st["history_hof"]["live"] is False and st["history_hof"]["blocked_on"]
-    assert "team column" in (st["history_hof"]["why"] or "") or "spine" in st["history_hof"]["blocked_on"]
+    # M10-12: the HoF franchise section is dark on the owner's attribution rule and
+    # the pre-1969 spine; it no longer says there is no spine or no team column.
+    assert "attribution rule" in st["history_hof"]["blocked_on"]
+    assert "no franchise spine" not in st["history_hof"]["blocked_on"]
     assert st["park_attendance"]["live"] is False and "D11" in st["park_attendance"]["blocked_on"]
     assert st["manager_names"]["live"] is False and st["manager_names"]["blocked_on"]
     for k, v in st.items():

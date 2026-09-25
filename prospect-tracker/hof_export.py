@@ -39,8 +39,8 @@ DARK, each with its blocker named on the page:
   The by-class line, additionally, because position_class misfiles every catcher
     who retired before roughly 1930.
   The predictor, until H-PRED-3 passes its ship rule.
-  Franchises, because there is no franchise spine and no frozen attribution rule
-    for a multi-team career.
+  Franchises, because there is no frozen attribution rule for a multi-team
+    career and the franchise spine starts in 1969.
 
 EVERY STRING THE PAGE RENDERS IS BUILT HERE. No figure is typed into HTML or JS.
 
@@ -498,12 +498,21 @@ def build() -> dict:
                          "why": blocked},
             "bakeoff": _bakeoff_panel(),
             "predictor": _predictor_panel(),
-            "franchises": {"live": False, "blocked_on": "no franchise spine",
-                           "why": ("The season frame carries no team column and "
-                                   "there is no franchise continuity map. "
-                                   "Crediting a multi-team career also needs a "
-                                   "frozen attribution rule with the rejected "
-                                   "alternative named.")},
+            # CORRECTED (audit M10-12): the blocker used to read "no franchise
+            # spine" and "no team column". The stint frame carries team_ID and
+            # the /franchise/ spine maps it to the 30 clubs from 1969 on; what
+            # is still missing is the spine before 1969 and the owner's frozen
+            # attribution rule.
+            "franchises": {"live": False,
+                           "blocked_on": "a frozen attribution rule for a multi-team career",
+                           "why": ("Each career stint carries its Baseball-Reference "
+                                   "team, and the franchise spine behind /franchise/ "
+                                   "maps those teams to the 30 current clubs from "
+                                   "1969 on. Crediting a Hall of Famer to a franchise "
+                                   "still needs that spine carried back before 1969, "
+                                   "with a bucket for clubs that have no current "
+                                   "franchise, and a frozen rule for a multi-team "
+                                   "career with the rejected alternative named.")},
         },
 
         "what_this_page_does_not_claim": None,
