@@ -402,3 +402,52 @@ def test_qo_tax_is_no_longer_dead_code():
     for tier, row in block.items():
         assert row["total_usd"] >= 0
         assert row["detail"]
+
+
+# ============================================================================
+# M04-01 - the surplus range is a quantile of VALUE, not the value of a path
+# ============================================================================
+
+def test_draw_pricing_matches_the_point_pricer_row_by_row():
+    """rational_value_draws_usd is rational_value_usd, one column at a time."""
+    s = fa_mc.simulate([3.0, 2.6, 2.1], [0.4, 0.2, 0.0], [5.5, 5.0, 4.4], 3,
+                       draws=200)
+    vals = fm.rational_value_draws_usd(s, 2027, 17_000_000, infl=0.04)
+    for i in (0, 7, 55, 199):
+        want = fm.rational_value_usd(list(s[i]), 2027, 17_000_000, infl=0.04)
+        assert abs(vals[i] - want) <= 1, (i, vals[i], want)
+
+
+def _priced_members():
+    import json
+    from pathlib import Path
+    d = json.loads((Path(__file__).parent / "data" / "fa_class.json")
+                   .read_text(encoding="utf-8"))
+    return [m for m in d["members"] if m.get("surplus") is not None
+            and m.get("surplusP10") is not None]
+
+
+def test_served_surplus_range_reads_the_copula_draws_on_multi_year_terms():
+    """Before the fix 41 of the 50 multi-year 2027 rows served surplusP10 equal to
+    minus the guarantee (a career at zero WAR every season) while the same row
+    printed a positive downside WAR from the copula."""
+    rows = _priced_members()
+    multi = [m for m in rows if (m.get("projYears") or 0) >= 2]
+    assert multi, "no multi-year priced rows"
+    for m in multi:
+        assert m.get("surplusBandSrc") == "mc_copula", m["key"]
+        assert m["surplusP10"] <= m["surplus"] <= m["surplusP90"], m["key"]
+        if (m.get("warTotalP10") or 0) >= 0.1:
+            assert m["surplusP10"] > -m["projGuar"], m["key"]
+        # The comonotone band is wider at both ends and stays in the artifact.
+        assert m["surplusP10Comon"] <= m["surplusP10"], m["key"]
+        assert m["surplusP90Comon"] >= m["surplusP90"], m["key"]
+
+
+def test_one_season_terms_keep_the_exact_path_price():
+    rows = [m for m in _priced_members() if m.get("projYears") == 1]
+    assert rows
+    for m in rows:
+        assert m.get("surplusBandSrc") == "season_path", m["key"]
+        assert m["surplusP10"] == m["surplusP10Comon"], m["key"]
+        assert m["surplusP90"] == m["surplusP90Comon"], m["key"]

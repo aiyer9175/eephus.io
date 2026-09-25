@@ -204,7 +204,7 @@ def test_the_band_disclosure_travels_with_the_number():
     bands = JS.split("function faBands(m)", 1)[1].split("\n  }", 1)[0]
     assert "flat ratio, not a per-tier fit" in bands
     assert "surplus: surplusBandText(m.surplus, m.surplusP10, m.surplusP90)" in bands
-    assert JS.count("P10 to P90 WAR paths") == 1, "the surplus sentence is composed twice"
+    assert JS.count("P10 to P90 of simulated contract value") == 1, "the surplus sentence is composed twice"
     assert "const band = surplusBandText(usd, p10, p90);" in JS
     # One FORMATTER too: the board block must not turn a surplus field into a
     # string of its own, and no caller may invent a zero for a missing end.

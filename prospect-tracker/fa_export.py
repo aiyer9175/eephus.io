@@ -753,8 +753,10 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                         path, yrs, class_year, dpw, infl=destale)
                     deal_plus = round(100 * rational / max(guar, 1))
                     # Probability buckets: floor/ceiling WAR paths (Gate-1
-                    # empirical quantiles decayed along the aging curves)
-                    # price to floor/ceiling rational value -> surplus range.
+                    # empirical quantiles decayed along the aging curves),
+                    # priced as paths. This is the surplus range for a
+                    # one-season term; longer terms read the copula draws
+                    # below (M04-01) and keep this as the Comon pair.
                     p10_path = path.get("war_by_year_p10")
                     p90_path = path.get("war_by_year_p90")
                     rational_p10 = (fm.rational_value_usd(p10_path[:yrs], class_year,
@@ -777,16 +779,37 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     # remaining year); the measured horizon residual Spearman
                     # is 0.4455 / 0.3594 / 0.3090 / 0.2571 at lags 1-4.
                     mc = None
+                    sims = None
                     if p10_path and p90_path and yrs >= 1:
                         try:
                             import fa_mc
-                            mc = fa_mc.path_quantiles(fa_mc.simulate(
+                            sims = fa_mc.simulate(
                                 path["war_by_year"], p10_path, p90_path, yrs,
-                                draws=fa_mc.N_DRAWS))
+                                draws=fa_mc.N_DRAWS)
+                            mc = fa_mc.path_quantiles(sims)
                         except Exception:                    # noqa: BLE001
                             log.warning("fa mc failed for %s - falling back "
                                         "to the quantile sum", row.get("player_key"))
                             mc = None
+                            sims = None
+                    # M04-01 (2026-09-25). The surplus RANGE reads the P10 and
+                    # P90 of contract VALUE across the same copula draws that
+                    # give warTotalP10/P90 and the downside WAR, not the value
+                    # of the per-season P10 and P90 paths. Pricing those paths
+                    # assumed a player at his P10 in every season at once:
+                    # Skubal's 7-year P10 read -$268.8M (zero WAR for seven
+                    # years) beside a downside WAR of 5.0. On a one-season term
+                    # the two readings agree (a monotone price of one season),
+                    # so the path value stays there and no draw noise enters.
+                    # The path-priced band is still served as the Comon pair,
+                    # as the WAR totals are (T1.3 precedent).
+                    comon_p10, comon_p90 = rational_p10, rational_p90
+                    if sims is not None and yrs >= 2:
+                        import numpy as np
+                        vals = fm.rational_value_draws_usd(sims, class_year,
+                                                           dpw, infl=destale)
+                        rational_p10 = int(np.quantile(vals, 0.10))
+                        rational_p90 = int(np.quantile(vals, 0.90))
                     m.update(_clean({
                         "warY1": path["war_y1"],
                         "warPath": path["war_by_year"][:max(yrs, 5)],
@@ -828,6 +851,14 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                         "surplus": rational - guar,
                         "surplusP10": (rational_p10 - guar) if rational_p10 is not None else None,
                         "surplusP90": (rational_p90 - guar) if rational_p90 is not None else None,
+                        # The superseded path-priced band (each season at its
+                        # own P10 / P90, priced and added), kept for the
+                        # Accountability comparison like warTotalP10Comon.
+                        "surplusP10Comon": (comon_p10 - guar) if comon_p10 is not None else None,
+                        "surplusP90Comon": (comon_p90 - guar) if comon_p90 is not None else None,
+                        "surplusBandSrc": ("mc_copula" if (sims is not None and yrs >= 2)
+                                           else "season_path" if rational_p10 is not None
+                                           else None),
                         "dealPlus": deal_plus,
                         # POSITION IS REQUIRED, not optional (2026-07-30). Under
                         # fa_market.VERDICT_BAND_MODE == "group" the edges are keyed by

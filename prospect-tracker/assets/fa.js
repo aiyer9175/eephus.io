@@ -144,7 +144,7 @@
   function surplusBandText(usd, p10, p90) {
     const b = surplusBandParts(usd, p10, p90);
     if (b == null || b.lo == null || b.hi == null) return null;
-    return `Surplus ${b.val}. P10 to P90 WAR paths: ${b.lo} to ${b.hi}.`;
+    return `Surplus ${b.val}. P10 to P90 of simulated contract value: ${b.lo} to ${b.hi}.`;
   }
   function surplusSpan(usd, p10, p90) {
     const b = surplusBandParts(usd, p10, p90);
@@ -1529,7 +1529,7 @@
       </tr>`;
     }).join("");
     const wp = (m.warPath || []).map((w, i) =>
-      `<div class="fa-warbar" title="${cls.class_year + i}: ${formatMetric(w, "war")} eWAR${(m.warPathP10 || [])[i] != null ? ` (floor ${formatMetric(m.warPathP10[i], "war")} / ceiling ${formatMetric(m.warPathP90[i], "war")})` : ""}"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>${String(cls.class_year + i).slice(2)}</span></div>`).join("");
+      `<div class="fa-warbar" title="${cls.class_year + i}: ${formatMetric(w, "war")} eWAR${(m.warPathP10 || [])[i] != null ? ` (season P10 ${formatMetric(m.warPathP10[i], "war")} / P90 ${formatMetric(m.warPathP90[i], "war")})` : ""}"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>${String(cls.class_year + i).slice(2)}</span></div>`).join("");
     // The same endpoint-labelled trend the $/WAR rail uses, over the projected
     // WAR path. The bars beside it are a shape; this is the shape WITH numbers
     // on both ends, which is what a decline curve actually needs to be read.
@@ -1577,12 +1577,12 @@
         <td>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</td>
         <td>${verdictChip(m)}</td>
       </tr></tbody></table>
-      ${(m.surplusP10 != null && m.surplusP90 != null) ? `<p class="fa-note" title="Rational value of the P10 and P90 WAR paths minus the predicted price">Surplus range, P10 &rarr; P90: ${surplusSpan(m.surplusP10)} &rarr; ${surplusSpan(m.surplusP90)}; mean ${surplusSpan(m.surplus)}</p>` : ""}`;
+      ${(m.surplusP10 != null && m.surplusP90 != null) ? `<p class="fa-note" title="10th and 90th percentile of the contract's value across simulated careers, where a player's seasons move together but not in lockstep, minus the predicted price">Surplus range, P10 &rarr; P90: ${surplusSpan(m.surplusP10)} &rarr; ${surplusSpan(m.surplusP90)}; mean ${surplusSpan(m.surplus)}</p>` : ""}`;
     const seasonPanel = `
       ${yearRows ? `<h3>Season-by-season projection</h3>
       <p class="fa-note">Mean is the <span data-gl="fa_projection_engine">Marcel champion</span> path this page prices on. /projections/ shows the proj_lgbm_v1 path for the same seasons, which can differ: ML paths failed the <span data-gl="fa_gates">Gate 2</span> market test, so contracts stay priced on the champion.</p>
       <table class="detail-table fa-year-table">
-      <thead><tr><th>Season</th><th>Age</th><th><span data-gl="proj_buckets">Floor</span></th><th>Mean</th><th><span data-gl="proj_buckets">Ceiling</span></th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
+      <thead><tr><th>Season</th><th>Age</th><th><span data-gl="proj_buckets" title="This season's own 10th percentile. The column is not a path: no career sits at its P10 every season">Season P10</span></th><th>Mean</th><th><span data-gl="proj_buckets" title="This season's own 90th percentile, read the same way">Season P90</span></th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
       <tbody>${yearRows}</tbody></table>` : ""}
       ${warTrend ? `<div class="fa-war-trend" title="Projected eWAR by season">${warTrend}</div>` : ""}
       ${wp ? `<div class="fa-warpath" title="Projected eWAR by season; hover a bar for P10/P90">${wp}</div>` : ""}

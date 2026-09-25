@@ -866,6 +866,32 @@ def rational_value_usd(war_by_year: list[float], class_year: int,
     return int(total)
 
 
+def rational_value_draws_usd(sims, class_year: int, dpw_usd: float,
+                             infl: float | None = None):
+    """rational_value_usd applied to every row of a (draws x years) array of
+    simulated WAR paths (fa_mc.simulate), returned as a numpy array of NPVs.
+
+    Same season pricing, level, escalation and discounting as
+    rational_value_usd, one column at a time, so a draw's value equals
+    rational_value_usd(list(draw)) to the dollar (test_fa_tier1 pins it). The
+    point of it: a QUANTILE of contract value has to be read off the priced
+    draws. Pricing each season's own P10 and adding them assumes the player
+    lands at his P10 in every season at once (comonotone), which the measured
+    horizon residual Spearman (0.45 at lag 1, fa_mc) says is false."""
+    import numpy as np
+    from value_framework import tiered_war_value_usd
+    r = _discount_rate()
+    infl = _dpw_inflation() if infl is None else float(infl)
+    level = dpw_usd / float(_vf_config()["dollars_per_war"]["flat"])
+    arr = np.asarray(sims, dtype=float)
+    total = np.zeros(arr.shape[0])
+    for t in range(arr.shape[1]):
+        col = np.fromiter((tiered_war_value_usd(w) for w in arr[:, t]),
+                          dtype=float, count=arr.shape[0])
+        total += (col * level * ((1 + infl) ** t)) / ((1 + r) ** t)
+    return total
+
+
 def expected_rational_value_usd(path: dict, years: int, class_year: int,
                                 dpw_usd: float, infl: float | None = None) -> int:
     """T1.4 - the EXPECTATION of the tier-priced value, not the tier price of
