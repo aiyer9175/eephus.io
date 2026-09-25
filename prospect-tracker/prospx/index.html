@@ -14353,11 +14353,30 @@ function etaDisplayYear(eta) {
 // inline ("wRC+" / "OPS+") so the reader always knows which they're seeing.
 //
 // Returns "" when no signal is available at all.
+// MLB sample behind the sabermetrics chip: the career_stats MLB row for the
+// sabermetrics season (AB for hitters, IP for pitchers), or null when none is on file.
+function mlbSabermetricSample(player) {
+  const sm = (player && player.sabermetrics) || {};
+  const rows = (player && player.career_stats) || [];
+  const row = rows.find(r => r && r.level === "MLB" && r.season === sm.season);
+  if (!row) return null;
+  if (sm.is_pitcher) return row.ip != null ? { n: Number(row.ip), unit: "IP" } : null;
+  return row.ab != null ? { n: Number(row.ab), unit: "AB" } : null;
+}
+// The leaderboard qualifiers (minAB 50 on hitter boards, minIP 15 on pitcher boards)
+// double as the floor under which the Debuted cell hides an MLB wRC+ / xFIP chip.
+const GRAD_MLB_CHIP_FLOOR = { AB: 50, IP: 15 };
+
 function headlineStatHTML(player, opts = {}) {
   const size = opts.size || "sm";          // sm | md (card detail)
   const sl   = player.statline || {};
   const sm   = player.sabermetrics || {};
   const isPitcher = sl.is_pitcher;
+  // opts.mlbFloor (Debuted cell): hide the chip when the MLB sample on file is under
+  // the leaderboard qualifier, and name the sample in its tooltip when shown.
+  const _mlbN = opts.mlbFloor ? mlbSabermetricSample(player) : null;
+  if (_mlbN && _mlbN.n < GRAD_MLB_CHIP_FLOOR[_mlbN.unit]) return "";
+  const _mlbNote = _mlbN ? ` · ${sm.season} MLB ${_mlbN.n} ${_mlbN.unit}` : "";
   const chipPad = size === "md" ? "3px 9px" : "2px 7px";
   const chipFz  = size === "md" ? "13px"    : "11px";
 
@@ -14372,7 +14391,7 @@ function headlineStatHTML(player, opts = {}) {
     if (sm.xfip != null) {
       label = "xFIP"; value = sm.xfip.toFixed(2);
       color = sm.xfip <= 3.50 ? "var(--up)" : sm.xfip >= 4.50 ? "var(--down)" : "var(--text-primary)";
-      source = "MLB · FanGraphs xFIP";
+      source = "MLB · FanGraphs xFIP" + _mlbNote;
     } else {
       return "";
     }
@@ -14380,7 +14399,7 @@ function headlineStatHTML(player, opts = {}) {
     if (sm.wrc_plus != null) {
       label = "wRC+"; value = Math.round(sm.wrc_plus);
       color = sm.wrc_plus >= 110 ? "var(--up)" : sm.wrc_plus <= 90 ? "var(--down)" : "var(--text-primary)";
-      source = "MLB · FanGraphs wRC+";
+      source = "MLB · FanGraphs wRC+" + _mlbNote;
     } else {
       return "";
     }
@@ -15278,10 +15297,17 @@ function makeGradMilbCell(p) {
         ? `K% ${sl.k_pct != null ? sl.k_pct.toFixed(1) + "%" : " - "} · BB% ${sl.bb_pct != null ? sl.bb_pct.toFixed(1) + "%" : " - "}`
         : `K/9 ${sl.k_per_9 ?? " - "} · BB/9 ${sl.bb_per_9 ?? " - "}`)
     : `${sl.hr ?? 0} HR · ${sl.sb ?? 0} SB`;
-  const seasonTag = sl.is_prior_season && sl.season
-    ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats - showing ${sl.season}">${sl.season}</span> `
+  // The column is headed "MLB stats", so a statline from any other level names its
+  // level (census M02-13: 833 of 2,764 debuted rows carried an unlabelled MiLB line).
+  const _lvlTag = sl.level && sl.level !== "MLB" ? sl.level : "";
+  const _tagTxt = [_lvlTag, sl.is_prior_season && sl.season ? sl.season : ""].filter(Boolean).join(" ");
+  const _tagTip = sl.is_prior_season && sl.season
+    ? `No ${new Date().getFullYear()} stats - showing ${sl.season}${_lvlTag ? " " + _lvlTag : ""}`
+    : `${sl.season || ""} ${_lvlTag} line, not MLB`.trim();
+  const seasonTag = _tagTxt
+    ? `<span class="prior-season-tag" title="${escapeHtml(_tagTip)}">${escapeHtml(_tagTxt)}</span> `
     : "";
-  const headline = headlineStatHTML(p);
+  const headline = headlineStatHTML(p, { mlbFloor: true });
   return `<div class="milb-cell">
     ${currentWar}${seasonTag}${headline ? headline + "<br/>" : ""}<strong style="font-weight: 600; color: var(--text-primary);">${slashLine}</strong>
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
