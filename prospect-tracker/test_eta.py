@@ -177,6 +177,55 @@ class CalendarFloor(unittest.TestCase):
         self.assertEqual(r.eta_year, date.today().year + 1)
         self.assertEqual(r.eta_half, "early")
 
+    # Census M01-05 (2026-09-24): after the MLB regular season ends the season is
+    # over, so a current-year ETA rolls to next year's early window, not in November.
+    # Dates sit in the current year because the roll only fires when the snapshot and
+    # the season end are both in the compute year (a backtest vintage never trips it).
+    def test_after_regular_season_end_rolls_current_year_forward(self):
+        y = date.today().year
+        r = estimate_eta(snapshot_date=date(y, 9, 28), regular_season_end=date(y, 9, 27),
+                         **self._mlb_ready_payload())
+        self.assertEqual(r.eta_year, y + 1)
+        self.assertEqual(r.eta_half, "early")
+        self.assertTrue(r.season_end_roll)
+        r = estimate_eta(snapshot_date=date(y, 10, 12), regular_season_end="%d-09-27" % y,
+                         **self._mlb_ready_payload())
+        self.assertEqual((r.eta_year, r.eta_half), (y + 1, "early"))
+
+    def test_on_or_before_regular_season_end_keeps_late(self):
+        y = date.today().year
+        for d in (date(y, 9, 23), date(y, 9, 27)):
+            r = estimate_eta(snapshot_date=d, regular_season_end=date(y, 9, 27),
+                             **self._mlb_ready_payload())
+            self.assertEqual((r.eta_year, r.eta_half), (y, "late"), d)
+            self.assertFalse(r.season_end_roll)
+
+    def test_no_season_end_keeps_the_old_floor(self):
+        # eta_backtest passes no regular_season_end: an October snapshot keeps
+        # current-year late, exactly as before the rule.
+        y = date.today().year
+        r = estimate_eta(snapshot_date=date(y, 10, 12), **self._mlb_ready_payload())
+        self.assertEqual((r.eta_year, r.eta_half), (y, "late"))
+        self.assertFalse(r.season_end_roll)
+
+    def test_season_end_in_another_year_never_rolls(self):
+        # A vintage snapshot from an earlier season is not "past this season's end".
+        y = date.today().year
+        r = estimate_eta(snapshot_date=date(y - 3, 10, 5),
+                         regular_season_end=date(y - 3, 9, 29),
+                         **self._mlb_ready_payload())
+        self.assertEqual((r.eta_year, r.eta_half), (y, "late"))
+
+    def test_the_aa_teenager_case(self):
+        # The census row: a 19-year-old AA hitter whose ETA lands in the current
+        # year (base years pinned to 0 so it does) reads next year's early window
+        # once the regular season is over.
+        y = date.today().year
+        r = estimate_eta(current_level="AA", age=19.4, is_pitcher=False, fv=65.0,
+                         stats=None, base_years={"AA": 0.0},
+                         snapshot_date=date(y, 9, 30), regular_season_end=date(y, 9, 27))
+        self.assertEqual((r.eta_year, r.eta_half), (y + 1, "early"))
+
     def test_jan_feb_offseason_not_rolled(self):
         # Jan/Feb offseason: April is still ahead — "early <current
         # year>" is legitimate.
@@ -258,6 +307,20 @@ class OrgPromotionTendency(unittest.TestCase):
         self.assertIsNone(r.org_promo_h1_rate)
         self.assertIsNone(r.org_promo_h2_rate)
 
+
+
+class SeasonEndWiring(unittest.TestCase):
+    """The live timeseries caller passes the season end; the backtest does not."""
+
+    def test_live_caller_passes_it_and_backtest_does_not(self):
+        from pathlib import Path
+        here = Path(__file__).resolve().parent
+        storage_src = (here / "storage.py").read_text(encoding="utf-8")
+        self.assertIn("regular_season_end=_eta_season_end", storage_src)
+        self.assertIn('"season_end_roll":', storage_src)
+        bt = here / "eta_backtest.py"
+        if bt.exists():
+            self.assertNotIn("regular_season_end", bt.read_text(encoding="utf-8"))
 
 if __name__ == "__main__":
     unittest.main()

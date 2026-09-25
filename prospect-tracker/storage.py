@@ -9176,6 +9176,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     from age_level import score_age_vs_level
     from eta import (estimate_eta, LEVEL_BIAS_ADJ as ETA_LEVEL_BIAS_ADJ,
                      FORTYMAN_ADJ as ETA_FORTYMAN_ADJ)
+    # MLB regular-season end for this year (StatsAPI /seasons, cached a week, disk
+    # fallback). Past it, eta.estimate_eta rolls a current-year ETA to next year's
+    # early window (census M01-05). Unknown -> None -> only Nov/Dec roll, as before.
+    try:
+        import fantasy_schedule as _fsched
+        _eta_season_end = ((_fsched.regular_season_dates(date.today().year) or {})
+                           .get("end"))
+    except Exception:                                      # noqa: BLE001
+        _eta_season_end = None
     from trades import canonical_org
     from level_norms import (
         compute_level_norms,
@@ -10597,6 +10606,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # production-frame refit and why AAA is deliberately 0.0.
             fortyman_adj=(ETA_FORTYMAN_ADJ.get(level)
                           if rs.get("on_40_man") else None),
+            # Live caller only: eta_backtest never passes it, so eta_eval is unmoved.
+            regular_season_end=_eta_season_end,
         )
         # Performance-vs-level-median enrichment. wRC+/xFIP aren't on the
         # MLB Stats API, so we compute their conceptual cousins from the
@@ -11384,6 +11395,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # within eta_year; "late" = Jul-Sep). Combines fractional
                 # ETA distance + org H1/H2 tendency + current-level bias.
                 "half":              eta.eta_half,
+                # True when the calendar floor rolled a current-year ETA to next
+                # year's early window because the regular season is over.
+                "season_end_roll":   bool(getattr(eta, "season_end_roll", False)),
             },
             # Per-tool lifetime delta map (first observation → latest).
             # `{hit: {delta, first, last, first_date, last_date, n_obs}, ...}`

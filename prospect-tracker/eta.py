@@ -321,6 +321,35 @@ class ETAResult:
     # the caller passed fortyman_adj (default None = OFF, byte-identical).
     # Appended LAST so existing field order is untouched.
     fortyman_adj_applied: float = 0.0
+    # True when the calendar floor rolled a current-year ETA to next year's early
+    # window because the MLB regular season is over (census M01-05, 2026-09-24).
+    # Appended after fortyman_adj_applied for the same reason.
+    season_end_roll: bool = False
+
+
+def _as_date(v):
+    """A date from a date / datetime / ISO string, or None."""
+    if v is None or v == "":
+        return None
+    try:
+        if hasattr(v, "month") and hasattr(v, "day"):
+            return date(v.year, v.month, v.day)
+        return date.fromisoformat(str(v)[:10])
+    except (TypeError, ValueError):
+        return None
+
+
+def regular_season_over(snapshot_date, regular_season_end, today_year: int) -> bool:
+    """True when `snapshot_date` falls after `regular_season_end` in the current year.
+
+    Both dates must sit in `today_year`: the flag is about a window that has already
+    passed at compute time, so a backtest vintage dated in another year never trips it.
+    Unknown dates return False (the pre-2026-09-24 behaviour: only Nov/Dec rolls)."""
+    d = _as_date(snapshot_date)
+    end = _as_date(regular_season_end)
+    if d is None or end is None:
+        return False
+    return d.year == end.year == int(today_year) and d > end
 
 
 def _org_promotion_phase_weight(phase: str, org_tendency: dict | None) -> float:
@@ -370,6 +399,7 @@ def estimate_eta(
     base_years: dict[str, float] | None = None,
     level_bias_adj: dict[str, float] | None = None,
     fortyman_adj: float | None = None,
+    regular_season_end=None,
 ) -> ETAResult:
     """
     Return an ETAResult for the given prospect attributes.
@@ -399,6 +429,12 @@ def estimate_eta(
         forward-chained by the S2 lab, never hardcoded here). None (the
         default) = no adjustment, output byte-identical to the pre-hook
         code path. Applied after level_bias_adj, floored at 0.
+    regular_season_end : date | str | None
+        The current season's MLB regular-season end date (StatsAPI /seasons).
+        When the snapshot falls after it, a current-year ETA rolls to next
+        year's early window (the same roll Nov/Dec snapshots already get).
+        None (the default, and what eta_backtest passes) leaves the calendar
+        floor as it was, so the backtest and eta_eval are byte-identical.
     """
     today_year = date.today().year
 
@@ -795,13 +831,22 @@ def estimate_eta(
 
     # Calendar floor: never emit a sub-year window that has already passed
     # at compute time. Post-break, a current-year "early" (Apr-Jun) window
-    # is gone, so it floors to "late"; in Nov/Dec the season itself is
-    # over, so a current-year ETA rolls to next year's early window.
+    # is gone, so it floors to "late"; once the MLB regular season has ended
+    # (the caller passes its end date; Nov/Dec always count) the season
+    # itself is over, so a current-year ETA rolls to next year's early window.
     # Jan/Feb "offseason" runs leave current-year "early" alone (April is
     # still ahead).
+    # Census M01-05 (2026-09-24): the roll used to wait for November, so from
+    # the last regular-season game through October 414 prospects (253 AAA,
+    # 160 AA) read "Late <this year>", a window that had closed.
+    season_end_roll = False
     if eta_year == today_year:
         if phase == "post_break":
             eta_half = "late"
+            if regular_season_over(snapshot_date, regular_season_end, today_year):
+                eta_year += 1
+                eta_half = "early"
+                season_end_roll = True
         elif phase == "offseason":
             try:
                 _m = (snapshot_date.month if hasattr(snapshot_date, "month")
@@ -811,6 +856,7 @@ def estimate_eta(
             if _m in (11, 12):
                 eta_year += 1
                 eta_half = "early"
+                season_end_roll = True
 
     return ETAResult(
         eta_year=eta_year,
@@ -828,4 +874,5 @@ def estimate_eta(
         org_promo_weight=round(org_weight, 2),
         eta_half=eta_half,
         fortyman_adj_applied=round(_fortyman_applied, 2),
+        season_end_roll=season_end_roll,
     )
