@@ -586,19 +586,34 @@ def scrape_all_spotrac_contracts(force: bool = False,
     return rows
 
 
-def build_contracts_by_key(rows: list[dict]) -> dict[str, dict]:
+def build_contracts_by_key(rows: list[dict], keep_alts: bool = False) -> dict[str, dict]:
     """Collapse multi-team rows to {player_key: contract_dict}. When a
     player appears on multiple team pages (rare — Spotrac updates fast
     so a mid-season trade usually only shows on the destination team),
-    keep the row with the highest AAV as a defensive tiebreak."""
+    keep the row with the highest AAV as a defensive tiebreak.
+
+    The key is a NAME slug, so two different players who share a name
+    (the LAD and ATH Max Muncy) collapse to one entry here. With
+    keep_alts=True the kept entry is a copy carrying every other row of
+    that slug under "same_slug_rows", so a caller that knows who it is
+    pricing (storage.resolve_contracts_to_ids, joined on mlbam id) can
+    pick the right one. The default output is unchanged."""
     out: dict[str, dict] = {}
+    by_key: dict[str, list[dict]] = {}
     for r in rows:
         key = r.get("player_key")
         if not key:
             continue
+        by_key.setdefault(key, []).append(r)
         prev = out.get(key)
         if prev is None or (r.get("aav_usd") or 0) > (prev.get("aav_usd") or 0):
             out[key] = r
+    if keep_alts:
+        for key, group in by_key.items():
+            if len(group) > 1:
+                kept = out[key]
+                out[key] = {**kept,
+                            "same_slug_rows": [dict(r) for r in group if r is not kept]}
     return out
 
 

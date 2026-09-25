@@ -159,5 +159,38 @@ class ARecordWithoutAnIdKeepsTheSlugJoin(unittest.TestCase):
             fx.close()
 
 
+class AKeyWhoseMlbHistoryWasSomeoneElses(unittest.TestCase):
+    """The jose_ramirez shape after storage's identity screen (2026-09-25): the
+    debuts record lost its borrowed 2014-2018 career, so the inactive rule can no
+    longer see it; the served identity_screen receipt keeps it off the board."""
+
+    def _run(self, debuts_rows):
+        fx = _Dir([])
+        try:
+            (fx.dir / "debuts.json").write_text(json.dumps(debuts_rows), encoding="utf-8")
+            recs = [_record("jose_ramirez", 802064, 22.1, "CLE")]
+            btv.apply_platform_surplus(recs, fx.dir)
+            return recs[0]
+        finally:
+            fx.close()
+
+    def test_screened_key_with_no_own_mlb_season_is_an_identity_collision(self):
+        row = self._run([{"player_key": "jose_ramirez", "mlbam_id": 802064,
+                          "roster_status": {"mlb_seasons": []},
+                          "identity_screen": {"mlbam": 802064,
+                                              "foreign_mlb_seasons": [2014, 2018]}}])
+        self.assertEqual(row["surplus_source"], "identity_collision")
+        self.assertIsNone(row["trade_value_mm"])
+        self.assertIn("mlbam 802064 has no MLB season", row["excluded_reason"])
+        self.assertIn("jose_ramirez", [e["key"] for e in btv._excluded_rows([row])])
+
+    def test_a_screened_key_with_its_own_mlb_seasons_is_left_to_the_other_rules(self):
+        row = self._run([{"player_key": "jose_ramirez", "mlbam_id": 802064,
+                          "roster_status": {"mlb_seasons": [2026]},
+                          "identity_screen": {"mlbam": 802064,
+                                              "foreign_mlb_seasons": [2014]}}])
+        self.assertNotEqual(row.get("surplus_source"), "identity_collision")
+
+
 if __name__ == "__main__":
     unittest.main()

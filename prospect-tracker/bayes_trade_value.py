@@ -4117,6 +4117,29 @@ def _roster_seasons_index(data_dir: Path) -> dict:
     return out
 
 
+def _identity_screen_index(data_dir: Path) -> dict:
+    """player_key -> the debuts record's `identity_screen` (storage, 2026-09-25): the
+    career-WAR seasons the export removed because the row's own mlbam id never
+    played them. A debuted key carrying one and no MLB season of its own is two
+    humans: the status and debut date belong to a namesake (jose_ramirez, the
+    802064 CPX pitcher, wore a 2014 debut and a 2014-2018 career). Before the
+    screen the inactive rule caught these rows on the borrowed seasons."""
+    out: dict = {}
+    try:
+        d = json.loads((Path(data_dir) / "debuts.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return out
+    players = d.get("players") if isinstance(d, dict) else d
+    if isinstance(players, dict):
+        players = list(players.values())
+    for p in (players or []):
+        pk = p.get("player_key")
+        scr = p.get("identity_screen")
+        if pk and isinstance(scr, dict) and scr.get("foreign_mlb_seasons"):
+            out[pk] = scr
+    return out
+
+
 def _has_control_window(row: dict) -> bool:
     """Does this row have controlled seasons left to price an eFV BACKGRADE over?
 
@@ -4912,12 +4935,13 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     roster = _roster_seasons_index(dd)                       # pk -> (last_mlb_season, n_seasons)
     current_season = max((ls for ls, _ in roster.values()), default=None)
     career_last = _career_war_seasons_index(dd)               # pk -> last career-WAR season
+    screened = _identity_screen_index(dd)                     # pk -> borrowed MLB history
 
     stats = {"xfv": 0, "projection": 0, "xfv_backgrade": 0, "unchanged": 0,
              "no_control_window": 0,
              "age_backfilled": 0, "inactive_dropped": 0, "backgrade_tempered": 0,
              "excluded_unpriceable": 0, _PREARB_SOURCE: 0,
-             "org_current_club": 0}
+             "org_current_club": 0, "identity_screened": 0}
     for r in records:
         pk = r.get("player_key")
         is_pros = r.get("status") == "active"
@@ -4947,6 +4971,29 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             age = ages[ppk]
             r["age"] = age
             stats["age_backfilled"] += 1
+
+        # A debuted key whose whole MLB history was another player's (storage's
+        # identity screen took it off the record) is not one human: unprice and
+        # ledger it, as the inactive rule below did while it could still see the
+        # borrowed seasons.
+        if (not is_pros and pk in screened and pk not in roster
+                and ppk not in proj_sur):
+            scr = screened[pk]
+            r["trade_value_mm"] = None
+            r["posterior_surplus_mm"] = None
+            r["trade_value_lo"] = None
+            r["trade_value_hi"] = None
+            r["trade_value_grade"] = None
+            r["trade_value_tier"] = None
+            r["surplus_source"] = "identity_collision"
+            yrs = scr.get("foreign_mlb_seasons") or []
+            r["excluded_reason"] = (
+                "debuted status and MLB "
+                + (f"season {min(yrs)}" if min(yrs) == max(yrs) else f"seasons {min(yrs)}-{max(yrs)}")
+                + " on this key belong "
+                + f"to another player; mlbam {scr.get('mlbam')} has no MLB season")
+            stats["identity_screened"] += 1
+            continue
 
         # Drop debuted players who have not appeared in MLB for 2+ seasons: they
         # are no longer active trade assets (restricted-list / retired / released

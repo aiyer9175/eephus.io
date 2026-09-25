@@ -3862,7 +3862,9 @@ def _load_spotrac_contracts(force: bool, log, label: str) -> dict:
     try:
         from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key
         rows = scrape_all_spotrac_contracts(force=force)
-        out = build_contracts_by_key(rows)
+        # keep_alts: a name slug two players share keeps both Spotrac rows, and
+        # the export binds each to its own mlbam id (storage.resolve_contracts_to_ids).
+        out = build_contracts_by_key(rows, keep_alts=True)
         log.info("%s: %d player-rows fetched, %d unique players", label, len(rows), len(out))
         return out
     except Exception:

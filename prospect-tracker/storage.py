@@ -7274,6 +7274,181 @@ def _bwar_reference(row: dict, yr: str):
         return None
 
 
+_SPOTRAC_PITCHER_POS = frozenset({"P", "SP", "RP", "RHP", "LHP", "CL"})
+
+
+def _pos_is_pitcher(pos) -> bool | None:
+    """True / False for a pitcher / position-player token, None when the token
+    cannot say (missing, two-way). Used only to tell two same-named players apart."""
+    tok = str(pos or "").strip().upper().split("/")[0]
+    if not tok or tok in {"TWP", "TW", "UT"}:
+        return None
+    return tok in _SPOTRAC_PITCHER_POS
+
+
+def resolve_contracts_to_ids(contracts_by_key: dict, humans: dict,
+                             rivals: list | tuple = ()) -> tuple[dict, dict]:
+    """Bind Spotrac contracts to players by mlbam id instead of by name slug.
+
+    Spotrac rows carry no mlbam id, only a name slug, a club and a position, so a
+    slug join hands one player another's contract whenever two share a name: the
+    ATH Max Muncy (691777) served the LAD Max Muncy's $10.0M, and a CPX pitcher
+    keyed jose_ramirez (802064) served the CLE third baseman's $20.8M through 2032.
+
+    humans:  {player_key: (mlbam, club, is_pitcher)} for the rows being exported.
+    rivals:  [(slug, mlbam, club, is_pitcher), ...] for other MLB players known to
+             hold a slug (the /projections/ veterans), so a contract can go to a
+             player who is not on this board.
+    Every Spotrac row of the slug (the kept row plus its "same_slug_rows") is given
+    to the ONE claimant it fits. A player alone on his slug takes every row (the
+    pitcher / hitter tag on a prospect row is too often a pre-conversion position
+    to veto a contract on its own). When several claim the slug, claimants of the
+    wrong side (pitcher vs hitter) are ruled out first, then the row's club breaks
+    the tie; a row still shared is given to nobody. A player who is handed several
+    rows keeps the one on his own club, then the highest AAV. A manual override
+    (source != spotrac) is left alone.
+
+    Returns ({player_key: contract or None}, receipt) for the keys it resolved. A
+    key absent from the result keeps the slug join (no mlbam, or no Spotrac row)."""
+    by_slug_rivals: dict[str, dict] = {}
+    for slug, mid, club, isp in rivals or ():
+        if slug and mid:
+            by_slug_rivals.setdefault(slug, {})[int(mid)] = (club, isp)
+    try:
+        from spotrac import _SPOTRAC_TEAM_SLUGS as _slugs
+        team_of = {v: k for k, v in _slugs.items()}
+    except Exception:                                        # pragma: no cover
+        team_of = {}
+    out: dict[str, dict | None] = {}
+    receipt = {"resolved": 0, "kept": 0, "moved": 0, "dropped": 0}
+    for key, (mid, club, isp) in humans.items():
+        ct = contracts_by_key.get(key)
+        if not ct or not mid:
+            continue
+        if (ct.get("source") or "spotrac") != "spotrac":
+            continue
+        mid = int(mid)
+        rows_all = [ct] + [r for r in (ct.get("same_slug_rows") or []) if isinstance(r, dict)]
+        # One Spotrac id is one person: a player traded mid-season sits on both
+        # clubs' pages (the new club's row is the prorated remainder), and the
+        # highest-AAV row stands for him, as build_contracts_by_key has always done.
+        by_sid: dict = {}
+        for r in rows_all:
+            sid = r.get("spotrac_id") or id(r)
+            if sid not in by_sid or (r.get("aav_usd") or 0) > (by_sid[sid].get("aav_usd") or 0):
+                by_sid[sid] = r
+        rows = list(by_sid.values())
+        claimants = dict(by_slug_rivals.get(key) or {})
+        claimants[mid] = (club, isp)
+        mine = []
+        for row in rows:
+            rp = _pos_is_pitcher(row.get("position"))
+            rclub = team_of.get(row.get("team_slug")) or row.get("team_code")
+            fit = list(claimants)
+            if len(fit) > 1:
+                fit = [m for m in fit
+                       if rp is None or claimants[m][1] is None or claimants[m][1] == rp]
+            if len(fit) > 1:
+                fit = [m for m in fit if rclub and claimants[m][0] == rclub]
+            if fit == [mid]:
+                mine.append((row, rclub))
+        chosen = None
+        if mine:
+            chosen = max(mine, key=lambda t: (bool(club) and t[1] == club,
+                                              t[0].get("aav_usd") or 0))[0]
+            chosen = {k: v for k, v in chosen.items() if k != "same_slug_rows"}
+        receipt["resolved"] += 1
+        if chosen is None:
+            receipt["dropped"] += 1
+        elif chosen.get("spotrac_id") == ct.get("spotrac_id"):
+            receipt["kept"] += 1
+        else:
+            receipt["moved"] += 1
+        out[key] = chosen
+    return out, receipt
+
+
+def screen_career_war_to_ids(career_war: dict, ids_by_key: dict,
+                             by_id: dict | None = None) -> tuple[dict, dict]:
+    """Drop the career-WAR seasons a player's own mlbam id never played.
+
+    The career_war table is keyed by name slug and its season map merges across
+    refetches, so a slug that once resolved to another player keeps that player's
+    seasons: jose_ramirez (802064, a CPX pitcher born 2004) served 2014-2018 WAR,
+    and the export back-filled those years into his roster_status mlb_seasons.
+    The war_daily frame is keyed by mlb_ID, so a COMPLETED season with no stint for
+    the row's id is another player's. The season in progress (the frame's latest
+    year) is kept, as in _career_war_exposure_fill. `by_id` is
+    stats.war_daily_exposure's output (read here when None); with no cache the rows
+    pass through unchanged, so an offline build serves what it served before.
+
+    Returns (career_war with the foreign seasons removed, receipt). A row left with
+    no season is removed. The input dict is not mutated. receipt["foreign_by_key"]
+    names each screened key's id and the seasons it lost; the export serves it as
+    the record's `identity_screen`, so the trade board can still see that the key's
+    MLB history belonged to someone else."""
+    receipt = {"rows_checked": 0, "rows_screened": 0, "rows_removed": 0,
+               "seasons_dropped": 0, "cache_ok": None, "foreign_by_key": {}}
+    need: dict[str, int] = {}
+    for key, row in (career_war or {}).items():
+        if not (row or {}).get("seasons"):
+            continue
+        mid = (ids_by_key or {}).get(key)
+        try:
+            need[key] = int(mid)
+        except (TypeError, ValueError):
+            continue
+    if not need:
+        return career_war, receipt
+    if by_id is None:
+        try:
+            import stats as _stats
+            by_id = _stats.war_daily_exposure(need.values())
+        except Exception:
+            log.debug("career_war identity screen: war_daily_exposure raised",
+                      exc_info=True)
+            by_id = {}
+    receipt["cache_ok"] = bool(by_id)
+    if not by_id:
+        return career_war, receipt
+    latest = max((int(y) for yrs in by_id.values() for y in yrs), default=None)
+    out = dict(career_war)
+    for key, mid in need.items():
+        row = career_war[key]
+        receipt["rows_checked"] += 1
+        played = {int(y) for y in (by_id.get(mid) or {})}
+        foreign = []
+        for yr in row["seasons"]:
+            try:
+                y = int(yr)
+            except (TypeError, ValueError):
+                continue
+            if latest is not None and y < latest and y not in played:
+                foreign.append(yr)
+        if not foreign:
+            continue
+        receipt["rows_screened"] += 1
+        receipt["seasons_dropped"] += len(foreign)
+        receipt["foreign_by_key"][key] = {"mlbam": mid,
+                                          "foreign_mlb_seasons": sorted(int(y) for y in foreign)}
+        keep = {y: v for y, v in row["seasons"].items() if y not in foreign}
+        if not keep:
+            out.pop(key, None)
+            receipt["rows_removed"] += 1
+            continue
+        new = dict(row)
+        new["seasons"] = keep
+        for fld in ("seasons_bwar", "seasons_pa", "seasons_ip"):
+            if isinstance(row.get(fld), dict):
+                new[fld] = {y: v for y, v in row[fld].items() if y not in foreign}
+        vals = [float(v) for v in keep.values()]
+        new["career_war"] = round(sum(vals), 2)
+        new["war_seasons_count"] = len(vals)
+        new["war_per_yr"] = round(sum(vals) / len(vals), 3)
+        out[key] = new
+    return out, receipt
+
+
 def _career_war_exposure_fill(career_war: dict, *id_maps: dict) -> tuple[dict, dict]:
     """The measured exposure to write into career_war rows that lack it, read OFFLINE
     from the war_daily last-good cache (stats.war_daily_exposure). Returns
@@ -9169,8 +9344,60 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         log.debug("export: durable player_photos id map unavailable", exc_info=True)
         _durable_ids_by_key = {}
 
+    # IDENTITY JOINS (X03-01, 2026-09-25). career_war and the Spotrac contracts are
+    # keyed by name slug, so a slug two players share handed one of them the other's
+    # WAR seasons and contract (jose_ramirez 802064, a CPX pitcher, served the CLE
+    # third baseman's $20.8M and a 2014-2018 pitcher's WAR; the ATH Max Muncy served
+    # the LAD Max Muncy's $10.0M). Each row is now bound to the mlbam id the row
+    # serves (the same player_ids -> statline -> durable order as `mlbam_id` below);
+    # the slug join stays only for a row with no id.
+    _ids_for_identity: dict[str, int] = {}
+    for _p_id in timeseries:
+        _k_id = _p_id.player_key
+        _m_id = (player_ids.get(_k_id)
+                 or (statlines.get(_k_id) or {}).get("mlbam_id")
+                 or _durable_ids_by_key.get(_k_id))
+        if _m_id:
+            try:
+                _ids_for_identity[_k_id] = int(_m_id)
+            except (TypeError, ValueError):
+                pass
+    career_war, _cw_screen = screen_career_war_to_ids(career_war, _ids_for_identity)
+    _cw_foreign = _cw_screen.pop("foreign_by_key", {})
+    log.info("export: career_war identity screen %s", _cw_screen)
+    try:
+        _rivals = []
+        _proj_path = Path(__file__).parent / "data" / "mlb_projections.json"
+        if _proj_path.exists():
+            with open(_proj_path, encoding="utf-8") as _fh:
+                for _v in (json.load(_fh).get("vets") or []):
+                    if _v.get("key") and _v.get("mlbam"):
+                        _rivals.append((str(_v["key"]).split("__")[0], _v["mlbam"],
+                                        _v.get("team"), _pos_is_pitcher(_v.get("pos"))))
+        def _side_of(_p):
+            # The statline's is_pitcher is measured on the player's own id; the
+            # consensus position can predate a conversion (Lucas Erceg reads 3B/1B).
+            _sp = (statlines.get(_p.player_key) or {}).get("is_pitcher")
+            return bool(_sp) if _sp is not None else _vf_is_pitcher_position(_p.position)
+        _humans = {
+            _p_id.player_key: (_ids_for_identity[_p_id.player_key],
+                               _p_id.org if len(str(_p_id.org or "")) == 3 else None,
+                               _side_of(_p_id))
+            for _p_id in timeseries if _p_id.player_key in _ids_for_identity}
+        _ct_by_id, _ct_receipt = resolve_contracts_to_ids(contracts_by_key, _humans, _rivals)
+        for _k_id, _ct_id in _ct_by_id.items():
+            if _ct_id is None:
+                contracts_by_key.pop(_k_id, None)
+            else:
+                contracts_by_key[_k_id] = _ct_id
+        log.info("export: contract identity join %s (%d rival veterans)",
+                 _ct_receipt, len(_rivals))
+    except Exception:
+        log.warning("export: contract identity join failed; slug join kept", exc_info=True)
+
     # Measured MLB exposure on the career-WAR stints (owner decision 14c, 2026-09-11)
-    # is read from the stored rows only; the export never reads the war_daily cache.
+    # is read from the stored rows only (the identity screen above reads only which
+    # seasons the war_daily cache holds for an id, never its PA / IP).
     # A table with no measured row means persist_career_war_exposure has not run on
     # this DB, so the 641 still gate on a season-implied load: say so, loudly.
     _xcen = _career_war_exposure_census(career_war)
@@ -11382,6 +11609,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # file (every active prospect who hasn't debuted). The per-season
             # exposure maps stay server-side (_served_career_war).
             "career_war": _served_career_war(career_war.get(p.player_key, {})),
+            # Present only where the identity screen removed career-WAR seasons the
+            # row's own mlbam id never played (another player's history on this slug).
+            **({"identity_screen": _cw_foreign[p.player_key]}
+               if p.player_key in _cw_foreign else {}),
             # Within-season + cross-season level changes derived from the
             # MLB Stats API per-player transactions endpoint. One record
             # per real level transition (lateral affiliate swaps filtered
