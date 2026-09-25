@@ -217,6 +217,10 @@ MODEL_GLOSSARY = {
     "advancement_pace": ["advancement_pace_plus"],        # W5 descriptive display (contract: never a model input)
     # eFV holistic program 2026-07-24 (docs/efv-2026-07-24/GATES.md):
     "efv_scoreboard": ["xfv"],             # eFV accountability scoreboard (source-comparison panel)
+    # eFV v2 champion H0 (1d6adb29). Not "internal": its development rows print on
+    # the glossary Source Comparison progress ledger, the same panel as the
+    # scoreboard above, so it takes the scoreboard's entry.
+    "efv_v2_h0": ["xfv"],
     "xfv_platoon": "internal",             # W-PLATOON loss ledger (platoon splits FAIL both sides)
     "xfv_wrc": "internal",                 # W-WRC/W-SB loss ledger (in-house wRC+ no ship)
     # consensus-basis counterfactual; normalization STAYS ON (turning it off is worse,

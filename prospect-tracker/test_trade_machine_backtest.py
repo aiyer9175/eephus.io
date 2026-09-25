@@ -219,7 +219,8 @@ def test_the_gate_never_fires_on_a_row_the_owner_rule_would_price():
     of the 61 gated rows carried a projection surplus.
     """
     src = (ROOT / "bayes_trade_value.py").read_text(encoding="utf-8")
-    i = src.index("if pk in proj_sur:")
+    # 452b2940 keys the projection branch on the mlbam-joined ppk.
+    i = src.index("if ppk in proj_sur:")
     j = src.index("_has_control_window(r)")
     assert i < j, (
         "the control-window gate now runs BEFORE the projection branch, so it can "

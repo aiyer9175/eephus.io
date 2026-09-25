@@ -63,7 +63,7 @@ def test_every_render_site_that_shows_a_team_mounts_the_note():
     # 40-char slice was.
     mounts = [i for i in banners
               if js[max(0, i - 9):i] != "function "
-              and "return bannerHTML(DATA)" not in js[max(0, i - 30):i + 30]]
+              and "function banner() { return bannerHTML(DATA" not in js[max(0, i - 30):i + 30]]
     assert len(mounts) >= 4, (
         f"only {len(mounts)} banner mount(s) found; the detector has stopped "
         f"seeing the render sites it is supposed to police")
@@ -79,20 +79,25 @@ def test_every_render_site_that_shows_a_team_mounts_the_note():
 
 
 def test_the_note_is_mounted_with_each_board_own_payload():
-    """A shared payload would misreport three boards: the counts differ."""
+    """A shared payload would misreport three boards: the counts differ.
+
+    Every board mounts the note through sectionBasis(sec, live, history)
+    (e654c440 folded the Defense board's defenseBasis() into it), which hands
+    the note the history file's own block on a past-season pill (the
+    CLOSED-season sentence) and the live board's otherwise."""
     js = _js()
-    for payload in ("DATA", "starterData", "hitterData", "leverageData"):
-        assert f"teamBasisNote({payload})" in js, (
+    for sec, payload, hist in (("bullpen", "DATA", "HISTORY"),
+                               ("starters", "starterData", "STARTER_HISTORY"),
+                               ("hitters", "hitterData", "HITTER_HISTORY"),
+                               ("leverage", "leverageData", "leverageHistory"),
+                               ("defense", "defenseData", "DEFENSE_HISTORY")):
+        assert f'teamBasisNote(sectionBasis("{sec}", {payload}, {hist}))' in js, (
             f"the note is not mounted with {payload}, so that board either shows "
             f"nothing or shows another board's row counts"
         )
-    # The Defense board mounts the note through defenseBasis(), which hands it
-    # the history file's own block on a past-season pill (the CLOSED-season
-    # sentence) and the live board's otherwise.
-    assert "teamBasisNote(defenseBasis())" in js
-    body = js.split("function defenseBasis()")[1].split("\n  }")[0]
-    assert "DEFENSE_HISTORY" in body and "defenseData" in body, (
-        "defenseBasis() no longer chooses between the live and the history payload")
+    body = js.split("function sectionBasis(sec, live, hist)")[1].split("\n  }")[0]
+    assert "return live" in body and "hist" in body, (
+        "sectionBasis() no longer chooses between the live and the history payload")
 
 
 def test_every_served_board_carries_the_block():
