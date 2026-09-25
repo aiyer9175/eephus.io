@@ -1,0 +1,13 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+# Test and tooling dependencies. The render tests skip without playwright
+# (plus `python -m playwright install chromium`) and test_no_undefined_names.py
+# skips without ruff, so a gate that installs only requirements.txt runs
+# neither (X04-09).
+-r requirements.txt
+playwright>=1.40
+ruff>=0.5
+pillow>=10        # tools/generate_brand_assets.py
+packaging>=23     # tools/freeze_constraints.py marker evaluation

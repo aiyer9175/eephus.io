@@ -12,3 +12,12 @@ markdown>=3.5          # build_site.py: render content/articles/*.md -> static a
 orjson>=3.9            # storage export serializer: 3-5x faster dumps of the 60MB+ payloads
 py_mini_racer  # CollegeSavant JS smoke test (test_collegesavant_smoke.py)
 pyyaml>=6.0    # value_framework/bayes_trade_value/fa_class/valuation_sets: config/valuation_sets/*.yaml
+# Imported directly and until 2026-09-25 only arrived through other packages
+# (X04-04). Floors here; exact versions of one machine in constraints-local.txt.
+numpy>=1.26       # about 150 modules
+pandas>=2.0       # about 35 modules
+scipy>=1.11
+joblib>=1.3       # model bundles (model/*.joblib)
+pyarrow>=14       # fielding.py, parquet readers
+urllib3>=2.0      # retry adapters beside requests
+statsmodels>=0.14 # value_framework.py fit only (ordered logit), not the nightly
