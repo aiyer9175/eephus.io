@@ -438,9 +438,11 @@
     var arrow = sort.dir < 0 ? "&#9662;" : "&#9652;";
     function th(key, label, title, small) {
       var on = sort.key === key;
+      // The title rides the th, so the head keeps its definition (Ladder yrs
+      // and Total remaining say what they are not) for any reader of the head.
       return '<th scope="col" aria-sort="' + (on ? (sort.dir < 0 ? "descending" : "ascending") : "none") +
-        '" data-export-text="' + esc(label) + '"><button type="button" class="arb-sort" data-asort="' + key +
-        '" title="' + esc(title) + '">' + label + '<span class="arb-sort-ind" aria-hidden="true">' +
+        '" title="' + esc(title) + '" data-export-text="' + esc(label) + '"><button type="button" class="arb-sort" data-asort="' + key +
+        '">' + label + '<span class="arb-sort-ind" aria-hidden="true">' +
         (on ? arrow : "") + "</span>" + (small ? "<small>" + small + "</small>" : "") + "</button></th>";
     }
     var head =
