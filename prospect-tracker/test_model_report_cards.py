@@ -268,6 +268,105 @@ def test_no_served_card_stars_a_leg_its_artifact_does_not_resolve():
 
 
 # --------------------------------------------------------------------------- #
+# Census X01-03 (2026-09-25): the card's baseline is named, and a +index card
+# shows its gated parent beside the naive stat
+# --------------------------------------------------------------------------- #
+# HEM+ printed 0.412 against AVG 0.235 with a star while its own artifact holds
+# raw wOBA at 0.4087 (gap lo95 -0.0096, a tie); DEM+ printed fielding
+# percentage 0.0111 beside a raw rate of 0.4531; SEM+ and REM+ printed ERA beside
+# raw FIP. The bar carried no name, so the reader could not tell which
+# comparator it was. Each of these four rows was gated on two legs, beat the
+# naive stat AND stay non-inferior to the parent, so the card now shows both,
+# with the parent leg's resolvability read off the artifact's own gap lo95.
+# The parent is the one the gate names (raw wOBA for HEM+, not OPS): the HEM
+# re-gate document forbids adding a post-hoc baseline to a settled row.
+PARENT_LEGS = {
+    "hem_plus": ("forward_spearman_vs_wOBA_next.avg",
+                 "forward_spearman_vs_wOBA_next.raw_woba", "gap_ci_vs_raw_woba.lo95"),
+    "sem_plus": ("forward_spearman_vs_RA9_next.era",
+                 "forward_spearman_vs_RA9_next.raw_fip", "gap_ci_vs_raw_fip.lo95"),
+    "rem_plus": ("forward_spearman_vs_RA9_next.era",
+                 "forward_spearman_vs_RA9_next.raw_fip",
+                 "gap_ci_vs_RA9_next.vs_raw_fip.lo95"),
+    "dem_plus": ("forward_spearman_vs_rate_next.fld_pct",
+                 "forward_spearman_vs_rate_next.raw_rate", "gap_ci_vs_raw_rate.lo95"),
+}
+
+
+def test_every_card_names_its_baseline():
+    """A bar pair whose baseline has no name cannot be read; with two legs on
+    one card it cannot even be told apart."""
+    missing = [f"{m['model_id']} {h['label']!r}" for m in _cards()
+               for h in m["card"]["headline"]
+               if not (isinstance(h.get("baseline_label"), str)
+                       and h["baseline_label"].strip())]
+    assert not missing, "card legs with no baseline_label: " + "; ".join(missing)
+
+
+def test_plus_index_cards_carry_the_naive_and_the_parent_leg():
+    rows = {m["model_id"]: m for m in _cards()}
+    for mid, (naive, parent, lo95) in PARENT_LEGS.items():
+        spec = rows[mid]["card"].get("derived_from")
+        assert spec, f"{mid}: card is typed; it must read its artifact"
+        baselines = [hs.get("baseline") for hs in spec["headline"]]
+        assert naive in baselines, f"{mid}: the gated naive leg is gone"
+        assert parent in baselines, (
+            f"{mid}: the card bars the model against the naive stat only, while "
+            f"its artifact holds the parent it must not lose to ({parent})")
+        hs = spec["headline"][baselines.index(parent)]
+        assert hs.get("resolvable") == {"above_zero": lo95}, (
+            f"{mid}: the parent leg's resolvability must be read off {lo95}")
+
+
+def test_a_tie_with_the_parent_carries_no_star():
+    """HEM+ and DEM+ are ties with their parents (lo95 below zero). The leg
+    shows, unstarred, and says in words that it is not a win."""
+    ctx = _card_js()
+    rows = {m["model_id"]: m for m in _cards()}
+    for mid in ("hem_plus", "dem_plus"):
+        leg = next(h for h in rows[mid]["card"]["headline"]
+                   if "parent" in h["baseline_label"])
+        assert leg["resolvable"] is False
+        html = _render(ctx, {"headline": [leg]})
+        assert html.count(STAR) == 0
+        assert "not a resolved win" in html
+        assert "vs " + leg["baseline_label"] in html
+
+
+def test_fwdhem_card_does_not_star_its_unresolved_lead():
+    """The xHEM+ Blend card starred 0.461 over xwOBA 0.454 while the re-gate
+    arm it quotes reads D4 v1 lo95 -0.0012 and its own notes say not
+    separable. It reads the arm's lo95_gt_0 and verdict now."""
+    row = next(m for m in _cards() if m["model_id"] == "fwdhem_plus")
+    h = row["card"]["headline"][0]
+    assert row["card"]["derived_from"]["headline"][0]["resolvable"] == (
+        "arms.A2_fwdhem_plus.ladder.D4.v1.lo95_gt_0")
+    assert h["resolvable"] is False
+    assert _render(_card_js(), {"headline": [h]}).count(STAR) == 0
+
+
+def test_resolvable_can_be_read_from_a_gap_lower_bound():
+    import pytest
+    card = {"headline": [{"label": "x", "champion": 0, "baseline": 0, "better": "higher"}]}
+    art = {"r": {"m": 0.41, "b": 0.40}, "ci": {"lo95": -0.001, "lo95b": 0.002}}
+    spec = {"headline": [{"champion": "r.m", "baseline": "r.b",
+                          "resolvable": {"above_zero": "ci.lo95"}}]}
+    got = mr.derive_card({"card": dict(card, derived_from=spec)}, art)
+    assert got["headline"][0]["resolvable"] is False
+    spec["headline"][0]["resolvable"] = {"above_zero": "ci.lo95b"}
+    got = mr.derive_card({"card": dict(card, derived_from=spec)}, art)
+    assert got["headline"][0]["resolvable"] is True
+    for bad in ({"above_zero": "r"}, {"below_zero": "ci.lo95"}):
+        spec["headline"][0]["resolvable"] = bad
+        with pytest.raises((ValueError, KeyError)):
+            mr.derive_card({"card": dict(card, derived_from=spec)}, art)
+    spec["headline"][0]["resolvable"] = "ci.lo95"
+    spec["headline"][0]["champion"] = {"above_zero": "ci.lo95"}
+    with pytest.raises(ValueError):
+        mr.derive_card({"card": dict(card, derived_from=spec)}, art)
+
+
+# --------------------------------------------------------------------------- #
 # Part 2: the /models/ accountability hub
 # --------------------------------------------------------------------------- #
 @functools.lru_cache(maxsize=1)

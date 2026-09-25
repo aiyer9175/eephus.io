@@ -4404,9 +4404,18 @@ function _cardHeadline(card) {
     // The artifact's verdict, verbatim, when the card is derived: the reader
     // sees "not resolvable at this power" beside a bar pair rather than
     // having to infer it from a missing star.
-    const said = typeof h.verdict === "string" && h.verdict ? `; ${escapeHtml(h.verdict)}` : "";
+    // A leg the artifact marks unresolved with no verdict string of its own
+    // still says so in words, so a missing star is never the only signal.
+    const said = typeof h.verdict === "string" && h.verdict ? `; ${escapeHtml(h.verdict)}`
+      : (h.resolvable === false ? "; not a resolved win" : "");
+    // The baseline bar is named: a card with two legs (the naive stat and the
+    // parent it refines) otherwise shows two unlabelled baseline bars. A label
+    // that already names it ("blend vs best single input") is not repeated.
+    const bl = typeof h.baseline_label === "string" ? h.baseline_label : "";
+    const vs = bl && !String(h.label || "").toLowerCase().includes(bl.toLowerCase())
+      ? `, vs ${escapeHtml(bl)}` : "";
     return `<div class="gl-card-metric">
-      <div class="gl-card-metriclab">${escapeHtml(h.label)} <span class="gl-card-dir">(${dir}${said})</span></div>
+      <div class="gl-card-metriclab">${escapeHtml(h.label)}${vs} <span class="gl-card-dir">(${dir}${said})</span></div>
       ${bar(h.champion, true)}${bar(h.baseline, false)}</div>`;
   }).join("");
   const foot = [card.n ? `n = ${escapeHtml(String(card.n))}` : "", escapeHtml(card.window || "")]

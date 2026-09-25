@@ -125,6 +125,9 @@ def validate(reg: dict | None = None) -> list[str]:
                         problems.append(f"{mid}: card headline champion/baseline must be numeric")
                     if h.get("better") not in ("lower", "higher"):
                         problems.append(f"{mid}: card headline 'better' must be 'lower' or 'higher'")
+                    bl = h.get("baseline_label")
+                    if bl is not None and not (isinstance(bl, str) and bl.strip()):
+                        problems.append(f"{mid}: card headline baseline_label must be a non-empty string")
             if card.get("derived_from") is not None and art:
                 problems += _derived_card_problems(mid, card, art)
     return problems
@@ -143,6 +146,12 @@ def validate(reg: dict | None = None) -> list[str]:
 # `digits` on the spec rounds the derived numbers for display, because the card
 # prints the value as stored and an artifact carries full float precision
 # (fa_gate1_eval.json's WAR MAE is 0.5156555204307136).
+#
+# Many +index artifacts carry a bootstrap interval on the gap but no per-leg
+# bool (hem_plus_eval.json: gap_ci_vs_raw_woba.lo95 -0.0096). For those a
+# `resolvable` spec may be {"above_zero": "<path to the gap's lo95>"}, and the
+# card reads resolvable = lo95 > 0, so the flag is still read off the artifact
+# and never typed.
 _CARD_DERIVABLE = {
     "champion": "number",
     "baseline": "number",
@@ -204,6 +213,16 @@ def derive_card(m: dict, doc=None) -> dict | None:
             kind = _CARD_DERIVABLE.get(field)
             if kind is None:
                 raise ValueError(f"card field {field!r} is not derivable")
+            if isinstance(path, dict):
+                if field != "resolvable" or set(path) != {"above_zero"}:
+                    raise ValueError(f"card {field} spec {path!r}: only resolvable "
+                                     "takes {'above_zero': path}")
+                bound = _dig_path(doc, path["above_zero"])
+                if not _typed(bound, "number"):
+                    raise ValueError(f"card resolvable bound {path['above_zero']} "
+                                     "is not a number")
+                nh[field] = bound > 0
+                continue
             val = _dig_path(doc, path)
             if not _typed(val, kind):
                 raise ValueError(f"card {field} path {path} is not a {kind}")

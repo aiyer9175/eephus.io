@@ -389,16 +389,17 @@
    "stale": false,
    "artifact_age_days": 0,
    "card": {
-    "n": 4316,
+    "n": 4318,
     "window": "pooled common set, every scored rater on identical rows",
     "headline": [
      {
       "label": "Future-contributor separation (AUC), blend vs best single input",
-      "champion": 0.734,
-      "baseline": 0.7182,
+      "champion": 0.7341,
+      "baseline": 0.7184,
       "better": "higher",
       "resolvable": true,
-      "verdict": "the blend wins"
+      "verdict": "the blend wins",
+      "baseline_label": "best single input"
      }
     ],
     "derived_from": {
@@ -533,7 +534,8 @@
       "label": "Realized career eWAR, top overall pick vs late-round (picks 301-500) bucket",
       "champion": 29.5,
       "baseline": 0.29,
-      "better": "higher"
+      "better": "higher",
+      "baseline_label": "picks 301-500"
      }
     ]
    }
@@ -716,13 +718,15 @@
       "label": "ETA error (years, MAE)",
       "champion": 1.43,
       "baseline": 1.98,
-      "better": "lower"
+      "better": "lower",
+      "baseline_label": "naive level-to-years table"
      },
      {
       "label": "Within one year",
       "champion": 0.585,
       "baseline": 0.378,
-      "better": "higher"
+      "better": "higher",
+      "baseline_label": "naive level-to-years table"
      }
     ]
    }
@@ -818,7 +822,8 @@
       "label": "Contract guarantee error ($M MAE)",
       "champion": 9.69,
       "baseline": 11.12,
-      "better": "lower"
+      "better": "lower",
+      "baseline_label": "nearest-comps median"
      }
     ]
    }
@@ -903,7 +908,8 @@
       "champion": 0.516,
       "baseline": 0.624,
       "better": "lower",
-      "resolvable": true
+      "resolvable": true,
+      "baseline_label": "5/4/3 carry-forward"
      }
     ],
     "derived_from": {
@@ -1024,7 +1030,8 @@
       "label": "System rank vs realized surplus (Spearman)",
       "champion": 0.509,
       "baseline": 0.227,
-      "better": "higher"
+      "better": "higher",
+      "baseline_label": "prospect count"
      }
     ]
    }
@@ -1144,9 +1151,24 @@
       "label": "Next-year offense (Spearman), served column",
       "champion": 0.461,
       "baseline": 0.454,
-      "better": "higher"
+      "better": "higher",
+      "baseline_label": "Savant xwOBA alone",
+      "resolvable": false,
+      "verdict": "DEMOTED: not separable from its baseline on the SERVED construction at this n under either convention."
      }
-    ]
+    ],
+    "derived_from": {
+     "n": "n_forward_pairs.A2",
+     "digits": 3,
+     "headline": [
+      {
+       "champion": "arms.A2_fwdhem_plus.ladder.D4.v1.rho_primary",
+       "baseline": "arms.A2_fwdhem_plus.ladder.D4.v1.rho_baseline",
+       "resolvable": "arms.A2_fwdhem_plus.ladder.D4.v1.lo95_gt_0",
+       "verdict": "arms.A2_fwdhem_plus.verdict_reason"
+      }
+     ]
+    }
    }
   },
   {
@@ -1186,7 +1208,7 @@
    "metric": "forward-chained Spearman Y->Y+1 wOBA (seeded bootstrap CI on the rho gap)",
    "eval_artifact": "data/hem_plus_eval.json",
    "verdict": "validated",
-   "notes": "SHIPPED 2026-07-05, the hitter analog of REM+/SEM+. Each wOBA component (unintentional walks, HBP, singles, doubles, triples, HR) is empirical-Bayes-shrunk toward the hitter pool by its own reliability constant (walks fast, extra-base hits slow), recombined with the FanGraphs wOBA linear weights, and re-anchored so the pool average scores 100; HEM+ = 100 * shrunk wOBA / pool wOBA (a ratio-to-league index, the wRC+/OPS+ family, NOT a z-score). Forward-chained OOS 2012-2024 (ex-2020, 3372 Y->Y+1 pairs): HEM+ predicts next-year wOBA at rho 0.4123 vs raw wOBA 0.4089, OPS 0.411, AVG 0.2348; bootstrap CI on the rho gap decisively beats AVG (lo95 +0.145) and holds even-or-ahead of its raw-wOBA parent (lo95 -0.009 >= -0.01), so the component shrinkage + hitter-pool anchoring earn their place. Volume (PA), baserunning (SB), and the slash line are shown as CONTEXT, never in the skill number. Data from the cached StatsAPI season hitting leaderboard (fa_sources). Harness tools/hem_plus_lab.py; core hem_plus.py (reuses the validated rem_plus shrink machinery). PRIOR, NOT A GATE RESULT (recorded 2026-09-18 per docs/HEM_RIV_REGATE_GATE.md R1-10): an independent bake-off on 2026-09-17 read HEM+ LOSING to Savant xwOBA outright at forward rho 0.4084 against 0.4456, gap lo95 -0.0601 under v1 and -0.0705 under v2, on 1,871 pairs. That does NOT fail the gate this row holds, which was run against AVG and raw wOBA and never against xwOBA, and adding a post-hoc baseline to a settled row is the move the gate forbids. It is carried here as a prior with its source and date; a separate pre-registration for a hem_plus re-gate against xwOBA is owed at the next re-baseline (R1-12). The display question that follows, whether HEM+ stays the primary hitter skill column beside xHEM+, is open.",
+   "notes": "SHIPPED 2026-07-05, the hitter analog of REM+/SEM+. Each wOBA component (unintentional walks, HBP, singles, doubles, triples, HR) is empirical-Bayes-shrunk toward the hitter pool by its own reliability constant (walks fast, extra-base hits slow), recombined with the FanGraphs wOBA linear weights, and re-anchored so the pool average scores 100; HEM+ = 100 * shrunk wOBA / pool wOBA (a ratio-to-league index, the wRC+/OPS+ family, NOT a z-score). Forward-chained OOS 2012-2024 (ex-2020, 3372 Y->Y+1 pairs): HEM+ predicts next-year wOBA at rho 0.4119 vs raw wOBA 0.4087, OPS 0.4108, AVG 0.2347; bootstrap CI on the rho gap decisively beats AVG (lo95 +0.145) and stays inside the non-inferiority margin of its raw-wOBA parent (lo95 -0.0096 >= -0.01), a tie with its parent and not a win, so the component shrinkage + hitter-pool anchoring earn their place. Volume (PA), baserunning (SB), and the slash line are shown as CONTEXT, never in the skill number. Data from the cached StatsAPI season hitting leaderboard (fa_sources). Harness tools/hem_plus_lab.py; core hem_plus.py (reuses the validated rem_plus shrink machinery). PRIOR, NOT A GATE RESULT (recorded 2026-09-18 per docs/HEM_RIV_REGATE_GATE.md R1-10): an independent bake-off on 2026-09-17 read HEM+ LOSING to Savant xwOBA outright at forward rho 0.4084 against 0.4456, gap lo95 -0.0601 under v1 and -0.0705 under v2, on 1,871 pairs. That does NOT fail the gate this row holds, which was run against AVG and raw wOBA and never against xwOBA, and adding a post-hoc baseline to a settled row is the move the gate forbids. It is carried here as a prior with its source and date; a separate pre-registration for a hem_plus re-gate against xwOBA is owed at the next re-baseline (R1-12). The display question that follows, whether HEM+ stays the primary hitter skill column beside xHEM+, is open.",
    "last_checked": "2026-09-24",
    "stale": false,
    "artifact_age_days": 25,
@@ -1198,9 +1220,39 @@
       "label": "Next-year offense (Spearman)",
       "champion": 0.412,
       "baseline": 0.235,
-      "better": "higher"
+      "better": "higher",
+      "baseline_label": "AVG",
+      "resolvable": true
+     },
+     {
+      "label": "Next-year offense (Spearman)",
+      "champion": 0.412,
+      "baseline": 0.409,
+      "better": "higher",
+      "baseline_label": "raw wOBA (its parent)",
+      "resolvable": false
      }
-    ]
+    ],
+    "derived_from": {
+     "n": "n_forward_pairs",
+     "digits": 3,
+     "headline": [
+      {
+       "champion": "forward_spearman_vs_wOBA_next.hem_plus",
+       "baseline": "forward_spearman_vs_wOBA_next.avg",
+       "resolvable": {
+        "above_zero": "gap_ci_vs_avg.lo95"
+       }
+      },
+      {
+       "champion": "forward_spearman_vs_wOBA_next.hem_plus",
+       "baseline": "forward_spearman_vs_wOBA_next.raw_woba",
+       "resolvable": {
+        "above_zero": "gap_ci_vs_raw_woba.lo95"
+       }
+      }
+     ]
+    }
    }
   },
   {
@@ -1224,7 +1276,8 @@
       "label": "Next-year offense (Spearman)",
       "champion": 0.455,
       "baseline": 0.428,
-      "better": "higher"
+      "better": "higher",
+      "baseline_label": "single-season HEM+"
      }
     ]
    }
@@ -1248,7 +1301,16 @@
       "champion": 0.4597,
       "baseline": 0.0111,
       "better": "higher",
-      "resolvable": true
+      "resolvable": true,
+      "baseline_label": "fielding percentage"
+     },
+     {
+      "label": "Next-year fielding rate (Spearman)",
+      "champion": 0.4597,
+      "baseline": 0.4531,
+      "better": "higher",
+      "baseline_label": "raw rate (its parent)",
+      "resolvable": false
      }
     ],
     "derived_from": {
@@ -1258,6 +1320,13 @@
        "champion": "forward_spearman_vs_rate_next.dem_plus",
        "baseline": "forward_spearman_vs_rate_next.fld_pct",
        "resolvable": "gate.clauses_v1.beats_fld_pct"
+      },
+      {
+       "champion": "forward_spearman_vs_rate_next.dem_plus",
+       "baseline": "forward_spearman_vs_rate_next.raw_rate",
+       "resolvable": {
+        "above_zero": "gap_ci_vs_raw_rate.lo95"
+       }
       }
      ]
     }
@@ -1434,7 +1503,8 @@
       "label": "WAR-path rank vs outcomes (Spearman)",
       "champion": 0.193,
       "baseline": 0.154,
-      "better": "higher"
+      "better": "higher",
+      "baseline_label": "MiLB-stats ridge"
      }
     ]
    }
@@ -1774,9 +1844,39 @@
       "label": "Next-year run prevention (Spearman)",
       "champion": 0.236,
       "baseline": 0.09,
-      "better": "higher"
+      "better": "higher",
+      "baseline_label": "ERA",
+      "resolvable": true
+     },
+     {
+      "label": "Next-year run prevention (Spearman)",
+      "champion": 0.236,
+      "baseline": 0.211,
+      "better": "higher",
+      "baseline_label": "raw FIP (its parent)",
+      "resolvable": true
      }
-    ]
+    ],
+    "derived_from": {
+     "n": "n_forward_pairs",
+     "digits": 3,
+     "headline": [
+      {
+       "champion": "forward_spearman_vs_RA9_next.rem_plus",
+       "baseline": "forward_spearman_vs_RA9_next.era",
+       "resolvable": {
+        "above_zero": "gap_ci_vs_RA9_next.vs_era.lo95"
+       }
+      },
+      {
+       "champion": "forward_spearman_vs_RA9_next.rem_plus",
+       "baseline": "forward_spearman_vs_RA9_next.raw_fip",
+       "resolvable": {
+        "above_zero": "gap_ci_vs_RA9_next.vs_raw_fip.lo95"
+       }
+      }
+     ]
+    }
    }
   },
   {
@@ -1907,9 +2007,39 @@
       "label": "Next-year run prevention (Spearman)",
       "champion": 0.417,
       "baseline": 0.284,
-      "better": "higher"
+      "better": "higher",
+      "baseline_label": "ERA",
+      "resolvable": true
+     },
+     {
+      "label": "Next-year run prevention (Spearman)",
+      "champion": 0.417,
+      "baseline": 0.382,
+      "better": "higher",
+      "baseline_label": "raw FIP (its parent)",
+      "resolvable": true
      }
-    ]
+    ],
+    "derived_from": {
+     "n": "n_forward_pairs",
+     "digits": 3,
+     "headline": [
+      {
+       "champion": "forward_spearman_vs_RA9_next.sem_plus",
+       "baseline": "forward_spearman_vs_RA9_next.era",
+       "resolvable": {
+        "above_zero": "gap_ci_vs_era.lo95"
+       }
+      },
+      {
+       "champion": "forward_spearman_vs_RA9_next.sem_plus",
+       "baseline": "forward_spearman_vs_RA9_next.raw_fip",
+       "resolvable": {
+        "above_zero": "gap_ci_vs_raw_fip.lo95"
+       }
+      }
+     ]
+    }
    }
   },
   {
@@ -1968,24 +2098,26 @@
    "stale": false,
    "artifact_age_days": 0,
    "card": {
-    "n": 4316,
+    "n": 4318,
     "window": "pooled common set, every scored rater on identical rows",
     "headline": [
      {
       "label": "Rank accuracy vs realized WAR (Spearman), consensus blend vs best single source",
       "champion": 0.2853,
-      "baseline": 0.2867,
+      "baseline": 0.2868,
       "better": "higher",
       "resolvable": false,
-      "verdict": "not resolvable at this power"
+      "verdict": "not resolvable at this power",
+      "baseline_label": "best single source"
      },
      {
       "label": "Useful-asset AUC, consensus blend vs best single source",
-      "champion": 0.734,
-      "baseline": 0.7182,
+      "champion": 0.7341,
+      "baseline": 0.7184,
       "better": "higher",
       "resolvable": true,
-      "verdict": "the blend wins"
+      "verdict": "the blend wins",
+      "baseline_label": "best single source"
      }
     ],
     "derived_from": {
@@ -3711,9 +3843,24 @@
       "label": "Next-year offense (Spearman), served column",
       "champion": 0.462,
       "baseline": 0.411,
-      "better": "higher"
+      "better": "higher",
+      "baseline_label": "actual wOBA",
+      "resolvable": true,
+      "verdict": "The SERVED construction clears its baseline under BOTH conventions after Holm (k=2)."
      }
-    ]
+    ],
+    "derived_from": {
+     "n": "n_forward_pairs.A1",
+     "digits": 3,
+     "headline": [
+      {
+       "champion": "arms.A1_xhem_plus.ladder.D4.v1.rho_primary",
+       "baseline": "arms.A1_xhem_plus.ladder.D4.v1.rho_baseline",
+       "resolvable": "arms.A1_xhem_plus.ladder.D4.v1.lo95_gt_0",
+       "verdict": "arms.A1_xhem_plus.verdict_reason"
+      }
+     ]
+    }
    }
   },
   {
