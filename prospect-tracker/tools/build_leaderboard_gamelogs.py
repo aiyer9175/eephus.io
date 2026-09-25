@@ -19,22 +19,24 @@ Slice contract (compact, newest-first games):
         "<player_key>": {
           "is_pitcher": false,
           "games": [
-            {"d","lvl","pa","ab","h","2b","3b","hr","bb","so","sb","r","rbi"},
+            {"d","lvl","pa","ab","h","2b","3b","hr","bb","so","sb","r","rbi","hbp","sf"},
             ...                         # hitter box line
           ]
         },
         "<player_key>": {
           "is_pitcher": true,
           "games": [
-            {"d","lvl","ip","k","er","r","h","bb","hr","bf"}, ...
+            {"d","lvl","ip","k","er","r","h","bb","hr","bf","hbp"}, ...
           ]
         }
       }
     }
 
-POC mode (default): only the top `--limit` prospects by overall_rank are
-pulled, so the slice is small and fast to build for UX review. The pipeline
-phase drops `--limit` to cover the full active pool.
+Coverage: only the top `limit` prospects by overall_rank are pulled (the
+nightly d5e call in run_monthly passes limit=200 under a 210 s soft budget), so
+window boards and Splits reach only those players; limit=0 covers the full
+active pool. The slice records `limit` and `n_candidates` so the frontend can
+caption what it covers.
 """
 from __future__ import annotations
 
@@ -73,6 +75,7 @@ def _hitter_game(g: dict) -> dict:
         "2b": g.get("doub"), "3b": g.get("trip"), "hr": g.get("hr"),
         "bb": g.get("bb"), "so": g.get("so"), "sb": g.get("sb"),
         "r": g.get("r"), "rbi": g.get("rbi"), "home": _home_flag(g),
+        "hbp": g.get("hbp"), "sf": g.get("sf"),
     }
 
 
@@ -82,6 +85,7 @@ def _pitcher_game(g: dict) -> dict:
         "ip": g.get("ip"), "k": g.get("k"), "er": g.get("er"),
         "r": g.get("r"), "h": g.get("h"), "bb": g.get("bb"),
         "hr": g.get("hr"), "bf": g.get("bf"), "home": _home_flag(g),
+        "hbp": g.get("hbp"),
     }
 
 
@@ -226,6 +230,10 @@ def build(season: int | None = None,
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
         "season": season,
         "as_of": as_of,
+        # Coverage meta (census M02-07): the frontend captions window boards and
+        # Splits with it. 0 = the full active pool.
+        "limit": int(limit or 0),
+        "n_candidates": len(cand),
         "players": out_players,
     }
     OUT.write_text(json.dumps(slice_obj, separators=(",", ":")), encoding="utf-8")

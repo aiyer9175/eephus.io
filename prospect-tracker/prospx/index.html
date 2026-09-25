@@ -15135,16 +15135,17 @@ function _l15OpsChip(p) {
   if (games[0].is_pitcher) return "";                       // hitters only
   const rank = getEfvRank(p);
   if (rank == null || rank > 200) return "";                // top ~200 gate
-  let n = 0, ab = 0, h = 0, bb = 0, doub = 0, trip = 0, hr = 0;
+  let n = 0, ab = 0, h = 0, bb = 0, doub = 0, trip = 0, hr = 0, hbp = 0, sf = 0, hbpKnown = true;
   for (const g of games) {
     if (!g || g.is_pitcher || g.ab == null) continue;       // skip games lacking AB data
     n++;
     ab += g.ab || 0; h += g.h || 0; bb += g.bb || 0;
     doub += g.doub || 0; trip += g.trip || 0; hr += g.hr || 0;
+    if (g.hbp == null || g.sf == null) hbpKnown = false; else { hbp += g.hbp; sf += g.sf; }
   }
   if (n < 8 || ab <= 0) return "";                          // sample gate
   const oneB = h - doub - trip - hr;
-  const obp = (ab + bb) > 0 ? (h + bb) / (ab + bb) : null;
+  const obp = _lbObp({ ab, h, bb, hbp, sf, hbpKnown });
   const slg = (oneB + 2 * doub + 3 * trip + 4 * hr) / ab;
   if (obp == null || !isFinite(slg)) return "";
   const ops = obp + slg;
@@ -19893,10 +19894,29 @@ function _lbOutsToIpStr(outs) {
   return `${Math.floor(outs / 3)}.${outs % 3}`;
 }
 
+// OBP and FIP with HBP / SF (census M02-08). Box lines built since 2026-09-25 carry
+// hbp and sf; the aggregate uses the standard formulas only when EVERY game in the
+// window carries them (hbpKnown), else the older (H+BB)/(AB+BB) and HBP-less FIP.
+function _lbObp(t) {
+  if (t.hbpKnown) {
+    const den = t.ab + t.bb + t.hbp + t.sf;
+    return den > 0 ? (t.h + t.bb + t.hbp) / den : null;
+  }
+  return (t.ab + t.bb) > 0 ? (t.h + t.bb) / (t.ab + t.bb) : null;
+}
+function _lbFip(t) {
+  const ip = t.outs / 3;
+  if (ip <= 0) return null;
+  const free = t.bb + (t.hbpKnown ? t.hbp : 0);
+  return (13 * t.hr + 3 * free - 2 * t.k) / ip + _LB_FIP_CONST;
+}
 function _lbAggHitter(games) {
   const t = { g: games.length, pa: 0, ab: 0, h: 0, _2b: 0, _3b: 0, hr: 0,
-              bb: 0, so: 0, sb: 0, r: 0, rbi: 0, lastLvl: null, lastDate: "" };
+              bb: 0, so: 0, sb: 0, r: 0, rbi: 0, hbp: 0, sf: 0,
+              hbpKnown: games.length > 0, lastLvl: null, lastDate: "" };
   for (const x of games) {
+    if (x.hbp == null || x.sf == null) t.hbpKnown = false;
+    else { t.hbp += x.hbp; t.sf += x.sf; }
     t.pa += x.pa || 0; t.ab += x.ab || 0; t.h += x.h || 0;
     t._2b += x["2b"] || 0; t._3b += x["3b"] || 0; t.hr += x.hr || 0;
     t.bb += x.bb || 0; t.so += x.so || 0; t.sb += x.sb || 0;
@@ -19907,8 +19927,10 @@ function _lbAggHitter(games) {
 }
 function _lbAggPitcher(games) {
   const t = { g: games.length, outs: 0, k: 0, er: 0, r: 0, h: 0, bb: 0,
-              hr: 0, bf: 0, bfKnown: true, lastLvl: null, lastDate: "" };
+              hr: 0, bf: 0, bfKnown: true, hbp: 0, hbpKnown: games.length > 0,
+              lastLvl: null, lastDate: "" };
   for (const x of games) {
+    if (x.hbp == null) t.hbpKnown = false; else t.hbp += x.hbp;
     t.outs += _lbIpOuts(x.ip); t.k += x.k || 0; t.er += x.er || 0;
     t.r += x.r || 0; t.h += x.h || 0; t.bb += x.bb || 0; t.hr += x.hr || 0;
     if (x.bf == null) t.bfKnown = false; else t.bf += x.bf;
@@ -19927,7 +19949,7 @@ function _lbWindowStatValue(statKey, t, isP) {
     const ab = t.ab, pa = t.pa;
     const oneB = t.h - t._2b - t._3b - t.hr;
     const avg = ab > 0 ? t.h / ab : null;
-    const obp = (ab + t.bb) > 0 ? (t.h + t.bb) / (ab + t.bb) : null;
+    const obp = _lbObp(t);
     const slg = ab > 0 ? (oneB + 2 * t._2b + 3 * t._3b + 4 * t.hr) / ab : null;
     switch (statKey) {
       case "avg": return avg;
@@ -19948,7 +19970,7 @@ function _lbWindowStatValue(statKey, t, isP) {
     case "era": return 9 * t.er / ip;
     case "whip": return (t.bb + t.h) / ip;
     case "hr_per_9": return 9 * t.hr / ip;
-    case "fip": return (13 * t.hr + 3 * t.bb - 2 * t.k) / ip + _LB_FIP_CONST;
+    case "fip": return _lbFip(t);
     case "pitcher_k_pct": return (t.bfKnown && t.bf > 0) ? 100 * t.k / t.bf : null;
     case "pitcher_bb_pct": return (t.bfKnown && t.bf > 0) ? 100 * t.bb / t.bf : null;
     default: return null;
@@ -19961,7 +19983,7 @@ function _lbWindowRowHitter(t) {
   const ab = t.ab, pa = t.pa;
   const oneB = t.h - t._2b - t._3b - t.hr;
   const avg = ab > 0 ? t.h / ab : null;
-  const obp = (ab + t.bb) > 0 ? (t.h + t.bb) / (ab + t.bb) : null;
+  const obp = _lbObp(t);
   const slg = ab > 0 ? (oneB + 2 * t._2b + 3 * t._3b + 4 * t.hr) / ab : null;
   return {
     level: t.lastLvl, is_pitcher: false,
@@ -20027,6 +20049,18 @@ function _lbWindowDates() {
            label: `Last ${N} days`, asOf };
 }
 
+// What the game-log slice covers (census M02-07): the nightly build pulls the top
+// `limit` prospects by board rank, so window boards and Splits reach only those
+// players. Derived from the slice itself; `limit` is absent on older slices.
+function lbSliceScopeText() {
+  const gl = DATA.leaderboard_gamelogs;
+  const n = gl && gl.players ? Object.keys(gl.players).length : 0;
+  if (!n) return "";
+  const lim = gl.limit ? Number(gl.limit) : 0;
+  return lim
+    ? `covers the top ${lim} prospects by board rank (${n.toLocaleString()} with a game log); everyone else appears only on the Full season board`
+    : `covers the ${n.toLocaleString()} prospects in the game-log slice; everyone else appears only on the Full season board`;
+}
 // Build the window pool: every slice player that clears the WHO filters,
 // aggregated over the date window, gated by sample, scored on the stat.
 function _lbWindowPool(cfg, statKey, opt) {
@@ -20057,6 +20091,10 @@ function _lbWindowPool(cfg, statKey, opt) {
     const v = _lbWindowStatValue(statKey, t, isP);
     if (v == null || !isFinite(v)) continue;
     const r = isP ? _lbWindowRowPitcher(t) : _lbWindowRowHitter(t);
+    // The window row is built from box lines, which carry no org; the Org cell
+    // printed "-" on every window row. The window is current-season, so the
+    // prospect's current org is the org of these games.
+    r.org = p.org; r.season = gl.season;
     pool.push({ p, r, v });
   }
   return pool;
@@ -20134,9 +20172,9 @@ function _splitCaps(games){
 }
 function _splitAgg(games, isP){ return isP ? _lbAggPitcher(games) : _lbAggHitter(games); }
 function _splitHitRates(t){
-  const ab=t.ab, pa=t.pa, oneB=t.h-t._2b-t._3b-t.hr, bip=ab-t.so-t.hr;
+  const ab=t.ab, pa=t.pa, oneB=t.h-t._2b-t._3b-t.hr, bip=ab-t.so-t.hr+(t.hbpKnown?t.sf:0);
   const avg= ab>0? t.h/ab : null;
-  const obp= (ab+t.bb)>0? (t.h+t.bb)/(ab+t.bb) : null;
+  const obp= _lbObp(t);
   const slg= ab>0? (oneB+2*t._2b+3*t._3b+4*t.hr)/ab : null;
   return { avg, obp, slg,
     ops:(obp!=null&&slg!=null)?obp+slg:null,
@@ -20149,7 +20187,7 @@ function _splitPitRates(t){
   const ip=t.outs/3, bf=t.bfKnown?t.bf:null, bip=Math.max(0,(t.h-t.hr)+(t.outs-t.k));
   return {
     era: ip>0?9*t.er/ip:null,
-    fip: ip>0?(13*t.hr+3*t.bb-2*t.k)/ip+_LB_FIP_CONST:null,
+    fip: _lbFip(t),
     whip: ip>0?(t.bb+t.h)/ip:null,
     k_per_9: ip>0?9*t.k/ip:null, bb_per_9: ip>0?9*t.bb/ip:null, hr_per_9: ip>0?9*t.hr/ip:null,
     k_pct: bf?100*t.k/bf:null, bb_pct: bf?100*t.bb/bf:null,
@@ -20275,7 +20313,7 @@ function _rollingPerfChart(games, isP){
     if (isP){ const ip = t.outs/3; if (ip >= 3) v = 9*t.er/ip; }
     else if (t.pa >= 15){
       const oneB = t.h - t._2b - t._3b - t.hr;
-      const obp = (t.ab + t.bb) > 0 ? (t.h + t.bb)/(t.ab + t.bb) : null;
+      const obp = _lbObp(t);
       const slg = t.ab > 0 ? (oneB + 2*t._2b + 3*t._3b + 4*t.hr)/t.ab : null;
       v = (obp != null && slg != null) ? obp + slg : null;
     }
@@ -20303,12 +20341,12 @@ function _rollingPerfChart(games, isP){
   </div>`;
 }
 function _splitFootnote(isP){
-  return `<div class="split-foot">Rates re-aggregated from box-line components over each window (totals summed, then rates derived - never averaged). ${isP?("FIP uses a flat "+_LB_FIP_CONST+" MiLB constant; xFIP / GB% need batted-ball data not in the box line."):"OBP and BABIP omit HBP/SF (absent from box lines); wOBA needs season linear-weights not carried per game."} Cells dim when the sample is below the metric's stabilization point (hover for the threshold). By-level / by-season views index OPS/ISO (or ERA) to that level's average so cohorts stay comparable. Platoon (vs LHP/RHP) needs pitch-level handedness data, which is not available at this level.</div>`;
+  return `<div class="split-foot">Rates re-aggregated from box-line components over each window (totals summed, then rates derived - never averaged). ${isP?("FIP uses a flat "+_LB_FIP_CONST+" MiLB constant and counts HBP when every game carries it; xFIP / GB% need batted-ball data not in the box line."):"OBP counts HBP and SF and BABIP counts SF when every game in the window carries them (box lines built from 2026-09-25); older box lines lack both, and those windows fall back to (H+BB)/(AB+BB). wOBA needs season linear-weights not carried per game."} Cells dim when the sample is below the metric's stabilization point (hover for the threshold). By-level / by-season views index OPS/ISO (or ERA) to that level's average so cohorts stay comparable. Platoon (vs LHP/RHP) needs pitch-level handedness data, which is not available at this level.</div>`;
 }
 function renderSplits(key){
   const host=document.getElementById("splits-body"); if(!host) return;
   const data=_splitGames(key);
-  if(!data){ host.innerHTML=`<div class="state-message" style="font-size:12px;">No game-log data for this player in the current slice (date-windowed splits cover the active pool with an MLBAM id).</div>`; return; }
+  if(!data){ host.innerHTML=`<div class="state-message" style="font-size:12px;">No game-log data for this player in the current slice (the slice ${escapeHtml(lbSliceScopeText() || "is empty in this build")}).</div>`; return; }
   const { games, isP }=data;
   if(!games.length){ host.innerHTML=`<div class="state-message" style="font-size:12px;">No games on file.</div>`; return; }
   const ui=_splitUIFor(key), caps=_splitCaps(games);
@@ -20393,7 +20431,7 @@ function _recentForm(p){
   }
   const t = _lbAggHitter(games); if (t.pa < 15) return null;
   const oneB = t.h-t._2b-t._3b-t.hr;
-  const obp = (t.ab+t.bb)>0?(t.h+t.bb)/(t.ab+t.bb):null;
+  const obp = _lbObp(t);
   const slg = t.ab>0?(oneB+2*t._2b+3*t._3b+4*t.hr)/t.ab:null;
   const ops = (obp!=null&&slg!=null)?obp+slg:null;
   const season = sl.ops!=null?Number(sl.ops):null;
@@ -20713,6 +20751,7 @@ function renderLeaderboards() {
       + `<strong style="color:var(--text-primary);">${state.lbWindow === "custom" ? "Custom range" : escapeHtml(_winDates.label)}</strong>`
       + `<span style="color:var(--text-secondary);font-family:var(--font-mono);"> · ${_lbFmtDate(_winDates.from)} - ${_lbFmtDate(_winDates.to)}</span>`
       + `<span style="color:var(--text-tertiary);"> · rate stats recomputed from per-game box lines · latest game ${_lbFmtDate(_winDates.asOf)}</span>`
+      + (lbSliceScopeText() ? `<div style="color:var(--text-tertiary);">Window boards: the game-log slice ${escapeHtml(lbSliceScopeText())}.</div>` : "")
       + `</div>`
     : "";
 
@@ -20747,7 +20786,7 @@ function renderLeaderboards() {
       ? `the ${escapeHtml(_winDates.label).toLowerCase()} ${escapeHtml(cfg.label)} window`
       : `the ${season} ${escapeHtml(cfg.label)} board`;
     document.getElementById("leaderboard-rows").innerHTML =
-      _staleNote + _winNote + header + `<div class="state-message">No active MiLB ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify for ${_scope} under these filters (min ${minLabel}).</div>`;
+      _staleNote + _winNote + header + `<div class="state-message">No active MiLB ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify for ${_scope} under these filters (min ${minLabel}).${windowMode && lbSliceScopeText() ? ` The game-log slice ${escapeHtml(lbSliceScopeText())}.` : ""}</div>`;
     return;
   }
 

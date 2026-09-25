@@ -453,6 +453,10 @@ def _extract_recent_games(
                 "is_pitcher": False,
                 "pa":  pa, "ab":  ab, "h":  h, "hr": hr, "doub": doub, "trip": trip,
                 "rbi": rbi, "bb":  bb, "so":  so, "sb":  sb, "r":  r,
+                # HBP / SF (census M02-08): OBP = (H+BB+HBP)/(AB+BB+HBP+SF).
+                # None when the feed omits them; consumers then fall back.
+                "hbp": _safe_int(st.get("hitByPitch")),
+                "sf":  _safe_int(st.get("sacFlies")),
             }
         else:
             ip   = _safe_float(st.get("inningsPitched"))
@@ -477,6 +481,7 @@ def _extract_recent_games(
                 "is_pitcher": True,
                 "ip": ip, "k": k, "er": er, "r": r, "h": h, "bb": bb, "hr": hra,
                 "bf": bf,
+                "hbp": _safe_int(st.get("hitByPitch")),   # FIP's free-pass term
             }
         rows.append(entry)
     # Newest first; take limit.
