@@ -1231,17 +1231,30 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     day = day or date.today().isoformat()
     if fantasy is None:
         fantasy = fe._load_json("fantasy.json")
-    if not isinstance(fantasy, dict) or not fantasy.get("players"):
+    # THE SEASON CHECK RUNS FIRST (2026-09-24). It used to run after the corpus
+    # check, so an empty corpus at the end of the season always published
+    # "Pipeline outage" and season_over could never fire. The corpus now says
+    # which season its lines cover (fantasy_export.season_mode): "next_season"
+    # lines are full-season totals for next year, and cutting per-game lines
+    # from them would price a slate that does not exist.
+    if isinstance(fantasy, dict):
+        season = fantasy.get("season")
+        frac = float(fantasy.get("season_fraction") or 0.0)
+        rem_games = int(round(_SEASON_GAMES * max(0.0, 1.0 - frac)))
+        if fantasy.get("mode") == fe.MODE_NEXT_SEASON or (
+                fantasy.get("season_fraction") is not None and rem_games <= 0):
+            return _empty(day, season,
+                          "The regular season is over. Daily slates come back on "
+                          "opening day.", kind="season_over")
+    if not isinstance(fantasy, dict):
         return _empty(day, None,
                       "The rest-of-season projection corpus has not been built yet. "
                       "The nightly build seeds it.", kind="no_corpus")
-    season = fantasy.get("season")
-    frac = float(fantasy.get("season_fraction") or 0.0)
-    rem_games = int(round(_SEASON_GAMES * max(0.0, 1.0 - frac)))
-    if rem_games <= 0:
+    if not fantasy.get("players"):
         return _empty(day, season,
-                      "The regular season is over. Daily slates come back on "
-                      "opening day.", kind="season_over")
+                      "The latest rest-of-season projection corpus came out with no "
+                      "players, so nothing on the slate can be priced.",
+                      kind="no_corpus")
     # An INJECTED `games` list is the caller's own verified slate (the offline
     # CLI, a test, a lab): [] from a caller means "there are no games", which is
     # a supported, tested path. Only a slate we went and got ourselves can be

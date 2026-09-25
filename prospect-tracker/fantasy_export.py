@@ -15,7 +15,10 @@ Projection method (reuses the Gate-1-validated FA engine, no new model):
     components + full-season playing time, blending the partial current season
     (fa_projection.py:587-639).
   * ROS playing time = projected full-season PT × (1 − season_fraction): what's
-    left to play. Counting stats = rates × ROS PT, inverting ISO/BABIP into hit
+    left to play. Once the regular season is over (season_mode, read off the
+    StatsAPI calendar) the payload is stamped mode "next_season" and serves the
+    same engine's full-season line for season + 1, unscaled. The pool floors
+    read the full-season PT in both modes. Counting stats = rates × ROS PT, inverting ISO/BABIP into hit
     types with the SAME algebra as `_assemble_hitter` (fa_projection.py:694-717).
   * Skill counting stats (H, 1B/2B/3B, HR, BB, K, IP) are engine-projected.
     CONTEXT stats the rate model can't produce — R, RBI, SB (hitters); W, QS, H
@@ -98,6 +101,60 @@ _QS_INTERCEPT = 0.3114
 _QS_IP_SLOPE = 0.14
 _QS_FIP_SLOPE = 0.11
 _QS_CEILING = 0.85
+
+# ---------------------------------------------------------------------------
+# THE POOL FLOORS AND THE SEASON MODE (2026-09-24).
+#
+# The floors used to read the REST-OF-SEASON remainder: a hitter left the pool
+# under 20 ROS PA and a pitcher under 8 ROS IP. ROS playing time is the
+# full-season projection times (1 - season_fraction), so the floor tightened
+# every day of the season and emptied the pool before the season ended: on the
+# 2026-09-07 corpus (fraction 0.891) every pitcher was gone past fraction 0.953
+# and every hitter past 0.969, and the 2026-09-23 build (0.976) served 0
+# players. Every rest-of-season board, the streamers, the closer grid, the DFS
+# slate and the betting props went dark with games still left to play. Only
+# 28 relievers survived at 0.891, because a 60-inning arm has under 8 innings
+# left by early September. The floors now read the FULL-SEASON projection, so
+# who is in the pool no longer depends on the date.
+#
+# THE LEVELS. The old floors, read on the full season, ran from 20 PA / 8 IP
+# on opening day to 80 PA / 32 IP at three quarters of the season, and the
+# August builds that sat there served 1,184 to 1,250 players inside the
+# 600KB corpus budget (test_fantasy_split). Carrying 20 / 8 over unchanged
+# measured 1,487 players and 697KB on 2026-09-24, most of the extra rows being
+# arms projected under 30 innings that no fantasy board ranks. 100 PA and 30 IP
+# (a bench bat, a middle reliever) measured 1,203 players, the August size.
+# Hand floors on a display pool, not fitted to any outcome.
+_POOL_FLOOR_PA = 100         # projected full-season plate appearances
+_POOL_FLOOR_IP = 30          # projected full-season innings
+
+# THE SEASON MODE. "ros" scales each full-season projection to what is left of
+# the regular season. "next_season" serves the same engine's full-season line
+# for the following season, unscaled, because once the regular season is over
+# "rest of season" is zero for everyone and a board of zeros is not a board.
+# The switch reads the StatsAPI season calendar (fsched.regular_season_dates);
+# when the calendar cannot be read the PA ratio stands in, and only a ratio that
+# has reached the clamp counts as a finished season.
+MODE_ROS = "ros"
+MODE_NEXT_SEASON = "next_season"
+_SEASON_DONE_FRAC = 0.999
+
+
+def season_mode(frac: float, *, today: date | None = None,
+                regular_season_end: str | None = None) -> str:
+    """MODE_NEXT_SEASON once the regular season is over, else MODE_ROS. Pure.
+
+    With a calendar end date, the season is over on the day after it. Without
+    one, only a PA ratio at the clamp (the league has already played at least
+    last season's plate appearances) counts."""
+    today = today or date.today()
+    if regular_season_end:
+        try:
+            return (MODE_NEXT_SEASON if today > date.fromisoformat(regular_season_end)
+                    else MODE_ROS)
+        except ValueError:
+            pass
+    return MODE_NEXT_SEASON if frac >= _SEASON_DONE_FRAC else MODE_ROS
 
 # ---------------------------------------------------------------------------
 # ONE opponent-offense matchup multiplier, for every board that prices a start.
@@ -401,16 +458,39 @@ def _active_roster_ids():
         return None
 
 
-def build_players(limit: int | None = None) -> dict:
-    """Project the whole pool ROS and score it. Returns the full payload dict."""
+def _season_calendar(season: int) -> dict | None:
+    """The regular-season dates for `season`, or None. Best-effort."""
+    try:
+        return fsched.regular_season_dates(season)
+    except Exception:                                      # noqa: BLE001
+        log.exception("fantasy: season calendar lookup failed")
+        return None
+
+
+def build_players(limit: int | None = None, *, today: date | None = None,
+                  calendar: dict | None | bool = True) -> dict:
+    """Project the whole pool and score it. Returns the full payload dict.
+
+    `today` and `calendar` are injectable for tests: calendar=True looks the
+    season calendar up, a dict ({"start", "end"}) is used as given, and None
+    means unknown (the PA ratio decides the mode)."""
     corpus = fp.build_corpus()
     league = corpus["league"]
     seasons = [s for s in league if isinstance(s, int)]
     cur = max(seasons) if seasons else datetime.now(timezone.utc).year
     curves, _war_map = fp.fitted_models(corpus, cur)
     frac = fp.season_fraction(league, cur)
-    remaining = max(0.0, 1.0 - frac)
-    in_prog = (cur, frac)
+    if calendar is True:
+        calendar = _season_calendar(cur)
+    mode = season_mode(frac, today=today,
+                       regular_season_end=(calendar or {}).get("end"))
+    # The share of each full-season projection this board serves: what is left
+    # of the regular season, or all of next season's.
+    remaining = 1.0 if mode == MODE_NEXT_SEASON else max(0.0, 1.0 - frac)
+    # A finished season is a complete season: the engine then reads it whole,
+    # with no in-progress playing-time blend (fa_projection._pt_expo at 1.0).
+    elapsed = 1.0 if mode == MODE_NEXT_SEASON else frac
+    in_prog = (cur, elapsed)
 
     # Latest-3-season history per player per side.
     by_player: dict[str, dict[int, dict[int, dict]]] = {"hit": {}, "pit": {}}
@@ -455,24 +535,24 @@ def build_players(limit: int | None = None) -> dict:
                 continue
             name = _name(mid)
             if side == "hit":
-                ros_pa = (proj.get("pt_proj") or 0) * remaining
-                if ros_pa < 20:
+                if (proj.get("pt_proj") or 0) < _POOL_FLOOR_PA:
                     continue
+                ros_pa = (proj.get("pt_proj") or 0) * remaining
                 stats = _hitter_ros(proj, ros_pa, sb_rate.get(mid))
                 pts = fscore.score_points(stats, "fgp", "hit")
                 players.append({"mlbam": mid, "name": name, "side": "hit",
                                 "pos": role, "ros": stats, "fpts_fgp": pts})
             else:
+                if (proj.get("ip_proj") or 0) < _POOL_FLOOR_IP:
+                    continue
                 ros_bf = (proj.get("pt_proj") or 0) * remaining
                 ros_ip = (proj.get("ip_proj") or 0) * remaining
-                if ros_ip < 8:
-                    continue
                 pr = "SP" if (role == "SP") else "RP"
                 stats = _pitcher_ros(proj, ros_bf, ros_ip, pr, ipgs_map.get(mid))
-                if pr == "RP" and frac > 0:
+                if pr == "RP" and elapsed > 0:
                     sh = rp_sh.get(mid) or {}
-                    stats["sv"] = round((sh.get("sv") or 0) * remaining / frac, 1)
-                    stats["hld"] = round((sh.get("hld") or 0) * remaining / frac, 1)
+                    stats["sv"] = round((sh.get("sv") or 0) * remaining / elapsed, 1)
+                    stats["hld"] = round((sh.get("hld") or 0) * remaining / elapsed, 1)
                 pts = fscore.score_points(stats, "fgp", "pit")
                 players.append({"mlbam": mid, "name": name, "side": "pit",
                                 "pos": pr, "ros": stats, "fpts_fgp": pts})
@@ -498,6 +578,15 @@ def build_players(limit: int | None = None) -> dict:
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "season": cur,
         "season_fraction": round(frac, 3),
+        # What the counting lines in `players` cover. "ros": the rest of
+        # `season`'s regular season. "next_season": the full `target_season`,
+        # served once the regular season is over (see season_mode).
+        "mode": mode,
+        "target_season": cur + 1 if mode == MODE_NEXT_SEASON else cur,
+        "regular_season": calendar or None,
+        "pool_floor": {"hit_pa": _POOL_FLOOR_PA, "pit_ip": _POOL_FLOOR_IP,
+                       "basis": "projected full-season playing time, not the "
+                                "rest-of-season remainder"},
         "n_players": len(players),
         "roster_status": {
             "applied": active_ids is not None,
@@ -529,8 +618,17 @@ def _player_luck(p: dict):
     return s.get("luck_gap") if p.get("side") == "hit" else s.get("luck")
 
 
-def _buy_sell(players: list[dict], n: int = 50) -> tuple[list, list]:
+def _buy_sell(players: list[dict], n: int = 50,
+              share: float = 1.0) -> tuple[list, list]:
     """Combined Buy-Low / Sell-High mlbam lists (positive luck = unlucky = buy).
+
+    THE 20-POINT GATE READS THE FULL-SEASON LINE (2026-09-24). `share` is the
+    part of the full-season projection each served line covers (1 - fraction
+    on a rest-of-season corpus, 1.0 on a next-season one). The gate used to
+    read the rest-of-season points directly, so it closed as the season ran
+    out: at fraction 0.983 no player projected 20 more points and both lists
+    were empty. Dividing by `share` puts the gate back on the player, not the
+    calendar, the same move the pool floors made.
 
     Hitter luck_gap (plus-stat units, spread ~+/-50) and pitcher luck (wOBA
     points, spread ~+/-0.05) sit ~500x apart, so a raw combined sort buries
@@ -539,8 +637,10 @@ def _buy_sell(players: list[dict], n: int = 50) -> tuple[list, list]:
     before the combined sort. Scaling by std (not mean-centering) preserves the
     sign, so a buy row keeps a positive gap and a sell row a negative one."""
     import statistics
+    share = share if (share and share > 0) else 1.0
     luckable = [p for p in players
-                if _player_luck(p) is not None and (p.get("fpts_fgp") or 0) > 20]
+                if _player_luck(p) is not None
+                and (p.get("fpts_fgp") or 0) / share > 20]
     scale: dict = {}
     for side in ("hit", "pit"):
         vals = [_player_luck(p) for p in luckable if p.get("side") == side]
@@ -1046,6 +1146,76 @@ def _team_next7(sched7: dict | None, teams_ctx: dict) -> dict:
     return out
 
 
+def _line_share(payload: dict) -> float:
+    """The part of a full-season projection the payload's lines cover: 1.0 on
+    a next-season corpus, 1 - season_fraction on a rest-of-season one, and 1.0
+    when the payload does not say (a payload from before 2026-09-24)."""
+    if payload.get("mode") == MODE_NEXT_SEASON:
+        return 1.0
+    frac = payload.get("season_fraction")
+    if not isinstance(frac, (int, float)):
+        return 1.0
+    return max(0.0, 1.0 - float(frac))
+
+
+_CLOSER_DEPTH_N = 5
+
+
+def _closer_role_score(r: dict) -> float:
+    """The grid's hand role score: the average Leverage Index at entry (gmLI)
+    dominates, saves and REM+ break ties. A role ORDER, not a saves forecast:
+    the save-share model lost its gate (docs/fantasy-closer-gate-2026-08-16.md)
+    and this score is the one that clause keeps."""
+    return ((r.get("gmli") or 0) * 100 + (r.get("saves") or 0) * 3
+            + (r.get("rem_plus") or 0) * 0.2)
+
+
+def _closer_depth(lb: dict | None = None) -> tuple[dict, dict]:
+    """(closer_depth, closer_rows) for the Closer Grid and the card's role chip.
+
+    THE POPULATION IS THE RELIEVER BOARD (2026-09-24), not the rest-of-season
+    pool. The grid used to group the pool's RP rows, and three things went
+    wrong with that:
+      * the pool thinned as the season ran out (28 RP rows on 2026-09-07, 0 on
+        09-23), so the grid showed 17 keys and then none;
+      * the pool marks every non-SP role RP, so starters with no gmLI
+        (Bello, Assad, Fedde, Quantrill and five more) topped their clubs
+        with the CLOSER chip;
+      * it grouped by the raw team code, so CHW/CWS, SD/SDP and WSH/WSN
+        rendered as six clubs.
+    bullpen_leaderboards.relievers is the site's reliever board: 509 of its
+    510 arms carry a gmLI on 2026-09-24, and every club is there. The grid
+    takes its QUALIFIED arms (the board's own fixed sample rule, rem_plus.QUALIFY_MIN_*, not a
+    threshold picked here) with a gmLI, keys them by the canonical org, and
+    orders each club by the unchanged hand score. Without the qualified rule an
+    arm with one appearance tops his club on gmLI alone.
+
+    closer_depth keeps its {org: [mlbam, ...]} shape. closer_rows carries the
+    fields the grid renders ({str(mlbam): {name, team, gmli, saves, rem_plus}})
+    for every listed arm; build_sections serves the ones with no pool row, so
+    both clients can draw the grid whatever the pool holds."""
+    if lb is None:
+        lb = _load_json("bullpen_leaderboards.json") or {}
+    by_team: dict[str, list] = {}
+    for r in (lb.get("relievers") or []):
+        if not r.get("qualified") or r.get("gmli") is None or not r.get("mlbam"):
+            continue
+        org = _canon_org(r.get("team"))
+        if org:
+            by_team.setdefault(org, []).append(r)
+    depth: dict = {}
+    rows: dict = {}
+    for org in sorted(by_team):
+        top = sorted(by_team[org],
+                     key=lambda r: (-_closer_role_score(r), int(r["mlbam"])))[:_CLOSER_DEPTH_N]
+        depth[org] = [int(r["mlbam"]) for r in top]
+        for r in top:
+            rows[str(int(r["mlbam"]))] = {
+                "name": r.get("name"), "team": org, "gmli": r.get("gmli"),
+                "saves": r.get("saves"), "rem_plus": r.get("rem_plus")}
+    return depth, rows
+
+
 def build_sections(payload: dict) -> dict:
     """Organize the projected pool + schedule + skill context into the sections
     (eleven of them as of 2026-08-16; the count in this line has drifted twice,
@@ -1077,29 +1247,30 @@ def build_sections(payload: dict) -> dict:
     # pitchers by `luck` (xERA/xwOBA vs actual). Positive residual = due to
     # regress up. The two luck scales are ~500x apart, so _buy_sell normalizes
     # each side by its own spread before the combined sort (see _buy_sell).
-    sections["buy_low"], sections["sell_high"] = _buy_sell(players)
+    sections["buy_low"], sections["sell_high"] = _buy_sell(
+        players, share=_line_share(payload))
 
-    # Closer Depth Chart — relievers grouped by team, ranked by a role score
-    # (avg leverage gmli dominates; saves + REM+ break ties). Top = likely closer,
-    # rest = handcuffs.
-    from collections import defaultdict
-    by_team: dict[str, list] = defaultdict(list)
-    for p in rps:
-        if p.get("team"):
-            by_team[p["team"]].append(p)
+    # Closer Depth Chart: the reliever board's arms grouped by club and ordered
+    # by the hand role score. See _closer_depth for the population. The inline
+    # rows ride only for arms the pool does not carry: a pooled arm's skill
+    # block is joined off the same reliever board row (_enrich), and the
+    # corpus has a 600KB budget.
+    pooled = {p["mlbam"] for p in players if p.get("side") == "pit"}
+    depth, closer_rows = _closer_depth()
+    sections["closer_depth"] = depth
+    sections["closer_rows"] = {k: v for k, v in closer_rows.items()
+                               if int(k) not in pooled}
 
-    def _role_score(p):
-        s = p.get("skill") or {}
-        return (s.get("gmli") or 0) * 100 + (s.get("saves") or 0) * 3 + (s.get("rem_plus") or 0) * 0.2
-    sections["closer_depth"] = {
-        team: [p["mlbam"] for p in sorted(lst, key=lambda p: -_role_score(p))[:5]]
-        for team, lst in by_team.items()}
+    # Once the regular season is over there is no slate to stream or to count
+    # two starts in, and the lines on `players` are next season's full-season
+    # totals, which no per-start score may be cut from.
+    next_season = payload.get("mode") == MODE_NEXT_SEASON
 
     # Daily SP Streamers — each announced probable start over the next 3 days,
     # ranked by matchup-adjusted expected FGP.
     sched = payload.get("schedule") or {}
     streamers = []
-    for g in (sched.get("games") or []):
+    for g in ([] if next_season else (sched.get("games") or [])):
         for me, opp in (("home", "away"), ("away", "home")):
             pp = (g.get(me) or {}).get("probable")
             if not pp or not pp.get("mlbam"):
@@ -1127,9 +1298,9 @@ def build_sections(payload: dict) -> dict:
     # _start_score (the opponent multiplier only needs opp_org) and carries its
     # `projected` flag into the row payload for the client's "(proj)" suffix.
     two = []
-    for mid_s, starts in (sched.get("two_start") or {}).items():
+    for mid_s, starts in ({} if next_season else (sched.get("two_start") or {})).items():
         p = sp_by_id.get(int(mid_s))
-        legs, total = [], 0.0
+        legs, total, n_priced = [], 0.0, 0
         for st in starts:
             sc = _start_score(p, st.get("opp_org"), teams_ctx)
             leg = {"date": st.get("date"), "opp_org": st.get("opp_org"),
@@ -1137,16 +1308,22 @@ def build_sections(payload: dict) -> dict:
             if st.get("projected"):
                 leg["projected"] = True
             legs.append(leg)
-            total += (sc or {}).get("per_start_fgp") or 0
+            if leg["exp_fgp"] is not None:
+                n_priced += 1
+                total += leg["exp_fgp"]
         # Pool misses (spot starters / no ROS projection) still list: fall back
         # to the schedule's own probable name + org so the row never renders
-        # blank (they sort to the bottom on total_fgp anyway).
+        # blank. A row with NO priced leg carries total_fgp None, not 0.0: a
+        # zero is a projection of zero points, and nobody projected him
+        # (2026-09-24: all 30 rows of the 09-23 build read 0.0 over an empty
+        # pool). None sorts last and renders as a dash.
         first = starts[0] if starts else {}
         two.append({"mlbam": int(mid_s),
                     "name": (p or {}).get("name") or first.get("name"),
                     "team": (p or {}).get("team") or first.get("team_org"),
                     "n_starts": len(starts),
-                    "total_fgp": round(total, 1), "legs": legs})
+                    "total_fgp": round(total, 1) if n_priced else None,
+                    "legs": legs})
     two.sort(key=lambda s: -(s.get("total_fgp") or -1e9))
     sections["two_start"] = two
 
@@ -1622,12 +1799,41 @@ def export(log=print, *, limit: int | None = None) -> int:
         # run_monthly's step wrapper logs it, and the previous fantasy.json
         # keeps serving rather than being replaced by nothing.
         raise ValueError("fantasy.json payload contains non-finite values")
+    # EMPTY-OVERWRITE GUARD (2026-09-24). The 2026-09-23 monthly build replaced
+    # a populated corpus with 0 players and nothing refused it, which darkened
+    # every rest-of-season board, the DFS slate and the betting props at once.
+    # No mode makes an empty pool correct (next_season serves full-season lines
+    # all winter), so an empty build never replaces a populated file: the old
+    # file keeps serving, the ingest ledger goes RED, and the step raises.
+    n_prev = _existing_player_count()
+    if payload["n_players"] == 0 and n_prev > 0:
+        _record_ingest_safe(
+            "fantasy_corpus", ok=False,
+            message=(f"the corpus build produced 0 players (mode {payload.get('mode')}, "
+                     f"fraction {payload.get('season_fraction')}); kept the previous "
+                     f"{n_prev}-player fantasy.json. Redraft, DFS and the betting "
+                     f"props all read it."))
+        raise ValueError(f"fantasy corpus built 0 players; refusing to replace "
+                         f"the {n_prev}-player file")
     DATA_DIR.mkdir(exist_ok=True)
     OUT_PATH.write_text(blob, encoding="utf-8")
     if callable(log):
-        log(f"fantasy: {payload['n_players']} players projected ROS "
+        what = ("full-season " + str(payload.get("target_season"))
+                if payload.get("mode") == MODE_NEXT_SEASON else "ROS")
+        log(f"fantasy: {payload['n_players']} players projected {what} "
             f"({payload['season']} @ {payload['season_fraction']:.0%} elapsed)")
     return payload["n_players"]
+
+
+def _existing_player_count() -> int:
+    """Players in the fantasy.json on disk now, 0 when there is none."""
+    try:
+        prev = json.loads(Path(OUT_PATH).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return 0
+    if not isinstance(prev, dict):
+        return 0
+    return len(prev.get("players") or [])
 
 
 if __name__ == "__main__":

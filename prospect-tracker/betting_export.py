@@ -4142,6 +4142,12 @@ def _fantasy_index() -> dict:
     fan = _load("fantasy.json") or {}
     by = {}
     n_off = 0
+    if fan.get("mode") == "next_season":
+        # Once the regular season is over the corpus serves NEXT season's
+        # full-season lines (fantasy_export.season_mode). No regular-season
+        # game is left to price, and a prop must not be read off a line for a
+        # season that has not started.
+        return by
     for p in fan.get("players") or []:
         if p.get("roster_status") == "off_roster":
             n_off += 1
@@ -4396,6 +4402,25 @@ def _pitch_hands(games) -> dict:
         return {}
 
 
+def _props_empty_reason(games: list[dict]) -> str:
+    """The sentence for a props board that priced nothing, by cause."""
+    if not games:
+        return "No slate is loaded."
+    fan = _load("fantasy.json")
+    if not isinstance(fan, dict):
+        return ("The projection corpus the props are priced from has not been "
+                "built, so no prop on this slate can be priced.")
+    if fan.get("mode") == "next_season":
+        return ("The regular season is over. Props are priced off rest-of-season "
+                "lines, and the corpus now carries next season's.")
+    if not fan.get("players"):
+        return ("The projection corpus the props are priced from came out with no "
+                "players in its latest build, so no prop on this slate can be "
+                "priced.")
+    return ("No probable starter or projected-lineup hitter on this slate has an "
+            "active-roster projection.")
+
+
 def props_fair_lines(games: list[dict], *, starters=None,
                      pitch_hands: dict | None = None) -> dict:
     """Model fair lines for the core props, with NO book comparison.
@@ -4540,6 +4565,12 @@ def props_fair_lines(games: list[dict], *, starters=None,
                     ],
                 })
     return {
+        # WHY THE BOARD IS EMPTY, when it is (2026-09-24). The page used to say
+        # "No slate is loaded" under a banner counting the games it had priced,
+        # because an empty props list was only ever read as "no games". None
+        # when any row priced.
+        "empty_reason": (None if (pitchers or hitters)
+                         else _props_empty_reason(games)),
         "model_only": True,
         "no_book_comparison_reason": ("The Odds API free tier bills player props per event; "
                                       "a full slate would spend the monthly budget in about "
@@ -6947,6 +6978,7 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     # props machinery is unarmed (value_rows is then empty by construction).
     props_fair = (props_fair_lines(games, starters=starters) if games else
                   {"model_only": True, "pitchers": [], "hitters": [],
+                   "empty_reason": "No slate is loaded.",
                    "no_book_comparison_reason": "no slate loaded"})
     _props_pre = props_value_bets(bets, props_fair, slots=None, on_date=slate_date,
                                   evald=evald, market_table=market_table)

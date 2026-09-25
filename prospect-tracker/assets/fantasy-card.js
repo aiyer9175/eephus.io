@@ -272,7 +272,11 @@
     if (!HOST || typeof HOST.scoreLine !== "function") return "";
     var rows = HOST.scoreLine(rec) || [];
     if (!rows.length) return "";
-    return '<div class="fc-sec"><div class="fc-sec-h">Rest of season, by league format</div>' +
+    // Next season's full-season line once the regular season is over
+    // (fantasy_export.season_mode); the rest of this season otherwise.
+    var d = payload() || {};
+    var span = d.mode === "next_season" ? (d.target_season + " full season") : "Rest of season";
+    return '<div class="fc-sec"><div class="fc-sec-h">' + esc(span) + ", by league format</div>" +
       '<div class="fc-scores">' + rows.map(function (r) {
         return '<span class="fc-score' + (r.active ? " is-active" : "") + '">' +
           '<span class="fc-score-l">' + esc(r.label) + "</span>" +
@@ -363,7 +367,8 @@
     return '<div class="fc-sec"><div class="fc-sec-h">' + gl("Bullpen role", "reliever_roles") + "</div>" +
       '<div class="fc-chips">' + chip(esc(r.team), role, r.idx === 0 ? "fc-good" : "") +
       chip("Depth chart", "#" + (r.idx + 1) + " of " + r.n) + "</div>" +
-      '<div class="fc-fine">Order by a gmLI-led score with saves and REM+. Not a saves projection.</div></div>';
+      '<div class="fc-fine">Order by a gmLI-led score with saves and REM+, over the reliever ' +
+      "board's qualified arms. Not a saves projection.</div></div>";
   }
   // ---- the season-trend sparkline (2026-08-16) ------------------------------
   // The cards.js precedent: inline SVG, theme tokens only, no canvas and no
@@ -519,6 +524,15 @@
       // A prospect on the dynasty board carries no rest-of-season record, which
       // is not an error: he has not played in the majors. Say which it is.
       if (dyn) return head(mlbam, [dynastyIdentity(mlbam)]) + dyn;
+      // A Closer Grid arm comes from the reliever board, not the projection
+      // pool, so he can have a bullpen role and no projection. Name him and
+      // show the role rather than a blank card.
+      var cr = (sections().closer_rows || {})[String(mlbam)];
+      if (cr) {
+        return head(mlbam, [{ name: cr.name, team: cr.team, pos: "RP", elig: [] }]) +
+          roleBlock({ side: "pit", mlbam: mlbam }) +
+          '<div class="fc-sec"><div class="fc-fine">No projection in the current build.</div></div>';
+      }
       return head(mlbam, [{}]) +
         '<div class="fc-sec"><div class="fc-fine">Not in the current build.</div></div>';
     }

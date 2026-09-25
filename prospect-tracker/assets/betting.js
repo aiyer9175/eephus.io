@@ -3213,7 +3213,9 @@
     if (!(pf.pitchers || []).length && !(pf.hitters || []).length) {
       // The value block still renders: its unarmed state names the two
       // environment variables, and that answer holds on an empty slate too.
-      return head + empty("No props to price", "No slate is loaded.") +
+      // The reason is the payload's (props_fair_lines.empty_reason): an empty
+      // props board on a priced slate is a corpus fact, not a missing slate.
+      return head + empty("No props to price", pf.empty_reason || "No slate is loaded.") +
         '<div class="bt-panel">' + propsValueBlock() + "</div>";
     }
     var meth = pf.method || {};

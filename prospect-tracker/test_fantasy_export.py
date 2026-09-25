@@ -12,6 +12,11 @@ Covers the two data-shape/scoring fixes:
     otherwise pitchers never reach either top-N list."""
 from __future__ import annotations
 
+import json
+from datetime import date
+
+import pytest
+
 import fantasy_export as fe
 
 
@@ -293,10 +298,225 @@ def test_single_sided_sections_stay_bare_ids():
             "changed, assets/fantasy.js scored()/recOf() must change with it")
 
 
+# ---- season mode, pool floors and the empty-overwrite guard ---------------
+# 2026-09-24 (M11-01). The floors read the rest-of-season remainder, so the
+# pool emptied before the season ended and the 2026-09-23 build served 0
+# players; export() wrote that over a populated file.
+def test_season_mode_reads_the_calendar_then_the_pa_ratio():
+    end = "2026-09-27"
+    assert fe.season_mode(0.976, today=date(2026, 9, 24),
+                          regular_season_end=end) == fe.MODE_ROS
+    assert fe.season_mode(0.976, today=date(2026, 9, 27),
+                          regular_season_end=end) == fe.MODE_ROS
+    # The day after the last scheduled game, whatever the PA ratio says.
+    assert fe.season_mode(0.990, today=date(2026, 9, 28),
+                          regular_season_end=end) == fe.MODE_NEXT_SEASON
+    # No calendar: only a ratio at the clamp is a finished season.
+    assert fe.season_mode(0.976, today=date(2026, 11, 1)) == fe.MODE_ROS
+    assert fe.season_mode(1.0, today=date(2026, 11, 1)) == fe.MODE_NEXT_SEASON
+
+
+_HIT_PROJ = {"pt_proj": 600.0, "bb_pct": 0.08, "k_pct": 0.22, "hr_pa": 0.03,
+             "babip": 0.300, "iso": 0.170}
+_SP_PROJ = {"pt_proj": 709.5, "ip_proj": 165.0, "k_pct": 0.25, "bb_pct": 0.08,
+            "hr_bf": 0.03, "fip_proj": 3.80}
+_RP_PROJ = {"pt_proj": 258.0, "ip_proj": 60.0, "k_pct": 0.27, "bb_pct": 0.09,
+            "hr_bf": 0.025, "fip_proj": 3.60}
+
+
+def _stub_pool(monkeypatch, frac, projs=None):
+    """A three-player corpus (a regular, a starter, a 60-inning reliever)
+    through the real build_players, with every file and network read stubbed."""
+    league = {2025: {"_total_pa": 1000.0}, 2026: {"_total_pa": 1000.0 * frac}}
+    corpus = {"league": league,
+              "hit": [{"mlbam": 1, "season": 2026, "pa": 600, "role": "SS", "age": 27}],
+              "pit": [{"mlbam": 2, "season": 2026, "ip": 165, "role": "SP", "age": 28},
+                      {"mlbam": 3, "season": 2026, "ip": 60, "role": "RP", "age": 29}]}
+    projs = projs or {(1, "hit"): _HIT_PROJ, (2, "pit"): _SP_PROJ,
+                      (3, "pit"): _RP_PROJ}
+
+    def _proj(hist, side, target, curves, lg, age, role=None, in_progress=None):
+        return dict(projs[(hist[0]["mlbam"], side)], role=role)
+    monkeypatch.setattr(fe.fp, "build_corpus", lambda: corpus)
+    monkeypatch.setattr(fe.fp, "fitted_models", lambda c, cur: ({}, {}))
+    monkeypatch.setattr(fe.fp, "project_player", _proj)
+    monkeypatch.setattr(fe, "_sb_rate_by_mlbam", lambda: {})
+    monkeypatch.setattr(fe, "_rp_saves_holds", lambda: {3: {"sv": 20, "hld": 2}})
+    monkeypatch.setattr(fe, "_ip_per_gs", lambda: {})
+    monkeypatch.setattr(fe, "_names_from_leaderboards", lambda: {})
+    monkeypatch.setattr(fe, "_load_json", lambda name: None)
+    monkeypatch.setattr(fe, "_enrich", lambda players: None)
+    monkeypatch.setattr(fe, "_active_roster_ids", lambda: None)
+
+
+_CAL = {"start": "2026-03-25", "end": "2026-09-27"}
+
+
+def test_the_pool_survives_the_last_week_of_the_season(monkeypatch):
+    """At fraction 0.976 the old floors (20 ROS PA, 8 ROS IP) dropped all three:
+    600 PA x 0.024 = 14.4 and 165 IP x 0.024 = 4.0."""
+    _stub_pool(monkeypatch, 0.976)
+    out = fe.build_players(today=date(2026, 9, 24), calendar=_CAL)
+    assert out["mode"] == fe.MODE_ROS and out["target_season"] == 2026
+    assert out["n_players"] == 3, out["players"]
+    by = {p["mlbam"]: p for p in out["players"]}
+    assert by[1]["ros"]["pa"] == round(600 * (1 - 0.976), 1)
+    assert by[3]["pos"] == "RP" and by[3]["ros"]["ip"] > 0
+    # Saves pace scales to what is left, off the season-to-date count.
+    assert by[3]["ros"]["sv"] == round(20 * (1 - 0.976) / 0.976, 1)
+
+
+def test_after_the_season_the_pool_serves_next_seasons_full_line(monkeypatch):
+    _stub_pool(monkeypatch, 1.0)
+    out = fe.build_players(today=date(2026, 10, 15), calendar=_CAL)
+    assert out["mode"] == fe.MODE_NEXT_SEASON and out["target_season"] == 2027
+    assert out["n_players"] == 3
+    by = {p["mlbam"]: p for p in out["players"]}
+    assert by[1]["ros"]["pa"] == 600.0          # the full season, not zero
+    assert by[2]["ros"]["ip"] == 165.0
+    assert by[3]["ros"]["sv"] == 20.0           # one full season of the pace
+    assert all((p["fpts_fgp"] or 0) > 0 for p in out["players"])
+
+
+def test_the_floors_read_full_season_playing_time(monkeypatch):
+    """A 15-PA bench bat and a 5-inning arm stay out in every mode."""
+    _stub_pool(monkeypatch, 0.5, projs={
+        (1, "hit"): dict(_HIT_PROJ, pt_proj=15.0),
+        (2, "pit"): dict(_SP_PROJ, ip_proj=5.0, pt_proj=21.5),
+        (3, "pit"): _RP_PROJ})
+    out = fe.build_players(today=date(2026, 7, 1), calendar=_CAL)
+    assert [p["mlbam"] for p in out["players"]] == [3]
+
+
+def test_export_refuses_to_replace_a_populated_file_with_an_empty_one(
+        monkeypatch, tmp_path):
+    out_path = tmp_path / "fantasy.json"
+    prev = {"players": [{"mlbam": 1, "side": "hit"}, {"mlbam": 2, "side": "pit"}]}
+    out_path.write_text(json.dumps(prev), encoding="utf-8")
+    monkeypatch.setattr(fe, "OUT_PATH", out_path)
+    monkeypatch.setattr(fe, "build_players", lambda limit=None: {
+        "season": 2026, "season_fraction": 0.976, "mode": fe.MODE_ROS,
+        "n_players": 0, "players": []})
+    monkeypatch.setattr(fe, "_attach_schedule", lambda payload: None)
+    monkeypatch.setattr(fe, "build_sections", lambda payload: {})
+    red = []
+    monkeypatch.setattr(fe, "_record_ingest_safe",
+                        lambda source, **kw: red.append((source, kw)))
+    with pytest.raises(ValueError):
+        fe.export(log=None)
+    assert json.loads(out_path.read_text(encoding="utf-8")) == prev
+    assert red and red[0][0] == "fantasy_corpus" and red[0][1]["ok"] is False
+
+
+def test_buy_sell_gate_reads_the_full_season_line():
+    """10 rest-of-season points at share 0.1 is a 100-point player."""
+    pool = [_mk_hit(1, 40.0), _mk_pit(2, 0.09)]
+    pool[0]["fpts_fgp"] = 10.0
+    buy, _sell = fe._buy_sell(pool, n=5, share=0.1)
+    assert 1 in [e["mlbam"] for e in buy]
+    assert fe._line_share({"mode": fe.MODE_NEXT_SEASON, "season_fraction": 1.0}) == 1.0
+    assert abs(fe._line_share({"mode": fe.MODE_ROS, "season_fraction": 0.9}) - 0.1) < 1e-9
+    assert fe._line_share({}) == 1.0
+
+
+# ---- closer grid population (2026-09-24, M11-03) ---------------------------
+def _rp(mid, team, gmli, sv=0, rem=100, qualified=True):
+    return {"mlbam": mid, "name": f"Arm {mid}", "team": team, "gmli": gmli,
+            "saves": sv, "rem_plus": rem, "qualified": qualified}
+
+
+def test_closer_depth_keys_canonical_clubs_and_skips_thin_samples():
+    board = {"relievers": [
+        _rp(1, "CWS", 1.6, sv=10), _rp(2, "CHW", 1.2),     # one club, two codes
+        _rp(3, "SD", 1.9, sv=37), _rp(4, "WSH", 1.7, sv=12),
+        _rp(5, "TB", 3.38, qualified=False),                # one appearance
+        _rp(6, "TB", 1.67, sv=40),
+        _rp(7, "TB", None, sv=0),                           # no gmLI
+    ]}
+    depth, rows = fe._closer_depth(board)
+    assert sorted(depth) == ["CHW", "SDP", "TBR", "WSN"]
+    assert depth["CHW"] == [1, 2]
+    assert depth["TBR"] == [6]
+    assert rows["6"] == {"name": "Arm 6", "team": "TBR", "gmli": 1.67,
+                         "saves": 40, "rem_plus": 100}
+
+
+def test_closer_grid_covers_every_club_on_the_served_board():
+    """Off the served reliever board and nothing else: 30 clubs, canonical
+    codes, every arm qualified with a gmLI, whatever the projection pool
+    holds (the 2026-09-23 pool held nothing)."""
+    lb = fe._load_json("bullpen_leaderboards.json")
+    if not lb or not lb.get("relievers"):
+        pytest.skip("no bullpen_leaderboards.json in this checkout")
+    depth, rows = fe._closer_depth(lb)
+    assert len(depth) == 30, sorted(depth)
+    assert all(fe._canon_org(k) == k for k in depth)
+    by_id = {int(r["mlbam"]): r for r in lb["relievers"] if r.get("mlbam")}
+    for ids in depth.values():
+        assert 1 <= len(ids) <= 5
+        for m in ids:
+            assert by_id[m].get("qualified") and by_id[m].get("gmli") is not None
+            assert str(m) in rows
+
+
+def _light_sections(monkeypatch):
+    monkeypatch.setattr(fe, "_teams_context", lambda: {})
+    monkeypatch.setattr(fe, "_load_json", lambda name: None)
+    monkeypatch.setattr(fe, "_callup_watch", lambda ts: [])
+    monkeypatch.setattr(fe, "_dynasty_prospects", lambda ts, season: [])
+    monkeypatch.setattr(fe, "_closer_depth", lambda: ({}, {}))
+
+
+_SCHED = {"games": [{"date": "2026-09-24",
+                     "home": {"org": "BOS", "probable": {"mlbam": 9}},
+                     "away": {"org": "NYY", "probable": None}}],
+          "two_start": {"9": [{"date": "2026-09-24", "opp_org": "NYY"},
+                              {"date": "2026-09-29", "opp_org": "TOR",
+                               "projected": True}]}}
+
+
+def test_an_unpriced_two_start_row_carries_no_total(monkeypatch):
+    _light_sections(monkeypatch)
+    sec = fe.build_sections({"players": [], "mode": fe.MODE_ROS,
+                             "season_fraction": 0.9, "schedule": _SCHED})
+    assert sec["two_start"][0]["total_fgp"] is None     # not a projection of 0.0
+    assert sec["daily_streamers"] == []
+
+
+def test_next_season_mode_serves_no_slate_sections(monkeypatch):
+    _light_sections(monkeypatch)
+    sp = {"mlbam": 9, "side": "pit", "pos": "SP", "fpts_fgp": 500.0,
+          "ros": {"gs": 30.0}}
+    sec = fe.build_sections({"players": [sp], "mode": fe.MODE_NEXT_SEASON,
+                             "season_fraction": 1.0, "schedule": _SCHED})
+    assert sec["daily_streamers"] == [] and sec["two_start"] == []
+    assert sec["ros_sp"] == [9]
+
+
+def test_closer_rows_ride_only_for_arms_the_pool_lacks(monkeypatch):
+    _light_sections(monkeypatch)
+    rows = {"7": {"name": "Pooled", "team": "BOS", "gmli": 1.8, "saves": 30,
+                  "rem_plus": 120},
+            "8": {"name": "Unpooled", "team": "BOS", "gmli": 1.5, "saves": 2,
+                  "rem_plus": 105}}
+    monkeypatch.setattr(fe, "_closer_depth", lambda: ({"BOS": [7, 8]}, rows))
+    rp = {"mlbam": 7, "side": "pit", "pos": "RP", "fpts_fgp": 50.0, "ros": {}}
+    sec = fe.build_sections({"players": [rp], "mode": fe.MODE_ROS,
+                             "season_fraction": 0.5, "schedule": {}})
+    assert sec["closer_depth"] == {"BOS": [7, 8]}
+    assert list(sec["closer_rows"]) == ["8"]
+    empty = fe.build_sections({"players": [], "mode": fe.MODE_ROS,
+                               "season_fraction": 0.5, "schedule": {}})
+    assert sorted(empty["closer_rows"]) == ["7", "8"]
+
+
 if __name__ == "__main__":
     import sys
     mod = sys.modules[__name__]
-    fns = [f for n, f in vars(mod).items() if n.startswith("test_") and callable(f)]
+    import inspect
+    # Fixture-taking tests (monkeypatch, tmp_path) run under pytest only.
+    fns = [f for n, f in vars(mod).items() if n.startswith("test_") and callable(f)
+           and not inspect.signature(f).parameters]
     for f in fns:
         f()
     print(f"ALL {len(fns)} fantasy_export tests PASS")

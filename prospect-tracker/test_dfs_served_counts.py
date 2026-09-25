@@ -566,3 +566,32 @@ def test_the_client_says_a_refused_market_was_refused():
     assert html.count("no total: the odds we hold were taken after first pitch") == 1
     assert "1 game on this slate had already started when that snapshot was taken" in html
     assert "total 9" in html                        # the other game keeps its market
+
+
+# ===========================================================================
+# 5. The season check runs before the corpus check (M11-01, 2026-09-24)
+# ===========================================================================
+# An empty corpus at the end of the season published "Pipeline outage"
+# because the no_corpus check ran first, so season_over could never fire; and
+# the no_corpus sentence said the corpus "has not been built yet" about a
+# corpus that had been built and came out empty.
+def test_a_finished_season_reads_season_over_not_an_outage():
+    empty_at_end = dict(_corpus(), season_fraction=1.0, players=[])
+    assert _build(fantasy=empty_at_end)["empty_reason_kind"] == "season_over"
+
+
+def test_a_next_season_corpus_is_never_priced_as_a_slate():
+    import fantasy_export as fe
+    nxt = dict(_corpus(), season_fraction=0.99, mode=fe.MODE_NEXT_SEASON)
+    p = _build(fantasy=nxt)
+    assert p["empty_reason_kind"] == "season_over"
+    assert p["players"] == []
+
+
+def test_an_empty_corpus_mid_season_says_it_came_out_empty():
+    p = _build(fantasy=dict(_corpus(), players=[]))
+    assert p["empty_reason_kind"] == "no_corpus"
+    assert "has not been built" not in p["empty_reason"]
+    missing = _build(fantasy=[])
+    assert missing["empty_reason_kind"] == "no_corpus"
+    assert "has not been built" in missing["empty_reason"]

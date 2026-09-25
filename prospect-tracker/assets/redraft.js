@@ -165,6 +165,13 @@
   // mlbam alone is last-write-wins: "pit" is appended second, so it silently
   // clobbers the hitter row and puts a pitcher's points on the hitter board.
   function rec(mlbam, side) { return S.byId[mlbam + "|" + side]; }
+  // THE SEASON MODE (fantasy_export.season_mode, 2026-09-24). Once the regular
+  // season is over the corpus serves next season's full-season lines, and every
+  // label that says "rest of season" has to say which season it is instead.
+  function isNextSeason() { return !!(S.data && S.data.mode === "next_season"); }
+  function horizon() {
+    return isNextSeason() ? (S.data.target_season + " full season") : "rest of season";
+  }
   function recOf(entry, fallbackSide) {
     if (entry && typeof entry === "object") return rec(entry.mlbam, entry.side);
     return rec(entry, fallbackSide) || rec(entry, fallbackSide === "hit" ? "pit" : "hit");
@@ -554,7 +561,7 @@
       filterBar(f.all.map(function (o) { return o.p; }), { shown: f.rows.length, total: f.all.length }) +
       renderCards(f.rows, HIT_COLS, SORT.ros_hitter, {
         hrefOf: function (o) { return hashFor(o.p.mlbam); },
-        empty: boardEmpty("No rest-of-season hitter rows in this build.")
+        empty: boardEmpty("No " + horizon() + " hitter rows in this build.")
       });
   }
   function boardPitcher(ids, isRp) {
@@ -562,7 +569,7 @@
     return filterBar(f.all.map(function (o) { return o.p; }), { shown: f.rows.length, total: f.all.length }) +
       renderCards(f.rows, pitCols(isRp), isRp ? SORT.ros_rp : SORT.ros_sp, {
         hrefOf: function (o) { return hashFor(o.p.mlbam); },
-        empty: boardEmpty("No rest-of-season pitcher rows in this build.")
+        empty: boardEmpty("No " + horizon() + " pitcher rows in this build.")
       });
   }
   function streamerDayLabel(d) {
@@ -585,6 +592,23 @@
     });
     days.sort();
     if (!days.length) {
+      // The empty state names its cause. "No probable starts posted" was the
+      // only sentence, and it ran on 2026-09-23 over 49 posted probables that
+      // the empty corpus could not price.
+      if (isNextSeason()) {
+        return '<div class="rd-note">The regular season is over. Streamers return with the ' +
+          esc(S.data.target_season) + " schedule.</div>";
+      }
+      var posted = 0;
+      ((S.data.schedule || {}).games || []).forEach(function (g) {
+        ["home", "away"].forEach(function (k) {
+          if (((g[k] || {}).probable || {}).mlbam) posted++;
+        });
+      });
+      if (posted) {
+        return '<div class="rd-note">' + posted + " probable starts are posted in the 3-day window, " +
+          "and none of those pitchers has a rest-of-season projection in this build.</div>";
+      }
       return '<div class="rd-note">No probable starts posted in the 3-day window yet.</div>';
     }
     // A deep-linked #day= outside the served window is not an error state: it
@@ -621,6 +645,10 @@
   // a fixed-height card box.
   function tableTwoStart(list) {
     if (!list || !list.length) {
+      if (isNextSeason()) {
+        return '<div class="rd-note">The regular season is over. Two-start weeks return with the ' +
+          esc(S.data.target_season) + " schedule.</div>";
+      }
       return '<div class="rd-note">No two-start pitchers in the current window yet.</div>';
     }
     var rows = list.slice(0, 60).map(function (t, i) {
@@ -720,6 +748,18 @@
   // ALREADY A CARD GRID: 30 team cards of 5 arms each.
   function renderClosers() {
     var depth = (S.data.sections || {}).closer_depth || {};
+    // The grid's arms come from the reliever board, not the projection pool
+    // (fantasy_export._closer_depth), so each carries its own inline row. The
+    // pool record, when there is one, still supplies the roster flag.
+    var inline = (S.data.sections || {}).closer_rows || {};
+    function arm(m) {
+      var p = rec(m, "pit"), r = inline[String(m)];
+      if (r) {
+        return { mlbam: m, name: r.name || (p && p.name), pool: p || null,
+                 skill: { gmli: r.gmli, saves: r.saves, rem_plus: r.rem_plus } };
+      }
+      return p ? { mlbam: p.mlbam, name: p.name, pool: p, skill: p.skill || {} } : null;
+    }
     var teams = Object.keys(depth).sort();
     if (!teams.length) {
       return '<div class="rd-note">No bullpen rows in this build.</div>';
@@ -732,8 +772,8 @@
       teams = teams.filter(function (tm) {
         if (normQ(tm).indexOf(q) >= 0) return true;
         return (depth[tm] || []).some(function (m) {
-          var p = rec(m, "pit");
-          return p && normQ(p.name).indexOf(q) >= 0;
+          var a = arm(m);
+          return a && normQ(a.name).indexOf(q) >= 0;
         });
       });
       if (!teams.length) {
@@ -743,11 +783,12 @@
     }
     var cards = teams.map(function (tm) {
       var lst = (depth[tm] || []).map(function (m, i) {
-        var p = rec(m, "pit"); if (!p) return "";   // bullpen depth is pitchers
-        var s = p.skill || {};
+        var a = arm(m); if (!a) return "";   // bullpen depth is pitchers
+        var s = a.skill || {};
         var role = i === 0 ? '<span class="rd-closer">CLOSER</span>'
           : '<span class="rd-hc">' + (i === 1 ? "next" : "depth") + "</span>";
-        return '<div class="rd-relief">' + role + " " + nameLink(p.mlbam, p.name) + offTag(p) +
+        return '<div class="rd-relief">' + role + " " + nameLink(a.mlbam, a.name) +
+          (a.pool ? offTag(a.pool) : "") +
           ' <span class="rd-dim">gmLI ' + num(s.gmli, 2) + " · " + num(s.saves, 0) +
           "sv · REM+ " + num(s.rem_plus, 0) + "</span></div>";
       }).join("");
@@ -762,7 +803,8 @@
     // likelihood to who gets saves.
     return filterBar(null) +
       '<div class="rd-note">' + gl("Role order", "reliever_roles") + " by a " + gl("gmLI", "gmli") +
-      "-led score with saves and REM+. Not a saves projection.</div>" +
+      "-led score with saves and REM+, over the reliever board's qualified arms. " +
+      "Not a saves projection.</div>" +
       '<div class="rd-grid">' + cards + "</div>";
   }
 
@@ -794,7 +836,8 @@
       kind: "board", module: "Redraft", accentToken: "--accent-cyan",
       title: title, subtitle: subtitle,
       url: "eephus.io/redraft", filenameBase: file,
-      caption: "Rest-of-season projections. A display ranking over served numbers.",
+      caption: (isNextSeason() ? S.data.target_season + " full-season" : "Rest-of-season") +
+        " projections. A display ranking over served numbers.",
       board: { columns: columns, rows: rows, counts: [10, 25, 50] }
     };
   }
@@ -849,9 +892,10 @@
     var columns = [{ label: "#", frac: 0.07, align: "right" },
                    { label: side === "hit" ? "Player" : "Pitcher", frac: 0.37 }];
     pick.forEach(function (c) { columns.push({ label: labelOf(c), frac: w, align: "right" }); });
-    var titles = { ros_sp: "Rest-of-Season Starters", ros_rp: "Rest-of-Season Relievers",
-                   ros_hitter: "Rest-of-Season Hitters" };
-    return shareWrap(titles[S.section] || "Rest-of-Season Board",
+    var span = isNextSeason() ? S.data.target_season + " Full-Season" : "Rest-of-Season";
+    var titles = { ros_sp: span + " Starters", ros_rp: span + " Relievers",
+                   ros_hitter: span + " Hitters" };
+    return shareWrap(titles[S.section] || span + " Board",
       "eephus-redraft-" + S.section,
       rows.length + " players · " + scoreLabel(),
       columns,
@@ -1184,9 +1228,19 @@
       // The build date is the vintage line: the corpus rebuilds nightly, and a
       // banner with no date cannot show that a night was missed.
       var built = String(d.generated_at || "").slice(0, 10);
-      b.innerHTML = '<div class="rd-asof">' + (d.n_players || 0) + " players · rest of season · " +
-        Math.round((d.season_fraction || 0) * 100) + "% of " + esc(d.season) + " played" +
+      b.innerHTML = '<div class="rd-asof">' + (d.n_players || 0) + " players · " +
+        (isNextSeason()
+          ? esc(horizon()) + " · the " + esc(d.season) + " regular season is over"
+          : "rest of season · " + Math.round((d.season_fraction || 0) * 100) + "% of " +
+            esc(d.season) + " played") +
         (built ? " · built " + esc(built) : "") + "</div>";
+    }
+    // The three board tabs say "ROS" in the page shell; in next-season mode
+    // they name the season they now rank.
+    if (isNextSeason()) {
+      document.querySelectorAll(".mlbstats-sectionbtn[data-redraftsection]").forEach(function (t) {
+        if (/^ROS /.test(t.textContent)) t.textContent = t.textContent.replace(/^ROS /, d.target_season + " ");
+      });
     }
     // Deep-link restore between the defaults and the first paint, so a restored
     // section or format renders once rather than flashing the default first.

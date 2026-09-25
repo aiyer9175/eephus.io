@@ -39,6 +39,7 @@ log = logging.getLogger("fantasy_schedule")
 
 SCHEDULE_API = "https://statsapi.mlb.com/api/v1/schedule"
 TEAMS_API = "https://statsapi.mlb.com/api/v1/teams"
+SEASONS_API = "https://statsapi.mlb.com/api/v1/seasons/"
 CACHE_DIR = Path(__file__).parent / ".cache" / "fantasy_schedule"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -53,6 +54,8 @@ LINEUP_TTL = 12 * 60     # 12 min
 # stadiums mid-year), so this one is cached for a day and the fetch is a
 # once-a-build cost at worst.
 TEAMS_TTL = 24 * 3600
+# The season calendar is fixed before opening day; a week is plenty fresh.
+SEASONS_TTL = 7 * 24 * 3600
 
 
 def _org(name: str | None) -> str | None:
@@ -254,6 +257,37 @@ def fetch_home_venues(season: int, *, use_cache: bool = True) -> dict:
         if vid is not None and org:
             out[int(vid)] = org
     return out
+
+
+def regular_season_dates(season: int, *, use_cache: bool = True) -> dict | None:
+    """{"start": ISO, "end": ISO} for `season`'s MLB regular season, or None.
+
+    WHY THIS EXISTS (2026-09-24). The fantasy corpus has to know whether the
+    regular season is still being played, and the league PA ratio it used to
+    infer that (fa_projection.season_fraction) is an estimate that clamps at
+    1.0 only when this season's PA pass last season's. The calendar is a fact:
+    StatsAPI /seasons publishes regularSeasonStartDate and regularSeasonEndDate.
+
+    The dates do not move inside a season, so the cache is a week, and a failed
+    fetch falls back to whatever copy is on disk at any age before it gives up.
+    None means the calendar is unknown, and the caller falls back to the PA
+    ratio."""
+    path = CACHE_DIR / f"season_{int(season)}.json"
+    try:
+        data = _cached_get(path, SEASONS_API + str(int(season)), {"sportId": 1},
+                           SEASONS_TTL, use_cache)
+    except Exception:
+        log.warning("fantasy_schedule: seasons fetch failed for %s", season)
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+    for s in (data or {}).get("seasons") or []:
+        if str((s or {}).get("seasonId")) == str(int(season)):
+            start, end = s.get("regularSeasonStartDate"), s.get("regularSeasonEndDate")
+            if start and end:
+                return {"start": str(start), "end": str(end)}
+    return None
 
 
 def starts_index(games: list[dict]) -> list[dict]:
