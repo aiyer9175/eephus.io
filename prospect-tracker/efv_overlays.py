@@ -310,15 +310,18 @@ def overlay_chips(r: dict, side: str, model_war: float, disp: dict | None = None
     parts = E.overlay_factors(r, side, model_war, model_names)
     out = []
     for k in model_names:
+        label = OVERLAYS[k]["chip"]
         if k == "xline":
             if not parts["xline_fv"]:
                 continue
             up = parts["xline_fv"] > 0
+            # the lean's own label (the A-ball or AAA lean): the card's pill keys on it
+            label = parts.get("xline_label") or label
         else:
             f = parts[k]
             if f == 1.0:
                 continue
             up = f > 1.0
-        out.append({"overlay": k, "label": OVERLAYS[k]["chip"],
+        out.append({"overlay": k, "label": label,
                     "dir": "up" if up else "down", "on_grade": False})
     return out

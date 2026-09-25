@@ -3423,6 +3423,12 @@ function _progCi(ci, d) {
     ? `${_progSigned(ci[0], d)} to ${_progSigned(ci[1], d)}` : "not recomputable";
 }
 
+// The served model a ledger row scored, in words (DS-02: eFV V2 serves from 2026-09-25).
+function _progModelName(r) {
+  const m = String((r && r.model_id) || "");
+  return m === "efv_v2" ? "eFV V2 (served)" : m === "efv_v1" ? "eFV v1" : (m || "eFV");
+}
+
 function _methProgressLedger(prog, bt) {
   const row = _progLatestHeadline(prog);
   if (!row) return "";
@@ -3446,11 +3452,11 @@ function _methProgressLedger(prog, bt) {
   let candTxt = "";
   if (cand) {
     const crt = cand.raters || {}, cleg = _progConsLeg(cand) || {};
-    candTxt = `<p class="meth-window"><strong>${escapeHtml(_progFrameLabel(prog, cand.frame))}, ${escapeHtml(cand.date || "")} <span class="sacc-chip-warn">${escapeHtml(String(cand.role || "").replace(/_/g, " "))}</span>:</strong> n ${Number(cand.n || 0).toLocaleString()}, eFV ${_progFmt((crt.efv || {}).spearman, 3)} against PROSPX consensus ${_progFmt((crt.prospx_consensus || {}).spearman, 3)}, delta ${_progSigned(cleg.delta, 4)}${Array.isArray(cleg.ci95) ? `, 95% CI ${_progCi(cleg.ci95, 3)}` : ""}: <span class="sacc-verdict-null">${escapeHtml(cand.verdict || "")}</span>.${_progIsCorrection(prog, cand) ? ` <span class="sacc-chip-warn">${escapeHtml(_progCorrectionName(cand))}, not model progress</span>` : ""} ${escapeHtml(cand.note || "")}</p>`;
+    candTxt = `<p class="meth-window"><strong>${escapeHtml(_progFrameLabel(prog, cand.frame))}, ${escapeHtml(cand.date || "")} <span class="sacc-chip-warn">${escapeHtml(String(cand.role || "").replace(/_/g, " "))}</span>:</strong> n ${Number(cand.n || 0).toLocaleString()}, ${escapeHtml(_progModelName(cand))} ${_progFmt((crt.efv || {}).spearman, 3)} against PROSPX consensus ${_progFmt((crt.prospx_consensus || {}).spearman, 3)}, delta ${_progSigned(cleg.delta, 4)}${Array.isArray(cleg.ci95) ? `, 95% CI ${_progCi(cleg.ci95, 3)}` : ""}: <span class="sacc-verdict-null">${escapeHtml(cand.verdict || "")}</span>.${_progIsCorrection(prog, cand) ? ` <span class="sacc-chip-warn">${escapeHtml(_progCorrectionName(cand))}, not model progress</span>` : ""} ${escapeHtml(cand.note || "")}</p>`;
   }
   return `<div class="meth-chart scx-progress-head">
     <div class="meth-chart-title">eFV progress ledger <span class="meth-sub">the dated record of eFV against PROSPX consensus and the industry</span></div>
-    <p class="meth-window"><strong>Latest, ${escapeHtml(row.date || "")}:</strong> on the ${escapeHtml(_progFrameLabel(prog, row.frame).toLowerCase())} frame (n ${Number(row.n || 0).toLocaleString()}), eFV ${_progFmt(efv, 3)} against PROSPX consensus ${_progFmt(cons, 3)}, delta ${_progSigned(leg.delta, 4)}${ciTxt}${floorTxt}: <span class="${resolvable ? "sacc-verdict-win" : "sacc-verdict-null"}">${escapeHtml(row.verdict || "")}</span>.${corrTxt}${chip}</p>
+    <p class="meth-window"><strong>Latest, ${escapeHtml(row.date || "")}:</strong> on the ${escapeHtml(_progFrameLabel(prog, row.frame).toLowerCase())} frame (n ${Number(row.n || 0).toLocaleString()}), ${escapeHtml(_progModelName(row))} ${_progFmt(efv, 3)} against PROSPX consensus ${_progFmt(cons, 3)}, delta ${_progSigned(leg.delta, 4)}${ciTxt}${floorTxt}: <span class="${resolvable ? "sacc-verdict-win" : "sacc-verdict-null"}">${escapeHtml(row.verdict || "")}</span>.${corrTxt}${chip}</p>
     ${candTxt}
   </div>`;
 }
@@ -3469,6 +3475,8 @@ function _progDateLabel(iso) {
 function _progDx(prog, r) {
   const cand = r.role === "headline_candidate";
   if (_progIsCorrection(prog, r)) return cand ? 27 : 18;
+  // the served V2 rows sit right of any same-date v1 row of the same frame
+  if (r.model_id === "efv_v2") return cand ? 13 : 4;
   if (cand) return 9;
   if (r.role !== "development") return 0;
   const base = r.frame === "lv_dev" ? -18 : -9;

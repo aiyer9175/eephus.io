@@ -191,6 +191,15 @@ def test_the_three_raters_clear_the_placebo_and_efv_does_not(view):
         assert view["per_rater"][r]["observed_inside_placebo_band"] is False, (
             f"{r} now sits INSIDE its permutation band, so its block-scale loss "
             "is no longer separable from what the transform costs by itself")
+    # DS-02 (2026-09-25): the served eFV V2 grade is the consensus value at the order
+    # rank inside (side, year), so it carries the block scale by construction (bug B5's
+    # repair). The registration below was made on eFV v1.
+    import efv_v2_serve
+    if (efv_v2_serve.enabled()
+            and view["per_rater"]["xfv"]["observed_inside_placebo_band"] is False):
+        pytest.xfail("eFV V2 sits outside its placebo band: its grade is drawn from the "
+                     "consensus values of each (side, year) group, so it carries block "
+                     "scale by construction; the registration was made on eFV v1")
     assert view["per_rater"]["xfv"]["observed_inside_placebo_band"] is True, (
         "eFV now sits OUTSIDE its permutation band, which would mean eFV carries "
         "block scale too. Confirm before anything is said about the difference.")

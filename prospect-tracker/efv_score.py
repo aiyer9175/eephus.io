@@ -2038,8 +2038,16 @@ def _build_grade_map(side: str):
         scored = json.loads(scored_live_path(side).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return []
-    return sorted((s["rank_war"], s["xfv_grade_display"]) for s in scored
-                  if s.get("rank_war") is not None and s.get("xfv_grade_display") is not None)
+    # DS-02: a V2-served row keeps its v1 blend and v1 quantile display grade under
+    # v1_rank_war / v1_grade_display, so this map (graduates and busts stay on v1)
+    # reads the same pool whichever eFV the board serves.
+    pairs = []
+    for s in scored:
+        rw = s.get("v1_rank_war", s.get("rank_war"))
+        gd = s.get("v1_grade_display", s.get("xfv_grade_display"))
+        if rw is not None and gd is not None:
+            pairs.append((rw, gd))
+    return sorted(pairs)
 
 
 def _map_grade(grade_map, rank_war):
@@ -2103,6 +2111,18 @@ def score_history(persist: bool = True) -> dict:
     players = (json.loads(ts_path.read_text(encoding="utf-8")).get("players")) or []
     fit = {s: _fit_production(s) for s in ("hit", "pit")}
     acq, il = _load_sidecars({p.get("player_key") for p in players if p.get("player_key")})
+    # DS-02: a V2-graded prospect's series is V2's (efv_v2_serve.HistoryGrader), so the
+    # chart's last point and the movement engine's eFV delta read the grade the board
+    # serves. Every other player keeps the v1 series (graduates and busts are v1; a
+    # constant-anchor row's chart prefers its provisional series in prospx).
+    import efv_v2_serve as _v2s
+    v2g = {}
+    if _v2s.enabled():
+        import efv_drivers as _drv
+        _panel = _drv.load_bio_panel()
+        for _s in ("hit", "pit"):
+            v2g[_s] = _v2s.HistoryGrader(
+                _s, json.loads(live_matrix_path(_s).read_text(encoding="utf-8")))
 
     out = {}
     for rec in players:
@@ -2119,6 +2139,9 @@ def score_history(persist: bool = True) -> dict:
         a_sc = acq.get(pk) or {}
         ilf = _injury_features(il.get(pk), None)
         series = []
+        g2 = v2g.get(side)
+        v2_member = g2 is not None and pk in g2.keys
+        v2_pts = []
         for pt in pts:
             cons_fv = _f(pt.get("consensus_fv_raw"))
             if cons_fv is None:
@@ -2132,6 +2155,12 @@ def score_history(persist: bool = True) -> dict:
             row.update(_prior_features(rec, pt, side))
             row["milb"] = _milb_features(rec.get("mlbam_id"), min(yr, CURRENT_SEASON) + 1,
                                          rec.get("birth_date"), side)
+            if v2_member:
+                v2_pts.append({"d": pt["snapshot_date"], "c": round(cons_fv, 1),
+                               "fv": cons_fv, "feats": _vec(row, side),
+                               "extra": {"bmi": _drv.bmi_asof(pk, pt["snapshot_date"],
+                                                              _panel)}})
+                continue
             # cons_war (consensus-anchor WAR) is computed first so a no-track-record
             # snapshot can be prior-anchored off it. ols is always present here
             # (fit_production_stack returns None otherwise and _fit_production raises),
@@ -2184,6 +2213,9 @@ def score_history(persist: bool = True) -> dict:
             if grade is None:
                 continue
             series.append({"d": pt["snapshot_date"], "x": round(grade, 1), "c": round(cons_fv, 1)})
+        if v2_member and v2_pts:
+            series = [{"d": q["d"], "x": round(g, 1), "c": q["c"]}
+                      for q, g in zip(v2_pts, g2.grades(v2_pts))]
         if len(series) >= 2:
             out[pk] = series
 
@@ -2268,6 +2300,192 @@ def _krp_display_raw(era_rel: float, k_rel: float) -> float:
     return x
 
 
+# ---------------------------------------------------------------------------
+# DS-02: serving eFV V2 (efv_v2_serve; docs/efv-v2/DRIVER_SYSTEM_V2.md, owner DS-Q1)
+# ---------------------------------------------------------------------------
+# run_live computes eFV v1 for every live row exactly as before, then _serve_v2 replaces
+# the served fields. Two populations:
+#
+#   consensus-graded rows (a source published an FV): every served number derives from
+#     V2's order index. The grade is the group's consensus value at the order rank
+#     (the board number, the pricing grade and the odds grade all at once), the sort
+#     key is the order index, the odds are the consensus outcome table read at that
+#     grade, the dollars are priced at it, and the chips are V2's admitted drivers plus
+#     the DS-11 overlay chips (a statement, never a grade move). Rows without a MiLB
+#     record are V2-graded too (DS-04 imputation) and keep xfv_provisional.
+#   constant-anchor rows (no source grade; the consensus is the last-resort constant):
+#     V2 has no consensus to reorder, so the row is served wholly by the production-only
+#     provisional model (data/xfv_ungraded.json, one run behind, as the routing always
+#     was): its grade, sort key, WAR, odds, dollars and chips, plus the overlay chips.
+#     A constant-anchor row with no provisional entry is dropped (eFV abstains).
+#
+# The v1 blend and its quantile display grade ride along as v1_rank_war and
+# v1_grade_display, which efv_export's whitelist never names, so run_backgrade's grade map
+# (graduates and busts stay on v1) reads the same pool it always read.
+
+def _v2_price_ctx(r) -> tuple:
+    age = r.get("age_now")
+    if age is None:
+        age = _age_at(r.get("birth_date"), CURRENT_SEASON)
+    eta = r.get("eta_years")
+    eta = float(eta) if eta is not None else PROSPECT_ETA_FALLBACK_YEARS
+    return age, eta
+
+
+def _v2_overlay_chips(r, side: str, model_war) -> list:
+    try:
+        import efv_overlays as _eo
+        return _eo.overlay_chips(r, side, float(model_war or 0.0))
+    except Exception:                                           # noqa: BLE001
+        log.warning("overlay chips unavailable for %s", r.get("player_key"), exc_info=True)
+        return []
+
+
+def _v2_entry(r, side: str, p: dict, v1e: dict | None) -> dict:
+    """The served row for a consensus-graded prospect, from V2's order index alone."""
+    import efv_v2_serve as _v2s
+    is_pit = side == "pit"
+    cons_fv = float(r["consensus_fv_raw"])
+    grade = float(p["efv_grade"])
+    probs = vf.p_bucket_given_fv(grade, is_pit) or []
+    pos = r.get("position")
+    age, eta = _v2_price_ctx(r)
+    delta, placeholder, is_floor = consensus_delta(
+        round(grade, 1), round(cons_fv, 1), anchor_constant_only=False,
+        grade_from_outcome_map=False)
+    p_bust = round(probs[0], 3) if probs else None
+    chips = list(p.get("chips") or []) + _v2_overlay_chips(r, side, p.get("efv_war_6yr"))
+    e = {
+        "player_key": r["player_key"], "kind": "active", "position": pos,
+        "consensus_fv": round(cons_fv, 1),
+        "xfv_grade": round(grade, 1),
+        "xfv_grade_odds": round(grade, 3),
+        "xfv_grade_healthy": None,
+        "xfv_minus_consensus": delta,
+        "consensus_is_placeholder": placeholder,
+        "xfv_grade_is_floor": is_floor,
+        "xfv_war_6yr": round(float(p["efv_war_6yr"]), 2),
+        "rank_war": None,
+        "p_bucket": {k: round(q, 3) for k, q in zip(_BUCKETS, probs)},
+        "surplus_mm": None,
+        "consensus_surplus_mm": r.get("consensus_surplus_mm"),
+        "dist": {"p_bust": p_bust},
+        "band_p10_mm": None, "band_p90_mm": None,
+        "p_bust": p_bust,
+        "injury_factor": None, "statcast_factor": None,
+        "grade_basis": _v2s.GRADE_BASIS,
+        "board_sort_key": round(float(p["order_idx"]), 9),
+        "efv_v2": {"u_c": round(float(p["u_c"]), 6), "e_skill": round(float(p["e_skill"]), 6),
+                   "e_time": round(float(p["e_time"]), 6),
+                   "order_idx": round(float(p["order_idx"]), 9),
+                   "group": [side, int(_v2s.live_year())],
+                   "order_rank": p.get("order_rank"), "consensus_rank": p.get("consensus_rank"),
+                   "group_n": p.get("group_n")},
+        "factors": chips,
+        "factors_more": None,
+        # the pricing grade IS the served grade (one order index)
+        "xfv_grade_display": round(grade, 1),
+        "xfv_minus_consensus_display": round(grade - cons_fv, 1),
+    }
+    if not p.get("has_milb"):
+        e["xfv_provisional"] = True
+    if v1e is not None:
+        for k in ("krp_plus", "xline_note"):
+            if v1e.get(k) is not None:
+                e[k] = v1e[k]
+        e["v1_rank_war"] = v1e.get("rank_war")
+        e["v1_grade_display"] = v1e.get("xfv_grade_display")
+    _reprice_surplus_on_display(e, is_pit, pos, age=age, eta=eta)
+    return e
+
+
+def _v2_provisional_entry(r, side: str, u: dict, v1e: dict) -> dict:
+    """The served row for a constant-anchor prospect: the provisional model's own row."""
+    e = {
+        "player_key": r["player_key"], "kind": "active", "position": r.get("position"),
+        "consensus_fv": v1e.get("consensus_fv"),
+        "xfv_grade": u.get("xfv_grade"),
+        "xfv_grade_odds": None,
+        "xfv_grade_healthy": None,
+        "xfv_minus_consensus": None,
+        "consensus_is_placeholder": True,
+        "xfv_grade_is_floor": False,
+        "xfv_war_6yr": u.get("xfv_war_6yr"),
+        "rank_war": None,
+        "p_bucket": u.get("p_bucket"),
+        "surplus_mm": u.get("surplus_mm"),
+        "consensus_surplus_mm": v1e.get("consensus_surplus_mm"),
+        "dist": u.get("dist"),
+        "band_p10_mm": u.get("band_p10_mm"), "band_p90_mm": u.get("band_p90_mm"),
+        "p_bust": u.get("p_bust"),
+        "injury_factor": None, "statcast_factor": None,
+        "grade_basis": "provisional_capped",
+        "board_sort_key": (round(float(u["xfv_war_6yr"]), 6)
+                           if u.get("xfv_war_6yr") is not None else None),
+        "factors": list(u.get("factors") or []) + _v2_overlay_chips(r, side, u.get("xfv_war_6yr")),
+        "factors_more": None,
+        "xfv_grade_display": v1e.get("xfv_grade_display"),
+        "xfv_minus_consensus_display": v1e.get("xfv_minus_consensus_display"),
+        "v1_rank_war": v1e.get("rank_war"),
+        "v1_grade_display": v1e.get("xfv_grade_display"),
+    }
+    for k in ("krp_plus", "xline_note"):
+        if v1e.get(k) is not None:
+            e[k] = v1e[k]
+    return e
+
+
+def _serve_v2(scored: list, live: list, preds: dict, side: str) -> tuple[list, dict]:
+    """Replace every served v1 row with its V2 row (or its provisional row), add V2 rows
+    run_live's v1 path abstained on (no MiLB record), and drop constant-anchor rows with
+    no provisional entry. Returns (rows, receipt)."""
+    by_key = {r.get("player_key"): r for r in live if r.get("player_key")}
+    prov = _provisional_rows()
+    out, rec = [], {"v2": 0, "v2_without_milb": 0, "provisional": 0, "dropped_no_provisional": 0}
+    seen = set()
+    for s in scored:
+        pk = s["player_key"]
+        r = by_key.get(pk) or {}
+        seen.add(pk)
+        if pk in preds:
+            out.append(_v2_entry(r, side, preds[pk], s))
+            rec["v2"] += 1
+        elif r.get("anchor_constant_only"):
+            u = prov.get(pk)
+            if u is None or u.get("xfv_grade") is None:
+                rec["dropped_no_provisional"] += 1
+                continue
+            out.append(_v2_provisional_entry(r, side, u, s))
+            rec["provisional"] += 1
+        else:
+            raise RuntimeError(f"{pk}: a consensus-graded live row V2 did not score")
+    for pk, p in preds.items():
+        if pk in seen:
+            continue
+        out.append(_v2_entry(by_key[pk], side, p, None))
+        rec["v2"] += 1
+        rec["v2_without_milb"] += 1
+    return out, rec
+
+
+_prov_rows_cache: dict | None = None
+
+
+def _provisional_rows() -> dict:
+    """{player_key: full provisional entry} from the PREVIOUS run's xfv_ungraded.json
+    (the same one-run lag _provisional_grades documents); {} on any failure."""
+    global _prov_rows_cache
+    if _prov_rows_cache is not None:
+        return _prov_rows_cache
+    try:
+        doc = json.loads(_PROV_GRADE_PATH.read_text(encoding="utf-8"))
+        _prov_rows_cache = dict(doc.get("by_player") or {})
+    except Exception:                                           # noqa: BLE001
+        log.warning("provisional rows unavailable (%s)", _PROV_GRADE_PATH.name)
+        _prov_rows_cache = {}
+    return _prov_rows_cache
+
+
 def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=None,
              rows=None, rank_out: dict | None = None) -> dict:
     """Score the CURRENT active prospect board (efv_dataset.build_live_matrix) with the
@@ -2292,6 +2510,12 @@ def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=No
     lam = blend_lambda(side)
     live = (json.loads(live_matrix_path(side).read_text(encoding="utf-8"))
             if rows is None else rows)
+    # DS-02: V2 serves on the default path only. The DS-11 seams (overlays, stack, rows)
+    # are v1 parity harnesses and keep v1 behaviour byte for byte.
+    import efv_v2_serve as _v2s
+    _v2_preds = (_v2s.score_live(side, live)
+                 if (_v2s.enabled() and overlays is None and stack is None and rows is None)
+                 else None)
 
     scored, skipped_no_track = [], 0
     krp_disp_raw = {}                                     # KRP+ DISPLAY pool: player_key -> _krp_display_raw (decoupled from the model's zeroed x_era_k; LANE H2)
@@ -2715,6 +2939,12 @@ def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=No
                     # standardization safety guards (len>=2, sd>0) above are kept.
                     s["krp_plus"] = round(100 + 10 * (x - mu) / sd, 1)
 
+    # DS-02: the V2 pass. Everything above is eFV v1 and stays computed so the graduate
+    # grade map (v1_rank_war / v1_grade_display) reads the pool it always read.
+    v2_receipt = None
+    if _v2_preds is not None:
+        scored, v2_receipt = _serve_v2(scored, live, _v2_preds, side)
+
     # SAME-BASIS invariant (bughunt F6, 2026-07-23): both totals are CALIBRATED
     # dollars now -- surplus_mm prices through _cal_mm at this module's seam (F1)
     # and consensus_surplus_mm is storage's calibrated surplus_value_mm
@@ -2736,6 +2966,8 @@ def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=No
         "biggest_disagreements": _live_disagreement_block(scored),
         "surplus_totals_mm": {"xfv": xfv_tot, "consensus": cons_tot,
                               "xfv_share_of_consensus": round(xfv_tot / cons_tot, 3) if cons_tot else None},
+        "served_model": (_v2s.SERVED_MODEL_ID if v2_receipt is not None else "efv_v1"),
+        "v2_serving": v2_receipt,
     }
     if persist:
         scored_live_path(side).write_text(json.dumps(scored, indent=0), encoding="utf-8")

@@ -577,7 +577,13 @@ def test_committed_artifact_headline_alias_contract():
 #   pre-existing floor-routing behaviour at a boundary, not a new defect.
 #   BOARD_BASIS_FINGERPRINT gained an injsides= term in the same commit, and this rides the
 #   SAME BOARD_RANK_BASIS_EPOCH 2026-09-04 as the label epoch.
-_GOLDEN_XFV_SHA256 = "d5f889aab14b4635060dbfc829502e2776054a2ddcf4666d90328b95217f6d73"
+# 2026-09-25 RESTAMP: DS-02, eFV V2 SERVES (efv_v2_serve; owner answer DS-Q1). Every
+#   consensus-graded active row now carries V2's grade (the consensus value at its rank in
+#   V2's order inside its side), board_sort_key is the order index, the odds and dollars
+#   read that grade, and constant-anchor rows are served by the provisional model. The
+#   hash had already drifted from the previous stamp on data alone (a known red); this
+#   stamps the committed V2 artifact. Rowcount 9502 -> 9509.
+_GOLDEN_XFV_SHA256 = "0bc5d958d7ae5bf9f21f544a0aa250dd8428486c15ebda54d0a0d467b654634f"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which
@@ -595,7 +601,7 @@ _GOLDEN_XFV_SHA256 = "d5f889aab14b4635060dbfc829502e2776054a2ddcf4666d90328b9521
 # (data/xfv.json by_player, read 2026-07-16 post-DB-repair regen). The +/-20%
 # band tolerates ordinary roster churn while still catching a gross
 # truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 9502
+_GOLDEN_XFV_ROWCOUNT = 9509
 
 
 def test_efv_grade_map_inverts_on_model_window():

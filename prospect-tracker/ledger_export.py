@@ -1690,8 +1690,10 @@ def build_all() -> tuple:
                             f"salaries, while the numerator is the whole projected {CLASS_YEAR} roster, so the index "
                             + ("runs mostly as an inverse payroll rank" if abs(rho_pay or 0) > abs(rho_war or 0)
                                else "reads payroll as well as WAR")
-                            + f": Spearman {rho_pay:.2f} against minus the CBT "
-                            f"payroll and {rho_war:.2f} against projected WAR across {len(rk)} clubs"),
+                            # printed from the stored 3dp value, so the copy and the pool
+                            # key can never round to different last digits (0.8749 -> 0.875)
+                            + f": Spearman {_r(rho_pay, 3):.2f} against minus the CBT "
+                            f"payroll and {_r(rho_war, 3):.2f} against projected WAR across {len(rk)} clubs"),
         "cost_plus_registry": "no registry row: Cost+ predicts nothing; a skill claim would need an eval first",
         "orgsur_chip": "descriptive, unvalidated",
         "farm_leaves": {k: {"basis": LEAF_VALUE[k][2], "weight": leaf_weights.get(k)} for k in FIN_LEAVES},

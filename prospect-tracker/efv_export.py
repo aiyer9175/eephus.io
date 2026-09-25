@@ -254,6 +254,12 @@ def _entry(s, side, kind):
     #                    above: a row without it must stay byte-identical.
     if s.get("rank_war") is not None:
         e["rank_war"] = s["rank_war"]
+    #   efv_v2          DS-02: on a V2-graded row, the order index and its parts
+    #                    (u_c, e_skill, e_time, order_idx, the (side, list year) group).
+    #                    board_sort_key carries the same order index, so the sort and
+    #                    the grade on this row come from one number.
+    if s.get("efv_v2") is not None:
+        e["efv_v2"] = s["efv_v2"]
     if s.get("xline_note"):                              # S-XLINE measurement note (annotation only,
         e["xline_note"] = s["xline_note"]                # live covered players; never a ranked factor)
     if s.get("xfv_provisional"):                          # prior-anchored (no pro track record)
@@ -424,6 +430,9 @@ def _serve_vs_eval_census(by_player: dict) -> dict:
             "does."),
         "sides": {},
     }
+    v2 = _v2_order_census(by_player)
+    if v2:
+        out["v2_board_order"] = v2
     for side in ("H", "P"):
         rows = [e for e in by_player.values()
                 if e.get("side") == side and e.get("kind") == "active"
@@ -454,6 +463,59 @@ def _serve_vs_eval_census(by_player: dict) -> dict:
             blk["map"][basis] = leg
         out["sides"][side] = blk
     return out
+
+
+def _v2_order_census(by_player: dict) -> dict:
+    """DS-02, measured on the artifact: inside each side, the order the board sorts V2
+    rows in (xfv_grade descending, then board_sort_key descending, the storage and
+    prospx rule) against the order of efv_v2.order_idx. One order index means zero
+    rows out of place. {} when no row is V2-graded."""
+    out = {}
+    for side in ("H", "P"):
+        rows = [(k, e) for k, e in by_player.items()
+                if e.get("side") == side and e.get("kind") == "active"
+                and e.get("efv_v2") is not None]
+        if not rows:
+            continue
+        board = [k for k, _e in sorted(rows, key=lambda kv: (-float(kv[1]["xfv_grade"]),
+                                                              -float(kv[1]["board_sort_key"]),
+                                                              kv[0]))]
+        idx = [k for k, _e in sorted(rows, key=lambda kv: (-float(kv[1]["efv_v2"]["order_idx"]),
+                                                            kv[0]))]
+        out[side] = {"n": len(rows),
+                     "rows_out_of_place": sum(1 for a, b in zip(board, idx) if a != b),
+                     "board_order_equals_order_index": board == idx}
+    return out
+
+
+def _served_model_meta() -> dict:
+    """What serves, and what the board may say about it. The claim is derived from
+    data/efv_progress.json (efv_v2_serve.served_claim), never written here."""
+    import efv_v2_serve as _v2s
+    if not _v2s.enabled():
+        return {"model_id": "efv_v1", "grade_basis": "outcome_pooled"}
+    return {"model_id": _v2s.SERVED_MODEL_ID, "grade_basis": _v2s.GRADE_BASIS,
+            "registry": "data/model_registry.json#efv_v2",
+            "claim": _v2s.served_claim(),
+            "receipt": _v2s.model_receipt(),
+            "who": ("every active prospect with a real consensus grade; rows whose "
+                    "consensus is the last-resort constant are served by the "
+                    "production-only provisional model (grade_basis "
+                    "provisional_capped)")}
+
+
+_GRADE_SCALE_V2 = (
+    "xfv_grade is THE board number: the displayed grade, the sort key and the basis of "
+    "overall_rank (storage.BOARD_GRADE_FIELD). Since 2026-09-25 (DS-02) it is eFV V2 on "
+    "every row with grade_basis efv_v2: the consensus FV value of the prospect's (side, "
+    "list year) group at the rank of V2's order index (efv_v2.order_idx, also the "
+    "board_sort_key), so consensus sets the level and the model only reorders. The same "
+    "grade prices surplus_mm, the band and dist (xfv_grade_quantile equals it on these "
+    "rows) and keys the odds: p_bucket and p_bust are the consensus outcome table read at "
+    "this grade (xfv_grade_odds). xfv_war_6yr is the consensus-FV-to-six-season-WAR line "
+    "at the grade, context only. Rows with grade_basis provisional_capped have no source "
+    "grade and are served by the production-only provisional model. Graduates and busts "
+    "(kind debuted / bust) keep eFV v1.")
 
 
 def run(persist: bool = True) -> dict:
@@ -549,6 +611,8 @@ def run(persist: bool = True) -> dict:
                            "on it and a re-key has not been measured). Live board players carry "
                            "kind=active + a surplus dist; they require a pro track record (eFV "
                            "abstains on players with no MiLB production).",
+            # DS-02: which eFV serves and the claim the board prints about it.
+            "served_model": _served_model_meta(),
             "eval": {"hitter": "data/xfv_eval.json", "pitcher": "data/xfv_eval_pitcher.json",
                      "tools": "data/xfv_tools.json"},
             "status": "provisional",
@@ -561,6 +625,9 @@ def run(persist: bool = True) -> dict:
         },
         "by_player": by_player,
     }
+    if out["meta"]["served_model"].get("model_id") != "efv_v1":
+        out["meta"]["grade_scale"] = _GRADE_SCALE_V2
+        out["meta"]["eval"]["served"] = "data/efv_v2_dev_eval.json"
     if persist:
         OUT_PATH.write_text(json.dumps(out, indent=0), encoding="utf-8")
         log.info("wrote %s (%d players)", OUT_PATH, len(by_player))

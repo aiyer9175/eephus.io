@@ -2911,7 +2911,7 @@
   },
   {
    "model_id": "xfv_hitter",
-   "surface": "/prospx (PRIMARY grade + ranking; consensus FV secondary)",
+   "surface": "SINCE 2026-09-25 (DS-02): graduates and busts (kind debuted / bust) and the graduate grade map only; the active board serves efv_v2. Before: /prospx (PRIMARY grade + ranking; consensus FV secondary)",
    "predicts": "realized first-6-MLB-season bWAR distribution -> xFV grade (20-80) + surplus, hitters",
    "champion": "xfv_hit_v1_lean",
    "baseline": "consensus FV (within-fold OLS WAR~FV)",
@@ -3341,7 +3341,7 @@
   },
   {
    "model_id": "xfv_pitcher",
-   "surface": "/prospx (PRIMARY grade + ranking; consensus FV secondary)",
+   "surface": "SINCE 2026-09-25 (DS-02): graduates and busts (kind debuted / bust) and the graduate grade map only; the active board serves efv_v2. Before: /prospx (PRIMARY grade + ranking; consensus FV secondary)",
    "predicts": "realized first-6-MLB-season bWAR distribution -> xFV grade (20-80) + surplus, pitchers",
    "champion": "xfv_pit_v1_lean",
    "baseline": "consensus FV (within-fold OLS WAR~FV)",
@@ -4883,6 +4883,22 @@
    "eval_artifact": "data/efv_v2_dev_eval.json",
    "verdict": "provisional",
    "notes": "DEVELOPMENT READ ONLY (2026-09-25, eWAR v2 label, spent frames, adjudicates nothing). vm_dev (vintage-matched vm2, n 803): H0 0.3807 vs consensus 0.4129, delta -0.0322 (E_cond CI95 -0.0581 to -0.0075); vs v1 0.3916, delta -0.0109 (E_cond CI95 -0.0343 to +0.0130). lv_dev (list vintages 2014-2019, W3, n 4702): H0 0.1575 vs consensus 0.17, delta -0.0124 (E_cond CI95 -0.0298 to +0.0044); vs v1 0.1641, delta -0.0065 (E_cond CI95 -0.0233 to +0.0097). Non-inferiority to v1 at 0.02 is not shown on either frame (both CI95 lower bounds sit below -0.02). Offset-only liveness holds on every fold.",
+   "last_checked": "2026-09-25",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
+   "model_id": "efv_v2",
+   "surface": "/prospx board and player cards (SERVED since 2026-09-25, DS-02): the eFV grade, the board order, the pricing grade and the odds grade of every active prospect with a real consensus grade, plus the glossary Source Comparison scored object (source_backtest via efv_v2_serve.served_oos_scores). efv_v2_serve.py, efv_v2_model.py",
+   "predicts": "an ORDER inside each (side, list year) group: order_idx = u_c + w_skill * e_skill + w_time * e_time, u_c the within-group consensus percentile, e_skill and e_time the admitted drivers of the skill and REACHED heads in consensus-percentile units. The grade is the group's consensus value at that rank, so consensus sets the level and the model only reorders.",
+   "champion": "served: the production fit is fit_v2 on the v1 matrices, decision years before 2025, frame vm, registered DS-08 weights (hit w_skill 0.599508 w_time 0.012287; pit w_skill 1.0 w_time 0.107279), DS-06 admission inside the fit (hitters: tool_hit skill, level_rank timing; pitchers: no driver admitted, so the consensus order, owner DS-Q2). Constant-anchor rows are served by the provisional model (xfv_ungraded).",
+   "baseline": "PROSPX consensus FV (the order it reorders) and eFV v1 on identical rows",
+   "metric": "development: within-(side, vintage) Spearman vs the outcome label (DS-15 statistic), pooled Spearman after one output map as the secondary, contributor AUC as the veto; served headline: the Source Comparison vintage-matched frame (data/source_backtest.json)",
+   "eval_artifact": "data/efv_v2_dev_eval.json",
+   "verdict": "provisional",
+   "owner": "eFV claim program",
+   "last_validated": "2026-09-25",
+   "notes": "2026-09-25 DS-02 (owner answer DS-Q1: the rebuilt eFV leads the board, labelled as tying consensus until a reserved read says otherwise; the label is derived from data/efv_progress.json by efv_v2_serve.served_claim and printed from data/xfv.json meta.served_model.claim). Development evidence (data/efv_v2_dev_eval.json ds16, eWAR v2 label, spent frames, adjudicates nothing): within-(side, vintage) V2 minus consensus -0.0005 (CI95 -0.0197 to +0.0172) on list vintages 2017-2019 and -0.0057 (CI95 -0.0231 to +0.0116) on the timing-pinned vintage-matched frame: a tie. No reserved frame has been read; the registered read is docs/efv-v2/EFV_V2_GATE.md, not before 2026-12-01.",
    "last_checked": "2026-09-25",
    "stale": false,
    "artifact_age_days": 0

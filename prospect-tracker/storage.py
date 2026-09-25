@@ -5001,6 +5001,15 @@ def _fv_to_points(fv: float | int | None) -> float:
 #               the primary specification is a measured NULL); when off, this
 #               resolves to exactly the raw grade and nothing moves.
 BOARD_GRADE_FIELD = "xfv_grade"
+#   2026-09-25  DS-02 (docs/efv-v2/DRIVER_SYSTEM_V2.md, owner answer DS-Q1). The FIELD
+#               is unchanged and every reader keeps reading it; what it HOLDS moved:
+#               on every consensus-graded active row it is now eFV V2 (efv_v2_serve),
+#               the consensus FV value of the row's (side, list year) group at the rank
+#               of V2's order index, and board_sort_key carries that order index. The
+#               board order, the displayed grade, the pricing grade, the odds grade and
+#               the Source Comparison scored object are one number. The epoch moved to
+#               2026-09-25 and the fingerprint gained the served= term in the same
+#               commit.
 
 #: DS-12 (docs/efv-v2/DRIVER_SYSTEM_V2.md, bug B7): debut-date bases that are a
 #: synthesized day rather than a game date. "rule5_rollforward_placeholder" is the
@@ -5022,7 +5031,11 @@ _NO_BOARD_SORT_KEY = -1e9
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-09-04"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-09-25"   # STRICTLY-AFTER gate: see load_rank_history.
+# Bumped 2026-09-25 for DS-02: eFV V2 became the board number (the consensus value at
+# V2's order rank inside each side) and board_sort_key became V2's order index, so every
+# consensus-graded row re-ranks once for a reason that is not player movement. Landed
+# before the fWAR label epoch's step A (FWAR_LABEL_EPOCH_GATE.md clause (l)).
 # Bumped 2026-09-04 for the eWAR LABEL EPOCH. career_war was rebased from bWAR to
 # eWAR v2, which re-labels the eFV training target for every debuted row, so the
 # board re-ranks once for a reason that is not player movement. That is the only
@@ -5156,7 +5169,12 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a9
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017"
                            "|label=ewar_v2@2026-09-03T12:35:09"
-                           "|injsides=pit")
+                           "|injsides=pit|served=efv_v2@f903b813")
+# served= added 2026-09-25 with DS-02 and the epoch bump. Every term before it names how
+# eFV v1 turns a prediction into a grade; none of them can see WHICH eFV serves. Serving
+# V2 moves every consensus-graded grade and rank while all eleven earlier terms stay
+# byte-identical, so the device names the served model and, for V2, a hash of the
+# registered weights and the serving constants (efv_v2_serve.fingerprint_term).
 # injsides added 2026-09-04: THE INJURY HAIRCUT WENT PITCHER-ONLY, on the owner's decision
 # and on measured outcomes (efv_score.INJURY_PENALTY_SIDES carries the numbers). It lifts
 # the haircut off 225 served hitters at a median x0.738 and leaves 360 pitchers untouched,
@@ -5383,9 +5401,16 @@ def board_basis_fingerprint() -> str:
         injsides = ",".join(sorted(_es4.INJURY_PENALTY_SIDES)) or "none"
     except Exception:
         injsides = "unavailable"
+    # SERVED MODEL, added 2026-09-25 with DS-02 (see the note at the pinned constant).
+    try:
+        import efv_v2_serve as _v2s
+        served = _v2s.fingerprint_term()
+    except Exception:
+        served = "unavailable"
     return (f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
             f"|feats={feats}|stale={stale}|floorroute={floorroute}|gradanchor={anchor}"
-            f"|disp={disp}|gradenorm={gradenorm}|label={label}|injsides={injsides}")
+            f"|disp={disp}|gradenorm={gradenorm}|label={label}|injsides={injsides}"
+            f"|served={served}")
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /

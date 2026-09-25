@@ -3570,9 +3570,22 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     # fair: a fitted model would otherwise enjoy an in-sample advantage the raw source
     # grades don't. Attached to every common row that has an eFV grade; sources still
     # define common-set membership, so eFV is reported on the subset it covers.
+    # DS-02 (docs/efv-v2/DRIVER_SYSTEM_V2.md, bug B2): when eFV V2 serves, the scored
+    # object is V2's served ordering out of sample (efv_v2_serve.served_oos_scores: the
+    # grade a forward-chained V2 fit serves, the order index breaking exact ties as the
+    # board does), so the page scores the object the board shows. eFV v1 otherwise.
     try:
-        from efv_model import oos_grades
-        xfv_oos = {**oos_grades("hit"), **oos_grades("pit")}
+        import efv_v2_serve as _v2s
+        _v2_on = _v2s.enabled()
+    except Exception:
+        log.exception("efv_v2_serve unavailable - scoring eFV v1")
+        _v2s, _v2_on = None, False
+    try:
+        if _v2_on:
+            xfv_oos = _v2s.served_oos_scores()
+        else:
+            from efv_model import oos_grades
+            xfv_oos = {**oos_grades("hit"), **oos_grades("pit")}
     except Exception:
         log.exception("eFV OOS grades unavailable for source comparison - continuing")
         xfv_oos = {}
@@ -3583,9 +3596,13 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     xfv_oos_vm2: dict = {}
     vm2_receipts: dict = {}
     try:
-        from efv_model import oos_grades as _oos
-        for _sd in ("hit", "pit"):
-            xfv_oos_vm2.update(_oos(_sd, timing_pin=True, receipts=vm2_receipts))
+        if _v2_on:
+            xfv_oos_vm2.update(_v2s.served_oos_scores(timing_pin=True,
+                                                      receipts=vm2_receipts))
+        else:
+            from efv_model import oos_grades as _oos
+            for _sd in ("hit", "pit"):
+                xfv_oos_vm2.update(_oos(_sd, timing_pin=True, receipts=vm2_receipts))
     except Exception:
         log.exception("eFV timing-pinned OOS grades unavailable; vm2 frame skipped")
         xfv_oos_vm2, vm2_receipts = {}, {}
@@ -3933,9 +3950,25 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                            "verdict; it becomes the headline once the owner has seen it."),
         })
         accuracy["head_to_head_verdict_vm2"] = _hv2
+    # DS-02: which eFV the head-to-head cells scored. efv_progress copies model_id
+    # into every ledger row, so a v2 row never displaces a v1 row of the same frame.
+    accuracy["efv_scored_object"] = (
+        {"model_id": _v2s.SERVED_MODEL_ID,
+         "basis": ("the served eFV V2 ordering out of sample: each decision year from "
+                   "2017 scored by a V2 fit on earlier matrix rows, the grade that fit "
+                   "serves (the consensus value of the (side, year) group at the order "
+                   "rank) with the order index breaking exact grade ties as the board "
+                   "does (efv_v2_serve.served_oos_scores)"),
+         "code": "efv_v2_serve.py", "since": "2026-09-25 (DS-02)"}
+        if _v2_on else
+        {"model_id": "efv_v1",
+         "basis": "raw out-of-sample eFV v1 score (efv_model.oos_grades)",
+         "code": "efv_model.py"})
     # DS-01 receipt: what column every eFV head-to-head cell above scored.
     accuracy["efv_scored_column"] = {
-        "basis": "raw out-of-sample eFV score (efv_model.oos_grades), no remap",
+        "basis": ("the served eFV V2 score out of sample (efv_v2_serve.served_oos_scores), "
+                  "no remap" if _v2_on else
+                  "raw out-of-sample eFV score (efv_model.oos_grades), no remap"),
         "since": "2026-09-25 (DS-01, bug B1 in docs/efv-v2/DRIVER_SYSTEM_V2.md)",
         "replaced": ("a rank remap onto the common-set consensus-FV values rounded to "
                      "0.1, which tied distinct scores before they were scored"),

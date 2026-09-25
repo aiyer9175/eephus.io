@@ -219,5 +219,10 @@ def test_served_pill_cards_split_exactly_on_the_served_lean(timeseries_doc):
     assert not wrong, (
         f"{len(wrong)} served pill cards say the wrong thing about the lean "
         f"(key, should say, says): {wrong[:10]}")
-    if ov.OVERLAY_HIT_DEFAULT or ov.OVERLAY_PIT_DEFAULT:
+    # DS-02: under eFV V2 the lean is a labelled note (on_grade False, no magnitude) and
+    # moves no grade, so every pill must say NOT an input; under v1 it moves the model leg.
+    import efv_v2_serve
+    if efv_v2_serve.enabled():
+        assert counts["in"] == 0, f"a pill claims the lean moves a V2 grade: {counts}"
+    elif ov.OVERLAY_HIT_DEFAULT or ov.OVERLAY_PIT_DEFAULT:
         assert counts["in"] > 0, f"the overlay ships but no served pill says so: {counts}"

@@ -61,7 +61,12 @@ def _active():
 # Measured on the 2026-07-30 served artifact (data/xfv.json generated 2026-07-28,
 # board scale OFF). Recorded so that ANY basis change has to come here and make a
 # deliberate edit, with a decision record, instead of shipping silently.
-PINNED_MIX = {"top10": 0, "top25": 1, "top50": 2, "top100": 6}
+PINNED_MIX = {"top10": 2, "top25": 8, "top50": 17, "top100": 31}
+# RE-RECORDED 2026-09-25 for DS-02 (eFV V2 serves; storage.BOARD_RANK_BASIS_EPOCH moved to
+# 2026-09-25 and the fingerprint gained served= in the same commit). Was top10 0, top25 1,
+# top50 2, top100 6. V2's grade is the consensus value at each prospect's rank inside his
+# own side, so the cross-side placement is consensus's own; v1's pitcher block deflated
+# pitcher grades against hitters. Measured on the V2 artifact: 2 / 8 / 17 / 31 pitchers.
 PINNED_BASIS = "xfv_grade"
 # Tolerance per cut. The pin exists to catch a BASIS change, and the basis is pinned
 # exactly by the fingerprint test below - so the mix only has to be tight enough to

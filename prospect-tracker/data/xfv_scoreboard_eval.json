@@ -472,24 +472,24 @@
   "vs_frame_n": 806,
   "vs_frame_note": "base year equals the eFV decision year; neither side holds a timing edge",
   "common_n": 4318,
-  "common_n_efv": 3255,
+  "common_n_efv": 3231,
   "verdict_vs_consensus": {
    "basis": "pooled_efv_common_vintage_matched",
    "basis_note": "base year equals the eFV decision year; neither side holds a timing edge",
    "n": 806,
-   "xfv_spearman": 0.3998,
+   "xfv_spearman": 0.4192,
    "consensus_spearman": 0.4122,
-   "delta": -0.0124,
+   "delta": 0.007,
    "mde95": 0.0303,
    "resolvable": false,
-   "margin_x_floor": 0.409,
+   "margin_x_floor": 0.231,
    "xfv_beats": false,
    "verdict": "not resolvable at this power",
    "frame_version": "vm1",
    "frame_note": "read off the vintage-matched basis. The other two frames are published in head_to_head_by_frame and each is tilted toward one of the two graders; see docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md.",
    "ci95": [
-    -0.0413,
-    0.0166
+    -0.0157,
+    0.0288
    ],
    "ci95_estimator": "E_cond, player-clustered",
    "ci95_source": "accuracy.head_to_head_vs_sources.sources.prospx_consensus.spearman.ci95",
@@ -499,19 +499,19 @@
    "basis": "pooled_efv_common_vintage_matched_vm2",
    "basis_note": "base year equals the eFV decision year, and eFV's consensus input is the raters' own preseason read (latest point dated Jan 1 to Apr 30 of that year), so neither side holds a timing edge; frame version vm2 (EV-01)",
    "n": 803,
-   "xfv_spearman": 0.393,
+   "xfv_spearman": 0.4074,
    "consensus_spearman": 0.4129,
-   "delta": -0.0199,
+   "delta": -0.0055,
    "mde95": 0.0303,
    "resolvable": false,
-   "margin_x_floor": 0.657,
+   "margin_x_floor": 0.182,
    "xfv_beats": false,
    "verdict": "not resolvable at this power",
    "frame_version": "vm2",
    "role": "headline_candidate",
    "ci95": [
-    -0.0468,
-    0.0092
+    -0.0202,
+    0.0099
    ],
    "ci95_estimator": "E_cond, player-clustered",
    "ci95_source": "accuracy.head_to_head_vs_sources_vm2.sources.prospx_consensus.spearman.ci95",
@@ -522,7 +522,7 @@
     "pit": 415
    },
    "timing_pin": {
-    "n_pinned_scores": 1508,
+    "n_pinned_scores": 1180,
     "n_rows": 803,
     "n_vintage_rows_without_pin": 3,
     "n_input_date_moved": 412,
@@ -546,12 +546,12 @@
     "basis": "pooled_efv_common_vintage_matched",
     "basis_note": "base year equals the eFV decision year; neither side holds a timing edge",
     "n": 806,
-    "xfv_spearman": 0.3998,
+    "xfv_spearman": 0.4192,
     "consensus_spearman": 0.4122,
-    "delta": -0.0124,
+    "delta": 0.007,
     "mde95": 0.0303,
     "resolvable": false,
-    "margin_x_floor": 0.409,
+    "margin_x_floor": 0.231,
     "xfv_beats": false,
     "verdict": "not resolvable at this power",
     "frame_version": "vm1"
@@ -560,25 +560,25 @@
     "basis": "pooled_efv_common_predebut",
     "basis_note": "post-debut consensus reads removed, all remaining base years kept; tilted TOWARD eFV, which is graded at the decision year while the retained earlier reads are not",
     "n": 2693,
-    "xfv_spearman": 0.3685,
+    "xfv_spearman": 0.3684,
     "consensus_spearman": 0.2933,
-    "delta": 0.0752,
+    "delta": 0.0751,
     "mde95": 0.0372,
     "resolvable": true,
-    "margin_x_floor": 2.022,
+    "margin_x_floor": 2.019,
     "xfv_beats": true,
     "verdict": "beats consensus"
    },
    "all_vintages": {
     "basis": "pooled_efv_common",
     "basis_note": "every base year including post-debut consensus reads; tilted TOWARD the consensus, which sees major league performance on those rows",
-    "n": 3255,
-    "xfv_spearman": 0.3564,
-    "consensus_spearman": 0.3161,
-    "delta": 0.0403,
+    "n": 3231,
+    "xfv_spearman": 0.3554,
+    "consensus_spearman": 0.3119,
+    "delta": 0.0435,
     "mde95": 0.0352,
     "resolvable": true,
-    "margin_x_floor": 1.145,
+    "margin_x_floor": 1.236,
     "xfv_beats": true,
     "verdict": "beats consensus"
    },
@@ -586,12 +586,12 @@
     "basis": "pooled_efv_common_vintage_matched_vm2",
     "basis_note": "base year equals the eFV decision year, and eFV's consensus input is the raters' own preseason read (latest point dated Jan 1 to Apr 30 of that year), so neither side holds a timing edge; frame version vm2 (EV-01)",
     "n": 803,
-    "xfv_spearman": 0.393,
+    "xfv_spearman": 0.4074,
     "consensus_spearman": 0.4129,
-    "delta": -0.0199,
+    "delta": -0.0055,
     "mde95": 0.0303,
     "resolvable": false,
-    "margin_x_floor": 0.657,
+    "margin_x_floor": 0.182,
     "xfv_beats": false,
     "verdict": "not resolvable at this power",
     "frame_version": "vm2"
@@ -602,51 +602,51 @@
     "label": "PROSPX consensus",
     "spearman": {
      "n": 806,
-     "efv": 0.3998,
+     "efv": 0.4192,
      "consensus": 0.4122,
-     "win": false,
-     "margin": -0.0124
+     "win": true,
+     "margin": 0.007
     },
     "auc_contributor": {
      "n": 806,
-     "efv": 0.7489,
+     "efv": 0.7578,
      "consensus": 0.7485,
      "win": true,
-     "margin": 0.0004
+     "margin": 0.0093
     }
    },
    "fangraphs": {
     "label": "FanGraphs",
     "spearman": {
      "n": 806,
-     "efv": 0.3998,
+     "efv": 0.4192,
      "consensus": 0.3649,
      "win": true,
-     "margin": 0.0349
+     "margin": 0.0543
     },
     "auc_contributor": {
      "n": 806,
-     "efv": 0.7489,
+     "efv": 0.7578,
      "consensus": 0.7144,
      "win": true,
-     "margin": 0.0345
+     "margin": 0.0434
     }
    },
    "mlb_pipeline": {
     "label": "MLB Pipeline",
     "spearman": {
      "n": 806,
-     "efv": 0.3998,
+     "efv": 0.4192,
      "consensus": 0.4113,
-     "win": false,
-     "margin": -0.0115
+     "win": true,
+     "margin": 0.0079
     },
     "auc_contributor": {
      "n": 806,
-     "efv": 0.7489,
+     "efv": 0.7578,
      "consensus": 0.7388,
      "win": true,
-     "margin": 0.0101
+     "margin": 0.019
     }
    }
   },
@@ -658,17 +658,17 @@
     "basis": "identical rows",
     "spearman": {
      "n": 168,
-     "efv": 0.4237,
+     "efv": 0.465,
      "consensus": 0.4591,
-     "win": false,
-     "margin": -0.0354
+     "win": true,
+     "margin": 0.0059
     },
     "auc_contributor": {
      "n": 168,
-     "efv": 0.758,
+     "efv": 0.7829,
      "consensus": 0.7688,
-     "win": false,
-     "margin": -0.0108
+     "win": true,
+     "margin": 0.0141
     }
    },
    {
@@ -678,17 +678,17 @@
     "basis": "identical rows",
     "spearman": {
      "n": 147,
-     "efv": 0.3791,
+     "efv": 0.4524,
      "consensus": 0.4231,
-     "win": false,
-     "margin": -0.044
+     "win": true,
+     "margin": 0.0293
     },
     "auc_contributor": {
      "n": 147,
-     "efv": 0.7359,
+     "efv": 0.7929,
      "consensus": 0.7815,
-     "win": false,
-     "margin": -0.0456
+     "win": true,
+     "margin": 0.0114
     }
    },
    {
@@ -698,17 +698,17 @@
     "basis": "identical rows",
     "spearman": {
      "n": 174,
-     "efv": 0.3809,
+     "efv": 0.3772,
      "consensus": 0.3764,
      "win": true,
-     "margin": 0.0045
+     "margin": 0.0008
     },
     "auc_contributor": {
      "n": 174,
-     "efv": 0.7324,
+     "efv": 0.7241,
      "consensus": 0.7238,
      "win": true,
-     "margin": 0.0086
+     "margin": 0.0003
     }
    },
    {
@@ -718,17 +718,17 @@
     "basis": "identical rows",
     "spearman": {
      "n": 250,
-     "efv": 0.256,
+     "efv": 0.3099,
      "consensus": 0.2884,
-     "win": false,
-     "margin": -0.0324
+     "win": true,
+     "margin": 0.0215
     },
     "auc_contributor": {
      "n": 250,
-     "efv": 0.7031,
+     "efv": 0.7207,
      "consensus": 0.7411,
      "win": false,
-     "margin": -0.038
+     "margin": -0.0204
     }
    },
    {
@@ -738,17 +738,17 @@
     "basis": "identical rows",
     "spearman": {
      "n": 131,
-     "efv": 0.4462,
+     "efv": 0.3681,
      "consensus": 0.4206,
-     "win": true,
-     "margin": 0.0256
+     "win": false,
+     "margin": -0.0525
     },
     "auc_contributor": {
      "n": 131,
-     "efv": 0.7785,
+     "efv": 0.7645,
      "consensus": 0.764,
      "win": true,
-     "margin": 0.0145
+     "margin": 0.0005
     }
    },
    {
@@ -758,17 +758,17 @@
     "basis": "identical rows",
     "spearman": {
      "n": 138,
-     "efv": 0.4875,
+     "efv": 0.3955,
      "consensus": 0.3683,
      "win": true,
-     "margin": 0.1192
+     "margin": 0.0272
     },
     "auc_contributor": {
      "n": 138,
-     "efv": 0.7622,
+     "efv": 0.7127,
      "consensus": 0.7295,
-     "win": true,
-     "margin": 0.0327
+     "win": false,
+     "margin": -0.0168
     }
    }
   ],
@@ -776,33 +776,33 @@
  },
  "top20_capture": {
   "protocol": "share of the full graded pool's realized WAR captured by the top 20 percent of each board (busts included at 0)",
-  "pool_n": 3649,
+  "pool_n": 3073,
   "top20": {
-   "n": 3649,
-   "efv": 0.7036,
-   "consensus": 0.7137,
+   "n": 3073,
+   "efv": 0.7306,
+   "consensus": 0.7351,
    "win": false,
-   "margin": -0.0101
+   "margin": -0.0045
   },
   "curve_area": {
-   "n": 3649,
-   "efv": 0.8114,
+   "n": 3073,
+   "efv": 0.8171,
    "consensus": 0.8181,
    "win": false,
-   "margin": -0.0067
+   "margin": -0.001
   }
  },
  "disagreement_receipts": {
   "protocol": "resolved players where eFV and consensus placed the player >= 15 percentile points apart, pre-debut vintage grades only; 'right' = whose placement sat closer to the realized-WAR placement",
   "n_pool": 1264,
-  "n_disagreements": 284,
-  "efv_right_share": 0.556,
+  "n_disagreements": 181,
+  "efv_right_share": 0.519,
   "efv_right_share_ci95": [
-   0.4965,
-   0.6127
+   0.4475,
+   0.5912
   ],
   "efv_right_share_resolvable": false,
-  "efv_right_share_verdict": "eFV is closer on 56% of the 284 resolved disagreements, 95% CI 50% to 61%. The interval CONTAINS 50%, so on this sample the share is not distinguishable from a coin flip and must not be presented as an edge.",
+  "efv_right_share_verdict": "eFV is closer on 52% of the 181 resolved disagreements, 95% CI 45% to 59%. The interval CONTAINS 50%, so on this sample the share is not distinguishable from a coin flip and must not be presented as an edge.",
   "null": 0.5,
   "win": false,
   "win_basis": "the 95% interval clears 0.5, not the point estimate; a point above 0.5 with an interval that contains it is a description of this sample and not an edge",
@@ -815,51 +815,51 @@
     "xfv_right": true
    },
    {
-    "name": "Zach Dezenzo",
-    "consensus_fv": 35.0,
+    "name": "Grant Holmes",
+    "consensus_fv": 37.9,
+    "war": 2.4,
+    "dir": "higher",
+    "xfv_right": true
+   },
+   {
+    "name": "Chayce McDermott",
+    "consensus_fv": 39.9,
+    "war": -0.5,
+    "dir": "higher",
+    "xfv_right": false
+   },
+   {
+    "name": "Blake Walston",
+    "consensus_fv": 41.6,
+    "war": -0.3,
+    "dir": "lower",
+    "xfv_right": true
+   },
+   {
+    "name": "Thomas Saggese",
+    "consensus_fv": 39.8,
     "war": 0.1,
     "dir": "higher",
-    "xfv_right": true
+    "xfv_right": false
    },
    {
-    "name": "Edmundo Sosa",
-    "consensus_fv": 42.8,
-    "war": 10.6,
+    "name": "Michael McGreevy",
+    "consensus_fv": 41.6,
+    "war": 2.4,
     "dir": "lower",
     "xfv_right": false
    },
    {
-    "name": "Dawel Lugo",
-    "consensus_fv": 42.8,
-    "war": -1.0,
-    "dir": "lower",
-    "xfv_right": true
-   },
-   {
-    "name": "Tanner Scott",
-    "consensus_fv": 43.0,
-    "war": 9.9,
-    "dir": "lower",
-    "xfv_right": false
-   },
-   {
-    "name": "Cole Waites",
-    "consensus_fv": 35.0,
-    "war": 0.0,
+    "name": "Keider Montero",
+    "consensus_fv": 35.5,
+    "war": 2.1,
     "dir": "higher",
     "xfv_right": true
    },
    {
-    "name": "Max Fried",
-    "consensus_fv": 50.5,
-    "war": 31.0,
-    "dir": "lower",
-    "xfv_right": false
-   },
-   {
-    "name": "Kohl Stewart",
-    "consensus_fv": 42.4,
-    "war": 0.3,
+    "name": "Gordon Graceffo",
+    "consensus_fv": 48.2,
+    "war": 1.6,
     "dir": "lower",
     "xfv_right": false
    }
@@ -889,7 +889,7 @@
  ],
  "source_backtest_freshness": {
   "reran": false,
-  "artifact_generated_at": "2026-09-25T19:22:58Z",
+  "artifact_generated_at": "2026-09-25T22:34:54Z",
   "rule": "reused (fresh within 7 days)"
  },
  "weak_cells": [
@@ -998,92 +998,52 @@
    "margin": -0.0027
   },
   {
-   "cell": "head_to_head.prospx_consensus",
-   "metric": "spearman",
-   "n": 806,
-   "efv": 0.3998,
-   "consensus": 0.4122,
-   "margin": -0.0124
-  },
-  {
-   "cell": "head_to_head.mlb_pipeline",
-   "metric": "spearman",
-   "n": 806,
-   "efv": 0.3998,
-   "consensus": 0.4113,
-   "margin": -0.0115
-  },
-  {
-   "cell": "head_to_head.archetype.hs_bat",
-   "metric": "spearman",
-   "n": 168,
-   "efv": 0.4237,
-   "consensus": 0.4591,
-   "margin": -0.0354
-  },
-  {
-   "cell": "head_to_head.archetype.hs_bat",
-   "metric": "auc_contributor",
-   "n": 168,
-   "efv": 0.758,
-   "consensus": 0.7688,
-   "margin": -0.0108
-  },
-  {
-   "cell": "head_to_head.archetype.hs_arm",
-   "metric": "spearman",
-   "n": 147,
-   "efv": 0.3791,
-   "consensus": 0.4231,
-   "margin": -0.044
-  },
-  {
-   "cell": "head_to_head.archetype.hs_arm",
-   "metric": "auc_contributor",
-   "n": 147,
-   "efv": 0.7359,
-   "consensus": 0.7815,
-   "margin": -0.0456
-  },
-  {
-   "cell": "head_to_head.archetype.college_arm",
-   "metric": "spearman",
-   "n": 250,
-   "efv": 0.256,
-   "consensus": 0.2884,
-   "margin": -0.0324
-  },
-  {
    "cell": "head_to_head.archetype.college_arm",
    "metric": "auc_contributor",
    "n": 250,
-   "efv": 0.7031,
+   "efv": 0.7207,
    "consensus": 0.7411,
-   "margin": -0.038
+   "margin": -0.0204
+  },
+  {
+   "cell": "head_to_head.archetype.intl_bat",
+   "metric": "spearman",
+   "n": 131,
+   "efv": 0.3681,
+   "consensus": 0.4206,
+   "margin": -0.0525
+  },
+  {
+   "cell": "head_to_head.archetype.intl_arm",
+   "metric": "auc_contributor",
+   "n": 138,
+   "efv": 0.7127,
+   "consensus": 0.7295,
+   "margin": -0.0168
   },
   {
    "cell": "capture.top20",
    "metric": "war_capture",
-   "n": 3649,
-   "efv": 0.7036,
-   "consensus": 0.7137,
-   "margin": -0.0101
+   "n": 3073,
+   "efv": 0.7306,
+   "consensus": 0.7351,
+   "margin": -0.0045
   },
   {
    "cell": "capture.curve_area",
    "metric": "war_capture",
-   "n": 3649,
-   "efv": 0.8114,
+   "n": 3073,
+   "efv": 0.8171,
    "consensus": 0.8181,
-   "margin": -0.0067
+   "margin": -0.001
   },
   {
    "cell": "receipts.disagreements",
    "metric": "right_share",
-   "n": 284,
-   "efv": 0.556,
+   "n": 181,
+   "efv": 0.519,
    "consensus": 0.5,
-   "margin": 0.056
+   "margin": 0.019
   }
  ],
  "weak_cells_note": "every cell above with win=false, verbatim; these drive the experiment queue, they are not smoothed away"

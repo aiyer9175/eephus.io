@@ -316,12 +316,15 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
     hv = acc.get("head_to_head_verdict") or {}
     vs = ((acc.get("head_to_head_vs_sources") or {}).get("sources") or {})
     head = BASIS_TO_FRAME.get(hv.get("basis"))
+    # DS-02: the model the artifact scored (efv_v1 until eFV V2 serves; an artifact
+    # written before the key existed scored v1).
+    model_id = (acc.get("efv_scored_object") or {}).get("model_id") or MODEL_ID
     rows = []
 
     def _base(frame, n, n_by_side, note=""):
         meta = FRAMES[frame]
         return {"run_id": None, "date": date, "trigger": trigger,
-                "model_id": MODEL_ID, "model_version": dict(model_version),
+                "model_id": model_id, "model_version": dict(model_version),
                 "frame": frame,
                 "frame_version": DEFAULT_FRAME_VERSION.get(frame),
                 "role": meta["role"], "tilted": bool(meta["tilted"]),

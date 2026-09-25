@@ -368,7 +368,11 @@ def test_dev_rows_append_once_and_never_displace_v1(arts):
     doc = _doc(arts)
     assert doc["headline_frame"] == "vm"
     head = [r for r in doc["rows"] if r["frame"] == "vm"]
-    assert len(head) == 1 and head[0]["model_id"] == P.MODEL_ID
+    # DS-02: the headline row carries the model the backtest scored (efv_v2 once V2
+    # serves), never a development model id
+    scored = (((json.loads((arts / P.SB_NAME).read_text(encoding="utf-8")).get("accuracy")
+                or {}).get("efv_scored_object") or {}).get("model_id") or P.MODEL_ID)
+    assert len(head) == 1 and head[0]["model_id"] == scored
     # a changed development read appends development rows only
     dev = json.loads((arts / P.DEV_NAME).read_text(encoding="utf-8"))
     dev["frames"]["lv_dev"]["raters"]["efv_v2_h0"]["spearman"] += 0.01

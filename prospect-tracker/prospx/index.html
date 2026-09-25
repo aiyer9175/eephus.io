@@ -9268,6 +9268,7 @@
           <button type="button" class="chip grade-toggle-btn" data-grade-toggle="xfv" title="Rank + lead with eFV (our outcome-grounded grade)" style="border:0;border-radius:0;">eFV</button>
           <button type="button" class="chip grade-toggle-btn" data-grade-toggle="fv" title="Rank + lead with consensus FV (the public scouting aggregate)" style="border:0;border-radius:0;border-left:1px solid var(--border);">Consensus</button>
         </div>
+        <a class="efv-claim-chip" data-efv-claim href="/glossary/#view=source-comparison" hidden style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);text-decoration:none;border:1px dashed var(--border);border-radius:4px;padding:2px 6px;white-space:nowrap;"></a>
       </div>
       <div class="filter-group">
         <span class="filter-label">Sort</span>
@@ -31733,6 +31734,10 @@ function getAaaStuffPlus(p) {
 // its value-add is the calibrated distribution + uncertainty + surplus). Live-board
 // players carry kind="active"; eFV abstains on players with no pro track record.
 let _EFV = null;
+// The eFV artifact's meta.served_model: which eFV serves and the claim the board prints
+// about it (DS-02). The claim is derived server-side from the eFV progress ledger
+// (efv_v2_serve.served_claim); nothing here writes a claim of its own.
+let _EFV_SERVED = null;
 let _EFV_RANK = null;     // player_key -> 1-based eFV rank over the active board (lazy)
 let _EFV_PREV_RANK = null; // player_key -> eFV rank by PREVIOUS grade (drives the rank-spot delta chip)
 let _EFV_TIE_COUNT = null; // board value -> how many players share it exactly (tie-block guard)
@@ -31741,6 +31746,8 @@ let _EFV_TIE_COUNT = null; // board value -> how many players share it exactly (
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       _EFV = (j && j.by_player) || {};
+      _EFV_SERVED = (j && j.meta && j.meta.served_model) || null;
+      _paintEfvClaim();
       _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_TIE_COUNT = null; _EFV_ORG_RANK = null;     // invalidate so the rank maps rebuild with fresh data
       // First paint can beat this fetch - repaint so eFV chips/cards appear.
       scheduleRender();
@@ -31764,6 +31771,29 @@ function milbProjHTML(p) {
   const cell = (lbl, o) => o ? `<span class="rps-plus-pill is-neutral g-term" data-term="milb_translation" title="Projected first-MLB-season ${lbl} from a MiLB->MLB matched-pair translation of this prospect's level-relative rate. P10-P90 ${o.lo}-${o.hi}%${o.low_confidence ? "; modest signal, read as context" : ""}.">Proj ${lbl} ${o.exp}%${o.low_confidence ? "*" : ""}</span>` : "";
   return cell("K%", pr.k_pct) + cell("BB%", pr.bb_pct);
 }
+// The served-model claim (DS-02, owner answer DS-Q1: eFV V2 leads the board, labelled
+// as tying consensus until a reserved read says otherwise). Every word and number comes
+// from meta.served_model.claim, which efv_export copies from the eFV progress ledger.
+function efvServedClaim() {
+  const c = _EFV_SERVED && _EFV_SERVED.claim;
+  return (c && c.word) ? c : null;
+}
+function efvClaimShort() {
+  const c = efvServedClaim();
+  if (!c) return "";
+  const m = _EFV_SERVED && _EFV_SERVED.model_id === "efv_v2" ? "eFV V2" : "eFV";
+  return c.word === "not yet scored" ? `${m} not yet scored` : `${m} ${c.word} consensus`;
+}
+function _paintEfvClaim() {
+  const c = efvServedClaim();
+  document.querySelectorAll("[data-efv-claim]").forEach(el => {
+    if (!c) { el.hidden = true; return; }
+    el.textContent = efvClaimShort();
+    el.title = `${c.text} Source: ${c.source}. Methodology, Source Comparison.`;
+    el.hidden = false;
+  });
+}
+function efvIsV2(x) { return !!(x && x.grade_basis === "efv_v2"); }
 function getEfv(p) {
   if (!p) return null;
   // Provisional (source-ungraded) players carry their eFV entry inline so every eFV helper
@@ -33452,7 +33482,13 @@ function efvTooltip(x) {
   // on both sides and the gap is inside the noise floor. A chip explainer has nowhere
   // to carry a floor or an n, so it states what the number IS and sends the reader to
   // the methodology page, which derives the standing from the artifact.
-  parts.push("Predicts a calibrated 6-yr WAR outcome distribution from how comparable prospects actually turned out. Open the player for the full mix.");
+  if (efvIsV2(x)) {
+    parts.push("eFV V2: the consensus FV order inside each side, reordered by the drivers that passed the admission rule; the grade is a consensus value at that rank. Open the player for the drivers.");
+    const _c = efvServedClaim();
+    if (_c) parts.push(_c.text);
+  } else {
+    parts.push("Predicts a calibrated 6-yr WAR outcome distribution from how comparable prospects actually turned out. Open the player for the full mix.");
+  }
   return parts.join(" · ");
 }
 // Which grade leads the board: follows the eFV/Consensus toggle (state.gradePrimary).
@@ -33462,6 +33498,7 @@ function efvTooltip(x) {
 function _gradePrimary() { return (typeof state !== "undefined" && state.gradePrimary === "fv") ? "fv" : "xfv"; }
 // Highlight the active "Rank by" toggle button to match _gradePrimary().
 function _syncGradeToggle() {
+  if (typeof _paintEfvClaim === "function") _paintEfvClaim();
   const pr = _gradePrimary();
   document.querySelectorAll("[data-grade-toggle]").forEach(b => {
     const on = b.dataset.gradeToggle === pr;
@@ -33723,10 +33760,29 @@ function efvDetailCard(p) {
   const moreHTML = (fm && Number(fm.n) > 0)
     ? `<div style="margin-top:5px;font-size:10px;color:var(--text-tertiary);font-style:italic;" title="Only the four largest model drivers are listed. ${Number(fm.n)} more cleared the reporting floor and were smaller; their magnitudes total ${Number(fm.mag).toFixed(2)} against the ${Number(((x.factors || [])[0] || {}).mag || 0).toFixed(2)} of the largest one shown. Overlay factors (Statcast+, age, injury, role) are not subject to this cut and are always listed.">and ${Number(fm.n)} smaller factor${Number(fm.n) === 1 ? "" : "s"} (combined ${Number(fm.mag).toFixed(2)})</div>`
     : "";
+  const _v2 = efvIsV2(x);
+  const _claim = _v2 ? efvServedClaim() : null;
+  // The grade is the consensus value at the prospect's rank in V2's order, so a row can
+  // gain on every driver and still fall: others gained more. Say where he sits in each.
+  const _vv = _v2 ? (x.efv_v2 || {}) : {};
+  const _sideWord = x.side === "P" ? "pitchers" : "hitters";
+  const placeHTML = (_v2 && _vv.order_rank != null && _vv.consensus_rank != null)
+    ? `<div class="efv-place-line" style="margin:-2px 0 8px;font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="The eFV grade is the consensus FV value at this prospect's place in eFV's order among ${_sideWord}. A driver moves him against the average prospect, so he can gain on every driver and still drop a place when others gain more.">#${Number(_vv.order_rank).toLocaleString()} of ${Number(_vv.group_n || 0).toLocaleString()} ${_sideWord} by eFV · #${Number(_vv.consensus_rank).toLocaleString()} by consensus FV</div>`
+    : "";
+  const claimHTML = _claim
+    ? `<div class="efv-claim-line" style="margin:-2px 0 8px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.4;" title="${escapeHtml(_claim.text + " Source: " + _claim.source + ".")}"><a href="/glossary/#view=source-comparison" style="color:var(--text-secondary);text-decoration:none;border-bottom:1px dotted var(--border);">${escapeHtml(efvClaimShort())}</a> · ${escapeHtml(_claim.frame_label ? _claim.frame_label.toLowerCase() + " frame" : "")}${_claim.n != null ? `, n ${Number(_claim.n).toLocaleString()}` : ""}</div>`
+    : "";
   const factorsHTML = (x.factors && x.factors.length) ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
-        <div title="Signals that moved eFV off the consensus prior, biggest first. The number is that signal's contribution size on the model's own scale, and the bar is the same number on a log scale so the large ones stay apart. They rank against each other; they do not sum to the eFV-minus-consensus gap. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${efvDeltaText(d)}</span> &rarr; eFV ${xg}` : ""}</div>
+        <div title="${_v2 ? "The drivers that moved this prospect's place in the consensus order inside his side, biggest first. The number is percentile points of the side's board. Notes marked 'not in the grade' state a condition (injury, age, reliever role, Statcast) and move nothing." : "Signals that moved eFV off the consensus prior, biggest first. The number is that signal's contribution size on the model's own scale, and the bar is the same number on a log scale so the large ones stay apart. They rank against each other; they do not sum to the eFV-minus-consensus gap. Game power is intentionally not a driver (scouts over-price it vs realized WAR)."}" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${efvDeltaText(d)}</span> &rarr; eFV ${xg}` : ""}</div>
         ${x.factors.slice().sort((a, b) => (Number(b && b.mag) || 0) - (Number(a && a.mag) || 0)).map(f => {
+          if (f && f.on_grade === false) {
+            return `<div class="efv-note-chip" style="display:flex;align-items:center;gap:7px;margin-bottom:3px;font-size:11px;">
+            <span style="color:var(--text-tertiary);width:10px;text-align:center;">&middot;</span>
+            <span style="flex:1;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(f.label)}</span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);flex-shrink:0;">not in the grade</span>
+          </div>`;
+          }
           const up = f.dir === "up";
           const col = up ? "var(--up)" : "var(--down)";
           const w = factorBarPct(f.mag);
@@ -33751,9 +33807,11 @@ function efvDetailCard(p) {
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <div class="detail-title" style="margin:0;"${x.grade_basis === "provisional_capped" ? ` title="${escapeHtml(efvScaleNote(x))}"` : ""}>${x.xfv_ungraded ? "Provisional eFV · production-only" : x.grade_basis === "provisional_capped" ? "eFV · provisional scale (no source grade)" : x.xfv_provisional ? "eFV · prior-anchored (awaiting pro debut)" : "eFV · outcome-grounded grade"}</div>
+        <div class="detail-title" style="margin:0;"${x.grade_basis === "provisional_capped" ? ` title="${escapeHtml(efvScaleNote(x))}"` : ""}>${x.xfv_ungraded ? "Provisional eFV · production-only" : x.grade_basis === "provisional_capped" ? "eFV · provisional scale (no source grade)" : _v2 ? (x.xfv_provisional ? "eFV V2 · consensus order, no pro record yet" : "eFV V2 · consensus order, reordered by drivers") : x.xfv_provisional ? "eFV · prior-anchored (awaiting pro debut)" : "eFV · outcome-grounded grade"}</div>
         <span class="fv-badge ${fvClass(String(efvGradeDisplay(x)))} size-sm"${x.xfv_ungraded ? ' style="border-style:dashed;"' : ""} title="${escapeHtml(efvTooltip(x))}">${efvGradeDisplay(x)}</span>
       </div>
+      ${claimHTML}
+      ${placeHTML}
       ${x.krp_plus != null ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:11px;color:var(--text-tertiary);">
         ${krpPlusPillHTML(p)}<span>K-backed run prevention: a below-level ERA the strikeouts support.</span>
       </div>` : ""}
@@ -33764,7 +33822,7 @@ function efvDetailCard(p) {
         <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Star Odds <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">2+ seasons of 4+ WAR</span></span>
         <span style="font-family:var(--font-mono);font-weight:700;color:${Number(p.surplus.star_odds) >= 0.20 ? "var(--up)" : Number(p.surplus.star_odds) >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)"};font-variant-numeric:tabular-nums;">${fmtStarOdds(p.surplus.star_odds)}</span>
       </div>` : ""}
-      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}eFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. Its ordering skill is measured against consensus FV out-of-sample on the Methodology page; the headline grade is on the familiar 20-80 scale, while the outcome mix uses the honest (typically lower) outcome-implied grade because scout FV runs optimistic. The dollar surplus + its range are in the Surplus value card below. Provisional. <a href="/glossary/#g=xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}${_v2 ? "eFV V2 keeps the consensus FV order inside each side and lets a small set of drivers move a prospect up or down it; the grade is the consensus value at his new rank, so the board, the outcome mix, P(bust) and the dollars all read one number. Its standing against consensus is measured out of sample on the Methodology page. The dollar surplus and its range are in the Surplus value card below. Provisional." : "eFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. Its ordering skill is measured against consensus FV out-of-sample on the Methodology page; the headline grade is on the familiar 20-80 scale, while the outcome mix uses the honest (typically lower) outcome-implied grade because scout FV runs optimistic. The dollar surplus + its range are in the Surplus value card below. Provisional."} <a href="/glossary/#g=xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
     </div>`;
 }
 
@@ -48641,7 +48699,7 @@ function renderPlayerDetail(key) {
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${_surpLabel}${scarcityChip}</div>
              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${_surpSub}</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="${_useEfv ? `eFV expected surplus over the ${_winWords}, from the outcome-grounded grade (the model's calibrated WAR distribution priced through the value framework). ${escapeHtml(surplusTip)}` : surplusTip}">${fmtUsd(surplus)}</div>
+           <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="${_useEfv ? (efvIsV2(_xf) ? `eFV expected surplus over the ${_winWords}, the value framework priced at the eFV grade (the same number the board shows). ${escapeHtml(surplusTip)}` : `eFV expected surplus over the ${_winWords}, from the outcome-grounded grade (the model's calibrated WAR distribution priced through the value framework). ${escapeHtml(surplusTip)}`) : surplusTip}">${fmtUsd(surplus)}</div>
          </div>${_efvFan ? `<div style="margin:-2px 0 8px;">${_efvFan}</div>` : ""}${_efvBand}${_efvBasisNote}`
       : "";
     // Expected market AAV - FV-derived WAR/yr × $/WAR market rate.

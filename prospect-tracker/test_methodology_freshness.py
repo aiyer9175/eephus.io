@@ -221,6 +221,7 @@ MODEL_GLOSSARY = {
     # the glossary Source Comparison progress ledger, the same panel as the
     # scoreboard above, so it takes the scoreboard's entry.
     "efv_v2_h0": ["xfv"],
+    "efv_v2": ["xfv"],
     "xfv_platoon": "internal",             # W-PLATOON loss ledger (platoon splits FAIL both sides)
     "xfv_wrc": "internal",                 # W-WRC/W-SB loss ledger (in-house wRC+ no ship)
     # consensus-basis counterfactual; normalization STAYS ON (turning it off is worse,

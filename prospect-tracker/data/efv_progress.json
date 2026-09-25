@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-09-25T21:30:28Z",
+ "generated_at": "2026-09-25T22:35:26Z",
  "headline_frame": "vm",
  "frames": {
   "vm": {
@@ -1130,7 +1130,7 @@
     }
    ],
    "note": "development frame, spent, not a claim",
-   "last_verified_at": "2026-09-25T21:30:28Z",
+   "last_verified_at": "2026-09-25T22:35:26Z",
    "content_hash": "1ce13465b106abd12b48cfe67e0664b5ecad2f19556de78d16a6d2ee34683dc6"
   },
   {
@@ -1338,7 +1338,7 @@
     }
    ],
    "note": "development frame, spent, not a claim",
-   "last_verified_at": "2026-09-25T21:30:28Z",
+   "last_verified_at": "2026-09-25T22:35:26Z",
    "content_hash": "0ab5d2f252c78b76a367447860d2cf23117d38173097a1c758aeeae2b0559d43"
   },
   {
@@ -2897,7 +2897,7 @@
     }
    ],
    "note": "DS-11 overlay read: eFV v1 WITH the gradeable served overlays (injury, age, reliever ceiling) against v1 without them, on v1's own forward-chained pool, rows with a MiLB block; within-(side, decision year) Spearman; spent frame, not a claim",
-   "last_verified_at": "2026-09-25T21:30:28Z",
+   "last_verified_at": "2026-09-25T22:35:26Z",
    "content_hash": "0f2fbcc4bd06b299e786af2053f1006b28ebe795b735aa35cdbaa96141e8587b"
   },
   {
@@ -2965,7 +2965,7 @@
     }
    ],
    "note": "DS-17 P(bust) chip read (REACHED head plus the FG-vs-Pipeline spread when admitted): Brier 0.1816 against consensus-only 0.21601 (delta -0.03441, CI95 [-0.03954, -0.02948]); log loss 0.52987 against 0.62148 (delta -0.09161, CI95 [-0.10387, -0.07985]). The AUC is for reaching the majors, not the WAR label. TILTED toward any head that reads level: a debuted matrix row is read just before its debut, so its level at the read foretells the debut. Spent frame, not a claim.",
-   "last_verified_at": "2026-09-25T21:30:28Z",
+   "last_verified_at": "2026-09-25T22:35:26Z",
    "content_hash": "f9ff1952c187343c191e884f7da14e3114488ad2ff4d8666ea0bceab0c1408b0"
   },
   {
@@ -3033,7 +3033,7 @@
     }
    ],
    "note": "DS-17 P(bust) chip read (REACHED head plus the FG-vs-Pipeline spread when admitted): Brier 0.24632 against consensus-only 0.22818 (delta 0.01814, CI95 [0.01322, 0.02249]); log loss 0.70709 against 0.64926 (delta 0.05784, CI95 [0.04479, 0.07041]). The AUC is for reaching the majors, not the WAR label. Spent frame, not a claim.",
-   "last_verified_at": "2026-09-25T21:30:28Z",
+   "last_verified_at": "2026-09-25T22:35:26Z",
    "content_hash": "7b7c3193e6cb96aa3c97e920d93e7b603d63f6871814d6841422c88de6c3520c"
   },
   {
@@ -3241,7 +3241,7 @@
     }
    ],
    "note": "DS-16 development read of the assembled V2 on the within (side, vintage) Spearman, the primary statistic of the DS-15 draft (EFV_V2_GATE.md s3); spent frame, not a claim",
-   "last_verified_at": "2026-09-25T21:30:28Z",
+   "last_verified_at": "2026-09-25T22:35:26Z",
    "statistic": "within (side, vintage) Spearman, size-weighted",
    "secondary": {
     "statistic": "pooled Spearman after the identical output map",
@@ -3507,7 +3507,7 @@
     }
    ],
    "note": "DS-16 development read of the assembled V2 on the within (side, vintage) Spearman, the primary statistic of the DS-15 draft (EFV_V2_GATE.md s3); spent frame, not a claim",
-   "last_verified_at": "2026-09-25T21:30:28Z",
+   "last_verified_at": "2026-09-25T22:35:26Z",
    "statistic": "within (side, vintage) Spearman, size-weighted",
    "secondary": {
     "statistic": "pooled Spearman after the identical output map",
@@ -3567,6 +3567,508 @@
     }
    },
    "content_hash": "620c988f16cb5bbe47283d5d464ccc48a9394076bca090e264dd1758327ad4b2"
+  },
+  {
+   "run_id": "2026-09-25T22:34:54Z|vm|6dd9e90d",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v2",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit|served=efv_v2@f903b813",
+    "commit": "a8f79364",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "vm",
+   "frame_version": "vm1",
+   "role": "headline",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 806,
+   "n_by_side": {
+    "hit": 389,
+    "pit": 417
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.4192,
+     "auc": 0.7578,
+     "n": 806
+    },
+    "prospx_consensus": {
+     "spearman": 0.4122,
+     "auc": 0.7485,
+     "n": 806
+    },
+    "mlb_pipeline": {
+     "spearman": 0.4113,
+     "auc": 0.7388,
+     "n": 806
+    },
+    "fangraphs": {
+     "spearman": 0.3649,
+     "auc": 0.7144,
+     "n": 806
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.007,
+      "ci95": [
+       -0.0157,
+       0.0288
+      ],
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": "E_cond, player-clustered",
+      "resolvable": false,
+      "key": "accuracy.head_to_head_verdict"
+     },
+     "auc": {
+      "delta": 0.0093,
+      "ci95": [
+       -0.0033,
+       0.022
+      ],
+      "mde95": 0.011,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": 0.0079,
+      "ci95": [
+       -0.0245,
+       0.0388
+      ],
+      "mde95": 0.0268,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": 0.019,
+      "ci95": [
+       0.0012,
+       0.0369
+      ],
+      "mde95": 0.0147,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources.sources.mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.0543,
+      "ci95": [
+       0.0166,
+       0.0919
+      ],
+      "mde95": 0.0315,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources.sources.fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.0434,
+      "ci95": [
+       0.0215,
+       0.0653
+      ],
+      "mde95": 0.0184,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources.sources.fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T22:34:54Z",
+     "sha256": "3b47d0eee7405a743b9ef925b88a3393edd7bdbd2103e5d659f89f27df032038"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "4f1ec0fe56fc673c7c76fe34cb5559a7839e97d6c5ded40ba7c8bc7f9382aadc"
+    }
+   ],
+   "note": "",
+   "last_verified_at": "2026-09-25T22:35:26Z",
+   "content_hash": "6dd9e90d8cfa45b9ae86804b60962a59559941a4e5a18f3c9a6a55193c4c660c"
+  },
+  {
+   "run_id": "2026-09-25T22:34:54Z|vm2|6ecc2a62",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v2",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit|served=efv_v2@f903b813",
+    "commit": "a8f79364",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "vm2",
+   "frame_version": "vm2",
+   "role": "headline_candidate",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 803,
+   "n_by_side": {
+    "hit": 388,
+    "pit": 415
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.4074,
+     "auc": 0.7505,
+     "n": 803
+    },
+    "prospx_consensus": {
+     "spearman": 0.4129,
+     "auc": 0.7492,
+     "n": 803
+    },
+    "mlb_pipeline": {
+     "spearman": 0.4116,
+     "auc": 0.7392,
+     "n": 803
+    },
+    "fangraphs": {
+     "spearman": 0.3662,
+     "auc": 0.7153,
+     "n": 803
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.0055,
+      "ci95": [
+       -0.0202,
+       0.0099
+      ],
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": "E_cond, player-clustered",
+      "resolvable": false,
+      "key": "accuracy.head_to_head_verdict_vm2"
+     },
+     "auc": {
+      "delta": 0.0013,
+      "ci95": [
+       -0.0078,
+       0.01
+      ],
+      "mde95": 0.0073,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.prospx_consensus.auc"
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.0042,
+      "ci95": [
+       -0.0318,
+       0.024
+      ],
+      "mde95": 0.0235,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.mlb_pipeline.spearman"
+     },
+     "auc": {
+      "delta": 0.0113,
+      "ci95": [
+       -0.0041,
+       0.0275
+      ],
+      "mde95": 0.0134,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.mlb_pipeline.auc"
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.0412,
+      "ci95": [
+       0.0083,
+       0.0756
+      ],
+      "mde95": 0.0278,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.fangraphs.spearman"
+     },
+     "auc": {
+      "delta": 0.0352,
+      "ci95": [
+       0.016,
+       0.0546
+      ],
+      "mde95": 0.0163,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources_vm2.sources.fangraphs.auc"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T22:34:54Z",
+     "sha256": "3b47d0eee7405a743b9ef925b88a3393edd7bdbd2103e5d659f89f27df032038"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "4f1ec0fe56fc673c7c76fe34cb5559a7839e97d6c5ded40ba7c8bc7f9382aadc"
+    }
+   ],
+   "note": "timing-pinned: eFV's consensus input is the raters' own preseason read; becomes the headline once the owner has seen it",
+   "last_verified_at": "2026-09-25T22:35:26Z",
+   "content_hash": "6ecc2a62c85e3b33834e75b8243fc3e160318614ad23ed6c47d13db77d73a2c8"
+  },
+  {
+   "run_id": "2026-09-25T22:34:54Z|predebut|396e375f",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v2",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit|served=efv_v2@f903b813",
+    "commit": "a8f79364",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "predebut",
+   "frame_version": null,
+   "role": "tilted",
+   "tilted": true,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 2693,
+   "n_by_side": {
+    "hit": 1374,
+    "pit": 1319
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3684,
+     "auc": 0.7617,
+     "n": 2693
+    },
+    "prospx_consensus": {
+     "spearman": 0.2933,
+     "auc": 0.7118,
+     "n": 2693
+    },
+    "mlb_pipeline": {
+     "spearman": 0.2983,
+     "auc": 0.7017,
+     "n": 2693
+    },
+    "fangraphs": {
+     "spearman": 0.2533,
+     "auc": 0.6729,
+     "n": 2693
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.0751,
+      "ci95": [
+       0.0341,
+       0.115
+      ],
+      "ci95_estimator": "E_cond, player-clustered",
+      "mde95": 0.0372,
+      "mde95_estimator": "E_refit",
+      "resolvable": true,
+      "key": "accuracy.head_to_head_by_frame.predebut"
+     }
+    }
+   },
+   "resolvable": true,
+   "verdict": "beats consensus",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T22:34:54Z",
+     "sha256": "3b47d0eee7405a743b9ef925b88a3393edd7bdbd2103e5d659f89f27df032038"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "4f1ec0fe56fc673c7c76fe34cb5559a7839e97d6c5ded40ba7c8bc7f9382aadc"
+    }
+   ],
+   "note": "post-debut consensus reads removed, all remaining base years kept; tilted TOWARD eFV, which is graded at the decision year while the retained earlier reads are not",
+   "last_verified_at": "2026-09-25T22:35:26Z",
+   "content_hash": "396e375f0838410260c7c6497b1d44f1e8544b8840faa73a45e6cd66ce36abf9"
+  },
+  {
+   "run_id": "2026-09-25T22:34:54Z|all_vintages|dd3cc797",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v2",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit|served=efv_v2@f903b813",
+    "commit": "a8f79364",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "all_vintages",
+   "frame_version": null,
+   "role": "tilted",
+   "tilted": true,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 3231,
+   "n_by_side": {
+    "hit": 1601,
+    "pit": 1630
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.3554,
+     "auc": 0.7509,
+     "n": 3231
+    },
+    "prospx_consensus": {
+     "spearman": 0.3119,
+     "auc": 0.7198,
+     "n": 3231
+    },
+    "mlb_pipeline": {
+     "spearman": 0.3116,
+     "auc": 0.705,
+     "n": 3231
+    },
+    "fangraphs": {
+     "spearman": 0.2722,
+     "auc": 0.6824,
+     "n": 3231
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": 0.0435,
+      "ci95": [
+       0.0053,
+       0.0816
+      ],
+      "ci95_estimator": "E_cond, player-clustered",
+      "mde95": 0.0352,
+      "mde95_estimator": "E_refit",
+      "resolvable": true,
+      "key": "accuracy.head_to_head_by_frame.all_vintages"
+     }
+    }
+   },
+   "resolvable": true,
+   "verdict": "beats consensus",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T22:34:54Z",
+     "sha256": "3b47d0eee7405a743b9ef925b88a3393edd7bdbd2103e5d659f89f27df032038"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "4f1ec0fe56fc673c7c76fe34cb5559a7839e97d6c5ded40ba7c8bc7f9382aadc"
+    }
+   ],
+   "note": "every base year including post-debut consensus reads; tilted TOWARD the consensus, which sees major league performance on those rows",
+   "last_verified_at": "2026-09-25T22:35:26Z",
+   "content_hash": "dd3cc7979ddf521c5c610b98399c30706bcb263e2c18221b0005a89378630ef7"
+  },
+  {
+   "run_id": "2026-09-25T22:34:54Z|disagreement|f022a0d5",
+   "date": "2026-09-25",
+   "trigger": "efv_change",
+   "model_id": "efv_v2",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit|served=efv_v2@f903b813",
+    "commit": "a8f79364",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "disagreement",
+   "frame_version": null,
+   "role": "secondary",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 181,
+   "n_by_side": null,
+   "raters": {},
+   "deltas": {},
+   "resolvable": false,
+   "verdict": "eFV is closer on 52% of the 181 resolved disagreements, 95% CI 45% to 59%. The interval CONTAINS 50%, so on this sample the share is not distinguishable from a coin flip and must not be presented as an edge.",
+   "share": {
+    "efv_right_share": 0.519,
+    "ci95": [
+     0.4475,
+     0.5912
+    ],
+    "null": 0.5,
+    "key": "disagreement_receipts"
+   },
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T22:34:54Z",
+     "sha256": "3b47d0eee7405a743b9ef925b88a3393edd7bdbd2103e5d659f89f27df032038"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "4f1ec0fe56fc673c7c76fe34cb5559a7839e97d6c5ded40ba7c8bc7f9382aadc"
+    }
+   ],
+   "note": "latest pre-debut consensus read",
+   "last_verified_at": "2026-09-25T22:35:26Z",
+   "content_hash": "f022a0d5db1fa9c7ef69941fe5d11a92f56ca2bb93473bca1288917eb62c99f0"
   }
  ],
  "backfill": {
