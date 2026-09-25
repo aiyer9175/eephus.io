@@ -1,5 +1,14 @@
 # Review Queue
 
+> **ARCHIVED 2026-09-25. Historical record, not current status.** This queue
+> was written for the Beta launch of 2026-07-11 ("nothing here ships before
+> Beta") and has not been maintained since. Known drift: item 2 (MiLB park
+> factors) is recorded as CLOSED-INFEASIBLE below, but the minors ingest gained
+> a venue dimension and `/parks/` serves the factors (201 venues plus 1 pooled
+> row). Current deferred work and owner decisions live in
+> `docs/master-plan-2026-09-24-final-pass.md` and the dated master plans under
+> `docs/`.
+
 Deferred work with enough spec to pick up cold. Each item: what / why /
 expected impact / rollback. Nothing here ships before Beta (2026-07-11)
 unless explicitly pulled forward by the owner; items marked DO NOT ATTEMPT

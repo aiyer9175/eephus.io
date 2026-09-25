@@ -77,3 +77,18 @@ def test_curated_block_present_in_data_sources():
         "tools/gen_audit_docs.py _DEFAULT_CURATED) before regenerating."
     )
     assert text.index(gen.CURATED_BEGIN) < text.index(gen.CURATED_END)
+
+
+def test_readme_routes_block_in_sync():
+    """Census X07-09 (2026-09-25): the README routes table listed 9 of 33
+    routes by hand. The block between the ROUTES sentinels is rendered from
+    build_site.NAV_ITEMS and build_site.main(); a new page without a
+    regeneration fails here."""
+    gen = _gen()
+    text = (ROOT / "README.md").read_bytes().decode("utf-8").replace("\r\n", "\n")
+    assert gen.README_ROUTES_BEGIN in text and gen.README_ROUTES_END in text, (
+        "README.md lost its ROUTES sentinels")
+    begin = text.index(gen.README_ROUTES_BEGIN)
+    end = text.index(gen.README_ROUTES_END) + len(gen.README_ROUTES_END)
+    assert text[begin:end] == gen.render_readme_routes(), (
+        "README.md routes block is out of sync - run `python tools/gen_audit_docs.py`")

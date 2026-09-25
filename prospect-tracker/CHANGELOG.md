@@ -8,7 +8,64 @@ their generator changes behavior.
 
 Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), docs/audit-2026-07-18/FINDINGS.md (fresh
-audit), REVIEW_QUEUE.md (deferred work), BETA_READINESS.md (go/no-go).
+audit), REVIEW_QUEUE.md (deferred work, archived 2026-09-25),
+BETA_READINESS.md (Beta go/no-go, archived 2026-09-25).
+
+## 2026-09-04 to 2026-09-25 (catch-up entry, written 2026-09-25)
+
+This log stopped at 2026-09-03 while about 300 commits landed. This entry
+summarizes them by program; each commit message carries its own before/after
+numbers, so `git log --since=2026-09-04 -- prospect-tracker` is the detailed
+record.
+
+1. eWAR LABEL EPOCH AND AFTER (09-04, 09-10/11, 09-17). The eFV labels moved
+   to eWAR as a basis decision, measured at no accuracy gain; four driver
+   families came back null. The injury haircut became pitcher-only (the hitter
+   side subtracted against the evidence). eWAR v3 wave W1.1 built the
+   FanGraphs WAR replica per component; the 3-year WAR rates moved onto eWAR;
+   the wOBA scale, linear weights, runs per win and the FIP constant are now
+   solved from the feed instead of fixed. The fWAR label epoch was registered
+   before the rebuild it governs.
+
+2. CLAIM AUDIT AND INVARIANTS (09-06). A-CLAIM-3/4/7/8/10/13/15: the site
+   stopped publishing a coin flip in bold, the flagship frame says it is
+   survivors only, and "eFV ties the consensus" names its ordering. An
+   invariant battery of twenty arithmetic laws now runs over the board, the
+   betting slate and the arbitration ladder, after four served-number defects
+   (a $80.0M free-agent price, a 100.1% playoff probability, and others).
+
+3. NEW MODULES. /hof/ (09-06: four sections live, four dark with named
+   blockers; the merit bake-off, which Baseball-Reference wins, ships saying so).
+   /management/ (09-06, Wave A 09-23: a decision ledger for nine families with
+   no plus metric and no skill claim). Futures as a tab with no market beside
+   it. /mlbstats/ Defense Leaderboards with DEM+ (09-11, pre-registered and
+   validated). Club Ledger and Franchise (09-23; ledger depth with every row
+   reconciled to its roll-up, 09-24). A shared team picker with club logos
+   (09-24).
+
+4. BETTING AND DIAMOND (09-06 to 09-25). Slots take any market; the board
+   re-reads the market, not the API key; schema 4 and schema 5 capture columns
+   dark on pre-registered clocks; the total's Poisson shape defect was found,
+   three gated repairs failed, and the failure is disclosed. The Dugout context
+   block sits beside the price and never touches a priced cell. The validation
+   headline leads with the benchmark ladder.
+
+5. COPY AND DISPLAY PASSES (09-11, 09-16/17). A third less copy across the
+   module pages and payloads, with typed figures derived from fields; one value
+   ruler of seven steps; Projections, the FA class board and MLB Stats became
+   tables that do not scroll sideways; the native controls moved into the site
+   idiom under a sweep test.
+
+6. FINAL PASS (09-24/25, docs/master-plan-2026-09-24-final-pass.md). About
+   a hundred commits, most of them one served defect each with before/after
+   numbers:
+   PROSPX rank chips equal board position, the draft board stops inventing
+   ranks, IL stints end on release, the trade audit prices at trade value, the
+   glossary carries the betting and DFS vocabulary, accuracy sentences that had
+   drifted from their artifacts are corrected and pinned, and the copy gates
+   see escaped dashes, the full owner word list and the exporters they skipped.
+   eFV redesign code EV-01 to EV-09 landed on development vintages only; the
+   reserved frame stays unread.
 
 ## 2026-09-03 (WAR basis epoch, wave 1: code, tooling and copy only)
 

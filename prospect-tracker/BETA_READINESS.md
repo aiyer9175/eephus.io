@@ -1,5 +1,11 @@
 # Beta Readiness (go/no-go)
 
+> **ARCHIVED 2026-09-25. Historical record, not current status.** This is the
+> go/no-go checklist for the Beta launch of 2026-07-11, kept as written. Its
+> figures are from that date: the model registry it counts at 75 rows carries
+> 317 today (`MODEL_REGISTRY.md`). Launch planning for the production port lives
+> in `docs/port/PORT_SPEC.md` and `docs/master-plan-2026-09-24-final-pass.md`.
+
 Launch: 2026-07-11. Curated checklist. Legend: [x] verified, [ ] open.
 
 ## VERDICT (2026-07-02): GO, conditional on the owner actions below
