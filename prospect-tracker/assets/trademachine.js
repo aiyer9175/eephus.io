@@ -512,7 +512,8 @@ let _tbTier   = "all";
 let _tbPos    = "all";
 let _tbOrg    = "all";
 let _tbExactPos = "all";
-let _tbSort   = "trade_desc";
+// null = the pool default (_tbEffSort). Set only when the reader picks a sort.
+let _tbSort   = null;
 let _tbQ      = "";        // free-text search
 // Full filtered+sorted board array from the latest _renderTBRows, captured so
 // the Generate GFX board spec renders the exact on-screen ordering (the modal
@@ -557,40 +558,53 @@ function _tbPrimaryPos(pos) {
   const order = ["C","SS","CF","2B","3B","1B","LF","RF","OF","SP","RP","CL","RHP","LHP","P","DH"];
   return order.find(x => parts.includes(x)) || parts[0] || "";
 }
-// Parse the _tbSort string into [column, direction]. "trade_desc" is the LEGACY
-// value of the default option and maps to the GRADE column, which is what it has
-// always done; the option is now labelled "eFV grade" to match, and Surplus ($)
-// is a separate option on trade_value_mm.
+// The board's default order is SURPLUS, the value the board prints, colours and
+// grades (M08-03, 2026-09-25). The MiLB pool defaults to the eFV grade, and the
+// "eFV grade" option orders prospects only.
 //
-// THE LABEL USED TO SAY "Trade value" while this returned "grade". The ordering
-// is the deliberate one (data/trade_machine_eval.json: grade rho 0.3433 against
-// surplus 0.3289 pooled), but the name was not: on
-// the served board eleven negative-surplus contracts sat inside the first fifty
-// rows, Carlos Correa at minus $58.0M in the sixth, while the largest surplus on
-// the board sat at rank 87. The value the string carries is kept so a bookmarked
-// or remembered selection still resolves.
+// UNTIL 2026-09-25 THE DEFAULT WAS THE RAW eFV GRADE ON EVERY ROW. For a debuted
+// player that is the grade frozen at his last pre-debut snapshot, which the FV
+// column does not print for MLB rows, so the order had no visible key: Carlos
+// Correa (minus $60.7M, F) sat sixth, Kris Bryant and Xander Bogaerts 13th and
+// 14th, and the largest surplus on the board ranked 185th. The eval that was
+// cited for it (data/trade_machine_eval.json slice_a) scores prospects against
+// career WAR; nothing in it scores the grade as an order for veteran contracts,
+// and the registry row for the board says the headline sort is the surplus.
+//
+// "trade_desc" is the LEGACY value of the eFV grade option and still maps to
+// the grade column, so a bookmarked or remembered selection resolves.
+function _tbEffSort() {
+  if (_tbSort) return _tbSort;
+  return _tbPool === "milb" ? "trade_desc" : "surplus_desc";
+}
+// Parse the effective sort string into [column, direction].
 function _tbSortParts() {
-  if (_tbSort === "trade_desc" || !_tbSort) return ["grade", "desc"];
-  const i = _tbSort.lastIndexOf("_");
-  if (i < 0) return [_tbSort, "desc"];
-  return [_tbSort.slice(0, i), _tbSort.slice(i + 1)];
+  const s = _tbEffSort();
+  if (s === "trade_desc") return ["grade", "desc"];
+  const i = s.lastIndexOf("_");
+  if (i < 0) return [s, "desc"];
+  return [s.slice(0, i), s.slice(i + 1)];
+}
+// Keep the Sort control naming the ordering the board is showing.
+function _tbSyncSortSelect() {
+  const sel = document.getElementById("tb-sort-select");
+  if (!sel) return;
+  const eff = _tbEffSort();
+  const opt = (eff === "grade_desc") ? "trade_desc" : eff;
+  sel.value = opt;
+  if (sel.value !== opt) sel.selectedIndex = -1;
 }
 // Per-column accessor (numeric -> null when absent so nulls always sort last;
-// text -> string). The default Grade column ranks by the raw eFV grade
-// (xfv_grade), which orders realized WAR better than the $-surplus transform
-// POOLED (data/trade_machine_eval.json: 0.3433 vs 0.3289).
+// text -> string). The "grade" key is the raw eFV grade (xfv_grade) and is
+// scoped to prospects: an MLB row returns null, so under the eFV grade sort the
+// prospects lead in grade order and the MLB rows follow in surplus order.
 //
-// "AND WINS WITHIN EVERY TIER" WAS FALSE AND SAT HERE FOR MONTHS. The eval's own
-// by_tier block: elite 0.2328 against 0.1490, high 0.2485 against 0.1507, mid
-// 0.2536 against 0.0820, and low 0.0683 against 0.0816, where GRADE LOSES. Low
-// holds 1,301 of the 2,333 scored rows, more than the other three tiers
-// combined, so the claim was wrong about the majority of the board it existed
-// to justify.
-//
-// The pooled figure carries no interval and no floor either, so "better" there
-// is a point estimate and not a resolved result. The default stays on grade: it
-// is the better pooled orderer and it is what this column has always done. What
-// changes is that the justification now matches the artifact.
+// What data/trade_machine_eval.json measures for the grade as an orderer, on
+// prospects against career WAR: pooled 0.3433 against surplus 0.3289 with no
+// interval, and by tier (slice_a.by_tier) elite 0.2328 against 0.1490, high
+// 0.2485 against 0.1507, mid 0.2536 against 0.0820, low 0.0683 against 0.0816,
+// where the grade loses. Low holds 1,301 of the 2,333 scored rows. No page
+// copy restates these figures, and the grade does not beat surplus in every tier.
 // Note: since the 2026-07-06 quantile flip, surplus
 // dollars are priced on the DISPLAYED quantile grade, not this raw grade -
 // they are related but distinct orderers. Surplus stays on trade_value_mm.
@@ -645,7 +659,7 @@ function _tbSortVal(p, col) {
   }
   if (col === "risk") return { n: num(p.sortino) };   // downside-adjusted surplus
   if (col === "surplus") return { n: num(p.trade_value_mm) };   // explicit $ column
-  return { n: num(p.xfv_grade) };                // grade (default) - eFV grade orderer
+  return { n: _tbIsMlb(p) ? null : num(p.xfv_grade) };   // grade - eFV grade orderer, prospects only
 }
 function _tbSortRows(rows) {
   const [col, dir] = _tbSortParts();
@@ -718,17 +732,12 @@ function _tbSortByCol(col) {
   const dir = (scol === col) ? (sdir === "asc" ? "desc" : "asc")
             : (["name", "org", "pos", "age"].includes(col) ? "asc" : "desc");
   _tbSort = `${col}_${dir}`;
-  const sel = document.getElementById("tb-sort-select");
   // THE DROPDOWN MUST NAME THE ORDERING IT IS SHOWING. This used to snap BOTH
   // grade_desc and surplus_desc back to the single "trade_desc" option, so
   // clicking the Surplus header left the control reading the grade option and a
-  // reader had no way to tell the two orderings apart. Only the grade default
+  // reader had no way to tell the two orderings apart. Only the grade sort
   // aliases now; surplus is its own option and selects itself.
-  if (sel) {
-    const opt = (_tbSort === "grade_desc") ? "trade_desc" : _tbSort;
-    sel.value = opt;
-    if (sel.value !== opt) sel.selectedIndex = -1;
-  }
+  _tbSyncSortSelect();
   resetPage("tradeboard");
   _renderTBRows();
 }
@@ -954,6 +963,7 @@ function _renderTBRows() {
     return true;
   });
   rows = _tbSortRows(rows);
+  _tbSyncSortSelect();
   _tbLastRows = rows;   // full filtered+sorted set for the Generate GFX board spec
 
   if (!rows.length) {
@@ -991,7 +1001,7 @@ function _renderTBRows() {
     ${_tbTh("Pos", "pos")}
     ${_tbTh("Org", "org")}
     ${_tbTh("FV", "fv", "tm-num", "Prospects only: eFV where graded, else consensus FV", false, "fv")}
-    ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade: contract-adjusted surplus, A+ to F. The default sort is the raw eFV grade, which orders realized value better pooled but not in the low tier (most of the board).", true)}
+    ${_tbTh("Grade", "surplus", "tm-num tm-col-div", "Trade Value Grade: the letter for the Surplus beside it, A+ to F. Sorts with Surplus.", true)}
     ${_tbTh("Surplus", "surplus", "tm-num", "$M of production above cost; same model as PROSPX and MLB Projections", false, "surplus_value")}
     ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside (higher is safer). Blank on a flat outcome fan; the bust probability still shows.", false, "risk_adjusted_surplus") : ""}
     ${_tbTh("Contract", "contract", "", "Club control: last controlled season · current salary. Where no salary path prices the row, its service-time phase instead, and the sort falls back to the debut+6 proxy. MiLB: the MLB deal on file, if any.", false, "club_control_window")}
@@ -1257,7 +1267,7 @@ function _tbWireFilters() {
   const exactPosSel = document.getElementById("tb-exact-pos-filter");
   if (exactPosSel) exactPosSel.addEventListener("change", () => { _tbExactPos = exactPosSel.value || "all"; resetPage("tradeboard"); _renderTBRows(); });
   const sortSel = document.getElementById("tb-sort-select");
-  if (sortSel) sortSel.addEventListener("change", () => { _tbSort = sortSel.value || "trade_desc"; resetPage("tradeboard"); _renderTBRows(); });
+  if (sortSel) sortSel.addEventListener("change", () => { _tbSort = sortSel.value || null; resetPage("tradeboard"); _renderTBRows(); });
 }
 
 // AUDIT 2026-07-18 (A10): a renderTradeBoard() lived here - dead code that
