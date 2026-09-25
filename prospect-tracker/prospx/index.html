@@ -21836,14 +21836,19 @@ const BALANCED_THRESHOLD_MM = 5;
 // ---------------------------------------------------------------------------
 // CLUB CONTROL WINDOW JOIN (2026-09-17). One fetch per page, cached, lazy.
 // ---------------------------------------------------------------------------
-const _CTRLWIN = { rows: null, loading: false };
+const _CTRLWIN = { rows: null, byMlbam: {}, loading: false };
 function _ctrlWinFill() {
   const slots = document.querySelectorAll("[data-ctrlwin-key]:not([data-ctrlwin-done])");
   if (!slots.length) return;
   if (!_CTRLWIN.rows) { _ctrlWinLoad(); return; }
   slots.forEach(el => {
     el.setAttribute("data-ctrlwin-done", "1");
-    const v = _CTRLWIN.rows[el.getAttribute("data-ctrlwin-key")];
+    // ON THE HUMAN (2026-09-25): /projections/ keys a slug two players share to
+    // one of them (max_muncy is the LAD veteran there; the ATH infielder is
+    // max_muncy__691777), so the card's mlbam picks the row and the slug is read
+    // only when the card carries no id.
+    const _cwMid = Number(el.getAttribute("data-ctrlwin-mlbam")) || null;
+    const v = _cwMid ? _CTRLWIN.byMlbam[_cwMid] : _CTRLWIN.rows[el.getAttribute("data-ctrlwin-key")];
     if (!v) return;
     const guar = v.thru != null ? v.thru : (Number(el.getAttribute("data-ctrlwin-thru")) || null);
     const ct = v.ctrlThru != null ? v.ctrlThru : (Math.max(v.thru || 0, v.salThru || 0) || null);
@@ -21877,14 +21882,53 @@ function _ctrlWinFill() {
       + `font-style:italic;" title="${escapeHtml(tip.trim())}">club control thru ${ct}${open ? "+" : ""}</span>`;
   });
 }
+// ---------------------------------------------------------------------------
+// DEBUTED LEAD (X03-06, 2026-09-25). A debuted player priced on his MLB contract
+// on the Trade Machine (surplus_source "projection") carries that trade value,
+// the number /trademachine/ and /projections/ print, at the top of the Surplus
+// value card. The eFV figure below it is his prospect valuation and is labelled
+// so: it tops out near $100M and is not a contract price (Bobby Witt Jr.: $100.2M
+// eFV beside $311.4M on both other surfaces). Same lazy, cached artifact the
+// trade audit reads; a card that cannot reach it shows the eFV row alone.
+// ---------------------------------------------------------------------------
+function _tvLeadFill() {
+  const slots = document.querySelectorAll("[data-tvlead-key]:not([data-tvlead-done])");
+  if (!slots.length) return;
+  if (!_TA_TV.idx) { _taTradeValuesLoad().then(() => { try { _tvLeadFill(); } catch (e) { /* non-critical */ } }); return; }
+  slots.forEach(el => {
+    el.setAttribute("data-tvlead-done", "1");
+    const row = _TA_TV.idx.byKey[el.getAttribute("data-tvlead-key")];
+    const mid = Number(el.getAttribute("data-tvlead-mlbam")) || null;
+    if (!row || row.surplus_source !== "projection" || row.trade_value_mm == null) return;
+    if (mid && row.mlbam_id != null && Number(row.mlbam_id) !== mid) return;
+    const mm = Number(row.trade_value_mm);
+    if (!isFinite(mm)) return;
+    const col = mm >= 50 ? "var(--up)" : mm >= 10 ? "var(--neon-cyan)" : mm < 0 ? "var(--down)" : "var(--text-primary)";
+    const tip = "Trade value: the posterior expected surplus of his MLB contract over the club control window, "
+      + "the same number the Trade Machine prints and /projections/ prices (surplus source: contract projection). "
+      + "The eFV figure below is his prospect valuation, not a contract price.";
+    el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+         <div>
+           <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Trade value</div>
+           <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">MLB contract projection · <a href="/trademachine/" style="color:var(--neon-cyan);">Trade Machine</a></div>
+         </div>
+         <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:${col};font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">${_taMM(mm)}</div>
+       </div>`;
+  });
+}
+
 function _ctrlWinLoad() {
   if (_CTRLWIN.loading) return;
   _CTRLWIN.loading = true;
   fetch("/data/mlb_projections.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
-      const by = {};
-      ((j && j.vets) || []).forEach(v => { if (v.key) by[v.key] = v; });
+      const by = {}, byM = {};
+      ((j && j.vets) || []).forEach(v => {
+        if (v.key) by[v.key] = v;
+        if (v.mlbam != null) byM[Number(v.mlbam)] = v;
+      });
+      _CTRLWIN.byMlbam = byM;
       _CTRLWIN.rows = by;
       _ctrlWinFill();
     })
@@ -48575,9 +48619,10 @@ function renderPlayerDetail(key) {
     const surplusTip = _baked
       ? `Estimated MLB surplus over the ${_winWords}, from the eephus value framework (a career-path mixture model) on FV ${fvCeil(fv)}, with the position-scarcity multiplier applied.${_winNote} Real surplus depends on health, performance variance, and the $/WAR market.`
       : `FV-implied estimate of MLB surplus over the ${_winWords} (FV ${fvCeil(fv)}, hitter/pitcher split), shown only until the engine value lands.${_winNote} Real surplus depends on health, performance variance, and the $/WAR market.`;
-    const _surpLabel = _useEfv ? "eFV surplus" : (p.status === "debuted" ? "Expected surplus (FV)" : "Surplus value");
+    const _surpLabel = _useEfv ? (p.status === "debuted" ? "eFV prospect valuation" : "eFV surplus")
+                     : (p.status === "debuted" ? "Expected surplus (FV)" : "Surplus value");
     const _surpSub = _useEfv
-      ? `eFV ${efvGradeDisplay(_xf)} · ${_winWords} (outcome-grounded)`
+      ? `eFV ${efvGradeDisplay(_xf)} · ${_winWords} (outcome-grounded)${p.status === "debuted" ? " · priced as a prospect, not on his contract" : ""}`
       : `FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · ${_winWords}`;
     const surplusRow = surplus != null
       ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
@@ -48800,7 +48845,10 @@ function renderPlayerDetail(key) {
                : (_xf && _xf.xfv_grade != null) ? _xf.xfv_grade
                : (typeof gradeBlock === "function" ? gradeBlock(p).value : null);
     const greeksRow = makeGreeksStrip(_gFv, _isPit, _gDist);
-    const inner = surplusRow + greeksRow + bakedDetailRow + dvmRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
+    const tvLeadSlot = p.status === "debuted"
+      ? `<div class="tvlead-slot" data-tvlead-key="${escapeHtml(p.player_key || "")}" data-tvlead-mlbam="${p.mlbam_id != null ? escapeHtml(String(p.mlbam_id)) : ""}"></div>`
+      : "";
+    const inner = tvLeadSlot + surplusRow + greeksRow + bakedDetailRow + dvmRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
     if (!inner) return "";
     const _srcLabel = _useEfv ? "eFV · outcome-grounded" : _baked ? "career-path mixture engine" : "FV-implied · FanGraphs 2019 framework";
     return `<div class="detail-title">Surplus value <span class="detail-title-sub">${_srcLabel}</span></div>
@@ -48877,7 +48925,7 @@ function renderPlayerDetail(key) {
         <div>
           <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;"><span class="g-term" data-term="aav">AAV</span>${extBadge}</div>
           <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${c.years_remaining || c.years || "?"} yr guaranteed · signed thru ${c.signed_through || "?"}</div>
-          <div class="ctrlwin-slot" data-ctrlwin-key="${escapeHtml(p.player_key || "")}" data-ctrlwin-thru="${c.signed_through != null ? c.signed_through : ""}"></div>
+          <div class="ctrlwin-slot" data-ctrlwin-key="${escapeHtml(p.player_key || "")}" data-ctrlwin-mlbam="${p.mlbam_id != null ? escapeHtml(String(p.mlbam_id)) : ""}" data-ctrlwin-thru="${c.signed_through != null ? c.signed_through : ""}"></div>
         </div>
         <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;" title="${escapeHtml("Average Annual Value - total contract / years remaining (present-value adjusted by Spotrac for deferral-heavy deals)")}">${fmtUsd(c.aav_usd)}</div>
       </div>`;
@@ -51021,6 +51069,7 @@ function renderPlayerDetail(key) {
   // silent on failure: a card that cannot reach it shows the Spotrac deal alone,
   // which is exactly what it showed before.
   try { _ctrlWinFill(); } catch (e) { /* the contract line is non-critical */ }
+  try { _tvLeadFill(); } catch (e) { /* the debuted trade-value lead is non-critical */ }
   // Fill the Splits body lazily (only present when the Stats / Statcast tab is
   // active). Loads the gamelog slice on first open, then re-renders in place.
   try { ensureSplits(p); } catch (e) { /* splits are non-critical */ }
