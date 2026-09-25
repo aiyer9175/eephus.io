@@ -15,7 +15,7 @@ laws whose absence let four of them ship wrong (audit L17, 2026-09-10).
 2. THE PLATE APPEARANCE IDENTITY WAS NOT AN IDENTITY. The DFS matchup and park
    multiplier moved walks and hit batsmen and left the at bat and the plate
    appearance alone, so `ab + bb + hbp` ran past `pa` on 14 of 109 rows on the
-   2026-09-10 board. FanDuel charges -0.25 an out and an out is `ab - h`, so the
+   2026-09-10 board. The FanDuel table then charged -0.25 an out (`ab - h`), so the
    break was priced. The at bat now absorbs what the walk took, and the law that
    pins that form also pins its DISCLOSED cost: with the plate appearance held
    fixed, the implied one-game batting average moves by more than the
@@ -162,7 +162,7 @@ def test_the_matchup_takes_the_at_bat_from_the_walk_not_from_the_turn():
     """The form of the fix, and the cost of the form, in one place.
 
     Walks rise, the plate appearance does not, so the at bat falls and the
-    scored FanDuel out (ab - h) falls on BOTH of its terms. That is the whole
+    out (ab - h) falls on BOTH of its terms. That is the whole
     repair. It is also the second half of L17-F5 getting LARGER, and this law
     says so rather than letting it ride: with the turns at the plate held fixed
     and the hit rate scaled, the implied line average h / ab moves by MORE than
@@ -410,3 +410,59 @@ def test_the_audited_record_states_the_anchor_the_code_holds():
     assert anchor in doc and "/ 4.15" not in doc and "4.15-PA" not in doc
     fn_doc = dx._hitter_line.__doc__ or ""
     assert anchor in fn_doc and "/ 4.15" not in fn_doc and "4.15-PA" not in fn_doc
+
+# ---------------------------------------------------------------------------
+# The contest tables (audit X02-04). Transcribed from the public classic rules
+# on 2026-09-25. A table that drifts from this transcription fails here, and a
+# weight on a key the line builders never produce scores zero forever, which is
+# how a FanDuel quality start went unpaid while the line projected it.
+# ---------------------------------------------------------------------------
+_PUBLIC_2026_09_25 = {
+    "dk": {"hitter": {"single": 3.0, "double": 5.0, "triple": 8.0, "hr": 10.0,
+                      "rbi": 2.0, "r": 2.0, "bb": 2.0, "hbp": 2.0, "sb": 5.0},
+           "pitcher": {"ip": 2.25, "k": 2.0, "w": 4.0, "er": -2.0,
+                       "h": -0.6, "bb": -0.6, "hbp": -0.6}},
+    "fd": {"hitter": {"single": 3.0, "double": 6.0, "triple": 9.0, "hr": 12.0,
+                      "rbi": 3.5, "r": 3.2, "bb": 3.0, "hbp": 3.0, "sb": 6.0},
+           "pitcher": {"ip": 3.0, "k": 3.0, "w": 6.0, "er": -3.0, "qs": 4.0}},
+}
+_ROS_PIT = {"gs": 30.0, "ip": 170.0, "k": 180.0, "bb": 50.0, "hbp": 6.0,
+            "w": 11.0, "qs": 14.0, "h": 150.0, "er": 70.0, "hr": 20.0}
+
+
+def test_the_contest_tables_match_the_dated_transcription():
+    import dfs_export as dx
+    assert dx.scoring_tables() == _PUBLIC_2026_09_25
+    for site in ("dk", "fd"):
+        src = dx.SCORING_SOURCES[site]
+        assert src["verified_on"] == "2026-09-25"
+        assert src["source_urls"] and all(u.startswith("https://") for u in src["source_urls"])
+
+
+def test_every_weight_scores_a_key_the_line_builders_produce():
+    import dfs_export as dx
+    hit, _ = dx._hitter_line(_ROS_HIT, 150, 1.0)
+    pit = dx._pitcher_line(_ROS_PIT, 1.0)
+    for site, t in dx.scoring_tables().items():
+        assert set(t["hitter"]) <= set(hit), (site, set(t["hitter"]) - set(hit))
+        assert set(t["pitcher"]) <= set(pit), (site, set(t["pitcher"]) - set(pit))
+    # The quality start is paid on FanDuel and not on DraftKings.
+    base = dict(pit, qs=0.0)
+    assert dx.score_line(pit, "fd", "pit") - dx.score_line(base, "fd", "pit") == pytest.approx(4.0 * pit["qs"], abs=0.02)
+    assert dx.score_line(pit, "dk", "pit") == dx.score_line(base, "dk", "pit")
+    # Neither site charges a hitter for an out or a caught stealing.
+    assert dx.score_line(dict(hit, out=0.0, cs=0.0), "fd", "hit") == dx.score_line(hit, "fd", "hit")
+    assert dx.score_line(dict(hit, out=0.0, cs=0.0), "dk", "hit") == dx.score_line(hit, "dk", "hit")
+
+
+def test_the_served_board_publishes_its_scoring_receipts():
+    """Skips only for a board an earlier exporter built (no receipts key)."""
+    import dfs_export as dx
+    p = Path(__file__).parent / "data" / "dfs.json"
+    if not p.exists():
+        pytest.skip("no served dfs.json")
+    d = json.loads(p.read_text(encoding="utf-8"))
+    if "scoring_sources" not in d:
+        pytest.skip("board built before the scoring receipts shipped")
+    assert d["scoring"] == dx.scoring_tables()
+    assert d["scoring_sources"] == dx.SCORING_SOURCES

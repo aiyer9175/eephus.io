@@ -193,14 +193,35 @@ _MIN_PROBABLES_FOR_COLLAPSE = 4
 # shutout and no-hitter bonuses. Their per-start expectation rounds to under a
 # tenth of a point in the modern usage era, and carrying them would imply a
 # projection of an event this pool does not project.
+#
+# RE-CHECKED 2026-09-25 (audit X02-04). FanDuel pays +4 for a quality start
+# (6+ IP, 3 or fewer ER), which this table left out although the pitcher line
+# projects `qs`; FanDuel no longer charges -0.25 per hitter out, which this
+# table still did; DraftKings lists no caught-stealing penalty, which this
+# table charged at -2. The line still carries `out` (ab - h) as the plate
+# appearance identity the anchor tests pin; no table scores it now.
 # ---------------------------------------------------------------------------
 DK_HITTER = {"single": 3.0, "double": 5.0, "triple": 8.0, "hr": 10.0,
-             "rbi": 2.0, "r": 2.0, "bb": 2.0, "hbp": 2.0, "sb": 5.0, "cs": -2.0}
+             "rbi": 2.0, "r": 2.0, "bb": 2.0, "hbp": 2.0, "sb": 5.0}
 DK_PITCHER = {"ip": 2.25, "k": 2.0, "w": 4.0, "er": -2.0,
               "h": -0.6, "bb": -0.6, "hbp": -0.6}
 FD_HITTER = {"single": 3.0, "double": 6.0, "triple": 9.0, "hr": 12.0,
-             "rbi": 3.5, "r": 3.2, "bb": 3.0, "hbp": 3.0, "sb": 6.0, "out": -0.25}
-FD_PITCHER = {"ip": 3.0, "k": 3.0, "w": 6.0, "er": -3.0}
+             "rbi": 3.5, "r": 3.2, "bb": 3.0, "hbp": 3.0, "sb": 6.0}
+FD_PITCHER = {"ip": 3.0, "k": 3.0, "w": 6.0, "er": -3.0, "qs": 4.0}
+
+# Where each table was checked and when, published beside the tables (not
+# inside them: score_line dots every key of a table with the line). The
+# operators' own rules pages refuse scripted reads, so the receipts are the
+# operator's network article (DraftKings) and two independent transcriptions
+# (FanDuel) that agree on every weight above.
+SCORING_SOURCES = {
+    "dk": {"verified_on": "2026-09-25",
+           "source_urls": ["https://dknetwork.draftkings.com/2020/05/29/beginner-mlb-dfs-scoring/",
+                           "https://rotogrinders.com/fantasy/lessons/mlb-scoring-breakdown-fanduel-and-draftkings"]},
+    "fd": {"verified_on": "2026-09-25",
+           "source_urls": ["https://fantasyteamadvice.com/mlb/fdoba",
+                           "https://www.fantasylabs.com/articles/how-valuable-quality-starts-mlb-pitchers/"]},
+}
 
 SCORING_CATALOG = [
     {"id": "dk", "label": "Classic (DK-style)", "default": True},
@@ -917,7 +938,7 @@ def _hitter_line(ros: dict, rem_games: int, mult: float) -> tuple[dict, float]:
         # appearance itself does not (a tough matchup does not shorten your
         # turn in the order), and neither does the strikeout, which moves the
         # OTHER way against a better arm. `so` is display context only (no DFS
-        # table scores it; the scored out term is ab - h), so it rides through
+        # table scores it, nor the out, ab - h, since 2026-09-25), so it rides through
         # unadjusted rather than carrying a sign we know is backwards.
         m = 1.0 if k in ("pa", "ab", "so") else mult
         exact[k] = float(v) * scale * m
@@ -928,8 +949,8 @@ def _hitter_line(ros: dict, rem_games: int, mult: float) -> tuple[dict, float]:
     # added came out of the same turns at the plate, so holding `ab` fixed puts
     # more events in the game than there are trips to take them. Measured on the
     # 2026-09-10 board, ab + bb + hbp ran PAST pa on 14 of 109 rows, worst 4.264
-    # against a 4.15 plate appearance game, and FanDuel charges -0.25 an out, so
-    # the incoherence was priced and not merely displayed.
+    # against a 4.15 plate appearance game, and the FanDuel table then charged
+    # -0.25 an out, so the incoherence was priced and not merely displayed.
     #
     # At mult == 1.0 this is exactly the old arithmetic (scale * ros.ab), so a
     # neutral matchup in a neutral park moves nothing.
@@ -947,7 +968,7 @@ def _hitter_line(ros: dict, rem_games: int, mult: float) -> tuple[dict, float]:
     # rows with mult < 1 deflate a further 0.93% and 2.72%. On the wider
     # 2026-09-16 board, whose 226 bats reach a multiplier of 1.374, it is 1.30%
     # mean and 4.94% max (Tatis: a rest-of-season .264 read .363 before and
-    # reads .381 after). The scored FanDuel out (ab - h) therefore moves on both
+    # reads .381 after). The out (ab - h) therefore moves on both
     # of its terms now, where it used to move on one. That is the trade being
     # taken: a line that adds up, at the price of a rate leg that reads further
     # from the ROS vector's own average.
@@ -1043,6 +1064,7 @@ def _empty(day: str, season, reason: str, extra: dict | None = None,
         "scoring": scoring_tables(),
         "scoring_catalog": SCORING_CATALOG,
         "scoring_note": SCORING_NOTE,
+        "scoring_sources": SCORING_SOURCES,
         "roster_templates": ROSTER_TEMPLATES,
         "salaries": _SALARY_BLOCK,
         "empty_reason": reason,
