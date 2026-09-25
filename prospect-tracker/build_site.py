@@ -3909,16 +3909,81 @@ def _arb_model_panel() -> str:
         "a club owes.</li>"
         "</ul>")
 
+    # DOWNSTREAM GATES. The salary path that prices every club-controlled
+    # season on /projections/, /trademachine/ and the player card consumes this
+    # model, and its gates write into the same artifact: GATE C (scored
+    # 2026-08-19, the gate_c_verification block) and GATE C2 (registered
+    # 2026-09-16, the gate_c2 block). Neither was rendered anywhere, so the
+    # page never said that the coverage extension serving since 2026-09-17 has
+    # no scored clause. Both lines read the artifact; an absent block is
+    # printed as not scored, never as a pass.
+    def _musd(v):
+        return "$%.2fM" % (float(v) / 1e6) if v is not None else "-"
+
+    downstream = []
+    gc = ev.get("gate_c_verification") or {}
+    if gc:
+        c1 = gc.get("c1_per_player_vs_ladders") or {}
+        mae = c1.get("mae_usd") or {}
+        popn = gc.get("population") or {}
+        vd = str(gc.get("verdict", "?"))
+        downstream.append(
+            '<details class="arb-row"><summary class="arb-sum">'
+            '<span class="arb-vd arb-vd--%s">%s</span> GATE C, the surplus '
+            'consumer (scored %s)</summary><dl>'
+            '<dt>window MAE, served chain</dt><dd>%s</dd>'
+            '<dt>window MAE, clemens_2026 ladder</dt><dd>%s</dd>'
+            '<dt>window MAE, fitted ladder</dt><dd>%s</dd>'
+            '<dt>paired players</dt><dd>%s</dd>'
+            '<dt>scope</dt><dd>the %s no-contract rows priced when it '
+            'shipped; the 2026-09-16 coverage extension is GATE C2</dd>'
+            '</dl></details>'
+            % ("pass" if vd == "PASS" else "null", html.escape(vd),
+               html.escape(str(gc.get("scored_at", "?"))),
+               _musd(mae.get("served")), _musd(mae.get("clemens_2026")),
+               _musd(mae.get("fitted")), html.escape(str(c1.get("n_paired", "-"))),
+               html.escape(str(popn.get("ship_day_count", "-")))))
+    g2 = ev.get("gate_c2") or {}
+    try:
+        import salary_path as _sp
+        sp_mode = str(_sp.SALARY_PATH_MODE)
+    except Exception:
+        sp_mode = "?"
+    if g2:
+        vd = str(g2.get("verdict", "?"))
+        downstream.append(
+            '<details class="arb-row"><summary class="arb-sum">'
+            '<span class="arb-vd arb-vd--%s">%s</span> GATE C2, the '
+            'control-window salary path (scored %s)</summary><dl>'
+            '<dt>served mode</dt><dd>%s</dd></dl></details>'
+            % ("pass" if vd == "PASS" else "null", html.escape(vd),
+               html.escape(str(g2.get("scored_at") or g2.get("generated_at") or "?")),
+               html.escape(sp_mode)))
+    else:
+        downstream.append(
+            '<details class="arb-row" open><summary class="arb-sum">'
+            '<span class="arb-vd arb-vd--null">NOT SCORED</span> GATE C2, the '
+            'control-window salary path</summary><dl>'
+            '<dt>served mode</dt><dd>%s</dd>'
+            '<dt>status</dt><dd>Registered 2026-09-16 (docs/ARBITRATION_GATE.md '
+            'section 11). None of its clauses has been scored, so the surplus '
+            'the path prices on /projections/, /trademachine/ and the player '
+            'card has no receipt yet.</dd></dl></details>'
+            % html.escape(sp_mode))
+
     return (
         '<div class="arb-scorecard">%s</div>'
         '<div class="section-head"><h2>What was measured</h2>'
         '<span class="section-sub">pre-registered</span></div>'
         '%s'
+        '<div class="section-head"><h2>Downstream gates</h2>'
+        '<span class="section-sub">the salary path built on this model</span></div>'
+        '%s'
         '<div class="section-head"><h2>Losses</h2></div>'
         '<ul class="arb-losses">%s</ul>'
         '<div class="section-head"><h2>What this model cannot tell you</h2></div>'
         '<div class="card arb-note">%s</div>'
-        % ("".join(tiles), "".join(rows),
+        % ("".join(tiles), "".join(rows), "".join(downstream),
            "".join(losses) or "<li>No rejected variants recorded.</li>",
            gaps))
 
