@@ -36,7 +36,9 @@ the same identity rule the v1 matrices use; it is routing, not a model input.
 RESERVED FRAMES (PROGRAM.md s2.4). List vintages 2020 and 2021 are R-LV, read once after
 docs/efv-v2/EFV_V2_GATE.md commits. guard_score_request() RAISES for a reserved vintage
 unless it is handed the sha of a commit that is an ancestor of HEAD and carries the gate
-document; every builder here calls it, and so must every scorer that reads this frame.
+document marked REGISTERED (a DRAFT of the gate, committed so its text is dated, never
+opens the guard; see GATE_STATUS_REGISTERED); every builder here calls it, and so must
+every scorer that reads this frame.
 The prospective leg R-VM (the 2025 and later debut cohorts) is pinned by
 reserved_vm_pins(): source_backtest.CANDIDATE_YEARS and efv_model.SCORED_YEARS may not
 include R_VM_FIRST_DEBUT_YEAR or later until its look record exists.
@@ -68,6 +70,11 @@ R_VM_FIRST_DEBUT_YEAR: int = 2025
 DEV_VINTAGES: tuple[int, ...] = tuple(range(2011, 2020))
 #: The registration a reserved read must cite (relative to this directory).
 GATE_DOC = "docs/efv-v2/EFV_V2_GATE.md"
+#: The status line a FINAL registration carries, alone on its line. A gate document at
+#: the named commit opens the reserved guard only when it has this line and no other
+#: status line (DS-15: the gate is committed as a DRAFT first, which must not open it).
+GATE_STATUS_PREFIX = "Registration status:"
+GATE_STATUS_REGISTERED = "Registration status: REGISTERED"
 SIDES = ("hit", "pit")
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
@@ -90,15 +97,37 @@ def _git_ok(*args: str) -> bool:
     return r.returncode == 0
 
 
+def gate_doc_registered(text: str | None) -> bool:
+    """True when the gate text carries GATE_STATUS_REGISTERED alone on a line and no
+    other status line. A DRAFT (or a document with no status line) is False."""
+    lines = [ln.strip() for ln in (text or "").splitlines()]
+    status = [ln for ln in lines if ln.startswith(GATE_STATUS_PREFIX)]
+    return status == [GATE_STATUS_REGISTERED]
+
+
+def _git_show(spec: str) -> str | None:
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "show", spec], capture_output=True,
+                           timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode != 0:
+        return None
+    return r.stdout.decode("utf-8", errors="replace")
+
+
 def gate_sha_committed(gate_sha: str | None) -> bool:
     """True only for a full 40-hex commit sha that is an ancestor of HEAD and whose
-    tree carries GATE_DOC. Anything else (None, a short sha, an uncommitted gate, a
-    commit on another line of history) is False."""
+    tree carries GATE_DOC marked REGISTERED (gate_doc_registered). Anything else (None,
+    a short sha, an uncommitted gate, a committed DRAFT, a commit on another line of
+    history) is False."""
     if not isinstance(gate_sha, str) or not _SHA_RE.match(gate_sha):
         return False
     if not _git_ok("cat-file", "-e", f"{gate_sha}^{{commit}}"):
         return False
     if not _git_ok("cat-file", "-e", f"{gate_sha}:./{GATE_DOC}"):
+        return False
+    if not gate_doc_registered(_git_show(f"{gate_sha}:./{GATE_DOC}")):
         return False
     return _git_ok("merge-base", "--is-ancestor", gate_sha, "HEAD")
 

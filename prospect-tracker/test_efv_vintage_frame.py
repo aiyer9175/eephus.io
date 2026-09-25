@@ -208,9 +208,11 @@ def test_reserved_guard_raises(V):
 
 
 def test_head_is_not_a_gate_sha_until_the_gate_commits():
-    # The registration does not exist yet (PROGRAM.md s4); HEAD cannot open R-LV.
-    if (ROOT / F.GATE_DOC).exists():
-        pytest.skip("gate document present; the sha check is exercised above")
+    # The registration does not exist yet (PROGRAM.md s4), or exists only as a DRAFT
+    # (DS-15); either way HEAD cannot open R-LV.
+    doc = ROOT / F.GATE_DOC
+    if doc.exists() and F.gate_doc_registered(doc.read_text(encoding="utf-8")):
+        pytest.skip("gate REGISTERED; the sha check is exercised above")
     assert F.gate_sha_committed(_head_sha()) is False
 
 
