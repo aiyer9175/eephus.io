@@ -58,6 +58,7 @@ GROUPS = {
     "financial":     "MLB Rules & Transactions",
     "fa":            "Free Agency",
     "betting":       "Betting & Markets",
+    "fantasy":       "Fantasy & DFS",
 }
 
 FOUNDATION_CATS = {"hitter-stat", "pitcher-stat", "standard-stat", "general-stat",
@@ -221,81 +222,145 @@ NEW_ENTRIES = [
 # reader assume the number was fitted.
 BETTING_ENTRIES = [
     {"id": "bet_edge", "term": "Edge", "category": "betting",
-     "aliases": ["edge", "model edge"], "priority": 90,
+     "aliases": ["edge", "model edge"], "priority": 90, "shelf": "foundation",
      "definition": "Model probability minus the de-vigged market probability for the same side of the same bet. A +6% edge means the model gives the side six points more chance than the market does once the book's cut is removed. It is a disagreement, not a profit: the model has to be right about the disagreement for it to be worth anything.",
-     "methodology": "Both terms must describe the SAME wager. Books do not all post the same runline or total, so the line is chosen first by book count and prices are shopped only among the books posting it. Pairing one book's line with another book's price for the opposite side once produced a fabricated 38.8 point edge on this site, which is why the pairing is now enforced in code and pinned by a test.",
+     "methodology": "Both terms must describe the SAME wager. Books do not all post the same runline or total, so the line is chosen first by book count and prices are shopped only among the books posting it. Pairing one book's line with another book's price for the opposite side once produced a fabricated edge on this site, which is why the pairing is enforced in code and pinned by a test.",
      "seeAlso": ["devig", "implied_probability", "ev_per_unit", "policy_floor"]},
     {"id": "vig", "term": "Vig", "category": "betting",
-     "aliases": ["vigorish", "juice", "hold", "overround"], "priority": 91,
+     "aliases": ["vigorish", "juice", "hold", "overround"], "priority": 91, "shelf": "foundation",
      "definition": "The book's cut, built into the price rather than charged as a fee. Both sides of a coin flip are priced around -110, so the two implied probabilities add to about 105% instead of 100%; that extra 5 points is the vig, also called the hold or the overround.",
      "seeAlso": ["devig", "implied_probability", "fair_line"]},
     {"id": "devig", "term": "De-vig", "category": "betting",
-     "aliases": ["de-vig", "devig", "no-vig", "remove the vig"], "priority": 92,
+     "aliases": ["de-vig", "devig", "no-vig", "remove the vig", "de-vigged"], "priority": 92, "shelf": "foundation",
      "definition": "Stripping the book's cut back out of a price to recover what the market actually thinks. This site uses the proportional method: divide each side's implied probability by their sum so the pair adds to 100%.",
      "methodology": "The de-vig is always taken from ONE book's two-sided market. Mixing the best price on one side with a different book's price on the other manufactures a fair line with a negative hold, which is a number no market ever offered. The payload names the book each fair line came from for exactly this reason.",
      "seeAlso": ["vig", "fair_line", "bet_edge"]},
     {"id": "fair_line", "term": "Fair line", "category": "betting",
-     "aliases": ["fair price", "fair odds"], "priority": 93,
+     "aliases": ["fair price", "fair odds"], "priority": 93, "shelf": "foundation",
      "definition": "The price that would exactly match a probability with no cut taken. A 60% chance is a fair line of -150. Two different fair lines appear on the betting board: the model's, from its own probability, and the market's, from the de-vigged book prices.",
      "seeAlso": ["devig", "implied_probability", "bet_edge"]},
     {"id": "implied_probability", "term": "Implied probability", "category": "betting",
-     "aliases": ["implied prob", "break-even rate"], "priority": 94,
+     "aliases": ["implied prob", "break-even rate"], "priority": 94, "shelf": "foundation",
      "definition": "The win rate a price needs just to break even. -150 implies 60%, +150 implies 40%. Because the vig is inside the price, the implied probabilities of two opposite sides always sum to more than 100%, which is why they are de-vigged before anything is compared to them.",
      "seeAlso": ["vig", "devig", "fair_line"]},
     {"id": "ev_per_unit", "term": "EV per unit", "category": "betting",
-     "aliases": ["expected value", "EV", "EV/u"], "priority": 95,
+     "aliases": ["expected value", "EV/u"], "priority": 95, "shelf": "foundation",
      "definition": "Expected profit on a one-unit bet under the MODEL's probability: p times the profit if it wins, minus (1 - p) times the unit if it loses. +0.20 means the model expects to make a fifth of a unit per bet on average over many repetitions of the same wager.",
-     "methodology": "EV is probability times payout, and payout dominates. Ranking a board by EV alone therefore selects the longest price on it almost every time, which is why the headline Pick of the Day is chosen on model probability inside a normal price band and long prices are judged on EV in their own slot. An EV computed from an unvalidated model is an expectation under an assumption, not a forecast.",
+     "methodology": "EV is probability times payout, and payout dominates. Ranking a board by EV alone therefore selects the longest price on it almost every time, which is why the headline Pick of the Day is chosen on model probability inside a normal price band and long prices are judged on EV in their own slot. On a whole-number total the EV is scaled by the share of games that do not push. An EV computed from an unvalidated model is an expectation under an assumption, not a forecast.",
      "seeAlso": ["bet_edge", "kelly_criterion", "betting_unit"]},
     {"id": "betting_unit", "term": "Unit", "category": "betting",
-     "aliases": ["unit", "1u", "flat stake"], "priority": 96,
-     "definition": "One bet's worth of bankroll, whatever size a reader chooses. Results are reported in units so they mean the same thing at any bankroll. Every pick on this site's public record is a flat 1 unit.",
-     "methodology": "The stake is flat on the record on purpose. A record kept in variable stakes cannot be audited from its own rows: a reader has to take it on trust that the sizing was decided before the result and not after it. Suggested display units may differ by slot, but the RECORDED stake never does.",
+     "aliases": ["unit", "1u", "flat stake"], "priority": 96, "shelf": "foundation",
+     "definition": "One bet's worth of bankroll, whatever size a reader chooses. Results are reported in units so they mean the same thing at any bankroll. Every pick on this site's public record is recorded at a flat 1 unit.",
+     "methodology": "The stake is flat on the record on purpose. A record kept in variable stakes cannot be audited from its own rows: a reader has to take it on trust that the sizing was decided before the result and not after it. A pick card may show a different suggested size, but the RECORDED stake never changes.",
      "seeAlso": ["kelly_criterion", "ev_per_unit"]},
     {"id": "kelly_criterion", "term": "Kelly", "category": "betting",
-     "aliases": ["Kelly criterion", "quarter Kelly", "full Kelly"], "priority": 97,
-     "definition": "The stake fraction that maximizes long-run bankroll growth given a probability and a price. This site shows it as INFORMATION and never as a recommendation, and it shows a quarter of it.",
-     "methodology": "Full Kelly is only optimal if the probability is right. It is brutally sensitive to overestimating an edge, and an unvalidated model is by definition a model whose edge estimate has not been checked, so a full-Kelly stake on one of these picks is a fast way to lose a bankroll. Quarter Kelly is served pre-divided so nobody has to do the arithmetic under the impression the site endorsed the larger number.",
+     "aliases": ["Kelly criterion", "quarter Kelly", "full Kelly"], "priority": 97, "shelf": "industry",
+     "origin": "John L. Kelly Jr. (1956), the Kelly criterion.",
+     "definition": "The stake fraction that maximizes long-run bankroll growth given a probability and a price. This site shows it as INFORMATION and never as a stake, and it shows a quarter of it.",
+     "methodology": "Full Kelly is only optimal if the probability is right. It is very sensitive to overestimating an edge, and an unvalidated model is by definition a model whose edge estimate has not been checked, so a full-Kelly stake on one of these picks is a fast way to lose a bankroll. Quarter Kelly is served pre-divided so nobody has to do the arithmetic under the impression the site endorsed the larger number.",
      "seeAlso": ["betting_unit", "ev_per_unit", "provisional_pick"]},
     {"id": "moneyline", "term": "Moneyline", "category": "betting",
-     "aliases": ["money line", "ML", "h2h"], "priority": 98,
+     "aliases": ["money line", "ML", "h2h"], "priority": 98, "shelf": "foundation",
      "definition": "A bet on which team wins the game, with no margin attached. Priced in American odds: -150 means risk 150 to win 100, +150 means risk 100 to win 150.",
      "seeAlso": ["runline", "total_line", "implied_probability"]},
     {"id": "runline", "term": "Runline", "category": "betting",
-     "aliases": ["run line", "spread"], "priority": 99,
+     "aliases": ["run line", "spread"], "priority": 99, "shelf": "foundation",
      "definition": "Baseball's spread, almost always 1.5 runs. The favourite at -1.5 has to win by two or more; the underdog at +1.5 wins the bet by losing by one or winning outright.",
-     "methodology": "Runline probabilities on this site come from a Poisson-difference margin model, which underdisperses real run scoring: baseball scores in clumps, so the true margin distribution has fatter tails than the model assumes and its runline numbers sit too close to the middle. The moneyline is the least exposed of the three markets, and any published runline pick carries that caveat on the row. A second, separate error: the runline counts every game the model leaves tied after nine as a +1.5 cover for both sides, while the moneyline splits the same games by the measured extra-innings home rate, so a +1.5 price runs high and a -1.5 price runs low. The measured split is published and not yet served, and a published runline pick states what it would change.",
-     "seeAlso": ["moneyline", "total_line"]},
+     "methodology": "Runline probabilities on this site come from a Poisson-difference margin model, which puts too little weight in the tails: baseball scores in clumps, so the real margin distribution is wider than the model assumes. A one-parameter dispersion correction has a pre-registered gate and is served only if it passes; until then a published runline pick carries the caveat on its row. Games the model leaves tied after nine are split between the two sides at the measured extra-innings home rate.",
+     "seeAlso": ["moneyline", "total_line", "run_dispersion"]},
     {"id": "total_line", "term": "Total", "category": "betting",
-     "aliases": ["over/under", "the total"], "priority": 100,
+     "aliases": ["over/under", "the total"], "priority": 100, "shelf": "foundation",
      "definition": "A bet on the combined runs scored by both teams, over or under a posted number. A total that lands exactly on a whole-number line is a push and returns the stake.",
      "methodology": "Totals carry the same Poisson underdispersion as the runline, and the same caveat rides any published total pick. Over 8.5 at one book and Under 9.5 at another are not two sides of one bet, so a total is priced only across books posting the same number.",
-     "seeAlso": ["runline", "moneyline"]},
+     "seeAlso": ["runline", "moneyline", "run_dispersion"]},
     {"id": "parlay", "term": "Parlay", "category": "betting",
-     "aliases": ["accumulator", "same-game parlay", "SGP"], "priority": 101,
+     "aliases": ["accumulator", "same-game parlay", "SGP"], "priority": 101, "shelf": "foundation",
      "definition": "One bet chaining several legs, all of which must win. The payout multiplies, and so does the book's cut: a parlay compounds the vig on every leg.",
-     "methodology": "Multiplying leg probabilities is only valid when the legs are INDEPENDENT, and legs from the same game never are. This site refuses to print a product for correlated legs rather than printing one with a warning attached, because a number that looks like a price is read as a price no matter what sits next to it.",
+     "methodology": "Multiplying leg probabilities is only valid when the legs are INDEPENDENT, and legs from the same game never are. The parlay builder blocks a moneyline and a runline on the same team (one bet with two prices) and prints a warning beside the other correlated combinations it knows: legs from the same game, a moneyline with that game's total, two props from one lineup, and a starter's strikeout prop with his team's moneyline.",
      "seeAlso": ["moneyline", "ev_per_unit"]},
     {"id": "clv", "term": "Closing line value", "category": "betting",
-     "aliases": ["CLV", "beat the close"], "priority": 102,
-     "definition": "Whether a bet's price at post beat the same bet's price at the moment the game started. Beating the close means the market moved toward the pick after it was posted.",
-     "methodology": "CLV is the honest short-run test of a betting model, because the closing line is the sharpest estimate the market produces and winning a single bet is evidence of almost nothing. This site publishes two forms side by side: price CLV, the posted decimal over the closing decimal minus one, and probability CLV, the implied probability at close minus at post.",
+     "aliases": ["CLV", "beat the close"], "priority": 102, "shelf": "foundation",
+     "definition": "Whether a bet's price when posted beat the same bet's price at the moment the game started. Beating the close means the market moved toward the pick after it was posted.",
+     "methodology": "This site stopped serving CLV on 2026-09-07 (owner decision). The record is graded on realized results, and the CLV panels say they are retired rather than printing an empty grade.",
      "seeAlso": ["implied_probability", "provisional_pick"]},
     {"id": "provisional_pick", "term": "Provisional pick", "category": "betting",
-     "aliases": ["provisional"], "priority": 103,
-     "definition": "A published pick from a model that has NOT been validated. The betting model's backtest is contaminated (its team inputs are season-to-date, so every graded game sits inside its own features), so no minimum edge has been measured and no pick here has a measured threshold behind it.",
-     "methodology": "The alternative was showing nothing for a season, and the owner chose to publish with the label instead. Every provisional pick carries the flag, the floor it cleared and the basis of that floor in the payload itself, so a row lifted out of the page is still self-describing. Each one is also recorded in a paper ledger that settles against the result, which is how the evidence for a real threshold gets built.",
-     "seeAlso": ["policy_floor", "brier_score", "clv"]},
+     "aliases": ["provisional pick"], "priority": 103, "shelf": "ark",
+     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+     "definition": "A published pick from a model that has NOT cleared its validation gates. No minimum edge has been measured yet, so the pick cleared the policy floor instead, and the card says so.",
+     "methodology": "The alternative was showing nothing for a season, and the owner chose to publish with the label instead. Every provisional pick carries the flag, the floor it cleared and the basis of that floor in the payload itself, so a row lifted out of the page is still self-describing. The Validation tab shows which gates are shut and how far each clock has run.",
+     "seeAlso": ["policy_floor", "validation_clocks", "brier_score"]},
     {"id": "policy_floor", "term": "Policy floor", "category": "betting",
-     "aliases": ["provisional floor", "minimum edge"], "priority": 104,
-     "definition": "The 6% edge a side must clear before it can be published while the model is unvalidated. It is a POLICY, chosen to be far stricter than anything the model can currently justify, and it is NOT a measurement.",
-     "methodology": "The model's whole in-sample margin over a home-field baseline is 0.0079 Brier, and the out-of-sample margin will be thinner. Requiring six points of edge means a pick appears only when the model disagrees with the market by far more than the skill there is evidence for, so the failure mode is publishing nothing on most slates rather than something weak on all of them. Every slot on the page reads this same floor: a slot allowed to quietly use a lower one would be a threshold invented to make a pick appear, which is the single most dishonest number this module could publish. When the validation gates open, a measured threshold replaces it automatically.",
-     "seeAlso": ["provisional_pick", "bet_edge", "brier_score"]},
+     "aliases": ["provisional floor", "minimum edge"], "priority": 104, "shelf": "ark",
+     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+     "definition": "The edge a side must clear before it can be published while the model is unvalidated. It is a POLICY, set well above anything the model's measured skill supports, and it is NOT a measurement. Each pick card prints the value it cleared.",
+     "methodology": "Requiring a large edge means a pick appears only when the model disagrees with the market by far more than the skill there is evidence for, so the failure mode is publishing nothing on most slates rather than something weak on all of them. Every slot on the page reads this same floor. When the validation gates open, a measured threshold replaces it automatically.",
+     "seeAlso": ["provisional_pick", "bet_edge", "validation_clocks"]},
     {"id": "brier_score", "term": "Brier score", "category": "betting",
-     "aliases": ["Brier"], "priority": 105,
+     "aliases": ["Brier"], "priority": 105, "shelf": "industry",
+     "origin": "Glenn W. Brier (1950), verification of probability forecasts.",
      "definition": "The standard accuracy score for probability forecasts: the mean squared error between the stated probability and the outcome (1 or 0). Lower is better, and it rewards being confident only when confidence is warranted.",
-     "methodology": "A Brier score means nothing without the baseline it is compared against, and this site prints two: a flat 50% forecast and a home-field-only forecast. It also means nothing if the model saw the games it is being scored on, which is why every graded block on the betting page is labelled with the mode that produced it.",
-     "seeAlso": ["provisional_pick", "policy_floor"]},
+     "methodology": "A Brier score means nothing without a baseline scored on the same games, which is what the benchmark ladder provides. It also means nothing if the model saw the games it is being scored on, which is why every graded block on the betting page is labelled with the mode that produced it.",
+     "seeAlso": ["benchmark_ladder", "vintage_grading", "reliability_curve"]},
+    {"id": "reliability_curve", "term": "Reliability curve", "category": "betting",
+     "aliases": ["calibration curve", "reliability diagram"], "priority": 106, "shelf": "foundation",
+     "definition": "Forecasts grouped into probability bins, with each bin's average stated probability plotted against how often those bets actually won. A calibrated model sits on the diagonal: its 60% calls win about 60% of the time.",
+     "methodology": "The Validation tab draws it from the calibration ledger, beside the bin table it is built from. It is a diagnostic only: no calibration correction is applied to the probabilities the page serves.",
+     "seeAlso": ["brier_score", "benchmark_ladder"]},
+    {"id": "run_dispersion", "term": "Run-dispersion correction", "category": "betting",
+     "aliases": ["dispersion correction", "run dispersion"], "priority": 107, "shelf": "ark",
+     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+     "definition": "A one-parameter widening of the Poisson-difference margin model, which puts too little weight on lopsided scores. It would move runline and total prices, not the moneyline.",
+     "methodology": "The correction was fitted and registered against a held-out gate before it was scored. The page reads the gate's verdict from the eval artifact: while the correction is not served, a runline or total price is the plain Poisson difference and the pick row says so. The alpha grid is on the Validation tab.",
+     "seeAlso": ["runline", "total_line", "validation_clocks"]},
+    {"id": "shadow_ledger", "term": "Shadow ledger", "category": "betting",
+     "aliases": ["paper ledger", "paper bets"], "priority": 108, "shelf": "ark",
+     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+     "definition": "Paper bets the model would have made under each candidate selection rule, recorded at board prices and settled against the result. None of them is a published pick, and none counts toward the public record.",
+     "methodology": "Each selection rule keeps its own tag and its own ROI. Tags are never pooled, because a combined ROI measures a mixture of rules nobody bet. The settled rows feed Clock B on the Validation tab.",
+     "seeAlso": ["validation_clocks", "betting_unit"]},
+    {"id": "validation_clocks", "term": "Validation clocks", "category": "betting",
+     "aliases": ["gates", "clock A", "clock B"], "priority": 109, "shelf": "ark",
+     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+     "definition": "The counters that decide when the betting model can be called validated. Clock A counts games graded out of sample; Clock B counts settled paper bets per selection rule; Clock C is the gradable pool that caps Clock A.",
+     "methodology": "Clock A and Clock B open different gates and are never added together. Until the gates open, picks are provisional and publish against the policy floor.",
+     "seeAlso": ["vintage_grading", "shadow_ledger", "provisional_pick"]},
+    {"id": "vintage_grading", "term": "Vintage mode", "category": "betting",
+     "aliases": ["vintage", "vintage backtest"], "priority": 110, "shelf": "ark",
+     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+     "definition": "The out-of-sample way the betting model is graded: every past game is priced on a dated leaderboard snapshot taken before that game, so no graded game sits inside its own inputs.",
+     "methodology": "A game with no earlier snapshot is skipped, not graded on today's numbers. The other mode, contaminated, prices games on season-to-date leaderboards that already contain them; it measures calibration only and cannot validate anything, and the page labels every block with the mode that produced it.",
+     "seeAlso": ["validation_clocks", "benchmark_ladder", "brier_score"]},
+    {"id": "benchmark_ladder", "term": "Benchmark ladder", "category": "betting",
+     "aliases": ["benchmarks"], "priority": 111, "shelf": "ark",
+     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+     "definition": "The model's Brier score beside simpler forecasts scored on the same vintage games: a home-field constant, a published Elo, and the de-vigged market at the open and at the close. Its place on the ladder is the plain answer to whether it knows anything the simpler forecasts do not.",
+     "methodology": "Every full tier is scored on one shared window of games, and the panel says so when the model sits last. A tier measured on fewer games renders apart, and a tier with no measurement prints its status instead of a number.",
+     "seeAlso": ["brier_score", "vintage_grading"]},
+]
+
+# The DFS vocabulary /fantasy/ uses (assets/dfs.js). Same merge rules as the
+# betting terms: additive, idempotent, never overwriting a served entry.
+DFS_ENTRIES = [
+    {"id": "dfs_points_per_1k", "term": "Points per $1k", "category": "fantasy",
+     "module": ["fantasy"], "aliases": ["Pts/$1k"], "priority": 120, "shelf": "foundation",
+     "definition": "Projected fantasy points per $1,000 of salary. The projection is ours and the salary is the one you entered, so the column fills only for players you priced.",
+     "methodology": "Read it with the start rate: a high value on a low start rate is a cheap bench bat.",
+     "seeAlso": ["dfs_start_rate", "dfs_matchup_multiplier"]},
+    {"id": "dfs_start_rate", "term": "Start rate", "category": "fantasy",
+     "module": ["fantasy"], "aliases": ["start"], "priority": 121, "shelf": "ark",
+     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+     "definition": "The projected chance a hitter is in the starting lineup, from his playing-time projection against a league plate-appearances-per-start anchor. A posted lineup card replaces it.",
+     "seeAlso": ["dfs_points_per_1k", "dfs_matchup_multiplier"]},
+    {"id": "dfs_matchup_multiplier", "term": "Matchup multiplier", "category": "fantasy",
+     "module": ["fantasy"], "aliases": ["matchup"], "priority": 122, "shelf": "ark",
+     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+     "definition": "How much the opponent and the park move a projection for one game: the inverse of the opponent's innings-weighted pitching index (the starter's SEM+ plus the club's Bullpen+), times the park factor.",
+     "seeAlso": ["dfs_start_rate", "implied_team_total", "sem_plus", "bullpen_plus"]},
+    {"id": "implied_team_total", "term": "Implied team total", "category": "fantasy",
+     "module": ["fantasy", "betting"], "aliases": ["team total", "team totals", "Opp total"], "priority": 123, "shelf": "foundation",
+     "definition": "The market's expected runs for one club: the posted game total split by each side's price with the book's margin removed, from a cached odds snapshot.",
+     "methodology": "Shown for context. Nothing on the DFS page is priced off it: the points are our projections.",
+     "seeAlso": ["total_line", "devig", "dfs_matchup_multiplier"]},
 ]
 
 
@@ -384,7 +449,7 @@ def extract_fa() -> list[dict]:
 
 
 def merge_betting(path: Path | None = None) -> dict:
-    """Add the betting vocabulary to the EXISTING data/glossary.json in place.
+    """Add the betting and DFS vocabulary to the EXISTING data/glossary.json in place.
 
     WHY THIS IS NOT PART OF main(). `main()` rebuilds the whole payload from
     prospx/index.html's inline `const GLOSSARY` block, and that block no longer
@@ -401,10 +466,10 @@ def merge_betting(path: Path | None = None) -> dict:
     payload = json.loads(out.read_text(encoding="utf-8"))
     have = {e["id"] for e in payload.get("entries") or []}
     added = []
-    for e in BETTING_ENTRIES:
+    for e in BETTING_ENTRIES + DFS_ENTRIES:
         if e["id"] in have:
             continue
-        e = {**e, "module": e.get("module") or ["betting"]}
+        e = {**e, "module": e.get("module") or [e.get("category") or "betting"]}
         payload.setdefault("entries", []).append(e)
         added.append(e["id"])
     groups = payload.setdefault("groups", {})
@@ -418,8 +483,14 @@ def merge_betting(path: Path | None = None) -> dict:
             e["seeAlso"] = [s for s in e["seeAlso"] if s in idset]
     if added:
         payload["version"] = glossary_version()
-        out.write_text(json.dumps(payload, ensure_ascii=False, indent=1),
-                       encoding="utf-8")
+        # Keep the served file's own line endings and trailing newline, so a
+        # merge diffs as the added entries and nothing else.
+        raw = out.read_bytes()
+        eol = "\r\n" if b"\r\n" in raw else "\n"
+        text = json.dumps(payload, ensure_ascii=False, indent=1)
+        if raw.endswith(b"\n"):
+            text += "\n"
+        out.write_bytes(text.replace("\n", eol).encode("utf-8"))
     return {"added": added, "n_entries": len(payload["entries"]),
             "group": GROUPS["betting"]}
 
