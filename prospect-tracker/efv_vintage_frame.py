@@ -17,8 +17,13 @@ row carries is dated inside the V preseason window:
                 each SCORED_SOURCES grade (max across the window) and the consensus of
                 the latest in-window point, i.e. the board as it stood.
     prior       efv_dataset._prior_features on that same latest in-window point.
-    milb        efv_dataset._milb_features(mlbam, V, birth, side, cutoff=V-01-01), so
+    milb        efv_dataset._milb_features(person, V, birth, side, cutoff=V-01-01), so
                 the last MiLB season read is V - 1 (its season ended before the window).
+                `person` is the OUTCOME-BLIND id from efv_identity (DS-03, bug B4): the
+                printed name matched against the people in affiliated minor league ball
+                before V, never the id the record carries (records gained ids mostly on
+                reaching the majors, so a block keyed on them is a debut proxy). The
+                record's own id stays on the row as `record_mlbam_id`, for audit only.
     sidecars    IL stints strictly before V-01-01; acquisition fields only when the
                 acquisition year is before V (a July draft in V is after the window).
 
@@ -48,6 +53,7 @@ import subprocess
 from pathlib import Path
 
 import efv_dataset as D
+import efv_identity as ID
 import milb_history as mh
 import source_backtest as SB
 
@@ -193,9 +199,13 @@ def window_bounds(vintage: int, debut_date: str | None) -> tuple[str, str]:
 # ---------------------------------------------------------------------------
 
 def frame_row(rec: dict, side: str, vintage: int, *, excl: frozenset[str] | None = None,
-              milb: bool = True) -> dict | None:
+              milb: bool = True, index: ID.NameIndex | None = None) -> dict | None:
     """The F-LV row for one record at vintage V, or None when he is not in the frame.
-    Callers go through build_frame, which applies the reserved guard first."""
+    Callers go through build_frame, which applies the reserved guard first.
+
+    Membership reads facts dated before the window (a published debut before it, a
+    major league line before V) off the record. The id every INPUT is keyed on is the
+    outcome-blind efv_identity resolution (`index` is the name index through V - 1)."""
     V = int(vintage)
     if not D._side_match(rec, side):
         return None
@@ -240,9 +250,17 @@ def frame_row(rec: dict, side: str, vintage: int, *, excl: frozenset[str] | None
     src_dates = sorted({str(ps.get("snapshot_date"))[:10]
                         for p in pts for s, ps in (p.get("per_source") or {}).items()
                         if (ps or {}).get("snapshot_date") and _is_real_grader(s, ps, excl)})
+    if index is None:
+        index = ID.build_index(V - 1)
+    ident = ID.resolve_record(rec, V, index)
     row = {
         "player_key": rec.get("player_key"),
-        "mlbam_id": mlbam,
+        # the outcome-blind id (DS-03); every input below is keyed on it
+        "mlbam_id": ident.person_id,
+        "id_how": ident.how,
+        "id_candidates": ident.n_candidates,
+        # the record's stored id: audit only, never an input (see the module docstring)
+        "record_mlbam_id": mlbam,
         "side": side,
         "vintage": V,
         "window": [lo, hi],
@@ -260,7 +278,8 @@ def frame_row(rec: dict, side: str, vintage: int, *, excl: frozenset[str] | None
         "milb_last_season": None,
     }
     if milb:
-        feats = D._milb_features(mlbam, V, rec.get("birth_date"), side, cutoff=lo)
+        feats = D._milb_features(ident.person_id, V, rec.get("birth_date"), side,
+                                 cutoff=lo)
         row["milb"] = feats
         row["milb_last_season"] = (feats or {}).get("milb_season")
     return row
@@ -302,9 +321,10 @@ def build_frame(side: str, vintage: int, *, gate_sha: str | None = None,
         universe = load_universe()
     non_rater, constant = _real_sources()
     excl = frozenset(non_rater | constant)
+    index = ID.build_index(int(vintage) - 1)
     rows = []
     for rec in universe.values():
-        r = frame_row(rec, side, vintage, excl=excl, milb=milb)
+        r = frame_row(rec, side, vintage, excl=excl, milb=milb, index=index)
         if r is not None:
             rows.append(r)
     rows.sort(key=lambda r: r["player_key"])

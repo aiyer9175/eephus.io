@@ -1,0 +1,597 @@
+{
+ "generated_at": "2026-09-25T19:46:42+00:00",
+ "produced_by": "tools/efv_identity_balance.py",
+ "role": "development",
+ "adjudicates": "nothing; a validity receipt for the outcome-blind resolver",
+ "frame": "lv_dev (F-LV, list vintages 2011 to 2019), W3 on the eWAR v2 label",
+ "label": {
+  "provider": "ewar_v2",
+  "resolved_through": 2025
+ },
+ "guards": {
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "r_vm_first_debut_year": 2025,
+  "vintages_read": [
+   2011,
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019
+  ],
+  "reserved_vm_pins": []
+ },
+ "resolver": {
+  "module": "efv_identity.py",
+  "sha256": "7ad16bcd0ba802fc76b2ac943f4e9d22b9e517eb2a4d612f2eb81fbc2658f334",
+  "rule": "printed name matched against people in affiliated minor league ball before V (StatsAPI sports 11 to 16 through V - 1, draft classes through V - 1); one candidate resolves"
+ },
+ "code": {
+  "commit": "fbe80e65772f48a05f767dafe6d976d6fe2a3f4b",
+  "tool_sha256": "3c11a04f203ff3ec0b46714d471ee7810acd9ca857f622b698118ef4de776cce"
+ },
+ "rows": {
+  "frame_rows": 5962,
+  "no_consensus": 0,
+  "label_none": 0,
+  "dropped_rvm_players": 26,
+  "by_how": {
+   "name_unique": 5389,
+   "ambiguous": 411,
+   "no_candidate": 130
+  },
+  "rows_scored": 5930
+ },
+ "indicators": {
+  "id_unresolved": "no outcome-blind id (efv_identity)",
+  "milb_absent": "no MiLB block on the outcome-blind id (the V2 absence flag)",
+  "level_prev_missing": "no minor league line in V - 1 on the outcome-blind id",
+  "age_prev_missing": "no minor league age in V - 1 on the outcome-blind id",
+  "acq_unknown_at_v": "acquisition record not known before V",
+  "record_id_missing": "the record's own stored id is absent (the leak B4 names)",
+  "record_birth_missing": "the record's stored birth date is absent",
+  "leaky_level_missing": "no V - 1 level under the leaky counterfactual resolver"
+ },
+ "balance": {
+  "hit": {
+   "id_unresolved": {
+    "n": 3034,
+    "n_with": 296,
+    "n_without": 2738,
+    "w3_pos_share_with": 0.2095,
+    "w3_pos_share_without": 0.2673,
+    "w3_pos_gap": -0.0579,
+    "r3_share_with": 0.277,
+    "r3_share_without": 0.4412,
+    "partial": -0.0381,
+    "ci95": [
+     -0.1038,
+     0.0324
+    ],
+    "B_used": 500,
+    "verdict": "BALANCED"
+   },
+   "milb_absent": {
+    "n": 3034,
+    "n_with": 1049,
+    "n_without": 1985,
+    "w3_pos_share_with": 0.3165,
+    "w3_pos_share_without": 0.2327,
+    "w3_pos_gap": 0.0837,
+    "r3_share_with": 0.4681,
+    "r3_share_without": 0.4025,
+    "partial": -0.0101,
+    "ci95": [
+     -0.0753,
+     0.0575
+    ],
+    "B_used": 500,
+    "verdict": "BALANCED"
+   },
+   "level_prev_missing": {
+    "n": 3034,
+    "n_with": 341,
+    "n_without": 2693,
+    "w3_pos_share_with": 0.2082,
+    "w3_pos_share_without": 0.2685,
+    "w3_pos_gap": -0.0603,
+    "r3_share_with": 0.2727,
+    "r3_share_without": 0.4445,
+    "partial": -0.0397,
+    "ci95": [
+     -0.1053,
+     0.0271
+    ],
+    "B_used": 500,
+    "verdict": "BALANCED"
+   },
+   "age_prev_missing": {
+    "n": 3034,
+    "n_with": 341,
+    "n_without": 2693,
+    "w3_pos_share_with": 0.2082,
+    "w3_pos_share_without": 0.2685,
+    "w3_pos_gap": -0.0603,
+    "r3_share_with": 0.2727,
+    "r3_share_without": 0.4445,
+    "partial": -0.0397,
+    "ci95": [
+     -0.1015,
+     0.0237
+    ],
+    "B_used": 500,
+    "verdict": "BALANCED"
+   },
+   "acq_unknown_at_v": {
+    "n": 3034,
+    "n_with": 1458,
+    "n_without": 1576,
+    "w3_pos_share_with": 0.2236,
+    "w3_pos_share_without": 0.297,
+    "w3_pos_gap": -0.0734,
+    "r3_share_with": 0.3567,
+    "r3_share_without": 0.4886,
+    "partial": -0.1261,
+    "ci95": [
+     -0.1741,
+     -0.084
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   },
+   "record_id_missing": {
+    "n": 3034,
+    "n_with": 1399,
+    "n_without": 1635,
+    "w3_pos_share_with": 0.223,
+    "w3_pos_share_without": 0.2948,
+    "w3_pos_gap": -0.0718,
+    "r3_share_with": 0.3524,
+    "r3_share_without": 0.4875,
+    "partial": -0.125,
+    "ci95": [
+     -0.1715,
+     -0.0764
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   },
+   "record_birth_missing": {
+    "n": 3034,
+    "n_with": 1411,
+    "n_without": 1623,
+    "w3_pos_share_with": 0.2268,
+    "w3_pos_share_without": 0.2921,
+    "w3_pos_gap": -0.0653,
+    "r3_share_with": 0.3586,
+    "r3_share_without": 0.4831,
+    "partial": -0.1206,
+    "ci95": [
+     -0.162,
+     -0.0754
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   },
+   "leaky_level_missing": {
+    "n": 3034,
+    "n_with": 607,
+    "n_without": 2427,
+    "w3_pos_share_with": 0.0346,
+    "w3_pos_share_without": 0.3185,
+    "w3_pos_gap": -0.2839,
+    "r3_share_with": 0.0412,
+    "r3_share_without": 0.5212,
+    "partial": -0.2445,
+    "ci95": [
+     -0.2782,
+     -0.2035
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   }
+  },
+  "pit": {
+   "id_unresolved": {
+    "n": 2896,
+    "n_with": 245,
+    "n_without": 2651,
+    "w3_pos_share_with": 0.1592,
+    "w3_pos_share_without": 0.2931,
+    "w3_pos_gap": -0.1339,
+    "r3_share_with": 0.3265,
+    "r3_share_without": 0.424,
+    "partial": -0.1145,
+    "ci95": [
+     -0.1824,
+     -0.0443
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   },
+   "milb_absent": {
+    "n": 2896,
+    "n_with": 970,
+    "n_without": 1926,
+    "w3_pos_share_with": 0.3474,
+    "w3_pos_share_without": 0.2487,
+    "w3_pos_gap": 0.0987,
+    "r3_share_with": 0.4856,
+    "r3_share_without": 0.3806,
+    "partial": -0.0621,
+    "ci95": [
+     -0.1244,
+     0.0081
+    ],
+    "B_used": 500,
+    "verdict": "BALANCED"
+   },
+   "level_prev_missing": {
+    "n": 2896,
+    "n_with": 370,
+    "n_without": 2526,
+    "w3_pos_share_with": 0.2108,
+    "w3_pos_share_without": 0.2922,
+    "w3_pos_gap": -0.0814,
+    "r3_share_with": 0.3432,
+    "r3_share_without": 0.4264,
+    "partial": -0.0849,
+    "ci95": [
+     -0.1439,
+     -0.0252
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   },
+   "age_prev_missing": {
+    "n": 2896,
+    "n_with": 370,
+    "n_without": 2526,
+    "w3_pos_share_with": 0.2108,
+    "w3_pos_share_without": 0.2922,
+    "w3_pos_gap": -0.0814,
+    "r3_share_with": 0.3432,
+    "r3_share_without": 0.4264,
+    "partial": -0.0849,
+    "ci95": [
+     -0.1438,
+     -0.026
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   },
+   "acq_unknown_at_v": {
+    "n": 2896,
+    "n_with": 1722,
+    "n_without": 1174,
+    "w3_pos_share_with": 0.2166,
+    "w3_pos_share_without": 0.3773,
+    "w3_pos_gap": -0.1607,
+    "r3_share_with": 0.3014,
+    "r3_share_without": 0.5835,
+    "partial": -0.2248,
+    "ci95": [
+     -0.2748,
+     -0.1773
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   },
+   "record_id_missing": {
+    "n": 2896,
+    "n_with": 1656,
+    "n_without": 1240,
+    "w3_pos_share_with": 0.218,
+    "w3_pos_share_without": 0.3669,
+    "w3_pos_gap": -0.1489,
+    "r3_share_with": 0.2947,
+    "r3_share_without": 0.5774,
+    "partial": -0.1951,
+    "ci95": [
+     -0.2414,
+     -0.1514
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   },
+   "record_birth_missing": {
+    "n": 2896,
+    "n_with": 1656,
+    "n_without": 1240,
+    "w3_pos_share_with": 0.2192,
+    "w3_pos_share_without": 0.3653,
+    "w3_pos_gap": -0.1461,
+    "r3_share_with": 0.2959,
+    "r3_share_without": 0.5758,
+    "partial": -0.1912,
+    "ci95": [
+     -0.2382,
+     -0.1483
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   },
+   "leaky_level_missing": {
+    "n": 2896,
+    "n_with": 812,
+    "n_without": 2084,
+    "w3_pos_share_with": 0.064,
+    "w3_pos_share_without": 0.3666,
+    "w3_pos_gap": -0.3026,
+    "r3_share_with": 0.0862,
+    "r3_share_without": 0.5441,
+    "partial": -0.2643,
+    "ci95": [
+     -0.3002,
+     -0.2241
+    ],
+    "B_used": 500,
+    "verdict": "IMBALANCED"
+   }
+  }
+ },
+ "timing_head_admissible": {
+  "hit": [
+   "age_prev_missing",
+   "id_unresolved",
+   "level_prev_missing",
+   "milb_absent"
+  ],
+  "pit": [
+   "milb_absent"
+  ]
+ },
+ "h1_regression": {
+  "leaky_reference": {
+   "features": [
+    "age_leaky",
+    "lvl_leaky"
+   ],
+   "n": 5930,
+   "by_side": {
+    "hit": {
+     "n": 3034,
+     "rho_consensus": 0.1834,
+     "rho_age_level": 0.1691
+    },
+    "pit": {
+     "n": 2896,
+     "rho_consensus": 0.1759,
+     "rho_age_level": 0.235
+    }
+   },
+   "rho_consensus": 0.181,
+   "rho_age_level": 0.2067,
+   "delta_vs_consensus": 0.0257,
+   "ci95": [
+    0.0073,
+    0.0445
+   ],
+   "reading": "CI95 above zero"
+  },
+  "outcome_blind": {
+   "features": [
+    "age_blind",
+    "lvl_blind"
+   ],
+   "n": 5930,
+   "by_side": {
+    "hit": {
+     "n": 3034,
+     "rho_consensus": 0.1834,
+     "rho_age_level": 0.1676
+    },
+    "pit": {
+     "n": 2896,
+     "rho_consensus": 0.1759,
+     "rho_age_level": 0.1691
+    }
+   },
+   "rho_consensus": 0.181,
+   "rho_age_level": 0.173,
+   "delta_vs_consensus": -0.0079,
+   "ci95": [
+    -0.0244,
+    0.0083
+   ],
+   "reading": "CI95 spans zero"
+  },
+  "i2_reference": {
+   "leaky": {
+    "delta": 0.0304,
+    "ci95": [
+     0.0125,
+     0.0496
+    ],
+    "n": 6564
+   },
+   "outcome_blind": {
+    "delta": 0.0003,
+    "ci95": [
+     -0.0174,
+     0.0176
+    ],
+    "n": 6564
+   },
+   "source": "_finalpass_2026-09-24/efv3/I2_new_information/IDEAS.md H1"
+  }
+ },
+ "h1_regression_holds": true,
+ "probes": {
+  "DS-03:balance.id_unresolved:hit": {
+   "tag": "DS-03:balance.id_unresolved:hit",
+   "verdict": "BALANCED",
+   "partial": -0.0381,
+   "ci95": [
+    -0.1038,
+    0.0324
+   ]
+  },
+  "DS-03:balance.milb_absent:hit": {
+   "tag": "DS-03:balance.milb_absent:hit",
+   "verdict": "BALANCED",
+   "partial": -0.0101,
+   "ci95": [
+    -0.0753,
+    0.0575
+   ]
+  },
+  "DS-03:balance.level_prev_missing:hit": {
+   "tag": "DS-03:balance.level_prev_missing:hit",
+   "verdict": "BALANCED",
+   "partial": -0.0397,
+   "ci95": [
+    -0.1053,
+    0.0271
+   ]
+  },
+  "DS-03:balance.age_prev_missing:hit": {
+   "tag": "DS-03:balance.age_prev_missing:hit",
+   "verdict": "BALANCED",
+   "partial": -0.0397,
+   "ci95": [
+    -0.1015,
+    0.0237
+   ]
+  },
+  "DS-03:balance.acq_unknown_at_v:hit": {
+   "tag": "DS-03:balance.acq_unknown_at_v:hit",
+   "verdict": "IMBALANCED",
+   "partial": -0.1261,
+   "ci95": [
+    -0.1741,
+    -0.084
+   ]
+  },
+  "DS-03:balance.record_id_missing:hit": {
+   "tag": "DS-03:balance.record_id_missing:hit",
+   "verdict": "IMBALANCED",
+   "partial": -0.125,
+   "ci95": [
+    -0.1715,
+    -0.0764
+   ]
+  },
+  "DS-03:balance.record_birth_missing:hit": {
+   "tag": "DS-03:balance.record_birth_missing:hit",
+   "verdict": "IMBALANCED",
+   "partial": -0.1206,
+   "ci95": [
+    -0.162,
+    -0.0754
+   ]
+  },
+  "DS-03:balance.leaky_level_missing:hit": {
+   "tag": "DS-03:balance.leaky_level_missing:hit",
+   "verdict": "IMBALANCED",
+   "partial": -0.2445,
+   "ci95": [
+    -0.2782,
+    -0.2035
+   ]
+  },
+  "DS-03:balance.id_unresolved:pit": {
+   "tag": "DS-03:balance.id_unresolved:pit",
+   "verdict": "IMBALANCED",
+   "partial": -0.1145,
+   "ci95": [
+    -0.1824,
+    -0.0443
+   ]
+  },
+  "DS-03:balance.milb_absent:pit": {
+   "tag": "DS-03:balance.milb_absent:pit",
+   "verdict": "BALANCED",
+   "partial": -0.0621,
+   "ci95": [
+    -0.1244,
+    0.0081
+   ]
+  },
+  "DS-03:balance.level_prev_missing:pit": {
+   "tag": "DS-03:balance.level_prev_missing:pit",
+   "verdict": "IMBALANCED",
+   "partial": -0.0849,
+   "ci95": [
+    -0.1439,
+    -0.0252
+   ]
+  },
+  "DS-03:balance.age_prev_missing:pit": {
+   "tag": "DS-03:balance.age_prev_missing:pit",
+   "verdict": "IMBALANCED",
+   "partial": -0.0849,
+   "ci95": [
+    -0.1438,
+    -0.026
+   ]
+  },
+  "DS-03:balance.acq_unknown_at_v:pit": {
+   "tag": "DS-03:balance.acq_unknown_at_v:pit",
+   "verdict": "IMBALANCED",
+   "partial": -0.2248,
+   "ci95": [
+    -0.2748,
+    -0.1773
+   ]
+  },
+  "DS-03:balance.record_id_missing:pit": {
+   "tag": "DS-03:balance.record_id_missing:pit",
+   "verdict": "IMBALANCED",
+   "partial": -0.1951,
+   "ci95": [
+    -0.2414,
+    -0.1514
+   ]
+  },
+  "DS-03:balance.record_birth_missing:pit": {
+   "tag": "DS-03:balance.record_birth_missing:pit",
+   "verdict": "IMBALANCED",
+   "partial": -0.1912,
+   "ci95": [
+    -0.2382,
+    -0.1483
+   ]
+  },
+  "DS-03:balance.leaky_level_missing:pit": {
+   "tag": "DS-03:balance.leaky_level_missing:pit",
+   "verdict": "IMBALANCED",
+   "partial": -0.2643,
+   "ci95": [
+    -0.3002,
+    -0.2241
+   ]
+  },
+  "DS-03:h1.leaky_reference": {
+   "tag": "DS-03:h1.leaky_reference",
+   "verdict": "CI95_ABOVE_ZERO",
+   "delta_vs_consensus": 0.0257,
+   "ci95": [
+    0.0073,
+    0.0445
+   ]
+  },
+  "DS-03:h1.outcome_blind": {
+   "tag": "DS-03:h1.outcome_blind",
+   "verdict": "CI95_SPANS_ZERO",
+   "delta_vs_consensus": -0.0079,
+   "ci95": [
+    -0.0244,
+    0.0083
+   ]
+  }
+ },
+ "n_probes": 18,
+ "not_in_efv_progress": "these reads score no eFV and no candidate, so the progress chart (eFV minus consensus) carries none of them; they are counted in data/xfv_arm_ledger.json",
+ "seed": 20260925,
+ "B": {
+  "h1": 1000,
+  "balance": 500
+ }
+}

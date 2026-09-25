@@ -136,9 +136,19 @@ def _synthetic(n=260, seed=7):
                                                      "snapshot_date": f"{y}-02-01"}}})
             c += 0.8 * x["ops_rel"] - 0.05 * (c - 44.0) + rng.gauss(0.0, 1.0)
         recs[pk] = {"player_key": pk, "mlbam_id": mid, "debut_date": None,
+                    "player_name": _syn_name(i),
                     "position": "SS", "birth_date": "1996-03-01", "points": pts,
                     "statline": {}}
     return recs, feats
+
+
+def _syn_name(i: int) -> str:
+    """A letters-only name unique to i (efv_identity resolves on the printed name)."""
+    s = ""
+    for _ in range(4):
+        i, r = divmod(i, 26)
+        s += chr(ord("a") + r)
+    return f"Syn {s}"
 
 
 @pytest.fixture
@@ -150,6 +160,13 @@ def synthetic(monkeypatch):
 
     monkeypatch.setattr(F.D, "_milb_features", milb)
     monkeypatch.setattr(F, "_mlb_ids", lambda season: frozenset())
+    # DS-03: the frame keys every input on the outcome-blind id, resolved from the
+    # printed name against people in affiliated ball before V; give the synthetic
+    # players an index in which each name has exactly one such person.
+    idx = F.ID.NameIndex()
+    for r in recs.values():
+        idx.add(r["player_name"], r["mlbam_id"], 2010)
+    monkeypatch.setattr(F.ID, "build_index", lambda last_season, **kw: idx)
     return recs
 
 
