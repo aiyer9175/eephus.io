@@ -10658,9 +10658,12 @@ function wireThemeToggle() {
 // =============================================================================
 // LOAD DATA
 // =============================================================================
-// timeseries.json is the boot-critical payload (~42MB raw, ~5MB on the
-// wire once nginx serves the precompressed .gz twin) carrying the
-// active-prospect list, spotlights, org summaries, and norms tables.
+// timeseries.json is the boot-critical payload (86.2MB raw, 10.1MB gzip on the
+// 2026-09-24 build, measured; an older note here said ~42MB) carrying the
+// active-prospect list, spotlights, org summaries, and norms tables. Census M01-11:
+// statcast_metrics and zone_metrics alone are 21.4MB of it (compact JSON); the board
+// reads them only in part (e.g. currentDisplayLevel), and moving the detail-only share
+// to the per-player sidecars is open work.
 // v33 cut it by a third: spray/rolling-xwOBA coordinates, game logs, and
 // HISTORICAL per-source tool grades moved to data/player_detail/{key}.json
 // (lazy-merged on card open; see _ensurePlayerDetail). Sidecar JSONs
@@ -31645,10 +31648,13 @@ function efvStockDir(p) {
 // UNGRADED eFV (data/xfv_ungraded.json): a PROVISIONAL, production-only leading indicator
 // for the ~6k source-UNGRADED roster players (DSL/CPX breakout bats + arms the sources are
 // behind on, plus org filler). Keyed by_player + by_mlbam. Distinct from the flagship eFV;
-// shown on farm-detail rosters with a "prov" marker. Lazy; absent => no ungraded grades.
+// its rows rank on the board among the graded players (dashed badge, small "p"), on farm
+// rosters and on their own detail pages. Absent => no ungraded grades.
 let _EFV_UNG = null, _EFV_UNG_LOADING = false;
-// LAZY: ~2.6MB, only needed on farm-detail pages - load on first request (not page boot)
-// so the homepage / board path stays lean. Re-renders once it lands.
+// Loaded on first request, not at page boot: 11.1MB raw, 1.2MB gzip on the 2026-09-24
+// build (the older "~2.6MB, farm-detail only" note is long out of date). The board, the
+// farm views and every rank read (buildEfvRankMap / buildEfvOrgRankMap) request it,
+// because the board rank counts these rows. Re-renders once it lands.
 function ensureEfvUngraded() {
   if (_EFV_UNG !== null || _EFV_UNG_LOADING) return;
   _EFV_UNG_LOADING = true;
