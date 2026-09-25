@@ -544,10 +544,9 @@ MODULE_STAGE = {
     "management": ("β", "Beta. Realized value only; the gate returned a bounded null for the steal and no family is ranked by skill"),
     "hof": ("β", "Beta. Every unpublished section names its blocker"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
-    # slot [0] and render through _stage_chip(); the older rows above predate
-    # the helper and their call sites still write "β beta" literally, using
-    # only slot [1] for the hover title. Nothing is gated: these pages are
-    # public and free while the section is built out.
+    # slot [0]; the rows above carry the sigil, which STAGE_CHIP_TEXT turns
+    # into the chip text. Every row renders through _stage_chip(). Nothing is
+    # gated: these pages are public and free while the section is built out.
     # One row for the merged module (2026-08-07). Dynasty, Redraft and DFS are
     # sub-modules under one masthead now, so there is one chip, not three.
     "fantasy": ("◆ Diamond preview", "Diamond preview: free and public"),
@@ -555,11 +554,20 @@ MODULE_STAGE = {
     "diamond": ("◆ Diamond preview", "Nothing is for sale yet; the whole site is free"),
 }
 
+# Chip text per stage sigil. Census X07-10 (2026-09-25): eleven module shells
+# wrote "β beta" by hand beside this helper, so renaming the stage meant editing
+# eleven f-strings. Every masthead chip now renders through _stage_chip(), and
+# the visible word for a sigil lives here once. A MODULE_STAGE slot 0 that is
+# not a key here (the Diamond rows) is already the full chip text.
+STAGE_CHIP_TEXT = {"β": "β beta"}
+
+
 def _stage_chip(key: str) -> str:
-    """The lifecycle chip on a module masthead: MODULE_STAGE[key] = (visible
-    text, hover title). Reuses the existing .eephus-beta chip so the Diamond
-    modules inherit the same sharp-cornered treatment as the beta chips."""
+    """The lifecycle chip on a module masthead: MODULE_STAGE[key] = (sigil or
+    visible text, hover title). Reuses the existing .eephus-beta chip so the
+    Diamond modules inherit the same sharp-cornered treatment as the beta chips."""
     label, title = MODULE_STAGE[key]
+    label = STAGE_CHIP_TEXT.get(label, label)
     return (f'<span class="eephus-beta" title="{html.escape(title)}">'
             f'{html.escape(label)}</span>')
 
@@ -3671,7 +3679,7 @@ def build_forums_index() -> str:
     recently active first. Static shell gives SEO + first paint + a nav home."""
     body = (
         '<div class="section-head"><h1>Forums '
-        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["forums"][1])}">β beta</span></h1>'
+        f'{_stage_chip("forums")}</h1>'
         '<span class="section-sub">Discussion across prospects, farm systems, and articles</span></div>'
         '<div class="eph-forums-index-page"><div id="eph-forums-index"></div></div>'
     )
@@ -3694,7 +3702,7 @@ def build_fa() -> str:
     body = (
         '<div class="fa-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Free Agency '
-        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["fa"][1])}">β beta</span></h1></div>'
+        f'{_stage_chip("fa")}</h1></div>'
         f'<span class="section-sub">the {_fa_span} class · projected contracts, '
         f'{_gl("rational_value", "rational value")}, team fits · {_fa_winters} archived winters</span></div>'
         '<div id="fa-banner"></div>'
@@ -3833,7 +3841,7 @@ def build_projections() -> str:
     body = (
         '<div class="fa-app proj-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Projections '
-        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">β beta</span></h1></div>'
+        f'{_stage_chip("projections")}</h1></div>'
         f'<span class="section-sub">five-year {_gl("ewar", "eWAR")} paths for every MLB player · '
         f'{_gl("proj_buckets", "floor / mean / ceiling")} · surplus over the club control window, inside those five seasons · '
         'prospects join at their PROSPX ETA</span></div>'
@@ -4043,13 +4051,11 @@ def build_arbitration() -> str:
     Arbitration History lazily fetches data/arb_history.json on first open,
     because it is the bigger payload and most visits never open it; the Model
     section is server-rendered and needs no script at all."""
-    stage = MODULE_STAGE["arbitration"]
     body = (
         '<div class="fa-app mlbstats-app arb-app">'
         '<div class="section-head section-head--byline"><div class="section-head-titles">'
         + CREATED_BY_BANNER
-        + '<h1>Arbitration Predictor <span class="eephus-beta" title="'
-        + html.escape(stage[1]) + '">&beta; beta</span></h1></div>'
+        + '<h1>Arbitration Predictor ' + _stage_chip("arbitration") + '</h1></div>'
         '<span class="section-sub">Projected '
         + _gl("arb_award_model", "arbitration awards")
         + ' and the market record against comparables. Arb-1 beats its baseline; '
@@ -4092,7 +4098,7 @@ def build_trademachine() -> str:
         # filter + collapse wiring to that id; .tm-app carries the standalone theming.
         '<div class="fa-app proj-app tm-app" id="proj-view-trademachine">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>Trade Machine '
-        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["trademachine"][1])}">β beta</span></h1></div>'
+        f'{_stage_chip("trademachine")}</h1></div>'
         f'<span class="section-sub">{_gl("surplus_value", "surplus")} in one currency: prospects on eFV, '
         'MLB players on projections, then the Bayesian trade-value board</span></div>'
         + _TRADE_MACHINE_BODY +
@@ -4134,7 +4140,7 @@ def build_mlbstats() -> str:
         # module roots (test_mlbx_css_scope.py pins the scope).
         '<div class="fa-app mlbstats-app mlbx">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">β beta</span></h1></div>'
+        f'<h1>MLB Stats {_stage_chip("mlbstats")}</h1></div>'
         f'<span class="section-sub">Every player by {_gl("ewar", "eWAR")}, then hitters '
         f'({_gl("hem_plus", "HEM+")}), starters ({_gl("sem_plus", "SEM+")}), relievers '
         f'({_gl("rem_plus", "REM+")}), fielders ({_gl("dem_plus", "DEM+")}) and leverage '
@@ -4240,7 +4246,7 @@ def build_pal() -> str:
     body = (
         '<div class="fa-app mlbstats-app pal-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">β beta</span></h1></div>'
+        f'<h1>Alchemy Lab {_stage_chip("pal")}</h1></div>'
         f'<span class="section-sub">Role and position {_gl("pal_conversion", "conversions")}. '
         f'{_gl("sp_rp_fit", "SP to RP")} {_pal_gate_clause(gate, "SP->RP")}; '
         f'{_gl("rp_sp_fit", "RP to SP")} {_pal_gate_clause(gate, "RP->SP")}; '
@@ -4939,7 +4945,7 @@ def build_parks() -> str:
     body = (
         '<div class="fa-app mlbstats-app parks-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>MiLB Park Factors <span class="eephus-beta" title="{html.escape(MODULE_STAGE["parks"][1])}">β beta</span></h1></div>'
+        f'<h1>MiLB Park Factors {_stage_chip("parks")}</h1></div>'
         f'<span class="section-sub">Run and home-run {_gl("milb_park_factor", "park factors")} for every '
         'affiliated venue, Triple-A through the DSL: home vs road scoring, league-centered, shrunk toward '
         'neutral by sample. Display only: no model reads them.</span></div>'
@@ -5007,7 +5013,7 @@ def build_management() -> str:
     body = (
         '<div class="fa-app mlbstats-app mgmt-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>In-Game Management <span class="eephus-beta" title="{html.escape(MODULE_STAGE["management"][1])}">β beta</span></h1></div>'
+        f'<h1>In-Game Management {_stage_chip("management")}</h1></div>'
         '<span class="section-sub">Every in-game decision the play corpus can name, with the '
         f'{_gl("realized_mwpa", "realized win probability")} it governed beside the priced '
         f'{_gl("decision_value", "decision value")} where one exists; realized value is a record of what '
@@ -5072,8 +5078,7 @@ def build_ledger() -> str:
     body = (
         '<div class="fa-app mlbstats-app ledger-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Club Ledger <span class="eephus-beta" title="{html.escape(MODULE_STAGE["ledger"][1])}">'
-        f'{html.escape(MODULE_STAGE["ledger"][0])} beta</span></h1></div>'
+        f'<h1>Club Ledger {_stage_chip("ledger")}</h1></div>'
         f'<span class="section-sub" id="ledger-masthead">Every club\'s {_gl("cbt_payroll", "CBT payroll")}, '
         f'commitments and {_gl("controlled_surplus", "controlled surplus")}, on the scale each was computed on.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Ledger sections">'
@@ -5130,8 +5135,7 @@ def build_franchise() -> str:
     body = (
         '<div class="fa-app mlbstats-app fr-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Franchise Overview <span class="eephus-beta" title="{html.escape(MODULE_STAGE["franchise"][1])}">'
-        f'{html.escape(MODULE_STAGE["franchise"][0])} beta</span></h1></div>'
+        f'<h1>Franchise Overview {_stage_chip("franchise")}</h1></div>'
         f'<span class="section-sub" id="franchise-masthead">The {_gl("franchise_index", "Franchise Index")} of every club '
         f'and the {_gl("franchise_branch_score", "branch scores")} beneath it, re-standardised across 30 clubs, '
         'with every number on the scale it was computed on.</span></div>'
@@ -5186,7 +5190,7 @@ def build_hof() -> str:
     body = (
         '<div class="fa-app mlbstats-app hof-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Hall of Fame <span class="eephus-beta" title="{html.escape(MODULE_STAGE["hof"][1])}">β beta</span></h1></div>'
+        f'<h1>Hall of Fame {_stage_chip("hof")}</h1></div>'
         f'<span class="section-sub">Career WAR, {_gl("war7", "WAR7")} and {_gl("jaws", "JAWS")} for '
         'every ten-season player, reproduced from Baseball-Reference\'s daily WAR file, with the '
         'writers\' ballot record. Three bands: eligible, active, and inside the five-year wait. No Hall '

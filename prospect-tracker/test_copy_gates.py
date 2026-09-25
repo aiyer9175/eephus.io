@@ -150,3 +150,24 @@ def test_the_gate_scans_the_exporters_whose_copy_is_served():
                      "betting_export.py", "war_board_export.py",
                      "bullpen_export.py", "pal_export.py", "source_backtest.py"):
         assert f'"{exporter}"' in src, f"{exporter} is not on TARGETS"
+
+
+def test_every_module_stage_chip_renders_through_one_helper():
+    """Census X07-10 (2026-09-25): eleven module shells wrote the beta chip by
+    hand, so a stage rename meant eleven edits (and /arbitration/ had drifted
+    to an entity form). The chip word now lives in build_site.STAGE_CHIP_TEXT
+    and every masthead chip renders through _stage_chip()."""
+    import re
+
+    import build_site
+    src = (ROOT / "build_site.py").read_text(encoding="utf-8")
+    word = build_site.STAGE_CHIP_TEXT["\u03b2"]
+    body = src.replace('STAGE_CHIP_TEXT = {"\u03b2": "' + word + '"}', "")
+    assert word not in body.replace('"' + word + '" by hand', ""), (
+        "a module chip writes the stage word literally; use _stage_chip(key)")
+    assert "&beta; beta" not in src
+    assert not re.search(r'eephus-beta" title="\{html\.escape\(MODULE_STAGE', src), (
+        "a masthead builds its chip from MODULE_STAGE by hand; use _stage_chip(key)")
+    for key in build_site.MODULE_STAGE:
+        chip = build_site._stage_chip(key)
+        assert chip.startswith('<span class="eephus-beta" title="'), key
