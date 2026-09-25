@@ -154,7 +154,7 @@ def test_header_names_only_sources_present(page):
     labels = {"fangraphs": "FanGraphs", "espn_draft": "ESPN draft",
               "mlb_pipeline_draft": "MLB Pipeline draft",
               "baseballamerica_draft": "Baseball America draft"}
-    for year in (2026, 2027, 2028):
+    for year in (2017, 2019, 2026, 2027, 2028):
         cls = _classes().get(year)
         if not cls:
             continue
@@ -190,3 +190,27 @@ def test_leaderboard_numbers_only_ranked_rows(page):
         numbered = [r for r in rows if r["first"].isdigit()]
         assert all(r["ranked"] for r in numbered), f"{year}: an unranked row carries a number"
         assert [int(r["first"]) for r in numbered] == list(range(1, len(numbered) + 1))
+
+
+def test_no_report_fallback_names_only_the_prospects_sources(page):
+    """The no-scouting-reports line named ESPN draft / MLB Pipeline / FanGraphs
+    on every draftee page; the 489 prospects that reach it are all on one or
+    two of those outlets (census M03-02, second hardcoded list)."""
+    src = open(PROSPX, encoding="utf-8").read()
+    assert "ESPN draft / MLB Pipeline / FanGraphs sources" not in src
+    _open(page, 2019)
+    out = page.evaluate(r"""
+      () => {
+        const cls = DATA.draft.classes.find(c => c.year === 2019);
+        const p = (cls.prospects || []).find(q => !Object.values(q.tool_grades || {})
+          .some(g => String(((g || {})._extras || {}).report || '').trim().length > 30));
+        if (!p) return null;
+        return { srcs: [...new Set((p.points || []).map(pt => pt.source))],
+                 html: _renderProspectScoutingReports(p) };
+      }""")
+    if not out:
+        pytest.skip("every 2019 prospect carries a report")
+    labels = {"fangraphs": "FanGraphs", "espn_draft": "ESPN draft",
+              "mlb_pipeline_draft": "MLB Pipeline draft"}
+    for key, lbl in labels.items():
+        assert (lbl in out["html"]) == (key in out["srcs"]), (out["srcs"], out["html"])

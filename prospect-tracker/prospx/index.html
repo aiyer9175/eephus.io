@@ -26993,7 +26993,14 @@ function _renderProspectScoutingReports(p) {
     return ext.report && String(ext.report).trim().length > 30;
   });
   if (!sources.length) {
-    return `<div style="color:var(--text-tertiary);font-size:12px;padding:8px 0;">No scouting reports on file. ESPN draft / MLB Pipeline / FanGraphs sources publish writeups on a delay; check back after the next refresh.</div>`;
+    // Name only the outlets that list this prospect, not a fixed set.
+    const LBL = { fangraphs: "FanGraphs", espn_draft: "ESPN draft",
+      mlb_pipeline_draft: "MLB Pipeline draft", baseballamerica_draft: "Baseball America draft" };
+    const seen = [];
+    for (const pt of (p.points || [])) if (pt && pt.source && !seen.includes(pt.source)) seen.push(pt.source);
+    const named = seen.map(s => LBL[s] || s).sort();
+    const who = named.length ? `${escapeHtml(named.join(" / "))} ${named.length > 1 ? "publish" : "publishes"}` : "Sources publish";
+    return `<div style="color:var(--text-tertiary);font-size:12px;padding:8px 0;">No scouting reports on file. ${who} writeups on a delay; check back after the next refresh.</div>`;
   }
   return sources.map((src, i) => {
     const ext = (tg[src] || {})._extras || {};
