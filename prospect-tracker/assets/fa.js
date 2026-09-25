@@ -1875,6 +1875,18 @@
       return;
     }
     const g1 = meta.gate1, g2 = meta.gate2;
+    // M04-03: every gate table says when it was measured and on which WAR
+    // basis, and says so plainly when that is not the basis the board prices
+    // on today. The Gate 2 artifact of 2026-08-19 names no basis at all.
+    const gateBasis = g => {
+      const when = g.generated_at ? String(g.generated_at).slice(0, 10) : null;
+      const now = meta.war_provider || null;
+      const on = g.war_provider ? `on the ${esc(g.war_provider)} WAR label` : "on a WAR label the artifact does not name";
+      const lag = now && g.war_provider !== now
+        ? ` The board prices on ${esc(now)} today, so this table does not describe the prices on the board; a re-run on the current label is owed.`
+        : "";
+      return `<div class="fa-note">Measured${when ? " " + esc(when) : ""} ${on}.${lag}</div>`;
+    };
     const pooledRows = (pooled, fmt) => Object.entries(pooled).map(([k, v]) =>
       `<tr><td>${esc(k)}</td><td>${fmt(v.mae_model)}</td><td>${fmt(v.mae_base)}</td><td>${v.n}</td><td>${v.mae_model < v.mae_base ? "&#10003; beats baseline" : "&#10007; behind baseline"}</td></tr>`).join("");
     // Three miss categories, each its own ranked list / Err column. One table,
@@ -1904,10 +1916,12 @@
       <span class="newsprint-eyebrow-meta"><span data-gl="fa_gates">Gate 1 and Gate 2</span>, read from the committed eval artifacts, misses included &middot; ${meta.cba ? meta.cba.unverified_records + " CBA records pending owner verification" : ""}</span></div>
       ${g1 ? `<h3>Gate 1: projection engine (${g1.pass ? "PASSED" : "FAILING"})</h3>
       <div class="fa-note">train &le; N-1, predict N, held-out seasons ${g1.targets ? g1.targets.join(", ") : ""} &middot; <span data-gl="proj_buckets">P10-P90</span> coverage ${g1.coverage_p10_p90 != null ? g1.coverage_p10_p90.toFixed(3) : "?"} (target 0.75-0.85)</div>
+      ${gateBasis(g1)}
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Naive baseline</th><th>n</th><th>Verdict</th></tr></thead>
       <tbody>${pooledRows(g1.pooled, v => v == null ? EM_DASH : v.toFixed(3))}</tbody></table>` : ""}
       ${g2 ? `<h3>Gate 2: market model (${g2.pass ? "PASSED" : "FAILING"})</h3>
       <div class="fa-note">forward-chained winters ${g2.test_winters ? g2.test_winters.join(", ") : ""} vs <span data-gl="nearest_comps">nearest-comps</span> baseline &middot; guarantee/AAV in $M</div>
+      ${gateBasis(g2)}
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Comps baseline</th><th>n</th><th>Verdict</th></tr></thead>
       <tbody>${pooledRows(g2.pooled, v => v == null ? EM_DASH : v.toFixed(2))}</tbody></table>
       ${g2.pooled_by_pos_group ? `

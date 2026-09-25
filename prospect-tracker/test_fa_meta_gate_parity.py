@@ -50,3 +50,29 @@ def test_fa_meta_gate2_is_the_committed_gate2_artifact():
     assert served == art, (
         "fa_meta.gate2 keys differ from the artifact: "
         f"{sorted(k for k in set(served) | set(art) if served.get(k) != art.get(k))}")
+
+
+def test_fa_meta_names_the_war_basis_the_board_prices_on():
+    """M04-03 (2026-09-25). Gate 2 was persisted on 2026-08-19, before the
+    2026-09-03 eWAR label epoch, and names no WAR basis; the page printed it
+    beside eWAR-priced contracts with no date and no basis. fa_meta now carries
+    the current basis so the Model view can compare."""
+    import war_source
+    assert _meta().get("war_provider") == war_source.DEFAULT_PROVIDER
+
+
+def test_model_view_discloses_a_gate_measured_on_another_label():
+    js = (Path(__file__).parent / "assets" / "fa.js").read_text(encoding="utf-8")
+    body = js.split("function renderModel(rows, meta)", 1)[1].split("\n  function ", 1)[0]
+    assert "const gateBasis = g =>" in body
+    assert body.count("${gateBasis(g1)}") == 1 and body.count("${gateBasis(g2)}") == 1
+    assert "g.war_provider !== now" in body
+    assert "a re-run on the current label is owed" in body
+
+
+def test_gate_writers_stamp_their_basis_and_date():
+    src = (Path(__file__).parent / "fa_backtest.py").read_text(encoding="utf-8")
+    gate2 = src.split("def run_market_gate(", 1)[1].split("\ndef ", 1)[0]
+    assert '"war_provider": fp._war_provider(),' in gate2
+    gate1 = src.split("def run_projection_gate(", 1)[1].split("\ndef ", 1)[0]
+    assert 'summary["generated_at"]' in gate1

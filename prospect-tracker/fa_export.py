@@ -1329,6 +1329,9 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR,
         # M04-08: the series the class board actually prices on, beside the
         # committed one above, so the $/WAR view can name both levels.
         "dpw_pricing": pricing,
+        # M04-03: the WAR basis the board prices on today, so the Model view
+        # can say when a gate artifact was measured on another one.
+        "war_provider": fp._war_provider(),
         "gate1": _gate("fa_gate1_eval.json"),
         "gate2": _gate("fa_gate2_eval.json"),
         "war_input_divergence": _war_input_divergence(),

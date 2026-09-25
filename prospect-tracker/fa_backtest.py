@@ -429,7 +429,11 @@ def run_projection_gate(persist: bool = True) -> dict:
         # Repo-visible copy (prospects.db is gitignored): the committed
         # gate verdict the Accountability surface + tests key off.
         import json
+        from datetime import datetime as _dt, timezone as _tz
         from pathlib import Path
+        # M04-03: self-dating, as Gate 2 is, so /fa/#view=model can say when
+        # the table was measured.
+        summary["generated_at"] = _dt.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         (Path(__file__).parent / "data" / "fa_gate1_eval.json").write_text(
             json.dumps(summary, indent=1), encoding="utf-8")
     return summary
@@ -650,6 +654,12 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
         "model_version": GATE2_MODEL_VERSION,
         "basis": "npv_deferral_adjusted",
         "discount_rate": disc_rate,
+        # M04-03 (2026-09-25): the WAR basis the corpus was labelled on, as
+        # Gate 1 stamps it. The 2026-08-19 artifact carries none, which is how
+        # a pre-epoch table kept serving beside eWAR-priced contracts with
+        # nothing on the page saying so. /fa/#view=model compares this with
+        # fa_meta.war_provider and discloses a mismatch.
+        "war_provider": fp._war_provider(),
         "test_winters": test_years,
         "pooled": {k: {"mae_model": _mae(v["m"]), "mae_base": _mae(v["b"]),
                        "n": len(v["m"])} for k, v in pooled.items()},

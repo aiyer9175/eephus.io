@@ -31,11 +31,11 @@ These tests pin the fence:
   - the served artifact carries no positive ptier bias beyond +10 $M
     (the E5a overshoot check, standing)
   - artifact verdict edges match the fa_market.py constants, and the
-    artifact carries generated_at. run_market_gate(persist=True) writes
-    the summary wholesale and does NOT emit generated_at/verdict_edges
-    itself, so the next re-persist trips these on purpose: whoever
-    re-persists owes the stamp and the edges block (or moves them into
-    the persist path).
+    artifact carries generated_at. run_market_gate(persist=True) stamps
+    generated_at and carries verdict_edges, *_gate and ptier_* blocks
+    forward (a97e5359, 2026-08-19); since 2026-09-25 it also stamps
+    war_provider. A plain re-persist therefore keeps the OLD edges: re-cutting
+    them is its own step.
 
 If a future re-gate ships shift_ptier or re-cuts any edge, it must update
 these assertions IN THE SAME CHANGE as the new passing gate doc.
