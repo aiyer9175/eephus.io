@@ -23520,15 +23520,16 @@ async function renderDraft() {
     return;
   }
 
-  // v15 - Prefer 2026 as the default landing year (most actively-scouted
-  // class). Falls back to the most recent available class if 2026 isn't
-  // in the export (e.g. mid-February before the next draft data lands).
-  const PREFERRED_DRAFT_YEAR = 2026;
+  // Default landing year: the newest completed class (its picks and results
+  // are on file), derived from the export instead of a fixed year. Falls back
+  // to the most recent class when no class has been drafted yet.
+  const PREFERRED_DRAFT_YEAR = _draftNewestCompletedYear(classes);
   if (state.draftYear !== "overall" &&
       (!state.draftYear || !classes.find(c => c.year === state.draftYear))) {
     const preferred = classes.find(c => c.year === PREFERRED_DRAFT_YEAR);
     state.draftYear = preferred ? preferred.year : classes[0].year;
   }
+  const upcomingYear = _draftUpcomingYear(classes);
   if (!state.draftView) state.draftView = "rankings";
 
   // Class chip strip: an "Overall" pseudo-class (cross-year analytics) first,
@@ -23539,16 +23540,17 @@ async function renderDraft() {
     `<button class="chip ${isOverall ? "active" : ""}" data-draft-year="overall"
             title="Cross-year analytics: class strength, signing trends, all-time org tendencies, overperformers">Overall</button>`
     + classes.map(c => {
-      // Two classes carry is_current (the upcoming draft being scouted, plus the
-      // next-draft lottery projection that has no prospects yet). Only the
-      // actively-scouted one gets the ⏳ "current class" marker so it's not
-      // ambiguous which draft is upcoming; the projection-only class is labeled
-      // as such.
-      const scouted   = c.is_current && (c.n_prospects || 0) > 0;
+      // Every undrafted class carries is_current, and more than one can hold
+      // prospects (the next draft plus an early list for the one after it).
+      // Only the upcoming class, the earliest undrafted class with prospects,
+      // gets the ⏳ marker; a later scouted class is labeled a future class,
+      // and a class with no prospects is a lottery projection only.
+      const scouted   = c.year === upcomingYear;
+      const future    = c.is_current && (c.n_prospects || 0) > 0 && !scouted;
       const projOnly  = c.is_current && (c.n_prospects || 0) === 0;
       const title = projOnly
         ? `${c.year} draft - lottery projection only (not yet scouted)`
-        : `${c.n_prospects} prospects${scouted ? " · upcoming draft, being scouted" : ""}`;
+        : `${c.n_prospects} prospects${scouted ? " · upcoming draft, being scouted" : future ? " · future class, early list" : ""}`;
       return `<button class="chip ${c.year === state.draftYear ? "active" : ""}"
             data-draft-year="${c.year}" title="${title}">
       ${c.year}${scouted ? " ⏳" : ""}</button>`;
@@ -28283,6 +28285,24 @@ function _csProjHTML(entry) {
   }).join(' <span style="color:var(--text-tertiary);">&middot;</span> ');
 }
 
+// The upcoming draft: the earliest undrafted (is_current) class that holds
+// prospects. The export marks every undrafted class is_current, so a list
+// for the draft after next (2028 while 2027 is being scouted) also carries
+// it; picking the first is_current class in the export's newest-first order
+// would name that later class. Falls back to the earliest is_current class.
+function _draftUpcomingYear(classes) {
+  const cur = (classes || []).filter(c => c.is_current);
+  const scouted = cur.filter(c => (c.n_prospects || 0) > 0);
+  const pool = scouted.length ? scouted : cur;
+  return pool.length ? Math.min(...pool.map(c => c.year)) : undefined;
+}
+
+// The newest completed (drafted) class with prospects, or undefined.
+function _draftNewestCompletedYear(classes) {
+  const done = (classes || []).filter(c => !c.is_current && (c.n_prospects || 0) > 0);
+  return done.length ? Math.max(...done.map(c => c.year)) : undefined;
+}
+
 // Effective draft year for the colleges board (the class strip is the
 // year control; Overall = all classes).
 function _collegeEffYear() {
@@ -28295,7 +28315,7 @@ function _collegeEffYear() {
 // keeps the highest FV and any realized career WAR.
 function _collegeAggregate(classes) {
   const yr = _collegeEffYear();
-  const curYear = (classes.find(c => c.is_current && (c.n_prospects || 0) > 0) || {}).year;
+  const curYear = _draftUpcomingYear(classes);
   const byCol = {};
   for (const c of (classes || [])) {
     if (yr !== "all" && c.year !== yr) continue;
@@ -28434,7 +28454,11 @@ async function renderCollegeDetail(name) {
     return;
   }
 
-  const curYear = (DATA.draft.classes.find(c => c.is_current && (c.n_prospects || 0) > 0) || {}).year;
+  const curYear = _draftUpcomingYear(DATA.draft.classes);
+  // Undrafted classes after the upcoming one (an early list for the draft
+  // after next): their players are neither current prospects nor history.
+  const futureYears = new Set(DATA.draft.classes
+    .filter(c => c.is_current && c.year !== curYear).map(c => c.year));
   // Dedupe to distinct players for the history (best FV, any WAR).
   const byPlayer = {};
   for (const p of hit.players) {
@@ -28479,11 +28503,13 @@ async function renderCollegeDetail(name) {
     + _statTileHTML("Current prospects", current.length ? String(current.length) : " - ")
     + '</div>';
 
-  // Current draft prospects (with college stats + CollegeSavant proj).
-  let currentBlock = "";
-  if (current.length) {
-    const anyCs = current.some(p => _csEntry(p.player_key));
-    const rows = current.map(p => {
+  // Current draft prospects (with college stats + CollegeSavant proj), then
+  // any early-list players for a later undrafted class in their own table.
+  const future = hit.players.filter(p => futureYears.has(p._year))
+    .sort((a, b) => a._year - b._year || (b.consensus_fv || 0) - (a.consensus_fv || 0));
+  const prospectTable = (list, title) => {
+    const anyCs = list.some(p => _csEntry(p.player_key));
+    const rows = list.map(p => {
       const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
       const cs = _csEntry(p.player_key);
       return '<tr>'
@@ -28494,13 +28520,18 @@ async function renderCollegeDetail(name) {
         + (anyCs ? '<td style="font-size:11px;">' + _csProjHTML(cs) + '</td>' : '')
         + '</tr>';
     }).join("");
-    currentBlock = '<div class="detail-title">Current draft prospects (' + curYear + ')</div>'
+    return '<div class="detail-title">' + title + '</div>'
       + '<table class="draft-table"><thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:right;">FV</th>'
       + '<th>College stats</th>' + (anyCs ? '<th title="CollegeSavant projected Single-A line (small samples)">Proj A (CollegeSavant)</th>' : '') + '</tr></thead><tbody>' + rows + '</tbody></table>';
+  };
+  let currentBlock = current.length ? prospectTable(current, 'Current draft prospects (' + curYear + ')') : "";
+  if (future.length) {
+    const fy = [...new Set(future.map(p => p._year))].sort().join(", ");
+    currentBlock += prospectTable(future, 'Future class (' + fy + ', early list)');
   }
 
   // Past draftees (deduped, newest first), with outcomes.
-  const past = players.filter(x => x.year !== curYear).sort((a, b) => b.year - a.year || (b.fv || 0) - (a.fv || 0));
+  const past = players.filter(x => x.year !== curYear && !futureYears.has(x.year)).sort((a, b) => b.year - a.year || (b.fv || 0) - (a.fv || 0));
   let pastBlock = "";
   if (past.length) {
     const rows = past.map(x => {
