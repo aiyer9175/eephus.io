@@ -512,6 +512,59 @@ def test_closer_rows_ride_only_for_arms_the_pool_lacks(monkeypatch):
     assert sorted(empty["closer_rows"]) == ["7", "8"]
 
 
+# ---- one club code set (M11-04, 2026-09-25) --------------------------------
+def test_enrich_keys_every_player_by_the_canonical_club(monkeypatch):
+    """The leaderboards key clubs MLB-style (AZ, CWS, KC, SD, SF, TB, WSH) and
+    the detail fallback mixes both families; team_next7 and closer_depth key
+    the canonical codes, so a raw copy dropped the card's next-7 strip for
+    every player on those seven clubs."""
+    boards = {"hitter_leaderboards.json": {1: {"team": "AZ"}},
+              "starter_leaderboards.json": {2: {"team": "CWS"}},
+              "bullpen_leaderboards.json": {3: {"team": "WSH"}}}
+    monkeypatch.setattr(fe, "_lb_index", lambda fname, key: boards[fname])
+    monkeypatch.setattr(fe, "_elig_positions", lambda: {})
+    monkeypatch.setattr(fe, "_hitter_elig", lambda mid, elig, detail: None)
+    monkeypatch.setattr(fe, "_detail_by_mlbam",
+                        lambda: {5: {"team": "KC", "name": "Detail Only"}})
+    players = [{"mlbam": 1, "side": "hit", "pos": "H"},
+               {"mlbam": 2, "side": "pit", "pos": "SP"},
+               {"mlbam": 3, "side": "pit", "pos": "RP"},
+               {"mlbam": 5, "side": "hit", "pos": "H"}]
+    fe._enrich(players)
+    assert [p["team"] for p in players] == ["ARI", "CHW", "WSN", "KCR"]
+
+
+def test_two_start_row_team_is_canonical(monkeypatch):
+    _light_sections(monkeypatch)
+    sched = {"games": [], "two_start": {"9": [
+        {"date": "2026-09-24", "opp_org": "NYY", "team_org": "SD"},
+        {"date": "2026-09-29", "opp_org": "TOR", "team_org": "SD"}]}}
+    sec = fe.build_sections({"players": [], "mode": fe.MODE_ROS,
+                             "season_fraction": 0.9, "schedule": sched})
+    assert sec["two_start"][0]["team"] == "SDP"
+
+
+def test_refresh_live_rekeys_an_old_corpus_to_canonical_clubs(monkeypatch, tmp_path):
+    payload = {"players": [{"mlbam": 1, "side": "hit", "team": "AZ"},
+                           {"mlbam": 2, "side": "pit", "team": "TB"},
+                           {"mlbam": 3, "side": "pit", "team": "BOS"}],
+               "schedule": {}}
+    monkeypatch.setattr(fe, "_load_json",
+                        lambda name: payload if name == "fantasy.json" else None)
+    monkeypatch.setattr(fe, "_active_roster_ids", lambda: None)
+    monkeypatch.setattr(fe, "_restamp_elig", lambda p, log=None: 0)
+    monkeypatch.setattr(fe, "_attach_schedule", lambda p: None)
+    monkeypatch.setattr(fe, "build_sections", lambda p: {})
+    monkeypatch.setattr(fe, "update_two_start_ledger",
+                        lambda *a, **k: {"projected_added": 0, "grades_added": 0,
+                                         "n_rows": 0})
+    out = tmp_path / "fantasy.json"
+    monkeypatch.setattr(fe, "OUT_PATH", out)
+    fe.refresh_live(log=None)
+    got = json.loads(out.read_text(encoding="utf-8"))
+    assert [p["team"] for p in got["players"]] == ["ARI", "TBR", "BOS"]
+
+
 if __name__ == "__main__":
     import sys
     mod = sys.modules[__name__]

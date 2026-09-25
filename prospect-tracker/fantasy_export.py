@@ -825,11 +825,17 @@ def _enrich(players: list[dict]) -> None:
             r = rp.get(mid) or {}
             p["skill"] = {k: r.get(k) for k in ("rem_plus", "gmli", "saves", "luck")}
             p["elig"] = ["P"]
-        p["team"] = r.get("team")
+        # ONE CODE SET (2026-09-25). The leaderboards key clubs MLB-style (AZ,
+        # CWS, KC, SD, SF, TB, WSH) and mlb_player_detail mixes both families,
+        # while team_next7, closer_depth, the streamer rows and DFS key the
+        # canonical codes. Copying the raw code split the pool into 34 to 37
+        # codes for 30 clubs and dropped the card's next-7 strip for every
+        # player on those seven clubs (260 of 1,220 on the 2026-09-24 build).
+        p["team"] = _canon_org(r.get("team"))
         d = detail.get(mid)
         if d:
             if not p.get("team"):
-                p["team"] = d.get("team")
+                p["team"] = _canon_org(d.get("team"))
             if not p.get("name"):
                 p["name"] = d.get("name")
 
@@ -1323,7 +1329,7 @@ def build_sections(payload: dict) -> dict:
         first = starts[0] if starts else {}
         two.append({"mlbam": int(mid_s),
                     "name": (p or {}).get("name") or first.get("name"),
-                    "team": (p or {}).get("team") or first.get("team_org"),
+                    "team": _canon_org((p or {}).get("team") or first.get("team_org")),
                     "n_starts": len(starts),
                     "total_fgp": round(total, 1) if n_priced else None,
                     "legs": legs})
@@ -1726,6 +1732,12 @@ def refresh_live(log=print) -> int:
     if callable(log):
         log(f"fantasy: roster status re-stamped, {_n_off} off-roster")
     _restamp_elig(payload, log)
+    # A corpus built before the canonical team codes (2026-09-25) carries the
+    # leaderboards' MLB-style codes; re-key it here so the nightly fixes it
+    # without waiting for the monthly build. Idempotent on canonical codes.
+    for _pl in payload.get("players") or []:
+        if _pl.get("team"):
+            _pl["team"] = _canon_org(_pl["team"])
     # Keep the schedule we already have, so an empty fetch can be told apart from
     # a genuinely empty slate (see the guard below).
     _prev_games = ((payload.get("schedule") or {}).get("games") or {})

@@ -37,6 +37,8 @@
   // unknown #sys= is refused against the served scoring catalog.
   var FILTER_POS = {};
   var FILTER_TEAMS = {};
+  var LEGACY_TEAM = { AZ: "ARI", CWS: "CHW", KC: "KCR", SD: "SDP", SF: "SFG",
+                      TB: "TBR", WSH: "WSN", OAK: "ATH" };
   var SORT = {
     ros_hitter: { key: "score", asc: false },
     ros_sp: { key: "score", asc: false },
@@ -1091,8 +1093,12 @@
     S.pos = (pos && Object.prototype.hasOwnProperty.call(FILTER_POS, pos.toUpperCase()))
       ? pos.toUpperCase() : null;
     var team = hashParam(h, "team", "[A-Za-z]{2,3}");
-    S.team = (team && Object.prototype.hasOwnProperty.call(FILTER_TEAMS, team.toUpperCase()))
-      ? team.toUpperCase() : null;
+    // The pool keys clubs by the site's canonical codes since 2026-09-25; a
+    // link shared before then may carry an MLB-style code, so map it across
+    // rather than refuse it.
+    team = team ? (LEGACY_TEAM[team.toUpperCase()] || team.toUpperCase()) : team;
+    S.team = (team && Object.prototype.hasOwnProperty.call(FILTER_TEAMS, team))
+      ? team : null;
     S.player = hashParam(h, "player", "\\d+");
   }
   function decodeQ(s) {
