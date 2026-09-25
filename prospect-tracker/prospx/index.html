@@ -16606,13 +16606,27 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
   // can still outrank a fresh game from a low-FV prospect, but a very
   // recent strong game from a mid-FV prospect can still surface
   // above a stale 60-FV game.
+  // Census M02-06: the boot rows no longer carry standout_games (they moved to
+  // the per-player shards), so the export keeps one top-level list,
+  // DATA.standouts, joined here to the board rows by player_key. Opening a card
+  // merges its shard back into that one row, so reading rows directly would
+  // make the ticker follow the reader's clicks.
   const games = [];
-  for (const p of players) {
-    const sg = ((p.statcast_metrics || {}).standout_games) || [];
-    if (!Array.isArray(sg) || !sg.length) continue;
-    for (const g of sg) {
-      if (!g || !g.date || !g.line) continue;
+  const _byKey = new Map(players.map(p => [p.player_key, p]));
+  if (Array.isArray(DATA.standouts)) {
+    for (const g of DATA.standouts) {
+      const p = g && _byKey.get(g.player_key);
+      if (!p || !g.date || !g.line) continue;
       games.push({ p, g });
+    }
+  } else {
+    for (const p of players) {
+      const sg = ((p.statcast_metrics || {}).standout_games) || [];
+      if (!Array.isArray(sg) || !sg.length) continue;
+      for (const g of sg) {
+        if (!g || !g.date || !g.line) continue;
+        games.push({ p, g });
+      }
     }
   }
   // v31.11 - Composite scoring with HEAVY FV bias + retained recency.
@@ -16624,7 +16638,15 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
   // the lower-FV prospect (exceptional bonus up to 30 pts) plus a
   // freshness advantage (recency up to 14 pts) - but a routine game
   // from a high-FV prospect still outranks a routine one from a low-FV.
-  const _nowMs = Date.now();
+  // The 14-day window anchors to the newest game on file, not to today, so the
+  // ribbon keeps the season's last two weeks through the offseason instead of
+  // falling back once the calendar passes the final game.
+  let _nowMs = 0;
+  for (const it of games) {
+    const t = new Date(it.g.date + "T00:00:00").getTime();
+    if (isFinite(t) && t > _nowMs) _nowMs = t;
+  }
+  if (!_nowMs) _nowMs = Date.now();
   const _14dCutoffMs = _nowMs - 14 * 86400000;
   const _fvWeight = (fv) => {
     if (fv == null) return 0.5;
@@ -16732,7 +16754,7 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
     <button class="news-ticker-headline" data-go-section="spotlights" type="button"
             title="Standout single-game performances from MiLB gameLogs, weighted toward higher-FV prospects">
       <span class="ntk-masthead">Standout performances</span>
-      <span class="ntk-subline">top FV first · ${top.length} game${top.length === 1 ? "" : "s"} · raw box-line</span>
+      <span class="ntk-subline">top FV first · ${top.length} game${top.length === 1 ? "" : "s"} · raw box-line · through ${escapeHtml(new Date(_nowMs).toISOString().slice(5, 10))}</span>
     </button>
     <div class="news-ticker-strip">${chips}</div>
   </div>`;
@@ -16794,9 +16816,9 @@ function _renderStandoutPerformancesFallback(root) {
   }).join("");
   root.innerHTML = `<div class="news-ticker">
     <button class="news-ticker-headline" data-go-section="spotlights" type="button"
-            title="Awaiting per-game gameLog refresh - showing season-aggregate composites">
+            title="No standout single games on file for the board - showing season-aggregate composites">
       <span class="ntk-masthead">Standout performances</span>
-      <span class="ntk-subline">season aggregate (refresh pending) · ${top.length} prospect${top.length === 1 ? "" : "s"}</span>
+      <span class="ntk-subline">season aggregate · no single games on file · ${top.length} prospect${top.length === 1 ? "" : "s"}</span>
     </button>
     <div class="news-ticker-strip">${chips}</div>
   </div>`;

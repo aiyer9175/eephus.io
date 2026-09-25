@@ -16695,6 +16695,26 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         if detail:
             player_detail_sidecar[pkey] = detail
 
+    # STANDOUT GAMES (census M02-06, 2026-09-25). The harvest below moves every
+    # statcast standout_games list into the per-player shards, which left the
+    # Standout Performances ribbon (it reads the boot rows) with 0 of 4,679
+    # players carrying a game, so it always fell back to season aggregates.
+    # Keep one compact top-level list of the ACTIVE board's standout games first.
+    standouts: list[dict] = []
+    for p in active_payload:
+        _sg = (p.get("statcast_metrics") or {}).get("standout_games") or []
+        for g in _sg:
+            if not isinstance(g, dict) or not g.get("date") or not g.get("line"):
+                continue
+            standouts.append({
+                "player_key": p.get("player_key"),
+                "date": g.get("date"), "level": g.get("level"),
+                "opponent": g.get("opponent"), "is_home": g.get("is_home"),
+                "line": g.get("line"), "score": g.get("score"),
+                "is_pitcher": g.get("is_pitcher"),
+            })
+    standouts.sort(key=lambda r: (r["date"] or "", r["player_key"] or ""), reverse=True)
+
     for p in active_payload:
         _harvest_player_detail(p)
     for p in graduate_payload:
@@ -16861,6 +16881,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "prospect_savant_count": savant_matched,
         "players":    active_payload,
         "spotlights": spotlight_payload,
+        # Standout single games of active prospects (see the harvest note above);
+        # read by the PROSPX Standout Performances ribbon.
+        "standouts":  standouts,
         "org_summary": org_summary,
         "farm_trajectory_means": farm_trajectory_means,
         # v28 — cohort-restricted (hitter / pitcher) league trajectory means
