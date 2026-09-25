@@ -643,6 +643,7 @@ def build() -> dict:
                            {"spotrac_usd": meta.get("space"), "spotrac_basis_usd": None, "platform_usd": None,
                             "platform_basis_usd": cba.get("threshold_usd")}),
             "tax_payroll_2027": meta.get("taxPayroll"), "committed_2027": meta.get("committed"),
+            "tax_floor_2027": (lpay.get("tax_floor_2027") if ledger_live else None),
             "payor_2027": ((lpay.get("payor_2027") or {}) if ledger_live else {"value": meta.get("payor"), "basis": "spotrac"}),
             "recent_spend": meta.get("recentSpend"), "max_guar": meta.get("maxGuar"), "n100m": meta.get("n100m"),
             "roster_surplus_ev": {"active_mm": _r(sum(act), 1), "debuted_mm": _r(sum(deb), 1),
@@ -870,7 +871,10 @@ def build() -> dict:
              "leaves": [
                  leaf("cost_plus", "Cost+", fin_doc["cost_plus"], "idx_plain", None, "Club Ledger Cost+, descriptive index, printed plain here and tiered only on /ledger/", "cost_plus", links["ledger"]),
                  leaf("space_2027", f"Space {CLASS_YEAR}", (fin_doc["space_2027"] or {}).get("spotrac_usd"), "usd_signed", None, "Spotrac basis; never a ladder", "cbt_space", links["ledger"]),
-                 leaf("tax_payroll_2027", f"Tax payroll {CLASS_YEAR}", fin_doc["tax_payroll_2027"], "usd", None, "fa_meta.teams.taxPayroll (Spotrac)", "cbt_payroll", links["ledger"]),
+                 leaf("tax_payroll_2027", f"Tax payroll {CLASS_YEAR}", fin_doc["tax_payroll_2027"], "usd", None,
+                      "fa_meta.teams.taxPayroll (Spotrac)" + ("; below this club's own guaranteed 2027 contract AAV (Club Ledger tax floor census)"
+                                                              if (fin_doc["tax_floor_2027"] or {}).get("below") else ""),
+                      "cbt_payroll", links["ledger"]),
                  leaf("payor_2027", "Payor tier", (fin_doc["payor_2027"] or {}).get("value"), "text", None, "Spotrac or derived, named on the tile", "payor_tier", links["ledger"]),
                  leaf("roster_surplus_ev", "Trade currency (overlaps farm)", fin_doc["roster_surplus_ev"]["total_mm"], "usdm", None, "Trade Machine currency: sum of trade_values posterior means over prospect and debuted rows; contains the farm surplus, never added to it", "trade_machine", links["trade_board"]),
              ]},
@@ -970,6 +974,7 @@ def build() -> dict:
             "farm_score": d["tree"]["branches"][2]["score"], "farm_letter": s["farm"]["letter"], "farm_rank": s["farm"]["rank"],
             "cost_plus": s["fin"]["cost_plus"], "wins_2027": s["outlook"]["wins"], "war": s["roster"]["war"],
             "tax_payroll_2027": s["fin"]["tax_payroll_2027"], "playoff_pct": s["odds"]["playoff_pct"],
+            "tax_floor_below_2027": bool((s["fin"]["tax_floor_2027"] or {}).get("below")),
             "wins_2026": s["season"]["wins"], "losses_2026": s["season"]["losses"],
         })
 
@@ -1012,6 +1017,8 @@ def build() -> dict:
         "space_label_platform": (f"platform carry-forward, {cba.get('threshold_usd', 0) // 1_000_000}M" if cba.get("threshold_usd") else "platform carry-forward"),
         "fin_no_ladder": "a salary, a club surplus total and a cap-space cell never take a ladder; sign colour only",
         "surplus_ev": "a sum of posterior means (trade_values), never of quantiles",
+        "tax_floor_flag": ((ledger.get("copy") or {}).get("tax_floor_flag") or "below own contracts"),
+        "tax_floor_note": ((ledger.get("copy") or {}).get("tax_floor_note") or ""),
         "trade_currency_label": "Trade currency (overlaps farm)",
         "trade_currency_overlap": ((ledger.get("copy") or {}).get("trade_currency_split")
                                    or "the trade currency is the prospect rows plus the debuted rows; it overlaps the farm surplus and is never added to it"),

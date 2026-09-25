@@ -226,16 +226,27 @@
   var KEEP_NARROW = { club: 1, cbt_payroll_2026: 1, space_2027_spotrac: 1, cost_plus: 1 };
   var TEXT_COLS = { club: 1, payor_2026: 1 };
 
+  // M09-03: a club whose Spotrac 2027 tax payroll sits below its own guaranteed
+  // 2027 contract AAV keeps Spotrac's figure and carries a flag naming why.
+  function taxFloorMark(r) {
+    return r.tax_floor_below_2027 ? '<span class="ledger-flag" title="' + esc(copy("tax_floor_note")) + '">low</span>' : "";
+  }
+  function taxFloorLine(tf) {
+    if (!tf || !tf.below) return "";
+    return "<br>" + flag(copy("tax_floor_flag")) + " guaranteed " + esc(classYear()) + " contract AAV " + esc(money(tf.guaranteed_aav_usd)) +
+      " on " + esc(tf.n_rows) + " rows, " + esc(money(-tf.gap_usd)) + " above this figure. " + esc(copy("tax_floor_note"));
+  }
   function leagueCell(r, key) {
     var v = r[key];
     if (key === "club") {
       return '<a href="#section=club&team=' + esc(r.club) + '" data-llink="1" title="' + esc(r.name || "") + '">' + esc(r.club) + "</a>";
     }
     if (key === "payor_2026") return esc(v || "");
-    if (key === "cost_plus" || key === "orgsur_plus") return zCell(v);
+    if (key === "cost_plus") return zCell(v) + taxFloorMark(r);
+    if (key === "orgsur_plus") return zCell(v);
     if (key === "vs_threshold_2026") return signedMoney(v);
     if (key === "space_2027_spotrac") {
-      return '<span class="' + signCls(v) + '" title="' + esc(copy("space_2027_platform_label")) + ": " + money(r.space_2027_platform) + '">' + money(v) + "</span>";
+      return '<span class="' + signCls(v) + '" title="' + esc(copy("space_2027_platform_label")) + ": " + money(r.space_2027_platform) + '">' + money(v) + "</span>" + taxFloorMark(r);
     }
     if (key === "proj_wins_2027") return num(v, 1);
     if (key === "locked_pct") return pct(v, 0);
@@ -382,7 +393,8 @@
   function renderPayroll(d) {
     var P = d.payroll, y = state.season, ps = P["s" + y] || {}, p27 = P.s2027 || {};
     var t1 = tile(gl("CBT payroll " + esc(y), "cbt_payroll"), money(ps.tax_payroll_usd),
-      gl("Total payroll allocations " + esc(y), "payroll_allocations") + ": " + esc(money(ps.total_payroll_usd)) + " (Spotrac)");
+      gl("Total payroll allocations " + esc(y), "payroll_allocations") + ": " + esc(money(ps.total_payroll_usd)) + " (Spotrac)" +
+      (y === classYear() ? taxFloorLine(P.tax_floor_2027) : ""));
     // The 2027 tier names its basis (the Spotrac page, or derived) in both branches.
     var basis27 = y === classYear() ? " (" + esc(copy("payor_basis")[P.payor_2027.basis] || P.payor_2027.basis) + ")" : "";
     var payorTxt = gl("payor", "payor_tier") + " " + esc(y === classYear() ? P.payor_2027.value : ps.payor_status_raw) + basis27;
@@ -391,7 +403,8 @@
     var t3 = tile(gl("Committed " + esc(classYear()), "payroll_allocations"), money(p27.total_payroll_usd), "Spotrac total payroll allocations");
     var sp = P.space_2027;
     var t4 = tile("Space " + esc(classYear()), signedMoney(sp.spotrac_usd),
-      esc(copy("space_2027_spotrac_label")) + "<br>" + esc(copy("space_2027_platform_label")) + ": " + signedMoney(sp.platform_usd));
+      esc(copy("space_2027_spotrac_label")) + "<br>" + esc(copy("space_2027_platform_label")) + ": " + signedMoney(sp.platform_usd) +
+      ((P.tax_floor_2027 || {}).below ? "<br>" + flag(copy("tax_floor_flag")) : ""));
     var out = '<div class="ledger-tiles">' + t1 + t2 + t3 + t4 + "</div>" +
       '<p class="ledger-count">' + esc(copy("allocations_note")) + "</p>";
     if (p27.split_available && p27.split) {

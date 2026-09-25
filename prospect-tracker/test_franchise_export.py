@@ -697,3 +697,16 @@ def test_arbitration_tiles_agree_with_the_arbitration_page_rule(d, clubs):
     assert "pre-arb minimums" in d["copy"]["arb_cost_sum"]
     branch = next(b for b in clubs["LAD"]["tree"]["branches"] if b["key"] == "arbitration")
     assert branch["leaves"][0]["key"] == "n_arb" and "class 1-4" in branch["leaves"][0]["label"]
+
+
+def test_the_ledger_tax_floor_flag_rides_the_fin_tile_leaf_and_board(d, clubs):
+    lg = _load("ledger_board.json")
+    below = set(lg["accountability"]["tax_floor_census"]["below"])
+    board = {r["code"]: r for r in d["board"]}
+    for code, c in clubs.items():
+        tf = c["sections"]["fin"]["tax_floor_2027"]
+        assert tf == lg["clubs"][code]["payroll"]["tax_floor_2027"], code
+        assert board[code]["tax_floor_below_2027"] == (code in below), code
+        lf = next(x for x in _branch(c, "fin")["leaves"] if x["key"] == "tax_payroll_2027")
+        assert ("below this club's own guaranteed" in lf["basis"]) == (code in below), code
+    assert d["copy"]["tax_floor_note"] == lg["copy"]["tax_floor_note"]

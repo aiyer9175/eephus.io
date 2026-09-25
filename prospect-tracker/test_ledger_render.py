@@ -1015,3 +1015,25 @@ def test_the_js_reads_every_shard_column_through_the_legend():
             assert 'id="ledger-block-%s"' % bid in html, (c, bid)
         assert "could not be loaded" not in html and "undefined" not in _block(html, "prospects"), c
         assert d["copy"]["shard_failed"] not in html, (c, "the served shard resolves")
+
+
+def test_a_club_below_its_own_contract_floor_is_flagged_on_the_league_board_and_c1():
+    """M09-03: Spotrac's 2027 tax payroll prints as published; a flag says it sits
+    below the club's own guaranteed 2027 contract AAV."""
+    s = _copy.deepcopy(SAMPLE)
+    s["copy"]["tax_floor_flag"] = "below own contracts"
+    s["copy"]["tax_floor_note"] = "Spotrac's 2027 tax payroll sits below the AAV of this club's own guaranteed 2027 contract rows"
+    for r in s["league"]["rows"]:
+        r["tax_floor_below_2027"] = r["club"] == "TBR"
+    html, _ = _render("league", payload=s)
+    tbr = html.split('title="Tampa Bay Rays"')[1].split("</tr>")[0]
+    lad = html.split('title="Los Angeles Dodgers"')[1].split("</tr>")[0]
+    assert tbr.count('class="ledger-flag" title="Spotrac') == 2, "Space 27 and Cost+"
+    assert "ledger-flag" not in lad
+    s["clubs"]["LAD"]["payroll"]["tax_floor_2027"] = {"guaranteed_aav_usd": 400 * M, "n_rows": 12, "n_option_rows_excluded": 0,
+                                                      "spotrac_tax_payroll_usd": 372907413, "gap_usd": 372907413 - 400 * M, "below": True}
+    club, _ = _render("club", payload=s, team="LAD", season="2027")
+    assert "below own contracts" in club and "guaranteed 2027 contract AAV $400.0M on 12 rows, $27.1M above this figure" in club
+    assert "$372.9M" in club, "Spotrac's figure still prints"
+    s["clubs"]["LAD"]["payroll"]["tax_floor_2027"]["below"] = False
+    assert "below own contracts" not in _render("club", payload=s, team="LAD", season="2027")[0]

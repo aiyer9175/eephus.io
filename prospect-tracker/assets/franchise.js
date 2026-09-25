@@ -499,7 +499,8 @@
     var s = d.sections.fin, sp = s.space_2027 || {}, ev = s.roster_surplus_ev || {};
     var t = tile(gl("Cost+", "cost_plus"), '<span class="fr-neutral">' + esc(nInt(s.cost_plus)) + "</span>", esc(copy("fin_cost_plus_note")), "", d.links.ledger) +
       tile(gl("Space " + esc(DATA.class_year), "cbt_space"), signedMoney(sp.spotrac_usd), esc(copy("space_label_spotrac")) + "<br>" + esc(copy("space_label_platform")) + ": " + signedMoney(sp.platform_usd), "", d.links.ledger) +
-      tile(gl("Tax payroll " + esc(DATA.class_year), "cbt_payroll"), esc(money(s.tax_payroll_2027)), "committed " + esc(money(s.committed_2027)) + " (Spotrac)", "", d.links.ledger) +
+      tile(gl("Tax payroll " + esc(DATA.class_year), "cbt_payroll"), esc(money(s.tax_payroll_2027)), "committed " + esc(money(s.committed_2027)) + " (Spotrac)" +
+        ((s.tax_floor_2027 || {}).below ? '<br><span class="fr-tag" title="' + esc(copy("tax_floor_note")) + '">' + esc(copy("tax_floor_flag")) + "</span>" : ""), "", d.links.ledger) +
       tile(gl("Payor tier", "payor_tier"), esc((s.payor_2027 || {}).value || ""), esc((s.payor_2027 || {}).basis || ""), "", d.links.ledger) +
       tile("$ per projected win", esc(money(s.usd_per_win)), "plain dollars, no ladder", "", d.links.ledger) +
       tile("Recent spend, 3 winters", esc(money(s.recent_spend)), "largest guarantee " + esc(money(s.max_guar)) + " &middot; " + esc(nInt(s.n100m)) + " deals of 100M+", "", d.links.fa_archive);
@@ -674,7 +675,7 @@
     if (key === "cost_plus") return '<span class="fr-neutral">' + esc(nInt(v)) + "</span>";
     if (key === "wins_2027") return esc(n1(v));
     if (key === "war") return esc(n1(v));
-    if (key === "tax_payroll_2027") return esc(money(v));
+    if (key === "tax_payroll_2027") return esc(money(v)) + (r.tax_floor_below_2027 ? ' <span class="fr-tag" title="' + esc(copy("tax_floor_note")) + '">low</span>' : "");
     if (key === "farm_rank") return esc(nInt(v));
     if (key === "playoff_pct") return esc(pct(v, 0));
     return esc(v == null ? "" : v);

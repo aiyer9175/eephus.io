@@ -1695,3 +1695,31 @@ def test_picks_summary_splits_the_signed_picks_by_tracker_coverage(d):
             t[2] += n_not
     # the 2026 class is two months old: most of it is untracked, not gone
     assert tot["2026"][0] > 500 and tot["2026"][2] > tot["2026"][1]
+
+
+def test_tax_floor_census_names_every_club_below_its_own_guaranteed_2027_contracts(d):
+    """M09-03: Spotrac 2027 tax payroll >= the AAV of the club's own guaranteed
+    2027 contract rows. Recomputed here from the served rows; the census, the
+    per-club block and the league flag all agree, and Spotrac's figure is never
+    replaced."""
+    import ledger_export as LE
+    cen = d["accountability"]["tax_floor_census"]
+    assert cen["n_clubs"] == 30 and "option" in cen["rule"]
+    expect = {}
+    for code, c in d["clubs"].items():
+        opt = {r[0] for r in c["fa"]["outgoing"] if r[4] == "pending_option" and r[5] in LE.TAX_FLOOR_NOT_GUARANTEED}
+        aav = sum(int(r[5] or 0) for r in c["contracts"]["rows"]
+                  if any(x[0] == LE.CLASS_YEAR and x[5] == "contract" for x in (r[10] or []))
+                  and r[0] not in opt and not any(o[0] == LE.CLASS_YEAR and o[1] in ("club", "mutual") for o in r[11]))
+        tf = c["payroll"]["tax_floor_2027"]
+        tax = c["payroll"]["s2027"]["tax_payroll_usd"]
+        assert tf["guaranteed_aav_usd"] == aav and tf["spotrac_tax_payroll_usd"] == tax, code
+        assert tf["gap_usd"] == tax - aav and tf["below"] == (tax - aav < 0), code
+        if tf["below"]:
+            expect[code] = tax - aav
+    assert cen["below"] == expect
+    rows = {r["club"]: r for r in d["league"]["rows"]}
+    assert {c for c, r in rows.items() if r["tax_floor_below_2027"]} == set(expect)
+    for code in expect:
+        assert d["clubs"][code]["payroll"]["space_2027"]["spotrac_usd"] + d["clubs"][code]["payroll"]["s2027"]["tax_payroll_usd"]             == LE.SPOTRAC_2027_BASIS_USD, "the flagged figure is Spotrac's, unreplaced"
+    assert "below own contracts" == d["copy"]["tax_floor_flag"] and "overstate" in d["copy"]["tax_floor_note"]

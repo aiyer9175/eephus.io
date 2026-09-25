@@ -75,6 +75,10 @@ IFA_YEARS = (2021, 2022, 2023, 2024, 2025, 2026)
 #: against the rows at build time), never as a rule.
 SPOTRAC_2027_BASIS_USD = 247_000_000
 
+#: fa_class option types whose 2027 year is not guaranteed, so the tax floor
+#: census leaves those contract rows out of the guaranteed AAV.
+TAX_FLOOR_NOT_GUARANTEED = ("club_option", "mutual_option")
+
 #: Registry rows whose verdicts the Method tab quotes beside the numbers. The
 #: last three landed with the depth pass (D5, 2026-09-24): the salary path the
 #: contract strips read, the prospect rows of the projections board, and the
@@ -1175,6 +1179,24 @@ def build_all() -> tuple:
             "franchise": f"/franchise/#team={c}" if (ROOT / "franchise" / "index.html").exists() else None,
         }
 
+        # -- tax floor census (M09-03): Spotrac's 2027 tax payroll against the AAV of
+        # the club's own guaranteed 2027 contract rows. A club or mutual option
+        # year is not guaranteed and is left out. The figure is FLAGGED where it
+        # sits below the floor, never replaced: Spotrac's number still prints.
+        opt27 = {r[0] for r in outgoing if r[4] == "pending_option" and r[5] in TAX_FLOOR_NOT_GUARANTEED}
+        floor_rows = [row for row in rows
+                      if any(cell[0] == CLASS_YEAR and cell[5] == "contract" for cell in (row[10] or []))
+                      and row[0] not in opt27
+                      and not any(o[0] == CLASS_YEAR and o[1] in ("club", "mutual") for o in (row[11] or []))]
+        floor_aav = int(sum(int(row[5] or 0) for row in floor_rows))
+        floor_gap = (int(tax27) - floor_aav) if tax27 is not None else None
+        payroll_block["tax_floor_2027"] = {
+            "guaranteed_aav_usd": floor_aav, "n_rows": len(floor_rows),
+            "n_option_rows_excluded": sum(1 for row in rows if row[0] in opt27),
+            "spotrac_tax_payroll_usd": tax27, "gap_usd": floor_gap,
+            "below": floor_gap is not None and floor_gap < 0,
+        }
+
         club_docs[c] = {
             "club": c, "name": names.get(c), "statsapi_code": code,
             "payroll": payroll_block, "cbt": cbt, "commitments": commitments,
@@ -1437,6 +1459,7 @@ def build_all() -> tuple:
             "committed_2027": p27["total_payroll_usd"],
             "space_2027_spotrac": d["payroll"]["space_2027"]["spotrac_usd"],
             "space_2027_platform": d["payroll"]["space_2027"]["platform_usd"],
+            "tax_floor_below_2027": d["payroll"]["tax_floor_2027"]["below"],
             "proj_wins_2027": d["indexes"]["proj_wins_2027"],
             "usd_per_win": d["indexes"]["usd_per_win"],
             "cost_plus": d["indexes"]["cost_plus"],
@@ -1554,6 +1577,10 @@ def build_all() -> tuple:
                         PAYOR_BASIS_DERIVED: PAYOR_BASIS_DERIVED},
         "space_2027_spotrac_label": f"Spotrac, {SPOTRAC_2027_BASIS_USD // 1_000_000}M basis",
         "space_2027_platform_label": f"platform carry-forward, {T_next // 1_000_000}M",
+        "tax_floor_flag": "below own contracts",
+        "tax_floor_note": ("Spotrac's 2027 tax payroll sits below the AAV of this club's own guaranteed 2027 "
+                           "contract rows (club and mutual option years left out). The figure prints as "
+                           "Spotrac publishes it; the 2027 space and Cost+ built on it overstate the room."),
         "split_2026_note": ("the 2026 Spotrac payroll page carries no active / injured / retained / "
                             "buried split; the strip is drawn for 2027 only"),
         "split_2027_label": "2027 allocations, Spotrac",
@@ -2015,6 +2042,13 @@ def build_all() -> tuple:
             "discount_rate": rate,
             "prearb_min_usd": prearb_min,
             "payor_2027_basis_census": dict(Counter(d["payroll"]["payor_2027"]["basis"] for d in club_docs.values())),
+            "tax_floor_census": {
+                "rule": ("Spotrac 2027 tax payroll >= the AAV of the club's own guaranteed 2027 contract rows "
+                         "(club and mutual option years left out)"),
+                "n_clubs": len(club_docs),
+                "below": {c: d["payroll"]["tax_floor_2027"]["gap_usd"] for c, d in sorted(club_docs.items())
+                          if d["payroll"]["tax_floor_2027"]["below"]},
+            },
         },
         "what_this_page_does_not_claim": [
             "revenue: no source in the tree carries club revenue or operating income",
