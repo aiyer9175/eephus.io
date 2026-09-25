@@ -2798,11 +2798,13 @@
         return '<td class="bt-num"' + (v == null ? "" : ' data-sort="' + v + '"') +
           ">" + txt + "</td>";
       }
-      return '<tr' + (clears ? ' class="bt-row-value"' : "") + ">" +
+      var plain = clears && badgePlain(r);
+      return '<tr' + (clears ? ' class="bt-row-value' + (plain ? " bt-row-plain" : "") + '"' : "") + ">" +
         "<td>" + esc(L.game) + "</td>" +
         "<td>" + esc(L.marketLabel) + "</td>" +
         "<td>" + esc(r.label == null ? "-" : r.label) +
-          (clears ? ' <span class="bt-tag bt-tag-ok">value</span>' : "") + "</td>" +
+          (clears ? (plain ? ' <span class="bt-tag bt-tag-plain">clears floor</span>'
+                           : ' <span class="bt-tag bt-tag-ok">value</span>') : "") + "</td>" +
         "<td>" + esc(r.book_title || r.book || "-") + "</td>" +
         num(r.odds, fmtOdds(r.odds)) +
         num(r.model_prob, pct(r.model_prob)) +
@@ -2883,7 +2885,7 @@
     // claim agreement with.
     var meta = d.pick_meta || {};
     if (meta.blocked) {
-      head += note("<strong>No best value badges today.</strong> " +
+      head += note("<strong>No " + badgeWord(null) + " badges today.</strong> " +
         esc(meta.blocked_reason || "the selection rule never ran") +
         ". The " + selNoun() + " slots stopped for that reason, and the badge " +
         "stops with them.");
@@ -2904,10 +2906,15 @@
           ? ", the edge floor alone. The " + selNounPl() + " also drop any market " +
             "the slot policy bars, so a badge is not a claim of eligibility"
           : ", the bar the " + selNounPl() + " use");
-      head += note("A <strong>best value</strong> badge marks the side in each game " +
+      head += note("A <strong>" + badgeWord(null) + "</strong> badge marks the side in each game " +
         "with the largest " + gl("edge", "bet_edge") + " clearing " +
         esc(floorText((S.data && S.data.pick_meta) || {})) + whose +
-        ". No badge: nothing in that game cleared it.");
+        ". No badge: nothing in that game cleared it." +
+        (watchMode() ? " The model is unvalidated, so the badge is a measured gap, not a value call." : "") +
+        (!watchMode() && d.total_level_check && d.total_level_check.fires
+          ? " A total that leans with the whole slate reads largest gap in plain ink: its row " +
+            "says the lean is model shape, not value."
+          : ""));
     }
     // The both-legs copy state renders above the board too: the closed
     // market's rows stay priced below (the ledgers keep recording it), and a
@@ -2960,6 +2967,22 @@
     return best;
   }
 
+  // THE BADGE'S WORD AND INK FOLLOW WHAT THE ROW CAN STAND BEHIND (M12-02,
+  // 2026-09-25). A green "best value" tag sat on total Overs whose own row says
+  // "Known model shape, not value", on a board served under the watch frame,
+  // which retired the pick noun (owner decision 2026-08-16). The tag still
+  // marks the same side (bestValueSide is untouched, so no slot, record, gate
+  // or policy leg moves); only the words and the colour change. Under the
+  // watch frame, and on any side carrying total_level_caveat, it reads
+  // "largest gap" in plain ink; green "best value" returns under the pick
+  // frame on rows the slate-lean check does not caveat.
+  function badgePlain(r) { return watchMode() || !!(r && r.total_level_caveat); }
+  function badgeWord(r) { return badgePlain(r) ? "largest gap" : "best value"; }
+  function badgeTag(r, tail) {
+    return ' <span class="bt-tag ' + (badgePlain(r) ? "bt-tag-plain" : "bt-tag-ok") +
+      ' bt-bestval">' + badgeWord(r) + (tail ? " " + tail : "") + "</span>";
+  }
+
   // The match window, in minutes. MIRRORS betting_export.EVENT_MATCH_MAX_MINUTES
   // and is read from the payload the moment `status` carries it; the literal is
   // the fallback for a payload that does not, and it exists only so the reason
@@ -2974,8 +2997,8 @@
     var m = b.model || {};
     var st = (S.data || {}).status || {};
     var best = bestValueSide(b, pickFloor());
-    var badge = best ? ' <span class="bt-tag bt-tag-ok bt-bestval">best value ' +
-      esc(best.label || best.side || "") + " " + fmtOdds(best.odds) + "</span>" : "";
+    var badge = best ? badgeTag(best, esc(best.label || best.side || "") + " " +
+      fmtOdds(best.odds)) : "";
     // BET1: a best-value badge on a total that leans with the whole slate
     // carries the lean, so the badge cannot be read without it.
     if (best && best.total_level_caveat) {
@@ -3098,7 +3121,7 @@
         gl("Kelly", "kelly_criterion") + "</th>" : "<th>Fair price</th>") + "</tr>";
     var body = rows.map(function (r) {
       var cells = "<td class=\"bt-l\">" + esc(r.label || r.side) +
-        (r === best ? ' <span class="bt-tag bt-tag-ok bt-bestval">best value</span>' : "") +
+        (r === best ? badgeTag(r) : "") +
         "</td><td>" + pct(r.model_prob) + "</td>";
       if (hasBook) {
         var cls = r.edge == null ? "" : (r.edge > 0 ? " bt-pos" : " bt-neg");
@@ -4092,9 +4115,11 @@
     // A leg that clears the served floor is tinted, not recoloured: the text
     // must keep its own contrast, so this is a background wash only.
     ".bt-table tbody tr.bt-row-value td{background:color-mix(in srgb,var(--accent-green,#3a9) 9%,transparent)}",
+    ".bt-table tbody tr.bt-row-value.bt-row-plain td{background:color-mix(in srgb,var(--text-secondary,#888) 8%,transparent)}",
     ".bt-tag{font:700 9px/1 var(--font-retro,monospace);padding:3px 5px;text-transform:uppercase}",
     ".bt-tag-warn{color:var(--text-primary);border:1.5px solid var(--accent-gold,#a80)}",
     ".bt-tag-ok{color:var(--accent-green,#3a9);border:1.5px solid var(--accent-green,#3a9)}",
+    ".bt-tag-plain{color:var(--text-secondary);border:1.5px solid var(--border-light,var(--border,#888))}",
     // The provisional badge's own hook, dead until 2026-08-16: provBadge has
     // emitted .bt-prov since the labelling contract landed and no rule in this
     // sheet ever matched it. Dashed is this sheet's dialect for informational,

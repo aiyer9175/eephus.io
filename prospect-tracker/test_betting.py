@@ -1857,8 +1857,48 @@ def test_a_blocked_build_suppresses_the_best_value_badge_and_says_why(live_ctx):
     text = _visible_text(html)
     assert "bt-bestval" not in html
     assert "no odds api key at build time" in text            # the reason, above the board
-    assert "No best value badges today" in text
+    # The fixture is a watch-frame payload, so the badge noun is the watch one
+    # (M12-02, 2026-09-25).
+    assert "No largest gap badges today" in text
     assert "nothing in that game cleared it" not in text      # the head note goes down too
+
+
+def _badges(payload: dict) -> list:
+    c = _ctx(_fetch_js(main=json.dumps(payload), learning=LEARNING_ARTIFACT,
+                       evald=EVAL_ARTIFACT))
+    html = c.eval("__show('teams')")
+    return re.findall(r'<span class="bt-tag ([a-z-]+) bt-bestval">([^<]*)</span>', html)
+
+
+def test_badge_word_and_ink_follow_the_frame_and_the_slate_lean():
+    """M12-02 (2026-09-25). A green "best value" tag sat on 11 total Overs whose
+    own row says "Known model shape, not value", on a board served under the
+    watch frame. The tag still marks the same side; its word and ink follow
+    what the row can stand behind.
+
+    MUTATION: restore the hard-coded green "best value" span in gameCard or
+    marketBlock. The watch and caveat halves fail."""
+    base = json.loads(LIVE_PAYLOAD)
+    # Watch frame (the served state): every badge is plain "largest gap".
+    watch = _badges(base)
+    assert watch, "control: the fixture badges something"
+    assert all(cls == "bt-tag-plain" and txt.startswith("largest gap")
+               for cls, txt in watch), watch
+    # Pick frame, no caveat: the green "best value" returns.
+    pick = json.loads(LIVE_PAYLOAD)
+    pick["pick_meta"]["frame"] = "pick"
+    pick["pick_meta"]["provisional"] = False
+    green = _badges(pick)
+    assert green and all(cls == "bt-tag-ok" and txt.startswith("best value")
+                         for cls, txt in green), green
+    # Pick frame, every side carrying the slate-lean caveat: plain again.
+    for b in pick["team_bets"]:
+        for rows in (b.get("moneyline"), b.get("runline"), (b.get("total") or {}).get("sides")):
+            for r in rows or []:
+                r["total_level_caveat"] = "Known model shape, not value."
+    lean = _badges(pick)
+    assert lean and all(cls == "bt-tag-plain" and txt.startswith("largest gap")
+                        for cls, txt in lean), lean
 
 
 def test_the_team_board_discloses_the_push_on_a_whole_number_total(live_ctx):
