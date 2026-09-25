@@ -108,8 +108,11 @@ DETAIL = json.dumps({"players": {
         "career": [{"y": 2025, "ip": "195.1", "era": 2.21, "kPct": 32.2, "bbPct": 4.6,
                     "war": 6.1, "war_bwar": 6.6}],
         "sc": {"season": 2025, "metrics": [{"label": "xwOBA Against", "value": ".260", "pct": 97}]},
-        "arsenal": [{"pitch": "4-Seam Fastball", "usage": 35.1, "rv100": -1.2, "whiff": 24.0,
-                     "ba": 0.21}],
+        # Savant pitch-arsenal-stats for a pitcher: positive rv100 = runs saved.
+        "arsenal": [{"pitch": "4-Seam Fastball", "usage": 35.1, "rv100": 1.2, "whiff": 24.0,
+                     "ba": 0.21},
+                    {"pitch": "Changeup", "usage": 12.0, "rv100": -1.6, "whiff": 18.0,
+                     "ba": 0.29}],
         "skills": {
             "pitch": {"kind": "sp", "season": 2026, "role": "SP", "ip": 180.1,
                       "qualified": True, "semPlus": 113, "xsemPlus": 110, "warIpPlus": 113,
@@ -444,6 +447,16 @@ def test_the_defense_lens_paints_the_z_band_on_an_inner_span():
     assert ('<span class="mlbp-lens-num"><span class="mlbp-scale-ratio vt-fam-ratio '
             'vt-good">113</span></span>') in hit
     assert "proj-pos" not in hit.split("mlbp-lens-val", 1)[1][:200]
+
+
+def test_arsenal_run_value_is_coloured_from_the_pitchers_side():
+    """M05-03: Savant's pitcher arsenal run value is positive when the pitch
+    saves runs, so a positive RV/100 is the good (green) cell and a negative
+    one the bad (red) cell, and the header says which way the sign runs."""
+    ars = _section(_render("#player=ace_arm&ptab=pitching"), "pitching-arsenal")
+    assert '<td class="proj-pos">1.2</td>' in ars
+    assert '<td class="proj-neg">-1.6</td>' in ars
+    assert "positive = runs saved" in ars
 
 
 def test_season_lines_carry_the_ewar_column_again():

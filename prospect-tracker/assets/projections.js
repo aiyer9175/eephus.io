@@ -2393,13 +2393,13 @@
   // ---- hitting ---------------------------------------------------------------
   function arsenalTable(ar, extra) {
     const table = (ar && ar.length)
-      ? `<table class="detail-table"><thead><tr><th>Pitch</th><th>Usage</th><th>RV/100</th><th>Whiff%</th><th>BA against</th></tr></thead>
+      ? `<table class="detail-table"><thead><tr><th>Pitch</th><th>Usage</th><th title="Savant pitcher run value per 100 pitches, pitcher view: positive = runs saved">RV/100</th><th>Whiff%</th><th>BA against</th></tr></thead>
       <tbody>${ar.map(a => `<tr><td>${esc(a.pitch || "")}</td><td>${a.usage != null ? a.usage.toFixed(1) + "%" : EM_DASH}</td>
-        <td class="${a.rv100 != null && a.rv100 < 0 ? "proj-pos" : a.rv100 > 0 ? "proj-neg" : ""}">${a.rv100 != null ? a.rv100.toFixed(1) : EM_DASH}</td>
+        <td class="${a.rv100 != null && a.rv100 > 0 ? "proj-pos" : a.rv100 < 0 ? "proj-neg" : ""}">${a.rv100 != null ? a.rv100.toFixed(1) : EM_DASH}</td>
         <td>${a.whiff != null ? a.whiff.toFixed(1) + "%" : EM_DASH}</td><td>${a.ba != null ? String(a.ba) : EM_DASH}</td></tr>`).join("")}</tbody></table>` : "";
     const tiles = extra ? `<div class="mlbp-tiles mlbp-tiles-left">${extra}</div>` : "";
     if (!table && !tiles) return "";
-    return section("pitching-arsenal", "Pitch Arsenal", "usage · run value /100 · whiff%", `<div class="mlbp-table-wrap">${table}</div>${tiles}`);
+    return section("pitching-arsenal", "Pitch Arsenal", "usage · run value /100 (positive = runs saved) · whiff%", `<div class="mlbp-table-wrap">${table}</div>${tiles}`);
   }
   // Season stat lines, eWAR last (owner decision 20, 2026-09-11: the column is
   // restored and the Value tab keeps its WAR-by-season bars with the bWAR tick).
