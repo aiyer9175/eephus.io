@@ -180,7 +180,10 @@
     var rows = sorted(filtered());
     var head = COLS.map(function (c) {
       var arrow = state.sort.key === c.key ? (state.sort.asc ? " ▲" : " ▼") : "";
-      return '<th class="' + c.cls + '" data-sort="' + c.key + '" tabindex="0" role="button">' +
+      // scope=col and aria-sort, not role=button: the header had no sort
+      // state for a screen reader at all (census X06-06).
+      var aria = state.sort.key === c.key ? (state.sort.asc ? "ascending" : "descending") : "none";
+      return '<th class="' + c.cls + '" data-sort="' + c.key + '" scope="col" tabindex="0" aria-sort="' + aria + '">' +
         esc(c.label) + arrow + "</th>";
     }).join("");
     var body = rows.slice(0, state.shown).map(function (r, i) {

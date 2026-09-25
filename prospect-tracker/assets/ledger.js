@@ -276,7 +276,10 @@
       var lab = slug ? gl(label, slug) : esc(label);
       var labShort = slug ? gl(SHORT[key] || label, slug) : esc(SHORT[key] || label);
       var arrow = state.sort.key === key ? (state.sort.asc ? " &#9650;" : " &#9660;") : "";
-      return '<th class="' + cls + '" data-lsort="' + esc(key) + '" tabindex="0" title="' + esc(tip) + '">' +
+      // aria-sort so a screen reader hears the sort, not only the arrow glyph
+      // (census X06-06)
+      var aria = state.sort.key === key ? (state.sort.asc ? "ascending" : "descending") : "none";
+      return '<th class="' + cls + '" data-lsort="' + esc(key) + '" scope="col" tabindex="0" aria-sort="' + aria + '" title="' + esc(tip) + '">' +
         '<span class="lb-lab-long">' + lab + '</span><span class="lb-lab-short">' + labShort + "</span>" + arrow + "</th>";
     }).join("") + '<th class="lb-xp"></th>';
     var body = sortedRows().map(function (r) {

@@ -858,10 +858,12 @@
       // exists to prevent. With the class on both, the rank pins narrow at the
       // left edge and the NAME pins beside it.
       var cls = c.key === "rank" ? "mlbstats-col-rank" : (c.text ? "dfs-l" : "");
-      return "<th" + (cls ? ' class="' + cls + '"' : "") +
-        '><span role="button" tabindex="0" data-dfssort="' +
-        esc(c.key) + '" data-dfsboard="' + board + '" aria-sort="' +
-        (on ? (st.asc ? "ascending" : "descending") : "none") + '">' +
+      // aria-sort on the th (a columnheader), not the span: on a role=button
+      // it is not read (census X06-06).
+      return "<th" + (cls ? ' class="' + cls + '"' : "") + ' scope="col" aria-sort="' +
+        (on ? (st.asc ? "ascending" : "descending") : "none") +
+        '"><span role="button" tabindex="0" data-dfssort="' +
+        esc(c.key) + '" data-dfsboard="' + board + '">' +
         (c.term ? gl(c.label, c.term) : esc(c.label)) +
         (on ? (st.asc ? " ▴" : " ▾") : "") + "</span></th>";
     }).join("");

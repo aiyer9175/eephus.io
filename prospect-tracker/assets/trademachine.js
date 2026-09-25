@@ -721,7 +721,7 @@ function _tbTh(label, col, cls, title, noActiveMark, term) {
   const tt = (title ? title + " · " : "") + "click to sort";
   const ariaSort = active ? (sdir === "asc" ? "ascending" : "descending") : "none";
   const text = term ? _tmGl(label, term) : label;
-  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}" tabindex="0" role="button" aria-sort="${ariaSort}">${text}${arrow}</th>`;
+  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}" scope="col" tabindex="0" aria-sort="${ariaSort}">${text}${arrow}</th>`;
 }
 // Column header click: toggle direction if already sorted by it, else pick a
 // sensible default (text asc, numeric desc).

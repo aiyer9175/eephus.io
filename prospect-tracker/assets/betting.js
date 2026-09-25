@@ -271,8 +271,8 @@
   // ---- sortable tables (owner ask 2026-09-05) --------------------------------
   // Every data table the module renders sorts on a header click, in both
   // directions, with nulls sinking. This mirrors the mlbstats.js header
-  // contract (role=button, tabindex, aria-sort, Enter and Space, the is-sorted
-  // class) but works on the RENDERED cells rather than a column spec: the
+  // contract (scope=col, tabindex, aria-sort, Enter and Space, the is-sorted
+  // class; no role=button, which would hide aria-sort from a screen reader) but works on the RENDERED cells rather than a column spec: the
   // betting tables are HTML strings built from a dozen payload shapes, and one
   // generic wiring beats twelve column specs that drift. A cell may carry
   // data-sort to override its display text; otherwise the first token of the
@@ -354,7 +354,7 @@
         ((S.section || "page") + ":" + ti + ":" + labels.join("|").slice(0, 80));
       Array.prototype.forEach.call(ths, function (th, ci) {
         if (!labels[ci]) return;                                   // blank action columns
-        th.setAttribute("role", "button");
+        th.setAttribute("scope", "col");
         th.setAttribute("tabindex", "0");
         th.setAttribute("aria-sort", "none");
         th.classList.add("bt-sortable");

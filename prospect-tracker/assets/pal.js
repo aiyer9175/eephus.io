@@ -336,10 +336,11 @@
       var sortable = c.kind !== "rank" && c.kind !== "name" && c.sortable !== false;
       var sorted = c.key === sortKey ? " is-sorted" : "";
       var lbl = c.term ? gloss(c.label, c.term) : esc(c.label);
-      // keyboard-operable sort headers (the trademachine pattern): only the
-      // genuinely sortable columns carry data-col + the button affordance
+      // keyboard-operable sort headers: only the genuinely sortable columns
+      // carry data-col, tabindex and aria-sort. No role=button: it replaced the
+      // columnheader role, the only role aria-sort is read on (census X06-06).
       var attrs = sortable
-        ? ' data-col="' + c.key + '" tabindex="0" role="button" aria-sort="'
+        ? ' data-col="' + c.key + '" scope="col" tabindex="0" aria-sort="'
           + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none") + '"'
         : "";
       head += '<th class="mlbstats-col-' + c.key + sorted + '"' + attrs + '>' + lbl + "</th>";
@@ -809,7 +810,7 @@
     var head = "<thead><tr>" + HISTORY_COLS.map(function (c) {
       if (c.kind === "name" || c.sortable === false) return "<th>" + c.label + "</th>";
       return '<th data-col="' + c.key + '"' + (c.key === sortKey ? ' class="is-sorted"' : "")
-        + ' tabindex="0" role="button" aria-sort="' + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none")
+        + ' scope="col" tabindex="0" aria-sort="' + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none")
         + '">' + c.label + "</th>";
     }).join("") + "</tr></thead>";
     var body = "<tbody>" + rows.map(function (h) {
@@ -1187,7 +1188,7 @@
       var sortable = c.kind !== "rank" && c.kind !== "name" && c.sortable !== false;
       var sorted = c.key === sortKey ? " is-sorted" : "";
       var attrs = sortable
-        ? ' data-col="' + c.key + '" tabindex="0" role="button" aria-sort="'
+        ? ' data-col="' + c.key + '" scope="col" tabindex="0" aria-sort="'
           + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none") + '"'
         : "";
       head += '<th class="mlbstats-col-' + c.key + sorted + '"' + attrs + '>' + esc(c.label) + "</th>";

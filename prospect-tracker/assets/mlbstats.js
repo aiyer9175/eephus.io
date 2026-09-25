@@ -1998,10 +1998,12 @@
       var fnote = (c.noteFrom && meta && meta.frame && meta.frame[c.noteFrom]) ? String(meta.frame[c.noteFrom]) : "";
       if (fnote) titleTxt = titleTxt ? titleTxt + " " + fnote : fnote;
       var title = titleTxt ? ' title="' + esc(titleTxt) + '"' : "";
-      // keyboard-operable sort headers (the trademachine _tbTh pattern):
-      // tabbable, announced as sorted, activated by Enter/Space via bindSortKeys
+      // keyboard-operable sort headers: tabbable, announced as sorted,
+      // activated by Enter/Space via bindSortKeys. No role=button: aria-sort is
+      // honoured only on a columnheader, and the button role replaced the th's
+      // own, so no screen reader heard the sort (census X06-06).
       var a11y = sortable
-        ? ' tabindex="0" role="button" aria-sort="' + ((c.key === sort.key) ? (sort.asc ? "ascending" : "descending") : "none") + '"'
+        ? ' scope="col" tabindex="0" aria-sort="' + ((c.key === sort.key) ? (sort.asc ? "ascending" : "descending") : "none") + '"'
         : "";
       var nw = (allv && String(c.label).indexOf(" ") < 0) ? " mlbstats-nw" : "";
       head += '<th class="mlbstats-col-' + c.key + sorted + p.cls + nw + '"' + title + a11y + ' data-col="' + c.key

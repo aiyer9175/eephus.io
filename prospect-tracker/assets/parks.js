@@ -382,7 +382,7 @@
       var title = c.title ? ' title="' + esc(c.title) + '"' : "";
       var aria = (c.key === state.sort.key) ? (state.sort.asc ? "ascending" : "descending") : "none";
       head += '<th class="pk-col-' + c.key + sorted + '"' + title
-        + ' tabindex="0" role="button" aria-sort="' + aria + '" data-pkcol="' + c.key + '">'
+        + ' scope="col" tabindex="0" aria-sort="' + aria + '" data-pkcol="' + c.key + '">'
         + esc(c.label) + "</th>";
     });
     head += "</tr></thead>";
