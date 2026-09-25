@@ -3101,6 +3101,15 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-sub">{html.escape(c.get("team") or "")}</span>'
             f'<span class="xmod-val">{c["fpts_fgp"]:.0f} FG pts</span></a>'
             for c in top)
+        if not rows and ff:
+            # The artifact loaded but the board is empty (the 2026-09-23 build
+            # served 0 players). Dropping the card said nothing; the card now
+            # says the board is empty and when it was built.
+            built = str(ff.get("generated_at") or "")[:10] or "date unknown"
+            rows = ('<a class="xmod-row" href="/fantasy/#m=redraft&amp;section=ros_hitter">'
+                    '<span class="xmod-name">No rows</span>'
+                    f'<span class="xmod-sub">board built {html.escape(built)} is empty</span>'
+                    '<span class="xmod-val">open →</span></a>')
         if rows:
             cards.append(('◈ Fantasy', '/fantasy/#m=redraft&amp;section=ros_hitter',
                           'rest-of-season hitter points leaders', rows))
