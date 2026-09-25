@@ -34,6 +34,17 @@
 // button so there is no ambiguity about how much came out. Anyone who wants
 // the full, unfiltered payload gets it from the documented artifacts, which
 // the button's own title text points at.
+//
+// THE SECOND CONTRACT: A FULL POOL FROM DATA, FOR A PAGINATED BOARD
+// ----------------------------------------------------------------
+// A board that pages its rows (PROSPX shows 50 of about 8,000 per page, as a
+// CSS grid rather than a table) cannot be scraped: the DOM holds one page, and
+// the grid cells mix names, badges and buttons. Such a board builds the model
+// from its own data and calls EephusCSV.downloadModel(model, stem). The model
+// is the same {headers, rows} shape formats.csv takes, the file is written by
+// the same BOM and filename code below, and the button that calls it must say
+// in its title that the file holds every row matching the current filters, in
+// the current sort, not only the page on screen.
 (function () {
   "use strict";
   if (window.EephusCSV) return;
@@ -109,7 +120,11 @@
   }
 
   function fileName(host) {
-    var base = (host.getAttribute("data-csv-export") || "table")
+    return fileNameFor(host.getAttribute("data-csv-export") || "table");
+  }
+
+  function fileNameFor(stem) {
+    var base = String(stem || "table")
       .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     var d = new Date();
     var iso = d.getFullYear() + "-"
@@ -122,7 +137,24 @@
   function download(host) {
     var table = targetTable(host);
     if (!table) return false;
-    var text = toCSV(table);
+    return saveText(toCSV(table), fileName(host));
+  }
+
+  // The second contract: a {headers, rows} model built from a board's data.
+  function modelToCSV(model) {
+    var X = window.EephusExport;
+    if (X && X.formats && X.formats.csv) return X.formats.csv(model);
+    var out = [model.headers.map(csvCell).join(",")];
+    for (var i = 0; i < model.rows.length; i++) out.push(model.rows[i].map(csvCell).join(","));
+    return out.join(String.fromCharCode(10));
+  }
+
+  function downloadModel(model, stem) {
+    if (!model || !model.headers || !model.rows) return false;
+    return saveText(modelToCSV(model), fileNameFor(stem));
+  }
+
+  function saveText(text, name) {
     // Leading BOM: without it Excel opens a UTF-8 CSV in the local ANSI
     // codepage and mangles every accented player name. Sheets, Numbers and
     // pandas all skip it, so the cost is zero and the failure it prevents is
@@ -131,7 +163,7 @@
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
-    a.download = fileName(host);
+    a.download = name;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -220,6 +252,8 @@
   window.EephusCSV = {
     scan: scan,
     download: download,
+    downloadModel: downloadModel,
+    modelToCSV: modelToCSV,
     toCSV: toCSV,
     targetTable: targetTable,
   };

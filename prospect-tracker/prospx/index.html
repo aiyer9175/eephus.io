@@ -9348,6 +9348,7 @@
            (Expanded view was inferior in every way per user direction). -->
       <div class="filter-group">
         <button class="chip reset-chip" type="button" data-reset-page="actives" title="Reset all filters, search, and sort on the prospect list">↺ Reset filters</button>
+        <button class="chip" type="button" id="board-csv-btn" title="Download CSV: every row matching the current filters, in the current sort, not only this page. Grades print as the board prints them (eFV to the nearest point, consensus FV rounded up) with the decimal beside each; the file stamps its as-of date, grade basis and sort on every row.">Download CSV <span class="board-csv-n" style="color:var(--text-tertiary);"></span></button>
       </div>
     </div>
   </div>
@@ -10352,6 +10353,7 @@
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
 <script src="/assets/eephus-export.js?v=abf28509" defer></script>
+<script src="/assets/eephus-csv.js?v=a8613a12" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
      git-ignored and absent on the public/dev tree, so its <script> 404s harmlessly
@@ -17833,6 +17835,73 @@ function convictionBanner() {
       ${cred}
     </div>`;
 }
+// FULL-BOARD CSV (census M01-10, 2026-09-24). The board pages 50 rows of a CSS grid, so
+// the shared helper's DOM scrape would export one page of mixed badge text. This builds
+// the file from the same data the board renders: every row getFilteredActives returns,
+// in its order, with each grade printed the way the board prints it (eFV nearest via
+// efvGradeDisplay, consensus FV up via gradeBlock) and the decimal beside it. The
+// consensus aggregate only: no per-source grades and no internal sort key.
+const BOARD_CSV_HEADERS = [
+  "rank", "efv_board_rank", "player_key", "mlbam_id", "name", "org", "pos", "age", "level",
+  "provisional", "efv", "efv_printed", "consensus_fv", "consensus_fv_printed",
+  "efv_minus_consensus", "p_bust_efv", "efv_surplus_mm", "consensus_surplus_mm",
+  "star_odds", "plus_pct", "eta_year", "eta_half", "sc_plus", "astuff_plus",
+  "grade_basis", "sort", "asof",
+];
+function boardCsvModel(rows) {
+  const num = (v, d) => (v == null || v === "" || !isFinite(Number(v))) ? "" : String(Number(Number(v).toFixed(d)));
+  const txt = v => (v == null ? "" : String(v));
+  const basis = (typeof _gradePrimary === "function" && _gradePrimary() === "fv") ? "consensus" : "eFV";
+  const sortKey = (typeof state !== "undefined" && state.sort) ? state.sort : "";
+  const asof = (DATA && DATA.generated_at) ? String(DATA.generated_at) : "";
+  const out = (rows || []).map((p, i) => {
+    const x = (typeof getEfv === "function") ? getEfv(p) : null;
+    const gb = gradeBlock(p);
+    const s = (p && p.surplus) || {};
+    const eta = (p && p.eta) || {};
+    const ast = (typeof getAaaStuffPlus === "function") ? getAaaStuffPlus(p) : null;
+    return [
+      String(i + 1), txt(getEfvRank(p)), txt(p.player_key), txt(p.mlbam_id), txt(p.player_name),
+      txt(p.org), txt(p.position), num(p.age, 1), txt(currentDisplayLevel(p)),
+      p._is_provisional ? "1" : "0",
+      num(efvBoardValue(x), 2), txt(gb.efvVal),
+      p._is_provisional ? "" : num(p.fv_close, 2),
+      p._is_provisional ? "" : txt(gb.consLabel != null ? gb.consLabel : gb.consVal),
+      txt(efvMinusConsensusDisplay(x)), num(x && x.p_bust, 3), num(x && x.surplus_mm, 1),
+      p._is_provisional ? "" : num(s.value_mm, 1),
+      num(s.star_odds, 4), num(s.opt_pct, 4), txt(eta.year), txt(eta.half),
+      txt(getStatcastPlus(p)), num(ast && ast.stuff_plus, 0),
+      basis, sortKey, asof,
+    ];
+  });
+  return { title: "PROSPX board", headers: BOARD_CSV_HEADERS.slice(), rows: out,
+           aligns: BOARD_CSV_HEADERS.map(() => "left") };
+}
+function exportBoardCSV() {
+  const go = () => {
+    const rows = getFilteredActives();
+    const ok = !!(window.EephusCSV && window.EephusCSV.downloadModel
+                  && window.EephusCSV.downloadModel(boardCsvModel(rows), "prospx-board"));
+    if (!ok && window.EephusExport && window.EephusExport.toast) {
+      window.EephusExport.toast("CSV export is unavailable on this page load");
+    }
+    return ok;
+  };
+  // The provisional rows are part of the board. Until their file lands the pool is graded
+  // rows only, so wait for it (it is normally already loaded) rather than ship a short file.
+  if (typeof ensureEfvUngraded === "function" && _EFV_UNG === null) {
+    ensureEfvUngraded();
+    let tries = 0;
+    const wait = () => { if (_EFV_UNG !== null || ++tries > 80) go(); else setTimeout(wait, 250); };
+    wait();
+    return true;
+  }
+  return go();
+}
+document.addEventListener("click", e => {
+  const b = e.target && e.target.closest ? e.target.closest("#board-csv-btn") : null;
+  if (b) { e.preventDefault(); exportBoardCSV(); }
+});
 function renderActives() {
   // v30.7 - News widget moved out of the global header into the
   // Transactions section (where it's the natural fit). MiLB Prospects
@@ -17926,6 +17995,8 @@ function renderActives() {
   _rowsEl.innerHTML = filtered.length
     ? _convHdr + paginationStripTop + header + rows + paginationStrip
     : _convHdr + `<div class="state-message">No active prospects match these filters.</div>`;
+  const _csvN = document.querySelector("#board-csv-btn .board-csv-n");
+  if (_csvN) _csvN.textContent = filtered.length === 1 ? "1 row" : `${filtered.length.toLocaleString()} rows`;
   // Highlight the active sort column in the fresh header.
   syncSortHeaderActive();
   if (_keepKey) {
