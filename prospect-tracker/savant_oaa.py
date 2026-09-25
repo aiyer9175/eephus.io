@@ -15,9 +15,10 @@ WHY THIS EXISTS
     substrate.
 
 WHAT IS AND IS NOT AVAILABLE
-    Catcher (pos=2) returns ZERO rows every year -- catcher framing/blocking is a
-    different Savant leaderboard and did not answer probes. Pitchers and DH have
-    no OAA. So this file covers 1B, 2B, 3B, SS, LF, CF, RF only.
+    Catcher (pos=2) returns ZERO rows every year. Catcher defense lives on other
+    Savant leaderboards, and the blocking and throwing ones resolve by season
+    (savant_catcher.py reads them for the Defense board's display columns).
+    Pitchers and DH have no OAA. So this file covers 1B, 2B, 3B, SS, LF, CF, RF only.
 
 GOTCHAS (both measured, both handled here)
     * With `min=q` the `year` column comes back EMPTY. `split=yes` populates it.

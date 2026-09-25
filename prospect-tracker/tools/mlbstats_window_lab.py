@@ -1588,6 +1588,12 @@ _SAVANT_HIT_KEYS = ("whiff_pct", "chase_pct", "z_contact_pct", "sweet_spot_pct",
                     "pull_pct")
 _SAVANT_PIT_KEYS = ("whiff_pct", "chase_pct", "z_contact_pct", "f_strike_pct",
                     "fb_velo")
+# Savant catcher blocking and throwing (savant_catcher.py, X05-02): read for the
+# live season only, so no window carries them.
+_SAVANT_CATCHER_REASON = ("Baseball Savant's catcher blocking and throwing boards "
+                          "are read for the live season only.")
+_SAVANT_CATCHER_KEYS = ("c_blk_runs", "c_blk_aa", "c_blk_pitches", "c_cs_runs",
+                        "c_cs_aa", "c_sb_att", "c_pop", "c_exchange", "c_arm")
 
 
 def columns_spec() -> dict:
@@ -1799,6 +1805,7 @@ def columns_spec() -> dict:
                 "dem_plus_3yr": "A frozen lab artifact with a window of its own.",
                 "hem_plus": "Inherits the hitter board's anchoring.",
                 "tier": "A cut on a season pool.",
+                **{k: _SAVANT_CATCHER_REASON for k in _SAVANT_CATCHER_KEYS},
             },
         },
     }

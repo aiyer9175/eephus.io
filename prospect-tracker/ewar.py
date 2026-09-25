@@ -1500,6 +1500,12 @@ def gate_coverage(model: dict) -> dict:
             # stays open and honest. Do not re-probe these spellings; if this is
             # revisited, the question to answer FIRST is where a season-resolved
             # framing source lives, not how to parse this one.
+            # ANSWERED 2026-09-24/25 (final pass X05-02): /catcher_framing?year=Y
+            # (no /leaderboard/ prefix) resolves by season (2019 and 2024 return
+            # different payloads), and the catcher-blocking and catcher-throwing
+            # boards stamp start_year on every row. savant_catcher.py reads the
+            # last two for display on the Defense board. eWAR's catcher hole is
+            # unchanged: putting any of them into eWAR is a model change.
             "catcher_framing_probe": {
                 "date": "2026-08-04",
                 "endpoint": "baseballsavant.mlb.com/leaderboard/catcher-framing",

@@ -7119,7 +7119,8 @@
    "seeAlso": [
     "dem_plus",
     "fielding_runs",
-    "def_runs"
+    "def_runs",
+    "catcher_blocking"
    ],
    "shelf": "industry",
    "origin": "Industry metric, FanGraphs' catcher framing runs, recovered from MLB's published run line. We display it."
@@ -8949,6 +8950,76 @@
    ],
    "shelf": "industry",
    "origin": "Industry metric. MLB Statcast (Baseball Savant): batted balls to the pull side."
+  },
+  {
+   "id": "catcher_blocking",
+   "term": "Catcher blocking",
+   "category": "statcast",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Blocking runs",
+    "Blocks above average",
+    "Blk runs",
+    "Blocks AA"
+   ],
+   "priority": 12,
+   "definition": "How many pitches in the dirt a catcher keeps in front of him against what an average catcher would, and the runs that saves.",
+   "methodology": "From the Baseball Savant catcher-blocking leaderboard, read by season. Blocks above average compares each scored pitch with its expected block rate; blocking runs is Savant's run value of those blocks. The pitch count beside it says how many pitches the model scored. Display only on the /mlbstats/ Defense board (Catching view): DEM+, eWAR and the team totals do not read it; framing stays FanGraphs'.",
+   "seeAlso": [
+    "catcher_throwing",
+    "framing_runs",
+    "dem_plus"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant) catcher blocking."
+  },
+  {
+   "id": "catcher_throwing",
+   "term": "Catcher throwing",
+   "category": "statcast",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Caught stealing above average",
+    "CS runs",
+    "CS AA",
+    "Catcher stealing runs"
+   ],
+   "priority": 12,
+   "definition": "How many runners a catcher throws out against the count an average catcher would, given the runner, the pitcher and the jump, and the runs that saves.",
+   "methodology": "From the Baseball Savant catcher-throwing leaderboard, read by season. The attempt count beside it is the sample. Display only on the /mlbstats/ Defense board (Catching view): DEM+, eWAR and the team totals do not read it; framing stays FanGraphs'.",
+   "seeAlso": [
+    "catcher_blocking",
+    "pop_time",
+    "steal_break_even"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant) catcher throwing."
+  },
+  {
+   "id": "pop_time",
+   "term": "Pop time",
+   "category": "statcast",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Pop 2B",
+    "Exchange time",
+    "Catcher arm strength",
+    "C arm"
+   ],
+   "priority": 11,
+   "definition": "Seconds from the pitch hitting the catcher's glove to the throw reaching the fielder at second base. Exchange is catch to release; arm strength is the throw's speed in mph.",
+   "methodology": "From the Baseball Savant catcher-throwing leaderboard, averaged over his throws that season. Lower pop and exchange times are better. Display only on the /mlbstats/ Defense board (Catching view): DEM+, eWAR and the team totals do not read it; framing stays FanGraphs'.",
+   "seeAlso": [
+    "catcher_throwing"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant) pop time, exchange and arm strength."
   }
  ]
 }

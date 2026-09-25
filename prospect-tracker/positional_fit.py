@@ -49,9 +49,12 @@ THREE THINGS THIS MODEL DOES THAT THE NAIVE VERSION DOES NOT
        SHRUNK glove, not the raw one.
 
 WHAT IS OUT OF SCOPE
-    Catcher. Savant's OAA leaderboard returns zero rows at C in every season, and
-    the catcher-framing leaderboard did not answer probes. Catchers are carried in
-    the payload with a c_out_of_scope flag and are never offered a move.
+    Catcher. Savant's OAA leaderboard returns zero rows at C in every season.
+    Season-resolved catcher boards do exist (catcher-blocking and
+    catcher-throwing, read for display by savant_catcher.py, and
+    /catcher_framing?year=), but a catcher arm here would be a new model and
+    needs its own gate. Until then catchers are carried in the payload with a
+    c_out_of_scope flag and are never offered a move.
 
 Run:  python positional_fit.py                # build data/positional_fit.json
       python positional_fit.py --report       # fit + print every fitted number

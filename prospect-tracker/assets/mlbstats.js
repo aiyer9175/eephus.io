@@ -93,6 +93,8 @@
   // formats an already-scaled percentage, so scale first, then hand it over.
   function fPct(v) { var n = num(v); return n == null ? EM_DASH : formatMetric(n * 100, "pct"); }
   function fSigned(v) { var n = num(v); if (n == null) return EM_DASH; return (n > 0 ? "+" : "") + n.toFixed(1); }
+  // Signed whole numbers: Savant serves blocking runs and blocks above average as integers.
+  function fSignedInt(v) { var n = num(v); if (n == null) return EM_DASH; return (n > 0 ? "+" : "") + Math.round(n); }
   function logo(team) {
     try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team) : ""; }
     catch (e) { return ""; }
@@ -816,6 +818,11 @@
       { id: "runs", label: "Runs", phone: ["pos", "fld_total", "def_runs", "inn"],
         keys: ["pos", "|", "fld_total", "fld_runs", "frm_runs", "|", "pos_runs", "pos_runs_fg", "def_runs", "|",
                "rate_1000_shrunk", "|", "inn"] },
+      // Catchers' own work beyond framing, from Savant. Pick the C chip to read
+      // it as a catcher board; other positions show the columns blank.
+      { id: "catching", label: "Catching", phone: ["dem_plus", "frm_runs", "c_blk_runs", "c_cs_runs"],
+        keys: ["pos", "|", "dem_plus", "frm_runs", "|", "c_blk_runs", "c_blk_aa", "c_blk_pitches", "|",
+               "c_cs_runs", "c_cs_aa", "c_sb_att", "|", "c_pop", "c_exchange", "c_arm", "|", "inn"] },
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
     // Single-view boards: no view strip, only a phone subset.
@@ -4565,6 +4572,26 @@
       title: "Fld/1000 pulled toward the position mean by innings. DEM+ is scored on this rate." },
     { key: "inn", label: "Inn", fmt: f1, num: true, title: "Defensive innings, C through RF." },
     { key: "fld_pct", label: "Fld%", fmt: f3, num: true, title: "Fielding percentage (context)." },
+    // Savant catcher blocking and throwing (savant_catcher.py), display only,
+    // on rows whose primary position is C. No club total is built from them.
+    { key: "c_blk_runs", label: "Blk runs", term: "catcher_blocking", fmt: fSignedInt, num: true,
+      title: "Runs saved by blocking pitches in the dirt, Savant's run value. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
+    { key: "c_blk_aa", label: "Blocks AA", term: "catcher_blocking", fmt: fSignedInt, num: true,
+      title: "Blocks above average on the pitches in the next column. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
+    { key: "c_blk_pitches", label: "Blk pitches", term: "catcher_blocking", fmt: fInt, num: true,
+      title: "Pitches received that the blocking model scores. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
+    { key: "c_cs_runs", label: "CS runs", term: "catcher_throwing", fmt: fSigned, num: true,
+      title: "Runs saved on stolen-base attempts, Savant's run value. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
+    { key: "c_cs_aa", label: "CS AA", term: "catcher_throwing", fmt: fSigned, num: true,
+      title: "Caught stealing above the expected count on the attempts in the next column. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
+    { key: "c_sb_att", label: "SB att", term: "catcher_throwing", fmt: fInt, num: true,
+      title: "Stolen-base attempts with him catching. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
+    { key: "c_pop", label: "Pop 2B", term: "pop_time", fmt: f2, num: true, asc: true,
+      title: "Average pop time on throws to second base, in seconds. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
+    { key: "c_exchange", label: "Exchange", term: "pop_time", fmt: f2, num: true, asc: true,
+      title: "Average time from catch to release, in seconds. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
+    { key: "c_arm", label: "C arm", term: "pop_time", fmt: f1, num: true,
+      title: "Average arm strength on throws, in mph. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
     { key: "hem_plus", label: "HEM+", term: "hem_plus", fmt: hemCell, num: true, desc: true,
       title: "HEM+ from the Hitter board (ratio scale), for the glove vs bat read." },
     // Whole-player eWAR on a fielding board: its fielding term comes from a
@@ -4580,7 +4607,9 @@
   // HEM+ join, so those columns drop rather than render blank. eWAR is NOT in
   // the list: it is a season count the history export joins per (player,
   // season), and coveredCols holds it back until a season carries it.
-  var DEFENSE_HISTORY_DROP = { dem_plus_3yr: 1, dem_plus_pos_pct: 1, rate_1000_shrunk: 1, hem_plus: 1 };
+  var DEFENSE_HISTORY_DROP = { dem_plus_3yr: 1, dem_plus_pos_pct: 1, rate_1000_shrunk: 1, hem_plus: 1,
+    c_blk_runs: 1, c_blk_aa: 1, c_blk_pitches: 1, c_cs_runs: 1, c_cs_aa: 1, c_sb_att: 1,
+    c_pop: 1, c_exchange: 1, c_arm: 1 };
   var DEFENSE_HISTORY_COLS = historyTitle(
     DEFENSE_COLS.filter(function (c) { return !DEFENSE_HISTORY_DROP[c.key]; }),
     "war", "Whole-player eWAR for the season shown.");

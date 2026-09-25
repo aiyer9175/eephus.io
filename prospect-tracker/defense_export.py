@@ -367,6 +367,18 @@ def _join_dem_plus_3yr(rows: list[dict]) -> dict:
     return meta
 
 
+def _join_savant_catcher(rows: list[dict], season: int) -> dict:
+    """Stamp Savant's catcher blocking and throwing DISPLAY columns (X05-02) onto
+    the rows whose primary position is C, and return their provenance block.
+    DEM+, eWAR, the team rollups and the betting framing read never see them.
+    Fail-soft: any error serves an unavailable block and blank columns."""
+    try:
+        import savant_catcher as _sc
+        return _sc.join(rows, int(season))
+    except Exception as e:   # noqa: BLE001 - a display join must not take a board down
+        return {"available": False, "reason": f"savant_catcher unavailable ({type(e).__name__})"}
+
+
 def _war_source_vintage(as_of: Optional[str] = None) -> dict:
     """The served eWAR build stamp, or a stated absence. Never raises: a board
     that cannot report its vintage must still render (audit F10-02). `as_of` is
@@ -602,6 +614,11 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     n_hem = _join_hem_plus(scored["fielders"], season)
     d3 = _join_dem_plus_3yr(scored["fielders"])
     war_meta = _stamp_war(scored["fielders"], season)
+    sc_meta = _join_savant_catcher(scored["fielders"], season)
+    if sc_meta.get("available"):
+        log(f"  defense: Savant catcher blocking/throwing joined for "
+            f"{sc_meta['n_joined']['blocking']}/{sc_meta['n_joined']['throwing']} "
+            f"of {sc_meta['n_catchers']} catchers")
     # THE BUILD STAMP SHIPS IFF THE COLUMN DOES (the contract in
     # test_defense_export_contract, in both directions). Read off the SERVED
     # rows, the same scan the test makes, so a refused join ships a board with
@@ -652,6 +669,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                     ("Team DEM+ and the club run totals include catchers and their "
                      "framing (team_frm_runs), and each alignment's catcher slot carries "
                      "his framing.")},
+        # Provenance and join coverage of the Savant catcher blocking and
+        # throwing display columns (see _join_savant_catcher). Rows only: no
+        # club total is built from them.
+        "savant_catcher": sc_meta,
         "hem_plus_join": {"n_stamped": n_hem,
                           "note": "HEM+ joined from hitter_leaderboards.json for the glove-versus-bat chart"},
         "ewar_join": war_meta,

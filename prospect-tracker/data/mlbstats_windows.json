@@ -351,7 +351,16 @@
     "dem_plus_pos_pct": "The same, within a position.",
     "dem_plus_3yr": "A frozen lab artifact with a window of its own.",
     "hem_plus": "Inherits the hitter board's anchoring.",
-    "tier": "A cut on a season pool."
+    "tier": "A cut on a season pool.",
+    "c_blk_runs": "Baseball Savant's catcher blocking and throwing boards are read for the live season only.",
+    "c_blk_aa": "Baseball Savant's catcher blocking and throwing boards are read for the live season only.",
+    "c_blk_pitches": "Baseball Savant's catcher blocking and throwing boards are read for the live season only.",
+    "c_cs_runs": "Baseball Savant's catcher blocking and throwing boards are read for the live season only.",
+    "c_cs_aa": "Baseball Savant's catcher blocking and throwing boards are read for the live season only.",
+    "c_sb_att": "Baseball Savant's catcher blocking and throwing boards are read for the live season only.",
+    "c_pop": "Baseball Savant's catcher blocking and throwing boards are read for the live season only.",
+    "c_exchange": "Baseball Savant's catcher blocking and throwing boards are read for the live season only.",
+    "c_arm": "Baseball Savant's catcher blocking and throwing boards are read for the live season only."
    }
   }
  },
@@ -846,7 +855,7 @@
    "2026": 0.9768
   }
  },
- "build_seconds": 165.0,
+ "build_seconds": 89.6,
  "reproduction": {
   "per_season": {
    "hem_plus": {
