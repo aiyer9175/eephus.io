@@ -163,6 +163,13 @@ def _team_board(corpus: Path | None):
     df["team"] = np.where(df["half"].astype(str).str.startswith("bot"),
                           df["home"], df["away"])
     df = df[df["team"].notna()].copy()
+    # The attribution map carries Baseball-Reference codes (OAK through 2024),
+    # while the decision ledger's clubs block keys every season on the canonical
+    # org (ATH). The club page joins the two on the code, so both go through
+    # the same trades.canonical_org, or an Athletics club page loses its steal
+    # block for every OAK season.
+    import trades
+    df["team"] = df["team"].map(lambda c: trades.canonical_org(c) or c)
     rows = []
     for (team, season), g in df.groupby(["team", "season"]):
         n = len(g)

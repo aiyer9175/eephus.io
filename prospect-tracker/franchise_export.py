@@ -37,7 +37,7 @@ counterfactual named, never a letter, never a plus metric.
 
 THE JOIN TRAPS, handled once: the five /mlbstats/ leaderboards carry StatsAPI
 codes (AZ, CWS, KC, SD, SF, TB, WSH), fa_meta.teams carries AVERAGES and OAK,
-trade_values carries "Cuba", arb_history and management_board.teams carry OAK,
+trade_values carries "Cuba", arb_history carries OAK,
 war_daily team_ID is Baseball-Reference's (OAK 1968-2024) and joins the club
 bWAR line only through data/franchise_spine.json. Everything goes through
 trades.canonical_org / canonical_org_from_id and the writer REFUSES (raises

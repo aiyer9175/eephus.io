@@ -84,6 +84,20 @@ def test_the_club_board_carries_no_decision_value_column(d):
                     assert "dv" not in kk and "decision" not in kk, (k, kk)
 
 
+def test_the_style_board_and_the_club_rows_share_one_club_code(d):
+    """M10-03. The club page joins teams.rows to clubs.rows on the code, so the two
+    blocks must key every season on the same canonical org. The style board keyed
+    the Athletics OAK for 2018-2024 while the clubs block keyed them ATH, and six
+    ATH club pages printed no steal block."""
+    t = d["teams"]
+    c = d.get("clubs") or {}
+    if t.get("status") != "built" or not c.get("rows"):
+        pytest.skip("club board or clubs block not built")
+    ts = {(r["team"], r["season"]) for r in t["rows"]}
+    cs = {(r["club"], r["season"]) for r in c["rows"]}
+    assert ts == cs, (sorted(ts - cs), sorted(cs - ts))
+
+
 def test_the_payload_says_why_there_is_no_plus_metric(d):
     s = d["sections"]["team_style"]
     assert s["plus_metric"] is False
