@@ -5640,6 +5640,31 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("aaa stuff+ re-score failed — continuing")
 
+        # --- 6b2c. Modern-signal retention (EV-03) -----------------------
+        # The DB signal tables (statcast_metrics, zone_metrics, pitch_arsenals,
+        # sabermetrics, statlines) hold one season and the aStuff+ sidecar keeps
+        # the latest season per player, so a season's as-of record survives only
+        # if someone copies it. tools/snapshot_modern_signals.py writes
+        # data/signal_snapshots/<season>/ (tracked, NOT served): an earlier
+        # season is written once and frozen, the live season merges by key and
+        # never drops a row. Runs after 6b2/6b2b so Swing+ and aStuff+ are fresh.
+        # Offline (no fetch). Heartbeat `signal_snapshots`. Never aborts.
+        with _step("6b2c. Modern-signal snapshots (data/signal_snapshots/)", log):
+            try:
+                from tools import snapshot_modern_signals as _sms
+                import job_heartbeat as _hb
+                _sn = _sms.snapshot()
+                _hb.record("signal_snapshots", ok=True,
+                           result=_sms.summary_line(_sn)[:120])
+                log.info("signal snapshots: %s", _sms.summary_line(_sn))
+            except Exception as _e:
+                log.exception("signal snapshots failed - continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("signal_snapshots", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
+
         # --- 6b3. MLB player detail export (player pages) ----------------
         # The /projections/#player= + FA-card-linked per-player payloads:
         # careers (StatsAPI + war_daily), Savant percentiles, arsenals,

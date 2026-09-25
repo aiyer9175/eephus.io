@@ -1,0 +1,153 @@
+{
+ "files": {
+  "2023/aaa_pitch_physics.json": {
+   "as_of": "2026-08-03",
+   "bytes": 451266,
+   "completeness": "complete",
+   "n_rows": 664
+  },
+  "2023/astuff_plus.json": {
+   "as_of": "2026-09-24",
+   "bytes": 62438,
+   "completeness": "partial_latest_season_only",
+   "n_rows": 293
+  },
+  "2023/savant_minors.json": {
+   "as_of": "2026-06-11",
+   "bytes": 533275,
+   "completeness": "complete",
+   "n_rows": 1575
+  },
+  "2024/aaa_pitch_physics.json": {
+   "as_of": "2026-08-03",
+   "bytes": 442480,
+   "completeness": "complete",
+   "n_rows": 628
+  },
+  "2024/astuff_plus.json": {
+   "as_of": "2026-09-24",
+   "bytes": 67222,
+   "completeness": "partial_latest_season_only",
+   "n_rows": 304
+  },
+  "2024/savant_minors.json": {
+   "as_of": "2026-06-11",
+   "bytes": 513025,
+   "completeness": "complete",
+   "n_rows": 1515
+  },
+  "2024/swing_plus.json": {
+   "as_of": "2026-09-24",
+   "bytes": 7477,
+   "completeness": "complete",
+   "n_rows": 173
+  },
+  "2025/aaa_pitch_physics.json": {
+   "as_of": "2026-08-03",
+   "bytes": 460779,
+   "completeness": "complete",
+   "n_rows": 638
+  },
+  "2025/astuff_plus.json": {
+   "as_of": "2026-09-24",
+   "bytes": 101318,
+   "completeness": "partial_latest_season_only",
+   "n_rows": 451
+  },
+  "2025/savant_minors.json": {
+   "as_of": "2026-06-11",
+   "bytes": 524975,
+   "completeness": "complete",
+   "n_rows": 1550
+  },
+  "2025/swing_plus.json": {
+   "as_of": "2026-09-24",
+   "bytes": 10359,
+   "completeness": "complete",
+   "n_rows": 244
+  },
+  "2026/aaa_pitch_physics.json": {
+   "as_of": "2026-08-03",
+   "bytes": 250606,
+   "completeness": "complete",
+   "n_rows": 331
+  },
+  "2026/alevel_signals.json": {
+   "as_of": "2026-09-24",
+   "bytes": 44347,
+   "completeness": "complete",
+   "n_rows": 717
+  },
+  "2026/astuff_plus.json": {
+   "as_of": "2026-09-24",
+   "bytes": 78151,
+   "completeness": "complete",
+   "n_rows": 331
+  },
+  "2026/pitch_arsenals.json": {
+   "as_of": "2026-09-24",
+   "bytes": 288977,
+   "completeness": "complete",
+   "n_rows": 673
+  },
+  "2026/sabermetrics.json": {
+   "as_of": "2026-09-24",
+   "bytes": 101281,
+   "completeness": "complete",
+   "n_rows": 1251
+  },
+  "2026/savant_minors.json": {
+   "as_of": "2026-06-23",
+   "bytes": 309051,
+   "completeness": "complete",
+   "n_rows": 918
+  },
+  "2026/statcast_metrics.json": {
+   "as_of": "2026-09-24",
+   "bytes": 3631513,
+   "completeness": "complete",
+   "n_rows": 8169
+  },
+  "2026/statlines.json": {
+   "as_of": "2026-09-24",
+   "bytes": 1023123,
+   "completeness": "complete",
+   "n_rows": 7538
+  },
+  "2026/swing_plus.json": {
+   "as_of": "2026-09-24",
+   "bytes": 11681,
+   "completeness": "complete",
+   "n_rows": 277
+  },
+  "2026/zone_metrics.json": {
+   "as_of": "2026-09-24",
+   "bytes": 2420094,
+   "completeness": "complete",
+   "n_rows": 9475
+  }
+ },
+ "generated_at": "2026-09-24",
+ "live_season": 2026,
+ "retention_rule": "seasons earlier than live_season are written once and frozen; the live season merges by key and never drops a row",
+ "savant_minors_history_check": {
+  "answer": "yes",
+  "checked_on": "2026-09-24",
+  "not_answered": "which levels the 2021-2022 rows cover; the aggregate CSV has no level column, and no further fetch was made",
+  "question": "Does the Savant minors statcast search return seasons 2021-2022?",
+  "reference_rows_2023_to_2026_batter_cache": {
+   "2023": 722,
+   "2024": 707,
+   "2025": 723,
+   "2026": 495
+  },
+  "request": "arkmetric_forward_eval.SAVANT, player_type=batter, group_by=name, min_pas=100, one request per season, nothing cached",
+  "rows": {
+   "2021": 169,
+   "2022": 737
+  }
+ },
+ "schema": 1,
+ "total_bytes": 11333438,
+ "what_this_is": "EV-03 modern-signal retention (docs/efv-v2/PROGRAM.md 3.4). Per-season, as-of-dated snapshots of prospect signals whose live sources keep one season. NOT served: depth-two data directory neither deploy consumer ships, no catalog row."
+}

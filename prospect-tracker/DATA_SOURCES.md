@@ -97,6 +97,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b. MLB projections export (mlb_projections.json) | mlb_projections.json, swing_plus.json |
 | 6b2. Swing+ scoring (swing_plus.json) | swing_plus.json |
 | 6b2b. AAA Stuff+ re-score (stuff_plus_aaa.json) | stuff_plus_aaa.json |
+| 6b2c. Modern-signal snapshots (data/signal_snapshots/) | - |
 | 6b3. MLB player detail export (mlb_player_detail.json) | mlb_player_detail.json |
 | 6b4. Bullpen Leaderboards (bullpen_leaderboards.json) | bullpen_leaderboards.json, leverage_consistency_eval.json |
 | 6b4b. gmLI consistency (leverage_consistency_eval.json) | leverage_consistency_eval.json, rem_plus_multiyear_eval.json, riv_plus_eval.json |
