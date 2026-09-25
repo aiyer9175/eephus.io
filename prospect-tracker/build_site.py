@@ -6123,8 +6123,9 @@ def build_sources() -> str:
         ("Baseball America", "https://www.baseballamerica.com/",
          "Prospect rankings, grades, and prospect and draft scouting reports (consensus input)."),
         ("ESPN", "https://www.espn.com/mlb/",
-         "Prospect rankings and scouting reports (consensus input); team logo imagery on "
-         "internal surfaces."),
+         "Prospect rankings and scouting reports (consensus input); the club logo images "
+         "on team pickers and boards load from ESPN's image server (the logos are the "
+         "clubs' trademarks)."),
         ("The Athletic", "https://www.nytimes.com/athletic/",
          "Prospect rankings (consensus input)."),
         ("Just Baseball", "https://www.justbaseball.com/",
@@ -6143,6 +6144,19 @@ def build_sources() -> str:
          "Baseball-Reference data programmatically."),
         ("Spotrac", "https://www.spotrac.com/",
          "Contracts, payrolls, free-agent classes, and international signing trackers."),
+        # Census X07-08 (2026-09-25): three upstreams the platform reads that
+        # this list never named. test_sources_attribution.py holds every
+        # external host in the ingest modules to a row here.
+        ("MLB Trade Rumors", "https://www.mlbtraderumors.com/",
+         "Arbitration salary projections (Matt Swartz's model) and the arbitration "
+         "results tracker: the comparator /arbitration/ scores its own model against, "
+         "and a record of settled salaries the arbitration dataset reads."),
+        ("The Odds API", "https://the-odds-api.com/",
+         "Sportsbook moneylines, run lines and totals for the /betting/ board, and the "
+         "game lines /fantasy/ DFS pricing reads."),
+        ("Open-Meteo", "https://open-meteo.com/",
+         "Game-time weather forecasts, captured nightly for a pre-registered betting "
+         "candidate; no page shows them yet. Weather data by Open-Meteo.com (CC BY 4.0)."),
     ]
     cards = "".join(
         f'<div class="card source-card"><h3><a href="{html.escape(url)}" target="_blank" '

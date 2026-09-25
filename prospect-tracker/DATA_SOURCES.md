@@ -184,4 +184,21 @@ between the sentinels.
   best-effort: a layout change fails soft and leaves the prior cache.
 - TJStats and MLB Pipeline live boards are captured daily point-in-time;
   their histories are append-only and cannot be backfilled.
+- Baseball-Reference war_daily (via pybaseball) is the run frame under the
+  served eWAR (`war_source.py`). The whole WAR basis rests on that one file;
+  a schema or availability change there moves every WAR the site prints.
+- The Odds API (`betting_ingest.py`) runs on the free tier, 500 credits a
+  month: the open and close snapshots cost 3 credits each, about 186 a month.
+  Props are priced per event and armed separately (EEPHUS_PROPS_CREDITS).
+  Display terms for the served prices are an open owner review item.
+- Open-Meteo (`betting_weather.py`) is captured nightly, keyless, on the free
+  endpoint, whose terms are non-commercial only and name subscription sites
+  as commercial; the data is CC BY 4.0 with attribution required. Setting the
+  key variable moves the capture to the commercial endpoint. Owner review item
+  before any paid Diamond tier.
+- MLB Trade Rumors (`tools/ingest_arbitration_ledger.py`) is a hand-run,
+  permanently cached, rate-limited ingest (MLBTR firewalls rapid requests),
+  never on the pipeline. `data/arb_ledger.json` republishes its projection
+  and tracker entries at a public URL that no page fetches; whether to keep
+  serving it is an open owner review item.
 <!-- CURATED:END -->
