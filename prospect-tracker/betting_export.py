@@ -3814,6 +3814,16 @@ def tie_atom_caveat(row: dict, thr: float | None) -> str | None:
 TOTAL_LEAN_TOLERANCE = 0.03
 TOTAL_LEAN_MIN_GAMES = 8
 
+#: A TOTAL CARRYING THE SLATE-LEAN CAVEAT FILLS NO SLOT (owner decision
+#: 2026-09-25). The first row the public record ever held (slate 2026-09-26,
+#: CLE at KCR Over 8.0) was a total on a slate whose check fired, and the lean
+#: the check discloses is the known Poisson shape, not value. So a total side
+#: stamped by `stamp_total_level_caveat` is skipped at the slot seam, which
+#: keeps it off the Pick of the Day, the longshot slot and therefore the public
+#: record. The board and its badges still show the row with the caveat. This
+#: turns off only by owner decision once the total-shape repair passes its gate.
+BAR_TOTAL_LEAN_SLOTS = True
+
 
 def total_level_check(bets: list[dict], *, fitted: dict | None = None) -> dict:
     """The slate-level total lean, with the caveat it earns when it fires.
@@ -3856,7 +3866,11 @@ def total_level_check(bets: list[dict], *, fitted: dict | None = None) -> dict:
                                "their mean, so this reads positive for a model "
                                "whose level is right"),
         "total_level_served": bm.SERVE_TOTAL_LEVEL,
-        "surface": "disclosure only; no price, edge, slot or ledger reads this block",
+        "surface": ("disclosure; no price, edge or ledger reads this block, and while "
+                    "BAR_TOTAL_LEAN_SLOTS holds (owner decision 2026-09-25) a total "
+                    "side carrying its caveat fills no slot and never reaches the "
+                    "public record"),
+        "slot_bar": BAR_TOTAL_LEAN_SLOTS,
         "fires": False, "direction": None, "caveat": None,
     }
     if n < 2:
@@ -5795,6 +5809,7 @@ def _floor_clearing_sides(bets: list[dict], thr: float, *,
     legs = slot_market_policy_legs()
     cands = []
     n_barred = 0
+    n_lean_barred = 0
     for b in bets:
         for market, rows in (("moneyline", b.get("moneyline") or []),
                              ("runline", b.get("runline") or []),
@@ -5813,6 +5828,12 @@ def _floor_clearing_sides(bets: list[dict], thr: float, *,
                     continue        # no real price taken, no pick
                 if barred:
                     n_barred += 1
+                    continue
+                # BAR_TOTAL_LEAN_SLOTS: counted after the floor and the policy,
+                # like the policy leg, so every census count shares a denominator.
+                if (BAR_TOTAL_LEAN_SLOTS and market == "total"
+                        and row.get("total_level_caveat")):
+                    n_lean_barred += 1
                     continue
                 cands.append({**row, "market": market, "game_pk": b.get("game_pk"),
                               "matchup": f"{b['away']['org']} at {b['home']['org']}",
@@ -5836,6 +5857,7 @@ def _floor_clearing_sides(bets: list[dict], thr: float, *,
         cands.append({**row, "evidence_closed": bool(market in ledger_closed)})
     if stats is not None:
         stats["n_policy_barred_sides"] = n_barred
+        stats["n_total_lean_barred_sides"] = n_lean_barred
     return cands
 
 
@@ -5994,8 +6016,16 @@ def provisional_picks(bets: list[dict], *, odds_priceable: bool,
     # assets/betting.js, which belongs to another track: this publishes both so
     # that fix is a one-line read and not a re-derivation. NAMED FOLLOW-UP,
     # docs/diamond-betting.md 7d.
+    n_lean_barred = int(floor_stats.get("n_total_lean_barred_sides") or 0)
     meta["n_floor_clearing_sides_before_policy"] = (
-        len(cands) + int(floor_stats.get("n_policy_barred_sides") or 0))
+        len(cands) + int(floor_stats.get("n_policy_barred_sides") or 0) + n_lean_barred)
+    # The total-lean bar (owner decision 2026-09-25) is a slot rule too, so its
+    # count rides beside the census and the empty-slot reason names it.
+    meta["n_total_lean_barred_sides"] = n_lean_barred
+    meta["total_lean_bar"] = BAR_TOTAL_LEAN_SLOTS
+    lean_clause = (f"; {n_lean_barred} total side(s) also cleared it and fill no slot "
+                   "while the slate's totals lean (owner decision 2026-09-25)"
+                   if n_lean_barred else "")
     policy_legs = slot_market_policy_legs()
     meta["market_policy"] = bm.SLOT_MARKET_POLICY
     # WHICH LEG BARS, BESIDE THE SENTENCE THAT SAYS IT. The same pair the
@@ -6021,11 +6051,13 @@ def provisional_picks(bets: list[dict], *, odds_priceable: bool,
             ("pick_of_the_day", in_band, _potd_rank, potd_band),
             ("longshot_of_the_day", longshots, _longshot_rank, long_band)):
         if not cands:
-            why = f"no side cleared the {thr:.1%} {floor_txt} on this slate"
+            why = (f"no side that may fill a slot cleared the {thr:.1%} {floor_txt} on "
+                   f"this slate{lean_clause}" if n_lean_barred else
+                   f"no side cleared the {thr:.1%} {floor_txt} on this slate")
             row = None
         elif not pool:
             why = (f"{len(cands)} side(s) cleared the {thr:.1%} {floor_txt} on this "
-                   f"slate and none of them are priced at {band}")
+                   f"slate and none of them are priced at {band}{lean_clause}")
             row = None
         else:
             row = _publish_slot(sorted(pool, key=rank)[0], slot, thr=thr, prov=prov)

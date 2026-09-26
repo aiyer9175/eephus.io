@@ -242,9 +242,81 @@ def test_the_check_fires_on_a_one_sided_slate_and_stamps_every_total_row():
     assert be.stamp_total_level_caveat(bets, chk) == 24
     assert all(s["total_level_caveat"] == chk["caveat"]
                for b in bets for s in b["total"]["sides"])
-    # A slot is a board row verbatim, so it inherits the sentence.
+    # Since the owner's 2026-09-25 bar a caveated total fills no slot, and the
+    # seam counts what it took out.
+    stats: dict = {}
+    cands = be._floor_clearing_sides(bets, 0.06, ledger_closed=frozenset(), stats=stats)
+    assert not cands and stats["n_total_lean_barred_sides"] == 12
+
+
+def test_with_the_bar_off_a_slot_is_a_board_row_verbatim_and_inherits_the_sentence(
+        monkeypatch):
+    monkeypatch.setattr(be, "BAR_TOTAL_LEAN_SLOTS", False)
+    bets = [_bet(i, 0.06 + 0.01 * (i % 3)) for i in range(12)]
+    be.stamp_total_level_caveat(bets, be.total_level_check(bets))
     cands = be._floor_clearing_sides(bets, 0.06, ledger_closed=frozenset())
     assert cands and all(c.get("total_level_caveat") for c in cands)
+
+
+def _mixed_slate(total_edge=0.40, ml_edge=0.20):
+    """Twelve leaning totals (so the check fires) plus one game whose moneyline
+    also clears the floor, at a smaller edge and a lower model probability than
+    the top Over, so the Over would win the headline slot if it could."""
+    bets = [_bet(i, 0.06 + 0.01 * (i % 3)) for i in range(12)]
+    bets[0]["total"]["sides"][0].update({"edge": total_edge, "model_prob": 0.90})
+    bets.append({"game_pk": 99, "start": None, "home": {"org": "BBB"},
+                 "away": {"org": "AAA"},
+                 "moneyline": [{"side": "home", "edge": ml_edge, "odds": -110,
+                                "book": "b", "model_prob": 0.60,
+                                "market_fair_prob": 0.60 - ml_edge,
+                                "kelly_full": 0.2}]})
+    return bets
+
+
+def test_a_caveated_total_never_fills_the_headline_slot(monkeypatch):
+    """THE DEFECT THIS PINS (owner decision 2026-09-25): the public record's
+    first row was a caveated Over on a leaning slate. With the bar on, the
+    moneyline takes the slot, the census still counts the barred totals as
+    having cleared the floor, and the payload names the bar.
+
+    MUTATION: drop the BAR_TOTAL_LEAN_SLOTS test at the seam and the Over
+    (model 0.90) wins the slot again."""
+    monkeypatch.setattr(be, "ledger_closed_markets", lambda *a, **k: frozenset())
+    bets = _mixed_slate()
+    chk = be.total_level_check(bets)
+    assert chk["fires"] and chk["slot_bar"] is True
+    be.stamp_total_level_caveat(bets, chk)
+    slots, _, meta = be.provisional_picks(bets, odds_priceable=True, evald={})
+    potd = slots["pick_of_the_day"]
+    assert potd is not None and potd["market"] == "moneyline"
+    assert meta["total_lean_bar"] is True
+    assert meta["n_total_lean_barred_sides"] == 12
+    assert meta["n_floor_clearing_sides"] == 1
+    assert meta["n_floor_clearing_sides_before_policy"] == 13
+
+
+def test_when_only_caveated_totals_clear_the_slot_is_empty_and_says_why(monkeypatch):
+    monkeypatch.setattr(be, "ledger_closed_markets", lambda *a, **k: frozenset())
+    bets = [_bet(i, 0.06 + 0.01 * (i % 3)) for i in range(12)]
+    be.stamp_total_level_caveat(bets, be.total_level_check(bets))
+    slots, reason, meta = be.provisional_picks(bets, odds_priceable=True, evald={})
+    assert slots["pick_of_the_day"] is None and slots["longshot_of_the_day"] is None
+    assert "12 total side(s) also cleared it and fill no slot" in reason
+    assert "owner decision 2026-09-25" in reason
+
+
+def test_a_slate_that_does_not_lean_keeps_its_totals_eligible(monkeypatch):
+    """The bar reads the stamped caveat, so a balanced slate's totals compete
+    exactly as before."""
+    monkeypatch.setattr(be, "ledger_closed_markets", lambda *a, **k: frozenset())
+    bets = [_bet(i, (0.07 if i % 2 else -0.07)) for i in range(12)]
+    chk = be.total_level_check(bets)
+    assert not chk["fires"]
+    assert be.stamp_total_level_caveat(bets, chk) == 0
+    stats: dict = {}
+    cands = be._floor_clearing_sides(bets, 0.06, ledger_closed=frozenset(), stats=stats)
+    assert cands and all(c["market"] == "total" for c in cands)
+    assert stats["n_total_lean_barred_sides"] == 0
 
 
 # The served 2026-09-11 board, the incident the owner saw: (line, fair_total,
