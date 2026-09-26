@@ -43,6 +43,14 @@ ROOT = Path(__file__).parent
 # 2026-08-19. A concurrent repair lane removed the occurrences; this ratchet
 # is the guarantee they never return. Matching is case-insensitive substring.
 BANNED_CLAIM_FRAGMENTS = (
+    # SC_HEADLINE_HOLM (owner answers FP3-1, FP3-3, 2026-09-25). The Source
+    # Comparison view said no floor covered the AUC leg and that no correction
+    # for testing several sources was applied; both became false when the six
+    # per-source cells became one Holm family with a floor per cell, and the
+    # timing-pinned frame stopped being a candidate when it took the headline.
+    "no floor is published for the auc leg",
+    "no correction for testing several sources is applied",
+    "becomes the headline once the owner has seen it",
     # glossary forward_gate said the Team Outlook forecast "is logged now";
     # nothing freezes it (data/mlb_projections.json is gitignored and rewritten
     # nightly, prospects.db keeps surplus only). M05-10, 2026-09-25.
@@ -1285,3 +1293,48 @@ def test_dpw_basis_copy_matches_the_served_bases():
             if f"${t:.2f}M" not in text:
                 problems.append(f"{eid} does not state the ${t:.2f}M tier")
     assert not problems, "$/WAR basis copy drift: " + "; ".join(problems)
+
+
+# SC_HEADLINE_HOLM (owner answers FP3-1 and FP3-3, 2026-09-25). The Source
+# Comparison headline moved to the timing-pinned frame vm2 and every surface
+# reads it from ONE key: accuracy.head_to_head_verdict, followed through its
+# `basis`. And the per-source cells print a verdict word only after a Holm
+# correction across the six cells, with the family and alpha on the page.
+def test_source_comparison_reads_one_headline_key():
+    js = _read_text("assets/glossary.js").replace("\r\n", "\n")
+    code = "\n".join(ln for ln in js.split("\n") if not ln.lstrip().startswith("//"))
+    for block in ("pooled_efv_common_vintage_matched", "pooled_efv_common_vintage_matched_vm2",
+                  "common_n_efv_vintage_matched"):
+        assert not re.search(r"\." + re.escape(block) + r"\b", code), (
+            f"assets/glossary.js reads accuracy.{block} directly; the headline is "
+            "head_to_head_verdict and its basis")
+    assert re.search(r"function _hhBlock\(bt\) \{[^}]*acc\[hh\.basis\]", js), (
+        "_hhBlock no longer follows head_to_head_verdict.basis")
+
+
+def test_per_source_verdict_words_come_from_the_holm_family():
+    """The per-source table prints the artifact's word or "interval only", and
+    the note states the family size and alpha from the artifact, never typed."""
+    js = _read_text("assets/glossary.js").replace("\r\n", "\n")
+    m = re.search(r"function _methPerSourceCells\(bt\) \{(.*?)\n\}\n", js, re.S)
+    assert m, "_methPerSourceCells not found in assets/glossary.js (renamed?)"
+    code = "\n".join(ln for ln in m.group(1).split("\n")
+                     if not ln.lstrip().startswith("//"))
+    assert "leg.verdict" in code and "interval only" in code
+    assert "h.k" in code and "h.alpha" in code
+    assert not _HARDCODED_DECIMAL_RE.findall(code), (
+        "_methPerSourceCells carries a hard-coded accuracy constant")
+    bt_path = ROOT / "data" / "source_backtest.json"
+    if not bt_path.exists():
+        return
+    import json as _json
+    acc = (_json.loads(bt_path.read_text(encoding="utf-8")).get("accuracy") or {})
+    vs = acc.get("head_to_head_vs_sources") or {}
+    if not vs.get("holm"):
+        return
+    assert vs["basis"] == (acc.get("head_to_head_verdict") or {}).get("basis")
+    for cell in vs["sources"].values():
+        for metric in ("spearman", "auc"):
+            leg = cell.get(metric) or {}
+            if leg.get("verdict"):
+                assert leg["holm"]["reject_holm"] is True, (cell["label"], metric)

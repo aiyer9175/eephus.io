@@ -379,7 +379,11 @@ def _parity(sb_path: Path, stats: dict, n: int, deltas: dict) -> dict:
         return {"status": "source_backtest.json unreadable"}
     acc = sb.get("accuracy") or {}
     served = acc.get(SB.VM2_BASIS) or {}
-    hv2 = acc.get("head_to_head_verdict_vm2") or {}
+    # vm2 is the headline since 2026-09-25 (owner answer FP3-1): its verdict is
+    # head_to_head_verdict itself; an older artifact carried it beside vm1.
+    hv = acc.get("head_to_head_verdict") or {}
+    hv2 = (hv if hv.get("basis") == SB.VM2_BASIS
+           else acc.get("head_to_head_verdict_vm2") or {})
     x = (served.get("xfv") or {})
     c = (served.get(CONS) or {})
     mine = deltas["efv_v1_vs_prospx_consensus"]["spearman"]

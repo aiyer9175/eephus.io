@@ -77,19 +77,19 @@
 "claim": {
 "word": "ties",
 "model_id": "efv_v2",
-"frame": "vm",
-"frame_label": "Vintage-matched",
-"delta": 0.007,
+"frame": "vm2",
+"frame_label": "Vintage-matched, timing-pinned",
+"delta": -0.0055,
 "ci95": [
--0.0157,
-0.0288
+-0.0202,
+0.0099
 ],
-"n": 806,
+"n": 803,
 "resolvable": false,
 "date": "2026-09-25",
-"run_id": "2026-09-25T22:34:54Z|vm|6dd9e90d",
+"run_id": "2026-09-25T23:50:14Z|vm2|b4273de2",
 "reserved_read": false,
-"text": "Ties PROSPX consensus: Spearman difference +0.0070, CI95 -0.016 to +0.029 on the vintage-matched frame (n 806, 2026-09-25).",
+"text": "Ties PROSPX consensus: Spearman difference -0.0055, CI95 -0.020 to +0.010 on the vintage-matched, timing-pinned frame (n 803, 2026-09-25).",
 "source": "data/efv_progress.json"
 },
 "receipt": {

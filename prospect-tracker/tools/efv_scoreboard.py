@@ -353,14 +353,27 @@ def _head_to_head(sb):
     the frame the verdict is read off (docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md:
     the verdict is read off the vintage-matched basis and the tilted frames are
     not headlines), and every frame rides along in head_to_head_by_frame.
+
+    ONE KEY (owner answer FP3-1, 2026-09-25). The headline moved to the
+    timing-pinned frame vm2, and this function names no frame of its own: the
+    cells read the accuracy block head_to_head_verdict.basis names, and the
+    frame id is the head_to_head_by_frame entry with that basis. The per-source
+    Holm reading (FP3-3) is copied beside each cell from
+    head_to_head_vs_sources when it sits on the same basis.
     """
     acc = sb.get("accuracy") or {}
-    if acc.get("pooled_efv_common_vintage_matched"):
-        pooled = acc["pooled_efv_common_vintage_matched"]
-        frame = "vintage_matched"
-        basis = ("identical rows, vintage-matched "
-                 "(accuracy.pooled_efv_common_vintage_matched), the frame "
-                 "verdict_vs_consensus is read off")
+    hv = acc.get("head_to_head_verdict") or {}
+    hv_basis = hv.get("basis")
+    by_frame = acc.get("head_to_head_by_frame") or {}
+    vs_block = acc.get("head_to_head_vs_sources") or {}
+    holm_src = ((vs_block.get("sources") or {})
+                if hv_basis and vs_block.get("basis") == hv_basis else {})
+    if hv_basis and acc.get(hv_basis):
+        pooled = acc[hv_basis]
+        frame = next((k for k, v in by_frame.items()
+                      if (v or {}).get("basis") == hv_basis), hv_basis)
+        basis = (f"identical rows on the headline frame (accuracy.{hv_basis}), "
+                 "the frame verdict_vs_consensus is read off")
     elif acc.get("pooled_efv_common"):
         pooled = acc["pooled_efv_common"]
         frame = "all_vintages"
@@ -388,6 +401,14 @@ def _head_to_head(sb):
                                          x.get("n")),
                        "auc_contributor": _cell(x.get("auc"), r.get("auc"),
                                                 x.get("n"))}
+        # FP3-3: the Holm-corrected reading of each cell, copied from the
+        # backtest. holm_verdict is None unless the cell survives the family.
+        for metric, name in (("spearman", "spearman"), ("auc", "auc_contributor")):
+            leg = (holm_src.get(key) or {}).get(metric) or {}
+            if leg.get("holm") is not None:
+                rivals[key][name]["ci95"] = leg.get("ci95")
+                rivals[key][name]["holm"] = dict(leg["holm"])
+                rivals[key][name]["holm_verdict"] = leg.get("verdict")
     arch = []
     for a in ((sb.get("accuracy") or {}).get("by_archetype")) or []:
         # Same basis rule as the tiles above: prefer the rater table scored on the
@@ -414,9 +435,9 @@ def _head_to_head(sb):
             "common_n": acc.get("common_n"),
             "common_n_efv": acc.get("common_n_efv"),
             "verdict_vs_consensus": acc.get("head_to_head_verdict"),
-            # EV-01: the timing-pinned frame (vm2), carried beside the vm1 verdict
-            # the cells above are read off; it is not the headline yet.
-            "verdict_vs_consensus_vm2": acc.get("head_to_head_verdict_vm2"),
+            "holm_family": ({k: vs_block["holm"].get(k)
+                             for k in ("family", "k", "alpha", "procedure", "rule")}
+                            if holm_src and vs_block.get("holm") else None),
             "head_to_head_by_frame": by_frame or None,
             "vs": rivals, "by_archetype_vs_consensus": arch,
             "by_archetype_basis": ("one row per player, the latest read before debut, "

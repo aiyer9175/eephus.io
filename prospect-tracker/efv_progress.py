@@ -27,7 +27,9 @@ HONEST BY CONSTRUCTION (PROGRAM.md s5.1):
    change and otherwise only moves that row's last_verified_at. A nightly run
    with no change adds no row.
 4. Tilted frames are rows with role "tilted". They are never the headline and
-   the page never charts them.
+   the page never charts them. A frame that lost the headline (vm1, role
+   "superseded" since 2026-09-25, owner answer FP3-1) keeps its rows as
+   history in the table and is not charted either.
 
 WHY THERE IS A SECOND, UNTRACKED COPY. The deploy box runs `git checkout -- .`
 before every nightly pull (deploy/nightly-build.sh), which is how the public
@@ -109,13 +111,17 @@ DEV_ARTIFACTS = ((DEV_NAME, DEV_FRAMES, DEV_RATERS, DEV_DELTAS, None),
 SCHEMA = 1
 MODEL_ID = "efv_v1"
 TRIGGERS = ("nightly", "efv_change", "look", "backfill", "harness_correction",
-            "data_correction")
+            "data_correction", "frame_change")
 #: Triggers whose rows record a CORRECTION, never a change to the model's
 #: specification: a fix to how eFV is scored (harness_correction, DS-01, bug B1
 #: in docs/efv-v2/DRIVER_SYSTEM_V2.md) or to the rows it is trained and scored
 #: on (data_correction, DS-12 and DS-13). The page marks them apart from model
 #: progress.
 CORRECTION_TRIGGERS = ("harness_correction", "data_correction")
+#: Triggers whose rows record a change of the HEADLINE FRAME (owner answer FP3-1,
+#: 2026-09-25: vm2 replaced vm1). The same model measured on the frame that now
+#: carries the headline; never model progress, and the page marks it apart.
+FRAME_CHANGE_TRIGGERS = ("frame_change",)
 REGEN_CMD = ("python -c \"import efv_progress as P; P.update(trigger='efv_change')\" "
              "(nightly: run_monthly after the 9g scoreboard refresh and after "
              "run_source_backtest; by hand: tools/efv_scoreboard.py)")
@@ -125,19 +131,23 @@ REGEN_CMD = ("python -c \"import efv_progress as P; P.update(trigger='efv_change
 #: looks, tilted rows are never charted and never the headline, secondary rows
 #: sit in the table only.
 FRAMES = {
-    "vm": {"basis_key": "pooled_efv_common_vintage_matched", "role": "headline",
+    # vm1, the headline until 2026-09-25. Superseded by vm2 (owner answer FP3-1):
+    # its rows stay in the ledger as history, sit in the table and are never
+    # charted, because on some of them eFV's consensus input was read after the
+    # raters' preseason window.
+    "vm": {"basis_key": "pooled_efv_common_vintage_matched", "role": "superseded",
            "tilted": False,
-           "label": "Vintage-matched",
-           "note": ("identical rows, base year equals the eFV decision year; "
-                    "neither grader holds a timing edge")},
+           "label": "Vintage-matched (vm1)",
+           "note": ("superseded 2026-09-25 by the timing-pinned frame: eFV's "
+                    "consensus input was read at its matrix date, after the "
+                    "raters' preseason window on some rows")},
     # EV-01 (PROGRAM.md s3.4): the same frame with eFV's consensus input pinned
-    # to the raters' preseason read. A separate frame id so its rows dedupe
-    # against their own history and never displace the vm1 headline.
+    # to the raters' preseason read. The headline since 2026-09-25 (FP3-1).
     "vm2": {"basis_key": "pooled_efv_common_vintage_matched_vm2",
-            "role": "headline_candidate", "tilted": False,
+            "role": "headline", "tilted": False,
             "label": "Vintage-matched, timing-pinned",
             "note": ("timing-pinned: eFV's consensus input is the raters' own "
-                     "preseason read; becomes the headline once the owner has seen it")},
+                     "preseason read; the headline since 2026-09-25")},
     # EV-09 (PROGRAM.md s3.4): development reads of a v2 candidate. Both frames are
     # spent; their rows are charted hollow and adjudicate nothing.
     "vm_dev": {"role": "development", "tilted": False,
@@ -167,18 +177,32 @@ FRAMES = {
                      "note": "latest pre-debut consensus read"},
 }
 
+#: Registered role changes, applied to every stored row of the frame on each
+#: commit so the served file, the durable copy and the page agree on what a row
+#: is. Only the role moves: the measured content, and so the content hash, is
+#: untouched. frame id -> (role before, role after, when and why).
+ROLE_CHANGES = {
+    "vm": ("headline", "superseded",
+           "2026-09-25, owner answer FP3-1: the timing-pinned frame vm2 replaced "
+           "vm1 as the headline"),
+    "vm2": ("headline_candidate", "headline",
+            "2026-09-25, owner answer FP3-1: promoted from headline candidate"),
+}
+
 #: head_to_head_verdict.basis -> ledger frame id.
 BASIS_TO_FRAME = {v["basis_key"]: k for k, v in FRAMES.items() if v.get("basis_key")}
 #: ledger frame id -> key under accuracy.head_to_head_by_frame and
 #: claim_instruments.head_to_head_floors.
 BY_FRAME_KEY = {"vm": "vintage_matched", "vm2": "vintage_matched_vm2",
                 "predebut": "predebut", "all_vintages": "all_vintages"}
-#: The frame version each vintage-matched frame's rows carry: vm1 is the
-#: headline frame, vm2 the EV-01 timing-pinned frame beside it. Read from the
+#: The frame version each vintage-matched frame's rows carry: vm1 the frame
+#: superseded on 2026-09-25, vm2 the EV-01 timing-pinned headline. Read from the
 #: artifact when the artifact says.
 DEFAULT_FRAME_VERSION = {"vm": "vm1", "vm2": "vm2"}
-#: Frames a chart series may contain. Tilted and secondary frames never.
-CHART_FRAMES = ("vm", "vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")
+#: Frames a chart series may contain. Tilted, secondary and superseded frames
+#: never (vm1 left the chart when vm2 took the headline; its rows stay in the
+#: table).
+CHART_FRAMES = ("vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")
 #: The only strata a row may carry (n_by_side keys).
 STRATA = ("hit", "pit")
 #: ledger rater name -> rater key in source_backtest.
@@ -344,6 +368,10 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
                 "ci95_estimator": hv.get("ci95_estimator"),
                 "resolvable": hv.get("resolvable"),
                 "key": hv_key}
+        # A floor carried from another frame is copied with its label (FP3-1).
+        if hv.get("mde95_status"):
+            cons["mde95_status"] = hv["mde95_status"]
+            cons["mde95_carried_from"] = hv.get("mde95_carried_from")
         deltas = {}
         for src in SOURCES_VS:
             cell = vs.get(src) or {}
@@ -359,7 +387,15 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
                     "ci95_estimator": "E_cond, player-clustered",
                     "clears_e_cond_floor": leg.get("clears_e_cond_floor"),
                     "key": f"{vs_key}.sources.{src}.{metric}"}
+                # FP3-3: the Holm-corrected reading, copied (never computed here).
+                if leg.get("holm") is not None:
+                    legs[metric]["holm"] = dict(leg["holm"])
+                    legs[metric]["holm_verdict"] = leg.get("verdict")
             if src == "prospx_consensus":
+                sp = cell.get("spearman") or {}
+                if sp.get("holm") is not None:
+                    cons = dict(cons, holm=dict(sp["holm"]),
+                                holm_verdict=sp.get("verdict"))
                 legs["spearman"] = cons
             if legs:
                 deltas[f"vs_{src}"] = legs
@@ -370,23 +406,15 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
         row["verdict"] = hv.get("verdict")
         return row
 
-    # The headline frame: the verdict itself, plus the per-source block.
+    # The headline frame: the verdict itself, plus the per-source block. Since
+    # FP3-1 that is vm2, found through head_to_head_verdict.basis like any other.
     if head:
+        nbs = ({s: hv["n_by_side"][s] for s in STRATA
+                if (hv.get("n_by_side") or {}).get(s)}
+               or _by_side(floors.get(BY_FRAME_KEY.get(head, ""))))
         rows.append(_verdict_row(
-            head, hv, vs, _by_side(floors.get(BY_FRAME_KEY.get(head, ""))),
-            "accuracy.head_to_head_verdict", "accuracy.head_to_head_vs_sources"))
-
-    # EV-01: the timing-pinned vintage-matched verdict, beside the headline and
-    # never in its place (role headline_candidate).
-    hv2 = acc.get("head_to_head_verdict_vm2") or {}
-    if (hv2.get("delta") is not None and head != "vm2"
-            and BASIS_TO_FRAME.get(hv2.get("basis")) == "vm2"):
-        vs2 = ((acc.get("head_to_head_vs_sources_vm2") or {}).get("sources") or {})
-        nbs = {s: hv2["n_by_side"][s] for s in STRATA
-               if (hv2.get("n_by_side") or {}).get(s)} or None
-        rows.append(_verdict_row(
-            "vm2", hv2, vs2, nbs, "accuracy.head_to_head_verdict_vm2",
-            "accuracy.head_to_head_vs_sources_vm2", note=FRAMES["vm2"]["note"]))
+            head, hv, vs, nbs, "accuracy.head_to_head_verdict",
+            "accuracy.head_to_head_vs_sources", note=FRAMES[head].get("note", "")))
 
     # Tilted frames: the by-frame cells, with the claim-instrument interval.
     for frame in ("predebut", "all_vintages"):
@@ -555,6 +583,19 @@ def merge_rows(served: list[dict], durable: list[dict]) -> list[dict]:
     return sorted(out, key=lambda r: r.get("date") or "")
 
 
+def restamp_roles(rows: list[dict]) -> list[dict]:
+    """Apply ROLE_CHANGES to stored rows: the row's role follows the registry,
+    the role it was written with is kept in `role_was`, and `role_changed` says
+    when and why. Idempotent; the content hash does not include the role."""
+    out = []
+    for r in rows:
+        ch = ROLE_CHANGES.get(r.get("frame"))
+        if ch and r.get("role") == ch[0]:
+            r = dict(r, role=ch[1], role_was=ch[0], role_changed=ch[2])
+        out.append(r)
+    return out
+
+
 def apply(rows: list[dict], candidates: list[dict], now_iso: str) -> tuple[list[dict], list[dict]]:
     """Append each candidate whose content differs from its frame's last row;
     otherwise move that row's last_verified_at. Returns (rows, appended)."""
@@ -597,11 +638,12 @@ def _doc(rows: list[dict], sb: dict | None, now_iso: str, prev: dict | None) -> 
         "headline_frame": head,
         "frames": frames,
         "chart": {"series_frames": list(CHART_FRAMES),
-                  "excluded_roles": ["tilted", "secondary"],
+                  "excluded_roles": ["tilted", "secondary", "superseded"],
                   "y": "eFV minus PROSPX consensus, Spearman rho",
                   "band": "plus and minus the row's mde95 around zero"},
         "strata": list(STRATA),
         "correction_triggers": list(CORRECTION_TRIGGERS),
+        "frame_change_triggers": list(FRAME_CHANGE_TRIGGERS),
         "regen_cmd": REGEN_CMD,
         "rule": ("append-only; a row is added when a frame's measured content "
                  "changes and otherwise only its last_verified_at moves; every "
@@ -649,7 +691,7 @@ def commit_rows(new_rows: list[dict], *, data_dir=None, out_path=None,
     now_iso = now_iso or _now_iso()
     prev = _load_json(out) or {}
     durable = _read_ledger(led)
-    rows = merge_rows(list(prev.get("rows") or []), durable)
+    rows = restamp_roles(merge_rows(list(prev.get("rows") or []), durable))
     rows, appended = apply(rows, new_rows, now_iso)
     if backfill_receipt is not None:
         prev = dict(prev)

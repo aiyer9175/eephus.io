@@ -160,12 +160,19 @@
       root.innerHTML = note("The scoreboard artifact carries no comparable metrics yet.");
       return;
     }
+    // The discrimination half of the sentence is the artifact's too: the contributor
+    // AUC cell carries a verdict word only when it survives the Holm correction
+    // across the per-source family (owner answer FP3-3, 2026-09-25).
+    var aucWord = auc.holm_verdict || null;
     var intro = resolvable
       ? "<p>Scored on the same players out of sample, forward-chained " + gl("backtest", "backtest") +
         ". Higher is better.</p>"
       : "<p>" + gl("eFV", "xfv") + " and the public consensus are statistically indistinguishable " +
-        "on both ordering and discrimination, scored on the same players out of sample, forward-chained " +
-        gl("backtest", "backtest") + ".</p>";
+        "on " + (aucWord ? "ordering" : "both ordering and discrimination") +
+        ", scored on the same players out of sample, forward-chained " +
+        gl("backtest", "backtest") + "." +
+        (aucWord ? " On contributor AUC, after a correction for testing several sources, eFV " +
+          esc(aucWord) + "." : "") + "</p>";
     // A LEAD IS NOT A RESULT UNTIL IT CLEARS THE FLOOR, AND A FLOOR IS NOT CHECKABLE
     // UNTIL IT NAMES ITS ESTIMATOR. These tiles used to print two numbers and let the
     // bigger one win, which is the bare-inequality pattern the eFV verdict gating
@@ -196,7 +203,8 @@
     var verdictHTML = "";
     if (vv && vv.delta != null && vv.mde95 != null) {
       var lead = (vv.delta >= 0 ? "+" : "") + dec(vv.delta);
-      var est = vv.mde95_estimator || "E_refit";
+      var est = (vv.mde95_estimator || "E_refit") +
+        (vv.mde95_status === "carried" ? ", carried from " + (vv.mde95_carried_from || "an earlier frame") : "");
       verdictHTML = '<p class="dm-fine">Rank correlation margin ' + esc(lead) +
         " over " + esc(who) + ". " + (resolvable
           ? "Clears the " + esc(dec(vv.mde95)) + " this backtest resolves at 95% (" +

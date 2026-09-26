@@ -1,21 +1,21 @@
 {
  "schema": 1,
- "generated_at": "2026-09-25T22:35:26Z",
- "headline_frame": "vm",
+ "generated_at": "2026-09-25T23:56:16Z",
+ "headline_frame": "vm2",
  "frames": {
   "vm": {
    "basis_key": "pooled_efv_common_vintage_matched",
-   "role": "headline",
+   "role": "superseded",
    "tilted": false,
-   "label": "Vintage-matched",
-   "note": "identical rows, base year equals the eFV decision year; neither grader holds a timing edge"
+   "label": "Vintage-matched (vm1)",
+   "note": "superseded 2026-09-25 by the timing-pinned frame: eFV's consensus input was read at its matrix date, after the raters' preseason window on some rows"
   },
   "vm2": {
    "basis_key": "pooled_efv_common_vintage_matched_vm2",
-   "role": "headline_candidate",
+   "role": "headline",
    "tilted": false,
    "label": "Vintage-matched, timing-pinned",
-   "note": "timing-pinned: eFV's consensus input is the raters' own preseason read; becomes the headline once the owner has seen it"
+   "note": "timing-pinned: eFV's consensus input is the raters' own preseason read; the headline since 2026-09-25"
   },
   "vm_dev": {
    "role": "development",
@@ -70,7 +70,6 @@
  },
  "chart": {
   "series_frames": [
-   "vm",
    "vm2",
    "vm_dev",
    "lv_dev",
@@ -79,7 +78,8 @@
   ],
   "excluded_roles": [
    "tilted",
-   "secondary"
+   "secondary",
+   "superseded"
   ],
   "y": "eFV minus PROSPX consensus, Spearman rho",
   "band": "plus and minus the row's mde95 around zero"
@@ -91,6 +91,9 @@
  "correction_triggers": [
   "harness_correction",
   "data_correction"
+ ],
+ "frame_change_triggers": [
+  "frame_change"
  ],
  "regen_cmd": "python -c \"import efv_progress as P; P.update(trigger='efv_change')\" (nightly: run_monthly after the 9g scoreboard refresh and after run_source_backtest; by hand: tools/efv_scoreboard.py)",
  "rule": "append-only; a row is added when a frame's measured content changes and otherwise only its last_verified_at moves; every number is copied from the artifact key named in the row",
@@ -166,7 +169,7 @@
    },
    "frame": "vm",
    "frame_version": "vm1",
-   "role": "headline",
+   "role": "superseded",
    "tilted": false,
    "window": null,
    "n": 802,
@@ -209,7 +212,9 @@
    ],
    "note": "",
    "last_verified_at": null,
-   "content_hash": "23e072750fa2f900d2d51d9598866a2b6fedf9b3edc134fed13b567c33983ee2"
+   "content_hash": "23e072750fa2f900d2d51d9598866a2b6fedf9b3edc134fed13b567c33983ee2",
+   "role_was": "headline",
+   "role_changed": "2026-09-25, owner answer FP3-1: the timing-pinned frame vm2 replaced vm1 as the headline"
   },
   {
    "run_id": "2026-09-04T18:52:00Z|vm|71db02bf",
@@ -224,7 +229,7 @@
    },
    "frame": "vm",
    "frame_version": "vm1",
-   "role": "headline",
+   "role": "superseded",
    "tilted": false,
    "window": null,
    "n": 803,
@@ -267,7 +272,9 @@
    ],
    "note": "",
    "last_verified_at": null,
-   "content_hash": "71db02bf69a42cb24037ff99b7563db1f76873869b2919fd2bd551685a589030"
+   "content_hash": "71db02bf69a42cb24037ff99b7563db1f76873869b2919fd2bd551685a589030",
+   "role_was": "headline",
+   "role_changed": "2026-09-25, owner answer FP3-1: the timing-pinned frame vm2 replaced vm1 as the headline"
   },
   {
    "run_id": "2026-09-05T16:59:55Z|vm|f8a83488",
@@ -282,7 +289,7 @@
    },
    "frame": "vm",
    "frame_version": "vm1",
-   "role": "headline",
+   "role": "superseded",
    "tilted": false,
    "window": null,
    "n": 799,
@@ -325,7 +332,9 @@
    ],
    "note": "",
    "last_verified_at": null,
-   "content_hash": "f8a83488e9d5674effd699a3d6c74eb99c6620d6edc7355f29b986da2ecea04a"
+   "content_hash": "f8a83488e9d5674effd699a3d6c74eb99c6620d6edc7355f29b986da2ecea04a",
+   "role_was": "headline",
+   "role_changed": "2026-09-25, owner answer FP3-1: the timing-pinned frame vm2 replaced vm1 as the headline"
   },
   {
    "run_id": "2026-09-24T19:26:45Z|vm|0196806a",
@@ -340,7 +349,7 @@
    },
    "frame": "vm",
    "frame_version": "vm1",
-   "role": "headline",
+   "role": "superseded",
    "tilted": false,
    "window": null,
    "n": 812,
@@ -421,7 +430,9 @@
    ],
    "note": "",
    "last_verified_at": null,
-   "content_hash": "0196806aa638ca0aa47b2f08a01e4b6f3a0903431bfd446c9b554c9e6894d009"
+   "content_hash": "0196806aa638ca0aa47b2f08a01e4b6f3a0903431bfd446c9b554c9e6894d009",
+   "role_was": "headline",
+   "role_changed": "2026-09-25, owner answer FP3-1: the timing-pinned frame vm2 replaced vm1 as the headline"
   },
   {
    "run_id": "2026-09-25T01:25:53Z|vm|e4bb234a",
@@ -436,7 +447,7 @@
    },
    "frame": "vm",
    "frame_version": "vm1",
-   "role": "headline",
+   "role": "superseded",
    "tilted": false,
    "window": [
     2017,
@@ -566,7 +577,9 @@
    ],
    "note": "",
    "last_verified_at": "2026-09-25T04:55:35Z",
-   "content_hash": "e4bb234a9282cb3229ffc0b7f74b7f0dfeb29d84bdd9a0dd022ffd33ca94195b"
+   "content_hash": "e4bb234a9282cb3229ffc0b7f74b7f0dfeb29d84bdd9a0dd022ffd33ca94195b",
+   "role_was": "headline",
+   "role_changed": "2026-09-25, owner answer FP3-1: the timing-pinned frame vm2 replaced vm1 as the headline"
   },
   {
    "run_id": "2026-09-25T01:25:53Z|predebut|bcde7128",
@@ -793,7 +806,7 @@
    },
    "frame": "vm2",
    "frame_version": "vm2",
-   "role": "headline_candidate",
+   "role": "headline",
    "tilted": false,
    "window": [
     2017,
@@ -923,7 +936,9 @@
    ],
    "note": "timing-pinned: eFV's consensus input is the raters' own preseason read; becomes the headline once the owner has seen it",
    "last_verified_at": "2026-09-25T04:55:35Z",
-   "content_hash": "dac20f99a0b244e818123e61b42cf5c343fb1658fb9e1cdb6b7f6a4be115274f"
+   "content_hash": "dac20f99a0b244e818123e61b42cf5c343fb1658fb9e1cdb6b7f6a4be115274f",
+   "role_was": "headline_candidate",
+   "role_changed": "2026-09-25, owner answer FP3-1: promoted from headline candidate"
   },
   {
    "run_id": "2026-09-25T04:55:35Z|vm_dev|1ce13465",
@@ -1130,7 +1145,7 @@
     }
    ],
    "note": "development frame, spent, not a claim",
-   "last_verified_at": "2026-09-25T22:35:26Z",
+   "last_verified_at": "2026-09-25T23:56:16Z",
    "content_hash": "1ce13465b106abd12b48cfe67e0664b5ecad2f19556de78d16a6d2ee34683dc6"
   },
   {
@@ -1338,7 +1353,7 @@
     }
    ],
    "note": "development frame, spent, not a claim",
-   "last_verified_at": "2026-09-25T22:35:26Z",
+   "last_verified_at": "2026-09-25T23:56:16Z",
    "content_hash": "0ab5d2f252c78b76a367447860d2cf23117d38173097a1c758aeeae2b0559d43"
   },
   {
@@ -1354,7 +1369,7 @@
    },
    "frame": "vm",
    "frame_version": "vm1",
-   "role": "headline",
+   "role": "superseded",
    "tilted": false,
    "window": [
     2017,
@@ -1484,7 +1499,9 @@
    ],
    "note": "Harness correction DS-01 (bug B1): eFV is now scored on its raw out-of-sample score instead of a remap onto the consensus grade grid that tied distinct scores; same model, not model progress.",
    "last_verified_at": "2026-09-25T18:43:28Z",
-   "content_hash": "54f775ff293bf9094f44c04c77b04a6c71cd252812298e22ad5d65395d9c8ee8"
+   "content_hash": "54f775ff293bf9094f44c04c77b04a6c71cd252812298e22ad5d65395d9c8ee8",
+   "role_was": "headline",
+   "role_changed": "2026-09-25, owner answer FP3-1: the timing-pinned frame vm2 replaced vm1 as the headline"
   },
   {
    "run_id": "2026-09-25T18:38:37Z|vm2|1f56213d",
@@ -1499,7 +1516,7 @@
    },
    "frame": "vm2",
    "frame_version": "vm2",
-   "role": "headline_candidate",
+   "role": "headline",
    "tilted": false,
    "window": [
     2017,
@@ -1629,7 +1646,9 @@
    ],
    "note": "Harness correction DS-01 (bug B1): eFV is now scored on its raw out-of-sample score instead of a remap onto the consensus grade grid that tied distinct scores; same model, not model progress. timing-pinned: eFV's consensus input is the raters' own preseason read; becomes the headline once the owner has seen it",
    "last_verified_at": "2026-09-25T18:43:28Z",
-   "content_hash": "1f56213db331002bfe750f0243b548f6c99a526c14add5eb76534753a3219242"
+   "content_hash": "1f56213db331002bfe750f0243b548f6c99a526c14add5eb76534753a3219242",
+   "role_was": "headline_candidate",
+   "role_changed": "2026-09-25, owner answer FP3-1: promoted from headline candidate"
   },
   {
    "run_id": "2026-09-25T18:38:37Z|predebut|5e3b4726",
@@ -1806,7 +1825,7 @@
    },
    "frame": "vm",
    "frame_version": "vm1",
-   "role": "headline",
+   "role": "superseded",
    "tilted": false,
    "window": [
     2017,
@@ -1936,7 +1955,9 @@
    ],
    "note": "Data correction DS-12 (bug B7): 131 eFV training rows whose debut day was a synthesized July 1 placeholder now read the real debut day from the StatsAPI people record; same model specification, not model progress.",
    "last_verified_at": "2026-09-25T19:07:29Z",
-   "content_hash": "51bcbfa93516ff30c36fc0d8b946a5536db30d59e9d1e6e4ad10b97071ea6dbc"
+   "content_hash": "51bcbfa93516ff30c36fc0d8b946a5536db30d59e9d1e6e4ad10b97071ea6dbc",
+   "role_was": "headline",
+   "role_changed": "2026-09-25, owner answer FP3-1: the timing-pinned frame vm2 replaced vm1 as the headline"
   },
   {
    "run_id": "2026-09-25T19:06:26Z|vm2|fe6afb4b",
@@ -1951,7 +1972,7 @@
    },
    "frame": "vm2",
    "frame_version": "vm2",
-   "role": "headline_candidate",
+   "role": "headline",
    "tilted": false,
    "window": [
     2017,
@@ -2081,7 +2102,9 @@
    ],
    "note": "Data correction DS-12 (bug B7): 131 eFV training rows whose debut day was a synthesized July 1 placeholder now read the real debut day from the StatsAPI people record; same model specification, not model progress. timing-pinned: eFV's consensus input is the raters' own preseason read; becomes the headline once the owner has seen it",
    "last_verified_at": "2026-09-25T19:07:29Z",
-   "content_hash": "fe6afb4b5ce30d9fcd3aca9809d60af8cf191de587357441e321e69067e66483"
+   "content_hash": "fe6afb4b5ce30d9fcd3aca9809d60af8cf191de587357441e321e69067e66483",
+   "role_was": "headline_candidate",
+   "role_changed": "2026-09-25, owner answer FP3-1: promoted from headline candidate"
   },
   {
    "run_id": "2026-09-25T19:06:26Z|predebut|750d2bc9",
@@ -2308,7 +2331,7 @@
    },
    "frame": "vm",
    "frame_version": "vm1",
-   "role": "headline",
+   "role": "superseded",
    "tilted": false,
    "window": [
     2017,
@@ -2438,7 +2461,9 @@
    ],
    "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress.",
    "last_verified_at": "2026-09-25T21:30:28Z",
-   "content_hash": "5995e45dcc42c1904831b187e67986d504256c6cee8af4f7b0395d5b6baca65d"
+   "content_hash": "5995e45dcc42c1904831b187e67986d504256c6cee8af4f7b0395d5b6baca65d",
+   "role_was": "headline",
+   "role_changed": "2026-09-25, owner answer FP3-1: the timing-pinned frame vm2 replaced vm1 as the headline"
   },
   {
    "run_id": "2026-09-25T19:22:58Z|vm2|9f131097",
@@ -2453,7 +2478,7 @@
    },
    "frame": "vm2",
    "frame_version": "vm2",
-   "role": "headline_candidate",
+   "role": "headline",
    "tilted": false,
    "window": [
     2017,
@@ -2583,7 +2608,9 @@
    ],
    "note": "Data correction DS-13 (bug B8): the five eFV training rows on the critical identity-collision list are adjudicated: michael_perez, miguel_gomez and enmanuel_rodriguez were false 0.0 busts and leave the bust pool, david_rodriguez and adrian_hernandez are rebound to the right human; same model specification, not model progress. timing-pinned: eFV's consensus input is the raters' own preseason read; becomes the headline once the owner has seen it",
    "last_verified_at": "2026-09-25T21:30:28Z",
-   "content_hash": "9f131097bb9102a4a7952808c02e38302f8b672bc72d48fc25712bc816b560d4"
+   "content_hash": "9f131097bb9102a4a7952808c02e38302f8b672bc72d48fc25712bc816b560d4",
+   "role_was": "headline_candidate",
+   "role_changed": "2026-09-25, owner answer FP3-1: promoted from headline candidate"
   },
   {
    "run_id": "2026-09-25T19:22:58Z|predebut|7ff5cd1a",
@@ -2897,7 +2924,7 @@
     }
    ],
    "note": "DS-11 overlay read: eFV v1 WITH the gradeable served overlays (injury, age, reliever ceiling) against v1 without them, on v1's own forward-chained pool, rows with a MiLB block; within-(side, decision year) Spearman; spent frame, not a claim",
-   "last_verified_at": "2026-09-25T22:35:26Z",
+   "last_verified_at": "2026-09-25T23:56:16Z",
    "content_hash": "0f2fbcc4bd06b299e786af2053f1006b28ebe795b735aa35cdbaa96141e8587b"
   },
   {
@@ -2965,7 +2992,7 @@
     }
    ],
    "note": "DS-17 P(bust) chip read (REACHED head plus the FG-vs-Pipeline spread when admitted): Brier 0.1816 against consensus-only 0.21601 (delta -0.03441, CI95 [-0.03954, -0.02948]); log loss 0.52987 against 0.62148 (delta -0.09161, CI95 [-0.10387, -0.07985]). The AUC is for reaching the majors, not the WAR label. TILTED toward any head that reads level: a debuted matrix row is read just before its debut, so its level at the read foretells the debut. Spent frame, not a claim.",
-   "last_verified_at": "2026-09-25T22:35:26Z",
+   "last_verified_at": "2026-09-25T23:56:16Z",
    "content_hash": "f9ff1952c187343c191e884f7da14e3114488ad2ff4d8666ea0bceab0c1408b0"
   },
   {
@@ -3033,7 +3060,7 @@
     }
    ],
    "note": "DS-17 P(bust) chip read (REACHED head plus the FG-vs-Pipeline spread when admitted): Brier 0.24632 against consensus-only 0.22818 (delta 0.01814, CI95 [0.01322, 0.02249]); log loss 0.70709 against 0.64926 (delta 0.05784, CI95 [0.04479, 0.07041]). The AUC is for reaching the majors, not the WAR label. Spent frame, not a claim.",
-   "last_verified_at": "2026-09-25T22:35:26Z",
+   "last_verified_at": "2026-09-25T23:56:16Z",
    "content_hash": "7b7c3193e6cb96aa3c97e920d93e7b603d63f6871814d6841422c88de6c3520c"
   },
   {
@@ -3241,7 +3268,7 @@
     }
    ],
    "note": "DS-16 development read of the assembled V2 on the within (side, vintage) Spearman, the primary statistic of the DS-15 draft (EFV_V2_GATE.md s3); spent frame, not a claim",
-   "last_verified_at": "2026-09-25T22:35:26Z",
+   "last_verified_at": "2026-09-25T23:56:16Z",
    "statistic": "within (side, vintage) Spearman, size-weighted",
    "secondary": {
     "statistic": "pooled Spearman after the identical output map",
@@ -3507,7 +3534,7 @@
     }
    ],
    "note": "DS-16 development read of the assembled V2 on the within (side, vintage) Spearman, the primary statistic of the DS-15 draft (EFV_V2_GATE.md s3); spent frame, not a claim",
-   "last_verified_at": "2026-09-25T22:35:26Z",
+   "last_verified_at": "2026-09-25T23:56:16Z",
    "statistic": "within (side, vintage) Spearman, size-weighted",
    "secondary": {
     "statistic": "pooled Spearman after the identical output map",
@@ -3581,7 +3608,7 @@
    },
    "frame": "vm",
    "frame_version": "vm1",
-   "role": "headline",
+   "role": "superseded",
    "tilted": false,
    "window": [
     2017,
@@ -3711,7 +3738,9 @@
    ],
    "note": "",
    "last_verified_at": "2026-09-25T22:35:26Z",
-   "content_hash": "6dd9e90d8cfa45b9ae86804b60962a59559941a4e5a18f3c9a6a55193c4c660c"
+   "content_hash": "6dd9e90d8cfa45b9ae86804b60962a59559941a4e5a18f3c9a6a55193c4c660c",
+   "role_was": "headline",
+   "role_changed": "2026-09-25, owner answer FP3-1: the timing-pinned frame vm2 replaced vm1 as the headline"
   },
   {
    "run_id": "2026-09-25T22:34:54Z|vm2|6ecc2a62",
@@ -3726,7 +3755,7 @@
    },
    "frame": "vm2",
    "frame_version": "vm2",
-   "role": "headline_candidate",
+   "role": "headline",
    "tilted": false,
    "window": [
     2017,
@@ -3856,7 +3885,9 @@
    ],
    "note": "timing-pinned: eFV's consensus input is the raters' own preseason read; becomes the headline once the owner has seen it",
    "last_verified_at": "2026-09-25T22:35:26Z",
-   "content_hash": "6ecc2a62c85e3b33834e75b8243fc3e160318614ad23ed6c47d13db77d73a2c8"
+   "content_hash": "6ecc2a62c85e3b33834e75b8243fc3e160318614ad23ed6c47d13db77d73a2c8",
+   "role_was": "headline_candidate",
+   "role_changed": "2026-09-25, owner answer FP3-1: promoted from headline candidate"
   },
   {
    "run_id": "2026-09-25T22:34:54Z|predebut|396e375f",
@@ -3936,7 +3967,7 @@
     }
    ],
    "note": "post-debut consensus reads removed, all remaining base years kept; tilted TOWARD eFV, which is graded at the decision year while the retained earlier reads are not",
-   "last_verified_at": "2026-09-25T22:35:26Z",
+   "last_verified_at": "2026-09-25T23:56:16Z",
    "content_hash": "396e375f0838410260c7c6497b1d44f1e8544b8840faa73a45e6cd66ce36abf9"
   },
   {
@@ -4017,7 +4048,7 @@
     }
    ],
    "note": "every base year including post-debut consensus reads; tilted TOWARD the consensus, which sees major league performance on those rows",
-   "last_verified_at": "2026-09-25T22:35:26Z",
+   "last_verified_at": "2026-09-25T23:56:16Z",
    "content_hash": "dd3cc7979ddf521c5c610b98399c30706bcb263e2c18221b0005a89378630ef7"
   },
   {
@@ -4067,8 +4098,209 @@
     }
    ],
    "note": "latest pre-debut consensus read",
-   "last_verified_at": "2026-09-25T22:35:26Z",
+   "last_verified_at": "2026-09-25T23:56:16Z",
    "content_hash": "f022a0d5db1fa9c7ef69941fe5d11a92f56ca2bb93473bca1288917eb62c99f0"
+  },
+  {
+   "run_id": "2026-09-25T23:50:14Z|vm2|b4273de2",
+   "date": "2026-09-25",
+   "trigger": "frame_change",
+   "model_id": "efv_v2",
+   "model_version": {
+    "fingerprint": "xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a970bd|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349|gradanchor=rookie_window|disp=hit:0.000000/1.000000|pit:0.000000/1.000000|gradenorm=asof@ref2017|label=ewar_v2@2026-09-03T12:35:09|injsides=pit|served=efv_v2@f903b813",
+    "commit": "9a53d29f",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025
+   },
+   "frame": "vm2",
+   "frame_version": "vm2",
+   "role": "headline",
+   "tilted": false,
+   "window": [
+    2017,
+    2023
+   ],
+   "n": 803,
+   "n_by_side": {
+    "hit": 388,
+    "pit": 415
+   },
+   "raters": {
+    "efv": {
+     "spearman": 0.4074,
+     "auc": 0.7505,
+     "n": 803
+    },
+    "prospx_consensus": {
+     "spearman": 0.4129,
+     "auc": 0.7492,
+     "n": 803
+    },
+    "mlb_pipeline": {
+     "spearman": 0.4116,
+     "auc": 0.7392,
+     "n": 803
+    },
+    "fangraphs": {
+     "spearman": 0.3662,
+     "auc": 0.7153,
+     "n": 803
+    }
+   },
+   "deltas": {
+    "vs_prospx_consensus": {
+     "spearman": {
+      "delta": -0.0055,
+      "ci95": [
+       -0.0202,
+       0.0099
+      ],
+      "mde95": 0.0303,
+      "mde95_estimator": "E_refit",
+      "ci95_estimator": "E_cond, player-clustered",
+      "resolvable": false,
+      "key": "accuracy.head_to_head_verdict",
+      "mde95_status": "carried",
+      "mde95_carried_from": "vm1",
+      "holm": {
+       "p_one_sided": 0.23753,
+       "holm_step": 4,
+       "holm_alpha": 0.016667,
+       "holm_z_one_sided": 2.128,
+       "mde95_holm": 0.0164,
+       "reject_holm": false
+      },
+      "holm_verdict": null
+     },
+     "auc": {
+      "delta": 0.0013,
+      "ci95": [
+       -0.0078,
+       0.01
+      ],
+      "mde95": 0.0073,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.prospx_consensus.auc",
+      "holm": {
+       "p_one_sided": 0.38509,
+       "holm_step": 6,
+       "holm_alpha": 0.05,
+       "holm_z_one_sided": 1.6449,
+       "mde95_holm": 0.0073,
+       "reject_holm": false
+      },
+      "holm_verdict": null
+     }
+    },
+    "vs_mlb_pipeline": {
+     "spearman": {
+      "delta": -0.0042,
+      "ci95": [
+       -0.0318,
+       0.024
+      ],
+      "mde95": 0.0235,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.mlb_pipeline.spearman",
+      "holm": {
+       "p_one_sided": 0.38426,
+       "holm_step": 5,
+       "holm_alpha": 0.025,
+       "holm_z_one_sided": 1.96,
+       "mde95_holm": 0.028,
+       "reject_holm": false
+      },
+      "holm_verdict": null
+     },
+     "auc": {
+      "delta": 0.0113,
+      "ci95": [
+       -0.0041,
+       0.0275
+      ],
+      "mde95": 0.0134,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": false,
+      "key": "accuracy.head_to_head_vs_sources.sources.mlb_pipeline.auc",
+      "holm": {
+       "p_one_sided": 0.08254,
+       "holm_step": 3,
+       "holm_alpha": 0.0125,
+       "holm_z_one_sided": 2.2414,
+       "mde95_holm": 0.0182,
+       "reject_holm": false
+      },
+      "holm_verdict": null
+     }
+    },
+    "vs_fangraphs": {
+     "spearman": {
+      "delta": 0.0412,
+      "ci95": [
+       0.0083,
+       0.0756
+      ],
+      "mde95": 0.0278,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources.sources.fangraphs.spearman",
+      "holm": {
+       "p_one_sided": 0.00739,
+       "holm_step": 2,
+       "holm_alpha": 0.01,
+       "holm_z_one_sided": 2.3263,
+       "mde95_holm": 0.0393,
+       "reject_holm": true
+      },
+      "holm_verdict": "beats FanGraphs"
+     },
+     "auc": {
+      "delta": 0.0352,
+      "ci95": [
+       0.016,
+       0.0546
+      ],
+      "mde95": 0.0163,
+      "mde95_estimator": "E_cond",
+      "ci95_estimator": "E_cond, player-clustered",
+      "clears_e_cond_floor": true,
+      "key": "accuracy.head_to_head_vs_sources.sources.fangraphs.auc",
+      "holm": {
+       "p_one_sided": 0.00019,
+       "holm_step": 1,
+       "holm_alpha": 0.008333,
+       "holm_z_one_sided": 2.394,
+       "mde95_holm": 0.0237,
+       "reject_holm": true
+      },
+      "holm_verdict": "beats FanGraphs"
+     }
+    }
+   },
+   "resolvable": false,
+   "verdict": "not resolvable at this power",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/source_backtest.json",
+     "generated_at": "2026-09-25T23:50:14Z",
+     "sha256": "6bff26beff61d108c2e41c7de7ff894c76a0ff81fe2293ec74aef4c9b67d6026"
+    },
+    {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-09-25",
+     "sha256": "5829cabb4edcecde5e4508f8d355743373d3f461a4da6dbc820f43aab213df14"
+    }
+   ],
+   "note": "Frame change, not model progress: the headline moved from the vintage-matched frame vm1 to the timing-pinned frame vm2 (owner answer FP3-1, 2026-09-25), and the per-source cells now carry a Holm-corrected reading (FP3-3). timing-pinned: eFV's consensus input is the raters' own preseason read; the headline since 2026-09-25",
+   "last_verified_at": "2026-09-25T23:56:16Z",
+   "content_hash": "b4273de2b95b6a5daee9a5a794c8efad7960ac3c5a26041632889bfc58893b0e"
   }
  ],
  "backfill": {

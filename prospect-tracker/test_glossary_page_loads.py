@@ -229,8 +229,9 @@ def test_progress_ledger_fetch_resolves_and_renders(server, browser):
     # A row is charted when it sits in a chart frame AND carries the Spearman delta the
     # chart plots (the page's _progSeriesRows rule). The DS-17 P(bust) rows carry an AUC
     # for reaching the majors and no Spearman, so they sit in the table only.
-    charted = [r for r in rows if r.get("role") not in ("tilted", "secondary")
-               and r.get("frame") in ("vm", "vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")
+    # FP3-1 (2026-09-25): vm1 is superseded and sits in the table only.
+    charted = [r for r in rows if r.get("role") not in ("tilted", "secondary", "superseded")
+               and r.get("frame") in ("vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")
                and ((r.get("deltas") or {}).get("vs_prospx_consensus") or {})
                .get("spearman", {}).get("delta") is not None]
     assert out["marks"] == len(charted), (out["marks"], len(charted))
@@ -240,13 +241,15 @@ def test_progress_ledger_fetch_resolves_and_renders(server, browser):
     assert f"n {int(head['n']):,}" in out["text"]
     assert head["verdict"] in out["text"]
     assert f"{head['raters']['efv']['spearman']:.3f}" in out["text"]
-    # EV-01: the timing-pinned headline candidate prints its own line and row.
-    cand = [r for r in rows if r.get("role") == "headline_candidate"]
-    if cand:
-        c = cand[-1]
-        assert "Vintage-matched, timing-pinned" in out["text"]
-        assert f"{c['raters']['efv']['spearman']:.3f}" in out["text"]
-        assert "headline candidate" in out["text"]
+    # FP3-1: the timing-pinned frame is the headline; the vm1 rows print in the
+    # table as superseded history, with the role they were written with.
+    assert doc["headline_frame"] == "vm2"
+    assert "Vintage-matched, timing-pinned" in out["text"]
+    if any(r.get("role") == "superseded" for r in rows):
+        assert "superseded" in out["text"]
+        assert "written as headline" in out["text"]
+    if head.get("deltas", {}).get("vs_prospx_consensus", {}).get("spearman", {}).get("mde95_status") == "carried":
+        assert "carried from vm1" in out["text"]
 
 
 def test_source_accuracy_subtabs_render(server, browser):

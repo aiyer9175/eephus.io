@@ -50,7 +50,9 @@ def test_backfilled_ci95_is_null_and_rater_frame_is_checked():
           "head_to_head": {"verdict_vs_consensus": VERDICT, "vs_frame": "vintage_matched",
                            "vs": _vs(800)}}
     r = B.row_from_version(on, B.SC_PATH, "d" * 40, "2026-09-01")
-    assert r["trigger"] == "backfill" and r["frame"] == "vm" and r["role"] == "headline"
+    assert r["trigger"] == "backfill" and r["frame"] == "vm"
+    # vm1 has been superseded since 2026-09-25 (FP3-1); a backfilled vm row is history.
+    assert r["role"] == P.FRAMES["vm"]["role"] == "superseded"
     for legs in r["deltas"].values():
         for leg in legs.values():
             assert leg["ci95"] is None

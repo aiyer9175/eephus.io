@@ -16,10 +16,17 @@ HEADTOHEAD_FRAME_GATE says every artifact-driven surface follows the corrected
 number, and do-not-reopen item 3 says copy may not claim eFV discriminates
 better.
 
+FP3-1 / FP3-3 (owner answers 2026-09-25): the headline moved to the
+timing-pinned frame vm2, and the view reads it from ONE key: every
+head-to-head renderer reads accuracy.head_to_head_verdict and follows its
+`basis` (_hhBlock), naming no accuracy block of its own. The per-source cells
+print a verdict word only where the artifact's Holm family gives one.
+
 Two layers:
-1. STATIC (always runs): the head-to-head renderers read no pooled block but
-   the vintage-matched one, stars go through the floor helper, the per-year
-   chart draws no eFV line, and the share-card engine honours star:false.
+1. STATIC (always runs): the head-to-head renderers read no pooled block and
+   reach the verdict's block only through _hhBlock, stars go through the floor
+   helper, the per-year chart draws no eFV line, and the share-card engine
+   honours star:false.
 2. RENDERED (skips without playwright or data/source_backtest.json): the bars
    print the verdict block's numbers, a star appears only on the floored
    pair's winner when it resolves and tops every bar, no AUC bar is ever
@@ -38,6 +45,12 @@ JS = ROOT / "assets" / "glossary.js"
 GFX = ROOT / "assets" / "eephus-gfx.js"
 DATA = ROOT / "data" / "source_backtest.json"
 VM = "pooled_efv_common_vintage_matched"
+VM2 = "pooled_efv_common_vintage_matched_vm2"
+
+
+# Any decimal literal that could be a statistic (the per-source table prints
+# only artifact numbers).
+_STAT_LITERAL_ANY = re.compile(r"(?<![\w.])\d*\.\d+(?![\w.])")
 
 
 def _fn_code(js: str, name: str) -> str:
@@ -57,10 +70,11 @@ def _js() -> str:
 @pytest.mark.parametrize("name", ["_methAccuracyChart", "_scxGfxSpec"])
 def test_head_to_head_renderers_read_only_the_verdict_basis(name):
     code = _fn_code(_js(), name)
-    blocks = set(re.findall(r"accuracy\.(pooled\w*|per_year\w*)", code))
-    assert blocks <= {VM}, (
-        f"{name} reads {sorted(blocks - {VM})}; the head-to-head surfaces "
-        f"read {VM}, the block head_to_head_verdict is computed on")
+    blocks = set(re.findall(r"accuracy\.(pooled\w*|per_year\w*|common_n_efv\w*)", code))
+    assert not blocks, (
+        f"{name} reads {sorted(blocks)}; the head-to-head surfaces reach the "
+        "block head_to_head_verdict is computed on only through _hhBlock")
+    assert "_hhBlock(bt)" in code
     assert "_hhStarRater(bt)" in code, (
         f"{name} no longer routes its star through the floor helper")
 
@@ -68,7 +82,33 @@ def test_head_to_head_renderers_read_only_the_verdict_basis(name):
 def test_star_helper_requires_a_resolved_floor():
     code = _fn_code(_js(), "_hhStarRater")
     assert "hh.resolvable !== true" in code
-    assert f'hh.basis !== "{VM}"' in code
+    assert "_hhBlock(bt)" in code and "_hhVerdict(bt)" in code
+
+
+def test_the_headline_block_is_one_key():
+    """FP3-1: _hhBlock follows head_to_head_verdict.basis, and no function in
+    the view names a vintage-matched block directly."""
+    js = _js()
+    blk = _fn_code(js, "_hhBlock")
+    assert "acc[hh.basis]" in blk
+    assert "head_to_head_verdict" in _fn_code(js, "_hhVerdict")
+    code = "\n".join(ln for ln in js.split("\n") if not ln.lstrip().startswith("//"))
+    for name in (VM, VM2, "common_n_efv_vintage_matched"):
+        assert not re.search(r"\." + re.escape(name) + r"\b", code), (
+            f"assets/glossary.js reads accuracy.{name} directly; read "
+            "head_to_head_verdict and follow its basis")
+    for name in ("_methHeroBanner", "_methCaveatHeadToHead", "_hhFloorClause"):
+        assert "_hhVerdict(bt)" in _fn_code(js, name), name
+
+
+def test_per_source_cells_print_only_the_artifacts_words():
+    """FP3-3: the per-source table reads the verdict word and the Holm floor
+    from the artifact and states the family and alpha from it too."""
+    code = _fn_code(_js(), "_methPerSourceCells")
+    assert "leg.verdict" in code and "interval only" in code
+    assert "h.k" in code and "h.alpha" in code and "h.family" in code
+    assert "vs.basis !== hh.basis" in code
+    assert not _STAT_LITERAL_ANY.findall(re.sub(r'[\w-]+="[^"$]*"', "", code))
 
 
 def test_per_year_chart_draws_no_efv_line_and_counts_no_wins():
@@ -149,8 +189,9 @@ def _artifact():
         pytest.skip("data/source_backtest.json absent (gitignored build artifact)")
     doc = json.loads(DATA.read_text(encoding="utf-8"))
     acc = doc.get("accuracy") or {}
-    if not (acc.get(VM) or {}).get("xfv") or not acc.get("head_to_head_verdict"):
-        pytest.skip("source_backtest.json carries no vintage-matched head-to-head")
+    hh = acc.get("head_to_head_verdict") or {}
+    if not hh or not (acc.get(hh.get("basis")) or {}).get("xfv"):
+        pytest.skip("source_backtest.json carries no head-to-head verdict block")
     return doc
 
 
@@ -226,7 +267,8 @@ def _render(server, browser, doc):
 def test_bars_print_the_verdict_block_and_star_only_past_a_floor(server, browser):
     doc = _artifact()
     acc = doc["accuracy"]
-    vm, hh = acc[VM], acc["head_to_head_verdict"]
+    hh = acc["head_to_head_verdict"]
+    vm = acc[hh["basis"]]
     out = _render(server, browser, doc)
     efv = [r for r in out["sp"] if r["label"].startswith("eFV")]
     assert efv and efv[0]["val"].startswith(f"{vm['xfv']['spearman']:.3f}"), (
@@ -241,7 +283,7 @@ def test_bars_print_the_verdict_block_and_star_only_past_a_floor(server, browser
     assert not re.search(r"best ordering skill in \d+ of \d+", out["text"])
     spec = out["spec"]
     if spec is not None:
-        n = acc.get("common_n_efv_vintage_matched") or vm["xfv"]["n"]
+        n = hh.get("n") or vm["xfv"]["n"]
         assert f"n={int(n):,}" in spec["subtitle"], spec["subtitle"]
         assert not any("AUC" in (t.get("label") or "") for t in spec["comp"]["tiles"])
         auc_panels = [p for p in spec["comp"]["panels"] if "AUC" in p["title"]]
@@ -252,7 +294,7 @@ def test_bars_print_the_verdict_block_and_star_only_past_a_floor(server, browser
 
 def _with_verdict(doc, xfv_sp, resolvable, xfv_beats):
     d = json.loads(json.dumps(doc))
-    d["accuracy"][VM]["xfv"]["spearman"] = xfv_sp
+    d["accuracy"][d["accuracy"]["head_to_head_verdict"]["basis"]]["xfv"]["spearman"] = xfv_sp
     d["accuracy"]["head_to_head_verdict"].update(
         {"resolvable": resolvable, "xfv_beats": xfv_beats})
     return d
@@ -263,7 +305,7 @@ def test_star_branches(server, browser):
     every bar earns exactly one star, on eFV; a resolved win that does not top
     every bar earns none; an unresolved gap earns none."""
     doc = _artifact()
-    vm = doc["accuracy"][VM]
+    vm = doc["accuracy"][doc["accuracy"]["head_to_head_verdict"]["basis"]]
     top = max(v["spearman"] for k, v in vm.items() if k != "xfv")
     cases = [
         (top + 0.05, True, True, ["eFV"]),
@@ -275,3 +317,49 @@ def test_star_branches(server, browser):
         starred = [r["label"].split(" ")[0] for r in out["sp"] if r["best"]]
         assert starred == want, (xfv_sp, res, beats, starred)
         assert not any(r["best"] for r in out["au"])
+
+
+def test_per_source_table_renders_the_holm_words(server, browser):
+    """Rendered: a verdict word appears exactly on the cells the artifact gives
+    one, the others read "interval only", and the family size and alpha on the
+    page are the artifact's."""
+    doc = _artifact()
+    vs = doc["accuracy"].get("head_to_head_vs_sources") or {}
+    if not vs.get("holm"):
+        pytest.skip("source_backtest.json predates the FP3-3 Holm family")
+    errors: list[str] = []
+    page = browser.new_page()
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    body = json.dumps(doc)
+    page.route("**/data/source_backtest.json*", lambda route, req=None: route.fulfill(
+        status=200, body=body, content_type="application/json"))
+    try:
+        page.goto(server + "glossary/index.html#view=source-comparison",
+                  wait_until="load", timeout=15_000)
+        page.wait_for_function(
+            "() => !!document.querySelector('#source-comparison-body .scx-per-source')",
+            timeout=15_000)
+        out = page.evaluate("""() => {
+          const t = document.querySelector('#source-comparison-body .scx-per-source');
+          return {rows: [...t.querySelectorAll('tbody tr')].map(tr =>
+                   [...tr.querySelectorAll('td')].map(td => td.innerText.trim())),
+                  text: t.innerText,
+                  hero: (document.querySelector('.source-comp-hero-lede') || {}).innerText || ""};
+        }""")
+    finally:
+        page.close()
+    assert not errors, errors
+    words = {c["label"]: [(c.get(m) or {}).get("verdict") for m in ("spearman", "auc")]
+             for c in vs["sources"].values()}
+    assert len(out["rows"]) == len(words)
+    for tds in out["rows"]:
+        want = words[tds[0]]
+        got = [tds[3], tds[6]]
+        for w, g in zip(want, got):
+            assert (g == w) if w else (g == "interval only"), (tds[0], want, got)
+    h = vs["holm"]
+    assert f"One family of {h['k']} tests" in out["text"]
+    assert f"alpha of {h['alpha']}" in out["text"]
+    hh = doc["accuracy"]["head_to_head_verdict"]
+    if hh.get("mde95_status") == "carried":
+        assert "carried from the vm1 frame" in out["hero"]

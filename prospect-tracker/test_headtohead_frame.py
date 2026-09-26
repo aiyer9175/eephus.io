@@ -92,10 +92,16 @@ def test_the_published_verdict_is_read_off_the_symmetric_frame():
         pytest.skip("source_backtest.json predates the M-1 frame split")
     hh = acc.get("head_to_head_verdict")
     assert hh, "the frame split ran but published no verdict"
-    assert hh.get("basis") == "pooled_efv_common_vintage_matched", (
-        "the head-to-head verdict moved off the symmetric frame; if that is "
-        "deliberate it needs its own gate, because the other two frames each "
+    # FP3-1 (owner answer 2026-09-25): the symmetric frame is the timing-pinned
+    # vintage-matched frame vm2; vm1 stays published as superseded history.
+    assert hh.get("basis") == "pooled_efv_common_vintage_matched_vm2", (
+        "the head-to-head verdict moved off the timing-pinned symmetric frame; if "
+        "that is deliberate it needs its own gate, because the other frames each "
         "hand one of the two graders an information edge")
+    assert hh.get("frame_version") == "vm2" and hh.get("role") == "headline"
+    vm1 = acc["head_to_head_by_frame"].get("vintage_matched")
+    if vm1:
+        assert vm1.get("role") == "superseded" and vm1.get("frame_version") == "vm1"
 
 
 def test_a_win_is_never_published_off_the_predebut_frame():
@@ -115,7 +121,7 @@ def test_a_win_is_never_published_off_the_predebut_frame():
             "the pre-debut frame must keep disclosing which way it tilts")
     hh = (bt.get("accuracy") or {}).get("head_to_head_verdict") or {}
     if hh.get("xfv_beats"):
-        assert hh.get("basis") == "pooled_efv_common_vintage_matched", (
+        assert hh.get("basis") == "pooled_efv_common_vintage_matched_vm2", (
             "a 'beats consensus' verdict was published off a tilted frame")
 
 
@@ -220,34 +226,106 @@ def test_the_pin_changes_only_the_scored_input(pinned):
     assert same > 100
 
 
-def test_the_served_vm2_frame_carries_its_timing_receipt_and_stays_beside_vm1():
+def test_the_vm2_headline_carries_its_timing_receipt_and_vm1_is_superseded():
+    """FP3-1: the headline verdict IS the vm2 frame; vm1 is kept as history."""
     bt = _load(BACKTEST)
     acc = bt.get("accuracy") or {}
-    hv2 = acc.get("head_to_head_verdict_vm2")
-    if not hv2:
-        pytest.skip("source_backtest.json predates the vm2 frame")
-    hv = acc["head_to_head_verdict"]
-    # vm1 is still the verdict the page reads.
-    assert hv["basis"] == "pooled_efv_common_vintage_matched"
-    assert hv["frame_version"] == "vm1"
-    assert acc["head_to_head_by_frame"]["vintage_matched"]["frame_version"] == "vm1"
-    assert hv2["basis"] == "pooled_efv_common_vintage_matched_vm2"
-    assert hv2["frame_version"] == "vm2" and hv2["role"] == "headline_candidate"
-    assert acc["head_to_head_by_frame"]["vintage_matched_vm2"]["frame_version"] == "vm2"
-    tp = hv2["timing_pin"]
-    assert tp["n_rows"] == hv2["n"] == acc["pooled_efv_common_vintage_matched_vm2"]["xfv"]["n"]
+    hv = acc.get("head_to_head_verdict")
+    if not hv or hv.get("frame_version") != "vm2":
+        pytest.skip("source_backtest.json predates the FP3-1 headline move")
+    assert "head_to_head_verdict_vm2" not in acc and "head_to_head_vs_sources_vm2" not in acc, (
+        "a second verdict key rides beside the headline; the page must read one key")
+    assert hv["basis"] == "pooled_efv_common_vintage_matched_vm2"
+    assert hv["role"] == "headline"
+    frames = acc["head_to_head_by_frame"]
+    assert frames["vintage_matched_vm2"]["frame_version"] == "vm2"
+    assert frames["vintage_matched_vm2"]["role"] == "headline"
+    vm1 = frames["vintage_matched"]
+    assert vm1["frame_version"] == "vm1" and vm1["role"] == "superseded"
+    assert vm1.get("superseded_note")
+    # The floor is labelled carried, never passed off as measured on vm2.
+    assert hv["mde95_status"] == "carried" and hv["mde95_carried_from"] == "vm1"
+    assert hv["mde95"] == vm1["mde95"]
+    tp = hv["timing_pin"]
+    assert tp["n_rows"] == hv["n"] == acc["pooled_efv_common_vintage_matched_vm2"]["xfv"]["n"]
     assert tp["n_outside_window"] == 0
     # The input is the raters' own consensus read on every row, not just any
     # point inside the window.
     assert tp["n_input_equals_rater_consensus"] == tp["n_rows"]
     lo, hi = tp["input_mmdd_range"]
     assert "-01-01" <= lo and hi < "-05-01"
-    assert sum(hv2["n_by_side"].values()) == hv2["n"]
+    assert sum(hv["n_by_side"].values()) == hv["n"]
     # A vm2 row is a vm1 row: the frame can only lose rows, never add them.
-    assert hv2["n"] <= hv["n"]
-    assert hv2["n"] + tp["n_vintage_rows_without_pin"] == hv["n"]
-    if hv2.get("xfv_beats"):
-        assert hv2["resolvable"] is True
+    assert hv["n"] <= vm1["n"]
+    assert hv["n"] + tp["n_vintage_rows_without_pin"] == vm1["n"]
+    if hv.get("xfv_beats"):
+        assert hv["resolvable"] is True
+
+
+def test_the_per_source_cells_carry_one_holm_family():
+    """FP3-3: six cells, one family, alpha stated; a verdict word only on a cell
+    that survives Holm, and the consensus Spearman cell also needs the headline."""
+    bt = _load(BACKTEST)
+    acc = bt.get("accuracy") or {}
+    vs = acc.get("head_to_head_vs_sources") or {}
+    if not vs.get("holm"):
+        pytest.skip("source_backtest.json predates the FP3-3 Holm family")
+    hv = acc["head_to_head_verdict"]
+    assert vs["basis"] == hv["basis"]
+    h = vs["holm"]
+    assert h["k"] == 6 and h["alpha"] == 0.05
+    assert h["family"] == [f"{r}.{m}" for r in ("prospx_consensus", "mlb_pipeline", "fangraphs")
+                           for m in ("spearman", "auc")]
+    steps = []
+    n_words = 0
+    for r, cell in vs["sources"].items():
+        for m in ("spearman", "auc"):
+            leg = cell.get(m)
+            if not leg:
+                continue
+            ho = leg["holm"]
+            steps.append(ho["holm_step"])
+            if leg["verdict"]:
+                n_words += 1
+                assert ho["reject_holm"] is True
+                assert abs(leg["delta"]) >= ho["mde95_holm"] - 1e-4
+                assert leg["verdict"] in (f"beats {cell['label']}", f"loses to {cell['label']}")
+                assert (leg["delta"] > 0) == leg["verdict"].startswith("beats")
+            else:
+                assert leg["reading"] == "interval only"
+    assert sorted(steps) == list(range(1, len(steps) + 1))
+    assert n_words == h["n_verdicts"]
+    cons = vs["sources"]["prospx_consensus"]["spearman"]
+    if cons["verdict"]:
+        assert hv["resolvable"] is True
+    # The headline's CI95 is the consensus Spearman cell's interval.
+    assert hv["ci95"] == cons["ci95"]
+
+
+def test_the_backtest_holm_matches_the_lab_implementation():
+    """source_backtest._holm_family is a stdlib copy of
+    tools/efv_power_lab.holm_family; on the same cells they agree exactly."""
+    import sys
+    import source_backtest as sb
+    sys.path.insert(0, str(Path(__file__).parent / "tools"))
+    lab = pytest.importorskip("efv_power_lab")
+    cells = [{"key": "a", "delta": -0.0055, "sd": 0.0077},
+             {"key": "b", "delta": 0.0013, "sd": 0.0044},
+             {"key": "c", "delta": -0.0042, "sd": 0.0143},
+             {"key": "d", "delta": 0.0113, "sd": 0.00815},
+             {"key": "e", "delta": 0.0412, "sd": 0.0169},
+             {"key": "f", "delta": 0.0352, "sd": 0.0099}]
+    mine, theirs = sb._holm_family(cells), lab.holm_family(cells)
+    assert mine["k"] == theirs["k"] == 6
+    for x, y in zip(mine["cells"], theirs["cells"]):
+        assert x["key"] == y["key"]
+        assert x["p_one_sided"] == y["p_one_sided"]
+        assert x["holm_step"] == y["holm_step"]
+        assert x["reject_holm"] == y["reject_holm"]
+        assert x["mde95_holm"] == y["mde95_holm_k6"]
+    # A missing cell stays in the family at p = 1 and is never rejected.
+    gap = sb._holm_family(cells[:5] + [{"key": "f", "delta": None, "sd": None}])
+    assert gap["k"] == 6 and gap["cells"][-1]["reject_holm"] is False
 
 
 def test_vm2_rows_drop_a_mismatched_or_out_of_window_pin():

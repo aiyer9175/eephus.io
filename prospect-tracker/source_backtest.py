@@ -2180,9 +2180,87 @@ _H2H_SOURCE_LABELS = {CONSENSUS_KEY: "PROSPX consensus",
 
 
 #: EV-01 (docs/efv-v2/PROGRAM.md s3.4): the accuracy key of the timing-pinned
-#: vintage-matched frame, frame version vm2. vm1 keeps
-#: "pooled_efv_common_vintage_matched" and stays the verdict's basis.
+#: vintage-matched frame, frame version vm2. Owner answer FP3-1 (2026-09-25,
+#: _audit_2026-09-09/DECISIONS_FOR_OWNER.md, final-pass batch 3) promoted it to
+#: the HEADLINE: accuracy.head_to_head_verdict is read off this block and every
+#: surface follows head_to_head_verdict.basis to it. vm1
+#: ("pooled_efv_common_vintage_matched") is still scored and published in
+#: head_to_head_by_frame with role "superseded", as history.
 VM2_BASIS = "pooled_efv_common_vintage_matched_vm2"
+#: The head_to_head_by_frame key of the headline frame, and of the frame it
+#: replaced. One place, so no reader types either.
+HEADLINE_FRAME_KEY = "vintage_matched_vm2"
+SUPERSEDED_FRAME_KEY = "vintage_matched"
+
+#: FP3-3 (owner answer 2026-09-25): the per-source head-to-head cells are ONE
+#: Holm family, fixed before any cell is read: eFV against each of these raters,
+#: on each of these metrics, on the headline frame (k = 6). A cell missing in a
+#: run stays in the family at p = 1, so k never shrinks to suit the data.
+H2H_HOLM_RATERS = (CONSENSUS_KEY, "mlb_pipeline", "fangraphs")
+H2H_HOLM_METRICS = ("spearman", "auc")
+H2H_HOLM_ALPHA = 0.05
+
+
+def _z_one_sided(alpha: float) -> float:
+    """z with P(Z > z) = alpha, by bisection on math.erfc (stdlib only)."""
+    import math
+    lo, hi = 0.0, 40.0
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        if 0.5 * math.erfc(mid / math.sqrt(2.0)) > alpha:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
+
+
+def _p_one_sided(delta, sd) -> float:
+    """p = P(Z > |delta| / sd). The floor convention every cell already uses
+    (clears when |delta| >= 1.645 * sd) is exactly p <= 0.05 on this scale."""
+    import math
+    if delta is None or not sd or sd <= 0:
+        return 1.0
+    return 0.5 * math.erfc((abs(float(delta)) / float(sd)) / math.sqrt(2.0))
+
+
+def _holm_family(cells, alpha: float = H2H_HOLM_ALPHA) -> dict:
+    """Holm step-down over a fixed family, one-sided on |delta| / sd.
+
+    The same contract as tools/efv_power_lab.holm_family (test-pinned equal on
+    the same input), kept here because that lab pins thread counts and imports
+    the model stack at import time, which a served exporter must not do.
+
+    cells: [{"key", "delta", "sd"}] in the registered order; ties in p break on
+    that order. Each cell comes back with its step, its step alpha, the floor
+    that step implies (z_step * sd) and `reject_holm`."""
+    k = len(cells)
+    st = []
+    for i, c in enumerate(cells):
+        sd = float(c["sd"]) if c.get("sd") else 0.0
+        st.append({"key": c["key"], "_order": i,
+                   "delta": None if c.get("delta") is None else round(float(c["delta"]), 5),
+                   "sd": round(sd, 5),
+                   "p_one_sided": round(_p_one_sided(c.get("delta"), sd), 5)})
+    order = sorted(range(k), key=lambda i: (st[i]["p_one_sided"], st[i]["_order"]))
+    live = True
+    for step, i in enumerate(order, 1):
+        a_step = alpha / (k - step + 1)
+        z_step = _z_one_sided(a_step)
+        s = st[i]
+        s["holm_step"] = step
+        s["holm_alpha"] = round(a_step, 6)
+        s["holm_z_one_sided"] = round(z_step, 4)
+        s["mde95_holm"] = round(z_step * s["sd"], 4)
+        s["clears_own_holm_step"] = bool(s["p_one_sided"] <= a_step)
+        if live and s["clears_own_holm_step"]:
+            s["reject_holm"] = True
+        else:
+            live = False
+            s["reject_holm"] = False
+        s.pop("_order")
+    return {"k": k, "alpha": alpha,
+            "procedure": "Holm step-down, one-sided on |delta| / sd",
+            "cells": st}
 
 
 def _attach_raw_efv(common_by_year, years, xfv_oos):
@@ -2273,16 +2351,29 @@ def _vm2_frame_rows(rows_x, raw_vm1, xfv_oos_vm2, receipts, is_vintage_matched):
     return out, receipt
 
 
-def _head_to_head_vs_sources(rows, block, *, frame, basis):
+def _head_to_head_vs_sources(rows, block, *, frame, basis, headline=None):
     """eFV against each rater on one frame, both legs, each with its paired
-    player-clustered CI95 and E_cond MDE95 (EV-00, PROGRAM.md s5.1 item 2).
+    player-clustered CI95 and E_cond MDE95 (EV-00, PROGRAM.md s5.1 item 2),
+    and ONE Holm family over the six cells (owner answer FP3-3, 2026-09-25).
 
     `block` is the frame's served accuracy block (the `_acc` output for the
     same rows), so every point value here is the one the page already prints;
-    the bootstrap adds only the interval and the floor. DESCRIPTIVE: no Holm
-    correction is applied across the sources and no per-source verdict word is
-    written. `clears_e_cond_floor` is a plain comparison against the one-sided
-    E_cond floor, carried so a reader can see it, and it is not a claim.
+    the bootstrap adds only the interval, the sd and the floor.
+
+    THE VERDICT WORD IS EARNED AFTER THE CORRECTION. The family is fixed before
+    any cell is read: eFV against PROSPX consensus, MLB Pipeline and FanGraphs,
+    on Spearman and on contributor AUC (H2H_HOLM_RATERS x H2H_HOLM_METRICS,
+    k = 6, alpha H2H_HOLM_ALPHA one-sided on |delta| / sd, sd the E_cond
+    bootstrap sd of the cell). A cell carries a verdict word only when it
+    survives Holm; every other cell carries `verdict` None and is read as its
+    interval only. `clears_e_cond_floor` (the uncorrected 1.645 * sd line) is
+    kept beside it, labelled as uncorrected, and is not a claim.
+
+    `headline` is the frame's head_to_head_verdict. The PROSPX consensus
+    Spearman cell IS that verdict, which answers to its own floor (the carried
+    E_refit mde95), so its word also needs the headline to resolve in the same
+    direction; the page can then never print a per-source word the headline
+    does not.
     """
     block = block or {}
     x = block.get("xfv") or {}
@@ -2293,20 +2384,21 @@ def _head_to_head_vs_sources(rows, block, *, frame, basis):
                           "the 2.5th and 97.5th percentile of the paired "
                           "player-clustered bootstrap; MDE95 = 1.645 * sd(delta), "
                           "one-sided"),
-           "note": ("descriptive: no multiplicity correction across sources and no "
-                    "per-source verdict. The secondary Holm family is registered "
-                    "only for eFV v2 on reserved frames (docs/efv-v2/PROGRAM.md "
-                    "s4 (d))."),
+           "note": ("a cell prints a verdict word only if it clears its floor after "
+                    "a Holm correction across the six cells in `holm.family`; "
+                    "otherwise it is read as its interval only (owner answer "
+                    "FP3-3, 2026-09-25)"),
            "sources": {}}
-    for rater in (CONSENSUS_KEY, "mlb_pipeline", "fangraphs"):
+    fam_cells = []
+    for rater in H2H_HOLM_RATERS:
         r = block.get(rater) or {}
-        if not r:
-            continue
-        cell = {"label": _H2H_SOURCE_LABELS.get(rater, rater)}
-        for metric in ("spearman", "auc"):
+        cell = {"label": _H2H_SOURCE_LABELS.get(rater, rater)} if r else None
+        for metric in H2H_HOLM_METRICS:
             xv, rv = x.get(metric), r.get(metric)
-            if xv is None or rv is None:
-                cell[metric] = None
+            if cell is None or xv is None or rv is None:
+                if cell is not None:
+                    cell[metric] = None
+                fam_cells.append({"key": f"{rater}.{metric}", "delta": None, "sd": None})
                 continue
             fl = _paired_delta_ci(rows, "xfv", rater, metric,
                                   label=f"{frame}.xfv_vs_{rater}.{metric}")
@@ -2317,14 +2409,54 @@ def _head_to_head_vs_sources(rows, block, *, frame, basis):
                 "delta": delta,
                 "point_delta_unrounded": fl.get("point_delta"),
                 "ci95": fl.get("ci95"),
+                "sd": fl.get("sd"),
                 "mde95": mde,
                 "mde95_estimator": "E_cond",
                 "derived_in_run": bool(fl.get("derived_in_run")),
                 "status": fl.get("status"),
                 "clears_e_cond_floor": (None if mde is None
                                         else bool(abs(delta) >= mde)),
+                "clears_e_cond_floor_note": "uncorrected 1.645 * sd line; not a claim",
             }
-        out["sources"][rater] = cell
+            fam_cells.append({"key": f"{rater}.{metric}", "delta": delta,
+                              "sd": fl.get("sd")})
+        if cell is not None:
+            out["sources"][rater] = cell
+    fam = _holm_family(fam_cells, H2H_HOLM_ALPHA)
+    by_key = {c["key"]: c for c in fam["cells"]}
+    for rater, cell in out["sources"].items():
+        for metric in H2H_HOLM_METRICS:
+            leg = cell.get(metric)
+            if not leg:
+                continue
+            h = by_key[f"{rater}.{metric}"]
+            leg["holm"] = {k: h[k] for k in ("p_one_sided", "holm_step", "holm_alpha",
+                                              "holm_z_one_sided", "mde95_holm",
+                                              "reject_holm")}
+            word = None
+            if h["reject_holm"] and leg["delta"]:
+                word = (f"beats {cell['label']}" if leg["delta"] > 0
+                        else f"loses to {cell['label']}")
+                if rater == CONSENSUS_KEY and metric == "spearman":
+                    hv = headline or {}
+                    agrees = (hv.get("resolvable") is True and hv.get("delta") is not None
+                              and (hv["delta"] > 0) == (leg["delta"] > 0))
+                    if not agrees:
+                        word = None
+            leg["verdict"] = word
+            leg["reading"] = "verdict" if word else "interval only"
+    out["holm"] = {
+        "family": [c["key"] for c in fam_cells],
+        "k": fam["k"], "alpha": fam["alpha"],
+        "procedure": fam["procedure"] + ", sd = the cell's E_cond bootstrap sd",
+        "rule": ("a cell carries a verdict word only when it survives Holm; the "
+                 "PROSPX consensus Spearman cell also needs head_to_head_verdict "
+                 "to resolve in the same direction; every other cell is read as "
+                 "its interval only"),
+        "registered": "owner answer FP3-3, 2026-09-25, before this block was first read",
+        "n_verdicts": sum(1 for c in out["sources"].values() for m in H2H_HOLM_METRICS
+                          if (c.get(m) or {}).get("verdict")),
+    }
     return out
 
 
@@ -3039,6 +3171,12 @@ def _claim_instruments(*, data_dir, pooled_common, frames, side_of, disp_raters,
         "vintage_matched": (XFV_HEADTOHEAD_VINTAGE_MDE95,
                             "source_backtest.XFV_HEADTOHEAD_VINTAGE_MDE95 "
                             "(tools/efv_headtohead_frame_lab.py, 2026-08-13)", None),
+        # The headline frame since FP3-1 carries vm1's stored floor (same players,
+        # same consensus column), labelled as carried; not re-measured on vm2.
+        HEADLINE_FRAME_KEY: (XFV_HEADTOHEAD_VINTAGE_MDE95,
+                             "source_backtest.XFV_HEADTOHEAD_VINTAGE_MDE95, carried "
+                             "from the vm1 frame (measured 2026-08-13 on eFV v1), "
+                             "not re-measured on vm2", None),
         "predebut": (XFV_HEADTOHEAD_PREDEBUT_MDE95,
                      "source_backtest.XFV_HEADTOHEAD_PREDEBUT_MDE95 "
                      "(tools/efv_headtohead_frame_lab.py, 2026-08-13)", None),
@@ -3828,8 +3966,10 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     # renders a bare inequality, which is the pattern the 2026-08-06 resolvability
     # gate was added to stop one level up.
     #
-    # The verdict is read off the VINTAGE-MATCHED basis, which is the only one of
-    # the three where neither grader holds a timing edge (see the block above).
+    # The verdict is read off the VINTAGE-MATCHED basis, the only frame where
+    # neither grader holds a timing edge (see the block above); since 2026-09-25
+    # its timing-pinned version vm2, which also pins eFV's consensus input to the
+    # raters' preseason window (owner answer FP3-1).
     # Every basis is still published, each against its OWN measured floor, so a
     # reader can see that the answer moves with the frame and by how much.
     def _h2h_cell(basis_key: str, rows_block: dict | None, floor: float,
@@ -3858,7 +3998,9 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
             "pooled_efv_common_vintage_matched",
             accuracy.get("pooled_efv_common_vintage_matched"),
             XFV_HEADTOHEAD_VINTAGE_MDE95,
-            "base year equals the eFV decision year; neither side holds a timing edge"),
+            "base year equals the eFV decision year; eFV's consensus input is read at "
+            "its matrix date, which on some rows falls after the raters' preseason "
+            "window (frame version vm1, superseded by vm2 on 2026-09-25)"),
         "predebut": _h2h_cell(
             "pooled_efv_common_predebut",
             accuracy.get("pooled_efv_common_predebut"),
@@ -3873,9 +4015,9 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
             "every base year including post-debut consensus reads; tilted TOWARD "
             "the consensus, which sees major league performance on those rows"),
     }
-    # EV-01: the timing-pinned vintage-matched frame (vm2), scored beside vm1.
-    # Its floor is the vm1 frame's stored E_refit constant (same rows, same
-    # consensus column); the in-run E_cond interval is its own.
+    # EV-01: the timing-pinned vintage-matched frame (vm2). Its floor is the vm1
+    # frame's stored E_refit constant (same rows, same consensus column); the
+    # in-run E_cond interval is its own.
     accuracy["pooled_efv_common_vintage_matched_vm2"] = (
         _acc(efv_common_vintage_vm2) if len(efv_common_vintage_vm2) >= 40 else None)
     _frames["vintage_matched_vm2"] = _h2h_cell(
@@ -3885,71 +4027,77 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         "base year equals the eFV decision year, and eFV's consensus input is the "
         "raters' own preseason read (latest point dated Jan 1 to Apr 30 of that "
         "year), so neither side holds a timing edge; frame version vm2 (EV-01)")
-    for _fk, _fv in (("vintage_matched", "vm1"), ("vintage_matched_vm2", "vm2")):
+    for _fk, _fv, _role in ((SUPERSEDED_FRAME_KEY, "vm1", "superseded"),
+                            (HEADLINE_FRAME_KEY, "vm2", "headline")):
         if _frames.get(_fk):
             _frames[_fk]["frame_version"] = _fv
+            _frames[_fk]["role"] = _role
+    if _frames.get(SUPERSEDED_FRAME_KEY):
+        _frames[SUPERSEDED_FRAME_KEY]["superseded_note"] = (
+            "the headline until 2026-09-25, kept as history. On some of its rows "
+            "eFV's consensus input was read after the raters' preseason window, "
+            "a timing edge toward eFV; vm2 pins that input to the window and "
+            "replaced it as the headline (owner answer FP3-1)")
     accuracy["head_to_head_by_frame"] = {k: v for k, v in _frames.items() if v}
-    if _frames.get("vintage_matched"):
-        accuracy["head_to_head_verdict"] = dict(_frames["vintage_matched"])
-        accuracy["head_to_head_verdict"]["frame_note"] = (
-            "read off the vintage-matched basis. The other two frames are published "
-            "in head_to_head_by_frame and each is tilted toward one of the two "
-            "graders; see docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md.")
-    # EV-00 (docs/efv-v2/PROGRAM.md s5.1 item 2). The paired, player-clustered
-    # interval for every rater on the verdict's own rows, and the verdict's CI95
-    # copied from the consensus Spearman leg of that same block. ADDITIVE: the
-    # verdict's delta, floor, resolvable flag and verdict word are unchanged;
-    # the floor that decides `resolvable` stays the stored E_refit constant.
-    accuracy["head_to_head_vs_sources"] = (
-        _head_to_head_vs_sources(
-            efv_common_vintage,
-            accuracy.get("pooled_efv_common_vintage_matched"),
-            frame="vintage_matched", basis="pooled_efv_common_vintage_matched")
-        if accuracy.get("pooled_efv_common_vintage_matched") else None)
-    if accuracy.get("head_to_head_verdict") and accuracy["head_to_head_vs_sources"]:
-        _leg = ((accuracy["head_to_head_vs_sources"]["sources"]
-                 .get(CONSENSUS_KEY) or {}).get("spearman") or {})
-        _hv = accuracy["head_to_head_verdict"]
-        _hv["ci95"] = _leg.get("ci95")
-        _hv["ci95_estimator"] = "E_cond, player-clustered"
-        _hv["ci95_source"] = ("accuracy.head_to_head_vs_sources.sources."
-                              f"{CONSENSUS_KEY}.spearman.ci95")
-        _hv["mde95_estimator"] = "E_refit"
-    # EV-01 vm2 verdict, beside the vm1 verdict and never in its place: the page
-    # reads head_to_head_verdict (vm1) until the owner has seen vm2.
-    accuracy["head_to_head_vs_sources_vm2"] = (
-        _head_to_head_vs_sources(
+    # THE HEADLINE IS ONE KEY (owner answer FP3-1, 2026-09-25). head_to_head_verdict
+    # is read off the timing-pinned frame vm2, and its `basis` names the accuracy
+    # block every surface reads its bars, tiles and cards from: the glossary
+    # Source Comparison hero, bars and share card, the scoreboard and the /diamond/
+    # tiles, and the progress ledger's headline. None of them names a frame of its
+    # own. With no vm2 frame in a run there is no headline verdict at all, never a
+    # silent fall back to the frame it replaced.
+    # EV-00 (docs/efv-v2/PROGRAM.md s5.1 item 2) plus FP3-3: the paired,
+    # player-clustered interval for every rater on the verdict's own rows, one
+    # Holm family over the six cells, and the verdict's CI95 copied from the
+    # consensus Spearman leg of that same block. The floor that decides
+    # `resolvable` stays the stored E_refit constant, labelled carried.
+    accuracy["head_to_head_verdict"] = None
+    accuracy["head_to_head_vs_sources"] = None
+    if _frames.get(HEADLINE_FRAME_KEY):
+        _hv = dict(_frames[HEADLINE_FRAME_KEY])
+        accuracy["head_to_head_vs_sources"] = _head_to_head_vs_sources(
             efv_common_vintage_vm2,
             accuracy.get("pooled_efv_common_vintage_matched_vm2"),
-            frame="vintage_matched_vm2", basis=VM2_BASIS)
-        if accuracy.get("pooled_efv_common_vintage_matched_vm2") else None)
-    accuracy["head_to_head_verdict_vm2"] = None
-    if _frames.get("vintage_matched_vm2"):
-        _hv2 = dict(_frames["vintage_matched_vm2"])
-        _leg2 = (((accuracy["head_to_head_vs_sources_vm2"] or {}).get("sources") or {})
-                 .get(CONSENSUS_KEY) or {}).get("spearman") or {}
+            frame=HEADLINE_FRAME_KEY, basis=VM2_BASIS, headline=_hv)
+        _leg = ((accuracy["head_to_head_vs_sources"]["sources"]
+                 .get(CONSENSUS_KEY) or {}).get("spearman") or {})
         _nbs: dict[str, int] = {}
         for _c in efv_common_vintage_vm2:
             _s = m_side.get(_c.get("key"))
             if _s:
                 _nbs[_s] = _nbs.get(_s, 0) + 1
-        _hv2.update({
-            "role": "headline_candidate",
-            "ci95": _leg2.get("ci95"),
+        _hv.update({
+            "ci95": _leg.get("ci95"),
             "ci95_estimator": "E_cond, player-clustered",
-            "ci95_source": ("accuracy.head_to_head_vs_sources_vm2.sources."
+            "ci95_source": ("accuracy.head_to_head_vs_sources.sources."
                             f"{CONSENSUS_KEY}.spearman.ci95"),
             "mde95_estimator": "E_refit",
-            "mde95_note": ("the vm1 frame's stored E_refit floor, carried because vm2 "
-                           "scores the same rows against the same consensus column; "
-                           "E_refit has not been re-measured on vm2"),
+            "mde95_status": "carried",
+            "mde95_carried_from": "vm1",
+            "mde95_note": ("carried, not re-measured: the E_refit floor measured on the "
+                           "vm1 frame for eFV v1 (tools/efv_headtohead_frame_lab.py, "
+                           "2026-08-13). vm2 scores the same players against the same "
+                           "consensus column; an E_refit re-measure would refit the "
+                           "served eFV V2 with the timing pin inside every draw, which "
+                           "is not cheap. The in-run E_cond floor on vm2 is "
+                           "head_to_head_vs_sources.sources."
+                           f"{CONSENSUS_KEY}.spearman.mde95"),
             "n_by_side": {k: _nbs[k] for k in ("hit", "pit") if k in _nbs},
             "timing_pin": vm2_timing,
-            "frame_note": ("timing-pinned vintage-matched frame (EV-01, "
-                           "docs/efv-v2/PROGRAM.md s3.4). Published beside the vm1 "
-                           "verdict; it becomes the headline once the owner has seen it."),
+            "headline_since": "2026-09-25 (owner answer FP3-1)",
+            "superseded_frame": {
+                "frame_version": "vm1", "basis": "pooled_efv_common_vintage_matched",
+                "by_frame_key": SUPERSEDED_FRAME_KEY},
+            "frame_note": ("read off the timing-pinned vintage-matched frame (vm2, "
+                           "EV-01), the headline since 2026-09-25 (owner answer "
+                           "FP3-1). vm1 is published in head_to_head_by_frame with "
+                           "role superseded; the two tilted frames there each hand "
+                           "one grader an information edge; see "
+                           "docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md."),
         })
-        accuracy["head_to_head_verdict_vm2"] = _hv2
+        accuracy["head_to_head_verdict"] = _hv
+    else:
+        log.warning("no vm2 frame in this run: no head-to-head headline is published")
     # DS-02: which eFV the head-to-head cells scored. efv_progress copies model_id
     # into every ledger row, so a v2 row never displaces a v1 row of the same frame.
     accuracy["efv_scored_object"] = (
@@ -4037,7 +4185,10 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     accuracy["claim_instruments"] = _claim_instruments(
         data_dir=data_dir,
         pooled_common=pooled_common,
+        # vm2 (the headline since FP3-1) enters as its own frame, so its in-run
+        # E_cond floor and its by-side floors sit beside vm1's; additive.
         frames={"vintage_matched": efv_common_vintage,
+                HEADLINE_FRAME_KEY: efv_common_vintage_vm2,
                 "predebut": efv_common_predebut,
                 "all_vintages": efv_common},
         side_of=m_side,

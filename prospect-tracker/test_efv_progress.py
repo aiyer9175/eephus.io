@@ -76,7 +76,8 @@ def test_row_numbers_equal_the_artifact_keys(arts):
     hv = acc["head_to_head_verdict"]
     _run(arts)
     doc = _doc(arts)
-    vm = [r for r in doc["rows"] if r["frame"] == "vm"]
+    head = P.BASIS_TO_FRAME[hv["basis"]]
+    vm = [r for r in doc["rows"] if r["frame"] == head]
     assert len(vm) == 1
     r = vm[0]
     blk = acc[hv["basis"]]
@@ -97,9 +98,18 @@ def test_row_numbers_equal_the_artifact_keys(arts):
             assert leg["delta"] == vs[src][metric]["delta"]
             assert leg["ci95"] == vs[src][metric]["ci95"]
             assert leg["mde95"] == vs[src][metric]["mde95"]
+            # FP3-3: the Holm reading is copied, never recomputed.
+            if vs[src][metric].get("holm") is not None:
+                assert leg["holm"] == vs[src][metric]["holm"]
+                assert leg["holm_verdict"] == vs[src][metric]["verdict"]
     auc = r["deltas"]["vs_prospx_consensus"]["auc"]
     assert auc["delta"] == vs["prospx_consensus"]["auc"]["delta"]
-    fl = acc["claim_instruments"]["head_to_head_floors"]["vintage_matched"]
+    if vs["prospx_consensus"]["spearman"].get("holm") is not None:
+        assert cons["holm"] == vs["prospx_consensus"]["spearman"]["holm"]
+        assert cons["holm_verdict"] == vs["prospx_consensus"]["spearman"]["verdict"]
+    if hv.get("mde95_status"):
+        assert cons["mde95_status"] == hv["mde95_status"] == "carried"
+    fl = acc["claim_instruments"]["head_to_head_floors"][P.BY_FRAME_KEY[head]]
     assert r["n_by_side"] == {s: fl["floor_E_cond_by_side"][s]["n"] for s in ("hit", "pit")}
     assert r["resolvable"] == hv["resolvable"]
     assert r["verdict"] == hv["verdict"]
@@ -122,7 +132,8 @@ def test_the_verdict_ci_is_the_claim_instrument_interval(arts):
     """One frame, one interval: the verdict's CI95 and the V6 floor's CI95 are
     the same player-clustered bootstrap (same resampler, B and seed)."""
     acc = json.loads((arts / P.SB_NAME).read_text(encoding="utf-8"))["accuracy"]
-    fl = acc["claim_instruments"]["head_to_head_floors"]["vintage_matched"]
+    head = P.BASIS_TO_FRAME[acc["head_to_head_verdict"]["basis"]]
+    fl = acc["claim_instruments"]["head_to_head_floors"][P.BY_FRAME_KEY[head]]
     assert acc["head_to_head_verdict"]["ci95"] == fl["floor_E_cond_in_run"]["ci95"]
 
 
@@ -173,7 +184,7 @@ def test_headline_frame_is_the_verdict_basis_frame(arts):
     _run(arts)
     doc = _doc(arts)
     hv = json.loads((arts / P.SB_NAME).read_text(encoding="utf-8"))["accuracy"]["head_to_head_verdict"]
-    assert doc["headline_frame"] == P.BASIS_TO_FRAME[hv["basis"]] == "vm"
+    assert doc["headline_frame"] == P.BASIS_TO_FRAME[hv["basis"]] == "vm2"
     head = [r for r in doc["rows"] if r["frame"] == doc["headline_frame"]]
     assert head and all(r["role"] == "headline" for r in head)
 
@@ -247,7 +258,9 @@ def test_served_ledger_contract():
         pytest.skip("data/efv_progress.json not built")
     doc = json.loads(SERVED.read_text(encoding="utf-8"))
     assert doc["schema"] == P.SCHEMA
-    assert doc["headline_frame"] == "vm"
+    assert doc["headline_frame"] == "vm2"
+    assert "superseded" in doc["chart"]["excluded_roles"]
+    assert "vm" not in doc["chart"]["series_frames"]
     _no_fv_cell(doc)
     _no_emdash(doc)
     ids = [r["run_id"] for r in doc["rows"]]
@@ -257,6 +270,10 @@ def test_served_ledger_contract():
         assert r["frame"] in P.FRAMES
         if r["frame"] in ("predebut", "all_vintages"):
             assert r["role"] == "tilted"
+        # FP3-1: every stored row of a frame carries that frame's current role.
+        assert r["role"] == P.FRAMES[r["frame"]]["role"], (r["run_id"], r["role"])
+        if r.get("role_was"):
+            assert P.ROLE_CHANGES[r["frame"]][:2] == (r["role_was"], r["role"])
         if r["trigger"] == "backfill":
             for legs in (r.get("deltas") or {}).values():
                 for leg in legs.values():
@@ -265,59 +282,66 @@ def test_served_ledger_contract():
 
 
 # ---------------------------------------------------------------------------
-# EV-01: the timing-pinned vintage-matched frame (vm2), beside the headline
+# EV-01 and FP3-1: the timing-pinned frame (vm2) is the headline; vm1 superseded
 
-def test_vm2_row_copies_the_vm2_keys_and_never_takes_the_headline(arts):
+def test_vm2_headline_row_copies_the_one_verdict_key(arts):
     acc = json.loads((arts / P.SB_NAME).read_text(encoding="utf-8"))["accuracy"]
-    hv2 = acc.get("head_to_head_verdict_vm2")
-    if not hv2:
-        pytest.skip("source_backtest.json predates the vm2 frame")
+    hv = acc["head_to_head_verdict"]
+    if hv.get("frame_version") != "vm2":
+        pytest.skip("source_backtest.json predates the FP3-1 headline move")
     _run(arts)
     doc = _doc(arts)
-    assert doc["headline_frame"] == "vm"
+    assert doc["headline_frame"] == "vm2"
     vm2 = [r for r in doc["rows"] if r["frame"] == "vm2"]
     assert len(vm2) == 1
     r = vm2[0]
-    assert r["role"] == "headline_candidate" and r["tilted"] is False
+    assert r["role"] == "headline" and r["tilted"] is False
     assert r["frame_version"] == "vm2"
-    assert "timing-pinned" in r["note"] and "becomes the headline" in r["note"]
-    blk = acc[hv2["basis"]]
-    assert r["n"] == hv2["n"] == blk["xfv"]["n"]
+    assert "timing-pinned" in r["note"]
+    blk = acc[hv["basis"]]
+    assert r["n"] == hv["n"] == blk["xfv"]["n"]
     for name, key in P.RATERS:
         assert r["raters"][name]["spearman"] == blk[key]["spearman"]
         assert r["raters"][name]["auc"] == blk[key]["auc"]
     cons = r["deltas"]["vs_prospx_consensus"]["spearman"]
-    assert cons["delta"] == hv2["delta"] and cons["ci95"] == hv2["ci95"]
-    assert cons["mde95"] == hv2["mde95"]
-    assert cons["key"] == "accuracy.head_to_head_verdict_vm2"
-    vs2 = acc["head_to_head_vs_sources_vm2"]["sources"]
-    for src in ("mlb_pipeline", "fangraphs"):
-        for metric in ("spearman", "auc"):
-            leg = r["deltas"][f"vs_{src}"][metric]
-            assert leg["delta"] == vs2[src][metric]["delta"]
-            assert leg["ci95"] == vs2[src][metric]["ci95"]
-    assert r["n_by_side"] == hv2["n_by_side"]
-    assert r["resolvable"] == hv2["resolvable"] and r["verdict"] == hv2["verdict"]
-    # vm1 keeps its own row and its own version.
-    vm = [x for x in doc["rows"] if x["frame"] == "vm"]
-    assert len(vm) == 1 and vm[0]["frame_version"] == "vm1"
-    assert vm[0]["role"] == "headline"
+    assert cons["delta"] == hv["delta"] and cons["ci95"] == hv["ci95"]
+    assert cons["mde95"] == hv["mde95"]
+    assert cons["key"] == "accuracy.head_to_head_verdict"
+    assert r["n_by_side"] == hv["n_by_side"]
+    assert r["resolvable"] == hv["resolvable"] and r["verdict"] == hv["verdict"]
+    # A fresh artifact writes no vm1 row: vm1 is history, not a live frame.
+    assert not [x for x in doc["rows"] if x["frame"] == "vm"]
+    assert "vm" not in doc["chart"]["series_frames"]
 
 
-def test_vm1_and_vm2_rows_dedupe_against_their_own_history(arts):
-    """A vm2 row must not count as a change of the vm frame, or every update
-    would append a vm1 and a vm2 row in turn."""
-    acc = json.loads((arts / P.SB_NAME).read_text(encoding="utf-8"))["accuracy"]
-    if not acc.get("head_to_head_verdict_vm2"):
-        pytest.skip("source_backtest.json predates the vm2 frame")
-    _run(arts)
-    assert _run(arts, now=T0 + timedelta(days=1))["appended"] == []
-    sb = json.loads((arts / P.SB_NAME).read_text(encoding="utf-8"))
-    sb["accuracy"]["head_to_head_verdict_vm2"]["delta"] += 0.01
-    sb["generated_at"] = "2027-03-01T00:00:00Z"
-    (arts / P.SB_NAME).write_text(json.dumps(sb), encoding="utf-8")
-    res = _run(arts, now=T0 + timedelta(days=2))
-    assert [x.split("|")[1] for x in res["appended"]] == ["vm2"]
+def test_role_changes_restamp_history_without_touching_its_hash():
+    """vm1 rows written as the headline read superseded, vm2 rows written as
+    the candidate read headline; the measured content and its hash do not move,
+    and a second pass changes nothing."""
+    base = {"frame": "vm", "n": 806, "model_id": "efv_v2", "model_version": {},
+            "role": "headline", "deltas": {"vs_prospx_consensus": {"spearman": {"delta": 0.007}}}}
+    base["content_hash"] = P.content_hash(base)
+    cand = dict(base, frame="vm2", role="headline_candidate")
+    cand["content_hash"] = P.content_hash(cand)
+    other = dict(base, frame="predebut", role="tilted")
+    once = P.restamp_roles([base, cand, other])
+    assert [r["role"] for r in once] == ["superseded", "headline", "tilted"]
+    assert once[0]["role_was"] == "headline" and "FP3-1" in once[0]["role_changed"]
+    assert once[1]["role_was"] == "headline_candidate"
+    assert "role_was" not in once[2]
+    assert [P.content_hash(r) for r in once] == [base["content_hash"], cand["content_hash"],
+                                                  P.content_hash(other)]
+    assert P.restamp_roles(once) == once
+    assert base["role"] == "headline", "restamp_roles edited its input in place"
+
+
+def test_a_frame_change_is_its_own_trigger_and_never_progress(arts):
+    assert "frame_change" in P.TRIGGERS and "frame_change" in P.FRAME_CHANGE_TRIGGERS
+    assert "frame_change" not in P.CORRECTION_TRIGGERS
+    _run(arts, trigger="frame_change")
+    doc = _doc(arts)
+    assert doc["frame_change_triggers"] == list(P.FRAME_CHANGE_TRIGGERS)
+    assert all(r["trigger"] == "frame_change" for r in doc["rows"])
 
 
 # ---------------------------------------------------------------------------
@@ -366,8 +390,8 @@ def test_dev_rows_append_once_and_never_displace_v1(arts):
     _run(arts)
     assert _run(arts, now=T0 + timedelta(days=1))["appended"] == []
     doc = _doc(arts)
-    assert doc["headline_frame"] == "vm"
-    head = [r for r in doc["rows"] if r["frame"] == "vm"]
+    assert doc["headline_frame"] == "vm2"
+    head = [r for r in doc["rows"] if r["frame"] == "vm2"]
     # DS-02: the headline row carries the model the backtest scored (efv_v2 once V2
     # serves), never a development model id
     scored = (((json.loads((arts / P.SB_NAME).read_text(encoding="utf-8")).get("accuracy")

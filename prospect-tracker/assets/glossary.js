@@ -645,14 +645,21 @@
           const hh = (j.accuracy || {}).head_to_head_verdict;
           if (!hh || hh.xfv_spearman == null || hh.consensus_spearman == null) return null;
           return [{
-            label: "Spearman rho vs realized WAR, vintage-matched (n=" + _rn(hh.n, 0) + ")",
+            label: "Spearman rho vs realized WAR, " + _hhFrameName(hh) + " (n=" + _rn(hh.n, 0) + ")",
             mv: _rn(hh.xfv_spearman, 4), bname: "consensus", bv: _rn(hh.consensus_spearman, 4),
-            band: "gap " + _rns(hh.delta, 4) + " vs a floor of " + _rn(hh.mde95, 4),
+            band: "gap " + _rns(hh.delta, 4) + " vs a floor of " + _rn(hh.mde95, 4) + (hh.mde95_status === "carried" ? " (carried from vm1)" : ""),
             verdict: hh.resolvable === true ? (hh.xfv_beats === true ? "clears" : "trails") : "inside",
             title: "head_to_head_verdict as recorded in the artifact",
           }];
         },
-        note: () => "The honest reading is a tie: the gap sits inside the floor this backtest can resolve, so eFV and the consensus are statistically indistinguishable on ordering. The full derived verdict renders in Source Comparison.",
+        // Derived from the same verdict, never typed (the reading used to be fixed prose).
+        note: j => {
+          const hh = ((j && j.accuracy) || {}).head_to_head_verdict;
+          if (!hh || hh.resolvable == null) return "";
+          return hh.resolvable === true
+            ? "The gap clears the floor this backtest can resolve. The full derived verdict renders in Source Comparison."
+            : "The honest reading is a tie: the gap sits inside the floor this backtest can resolve, so eFV and the consensus are statistically indistinguishable on ordering. The full derived verdict renders in Source Comparison.";
+        },
       },
       consensus_fv: {
         art: "/data/source_backtest.json",
@@ -1223,12 +1230,31 @@ function _methCalibrationChart(bt, metricKey, metricLabel, opts) {
 // So a star goes to the winner of that one floored pair, only when the pair
 // resolves, and only when that winner also tops every bar; otherwise no bar is
 // starred. Returns the rater key to star on the Spearman leg, or null.
-function _hhStarRater(bt) {
+// THE HEADLINE IS ONE KEY (owner answer FP3-1, 2026-09-25). The headline moved
+// from the vintage-matched frame vm1 to the timing-pinned frame vm2, and no
+// renderer on this view names a frame of its own: the hero, the bars, the star,
+// the share card and the caveat all read accuracy.head_to_head_verdict and
+// follow its `basis` to the accuracy block it was computed on. An artifact with
+// no verdict renders no head-to-head rather than an older frame's numbers.
+function _hhVerdict(bt) {
+  return (bt && bt.accuracy && bt.accuracy.head_to_head_verdict) || null;
+}
+
+function _hhBlock(bt) {
+  const hh = _hhVerdict(bt);
   const acc = bt && bt.accuracy;
-  const hh = acc && acc.head_to_head_verdict;
-  const blk = acc && acc.pooled_efv_common_vintage_matched;
+  return (hh && hh.basis && acc && acc[hh.basis]) || null;
+}
+
+// The frame's name in copy, from the verdict's own frame_version.
+function _hhFrameName(hh) {
+  return (hh && hh.frame_version === "vm2") ? "vintage-matched, timing-pinned" : "vintage-matched";
+}
+
+function _hhStarRater(bt) {
+  const hh = _hhVerdict(bt);
+  const blk = _hhBlock(bt);
   if (!hh || hh.resolvable !== true || !blk) return null;
-  if (hh.basis !== "pooled_efv_common_vintage_matched") return null;
   const winner = hh.xfv_beats ? "xfv" : "prospx_consensus";
   const w = blk[winner];
   const vals = Object.keys(blk).map(r => blk[r] && blk[r].spearman).filter(v => v != null);
@@ -1247,9 +1273,10 @@ function _hhStarRater(bt) {
 // onto that block on 2026-08-13 and the bars were not. HEADTOHEAD_FRAME_GATE
 // says every artifact-driven surface follows the corrected number, so the bars
 // read the verdict's block with no fallback: an artifact without it renders no
-// chart rather than the uncorrected one.
+// chart rather than the uncorrected one. Since 2026-09-25 that block is found
+// through head_to_head_verdict.basis (_hhBlock), never named here.
 function _methAccuracyChart(bt) {
-  const acc = bt.accuracy && bt.accuracy.pooled_efv_common_vintage_matched;
+  const acc = _hhBlock(bt);
   if (!acc) return "";
   const h2hRaters = (bt.accuracy && bt.accuracy.head_to_head_raters) || bt.raters;
   const spStar = _hhStarRater(bt);
@@ -1270,12 +1297,12 @@ function _methAccuracyChart(bt) {
   };
   const sp = metric("spearman", "Ordering skill - Spearman ρ (grade vs realized WAR)", 0, 0.5, v => v.toFixed(3), spStar);
   const au = metric("auc", "Discrimination - AUC (grade predicts ‘became a contributor’)", 0.5, 0.85, v => v.toFixed(3), null);
-  const hhStar = bt.accuracy.head_to_head_verdict || null;
+  const hhStar = _hhVerdict(bt);
   const starNote = `<p class="meth-sub">★ marks a grader only where its gap clears a published noise floor. ${spStar
     ? "The Spearman gap clears its floor."
     : (hhStar && hhStar.resolvable === false)
       ? "The Spearman gap does not, so no bar is starred."
-      : "No floor is published for the Spearman gap here, so no bar is starred."} No floor is published for the AUC leg on these rows, so no AUC bar is starred and no discrimination claim is made.</p>`;
+      : "No floor is published for the Spearman gap here, so no bar is starred."} No AUC bar is starred: whether any gap between eFV and one source clears its floor, on either leg, is read in the per-source table below, after a correction for testing several sources at once.</p>`;
   // SAME ROWS OR THE COMPARISON IS NOT ONE. accuracy.pooled scores each rater on
   // whatever it covers, so the eFV bar ran on 3,210 players and the board bars on
   // 4,259; roughly half the gap that pairing showed was the row difference, not
@@ -1295,12 +1322,11 @@ function _methAccuracyChart(bt) {
   // banner below was already fixed for once.
   const pld = acc;
   const x = pld.xfv, c = pld.prospx_consensus, fg = pld.fangraphs, mlb = pld.mlb_pipeline;
-  const hh = bt.accuracy.head_to_head_verdict || null;
+  const hh = _hhVerdict(bt);
   let verdict;
   if (x && x.spearman != null && c && c.spearman != null) {
     const f3 = v => (v == null ? "-" : v.toFixed(3));
-    const n = (bt.accuracy.common_n_efv_vintage_matched
-      || bt.accuracy.common_n_efv || 0).toLocaleString();
+    const n = Number((hh && hh.n) || (x && x.n) || 0).toLocaleString();
     // DERIVED, NEVER ASSERTED (2026-09-04, design audit F46). This template used
     // to open with fixed prose asserting eFV ordered realized WAR ahead of every
     // rater, and then print MLB Pipeline ABOVE eFV in the same sentence: on
@@ -1333,10 +1359,54 @@ function _methAccuracyChart(bt) {
   } else {
     verdict = `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric (reported as measured, not cherry-picked).</p>`;
   }
-  const nRows = bt.accuracy.common_n_efv_vintage_matched || (acc.xfv && acc.xfv.n) || null;
+  const nRows = (hh && hh.n) || (acc.xfv && acc.xfv.n) || null;
   return `<div class="meth-chart meth-accuracy">
-    <div class="meth-chart-title">Head-to-head predictive accuracy <span class="meth-sub">same players, same outcome, same window, same vintage${nRows ? ` &middot; n=${Number(nRows).toLocaleString()}` : ""}</span></div>
+    <div class="meth-chart-title">Head-to-head predictive accuracy <span class="meth-sub">same players, same outcome, same window, same vintage, ${escapeHtml(_hhFrameName(hh))} frame${nRows ? ` &middot; n=${Number(nRows).toLocaleString()}` : ""}</span></div>
     ${sp}${au}${starNote}${verdict}
+  </div>`;
+}
+
+// PER-SOURCE CELLS, HOLM-CORRECTED (owner answer FP3-3, 2026-09-25). eFV against
+// each source on each leg, on the headline frame's rows. The family, its size and
+// its alpha are read from the artifact (head_to_head_vs_sources.holm), and a cell
+// prints a verdict word only when the artifact gives it one, which it does only
+// for a cell that survives the correction; every other cell prints its interval
+// alone. Nothing is computed here.
+function _methPerSourceCells(bt) {
+  const hh = _hhVerdict(bt);
+  const vs = bt && bt.accuracy && bt.accuracy.head_to_head_vs_sources;
+  if (!hh || !vs || !vs.sources || !vs.holm || vs.basis !== hh.basis) return "";
+  const h = vs.holm;
+  const f4 = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(4));
+  const s4 = v => (v == null || isNaN(Number(v)) ? "-" : (Number(v) > 0 ? "+" : "") + Number(v).toFixed(4));
+  const s3 = v => (v == null || isNaN(Number(v)) ? "-" : (Number(v) > 0 ? "+" : "") + Number(v).toFixed(3));
+  const cell = leg => {
+    if (!leg) return `<td>-</td><td>-</td><td>-</td>`;
+    const ci = Array.isArray(leg.ci95) ? `<br><span class="meth-sub" style="white-space:nowrap;">CI95 ${s3(leg.ci95[0])} to ${s3(leg.ci95[1])}</span>` : "";
+    const fl = leg.holm && leg.holm.mde95_holm != null ? f4(leg.holm.mde95_holm) : "-";
+    const word = leg.verdict
+      ? `<span class="${leg.delta > 0 ? "sacc-verdict-win" : "sacc-verdict-null"}">${escapeHtml(leg.verdict)}</span>`
+      : `<span class="meth-sub">interval only</span>`;
+    return `<td>${s4(leg.delta)}${ci}</td><td>${fl}</td><td>${word}</td>`;
+  };
+  const labels = { prospx_consensus: "PROSPX consensus", mlb_pipeline: "MLB Pipeline", fangraphs: "FanGraphs" };
+  const fam = (h.family || []).map(k => {
+    const [r, m] = String(k).split(".");
+    return `${labels[r] || r} ${m === "auc" ? "AUC" : "Spearman"}`;
+  }).join(", ");
+  const rows = Object.keys(vs.sources).map(r => {
+    const c = vs.sources[r] || {};
+    return `<tr><td>${escapeHtml(c.label || labels[r] || r)}</td>${cell(c.spearman)}${cell(c.auc)}</tr>`;
+  }).join("");
+  const alpha = h.alpha != null ? Number(h.alpha).toString() : "-";
+  return `<div class="meth-chart scx-per-source">
+    <div class="meth-table-title">eFV against each source, corrected for testing several at once <span class="meth-sub">${escapeHtml(_hhFrameName(hh))} frame, n=${Number(vs.n || 0).toLocaleString()}</span></div>
+    <div class="table-scroll-x"><table class="meth-table">
+      <thead><tr><th rowspan="2">Source</th><th colspan="3" style="text-align:center;">Ordering (Spearman)</th><th colspan="3" style="text-align:center;">Contributor AUC</th></tr>
+      <tr><th>eFV minus source</th><th>Floor after Holm</th><th>Reading</th><th>eFV minus source</th><th>Floor after Holm</th><th>Reading</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="meth-note">One family of ${Number(h.k || 0)} tests (${escapeHtml(fam)}), Holm step-down at a family alpha of ${escapeHtml(alpha)}, one-sided on the gap over its bootstrap spread, fixed before any cell was read. A cell carries a verdict only when its gap survives the correction; the rest are read as their interval alone. The PROSPX consensus Spearman cell is the headline above and also needs the headline's own floor to agree. Every figure is read from the backtest artifact.</p>
   </div>`;
 }
 
@@ -1815,21 +1885,22 @@ function _methCaveatArchetypeClause(bt) {
 // the floor. Three branches off head_to_head_verdict, the same call the hero
 // makes, so the caveat cannot say what the verdict does not.
 function _methCaveatHeadToHead(bt) {
-  const hh = bt && bt.accuracy && bt.accuracy.head_to_head_verdict;
+  const hh = _hhVerdict(bt);
   const fmt = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
   if (!hh || hh.delta == null || hh.mde95 == null) {
     return "<strong>The head-to-head is a point estimate.</strong> No floored verdict is loaded, so no ordering claim is made.";
   }
   const n = hh.n != null ? `the same ${Number(hh.n).toLocaleString()}` : "identical";
+  const fr = escapeHtml(_hhFrameName(hh));
   const d = Number(hh.delta);
   const sd = (d > 0 ? "+" : "") + d.toFixed(3);
   if (hh.resolvable === true && hh.xfv_beats === true) {
-    return `<strong>eFV's head-to-head lead clears its floor.</strong> On ${n} vintage-matched rows eFV leads PROSPX consensus by ${sd} against a noise floor of ${fmt(hh.mde95)}.`;
+    return `<strong>eFV's head-to-head lead clears its floor.</strong> On ${n} ${fr} rows eFV leads PROSPX consensus by ${sd} against a noise floor of ${fmt(hh.mde95)}.`;
   }
   if (hh.resolvable === true) {
-    return `<strong>eFV trails the consensus by a margin that clears its floor.</strong> On ${n} vintage-matched rows eFV minus PROSPX consensus is ${sd} against a noise floor of ${fmt(hh.mde95)}.`;
+    return `<strong>eFV trails the consensus by a margin that clears its floor.</strong> On ${n} ${fr} rows eFV minus PROSPX consensus is ${sd} against a noise floor of ${fmt(hh.mde95)}.`;
   }
-  return `<strong>The head-to-head does not resolve.</strong> On ${n} vintage-matched rows eFV minus PROSPX consensus is ${sd} against a noise floor of ${fmt(hh.mde95)}, so neither grade is called the winner.`;
+  return `<strong>The head-to-head does not resolve.</strong> On ${n} ${fr} rows eFV minus PROSPX consensus is ${sd} against a noise floor of ${fmt(hh.mde95)}, so neither grade is called the winner.`;
 }
 
 // "How to Read the Site" (Part 1 anchor) - annotated anatomy of a player card,
@@ -2799,7 +2870,7 @@ function _disagreementRead(det) {
 }
 
 function _hhFloorClause(bt) {
-  const hh = bt && bt.accuracy && bt.accuracy.head_to_head_verdict;
+  const hh = _hhVerdict(bt);
   if (!hh || hh.mde95 == null) return ".";
   // f3 is declared `const` INSIDE four other functions and is NOT module-scope.
   // Referencing it here threw ReferenceError, which took out _methHeroBanner and
@@ -2807,9 +2878,12 @@ function _hhFloorClause(bt) {
   // A local formatter is the fix; do not reach for the outer ones.
   const fmt = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
   const est = hh.estimator ? ` ${escapeHtml(hh.estimator)}` : "";
+  // A floor carried from an earlier frame says so where it is printed.
+  const carried = hh.mde95_status === "carried"
+    ? ` (carried from the ${escapeHtml(String(hh.mde95_carried_from || "earlier"))} frame, not re-measured on this one)` : "";
   return hh.resolvable
-    ? `, clearing its${est} noise floor of ${fmt(hh.mde95)}.`
-    : ` that does NOT clear its${est} noise floor of ${fmt(hh.mde95)}. We report that as unresolved, not as a win.`;
+    ? `, clearing its${est} noise floor of ${fmt(hh.mde95)}${carried}.`
+    : ` that does NOT clear its${est} noise floor of ${fmt(hh.mde95)}${carried}. We report that as unresolved, not as a win.`;
 }
 
 function _methHeroBanner(bt) {
@@ -2830,8 +2904,9 @@ function _methHeroBanner(bt) {
   // eFV decision year), so the lead printed here has to come from that same
   // block or the banner is back to floor-checking one population with another
   // population's floor, which is the exact failure this comment already records.
-  const p = (bt.accuracy && (bt.accuracy.pooled_efv_common_vintage_matched
-    || bt.accuracy.pooled_efv_common || bt.accuracy.pooled)) || {};
+  // FP3-1 (2026-09-25): the block is found through head_to_head_verdict.basis,
+  // with no fallback to another frame's numbers.
+  const p = _hhBlock(bt) || {};
   const x = p.xfv, c = p.prospx_consensus, fg = p.fangraphs, mlb = p.mlb_pipeline;
   if (!x || x.spearman == null) return "";
   const f3 = v => (v == null ? "-" : v.toFixed(3));
@@ -2844,7 +2919,7 @@ function _methHeroBanner(bt) {
   // helper that was only bound inside another function, the ReferenceError blanked
   // the entire source-comparison view and the suite stayed green because the
   // view-walk test accepted the empty state as a pass.
-  const hhv = (bt.accuracy && bt.accuracy.head_to_head_verdict) || null;
+  const hhv = _hhVerdict(bt);
   const tile = (lbl, v, isEfv) => `<div class="meth-find-card${isEfv ? " scx-hero-efv" : ""}">
     <div class="meth-find-stat">${f3(v)}</div>
     <div class="meth-find-label">${escapeHtml(lbl)}</div>
@@ -2873,7 +2948,7 @@ function _methHeroBanner(bt) {
   const leadClause = (lead != null && bestPub)
     ? `, ${f3(x.spearman)} against ${f3(bestPub[1].spearman)} for the best public source (${escapeHtml(bestPub[0])}), a ${lead >= 0 ? "+" : ""}${lead.toFixed(3)} point estimate`
     : "";
-  const verbPhrase = ahead ? "it grades ahead of every one of them" : "it lands level with them";
+  const verbPhrase = ahead ? "it grades ahead of every one of them" : "it lands level with the best of them";
   return `<div class="source-comp-hero">
     <div class="source-comp-hero-kicker">A different kind of Future Value</div>
     <h2 class="source-comp-hero-title">${headline}</h2>
@@ -3233,9 +3308,9 @@ function _methScoreboardHTML() {
 // floor on these rows, and a share card travels without the page's caveats.
 function _scxGfxSpec() {
   const bt = _S.backtest;
-  if (!bt || bt.__error || !bt.accuracy || !bt.accuracy.pooled_efv_common_vintage_matched) return null;
-  const pooled = bt.accuracy.pooled_efv_common_vintage_matched;
-  const hh = bt.accuracy.head_to_head_verdict || null;
+  if (!bt || bt.__error || !bt.accuracy || !_hhBlock(bt)) return null;
+  const pooled = _hhBlock(bt);
+  const hh = _hhVerdict(bt);
   const spStar = _hhStarRater(bt);
   const raters = ((bt.accuracy.head_to_head_raters) || bt.raters || []).slice();
   if (raters.indexOf("xfv") === -1 && pooled.xfv) raters.push("xfv");
@@ -3302,18 +3377,18 @@ function _scxGfxSpec() {
   // engine stars a panel's longest bar unless the panel says star:false.
   const panels = [];
   if (sp.length >= 2) panels.push({ title: "Ordering skill · Spearman (grade vs realized WAR)", lo: 0, hi: 0.5, rows: sp, star: spStar != null });
-  if (au.length >= 2) panels.push({ title: "Discrimination · contributor AUC (no floor, none starred)", lo: 0.5, hi: 0.85, rows: au, star: false });
+  if (au.length >= 2) panels.push({ title: "Discrimination · contributor AUC (none starred)", lo: 0.5, hi: 0.85, rows: au, star: false });
 
   const years = (bt.window && bt.window.years) || [];
   const span = years.length ? years[0] + "-" + years[years.length - 1] : "";
-  const nCommon = bt.accuracy.common_n_efv_vintage_matched || x.n || null;
+  const nCommon = (hh && hh.n) || x.n || null;
   const sgn3 = v => (v == null || isNaN(Number(v)) ? "-" : (Number(v) > 0 ? "+" : "") + Number(v).toFixed(3));
   const call = (hh && hh.delta != null && hh.mde95 != null)
     ? "eFV vs consensus " + sgn3(hh.delta) + ", floor " + f3(hh.mde95)
       + (hh.resolvable ? ", resolved" : ", not resolvable") + " · "
     : "";
-  const note = "Every grader on the same rows, base year equal to the eFV decision year · "
-    + call + "★ only where a gap clears a published floor";
+  const note = "Every grader on the same rows, base year equal to the eFV decision year, "
+    + _hhFrameName(hh) + " frame · " + call + "★ only where a gap clears a published floor";
   return {
     kind: "sourcecomp",
     module: "Source Comparison",
@@ -3357,10 +3432,11 @@ function _loadProgress() {
 
 // Frames a chart series may hold. Tilted frames never, whatever the artifact
 // lists: they are timing, not skill (PROGRAM.md s7 item 1). vm2 is the EV-01
-// timing-pinned vintage-matched frame, drawn as a hollow square beside vm1.
-// vm_dev and lv_dev hold development reads of a v2 candidate (EV-09), drawn as
-// hollow circles: spent frames, never a claim.
-const _PROG_CHART_FRAMES = ["vm", "vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros"];
+// timing-pinned vintage-matched frame, the headline since 2026-09-25 (owner
+// answer FP3-1); vm1, the frame it replaced, is superseded and sits in the table
+// only. vm_dev and lv_dev hold development reads of a v2 candidate (EV-09),
+// drawn as hollow circles: spent frames, never a claim.
+const _PROG_CHART_FRAMES = ["vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros"];
 
 function _progRows(prog) {
   return (prog && !prog.__error && Array.isArray(prog.rows)) ? prog.rows : [];
@@ -3370,18 +3446,20 @@ function _progSeriesRows(prog) {
   const allowed = ((prog && prog.chart && prog.chart.series_frames) || _PROG_CHART_FRAMES)
     .filter(f => _PROG_CHART_FRAMES.includes(f));
   return _progRows(prog).filter(r => r.role !== "tilted" && r.tilted !== true
-    && r.role !== "secondary" && allowed.includes(r.frame)
+    && r.role !== "secondary" && r.role !== "superseded" && allowed.includes(r.frame)
     && _progConsLeg(r) && _progConsLeg(r).delta != null);
 }
 
-// A row appended by a fix to how eFV is scored (DS-01), never by a model
-// change. Drawn and labelled apart so a reader never takes it for progress.
+// A row appended by a fix to how eFV is scored (DS-01) or by a change of the
+// headline frame (FP3-1), never by a model change. Drawn and labelled apart so a
+// reader never takes it for progress.
 function _progIsCorrection(prog, r) {
   const trig = (prog && Array.isArray(prog.correction_triggers)) ? prog.correction_triggers : ["harness_correction", "data_correction"];
-  return !!(r && trig.includes(r.trigger));
+  const fc = (prog && Array.isArray(prog.frame_change_triggers)) ? prog.frame_change_triggers : ["frame_change"];
+  return !!(r && (trig.includes(r.trigger) || fc.includes(r.trigger)));
 }
 
-// "harness correction" or "data correction", from the row's own trigger.
+// "harness correction", "data correction" or "frame change", from the row's own trigger.
 function _progCorrectionName(r) {
   return String((r && r.trigger) || "correction").replace(/_/g, " ");
 }
@@ -3436,8 +3514,10 @@ function _methProgressLedger(prog, bt) {
   const efv = (rt.efv || {}).spearman, cons = (rt.prospx_consensus || {}).spearman;
   const leg = _progConsLeg(row) || {};
   const ciTxt = Array.isArray(leg.ci95) ? `, 95% CI ${_progCi(leg.ci95, 3)}` : "";
+  const carriedTxt = leg.mde95_status === "carried"
+    ? `, carried from ${escapeHtml(String(leg.mde95_carried_from || "an earlier frame"))}` : "";
   const floorTxt = leg.mde95 != null
-    ? `, noise floor ${_progFmt(leg.mde95, 3)}${leg.mde95_estimator ? " (" + escapeHtml(leg.mde95_estimator) + ")" : ""}` : "";
+    ? `, noise floor ${_progFmt(leg.mde95, 3)}${leg.mde95_estimator ? " (" + escapeHtml(leg.mde95_estimator) + carriedTxt + ")" : ""}` : "";
   const stale = !!(bt && bt.generated_at && row.last_verified_at
     && String(row.last_verified_at) < String(bt.generated_at));
   const chip = stale
@@ -3572,7 +3652,7 @@ function _methProgressChart(prog) {
     hasDev ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};border-radius:50%;"></span>development frame, spent, not a claim</span>` : "",
     rows.some(r => r.statistic) ? `<span class="meth-legend-key">a development row that names its statistic (the rebuilt V2) reads Spearman within side and vintage, the statistic registered for the reserved reads; its pooled reading sits in the table</span>` : "",
     hasLook ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};transform:rotate(45deg);"></span>reserved-frame look</span>` : "",
-    hasCorr ? `<span class="meth-legend-key"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M 6,1 L 11,10.5 L 1,10.5 Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="1.6"/></svg>correction: a fix to how eFV is scored or to the rows it is trained and scored on, not model progress</span>` : "",
+    hasCorr ? `<span class="meth-legend-key"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M 6,1 L 11,10.5 L 1,10.5 Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="1.6"/></svg>correction or frame change: a fix to how eFV is scored, to the rows it is trained and scored on, or a move of the headline to another frame, not model progress</span>` : "",
     floor != null ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);opacity:.35;"></span>plus or minus the noise floor (${_progFmt(floor, 3)})</span>` : "",
   ].filter(Boolean).join("");
   return `<div class="meth-chart">
@@ -3584,7 +3664,7 @@ function _methProgressChart(prog) {
       ${marks}${ticks}
     </svg>
     <div class="meth-legend">${legend}</div>
-    <p class="meth-note">A point above zero is eFV ordering realized WAR better than the consensus on the same players. Inside the shaded band the difference is smaller than this sample can resolve, so no point inside it is a lead or a deficit. Rows backfilled from the committed history carry no interval, because one cannot be recomputed from a committed number. Tilted frames are never plotted.${hasCorr ? " An open triangle is the same model specification rescored after a correction (to the scoring harness or to the rows), so the step it shows is a correction and not progress." : ""}</p>
+    <p class="meth-note">A point above zero is eFV ordering realized WAR better than the consensus on the same players. Inside the shaded band the difference is smaller than this sample can resolve, so no point inside it is a lead or a deficit. Rows backfilled from the committed history carry no interval, because one cannot be recomputed from a committed number. Tilted frames are never plotted.${_progRows(prog).some(r => r.role === "superseded") ? ` Rows of a frame that has lost the headline, ${escapeHtml(_progFrameLabel(prog, "vm"))}, are marked superseded in the table below and are not plotted.` : ""}${hasCorr ? " An open triangle is the same model specification rescored after a correction (to the scoring harness or to the rows) or read on the frame that now carries the headline, so the step it shows is not progress." : ""}</p>
   </div>`;
 }
 
@@ -3611,7 +3691,7 @@ function _progRowHtml(prog, r) {
     : (r.trigger ? `<br><span class="meth-sub">${escapeHtml(r.trigger)}</span>` : "");
   const model = `${escapeHtml(r.model_id || "")}${mv.commit ? ` <span class="meth-sub">${escapeHtml(mv.commit)}</span>` : ""}${trigTxt}`;
   const chipCls = r.role === "headline" ? "sacc-chip-ok" : "sacc-chip-warn";
-  const frame = `${escapeHtml(_progFrameLabel(prog, r.frame))}${r.frame_version ? ` <span class="meth-sub">${escapeHtml(r.frame_version)}</span>` : ""}<br><span class="${chipCls}">${escapeHtml(String(r.role || "").replace(/_/g, " "))}</span>${r.statistic ? `<br><span class="meth-sub">${escapeHtml(r.statistic)}</span>` : ""}`;
+  const frame = `${escapeHtml(_progFrameLabel(prog, r.frame))}${r.frame_version ? ` <span class="meth-sub">${escapeHtml(r.frame_version)}</span>` : ""}<br><span class="${chipCls}">${escapeHtml(String(r.role || "").replace(/_/g, " "))}</span>${r.role_was ? `<br><span class="meth-sub" title="${escapeHtml(r.role_changed || "")}">written as ${escapeHtml(String(r.role_was).replace(/_/g, " "))}</span>` : ""}${r.statistic ? `<br><span class="meth-sub">${escapeHtml(r.statistic)}</span>` : ""}`;
   let deltaCell;
   if (r.share && r.share.efv_right_share != null) {
     const ci = Array.isArray(r.share.ci95) ? ` (CI ${_progFmt(r.share.ci95[0] * 100, 0)}% to ${_progFmt(r.share.ci95[1] * 100, 0)}%)` : "";
@@ -3662,7 +3742,7 @@ function _methProgressTable(prog) {
   return `<div class="meth-chart">
     <div class="meth-table-title">Every ledger row, newest first</div>
     ${mainHtml}${tiltedHtml}${secondaryHtml}
-    <p class="meth-note">Rows are appended when a frame's measured numbers change and are never edited. Each row names the artifact it was copied from. Pipeline and FanGraphs cells are descriptive: no correction for testing several sources is applied, so a CI clear of zero on one of them is not a claimed win.</p>
+    <p class="meth-note">Rows are appended when a frame's measured numbers change, and their numbers are never edited; a row's role moves only when its frame's role does (a superseded row says so). Each row names the artifact it was copied from. The Pipeline and FanGraphs columns print each grader's own figures on the row's players; whether a gap to eFV survives the correction for testing several sources is read in the per-source table above, and a CI clear of zero is not a win on its own.</p>
   </div>`;
 }
 
@@ -3721,6 +3801,7 @@ function renderSourceComparison() {
       ${_methPerYearChart(bt)}
       <h3 class="meth-h3">Head-to-head: ranking skill + contributor AUC</h3>
       ${_methAccuracyChart(bt)}
+      ${_methPerSourceCells(bt)}
       ${_methConsensusVsInputsNote(bt)}
       ${_methEfvPanel(bt)}
       ${_methSideCalibration()}

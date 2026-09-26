@@ -467,35 +467,13 @@
  },
  "head_to_head": {
   "protocol": "common resolved set (players every scored source graded that preseason); eFV enters with its forward-chained OOS grade, never an in-sample fit",
-  "basis": "identical rows, vintage-matched (accuracy.pooled_efv_common_vintage_matched), the frame verdict_vs_consensus is read off",
-  "vs_frame": "vintage_matched",
-  "vs_frame_n": 806,
-  "vs_frame_note": "base year equals the eFV decision year; neither side holds a timing edge",
+  "basis": "identical rows on the headline frame (accuracy.pooled_efv_common_vintage_matched_vm2), the frame verdict_vs_consensus is read off",
+  "vs_frame": "vintage_matched_vm2",
+  "vs_frame_n": 803,
+  "vs_frame_note": "base year equals the eFV decision year, and eFV's consensus input is the raters' own preseason read (latest point dated Jan 1 to Apr 30 of that year), so neither side holds a timing edge; frame version vm2 (EV-01)",
   "common_n": 4318,
   "common_n_efv": 3231,
   "verdict_vs_consensus": {
-   "basis": "pooled_efv_common_vintage_matched",
-   "basis_note": "base year equals the eFV decision year; neither side holds a timing edge",
-   "n": 806,
-   "xfv_spearman": 0.4192,
-   "consensus_spearman": 0.4122,
-   "delta": 0.007,
-   "mde95": 0.0303,
-   "resolvable": false,
-   "margin_x_floor": 0.231,
-   "xfv_beats": false,
-   "verdict": "not resolvable at this power",
-   "frame_version": "vm1",
-   "frame_note": "read off the vintage-matched basis. The other two frames are published in head_to_head_by_frame and each is tilted toward one of the two graders; see docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md.",
-   "ci95": [
-    -0.0157,
-    0.0288
-   ],
-   "ci95_estimator": "E_cond, player-clustered",
-   "ci95_source": "accuracy.head_to_head_vs_sources.sources.prospx_consensus.spearman.ci95",
-   "mde95_estimator": "E_refit"
-  },
-  "verdict_vs_consensus_vm2": {
    "basis": "pooled_efv_common_vintage_matched_vm2",
    "basis_note": "base year equals the eFV decision year, and eFV's consensus input is the raters' own preseason read (latest point dated Jan 1 to Apr 30 of that year), so neither side holds a timing edge; frame version vm2 (EV-01)",
    "n": 803,
@@ -508,15 +486,17 @@
    "xfv_beats": false,
    "verdict": "not resolvable at this power",
    "frame_version": "vm2",
-   "role": "headline_candidate",
+   "role": "headline",
    "ci95": [
     -0.0202,
     0.0099
    ],
    "ci95_estimator": "E_cond, player-clustered",
-   "ci95_source": "accuracy.head_to_head_vs_sources_vm2.sources.prospx_consensus.spearman.ci95",
+   "ci95_source": "accuracy.head_to_head_vs_sources.sources.prospx_consensus.spearman.ci95",
    "mde95_estimator": "E_refit",
-   "mde95_note": "the vm1 frame's stored E_refit floor, carried because vm2 scores the same rows against the same consensus column; E_refit has not been re-measured on vm2",
+   "mde95_status": "carried",
+   "mde95_carried_from": "vm1",
+   "mde95_note": "carried, not re-measured: the E_refit floor measured on the vm1 frame for eFV v1 (tools/efv_headtohead_frame_lab.py, 2026-08-13). vm2 scores the same players against the same consensus column; an E_refit re-measure would refit the served eFV V2 with the timing pin inside every draw, which is not cheap. The in-run E_cond floor on vm2 is head_to_head_vs_sources.sources.prospx_consensus.spearman.mde95",
    "n_by_side": {
     "hit": 388,
     "pit": 415
@@ -539,12 +519,32 @@
      "-04-30"
     ]
    },
-   "frame_note": "timing-pinned vintage-matched frame (EV-01, docs/efv-v2/PROGRAM.md s3.4). Published beside the vm1 verdict; it becomes the headline once the owner has seen it."
+   "headline_since": "2026-09-25 (owner answer FP3-1)",
+   "superseded_frame": {
+    "frame_version": "vm1",
+    "basis": "pooled_efv_common_vintage_matched",
+    "by_frame_key": "vintage_matched"
+   },
+   "frame_note": "read off the timing-pinned vintage-matched frame (vm2, EV-01), the headline since 2026-09-25 (owner answer FP3-1). vm1 is published in head_to_head_by_frame with role superseded; the two tilted frames there each hand one grader an information edge; see docs/efv-2026-08-13/HEADTOHEAD_FRAME_GATE.md."
+  },
+  "holm_family": {
+   "family": [
+    "prospx_consensus.spearman",
+    "prospx_consensus.auc",
+    "mlb_pipeline.spearman",
+    "mlb_pipeline.auc",
+    "fangraphs.spearman",
+    "fangraphs.auc"
+   ],
+   "k": 6,
+   "alpha": 0.05,
+   "procedure": "Holm step-down, one-sided on |delta| / sd, sd = the cell's E_cond bootstrap sd",
+   "rule": "a cell carries a verdict word only when it survives Holm; the PROSPX consensus Spearman cell also needs head_to_head_verdict to resolve in the same direction; every other cell is read as its interval only"
   },
   "head_to_head_by_frame": {
    "vintage_matched": {
     "basis": "pooled_efv_common_vintage_matched",
-    "basis_note": "base year equals the eFV decision year; neither side holds a timing edge",
+    "basis_note": "base year equals the eFV decision year; eFV's consensus input is read at its matrix date, which on some rows falls after the raters' preseason window (frame version vm1, superseded by vm2 on 2026-09-25)",
     "n": 806,
     "xfv_spearman": 0.4192,
     "consensus_spearman": 0.4122,
@@ -554,7 +554,9 @@
     "margin_x_floor": 0.231,
     "xfv_beats": false,
     "verdict": "not resolvable at this power",
-    "frame_version": "vm1"
+    "frame_version": "vm1",
+    "role": "superseded",
+    "superseded_note": "the headline until 2026-09-25, kept as history. On some of its rows eFV's consensus input was read after the raters' preseason window, a timing edge toward eFV; vm2 pins that input to the window and replaced it as the headline (owner answer FP3-1)"
    },
    "predebut": {
     "basis": "pooled_efv_common_predebut",
@@ -594,59 +596,138 @@
     "margin_x_floor": 0.182,
     "xfv_beats": false,
     "verdict": "not resolvable at this power",
-    "frame_version": "vm2"
+    "frame_version": "vm2",
+    "role": "headline"
    }
   },
   "vs": {
    "prospx_consensus": {
     "label": "PROSPX consensus",
     "spearman": {
-     "n": 806,
-     "efv": 0.4192,
-     "consensus": 0.4122,
-     "win": true,
-     "margin": 0.007
+     "n": 803,
+     "efv": 0.4074,
+     "consensus": 0.4129,
+     "win": false,
+     "margin": -0.0055,
+     "ci95": [
+      -0.0202,
+      0.0099
+     ],
+     "holm": {
+      "p_one_sided": 0.23753,
+      "holm_step": 4,
+      "holm_alpha": 0.016667,
+      "holm_z_one_sided": 2.128,
+      "mde95_holm": 0.0164,
+      "reject_holm": false
+     },
+     "holm_verdict": null
     },
     "auc_contributor": {
-     "n": 806,
-     "efv": 0.7578,
-     "consensus": 0.7485,
+     "n": 803,
+     "efv": 0.7505,
+     "consensus": 0.7492,
      "win": true,
-     "margin": 0.0093
+     "margin": 0.0013,
+     "ci95": [
+      -0.0078,
+      0.01
+     ],
+     "holm": {
+      "p_one_sided": 0.38509,
+      "holm_step": 6,
+      "holm_alpha": 0.05,
+      "holm_z_one_sided": 1.6449,
+      "mde95_holm": 0.0073,
+      "reject_holm": false
+     },
+     "holm_verdict": null
     }
    },
    "fangraphs": {
     "label": "FanGraphs",
     "spearman": {
-     "n": 806,
-     "efv": 0.4192,
-     "consensus": 0.3649,
+     "n": 803,
+     "efv": 0.4074,
+     "consensus": 0.3662,
      "win": true,
-     "margin": 0.0543
+     "margin": 0.0412,
+     "ci95": [
+      0.0083,
+      0.0756
+     ],
+     "holm": {
+      "p_one_sided": 0.00739,
+      "holm_step": 2,
+      "holm_alpha": 0.01,
+      "holm_z_one_sided": 2.3263,
+      "mde95_holm": 0.0393,
+      "reject_holm": true
+     },
+     "holm_verdict": "beats FanGraphs"
     },
     "auc_contributor": {
-     "n": 806,
-     "efv": 0.7578,
-     "consensus": 0.7144,
+     "n": 803,
+     "efv": 0.7505,
+     "consensus": 0.7153,
      "win": true,
-     "margin": 0.0434
+     "margin": 0.0352,
+     "ci95": [
+      0.016,
+      0.0546
+     ],
+     "holm": {
+      "p_one_sided": 0.00019,
+      "holm_step": 1,
+      "holm_alpha": 0.008333,
+      "holm_z_one_sided": 2.394,
+      "mde95_holm": 0.0237,
+      "reject_holm": true
+     },
+     "holm_verdict": "beats FanGraphs"
     }
    },
    "mlb_pipeline": {
     "label": "MLB Pipeline",
     "spearman": {
-     "n": 806,
-     "efv": 0.4192,
-     "consensus": 0.4113,
-     "win": true,
-     "margin": 0.0079
+     "n": 803,
+     "efv": 0.4074,
+     "consensus": 0.4116,
+     "win": false,
+     "margin": -0.0042,
+     "ci95": [
+      -0.0318,
+      0.024
+     ],
+     "holm": {
+      "p_one_sided": 0.38426,
+      "holm_step": 5,
+      "holm_alpha": 0.025,
+      "holm_z_one_sided": 1.96,
+      "mde95_holm": 0.028,
+      "reject_holm": false
+     },
+     "holm_verdict": null
     },
     "auc_contributor": {
-     "n": 806,
-     "efv": 0.7578,
-     "consensus": 0.7388,
+     "n": 803,
+     "efv": 0.7505,
+     "consensus": 0.7392,
      "win": true,
-     "margin": 0.019
+     "margin": 0.0113,
+     "ci95": [
+      -0.0041,
+      0.0275
+     ],
+     "holm": {
+      "p_one_sided": 0.08254,
+      "holm_step": 3,
+      "holm_alpha": 0.0125,
+      "holm_z_one_sided": 2.2414,
+      "mde95_holm": 0.0182,
+      "reject_holm": false
+     },
+     "holm_verdict": null
     }
    }
   },
@@ -889,7 +970,7 @@
  ],
  "source_backtest_freshness": {
   "reran": false,
-  "artifact_generated_at": "2026-09-25T22:34:54Z",
+  "artifact_generated_at": "2026-09-25T23:50:14Z",
   "rule": "reused (fresh within 7 days)"
  },
  "weak_cells": [
@@ -996,6 +1077,22 @@
    "efv": 0.727,
    "consensus": 0.7297,
    "margin": -0.0027
+  },
+  {
+   "cell": "head_to_head.prospx_consensus",
+   "metric": "spearman",
+   "n": 803,
+   "efv": 0.4074,
+   "consensus": 0.4129,
+   "margin": -0.0055
+  },
+  {
+   "cell": "head_to_head.mlb_pipeline",
+   "metric": "spearman",
+   "n": 803,
+   "efv": 0.4074,
+   "consensus": 0.4116,
+   "margin": -0.0042
   },
   {
    "cell": "head_to_head.archetype.college_arm",
