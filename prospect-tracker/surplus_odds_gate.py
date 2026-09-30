@@ -18,7 +18,9 @@ cell, band or tier, and backtest.run_backtest (which always builds by_fv_tier) i
 called. The scorer is calibration_metrics(); test_surplus_odds_gate.py pins that neither
 it nor the artifact carries an FV or tier stratum.
 
-Writes exactly one artifact, data/surplus_odds_gate_eval.json. Moves no served number:
+Writes one block, `surplus_odds_gate`, inside the parent artifact
+data/surplus_backtest_real.json (the prospect_surplus row's eval; a failed challenger is
+a block in its parent, never a standalone *_eval.json). Moves no served number:
 the flag it adjudicates, efv_score.SURPLUS_FROM_SERVED_ODDS_DEFAULT, is flipped by hand
 only on a pass inside the landing rule.
 
@@ -41,7 +43,8 @@ log = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
-OUT_PATH = DATA_DIR / "surplus_odds_gate_eval.json"
+OUT_PATH = DATA_DIR / "surplus_backtest_real.json"   # the parent artifact
+BLOCK_KEY = "surplus_odds_gate"
 GATE_DOC = "docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md"
 
 # Registered constants (gate sections 3 to 5). Not arguments: the read takes none.
@@ -407,7 +410,8 @@ def run(persist: bool = True) -> dict:
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "produced_by": "surplus_odds_gate.py",
         "gate_doc": GATE_DOC,
-        "registration_commit": _git("log", "-1", "--format=%H", "--", GATE_DOC),
+        "registration_commit": _git("log", "--diff-filter=A", "--format=%H", "--", GATE_DOC),
+        "gate_doc_commit_at_read": _git("log", "-1", "--format=%H", "--", GATE_DOC),
         "code_commit": _git("rev-parse", "HEAD"),
         "scope": ("one registered read; pooled statistics only; no statistic by consensus "
                   "grade cell, band or stratum; backtest.run_backtest never called"),
@@ -429,9 +433,18 @@ def run(persist: bool = True) -> dict:
         "ships": bool(v.get("verdict") == "PASS" and landing["holds"]),
     }
     if persist:
-        OUT_PATH.write_text(json.dumps(out, indent=1), encoding="utf-8")
-        log.info("wrote %s", OUT_PATH)
+        persist_block(out)
     return out
+
+
+def persist_block(block: dict, path: Path | None = None) -> None:
+    """Write the read as the BLOCK_KEY block of the parent artifact, leaving every other
+    key as it is (surplus_backtest_real.run carries this block over when it rewrites)."""
+    p = OUT_PATH if path is None else Path(path)
+    doc = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+    doc[BLOCK_KEY] = block
+    p.write_text(json.dumps(doc, indent=1), encoding="utf-8")
+    log.info("wrote %s [%s]", p, BLOCK_KEY)
 
 
 if __name__ == "__main__":

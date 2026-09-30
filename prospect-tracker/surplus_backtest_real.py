@@ -72,6 +72,8 @@ log = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parent / "data"
 OUT_PATH = DATA_DIR / "surplus_backtest_real.json"
+# Blocks written into this artifact by other tools, carried over on a rewrite.
+CARRIED_BLOCKS = ("surplus_odds_gate",)
 
 LISTING_YEARS = (2017, 2018, 2019)
 MIN_FV = 40.0
@@ -355,6 +357,16 @@ def run(persist: bool = True) -> dict:
         "resolved_only": _lean(resolved),
     }
     if persist:
+        # Lab blocks other writers keep in this artifact survive a rewrite (a failed
+        # challenger lives in its parent artifact): the surplus-odds gate read.
+        if OUT_PATH.exists():
+            try:
+                prev = json.loads(OUT_PATH.read_text(encoding="utf-8"))
+            except ValueError:
+                prev = {}
+            for k in CARRIED_BLOCKS:
+                if k in prev and k not in out:
+                    out[k] = prev[k]
         OUT_PATH.write_text(json.dumps(out, indent=1), encoding="utf-8")
         log.info("wrote %s", OUT_PATH)
     return out

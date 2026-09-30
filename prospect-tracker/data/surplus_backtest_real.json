@@ -415,5 +415,161 @@
     "elasticity": 0.0
    }
   ]
+ },
+ "surplus_odds_gate": {
+  "schema": 1,
+  "generated_at": "2026-09-30T22:53:23+00:00",
+  "produced_by": "surplus_odds_gate.py",
+  "gate_doc": "docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md",
+  "registration_commit": "fc90703d7c41f5d5d86fdd914f1543974f9c29a0",
+  "gate_doc_commit_at_read": "79a637e38aff12618b982342567ea55f7802cfe2",
+  "code_commit": "79a637e38aff12618b982342567ea55f7802cfe2",
+  "scope": "one registered read; pooled statistics only; no statistic by consensus grade cell, band or stratum; backtest.run_backtest never called",
+  "frame": {
+   "decision_years": [
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "folds": [
+    {
+     "side": "hit",
+     "decision_year": 2016,
+     "n_train": 268,
+     "n_test": 99,
+     "n_priced": 99
+    },
+    {
+     "side": "hit",
+     "decision_year": 2017,
+     "n_train": 367,
+     "n_test": 118,
+     "n_priced": 118
+    },
+    {
+     "side": "hit",
+     "decision_year": 2018,
+     "n_train": 485,
+     "n_test": 180,
+     "n_priced": 180
+    },
+    {
+     "side": "hit",
+     "decision_year": 2019,
+     "n_train": 665,
+     "n_test": 199,
+     "n_priced": 199
+    },
+    {
+     "side": "pit",
+     "decision_year": 2016,
+     "n_train": 278,
+     "n_test": 120,
+     "n_priced": 120
+    },
+    {
+     "side": "pit",
+     "decision_year": 2017,
+     "n_train": 398,
+     "n_test": 89,
+     "n_priced": 89
+    },
+    {
+     "side": "pit",
+     "decision_year": 2018,
+     "n_train": 487,
+     "n_test": 213,
+     "n_priced": 213
+    },
+    {
+     "side": "pit",
+     "decision_year": 2019,
+     "n_train": 700,
+     "n_test": 196,
+     "n_priced": 196
+    }
+   ],
+   "accounting": {
+    "resolved_debuted": 438,
+    "resolved_washed": 747,
+    "excluded_censored_active": 29
+   },
+   "n": 1185,
+   "n_by_side": {
+    "hit": 585,
+    "pit": 600
+   },
+   "n_players": 1185,
+   "n_mean_moved_5c_or_more": 1163,
+   "served_bust_floor_mm": 0.9784,
+   "price_eta_years": 1.0,
+   "n_draws": 4000,
+   "realized_unit": "live flat $/WAR 17.1436M, discount 0.07 to the decision year"
+  },
+  "incumbent": {
+   "n": 1185,
+   "bias_mm": -0.5736621928688778,
+   "slope": 0.9971608798252907,
+   "intercept_mm": -0.5320356660751031,
+   "pit_coverage": 0.7544303797468355,
+   "pit_ks_stat": 0.10437967449176933
+  },
+  "candidate": {
+   "n": 1185,
+   "bias_mm": 1.0202457816109651,
+   "slope": 0.8913048775634493,
+   "intercept_mm": 2.4406586364125076,
+   "pit_coverage": 0.740084388185654,
+   "pit_ks_stat": 0.055121758495089046
+  },
+  "bootstrap": {
+   "D_cov": {
+    "ci95": [
+     -0.029535864978902926,
+     0.0
+    ],
+    "boot_mean": -0.014421097046413502
+   },
+   "H_bias": {
+    "ci95": [
+     -1.7850565952945636,
+     1.9075798398631916
+    ],
+    "boot_mean": 0.20700885990012305
+   },
+   "H_slope": {
+    "ci95": [
+     -0.12363267561076108,
+     0.1567342655589186
+    ],
+    "boot_mean": 0.0443357156782595
+   },
+   "B": 2000,
+   "seed": 20260930,
+   "clusters": 1185
+  },
+  "one_object_ok": true,
+  "decision": {
+   "verdict": "FAIL",
+   "clauses": {
+    "G1_one_object": true,
+    "G2_coverage": false,
+    "G3_bias_no_harm": true,
+    "G4_slope_no_harm": true
+   },
+   "point": {
+    "D_cov": -0.014345991561181437,
+    "H_bias": 0.44658358874208737,
+    "H_slope": 0.10585600226184133
+   }
+  },
+  "landing": {
+   "rule": "only before 2026-10-04, or after the fWAR label epoch's step Z (FWAR_LABEL_EPOCH_GATE.md part 9)",
+   "read_date": "2026-09-30",
+   "before_2026_10_04": true,
+   "holds": true
+  },
+  "ships": false
  }
 }

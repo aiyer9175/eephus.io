@@ -212,11 +212,28 @@ def test_reserved_frames_are_not_read():
 
 
 def test_artifact_has_no_fv_or_tier_stratum():
-    art = ROOT / "data" / "surplus_odds_gate_eval.json"
+    art = ROOT / "data" / "surplus_backtest_real.json"
     if not art.exists():
+        pytest.skip("the parent artifact is not generated on this machine")
+    doc = json.loads(art.read_text(encoding="utf-8")).get(G.BLOCK_KEY)
+    if doc is None:
         pytest.skip("the one read has not run")
-    doc = json.loads(art.read_text(encoding="utf-8"))
     bad = [k for k in _keys(doc) if "fv" in k.lower() or "tier" in k.lower()]
     assert bad == []
     assert doc["gate_doc"] == G.GATE_DOC
     assert doc["frame"]["decision_years"] == list(G.GATE_YEARS)
+
+
+def test_block_persists_beside_the_parent_keys(tmp_path):
+    p = tmp_path / "parent.json"
+    p.write_text(json.dumps({"accounting": {"scored": 1}}), encoding="utf-8")
+    G.persist_block({"n": 3}, path=p)
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    assert doc == {"accounting": {"scored": 1}, G.BLOCK_KEY: {"n": 3}}
+
+
+def test_parent_writer_carries_the_block_over():
+    import surplus_backtest_real as sbr
+    assert G.BLOCK_KEY in sbr.CARRIED_BLOCKS
+    # the harness mirrors the gate's path, so compare the file each module names
+    assert G.OUT_PATH.name == sbr.OUT_PATH.name == "surplus_backtest_real.json"

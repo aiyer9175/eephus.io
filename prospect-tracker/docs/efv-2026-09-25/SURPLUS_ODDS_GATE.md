@@ -198,3 +198,64 @@ written into section 9, and the owner question list gets the result.
 ## 9. Results
 
 (Filled in after the one read. Nothing above this line may be edited once results exist.)
+
+**Verdict: FAIL (G2).** The flag stays False and nothing served moves. Read 2026-09-30,
+code `79a637e3` (the build commit; the registration is `fc90703d`, and `79a637e3` also
+carries the one pre-read correction to section 3: a frame debut can be 2020). Artifact:
+the `surplus_odds_gate` block of `data/surplus_backtest_real.json`.
+
+**Frame.** 8 folds (hit and pit, test decision years 2016 to 2019), 1,214 rows priced;
+surplus_backtest_real's rules resolved 438 debuted and 747 washed-out rows and excluded 29
+as censored-active. n = 1,185 rows (hit 585, pit 600), 1,185 players. Served bust floor
+$0.9784M; realized valued at the live flat $17.1436M per WAR, discounted at the live
+config's 0.07 to the decision year.
+
+| pooled, served $M | incumbent | candidate |
+|---|---|---|
+| PIT coverage, [0.10, 0.90] (0.80 nominal) | 0.7544 | 0.7401 |
+| bias, mean(realized - pred) | -0.574 | +1.020 |
+| slope, realized on pred | 0.997 | 0.891 |
+| intercept | -0.532 | +2.441 |
+| PIT KS statistic (descriptive) | 0.104 | 0.055 |
+
+| clause | point | CI95 (B 2,000, player clusters) | result |
+|---|---|---|---|
+| G1 one object | every row | | pass |
+| G2 `D_cov` | -0.0143 | [-0.0295, +0.0000] | **FAIL** |
+| G3 `H_bias` | +0.447 | [-1.785, +1.908] | pass (not resolvably worse) |
+| G4 `H_slope` | +0.106 | [-0.124, +0.157] | pass (not resolvably worse) |
+
+The landing rule held on the day (before 2026-10-04) and is moot.
+
+**What the read says, without adjudicating beyond the rule.** Drawing the fan from the
+served odds makes the PIT histogram flatter overall (KS 0.055 against 0.104) but puts
+fewer realized outcomes inside the registered 80 percent band (0.740 against 0.754), and
+it moves the mean on 1,163 of 1,185 rows, from an incumbent that sat at slope 0.997 and
+bias -0.57 to one that under-predicts realized surplus (bias +1.02, slope 0.89), neither
+resolvably. It fails although the Platt odds were partly in sample on the bust event
+(section 3 (i)), the one advantage that favoured it.
+
+**Disclosures.** (1) The result was first written as a standalone
+`data/surplus_odds_gate_eval.json`. The house rule puts a failed challenger in its
+parent artifact, so the same code, unchanged except for where it persists, was re-run
+once to write the block; every field of the frame, both arms, the bootstrap, the
+decision and the landing record is identical between the two runs (checked field by
+field) and the standalone file was removed. That is a persistence move, not a second
+look. (2) The frame's display grade is the per-fold quantile map of section 3; the
+F-SIDE-FIX top-band re-anchor that `efv_score.run` also applies is not in it, because
+its crosswalk is built from the pool's realized WAR. (3) `surplus_backtest_real.run`
+now carries this block over when it rewrites its artifact.
+
+**What stays served.** The "Two bases" note keeps showing where the page's rule trips:
+717 debuted and 70 bust run_backgrade rows and 2 thin-sample provisional rows (section
+1). The active V2 board is one object already (`707bdabd`).
+
+**Owner question.** How should the graduate and bust eFV cards reconcile P(bust) and the
+dollar fan now that the registered read failed?
+(a) DEFAULT: keep the incumbent pricing and the "Two bases" note (nothing moves).
+(b) Ship the candidate anyway as a coherence choice, against a failed read (moves
+surplus_mm, the band and the fan on the run_backgrade rows and in `xfv_scored*.json`;
+needs a new registration or an explicit owner waiver).
+(c) Copy only: print the fan's own bust share beside the calibrated P(bust).
+(d) Hide the eFV fan on graduate and bust cards (a debuted player's card already leads
+with the Trade Machine value).
