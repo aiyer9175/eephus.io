@@ -884,6 +884,9 @@ _SIDECAR_WRITE_TARGETS = (
     # DS-17: efv_v2_model.pbust_serving_arm reads the committed P(bust) read
     # through PBUST_EVAL_PATH, resolved at call time; mirrored like DEV_EVAL_PATH.
     ("efv_v2_model", "PBUST_EVAL_PATH", "data/efv_v2_pbust_eval.json"),
+    # VAL_3 surplus-odds gate: surplus_odds_gate.run writes its one read through
+    # OUT_PATH, resolved at call time.
+    ("surplus_odds_gate", "OUT_PATH", "data/surplus_odds_gate_eval.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands

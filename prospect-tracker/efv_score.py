@@ -1489,7 +1489,28 @@ def _grade_map_age(age, eta_to_debut) -> float | None:
     return float(age) + float(eta_to_debut) + TARGET_SEASONS
 
 
-def _reprice_surplus_on_display(s: dict, is_pit: bool, pos, age=None, eta=None) -> None:
+# SURPLUS FROM THE SERVED ODDS (docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md, owner answer
+# 2026-09-25 batch 2). At the three Platt seams (run, run_live v1, run_backgrade) the
+# served p_bust is the Platt-calibrated odds at the realized-implied ODDS grade while the
+# dollars are priced from the raw curve at the DISPLAY grade, so the card could print
+# P(bust) 35% beside a P10 of $27M (census M01-08). With this flag on, those seams hand
+# their served odds vector to _reprice_surplus_on_display, which draws the fan and the
+# mean from that one mixture (bucket dollar values unchanged). V2 rows never pass odds:
+# they already read odds and dollars off one grade and one curve. Default OFF until the
+# gate's one read passes; env EEPHUS_SURPLUS_FROM_SERVED_ODDS "1"/"0" toggles a process.
+SURPLUS_FROM_SERVED_ODDS_DEFAULT = False
+
+
+def _surplus_odds_flag() -> bool:
+    import os
+    env = os.environ.get("EEPHUS_SURPLUS_FROM_SERVED_ODDS")
+    if env is not None:
+        return env.strip() == "1"
+    return SURPLUS_FROM_SERVED_ODDS_DEFAULT
+
+
+def _reprice_surplus_on_display(s: dict, is_pit: bool, pos, age=None, eta=None,
+                                odds=None) -> None:
     """Re-price the surplus DOLLARS (surplus_mm + band + the surplus fan) off the DISPLAYED
     20-80 grade (xfv_grade_display) instead of the honestly-deflated realized grade, so the
     dollars a prospect shows match the eFV grade the site displays and the /projections/
@@ -1499,6 +1520,10 @@ def _reprice_surplus_on_display(s: dict, is_pit: bool, pos, age=None, eta=None) 
     realized grade: they are probabilities, not a dollar value, and were ground-truthed on
     that basis. No-op when the display grade or a priced surplus is unavailable (e.g. a
     provisional cohort).
+
+    `odds` is the row's served 5-bucket vector (bust first, unrounded). It is read only
+    when SURPLUS_FROM_SERVED_ODDS_DEFAULT (or its env override) is on; it prices the
+    dollars from the odds and never changes them.
 
     INVARIANT AMENDED 2026-07-25 (owner-authorized). This function's rule is unchanged:
     the display re-pricing still never touches the odds. But the standing site-wide claim
@@ -1526,8 +1551,15 @@ def _reprice_surplus_on_display(s: dict, is_pit: bool, pos, age=None, eta=None) 
         kw["age"] = age
     if eta is not None:
         kw["eta_years"] = eta
-    sq = vf.expected_surplus_usd(gq, is_pit, pos, **kw)
-    dq = vf.sv_distribution(gq, is_pit, pos, **kw) or {}
+    if odds is not None and _surplus_odds_flag():
+        # SURPLUS_ODDS_GATE candidate: the served odds weight the buckets, each bucket
+        # keeps its dollar value at the display grade, so the fan's bust share IS p_bust.
+        odds = list(odds)
+        sq = vf.mixture_surplus_usd(gq, is_pit, pos, odds, **kw)
+        dq = vf.sv_distribution(gq, is_pit, pos, bucket_probs=odds, **kw) or {}
+    else:
+        sq = vf.expected_surplus_usd(gq, is_pit, pos, **kw)
+        dq = vf.sv_distribution(gq, is_pit, pos, **kw) or {}
     pq = dq.get("percentiles") or {}
     _r1 = lambda v: round(float(v), 1) if v is not None else None
     _cq = lambda v: _cal_mm(v, gq, is_pit)
@@ -1813,6 +1845,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
 
     scored = []
     _price_ctx = {}                                       # pk -> age, for the post-rank surplus re-price
+    _odds_ctx = {}                                        # pk -> served odds (SURPLUS_ODDS_GATE)
     _rank_exact = {}                                      # pk -> UNROUNDED rank_war (tie-group display sort)
     for r in data:
         pk = r["player_key"]
@@ -1864,6 +1897,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         # rank, grade or dollar figure moves. Bust mass is replaced and the four
         # remaining buckets rescale, so the vector still sums to 1.
         probs = _odds_cal.recalibrate_bucket(probs, is_pit, provisional=not src.get("milb"))
+        _odds_ctx[pk] = list(probs) if probs else None
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; consensus at its own grade), so the
         # eFV and consensus columns share one pricing basis.
@@ -1961,7 +1995,8 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     # xfv_grade_display is pool-relative. Star/bust odds stay on the realized grade.
     for s in scored:
         _reprice_surplus_on_display(s, is_pit, s.get("position"),
-                                    age=_price_ctx.get(s["player_key"]), eta=1.0)
+                                    age=_price_ctx.get(s["player_key"]), eta=1.0,
+                                    odds=_odds_ctx.get(s["player_key"]))
 
     # --- validation -------------------------------------------------------
     res = [s for s in scored if s["kind"] == "debuted" and not s["censored"]]
@@ -2520,6 +2555,7 @@ def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=No
     scored, skipped_no_track = [], 0
     krp_disp_raw = {}                                     # KRP+ DISPLAY pool: player_key -> _krp_display_raw (decoupled from the model's zeroed x_era_k; LANE H2)
     _price_ctx = {}                                       # pk -> (age, eta), for the post-rank surplus re-price
+    _odds_ctx = {}                                        # pk -> served odds (SURPLUS_ODDS_GATE)
     _rank_exact = {}                                      # pk -> UNROUNDED rank_war (tie-group display sort)
     for r in live:
         try:
@@ -2751,6 +2787,7 @@ def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=No
         # rank, grade or dollar figure moves. Bust mass is replaced and the four
         # remaining buckets rescale, so the vector still sums to 1.
         probs = _odds_cal.recalibrate_bucket(probs, is_pit, provisional=not (r.get("milb") or {}))
+        _odds_ctx[r["player_key"]] = list(probs) if probs else None
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; percentiles pointwise - monotone).
         xfv_surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=eta)
@@ -2917,7 +2954,8 @@ def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=No
     # odds stay on the realized grade.
     for s in scored:
         _age, _eta = _price_ctx.get(s["player_key"], (None, PROSPECT_ETA_FALLBACK_YEARS))
-        _reprice_surplus_on_display(s, is_pit, s.get("position"), age=_age, eta=_eta)
+        _reprice_surplus_on_display(s, is_pit, s.get("position"), age=_age, eta=_eta,
+                                    odds=_odds_ctx.get(s["player_key"]))
 
     # KRP+ (K-backed Run Prevention) DISPLAY PILL: standardize the DISPLAY raw
     # (_krp_display_raw; LANE H2 decouple) over the live pitcher pool onto the
@@ -3407,7 +3445,8 @@ def run_backgrade(persist: bool = True) -> dict:
             "factors": factors,
         }
         # Surplus dollars on the DISPLAYED (quantile) grade, consistent with the live board.
-        _reprice_surplus_on_display(entry, is_pit, pos, age=age, eta=eta)
+        _reprice_surplus_on_display(entry, is_pit, pos, age=age, eta=eta,
+                                    odds=list(probs) if probs else None)
         if not row.get("milb"):
             entry["xfv_provisional"] = True          # prior-anchored (no pro track record)
         if inj < 1.0:

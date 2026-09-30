@@ -115,7 +115,8 @@ realized 0. A row with an MLB season before its decision year is excluded.
 
 **Reserved frames.** No decision year from 2020 on is read, so no row touches list
 vintages 2020 or 2021 (R-LV, `efv_vintage_frame.RESERVED_LV`), and every debut in the
-frame is before 2020, far from the 2025+ debut cohorts (R-VM). The scorer asserts both.
+frame is 2020 or earlier (resolved means `debut + 5 <= 2025`), far from the 2025+ debut
+cohorts (R-VM). The scorer asserts both.
 
 **PROSPECT_ANCHOR guard.** Every statistic is POOLED over the whole frame. Nothing is
 computed, stored or printed by consensus-FV cell or by any FV band, tier or stratum; no

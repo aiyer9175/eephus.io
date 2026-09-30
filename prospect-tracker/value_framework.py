@@ -1875,7 +1875,62 @@ def _resolve_fv_sd(fv_dispersion, source_fvs, n_sources):
     return _source_fv_sd(fv_dispersion, n_sources), fv_dispersion, n_sources
 
 
-def _sv_draws_mm(fv, is_pitcher, position, n, seed=None, age=None, eta_years=None, fv_sd=0.0):
+def _normalized_bucket_probs(bucket_probs) -> list[float]:
+    """A caller-supplied 5-bucket weight vector, checked and renormalized to sum 1."""
+    try:
+        w = [float(v) for v in bucket_probs]
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"bucket_probs must be {_N_BUCKETS} numbers") from exc
+    if len(w) != _N_BUCKETS or any(not math.isfinite(v) or v < 0 for v in w):
+        raise ValueError(f"bucket_probs must be {_N_BUCKETS} finite non-negative numbers")
+    tot = sum(w)
+    if tot <= 0:
+        raise ValueError("bucket_probs must not sum to zero")
+    return [v / tot for v in w]
+
+
+def _mixture_bucket_values(fv, is_pitcher, position, age=None, eta_years=None):
+    """(curve probs, per-bucket dollar values in USD, expected_surplus_usd) at FV.
+
+    The per-bucket values are the role-mixed bucket surpluses rescaled so that the
+    curve's own mixture mean equals expected_surplus_usd (anchor, bridge and C6 floor
+    included). They are what one bucket is worth on this player's timing, whatever
+    weight that bucket is given. (None, None, None) for a bad FV."""
+    mean_usd = expected_surplus_usd(fv, is_pitcher, position, age=age, eta_years=eta_years)
+    if mean_usd is None:
+        return None, None, None
+    f = float(fv)
+    debut_age, eta_eff = _resolve_timing(age, eta_years)
+    da, ee = _round_timing(debut_age, eta_eff)
+    probs = p_bucket_given_fv(f, is_pitcher)
+    bucket_sv = list(_effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(f, _role_key(is_pitcher))))
+    pipeline_mean = sum(p * s for p, s in zip(probs, bucket_sv))
+    scale = (mean_usd / pipeline_mean) if pipeline_mean > 0 else 0.0
+    return probs, [s * scale for s in bucket_sv], mean_usd
+
+
+def mixture_surplus_usd(fv, is_pitcher, position=None, bucket_probs=None, *,
+                        age=None, eta_years=None) -> float | None:
+    """Expected surplus (USD) of the bucket mixture at FV weighted by `bucket_probs`.
+
+    docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md, the candidate: the bucket dollar values
+    are the ones expected_surplus_usd prices at this FV and timing, and only the weights
+    change, so a caller holding an outcome-odds vector gets the mean of the SAME object
+    its P(bust) describes. The mean is NOT re-pinned to expected_surplus_usd (that would
+    inflate the non-bust buckets to hold the old mean). bucket_probs=None returns
+    expected_surplus_usd exactly."""
+    probs, eff_sv, mean_usd = _mixture_bucket_values(fv, is_pitcher, position,
+                                                     age=age, eta_years=eta_years)
+    if probs is None:
+        return None
+    if bucket_probs is None:
+        return mean_usd
+    w = _normalized_bucket_probs(bucket_probs)
+    return max(0.0, sum(p * s for p, s in zip(w, eff_sv)))
+
+
+def _sv_draws_mm(fv, is_pitcher, position, n, seed=None, age=None, eta_years=None, fv_sd=0.0,
+                 bucket_probs=None):
     """Monte Carlo SV draws ($M): sample bucket ~ P(bucket|FV), then a
     mean-preserving within-bucket Gamma (bust = point mass at $0). The bucket
     means are scaled so the mixture mean equals the (anchor/timing-adjusted)
@@ -1889,21 +1944,24 @@ def _sv_draws_mm(fv, is_pitcher, position, n, seed=None, age=None, eta_years=Non
     unchanged while the outcome variance grows MONOTONICALLY with disagreement at
     every FV -- no FV-jitter mean-shift to fight, so no narrowing artifact. bust
     (mean $0) stays a $0 point mass under any cv. fv_sd = 0 reproduces the plain
+    distribution exactly.
+
+    `bucket_probs` (docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md) replaces the sampling
+    weights with a caller's outcome-odds vector while every bucket keeps the dollar value
+    it has at this FV; the mixture mean becomes mixture_surplus_usd, so the returned
+    probs[0] is the bust share of these very draws. None reproduces the plain
     distribution exactly."""
     import numpy as np
-    mean_usd = expected_surplus_usd(fv, is_pitcher, position, age=age, eta_years=eta_years)
-    if mean_usd is None:
+    probs, eff_sv, mean_usd = _mixture_bucket_values(fv, is_pitcher, position,
+                                                     age=age, eta_years=eta_years)
+    if probs is None:
         return None, None, None
+    if bucket_probs is not None:
+        probs = _normalized_bucket_probs(bucket_probs)
+        mean_usd = max(0.0, sum(p * s for p, s in zip(probs, eff_sv)))
     cfg = _config().get("distribution", {})
     cv_map = cfg.get("within_bucket_cv", {})
     f = float(fv)
-    debut_age, eta_eff = _resolve_timing(age, eta_years)
-    da, ee = _round_timing(debut_age, eta_eff)
-    probs = p_bucket_given_fv(f, is_pitcher)
-    bucket_sv = list(_effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(f, _role_key(is_pitcher))))
-    pipeline_mean = sum(p * s for p, s in zip(probs, bucket_sv))
-    scale = (mean_usd / pipeline_mean) if pipeline_mean > 0 else 0.0
-    eff_sv = [s * scale for s in bucket_sv]
     cvs = [float(cv_map.get(b, 0.0)) for b in _BUCKETS]
     fv_sd = float(fv_sd or 0.0)
     if fv_sd > 0:
@@ -1944,14 +2002,16 @@ def _sv_draws_mm(fv, is_pitcher, position, n, seed=None, age=None, eta_years=Non
 
 
 def sv_draws(fv, is_pitcher, position=None, *, draws=None, seed=None,
-             age=None, eta_years=None, fv_dispersion=None, source_fvs=None, n_sources=None):
+             age=None, eta_years=None, fv_dispersion=None, source_fvs=None, n_sources=None,
+             bucket_probs=None):
     """Raw Monte Carlo SV draws ($M, numpy array) for a prospect -- e.g. for the
     backtest's PIT / interval-coverage checks. None for bad FV. Source-disagreement
-    spread (Prompt I) is applied when fv_dispersion / source_fvs is supplied."""
+    spread (Prompt I) is applied when fv_dispersion / source_fvs is supplied.
+    `bucket_probs` weights the buckets by a caller's odds vector (_sv_draws_mm)."""
     n = _mc_draws(draws)
     fv_sd, _, _ = _resolve_fv_sd(fv_dispersion, source_fvs, n_sources)
     out, _, _ = _sv_draws_mm(fv, is_pitcher, position, n, seed=seed, age=age,
-                             eta_years=eta_years, fv_sd=fv_sd)
+                             eta_years=eta_years, fv_sd=fv_sd, bucket_probs=bucket_probs)
     return out
 
 
@@ -1969,6 +2029,7 @@ def sv_distribution(
     fv_dispersion: float | None = None,
     source_fvs=None,
     n_sources: int | None = None,
+    bucket_probs=None,
 ) -> dict | None:
     """STANDARD OUTPUT CONTRACT -- the full surplus-value distribution for a
     prospect (not just its mean). Returns the `output` dict:
@@ -1986,7 +2047,12 @@ def sv_distribution(
     scaled so the mixture mean equals the (anchor-adjusted) expected surplus, so
     `mean` equals surplus_value_mm() up to rounding (this `mean` keeps 2 dp,
     surplus_value_mm rounds to 1) and the MC sample mean tracks it. Returns None
-    for missing / unparseable / non-finite FV."""
+    for missing / unparseable / non-finite FV.
+
+    `bucket_probs` (a 5-vector, bust first) samples the buckets at those weights
+    instead of P(bucket|FV), each bucket keeping its dollar value at this FV; `mean`
+    is then mixture_surplus_usd and `p_bust` is bucket_probs' bust share, so the odds
+    and the dollar range are one object (docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md)."""
     import numpy as np
 
     n = _mc_draws(draws)
@@ -1998,7 +2064,8 @@ def sv_distribution(
 
     fv_sd, dispersion, n_src = _resolve_fv_sd(fv_dispersion, source_fvs, n_sources)
     sv_mm, probs, mean_usd = _sv_draws_mm(fv, is_pitcher, position, n,
-                                          seed=seed, age=age, eta_years=eta_years, fv_sd=fv_sd)
+                                          seed=seed, age=age, eta_years=eta_years, fv_sd=fv_sd,
+                                          bucket_probs=bucket_probs)
     if sv_mm is None:
         return None
     out = _dist_output(sv_mm, float(probs[_BUCKETS.index("bust")]), mean_usd / 1e6,
