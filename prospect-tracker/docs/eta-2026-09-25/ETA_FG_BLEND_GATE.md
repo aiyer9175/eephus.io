@@ -82,7 +82,7 @@ What serves today: `storage.py` computes `org_promotion_tendencies` from the tra
 
 ## 8. Results (verbatim lab output)
 
-PENDING. The look is owed on or after 2026-09-28.
+The one registered look is recorded (second run, below). The first run crashed before recording anything and is disclosed first.
 
 ### First run, 2026-09-30 17:59, crashed before recording
 
@@ -120,3 +120,31 @@ Its stderr, verbatim:
 No block was written: `data/eta_eval.json` stayed byte-identical to its pre-run copy, with neither `fg_blend_gate_2026_09_25` nor `org_timing_gate_2026_09_25`. The VERDICT line was never printed, the org gate never ran, the 2026 shadow was never frozen, and nothing was committed.
 
 Owner decision (2026-09-30, ETA-1): repair the report-only sort with one line (a None level now sorts last: `sorted(..., key=lambda x: (x is None, x or ""))`), commit that repair alone with this disclosure, and rerun the look once. The rerun must reproduce the `cohort 2024:` line, the `frame:` line and the nine clause lines above byte for byte, or the look is VOID. No scored clause's code changes in the repair; `test_eta_fg_blend_gate.py` gains a synthetic frame with a level-None row so the by-level table is exercised. Before the repair, the parts of the look that run after that line and score nothing were smoke-run once for crashes (the level-change rebuild, the point-in-time org tendencies on one listing date, and the 2026 shadow construction, which reads no outcome); they printed only counts (7,108 players with level changes, 31 orgs with a tendency on 2024-02-01, 4,486 shadow rows) and wrote nothing.
+
+### Second run, recorded look
+
+`python -u tools/eta_fg_blend_gate.py`, run once on 2026-09-30 after commit 6ca2e8f4 (the one-line repair), finished 19:18 EDT with exit code 0. No monthly, pytest or other writer ran. The inputs the frame reads (`prospects.db`, `data/debuts.json`, `.cache/mlbam_ids.json`) were last written before the first run began. Its stdout, verbatim (stderr was empty):
+
+    cohort 2024: {"censored_active": 877, "debut_after_cutoff_ignored": 0, "debut_from_statsapi": 6, "debuted": 497, "dropped_debut_before_listing": 1, "excluded_no_bio": 0, "excluded_post_debut": 146, "fg_present": 1183, "level_from_career_stats": 669, "level_from_statsapi": 462, "listed": 1558, "mlbam_unknown": 1, "no_level_age_fallback": 281, "on40": 56, "org_unknown_at_V": 24, "overdue": 137, "washed_out": 21}
+    frame: rows=1394 debuted=503 censored_active=871 fg_debuted_c5_clean=446 fg_rows_failing_c5=0
+    arm A C1 ROW-MATCHED MAE: n=446 CH40 1.0224 vs 0.861; dMAE +0.1614 MDE95 0.0563 CI95 [+0.1054, +0.2152] p 0.0005 Holm pass -> PASS
+    arm A C2 ROW-MATCHED WITHIN-1Y: CH40 0.7377 vs 0.8453; d +0.1076 CI95 [+0.0762, +0.1435] -> PASS
+    arm A C3 POOLED MAE (n=503): 0.8489 vs CH40 0.992 -> PASS
+    arm A C4 OVERDUE: censored_active n=871; CH40 205 vs 201; delta -4 vs limit +110 (pro-rata flag 41.5) -> PASS
+    arm B C1 ROW-MATCHED MAE: n=446 CH40 1.0224 vs 0.8094; dMAE +0.2130 MDE95 0.0605 CI95 [+0.1547, +0.2735] p 0.0005 Holm pass -> PASS
+    arm B C2 ROW-MATCHED WITHIN-1Y: CH40 0.7377 vs 0.8408; d +0.1031 CI95 [+0.0739, +0.1368] -> PASS
+    arm B C3 POOLED MAE (n=503): 0.8032 vs CH40 0.992 -> PASS
+    arm B C4 OVERDUE: censored_active n=871; CH40 205 vs 201; delta -4 vs limit +110 (pro-rata flag 41.5) -> PASS
+    C6 B OVER A: dMAE +0.0516 CI95 [+0.0269, +0.0785]; overdue B-A +0 -> PASS
+    VERDICT: SHIP CANDIDATE (owner's call); recommended arm B
+    ORG GATE: debuted n=503 rows moved 0; REMOVE 0.992 vs KEEP 0.992; dMAE +0.0000 CI95 [+0.0000, +0.0000]; overdue KEEP-REMOVE +0 -> REMOVE
+    live shadow frozen: 2026 list rows=4486; scored after the 2028 regular season
+    wrote fg_blend_gate_2026_09_25 and org_timing_gate_2026_09_25 into eta_eval.json
+
+Reproduction (owner rule ETA-1): the `cohort 2024:` line, the `frame:` line and the nine clause lines are byte-identical to the first run's eleven lines above, so the look stands.
+
+Artifact of record: `data/eta_eval.json`, blocks `fg_blend_gate_2026_09_25` (look 2026-09-30, the clauses, the decision, the by-level table, the verbatim lines, and the 2026 live shadow of 4,486 frozen rows, scored after the 2028 regular season) and `org_timing_gate_2026_09_25`.
+
+**Verdict (section 4): SHIP CANDIDATE, both arms; recommended arm B** (C6 passes: arm B beats arm A row-matched by dMAE +0.0516, CI95 +0.0269 to +0.0785, overdue B-A +0). The gate itself flips nothing; the flip is the owner's call (answered 2026-09-30 as ETA-2: flip to arm B if this verdict is recorded).
+
+**Section 7 result: REMOVE.** On the 1,394-row frame the KEEP arm (point-in-time org promotion tendencies) and the REMOVE arm (None) give the same debut year on every row (rows moved 0; debuted MAE 0.992 both; overdue 205 both). Section 7's rule reads: if the two arms produce the same year on every row, the multipliers have not earned their place, and the recommendation is REMOVE. The stored bootstrap p of 2.0 is what the formula gives on an all-zero delta (2 x min(1, 1)) and adjudicates nothing. Removal is a served-number change and the owner's call; the multipliers keep serving until the owner answers.

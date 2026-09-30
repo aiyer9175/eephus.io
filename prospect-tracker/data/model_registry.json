@@ -770,6 +770,21 @@
    "artifact_age_days": 52
   },
   {
+   "model_id": "eta_fg_blend",
+   "surface": "PROSPX ETA for prospects whose current FanGraphs entry publishes an eta_year - GATED (eta.ETA_FG_BLEND_ARM, default None; flipping it is the owner's call)",
+   "predicts": "MLB debut year: arm A = max(floor, rnd(0.5 x CH40 + 0.5 x FanGraphs eta_year)); arm B = arm A minus one year for a prospect already on the 40-man",
+   "champion": "gate verdict SHIP CANDIDATE, recommended arm B (not served at this commit)",
+   "baseline": "CH40: estimate_eta with LEVEL_BIAS_ADJ and FORTYMAN_ADJ, the served champion, on identical rows",
+   "metric": "gate doc docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md section 4: C1 row-matched MAE (dMAE > MDE95, Holm), C2 within-1y, C3 pooled MAE, C4 overdue guardrail +110, C5 leak check, C6 B over A",
+   "eval_artifact": "data/eta_eval.json",
+   "verdict": "provisional",
+   "provisional_kind": "measured_not_adopted",
+   "notes": "One registered look, 2026-09-30 (second run; the first crashed at a report-only sort after scoring and recorded nothing; owner rule ETA-1 allowed a one-line repair, 6ca2e8f4, and one rerun that reproduced all eleven scored lines byte for byte). Fresh frame: the 2024 list, 1,394 rows, outcomes through 2026-09-27; the 2020/2021 lists never built; development vintages spent. Row-matched (446 debuted rows with a clean FanGraphs year): CH40 MAE 1.0224, arm A 0.861 (dMAE +0.1614, MDE95 0.0563, CI95 +0.1054 to +0.2152), arm B 0.8094 (dMAE +0.2130, MDE95 0.0605, CI95 +0.1547 to +0.2735), both Holm pass; within-1y CH40 0.7377, A 0.8453, B 0.8408, both CI above zero; pooled (503 debuted) CH40 0.992, A 0.8489, B 0.8032; overdue on 871 censored-active rows CH40 205, A and B 201 (delta -4 against +110). C6 B over A dMAE +0.0516 (CI95 +0.0269 to +0.0785), overdue +0. VERDICT: SHIP CANDIDATE (both arms), recommended arm B. Section 7 org-multiplier gate: KEEP and REMOVE give the same year on every row (moved 0), so the registered recommendation is REMOVE, the owner's call. A 2026 live shadow (4,486 rows) is frozen in the block and scored after the 2028 regular season. Blocks: data/eta_eval.json fg_blend_gate_2026_09_25 and org_timing_gate_2026_09_25; lab tools/eta_fg_blend_gate.py.",
+   "last_checked": "2026-09-30",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
    "model_id": "eta_hazard_lite",
    "surface": "eFV surplus ETA layer - GATED OFF (eta.py fortyman_adj hook, default None); docs/efv-2026-07-24 W-SURPLUS S2",
    "predicts": "40-man-selection + level + age shave of eta_years for already-selected arms",
