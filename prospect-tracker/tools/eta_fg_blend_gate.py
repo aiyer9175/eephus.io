@@ -452,7 +452,7 @@ def run_blend_gate(rows: list[dict], log) -> dict:
     out["by_level"] = {lv: {"CH40": score([(ch(r), r["actual"]) for r in fgdeb if r["level"] == lv]),
                             **{a: score([(f(r), r["actual"]) for r in fgdeb if r["level"] == lv])
                                for a, f in arms.items()}}
-                       for lv in sorted({r["level"] for r in fgdeb})}
+                       for lv in sorted({r["level"] for r in fgdeb}, key=lambda x: (x is None, x or ""))}
     out["coverage_fg_share_of_debuted"] = round(len(fgdeb) / len(deb), 4) if deb else None
     out["decision"] = decide(clauses, c6)
     log(f"VERDICT: {out['decision']['verdict']}; recommended arm {out['decision']['recommended_arm']}")

@@ -110,6 +110,22 @@ class Scoring(unittest.TestCase):
         self.assertFalse(G.c5_clean(dict(base, outcome="debuted", debut_date=None, actual=2024)))
         self.assertFalse(G.c5_clean({"fg": None, "outcome": "debuted"}))
 
+    def test_by_level_table_takes_a_row_with_no_level(self):
+        # The first look (2026-09-30) crashed here: a C5-clean debuted row with level None
+        # could not be sorted against the named levels. None now sorts last.
+        rows = []
+        for i, lv in enumerate(("AA", "A+", "AAA", None) * 3):
+            rows.append({"player_key": f"p{i}", "vintage": 2024, "level": lv, "on40": i % 2,
+                         "ch40": 2027, "fg": 2025, "fg_date": "2024-02-01",
+                         "outcome": "debuted", "debut_date": "2025-06-01", "actual": 2025})
+        rows.append({"player_key": "c0", "vintage": 2024, "level": None, "on40": 0,
+                     "ch40": 2028, "fg": None, "fg_date": None, "outcome": "censored_active",
+                     "actual": None})
+        out = G.run_blend_gate(rows, lambda s: None)
+        self.assertEqual(list(out["by_level"]), ["A+", "AA", "AAA", None])
+        self.assertEqual(out["by_level"][None]["CH40"]["n"], 3)
+        self.assertIn("verdict", out["decision"])
+
     def test_arm_rows_without_a_clean_fg_year_keep_the_champion(self):
         r = {"ch40": 2028, "fg": 2025, "vintage": 2024, "on40": 1, "c5_ok": False}
         self.assertEqual(G.arm_year(r, "A"), 2028)

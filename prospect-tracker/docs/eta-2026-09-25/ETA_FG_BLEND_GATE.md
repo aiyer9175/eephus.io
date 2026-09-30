@@ -83,3 +83,40 @@ What serves today: `storage.py` computes `org_promotion_tendencies` from the tra
 ## 8. Results (verbatim lab output)
 
 PENDING. The look is owed on or after 2026-09-28.
+
+### First run, 2026-09-30 17:59, crashed before recording
+
+Added 2026-09-30. The first run of `python -u tools/eta_fg_blend_gate.py` (17:59:32 to 18:00:02 EDT, no monthly and no pytest running, the monthly's step log ended 13:38) scored and printed every adjudicating clause, then crashed in a line that adjudicates nothing: the by-level table reported alongside (section 4) sorted the set of levels at `tools/eta_fg_blend_gate.py:455`, and some C5-clean debuted rows carry level None (the cohort counts 281 `no_level_age_fallback` rows). The crash came before `decide()`, before the section 7 org-multiplier gate, before the section 5 live-shadow freeze and before the artifact write.
+
+Its stdout, verbatim:
+
+    cohort 2024: {"censored_active": 877, "debut_after_cutoff_ignored": 0, "debut_from_statsapi": 6, "debuted": 497, "dropped_debut_before_listing": 1, "excluded_no_bio": 0, "excluded_post_debut": 146, "fg_present": 1183, "level_from_career_stats": 669, "level_from_statsapi": 462, "listed": 1558, "mlbam_unknown": 1, "no_level_age_fallback": 281, "on40": 56, "org_unknown_at_V": 24, "overdue": 137, "washed_out": 21}
+    frame: rows=1394 debuted=503 censored_active=871 fg_debuted_c5_clean=446 fg_rows_failing_c5=0
+    arm A C1 ROW-MATCHED MAE: n=446 CH40 1.0224 vs 0.861; dMAE +0.1614 MDE95 0.0563 CI95 [+0.1054, +0.2152] p 0.0005 Holm pass -> PASS
+    arm A C2 ROW-MATCHED WITHIN-1Y: CH40 0.7377 vs 0.8453; d +0.1076 CI95 [+0.0762, +0.1435] -> PASS
+    arm A C3 POOLED MAE (n=503): 0.8489 vs CH40 0.992 -> PASS
+    arm A C4 OVERDUE: censored_active n=871; CH40 205 vs 201; delta -4 vs limit +110 (pro-rata flag 41.5) -> PASS
+    arm B C1 ROW-MATCHED MAE: n=446 CH40 1.0224 vs 0.8094; dMAE +0.2130 MDE95 0.0605 CI95 [+0.1547, +0.2735] p 0.0005 Holm pass -> PASS
+    arm B C2 ROW-MATCHED WITHIN-1Y: CH40 0.7377 vs 0.8408; d +0.1031 CI95 [+0.0739, +0.1368] -> PASS
+    arm B C3 POOLED MAE (n=503): 0.8032 vs CH40 0.992 -> PASS
+    arm B C4 OVERDUE: censored_active n=871; CH40 205 vs 201; delta -4 vs limit +110 (pro-rata flag 41.5) -> PASS
+    C6 B OVER A: dMAE +0.0516 CI95 [+0.0269, +0.0785]; overdue B-A +0 -> PASS
+
+Its stderr, verbatim:
+
+    Traceback (most recent call last):
+      File "C:\Users\noah\baseball-projects\BaseballR\prospect-tracker\tools\eta_fg_blend_gate.py", line 618, in <module>
+        sys.exit(main())
+                 ~~~~^^
+      File "C:\Users\noah\baseball-projects\BaseballR\prospect-tracker\tools\eta_fg_blend_gate.py", line 614, in main
+        return run_look()
+      File "C:\Users\noah\baseball-projects\BaseballR\prospect-tracker\tools\eta_fg_blend_gate.py", line 555, in run_look
+        blend = run_blend_gate(rows, log)
+      File "C:\Users\noah\baseball-projects\BaseballR\prospect-tracker\tools\eta_fg_blend_gate.py", line 455, in run_blend_gate
+        for lv in sorted({r["level"] for r in fgdeb})}
+                  ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    TypeError: '<' not supported between instances of 'str' and 'NoneType'
+
+No block was written: `data/eta_eval.json` stayed byte-identical to its pre-run copy, with neither `fg_blend_gate_2026_09_25` nor `org_timing_gate_2026_09_25`. The VERDICT line was never printed, the org gate never ran, the 2026 shadow was never frozen, and nothing was committed.
+
+Owner decision (2026-09-30, ETA-1): repair the report-only sort with one line (a None level now sorts last: `sorted(..., key=lambda x: (x is None, x or ""))`), commit that repair alone with this disclosure, and rerun the look once. The rerun must reproduce the `cohort 2024:` line, the `frame:` line and the nine clause lines above byte for byte, or the look is VOID. No scored clause's code changes in the repair; `test_eta_fg_blend_gate.py` gains a synthetic frame with a level-None row so the by-level table is exercised. Before the repair, the parts of the look that run after that line and score nothing were smoke-run once for crashes (the level-change rebuild, the point-in-time org tendencies on one listing date, and the 2026 shadow construction, which reads no outcome); they printed only counts (7,108 players with level changes, 31 orgs with a tendency on 2024-02-01, 4,486 shadow rows) and wrote nothing.
