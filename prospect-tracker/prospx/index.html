@@ -37652,11 +37652,13 @@ function renderBucketBar(buckets, opts) {
 // Platt-calibrated outcome odds (x.p_bust), while the dollar fan (x.dist) is priced by the
 // value framework from the uncalibrated outcome mix at the display grade, which gives bust
 // a much smaller share (Jesus Made: calibrated 0.349 against about 0.05 inside the fan).
-// The bust bucket prices at the $0.7M floor, so when P(bust) alone is at least 10% / 25% /
+// The bust bucket prices at the calibration's bust floor ($0.98M at the VAL_1 level), so when P(bust) alone is at least 10% / 25% /
 // 50% the fan's P10 / P25 / P50 should sit on that floor if both read one mix. Where they
 // do not, the card says so instead of printing two numbers that cannot both hold. Pricing
-// the fan from the calibrated mix moves served dollars and is an owner / gate question.
-const _EFV_FAN_FLOOR_MM = 1.0;   // above the $0.7M bust floor, below any real outcome
+// the fan from the calibrated mix was gated (docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md) and
+// FAILED its registered read on 2026-09-30, so the note stays. Since eFV V2 (707bdabd) the
+// active board reads odds and dollars off one grade and one curve and never trips this.
+const _EFV_FAN_FLOOR_MM = 1.0;   // the bust floor serves as $1.0M after rounding; above it is a real outcome
 function efvFanBasisConflict(x) {
   const d = x && x.dist;
   const pb = x && x.p_bust != null ? Number(x.p_bust) : null;
@@ -48648,7 +48650,7 @@ function renderPlayerDetail(key) {
          </div>` : "";
     // The fan and P(bust) are on different bases; say so where they visibly disagree.
     const _efvBasisNote = (_useEfv && _efvFan && efvFanBasisConflict(_xf))
-      ? `<div class="efv-basis-note" style="margin:-4px 0 8px;font-size:10px;line-height:1.45;color:var(--text-tertiary);font-style:italic;" title="The bust bucket prices at the $700K floor. If the dollar range used the calibrated P(bust), its low end would sit on that floor.">Two bases: P(bust) ${Math.round(Number(_xf.p_bust) * 100)}% on the grade card is the calibrated outcome odds. This dollar range is priced from the model's uncalibrated outcome mix, which gives bust a smaller share, so its low end sits above the $700K bust floor.</div>`
+      ? `<div class="efv-basis-note" style="margin:-4px 0 8px;font-size:10px;line-height:1.45;color:var(--text-tertiary);font-style:italic;" title="The bust bucket prices at the surplus calibration's bust floor. If the dollar range used the calibrated P(bust), its low end would sit on that floor.">Two bases: P(bust) ${Math.round(Number(_xf.p_bust) * 100)}% on the grade card is the calibrated outcome odds. This dollar range is priced from the model's uncalibrated outcome mix, which gives bust a smaller share, so its low end sits above the bust floor.</div>`
       : "";
     const fmtUsd = m => {
       if (m == null) return " - ";
