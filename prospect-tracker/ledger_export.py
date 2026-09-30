@@ -710,6 +710,9 @@ def build_all() -> tuple:
         if c:
             outlook[c] = row
     dpw_proj = proj.get("dpw_usd")
+    # The level the farm leg's prospect dollars were priced at (the timeseries
+    # stamp, VAL_1): equal to dpw_proj when one level prices both legs.
+    farm_level = (ts.get("calibration") or {}).get("dpw_level_usd")
     sp_census = (proj.get("accountability") or {}).get("salary_path") or {}
     prearb_min_season = max(LEAGUE_MIN_CURATED)
     prearb_min = LEAGUE_MIN_CURATED[prearb_min_season]
@@ -1677,7 +1680,13 @@ def build_all() -> tuple:
         "never_combine": hist_fk.get("never_combine"),
         "surplus_basis": (f"MLB leg: MLB Projections surNpv at dpw {dpw_proj:,} ({CLASS_YEAR} ex-ante), 5-season "
                           f"horizon, {_pct_str(rate)} discount, usd converted to $M; farm leg: org_summary active "
-                          "surplus ($M, prospect_surplus validated). Both legs in $M before the sum."),
+                          "surplus ($M, prospect_surplus validated), "
+                          + (f"priced at the same {dpw_proj:,} per WAR (one level for prospect and veteran "
+                             "surplus since 2026-09-25). "
+                             if farm_level and dpw_proj and int(farm_level) == int(dpw_proj) else
+                             f"priced at {farm_level:,} per WAR against the MLB leg's {dpw_proj:,}, summed as "
+                             "priced. " if farm_level and dpw_proj else "")
+                          + "Both legs in $M before the sum."),
         "surplus_no_tier": ("a club total sits above the player-row surplus ladder's top cut nearly "
                             "everywhere, so it prints plain"),
         "surplus_ev": "Sur+ sums are sums of expected values; quantiles are never summed",
@@ -1743,7 +1752,8 @@ def build_all() -> tuple:
     copy.update({
         "farm_dollar_is_template": (
             "A farm dollar here is an expected value: the eFV expected surplus of an active prospect, "
-            "in millions, on the clemens_2026 valuation set over its own seven-season window, priced "
+            "in millions, on the clemens_2026 valuation set (its tier shape at the one free-agent $/WAR "
+            "level the MLB leg also prices at) over its own seven-season window, priced "
             "through the platform's calibrated engine (calibration {calibration_version}, "
             "prospect_surplus validated on data/surplus_backtest_real.json). It is the mean of a "
             "distribution whose 10th and 90th percentiles print on the row. Net of the signing bonus "
@@ -1830,8 +1840,10 @@ def build_all() -> tuple:
                                "from the raw float; the printed equation can miss by a few tens of "
                                "thousands"),
         "sur_strip_basis": (f"MLB Projections per-season surplus: convex tier pricing at the {CLASS_YEAR} "
-                            "ex-ante FA $/WAR level, escalated per season, minus the season's salary "
-                            "path cell; not war x $/WAR"),
+                            "ex-ante FA $/WAR level, "
+                            + (f"escalated {float(proj.get('dpw_infl')) * 100:.1f}% per season"
+                               if proj.get("dpw_infl") else "flat across seasons")
+                            + ", minus the season's salary path cell; not war x $/WAR"),
         "war_band_cell": "per season, never summed",
         "tv_reanchored": ("re-anchored on the trade board (archetype posterior floor); the projections "
                           "figure is the contract row's"),
@@ -1983,7 +1995,8 @@ def build_all() -> tuple:
         ["S17", "ifa_timeseries.json", "ifa_export", "nightly"],
         ["S18", "org_tendencies.json slot", "org_tendencies", "nightly"],
         ["S19", "storage.farm_grade_history", "storage snapshot", "nightly"],
-        ["S20", "fa_dpw_series.json", "fa_backtest.run_market_gate (persist_dpw=True)", "by hand, with a Gate 2 persist"],
+        ["S20", "fa_dpw_series.json (the one $/WAR series and level)", "fa_market.write_dpw_series",
+         "nightly, first step of the rebuild"],
         ["S21", "model_registry.json", "hand-committed", "frozen"],
         ["S22", "storage.fa_events (qo_offered)", "fa_pipeline", "daily"],
         ["S23", "timeseries.json players (acquisition, surplus, roster_status, eta)", "storage.export_timeseries_json", "nightly"],
@@ -1991,15 +2004,25 @@ def build_all() -> tuple:
         ["S25", "arbitration_eval.json a6_swartz (quoted only)", "arb_eval", "on change"],
         ["S26", "xfv.json meta header (calibration stamp only)", "efv_export", "nightly"],
     ]
+    def _cal_src(doc_cal: dict | None, generated_at) -> dict:
+        c = doc_cal or {}
+        return {"version": c.get("version"), "dpw_level_usd": c.get("dpw_level_usd"),
+                "generated_at": generated_at}
+
     cal_sources = {
-        "timeseries": {"version": (ts.get("calibration") or {}).get("version"), "generated_at": ts.get("generated_at")},
-        "trade_values": {"version": (tv.get("calibration") or {}).get("version"), "generated_at": tv.get("generated_at")},
-        "xfv": {"version": (xfv_meta.get("calibration") or {}).get("version"), "generated_at": xfv_meta.get("generated_at")},
-        "mlb_projections": {"version": (proj.get("calibration") or {}).get("version"), "generated_at": proj.get("generated_at")},
+        "timeseries": _cal_src(ts.get("calibration"), ts.get("generated_at")),
+        "trade_values": _cal_src(tv.get("calibration"), tv.get("generated_at")),
+        "xfv": _cal_src(xfv_meta.get("calibration"), xfv_meta.get("generated_at")),
+        "mlb_projections": _cal_src(proj.get("calibration"), proj.get("generated_at")),
     }
     cal_versions = {s["version"] for s in cal_sources.values() if s.get("version")}
-    calibration = {"version": (tv.get("calibration") or {}).get("version"), "sources": cal_sources,
-                   "agree": len(cal_versions) <= 1}
+    # VAL_1 (2026-09-25): the stamp names the $/WAR level too; one map at two
+    # levels is two currencies.
+    cal_levels = {s["dpw_level_usd"] for s in cal_sources.values() if s.get("dpw_level_usd")}
+    calibration = {"version": (tv.get("calibration") or {}).get("version"),
+                   "dpw_level_usd": (tv.get("calibration") or {}).get("dpw_level_usd"),
+                   "sources": cal_sources,
+                   "agree": len(cal_versions) <= 1 and len(cal_levels) <= 1}
     arbitration_eval = {k: a6.get(k) for k in ("n", "ours_mdape", "swartz_mdape", "ratio_ours_over_swartz",
                                                 "verdict", "claim", "statement")}
     arbitration_eval["generated_at"] = arb_eval.get("generated_at")

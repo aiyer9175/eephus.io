@@ -216,7 +216,11 @@ def test_top_prospect_surplus_in_expected_range() -> None:
     that warrants review."""
     s = vf.surplus_value_mm(60, is_pitcher=False, position="SS")
     assert s is not None
-    assert 35.0 <= s <= 90.0, f"FV 60 SS surplus {s} out of expected range"   # v47 recalibrated (~$53M)
+    # VAL_1 (owner answer FP2-1, 2026-09-30): the band is in FanGraphs-level dollars ($11.74M per WAR);
+    # prospect surplus now prices at the free-agent winter level, so the band moves with
+    # the level (s / unit), it is not widened. 91.0 at $17.14M reads 62.3 here.
+    unit = vf.dollars_per_war_flat() / 11.74
+    assert 35.0 <= s / unit <= 90.0, f"FV 60 SS surplus {s} out of expected range"   # v47 recalibrated (~$53M)
 
 
 def test_fringe_prospect_surplus_at_floor() -> None:

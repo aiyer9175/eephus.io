@@ -81,6 +81,9 @@ def main() -> None:
         "enabled": True,
         "version": f"isotonic-real-v3-todaypriced-{date.today().isoformat()}",
         "method": "isotonic",
+        # VAL_1 (2026-09-25): the level the targets and raw predictions were
+        # priced at; value_framework applies the map in this unit.
+        "fit_dpw_flat_usd": int(round(flat_mm * 1e6)),
         "linear": {"slope": 1.0, "intercept_mm": 0.0},
         "isotonic": {"x_mm": [round(x, 2) for x in xs],
                      "y_mm": [round(y, 2) for y in ys]},

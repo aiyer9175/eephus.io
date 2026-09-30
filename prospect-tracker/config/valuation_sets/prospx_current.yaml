@@ -60,6 +60,11 @@ tiers:
   # (FV70 hit 226.7 -> 223.2). ctrl_war moves at the BOTTOM because the sub-45 anchor knots
   # were re-measured on the eWAR label after the routine --fit reverted them: 35+ 0.32 ->
   # 0.23 and 40 0.52 -> 0.43. The 45-and-up ctrl_war values move only with the refit.
+  # RE-CAPTURED 2026-09-30 for VAL_1 (one $/WAR series, owner decision FP2-1). The
+  # one written series (fa_market.write_dpw_series) replaced the hand-persisted Gate 2
+  # copy; its 2026 winter reads 16.46M (the series /fa/ already priced on) against
+  # 17.29M, so this set's trailing-3 mean goes 16.61M -> 16.20M (-2.5 percent).
+  # Captured INSIDE `with vf.valuation_set("prospx_current")`. ctrl_war UNCHANGED.
   # RE-CAPTURED 2026-08-04 for the R7 dpw RE-ANCHOR (owner-approved flip).
   # The FA-signings-implied $/WAR series was regenerated and the 2026 winter
   # moved 14.92M -> 17.29M (+15.9%), trailing-3 mean 14.89M -> 16.61M (+11.6%),
@@ -95,25 +100,25 @@ tiers:
   hitter:
     "35+":  {surplus_musd: 2.5,   ctrl_war: 0.23}
     "40":   {surplus_musd: 3.3,   ctrl_war: 0.43}
-    "40+":  {surplus_musd: 12.2,   ctrl_war: 1.17}
-    "45":   {surplus_musd: 24.4,   ctrl_war: 1.92}
-    "45+":  {surplus_musd: 36.9,   ctrl_war: 3.0}
-    "50":   {surplus_musd: 48.2,   ctrl_war: 4.08}
-    "55":   {surplus_musd: 68.1,   ctrl_war: 5.88}
-    "60":   {surplus_musd: 107.2,   ctrl_war: 8.64}
-    "65":   {surplus_musd: 168.4,   ctrl_war: 12.06}
-    "70":   {surplus_musd: 223.2,   ctrl_war: 14.94}
+    "40+":  {surplus_musd: 11.9,   ctrl_war: 1.17}
+    "45":   {surplus_musd: 23.9,   ctrl_war: 1.92}
+    "45+":  {surplus_musd: 36.2,   ctrl_war: 3.0}
+    "50":   {surplus_musd: 47.2,   ctrl_war: 4.08}
+    "55":   {surplus_musd: 66.6,   ctrl_war: 5.88}
+    "60":   {surplus_musd: 104.7,   ctrl_war: 8.64}
+    "65":   {surplus_musd: 164.4,   ctrl_war: 12.06}
+    "70":   {surplus_musd: 217.8,   ctrl_war: 14.94}
   pitcher:
     "35+":  {surplus_musd: 2.0,   ctrl_war: 0.23}
     "40":   {surplus_musd: 2.9,   ctrl_war: 0.43}
-    "40+":  {surplus_musd: 9.3,   ctrl_war: 1.17}
-    "45":   {surplus_musd: 14.9,   ctrl_war: 1.92}
-    "45+":  {surplus_musd: 28.0,   ctrl_war: 3.0}
-    "50":   {surplus_musd: 38.1,   ctrl_war: 4.08}
-    "55":   {surplus_musd: 54.7,   ctrl_war: 5.88}
-    "60":   {surplus_musd: 89.7,   ctrl_war: 8.64}
-    "65":   {surplus_musd: 145.2,   ctrl_war: 12.06}
-    "70":   {surplus_musd: 195.0,   ctrl_war: 14.94}
+    "40+":  {surplus_musd: 9.0,   ctrl_war: 1.17}
+    "45":   {surplus_musd: 13.8,   ctrl_war: 1.92}
+    "45+":  {surplus_musd: 27.4,   ctrl_war: 3.0}
+    "50":   {surplus_musd: 37.4,   ctrl_war: 4.08}
+    "55":   {surplus_musd: 53.6,   ctrl_war: 5.88}
+    "60":   {surplus_musd: 87.7,   ctrl_war: 8.64}
+    "65":   {surplus_musd: 141.8,   ctrl_war: 12.06}
+    "70":   {surplus_musd: 190.4,   ctrl_war: 14.94}
 
 # --- Global valuation parameters ---
 # MIRROR of value_framework_config.yaml at capture, for documentation and diff

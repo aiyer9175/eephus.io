@@ -536,7 +536,10 @@ def defensive_floor_mm(position: str | None, def_grade: float | None,
         # above-average defender still registers a non-zero floor contribution.
         grade_scale = 0.25 + 0.75 * (def_grade - above_avg_thr) / (elite_thr - above_avg_thr)
 
-    dpw  = float(cfg.get("floor_dollars_per_war_mm", 8.76))
+    # VAL_1 (2026-09-25): the floor prices at the LIVE 1-to-2 WAR tier rate, so it
+    # moves with the one $/WAR level instead of a literal copy of the FanGraphs
+    # 1-to-2 tier (8.76, which is still what this returns at the FanGraphs level).
+    dpw  = float(vf._config()["dollars_per_war"]["tiered"]["rates"]["1_to_2"]) / 1e6
     # Use caller-supplied remaining years (for debuted players with limited control),
     # otherwise fall back to config default.
     yrs  = int(min(remaining_years, cfg.get("floor_control_years", 5))
@@ -547,7 +550,7 @@ def defensive_floor_mm(position: str | None, def_grade: float | None,
     # NOTE (Phase 2 audit): this is a DELIBERATE flat defensive FLOOR, not a
     # price-the-mean of an uncertain outcome. An elite defender's glove is worth a
     # near-certain `base_war` every season regardless of the bat, so it is priced
-    # at a single floor rate (`floor_dollars_per_war_mm`, the 1-2 WAR tier) and
+    # at a single floor rate (the live 1-2 WAR tier rate) and
     # discounted per season. It is additive on top of the mixture-priced posterior
     # and is intentionally EXEMPT from the convex per-season kernel (there is no
     # volatile WAR distribution to transform-first here). Left as-is by design.
@@ -3078,7 +3081,11 @@ def bayesian_trade_value(
                 recency_weight = min(recency_weight, veteran_cap)
             recency_weight  = round(min(0.75, recency_weight), 3)
 
-            dpw_mm           = 11.74
+            # VAL_1 (2026-09-25): the signal is in surplus dollars priced at the
+            # live level (surplus_value_mm), so it converts to WAR at that level.
+            # A literal 11.74 would have read every signal 1.46x larger once the
+            # level moved to the FA winter level.
+            dpw_mm           = vf.dollars_per_war_flat()
             raw_war_delta    = signal_mm / dpw_mm
 
             # § SIGNAL CAP: cap the WAR boost from a single season's signal.

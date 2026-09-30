@@ -592,7 +592,27 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                 by_player[side][r["mlbam"]][r["season"]] = r
 
     enriched = fm.enriched_signings(2015, class_year - 1)
-    dpw_series = fm.dollars_per_war_by_winter(enriched)
+    # VAL_1 (owner decision FP2-1, 2026-09-25): the board prices on THE one
+    # written series (data/fa_dpw_series.json, fa_market.write_dpw_series), the
+    # same file /projections/ and prospect surplus read, instead of a series
+    # re-derived here and written nowhere. The in-run derivation is kept only as
+    # a check: the two agree unless the corpus moved after the writer ran, and
+    # the gap is published so a disagreement is visible, not silent.
+    in_run = fm.dollars_per_war_by_winter(enriched)
+    dpw_series = fm.written_dpw_series(through=class_year - 1)
+    if dpw_series:
+        series_src = "data/fa_dpw_series.json"
+        yrs = set(dpw_series) | set(in_run)
+        series_gap = max((abs(dpw_series.get(y, 0.0) - in_run.get(y, 0.0)) for y in yrs),
+                         default=0.0)
+        if series_gap > 1.0:
+            log.warning("fa_dpw_series.json differs from this run's corpus by up to $%.0f "
+                        "per WAR (class %d); pricing on the written series", series_gap,
+                        class_year)
+    else:
+        log.error("fa_dpw_series.json absent or empty: class %d prices on the in-run series",
+                  class_year)
+        dpw_series, series_src, series_gap = in_run, "in_run_fallback", 0.0
     model = fm.MarketModel(enriched, dpw_series)
     cls = list(storage.load_fa_class_players(class_year).values())
     # Winter-tracker state: in-class signings (terms from the class page) +
@@ -619,7 +639,8 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     else:
         model.supply_by_year[class_year] = fm._supply(
             [{"class_year": class_year, "position": p.get("position")} for p in cls], class_year)
-    dpw = fm.winter_dpw(dpw_series, class_year)
+    dpw = (fm.written_pricing_level_usd(class_year) if series_src != "in_run_fallback"
+           else None) or fm.winter_dpw(dpw_series, class_year)
     # The rate this winter carries dollars forward at. Estimated from the
     # module's OWN realized $/WAR series over the training winters (see
     # fm._destale_rate) instead of borrowing value_framework's
@@ -986,13 +1007,14 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         "generated_at": date.today().isoformat(),
         "class_year": class_year,
         "dpw_usd": int(dpw),
-        # M04-08 (2026-09-25). The series dpw_usd was carried forward FROM:
-        # re-derived in this run from the current corpus and WAR basis, and
-        # never written anywhere else. The rail, the $/WAR view, the Archive,
-        # the Club Ledger and /projections/ read the committed
-        # data/fa_dpw_series.json instead, so without this the board's level
-        # could not be reconciled with any series a reader can see.
+        # M04-08 (2026-09-25). The series dpw_usd was carried forward FROM.
+        # Since VAL_1 (same day) it is the one written data/fa_dpw_series.json
+        # every surface reads (dpw_series_source), so it equals the committed
+        # series on every winter up to the class; the in-run derivation is a
+        # check whose largest per-winter gap ships as dpw_series_check_gap_usd.
         "dpw_series_pricing": {str(y): int(v) for y, v in sorted(dpw_series.items())},
+        "dpw_series_source": series_src,
+        "dpw_series_check_gap_usd": int(round(series_gap)),
         # The rate the module ACTUALLY carries dollars forward at. This used
         # to publish value_framework's dollars_per_war_inflation, which is 0.0
         # in production, while assets/fa.js printed "escalating 5%/yr" from its

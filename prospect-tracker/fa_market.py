@@ -840,6 +840,115 @@ def winter_dpw(dpw_series: dict[int, float], class_year: int) -> float:
 
 
 # ============================================================================
+# THE one written $/WAR series (VAL_1, owner decision FP2-1, 2026-09-25)
+# ============================================================================
+# Before 2026-09-25 three $/WAR bases served at once. Prospect surplus priced at
+# the clemens_2026 FanGraphs flat $11.74M. /projections/ priced veterans at a
+# committed data/fa_dpw_series.json that only a Gate 2 persist wrote, by hand,
+# carried to $17.97M for 2027. /fa/ priced at a series fa_export re-derived in
+# every run and wrote nowhere, carried to $17.14M. The Trade Machine and the
+# Club Ledger added prospect and veteran dollars into one total, so a prospect
+# win cost less than a veteran win inside it. Now one writer writes one series and
+# one level, and every surface reads them: fa_export (the /fa/ class boards),
+# proj_export (veteran seasons) and value_framework (prospect surplus, and
+# through it the eFV board, the Trade Machine, the farm and the Club Ledger).
+
+DPW_SERIES_PATH = Path(__file__).parent / "data" / "fa_dpw_series.json"
+DPW_SERIES_METHOD = "fa_signings_implied_v1"
+DPW_SERIES_FIRST_WINTER = 2015
+
+
+def build_dpw_series_payload(class_year: int,
+                             enriched: list[dict] | None = None) -> dict:
+    """The one written $/WAR series and the level every surplus prices at.
+
+    usd_per_war_by_winter: the per-winter signings-implied series
+    (dollars_per_war_by_winter) over the whole corpus through the class winter,
+    integer dollars; thin winters are dropped as before, so a class winter only
+    appears once it clears the floor. The retrospective ledger may read every
+    winter's own rate.
+
+    pricing: the ex-ante level for ``class_year``, exactly winter_dpw over the
+    winters BEFORE it (the latest prior winter carried forward at the series'
+    own trend), with the anchor winter, the carry rate and the discount rate the
+    series was built at (the series divides by discounted WAR, so it depends on
+    that rate). fa_export, proj_export and value_framework read level_usd from
+    here; none of them re-derives it."""
+    if enriched is None:
+        enriched = enriched_signings(DPW_SERIES_FIRST_WINTER, class_year)
+    series = {int(y): int(v) for y, v in dollars_per_war_by_winter(enriched).items()}
+    prior = {y: float(v) for y, v in series.items() if y < class_year}
+    pricing = None
+    if prior:
+        anchor = max(prior)
+        pricing = {
+            "class_year": int(class_year),
+            "level_usd": int(round(winter_dpw(prior, class_year))),
+            "anchor_winter": anchor,
+            "anchor_usd": series[anchor],
+            "carry_rate": round(_destale_rate(prior, class_year), 6),
+            "method": _dpw_forecast_method(),
+            "discount_rate": _discount_rate(),
+            "corpus_winters": [min(series), max(series)] if series else None,
+            "writer": "fa_market.write_dpw_series",
+            "read_by": ["fa_export (the /fa/ class boards)",
+                        "proj_export (veteran seasons on /projections/)",
+                        "value_framework (prospect surplus; the clemens_2026 tier "
+                        "shape rescaled to this level)"],
+        }
+    from fa_backtest import GATE2_MODEL_VERSION
+    return {"method": DPW_SERIES_METHOD,
+            "model_version": GATE2_MODEL_VERSION,
+            "usd_per_war_by_winter": {str(k): v for k, v in sorted(series.items())},
+            "breakdown": dpw_breakdowns(enriched),
+            "pricing": pricing}
+
+
+def write_dpw_series(class_year: int, enriched: list[dict] | None = None) -> dict:
+    """Write data/fa_dpw_series.json, the ONLY writer of the file. Called once a
+    night by run_monthly.rebuild_only before anything prices a prospect or a
+    veteran, and by the Gate 2 persist (fa_backtest.run_market_gate), which
+    used to write its own copy. Returns the pricing block."""
+    payload = build_dpw_series_payload(class_year, enriched)
+    DPW_SERIES_PATH.write_text(json.dumps(payload, indent=1), encoding="utf-8")
+    fa_class._dpw_series.cache_clear()
+    # value_framework caches its config for the life of the process, and the
+    # level lives in this file: drop the cache so this process prices at the
+    # level it just wrote, never the one it read before.
+    import value_framework as _vf
+    _vf._reset_caches()
+    return payload["pricing"] or {}
+
+
+def _written_doc() -> dict:
+    try:
+        return json.loads(DPW_SERIES_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def written_dpw_series(through: int | None = None) -> dict[int, float]:
+    """The written per-winter series, winters <= ``through`` when given (the
+    exact series an in-run derivation over signings through that winter gives,
+    because each winter's rate reads only its own deals). {} when absent."""
+    raw = _written_doc().get("usd_per_war_by_winter") or {}
+    return {int(y): float(v) for y, v in raw.items()
+            if through is None or int(y) <= through}
+
+
+def written_pricing_level_usd(class_year: int) -> float | None:
+    """The one $/WAR level for ``class_year``: the written pricing.level_usd
+    when the file prices that class, else winter_dpw over the written series
+    (a future class carries the same anchor further). None when no series is
+    written."""
+    block = _written_doc().get("pricing") or {}
+    if block.get("level_usd") and int(block.get("class_year") or -1) == int(class_year):
+        return float(block["level_usd"])
+    series = written_dpw_series(through=class_year - 1)
+    return winter_dpw(series, class_year) if series else None
+
+
+# ============================================================================
 # Rational value, deferrals, opt-outs, QO tax
 # ============================================================================
 

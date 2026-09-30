@@ -175,6 +175,75 @@ def _validate_config(cfg: dict) -> dict:
     return cfg
 
 
+_DPW_SERIES_PATH = _HERE / "data" / "fa_dpw_series.json"
+
+
+def written_dpw_pricing() -> dict | None:
+    """The ``pricing`` block of THE one written $/WAR series
+    (data/fa_dpw_series.json, written by fa_market.write_dpw_series): the
+    class year it prices, the ex-ante level (level_usd), the winter it was
+    carried from and the rate it was carried at. None when the file or the
+    block is absent or malformed. Read-only; this module never writes it."""
+    try:
+        doc = json.loads(_DPW_SERIES_PATH.read_text(encoding="utf-8"))
+        block = doc["pricing"]
+        level = float(block["level_usd"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return block if level > 0 else None
+
+
+def _apply_fa_winter_level(cfg: dict) -> dict:
+    """VAL_1 (owner decision FP2-1, 2026-09-25): ONE $/WAR level for prospect
+    and veteran surplus.
+
+    Before this, a prospect win priced at the clemens_2026 FanGraphs flat
+    $11.74M while /projections/ priced a veteran win at the committed
+    signings-implied series carried to $17.97M, and the Trade Machine and the
+    Club Ledger added the two into one total, so a prospect win cost less
+    than a veteran win inside the same number. The level is now the free-agent
+    winter level every surface prices at: pricing.level_usd of the one written
+    series, the latest winter's signings-implied $/WAR carried forward at the
+    series' own trend to the next class year (the level /fa/ and /projections/
+    price that class at).
+
+    The clemens_2026 tier SHAPE (the published rate ratios, checksummed) is
+    kept and rescaled to that level. The FV 40 dollar anchor is stated at the
+    FanGraphs level ("Edwards 2018, scaled to the current overall $/WAR"), so
+    it rescales by the same factor. Nothing about WAR moves: the FV-to-WAR
+    anchors, the outcome odds and the control window are untouched.
+
+    Falls back to the configured (FanGraphs) level, stamped applied False,
+    when the written series has no pricing block (a fresh checkout before the
+    writer has run), so a missing file is visible in every artifact stamp."""
+    dpw = cfg["dollars_per_war"]
+    base_flat = float(dpw["flat"])
+    pricing = written_dpw_pricing()
+    if pricing is None:
+        dpw["_fa_reanchor"] = {"applied": False, "method": "fa_winter_level",
+                               "reason": "data/fa_dpw_series.json carries no pricing block",
+                               "level_usd": round(base_flat)}
+        return cfg
+    level = float(pricing["level_usd"])
+    scale = level / base_flat
+    dpw["flat"] = level
+    dpw["tiered"]["rates"] = {k: float(v) * scale
+                              for k, v in dpw["tiered"]["rates"].items()}
+    anchor = cfg.get("lowtier_anchor") or {}
+    if anchor.get("anchor_usd_40fv_position") is not None:
+        anchor["anchor_usd_40fv_position"] = float(anchor["anchor_usd_40fv_position"]) * scale
+    dpw["_fa_reanchor"] = {"applied": True, "method": "fa_winter_level",
+                           "class_year": pricing.get("class_year"),
+                           "level_usd": round(level),
+                           "base_flat_usd": round(base_flat),
+                           "scale": round(scale, 4),
+                           "anchor_winter": pricing.get("anchor_winter"),
+                           "carry_rate": pricing.get("carry_rate"),
+                           "series": "data/fa_dpw_series.json pricing.level_usd",
+                           "shape": "clemens_2026 tier ratios and the FV 40 anchor rescaled to the level"}
+    return cfg
+
+
 def _apply_fa_implied_reanchor(cfg: dict) -> dict:
     """v3 (surplus) — re-anchor the $/WAR LEVEL to the FA module's
     signings-implied series (data/fa_dpw_series.json: per-winter total
@@ -190,6 +259,8 @@ def _apply_fa_implied_reanchor(cfg: dict) -> dict:
     fa = (cfg.get("dollars_per_war") or {}).get("fa_implied") or {}
     if not fa.get("enabled"):
         return cfg
+    if fa.get("method") == "fa_winter_level":
+        return _apply_fa_winter_level(cfg)
     try:
         series = json.loads((_HERE / "data" / "fa_dpw_series.json")
                             .read_text(encoding="utf-8"))["usd_per_war_by_winter"]
@@ -1544,14 +1615,14 @@ def calibration_zero_cross_mm() -> float | None:
         if len(xs) >= 2 and len(xs) == len(ys):
             # highest x whose y is still 0 = the last input that clamps
             zero_xs = [x for x, y in zip(xs, ys) if y <= 0.0]
-            return max(zero_xs) if zero_xs else None
+            return max(zero_xs) * calibration_level_scale() if zero_xs else None
         return None
     slope = float(cal.get("slope", 1.0) or 0.0)
     intercept = float(cal.get("intercept", 0.0) or 0.0)
     if slope <= 0:
         return None
     cross = -intercept / slope
-    return cross if cross > 0 else None
+    return cross * calibration_level_scale() if cross > 0 else None
 
 
 def calibration_version() -> str:
@@ -1573,11 +1644,38 @@ def calibration_version() -> str:
 
 
 def calibration_stamp() -> dict:
-    """The meta block a surplus-carrying artifact should embed verbatim."""
+    """The meta block a surplus-carrying artifact should embed verbatim.
+
+    dpw_level_usd (VAL_1, 2026-09-25) names the $/WAR level the dollars were
+    priced at. The version names the MAP only; since the level is read from
+    the one written series, two artifacts on the same map but priced at two
+    levels would otherwise carry identical stamps."""
     cal = _config().get("calibration", {}) or {}
     return {"version": calibration_version(),
             "enabled": bool(cal.get("enabled")),
-            "method": str(cal.get("method", "linear")).lower()}
+            "method": str(cal.get("method", "linear")).lower(),
+            "dpw_level_usd": int(round(_flat_rate_usd()))}
+
+
+def calibration_level_scale() -> float:
+    """VAL_1 (2026-09-25): the factor s the dollar calibration is applied at.
+
+    The isotonic knots are absolute $M, fit on raw surplus priced at the
+    level recorded in calibration.fit_dpw_flat_usd (the FanGraphs $11.74M,
+    v6 2026-07-31). Once prospects price at the free-agent winter level, raw
+    surplus is in a larger dollar unit, so the map is applied in its own
+    unit: s * f(x / s), s = live flat / fit flat. That is what a refit at the
+    new level targets (tools/fit_surplus_calibration.py prices its realized
+    targets at the live flat level) except for the league-minimum leg, which
+    does not scale with the level. It is a unit conversion, not a refit: the
+    knots are unchanged. 1.0 unless the fa_winter_level re-anchor applied, so
+    the prospx_current identity set keeps its byte-identical pricing."""
+    cal = _config().get("calibration", {}) or {}
+    fit = cal.get("fit_dpw_flat_usd")
+    re = _config()["dollars_per_war"].get("_fa_reanchor") or {}
+    if not fit or re.get("method") != "fa_winter_level" or not re.get("applied"):
+        return 1.0
+    return _flat_rate_usd() / float(fit)
 
 
 def apply_calibration(predicted_mm: float | None, fv: float | None = None,
@@ -1595,24 +1693,27 @@ def apply_calibration(predicted_mm: float | None, fv: float | None = None,
     cal = _config().get("calibration", {})
     if not cal.get("enabled"):
         return predicted_mm
-    x = float(predicted_mm)
+    # VAL_1: apply the map in the dollar unit it was fit in (see
+    # calibration_level_scale); s is 1.0 unless the level moved.
+    s = calibration_level_scale()
+    x = float(predicted_mm) / s
     if str(cal.get("method", "linear")).lower() == "isotonic":
         iso = cal.get("isotonic", {})
         xs = [float(v) for v in iso.get("x_mm", [])]
         ys = [float(v) for v in iso.get("y_mm", [])]
         if len(xs) >= 2 and len(xs) == len(ys):
             if x <= xs[0]:
-                return ys[0]
+                return ys[0] * s
             if x >= xs[-1]:
-                return ys[-1]
+                return ys[-1] * s
             for i in range(len(xs) - 1):
                 if xs[i] <= x <= xs[i + 1]:
                     span = xs[i + 1] - xs[i]
                     t = (x - xs[i]) / span if span else 0.0
-                    return ys[i] * (1 - t) + ys[i + 1] * t
-        return x  # malformed table -> identity
+                    return (ys[i] * (1 - t) + ys[i + 1] * t) * s
+        return x * s  # malformed table -> identity
     lin = cal.get("linear", {})
-    return float(lin.get("slope", 1.0)) * x + float(lin.get("intercept_mm", 0.0))
+    return (float(lin.get("slope", 1.0)) * x + float(lin.get("intercept_mm", 0.0))) * s
 
 
 def surplus_value_mm(
@@ -3924,6 +4025,12 @@ def build_snapshot() -> dict:
         },
         "dollars_per_war": {
             "flat_mm": round(float(dpw["flat"]) / 1e6, 4),
+            # VAL_1 (2026-09-25): where the level came from. applied True with
+            # method fa_winter_level = the free-agent winter level of the one
+            # written series, the clemens tier shape rescaled to it.
+            "level_basis": dict(dpw.get("_fa_reanchor") or {"applied": False,
+                                                             "method": "configured"}),
+            "calibration_level_scale": round(calibration_level_scale(), 6),
             "tiered_mm": {k: round(float(v) / 1e6, 4) for k, v in dpw["tiered"]["rates"].items()},
             "tiered_breakpoints": [float(b) for b in dpw["tiered"]["breakpoints"]],
             # Phase 2: which convex kernel prices each season, plus a small

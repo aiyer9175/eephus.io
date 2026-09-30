@@ -75,13 +75,20 @@ tiers:
 params:
   # Graduated FA cost of a win, 2024-2026 average ($M / WAR), keyed to the
   # season's own WAR. breakpoints are WAR thresholds [<1 -> lt_1, <2 -> 1_to_2,
-  # else 2plus]. disable_fa_implied: price against the published FG rate, not our
-  # FA-signings-implied rescale.
+  # else 2plus]. These published figures fix the SHAPE (the rate ratios) and are
+  # checksummed as FanGraphs printed them.
+  # level: fa_winter (VAL_1, owner decision FP2-1, 2026-09-25): prices at ONE
+  # level for prospect and veteran surplus, the free-agent winter level /fa/ and
+  # /projections/ price at (data/fa_dpw_series.json pricing.level_usd, written by
+  # fa_market.write_dpw_series), with this shape rescaled to it. It replaced
+  # disable_fa_implied: true, under which a prospect win cost the FanGraphs
+  # $11.74M while a veteran win cost the signings-implied level inside the
+  # same Trade Machine and Club Ledger totals.
   win_cost:
     breakpoints: [1.0, 2.0]
     rates_musd: {lt_1: 6.97, "1_to_2": 8.76, "2plus": 13.63}
     flat_musd: 11.74
-    disable_fa_implied: true
+    level: fa_winter
   # Arbitration: percent of the PRIOR season's FA-equivalent value, Arb 1-4.
   # 3 pre-arb (league min) + 4 arb over a 7-season control window.
   arbitration:

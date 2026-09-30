@@ -764,7 +764,13 @@ def test_no_power_infielder_partial_sample_suppresses_defensive_floor() -> None:
     # label (FV50 hit 47.4 -> 48.2), which is enough to carry 30.4 past a 30.0 line set
     # before that. Headroom is now 0.6 and that is deliberate: the next upward move should
     # be re-examined rather than widened again.
-    assert out["trade_value_mm"] < 31.0
+    # VAL_1 (owner answer FP2-1, 2026-09-30): the ceiling is a FanGraphs-level dollar figure ($11.74M per
+    # WAR, the level it was set at). Prospect surplus now prices at the free-agent winter
+    # level, so the price is read back in the unit the line was drawn in. Not widened:
+    # measured 43.3 at $17.14M, which is 29.7 at the FanGraphs level.
+    import value_framework as _vf
+    _unit = _vf.dollars_per_war_flat() / 11.74
+    assert out["trade_value_mm"] / _unit < 31.0
 
 
 def test_stuff_command_post_callup_starter_outranks_no_power_infielder() -> None:

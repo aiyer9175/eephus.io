@@ -75,8 +75,11 @@ def test_calibration_version_is_reported():
 
 def test_calibration_stamp_shape():
     st = vf.calibration_stamp()
-    assert set(st) == {"version", "enabled", "method"}
+    # dpw_level_usd (VAL_1, 2026-09-25): the version names the MAP only, so one
+    # map priced at two $/WAR levels would stamp identically without it.
+    assert set(st) == {"version", "enabled", "method", "dpw_level_usd"}
     assert isinstance(st["enabled"], bool)
+    assert st["dpw_level_usd"] == round(float(vf._config()["dollars_per_war"]["flat"]))
 
 
 @pytest.mark.parametrize("name", sorted(_SURPLUS_ARTIFACTS))
@@ -104,7 +107,9 @@ def test_all_surplus_artifacts_agree_on_the_calibration():
         except (OSError, ValueError):
             continue
         if isinstance(stamp, dict) and stamp.get("version"):
-            seen[name] = stamp["version"]
+            # The $/WAR level is part of the currency (VAL_1): same map, two
+            # levels, two currencies.
+            seen[name] = (stamp["version"], stamp.get("dpw_level_usd"))
     if len(seen) < 2:
         pytest.skip("fewer than two stamped artifacts on this machine yet")
     versions = set(seen.values())
@@ -246,6 +251,7 @@ def test_stamped_artifacts_match_the_live_config():
     built by a process holding a stale config in memory - the 21:12 timeseries
     case. Reported as a regen requirement, not a code failure."""
     live = vf.calibration_version()
+    live_level = vf.calibration_stamp()["dpw_level_usd"]
     stale = {}
     for name, path in _SURPLUS_ARTIFACTS.items():
         p = DATA / name
@@ -257,6 +263,9 @@ def test_stamped_artifacts_match_the_live_config():
             continue
         if isinstance(stamp, dict) and stamp.get("version") and stamp["version"] != live:
             stale[name] = stamp["version"]
+        elif isinstance(stamp, dict) and stamp.get("dpw_level_usd") is not None \
+                and stamp["dpw_level_usd"] != live_level:
+            stale[name] = f"$/WAR level {stamp['dpw_level_usd']}"
     if stale:
         pytest.xfail(f"artifacts built on a superseded calibration (regen owed): "
                      f"{stale} vs live {live}")

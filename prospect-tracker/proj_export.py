@@ -554,14 +554,13 @@ def _ros_surplus_usd(war_now: float, cur_sal: float, ros_frac: float,
 
 
 def _winter_dpw(first_season: int) -> float:
-    """Ex-ante $/WAR level for the first projected season, from the
-    committed signings-implied series (last prior winter escalated)."""
-    try:
-        series = json.loads((DATA_DIR / "fa_dpw_series.json").read_text(encoding="utf-8"))
-        by = {int(k): float(v) for k, v in series["usd_per_war_by_winter"].items()}
-    except (OSError, ValueError, KeyError):
-        return fa_class._flat_dpw_usd()
-    return fm.winter_dpw(by, first_season)
+    """Ex-ante $/WAR level for the first projected season: the level of THE
+    one written series (data/fa_dpw_series.json pricing.level_usd, VAL_1,
+    2026-09-25), the same number /fa/ prices the class at and prospect
+    surplus prices every season at. Falls back to the valuation set's flat
+    rate only when no series is written."""
+    level = fm.written_pricing_level_usd(first_season)
+    return level if level else fa_class._flat_dpw_usd()
 
 
 # ============================================================================
@@ -2891,7 +2890,8 @@ def build_payload() -> dict:
         "notes": [
             "veterans: proj_lgbm_v1 quantile heads (horizons 1-5) stacked on the FA module's Marcel champion; war = the median head lifted toward the quantile-implied mean where it sits below it, bands = the P10/P90 heads; warChamp = the champion mean path (the FA pricing path and the Team Outlook sum basis); rows the heads cannot score fall back to the champion with Gate-1 residual-quantile bands",
             "prospects: P(bucket|FV) x calibrated per-bucket WAR trajectories from projected debut age, starting at the PROSPX ETA; floor/ceiling = 10th/90th-percentile OUTCOME buckets",
-            f"dollars: convex tier pricing at the {FIRST_SEASON} ex-ante FA $/WAR level, "
+            f"dollars: convex tier pricing at the {FIRST_SEASON} ex-ante FA $/WAR level "
+            "(the one written series /fa/ prices the class on; prospect seasons price at the same level), "
             + (f"escalated {_dpw_infl * 100:.1f}%/yr" if _dpw_infl else "flat across seasons")
             + "; veteran surplus over the control window: contracted seasons at their salary, pre-arbitration seasons at the league minimum, arbitration seasons at the projected award, discounted at the platform rate",
             "two-way players project BOTH sides, summed per season (per-side paths in warHit/warPit; bands combine at assumed cross-side correlation rho=0.5 - documented)",

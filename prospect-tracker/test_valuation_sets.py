@@ -111,10 +111,19 @@ def test_clemens_default_applies_and_context_restores():
     assert cfg["service_time"]["arb_basis"] == "prior_season"
     assert float(cfg["discount_rate"]) == pytest.approx(0.07)
     assert float(cfg["dollars_per_war_inflation"]) == pytest.approx(0.0)
-    # fa_implied disabled -> tier rates stay at the published FG figures.
-    assert cfg["dollars_per_war"]["fa_implied"]["enabled"] is False
-    assert float(cfg["dollars_per_war"]["tiered"]["rates"]["lt_1"]) == pytest.approx(6.97e6, rel=1e-6)
-    assert float(cfg["dollars_per_war"]["tiered"]["rates"]["2plus"]) == pytest.approx(13.63e6, rel=1e-6)
+    # VAL_1 (owner decision FP2-1, 2026-09-25): the published FG tier SHAPE at the
+    # free-agent winter level (one level for prospect and veteran surplus). The
+    # rates keep the published ratios; the level is the written series' level.
+    dpw = cfg["dollars_per_war"]
+    assert dpw["fa_implied"]["enabled"] is True
+    assert dpw["fa_implied"]["method"] == "fa_winter_level"
+    scale = float(dpw["flat"]) / 11.74e6
+    if (dpw.get("_fa_reanchor") or {}).get("applied"):
+        assert scale == pytest.approx(float(dpw["_fa_reanchor"]["scale"]), abs=1e-4)
+    else:
+        assert scale == pytest.approx(1.0)
+    assert float(dpw["tiered"]["rates"]["lt_1"]) == pytest.approx(6.97e6 * scale, rel=1e-6)
+    assert float(dpw["tiered"]["rates"]["2plus"]) == pytest.approx(13.63e6 * scale, rel=1e-6)
     assert cfg["star_definition"]["min_seasons"] == 2
     assert cfg["star_definition"]["war_threshold"] == 4.0
     base_50 = vf.surplus_value_mm(50.0, False)
@@ -159,7 +168,13 @@ def test_clemens_default_applies_and_context_restores():
         # the sub-45 knots to a single 0.19 constant across FV20..40, they were re-measured
         # on the eWAR label (FV35 0.0069, FV40 0.0710) and re-applied, so 35+ ctrl_war goes
         # 0.32 -> 0.23 and 40 goes 0.52 -> 0.43.
-        assert vf.surplus_value_mm(50.0, False) == pytest.approx(48.2, abs=0.1)
+        # RESTAMPED 2026-09-30 for VAL_1, 48.2 -> 47.2. A WIN-COST move: the one written
+        # $/WAR series (fa_market.write_dpw_series) replaced the hand-persisted Gate 2
+        # copy, so the 2026 winter reads 16.46M (the series /fa/ always priced on)
+        # against 17.29M, and prospx_current's trailing-3 mean goes 16.61M -> 16.20M
+        # (-2.5 percent). ctrl_war did not move. The tier grid was re-captured inside
+        # this set in the same change.
+        assert vf.surplus_value_mm(50.0, False) == pytest.approx(47.2, abs=0.1)
     assert vf.active_valuation_set() == "clemens_2026"
     assert vf.surplus_value_mm(50.0, False) == pytest.approx(base_50, abs=0.01)
     assert vf._config()["_valuation_set"] == "clemens_2026"

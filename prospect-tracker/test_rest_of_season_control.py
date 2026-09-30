@@ -71,8 +71,15 @@ def test_the_config_this_files_hand_arithmetic_is_derived_from():
     """Fails loudly if the anchors move, instead of letting every literal below
     fail one by one with no explanation."""
     cfg = vf._config()["dollars_per_war"]
-    assert float(cfg["flat"]) == FLAT
-    assert float(cfg["tiered"]["rates"]["2plus"]) == RATE_2PLUS
+    # VAL_1 (owner answer FP2-1, 2026-09-30): the served level is the free-agent winter level with the
+    # clemens_2026 shape rescaled to it, so the literals below pass dpw explicitly and
+    # depend only on the RATIO RATE_2PLUS / FLAT, which the rescale keeps exactly.
+    assert float(cfg["tiered"]["rates"]["2plus"]) / float(cfg["flat"]) == pytest.approx(
+        RATE_2PLUS / FLAT, rel=1e-12)
+    import valuation_sets as vs
+    wc = vs.load("clemens_2026")["params"]["win_cost"]
+    assert float(wc["flat_musd"]) * 1e6 == FLAT
+    assert float(wc["rates_musd"]["2plus"]) * 1e6 == RATE_2PLUS
     assert [float(b) for b in cfg["tiered"]["breakpoints"]] == BREAKPOINTS
     assert str(cfg.get("kernel_mode", "smoothed")) == "smoothed"
 

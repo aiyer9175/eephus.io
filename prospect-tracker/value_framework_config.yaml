@@ -536,6 +536,12 @@ calibration:
   # docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md. Prefix stays sanctioned and the
   # map is genuinely isotonic this time (v5 was a floored line wearing knots).
   version: "isotonic-real-v6-evframe-2026-07-31"
+  # VAL_1 (owner decision FP2-1, 2026-09-25): the $/WAR level the knots below were
+  # fit at (the clemens_2026 FanGraphs flat, in force on 2026-07-31). The knots are
+  # absolute $M, so under the free-agent winter level the map is applied in its own
+  # unit, s * f(x / s), s = live flat / this (value_framework.calibration_level_scale).
+  # A refit stamps the level it fit at here.
+  fit_dpw_flat_usd: 11740000
   method: isotonic            # linear | isotonic
   linear: {slope: 1.0, intercept_mm: 0.0}
   isotonic:
@@ -642,7 +648,9 @@ trade_value:
     RP:   0.0
   floor_control_years: 5
   floor_discount_rate: 0.09
-  floor_dollars_per_war_mm: 8.76   # 1-to-2 WAR tier; floor D is real but not star-tier
+  # floor $/WAR: the LIVE 1-to-2 WAR tier rate (value_framework dollars_per_war),
+  # read in bayes_trade_value.defensive_floor_mm since VAL_1 (2026-09-25); floor D
+  # is real but not star-tier. It was a literal 8.76 (the FanGraphs 1-to-2 tier).
   def_grade_above_avg: 55.0        # partial floor threshold (20-80 scale)
   def_grade_elite:     65.0        # full floor threshold
 

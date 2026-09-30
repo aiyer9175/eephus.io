@@ -194,9 +194,10 @@
   }
 
   // ---- view -----------------------------------------------------------------
-  // M04-08: the class board's own pricing basis (fa_meta.dpw_pricing). The
-  // chart and table above it are the COMMITTED series; the board re-derives
-  // the series from the current corpus each run and prices on that one.
+  // M04-08: the class board's own pricing basis (fa_meta.dpw_pricing). Since
+  // VAL_1 (2026-09-25) the board, /projections/ and prospect surplus all read
+  // the one written series charted above, so the note says so; the older
+  // two-series sentence only prints if an artifact still shows a gap.
   function pricingNote(P, head) {
     if (!P || !P.usd_per_war_by_winter || P.winter_dpw_usd == null) return "";
     const s = P.usd_per_war_by_winter;
@@ -206,20 +207,32 @@
     const carry = P.method === "flat5"
       ? `carried forward at ${(Number(P.escalator) * 100).toFixed(1)}%/yr`
       : `forecast by ${esc(String(P.method || "?"))}`;
+    const same = Object.keys(s).every(y => Number(s[y]) === Number(head[y]));
+    const projSame = P.projections_dpw_usd != null && Number(P.projections_first_season) === cy
+      && Math.round(Number(P.projections_dpw_usd)) === Math.round(Number(P.winter_dpw_usd));
+    if (same) {
+      return `<p class="dpw-note">The class board prices on this series: ${winter(anchor)} at
+        ${money(s[anchor])}, ${carry} to ${money(P.winter_dpw_usd)} for ${winter(cy)}.${projSame
+        ? " /projections/ prices veteran seasons and prospect surplus prices every prospect season at that same level."
+        : ""}</p>`;
+    }
     const proj = P.projections_dpw_usd != null && Number(P.projections_first_season) === cy
-      ? ` /projections/ carries the committed series to ${money(P.projections_dpw_usd)} for the same winter and prices veteran seasons at that rate.`
+      ? ` /projections/ prices veteran seasons at ${money(P.projections_dpw_usd)} for the same winter.`
       : "";
-    return `<p class="dpw-note">The class board does not price on this committed series. It
-      re-derives the series from the current corpus each run: ${winter(anchor)} reads
-      ${money(s[anchor])} in that series against ${money(head[anchor])} in this one, ${carry} to
+    return `<p class="dpw-note">The class board's series differs from the series charted above:
+      ${winter(anchor)} reads ${money(s[anchor])} there against ${money(head[anchor])} here, ${carry} to
       ${money(P.winter_dpw_usd)} for ${winter(cy)}.${proj} The "Board pricing" column
-      below is that series.</p>`;
+      below is the board's series.</p>`;
   }
 
   function render(root) {
     const bd = (DATA && DATA.breakdown) || null;
     const head = (DATA && DATA.usd_per_war_by_winter) || {};
-    const pser = (PRICING && PRICING.usd_per_war_by_winter) || null;
+    const pser0 = (PRICING && PRICING.usd_per_war_by_winter) || null;
+    // VAL_1: the "Board pricing" column only prints while the board's series
+    // differs from the one written series; identical columns say nothing.
+    const pser = pser0 && !Object.keys(pser0).every(y => Number(pser0[y]) === Number(head[y]))
+      ? pser0 : null;
     const xs = Object.keys(head).sort();
     if (!xs.length) {
       root.innerHTML = `<div class="state-message">The $/WAR series is not exported yet.
@@ -283,8 +296,9 @@
       <h2 class="dpw-head">FA $/WAR by winter</h2>
       <p class="dpw-lede">Implied <span data-gl="winter_dpw">$/WAR</span>: each winter's
         <span data-gl="deferral_npv">deferral-adjusted</span> guarantees over the discounted
-        WAR its signings were projected to deliver. This is the committed series (data file
-        written by the Gate 2 run): the Archive, the Club Ledger and /projections/ read it.</p>
+        WAR its signings were projected to deliver. This is the one written series, rewritten
+        each night before anything is priced: the class board, /projections/, prospect surplus,
+        the Archive and the Club Ledger all read it.</p>
       ${pricingNote(PRICING, head)}
 
       <div class="dpw-panel">

@@ -272,7 +272,14 @@ def engine_params(set_id: str) -> dict:
             if wc.get("rates_musd") is not None:
                 tiered["rates"] = {k: float(v) * 1e6 for k, v in wc["rates_musd"].items()}
             dpw["tiered"] = tiered
-        if wc.get("disable_fa_implied"):
+        if wc.get("level") == "fa_winter":
+            # VAL_1 (owner decision FP2-1, 2026-09-25): the published tier SHAPE,
+            # rescaled to the free-agent winter level of the one written series
+            # (value_framework._apply_fa_winter_level). trailing_years is unused on
+            # this method and kept only so the block validates.
+            dpw["fa_implied"] = {"enabled": True, "trailing_years": 3,
+                                 "method": "fa_winter_level"}
+        elif wc.get("disable_fa_implied"):
             # Faithful replication of the published framework uses the FG cost-of-win
             # directly, NOT our FA-implied rescale. Keep trailing_years so the block
             # still validates.

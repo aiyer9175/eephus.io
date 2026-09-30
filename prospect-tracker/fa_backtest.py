@@ -722,20 +722,14 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
             pass
         _out.write_text(_json.dumps(summary, indent=1), encoding="utf-8")
     if persist and persist_dpw:
-        import json as _json
-        from pathlib import Path as _Path
-        # The estimated per-winter $/WAR series (FULL corpus — the ledger is
-        # retrospective and may see every winter's own implied rate). This
-        # REPLACES fa_class's v1 framework backcast, as the plan promised.
-        series = fm.dollars_per_war_by_winter(enriched)
-        # Breakdowns ride along: same corpus, same winters, no extra ingest.
-        # The headline stays exactly where it was so no reader has to move.
-        (_Path(__file__).parent / "data" / "fa_dpw_series.json").write_text(
-            _json.dumps({"method": "fa_signings_implied_v1",
-                         "model_version": GATE2_MODEL_VERSION,
-                         "usd_per_war_by_winter": {str(k): int(v) for k, v in series.items()},
-                         "breakdown": fm.dpw_breakdowns(enriched)},
-                        indent=1), encoding="utf-8")
+        # VAL_1 (2026-09-25): the file has ONE writer, fa_market.write_dpw_series,
+        # which also writes the pricing level every surface reads. This persist
+        # used to write its own copy (series and breakdowns, no level), which is
+        # how /projections/ came to price on a series /fa/ did not. The writer
+        # re-reads the corpus through the class winter, so the file is identical
+        # whichever of the two callers wrote it last.
+        from fa_export import CLASS_YEAR as _CLASS_YEAR
+        fm.write_dpw_series(_CLASS_YEAR)
     return summary
 
 

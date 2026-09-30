@@ -1324,6 +1324,31 @@ def _stage_fangraphs_articles(log) -> None:
         log.info("fangraphs_csv: staged %d committed article CSV(s) for ingest", staged)
 
 
+def _write_dpw_series_step(log) -> None:
+    """VAL_1 (owner decision FP2-1, 2026-09-25): write THE one $/WAR series
+    (data/fa_dpw_series.json, fa_market.write_dpw_series) before anything in
+    the rebuild prices a prospect or a veteran. Everything downstream reads its
+    pricing.level_usd: the timeseries and eFV surplus through value_framework,
+    proj_export's veteran seasons, the trade values, and fa_export later in the
+    night (d10 / d10b). fa_export cannot be the writer: it runs after
+    proj_export and reads mlb_projections, which would price the two a night
+    apart. value_framework caches its config for the life of the process, so
+    the caches are dropped after the write; a stale level in memory is the
+    21:12 timeseries incident class. Best-effort: on failure the file on disk
+    (the previous night's) still prices every surface at one level."""
+    try:
+        import fa_market as _fm
+        import value_framework as _vf
+        from fa_export import CLASS_YEAR as _FA_CLASS_YEAR
+        _p = _fm.write_dpw_series(_FA_CLASS_YEAR)
+        _vf._reset_caches()
+        log.info("dpw series: class %s level $%s per WAR (winter %s carried at %s)",
+                 _p.get("class_year"), _p.get("level_usd"), _p.get("anchor_winter"),
+                 _p.get("carry_rate"))
+    except Exception:
+        log.exception("dpw series write failed - pricing on the file already on disk")
+
+
 def rebuild_only(out_dir: Path = Path("data"), *,
                  stamp_summary: bool = True) -> None:
     """Fast export-only path: ingest any FG drops, rebuild the timeseries
@@ -1345,6 +1370,7 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     )
     log = logging.getLogger("rebuild_only")
     init_db()
+    _write_dpw_series_step(log)
     ingest_source_article_drops(out_dir, log)
 
     # First: drain the FanGraphs drop folder so any waiting CSVs land

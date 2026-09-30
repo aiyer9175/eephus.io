@@ -1365,13 +1365,18 @@
           title="Open the $/WAR by winter detail">${trendSvg}<span class="fa-dpw-cue">$/WAR by winter, in full &rarr;</span></div>`
       : yrs.slice(-6).map(y =>
         `<div class="fa-rail-row"><span>${Number(y) - 1}-${String(y).slice(2)}</span><span class="fa-rail-num">${money(series[y])}</span></div>`).join("");
-    // M04-08: the sparkline is the committed platform series; the board prices
-    // on the series this run re-derived. Both levels, named, so the eyebrow's
-    // figure can be traced to a winter a reader can see.
+    // M04-08: the eyebrow's figure traced to a winter a reader can see. Since
+    // VAL_1 (2026-09-25) the board prices on the series in the sparkline (one
+    // written series for /fa/, /projections/ and prospect surplus); the title
+    // names a gap only if an artifact still carries one.
     const pricing = cls.dpw_series_pricing || {};
     const anchorY = Object.keys(pricing).filter(y => Number(y) < cls.class_year).sort().pop();
+    const oneSeries = Object.keys(pricing).every(y => Number(pricing[y]) === Number(series[y]));
+    const basisTitle = oneSeries
+      ? "The board, /projections/ and prospect surplus all price on the series in the chart above, carried forward to this winter."
+      : "The board's series differs from the series in the chart above; the board prices on its own.";
     const basis = (anchorY && cls.dpw_usd != null)
-      ? `<div class="fa-rail-row fa-sub" title="The chart above is the committed series the Archive, the Club Ledger and /projections/ read. The board re-derives the series from the current corpus each run and prices on that one."><span>Board prices on this run's series: ${Number(anchorY) - 1}-${String(anchorY).slice(2)} ${money(pricing[anchorY])}, so ${cls.class_year - 1}-${String(cls.class_year).slice(2)} ${money(cls.dpw_usd)}</span></div>`
+      ? `<div class="fa-rail-row fa-sub" title="${basisTitle}"><span>Board prices at ${Number(anchorY) - 1}-${String(anchorY).slice(2)} ${money(pricing[anchorY])}, so ${cls.class_year - 1}-${String(cls.class_year).slice(2)} ${money(cls.dpw_usd)}</span></div>`
       : "";
     const mod = railMod;
     return `<aside class="fa-board-rail">

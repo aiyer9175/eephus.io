@@ -866,13 +866,33 @@ def _rows(shard, key):
 # D5-0: the spine
 # --------------------------------------------------------------------------
 
-def test_the_main_payload_carries_no_row_array_and_stays_under_one_megabyte(d):
+def test_the_main_payload_carries_no_row_array_and_stays_under_one_megabyte(d, shards):
+    """The preview guard (ledger_export: PREVIEW_N rows, PREVIEW_N_SMALL once the
+    full-preview board passes PREVIEW_GUARD_BYTES).
+
+    Re-expressed 2026-09-30, while landing VAL_1 (owner answer FP2-1): the
+    guard fired for the first time, on a full-preview board of about 955 KB
+    (the nightly data added about 7.6 KB since 2026-09-25, VAL_1's level stamps
+    and copy about 0.7 KB, so it fires without VAL_1 too). The old check
+    read "board on disk under the line => full preview", which is false on
+    exactly the path where the guard fires, because the file on disk is then
+    the SMALL board. The guard is now checked on both paths: a full preview
+    must sit under the line, and a small preview must come from a full-preview
+    board that passed it. That byte count is rebuilt from the shards: the board
+    plus the preview rows the guard dropped, less one byte per club for a shard
+    byte-count stamp that can lose a digit (the only other part that moves)."""
     import ledger_export as L
-    assert ART.stat().st_size < L.BOARD_CAP_BYTES
+    size = ART.stat().st_size
+    assert size < L.BOARD_CAP_BYTES
     n = d["shards"]["preview_n"]
     assert n in (L.PREVIEW_N, L.PREVIEW_N_SMALL) and d["shards"]["board_guard_bytes"] == L.PREVIEW_GUARD_BYTES
-    if ART.stat().st_size <= L.PREVIEW_GUARD_BYTES:
-        assert n == L.PREVIEW_N, "the guard only drops the preview when the board passes the line"
+    if n == L.PREVIEW_N:
+        assert size <= L.PREVIEW_GUARD_BYTES, "a board past the line kept the full preview"
+    else:
+        dropped = sum(len(json.dumps(r, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) + 1
+                      for c in d["clubs"] for r in _rows(shards[c], "farm.prospects")[n:L.PREVIEW_N])
+        full = size + dropped - len(d["clubs"])
+        assert full > L.PREVIEW_GUARD_BYTES, (full, "the guard only drops the preview when the board passes the line")
     for c, club in d["clubs"].items():
         assert "prospects" not in club["farm"] and "graduates" not in club["farm"] and "picks" not in club["farm"], c
         assert "ladders" not in club["arbitration"] and "realized_rows" not in club["arbitration"], c
@@ -1120,6 +1140,11 @@ def test_the_prospect_row_prints_one_surplus_basis_and_its_band_is_never_summed(
         lo_sum = sum(r[lo_i] or 0 for r in rows)
         hi_sum = sum(r[hi_i] or 0 for r in rows)
         leaves = set(_leaves(club["farm"]["reconciliation"])) | set(_leaves(club["farm"]["method"])) | set(_leaves(club["surplus"]["reconciliation"]))
+        # Dollar leaves only (JSON floats). A summed band would land as a rounded
+        # $M float; an integer leaf is a count. Added 2026-09-30 (VAL_1, owner
+        # answer FP2-1): ATL's band-low sum read exactly 63.0 on the new level and
+        # collided with its draft-method prospect COUNT of 63, a false alarm.
+        leaves = {v for v in leaves if isinstance(v, float)}
         for bad in (round(lo_sum, 1), round(lo_sum, 2), round(hi_sum, 1), round(hi_sum, 2)):
             if bad:
                 assert bad not in leaves, (c, bad, "a summed band reached a reconciliation block")

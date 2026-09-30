@@ -1155,6 +1155,17 @@ def test_dpw_tier_rates_match_the_valuation_set():
                  for raw in re.findall(r"\$(\d+\.\d+)m overall", formula)
                  if abs(float(raw) - flat) > 0.005]
     allowed = list(rates.values()) + [flat]
+    # VAL_1 (owner answer FP2-1, 2026-09-30): the card also quotes the published FanGraphs shape it rescales
+    # (the checksummed clemens_2026 win_cost figures) and the winter the level is carried
+    # from (pricing.anchor_usd of the one written series). Both are derived, not typed.
+    import valuation_sets as vs
+    wc = vs.load("clemens_2026")["params"]["win_cost"]
+    allowed += [float(v) for v in wc["rates_musd"].values()] + [float(wc["flat_musd"])]
+    series = json.loads((Path(value_framework._HERE) / "data" / "fa_dpw_series.json")
+                        .read_text(encoding="utf-8"))
+    anchor = (series.get("pricing") or {}).get("anchor_usd")
+    if anchor:
+        allowed.append(float(anchor) / 1e6)
     every = " ".join(v for v in entry.values() if isinstance(v, str)).lower()
     problems += [f"dpw_tier quotes ${raw}M, none of the configured rates {sorted(allowed)}"
                  for raw in re.findall(r"\$(\d+\.\d\d)m\b", every)
@@ -1228,6 +1239,9 @@ def test_prospect_path_registry_row_quotes_only_artifact_figures():
 # and quoted forecast MAPEs (0.122 / 0.132 against 0.102) the eval artifact no
 # longer holds; value_framework and surplus_value priced realized value as
 # career WAR x a flat $11.74M while PROSPX prices each season at its tier.
+# VAL_1 (owner decision FP2-1, same day) then put prospect surplus on the
+# winter level too, so the rational_value sentence now states ONE level and the
+# tier figures below are the live (rescaled) rates.
 
 def _all_text(entry):
     return " ".join(v for v in entry.values() if isinstance(v, str))
@@ -1263,15 +1277,20 @@ def test_dpw_basis_copy_matches_the_served_bases():
             problems.append(f"{eid} does not name the {winter}")
     if "Same NPV currency as PROSPX" in rv:
         problems.append("rational_value claims the prospect surplus currency")
-    got = re.findall(r"prices a win at \$(\d+\.\d)M where prospect surplus prices at "
-                     r"the clemens_2026 set's flat \$(\d+\.\d\d)M", rv)
+    if "prospect surplus prices at the clemens_2026 set's flat" in rv:
+        problems.append("rational_value still discloses a second (prospect) level")
+    got = re.findall(r"prices a win at \$(\d+\.\d)M, and since 2026-09-25 prospect surplus "
+                     r"and /projections/ price every season at that level too", rv)
     if not got:
         problems.append("rational_value level sentence changed shape")
-    for w, f in got:
+    for w in got:
         if abs(float(w) - level) > 0.05:
             problems.append(f"rational_value winter level ${w}M; fa_class {level:.3f}")
-        if abs(float(f) - flat) > 0.005:
-            problems.append(f"rational_value prospect level ${f}M; engine {flat:.2f}")
+        if abs(float(w) - flat) > 0.05:
+            problems.append(f"rational_value level ${w}M; prospect engine level {flat:.2f}")
+    dt = _all_text(_glossary_entry("dpw_tier"))
+    if f"${flat:.2f}M" not in dt:
+        problems.append(f"dpw_tier does not state the ${flat:.2f}M overall level")
     m = re.search(r"carry[^.]*?MAPE (0\.\d+), a log-linear trend (0\.\d+) and the trend "
                   r"with a CBT covariate (0\.\d+)", mg)
     if not m:
