@@ -848,3 +848,46 @@ def test_position_strip_reads_the_nightly_mlbam_keyed_file():
     prospx = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
     assert "mlb_fielding_positions.json" not in prospx
     assert '"mlb_position_games.json"' in prospx
+
+
+def _tail_row(row):
+    """The same nine-figure deal with the contract tail on: the salary path
+    runs to 2039 and the eight seasons after 2031 carry a price."""
+    row = _horizon_row(row)
+    row.update({"salPath": [[s, 51000000, 51000000, 51000000, "signed", "contract", 0]
+                            for s in range(2027, 2040)],
+                "salThru": 2039, "ctrlWhy": "contract_only",
+                "sur": [47.3, 51.3, 39.6, 58.7, 40.6, -29.2, -35.4, -41.9, -46.7, -50.8, -51.0, -51.0, -51.0],
+                "warTail": [1.65, 1.26, 0.84, 0.42, 0.02, 0.0, 0.0, 0.0],
+                "surNpv": 8600000, "surTotal": 10600000})
+    return row
+
+
+def test_a_guarantee_priced_past_the_horizon_names_its_whole_span():
+    """Owner answer 2026-09-25 (M05-01 step 2): a guarantee through 2039 is
+    priced through 2039, the seasons after 2031 on the champion mean path. The
+    card and the board label the surplus with the whole span and say which path
+    the later seasons price on; nothing calls them unpriced."""
+    global DETAIL, BOARD
+    base_d, base_b = DETAIL, BOARD
+    try:
+        bd = json.loads(base_b)
+        bd["first_season"] = 2027
+        BOARD = json.dumps(bd)
+        d = json.loads(base_d)
+        d["players"]["vet_guy"]["proj"] = _tail_row(d["players"]["vet_guy"]["proj"])
+        DETAIL = json.dumps(d)
+        html = _render("#player=vet_guy&ptab=projection")
+        assert "Surplus (2027-2039)" in html
+        assert "2032-2039 on the champion aging path" in html
+        assert "not priced" not in html and "carry no price" not in html
+        foot = html.split("data-proj-contract-tail", 1)[1][:400]
+        assert "Surplus prices the whole guarantee, 2027-2039." in foot
+        assert "The 8 guaranteed seasons 2032-2039 price on the champion (Marcel) mean aging path" in foot
+        bd["vets"][0] = _tail_row(bd["vets"][0])
+        BOARD = json.dumps(bd)
+        board = _render("")
+        assert "over the whole guarantee, 2027-2039" in board
+        assert "only, not the whole club control window" not in board
+    finally:
+        DETAIL, BOARD = base_d, base_b

@@ -531,7 +531,7 @@ def _contract_prices_window(sal, first_season, horizon) -> bool:
 
 def salary_path(mlbam, *, key=None, first_season, horizon, contract=None,
                 board_row=None, league_min=None, opts=None, mode=None,
-                raise_fn=None, vintage=None) -> dict:
+                raise_fn=None, vintage=None, tail_last=None) -> dict:
     """One player's control-window salary path. PURE: every input is passed in.
 
     `contract` is a Spotrac contract dict (`salary_by_year`, `signed_through`);
@@ -545,6 +545,14 @@ def salary_path(mlbam, *, key=None, first_season, horizon, contract=None,
     The second lock is deliberately redundant: Spotrac's status grid sometimes
     carries a token for a season an extension also covers, and a token must
     never beat dollars.
+
+    THE CONTRACT TAIL (owner answer 2026-09-25, M05-01 step 2). `tail_last`,
+    when it is past the horizon, extends the path through that season with the
+    GUARANTEED seasons only: a season past the horizon carries a price exactly
+    when the contract lists dollars for it, and no board step, class-closure
+    rung or league minimum is ever projected out there. The caller decides how
+    far the tail may run (proj_export caps it at the length of the WAR path it
+    prices with); None keeps the path at `horizon` seasons, byte for byte.
     """
     mode = mode or SALARY_PATH_MODE
     if mode not in MODES:
@@ -655,6 +663,26 @@ def salary_path(mlbam, *, key=None, first_season, horizon, contract=None,
             cell["lo"] = cell["hi"] = cell["usd"]
         seasons.append(cell)
 
+    # ---- the contract tail: guaranteed seasons past the horizon ----------
+    # Rule 1 alone. A gap year inside the tail stays an unpriced cell so the
+    # season index `t` keeps meaning "seasons after first_season" on every cell
+    # (the surplus strip and its NPV identity enumerate by position), and the
+    # tail is trimmed back to its last priced season.
+    tail_end = None
+    if tail_last is not None and mode != "off" and int(tail_last) > last_season:
+        for s in range(last_season + 1, int(tail_last) + 1):
+            cell = {"t": s - first_season, "season": s, "usd": None, "lo": None,
+                    "hi": None, "src": "none", "tok": None, "cls": None,
+                    "s2": False, "opt": opt_seasons.get(s), "cut": False}
+            if s in sal:
+                cell.update(usd=int(sal[s]), lo=int(sal[s]), hi=int(sal[s]),
+                            src="contract", tok="signed")
+            seasons.append(cell)
+        while len(seasons) > horizon and seasons[-1]["usd"] is None:
+            seasons.pop()
+        if len(seasons) > horizon:
+            tail_end = seasons[-1]["season"]
+
     # ---- the CBA maximum-cut floor across a contract-to-arbitration step --
     # The board chains each award off the PANEL's prior salary, which is the
     # salary Spotrac's arbitration table knows about; it does not know about an
@@ -706,6 +734,10 @@ def salary_path(mlbam, *, key=None, first_season, horizon, contract=None,
         "cut_season": None,
         "cba_floored": floored,
         "closure_buyout": buyout,
+        # The last guaranteed season the tail priced past the horizon, or None
+        # when the path stops at the horizon. control_end reads it: a window
+        # priced through its guarantee did not run out of HORIZON.
+        "tail_last": tail_end,
         "vintage": vintage,
         "mode": mode,
     }
@@ -756,8 +788,9 @@ def control_end(path: dict, thru, first_season: int, horizon: int) -> dict:
 
     `salThru` (``path["last_controlled"]``) is NOT that season. It is the last
     season of the horizon that carries a PRICE, which is a narrower object in
-    three ways: it is capped at ``first_season + horizon - 1`` (a contract
-    running past the horizon reads short), it stops where the published
+    three ways: it is capped at ``first_season + horizon - 1`` except where the
+    contract tail prices a guarantee past it (a tail cut short, or a path built
+    without one, reads short), it stops where the published
     arbitration grid stops rather than where control stops (`truncated`), and
     it can sit at or past a season the tender cliff has already stamped `cut`.
     This function is the only place the COPY is allowed to read, because it is
@@ -807,7 +840,9 @@ def control_end(path: dict, thru, first_season: int, horizon: int) -> dict:
     player, and every such row already names a season at or past the end of
     everything priced here, so nothing downstream can contradict it. Putting a
     `+` on 39 nine-figure veteran contracts would be the noise that teaches a
-    reader to ignore the mark where it matters.
+    reader to ignore the mark where it matters. Since the contract tail (owner
+    answer 2026-09-25) those 39 read `contract_only`: their guarantee is priced
+    to its last season.
     """
     last_h = int(first_season) + int(horizon) - 1
     try:
@@ -821,7 +856,12 @@ def control_end(path: dict, thru, first_season: int, horizon: int) -> dict:
         why = path["truncated"]
     elif end is None:
         why = None                     # nothing on file at all: the cell says so
-    elif end >= last_h:
+    elif end >= last_h and not (path.get("tail_last") and end <= path["tail_last"]):
+        # A window whose guarantee the contract tail priced to its last season
+        # (owner answer 2026-09-25) stopped where the CONTRACT stops, not where
+        # the horizon does, so it falls through to the tests below and reads
+        # `contract_only`. A tail cut short of the guarantee is still a horizon
+        # failure and still says so.
         # THE HORIZON TEST OUTRANKS THE BUY-OUT TEST. A window that reaches the
         # last priced season ran out of HORIZON whatever else is true of it, and
         # `truncated` is cleared on exactly those rows a few lines above for the

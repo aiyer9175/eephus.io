@@ -530,8 +530,11 @@
   function contractDepth(pr, opts) {
     if (!pr) return "";
     function P(n) { return cv("contracts.paths", pr, n); }
-    var sur = P("sur_mm") || [], seasons = DATA.horizon, rate = (DATA.accountability || {}).discount_rate;
-    var strip = seasons.map(function (s, i) { return isNum(sur[i]) ? esc(s) + " " + signedMM(sur[i]) : ""; }).filter(Boolean).join(", ");
+    var sur = P("sur_mm") || [], first = DATA.horizon[0], rate = (DATA.accountability || {}).discount_rate;
+    // The WHOLE strip, not only the horizon columns: a guarantee past the last
+    // horizon season is priced through its last season (the contract tail), and
+    // the NPV identity below discounts every cell of it.
+    var strip = sur.map(function (v, i) { return isNum(v) ? esc(first + i) + " " + signedMM(v) : ""; }).filter(Boolean).join(", ");
     var out = dd("Surplus strip", strip + '<div class="ledger-count">' + esc(copy("sur_strip_basis")) + "</div>");
     out += dd("NPV identity", "NPV of the strip at " + esc(isNum(rate) ? pctStr(rate) : "the platform rate") + ": " + esc(money(P("npv_check_usd"))) + "; served " + esc(money(P("sur_npv_usd"))) +
       '<div class="ledger-count">' + esc(copy("npv_identity")) + "</div>");

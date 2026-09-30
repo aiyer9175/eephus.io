@@ -1742,6 +1742,7 @@ the 5c amendment form and it is the only way this document changes.
 | 2026-09-18 | - | registered | - | pre-registration committed; no candidate scored |
 | 2026-09-18 | - | amended | - | AMENDMENT A-1 (section 21): the two-sided label defect is repaired; the design-day descriptives it moves are named and restated. No candidate scored, no look spent, no threshold moved |
 | 2026-09-18 | - | restated | - | REPAIR + RESTATEMENT (section 22): the label repair landed and every descriptive A-1 named as stale is restated from the repaired corpus. No candidate scored, no arm fitted, no look spent, no threshold moved |
+| 2026-09-30 | - | noted | - | CONTRACT TAIL (owner answer 2026-09-25, census M05-01 step 2): proj_export.PRICE_CONTRACT_TAIL prices a guaranteed contract past 2031 through its last season, those seasons on `warChamp` extended (the champion mean, insulated from both arms by 9.2), so neither SERVE flag moves them. It moves the served baselines 9.1 is read against: sum of `surNpv` $13,488.3M to $13,385.9M on the same 904 rows, 39 rows, Ohtani `surNpv` $211.7M to $155.3M. A flip's pre and post are both read on the tail-priced payload. No candidate scored, no look spent, no threshold moved |
 
 ---
 

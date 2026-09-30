@@ -1620,7 +1620,13 @@ def test_the_war_path_is_expected_values_and_the_bands_are_never_summed(d, shard
         for r in _rows(shards[c], C):
             v = vets[r[k_i]]
             assert r[w_i] == v["war"] and r[lo_i] == v.get("warP10") and r[hi_i] == v.get("warP90"), (c, r[k_i])
-            assert len(r[w_i]) == len(d["horizon"]) == len(r[s_i]), (c, r[k_i])
+            # The WAR path is the five projected seasons; the surplus strip runs
+            # through the last priced season, which is past the horizon on a
+            # guarantee the contract tail prices (owner answer 2026-09-25).
+            last_h = d["horizon"][-1]
+            tail = [cell[0] for cell in (v.get("salPath") or []) if cell[0] > last_h]
+            assert len(r[w_i]) == len(d["horizon"]), (c, r[k_i])
+            assert len(r[s_i]) == len(d["horizon"]) + (max(tail) - last_h if tail else 0), (c, r[k_i])
             for t, w in enumerate(r[w_i]):
                 if r[lo_i] and r[hi_i] and w is not None and r[lo_i][t] is not None:
                     assert r[lo_i][t] <= w <= r[hi_i][t] + 1e-9, (c, r[k_i], t)

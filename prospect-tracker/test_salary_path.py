@@ -326,3 +326,42 @@ def test_a_contract_that_buys_out_the_whole_grid_ends_the_closure_question():
               board_row=_row(_steps((2027, 4_000_000, "ARB 2"), (2028, 6_000_000, "ARB 3"))))
     assert [c["src"] for c in p["seasons"] if c["usd"]] == ["contract", "contract"]
     assert p["last_controlled"] == 2028
+
+
+# ------------------------------------------------------- the contract tail
+def test_the_contract_tail_prices_only_guaranteed_dollars_past_the_horizon():
+    """Owner answer 2026-09-25 (M05-01 step 2). With `tail_last` the path runs
+    past the horizon through the last GUARANTEED season, contract dollars only;
+    a gap year stays an unpriced cell so `t` keeps its meaning, and the tail is
+    trimmed back to its last priced season. None keeps H seasons exactly."""
+    sal = {y: 30_000_000 for y in range(2026, 2034)}
+    sal.pop(2032)
+    ct = {"salary_by_year": sal, "signed_through": 2033}
+    board = _row(_steps((2034, 9_000_000, "ARB 3")))
+    p = _path(contract=ct, board_row=board, tail_last=2035)
+    assert [c["season"] for c in p["seasons"]] == list(range(2027, 2034))
+    assert [c["t"] for c in p["seasons"]] == list(range(7))
+    gap = p["seasons"][5]
+    assert gap["season"] == 2032 and gap["usd"] is None and gap["src"] == "none"
+    last = p["seasons"][6]
+    assert last["src"] == "contract" and last["usd"] == 30_000_000
+    assert p["tail_last"] == 2033 and p["last_controlled"] == 2033
+    assert all(c["src"] in ("contract", "none") for c in p["seasons"][H:])
+    flat = _path(contract=ct, board_row=board)
+    assert len(flat["seasons"]) == H and flat["tail_last"] is None
+    assert [c["usd"] for c in flat["seasons"]] == [c["usd"] for c in p["seasons"][:H]]
+
+
+def test_a_guarantee_priced_to_its_end_is_not_a_horizon_failure():
+    """A window whose guarantee the tail priced to its last season stopped
+    where the contract stops, so it reads `contract_only`; a tail cut short of
+    the guarantee still reads `horizon`."""
+    ct = {"salary_by_year": {y: 51_000_000 for y in range(2025, 2040)},
+          "signed_through": 2039}
+    full = _path(contract=ct, tail_last=2039)
+    ce = sp.control_end(full, 2039, FIRST, H)
+    assert ce["why"] == "contract_only" and ce["end"] == 2039 and not ce["est"]
+    short = _path(contract=ct, tail_last=2035)
+    assert sp.control_end(short, 2039, FIRST, H)["why"] == "horizon"
+    none = _path(contract=ct)
+    assert sp.control_end(none, 2039, FIRST, H)["why"] == "horizon"

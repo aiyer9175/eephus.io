@@ -713,6 +713,10 @@ def build_all() -> tuple:
     # The level the farm leg's prospect dollars were priced at (the timeseries
     # stamp, VAL_1): equal to dpw_proj when one level prices both legs.
     farm_level = (ts.get("calibration") or {}).get("dpw_level_usd")
+    # The contract tail (proj_export.PRICE_CONTRACT_TAIL): surNpv prices a
+    # guarantee that runs past the horizon through its last season.
+    tail_on = bool((((proj.get("accountability") or {}).get("salary_path") or {})
+                    .get("contract_tail") or {}).get("enabled"))
     sp_census = (proj.get("accountability") or {}).get("salary_path") or {}
     prearb_min_season = max(LEAGUE_MIN_CURATED)
     prearb_min = LEAGUE_MIN_CURATED[prearb_min_season]
@@ -975,7 +979,20 @@ def build_all() -> tuple:
             if (v.get("salSrc") in ("contract", "contract+arb") and v.get("thru")
                     and tvc.get("signed_through") and int(tvc["signed_through"]) != int(v["thru"])):
                 contract_disagreements += 1
-            opts = [list(o) for o in sorted({(o[0], o[1], o[2]) for o in opts if o[0]})]
+            # One option per (season, holder), keeping the curated price where a
+            # source has one. salOpt stamps a season with no price; since the
+            # contract tail (2026-09-30) it reaches past the horizon, where the
+            # curated file prices the same club option, and a set over
+            # (season, holder, price) held both and could not sort None
+            # against a price.
+            best = {}
+            for o in opts:
+                if not o[0]:
+                    continue
+                k = (o[0], o[1])
+                if k not in best or (best[k][2] is None and o[2] is not None):
+                    best[k] = o
+            opts = [list(best[k]) for k in sorted(best)]
             if opts:
                 opts_all.append([v.get("name"), opts])
             rows.append([v.get("key"), v.get("name"), v.get("pos"), v.get("age"), v.get("salSrc"),
@@ -1679,7 +1696,10 @@ def build_all() -> tuple:
         "ou_mkt": hist_fk.get("ou_mkt"), "ou_war": hist_fk.get("ou_war"),
         "never_combine": hist_fk.get("never_combine"),
         "surplus_basis": (f"MLB leg: MLB Projections surNpv at dpw {dpw_proj:,} ({CLASS_YEAR} ex-ante), 5-season "
-                          f"horizon, {_pct_str(rate)} discount, usd converted to $M; farm leg: org_summary active "
+                          "horizon"
+                          + (f", every guaranteed season past {HORIZON[-1]} priced too, on the champion mean path"
+                             if tail_on else "")
+                          + f", {_pct_str(rate)} discount, usd converted to $M; farm leg: org_summary active "
                           "surplus ($M, prospect_surplus validated), "
                           + (f"priced at the same {dpw_proj:,} per WAR (one level for prospect and veteran "
                              "surplus since 2026-09-25). "

@@ -308,3 +308,32 @@ def test_the_caminero_row_is_the_owners_report_answered():
     assert row.get("salSrc") == "contract+arb"
     print(f"caminero: guaranteed {row['thru']}, club control {row['ctrlThru']}, "
           f"basis {row['salSrc']}, surplus {row.get('surTotal')}")
+
+
+def test_every_guarantee_past_the_horizon_is_priced_to_its_end():
+    """Owner answer 2026-09-25 (M05-01 step 2, proj_export.PRICE_CONTRACT_TAIL).
+    Every served guarantee that runs past the last projected season is priced
+    through its last guaranteed season, so no row is left clamped by the
+    horizon with a control end past it, the tail carries contract dollars only,
+    and `warTail` names one WAR per tail season."""
+    import proj_export as pe
+    if not pe.PRICE_CONTRACT_TAIL:
+        pytest.skip("contract tail off")
+    first, H = _window()
+    last = first + H - 1
+    clamped = [v["key"] for v in _vets()
+               if v.get("ctrlWhy") == "horizon" and (v.get("ctrlThru") or 0) > last]
+    assert not clamped, clamped[:5]
+    n = 0
+    for v in _vets():
+        tail = [c for c in (v.get("salPath") or []) if c[0] > last]
+        if not tail:
+            assert not v.get("warTail"), v["key"]
+            continue
+        n += 1
+        assert all(c[5] == "contract" for c in tail), v["key"]
+        assert tail[-1][0] == v["thru"] == v["ctrlThru"], v["key"]
+        assert len(v["warTail"]) == tail[-1][0] - last, v["key"]
+        assert v.get("ctrlWhy") != "horizon", v["key"]
+    acc = _doc("mlb_projections.json")["accountability"]["salary_path"]["contract_tail"]
+    assert n == acc["rows"] and acc["capped_rows"] == 0
