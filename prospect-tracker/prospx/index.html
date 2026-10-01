@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=81596c58">
+  <link rel="stylesheet" href="/assets/site.css?v=92b014c5">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -1651,7 +1651,10 @@
     .section-tab {
       position: relative;          /* anchor the active iridescent underline */
       flex-shrink: 0; /* never compress - the strip scrolls instead */
-      padding: 8px 14px;
+      /* 12px sides (was 14): the 12 px tab icons (PX-10) add 17px a tab,
+         and at 14px the 13 tabs overflowed the 1560px strip by 40px, so a
+         1600px-plus screen wrapped to a second row it never had. */
+      padding: 8px 12px;
       font-family: var(--font-sans);
       font-size: 12px;
       font-weight: 600;
@@ -1673,9 +1676,8 @@
     .section-tabs-scroll > .section-tab:first-of-type { border-left: none; }
     .section-tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
     /* Anchor variant (the /glossary/ link): same box as the buttons, no
-       underline; the gold § matches the glossary's site-wide module glyph. */
+       underline; it carries the glossary pixel icon like the tab buttons. */
     a.section-tab-link { text-decoration: none; display: inline-flex; align-items: center; }
-    .section-tab-glyph { color: var(--card-gold, var(--neon-amber)); font-weight: 700; margin-right: 5px; }
     /* v34 - Active tab now reads as bold text with an iridescent underline
        that mirrors the masthead rule under the title + the logo seam
        (red → gold → green → navy), instead of a flat navy fill block. Ties
@@ -1699,6 +1701,10 @@
        group turns lilac on the hovered, focused or active tab. */
     .ico { display: inline-block; flex: none; vertical-align: top; fill: currentColor; shape-rendering: crispEdges; }
     .section-tab:hover .ico, .section-tab:focus-visible .ico, .section-tab.active .ico { --ico-accent: var(--accent-lilac); }
+    /* PX-10: the 12 px tab icon sits before the label on the text's own rows. */
+    .section-tab .ico { vertical-align: -2px; margin-right: 5px; }
+    #global-theme-toggle .theme-icon .ico { display: block; }
+    #global-theme-toggle .theme-icon .ico[hidden] { display: none; }
     /* Phone (<=640px, canonical --bp-mobile): the 13-tab strip collapses
        behind a disclosure button that names the CURRENT section (same
        accordion pattern as the Filters toggle); expanding it reveals the
@@ -8846,43 +8852,43 @@
        static copies: prospx + the two CollegeSavant pages; test_collegesavant_nav_in_sync
        guards them). The MLB modules sit in an "MLB Modules" dropdown. -->
   <nav class="eephus-links">
-    <a href="/">Home</a>
-    <a href="/prospx/" class="is-active">PROSPX</a>
-    <a href="/collegesavant/">CollegeSavant</a>
+    <a href="/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-home" width="16" height="16"/></svg></span>Home</a>
+    <a href="/prospx/" class="is-active"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-prospx" width="16" height="16"/></svg></span>PROSPX</a>
+    <a href="/collegesavant/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-collegesavant" width="16" height="16"/></svg></span>CollegeSavant</a>
     <details class="eephus-nav-group" data-nav-group>
       <summary aria-haspopup="true">MLB Modules<span class="nav-caret" aria-hidden="true">▾</span></summary>
       <div class="eephus-nav-menu" role="menu">
-        <a href="/franchise/" role="menuitem">Franchise</a>
-        <a href="/fa/" role="menuitem">Free Agency</a>
-        <a href="/projections/" role="menuitem">Projections</a>
-        <a href="/mlbstats/" role="menuitem">MLB Stats</a>
-        <a href="/pal/" role="menuitem">Alchemy Lab</a>
-        <a href="/trademachine/" role="menuitem">Trade Machine</a><a href="/arbitration/" role="menuitem">Arbitration</a><a href="/ledger/" role="menuitem">Club Ledger</a><a href="/management/" role="menuitem">In-Game Management</a><a href="/hof/" role="menuitem">Hall of Fame</a>
+        <a href="/franchise/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-franchise" width="16" height="16"/></svg>Franchise</a>
+        <a href="/fa/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-fa" width="16" height="16"/></svg>Free Agency</a>
+        <a href="/projections/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-projections" width="16" height="16"/></svg>Projections</a>
+        <a href="/mlbstats/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-mlbstats" width="16" height="16"/></svg>MLB Stats</a>
+        <a href="/pal/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-pal" width="16" height="16"/></svg>Alchemy Lab</a>
+        <a href="/trademachine/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-trademachine" width="16" height="16"/></svg>Trade Machine</a><a href="/arbitration/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-arbitration" width="16" height="16"/></svg>Arbitration</a><a href="/ledger/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-ledger" width="16" height="16"/></svg>Club Ledger</a><a href="/management/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-management" width="16" height="16"/></svg>In-Game Management</a><a href="/hof/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-hof" width="16" height="16"/></svg>Hall of Fame</a>
       </div>
     </details>
     <details class="eephus-nav-group" data-nav-group>
       <summary aria-haspopup="true">Diamond<span class="nav-caret" aria-hidden="true">▾</span></summary>
       <div class="eephus-nav-menu" role="menu">
-        <a href="/fantasy/" role="menuitem">Fantasy</a>
-        <a href="/betting/" role="menuitem">Sports Betting</a>
-        <a href="/diamond/" role="menuitem">Diamond Pass</a>
+        <a href="/fantasy/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-fantasy" width="16" height="16"/></svg>Fantasy</a>
+        <a href="/betting/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-betting" width="16" height="16"/></svg>Sports Betting</a>
+        <a href="/diamond/" role="menuitem"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-diamond" width="16" height="16"/></svg>Diamond Pass</a>
       </div>
     </details>
-    <a href="/articles/">Articles</a>
-    <a href="/forums/">Forums</a>
-    <a href="/glossary/">Glossary</a>
-    <a href="/team/">Developers</a>
+    <a href="/articles/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-articles" width="16" height="16"/></svg></span>Articles</a>
+    <a href="/forums/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-forums" width="16" height="16"/></svg></span>Forums</a>
+    <a href="/glossary/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-glossary" width="16" height="16"/></svg></span>Glossary</a>
+    <a href="/team/"><span class="nav-drawer-ico"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-team" width="16" height="16"/></svg></span>Developers</a>
   </nav>
   <div class="eephus-nav-controls">
     <button class="eephus-nav-ctrl" id="global-watchlist" type="button"
             title="Open your watchlist" aria-label="Watchlist">
-      <span aria-hidden="true">★</span>
+      <svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-watchlist" width="16" height="16"/></svg>
       <span class="eephus-nav-ctrl-label">Watchlist</span>
       <span class="global-ctrl-count" id="global-watchlist-count" hidden>0</span>
     </button>
     <button class="eephus-nav-ctrl" id="global-theme-toggle" type="button"
             aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
-      <span class="theme-icon" aria-hidden="true">☾</span>
+      <span class="theme-icon" aria-hidden="true"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false" data-theme-glyph="light"><use href="/assets/eephus-icons.svg?v=4da3de91#i-theme-dark" width="16" height="16"/></svg><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false" data-theme-glyph="dark" hidden><use href="/assets/eephus-icons.svg?v=4da3de91#i-theme-light" width="16" height="16"/></svg></span>
       <span class="eephus-nav-ctrl-label theme-label">Dark Mode</span>
     </button>
   </div>
@@ -9090,21 +9096,21 @@
       <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
     </button>
     <div class="section-tabs-scroll" id="section-tabs-scroll">
-    <button class="section-tab active" data-section="active">MiLB Prospects</button>
-    <button class="section-tab" data-section="spotlights">Spotlights</button>
-    <button class="section-tab" data-section="farm">Farm Systems</button>
-    <button class="section-tab" data-section="traded">Transactions</button>
-    <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Injured List</button>
-    <button class="section-tab" data-section="leaderboards">Leaderboards</button>
-    <button class="section-tab" data-section="debuts">Debuted</button>
-    <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses. High School Details maps where prep talent comes from.">MLB Draft/HS</button>
-    <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021-present).">International Amateurs</button>
-    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort with its own performance index, RPS-Intl+ (100+15z within the league cohort) - not the MiLB board's ratio RPS+.">Overseas</button>
-    <button class="section-tab" data-section="timemachine" title="Time-travel the board - view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates.">Time Machine</button>
-    <button class="section-tab" data-section="charts" title="Build your own scatterplot - pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems).">Scatterplots</button>
+    <button class="section-tab active" data-section="active"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-prospects" width="16" height="16"/></svg>MiLB Prospects</button>
+    <button class="section-tab" data-section="spotlights"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-spotlights" width="16" height="16"/></svg>Spotlights</button>
+    <button class="section-tab" data-section="farm"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-farm" width="16" height="16"/></svg>Farm Systems</button>
+    <button class="section-tab" data-section="traded"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-transactions" width="16" height="16"/></svg>Transactions</button>
+    <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-il" width="16" height="16"/></svg>Injured List</button>
+    <button class="section-tab" data-section="leaderboards"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-leaderboards" width="16" height="16"/></svg>Leaderboards</button>
+    <button class="section-tab" data-section="debuts"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-debuted" width="16" height="16"/></svg>Debuted</button>
+    <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses. High School Details maps where prep talent comes from."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-draft" width="16" height="16"/></svg>MLB Draft/HS</button>
+    <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021-present)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-intl" width="16" height="16"/></svg>International Amateurs</button>
+    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort with its own performance index, RPS-Intl+ (100+15z within the league cohort) - not the MiLB board's ratio RPS+."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-overseas" width="16" height="16"/></svg>Overseas</button>
+    <button class="section-tab" data-section="timemachine" title="Time-travel the board - view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-timemachine" width="16" height="16"/></svg>Time Machine</button>
+    <button class="section-tab" data-section="charts" title="Build your own scatterplot - pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems)."><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-px-scatter" width="16" height="16"/></svg>Scatterplots</button>
     <!-- Glossary lives on its own surface (/glossary/) - a real link styled
          as a section tab, with the site's § module glyph. -->
-    <a class="section-tab section-tab-link" href="/glossary/" title="Glossary &amp; Methodology - every term, model derivation, and the track record behind the site"><span class="section-tab-glyph" aria-hidden="true">§</span>Glossary</a>
+    <a class="section-tab section-tab-link" href="/glossary/" title="Glossary &amp; Methodology - every term, model derivation, and the track record behind the site"><svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false"><use href="/assets/eephus-icons.svg?v=4da3de91#i-glossary" width="16" height="16"/></svg>Glossary</a>
     </div>
     <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
       <span>Compare</span><span class="compare-count" id="compare-count">0</span>
@@ -10679,8 +10685,11 @@ function applyTheme(theme) {
   for (const id of ["theme-toggle", "global-theme-toggle"]) {
     const btn = document.getElementById(id);
     if (btn) {
-      const icon = btn.querySelector(".theme-icon");
-      if (icon) icon.textContent = theme === "dark" ? "☀" : "☾";
+      // PX-22: the two pixel glyphs ship in the markup; show the one
+      // that names the destination (moon in light mode, sun in dark).
+      btn.querySelectorAll(".theme-icon [data-theme-glyph]").forEach(g => {
+        g.toggleAttribute("hidden", g.getAttribute("data-theme-glyph") !== theme);
+      });
       // Label names the destination mode (matches icon + title): in light
       // mode the toggle offers "Dark Mode", and vice-versa.
       const label = btn.querySelector(".theme-label");

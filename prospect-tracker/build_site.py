@@ -488,6 +488,28 @@ def _ico(key: str, size: int) -> str:
     return (f'<svg class="ico" width="{size}" height="{size}" viewBox="0 0 16 16" '
             f'aria-hidden="true" focusable="false"><use href="{href}"/></svg>')
 
+
+def _masthead_icon(key: str) -> str:
+    """The 32 px module icon at the head of a module masthead h1 (PX-07): the
+    16 x 16 drawing at 2x, before the title text; the stage chip after the
+    title is unchanged."""
+    return _ico(key, 32)
+
+
+def _prospx_subnav_section(href: str) -> str:
+    """The PROSPX data-section a PROSPX_SUBNAV deep link opens: the hash's
+    tab= value, or "active" (the default board) when there is none."""
+    m = re.search(r"[#&]tab=([\w-]+)", href)
+    return m.group(1) if m else "active"
+
+
+def _nav_drawer_ico(key: str) -> str:
+    """The 12 px icon on a top-level nav leaf, shown ONLY in the phone drawer
+    (PX-04). The one-line top bar stays text (plan 5.7.1 line 9, owner answer
+    PX-Q2): site.css hides .nav-drawer-ico everywhere except the open drawer at
+    640px and below. The three hand-kept static navs carry the same markup."""
+    return f'<span class="nav-drawer-ico">{_ico(key, 12)}</span>'
+
 # Site-wide theme: read the shared key PROSPX uses (prospect-tracker.theme) and
 # set <html data-theme> synchronously in <head> (no flash); toggle persists to
 # the same key so light/dark stays in sync across the whole site incl. PROSPX.
@@ -500,7 +522,8 @@ THEME_INIT = (
 )
 THEME_BTN = (
     '<button type="button" class="home-theme-toggle" data-theme-toggle onclick="eephusToggleTheme()" aria-label="Toggle dark mode">'
-    '<span class="lbl-dark">☾ Dark</span><span class="lbl-light">☀ Light</span></button>'
+    f'<span class="lbl-dark">{_ico("theme-dark", 12)}Dark</span>'
+    f'<span class="lbl-light">{_ico("theme-light", 12)}Light</span></button>'
 )
 
 # Favicons + PWA + theme-color - SVG primary (crisp at any size), ICO + 32px PNG
@@ -1012,7 +1035,9 @@ def _nav(active: str) -> str:
             clinks = []
             for k, l, h in children:
                 ccls = ' class="is-active"' if k == active else ""
-                clinks.append(f'<a href="{h}" role="menuitem"{ccls}>{html.escape(short.get(k, l))}</a>')
+                # PX-04: a 12 px pixel icon before the unchanged label, in the
+                # desktop dropdown and in the phone drawer alike.
+                clinks.append(f'<a href="{h}" role="menuitem"{ccls}>{_ico(k, 12)}{html.escape(short.get(k, l))}</a>')
             gcls = " is-active" if active_in else ""
             # Native <details> dropdown: click-toggles, keyboard-accessible with
             # zero JS. assets/eephus-nav.js adds outside-click/Esc close and
@@ -1027,18 +1052,20 @@ def _nav(active: str) -> str:
         else:
             key, label, href = item
             cls = ' class="is-active"' if key == active else ""
-            items.append(f'<a href="{href}"{cls}>{html.escape(short.get(key, label))}</a>')
+            items.append(f'<a href="{href}"{cls}>{_nav_drawer_ico(key)}{html.escape(short.get(key, label))}</a>')
     # Site-wide controls (right-aligned), matching PROSPX's primary nav: a
-    # Watchlist deep-link into PROSPX + the Dark Mode toggle.
+    # Watchlist deep-link into PROSPX + the Dark Mode toggle. PX-22 (owner
+    # answer PX-Q2): the three glyphs are pixel icons now (the old ⌘ and ☾ fell
+    # back to a system face); same buttons, boxes, labels and aria-labels.
     controls = (
         '<div class="eephus-nav-controls">'
         '<button class="eephus-nav-ctrl" type="button" data-qk-open aria-label="Quick search (Ctrl+K)" title="Search any term or metric - Ctrl+K / ⌘K">'
-        '<span aria-hidden="true">⌘K</span><span class="eephus-nav-ctrl-label">Search</span></button>'
+        f'{_ico("search", 12)}<span class="eephus-nav-ctrl-label">Search</span></button>'
         '<a class="eephus-nav-ctrl" href="/prospx/#tab=watchlist" aria-label="Watchlist">'
-        '<span aria-hidden="true">★</span><span class="eephus-nav-ctrl-label">Watchlist</span></a>'
+        f'{_ico("watchlist", 12)}<span class="eephus-nav-ctrl-label">Watchlist</span></a>'
         '<button class="eephus-nav-ctrl" type="button" data-theme-toggle onclick="eephusToggleTheme()" aria-label="Toggle dark mode">'
-        '<span class="theme-icon lbl-dark" aria-hidden="true">☾</span>'
-        '<span class="theme-icon lbl-light" aria-hidden="true">☀</span>'
+        f'<span class="theme-icon lbl-dark" aria-hidden="true">{_ico("theme-dark", 12)}</span>'
+        f'<span class="theme-icon lbl-light" aria-hidden="true">{_ico("theme-light", 12)}</span>'
         '<span class="eephus-nav-ctrl-label"><span class="lbl-dark">Dark Mode</span><span class="lbl-light">Light Mode</span></span>'
         '</button></div>'
     )
@@ -2142,7 +2169,7 @@ def build_news(data: dict | None = None) -> str:
         for c, lbl in chip_defs)
     body = (
         '<div class="news-app">'
-        '<div class="section-head"><h1>Prospect News</h1>'
+        f'<div class="section-head"><h1>{_masthead_icon("news")}Prospect News</h1>'
         '<span class="section-sub">debuts, trades, level moves, IL, eFV changes and FA signings</span>'
         f'{_gfx_chip_html("news-gfx-chip")}</div>'
         f'<p class="news-intro">The {_gl("wire_ticker", "wire")}, last ~30 days, newest first. '
@@ -2825,7 +2852,7 @@ def build_this_day(data: dict | None = None) -> str:
 
     body = (
         '<div class="news-app hist-app">'
-        f'<div class="section-head"><h1>Today in Prospect History - {html.escape(mon_d)}</h1>'
+        f'<div class="section-head"><h1>{_masthead_icon("history")}Today in Prospect History - {html.escape(mon_d)}</h1>'
         '<span class="section-sub">debut anniversaries, trades, signings &amp; IL moves on this calendar date</span></div>'
         '<p class="news-intro">Exact calendar-date matches from past seasons. Transactions from 2019, '
         f'IL placements from 2017. Debut rows carry {_gl("wag", "WAG")}.</p>'
@@ -3015,7 +3042,7 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{m.get("projYears") or "?"}y / ${(m["projGuar"] / 1e6):.0f}M</span></a>'
             for m in top)
         if rows:
-            cards.append(('$ Free Agency', '/fa/',
+            cards.append((f'{_ico("fa", 16)}Free Agency', '/fa/',
                           f'{fa.get("class_year", 2027) - 1}-{str(fa.get("class_year", 2027))[2:]} projected market leaders', rows))
     except (OSError, ValueError, KeyError):
         pass
@@ -3031,7 +3058,7 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{v["warTotal"]:.1f} WAR</span></a>'
             for v in top)
         if rows:
-            cards.append(('Δ MLB Projections', '/projections/',
+            cards.append((f'{_ico("projections", 16)}MLB Projections', '/projections/',
                           'five-year eWAR leaders', rows))
     except (OSError, ValueError, KeyError):
         pass
@@ -3062,12 +3089,12 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">${p["trade_value_mm"]:.0f}M</span></a>'
             for p in top)
         if rows:
-            cards.append(('⇄ Trade Machine', '/trademachine/',
+            cards.append((f'{_ico("trademachine", 16)}Trade Machine', '/trademachine/',
                           'surplus trade value, prospects + MLB', rows))
     except (OSError, ValueError, KeyError):
         pass
     # CollegeSavant - static teaser (its data bundles stay in-module)
-    cards.append(('✪ CollegeSavant', '/collegesavant/',
+    cards.append((f'{_ico("collegesavant", 16)}CollegeSavant', '/collegesavant/',
                   'college baseball percentiles',
                   '<a class="xmod-row" href="/collegesavant/"><span class="xmod-name">Hitter dashboard</span><span class="xmod-val">EV · xwOBA · discipline →</span></a>'
                   '<a class="xmod-row" href="/collegesavant/pitcher_index.html"><span class="xmod-name">Pitcher dashboard</span><span class="xmod-val">Stuff+ · shapes →</span></a>'))
@@ -3083,7 +3110,7 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{round(r["rem_plus"])} REM+</span></a>'
             for r in top)
         if rows:
-            cards.append(('▦ MLB Stats', '/mlbstats/#section=bullpen',
+            cards.append((f'{_ico("mlbstats", 16)}MLB Stats', '/mlbstats/#section=bullpen',
                           'top relievers by REM+', rows))
     except (OSError, ValueError, KeyError):
         pass
@@ -3112,8 +3139,8 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{s["wpa"]:+.1f} WPA</span></a>'
             for s in sp)
         if rows:
-            # ⇅ (the win-probability swing); ◈ is spoken for by Fantasy, below.
-            cards.append(('⇅ Leverage', '/mlbstats/#section=leverage',
+            # i-li, the win-probability swing (the old ⇅ glyph, redrawn).
+            cards.append((f'{_ico("li", 16)}Leverage', '/mlbstats/#section=leverage',
                           'realized win-probability added', rows))
     except (OSError, ValueError, KeyError):
         pass
@@ -3134,7 +3161,7 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{round(f["dem_plus"])} DEM+</span></a>'
             for f in top)
         if rows:
-            cards.append(('⌖ Defense', '/mlbstats/#section=defense',
+            cards.append((f'{_ico("defense", 16)}Defense', '/mlbstats/#section=defense',
                           'top qualified fielders by DEM+', rows))
     except (OSError, ValueError, KeyError, TypeError):
         pass
@@ -3153,7 +3180,7 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{round(c["fit"])} FIT</span></a>'
             for c in top)
         if rows:
-            cards.append(('⚗ Alchemy Lab', '/pal/',
+            cards.append((f'{_ico("pal", 16)}Alchemy Lab', '/pal/',
                           'reliever-to-starter conversion screen', rows))
     except (OSError, ValueError, KeyError):
         pass
@@ -3189,7 +3216,7 @@ def _cross_module_strip() -> str:
                     f'<span class="xmod-sub">board built {html.escape(built)} is empty</span>'
                     '<span class="xmod-val">open →</span></a>')
         if rows:
-            cards.append(('◈ Fantasy', '/fantasy/#m=redraft&amp;section=ros_hitter',
+            cards.append((f'{_ico("fantasy", 16)}Fantasy', '/fantasy/#m=redraft&amp;section=ros_hitter',
                           'rest-of-season hitter points leaders', rows))
     except (OSError, ValueError, KeyError):
         pass
@@ -3215,7 +3242,7 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{f:.2f} run PF</span></a>'
             for v, f in top)
         if rows:
-            cards.append(('◊ Park Factors', '/parks/',
+            cards.append((f'{_ico("parks", 16)}Park Factors', '/parks/',
                           f'MiLB venues that add the most offense ({year} window)', rows))
     except (OSError, ValueError, KeyError, TypeError):
         pass
@@ -3237,7 +3264,7 @@ def _cross_module_strip() -> str:
                 ("deprecated", "Deprecated", "measured, failed, retired"),
                 ("unvalidated", "Unvalidated", "serving, not yet gated")))
         if tally:
-            cards.append(('✓ Model Ledger', '/models/',
+            cards.append((f'{_ico("models", 16)}Model Ledger', '/models/',
                           f'{sum(tally.values())} models with a predictive claim',
                           rows))
     except (OSError, ValueError, KeyError, TypeError):
@@ -3250,7 +3277,7 @@ def _cross_module_strip() -> str:
     # in this same run, and a quiet missing card would just hide that earlier.
     free_line = ("member pass" if _diamond_cfg()["gating"]
                  else "free during the founding preview")
-    cards.append(('◆ Diamond', '/diamond/',
+    cards.append((f'{_ico("diamond", 16)}Diamond', '/diamond/',
                   'the paid tier: fantasy and betting',
                   '<a class="xmod-row" href="/fantasy/"><span class="xmod-name">Fantasy</span><span class="xmod-val">redraft · dynasty · DFS →</span></a>'
                   '<a class="xmod-row" href="/betting/"><span class="xmod-name">Sports Betting</span><span class="xmod-val">model vs the book price →</span></a>'
@@ -3470,32 +3497,14 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # ---- sidebar ----
     # The sidebar has room for fuller module names than the horizontal
     # header nav, so a couple of labels expand here (key → sidebar label).
-    # Every module carries a terminal-safe glyph (PROSPX carries its ball
-    # badge instead). Lifecycle sigils live on module mastheads, not here.
+    # Every module carries its 16 px pixel icon (final-pass plan 5.7, PX-05),
+    # drawn once in assets/eephus-icons.svg and keyed by the NAV_ITEMS key;
+    # PROSPX's 16 px ball monogram became i-prospx (no monogram below 40 px).
+    # The unicode glyph map this replaced was a third icon vocabulary.
+    # Lifecycle sigils live on module mastheads, not here.
     sidebar_labels = {"fa": "MLB Free Agency", "projections": "MLB Projections",
                       "collegesavant": "CollegeSavant",
                       "glossary": "Glossary & Methodology"}
-    sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
-                     "arbitration": "⚖",
-                     "collegesavant": "✪", "glossary": "§", "forums": "❝",
-                     "team": "⚒", "mlbstats": "▦", "pal": "⚗", "trademachine": "⇄",
-                     # Diamond section. One row for Fantasy again after the
-                     # 2026-08-07 merge; Dynasty / Redraft / DFS are its
-                     # sub-modules and are reached by the module bar, not here.
-                     "fantasy": "◈",
-                     "betting": "⌁", "diamond": "◆",
-                     # The two 2026-09-06 modules. Both fell through to the
-                     # generic "›" because neither had an entry, which is the
-                     # same omission that kept them out of NAV_ITEMS entirely.
-                     # A signal flag for the manager flashing signs, and a
-                     # heraldic mark for the plaque; both sit in the same
-                     # ornamental family as ⚖ (arbitration) and ⚗ (alchemy).
-                     "management": "⚑", "hof": "⚜",
-                     # Club Ledger (2026-09-23): a ledger book, in the same
-                     # ornamental family as the rows above.
-                     "ledger": "▤",
-                     # Franchise (2026-09-23): an org chart of four nodes.
-                     "franchise": "❖"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
         if key == "home":
@@ -3503,8 +3512,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         if grouped:
             classes.append("sb-grouped")
         cls = f' class="{" ".join(classes)}"' if classes else ""
-        icon = (prospx_ball_logo("sbnav") if key == "prospx"
-                else f'<span class="sb-ico" aria-hidden="true">{sidebar_icons.get(key, "›")}</span>')
+        icon = f'<span class="sb-ico" aria-hidden="true">{_ico(key, 16)}</span>'
         return f'<a href="{href}"{cls}>{icon}{html.escape(label)}</a>'
     nav = []
     for item in NAV_ITEMS:
@@ -3517,7 +3525,10 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         else:
             key, label, href = item
             nav.append(_sb_link(key, sidebar_labels.get(key, label), href))
-    sub = "".join(f'<a href="{href}"><span class="px-glyph">›</span>{html.escape(label)}</a>'
+    # The PROSPX sub-nav: each deep link carries its section tab's 12 px icon
+    # (PX-05), the same symbol the PROSPX tab strip draws, where a cyan "›"
+    # used to repeat on every row.
+    sub = "".join(f'<a href="{href}">{_ico(_prospx_subnav_section(href), 12)}{html.escape(label)}</a>'
                   for label, href in PROSPX_SUBNAV)
     feed = _feed_html(events, 12) or '<div class="feed-item" style="color:#6f8a76;">No recent activity.</div>'
     spotlight = _spotlight_html(players, spotlight_buckets)
@@ -3543,7 +3554,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         # the PROSPX sub-nav drops below the spotlight feature.
         f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><a href="/news/" title="All prospect news"><span class="blip"></span>Prospect News<span class="feed-head-more">all →</span></a></div>{feed}</div></div>'
         f'{spotlight}'
-        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{prospx_ball_logo("sbgrp", 14)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
+        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{_ico("prospx", 12)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
         '</aside>'
         + _HOME_DRAWER_JS
     )
@@ -3737,7 +3748,7 @@ def build_articles_index(articles: list[dict]) -> str:
         )
     grid = "".join(cards) or '<p>No articles yet.</p>'
     body = (
-        '<div class="section-head"><h1>Articles</h1></div>'
+        f'<div class="section-head"><h1>{_masthead_icon("articles")}Articles</h1></div>'
         f'<div class="article-grid">{grid}</div>'
     )
     return page("Articles - eephus.io", "articles", body, "Long-form baseball analysis from eephus.io.",
@@ -3748,7 +3759,7 @@ def build_forums_index() -> str:
     client-side by eephus-ui.js (#eph-forums-index): bump / Hot ordering, most
     recently active first. Static shell gives SEO + first paint + a nav home."""
     body = (
-        '<div class="section-head"><h1>Forums '
+        f'<div class="section-head"><h1>{_masthead_icon("forums")}Forums '
         f'{_stage_chip("forums")}</h1>'
         '<span class="section-sub">Discussion across prospects, farm systems, and articles</span></div>'
         '<div class="eph-forums-index-page"><div id="eph-forums-index"></div></div>'
@@ -3771,7 +3782,7 @@ def build_fa() -> str:
     _fa_winters = len(_cached_data_json("fa_archive.json").get("winters") or []) or 12
     body = (
         '<div class="fa-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Free Agency '
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>{_masthead_icon("fa")}MLB Free Agency '
         f'{_stage_chip("fa")}</h1></div>'
         f'<span class="section-sub">the {_fa_span} class · projected contracts, '
         f'{_gl("rational_value", "rational value")}, team fits · {_fa_winters} archived winters</span></div>'
@@ -3910,7 +3921,7 @@ def build_projections() -> str:
     #view=trademachine bookmarks there)."""
     body = (
         '<div class="fa-app proj-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Projections '
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>{_masthead_icon("projections")}MLB Projections '
         f'{_stage_chip("projections")}</h1></div>'
         f'<span class="section-sub">five-year {_gl("ewar", "eWAR")} paths for every MLB player · '
         f'{_gl("proj_buckets", "floor / mean / ceiling")} · surplus over the club control window, a longer guarantee through its last season · '
@@ -4125,7 +4136,7 @@ def build_arbitration() -> str:
         '<div class="fa-app mlbstats-app arb-app">'
         '<div class="section-head section-head--byline"><div class="section-head-titles">'
         + CREATED_BY_BANNER
-        + '<h1>Arbitration Predictor ' + _stage_chip("arbitration") + '</h1></div>'
+        + '<h1>' + _masthead_icon("arbitration") + 'Arbitration Predictor ' + _stage_chip("arbitration") + '</h1></div>'
         '<span class="section-sub">Projected '
         + _gl("arb_award_model", "arbitration awards")
         + ' and the market record against comparables. Arb-1 beats its baseline; '
@@ -4167,7 +4178,7 @@ def build_trademachine() -> str:
         # id="proj-view-trademachine" is kept for trademachine.js, which scopes its
         # filter + collapse wiring to that id; .tm-app carries the standalone theming.
         '<div class="fa-app proj-app tm-app" id="proj-view-trademachine">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>Trade Machine '
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>{_masthead_icon("trademachine")}Trade Machine '
         f'{_stage_chip("trademachine")}</h1></div>'
         f'<span class="section-sub">{_gl("surplus_value", "surplus")} in one currency: prospects on eFV, '
         'MLB players on projections, then the Bayesian trade-value board</span></div>'
@@ -4210,7 +4221,7 @@ def build_mlbstats() -> str:
         # module roots (test_mlbx_css_scope.py pins the scope).
         '<div class="fa-app mlbstats-app mlbx">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>MLB Stats {_stage_chip("mlbstats")}</h1></div>'
+        f'<h1>{_masthead_icon("mlbstats")}MLB Stats {_stage_chip("mlbstats")}</h1></div>'
         f'<span class="section-sub">Every player by {_gl("ewar", "eWAR")}, then hitters '
         f'({_gl("hem_plus", "HEM+")}), starters ({_gl("sem_plus", "SEM+")}), relievers '
         f'({_gl("rem_plus", "REM+")}), fielders ({_gl("dem_plus", "DEM+")}) and leverage '
@@ -4316,7 +4327,7 @@ def build_pal() -> str:
     body = (
         '<div class="fa-app mlbstats-app pal-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Alchemy Lab {_stage_chip("pal")}</h1></div>'
+        f'<h1>{_masthead_icon("pal")}Alchemy Lab {_stage_chip("pal")}</h1></div>'
         f'<span class="section-sub">Role and position {_gl("pal_conversion", "conversions")}. '
         f'{_gl("sp_rp_fit", "SP to RP")} {_pal_gate_clause(gate, "SP->RP")}; '
         f'{_gl("rp_sp_fit", "RP to SP")} {_pal_gate_clause(gate, "RP->SP")}; '
@@ -4489,7 +4500,7 @@ def build_fantasy() -> str:
     body = (
         '<div class="fa-app mlbstats-app fantasy-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Fantasy {_stage_chip("fantasy")}</h1></div>'
+        f'<h1>{_masthead_icon("fantasy")}Fantasy {_stage_chip("fantasy")}</h1></div>'
         '<span class="section-sub">Redraft, dynasty and DFS on one projection engine.</span>'
         f'{_partof_diamond()}</div>'
         f'{modbar}{redraft}{dynasty}{dfs}'
@@ -4710,7 +4721,7 @@ def build_betting() -> str:
     body = (
         '<div class="fa-app mlbstats-app betting-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Sports Betting {_stage_chip("betting")}</h1></div>'
+        f'<h1>{_masthead_icon("betting")}Sports Betting {_stage_chip("betting")}</h1></div>'
         f'<span class="section-sub">Model probability vs the {_gl("devig", "de-vigged")} book price. '
         'Each published pick records its timestamp, book, odds and a flat one-unit stake; the '
         'record is append-only and '
@@ -4943,7 +4954,7 @@ def build_diamond() -> str:
     body = (
         '<div class="fa-app mlbstats-app diamond-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Diamond Pass {_stage_chip("diamond")}</h1></div>'
+        f'<h1>{_masthead_icon("diamond")}Diamond Pass {_stage_chip("diamond")}</h1></div>'
         f'<span class="section-sub">{sub}</span></div>'
         f'{banner}'
         '<div class="gl-intro">'
@@ -5017,7 +5028,7 @@ def build_parks() -> str:
     body = (
         '<div class="fa-app mlbstats-app parks-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>MiLB Park Factors {_stage_chip("parks")}</h1></div>'
+        f'<h1>{_masthead_icon("parks")}MiLB Park Factors {_stage_chip("parks")}</h1></div>'
         f'<span class="section-sub">Run and home-run {_gl("milb_park_factor", "park factors")} for every '
         'affiliated venue, Triple-A through the DSL: home vs road scoring, league-centered, shrunk toward '
         'neutral by sample. Display only: no model reads them.</span></div>'
@@ -5085,7 +5096,7 @@ def build_management() -> str:
     body = (
         '<div class="fa-app mlbstats-app mgmt-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>In-Game Management {_stage_chip("management")}</h1></div>'
+        f'<h1>{_masthead_icon("management")}In-Game Management {_stage_chip("management")}</h1></div>'
         '<span class="section-sub">Every in-game decision the play corpus can name, with the '
         f'{_gl("realized_mwpa", "realized win probability")} it governed beside the priced '
         f'{_gl("decision_value", "decision value")} where one exists; realized value is a record of what '
@@ -5150,7 +5161,7 @@ def build_ledger() -> str:
     body = (
         '<div class="fa-app mlbstats-app ledger-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Club Ledger {_stage_chip("ledger")}</h1></div>'
+        f'<h1>{_masthead_icon("ledger")}Club Ledger {_stage_chip("ledger")}</h1></div>'
         f'<span class="section-sub" id="ledger-masthead">Every club\'s {_gl("cbt_payroll", "CBT payroll")}, '
         f'commitments and {_gl("controlled_surplus", "controlled surplus")}, on the scale each was computed on.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Ledger sections">'
@@ -5209,7 +5220,7 @@ def build_franchise() -> str:
     body = (
         '<div class="fa-app mlbstats-app fr-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Franchise Overview {_stage_chip("franchise")}</h1></div>'
+        f'<h1>{_masthead_icon("franchise")}Franchise Overview {_stage_chip("franchise")}</h1></div>'
         f'<span class="section-sub" id="franchise-masthead">The {_gl("franchise_index", "Franchise Index")} of every club '
         f'and the {_gl("franchise_branch_score", "branch scores")} beneath it, re-standardised across 30 clubs, '
         'with every number on the scale it was computed on.</span></div>'
@@ -5265,7 +5276,7 @@ def build_hof() -> str:
     body = (
         '<div class="fa-app mlbstats-app hof-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Hall of Fame {_stage_chip("hof")}</h1></div>'
+        f'<h1>{_masthead_icon("hof")}Hall of Fame {_stage_chip("hof")}</h1></div>'
         f'<span class="section-sub">Career WAR, {_gl("war7", "WAR7")} and {_gl("jaws", "JAWS")} for '
         'every ten-season player, reproduced from Baseball-Reference\'s daily WAR file, with the '
         'writers\' ballot record. Three bands: eligible, active, and inside the five-year wait. No Hall '
@@ -5666,7 +5677,7 @@ def build_models() -> str:
     body = (
         f'<div class="fa-app mlbstats-app acct-app" data-acct-stale-days="{model_registry.STALE_DAYS}">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        '<h1>Model Accountability</h1></div>'
+        f'<h1>{_masthead_icon("models")}Model Accountability</h1></div>'
         '<span class="section-sub">Every model with a predictive claim, its '
         f'{_gl("model_verdict", "verdict")}, and the eval artifact behind it, read from the registry '
         'and the artifacts at build time.</span></div>'
@@ -5718,7 +5729,7 @@ def build_glossary() -> str:
     )
     body = (
         '<div class="gl-app">'
-        '<div class="section-head"><h1>Glossary &amp; Methodology</h1>'
+        f'<div class="section-head"><h1>{_masthead_icon("glossary")}Glossary &amp; Methodology</h1>'
         '<span class="section-sub">terms, derivations, and each model\'s track record</span></div>'
         f"{intro}"
         '<div class="filter-bar"><span class="gl-microlabel">View</span>'
@@ -5853,59 +5864,27 @@ def build_team() -> str:
               '<circle cx="2" cy="3.2" r="1.3" fill="currentColor"/>'
               '<circle cx="12" cy="1.3" r="1.4" fill="currentColor"/>'
               '<circle cx="22" cy="3.2" r="1.3" fill="currentColor"/></svg>')
-    _M_PROJ = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-5 4 3 8-9" fill="none" '
-               'stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
-               '<circle cx="3" cy="17" r="1.5" fill="currentColor"/><circle cx="8" cy="12" r="1.5" fill="currentColor"/>'
-               '<circle cx="12" cy="15" r="1.5" fill="currentColor"/><circle cx="20" cy="6" r="1.7" fill="currentColor"/></svg>')
-    _M_FA = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19" stroke="currentColor" '
-             'stroke-width="2" stroke-linecap="round"/><path d="M16.5 6.6C15.4 5.4 13.8 4.8 12 4.8c-2.5 0-4.5 '
-             '1.3-4.5 3.4 0 2.1 1.8 2.9 4.5 3.6 2.7.6 4.8 1.5 4.8 3.8s-2.1 3.7-4.8 3.7c-2 0-3.8-.7-4.9-2" '
-             'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>')
-    _M_CAP = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 2.5 8.5 12 13l9.5-4.5z" fill="none" '
-              'stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M6.5 11v4.2c0 1.3 2.5 '
-              '2.4 5.5 2.4s5.5-1.1 5.5-2.4V11" fill="none" stroke="currentColor" stroke-width="1.9" '
-              'stroke-linecap="round" stroke-linejoin="round"/><path d="M21.5 8.5v5" stroke="currentColor" '
-              'stroke-width="1.9" stroke-linecap="round"/></svg>')
-    _M_PEN = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.2-4.2L15 6l3 3-9.8 9.8L4 20z" '
-              'fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M13.5 7.5l3 3" '
-              'stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>')
-    _M_STAR = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9 '
-               '6.8 19l1-5.8L3.6 9.1l5.8-.8z" fill="none" stroke="currentColor" stroke-width="1.8" '
-               'stroke-linejoin="round"/></svg>')
-    _M_WEB = ('<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" '
-              'stroke="currentColor" stroke-width="1.9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 '
-              '2.5-2.5 15.5 0 18" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>')
-    # Trade Machine: two opposing arrows (the ⇄ swap glyph the module wears site-wide),
-    # so the Trade Machine creator no longer shares the generic star with Writer/Analyst.
-    _M_TRADE = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13M14 6l3 3-3 3M20 15H7M10 12l-3 3 3 3" '
-                'fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>')
-    # eephus.io (the whole site): an infield diamond with the pitcher's mound.
-    _M_SITE = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 9-9 9-9-9z" fill="none" '
-               'stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
-               '<circle cx="12" cy="12" r="1.6" fill="currentColor"/></svg>')
-    # MLB Stats: leaderboard bars on a baseline.
-    _M_STATS = ('<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" '
-                'stroke-width="2" stroke-linecap="round"><path d="M5 20v-7"/><path d="M12 20V5"/>'
-                '<path d="M19 20v-10"/></g><path d="M3 20h18" fill="none" stroke="currentColor" '
-                'stroke-width="1.4" stroke-linecap="round"/></svg>')
-    # Alchemy Lab: an Erlenmeyer flask.
-    _M_ALCHEMY = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-4.4 8.4a2 2 0 0 0 '
-                  '1.8 2.9h9.2a2 2 0 0 0 1.8-2.9L14 9V3" fill="none" stroke="currentColor" '
-                  'stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>'
-                  '<path d="M7.7 15h8.6" stroke="currentColor" stroke-width="1.4"/></svg>')
-    def _badge_for(note: str, uid: str) -> str:
+    # PX-08: each credit wears its module's pixel icon at 24 px (the 12 x 12
+    # core at 2x), the same drawing as the nav, rail and masthead, which
+    # retires the ten hand-drawn 24 px marks that were a fourth icon
+    # vocabulary. Site design wears the pen (the drawing the wire's signing
+    # pictogram uses) and any unmapped role, Writer and Analyst included, the
+    # Articles pilcrow. The two gold accents became primary ink: the pixel set
+    # draws no icon in gold (plan 5.7.1 line 7).
+    def _badge_for(note: str) -> str:
         n = note.lower()
-        if "prospx" in n:                         mark, accent = prospx_ball_logo(uid, 24), "var(--accent-gold)"
-        elif "projection" in n:                   mark, accent = _M_PROJ, "var(--accent-cyan)"
-        elif "free agency" in n:                  mark, accent = _M_FA, "var(--accent-green)"
-        elif "collegesavant" in n or "college" in n: mark, accent = _M_CAP, "var(--accent-lilac)"
-        elif "eephus" in n:                       mark, accent = _M_SITE, "var(--accent-gold)"
-        elif "stats" in n:                        mark, accent = _M_STATS, "var(--neon-amber)"
-        elif "alchemy" in n:                      mark, accent = _M_ALCHEMY, "var(--neon-violet)"
-        elif "webmaster" in n or "web" in n:      mark, accent = _M_WEB, "var(--accent-navy)"
-        elif "design" in n:                       mark, accent = _M_PEN, "var(--text-secondary)"
-        elif "trade" in n:                        mark, accent = _M_TRADE, "var(--accent-orange)"
-        else:                                     mark, accent = _M_STAR, "var(--accent-red)"   # Writer/Analyst + any unmapped role
+        if "prospx" in n:                         key, accent = "prospx", "var(--text-primary)"
+        elif "projection" in n:                   key, accent = "projections", "var(--accent-cyan)"
+        elif "free agency" in n:                  key, accent = "fa", "var(--accent-green)"
+        elif "collegesavant" in n or "college" in n: key, accent = "collegesavant", "var(--accent-lilac)"
+        elif "eephus" in n:                       key, accent = "home", "var(--text-primary)"
+        elif "stats" in n:                        key, accent = "mlbstats", "var(--neon-amber)"
+        elif "alchemy" in n:                      key, accent = "pal", "var(--neon-violet)"
+        elif "webmaster" in n or "web" in n:      key, accent = "team", "var(--accent-navy)"
+        elif "design" in n:                       key, accent = "ev-signing", "var(--text-secondary)"
+        elif "trade" in n:                        key, accent = "trademachine", "var(--accent-orange)"
+        else:                                     key, accent = "articles", "var(--accent-red)"   # Writer/Analyst + any unmapped role
+        mark = _ico(key, 24)
         creator = "creator" in n or "lead" in n or "webmaster" in n   # crown any lead/creator/webmaster role
         cls = "team-badge" + (" is-creator" if creator else "")
         label = html.escape(note)
@@ -5986,7 +5965,7 @@ def build_team() -> str:
         # roles, full role name on hover) render on the FRONT face under the socials.
         note_html = (
             '<div class="team-notes">'
-            + "".join(_badge_for(n, f'{_member_slug(m["name"])}-{i}') for i, n in enumerate(notes))
+            + "".join(_badge_for(n) for n in notes)
             + "</div>"
         ) if notes else ""
         slug = _member_slug(m["name"])
@@ -6048,7 +6027,7 @@ def build_team() -> str:
         '});})();</script>'
     )
     body = (
-        '<div class="section-head"><h1>Developers</h1></div>'
+        f'<div class="section-head"><h1>{_masthead_icon("team")}Developers</h1></div>'
         f'{mission}'
         f'{follow}'
         f'<div class="team-grid">{"".join(cards)}</div>'

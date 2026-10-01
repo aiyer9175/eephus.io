@@ -147,8 +147,6 @@ def test_base_ico_rule_is_mirrored_in_prospx():
 
 # ------------------------------------------------- no monogram below 40 px
 
-@pytest.mark.xfail(strict=True, reason="PX-05 retires the 16 and 14 px rail monograms "
-                                       "and PX-08 the 24 px /team/ badge; drop this marker then")
 def test_no_monogram_call_below_40px():
     src = (ROOT / "build_site.py").read_text(encoding="utf-8")
     small = []

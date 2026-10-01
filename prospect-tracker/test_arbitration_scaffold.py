@@ -138,12 +138,12 @@ def test_route_note_is_registered():
     assert "arbitration/index.html" in G._ROUTE_NOTES
 
 
-def test_sidebar_icon_is_a_single_terminal_safe_codepoint():
-    src = inspect.getsource(B.build_home)
-    m = re.search(r'"arbitration":\s*"([^"]+)"', src)
-    assert m, "sidebar icon missing"
-    g = m.group(1)
-    assert len(g) == 1 and ord(g) < 0x1F000
+def test_sidebar_icon_is_a_drawn_pixel_symbol():
+    # PX-05 (final-pass plan 5.7): the rail draws i-arbitration from the
+    # sprite at 16 px; the unicode glyph map it replaced is gone.
+    assert B.ICON_FOR.get("arbitration") == "arbitration" and "arbitration" in B.ICON_KEYS
+    assert 'width="16"' in B._ico("arbitration", 16)
+    assert "sidebar_icons" not in inspect.getsource(B.build_home)
 
 
 def test_the_model_panel_is_server_rendered():

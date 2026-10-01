@@ -717,7 +717,9 @@ def test_ledger_is_in_nav_items_and_the_static_copies():
     assert MODULE_STAGE["ledger"][0] == MODULE_STAGE["arbitration"][0], "slot 0 is the sigil, not the word"
     assert MODULE_STAGE["ledger"][1] == "Beta. Descriptive ledger: no payroll forecast, no revenue"
     for rel in ("prospx/index.html", "collegesavant/index.html", "collegesavant/pitcher_index.html"):
-        nav = (ROOT / rel).read_text(encoding="utf-8")
+        # The leaves carry a 12 px pixel icon before the label (PX-04/PX-10);
+        # the slot order is what this pins, so the icon markup is set aside.
+        nav = re.sub(r'<svg class="ico"[^>]*>.*?</svg>', "", (ROOT / rel).read_text(encoding="utf-8"))
         i = nav.index('<a href="/arbitration/" role="menuitem">Arbitration</a>')
         assert nav[i:].startswith('<a href="/arbitration/" role="menuitem">Arbitration</a><a href="/ledger/" role="menuitem">Club Ledger</a>'), rel
 

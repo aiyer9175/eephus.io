@@ -667,6 +667,14 @@
 .sb-subnav a:hover .ico, .sb-subnav a:focus-visible .ico, .sb-subnav a.is-active .ico {
   --ico-accent: var(--accent-lilac);
 }
+/* A top-level leaf carries its icon only in the phone drawer (PX-04): the
+   one-line top bar stays text, so the wrapper is hidden here and shown by the
+   <=640px [data-nav-open] block. */
+.eephus-nav .nav-drawer-ico { display: none; }
+.eephus-nav .eephus-links > a:hover .ico, .eephus-nav .eephus-links > a.is-active .ico { --ico-accent: var(--accent-lilac); }
+/* PX-22: the top-bar control glyphs are 12 px pixel icons. */
+.eephus-nav .eephus-nav-ctrl .ico { display: block; }
+.home-theme-toggle .ico { vertical-align: -2px; margin-right: 6px; }
 /* Site-wide controls (Watchlist, Dark Mode), right-aligned in the primary nav. */
 .eephus-nav .eephus-nav-controls { display: inline-flex; align-items: center; gap: 8px; }
 /* Terminal/Bloomberg treatment: see-through chip + hairline border + MS-Gothic
@@ -750,6 +758,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   padding: 10px 2px; margin: 28px 0 22px;
 }
 .section-head h1 { font-family: var(--font-retro-mono); font-size: 1.5rem; margin: 0; letter-spacing: .04em; }
+/* The 32 px module icon before a masthead title (PX-07), centred on the
+   24 px title's line. */
+.section-head h1 > .ico { vertical-align: middle; margin: -4px 10px 0 0; }
 .section-head .section-sub { font-size: .85rem; color: var(--text-tertiary); font-style: italic; }
 /* Tap target that expands the phone-clamped module subtitle. Hidden by default
    and at every width above the phone breakpoint, where the subtitle is never
@@ -990,11 +1001,17 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
     border-left: none; border-top: 1px solid var(--border-light);
   }
   .eephus-nav[data-nav-open] .eephus-links a:first-of-type { border-top: none; }
+  /* The drawer shows the 12 px leaf icons (PX-04) before each label. */
+  .eephus-nav[data-nav-open] .eephus-links > a { gap: 8px; }
+  .eephus-nav[data-nav-open] .nav-drawer-ico { display: block; flex: none; }
+  .eephus-nav[data-nav-open] .nav-drawer-ico .ico { display: block; }
   /* Active-link underline: pin it to the label's left edge in the panel
-     (the full-width variant reads as a stray rule under empty space). */
+     (the full-width variant reads as a stray rule under empty space). The
+     label starts after the 12 px icon and the 8 px gap. */
   .eephus-nav[data-nav-open] .eephus-links a.is-active::after {
-    left: 12px; right: auto; width: 44px; bottom: 6px;
+    left: 32px; right: auto; width: 44px; bottom: 6px;
   }
+  .eephus-nav[data-nav-open] .eephus-nav-menu a.is-active::after { left: 34px; }
   /* "MLB Modules" group renders INLINE inside the open panel: static menu,
      no shadow, indented under its summary. The fixed-position placement in
      eephus-nav.js is desktop-only (it no-ops at <=640px). */
@@ -1160,11 +1177,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); }
 .sb-search::placeholder { color: var(--text-tertiary); }
 .sb-group { margin-bottom: 20px; }
-/* PROSPX baseball badge inline with its nav entry + subnav group label. */
+/* The PROSPX ball badge (prospx_ball_logo, 40 px and up only since PX-05). */
 .px-ball { flex: none; }
 .sb-group-label--lockup { display: flex; align-items: center; gap: 6px; }
-/* Module glyphs in the sidebar nav - terminal-safe text glyphs, fixed
-   width so labels align whether the icon is a glyph or the ball SVG. */
+/* Module icons in the sidebar nav: a 16 px pixel icon (PX-05) in a fixed
+   16 px slot, tertiary ink at rest and primary on hover or the current page. */
 .sb-ico {
   width: 16px; flex: none; text-align: center;
   font-family: var(--font-retro-mono); font-size: 13px;
@@ -1204,7 +1221,6 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   .sb-nav a { padding: 11px 9px; }
   .sb-subnav a { padding: 10px 8px; }
 }
-.sb-subnav a .px-glyph { color: var(--accent-cyan); font-family: var(--font-retro-mono); }
 
 /* sidebar terminal feed */
 .sb-feed { background: #0B0E07; border: 1px solid var(--border); padding: 10px 11px; }
@@ -3756,8 +3772,9 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 }
 .xmod-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .xmod-card { background: var(--bg-secondary); border: 1px solid var(--border); padding: 10px 12px; }
-.xmod-head { display: flex; justify-content: space-between; align-items: baseline; }
-.xmod-title { font-family: var(--font-retro-mono); font-size: 12.5px; font-weight: 700; letter-spacing: .04em; }
+.xmod-head { display: flex; justify-content: space-between; align-items: center; }
+/* The card title leads with its module's 16 px pixel icon (PX-06). */
+.xmod-title { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-retro-mono); font-size: 12.5px; font-weight: 700; letter-spacing: .04em; }
 .xmod-link { font-size: 11px; color: var(--accent-cyan); text-decoration: none; }
 .xmod-link:hover { text-decoration: underline; }
 .xmod-sub-head { font-size: 10.5px; color: var(--text-tertiary); font-style: italic; margin: 2px 0 8px; }
