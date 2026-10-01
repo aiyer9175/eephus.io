@@ -70,6 +70,9 @@ _NAV_VER = _asset_ver("assets/eephus-nav.js")
 # deterministic rather than lucky.
 _TIERS_VER = _asset_ver("assets/eephus-tiers.js")
 _ACCT_VER = _asset_ver("assets/eephus-account.js")
+# The pixel icon sprite (final-pass plan 5.7, PX-02), referenced by external
+# <use href="/assets/eephus-icons.svg?v=<hash>#i-key"> from _ico() below.
+_ICONS_VER = _asset_ver("assets/eephus-icons.svg")
 _UI_VER = _asset_ver("assets/eephus-ui.js")
 _ACCT_CSS_VER = _asset_ver("assets/eephus-account.css")
 _BG_VER = _asset_ver("assets/eephus-bg.js")
@@ -418,6 +421,72 @@ PROSPX_SUBNAV = [
     # ("Glossary & Methodology" in the Modules nav), so listing it here too
     # was redundant.
 ]
+
+# The pixel icon set (final-pass plan 5.7, PX-02). tools/pixel_icons.py draws
+# every icon once into assets/eephus-icons.svg (symbol id "i-" + icon key) and
+# writes the same keys to assets/eephus-icons.json, which is read here so a
+# key with no drawing fails the build instead of shipping an empty box.
+# ICON_FOR maps each caller vocabulary to its symbol: a NAV_ITEMS key, a footer
+# route, a PROSPX section-tab data-section, a wire event type. The vocabularies
+# are merged into one map, and a key two of them use for different symbols
+# refuses to import. A symbol key ("px-farm", "ev-up") passes through _ico()
+# unmapped.
+ICON_SIZES = (12, 16, 24, 32)
+
+
+def _icon_keys() -> frozenset:
+    try:
+        return frozenset(json.loads((ROOT / "assets" / "eephus-icons.json").read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        return frozenset()
+
+
+ICON_KEYS = _icon_keys()
+_PX_SECTION_ICON = {
+    "active": "px-prospects", "spotlights": "px-spotlights", "farm": "px-farm",
+    "traded": "px-transactions", "injured": "px-il", "leaderboards": "px-leaderboards",
+    "debuts": "px-debuted", "draft": "px-draft", "ifa": "px-intl",
+    "overseas": "px-overseas", "timemachine": "px-timemachine", "charts": "px-scatter",
+}
+_WIRE_ICON = {t: f"ev-{t}" for t in ("up", "down", "promo", "demo", "il", "debut", "trade", "signing")}
+
+
+def _merge_icon_maps(*maps: dict) -> dict:
+    out: dict = {}
+    for m in maps:
+        for k, v in m.items():
+            if out.get(k, v) != v:
+                raise ValueError(f"icon key {k!r} maps to both i-{out[k]} and i-{v}")
+            out[k] = v
+    return out
+
+
+ICON_FOR = _merge_icon_maps(
+    {k: k for k, _label, _href in nav_leaves()},
+    {k: k for k in ("models", "parks", "news", "history", "watchlist")},
+    _PX_SECTION_ICON,
+    _WIRE_ICON,
+)
+
+
+def _ico(key: str, size: int) -> str:
+    """One pixel icon as an inline <svg class="ico"> over the shared sprite.
+
+    Sizes are 12, 16, 24 or 32 and nothing else (plan 5.7.1 line 2). 12 and 24
+    crop to the 12 x 12 core (viewBox "2 2 12 12"); 16 and 32 show the full
+    16 x 16 box. Decoration only: aria-hidden, the label beside it carries the
+    meaning."""
+    if size not in ICON_SIZES:
+        raise ValueError(f"icon size {size} is not one of {ICON_SIZES}")
+    sym = ICON_FOR.get(key, key)
+    if sym not in ICON_KEYS:
+        raise ValueError(f"no pixel icon i-{sym} for key {key!r} in assets/eephus-icons.svg")
+    href = f"/assets/eephus-icons.svg?v={_ICONS_VER}#i-{sym}"
+    if size in (12, 24):
+        return (f'<svg class="ico" width="{size}" height="{size}" viewBox="2 2 12 12" '
+                f'aria-hidden="true" focusable="false"><use href="{href}" width="16" height="16"/></svg>')
+    return (f'<svg class="ico" width="{size}" height="{size}" viewBox="0 0 16 16" '
+            f'aria-hidden="true" focusable="false"><use href="{href}"/></svg>')
 
 # Site-wide theme: read the shared key PROSPX uses (prospect-tracker.theme) and
 # set <html data-theme> synchronously in <head> (no flash); toggle persists to
@@ -6837,12 +6906,16 @@ def _write(rel: str, content: str) -> None:
 # it. They are now stamped from the same content hash the generated pages use,
 # so any asset edit propagates on the next build with no hand step.
 #
-# Scoped to stylesheet links and script srcs, matching test_asset_versioning's
-# scope exactly: icons, manifest, canonical and preconnect are deliberately
-# left alone because a momentarily stale one does not break rendering, and
-# stamping them would only churn a 55k-line file. `?v=` is optional in the URL
-# pattern so a newly added ref is stamped on its first build rather than
-# waiting for someone to notice test_asset_versioning going red.
+# Scoped to stylesheet links, script srcs and SVG <use> hrefs (the pixel icon
+# sprite, final-pass plan 5.7 PX-09), matching test_asset_versioning's scope
+# exactly: icons, manifest, canonical and preconnect are deliberately left
+# alone because a momentarily stale one does not break rendering, and stamping
+# them would only churn a 55k-line file. `?v=` is optional in the URL pattern
+# so a newly added ref is stamped on its first build rather than waiting for
+# someone to notice test_asset_versioning going red. A <use> href ends in a
+# #fragment (the symbol id): the URL pattern stops the path and the old stamp
+# at "#" and writes the fragment back after the new stamp, so
+# "/assets/eephus-icons.svg?v=old#i-ledger" becomes "?v=<hash>#i-ledger".
 HAND_AUTHORED_PAGES = (
     "prospx/index.html",
     "collegesavant/index.html",
@@ -6851,31 +6924,40 @@ HAND_AUTHORED_PAGES = (
 
 _STYLESHEET_TAG_RE = re.compile(r"<link\b[^>]*\brel=[\"']stylesheet[\"'][^>]*>", re.I)
 _SCRIPT_TAG_RE = re.compile(r"<script\b[^>]*\bsrc=[\"'][^\"']+[\"'][^>]*>", re.I)
-_ASSET_URL_RE = re.compile(r'((?:href|src)=")(/assets/[^"?]+)(?:\?v=[^"]*)?(")')
+_USE_TAG_RE = re.compile(r"<use\b[^>]*\bhref=[\"'][^\"']+[\"'][^>]*>", re.I)
+_ASSET_URL_RE = re.compile(r'((?:href|src)=")(/assets/[^"?#]+)(?:\?v=[^"#]*)?(#[^"]*)?(")')
 
 
-def restamp_hand_authored_pages() -> None:
-    """Stamp every /assets/ stylesheet and script ref in the hand-authored
-    pages with the asset's current content hash. Refs whose target is absent
-    from the tree keep whatever they carry - there is no content to hash."""
+def _restamp_html(text: str) -> str:
+    """Return `text` with every /assets/ stylesheet href, script src and <use>
+    href stamped with the asset's current content hash, any #fragment kept.
+    Refs whose target is absent from the tree keep whatever they carry - there
+    is no content to hash."""
 
     def _stamp_url(m: "re.Match[str]") -> str:
         asset = m.group(2).lstrip("/")
         if not (ROOT / asset).exists():
             return m.group(0)
-        return f"{m.group(1)}{m.group(2)}?v={_asset_ver(asset)}{m.group(3)}"
+        return f"{m.group(1)}{m.group(2)}?v={_asset_ver(asset)}{m.group(3) or ''}{m.group(4)}"
 
     def _stamp_tag(m: "re.Match[str]") -> str:
         return _ASSET_URL_RE.sub(_stamp_url, m.group(0))
 
+    for tag_re in (_STYLESHEET_TAG_RE, _SCRIPT_TAG_RE, _USE_TAG_RE):
+        text = tag_re.sub(_stamp_tag, text)
+    return text
+
+
+def restamp_hand_authored_pages() -> None:
+    """Stamp every /assets/ stylesheet, script and <use> ref in the
+    hand-authored pages with the asset's current content hash (_restamp_html)."""
     for rel in HAND_AUTHORED_PAGES:
         path = ROOT / rel
         if not path.exists():
             print(f"  skipped {rel} (absent)")
             continue
         original = path.read_text(encoding="utf-8")
-        stamped = _STYLESHEET_TAG_RE.sub(_stamp_tag, original)
-        stamped = _SCRIPT_TAG_RE.sub(_stamp_tag, stamped)
+        stamped = _restamp_html(original)
         if stamped != original:
             path.write_text(stamped, encoding="utf-8")
             print(f"  restamped {rel}")

@@ -638,17 +638,35 @@
   background: var(--bg-secondary); border: 1px solid var(--border);
   box-shadow: 0 10px 28px rgba(0, 0, 0, .18); padding: 4px 0;
 }
+/* Each leaf is a flex row on a 16px line (whole-pixel rows), so a 12px pixel
+   icon before the label (final-pass plan 5.7, PX-04) sits on the same rows as
+   the text. */
 .eephus-nav .eephus-nav-menu a {
   font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
   letter-spacing: .02em; color: var(--text-secondary); text-decoration: none;
   padding: 9px 14px; white-space: nowrap; border-left: none;
-  display: block; transition: background .12s, color .12s;
+  display: flex; align-items: center; gap: 8px; line-height: 16px;
+  transition: background .12s, color .12s;
 }
 .eephus-nav .eephus-nav-menu a:hover,
 .eephus-nav .eephus-nav-menu a:focus-visible {
   background: var(--bg-tertiary); color: var(--text-primary);
 }
 .eephus-nav .eephus-nav-menu a.is-active { color: var(--text-primary); font-weight: 700; }
+/* Pixel icons (final-pass plan 5.7, PX-03). An .ico is an inline <svg> over
+   the shared sprite /assets/eephus-icons.svg, sized ONLY by its width and
+   height attributes (12, 16, 24 or 32; never em). Ink is the host label's own
+   colour; the one accent group reads --ico-accent, which is ink at rest and
+   lilac on hover, focus and the current page. Nothing moves. Mirrored in the
+   PROSPX <style>. */
+.ico { display: inline-block; flex: none; vertical-align: top; fill: currentColor; shape-rendering: crispEdges; }
+.eephus-nav .eephus-nav-menu a:hover .ico,
+.eephus-nav .eephus-nav-menu a:focus-visible .ico,
+.eephus-nav .eephus-nav-menu a.is-active .ico,
+.sb-nav a:hover .ico, .sb-nav a:focus-visible .ico, .sb-nav a.is-active .ico,
+.sb-subnav a:hover .ico, .sb-subnav a:focus-visible .ico, .sb-subnav a.is-active .ico {
+  --ico-accent: var(--accent-lilac);
+}
 /* Site-wide controls (Watchlist, Dark Mode), right-aligned in the primary nav. */
 .eephus-nav .eephus-nav-controls { display: inline-flex; align-items: center; gap: 8px; }
 /* Terminal/Bloomberg treatment: see-through chip + hairline border + MS-Gothic
@@ -1153,6 +1171,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   color: var(--text-tertiary);
 }
 .sb-nav a:hover .sb-ico, .sb-nav a.is-active .sb-ico { color: var(--text-primary); }
+.sb-ico .ico { display: block; }
 /* DELETED 2026-08-05: .mod-stage, the superscript alpha/beta marker meant to sit
    beside module names in the navs. It was never emitted; the lifecycle state
    ships as the bordered .eephus-beta chip on the masthead and .h1-stage inside

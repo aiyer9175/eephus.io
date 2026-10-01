@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=70b78e41">
+  <link rel="stylesheet" href="/assets/site.css?v=81596c58">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -1693,6 +1693,12 @@
       background: var(--iridescent);
       border-radius: 2px;
     }
+    /* Pixel icons (final-pass plan 5.7, PX-03): MIRRORS the .ico rule in
+       assets/site.css so a section-tab icon paints right even under a cached
+       site.css. Sized only by width/height attributes (12/16/24/32); the accent
+       group turns lilac on the hovered, focused or active tab. */
+    .ico { display: inline-block; flex: none; vertical-align: top; fill: currentColor; shape-rendering: crispEdges; }
+    .section-tab:hover .ico, .section-tab:focus-visible .ico, .section-tab.active .ico { --ico-accent: var(--accent-lilac); }
     /* Phone (<=640px, canonical --bp-mobile): the 13-tab strip collapses
        behind a disclosure button that names the CURRENT section (same
        accordion pattern as the Filters toggle); expanding it reveals the

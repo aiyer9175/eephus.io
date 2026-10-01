@@ -23,9 +23,11 @@ rewrites these from the same content hash the generated pages use, and the
 freshness test below fails if a build has not been run since the last asset
 edit.
 
-The tests assert that every LOCAL stylesheet-link href and script src on
-those pages (a) carries a `?v=` cache-buster and (b) that the stamp equals
-the referenced asset's CURRENT content hash. Out of scope by design:
+The tests assert that every LOCAL stylesheet-link href, script src and SVG
+<use> href (the pixel icon sprite, final-pass plan 5.7 PX-09) on those pages
+(a) carries a `?v=` cache-buster and (b) that the stamp equals the referenced
+asset's CURRENT content hash. A <use> href ends in the symbol's #fragment,
+which the stamp must sit in front of and never swallow. Out of scope by design:
   - external URLs (http[s]:// or protocol-relative //) - not ours to stamp
   - /data/ payloads (value_framework.js, collegesavant_*.js) - fetched and
     stamped at runtime, long-cached on purpose
@@ -56,6 +58,7 @@ HAND_AUTHORED_PAGES = [
 _STYLESHEET_LINK = re.compile(r"<link\b[^>]*\brel=[\"']stylesheet[\"'][^>]*>", re.I)
 _HREF = re.compile(r"\bhref=[\"']([^\"']+)[\"']", re.I)
 _SCRIPT_SRC = re.compile(r"<script\b[^>]*\bsrc=[\"']([^\"']+)[\"'][^>]*>", re.I)
+_USE_HREF = re.compile(r"<use\b[^>]*\bhref=[\"']([^\"']+)[\"'][^>]*>", re.I)
 
 
 def _local_asset_refs(html: str) -> list[str]:
@@ -68,17 +71,27 @@ def _local_asset_refs(html: str) -> list[str]:
         if m:
             refs.append(m.group(1))
     refs.extend(_SCRIPT_SRC.findall(html))
+    refs.extend(_USE_HREF.findall(html))
 
     local: list[str] = []
     for url in refs:
         u = url.strip()
-        if u.startswith(("http://", "https://", "//")):
-            continue  # external - not ours
-        path = u.split("?", 1)[0]
+        if u.startswith(("http://", "https://", "//", "#")):
+            continue  # external, or a same-document <use href="#id"> - not ours
+        path = u.split("#", 1)[0].split("?", 1)[0]
         if path.startswith("/data/"):
             continue  # runtime-stamped payload, long-cached on purpose
         local.append(u)
     return local
+
+
+def _split_ref(url: str) -> tuple[str, str, str]:
+    """(path, stamp, fragment) of a local ref: '/a.svg?v=ab12#i-x' gives
+    ('/a.svg', 'ab12', '#i-x')."""
+    rest, hash_, frag = url.partition("#")
+    path, _, query = rest.partition("?")
+    stamp = query[2:] if query.startswith("v=") else query
+    return path, stamp, hash_ + frag
 
 
 @pytest.mark.parametrize("page", HAND_AUTHORED_PAGES)
@@ -117,12 +130,11 @@ def test_local_asset_stamps_match_current_content(page):
 
     stale = []
     for url in _local_asset_refs(html):
-        path, _, query = url.partition("?")
+        path, got, _frag = _split_ref(url)
         rel = path.lstrip("/")
         if not (ROOT / rel).exists():
             continue  # nothing on disk to hash
         want = build_site._asset_ver(rel)
-        got = query[2:] if query.startswith("v=") else query
         if got != want:
             stale.append(f"{path}: stamped ?v={got}, content hash is {want}")
 
@@ -132,3 +144,53 @@ def test_local_asset_stamps_match_current_content(page):
         "`python build_site.py` (it re-stamps these pages):\n  "
         + "\n  ".join(stale)
     )
+
+
+# --------------------------------------------------------------------------- #
+# PX-09: the restamp must stamp an SVG <use> href and keep its #fragment. The
+# old URL pattern `(?:\?v=[^"]*)?` ran to the closing quote, so a restamp of
+# "/assets/eephus-icons.svg?v=old#i-ledger" would have written "?v=<hash>" and
+# dropped "#i-ledger", and every icon on a hand page would have gone blank.
+
+def test_restamp_keeps_the_use_fragment():
+    import build_site
+
+    want = build_site._asset_ver("assets/eephus-icons.svg")
+    fixture = (
+        '<svg class="ico" width="12" height="12" viewBox="2 2 12 12">'
+        '<use href="/assets/eephus-icons.svg?v=deadbeef#i-ledger" width="16" height="16"/></svg>'
+        '<svg class="ico" width="16" height="16" viewBox="0 0 16 16">'
+        '<use href="/assets/eephus-icons.svg#i-px-farm"/></svg>'
+        '<link rel="stylesheet" href="/assets/site.css?v=old">'
+        '<script src="/assets/eephus-nav.js" defer></script>'
+    )
+    out = build_site._restamp_html(fixture)
+    assert f'href="/assets/eephus-icons.svg?v={want}#i-ledger"' in out
+    assert f'href="/assets/eephus-icons.svg?v={want}#i-px-farm"' in out
+    assert f'href="/assets/site.css?v={build_site._asset_ver("assets/site.css")}"' in out
+    assert f'src="/assets/eephus-nav.js?v={build_site._asset_ver("assets/eephus-nav.js")}"' in out
+    # Idempotent: a second pass changes nothing.
+    assert build_site._restamp_html(out) == out
+    # And the guard's own parser reads the stamped refs back as current.
+    for url in _local_asset_refs(out):
+        path, stamp, frag = _split_ref(url)
+        assert stamp == build_site._asset_ver(path.lstrip("/")), url
+        if path.endswith(".svg"):
+            assert frag in ("#i-ledger", "#i-px-farm"), url
+
+
+def test_use_refs_on_hand_pages_point_at_drawn_symbols():
+    """Every <use> into the sprite on a hand page names a symbol the sprite
+    draws (vacuous until PX-10 puts icons on those pages)."""
+    import json
+
+    keys = set(json.loads((ROOT / "assets" / "eephus-icons.json").read_text(encoding="utf-8")))
+    missing = []
+    for page in HAND_AUTHORED_PAGES:
+        html = (ROOT / page).read_text(encoding="utf-8")
+        for url in _USE_HREF.findall(html):
+            path, _stamp, frag = _split_ref(url)
+            if path == "/assets/eephus-icons.svg":
+                if not frag.startswith("#i-") or frag[3:] not in keys:
+                    missing.append(f"{page}: {url}")
+    assert not missing, "\n  ".join(missing)
