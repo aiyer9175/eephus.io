@@ -109,7 +109,7 @@ def test_no_figure_is_typed_into_the_page_html():
 def test_the_js_reads_its_copy_from_the_payload():
     for key in ("root_sentence", "cba_banner", "dugout_sentence", "market_realized_sentence", "never_combine",
                 "odds_interval", "score_basis", "farm_score_note", "outlook_chip",
-                "park_not_tiered", "surplus_ev", "trade_currency_label", "trade_currency_overlap", "board_lede", "history_pennants", "tile_open", "arb_cost_sum"):
+                "park_not_tiered", "surplus_ev", "mlb_leg_label", "mlb_leg_note", "cost_plus_parts_note", "board_lede", "history_pennants", "tile_open", "arb_cost_sum"):
         assert 'copy("%s")' % key in JS, key
     assert "what_this_page_does_not_claim" not in JS or True
     assert "NOT ONE FIGURE IN THIS FILE IS TYPED" in JS
@@ -242,13 +242,23 @@ def test_every_section_header_has_basis_verdict_and_open_links():
             assert lad["links"][href].replace("&", "&amp;") in html, href
 
 
-def test_fin_prints_the_trade_currency_with_its_overlap_sentence():
+def test_fin_prints_the_mlb_leg_only_and_the_cost_plus_parts():
+    """Owner answers M13-2 and M13-4: FIN prints the MLB leg under its own label
+    (no Trade Machine currency) and Cost+'s three parts on separate rows."""
     d = _served()
     html, _ = _render("club", team="TBR")
     sec = html.split('data-frsec="fin"')[1].split("</section>")[0]
-    assert "Roster surplus EV" not in sec
-    assert d["copy"]["trade_currency_label"].replace("(", "") in sec.replace("(", "")
-    assert d["copy"]["trade_currency_overlap"].replace("'", "&#39;") in sec or d["copy"]["trade_currency_overlap"] in sec
+    assert "Roster surplus EV" not in sec and "Trade currency" not in sec
+    assert d["copy"]["mlb_leg_label"].replace("(", "") in sec.replace("(", "")
+    tbr = next(c for c in d["clubs"] if c["code"] == "TBR")
+    mm = tbr["sections"]["fin"]["mlb_leg"]["mlb_mm"]
+    assert ("$%.1fM" % mm) in sec
+    labels = d["copy"]["cost_plus_part_labels"]
+    for k in ("guaranteed", "arb", "prearb"):
+        assert labels[k] in sec, k
+    assert d["copy"]["cost_plus_numerator_label"] in sec
+    # the ladder sum carries pre-arb rungs, so it is not called an arbitration cost
+    assert "arbitration cost" not in sec and "Ladder sum 2027 (arb and pre-arb rungs" in sec
 
 
 def test_glossary_hooks_resolve():

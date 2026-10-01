@@ -228,15 +228,36 @@
   var KEEP_NARROW = { club: 1, cbt_payroll_2026: 1, space_2027_spotrac: 1, cost_plus: 1 };
   var TEXT_COLS = { club: 1, payor_2026: 1 };
 
-  // M09-03: a club whose Spotrac 2027 tax payroll sits below its own guaranteed
-  // 2027 contract AAV keeps Spotrac's figure and carries a flag naming why.
+  // M09-03 / owner answer M13-1: a club whose Spotrac 2027 tax payroll sits
+  // below its own guaranteed 2027 contract AAV takes the AAV as its 2027 basis,
+  // and every cell built on it carries a flag naming the substitution.
   function taxFloorMark(r) {
-    return r.tax_floor_below_2027 ? '<span class="ledger-flag" title="' + esc(copy("tax_floor_note")) + '">low</span>' : "";
+    return r.tax_floor_below_2027 ? '<span class="ledger-flag" title="' + esc(copy("tax_floor_note")) + '">AAV</span>' : "";
   }
   function taxFloorLine(tf) {
     if (!tf || !tf.below) return "";
-    return "<br>" + flag(copy("tax_floor_flag")) + " guaranteed " + esc(classYear()) + " contract AAV " + esc(money(tf.guaranteed_aav_usd)) +
-      " on " + esc(tf.n_rows) + " rows, " + esc(money(-tf.gap_usd)) + " above this figure. " + esc(copy("tax_floor_note"));
+    return "<br>" + flag(copy("cbt_basis_aav_label")) + " Spotrac publishes " + esc(money(tf.spotrac_tax_payroll_usd)) + "; the guaranteed " +
+      esc(classYear()) + " contract AAV on " + esc(tf.n_rows) + " rows is " + esc(money(tf.guaranteed_aav_usd)) + ". " + esc(copy("tax_floor_note"));
+  }
+  // The Cost+ denominator, three parts printed apart (owner answer M13-4):
+  // never added into one payroll figure on this page.
+  function costParts(I) {
+    var P = I.cost_plus_parts || {}, L = copy("cost_plus_part_labels") || {}, F = I.locked_fa_2027 || {};
+    if (!isNum(P.guaranteed_usd)) return "";
+    return '<table class="ledger-mini ledger-cost-parts">' +
+      "<tr><td>" + esc(copy("cost_plus_numerator_label")) + "</td><td>" + esc(num(I.proj_war_2027, 1)) + " less " + esc(num(F.war, 1)) +
+        " (" + esc(F.n) + " locked free agents) = " + esc(num(I.proj_war_2027_ex_fa, 1)) + "</td></tr>" +
+      "<tr><td>" + esc(L.guaranteed || "") + "</td><td>" + esc(money(P.guaranteed_usd)) + (P.guaranteed_source === "guaranteed_aav" ? " " + flag(copy("cbt_basis_aav_label")) : "") + "</td></tr>" +
+      "<tr><td>" + esc(L.arb || "") + " (" + esc(P.n_arb) + ")</td><td>" + esc(money(P.arb_usd)) + "</td></tr>" +
+      "<tr><td>" + esc(L.prearb || "") + " (" + esc(P.n_prearb) + ")</td><td>" + esc(money(P.prearb_usd)) + "</td></tr></table>" +
+      '<p class="ledger-count">' + esc(copy("cost_plus_parts_note")) +
+      (P.n_contract_dropped ? "; here " + esc(P.n_contract_dropped) + " rung (" + esc(money(P.contract_dropped_usd)) + ")" : "") + ".</p>";
+  }
+  function costTitle(r) {
+    var p = r.cost_plus_parts || [], L = copy("cost_plus_part_labels") || {};
+    if (!isNum(p[0])) return "";
+    return (L.guaranteed || "") + " " + money(p[0]) + "; " + (L.arb || "") + " " + money(p[1]) + "; " + (L.prearb || "") + " " + money(p[2]) +
+      "; WAR less locked free agents " + num(r.proj_war_2027_ex_fa, 1) + " (" + num(r.locked_fa_war_2027, 1) + " left out)";
   }
   function leagueCell(r, key) {
     var v = r[key];
@@ -244,7 +265,7 @@
       return '<a href="#section=club&team=' + esc(r.club) + '" data-llink="1" title="' + esc(r.name || "") + '">' + esc(r.club) + "</a>";
     }
     if (key === "payor_2026") return esc(v || "");
-    if (key === "cost_plus") return zCell(v) + taxFloorMark(r);
+    if (key === "cost_plus") return '<span title="' + esc(costTitle(r)) + '">' + zCell(v) + "</span>" + taxFloorMark(r);
     if (key === "orgsur_plus") return zCell(v);
     if (key === "vs_threshold_2026") return signedMoney(v);
     if (key === "space_2027_spotrac") {
@@ -397,7 +418,11 @@
   }
   function renderPayroll(d) {
     var P = d.payroll, y = state.season, ps = P["s" + y] || {}, p27 = P.s2027 || {};
-    var t1 = tile(gl("CBT payroll " + esc(y), "cbt_payroll"), money(ps.tax_payroll_usd),
+    // the 2027 tile prints the club's 2027 basis (owner answer M13-1): Spotrac's
+    // figure, or the guaranteed AAV where that is larger, named by taxFloorLine
+    var b27 = P.cbt_basis_2027 || {};
+    var bigTax = y === classYear() && isNum(b27.usd) ? b27.usd : ps.tax_payroll_usd;
+    var t1 = tile(gl("CBT payroll " + esc(y), "cbt_payroll"), money(bigTax),
       gl("Total payroll allocations " + esc(y), "payroll_allocations") + ": " + esc(money(ps.total_payroll_usd)) + " (Spotrac)" +
       (y === classYear() ? taxFloorLine(P.tax_floor_2027) : ""));
     // The 2027 tier names its basis (the Spotrac page, or derived) in both branches.
@@ -410,7 +435,7 @@
     var sp = P.space_2027;
     var t4 = tile("Space " + esc(classYear()), signedMoney(sp.spotrac_usd),
       esc(copy("space_2027_spotrac_label")) + "<br>" + esc(copy("space_2027_platform_label")) + ": " + signedMoney(sp.platform_usd) +
-      ((P.tax_floor_2027 || {}).below ? "<br>" + flag(copy("tax_floor_flag")) : ""));
+      ((P.tax_floor_2027 || {}).below ? "<br>" + flag(copy("cbt_basis_aav_label")) : ""));
     var out = '<div class="ledger-tiles">' + t1 + t2 + t3 + t4 + "</div>" +
       '<p class="ledger-count">' + esc(copy("allocations_note")) + "</p>";
     if (p27.split_available && p27.split) {
@@ -754,7 +779,8 @@
       tile("$ per projected win " + esc(classYear()), money(I.usd_per_win), esc(copy("ratio_bases"))) +
       tile("$ per projected WAR " + esc(classYear()), money(I.usd_per_war), "plain dollars, no ladder") +
       tile(gl("Cost+", "cost_plus"), zCell(I.cost_plus), esc(copy("cost_plus_basis"))) +
-      tile("Locked", pct(I.locked_pct, 0), "share of " + esc(classYear()) + "-" + esc(DATA.horizon[DATA.horizon.length - 1]) + " core WAR under control") + "</div>";
+      tile("Locked", pct(I.locked_pct, 0), "share of " + esc(classYear()) + "-" + esc(DATA.horizon[DATA.horizon.length - 1]) + " core WAR under control") + "</div>" +
+      costParts(I);
     out += "<h3>" + gl("Controlled surplus", "controlled_surplus") + " (" + esc(S.unit) + ", plain)</h3><table class=\"ledger-mini\">" +
       "<tr><td>MLB leg (surNpv)</td><td>" + esc(moneyMM(S.mlb_mm)) + "</td></tr>" +
       Object.keys(S.mlb_by_salsrc_mm).map(function (k) { return "<tr><td>&nbsp;&nbsp;" + esc(k) + "</td><td>" + esc(moneyMM(S.mlb_by_salsrc_mm[k])) + "</td></tr>"; }).join("") +

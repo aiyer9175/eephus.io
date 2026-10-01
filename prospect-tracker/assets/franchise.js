@@ -496,20 +496,32 @@
       "<h3>Farm score since the first snapshot</h3>" + hist + '<p class="fr-count">' + esc(s.history.length) + " snapshots</p>" + extra;
   }
   function secFin(d) {
-    var s = d.sections.fin, sp = s.space_2027 || {}, ev = s.roster_surplus_ev || {};
+    var s = d.sections.fin, sp = s.space_2027 || {}, ml = s.mlb_leg || {};
+    var aav = s.tax_payroll_2027_source === "guaranteed_aav";
     var t = tile(gl("Cost+", "cost_plus"), '<span class="fr-neutral">' + esc(nInt(s.cost_plus)) + "</span>", esc(copy("fin_cost_plus_note")), "", d.links.ledger) +
       tile(gl("Space " + esc(DATA.class_year), "cbt_space"), signedMoney(sp.spotrac_usd), esc(copy("space_label_spotrac")) + "<br>" + esc(copy("space_label_platform")) + ": " + signedMoney(sp.platform_usd), "", d.links.ledger) +
       tile(gl("Tax payroll " + esc(DATA.class_year), "cbt_payroll"), esc(money(s.tax_payroll_2027)), "committed " + esc(money(s.committed_2027)) + " (Spotrac)" +
-        ((s.tax_floor_2027 || {}).below ? '<br><span class="fr-tag" title="' + esc(copy("tax_floor_note")) + '">' + esc(copy("tax_floor_flag")) + "</span>" : ""), "", d.links.ledger) +
+        (aav ? '<br><span class="fr-tag" title="' + esc(copy("tax_floor_note")) + '">' + esc(copy("cbt_basis_aav_label")) + "</span>" : ""), "", d.links.ledger) +
       tile(gl("Payor tier", "payor_tier"), esc((s.payor_2027 || {}).value || ""), esc((s.payor_2027 || {}).basis || ""), "", d.links.ledger) +
-      tile("$ per projected win", esc(money(s.usd_per_win)), "plain dollars, no ladder", "", d.links.ledger) +
+      tile("$ per projected win", esc(money(s.usd_per_win)), "the Cost+ denominator over projected wins less the locked free agents; plain dollars, no ladder", "", d.links.ledger) +
       tile("Recent spend, 3 winters", esc(money(s.recent_spend)), "largest guarantee " + esc(money(s.max_guar)) + " &middot; " + esc(nInt(s.n100m)) + " deals of 100M+", "", d.links.fa_archive);
-    var sur = mini([[gl(copy("trade_currency_label"), "trade_machine"),'<span class="' + signCls(ev.total_mm) + '">' + esc(moneyMM(ev.total_mm)) + "</span>"],
-                    ["Active prospects (" + esc(nInt(ev.n_active)) + ")", esc(moneyMM(ev.active_mm))],
-                    ["Debuted (" + esc(nInt(ev.n_debuted)) + ")", esc(moneyMM(ev.debuted_mm))],
-                    ["Projected " + esc(DATA.class_year) + " arbitration cost", esc(money(d.sections.arbitration.proj_2027_usd))]]);
-    return banner() + '<div class="fr-tiles">' + t + "</div>" + sur +
-      '<p class="fr-count">' + esc(copy("trade_currency_overlap")) + ". " + esc(copy("surplus_ev")) + " " + esc(copy("fin_no_ladder")) + " " + esc(copy("fin_cost_plus_registry")) + "</p>";
+    // Cost+ in its parts (owner answers M13-4 and COSTPLUS-1): the numerator and
+    // the three denominator parts, each on its own row, never added together.
+    var P = s.cost_plus_parts || {}, L = copy("cost_plus_part_labels") || {}, F = s.locked_fa_2027 || {};
+    var parts = isNum(P.guaranteed_usd) ? mini([
+      [esc(copy("cost_plus_numerator_label")), esc(n1(s.proj_war_2027)) + " less " + esc(n1(F.war)) + " (" + esc(nInt(F.n)) + " locked free agents) = " + esc(n1(s.proj_war_2027_ex_fa))],
+      [esc(L.guaranteed || ""), esc(money(P.guaranteed_usd)) + (P.guaranteed_source === "guaranteed_aav" ? ' <span class="fr-tag">' + esc(copy("cbt_basis_aav_label")) + "</span>" : "")],
+      [esc(L.arb || "") + " (" + esc(nInt(P.n_arb)) + ")", esc(money(P.arb_usd))],
+      [esc(L.prearb || "") + " (" + esc(nInt(P.n_prearb)) + ")", esc(money(P.prearb_usd))]]) +
+      '<p class="fr-count">' + esc(copy("cost_plus_parts_note")) + ".</p>" : "";
+    // The surplus figure is the MLB leg only (owner answer M13-2): no prospect
+    // row is in it, so it never overlaps the FARM branch.
+    var by = ml.by_salsrc_mm || {};
+    var sur = mini([[gl(copy("mlb_leg_label"), "controlled_surplus"), '<span class="' + signCls(ml.mlb_mm) + '">' + esc(moneyMM(ml.mlb_mm)) + "</span>"]]
+      .concat(Object.keys(by).map(function (k) { return ["&nbsp;&nbsp;" + esc(k), esc(moneyMM(by[k]))]; }))
+      .concat([["Ladder sum " + esc(DATA.class_year) + " (arb and pre-arb rungs, as on /ledger/)", esc(money(d.sections.arbitration.proj_2027_usd))]]));
+    return banner() + '<div class="fr-tiles">' + t + "</div>" + parts + sur +
+      '<p class="fr-count">' + esc(copy("mlb_leg_note")) + ". " + esc(copy("surplus_ev")) + " " + esc(copy("fin_no_ladder")) + " " + esc(copy("fin_cost_plus_registry")) + "</p>";
   }
   function secMarket(d) {
     var s = d.sections.market;
@@ -675,7 +687,7 @@
     if (key === "cost_plus") return '<span class="fr-neutral">' + esc(nInt(v)) + "</span>";
     if (key === "wins_2027") return esc(n1(v));
     if (key === "war") return esc(n1(v));
-    if (key === "tax_payroll_2027") return esc(money(v)) + (r.tax_floor_below_2027 ? ' <span class="fr-tag" title="' + esc(copy("tax_floor_note")) + '">low</span>' : "");
+    if (key === "tax_payroll_2027") return esc(money(v)) + (r.tax_floor_below_2027 ? ' <span class="fr-tag" title="' + esc(copy("tax_floor_note")) + '">AAV</span>' : "");
     if (key === "farm_rank") return esc(nInt(v));
     if (key === "playoff_pct") return esc(pct(v, 0));
     return esc(v == null ? "" : v);

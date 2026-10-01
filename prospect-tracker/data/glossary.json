@@ -7864,10 +7864,10 @@
     "WAR per dollar"
    ],
    "priority": 40,
-   "definition": "Descriptive, not a model: projected wins above replacement per million dollars of next season's CBT payroll, indexed so that 100 is the league mean and each 10 points is one standard deviation across the thirty clubs.",
-   "methodology": "ledger_export.py divides team_outlook 2027 WAR by Spotrac's 2027 tax payroll in millions, standardises across the 30 clubs and rounds to the nearest point; the numerator is a provisional projection, the index carries no registry row because it predicts nothing, and any efficiency skill claim would need an eval first. The denominator carries no arbitration or pre-arbitration salaries while the numerator is the whole projected roster, so the index can track a small CBT payroll more than projected WAR; the ledger prints both rank correlations, measured each build, beside the index.",
+   "definition": "Descriptive, not a model: next season's projected wins above replacement, less the projected WAR of the club's locked free agents, per million dollars of three cost parts printed beside it (guaranteed salaries, the platform's projected arbitration awards and the pre-arbitration minimum rungs), indexed so that 100 is the league mean and each 10 points is one standard deviation across the thirty clubs.",
+   "methodology": "ledger_export.py takes team_outlook 2027 WAR, subtracts the 2027 WAR (champion mean) of every fa_class member whose status is locked, from the club the projection rolls him into, and divides by the sum of three parts in millions: guaranteed 2027 salaries (Spotrac's 2027 tax payroll, or the club's own guaranteed contract AAV where that is larger), the club's projected 2027 arbitration rungs from data/arbitration.json and its pre-arbitration minimum rungs from the same ladders. A rung for a player whose 2027 salary is already a contract on file is left out, since the guaranteed part carries him. It standardises the ratio across the 30 clubs and rounds to the nearest point. The three parts are printed apart and never added into a payroll figure; the numerator is a provisional projection, the index carries no registry row because it predicts nothing, and any efficiency skill claim would need an eval first. The ledger prints the index's rank correlation with the summed cost and with the numerator, measured each build, beside it.",
    "example": "",
-   "formula": "Cost+ = 100 + 10 x z(projected WAR / (CBT payroll in $M))",
+   "formula": "Cost+ = 100 + 10 x z((projected WAR - locked free agents' WAR) / ((guaranteed + arbitration + pre-arb minimums) in $M))",
    "seeAlso": [
     "sur_plus",
     "controlled_surplus",
@@ -8113,7 +8113,7 @@
    ],
    "priority": 42,
    "definition": "The gap between a club's competitive balance tax payroll and the threshold it is measured against; negative when the club sits over the line. A capacity fact, never coloured on a ladder.",
-   "methodology": "Spotrac's 2027 page computes space against a 247M basis while the platform's cba_rules carry 244M forward as explicitly unknown; the Club Ledger and the Franchise page print both, each labelled with its basis, and never mix them.",
+   "methodology": "Spotrac's 2027 page computes space against a 247M basis while the platform's cba_rules carry 244M forward as explicitly unknown; the Club Ledger and the Franchise page print both, each labelled with its basis, and never mix them. Where Spotrac's 2027 tax payroll sits below the AAV of the club's own guaranteed 2027 contract rows, that AAV stands in for it and the cell is flagged.",
    "example": "",
    "formula": "",
    "seeAlso": [

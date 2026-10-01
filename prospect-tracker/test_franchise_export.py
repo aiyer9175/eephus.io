@@ -299,8 +299,11 @@ def test_fin_is_descriptive_and_space_equals_fa_meta_space_labelled_spotrac_247m
     for code, c in clubs.items():
         f = c["sections"]["fin"]
         assert f["descriptive"] is True and _branch(c, "fin")["kind"] == "descriptive"
-        assert f["space_2027"]["spotrac_usd"] == fm["teams"][code]["space"], code
+        # Spotrac's space unless the club's guaranteed AAV stands in (owner answer M13-1)
+        if f["tax_payroll_2027_source"] == "spotrac":
+            assert f["space_2027"]["spotrac_usd"] == fm["teams"][code]["space"], code
         if lg:
+            assert f["space_2027"] == lg["clubs"][code]["payroll"]["space_2027"], code
             assert f["space_2027"]["spotrac_basis_usd"] == 247_000_000
             assert f["cost_plus"] == lg["clubs"][code]["indexes"]["cost_plus"], code
             assert f["space_2027"]["platform_basis_usd"] != f["space_2027"]["spotrac_basis_usd"], "two bases, never mixed"
@@ -369,35 +372,42 @@ def test_realized_fa_value_is_labelled_not_skill_with_method_and_coverage(d, clu
         assert tot["n_covered"] <= tot["n"]
 
 
-def test_roster_surplus_is_a_sum_of_posterior_means_not_quantiles(clubs):
-    from trades import canonical_org
-    tv = _load("trade_values.json")
-    by = {}
-    for p in tv["players"]:
-        code = canonical_org(p.get("org"))
-        if code in clubs:
-            by.setdefault(code, []).append(p)
-    for code, c in clubs.items():
-        ev = c["sections"]["fin"]["roster_surplus_ev"]
-        act = round(sum(float(p.get("posterior_surplus_mm") or 0) for p in by[code] if p.get("status") == "active"), 1)
-        assert abs(ev["active_mm"] - act) < 0.11, code
-        assert "means" in ev["basis"] and "never of quantiles" in ev["basis"]
-        for k in ev:
-            assert "p10" not in k and "p90" not in k and "lo" not in k and "hi" not in k
-
-
-def test_fin_trade_currency_is_labelled_as_overlapping_the_farm_surplus(d, clubs):
+def test_fin_surplus_is_the_ledger_mlb_leg_only_with_no_farm_overlap(d, clubs):
+    """Owner answer M13-2: the FIN surplus figure is the Club Ledger's MLB leg
+    (surNpv over the club's veteran rows) on all 30 clubs, its label says so,
+    and the Trade Machine currency, which carries the farm, is gone from FIN."""
     lg = _load("ledger_board.json")
-    assert "overlap" in d["copy"]["trade_currency_label"]
-    assert "overlaps" in d["copy"]["trade_currency_overlap"] and "never added" in d["copy"]["trade_currency_overlap"]
+    import franchise_export as F
+    assert "MLB leg only" in d["copy"]["mlb_leg_label"] and "no farm" in d["copy"]["mlb_leg_label"]
+    assert "never overlaps" in d["copy"]["mlb_leg_note"]
+    assert "trade_currency_label" not in d["copy"]
     for code, c in clubs.items():
-        ev = c["sections"]["fin"]["roster_surplus_ev"]
-        assert "overlaps the farm surplus" in ev["basis"], code
-        lf = next(x for x in _branch(c, "fin")["leaves"] if x["key"] == "roster_surplus_ev")
-        assert lf["label"] == d["copy"]["trade_currency_label"] and "never added" in lf["basis"], code
-        assert "Roster surplus" not in lf["label"]
-        if code in lg.get("clubs", {}):
-            assert abs(ev["total_mm"] - lg["clubs"][code]["surplus"]["trade_currency_mm"]) < 0.11, code
+        f = c["sections"]["fin"]
+        assert "roster_surplus_ev" not in f, code
+        ml = f["mlb_leg"]
+        assert ml["mlb_mm"] == lg["clubs"][code]["surplus"]["mlb_mm"], code
+        assert ml["by_salsrc_mm"] == lg["clubs"][code]["surplus"]["mlb_by_salsrc_mm"], code
+        assert "never of quantiles" in ml["basis"] and "never overlaps the farm" in ml["basis"], code
+        for k in ml:
+            assert "p10" not in k and "p90" not in k and "lo" not in k and "hi" not in k
+        leaves = {x["key"]: x for x in _branch(c, "fin")["leaves"]}
+        assert "roster_surplus_ev" not in leaves, code
+        assert leaves["mlb_leg"]["label"] == F.MLB_LEG_LABEL == d["copy"]["mlb_leg_label"], code
+        assert leaves["mlb_leg"]["value"] == ml["mlb_mm"], code
+
+
+def test_fin_cost_plus_carries_the_ledger_parts_and_numerator(d, clubs):
+    """M13-4 / COSTPLUS-1: FIN re-serves the Ledger's three denominator parts
+    and its numerator less the locked free agents, never their sum."""
+    lg = _load("ledger_board.json")
+    for code, c in clubs.items():
+        f, I = c["sections"]["fin"], lg["clubs"][code]["indexes"]
+        assert f["cost_plus_parts"] == I["cost_plus_parts"], code
+        assert f["locked_fa_2027"] == I["locked_fa_2027"], code
+        assert f["proj_war_2027_ex_fa"] == I["proj_war_2027_ex_fa"] and f["usd_per_win"] == I["usd_per_win"], code
+        assert f["tax_payroll_2027"] == lg["clubs"][code]["payroll"]["cbt_basis_2027"]["usd"], code
+    for k in ("cost_plus_part_labels", "cost_plus_numerator_label", "cost_plus_parts_note", "cbt_basis_aav_label"):
+        assert d["copy"][k] == lg["copy"][k], k
 
 
 def test_arb_ou_mkt_and_ou_war_are_never_combined(d, clubs):
@@ -734,5 +744,6 @@ def test_the_ledger_tax_floor_flag_rides_the_fin_tile_leaf_and_board(d, clubs):
         assert tf == lg["clubs"][code]["payroll"]["tax_floor_2027"], code
         assert board[code]["tax_floor_below_2027"] == (code in below), code
         lf = next(x for x in _branch(c, "fin")["leaves"] if x["key"] == "tax_payroll_2027")
-        assert ("below this club's own guaranteed" in lf["basis"]) == (code in below), code
+        assert ("guaranteed 2027 contract AAV" in lf["basis"]) == (code in below), code
+        assert (c["sections"]["fin"]["tax_payroll_2027_source"] == "guaranteed_aav") == (code in below), code
     assert d["copy"]["tax_floor_note"] == lg["copy"]["tax_floor_note"]

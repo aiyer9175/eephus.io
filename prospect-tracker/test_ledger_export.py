@@ -208,7 +208,10 @@ def test_space_2027_names_its_basis_spotrac_247m_and_platform_244m(d):
     assert L.SPOTRAC_2027_BASIS_USD != T27, "the two bases differ, which is why both are named"
     for c, club in d["clubs"].items():
         sp = club["payroll"]["space_2027"]
-        tax = club["payroll"]["s2027"]["tax_payroll_usd"]
+        # the 2027 basis (owner answer M13-1): Spotrac's tax payroll, or the
+        # club's guaranteed contract AAV where that is larger
+        tax = club["payroll"]["cbt_basis_2027"]["usd"]
+        assert sp["source"] == club["payroll"]["cbt_basis_2027"]["source"], c
         assert sp["spotrac_basis_usd"] == L.SPOTRAC_2027_BASIS_USD
         assert sp["platform_basis_usd"] == T27
         if tax is not None:
@@ -1838,9 +1841,31 @@ def test_tax_floor_census_names_every_club_below_its_own_guaranteed_2027_contrac
     assert cen["below"] == expect
     rows = {r["club"]: r for r in d["league"]["rows"]}
     assert {c for c, r in rows.items() if r["tax_floor_below_2027"]} == set(expect)
-    for code in expect:
-        assert d["clubs"][code]["payroll"]["space_2027"]["spotrac_usd"] + d["clubs"][code]["payroll"]["s2027"]["tax_payroll_usd"]             == LE.SPOTRAC_2027_BASIS_USD, "the flagged figure is Spotrac's, unreplaced"
-    assert "below own contracts" == d["copy"]["tax_floor_flag"] and "overstate" in d["copy"]["tax_floor_note"]
+    # owner answer M13-1: a club below its own guaranteed AAV takes the AAV as its
+    # 2027 basis (space, CBT block, Cost+ family), and only such a club does;
+    # Spotrac's figure stays in payroll.s2027 as published
+    for code, c in d["clubs"].items():
+        b = c["payroll"]["cbt_basis_2027"]
+        tax = c["payroll"]["s2027"]["tax_payroll_usd"]
+        assert b["spotrac_usd"] == tax and b["guaranteed_aav_usd"] == c["payroll"]["tax_floor_2027"]["guaranteed_aav_usd"], code
+        if tax is not None:
+            assert b["usd"] == max(tax, b["guaranteed_aav_usd"]), code
+        assert (b["source"] == "guaranteed_aav") == (code in expect), code
+        assert c["cbt"]["2027"]["tax_payroll_source"] == b["source"] and c["cbt"]["2027"]["spotrac_tax_payroll_usd"] == tax, code
+        if b["usd"] is not None:
+            assert c["payroll"]["space_2027"]["spotrac_usd"] + b["usd"] == LE.SPOTRAC_2027_BASIS_USD, code
+            assert c["cbt"]["2027"]["tax_payroll_usd"] == b["usd"] == c["indexes"]["cost_plus_parts"]["guaranteed_usd"], code
+    assert d["league"]["pools"]["cost_plus"]["n_guaranteed_aav_basis"] == len(expect)
+    assert "below own contracts" == d["copy"]["tax_floor_flag"] and "stands in" in d["copy"]["tax_floor_note"]
+    assert d["copy"]["cbt_basis_aav_label"]
+
+
+def test_the_2027_basis_is_the_larger_of_spotrac_and_the_guaranteed_aav():
+    import ledger_export as LE
+    assert LE.cbt_payroll_basis(27_666_666, 39_500_000) == (39_500_000, "guaranteed_aav")
+    assert LE.cbt_payroll_basis(39_500_000, 39_500_000) == (39_500_000, "spotrac")
+    assert LE.cbt_payroll_basis(202_884_218, 193_930_144) == (202_884_218, "spotrac")
+    assert LE.cbt_payroll_basis(None, 39_500_000) == (None, "spotrac")
 
 
 def test_the_2027_surcharges_only_note_is_derived_from_an_exact_reconstruction(d):
@@ -1869,24 +1894,111 @@ def test_the_2027_surcharges_only_note_is_derived_from_an_exact_reconstruction(d
     assert "247M basis" in d["copy"]["cbt_spotrac_surcharges_only"]
 
 
-def test_cost_plus_says_what_its_denominator_leaves_out_and_what_it_ranks(d):
-    """The Cost+ family divides by Spotrac's CBT payroll, which carries no
-    arbitration or pre-arbitration salaries; the disclosure and both rank
-    correlations are measured every build, never typed."""
+def test_cost_plus_says_what_its_two_sides_hold_and_what_it_ranks(d):
+    """Owner answers M13-4 and COSTPLUS-1: the Cost+ family divides by three
+    parts (guaranteed salaries, projected arbitration awards, pre-arbitration
+    minimum rungs) and its numerator leaves out the locked free agents. The
+    disclosure and both rank correlations are measured every build, never typed."""
     import ledger_export as LE
     pool = d["league"]["pools"]["cost_plus"]
-    rows = [(c["indexes"]["cost_ratio_war_per_mm"], -c["payroll"]["s2027"]["tax_payroll_usd"], c["indexes"]["proj_war_2027"])
-            for c in d["clubs"].values() if c["indexes"]["cost_ratio_war_per_mm"] is not None]
+    rows = []
+    for c in d["clubs"].values():
+        I, P = c["indexes"], c["indexes"]["cost_plus_parts"]
+        if I["cost_ratio_war_per_mm"] is None:
+            continue
+        den = P["guaranteed_usd"] + P["arb_usd"] + P["prearb_usd"]
+        war_ex = I["proj_war_2027"] - I["locked_fa_2027"]["war"]
+        rows.append((I["cost_ratio_war_per_mm"], -den, I["proj_war_2027_ex_fa"]))
+        # the index, the $ per WAR and the $ per win all divide by the same parts
+        assert abs(I["cost_ratio_war_per_mm"] - war_ex / (den / 1e6)) <= 0.003, c["club"]
+        assert abs(I["usd_per_war"] - den / war_ex) / I["usd_per_war"] < 0.005, c["club"]
+        assert abs(I["usd_per_win"] - den / (I["proj_wins_2027"] - I["locked_fa_2027"]["war"])) / I["usd_per_win"] < 0.005, c["club"]
     assert pool["n_spearman"] == len(rows) == 30
     rho_pay = LE._spearman([r[0] for r in rows], [r[1] for r in rows])
     rho_war = LE._spearman([r[0] for r in rows], [r[2] for r in rows])
-    assert abs(pool["spearman_vs_neg_cbt_payroll"] - rho_pay) <= 0.02
+    assert abs(pool["spearman_vs_neg_denominator"] - rho_pay) <= 0.02
     assert abs(pool["spearman_vs_proj_war"] - rho_war) <= 0.02
     basis = d["copy"]["cost_plus_basis"]
-    assert "no arbitration or pre-arbitration salaries" in basis
-    assert f"Spearman {pool['spearman_vs_neg_cbt_payroll']:.2f}" in basis and f"{pool['spearman_vs_proj_war']:.2f} against projected WAR" in basis
-    assert ("inverse payroll rank" in basis) == (abs(pool["spearman_vs_neg_cbt_payroll"]) > abs(pool["spearman_vs_proj_war"]))
+    assert "three parts" in basis and "locked free agents" in basis and "never added into one payroll figure" in basis
+    assert f"Spearman {pool['spearman_vs_neg_denominator']:.2f}" in basis and f"{pool['spearman_vs_proj_war']:.2f} against projected WAR" in basis
+    assert ("inverse cost rank" in basis) == (abs(pool["spearman_vs_neg_denominator"]) > abs(pool["spearman_vs_proj_war"]))
     cols = {c[0]: c for c in d["league"]["columns"]}
     for k in ("cost_plus", "usd_per_win", "usd_per_war"):
-        assert LE.NO_ARB_IN_DENOM in cols[k][3], k
+        assert LE.COST_PLUS_SIDES in cols[k][3], k
     assert LE._spearman([1, 2, 3, 4], [4, 3, 2, 1]) == -1.0 and LE._spearman([1, 2], [1, 2]) is None
+
+
+def test_the_cost_plus_denominator_parts_recompute_from_the_arbitration_ladders(d, proj):
+    """M13-4: the arbitration and pre-arbitration parts are the club's 2027
+    rungs in data/arbitration.json, apart, less any rung whose player already
+    carries a signed 2027 contract salary cell (counted once, in the guaranteed
+    part). They reconcile to the ledger's own arbitration by_season row."""
+    import ledger_export as LE
+    from trades import canonical_org
+    arb = json.loads((ROOT / "data" / "arbitration.json").read_text(encoding="utf-8"))
+    vets = {int(v["mlbam"]): v for v in proj["vets"] if v.get("mlbam") is not None}
+    want = {}
+    for r in arb["rows"]:
+        c = canonical_org(r.get("t"))
+        if c not in d["clubs"]:
+            continue
+        rung = next((t for t in (r.get("l") or []) if t[0] == LE.CLASS_YEAR), None)
+        if rung is None or rung[1] is None:
+            continue
+        w = want.setdefault(c, [0, 0, 0])
+        v = vets.get(int(r["m"])) if r.get("m") is not None else None
+        cell = next((x for x in ((v or {}).get("salPath") or []) if x[0] == LE.CLASS_YEAR), None)
+        usd = int(round(float(rung[1])))
+        if cell is not None and cell[5] == "contract":
+            w[2] += usd
+        elif rung[4] == "PRE-ARB":
+            w[1] += usd
+        else:
+            w[0] += usd
+    for code, c in d["clubs"].items():
+        P = c["indexes"]["cost_plus_parts"]
+        a, p, x = want.get(code, [0, 0, 0])
+        assert (P["arb_usd"], P["prearb_usd"], P["contract_dropped_usd"]) == (a, p, x), code
+        s27 = {row[0]: row for row in c["arbitration"]["by_season"]}.get(LE.CLASS_YEAR) or [0, 0, 0, 0, 0, 0]
+        assert P["arb_usd"] + P["prearb_usd"] + P["contract_dropped_usd"] == s27[1] + s27[3], code
+    one = LE.cost_plus_arb_parts([{"m": 1, "l": [[2027, 780000, 0, 0, "PRE-ARB"]]}],
+                                 {1: {"salPath": [[2027, 1e7, 1e7, 1e7, "signed", "contract", 0]]}}, 2027)
+    assert one["n_contract_dropped"] == 1 and one["prearb_usd"] == 0
+
+
+def test_locked_free_agents_leave_the_cost_plus_numerator(d, proj):
+    """COSTPLUS-1: every fa_class member with status locked leaves the
+    numerator with his 2027 champion-mean WAR, on the club the projection rolls
+    him into; $ per projected win drops the same WAR from the wins."""
+    from trades import canonical_org
+    fa = json.loads((ROOT / "data" / "fa_class.json").read_text(encoding="utf-8"))
+    locked = {m["key"] for m in fa["members"] if m.get("status") == "locked"}
+    idx = d["class_year"] - int(proj.get("first_season") or d["class_year"])
+    want = {}
+    for v in proj["vets"]:
+        if v.get("key") in locked and (v.get("warChamp") or [None])[idx] is not None:
+            w = want.setdefault(canonical_org(v["team"]), [0, 0.0])
+            w[0] += 1
+            w[1] += float(v["warChamp"][idx])
+    for code, c in d["clubs"].items():
+        n, war = want.get(code, [0, 0.0])
+        F = c["indexes"]["locked_fa_2027"]
+        assert F["n"] == n and abs(F["war"] - war) <= 0.051, code
+        assert abs(c["indexes"]["proj_war_2027_ex_fa"] - (c["indexes"]["proj_war_2027"] - war)) <= 0.051, code
+    pool = d["league"]["pools"]["cost_plus"]
+    assert pool["locked_fa_n"] == sum(n for n, _ in want.values())
+    assert pool["locked_fa_not_in_projections"] == len(locked) - sum(1 for v in proj["vets"] if v.get("key") in locked)
+
+
+def test_the_cost_plus_divisor_is_never_served_as_one_figure(d):
+    """The NEVER list: the three parts are keys apart, their sum reaches no key
+    on a club block, and the page prints them on separate rows."""
+    for code, c in d["clubs"].items():
+        P = c["indexes"]["cost_plus_parts"]
+        total = P["guaranteed_usd"] + P["arb_usd"] + P["prearb_usd"]
+        if total in (P["guaranteed_usd"], P["arb_usd"], P["prearb_usd"]):
+            continue
+        assert total not in set(_leaves(c)), code
+    js = JS.read_text(encoding="utf-8")
+    body = js[js.index("function costParts("):js.index("function costTitle(")]
+    assert "P.guaranteed_usd + " not in body and "+ P.arb_usd" not in body

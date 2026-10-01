@@ -110,6 +110,10 @@ FORBIDDEN_KEY_FRAGMENTS = ("ou_total", "ou_combined", "ou_sum")
 #: pinned against build_site.ESPN_SLUGS by test_franchise_export.
 _LOGO_SLUG_OVERRIDE = {"ARI": "ari", "CHW": "chw"}
 
+#: The FIN surplus figure's label (owner answer M13-2): the Club Ledger's MLB
+#: leg alone, which carries no prospect row and so never overlaps the farm.
+MLB_LEG_LABEL = "MLB surplus (MLB leg only, no farm)"
+
 DUGOUT_FAMILIES = (("pitching_change", "Pitching changes"), ("pinch_hit", "Pinch hitters"),
                    ("pinch_run", "Pinch runners"), ("intentional_walk", "Intentional walks"),
                    ("bunt", "Bunts"), ("steal", "Steals"))
@@ -567,6 +571,7 @@ def build() -> dict:
         lc = ledger_clubs.get(c) or {}
         lidx = lc.get("indexes") or {}
         lpay = lc.get("payroll") or {}
+        lsur = lc.get("surplus") or {}
 
         links = {
             "mlbstats_hitters": f"/mlbstats/#section=hitters&hview=teams&team={sapi}",
@@ -661,24 +666,37 @@ def build() -> dict:
         }
 
         # -- FIN (descriptive) ----------------------------------------------------------------
-        tvp = tv_by.get(c) or []
-        act = [float(p.get("posterior_surplus_mm") or 0) for p in tvp if p.get("status") == "active"]
-        deb = [float(p.get("posterior_surplus_mm") or 0) for p in tvp if p.get("status") == "debuted"]
+        # The FIN surplus figure is the Club Ledger's MLB leg only (owner answer
+        # M13-2, 2026-09-25): the surplus of the club's veteran rows (surNpv),
+        # with no prospect row in it, so it never overlaps the FARM branch. It
+        # replaces the Trade Machine currency, which carried the farm inside it.
+        # The 2027 tax payroll is the Ledger's 2027 basis (owner answer M13-1):
+        # Spotrac's figure, or the club's guaranteed contract AAV where larger.
+        b27 = (lpay.get("cbt_basis_2027") or {}) if ledger_live else {}
         fin_doc = {
             "live": True, "descriptive": True,
             "cost_plus": lidx.get("cost_plus") if ledger_live else None,
             "usd_per_win": lidx.get("usd_per_win") if ledger_live else None,
+            # the Cost+ denominator, three parts kept apart (owner answer M13-4),
+            # and its numerator less the locked free agents (COSTPLUS-1)
+            "cost_plus_parts": (lidx.get("cost_plus_parts") if ledger_live else None),
+            "locked_fa_2027": (lidx.get("locked_fa_2027") if ledger_live else None),
+            "proj_war_2027": (lidx.get("proj_war_2027") if ledger_live else None),
+            "proj_war_2027_ex_fa": (lidx.get("proj_war_2027_ex_fa") if ledger_live else None),
             "space_2027": ((lpay.get("space_2027") or {}) if ledger_live else
                            {"spotrac_usd": meta.get("space"), "spotrac_basis_usd": None, "platform_usd": None,
                             "platform_basis_usd": cba.get("threshold_usd")}),
-            "tax_payroll_2027": meta.get("taxPayroll"), "committed_2027": meta.get("committed"),
+            "tax_payroll_2027": (b27.get("usd") if b27.get("usd") is not None else meta.get("taxPayroll")),
+            "tax_payroll_2027_source": (b27.get("source") or "spotrac"),
+            "committed_2027": meta.get("committed"),
             "tax_floor_2027": (lpay.get("tax_floor_2027") if ledger_live else None),
             "payor_2027": ((lpay.get("payor_2027") or {}) if ledger_live else {"value": meta.get("payor"), "basis": "spotrac"}),
             "recent_spend": meta.get("recentSpend"), "max_guar": meta.get("maxGuar"), "n100m": meta.get("n100m"),
-            "roster_surplus_ev": {"active_mm": _r(sum(act), 1), "debuted_mm": _r(sum(deb), 1),
-                                  "total_mm": _r(sum(act) + sum(deb), 1), "n_active": len(act), "n_debuted": len(deb),
-                                  "basis": ("sum of trade_values posterior_surplus_mm, a sum of means and never of quantiles; "
-                                            "the Trade Machine currency, which overlaps the farm surplus and is never added to it")},
+            "mlb_leg": {"mlb_mm": (lsur.get("mlb_mm") if ledger_live else None),
+                        "by_salsrc_mm": ((lsur.get("mlb_by_salsrc_mm") or {}) if ledger_live else {}),
+                        "basis": ("Club Ledger MLB leg: surNpv summed over the club's veteran rows, a sum of means "
+                                  "and never of quantiles; no prospect row is in it, so it never overlaps the farm"
+                                  if ledger_live else "Club Ledger not on disk")},
             "cba_banner": True,
             "basis": ("Club Ledger (ledger_export): Cost+ and space on both bases" if ledger_live
                       else "fa_meta.teams (Spotrac); Club Ledger not on disk"),
@@ -902,11 +920,12 @@ def build() -> dict:
                  leaf("cost_plus", "Cost+", fin_doc["cost_plus"], "idx_plain", None, "Club Ledger Cost+, descriptive index, printed plain here and tiered only on /ledger/", "cost_plus", links["ledger"]),
                  leaf("space_2027", f"Space {CLASS_YEAR}", (fin_doc["space_2027"] or {}).get("spotrac_usd"), "usd_signed", None, "Spotrac basis; never a ladder", "cbt_space", links["ledger"]),
                  leaf("tax_payroll_2027", f"Tax payroll {CLASS_YEAR}", fin_doc["tax_payroll_2027"], "usd", None,
-                      "fa_meta.teams.taxPayroll (Spotrac)" + ("; below this club's own guaranteed 2027 contract AAV (Club Ledger tax floor census)"
-                                                              if (fin_doc["tax_floor_2027"] or {}).get("below") else ""),
+                      ("Club Ledger 2027 basis (Spotrac tax payroll)" if ledger_live else "fa_meta.teams.taxPayroll (Spotrac)")
+                      + ("; the club's own guaranteed 2027 contract AAV, larger than Spotrac's figure, stands in (Club Ledger tax floor census)"
+                         if fin_doc["tax_payroll_2027_source"] == "guaranteed_aav" else ""),
                       "cbt_payroll", links["ledger"]),
                  leaf("payor_2027", "Payor tier", (fin_doc["payor_2027"] or {}).get("value"), "text", None, "Spotrac or derived, named on the tile", "payor_tier", links["ledger"]),
-                 leaf("roster_surplus_ev", "Trade currency (overlaps farm)", fin_doc["roster_surplus_ev"]["total_mm"], "usdm", None, "Trade Machine currency: sum of trade_values posterior means over prospect and debuted rows; contains the farm surplus, never added to it", "trade_machine", links["trade_board"]),
+                 leaf("mlb_leg", MLB_LEG_LABEL, fin_doc["mlb_leg"]["mlb_mm"], "usdm", None, fin_doc["mlb_leg"]["basis"], "controlled_surplus", links["ledger"]),
              ]},
             {"key": "market", "kind": "descriptive", "label": "MARKET", "title": BRANCH_TITLE["market"],
              "weight": None, "score": None, "rank": None, "letter": None,
@@ -1046,12 +1065,17 @@ def build() -> dict:
         "space_label_spotrac": (f"Spotrac, {spotrac_basis // 1_000_000}M basis" if spotrac_basis else "Spotrac basis"),
         "space_label_platform": (f"platform carry-forward, {cba.get('threshold_usd', 0) // 1_000_000}M" if cba.get("threshold_usd") else "platform carry-forward"),
         "fin_no_ladder": "a salary, a club surplus total and a cap-space cell never take a ladder; sign colour only",
-        "surplus_ev": "a sum of posterior means (trade_values), never of quantiles",
+        "surplus_ev": "a sum of means (the Club Ledger's surNpv), never of quantiles",
         "tax_floor_flag": ((ledger.get("copy") or {}).get("tax_floor_flag") or "below own contracts"),
         "tax_floor_note": ((ledger.get("copy") or {}).get("tax_floor_note") or ""),
-        "trade_currency_label": "Trade currency (overlaps farm)",
-        "trade_currency_overlap": ((ledger.get("copy") or {}).get("trade_currency_split")
-                                   or "the trade currency is the prospect rows plus the debuted rows; it overlaps the farm surplus and is never added to it"),
+        "mlb_leg_label": MLB_LEG_LABEL,
+        "mlb_leg_note": ("the MLB leg is the Club Ledger's projected surplus of the club's contract and arbitration-path "
+                         "veterans; no prospect row is in it, so it never overlaps the FARM branch, and the Trade Machine "
+                         "currency, which does, is left to /ledger/ and /trademachine/"),
+        "cbt_basis_aav_label": ((ledger.get("copy") or {}).get("cbt_basis_aav_label") or "guaranteed contract AAV used"),
+        "cost_plus_part_labels": ((ledger.get("copy") or {}).get("cost_plus_part_labels") or {}),
+        "cost_plus_numerator_label": ((ledger.get("copy") or {}).get("cost_plus_numerator_label") or ""),
+        "cost_plus_parts_note": ((ledger.get("copy") or {}).get("cost_plus_parts_note") or ""),
         "market_fits_note": "fit is a model of where a player signs, not of club quality (fa_team_fit provisional)",
         "market_realized_title": "Realized contract value to date",
         "market_realized_sentence": ("realized value, not skill: this is what the contracts returned, not how well the "

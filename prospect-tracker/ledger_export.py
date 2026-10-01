@@ -17,7 +17,10 @@ WHAT IT NEVER SERVES, decided before the first number was computed:
     no key sums them. A club payroll forecast assembled from a provisional
     arbitration model, an inferred class token, rule minimums and a
     carry-forward CBA would need its own registry row (club_payroll_path) and a
-    backtest on the 2016-2025 payroll history, and it has neither.
+    backtest on the 2016-2025 payroll history, and it has neither. The Cost+
+    family divides by guaranteed salaries, projected arbitration awards and
+    pre-arbitration minimum rungs (owner answer M13-4); those three parts are
+    keyed apart and their sum lives only inside the division.
   * Revenue, attendance money, TV money, franchise valuations, revenue-sharing
     status, minor-league payroll, actual CBT bills paid. No source in the tree
     carries them; the page says so and the writer refuses any key by those
@@ -89,9 +92,12 @@ def _round_no(r: dict) -> int | None:
 #: against the rows at build time), never as a rule.
 SPOTRAC_2027_BASIS_USD = 247_000_000
 
-#: The Cost+ family's denominator gap, said on every column that divides by it.
-NO_ARB_IN_DENOM = ("the payroll carries no arbitration or pre-arbitration salaries, the projected roster "
-                   "in the numerator does")
+#: The Cost+ family's two sides (owner answers M13-4 and COSTPLUS-1), said on
+#: every column that divides by them. The denominator is three parts printed
+#: apart beside the index; the page never adds them into one payroll figure.
+COST_PLUS_SIDES = ("denominator in three parts: guaranteed 2027 salaries (the 2027 CBT payroll), the "
+                   "platform's projected 2027 arbitration awards and the pre-arbitration minimum rungs; "
+                   "the numerator leaves out the 2027 WAR of the club's locked free agents")
 
 #: fa_class option types whose 2027 year is not guaranteed, so the tax floor
 #: census leaves those contract rows out of the guaranteed AAV.
@@ -367,6 +373,50 @@ def computed_cbt_bill(tax_payroll_usd, threshold_usd, tier, rates, tiers) -> dic
             "base_rate": base}
 
 
+def cbt_payroll_basis(spotrac_tax_usd, guaranteed_aav_usd) -> tuple:
+    """(usd, source) for a club's next-season CBT payroll (owner answer M13-1,
+    2026-09-25): the LARGER of Spotrac's tax payroll and the AAV of the club's
+    own guaranteed contract rows for that season. source is "guaranteed_aav"
+    only where the AAV is strictly larger; with no Spotrac figure there is no
+    basis (None, "spotrac"), since the AAV alone omits every non-contract cost."""
+    if spotrac_tax_usd is None:
+        return None, "spotrac"
+    if guaranteed_aav_usd is not None and int(guaranteed_aav_usd) > int(spotrac_tax_usd):
+        return int(guaranteed_aav_usd), "guaranteed_aav"
+    return int(spotrac_tax_usd), "spotrac"
+
+
+def cost_plus_arb_parts(arb_rows: list, vets_by_mlbam: dict, season: int) -> dict:
+    """The arbitration and pre-arbitration parts of the Cost+ denominator
+    (owner answer M13-4): the club's projected `season` rungs from
+    arbitration.json, the arbitration rungs and the PRE-ARB minimum rungs kept
+    apart. A rung with no projection adds nothing and is counted. A rung whose
+    player already carries a signed contract salary cell for `season` is left
+    out and counted, because the guaranteed part holds his salary already."""
+    out = {"arb_usd": 0, "n_arb": 0, "prearb_usd": 0, "n_prearb": 0, "n_null": 0,
+           "contract_dropped_usd": 0, "n_contract_dropped": 0}
+    for r in arb_rows:
+        rung = next((t for t in (r.get("l") or []) if t and t[0] == season), None)
+        if rung is None:
+            continue
+        if rung[1] is None:
+            out["n_null"] += 1
+            continue
+        usd = int(round(float(rung[1])))
+        v = vets_by_mlbam.get(int(r["m"])) if r.get("m") is not None else None
+        cell = next((c for c in ((v or {}).get("salPath") or []) if c and c[0] == season), None)
+        if cell is not None and len(cell) > 5 and cell[5] == "contract":
+            out["contract_dropped_usd"] += usd
+            out["n_contract_dropped"] += 1
+        elif rung[4] == "PRE-ARB":
+            out["prearb_usd"] += usd
+            out["n_prearb"] += 1
+        else:
+            out["arb_usd"] += usd
+            out["n_arb"] += 1
+    return out
+
+
 def farm_leaf(tree: dict, grades: dict, key: str) -> dict:
     """One fin_* leaf for the farm block: the LETTER copied from org_summary
     .grades (computed by rank across 30 orgs in storage._letter_grade, never
@@ -451,6 +501,8 @@ def trade_cbt_slice(doc: dict, calendar: dict | None) -> dict:
                     for s in (season_now, class_year)}
     cba = doc.get("cba") or {}
     copy = doc.get("copy") or {}
+    aav_clubs = sorted(c for c, d in doc["clubs"].items()
+                       if ((d.get("cbt") or {}).get(str(class_year)) or {}).get("tax_payroll_source") == "guaranteed_aav")
     return {
         "generated_at": doc.get("generated_at"),
         "season_now": season_now,
@@ -464,7 +516,9 @@ def trade_cbt_slice(doc: dict, calendar: dict | None) -> dict:
         "clubs": clubs,
         "source": {
             "payroll": (f"Spotrac tax payroll ({season_now} and {class_year} pages) as the Club "
-                        f"Ledger read it on {str(doc.get('generated_at') or '')[:10]}"),
+                        f"Ledger read it on {str(doc.get('generated_at') or '')[:10]}"
+                        + (f"; for {', '.join(aav_clubs)} the {class_year} figure is the club's own "
+                           "guaranteed contract AAV, which is larger than Spotrac's" if aav_clubs else "")),
             "thresholds": (f"the 2022 CBA schedule (cba_rules, through fa_cba); the {class_year} "
                            f"threshold is the {season_now} figure carried forward, since no "
                            f"{class_year} threshold is published and the agreement expires "
@@ -880,6 +934,29 @@ def build_all() -> tuple:
     members = fa_class.get("members") or []
     fits = fa_class.get("teamFits") or {}
     winters = fa_archive.get("winters") or []
+    # Locked free agents leave the Cost+ numerator (owner answer COSTPLUS-1,
+    # 2026-09-30): Team Outlook's first projected season keeps every veteran
+    # on his current club, so a locked free agent's 2027 WAR sits in the
+    # club's roster WAR while no 2027 salary of his sits in the denominator.
+    # His WAR is the champion mean for that season (warChamp), the same number
+    # _team_outlook summed into the club's roster WAR, on the club it summed
+    # it into (the vet row's team).
+    first_season = int(proj.get("first_season") or CLASS_YEAR)
+    fa_idx = CLASS_YEAR - first_season
+    locked_keys = {m.get("key") for m in members if m.get("status") == "locked" and m.get("key")}
+    locked_fa_by_club: dict = defaultdict(lambda: [0, 0.0])
+    n_locked_in_vets = 0
+    for v in vets:
+        if v.get("key") not in locked_keys:
+            continue
+        n_locked_in_vets += 1
+        ch = v.get("warChamp") or []
+        w = ch[fa_idx] if 0 <= fa_idx < len(ch) else None
+        c = _canon(v.get("team"))
+        if w is None or not c:
+            continue
+        locked_fa_by_club[c][0] += 1
+        locked_fa_by_club[c][1] += float(w)
 
     # farm capital
     org_summary = {}
@@ -963,6 +1040,9 @@ def build_all() -> tuple:
     club_docs: dict = {}
     shard_docs: dict = {}
     ratio_by_club: dict = {}
+    # the Cost+ divisor per club, held here for the rank correlation only and
+    # never written to the document (no single projected payroll is served)
+    denom_by_club: dict = {}
     contract_disagreements = 0
 
     for c in clubs:
@@ -1204,19 +1284,8 @@ def build_all() -> tuple:
                 "by_salary_basis": dict(Counter(p.get("salary_basis") or "none" for p in tvp)),
             },
         }
-        wins27, war27 = out.get("wins"), out.get("war")
-        ratio = (float(war27) / (float(tax27) / 1e6)) if (war27 and tax27) else None
-        ratio_by_club[c] = ratio
-        indexes = {
-            "usd_per_win": int(round(float(tax27) / float(wins27))) if (tax27 and wins27) else None,
-            "usd_per_war": int(round(float(tax27) / float(war27))) if (tax27 and war27) else None,
-            "cost_plus": None,      # filled after the league pool is known
-            "cost_ratio_war_per_mm": _r(ratio, 3),
-            "orgsur_plus": (org_summary.get(c) or {}).get("financial_score"),
-            "locked_pct": out.get("lockedPct"),
-            "proj_wins_2027": wins27, "proj_war_2027": war27,
-            "cba_banner": True,
-        }
+        # (the C6 indexes are built below, after the tax floor census, because
+        # their denominator reads the 2027 CBT payroll basis it decides)
 
         # -- C7 farm capital ---------------------------------------------------
         o = org_summary.get(c) or {}
@@ -1356,8 +1425,9 @@ def build_all() -> tuple:
 
         # -- tax floor census (M09-03): Spotrac's 2027 tax payroll against the AAV of
         # the club's own guaranteed 2027 contract rows. A club or mutual option
-        # year is not guaranteed and is left out. The figure is FLAGGED where it
-        # sits below the floor, never replaced: Spotrac's number still prints.
+        # year is not guaranteed and is left out. Where Spotrac's figure sits
+        # below the floor, the floor stands in for it (owner answer M13-1,
+        # below); Spotrac's number stays in payroll.s2027 as published.
         opt27 = {r[0] for r in outgoing if r[4] == "pending_option" and r[5] in TAX_FLOOR_NOT_GUARANTEED}
         floor_rows = [row for row in rows
                       if any(cell[0] == CLASS_YEAR and cell[5] == "contract" for cell in (row[10] or []))
@@ -1370,6 +1440,68 @@ def build_all() -> tuple:
             "n_option_rows_excluded": sum(1 for row in rows if row[0] in opt27),
             "spotrac_tax_payroll_usd": tax27, "gap_usd": floor_gap,
             "below": floor_gap is not None and floor_gap < 0,
+        }
+
+        # -- the 2027 CBT payroll basis (owner answer M13-1, 2026-09-25): the
+        # larger of Spotrac's 2027 tax payroll and the guaranteed AAV above. It
+        # carries the 2027 space on both bases, the 2027 CBT block and the Cost+
+        # family; the substitution names itself (source "guaranteed_aav").
+        basis27, basis_src = cbt_payroll_basis(tax27, floor_aav)
+        payroll_block["cbt_basis_2027"] = {"usd": basis27, "source": basis_src, "spotrac_usd": tax27,
+                                           "guaranteed_aav_usd": floor_aav, "n_rows": len(floor_rows)}
+        sp27 = payroll_block["space_2027"]
+        sp27["source"] = basis_src
+        if basis27 is not None:
+            sp27["spotrac_usd"] = SPOTRAC_2027_BASIS_USD - basis27
+            sp27["platform_usd"] = T_next - basis27
+        b27 = cbt[str(CLASS_YEAR)]
+        b27["spotrac_tax_payroll_usd"] = tax27
+        b27["tax_payroll_source"] = basis_src
+        if basis_src == "guaranteed_aav":
+            comp = computed_cbt_bill(basis27, T_next, b27["tier"], rates, tiers)
+            est = b27["spotrac_est_bill_usd"]
+            b27.update({"tax_payroll_usd": basis27, "over_usd": comp["over_usd"], "bracket": comp["bracket"],
+                        "computed_bill_usd": comp["bill_usd"], "base_rate": comp["base_rate"],
+                        "diff_usd": ((comp["bill_usd"] - est)
+                                     if (est is not None and comp["bill_usd"] is not None) else None),
+                        "over_spotrac_basis_usd": basis27 - SPOTRAC_2027_BASIS_USD})
+
+        # -- C6 indexes (owner answers M13-4 and COSTPLUS-1). The denominator is
+        # three parts kept apart: guaranteed 2027 salaries (the basis above), the
+        # platform's projected 2027 arbitration awards and the pre-arbitration
+        # minimum rungs (cost_plus_arb_parts). Their sum is a divisor only: no
+        # key holds it and the page never prints it (the NEVER list's single
+        # projected payroll). The numerator leaves out locked free agents' 2027
+        # WAR, and the wins behind $ per projected win drop by the same amount.
+        wins27, war27 = out.get("wins"), out.get("war")
+        aparts = cost_plus_arb_parts(arows, vets_by_mlbam, CLASS_YEAR)
+        n_fa, fa_war = locked_fa_by_club.get(c, [0, 0.0])
+        assert war27 is None or fa_war <= float(war27) + 0.05, (c, fa_war, war27)
+        war_ex = (float(war27) - fa_war) if war27 is not None else None
+        wins_ex = (float(wins27) - fa_war) if wins27 is not None else None
+        denom = (basis27 + aparts["arb_usd"] + aparts["prearb_usd"]) if basis27 is not None else None
+        ratio = (war_ex / (denom / 1e6)) if (war_ex and denom) else None
+        ratio_by_club[c] = ratio
+        denom_by_club[c] = denom
+        indexes = {
+            "usd_per_win": int(round(denom / wins_ex)) if (denom and wins_ex) else None,
+            "usd_per_war": int(round(denom / war_ex)) if (denom and war_ex) else None,
+            "cost_plus": None,      # filled after the league pool is known
+            "cost_ratio_war_per_mm": _r(ratio, 3),
+            "cost_plus_parts": {
+                "guaranteed_usd": basis27, "guaranteed_source": basis_src,
+                "arb_usd": aparts["arb_usd"], "n_arb": aparts["n_arb"],
+                "prearb_usd": aparts["prearb_usd"], "n_prearb": aparts["n_prearb"],
+                "n_null_rungs": aparts["n_null"],
+                "contract_dropped_usd": aparts["contract_dropped_usd"],
+                "n_contract_dropped": aparts["n_contract_dropped"],
+            },
+            "locked_fa_2027": {"n": n_fa, "war": round(fa_war, 1)},
+            "orgsur_plus": (org_summary.get(c) or {}).get("financial_score"),
+            "locked_pct": out.get("lockedPct"),
+            "proj_wins_2027": wins27, "proj_war_2027": war27,
+            "proj_wins_2027_ex_fa": _r(wins_ex, 1), "proj_war_2027_ex_fa": _r(war_ex, 1),
+            "cba_banner": True,
         }
 
         club_docs[c] = {
@@ -1622,12 +1754,13 @@ def build_all() -> tuple:
     cp = [club_docs[c]["indexes"]["cost_plus"] for c in clubs if club_docs[c]["indexes"]["cost_plus"] is not None]
     assert abs(statistics.mean(cp) - 100) <= 0.5, statistics.mean(cp)
     assert abs(statistics.pstdev(cp) - 10) <= 0.5, statistics.pstdev(cp)
-    # what the index ranks: its Spearman against minus the CBT payroll and against
-    # the projected WAR, on the unrounded ratio, measured here every build
+    # what the index ranks: its Spearman against minus its three-part
+    # denominator and against its numerator (projected WAR less the locked free
+    # agents), on the unrounded ratio, measured here every build
     rk = [c for c in clubs if ratio_by_club.get(c) is not None
-          and club_docs[c]["payroll"]["s2027"]["tax_payroll_usd"] and club_docs[c]["indexes"]["proj_war_2027"]]
-    rho_pay = _spearman([ratio_by_club[c] for c in rk], [-club_docs[c]["payroll"]["s2027"]["tax_payroll_usd"] for c in rk])
-    rho_war = _spearman([ratio_by_club[c] for c in rk], [club_docs[c]["indexes"]["proj_war_2027"] for c in rk])
+          and denom_by_club.get(c) and club_docs[c]["indexes"]["proj_war_2027_ex_fa"]]
+    rho_pay = _spearman([ratio_by_club[c] for c in rk], [-denom_by_club[c] for c in rk])
+    rho_war = _spearman([ratio_by_club[c] for c in rk], [club_docs[c]["indexes"]["proj_war_2027_ex_fa"] for c in rk])
 
     # ---- league board ------------------------------------------------------------
     league_rows = []
@@ -1644,9 +1777,14 @@ def build_all() -> tuple:
             "space_2027_spotrac": d["payroll"]["space_2027"]["spotrac_usd"],
             "space_2027_platform": d["payroll"]["space_2027"]["platform_usd"],
             "tax_floor_below_2027": d["payroll"]["tax_floor_2027"]["below"],
+            "cbt_basis_2027_source": d["payroll"]["cbt_basis_2027"]["source"],
             "proj_wins_2027": d["indexes"]["proj_wins_2027"],
             "usd_per_win": d["indexes"]["usd_per_win"],
             "cost_plus": d["indexes"]["cost_plus"],
+            # the three denominator parts, apart, for the Cost+ cell's title
+            "cost_plus_parts": [d["indexes"]["cost_plus_parts"][k] for k in ("guaranteed_usd", "arb_usd", "prearb_usd")],
+            "locked_fa_war_2027": d["indexes"]["locked_fa_2027"]["war"],
+            "proj_war_2027_ex_fa": d["indexes"]["proj_war_2027_ex_fa"],
             "usd_per_war": d["indexes"]["usd_per_war"],
             "locked_pct": d["indexes"]["locked_pct"],
             "controlled_surplus_mm": d["surplus"]["total_mm"],
@@ -1683,11 +1821,11 @@ def build_all() -> tuple:
             ["payor_2026", "Payor", "payor_tier", "Spotrac 2026 payor status"],
             ["est_tax_2026", "Est. tax 2026", "computed_cbt_bill", "Spotrac estimate; blank when the club is not a payor, never zero"],
             ["committed_2027", "Committed 2027", "payroll_allocations", "Spotrac total payroll allocations 2027"],
-            ["space_2027_spotrac", "Space 2027", "cbt_payroll", f"Spotrac, {SPOTRAC_2027_BASIS_USD // 1_000_000}M basis; the platform {T_next // 1_000_000}M carry-forward figure sits in the tooltip and the two are never mixed"],
+            ["space_2027_spotrac", "Space 2027", "cbt_payroll", f"Spotrac, {SPOTRAC_2027_BASIS_USD // 1_000_000}M basis; the platform {T_next // 1_000_000}M carry-forward figure sits in the tooltip and the two are never mixed; where Spotrac's 2027 tax payroll sits below the club's own guaranteed contract AAV, the AAV stands in and the cell is flagged"],
             ["proj_wins_2027", "Proj wins 2027", None, f"team_win_projections ({tw})"],
-            ["usd_per_win", "$ per proj win", "cost_plus", f"Spotrac CBT payroll 2027 over team_win_projections 2027 wins ({tw}); plain dollars; {NO_ARB_IN_DENOM}"],
-            ["cost_plus", "Cost+", "cost_plus", f"100+10z of projected 2027 WAR per $M of 2027 CBT payroll across the 30 clubs; descriptive index, numerator {tw}; {NO_ARB_IN_DENOM}"],
-            ["usd_per_war", "$ per proj WAR", "cost_plus", f"Spotrac CBT payroll 2027 over projected 2027 WAR; plain dollars, no ladder; {NO_ARB_IN_DENOM}"],
+            ["usd_per_win", "$ per proj win", "cost_plus", f"the Cost+ denominator over team_win_projections 2027 wins ({tw}) less the locked free agents' 2027 WAR; plain dollars; {COST_PLUS_SIDES}"],
+            ["cost_plus", "Cost+", "cost_plus", f"100+10z of projected 2027 WAR per $M of the denominator across the 30 clubs; descriptive index, numerator {tw}; {COST_PLUS_SIDES}"],
+            ["usd_per_war", "$ per proj WAR", "cost_plus", f"the Cost+ denominator over projected 2027 WAR less the locked free agents' 2027 WAR; plain dollars, no ladder; {COST_PLUS_SIDES}"],
             ["locked_pct", "Locked", "controlled_surplus", "share of 2027-31 core WAR under club control (a share of a projection)"],
             ["controlled_surplus_mm", "Controlled surplus", "controlled_surplus", "$M: MLB leg (surNpv) + farm leg (org active surplus), sums of means; plain"],
             ["arb_exposure_2027", "Arb exposure 2027", "arb_exposure", "not a payroll forecast: assumes every player is tendered; a non-tender lowers the figure; arb_award provisional"],
@@ -1704,8 +1842,13 @@ def build_all() -> tuple:
         "pools": {"cost_plus": {"mean_ratio": _r(mu, 4), "sd_ratio": _r(sd, 4), "n": len(vals),
                                 "mean_index": _r(statistics.mean(cp), 2), "sd_index": _r(statistics.pstdev(cp), 2),
                                 "averages_excluded": True,
-                                "spearman_vs_neg_cbt_payroll": _r(rho_pay, 3), "spearman_vs_proj_war": _r(rho_war, 3),
-                                "n_spearman": len(rk)}},
+                                "spearman_vs_neg_denominator": _r(rho_pay, 3), "spearman_vs_proj_war": _r(rho_war, 3),
+                                "n_spearman": len(rk),
+                                "n_guaranteed_aav_basis": sum(1 for c in clubs
+                                                              if club_docs[c]["payroll"]["cbt_basis_2027"]["source"] == "guaranteed_aav"),
+                                "locked_fa_n": sum(club_docs[c]["indexes"]["locked_fa_2027"]["n"] for c in clubs),
+                                "locked_fa_war": _r(sum(locked_fa_by_club[c][1] for c in clubs if c in locked_fa_by_club), 1),
+                                "locked_fa_not_in_projections": len(locked_keys) - n_locked_in_vets}},
         "quadrant": {"x": "cbt_payroll_2026", "y": "controlled_surplus_mm", "unit": "$M", "min_width_px": 700},
         "cba_banner": True,
     }
@@ -1768,8 +1911,10 @@ def build_all() -> tuple:
                                         "rate, which the computed bill does"),
         "tax_floor_flag": "below own contracts",
         "tax_floor_note": ("Spotrac's 2027 tax payroll sits below the AAV of this club's own guaranteed 2027 "
-                           "contract rows (club and mutual option years left out). The figure prints as "
-                           "Spotrac publishes it; the 2027 space and Cost+ built on it overstate the room."),
+                           "contract rows (club and mutual option years left out), so the larger figure, the "
+                           "guaranteed AAV, stands in for it in the 2027 space, the 2027 CBT block, Cost+ and "
+                           "the $ per projected win and WAR; Spotrac's own figure prints beside it."),
+        "cbt_basis_aav_label": "guaranteed contract AAV used",
         "split_2026_note": ("the 2026 Spotrac payroll page carries no active / injured / retained / "
                             "buried split; the strip is drawn for 2027 only"),
         "split_2027_label": "2027 allocations, Spotrac",
@@ -1843,16 +1988,28 @@ def build_all() -> tuple:
                                  "MLB and farm legs by construction and is never added to them"),
         "trajectory_note": "since late June, no earlier history",
         "trajectory_loading": "the series loads per club",
-        "ratio_bases": (f"Spotrac CBT payroll {CLASS_YEAR} over team_win_projections {CLASS_YEAR} ({tw})"),
-        "cost_plus_basis": ("descriptive index: a ratio of two served numbers, not a model. The denominator is "
-                            f"Spotrac's {CLASS_YEAR} CBT payroll, which carries no arbitration or pre-arbitration "
-                            f"salaries, while the numerator is the whole projected {CLASS_YEAR} roster, so the index "
-                            + ("runs mostly as an inverse payroll rank" if abs(rho_pay or 0) > abs(rho_war or 0)
-                               else "reads payroll as well as WAR")
+        "ratio_bases": (f"the three Cost+ denominator parts over team_win_projections {CLASS_YEAR} wins ({tw}) "
+                        f"less the {CLASS_YEAR} WAR of the club's locked free agents"),
+        "cost_plus_basis": ("descriptive index, not a model: projected " f"{CLASS_YEAR} WAR, less the {CLASS_YEAR} "
+                            "WAR of the club's locked free agents, per $M of three parts printed beside it and never "
+                            f"added into one payroll figure: guaranteed {CLASS_YEAR} salaries (Spotrac's "
+                            f"{CLASS_YEAR} CBT payroll, or the club's own guaranteed contract AAV where that is "
+                            f"larger), the platform's projected {CLASS_YEAR} arbitration awards and the "
+                            "pre-arbitration minimum rungs. The index "
+                            + ("runs mostly as an inverse cost rank" if abs(rho_pay or 0) > abs(rho_war or 0)
+                               else "reads cost as well as WAR")
                             # printed from the stored 3dp value, so the copy and the pool
                             # key can never round to different last digits (0.8749 -> 0.875)
-                            + f": Spearman {_r(rho_pay, 3):.2f} against minus the CBT "
-                            f"payroll and {_r(rho_war, 3):.2f} against projected WAR across {len(rk)} clubs"),
+                            + f": Spearman {_r(rho_pay, 3):.2f} against minus the three parts together "
+                            f"and {_r(rho_war, 3):.2f} against projected WAR less the locked free agents "
+                            f"across {len(rk)} clubs"),
+        "cost_plus_part_labels": {"guaranteed": f"Guaranteed {CLASS_YEAR} salaries (CBT payroll)",
+                                  "arb": f"Projected {CLASS_YEAR} arbitration awards",
+                                  "prearb": "Pre-arbitration minimum rungs"},
+        "cost_plus_numerator_label": f"Projected {CLASS_YEAR} WAR less locked free agents",
+        "cost_plus_parts_note": ("the three parts print apart and are never added into a payroll figure; a "
+                                 f"rung for a player whose {CLASS_YEAR} salary is already a contract on file is "
+                                 "left out of the arbitration parts, since the guaranteed part carries it"),
         "cost_plus_registry": "no registry row: Cost+ predicts nothing; a skill claim would need an eval first",
         "orgsur_chip": "descriptive, unvalidated",
         "farm_leaves": {k: {"basis": LEAF_VALUE[k][2], "weight": leaf_weights.get(k)} for k in FIN_LEAVES},
@@ -2451,6 +2608,14 @@ def _assert_document(doc: dict) -> None:
         s27 = bs.get(CLASS_YEAR) or [CLASS_YEAR, 0, 0, 0, 0, 0]
         assert s27[1] + s27[3] == d["arbitration"]["s2027_usd"], (c, "by_season 2027 != s2027_usd")
         assert sum(r[1] + r[3] for r in bs.values()) == d["arbitration"]["remaining_usd"], (c, "by_season != remaining")
+        # the Cost+ arbitration parts are the by_season 2027 rungs less the rungs
+        # left out for a contract on file (M13-4), and the space reads the basis
+        cp = d["indexes"]["cost_plus_parts"]
+        assert cp["arb_usd"] + cp["prearb_usd"] + cp["contract_dropped_usd"] == d["arbitration"]["s2027_usd"], (c, "cost parts")
+        b27 = d["payroll"]["cbt_basis_2027"]
+        if b27["usd"] is not None:
+            assert sp["spotrac_usd"] + b27["usd"] == SPOTRAC_2027_BASIS_USD, (c, "space vs basis")
+            assert d["cbt"]["2027"]["tax_payroll_usd"] == b27["usd"] == cp["guaranteed_usd"], (c, "basis")
         assert d["surplus"]["reconciliation"]["status"] == "exact", (c, d["surplus"]["reconciliation"])
         assert d["shard"]["path"] == f"{SHARD_DIRNAME}/{c}.json", c
         assert ("trajectory" not in d["surplus"] and "trajectory_active" not in d["farm"]

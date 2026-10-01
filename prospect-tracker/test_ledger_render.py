@@ -1047,10 +1047,12 @@ def test_the_js_reads_every_shard_column_through_the_legend():
 
 
 def test_a_club_below_its_own_contract_floor_is_flagged_on_the_league_board_and_c1():
-    """M09-03: Spotrac's 2027 tax payroll prints as published; a flag says it sits
-    below the club's own guaranteed 2027 contract AAV."""
+    """M09-03 and owner answer M13-1: a club whose Spotrac 2027 tax payroll sits
+    below its own guaranteed 2027 contract AAV takes the AAV as its 2027 basis;
+    the tile prints the basis, names Spotrac's figure and flags the substitution."""
     s = _copy.deepcopy(SAMPLE)
     s["copy"]["tax_floor_flag"] = "below own contracts"
+    s["copy"]["cbt_basis_aav_label"] = "guaranteed contract AAV used"
     s["copy"]["tax_floor_note"] = "Spotrac's 2027 tax payroll sits below the AAV of this club's own guaranteed 2027 contract rows"
     for r in s["league"]["rows"]:
         r["tax_floor_below_2027"] = r["club"] == "TBR"
@@ -1061,11 +1063,38 @@ def test_a_club_below_its_own_contract_floor_is_flagged_on_the_league_board_and_
     assert "ledger-flag" not in lad
     s["clubs"]["LAD"]["payroll"]["tax_floor_2027"] = {"guaranteed_aav_usd": 400 * M, "n_rows": 12, "n_option_rows_excluded": 0,
                                                       "spotrac_tax_payroll_usd": 372907413, "gap_usd": 372907413 - 400 * M, "below": True}
+    s["clubs"]["LAD"]["payroll"]["cbt_basis_2027"] = {"usd": 400 * M, "source": "guaranteed_aav", "spotrac_usd": 372907413,
+                                                      "guaranteed_aav_usd": 400 * M, "n_rows": 12}
     club, _ = _render("club", payload=s, team="LAD", season="2027")
-    assert "below own contracts" in club and "guaranteed 2027 contract AAV $400.0M on 12 rows, $27.1M above this figure" in club
-    assert "$372.9M" in club, "Spotrac's figure still prints"
+    payroll = _block(club, "payroll") if 'id="ledger-block-payroll"' in club else club
+    assert '<div class="ledger-tile-big ">$400.0M</div>' in payroll, "the 2027 tile prints the basis"
+    assert "guaranteed contract AAV used" in club
+    assert "Spotrac publishes $372.9M; the guaranteed 2027 contract AAV on 12 rows is $400.0M" in club, "Spotrac's figure still prints"
     s["clubs"]["LAD"]["payroll"]["tax_floor_2027"]["below"] = False
-    assert "below own contracts" not in _render("club", payload=s, team="LAD", season="2027")[0]
+    assert "guaranteed contract AAV used" not in _render("club", payload=s, team="LAD", season="2027")[0]
+
+
+def test_cost_plus_prints_its_three_parts_apart_and_its_numerator():
+    """Owner answers M13-4 and COSTPLUS-1: under the index the numerator less the
+    locked free agents and the three denominator parts, each on its own row; no
+    row adds them up."""
+    s = _copy.deepcopy(SAMPLE)
+    s["copy"]["cost_plus_part_labels"] = {"guaranteed": "Guaranteed 2027 salaries (CBT payroll)",
+                                          "arb": "Projected 2027 arbitration awards", "prearb": "Pre-arbitration minimum rungs"}
+    s["copy"]["cost_plus_numerator_label"] = "Projected 2027 WAR less locked free agents"
+    s["copy"]["cost_plus_parts_note"] = "the three parts print apart"
+    I = s["clubs"]["LAD"]["indexes"]
+    I.update({"cost_plus_parts": {"guaranteed_usd": 372907413, "guaranteed_source": "spotrac", "arb_usd": 7517000, "n_arb": 1,
+                                  "prearb_usd": 11700000, "n_prearb": 15, "n_null_rungs": 0,
+                                  "contract_dropped_usd": 780000, "n_contract_dropped": 1},
+              "locked_fa_2027": {"n": 8, "war": 7.7}, "proj_war_2027": 51.4, "proj_war_2027_ex_fa": 43.7})
+    html, _ = _render("club", payload=s, team="LAD")
+    assert "<tr><td>Projected 2027 WAR less locked free agents</td><td>51.4 less 7.7 (8 locked free agents) = 43.7</td></tr>" in html
+    assert "<tr><td>Guaranteed 2027 salaries (CBT payroll)</td><td>$372.9M</td></tr>" in html
+    assert "<tr><td>Projected 2027 arbitration awards (1)</td><td>$7.5M</td></tr>" in html
+    assert "<tr><td>Pre-arbitration minimum rungs (15)</td><td>$11.7M</td></tr>" in html
+    assert "$392.1M" not in html, "the three parts are never added on the page"
+    assert "here 1 rung ($0.8M)" in html
 
 
 def test_the_2027_spotrac_estimate_says_it_is_surcharges_only_and_the_difference_takes_no_sign_colour():
