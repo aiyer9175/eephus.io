@@ -32426,9 +32426,12 @@ function palFitPanel(p) {
       <div style="font-size:10px;color:var(--text-tertiary);line-height:1.45;margin-top:5px;">${escapeHtml(lead)}${shape != null ? ` (starter shape <b style="color:var(--text-secondary);">${shape}/100</b>)` : ""}. Shape-only screen from the scout tool grades - open the <strong>Alchemy Lab</strong> for the full role-fit breakdown.</div>
     </div>`;
 }
-// ===== AAA Statcast hitter sidecar (data/statcast_aaa_hitters.json) =========
-// Savant minors (AAA tracked parks) batter aggregates - each hitter's latest
-// >=100 PA tracked season, keyed by_mlbam. Batter analog of stuff_plus_aaa.json
+// ===== Statcast (tracked parks) hitter sidecar (data/statcast_aaa_hitters.json) =====
+// Savant minors batter aggregates from every Hawk-Eye tracked park (every AAA
+// park and the Single-A Florida State League; owner answer M25AAA-2 keeps
+// every row and labels it, so the card is NOT titled AAA). Each hitter's latest
+// >=100 PA tracked season, keyed by_mlbam, with `levels` naming the tracked
+// level(s) of his season lines that season. Batter analog of stuff_plus_aaa.json
 // but LAZY (ensurePalFit pattern): fetched once on the first HITTER detail
 // card, cached on a module-level var, repainted via scheduleRender when it
 // lands. bat_speed is null in the current payload - deliberately not rendered.
@@ -32479,15 +32482,22 @@ function _aaaFetchedSuffix(season) {
 }
 // Hover provenance for the card's season line: source, fetch date and the
 // data-through date, all read from the sidecar.
-function _aaaProvenance(season) {
+function _aaaProvenance(season, levels) {
   const parts = [_AAA_STATCAST_SOURCE || "Baseball Savant statcast search, minors"];
+  if (Array.isArray(levels) && levels.length) {
+    parts.push(`level ${levels.map(_aaaLevelLabel).join(" + ")}, from his MiLB season lines in tracked leagues`);
+  }
   const f = _AAA_STATCAST_FETCHED[String(season)];
   const t = _AAA_STATCAST_THROUGH[String(season)];
   if (f) parts.push(`fetched ${f}`);
   if (t) parts.push(`games through ${t}`);
   return parts.join("; ");
 }
-// Compact "AAA Statcast" pill row on the hitter detail card - the batter-side
+// "A (FSL)": the only tracked Single-A league is the Florida State League.
+function _aaaLevelLabel(lv) {
+  return lv === "A" ? "A (FSL)" : String(lv);
+}
+// Compact "Statcast (tracked parks)" pill row on the hitter detail card - the batter-side
 // mirror of palFitPanel (which is pitchers-only). Returns "" whenever the
 // player is a pitcher or has no sidecar row: no empty shell. The pill row
 // flex-wraps so narrow viewports stack pills instead of overflowing.
@@ -32508,21 +32518,25 @@ function aaaStatcastPanel(p) {
   const luck = (r.luck_gap != null && isFinite(r.luck_gap)) ? Number(r.luck_gap) : null;
   const luckTxt = (luck != null) ? `${luck > 0 ? "+" : ""}${luck.toFixed(3)}` : null;
   const luckCls = (luck == null || luck === 0) ? "is-neutral" : (luck > 0 ? "is-pos" : "is-neg");
-  const luckTitle = "Luck gap = xwOBA minus wOBA at AAA. Positive: his AAA line understates the underlying contact quality (xwOBA above wOBA), so the surface stats sell him short. Negative: results have outrun the contact quality.";
+  const luckTitle = "Luck gap = xwOBA minus wOBA in tracked parks. Positive: his tracked-park line understates the underlying contact quality (xwOBA above wOBA), so the surface stats sell him short. Negative: results have outrun the contact quality.";
   const pills = [
-    pill("xwOBA", f3(r.xwoba), "Expected wOBA from contact quality (exit velo + launch angle) plus real K/BB, AAA tracked parks only."),
-    pill("EV", f1(r.ev) != null ? `${f1(r.ev)} mph` : null, "Average exit velocity on batted balls at AAA."),
-    pill("HardHit%", f1(r.hardhit_percent) != null ? `${f1(r.hardhit_percent)}%` : null, "Share of batted balls hit 95+ mph at AAA."),
-    pill("Whiff%", f1(r.whiff) != null ? `${f1(r.whiff)}%` : null, "Swings and misses per swing at AAA."),
+    pill("xwOBA", f3(r.xwoba), "Expected wOBA from contact quality (exit velo + launch angle) plus real K/BB, tracked parks only (every AAA park and the Single-A Florida State League)."),
+    pill("EV", f1(r.ev) != null ? `${f1(r.ev)} mph` : null, "Average exit velocity on batted balls in tracked parks."),
+    pill("HardHit%", f1(r.hardhit_percent) != null ? `${f1(r.hardhit_percent)}%` : null, "Share of batted balls hit 95+ mph in tracked parks."),
+    pill("Whiff%", f1(r.whiff) != null ? `${f1(r.whiff)}%` : null, "Swings and misses per swing in tracked parks."),
     pill("Luck", luckTxt, luckTitle, luckCls),
   ].filter(Boolean).join("");
   if (!pills) return "";               // every metric null -> skip entirely
-  const suffix = [r.season != null ? `AAA ${r.season}${_aaaFetchedSuffix(r.season)}` : "AAA",
+  // The level(s) the season's line came from, beside the season: "AAA 2026",
+  // "A (FSL) 2026", "AAA + A (FSL) 2025". No levels -> the season alone.
+  const lvl = (Array.isArray(r.levels) && r.levels.length) ? r.levels.map(_aaaLevelLabel).join(" + ") : "";
+  const seasonTxt = r.season != null ? [lvl, `${r.season}${_aaaFetchedSuffix(r.season)}`].filter(Boolean).join(" ") : lvl;
+  const suffix = [seasonTxt || null,
                   r.pa != null ? `${r.pa} PA` : null, "Savant"].filter(Boolean).join(", ");
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
-        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">AAA Statcast</div>
-        <div class="aaa-statcast-asof" style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;" title="${escapeHtml(_aaaProvenance(r.season))}">${escapeHtml(suffix)}</div>
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Statcast (tracked parks)</div>
+        <div class="aaa-statcast-asof" style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;" title="${escapeHtml(_aaaProvenance(r.season, r.levels))}">${escapeHtml(suffix)}</div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;">${pills}</div>
     </div>`;
@@ -32567,8 +32581,8 @@ function _alevelSigFor(p) {
   return _ALEVEL_SIG.by_mlbam[String(mid)] || null;
 }
 // Compact one-pill panel on the detail card Overview - sits directly after
-// the AAA Statcast panel slot (hitters) and doubles as the pitcher home,
-// since the AAA panel is hitters-only and the A/CPX signal pool barely
+// the Statcast (tracked parks) panel slot (hitters) and doubles as the pitcher home,
+// since that panel is hitters-only and the A/CPX signal pool barely
 // overlaps it. Muted header suffix carries level + season + n_pitches.
 function alevelSignalPanel(p) {
   if (!p) return "";
@@ -51418,7 +51432,7 @@ function renderPlayerDetail(key) {
   const efvCardHtml = efvDetailCard(p);   // eFV outcome read (primary grade's distribution + surplus)
   const efvProxyHtml = (typeof efvProxyPanel === "function") ? efvProxyPanel(p) : "";  // leading indicator
   const palFitHtml = (typeof palFitPanel === "function") ? palFitPanel(p) : "";  // PAL role-conversion cross-link (pitchers)
-  const aaaStatcastHtml = (typeof aaaStatcastPanel === "function") ? aaaStatcastPanel(p) : "";  // AAA Statcast contact-quality pills (hitters)
+  const aaaStatcastHtml = (typeof aaaStatcastPanel === "function") ? aaaStatcastPanel(p) : "";  // Statcast (tracked parks) contact-quality pills (hitters)
   const alevelSignalHtml = (typeof alevelSignalPanel === "function") ? alevelSignalPanel(p) : "";  // A-ball Statcast signal pill (S-XLINE-4; the panel computes nothing, the overlay reading the same sidecar leans eFV)
   const apPaceHtml = (typeof apPacePanel === "function") ? apPacePanel(p) : "";  // Advancement Pace+ ladder-pace panel (W5, descriptive display only, hitters)
   // Archetype comps panel is BUILT BUT DELIBERATELY UNWIRED (2026-07-29). It was

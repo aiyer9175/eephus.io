@@ -100,7 +100,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6. FA refresh + export (fa_* sidecars) | timeseries.json |
 | 6b. MLB projections export (mlb_projections.json) | mlb_projections.json, swing_plus.json |
 | 6b2. Swing+ scoring (swing_plus.json) | swing_plus.json |
-| 6b2a. AAA Savant batter refresh (statcast_aaa_hitters.json) | statcast_aaa_hitters.json |
+| 6b2a. Savant minors batter refresh, tracked parks (statcast_aaa_hitters.json) | statcast_aaa_hitters.json |
 | 6b2b. AAA Stuff+ re-score (stuff_plus_aaa.json) | stuff_plus_aaa.json |
 | 6b2c. Modern-signal snapshots (data/signal_snapshots/) | - |
 | 6b3. MLB player detail export (mlb_player_detail.json) | mlb_player_detail.json |

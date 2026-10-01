@@ -9044,6 +9044,31 @@
    ],
    "shelf": "industry",
    "origin": "Industry metric. MLB Statcast (Baseball Savant) pop time, exchange and arm strength."
+  },
+  {
+   "id": "statcast_tracked_parks",
+   "term": "Statcast (tracked parks)",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Statcast (tracked parks)",
+    "minors Statcast"
+   ],
+   "priority": 50,
+   "definition": "The minor-league Statcast line on a PROSPX hitter card: Baseball Savant's minors aggregates (xwOBA, exit velocity, hard-hit%, whiff% and a luck gap) from the parks that carry Hawk-Eye tracking, which are every AAA park and the Single-A Florida State League. The card names the level the line came from beside the season: AAA, A (FSL), or both.",
+   "methodology": "Source: the Baseball Savant statcast search for the minors, regular season, one aggregate row per batter. Only tracked parks report, so the line is not a full-season line for a player who also played in an untracked league (A+, AA, the complex leagues, or a non-FSL Single-A league). The card shows each hitter's latest season with 100 or more tracked PA, from 2023 on.\n\nThe level comes from the player's MiLB season lines that season (MLB StatsAPI), keeping the lines in a tracked league: AAA in any league and A in the Florida State League only. Savant's aggregate has no level column. The rule is checked against the data: each row's Savant PA must equal the PA of those lines for nearly every row.\n\nLuck gap = xwOBA minus wOBA. Positive means the results trail the contact quality.\n\nThe current season refreshes monthly and the card prints the last game date it covers. This display copy is separate from the copy eFV (S-XLINE) and SC+ read, which moves to the full season at the fWAR label epoch. Descriptive only; no forward claim.",
+   "origin": "Industry data. MLB Statcast minor-league tracking (Baseball Savant); the level label is derived here from MLB StatsAPI season lines.",
+   "seeAlso": [
+    "xwoba",
+    "exit_velocity",
+    "hard_hit_pct",
+    "whiff_pct",
+    "statcast_plus",
+    "s_xline"
+   ],
+   "shelf": "industry"
   }
  ]
 }

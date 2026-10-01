@@ -3,25 +3,44 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""AAA Statcast hitter sidecar - the batter analog of stuff_plus_aaa.json.
+"""Statcast (tracked parks) hitter sidecar - the batter analog of
+stuff_plus_aaa.json. The file keeps its historical name; the card it feeds
+reads "Statcast (tracked parks)" (owner answer M25AAA-2, 2026-10-01).
 
   DATA     the Savant minors batter aggregates (the statcast-search minors
-           player CSV, request arkmetric_forward_eval.SAVANT; AAA tracked
-           parks, coverage begins 2023), read per season from one of TWO
-           caches:
+           player CSV, request arkmetric_forward_eval.SAVANT; coverage begins
+           2023), read per season from one of TWO caches:
              .cache/savant_minors_live/batter_<season>.csv  the current
                  season, refreshed by refresh() (run_monthly step 6b2a);
                  read by THIS CARD ONLY.
              .cache/savant_minors/batter_<season>.csv  the model cache that
                  arkmetric_forward_eval.savant_rows maintains; used for every
                  season the live cache does not hold.
+  PARKS    the Savant minors search covers every Hawk-Eye tracked park, not
+           AAA alone: every AAA park (International and Pacific Coast
+           Leagues) and the Single-A Florida State League. Measured on the
+           2026-10-01 bake: 1,631 of 1,640 rows' Savant PA equal the PA of
+           the player's AAA plus Florida State League season lines exactly,
+           7 differ by 1 PA, 2 cover part of an FSL line, and no row
+           has a Savant line without one of those two. A+ and AA parks do not
+           appear. So a hitter with no AAA line (154 of the 720 2026 rows,
+           for example Dax Kilby) carries his FSL line here.
   ROWS     each mlbam with >= 100 PA in a season; the LATEST qualified
-           season wins (seasons walked ascending, later overwrites).
+           season wins (seasons walked ascending, later overwrites). Every
+           row is kept (owner answer M25AAA-2: keep and relabel, no AAA-only
+           filter).
   FIELDS   xwoba / woba / xslg / slg, ev (launch_speed), hardhit_percent,
            barrels_per_bbe_percent, whiff (swing_miss_percent), bat_speed
            (null - the minors aggregate export does not carry it yet),
            luck_gap = round(xwoba - woba, 3) (positive = under-performed
-           the contact quality), pa, season.
+           the contact quality), pa, season, levels.
+  LEVELS   levels = the level(s) the season's Statcast line came from,
+           highest first: the player's MiLB season lines that season
+           (milb_history cache, offline) with PA > 0 in a tracked league,
+           AAA in any league and A in the Florida State League only. Savant's
+           aggregate carries no level or league column, so the season lines
+           are the only source. [] when the cache holds no such line (none on
+           the 2026-10-01 bake). A label, never an input to any number.
 
 WHY TWO CACHES (owner answer M25-3, 2026-09-25, held until fWAR epoch step M).
 The model cache's batter_2026.csv is not a card-only input. Three served model
@@ -39,13 +58,15 @@ SEASONS 2023-2025 only, so its forward eval never reads a 2026 file.
 Sidecar: data/statcast_aaa_hitters.json {"generated_at", "note", "source",
 "source_fetched": {season: fetch date}, "source_through": {season: last
 regular-season game date the CSV covers}, "by_mlbam": {mlbam: {...}}}.
-Consumer: the PROSPX hitter-card "AAA Statcast" pill row (aaaStatcastPanel),
-which prints the data-through date and the source.
+Consumer: the PROSPX hitter-card "Statcast (tracked parks)" pill row
+(aaaStatcastPanel), which prints each row's level(s) beside the season, the
+data-through date and the source.
 
 MONTHLY PHASE (refresh): gated to the AAA regular season (StatsAPI /seasons,
 sportId 11) plus ONE final pull after it ends, so the card's last 2026 read
-covers the whole regular season. One request per run, cached, never more often
-than REFRESH_TTL_S. A failed or malformed fetch keeps the last good file and
+covers the whole AAA regular season. The gate reads the AAA calendar only;
+the Florida State League rows ride the same request. One request per run,
+cached, never more often than REFRESH_TTL_S. A failed or malformed fetch keeps the last good file and
 returns ok=False for the ingest-health ledger; nothing here raises.
 
 Run: python statcast_aaa_hitters.py            (bake the sidecar from the caches)
@@ -70,14 +91,22 @@ DATA_DIR = ROOT / "data"
 OUT_PATH = DATA_DIR / "statcast_aaa_hitters.json"
 LIVE_DIR = ROOT / ".cache" / "savant_minors_live"
 
-SEASONS = (2023, 2024, 2025, 2026)   # AAA Statcast tracking begins 2023
+SEASONS = (2023, 2024, 2025, 2026)   # Savant minors coverage begins 2023
 MIN_PA = 100
 
-NOTE = ("Savant minors (AAA tracked parks) batter aggregates 2023+, latest "
-        ">=100 PA season per player; luck_gap = round(xwoba - woba, 3), "
+NOTE = ("Savant minors Statcast (tracked parks: every AAA park and the "
+        "Single-A Florida State League) batter aggregates 2023+, latest "
+        ">=100 PA season per player; levels = the tracked level(s) of the "
+        "player's season lines that season; luck_gap = round(xwoba - woba, 3), "
         "positive = under-performed the contact quality")
-SOURCE = ("Baseball Savant statcast search, minors (AAA tracked parks), "
-          "regular season, batters with 100+ PA")
+SOURCE = ("Baseball Savant statcast search, minors (tracked parks: every AAA "
+          "park and the Single-A Florida State League), regular season, "
+          "batters with 100+ PA")
+
+# The tracked leagues by level (see PARKS in the module docstring). None =
+# every league at that level. Level labels and league names are the
+# milb_history cache's own.
+TRACKED_LEAGUES = {"AAA": None, "A": frozenset({"FSL", "Florida State League"})}
 
 AAA_SPORT_ID = 11
 SEASONS_API = "https://statsapi.mlb.com/api/v1/seasons/{season}?sportId={sport}"
@@ -163,6 +192,30 @@ def season_rows(season: int) -> tuple[list[dict], str]:
     return af.savant_rows(season, "batter", fetch=False), "model"
 
 
+def tracked_lines(mlbam: int, season: int) -> list[dict]:
+    """The player's MiLB season lines (milb_history cache, offline) in a
+    tracked league that season, PA > 0."""
+    import milb_history as mh
+    out = []
+    for r in mh.player_index(int(season), "hitting", fetch=False).get(int(mlbam), []):
+        lv = r.get("level")
+        if lv not in TRACKED_LEAGUES or not (_f(r.get("pa")) or 0) > 0:
+            continue
+        leagues = TRACKED_LEAGUES[lv]
+        if leagues is not None and (r.get("league") or "").strip() not in leagues:
+            continue
+        out.append(r)
+    return out
+
+
+def tracked_levels(mlbam: int, season: int) -> list[str]:
+    """The level(s) a season's Statcast line came from, highest first (see
+    LEVELS in the module docstring)."""
+    import milb_history as mh
+    lvls = {r["level"] for r in tracked_lines(mlbam, season)}
+    return sorted(lvls, key=lambda lv: -mh._LEVEL_RANK.get(lv, -1))
+
+
 def build(seasons=SEASONS) -> dict:
     """Payload from the cached CSVs only (never fetches)."""
     import arkmetric_forward_eval as af
@@ -178,7 +231,9 @@ def build(seasons=SEASONS) -> dict:
             pa = _f(r.get("pa"))
             if mid is None or pa is None or pa < MIN_PA:
                 continue
-            by_mlbam[str(int(mid))] = _row(r, season)
+            row = _row(r, season)
+            row["levels"] = tracked_levels(int(mid), season)
+            by_mlbam[str(int(mid))] = row
             n += 1
         log.info("aaa statcast hitters %d: %d qualified rows (%s cache)",
                  season, n, which)

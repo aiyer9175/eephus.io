@@ -203,6 +203,7 @@ MODEL_GLOSSARY = {
     "statcast_plus": ["statcast_plus"],
     "stuff_plus_external": ["stuff_grade_plus"],
     "stuff_plus_aaa": ["stuff_plus_aaa"],
+    "statcast_tracked_parks_card": ["statcast_tracked_parks"],  # M25AAA-2 relabel: the PROSPX Statcast (tracked parks) card
     "swing_plus_external": ["swing_plus"],
     # Will's-metrics program 2026-07-23 (docs/wills-2026-07-23/GATES.md): loss ledgers
     # are internal; shipped display surfaces map to their glossary entries.

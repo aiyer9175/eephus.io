@@ -5077,6 +5077,20 @@
    "last_checked": "2026-09-25",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "statcast_tracked_parks_card",
+   "surface": "PROSPX hitter card, Signals tab: the 'Statcast (tracked parks)' pill row (prospx/index.html aaaStatcastPanel), read from data/statcast_aaa_hitters.json, baked by statcast_aaa_hitters.py (run_monthly step 6b2a)",
+   "predicts": "nothing forward. Descriptive: each hitter's latest >=100 PA Baseball Savant minors Statcast line (xwOBA, exit velocity, hard-hit%, whiff%, luck gap = xwOBA minus wOBA) from the Hawk-Eye tracked parks, which are every AAA park and the Single-A Florida State League, with the level(s) the line came from named beside the season",
+   "champion": "Savant minors batter aggregates as published (no model of ours); levels = the tracked levels of the player's MiLB season lines that season (AAA in any league, A in the Florida State League only; milb_history cache)",
+   "baseline": "n/a - a DESCRIPTIVE display of published tracking data, not a predictive model",
+   "metric": "descriptive; no forward gate by design. The level label is checked, not scored: each row's Savant PA must reconcile to the PA of its tracked season lines (test_statcast_aaa_hitters)",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "notes": "Registered 2026-10-01 with owner answer M25AAA-2 (keep the rows and relabel as tracked parks). The card was titled 'AAA Statcast', but Savant's minors search covers every Hawk-Eye tracked park, so 154 of the 720 2026 rows were hitters with no AAA line that season (for example Dax Kilby and Tyson Lewis, whose lines are Florida State League lines). Measured on the 2026-10-01 bake: 1,631 of 1,640 rows' Savant PA equal the PA of the player's AAA plus Florida State League season lines, 7 differ by 1 PA, 2 cover part of an FSL line, and no A+, AA or complex park appears. The card is now titled 'Statcast (tracked parks)' and each row names its level (AAA, A (FSL), or both); every row is kept and no AAA-only filter exists. No served number moved: the relabel added the levels field and changed the note and source strings only. The card reads a card-only live cache refreshed monthly (2026 games through 2026-09-20). The model cache copy that eFV (S-XLINE) and the SC+ re-source read is unchanged, still the 2026-06-22 file, and promotes at fWAR epoch step M (owner answer M25AAA-1). The data file keeps its historical name.",
+   "last_checked": "2026-10-01",
+   "stale": false,
+   "provisional_kind": "measurement_only"
   }
  ],
  "problems": []

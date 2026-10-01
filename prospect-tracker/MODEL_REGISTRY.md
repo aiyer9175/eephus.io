@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-09-24**. `validate()` at generation time: **clean**.
 
-**323 models.** Verdicts: validated: 53, provisional: 138, unvalidated: 44, deprecated: 88.
+**324 models.** Verdicts: validated: 53, provisional: 139, unvalidated: 44, deprecated: 88.
 
 ## Instrument boundary
 
@@ -342,6 +342,7 @@ can be measured.
 | `franchise_branch_score` | /franchise/ canopy bubbles, the full tree and the board c... | nothing. A DESCRIPTIVE 100 + 10z of ONE served value across the 30 clubs (population sd, one decimal): war_leaderboards.teams.w... | franchise_export._score_100 (the storage._zscore_to_100 formula, re-implement... | league mean = 100, +1 population sd = 110 | none standalone; a rank index over served values, each of which carries its o... | **unvalidated** | - | - | - |
 | `efv_v2_h0` | model-dev (rendered as development rows on the glossary S... | score_v2 = P(REACHED) * E[WAR \| REACHED]: consensus-offset hurdle, logistic and weighted-OLS maps on consensus FV fixed as wit... | eFV v1 stays served; H0 is adjudicated only on the reserved frames (R-LV, R-V... | PROSPX consensus (primary) and eFV v1 (non-inferiority, TOST 0.02) on identic... | Spearman vs realized WAR (gate), contributor AUC (veto); E_cond player-cluste... | **provisional** | `data/efv_v2_dev_eval.json` | 0 | no |
 | `efv_v2` | /prospx board and player cards (SERVED since 2026-09-25,... | an ORDER inside each (side, list year) group: order_idx = u_c + w_skill * e_skill + w_time * e_time, u_c the within-group conse... | served: the production fit is fit_v2 on the v1 matrices, decision years befor... | PROSPX consensus FV (the order it reorders) and eFV v1 on identical rows | development: within-(side, vintage) Spearman vs the outcome label (DS-15 stat... | **provisional** | `data/efv_v2_dev_eval.json` | 0 | no |
+| `statcast_tracked_parks_card` | PROSPX hitter card, Signals tab: the 'Statcast (tracked p... | nothing forward. Descriptive: each hitter's latest >=100 PA Baseball Savant minors Statcast line (xwOBA, exit velocity, hard-hi... | Savant minors batter aggregates as published (no model of ours); levels = the... | n/a - a DESCRIPTIVE display of published tracking data, not a predictive model | descriptive; no forward gate by design. The level label is checked, not score... | **provisional** | - | - | no |
 
 Stored problems at last refresh: none.
 

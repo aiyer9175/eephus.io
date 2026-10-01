@@ -399,9 +399,10 @@ SCHEDULED_EXPORTS = (
     # never off a heartbeat, because a heartbeat cannot witness a night the
     # pipeline did not run at all. See _vintage_capture_gap.
     "vintage_capture_gap",
-    # The AAA Savant batter refresh behind the PROSPX "AAA Statcast" card
-    # (step 6b2a, owner answer M25-3). A refused or failed fetch keeps the last
-    # good CSV and files ok=False here, so a card frozen at an old date shouts.
+    # The Savant minors refresh behind the PROSPX "Statcast (tracked parks)"
+    # card (step 6b2a, owner answer M25-3). A refused or failed fetch keeps the
+    # last good CSV and files ok=False here, so a card frozen at an old date
+    # shouts.
     "savant_aaa_batters",
     # The postseason bracket simulator (step d10f, docs/betting-2026-10/
     # BRACKET_SIM_GATE.md 9): a crash writes a crash entry and no number, and
@@ -5828,7 +5829,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("swing+ scoring failed — continuing")
 
-        # --- 6b2a. AAA Savant batter refresh (PROSPX AAA Statcast card) --
+        # --- 6b2a. Savant minors batter refresh (PROSPX Statcast (tracked parks) card)
         # Owner answer M25-3 (2026-09-25): refetch the current season's Savant
         # minors batter aggregates monthly and rebake the card sidecar. Gated to
         # the AAA regular season plus ONE final pull after it ends; one request,
@@ -5837,7 +5838,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # .cache/savant_minors_live/, which only this card reads: the model
         # cache that S-XLINE eFV and the SC+ re-source read stays as it is
         # until the fWAR epoch's step M (see statcast_aaa_hitters.py).
-        with _step("6b2a. AAA Savant batter refresh (statcast_aaa_hitters.json)", log):
+        with _step("6b2a. Savant minors batter refresh, tracked parks (statcast_aaa_hitters.json)", log):
             try:
                 from statcast_aaa_hitters import refresh as _aaa_bat_refresh
                 _ab = _aaa_bat_refresh()
@@ -5845,7 +5846,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                int(_ab.get("n_hitters") or 0),
                                str(_ab.get("message") or "")[:200], log=log)
             except Exception as _e:
-                log.exception("aaa savant batter refresh failed - continuing")
+                log.exception("savant minors batter refresh failed - continuing")
                 _record_ingest("savant_aaa_batters", False, 0,
                                f"crashed: {_e}"[:200], log=log)
 

@@ -3,8 +3,8 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""Offline unit tests for the AAA Statcast hitter sidecar
-(statcast_aaa_hitters.py). Builds from the cached Savant minors batter
+"""Offline unit tests for the Statcast (tracked parks) hitter sidecar
+(statcast_aaa_hitters.py; the file keeps its old name, the card does not). Builds from the cached Savant minors batter
 CSVs in .cache/savant_minors/ - no network - and pins the payload shape,
 a known covered mlbam, the latest-season-wins rule, and the luck_gap
 arithmetic. The monthly refresh tests (step 6b2a, owner answer M25-3) redirect
@@ -32,7 +32,7 @@ pytestmark = pytest.mark.skipif(
 
 ROW_KEYS = {"xwoba", "woba", "xslg", "slg", "ev", "hardhit_percent",
             "barrels_per_bbe_percent", "whiff", "bat_speed", "luck_gap",
-            "pa", "season"}
+            "pa", "season", "levels"}
 
 
 @pytest.fixture(scope="module")
@@ -107,13 +107,69 @@ def test_source_fetched_reads_the_file_time(tmp_path):
     assert sah.source_fetched((2025, 2026), tmp_path) == {"2026": "2026-06-22"}
 
 
+def _card_block() -> str:
+    html = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    start = html.index("// ===== Statcast (tracked parks) hitter sidecar")
+    return html[start:html.index("// ===== A-ball Statcast signal pill", start)]
+
+
+def test_the_card_is_titled_tracked_parks_and_names_the_level():
+    """Owner answer M25AAA-2 (2026-10-01): the Savant minors rows cover every
+    tracked park (every AAA park and the Florida State League), so the card
+    keeps every row and is titled "Statcast (tracked parks)", never "AAA
+    Statcast", and prints each row's level(s) beside the season."""
+    block = _card_block()
+    assert '>Statcast (tracked parks)</div>' in block
+    assert "AAA Statcast" not in block
+    assert "at AAA" not in block and "AAA tracked parks" not in block
+    assert "r.levels" in block and "_aaaLevelLabel" in block
+    assert "_aaaProvenance(r.season, r.levels)" in block
+    # keep and relabel: no AAA-only filter on the client either
+    assert 'levels.includes("AAA")' not in block and 'indexOf("AAA")' not in block
+
+
+def test_the_level_rule_is_aaa_anywhere_and_a_in_the_fsl_only(monkeypatch):
+    import milb_history as mh
+    lines = {1: [{"level": "AAA", "league": "PCL", "pa": 300},
+                 {"level": "A", "league": "FSL", "pa": 40},
+                 {"level": "AA", "league": "EAS", "pa": 120},
+                 {"level": "A+", "league": "SAL", "pa": 90},
+                 {"level": "MLB", "league": "AL", "pa": 30}],
+             2: [{"level": "A", "league": "CAL", "pa": 200},
+                 {"level": "CPX", "league": "FCL", "pa": 20},
+                 {"level": "A", "league": "FSL", "pa": 0}],
+             3: [{"level": "A+", "league": "MID", "pa": 250},
+                 {"level": "A", "league": "FSL", "pa": 180}]}
+    monkeypatch.setattr(mh, "player_index", lambda season, group, fetch=True: lines)
+    assert sah.tracked_levels(1, 2026) == ["AAA", "A"]
+    assert sah.tracked_levels(2, 2026) == []
+    assert sah.tracked_levels(3, 2026) == ["A"]
+    assert sah.tracked_levels(4, 2026) == []
+
+
+def test_every_row_names_its_level_and_the_pa_reconciles(payload):
+    """The docstring's PARKS claim, recomputed: the Savant PA of a row equals
+    the PA of its tracked season lines (AAA plus FSL) for nearly every row,
+    every row names a level, and the rows with no AAA line are kept."""
+    import milb_history as mh
+    if not mh.player_index(2026, "hitting", fetch=False):
+        pytest.skip("milb_history 2026 hitting cache absent")
+    by = payload["by_mlbam"]
+    exact = 0
+    for mid, row in by.items():
+        assert row["levels"], f"{mid}: no tracked season line in {row['season']}"
+        pa = sum(int(sah._f(r.get("pa")) or 0)
+                 for r in sah.tracked_lines(int(mid), row["season"]))
+        exact += pa == row["pa"]
+    assert exact / len(by) >= 0.99, (exact, len(by))
+    assert sum(r["levels"] == ["A"] for r in by.values()) > 100
+
+
 def test_the_served_card_prints_the_fetch_date_on_a_partial_season():
     """The PROSPX panel reads source_through (the data-through date) and
     source_fetched, prints the date on a season fetched inside its own year,
     and carries the source as hover provenance."""
-    html = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
-    start = html.index("// ===== AAA Statcast hitter sidecar")
-    block = html[start:html.index("// ===== A-ball Statcast signal pill", start)]
+    block = _card_block()
     assert "source_fetched" in block
     assert "source_through" in block
     assert "_aaaFetchedSuffix" in block
@@ -162,7 +218,8 @@ def live(tmp_path, monkeypatch):
 
 def test_the_phase_is_registered_with_the_monthly_savant_phases():
     src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
-    i = src.index('_step("6b2a. AAA Savant batter refresh (statcast_aaa_hitters.json)"')
+    i = src.index('_step("6b2a. Savant minors batter refresh, tracked parks '
+                  '(statcast_aaa_hitters.json)"')
     assert src.index('_step("6b2. Swing+ scoring') < i < src.index('_step("6b2b. AAA Stuff+')
     body = src[i:src.index('_step("6b2b. AAA Stuff+', i)]
     assert "from statcast_aaa_hitters import refresh" in body
