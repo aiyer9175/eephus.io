@@ -153,13 +153,13 @@ def _cat_raw(player: Mapping[str, float], cat: str, side: str,
     return float(player.get(cat, 0) or 0)  # counting cat: raw total
 
 
-def roto_valuations(pool: Iterable[Mapping], fmt: str = "5x5", side: str = "hit") -> dict:
-    """League-relative valuation for one side of a roto format.
+def roto_params(pool: Iterable[Mapping], fmt: str = "5x5", side: str = "hit") -> dict | None:
+    """The pool constants one side of a roto format is z-scored against:
+    {"fmt", "side", "cats", "rate_means", "mu", "sd"}. None for an empty pool.
 
-    Returns {player_id: {"value": total_z, "cats": {cat: z}}} — higher value is
-    better. `pool` items must carry an "id" plus the stat/PT keys the format's
-    cats need. Value is only comparable WITHIN one side+pool (hitters vs hitters).
-    """
+    Split out of roto_valuations (2026-10-01) so a line that is NOT in the pool
+    (a prospect's projected season, on the /fantasy/ Fantasy Rank) can be
+    valued on the same scale as the pool without joining it."""
     fmt = (fmt or "5x5").lower()
     if fmt not in ROTO_CATS:
         raise ValueError(f"unknown roto format {fmt!r}; expected one of {tuple(ROTO_CATS)}")
@@ -167,7 +167,7 @@ def roto_valuations(pool: Iterable[Mapping], fmt: str = "5x5", side: str = "hit"
     cats = ROTO_CATS[fmt][side]
     players = [p for p in pool]
     if not players:
-        return {}
+        return None
 
     # Pool mean of each RATE cat (PT-weighted so it's the real league rate).
     pt_key = _PT_KEY[side]
@@ -178,23 +178,44 @@ def roto_valuations(pool: Iterable[Mapping], fmt: str = "5x5", side: str = "hit"
             den = sum(float(p.get(pt_key, 0) or 0) for p in players)
             rate_means[cat] = (num / den) if den else 0.0
 
-    # Raw contribution per player per cat, then z-score each cat across the pool.
-    raws: dict[str, list[float]] = {cat: [] for cat in cats}
-    for p in players:
-        for cat in cats:
-            raws[cat].append(_cat_raw(p, cat, side, rate_means.get(cat, 0.0)))
-
-    z: dict[str, list[float]] = {}
+    mu: dict[str, float] = {}
+    sd: dict[str, float] = {}
     for cat in cats:
-        xs = raws[cat]
-        mu = sum(xs) / len(xs)
-        var = sum((x - mu) ** 2 for x in xs) / len(xs)
-        sd = math.sqrt(var)
-        z[cat] = [((x - mu) / sd) if sd else 0.0 for x in xs]
+        xs = [_cat_raw(p, cat, side, rate_means.get(cat, 0.0)) for p in players]
+        m = sum(xs) / len(xs)
+        mu[cat] = m
+        sd[cat] = math.sqrt(sum((x - m) ** 2 for x in xs) / len(xs))
+    return {"fmt": fmt, "side": side, "cats": list(cats), "rate_means": rate_means,
+            "mu": mu, "sd": sd}
 
+
+def roto_value(player: Mapping, params: Mapping) -> tuple[float, dict]:
+    """(summed z, {cat: z}) for one line against roto_params' pool constants.
+    Unrounded; roto_valuations rounds for its own output."""
+    side = params["side"]
+    per = {}
+    for cat in params["cats"]:
+        x = _cat_raw(player, cat, side, (params.get("rate_means") or {}).get(cat, 0.0))
+        s = params["sd"][cat]
+        per[cat] = ((x - params["mu"][cat]) / s) if s else 0.0
+    return sum(per.values()), per
+
+
+def roto_valuations(pool: Iterable[Mapping], fmt: str = "5x5", side: str = "hit") -> dict:
+    """League-relative valuation for one side of a roto format.
+
+    Returns {player_id: {"value": total_z, "cats": {cat: z}}} — higher value is
+    better. `pool` items must carry an "id" plus the stat/PT keys the format's
+    cats need. Value is only comparable WITHIN one side+pool (hitters vs hitters).
+    """
+    players = [p for p in pool]
+    params = roto_params(players, fmt, side)
+    if params is None:
+        return {}
     out: dict = {}
-    for i, p in enumerate(players):
-        per_cat = {cat: round(z[cat][i], 3) for cat in cats}
+    for p in players:
+        _v, z = roto_value(p, params)
+        per_cat = {cat: round(z[cat], 3) for cat in params["cats"]}
         out[p["id"]] = {"value": round(sum(per_cat.values()), 3), "cats": per_cat}
     return out
 

@@ -215,7 +215,7 @@ def _data_vers_script(names: tuple[str, ...]) -> str:
 # starter_history.json are the fantasy card's season-history boards: monthly
 # build-time artifacts like the rest, and the two heaviest lazy fetches in
 # the module, which is exactly the transfer the stamp exists to save.
-FANTASY_DATA_STAMPS = ("fantasy.json", "dfs.json",
+FANTASY_DATA_STAMPS = ("fantasy.json", "dfs.json", "fantasy_rank.json",
                        "hitter_history.json", "starter_history.json")
 DIAMOND_DATA_STAMPS = ("xfv_scoreboard_eval.json",)
 
@@ -4354,7 +4354,7 @@ def build_fantasy() -> str:
     Section keys, which are the contract with the clients (syncTabs compares
     the nav attribute value against the client's own canonical name):
       redraft  streamers | two_start | ros_sp | ros_rp | ros_hitter | buysell | closers
-      dynasty  dynasty | callups | keeper
+      dynasty  dynasty | callups | keeper | fantasy_rank
       dfs      slate | value | optimizer | stacks
     """
     redraft = _fantasy_panel(
@@ -4375,17 +4375,19 @@ def build_fantasy() -> str:
         "dynasty",
         f"Dynasty and keeper value: prospects ranked on {_gl('xfv', 'eFV')}, blended with star "
         "odds, bust risk, ETA and surplus. The board ranks prospects only. Call-up Watch flags who "
-        "is next; the keeper calculator compares a prospect's board rank with the pick a keeper "
-        "costs in a prospects-only draft.",
+        "is next. Fantasy Rank ranks MLB players and prospects on projected fantasy value in your "
+        "format, not on WAR. The keeper calculator compares a rank with the pick a keeper costs, "
+        "in a prospects-only draft or, on its All players pool, a draft of both.",
         # dynasty.js fills this with the LENS control (board order / contending
-        # / rebuilding), not a scoring selector: this board is graded and
-        # ranked, it has no scoring formats. The class stays as-is because
-        # redraft.js and dynasty.js style .fantasy-scoring-bar and .dyn-lensbar
-        # independently.
-        '<div id="dynasty-scoring" class="fantasy-scoring-bar" aria-label="Board lens"></div>',
+        # / rebuilding) on the Dynasty Board, which is graded and has no
+        # scoring formats, and with the FORMAT control on the Fantasy Rank and
+        # the keeper's All players pool (2026-10-01). The class stays as-is
+        # because redraft.js and dynasty.js style .fantasy-scoring-bar and
+        # .dyn-lensbar independently.
+        '<div id="dynasty-scoring" class="fantasy-scoring-bar" aria-label="Board lens or scoring format"></div>',
         "Dynasty",
         [("dynasty", "Dynasty Board"), ("callups", "Call-up Watch"),
-         ("keeper", "Keeper Calculator")],
+         ("keeper", "Keeper Calculator"), ("fantasy_rank", "Fantasy Rank")],
         "dynasty-board", False)
     dfs = _fantasy_panel(
         "dfs",

@@ -61,7 +61,7 @@ ASSETS = ROOT / "assets"
 # without a consumer is a few wasted bytes of inline JSON (also safe). What
 # must never happen is a betting name in any of them, and that is enforced.
 SHIPPED_LISTS = {
-    "build_fantasy": ("fantasy.json", "dfs.json",
+    "build_fantasy": ("fantasy.json", "dfs.json", "fantasy_rank.json",
                       "hitter_history.json", "starter_history.json"),
     "build_diamond": ("xfv_scoreboard_eval.json",),
 }

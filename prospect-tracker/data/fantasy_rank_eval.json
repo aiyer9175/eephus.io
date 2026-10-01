@@ -1,0 +1,230 @@
+{
+ "generated_at": "2026-10-01",
+ "model_id": "fantasy_combined_rank",
+ "question": "Does the combined rank's prospect leg (projected FanGraphs Points above replacement, weighted by arrival) rank a past prospect class by the fantasy value it went on to produce better than the consensus FV rank?",
+ "frame": {
+  "list_vintages": [
+   2018,
+   2019
+  ],
+  "reserved_list_vintages_excluded": [
+   2020,
+   2021
+  ],
+  "reserved_debut_cohort_excluded_from": 2025,
+  "realized_seasons": "Y..Y+4 (2018-2022 and 2019-2023)",
+  "format": "FanGraphs Points (the module default)",
+  "horizon": 5,
+  "discount_rate": 0.07,
+  "league": {
+   "teams": 12,
+   "hit_slots": 12,
+   "pit_slots": 10
+  }
+ },
+ "realized_value": "per season: FanGraphs Points of the realized line (corpus components through the projection algebra; SB from the cached StatsAPI MLB rows; a pitcher's hits allowed at the league BABIP and no saves or holds) minus that season's realized replacement (145th hitter, 121st pitcher), floored at zero, discounted 7% a season, summed over both sides",
+ "point_in_time": "translation fits on debuts through Y-2; playing-time cohort and aging curves through season Y-1; replacement = season Y-1's realized replacement held flat; MiLB inputs read before the listing date; ETA = the vintage ETA eta_backtest reconstructs",
+ "known_leak": "arrival curves are cross-fitted on the other non-reserved list vintages (2018, 2019, 2022, 2023 minus the test vintage), with the test vintage's players removed and debuts after 2024 censored; later vintages inform an earlier test vintage's level base rates",
+ "accounting": {
+  "2018": {
+   "listed": 905,
+   "dropped_reserved_debut": 18,
+   "dropped_no_mlbam": 7,
+   "no_milb_input": 165,
+   "scored": 880,
+   "realized_positive": 118,
+   "km_levels": [
+    "A",
+    "A+",
+    "AA",
+    "AAA",
+    "CPX",
+    "DSL"
+   ],
+   "km_train_rows": 3013
+  },
+  "2019": {
+   "listed": 1160,
+   "dropped_reserved_debut": 46,
+   "dropped_no_mlbam": 12,
+   "no_milb_input": 232,
+   "scored": 1102,
+   "realized_positive": 145,
+   "km_levels": [
+    "A",
+    "A+",
+    "AA",
+    "AAA",
+    "CPX",
+    "DSL"
+   ],
+   "km_train_rows": 2399
+  }
+ },
+ "by_vintage": {
+  "2018": {
+   "n": 880,
+   "rho_prospect_leg": 0.2417,
+   "rho_consensus_fv": 0.3043,
+   "rho_difference": -0.0626,
+   "km_curves_used": {
+    "AAA": [
+     0.3675,
+     0.241,
+     0.2065,
+     0.2065,
+     0.2065,
+     0.2065,
+     0.2065,
+     0.2065,
+     0.2065
+    ],
+    "AA": [
+     0.6844,
+     0.4444,
+     0.3401,
+     0.3292,
+     0.3182,
+     0.3182,
+     0.3182,
+     0.3182,
+     0.3182
+    ],
+    "A+": [
+     0.8894,
+     0.705,
+     0.5461,
+     0.5165,
+     0.487,
+     0.4723,
+     0.4723,
+     0.4723,
+     0.4723
+    ],
+    "A": [
+     0.981,
+     0.8586,
+     0.6718,
+     0.6011,
+     0.5304,
+     0.5186,
+     0.5186,
+     0.5186,
+     0.5186
+    ],
+    "CPX": [
+     1.0,
+     0.961,
+     0.8981,
+     0.7876,
+     0.6908,
+     0.6218,
+     0.6218,
+     0.6218,
+     0.6218
+    ],
+    "DSL": [
+     0.9945,
+     0.989,
+     0.9587,
+     0.8741,
+     0.7895,
+     0.7613,
+     0.7613,
+     0.7613,
+     0.7613
+    ]
+   }
+  },
+  "2019": {
+   "n": 1102,
+   "rho_prospect_leg": 0.2001,
+   "rho_consensus_fv": 0.3193,
+   "rho_difference": -0.1192,
+   "km_curves_used": {
+    "AAA": [
+     0.3521,
+     0.2465,
+     0.2113,
+     0.2113,
+     0.2113,
+     0.2113,
+     0.2113,
+     0.2113,
+     0.2113
+    ],
+    "AA": [
+     0.6425,
+     0.4469,
+     0.3673,
+     0.3551,
+     0.3551,
+     0.3551,
+     0.3428,
+     0.3428,
+     0.3428
+    ],
+    "A+": [
+     0.8918,
+     0.7071,
+     0.6011,
+     0.5343,
+     0.5009,
+     0.4675,
+     0.4508,
+     0.4508,
+     0.4508
+    ],
+    "A": [
+     0.9729,
+     0.8706,
+     0.7119,
+     0.6976,
+     0.6122,
+     0.5837,
+     0.5837,
+     0.5837,
+     0.5837
+    ],
+    "CPX": [
+     1.0,
+     0.9658,
+     0.892,
+     0.892,
+     0.7756,
+     0.7756,
+     0.7756,
+     0.7756,
+     0.7756
+    ],
+    "DSL": [
+     0.9934,
+     0.9868,
+     0.9433,
+     0.9433,
+     0.9433,
+     0.9433,
+     0.9433,
+     0.9433,
+     0.9433
+    ]
+   }
+  }
+ },
+ "pooled": {
+  "n": 1982,
+  "n_players": 1329,
+  "rho_prospect_leg": 0.2162,
+  "rho_consensus_fv": 0.3085,
+  "rho_difference": -0.0923,
+  "difference_ci95_player_clustered": {
+   "lo95": -0.1476,
+   "hi95": -0.0378,
+   "draws": 2000,
+   "seed": 20261001
+  }
+ },
+ "result": "the consensus FV out-ranks the prospect leg on realized fantasy value (interval below zero)",
+ "verdict": "provisional",
+ "verdict_basis": "one backtest on two list vintages with a cross-fitted arrival leg and points-format realized value only; the roto formats are not scored"
+}

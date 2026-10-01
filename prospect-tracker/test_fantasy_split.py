@@ -41,6 +41,12 @@ JS_FILES = {
 }
 SIDECAR = {"dynasty": "/data/fantasy.json", "redraft": "/data/fantasy.json",
            "dfs": "/data/dfs.json"}
+# A client's OWN second sidecar, named by its constant. Dynasty's Fantasy Rank
+# (owner answer M21-4, 2026-10-01) is written by the same exporter beside the
+# corpus and read by Dynasty alone, so it is Dynasty's own payload, not a
+# second corpus; it loads only when its tab or the keeper's All players pool
+# is opened.
+OWN_EXTRA = {"dynasty": [("RANK_URL", "/data/fantasy_rank.json")]}
 # The shared player-card overlay. It is not a board CLIENT (it fetches no
 # corpus and owns no payload; the host hands it one), so it stays out of
 # JS_FILES and its own contract is pinned separately. It IS held to the same
@@ -690,13 +696,18 @@ def test_each_client_fetches_its_own_sidecar(name):
     src = _src(name)
     urls = re.findall(r'DATA_URL\s*=\s*"([^"]+)"', src)
     assert urls == [SIDECAR[name]], (name, urls)
+    extra = OWN_EXTRA.get(name, [])
+    for const, url in extra:
+        assert re.findall(const + r'\s*=\s*"([^"]+)"', src) == [url], (name, const)
     code = _code(name)
     calls = re.findall(r"(?<!function )load\(\s*([A-Za-z_$][\w$]*)\s*\)", code)
-    assert calls == ["DATA_URL"], (name, calls)
+    assert sorted(set(calls)) == sorted(["DATA_URL"] + [c for c, _u in extra]), (name, calls)
+    assert calls.count("DATA_URL") == 1, (name, calls)
     # The loader itself is the ONLY fetch, and it takes the url it was handed.
     fetches = [f.strip() for f in re.findall(r"[^.\w]fetch\(\s*([^,)]+)", code)]
     assert fetches == ["url"], (name, fetches)
-    assert sorted(set(re.findall(r'"(/data/[^"]+)"', code))) == [SIDECAR[name]], name
+    assert sorted(set(re.findall(r'"(/data/[^"]+)"', code))) == sorted(
+        [SIDECAR[name]] + [u for _c, u in extra]), name
 
 
 @pytest.mark.parametrize("name", sorted(GUARDED))
@@ -2585,14 +2596,17 @@ def test_fantasy_team_next7_bakes_shape_and_context():
 
 
 def test_fantasy_payload_stays_inside_its_budget():
-    """The corpus is budgeted at 600KB (561KB before team_next7; the new
-    section plus its schedule leg measure ~24KB at the 30-org worst case). The
-    live file is asserted when it exists; the fixture bound always runs, so a
-    fresh checkout still pins the new section's size."""
+    """The corpus is budgeted at 720KB. It was 600KB (561KB before team_next7;
+    that section plus its schedule leg measure ~24KB at the 30-org worst case)
+    until the owner's answer M21-1 on 2026-09-25 lowered the pool floors to 20
+    projected full-season PA and 8 IP (about 1,487 players, 697KB measured on
+    2026-09-24) and raised this budget to about 720KB to carry them. The live
+    file is asserted when it exists; the fixture bound always runs, so a fresh
+    checkout still pins the new section's size."""
     import fantasy_export as fe
     live = ROOT / "data" / "fantasy.json"
     if live.exists():
-        assert live.stat().st_size < 600 * 1024, live.stat().st_size
+        assert live.stat().st_size < 720 * 1024, live.stat().st_size
     full = {("ORG%02d" % i): [{"d": "2026-08-%02d" % (17 + j), "opp": "OPP",
                                "home": j % 2 == 0} for j in range(7)]
             for i in range(30)}
@@ -2612,6 +2626,122 @@ def test_the_retired_board_shells_are_stubs_that_load_no_client(name):
     assert "fantasy-card.js" not in html, name
     assert "/assets/%s.js" % name not in html, name
     assert "/fantasy/" in html, name
+
+
+# ---------------------------------------------------------------------------
+# The Fantasy Rank tab and the keeper pool toggle (owner answers M21-3, M21-4,
+# 2026-09-25; built 2026-10-01)
+# ---------------------------------------------------------------------------
+def _keeper_board(n=150):
+    return [{"mlbam": 1000 + i, "name": "Kid %d" % i, "org": "BOS", "pos": "SS",
+             "eta": 2027, "efv": 50.0, "star": 5, "bust": 30, "surplus": 10.0,
+             "band": [0.0, 20.0], "score": 5.0, "rank": i, "tier": "Tier 4"}
+            for i in range(1, n + 1)]
+
+
+RANK_PAYLOAD = {
+    "seasons": [2027, 2028, 2029, 2030, 2031], "first_season": 2027,
+    "formats": [{"id": "fgp", "kind": "points", "label": "FanGraphs Points"},
+                {"id": "sabr", "kind": "points", "label": "SABR Points"},
+                {"id": "5x5", "kind": "roto", "label": "Old School (5x5)"},
+                {"id": "4x4", "kind": "roto", "label": "Ottoneu Classic (4x4)"}],
+    "basis": ["Value = a stated sum."],
+    "backtest": {"vintages": [2018, 2019], "n": 1982, "rho_prospect_leg": 0.2162,
+                 "rho_consensus_fv": 0.3085, "lo95": -0.1476, "hi95": -0.0378},
+    "rows": [
+        {"mlbam": 1, "name": "Vet Bat", "team": "NYY", "pos": "RF", "kind": "mlb", "side": "hit",
+         "rk": {"fgp": 1, "sabr": 1, "5x5": 2, "4x4": 1},
+         "v": {"fgp": 900.0, "sabr": 900.0, "5x5": 20.0, "4x4": 15.0},
+         "s": {"fgp": [300, 250, 200, 150, 100], "sabr": [300, 250, 200, 150, 100],
+               "5x5": [6.0, 5.0, 4.0, 3.0, 2.0], "4x4": [5.0, 4.0, 3.0, 2.0, 1.0]}},
+        {"mlbam": 1001, "name": "Kid 1", "team": "BOS", "pos": "SS", "kind": "prospect",
+         "side": "hit", "eta": 2027, "lvl": "AA", "board_rank": 1,
+         "p": [0.35, 0.63, 0.74, 0.78, 0.8],
+         "rk": {"fgp": 2, "sabr": 2, "5x5": 1, "4x4": None},
+         "v": {"fgp": 120.0, "sabr": 120.0, "5x5": 30.0, "4x4": 0.0},
+         "s": {"fgp": [10, 20, 30, 40, 50], "sabr": [10, 20, 30, 40, 50],
+               "5x5": [1.0, 2.0, 3.0, 4.0, 5.0], "4x4": [0, 0, 0, 0, 0]}},
+    ],
+}
+
+
+def _rank_ctx(board=None, rank=RANK_PAYLOAD):
+    payload = {"season": 2026, "n_players": 0, "scoring_catalog": [], "players": [],
+               "sections": {"dynasty": board if board is not None else _keeper_board(),
+                            "callup_watch": []}}
+    prelude = APP_PRELUDE % json.dumps(payload)
+    route = ("var RANKP = %s;\n"
+             "var fetch = function (u) { var P = String(u).indexOf('fantasy_rank') >= 0 ? RANKP : PAYLOAD;"
+             " return FT({ ok: true, json: function () { return FT(P); } }); };\n"
+             "window.fetch = fetch;\n") % json.dumps(rank)
+    c = MiniRacer()
+    c.eval(prelude + route)
+    c.eval((ASSETS / "dynasty.js").read_text(encoding="utf-8"))
+    return c
+
+
+def _verdicts(html):
+    return re.findall(r'class="dyn-sc dyn-(?:pos|neg)">(keep|let go) \(', html)
+
+
+def test_keeper_default_pool_is_prospects_only_and_unchanged():
+    """The toggle's default leaves the calculator as it was: 150 board rows,
+    pick 54, so ranks 1 to 54 keep and 55 to 150 let go (the census read 54
+    keep and 96 let go on the served board)."""
+    c = _rank_ctx()
+    html = c.eval('__go("#section=keeper")')
+    v = _verdicts(html)
+    assert len(v) == 150 and v.count("keep") == 54, (len(v), v.count("keep"))
+    assert "costs pick <b>54</b>" in html
+    assert "This verdict answers a prospects-only draft" in html
+    assert "fantasy_rank" not in c.eval("JSON.stringify(__LS)")
+
+
+def test_keeper_default_on_the_served_board_keeps_54():
+    """The same pin on the served Dynasty Board when it is in the tree."""
+    live = ROOT / "data" / "fantasy.json"
+    if not live.exists():
+        pytest.skip("no served fantasy.json")
+    board = (json.loads(live.read_text(encoding="utf-8")).get("sections") or {}).get("dynasty") or []
+    if len(board) < 150:
+        pytest.skip("served board under 150 rows")
+    html = _rank_ctx(board=board).eval('__go("#section=keeper")')
+    assert _verdicts(html).count("keep") == 54
+
+
+def test_keeper_all_players_pool_reads_the_fantasy_rank_and_names_its_pool():
+    c = _rank_ctx()
+    html = c.eval('__go("#section=keeper&pool=all")')
+    assert "This verdict answers a draft of MLB players and prospects" in html
+    assert "FanGraphs Points" in html and "costs pick <b>54</b>" in html
+    assert "Vet Bat" in html and "Kid 1" in html
+    # Two ranked rows in fgp, both inside pick 54.
+    assert _verdicts(html) == ["keep", "keep"]
+    # The format moves the pool: in 4x4 the prospect is not ranked.
+    html4 = c.eval('__go("#section=keeper&pool=all&fmt=4x4")')
+    assert "Vet Bat" in html4 and "Kid 1" not in html4
+
+
+def test_fantasy_rank_tab_ranks_by_the_chosen_format_and_states_the_backtest():
+    c = _rank_ctx()
+    html = c.eval('__go("#section=fantasy_rank")')
+    assert html.index("Vet Bat") < html.index("Kid 1")
+    assert "does not reorder /projections/" in html
+    assert "Spearman 0.22" in html and "below the consensus FV order at 0.31" in html
+    html5 = c.eval('__go("#section=fantasy_rank&fmt=5x5")')
+    assert html5.index("Kid 1") < html5.index("Vet Bat")
+    fmt_bar = c.eval("__html['dynasty-scoring']")
+    assert 'data-dynfmt="5x5"' in fmt_bar and 'aria-pressed="true"' in fmt_bar
+    only = c.eval('__go("#section=fantasy_rank&kind=prospect")')
+    assert "Kid 1" in only and "Vet Bat" not in only
+
+
+def test_the_prospect_board_never_fetches_the_rank():
+    c = _rank_ctx()
+    c.eval("var __urls = []; var __f0 = fetch; fetch = function (u) { __urls.push(String(u)); return __f0(u); }; window.fetch = fetch;")
+    c.eval('__go("#section=dynasty")')
+    c.eval('__go("#section=keeper")')
+    assert not [u for u in json.loads(c.eval("JSON.stringify(__urls)")) if "fantasy_rank" in u]
 
 
 if __name__ == "__main__":

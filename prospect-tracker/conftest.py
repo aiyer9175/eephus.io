@@ -548,6 +548,10 @@ _SIDECAR_GLOBS = (
     # development records the progress ledger copies from.
     "data/efv_overlay_oos_eval.json",
     "data/efv_v2_pbust_eval.json",
+    # M21-4: the Fantasy Rank, its monthly model cache and its backtest.
+    "data/fantasy_rank.json",
+    "data/fantasy_rank_eval.json",
+    ".cache/fantasy_rank_model.json",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -853,6 +857,12 @@ _SIDECAR_WRITE_TARGETS = (
     ("betting_props_dark", "OUT", "data/betting_props_dark_eval.json"),
     ("dfs_export", "OUT_PATH", "data/dfs.json"),
     ("fantasy_export", "LEDGER_PATH", ".cache/two_start_ledger.jsonl"),
+    # M21-4 (2026-10-01): fantasy_export's second output, the Dynasty Fantasy
+    # Rank, plus the monthly model cache it re-ranks from nightly and the
+    # registered backtest's artifact. All three resolve at call time.
+    ("fantasy_rank", "RANK_PATH", "data/fantasy_rank.json"),
+    ("fantasy_rank", "MODEL_CACHE", ".cache/fantasy_rank_model.json"),
+    ("fantasy_rank", "EVAL_PATH", "data/fantasy_rank_eval.json"),
     ("tools.betting_calibration", "LEDGER_PATH",
      ".cache/betting/calibration.jsonl"),
     # The close-job WRITER itself: `p = path or HEARTBEAT_PATH` and

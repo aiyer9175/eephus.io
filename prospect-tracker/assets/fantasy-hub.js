@@ -21,7 +21,7 @@
 //      HERE: the hash is "#m=<module>&<that module's own hash>", each client
 //      reads and writes only its half through this file, and only the ACTIVE
 //      module's half is in the URL.
-//   3. THE PAYLOAD. data/fantasy.json runs to several hundred KB (a 600KB
+//   3. THE PAYLOAD. data/fantasy.json runs to several hundred KB (a 720KB
 //      budget test pins the ceiling) and both Redraft and Dynasty read it.
 //      One memoized load serves both, and the DFS card as well.
 //
@@ -67,6 +67,7 @@
     ros_rp: "redraft", ros_hitter: "redraft", buysell: "redraft",
     closers: "redraft",
     dynasty: "dynasty", board: "dynasty", callups: "dynasty", keeper: "dynasty",
+    fantasy_rank: "dynasty",
     slate: "dfs", value: "dfs", stacks: "dfs", optimizer: "dfs",
     pitchers: "dfs", hitters: "dfs", salaries: "dfs"
   };

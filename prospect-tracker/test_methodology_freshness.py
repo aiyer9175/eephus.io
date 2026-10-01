@@ -443,6 +443,10 @@ MODEL_GLOSSARY = {
     "fantasy_roto_valuation": "internal",
     "fantasy_buy_sell": "internal",
     "fantasy_closer_depth": "internal",
+    # 2026-10-01 (owner answer M21-4): the Dynasty Fantasy Rank states its
+    # design, its replacement level and its backtest reading on the page from
+    # its own payload; a ranking on fantasy scoring, not an Arkmetric.
+    "fantasy_combined_rank": "internal",
     # X-D1 gmLI deployment-context metric: gate passed and wired 2026-07-02
     # (bullpen_export join + /mlbstats/ column); documented by its glossary
     # entry.

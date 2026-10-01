@@ -91,8 +91,8 @@
   // On /fantasy/ this file is ONE OF THREE clients in one document, so it owns
   // neither the address bar nor the corpus. assets/fantasy-hub.js hands it its
   // own half of the hash (the "#m=redraft" prefix is stripped on read and put
-  // back on write), one memoized load of the ~585KB data/fantasy.json (budgeted
-  // under 600KB by test_fantasy_split) that
+  // back on write), one memoized load of the ~690KB data/fantasy.json (budgeted
+  // under 720KB by test_fantasy_split) that
   // assets/dynasty.js shares, and the module's activation. Three clients each
   // writing location.hash from their own state is three writers over one
   // string, which is the collision the namespace exists to prevent.

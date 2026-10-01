@@ -41,6 +41,7 @@ from pathlib import Path
 
 import dynasty_blend
 import fa_projection as fp
+import fantasy_rank as frank
 import fantasy_schedule as fsched
 import fantasy_scoring as fscore
 
@@ -124,9 +125,13 @@ _QS_CEILING = 0.85
 # measured 1,487 players and 697KB on 2026-09-24, most of the extra rows being
 # arms projected under 30 innings that no fantasy board ranks. 100 PA and 30 IP
 # (a bench bat, a middle reliever) measured 1,203 players, the August size.
-# Hand floors on a display pool, not fitted to any outcome.
-_POOL_FLOOR_PA = 100         # projected full-season plate appearances
-_POOL_FLOOR_IP = 30          # projected full-season innings
+#
+# OWNER ANSWER M21-1 (2026-09-25): 20 projected full-season PA and 8 IP, the
+# old levels read on the full season, with the corpus budget raised to 720KB
+# (test_fantasy_split) to carry the wider pool. Hand floors on a display pool,
+# not fitted to any outcome.
+_POOL_FLOOR_PA = 20          # projected full-season plate appearances
+_POOL_FLOOR_IP = 8           # projected full-season innings
 
 # THE SEASON MODE. "ros" scales each full-season projection to what is left of
 # the regular season. "next_season" serves the same engine's full-season line
@@ -512,6 +517,22 @@ def build_players(limit: int | None = None, *, today: date | None = None,
         return _name_from_links(links, mid)
 
     players: list[dict] = []
+    # THE FANTASY RANK'S MLB LEG (owner answer M21-4, fantasy_rank.py): each
+    # pooled row's per-season lines over the rank's horizon, walked from the
+    # SAME projection on the same aging curves. Collected here because this
+    # loop is the only place the projection and the curves meet; it rides out
+    # under "_rank_inputs", which export() pops before anything is written.
+    horizon: list[dict] = []
+
+    def _horizon(mid, side, pos, proj, role, **kw):
+        try:
+            lines = frank.mlb_horizon_lines(proj, side, role, curves, **kw)
+        except Exception:                                    # noqa: BLE001
+            log.exception("fantasy: horizon lines failed for %s", mid)
+            return
+        if lines:
+            horizon.append({"mlbam": mid, "side": side, "pos": pos, "lines": lines})
+
     ids = set(by_player["hit"]) | set(by_player["pit"])
     for i, mid in enumerate(sorted(ids)):
         if limit and i >= limit:
@@ -542,6 +563,8 @@ def build_players(limit: int | None = None, *, today: date | None = None,
                 pts = fscore.score_points(stats, "fgp", "hit")
                 players.append({"mlbam": mid, "name": name, "side": "hit",
                                 "pos": role, "ros": stats, "fpts_fgp": pts})
+                _horizon(mid, "hit", role, proj, proj.get("role") or role,
+                         sb_pa=sb_rate.get(mid))
             else:
                 if (proj.get("ip_proj") or 0) < _POOL_FLOOR_IP:
                     continue
@@ -556,8 +579,21 @@ def build_players(limit: int | None = None, *, today: date | None = None,
                 pts = fscore.score_points(stats, "fgp", "pit")
                 players.append({"mlbam": mid, "name": name, "side": "pit",
                                 "pos": pr, "ros": stats, "fpts_fgp": pts})
+                sh = rp_sh.get(mid) or {}
+                _horizon(mid, "pit", pr, proj, pr,
+                         sv0=((sh.get("sv") or 0) / elapsed) if (pr == "RP" and elapsed > 0) else 0.0,
+                         hld0=((sh.get("hld") or 0) / elapsed) if (pr == "RP" and elapsed > 0) else 0.0)
 
     _enrich(players)
+    # Name, club and a display position ride the horizon rows from the
+    # enriched pool rows (a hitter's corpus role is the bare "H", so his
+    # lineup slots stand in for it).
+    _who = {(p["mlbam"], p["side"]): p for p in players}
+    for h in horizon:
+        p = _who.get((h["mlbam"], h["side"])) or {}
+        h["name"], h["team"] = p.get("name"), p.get("team")
+        if h["side"] == "hit" and p.get("elig"):
+            h["pos"] = "/".join(p["elig"][:2])
     # ROSTER STATUS, FLAGGED AND NEVER FILTERED. This is a rest-of-season board, so
     # an injured player is the most important row on it: a manager rostering him
     # needs to SEE that he is out. Dropping him, the way the lineup charts
@@ -603,6 +639,9 @@ def build_players(limit: int | None = None, *, today: date | None = None,
         "scoring": fscore.points_weight_tables(),
         "scoring_catalog": fscore.SCORING_CATALOG,
         "players": players,
+        # Popped by export() before the write; never served.
+        "_rank_inputs": {"horizon": horizon, "corpus": corpus, "curves": curves,
+                         "league": league, "first_season": cur + 1},
     }
 
 
@@ -1796,6 +1835,14 @@ def refresh_live(log=print) -> int:
     if blob is None:
         return 0                    # already logged + RED; the old file stands
     OUT_PATH.write_text(blob, encoding="utf-8")
+    # The Fantasy Rank's prospect leg follows the board it was just rebuilt
+    # from (the MLB leg waits for the monthly corpus, cached by export()).
+    try:
+        frank.refresh((payload.get("sections") or {}).get("dynasty") or [],
+                      int(payload.get("season") or date.today().year), log_fn=log)
+    except Exception:                                        # noqa: BLE001
+        logging.getLogger("fantasy_export").exception(
+            "fantasy: Fantasy Rank refresh failed - previous rank file kept")
     # The two-start ledger records what was ACTUALLY served, so it runs only
     # after the write above succeeds. Best-effort by the same doctrine as the
     # ingest ledger: an instrument must never be the reason a refresh fails.
@@ -1819,6 +1866,7 @@ def refresh_live(log=print) -> int:
 def export(log=print, *, limit: int | None = None) -> int:
     """Build data/fantasy.json. Returns the player count."""
     payload = build_players(limit=limit)
+    rank_inputs = payload.pop("_rank_inputs", None)
     _attach_schedule(payload)
     payload["sections"] = build_sections(payload)
     blob = _json_blob(payload, "fantasy_export")
@@ -1847,12 +1895,32 @@ def export(log=print, *, limit: int | None = None) -> int:
                          f"the {n_prev}-player file")
     DATA_DIR.mkdir(exist_ok=True)
     OUT_PATH.write_text(blob, encoding="utf-8")
+    _export_rank(rank_inputs, payload, log)
     if callable(log):
         what = ("full-season " + str(payload.get("target_season"))
                 if payload.get("mode") == MODE_NEXT_SEASON else "ROS")
         log(f"fantasy: {payload['n_players']} players projected {what} "
             f"({payload['season']} @ {payload['season_fraction']:.0%} elapsed)")
     return payload["n_players"]
+
+
+def _export_rank(rank_inputs: dict | None, payload: dict, log=print) -> None:
+    """The second output, data/fantasy_rank.json (fantasy_rank.RANK_PATH):
+    the Dynasty Fantasy Rank, built off this corpus build and the Dynasty
+    Board's prospects. Best-effort: it never fails the corpus, which is
+    already written, and a failure keeps the previous rank file served."""
+    if not rank_inputs or not rank_inputs.get("horizon"):
+        return
+    try:
+        frank.export_from_inputs(rank_inputs,
+                                 (payload.get("sections") or {}).get("dynasty") or [],
+                                 log_fn=log)
+    except Exception:                                        # noqa: BLE001
+        logging.getLogger("fantasy_export").exception(
+            "fantasy: Fantasy Rank build failed - previous rank file kept")
+        _record_ingest_safe("fantasy_rank", ok=False,
+                            message="the Fantasy Rank build raised; the previous "
+                                    "data/fantasy_rank.json stays served")
 
 
 def _existing_player_count() -> int:

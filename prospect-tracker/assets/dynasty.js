@@ -21,10 +21,20 @@
 (function () {
   "use strict";
   var DATA_URL = "/data/fantasy.json";
+  // THE FANTASY RANK (owner answer M21-4, 2026-09-25): MLB players and
+  // prospects on one dynasty rank of projected FANTASY value, in the reader's
+  // format, built by fantasy_rank.py beside the corpus. Its own sidecar,
+  // fetched only when the Fantasy Rank tab or the keeper's All players pool
+  // is opened, so a reader of the prospect board never downloads it.
+  var RANK_URL = "/data/fantasy_rank.json";
   var S = { data: null, section: "dynasty", lens: "board", keeper: null, player: null,
-            q: "", org: null, eta: null, tier: null };
-  var SORT = { dynasty: { key: "rank", asc: true } };
+            q: "", org: null, eta: null, tier: null,
+            fmt: "fgp", pool: "prospects", kind: null,
+            rank: null, rankLoading: false, rankErr: null };
+  var SORT = { dynasty: { key: "rank", asc: true }, fantasy_rank: { key: "rank", asc: true } };
   var SORT_DEFAULTS = { dynasty: { key: "rank", asc: true } };
+  var FMT_IDS = ["fgp", "sabr", "5x5", "4x4"];
+  var POINTS_FMT = { fgp: 1, sabr: 1 };
   var LINKS = null;
   var LS_KEY = "eephus.dynasty.keeper";
 
@@ -61,7 +71,7 @@
   // On /fantasy/ this file shares one document with assets/redraft.js and
   // assets/dfs.js, so assets/fantasy-hub.js owns the address bar and hands
   // this module only its own half of the hash. The corpus load goes through
-  // the host too: data/fantasy.json is ~585KB (budgeted under 600KB by
+  // the host too: data/fantasy.json is ~690KB (budgeted under 720KB by
   // test_fantasy_split) and Redraft reads the same file,
   // so a reader who opens both tabs downloads and parses it once.
   //
@@ -548,11 +558,242 @@
       rows + "</tbody></table></div>" + gateNote(list.length, shown.length);
   }
 
+  // ---- the Fantasy Rank ------------------------------------------------------
+  // Every number here is served by fantasy_rank.py; this file sorts, filters
+  // and rounds, nothing else. The rank is a pure function of the served value
+  // in the chosen format, so no other board's order reaches it.
+  function rankRows() { return (S.rank && S.rank.rows) || []; }
+  // The load is synchronous under the test harness's promise stub, so the
+  // re-render runs only when the answer lands AFTER the caller has painted.
+  function loadRank() {
+    if (S.rank || S.rankLoading) return;
+    S.rankLoading = true;
+    S.rankErr = null;
+    var sync = true;
+    load(RANK_URL).then(function (d) {
+      S.rank = (d && d.rows) ? d : { rows: [] };
+      S.rankLoading = false;
+      if (!sync) renderSection();
+    }).catch(function (e) {
+      S.rankLoading = false;
+      S.rankErr = String((e && e.message) || e);
+      if (!sync) renderSection();
+    });
+    sync = false;
+  }
+  function fmtLabel(id) {
+    var cat = (S.rank && S.rank.formats) || (S.data && S.data.scoring_catalog) || [];
+    for (var i = 0; i < cat.length; i++) if (cat[i].id === id) return cat[i].label;
+    return id;
+  }
+  function fmtVal(v) {
+    if (v == null || isNaN(v)) return "-";
+    return POINTS_FMT[S.fmt] ? Number(v).toFixed(0) : Number(v).toFixed(1);
+  }
+  function rankedRows() {
+    var f = S.fmt;
+    return rankRows().filter(function (d) { return d.rk && d.rk[f] != null; })
+      .sort(function (a, b) { return a.rk[f] - b.rk[f]; });
+  }
+  function renderFmtBar() {
+    var btns = FMT_IDS.map(function (id) {
+      var on = id === S.fmt;
+      return '<button type="button" class="dyn-lensbtn' + (on ? " active" : "") + '" data-dynfmt="' +
+        id + '" aria-pressed="' + (on ? "true" : "false") + '">' + esc(fmtLabel(id)) + "</button>";
+    }).join("");
+    return '<div class="dyn-lensbar"><span class="dyn-lens-lbl">Format</span>' + btns +
+      '<span class="dyn-lens-note">The Fantasy Rank re-ranks in the format you pick.</span></div>';
+  }
+  function frCols() {
+    var seasons = (S.rank && S.rank.seasons) || [];
+    var cols = [
+      { key: "rank", label: "#", where: "head", track: "38px", kind: "rank", asc: true,
+        title: "Fantasy Rank in the chosen format. Sorting does not renumber it.",
+        get: function (d) { return d.rk ? d.rk[S.fmt] : null; } },
+      { key: "name", label: "Player", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
+        title: "Sort by name", get: function (d) { return d.name; },
+        cell: function (d) {
+          return '<div class="dyn-id ff-id"><span class="mlb-name">' + teamLogo(d.team) + " " +
+            nameLink(d.mlbam, d.name) + '</span><span class="mlb-sub">' + esc(d.pos || "") +
+            (d.team ? " &middot; " + esc(d.team) : "") + "</span></div>";
+        } },
+      { key: "value", label: "Value", where: "head", track: "84px", strong: true,
+        title: "Discounted value above replacement over the horizon, in the chosen format.",
+        get: function (d) { return d.v ? d.v[S.fmt] : null; }, fmt: fmtVal },
+      { key: "kind", label: "Type", where: "head", track: "84px", text: true, asc: true,
+        title: "MLB player or prospect",
+        get: function (d) { return d.kind === "prospect" ? "Prospect" : "MLB"; } },
+      { key: "eta", label: "ETA", where: "head", track: "64px", asc: true,
+        title: "Prospect ETA year; MLB players show a dash.",
+        get: function (d) { return d.kind === "prospect" ? d.eta : null; },
+        cell: function (d) { return esc(d.kind === "prospect" ? (d.eta || "-") : "-"); } }
+    ];
+    seasons.forEach(function (yr, t) {
+      cols.push({ key: "s" + t, label: String(yr), where: "tape",
+        title: "Value above replacement in " + yr + (t ? ", before the discount" : "") +
+          ", weighted by the chance he has arrived (prospects).",
+        get: function (d) { return d.s && d.s[S.fmt] ? d.s[S.fmt][t] : null; }, fmt: fmtVal });
+    });
+    cols.push({ key: "arrive", label: "Arrived by " + (seasons[seasons.length - 1] || ""), where: "tape",
+      title: "P(arrived) by the last horizon season, from the ETA model's arrival curve for his level.",
+      get: function (d) { return (d.p && d.p.length) ? d.p[d.p.length - 1] : null; },
+      cell: function (d) {
+        return (d.p && d.p.length) ? num(d.p[d.p.length - 1] * 100, 0) + "%" : "MLB";
+      } });
+    cols.push({ key: "board", label: "Board #", where: "tape", asc: true,
+      title: "His Dynasty Board rank (prospects only).",
+      get: function (d) { return d.board_rank; } });
+    return cols;
+  }
+  function frStripe(d) {
+    return d.kind === "prospect" ? "var(--accent-cyan)" : "var(--border)";
+  }
+  function kindChips() {
+    var opts = [["", "All players"], ["mlb", "MLB"], ["prospect", "Prospects"]];
+    return opts.map(function (o) {
+      var on = (S.kind || "") === o[0];
+      return '<button type="button" class="dyn-f-chip' + (on ? " active" : "") + '" data-dynkind="' +
+        o[0] + '" aria-pressed="' + (on ? "true" : "false") + '">' + esc(o[1]) + "</button>";
+    }).join("");
+  }
+  // The backtest sentence is assembled from the served artifact numbers, so
+  // it can only say what the registered backtest artifact measured.
+  function backtestNote(bt) {
+    if (!bt || bt.rho_prospect_leg == null || bt.rho_consensus_fv == null) {
+      return "The prospect leg has no backtest reading in this build.";
+    }
+    var lead = bt.rho_prospect_leg >= bt.rho_consensus_fv ? "above" : "below";
+    var ci = (bt.lo95 != null && bt.hi95 != null)
+      ? " (difference " + num(bt.rho_prospect_leg - bt.rho_consensus_fv, 2) + ", 95% interval " +
+        num(bt.lo95, 2) + " to " + num(bt.hi95, 2) + ")" : "";
+    return "Prospect leg check: on the " + esc((bt.vintages || []).join(" and ")) + " prospect classes, " +
+      "this leg's order matched the fantasy value those players went on to produce at Spearman " +
+      num(bt.rho_prospect_leg, 2) + ", " + lead + " the consensus FV order at " +
+      num(bt.rho_consensus_fv, 2) + ci + ". Read the prospect order with that in mind.";
+  }
+  function renderRankBoard() {
+    if (!S.rank) {
+      loadRank();
+      if (!S.rank) {
+        return S.rankErr
+          ? '<div class="dyn-error" role="alert"><strong>The Fantasy Rank failed to load.</strong> ' +
+            esc(S.rankErr) + "</div>"
+          : '<div class="dyn-note">Loading the Fantasy Rank.</div>';
+      }
+    }
+    var all = rankedRows();
+    if (!rankRows().length) {
+      return '<div class="dyn-note">No Fantasy Rank rows in this build; they fill on the monthly build. ' +
+        "Nothing is broken.</div>";
+    }
+    var R = S.rank;
+    var intro = '<div class="dyn-note">' + (R.basis || []).map(esc).join(" ") +
+      " A /fantasy/ rank on projected fantasy value only: it reads no WAR and does not reorder " +
+      "/projections/. " + esc(fmtLabel(S.fmt)) + ": " +
+      ((R.n_ranked && R.n_ranked[S.fmt] != null) ? R.n_ranked[S.fmt] : all.length) +
+      " players clear replacement over the horizon; listed are the top " + esc(R.serve_top_n || 400) +
+      " in any format and every Dynasty Board prospect.</div>" +
+      '<div class="dyn-note">' + backtestNote(R.backtest) + "</div>";
+    var rows = all.filter(function (d) {
+      if (S.kind && d.kind !== S.kind) return false;
+      if (S.q && normQ(d.name).indexOf(normQ(S.q)) < 0) return false;
+      return true;
+    });
+    var unranked = rankRows().filter(function (d) {
+      return d.kind === "prospect" && (!d.rk || d.rk[S.fmt] == null);
+    }).length;
+    var tail = unranked ? '<div class="dyn-note">' + unranked + " board prospects sit at or below " +
+      "replacement in every season of the horizon in this format and are not ranked.</div>" : "";
+    var bar = '<div class="dyn-filterbar"><input type="search" id="dyn-f-q" class="dyn-f-q" ' +
+      'placeholder="Filter by name" aria-label="Filter by player name" maxlength="40" value="' +
+      esc(S.q) + '">' + kindChips() +
+      ((S.q || S.kind) ? '<span class="dyn-f-count">' + rows.length + " of " + all.length + " rows</span>" : "") +
+      "</div>";
+    return intro + bar + renderCards(rows, frCols(), SORT.fantasy_rank, {
+      rankOf: function (d) { return d.rk[S.fmt]; },
+      stripeOf: frStripe,
+      hrefOf: function (d) { return hashFor(d.mlbam); },
+      empty: "No player matches the current filter."
+    }) + tail;
+  }
+
   // ---- keeper calculator ----------------------------------------------------
   function keeperVerdict(d) {
     var pick = costPick(), be = breakEvenRound(d.rank);
     var edge = pick - d.rank;
     return { pick: pick, be: be, edge: edge, keep: edge >= 0 };
+  }
+  // THE POOL TOGGLE (owner answer M21-3, 2026-09-25). "Prospects only" is the
+  // default and is the calculator exactly as it was: the pick against the
+  // prospect board rank, a farm-draft verdict. "All players" compares the
+  // same pick with the Fantasy Rank, a draft that holds MLB players and
+  // prospects, in the chosen format. The page names the pool either way.
+  function poolBar() {
+    var opts = [["prospects", "Prospects only"], ["all", "All players"]];
+    return '<div class="dyn-lensbar" role="group" aria-label="Keeper verdict pool">' +
+      '<span class="dyn-lens-lbl">Pool</span>' + opts.map(function (o) {
+        var on = S.pool === o[0];
+        return '<button type="button" class="dyn-lensbtn' + (on ? " active" : "") + '" data-dynpool="' +
+          o[0] + '" aria-pressed="' + (on ? "true" : "false") + '">' + esc(o[1]) + "</button>";
+      }).join("") + '<span class="dyn-lens-note">' +
+      (S.pool === "all"
+        ? "This verdict answers a draft of MLB players and prospects, ranked on the Fantasy Rank in " +
+          esc(fmtLabel(S.fmt)) + "."
+        : "This verdict answers a prospects-only draft, ranked on the Dynasty Board.") +
+      "</span></div>";
+  }
+  function renderKeeperAll(k, form) {
+    var explain =
+      '<div class="dyn-note">Pick spent against Fantasy Rank in a draft that holds MLB players and ' +
+      "prospects, in " + esc(fmtLabel(S.fmt)) + ". No dynasty dollar curve is fit, so no dollar value is " +
+      "shown. With " + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
+      " keeper costs pick <b>" + costPick() + "</b> of that draft. Settings stay in this browser.</div>";
+    if (!S.rank) {
+      loadRank();
+      if (!S.rank) {
+        return poolBar() + explain + form + (S.rankErr
+          ? '<div class="dyn-error" role="alert"><strong>The Fantasy Rank failed to load.</strong> ' +
+            esc(S.rankErr) + "</div>"
+          : '<div class="dyn-note">Loading the Fantasy Rank.</div>');
+      }
+    }
+    var list = rankedRows().map(function (d) {
+      return { mlbam: d.mlbam, name: d.name, org: d.team, pos: d.pos, kind: d.kind,
+               eta: d.eta, rank: d.rk[S.fmt], value: d.v ? d.v[S.fmt] : null };
+    });
+    if (!list.length) {
+      return poolBar() + explain + form + '<div class="dyn-note">No Fantasy Rank rows in this build. ' +
+        "The pick math above still updates.</div>";
+    }
+    if (S.q) {
+      list = list.filter(function (d) { return normQ(d.name).indexOf(normQ(S.q)) >= 0; });
+      if (!list.length) {
+        return poolBar() + explain + form + filterBar(null, false) +
+          '<div class="dyn-note">No player matches the name filter.</div>';
+      }
+    }
+    var shown = capRows(list.slice(0, 150));
+    var rows = shown.map(function (d) {
+      var v = keeperVerdict(d);
+      return "<tr>" +
+        '<td class="mlbstats-col-rank">' + esc(d.rank) + "</td>" +
+        '<td class="dyn-nm">' + teamLogo(d.org) + " " + nameLink(d.mlbam, d.name) + "</td>" +
+        "<td>" + esc(d.pos || "") + "</td>" +
+        "<td>" + (d.kind === "prospect" ? "Prospect" : "MLB") + "</td>" +
+        "<td>" + fmtVal(d.value) + "</td>" +
+        "<td>R" + esc(v.be) + "</td>" +
+        '<td class="dyn-sc ' + (v.keep ? "dyn-pos" : "dyn-neg") + '">' +
+        (v.keep ? "keep" : "let go") + " (" + (v.edge >= 0 ? "+" : "") + esc(v.edge) + ")</td>" +
+        "</tr>";
+    }).join("");
+    return poolBar() + explain + form + filterBar(null, false) +
+      '<div class="dyn-note">Edge = pick spent minus Fantasy Rank; positive means keep in a draft of ' +
+      "MLB players and prospects. Keep by: earliest round where edge is 0 or more.</div>" +
+      '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
+      '<thead><tr><th class="mlbstats-col-rank">#</th><th class="dyn-nm">Player</th><th>Pos</th>' +
+      "<th>Type</th><th>Value</th>" +
+      "<th>Keep by</th><th>Verdict at R" + esc(k.round) + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      gateNote(list.length, shown.length);
   }
   function renderKeeper() {
     var k = keeper();
@@ -566,15 +807,17 @@
       field("dyn-k-window", "Your contention window, in years", k.window, 1, 12) +
       '<button type="button" class="dyn-btn" id="dyn-k-reset">Reset</button>' +
       "</div>";
+    if (S.pool === "all") return renderKeeperAll(k, form);
     // THE BASIS (2026-09-25). The board ranks prospects only, so the verdict is
     // a prospects-only (farm or minors) draft verdict. It used to say "costs
     // pick 54 overall", which read as the main draft, where a prospect goes far
     // later than his prospect rank; no combined MLB-plus-prospect rank is served
     // here, so the page states the basis instead of implying the other one.
-    var explain =
+    var explain = poolBar() +
       '<div class="dyn-note">Pick spent against board rank in a prospects-only draft (a farm or minors ' +
       "draft). The board ranks prospects only, so in a draft that also holds MLB players a prospect goes " +
-      "later than his board rank, and this tool does not price that. No dynasty dollar curve is fit, so no " +
+      "later than his board rank; the All players pool above answers that draft on the Fantasy Rank. " +
+      "No dynasty dollar curve is fit, so no " +
       "dollar value is shown. With " + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
       " keeper costs pick <b>" + costPick() + "</b> of that draft. The window only marks whether the ETA " +
       "lands inside it; the verdict does not read it. Settings stay in this browser.</div>";
@@ -654,13 +897,19 @@
   }
 
   // ---- render + wiring ------------------------------------------------------
-  function isBoard() { return S.section !== "callups" && S.section !== "keeper"; }
+  function isBoard() { return S.section === "dynasty"; }
+  // The Fantasy Rank tab, and the keeper on its All players pool, read the
+  // rank sidecar and take the format control.
+  function usesRank() { return S.section === "fantasy_rank" || (S.section === "keeper" && S.pool === "all"); }
+  function activeCols() { return S.section === "fantasy_rank" ? frCols() : DYN_COLS; }
+  function activeSort() { return S.section === "fantasy_rank" ? SORT.fantasy_rank : SORT.dynasty; }
   function renderSection() {
     var r = root();
     if (!r) return;
     var html;
     if (S.section === "callups") html = renderCallups();
     else if (S.section === "keeper") html = renderKeeper();
+    else if (S.section === "fantasy_rank") html = renderRankBoard();
     else html = renderBoard();
     if (isBoard() && window.EEPHUS_GFX && EEPHUS_GFX.chipHTML) {
       html = '<div class="dyn-tools">' + EEPHUS_GFX.chipHTML("dyn-gfx", "Generate GFX") + "</div>" + html;
@@ -670,7 +919,8 @@
     // rather than left showing a control that no longer does anything.
     var host = lensHost();
     if (host) {
-      host.innerHTML = (isBoard() && (sections().dynasty || []).length) ? renderLensBar() : "";
+      host.innerHTML = (isBoard() && (sections().dynasty || []).length) ? renderLensBar()
+        : (usesRank() ? renderFmtBar() : "");
       wireLens(host);
     }
     wireSection(r);
@@ -686,14 +936,38 @@
         writeHash();
       });
     });
+    scope.querySelectorAll("[data-dynfmt]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-dynfmt");
+        if (FMT_IDS.indexOf(v) < 0) return;
+        S.fmt = v;
+        renderSection();
+        writeHash();
+      });
+    });
   }
   function wireSection(r) {
     wireLens(r);
     wireFilterBar(r);
+    r.querySelectorAll("[data-dynpool]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        S.pool = b.getAttribute("data-dynpool") === "all" ? "all" : "prospects";
+        renderSection();
+        writeHash();
+      });
+    });
+    r.querySelectorAll("[data-dynkind]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-dynkind");
+        S.kind = (v === "mlb" || v === "prospect") ? v : null;
+        renderSection();
+        writeHash();
+      });
+    });
     r.querySelectorAll("[data-dynsort]").forEach(function (h) {
       function fire(refocus) {
-        var st = SORT.dynasty;
-        var k = h.getAttribute("data-dynsort"), c = colByKey(DYN_COLS, k);
+        var st = activeSort();
+        var k = h.getAttribute("data-dynsort"), c = colByKey(activeCols(), k);
         if (st.key === k) st.asc = !st.asc;
         else { st.key = k; st.asc = !!(c && c.asc); }
         renderSection();
@@ -790,7 +1064,11 @@
   // The canonical section name is the one the SHELL's nav attribute carries
   // ("dynasty"), because syncTabs compares the two directly and a mismatch
   // renders the right board under a nav that announces the wrong tab.
-  var SECTIONS = ["dynasty", "board", "callups", "keeper"];
+  //   #section=fantasy_rank   the Fantasy Rank (2026-10-01)
+  //   #fmt=fgp|sabr|5x5|4x4   its format (fgp, the default, is left out)
+  //   #kind=mlb|prospect      its type filter
+  //   #pool=all               the keeper's All players pool (prospects only is the default)
+  var SECTIONS = ["dynasty", "board", "callups", "keeper", "fantasy_rank"];
   var SECTION_ALIAS = { board: "dynasty" };
   var LAST_HASH = null;
   function hashParam(h, key, pat) {
@@ -834,6 +1112,10 @@
     S.eta = (eta && rows.some(function (d) { return String(d.eta || "") === eta; })) ? eta : null;
     var tier = hashParam(h, "tier", "[a-z0-9]{1,8}");
     S.tier = (tier && rows.some(function (d) { return tierSlug(d.tier) === tier; })) ? tier : null;
+    var fmt = hashParam(h, "fmt", "fgp|sabr|5x5|4x4");
+    S.fmt = fmt || "fgp";
+    S.pool = hashParam(h, "pool", "all|prospects") === "all" ? "all" : "prospects";
+    S.kind = hashParam(h, "kind", "mlb|prospect");
     S.player = hashParam(h, "player", "\\d+");
   }
   // The BOARD half of the hash, card left out: hashFor() builds a card link
@@ -850,6 +1132,9 @@
     if (S.org) parts.push("team=" + S.org);
     if (S.eta) parts.push("eta=" + S.eta);
     if (S.tier) parts.push("tier=" + S.tier);
+    if (S.fmt && S.fmt !== "fgp") parts.push("fmt=" + S.fmt);
+    if (S.kind) parts.push("kind=" + S.kind);
+    if (S.pool === "all") parts.push("pool=all");
     return "#" + parts.join("&");
   }
   // The module's OWN hash. hashFor() is the same string routed through the
