@@ -865,7 +865,8 @@ def _tail_row(row):
 
 def test_a_guarantee_priced_past_the_horizon_names_its_whole_span():
     """Owner answer 2026-09-25 (M05-01 step 2): a guarantee through 2039 is
-    priced through 2039, the seasons after 2031 on the champion mean path. The
+    priced through 2039, the seasons after 2031 on the champion aging curve
+    chained from the 2031 WAR (owner answer VAL2-Q1). The
     card and the board label the surplus with the whole span and say which path
     the later seasons price on; nothing calls them unpriced."""
     global DETAIL, BOARD
@@ -879,11 +880,12 @@ def test_a_guarantee_priced_past_the_horizon_names_its_whole_span():
         DETAIL = json.dumps(d)
         html = _render("#player=vet_guy&ptab=projection")
         assert "Surplus (2027-2039)" in html
-        assert "2032-2039 on the champion aging path" in html
+        assert "2032-2039 on the champion aging curve" in html
         assert "not priced" not in html and "carry no price" not in html
         foot = html.split("data-proj-contract-tail", 1)[1][:400]
         assert "Surplus prices the whole guarantee, 2027-2039." in foot
-        assert "The 8 guaranteed seasons 2032-2039 price on the champion (Marcel) mean aging path" in foot
+        assert ("The 8 guaranteed seasons 2032-2039 price on the champion (Marcel) aging curve "
+                "chained from the 2031 WAR") in foot
         bd["vets"][0] = _tail_row(bd["vets"][0])
         BOARD = json.dumps(bd)
         board = _render("")

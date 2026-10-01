@@ -695,8 +695,9 @@ def build_payload() -> dict:
              # same reason as the rest: the card's hero line states the control
              # end, and a card that re-derived it could disagree with the board
              # about which season a club holds a player through.
-             # warTail (owner answer 2026-09-25): the champion mean WAR each
-             # guaranteed season past the horizon is priced on.
+             # warTail (owner answers 2026-09-25 and VAL2-Q1): the WAR each
+             # guaranteed season past the horizon is priced on, the champion
+             # aging curve chained from the 2031 WAR.
              "proj": {k: v.get(k) for k in ("war", "warP10", "warP90",
                                             "warTotal", "warTotalP10",
                                             "warTotalP90", "sur", "surNpv",

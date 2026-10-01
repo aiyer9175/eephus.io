@@ -729,6 +729,11 @@ def build_all() -> tuple:
     # guarantee that runs past the horizon through its last season.
     tail_on = bool((((proj.get("accountability") or {}).get("salary_path") or {})
                     .get("contract_tail") or {}).get("enabled"))
+    # Which seam the tail priced on (proj_export.TAIL_SEAM, owner answer
+    # VAL2-Q1): the champion aging curve chained from the last horizon WAR, or
+    # the champion mean level (the VAL_2 shape).
+    tail_chained = ((((proj.get("accountability") or {}).get("salary_path") or {})
+                     .get("contract_tail") or {}).get("seam") == "chained")
     sp_census = (proj.get("accountability") or {}).get("salary_path") or {}
     prearb_min_season = max(LEAGUE_MIN_CURATED)
     prearb_min = LEAGUE_MIN_CURATED[prearb_min_season]
@@ -1708,7 +1713,9 @@ def build_all() -> tuple:
         "never_combine": hist_fk.get("never_combine"),
         "surplus_basis": (f"MLB leg: MLB Projections surNpv at dpw {dpw_proj:,} ({CLASS_YEAR} ex-ante), 5-season "
                           "horizon"
-                          + (f", every guaranteed season past {HORIZON[-1]} priced too, on the champion mean path"
+                          + ((f", every guaranteed season past {HORIZON[-1]} priced too, on the champion "
+                              f"aging curve chained from the {HORIZON[-1]} WAR" if tail_chained else
+                              f", every guaranteed season past {HORIZON[-1]} priced too, on the champion mean path")
                              if tail_on else "")
                           + f", {_pct_str(rate)} discount, usd converted to $M; farm leg: org_summary active "
                           "surplus ($M, prospect_surplus validated), "

@@ -396,6 +396,39 @@ def _ml_active() -> bool:
 FA_PRICING_USE_DEF = False
 
 
+def chain_aging_tail(series: list[float], champ_series: list[float],
+                     horizon: int, n_years: int) -> list[float]:
+    """THE SEAM: extend a `horizon`-season path past its last season along the
+    champion's aging curve, chained from that last season's value.
+
+    The champion's RELATIVE decay is applied to the path's own last value:
+    season t prices champ[t] * (series[h-1] / champ[h-1]), floored at 0. Where
+    the champion anchor is about zero (0.05 WAR or less) the ratio is undefined,
+    so the last value decays along the champion's year-over-year ratio chain
+    (capped at 1.0, 0.7 where the champion's prior season is itself about
+    zero), floored at 0. Returns `series` followed by the chained seasons
+    through index n_years - 1, each rounded to 0.01.
+
+    contract_war_path uses this for horizons 6+ of the ML path and its P10/P90
+    heads, and proj_export's contract tail (VAL2-Q1, owner answer 2026-09-30)
+    prices guaranteed seasons past 2031 on the same output, so the two can
+    never chain a different curve or from a different start point."""
+    H = int(horizon)
+    anchor = champ_series[H - 1]
+    scale = (series[H - 1] / anchor) if anchor > 0.05 else None
+    tail = []
+    for t in range(H, int(n_years)):
+        if scale is not None:
+            tail.append(max(0.0, champ_series[t] * scale))
+        else:
+            # champion anchor ~0: decay the h5 value by the champion's
+            # year-over-year ratio chain, floored at 0
+            prev = tail[-1] if tail else max(0.0, series[H - 1])
+            r = (champ_series[t] / champ_series[t - 1]) if champ_series[t - 1] > 0.05 else 0.7
+            tail.append(max(0.0, prev * min(1.0, r)))
+    return list(series) + [round(v, 2) for v in tail]
+
+
 def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
                       age: int | None, curves: dict, war_map: dict,
                       league: dict, in_progress: tuple[int, float] | None = None,
@@ -481,19 +514,7 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     H = proj_ml.HORIZONS
 
     def _extend(series_ml: list[float], champ_series: list[float]) -> list[float]:
-        anchor = champ_series[H - 1]
-        scale = (series_ml[H - 1] / anchor) if anchor > 0.05 else None
-        tail = []
-        for t in range(H, MAX_PATH_YEARS):
-            if scale is not None:
-                tail.append(max(0.0, champ_series[t] * scale))
-            else:
-                # champion anchor ~0: decay the ml h5 value by the champion's
-                # year-over-year ratio chain, floored at 0
-                prev = tail[-1] if tail else max(0.0, series_ml[H - 1])
-                r = (champ_series[t] / champ_series[t - 1]) if champ_series[t - 1] > 0.05 else 0.7
-                tail.append(max(0.0, prev * min(1.0, r)))
-        return series_ml + [round(v, 2) for v in tail]
+        return chain_aging_tail(series_ml, champ_series, H, MAX_PATH_YEARS)
 
     med = _extend(ml["war_by_year"], path)
     out_ml = {**out,

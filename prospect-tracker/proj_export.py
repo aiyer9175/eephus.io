@@ -69,16 +69,48 @@ HORIZON = 5                  # 2027..2031
 # THE CONTRACT TAIL (owner answer 2026-09-25, census M05-01 step 2). A
 # guaranteed contract that runs past the last projected season is priced
 # through its last guaranteed season, not only through FIRST_SEASON+HORIZON-1.
-# The seasons past the horizon price on the Marcel CHAMPION's mean aging path
-# (`war_by_year_champ`, fa_market._decay_path, which runs MAX_PATH_YEARS), never
-# on the proj_lgbm quantile head and never on its h5-anchored extension: a
-# quantile point is median-like and is never summed, and the champion mean is
-# the path no projection-shape flag moves (docs/PROJ_PATH_SHAPE_GATE.md 9.2).
 # Only CONTRACT dollars are priced out there; an unsigned club-controlled
 # season past the horizon still carries no price. The board still PRINTS five
 # seasons; the tail WAR each priced season used ships as `warTail`.
 # False restores the five-season surplus on every row, byte for byte.
 PRICE_CONTRACT_TAIL = True
+# THE 2031/2032 SEAM (owner answer VAL2-Q1, 2026-09-30). Which WAR a tail season
+# prices on:
+#   "chained"         the champion's aging curve CHAINED FROM THE SERVED 2031
+#                     WAR: fa_market.chain_aging_tail, the FA module's own seam
+#                     (contract_war_path extends the ML path's horizons 6+ with
+#                     it), so /projections/ and that path can never use a
+#                     different curve or a different start point. It removes
+#                     the level step between 2031 (ML path) and 2032 (champion
+#                     level): -3.24 WAR on McGonigle, +2.95 on Soto.
+#   "champion_level"  the Marcel champion's mean path at its own level
+#                     (war_by_year_champ), the VAL_2 shape (36b93e16).
+# The chained tail rides the 2031 point of the served path, so a
+# docs/PROJ_PATH_SHAPE_GATE.md SERVE flag moves it (section 9.1 already names
+# horizons 6-15 through the h5 anchor); the champion level does not.
+TAIL_SEAM = "chained"
+
+
+def _tail_war(war: list, champ_full: list, war_full: list | None) -> tuple[list[float], str]:
+    """The WAR each season past the horizon prices on, by TAIL_SEAM.
+
+    "chained" reads the row's full served path (each side's war_by_year, summed
+    on a two-way row), whose seasons past the horizon ARE
+    fa_market.chain_aging_tail. Where that carrier is missing or does not
+    reproduce the served five seasons it is recomputed from the served path
+    and the champion path with the same function, so the rule never forks."""
+    if TAIL_SEAM == "champion_level":
+        return [float(w) for w in champ_full[HORIZON:]], "champion_level"
+    if TAIL_SEAM != "chained":
+        raise ValueError("unknown TAIL_SEAM %r" % (TAIL_SEAM,))
+    if (war_full and len(war_full) >= len(champ_full)
+            and all(abs(float(war_full[t]) - float(war[t])) < 0.006
+                    for t in range(HORIZON))):
+        return [float(w) for w in war_full[HORIZON:len(champ_full)]], "served_path"
+    full = fm.chain_aging_tail([float(w) for w in war[:HORIZON]],
+                               [float(w) for w in champ_full], HORIZON,
+                               len(champ_full))
+    return [float(w) for w in full[HORIZON:]], "recomputed"
 # Exposure floor for the veteran universe: at least one of the last three
 # seasons with a real sample (sub-cup-of-coffee players add noise, not
 # signal, and the engine's reliability buckets were fitted above this).
@@ -915,12 +947,21 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         if not name:
             continue
         # The champion MEAN path at its full length (fa_market.MAX_PATH_YEARS,
-        # both sides summed on a two-way row): the WAR PRICE_CONTRACT_TAIL
-        # prices a guaranteed season past the horizon with. Private; stripped by
-        # _strip_private once the salary path pass has used it.
+        # both sides summed on a two-way row): how far the contract tail may
+        # run, and the WAR it prices on under TAIL_SEAM "champion_level".
+        # Private; stripped by _strip_private once the salary path pass has
+        # used it.
         _cf = [paths[s].get("war_by_year_champ") or paths[s]["war_by_year"] for s in paths]
         champ_full = [round(sum(float(a[t] or 0.0) for a in _cf), 2)
                       for t in range(min(len(a) for a in _cf))]
+        # The SERVED path at its full length (TAIL_SEAM "chained", owner answer
+        # VAL2-Q1): each side's war_by_year, whose seasons past the horizon are
+        # fa_market.chain_aging_tail (the champion's aging curve chained from
+        # that side's 2031 WAR), summed across sides on a two-way row exactly
+        # as `war` is. Private; stripped with the champion path.
+        _wf = [paths[s]["war_by_year"] for s in paths]
+        war_full = [round(sum(float(a[t] or 0.0) for a in _wf), 2)
+                    for t in range(min(len(a) for a in _wf))]
         _nkey = normalize_key(name)
         _ambiguous = _name_counts.get(_nkey, 0) > 1
         ct = _ct_by_mlbam.get(mlbam)
@@ -953,6 +994,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
                                      else paths[s]["war_by_year"][0]) or 0.0
                                     for s in paths), 2),
             "_warChampFull": champ_full,
+            "_warFull": war_full,
         }
         # Projected RATE lines (fa_projection.rate_path - the year-1 Marcel
         # components walked along the per-component aging curves). Hitters:
@@ -1094,7 +1136,7 @@ def _strip_private(m: dict) -> None:
     """Drop the private carrier keys `_apply_contract` records for this pass.
     `_clean` runs BEFORE the path pass (inside the row loop), so it cannot do
     this; the path pass is the last thing to touch a veteran row, so it does."""
-    for k in ("_salYears", "_rosUsd", "_warChampFull"):
+    for k in ("_salYears", "_rosUsd", "_warChampFull", "_warFull"):
         m.pop(k, None)
 
 
@@ -1229,8 +1271,9 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
         ct = (contracts or {}).get(mlbam)
         war = m.get("war") or []
         # THE CONTRACT TAIL (PRICE_CONTRACT_TAIL). The pricing WAR is the
-        # served path for the projected seasons and the champion mean after
-        # them; the tail may run only as far as that champion path does.
+        # served path for the projected seasons and, after them, the seam
+        # TAIL_SEAM names (see _tail_war); the tail may run only as far as the
+        # champion path does.
         champ_full = m.get("_warChampFull") or []
         tail_last = None
         _ct_years = [int(y) for y in ((ct or {}).get("salary_by_year") or {})]
@@ -1245,7 +1288,9 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
                 tail_last = None
         war_px = list(war)
         if tail_last is not None and len(war_px) >= HORIZON:
-            war_px = war_px[:HORIZON] + [float(w) for w in champ_full[HORIZON:]]
+            _tw, _how = _tail_war(war_px, champ_full, m.get("_warFull"))
+            war_px = war_px[:HORIZON] + _tw
+            tail["seam_" + _how] = tail.get("seam_" + _how, 0) + 1
         path = sp.salary_path(
             mlbam, key=m.get("key"), first_season=FIRST_SEASON, horizon=HORIZON,
             contract=ct, board_row=brows.get(mlbam), league_min=lm,
@@ -1355,7 +1400,8 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
             m["surTotal"] = int((ros_usd or 0.0) + npv)
         else:
             m.pop("surTotal", None)
-        # The WAR each tail season priced on: the champion mean, one entry per
+        # The WAR each tail season priced on (TAIL_SEAM: the champion's aging
+        # curve chained from the 2031 WAR), one entry per
         # season FIRST_SEASON+HORIZON .. the last tail season (None on a gap
         # year the contract lists no dollars for). `war` stays the five
         # projected seasons the board prints.
@@ -1474,12 +1520,14 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
         "option_file_rows": len(opts_all),
         # THE CONTRACT TAIL (PRICE_CONTRACT_TAIL, owner answer 2026-09-25):
         # rows whose guarantee runs past the horizon and is priced through its
-        # last season on the champion mean path; the guaranteed seasons and
+        # last season on the TAIL_SEAM path; the guaranteed seasons and
         # dollars that adds; the discounted surplus those seasons contribute;
         # and the rows whose guarantee outruns the champion path (priced only
         # as far as it reaches, and still labelled as clamped).
         "contract_tail": dict(tail, enabled=bool(PRICE_CONTRACT_TAIL),
-                              war_basis="war_by_year_champ"),
+                              war_basis=("war_by_year_champ" if TAIL_SEAM == "champion_level"
+                                         else "chain_aging_tail"),
+                              seam=TAIL_SEAM),
     })
     _SALARY_PATH_CENSUS = {k: v for k, v in census.items() if v is not None}
     if say:
@@ -2962,8 +3010,11 @@ def build_payload() -> dict:
             + (f"escalated {_dpw_infl * 100:.1f}%/yr" if _dpw_infl else "flat across seasons")
             + "; veteran surplus over the control window: contracted seasons at their salary, pre-arbitration seasons at the league minimum, arbitration seasons at the projected award, discounted at the platform rate"
             + (f"; a guarantee that runs past {FIRST_SEASON + HORIZON - 1} is priced through its last season, "
-               "those seasons on the champion mean path (warChamp extended, published per season as warTail), "
-               "and an unsigned season past it carries no price"
+               + ("those seasons on the champion mean path (warChamp extended, published per season as warTail), "
+                  if TAIL_SEAM == "champion_level" else
+                  f"those seasons on the champion (Marcel) aging curve chained from the served {FIRST_SEASON + HORIZON - 1} WAR "
+                  "(the FA module's seam, fa_market.chain_aging_tail; published per season as warTail), ")
+               + "and an unsigned season past it carries no price"
                if PRICE_CONTRACT_TAIL else
                f"; nothing past {FIRST_SEASON + HORIZON - 1} is priced"),
             "two-way players project BOTH sides, summed per season (per-side paths in warHit/warPit; bands combine at assumed cross-side correlation rho=0.5 - documented)",

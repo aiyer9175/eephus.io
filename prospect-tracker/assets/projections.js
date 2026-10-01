@@ -367,9 +367,11 @@
   // THE CONTRACT TAIL (owner answer 2026-09-25, M05-01 step 2). A guarantee
   // that runs past the five projected seasons is now priced through its last
   // season (proj_export.PRICE_CONTRACT_TAIL), and the seasons past the five
-  // price on the champion (Marcel) mean aging path, which the board does not
-  // print; `warTail` carries the WAR each one priced. The surplus is labelled
-  // with the whole span it covers, read off the row's own salary path.
+  // price on the champion (Marcel) aging curve CHAINED FROM THE LAST PRINTED
+  // SEASON's WAR (owner answer VAL2-Q1, proj_export.TAIL_SEAM; the FA module's
+  // own seam), which the board does not print; `warTail` carries the WAR each
+  // one priced. The surplus is labelled with the whole span it covers, read off
+  // the row's own salary path.
   function pricedTail(m) {
     if (!m || !DATA || DATA.first_season == null) return null;
     const lastH = DATA.first_season + DATA.horizon - 1;
@@ -385,7 +387,7 @@
   }
   function pricedTailText(tp) {
     const span = tp.n === 1 ? `guaranteed ${tp.from} season prices` : `${tp.n} guaranteed seasons ${tp.from}-${tp.end} price`;
-    return `The ${span} on the champion (Marcel) mean aging path, past the five seasons the board prints.`;
+    return `The ${span} on the champion (Marcel) aging curve chained from the ${tp.from - 1} WAR, past the five seasons the board prints.`;
   }
   function warAt(m, t) {
     const arr = m.war;
@@ -758,7 +760,7 @@
       ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${DATA.n_vets} veterans (proj_lgbm_v1 on the <span data-gl="fa_projection_engine">FA projection engine</span>; /fa/ prices on its Marcel champion)
       &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
       &middot; priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons"}
-      &middot; WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window, unsigned seasons through ${first + (DATA.horizon || 5) - 1} at most and a longer guarantee through its last season on the champion aging path
+      &middot; WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window, unsigned seasons through ${first + (DATA.horizon || 5) - 1} at most and a longer guarantee through its last season on the champion aging curve chained from the ${first + (DATA.horizon || 5) - 1} WAR
       &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
     const gfxBtn = document.getElementById("proj-board-gfx");
     if (gfxBtn) gfxBtn.onclick = () => {
@@ -1443,7 +1445,7 @@
         : opn === "club" ? "Club option season, priced as guaranteed salary; the club's choice to decline it is not modelled"
         : opn ? "Priced as if the player stays; an opt out is not modelled"
         : (src === "contract" && t >= H)
-        ? `Guaranteed salary on file; this season prices ${wTail != null ? `${fmtWar(wTail)} WAR` : "the WAR"} on the champion (Marcel) mean aging path, past the five seasons the board prints`
+        ? `Guaranteed salary on file; this season prices ${wTail != null ? `${fmtWar(wTail)} WAR` : "the WAR"} on the champion (Marcel) aging curve chained from the ${first + H - 1} WAR, past the five seasons the board prints`
         : src === "class_closure" ? "Arbitration year implied by the last class token on the board, not listed by Spotrac yet"
         : src === "arb_ladder" ? (tok.toUpperCase().indexOf("PRE") === 0
             ? "Pre arbitration season at the CBA league minimum - a rule, not a prediction"
@@ -1584,7 +1586,7 @@
         ? " The contract buys out his whole published arbitration grid, so no arbitration season follows it."
         : " No arbitration seasons are on file after it.";
       const _tpC = why === "horizon" ? null : pricedTail(m);
-      const tailP = _tpC ? ` Surplus prices every guaranteed season, ${_tpC.from}-${_tpC.end} on the champion aging path.` : "";
+      const tailP = _tpC ? ` Surplus prices every guaranteed season, ${_tpC.from}-${_tpC.end} on the champion aging curve chained from the ${_tpC.from - 1} WAR.` : "";
       return { text: String(ct), sub: "guaranteed", fold: `guaranteed ${m.thru}`,
         cls: "proj-ct-signed",
         tip: `Guaranteed through ${m.thru}${rate}.${tail}${tailP}${cutNote}` };
@@ -1734,7 +1736,7 @@
       // survives a CSV. Empty on a veteran row, which has no prime path.
       + `<th class="pc-csv" hidden data-export-text="Prime ${H}y WAR (prospects, talent anchor)"></th>`
       + th("sur", "Surplus", "pc-sur",
-          `Veterans: production value minus salary over the club control window, through ${first + H - 1} at most - contracted dollars where a contract exists, the league minimum for pre-arbitration seasons, the projected award for arbitration seasons. A guarantee that runs past ${first + H - 1} is priced through its last season, those seasons on the champion (Marcel) mean aging path; an unsigned season past ${first + H - 1} carries no price. Prospects: surplus over the 7-season valuation window from their ETA.`, "Surplus")
+          `Veterans: production value minus salary over the club control window, through ${first + H - 1} at most - contracted dollars where a contract exists, the league minimum for pre-arbitration seasons, the projected award for arbitration seasons. A guarantee that runs past ${first + H - 1} is priced through its last season, those seasons on the champion (Marcel) aging curve chained from the ${first + H - 1} WAR; an unsigned season past ${first + H - 1} carries no price. Prospects: surplus over the 7-season valuation window from their ETA.`, "Surplus")
       + seasons.map((s, t) => th("y" + t,
           `<span class="proj-sr-sm">${String(s).slice(0, 2)}</span>${String(s).slice(2)}`
             + (state.cells === "war" ? "" : `<span class="proj-th-unit">${esc(cellLbl)}</span>`),
@@ -2833,7 +2835,7 @@
         money(sv), sv >= 0 ? "proj-pos" : "proj-neg",
         { gl: "surplus_value",
           sub: tl ? `${tl.n} guaranteed season${tl.n === 1 ? "" : "s"} after ${tl.end} not priced`
-            : tp ? `${tp.from}-${tp.end} on the champion aging path`
+            : tp ? `${tp.from}-${tp.end} on the champion aging curve`
             : (pr.surSalLo != null && pr.surSalHi != null)
             ? `award band ${money(pr.surSalLo)} to ${money(pr.surSalHi)}` : "" }));
     const h = sk.hem, d = sk.def, s = (p.isPit || p.twoWay) ? pitchSkill(p) : null;
