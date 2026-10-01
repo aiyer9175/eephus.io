@@ -24,7 +24,7 @@ Do-not-refind lists from `.claude/maps/priorAudits.md` were honored.
 | A10 | P3 | dead code | `trademachine.js` `renderTradeBoard()` duplicated `mount()`'s fetch/wire/GRPO block, unreferenced. Removed. |
 | A11 | P3 | CollegeSavant | Hitter leaderboard descending sort floated missing values to the top (null-guard × direction). Fixed the null sink to stay last in both directions. |
 | A12 | P3 | GFX engine | Modal dropped control changes made while a render was in flight (preview/export could mismatch selected options). Re-read options after each render. |
-| A13 | P2/P3 | docs/gov | `docs/generate-gfx.md` rewritten to the shipped system; CHANGELOG backfilled 07-15b..07-18; REVIEW_QUEUE item 16 + BETA_READINESS stale boxes reconciled; registry note added for the 07-17 injury directive. |
+| A13 | P2/P3 | docs/gov | `docs/generate-gfx.md` rewritten to the shipped system; CHANGELOG backfilled 07-15b..07-18; docs/archive/REVIEW_QUEUE.md item 16 + docs/archive/BETA_READINESS.md stale boxes reconciled; registry note added for the 07-17 injury directive. |
 
 ## DEFERRED to owner (moves published model numbers, or needs the canonical DB to verify/fix)
 
@@ -40,6 +40,6 @@ Do-not-refind lists from `.claude/maps/priorAudits.md` were honored.
 ## DROPPED (intentional, refuted, or already-known)
 
 - `STATCAST_METRICS_FRESH_DAYS = 0`: the intentional "always refresh" sentinel (matches career-stats stage 3a freshness=0), not dead code.
-- BETA_READINESS go/no-go checkbox drift: already logged in priorAudits §2.2.
+- docs/archive/BETA_READINESS.md go/no-go checkbox drift: already logged in priorAudits §2.2.
 - projections.js "per-year bands unaffected" comment: a change-scope statement, not a calibration claim (verifier-refuted).
 - Wave-2 lab re-runnability, supply_pop "alignment" sigma: refuted / not-a-defect on inspection.

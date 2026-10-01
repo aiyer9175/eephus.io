@@ -471,7 +471,7 @@ def recommendation(per_comp, blend):
         "decision_basis": f"pooled_oos_closed (debut <= {DECISION_MAX_DEBUT_YEAR})",
         "shipping_note": ("a reweight of the published SC+ composite ships only "
                           "through a dedicated pre-registered gated experiment "
-                          "(see REVIEW_QUEUE.md); this artifact records the "
+                          "(see docs/archive/REVIEW_QUEUE.md); this artifact records the "
                           "candidate signal, it does not authorize the change"),
         "oos_gain_blend_minus_composite": gains,
         "composite_pooled_r_rate": comp_r,

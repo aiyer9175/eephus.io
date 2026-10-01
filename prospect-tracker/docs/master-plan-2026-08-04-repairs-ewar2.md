@@ -115,7 +115,7 @@ simple PT level story - decompose before fixing:
    noise) AND recentered team MAE not-worse. A candidate that trades shape for level or
    level for shape fails.
 4. Whatever ships or fails, the loss ledger goes in the registry and the
-   `REVIEW_QUEUE.md` h5 star item gets re-pointed at the refreshed war_cohort_eval.
+   `docs/archive/REVIEW_QUEUE.md` h5 star item gets re-pointed at the refreshed war_cohort_eval.
 
 ---
 

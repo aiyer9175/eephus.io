@@ -297,7 +297,7 @@ C7. Record as closed in the plan ledger, do not build: POW+/HIT+/PD+/ISO+ as
     training drivers (frontend-only composites; trainable parts already adjudicated;
     Statcast parts have no history), SC+ components as training features (no
     pre-2023 history; the live overlay already carries whiff/velo at component level;
-    the component reweight is queued to season close per REVIEW_QUEUE.md:191-209
+    the component reweight is queued to season close per docs/archive/REVIEW_QUEUE.md item 12
     item 12 and its pre-set trigger).
 
 ## Lane D: driver explainer display (Pinazzi + magnitude scaling)

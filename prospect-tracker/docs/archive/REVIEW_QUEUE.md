@@ -7,7 +7,7 @@
 > a venue dimension and `/parks/` serves the factors (201 venues plus 1 pooled
 > row). Current deferred work and owner decisions live in
 > `docs/master-plan-2026-09-24-final-pass.md` and the dated master plans under
-> `docs/`.
+> `docs/`. Moved here from the repository root on 2026-10-01 (owner answer M23-4).
 
 Deferred work with enough spec to pick up cold. Each item: what / why /
 expected impact / rollback. Nothing here ships before Beta (2026-07-11)

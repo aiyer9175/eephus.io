@@ -448,7 +448,7 @@ MODEL_GLOSSARY = {
     # entry.
     "leverage_consistency": ["gmli_3yr"],
     # X-D2 AgeRel+ candidate: numeric bar met but not a clear pass; NOT
-    # wired, owner decision queued in REVIEW_QUEUE.md.
+    # wired, owner decision queued in docs/archive/REVIEW_QUEUE.md.
     "age_rel_outperformance": "internal",
     # eFV round (2026-07-02): three gated experiments, all rejected or
     # inconclusive at their pre-registered gates; loss ledgers, rendered

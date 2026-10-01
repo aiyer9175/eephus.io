@@ -93,7 +93,7 @@ def test_recenter_remainder_near_zero():
     So the honest fix is NOT here: either re-anchor the playing-time refit so the
     league still sums to ~1000, or re-fit the cohort intercepts on the new paths
     under their own holdout gate (proj_backtest.py). Widening this bound would
-    delete the only instrument that noticed. See also REVIEW_QUEUE item 1
+    delete the only instrument that noticed. See also docs/archive/REVIEW_QUEUE.md item 1
     (proj_lgbm star-tail refit) - this is the same under-projected star tail.
 
     BOTH CANDIDATES MEASURED 2026-07-31, NEITHER SHIPS. Full writeup in

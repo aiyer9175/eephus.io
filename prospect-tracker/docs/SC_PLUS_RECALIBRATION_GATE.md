@@ -182,7 +182,7 @@ maximum.
 
 ## 3. Out of scope, explicitly
 
-- Composite reweighting (queued to season close, `REVIEW_QUEUE.md:191-209`).
+- Composite reweighting (queued to season close, `docs/archive/REVIEW_QUEUE.md` item 12).
 - Adding SC+ component legs to eFV (`efv_model.py` does not read `statcast_plus`
   at all; it is a serve-time tilt in `efv_score._statcast_factor` only, so the
   eFV out-of-sample eval CANNOT see this change and the 0.017/0.016 feature-add

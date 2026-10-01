@@ -152,7 +152,7 @@ stability proof. Re-measure on the current frame; if the trend continues,
 propose (do not ship without a gate win) a window-disciplined re-fit. Document
 either way in the eval artifact.
 
-A1.4 Per-year WAR band coverage. REVIEW_QUEUE item 13: displayed totals
+A1.4 Per-year WAR band coverage. docs/archive/REVIEW_QUEUE.md item 13: displayed totals
 covered 0.63 vs the 0.80 design; totals were dropped rather than fixed, and the
 per-year bands still carry the defect (survived-only coverage ~0.55, driven by
 a strictly-positive decayed p10 while ~40% of real seasons are <=0 WAR).
@@ -201,7 +201,7 @@ exist in the matrices), forward-disciplined. Register it; verdict per results.
 A3.2 Refresh the stalest live-surface evals, oldest first:
 trade_machine_surplus (39d; /trademachine/ ordering; bayes_trade_value.py
 self-flags "latent-P0 on any coverage" at :690), statcast_plus (53d; the
-component diagnostic already suggests reweighting, REVIEW_QUEUE item 12),
+component diagnostic already suggests reweighting, docs/archive/REVIEW_QUEUE.md item 12),
 farm_grades (53d), draft_slot_curve + fa_qo_pick_tax (53d), fa_dpw_series
 (53d), mlb_projections_prospects (52d). Rerun each on its existing harness;
 update registry verdicts honestly; ship measured wins only.

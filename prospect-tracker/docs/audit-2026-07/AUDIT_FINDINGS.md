@@ -223,7 +223,7 @@ swap, level_jump, type-conditioned consensus weights).
 
 VERIFY (4 read-only lanes over 4525ec5..HEAD, 16 findings, no P0):
 - P1 FIXED: the X-D2 owner-decision spec that four docs referenced did not exist in
-  REVIEW_QUEUE.md; now item 11.
+  docs/archive/REVIEW_QUEUE.md; now item 11.
 - P2 FIXED: C1 track-record panel deep link used /glossary/?view=... but the glossary app
   parses hash only; now #view=source-comparison.
 - P2 FIXED: tools/leverage_consistency_eval.py hardcoded CURRENT_SEASON/MULTI_YEAR_SEASONS
@@ -233,7 +233,7 @@ VERIFY (4 read-only lanes over 4525ec5..HEAD, 16 findings, no P0):
 - P2 FIXED: X-C3 decision instrument sat on in-progress 2026 outcomes (irreproducible
   committed numbers). Decision now pinned to CLOSED outcome seasons. NOTE the pin flipped
   the rule to "reweight" (closed-basis blend gain +0.14 hit / +0.28 pit, n=23/side):
-  recorded as a QUEUED candidate (REVIEW_QUEUE.md item 12), composite unchanged; a
+  recorded as a QUEUED candidate (docs/archive/REVIEW_QUEUE.md item 12), composite unchanged; a
   published-metric change needs its own pre-registered gate.
 - P3s FIXED: gmLI pct cell now fInt-coerced; bullpen join count only counts rendering rows;
   glossary writers share one no-trailing-newline convention; leverage artifact writes
@@ -341,7 +341,7 @@ loss ledger, registry row + eval artifact + freshness map for anything model-sha
 First eight-lane run landed two lanes (E-ISO3, farm snapshotting) before a session-limit
 interruption; the resume landed five more; the entity-pages lane failed on a structured-
 output error (not a data problem) and is deferred (additive static pages, not launch-
-critical; REVIEW_QUEUE). Outcomes:
+critical; docs/archive/REVIEW_QUEUE.md). Outcomes:
 
 - R-BAND (F-01 remediation): gate FAIL, and the failure is more informative than expected.
   The simulated path-total band (Gaussian AR(1) copula, estimated dependence rho 0.345,
@@ -385,7 +385,7 @@ critical; REVIEW_QUEUE). Outcomes:
   overseas_stats.py already parses it, so no league-context scrape is needed; the only new
   input is curating ~7-10 fg_player_ids (an owner-extendable ledger task). A ready-to-run
   gated refit is spec'd in docs/audit-2026-07/overseas-factors-recheck.md and queued
-  (REVIEW_QUEUE). No code changed.
+  (docs/archive/REVIEW_QUEUE.md). No code changed.
 
 ### Earlier partial-landing note (superseded by the outcomes above)
 
@@ -555,9 +555,9 @@ pre-registered here before any number was computed; harness tools/sem_plus_lab.p
   overseas-with-outcome cohort is ~10 (the overseas translation cohort is 28 resolved NPB/KBO
   transitions total), far too thin for the per-side, no-degradation, bootstrap-CI rigor the
   four prior eFV experiments were held to; the eFV calibration line is already closed at the
-  trainable-data ceiling. REVIEW_QUEUE item 15, with the method + the zero-risk interim
+  trainable-data ceiling. docs/archive/REVIEW_QUEUE.md item 15, with the method + the zero-risk interim
   (surface the validated MLB-equivalent line as card CONTEXT without moving eFV). (b) Per-year
-  WAR quantile marginal recalibration is REVIEW_QUEUE item 13, already spec'd (attrition zero-
+  WAR quantile marginal recalibration is docs/archive/REVIEW_QUEUE.md item 13, already spec'd (attrition zero-
   mass, gate coverage [0.75,0.85]); it is high-blast-radius on published /projections/ + /fa/
   bands and its total-band sibling was already shown miscalibrated and dropped, so it stays
   deferred rather than shipped unvalidated pre-launch. Both respect the standing rule: gate
@@ -623,7 +623,7 @@ pre-registered here before any number was computed; harness tools/sem_plus_lab.p
   formalized after inspecting the failure; the plain level-relative comparator
   out-predicts it (r 0.1559 vs 0.1237); upper-level same-age cohorts are promoted elites
   (selection confound in display semantics). Per the ship policy: NOT WIRED, owner
-  decision queued in REVIEW_QUEUE.md. Lane H1 landed F-02 (visible error states + retry
+  decision queued in docs/archive/REVIEW_QUEUE.md. Lane H1 landed F-02 (visible error states + retry
   in all six module apps) and F-08 (REM+/Bullpen+ explainers) plus per-year P90 upside
   and eFV-primary grade language on projections/#cmp. Lane P landed D4 (surplus $ band),
   B3 (GFX follows rank mode), C1 (track-record panel), C2 (reliability diagram of the
@@ -632,8 +632,8 @@ pre-registered here before any number was computed; harness tools/sem_plus_lab.p
 - 2026-07-01 (wave 2, lane G): audit deliverables landed. MODEL_REGISTRY.md /
   SITE_MAP.md / DATA_SOURCES.md are GENERATED (tools/gen_audit_docs.py, drift-guarded
   by test_generated_docs_in_sync.py; DATA_SOURCES.md carries a verbatim-round-tripped
-  CURATED block); CHANGELOG.md / REVIEW_QUEUE.md / BETA_READINESS.md are curated.
+  CURATED block); CHANGELOG.md / docs/archive/REVIEW_QUEUE.md / docs/archive/BETA_READINESS.md are curated.
   Registry at generation time: 42 rows (17 validated / 21 provisional / 3 unvalidated /
-  1 deprecated), validate() clean. F-01 spec'd in REVIEW_QUEUE.md item 7. NOTE: rerun
+  1 deprecated), validate() clean. F-01 spec'd in docs/archive/REVIEW_QUEUE.md item 7. NOTE: rerun
   tools/gen_audit_docs.py after ALL lanes land (SITE_MAP/DATA_SOURCES introspect live
   source, so sibling-lane edits will show as expected drift).

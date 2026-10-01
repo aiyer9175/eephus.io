@@ -1218,7 +1218,7 @@ Gate and audit docs: `docs/EFV_GATE_STANDARD.md`, `docs/EFV_FRONTIER_AUDIT.md`,
 `docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md`,
 `docs/efv-2026-07-30/TRADE_ARCHETYPE_FLOOR_GATE.md`,
 `docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_GATE.md`,
-`docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_SHIP.md`, `REVIEW_QUEUE.md` item 15.
+`docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_SHIP.md`, `docs/archive/REVIEW_QUEUE.md` item 15.
 
 Artifacts: `data/xfv_eval.json`, `data/xfv_eval_pitcher.json`,
 `data/xfv_scoreboard_eval.json`, `data/xfv_mde_floor.json`, `data/xfv_headtohead_gap.json`,

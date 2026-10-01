@@ -453,7 +453,7 @@ lives beside the six that were run, and verified against the code before writing
 - **SC+ components as training features.** No pre-2023 history, so a forward chain over
   2014-2024 folds would train nine of eleven folds on an absent column. The live overlay
   already carries whiff and velocity at component level, and the component reweight is
-  queued to season close per `REVIEW_QUEUE.md` items 191-209 with its own pre-set
+  queued to season close per `docs/archive/REVIEW_QUEUE.md` item 12 with its own pre-set
   trigger. Not built.
 
 Neither is a null measured today. They are arms with no admissible measurement

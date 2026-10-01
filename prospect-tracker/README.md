@@ -335,6 +335,11 @@ Publish `index.html`, `articles/`, `prospx/`, `fa/`, `projections/`,
 `glossary/`, `forums/`, `team/`, `assets/`, `data/`, and `vendor/`. The site
 must be served at the domain root so the root-absolute asset paths work.
 
+The port to git.eephus.io is deferred by the owner. Its checklist is
+[`docs/LAUNCH_READINESS.md`](docs/LAUNCH_READINESS.md) and its spec is
+[`docs/port/PORT_SPEC.md`](docs/port/PORT_SPEC.md). The Beta checklist and review
+queue are archived under `docs/archive/`.
+
 ## Project layout
 
 ```
