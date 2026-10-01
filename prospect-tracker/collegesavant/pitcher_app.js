@@ -994,11 +994,18 @@ function renderProjections() {
   const legHead = (label, flag) => flag ? `${label} <span class="trans-flag">${flag}</span>` : label;
   const MUTED = ' style="opacity:0.55"';
   const fk = legFlag("pit_k"), fb = legFlag("pit_bb");
-  const list = state.pitchers
+  // The board lists arms at or above the pool's median pitch count by default
+  // (owner answer M19CS-2), through the same qualifier and Min pitches control
+  // as the leaderboards; 0 lists every projected arm. CS+ is still z-scored on
+  // the whole season pool, so the filter changes who is listed, not any value.
+  const qual = qualifier();
+  const projected = state.pitchers
     .map((p) => ({ p, t: T[p.slug], cs: state.csPlus && state.csPlus.get(p.slug) }))
-    .filter((x) => x.t && x.t.single_a)
-    .sort((a, b) => (b.cs ?? -Infinity) - (a.cs ?? -Infinity))
-    .slice(0, LEADERBOARD_LIMIT);
+    .filter((x) => x.t && x.t.single_a);
+  const listed = projected
+    .filter((x) => passesQualifier(x.p, qual))
+    .sort((a, b) => (b.cs ?? -Infinity) - (a.cs ?? -Infinity));
+  const list = listed.slice(0, LEADERBOARD_LIMIT);
   const body = list.map((x, i) => {
     const sa = x.t.single_a;
     const logo = x.p.team && TEAM_LOGOS.has(x.p.team) ? `<img class="tt-logo" src="logos/${escapeHtml(x.p.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : "";
@@ -1009,7 +1016,7 @@ function renderProjections() {
       <td class="tt-col"${fb ? MUTED : ""}>${pband(sa.bb_pct)}</td></tr>`;
   }).join("");
   app.innerHTML = `
-    <section class="toolbar">${renderYearSelect()}</section>
+    <section class="toolbar">${renderYearSelect()}${qualifierControl(qual)}</section>
     <div class="panel-title"><span>How the projection works</span><span>college-to-Single-A statistical translation</span></div>
     <ol class="proj-method">
       <li><strong>Matched pairs.</strong> We take college pitchers who later reached Single-A, pair each one's college rate with the Single-A rate they actually posted, and fit how the two relate. Strikeout and walk rates are read from K/9 and BB/9 over batters faced.</li>
@@ -1023,13 +1030,16 @@ function renderProjections() {
       <thead><tr><th class="tt-team">Projection</th><th class="tt-col">r²</th><th class="tt-col">±band</th><th class="tt-col">MAE</th><th class="tt-col">P10-P90 cover</th><th class="tt-col">n pairs</th></tr></thead>
       <tbody>${accRows || `<tr><td colspan="6" class="note-line">No backtest on file.</td></tr>`}</tbody>
     </table></div></section>
-    <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} pitchers with a projection · ranked by CS+ (pro profile)</span></div>
+    <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} pitchers listed · ranked by CS+ (pro profile)</span></div>
+    <p class="note-line">${listed.length.toLocaleString()} of ${projected.length.toLocaleString()} pitcher${projected.length === 1 ? "" : "s"} with a projection listed, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ compares against the whole ${state.year} pool.${listed.length > list.length ? ` Showing the top ${list.length}.` : ""}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Pitcher</th><th class="tt-col">CS+</th><th class="tt-col">${legHead("Proj A K%", fk)}</th><th class="tt-col">${legHead("Proj A BB%", fb)}</th></tr></thead>
       <tbody>${body || `<tr><td colspan="5" class="note-line">No projections for this year.</td></tr>`}</tbody>
     </table></div></section>`;
   const ys = app.querySelector(".year-select");
   if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderProjections(); });
+  const mp = app.querySelector("[data-min-pitch]");
+  if (mp) mp.addEventListener("change", (e) => { state.minPitch = Number(e.target.value) || 0; renderProjections(); });
 }
 
 function renderTeams() {

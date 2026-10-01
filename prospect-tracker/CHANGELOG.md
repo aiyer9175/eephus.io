@@ -14,6 +14,16 @@ readiness for the port: docs/LAUNCH_READINESS.md.
 
 ## 2026-10-01
 
+- The CollegeSavant Projected Single-A boards list rows at or above the
+  season pool's median PA or pitch count by default, the same qualifier and
+  Min PA / Min pitches control as the leaderboards (owner answer M19CS-2;
+  0 lists every projected row). The board prints the qualifier sentence; CS+
+  values do not move and Team Tendencies stay unfiltered. Default views: the
+  pitcher board (2026) lists 77 of 144 arms at 73+ pitches, leader still Luke
+  Alwood 117 (Nicholas Robb 113, 69 pitches, drops off); the hitter board
+  (2025) has no PA column and still lists all 184. Other seasons: hitters 2024
+  lead Charlie Condon 115 (264 PA), was Kalvin Alexander 119 (35 PA); pitchers
+  2024 lead Najer Victor 118 (256 pitches), was Hunter Alberini 123 (54).
 - Owner answers M23-2, M23-3 and M23-4 (2026-09-25), three commits. (1) Projection
   veteran rows carry an audit-only `contract_club` (the Spotrac club paying the
   salary) on exactly the 136 rows whose contract club differs from their current

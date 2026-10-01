@@ -1045,11 +1045,18 @@ function renderProjections() {
         <td class="tt-col">${cov}</td><td class="tt-col">${f.n ?? " - "}</td></tr>`;
     }).join("");
   const pband = (b, dec) => b == null ? " - " : (dec ? b.exp.toFixed(3).replace(/^0(?=\.)/, "") : b.exp.toFixed(1) + "%");
-  const list = state.players
+  // The board lists hitters at or above the pool's median PA by default (owner
+  // answer M19CS-2), through the same qualifier and Min PA control as the
+  // leaderboards; 0 lists every projected hitter. CS+ is still z-scored on the
+  // whole season pool, so the filter changes who is listed, not any value.
+  const qual = qualifier();
+  const projected = state.players
     .map((p) => ({ p, t: T[p.slug], cs: state.csPlus && state.csPlus.get(p.slug) }))
-    .filter((x) => x.t && x.t.single_a)
-    .sort((a, b) => (b.cs ?? -Infinity) - (a.cs ?? -Infinity))
-    .slice(0, LEADERBOARD_LIMIT);
+    .filter((x) => x.t && x.t.single_a);
+  const listed = projected
+    .filter((x) => passesQualifier(x.p, qual))
+    .sort((a, b) => (b.cs ?? -Infinity) - (a.cs ?? -Infinity));
+  const list = listed.slice(0, LEADERBOARD_LIMIT);
   const fk = legFlag(E, "hit_k"), fb = legFlag(E, "hit_bb"), fo = legFlag(E, "hit_ops");
   const body = list.map((x, i) => {
     const sa = x.t.single_a;
@@ -1062,7 +1069,7 @@ function renderProjections() {
       <td class="tt-col"${fo ? MUTED_CELL : ""}>${pband(sa.ops, true)}</td></tr>`;
   }).join("");
   app.innerHTML = `
-    <section class="toolbar">${renderYearSelect()}</section>
+    <section class="toolbar">${renderYearSelect()}${qualifierControl(qual)}</section>
     <div class="panel-title"><span>How the projection works</span><span>college-to-Single-A statistical translation</span></div>
     <ol class="proj-method">
       <li><strong>Matched pairs.</strong> We take college hitters who later reached Single-A, pair each one's college tracked rate with the Single-A rate they actually posted, and fit how the two relate.</li>
@@ -1077,13 +1084,16 @@ function renderProjections() {
       <tbody>${accRows || `<tr><td colspan="6" class="note-line">No backtest on file.</td></tr>`}</tbody>
     </table></div></section>
     <p class="trans-note">Coverage near 80% means the P10-P90 bands are sized to the data. Rows below r² ${lowSignalR2().toFixed(2)} are flagged and shown for context. Not adjusted for schedule strength or park (no conference / park table held). Stuff and tracked skills are descriptive (the CS+ index), not pro outcome forecasts.</p>
-    <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} hitters with a projection · ranked by CS+ (pro profile)</span></div>
+    <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} hitters listed · ranked by CS+ (pro profile)</span></div>
+    <p class="note-line">${listed.length.toLocaleString()} of ${projected.length.toLocaleString()} hitter${projected.length === 1 ? "" : "s"} with a projection listed, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ compares against the whole ${state.year} pool.${listed.length > list.length ? ` Showing the top ${list.length}.` : ""}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th><th class="tt-col">CS+</th><th class="tt-col">${legHead("Proj A K%", fk)}</th><th class="tt-col">${legHead("Proj A BB%", fb)}</th><th class="tt-col">${legHead("Proj A OPS", fo)}</th></tr></thead>
       <tbody>${body || `<tr><td colspan="6" class="note-line">No projections for this year.</td></tr>`}</tbody>
     </table></div></section>`;
   const ys = app.querySelector(".year-select");
   if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderProjections(); });
+  const pa = app.querySelector("[data-min-pa]");
+  if (pa) pa.addEventListener("change", (e) => { state.minPA = Number(e.target.value) || 0; renderProjections(); });
 }
 
 // The college -> Single-A projection block (the module's through-line). Reads the
