@@ -691,7 +691,64 @@ PLAYER_KEY_ALIASES = {
         "player_key": "junior_garcia",
         "player_name": "Junior Garcia",
     },
+    # 2026-09-30, census M02-11 (tools/repair_identity_split_2026_09_30.py).
+    # Three FanGraphs fragment keys of humans whose board rows the split
+    # moved; each fragment is the SAME human as its target on two signals.
+    "jose_rodriguez__sa3015437": {
+        # The TOR RHP, mlbam 692064, b. 2001-07-18: the id cache resolves both
+        # keys to 692064, both players rows carry b. 2001-07-18, and the
+        # FanGraphs rows on both read signed 2019 LAD from Mexico for $15,000.
+        "player_key": "jose_rodriguez",
+        "player_name": "José Rodríguez",
+    },
+    "michael_massey__noid": {
+        # The DET RHP, mlbam 695602: the one FG 2024-08-01 row carries the
+        # same signing (2024 DET draft from Wake Forest, $522,500) and the
+        # same report as the sa3037259 rows.
+        "player_key": "michael_massey__sa3037259",
+        "player_name": "Michael Massey",
+    },
+    "carlos_rodriguez__sa3005478": {
+        # The OF, mlbam 677578, b. 2000-12-07 (MIL 2017 IFA from Venezuela,
+        # later ATL and SDP): the id cache resolves both keys to 677578 and
+        # both players rows carry b. 2000-12-07.
+        "player_key": "carlos_d_rodriguez",
+        "player_name": "Carlos D. Rodriguez",
+    },
+    "carlos_rodriguez__noid": {
+        # The same OF's FG 2018report row (OF, MIL, from Venezuela). The MIL
+        # RHP on the bare key was drafted in 2021; in February 2018 the only
+        # Carlos Rodriguez in the MIL system was 677578, whom the Pipeline
+        # 2018 Brewers list names by Person id.
+        "player_key": "carlos_d_rodriguez",
+        "player_name": "Carlos D. Rodriguez",
+    },
 }
+
+# Same-name player_keys that are DIFFERENT humans. build_timeseries merges any
+# two rows whose printed names normalize alike (the v7 __noid dedup) unless the
+# pair is listed here, so a key split that leaves both humans with one printed
+# name is undone at read time without an entry. Order-free pairs; every entry
+# names the evidence (distinct MLBAM ids). Populated from same_name_collisions()
+# by hand, never automatically.
+SAME_NAME_NOT_DUPES: frozenset[frozenset[str]] = frozenset(
+    frozenset(pair) for pair in (
+        # 2026-09-30, census M02-11: "José Rodríguez" is 692064 (TOR RHP),
+        # 679563 (PHI SS, ex-CHW) and 836624 (MIL DSL SS).
+        ("jose_rodriguez", "jose_rodriguez_679563"),
+        ("jose_rodriguez", "jose_rodriguez_836624"),
+        ("jose_rodriguez_679563", "jose_rodriguez_836624"),
+        # "Jose Rodriguez": 800412 (MIN OF) is not the 2018-2019 TEX catcher.
+        ("jose_rodriguez_800412", "jose_rodriguez__noid"),
+        ("jose_rodriguez_800412", "jose_rodriguez__sa3008753"),
+        # "Michael Massey": 686681 (KCR 2B) and 695602 (DET RHP).
+        ("michael_massey", "michael_massey__sa3037259"),
+        # "Carlos Rodriguez": 692230 (MIL RHP), 692025 (SDP C), 823864 (DET P).
+        ("carlos_rodriguez", "carlos_rodriguez_692025"),
+        ("carlos_rodriguez", "carlos_rodriguez_823864"),
+        ("carlos_rodriguez_692025", "carlos_rodriguez_823864"),
+    )
+)
 
 CANONICAL_PLAYER_NAMES = {
     alias["player_key"]: alias["player_name"]
@@ -1809,7 +1866,7 @@ def normalize_name_for_dedup(name: str) -> str:
 def same_name_collisions(snapshots: list[Snapshot]) -> list[dict]:
     """REPORT same-name player_key clusters that build_timeseries would merge.
 
-    v27 (D16). `_SAME_NAME_NOT_DUPES` is empty, so every same-name pair is
+    v27 (D16). Every same-name pair not listed in SAME_NAME_NOT_DUPES is
     merged unconditionally and one player's points land on another's consensus.
     This function does NOT change that: it reports, so the allowlist can be
     populated by hand. It never merges and never splits.
@@ -2221,15 +2278,15 @@ def build_timeseries(
         cleaned = cleaned.replace("’", "'").replace("‘", "'")
         return " ".join(cleaned.split())
 
-    # A `_SAME_NAME_NOT_DUPES` allowlist carves out legit same-name pairs.
-    # It is EMPTY, and the merge below is therefore unconditional on a name
-    # collision. That is not free: same-name pairs DO surface in this corpus and
-    # a merge pools one player's points onto another's consensus. v27 adds
-    # same_name_collisions() as a REPORT so the population is visible; it
-    # deliberately does not auto-merge or auto-split, because deciding which
-    # same-name pairs are one person is an identity question, not a
-    # consensus-engine question. Populate this set from that report, by hand.
-    _SAME_NAME_NOT_DUPES: set[tuple[str, str]] = set()
+    # The module-level SAME_NAME_NOT_DUPES allowlist carves out legit same-name
+    # pairs; any other name collision merges unconditionally. That is not free:
+    # same-name pairs DO surface in this corpus and a merge pools one player's
+    # points onto another's consensus. v27 adds same_name_collisions() as a
+    # REPORT so the population is visible; it deliberately does not auto-merge
+    # or auto-split, because deciding which same-name pairs are one person is
+    # an identity question, not a consensus-engine question. The set is
+    # populated from that report, by hand (first entries 2026-09-30, M02-11).
+    _SAME_NAME_NOT_DUPES = SAME_NAME_NOT_DUPES
 
     by_name: dict[str, PlayerTimeseries] = {}
     for p in result:
@@ -2240,8 +2297,7 @@ def build_timeseries(
             continue
         # Allowlist escape — same name BUT confirmed-distinct via
         # different player_keys (rare; not currently populated).
-        if (canon.player_key, p.player_key) in _SAME_NAME_NOT_DUPES \
-                or (p.player_key, canon.player_key) in _SAME_NAME_NOT_DUPES:
+        if frozenset((canon.player_key, p.player_key)) in _SAME_NAME_NOT_DUPES:
             by_name[f"{norm_key}#{p.player_key}"] = p
             continue
         # Prefer the entry whose key does NOT end with __noid.

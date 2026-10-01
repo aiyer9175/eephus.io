@@ -135,6 +135,79 @@ def test_c6_flags_snapshot_org_vs_displayed_org():
     assert hits[0]["displayed_org"] == "MIL"
 
 
+# The three served debuted rows census M02-11 found on 2026-09-24, as they
+# stood in data/debuts.json: each key's position came from another human's
+# board rows, each stat line from the bound id.
+M02_11_DEBUTED = [
+    {"player_key": "jose_rodriguez", "position": "SS", "mlbam_id": 692064,
+     "scope": "graduated", "statline": {"is_pitcher": True}},
+    {"player_key": "michael_massey", "position": "RHP", "mlbam_id": 686681,
+     "scope": "graduated", "statline": {"is_pitcher": False}},
+    {"player_key": "carlos_rodriguez", "position": "OF", "mlbam_id": 692230,
+     "scope": "graduated", "statline": {"is_pitcher": True},
+     "sabermetrics": {"is_pitcher": True}},
+]
+
+
+def test_c4b_flags_debuted_rows_whose_position_and_stat_lines_disagree():
+    hits = ia.find_debuted_side_conflicts(M02_11_DEBUTED)
+    assert [h["player_key"] for h in hits] == [
+        "carlos_rodriguez", "jose_rodriguez", "michael_massey"]
+    by_key = {h["player_key"]: h for h in hits}
+    assert by_key["jose_rodriguez"]["claimed_side"] == "H"
+    assert by_key["jose_rodriguez"]["stat_side"] == "P"
+    assert by_key["michael_massey"]["claimed_side"] == "P"
+    assert by_key["carlos_rodriguez"]["stat_fields"] == ["sabermetrics", "statline"]
+    report = ia.audit(board_rows=M02_11_DEBUTED, roster_rows=[])
+    assert report["summary"]["c4b_debuted_side_conflicts"] == 3
+    assert set(report["critical_player_keys"]) == {
+        "carlos_rodriguez", "jose_rodriguez", "michael_massey"}
+    # Graduates are not on the active board, so none is critical-active.
+    assert report["critical_active_player_keys"] == []
+
+
+def test_c4b_is_quiet_once_the_rows_are_split():
+    split = [dict(M02_11_DEBUTED[0], position="RHP"),
+             dict(M02_11_DEBUTED[1], position="2B"),
+             dict(M02_11_DEBUTED[2], position="RHP")]
+    assert ia.find_debuted_side_conflicts(split) == []
+
+
+def test_c4b_two_way_players_are_never_flagged():
+    rows = [
+        {"player_key": "shohei_ohtani", "position": "RHP", "scope": "graduated",
+         "statline": {"is_pitcher": False}},
+        {"player_key": "some_two_way_rookie", "position": "TWP",
+         "scope": "graduated", "statline": {"is_pitcher": False}},
+    ]
+    assert ia.find_debuted_side_conflicts(rows) == []
+    assert "shohei_ohtani" in ia.KNOWN_TWO_WAY_DEBUTED
+
+
+def test_c4b_needs_every_stat_line_to_disagree_and_reads_debuted_rows_only():
+    mixed = [{"player_key": "converted", "position": "SS", "scope": "graduated",
+              "statline": {"is_pitcher": True},
+              "sabermetrics": {"is_pitcher": False}}]
+    assert ia.find_debuted_side_conflicts(mixed) == []
+    no_line = [{"player_key": "no_line", "position": "SS", "scope": "graduated"}]
+    assert ia.find_debuted_side_conflicts(no_line) == []
+    # An active row is C4's job (the fielding census), not C4b's.
+    active = [dict(M02_11_DEBUTED[0], scope="active")]
+    assert ia.find_debuted_side_conflicts(active) == []
+
+
+def test_c6_ignores_the_pipeline_placeholder_org():
+    """MLB Pipeline prints "Office of the Commissioner" for a player between
+    clubs. On 2026-09-24 it flagged myles_bailey (CHC 1B, a 2026 draftee)
+    as an org split; the placeholder is no club and must never witness one."""
+    board = [{"player_key": "myles_bailey", "mlbam_id": None, "org": "CHC",
+              "current_level": "A", "scope": "active"}]
+    assert ia.find_org_splits(
+        board, {"myles_bailey": "Office of the Commissioner"}) == []
+    # A real club on the snapshot still fires.
+    assert len(ia.find_org_splits(board, {"myles_bailey": "MIL"})) == 1
+
+
 def test_frankenstein_composite_fires_on_the_trigger_case():
     report = _flores_report()
     assert report["frankenstein_records"] == ["jesus_flores"]
@@ -436,6 +509,20 @@ def test_no_birth_date_contradicts_its_bound_mlbam_id(live_report):
     assert live_report["birthdate_conflicts"] == []
 
 
+def test_no_debuted_row_serves_another_humans_side(live_report):
+    """A hard invariant (C4b, census M02-11): no served debuted row whose board
+    position is on one side of the ball while every stat line of its bound id
+    is on the other, outside the two-way allow-list. 3 on 2026-09-24
+    (jose_rodriguez, michael_massey, carlos_rodriguez), 0 after the split."""
+    hits = {r["player_key"]: r["board_position"]
+            for r in live_report["debuted_side_conflicts"]}
+    assert not hits, (
+        "Debuted rows serving another human's side of the ball: " +
+        ", ".join(f"{k} ({v})" for k, v in sorted(hits.items())) +
+        ". Split the other human's board rows onto his own key by mlbam id "
+        "(tools/repair_identity_split_2026_09_30.py is the pattern).")
+
+
 def test_frankenstein_records_are_all_known(live_report):
     """Unidentified AND placed AND fielding on the wrong side. The tightest
     signature; 3 records today, all already known."""
@@ -510,7 +597,8 @@ def test_report_artifact_is_written_and_well_formed(tmp_path, live_report):
     for section in ("critical_player_keys", "critical_active_player_keys",
                     "frankenstein_records", "unsplit_collisions",
                     "double_bound_keys", "unresolved_active",
-                    "side_conflicts", "birthdate_conflicts", "org_splits",
+                    "side_conflicts", "debuted_side_conflicts",
+                    "birthdate_conflicts", "org_splits",
                     "shadowed_slugs"):
         assert section in doc, section
     # Deterministic against the fixture-built report from the same tree.

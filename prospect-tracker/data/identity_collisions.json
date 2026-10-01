@@ -1,11 +1,11 @@
 {
- "generated_at": "2026-09-07T09:51:59Z",
+ "generated_at": "2026-10-01T04:10:21Z",
  "summary": {
-  "board_rows": 9787,
-  "active_board_rows": 4688,
-  "roster_rows": 10731,
+  "board_rows": 9795,
+  "active_board_rows": 4690,
+  "roster_rows": 10746,
   "colliding_slugs": 200,
-  "critical_player_keys": 5,
+  "critical_player_keys": 6,
   "critical_active_player_keys": 0,
   "c1_shared_key": 0,
   "c1_unattributed": 2,
@@ -14,7 +14,8 @@
   "c1_untracked": 33,
   "c2_double_bound": 0,
   "c3_unresolved_active": 0,
-  "c4_side_conflicts": 2,
+  "c4_side_conflicts": 3,
+  "c4b_debuted_side_conflicts": 0,
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
   "c7_name_variant_splits": 20,
@@ -24,6 +25,7 @@
  },
  "critical_player_keys": [
   "adrian_hernandez",
+  "david_rodriguez",
   "dominic_keegan",
   "enmanuel_rodriguez",
   "michael_perez",
@@ -51,7 +53,7 @@
      "position": "P",
      "org": "CHW",
      "level": "DSL",
-     "age": 17.1
+     "age": 17.2
     },
     {
      "mlbam_id": 840917,
@@ -60,7 +62,7 @@
      "position": "P",
      "org": "BAL",
      "level": "DSL",
-     "age": 19.7
+     "age": 19.8
     }
    ]
   },
@@ -92,7 +94,7 @@
      "position": "P",
      "org": "MIA",
      "level": "AA",
-     "age": 24.0
+     "age": 24.1
     }
    ]
   }
@@ -1576,8 +1578,20 @@
    "mlbam_id": 685777,
    "scope": "inactive",
    "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "david_rodriguez",
+   "board_position": "C",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 48,
+   "mlbam_id": 703330,
+   "scope": "inactive",
+   "overall_rank": null
   }
  ],
+ "debuted_side_conflicts": [],
  "birthdate_conflicts": [],
  "org_splits": [],
  "name_variant_splits": [
@@ -1600,7 +1614,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-09-01",
-    "2026-09-06"
+    "2026-09-30"
    ],
    "resolved_by_alias": true
   },
@@ -1646,7 +1660,7 @@
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
     "2022-08-02",
-    "2026-09-06"
+    "2026-09-30"
    ],
    "resolved_by_alias": false
   },
@@ -1715,7 +1729,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2023-08-01",
-    "2026-09-06"
+    "2026-09-30"
    ],
    "resolved_by_alias": true
   },
@@ -1738,7 +1752,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2022-08-02",
-    "2026-09-06"
+    "2026-09-30"
    ],
    "resolved_by_alias": true
   },
@@ -1761,7 +1775,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-02-12",
-    "2026-09-06"
+    "2026-09-30"
    ],
    "resolved_by_alias": true
   },
@@ -1806,7 +1820,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-06",
+    "2026-09-30",
     "2025-07-31"
    ],
    "resolved_by_alias": true
@@ -1875,7 +1889,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-06",
+    "2026-09-30",
     "2026-08-02"
    ],
    "resolved_by_alias": true
@@ -1898,7 +1912,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-06",
+    "2026-09-30",
     "2026-02-12"
    ],
    "resolved_by_alias": true
@@ -1921,7 +1935,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-06",
+    "2026-09-30",
     "2021-02-26"
    ],
    "resolved_by_alias": true
@@ -1945,7 +1959,7 @@
    "status": "unadjudicated",
    "last_snapshot_dates": [
     "2026-08-02",
-    "2026-09-06"
+    "2026-09-30"
    ],
    "resolved_by_alias": true
   },
@@ -1967,7 +1981,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-06",
+    "2026-09-30",
     "2026-08-10"
    ],
    "resolved_by_alias": true
@@ -2013,7 +2027,7 @@
    ],
    "status": "unadjudicated",
    "last_snapshot_dates": [
-    "2026-09-06",
+    "2026-09-30",
     "2025-07-31"
    ],
    "resolved_by_alias": true
@@ -2036,8 +2050,8 @@
    ],
    "status": "two_humans_distinct_ids",
    "last_snapshot_dates": [
-    "2026-09-06",
-    "2026-09-06"
+    "2026-09-30",
+    "2026-09-30"
    ],
    "resolved_by_alias": false
   }

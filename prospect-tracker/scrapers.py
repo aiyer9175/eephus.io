@@ -640,6 +640,19 @@ _SPLIT_KEYS: dict[tuple[str, int], str] = {
     # OF's own id 815010 was re-bound to the bare key; consensus.
     # PLAYER_KEY_ALIASES folds the ingest fork junior_garcia_815010 back.
     ("junior_garcia", 642371): "junior_garcia_642371",
+    # 2026-09-30 - census M02-11, repaired by
+    # tools/repair_identity_split_2026_09_30.py. Three debuted keys carried
+    # other humans' board rows; MLB Pipeline's own Person id on each cached
+    # row named the human, and scrape_mlb_pipeline now routes every Pipeline
+    # row through this table, so the daily and archive Pipeline upserts
+    # cannot re-mint these rows on the incumbent's key (the 836624 rows came
+    # back that way after the 2026-08-04 repair). The incumbents (692064 TOR
+    # RHP, 686681 KCR 2B, 692230 MIL RHP) keep their keys.
+    ("jose_rodriguez", 679563): "jose_rodriguez_679563",      # CHW 2B/SS b.2001-05-13
+    ("jose_rodriguez", 800412): "jose_rodriguez_800412",      # MIN OF b.2005-06-10
+    ("jose_rodriguez", 836624): "jose_rodriguez_836624",      # MIL DSL SS b.2009-01-19
+    ("michael_massey", 695602): "michael_massey__sa3037259",  # DET RHP b.2003-04-05
+    ("carlos_rodriguez", 677578): "carlos_d_rodriguez",       # the OF b.2000-12-07
 }
 
 
@@ -2748,9 +2761,13 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
 
         p = persons.get(pid, {})
         name = p.get("name") or f"Person {pid}"
+        # The Person id IS the MLBAM id, so a known slug collision routes to
+        # its split key here instead of landing on the incumbent's key.
+        key = normalize_key(name)
+        key = split_key_for_mlbam(key, pid) or key
         rows.append(Snapshot(
             source="mlb_pipeline", snapshot_date=snap_date, interval_label=label,
-            player_key=normalize_key(name), player_name=name,
+            player_key=key, player_name=name,
             position=position, org=_resolve_org(pid),
             rank=rank, fv=overall, status="active",
             tools=tools,
@@ -3029,7 +3046,9 @@ def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
             source="mlb_pipeline_international",
             snapshot_date=snap_date,
             interval_label=label,
-            player_key=normalize_key(name),
+            # Same Person-id routing as scrape_mlb_pipeline.
+            player_key=(split_key_for_mlbam(normalize_key(name), person_m.group(1))
+                        or normalize_key(name)),
             player_name=name,
             position=pos_m.group(1) if pos_m else person.get("position"),
             org=org,

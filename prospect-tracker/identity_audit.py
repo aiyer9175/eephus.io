@@ -39,11 +39,17 @@ Five detectors, named the way the audit named them:
                           we cannot identify - the merge-prone shape)
   C4 side_conflicts       a board record scored on one side of the ball
                           whose entire fielding log is the other side
+  C4b debuted_side_conflicts
+                          a DEBUTED record whose board position is on one
+                          side of the ball while every stat line of its bound
+                          id (statline, sabermetrics) is on the other; C4
+                          reads the MiLB fielding census, which a graduate
+                          leaves, so it could not see these
   C5 birthdate_conflicts  board birth_date inconsistent with the roster age
                           of the mlbam id actually bound to that key
 
-Severity: C2, C3, C4 and C5 are "critical" (a served record is wrong right
-now). C1 splits: "shared_key" and "unattributed" are critical, "shadowed"
+Severity: C2, C3, C4, C4b and C5 are "critical" (a served record is wrong
+right now). C1 splits: "shared_key" and "unattributed" are critical, "shadowed"
 is a warning (the board record is correctly bound, the second human is
 simply missing), and "split" / "untracked" are informational.
 """
@@ -71,6 +77,24 @@ AGE_TOLERANCE_YEARS = 1.0
 # C4 only fires on an unambiguous fielding record: at least this many games
 # and no games at all on the side the board claims.
 MIN_FIELDING_GAMES = 10
+
+# C4b allow-list: debuted players who genuinely play both sides in MLB, so a
+# hitter line under a pitcher's board position (or the reverse) is the player,
+# not a merge. A board position of TWP is skipped on its own. Add a key here
+# only for a player MLB itself has used on both sides.
+KNOWN_TWO_WAY_DEBUTED = frozenset({
+    "shohei_ohtani",     # two-way since 2018
+    "brendan_mckay",     # TBR LHP and DH, 2019-2021
+    "michael_lorenzen",  # RHP who also played the outfield
+    "anthony_gose",      # OF converted to LHP, both sides in MLB
+    "jared_walsh",       # 1B who also pitched for LAA
+})
+
+# Placeholder orgs a source prints when it has no club for a player. MLB
+# Pipeline gives "Office of the Commissioner" for a player between clubs (a
+# just-signed draftee, an unaffiliated signee): a sentinel, not a club, so it
+# can never witness an org split (the myles_bailey flag, 2026-09-24).
+PLACEHOLDER_ORGS = frozenset({"Office of the Commissioner"})
 
 _PITCHER_TOKENS = frozenset({
     "P", "SP", "RP", "LHP", "RHP", "LHRP", "RHRP", "SIRP", "MIRP",
@@ -431,6 +455,64 @@ def find_side_conflicts(board_rows, positions_played,
 
 
 # ---------------------------------------------------------------------------
+# C4b - debuted rows: board position side vs the bound id's own stat lines
+# ---------------------------------------------------------------------------
+
+_STAT_SIDE_FIELDS = ("statline", "sabermetrics")
+
+
+def stat_sides(row) -> dict[str, str]:
+    """{field: "P" | "H"} for each stat line on the row that states a side.
+
+    statline and sabermetrics are fetched by the BOUND mlbam id, so their
+    is_pitcher flag is the side the human behind the id actually plays."""
+    out: dict[str, str] = {}
+    for field in _STAT_SIDE_FIELDS:
+        blob = row.get(field)
+        if isinstance(blob, dict) and blob.get("is_pitcher") is not None:
+            out[field] = "P" if blob["is_pitcher"] else "H"
+    return out
+
+
+def find_debuted_side_conflicts(board_rows,
+                                allow=KNOWN_TWO_WAY_DEBUTED) -> list[dict]:
+    """A debuted record whose board position names one side of the ball while
+    every stat line of its bound id is on the other.
+
+    The board position comes from the snapshots on the key and the stat lines
+    come from the bound id, so the two disagree exactly when the key carries
+    another human's board rows (jose_rodriguez served as SS with a TOR RHP's
+    pitching line, census M02-11). Fires only when at least one stat line
+    states a side and none agrees with the board. TWP positions and the
+    two-way allow-list are skipped."""
+    out: list[dict] = []
+    for p in board_rows:
+        if p.get("scope") != "graduated" and p.get("status") != "debuted":
+            continue
+        key = p.get("player_key")
+        pos = p.get("position")
+        if not key or key in allow or str(pos or "").strip().upper() == "TWP":
+            continue
+        claimed = position_kind(pos)
+        sides = stat_sides(p)
+        if claimed is None or not sides:
+            continue
+        if any(s == claimed for s in sides.values()):
+            continue
+        out.append({
+            "check": "C4b",
+            "player_key": key,
+            "board_position": pos,
+            "claimed_side": claimed,
+            "stat_side": next(iter(sides.values())),
+            "stat_fields": sorted(sides),
+            "mlbam_id": p.get("mlbam_id"),
+            "scope": p.get("scope", "graduated"),
+        })
+    return sorted(out, key=lambda r: r["player_key"])
+
+
+# ---------------------------------------------------------------------------
 # C5 - board birth_date vs the roster age of the bound id
 # ---------------------------------------------------------------------------
 
@@ -497,7 +579,10 @@ def find_org_splits(board_rows, snapshot_orgs) -> list[dict]:
     the 4467 active rows with a snapshot org, 1572 disagree. Requiring
     mlbam_id to be NULL as well cuts that to 2, both of them independently
     confirmed merged records. So this check is only run on id-less rows,
-    and that restriction is the whole point of it."""
+    and that restriction is the whole point of it.
+
+    A placeholder org (PLACEHOLDER_ORGS) on either side is no club at all,
+    so it never counts as a disagreement."""
     out: list[dict] = []
     for p in board_rows:
         if p.get("scope", "active") != "active":
@@ -508,6 +593,8 @@ def find_org_splits(board_rows, snapshot_orgs) -> list[dict]:
         snap = (snapshot_orgs or {}).get(key)
         built = p.get("org")
         if not key or not snap or not built or snap == built:
+            continue
+        if snap in PLACEHOLDER_ORGS or built in PLACEHOLDER_ORGS:
             continue
         out.append({
             "check": "C6",
@@ -530,9 +617,10 @@ _C1_CRITICAL = frozenset({"shared_key", "unattributed"})
 def audit(board_rows, roster_rows, photo_bindings=None,
           positions_played=None, snapshot_orgs=None, as_of=None,
           players_rows=None, aliases=None) -> dict:
-    """Run all seven detectors and return the report body. `players_rows`
+    """Run every detector and return the report body. `players_rows`
     and `aliases` are optional so a caller exercising only C1-C6 (every
-    pre-2026-08-10 test) is byte-identical; C7 runs when they are given."""
+    pre-2026-08-10 test) is byte-identical; C7 runs when they are given.
+    C4b reads only the board rows' own stat lines."""
     board_rows = list(board_rows or [])
     roster_rows = list(roster_rows or [])
     # One key can appear in more than one slice (a graduate still carries an
@@ -551,6 +639,7 @@ def audit(board_rows, roster_rows, photo_bindings=None,
     c2 = find_double_bound_keys(photo_bindings)
     c3 = find_unresolved_active(board_rows)
     c4 = find_side_conflicts(board_rows, positions_played)
+    c4b = find_debuted_side_conflicts(board_rows)
     c5 = find_birthdate_conflicts(board_rows, roster_rows, as_of=as_of)
     c6 = find_org_splits(board_rows, snapshot_orgs)
     c7 = find_name_variant_splits(players_rows, aliases=aliases,
@@ -567,7 +656,7 @@ def audit(board_rows, roster_rows, photo_bindings=None,
     for row in c1_critical:
         if row.get("board_key"):
             critical_keys.add(row["board_key"])
-    for rows in (c2, c3, c4, c5, c6, c7_open):
+    for rows in (c2, c3, c4, c4b, c5, c6, c7_open):
         critical_keys.update(r["player_key"] for r in rows if r.get("player_key"))
 
     # The composite fingerprint: an ACTIVE record that is simultaneously
@@ -609,6 +698,7 @@ def audit(board_rows, roster_rows, photo_bindings=None,
             "c2_double_bound": len(c2),
             "c3_unresolved_active": len(c3),
             "c4_side_conflicts": len(c4),
+            "c4b_debuted_side_conflicts": len(c4b),
             "c5_birthdate_conflicts": len(c5),
             "c6_org_splits": len(c6),
             "c7_name_variant_splits": len(c7),
@@ -629,6 +719,7 @@ def audit(board_rows, roster_rows, photo_bindings=None,
         "double_bound_keys": c2,
         "unresolved_active": c3,
         "side_conflicts": c4,
+        "debuted_side_conflicts": c4b,
         "birthdate_conflicts": c5,
         "org_splits": c6,
         "name_variant_splits": c7,
@@ -736,12 +827,13 @@ def load_photo_bindings() -> dict:
 
 
 def load_snapshot_orgs() -> dict:
-    """{player_key: org} from the LATEST dated snapshot carrying an org."""
+    """{player_key: org} from the LATEST dated snapshot carrying a real org
+    (a PLACEHOLDER_ORGS value is skipped, so the newest actual club wins)."""
     rows = _query_db(
         "SELECT player_key, org FROM snapshots "
         "WHERE org IS NOT NULL AND player_key IS NOT NULL "
         "ORDER BY snapshot_date")
-    return {key: org for key, org in rows}
+    return {key: org for key, org in rows if org not in PLACEHOLDER_ORGS}
 
 
 def load_players_rows() -> list[dict]:

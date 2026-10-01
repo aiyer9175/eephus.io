@@ -616,10 +616,10 @@ def d16_collisions(by_player, snaps_by_player):
     }
 
 
-# `_SAME_NAME_NOT_DUPES` is a function-local in build_timeseries, so it cannot be
-# imported. It is literally `set()` at consensus.py:1359; mirrored here for the
-# artifact's `allowlist_is_empty` field, which is a source assertion, not a fit.
-C_SAME_NAME_ALLOWLIST: set = set()
+# The allowlist build_timeseries reads is consensus.SAME_NAME_NOT_DUPES (module
+# level since 2026-09-30); read here for the artifact's `allowlist_is_empty`
+# field, which is a source assertion, not a fit.
+C_SAME_NAME_ALLOWLIST: set = set(getattr(C, "SAME_NAME_NOT_DUPES", ()))
 
 
 # ---------------------------------------------------------------------------

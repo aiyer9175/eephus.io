@@ -244,6 +244,15 @@ def _norm_headers(row: dict) -> dict:
 # The incumbent is never re-keyed; only the newcomer is routed.
 _FG_ORG_SPLIT_KEYS: dict[tuple[str, str], str] = {
     ("carlos_castillo", "LAA"): "carlos_castillo_laa",
+    # 2026-09-30 (census M02-11, tools/repair_identity_split_2026_09_30.py).
+    # A board drop that lists only ONE of two same-slug humans has no PID
+    # collision inside the drop, so the canonical-owner pass hands him the
+    # bare key: the DET RHP Michael Massey (sa3037259, mlbam 695602) landed
+    # on the KCR 2B's key from the 2026-07-23 and 2026-08-02 boards, and the
+    # MIL SS Jose Rodriguez (sa3075073, mlbam 836624) is one MIL-only drop
+    # away from the TOR RHP's key. The incumbents never played for DET / MIL.
+    ("michael_massey", "DET"): "michael_massey__sa3037259",
+    ("jose_rodriguez", "MIL"): "jose_rodriguez_836624",
 }
 
 

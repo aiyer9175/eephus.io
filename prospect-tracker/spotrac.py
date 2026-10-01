@@ -231,6 +231,17 @@ def scrape_spotrac_ifa_range(years: Iterable[int], force: bool = False,
 #   * a {org: {year: total_bonus}} matrix for "IFA spending per year",
 #   * a {player_key: bonus_usd} map for IFA-method acquisitions enrichment.
 
+# Known slug collisions where the Spotrac row's own signing club names the
+# human: (slug, org) -> the split key that human's rows live under. Mirrors
+# fangraphs_csv._FG_ORG_SPLIT_KEYS. Without it the latest-year rule below
+# handed the MIL SS Jose Rodriguez's 2026 $1.5M signing (mlbam 836624) to the
+# TOR RHP on the bare key, a 2019 LAD signing (census M02-11, 2026-09-30).
+_IFA_ORG_SPLIT_KEYS: dict[tuple[str, str], str] = {
+    ("jose_rodriguez", "MIL"): "jose_rodriguez_836624",
+    ("jose_rodriguez", "MIN"): "jose_rodriguez_800412",
+}
+
+
 def build_ifa_bonus_by_key(signings: list[dict]) -> dict[str, int]:
     """Collapse a multi-year signing list to {player_key: bonus_usd}.
 
@@ -241,7 +252,9 @@ def build_ifa_bonus_by_key(signings: list[dict]) -> dict[str, int]:
     for s in signings:
         if s.get("bonus_usd") is None or not s.get("player_key"):
             continue
-        by_key[(s["player_key"], s["year"] or 0)] = s["bonus_usd"]
+        key = _IFA_ORG_SPLIT_KEYS.get((s["player_key"], s.get("org")),
+                                      s["player_key"])
+        by_key[(key, s["year"] or 0)] = s["bonus_usd"]
     out: dict[str, int] = {}
     for (key, year), bonus in sorted(by_key.items(), key=lambda kv: kv[0][1]):
         out[key] = bonus
