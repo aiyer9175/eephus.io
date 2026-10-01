@@ -457,6 +457,20 @@ def _class_supply_rows(cls: list[dict], class_year: int,
 # guarantee / surplus off it. Falls back to the Marcel path when unprojected.
 _MLB_PROJ_CACHE: dict | None = None
 
+#: How a FUTURE class's path runs past the projection's last season (owner answer
+#: Q-A (b), 2026-09-30).
+#:   "chained"  fa_market.chain_aging_tail along the projection's champion aging
+#:              curve (warChamp + warChampTail, the curve /projections/ chains its
+#:              contract tail on), from this page's own 2031 value, so the two
+#:              pages extend a path with one function and one curve. The P10/P90
+#:              chain at the FA module's anchors (0.6 / 1.4 x the champion), the
+#:              P10 without the zero floor (the same rule as the /projections/
+#:              tail range; moot here, the overlaid head is floored at 0).
+#:   "ratio"    the projection's last two seasons' ratio, clamped to 0.5-0.95
+#:              (0.82 when it cannot be read): the rule before 2026-09-30, and
+#:              what a row without the published champion tail still takes.
+FUTURE_CLASS_TAIL = "chained"
+
 
 def _load_mlb_projections() -> dict:
     global _MLB_PROJ_CACHE
@@ -481,8 +495,9 @@ def _load_mlb_projections() -> dict:
 def _apply_proj_override(path: dict, pv: dict, class_year: int,
                          first_season: int | None) -> bool:
     """Overlay the projection module's war[] onto `path` (mutates in place),
-    aligned so projection season == class_year maps to path year 1. Keeps the
-    Marcel-decayed tail for contract years the 5y projection doesn't reach.
+    aligned so projection season == class_year maps to path year 1. Contract
+    years the 5y projection doesn't reach are chained from its last season
+    along the projection's champion aging curve (FUTURE_CLASS_TAIL).
     Returns True when applied."""
     if first_season is None:
         return False
@@ -512,16 +527,25 @@ def _apply_proj_override(path: dict, pv: dict, class_year: int,
             return max(0.5, min(0.95, seq[-1] / seq[-2]))
         return 0.82
 
-    def _overlay(key: str, src: list | None) -> None:
+    champ = _future_tail_champion(pv, path, start)
+
+    def _overlay(key: str, src: list | None, mult: float = 1.0, floor: bool = True) -> None:
         # Overlay the projected years, then EXTEND past the projection horizon
-        # by decaying the last projected value (not the stale Marcel tail, which
-        # collapses to ~0 for young stars on long future-class deals).
+        # (not the stale Marcel tail, which collapses to ~0 for young stars on
+        # long future-class deals): along the projection's champion aging curve
+        # chained from the last projected value (FUTURE_CLASS_TAIL "chained"),
+        # else by decaying it at the clamped ratio.
         cur = path.get(key)
         seq = (src or [])[start:]
         if not seq or not isinstance(cur, list):
             return
         seq = [max(0.0, float(v)) for v in seq]   # fm._decay_path floors at 0
         cur[:len(seq)] = seq
+        if champ is not None and len(champ) >= len(cur) > len(seq):
+            full = fm.chain_aging_tail(seq, [mult * c for c in champ], len(seq),
+                                       len(cur), floor=floor)
+            cur[len(seq):] = full[len(seq):len(cur)]
+            return
         ratio = _decay_ratio(seq)
         last = seq[-1]
         for i in range(len(seq), len(cur)):
@@ -536,12 +560,12 @@ def _apply_proj_override(path: dict, pv: dict, class_year: int,
     # q90). Floored at 0 like fm._decay_path, then clamped so the invariant
     # p10 <= mean <= p90 holds on every served season.
     q50 = pv.get("war") or []
-    for key, src in (("war_by_year_p10", pv.get("warP10")),
-                     ("war_by_year_p90", pv.get("warP90"))):
+    for key, src, mult, floor in (("war_by_year_p10", pv.get("warP10"), 0.6, False),
+                                  ("war_by_year_p90", pv.get("warP90"), 1.4, True)):
         if src and q50 and len(src) == len(q50) == len(war):
-            _overlay(key, [w + (q - m) for w, q, m in zip(war, src, q50)])
+            _overlay(key, [w + (q - m) for w, q, m in zip(war, src, q50)], mult, floor)
         else:
-            _overlay(key, src)
+            _overlay(key, src, mult, floor)
     lo, hi = path.get("war_by_year_p10"), path.get("war_by_year_p90")
     for t, w in enumerate(path["war_by_year"]):
         if isinstance(lo, list) and t < len(lo):
@@ -550,6 +574,34 @@ def _apply_proj_override(path: dict, pv: dict, class_year: int,
             hi[t] = round(max(hi[t], w), 2)
     path["war_total"] = round(sum(path["war_by_year"]), 2)
     return True
+
+
+def _future_tail_champion(pv: dict, path: dict, start: int) -> list[float] | None:
+    """The champion aging curve a future class's path chains along past the
+    projection's last season, aligned so index 0 is the class year, or None
+    (FUTURE_CLASS_TAIL "ratio", or a projection row without the published
+    champion tail).
+
+    It is the projection's own champion MEAN path (warChamp, then warChampTail
+    past the five printed seasons): the curve proj_export's contract tail
+    chains on. Seasons past its end (a path runs fa_market.MAX_PATH_YEARS from
+    the class year, the projection's from its first season) continue on this
+    path's Marcel champion's year-over-year ratio, capped at 1.0 (0.7 where the
+    prior champion season is 0.05 WAR or less), chain_aging_tail's own ratio
+    rule."""
+    if FUTURE_CLASS_TAIL != "chained":
+        return None
+    head, tail = pv.get("warChamp"), pv.get("warChampTail")
+    if not head or not tail or start < 0 or start >= len(head):
+        return None
+    cs = [float(c or 0.0) for c in (list(head) + list(tail))[start:]]
+    fc = path.get("war_by_year_champ") or path.get("war_by_year") or []
+    n = len(path.get("war_by_year") or [])
+    while len(cs) < n:
+        t = len(cs)
+        r = (fc[t] / fc[t - 1]) if (t < len(fc) and fc[t - 1] > 0.05) else 0.7
+        cs.append(max(0.0, cs[-1] * min(1.0, r)))
+    return cs
 
 
 _CONTRACT_ORGS: dict[str, str] | None = None

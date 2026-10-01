@@ -1058,6 +1058,13 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
                                      else paths[s]["war_by_year"][0]) or 0.0
                                     for s in paths), 2),
             "_warChampFull": champ_full,
+            # The champion MEAN path past the five printed seasons, public (owner
+            # answer Q-A (b), 2026-09-30): the aging curve /fa/'s future-class
+            # overlay chains its seasons past 2031 along (fa_export.
+            # FUTURE_CLASS_TAIL), the same curve this module's contract tail
+            # chains on, so the two pages extend a path with one curve. Read by
+            # /fa/ only; nothing on /projections/ prices or prints it.
+            "warChampTail": champ_full[HORIZON:] or None,
             "_warFull": war_full,
             "_p10Full": p10_full,
             "_p90Full": p90_full,
