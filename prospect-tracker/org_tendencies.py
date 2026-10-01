@@ -67,6 +67,11 @@ OUT_PATH = DATA_DIR / "org_tendencies.json"
 
 DRAFT_FIRST_YEAR = 2021
 TRADE_FIRST_DATE = "2022-01-01"
+# Owner answer M8-3 (2026-09-25): the trade profile counts the MLB transaction feed
+# plus board-inferred org changes, after an A -> B -> A round-trip filter. A move and
+# its reverse for the same player within this many days is read as two sources
+# disagreeing on his org, not two trades (see trade_moves).
+ROUND_TRIP_DAYS = 90
 HIT_TOOLS = ("hit", "game_pwr", "raw_pwr", "speed", "field", "pitch_sel", "bat_ctrl")
 PIT_TOOLS = ("fb", "sl", "cb", "ch", "cmd")
 UP_MIDDLE = {"C", "SS", "CF", "2B"}
@@ -778,8 +783,42 @@ def cash_direction(description: str) -> str | None:
     return None
 
 
+def _drop_round_trips(moves: list[tuple[str, str, str, str, bool]],
+                      days: int) -> list[tuple[str, str, str, str, bool]]:
+    """Drop A -> B -> A round trips from (player_key, date, from, to, is_feed) moves.
+
+    Per player, in date order: when a move reverses the last kept move (B -> A after
+    A -> B) within `days`, the pair is read as two sources disagreeing on the
+    player's org. The feed is the authority: two feed legs are two real
+    transactions and both stay; a feed leg with an inferred leg keeps the feed leg
+    and drops the inferred one; two inferred legs both drop. Cancelling against the
+    last KEPT move handles flip-flops (A -> B -> A -> B keeps at most one move)."""
+    by_key: dict[str, list] = defaultdict(list)
+    for m in moves:
+        by_key[m[0]].append(m)
+    kept: list = []
+    for key in sorted(by_key):
+        stack: list = []
+        for m in sorted(by_key[key], key=lambda x: (x[1], not x[4])):
+            top = stack[-1] if stack else None
+            if (top is not None and top[2] == m[3] and top[3] == m[2]
+                    and not (top[4] and m[4])
+                    and (date.fromisoformat(m[1][:10])
+                         - date.fromisoformat(top[1][:10])).days <= days):
+                if top[4]:
+                    continue                  # feed leg stays, inferred reverse drops
+                stack.pop()                   # the inferred leg drops
+                if m[4]:
+                    stack.append(m)           # a feed reverse of an inferred leg stays
+                continue
+            stack.append(m)
+        kept += stack
+    return kept
+
+
 def trade_moves(rows, mlb30: set,
-                include_inferred: bool = False) -> list[tuple[str, str, str, str]]:
+                include_inferred: bool = False,
+                round_trip_days: int | None = None) -> list[tuple[str, str, str, str]]:
     """Distinct cross-org moves (player_key, trade_date, from, to) from trades rows
     (player_key, trade_date, from_org, to_org, source, date_range_start).
 
@@ -789,7 +828,9 @@ def trade_moves(rows, mlb30: set,
     were A -> B -> A round trips, mostly two sources disagreeing on a player's org
     (adam_kloffenstein TOR -> NYY -> TOR within a month); on mlb_api rows alone
     26 of 1,602 are round trips. include_inferred=True keeps the de-duplicated
-    inferred moves the feed does not confirm.
+    inferred moves the feed does not confirm; round_trip_days then drops the
+    A -> B -> A round trips inside that window (_drop_round_trips). The served
+    trade profile uses both (owner answer M8-3, trades_panel).
 
     Census M02-05 (2026-09-25). The table carries four artifacts that inflated
     every org's trade panel:
@@ -819,10 +860,12 @@ def trade_moves(rows, mlb30: set,
             if k not in inferred or d < inferred[k]:
                 inferred[k] = d
     confirmed = {(k[0], k[1], k[2]) for k in api}
-    moves = [(k[0], d, k[1], k[2]) for k, d in api.items()]
-    moves += [(k[0], d, k[1], k[2]) for k, d in inferred.items()
+    moves = [(k[0], d, k[1], k[2], True) for k, d in api.items()]
+    moves += [(k[0], d, k[1], k[2], False) for k, d in inferred.items()
               if (k[0], k[1], k[2]) not in confirmed]
-    return moves
+    if include_inferred and round_trip_days is not None:
+        moves = _drop_round_trips(moves, round_trip_days)
+    return [m[:4] for m in moves]
 
 
 def trades_panel(con, mlb30: set | None = None) -> dict:
@@ -839,7 +882,8 @@ def trades_panel(con, mlb30: set | None = None) -> dict:
     cash_recv: dict[str, int] = defaultdict(int)
     cash_any: dict[str, int] = defaultdict(int)
     for key, d, frm, to in trade_moves(
-            [(k, d, f, t, s, st) for k, d, f, t, s, _desc, st in rows], mlb30):
+            [(k, d, f, t, s, st) for k, d, f, t, s, _desc, st in rows], mlb30,
+            include_inferred=True, round_trip_days=ROUND_TRIP_DAYS):
         inb[to].append((key, d))
         deals[to].add((d, frm, to))
         out_n[frm] += 1
@@ -898,9 +942,13 @@ def trades_panel(con, mlb30: set | None = None) -> dict:
                               "balanced")
     return {"orgs": raw, "league": lg,
             "window": f"{TRADE_FIRST_DATE[:4]}-present",
+            "roundTripDays": ROUND_TRIP_DAYS,
             "note": ("prospect-capital lens: 'in'/'out' count distinct tracked-prospect "
-                     "trades between two of the 30 clubs in the MLB transaction feed; "
-                     "org changes seen only on board snapshots are not counted; FV "
+                     "moves between two of the 30 clubs, from the MLB transaction feed "
+                     "plus org changes seen on board snapshots; a move reversed for the "
+                     f"same player within {ROUND_TRIP_DAYS} days (A to B to A) is read as "
+                     "two sources disagreeing and drops, except that two feed moves both "
+                     "count and a feed move outranks a snapshot-inferred one; FV "
                      "graded from board snapshots within ±120d of the trade, ungraded "
                      "moves are counted, never guessed")}
 
