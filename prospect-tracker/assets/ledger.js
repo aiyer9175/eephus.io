@@ -553,7 +553,7 @@
     // The club's right (owner answer VAL2-Q2): a club option the club would
     // decline is a $0 cell in the strip above, never a negative one.
     var co = P("club_opt_years") || [], cd = P("club_opt_declined") || [];
-    if (co.length) out += dd("Club option " + co.join(", "), (cd.length ? "Declined on the mean path, priced at $0: " + esc(cd.join(", ")) + ". " : "") + esc(copy("club_option_rule")));
+    if (co.length) out += dd("Club option " + co.join(", ") + (cd.length ? ", declined " + cd.join(", ") : ""), esc(copy("club_option_rule")));
     return out;
   }
   function cellState(tok, cliff) {
