@@ -361,6 +361,10 @@ SCHEDULED_EXPORTS = (
     # never off a heartbeat, because a heartbeat cannot witness a night the
     # pipeline did not run at all. See _vintage_capture_gap.
     "vintage_capture_gap",
+    # The AAA Savant batter refresh behind the PROSPX "AAA Statcast" card
+    # (step 6b2a, owner answer M25-3). A refused or failed fetch keeps the last
+    # good CSV and files ok=False here, so a card frozen at an old date shouts.
+    "savant_aaa_batters",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -5713,6 +5717,27 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.info("swing+: %d hitters scored", _sw.get("n_scored", 0))
             except Exception:
                 log.exception("swing+ scoring failed — continuing")
+
+        # --- 6b2a. AAA Savant batter refresh (PROSPX AAA Statcast card) --
+        # Owner answer M25-3 (2026-09-25): refetch the current season's Savant
+        # minors batter aggregates monthly and rebake the card sidecar. Gated to
+        # the AAA regular season plus ONE final pull after it ends; one request,
+        # cached; a failed or malformed fetch keeps the last good CSV and files
+        # ok=False under savant_aaa_batters. The refresh lands in
+        # .cache/savant_minors_live/, which only this card reads: the model
+        # cache that S-XLINE eFV and the SC+ re-source read stays as it is
+        # until the fWAR epoch's step M (see statcast_aaa_hitters.py).
+        with _step("6b2a. AAA Savant batter refresh (statcast_aaa_hitters.json)", log):
+            try:
+                from statcast_aaa_hitters import refresh as _aaa_bat_refresh
+                _ab = _aaa_bat_refresh()
+                _record_ingest("savant_aaa_batters", bool(_ab.get("ok")),
+                               int(_ab.get("n_hitters") or 0),
+                               str(_ab.get("message") or "")[:200], log=log)
+            except Exception as _e:
+                log.exception("aaa savant batter refresh failed - continuing")
+                _record_ingest("savant_aaa_batters", False, 0,
+                               f"crashed: {_e}"[:200], log=log)
 
         # --- 6b2b. AAA Stuff+ re-score (in-house pitch-quality model) ----
         # Incremental current-season pitch fetch (closed seasons immutable

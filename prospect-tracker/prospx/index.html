@@ -32348,7 +32348,8 @@ function palFitPanel(p) {
 // but LAZY (ensurePalFit pattern): fetched once on the first HITTER detail
 // card, cached on a module-level var, repainted via scheduleRender when it
 // lands. bat_speed is null in the current payload - deliberately not rendered.
-let _AAA_STATCAST = null, _AAA_STATCAST_LOADING = false, _AAA_STATCAST_FETCHED = {};
+let _AAA_STATCAST = null, _AAA_STATCAST_LOADING = false, _AAA_STATCAST_FETCHED = {},
+    _AAA_STATCAST_THROUGH = {}, _AAA_STATCAST_SOURCE = "";
 function ensureAaaStatcast() {
   if (_AAA_STATCAST !== null || _AAA_STATCAST_LOADING) return;
   _AAA_STATCAST_LOADING = true;
@@ -32357,6 +32358,8 @@ function ensureAaaStatcast() {
     .then(j => {
       _AAA_STATCAST = (j && j.by_mlbam) || {};
       _AAA_STATCAST_FETCHED = (j && j.source_fetched) || {};
+      _AAA_STATCAST_THROUGH = (j && j.source_through) || {};
+      _AAA_STATCAST_SOURCE = (j && typeof j.source === "string") ? j.source : "";
       // First paint can beat this fetch - repaint the open card so the
       // panel appears without a manual refresh (coalesced via scheduleRender).
       scheduleRender();
@@ -32369,15 +32372,36 @@ function _aaaStatcastFor(p) {
   if (!mid) return null;
   return _AAA_STATCAST[String(mid)] || null;
 }
-// " as of Jun 23" when the season's Savant CSV was fetched during that same
-// season, so a partial-season snapshot never reads as the full season.
-// generated_at is the bake date and cannot answer that; source_fetched can.
-function _aaaFetchedSuffix(season) {
-  const d = _AAA_STATCAST_FETCHED[String(season)];
+// " through Sep 20" (source_through: the last regular-season game day the
+// season's Savant CSV covers, written by the monthly refresh) or, for a season
+// read from a CSV with no through date, " as of Jun 23" (source_fetched) when
+// that CSV was fetched during the same season. Either way a partial-season
+// snapshot never reads as the full season. generated_at is the bake date and
+// cannot answer that.
+function _aaaShortDate(d) {
   if (!d || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(d)) return "";
-  if (Number(d.slice(0, 4)) !== Number(season)) return "";
   const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(d.slice(5, 7)) - 1];
-  return mon ? ` as of ${mon} ${Number(d.slice(8, 10))}` : "";
+  return mon ? `${mon} ${Number(d.slice(8, 10))}` : "";
+}
+function _aaaFetchedSuffix(season) {
+  const t = _AAA_STATCAST_THROUGH[String(season)];
+  if (t && Number(String(t).slice(0, 4)) === Number(season) && _aaaShortDate(t)) {
+    return ` through ${_aaaShortDate(t)}`;
+  }
+  const d = _AAA_STATCAST_FETCHED[String(season)];
+  if (!d || Number(String(d).slice(0, 4)) !== Number(season)) return "";
+  const s = _aaaShortDate(d);
+  return s ? ` as of ${s}` : "";
+}
+// Hover provenance for the card's season line: source, fetch date and the
+// data-through date, all read from the sidecar.
+function _aaaProvenance(season) {
+  const parts = [_AAA_STATCAST_SOURCE || "Baseball Savant statcast search, minors"];
+  const f = _AAA_STATCAST_FETCHED[String(season)];
+  const t = _AAA_STATCAST_THROUGH[String(season)];
+  if (f) parts.push(`fetched ${f}`);
+  if (t) parts.push(`games through ${t}`);
+  return parts.join("; ");
 }
 // Compact "AAA Statcast" pill row on the hitter detail card - the batter-side
 // mirror of palFitPanel (which is pitchers-only). Returns "" whenever the
@@ -32410,11 +32434,11 @@ function aaaStatcastPanel(p) {
   ].filter(Boolean).join("");
   if (!pills) return "";               // every metric null -> skip entirely
   const suffix = [r.season != null ? `AAA ${r.season}${_aaaFetchedSuffix(r.season)}` : "AAA",
-                  r.pa != null ? `${r.pa} PA` : null].filter(Boolean).join(", ");
+                  r.pa != null ? `${r.pa} PA` : null, "Savant"].filter(Boolean).join(", ");
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
         <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">AAA Statcast</div>
-        <div style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(suffix)}</div>
+        <div class="aaa-statcast-asof" style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;" title="${escapeHtml(_aaaProvenance(r.season))}">${escapeHtml(suffix)}</div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;">${pills}</div>
     </div>`;

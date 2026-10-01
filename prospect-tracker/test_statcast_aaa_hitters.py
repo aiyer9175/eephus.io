@@ -7,7 +7,9 @@
 (statcast_aaa_hitters.py). Builds from the cached Savant minors batter
 CSVs in .cache/savant_minors/ - no network - and pins the payload shape,
 a known covered mlbam, the latest-season-wins rule, and the luck_gap
-arithmetic."""
+arithmetic. The monthly refresh tests (step 6b2a, owner answer M25-3) redirect
+the live cache and the sidecar to tmp_path and fetch through a fake getter, so
+they never touch the network, the served sidecar or the model cache."""
 
 from __future__ import annotations
 
@@ -39,7 +41,8 @@ def payload():
 
 
 def test_payload_shape(payload):
-    assert set(payload) == {"generated_at", "note", "source_fetched", "by_mlbam"}
+    assert set(payload) == {"generated_at", "note", "source", "source_fetched",
+                            "source_through", "by_mlbam"}
     assert isinstance(payload["note"], str) and payload["note"]
     by = payload["by_mlbam"]
     assert len(by) > 500, "cached seasons should yield hundreds of hitters"
@@ -60,10 +63,9 @@ def test_known_covered_mlbam_appears(payload):
 def test_latest_qualified_season_wins(payload):
     """The emitted season for the known player must be the max cached
     season in which he has >= MIN_PA (recomputed from the CSVs here)."""
-    import arkmetric_forward_eval as af
     qualified = []
     for season in sah.SEASONS:
-        for r in af.savant_rows(season, "batter", fetch=False):
+        for r in sah.season_rows(season)[0]:     # the same cache build() reads
             try:
                 mid, pa = int(float(r["player_id"])), float(r["pa"])
             except (KeyError, TypeError, ValueError):
@@ -106,10 +108,136 @@ def test_source_fetched_reads_the_file_time(tmp_path):
 
 
 def test_the_served_card_prints_the_fetch_date_on_a_partial_season():
-    """The PROSPX panel reads source_fetched and prints the date when the
-    CSV was fetched inside the season it covers."""
+    """The PROSPX panel reads source_through (the data-through date) and
+    source_fetched, prints the date on a season fetched inside its own year,
+    and carries the source as hover provenance."""
     html = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
     start = html.index("// ===== AAA Statcast hitter sidecar")
     block = html[start:html.index("// ===== A-ball Statcast signal pill", start)]
     assert "source_fetched" in block
+    assert "source_through" in block
     assert "_aaaFetchedSuffix" in block
+    assert "_aaaProvenance" in block
+    assert "through ${" in block
+
+
+# ---------------------------------------------------------------------------
+# The monthly refresh (run_monthly step 6b2a)
+# ---------------------------------------------------------------------------
+import json  # noqa: E402
+from datetime import date, datetime, timezone  # noqa: E402
+
+CAL_2026 = {"start": "2026-03-27", "end": "2026-09-20"}
+_HEAD = ("player_id,player_name,pa,xwoba,woba,xslg,slg,launch_speed,"
+         "hardhit_percent,barrels_per_bbe_percent,swing_miss_percent,bat_speed")
+
+
+def _csv(n: int, xwoba: float = 0.330) -> bytes:
+    rows = [_HEAD] + [f"{900000 + i},Player {i},{150 + i},{xwoba},0.320,0.420,"
+                      f"0.400,89.5,40.0,8.0,25.0," for i in range(n)]
+    return ("\n".join(rows) + "\n").encode("utf-8")
+
+
+def _raise(url, timeout=0):
+    raise OSError("timeout")
+
+
+def _no_network(url, timeout=0):
+    raise AssertionError(f"unexpected fetch: {url}")
+
+
+@pytest.fixture()
+def live(tmp_path, monkeypatch):
+    """Redirect both outputs (the live cache and the sidecar) to tmp_path and
+    seed a fresh AAA 2026 calendar so no test reaches StatsAPI."""
+    d = tmp_path / "savant_minors_live"
+    d.mkdir()
+    monkeypatch.setattr(sah, "LIVE_DIR", d)
+    monkeypatch.setattr(sah, "OUT_PATH", tmp_path / "statcast_aaa_hitters.json")
+    (d / "aaa_season_2026.json").write_text(json.dumps({"seasons": [{
+        "seasonId": "2026", "regularSeasonStartDate": CAL_2026["start"],
+        "regularSeasonEndDate": CAL_2026["end"]}]}), encoding="utf-8")
+    return d
+
+
+def test_the_phase_is_registered_with_the_monthly_savant_phases():
+    src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    i = src.index('_step("6b2a. AAA Savant batter refresh (statcast_aaa_hitters.json)"')
+    assert src.index('_step("6b2. Swing+ scoring') < i < src.index('_step("6b2b. AAA Stuff+')
+    body = src[i:src.index('_step("6b2b. AAA Stuff+', i)]
+    assert "from statcast_aaa_hitters import refresh" in body
+    assert body.count('_record_ingest("savant_aaa_batters"') == 2
+    import run_monthly
+    assert "savant_aaa_batters" in run_monthly.SCHEDULED_EXPORTS
+
+
+def test_the_gate_is_the_regular_season_plus_one_final_pull():
+    old = {"fetched_ts": datetime(2026, 6, 1, tzinfo=timezone.utc).timestamp(),
+           "through": "2026-05-31"}
+    now = datetime(2026, 7, 1, 12, tzinfo=timezone.utc).timestamp()
+    cal_2027 = {"start": "2027-03-26", "end": "2027-09-19"}
+    assert sah.phase_decision(date(2027, 1, 1), cal_2027, {})[0] is False
+    assert sah.phase_decision(date(2026, 7, 1), CAL_2026, {}, now)[0] is True
+    assert sah.phase_decision(date(2026, 7, 1), CAL_2026, old, now)[0] is True
+    fresh = dict(old, fetched_ts=now - 86400)
+    assert sah.phase_decision(date(2026, 7, 1), CAL_2026, fresh, now)[0] is False
+    # after the season: one more pull unless the copy already covers the end
+    assert sah.phase_decision(date(2026, 10, 1), CAL_2026, old)[0] is True
+    done = dict(old, through="2026-09-20")
+    assert sah.phase_decision(date(2026, 10, 1), CAL_2026, done)[0] is False
+    assert sah.phase_decision(date(2026, 11, 1), CAL_2026, done)[0] is False
+
+
+def test_data_through_is_the_day_before_the_fetch_capped_at_the_season_end():
+    assert sah.data_through(datetime(2026, 6, 23, 1, 30, tzinfo=timezone.utc),
+                            CAL_2026) == "2026-06-21"
+    assert sah.data_through(datetime(2026, 10, 1, 9, tzinfo=timezone.utc),
+                            CAL_2026) == "2026-09-20"
+    assert sah.data_through(datetime(2026, 3, 20, 12, tzinfo=timezone.utc),
+                            CAL_2026) is None
+
+
+def test_a_good_fetch_lands_in_the_live_cache_only(live):
+    import arkmetric_forward_eval as af
+    model = af.CACHE_DIR / "batter_2026.csv"
+    before = (model.stat().st_mtime, model.read_bytes()) if model.exists() else None
+    res = sah.fetch_live(2026, CAL_2026, getter=lambda url, t=0: _csv(600),
+                         now=datetime(2026, 10, 1, 9, tzinfo=timezone.utc))
+    assert res["ok"] and res["rows"] == 600 and res["through"] == "2026-09-20"
+    meta = sah.read_live_meta(2026)
+    assert meta["fetched"] == "2026-10-01" and meta["through"] == "2026-09-20"
+    assert "hfSea=2026" in meta["url"] and "minors=true" in meta["url"]
+    after = (model.stat().st_mtime, model.read_bytes()) if model.exists() else None
+    assert after == before, "the refresh must never write the model cache"
+    payload = sah.build()
+    assert payload["source_through"] == {"2026": "2026-09-20"}
+    assert payload["source_fetched"]["2026"] == "2026-10-01"
+    assert payload["by_mlbam"]["900000"]["season"] == 2026
+
+
+@pytest.mark.parametrize("getter", [
+    pytest.param(_raise, id="network"),
+    pytest.param(lambda url, t=0: b"<html>Service Unavailable</html>", id="html"),
+    pytest.param(lambda url, t=0: b"player_id,pa\n1,200\n", id="columns"),
+    pytest.param(lambda url, t=0: _csv(100), id="shrunk"),
+])
+def test_a_failed_fetch_keeps_the_last_good_file(live, getter):
+    sah.fetch_live(2026, CAL_2026, getter=lambda url, t=0: _csv(600),
+                   now=datetime(2026, 6, 1, 12, tzinfo=timezone.utc))
+    path, meta_path = sah.live_path(2026), sah.live_meta_path(2026)
+    good, good_meta = path.read_bytes(), meta_path.read_bytes()
+    res = sah.refresh(date(2026, 7, 15), getter=getter, persist=True)
+    assert res["ok"] is False and res["fetched"] is False
+    assert path.read_bytes() == good and meta_path.read_bytes() == good_meta
+    # the sidecar is still baked, from the last good file
+    out = json.loads(sah.OUT_PATH.read_text(encoding="utf-8"))
+    assert out["source_through"] == {"2026": "2026-05-31"}
+    assert out["by_mlbam"]["900000"]["season"] == 2026
+
+
+def test_an_off_season_run_fetches_nothing(live):
+    sah.fetch_live(2026, CAL_2026, getter=lambda url, t=0: _csv(600),
+                   now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))
+    res = sah.refresh(date(2026, 11, 1), getter=_no_network, persist=False)
+    assert res["ok"] is True and res["fetched"] is False
+    assert "final pull done" in res["message"]
