@@ -214,3 +214,96 @@ def test_no_report_fallback_names_only_the_prospects_sources(page):
               "mlb_pipeline_draft": "MLB Pipeline draft"}
     for key, lbl in labels.items():
         assert (lbl in out["html"]) == (key in out["srcs"]), (out["srcs"], out["html"])
+
+
+# Owner answer M8-1 (2026-09-25): the unranked tail shows ONE Baseball America list at a
+# time, the one the Pool (HS / College) filter names, and the HS list under All. Ranked
+# rows are untouched and the two lists never sit in one sequence.
+_POOL_SCAN = r"""
+(args) => {
+  const [year, pool] = args;
+  state.draftPool = pool; state.pageSizes.draft = 5000; state.pages.draft = 1;
+  restoreUIFromState(); render();
+  const cls = ((DATA.draft || {}).classes || []).find(c => c.year === year) || {};
+  const byKey = {};
+  for (const p of (cls.prospects || [])) byKey[p.player_key] = p;
+  const cards = [...document.querySelectorAll('.draft-card')].map(e => {
+    const m = (e.getAttribute('onclick') || '').match(/goToDraftee\('([^']+)'/);
+    const rec = m ? byKey[m[1]] : null;
+    const ex = rec && rec.tool_grades && rec.tool_grades.baseballamerica_draft
+      ? (rec.tool_grades.baseballamerica_draft._extras || {}) : {};
+    return { ranked: !!rec && (rec.consensus_fv != null || rec.consensus_rank != null),
+             scope: ex.ba_rank_is_global === false ? (ex.ba_scope || null) : null,
+             type: rec ? (rec.player_type || '') : '' };
+  });
+  const head = (document.querySelector('.draft-grid').previousElementSibling || {}).textContent || '';
+  return { cards, head };
+}
+"""
+
+
+def _pool_of(scope):
+    return "HS" if scope.upper().startswith("HS") else "College"
+
+
+@pytest.mark.parametrize("year", [2027, 2028])
+def test_rankings_show_one_ba_list_at_a_time(page, year):
+    cls = _classes().get(year)
+    if not cls:
+        pytest.skip(f"no {year} class in the artifact")
+    scoped = [p for p in cls.get("prospects") or []
+              if p.get("consensus_fv") is None and p.get("consensus_rank") is None
+              and (((p.get("tool_grades") or {}).get("baseballamerica_draft") or {})
+                   .get("_extras") or {}).get("ba_rank_is_global") is False]
+    n_by = {"HS": 0, "College": 0}
+    for p in scoped:
+        n_by[_pool_of(p["tool_grades"]["baseballamerica_draft"]["_extras"].get("ba_scope") or "")] += 1
+    if not (n_by["HS"] and n_by["College"]):
+        pytest.skip(f"{year}: the class does not carry both BA lists")
+    _open(page, year)
+    try:
+        for pool, shown in (("all", "HS"), ("HS", "HS"), ("COL", "College")):
+            got = page.evaluate(_POOL_SCAN, [year, pool])
+            tail = [c for c in got["cards"] if not c["ranked"] and c["scope"]]
+            assert tail, f"{year} Pool {pool}: no BA tail rendered"
+            assert {_pool_of(c["scope"]) for c in tail} == {shown}, (
+                f"{year} Pool {pool}: the tail mixes BA lists")
+            assert len(tail) == n_by[shown], (year, pool, len(tail), n_by)
+            other = "College" if shown == "HS" else "HS"
+            assert f"the {n_by[other]} unranked prospects on BA's {other} list" in got["head"], got["head"]
+            # Ranked rows are not touched by the one-list rule (Pool All keeps every one).
+            if pool == "all":
+                n_ranked = sum(1 for p in cls["prospects"]
+                               if p.get("consensus_fv") is not None or p.get("consensus_rank") is not None)
+                assert sum(c["ranked"] for c in got["cards"]) == n_ranked
+        assert not page._draft_errs, page._draft_errs
+    finally:
+        page.evaluate("() => { state.draftPool = 'all'; restoreUIFromState(); render(); }")
+
+
+def test_leaderboard_ba_switch_shows_one_list(page):
+    years = [y for y in _years_with_scope_tail() if y >= 2027]
+    if not years:
+        pytest.skip("no current class with an unranked BA scope tail")
+    year = max(years)
+    _open(page, year, "leaderboard")
+    scan = r"""
+      () => {
+        state.draftLeaderShowAll = true; renderDraft();
+        return { chips: [...document.querySelectorAll('.draft-results-grid .draft-table tbody tr')]
+                   .map(tr => tr.cells[0].textContent.trim()).filter(t => t.startsWith('BA ')),
+                 active: [...document.querySelectorAll('[data-draft-lb-ba].active')].map(b => b.dataset.draftLbBa) };
+      }"""
+    try:
+        page.evaluate("() => { state.draftPool = 'all'; }")
+        got = page.evaluate(scan)
+        assert got["chips"] and all(c.startswith("BA HS #") for c in got["chips"]), got["chips"][:5]
+        assert got["active"] == ["HS"]
+        page.click('[data-draft-lb-ba="COL"]')
+        got = page.evaluate(scan)
+        assert got["chips"] and all(c.startswith("BA Col #") for c in got["chips"]), got["chips"][:5]
+        assert got["active"] == ["COL"]
+        assert page.evaluate("() => state.draftPool") == "COL"
+        assert not page._draft_errs, page._draft_errs
+    finally:
+        page.evaluate("() => { state.draftPool = 'all'; restoreUIFromState(); }")

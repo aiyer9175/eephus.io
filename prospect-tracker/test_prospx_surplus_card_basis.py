@@ -126,3 +126,64 @@ def test_efv_mode_detail_page_prints_one_p_bust(booted_page):
     assert "risk-adj" not in (got["card"] or ""), (
         "the eFV-headlined Surplus value card prints the consensus engine's risk-adj")
     assert not errs, "JS errors:\n  " + "\n  ".join(errs)
+
+
+# Owner answer M7-3 (2026-09-25): in Consensus mode the card's third meta figure is the
+# consensus engine's dist.risk_adjusted_mm, which is mean - lambda x (mean - downside).
+# risk_lambda is 0 on every served row, so no risk adjustment is applied and the figure
+# is the plain simulated mean: it prints as "sim mean", never "risk-adj".
+def test_served_rows_carry_lambda_zero_so_the_label_is_sim_mean():
+    path = DATA / "timeseries.json"
+    if not path.exists():
+        pytest.skip("data/timeseries.json not built")
+    rows = json.loads(path.read_text(encoding="utf-8")).get("players") or []
+    lams = [((p.get("surplus") or {}).get("dist") or {}).get("risk_lambda") for p in rows
+            if ((p.get("surplus") or {}).get("dist") or {}).get("risk_adjusted_mm") is not None]
+    assert lams, "no served row carries risk_adjusted_mm; this check proved nothing"
+    assert all(lam is not None and float(lam) == 0.0 for lam in lams), (
+        "a served row carries a positive risk_lambda: re-read owner answer M7-3, "
+        "that row now earns the risk-adj label and the copy must say what it applies")
+
+
+def test_no_template_prints_a_hardcoded_risk_adj_label():
+    src = PROSPX.read_text(encoding="utf-8")
+    assert re.search(r"^function svRiskAdjLabel\(d\) \{", src, re.M), "svRiskAdjLabel vanished"
+    hard = re.findall(r"[`'\"][^`'\"\n]*risk-adj \$\{", src)
+    assert not hard, f"a template prints 'risk-adj' without svRiskAdjLabel: {hard[:3]}"
+
+
+def test_sim_mean_label_follows_lambda():
+    mr = pytest.importorskip("py_mini_racer")
+    import warnings
+    warnings.filterwarnings("ignore")
+    src = PROSPX.read_text(encoding="utf-8")
+    m = re.search(r"^function svRiskAdjLabel\(d\) \{.*?\n\}\n", src, re.S | re.M)
+    assert m
+    ctx = mr.MiniRacer()
+    ctx.eval(m.group(0))
+    assert ctx.eval("svRiskAdjLabel({risk_lambda: 0})") == "sim mean"
+    assert ctx.eval("svRiskAdjLabel({risk_lambda: 0.0, risk_adjusted_mm: 69})") == "sim mean"
+    assert ctx.eval("svRiskAdjLabel({})") == "sim mean"
+    assert ctx.eval("svRiskAdjLabel({risk_lambda: 0.5})") == "risk-adj"
+
+
+def test_consensus_mode_detail_card_prints_sim_mean(booted_page):
+    page, errs = booted_page
+    key = "jesus_made"
+    if not page.evaluate(f"() => DATA.players.some(p => p.player_key === '{key}')"):
+        pytest.skip(f"{key} is not on the served board")
+    page.evaluate("() => { state.gradePrimary = 'fv'; location.hash = 'player=jesus_made'; render(); }")
+    page.wait_for_function(
+        "() => { const b = document.getElementById('player-detail-body');"
+        " return b && /Surplus value/.test(b.innerText) && _gradePrimary() === 'fv'; }",
+        timeout=30_000)
+    page.wait_for_timeout(500)
+    got = page.evaluate(_READ)
+    try:
+        assert got and got["primary"] == "fv"
+        card = got["card"] or ""
+        assert re.search(r"sim mean \$[0-9.]+[MK]", card), card[-400:]
+        assert "risk-adj" not in card, card[-400:]
+        assert not errs, "JS errors:\n  " + "\n  ".join(errs)
+    finally:
+        page.evaluate("() => { state.gradePrimary = 'xfv'; render(); }")

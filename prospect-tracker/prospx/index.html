@@ -14407,18 +14407,24 @@ function etaDisplayYear(eta) {
 //
 // Returns "" when no signal is available at all.
 // MLB sample behind the sabermetrics chip: the career_stats MLB row for the
-// sabermetrics season (AB for hitters, IP for pitchers), or null when none is on file.
+// sabermetrics season (PA for hitters, IP for pitchers), or null when none is on file.
+// The served MLB rows carry AB and never PA, so PA is the row's pa when present, else
+// AB x 1.1, the same reading storage._mlb_exposure_measured uses; the tooltip names
+// the AB on file beside the PA it implies.
 function mlbSabermetricSample(player) {
   const sm = (player && player.sabermetrics) || {};
   const rows = (player && player.career_stats) || [];
   const row = rows.find(r => r && r.level === "MLB" && r.season === sm.season);
   if (!row) return null;
-  if (sm.is_pitcher) return row.ip != null ? { n: Number(row.ip), unit: "IP" } : null;
-  return row.ab != null ? { n: Number(row.ab), unit: "AB" } : null;
+  if (sm.is_pitcher) return row.ip != null ? { n: Number(row.ip), unit: "IP", text: `${Number(row.ip)} IP` } : null;
+  if (row.pa != null) return { n: Number(row.pa), unit: "PA", text: `${Number(row.pa)} PA` };
+  if (row.ab == null) return null;
+  const pa = Number(row.ab) * 1.1;
+  return { n: pa, unit: "PA", text: `${Number(row.ab)} AB, about ${Math.round(pa)} PA` };
 }
-// The leaderboard qualifiers (minAB 50 on hitter boards, minIP 15 on pitcher boards)
-// double as the floor under which the Debuted cell hides an MLB wRC+ / xFIP chip.
-const GRAD_MLB_CHIP_FLOOR = { AB: 50, IP: 15 };
+// Owner answer M8-4 (2026-09-25): a stabilization floor, 100 PA for a hitter and 30 IP
+// for a pitcher, under which the Debuted cell hides an MLB wRC+ / xFIP chip.
+const GRAD_MLB_CHIP_FLOOR = { PA: 100, IP: 30 };
 
 function headlineStatHTML(player, opts = {}) {
   const size = opts.size || "sm";          // sm | md (card detail)
@@ -14426,10 +14432,10 @@ function headlineStatHTML(player, opts = {}) {
   const sm   = player.sabermetrics || {};
   const isPitcher = sl.is_pitcher;
   // opts.mlbFloor (Debuted cell): hide the chip when the MLB sample on file is under
-  // the leaderboard qualifier, and name the sample in its tooltip when shown.
+  // the 100 PA / 30 IP floor, and name the sample in its tooltip when shown.
   const _mlbN = opts.mlbFloor ? mlbSabermetricSample(player) : null;
   if (_mlbN && _mlbN.n < GRAD_MLB_CHIP_FLOOR[_mlbN.unit]) return "";
-  const _mlbNote = _mlbN ? ` · ${sm.season} MLB ${_mlbN.n} ${_mlbN.unit}` : "";
+  const _mlbNote = _mlbN ? ` · ${sm.season} MLB ${_mlbN.text}` : "";
   const chipPad = size === "md" ? "3px 9px" : "2px 7px";
   const chipFz  = size === "md" ? "13px"    : "11px";
 
@@ -17947,15 +17953,31 @@ function convictionBanner() {
 // the shared helper's DOM scrape would export one page of mixed badge text. This builds
 // the file from the same data the board renders: every row getFilteredActives returns,
 // in its order, with each grade printed the way the board prints it (eFV nearest via
-// efvGradeDisplay, consensus FV up via gradeBlock) and the decimal beside it. The
-// consensus aggregate only: no per-source grades and no internal sort key.
+// efvGradeDisplay, consensus FV up via gradeBlock) and the decimal beside it. No
+// internal sort key. Owner answer M8-2 (2026-09-25): the file also carries each public
+// source's current grade (FanGraphs, MLB Pipeline, Baseball America, ESPN), read from
+// the latest point's per_source map (the grades the consensus is built from), printed
+// as published ("45+" keeps FanGraphs' plus) and blank where the source has none.
+const BOARD_CSV_SOURCE_COLS = [
+  ["fangraphs_fv", "fangraphs"], ["mlb_pipeline_fv", "mlb_pipeline"],
+  ["baseball_america_fv", "baseballamerica"], ["espn_fv", "espn"],
+];
 const BOARD_CSV_HEADERS = [
   "rank", "efv_board_rank", "player_key", "mlbam_id", "name", "org", "pos", "age", "level",
   "provisional", "efv", "efv_printed", "consensus_fv", "consensus_fv_printed",
+  ...BOARD_CSV_SOURCE_COLS.map(c => c[0]),
   "efv_minus_consensus", "p_bust_efv", "efv_surplus_mm", "consensus_surplus_mm",
   "star_odds", "plus_pct", "eta_year", "eta_half", "sc_plus", "astuff_plus",
   "grade_basis", "sort", "asof",
 ];
+// One source's published grade on the player's latest point, as published, or "".
+function boardCsvSourceGrade(p, src) {
+  const pts = (p && p.points) || [];
+  const last = pts.length ? pts[pts.length - 1] : null;
+  const v = last && last.per_source ? last.per_source[src] : null;
+  if (!v || v.fv_published == null || !isFinite(Number(v.fv_published))) return "";
+  return String(Number(v.fv_published)) + (v.fv_plus ? "+" : "");
+}
 function boardCsvModel(rows) {
   const num = (v, d) => (v == null || v === "" || !isFinite(Number(v))) ? "" : String(Number(Number(v).toFixed(d)));
   const txt = v => (v == null ? "" : String(v));
@@ -17975,6 +17997,7 @@ function boardCsvModel(rows) {
       num(efvBoardValue(x), 2), txt(gb.efvVal),
       p._is_provisional ? "" : num(p.fv_close, 2),
       p._is_provisional ? "" : txt(gb.consLabel != null ? gb.consLabel : gb.consVal),
+      ...BOARD_CSV_SOURCE_COLS.map(c => boardCsvSourceGrade(p, c[1])),
       txt(efvMinusConsensusDisplay(x)), num(x && x.p_bust, 3), num(x && x.surplus_mm, 1),
       p._is_provisional ? "" : num(s.value_mm, 1),
       num(s.star_odds, 4), num(s.opt_pct, 4), txt(eta.year), txt(eta.half),
@@ -24118,6 +24141,8 @@ function _applyDraftFilters(prospects) {
       return false;
     });
   }
+  // One BA list at a time behind the Pool filter (see _draftTailShown).
+  pool = pool.filter(_draftTailShown);
   return pool;
 }
 
@@ -24160,6 +24185,24 @@ function _draftRankedFirstCmp(a, b) {
   const ra = _draftHasClassRank(a), rb = _draftHasClassRank(b);
   if (ra !== rb) return ra ? -1 : 1;
   return ra ? 0 : _draftTailCmp(a, b);
+}
+// One BA list at a time (owner answer M8-1, 2026-09-25). The unranked tail shows the
+// Baseball America list the Pool (HS / College) filter names, and the HS list when the
+// filter reads All, so the HS and College lists never sit in one sequence. Ranked rows
+// and unranked rows on no BA list are untouched.
+function _draftTailBaPool() {
+  return (state.draftPool === "COL") ? "College" : "HS";
+}
+function _draftTailShown(p) {
+  if (_draftHasClassRank(p)) return true;
+  const sc = _draftBaScope(p);
+  return !sc || sc.pool === _draftTailBaPool();
+}
+// The unranked BA rows the one-list rule holds back: {n, pool} for the other list.
+function _draftTailHidden(pool) {
+  const shown = _draftTailBaPool();
+  const n = (pool || []).filter(p => !_draftTailShown(p)).length;
+  return { n, pool: shown === "HS" ? "College" : "HS", shown };
 }
 
 function _applyDraftSort(prospects) {
@@ -24325,6 +24368,8 @@ function _renderDraftRankings(host, cls) {
   const _nRanked = _nOrd;
   const _nTail = prospects.length - _nRanked;
   const _nTailScoped = prospects.filter(p => !_draftHasClassRank(p) && _draftBaScope(p)).length;
+  // The other BA list's unranked rows in this class, held back by the one-list rule.
+  const _tailHid = _draftTailHidden(basePool);
   // Sources actually present in this class's points, not a fixed list.
   const _DRAFT_SRC_LABEL = { fangraphs: "FanGraphs", espn_draft: "ESPN draft",
     mlb_pipeline_draft: "MLB Pipeline draft", baseballamerica_draft: "Baseball America draft" };
@@ -24342,7 +24387,10 @@ function _renderDraftRankings(host, cls) {
     ${cls.is_current ? " · still pre-draft" : " · drafted"}
     ${_srcLabels.length ? `· sources: ${escapeHtml(_srcLabels.join(", "))}.` : ""}
     Draft Stock+ is normalized within this class only (100 = class median).
-    ${_nTailScoped ? `The ${_nTail} unranked prospects carry no #n: they are listed by Baseball America's HS list, then its College list, with BA's rank inside that list (BA HS #n, BA Col #n), which is not a class order.` : ""}
+    ${_nTailScoped ? `The ${_nTail} unranked prospects carry no #n: they follow Baseball America's ${_tailHid.shown} list in BA's order, with BA's rank inside that list (BA ${_tailHid.shown === "College" ? "Col" : "HS"} #n), which is not a class order.` : ""}
+    ${_tailHid.n ? `One BA list shows at a time: the ${_tailHid.n} unranked prospects on BA's ${_tailHid.pool} list show with
+      <a href="#" onclick="event.preventDefault();state.draftPool='${_tailHid.pool === "College" ? "COL" : "HS"}';resetPage('draft');restoreUIFromState();render();syncToURL();"
+         style="color:var(--neon-cyan);">Pool set to ${_tailHid.pool}</a>.` : ""}
   </div>`;
 
   const pageSize = state.pageSizes.draft || 50;
@@ -25472,12 +25520,18 @@ function _renderDraftLeaderboard(host, cls) {
       || (b.consensus_fv || 0) - (a.consensus_fv || 0);
   });
   const nLeadRanked = prospects.filter(_draftHasClassRank).length;
+  // The ordered table lists one BA list at a time, the one the Pool filter names
+  // (HS under All): the HS and College lists are never one sequence. The position
+  // and tool panels below are not orders and keep the whole class.
+  const listed = prospects.filter(_draftTailShown);
+  const tailHid = _draftTailHidden(prospects);
+  const nTailAll = prospects.length - nLeadRanked;
   // Cap to the top 50 by default with a "show all" expander (mirrors the IFA /
   // Transactions lists) so the rest of the class is reachable, not truncated.
   const LEADER_CAP = 50;
   const leaderShowAll = !!state.draftLeaderShowAll;
-  const top = leaderShowAll ? prospects : prospects.slice(0, LEADER_CAP);
-  const leaderHidden = prospects.length - top.length;
+  const top = leaderShowAll ? listed : listed.slice(0, LEADER_CAP);
+  const leaderHidden = listed.length - top.length;
 
   // Per-position bests, grouped by the canonical bucket (C/SS/INF/OF/SP/RP) the
   // Rankings filter uses - not the raw position string (which spawned a row per
@@ -25582,23 +25636,35 @@ function _renderDraftLeaderboard(host, cls) {
   </tr>`;
   }).join("");
 
-  const _leadSub = nLeadRanked === prospects.length
+  const _nCount = listed.length < prospects.length
+    ? `${listed.length} of ${prospects.length} prospects` : `${prospects.length} prospects`;
+  const _otherList = tailHid.n
+    ? `. One BA list shows at a time: the ${tailHid.n} on its ${tailHid.pool} list show with the BA list switch on ${tailHid.pool}` : "";
+  const _leadSub = nTailAll === 0
     ? `${prospects.length} prospects · ranked by Draft Stock+ (100 = class median), then consensus FV`
     : nLeadRanked > 0
-      ? `${prospects.length} prospects · the ${nLeadRanked} with a whole-class rank are ranked by Draft Stock+ (100 = class median), then consensus FV; the other ${prospects.length - nLeadRanked} follow Baseball America's HS list, then its College list, and carry BA's list rank instead of a number`
-      : `${prospects.length} prospects · no source has ranked or graded this class as a whole yet, so there is no Draft Stock+ order. Rows follow Baseball America's HS list, then its College list, and carry BA's list rank (not a class rank)`;
+      ? `${_nCount} · the ${nLeadRanked} with a whole-class rank are ranked by Draft Stock+ (100 = class median), then consensus FV; the other ${listed.length - nLeadRanked} follow Baseball America's ${tailHid.shown} list and carry BA's list rank instead of a number${_otherList}`
+      : `${_nCount} · no source has ranked or graded this class as a whole yet, so there is no Draft Stock+ order. Rows follow Baseball America's ${tailHid.shown} list and carry BA's list rank (not a class rank)${_otherList}`;
+  // The switch writes the Pool filter the Rankings view shares, so both views
+  // show the same BA list.
+  const _hasBaTail = prospects.some(p => !_draftHasClassRank(p) && _draftBaScope(p));
+  const _baSwitch = _hasBaTail ? `<div class="draft-lb-ba-switch" style="display:flex;gap:6px;align-items:center;margin:0 0 8px;font-size:11px;color:var(--text-tertiary);">
+      <span title="Baseball America ranks its HS and College lists separately, so the unranked rows show one list at a time. This switch sets the Pool filter the Rankings view uses.">BA list</span>
+      ${[["HS", "HS"], ["COL", "College"]].map(([v, l]) => `<button class="chip${tailHid.shown === l ? " active" : ""}" type="button" data-draft-lb-ba="${v}" aria-pressed="${tailHid.shown === l}">${l}</button>`).join("")}
+    </div>` : "";
   host.innerHTML = _draftCaption(`${cls.year} draft leaderboard`, _leadSub)
     + `
     <div class="draft-results-grid">
       <div class="draft-panel" style="grid-column:1/-1;">
-        <h3>${cls.year} class ${nLeadRanked === 0 ? `${leaderShowAll ? `all ${top.length}` : `first ${top.length}`} by Baseball America list` : `${leaderShowAll ? `all ${top.length}` : `top ${top.length}`} by Draft Stock+`}</h3>
+        <h3>${cls.year} class ${nLeadRanked === 0 ? `${leaderShowAll ? `all ${top.length}` : `first ${top.length}`} by Baseball America ${tailHid.shown} list` : `${leaderShowAll ? `all ${top.length}` : `top ${top.length}`} by Draft Stock+`}</h3>
+        ${_baSwitch}
         <table class="draft-table">
           <thead><tr><th>#</th><th>Name</th><th>Pos</th><th>School</th>
             <th>DS+</th><th>FV</th><th>Round</th></tr></thead>
           <tbody>${topRows}</tbody>
         </table>
         ${(!leaderShowAll && leaderHidden > 0)
-          ? `<div style="text-align:center;margin-top:10px;"><button class="chip" id="draft-leader-show-all" type="button">Show all ${prospects.length} prospects (+${leaderHidden} more)</button></div>`
+          ? `<div style="text-align:center;margin-top:10px;"><button class="chip" id="draft-leader-show-all" type="button">Show all ${listed.length} prospects (+${leaderHidden} more)</button></div>`
           : ""}
       </div>
       <div class="draft-panel">
@@ -25612,6 +25678,13 @@ function _renderDraftLeaderboard(host, cls) {
     </div>`;
   const _lbSa = document.getElementById("draft-leader-show-all");
   if (_lbSa) _lbSa.addEventListener("click", () => { state.draftLeaderShowAll = true; renderDraft(); });
+  host.querySelectorAll("[data-draft-lb-ba]").forEach(b => b.addEventListener("click", () => {
+    state.draftPool = b.dataset.draftLbBa;
+    resetPage("draft");
+    restoreUIFromState();
+    renderDraft();
+    syncToURL();
+  }));
 }
 
 function _renderClassStrength(host, classes) {
@@ -34697,7 +34770,7 @@ function _gfxSubtitle(total, cap) {
     xfv: "by eFV", fv: "by consensus FV", upside: "upside first", statcast_plus: "by Statcast+",
     xfv_delta: "by eFV − consensus gap", conviction: "conviction (boldest bets vs consensus)",
     tool: "by tool grade", stock_movers: "biggest FV movers", source_confidence: "most-corroborated FV",
-    surplus_sv: "by expected surplus value", surplus_risk: "by risk-adjusted SV",
+    surplus_sv: "by expected surplus value", surplus_risk: "by simulated mean SV",
     surplus_p90: "by ceiling (P90)", surplus_p10: "by floor (P10)", surplus_pbust: "lowest bust risk",
     wag: "by WAR-above-grade", age_asc: "youngest first", age_desc: "oldest first",
     age_vs_level: "most young-for-level", eta: "earliest ETA",
@@ -35433,7 +35506,7 @@ function _gfxSurplusBlock(p, P) {
   if (!_tvLead && d.p10_mm != null) metaBits.push(fmtFanRange(d.p10_mm, d.p90_mm, fmtUsd));
   if (pb != null) metaBits.push(`P(bust) ${pb}%`);
   if (!_tvLead && d.p_above_threshold != null && d.threshold_mm != null) metaBits.push(`P(>$${Math.round(d.threshold_mm)}M) ${Math.round(d.p_above_threshold * 100)}%`);
-  if (!_tvLead && d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtUsd(d.risk_adjusted_mm)}`);
+  if (!_tvLead && d.risk_adjusted_mm != null) metaBits.push(`${(typeof svRiskAdjLabel === "function") ? svRiskAdjLabel(d) : "sim mean"} ${fmtUsd(d.risk_adjusted_mm)}`);
   if (_tvSec) metaBits.unshift(`${_tvSec.label} ${fmtUsd(_tvSec.mm)}`);
   return `<div style="background:${P.bg};border:1px solid ${P.border};border-radius:8px;padding:16px 18px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:11px;border-bottom:1px solid ${P.border};margin-bottom:13px;">
@@ -37662,7 +37735,7 @@ function makeSurplusCell(p) {
     + (d.p10_mm != null ? ` · ${fmtFanRange(d.p10_mm, d.p90_mm, fmtSvMM, "outcome range")}` : "")
     + (fanOutsideNote(s.value_mm, d.p10_mm, d.p90_mm) ? ` · ${fanOutsideNote(s.value_mm, d.p10_mm, d.p90_mm)}` : "")
     + (pb != null ? ` · P(bust) ${pb}%` : "")
-    + (d.risk_adjusted_mm != null ? ` · risk-adj ${fmtSvMM(d.risk_adjusted_mm)}` : "")
+    + (d.risk_adjusted_mm != null ? ` · ${svRiskAdjLabel(d)} ${fmtSvMM(d.risk_adjusted_mm)}` : "")
     + (wag != null ? ` · WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(2)}` : "")
     + (dvm != null ? ` · $DvM+ ${Math.round(dvm)} (surplus-development vs FV-tier peers)` : "")
     + ". This is an expectation, not a forecast of this player's own return"
@@ -37724,6 +37797,15 @@ function fmtSvMM(m) {
   if (a >= 10) return `${sign}$${Math.round(a)}M`;
   if (a >= 1)  return `${sign}$${a.toFixed(1)}M`;
   return `${sign}$${Math.round(a * 1000)}K`;
+}
+
+// The consensus engine's dist.risk_adjusted_mm is mean - lambda x (mean - downside).
+// With lambda 0 (every served row: dist.risk_lambda 0.0) no risk adjustment is applied
+// and the figure IS the simulated mean, so it prints as "sim mean" (owner answer M7-3,
+// 2026-09-25). Only a row that carries a positive lambda earns the "risk-adj" label.
+function svRiskAdjLabel(d) {
+  const lam = d && d.risk_lambda != null ? Number(d.risk_lambda) : 0;
+  return (isFinite(lam) && lam > 0) ? "risk-adj" : "sim mean";
 }
 
 // A P10-to-P90 interval is a percentile range and the surplus beside it is a MEAN, so
@@ -39449,7 +39531,8 @@ function _sortStatPill(p) {
   }
   const surM = {
     surplus_sv: ["Surplus", s => s && s.value_mm],
-    surplus_risk: ["Risk-adj", s => s && s.dist && s.dist.risk_adjusted_mm],
+    surplus_risk: [(p.surplus && p.surplus.dist && svRiskAdjLabel(p.surplus.dist) === "risk-adj") ? "Risk-adj" : "Sim mean",
+                   s => s && s.dist && s.dist.risk_adjusted_mm],
     surplus_p10: ["P10 SV", s => s && s.dist && s.dist.p10_mm],
     surplus_p90: ["P90 SV", s => s && s.dist && s.dist.p90_mm]
   };
@@ -49048,7 +49131,7 @@ function renderPlayerDetail(key) {
       // A hidden eFV fan stays hidden here too: this fallback would otherwise redraw it.
       if (d.p10_mm != null && !_efvFan && !_efvFanOff) metaBits.push(fmtFanRange(d.p10_mm, d.p90_mm, fmtSvMM));
       if (pb != null) metaBits.push(`<span style="color:${pb >= 40 ? 'var(--down)' : 'var(--text-secondary)'};">P(bust) ${pb}%</span>`);
-      if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtSvMM(d.risk_adjusted_mm)}`);
+      if (d.risk_adjusted_mm != null) metaBits.push(`${svRiskAdjLabel(d)} ${fmtSvMM(d.risk_adjusted_mm)}`);
       if (bk || d.p10_mm != null || metaBits.length) {
         bakedDetailRow = `<div style="padding-bottom:10px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
             ${(bk && !_gradeCardHasMix) ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Outcome mix</div>${renderBucketBar(bk, { height: 16, labels: true, legend: true })}` : ""}
@@ -51905,7 +51988,7 @@ function _renderOrgTendencies(orgCode) {
   const tradeCard = _otCard("Trade profile",
     `Tracked-prospect moves, ${(T.trades && T.trades.window) || "2022-present"}`,
     `<table class="detail-table" style="width:100%;">
-      <tr><td>Volume (in + out)</td><td style="text-align:right;">${tr.volume ?? " - "}</td><td>${_otZBar(tr.zVolume)}</td></tr>
+      <tr><td title="${escapeHtml((T.trades && T.trades.note) || "")}">Volume (in + out)</td><td style="text-align:right;">${tr.volume ?? " - "}</td><td>${_otZBar(tr.zVolume)}</td></tr>
       <tr><td title="Tracked prospects acquired minus traded away - positive accumulates prospect capital; negative converts it into MLB help.">Net prospect capital</td><td style="text-align:right;">${tr.netProspects > 0 ? "+" : ""}${tr.netProspects ?? " - "}</td><td>${_otZBar(tr.zNet)}</td></tr>
       <tr><td title="Share of graded acquired prospects at FV 50+ - quality vs depth.">FV 50+ share of acquisitions</td><td style="text-align:right;">${tr.acqTopShare != null ? (tr.acqTopShare * 100).toFixed(0) + "%" : " - "}</td><td>${_otZBar(tr.zQuality)}</td></tr>
       <tr><td title="Trades where the description shows this club RECEIVING cash considerations.">Cash received (deals)</td><td style="text-align:right;">${tr.cashReceived ?? " - "}</td><td>${_otZBar(tr.zCash)}</td></tr>

@@ -13,7 +13,8 @@ a .294/.395 AAA line). 826 of 2,764 served debuted rows carry a non-MLB statline
 Contract pinned here, over every served debuted row:
   * a statline whose level is not MLB prints its level tag;
   * the wRC+ / xFIP chip is hidden when the MLB sample on file is under the
-    leaderboard qualifier (50 AB, 15 IP), and names the sample when shown.
+    100 PA / 30 IP floor (owner answer M8-4, 2026-09-25; PA is AB x 1.1 when the row
+    carries no PA), and names the sample when shown.
 """
 from __future__ import annotations
 
@@ -66,10 +67,32 @@ def test_fixture_aaa_line_under_tiny_mlb_sample(js):
            "career_stats": [{"season": 2026, "level": "MLB", "ab": 5}]}
     html = _cell(js, row)
     assert 'class="prior-season-tag"' in html and ">AAA<" in html
-    assert "wRC+" not in html  # 5 MLB AB is under the 50 AB qualifier
+    assert "wRC+" not in html  # 5 MLB AB is under the 100 PA floor
+    row["career_stats"][0]["ab"] = 90   # about 99 PA: still under the floor
+    assert "wRC+" not in _cell(js, row)
+    row["career_stats"][0]["ab"] = 91   # about 100 PA: the chip shows
+    assert "wRC+" in _cell(js, row)
     row["career_stats"][0]["ab"] = 180
     html = _cell(js, row)
-    assert "wRC+" in html and "2026 MLB 180 AB" in html
+    assert "wRC+" in html and "2026 MLB 180 AB, about 198 PA" in html
+    row["career_stats"][0]["pa"] = 120  # a measured PA wins over the AB estimate
+    assert "2026 MLB 120 PA" in _cell(js, row)
+
+
+def test_pitcher_chip_needs_thirty_innings(js):
+    row = {"statline": {"level": "MLB", "season": 2026, "is_prior_season": False, "is_pitcher": True,
+                        "era": 3.1, "ip": 29.0},
+           "sabermetrics": {"season": 2026, "is_pitcher": True, "xfip": 3.4},
+           "career_stats": [{"season": 2026, "level": "MLB", "ip": 29.0}]}
+    assert "xFIP" not in _cell(js, row)
+    row["career_stats"][0]["ip"] = 30.0
+    html = _cell(js, row)
+    assert "xFIP" in html and "2026 MLB 30 IP" in html
+
+
+def test_floor_constant_is_the_owner_answer():
+    m = re.search(r"^const GRAD_MLB_CHIP_FLOOR = (.*?);$", _src(), re.M)
+    assert m and m.group(1).replace(" ", "") == "{PA:100,IP:30}", m and m.group(1)
 
 
 def test_every_served_non_mlb_line_is_tagged(js):
@@ -93,7 +116,11 @@ def test_every_served_non_mlb_line_is_tagged(js):
               if c.get("level") == "MLB" and c.get("season") == sm.get("season")]
         if cs and chip:
             c = cs[0]
-            n = c.get("ip") if sm.get("is_pitcher") else c.get("ab")
+            if sm.get("is_pitcher"):
+                n = c.get("ip")
+            else:
+                n = c.get("pa") if c.get("pa") is not None else (
+                    c["ab"] * 1.1 if c.get("ab") is not None else None)
             if n is not None:
-                assert n >= (15 if sm.get("is_pitcher") else 50), (r.get("player_key"), n)
+                assert n >= (30 if sm.get("is_pitcher") else 100), (r.get("player_key"), n)
     assert n_non_mlb > 0

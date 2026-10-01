@@ -12,7 +12,10 @@ a paginated card grid would carry one page of badge text. The board now builds a
 
 Contract pinned here: the page loads the helper; the file has one row per board row after
 the provisional pool lands, in board order; printed grades match the board's own formatter;
-the stamp columns are present; no per-source grade or internal sort key is exported.
+the stamp columns are present; no internal sort key is exported. Owner answer M8-2
+(2026-09-25): the file carries one grade column per public source (FanGraphs, MLB Pipeline,
+Baseball America, ESPN), the grade on the player's latest point as published, blank where
+the source has none.
 """
 from __future__ import annotations
 
@@ -90,10 +93,27 @@ def test_the_download_holds_the_whole_filtered_board(booted_page):
     for col in ("rank", "player_key", "efv", "efv_printed", "consensus_fv_printed",
                 "provisional", "grade_basis", "sort", "asof"):
         assert col in head
-    banned = [h for h in head if re.search(r"fangraphs|pipeline|baseball_america|espn|"
-                                           r"board_sort_key|^fg_|^ba_|^mlbp_", h, re.I)]
-    assert not banned, f"per-source or internal columns exported: {banned}"
+    banned = [h for h in head if re.search(r"board_sort_key", h, re.I)]
+    assert not banned, f"internal columns exported: {banned}"
+    src_cols = ["fangraphs_fv", "mlb_pipeline_fv", "baseball_america_fv", "espn_fv"]
+    for col in src_cols:
+        assert col in head, f"per-source grade column {col} missing (owner answer M8-2)"
     ix = {h: i for i, h in enumerate(head)}
+    # Each per-source cell is the grade on the row's latest point, as published, or blank.
+    want = page.evaluate(r"""() => getFilteredActives().map(p => {
+        const pts = p.points || [], last = pts.length ? pts[pts.length - 1] : null;
+        const ps = (last && last.per_source) || {};
+        return ["fangraphs", "mlb_pipeline", "baseballamerica", "espn"].map(s => {
+          const v = ps[s];
+          return (!v || v.fv_published == null) ? "" : String(Number(v.fv_published)) + (v.fv_plus ? "+" : "");
+        });
+      })""")
+    got = [[r[ix[c]] for c in src_cols] for r in body]
+    assert got == want, "per-source grade cells differ from the rows' latest per_source map"
+    for j, col in enumerate(src_cols):
+        filled = [g[j] for g in got if g[j]]
+        assert filled, f"{col} is blank on every row"
+        assert all(re.fullmatch(r"\d{2}(\.\d)?\+?", v) for v in filled), (col, filled[:5])
     assert [r[ix["rank"]] for r in body[:5]] == ["1", "2", "3", "4", "5"]
     assert all(r[ix["asof"]] for r in body[:5])
     assert sum(r[ix["provisional"]] == "1" for r in body) > 0
