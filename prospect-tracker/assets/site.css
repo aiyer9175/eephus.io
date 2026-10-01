@@ -3390,6 +3390,13 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
    the tip was never wired, so this styled nothing. */
 .gl-srdef { position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; }
+/* Site-wide visually hidden utility: text a screen reader reads and the page
+   does not paint (the sort state inside an active div sort chip, census M24-4).
+   Absolutely positioned, so the host that carries it must be positioned too or
+   the 1px box can land outside a scrolling strip and widen the page. */
+.visually-hidden { position: absolute !important; width: 1px; height: 1px;
+  padding: 0; margin: -1px; border: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
 /* ---- Generate GFX modal (shared: Free Agency, Projections) ---- */
 .egfx-overlay {
@@ -4124,7 +4131,10 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 
 /* Tape sort bar. The row-2 chips are not track-aligned with the header, so they
    get their own strip of sort buttons instead of a fake column heading floating
-   above them. Same aria-sort + arrow contract as the aligned header.
+   above them. These are div chips, not table heads, so they carry no aria-sort
+   (ARIA reads it only on a columnheader or rowheader): the active chip is
+   class="is-sorted" aria-pressed="true" and holds its sort state as
+   .visually-hidden text, and that class, not an attribute, paints it (M24-4).
 
    SHARED, not fantasy-only: the Free Agency and Projections boards mount the
    same device as .mlb-sortbar (2026-07-31). One implementation, two class names
@@ -4160,10 +4170,11 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 }
 .ff-sortbar [role="button"]:focus-visible,
 .mlb-sortbar [role="button"]:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
-.ff-sortbar [role="button"]:not([aria-sort="none"]),
-.ff-card-head [role="button"]:not([aria-sort="none"]),
-.mlb-sortbar [role="button"]:not([aria-sort="none"]) {
+.ff-sortbar [role="button"].is-sorted,
+.ff-card-head [role="button"].is-sorted,
+.mlb-sortbar [role="button"].is-sorted {
   color: var(--text-primary); border-color: var(--accent-cyan); opacity: 1;
+  position: relative;  /* holds the chip's .visually-hidden sort text */
 }
 
 @media (max-width: 720px) {

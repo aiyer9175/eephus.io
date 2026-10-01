@@ -15,7 +15,8 @@ no aria-sort at all; DFS put it on the span inside the head. The head is now a
 
 The card boards whose "heads" are <div> sort bars (PROSPX, the fantasy
 Redraft, Dynasty and Rest of season cards) are not tables and are not judged
-here; they are listed as NEXT in the lane report.
+here: they carry aria-pressed and visually hidden sort text instead (census
+M24-4), pinned in test_prospx_sort_a11y.py and test_fantasy_sortbar_a11y.py.
 """
 from __future__ import annotations
 

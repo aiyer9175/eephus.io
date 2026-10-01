@@ -472,13 +472,20 @@
   // clicking it re-sorted the board into the order it was already in and moved
   // the sort arrow off Score onto a heading that is a display position, not a
   // field. A control whose first click does nothing is worse than no control.
+  // The chip is a div-bar toggle button, not a table head, so it carries no
+  // aria-sort (ARIA reads that only on a columnheader or rowheader). The active
+  // chip says its state in visually hidden text, is aria-pressed, and is styled
+  // by .is-sorted in assets/site.css (census M24-4). The arrow stays one text run
+  // with the label: splitting it into its own span moved the next chip 0.016px.
   function sortBtn(c, st) {
     if (!c.get) return "<span>" + glossLbl(c) + "</span>";
     var on = st.key === c.key;
-    return '<span role="button" tabindex="0" data-rdsort="' + esc(c.key) + '" aria-sort="' +
-      (on ? (st.asc ? "ascending" : "descending") : "none") + '"' +
+    return '<span role="button" tabindex="0" data-rdsort="' + esc(c.key) + '"' +
+      (on ? ' class="is-sorted"' : "") + ' aria-pressed="' + (on ? "true" : "false") + '"' +
       (c.title ? ' title="' + esc(c.title) + '"' : "") + ">" + glossLbl(c) +
-      (on ? (st.asc ? " ▴" : " ▾") : "") + "</span>";
+      (on ? (st.asc ? " ▴" : " ▾") +
+        '<span class="visually-hidden">, sorted ' + (st.asc ? "ascending" : "descending") + "</span>" : "") +
+      "</span>";
   }
   function cellValue(c, row) {
     if (c.cell) return c.cell(row);

@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=954ed93d">
+  <link rel="stylesheet" href="/assets/site.css?v=94d0534f">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -14298,6 +14298,31 @@ function _sortDirArrow(stateField, key) {
 // the active header so the user can see which direction is in effect
 // without remembering whether they clicked once or twice. The CSS
 // pseudo-element on .sort-header.is-active reads the attribute.
+// a11y (census M24-4) - aria-sort is read only on a columnheader or rowheader.
+// A <th class="sort-header"> in a real table keeps its columnheader role and
+// carries aria-sort. The div-grid board headers are <span role="button"> chips,
+// so they carry aria-pressed instead, and the active chip holds its sort state
+// as .visually-hidden text (assets/site.css); .sort-header is position:relative,
+// which contains that 1px box. The paint stays on .is-active.
+function _stampSortHeaderState(h, isActive, dir) {
+  if (h.tagName === "TH") {
+    h.setAttribute("aria-sort", isActive ? dir : "none");
+    return;
+  }
+  h.removeAttribute("aria-sort");
+  h.setAttribute("aria-pressed", isActive ? "true" : "false");
+  let sr = null;
+  for (const c of h.children) if (c.classList.contains("sort-header-sr")) sr = c;
+  if (!isActive) { if (sr) sr.remove(); return; }
+  if (!sr) {
+    sr = document.createElement("span");
+    sr.className = "visually-hidden sort-header-sr";
+    h.appendChild(sr);
+  }
+  const txt = ", sorted " + dir;
+  if (sr.textContent !== txt) sr.textContent = txt;
+}
+
 function syncSortHeaderActive() {
   // Normalize direction-paired keys to their column base ("ht" / "wt" /
   // "bmi") so toggling asc/desc keeps the highlight on the column.
@@ -14322,10 +14347,8 @@ function syncSortHeaderActive() {
       else h.removeAttribute("data-sort-dir");
       // a11y - announce the current sort state to assistive tech. The
       // arrow "▲" means the reverse (ascending) order is in effect; "▼" is
-      // the natural (descending) order. Inactive sortable headers read
-      // "none" so a screen-reader user knows they are sortable but unsorted.
-      h.setAttribute("aria-sort",
-        isActive ? (arrow === "▲" ? "ascending" : "descending") : "none");
+      // the natural (descending) order.
+      _stampSortHeaderState(h, isActive, arrow === "▲" ? "ascending" : "descending");
     });
   }
 }
@@ -56932,13 +56955,15 @@ function attachHandlers() {
   // button. Renderers drop fresh .sort-header spans into #content on each
   // paint (including farm / draft renders that don't call
   // syncSortHeaderActive), so one scoped observer stamps role + tabindex and
-  // we never have to wire the ~25 render sites individually. aria-sort (the
-  // live sort state) is stamped separately by syncSortHeaderActive.
+  // we never have to wire the ~25 render sites individually. The live sort
+  // state (aria-pressed plus hidden text on a span, aria-sort on a <th>) is
+  // stamped separately by syncSortHeaderActive. A <th> keeps its columnheader
+  // role: role=button would replace it and hide aria-sort (census M24-4).
   (function initSortHeaderA11y() {
     const root = document.getElementById("content");
     if (!root) return;
     const stamp = (el) => {
-      if (el.getAttribute("role") !== "button") el.setAttribute("role", "button");
+      if (el.tagName !== "TH" && el.getAttribute("role") !== "button") el.setAttribute("role", "button");
       if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
     };
     const scan = (node) => {

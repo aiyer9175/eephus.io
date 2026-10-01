@@ -354,12 +354,17 @@
     });
     return out;
   }
+  // A div-bar toggle button, not a table head: no aria-sort (read only on a
+  // columnheader or rowheader). The active chip carries .is-sorted (its paint in
+  // assets/site.css), aria-pressed and visually hidden sort text (census M24-4).
   function sortBtn(c, st) {
     var on = st.key === c.key;
-    return '<span role="button" tabindex="0" data-dynsort="' + esc(c.key) + '" aria-sort="' +
-      (on ? (st.asc ? "ascending" : "descending") : "none") + '"' +
+    return '<span role="button" tabindex="0" data-dynsort="' + esc(c.key) + '"' +
+      (on ? ' class="is-sorted"' : "") + ' aria-pressed="' + (on ? "true" : "false") + '"' +
       (c.title ? ' title="' + esc(c.title) + '"' : "") + ">" + glossLbl(c) +
-      (on ? (st.asc ? " ▴" : " ▾") : "") + "</span>";
+      (on ? (st.asc ? " ▴" : " ▾") +
+        '<span class="visually-hidden">, sorted ' + (st.asc ? "ascending" : "descending") + "</span>" : "") +
+      "</span>";
   }
   function cellValue(c, row) {
     if (c.cell) return c.cell(row);
