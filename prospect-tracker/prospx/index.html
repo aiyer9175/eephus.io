@@ -37434,10 +37434,27 @@ async function animateGfx() {
     rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     const stopped = new Promise(res => { rec.onstop = res; });
     rec.start();
-    const DUR = 2600, t0 = performance.now();
+    // The sweep runs on VISIBLE time (A14, 2026-10-01). rAF does not fire in a
+    // hidden tab, so a wall clock came back past DUR and ended the clip early.
+    // While the tab is hidden the recorder pauses and the clock stops; on
+    // return the frame baseline resets, so the clip always holds the full sweep.
+    const DUR = 2600;
+    let shown = 0, last = null;
+    const onVis = () => {
+      last = null;
+      try {
+        if (document.visibilityState === "hidden") { if (rec.state === "recording") rec.pause(); }
+        else if (rec.state === "paused") rec.resume();
+      } catch (_) { /* recorder already stopped */ }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    onVis();                                     // hidden at start: hold until shown
     await new Promise(res => {
       const frame = (now) => {
-        const prog = ((now - t0) % DUR) / DUR;
+        if (document.visibilityState === "hidden") { last = null; requestAnimationFrame(frame); return; }
+        if (last != null) shown += now - last;
+        last = now;
+        const prog = Math.min(1, shown / DUR);
         ctx.drawImage(base, 0, 0);
         // Diagonal holographic glare sweep - the classic foil "tilt" shimmer.
         const cx = (-0.35 + 1.7 * prog) * W;
@@ -37448,10 +37465,11 @@ async function animateGfx() {
         ctx.globalCompositeOperation = "soft-light";
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
         ctx.globalCompositeOperation = "source-over";
-        if (now - t0 < DUR) requestAnimationFrame(frame); else res();
+        if (shown < DUR) requestAnimationFrame(frame); else res();
       };
       requestAnimationFrame(frame);
     });
+    document.removeEventListener("visibilitychange", onVis);
     rec.stop(); await stopped;
     const blob = new Blob(chunks, { type: "video/webm" });
     if (!blob.size) throw new Error("empty recording");

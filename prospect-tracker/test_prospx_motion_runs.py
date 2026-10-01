@@ -21,6 +21,10 @@ the SERVED page, and asserts the two runs measure the same:
   - A09: the rank diamonds run no loop. They are static by spec but inherited
     the generic .card-rarity-* loops, which ran on every rarity diamond and
     moved nothing; switching them off leaves each diamond pixel-identical.
+  - A14: the animated GFX export (animateGfx) sweeps on visible time. With a
+    stubbed MediaRecorder and a simulated hidden interval of 1 s mid-run, the
+    sweep still reaches progress 1.0 and the recorder holds at least 2600 ms
+    of visible sweep before rec.stop(); a wall clock ended the clip early.
 
 Playwright/chromium are OPTIONAL; the browser tests skip cleanly when they are
 unavailable (mirrors test_reduced_motion_runs.py)."""
@@ -106,6 +110,83 @@ def _diamond_shots(page) -> dict:
     return out
 
 
+# Run animateGfx with a stubbed recorder and still-frame renderer, hide the
+# tab for 1 s mid-run (document.visibilityState overridden plus a
+# visibilitychange event), and read the sweep progress back from the glare
+# gradient each frame draws (cx = (-0.35 + 1.7 * prog) * W, x0 = cx - 0.28 W).
+_GFX_JS = r"""
+async () => {
+  const W = 200, log = [], progs = [];
+  class FakeRecorder {
+    constructor() { this.state = 'inactive'; }
+    static isTypeSupported(m) { return /^video\/webm/.test(m); }
+    start() { this.state = 'recording'; log.push(['start', performance.now()]); }
+    pause() { this.state = 'paused'; log.push(['pause', performance.now()]); }
+    resume() { this.state = 'recording'; log.push(['resume', performance.now()]); }
+    stop() {
+      this.state = 'inactive'; log.push(['stop', performance.now()]);
+      if (this.ondataavailable) this.ondataavailable({data: new Blob(['x'])});
+      if (this.onstop) this.onstop();
+    }
+  }
+  window.MediaRecorder = FakeRecorder;
+  window._gfxCanvas = async () => {
+    const c = document.createElement('canvas'); c.width = W; c.height = 100; return c;
+  };
+  window._gfxFilename = () => 'probe.png';
+  let saved = 0, alerted = null;
+  window._gfxSaveBlob = () => { saved++; };
+  window.alert = (m) => { alerted = String(m); };
+  Object.defineProperty(navigator, 'canShare', {value: () => false, configurable: true});
+  _gfxBoardEl = document.body;
+  const grad = CanvasRenderingContext2D.prototype.createLinearGradient;
+  CanvasRenderingContext2D.prototype.createLinearGradient = function (x0) {
+    if (this.canvas.width === W) progs.push(((x0 + 0.28 * W) / W + 0.35) / 1.7);
+    return grad.apply(this, arguments);
+  };
+  const setVis = (state) => {
+    Object.defineProperty(document, 'visibilityState', {get: () => state, configurable: true});
+    Object.defineProperty(document, 'hidden', {get: () => state === 'hidden', configurable: true});
+    document.dispatchEvent(new Event('visibilitychange'));
+  };
+  const run = animateGfx();
+  await new Promise((r) => setTimeout(r, 900));
+  const h0 = performance.now();
+  setVis('hidden');
+  await new Promise((r) => setTimeout(r, 1000));
+  setVis('visible');
+  const h1 = performance.now();
+  await run;
+  delete document.visibilityState;
+  delete document.hidden;
+  CanvasRenderingContext2D.prototype.createLinearGradient = grad;
+  // Recorded time outside the hidden window, from the recorder's own log.
+  let visible = 0, from = null;
+  for (const [ev, t] of log) {
+    if (ev === 'start' || ev === 'resume') from = t;
+    else if (from != null) {
+      const overlap = Math.max(0, Math.min(t, h1) - Math.max(from, h0));
+      visible += (t - from) - overlap;
+      from = null;
+    }
+  }
+  const last = progs.length ? progs[progs.length - 1] : null;
+  return {
+    summary: {
+      reaches_full_sweep: last != null && Math.abs(last - 1) < 1e-6,
+      visible_at_least_2600: visible >= 2600,
+      paused_while_hidden: log.some(([ev]) => ev === 'pause'),
+      stopped_once: log.filter(([ev]) => ev === 'stop').length === 1,
+      saved_once: saved === 1,
+      no_alert: alerted === null,
+    },
+    detail: {last_prog: last, frames: progs.length, visible_ms: Math.round(visible),
+             log: log.map(([ev, t]) => ev + '@' + Math.round(t)), alerted},
+  };
+}
+"""
+
+
 @pytest.fixture(scope="module")
 def measured():
     """{mode: {probe: result}} for both modes, from one chromium launch."""
@@ -135,6 +216,7 @@ def measured():
                 res["ring:" + tier] = page.evaluate(_RING_JS, tier)
             res["diamonds"] = page.evaluate(_DIAMONDS_JS)
             res["diamond_shots"] = {t: a == b for t, (a, b) in _diamond_shots(page).items()}
+            res["gfx"] = page.evaluate(_GFX_JS)
             out[mode] = res
             ctx.close()
         browser.close()
@@ -179,3 +261,12 @@ def test_a09_rank_diamonds_run_no_loop(measured):
         assert all(shots.values()), f"diamond frame changed under {mode}: {shots}"
     assert measured["reduce"]["diamonds"] == measured["no-preference"]["diamonds"]
     assert measured["reduce"]["diamond_shots"] == measured["no-preference"]["diamond_shots"]
+
+
+def test_a14_gfx_animation_holds_the_full_sweep(measured):
+    """A14: a hidden interval mid-run neither cuts the sweep short nor lands
+    in the clip, under both motion settings."""
+    for mode in MODES:
+        got = measured[mode]["gfx"]
+        assert all(got["summary"].values()), f"{mode}: {got}"
+    assert measured["reduce"]["gfx"]["summary"] == measured["no-preference"]["gfx"]["summary"]
