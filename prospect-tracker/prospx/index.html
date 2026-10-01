@@ -4436,7 +4436,11 @@
        the headshot, identical motion to detail-page .card-rarity-XX.
        Bumps border-width to 2px on the L/R/B sides while letting the
        team-color top border stay 3px so the card-edge frame still
-       reads. */
+       reads. The four animated tiers below set the background as
+       !important LONGHANDS (image, origin, clip, size, color, repeat)
+       and leave background-position free: an !important background
+       shorthand also pins background-position, which outranks the
+       keyframes and held the ring still (A01, 2026-10-01). */
     .headshot.fv-headshot-ring.card-rarity-shine,
     .headshot.fv-headshot-ring.card-rarity-foil,
     .headshot.fv-headshot-ring.card-rarity-chrome,
@@ -4461,25 +4465,33 @@
     }
     /* Foil (FV 50) - subtle silver shimmer. */
     .headshot.fv-headshot-ring.card-rarity-foil {
-      background:
-        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+      background-image:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)),
         linear-gradient(135deg,
           rgba(200,200,210,0.55) 0%,
           rgba(240,240,250,0.7) 50%,
-          rgba(200,200,210,0.55) 100%) border-box !important;
+          rgba(200,200,210,0.55) 100%) !important;
+      background-origin: padding-box, border-box !important;
+      background-clip: padding-box, border-box !important;
+      background-color: transparent !important;
+      background-repeat: repeat !important;
       background-size: 100% 100%, 200% 200% !important;
       animation: foil-shift 8s linear infinite;
     }
     /* Chrome (FV 55) - silver-white shimmer, faster cadence than foil. */
     .headshot.fv-headshot-ring.card-rarity-chrome {
-      background:
-        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+      background-image:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)),
         linear-gradient(135deg,
           rgba(220,220,235,0.85) 0%,
           rgba(160,170,200,0.45) 35%,
           rgba(255,255,255,0.85) 50%,
           rgba(160,170,200,0.45) 65%,
-          rgba(220,220,235,0.85) 100%) border-box !important;
+          rgba(220,220,235,0.85) 100%) !important;
+      background-origin: padding-box, border-box !important;
+      background-clip: padding-box, border-box !important;
+      background-color: transparent !important;
+      background-repeat: repeat !important;
       background-size: 100% 100%, 300% 300% !important;
       animation: chrome-shimmer 4.2s linear infinite,
                  chrome-headshot-pulse 2s ease-in-out infinite;
@@ -4487,9 +4499,13 @@
     /* Holo (FV 60) - full rainbow shift. Higher tier than chrome per
        v18.3 user re-tiering. */
     .headshot.fv-headshot-ring.card-rarity-holo {
-      background:
-        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
-        var(--refractor-holo) border-box !important;
+      background-image:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)),
+        var(--refractor-holo) !important;
+      background-origin: padding-box, border-box !important;
+      background-clip: padding-box, border-box !important;
+      background-color: transparent !important;
+      background-repeat: repeat !important;
       background-size: 100% 100%, 300% 300% !important;
       animation: holo-shift 5s linear infinite,
                  holo-headshot-pulse 2s ease-in-out infinite;
@@ -4502,9 +4518,13 @@
       border-right-width:  2.5px !important;
       border-bottom-width: 2.5px !important;
       border-left-width:   2.5px !important;
-      background:
-        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
-        var(--refractor-legendary) border-box !important;
+      background-image:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)),
+        var(--refractor-legendary) !important;
+      background-origin: padding-box, border-box !important;
+      background-clip: padding-box, border-box !important;
+      background-color: transparent !important;
+      background-repeat: repeat !important;
       background-size: 100% 100%, 400% 400% !important;
       animation: holo-shift 3s linear infinite,
                  legendary-headshot-pulse 2s ease-in-out infinite;
