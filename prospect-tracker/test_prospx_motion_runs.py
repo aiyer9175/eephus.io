@@ -25,6 +25,9 @@ the SERVED page, and asserts the two runs measure the same:
     stubbed MediaRecorder and a simulated hidden interval of 1 s mid-run, the
     sweep still reaches progress 1.0 and the recorder holds at least 2600 ms
     of visible sweep before rec.stop(); a wall clock ended the clip early.
+  - A11: the PX-24 card-foil edge sweep exists. In dark, hovering a foil,
+    chrome or holo player's card header runs cf-sweep once (420 ms, 1
+    iteration, running then finished); in light no cf-sweep starts.
 
 Playwright/chromium are OPTIONAL; the browser tests skip cleanly when they are
 unavailable (mirrors test_reduced_motion_runs.py)."""
@@ -187,6 +190,50 @@ async () => {
 """
 
 
+# The first board row of each rarity tier, by its rank diamond.
+_TIER_KEYS_JS = r"""
+() => {
+  const out = {};
+  document.querySelectorAll('.player-row[data-key]').forEach((row) => {
+    const n = row.querySelector('.rank-num[class*="card-rarity-"]');
+    if (!n) return;
+    const tier = n.className.match(/card-rarity-([a-z]+)/)[1];
+    if (!out[tier]) out[tier] = row.dataset.key;
+  });
+  return out;
+}
+"""
+
+_SWEEP_JS = r"""
+() => document.getAnimations().filter((a) => a.animationName === 'cf-sweep').map((a) => {
+  const t = a.effect.getComputedTiming();
+  return {name: a.animationName, duration: t.duration, iterations: t.iterations, state: a.playState};
+})
+"""
+
+SWEEP_TIERS = ("foil", "chrome", "holo")
+
+
+def _hover_sweeps(page, base: str, keys: dict) -> dict:
+    """{tier: {'early': [...], 'late': [...]}} for each card header hovered."""
+    out = {}
+    for tier in SWEEP_TIERS:
+        key = keys.get(tier)
+        if not key:
+            continue
+        page.goto(base + "prospx/index.html#player=" + key, wait_until="load", timeout=60_000)
+        page.wait_for_selector(".detail-page-header", state="attached", timeout=60_000)
+        page.wait_for_timeout(500)
+        page.mouse.move(1, 1)
+        page.wait_for_timeout(100)
+        page.hover(".detail-page-header")
+        page.wait_for_timeout(60)
+        early = page.evaluate(_SWEEP_JS)
+        page.wait_for_timeout(700)
+        out[tier] = {"early": early, "late": page.evaluate(_SWEEP_JS)}
+    return out
+
+
 @pytest.fixture(scope="module")
 def measured():
     """{mode: {probe: result}} for both modes, from one chromium launch."""
@@ -217,6 +264,12 @@ def measured():
             res["diamonds"] = page.evaluate(_DIAMONDS_JS)
             res["diamond_shots"] = {t: a == b for t, (a, b) in _diamond_shots(page).items()}
             res["gfx"] = page.evaluate(_GFX_JS)
+            keys = page.evaluate(_TIER_KEYS_JS)
+            res["sweep:light"] = _hover_sweeps(page, base, keys)
+            ctx.close()
+            ctx = browser.new_context(reduced_motion=mode, viewport={"width": 1280, "height": 900})
+            ctx.add_init_script(_INIT.replace("'light'", "'dark'"))
+            res["sweep:dark"] = _hover_sweeps(ctx.new_page(), base, keys)
             out[mode] = res
             ctx.close()
         browser.close()
@@ -270,3 +323,22 @@ def test_a14_gfx_animation_holds_the_full_sweep(measured):
         got = measured[mode]["gfx"]
         assert all(got["summary"].values()), f"{mode}: {got}"
     assert measured["reduce"]["gfx"]["summary"] == measured["no-preference"]["gfx"]["summary"]
+
+
+def test_a11_card_foil_edge_sweeps_in_dark_only(measured):
+    """A11: in dark, hovering a foil, chrome or holo player card header runs
+    cf-sweep once (420 ms, one iteration, running then finished); in light no
+    cf-sweep starts; the same under both motion settings."""
+    for mode in MODES:
+        dark, light = measured[mode]["sweep:dark"], measured[mode]["sweep:light"]
+        assert dark, f"no foil, chrome or holo player card reached under {mode}"
+        for tier, got in dark.items():
+            assert len(got["early"]) == 1, f"{tier} dark {mode}: {got}"
+            early, late = got["early"][0], got["late"][0] if got["late"] else None
+            assert early["name"] == "cf-sweep" and early["duration"] == 420, early
+            assert early["iterations"] == 1 and early["state"] == "running", early
+            assert late is not None and late["state"] == "finished", got
+        for tier, got in light.items():
+            assert got == {"early": [], "late": []}, f"{tier} light {mode}: {got}"
+    assert measured["reduce"]["sweep:dark"] == measured["no-preference"]["sweep:dark"]
+    assert measured["reduce"]["sweep:light"] == measured["no-preference"]["sweep:light"]

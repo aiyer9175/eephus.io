@@ -6814,6 +6814,42 @@
       z-index: 0;
     }
     .detail-page-header > * { position: relative; z-index: 1; }
+    /* PX-24 card-foil refractor edge sweep (owner answer PX-Q1; A11,
+       2026-10-01), the B card-foil motion: dark theme only, PROSPX player
+       card only. Hovering the header, or focus inside it, runs the brand
+       ramp once around the 1px edge (cf-sweep, 6 steps in .42s) and holds
+       the full ring while the pointer or focus stays. The ring is its own
+       element masked to the edge, so the header's .card-rarity-* loop,
+       border and background are untouched; light theme keeps today's
+       static ring. It runs the same under Reduce Motion (owner rule
+       2026-10-01). Do not reuse on menus, module cards or board rows. */
+    .detail-page-header > .cf-edge {
+      display: none;
+      position: absolute;
+      inset: -1px;
+      z-index: 2;
+      pointer-events: none;
+      border: 1px solid transparent;
+      border-radius: inherit;
+      background-image: none, var(--iridescent);
+      background-origin: padding-box, border-box;
+      background-clip: padding-box, border-box;
+      background-size: 100% 100%, 100% 100%;
+      background-position: 0 0, 0 0;
+      background-repeat: no-repeat;
+      -webkit-mask: linear-gradient(currentColor 0 0) padding-box, linear-gradient(currentColor 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(currentColor 0 0) padding-box exclude, linear-gradient(currentColor 0 0);
+    }
+    [data-theme="dark"] .detail-page-header:hover > .cf-edge,
+    [data-theme="dark"] .detail-page-header:focus-within > .cf-edge {
+      display: block;
+      animation: cf-sweep .42s steps(6, end) 1 both;
+    }
+    @keyframes cf-sweep {
+      from { background-size: 100% 100%, 400% 100%; background-position: 0 0, 100% 0; }
+      to   { background-size: 100% 100%, 100% 100%; background-position: 0 0, 0 0; }
+    }
     .detail-page-header.fv-tier-80 { --fv-tier-glow: var(--fv-80); }
     .detail-page-header.fv-tier-70 { --fv-tier-glow: var(--fv-70); }
     .detail-page-header.fv-tier-65 { --fv-tier-glow: var(--fv-65); }
@@ -48498,6 +48534,7 @@ function renderPlayerDetail(key) {
     </div>
     <div id="px-hub"></div>
     <div class="detail-page-header ${_fvTierClass}" style="${orgStripe(p.org)}">
+      <span class="cf-edge" aria-hidden="true"></span>
       <div style="display:flex;align-items:flex-start;gap:16px;flex:1;min-width:0;">
         <div class="headshot-frame">${headshotHTML(p, 130)}</div>
         ${teamLogoHTML(p.org, "lg", p.org ? fullOrgName(p.org) : "")}
