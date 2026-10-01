@@ -2,7 +2,7 @@
 """Build data/hof_board.json, the payload behind /hof/.
 
 WHAT THIS PAGE IS ALLOWED TO SAY, and it is much less than the module will
-eventually say. Four sections ship live and four ship dark, and the dark ones
+eventually say. Six sections ship live and two ship dark, and the dark ones
 are dark for reasons that are data problems rather than modelling problems.
 
 LIVE:
@@ -26,6 +26,11 @@ LIVE:
     2022, 2023 or 2024. Without this band Albert Pujols, Zack Greinke, Robinson
     Cano, Miguel Cabrera and Joey Votto appear on neither board, and they are
     the single most likely thing a reader opens this page to look up.
+  Franchises (lit 2026-09-25 on the owner's frozen rule). Every inductee with
+    a playing record credited to ONE franchise, the one with the most bWAR
+    summed over his war_daily stints, through data/franchise_spine.json carried
+    back to 1871 with a named defunct-club bucket.
+    docs/HOF_FRANCHISE_ATTRIBUTION.md holds the rule and what it rejected.
 
 DARK, each with its blocker named on the page:
   Deserved vs Inducted, and the Hall-sized line with it. A Hall-SIZED line needs
@@ -39,8 +44,6 @@ DARK, each with its blocker named on the page:
   The by-class line, additionally, because position_class misfiles every catcher
     who retired before roughly 1930.
   The predictor, until H-PRED-3 passes its ship rule.
-  Franchises, because there is no frozen attribution rule for a multi-team
-    career and the franchise spine starts in 1969.
 
 EVERY STRING THE PAGE RENDERS IS BUILT HERE. No figure is typed into HTML or JS.
 
@@ -320,6 +323,160 @@ def _bakeoff_panel() -> dict:
     }
 
 
+def _club_names() -> dict:
+    """{org code: club name} from the StatsAPI teams cache /franchise/ reads.
+    A missing cache leaves the code as the name; nothing is typed here."""
+    try:
+        import franchise_export as fe
+        return {c: (r.get("name") or c) for c, r in fe._clubs_from_cache().items()}
+    except Exception:                              # noqa: BLE001
+        return {}
+
+
+def _franchises_panel(b, cf) -> dict:
+    """The Franchises section: every inductee credited to ONE franchise.
+
+    THE RULE (owner answer 2026-09-25, docs/HOF_FRANCHISE_ATTRIBUTION.md): the
+    franchise with the most bWAR, summed over every war_daily stint. The map is
+    data/franchise_spine.json, carried back to 1871, with every season before
+    1969 landing on one of the 30 franchises or on a named defunct club.
+
+    THE POPULATION is every inductee the ledger resolves to a playing record,
+    on any route. The credit is by PLAYING WAR, so an inductee enshrined as a
+    manager or executive is credited where he played, and the route column
+    stays three-state: a writers' election as a player is the only verified
+    player induction, and the counts say how many of each.
+    """
+    spine = json.loads(hd.FRANCHISE_SPINE_PATH.read_text(encoding="utf-8"))
+    hist = spine.get("history") or {}
+    defunct = {c["key"]: c for c in hist.get("defunct") or []}
+    groups = hist.get("defunct_groups") or {}
+    orgs = sorted(spine.get("orgs") or {})
+    names = _club_names()
+
+    inducted = list((b.get("inducted") or {}).keys())
+    credit = hd.franchise_credit(offline=True)
+    credit = credit[credit["player_ID"].isin(set(inducted))]
+    prim = hd.primary_franchise(credit).set_index("player_ID")
+    by_pid = {pid: g.sort_values(["war", "seasons"], ascending=[False, False],
+                                 kind="mergesort")
+              for pid, g in credit.groupby("player_ID", sort=False)}
+    cfi = cf.set_index("player_ID")
+
+    def _label(key):
+        if key in defunct:
+            c = defunct[key]
+            return f"{c['label']}, {groups.get(c['group'], c['group'])}"
+        return names.get(key) or key
+
+    rows = []
+    for pid in inducted:
+        if pid not in prim.index:
+            continue
+        p = prim.loc[pid]
+        state, iyear, _ = _induction_state(pid, b, None)
+        cr = by_pid[pid]
+        rows.append({
+            "id": pid,
+            "name": str(cfi.at[pid, "name"]) if pid in cfi.index else pid,
+            # Published at the board's tenth (half-up), so the row reads the
+            # same career WAR as the Eligible board; `credit` carries the
+            # file's two decimals and rounds to it.
+            "career_war": _f(cfi.at[pid, "career_war"]) if pid in cfi.index else None,
+            "primary": p["franchise"],
+            "primary_bucket": p["bucket"],
+            "primary_label": _label(p["franchise"]),
+            "primary_group": (defunct[p["franchise"]]["group"]
+                              if p["franchise"] in defunct else None),
+            # Rounded on the file's two decimals first, then half-up to the
+            # tenth, so it reads as the first `credit` entry rounded.
+            "primary_war": _f(_f(p["war"], 2)),
+            "primary_seasons": int(p["seasons"]),
+            "tied": bool(p["tied"]),
+            "induction": state,
+            "induction_year": iyear,
+            # Every franchise he played for, WAR summed per stint at the
+            # file's two decimals, so the entries sum to his career WAR.
+            "credit": [[k, _f(w, 2)] for k, w in zip(cr["franchise"], cr["war"])],
+        })
+    rows.sort(key=lambda r: (-(r["primary_war"] or 0), r["name"]))
+
+    clubs = []
+    for org in orgs:
+        mine = [r for r in rows if r["primary"] == org]
+        played = sum(1 for r in rows if any(k == org for k, _ in r["credit"]))
+        clubs.append({
+            "code": org, "name": names.get(org) or org,
+            "n": len(mine),
+            "n_player_bbwaa": sum(1 for r in mine if r["induction"] == "player_bbwaa"),
+            "n_route_unverified": sum(1 for r in mine if r["induction"] == "route_unverified"),
+            "n_played_for": played,
+            # ids into `inductees` below, highest WAR with the club first.
+            "inductees": [r["id"] for r in mine],
+        })
+    dmine = [r for r in rows if r["primary_bucket"] == hd.DEFUNCT_BUCKET]
+    by_group = {g: sum(1 for r in dmine if defunct[r["primary"]]["group"] == g)
+                for g in groups}
+    n_unmapped = len(inducted) - len(rows)
+    n_club = sum(c["n"] for c in clubs)
+    return {
+        "live": True,
+        "doc": "docs/HOF_FRANCHISE_ATTRIBUTION.md",
+        "rule": hd.FRANCHISE_RULE,
+        "rule_frozen": hd.FRANCHISE_RULE_FROZEN,
+        "rejected": (
+            "Rejected: the cap on the plaque, which no source in this tree "
+            "records; most seasons or games with a club, which credits a long "
+            "decline over a short peak; and fractional credit as the headline, "
+            "since each inductee counts once. The WAR each inductee earned with "
+            "every franchise is still served beside the credit."),
+        "map_basis": hist.get("basis"),
+        "credit_basis": (
+            "Credit is by playing WAR. An inductee enshrined as a manager or "
+            "executive is credited where he played, and the induction column "
+            "keeps its three states: a writers' election as a player is the "
+            "only player induction this page can verify."),
+        "counts": {
+            "n_inductees": len(inducted),
+            "n_credited": len(rows),
+            "n_unmapped": n_unmapped,
+            "n_to_a_current_franchise": n_club,
+            "n_to_a_defunct_club": len(dmine),
+            "n_defunct_by_group": by_group,
+            "n_decided_by_tiebreak": sum(1 for r in rows if r["tied"]),
+            "n_defunct_clubs_in_map": len(defunct),
+            "map_first_season": hist.get("first_season"),
+        },
+        "clubs": clubs,
+        "defunct": {
+            "key": hd.DEFUNCT_BUCKET,
+            "label": "Defunct clubs",
+            "n": len(dmine),
+            "n_player_bbwaa": sum(1 for r in dmine if r["induction"] == "player_bbwaa"),
+            "n_route_unverified": sum(1 for r in dmine if r["induction"] == "route_unverified"),
+            "by_group": by_group,
+            "group_labels": groups,
+            "inductees": [r["id"] for r in dmine],
+        },
+        "inductees": rows,
+    }
+
+
+def _franchises_or_dark(b, cf) -> dict:
+    """The panel, or a dark section naming why. A stint the franchise map cannot
+    place (a new war_daily team code, a missing `history` block) darkens this
+    one section with its reason instead of taking the whole board down."""
+    try:
+        return _franchises_panel(b, cf)
+    except (RuntimeError, OSError, ValueError, KeyError) as exc:
+        return {"live": False,
+                "blocked_on": "the franchise map (data/franchise_spine.json)",
+                "why": ("The Hall of Fame franchise credit could not be built this "
+                        f"run: {exc}. Rerun python tools/franchise_spine_history.py "
+                        "and check the war_daily team codes; nothing is credited "
+                        "until every stint maps.")}
+
+
 def build() -> dict:
     hd.clear_cache()
     b = hd.ballots()
@@ -498,21 +655,10 @@ def build() -> dict:
                          "why": blocked},
             "bakeoff": _bakeoff_panel(),
             "predictor": _predictor_panel(),
-            # CORRECTED (audit M10-12): the blocker used to read "no franchise
-            # spine" and "no team column". The stint frame carries team_ID and
-            # the /franchise/ spine maps it to the 30 clubs from 1969 on; what
-            # is still missing is the spine before 1969 and the owner's frozen
-            # attribution rule.
-            "franchises": {"live": False,
-                           "blocked_on": "a frozen attribution rule for a multi-team career",
-                           "why": ("Each career stint carries its Baseball-Reference "
-                                   "team, and the franchise spine behind /franchise/ "
-                                   "maps those teams to the 30 current clubs from "
-                                   "1969 on. Crediting a Hall of Famer to a franchise "
-                                   "still needs that spine carried back before 1969, "
-                                   "with a bucket for clubs that have no current "
-                                   "franchise, and a frozen rule for a multi-team "
-                                   "career with the rejected alternative named.")},
+            # LIT 2026-09-25 (owner answer, final-pass batch 6, M10-12): the
+            # attribution rule is frozen and the spine runs back to 1871 with
+            # a defunct bucket. docs/HOF_FRANCHISE_ATTRIBUTION.md.
+            "franchises": _franchises_or_dark(b, cf),
         },
 
         "what_this_page_does_not_claim": None,

@@ -88,6 +88,15 @@
 }
 .hof-dark-why { font-size: 13px; font-weight: 600; margin: 4px 0; }
 
+/* Franchises: one closed list per franchise under the summary table. */
+.hof-fr { margin: 4px 0; border: 1px solid var(--border-subtle); border-radius: 6px;
+  background: var(--bg-secondary); }
+.hof-fr summary { cursor: pointer; padding: 6px 10px; font-size: 13px; font-weight: 600; }
+.hof-fr[open] summary { border-bottom: 1px solid var(--border-subtle); }
+.hof-fr-table thead th { cursor: default; }
+.hof-fr-table td.hof-c-pos { white-space: normal; min-width: 14ch; }
+.hof-fr-defunct td { font-style: italic; }
+
 @media (max-width: 720px) {
   .hof-table { font-size: 12px; }
   .hof-table th, .hof-table td { padding: 4px 6px; }

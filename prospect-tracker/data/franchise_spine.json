@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-09-23",
- "scope": "Baseball-Reference war_daily team_ID to canonical org, seasons 1969 to 2026, for the /franchise/ club bWAR line ONLY. The 2000-2026 standings join by StatsAPI team id (stable across relocations) and need no spine. The Hall of Fame franchises section needs a team column on the season frame and a frozen multi-team attribution rule with the rejected alternative named; this spine supplies neither and does not claim to unblock /hof/.",
+ "scope": "Baseball-Reference war_daily team_ID to canonical org. `orgs` covers seasons 1969 to 2026 and keys on (team_id, season); it is the /franchise/ club bWAR line. `history` carries the map back to 1871, keyed on (team_id, lg, season), with every season before 1969 landing on one of the 30 franchises or on a named defunct club; it serves the Hall of Fame franchise credit (docs/HOF_FRANCHISE_ATTRIBUTION.md, owner answer 2026-09-25). The 2000-2026 standings join by StatsAPI team id (stable across relocations) and need no spine.",
  "source": ".cache/war_daily/bat.parquet and pit.parquet (team_ID, year_ID); intervals measured 2026-09-23",
  "first_season": 1969,
  "last_season": 2026,
@@ -328,7 +328,3090 @@
  },
  "not_in_scope": [
   "standings (joined by StatsAPI team id)",
-  "Hall of Fame plaques per franchise",
+  "the cap a Hall of Fame plaque shows (the credit is by playing WAR, not by plaque)",
   "pennants and titles"
- ]
+ ],
+ "history": {
+  "first_season": 1871,
+  "last_season": 1968,
+  "key": "(team_id, lg, season); lg NA is the National Association, which war_daily carries as a null lg_ID",
+  "basis": "lineage follows the Baseball-Reference and Lahman franchise grouping (a current franchise starts at its club's NL 1876, AA 1882 or AL 1901 entry; National Association clubs are clubs of their own). Every other season before 1969 is a named defunct club: one team code, split at a league-family change and, for nineteenth-century majors, at a missing season, then joined by the named merges. Written by tools/franchise_spine_history.py from the war_daily parquets.",
+  "lineage": {
+   "ATH": [
+    {
+     "team_id": "PHA",
+     "lg": "AL",
+     "first": 1901,
+     "last": 1954
+    },
+    {
+     "team_id": "KCA",
+     "lg": "AL",
+     "first": 1955,
+     "last": 1967
+    },
+    {
+     "team_id": "OAK",
+     "lg": "AL",
+     "first": 1968,
+     "last": 1968
+    }
+   ],
+   "ATL": [
+    {
+     "team_id": "BSN",
+     "lg": "NL",
+     "first": 1876,
+     "last": 1952
+    },
+    {
+     "team_id": "MLN",
+     "lg": "NL",
+     "first": 1953,
+     "last": 1965
+    },
+    {
+     "team_id": "ATL",
+     "lg": "NL",
+     "first": 1966,
+     "last": 1968
+    }
+   ],
+   "BAL": [
+    {
+     "team_id": "MLA",
+     "lg": "AL",
+     "first": 1901,
+     "last": 1901
+    },
+    {
+     "team_id": "SLB",
+     "lg": "AL",
+     "first": 1902,
+     "last": 1953
+    },
+    {
+     "team_id": "BAL",
+     "lg": "AL",
+     "first": 1954,
+     "last": 1968
+    }
+   ],
+   "BOS": [
+    {
+     "team_id": "BOS",
+     "lg": "AL",
+     "first": 1901,
+     "last": 1968
+    }
+   ],
+   "CHC": [
+    {
+     "team_id": "CHC",
+     "lg": "NL",
+     "first": 1876,
+     "last": 1968
+    }
+   ],
+   "CHW": [
+    {
+     "team_id": "CHW",
+     "lg": "AL",
+     "first": 1901,
+     "last": 1968
+    }
+   ],
+   "CIN": [
+    {
+     "team_id": "CIN",
+     "lg": "AA",
+     "first": 1882,
+     "last": 1889
+    },
+    {
+     "team_id": "CIN",
+     "lg": "NL",
+     "first": 1890,
+     "last": 1968
+    }
+   ],
+   "CLE": [
+    {
+     "team_id": "CLE",
+     "lg": "AL",
+     "first": 1901,
+     "last": 1968
+    }
+   ],
+   "DET": [
+    {
+     "team_id": "DET",
+     "lg": "AL",
+     "first": 1901,
+     "last": 1968
+    }
+   ],
+   "HOU": [
+    {
+     "team_id": "HOU",
+     "lg": "NL",
+     "first": 1962,
+     "last": 1968
+    }
+   ],
+   "LAA": [
+    {
+     "team_id": "LAA",
+     "lg": "AL",
+     "first": 1961,
+     "last": 1964
+    },
+    {
+     "team_id": "CAL",
+     "lg": "AL",
+     "first": 1965,
+     "last": 1968
+    }
+   ],
+   "LAD": [
+    {
+     "team_id": "BRO",
+     "lg": "AA",
+     "first": 1884,
+     "last": 1889
+    },
+    {
+     "team_id": "BRO",
+     "lg": "NL",
+     "first": 1890,
+     "last": 1957
+    },
+    {
+     "team_id": "LAD",
+     "lg": "NL",
+     "first": 1958,
+     "last": 1968
+    }
+   ],
+   "MIN": [
+    {
+     "team_id": "WSH",
+     "lg": "AL",
+     "first": 1901,
+     "last": 1960
+    },
+    {
+     "team_id": "MIN",
+     "lg": "AL",
+     "first": 1961,
+     "last": 1968
+    }
+   ],
+   "NYM": [
+    {
+     "team_id": "NYM",
+     "lg": "NL",
+     "first": 1962,
+     "last": 1968
+    }
+   ],
+   "NYY": [
+    {
+     "team_id": "BLA",
+     "lg": "AL",
+     "first": 1901,
+     "last": 1902
+    },
+    {
+     "team_id": "NYY",
+     "lg": "AL",
+     "first": 1903,
+     "last": 1968
+    }
+   ],
+   "PHI": [
+    {
+     "team_id": "PHI",
+     "lg": "NL",
+     "first": 1883,
+     "last": 1968
+    }
+   ],
+   "PIT": [
+    {
+     "team_id": "PIT",
+     "lg": "AA",
+     "first": 1882,
+     "last": 1886
+    },
+    {
+     "team_id": "PIT",
+     "lg": "NL",
+     "first": 1887,
+     "last": 1968
+    }
+   ],
+   "SFG": [
+    {
+     "team_id": "NYG",
+     "lg": "NL",
+     "first": 1883,
+     "last": 1957
+    },
+    {
+     "team_id": "SFG",
+     "lg": "NL",
+     "first": 1958,
+     "last": 1968
+    }
+   ],
+   "STL": [
+    {
+     "team_id": "STL",
+     "lg": "AA",
+     "first": 1882,
+     "last": 1891
+    },
+    {
+     "team_id": "STL",
+     "lg": "NL",
+     "first": 1892,
+     "last": 1968
+    }
+   ],
+   "TEX": [
+    {
+     "team_id": "WSA",
+     "lg": "AL",
+     "first": 1961,
+     "last": 1968
+    }
+   ]
+  },
+  "defunct_bucket": "DEFUNCT",
+  "defunct_groups": {
+   "nineteenth_century": "nineteenth-century major",
+   "federal_league": "Federal League",
+   "negro_leagues": "Negro Leagues"
+  },
+  "defunct": [
+   {
+    "key": "DEF-ATH-1871",
+    "label": "ATH 1871-1876",
+    "group": "nineteenth_century",
+    "first": 1871,
+    "last": 1876,
+    "intervals": [
+     {
+      "team_id": "ATH",
+      "lg": "NA",
+      "first": 1871,
+      "last": 1875
+     },
+     {
+      "team_id": "ATH",
+      "lg": "NL",
+      "first": 1876,
+      "last": 1876
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BOS-1871",
+    "label": "BOS 1871-1875",
+    "group": "nineteenth_century",
+    "first": 1871,
+    "last": 1875,
+    "intervals": [
+     {
+      "team_id": "BOS",
+      "lg": "NA",
+      "first": 1871,
+      "last": 1875
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CHI-1871",
+    "label": "CHI 1871-1875",
+    "group": "nineteenth_century",
+    "first": 1871,
+    "last": 1875,
+    "intervals": [
+     {
+      "team_id": "CHI",
+      "lg": "NA",
+      "first": 1871,
+      "last": 1871
+     },
+     {
+      "team_id": "CHI",
+      "lg": "NA",
+      "first": 1874,
+      "last": 1875
+     }
+    ],
+    "merge": "Chicago White Stockings, 1871 and 1874-1875 (no club 1872-1873 after the Chicago fire)"
+   },
+   {
+    "key": "DEF-CLE-1871",
+    "label": "CLE 1871-1872",
+    "group": "nineteenth_century",
+    "first": 1871,
+    "last": 1872,
+    "intervals": [
+     {
+      "team_id": "CLE",
+      "lg": "NA",
+      "first": 1871,
+      "last": 1872
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-KEK-1871",
+    "label": "KEK 1871",
+    "group": "nineteenth_century",
+    "first": 1871,
+    "last": 1871,
+    "intervals": [
+     {
+      "team_id": "KEK",
+      "lg": "NA",
+      "first": 1871,
+      "last": 1871
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-NYU-1871",
+    "label": "NYU 1871-1876",
+    "group": "nineteenth_century",
+    "first": 1871,
+    "last": 1876,
+    "intervals": [
+     {
+      "team_id": "NYU",
+      "lg": "NA",
+      "first": 1871,
+      "last": 1875
+     },
+     {
+      "team_id": "NYU",
+      "lg": "NL",
+      "first": 1876,
+      "last": 1876
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-OLY-1871",
+    "label": "OLY 1871-1872",
+    "group": "nineteenth_century",
+    "first": 1871,
+    "last": 1872,
+    "intervals": [
+     {
+      "team_id": "OLY",
+      "lg": "NA",
+      "first": 1871,
+      "last": 1872
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-ROK-1871",
+    "label": "ROK 1871",
+    "group": "nineteenth_century",
+    "first": 1871,
+    "last": 1871,
+    "intervals": [
+     {
+      "team_id": "ROK",
+      "lg": "NA",
+      "first": 1871,
+      "last": 1871
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-TRO-1871",
+    "label": "TRO 1871-1872",
+    "group": "nineteenth_century",
+    "first": 1871,
+    "last": 1872,
+    "intervals": [
+     {
+      "team_id": "TRO",
+      "lg": "NA",
+      "first": 1871,
+      "last": 1872
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BAL-1872",
+    "label": "BAL 1872-1874",
+    "group": "nineteenth_century",
+    "first": 1872,
+    "last": 1874,
+    "intervals": [
+     {
+      "team_id": "BAL",
+      "lg": "NA",
+      "first": 1872,
+      "last": 1874
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BRA-1872",
+    "label": "BRA 1872-1875",
+    "group": "nineteenth_century",
+    "first": 1872,
+    "last": 1875,
+    "intervals": [
+     {
+      "team_id": "BRA",
+      "lg": "NA",
+      "first": 1872,
+      "last": 1875
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-ECK-1872",
+    "label": "ECK 1872",
+    "group": "nineteenth_century",
+    "first": 1872,
+    "last": 1872,
+    "intervals": [
+     {
+      "team_id": "ECK",
+      "lg": "NA",
+      "first": 1872,
+      "last": 1872
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-MAN-1872",
+    "label": "MAN 1872",
+    "group": "nineteenth_century",
+    "first": 1872,
+    "last": 1872,
+    "intervals": [
+     {
+      "team_id": "MAN",
+      "lg": "NA",
+      "first": 1872,
+      "last": 1872
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-NAT-1872",
+    "label": "NAT 1872",
+    "group": "nineteenth_century",
+    "first": 1872,
+    "last": 1872,
+    "intervals": [
+     {
+      "team_id": "NAT",
+      "lg": "NA",
+      "first": 1872,
+      "last": 1872
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-MAR-1873",
+    "label": "MAR 1873",
+    "group": "nineteenth_century",
+    "first": 1873,
+    "last": 1873,
+    "intervals": [
+     {
+      "team_id": "MAR",
+      "lg": "NA",
+      "first": 1873,
+      "last": 1873
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PHI-1873",
+    "label": "PHI 1873-1875",
+    "group": "nineteenth_century",
+    "first": 1873,
+    "last": 1875,
+    "intervals": [
+     {
+      "team_id": "PHI",
+      "lg": "NA",
+      "first": 1873,
+      "last": 1875
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-RES-1873",
+    "label": "RES 1873",
+    "group": "nineteenth_century",
+    "first": 1873,
+    "last": 1873,
+    "intervals": [
+     {
+      "team_id": "RES",
+      "lg": "NA",
+      "first": 1873,
+      "last": 1873
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WAS-1873",
+    "label": "WAS 1873",
+    "group": "nineteenth_century",
+    "first": 1873,
+    "last": 1873,
+    "intervals": [
+     {
+      "team_id": "WAS",
+      "lg": "NA",
+      "first": 1873,
+      "last": 1873
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-HAR-1874",
+    "label": "HAR 1874-1877",
+    "group": "nineteenth_century",
+    "first": 1874,
+    "last": 1877,
+    "intervals": [
+     {
+      "team_id": "HAR",
+      "lg": "NA",
+      "first": 1874,
+      "last": 1875
+     },
+     {
+      "team_id": "HAR",
+      "lg": "NL",
+      "first": 1876,
+      "last": 1877
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CEN-1875",
+    "label": "CEN 1875",
+    "group": "nineteenth_century",
+    "first": 1875,
+    "last": 1875,
+    "intervals": [
+     {
+      "team_id": "CEN",
+      "lg": "NA",
+      "first": 1875,
+      "last": 1875
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-NHV-1875",
+    "label": "NHV 1875",
+    "group": "nineteenth_century",
+    "first": 1875,
+    "last": 1875,
+    "intervals": [
+     {
+      "team_id": "NHV",
+      "lg": "NA",
+      "first": 1875,
+      "last": 1875
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SLR-1875",
+    "label": "SLR 1875",
+    "group": "nineteenth_century",
+    "first": 1875,
+    "last": 1875,
+    "intervals": [
+     {
+      "team_id": "SLR",
+      "lg": "NA",
+      "first": 1875,
+      "last": 1875
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-STL-1875",
+    "label": "STL 1875-1877",
+    "group": "nineteenth_century",
+    "first": 1875,
+    "last": 1877,
+    "intervals": [
+     {
+      "team_id": "STL",
+      "lg": "NA",
+      "first": 1875,
+      "last": 1875
+     },
+     {
+      "team_id": "STL",
+      "lg": "NL",
+      "first": 1876,
+      "last": 1877
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WAS-1875",
+    "label": "WAS 1875",
+    "group": "nineteenth_century",
+    "first": 1875,
+    "last": 1875,
+    "intervals": [
+     {
+      "team_id": "WAS",
+      "lg": "NA",
+      "first": 1875,
+      "last": 1875
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WES-1875",
+    "label": "WES 1875",
+    "group": "nineteenth_century",
+    "first": 1875,
+    "last": 1875,
+    "intervals": [
+     {
+      "team_id": "WES",
+      "lg": "NA",
+      "first": 1875,
+      "last": 1875
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CIN-1876",
+    "label": "CIN 1876-1880",
+    "group": "nineteenth_century",
+    "first": 1876,
+    "last": 1880,
+    "intervals": [
+     {
+      "team_id": "CIN",
+      "lg": "NL",
+      "first": 1876,
+      "last": 1880
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-LOU-1876",
+    "label": "LOU 1876-1877",
+    "group": "nineteenth_century",
+    "first": 1876,
+    "last": 1877,
+    "intervals": [
+     {
+      "team_id": "LOU",
+      "lg": "NL",
+      "first": 1876,
+      "last": 1877
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-IND-1878",
+    "label": "IND 1878",
+    "group": "nineteenth_century",
+    "first": 1878,
+    "last": 1878,
+    "intervals": [
+     {
+      "team_id": "IND",
+      "lg": "NL",
+      "first": 1878,
+      "last": 1878
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-MLG-1878",
+    "label": "MLG 1878",
+    "group": "nineteenth_century",
+    "first": 1878,
+    "last": 1878,
+    "intervals": [
+     {
+      "team_id": "MLG",
+      "lg": "NL",
+      "first": 1878,
+      "last": 1878
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PRO-1878",
+    "label": "PRO 1878-1885",
+    "group": "nineteenth_century",
+    "first": 1878,
+    "last": 1885,
+    "intervals": [
+     {
+      "team_id": "PRO",
+      "lg": "NL",
+      "first": 1878,
+      "last": 1885
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BUF-1879",
+    "label": "BUF 1879-1885",
+    "group": "nineteenth_century",
+    "first": 1879,
+    "last": 1885,
+    "intervals": [
+     {
+      "team_id": "BUF",
+      "lg": "NL",
+      "first": 1879,
+      "last": 1885
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CLV-1879",
+    "label": "CLV 1879-1884",
+    "group": "nineteenth_century",
+    "first": 1879,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "CLV",
+      "lg": "NL",
+      "first": 1879,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SYR-1879",
+    "label": "SYR 1879",
+    "group": "nineteenth_century",
+    "first": 1879,
+    "last": 1879,
+    "intervals": [
+     {
+      "team_id": "SYR",
+      "lg": "NL",
+      "first": 1879,
+      "last": 1879
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-TRO-1879",
+    "label": "TRO 1879-1882",
+    "group": "nineteenth_century",
+    "first": 1879,
+    "last": 1882,
+    "intervals": [
+     {
+      "team_id": "TRO",
+      "lg": "NL",
+      "first": 1879,
+      "last": 1882
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WOR-1880",
+    "label": "WOR 1880-1882",
+    "group": "nineteenth_century",
+    "first": 1880,
+    "last": 1882,
+    "intervals": [
+     {
+      "team_id": "WOR",
+      "lg": "NL",
+      "first": 1880,
+      "last": 1882
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-DTN-1881",
+    "label": "DTN 1881-1888",
+    "group": "nineteenth_century",
+    "first": 1881,
+    "last": 1888,
+    "intervals": [
+     {
+      "team_id": "DTN",
+      "lg": "NL",
+      "first": 1881,
+      "last": 1888
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BAL-1882",
+    "label": "BAL/BLN 1882-1899",
+    "group": "nineteenth_century",
+    "first": 1882,
+    "last": 1899,
+    "intervals": [
+     {
+      "team_id": "BAL",
+      "lg": "AA",
+      "first": 1882,
+      "last": 1891
+     },
+     {
+      "team_id": "BLN",
+      "lg": "NL",
+      "first": 1892,
+      "last": 1899
+     }
+    ],
+    "merge": "Baltimore Orioles, American Association 1882-1891 then National League 1892-1899"
+   },
+   {
+    "key": "DEF-LOU-1882",
+    "label": "LOU 1882-1899",
+    "group": "nineteenth_century",
+    "first": 1882,
+    "last": 1899,
+    "intervals": [
+     {
+      "team_id": "LOU",
+      "lg": "AA",
+      "first": 1882,
+      "last": 1891
+     },
+     {
+      "team_id": "LOU",
+      "lg": "NL",
+      "first": 1892,
+      "last": 1899
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PHA-1882",
+    "label": "PHA 1882-1891",
+    "group": "nineteenth_century",
+    "first": 1882,
+    "last": 1891,
+    "intervals": [
+     {
+      "team_id": "PHA",
+      "lg": "AA",
+      "first": 1882,
+      "last": 1891
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-COL-1883",
+    "label": "COL 1883-1884",
+    "group": "nineteenth_century",
+    "first": 1883,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "COL",
+      "lg": "AA",
+      "first": 1883,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-NYP-1883",
+    "label": "NYP 1883-1887",
+    "group": "nineteenth_century",
+    "first": 1883,
+    "last": 1887,
+    "intervals": [
+     {
+      "team_id": "NYP",
+      "lg": "AA",
+      "first": 1883,
+      "last": 1887
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-ALT-1884",
+    "label": "ALT 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "ALT",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BLU-1884",
+    "label": "BLU 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "BLU",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BOS-1884",
+    "label": "BOS 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "BOS",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-COR-1884",
+    "label": "COR 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "COR",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CPI-1884",
+    "label": "CPI 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "CPI",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-IND-1884",
+    "label": "IND 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "IND",
+      "lg": "AA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-KCC-1884",
+    "label": "KCC 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "KCC",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-MIL-1884",
+    "label": "MIL 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "MIL",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PHK-1884",
+    "label": "PHK 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "PHK",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-RIC-1884",
+    "label": "RIC 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "RIC",
+      "lg": "AA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SLM-1884",
+    "label": "SLM 1884-1886",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1886,
+    "intervals": [
+     {
+      "team_id": "SLM",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     },
+     {
+      "team_id": "SLM",
+      "lg": "NL",
+      "first": 1885,
+      "last": 1886
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-STP-1884",
+    "label": "STP 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "STP",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-TOL-1884",
+    "label": "TOL 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "TOL",
+      "lg": "AA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WAS-1884",
+    "label": "WAS 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "WAS",
+      "lg": "AA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WHS-1884",
+    "label": "WHS 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "WHS",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WIL-1884",
+    "label": "WIL 1884",
+    "group": "nineteenth_century",
+    "first": 1884,
+    "last": 1884,
+    "intervals": [
+     {
+      "team_id": "WIL",
+      "lg": "UA",
+      "first": 1884,
+      "last": 1884
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-KCN-1886",
+    "label": "KCN 1886",
+    "group": "nineteenth_century",
+    "first": 1886,
+    "last": 1886,
+    "intervals": [
+     {
+      "team_id": "KCN",
+      "lg": "NL",
+      "first": 1886,
+      "last": 1886
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WHS-1886",
+    "label": "WHS 1886-1889",
+    "group": "nineteenth_century",
+    "first": 1886,
+    "last": 1889,
+    "intervals": [
+     {
+      "team_id": "WHS",
+      "lg": "NL",
+      "first": 1886,
+      "last": 1889
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CLE-1887",
+    "label": "CLE/CLV 1887-1899",
+    "group": "nineteenth_century",
+    "first": 1887,
+    "last": 1899,
+    "intervals": [
+     {
+      "team_id": "CLE",
+      "lg": "AA",
+      "first": 1887,
+      "last": 1888
+     },
+     {
+      "team_id": "CLV",
+      "lg": "NL",
+      "first": 1889,
+      "last": 1899
+     }
+    ],
+    "merge": "Cleveland Blues (AA 1887-1888) then Spiders (NL 1889-1899)"
+   },
+   {
+    "key": "DEF-IND-1887",
+    "label": "IND 1887-1889",
+    "group": "nineteenth_century",
+    "first": 1887,
+    "last": 1889,
+    "intervals": [
+     {
+      "team_id": "IND",
+      "lg": "NL",
+      "first": 1887,
+      "last": 1889
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-KCC-1888",
+    "label": "KCC 1888-1889",
+    "group": "nineteenth_century",
+    "first": 1888,
+    "last": 1889,
+    "intervals": [
+     {
+      "team_id": "KCC",
+      "lg": "AA",
+      "first": 1888,
+      "last": 1889
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-COL-1889",
+    "label": "COL 1889-1891",
+    "group": "nineteenth_century",
+    "first": 1889,
+    "last": 1891,
+    "intervals": [
+     {
+      "team_id": "COL",
+      "lg": "AA",
+      "first": 1889,
+      "last": 1891
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BOS-1890",
+    "label": "BOS 1890-1891",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1891,
+    "intervals": [
+     {
+      "team_id": "BOS",
+      "lg": "PL",
+      "first": 1890,
+      "last": 1890
+     },
+     {
+      "team_id": "BOS",
+      "lg": "AA",
+      "first": 1891,
+      "last": 1891
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BRG-1890",
+    "label": "BRG 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "BRG",
+      "lg": "AA",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BUF-1890",
+    "label": "BUF 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "BUF",
+      "lg": "PL",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BWW-1890",
+    "label": "BWW 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "BWW",
+      "lg": "PL",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CHI-1890",
+    "label": "CHI 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "CHI",
+      "lg": "PL",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CLE-1890",
+    "label": "CLE 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "CLE",
+      "lg": "PL",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-NYI-1890",
+    "label": "NYI 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "NYI",
+      "lg": "PL",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PBB-1890",
+    "label": "PBB 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "PBB",
+      "lg": "PL",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PHQ-1890",
+    "label": "PHQ 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "PHQ",
+      "lg": "PL",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-ROC-1890",
+    "label": "ROC 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "ROC",
+      "lg": "AA",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SYR-1890",
+    "label": "SYR 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "SYR",
+      "lg": "AA",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-TOL-1890",
+    "label": "TOL 1890",
+    "group": "nineteenth_century",
+    "first": 1890,
+    "last": 1890,
+    "intervals": [
+     {
+      "team_id": "TOL",
+      "lg": "AA",
+      "first": 1890,
+      "last": 1890
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CKK-1891",
+    "label": "CKK 1891",
+    "group": "nineteenth_century",
+    "first": 1891,
+    "last": 1891,
+    "intervals": [
+     {
+      "team_id": "CKK",
+      "lg": "AA",
+      "first": 1891,
+      "last": 1891
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-MIL-1891",
+    "label": "MIL 1891",
+    "group": "nineteenth_century",
+    "first": 1891,
+    "last": 1891,
+    "intervals": [
+     {
+      "team_id": "MIL",
+      "lg": "AA",
+      "first": 1891,
+      "last": 1891
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WAS-1891",
+    "label": "WAS/WHS 1891-1899",
+    "group": "nineteenth_century",
+    "first": 1891,
+    "last": 1899,
+    "intervals": [
+     {
+      "team_id": "WAS",
+      "lg": "AA",
+      "first": 1891,
+      "last": 1891
+     },
+     {
+      "team_id": "WHS",
+      "lg": "NL",
+      "first": 1892,
+      "last": 1899
+     }
+    ],
+    "merge": "Washington Senators, American Association 1891 then National League 1892-1899"
+   },
+   {
+    "key": "DEF-BAL-1914",
+    "label": "BAL 1914-1915",
+    "group": "federal_league",
+    "first": 1914,
+    "last": 1915,
+    "intervals": [
+     {
+      "team_id": "BAL",
+      "lg": "FL",
+      "first": 1914,
+      "last": 1915
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BTT-1914",
+    "label": "BTT 1914-1915",
+    "group": "federal_league",
+    "first": 1914,
+    "last": 1915,
+    "intervals": [
+     {
+      "team_id": "BTT",
+      "lg": "FL",
+      "first": 1914,
+      "last": 1915
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BUF-1914",
+    "label": "BUF 1914-1915",
+    "group": "federal_league",
+    "first": 1914,
+    "last": 1915,
+    "intervals": [
+     {
+      "team_id": "BUF",
+      "lg": "FL",
+      "first": 1914,
+      "last": 1915
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CHI-1914",
+    "label": "CHI 1914-1915",
+    "group": "federal_league",
+    "first": 1914,
+    "last": 1915,
+    "intervals": [
+     {
+      "team_id": "CHI",
+      "lg": "FL",
+      "first": 1914,
+      "last": 1915
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-IND-1914",
+    "label": "IND/NEW 1914-1915",
+    "group": "federal_league",
+    "first": 1914,
+    "last": 1915,
+    "intervals": [
+     {
+      "team_id": "IND",
+      "lg": "FL",
+      "first": 1914,
+      "last": 1914
+     },
+     {
+      "team_id": "NEW",
+      "lg": "FL",
+      "first": 1915,
+      "last": 1915
+     }
+    ],
+    "merge": "Indianapolis Hoosiers 1914 then Newark Peppers 1915, Federal League"
+   },
+   {
+    "key": "DEF-KCP-1914",
+    "label": "KCP 1914-1915",
+    "group": "federal_league",
+    "first": 1914,
+    "last": 1915,
+    "intervals": [
+     {
+      "team_id": "KCP",
+      "lg": "FL",
+      "first": 1914,
+      "last": 1915
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PBS-1914",
+    "label": "PBS 1914-1915",
+    "group": "federal_league",
+    "first": 1914,
+    "last": 1915,
+    "intervals": [
+     {
+      "team_id": "PBS",
+      "lg": "FL",
+      "first": 1914,
+      "last": 1915
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SLM-1914",
+    "label": "SLM 1914-1915",
+    "group": "federal_league",
+    "first": 1914,
+    "last": 1915,
+    "intervals": [
+     {
+      "team_id": "SLM",
+      "lg": "FL",
+      "first": 1914,
+      "last": 1915
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-ABC-1920",
+    "label": "ABC 1920-1926",
+    "group": "negro_leagues",
+    "first": 1920,
+    "last": 1926,
+    "intervals": [
+     {
+      "team_id": "ABC",
+      "lg": "NNL",
+      "first": 1920,
+      "last": 1926
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CAG-1920",
+    "label": "CAG 1920-1948",
+    "group": "negro_leagues",
+    "first": 1920,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "CAG",
+      "lg": "NNL",
+      "first": 1920,
+      "last": 1931
+     },
+     {
+      "team_id": "CAG",
+      "lg": "NSL",
+      "first": 1932,
+      "last": 1932
+     },
+     {
+      "team_id": "CAG",
+      "lg": "NN2",
+      "first": 1933,
+      "last": 1935
+     },
+     {
+      "team_id": "CAG",
+      "lg": "NAL",
+      "first": 1937,
+      "last": 1948
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-COG-1920",
+    "label": "COG 1920-1921",
+    "group": "negro_leagues",
+    "first": 1920,
+    "last": 1921,
+    "intervals": [
+     {
+      "team_id": "COG",
+      "lg": "NNL",
+      "first": 1920,
+      "last": 1921
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CSW-1920",
+    "label": "CSW 1920-1930",
+    "group": "negro_leagues",
+    "first": 1920,
+    "last": 1930,
+    "intervals": [
+     {
+      "team_id": "CSW",
+      "lg": "NNL",
+      "first": 1920,
+      "last": 1930
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-DM-1920",
+    "label": "DM 1920-1926",
+    "group": "negro_leagues",
+    "first": 1920,
+    "last": 1926,
+    "intervals": [
+     {
+      "team_id": "DM",
+      "lg": "NNL",
+      "first": 1920,
+      "last": 1926
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-DS-1920",
+    "label": "DS 1920-1931",
+    "group": "negro_leagues",
+    "first": 1920,
+    "last": 1931,
+    "intervals": [
+     {
+      "team_id": "DS",
+      "lg": "NNL",
+      "first": 1920,
+      "last": 1931
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-KCM-1920",
+    "label": "KCM 1920-1948",
+    "group": "negro_leagues",
+    "first": 1920,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "KCM",
+      "lg": "NNL",
+      "first": 1920,
+      "last": 1930
+     },
+     {
+      "team_id": "KCM",
+      "lg": "NAL",
+      "first": 1937,
+      "last": 1948
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SLG-1920",
+    "label": "SLG 1920-1921",
+    "group": "negro_leagues",
+    "first": 1920,
+    "last": 1921,
+    "intervals": [
+     {
+      "team_id": "SLG",
+      "lg": "NNL",
+      "first": 1920,
+      "last": 1921
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-COB-1921",
+    "label": "COB 1921",
+    "group": "negro_leagues",
+    "first": 1921,
+    "last": 1921,
+    "intervals": [
+     {
+      "team_id": "COB",
+      "lg": "NNL",
+      "first": 1921,
+      "last": 1921
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CS-1921",
+    "label": "CS 1921",
+    "group": "negro_leagues",
+    "first": 1921,
+    "last": 1921,
+    "intervals": [
+     {
+      "team_id": "CS",
+      "lg": "NNL",
+      "first": 1921,
+      "last": 1921
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CTS-1922",
+    "label": "CTS 1922",
+    "group": "negro_leagues",
+    "first": 1922,
+    "last": 1922,
+    "intervals": [
+     {
+      "team_id": "CTS",
+      "lg": "NNL",
+      "first": 1922,
+      "last": 1922
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PK-1922",
+    "label": "PK 1922",
+    "group": "negro_leagues",
+    "first": 1922,
+    "last": 1922,
+    "intervals": [
+     {
+      "team_id": "PK",
+      "lg": "NNL",
+      "first": 1922,
+      "last": 1922
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SLS-1922",
+    "label": "SLS 1922-1931",
+    "group": "negro_leagues",
+    "first": 1922,
+    "last": 1931,
+    "intervals": [
+     {
+      "team_id": "SLS",
+      "lg": "NNL",
+      "first": 1922,
+      "last": 1931
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-AC-1923",
+    "label": "AC 1923-1929",
+    "group": "negro_leagues",
+    "first": 1923,
+    "last": 1929,
+    "intervals": [
+     {
+      "team_id": "AC",
+      "lg": "ECL",
+      "first": 1923,
+      "last": 1928
+     },
+     {
+      "team_id": "AC",
+      "lg": "ANL",
+      "first": 1929,
+      "last": 1929
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BBS-1923",
+    "label": "BBS 1923-1934",
+    "group": "negro_leagues",
+    "first": 1923,
+    "last": 1934,
+    "intervals": [
+     {
+      "team_id": "BBS",
+      "lg": "ECL",
+      "first": 1923,
+      "last": 1928
+     },
+     {
+      "team_id": "BBS",
+      "lg": "ANL",
+      "first": 1929,
+      "last": 1929
+     },
+     {
+      "team_id": "BBS",
+      "lg": "EWL",
+      "first": 1932,
+      "last": 1932
+     },
+     {
+      "team_id": "BBS",
+      "lg": "NN2",
+      "first": 1933,
+      "last": 1934
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BRG-1923",
+    "label": "BRG 1923-1927",
+    "group": "negro_leagues",
+    "first": 1923,
+    "last": 1927,
+    "intervals": [
+     {
+      "team_id": "BRG",
+      "lg": "ECL",
+      "first": 1923,
+      "last": 1927
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CSE-1923",
+    "label": "CSE 1923-1929",
+    "group": "negro_leagues",
+    "first": 1923,
+    "last": 1929,
+    "intervals": [
+     {
+      "team_id": "CSE",
+      "lg": "ECL",
+      "first": 1923,
+      "last": 1928
+     },
+     {
+      "team_id": "CSE",
+      "lg": "ANL",
+      "first": 1929,
+      "last": 1929
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-HIL-1923",
+    "label": "HIL 1923-1932",
+    "group": "negro_leagues",
+    "first": 1923,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "HIL",
+      "lg": "ECL",
+      "first": 1923,
+      "last": 1927
+     },
+     {
+      "team_id": "HIL",
+      "lg": "ANL",
+      "first": 1929,
+      "last": 1929
+     },
+     {
+      "team_id": "HIL",
+      "lg": "EWL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-MB-1923",
+    "label": "MB 1923",
+    "group": "negro_leagues",
+    "first": 1923,
+    "last": 1923,
+    "intervals": [
+     {
+      "team_id": "MB",
+      "lg": "NNL",
+      "first": 1923,
+      "last": 1923
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-NLG-1923",
+    "label": "NLG 1923-1929",
+    "group": "negro_leagues",
+    "first": 1923,
+    "last": 1929,
+    "intervals": [
+     {
+      "team_id": "NLG",
+      "lg": "ECL",
+      "first": 1923,
+      "last": 1928
+     },
+     {
+      "team_id": "NLG",
+      "lg": "ANL",
+      "first": 1929,
+      "last": 1929
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-TT-1923",
+    "label": "TT 1923",
+    "group": "negro_leagues",
+    "first": 1923,
+    "last": 1923,
+    "intervals": [
+     {
+      "team_id": "TT",
+      "lg": "NNL",
+      "first": 1923,
+      "last": 1923
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BBB-1924",
+    "label": "BBB 1924-1948",
+    "group": "negro_leagues",
+    "first": 1924,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "BBB",
+      "lg": "NNL",
+      "first": 1924,
+      "last": 1930
+     },
+     {
+      "team_id": "BBB",
+      "lg": "NSL",
+      "first": 1932,
+      "last": 1932
+     },
+     {
+      "team_id": "BBB",
+      "lg": "NAL",
+      "first": 1937,
+      "last": 1948
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CBN-1924",
+    "label": "CBN 1924",
+    "group": "negro_leagues",
+    "first": 1924,
+    "last": 1924,
+    "intervals": [
+     {
+      "team_id": "CBN",
+      "lg": "NNL",
+      "first": 1924,
+      "last": 1924
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-HBG-1924",
+    "label": "HBG 1924-1927",
+    "group": "negro_leagues",
+    "first": 1924,
+    "last": 1927,
+    "intervals": [
+     {
+      "team_id": "HBG",
+      "lg": "ECL",
+      "first": 1924,
+      "last": 1927
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-MRS-1924",
+    "label": "MRS 1924-1948",
+    "group": "negro_leagues",
+    "first": 1924,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "MRS",
+      "lg": "NNL",
+      "first": 1924,
+      "last": 1930
+     },
+     {
+      "team_id": "MRS",
+      "lg": "NSL",
+      "first": 1932,
+      "last": 1932
+     },
+     {
+      "team_id": "MRS",
+      "lg": "NAL",
+      "first": 1937,
+      "last": 1948
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WP-1924",
+    "label": "WP 1924",
+    "group": "negro_leagues",
+    "first": 1924,
+    "last": 1924,
+    "intervals": [
+     {
+      "team_id": "WP",
+      "lg": "ECL",
+      "first": 1924,
+      "last": 1924
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WMP-1925",
+    "label": "WMP 1925",
+    "group": "negro_leagues",
+    "first": 1925,
+    "last": 1925,
+    "intervals": [
+     {
+      "team_id": "WMP",
+      "lg": "ECL",
+      "first": 1925,
+      "last": 1925
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CEL-1926",
+    "label": "CEL 1926",
+    "group": "negro_leagues",
+    "first": 1926,
+    "last": 1926,
+    "intervals": [
+     {
+      "team_id": "CEL",
+      "lg": "NNL",
+      "first": 1926,
+      "last": 1926
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-NS-1926",
+    "label": "NS 1926",
+    "group": "negro_leagues",
+    "first": 1926,
+    "last": 1926,
+    "intervals": [
+     {
+      "team_id": "NS",
+      "lg": "ECL",
+      "first": 1926,
+      "last": 1926
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CHT-1927",
+    "label": "CHT 1927",
+    "group": "negro_leagues",
+    "first": 1927,
+    "last": 1927,
+    "intervals": [
+     {
+      "team_id": "CHT",
+      "lg": "NNL",
+      "first": 1927,
+      "last": 1927
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CTG-1928",
+    "label": "CTG 1928",
+    "group": "negro_leagues",
+    "first": 1928,
+    "last": 1928,
+    "intervals": [
+     {
+      "team_id": "CTG",
+      "lg": "NNL",
+      "first": 1928,
+      "last": 1928
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PTG-1928",
+    "label": "PTG 1928",
+    "group": "negro_leagues",
+    "first": 1928,
+    "last": 1928,
+    "intervals": [
+     {
+      "team_id": "PTG",
+      "lg": "ECL",
+      "first": 1928,
+      "last": 1928
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-HG-1929",
+    "label": "HG 1929-1948",
+    "group": "negro_leagues",
+    "first": 1929,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "HG",
+      "lg": "ANL",
+      "first": 1929,
+      "last": 1929
+     },
+     {
+      "team_id": "HG",
+      "lg": "EWL",
+      "first": 1932,
+      "last": 1932
+     },
+     {
+      "team_id": "HG",
+      "lg": "NN2",
+      "first": 1933,
+      "last": 1948
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-NEG-1930",
+    "label": "NEG/CEG/WEG/BEG 1930-1948",
+    "group": "negro_leagues",
+    "first": 1930,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "NEG",
+      "lg": "NNL",
+      "first": 1930,
+      "last": 1930
+     },
+     {
+      "team_id": "NEG",
+      "lg": "NSL",
+      "first": 1932,
+      "last": 1932
+     },
+     {
+      "team_id": "NEG",
+      "lg": "NN2",
+      "first": 1933,
+      "last": 1934
+     },
+     {
+      "team_id": "CEG",
+      "lg": "NN2",
+      "first": 1935,
+      "last": 1935
+     },
+     {
+      "team_id": "WEG",
+      "lg": "NN2",
+      "first": 1936,
+      "last": 1937
+     },
+     {
+      "team_id": "BEG",
+      "lg": "NN2",
+      "first": 1938,
+      "last": 1948
+     }
+    ],
+    "merge": "Elite Giants: Nashville, Columbus 1935, Washington 1936-1937, Baltimore 1938-1948"
+   },
+   {
+    "key": "DEF-AB2-1931",
+    "label": "AB2 1931-1932",
+    "group": "negro_leagues",
+    "first": 1931,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "AB2",
+      "lg": "NNL",
+      "first": 1931,
+      "last": 1931
+     },
+     {
+      "team_id": "AB2",
+      "lg": "NSL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CCU-1931",
+    "label": "CCU 1931",
+    "group": "negro_leagues",
+    "first": 1931,
+    "last": 1931,
+    "intervals": [
+     {
+      "team_id": "CCU",
+      "lg": "NNL",
+      "first": 1931,
+      "last": 1931
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-LOW-1931",
+    "label": "LOW 1931",
+    "group": "negro_leagues",
+    "first": 1931,
+    "last": 1931,
+    "intervals": [
+     {
+      "team_id": "LOW",
+      "lg": "NNL",
+      "first": 1931,
+      "last": 1931
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BCA-1932",
+    "label": "BCA 1932-1938",
+    "group": "negro_leagues",
+    "first": 1932,
+    "last": 1938,
+    "intervals": [
+     {
+      "team_id": "BCA",
+      "lg": "NSL",
+      "first": 1932,
+      "last": 1932
+     },
+     {
+      "team_id": "BCA",
+      "lg": "NAL",
+      "first": 1938,
+      "last": 1938
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CLS-1932",
+    "label": "CLS 1932",
+    "group": "negro_leagues",
+    "first": 1932,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "CLS",
+      "lg": "EWL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CUP-1932",
+    "label": "CUP 1932",
+    "group": "negro_leagues",
+    "first": 1932,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "CUP",
+      "lg": "EWL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-DW-1932",
+    "label": "DW 1932",
+    "group": "negro_leagues",
+    "first": 1932,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "DW",
+      "lg": "EWL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-LRG-1932",
+    "label": "LRG 1932",
+    "group": "negro_leagues",
+    "first": 1932,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "LRG",
+      "lg": "NSL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-LVB-1932",
+    "label": "LVB 1932",
+    "group": "negro_leagues",
+    "first": 1932,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "LVB",
+      "lg": "NSL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-MGS-1932",
+    "label": "MGS 1932",
+    "group": "negro_leagues",
+    "first": 1932,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "MGS",
+      "lg": "NSL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-MRM-1932",
+    "label": "MRM 1932",
+    "group": "negro_leagues",
+    "first": 1932,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "MRM",
+      "lg": "NSL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-NWB-1932",
+    "label": "NWB 1932",
+    "group": "negro_leagues",
+    "first": 1932,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "NWB",
+      "lg": "EWL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-WAP-1932",
+    "label": "WAP 1932",
+    "group": "negro_leagues",
+    "first": 1932,
+    "last": 1932,
+    "intervals": [
+     {
+      "team_id": "WAP",
+      "lg": "EWL",
+      "first": 1932,
+      "last": 1932
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-AG-1933",
+    "label": "AG 1933",
+    "group": "negro_leagues",
+    "first": 1933,
+    "last": 1933,
+    "intervals": [
+     {
+      "team_id": "AG",
+      "lg": "NN2",
+      "first": 1933,
+      "last": 1933
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CBB-1933",
+    "label": "CBB 1933",
+    "group": "negro_leagues",
+    "first": 1933,
+    "last": 1933,
+    "intervals": [
+     {
+      "team_id": "CBB",
+      "lg": "NN2",
+      "first": 1933,
+      "last": 1933
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-ID-1933",
+    "label": "ID 1933",
+    "group": "negro_leagues",
+    "first": 1933,
+    "last": 1933,
+    "intervals": [
+     {
+      "team_id": "ID",
+      "lg": "NN2",
+      "first": 1933,
+      "last": 1933
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PC-1933",
+    "label": "PC/TC 1933-1940",
+    "group": "negro_leagues",
+    "first": 1933,
+    "last": 1940,
+    "intervals": [
+     {
+      "team_id": "PC",
+      "lg": "NN2",
+      "first": 1933,
+      "last": 1938
+     },
+     {
+      "team_id": "TC",
+      "lg": "NAL",
+      "first": 1939,
+      "last": 1940
+     }
+    ],
+    "merge": "Crawfords: Pittsburgh 1933-1938, then Toledo and Indianapolis (NAL) 1939-1940"
+   },
+   {
+    "key": "DEF-CRS-1934",
+    "label": "CRS 1934",
+    "group": "negro_leagues",
+    "first": 1934,
+    "last": 1934,
+    "intervals": [
+     {
+      "team_id": "CRS",
+      "lg": "NN2",
+      "first": 1934,
+      "last": 1934
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-ND-1934",
+    "label": "ND 1934-1935",
+    "group": "negro_leagues",
+    "first": 1934,
+    "last": 1935,
+    "intervals": [
+     {
+      "team_id": "ND",
+      "lg": "NN2",
+      "first": 1934,
+      "last": 1935
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PBG-1934",
+    "label": "PBG 1934",
+    "group": "negro_leagues",
+    "first": 1934,
+    "last": 1934,
+    "intervals": [
+     {
+      "team_id": "PBG",
+      "lg": "NN2",
+      "first": 1934,
+      "last": 1934
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-PS-1934",
+    "label": "PS 1934-1948",
+    "group": "negro_leagues",
+    "first": 1934,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "PS",
+      "lg": "NN2",
+      "first": 1934,
+      "last": 1948
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-BE-1935",
+    "label": "BE/NE 1935-1948",
+    "group": "negro_leagues",
+    "first": 1935,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "BE",
+      "lg": "NN2",
+      "first": 1935,
+      "last": 1935
+     },
+     {
+      "team_id": "NE",
+      "lg": "NN2",
+      "first": 1936,
+      "last": 1948
+     }
+    ],
+    "merge": "Eagles: Brooklyn 1935, Newark 1936-1948"
+   },
+   {
+    "key": "DEF-NYC-1935",
+    "label": "NYC 1935-1948",
+    "group": "negro_leagues",
+    "first": 1935,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "NYC",
+      "lg": "NN2",
+      "first": 1935,
+      "last": 1948
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-NBY-1936",
+    "label": "NBY 1936-1948",
+    "group": "negro_leagues",
+    "first": 1936,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "NBY",
+      "lg": "NN2",
+      "first": 1936,
+      "last": 1948
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CT-1937",
+    "label": "CT 1937",
+    "group": "negro_leagues",
+    "first": 1937,
+    "last": 1937,
+    "intervals": [
+     {
+      "team_id": "CT",
+      "lg": "NAL",
+      "first": 1937,
+      "last": 1937
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-DTS-1937",
+    "label": "DTS 1937",
+    "group": "negro_leagues",
+    "first": 1937,
+    "last": 1937,
+    "intervals": [
+     {
+      "team_id": "DTS",
+      "lg": "NAL",
+      "first": 1937,
+      "last": 1937
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-IA-1937",
+    "label": "IA 1937",
+    "group": "negro_leagues",
+    "first": 1937,
+    "last": 1937,
+    "intervals": [
+     {
+      "team_id": "IA",
+      "lg": "NAL",
+      "first": 1937,
+      "last": 1937
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SL2-1937",
+    "label": "SL2 1937",
+    "group": "negro_leagues",
+    "first": 1937,
+    "last": 1937,
+    "intervals": [
+     {
+      "team_id": "SL2",
+      "lg": "NAL",
+      "first": 1937,
+      "last": 1937
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-AB3-1938",
+    "label": "AB3 1938",
+    "group": "negro_leagues",
+    "first": 1938,
+    "last": 1938,
+    "intervals": [
+     {
+      "team_id": "AB3",
+      "lg": "NAL",
+      "first": 1938,
+      "last": 1938
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-JRC-1938",
+    "label": "JRC 1938-1942",
+    "group": "negro_leagues",
+    "first": 1938,
+    "last": 1942,
+    "intervals": [
+     {
+      "team_id": "JRC",
+      "lg": "NAL",
+      "first": 1938,
+      "last": 1942
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SEN-1938",
+    "label": "SEN 1938",
+    "group": "negro_leagues",
+    "first": 1938,
+    "last": 1938,
+    "intervals": [
+     {
+      "team_id": "SEN",
+      "lg": "NN2",
+      "first": 1938,
+      "last": 1938
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CBR-1939",
+    "label": "CBR 1939-1940",
+    "group": "negro_leagues",
+    "first": 1939,
+    "last": 1940,
+    "intervals": [
+     {
+      "team_id": "CBR",
+      "lg": "NAL",
+      "first": 1939,
+      "last": 1940
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-IAB-1939",
+    "label": "IAB 1939",
+    "group": "negro_leagues",
+    "first": 1939,
+    "last": 1939,
+    "intervals": [
+     {
+      "team_id": "IAB",
+      "lg": "NAL",
+      "first": 1939,
+      "last": 1939
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SL3-1939",
+    "label": "SL3 1939",
+    "group": "negro_leagues",
+    "first": 1939,
+    "last": 1939,
+    "intervals": [
+     {
+      "team_id": "SL3",
+      "lg": "NAL",
+      "first": 1939,
+      "last": 1939
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-TC2-1939",
+    "label": "TC2 1939",
+    "group": "negro_leagues",
+    "first": 1939,
+    "last": 1939,
+    "intervals": [
+     {
+      "team_id": "TC2",
+      "lg": "NN2",
+      "first": 1939,
+      "last": 1939
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-SNS-1940",
+    "label": "SNS 1940-1941",
+    "group": "negro_leagues",
+    "first": 1940,
+    "last": 1941,
+    "intervals": [
+     {
+      "team_id": "SNS",
+      "lg": "NAL",
+      "first": 1940,
+      "last": 1941
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CCB-1942",
+    "label": "CCB 1942",
+    "group": "negro_leagues",
+    "first": 1942,
+    "last": 1942,
+    "intervals": [
+     {
+      "team_id": "CCB",
+      "lg": "NAL",
+      "first": 1942,
+      "last": 1942
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CBE-1943",
+    "label": "CBE 1943-1948",
+    "group": "negro_leagues",
+    "first": 1943,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "CBE",
+      "lg": "NAL",
+      "first": 1943,
+      "last": 1948
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-CC-1943",
+    "label": "CC 1943-1945",
+    "group": "negro_leagues",
+    "first": 1943,
+    "last": 1945,
+    "intervals": [
+     {
+      "team_id": "CC",
+      "lg": "NAL",
+      "first": 1943,
+      "last": 1945
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-HAR-1943",
+    "label": "HAR 1943",
+    "group": "negro_leagues",
+    "first": 1943,
+    "last": 1943,
+    "intervals": [
+     {
+      "team_id": "HAR",
+      "lg": "NN2",
+      "first": 1943,
+      "last": 1943
+     }
+    ],
+    "merge": null
+   },
+   {
+    "key": "DEF-IC-1946",
+    "label": "IC 1946-1948",
+    "group": "negro_leagues",
+    "first": 1946,
+    "last": 1948,
+    "intervals": [
+     {
+      "team_id": "IC",
+      "lg": "NAL",
+      "first": 1946,
+      "last": 1948
+     }
+    ],
+    "merge": null
+   }
+  ],
+  "census": {
+   "team_lg_seasons": 1860,
+   "to_lineage": 1278,
+   "to_defunct": 582,
+   "defunct_clubs": 161,
+   "merges": 8
+  }
+ }
 }

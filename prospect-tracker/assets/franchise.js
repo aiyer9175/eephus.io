@@ -639,7 +639,27 @@
     return "<h3>Wins and losses, " + esc(s.standings.length ? s.standings[0][0] : "") + " to " + esc(s.standings.length ? s.standings[s.standings.length - 1][0] : "") + "</h3>" + strip +
       '<p class="fr-count">' + esc(copy("history_note")) + " " + esc(copy("history_pennants")) + "</p>" +
       "<h3>Club bWAR by season</h3>" + line + '<p class="fr-count">' + esc(copy("bwar_basis")) + " &middot; spine: " + spine + " &middot; " + esc(s.bwar.length) + " seasons</p>" +
-      '<div class="fr-tiles">' + t + "</div>" + dark("Hall of Fame plaques", (s.hof || {}).why || (s.hof || {}).blocked_on || "");
+      '<div class="fr-tiles">' + t + "</div>" + hofTile(d, s.hof || {});
+  }
+  // THE HALL OF FAME TILE re-serves /hof/'s Franchises section: one franchise
+  // per inductee under the owner's frozen rule (2026-09-25). Every figure and
+  // sentence is a payload key; dark again with /hof/'s wording if that is dark.
+  var IND_LABEL = { player_bbwaa: "Player, writers", route_unverified: "Inducted, route unverified" };
+  function hofTile(d, h) {
+    if (!h.live) return dark("Hall of Fame inductees", h.why || h.blocked_on || "");
+    var sub = esc(nInt(h.n_player_bbwaa)) + " elected by the writers as players, " +
+      esc(nInt(h.n_route_unverified)) + " by another route &middot; " +
+      esc(nInt(h.n_played_for)) + " inductees played for the club";
+    var rows = (h.inductees || []).map(function (r) {
+      return [esc(r[0]), n1(r[1]), nInt(r[2]), n1(r[3]), esc((IND_LABEL[r[4]] || r[4] || "") + (r[5] ? " " + r[5] : ""))];
+    });
+    var list = rows.length
+      ? "<details><summary>" + esc(nInt(rows.length)) + " inductees credited to the club</summary>" +
+        table(["Inductee", "WAR with club", "Seasons", "Career WAR", "Induction"], rows, 3) + "</details>"
+      : "";
+    return "<h3>Hall of Fame</h3>" +
+      '<div class="fr-tiles">' + tile("Hall of Fame inductees", esc(nInt(h.n)), sub, "", d.links.hof) + "</div>" + list +
+      '<p class="fr-count">' + esc(h.rule || "") + " Frozen " + esc(h.rule_frozen || "") + ". " + esc(h.credit_basis || "") + "</p>";
   }
   function secOdds(d) {
     var s = d.sections.odds;

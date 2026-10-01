@@ -29,10 +29,13 @@ recomputes a model, opens a socket or lends a verdict chip to a surface that
 has no registry row (futures.json has none, so the ODDS section quotes the
 artifact's own interval sentence instead).
 
-NEVER SERVED, decided before the first number: a HoF tile (the HoF franchises
-section is dark with hof_export's own wording), pennants or titles as a served
+NEVER SERVED, decided before the first number: pennants or titles as a served
 field, any club decision-quality grade, any manager skill claim, revenue or
-valuation figures. The DUGOUT and MARKET sections carry realized value with the
+valuation figures. The HoF tile was on this list while the HoF franchises
+section was dark; the owner froze its attribution rule on 2026-09-25 (final-pass
+batch 6, docs/HOF_FRANCHISE_ATTRIBUTION.md), so HISTORY now re-serves
+hof_export's per-franchise credit, and it goes dark again with hof_export's own
+wording whenever that section is dark. The DUGOUT and MARKET sections carry realized value with the
 counterfactual named, never a letter, never a plus metric.
 
 THE JOIN TRAPS, handled once: the five /mlbstats/ leaderboards carry StatsAPI
@@ -381,6 +384,30 @@ def _bwar_by_org(spine: dict) -> tuple[dict, dict]:
                  "unmapped_team_ids": sorted(unmapped), "first_season": SPINE_FIRST}
 
 
+def _hof_block(panel: dict, club: dict | None, rows: dict) -> dict:
+    """One club's Hall of Fame tile, re-served from hof_board.sections.franchises.
+
+    Inductee rows are [name, WAR with the club, seasons with it, career WAR,
+    induction state, induction year], highest WAR with the club first, in
+    hof_export's order. The induction state keeps hof_export's three values."""
+    club = club or {}
+    ids = club.get("inductees") or []
+    return {
+        "live": True,
+        "n": club.get("n", 0),
+        "n_player_bbwaa": club.get("n_player_bbwaa", 0),
+        "n_route_unverified": club.get("n_route_unverified", 0),
+        "n_played_for": club.get("n_played_for", 0),
+        "inductees": [[rows[i]["name"], rows[i]["primary_war"], rows[i]["primary_seasons"],
+                       rows[i]["career_war"], rows[i]["induction"], rows[i]["induction_year"]]
+                      for i in ids if i in rows],
+        "rule": panel.get("rule"),
+        "rule_frozen": panel.get("rule_frozen"),
+        "credit_basis": panel.get("credit_basis"),
+        "doc": panel.get("doc"),
+    }
+
+
 def _team_rows(payload: dict, key: str = "teams") -> dict:
     """{canonical code: row} for a leaderboard's `teams` block (StatsAPI codes)."""
     out = {}
@@ -549,6 +576,11 @@ def build() -> dict:
         sp = (ledger_clubs[codes[0]].get("payroll") or {}).get("space_2027") or {}
         spotrac_basis = sp.get("spotrac_basis_usd")
     hof_franchises = ((hof.get("sections") or {}).get("franchises") or {})
+    # The HoF credit, re-served as hof_export wrote it: one franchise per
+    # inductee under the owner's frozen rule (2026-09-25). Nothing is recounted.
+    hof_live = bool(hof_franchises.get("live"))
+    hof_rows = {r["id"]: r for r in hof_franchises.get("inductees") or []}
+    hof_clubs = {r["code"]: r for r in hof_franchises.get("clubs") or []}
     arb_router_narrows = "TEAM_NARROW_RE" in (ROOT / "assets" / "arbitration.js").read_text(encoding="utf-8") \
         if (ROOT / "assets" / "arbitration.js").exists() else False
 
@@ -840,7 +872,8 @@ def build() -> dict:
             "standings": srows, "bwar": bwar.get(c) or [],
             "best": best, "worst": worst,
             "spine": (spine.get("orgs") or {}).get(c) or [],
-            "hof": {"live": False, "blocked_on": hof_franchises.get("blocked_on") or "a frozen attribution rule for a multi-team career",
+            "hof": _hof_block(hof_franchises, hof_clubs.get(c), hof_rows) if hof_live else
+                   {"live": False, "blocked_on": hof_franchises.get("blocked_on") or "a frozen attribution rule for a multi-team career",
                     "why": hof_franchises.get("why")},
             "basis": f"StatsAPI standings {STANDINGS_FIRST}-{SEASON_NOW} by team id (no spine); club bWAR by season through franchise_spine.json from {SPINE_FIRST}",
         }
@@ -983,7 +1016,11 @@ def build() -> dict:
                  leaf("best_season", "Best season since 2000", (f"{best[0]} ({best[1]}-{best[2]})" if best else None), "text", None, "StatsAPI standings", "season_record", links["hof"]),
                  leaf("worst_season", "Worst season since 2000", (f"{worst[0]} ({worst[1]}-{worst[2]})" if worst else None), "text", None, "StatsAPI standings", "season_record", links["hof"]),
                  leaf("bwar_last", f"Club bWAR {SEASON_NOW}", (bwar.get(c) or [[None, None]])[-1][1], "war", None, "war_daily through the spine; bWAR basis", None, links["hof"]),
-                 leaf("hof", "Hall of Fame plaques", None, "dark", None, history["hof"]["blocked_on"], "jaws", links["hof"]),
+                 (leaf("hof", "Hall of Fame inductees", history["hof"]["n"], "count", None,
+                       f"credited to one franchise by most bWAR over his stints (rule frozen {history['hof']['rule_frozen']}); hof_board.sections.franchises",
+                       None, links["hof"])
+                  if history["hof"].get("live") else
+                  leaf("hof", "Hall of Fame inductees", None, "dark", None, history["hof"]["blocked_on"], None, links["hof"])),
              ]},
             {"key": "odds", "kind": "descriptive", "label": "ODDS", "title": BRANCH_TITLE["odds"],
              "weight": None, "score": None, "rank": None, "letter": None,
@@ -1142,6 +1179,7 @@ def build() -> dict:
         "tree.branches[].leaves[].ladder": "z | ratio | run | rosterWar | null: the family /mlbstats/ paints the same key on, never a foreign scale",
         "history.standings": "[season, wins, losses, run_diff, division_rank]",
         "history.bwar": "[season, club_bwar]",
+        "history.hof.inductees": "[name, war_with_club, seasons_with_club, career_war, induction, induction_year]",
         "tree.branches[].leaves[].kind": "war | idx | idx_plain | pct | pct3 | count | usd | usd_signed | usdm | num1 | signed | signed2 | plain | text | dark",
     }
 
@@ -1151,10 +1189,11 @@ def build() -> dict:
                             "coverage_by_winter": [[w.get("year"), sum(1 for s in (w.get("signings") or []) if s.get("warTd") is not None),
                                                     len(w.get("signings") or [])] for w in winters]},
         "park_attendance": {"live": False, "blocked_on": "omitted in v1 by owner decision D11; a game-feed attendance ingest (2026 only) would light it"},
-        "history_hof": {"live": False, "blocked_on": hof_franchises.get("blocked_on") or "a frozen attribution rule for a multi-team career",
-                        "why": hof_franchises.get("why") or ("the season frame carries no team column and a frozen "
-                                                              "multi-team attribution rule is required; the spine is "
-                                                              "necessary but not sufficient")},
+        "history_hof": ({"live": True, "rule": hof_franchises.get("rule"), "rule_frozen": hof_franchises.get("rule_frozen"),
+                         "doc": hof_franchises.get("doc"), "counts": hof_franchises.get("counts")} if hof_live else
+                        {"live": False, "blocked_on": hof_franchises.get("blocked_on") or "a frozen attribution rule for a multi-team career",
+                         "why": hof_franchises.get("why") or ("the Hall of Fame franchises section on /hof/ is dark, "
+                                                               "and this tile re-serves it")}),
         "history_bwar": {"live": bool(bwar), "first_season": SPINE_FIRST,
                          "unmapped_team_ids": bwar_census.get("unmapped_team_ids")},
         "dugout_families": {"live": bool(mgmt_clubs), "blocked_on": None if mgmt_clubs else "management_board clubs block absent (D2 Wave A)"},
@@ -1213,7 +1252,7 @@ def build() -> dict:
             "attendance before 2026, ticket prices, local or national TV money, revenue-sharing status: not sourced",
             "minor-league payroll, front-office salaries, actual CBT bills paid: not sourced",
             "pennants and titles as a served field: only clinched and divisionChamp for the cached season",
-            "Hall of Fame plaques per franchise: hof_export needs a team column and a frozen attribution rule; the spine alone does not unblock it",
+            "the cap a Hall of Fame plaque shows: the HISTORY tile credits each inductee to the franchise where he accumulated the most bWAR (hof_export's frozen rule), by playing WAR, whatever the plaque's role",
             "a per-game MLB park index over a home slate: the per-club park factor table is what is served (fa_meta.park_factors)",
             "defensive shifts, manager identity, any per-club decision-quality grade or manager skill claim",
             "a combined arbitration residual: ou_mkt and ou_war are two tiles and never one number",

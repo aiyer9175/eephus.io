@@ -5122,10 +5122,12 @@ def build_franchise() -> str:
     shell types no number and no sentence beyond two glossary hooks, and the
     masthead line is filled from the payload.
 
-    NEVER HERE: a HoF tile (dark with hof_export's own wording), pennants or
-    titles, any club decision-quality grade, any manager skill claim, revenue
-    or valuation figures. Letters print in neutral ink and only scores take
-    the z ladder.
+    NEVER HERE: pennants or titles, any club decision-quality grade, any
+    manager skill claim, revenue or valuation figures. Letters print in neutral
+    ink and only scores take the z ladder. The Hall of Fame tile went live
+    2026-09-25 on the owner's frozen attribution rule (hof_export's Franchises
+    section, docs/HOF_FRANCHISE_ATTRIBUTION.md) and stays dark if that section
+    is dark.
 
     Shell on the build_ledger pattern: section-head with the byline and the
     stage chip, the .mlbstats-sectionnav tablist (Club, Board), one mount root
@@ -5167,8 +5169,9 @@ def build_hof() -> str:
     """The /hof/ Hall of Fame module.
 
     Static shell + assets/hof.js, which fetches data/hof_board.json
-    (hof_export.py). FIVE SECTIONS LIVE (the bake-off went live reporting a
-    loss), THREE DARK, and the dark ones each name their blocker on the page.
+    (hof_export.py). SIX SECTIONS LIVE (the bake-off went live reporting a
+    loss; Franchises went live 2026-09-25 on the owner's frozen attribution
+    rule), TWO DARK, and the dark ones each name their blocker on the page.
     The shell types no section count: the payload's `sections` block owns it.
 
     WHAT IT IS NOT. It is not a Hall-of-Fame predictor and it does not tell a
@@ -5198,6 +5201,7 @@ def build_hof() -> str:
         'line and no snub list; the Bake-off tab says why.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Hall of Fame sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-hofsection="board" role="tab" aria-selected="true">Leaderboards</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-hofsection="franchises" role="tab" aria-selected="false">Franchises</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-hofsection="blocked" role="tab" aria-selected="false">Bake-off &amp; What Is Not Published</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-hofsection="method" role="tab" aria-selected="false">Method &amp; Sample</button>'
         '</div>'

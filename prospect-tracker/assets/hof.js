@@ -14,13 +14,18 @@
 // be the exact failure the page exists to avoid. If a string here looks like
 // prose, check where it comes from: it is a payload key.
 //
-// FIVE SECTIONS ARE LIVE AND THREE ARE DARK. The dark ones render a card that
+// SIX SECTIONS ARE LIVE AND TWO ARE DARK. The dark ones render a card that
 // names their blocker and says nothing else. They are dark for data reasons,
 // not modelling reasons:
 //   deserved    a Hall-SIZED line needs the count of PLAYER inductions, and no
 //               field in the source says what a plaque says
 //   predictor   no merit model has passed its ship rule
-//   franchises  no frozen attribution rule, and no franchise spine before 1969
+//
+// FRANCHISES WENT LIVE 2026-09-25 on the owner's frozen rule: every inductee
+// credited to ONE franchise, the one with the most bWAR summed over his
+// stints, through a franchise map carried back to 1871 with a defunct-club
+// bucket. The rule, its date, what it rejected and every count are payload
+// keys; the induction column keeps its three states there too.
 //
 // THE BAKE-OFF IS LIVE AND IT REPORTS A LOSS. Baseball-Reference's own HoF
 // Monitor separates the Hall better than our WAR shelf does, on every one of
@@ -298,6 +303,75 @@
       '<p class="hof-note">' + esc(s.why) + "</p></section>";
   }
 
+  // ---- franchises -------------------------------------------------------------
+  // One row per current franchise plus the defunct bucket, then a closed list
+  // per franchise. The clubs carry inductee ids; the rows live once, in
+  // sections.franchises.inductees.
+  function renderFranchises() {
+    var f = DATA.sections.franchises;
+    if (!f || !f.live) return renderDark("franchises", "Franchises");
+    var byId = {};
+    (f.inductees || []).forEach(function (r) { byId[r.id] = r; });
+    var c = f.counts, dfn = f.defunct, gl = dfn.group_labels || {};
+    var groups = Object.keys(dfn.by_group || {}).map(function (g) {
+      return esc(dfn.by_group[g]) + " " + esc(gl[g] || g);
+    }).join(", ");
+    var units = f.clubs.slice();
+    units.push({ code: dfn.key, name: dfn.label, n: dfn.n, n_player_bbwaa: dfn.n_player_bbwaa,
+      n_route_unverified: dfn.n_route_unverified, n_played_for: null,
+      inductees: dfn.inductees, defunct: true });
+    units.sort(function (a, b) { return (b.n - a.n) || String(a.name).localeCompare(String(b.name)); });
+    function topNames(u) {
+      return u.inductees.slice(0, 3).map(function (id) {
+        var r = byId[id];
+        return r ? esc(r.name) + " " + num(r.primary_war) : "";
+      }).join(", ");
+    }
+    var rows = units.map(function (u) {
+      return "<tr" + (u.defunct ? ' class="hof-fr-defunct"' : "") + '><td class="hof-c-name">' + esc(u.name) + "</td>" +
+        '<td class="hof-c-n">' + esc(u.n) + "</td>" +
+        '<td class="hof-c-n">' + esc(u.n_player_bbwaa) + "</td>" +
+        '<td class="hof-c-n">' + esc(u.n_route_unverified) + "</td>" +
+        '<td class="hof-c-n">' + (u.n_played_for === null ? "" : esc(u.n_played_for)) + "</td>" +
+        '<td class="hof-c-pos">' + topNames(u) + "</td></tr>";
+    }).join("");
+    var lists = units.filter(function (u) { return u.n > 0; }).map(function (u) {
+      var body = u.inductees.map(function (id) {
+        var r = byId[id];
+        if (!r) return "";
+        return '<tr><td class="hof-c-name">' + esc(r.name) + "</td>" +
+          (u.defunct ? '<td class="hof-c-pos">' + esc(r.primary_label) + "</td>" : "") +
+          '<td class="hof-c-n">' + num(r.primary_war) + "</td>" +
+          '<td class="hof-c-n">' + esc(r.primary_seasons) + "</td>" +
+          '<td class="hof-c-n">' + num(r.career_war) + "</td>" +
+          '<td class="hof-c-ind">' + inductionCell(r) + "</td></tr>";
+      }).join("");
+      return '<details class="hof-fr"><summary>' + esc(u.name) + ' <span class="hof-bandn">' + esc(u.n) + "</span></summary>" +
+        '<div class="hof-tablewrap mlbstats-scroll"><table class="hof-table hof-fr-table"><thead><tr>' +
+        '<th class="hof-c-name">Inductee</th>' + (u.defunct ? '<th class="hof-c-pos">Club</th>' : "") +
+        '<th class="hof-c-n">WAR with</th><th class="hof-c-n">Seasons with</th>' +
+        '<th class="hof-c-n">Career WAR</th><th class="hof-c-ind">Induction</th>' +
+        "</tr></thead><tbody>" + body + "</tbody></table></div></details>";
+    }).join("");
+    return '<section class="hof-block"><h2>Franchises</h2>' +
+      '<p class="hof-note"><strong>' + esc(f.rule) + "</strong> Frozen " + esc(f.rule_frozen) +
+      " (" + esc(f.doc) + ").</p>" +
+      '<p class="hof-note">' + esc(c.n_credited) + " of " + esc(c.n_inductees) +
+      " inductees with a playing record are credited: " + esc(c.n_to_a_current_franchise) +
+      " to a current franchise and " + esc(c.n_to_a_defunct_club) + " to a defunct club (" + groups + "). " +
+      esc(f.credit_basis) + "</p>" +
+      '<div class="hof-tablewrap mlbstats-scroll"><table class="hof-table hof-fr-table"><thead><tr>' +
+      '<th class="hof-c-name">Franchise</th><th class="hof-c-n">Credited</th>' +
+      '<th class="hof-c-n">Writers, as players</th><th class="hof-c-n">Route unverified</th>' +
+      '<th class="hof-c-n">Inductees who played for it</th><th class="hof-c-pos">Most WAR with the franchise</th>' +
+      "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      "<h3>Inductees by franchise</h3>" + lists +
+      '<p class="hof-note">' + esc(f.rejected) + "</p>" +
+      '<p class="hof-count">The map: ' + esc(f.map_basis) + " " + esc(c.n_defunct_clubs_in_map) +
+      " defunct clubs from " + esc(c.map_first_season) + "; " + esc(c.n_decided_by_tiebreak) +
+      " credits decided by the tie-break.</p></section>";
+  }
+
   function renderMethod() {
     var c = DATA.coverage, r = DATA.reproduction, a = r.against_the_public_shelf;
     var hand = r.hand_checked;
@@ -337,11 +411,13 @@
     }
     if (!DATA) { root.innerHTML = '<p class="hof-note">Loading.</p>'; return; }
     if (state.section === "method") { root.innerHTML = renderMethod(); return; }
+    if (state.section === "franchises") { root.innerHTML = renderFranchises(); return; }
     if (state.section === "blocked") {
+      var fr = DATA.sections.franchises;
       root.innerHTML = renderBakeoff() +
         renderDark("deserved", "Deserved vs Inducted") +
         renderDark("predictor", "Induction predictor") +
-        renderDark("franchises", "Franchises");
+        (fr && fr.live ? "" : renderDark("franchises", "Franchises"));
       return;
     }
     root.innerHTML = renderBands() + renderBandNote() + renderControls() +

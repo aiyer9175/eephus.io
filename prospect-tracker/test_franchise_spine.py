@@ -5,13 +5,13 @@
 
 """data/franchise_spine.json: the frozen B-Ref team_ID -> canonical org map.
 
-SCOPED TO THE CLUB bWAR LINE ONLY. The 2000-2026 standings join by StatsAPI
+`orgs` IS THE CLUB bWAR LINE, 1969 on. The 2000-2026 standings join by StatsAPI
 team id, which is stable across the relocations (120 Expos / Nationals, 133
-Athletics, 139 Devil Rays / Rays, 146 Marlins), so they need no spine; the HoF
-franchises section needs a team column on the season frame and a frozen
-multi-team attribution rule, which this spine does not supply. The tests pin
-that every team_ID the war_daily frames carry since 1969 maps to exactly one
+Athletics, 139 Devil Rays / Rays, 146 Marlins), so they need no spine. The tests
+pin that every team_ID the war_daily frames carry since 1969 maps to exactly one
 org, that no org's intervals overlap, and that the relocations are named.
+`history` (owner answer 2026-09-25) carries the map back to 1871 for the Hall
+of Fame franchise credit; test_hof_franchise pins it.
 """
 from __future__ import annotations
 
@@ -74,7 +74,10 @@ def test_standings_join_by_team_id_and_need_no_spine(spine):
     assert len(ids) == 30
     assert ids[120] == "WSN" and ids[133] == "ATH" and ids[139] == "TBR" and ids[146] == "MIA"
     assert "standings" in " ".join(spine["not_in_scope"]).lower()
-    assert "Hall of Fame" in " ".join(spine["not_in_scope"])
+    # The plaque's cap is out of scope; the Hall of Fame credit is in scope
+    # since 2026-09-25 and runs on `history`.
+    assert "plaque" in " ".join(spine["not_in_scope"])
+    assert spine["history"]["first_season"] == 1871
 
 
 def test_spine_intervals_do_not_overlap_within_an_org(spine):

@@ -1,9 +1,9 @@
 """The /hof/ payload and the page that renders it.
 
-WHAT THE PAGE IS ALLOWED TO SAY, pinned. Five sections live, three dark, and the dark ones
-are dark for DATA reasons rather than modelling ones. The tests below exist because every
-one of those three is easy to ship anyway by quietly substituting a number that looks close
-enough.
+WHAT THE PAGE IS ALLOWED TO SAY, pinned. Six sections live, two dark, and the dark ones
+are dark for DATA reasons rather than modelling ones. The tests below exist because each
+of them is easy to ship anyway by quietly substituting a number that looks close enough.
+Franchises went live 2026-09-25 on the owner's frozen rule; test_hof_franchise pins it.
 
 THE BAKE-OFF IS LIVE AND IT REPORTS A LOSS, which is its own kind of discipline: a
 benchmark panel that only ships on a win is not a benchmark. Tests pin that every in-house
@@ -137,17 +137,28 @@ def test_the_watch_board_carries_no_projection(d):
         assert "projection" not in r and "odds" not in r
 
 
-def test_the_franchise_blocker_names_what_is_still_missing(d):
-    """M10-12. The section said "no franchise spine" and "no team column" while the
-    stint frame carries team_ID and the /franchise/ spine maps it from 1969 on. It
-    stays dark on the owner's frozen attribution rule and the pre-1969 spine."""
-    import json as _json
+def test_the_franchise_section_is_lit_on_the_frozen_rule(d):
+    """M10-12, owner answer 2026-09-25. The section was dark on a frozen
+    attribution rule and a spine that started in 1969. Both now exist, so it is
+    live, prints the rule with its date and doc, names what it rejected, and the
+    page's own count of dark sections reads two of eight."""
     f = d["sections"]["franchises"]
-    assert f["live"] is False
-    assert "no franchise spine" not in f["blocked_on"] and "no team column" not in f["why"]
-    assert "attribution rule" in f["blocked_on"]
-    spine = _json.loads((Path(__file__).resolve().parent / "data" / "franchise_spine.json").read_text(encoding="utf-8"))
-    assert str(spine["first_season"]) in f["why"]
+    assert f["live"] is True and "blocked_on" not in f
+    assert f["rule_frozen"] == "2026-09-25"
+    assert f["doc"] == "docs/HOF_FRANCHISE_ATTRIBUTION.md"
+    assert "most Baseball-Reference WAR" in f["rule"] and "every stint" in f["rule"]
+    assert f["rejected"].startswith("Rejected:") and "plaque" in f["rejected"]
+    assert f["counts"]["map_first_season"] == 1871
+    assert "2 of its 8 sections are dark" in d["what_this_page_does_not_claim"]
+
+
+def test_the_js_renders_the_franchise_section_from_the_payload():
+    js = JS.read_text(encoding="utf-8")
+    assert "function renderFranchises(" in js
+    for key in ("f.rule", "f.rule_frozen", "f.rejected", "f.credit_basis", "f.map_basis"):
+        assert key in js, key
+    page = PAGE.read_text(encoding="utf-8")
+    assert 'data-hofsection="franchises"' in page
 
 
 def test_the_predictor_is_dark(d):

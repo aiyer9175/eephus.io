@@ -532,24 +532,43 @@ def test_every_link_uses_a_key_the_target_module_reads(clubs):
 
 def test_dark_sections_name_their_blocker(d, clubs):
     st = d["sections_status"]
-    assert st["history_hof"]["live"] is False and st["history_hof"]["blocked_on"]
-    # M10-12: the HoF franchise section is dark on the owner's attribution rule and
-    # the pre-1969 spine; it no longer says there is no spine or no team column.
-    assert "attribution rule" in st["history_hof"]["blocked_on"]
-    assert "no franchise spine" not in st["history_hof"]["blocked_on"]
     assert st["park_attendance"]["live"] is False and "D11" in st["park_attendance"]["blocked_on"]
     assert st["manager_names"]["live"] is False and st["manager_names"]["blocked_on"]
     for k, v in st.items():
         if v.get("live") is False:
             assert v.get("blocked_on"), k
-    for c in clubs.values():
-        h = c["sections"]["history"]["hof"]
-        assert h["live"] is False and h["blocked_on"]
-        assert _branch(c, "history")["leaves"][-1]["kind"] == "dark"
     for s in d["what_this_page_does_not_claim"]:
         assert isinstance(s, str) and s
-    assert any("Hall of Fame" in s for s in d["what_this_page_does_not_claim"])
+    assert any("Hall of Fame" in s and "plaque" in s for s in d["what_this_page_does_not_claim"])
     assert any("pennants" in s for s in d["what_this_page_does_not_claim"])
+
+
+def test_the_hall_of_fame_tile_re_serves_the_hof_franchise_credit(d, clubs):
+    """Owner answer 2026-09-25 (final-pass batch 6): the tile is lit on the frozen
+    rule and re-serves /hof/'s Franchises section without recounting it. Every
+    club's count and inductee list matches hof_board, and the 30 counts plus the
+    defunct bucket add up to every credited inductee."""
+    hof = json.loads((ROOT / "data" / "hof_board.json").read_text(encoding="utf-8"))
+    fr = hof["sections"]["franchises"]
+    st = d["sections_status"]["history_hof"]
+    assert fr["live"] is True and st["live"] is True
+    assert st["rule"] == fr["rule"] and st["rule_frozen"] == "2026-09-25"
+    by_code = {c["code"]: c for c in fr["clubs"]}
+    rows = {r["id"]: r for r in fr["inductees"]}
+    total = 0
+    for code, c in clubs.items():
+        h = c["sections"]["history"]["hof"]
+        src = by_code[code]
+        assert h["live"] is True and h["n"] == src["n"] == len(h["inductees"])
+        assert h["n_player_bbwaa"] + h["n_route_unverified"] == h["n"]
+        assert [r[0] for r in h["inductees"]] == [rows[i]["name"] for i in src["inductees"]]
+        assert {r[4] for r in h["inductees"]} <= {"player_bbwaa", "route_unverified"}
+        leaf = _branch(c, "history")["leaves"][-1]
+        assert leaf["key"] == "hof" and leaf["kind"] == "count" and leaf["value"] == h["n"]
+        assert leaf["link"] == "/hof/"
+        total += h["n"]
+    assert total + fr["defunct"]["n"] == fr["counts"]["n_credited"] == fr["counts"]["n_inductees"]
+    assert "pennants" not in json.dumps(d["clubs"][0]["sections"]["history"]["hof"])
 
 
 def test_payload_under_size_budget(d):

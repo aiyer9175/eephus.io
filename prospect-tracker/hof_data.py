@@ -1680,3 +1680,128 @@ def assert_no_censored_zero(rows: Iterable) -> int:
             f"{bad[:20]}{' and more' if len(bad) > 20 else ''}. A censored "
             "label must be hof_data.CENSORED (None).")
     return n
+
+
+# ---------------------------------------------------------------------------
+# Franchise credit. Owner answer 2026-09-25 (final-pass batch 6, M10-12); the
+# rule and its rejected alternatives are in docs/HOF_FRANCHISE_ATTRIBUTION.md.
+# ---------------------------------------------------------------------------
+
+#: The day the owner froze the attribution rule. Printed on /hof/ beside it.
+FRANCHISE_RULE_FROZEN = "2026-09-25"
+
+#: The rule, in the words the page prints.
+FRANCHISE_RULE = (
+    "A Hall of Famer is credited to one franchise: the one with which he "
+    "accumulated the most Baseball-Reference WAR, summed over every stint in "
+    "the daily WAR file, batting and pitching together. Ties go to more seasons "
+    "with the franchise, then the earlier first season.")
+
+#: The franchise map: data/franchise_spine.json, `orgs` from 1969 and
+#: `history` (tools/franchise_spine_history.py) from 1871 to 1968.
+FRANCHISE_SPINE_PATH = ROOT / "data" / "franchise_spine.json"
+
+#: The bucket every defunct club rolls up to on a per-franchise count.
+DEFUNCT_BUCKET = "DEFUNCT"
+
+
+def franchise_map(path=None) -> pd.DataFrame:
+    """The franchise map as one table: team_ID, lg, year_ID, franchise, bucket.
+
+    Seasons before the spine's first season (1969) key on (team_ID, lg,
+    season), because Baseball-Reference reuses a team code across unrelated
+    clubs before then (BAL is four clubs, COL two). From 1969 the key is
+    (team_ID, season) and lg reads "*". bucket is "club" for the 30 current
+    franchises and DEFUNCT_BUCKET for a defunct club, whose franchise is its
+    own key (DEF-<code>-<first season>), so two defunct clubs are never pooled
+    into one when a player's primary franchise is chosen.
+    """
+    p = Path(path or FRANCHISE_SPINE_PATH)
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    hist = doc.get("history") or {}
+    if not hist:
+        raise RuntimeError(
+            f"{p.name} carries no `history` block; run python "
+            "tools/franchise_spine_history.py")
+    rows = []
+    for org, ivs in (doc.get("orgs") or {}).items():
+        for iv in ivs:
+            for y in range(int(iv["first"]), int(iv["last"]) + 1):
+                rows.append((iv["team_id"], "*", y, org, "club"))
+    for org, ivs in (hist.get("lineage") or {}).items():
+        for iv in ivs:
+            for y in range(int(iv["first"]), int(iv["last"]) + 1):
+                rows.append((iv["team_id"], iv["lg"], y, org, "club"))
+    for club in hist.get("defunct") or []:
+        for iv in club["intervals"]:
+            for y in range(int(iv["first"]), int(iv["last"]) + 1):
+                rows.append((iv["team_id"], iv["lg"], y, club["key"],
+                             DEFUNCT_BUCKET))
+    m = pd.DataFrame(rows, columns=["team_ID", "lg", "year_ID", "franchise",
+                                    "bucket"])
+    dup = m.duplicated(subset=["team_ID", "lg", "year_ID"], keep=False)
+    if dup.any():
+        raise RuntimeError(
+            "the franchise map sends one team-league-season to two "
+            f"franchises: {m[dup].head(6).to_dict('records')}")
+    return m
+
+
+def _stint_keys(df: pd.DataFrame, first_modern: int) -> pd.DataFrame:
+    lg = df["lg_ID"].where(df["lg_ID"].notna(), "NA").astype(str)
+    out = df.copy()
+    out["lg"] = np.where(out["year_ID"].astype(int) >= first_modern, "*", lg)
+    out["year_ID"] = out["year_ID"].astype(int)
+    out["team_ID"] = out["team_ID"].astype(str)
+    return out
+
+
+def franchise_credit(*, offline: bool = False, spine_path=None) -> pd.DataFrame:
+    """One row per (player_ID, franchise): bWAR summed over every stint.
+
+    Columns: player_ID, franchise, bucket, war, seasons, first, last.
+
+    The stints are the same rows career_frame sums (WAR not null, batting and
+    pitching together), so a player's franchise WAR sums to his career WAR
+    exactly; test_hof_franchise pins that. A stint the map cannot place is a
+    hard error, never a silent drop: the credit would no longer sum.
+    """
+    doc = json.loads(Path(spine_path or FRANCHISE_SPINE_PATH)
+                     .read_text(encoding="utf-8"))
+    first_modern = int(doc.get("first_season") or 1969)
+    fmap = franchise_map(spine_path)
+    parts = []
+    for side in SIDES:
+        raw = stint_frame(side, offline=offline)
+        d = raw.loc[:, ["player_ID", "year_ID", "team_ID", "lg_ID", "WAR"]].copy()
+        d["WAR"] = pd.to_numeric(d["WAR"], errors="coerce")
+        parts.append(d.dropna(subset=["WAR"]))
+    s = _stint_keys(pd.concat(parts, ignore_index=True), first_modern)
+    j = s.merge(fmap, on=["team_ID", "lg", "year_ID"], how="left")
+    miss = j[j["franchise"].isna()]
+    if len(miss):
+        raise RuntimeError(
+            f"{len(miss)} stints map to no franchise, e.g. "
+            f"{miss[['team_ID', 'lg', 'year_ID']].drop_duplicates().head(8).to_dict('records')}")
+    g = j.groupby(["player_ID", "franchise", "bucket"], sort=False)
+    out = g.agg(war=("WAR", "sum"), seasons=("year_ID", "nunique"),
+                first=("year_ID", "min"), last=("year_ID", "max")).reset_index()
+    return out
+
+
+def primary_franchise(credit: pd.DataFrame) -> pd.DataFrame:
+    """One row per player: the franchise with the most WAR, under the frozen
+    rule. Ties (exact, on the two-decimal sums) go to more seasons with the
+    franchise, then the earlier first season, then the franchise key, so the
+    answer never depends on row order. `tied` marks a player whose top two
+    franchises carry the same WAR."""
+    c = credit.sort_values(["player_ID", "war", "seasons", "first", "franchise"],
+                           ascending=[True, False, False, True, True],
+                           kind="mergesort")
+    top = c.drop_duplicates(subset=["player_ID"], keep="first").copy()
+    second = (c[c.duplicated(subset=["player_ID"], keep="first")]
+              .drop_duplicates(subset=["player_ID"], keep="first")
+              .set_index("player_ID")["war"])
+    top["tied"] = [bool(abs(w - second.get(p, float("nan"))) < 1e-9)
+                   for p, w in zip(top["player_ID"], top["war"])]
+    return top.reset_index(drop=True)
