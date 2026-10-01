@@ -1555,7 +1555,13 @@
     // tie_atom block, so no number here is typed or recomputed.
     // BET1: a total slot on a slate whose totals lean one way carries the
     // server's sentence about that lean, built from the payload's own block.
-    var caveat = (p.caveat ? note(esc(p.caveat)) : "") +
+    var caveat = (postseasonLabel(p)
+        ? note("<strong>Postseason game: " + esc(postseasonLabel(p)) + ".</strong> " +
+          "Every game behind the model's evidence is a regular-season game; " +
+          "pricing the postseason is an owner decision of 2026-10-01, and this " +
+          "row is recorded in the postseason sub-ledger.")
+        : "") +
+      (p.caveat ? note(esc(p.caveat)) : "") +
       (p.tie_atom_caveat ? note(esc(p.tie_atom_caveat)) : "") +
       (p.total_level_caveat ? note(esc(p.total_level_caveat)) : "") +
       (p.evidence_caveat ? note(esc(p.evidence_caveat)) : "") + dispersionLine(shaped);
@@ -1576,7 +1582,7 @@
       '<div class="bt-pick-sel">' + esc(p.label || p.side || "") + " " +
       fmtOdds(p.odds) + "</div>" +
       '<div class="bt-pick-meta">' + esc(p.matchup || "") + " &middot; " +
-      esc(p.market || "") + " &middot; " + esc(p.book || "") + "</div>" +
+      esc(p.market || "") + " &middot; " + esc(p.book || "") + postseasonTag(p) + "</div>" +
       pickSentence(p) + pushLine(p) +
       '<div class="bt-pick-nums">' +
       chip("Model", pct(p.model_prob)) + chip("Market fair", pct(p.market_fair_prob)) +
@@ -2686,16 +2692,39 @@
       '</span><span class="bt-kv-v">' + v + "</span></div>";
   }
 
+  // THE POSTSEASON SUB-LEDGER (owner decision 2026-10-01). The headline above
+  // it counts regular-season rows only and says so; postseason rows are
+  // tallied here and added to nothing. A payload from before the split carries
+  // no `postseason` block and renders exactly as it did.
+  function postseasonRecordBlock(r) {
+    var ps = (r || {}).postseason;
+    if (!ps) return "";
+    var lbl = esc(ps.label || "never graded on a postseason game");
+    var head = '<div class="bt-panel-sub">Postseason sub-ledger (' + lbl + ")</div>";
+    if (!ps.n_rows) {
+      return head + "<p>No postseason row on the record yet. A postseason " + selNoun() +
+        " lands here, labelled, and never in the regular-season counts above.</p>";
+    }
+    return head + '<div class="bt-kv">' +
+      kv("Record", ps.won + "-" + ps.lost + (ps.push ? "-" + ps.push : "")) +
+      kv("Net units", signed(ps.net_units, 2)) +
+      kv("ROI", ps.roi_pct == null ? "-" : signed(ps.roi_pct, 2) + "%") +
+      kv("Open", ps.n_open) + "</div>" +
+      (ps.note ? note(esc(ps.note)) : "");
+  }
+
   function recordPanel(r) {
     var body;
-    if (!r || !r.n_rows) {
+    var nAll = r ? (r.n_rows_all != null ? r.n_rows_all : r.n_rows) : 0;
+    if (!r || !nAll) {
       body = empty("The record starts when the " + selNounPl() + " do",
         "No " + selNoun() + " published yet. Each lands here with its book, price " +
         "at post and a flat 1 unit stake" +
         (clvEnabled() ? ", graded against the closing line" : "") +
         ". Rows are never edited or deleted.");
     } else {
-      body = '<div class="bt-kv">' +
+      body = (r.postseason ? '<div class="bt-panel-sub">Regular season</div>' : "") +
+        '<div class="bt-kv">' +
         kv("Record", r.won + "-" + r.lost + (r.push ? "-" + r.push : "")) +
         kv("Net units", signed(r.net_units, 2)) +
         kv("ROI", r.roi_pct == null ? "-" : signed(r.roi_pct, 2) + "%") +
@@ -2707,7 +2736,9 @@
             kv("Average CLV", r.avg_clv_pct == null ? "not graded yet" : signed(r.avg_clv_pct, 2) + "%")
           : "") +
         kv("Open", r.n_open) +
-        "</div>";
+        "</div>" +
+        (r.scope_note ? note(esc(r.scope_note)) : "") +
+        postseasonRecordBlock(r);
     }
     var url = (S.data && S.data.record_url) || "/data/betting_record.json";
     // THE JOIN, NAMED. `record` is not the record file: it is the record joined
@@ -3133,6 +3164,21 @@
     return (mins % 60 === 0) ? (mins / 60) + "h" : mins + " min";
   }
 
+  // The postseason label, read off a card, a slot or a record row. Empty for a
+  // regular-season row, which carries no game_type at all.
+  function postseasonLabel(r) {
+    if (!r || !r.game_type || r.game_type === "R") return "";
+    return String(r.postseason_label || "never graded on a postseason game");
+  }
+
+  function postseasonTag(r) {
+    var lbl = postseasonLabel(r);
+    if (!lbl) return "";
+    return ' <span class="bt-tag bt-tag-warn bt-post" title="' +
+      esc((r.series ? r.series + ": " : "") + "the model was fitted and graded " +
+        "on regular-season games only") + '">' + esc(lbl) + "</span>";
+  }
+
   function gameCard(b) {
     var m = b.model || {};
     var st = (S.data || {}).status || {};
@@ -3155,6 +3201,10 @@
         '">unpriced: no pre-game odds event within ' + matchWindowText(st) +
         " of first pitch</span>";
     }
+    // A POSTSEASON CARD SAYS SO IN WORDS (owner decision 2026-10-01). The label
+    // is the server's string, carried on the card, so the page and the record
+    // read one sentence.
+    badge += postseasonTag(b);
     var hd = '<div class="bt-game-hd">' +
       '<div class="bt-game-teams">' + teamLogo(b.away.org) + " " + esc(b.away.org) +
       ' <span class="bt-at">at</span> ' + teamLogo(b.home.org) + " " + esc(b.home.org) +

@@ -616,6 +616,10 @@ def candidates_from_board(payload: dict, *, min_edge: float,
                     "market_fair_prob": r.get("market_fair_prob"),
                     "ev_per_unit": r.get("ev_per_unit"),
                     "slot": DEFAULT_SLOT_TAG,
+                    # A paper row off a postseason card carries the card's
+                    # game_type and label (owner decision 2026-10-01). Absent
+                    # on a regular-season row, which keeps its old shape.
+                    **betting_settle.postseason_fields(b.get("game_type")),
                 })
     out.sort(key=lambda r: (r.get("ev_per_unit") is None, -(r.get("ev_per_unit") or 0)))
 
@@ -1011,8 +1015,10 @@ def settle(*, games: list[dict] | None = None, path: Path | None = None,
 
     if games is None:
         try:
-            import betting_model as bm
-            games = bm.completed_games()
+            # The settlement path's game list: completed_games() plus the
+            # postseason finals, which settle postseason paper rows
+            # (2026-10-01). betting_settle.run passes the same list in.
+            games = betting_settle.load_completed()
         except Exception as exc:                              # noqa: BLE001
             log.warning("betting_shadow: could not load completed games (%s); "
                         "nothing settled", exc)
@@ -1130,6 +1136,13 @@ def _sweep_row(r: dict) -> dict | None:
     two different samples wearing one name. A push never reaches here, a row
     with no edge or no usable price is dropped rather than defaulted."""
     if r.get("result") not in ("won", "lost"):
+        return None
+    # THE POSTSEASON REFUSAL (2026-10-01, INT-A1). The owner priced the
+    # postseason; nobody re-framed a gate. Every sweep, cell, readiness count
+    # and clock this module feeds was registered on regular-season paper rows,
+    # so a postseason row is a second population and never enters one. It is
+    # still on disk, still settles, and is tallied in `summary()['postseason']`.
+    if betting_settle.is_postseason(r):
         return None
     # THE BASIS REFUSAL (2026-09-17). One shaping seam, so every sweepable read
     # in this module inherits it: the pooled shape, the per-tag shape, the
@@ -1429,8 +1442,11 @@ def sweep_readiness_by_market_tag(*, path: Path | None = None) -> dict:
     may set a threshold TODAY: for a cell the cap change split, that is the
     post-split era alone, because the pre-split rows were chosen by a rule this
     selector no longer runs (the same argument that put `untagged` on
-    betting_model's do-not-fit list, which still applies on top of this)."""
-    rows = load(path)
+    betting_model's do-not-fit list, which still applies on top of this).
+
+    Postseason rows are not counted here at all (2026-10-01): they are their
+    own sub-ledger, `summary()['postseason']`, and no cell is theirs."""
+    rows = [r for r in load(path) if not betting_settle.is_postseason(r)]
     cells: dict[tuple, list] = {}
     for r in rows:
         m = market_of(r)
@@ -1498,6 +1514,27 @@ def _tally(rows: list[dict]) -> dict:
     }
 
 
+def _postseason_block(post: list[dict]) -> dict:
+    """The postseason paper rows as their own sub-ledger: one tally, then the
+    same rows partitioned by market and by StatsAPI game type. Never pooled
+    with the regular-season blocks, and never a sweep input (`_sweep_row`)."""
+    by_market: dict[str, list[dict]] = {}
+    by_type: dict[str, list[dict]] = {}
+    for r in post:
+        by_market.setdefault(market_of(r), []).append(r)
+        by_type.setdefault(betting_settle.game_type_of(r), []).append(r)
+    return {
+        **_tally(post),
+        "label": betting_settle.POSTSEASON_LABEL,
+        "by_market": {m: _tally(v) for m, v in sorted(by_market.items())},
+        "by_game_type": {t: _tally(v) for t, v in sorted(by_type.items())},
+        "note": ("paper rows off postseason games (StatsAPI F, D, L, W), priced "
+                 "by owner decision of 2026-10-01 with a pricer fitted and "
+                 "graded on regular-season games only. Reported apart, swept "
+                 "by nothing, and never added to the regular-season tallies"),
+    }
+
+
 def summary(*, path: Path | None = None) -> dict:
     """What the ledger has accumulated, for the page and for the gate.
 
@@ -1513,9 +1550,21 @@ def summary(*, path: Path | None = None) -> dict:
     sweep keys on), `budget_split` (the two budget eras, reported apart, and the
     cells the cap change actually split), and `sweep_readiness_by_market_tag`.
     Every one of those is a REPORT. The sweepable shape lives in
-    `graded_bets_by_market_tag`, which has no pooled key at all."""
-    rows = load(path)
+    `graded_bets_by_market_tag`, which has no pooled key at all.
+
+    SINCE 2026-10-01 EVERY BLOCK ABOVE IS REGULAR-SEASON. /betting/ prices the
+    postseason by owner decision (INT-A1) and the pricer has never been graded
+    on a postseason game, so those paper rows are reported apart under
+    `postseason`, partitioned by market and by game type, and are added to
+    nothing else here. `n_rows_all` is the whole ledger."""
+    rows_all = load(path)
+    rows = [r for r in rows_all if not betting_settle.is_postseason(r)]
+    post = [r for r in rows_all if betting_settle.is_postseason(r)]
     out = _tally(rows)
+    out["n_rows_all"] = len(rows_all)
+    out["n_postseason_rows"] = len(post)
+    out["scope"] = "regular_season"
+    out["postseason"] = _postseason_block(post)
     buckets: dict[str, list[dict]] = {}
     for r in rows:
         buckets.setdefault(r.get("slot") or "untagged", []).append(r)
@@ -1660,12 +1709,19 @@ def readiness_artifact(*, path: Path | None = None) -> dict:
         "generated_at": _now(),
         "newest_row_at": stamps[-1] if stamps else None,
         "oldest_row_at": stamps[0] if stamps else None,
-        "n_rows": len(rows),
+        # REGULAR-SEASON COUNTS (2026-10-01). Every block below this line is the
+        # regular-season ledger; the postseason paper rows are the `postseason`
+        # sub-ledger at the end and are counted in nothing else.
+        "n_rows": summ.get("n_rows"),
+        "n_rows_all": len(rows),
+        "n_postseason_rows": summ.get("n_postseason_rows"),
+        "scope": "regular_season",
         "min_bets_for_sweep": MIN_BETS_FOR_SWEEP,
         "by_market": summ.get("by_market"),
         "by_market_by_tag": summ.get("by_market_by_tag"),
         "sweep_readiness_by_market_tag": summ.get("sweep_readiness_by_market_tag"),
         "budget_split": summ.get("budget_split"),
+        "postseason": summ.get("postseason"),
         "reading": ("counts only. A cell is `ready` when its own settled count "
                     "reaches the floor; until then it has no verdict, and the "
                     "won/lost columns beside it are a description of history "

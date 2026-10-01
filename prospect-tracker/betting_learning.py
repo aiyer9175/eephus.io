@@ -444,11 +444,22 @@ def _price_clock(shadow_summary: dict, ledger_rows: list[dict],
     except Exception:                                           # noqa: BLE001
         def _tags_of(r):
             return {r.get("slot") or "untagged"}
+    try:
+        import betting_settle
+        _post = betting_settle.is_postseason
+    except Exception:                                           # noqa: BLE001
+        def _post(r):
+            return False
 
     # One pass over the ledger, indexed by tag, rather than one pass per tag.
+    # POSTSEASON ROWS DO NOT RUN THE CLOCK (2026-10-01): the readiness counts
+    # it copies refuse them, so its arrival rate must refuse them too, or the
+    # rate and the count would be measured on two different populations.
     settled_by_tag_date: dict[str, dict] = {}
     for r in ledger_rows:
         if r.get("result") not in ("won", "lost"):
+            continue
+        if _post(r):
             continue
         d = r.get("slate_date")
         if not d:

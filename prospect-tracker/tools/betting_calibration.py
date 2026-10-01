@@ -90,6 +90,11 @@ OPEN_FIELDS = frozenset({
     # 2026-08-16, section 7c: props rows name their player. Team rows never
     # carry the key, which is what keeps the two populations separable.
     "player",
+    # 2026-10-01 (owner decision INT-A1): a side off a POSTSEASON game names
+    # its StatsAPI game type (F, D, L, W). Regular-season rows never carry the
+    # key, which is what keeps every gate this ledger feeds on regular-season
+    # rows: see `canonical_settled_games` and `summary`.
+    "game_type",
 })
 CLOSE_FIELDS = frozenset({
     "cal_id", "phase", "written_at", "close_odds", "close_decimal",
@@ -320,6 +325,7 @@ def record_slate(payload: dict, *, path: Path | None = None,
             "best_decimal": r.get("decimal"),
             "n_books_on_line": s["n_books_on_line"],
             "inputs_vintage_date": vintage,
+            **({"game_type": bset.game_type_of(b)} if bset.is_postseason(b) else {}),
         })
     n = append(events, path=path)
     if log_fn and n:
@@ -536,8 +542,14 @@ def summary(*, path: Path | None = None) -> dict:
     POOLED IS LEGITIMATE HERE and nowhere else in the betting module: these are
     probabilities on every side, not bets chosen by a rule, so there is no
     selection to condition on. That is stated rather than assumed because the
-    identical word means the opposite thing one file over."""
-    cur = rows(path=path)
+    identical word means the opposite thing one file over.
+
+    REGULAR-SEASON SINCE 2026-10-01. Postseason sides (owner decision INT-A1)
+    are counted under `postseason` and in nothing else here, because the
+    pricer was never fitted or graded on a postseason game."""
+    every = rows(path=path)
+    cur = [r for r in every if not bset.is_postseason(r)]
+    post = [r for r in every if bset.is_postseason(r)]
     settled = [r for r in cur if r.get("result") in ("won", "lost")]
     pushes = [r for r in cur if r.get("result") == "push"]
     closed = [r for r in cur if r.get("market_move_pct") is not None]
@@ -608,6 +620,15 @@ def summary(*, path: Path | None = None) -> dict:
                        "is the vintage-graded moneyline sample beating the home-field "
                        "baseline on games the model could not see. Honest "
                        "probabilities do not license a pick."),
+        "scope": "regular_season",
+        "n_rows_all": len(every),
+        "postseason": {
+            **_block(post),
+            "label": bset.POSTSEASON_LABEL,
+            "note": ("priced sides off postseason games (StatsAPI F, D, L, W), "
+                     "owner decision 2026-10-01; counted here and in no other "
+                     "block, and in no gate"),
+        },
     }
 
 
@@ -648,6 +669,12 @@ def canonical_settled_games(rws: list[dict]) -> dict:
     for r in rws:
         m = r.get("market")
         if m not in out:
+            continue
+        # POSTSEASON ROWS ARE NO GATE'S EVIDENCE (2026-10-01, INT-A1). The 7b
+        # market gate and the 11b calibration ledger arm were registered on
+        # regular-season games; the owner priced the postseason and re-framed
+        # no gate, so a postseason side never reaches either statistic.
+        if bset.is_postseason(r):
             continue
         if r.get("result") not in ("won", "lost"):
             continue

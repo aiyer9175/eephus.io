@@ -76,6 +76,7 @@ from pathlib import Path
 import betting_ingest as bi
 import betting_model as bm
 import betting_dugout as bd
+import betting_settle as bset
 
 log = logging.getLogger("betting_export")
 
@@ -1708,7 +1709,49 @@ def record_summary(rows: list[dict] | None = None, clv: dict | None = None,
     clv = load_clv() if clv is None else clv
     settlement = load_settlement() if settlement is None else settlement
     merged = _merged_rows(rows, clv, settlement)
+    # THE HEADLINE IS THE REGULAR SEASON (owner decision 2026-10-01, INT-A1).
+    # Postseason rows rest on a pricer with no postseason evidence, so they are
+    # tallied apart under `postseason` and the headline counts below exclude
+    # them; `scope_note` says so on the payload. `chain_sha` stays over EVERY
+    # row, because the chain proves the whole record was appended to.
+    regular = [r for r in merged if not bset.is_postseason(r)]
+    post = [r for r in merged if bset.is_postseason(r)]
+    out = _record_tally(regular)
+    out["n_rows_all"] = len(rows)
+    out["n_postseason_rows"] = len(post)
+    out["scope"] = "regular_season"
+    out["scope_note"] = (
+        "Regular-season rows only. Postseason rows (StatsAPI game types F, D, L "
+        "and W) are excluded from these counts and reported as their own "
+        "sub-ledger under postseason, because the model has never been fitted "
+        "or graded on a postseason game; pricing the postseason is an owner "
+        "decision of 2026-10-01.")
+    post_block = _record_tally(post)
+    post_block["label"] = bset.POSTSEASON_LABEL
+    post_block["by_game_type"] = {
+        gt: sum(1 for r in post if bset.game_type_of(r) == gt)
+        for gt in bset.POSTSEASON_GAME_TYPES}
+    post_block["note"] = (
+        "Postseason rows, tallied apart from the regular-season record and never "
+        "added to it. The pricer was fitted and graded on regular-season games "
+        "only; these rows are priced by owner decision of 2026-10-01.")
+    out["postseason"] = post_block
+    out["stake_policy"] = "flat 1 unit"
+    # The rolling hash of the record these numbers were computed over, so a
+    # reader who archived yesterday's value can prove today's record extends
+    # it rather than having been quietly rewritten. See `chain_sha`.
+    out["chain_sha"] = chain_sha(rows)
+    out["chain_note"] = ("sha256 folded row by row over the record; a record that "
+                         "still contains an archived value as one of its prefix "
+                         "hashes is an append, and one that does not is a rewrite")
+    return out
 
+
+def _record_tally(merged: list[dict]) -> dict:
+    """W-L, units, ROI and the CLV pair over one set of merged record rows.
+    Factored out of `record_summary` unchanged so the regular-season headline
+    and the postseason sub-ledger are counted by one rule."""
+    rows = merged
     settled = [r for r in merged if r.get("result") in ("won", "lost", "push", "void")]
     wins = sum(1 for r in settled if r.get("result") == "won")
     losses = sum(1 for r in settled if r.get("result") == "lost")
@@ -1737,14 +1780,6 @@ def record_summary(rows: list[dict] | None = None, clv: dict | None = None,
         "beat_close_rate": (round(sum(1 for r in graded if r.get("beat_close")) / len(graded), 4)
                             if graded else None),
         "avg_clv_pct": round(sum(clvs) / len(clvs), 3) if clvs else None,
-        "stake_policy": "flat 1 unit",
-        # The rolling hash of the record these numbers were computed over, so a
-        # reader who archived yesterday's value can prove today's record extends
-        # it rather than having been quietly rewritten. See `chain_sha`.
-        "chain_sha": chain_sha(rows),
-        "chain_note": ("sha256 folded row by row over the record; a record that "
-                       "still contains an archived value as one of its prefix "
-                       "hashes is an append, and one that does not is a rewrite"),
     }
 
 
@@ -2289,6 +2324,12 @@ def record_row(slot_row: dict, *, slate_date: str, evald: dict | None,
         # rows apart instead of pooling them (see context_version_note).
         "context_version": (slot_row.get("context_version")
                             or bm.context_model_version()),
+        # A POSTSEASON ROW SAYS SO ON THE RECORD ITSELF (owner decision
+        # 2026-10-01, INT-A1): `game_type` and the label "never graded on a
+        # postseason game". Absent on a regular-season row, so those rows keep
+        # the exact shape every row before them has, and `record_summary`
+        # reports the postseason rows as their own sub-ledger.
+        **_postseason_row_fields(slot_row),
         "label": provisional_record_label(
             evald, min_edge=float(slot_row.get("min_edge_used") or PROVISIONAL_MIN_EDGE),
             provisional=bool(slot_row.get("provisional"))),
@@ -2495,6 +2536,43 @@ def anchors_close_window(game: dict) -> bool:
     return is_bettable(game) or st in IN_PROGRESS_STATES
 
 
+#: THE GAME SCOPE (owner decision 2026-10-01, INT-A1, "Yes, full"; task
+#: BET_POSTSEASON_PRICING; docs/diamond-betting.md section 8a). True: the board
+#: reads data/fantasy.json's `schedule.postseason_games` beside its regular
+#: season `games`, so wild card, division series, LCS and World Series games
+#: (StatsAPI gameType F, D, L, W) are priced, may fill both slots and may post
+#: public record rows. Nothing else in the pricer changes: no refit, no new
+#: feature, the same per-slot guard and the same total-lean bar. The model has
+#: never been fitted or graded on a postseason game, so every postseason card,
+#: slot, paper row and record row carries `game_type` and the label
+#: betting_settle.POSTSEASON_LABEL, and the record reports those rows as their
+#: own sub-ledger. False restores the regular-season-only board byte for byte.
+BET_POSTSEASON_SCOPE = True
+
+
+def _schedule_rows(fan: dict | None) -> list[dict]:
+    """Every schedule row the board may consider: the regular-season list, plus
+    the postseason list while BET_POSTSEASON_SCOPE is on.
+
+    ONE read of the scope, shared by `slate_games` and `resolve_slate`, so the
+    close job's slate and the board's slate cannot disagree about which games
+    exist. A postseason row already carries `game_type` from fantasy_schedule;
+    it is stamped again here off the list it came from, so a row is never
+    priced as regular-season because a producer dropped the key."""
+    sched = (fan or {}).get("schedule") or {}
+    rows = list(sched.get("games") or [])
+    if BET_POSTSEASON_SCOPE:
+        seen = {g.get("game_pk") for g in rows}
+        for g in sched.get("postseason_games") or []:
+            if g.get("game_pk") in seen:
+                continue
+            gt = str(g.get("game_type") or "").strip().upper()
+            if gt not in bset.POSTSEASON_GAME_TYPES:
+                continue                  # a list that is not what it says it is
+            rows.append(g)
+    return rows
+
+
 def slate_games(on_date: str | None = None, *, include_unbettable: bool = False) -> list[dict]:
     """Today's BETTABLE games from data/fantasy.json's schedule block. That block
     is already refreshed by run_monthly step 9d, so /betting/ costs the pipeline
@@ -2504,9 +2582,11 @@ def slate_games(on_date: str | None = None, *, include_unbettable: bool = False)
     earliest date on file: an evening build on a day whose games are all Final
     should show tomorrow's board rather than a board of finished scores. Pass
     `include_unbettable=True` for a raw read (nothing in the pipeline wants
-    one; it exists so a diagnosis can compare the two counts)."""
+    one; it exists so a diagnosis can compare the two counts).
+
+    Postseason rows join through `_schedule_rows` (BET_POSTSEASON_SCOPE)."""
     fan = _load("fantasy.json") or {}
-    games = ((fan.get("schedule") or {}).get("games")) or []
+    games = _schedule_rows(fan)
     if not games:
         return []
     live = games if include_unbettable else [g for g in games if is_bettable(g)]
@@ -2926,7 +3006,7 @@ def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
             all_rows=raw)
 
     fan = _load("fantasy.json") or {}
-    allg = ((fan.get("schedule") or {}).get("games")) or []
+    allg = _schedule_rows(fan)
     days = sorted({g["date"] for g in allg if g.get("date")})
     # INJECTABLE, and defaulted from the cache only when the caller says nothing.
     # A test that does not pass one used to read whatever `.cache/odds` happened
@@ -3923,6 +4003,23 @@ def stamp_total_level_caveat(bets: list[dict], check: dict) -> int:
     return n
 
 
+def _postseason_card_fields(g: dict | None) -> dict:
+    """`game_type`, `postseason_label` and `series` for a postseason schedule
+    row, {} for any other. The vocabulary is betting_settle's, shared with
+    both ledgers."""
+    out = bset.postseason_fields((g or {}).get("game_type"))
+    if out:
+        out["series"] = ((g or {}).get("series")
+                         or bset.POSTSEASON_ROUND_NAMES.get(out["game_type"]))
+    return out
+
+
+def _postseason_row_fields(row: dict | None) -> dict:
+    """The two keys a slot candidate, a published slot and a record row copy
+    off their card: `game_type` and `postseason_label`, or {}."""
+    return bset.postseason_fields((row or {}).get("game_type"))
+
+
 def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
               starters=None, now=None, stats=None) -> list[dict]:
     """Every game on the slate: model probabilities, the market when a snapshot
@@ -4055,6 +4152,11 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
             "start": g.get("datetime"),
             "status": g.get("status"),
             "double_header": bool(g.get("double_header")),
+            # A POSTSEASON CARD SAYS SO (owner decision 2026-10-01, INT-A1):
+            # `game_type` (F, D, L, W), the label "never graded on a postseason
+            # game" and the series name. Absent on a regular-season card, so
+            # that card is byte-identical to the ones before the scope moved.
+            **_postseason_card_fields(g),
             # WHICH odds event priced this row. On a doubleheader the org pair
             # is not a key, so the event id and its start are the only way a
             # reader (or a test) can prove game two was not priced off game one.
@@ -5838,11 +5940,21 @@ def _floor_clearing_sides(bets: list[dict], thr: float, *,
                 cands.append({**row, "market": market, "game_pk": b.get("game_pk"),
                               "matchup": f"{b['away']['org']} at {b['home']['org']}",
                               "start": b.get("start"),
-                              "evidence_closed": bool(market in ledger_closed)})
+                              "evidence_closed": bool(market in ledger_closed),
+                              # The card's postseason label rides onto the
+                              # candidate, and from there onto the slot and
+                              # the record row (owner decision 2026-10-01).
+                              **_postseason_row_fields(b)})
+    # A props row names its game, not its card, so its postseason label is
+    # read off the card of the same game_pk.
+    post_by_pk = {b.get("game_pk"): _postseason_row_fields(b) for b in bets
+                  if _postseason_row_fields(b)}
     for row in extra_rows or []:
         market = row.get("market")
         if not market:
             continue
+        if row.get("game_pk") in post_by_pk:
+            row = {**row, **post_by_pk[row.get("game_pk")]}
         # Props are not in DISPERSION_SENSITIVE_MARKETS (7c), so the dispersion
         # leg has never had anything to say about them and the ledger leg is
         # their whole gate under every policy value.

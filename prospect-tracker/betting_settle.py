@@ -75,6 +75,57 @@ PROPS_RESULTS = ("won", "lost", "push", "void")
 #: certainty at 13.8 nats, which is punishing without being infinite.
 LOG_LOSS_EPS = 1e-6
 
+#: THE POSTSEASON VOCABULARY (owner decision 2026-10-01, INT-A1; task
+#: BET_POSTSEASON_PRICING; docs/diamond-betting.md section 8a). /betting/ prices
+#: postseason games although the model has never been fitted or graded on one.
+#: It lives HERE because this is the one module every ledger already imports:
+#: the public record, the paper ledger and the calibration ledger read one
+#: definition of "a postseason row", so no two of them can disagree about which
+#: rows are their own sub-ledger.
+#:
+#: StatsAPI gameType codes: F wild card, D division series, L league
+#: championship series, W World Series. A row with no `game_type` field is a
+#: REGULAR-SEASON row, because every row written before 2026-10-01 came off a
+#: board that carried regular-season games only (fantasy_schedule fetched
+#: gameType=R), and the field is written on postseason rows alone so that a
+#: regular-season row is byte-identical to the rows before it.
+POSTSEASON_GAME_TYPES = ("F", "D", "L", "W")
+REGULAR_SEASON_GAME_TYPE = "R"
+
+#: The visible label every postseason card, slot, paper row and record row
+#: carries, verbatim. The orchestrator's binding condition 1 names the words.
+POSTSEASON_LABEL = "never graded on a postseason game"
+
+#: Human names for the four codes, for copy only. Nothing branches on them.
+POSTSEASON_ROUND_NAMES = {"F": "Wild Card Series", "D": "Division Series",
+                          "L": "League Championship Series", "W": "World Series"}
+
+
+def game_type_of(row: dict | None) -> str:
+    """The StatsAPI gameType a ledger row or board card was written for.
+
+    Absent reads as R: see POSTSEASON_GAME_TYPES for why that reading is a
+    fact about the rows already on disk and not a guess."""
+    gt = str((row or {}).get("game_type") or "").strip().upper()
+    return gt or REGULAR_SEASON_GAME_TYPE
+
+
+def is_postseason(row: dict | None) -> bool:
+    """True for a row written off a postseason game (F, D, L or W)."""
+    return game_type_of(row) in POSTSEASON_GAME_TYPES
+
+
+def postseason_fields(game_type) -> dict:
+    """The two keys a postseason row carries, or {} for any other game type.
+
+    Empty for a regular-season game ON PURPOSE: the keys are absent rather
+    than null so a regular-season row, card or record line is byte-identical
+    to the ones written before postseason pricing existed."""
+    gt = str(game_type or "").strip().upper()
+    if gt not in POSTSEASON_GAME_TYPES:
+        return {}
+    return {"game_type": gt, "postseason_label": POSTSEASON_LABEL}
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -467,10 +518,23 @@ def load_completed(season: str | None = None) -> list[dict]:
     not crash the nightly that also has a board to publish."""
     try:
         import betting_model as bm
-        return bm.completed_games(season) if season else bm.completed_games()
+        games = bm.completed_games(season) if season else bm.completed_games()
     except Exception as exc:                                    # noqa: BLE001
         log.warning("betting_settle: completed games unavailable (%s)", exc)
         return []
+    # POSTSEASON FINALS SETTLE POSTSEASON ROWS (2026-10-01, INT-A1). They come
+    # from their own cache, `betting_model.postseason_finals`, and are joined
+    # HERE, on the settlement path only: completed_games() is the coefficient
+    # fit's input and stays regular-season, so no postseason score can reach a
+    # refit, a backtest or any gate's frame through this list. A failure leaves
+    # the postseason rows open with "game not final", which is a named reason.
+    try:
+        post = bm.postseason_finals(season)
+    except Exception as exc:                                    # noqa: BLE001
+        log.warning("betting_settle: postseason finals unavailable (%s)", exc)
+        post = []
+    have = {g.get("game_pk") for g in games}
+    return list(games) + [g for g in post if g.get("game_pk") not in have]
 
 
 def run(*, games=None, log_fn=None) -> dict:

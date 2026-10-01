@@ -148,7 +148,7 @@ def fetch_probables(start_date: str, end_date: str, *, game_type: str = "R",
                 continue
             teams = g.get("teams") or {}
             venue = g.get("venue") or {}
-            out.append({
+            row = {
                 "game_pk": int(pk),
                 "date": g.get("officialDate") or d.get("date"),
                 "datetime": g.get("gameDate"),
@@ -157,8 +157,38 @@ def fetch_probables(start_date: str, end_date: str, *, game_type: str = "R",
                 "venue": {"id": venue.get("id"), "name": venue.get("name")},
                 "home": _side(teams.get("home") or {}),
                 "away": _side(teams.get("away") or {}),
-            })
+            }
+            # A NON-REGULAR-SEASON ROW SAYS SO (2026-10-01). Regular-season rows
+            # stay byte-identical to the ones before this key existed; a
+            # postseason row carries its StatsAPI code and the series name so
+            # the betting board can label it (docs/diamond-betting.md 8a).
+            gt = g.get("gameType")
+            if gt and gt != "R":
+                row["game_type"] = gt
+                if g.get("seriesDescription"):
+                    row["series"] = g.get("seriesDescription")
+            out.append(row)
     return out
+
+
+#: The postseason gameType codes, comma-joined the way StatsAPI takes a list:
+#: F wild card, D division series, L league championship series, W World
+#: Series. betting_settle.POSTSEASON_GAME_TYPES holds the same four codes for
+#: the ledgers; this module does not import the betting stack.
+POSTSEASON_GAME_TYPES = "F,D,L,W"
+
+
+def fetch_postseason(start_date: str, end_date: str, *, use_cache: bool = True) -> list[dict]:
+    """Scheduled POSTSEASON games in the window, in fetch_probables' shape, each
+    row carrying `game_type` (F, D, L or W) and `series`.
+
+    Kept apart from fetch_probables' regular-season list on purpose: the
+    streamer, two-start and DFS boards read that list and are regular-season
+    surfaces. Only /betting/ reads this one (owner decision 2026-10-01,
+    INT-A1). A matchup still to be decided ("ATL/PHI") arrives with a club code
+    no model row has, and the board skips it as it skips any unknown club."""
+    return fetch_probables(start_date, end_date, game_type=POSTSEASON_GAME_TYPES,
+                           use_cache=use_cache)
 
 
 def fetch_lineups(day: str, *, game_type: str = "R", use_cache: bool = True) -> dict:

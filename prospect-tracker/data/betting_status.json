@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-25T23:34:22+00:00",
+ "generated_at": "2026-10-01T18:11:29+00:00",
  "configured": true,
  "provider": "The Odds API (free tier)",
  "sport": "baseball_mlb",
@@ -14,13 +14,13 @@
  "credits_per_snapshot": 3,
  "monthly_budget": 500,
  "planned_monthly_credits": 186,
- "n_snapshots_cached": 37,
- "latest_snapshot": "2026-09-25T23:34:22+00:00",
+ "n_snapshots_cached": 40,
+ "latest_snapshot": "2026-09-30T17:54:11+00:00",
  "latest_kind": "open",
  "latest_credits": {
   "cost": 3,
-  "used": 54,
-  "remaining": 446,
+  "used": 63,
+  "remaining": 437,
   "last": 3
  },
  "props": "props machinery is inert: EEPHUS_PROPS_CREDITS is not set. Both EEPHUS_ODDS_API_KEY and EEPHUS_PROPS_CREDITS must be set before a per-event props pull can spend a credit.",

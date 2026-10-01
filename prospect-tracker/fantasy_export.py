@@ -1413,9 +1413,19 @@ def _attach_schedule(payload: dict) -> None:
         starts7 = fsched.starts_index(games7)
         team_sched = fsched.team_schedule(games7)
         two = fsched.projected_two_start(starts7, team_sched, e7)
+        # THE POSTSEASON SLATE, FOR /betting/ ONLY (owner decision 2026-10-01,
+        # INT-A1). A separate list so `games`, which the streamer, two-start
+        # and DFS boards read, stays regular-season. A failed fetch is [] and
+        # the betting board simply has no postseason rows that night.
+        try:
+            post3 = fsched.fetch_postseason(s3, e3)
+        except Exception:                                    # noqa: BLE001
+            log.exception("fantasy: postseason schedule fetch failed - continuing")
+            post3 = []
         payload["schedule"] = {
             "streamer_window": [s3, e3],
             "games": games3,
+            "postseason_games": post3,
             "two_start": {str(m): v for m, v in two.items()},
             # The 7-day per-club slate, compacted to (date, opponent, side).
             # Until 2026-08-16 games7 was fetched and then DISCARDED once

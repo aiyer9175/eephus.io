@@ -10213,6 +10213,97 @@ snapshot, so it stays null until section 3's close job runs.
 
 ---
 
+## 8a. Postseason games are priced (owner decision 2026-10-01, INT-A1)
+
+**The decision.** On 2026-10-01 the owner answered INT-A1 with (c) "Yes,
+full" (recorded in `_audit_2026-09-09/DECISIONS_FOR_OWNER.md` under "Part 8
+batch 8 (rest) and batch 9 (part): links and postseason betting"), departing
+from the recommended "no": /betting/ prices postseason games, and they may fill
+the Pick of the Day and longshot slots and post public record rows, although
+the pricer has never been fitted or graded on a postseason game. Task
+BET_POSTSEASON_PRICING carries it out.
+
+**What the model's evidence is.** Every game behind every number this module
+publishes about itself is a regular-season game: the coefficient fit and the
+vintage backtest read `betting_model.completed_games()`, which takes
+StatsAPI gameType R only (`_row_from_schedule`), and the paper and calibration
+ledgers held regular-season sides only until this date. Pricing the postseason
+is an owner decision, not a finding.
+
+**How postseason games enter: the game scope, and nothing else.**
+`fantasy_export._attach_schedule` writes a second list,
+`schedule.postseason_games`, from `fantasy_schedule.fetch_postseason` (gameType
+F, D, L, W over the same three-day window as `games`). `games` stays
+regular-season because the streamer, two-start and DFS boards read it.
+`betting_export._schedule_rows` joins the two lists while
+`BET_POSTSEASON_SCOPE` is True, and `slate_games` and `resolve_slate` both read
+that one helper, so the board and the close job agree on which games exist.
+False restores the regular-season board byte for byte. No coefficient is
+refitted, no feature is added, and the pricer prices a postseason game exactly
+as it prices a regular-season one: the listed probable's SEM+ when one is
+announced (a postseason probable is often posted later than a regular-season
+one, and an unannounced side falls back to the club's rotation, as it always
+has), season-to-date team inputs, the home club's park index and home field. A
+matchup still to be decided (StatsAPI lists the club as "ATL/PHI") has no
+model row and is skipped, as any unknown club is.
+
+**The labels (binding condition 1).** Every postseason card in
+`team_bets`, every slot candidate and published slot, every shadow ledger row
+and every public record row carries `game_type` (F, D, L or W) and
+`postseason_label`, the string "never graded on a postseason game", from one
+definition, `betting_settle.postseason_fields`. A card also carries `series`.
+A regular-season row carries neither key, so it is byte-identical to every row
+before this date, and a row with no `game_type` reads as R. The calibration
+ledger's open phase gained `game_type` on postseason sides for the same reason.
+The page renders the label as a tag on the game card and on a filled slot, and
+the slot card adds one sentence saying the model's evidence is regular-season
+only.
+
+**The sub-ledger (binding condition 2).** `record_summary` counts the
+regular-season rows in its headline (`scope: regular_season`, with
+`scope_note` saying postseason rows are excluded) and tallies postseason rows
+apart under `record.postseason`, with `by_game_type`. `chain_sha` is still
+folded over every row, because the chain proves the whole record was appended
+to. `betting_shadow.summary()` and `data/betting_subledger.json` follow the
+same split: every existing block is regular-season, and `postseason` holds
+the postseason paper rows by market and by game type. `n_rows_all` is the
+whole ledger in each.
+
+**No gate's frame moves.** The 5c, 5d and 5l sections and every gate in 7, 7b,
+7e and 11b name regular-season frames, and this section touches none of their
+clauses. Postseason rows are refused at the shaping seams so the frames stay
+what they were registered as: `betting_shadow._sweep_row` refuses a postseason
+paper row (gate 3, the readiness counts and the per-cell sweeps),
+`tools/betting_calibration.canonical_settled_games` skips a postseason side
+(the 7b market gate and the 11b ledger arm), the calibration summary counts
+them only under `postseason`, and `betting_learning._price_clock` does not
+count them in its arrival rate. The dark columns and the outcome joins of
+5c, 5d, 5e, 5f, 5j and 5l read `completed_games()` and are untouched.
+
+**Unchanged rules (binding condition 4).** The per-slot record guard (one row
+per slate and slot, `maybe_publish_record`) and the total-lean bar
+(`BAR_TOTAL_LEAN_SLOTS`) apply to postseason rows exactly as written.
+`test_betting_postseason.py` pins both on postseason rows.
+
+**Settlement.** A postseason row settles against
+`betting_model.postseason_finals()`, a separate cache
+(`.cache/betting/postseason_games.json`, one StatsAPI request at most every 30
+minutes) that `betting_settle.load_completed` appends to the regular-season
+list on the settlement path only. `completed_games()` never sees a postseason
+score.
+
+**The registry and the glossary (binding condition 3).** The
+`betting_game_prob` row and the `provisional_pick` glossary entry say the
+model's evidence is regular-season only and that postseason pricing is an
+owner decision of 2026-10-01.
+
+**What is not done here.** No postseason odds or bracket view (INT-A2 and
+Q901-1 are their own tasks), no postseason props (the corpus is in
+next-season mode and prices no prop), and no postseason grading claim of any
+kind: the sub-ledger is a description of history, not evidence.
+
+---
+
 ## 9. Legal rails (non-negotiable)
 
 Every betting surface carries: **21+**, informational and entertainment only,

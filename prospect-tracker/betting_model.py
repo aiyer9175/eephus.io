@@ -3318,19 +3318,26 @@ def _write_rows(path, rows) -> None:
 SCHEDULE_API = "https://statsapi.mlb.com/api/v1/schedule"
 
 
-def _row_from_schedule(g: dict, fallback_date: str | None) -> dict | None:
+def _row_from_schedule(g: dict, fallback_date: str | None, *,
+                       game_types: tuple = ("R",)) -> dict | None:
     """One schedule game -> the SAME compact row shape the feed walk produces.
 
     Kept byte-compatible with the feed path on purpose: the two sources have to
     be mergeable by game_pk, and a row whose shape depends on which door it came
-    through would make the fit and the backtest quietly source-dependent."""
+    through would make the fit and the backtest quietly source-dependent.
+
+    `game_types` defaults to the regular season, which is every caller that
+    feeds the fit, the backtest and every gate. Only `postseason_finals` passes
+    the postseason codes, and its rows carry a `game_type` key the regular
+    season rows never do, so a postseason row cannot pass for one."""
     if (g.get("status") or {}).get("abstractGameState") != "Final":
         return None
     # gameType=R is a query parameter, not a promise about the payload. The
     # backtest must never see spring training, exhibition or postseason games:
     # they carry different team quality and different roster rules, and the fit
     # would silently absorb both.
-    if (g.get("gameType") or "R") != "R":
+    gt = g.get("gameType") or "R"
+    if gt not in game_types:
         return None
     teams = g.get("teams") or {}
     home, away = teams.get("home") or {}, teams.get("away") or {}
@@ -3346,7 +3353,7 @@ def _row_from_schedule(g: dict, fallback_date: str | None) -> dict | None:
               or (away.get("team") or {}).get("name"))
     if not ho or not ao:
         return None
-    return {
+    row = {
         "game_pk": g.get("gamePk"),
         "season": str(g.get("season") or ""),
         "date": g.get("officialDate") or fallback_date,
@@ -3356,6 +3363,9 @@ def _row_from_schedule(g: dict, fallback_date: str | None) -> dict | None:
         "home_sp": (home.get("probablePitcher") or {}).get("id"),
         "away_sp": (away.get("probablePitcher") or {}).get("id"),
     }
+    if gt != "R":
+        row["game_type"] = gt
+    return row
 
 
 def fetch_finals(start_date: str, end_date: str, *, log_fn=None) -> list[dict]:
@@ -3578,6 +3588,79 @@ def build_game_cache(*, force: bool = False, refresh: bool = True,
 def completed_games(season: str | None = None, *, refresh: bool = True) -> list[dict]:
     rows = build_game_cache(refresh=refresh)
     return [r for r in rows if not season or r.get("season") == str(season)]
+
+
+#: POSTSEASON RESULTS, FOR SETTLEMENT ONLY (owner decision 2026-10-01, INT-A1).
+#: /betting/ prices postseason games, so their rows need a final score to
+#: settle against, and completed_games() must not supply one: it is the input
+#: to the coefficient fit, the vintage backtest and every gate's frame, and all
+#: of those are regular-season by construction (`_row_from_schedule` above).
+#: So the postseason finals live in their OWN file beside the regular-season
+#: cache and are joined only by betting_settle.load_completed, the settlement
+#: path. Nothing that fits or grades the model reads this function.
+POSTSEASON_SCHEDULE_TYPES = ("F", "D", "L", "W")
+POSTSEASON_FINALS_FILE = "postseason_games.json"
+#: One StatsAPI request at most this often. A settlement pass runs a few times a
+#: night, and a postseason day has one to four games.
+POSTSEASON_FINALS_TTL_SECONDS = 1800
+#: The earliest date a postseason game can be played. A floor, not a fact about
+#: any one season: the request window runs from here to today.
+POSTSEASON_EARLIEST_MMDD = "09-15"
+
+
+def postseason_finals(season: str | None = None, *, refresh: bool = True,
+                      log_fn=None) -> list[dict]:
+    """Final postseason games (F, D, L, W) for `season`, as completed-game rows
+    carrying a `game_type` key, from .cache/betting/postseason_games.json.
+
+    Same row shape as completed_games() plus `game_type`, so the shared grader
+    reads both. A fetch failure keeps the cached rows and says so in the log;
+    refresh=False never touches the network."""
+    season = str(season or _dt.date.today().year)
+    GAME_CACHE.mkdir(parents=True, exist_ok=True)
+    path = GAME_CACHE / POSTSEASON_FINALS_FILE
+    cached = _load_json(path) if path.exists() else []
+    if not isinstance(cached, list):
+        cached = []
+    rows = cached
+    fresh_enough = False
+    if path.exists():
+        try:
+            import time as _time
+            fresh_enough = (_time.time() - path.stat().st_mtime) < POSTSEASON_FINALS_TTL_SECONDS
+        except OSError:
+            fresh_enough = False
+    today = _dt.date.today().isoformat()
+    start = f"{season}-{POSTSEASON_EARLIEST_MMDD}"
+    if refresh and not fresh_enough and start <= today:
+        try:
+            import feed_cache
+            resp = feed_cache.SESSION.get(
+                SCHEDULE_API,
+                params={"sportId": 1, "startDate": start, "endDate": today,
+                        "gameType": ",".join(POSTSEASON_SCHEDULE_TYPES),
+                        "hydrate": "probablePitcher,linescore"},
+                timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+            by_pk = {r.get("game_pk"): r for r in cached if r.get("game_pk")}
+            for d in data.get("dates") or []:
+                for g in d.get("games") or []:
+                    row = _row_from_schedule(g, d.get("date"),
+                                             game_types=POSTSEASON_SCHEDULE_TYPES)
+                    if row and row.get("game_pk"):
+                        by_pk[row["game_pk"]] = row
+            rows = sorted(by_pk.values(),
+                          key=lambda r: (r.get("date") or "", r.get("game_pk") or 0))
+            _write_rows(path, rows)
+            if log_fn:
+                log_fn(f"betting_model: {len(rows)} final postseason game(s) cached")
+        except Exception as exc:                              # noqa: BLE001
+            log.warning("betting_model: could not refresh postseason finals (%s); "
+                        "serving %d cached row(s)", exc, len(cached))
+            rows = cached
+    return [r for r in rows if str(r.get("season") or "") == season
+            and r.get("game_type") in POSTSEASON_SCHEDULE_TYPES]
 
 
 # ---------------------------------------------------------------------------

@@ -8571,7 +8571,7 @@
    "shelf": "ark",
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
    "definition": "A published pick from a model that has NOT cleared its validation gates. No minimum edge has been measured yet, so the pick cleared the policy floor instead, and the card says so.",
-   "methodology": "The alternative was showing nothing for a season, and the owner chose to publish with the label instead. Every provisional pick carries the flag, the floor it cleared and the basis of that floor in the payload itself, so a row lifted out of the page is still self-describing. The Validation tab shows which gates are shut and how far each clock has run.",
+   "methodology": "The alternative was showing nothing for a season, and the owner chose to publish with the label instead. Every provisional pick carries the flag, the floor it cleared and the basis of that floor in the payload itself, so a row lifted out of the page is still self-describing. The Validation tab shows which gates are shut and how far each clock has run. Every game behind the model's evidence is a regular-season game. Postseason games are priced by owner decision of 2026-10-01, although the model has never been fitted or graded on one: each postseason card, selection and record row says 'never graded on a postseason game', and the record reports those rows as a postseason sub-ledger beside the regular-season record, never inside it.",
    "seeAlso": [
     "policy_floor",
     "validation_clocks",
