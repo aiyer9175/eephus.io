@@ -4292,6 +4292,56 @@ reported, as the 2026-09-11 amendment requires.
 and the postseason ruling stand as registered. Only the column's construction and
 the clock's start move.
 
+### The per-hand estimator `platoon_ratio_v1`, pre-registered (2026-10-01, before its constant is fitted)
+
+Written before the shrink constant below is fitted and before the switch is
+coded; the commit that fits it records the fit output and changes nothing here.
+`hem_plus.py` carries the same text in its module docstring.
+
+**The estimate.** For a hitter with a season line and a counting line against
+each pitcher hand (`d_L`, `d_R` the wOBA denominators of the two lines, `x_L`,
+`x_R` their raw wOBA):
+
+1. Raw platoon ratio `q = x_L / x_R - 1`, defined when both lines exist and
+   `x_R > 0`.
+2. Its sample `n = d_L * d_R / (d_L + d_R)`: the variance of a ratio of two
+   means scales with `1/d_L + 1/d_R`. A hitter missing a hand has `n = 0`.
+3. Regressed ratio `q* = (n * q + K_b * mu_b) / (n + K_b)`, where `b` is the
+   hitter's bat side (L, R or S; an unknown side uses the all-hitter values) and
+   `mu_b` is this season's league mean ratio for that side: pooled wOBA against
+   left-handers over pooled wOBA against right-handers, minus 1, over every
+   hitter of that side with both lines. A side whose season pool holds fewer
+   than 1,000 wOBA-PA on either hand uses the frozen 2016-2018 `mu_b` instead.
+4. Spread around the season level so the two hands average back to it:
+   `m_R = (d_L + d_R) / (d_L * (1 + q*) + d_R)`, `m_L = (1 + q*) * m_R`. Then
+   `d_L * m_L + d_R * m_R = d_L + d_R` exactly, and a hitter with one line only
+   gets `m = 1` on it.
+5. The per-hand estimate is the season shrunk wOBA times `m_h`, i.e. season
+   shrunk wOBA x (1 + regressed platoon ratio for that hand), scored to HEM+ on
+   the SEASON pool anchor exactly as the season number is (so the league platoon
+   effect survives, as the 2026-09-10 repair registered), rounded to the nearest
+   integer. A hand with no line serves null, as today.
+
+**The constant, fitted once.** `K_b` for L, R, S and all hitters, by the DEM+
+precedent (`positional_fit.fit_signal`, year-over-year persistence): StatsAPI
+`statSplits` (`sitCodes` vl and vr, `playerPool` All, regular season) for 2016,
+2017 and 2018 and each season's `batSide`; pairs are the same hitter in
+consecutive seasons (2016 to 2017, 2017 to 2018) on the same bat side with
+`n >= 50` in both; `r` is the Pearson correlation of `q` across the pair, clamped
+to [0.05, 0.95]; `hm` the mean of the pair's harmonic-mean `n`; `K_b = hm * (1 -
+r) / r`, rounded to the nearest 10. A side with fewer than 30 pairs takes the
+all-hitter K. As `fit_signal` notes, persistence also absorbs real year-to-year
+change, so K errs toward more shrinkage. The frozen `mu_b` are the pooled
+2016-2018 ratios by side. Nothing from 2019 on is read, no outcome of any game is
+read, and the fit is never re-run against later seasons.
+
+**Pass condition for the switch, on the re-exported board.** For hitters with
+300 or more PA and a value on both hands in the constructed orders: the
+split-PA weighted mean of the two hands is within 1 HEM+ point of season HEM+,
+and the slope of that gap on (season - 100) is within 0.03 of zero (it was -0.15
+under the old construction). Served betting probabilities on the day's board are
+byte-identical before and after, because the served model reads `z_off` only.
+
 ## 5f. The pinch-hit and bullpen-handedness gate (pre-registered 2026-09-11, schema 5)
 
 **Written before the schema bump it describes exists in code and before the

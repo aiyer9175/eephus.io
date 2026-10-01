@@ -29,6 +29,28 @@ recipe from rem_plus. hitter_export.py assembles inputs (StatsAPI hitting
 statlines) and writes the sidecar; tools/hem_plus_lab.py is the forward-chained
 backtest (HEM+(Y) vs next-year wOBA, must beat raw wOBA / OPS / AVG). Every
 threshold here is a module constant so the backtest can tune it.
+
+PER-HAND HEM+, ESTIMATOR platoon_ratio_v1 (pre-registered 2026-10-01, before its
+constant is fitted; docs/diamond-betting.md section 5e, "The per-hand estimator
+platoon_ratio_v1"). Census finding M06-05: the per-hand number reused the season
+shrink on the split's smaller denominator, so a thin split regressed toward 100
+rather than toward the hitter's own level (two-hand mean minus season HEM+, slope
+-0.15 on season - 100). The replacement, for a hitter with lines against both
+hands (d_L, d_R their wOBA denominators, x_L, x_R their raw wOBA):
+  q   = x_L / x_R - 1                         raw platoon ratio
+  n   = d_L * d_R / (d_L + d_R)               its sample (0 when a hand is missing)
+  q*  = (n * q + K_b * mu_b) / (n + K_b)      shrunk toward the league ratio for
+                                              bat side b (L, R, S; unknown = all),
+                                              mu_b this season's pooled ratio, the
+                                              frozen 2016-2018 one when the side's
+                                              pool is under 1,000 wOBA-PA a hand
+  m_R = (d_L + d_R) / (d_L * (1 + q*) + d_R),  m_L = (1 + q*) * m_R
+  per-hand wOBA = season shrunk wOBA * m_h, scored on the SEASON pool anchor.
+So the d-weighted mean of the two hands IS the season number, and only the gap
+between them is regressed. K_b is fitted ONCE on 2016-2018 by the DEM+ precedent
+(positional_fit.fit_signal, year-over-year persistence of q, pairs with n >= 50
+both years, r clamped to [0.05, 0.95], K = hm * (1 - r) / r rounded to 10, a side
+under 30 pairs takes the all-hitter K) and frozen here; nothing after 2018 is read.
 """
 from __future__ import annotations
 
