@@ -292,10 +292,10 @@
     "Development vs Mean"
    ],
    "priority": 1,
-   "definition": "Farm development index: 100 = league-mean FV growth, 10 points = one standard deviation across the 30 orgs. Drives the Development branch of the farm grade.",
-   "methodology": "Each farm's cumulative FV growth over a trailing window (1y through 8y; 7y is the principal window) scored against the league-mean farm. Acquisitions are nullified (a trade-in adds nothing to the receiving farm's development) and graduations do not subtract, so it measures development of prospects already in the system. The blended trajectory_score weights the principal 7y window 60%, 3y 30% and 1y 10%.",
-   "formula": "DvM+ = 100 + 10 · (org_growth − league_mean_growth) / league_stdev\ntrajectory_score = 0.60·7y + 0.30·3y + 0.10·1y",
-   "example": "An org at 7yDvM+ 130 grew its prospects' aggregate FV three standard deviations faster than the average farm over seven years, acquisitions excluded.",
+   "definition": "Farm development index: 100 = the league-mean farm, 10 points = one standard deviation across the 30 orgs. Feeds the Development branch of the farm grade and the farm tiebreaker.",
+   "methodology": "Each farm's development credit over a trailing window (1y through 8y; 7y is the principal window). Every grade step a prospect takes while he is in the org is credited at its value on a fixed FV-to-expected-career-WAR table (FV_EXPECTED_WAR), not in raw grade points, so a 60 to 70 step earns 13.0 and a 40 to 50 step 2.5. The grade at each list date is the eFV retrospective series (the current model re-scoring the list as it stood) where one exists, consensus FV otherwise. A window's growth is the mean of the last three points of the org's cumulative credit minus the mean of the three points at or before the window start. Acquisitions are nullified (the first read in an org, or a trade-in, plants a baseline with no credit) and graduations do not subtract, so it measures development of prospects already in the system. The blended trajectory_score weights the principal 7y window 60%, 3y 30% and 1y 10%.",
+   "formula": "step credit = W(new grade) - W(prior grade), W = FV_EXPECTED_WAR, linearly interpolated\ngrowth[window] = mean(last 3 points of cumulative credit) - mean(3 points at or before as_of - window)\nDvM+ = 100 + 10 · (org growth - league mean growth) / league stdev\ntrajectory_score = 0.60·7y + 0.30·3y + 0.10·1y",
+   "example": "An org at 7yDvM+ 130 earned development credit (grade steps valued in expected WAR) three standard deviations above the average farm over seven years, acquisitions excluded.",
    "seeAlso": [
     "farm_rank",
     "farm_grade_talent_translation",
@@ -344,10 +344,10 @@
     "Tool Development vs Mean"
    ],
    "priority": 7,
-   "definition": "Org tool-development composite, weighted by what each position needs. 100 = league-mean pace; +10 = 1σ.",
-   "methodology": "Position-weighted blend of the org's per-tool DvM+ (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). Each per-tool DvM+ is the league-anchored 100 + 10z of the org's mean lifetime tool delta across its multi-cycle actives. Each tool is weighted by its importance to the position bucket: catchers' Field and Arm, outfielders' Speed, starters' Fastball and Command.\n\nComputed per bucket (C / INF / OF / SP / RP) from the bucket's own per-tool DvM+ (org-wide value when a cell is sparse), then blended across buckets by how many prospects the org develops in each.\n\nFanGraphs physical grades are excluded (static values with no multi-snapshot history). Attribution is current org: a traded prospect brings his lifetime delta. Display only; not in farm_score.",
+   "definition": "Org tool-development composite, weighted by what each position needs. 100 = league-mean pace. Its per-tool legs run near +10 = 1σ; the composite's own spread is far narrower (see the example).",
+   "methodology": "Position-weighted blend of the org's per-tool DvM+ (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). Each per-tool DvM+ starts from every active prospect's change in that consensus tool grade, first to last reading inside a 7-year lookback, converted through the FV-to-expected-WAR table and multiplied by his level weight (DSL 0.50 up to AA 1.20); the org mean is shrunk toward the league mean by n/(n+2), scored 100 + 10z against the league spread and stretched 1.35 around 100. Each tool is weighted by its importance to the position bucket: catchers' Field and Arm, outfielders' Speed, starters' Fastball and Command.\n\nComputed per bucket (C / INF / OF / SP / RP) from the bucket's own per-tool DvM+ (org-wide value when a cell is sparse), then blended across buckets by how many prospects the org develops in each.\n\nFanGraphs physical grades are excluded (static values with no multi-snapshot history). Attribution is current org: a traded prospect brings his whole in-window delta. The composite itself is display only, but the per-bucket per-tool values it is built from are the Tool leg of each position bucket's development blend, which feeds the Development leaves of farm_score.",
    "formula": "ToolDvM+ = Σ_bucket (n_bucket · ToolDvM+_bucket) / Σ_bucket n_bucket\nToolDvM+_bucket = Σ_tool (w_tool · DvM+_tool) / Σ_tool w_tool\nwhere w_tool is the tool's position-importance weight for that bucket",
-   "example": "An org that develops Field and Arm in its catchers and Fastball and Command in its starters outscores an equal-on-average org whose gains came in low-importance tools. NYM 106 (1st of 30) ≈ +0.6σ.",
+   "example": "An org that develops Field and Arm in its catchers and Fastball and Command in its starters outscores an equal-on-average org whose gains came in low-importance tools. The composite averages legs that only partly agree, so across the 30 orgs its standard deviation is about 3 points: a 106 sits about two standard deviations above the mean, not 0.6.",
    "seeAlso": [
     "dvm_plus",
     "tool_specific_dvm_plus",
@@ -3017,8 +3017,8 @@
     "Dev grade"
    ],
    "priority": 52,
-   "definition": "How fast the org's prospects develop their tools against the league. 9% of the farm score (v40).",
-   "methodology": "Development branch of the farm grade tree, four leaves: (a) Hitter Tools DvM+ (mean of HitDvM+ / PowerDvM+ / SpeedDvM+ / FieldDvM+ / ArmDvM+ / PitchSelDvM+ / BatCtrlDvM+), (b) Pitcher Tools DvM+ (FB / SL / CB / CH / Cmd / Ct), (c) Health Management and (d) Statcast Quality (the org's aggregate SC+). DvM+ legs are 100-anchored (+10 = 1σ) and measure tool growth in the org regardless of starting grade: a 40 hit tool that grew to 55 over two cycles counts as development.",
+   "definition": "How fast the org's prospects develop against the league. 9% of the farm score (v40).",
+   "methodology": "Development branch of the farm grade tree, the mean of four leaves: (a) Hitter development and (b) Pitcher development, each the org's principal-window (7y) DvM+ at weight 2 plus that side's development blend at weight 1, both scored against the league; the side blend is a position-bucket weighted mean (C 35%, INF 40%, OF 25%; SP 80%, RP 20%) in which each bucket blends FV-DvM+ and Tool-DvM+ (together 75%, Tool taking 30% of that slice and 40% to 60% once FV-DvM+ leads Tool-DvM+ by 15 to 35 points or more) with Statcast DvM+ (25%); (c) Health Management; and (d) Statcast Quality (the org's aggregate SC+). DvM+ legs are 100-anchored (+10 = 1σ). Growth is not counted the same at every starting grade: FV steps are credited at their value on the FV-to-expected-WAR table (a 60 to 70 step earns 13.0, a 40 to 50 step 2.5), and each tool delta goes through the same table and is weighted by the prospect's level (DSL 0.50 up to AA 1.20).",
    "seeAlso": [
     "dvm_plus",
     "tools_dvm_plus",
@@ -3980,10 +3980,10 @@
     "fin_dollar_dvm"
    ],
    "priority": 62,
-   "definition": "The org-level roll-up of its active prospects' $DvM+ - development of surplus dollars, indexed to 100 = league mean.",
-   "methodology": "Mean of the $DvM+ of an org's active prospects (development-vs-mean on projected surplus dollars rather than FV), 100-anchored. Credits systems growing the dollar value of the talent they hold. Feeds the Value branch beside WAR per $M and contract surplus.",
-   "formula": "Org $DvM+ = mean of the org's active prospects' per-prospect $DvM+ (surplus-dollar development vs the FV-tier mean), 100 = league mean\nfeeds the Value branch as the fin_dollar_dvm leaf",
-   "example": "An org whose actives average $DvM+ 108 reads Org $DvM+ 108: the dollar value of its talent is rising faster than tier-mean development.",
+   "definition": "The org-level roll-up of its active prospects' $DvM+: how fast their grades are moving against peers in the same eFV tier, indexed to 100. Despite the $, it reads no dollars.",
+   "methodology": "Mean of the $DvM+ of an org's active prospects. Each prospect's raw pace is his eFV change per year over his tracked span (consensus FV where eFV has no history) plus half his years young for level; it is scored 100 + 10z against the prospects in his current eFV tier (rounded to 5) when that tier has 4 or more members, against all actives otherwise, with no clamp. Feeds the Value branch at 10% beside WAR per $M and contract surplus.",
+   "formula": "per-prospect raw = (grade now - first grade) / years tracked + 0.5 · years young for level\n$DvM+ = 100 + 10 · (raw - tier mean) / tier stdev, tier = current eFV rounded to 5 (all actives when the tier has fewer than 4); no clamp\nOrg $DvM+ = mean of the org's actives' $DvM+\nfeeds the Value branch as the fin_dollar_dvm leaf (weight 0.10)",
+   "example": "An org whose actives average $DvM+ 108 reads Org $DvM+ 108: its prospects' grades are moving faster than their eFV-tier peers'.",
    "seeAlso": [
     "dvm_plus",
     "farm_grade_financial",

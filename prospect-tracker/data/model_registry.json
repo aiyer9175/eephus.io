@@ -591,24 +591,24 @@
   {
    "model_id": "dvm_plus_dollar",
    "surface": "PROSPX prospect payload ($DvM+ leaderboard column, farm financial detail) + the org roll-up on the farm Financial branch",
-   "predicts": "descriptive index of a prospect's surplus-dollar development pace against his FV tier",
+   "predicts": "descriptive index of a prospect's grade pace (eFV change per year plus an age-for-level term) against his current eFV tier",
    "champion": "storage.py $DvM+ league pre-pass (_dollar_dvm_by_key) + fin_dollar_dvm org aggregation",
    "baseline": "n/a (descriptive tier-relative index)",
    "metric": "none standalone",
    "eval_artifact": null,
    "verdict": "unvalidated",
-   "notes": "2026-07-29 display-index registration (standing rule: every shipped model gets a row). SCALE DIFFERS FROM THE REST OF THE DvM+ FAMILY: $DvM+ is 100 + 10z within the player's FV TIER (not across the 30 orgs) and it IS clamped, to 40-160; the tier pool falls back to the global pool under 4 members. The org figure is the mean of its actives' $DvM+ values. COMPUTING SITE: storage.py. Documented by the fin_dollar_dvm glossary entry (org roll-up) and the dvm_plus entry (family shape)."
+   "notes": "2026-07-29 display-index registration (standing rule: every shipped model gets a row). SCALE DIFFERS FROM THE REST OF THE DvM+ FAMILY: $DvM+ is 100 + 10z within the player's current eFV TIER (rounded to 5; not across the 30 orgs) and it is NOT clamped: the 40-160 display clamp was removed 2026-07-29 (storage.py _dollar_dvm_by_key), and on 2026-10-01 the served values ran from -93.5 to 145.5 over 4,690 actives (6 below 40). The tier pool falls back to the global pool under 4 members. Despite the $ it reads no dollars: raw pace = eFV change per year (consensus FV where eFV has no history) + 0.5 x years young for level. The org figure is the mean of its actives' $DvM+ values. COMPUTING SITE: storage.py. Documented by the fin_dollar_dvm glossary entry (org roll-up) and the dvm_plus entry (family shape)."
   },
   {
    "model_id": "dvm_plus_org",
    "surface": "PROSPX farm report card (Development branch), farm detail org tables, farm tiebreaker input",
-   "predicts": "descriptive index of an org's cumulative prospect FV growth over a trailing window (1y / 3y / 6y), plus the per-position-bucket FVDvM+ view",
-   "champion": "storage.py org development pre-pass (window-keyed DvM+, 6yDvM+ headline, _pos_bucket_fv_dvm_plus)",
+   "predicts": "descriptive index of an org's prospect development credit (each grade step valued on the FV_EXPECTED_WAR table) over a trailing window (1y to 8y, principal 7y), plus the per-position-bucket FVDvM+ view",
+   "champion": "storage.py org development pre-pass (window-keyed DvM+, 7yDvM+ headline, _pos_bucket_fv_dvm_plus)",
    "baseline": "n/a (descriptive league-relative index)",
    "metric": "none standalone; the farm-grade tree it feeds is measured under farm_grades",
    "eval_artifact": null,
    "verdict": "unvalidated",
-   "notes": "2026-07-29 display-index registration (standing rule: every shipped model gets a row). SCALE: 100 + 10z across the 30 orgs, unclamped. COMPUTING SITE: storage.py (org summary pass; FVDvM+ bucket view at _pos_bucket_fv_dvm_plus). Acquisitions are nullified and graduations do not subtract, so it reads development of talent already held. The blended trajectory score that drives the farm letter weights 6y 0.60 / 3y 0.30 / 1y 0.10, and 6yDvM+ also enters farm_tiebreaker at 0.25. Documented by the dvm_plus glossary entry. It is DESCRIPTIVE: no forward backtest of DvM+ itself exists, only of the farm-grade tree it feeds."
+   "notes": "2026-07-29 display-index registration (standing rule: every shipped model gets a row). SCALE: 100 + 10z across the 30 orgs, unclamped. COMPUTING SITE: storage.py (org summary pass; FVDvM+ bucket view at _pos_bucket_fv_dvm_plus). Each grade step is credited at its FV_EXPECTED_WAR value on the eFV retrospective series (consensus FV where eFV has none). Acquisitions are nullified and graduations do not subtract, so it reads development of talent already held. The blended trajectory score weights the principal window (FARM_PRINCIPAL_WINDOW, 7y) 0.60 / 3y 0.30 / 1y 0.10, and 7yDvM+ also enters farm_tiebreaker at 0.25. Documented by the dvm_plus glossary entry. It is DESCRIPTIVE: no forward backtest of DvM+ itself exists, only of the farm-grade tree it feeds. 2026-10-01 (DVM-0): the 6y principal and 6yDvM+ tiebreaker leg this row named were stale; both are 7y."
   },
   {
    "model_id": "dvm_plus_tools",
@@ -2509,12 +2509,12 @@
    "model_id": "tbs_farm",
    "surface": "PROSPX farm systems list (continuous score under each farm letter) + the continuous 1-30 farm rank",
    "predicts": "ordering of farm systems that share a letter grade",
-   "champion": "storage.py farm_tiebreaker blend (0.40 total active surplus, 0.25 6yDvM+, 0.35 raw graduate WAR)",
+   "champion": "storage.py farm_tiebreaker blend (0.40 total active surplus, 0.25 7yDvM+, 0.35 raw graduate WAR)",
    "baseline": "n/a (ordering heuristic; the underlying farm tree is measured under farm_grades)",
    "metric": "none standalone",
    "eval_artifact": null,
    "verdict": "unvalidated",
-   "notes": "2026-07-29 display-index registration (standing rule: every shipped model gets a row). SCALE: 100 + 10z across the 30 orgs (the three legs are z-scored, weighted, then anchored), a different scale from the prospect-level TBS despite the shared name. COMPUTING SITE: storage.py (entry['farm_tiebreaker']). Total surplus and 6yDvM+ share weight rather than double-count because they are the dollar and indexed views of one controlled-value concept; raw graduate WAR adds the realized-output axis. Documented by the farm_tiebreaker glossary entry."
+   "notes": "2026-07-29 display-index registration (standing rule: every shipped model gets a row). SCALE: 100 + 10z across the 30 orgs (the three legs are z-scored, weighted, then anchored), a different scale from the prospect-level TBS despite the shared name. COMPUTING SITE: storage.py (entry['farm_tiebreaker']). Total surplus and 7yDvM+ share weight rather than double-count because they are the dollar and indexed views of one controlled-value concept; raw graduate WAR adds the realized-output axis. Documented by the farm_tiebreaker glossary entry."
   },
   {
    "model_id": "tbs_prospect",

@@ -682,9 +682,9 @@ MODEL_GLOSSARY = {
     # entry that carries its scale convention. The cross-family scale table
     # lives in docs/efv-2026-07-29/ARKMETRIC_SCALE_CONVENTIONS.md.
     "krp_plus": ["krp_plus"],                 # 100+10z, display pill decoupled from the eFV model feature
-    "dvm_plus_org": ["dvm_plus"],             # org development index by window (incl. 6yDvM+ and the FVDvM+ bucket view)
+    "dvm_plus_org": ["dvm_plus"],             # org development index by window (incl. 7yDvM+ and the FVDvM+ bucket view)
     "dvm_plus_tools": ["tools_dvm_plus", "tool_specific_dvm_plus"],
-    "dvm_plus_dollar": ["fin_dollar_dvm", "dvm_plus"],  # FV-tier-anchored, clamped 40-160 (the family's odd scale)
+    "dvm_plus_dollar": ["fin_dollar_dvm", "dvm_plus"],  # eFV-tier-anchored, unclamped since 2026-07-29 (the family's odd scale)
     "cs_plus": ["cs_plus"],                   # college cohort 100+10z, computed client-side
     "rps_plus": ["rps_plus"],                 # three variants under one name, all disclosed in the entry
     "tool_plus": ["tiebreaker_score"],        # not rendered directly; a draft/overseas TBS input term

@@ -49,11 +49,11 @@ different units.
 | Cmd+ | 3 (100 + 10z) | active prospect cohort | 0-250 | `storage.py` (`_index_plus`), no glossary entry yet |
 | pStuff+ | 3 (100 + 10z) | the pitcher's MiLB level | 0-250 | `storage.py` (`_compute_peripheral_stf_plus`); leaderboard JS reconciled onto it 2026-07-29 |
 | KRP+ | 3 (100 + 10z) | live eFV pitcher pool | none (de-clamped 2026-07-24b) | `efv_score.py` (`_krp_display_raw`) |
-| DvM+ / 6yDvM+ / FVDvM+ | 3 (100 + 10z) | the 30 orgs | none | `storage.py` |
+| DvM+ / 7yDvM+ / FVDvM+ | 3 (100 + 10z) | the 30 orgs | none | `storage.py` |
 | per-tool DvM+ | 3 (100 + 10z) | the 30 orgs, per tool | none | `storage.py` |
 | ToolDvM+ | 3 (inherited) | position-importance-weighted mean OF already-anchored per-tool values | none | `storage.py` |
-| $DvM+ | 3 (100 + 10z), FV-TIER anchored | the player's FV tier, not the league | 40-160 | `storage.py` (`_dollar_dvm_by_key`) |
-| Org $DvM+ | 3 (inherited) | mean of the org's actives' $DvM+ | 40-160 inherited | `storage.py` |
+| $DvM+ | 3 (100 + 10z), eFV-TIER anchored | the player's current eFV tier, not the league | none (the 40-160 clamp was removed 2026-07-29) | `storage.py` (`_dollar_dvm_by_key`) |
+| Org $DvM+ | 3 (inherited) | mean of the org's actives' $DvM+ | none | `storage.py` |
 | RIV+ | 3 (100 + 10z) | relievers | none | `rem_plus.py` (`RIV_SCALE = 10`) |
 | DEM+ | 3 (100 + 10z) | fielders with 200+ defensive innings, shrunk rates | none | `dem_plus.py` |
 | Team DEM+ | 3 (inherited) | innings-weighted mean of a club's non-catcher DEM+ | none | `dem_plus.py` (`team_defense`) |
@@ -77,11 +77,11 @@ different units.
   formula family, different fit), aStuff+ (100 + 10z), tjStuff+ (100 - 10z, inverted, clamped
   20-180), pStuff+ in Python, and pStuff+ in the leaderboard JS. A CollegeSavant 130 is barely
   plus; an aStuff+ 130 is elite. Never put two of them in one column.
-- **A tighter clamp is not a tighter distribution.** CS+ and $DvM+ clamp at 40-160, the draft
+- **A tighter clamp is not a tighter distribution.** CS+ clamps at 40-160 ($DvM+ did until 2026-07-29), the draft
   and overseas 15z metrics clamp at 60-140, KRP+ and SC+ do not clamp at all. The clamp changes
   what the extremes can print, not what a point means.
 - **$DvM+ is anchored inside an FV tier**, not across the league, so it answers "is this
-  prospect developing surplus faster than his tier?" and never "is he worth more than that
+  prospect's grade moving faster than his tier's?" (it reads no dollars) and never "is he worth more than that
   prospect?".
 - **RPS+ carries three scales under one label** (ratio for actives, 15z for draft, 15z for
   overseas), which is why the three cohorts are never pooled into a single RPS+ ranking.

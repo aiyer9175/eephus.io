@@ -9925,7 +9925,7 @@
              is selected in the right-hand "Development window" picker, so
              three chips (one per window) would just duplicate that control. -->
         <button class="chip" data-farm-sort="trajectory"
-                title="Sort by DvM+ for the currently selected development window (1y / 3y / 6y, picked on the right). 6y is the default and principal signal. Acquisitions + debuts are nullified - pure development of prospects already in the system.">Trajectory (DvM+)</button>
+                title="Sort by DvM+ for the development window selected on the right; the default is the principal window the farm grade anchors on. Acquisitions + debuts are nullified - pure development of prospects already in the system.">Trajectory (DvM+)</button>
         <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted debuts in the trailing 12 months">Grad pipeline</button>
         <button class="chip" data-farm-sort="ifa_spend_pct" title="IFA's share of total Draft+IFA spending over the trailing 3 years - orgs that allocate the highest percentage of their amateur-acquisition dollars to international free agents rise to the top">IFA Spending %</button>
         <button class="chip" data-farm-sort="draft_spend_pct" title="Draft's share of total Draft+IFA spending over the trailing 3 years - orgs that allocate the highest percentage of their amateur-acquisition dollars to the draft rise to the top">Draft Spending %</button>
@@ -40364,15 +40364,15 @@ function makeFarmReportCard(org) {
     subCell('Trade Acumen',      'tx_trades',  'tx_trades',  fmtTradeWarDelta, tradeLeaf.war_delta, tradeTooltip) +
     subCell('Waiver Claims',     'tx_waivers', 'tx_waivers', fmtWaiverHitRate, waiverLeaf.hit_rate, waiverTooltip);
 
-  // v28 - Hitter / Pitcher DvM+ is a 70/30 blend of cohort-restricted
-  // Overall DvM+ (FV-growth scoped to the cohort) + Tool-grade-based
-  // DvM+ (weighted mean of per-tool deltas across the cohort). Display
+  // v28 - Hitter / Pitcher DvM+ is the position-bucket weighted mean of
+  // each bucket's FV / Tool / Statcast blend (weights from the payload's
+  // farm_dev_spec; see farmDevBlendCopy). Display
   // is window-reactive (reads `dvm_plus_by_window[active]` keyed off
   // state.formWindow); tooltip shows the breakdown of overall vs tool
   // so the reader can see WHY the blended value lands where it does.
   // Missing-signal: when one side is None the other takes 100%
   // weight (matches the backend `_blend_dvm`).
-  const _devActiveWindow = state.formWindow || "7y";
+  const _devActiveWindow = state.formWindow || farmDevSpec().principal_window;
   const _devHitterLeaf  = t.dev_hitter  || {};
   const _devPitcherLeaf = t.dev_pitcher || {};
   const _devHitterValue  = (_devHitterLeaf.dvm_plus_by_window  || {})[_devActiveWindow]  ?? _devHitterLeaf.dvm_plus;
@@ -40385,14 +40385,15 @@ function makeFarmReportCard(org) {
     if (overall != null) parts.push(`FV ${overall}`);
     if (tool    != null) parts.push(`Tool ${tool}`);
     if (sc      != null) parts.push(`SC+ ${sc}`);
-    // v30.7 - 3-way blend (FV 50% / Tool 30% / Statcast 20%). FV+Tool
-    // sub-blend retains the adaptive over-grade penalty (Tool weight
-    // climbs to 60% of its 30% slice when FV outruns Tool by ≥15);
-    // Statcast layers on top at a fixed 20%.
-    return `${side} DvM+ · 50% FVDvM+ + 30% ToolDvM+ + 20% StatcastDvM+ at ${_devActiveWindow}. ${parts.join(' · ')}. Tool deltas are LEVEL-WEIGHTED (AA = 1.20×, AAA 1.10×, MLB 1.00×, A+ 0.95×, A 0.80×, CPX 0.60×, DSL 0.50×) so high-tool grades at AA count more than equivalent grades at DSL. Leaf letter grades anchor on 6y.`;
+    // v30.7 - 3-way blend per position bucket, weights read from the
+    // payload's farm_dev_spec (farmDevBlendCopy): the FV+Tool slice keeps
+    // the adaptive over-grade penalty, Statcast takes a fixed share.
+    const _bc = farmDevBlendCopy();
+    return `${side} DvM+ · position-bucket mean of ${_bc.fv}% FVDvM+ + ${_bc.tool}% ToolDvM+ + ${_bc.sc}% StatcastDvM+ (baseline; Tool's share of the ${_bc.slice}% FV+Tool slice rises from ${_bc.inSlice}% to ${_bc.penStart}%-${_bc.penCap}% when FV leads Tool by ${_bc.gapStart}+) at ${_devActiveWindow}. ${parts.join(' · ')}. Tool deltas are LEVEL-WEIGHTED (AA = 1.20×, AAA 1.10×, MLB 1.00×, A+ 0.95×, A 0.80×, CPX 0.60×, DSL 0.50×) so high-tool grades at AA count more than equivalent grades at DSL. Leaf letter grades anchor on ${farmDevSpec().principal_window}.`;
   };
   // v30.7 - Sub-subgrade mini bars under each Dev leaf. Renders THREE
-  // bars now (FV 50% / Tool 30% / Statcast 20%) so the reader sees the
+  // bars (FV / Tool / Statcast at the baseline shares from
+  // farmDevBlendCopy) so the reader sees the
   // full composition of the blended value visually. Each bar uses 100
   // as the league-mean anchor; deviation maps to bar width capped at
   // ±30 (>110 fills past the midpoint, <90 sits empty). Color matches
@@ -40478,9 +40479,9 @@ function makeFarmReportCard(org) {
       </details>`;
     })();
     return `<div style="margin:4px 0 8px 12px;padding:6px 8px;background:var(--bg-secondary);border-left:2px solid var(--border-light);border-radius:0 4px 4px 0;display:flex;flex-direction:column;gap:3px;">
-      ${bar('FVDvM+',       50, overall)}
-      ${bar('ToolDvM+',     30, tool)}
-      ${bar('StatcastDvM+', 20, sc)}
+      ${bar('FVDvM+',       farmDevBlendCopy().fv, overall)}
+      ${bar('ToolDvM+',     farmDevBlendCopy().tool, tool)}
+      ${bar('StatcastDvM+', farmDevBlendCopy().sc, sc)}
     </div>${_posBucketGrid}`;
   };
   // v31 - Health Management leaf under Development. Captures how
@@ -41351,15 +41352,68 @@ function makeFarmToolDevCard(org) {
     </div>`;
 }
 
+// Farm Development copy constants. The boot payload carries them as
+// farm_dev_spec (storage.farm_dev_spec: the principal window and the
+// per-bucket FV / Tool / Statcast blend constants), so the copy below names
+// what the code runs instead of typing it. The fallback mirrors storage's
+// constants for a payload written before the block existed and is pinned to
+// them by test_dvm_copy_truth.py.
+function farmDevSpec() {
+  const FALLBACK = {
+    principal_window: "7y",
+    dvm_blend: {
+      fv_tool_share: 0.75, statcast_share: 0.25, tool_share_in_slice: 0.30,
+      penalty_gap_start: 15, penalty_gap_cap: 35,
+      tool_share_penalty_start: 0.40, tool_share_penalty_cap: 0.60,
+    },
+  };
+  const s = (typeof DATA !== "undefined" && DATA && DATA.farm_dev_spec) || {};
+  return {
+    principal_window: s.principal_window || FALLBACK.principal_window,
+    dvm_blend: Object.assign({}, FALLBACK.dvm_blend, s.dvm_blend || {}),
+  };
+}
+// A share (0-1) as a percent string: 0.225 -> "22.5", 0.25 -> "25".
+function _farmPct(x) {
+  return String(Math.round(x * 1000) / 10);
+}
+// Baseline FV / Tool / Statcast shares of the bucket blend plus the
+// over-grading ramp, as printable percents.
+function farmDevBlendCopy() {
+  const b = farmDevSpec().dvm_blend;
+  const tool = b.fv_tool_share * b.tool_share_in_slice;
+  return {
+    fv: _farmPct(b.fv_tool_share - tool), tool: _farmPct(tool), sc: _farmPct(b.statcast_share),
+    slice: _farmPct(b.fv_tool_share), inSlice: _farmPct(b.tool_share_in_slice),
+    penStart: _farmPct(b.tool_share_penalty_start), penCap: _farmPct(b.tool_share_penalty_cap),
+    gapStart: b.penalty_gap_start, gapCap: b.penalty_gap_cap,
+  };
+}
+// One sentence on the bucket blend, from farmDevBlendCopy().
+function farmDevBlendSentence() {
+  const c = farmDevBlendCopy();
+  return `each position bucket blends FV-DvM+ and Tool-DvM+ (together ${c.slice}%, Tool taking ${c.inSlice}% of that slice, ${c.penStart}% to ${c.penCap}% once FV-DvM+ leads Tool-DvM+ by ${c.gapStart} to ${c.gapCap} points or more) with Statcast DvM+ (${c.sc}%), so the baseline split is FV ${c.fv}% / Tool ${c.tool}% / Statcast ${c.sc}%`;
+}
+// The position-bucket weights a side blend uses, read from the payload's
+// pos_buckets[b].weight (e.g. "C 35% / INF 40% / OF 25%").
+function farmDevBucketWeights(leaf, order) {
+  const pb = (leaf && leaf.pos_buckets) || {};
+  return order.filter(b => pb[b] && pb[b].weight != null)
+    .map(b => `${b} ${_farmPct(pb[b].weight)}%`).join(" / ");
+}
+
 // v27 - Multi-window DvM+ panel for the Development tab. Shows 1y / 3y /
-// 6y DvM+ side-by-side with delta vs league mean, org rank, and a tone
-// class that mirrors makeFarmToolDevCard (≥110 strong / ≥100 pos /
-// ≥90 neg / <90 weak). Lets the user see the full dev arc at a glance
-// instead of having to flip the window chip three times.
+// the principal window (farm_dev_spec.principal_window) side-by-side with
+// delta vs league mean, org rank, and a tone class that mirrors
+// makeFarmToolDevCard (>=110 strong / >=100 pos / >=90 neg / <90 weak).
+// Lets the user see the full dev arc at a glance instead of having to flip
+// the window chip three times.
 function makeFarmDvmMultiWindowPanel(org) {
   const dvm   = (org && org.dvm_plus) || {};
   const delta = (org && org.delta_above_mean) || {};
   const rank  = (org && org.component_ranks && org.component_ranks.dvm_plus) || null;
+  const pw    = farmDevSpec().principal_window;
+  const wins  = ["1y", "3y", pw].filter((w, i, a) => a.indexOf(w) === i);
   const cell = (label, key) => {
     const v = dvm[key];
     const d = delta[key];
@@ -41374,27 +41428,34 @@ function makeFarmDvmMultiWindowPanel(org) {
       <div style="font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:2px;letter-spacing:0.02em;">${deltaStr}</div>
     </div>`;
   };
-  return `<div class="detail-title flush">Development arc <span class="detail-title-sub">DvM+ across three windows · 100 = league mean · +10 = 1σ above. 1y is the current pace, 3y smooths over the current draft cycle, 6y is the principal sustained-development signal.</span></div>
+  const winNote = { "1y": "1y is the current pace", "3y": "3y smooths over the current draft cycle" };
+  const notes = wins.map(w => w === pw
+    ? `${w} is the principal window, the sustained-development signal the farm grade anchors on`
+    : winNote[w]).filter(Boolean).join(", ");
+  return `<div class="detail-title flush">Development arc <span class="detail-title-sub">DvM+ across ${wins.length} windows · 100 = league mean · +10 = 1σ above. ${notes}.</span></div>
     <div class="tooldev-card">
-      <div class="tooldev-grid" style="grid-template-columns:repeat(3,1fr);">
-        ${cell("1y", "1y")}
-        ${cell("3y", "3y")}
-        ${cell("6y", "6y")}
+      <div class="tooldev-grid" style="grid-template-columns:repeat(${wins.length},1fr);">
+        ${wins.map(w => cell(w, w)).join("")}
       </div>
       <div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);text-align:right;">1y rank #${rank ?? " - "} of 30 orgs</div>
     </div>`;
 }
 
-// v28 - Hitter vs Pitcher Development split card. Reads the 70/30
-// blend (cohort Overall DvM+ + Tool DvM+) from `dvm_plus_by_window`
-// at the active window chip; falls back to the 6y headline if the
-// window key is absent. Each cell exposes the Overall + Tool
-// breakdown so the reader can attribute the blended score.
+// v28 - Hitter vs Pitcher Development split card. Reads the side blend
+// (the position-bucket weighted mean of each bucket's FV / Tool / Statcast
+// blend) from `dvm_plus_by_window` at the active window chip; falls back to
+// the principal-window headline if the window key is absent. Each cell
+// exposes the cohort Overall (FV-DvM+) and side Tool DvM+ so the reader can
+// attribute the blended score. Weights in the copy come from the payload.
 function makeFarmDevCohortSplit(org) {
   const t = (org && org.tree) || {};
   const dh = t.dev_hitter  || {};
   const dp = t.dev_pitcher || {};
-  const win = state.formWindow || "7y";
+  const win = state.formWindow || farmDevSpec().principal_window;
+  const blendCopy = farmDevBlendCopy();
+  const hitW = farmDevBucketWeights(dh, ["C", "INF", "OF"]);
+  const pitW = farmDevBucketWeights(dp, ["SP", "RP"]);
+  const bucketW = [hitW, pitW].filter(Boolean).join("; ");
   const valOf = leaf => (leaf.dvm_plus_by_window || {})[win] ?? leaf.dvm_plus;
   if (valOf(dh) == null && valOf(dp) == null) return "";
   const cell = (label, leaf) => {
@@ -41410,13 +41471,13 @@ function makeFarmDevCohortSplit(org) {
     if (overall != null) parts.push(`Overall ${overall}`);
     if (tool    != null) parts.push(`Tool ${tool}`);
     const breakdown = parts.length ? parts.join(' · ') : ' - ';
-    return `<div class="tooldev-cell ${tone}" title="${label} DvM+ ${v ?? ' - '} at ${win} · 70% cohort Overall DvM+ (FV growth restricted to ${label.toLowerCase()}s) + 30% Tool DvM+ (per-tool deltas). ${breakdown}.">
+    return `<div class="tooldev-cell ${tone}" title="${label} DvM+ ${v ?? ' - '} at ${win} · position-bucket mean of the FV / Tool / Statcast blend (baseline FV ${blendCopy.fv}% / Tool ${blendCopy.tool}% / Statcast ${blendCopy.sc}%). Overall = the ${label.toLowerCase()} cohort FV-DvM+; Tool = the ${label.toLowerCase()} Tool DvM+. ${breakdown}.">
       <div class="td-label">${label}</div>
       <div class="td-val">${v ?? " - "}</div>
       <div style="font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:2px;letter-spacing:0.02em;">${breakdown}</div>
     </div>`;
   };
-  return `<div class="detail-title">Cohort split <span class="detail-title-sub">Hitter vs Pitcher DvM+ at ${win} window · 70% cohort Overall DvM+ + 30% Tool DvM+. Surfaces which cohort is driving the org's headline dev pace.</span></div>
+  return `<div class="detail-title">Cohort split <span class="detail-title-sub">Hitter vs Pitcher DvM+ at ${win} window · each side is the position-bucket weighted mean${bucketW ? ` (${escapeHtml(bucketW)})` : ""} of the bucket blend: ${farmDevBlendSentence()}. Surfaces which cohort is driving the org's headline dev pace.</span></div>
     <div class="tooldev-card">
       <div class="tooldev-grid" style="grid-template-columns:repeat(2,1fr);">
         ${cell("Hitter",  dh)}
@@ -41440,7 +41501,7 @@ function makeFarmPosBucketGrades(org) {
   const hitBuckets = dh.pos_buckets || {};
   const pitBuckets = dp.pos_buckets || {};
   if (!Object.keys(hitBuckets).length && !Object.keys(pitBuckets).length) return "";
-  const win = state.formWindow || "7y";
+  const win = state.formWindow || farmDevSpec().principal_window;
   const _cell = (bucket, v, side) => {
     const blend = (v.blend_by_window || {})[win];
     const fv    = (v.fv_dvm_plus_by_window || {})[win];
@@ -41488,18 +41549,25 @@ function makeFarmPosBucketGrades(org) {
   const pitRow = _row("Pitcher", dp, ["SP", "RP"]);
   if (!hitRow && !pitRow) return "";
   return `<div class="detail-title">Position-bucket grades
-    <span class="detail-title-sub">3-axis blend (FV 50% / Tool 30% / Statcast 20%) per position bucket at ${win} window. Each bucket now uses its OWN per-bucket Tool DvM+ (position-weighted aggregate of per-tool deltas restricted to that bucket); when bucket cohort is too sparse for its own aggregation, falls back to org-side-wide. Bucket cells dim when active &lt; 3 (dropped from the side's blend; remaining buckets renormalize).</span></div>
+    <span class="detail-title-sub">3-axis blend per position bucket at ${win} window: ${farmDevBlendSentence()}. Each bucket now uses its OWN per-bucket Tool DvM+ (position-weighted aggregate of per-tool deltas restricted to that bucket); when bucket cohort is too sparse for its own aggregation, falls back to org-side-wide. Bucket cells dim when active &lt; 3 (dropped from the side's blend; remaining buckets renormalize).</span></div>
     <div class="tooldev-card">
       ${hitRow}
       ${pitRow}
     </div>`;
 }
 
-// v27 - Top movers on the org's active roster (trailing 1y FV delta).
-// Pulls `stock.delta` (consensus_fv_raw delta over the last ~365d) from
+// v27 - Top movers on the org's active roster. Pulls `stock.delta` from
 // each player and ranks both directions so the reader can see who's
-// driving the gain and who's regressing. Mirrors the homepage Top Movers
-// strip, but scoped to a single org.
+// driving the gain and who's falling. The delta is NOT a fixed 1-year
+// window: storage's _serialize sets it to the eFV change since the grade's
+// last real step (stock.basis "xfv") where eFV has a series on the board
+// basis, else the latest same-source consensus FV step ("same_source").
+// The copy names the bases present and each row's dates from the payload.
+// Mirrors the homepage Top Movers strip, but scoped to a single org.
+const _FARM_MOVE_BASIS_COPY = {
+  xfv: "the eFV change since the grade's last real step",
+  same_source: "the latest same-source consensus FV step (sources grading him at both ends)",
+};
 function makeFarmDevTopMovers(rosterPlayersAll) {
   if (!rosterPlayersAll || !rosterPlayersAll.length) return "";
   const withDelta = rosterPlayersAll
@@ -41517,27 +41585,38 @@ function makeFarmDevTopMovers(rosterPlayersAll) {
     const _efvNow = efvGradeDisplay(getEfv(p));
     const fvNow = _efvNow != null ? _efvNow : (p.fv_close != null ? fvCeil(p.fv_close) : " - ");
     const tone = r.d >= 0 ? "var(--up)" : "var(--down)";
+    const s = p.stock || {};
+    const span = (s.from_label || s.from_date || s.to_label || s.to_date)
+      ? `${s.from_label || " - "} (${s.from_date || " - "}) to ${s.to_label || " - "} (${s.to_date || " - "})`
+      : "";
     return `<tr>
       <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(p.player_key)}');" style="color:var(--text-primary);">${escapeHtml(p.player_name)}</a></td>
       <td style="text-align:center;color:var(--text-tertiary);font-size:11px;">${escapeHtml(p.position || " - ")}</td>
       <td style="text-align:center;"><span class="fv-badge ${fvClass(String(fvNow))} size-sm">${fvNow}</span></td>
-      <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:${tone};font-weight:600;">${fmtDelta(r.d)}</td>
+      <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:${tone};font-weight:600;"${span ? ` title="${escapeHtml(span)}"` : ""}>${fmtDelta(r.d)}</td>
     </tr>`;
   };
   const empty = `<tr><td colspan="4" style="text-align:center;color:var(--text-tertiary);font-size:11px;padding:8px;"> - none - </td></tr>`;
-  return `<div class="detail-title">Top movers <span class="detail-title-sub">Trailing 1-year FV delta on the active roster · per-prospect growth that's powering (or dragging) the org's DvM+. Anchor is the latest consensus FV; prior is the snapshot nearest 365d back.</span></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;">
+  // Name the delta's basis from the rows shown, never a fixed window.
+  const shown = risers.concat(fallers);
+  const bases = shown.map(r => (r.p.stock || {}).basis).filter((b, i, a) => b && a.indexOf(b) === i);
+  const basisCopy = bases.map(b => _FARM_MOVE_BASIS_COPY[b] || `a movement-engine score (basis ${b}), not a grade change`);
+  const basisLine = basisCopy.length
+    ? `Δ is ${basisCopy.join("; or ")}, so each row has its own dates (hover the Δ).`
+    : "Δ is each prospect's latest grade step.";
+  return `<div class="detail-title">Top movers <span class="detail-title-sub">Latest grade move on the active roster · per-prospect growth that's powering (or dragging) the org's DvM+. ${escapeHtml(basisLine)}</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;align-items:start;">
       <div>
         <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Top risers</div>
         <table class="detail-table" style="width:100%;">
-          <thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:center;">FV</th><th style="text-align:right;">Δ 1y</th></tr></thead>
+          <thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:center;">FV</th><th style="text-align:right;">Δ</th></tr></thead>
           <tbody>${risers.length ? risers.map(row).join("") : empty}</tbody>
         </table>
       </div>
       <div>
         <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Top decliners</div>
         <table class="detail-table" style="width:100%;">
-          <thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:center;">FV</th><th style="text-align:right;">Δ 1y</th></tr></thead>
+          <thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:center;">FV</th><th style="text-align:right;">Δ</th></tr></thead>
           <tbody>${fallers.length ? fallers.map(row).join("") : empty}</tbody>
         </table>
       </div>
@@ -53920,17 +53999,18 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // active roster. Mirrors the "back of a baseball card" layout - every
   // dev signal on one page so the reader doesn't have to bounce between
   // the report card, the header tool-dev card, and the growth chart.
+  const _pw = farmDevSpec().principal_window;
   const devTabHtml = `
     ${makeFarmDvmMultiWindowPanel(org)}
     ${makeFarmDevCohortSplit(org)}
     ${makeFarmPosBucketGrades(org)}
-    <div class="detail-title">${(state.formWindow || "7y")} development vs mean farm <span class="detail-title-sub">pure-development metric - debuts + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. 7y is the principal (default) signal.</span></div>
+    <div class="detail-title">${(state.formWindow || _pw)} development vs mean farm <span class="detail-title-sub">pure-development metric - debuts + acquisitions (trades, draft, IFA) nullified, so only the grade gained while a prospect was in the org counts, each step valued on the FV-to-expected-WAR table. ${_pw} is the principal (default) signal.</span></div>
     <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
       <span class="filter-label">Window</span>
-      ${["3y","4y","5y","6y","7y","8y"].map(w => `<button class="chip${(state.formWindow || "7y") === w ? " active" : ""}" data-form-window="${w}" type="button"${w === "7y" ? ' title="Default - empirically-optimal window"' : ''}>${w}${w === "7y" ? ' <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span>' : ''}</button>`).join("")}
+      ${["3y","4y","5y","6y","7y","8y"].map(w => `<button class="chip${(state.formWindow || _pw) === w ? " active" : ""}" data-form-window="${w}" type="button"${w === _pw ? ' title="Default - empirically-optimal window"' : ''}>${w}${w === _pw ? ' <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span>' : ''}</button>`).join("")}
     </div>
-    ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "7y"] ?? 0), state.formWindow || "7y")}
-    ${makeFarmCohortGrowthPanel(org, state.formWindow || "7y")}
+    ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || _pw] ?? 0), state.formWindow || _pw)}
+    ${makeFarmCohortGrowthPanel(org, state.formWindow || _pw)}
     ${makeFarmToolDevCard(org)}
     ${makeFarmDevTopMovers(rosterPlayersAll)}
     ${makeFarmGraduates(orgCode)}`;

@@ -2246,8 +2246,11 @@ def build_all() -> tuple:
             "validated. Read the debuted column as a served number without its own eval."),
         "shard_failed": "The per-club rows did not load; the preview above is the board's.",
         "shard_vintage": "These rows were written against a different board build than the one on screen.",
-        "dvm_within_tier": ("$DvM+ is scaled within the prospect's FV tier and clamped 40-160: not on "
-                            "the league z pool, unvalidated."),
+        "dvm_within_tier": ("$DvM+ is 100 + 10z of the prospect's grade pace (eFV change per year, "
+                            "consensus FV where eFV has no history, plus half his years young for "
+                            "level) against his current eFV tier, with no clamp, so a value below 40 "
+                            "or above 160 is the model's own reading: not on the league z pool, not "
+                            "a dollar figure, unvalidated."),
         "p_bust_basis": ("P(bust) on the eFV row is the retired realized_implied map (ground-truthed "
                          "there); the MLB Projections prospect row's pBust is a different curve and "
                          "prints only under its own label."),

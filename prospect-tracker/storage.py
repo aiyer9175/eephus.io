@@ -4789,6 +4789,40 @@ FARM_PRINCIPAL_WINDOW = "7y"
 # Windows offered in the frontend selector (subset of FARM_TRAJECTORY_WINDOWS).
 FARM_SELECTABLE_WINDOWS = ["3y", "4y", "5y", "6y", "7y", "8y"]
 
+# The per-bucket DvM+ development blend (_blend_dvm_3way inside
+# export_timeseries_json). FV-DvM+ and Tool-DvM+ share one slice, Statcast
+# DvM+ takes the rest. Inside the slice Tool takes the baseline share; when
+# FV-DvM+ leads Tool-DvM+ by PENALTY_GAP_START points or more the Tool share
+# ramps from PENALTY_START (1 point of share per point of gap) to PENALTY_CAP
+# at PENALTY_GAP_CAP. Named here so the payload (farm_dev_spec) and the
+# PROSPX copy read the same numbers the blend runs on.
+FARM_DVM_FV_TOOL_SHARE            = 0.75
+FARM_DVM_STATCAST_SHARE           = 0.25
+FARM_DVM_TOOL_SHARE_IN_SLICE      = 0.30
+FARM_DVM_TOOL_PENALTY_GAP_START   = 15
+FARM_DVM_TOOL_PENALTY_GAP_CAP     = 35
+FARM_DVM_TOOL_SHARE_PENALTY_START = 0.40
+FARM_DVM_TOOL_SHARE_PENALTY_CAP   = 0.60
+
+
+def farm_dev_spec() -> dict:
+    """The constants behind the farm Development copy, served in the PROSPX boot
+    payload as `farm_dev_spec` so the Development tab names the principal window
+    and the blend weights from the code instead of typing them. Nothing here is a
+    measured number; changing a constant above changes the copy with it."""
+    return {
+        "principal_window": FARM_PRINCIPAL_WINDOW,
+        "dvm_blend": {
+            "fv_tool_share":            FARM_DVM_FV_TOOL_SHARE,
+            "statcast_share":           FARM_DVM_STATCAST_SHARE,
+            "tool_share_in_slice":      FARM_DVM_TOOL_SHARE_IN_SLICE,
+            "penalty_gap_start":        FARM_DVM_TOOL_PENALTY_GAP_START,
+            "penalty_gap_cap":          FARM_DVM_TOOL_PENALTY_GAP_CAP,
+            "tool_share_penalty_start": FARM_DVM_TOOL_SHARE_PENALTY_START,
+            "tool_share_penalty_cap":   FARM_DVM_TOOL_SHARE_PENALTY_CAP,
+        },
+    }
+
 FARM_TOP_END_COUNT  = 5             # top N prospects feeding the "stars" score
 FARM_DEPTH_START    = 5             # prospects #6 ...
 FARM_DEPTH_END      = 25            # ... through #25 feed the "depth" score
@@ -14929,10 +14963,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # v28 — Final blend pass. 70% cohort-restricted Overall DvM+ +
     # 30% tool-grade-based DvM+. Missing-signal: if one side is
     # absent the other takes 100%. Headline `dvm_plus` (which feeds
-    # LEAF_SPECS letter grading) anchors on the 6y window — the
-    # principal sustained-development signal. `dvm_plus_by_window`
-    # exposes the full {1y, 3y, 6y} blend dict for window-reactive
-    # frontend display.
+    # LEAF_SPECS letter grading) anchors on FARM_PRINCIPAL_WINDOW (7y),
+    # the principal sustained-development signal. `dvm_plus_by_window`
+    # exposes the blend at every window in FARM_TRAJECTORY_WINDOWS for
+    # window-reactive frontend display. (Since v30.7 the blend is the
+    # 3-way _blend_dvm_3way below, not this 70/30.)
     # v30 — Asymmetric over-grading penalty. When the overall (FV-based)
     # DvM+ outruns the tool-based DvM+ by a wide margin, the farm is
     # likely receiving FV upgrades the underlying tool grades haven't
@@ -14950,13 +14985,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     #                       never outweigh overall by more than 60/40)
     def _adaptive_tool_weight(overall, tool):
         if overall is None or tool is None:
-            return 0.30
+            return FARM_DVM_TOOL_SHARE_IN_SLICE
         gap = overall - tool
-        if gap < 15:
-            return 0.30
-        if gap >= 35:
-            return 0.60
-        return 0.40 + (gap - 15) * 0.01
+        if gap < FARM_DVM_TOOL_PENALTY_GAP_START:
+            return FARM_DVM_TOOL_SHARE_IN_SLICE
+        if gap >= FARM_DVM_TOOL_PENALTY_GAP_CAP:
+            return FARM_DVM_TOOL_SHARE_PENALTY_CAP
+        return FARM_DVM_TOOL_SHARE_PENALTY_START + (gap - FARM_DVM_TOOL_PENALTY_GAP_START) * 0.01
 
     def _blend_dvm(overall, tool):
         if overall is None and tool is None:
@@ -15041,12 +15076,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 for e in org_summary]
         _bucket_sc_dvm[bucket] = _sc_dvm_map(rows)
 
-    # v30.7 — 3-way DvM+ blend. Adds StatcastDvM+ as a 20% leg
-    # alongside the existing FVDvM+ (50%) + ToolDvM+ (30%). The
-    # FV+Tool sub-blend keeps its adaptive over-grade penalty (when
-    # FV outruns Tool by ≥15, Tool's share within its 30% slice ramps
-    # up to absorb the difference). Statcast layers on top at a
-    # fixed 20%.
+    # v30.7 3-way DvM+ blend, as it runs today: FVDvM+ and ToolDvM+
+    # share FARM_DVM_FV_TOOL_SHARE (0.75), StatcastDvM+ takes
+    # FARM_DVM_STATCAST_SHARE (0.25), so the baseline split is FV 52.5 /
+    # Tool 22.5 / Statcast 25 (the 50/30/20 this comment once named
+    # predates the audit trim in the docstring). The FV+Tool slice keeps
+    # its adaptive over-grade penalty (_adaptive_tool_weight).
     def _blend_dvm_3way(fv_dvm, tool_dvm, sc_dvm):
         """FV / Tool / Statcast development blend. v-arkmetric-audit (finding 9 —
         CIRCULARITY): scouting tool grades feed BOTH the consensus FV (so FV-DvM)
@@ -15062,11 +15097,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             tool_w_in_slice = _adaptive_tool_weight(fv_dvm, tool_dvm)
             # FV + Tool combined = 75% of total (was 80%); the tool-weight-in-slice
             # (baseline 30%, up to 60% under penalty) governs how the 75% splits.
-            tool_w_total = 0.75 * tool_w_in_slice
-            fv_w_total   = 0.75 - tool_w_total
+            tool_w_total = FARM_DVM_FV_TOOL_SHARE * tool_w_in_slice
+            fv_w_total   = FARM_DVM_FV_TOOL_SHARE - tool_w_total
             return int(round(fv_w_total * fv_dvm
                              + tool_w_total * tool_dvm
-                             + 0.25 * sc_dvm))
+                             + FARM_DVM_STATCAST_SHARE * sc_dvm))
         # Missing-axis fallbacks. SC missing → original 2-way blend.
         if sc_dvm is None:
             return _blend_dvm(fv_dvm, tool_dvm)
@@ -17217,6 +17252,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # JS/HTML reader (finding [32]).
         "farm_hitter_trajectory_means":   hitter_traj_means,
         "farm_pitcher_trajectory_means":  pitcher_traj_means,
+        # The principal window and the DvM+ blend constants, so the farm
+        # Development tab copy reads them instead of typing them (farm_dev_spec).
+        "farm_dev_spec": farm_dev_spec(),
         "level_norms": level_norms,
         # MLB Draft bonus-pool ceilings + per-pick slot values, scraped
         # from MLB.com per year. Keyed by year (int). Drives the
