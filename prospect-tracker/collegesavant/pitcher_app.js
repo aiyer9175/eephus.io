@@ -239,7 +239,7 @@ function init() {
     state.allPitchers = (window.PITCHER_DATA || []).map(normalizePitcher);
     state.allPitches = collectPitchRows().map(normalizePitchRow);
     state.availableYears = [...new Set(state.allPitchers.map((pitcher) => pitcher.year))].sort((a, b) => b - a);
-    state.year = largestPoolYear(state.availableYears) || 2026;
+    state.year = state.availableYears[0] || 2026;
     setActiveYear(yearFromHash(window.location.hash) || state.year);
     window.addEventListener("hashchange", render);
     render();
@@ -290,27 +290,69 @@ function normalizePitcher(row) {
 // (4,400+ arms on 480+ teams), 2025 is a Big Ten slice, and 2026 is an early
 // cut (a median of about 70 pitches, no K/BB or swing-decision columns). CS+
 // and every percentile are z-scored within the active season, so "100" means
-// that pool's average. The season picker names each pool's size, team count
-// and median pitch count, the default season is the largest pool, and the CS+
-// copy says which pool it is relative to (census M03-10).
+// that pool's average. The page opens on the newest season (owner answer
+// M19-2, 2026-09-25), and the season picker and the CS+ copy name each pool:
+// its scope (national, or Big Ten only when every team code is a Big Ten
+// school), size, team count and median pitch count (census M03-10).
+const BIG_TEN_CODES = new Set([
+  "ILL_ILL", "IOW_HAW", "IU", "MAR_TER", "MIC_SPA", "MIC_WOL", "MIN_GOL", "NEB",
+  "NOR_CAT", "ORE_DUC", "OSU_BUC", "PEN_NIT", "PUR_BOI", "RUT_SCA", "SOU_TRO", "WAS_HUS",
+]);
+// The vendored CollegeSavant files arrived with the module (2026-06-11) and
+// have not been refreshed since. They carry no game dates, so the data stamp
+// names the day they were received, never a games-through date.
+const DATA_RECEIVED = "2026-06-11";
+
 function yearPool(year) {
   const rows = (state.allPitchers || []).filter((p) => p.year === year);
-  const teams = new Set(rows.map((p) => p.team).filter(Boolean)).size;
+  const teamSet = new Set(rows.map((p) => p.team).filter(Boolean));
+  const scope = !teamSet.size ? "" : [...teamSet].every((t) => BIG_TEN_CODES.has(t)) ? "Big Ten only" : "national";
   const pc = rows.map((p) => Number(p.pitch_count)).filter(Number.isFinite).sort((a, b) => a - b);
-  return { n: rows.length, teams, medPitches: pc.length ? pc[Math.floor(pc.length / 2)] : null };
+  return { n: rows.length, teams: teamSet.size, scope, medPitches: pc.length ? pc[Math.floor(pc.length / 2)] : null };
 }
 function poolText(year) {
-  const { n, teams, medPitches } = yearPool(year);
-  return `${n.toLocaleString()} arm${n === 1 ? "" : "s"}${teams ? `, ${teams} team${teams === 1 ? "" : "s"}` : ""}`
+  const { n, teams, scope, medPitches } = yearPool(year);
+  return `${scope ? `${scope} · ` : ""}${n.toLocaleString()} arm${n === 1 ? "" : "s"}`
+    + `${teams ? `, ${teams} team${teams === 1 ? "" : "s"}` : ""}`
     + (medPitches != null ? `, median ${medPitches} pitches` : "");
 }
-function largestPoolYear(years) {
-  return years.slice().sort((a, b) => yearPool(b).n - yearPool(a).n || b - a)[0];
+
+// Default sample qualifier (owner answer M19-3): the active pool's median
+// pitch count, shown in the Min pitches control with its number and
+// changeable by the reader. state.minPitch null means "follow the pool
+// median"; a season change resets it. The qualifier only filters which arms
+// are listed: CS+ and every percentile stay computed against the whole pool.
+function qualifier() {
+  const { medPitches } = yearPool(state.year);
+  if (medPitches == null) return { available: false, value: 0, median: null, isDefault: true };
+  const user = state.minPitch;
+  return { available: true, value: user == null ? medPitches : user, median: medPitches, isDefault: user == null };
+}
+function passesQualifier(p, q) {
+  return !q.available || q.value <= 0 || (p.pitch_count || 0) >= q.value;
+}
+function qualifierControl(q) {
+  if (!q.available) {
+    return `<span class="lb-pa lb-pa-off">Min pitches: unavailable for ${state.year} (no pitch counts)</span>`;
+  }
+  return `<label class="lb-pa">Min pitches <input type="number" min="0" step="10" value="${q.value}" data-min-pitch aria-label="Minimum pitches, default the ${state.year} pool median of ${q.median}"> <span class="lb-pa-note">median ${q.median}</span></label>`;
+}
+function qualifierText(q) {
+  if (!q.available) return `no sample qualifier: the ${state.year} pool has no pitch counts, so every arm is listed`;
+  if (q.value <= 0) return `no pitch minimum (the ${state.year} pool median is ${q.median} pitches)`;
+  return `${q.value}+ pitches${q.isDefault ? ` (default: the ${state.year} pool median)` : ` (the ${state.year} pool median is ${q.median})`}`;
+}
+function dataStamp() {
+  const inSeason = state.year >= Number(DATA_RECEIVED.slice(0, 4));
+  return `Data through: the CollegeSavant files received ${DATA_RECEIVED}, not refreshed since; the files carry no game dates. `
+    + `The ${state.year} pool: ${poolText(state.year)}${inSeason ? `, a cut taken during the ${state.year} season` : ""}.`;
 }
 
 function setActiveYear(year) {
   const numericYear = Number(year);
+  const previous = state.year;
   state.year = state.availableYears.includes(numericYear) ? numericYear : (state.availableYears[0] || numericYear);
+  if (state.year !== previous) state.minPitch = null;
   ensurePitchData(state.year);
   state.pitchers = state.allPitchers.filter((pitcher) => pitcher.year === state.year);
   state.pitches = state.allPitches.filter((pitch) => pitch.year === state.year);
@@ -487,19 +529,22 @@ function renderHome() {
       <span class="hub-go">Open</span>
     </a>`;
   }).join("");
+  const q = qualifier();
   app.innerHTML = `
-    <section class="toolbar home-toolbar">${renderYearSelect()}</section>
+    <section class="toolbar home-toolbar">${renderYearSelect()}${qualifierControl(q)}</section>
 
     <section class="home-intro">
       <h1>CollegeSavant - Pitchers</h1>
       <p>Tracked pitch shapes, velocity, and whiffs, a pool-anchored CS+ index, and a college-to-Single-A projection for the ${state.year} college dataset.</p>
+      <p class="cs-stamp">${escapeHtml(dataStamp())}</p>
     </section>
 
     <section class="hub-grid">${hub}</section>
 
     <div class="panel-title" style="margin-top:20px;"><span>Top of the ${state.year} class</span><span>leaders by the metrics that travel to pro ball</span></div>
+    <p class="note-line">Listed: ${escapeHtml(qualifierText(q))}. CS+ 100 = the ${state.year} pool average (${escapeHtml(poolText(state.year))}).</p>
     <section class="widget-grid">
-      ${PITCHER_HOME_WIDGET_METRICS.map((item) => renderTopWidget({ ...getMetric(item.key), label: item.label })).join("")}
+      ${PITCHER_HOME_WIDGET_METRICS.map((item) => renderTopWidget({ ...getMetric(item.key), label: item.label }, q)).join("")}
     </section>
   `;
 
@@ -508,10 +553,12 @@ function renderHome() {
     window.location.hash = "#/";
     renderHome();
   });
+  const mp = app.querySelector("[data-min-pitch]");
+  if (mp) mp.addEventListener("change", (e) => { state.minPitch = Number(e.target.value) || 0; renderHome(); });
 }
 
-function renderTopWidget(metric) {
-  const rows = topRowsForMetric(metric).slice(0, 10);
+function renderTopWidget(metric, q = qualifier()) {
+  const rows = topRowsForMetric(metric).filter((p) => passesQualifier(p, q)).slice(0, 10);
   return `
     <article class="top-widget">
       <div class="widget-title">
@@ -575,12 +622,12 @@ function renderLeaderboard() {
   state.sortKey = col.key;
   const dir = state.sortDir != null ? state.sortDir : (col.higherBetter ? -1 : 1);
   state.sortDir = dir;
-  const minPitch = state.minPitch || 0;
+  const qual = qualifier();
   const teamF = state.teamFilter || "all";
   const q = state.query.toLowerCase();
   const filtered = state.pitchers.filter((p) =>
     p.pitcher_name.toLowerCase().includes(q) &&
-    (minPitch <= 0 || (p.pitch_count || 0) >= minPitch) &&
+    passesQualifier(p, qual) &&
     (teamF === "all" || p.team === teamF));
   filtered.sort((a, b) => {
     const av = sortVal(a, state.sortKey), bv = sortVal(b, state.sortKey);
@@ -618,11 +665,12 @@ function renderLeaderboard() {
         <option value="all">All teams</option>
         ${teams.map((t) => `<option value="${escapeHtml(t)}"${TEAM_LOGOS.has(t) ? ` data-logo="logos/${escapeHtml(t)}.png"` : ""} ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
       </select>
-      <label class="lb-pa">Min pitches <input type="number" min="0" step="50" value="${minPitch}" data-min-pitch></label>
+      ${qualifierControl(qual)}
       <button class="control-button" type="button" data-reset>Reset</button>
       <button class="chip egfx-chip" id="cs-lb-gfx" title="Generate a shareable graphic (theme-aware, multiple formats)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>
     </section>
-    <p class="note-line">${filtered.length.toLocaleString()} pitcher${filtered.length === 1 ? "" : "s"}${minPitch > 0 ? ` with ${minPitch}+ pitches` : ""}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
+    <p class="note-line">${filtered.length.toLocaleString()} pitcher${filtered.length === 1 ? "" : "s"}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ and percentiles compare against the whole ${state.year} pool. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
+    <p class="note-line cs-stamp">${escapeHtml(dataStamp())}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Pitcher</th>${head}</tr></thead>
       <tbody>${body || `<tr><td colspan="${LB_COLUMNS.length + 2}" class="note-line">No pitchers match these filters.</td></tr>`}</tbody>
@@ -649,7 +697,7 @@ function renderLeaderboard() {
   if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderLeaderboard(); });
   const rb = app.querySelector("[data-reset]");
   if (rb) rb.addEventListener("click", () => {
-    state.query = ""; state.minPitch = 0; state.teamFilter = "all"; state.sortKey = "stuff_plus"; state.sortDir = null;
+    state.query = ""; state.minPitch = null; state.teamFilter = "all"; state.sortKey = "stuff_plus"; state.sortDir = null;
     renderLeaderboard();
   });
   const lbGfx = app.querySelector("#cs-lb-gfx");

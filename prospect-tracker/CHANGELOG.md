@@ -11,6 +11,31 @@ pre-registered experiment gates), docs/audit-2026-07-18/FINDINGS.md (fresh
 audit), REVIEW_QUEUE.md (deferred work, archived 2026-09-25),
 BETA_READINESS.md (Beta go/no-go, archived 2026-09-25).
 
+## 2026-10-01
+
+- CollegeSavant opens on its NEWEST season again, labelled (owner answer
+  M19-2, reversing the 2026-09-25 default to the largest pool): hitters 2025,
+  a Big Ten-only file of 184 hitters with no PA column, and pitchers 2026, 842
+  arms at a median of 73 pitches. CS+ and every percentile are z-scored within
+  each season's pool, so EVERY CS+ VALUE ON THE DEFAULT VIEW MOVED: the top
+  hitter by CS+ was Kalvin Alexander 119 (2024 national pool, 35 PA) and is
+  Christopher Hacopian 112 (2025 Big Ten pool); the top pitcher was Hunter
+  Alberini 123 (2024, 54 pitches) and is Luke Alwood 117 (2026, 80 pitches).
+  The Projected Single-A boards list 184 hitters and 144 pitchers (were 300
+  and 300 from 2024). The season picker names each pool ("2025 · Big Ten only
+  · 184 hitters, 16 teams, no PA column", "2024 · national · 3,607 hitters,
+  336 teams, median 93 PA"), the CS+ copy names the pool, and a data stamp
+  says the files were received 2026-06-11 and carry no game dates.
+- CollegeSavant leaderboards and home widgets list rows at or above the
+  season pool's median PA or pitch count by default (owner answer M19-3; the
+  number sits in the Min PA / Min pitches control and the reader can change
+  it). The 2025 hitter pool has no PA column, and the page says the qualifier
+  is unavailable for that season instead of filtering nothing silently.
+- A pitcher K% challenger on full-season NCAA box K% is pre-registered
+  (owner answer M19-1, docs/COLLEGE_PIT_K_CHALLENGER_GATE.md, registry row
+  college_pitk_box_challenger): 232 frozen pairs, one look on 2026-11-02, not
+  scored. The incumbent pitcher K% leg stays flagged and muted.
+
 ## 2026-09-04 to 2026-09-25 (catch-up entry, written 2026-09-25)
 
 This log stopped at 2026-09-03 while about 300 commits landed. This entry

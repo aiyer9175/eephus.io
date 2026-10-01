@@ -140,6 +140,12 @@ td.tt-team { text-align: left; }
 .tt-table th[data-gen-sorted] { background: var(--chip); }
 .lb-pa { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); font-family: var(--font-retro-mono, ui-monospace, monospace); }
 .lb-pa input { width: 56px; }
+.lb-pa-note { font-size: 11px; color: var(--muted); font-family: var(--font-retro-mono, ui-monospace, monospace); }
+.home-intro .cs-stamp { font-size: 11px; }
+/* Each season option names its pool (scope, size, teams, median sample), so
+   the closed select can be wider than a phone; it shrinks to its container
+   and the open list still shows the full text. */
+.year-select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
 .proj-name { color: var(--ink); font-weight: 700; text-decoration: none; }
 .proj-name:hover { color: var(--blue); text-decoration: underline; }
 /* School -> PROSPX college entity page. Reads as the muted team text it sits in,
@@ -1325,7 +1331,7 @@ select {
   }
 
   .toolbar {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     display: grid;
   }
 

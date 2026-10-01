@@ -225,7 +225,7 @@ async function init() {
       state.battedBalls = normalizeBattedBalls({});
     }
     state.availableYears = [...new Set(state.allPlayers.map((player) => player.year))].sort((a, b) => b - a);
-    state.year = largestPoolYear(state.availableYears) || 2025;
+    state.year = state.availableYears[0] || 2025;
     setActiveYear(yearFromHash(window.location.hash) || state.year);
     window.addEventListener("hashchange", render);
     render();
@@ -317,25 +317,72 @@ function normalizePlayer(row) {
 // Each season's payload is a different pool: 2024 is the national TrackMan set
 // (3,600+ hitters on 300+ teams) while 2025 is a Big Ten-only file with no team
 // or PA column. CS+ and every percentile are z-scored within the active
-// season, so "100" means that pool's average. The season picker therefore
-// names each pool's size and team count, the default season is the largest
-// pool, and the CS+ copy says which pool it is relative to (census M03-10).
+// season, so "100" means that pool's average. The page opens on the newest
+// season (owner answer M19-2, 2026-09-25), and the season picker and the CS+
+// copy name each pool: its scope (national, or Big Ten only when every team
+// code is a Big Ten school), size, team count and median PA (census M03-10).
+const BIG_TEN_CODES = new Set([
+  "ILL_ILL", "IOW_HAW", "IU", "MAR_TER", "MIC_SPA", "MIC_WOL", "MIN_GOL", "NEB",
+  "NOR_CAT", "ORE_DUC", "OSU_BUC", "PEN_NIT", "PUR_BOI", "RUT_SCA", "SOU_TRO", "WAS_HUS",
+]);
+// The vendored CollegeSavant files arrived with the module (2026-06-11) and
+// have not been refreshed since. They carry no game dates, so the data stamp
+// names the day they were received, never a games-through date.
+const DATA_RECEIVED = "2026-06-11";
+
 function yearPool(year) {
   const rows = (state.allPlayers || []).filter((p) => p.year === year);
-  const teams = new Set(rows.map((p) => p.team).filter(Boolean)).size;
-  return { n: rows.length, teams };
+  const teamSet = new Set(rows.map((p) => p.team).filter(Boolean));
+  const scope = !teamSet.size ? "" : [...teamSet].every((t) => BIG_TEN_CODES.has(t)) ? "Big Ten only" : "national";
+  const pa = rows.filter((p) => p.pa != null && p.pa !== "").map((p) => Number(p.pa))
+    .filter(Number.isFinite).sort((a, b) => a - b);
+  return { n: rows.length, teams: teamSet.size, scope, medPA: pa.length ? pa[Math.floor(pa.length / 2)] : null };
 }
 function poolText(year) {
-  const { n, teams } = yearPool(year);
-  return `${n.toLocaleString()} hitter${n === 1 ? "" : "s"}${teams ? `, ${teams} team${teams === 1 ? "" : "s"}` : ""}`;
+  const { n, teams, scope, medPA } = yearPool(year);
+  return `${scope ? `${scope} · ` : ""}${n.toLocaleString()} hitter${n === 1 ? "" : "s"}`
+    + `${teams ? `, ${teams} team${teams === 1 ? "" : "s"}` : ""}`
+    + (medPA != null ? `, median ${medPA} PA` : ", no PA column");
 }
-function largestPoolYear(years) {
-  return years.slice().sort((a, b) => yearPool(b).n - yearPool(a).n || b - a)[0];
+
+// Default sample qualifier (owner answer M19-3): the active pool's median PA,
+// shown in the Min PA control with its number and changeable by the reader.
+// state.minPA null means "follow the pool median"; a season change resets it.
+// A pool with no PA column (the 2025 Big Ten file) has no qualifier, and the
+// page says so instead of listing every row as if it had been filtered. The
+// qualifier only filters which hitters are listed: CS+ and every percentile
+// stay computed against the whole season pool.
+function qualifier() {
+  const { medPA } = yearPool(state.year);
+  if (medPA == null) return { available: false, value: 0, median: null, isDefault: true };
+  const user = state.minPA;
+  return { available: true, value: user == null ? medPA : user, median: medPA, isDefault: user == null };
+}
+function passesQualifier(p, q) {
+  return !q.available || q.value <= 0 || p.pa == null || p.pa >= q.value;
+}
+function qualifierControl(q) {
+  if (!q.available) {
+    return `<span class="lb-pa lb-pa-off">Min PA: unavailable for ${state.year} (no PA column)</span>`;
+  }
+  return `<label class="lb-pa">Min PA <input type="number" min="0" step="10" value="${q.value}" data-min-pa aria-label="Minimum PA, default the ${state.year} pool median of ${q.median}"> <span class="lb-pa-note">median ${q.median}</span></label>`;
+}
+function qualifierText(q) {
+  if (!q.available) return `no sample qualifier: the ${state.year} pool has no PA column, so every hitter is listed`;
+  if (q.value <= 0) return `no PA minimum (the ${state.year} pool median is ${q.median} PA)`;
+  return `${q.value}+ PA${q.isDefault ? ` (default: the ${state.year} pool median)` : ` (the ${state.year} pool median is ${q.median})`}`;
+}
+function dataStamp() {
+  const inSeason = state.year >= Number(DATA_RECEIVED.slice(0, 4));
+  return `Data through: the CollegeSavant files received ${DATA_RECEIVED}, not refreshed since; the files carry no game dates. `
+    + `The ${state.year} pool: ${poolText(state.year)}${inSeason ? `, a cut taken during the ${state.year} season` : ""}.`;
 }
 
 function setActiveYear(year) {
   const numericYear = Number(year);
+  const previous = state.year;
   state.year = state.availableYears.includes(numericYear) ? numericYear : (state.availableYears[0] || numericYear);
+  if (state.year !== previous) state.minPA = null;
   ensureHitterBip(state.year);
   state.players = state.allPlayers.filter((player) => player.year === state.year);
   state.percentiles = computePercentiles(state.players);
@@ -490,19 +537,22 @@ function renderHome() {
       <span class="hub-go">Open</span>
     </a>`;
   }).join("");
+  const q = qualifier();
   app.innerHTML = `
-    <section class="toolbar home-toolbar">${renderYearSelect()}</section>
+    <section class="toolbar home-toolbar">${renderYearSelect()}${qualifierControl(q)}</section>
 
     <section class="home-intro">
       <h1>CollegeSavant - Hitters</h1>
       <p>Tracked batted-ball quality and plate discipline, a pool-anchored CS+ index, and a college-to-Single-A projection for the ${state.year} college dataset.</p>
+      <p class="cs-stamp">${escapeHtml(dataStamp())}</p>
     </section>
 
     <section class="hub-grid">${hub}</section>
 
     <div class="panel-title" style="margin-top:20px;"><span>Top of the ${state.year} class</span><span>leaders by the metrics that travel to pro ball</span></div>
+    <p class="note-line">Listed: ${escapeHtml(qualifierText(q))}. CS+ 100 = the ${state.year} pool average (${escapeHtml(poolText(state.year))}).</p>
     <section class="widget-grid">
-      ${HOME_WIDGET_METRICS.map((item) => renderTopWidget({ ...getMetric(item.key), label: item.label })).join("")}
+      ${HOME_WIDGET_METRICS.map((item) => renderTopWidget({ ...getMetric(item.key), label: item.label }, q)).join("")}
     </section>
   `;
 
@@ -514,10 +564,12 @@ function renderHome() {
       renderHome();
     });
   }
+  const pa = app.querySelector("[data-min-pa]");
+  if (pa) pa.addEventListener("change", (e) => { state.minPA = Number(e.target.value) || 0; renderHome(); });
 }
 
-function renderTopWidget(metric) {
-  const rows = topRowsForMetric(metric).slice(0, 10);
+function renderTopWidget(metric, q = qualifier()) {
+  const rows = topRowsForMetric(metric).filter((p) => passesQualifier(p, q)).slice(0, 10);
   return `
     <article class="top-widget">
       <div class="widget-title">
@@ -582,12 +634,12 @@ function renderLeaderboard() {
   state.sortKey = col.key;
   const dir = state.sortDir != null ? state.sortDir : (col.higherBetter ? -1 : 1);
   state.sortDir = dir;
-  const minPA = state.minPA || 0;
+  const qual = qualifier();
   const teamF = state.teamFilter || "all";
   const q = state.query.toLowerCase();
   const filtered = state.players.filter((p) =>
     p.hitter_name.toLowerCase().includes(q) &&
-    (minPA <= 0 || p.pa == null || p.pa >= minPA) &&
+    passesQualifier(p, qual) &&
     (teamF === "all" || p.team === teamF));
   // A11: missing values must always sink to the BOTTOM, in both directions.
   // The old `dir * compareNullable(...)` multiplied the null guard by the sort
@@ -601,7 +653,6 @@ function renderLeaderboard() {
     return dir * (av - bv);
   });
   const visible = filtered.slice(0, LEADERBOARD_LIMIT);
-  const hasPa = state.players.some((p) => p.pa != null);
   const teams = [...new Set(state.players.map((p) => p.team).filter(Boolean))]
     .sort((a, b) => formatTeamName(a).localeCompare(formatTeamName(b)));
   const head = LB_COLUMNS.map((c) => {
@@ -629,11 +680,12 @@ function renderLeaderboard() {
         <option value="all">All teams</option>
         ${teams.map((t) => `<option value="${escapeHtml(t)}"${TEAM_LOGOS[t] ? ` data-logo="${TEAM_LOGOS[t]}"` : ""} ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
       </select>
-      ${hasPa ? `<label class="lb-pa">Min PA <input type="number" min="0" step="10" value="${minPA}" data-min-pa></label>` : ""}
+      ${qualifierControl(qual)}
       <button class="control-button" type="button" data-reset>Reset</button>
       <button class="chip egfx-chip" id="cs-lb-gfx" title="Generate a shareable graphic (theme-aware, multiple formats)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>
     </section>
-    <p class="note-line">${filtered.length.toLocaleString()} hitter${filtered.length === 1 ? "" : "s"}${(hasPa && minPA > 0) ? ` with ${minPA}+ PA` : ""}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
+    <p class="note-line">${filtered.length.toLocaleString()} hitter${filtered.length === 1 ? "" : "s"}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ and percentiles compare against the whole ${state.year} pool. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
+    <p class="note-line cs-stamp">${escapeHtml(dataStamp())}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th>${head}</tr></thead>
       <tbody>${body || `<tr><td colspan="${LB_COLUMNS.length + 2}" class="note-line">No hitters match these filters.</td></tr>`}</tbody>
@@ -660,7 +712,7 @@ function renderLeaderboard() {
   if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderLeaderboard(); });
   const rb = app.querySelector("[data-reset]");
   if (rb) rb.addEventListener("click", () => {
-    state.query = ""; state.minPA = 0; state.teamFilter = "all"; state.sortKey = "cs_plus"; state.sortDir = null;
+    state.query = ""; state.minPA = null; state.teamFilter = "all"; state.sortKey = "cs_plus"; state.sortDir = null;
     renderLeaderboard();
   });
   const lbGfx = app.querySelector("#cs-lb-gfx");
