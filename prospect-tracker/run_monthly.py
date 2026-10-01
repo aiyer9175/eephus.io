@@ -3639,7 +3639,10 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 # tracked like data/mgmt_decisions; written from the bytes the
                 # board indexed so shards.files matches disk.
                 _lg.write_shards(_lgd, _lgs)
-                _lg_n = sum(int((d.get("contracts") or {}).get("n_priced") or 0)
+                # M27-4 (2026-09-25): the Trade Machine's CBT slice, read off
+                # the board just written so the two never disagree.
+                _lg.write_trade_cbt(_lgd)
+                _lg_n =sum(int((d.get("contracts") or {}).get("n_priced") or 0)
                             for d in _lgd["clubs"].values())
                 log.info("ledger: %d clubs, %d priced contract rows",
                          len(_lgd["clubs"]), _lg_n)

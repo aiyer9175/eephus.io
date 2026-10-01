@@ -319,6 +319,230 @@ function _tmTotal(side) {
   return side.reduce((s, x) => s + (x.mm || 0), 0);
 }
 
+// ---- CBT context (owner answer M27-4, 2026-09-25) -------------------------
+// Display only: one block per side with the club's CBT position before and
+// after the trade, for the 2026 prorated remainder and for 2027, read from the
+// Club Ledger's CBT slice (the trade_cbt sidecar ledger_export writes). No
+// figure here enters a trade value or the verdict above it. The functions
+// between this marker and the end marker are pure; the tests run them in a
+// real JS engine on fixtures.
+
+// The 2022 CBA schedule, the same arithmetic as ledger_export.computed_cbt_bill:
+// base rate by payor year on the first tier, plus each surcharge above it.
+function _tmCbtBaseKey(tier) {
+  const t = String(tier || "Non-Tax").trim();
+  if (t.startsWith("2nd")) return "2";
+  if (t.startsWith("3")) return "3+";
+  return "1";
+}
+function _tmCbtBill(tax, threshold, tier, rates, tiers) {
+  if (tax == null || threshold == null || !rates || !tiers) return { over: null, bill: null, bracket: null };
+  const over = Number(tax) - Number(threshold);
+  const t1 = Number(tiers[0]), t2 = Number(tiers[1]), t3 = Number(tiers[2]);
+  const k = _tmCbtBaseKey(tier);
+  const base = Number(rates.base_rate_by_payor_year[k]);
+  const sur = rates.surcharge_rates;
+  const s1 = Number(sur.tier1);
+  const s2 = Number(k === "1" ? sur.tier2_first : sur.tier2_repeat);
+  const s3 = Number(sur.tier3);
+  if (over <= 0) return { over: over, bill: 0, bracket: "under" };
+  const clip = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+  const bill = base * Math.min(over, t1)
+    + (base + s1) * clip(over - t1, 0, t2 - t1)
+    + (base + s2) * clip(over - t2, 0, t3 - t2)
+    + (base + s3) * Math.max(over - t3, 0);
+  const bracket = over <= t1 ? "base" : over <= t2 ? "surcharge_1" : over <= t3 ? "surcharge_2" : "surcharge_3";
+  return { over: over, bill: bill, bracket: bracket };
+}
+
+// Days of the regular season still to play on `todayISO` (today counts, the
+// acquiring club carries a player from the day he arrives) and the season's
+// length, both ends counted. Before Opening Day the whole season is left;
+// after the final regular-season day none is.
+function _tmCbtDaysLeft(cal, todayISO) {
+  if (!cal || !cal.start || !cal.end || !todayISO) return null;
+  const day = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 86400000;
+  const len = day(cal.end) - day(cal.start) + 1;
+  const t = day(todayISO);
+  const left = t < day(cal.start) ? len : Math.max(0, day(cal.end) - t + 1);
+  return { left: left, len: len };
+}
+
+// The CBT charge one traded asset carries in `season`, in dollars. Prospects
+// carry none here (a 40-man minor leaguer's small charge is not on file). An
+// MLB player carries his contract AAV in a season his contract covers. For the
+// next season only a signed, guaranteed year counts: the Ledger's next-season
+// tax payroll (Spotrac) holds no projected arbitration or pre-arbitration
+// salary and no club or mutual option year, so neither does the move.
+// known=false means no salary is on file and the asset counts as $0.
+function _tmCbtCharge(item, proj, season, seasonNow) {
+  if (!item || item.kind === "prospect") return { usd: 0, known: true };
+  if (!proj) return { usd: 0, known: false };
+  const aav = proj.aav != null && isFinite(Number(proj.aav)) ? Number(proj.aav) : null;
+  if (season === seasonNow) {
+    if (aav != null && proj.thru != null && Number(proj.thru) >= season) return { usd: aav, known: true };
+    return { usd: 0, known: false };
+  }
+  const row = (proj.salPath || []).find(r => r && Number(r[0]) === season);
+  if (!row) return { usd: 0, known: true };              // no season left to carry
+  const opt = (proj.salOpt || []).find(o => o && Number(o[0]) === season);
+  const optional = opt && (opt[1] === "club" || opt[1] === "mutual");
+  if (row[4] !== "signed" || row[5] !== "contract" || optional) return { usd: 0, known: true };
+  return { usd: aav != null ? aav : Number(row[1]) || 0, known: true };
+}
+
+// One club's CBT position for one season before and after the trade. `net`
+// is the AAV the club takes in minus the AAV it sends out (dollars); in the
+// season under way only the share of it for the days still to play counts.
+function _tmCbtSeason(blk, net, frac, rates, tiers) {
+  if (!blk || blk.tax_payroll_usd == null || blk.threshold_usd == null) return null;
+  const before = Number(blk.tax_payroll_usd);
+  const moved = net * frac;
+  const after = before + moved;
+  const b0 = _tmCbtBill(before, blk.threshold_usd, blk.tier, rates, tiers);
+  const b1 = _tmCbtBill(after, blk.threshold_usd, blk.tier, rates, tiers);
+  return { before: before, after: after, moved: moved, threshold: Number(blk.threshold_usd),
+           carry: !!blk.carry_forward, tier: blk.tier || "Non-Tax", tierBasis: blk.tier_basis || "",
+           bracketBefore: b0.bracket, bracketAfter: b1.bracket,
+           marginal: (b1.bill != null && b0.bill != null) ? b1.bill - b0.bill : null };
+}
+
+// A side's club is the club that SENDS the players the other side receives
+// (the Trade Machine's "receives" framing). One club or none: players from
+// two clubs on the far side name no single club.
+function _tmCbtClubOf(items, canon) {
+  const codes = new Set();
+  for (const x of items || []) {
+    const c = canon(x && x.org);
+    if (c) codes.add(c);
+  }
+  if (codes.size === 1) return { club: codes.values().next().value };
+  return { club: null, why: codes.size > 1 ? "mixed" : "none" };
+}
+
+// Everything one side's block prints, as data. `inItems` the side receives,
+// `outItems` it sends; `projOf(item)` returns the player's projection block.
+function _tmCbtSide(club, inItems, outItems, projOf, cbt, todayISO) {
+  const sNow = Number(cbt.season_now), sNext = Number(cbt.class_year);
+  const blocks = (cbt.clubs || {})[club];
+  if (!blocks) return null;
+  const sum = (items, season) => {
+    let usd = 0, unknown = 0;
+    for (const x of items || []) {
+      const ch = _tmCbtCharge(x, projOf(x), season, sNow);
+      usd += ch.usd;
+      if (!ch.known) unknown += 1;
+    }
+    return { usd: usd, unknown: unknown };
+  };
+  const out = { club: club, seasons: [] };
+  const cal = (cbt.calendar || {})[String(sNow)];
+  const dl = _tmCbtDaysLeft(cal, todayISO);
+  const iN = sum(inItems, sNow), oN = sum(outItems, sNow);
+  if (dl && dl.left === 0) {
+    out.seasons.push({ season: sNow, closed: true });
+  } else {
+    const r = dl ? _tmCbtSeason(blocks[String(sNow)], iN.usd - oN.usd, dl.left / dl.len, cbt.rates, cbt.surcharge_tiers_usd) : null;
+    out.seasons.push(Object.assign({ season: sNow, closed: false, prorated: true,
+      daysLeft: dl ? dl.left : null, days: dl ? dl.len : null, noCalendar: !dl,
+      unknown: iN.unknown + oN.unknown }, r || {}));
+  }
+  const iX = sum(inItems, sNext), oX = sum(outItems, sNext);
+  const r2 = _tmCbtSeason(blocks[String(sNext)], iX.usd - oX.usd, 1, cbt.rates, cbt.surcharge_tiers_usd);
+  out.seasons.push(Object.assign({ season: sNext, closed: false, prorated: false,
+    unknown: iX.unknown + oX.unknown }, r2 || {}));
+  return out;
+}
+
+function _tmUsdM(usd, signed) {
+  if (usd == null || !isFinite(Number(usd))) return "-";
+  const v = Number(usd) / 1e6;
+  const s = Math.abs(v).toFixed(1);   // payrolls near $244M need the decimal
+  if (signed) return (v < 0 ? "-$" : "+$") + s + "M";
+  return (v < 0 ? "-$" : "$") + s + "M";
+}
+
+// The printed lines of one side's block, plain text, so the wording is tested
+// exactly as served.
+function _tmCbtLines(side, cbt) {
+  const br = cbt.brackets || {};
+  const bName = k => br[k] || k || "-";
+  const basis = cbt.payor_basis || {};
+  const lines = [];
+  for (const s of side.seasons) {
+    if (s.closed) {
+      lines.push({ season: s.season, text: `${s.season} closed: the trade does not change ${s.season} tax payroll` });
+      continue;
+    }
+    if (s.before == null) {
+      lines.push({ season: s.season, text: s.noCalendar
+        ? `${s.season}: the regular-season dates are not on file, so the prorated remainder is not computed`
+        : `${s.season}: no tax payroll on file for this club` });
+      continue;
+    }
+    const bits = [];
+    bits.push(`tax payroll ${_tmUsdM(s.before)} to ${_tmUsdM(s.after)}`);
+    if (s.prorated) bits.push(`${s.daysLeft} of ${s.days} regular-season days left`);
+    bits.push(s.carry
+      ? `threshold ${_tmUsdM(s.threshold)}, the ${cbt.season_now} figure carried forward (no ${s.season} threshold is published)`
+      : `threshold ${_tmUsdM(s.threshold)}`);
+    bits.push(s.bracketBefore === s.bracketAfter
+      ? `bracket: ${bName(s.bracketBefore)}`
+      : `bracket: ${bName(s.bracketBefore)} to ${bName(s.bracketAfter)}`);
+    const what = s.prorated ? "prorated AAV moved" : "AAV moved";
+    bits.push(`marginal tax ${_tmUsdM(s.marginal, true)} on ${_tmUsdM(Math.abs(s.moved))} of ${what} ${s.moved < 0 ? "out" : "in"} (net)`);
+    bits.push(`payor tier ${s.tier}${basis[s.tierBasis] ? ` (${basis[s.tierBasis]})` : ""}`);
+    if (s.unknown) bits.push(`${s.unknown} player${s.unknown === 1 ? "" : "s"} with no ${s.season} salary on file count as $0`);
+    const head = s.prorated ? `${s.season}, prorated remainder` : `${s.season}`;
+    lines.push({ season: s.season, text: `${head}: ${bits.join("; ")}` });
+  }
+  return lines;
+}
+// ---- end CBT context ------------------------------------------------------
+
+function _tmTodayISO() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function _tmCanonOrg(org) {
+  const hub = window.EEPHUS_HUB;
+  const c = hub && hub.club ? hub.club(org) : null;
+  return c ? c.code : null;
+}
+
+// The CBT block under the verdict. Nothing renders until the slice has
+// loaded; a side whose club cannot be named says why instead of guessing.
+function _tmCbtHtml() {
+  const cbt = _TM.cbt;
+  if (!cbt || !cbt.clubs || !(_TM.a.length || _TM.b.length)) return "";
+  const projOf = x => (x && x.kind === "mlb" && _TM.detail && _TM.detail[x.key]) ? _TM.detail[x.key].proj : null;
+  const today = _tmTodayISO();
+  const sideBlock = (label, inItems, outItems, otherLabel) => {
+    const who = _tmCbtClubOf(outItems, _tmCanonOrg);
+    if (!who.club) {
+      const why = who.why === "mixed"
+        ? `the players Side ${otherLabel} receives come from more than one club`
+        : `Side ${otherLabel} receives no player yet`;
+      return `<div class="tm-cbt-side"><div class="tm-cbt-club">Side ${label}</div>
+        <div class="tm-cbt-line tm-cbt-dim">Club not named: ${escapeHtml(why)}. A side's club is the one that sends the players the other side receives.</div></div>`;
+    }
+    const side = _tmCbtSide(who.club, inItems, outItems, projOf, cbt, today);
+    if (!side) return "";
+    const lines = _tmCbtLines(side, cbt).map(l =>
+      `<div class="tm-cbt-line">${escapeHtml(l.text)}</div>`).join("");
+    return `<div class="tm-cbt-side"><div class="tm-cbt-club">${_tmTeamLogo(who.club)} Side ${label}: ${escapeHtml(who.club)}</div>${lines}</div>`;
+  };
+  const src = cbt.source || {};
+  const srcBits = [src.payroll, src.thresholds, src.calendar].filter(Boolean).map(escapeHtml).join("; ");
+  return `<div class="tm-cbt">
+    <div class="tm-cbt-head">${_tmGl("CBT", "cbt_payroll")} context <span class="tm-cbt-dim">display only; the trade values and verdict above do not use it</span></div>
+    <div class="tm-cbt-grid">${sideBlock("A", _TM.a, _TM.b, "B")}${sideBlock("B", _TM.b, _TM.a, "A")}</div>
+    <div class="tm-cbt-foot">Sources: ${srcBits}. Marginal tax is the change in the computed bill at the club's payor tier, the same schedule the <a href="/ledger/">Club Ledger</a> prints.</div>
+  </div>`;
+}
+
 // One shared dead-band for "even" trade verdicts, used by BOTH the Trade
 // Machine and the Transactions Trade Audit so the two never disagree on what
 // counts as balanced. The wider $5M band is deliberate: surplus dollars carry
@@ -415,6 +639,7 @@ function renderTradeMachine() {
     <div class="detail-title" style="font-size:13px;"><span data-gl="trade_machine">Trade Machine</span></div>
     <div class="tm-grid">${sideHtml("a", "Side A")}${sideHtml("b", "Side B")}</div>
     ${verdict}
+    ${_tmCbtHtml()}
   </div>`;
   _tmWireGl(el);
   el.querySelectorAll("[data-tm-search]").forEach(inp => {
@@ -1468,6 +1693,12 @@ function _tbShowGroup(playerKey) {
             else { _tbGrpoState = "unavailable"; }
           })
           .catch(() => { _tbGrpoState = "unavailable"; });
+        // The Club Ledger's CBT slice for the evaluator's CBT block (M27-4).
+        // Non-blocking and optional: without it the block simply does not show.
+        fetch(DATA_BASE + "trade_cbt.json", { cache: "no-cache" })
+          .then(r => r.ok ? r.json() : null)
+          .then(c => { if (c && c.clubs) { _TM.cbt = c; renderTradeMachine(); } })
+          .catch(() => { /* enrichment only */ });
         _tbWireFilterToggle();
       })
       .catch(() => {

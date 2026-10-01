@@ -402,6 +402,90 @@ def bracket_labels(tiers) -> dict:
 
 
 # --------------------------------------------------------------------------
+# the Trade Machine's CBT slice (owner answer M27-4, 2026-09-25)
+# --------------------------------------------------------------------------
+# The Trade Machine prints, per side, the club's CBT position before and after
+# the trade for the 2026 prorated remainder and for 2027. It reads the same
+# per-club cbt blocks the Ledger serves (Spotrac tax payroll, the cba_rules
+# thresholds through fa_cba, the payor tier) from a slim sidecar instead of
+# the whole board, plus the 2026 regular-season dates that size the proration.
+# Display only: no figure here enters a trade value.
+
+TRADE_CBT_OUT = DATA / "trade_cbt.json"
+SEASON_CALENDAR_DIR = ROOT / ".cache" / "fantasy_schedule"
+
+
+def season_calendar_on_disk(season: int, cache_dir: Path | None = None) -> dict | None:
+    """{"start", "end", "days"} for `season`'s regular season from the cached
+    StatsAPI /seasons payload (fantasy_schedule.regular_season_dates writes
+    it), or None. Read from disk only: this module opens no socket. `days`
+    counts both ends, the length the CBT proration divides by."""
+    p = Path(cache_dir or SEASON_CALENDAR_DIR) / f"season_{int(season)}.json"
+    try:
+        raw = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    for row in (raw or {}).get("seasons") or []:
+        if str((row or {}).get("seasonId")) != str(int(season)):
+            continue
+        start, end = row.get("regularSeasonStartDate"), row.get("regularSeasonEndDate")
+        if not (start and end):
+            return None
+        days = (date.fromisoformat(str(end)) - date.fromisoformat(str(start))).days + 1
+        return {"start": str(start), "end": str(end), "days": days}
+    return None
+
+
+def trade_cbt_slice(doc: dict, calendar: dict | None) -> dict:
+    """The Trade Machine's CBT sidecar, read off a built Ledger board. Pure:
+    every figure is copied from `doc` (the clubs' cbt blocks and the rule
+    block), none is recomputed, so the Trade Machine and /ledger/ print the
+    same tax payroll, threshold and tier for every club."""
+    season_now, class_year = int(doc["season_now"]), int(doc["class_year"])
+    keep = ("tax_payroll_usd", "threshold_usd", "threshold_verify", "carry_forward",
+            "tier", "tier_basis")
+    clubs = {}
+    for c, d in sorted(doc["clubs"].items()):
+        cbt = d.get("cbt") or {}
+        clubs[c] = {str(s): {k: (cbt.get(str(s)) or {}).get(k) for k in keep}
+                    for s in (season_now, class_year)}
+    cba = doc.get("cba") or {}
+    copy = doc.get("copy") or {}
+    return {
+        "generated_at": doc.get("generated_at"),
+        "season_now": season_now,
+        "class_year": class_year,
+        "calendar": {str(season_now): calendar},
+        "rates": cba.get("rates"),
+        "surcharge_tiers_usd": cba.get("surcharge_tiers_usd"),
+        "brackets": cba.get("brackets"),
+        "cba_expiry": cba.get("expiry"),
+        "payor_basis": copy.get("payor_basis"),
+        "clubs": clubs,
+        "source": {
+            "payroll": (f"Spotrac tax payroll ({season_now} and {class_year} pages) as the Club "
+                        f"Ledger read it on {str(doc.get('generated_at') or '')[:10]}"),
+            "thresholds": (f"the 2022 CBA schedule (cba_rules, through fa_cba); the {class_year} "
+                           f"threshold is the {season_now} figure carried forward, since no "
+                           f"{class_year} threshold is published and the agreement expires "
+                           f"{cba.get('expiry')}"),
+            "calendar": (f"MLB StatsAPI /seasons, regular season {(calendar or {}).get('start')} "
+                         f"to {(calendar or {}).get('end')}") if calendar else None,
+        },
+    }
+
+
+def write_trade_cbt(doc: dict, out: Path | None = None,
+                    calendar_dir: Path | None = None) -> Path:
+    """Write the Trade Machine's CBT sidecar from a built board. Called from
+    main() and from run_monthly step d10e right after the board write."""
+    p = Path(out or TRADE_CBT_OUT)
+    sl = trade_cbt_slice(doc, season_calendar_on_disk(int(doc["season_now"]), calendar_dir))
+    p.write_text(json.dumps(sl, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    return p
+
+
+# --------------------------------------------------------------------------
 # readers
 # --------------------------------------------------------------------------
 
@@ -2425,6 +2509,8 @@ def main(argv=None) -> int:
     sizes = [p.stat().st_size for p in written]
     print(f"  shards: {len(written)} files in data/{SHARD_DIRNAME}/, {min(sizes) / 1e3:.0f}-{max(sizes) / 1e3:.0f} KB, "
           f"preview_n {doc['shards']['preview_n']}")
+    tc = write_trade_cbt(doc)
+    print(f"wrote {tc.relative_to(ROOT)} ({tc.stat().st_size / 1e3:.0f} KB)")
     fr = Counter(d["farm"]["reconciliation"]["status"] for d in doc["clubs"].values())
     print(f"  farm reconciliation: {dict(fr)}")
     rows = doc["league"]["rows"]

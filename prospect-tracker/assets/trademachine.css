@@ -162,6 +162,25 @@
 .tm-balverdict { font-weight: 700; color: var(--text-primary); }
 .tm-balverdict.is-bal { color: var(--neon-green); }
 
+/* CBT context under the verdict (M27-4): one block per side, display only. */
+#trade-machine .tm-cbt {
+  margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border);
+  font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.5;
+}
+#trade-machine .tm-cbt-head { font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+#trade-machine .tm-cbt-head .tm-cbt-dim { font-weight: 400; margin-left: 4px; }
+#trade-machine .tm-cbt-dim { color: var(--text-tertiary); }
+#trade-machine .tm-cbt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+#trade-machine .tm-cbt-side { min-width: 0; }
+#trade-machine .tm-cbt-club {
+  display: flex; align-items: center; gap: 6px;
+  font-weight: 600; color: var(--text-primary); margin-bottom: 3px;
+}
+#trade-machine .tm-cbt-line { overflow-wrap: anywhere; margin-bottom: 3px; }
+#trade-machine .tm-cbt-foot { margin-top: 6px; font-size: 11px; color: var(--text-tertiary); overflow-wrap: anywhere; }
+#trade-machine .tm-cbt-foot a { color: var(--accent-cyan); }
+@media (max-width: 720px) { #trade-machine .tm-cbt-grid { grid-template-columns: 1fr; } }
+
 /* Trade Board table: finished column treatment (header band, row dividers, hover,
    right-aligned numerics, and group dividers separating identity | value | signals). */
 .tm-board-table { width: 100%; border-collapse: collapse; }

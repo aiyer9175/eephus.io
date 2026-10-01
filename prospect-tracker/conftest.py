@@ -887,6 +887,9 @@ _SIDECAR_WRITE_TARGETS = (
     # VAL_3 surplus-odds gate: surplus_odds_gate.run writes its one read as a block
     # of its parent artifact through OUT_PATH, resolved at call time.
     ("surplus_odds_gate", "OUT_PATH", "data/surplus_backtest_real.json"),
+    # M27-4: the Ledger exporter's second output, the Trade Machine's CBT
+    # slice; write_trade_cbt resolves TRADE_CBT_OUT at call time.
+    ("ledger_export", "TRADE_CBT_OUT", "data/trade_cbt.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands
