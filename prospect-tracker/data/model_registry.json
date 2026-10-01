@@ -2289,14 +2289,77 @@
    "surface": "PROSPX spotlights + WIRE flags",
    "predicts": "risers/rebounders/fallers (implicit claim: movement persists)",
    "champion": "movement_engine v19 (hand-tuned gates)",
-   "baseline": "fv-band controls (editorial_eval.py: the first 5 unflagged players by player key per flag, not a random matched draw)",
-   "metric": "30/60-day matched-control hit rate with Wilson CIs",
+   "baseline": "matched controls (editorial_eval.py v2: 5 unflagged board players drawn at random, seeded per flag, from the flag's fv_band x level x age_band cell on the emit night, excluding only players flagged on the same date)",
+   "metric": "30/60-day hit rate on the board's consensus FV (metric_snapshots), flag vs matched control; verdict from the gap's 95% bootstrap interval, players resampled whole",
    "eval_artifact": "data/editorial_eval.json",
    "verdict": "provisional",
-   "notes": "Scoring machinery: editorial_eval.py (30/60-day windows, config-defined hits, fv-band controls, Wilson CIs, kill rule = fails to clear control after 2 matured cohorts), wired into run_monthly; the per-type rates and verdicts live in data/editorial_eval.json, not here. AUDIT 2026-09-25 (census M02-04, two verifiers CONFIRMED): flags are scored from the stored flag FV and controls from the median of source snapshots (two bases), the controls are the first unflagged players by key (4,827 faller h30 draws from 37 players), every ever-flagged key is excluded from controls (look-ahead), and the snapshots basis is not point-in-time (upserts rewrite snapshot_date). An audit re-score on one basis with random controls moved the rebound and riser verdicts, so the artifact's verdicts are not reliable; the corrected eval (metric_snapshots basis, random in-cell controls, player-clustered CIs) and any kill-rule change are held for the owner. Verdict stays provisional.",
+   "notes": "Scoring machinery: editorial_eval.py, wired into run_monthly. Two versions live side by side in data/editorial_eval.json. v1 (top-level by_flag_type) is unchanged because the GRPO forward gate froze its design on it; the census audit (M02-04, X01-10, two verifiers CONFIRMED) found it scores flags from the stored flag FV and controls from the source-snapshot median, draws controls as the first unflagged players by key, excludes every ever-flagged key, counts daily cohorts and uses row-level Wilson intervals. v2 (registered 2026-10-01 on the owner's answer of 2026-09-25) scores both legs on the point-in-time board history, draws seeded random matched controls, counts calendar-month cohorts and clusters the intervals by player; its hit is the FV leg of HIT_RULES only, since the board history carries no source ranks or source counts. The served receipts (Spotlights tab, /glossary/) and this row's card read the v2 block; the per-type rates, verdicts, kill-rule recommendations and the v1-to-v2 before/after table live in the artifact, not here. Any bucket change under the kill rule is the owner's decision. Verdict stays provisional.",
    "last_checked": "2026-09-24",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 0,
+   "card": {
+    "window": "v2 re-score, 30-day window, board history from the first flags (2026-06-11)",
+    "headline": [
+     {
+      "label": "Riser flags: board FV up 5+ within 30 days",
+      "champion": 0.0042,
+      "baseline": 0.0006,
+      "better": "higher",
+      "baseline_label": "matched control",
+      "resolvable": false,
+      "verdict": "inside: flag 0.0042 vs matched control 0.0006, gap 95% CI -0.0002 to +0.0099 (clustered by player)"
+     },
+     {
+      "label": "Rebound flags: board FV up 5+ within 30 days",
+      "champion": 0.0163,
+      "baseline": 0.0018,
+      "better": "higher",
+      "baseline_label": "matched control",
+      "resolvable": false,
+      "verdict": "inside: flag 0.0163 vs matched control 0.0018, gap 95% CI -0.0030 to +0.0471 (clustered by player)"
+     },
+     {
+      "label": "Faller flags: board FV down 5+ within 30 days",
+      "champion": 0.0639,
+      "baseline": 0.0806,
+      "better": "higher",
+      "baseline_label": "matched control",
+      "resolvable": false,
+      "verdict": "inside: flag 0.0639 vs matched control 0.0806, gap 95% CI -0.0703 to +0.0445 (clustered by player)"
+     }
+    ],
+    "derived_from": {
+     "n": "v2.n_scored.h30",
+     "digits": 4,
+     "headline": [
+      {
+       "champion": "v2.by_flag_type.riser.horizons.h30.hit_rate",
+       "baseline": "v2.by_flag_type.riser.horizons.h30.control_rate",
+       "resolvable": {
+        "above_zero": "v2.by_flag_type.riser.horizons.h30.gap_lo95"
+       },
+       "verdict": "v2.by_flag_type.riser.horizons.h30.verdict_text"
+      },
+      {
+       "champion": "v2.by_flag_type.rebound.horizons.h30.hit_rate",
+       "baseline": "v2.by_flag_type.rebound.horizons.h30.control_rate",
+       "resolvable": {
+        "above_zero": "v2.by_flag_type.rebound.horizons.h30.gap_lo95"
+       },
+       "verdict": "v2.by_flag_type.rebound.horizons.h30.verdict_text"
+      },
+      {
+       "champion": "v2.by_flag_type.faller.horizons.h30.hit_rate",
+       "baseline": "v2.by_flag_type.faller.horizons.h30.control_rate",
+       "resolvable": {
+        "above_zero": "v2.by_flag_type.faller.horizons.h30.gap_lo95"
+       },
+       "verdict": "v2.by_flag_type.faller.horizons.h30.verdict_text"
+      }
+     ]
+    },
+    "n": 4620
+   }
   },
   {
    "model_id": "star_odds",

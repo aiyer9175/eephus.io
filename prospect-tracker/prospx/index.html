@@ -3921,6 +3921,23 @@
       margin-bottom: var(--space-3);
       align-items: center;
     }
+    /* Spotlights track record: the editorial eval's verdicts for the open bucket. */
+    .spotlight-track-record {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin: 0 0 var(--space-3);
+      overflow-wrap: anywhere;
+    }
+    .spotlight-track-record:empty { display: none; }
+    .spotlight-track-record .str-head { font-weight: 600; color: var(--text-primary); }
+    .spotlight-track-record .str-v { font-weight: 600; }
+    .spotlight-track-record .str-v.is-clears { color: var(--up, var(--neon-cyan)); }
+    .spotlight-track-record .str-v.is-trails { color: var(--down, var(--text-primary)); }
+    .spotlight-track-record .str-note { color: var(--text-tertiary); margin-top: 4px; }
     .spotlight-header, .spotlight-row {
       display: grid;
       grid-template-columns: 32px 1.25fr 0.45fr 0.75fr 1.15fr 1.55fr;
@@ -9441,6 +9458,7 @@
               title="Prospects whose 2026 performance has materially deteriorated. Very-young and young+pedigreed prospects are filtered out unless their K-rate has cratered (Bryce Rainer-style).">Fallers</button>
       <button class="chip reset-chip" type="button" data-reset-page="spotlights" title="Reset spotlight bucket back to default (Risers)" style="margin-left:12px;">↺ Reset</button>
     </div>
+    <div id="spotlight-track-record" class="spotlight-track-record" aria-live="polite"></div>
     <div class="active-grid">
       <div id="spotlight-rows"></div>
       <aside id="spotlights-context-rail" class="active-context-rail" aria-label="League context"></aside>
@@ -18136,6 +18154,51 @@ function renderActives() {
   }
 }
 
+// Spotlights track record (census M02-04 and X01-10, owner answer 2026-09-25):
+// the re-scored (v2) verdicts for the open bucket, read from the editorial eval
+// artifact at render time and never typed here, with the earlier version's
+// rates beside them. Fetched once; the box stays empty until it lands.
+let _SPOT_EVAL = null;
+function _loadSpotEval() {
+  if (_SPOT_EVAL !== null) return;
+  _SPOT_EVAL = false;
+  fetch("/data/editorial_eval.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _SPOT_EVAL = j || {};
+      try { renderSpotlightTrackRecord(state.spotlightBucket); } catch (e) { /* silent */ }
+    })
+    .catch(() => { _SPOT_EVAL = {}; });
+}
+function renderSpotlightTrackRecord(bucket) {
+  const el = document.getElementById("spotlight-track-record");
+  if (!el) return;
+  _loadSpotEval();
+  const j = _SPOT_EVAL || {};
+  const ft = { risers: "riser", hot: "riser", rebounders: "rebound", fallers: "faller" }[bucket];
+  const t = (((j.v2 || {}).by_flag_type) || {})[ft];
+  const ba = ((j.before_after || {})[ft]) || {};
+  if (!t || !t.horizons) { el.innerHTML = ""; return; }
+  const pct = v => (v == null || isNaN(Number(v))) ? "-" : (Math.abs(Number(v)) < 0.0005 ? 0 : Number(v) * 100).toFixed(1) + "%";
+  const word = { riser: "rose 5 or more", rebound: "rose 5 or more", faller: "fell 5 or more" }[ft];
+  const vword = { clears: "beats its control", trails: "trails its control", inside: "not separable from its control" };
+  const parts = ["h30", "h60"].map(hk => {
+    const h = t.horizons[hk];
+    if (!h || h.hit_rate == null || h.control_rate == null || !Array.isArray(h.gap_ci)) return "";
+    const was = ((ba[hk] || {}).before) || {};
+    const v = vword[h.verdict] ? h.verdict : "inside";
+    return `<div>Within ${hk.slice(1)} days the board FV ${word} for ${pct(h.hit_rate)} of flags (n ${Number(h.n).toLocaleString()}, ${h.players} players) vs ${pct(h.control_rate)} of matched controls (n ${Number(h.control_n).toLocaleString()}); gap 95% CI ${pct(h.gap_ci[0])} to ${pct(h.gap_ci[1])}: <span class="str-v is-${v}">${vword[v]}</span>.`
+      + (was.hit_rate != null ? ` Before the re-score: ${pct(was.hit_rate)} vs ${pct(was.control_rate)}.` : "") + `</div>`;
+  }).filter(Boolean);
+  if (!parts.length) { el.innerHTML = ""; return; }
+  const kr = (t.kill_rule || {}).verdict_recommendation;
+  el.innerHTML = `<div class="str-head">Track record${(j.v2 || {}).registered ? ", re-scored " + escapeHtml(j.v2.registered) : ""}</div>`
+    + parts.join("")
+    + `<div class="str-note">Matched controls: unflagged board players drawn at random from the same FV band, level and age band on the emit night; intervals clustered by player; ${Number(t.matured_monthly_cohorts) || 0} monthly cohorts.`
+    + (kr === "deprecated" ? " The registered kill rule recommends deprecating this bucket; it stays up pending the owner's decision." : "")
+    + ` <a href="/glossary/#g=spotlights">Receipt</a></div>`;
+}
+
 function renderSpotlights() {
   // v30.7 - Standout-performances ribbon. Was in the global header;
   // now lives inside the spotlights section so it shows in context
@@ -18164,6 +18227,7 @@ function renderSpotlights() {
   }
   document.querySelectorAll("[data-spotlight-bucket]").forEach(b =>
     b.classList.toggle("active", b.dataset.spotlightBucket === bucket));
+  try { renderSpotlightTrackRecord(bucket); } catch (e) { /* silent */ }
 
   // Optional client-side sort over the bucket's pre-sorted rows.
   // Default "rank" preserves the backend's bucket order; alternatives

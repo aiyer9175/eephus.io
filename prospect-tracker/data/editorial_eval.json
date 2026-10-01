@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-05",
+ "generated_at": "2026-10-01",
  "hit_rules": {
   "riser": {
    "fv_delta": 5.0,
@@ -18,40 +18,40 @@
   30,
   60
  ],
- "flags_logged": 6080,
- "flags_matured": 4336,
- "flags_pending": 1744,
+ "flags_logged": 7611,
+ "flags_matured": 5835,
+ "flags_pending": 1776,
  "by_flag_type": {
   "faller": {
-   "matured_cohorts": 46,
+   "matured_cohorts": 64,
    "horizons": {
     "h30": {
-     "n": 961,
-     "hit_rate": 0.1988,
+     "n": 1125,
+     "hit_rate": 0.1547,
      "ci": [
-      0.1747,
-      0.2252
+      0.1347,
+      0.177
      ],
-     "control_n": 4173,
+     "control_n": 4978,
      "control_rate": 0.0,
      "control_ci": [
       0.0,
-      0.0009
+      0.0008
      ],
      "clears_control": true
     },
     "h60": {
-     "n": 644,
-     "hit_rate": 0.278,
+     "n": 931,
+     "hit_rate": 0.2524,
      "ci": [
-      0.2447,
-      0.3138
+      0.2256,
+      0.2813
      ],
-     "control_n": 3214,
-     "control_rate": 0.0,
+     "control_n": 4023,
+     "control_rate": 0.0467,
      "control_ci": [
-      0.0,
-      0.0012
+      0.0406,
+      0.0537
      ],
      "clears_control": true
     }
@@ -63,75 +63,75 @@
    }
   },
   "rebound": {
-   "matured_cohorts": 46,
+   "matured_cohorts": 64,
    "horizons": {
     "h30": {
-     "n": 487,
-     "hit_rate": 0.2115,
+     "n": 650,
+     "hit_rate": 0.2831,
      "ci": [
-      0.1776,
-      0.25
+      0.2498,
+      0.3189
      ],
-     "control_n": 2009,
-     "control_rate": 0.2464,
+     "control_n": 2787,
+     "control_rate": 0.2278,
      "control_ci": [
-      0.228,
-      0.2657
+      0.2127,
+      0.2438
      ],
-     "clears_control": false
+     "clears_control": true
     },
     "h60": {
-     "n": 265,
-     "hit_rate": 0.1585,
+     "n": 453,
+     "hit_rate": 0.3333,
      "ci": [
-      0.1194,
-      0.2073
+      0.2915,
+      0.378
      ],
-     "control_n": 1254,
-     "control_rate": 0.1499,
+     "control_n": 1843,
+     "control_rate": 0.2946,
      "control_ci": [
-      0.1312,
-      0.1707
+      0.2743,
+      0.3159
      ],
      "clears_control": false
     }
    },
    "kill_rule": {
     "eligible": true,
-    "fails_to_clear": true,
-    "verdict_recommendation": "deprecated"
+    "fails_to_clear": false,
+    "verdict_recommendation": "keep-measuring"
    }
   },
   "riser": {
-   "matured_cohorts": 46,
+   "matured_cohorts": 64,
    "horizons": {
     "h30": {
-     "n": 2888,
-     "hit_rate": 0.1506,
+     "n": 4060,
+     "hit_rate": 0.1874,
      "ci": [
-      0.138,
-      0.1641
+      0.1757,
+      0.1997
      ],
-     "control_n": 12292,
-     "control_rate": 0.2186,
+     "control_n": 17687,
+     "control_rate": 0.2009,
      "control_ci": [
-      0.2114,
-      0.226
+      0.1951,
+      0.2069
      ],
      "clears_control": false
     },
     "h60": {
-     "n": 1488,
-     "hit_rate": 0.2211,
+     "n": 2633,
+     "hit_rate": 0.2955,
      "ci": [
-      0.2007,
-      0.2429
+      0.2784,
+      0.3132
      ],
-     "control_n": 7151,
-     "control_rate": 0.1527,
+     "control_n": 11151,
+     "control_rate": 0.2762,
      "control_ci": [
-      0.1446,
-      0.1612
+      0.268,
+      0.2846
      ],
      "clears_control": true
     }
@@ -147,5 +147,521 @@
   "hit": "consensus FV moves >= fv_delta by the horizon, OR new top-100 entry, OR a new source publishes an FV (fallers invert the FV leg)",
   "control": "unflagged players in the flag's fv_band with a snapshot within 15 days pre-emit, same rule + window",
   "kill_rule": "flag type failing to clear control after 2 matured cohorts -> deprecated (registry verdict, owner-committed)"
+ },
+ "served_version": "v2",
+ "v2": {
+  "version": "v2",
+  "registered": "2026-10-01",
+  "n_scored": {
+   "h30": 4620,
+   "h60": 3066
+  },
+  "board_nights": {
+   "first": "2026-06-06",
+   "last": "2026-09-30",
+   "count": 88
+  },
+  "by_flag_type": {
+   "faller": {
+    "matured_monthly_cohorts": 3,
+    "cohort_months": [
+     "2026-06",
+     "2026-07",
+     "2026-08"
+    ],
+    "flag_counts": {
+     "flags": 1338,
+     "no_board_row_at_emit": 0,
+     "no_cell": 0,
+     "empty_pool": 100,
+     "matched": 1238
+    },
+    "median_pool": 4,
+    "horizons": {
+     "h30": {
+      "n": 970,
+      "players": 52,
+      "unscoreable": 81,
+      "hit_rate": 0.0639,
+      "control_n": 3375,
+      "control_players": 179,
+      "control_rate": 0.0806,
+      "ci": [
+       0.0267,
+       0.1162
+      ],
+      "control_ci": [
+       0.0449,
+       0.1223
+      ],
+      "gap": -0.0167,
+      "gap_ci": [
+       -0.0703,
+       0.0445
+      ],
+      "gap_lo95": -0.0703,
+      "gap_hi95": 0.0445,
+      "verdict": "inside",
+      "clears_control": false,
+      "verdict_text": "inside: flag 0.0639 vs matched control 0.0806, gap 95% CI -0.0703 to +0.0445 (clustered by player)",
+      "by_month": {
+       "2026-06": {
+        "n": 382,
+        "hit_rate": 0.0288,
+        "control_n": 1343,
+        "control_rate": 0.0343
+       },
+       "2026-07": {
+        "n": 402,
+        "hit_rate": 0.1269,
+        "control_n": 1398,
+        "control_rate": 0.1602
+       },
+       "2026-08": {
+        "n": 186,
+        "hit_rate": 0.0,
+        "control_n": 634,
+        "control_rate": 0.0032
+       }
+      }
+     },
+     "h60": {
+      "n": 732,
+      "players": 46,
+      "unscoreable": 132,
+      "hit_rate": 0.2254,
+      "control_n": 2690,
+      "control_players": 161,
+      "control_rate": 0.2736,
+      "ci": [
+       0.1121,
+       0.3607
+      ],
+      "control_ci": [
+       0.1769,
+       0.3843
+      ],
+      "gap": -0.0482,
+      "gap_ci": [
+       -0.2032,
+       0.1202
+      ],
+      "gap_lo95": -0.2032,
+      "gap_hi95": 0.1202,
+      "verdict": "inside",
+      "clears_control": false,
+      "verdict_text": "inside: flag 0.2254 vs matched control 0.2736, gap 95% CI -0.2032 to +0.1202 (clustered by player)",
+      "by_month": {
+       "2026-06": {
+        "n": 357,
+        "hit_rate": 0.3025,
+        "control_n": 1327,
+        "control_rate": 0.318
+       },
+       "2026-07": {
+        "n": 368,
+        "hit_rate": 0.1549,
+        "control_n": 1342,
+        "control_rate": 0.234
+       },
+       "2026-08": {
+        "n": 7,
+        "hit_rate": 0.0,
+        "control_n": 21,
+        "control_rate": 0.0
+       }
+      }
+     }
+    },
+    "kill_rule": {
+     "eligible": true,
+     "fails_to_clear": true,
+     "verdict_recommendation": "deprecated"
+    }
+   },
+   "rebound": {
+    "matured_monthly_cohorts": 3,
+    "cohort_months": [
+     "2026-06",
+     "2026-07",
+     "2026-08"
+    ],
+    "flag_counts": {
+     "flags": 817,
+     "no_board_row_at_emit": 0,
+     "no_cell": 0,
+     "empty_pool": 126,
+     "matched": 691
+    },
+    "median_pool": 7,
+    "horizons": {
+     "h30": {
+      "n": 551,
+      "players": 27,
+      "unscoreable": 8,
+      "hit_rate": 0.0163,
+      "control_n": 2238,
+      "control_players": 163,
+      "control_rate": 0.0018,
+      "ci": [
+       0.0,
+       0.0489
+      ],
+      "control_ci": [
+       0.0,
+       0.0049
+      ],
+      "gap": 0.0145,
+      "gap_ci": [
+       -0.003,
+       0.0471
+      ],
+      "gap_lo95": -0.003,
+      "gap_hi95": 0.0471,
+      "verdict": "inside",
+      "clears_control": false,
+      "verdict_text": "inside: flag 0.0163 vs matched control 0.0018, gap 95% CI -0.0030 to +0.0471 (clustered by player)",
+      "by_month": {
+       "2026-06": {
+        "n": 165,
+        "hit_rate": 0.0182,
+        "control_n": 646,
+        "control_rate": 0.0046
+       },
+       "2026-07": {
+        "n": 229,
+        "hit_rate": 0.0262,
+        "control_n": 878,
+        "control_rate": 0.0011
+       },
+       "2026-08": {
+        "n": 157,
+        "hit_rate": 0.0,
+        "control_n": 714,
+        "control_rate": 0.0
+       }
+      }
+     },
+     "h60": {
+      "n": 378,
+      "players": 25,
+      "unscoreable": 29,
+      "hit_rate": 0.0053,
+      "control_n": 1550,
+      "control_players": 139,
+      "control_rate": 0.0013,
+      "ci": [
+       0.0,
+       0.0183
+      ],
+      "control_ci": [
+       0.0,
+       0.0046
+      ],
+      "gap": 0.004,
+      "gap_ci": [
+       -0.0037,
+       0.017
+      ],
+      "gap_lo95": -0.0037,
+      "gap_hi95": 0.017,
+      "verdict": "inside",
+      "clears_control": false,
+      "verdict_text": "inside: flag 0.0053 vs matched control 0.0013, gap 95% CI -0.0037 to +0.0170 (clustered by player)",
+      "by_month": {
+       "2026-06": {
+        "n": 165,
+        "hit_rate": 0.0,
+        "control_n": 655,
+        "control_rate": 0.0031
+       },
+       "2026-07": {
+        "n": 208,
+        "hit_rate": 0.0096,
+        "control_n": 870,
+        "control_rate": 0.0
+       },
+       "2026-08": {
+        "n": 5,
+        "hit_rate": 0.0,
+        "control_n": 25,
+        "control_rate": 0.0
+       }
+      }
+     }
+    },
+    "kill_rule": {
+     "eligible": true,
+     "fails_to_clear": true,
+     "verdict_recommendation": "deprecated"
+    }
+   },
+   "riser": {
+    "matured_monthly_cohorts": 3,
+    "cohort_months": [
+     "2026-06",
+     "2026-07",
+     "2026-08"
+    ],
+    "flag_counts": {
+     "flags": 5456,
+     "no_board_row_at_emit": 0,
+     "no_cell": 4,
+     "empty_pool": 1049,
+     "matched": 4403
+    },
+    "median_pool": 6,
+    "horizons": {
+     "h30": {
+      "n": 3099,
+      "players": 143,
+      "unscoreable": 262,
+      "hit_rate": 0.0042,
+      "control_n": 11910,
+      "control_players": 298,
+      "control_rate": 0.0006,
+      "ci": [
+       0.0003,
+       0.0105
+      ],
+      "control_ci": [
+       0.0001,
+       0.0013
+      ],
+      "gap": 0.0036,
+      "gap_ci": [
+       -0.0002,
+       0.0099
+      ],
+      "gap_lo95": -0.0002,
+      "gap_hi95": 0.0099,
+      "verdict": "inside",
+      "clears_control": false,
+      "verdict_text": "inside: flag 0.0042 vs matched control 0.0006, gap 95% CI -0.0002 to +0.0099 (clustered by player)",
+      "by_month": {
+       "2026-06": {
+        "n": 871,
+        "hit_rate": 0.0023,
+        "control_n": 3281,
+        "control_rate": 0.0012
+       },
+       "2026-07": {
+        "n": 1174,
+        "hit_rate": 0.0077,
+        "control_n": 4409,
+        "control_rate": 0.0007
+       },
+       "2026-08": {
+        "n": 1054,
+        "hit_rate": 0.0019,
+        "control_n": 4220,
+        "control_rate": 0.0
+       }
+      }
+     },
+     "h60": {
+      "n": 1956,
+      "players": 120,
+      "unscoreable": 279,
+      "hit_rate": 0.0143,
+      "control_n": 7479,
+      "control_players": 227,
+      "control_rate": 0.0025,
+      "ci": [
+       0.0005,
+       0.0312
+      ],
+      "control_ci": [
+       0.0,
+       0.0067
+      ],
+      "gap": 0.0118,
+      "gap_ci": [
+       -0.0024,
+       0.0291
+      ],
+      "gap_lo95": -0.0024,
+      "gap_hi95": 0.0291,
+      "verdict": "inside",
+      "clears_control": false,
+      "verdict_text": "inside: flag 0.0143 vs matched control 0.0025, gap 95% CI -0.0024 to +0.0291 (clustered by player)",
+      "by_month": {
+       "2026-06": {
+        "n": 813,
+        "hit_rate": 0.0221,
+        "control_n": 3134,
+        "control_rate": 0.0041
+       },
+       "2026-07": {
+        "n": 1096,
+        "hit_rate": 0.0091,
+        "control_n": 4151,
+        "control_rate": 0.0014
+       },
+       "2026-08": {
+        "n": 47,
+        "hit_rate": 0.0,
+        "control_n": 194,
+        "control_rate": 0.0
+       }
+      }
+     }
+    },
+    "kill_rule": {
+     "eligible": true,
+     "fails_to_clear": true,
+     "verdict_recommendation": "deprecated"
+    }
+   }
+  },
+  "diagnostics": {
+   "level_asof_matches_stored_flag_level": 0.9621,
+   "level_rows": 7607,
+   "board_fv_differs_from_stored_flag_fv_by_more_than_1": 0.0238,
+   "fv_rows": 7611
+  },
+  "conventions": {
+   "basis": "both legs on metric_snapshots consensus_fv: base = board row on the emit date (or up to 3 days earlier), end = first board night on or after emit + horizon; no board row at either end = unscoreable, out of numerator and denominator",
+   "hit": "board consensus FV moves by fv_delta or more in the flag's direction (HIT_RULES FV leg; the top-100 and new-source legs are not on the board history)",
+   "control": "5 board players drawn at random (seed 20260925, per flag) from the flag's fv_band x level x age_band cell on the base night, excluding only players flagged on the same date; level is the level held that night (level_changes)",
+   "ci": "95% percentile bootstrap, 2000 draws, players resampled whole (flags by flagged player, controls by control player); the gap interval is flag rate minus control rate",
+   "verdict": "clears = gap interval above 0, trails = below 0, inside = spans 0",
+   "cohorts": "calendar months of the emit date",
+   "kill_rule": "a flag type that clears its control on no horizon after 2 matured monthly cohorts -> deprecated (registry verdict, owner-committed)"
+  }
+ },
+ "before_after": {
+  "faller": {
+   "h30": {
+    "before": {
+     "n": 1125,
+     "hit_rate": 0.1547,
+     "control_rate": 0.0,
+     "clears_control": true
+    },
+    "after": {
+     "n": 970,
+     "hit_rate": 0.0639,
+     "control_rate": 0.0806,
+     "gap_ci": [
+      -0.0703,
+      0.0445
+     ],
+     "verdict": "inside",
+     "clears_control": false
+    }
+   },
+   "h60": {
+    "before": {
+     "n": 931,
+     "hit_rate": 0.2524,
+     "control_rate": 0.0467,
+     "clears_control": true
+    },
+    "after": {
+     "n": 732,
+     "hit_rate": 0.2254,
+     "control_rate": 0.2736,
+     "gap_ci": [
+      -0.2032,
+      0.1202
+     ],
+     "verdict": "inside",
+     "clears_control": false
+    }
+   },
+   "kill_rule": {
+    "before": "keep-measuring",
+    "after": "deprecated"
+   }
+  },
+  "rebound": {
+   "h30": {
+    "before": {
+     "n": 650,
+     "hit_rate": 0.2831,
+     "control_rate": 0.2278,
+     "clears_control": true
+    },
+    "after": {
+     "n": 551,
+     "hit_rate": 0.0163,
+     "control_rate": 0.0018,
+     "gap_ci": [
+      -0.003,
+      0.0471
+     ],
+     "verdict": "inside",
+     "clears_control": false
+    }
+   },
+   "h60": {
+    "before": {
+     "n": 453,
+     "hit_rate": 0.3333,
+     "control_rate": 0.2946,
+     "clears_control": false
+    },
+    "after": {
+     "n": 378,
+     "hit_rate": 0.0053,
+     "control_rate": 0.0013,
+     "gap_ci": [
+      -0.0037,
+      0.017
+     ],
+     "verdict": "inside",
+     "clears_control": false
+    }
+   },
+   "kill_rule": {
+    "before": "keep-measuring",
+    "after": "deprecated"
+   }
+  },
+  "riser": {
+   "h30": {
+    "before": {
+     "n": 4060,
+     "hit_rate": 0.1874,
+     "control_rate": 0.2009,
+     "clears_control": false
+    },
+    "after": {
+     "n": 3099,
+     "hit_rate": 0.0042,
+     "control_rate": 0.0006,
+     "gap_ci": [
+      -0.0002,
+      0.0099
+     ],
+     "verdict": "inside",
+     "clears_control": false
+    }
+   },
+   "h60": {
+    "before": {
+     "n": 2633,
+     "hit_rate": 0.2955,
+     "control_rate": 0.2762,
+     "clears_control": true
+    },
+    "after": {
+     "n": 1956,
+     "hit_rate": 0.0143,
+     "control_rate": 0.0025,
+     "gap_ci": [
+      -0.0024,
+      0.0291
+     ],
+     "verdict": "inside",
+     "clears_control": false
+    }
+   },
+   "kill_rule": {
+    "before": "keep-measuring",
+    "after": "deprecated"
+   }
+  }
  }
 }

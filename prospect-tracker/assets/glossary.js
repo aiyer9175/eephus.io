@@ -530,26 +530,36 @@
       spotlights: {
         art: "/data/editorial_eval.json",
         estimand: "Do the editorial flags predict real consensus movement, or just narrate it?",
-        baseline: "unflagged players in the same FV band on the emit date (the first five by player key, not a random draw), scored over the same window",
+        baseline: "unflagged board players drawn at random from the flag's own FV band x level x age band on the emit night, scored over the same window on the same board history",
         read: j => {
-          const t = j.by_flag_type || {};
+          const v2 = j.v2 || {}, t = v2.by_flag_type || {}, ba = j.before_after || {};
+          const _z = v => (v != null && Math.abs(Number(v)) < 0.0005 ? 0 : v);   // no negative zero
           const rows = [];
-          [["faller", "Faller flags: consensus drop within 30 days"],
-           ["rebound", "Rebound flags: recovery within 30 days"],
-           ["riser", "Riser flags: further rise within 30 days"]].forEach(pair => {
-            const f = ((t[pair[0]] || {}).horizons || {}).h30;
-            if (!f || f.hit_rate == null || !Array.isArray(f.ci)) return;
-            rows.push({
-              label: pair[1] + " (n=" + _rn(f.n, 0) + " flags)",
-              mv: _rnp(f.hit_rate), bname: "control (n=" + _rn(f.control_n, 0) + ")", bv: _rnp(f.control_rate),
-              band: "95% CI " + _rnp(f.ci[0]) + " to " + _rnp(f.ci[1]) + "; control " + _rnp((f.control_ci || [])[0]) + " to " + _rnp((f.control_ci || [])[1]),
-              verdict: f.clears_control === true ? "clears" : "inside",
-              title: "clears_control as recorded in the artifact",
+          [["riser", "Riser flags: board FV up 5 or more"],
+           ["rebound", "Rebound flags: board FV up 5 or more"],
+           ["faller", "Faller flags: board FV down 5 or more"]].forEach(pair => {
+            ["h30", "h60"].forEach(hk => {
+              const f = ((t[pair[0]] || {}).horizons || {})[hk];
+              if (!f || f.hit_rate == null || f.control_rate == null || !Array.isArray(f.gap_ci)) return;
+              const was = (((ba[pair[0]] || {})[hk]) || {}).before || {};
+              rows.push({
+                label: pair[1] + " within " + hk.slice(1) + " days (n=" + _rn(f.n, 0) + " flags, " + _rn(f.players, 0) + " players)",
+                mv: _rnp(f.hit_rate), bname: "matched control (n=" + _rn(f.control_n, 0) + ")", bv: _rnp(f.control_rate),
+                band: "gap " + _rns(Number(f.gap) * 100, 1) + " pts, 95% CI " + _rnp(_z(f.gap_ci[0])) + " to " + _rnp(_z(f.gap_ci[1])) + " (clustered by player)"
+                  + (was.hit_rate != null ? "; before the re-score " + _rnp(was.hit_rate) + " vs " + _rnp(was.control_rate) : ""),
+                verdict: ["clears", "inside", "trails"].indexOf(f.verdict) >= 0 ? f.verdict : "inside",
+                title: "v2 verdict as recorded in the artifact",
+              });
             });
           });
           return rows.length ? rows : null;
         },
-        note: () => "Method caveat (audit 2026-09-25): a flag is scored from the FV stored when it was emitted, a control from the median of the sources' snapshots, and the controls are the first unflagged players by key rather than a random matched draw, so these rates are not a like-for-like comparison. The verdicts below can change once both legs are scored on one basis; the corrected eval awaits the owner's review.",
+        note: j => {
+          const t = ((j.v2 || {}).by_flag_type) || {};
+          const k = Object.keys(t).filter(x => ((t[x] || {}).kill_rule || {}).verdict_recommendation === "deprecated");
+          return "Re-scored " + ((j.v2 || {}).registered || "") + " (v2): flags and controls both read the board's own consensus FV from the night of each run, controls are a seeded random draw from the flag's cell, cohorts are calendar months and intervals are clustered by player. The earlier version scored flags and controls on different FV bases against the first unflagged players by key; its rates are kept in the artifact as the before column."
+            + (k.length ? " The registered kill rule now recommends deprecating: " + k.join(", ") + ". Whether any bucket changes is the owner's call." : "");
+        },
       },
       fa_projection_engine: {
         art: "/data/fa_gate1_eval.json",
