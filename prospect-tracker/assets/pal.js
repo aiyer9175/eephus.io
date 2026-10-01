@@ -31,6 +31,7 @@
   var DATA_URL = "/data/pal.json";
   var DATA = null;
   var LOAD_ERROR = false;    // fetch failed / non-OK (distinct from "not exported yet")
+  var LOADING = false;       // the payload is in flight: the lamp loader, not the computing note
   // DEFAULT TAB = the direction that passes its gate (owner default, 2026-09-06).
   // The lab opened on RP->SP, which is the direction whose ranking the gate does
   // NOT validate; the page led with its weakest claim. build_site.py paints the
@@ -1564,6 +1565,7 @@
         ? pxState("failed", "Data failed to load. Refresh to retry; "
           + "if it persists the nightly build is mid-run. "
           + '<button type="button" class="chip" id="pal-retry">Retry</button>', "pal-load-error")
+        : LOADING ? pxState("loading", esc("Loading…"))
         // Names the ACTUAL source mix. This read "from Statcast", which is only
         // the arsenal and velocity half: role, rates and platoon splits are
         // StatsAPI (through bullpen_export) and the conversion WAR column is
@@ -1571,10 +1573,7 @@
         : pxState("unmeasured", esc("The Alchemy Lab is being computed from Statcast arsenals, StatsAPI roles and "
                 + "platoon splits, and run-frame WAR. Check back shortly."));
       var retry = document.getElementById("pal-retry");
-      if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = pxState("loading", esc("Loading…"));
-        load();
-      });
+      if (retry) retry.addEventListener("click", function () { load(); });
       return;
     }
     root.innerHTML = (section === "sp2rp") ? renderSP2RP() : (section === "history") ? renderHistory()
@@ -1700,13 +1699,16 @@
 
   // Loader with a visible failure mode: a non-OK response or a network error
   // sets LOAD_ERROR so render() paints the error state (with a Retry button)
-  // instead of a blank/"computing" page.
+  // instead of a blank/"computing" page. While the fetch is in flight render()
+  // paints the lamp loader, so the first paint is the loading kind.
   function load() {
     LOAD_ERROR = false;
+    LOADING = true;
+    render();
     fetch(DATA_URL, { cache: "no-cache" })
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then(function (j) { DATA = j; render(); })
-      .catch(function () { DATA = null; LOAD_ERROR = true; render(); });
+      .then(function (j) { LOADING = false; DATA = j; render(); })
+      .catch(function () { LOADING = false; DATA = null; LOAD_ERROR = true; render(); });
   }
 
   function init() {

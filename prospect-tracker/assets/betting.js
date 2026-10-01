@@ -4227,6 +4227,10 @@
     // screen even if nothing else ever arrives.
     if (!readHash()) writeHash();
     renderLegal();
+    // Then the lamp loader, in the section root below the legal block, until
+    // the payload settles and paintAll() replaces it.
+    var lr = el("betting-app-root");
+    if (lr) lr.innerHTML = pxState("loading", esc("Loading the betting board..."));
     var url = dataUrl();
     LOADED_URL = url;
     fetch(url, { cache: "no-cache" }).then(function (r) {
@@ -4435,15 +4439,16 @@
     ".bt-input{font:600 13px/1 var(--font-retro,monospace);padding:7px 9px;border:1px solid var(--border,#3a3a3a);background:var(--bg-primary,transparent);color:var(--text-primary);border-radius:0;width:100%;box-sizing:border-box}",
     ".bt-calc-out{margin:10px 0 6px;min-height:22px}",
     ".bt-calc-why{font-size:11.5px;color:var(--text-tertiary)}",
-    ".bt-btn{font:600 11px/1 var(--font-retro,monospace);padding:6px 10px;border:1px solid var(--border,#3a3a3a);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;border-radius:0;margin-left:4px}",
+    ".bt-btn{font:600 11px/1 var(--font-retro,monospace);padding:6px 10px;border:1px solid var(--border,#3a3a3a);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;border-radius:0;margin-left:4px;" +
+      "transition:background-color 120ms ease,color 120ms ease,border-color 120ms ease}",
     // --transition-hover IS NOT DEFINED ON THIS PAGE. The token lives in
     // prospx/index.html's inline :root block and nowhere else - it is not in
     // assets/site.css - so on /betting/ this var() always fell through to its
     // `none` fallback and the hover transition never once ran. The declaration
     // is written out here, matching the token's own value, rather than left as
-    // a reference to something the page cannot resolve.
-    ".bt-btn:hover{background:var(--bg-hover,var(--bg-secondary));" +
-      "transition:background-color 120ms ease,color 120ms ease,border-color 120ms ease}",
+    // a reference to something the page cannot resolve. It sits on the base
+    // rule, not on :hover, so the colour eases back out as well as in.
+    ".bt-btn:hover{background:var(--bg-hover,var(--bg-secondary))}",
     // Conversion chips (stage + preview slice) are anchors, so they need the
     // chip's own colour rather than the global link colour.
     ".bt-chip-link{text-decoration:none;cursor:pointer}",

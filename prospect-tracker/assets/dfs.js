@@ -1781,7 +1781,11 @@
       EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); syncCard(); });
     }
   }
+  // The lamp loader goes up before the payload is asked for, so a held or slow
+  // load shows the loading kind rather than an empty root.
   function boot() {
+    var r = root();
+    if (r) r.innerHTML = pxState("loading", "Loading the DFS slate.");
     load(DATA_URL).then(onData).catch(function (e) { errorState(String(e && e.message || e)); });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

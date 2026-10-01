@@ -1667,6 +1667,10 @@ function _tbShowGroup(playerKey) {
     if (_mounted) { renderTradeMachine(); _renderTBRows(); return; }
     if (!document.getElementById("tradeboard-content")) return;
     _mounted = true;
+    // The lamp loader holds the board's place until trade values arrive; the
+    // first board render replaces it.
+    const lw = document.getElementById("tradeboard-content");
+    if (lw && window.EephusState) lw.innerHTML = window.EephusState.html("loading", "Loading the trade-value board...");
     fetch(DATA_BASE + "trade_values.json", { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(d => {

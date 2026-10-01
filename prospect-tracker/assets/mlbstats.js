@@ -1966,17 +1966,35 @@
   // cannot disagree with the number above it. No hash key: an expanded row is a
   // glance, not a page state.
   var warOpen = {};
+  // The board is rebuilt on every toggle, so a caret written in its new state
+  // never runs its .12s turn (site.css). The toggled row's caret is written in
+  // the state it had (aria-expanded already says the new one), the style is
+  // flushed, and only then is it flipped, so that one caret turns on open and
+  // on close and no other caret moves.
+  var warCaretFrom = null;
   function toggleSeasonRow(id) {
     if (!id) return;
-    if (warOpen[id]) delete warOpen[id]; else warOpen[id] = 1;
-    renderWar();
+    var was = !!warOpen[id];
+    if (was) delete warOpen[id]; else warOpen[id] = 1;
+    warCaretFrom = { id: id, open: was };
+    try { renderWar(); } finally { warCaretFrom = null; }
+    var root = document.getElementById("mlbstats-war-root");
+    var carets = root ? root.querySelectorAll(".mlbx-caret[data-mlbexpand]") : [];
+    for (var i = 0; i < carets.length; i++) {
+      var c = carets[i];
+      if (c.getAttribute("data-mlbexpand") !== id) continue;
+      void c.offsetWidth;
+      c.classList.toggle("is-open", !was);
+      c.setAttribute("aria-expanded", String(!was));
+    }
   }
   function warTableOpts() {
     return {
       nameExtra: function (r) {
         if (!r.seasons || !r.seasons.length) return "";
         var open = !!warOpen[String(r.mlbam)];
-        return '<button type="button" class="mlbx-caret' + (open ? " is-open" : "")
+        var drawn = (warCaretFrom && warCaretFrom.id === String(r.mlbam)) ? warCaretFrom.open : open;
+        return '<button type="button" class="mlbx-caret' + (drawn ? " is-open" : "")
           + '" data-mlbexpand="' + esc(String(r.mlbam)) + '" aria-expanded="' + open
           + '" aria-label="Season by season" title="Season by season" data-export-skip></button>';
       },
@@ -5442,6 +5460,7 @@
   // ---------------------------------------------------------------------------
   var WAR_URL = "/data/war_leaderboards.json";
   var warData = null, warErr = false, warInit = false;
+  var warLoading = false;                          // the board payload is in flight
   var warView = "players";                         // players | teams
   var warSort = { key: "war", asc: false };
   var warTeamSort = { key: "war", asc: false };
@@ -5684,16 +5703,17 @@
     var root = document.getElementById("mlbstats-war-root");
     if (!root) return;
     if (!warRows().length) {
-      root.innerHTML = warErr
+      // In flight: the lamp loader. The computing note is for a load that
+      // settled with no rows, and the failed kind for one that errored.
+      root.innerHTML = warLoading
+        ? pxState("loading", "Loading&hellip;")
+        : warErr
         ? pxState("failed", "Data failed to load. Refresh to retry; "
           + "if it persists the nightly build is mid-run. "
           + '<button type="button" class="chip" id="mlbstats-war-retry">Retry</button>', "mlbstats-load-error")
         : pxState("unmeasured", "The eWAR board is being computed. Check back shortly.");
       var retry = document.getElementById("mlbstats-war-retry");
-      if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = pxState("loading", "Loading&hellip;");
-        loadWar();
-      });
+      if (retry) retry.addEventListener("click", function () { loadWar(); });
       return;
     }
     var tabs = [["players", "Players"], ["teams", "Team eWAR"]];
@@ -5751,14 +5771,16 @@
   // The guard is on init, not on the fetch, so Retry can run the fetch again.
   function loadWar() {
     warErr = false;
+    warLoading = true;
+    renderWar();
     fetch(WAR_URL, { cache: "no-cache" })
       .then(function (r) {
         if (r.status === 404) return null;
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
       })
-      .then(function (j) { warData = (j && Array.isArray(j.players)) ? j : null; renderWar(); })
-      .catch(function () { warData = null; warErr = true; renderWar(); });
+      .then(function (j) { warLoading = false; warData = (j && Array.isArray(j.players)) ? j : null; renderWar(); })
+      .catch(function () { warLoading = false; warData = null; warErr = true; renderWar(); });
     // THE PER-SEASON SUBSTRATE RIDES WITH THE BOARD, second in the queue so the
     // board's own payload paints first. Measured on the served artifacts: the
     // landing section fetches war_leaderboards.json (40.8 KB gzip) plus
@@ -5776,7 +5798,6 @@
   function initWar() {
     if (warInit) { renderWar(); return; }
     warInit = true;
-    renderWar();
     loadWar();
   }
 

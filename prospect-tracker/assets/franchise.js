@@ -863,6 +863,9 @@
         window.addEventListener("hashchange", function () { readHash(); render(); });
       }
     } catch (e) { /* optional */ }
+    // The lamp loader goes up before the fetch: with DATA still null, render()
+    // paints its loading kind and the board replaces it when the fetch settles.
+    render();
     fetch(DATA_URL, { cache: "no-cache" })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (d) {
