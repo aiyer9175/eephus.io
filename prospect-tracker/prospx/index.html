@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=b71d354c">
+  <link rel="stylesheet" href="/assets/site.css?v=8c30b2fb">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -15090,7 +15090,7 @@ function _statcastPercentileBlock(p, opts = {}) {
     <div class="detail-card" style="padding:12px 14px;">
       ${bars}
       <div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;line-height:1.5;border-top:1px dashed var(--border-light);padding-top:6px;">
-        Higher percentile = better for every metric here; direction is handled per-metric, so Whiff%, Chase% and HH%-allowed flip and a LOW raw value scores HIGH. Fill color is the same tier ramp the MLB player pages use: green elite, cyan good, grey average, gold low, red poor.
+        Higher percentile = better for every metric here; direction is handled per-metric, so Whiff%, Chase% and HH%-allowed flip and a LOW raw value scores HIGH. Fill color is a five-step tier ramp: green elite, cyan good, grey average, gold low, red poor.
       </div>
     </div>`;
 }

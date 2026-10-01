@@ -3600,31 +3600,34 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .mlbp-slider { display: grid; grid-template-columns: 130px 1fr 86px; gap: 12px; align-items: center; margin: 7px 0; }
 .mlbp-slider-label { font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--text-secondary); }
 .mlbp-slider-track { position: relative; height: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); }
-/* Colour (owner ask 2026-10-01): projections.js sets --pct inline on the fill
-   and the chip from EephusTiers.pctColor, a continuous OKLAB walk along the
-   value ruler (poor at 0, below 20, avg 40, above 60, good 80, great 90,
-   elite 100), so neighbouring percentiles read as neighbours in either theme.
-   The track stays neutral so the colour reads as the bar's value, not as a
-   ruler. The chip keeps its solid --bg-primary ground and takes the colour as
-   text and border; measured WCAG of the chip text on that ground at p = 0, 10,
-   50, 90, 100: light 5.69 / 5.39 / 5.60 / 5.25 / 9.39, dark 7.11 / 6.64 /
-   8.68 / 6.84 / 11.51. */
-.mlbp-slider-fill { height: 100%; background: var(--pct, var(--text-tertiary)); }
+.mlbp-slider-fill { height: 100%; }
+.mlbp-slider-fill.is-elite { background: var(--accent-green); }
+.mlbp-slider-fill.is-good  { background: var(--accent-cyan); }
+.mlbp-slider-fill.is-avg   { background: var(--text-tertiary); }
+.mlbp-slider-fill.is-low   { background: var(--accent-gold); }
+.mlbp-slider-fill.is-poor  { background: var(--accent-red); }
 .mlbp-slider-pct {
   position: absolute; top: -7px; transform: translateX(-50%);
   font-family: var(--font-mono); font-size: 11px; font-weight: 800;
-  background: var(--bg-primary); border: 1px solid var(--pct, var(--border));
-  padding: 1px 5px; color: var(--pct, var(--text-primary));
+  background: var(--bg-primary); border: 1px solid var(--border);
+  padding: 1px 5px; color: var(--text-primary);
 }
-/* Fallback: a browser without color-mix paints the five pctClass steps it
-   painted before, and the chip goes back to its neutral ink. */
-@supports not (color: color-mix(in oklch, red, blue)) {
-  .mlbp-slider-fill.is-elite { background: var(--accent-green); }
-  .mlbp-slider-fill.is-good  { background: var(--accent-cyan); }
-  .mlbp-slider-fill.is-avg   { background: var(--text-tertiary); }
-  .mlbp-slider-fill.is-low   { background: var(--accent-gold); }
-  .mlbp-slider-fill.is-poor  { background: var(--accent-red); }
-  .mlbp-slider-track .mlbp-slider-pct { border-color: var(--border); color: var(--text-primary); }
+/* Percentile gradient (owner ask 2026-10-01). On the MLB player page,
+   projections.js writes --pct inline on the fill and the chip from
+   EephusTiers.pctColor, a continuous OKLAB walk along the value ruler (poor
+   at 0, below 20, avg 40, above 60, good 80, great 90, elite 100), so
+   neighbouring percentiles read as neighbours in either theme. Only a row
+   that carries --pct takes it: the PROSPX Statcast card draws these same
+   classes without it and keeps the five steps above, and so does any browser
+   without color-mix, since the rule below sits behind @supports. The track
+   stays neutral so the colour reads as the bar's value, not as a ruler. The
+   chip keeps its solid --bg-primary ground and takes the colour as text and
+   border; measured WCAG of the chip text on that ground at p = 0, 10, 50,
+   90, 100: light 5.69 / 5.39 / 5.60 / 5.25 / 9.39, dark 7.11 / 6.64 / 8.68 /
+   6.84 / 11.51. */
+@supports (color: color-mix(in oklch, red, blue)) {
+  .mlbp-slider-track .mlbp-slider-fill[style*="--pct:"] { background: var(--pct); }
+  .mlbp-slider-track .mlbp-slider-pct[style*="--pct:"] { color: var(--pct); border-color: var(--pct); }
 }
 .mlbp-slider-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; text-align: right; }
 /* projection fan chart */

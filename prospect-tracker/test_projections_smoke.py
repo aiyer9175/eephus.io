@@ -617,8 +617,8 @@ def test_luck_leaves_the_percentile_colour_scale():
 def test_statcast_bars_take_the_percentile_gradient_and_keep_the_fallback_step():
     """Owner ask 2026-10-01: each bar and its chip carry one colour from the
     shared percentile gradient (EephusTiers.pctColor) as an inline --pct, and
-    both keep their pctClass step, which site.css paints only where color-mix
-    is unsupported. The Luck chip stays neutral: no --pct, no step."""
+    both keep their pctClass step, which is what site.css paints where
+    color-mix is unsupported. The Luck chip stays neutral: no --pct, no step."""
     sc = _section(_render("#player=vet_guy&ptab=hitting"), "hitting-statcast")
     mix = "color-mix(in oklab, var(--vt-great) 50%, var(--vt-elite))"  # p = 95
     assert f'class="mlbp-slider-fill is-elite" style="--pct:{mix};width:95%;"' in sc
@@ -631,20 +631,23 @@ def test_statcast_bars_take_the_percentile_gradient_and_keep_the_fallback_step()
 
 
 def test_the_slider_css_paints_from_pct_and_falls_back_to_the_steps():
+    """The five steps stay the base rule: the PROSPX Statcast card draws the
+    same classes with no --pct and must keep them, and so must a browser with
+    no color-mix. The gradient is one opt-in rule behind @supports that only a
+    row carrying --pct matches, at a specificity above the steps."""
     css = re.sub(r"/\*.*?\*/", "", (ROOT / "assets" / "site.css").read_text(encoding="utf-8"), flags=re.S)
-    assert re.search(r"\.mlbp-slider-fill\s*\{[^}]*background:\s*var\(--pct,", css)
-    chip = re.search(r"\.mlbp-slider-pct\s*\{([^}]*)\}", css).group(1)
-    assert "color: var(--pct," in chip and "var(--pct, var(--border))" in chip
-    assert "background: var(--bg-primary)" in chip, "the chip keeps its solid ground"
-    track = re.search(r"\.mlbp-slider-track\s*\{([^}]*)\}", css).group(1)
-    assert "var(--bg-tertiary)" in track and "--pct" not in track, "the track stays neutral"
-    m = re.search(r"@supports not \(color: color-mix\(in oklch, red, blue\)\) \{(.*?)\n\}", css, re.S)
-    assert m, "no color-mix fallback block"
+    m = re.search(r"@supports \(color: color-mix\(in oklch, red, blue\)\) \{(.*?)\n\}", css, re.S)
+    assert m, "no color-mix gated gradient block"
+    block, rest = m.group(1), css.replace(m.group(0), "")
+    assert re.search(r'\.mlbp-slider-track \.mlbp-slider-fill\[style\*="--pct:"\]\s*\{\s*background: var\(--pct\);', block)
+    assert re.search(r'\.mlbp-slider-track \.mlbp-slider-pct\[style\*="--pct:"\]\s*\{\s*color: var\(--pct\); border-color: var\(--pct\);', block)
     for step in ("is-elite", "is-good", "is-avg", "is-low", "is-poor"):
-        assert f".mlbp-slider-fill.{step}" in m.group(1), step
-    # outside the fallback block no step paints a fill (the gradient owns it)
-    rest = css.replace(m.group(0), "")
-    assert ".mlbp-slider-fill.is-" not in rest
+        assert re.search(r"\.mlbp-slider-fill\.%s\s*\{\s*background:" % step, rest), step
+    assert "--pct" not in rest, "outside the gated block nothing reads --pct"
+    chip = re.search(r"\.mlbp-slider-pct\s*\{([^}]*)\}", rest).group(1)
+    assert "background: var(--bg-primary)" in chip, "the chip keeps its solid ground"
+    track = re.search(r"\.mlbp-slider-track\s*\{([^}]*)\}", rest).group(1)
+    assert "var(--bg-tertiary)" in track, "the track stays neutral"
 
 
 # ---------------------------------------------------------------------------
