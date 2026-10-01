@@ -108,22 +108,26 @@ def test_pitchers_never_reach_the_bench_and_a_two_way_player_stays():
     assert not H.is_pitcher(_hit("n", primary_pos=None))
 
 
-def test_bench_per_hand_value_equals_split_hem_plus_on_the_same_pool():
-    """Mutation: the bench scored on a different anchor than the slots."""
+def test_bench_per_hand_value_equals_split_hem_pair_on_the_same_pool():
+    """Mutation: the bench scored on a different anchor or league ratio than the
+    slots."""
     hs = _club()
     counts = _feed(hs)
     counts["L"][201] = _counts(pa=90, h=30, doub=8, hr=6)      # a distinct line
     out = _scored(hs, counts, _positions(hs))
     pool_in = [h for h in hs if H._woba_denom(h) > 0]
     pool = H.build_pool(pool_in)
+    mu = H.league_platoon_ratios(counts, {h.mlbam: h.bats for h in hs})
+    by_id = {h.mlbam: h for h in hs}
     row = next(r for r in out["teams"][0]["bench"] if r["key"] == "b1")
-    assert row["hem_plus_split"]["L"] == H.split_hem_plus(counts["L"][201], pool)
-    assert row["hem_plus_split"]["R"] == H.split_hem_plus(counts["R"][201], pool)
+    want = H.split_hem_pair(by_id[201], counts["L"][201], counts["R"][201], pool, mu)
+    assert row["hem_plus_split"] == want
     assert row["split_pa"] == {"L": 90, "R": 200}
     # and the slots read the same map: a nine bat's slot value matches too
     slot = out["teams"][0]["orders"]["vl"][0]
     mid = int(slot["key"][1:]) + 100
-    assert slot["hem_plus_split"] == H.split_hem_plus(counts["L"][mid], pool)
+    assert slot["hem_plus_split"] == H.split_hem_pair(
+        by_id[mid], counts["L"][mid], counts["R"][mid], pool, mu)["L"]
 
 
 def test_a_missing_hand_is_null_never_a_season_number():

@@ -766,7 +766,14 @@ def _platoon_split_availability(teams: list[dict], platoon_counts: Optional[dict
         "n_rows_vs_lhp": len((platoon_counts or {}).get("L") or {}),
         "n_rows_vs_rhp": len((platoon_counts or {}).get("R") or {}),
         "source": ("StatsAPI statSplits sitCodes vl/vr, playerPool=All, two bulk "
-                   "calls; per-hand HEM+ scored on the same season pool anchor"),
+                   "calls; per-hand HEM+ is the season shrunk wOBA times the "
+                   "hitter's platoon ratio regressed toward the league ratio for "
+                   "his bat side, on the same season pool anchor"),
+        # The per-hand construction (hem_plus.SPLIT_ESTIMATOR). The nightly
+        # vintage copies it into the 5f hitter-column basis, where the 5e / 5f
+        # dark clocks read it (owner-signed restart, 2026-09-25).
+        "estimator": hem_plus.SPLIT_ESTIMATOR,
+        "k": dict(hem_plus.K_PLATOON),
     }
     if available and n_teams and n_equal == n_teams:
         meta["warning"] = (
@@ -1208,6 +1215,12 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     positions, pos_meta = load_positions(int(season))
     scored = hem_plus.score_pool(hitters, active_ids, platoon_counts, positions)
     ps_meta = _platoon_split_availability(scored.get("teams") or [], platoon_counts)
+    if platoon_counts:
+        # The league platoon ratio each bat side was regressed toward this run.
+        mu = hem_plus.league_platoon_ratios(
+            platoon_counts, {int(h.mlbam): h.bats for h in hitters
+                             if h.mlbam is not None and h.bats})
+        ps_meta["league_ratio"] = {s: round(v, 4) for s, v in mu.items()}
     log(f"  hitters: per-hand HEM+ {'available' if ps_meta['available'] else 'UNAVAILABLE'}"
         f" ({ps_meta.get('n_slots_split', 0)} of {ps_meta.get('n_slots', 0)} lineup slots)")
     h3_meta = _join_hem_plus_3yr(scored["hitters"])

@@ -294,30 +294,37 @@ SPLIT_COUNT_FIELDS = {
 }
 
 
-def split_hem_plus(counts: dict | None, pool: Pool) -> Optional[int]:
-    """HEM+ for ONE hand, from that hand's own counting line, on the SAME pool.
+#: The per-hand estimator id. Stamped into the hitter artifact's platoon_splits
+#: block and from there into the vintage basis, where the 5e / 5f dark clocks
+#: read it (leaderboard_vintages.SPLIT_ESTIMATOR_ID, pinned equal by a test).
+SPLIT_ESTIMATOR = "platoon_ratio_v1"
 
-    WHY THIS EXISTS (audit finding F08-02, 2026-09-10). `_platoon_adj` says so in
-    its own docstring: it re-lenses the ORDER vs L / vs R and never the published
-    number. So both hand-labelled orders carried each hitter's SEASON hem_plus,
-    and a PA-weighted mean over a permutation of the same nine bats is
-    permutation-invariant. Measured on the served board: the batSide lens was up
-    (737 of 737 hitters stamped), the two orders were genuinely different
-    permutations (0 of 30 teams identical), and `off_vs_lhp` and `off_vs_rhp`
-    were still bit-identical on all 30 clubs, across all 480 captured rows. The
-    pre-registered handedness gate would have measured its own twin.
+#: Platoon-ratio shrink constants by bat side, in units of the ratio's sample
+#: n = d_L * d_R / (d_L + d_R). FROZEN from the pre-registered fit
+#: (tools/hem_split_ratio_lab.py; StatsAPI statSplits 2016-2018, same-side
+#: consecutive-season pairs with n >= 50 both years, the fit_signal rule; 727,
+#: 734 and 722 hitter-seasons with both lines). Fit output, for the record:
+#:   L    pairs 121  r_raw -0.0499  r 0.05 (clamp)  hm 104.2  K 1980
+#:   R    pairs 266  r_raw  0.0477  r 0.05 (clamp)  hm  93.9  K 1780
+#:   S    pairs  62  r_raw -0.0710  r 0.05 (clamp)  hm  99.3  K 1890
+#:   ALL  pairs 449  r_raw  0.2159  r 0.2159        hm  97.4  K 350
+#: Within a bat side the year-to-year persistence of the ratio is
+#: indistinguishable from zero, so all three side constants sit on the clamp
+#: floor and a season's own platoon gap carries about 5 percent weight at a
+#: regular's sample (n near 100). ALL persists because it mixes the sides, whose
+#: league gaps differ; it serves only a bat with no known side, toward the
+#: all-hitter ratio, where that between-side spread is real signal.
+K_PLATOON = {"L": 1980.0, "R": 1780.0, "S": 1890.0, "ALL": 350.0}
+#: League platoon ratio (wOBA vs LHP over wOBA vs RHP, minus 1) by bat side,
+#: pooled over 2016-2018 by the same fit. Used only when this season's pool for
+#: a side holds under PLATOON_MU_MIN_D wOBA-PA against either hand.
+MU_PLATOON_FROZEN = {"L": -0.1121, "R": 0.0512, "S": -0.0179, "ALL": -0.0087}
+PLATOON_MU_MIN_D = 1000.0
+PLATOON_SIDES = ("L", "R", "S")
 
-    THE ANCHOR IS THE SEASON POOL, ON PURPOSE, AND IT IS THE WHOLE POINT. Scoring
-    each hand against its own hand-specific pool would re-centre both to 100 and
-    delete the league-wide platoon effect, which is the signal. Anchoring both to
-    the one season pool makes a lefty's vs-LHP number read BELOW his season HEM+
-    by the amount he actually loses, and makes the two hands comparable.
 
-    Shrinkage needs no new constant: the split denominator is smaller, so the
-    existing per-component reliability constants regress a thin split harder,
-    which is the correct behaviour and is why this reuses `hem_plus` verbatim
-    rather than re-deriving the arithmetic. Returns None on an unusable line,
-    never a fabricated value."""
+def _line_hitter(counts: dict | None) -> Optional["Hitter"]:
+    """One split counting line as a scratch Hitter, or None when unusable."""
     if not isinstance(counts, dict):
         return None
     tmp = Hitter(key="_split")
@@ -329,9 +336,150 @@ def split_hem_plus(counts: dict | None, pool: Pool) -> Optional[int]:
             setattr(tmp, dst, float(v))
         except (TypeError, ValueError):
             continue
-    if _woba_denom(tmp) <= 0:
+    return tmp if _woba_denom(tmp) > 0 else None
+
+
+def _woba_parts(hi: Optional["Hitter"]) -> tuple[float, float]:
+    """(raw wOBA numerator, wOBA denominator) of a line; (0, 0) when absent."""
+    if hi is None:
+        return 0.0, 0.0
+    d = _woba_denom(hi)
+    w = _raw_woba(hi)
+    return ((w or 0.0) * d, d) if d > 0 else (0.0, 0.0)
+
+
+def platoon_side(bats: Optional[str]) -> str:
+    """The shrink group for a bat side: 'L', 'R', 'S', or 'ALL' when unknown."""
+    b = (bats or "").upper()[:1]
+    return b if b in PLATOON_SIDES else "ALL"
+
+
+def platoon_ratio(line_l: Optional["Hitter"],
+                  line_r: Optional["Hitter"]) -> tuple[Optional[float], float]:
+    """(q, n): raw platoon ratio wOBA_vsL / wOBA_vsR - 1 and its sample
+    d_L * d_R / (d_L + d_R). (None, 0.0) unless both lines carry a wOBA
+    denominator and the vs-RHP wOBA is positive."""
+    nl, dl = _woba_parts(line_l)
+    nr, dr = _woba_parts(line_r)
+    if dl <= 0 or dr <= 0 or nr <= 0:
+        return None, 0.0
+    return (nl / dl) / (nr / dr) - 1.0, dl * dr / (dl + dr)
+
+
+def league_platoon_ratios(platoon_counts: Optional[dict],
+                          bats_by_id: Optional[dict] = None,
+                          min_d: float = PLATOON_MU_MIN_D) -> dict:
+    """{side: mu} for 'L', 'R', 'S' and 'ALL': pooled wOBA against left-handers
+    over pooled wOBA against right-handers, minus 1, over every hitter of that
+    side with both lines. A side whose pool holds under `min_d` wOBA-PA on
+    either hand takes MU_PLATOON_FROZEN."""
+    acc = {s: [0.0, 0.0, 0.0, 0.0] for s in PLATOON_SIDES + ("ALL",)}
+    pc = platoon_counts or {}
+    left, right = pc.get("L") or {}, pc.get("R") or {}
+    for mid in set(left) & set(right):
+        nl, dl = _woba_parts(_line_hitter(left.get(mid)))
+        nr, dr = _woba_parts(_line_hitter(right.get(mid)))
+        if dl <= 0 or dr <= 0:
+            continue
+        side = platoon_side((bats_by_id or {}).get(int(mid)))
+        for s in {side, "ALL"}:
+            a = acc[s]
+            a[0] += nl
+            a[1] += dl
+            a[2] += nr
+            a[3] += dr
+    out = {}
+    for s, (nl, dl, nr, dr) in acc.items():
+        if dl >= min_d and dr >= min_d and nr > 0:
+            out[s] = (nl / dl) / (nr / dr) - 1.0
+        else:
+            out[s] = MU_PLATOON_FROZEN[s]
+    return out
+
+
+def shrink_platoon_ratio(q: Optional[float], n: float, side: str,
+                         mu: dict) -> float:
+    """q* = (n q + K mu) / (n + K) for the side's K and league ratio; the league
+    ratio itself when there is no sample."""
+    m = mu.get(side, MU_PLATOON_FROZEN.get(side, 0.0))
+    k = K_PLATOON.get(side, K_PLATOON["ALL"])
+    if q is None or n <= 0:
+        return m
+    if k <= 0:
+        return q
+    return (n * q + k * m) / (n + k)
+
+
+def hand_multipliers(q_star: float, d_l: float, d_r: float) -> tuple[float, float]:
+    """(m_L, m_R) with m_L / m_R = 1 + q* and d_L m_L + d_R m_R = d_L + d_R, so
+    the d-weighted mean of the two hands is the season level exactly. A hitter
+    with one line gets 1.0 on it."""
+    tot = d_l + d_r
+    den = d_l * (1.0 + q_star) + d_r
+    if tot <= 0 or den <= 0:
+        return 1.0, 1.0
+    m_r = tot / den
+    return (1.0 + q_star) * m_r, m_r
+
+
+def _hem_from_woba(w: Optional[float], pool: Pool) -> Optional[int]:
+    """The season HEM+ scale for a wOBA value: same anchor, same gain, nearest."""
+    if w is None or pool.mean_woba <= 0:
         return None
-    return hem_plus(tmp, pool)
+    return int(round(100.0 + HEM_SPREAD_GAIN * (100.0 * w / pool.mean_woba - 100.0)))
+
+
+def split_hem_pair(season: Optional["Hitter"], counts_l: Optional[dict],
+                   counts_r: Optional[dict], pool: Pool,
+                   mu: Optional[dict] = None) -> dict:
+    """{'L': hem_vs_lhp, 'R': hem_vs_rhp} for one hitter, estimator
+    platoon_ratio_v1 (module docstring; docs/diamond-betting.md 5e).
+
+    WHY A PER-HAND NUMBER EXISTS (audit finding F08-02, 2026-09-10). Both
+    hand-labelled orders used to carry the SEASON hem_plus, so `off_vs_lhp` and
+    `off_vs_rhp` were a mean over a permutation of the same nine bats and came out
+    bit-identical on all 30 clubs across all 480 captured rows.
+
+    WHY THIS ESTIMATOR (census M06-05, owner answer 2026-09-25). The first
+    per-hand number re-ran the season shrink on each hand's smaller line, which
+    pulled a thin split toward 100 instead of toward the hitter's own level: a
+    125+ hitter lost 4.7 points on the two-hand mean and a 95-or-below hitter
+    gained 2.2. Here the LEVEL is the season shrunk wOBA, and only the GAP
+    between the hands is regressed, toward the league gap for the bat side.
+
+    THE ANCHOR IS STILL THE SEASON POOL. Scoring each hand against its own pool
+    would re-centre both to 100 and delete the league platoon effect, which is
+    the signal; a lefty's vs-LHP number reads below his season HEM+ by his
+    regressed platoon gap.
+
+    `season` is the scored season Hitter (woba_skill set by hem_plus). When it is
+    absent the level is the shrunk wOBA of the two lines summed. A hand with no
+    usable line is None, never a fabricated value."""
+    line_l, line_r = _line_hitter(counts_l), _line_hitter(counts_r)
+    out = {"L": None, "R": None}
+    if line_l is None and line_r is None:
+        return out
+    level = season.woba_skill if season is not None else None
+    if level is None:
+        tot = Hitter(key="_both")
+        for ln in (line_l, line_r):
+            if ln is None:
+                continue
+            for f in SPLIT_COUNT_FIELDS.values():
+                setattr(tot, f, getattr(tot, f) + getattr(ln, f))
+        level = woba_skill(tot, pool)
+    if level is None:
+        return out
+    side = platoon_side(season.bats if season is not None else None)
+    q, n = platoon_ratio(line_l, line_r)
+    q_star = shrink_platoon_ratio(q, n, side, mu or MU_PLATOON_FROZEN)
+    m_l, m_r = hand_multipliers(q_star, _woba_denom(line_l) if line_l else 0.0,
+                                _woba_denom(line_r) if line_r else 0.0)
+    if line_l is not None:
+        out["L"] = _hem_from_woba(level * m_l, pool)
+    if line_r is not None:
+        out["R"] = _hem_from_woba(level * m_r, pool)
+    return out
 
 
 def assign_tiers(hitters: list["Hitter"]) -> None:
@@ -450,14 +598,17 @@ def build_batting_order(hitters: list["Hitter"], opp_hand: str,
 #   5. both have PLATOON_OPTION_MIN_SPLIT_PA or more split PA vs h;
 #   6. B's split minus S's split is PLATOON_OPTION_MARGIN or more.
 # The reader-facing statement of the rule is the platoon_option glossary entry.
-#: Split PA floor, both players, against the hand. Below it the shrunk split is
-#: mostly the pool anchor (the data weight at 30 wOBA-PA is 0.20 on walks and
-#: 0.03 on doubles), and 100 PA is the page's existing thin-sample floor. The
-#: card dims any per-hand number under this same floor.
+#: Split PA floor, both players, against the hand: the page's existing
+#: thin-sample floor. Under platoon_ratio_v1 a hand's number below it is mostly
+#: the season level times the league gap for the bat side (the hitter's own gap
+#: carries n / (n + K_PLATOON) of the weight). The card dims any per-hand number
+#: under this same floor. Unchanged by the 2026-10-01 estimator switch.
 PLATOON_OPTION_MIN_SPLIT_PA = 100
-#: HEM+ points the bench split must clear the starter's by. The measured spread of
-#: (vs-LHP minus vs-RHP HEM+) within a bat side and sample band is 13.5 to 22.3,
-#: an upper bound on the noise in a difference of two splits; 15 is its low end.
+#: HEM+ points the bench split must clear the starter's by. Measured under the
+#: per-hand construction before platoon_ratio_v1: the spread of (vs-LHP minus
+#: vs-RHP HEM+) within a bat side and sample band was 13.5 to 22.3, an upper
+#: bound on the noise in a difference of two splits; 15 is its low end. Not
+#: re-derived on the new construction (an owner question, 2026-10-01).
 PLATOON_OPTION_MARGIN = 15
 #: Defensive innings at a position that make a bat eligible there (rule 3). The
 #: fielding-innings feed carries innings only; 30 innings reproduces the
@@ -653,23 +804,33 @@ def team_offense(team: str, hitters: list["Hitter"],
     return out
 
 
-def build_split_hem(platoon_counts: Optional[dict], pool: Pool) -> Optional[dict]:
+def build_split_hem(platoon_counts: Optional[dict], pool: Pool,
+                    hitters: Optional[Iterable["Hitter"]] = None) -> Optional[dict]:
     """{mlbam: {'L': hem_vs_lhp, 'R': hem_vs_rhp, 'pa': {...}}} from raw split
-    lines, scored on the season `pool` (see split_hem_plus for why that anchor).
+    lines, estimator platoon_ratio_v1 on the season `pool` (see split_hem_pair).
 
     `platoon_counts` is {'L': {mlbam: counts}, 'R': {mlbam: counts}} as
-    hitter_export.load_platoon_splits returns it. None in, None out: an absent
-    feed must stay distinguishable from a feed that resolved nobody, which is
-    the load_bat_side posture and the reason that outage was caught at all."""
+    hitter_export.load_platoon_splits returns it; `hitters` are the scored season
+    Hitters, which carry the level (woba_skill) and the bat side. None in, None
+    out: an absent feed must stay distinguishable from a feed that resolved
+    nobody, which is the load_bat_side posture and the reason that outage was
+    caught at all."""
     if not platoon_counts:
         return None
+    by_id = {int(h.mlbam): h for h in (hitters or []) if h.mlbam is not None}
+    mu = league_platoon_ratios(platoon_counts,
+                               {m: h.bats for m, h in by_id.items() if h.bats})
+    left, right = platoon_counts.get("L") or {}, platoon_counts.get("R") or {}
     out: dict = {}
-    for hand in ("L", "R"):
-        for mid, counts in (platoon_counts.get(hand) or {}).items():
-            v = split_hem_plus(counts, pool)
+    for mid in sorted({int(m) for m in left} | {int(m) for m in right}):
+        cl = left.get(mid, left.get(str(mid)))
+        cr = right.get(mid, right.get(str(mid)))
+        vals = split_hem_pair(by_id.get(mid), cl, cr, pool, mu)
+        for hand, counts in (("L", cl), ("R", cr)):
+            v = vals.get(hand)
             if v is None:
                 continue
-            row = out.setdefault(int(mid), {"pa": {}})
+            row = out.setdefault(mid, {"pa": {}})
             row[hand] = v
             try:
                 row["pa"][hand] = int(float(counts.get("plateAppearances") or 0))
@@ -701,7 +862,7 @@ def score_pool(hitters: list["Hitter"],
         h.qualified = _woba_denom(h) >= QUALIFY_MIN_PA
     assign_tiers(pool_input)
 
-    split_hem = build_split_hem(platoon_counts, pool)
+    split_hem = build_split_hem(platoon_counts, pool, pool_input)
 
     by_team: dict[str, list["Hitter"]] = {}
     for h in pool_input:
