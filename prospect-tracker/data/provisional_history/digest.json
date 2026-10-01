@@ -1,0 +1,40 @@
+{
+ "schema": 1,
+ "generated_at": "2026-10-01T13:12:11+00:00",
+ "what": "one row per build of data/xfv_ungraded.json (the served provisional grade); the full rows live in the snapshot file each row names under .cache/provisional_history/",
+ "producer": "provisional_history.py (run_monthly daily step d9a)",
+ "rule": "append-only; a row is added when a build date or its rows hash is new; the untracked .cache/provisional_history/digest.jsonl copy is merged back so the box's nightly git checkout cannot drop a row",
+ "columns": [
+  "key",
+  "mlbam",
+  "side",
+  "level",
+  "age",
+  "grade",
+  "p_bust",
+  "p_g6",
+  "p_g12"
+ ],
+ "rows": [
+  {
+   "date": "2026-10-01",
+   "retained_at": "2026-10-01T13:12:11+00:00",
+   "artifact_sha256": "0894937f2892ab81d8794008a65c83dd88353d3a3249f565f3764c0f47141391",
+   "sha256_rows": "556b09c791811724ec0ddf7cb39bd1434ebc0d2933054ab74c242725176eed91",
+   "n_rows": 6071,
+   "n_by_side": {
+    "H": 2442,
+    "P": 3629
+   },
+   "grade": {
+    "median": 26.6,
+    "p90": 32.3,
+    "max": 47.2
+   },
+   "n_grade_ge_35": 311,
+   "n_with_p_bust": 6071,
+   "n_with_p_first_grade": 0,
+   "snapshot": "2026/2026-10-01.json.gz"
+  }
+ ]
+}

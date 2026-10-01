@@ -552,6 +552,10 @@ _SIDECAR_GLOBS = (
     "data/fantasy_rank.json",
     "data/fantasy_rank_eval.json",
     ".cache/fantasy_rank_model.json",
+    # PV-02: the retained served provisional grade (untracked snapshots plus
+    # the durable digest copy) and its tracked digest.
+    ".cache/provisional_history/**/*",
+    "data/provisional_history/digest.json",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -900,6 +904,9 @@ _SIDECAR_WRITE_TARGETS = (
     # M27-4: the Ledger exporter's second output, the Trade Machine's CBT
     # slice; write_trade_cbt resolves TRADE_CBT_OUT at call time.
     ("ledger_export", "TRADE_CBT_OUT", "data/trade_cbt.json"),
+    # PV-02: provisional_history.retain resolves its tracked digest at call
+    # time; the snapshot store is the CACHE_DIR directory below.
+    ("provisional_history", "DIGEST_PATH", "data/provisional_history/digest.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands
@@ -910,6 +917,7 @@ _SIDECAR_WRITE_DIRS = (
     ("betting_shadow", "BETTING_CACHE_DIR", ".cache/betting"),
     ("betting_model", "GAME_CACHE", ".cache/betting"),
     ("dfs_export", "ARCHIVE_DIR", ".cache/dfs_history"),
+    ("provisional_history", "CACHE_DIR", ".cache/provisional_history"),
 )
 
 #: Modules that turn one of these paths into a STRING for readers of a

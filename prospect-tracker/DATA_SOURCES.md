@@ -28,6 +28,7 @@ happen inside the called module, so this file alone cannot split them).
 | d8. Trade detection | - |
 | d8b. eWAR live-season rebuild (ewar.json) | ewar.json |
 | d9. Rebuild timeseries (no scrape) | fielding_innings.json, mlb_player_detail.json, mlb_projections.json, trade_values.json, xfv.json |
+| d9a. Provisional grade retention (provisional_history) | - |
 | d9b1. Refresh current-season fielding innings (fielding_innings.json) | fielding_innings.json |
 | d9b2. Re-bake MLB player detail (mlb_player_detail.json) | mlb_player_detail.json, photo_ctx.json |
 | d9c. Headshot resolution (photo_ctx.json) | fantasy.json, photo_ctx.json |

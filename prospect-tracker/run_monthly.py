@@ -126,6 +126,27 @@ def _efv_progress_update(out_dir: Path, where: str) -> None:
 STEP_TIMINGS_PATH = Path(__file__).resolve().parent / "logs" / "pipeline_steps_latest.json"
 
 
+def _provisional_nightly(log: logging.Logger, where: str) -> None:
+    """PV-02: retain tonight's served provisional grade
+    (provisional_history.retain) under the `provisional_retention` heartbeat.
+    Best-effort: a failure is logged and recorded, never raised."""
+    try:
+        import provisional_history
+        import job_heartbeat as _hb
+        _res = provisional_history.retain()
+        _hb.record("provisional_retention", ok=(_res.get("status") == "ok"),
+                   result=f"{where}: {provisional_history.summary_line(_res)}"[:120])
+        log.info("provisional retention (%s): %s", where,
+                 provisional_history.summary_line(_res))
+    except Exception as _e:                                   # noqa: BLE001
+        log.exception("provisional retention failed (%s) - continuing", where)
+        try:
+            import job_heartbeat as _hb
+            _hb.record("provisional_retention", ok=False, result=f"{where}: {_e}"[:120])
+        except Exception:                                     # noqa: BLE001
+            pass
+
+
 def write_step_timings(mode: str, total_runtime: float,
                        log: logging.Logger | None = None,
                        path: Path | None = None,
@@ -2768,6 +2789,13 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # One request refreshes the live season's innings by position, so the card
         # bake below, the Defense board and Position Fit stop pairing current runs
         # with a July innings file. Rewrites only that season's key, atomically.
+        with _step("d9a. Provisional grade retention (provisional_history)", log):
+            # PV-02. d9 just rewrote the served provisional grade, a gitignored
+            # file, so it has no history unless it is kept here: a snapshot
+            # under .cache/provisional_history/ (untracked) plus a small
+            # tracked digest. Heartbeat `provisional_retention`. Never aborts.
+            _provisional_nightly(log, "daily")
+
         with _step("d9b1. Refresh current-season fielding innings (fielding_innings.json)", log):
             try:
                 from fielding_innings import refresh_current as _refresh_innings
