@@ -99,8 +99,31 @@
     try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team) : ""; }
     catch (e) { return ""; }
   }
+  // The hub charts draw on a viewBox (640 units wide unless told) that the SVG
+  // scales to its cell, so a 9-unit label in the 306px cell of a 390px phone
+  // drew 5px tall (9px at 1280). Every chart here gets a viewBox as wide as
+  // its cell is in pixels, read off the .mlbx root when it renders: site.css
+  // lays .mlbstats-viz out in one column at 820px and below and two with a
+  // 16px gap above, inside a collapse body padded 12px a side and cells padded
+  // 12px a side, each boxed by a 1px border. Capped at the old 640, so a wide
+  // cell keeps the old box; no layout (the py_mini_racer smoke test) keeps the default.
+  var VIZ_MAX_W = 640, VIZ_MIN_W = 200;
+  function vizWidth() {
+    try {
+      var host = document.querySelector(".mlbx");
+      var w = host ? host.clientWidth : 0;
+      if (!w) return null;
+      var one = window.matchMedia ? window.matchMedia("(max-width: 820px)").matches : w <= 772;
+      var cell = one ? w - 52 : (w - 42) / 2 - 26;
+      return Math.max(VIZ_MIN_W, Math.min(VIZ_MAX_W, Math.round(cell)));
+    } catch (e) { return null; }
+  }
   function chart(fn, arg, opts) {
-    try { return (window.EEPHUS_HUB && EEPHUS_HUB[fn]) ? EEPHUS_HUB[fn](arg, opts) : ""; }
+    try {
+      var o = opts || {};
+      if (o.width == null) { var vw = vizWidth(); if (vw) o.width = vw; }
+      return (window.EEPHUS_HUB && EEPHUS_HUB[fn]) ? EEPHUS_HUB[fn](arg, o) : "";
+    }
     catch (e) { return ""; }
   }
   function relieverViz() {

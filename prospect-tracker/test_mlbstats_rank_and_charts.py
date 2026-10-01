@@ -12,6 +12,11 @@
    season line made the second player print 3. The counter is generated
    content, so the test reads what CSS reads: each row's computed
    counter-increment, summed in document order.
+2. The chart labels. EEPHUS_HUB.histogram and scatter draw on a viewBox that
+   the SVG scales to its cell, and every /mlbstats/ chart used the default
+   640-unit box, so at 390 (a 306px cell) a 9-unit label drew 5px tall.
+   mlbstats.js now hands each chart a viewBox as wide as its cell. Every
+   chart on every Charts panel at 390 must draw its first label 8px or taller.
 
 Every request off loopback is aborted. Playwright and chromium are OPTIONAL;
 the tests skip when they are missing, and when the boards are not built here.
@@ -26,6 +31,18 @@ from conftest import serve_site
 
 ROOT = Path(__file__).parent
 WAR_FILE = "war_leaderboards.json"
+BOARD_FILES = ["bullpen_leaderboards.json", "starter_leaderboards.json", "hitter_leaderboards.json",
+               "leverage_leaderboards.json", "defense_leaderboards.json"]
+# (label, hash, collapse key of its Charts panel): every surface that draws a hub chart.
+CHART_PAGES = [
+    ("bullpen", "section=bullpen", "relievers-viz"),
+    ("starters", "section=starters&sview=charts", "starters-viz"),
+    ("hitters", "section=hitters&hview=charts", "hitters-viz"),
+    ("leverage batters", "section=leverage", "leverage-viz"),
+    ("leverage starters", "section=leverage&lview=starters", "leverage-viz"),
+    ("defense", "section=defense&dview=charts", "defense-viz"),
+]
+MIN_LABEL_PX = 8
 
 # The rank each of the first rows prints: a row adds its counter-increment to
 # the running count, and a player row (it carries td.mlbstats-name) prints the
@@ -101,3 +118,43 @@ def test_opening_the_overall_caret_keeps_the_next_player_at_rank_2(browser, serv
             "with the first player's season line open the board prints %s" % ranks[:4])
     finally:
         ctx.close()
+
+
+_LABELS = r"""
+() => Array.from(document.querySelectorAll('.mlbx svg.eephus-chart'))
+  .filter(s => s.getBoundingClientRect().width > 0)
+  .map(s => {
+    const t = s.querySelector('text');
+    return {aria: s.getAttribute('aria-label'), css_w: s.getBoundingClientRect().width,
+            viewbox: s.getAttribute('viewBox'),
+            first_label_px: t ? t.getBoundingClientRect().height : null};
+  })
+"""
+
+
+def test_every_chart_at_390_draws_its_first_label_8px_or_taller(browser, server):
+    if not all((ROOT / "data" / f).exists() for f in BOARD_FILES):
+        pytest.skip("the /mlbstats/ boards are not built on this machine")
+    opened = "".join("localStorage.setItem('mlbstats.collapse.%s', '0');" % k
+                     for k in sorted({c for _, _, c in CHART_PAGES}))
+    ctx = _context(browser, 390, 844, opened)
+    problems, measured = [], 0
+    try:
+        for label, hash_, _ in CHART_PAGES:
+            page = ctx.new_page()
+            page.goto(server + "mlbstats/#" + hash_, wait_until="load", timeout=60_000)
+            page.wait_for_selector(".mlbx svg.eephus-chart", timeout=30_000)
+            charts = page.evaluate(_LABELS)
+            if not charts:
+                problems.append("%s: no chart drawn" % label)
+            for c in charts:
+                measured += 1
+                px = c["first_label_px"]
+                if px is None or px < MIN_LABEL_PX:
+                    problems.append("%s / %s: first label %s px in a %.0f px chart (viewBox %s)"
+                                    % (label, c["aria"], px, c["css_w"], c["viewbox"]))
+            page.close()
+    finally:
+        ctx.close()
+    assert measured >= len(CHART_PAGES), measured
+    assert not problems, "\n".join(problems)
