@@ -940,7 +940,7 @@ def build() -> dict:
              "basis": arbitration["basis"], "verdict": verdict_of.get("arb_award"), "verdict_model": "arb_award",
              "leaves": [
                  leaf("n_arb", "Arbitration class 1-4", arbitration["n_arb"], "count", None, "arbitration.json rows whose first remaining ladder season is class 1-4 (not all of them are arbitration-eligible in " + str(CLASS_YEAR) + "); pre-arb (class 0) rows are counted apart as n_pre_arb, all rows as n_rows", None, links["arbitration_teams"]),
-                 leaf("proj_2027_usd", f"Projected {CLASS_YEAR} cost", arbitration["proj_2027_usd"], "usd", None, f"sum of the {CLASS_YEAR} ladder steps incl. pre-arb minimums; provisional; upper bound, not a payroll forecast", "arb_exposure", links["arbitration_teams"]),
+                 leaf("proj_2027_usd", f"Projected {CLASS_YEAR} cost", arbitration["proj_2027_usd"], "usd", None, f"sum of the {CLASS_YEAR} ladder steps incl. pre-arb minimums; provisional; not a payroll forecast: assumes every player is tendered; a non-tender lowers the figure", "arb_exposure", links["arbitration_teams"]),
                  leaf("proj_war_2027", "Projected eWAR of the class", arbitration["proj_war_2027"], "war", None, "arbitration.json w", "ewar", links["arbitration_teams"]),
                  leaf("ou_mkt_total_usd", "ou_mkt, all seasons", arbitration["ou_mkt_total_usd"], "usd_signed", None, "arb_history ou_mkt; never combined with ou_war", None, links["arbitration_history"]),
                  leaf("ou_war_total_usd", "ou_war, all seasons", arbitration["ou_war_total_usd"], "usd_signed", None, "arb_history ou_war; never combined with ou_mkt", None, links["arbitration_history"]),
@@ -1067,7 +1067,7 @@ def build() -> dict:
         "dugout_style": ((mgmt.get("clubs") or {}).get("style_sentence") or "style, not skill"),
         "dugout_not_summed": "per family, never a cross-family total; defensive subs carry a count only",
         "dugout_gate": ((mgmt.get("gate") or {}).get("verdict") or ""),
-        "arb_upper_bound": "upper bound, not a payroll forecast: non-tenders and extensions are absent",
+        "arb_tender_note": "not a payroll forecast: assumes every player is tendered; a non-tender lowers the figure. Extensions are absent",
         "arb_flag_note": "steps not from published service time",
         "arb_cost_sum": f"sum of the {CLASS_YEAR} ladder steps incl. pre-arb minimums: the /arbitration/ Team View's {CLASS_YEAR} arbitration and pre-arb min. columns added together",
         "tile_open": "open",

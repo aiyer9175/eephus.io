@@ -70,6 +70,20 @@ DRAFT_YEARS = tuple(range(2017, 2027))
 POOL_YEARS = ("2021", "2022", "2023", "2024", "2025", "2026")
 IFA_YEARS = (2021, 2022, 2023, 2024, 2025, 2026)
 
+#: Round 11+ bonus charge (owner answer M10-3, 2026-09-25): the part of a bonus
+#: above this figure for a pick after round 10 counts against the club's bonus
+#: pool under the 2022 CBA. Earlier drafts ran under the earlier CBA's threshold,
+#: which no file in this repo carries, so those years print no figure.
+R11_THRESHOLD_USD = 150_000
+R11_FIRST_DRAFT = 2022
+
+
+def _round_no(r: dict) -> int | None:
+    """The draft round as an int from round_label ("12" -> 12); a supplemental or
+    competitive balance label ("CB-A", "1C", "PPI") is not a numbered round."""
+    lab = str(r.get("round_label") or "").strip()
+    return int(lab) if lab.isdigit() else None
+
 #: Spotrac's own 2027 basis, measured on the cached page: tax_payroll_usd +
 #: space_usd = 247,000,000 on all 30 rows. Held as a MEASUREMENT (asserted
 #: against the rows at build time), never as a rule.
@@ -1142,6 +1156,14 @@ def build_all() -> tuple:
             paid = int(sum(r.get("bonus_usd") or 0 for r in mine))
             paid_slotted = int(sum(r.get("bonus_usd") or 0 for r in slotted))
             pool_usd = (pool_by_year.get(str(y)) or [None])[0]
+            # Round 11+ over the threshold: its own column, never in pool_used.
+            if y >= R11_FIRST_DRAFT:
+                r11 = [int(r["bonus_usd"]) - R11_THRESHOLD_USD for r in mine
+                       if _round_no(r) is not None and _round_no(r) > 10
+                       and (r.get("bonus_usd") or 0) > R11_THRESHOLD_USD]
+                r11_usd, n_r11 = int(sum(r11)), len(r11)
+            else:
+                r11_usd = n_r11 = None
             # pool_used divides by the published pool, which is the sum of the
             # club's round 1-10 slot values; the numerator is the bonuses on those
             # slotted picks only. Rounds 11+ carry no slot_usd, so their bonuses
@@ -1152,7 +1174,8 @@ def build_all() -> tuple:
                 paid_slotted,
                 int(sum((r.get("bonus_usd") or 0) - (r.get("slot_usd") or 0) for r in slotted)),
                 slot_cov.get(str(y)), pool_usd,
-                round(paid_slotted / pool_usd, 3) if (pool_usd and paid_slotted) else None]
+                round(paid_slotted / pool_usd, 3) if (pool_usd and paid_slotted) else None,
+                r11_usd, n_r11]
         sc = slot_orgs.get(c) or {}
         slot_chips = {k: sc.get(k) for k in ("nSlotted", "overSlotShare", "r1UnderShare", "bonusHHI",
                                               "prepDollarShare", "zOver", "zBonusHHI", "zPrepDollar",
@@ -1583,7 +1606,7 @@ def build_all() -> tuple:
             ["usd_per_war", "$ per proj WAR", "cost_plus", f"Spotrac CBT payroll 2027 over projected 2027 WAR; plain dollars, no ladder; {NO_ARB_IN_DENOM}"],
             ["locked_pct", "Locked", "controlled_surplus", "share of 2027-31 core WAR under club control (a share of a projection)"],
             ["controlled_surplus_mm", "Controlled surplus", "controlled_surplus", "$M: MLB leg (surNpv) + farm leg (org active surplus), sums of means; plain"],
-            ["arb_exposure_2027", "Arb exposure 2027", "arb_exposure", "upper bound, not a payroll forecast; arb_award provisional"],
+            ["arb_exposure_2027", "Arb exposure 2027", "arb_exposure", "not a payroll forecast: assumes every player is tendered; a non-tender lowers the figure; arb_award provisional"],
             ["orgsur_plus", "OrgSur+", "sur_plus", "org_summary.financial_score; descriptive, unvalidated"],
             ["farm_rank", "Farm rank", None, "PROSPX farm rank (farm_grades provisional)"],
         ],
@@ -1705,7 +1728,8 @@ def build_all() -> tuple:
         "retained_blocked_on": ("Spotrac's dataTable-retained rows carry no table_id on the read side yet; "
                                 "retained obligations are never merged into the employing club's AAV"),
         "retained_cross_check": "Spotrac 2027 retained allocation, club total",
-        "arb_upper_bound": "Upper bound, not a payroll forecast: non-tenders and extensions are absent",
+        "arb_tender_note": ("Not a payroll forecast: assumes every player is tendered; a non-tender lowers "
+                            "the figure. Extensions are absent"),
         "arb_provisional": "provisional: the arb-1 model is gated, arb-2+ is a population multiplier",
         "arb_flag_key": (arb.get("field_key") or {}).get("e"),
         "arb_realized_title": "What arbitration cost, and what it bought",
@@ -1753,7 +1777,12 @@ def build_all() -> tuple:
         "slot_coverage_basis": "share of the league's draft_results rows for that year carrying slot_usd",
         "pool_used_basis": ("bonuses on the round 1-10 slotted picks over the published pool, which is "
                             "the sum of those slot values; the Paid column also counts rounds 11 and later, "
-                            "which carry no slot, and their bonuses above $150,000 are not added to Pool used"),
+                            "which carry no slot, and the part of their bonuses above $150,000 sits in its own "
+                            "column, not in Pool used"),
+        "r11_over_basis": (f"the part of each round 11 or later bonus above ${R11_THRESHOLD_USD:,}, summed, "
+                           "with the number of such picks; the CBA charges it to the bonus pool. "
+                           f"Drafts before {R11_FIRST_DRAFT} ran under the earlier CBA's threshold and "
+                           "print n/a"),
         "slot_window": slot_window,
         "slot_league": slot_league,
         "pick_war_label": ("expected first-6 WAR of the 2027 first-round pick (draft_slot_curve, validated; "
@@ -1924,7 +1953,7 @@ def build_all() -> tuple:
         "arbitration.rows": "[name, mlbam, token_2027, proj_2027_usd, lo_usd, hi_usd, years_left, war_2027, class, flags]",
         "arbitration.realized.seasons": "[season, n, actual_usd, ours_usd, ou_mkt_usd, ou_war_usd, war]; ou_mkt and ou_war are never combined",
         "farm.pools": "year -> [pool_usd, status, picks [[pick_overall, slot_usd]]]",
-        "farm.draft_paid": "year -> [n_picks, n_signed, n_unsigned, paid_usd, n_slotted, slot_usd_on_slotted, paid_usd_on_slotted, over_slot_usd, slot_coverage_pct, pool_usd, pool_used]; paid_usd is every round; pool_used = paid_usd_on_slotted / pool_usd, the round 1-10 slotted bonuses over the published pool (round 11+ bonuses above $150,000 are not added)",
+        "farm.draft_paid": "year -> [n_picks, n_signed, n_unsigned, paid_usd, n_slotted, slot_usd_on_slotted, paid_usd_on_slotted, over_slot_usd, slot_coverage_pct, pool_usd, pool_used, r11_over_usd, n_r11_over]; paid_usd is every round; pool_used = paid_usd_on_slotted / pool_usd, the round 1-10 slotted bonuses over the published pool (round 11+ bonuses above $150,000 are not added); r11_over_usd, n_r11_over: the part of each round 11+ bonus above $150,000 summed, and the count of those picks, drafts from 2022 only (null before)",
         "farm.lottery": "[pick_pos, odds_pct, odds_top6_pct, wins, losses, snapshot_date, source]",
         "farm.pick_war": "[expected_first6_war, bucket_upper_bound, pick_pos]",
         "farm.ifa": "class year -> [total_usd, signings, top_bonus, top_player, pool_pct_sum, implied_pool_usd, implied_n]",
@@ -2017,8 +2046,8 @@ def build_all() -> tuple:
             "[season, arb_rung_usd, n_arb_rungs, prearb_rung_usd, n_prearb_rungs, n_null_rungs]; "
             "arb_rung_usd sums the season's arbitration rungs that carry a projection and prearb_rung_usd "
             "the season's PRE-ARB rungs; their sum is the v1 ladder sum for that season (s2027_usd for "
-            "2027) and the sum over seasons of both is v1 remaining_usd; each is an upper bound and neither "
-            "is summed into the commitments stack; n_arb_rungs and n_prearb_rungs count the rungs in each "
+            "2027) and the sum over seasons of both is v1 remaining_usd; each assumes every player is tendered "
+            "(a non-tender lowers it) and neither is summed into the commitments stack; n_arb_rungs and n_prearb_rungs count the rungs in each "
             "sum; n_null_rungs counts rungs with proj null (no salary on file, flag 13), which enter no sum "
             "and print dark on the ladder"),
         "surplus.reconciliation": (

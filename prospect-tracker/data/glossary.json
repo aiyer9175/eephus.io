@@ -7818,7 +7818,7 @@
     "arb steps"
    ],
    "priority": 40,
-   "definition": "The sum of a club's arbitration ladder steps for a season: projected arbitration awards plus pre-arb seasons at the league minimum, for every player on the club's ladder. Not a payroll forecast: every listed player is assumed tendered, and extensions are absent.",
+   "definition": "The sum of a club's arbitration ladder steps for a season: projected arbitration awards plus pre-arb seasons at the league minimum, for every player on the club's ladder. Not a payroll forecast: it assumes every player is tendered; a non-tender lowers the figure, and extensions are absent.",
    "methodology": "ledger_export.py and franchise_export.py sum the 2027 ladder step of every data/arbitration.json row for the club, pre-arb rungs included; the /arbitration/ Team View shows the arbitration and pre-arb parts in separate columns. The arb_award model is provisional and every 2027 step is a CBA carry-forward, both of which the cell says.",
    "example": "",
    "formula": "",

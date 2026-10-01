@@ -411,7 +411,11 @@ def test_arb_ou_mkt_and_ou_war_are_never_combined(d, clubs):
             assert not ("ou_mkt" in ks and "ou_war" in ks), k
             assert ks not in ("ou_total", "ou_combined", "ou_sum"), k
         assert a["verdict"] == "provisional"
-        assert "upper bound" in d["copy"]["arb_upper_bound"]
+        # owner answer M10-4: tendered wording, never "upper bound"
+        assert "assumes every player is tendered" in d["copy"]["arb_tender_note"]
+        assert "a non-tender lowers the figure" in d["copy"]["arb_tender_note"]
+        assert "arb_upper_bound" not in d["copy"]
+        assert "upper bound" not in json.dumps(c, ensure_ascii=False).lower()
 
 
 def test_every_2027_dollar_carries_the_cba_carry_forward_flag(d, clubs):

@@ -701,7 +701,7 @@
     var out = banner() + '<div class="ledger-tiles ledger-tiles--2">' +
       tile("Arb-eligible", esc(A.n), "class mix " + Object.keys(A.class_mix).map(function (k) { return k + ": " + A.class_mix[k]; }).join(", ") +
         (isNum(A.n_in_vets) ? "; " + esc(A.n_in_vets) + " in the projections vets, " + esc(A.n_with_salpath) + " with a salary path" : "")) +
-      tile(gl("Ladder sum " + esc(classYear()) + " (arb and pre-arb rungs)", "arb_exposure"), money(A.s2027_usd), splitSub + esc(copy("arb_upper_bound"))) +
+      tile(gl("Ladder sum " + esc(classYear()) + " (arb and pre-arb rungs)", "arb_exposure"), money(A.s2027_usd), splitSub + esc(copy("arb_tender_note"))) +
       tile("Remaining, all seasons", money(A.remaining_usd), esc(copy("arb_provisional"))) +
       tile("Projected eWAR over the ladder", num(A.war, 1), "sum of the per-season projections") + "</div>";
     out += '<p class="ledger-count">Flag census: ' + Object.keys(A.flags).map(function (b) { return "bit " + b + ": " + A.flags[b]; }).join(", ") + ". " + esc(copy("arb_flag_key")) + "</p>";
@@ -818,11 +818,14 @@
       var p = F.pools[y];
       return "<div>" + esc(y) + "<b>" + esc(p[0] !== null ? money(p[0]) : p[1]) + "</b></div>";
     }).join("") + "</div>" + '<p class="ledger-count">' + esc(copy("pools_note")) + "</p>";
-    out += '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Draft</th><th>Picks</th><th>Signed</th><th>Paid, all rounds</th><th>Paid (slotted)</th><th>Slot (slotted)</th><th>Over slot</th><th>Slot coverage</th><th>Pool used</th></tr></thead><tbody>' +
+    out += '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Draft</th><th>Picks</th><th>Signed</th><th>Paid, all rounds</th><th>Paid (slotted)</th><th>Slot (slotted)</th><th>Over slot</th><th>Slot coverage</th><th>Pool used</th><th>Round 11+ over $150K</th></tr></thead><tbody>' +
       Object.keys(F.draft_paid).sort().reverse().map(function (y) {
         var r = F.draft_paid[y];
-        return "<tr><td>" + esc(y) + "</td><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(money(r[3])) + "</td><td>" + esc(money(r[6])) + "</td><td>" + esc(money(r[5])) + " (" + esc(r[4]) + ")</td><td>" + signedMoney(r[7]) + "</td><td>" + esc(isNum(r[8]) ? num(r[8], 0) + "%" : "") + "</td><td>" + esc(isNum(r[10]) ? pct(r[10], 0) : "") + "</td></tr>";
-      }).join("") + "</tbody></table></div>" + '<p class="ledger-count">Slot coverage: ' + esc(copy("slot_coverage_basis")) + ". Pool used: " + esc(copy("pool_used_basis")) + ".</p>";
+        // Round 11+ over $150K (owner answer M10-3): its own column, never in Pool used;
+        // a draft before the 2022 CBA carries null and prints n/a.
+        var r11 = isNum(r[11]) ? money(r[11]) + " (" + r[12] + ")" : (r.length > 11 ? "n/a" : "");
+        return "<tr><td>" + esc(y) + "</td><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(money(r[3])) + "</td><td>" + esc(money(r[6])) + "</td><td>" + esc(money(r[5])) + " (" + esc(r[4]) + ")</td><td>" + signedMoney(r[7]) + "</td><td>" + esc(isNum(r[8]) ? num(r[8], 0) + "%" : "") + "</td><td>" + esc(isNum(r[10]) ? pct(r[10], 0) : "") + "</td><td>" + esc(r11) + "</td></tr>";
+      }).join("") + "</tbody></table></div>" + '<p class="ledger-count">Slot coverage: ' + esc(copy("slot_coverage_basis")) + ". Pool used: " + esc(copy("pool_used_basis")) + ". Round 11+ over $150K: " + esc(copy("r11_over_basis")) + ".</p>";
     var shp = shardOf(d.club);
     if (shp && shp.farm && shp.farm.picks) out += renderPicks(shp.farm.picks, F.picks_summary || {});
     var sc = F.slot_chips || {}, lg = copy("slot_league") || {};

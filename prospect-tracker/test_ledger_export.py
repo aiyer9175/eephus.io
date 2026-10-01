@@ -346,13 +346,20 @@ def test_the_two_arbitration_residuals_are_never_combined(d):
             assert (m + w) not in vals and (m + w) / 2 not in vals, c
 
 
-def test_the_arbitration_sum_is_labelled_an_upper_bound(d):
-    s = d["copy"]["arb_upper_bound"].lower()
-    assert "upper bound" in s and "not a payroll forecast" in s
+def test_the_arbitration_sum_assumes_every_player_tendered(d):
+    """Owner answer M10-4 (2026-09-25): the ladder sum is not called an upper bound
+    (an extension or a raise can exceed it); it assumes every player is tendered and
+    a non-tender lowers it."""
+    s = d["copy"]["arb_tender_note"].lower()
+    assert "assumes every player is tendered" in s and "a non-tender lowers the figure" in s
+    assert "not a payroll forecast" in s and "upper bound" not in s
+    assert "arb_upper_bound" not in d["copy"]
     col = [c for c in d["league"]["columns"] if c[0] == "arb_exposure_2027"][0]
-    assert "upper bound" in col[3]
+    assert "assumes every player is tendered" in col[3] and "upper bound" not in col[3]
+    assert "upper bound" not in d["field_key"]["arbitration.by_season"]
+    assert "upper bound" not in json.dumps(d, ensure_ascii=False).lower()
     js = JS.read_text(encoding="utf-8")
-    assert 'copy("arb_upper_bound")' in js
+    assert 'copy("arb_tender_note")' in js and "arb_upper_bound" not in js
     for club in d["clubs"].values():
         A = club["arbitration"]
         assert A["s2027_usd"] == sum(r[3] or 0 for r in A["rows"])
@@ -1359,6 +1366,41 @@ def test_draft_pool_usage_is_slotted_bonuses_over_the_pool(d):
     assert n > 100
     assert "paid_usd_on_slotted / pool_usd" in d["field_key"]["farm.draft_paid"]
     assert "rounds 11 and later" in d["copy"]["pool_used_basis"]
+    assert "its own column, not in Pool used" in d["copy"]["pool_used_basis"]
+
+
+def test_round_11_over_150k_is_its_own_column_and_reconciles_to_the_pick_rows(d, shards):
+    """Owner answer M10-3 (2026-09-25): Pool used keeps rounds 1-10; the part of each
+    round 11+ bonus above $150,000 (the CBA's pool charge) is a separate column,
+    draft_paid[11] with its pick count in [12]. Drafts before 2022 ran under the
+    earlier CBA's threshold and carry null. Per club and year it equals the shard's
+    pick rows recomputed (ints, no tolerance), and Pool used never includes it."""
+    import ledger_export as le
+    assert le.R11_THRESHOLD_USD == 150_000 and le.R11_FIRST_DRAFT == 2022
+    P = "farm.picks"
+    rd_i, b_i = _col(d, P, "round_label"), _col(d, P, "bonus_usd")
+    n_years = n_charged = 0
+    for c, club in d["clubs"].items():
+        for y, r in club["farm"]["draft_paid"].items():
+            assert len(r) == 13, (c, y, len(r))
+            if int(y) < 2022:
+                assert r[11] is None and r[12] is None, (c, y)
+                continue
+            rows = shards[c]["farm"]["picks"][y]
+            over = [int(p[b_i]) - 150_000 for p in rows
+                    if str(p[rd_i] or "").isdigit() and int(p[rd_i]) > 10 and (p[b_i] or 0) > 150_000]
+            assert r[11] == sum(over) and r[12] == len(over), (c, y, r[11], r[12], over)
+            assert r[11] <= r[3], (c, y, "the charge is part of Paid, all rounds")
+            if r[9]:
+                assert r[10] == (round(r[6] / r[9], 3) if r[6] else None), (c, y, "Pool used stays rounds 1-10")
+            n_years += 1
+            n_charged += r[12] > 0
+    assert n_years >= 140 and n_charged > 50, (n_years, n_charged)
+    fk = d["field_key"]["farm.draft_paid"]
+    assert "pool_used, r11_over_usd, n_r11_over]" in fk and "drafts from 2022 only" in fk
+    assert "$150,000" in d["copy"]["r11_over_basis"] and "print n/a" in d["copy"]["r11_over_basis"]
+    js = JS.read_text(encoding="utf-8")
+    assert "<th>Pool used</th><th>Round 11+ over $150K</th>" in js and 'copy("r11_over_basis")' in js
 
 
 def test_grad_contract_surplus_per_graduate_is_dark_and_the_mean_is_copied(d, org_summary):
