@@ -9875,29 +9875,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                  "otherwise have overridden the reconciled org",
                  _roster_fixed, "y" if _roster_fixed == 1 else "ies")
 
-    # ── Per-org promotion-phase tendency (H1 vs H2) ───────────────────────
-    # Walks every promotion event across every prospect (active +
-    # graduated) and buckets by which half of the season the
-    # promotion occurred in. The resulting per-org rate feeds into
-    # each player's ETA half-season adjustment — orgs that
-    # historically promote heavily post-ASB nudge the half-season-
-    # elapsed adjustment downward (more debut risk this year);
-    # H1-heavy orgs pull it back toward zero.
-    #
-    # Source of truth: `level_changes[player_key]` rows with
-    # `kind in {"promotion", "debut"}`. We look at the trailing
-    # 3 calendar years of events so the tendency reflects current
-    # front-office behavior, not a decade-old pattern.
-    def _compute_org_promotion_tendencies() -> dict[str, dict]:
-        # The computation lives in eta.org_promotion_tendencies (moved 2026-09-25,
-        # byte-identical) so the org keep-or-remove gate can score the SAME code
-        # point-in-time. Served: rolling window from this year minus 3, current org.
-        from datetime import date as _date
-        from eta import org_promotion_tendencies as _org_tendencies
-        return _org_tendencies(level_changes, roster_org_by_key,
-                               min_year=_date.today().year - 3)
-
-    org_promotion_tendencies = _compute_org_promotion_tendencies()
+    # Per-org promotion-phase tendency: NOT computed for the served ETA since
+    # 2026-09-30. The one registered look of docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md
+    # (section 7, data/eta_eval.json org_timing_gate_2026_09_25) found the KEEP and
+    # REMOVE arms give the same debut year on all 1,394 rows, verdict REMOVE, and the
+    # owner answered REMOVE (ETA-3). estimate_eta's served call below passes
+    # org_promotion_tendency=None. eta.org_promotion_tendencies stays for the gate lab;
+    # the Org Tendencies page computes its own display in org_tendencies.py.
 
     def _derived_graduation_date(p: PlayerTimeseries) -> str | None:
         """The debut date alone; see _derived_graduation_date_with_basis."""
@@ -10858,13 +10842,6 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 health["is_post_tj"] = True
                 health["tj_surgery_date"] = _fg_tj_date
                 health["tj_source"] = "fangraphs_extras"
-        # Resolve the player's CURRENT org for the promotion-tendency
-        # lookup. Falls back gracefully if the player doesn't have an
-        # org on file (rare — usually amateur/IFA pre-resolution).
-        _player_org = canonical_org(
-            roster_org_by_key.get(p.player_key) or p.org
-        )
-        _org_tendency = org_promotion_tendencies.get(_player_org) if _player_org else None
         eta = estimate_eta(
             level, age, is_pitcher, latest_fv, sl,
             expected_ages=age_baselines,
@@ -10880,12 +10857,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # applies the half-season-elapsed adjustment when the
             # snapshot lands after the All-Star break.
             snapshot_date=date.today(),
-            # Per-org H1/H2 promotion tendency (computed once at top
-            # of export). Scales the half-season adjustment — H2-heavy
-            # orgs get a stronger post-break pull-in; H1-heavy orgs
-            # get a softer one. None for orgs with <5 historical
-            # promotions on file in the 3-year window.
-            org_promotion_tendency=_org_tendency,
+            # Org promotion multipliers removed (owner answer ETA-3, 2026-09-30,
+            # after the section 7 keep-or-remove gate of ETA_FG_BLEND_GATE.md read
+            # REMOVE: 0 of 1,394 rows moved). None leaves the half-season term at
+            # the league baseline, the pull-in floor unscaled and eta_half free of
+            # the org nudge.
+            org_promotion_tendency=None,
             # v12 — current IL status pushes ETA out. Season-ending
             # injury (or 60+ days on IL) adds +1.0y; 30-59 days adds
             # +0.5y. Fixes "Sebastian Walcott ETA 2026 despite being
@@ -11692,23 +11669,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "health_adj": eta.health_adj,
                 # H1/H2 split — `season_phase` is one of "pre_break",
                 # "post_break", "offseason"; `half_season_adj` is the
-                # actual year-adjustment applied (scaled by org-promo
-                # tendency when on file, else the league-baseline -0.25
-                # in post_break). All surface on the ETA panel.
+                # actual year-adjustment applied (the league-baseline -0.25
+                # in post_break; the org scaling was removed 2026-09-30).
+                # All surface on the ETA panel.
                 "half_season_adj": eta.half_season_adj,
                 "season_phase": eta.season_phase,
-                # Per-org promotion-phase tendency context. h1_rate +
-                # h2_rate are floats in [0, 1] showing the org's
-                # historical promotion split; org_promo_weight is the
-                # multiplier applied to the league-baseline H1/H2
-                # adjustment (1.0 = neutral). None when the org has
-                # <5 historical promotions in the rolling 3yr window.
+                # Per-org promotion-phase tendency context. Since the
+                # multipliers left the served call (owner answer ETA-3,
+                # 2026-09-30) the rates are None and the weight is 1.0 on
+                # every row; the keys stay so older readers keep their shape.
                 "org_promo_h1_rate": eta.org_promo_h1_rate,
                 "org_promo_h2_rate": eta.org_promo_h2_rate,
                 "org_promo_weight":  eta.org_promo_weight,
                 # v31.8 — Half-year bucket ("early" = Apr-Jun debut window
                 # within eta_year; "late" = Jul-Sep). Combines fractional
-                # ETA distance + org H1/H2 tendency + current-level bias.
+                # ETA distance + current-level bias.
                 "half":              eta.eta_half,
                 # True when the calendar floor rolled a current-year ETA to next
                 # year's early window because the regular season is over.

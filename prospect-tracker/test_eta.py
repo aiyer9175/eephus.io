@@ -486,11 +486,52 @@ class OrgPromotionTendencies(unittest.TestCase):
         out = org_promotion_tendencies(lc, orgs, before="2024-03-01")
         self.assertEqual(out["SEA"]["sample_n"], 11)
 
-    def test_storage_serves_the_shared_function(self):
+    def test_storage_no_longer_computes_it(self):
+        # Owner answer ETA-3 (2026-09-30): the section 7 gate read REMOVE, so the
+        # served export stops computing tendencies; the gate lab still imports them.
+        from pathlib import Path
+        here = Path(__file__).resolve().parent
+        src = (here / "storage.py").read_text(encoding="utf-8")
+        self.assertNotIn("from eta import org_promotion_tendencies", src)
+        self.assertNotIn("_compute_org_promotion_tendencies", src)
+        lab = (here / "tools" / "eta_fg_blend_gate.py").read_text(encoding="utf-8")
+        self.assertIn("E.org_promotion_tendencies(", lab)
+
+
+class OrgMultipliersRemovedFromServing(unittest.TestCase):
+    """Owner answer ETA-3 (2026-09-30), on the REMOVE verdict of section 7 of
+    docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md: estimate_eta's served call passes
+    org_promotion_tendency=None and the PROSPX ETA breakdown drops the org line."""
+
+    def test_served_call_passes_none(self):
+        import ast
         from pathlib import Path
         src = (Path(__file__).resolve().parent / "storage.py").read_text(encoding="utf-8")
-        self.assertIn("from eta import org_promotion_tendencies as _org_tendencies", src)
-        self.assertIn("min_year=_date.today().year - 3)", src)
+        calls = [n for n in ast.walk(ast.parse(src))
+                 if isinstance(n, ast.Call) and getattr(n.func, "id", None) == "estimate_eta"]
+        self.assertEqual(len(calls), 1)
+        kw = {k.arg: k.value for k in calls[0].keywords}
+        self.assertIn("org_promotion_tendency", kw)
+        self.assertIsInstance(kw["org_promotion_tendency"], ast.Constant)
+        self.assertIsNone(kw["org_promotion_tendency"].value)
+
+    def test_none_is_neutral(self):
+        r = estimate_eta("AA", 21.0, False, 50.0, None,
+                         snapshot_date=date(2026, 9, 30),
+                         org_promotion_tendency=None)
+        self.assertEqual(r.org_promo_weight, 1.0)
+        self.assertIsNone(r.org_promo_h1_rate)
+        self.assertIsNone(r.org_promo_h2_rate)
+
+    def test_prospx_breakdown_has_no_org_line(self):
+        from pathlib import Path
+        html = (Path(__file__).resolve().parent / "prospx" / "index.html").read_text(
+            encoding="utf-8")
+        self.assertNotIn("org promotes ${h1}% H1", html)
+        self.assertNotIn("org_promo_h1_rate", html)
+        self.assertNotIn("org H1/H2 promotion tendency +", html)
+        self.assertIn("Blends how far into the year the fractional ETA lands and a "
+                      "current-level bias", html)
 
 
 if __name__ == "__main__":

@@ -14344,15 +14344,15 @@ function makeEtaCell(p) {
              : diff === 4 ? "eta-far"
              : "eta-very-far";
   // v31.8 - Half-year prefix ("Early" / "Late") derived from a blend
-  // of fractional ETA distance, org H1/H2 promotion tendency, and
-  // current-level bias. Rendered as a small italic prefix before the
+  // of fractional ETA distance and current-level bias (the org H1/H2
+  // promotion nudge left the served call 2026-09-30, owner answer ETA-3). Rendered as a small italic prefix before the
   // year so the cell reads "Late 2026" / "Early 2027" at a glance.
   // Falls back to the year alone when the backend hasn't shipped the
   // bucket yet (older payloads).
   const halfBucket = (eta.half === "early") ? "Early"
                    : (eta.half === "late")  ? "Late"  : null;
   const halfChip = halfBucket
-    ? `<span style="font-family:var(--font-serif);font-style:italic;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;margin-right:3px;" title="${halfBucket === 'Early' ? 'Apr-Jun debut window' : 'Jul-Sep debut window'} - blends fractional ETA distance + org H1/H2 promotion tendency + current-level bias">${halfBucket}</span>`
+    ? `<span style="font-family:var(--font-serif);font-style:italic;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;margin-right:3px;" title="${halfBucket === 'Early' ? 'Apr-Jun debut window' : 'Jul-Sep debut window'} - blends fractional ETA distance + current-level bias">${halfBucket}</span>`
     : '';
   return `<div class="eta-cell" title="${eta.confidence ? eta.confidence + ' confidence' : 'ETA estimate'}${halfBucket ? ` · ${halfBucket} ${eta.year}` : ''}">
     ${halfChip}<span class="eta-year ${cls}">${eta.year}</span>
@@ -50608,18 +50608,15 @@ function renderPlayerDetail(key) {
     }
     // Early/Late projection + the inputs that produced it.
     const halfWord = etaHalfWord(eta);
-    const orgBits = [];
-    if (eta.org_promo_h1_rate != null && eta.org_promo_h2_rate != null) {
-      const h1 = Math.round(eta.org_promo_h1_rate * 100);
-      const h2 = Math.round(eta.org_promo_h2_rate * 100);
-      orgBits.push(`org promotes ${h1}% H1 / ${h2}% H2`);
-    }
-    if (eta.season_phase) orgBits.push(`current phase: ${String(eta.season_phase).replace(/_/g, " ")}`);
+    // The org promotion H1/H2 line left with the org multipliers (owner answer ETA-3,
+    // 2026-09-30; ETA_FG_BLEND_GATE.md section 7 read REMOVE).
+    const phaseBits = [];
+    if (eta.season_phase) phaseBits.push(`current phase: ${String(eta.season_phase).replace(/_/g, " ")}`);
     const halfExplain = halfWord
       ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;line-height:1.5;">
-           <strong style="color:var(--text-secondary);">${halfWord} ${eta.year}</strong> - 
+           <strong style="color:var(--text-secondary);">${halfWord} ${eta.year}</strong> -
            ${halfWord === "Early" ? "an Apr-Jun (first-half)" : "a Jul-Sep (second-half)"} debut window.
-           Blends how far into the year the fractional ETA lands, the org's H1/H2 promotion tendency, and a current-level bias (AAA leans early; A/A+ on a multi-year track lean late).${orgBits.length ? ` <span style="color:var(--text-tertiary);">(${orgBits.join(" · ")})</span>` : ""}
+           Blends how far into the year the fractional ETA lands and a current-level bias (AAA leans early; A/A+ on a multi-year track lean late).${phaseBits.length ? ` <span style="color:var(--text-tertiary);">(${phaseBits.join(" · ")})</span>` : ""}
          </div>`
       : "";
     const confLine = eta.confidence

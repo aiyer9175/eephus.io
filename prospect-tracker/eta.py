@@ -384,6 +384,13 @@ def _org_promotion_phase_weight(phase: str, org_tendency: dict | None) -> float:
     its historical promotion-phase tendency. Returns 1.0 (neutral) when
     no tendency on file or sample too thin.
 
+    DEAD FOR SERVING since 2026-09-30: the section 7 keep-or-remove gate of
+    docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md read REMOVE (KEEP and REMOVE gave the
+    same year on all 1,394 rows) and the owner answered REMOVE (ETA-3), so storage.py
+    passes org_promotion_tendency=None and this returns 1.0 on every served row. It
+    stays (with org_promotion_tendencies and the aggressiveness floor multiplier in
+    estimate_eta) for tools/eta_fg_blend_gate.py, which scores the KEEP arm.
+
       h2_rate ≥ 0.60 (clearly H2-heavy):
         post-break  → 1.4   (pull ETA in harder — org loves H2 calls)
         pre-break   → 0.5   (org rarely promotes in H1; weak adjustment)
@@ -421,8 +428,9 @@ def org_promotion_tendencies(level_changes: dict, org_by_key: dict, *,
     skipped). An org with fewer than 5 events gets no entry. The aggressiveness index
     is the org's event count over the median count across orgs with an entry.
 
-    storage.py serves it with `min_year` = this year minus 3 and each player's current
-    org. The point-in-time form the org keep-or-remove gate scores
+    storage.py served it with `min_year` = this year minus 3 and each player's current
+    org until 2026-09-30, when the owner removed it from the served call (ETA-3, on the
+    section 7 REMOVE verdict); it is now read only by the gate lab. The point-in-time form the org keep-or-remove gate scores
     (docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md section 7) passes `before` (events dated
     strictly before it) and `seasons` (event years allowed), with orgs as of the list
     date."""
@@ -767,7 +775,8 @@ def estimate_eta(
     # promotion-phase tendency, we scale this baseline adjustment:
     # H2-heavy orgs (TBR, OAK-types that bank Sept call-ups) get a
     # stronger pull-in; H1-heavy orgs (front-loaded promoters) get a
-    # weaker one. See `_org_promotion_phase_weight` for the table.
+    # weaker one. See `_org_promotion_phase_weight` for the table. Served rows pass
+    # no tendency since 2026-09-30 (ETA-3), so org_weight is 1.0 there.
     org_weight = _org_promotion_phase_weight(phase, org_promotion_tendency)
     if phase == "post_break":
         half_season_adj = HALF_SEASON_ADJ * org_weight
@@ -833,7 +842,9 @@ def estimate_eta(
         if _is_very_young_for_level
         else _LEVEL_PULL_FLOOR_FRAC.get(current_level or "")
     )
-    # Org-aggressiveness floor multiplier.
+    # Org-aggressiveness floor multiplier. Lab only since 2026-09-30 (owner answer
+    # ETA-3 on the section 7 REMOVE verdict): the served call passes no tendency, so
+    # this stays 1.0 on every served row.
     _org_floor_mult = 1.0
     if org_promotion_tendency:
         _aggr = org_promotion_tendency.get("aggressiveness_index")
@@ -909,7 +920,7 @@ def estimate_eta(
         half_score += 0.5
     elif frac < -0.15:     # rounded up — at the start of the year
         half_score -= 0.5
-    # Org tendency layer.
+    # Org tendency layer (lab only since 2026-09-30, ETA-3: the served call passes None).
     if org_promotion_tendency and (org_promotion_tendency.get("sample_n") or 0) >= 5:
         h2 = float(org_promotion_tendency.get("h2_rate") or 0.0)
         h1 = float(org_promotion_tendency.get("h1_rate") or 0.0)
