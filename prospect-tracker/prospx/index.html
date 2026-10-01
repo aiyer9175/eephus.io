@@ -50584,6 +50584,14 @@ function renderPlayerDetail(key) {
     if (eta.half_season_adj != null && eta.half_season_adj !== 0)
       r.push(["Half-season timing", adj(eta.half_season_adj),
         reason(eta.half_season_adj, "tracking to an earlier-in-year call-up", "tracking to a later-in-year call-up")]);
+    // FanGraphs blend (served arm B since 2026-09-30): the rows above build the model's own
+    // year; the served year averages it with FanGraphs' published ETA, rounded up at a half,
+    // one year earlier for a prospect already on the 40-man. Present only when a blend served.
+    if (eta.fg_blend_arm && eta.champion_year != null && eta.fg_eta_year != null) {
+      const on40 = !!((p.roster_status || {}).on_40_man);
+      r.push(["FanGraphs blend", `${eta.champion_year} → ${eta.year}`,
+        `model ${eta.champion_year} and FanGraphs ${eta.fg_eta_year} averaged${on40 && eta.fg_blend_arm === "B" ? ", one year earlier for a 40-man player" : ""}, never before the next open season`]);
+    }
     // Early/Late projection + the inputs that produced it.
     const halfWord = etaHalfWord(eta);
     const orgBits = [];

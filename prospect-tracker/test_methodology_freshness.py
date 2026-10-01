@@ -254,6 +254,7 @@ MODEL_GLOSSARY = {
     "xfv_ungraded_disc": "internal",       # W-DISC loss ledger (coverage-starved)
     "xfv_role_arg": "internal",            # W-SURPLUS S3 audit-only
     "eta_hazard_lite": ["eta"],            # W-SURPLUS S2 (PASS, gated OFF this cycle)
+    "eta_fg_blend": ["eta"],               # FanGraphs blend arm B, served 2026-09-30
     "aaa_physics_screen": ["stuff_plus_aaa"],  # W-SCREEN physics forward screen + sidecar
     # eFV accuracy / true-to-model program 2026-07-24b (docs/efv-2026-07-24/GATES-ACCURACY.md):
     "xfv_lambda_reselect": ["xfv"],        # blend-weight re-select SHIP (hit 0.85, +Spearman/AUC)

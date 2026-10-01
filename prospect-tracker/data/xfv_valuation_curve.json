@@ -44,7 +44,7 @@
 },
 "live": {
 "n": 183,
-"surplus_mm_median": 4.3,
+"surplus_mm_median": 4.2,
 "war6_median": 1.06,
 "p_star_median": 0.004
 }
@@ -64,7 +64,7 @@
 },
 "live": {
 "n": 108,
-"surplus_mm_median": 12.5,
+"surplus_mm_median": 12.1,
 "war6_median": 1.96,
 "p_star_median": 0.006
 }
@@ -84,7 +84,7 @@
 },
 "live": {
 "n": 32,
-"surplus_mm_median": 27.5,
+"surplus_mm_median": 24.8,
 "war6_median": 3.55,
 "p_star_median": 0.011
 }
@@ -104,7 +104,7 @@
 },
 "live": {
 "n": 37,
-"surplus_mm_median": 42.6,
+"surplus_mm_median": 40.8,
 "war6_median": 4.5,
 "p_star_median": 0.016
 }
@@ -124,7 +124,7 @@
 },
 "live": {
 "n": 37,
-"surplus_mm_median": 54.6,
+"surplus_mm_median": 53.4,
 "war6_median": 5.49,
 "p_star_median": 0.022
 }
@@ -144,7 +144,7 @@
 },
 "live": {
 "n": 11,
-"surplus_mm_median": 81.1,
+"surplus_mm_median": 78.4,
 "war6_median": 8.49,
 "p_star_median": 0.064
 }
@@ -257,7 +257,7 @@
 },
 "live": {
 "n": 54,
-"surplus_mm_median": 11.6,
+"surplus_mm_median": 11.0,
 "war6_median": 1.63,
 "p_star_median": 0.002
 }
@@ -277,7 +277,7 @@
 },
 "live": {
 "n": 50,
-"surplus_mm_median": 23.2,
+"surplus_mm_median": 20.6,
 "war6_median": 2.45,
 "p_star_median": 0.003
 }
@@ -297,7 +297,7 @@
 },
 "live": {
 "n": 13,
-"surplus_mm_median": 38.5,
+"surplus_mm_median": 37.4,
 "war6_median": 3.01,
 "p_star_median": 0.004
 }
@@ -317,7 +317,7 @@
 },
 "live": {
 "n": 22,
-"surplus_mm_median": 54.4,
+"surplus_mm_median": 54.3,
 "war6_median": 3.63,
 "p_star_median": 0.006
 }

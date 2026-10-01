@@ -10913,7 +10913,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             eta = apply_fg_blend(
                 eta,
                 fg_eta_year_from_per_source(
-                    p.points[-1].per_source if p.points else None),
+                    p.points[-1].per_source if p.points else None,
+                    list_year=date.today().year),
                 arm=_eta_mod.ETA_FG_BLEND_ARM,
                 on40=bool(rs.get("on_40_man")),
                 floor_year=live_floor_year(date.today(), _eta_season_end,

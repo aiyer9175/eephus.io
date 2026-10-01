@@ -1935,7 +1935,7 @@ function renderGuide() {
     anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--up);">▲</span>`, "stock",
       "Recent direction of the consensus FV - rising, flat, or falling over the trailing window."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);">ETA 2027</span>`, "eta",
-      "Projected MLB-arrival year, derived from level, age, performance, and the org's promotion pace."),
+      "Projected MLB-arrival year: the model's year from level, age, performance, and the org's promotion pace, averaged with FanGraphs' published ETA where FanGraphs lists one."),
   ].join("");
 
   const chartAnatomy = [

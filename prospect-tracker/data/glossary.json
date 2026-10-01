@@ -1633,14 +1633,14 @@
    ],
    "aliases": [],
    "priority": 22,
-   "definition": "Estimated MLB arrival year. Derived from level, age vs level mean, and FV grade adjustments.",
-   "methodology": "Starts from the current-level baseline (AAA ≈ 0.8 years to MLB, AA ≈ 1.5, A+ ≈ 2.5) and adds adjustments for performance (RPS+ vs level), age vs level, FV grade and IL / health flags. Confidence (high / mid / low) reflects the spread between the components.",
+   "definition": "Estimated MLB arrival year: the model's year from level, age vs level, performance and FV, averaged with FanGraphs' published ETA where FanGraphs lists one, one year earlier for a prospect already on the 40-man.",
+   "methodology": "Starts from the current-level baseline (AAA ≈ 0.8 years to MLB, AA ≈ 1.5, A+ ≈ 2.5) and adds adjustments for performance (RPS+ vs level), age vs level, FV grade and IL / health flags. Confidence (high / mid / low) reflects the spread between the components.\n\nFanGraphs blend (served since 2026-09-30). Where a FanGraphs list dated this year publishes an ETA year for him, the served year is the average of the model's year and FanGraphs' year, rounded up at a half, one year earlier for a prospect already on the 40-man, and never before the next open season. Prospects with no such entry (not listed, dropped off, or last listed in an earlier year) keep the model's year. The blend's weight and the one-year 40-man step were fixed before a registered one-look test on the 2024 list (a list neither was chosen on), where it beat the model alone on debut-year error and on within-one-year calls without marking more active prospects overdue; the numbers are on the Models page (eta_fg_blend). The ETA breakdown prints the model's year, FanGraphs' year and the served year.",
    "seeAlso": [
     "fv",
     "rps_plus"
    ],
-   "formula": "years_to_MLB = level_base + perf_adj + age_adj + fv_adj + health_adj\nETA year = current season + ceil(years_to_MLB, by season phase)",
-   "example": "Ryan Sloan (SEA, AA): base 1.35 years, +0.5 performance, −1.15 age-vs-level (young for AA), −0.25 FV leaves about 0.45 years: ETA 2027, high confidence. Every term shows in the ETA tooltip.",
+   "formula": "years_to_MLB = level_base + perf_adj + age_adj + fv_adj + health_adj\nETA year = current season + ceil(years_to_MLB, by season phase)\nserved ETA = max(next open season, round_half_up(0.5 x model year + 0.5 x FanGraphs year) - 1 if on the 40-man) where a FanGraphs list dated this year gives a year; otherwise the model year",
+   "example": "Ryan Sloan (SEA, AA): base 1.35 years, +0.5 performance, −1.15 age-vs-level (young for AA), −0.25 FV leaves about 0.45 years: ETA 2027, high confidence. Every term shows in the ETA tooltip. Blend: Eli Willits (WSN, AA) gets 2027 from the model and 2029 from FanGraphs, so his served ETA is their average, 2028.",
    "shelf": "ark",
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },

@@ -161,7 +161,11 @@ FORTYMAN_ADJ: dict[str, float] = {"AAA": 0.0, "AA": 0.97, "A+": 1.0, "A": 1.0}
 # champion 1.130, arm B 0.953, overdue +52 and +0 against the +110 guardrail). Those
 # vintages are spent; the gate's one look is on the fresh 2024 list on or after 2026-09-28.
 # Flipping this flag is the owner's call after that look, never the gate's.
-ETA_FG_BLEND_ARM: str | None = None
+# SERVED "B" since 2026-09-30: the look (data/eta_eval.json fg_blend_gate_2026_09_25) read
+# SHIP CANDIDATE with arm B recommended (row-matched MAE 0.8094 vs the champion's 1.0224 on
+# 446 debuted rows of the 2024 list; B over A dMAE +0.0516), and the owner's answer ETA-2
+# flips to arm B on that verdict. Setting None serves the champion unchanged again.
+ETA_FG_BLEND_ARM: str | None = "B"
 FG_BLEND_ARMS = ("A", "B")
 FG_BLEND_WEIGHT = 0.5
 FG_BLEND_FORTYMAN_SHIFT = 1
@@ -1000,14 +1004,21 @@ def fg_blend_eta_year(champion_year: int | None, fg_eta_year: int | None,
     return max(int(floor_year), year)
 
 
-def fg_eta_year_from_per_source(per_source: dict | None) -> int | None:
+def fg_eta_year_from_per_source(per_source: dict | None, *,
+                                list_year: int | None = None) -> int | None:
     """FanGraphs' published eta_year from a consensus point's per_source map.
 
     Only a CURRENT FanGraphs entry counts: a source the consensus flags dropped_off
     (the player fell off FanGraphs' list) returns None, as does a missing or
-    non-integer year."""
+    non-integer year. With `list_year` (the served caller passes this year), the entry
+    must also come from a FanGraphs list dated in that year, the gate's FG(V) rule
+    (docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md section 2): a prospect whose newest
+    FanGraphs entry is an older list's keeps the champion, since the gate never scored
+    a year published in an earlier season."""
     fg = (per_source or {}).get("fangraphs") or {}
     if not isinstance(fg, dict) or fg.get("dropped_off"):
+        return None
+    if list_year is not None and str(fg.get("snapshot_date") or "")[:4] != str(int(list_year)):
         return None
     tools = fg.get("tools") or {}
     extras = tools.get("_extras") if isinstance(tools, dict) else None

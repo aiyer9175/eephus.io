@@ -325,11 +325,19 @@ class SeasonEndWiring(unittest.TestCase):
 class FanGraphsBlendArm(unittest.TestCase):
     """ETA_FG_BLEND_ARM (registered 2026-09-25, docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md).
 
-    Default off, fixed constants, and the two arms' exact arithmetic."""
+    Served as arm B since 2026-09-30 (the recorded look's verdict, owner answer ETA-2),
+    fixed constants, and the two arms' exact arithmetic."""
 
-    def test_flag_defaults_off_and_constants_are_the_registered_ones(self):
+    def test_flag_serves_arm_b_and_constants_are_the_registered_ones(self):
+        import json
+        from pathlib import Path
         import eta
-        self.assertIsNone(eta.ETA_FG_BLEND_ARM)
+        self.assertEqual(eta.ETA_FG_BLEND_ARM, "B")
+        # The served arm is the one the recorded look recommended; never a flip ahead of it.
+        blk = json.loads((Path(__file__).resolve().parent / "data" / "eta_eval.json")
+                         .read_text(encoding="utf-8"))["fg_blend_gate_2026_09_25"]
+        self.assertTrue(blk["look"])
+        self.assertEqual(blk["decision"]["recommended_arm"], eta.ETA_FG_BLEND_ARM)
         self.assertEqual(eta.FG_BLEND_ARMS, ("A", "B"))
         self.assertEqual(eta.FG_BLEND_WEIGHT, 0.5)
         self.assertEqual(eta.FG_BLEND_FORTYMAN_SHIFT, 1)
@@ -383,6 +391,22 @@ class FanGraphsBlendArm(unittest.TestCase):
         self.assertIsNone(f({"fangraphs": {"tools": None}}))
         self.assertIsNone(f(None))
 
+    def test_served_fg_year_comes_from_this_years_list_only(self):
+        # The gate's FG(V) is read from a FanGraphs list dated in the forecast's year; the
+        # served call passes list_year so an older list's year never blends (the first
+        # served regen found 489 of 1,642 blended prospects on a 2018-2025 list).
+        from eta import fg_eta_year_from_per_source as f
+        cur = {"fangraphs": {"snapshot_date": "2026-08-02", "tools": {"_extras": {"eta_year": 2028}}}}
+        old = {"fangraphs": {"snapshot_date": "2024-08-01", "tools": {"_extras": {"eta_year": 2026}}}}
+        undated = {"fangraphs": {"tools": {"_extras": {"eta_year": 2028}}}}
+        self.assertEqual(f(cur, list_year=2026), 2028)
+        self.assertIsNone(f(old, list_year=2026))
+        self.assertIsNone(f(undated, list_year=2026))
+        self.assertEqual(f(old), 2026)            # the gate lab's call passes no list_year
+        self.assertEqual(f({"fangraphs": {"snapshot_date": date(2026, 2, 1),
+                                          "tools": {"_extras": {"eta_year": 2027}}}},
+                           list_year=2026), 2027)
+
     def test_live_floor_year_rolls_after_the_season(self):
         from eta import live_floor_year
         self.assertEqual(live_floor_year(date(2026, 8, 1), "2026-09-27", 2026), 2026)
@@ -419,6 +443,7 @@ class FanGraphsBlendArm(unittest.TestCase):
         src = (Path(__file__).resolve().parent / "storage.py").read_text(encoding="utf-8")
         self.assertIn("if _eta_mod.ETA_FG_BLEND_ARM is not None:", src)
         self.assertIn("fg_eta_year_from_per_source(", src)
+        self.assertIn("list_year=date.today().year),", src)
         # the served JSON gains blend keys only when a blend was served
         self.assertIn('if getattr(eta, "fg_blend_arm", None) else {})', src)
 
