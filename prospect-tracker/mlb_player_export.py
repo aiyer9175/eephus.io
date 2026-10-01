@@ -709,7 +709,7 @@ def build_payload() -> dict:
                                             "ctrlThru", "ctrlOpen", "ctrlEst",
                                             "ctrlWhy",
                                             "thru", "aav", "warHit", "warPit",
-                                            "warTail")},
+                                            "warTail", "warP10Tail", "warP90Tail")},
              "twoWay": bool(v.get("twoWay")) or None,
              "isPit": is_pit and not v.get("twoWay")}
         players[key] = p

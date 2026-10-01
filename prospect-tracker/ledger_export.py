@@ -1853,6 +1853,10 @@ def build_all() -> tuple:
         "trajectory_active_basis": ("the actives of each snapshot, on that snapshot's own status, gross "
                                     "of bonuses; so it does not chart the leaf and a graduation moves it"),
         "band_row_only": "p10 to p90, eFV basis, per row only",
+        "band_row_projection": ("p10 to p90, projection basis: every season the value prices at its own P10 "
+                                "and P90 WAR, salary held at the mean path, through the last guaranteed "
+                                f"season (past {HORIZON[-1]} the {HORIZON[-1]} P10 and P90 chained along the "
+                                "champion aging curve, the P10 not floored at zero); per row only"),
         "years_to_fa_dark": "control not started; service time is a proxy on this site",
         "service_time_source": (tv.get("prearb_basis") or {}).get("service_time_source"),
         "ifa_slot_dark": "no slot: IFA is pool-percentage, see implied pool",

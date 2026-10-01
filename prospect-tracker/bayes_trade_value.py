@@ -4404,7 +4404,8 @@ def _proj_season_value_fn():
     return _SEASON_VALUE_FN or None
 
 
-def _projection_band_mm(v: dict | None, dpw: float | None, disc: float):
+def _projection_band_mm(v: dict | None, dpw: float | None, disc: float,
+                        first_season: int | None = None):
     """A p10-p90 surplus band for a PROJECTION-priced row, ON THE PROJECTION BASIS.
 
     The re-point hands MLB rows the projection's surTotal and then nulls the band,
@@ -4477,6 +4478,30 @@ def _projection_band_mm(v: dict | None, dpw: float | None, disc: float):
         mid = season_value(float(war[t]), t, dpw)
         d_lo += (mid - season_value(float(p10[t]), t, dpw)) / ((1.0 + disc) ** t)
         d_hi += (season_value(float(p90[t]), t, dpw) - mid) / ((1.0 + disc) ** t)
+    # THE CONTRACT TAIL'S RANGE (owner answer VAL2-Q3, 2026-09-30). The point
+    # value prices every guaranteed season past the five printed ones on
+    # warTail, so the range now does too, on that season's own P10/P90
+    # (warP10Tail / warP90Tail: the 2031 heads chained along the champion's
+    # aging curve, proj_export.TAIL_BAND), on the same one-season-at-a-time
+    # construction as above. The tail P10 is not floored at zero (owner answer
+    # VAL2-Q3-REVIEW (b)), so a negative 2031 P10 stays negative past 2031; the
+    # kernel prices any season at or below zero WAR at $0, so a P10 below zero
+    # takes that season's whole mid value off and no more. A club option season
+    # the club declines on the mean path (salOptDecl) is a decision held at the
+    # mean, like the non-tender cut: it carries no range.
+    wt, lt, ht = v.get("warTail"), v.get("warP10Tail"), v.get("warP90Tail")
+    if isinstance(wt, list) and isinstance(lt, list) and isinstance(ht, list):
+        h = len(war)
+        decl = {int(s) for s in (v.get("salOptDecl") or [])}
+        for i in range(min(len(wt), len(lt), len(ht))):
+            t = h + i
+            if t >= len(sur) or sur[t] is None or wt[i] is None or lt[i] is None or ht[i] is None:
+                continue
+            if first_season is not None and int(first_season) + t in decl:
+                continue
+            mid = season_value(float(wt[i]), t, dpw)
+            d_lo += (mid - season_value(float(lt[i]), t, dpw)) / ((1.0 + disc) ** t)
+            d_hi += (season_value(float(ht[i]), t, dpw) - mid) / ((1.0 + disc) ** t)
     # The rest-of-season leg is priced undiscounted at t=0 as a FRACTION OF THE
     # FULL FIRST SEASON - f * (V(w_full) - salary_full), proj_export's convention
     # since 2026-08-04d - so its band prorates the same fan on the same basis:
@@ -5214,12 +5239,14 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     # the ones just seeded, so a veteran the board always carried and a veteran
     # who arrived through the seeder reach the reader on identical footing. Doing
     # it in each construction path instead is how the two drift.
-    stats["projection_banded"] = _stamp_projection_bands(records, proj_rows, _dpw, _disc)
+    stats["projection_banded"] = _stamp_projection_bands(records, proj_rows, _dpw, _disc,
+                                                         mp.get("first_season"))
     return stats
 
 
 def _stamp_projection_bands(records: list, proj_rows: dict,
-                            dpw: float | None, disc: float) -> int:
+                            dpw: float | None, disc: float,
+                            first_season: int | None = None) -> int:
     """Attach the projection-basis p10-p90 band to every projection-priced row.
 
     Pre-arb rows (R5.1) come through here too: their value is the same
@@ -5233,7 +5260,7 @@ def _stamp_projection_bands(records: list, proj_rows: dict,
         if r.get("surplus_source") not in ("projection", _PREARB_SOURCE):
             continue
         v = proj_rows.get(_proj_key_of(r)) or {}
-        lo, hi = _projection_band_mm(v, dpw, disc)
+        lo, hi = _projection_band_mm(v, dpw, disc, first_season)
         r["trade_value_lo"] = lo
         r["trade_value_hi"] = hi
         if lo is not None:

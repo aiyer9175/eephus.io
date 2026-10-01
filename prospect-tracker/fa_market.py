@@ -397,7 +397,7 @@ FA_PRICING_USE_DEF = False
 
 
 def chain_aging_tail(series: list[float], champ_series: list[float],
-                     horizon: int, n_years: int) -> list[float]:
+                     horizon: int, n_years: int, floor: bool = True) -> list[float]:
     """THE SEAM: extend a `horizon`-season path past its last season along the
     champion's aging curve, chained from that last season's value.
 
@@ -412,21 +412,28 @@ def chain_aging_tail(series: list[float], champ_series: list[float],
     contract_war_path uses this for horizons 6+ of the ML path and its P10/P90
     heads, and proj_export's contract tail (VAL2-Q1, owner answer 2026-09-30)
     prices guaranteed seasons past 2031 on the same output, so the two can
-    never chain a different curve or from a different start point."""
+    never chain a different curve or from a different start point.
+
+    floor=False (owner answer VAL2-Q3-REVIEW (b), 2026-09-30) drops the zero
+    floor: a negative last value is carried along the same chain, so a P10
+    head below zero stays below zero past the horizon instead of stepping up
+    to 0. The default keeps the floor, so every existing caller is unchanged."""
     H = int(horizon)
+    lo = (lambda v: max(0.0, v)) if floor else (lambda v: v)
     anchor = champ_series[H - 1]
     scale = (series[H - 1] / anchor) if anchor > 0.05 else None
     tail = []
     for t in range(H, int(n_years)):
         if scale is not None:
-            tail.append(max(0.0, champ_series[t] * scale))
+            tail.append(lo(champ_series[t] * scale))
         else:
             # champion anchor ~0: decay the h5 value by the champion's
-            # year-over-year ratio chain, floored at 0
-            prev = tail[-1] if tail else max(0.0, series[H - 1])
+            # year-over-year ratio chain, floored at 0 unless floor=False
+            prev = tail[-1] if tail else lo(series[H - 1])
             r = (champ_series[t] / champ_series[t - 1]) if champ_series[t - 1] > 0.05 else 0.7
-            tail.append(max(0.0, prev * min(1.0, r)))
-    return list(series) + [round(v, 2) for v in tail]
+            tail.append(lo(prev * min(1.0, r)))
+    # + 0.0 turns a rounded -0.0 (an unfloored value just below zero) into 0.0
+    return list(series) + [round(v, 2) + 0.0 for v in tail]
 
 
 def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
@@ -529,6 +536,13 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
               "war_y1_champ": out["war_y1"],
               "war_by_year_p10": _extend(ml["war_by_year_p10"],
                                          [p * 0.6 for p in path]),
+              # The same P10 chain without the zero floor (owner answer
+              # VAL2-Q3-REVIEW (b)): what proj_export's contract tail range
+              # reads, so a negative 2031 P10 carries into the later seasons.
+              # Identical to war_by_year_p10 wherever that is above zero.
+              "war_by_year_p10_open": chain_aging_tail(
+                  ml["war_by_year_p10"], [p * 0.6 for p in path], H,
+                  MAX_PATH_YEARS, floor=False),
               "war_by_year_p90": _extend(ml["war_by_year_p90"],
                                          [p * 1.4 for p in path]),
               "model": proj_ml.MODEL_VERSION}

@@ -94,7 +94,7 @@ _CARD_COPY_KEYS = ("war", "warP10", "warP90", "warTotal", "warTotalP10",
                    "rosFrac", "salPath", "salThru", "salSrc", "surSalLo",
                    "surSalHi", "salCut", "salTrunc", "salOpt", "salOptDecl", "salVintage",
                    "ctrlThru", "ctrlOpen", "ctrlEst", "ctrlWhy", "thru", "aav",
-                   "warHit", "warPit", "warTail")
+                   "warHit", "warPit", "warTail", "warP10Tail", "warP90Tail")
 
 
 def test_the_card_copy_list_is_the_one_the_exporter_uses():

@@ -385,9 +385,13 @@
     if (!n) return null;
     return { first, end, n, from: lastH + 1 };
   }
+  // Their P10/P90 (warP10Tail / warP90Tail, owner answers VAL2-Q3 and
+  // VAL2-Q3-REVIEW (b)) are the last printed season's P10/P90 chained the same
+  // way, the P10 never floored at zero, and the trade value's range spans them.
   function pricedTailText(tp) {
     const span = tp.n === 1 ? `guaranteed ${tp.from} season prices` : `${tp.n} guaranteed seasons ${tp.from}-${tp.end} price`;
-    return `The ${span} on the champion (Marcel) aging curve chained from the ${tp.from - 1} WAR, past the five seasons the board prints.`;
+    return `The ${span} on the champion (Marcel) aging curve chained from the ${tp.from - 1} WAR, past the five seasons the board prints. `
+      + `Their P10 and P90 are the ${tp.from - 1} P10 and P90 chained the same way, the P10 not floored at zero, and the trade value's P10-P90 range runs through ${tp.end}.`;
   }
   function warAt(m, t) {
     const arr = m.war;
@@ -1444,13 +1448,17 @@
         : opn ? `${s} ${opn} option`
         : src === "contract" ? `${s} signed` : `${s} ${tok.toLowerCase()}`;
       const wTail = (t >= H && Array.isArray(m.warTail)) ? m.warTail[t - H] : null;
+      const lTail = (t >= H && Array.isArray(m.warP10Tail)) ? m.warP10Tail[t - H] : null;
+      const hTail = (t >= H && Array.isArray(m.warP90Tail)) ? m.warP90Tail[t - H] : null;
+      const bTail = (lTail != null && hTail != null)
+        ? ` (P10 ${war1(lTail)} / P90 ${war1(hTail)}, the ${first + H - 1} P10 and P90 chained the same way, the P10 not floored at zero)` : "";
       const tip = cut
         ? "Carrying him through the rest of his arbitration years costs more than he is worth, so the club walks away here"
         : (opn === "club" && decl.has(s)) ? "Club option season the club would decline: the salary is above his value on the mean path, so it prices at $0, never below (declining is the club's right)"
         : opn === "club" ? "Club option season the club would exercise: it prices as guaranteed salary, worth more than it costs on the mean path"
         : opn ? "Priced as if the player stays; an opt out is not modelled"
         : (src === "contract" && t >= H)
-        ? `Guaranteed salary on file; this season prices ${wTail != null ? `${fmtWar(wTail)} WAR` : "the WAR"} on the champion (Marcel) aging curve chained from the ${first + H - 1} WAR, past the five seasons the board prints`
+        ? `Guaranteed salary on file; this season prices ${wTail != null ? `${fmtWar(wTail)} WAR` : "the WAR"} on the champion (Marcel) aging curve chained from the ${first + H - 1} WAR, past the five seasons the board prints${bTail}`
         : src === "class_closure" ? "Arbitration year implied by the last class token on the board, not listed by Spotrac yet"
         : src === "arb_ladder" ? (tok.toUpperCase().indexOf("PRE") === 0
             ? "Pre arbitration season at the CBA league minimum - a rule, not a prediction"

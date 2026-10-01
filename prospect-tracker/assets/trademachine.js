@@ -1060,8 +1060,21 @@ function _renderTBRows() {
     // mean path". The award's own uncertainty ships separately as
     // surplus_salary_band_mm, WAR held at the mean: one factor at a time, in
     // both directions.
+    // THE SPAN (owner answers VAL2-Q3 and VAL2-Q3-REVIEW (b), 2026-09-30): the
+    // range runs over every season the value prices, so a guarantee past the
+    // projection's fifth printed season carries its range to its last season.
+    // Those seasons ride the fifth season's P10/P90 chained along the champion
+    // aging curve, and the P10 is never floored: a fifth season P10 below zero
+    // carries on below zero. The fifth season is derived from the payload's own
+    // season, like every other span on this page.
+    const _bThru = p.salary_thru != null ? Number(p.salary_thru) : null;
+    const _bLastH = _tbCurSeason() + 5;
+    const _bDecl = Array.isArray(p.club_option_declined) && p.club_option_declined.length;
     const bandWhat = p.band_basis === "projection"
-      ? "projection P10-P90 WAR fan, salary path and the non-tender decision both held at the mean path (every season at its own P10 together, so it is wide)"
+      ? `projection P10-P90 WAR fan over every season the value prices${_bThru != null ? ` (through ${_bThru})` : ""}, salary path and the non-tender decision both held at the mean path (every season at its own P10 together, so it is wide)`
+        + (_bThru != null && _bThru > _bLastH
+          ? `. The seasons past ${_bLastH} take the ${_bLastH} P10 and P90 chained along the champion aging curve; the P10 is not floored at zero, so a ${_bLastH} P10 below zero stays below zero (a season at or below zero WAR is worth $0, so at the low end that season costs his full salary)${_bDecl ? "; a declined club option season carries no range" : ""}`
+          : "")
       : "eFV credible interval";
     let rangeTip = "";
     if (lo != null && hi != null) {

@@ -516,6 +516,13 @@
       '<div class="ledger-bar2-lab">Arbitration Predictor board, ' + esc(A.n) + " rows, " + esc(A.n_in_vets) + " in the projections vets: ladder sum " + esc(money(arb + pre)) +
       " = arb rungs " + esc(money(arb)) + " (" + esc(na) + ") + pre-arb rungs " + esc(money(pre)) + " (" + esc(np) + ")" + (nn ? "; " + esc(nn) + " null rung(s) outside every sum" : "") + "</div></div>";
   }
+  // The basis words under a trade value range: a projection-priced MLB row's
+  // range is the projection P10-P90 over every priced season, not the eFV
+  // interval a prospect row carries. An older payload without the projection
+  // key falls back to the one sentence it has.
+  function bandCopy(isProjection) {
+    return (isProjection && copy("band_row_projection")) || copy("band_row_only");
+  }
   // The WAR strip beneath a salary cell: the season's expected WAR (a mean),
   // blank where the surplus strip has no salary so the two strips align; the
   // band rides the title, per season, never summed. No ruler call.
@@ -543,7 +550,7 @@
     out += dd("Total to acquire", esc(money(P("sur_total_usd"))) + " = rest of season " + esc(moneyMM(P("sur_ros_mm"))) + " + NPV " + esc(money(P("sur_npv_usd"))) +
       '<div class="ledger-count">' + esc(copy("sur_total_identity")) + "</div>");
     if (isNum(P("tv_mm"))) {
-      out += dd("Trade Machine", esc(moneyMM(P("tv_mm"))) + " (" + bandMM(P("tv_lo_mm"), P("tv_hi_mm"), copy("band_row_only")) + ") " + letter(P("tv_grade")) + " " + esc(P("surplus_source") || "") +
+      out += dd("Trade Machine", esc(moneyMM(P("tv_mm"))) + " (" + bandMM(P("tv_lo_mm"), P("tv_hi_mm"), bandCopy(P("band_basis") === "projection")) + ") " + letter(P("tv_grade")) + " " + esc(P("surplus_source") || "") +
         (P("reanchored") ? " " + flag("re-anchored") + " " + esc(copy("tv_reanchored")) : "") +
         (P("surplus_source") === "prearb_min" ? '<div class="ledger-count">' + esc(copy("prearb_min_floor")) + "</div>" : ""));
     }
@@ -1004,7 +1011,7 @@
       var key = cv("surplus.rows_debuted", r, "key"), k = "T:" + key, open = !!state.open[k], v = cv("surplus.rows_debuted", r, "tv_mm"), src = cv("surplus.rows_debuted", r, "surplus_source");
       sum += Number(v || 0);
       var href = cv("surplus.rows_debuted", r, "in_contract_rows") ? "/projections/#player=" + esc(key) : "/prospx/#player=" + esc(key);
-      var row = '<tr><td><a href="' + href + '">' + esc(cv("surplus.rows_debuted", r, "name")) + '</a> <span class="ledger-src">' + esc(cv("surplus.rows_debuted", r, "pos")) + "</span></td><td>" + signedMM(v) + "</td><td>" + bandMM(cv("surplus.rows_debuted", r, "tv_lo_mm"), cv("surplus.rows_debuted", r, "tv_hi_mm"), copy("band_row_only")) + "</td>" +
+      var row = '<tr><td><a href="' + href + '">' + esc(cv("surplus.rows_debuted", r, "name")) + '</a> <span class="ledger-src">' + esc(cv("surplus.rows_debuted", r, "pos")) + "</span></td><td>" + signedMM(v) + "</td><td>" + bandMM(cv("surplus.rows_debuted", r, "tv_lo_mm"), cv("surplus.rows_debuted", r, "tv_hi_mm"), bandCopy(src === "projection" || src === "prearb_min")) + "</td>" +
         '<td class="lc-col-hide">' + letter(cv("surplus.rows_debuted", r, "tv_tier")) + '</td><td class="lc-col-hide">' + letter(cv("surplus.rows_debuted", r, "tv_grade")) + '</td><td class="lc-col-hide"><span class="ledger-src">' + esc(src || "") + "</span></td>" +
         '<td class="lc-col-hide">' + esc(cv("surplus.rows_debuted", r, "salary_basis") || "") + '</td><td class="lc-col-hide">' + esc((cv("surplus.rows_debuted", r, "control_thru") || "") + " " + (cv("surplus.rows_debuted", r, "control_why") || "")) + "</td>" + xpBtn(k) + "</tr>";
       if (open) row += '<tr class="ledger-xp-row"><td colspan="9"><dl class="ledger-dl">' + rowDl(L, r) + (src === "prearb_min" ? dd("Floor", esc(copy("prearb_min_floor"))) : "") + "</dl></td></tr>";

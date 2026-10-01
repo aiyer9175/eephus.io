@@ -89,6 +89,49 @@ PRICE_CONTRACT_TAIL = True
 # docs/PROJ_PATH_SHAPE_GATE.md SERVE flag moves it (section 9.1 already names
 # horizons 6-15 through the h5 anchor); the champion level does not.
 TAIL_SEAM = "chained"
+# THE TAIL'S RANGE (owner answers VAL2-Q3 and VAL2-Q3-REVIEW (b), 2026-09-30).
+# The P10/P90 of each tail season, published as warP10Tail / warP90Tail beside
+# warTail, so the trade value's range spans every season its point value prices.
+# Method, the FA module's own (contract_war_path): the 2031 P10 and P90 heads
+# chained along the champion's aging curve with fa_market.chain_aging_tail
+# (anchors 0.6 and 1.4 x the champion path, so with a defined anchor each tail
+# season keeps the 2031 P10/point and P90/point ratios). THE LOW END IS NOT
+# FLOORED (VAL2-Q3-REVIEW (b)): a negative 2031 P10 carries into the later
+# seasons along the same chain (TAIL_BAND_P10_FLOOR False), so the range has no
+# step at 2032; the FA module floors it at 0. The high end and the point keep
+# the floor. Per season only: nothing here sums a quantile point across seasons.
+# Requires TAIL_SEAM "chained" (the band is chained from the same 2031 point);
+# False ships no tail band and the range spans 2027-2031.
+TAIL_BAND = True
+# True restores the floored low end (the c3_tail_band build reviewed 2026-09-30).
+TAIL_BAND_P10_FLOOR = False
+
+
+def _tail_band(m: dict, champ_full: list):
+    """(p10_tail, p90_tail) for the seasons past the horizon, or None.
+
+    Reads the row's full-length P10/P90 (each side's war_by_year_p10_open /
+    war_by_year_p90, whose tail is chain_aging_tail, the P10 one without the
+    zero floor; combined by the rho rule on a two-way row). Where a carrier is
+    missing or does not reproduce the served five seasons it is recomputed with
+    chain_aging_tail from the served warP10/warP90 and the champion path at the
+    FA module's anchors (0.6 and 1.4 x), the P10 again without the floor."""
+    if not TAIL_BAND or TAIL_SEAM != "chained":
+        return None
+    n = len(champ_full)
+    out = []
+    for key, served, mult, floor in (("_p10Full", m.get("warP10"), 0.6, TAIL_BAND_P10_FLOOR),
+                                     ("_p90Full", m.get("warP90"), 1.4, True)):
+        full = m.get(key)
+        if not served or len(served) < HORIZON or any(x is None for x in served[:HORIZON]):
+            return None
+        if not (full and len(full) >= n
+                and all(abs(float(full[t]) - float(served[t])) < 0.006 for t in range(HORIZON))):
+            full = fm.chain_aging_tail([float(x) for x in served[:HORIZON]],
+                                       [mult * float(c) for c in champ_full], HORIZON, n,
+                                       floor=floor)
+        out.append([float(x) for x in full[HORIZON:n]])
+    return out[0], out[1]
 
 
 def _tail_war(war: list, champ_full: list, war_full: list | None) -> tuple[list[float], str]:
@@ -915,17 +958,21 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             # shocks but not skill shocks - a documented assumption, less
             # conservative than the previous straight quantile sum).
             _RHO = 0.5
-            def _comb_band(key, sign):
+            def _comb_band(key, sign, base=None):
+                # `base` is the summed path the band centres on: the served five
+                # seasons by default, the full-length path for the contract
+                # tail's band (TAIL_BAND), on the same combination rule.
+                base = war_arr if base is None else base
                 lo_h = paths["hit"].get(key); lo_p = paths["pit"].get(key)
-                if not lo_h or not lo_p or not war_arr:
+                if not lo_h or not lo_p or not base:
                     return None
                 out = []
                 mh_ = paths["hit"]["war_by_year"]; mp_ = paths["pit"]["war_by_year"]
-                for tt in range(len(war_arr)):
+                for tt in range(min(len(base), len(lo_h), len(lo_p), len(mh_), len(mp_))):
                     dh = abs((mh_[tt] or 0) - (lo_h[tt] or 0))
                     dp = abs((mp_[tt] or 0) - (lo_p[tt] or 0))
                     d = (dh * dh + dp * dp + 2 * _RHO * dh * dp) ** 0.5
-                    out.append(round(war_arr[tt] + sign * d, 2))
+                    out.append(round(base[tt] + sign * d, 2))
                 return out
             p10_arr = _comb_band("war_by_year_p10", -1)
             p90_arr = _comb_band("war_by_year_p90", +1)
@@ -962,6 +1009,23 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         _wf = [paths[s]["war_by_year"] for s in paths]
         war_full = [round(sum(float(a[t] or 0.0) for a in _wf), 2)
                     for t in range(min(len(a) for a in _wf))]
+        # Its P10/P90 at full length (TAIL_BAND, owner answer VAL2-Q3): each
+        # side's war_by_year_p10_open/p90, whose seasons past the horizon are
+        # the same chain_aging_tail applied to the 2031 P10/P90 head (the FA
+        # module's seam; the P10 one without the zero floor, owner answer
+        # VAL2-Q3-REVIEW (b)), combined across sides on a two-way row by the
+        # same rho rule as the five printed seasons. A side with no open
+        # carrier (a champion-only path, already floored at every season)
+        # reads war_by_year_p10. Private; stripped.
+        _k10 = ("war_by_year_p10_open"
+                if not TAIL_BAND_P10_FLOOR and all(paths[s].get("war_by_year_p10_open") for s in paths)
+                else "war_by_year_p10")
+        if two_way:
+            p10_full = _comb_band(_k10, -1, war_full)
+            p90_full = _comb_band("war_by_year_p90", +1, war_full)
+        else:
+            p10_full = path.get(_k10) or None
+            p90_full = path.get("war_by_year_p90") or None
         _nkey = normalize_key(name)
         _ambiguous = _name_counts.get(_nkey, 0) > 1
         ct = _ct_by_mlbam.get(mlbam)
@@ -995,6 +1059,8 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
                                     for s in paths), 2),
             "_warChampFull": champ_full,
             "_warFull": war_full,
+            "_p10Full": p10_full,
+            "_p90Full": p90_full,
         }
         # Projected RATE lines (fa_projection.rate_path - the year-1 Marcel
         # components walked along the per-component aging curves). Hitters:
@@ -1136,7 +1202,7 @@ def _strip_private(m: dict) -> None:
     """Drop the private carrier keys `_apply_contract` records for this pass.
     `_clean` runs BEFORE the path pass (inside the row loop), so it cannot do
     this; the path pass is the last thing to touch a veteran row, so it does."""
-    for k in ("_salYears", "_rosUsd", "_warChampFull", "_warFull"):
+    for k in ("_salYears", "_rosUsd", "_warChampFull", "_warFull", "_p10Full", "_p90Full"):
         m.pop(k, None)
 
 
@@ -1295,6 +1361,7 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
             _tw, _how = _tail_war(war_px, champ_full, m.get("_warFull"))
             war_px = war_px[:HORIZON] + _tw
             tail["seam_" + _how] = tail.get("seam_" + _how, 0) + 1
+        band_tail = _tail_band(m, champ_full) if tail_last is not None else None
         path = sp.salary_path(
             mlbam, key=m.get("key"), first_season=FIRST_SEASON, horizon=HORIZON,
             contract=ct, board_row=brows.get(mlbam), league_min=lm,
@@ -1426,6 +1493,17 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
                             for c in seasons[HORIZON:]]
         else:
             m.pop("warTail", None)
+        # The tail's own P10/P90 per season (TAIL_BAND, owner answer VAL2-Q3),
+        # aligned with warTail: what the trade value's range prices the tail on.
+        if path.get("tail_last") is not None and band_tail is not None:
+            m["warP10Tail"] = [round(band_tail[0][c["t"] - HORIZON], 2) + 0.0 if c["usd"] is not None else None
+                               for c in seasons[HORIZON:]]
+            m["warP90Tail"] = [round(band_tail[1][c["t"] - HORIZON], 2) if c["usd"] is not None else None
+                               for c in seasons[HORIZON:]]
+            tail["band_rows"] = tail.get("band_rows", 0) + 1
+        else:
+            m.pop("warP10Tail", None)
+            m.pop("warP90Tail", None)
         pl = sp.payload_path(path)
         if pl:
             m["salPath"] = pl
@@ -1554,7 +1632,9 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
         "contract_tail": dict(tail, enabled=bool(PRICE_CONTRACT_TAIL),
                               war_basis=("war_by_year_champ" if TAIL_SEAM == "champion_level"
                                          else "chain_aging_tail"),
-                              seam=TAIL_SEAM),
+                              seam=TAIL_SEAM,
+                              band=bool(TAIL_BAND and TAIL_SEAM == "chained"),
+                              band_p10_floor=bool(TAIL_BAND_P10_FLOOR)),
     })
     _SALARY_PATH_CENSUS = {k: v for k, v in census.items() if v is not None}
     if say:
