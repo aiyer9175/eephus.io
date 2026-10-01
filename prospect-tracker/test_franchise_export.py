@@ -263,6 +263,99 @@ def test_season_is_descriptive_and_wins_equal_the_standings_by_team_id(clubs):
         assert _branch(c, "season")["headline"] == f"{s['wins']}-{s['losses']}"
 
 
+# --------------------------------------------------------------------------
+# The division champion (FS_1, 2026-10-01): one rule, never the feed's flag
+# --------------------------------------------------------------------------
+
+def _tr(tid, name, rank, clinch, feed_flag, w, l):
+    return {"team": {"id": tid, "name": name}, "divisionRank": rank, "clinchIndicator": clinch,
+            "divisionChamp": feed_flag, "clinched": clinch is not None, "wins": w, "losses": l}
+
+
+# Trimmed from .cache/statsapi_standings_2026.json (NL East, division 204):
+# the feed flags the second-place Phillies (rank 2, 'w') beside the Braves.
+NL_EAST_2026 = [{"division": {"id": 204}, "teamRecords": [
+    _tr(144, "Braves", "1", "y", True, 94, 68),
+    _tr(143, "Phillies", "2", "w", True, 88, 74),
+    _tr(146, "Marlins", "3", None, False, 80, 82),
+]}]
+# Trimmed from .cache/statsapi_standings_2012.json (NL West, division 203):
+# the feed leaves divisionChamp off the first-place Giants.
+NL_WEST_2012 = [{"division": {"id": 203}, "teamRecords": [
+    _tr(137, "Giants", "1", "y", False, 94, 68),
+    _tr(119, "Dodgers", "2", None, False, 86, 76),
+]}]
+
+
+def test_phi_2026_is_not_a_division_champion_and_atl_is():
+    import franchise_export as fe
+    assert fe.division_champions(NL_EAST_2026, live=True) == {204: "ATL"}
+    assert fe.division_champions(NL_EAST_2026, live=False) == {204: "ATL"}
+
+
+def test_sfg_2012_is_a_champion_although_the_feed_omits_the_flag():
+    import franchise_export as fe
+    assert fe.division_champions(NL_WEST_2012, live=False) == {203: "SFG"}
+
+
+def test_a_live_division_leader_without_y_or_z_is_not_yet_a_champion():
+    import franchise_export as fe
+    live = [{"division": {"id": 204}, "teamRecords": [
+        _tr(144, "Braves", "1", None, False, 60, 40),
+        _tr(143, "Phillies", "2", None, False, 58, 42),
+    ]}]
+    assert fe.division_champions(live, live=True) == {204: None}
+    assert fe.division_champions(live, live=False) == {204: "ATL"}
+    clinched_best = [{"division": {"id": 204}, "teamRecords": [_tr(144, "Braves", "1", "z", False, 100, 62)]}]
+    assert fe.division_champions(clinched_best, live=True) == {204: "ATL"}
+
+
+def test_a_division_without_one_rank_one_club_maps_to_none_not_a_refusal():
+    import franchise_export as fe
+    tied = [{"division": {"id": 204}, "teamRecords": [
+        _tr(144, "Braves", "1", None, False, 81, 81),
+        _tr(143, "Phillies", "1", None, False, 81, 81),
+    ]}]
+    assert fe.division_champions(tied, live=False) == {204: None}
+
+
+def test_a_feed_flag_on_a_second_place_club_yields_exactly_one_disagreement_row(tmp_path, monkeypatch):
+    import franchise_export as fe
+    (tmp_path / f"statsapi_standings_{fe.SEASON_NOW}.json").write_text(
+        json.dumps({"records": NL_EAST_2026}), encoding="utf-8")
+    monkeypatch.setattr(fe, "CACHE", tmp_path)
+    monkeypatch.setattr(fe, "STANDINGS_FIRST", fe.SEASON_NOW)
+    rows, _ids, disagreements = fe._standings()
+    assert disagreements == [[fe.SEASON_NOW, "PHI", True, False]]
+    assert rows["ATL"][fe.SEASON_NOW]["div_champ"] is True
+    assert rows["PHI"][fe.SEASON_NOW]["div_champ"] is False
+    assert rows["PHI"][fe.SEASON_NOW]["clinched"] is True
+    assert set(rows["PHI"][fe.SEASON_NOW]) == {"w", "l", "rs", "ra", "rd", "rank", "gp", "pct",
+                                               "clinched", "div_champ", "division_id"}
+
+
+def test_served_champions_are_one_rank_one_club_per_division_and_the_rows_disclose_the_feed(d, clubs):
+    champs = [c["code"] for c in clubs.values() if c["sections"]["season"]["division_champ"]]
+    assert all(clubs[c]["sections"]["season"]["division_rank"] == 1 for c in champs), champs
+    assert len({clubs[c]["division"] for c in champs}) == len(champs) <= 6
+    assert clubs["PHI"]["sections"]["season"]["division_champ"] is False
+    rows = d["accountability"]["standings_flag_disagreements"]
+    for season, code, feed_flag, derived in rows:
+        assert isinstance(season, int) and code in clubs and feed_flag is not derived
+    assert [r for r in rows if r[0] == d["season_now"]] == [[d["season_now"], "PHI", True, False]]
+
+
+def test_the_division_fix_leaves_every_other_payload_key_unchanged(d, clubs):
+    assert set(d["accountability"]) == {"registry_verdicts", "registry_checked_at", "n_clubs", "org_join",
+                                        "bwar_census", "standings_flag_disagreements",
+                                        "score_formula", "index_formula"}
+    for code, c in clubs.items():
+        assert list(c["sections"]["season"]) == [
+            "wins", "losses", "games", "pct", "run_diff", "rs", "ra", "division_rank", "clinched",
+            "division_champ", "cur_wins_outlook", "cur_pct_outlook", "pythag_pct", "actual_pct",
+            "talent_prior_pct", "blend_weights", "gb", "rem_games", "basis"], code
+
+
 def test_roster_ewar_equals_war_leaderboard_teams(clubs):
     from trades import canonical_org
     war = _load("war_leaderboards.json")

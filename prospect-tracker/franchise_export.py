@@ -292,17 +292,49 @@ def _clubs_from_cache() -> dict:
     return out
 
 
-def _standings() -> tuple[dict, dict]:
+def division_champions(records, live: bool) -> dict:
+    """{division_id: club code or None} for one season's StatsAPI standings
+    records, by one rule (FS_1, 2026-10-01). A completed season (live False):
+    the unique club with divisionRank 1 in each division. The live season
+    (live True): that club only once its clinchIndicator is 'y' or 'z'
+    (clinched the division, or the league's best record), else None. The
+    feed's divisionChamp is never read: the 2026 cache flags the second-place
+    Phillies (rank 2, clinchIndicator 'w', a wild card) beside the Braves, and
+    the 2012 cache leaves the flag off the first-place Giants. A division with
+    zero or two rank-1 clubs maps to None rather than refusing the board."""
+    from trades import canonical_org_from_id
+    out: dict = {}
+    for rec in records or []:
+        div = (rec.get("division") or {}).get("id")
+        if div is None:
+            continue
+        firsts = [tr for tr in rec.get("teamRecords") or [] if str(tr.get("divisionRank") or "") == "1"]
+        champ = None
+        if len(firsts) == 1:
+            tr = firsts[0]
+            if not live or tr.get("clinchIndicator") in ("y", "z"):
+                team = tr.get("team") or {}
+                champ = canonical_org_from_id(team.get("id"), team.get("name"))
+        out[div] = champ
+    return out
+
+
+def _standings() -> tuple[dict, dict, list]:
     """{code: {season: row}} joined by StatsAPI team id (stable across the
-    relocations: 120, 133, 139, 146), plus the census of ids seen."""
+    relocations: 120, 133, 139, 146), plus the census of ids seen, plus the
+    [season, code, feed_flag, derived] rows where the feed's divisionChamp
+    differs from division_champions()."""
     from trades import canonical_org_from_id
     out: dict = defaultdict(dict)
     ids_seen: dict = {}
+    disagreements: list = []
     for season in range(STANDINGS_FIRST, SEASON_NOW + 1):
         raw = _j(f"statsapi_standings_{season}.json", CACHE)
         if not raw:
             continue
-        for rec in raw.get("records") or []:
+        records = raw.get("records") or []
+        champs = division_champions(records, live=(season == SEASON_NOW))
+        for rec in records:
             div = (rec.get("division") or {}).get("id")
             for tr in rec.get("teamRecords") or []:
                 tid = (tr.get("team") or {}).get("id")
@@ -310,15 +342,20 @@ def _standings() -> tuple[dict, dict]:
                 if not code:
                     continue
                 ids_seen.setdefault(int(tid), code)
+                derived = champs.get(div) == code
+                feed = bool(tr.get("divisionChamp"))
+                if feed != derived:
+                    disagreements.append([season, code, feed, derived])
                 out[code][season] = {
                     "w": tr.get("wins"), "l": tr.get("losses"), "rs": tr.get("runsScored"),
                     "ra": tr.get("runsAllowed"), "rd": tr.get("runDifferential"),
                     "rank": int(tr.get("divisionRank")) if tr.get("divisionRank") else None,
                     "gp": tr.get("gamesPlayed"), "pct": tr.get("winningPercentage"),
-                    "clinched": bool(tr.get("clinched")), "div_champ": bool(tr.get("divisionChamp")),
+                    "clinched": bool(tr.get("clinched")), "div_champ": derived,
                     "division_id": div,
                 }
-    return dict(out), ids_seen
+    disagreements.sort(key=lambda r: (r[0], r[1]))
+    return dict(out), ids_seen, disagreements
 
 
 def _venues() -> dict:
@@ -454,7 +491,7 @@ def build() -> dict:
     if len(codes) != N_CLUBS:
         raise FranchiseRefusal(f"{len(codes)} clubs resolved from the StatsAPI teams cache, not {N_CLUBS}")
 
-    standings, standings_ids = _standings()
+    standings, standings_ids, standings_flag_disagreements = _standings()
     venues = _venues()
     bwar, bwar_census = _bwar_by_org(spine)
 
@@ -1246,6 +1283,7 @@ def build() -> dict:
                          "standings_ids": len(standings_ids), "futures": [len(futures.get("clubs") or []), len(futures_rows)],
                          "ledger": [len(ledger_clubs), sum(1 for c in codes if c in ledger_clubs)]},
             "bwar_census": bwar_census,
+            "standings_flag_disagreements": standings_flag_disagreements,
             "score_formula": "100 + 10 * (v - mean) / population sd over the 30 served values, one decimal; None stays None",
             "index_formula": "weighted mean of the three graded branch scores, re-standardised by the same formula",
         },
