@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=47c4d428">
+  <link rel="stylesheet" href="/assets/site.css?v=ef433c4c">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -676,9 +676,10 @@
     *::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
     *::-webkit-scrollbar-thumb:active { background: var(--scrollbar-thumb-hover); }
     *::-webkit-scrollbar-corner { background: transparent; }
-    /* Marquee strips hide the scrollbar entirely; only the reduced-motion
-       fallback (.ntk-scroll) restores a slim horizontal bar so the content
-       stays reachable when the marquee is suppressed. */
+    /* Marquee strips hide the scrollbar entirely. The .ntk-scroll rules
+       restore a slim horizontal bar; marqueeifyTicker always lands the
+       strip in a moving marquee, with or without Reduce Motion, so no
+       strip takes .ntk-scroll today. */
     .news-ticker-strip::-webkit-scrollbar { display: none; }
     .news-ticker-strip.ntk-scroll::-webkit-scrollbar { display: block; height: 8px; }
     .news-ticker-strip.ntk-scroll::-webkit-scrollbar-thumb { border-width: 1px; }
@@ -1526,20 +1527,15 @@
     .news-ticker-strip.ntk-marquee .news-ticker-track {
       animation: news-ticker-scroll 40s linear infinite;
       will-change: transform;
-      /* Keep scrolling even under prefers-reduced-motion. The global site.css
-         reset (* { animation-duration:.001ms; animation-iteration-count:1 }
-         !important) is beaten here by selector specificity; marqueeifyTicker
-         also sets the exact duration inline with !important. Owner request:
-         all tickers run by default. */
-      animation-duration: 40s !important;
-      animation-iteration-count: infinite !important;
+      /* Scrolls with or without Reduce Motion (owner, 2026-10-01);
+         marqueeifyTicker sets the exact duration inline. */
     }
     /* Pause on hover so a reader can stop the scroll and click a chip. */
     .news-ticker:hover .news-ticker-strip.ntk-marquee .news-ticker-track {
       animation-play-state: paused;
     }
-    /* Reduced-motion (or no ResizeObserver) readers keep a slim horizontal
-       scroll rather than a clipped, frozen strip. */
+    /* A slim horizontal scroll rather than a clipped, frozen strip, if a
+       strip ever takes .ntk-scroll (none does today). */
     .news-ticker-strip.ntk-scroll { overflow-x: auto; }
     @keyframes news-ticker-scroll {
       from { transform: translateX(0); }
@@ -4202,9 +4198,7 @@
       70%  { box-shadow: 0 0 0 10px rgba(31, 122, 58, 0); }
       100% { box-shadow: 0 0 0 0   rgba(31, 122, 58, 0); }
     }
-    @media (prefers-reduced-motion: reduce) {
-      .debut-recent-banner .grb-dot { animation: none; }
-    }
+    /* The pulse runs under Reduce Motion too (owner, 2026-10-01). */
     .debut-recent-banner .grb-text strong {
       color: var(--neon-green);
       font-weight: 700;
@@ -4247,10 +4241,7 @@
       animation: prospx-spin 0.8s steps(8) infinite;
     }
     @keyframes prospx-spin { to { transform: rotate(360deg); } }
-    /* Reduced motion stills both (plan 5.7.1 line 11: no slowed spin). */
-    @media (prefers-reduced-motion: reduce) {
-      .state-message.is-loading, .state-message.is-loading::before { animation: none; }
-    }
+    /* Both run under Reduce Motion too (owner, 2026-10-01). */
     .state-message.is-error::before {
       content: "!";
       font-weight: 700;
@@ -4708,9 +4699,7 @@
       70%  { box-shadow: 0 0 0 5px transparent; opacity: 0.7; }
       100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
     }
-    @media (prefers-reduced-motion: reduce) {
-      .freshness-stamp .fresh-dot { animation: none; }
-    }
+    /* freshPulse runs under Reduce Motion too (owner, 2026-10-01). */
 
     /* === Time Machine ============================================= */
     .tm-controls {
@@ -10416,7 +10405,7 @@
 
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
-<script src="/assets/eephus-export.js?v=2d88d7cb" defer></script>
+<script src="/assets/eephus-export.js?v=e6d8c948" defer></script>
 <script src="/assets/eephus-csv.js?v=a8613a12" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
@@ -10428,9 +10417,9 @@
 <script src="/assets/eephus-config.js?v=5e092777" defer></script>
 <script src="/assets/eephus-account.js?v=22deb404" defer></script>
 <script src="/assets/eephus-nav.js?v=44768f08" defer></script>
-<script src="/assets/eephus-state.js?v=8385052c" defer></script>
+<script src="/assets/eephus-state.js?v=bf1de8b3" defer></script>
 <script src="/assets/eephus-ui.js?v=37b20203" defer></script>
-  <script src="/assets/eephus-gl.js?v=7b97df51" defer></script>
+  <script src="/assets/eephus-gl.js?v=1621bad7" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
   <script src="/assets/eephus-hub.js?v=f09d4370" defer></script>
   <!-- Team picker: logo listbox on every select[data-team-picker] (reads the hub's club table) -->
@@ -10439,7 +10428,7 @@
      pages (single component + token set in assets/site.css [data-theme=dark]).
      Mounts only while the dark theme is active; render() feeds it the
      prospect FV on detail views so the field escalates with the rarity tier. -->
-<script src="/assets/eephus-bg.js?v=619ab847" defer></script>
+<script src="/assets/eephus-bg.js?v=9dd26b43" defer></script>
 
 <!-- v32.0 - FV/WAR/$ conversion framework, loaded synchronously so all
      downstream code can call dollarsPerWar() / surplusValueMM() / etc
@@ -16443,9 +16432,10 @@ function getFilteredGrads() {
 //   - the duplicated copy is aria-hidden + inert (data-key stripped, taken
 //     out of tab order) so AT and keyboard users see each chip once and
 //     clicks only fire on the real copy;
-//   - prefers-reduced-motion (or a browser without ResizeObserver that
-//     can't measure a hidden strip) falls back to a slim horizontal scroll
-//     so the content is never clipped-and-frozen;
+//   - it scrolls with or without Reduce Motion (owner, 2026-10-01), and a
+//     strip it cannot measure yet (a hidden tab, no ResizeObserver) still
+//     moves on the two-copy fallback, so the content is never
+//     clipped-and-frozen;
 //   - a ResizeObserver (stored on the persistent container, not the
 //     re-rendered strip, so it never leaks) re-evaluates when the owning
 //     section goes from display:none to visible (clientWidth 0 -> N) or on
@@ -16468,12 +16458,10 @@ function marqueeifyTicker(root) {
   }
   const base = track.innerHTML;
   if (!base) return;
-  // Owner request: ALL tickers scroll by default and IGNORE prefers-reduced-
-  // motion. The global site.css reduced-motion reset (animation-duration:.001ms
-  // + iteration-count:1, !important) is beaten by the .ntk-marquee CSS rule
-  // (specificity) + the inline `!important` animation-duration set below, so the
-  // marquee keeps running. (It still pauses on hover, and the chips remain a
-  // complete, readable set.)
+  // Owner request: ALL tickers scroll by default, with or without Reduce
+  // Motion (owner, 2026-10-01). The .ntk-marquee CSS rule runs the animation
+  // and the inline animation-duration set below sizes it to the content. It
+  // still pauses on hover, and the chips remain a complete, readable set.
   // Build an N-copy marquee track (first copy interactive, the rest inert /
   // out of tab order so AT + clicks only ever see each chip once) and flip the
   // strip into the moving .ntk-marquee state. Shared by the measured exact-fit
@@ -16507,7 +16495,7 @@ function marqueeifyTicker(root) {
       if (track.dataset.state !== "marquee-fallback") {
         buildCopies(2);
         track.style.removeProperty("--ntk-shift");          // CSS default: -50%
-        track.style.setProperty("animation-duration", "40s", "important");  // beat reduced-motion reset
+        track.style.setProperty("animation-duration", "40s");
         track.dataset.state = "marquee-fallback";
       }
       return;
@@ -16520,8 +16508,7 @@ function marqueeifyTicker(root) {
     buildCopies(copies);
     track.dataset.state = "marquee";
     track.style.setProperty("--ntk-shift", "-" + oneCopy + "px");  // shift one copy
-    // !important so the inline duration beats the global reduced-motion reset.
-    track.style.setProperty("animation-duration", Math.max(16, Math.round(oneCopy / 55)) + "s", "important");  // ~55px/sec, 16s floor
+    track.style.setProperty("animation-duration", Math.max(16, Math.round(oneCopy / 55)) + "s");  // ~55px/sec, 16s floor
   };
   if ("ResizeObserver" in window) {
     root._mqRO = new ResizeObserver(() => { try { apply(); } catch (e) {} });

@@ -2,7 +2,8 @@
   <!-- Animated eephus mark: "the eephus" - the lob arc traces in left to right,
        then the ball drops onto the apex and settles. One short shot (~1s), then
        static; it never loops. Self-contained CSS (works as an <img>/<object> or
-       inlined). prefers-reduced-motion shows the final frame with no motion. -->
+       inlined). It plays under prefers-reduced-motion as well: the motion is
+       one short shot, and the site never switches its minimal motion off. -->
   <defs>
     <linearGradient id="ew-arc-anim" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%"  stop-color="#B91C1C"/>
@@ -26,11 +27,6 @@
         100% { opacity: 1; transform: translateY(0) scale(1); }
       }
       @keyframes wm-in { to { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) {
-        .arc { animation: none; stroke-dashoffset: 0; }
-        .ball { animation: none; opacity: 1; }
-        .wm { animation: none; opacity: 1; }
-      }
     </style>
   </defs>
   <path class="arc" pathLength="100" d="M 18 56 Q 150 -18 282 56"/>

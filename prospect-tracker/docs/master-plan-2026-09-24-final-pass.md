@@ -1490,11 +1490,13 @@ Prototypes, all measured at 1280 and 390, light and dark, port 8745, server stop
 8. No ball, no monogram, no wordmark letters in any icon. PROSPX gets a card-with-portrait glyph, which retires the 14, 16 and 24 px monogram uses.
 9. The top bar stays text. Icons live where a reader scans a list: two dropdowns, phone drawer, rail, cards, tabs, mastheads.
 10. Motion: two pieces only. The loader loops while loading; the 404 foul ball plays once in 0.9 s. Both are CSS `step-end`, no JS, no rAF.
-11. Every animated piece: base style is the still frame; explicit `@media (prefers-reduced-motion:reduce){animation:none}`; the old 2.4 s reduced-motion spin is deleted.
+11. Every animated piece: base style is the still frame; explicit `@media (prefers-reduced-motion:reduce){animation:none}`; the old 2.4 s reduced-motion spin is deleted. (Reduced-motion clause superseded 2026-10-01, see the amendment after this list.)
 12. Everything else (menus, empty, not measured, failed, card back) is static.
 13. Decoration is `aria-hidden`; labels and messages carry meaning; charts carry `role="img"`, an `aria-label` and a real `<table>` with every number.
 14. Budgets: sprite at most 40,960 B (measured 15,436 B, 2,409 gzip, 53 symbols); each animation at most 8 KB (loader 2,951 B, 404 3,597 B with CSS); each static state at most 1.6 KB.
 15. Fractional DPR (1.25, 1.5 Windows scaling) softens every pixel set, including all three directions; accepted, measured crisp at DPR 1, 2 and 4.
+
+**Amended 2026-10-01 (owner):** Reduce Motion does not disable this site's animations: they are minimal by design. Every animation and transition runs as it does without the preference; the one exception is the pointer-tracking background parallax. Item 11's reduced-motion clause, T6's `animation:none` check, T7's "reduced motion: 4 frames identical" check, PB-03's "reduced motion stops everything" and PB-10's "reduced-motion frames identical" are superseded: a reduced-motion frame must match the frame without the preference (`test_reduced_motion_runs.py`).
 
 #### 5.7.2. Asset inventory
 

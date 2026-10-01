@@ -38,5 +38,5 @@ Higher-quality GIF than the committed one (palette pass), still matted:
     ffmpeg -framerate 25 -i frames/frame_%03d.png -i palette.png \
       -lavfi "paletteuse=dither=bayer" eephus-arc-hq.gif
 
-Static fallback (reduced-motion, favicons, anywhere motion does not belong):
+Static fallback (favicons, anywhere motion does not belong):
 the final frame, `frames/frame_041.png`, or the static marks in `../marks/`.

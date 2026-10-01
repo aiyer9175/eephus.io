@@ -639,7 +639,7 @@
       ".ex-menu-sep{height:1px;background:var(--border-light,#eee);margin:4px 2px;}",
       ".eephus-export-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);z-index:10000;background:var(--bg-header,#0E2B4D);color:var(--text-on-accent,#fff);font-family:var(--font-retro,monospace);font-size:12.5px;padding:9px 16px;border:1px solid var(--accent-lilac,#6E56CF);opacity:0;pointer-events:none;transition:opacity .15s ease,transform .15s ease;}",
       ".eephus-export-toast.is-on{opacity:1;transform:translateX(-50%) translateY(0);}",
-      "@media (prefers-reduced-motion: reduce){.eephus-export-chip,.eephus-export-toast{transition:none;}}",
+      /* the .15 s chip and toast transitions run under Reduce Motion too (owner, 2026-10-01) */
     ].join("\n");
     document.head.appendChild(css);
   }

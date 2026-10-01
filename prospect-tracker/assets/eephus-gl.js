@@ -368,8 +368,8 @@
     if (!span) return;
     tipCancelHide();                                   // re-entering the term aborts a pending close
     clearTimeout(_tipShowTimer);
-    const delay = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 300;
-    _tipShowTimer = setTimeout(() => tipShow(span), delay);
+    // 300 ms hover delay, with or without Reduce Motion (owner, 2026-10-01).
+    _tipShowTimer = setTimeout(() => tipShow(span), 300);
   });
   document.addEventListener("mouseout", e => {
     if (e.target.closest && e.target.closest("[data-gl]")) tipScheduleHide();

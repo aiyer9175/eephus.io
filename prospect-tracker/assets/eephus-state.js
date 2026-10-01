@@ -21,8 +21,8 @@
    defined before any board renders (deferred scripts run in document order).
 
    Motion: CSS only (assets/site.css, the .px-state block), step-end, no timer
-   and no animation-frame loop here. Under prefers-reduced-motion the loader
-   holds the ball at the apex of the arc.
+   and no animation-frame loop here. The loader loops the same way with or
+   without Reduce Motion (owner, 2026-10-01).
    ========================================================================== */
 (function () {
   "use strict";

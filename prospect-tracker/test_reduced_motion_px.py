@@ -5,8 +5,11 @@
 
 """T6 of the pixel system (final-pass plan 5.7.4): reduced motion and budgets.
 
-  - every @keyframes px-* in assets/site.css has a prefers-reduced-motion rule
-    that sets animation:none on every selector that runs it;
+  - owner rule 2026-10-01 (supersedes plan 5.7.1 line 11): the site's motion is
+    minimal and runs on the OS Reduce Motion setting; no prefers-reduced-motion
+    rule anywhere in site.css, the PROSPX <style>, the export asset or the
+    animated mark sets animation:none, transition:none or a slowed duration,
+    and the old global animation reset is gone;
   - the old 0.8 s steps(8) square and its 2.4 s reduced-motion spin are gone
     (from site.css and from the PROSPX <style>);
   - every px animation steps (step-end), and its base style is the still
@@ -25,6 +28,8 @@ ROOT = Path(__file__).parent
 CSS = (ROOT / "assets" / "site.css").read_text(encoding="utf-8")
 STATE_JS = (ROOT / "assets" / "eephus-state.js").read_text(encoding="utf-8")
 PROSPX = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+EXPORT_JS = (ROOT / "assets" / "eephus-export.js").read_text(encoding="utf-8")
+ARC_SVG = (ROOT / "branding" / "animated" / "eephus-arc.svg").read_text(encoding="utf-8")
 
 
 def _strip_comments(css: str) -> str:
@@ -72,18 +77,47 @@ def test_the_pixel_keyframes_exist():
     assert KEYFRAMES == ["px-hide", "px-lob", "px-show"], KEYFRAMES
 
 
-def test_every_px_keyframe_selector_stops_under_reduced_motion():
-    stilled = set()
-    for sels, body in _rules(REDUCE):
-        if re.search(r"animation\s*:\s*none", body):
-            stilled.update(sels)
+def test_every_px_keyframe_is_used():
     for name in KEYFRAMES:
         users = [s for sels, body in _rules(CLEAN)
                  if re.search(r"animation(?:-name)?\s*:[^;]*\b" + re.escape(name) + r"\b", body)
                  for s in sels]
         assert users, f"@keyframes {name} is never used"
-        missing = [s for s in users if s not in stilled]
-        assert not missing, f"{name}: no reduced-motion animation:none for {missing}"
+
+
+_STILL = re.compile(r"(animation|transition)(-duration|-iteration-count|-play-state)?\s*:\s*"
+                    r"(none|0\.0*1ms|0s|1\s*!|paused)")
+
+POLICY = ("Reduce Motion does not disable this site's animations: they are minimal by "
+          "design (owner, 2026-10-01). Every animation and transition runs as it does "
+          "without the preference. The one exception is pointer-tracking movement (the "
+          "background parallax), which keeps honoring the preference because it is "
+          "coupled to the pointer, not a timed animation.")
+
+
+def test_the_policy_heads_the_reduced_motion_section():
+    flat = " ".join(CSS.replace("/*", " ").replace("*/", " ").split())
+    assert POLICY in flat
+
+
+def test_nothing_is_switched_off_under_reduced_motion():
+    """Owner rule 2026-10-01: the animations are minimal and keep running on the
+    Reduce Motion setting; the one exception, the pointer-tracking parallax,
+    lives in eephus-bg.js, not in a stylesheet."""
+    assert not _STILL.search(REDUCE), REDUCE
+    assert "animation" not in REDUCE and "transition" not in REDUCE, REDUCE
+    assert "!important" not in REDUCE, "the global animation reset is back"
+    style = _strip_comments(PROSPX[PROSPX.index("<style>"):PROSPX.index("</style>")])
+    for pre, body in _blocks(style):
+        if pre.startswith("@media") and "prefers-reduced-motion" in pre:
+            assert not _STILL.search(body), (pre, body)
+    # comments may mention the setting; no rule or query may act on it
+    assert "prefers-reduced-motion" not in _strip_comments(EXPORT_JS)
+    assert "prefers-reduced-motion" not in _strip_comments(re.sub(r"<!--.*?-->", "", ARC_SVG, flags=re.S))
+    gl = (ROOT / "assets" / "eephus-gl.js").read_text(encoding="utf-8")
+    assert "prefers-reduced-motion" not in gl, "the glossary tooltip delay reads the preference again"
+    bg = (ROOT / "assets" / "eephus-bg.js").read_text(encoding="utf-8")
+    assert "prefers-reduced-motion: reduce" in bg, "the pointer parallax keeps honoring the preference"
 
 
 def test_the_old_spinner_and_its_slowed_spin_are_gone():
@@ -93,8 +127,7 @@ def test_the_old_spinner_and_its_slowed_spin_are_gone():
     assert ".state-message.is-loading" not in CLEAN
     style = PROSPX[PROSPX.index("<style>"):PROSPX.index("</style>")]
     assert "animation-duration: 2.4s" not in style
-    assert re.search(r"prefers-reduced-motion: reduce\) \{\s*\.state-message\.is-loading, "
-                     r"\.state-message\.is-loading::before \{ animation: none; \}", style)
+    assert ".state-message.is-loading::before { animation: none; }" not in style
 
 
 def test_px_animations_step_and_rest_on_the_still_frame():

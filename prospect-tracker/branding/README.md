@@ -159,8 +159,10 @@ above it.
 It is cheap by design: a hard star-count ceiling, device-pixel-ratio capped at
 2, one animation loop paused on hidden tabs. The twinkle always runs (a static
 star sky reads as dead); it is aria-hidden decoration, so it keeps twinkling even
-under `prefers-reduced-motion`, while the user-tracking parallax honors the OS
-motion preference. Every dial lives in the `[data-theme="dark"]` token block in
+under `prefers-reduced-motion`, as does every other animation on the site (owner
+rule 2026-10-01: the motion is minimal and is never switched off for the Reduce
+Motion setting); only the user-tracking parallax honors the OS motion
+preference, since pointer-following drift reads very differently. Every dial lives in the `[data-theme="dark"]` token block in
 `site.css` (`--star-holo-*`, `--star-density-base`, etc.). It also responds to a
 prospect page's headline FV through `EephusBG.setFV()`: better prospects, a
 denser, brighter field.

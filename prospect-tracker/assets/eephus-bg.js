@@ -20,11 +20,13 @@
 //   • exactly one requestAnimationFrame loop, paused while document.hidden
 //   • absolute star-count ceiling regardless of viewport size
 //   • devicePixelRatio capped at 2
-//   • the twinkle ALWAYS runs (owner ask: a static starfield looks dead). The
-//     field is whisper-opacity aria-hidden decoration, so it keeps twinkling
-//     even under prefers-reduced-motion; only the user-tracking parallax honors
-//     the OS motion preference (it reads very differently). The hidden-tab pause
-//     is unconditional.
+//   • the twinkle ALWAYS runs (owner ask: a static starfield looks dead).
+//     Reduce Motion does not disable this site's animations: they are minimal
+//     by design (owner, 2026-10-01). Every animation and transition runs as
+//     it does without the preference. The one exception is pointer-tracking
+//     movement (the background parallax below), which keeps honoring the
+//     preference because it is coupled to the pointer, not a timed
+//     animation. The hidden-tab pause is unconditional.
 //
 // FV linkage (PROSPX prospect views): the app calls EephusBG.setFV(fv) on route
 // changes. Intensity t = clamp((fv - 45) / (70 - 45), 0, 1) - the audited
@@ -233,7 +235,7 @@
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(rebuild, 150);
     });
-    if (!reducedMotion()) {                       // user-tracking motion honors the OS pref
+    if (!reducedMotion()) {                       // pointer-tracking parallax: the one exception
       listen(window, "scroll", function () {
         scrollOff = -Math.max(-MAX_PARALLAX_PX, Math.min(MAX_PARALLAX_PX, window.scrollY * 0.02));
       }, { passive: true });

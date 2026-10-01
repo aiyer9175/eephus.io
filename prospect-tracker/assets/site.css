@@ -942,7 +942,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   text-transform: uppercase; color: var(--text-tertiary); opacity: .7;
 }
 .team-card-front { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
-@media (prefers-reduced-motion: reduce) { .team-card-inner { transition: none; } }
+/* The flip keeps its transition under Reduce Motion (owner, 2026-10-01). */
 
 /* ---- footer ---- */
 .eephus-footer {
@@ -1093,8 +1093,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   display: flex; align-items: center; gap: 0; overflow: hidden; white-space: nowrap;
 }
 /* WIRE brand mark - pinned at the left, opaque, and ABOVE the scrolling track
-   (sticky so it stays put if the bar becomes manually scrollable under
-   reduced-motion). Items dissolve behind it rather than overlapping it. */
+   (sticky, so it stays put above the moving track). Items dissolve behind
+   it rather than overlapping it. */
 .home-ticker .ticker-tag {
   position: sticky; left: 0; z-index: 3;
   flex: none; display: inline-flex; align-items: center; gap: 6px;
@@ -1117,14 +1117,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .home-ticker .ticker-track {
   display: inline-flex; align-items: center; gap: 0; padding: 7px 0;
   animation: ticker-scroll 50s linear infinite;
-  /* Keep scrolling even when the browser/OS prefers reduced motion. The global
-     reduced-motion reset (animation-duration:.001ms + iteration-count:1,
-     !important) is beaten here by higher selector specificity. The ticker is
-     decorative (aria-hidden) with a STATIC, accessible Prospect Wire feed in the
-     sidebar, and it pauses on hover - so motion-sensitive readers still get the
-     data and can stop it. (Per site-owner request the marquee always runs.) */
-  animation-duration: 50s !important;
-  animation-iteration-count: infinite !important;
+  /* It scrolls with or without Reduce Motion (see the prefers-reduced-motion
+     policy further down this file). The ticker is decorative
+     (aria-hidden) with a STATIC, accessible Prospect Wire feed in the
+     sidebar, and it pauses on hover - so a reader still gets the data and
+     can stop it. (Per site-owner request the marquee always runs.) */
 }
 /* Pause-on-hover (desktop) so a reader can stop the marquee and click an item. */
 .home-ticker:hover .ticker-track { animation-play-state: paused; }
@@ -1359,7 +1356,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    It never loops. The nav/sidebar lockups are static. The arc path carries
    pathLength="100" (build_site.py) so the dash math is resolution-independent. */
 /* Robust by construction: the base path has NO dash (fully drawn), so if the
-   animation never runs - unsupported, reduced-motion, an odd browser - the arc
+   animation never runs - unsupported, an odd browser - the arc
    is simply visible. The keyframe sets the hidden start; `backwards` holds it
    only while the animation is live. The logo can never get stuck invisible. */
 .eephus-logo--animate .ew-arc path {
@@ -1381,8 +1378,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* Hover-replay: hovering ANY eephus.io wordmark (hero, nav, sidebar) re-traces
    the arc and re-settles the ball, so the animation is always discoverable and
    verifiable even if the one-shot on load was missed. Distinct keyframe names so
-   the hover actually re-triggers; works under reduced-motion since it is
-   user-initiated (a deliberate intent, not autoplay). */
+   the hover actually re-triggers. It runs under Reduce Motion like every
+   animation here. */
 .eephus-wordmark-merged { cursor: pointer; }
 .eephus-wordmark-merged:hover .ew-arc path {
   animation: ew-arc-redraw .8s cubic-bezier(.22,.61,.36,1) backwards;
@@ -1400,12 +1397,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   70%  { opacity: 1; transform: translateX(-50%) translateY(.03em) scale(1.05); }
   100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
-@media (prefers-reduced-motion: reduce) {
-  /* Proper fallback for the autoplay-on-load: the finished logo, no motion. The
-     hover-replay above stays (it is user-initiated). */
-  .eephus-logo--animate .ew-arc path,
-  .eephus-logo--animate .ew-ball { animation: none; }
-}
+/* The logo's one-shot draw-on and the hover replay both run under Reduce
+   Motion (owner, 2026-10-01). */
 
 /* Cybergothic dark masthead: a faint lilac/cyan neon glow on the nameplate so
    the wordmark reads like backlit chrome on the holo field. Dark only. */
@@ -1648,22 +1641,12 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   outline-offset: 2px;
 }
 
-/* Respect prefers-reduced-motion: stop the homepage wire ticker + blink-dots and
-   neutralize transitions/animations site-wide for users who ask for less motion.
-   Plotted chart curves are static SVG paths, unaffected. */
-@media (prefers-reduced-motion: reduce) {
-  /* Under reduced-motion the global reset below also stills the WIRE marquee
-     (the duplicated track holds a complete, readable set of items when frozen);
-     the sidebar "Prospect Wire" feed is the static accessible equivalent. The
-     pulse-dots are stilled explicitly so they don't hold a half-faded frame. */
-  .home-ticker .ticker-tag .blip, .sb-feed .feed-head .blip { animation: none; }
-  *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
-}
+/* ---- prefers-reduced-motion ---- */
+/* Reduce Motion does not disable this site's animations: they are minimal by
+   design (owner, 2026-10-01). Every animation and transition runs as it does
+   without the preference. The one exception is pointer-tracking movement (the
+   background parallax), which keeps honoring the preference because it is
+   coupled to the pointer, not a timed animation. */
 
 /* ── Free Agency app (/fa/) ──────────────────────────────────────────────── */
 /* The FA module's own surface - separate from PROSPX by design. Everything is
@@ -1806,7 +1789,8 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    0.8 s steps(8) square and its 2.4 s reduced-motion spin.
    Motion: the loader loops while loading; the 404 foul ball plays once in
    0.9 s. Both are step-end, both have their still frame as the base style,
-   and both stop under prefers-reduced-motion (the rule at the end). */
+   and both run under Reduce Motion exactly as without it (owner,
+   2026-10-01; the policy at the prefers-reduced-motion section). */
 .px-state {
   display: flex; align-items: center; gap: 14px;
   width: fit-content; max-width: 100%; box-sizing: border-box;
@@ -1845,10 +1829,6 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .px-foul .z { opacity: 1; animation-name: px-hide; }
 @keyframes px-hide { 0%, 100% { opacity: 0; } }
 @keyframes px-show { 0%, 100% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) {
-  .px-lob .f { animation: none; }
-  .px-foul .t, .px-foul .b, .px-foul .z { animation: none; }
-}
 .fa-app .fa-thin { color: var(--text-gold); cursor: help; }
 /* Handedness token on the class board (B:L bat side / T:R throwing hand). Small,
    monospaced and helpable - it is a scanning aid, not a headline number. */
@@ -3896,9 +3876,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
    11px), /mlbstats/ 40, /glossary/ 18.
 
    Keyed on (pointer: coarse) rather than width, because the thing that makes
-   44px necessary is the finger, not the viewport - and because the site's
-   reduced-motion reset is deliberately ignored elsewhere, so width queries
-   here would fight the tickers. Desktop is untouched.
+   44px necessary is the finger, not the viewport. Desktop is untouched.
    --------------------------------------------------------------------------- */
 @media (pointer: coarse) {
   /* Controls a thumb actually aims at. */
