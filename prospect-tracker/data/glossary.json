@@ -8582,6 +8582,30 @@
    ]
   },
   {
+   "id": "postseason_bracket_sim",
+   "term": "Postseason bracket simulator",
+   "category": "betting",
+   "aliases": [
+    "postseason bracket simulator",
+    "bracket simulator",
+    "postseason_bracket_sim"
+   ],
+   "priority": 103,
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+   "definition": "During the postseason, each playoff club's chance to win its current series, reach the League Championship Series, win the pennant and win the World Series, computed from the posted bracket and every game already played. Labelled implied, no market: no book price sits beside it and none is derived from it.",
+   "methodology": "Each remaining series is walked game by game in its real format (best of 3, 5 or 7, with the posted home field), so the result is exact rather than sampled and carries no simulation interval. A game the betting board prices uses the board's own home-win probability, unchanged; every other game uses a results-only Elo rating (base 1500, K 4, a 24-point home edge) walked over the 2026 regular season and frozen on the simulator's first day, so a postseason result never moves a rating. Both inputs were built on regular-season games only, and neither has been graded on a postseason game. The Futures board and the Franchise page show the day's frozen entry with its date; the division, playoff and bye columns stay with the season simulator. Every day's entry is kept in a chain-hashed forward record, and nothing in it is scored until one read after the World Series, under rules registered on 2026-10-01 before the first number existed.",
+   "seeAlso": [
+    "provisional_pick",
+    "brier_score",
+    "implied_probability"
+   ],
+   "module": [
+    "betting",
+    "franchise"
+   ]
+  },
+  {
    "id": "policy_floor",
    "term": "Policy floor",
    "category": "betting",

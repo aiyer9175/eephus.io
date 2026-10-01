@@ -425,6 +425,10 @@ MODEL_GLOSSARY = {
     # then, on the page, the same decision as betting_game_prob above.
     "betting_prob_calibration": "internal",
     "betting_elo_benchmark": "internal",
+    # 2026-10-01 BRACKET_SIM_BUILD: the postseason bracket simulator serves the
+    # Pennant and World Series columns on /betting/ and the Pennant tile on
+    # /franchise/ during the postseason, so a reader looks it up.
+    "postseason_bracket_sim": ["postseason_bracket_sim"],
     # 2026-08-18 SDR W0: registered-and-waiting rows (data-blocked intake).
     # They gain real glossary terms in the W2 display wave, where the copy
     # ships; until a surface exists there is nothing for a reader to look up.

@@ -235,6 +235,12 @@ Data-sanity spot checks (confirms the site matches the intended local build):
   is a frozen fallback (it is publish-excluded but survives via rsync without
   `--delete-excluded`); its live content ships via the chunked
   `scout_reports_*.json` shards.
+- **The postseason bracket simulator's forward record** is
+  `.cache/bracket_sim/record.json` (docs/betting-2026-10/BRACKET_SIM_GATE.md
+  7.2): one chain-hashed entry per day of the postseason, first write wins, and
+  it cannot be rebuilt, because each entry froze that day's bracket and board.
+  Back it up with `.cache/betting/`. `data/bracket_sim_record.json` and
+  `data/bracket_sim.json` are derived re-renders published by rsync.
 - **Why those two betting directories are not "just cache".** `.cache/odds/` is
   the immutable price evidence: a closing line that was not captured near first
   pitch is gone, and every CLV grade on the public record is derived from it.

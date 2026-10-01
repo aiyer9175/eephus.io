@@ -440,6 +440,35 @@ ARTIFACTS = (
                  "record)."),
     },
     {
+        "file": "bracket_sim.json", "group": "diamond",
+        "title": "Postseason bracket simulator",
+        "what": ("Per postseason club, the probability of winning each remaining "
+                 "round, the pennant and the World Series, from the posted bracket "
+                 "and every played game, with the state date and the series decided "
+                 "so far. Labelled implied, no market."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_bracket_sim.py",
+        "note": ("An exact series recursion, so it carries no simulation interval. "
+                 "No market price exists for it and none is derived from it: no "
+                 "price, edge, slot or record row is taken from these numbers. "
+                 "Registered before the first number in "
+                 "docs/betting-2026-10/BRACKET_SIM_GATE.md."),
+    },
+    {
+        "file": "bracket_sim_record.json", "group": "diamond",
+        "title": "Postseason bracket simulator forward record",
+        "what": ("Each day's frozen bracket-simulator output, one entry per date: "
+                 "the bracket state, the input of every game, the per-club "
+                 "probabilities and the consistency checks, chain-hashed."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_bracket_sim.py",
+        "note": ("A RECORD, NOT A RESULT. Nothing in it is scored before the one "
+                 "look after the World Series. This file is a DERIVED re-render "
+                 "published by rsync; the source of truth is "
+                 ".cache/bracket_sim/record.json, outside data/ for the reason the "
+                 "futures record gives."),
+    },
+    {
         "file": "management_board.json", "group": "mlb",
         "title": "In-Game Management board",
         "what": ("Stolen-base decision values by target base and season, the club "

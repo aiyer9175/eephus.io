@@ -104,6 +104,46 @@ REGISTRY_IDS = ("ewar", "team_win_projections", "farm_grades", "org_sur_plus", "
 #: The registry row the ODDS section quotes: futures.json is its eval artifact.
 ODDS_REGISTRY_ID = "playoff_odds_sim"
 
+#: The postseason bracket simulator (docs/betting-2026-10/BRACKET_SIM_GATE.md 8).
+#: While it serves, the Pennant tile and its World Series line read its payload,
+#: labelled implied, no market, with this row's chip; Playoffs, Division, Bye and
+#: Projected wins keep the season simulator, its stamp and its chip. Off or
+#: absent, the document is byte for byte what it was without it.
+BRACKET_REGISTRY_ID = "postseason_bracket_sim"
+
+
+def _bracket_overlay(reg_rows: dict) -> tuple[dict | None, str | None]:
+    """(overlay, not_updated_note) from data/bracket_sim.json.
+
+    The overlay is None unless bracket_sim.SERVE_BRACKET_SIM is True, the
+    payload says it serves, it is this season's, and its registry row exists
+    (the chip quotes it). The note is the gate 9.3 sentence for a day the
+    simulator did not update and a game has been played since its last entry."""
+    try:
+        import bracket_sim
+    except Exception:                                          # noqa: BLE001
+        return None, None
+    if not bracket_sim.SERVE_BRACKET_SIM or not (DATA / "bracket_sim.json").exists():
+        return None, None
+    doc = _j("bracket_sim.json") or {}
+    serve = doc.get("serve") or {}
+    if doc.get("season") != SEASON_NOW:
+        return None, None
+    if not serve.get("on"):
+        return None, serve.get("not_updated_note") or None
+    row = reg_rows.get(BRACKET_REGISTRY_ID)
+    if not row or not doc.get("clubs"):
+        return None, None
+    clubs = {}
+    for r in doc.get("clubs") or []:
+        c = _canon(r.get("team"))
+        if c:
+            clubs[c] = r
+    return {"as_of": serve.get("as_of"), "line": serve.get("line"),
+            "division_note": serve.get("division_columns_note"), "label": doc.get("label"),
+            "verdict": row.get("verdict"), "clubs": clubs,
+            "generated_at": doc.get("generated_at")}, None
+
 #: Key names the writer refuses to emit anywhere in the document.
 FORBIDDEN_KEYS = {"revenue", "revenues", "valuation", "valuations", "tv_money", "rsn",
                   "pennants", "titles", "manager_skill", "decision_quality", "hof_plaques"}
@@ -525,6 +565,12 @@ def build() -> dict:
         m = reg_rows.get(mid)
         registry_verdicts.append({"model_id": mid, "present": bool(m), "verdict": (m or {}).get("verdict"),
                                   "surface": (m or {}).get("surface"), "eval_artifact": (m or {}).get("eval_artifact")})
+    bracket, bracket_not_updated = _bracket_overlay(reg_rows)
+    if bracket:
+        m = reg_rows[BRACKET_REGISTRY_ID]
+        registry_verdicts.append({"model_id": BRACKET_REGISTRY_ID, "present": True,
+                                  "verdict": m.get("verdict"), "surface": m.get("surface"),
+                                  "eval_artifact": m.get("eval_artifact")})
     verdict_of = {r["model_id"]: r["verdict"] for r in registry_verdicts}
     odds_registered = bool(reg_rows.get(ODDS_REGISTRY_ID))
 
@@ -926,6 +972,24 @@ def build() -> dict:
             "verdict": verdict_of.get(ODDS_REGISTRY_ID) if odds_registered else None,
             "basis": f"futures.json ({futures.get('sims')} sims) and the Team Outlook current overlay",
         }
+        pennant_leaf = (fut.get("pennantPct"), "futures.pennantPct")
+        ws_leaf = (fut.get("wsPct"), "futures.wsPct")
+        if bracket:
+            # A club outside the postseason reads 0 for both columns (gate 6.1).
+            br = bracket["clubs"].get(c) or {}
+            odds["bracket"] = {
+                "pennant_pct": br.get("pennant_pct", 0.0) if br else 0.0,
+                "ws_pct": br.get("ws_pct", 0.0) if br else 0.0,
+                "seed": br.get("seed"), "series_now": br.get("series_now_text"),
+                "as_of": bracket["as_of"], "label": bracket["label"],
+                "registry_row": BRACKET_REGISTRY_ID, "verdict": bracket["verdict"],
+                "basis": (f"bracket_sim.json as of {bracket['as_of']}: exact series recursion over "
+                          "the posted bracket, every played game in it"),
+            }
+            pennant_leaf = (odds["bracket"]["pennant_pct"],
+                            f"bracket_sim.pennant_pct, {bracket['label']}, as of {bracket['as_of']}")
+            ws_leaf = (odds["bracket"]["ws_pct"],
+                       f"bracket_sim.ws_pct, {bracket['label']}, as of {bracket['as_of']}")
 
         # -- the tree -------------------------------------------------------------------------------
         def leaf(key, label, value, kind, ladder=None, basis="", gl=None, link=None):
@@ -1067,8 +1131,8 @@ def build() -> dict:
                  leaf("proj_wins", f"Projected wins {SEASON_NOW}", fut.get("projWins"), "num1", None, "futures.projWins with the P10-P90 band", None, links["betting_futures"]),
                  leaf("playoff_pct", "Playoff pct", fut.get("playoffPct"), "pct", None, "futures.playoffPct", None, links["betting_futures"]),
                  leaf("division_pct", "Division pct", fut.get("divisionPct"), "pct", None, "futures.divisionPct", None, links["betting_futures"]),
-                 leaf("pennant_pct", "Pennant pct", fut.get("pennantPct"), "pct", None, "futures.pennantPct", None, links["betting_futures"]),
-                 leaf("ws_pct", "World Series pct", fut.get("wsPct"), "pct", None, "futures.wsPct", None, links["betting_futures"]),
+                 leaf("pennant_pct", "Pennant pct", pennant_leaf[0], "pct", None, pennant_leaf[1], None, links["betting_futures"]),
+                 leaf("ws_pct", "World Series pct", ws_leaf[0], "pct", None, ws_leaf[1], None, links["betting_futures"]),
              ]},
         ]
         assert [b["key"] for b in branches] == list(BRANCH_ORDER)
@@ -1197,6 +1261,12 @@ def build() -> dict:
         "dark_tag": "dark",
         "open_in": "Open in",
     }
+    if bracket:
+        # Both lines are quoted from the simulator's payload, never composed here.
+        copy["odds_bracket_line"] = bracket["line"] or ""
+        copy["odds_division_as_of"] = bracket["division_note"] or ""
+    elif bracket_not_updated:
+        copy["odds_bracket_not_updated"] = bracket_not_updated
 
     field_key = {
         "roster.lineup": "[tier, name, bats, hem_plus, pa, key]",
@@ -1243,6 +1313,9 @@ def build() -> dict:
                                            else "arbitration.js accepts only #history, #teams and #model; the link is unnarrowed")},
         "manager_names": {"live": False, "blocked_on": "the manager entity (M-MWAR-2) is a network ingest not in this tree; rows say team-season"},
     }
+    if bracket:
+        sections_status["odds"]["bracket_row"] = BRACKET_REGISTRY_ID
+        sections_status["odds"]["bracket_as_of"] = bracket["as_of"]
 
     doc = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -1300,6 +1373,8 @@ def build() -> dict:
             "a club payroll forecast: FIN is descriptive and quotes the Club Ledger, which serves none",
         ],
     }
+    if bracket:
+        doc["basis"]["bracket_sim"] = bracket["generated_at"]
     _assert_document(doc)
     return doc
 
@@ -1337,6 +1412,10 @@ def _assert_document(doc: dict) -> None:
         for blk in ("fin", "market", "arbitration"):
             assert d["sections"][blk].get("cba_banner") is True, (d["code"], blk)
         assert d["sections"]["odds"]["verdict"] == verdict_of.get(d["sections"]["odds"]["registry_row"]), d["code"]
+        br = d["sections"]["odds"].get("bracket")
+        if br is not None:
+            assert br["verdict"] == verdict_of.get(br["registry_row"]), d["code"]
+            assert br["label"] == "implied, no market" and br["as_of"], d["code"]
         assert d["sections"]["dugout"]["plus_metric"] is False and d["sections"]["dugout"]["letter"] is None
     for path, k in _walk_keys(doc):
         ks = str(k).lower()

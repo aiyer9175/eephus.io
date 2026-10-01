@@ -2375,16 +2375,97 @@
   // rendered into a price cell looks like a number.
   var FUT = null;
   var FUT_ERR = "";
+  // THE POSTSEASON BRACKET SIMULATOR (docs/betting-2026-10/BRACKET_SIM_GATE.md,
+  // section 8). During the postseason the Pennant and World Series columns read
+  // the simulator's payload, labelled implied, no market, with its as-of date;
+  // Division, Playoffs, Bye, Proj W and Win band keep the season simulator and
+  // its end-of-season stamp. The interval and price cells print a dash for
+  // those rows: the recursion is exact, and no price is derived from these
+  // numbers. A missing payload, or one that does not serve, leaves the board
+  // exactly as it renders without it. Every sentence comes from the payload.
+  var BR = null;
 
   function loadFutures() {
     if (FUT || FUT_ERR) { paintAll(); return; }
+    var br = fetch("/data/bracket_sim.json", { cache: "no-cache" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
     fetch("/data/futures.json", { cache: "no-cache" })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function (d) { FUT = d; paintAll(); })
+      .then(function (d) { return br.then(function (b) { BR = b; FUT = d; paintAll(); }); })
       .catch(function () {
         FUT_ERR = "data/futures.json did not load.";
         paintAll();
       });
+  }
+
+  // {on: true, b, by} while the simulator serves this season's board;
+  // {on: false, b} on a day it did not update; null otherwise.
+  function bracketOverlay() {
+    var b = BR;
+    if (!b || !b.serve || !FUT || b.season !== FUT.season) return null;
+    if (b.serve.on && b.clubs && b.clubs.length) {
+      var by = {};
+      b.clubs.forEach(function (c) { by[c.team] = c; });
+      return { on: true, b: b, by: by };
+    }
+    return b.serve.not_updated_note ? { on: false, b: b } : null;
+  }
+
+  function brPct(v) {
+    return (v === null || v === undefined) ? '<span class="bt-dim">-</span>' : (v * 100).toFixed(1) + "%";
+  }
+
+  // The stamp lines above the board while the simulator serves, or the
+  // did-not-update sentence beneath the season stamp on a day it did not.
+  function brStamp(ov) {
+    if (!ov) return "";
+    var s = ov.b.serve;
+    if (!ov.on) return '<p class="bt-note"><strong>' + esc(s.not_updated_note) + "</strong></p>";
+    return (s.division_columns_note ? '<p class="bt-note"><strong>' + esc(s.division_columns_note) + "</strong></p>" : "") +
+      '<p class="bt-note"><strong>' + esc(s.line) + "</strong></p>";
+  }
+
+  // The four tail cells of a board row: Pennant, World Series, WS interval and
+  // the implied price. A club outside the postseason reads 0 (gate 6.1).
+  function brCells(ov, c) {
+    var r = ov.by[c.team] || { pennant_pct: 0, ws_pct: 0 };
+    var dash = '<span class="bt-dim">-</span>';
+    return "<td>" + brPct(r.pennant_pct) + "</td>" + "<td>" + brPct(r.ws_pct) + "</td>" +
+      "<td>" + dash + "</td>" + "<td>" + dash + "</td>";
+  }
+
+  function brSort(ov, clubs) {
+    return clubs.map(function (c, i) { return { c: c, i: i }; }).sort(function (x, y) {
+      var a = (ov.by[x.c.team] || {}).ws_pct || 0, b = (ov.by[y.c.team] || {}).ws_pct || 0;
+      return (b - a) || (x.i - y.i);
+    }).map(function (x) { return x.c; });
+  }
+
+  // The postseason table below the board: one row per postseason club.
+  function brPanel(ov) {
+    var b = ov.b, cols = b.columns || {}, rec = b.record || {};
+    var rows = b.clubs.map(function (c) {
+      return "<tr>" + '<td class="bt-l">' + esc(c.team) + "</td>" +
+        "<td>" + esc(c.seed) + "</td>" +
+        '<td class="bt-l">' + esc(c.series_now_text || "") + "</td>" +
+        "<td>" + brPct(c.p_round_now) + "</td>" +
+        "<td>" + brPct(c.reach_lcs_pct) + "</td>" +
+        "<td>" + brPct(c.pennant_pct) + "</td>" +
+        "<td>" + brPct(c.ws_pct) + "</td></tr>";
+    }).join("");
+    return '<div class="bt-panel" data-bt-bracket="1"><div class="bt-panel-hd">Postseason bracket (' +
+      esc(b.label) + ", as of " + esc(b.serve.as_of) + ")</div>" +
+      '<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr>' +
+      '<th class="bt-l">Club</th><th>Seed</th><th class="bt-l">Series now</th>' +
+      "<th>" + esc(cols.p_round_now) + "</th><th>" + esc(cols.reach_lcs) + "</th>" +
+      "<th>" + esc(cols.pennant) + "</th><th>" + esc(cols.ws) + "</th>" +
+      "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      '<p class="bt-note">' + esc(b.method) + " " + esc(b.never) + "</p>" +
+      '<p class="bt-note"><strong>Postseason simulator record: ' + esc(rec.n_days) + " day" +
+      (rec.n_days === 1 ? "" : "s") + " logged, " + esc(rec.n_crash_days) + " crash day" +
+      (rec.n_crash_days === 1 ? "" : "s") + ", " + esc(rec.n_series_decided) + " series decided, " +
+      esc(rec.n_scored) + " scored.</strong> " + esc(rec.what_it_is) + "</p></div>";
   }
 
   function futPrice(v) {
@@ -2401,7 +2482,8 @@
       return '<p class="bt-note">' + esc(FUT.empty_reason || "No board.") + "</p>";
     }
     var nm = FUT.no_market;
-    var rows = FUT.clubs.map(function (c) {
+    var ov = bracketOverlay(), on = !!(ov && ov.on);
+    var rows = (on ? brSort(ov, FUT.clubs) : FUT.clubs).map(function (c) {
       function p3(v) { return (v === null || v === undefined) ? "" : (v * 100).toFixed(1) + "%"; }
       var mc = c.mcWs || {};
       return "<tr>" +
@@ -2412,11 +2494,12 @@
         "<td>" + p3(c.divisionPct) + "</td>" +
         "<td>" + p3(c.playoffPct) + "</td>" +
         "<td>" + p3(c.byePct) + "</td>" +
+        (on ? brCells(ov, c) :
         "<td>" + p3(c.pennantPct) + "</td>" +
         "<td>" + p3(c.wsPct) + "</td>" +
         '<td>' + ((mc.lo95 === undefined || mc.lo95 === null) ? "" :
           (mc.lo95 * 100).toFixed(1) + " to " + (mc.hi95 * 100).toFixed(1)) + "</td>" +
-        '<td>' + futPrice(c.impliedAmericanWS) + "</td>" +
+        '<td>' + futPrice(c.impliedAmericanWS) + "</td>") +
         "</tr>";
     }).join("");
 
@@ -2425,15 +2508,17 @@
     // The exporter derives the line from the payload's build date and the
     // season's last regular-season date and leaves it null before then.
     return '<div class="bt-panel"><div class="bt-panel-hd">Futures</div>' +
-      (FUT.as_of_note ? '<p class="bt-note"><strong>' + esc(FUT.as_of_note) + "</strong></p>" : "") +
+      (on ? brStamp(ov) :
+        (FUT.as_of_note ? '<p class="bt-note"><strong>' + esc(FUT.as_of_note) + "</strong></p>" : "") +
+        brStamp(ov)) +
       '<p class="bt-note"><strong>There is no market on this board.</strong> ' +
       esc(nm.what_is_missing) + "</p>" +
       '<p class="bt-note">' + esc(nm.what_would_have_to_happen) + " " +
       esc(nm.and_then_still_not_an_edge) + "</p>" +
       '<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr>' +
       '<th class="bt-l">Club</th><th>Record</th><th>Proj W</th><th>Win band</th>' +
-      "<th>Division</th><th>Playoffs</th><th>Bye</th><th>Pennant</th>" +
-      "<th>World Series</th><th>WS interval</th><th>Model price (implied)</th>" +
+      "<th>Division</th><th>Playoffs</th><th>Bye</th><th>" + (on ? esc(ov.b.columns.pennant) : "Pennant") + "</th>" +
+      "<th>" + (on ? esc(ov.b.columns.ws) : "World Series") + "</th><th>WS interval</th><th>Model price (implied)</th>" +
       "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
       '<p class="bt-note">' + esc(FUT.why_the_price_column_is_not_called_fair) + "</p>" +
       '<p class="bt-note">' + esc(FUT.what_the_intervals_are) + "</p>" +
@@ -2453,7 +2538,7 @@
         (FUT.ledger.first_as_of ? ' Logging began ' + esc(FUT.ledger.first_as_of) + '.' : '') +
         '</p>' : '') +
       '<p class="bt-dim">' + esc(FUT.sims) + " simulations, board hash " +
-      esc(FUT.content_hash) + ".</p></div>";
+      esc(FUT.content_hash) + ".</p></div>" + (on ? brPanel(ov) : "");
   }
 
   function renderValidation() {

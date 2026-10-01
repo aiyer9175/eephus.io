@@ -87,6 +87,14 @@ data/betting_shadow.json
 # `.cache/`, on the backup list in deploy/WEBMASTER.md); this copy is a derived
 # re-render written by every build and published by rsync.
 data/futures_ledger.json
+# The POSTSEASON BRACKET SIMULATOR (docs/betting-2026-10/BRACKET_SIM_GATE.md),
+# on the same two reasonings. Its payload is a nightly build product like
+# data/futures.json beside it, and its forward record is an accruing file whose
+# source of truth is .cache/bracket_sim/record.json; the data/ copy is a derived
+# re-render published by rsync, never tracked, because the nightly
+# `git checkout -- .` would revert every day's entry (gate 7.2, BS-1 (a)).
+data/bracket_sim.json
+data/bracket_sim_record.json
 # The LEARNING SERIES, derived the same way from the eval, the two ledgers and
 # its own append-only history. Rewritten by run_monthly step 9e every night.
 data/betting_learning.json

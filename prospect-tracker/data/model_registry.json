@@ -254,7 +254,7 @@
   },
   {
    "model_id": "betting_elo_benchmark",
-   "surface": "NOTHING SERVED. Validation ladder tier only: the benchmarks block of data/betting_model_eval.json (docs/diamond-betting.md section 6, pre-registered 2026-08-16). No page renders it and no served probability reads it.",
+   "surface": "Validation ladder tier: the benchmarks block of data/betting_model_eval.json (docs/diamond-betting.md section 6, pre-registered 2026-08-16). No page renders this tier, and no served price, slot or record row reads its per-game probabilities. One consumer reads the construction, not the tier (2026-10-01, docs/betting-2026-10/BRACKET_SIM_GATE.md section 3.2): postseason_bracket_sim walks the same literature Elo over the 2026 regular-season finals, frozen at its first run, as the prior for postseason games the board does not price.",
    "predicts": "P(home win) from game results ONLY, as the results-only floor tier of the benchmark ladder on the vintage eval window: what a model with zero features earns from wins and losses",
    "champion": "n/a (baseline). Fixed literature configuration: base rating 1500, K = 4, home advantage 24 Elo points, the published MLB Elo constants, NEVER fitted on the eval window or on anything else in this repository; season starts flat, no carryover, prediction strictly before each game's own update",
    "baseline": "the ladder's other tiers on the same window: home constant, de-vigged market open/close, and the feature model itself",
@@ -1829,6 +1829,18 @@
    "last_checked": "2026-09-24",
    "stale": false,
    "artifact_age_days": 61
+  },
+  {
+   "model_id": "postseason_bracket_sim",
+   "surface": "the Pennant and World Series columns and the postseason table of the Futures panel on /betting/, and the Pennant tile of the Franchise ODDS section, during the postseason only, labelled implied, no market; data/bracket_sim.json",
+   "predicts": "per postseason club, P(win each remaining round), P(pennant) and P(World Series), from the bracket state",
+   "champion": "bracket_v1: exact series recursion over the posted bracket; per game the served betting_game_prob p_home where the board prices the game, else the literature Elo (1500, K 4, 24 points home) over the 2026 regular-season finals, frozen at the first run; formats and home field per docs/betting-2026-10/BRACKET_SIM_GATE.md",
+   "baseline": "the coin bracket: the same state, every unplayed game at 0.5",
+   "metric": "Brier per round and pooled, and a ten-bin calibration table, on the daily forward record, read once after the World Series (docs/betting-2026-10/BRACKET_SIM_GATE.md, sections 10 and 11)",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "registration_status": "registered, forward record running, not read",
+   "notes": "Owner answers INT-A2 (b) and Q901-1 (c), 2026-10-01, recorded in _audit_2026-09-09/DECISIONS_FOR_OWNER.md: postseason odds on /betting/ come from a registered bracket-state simulator with its own daily forward record, labelled implied, with no market, from the 2026 postseason on. EVIDENCE IS REGULAR-SEASON ONLY: both input sources, the betting_game_prob pricer and the literature Elo, were built on regular-season games and neither has been graded on a postseason game. It replaces the end-of-season stamp ('As of the end of the regular season (<date>): postseason results are not in these odds.') on the Pennant and World Series columns only; Division, Playoffs, Bye, Proj W and Win band keep the season simulator (playoff_odds_sim) and the stamp. Built 2026-10-01 (task BRACKET_SIM_BUILD): bracket_sim.py, nightly step d10f after the board export, SERVE_BRACKET_SIM True (False restores both surfaces byte for byte). The forward record's source of truth is .cache/bracket_sim/record.json (one entry per date, first write wins, chain-hashed), re-rendered to data/bracket_sim_record.json. Nothing is scored before the one look after the World Series; eval_artifact stays null until then and becomes data/bracket_sim_eval.json, and the verdict then moves to provisional whatever the outcome. Never a price, an edge, a slot, a record row or a ledger row, and never an input to another model. Gate: docs/betting-2026-10/BRACKET_SIM_GATE.md."
   },
   {
    "model_id": "proj_calibration_map",

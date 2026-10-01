@@ -559,6 +559,12 @@ _SIDECAR_GLOBS = (
     # PV-04: the append-only provisional track record and its durable copy.
     "data/provisional_track_eval.json",
     ".cache/provisional_track/**/*",
+    # BRACKET_SIM_BUILD: the postseason bracket simulator's payload, its
+    # first-write-wins forward record (source of truth and derived copy) and
+    # the StatsAPI receipts it caches.
+    "data/bracket_sim*.json",
+    ".cache/bracket_sim/**/*",
+    ".cache/bracket/**/*",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -913,6 +919,13 @@ _SIDECAR_WRITE_TARGETS = (
     # PV-04: provisional_track resolves both at call time (update / commit_rows).
     ("provisional_track", "OUT_PATH", "data/provisional_track_eval.json"),
     ("provisional_track", "LEDGER_PATH", ".cache/provisional_track/ledger.jsonl"),
+    # BRACKET_SIM_BUILD: bracket_sim.run resolves all four at call time. The
+    # board is only READ there (gate 3.1); it is listed so the rule has no
+    # exception, the same reasoning as the results-cache readers above.
+    ("bracket_sim", "OUT_PATH", "data/bracket_sim.json"),
+    ("bracket_sim", "RECORD_PATH", ".cache/bracket_sim/record.json"),
+    ("bracket_sim", "RECORD_DERIVED_PATH", "data/bracket_sim_record.json"),
+    ("bracket_sim", "BOARD_PATH", "data/betting.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands
@@ -924,6 +937,7 @@ _SIDECAR_WRITE_DIRS = (
     ("betting_model", "GAME_CACHE", ".cache/betting"),
     ("dfs_export", "ARCHIVE_DIR", ".cache/dfs_history"),
     ("provisional_history", "CACHE_DIR", ".cache/provisional_history"),
+    ("bracket_sim", "FETCH_CACHE_DIR", ".cache/bracket"),
 )
 
 #: Modules that turn one of these paths into a STRING for readers of a

@@ -403,6 +403,11 @@ SCHEDULED_EXPORTS = (
     # (step 6b2a, owner answer M25-3). A refused or failed fetch keeps the last
     # good CSV and files ok=False here, so a card frozen at an old date shouts.
     "savant_aaa_batters",
+    # The postseason bracket simulator (step d10f, docs/betting-2026-10/
+    # BRACKET_SIM_GATE.md 9): a crash writes a crash entry and no number, and
+    # the Futures panel falls back to the end-of-season stamp. Watched so the
+    # deploy shell prints the red instead of the page going quietly stale.
+    "bracket_sim",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -3739,6 +3744,28 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 log.exception("ledger export failed - continuing")
                 _record_ingest("ledger_export", False, 0, f"ledger export raised: {e}",
                                "mlb", log)
+
+        # --- d10f. The postseason bracket simulator -----------------------
+        with _step("d10f. Postseason bracket simulator (bracket_sim.json)", log):
+            # docs/betting-2026-10/BRACKET_SIM_GATE.md 6.2: one isolated step,
+            # AFTER the 9e board export (it reads the board that export
+            # wrote, for the games the board prices) and after d9's
+            # write_futures (it quotes the season simulator's build date in the
+            # division-columns stamp), and BEFORE 6b7d, whose ODDS section
+            # reads its payload. It writes data/bracket_sim.json, appends the
+            # day's frozen entry to .cache/bracket_sim/record.json (first write
+            # wins) and re-renders data/bracket_sim_record.json. A crash files
+            # a red under "bracket_sim" and nothing else waits on it. Nothing
+            # in the betting pricer, a slot, the record or a ledger reads it.
+            try:
+                import bracket_sim as _bsim
+                _br = _bsim.run(log_fn=log.info)
+                _record_ingest("bracket_sim", bool(_br.get("ok")), _br.get("n_clubs", 0),
+                               (_br.get("message") or "")[:200], "mlb", log)
+            except Exception as e:                # noqa: BLE001
+                log.exception("bracket simulator failed - continuing")
+                _record_ingest("bracket_sim", False, 0,
+                               f"bracket simulator raised: {e}", "mlb", log)
 
         # --- 6b7d. Franchise board ----------------------------------------
         with _step("6b7d. Franchise board (franchise_board.json)", log):

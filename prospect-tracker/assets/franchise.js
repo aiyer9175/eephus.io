@@ -671,17 +671,34 @@
       '<div class="fr-tiles">' + tile("Hall of Fame inductees", esc(nInt(h.n)), sub, "", d.links.hof) + "</div>" + list +
       '<p class="fr-count">' + esc(h.rule || "") + " Frozen " + esc(h.rule_frozen || "") + ". " + esc(h.credit_basis || "") + "</p>";
   }
+  // THE PENNANT TILE DURING THE POSTSEASON (docs/betting-2026-10/BRACKET_SIM_GATE.md
+  // section 8): while the bracket simulator serves, the tile and its World Series
+  // line read s.bracket, labelled implied, no market, with that row's own chip and
+  // as-of date; the Playoffs tile, its division and bye lines and Projected wins
+  // keep the season simulator, its stamp and the section chip. Without s.bracket
+  // the tile renders exactly as before.
+  function pennantTile(d, s) {
+    var b = s.bracket;
+    if (!b) return tile("Pennant", esc(pct(s.pennant_pct, 1)), "World Series " + esc(pct(s.ws_pct, 1)), "", d.links.betting_futures);
+    var chip = '<span class="eephus-beta fr-verdict" title="' + esc(b.basis) + '">' + esc(b.registry_row) + " " + esc(b.verdict) + "</span>";
+    return tile("Pennant (" + esc(b.label) + ")", esc(pct(b.pennant_pct, 1)),
+      "World Series " + esc(pct(b.ws_pct, 1)) + " &middot; as of " + esc(b.as_of) + " " + chip, "", d.links.betting_futures);
+  }
   function secOdds(d) {
     var s = d.sections.odds;
     var t = tile("Projected wins " + esc(DATA.season_now), esc(n1(s.proj_wins)), "band " + esc(nInt(s.p10)) + " to " + esc(nInt(s.p90)) + " &middot; " + esc(s.record || ""), "", d.links.betting_futures) +
       tile("Playoffs", esc(pct(s.playoff_pct, 1)), "division " + esc(pct(s.division_pct, 1)) + " &middot; bye " + esc(pct(s.bye_pct, 1)), "", d.links.betting_futures) +
-      tile("Pennant", esc(pct(s.pennant_pct, 1)), "World Series " + esc(pct(s.ws_pct, 1)), "", d.links.betting_futures) +
+      pennantTile(d, s) +
       tile(gl("Pythag vs actual", "pythag_pct"), esc(pct3(s.pythag_pct)), "actual " + esc(pct3(s.actual_pct)) + " &middot; " + esc(copy("pythag_label"))) +
       tile("Strength of schedule", esc(pct3(s.sos)), "rank " + esc(nInt(s.sos_rank)) + " &middot; IL out 60+: " + esc(nInt(s.il_out_60)));
     // The season-over line comes from the Futures payload as written, so the two
-    // surfaces cannot disagree about when the odds stopped learning.
-    var asOf = copy("odds_as_of");
+    // surfaces cannot disagree about when the odds stopped learning. While the
+    // bracket simulator serves, the reworded stamp and its line come from that
+    // payload instead, quoted through the export.
+    var asOf = s.bracket ? copy("odds_division_as_of") : copy("odds_as_of");
+    var brLine = s.bracket ? copy("odds_bracket_line") : copy("odds_bracket_not_updated");
     return (asOf ? '<p class="fr-note"><strong>' + esc(asOf) + "</strong></p>" : "") +
+      (brLine ? '<p class="fr-note"><strong>' + esc(brLine) + "</strong></p>" : "") +
       '<div class="fr-tiles">' + t + "</div>" +
       '<p class="fr-note">' + esc(copy("odds_interval")) + "</p>" +
       '<p class="fr-count">' + esc(copy("odds_ledger")) + ". " + esc(copy("odds_no_market")) + "</p>" +

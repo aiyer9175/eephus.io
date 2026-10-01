@@ -51,6 +51,7 @@ happen inside the called module, so this file alone cannot split them).
 | d10c. TJStats Live second capture | - |
 | d10d. ESPN new-article probe | ledger_board.json |
 | d10e. Club Ledger board (ledger_board.json) | ledger_board.json |
+| d10f. Postseason bracket simulator (bracket_sim.json) | bracket_sim.json, bracket_sim_record.json, record.json |
 | 6b7d. Franchise board (franchise_board.json) | franchise_board.json, franchise_spine.json, timeseries.json |
 | d11. Rebuild site (build_site) | pipeline_steps_daily.json, timeseries.json |
 

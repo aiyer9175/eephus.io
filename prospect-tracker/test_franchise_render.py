@@ -456,7 +456,7 @@ def test_the_odds_section_prints_the_season_over_line_only_when_the_payload_has_
     d = _served()
     line = ("As of the end of the regular season (2026-10-01): postseason "
             "results are not in these odds.")
-    p = _copy.deepcopy(d)
+    p = _strip_bracket(_copy.deepcopy(d))
     p["copy"]["odds_as_of"] = line
     html, _ = _render(team="LAD", payload=p)
     sec = html.split('data-frsec="odds"')[1]
@@ -465,3 +465,46 @@ def test_the_odds_section_prints_the_season_over_line_only_when_the_payload_has_
     p["copy"]["odds_as_of"] = ""
     html, _ = _render(team="LAD", payload=p)
     assert "postseason results are not in" not in html
+
+
+def _strip_bracket(p):
+    """The payload as it is without the postseason bracket simulator (its flag
+    off, or no payload): no odds.bracket block and none of its copy keys."""
+    for c in p["clubs"]:
+        c["sections"]["odds"].pop("bracket", None)
+    for k in ("odds_bracket_line", "odds_division_as_of", "odds_bracket_not_updated"):
+        p["copy"].pop(k, None)
+    return p
+
+
+def test_the_pennant_tile_reads_the_bracket_simulator_while_it_serves():
+    """docs/betting-2026-10/BRACKET_SIM_GATE.md 8: the Pennant tile and its
+    World Series line read odds.bracket, labelled implied, no market, with the
+    postseason_bracket_sim chip and its date; the reworded stamp and the line
+    print above the tiles; the Playoffs tile keeps the season simulator. With
+    the block absent the tile is the season simulator's, unlabelled."""
+    import copy as _copy
+    p = _strip_bracket(_copy.deepcopy(_served()))
+    lad = next(c for c in p["clubs"] if c["code"] == "LAD")
+    lad["sections"]["odds"]["bracket"] = {
+        "pennant_pct": 0.123456, "ws_pct": 0.0456, "seed": 2, "series_now": "fixture",
+        "as_of": "2026-10-02", "label": "implied, no market",
+        "registry_row": "postseason_bracket_sim", "verdict": "unvalidated", "basis": "fixture"}
+    note = ("As of the end of the regular season (2026-10-02): postseason results are not "
+            "in the Division, Playoffs, Bye, Proj W and Win band columns.")
+    brline = ("Pennant and World Series: implied by the postseason bracket simulator as of "
+              "2026-10-02, no market.")
+    p["copy"]["odds_division_as_of"] = note
+    p["copy"]["odds_bracket_line"] = brline
+    p["copy"]["odds_as_of"] = "As of the end of the regular season (2026-10-02): postseason results are not in these odds."
+    html, _ = _render(team="LAD", payload=p)
+    sec = html.split('data-frsec="odds"')[1]
+    assert note in sec and brline in sec
+    assert sec.index(brline) < sec.index("fr-tiles")
+    assert "are not in these odds" not in sec
+    assert "Pennant (implied, no market)" in sec and "12.3%" in sec and "World Series 4.6%" in sec
+    assert "postseason_bracket_sim unvalidated" in sec and "as of 2026-10-02" in sec
+    del lad["sections"]["odds"]["bracket"]
+    html, _ = _render(team="LAD", payload=p)
+    sec = html.split('data-frsec="odds"')[1]
+    assert "Pennant (implied" not in sec and "postseason_bracket_sim" not in sec

@@ -461,3 +461,53 @@ only: no test computes a number from the real 2026 bracket.
   numbers. (b) Keep the season simulator's price: it would sit beside a World
   Series column it no longer matches. (c) Derive the price from this
   simulator: lifts the ban in section 12 for this one column.
+
+## 16. Build record (BRACKET_SIM_BUILD, 2026-10-01)
+
+Appended by the build. No rule above changes.
+
+- **Code.** `bracket_sim.py`: a pure core (`parse_bracket`, `derive_seeds`,
+  `build_structure`, `resolve_inputs`, `compute`, `outputs_from`) and `run()`,
+  the nightly step. It runs as step `d10f` of `run_monthly.py`, after 9e (the
+  board export) and d9 (`write_futures`) and before 6b7d (the Franchise board,
+  which reads its payload); a crash files
+  `_record_ingest("bracket_sim", False, 0, reason)` and `bracket_sim` is on
+  `SCHEDULED_EXPORTS`.
+- **Flag.** `bracket_sim.SERVE_BRACKET_SIM = True`, landed 2026-10-01, inside
+  the window of section 8. False keeps the record running and restores both
+  surfaces byte for byte.
+- **Paths.** The record is `.cache/bracket_sim/record.json`. Its derived copy
+  `data/bracket_sim_record.json` and the payload `data/bracket_sim.json` are
+  gitignored and published by the nightly rsync, like `data/futures.json`. The
+  two StatsAPI responses of each run are kept as receipts under
+  `.cache/bracket/<as_of>_series.json` and `<as_of>_schedule.json` with
+  `fetched_at`, and are never read back as a source.
+- **Choices where this file was silent** (defaults, recorded so the scorer can
+  read them):
+  1. `machine` is `box` when the nightly shell's `EEPHUS_SKIP_INPROC_BUILD=1` is
+     set (or `EEPHUS_MACHINE=box`), else `local`.
+  2. The schedule call's window is `<season>-09-15` to `<season>-11-30`.
+  3. A posted team that does not resolve through `canonical_org_from_id` is a
+     placeholder only when its name carries a slash or one of seed, champion,
+     winner, TBD or TBA; any other unresolved club is a crash (section 9).
+  4. Seed 3 is the Wild Card host that is a division champion; seed 1 is the
+     bye whose posted Division Series opponent, or placeholder such as
+     "ATL/PHI", is the 4/5 series. The standings check is exact on winning
+     percentage: equal records pass, since MLB's tiebreak is not modelled.
+  5. A neutral site is a posted game whose venue id differs from the posted
+     host's home venue id.
+  6. `late` is true when a game of the as-of officialDate has a codedGameState
+     other than S, P, D or C at `generated_at`.
+  7. On a crash, "no game played since the last good entry" is read from the
+     played game ids when the bracket was fetched, else from the last good
+     entry's `next_game_start`.
+  8. Once the World Series is decided the step writes no further entry and
+     serves the final one. A run in a season other than the record's writes no
+     entry: a new season's record is a later registration.
+  9. Outputs are stored to six decimals; the 6.3 checks run on the unrounded
+     values and are stored with the entry, and the replay test compares the
+     canonical bytes of the recomputed outputs and checks.
+- **Where the task text differed from this file.** The build task asked for a
+  seeded simulation count and a tracked `data/bracket_sim_record.json`. This
+  file registers an exact computation with no seed (section 5) and a gitignored
+  derived copy (section 7.2, BS-1 (a)); the build follows this file.
