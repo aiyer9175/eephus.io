@@ -29,7 +29,7 @@ out = {
             "published-list population (source-graded prospects with a pro track record) and "
             "keyed on the GRADE alone, then applied unchanged to a provisional grade fitted "
             "off as little as 80 plate appearances of DSL production"),
-        "served_example": {"player": "an 87-PA DSL bat at provisional grade 44.9",
+        "served_example": {"player": "an 87-PA DSL bat at provisional grade 44.9 (2026-07-25 build)",
                            "p_bust_before": 0.510, "p_bust_after": 0.884,
                            "p_bust_on_the_pre_cap_deployed_build": 0.201},
     },
@@ -130,7 +130,9 @@ out = {
     "limits": [
         "serves p_bust and p_bucket only; surplus dollars stay on the engine grade-anchored path",
         ("hitter 45+ band still under-called out of fold (0.743 against 0.813 observed, n = 107); "
-         "the live provisional maximum is 44.9 so that band is nearly empty in production"),
+         "the provisional maximum is " + str(new["meta"]["grade_dist"]["max"]) + " on the "
+         + str(new["meta"]["generated_at"]) + " build read here (data/xfv_ungraded.json "
+         "meta.grade_dist.max), so check how full that band is before relying on this"),
         ("MiLB feature history floors at 2014, so early cohort rows see 1 to 2 prior seasons; that "
          "matters for n_milb_seasons at the upper levels, not for the 17-to-19-year-old DSL/CPX "
          "population the defect lives in"),

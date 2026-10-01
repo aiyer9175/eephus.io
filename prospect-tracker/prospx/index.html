@@ -13112,8 +13112,8 @@ function fvCloseLabel(p) {
 }
 
 // Compact eFV-over-seasons chart for provisional (source-ungraded, no-snapshot) prospects:
-// the grade the production-only model would have given AS-OF each MiLB season, so an un-scouted
-// prospect still gets an eFV trajectory. Cyan line on the FV scale; one labeled dot per season.
+// each MiLB season re-scored with the CURRENT production-only model (not the grade served at
+// the time), so an un-scouted prospect still gets an eFV trajectory. Cyan line on the FV scale; one labeled dot per season.
 // A single-point series is legal here: first-pro-season prospects have one grade and no
 // trajectory, and one dot on the frame reads their level honestly where an empty slot did not.
 function makeProvisionalEfvChart(series, dims) {
@@ -33391,9 +33391,9 @@ function efvRankValue(p) {
   const x = getEfv(p);
   // Board ordering = the board number, decimal (so same-integer players order by the
   // underlying decimal), with consensus FV as the fallback where eFV abstains.
-  // Provisional (source-ungraded) prospects carry real uncertainty vs a graded grade,
-  // so they take a fixed penalty: a provisional X sits BELOW a graded X (ordering
-  // WITHIN the provisional cohort is preserved).
+  // Provisional (source-ungraded) prospects take NO rank penalty (_PROV_RANK_PENALTY = 0
+  // since 2026-07-25): a provisional X sorts exactly like a graded X and is marked by the
+  // dashed badge instead.
   const v = efvBoardValue(x);
   // F2 repair 2026-07-25: the sort value MUST equal the displayed value, or the visible
   // grade column stops being monotonic in board order - which is the entire point of the
@@ -33443,9 +33443,9 @@ function buildEfvRankMap() {
   // (efvPrevGrade), so the rank chip shows how many SPOTS a player climbed/fell on the eFV
   // board over the last update window. Players flat over that window keep their slot (delta 0),
   // so only genuine recent movers shift -- no lifetime climbs.
-  // The provisional penalty MUST be applied on both sides. efvPrevGrade returns a bare
-  // board value while efvRankValue subtracts _PROV_RANK_PENALTY, so without this every
-  // provisional prospect would read a phantom climb worth exactly the penalty.
+  // Both sides use the bare board value. When efvRankValue subtracted _PROV_RANK_PENALTY
+  // (retired 2026-07-25, now 0) this had to subtract it too, or every provisional prospect
+  // read a phantom climb worth exactly the penalty.
   const prevVal = p => {
     const pv = efvPrevGrade(p);
     if (pv == null) return efvRankValue(p);
@@ -48858,9 +48858,10 @@ function renderPlayerDetail(key) {
        ${transactionLegend()}
        ${makeFvTape(p.points)}`
     : (p._is_provisional && _provEfvHist && _provEfvHist.length >= 2)
-      // Provisional prospects have no scout snapshots, but DO have a per-season eFV trajectory
-      // (the production-only grade as-of each MiLB season). Plot that instead.
-      ? `<div class="detail-title">eFV history <span class="detail-title-sub">production-only grade as-of each MiLB season · no source grades to chart</span></div>${makeProvisionalEfvChart(_provEfvHist, { width: 360, height: 150 })}`
+      // Provisional prospects have no scout snapshots, but DO have a per-season eFV trajectory:
+      // each past MiLB season re-scored with TODAY's production-only model, not the grade the
+      // site served at the time (that record is .cache/provisional_history/). Label it so.
+      ? `<div class="detail-title">eFV history <span class="detail-title-sub">each MiLB season re-scored with the current model · no source grades to chart</span></div>${makeProvisionalEfvChart(_provEfvHist, { width: 360, height: 150 })}`
       : _provSingle
         // One pro season on record: a single dot on the same frame. The old text fallback
         // ("not enough FV updates") described a scouting cadence these players are not on -

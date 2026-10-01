@@ -21,22 +21,22 @@ Imputing a constant FV into the shipped model was tested and FAILS (the FV weigh
 dominant that production-only predictions floor at the -2 WAR clamp; degenerate). The
 no-FV fit is the fix.
 
-  VALIDATION (forward-chained on the labeled matrix, low-minors DSL/CPX/A cohort -- the
-  target population; data/xfv_ungraded_eval.json):
-    HITTERS  keep level_rank: low-minors age<=21 Spearman vs realized WAR ~0.22, all-levels
-             ~0.31 -- nearly matching the 0.26 consensus FV gets on graded low-minors bats,
-             for players who have NO consensus at all. A real coverage + discovery win.
-    PITCHERS drop level_rank (it HURTS the low-minors read -- it rewards quad-A org arms
-             reaching AAA): low-minors Spearman jumps 0.09 -> 0.24. The K-rate signal (a DSL
-             arm missing bats) is the genuine lead; conservative by design (weak signal).
+  VALIDATION. data/xfv_ungraded_eval.json is the gate battery: the served grade's
+  forward-chained Spearman against realized first-6-season WAR, scored on the source-GRADED
+  labelled pool the ridge is fitted on (mostly AA / AAA, while the served pool leans DSL;
+  the artifact's population block carries the shares), so it measures WAR skill on graded
+  prospects, not how well the grade anticipates the grade a source later assigns. Its
+  legacy_2026_07_14 block reproduces the older two-cohort protocol that evaluate() below
+  still runs. No figure is quoted here: read the artifact. HITTERS keep level_rank; PITCHERS drop it (it rewards quad-A org arms
+  reaching AAA and hurt the low-minors read when it was measured).
 
-  GRADE MAP: a conventional, CAPPED, ABSOLUTE linear map war_pred -> FV (NOT a cohort
-  quantile map -- a weak year must not inflate the top). Calibrated so the cohort matches
-  both the owner's spec and conventional FV semantics: MOST land 20-30 (org filler), only
-  genuine production breakouts reach 35-43, and a hard cap (43 hit / 40 pit) keeps any
-  un-scouted player from masquerading as a real prospect (a true 45+ would have been
-  graded). Heavy reliability shrinkage (inherited from _season_rates) keeps small-sample
-  DSL lines from spiking.
+  GRADE MAP: a conventional ABSOLUTE linear map war_pred -> FV (NOT a cohort quantile map:
+  a weak year must not inflate the top), floored at 20 and compressed above a knee toward a
+  ceiling by an order-preserving SOFT cap (_GRADE_MAP below; the served values are echoed in
+  data/xfv_ungraded.json meta.grade_map). Most rows land 20-30 (org filler) and genuine
+  production breakouts reach the knee, so an un-scouted player cannot print a top-prospect
+  grade. Heavy reliability shrinkage (inherited from _season_rates) keeps small-sample DSL
+  lines from spiking.
 
 These grades are PROVISIONAL and explicitly flagged (xfv_ungraded + xfv_provisional) so
 every surface can show them as the production-only leading indicator they are, distinct
@@ -67,7 +67,9 @@ from efv_dataset import matrix_path, _milb_features, _f, CURRENT_SEASON
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
 OUT_PATH = DATA_DIR / "xfv_ungraded.json"
-EVAL_PATH = DATA_DIR / "xfv_ungraded_eval.json"
+EVAL_PATH = DATA_DIR / "xfv_ungraded_eval.json"   # the gate battery; read-only here
+# evaluate(persist=True) writes the legacy protocol here, never over EVAL_PATH.
+LEGACY_EVAL_PATH = DATA_DIR / "_labs" / "xfv_ungraded_legacy_protocol.json"
 _BUCKETS = ("bust", "bench", "regular", "good", "star")
 
 # No-FV production feature sets (see module docstring + data/xfv_ungraded_eval.json).
@@ -97,17 +99,16 @@ _NOFV_MONO = {
 
 # Conventional grade map with a SOFT ceiling: grade = BASE + SLOPE*war_pred, floored at
 # FLOOR, then compressed above KNEE toward CEIL: g' = KNEE + (CEIL-KNEE)*(1-exp(-(g-KNEE)/SOFT)).
-# Spec-calibrated (owner: "low, 20-30 for most, breakouts higher") + validated to match
-# conventional FV semantics on the real roster cohort (hitters median ~23 / 77% <=30;
-# pitchers median ~24 / 87% <=30). WHY SOFT, not a HARD CAP (cap test, 2026-06-23):
-#   HITTERS  uncapped grade carries REAL forward-chained signal above 43 (realized 6yr WAR
-#            bins: [43,48) mean 3.43, [48+) mean 6.10; Spearman 0.29 among grade>=40), so a
-#            hard cap at 43 DISCARDS signal -- the genuine young-for-level breakouts (an 18-yo
-#            holding AA) deserve mid-to-high-40s. KNEE 43 / CEIL 49 lets them through while
-#            bounding the extreme (an un-scouted player still can't claim top-prospect status
-#            without scout corroboration; ungraded-selection risk caps the magnitude).
-#   PITCHERS signal above 40 is NOISE (Spearman 0.077; bins flat) -- the top uncapped arms are
-#            small-sample high-K complex-ball spikes. KNEE 38 / CEIL 42 compresses hard.
+# Spec-calibrated to the owner's "low, 20-30 for most, breakouts higher" (the served
+# distribution is data/xfv_ungraded.json meta.grade_dist). WHY SOFT, not a HARD CAP (cap
+# test, 2026-06-23; its numbers were not kept in an artifact, so none is quoted here):
+#   HITTERS  the uncapped grade read real forward-chained signal above the old hard cap of
+#            43, so a hard cap discarded the young-for-level breakouts (an 18-yo holding AA).
+#            The soft hitter knee / ceiling below lets them through while bounding the
+#            extreme (an un-scouted player still cannot claim top-prospect status).
+#   PITCHERS the signal above 40 read as noise (the top uncapped arms were small-sample
+#            high-K complex-ball spikes), so the pitcher map compresses hard. The 2026-06-23
+#            pitcher knee 38 / ceiling 42 was de-rated on 2026-07-25 to the values below.
 # Soft (not hard) so ORDER is preserved above the knee -- it matters now that these grades fold
 # into the flagship board rank + farm composite.
 _GRADE_MAP = {
@@ -128,7 +129,7 @@ _GRADE_MAP = {
 # not top compression). A Primera-class breakout then grades to its true model value
 # instead of piling at the ceiling. The soft ceiling is ORDER-PRESERVING (strictly
 # monotone in war above the knee, identity below), and the low-minors OOS harness
-# (evaluate() / data/xfv_ungraded_eval.json) scores _war(), NOT _grade() -- so this
+# (evaluate(), the legacy protocol) scores _war(), NOT _grade() -- so this
 # flip is Spearman-INVARIANT by construction; the only effect is de-compression of the
 # served grade distribution. Default OFF; the Wave-F consolidator flips to True on ship.
 # PROVISIONAL CAP RESTORED 2026-07-25 (owner call, docs/EFV_FRONTIER_AUDIT.md follow-up).
@@ -245,8 +246,11 @@ _LEVEL_ETA = {"DSL": 6.0, "CPX": 5.0, "A": 4.5, "A+": 3.5, "AA": 2.5, "AAA": 1.5
 #    defect lives in is 17 to 19 year olds with 1 to 2 pro seasons anyway.
 #  * Residual: the hitter 45+ band is still under-called out of fold (0.743
 #    against 0.813 observed, n = 107). The served provisional map tops out at
-#    CEIL 49 and the live artifact's maximum is 44.9, so that band is nearly
-#    empty in production. Not repaired here.
+#    CEIL 49. On the 2026-07-25 build the artifact maximum was 44.9 and that
+#    band was nearly empty; it is not empty now (6 hitter rows at 45+ on the
+#    2026-09-24 build, 3 of them served, in
+#    data/provisional_freeze/xfv_ungraded_2026-09-24.json; today's maximum is
+#    data/xfv_ungraded.json meta.grade_dist.max). Not repaired here.
 #  * A row whose level does not resolve to the ladder keeps the incumbent
 #    p_bust and is flagged p_bust_low_confidence rather than fed a made-up
 #    number.
@@ -554,10 +558,24 @@ def _factors(ridge, feats, top: int = 3, side: str = "hit") -> list:
                              min_mag=0.05, top=top)
 
 
-def evaluate(persist: bool = True) -> dict:
-    """Forward-chained rank validation vs realized WAR on the low-minors target cohort
-    (the governance artifact -- proves the no-FV production model carries OOS signal where
-    there is no consensus FV). Mirrors the flagship eval protocol."""
+def _legacy_eval_target(path: Path | None = None) -> Path:
+    """Where evaluate(persist=True) may write: the lab path, never EVAL_PATH.
+
+    EVAL_PATH holds the gate battery (tools/efv_ungraded_gate_lab.py) that the
+    registry row xfv_ungraded cites. evaluate() writes the legacy two-number format,
+    so one `python efv_ungraded.py --eval` used to erase the battery (PROVISIONAL_V2
+    defect D4). A target that resolves to EVAL_PATH is refused."""
+    target = Path(path) if path is not None else LEGACY_EVAL_PATH
+    if target.resolve() == Path(EVAL_PATH).resolve():
+        raise ValueError(f"evaluate() refuses to write the gate artifact {EVAL_PATH}")
+    return target
+
+
+def evaluate(persist: bool = False, out_path: Path | None = None) -> dict:
+    """Forward-chained rank validation vs realized WAR on the low-minors target cohort,
+    the legacy two-cohort protocol. Mirrors the flagship eval protocol. The governance
+    artifact is the gate battery in data/xfv_ungraded_eval.json, which this function
+    never writes: persist=True writes LEGACY_EVAL_PATH (data/_labs/) instead."""
     out = {"generated_at": __import__("datetime").date.today().isoformat(),
            "model": "eFV ungraded (no-FV production ridge)", "by_side": {}}
     for side in ("hit", "pit"):
@@ -592,13 +610,22 @@ def evaluate(persist: bool = True) -> dict:
                         T.append(r["target"])
             res[label] = {"n": len(P), "spearman_vs_realized_war": _spearman(P, T) if len(P) >= 8 else None}
         out["by_side"][side] = {"features": keys, "cohorts": res}
-    out["note"] = ("Production-only (no consensus FV) ranks realized WAR among un-graded-analog "
-                   "low-minors players; this is the signal the provisional ungraded grade rests on. "
-                   "Hitters ~0.22 low-minors / ~0.31 all-levels; pitchers ~0.24 low-minors (level_rank "
-                   "dropped). These are PROVISIONAL leading-indicator grades, not the flagship.")
+    def _fmt(side, cohort):
+        v = out["by_side"][side]["cohorts"].get(cohort) or {}
+        rho = v.get("spearman_vs_realized_war")
+        return f"{'n/a' if rho is None else round(rho, 3)} (n {v.get('n', 0)})"
+    out["note"] = ("Production-only (no consensus FV) Spearman against realized first-6-season "
+                   "WAR on the source-GRADED labelled pool, this run: hitters low-minors "
+                   f"{_fmt('hit', 'low_minors_age_le21')} / all-levels {_fmt('hit', 'all_levels')}; "
+                   f"pitchers low-minors {_fmt('pit', 'low_minors_age_le21')} / all-levels "
+                   f"{_fmt('pit', 'all_levels')} (level_rank dropped for pitchers). WAR skill on "
+                   "graded prospects, not grading skill on the served pool. These are PROVISIONAL "
+                   "leading-indicator grades, not the flagship.")
     if persist:
-        EVAL_PATH.write_text(json.dumps(out, indent=1), encoding="utf-8")
-        log.info("wrote %s", EVAL_PATH)
+        target = _legacy_eval_target(out_path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(out, indent=1), encoding="utf-8")
+        log.info("wrote %s", target)
     return out
 
 
@@ -831,7 +858,9 @@ if __name__ == "__main__":
     import sys
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     if "--eval" in sys.argv:
-        rep = evaluate()
+        # Prints only; --write also saves the run to LEGACY_EVAL_PATH (data/_labs/).
+        # Neither touches the gate battery at EVAL_PATH.
+        rep = evaluate(persist="--write" in sys.argv)
         for side, blk in rep["by_side"].items():
             print(f"\n=== {side} (no-FV production model) ===")
             for c, v in blk["cohorts"].items():
