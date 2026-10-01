@@ -101,6 +101,13 @@ REGISTRY_IDS = ("arb_award", "team_win_projections", "prospect_surplus", "fa_mar
 # data/ledger_clubs/CODE.json and the board keeps a preview of PREVIEW_N rows
 # per block plus the reconciliation blocks that tie every row layer to the v1
 # roll-up it sits under.
+#
+# Trajectory trim (owner answer VAL1-Q1, 2026-09-30): the full-preview board
+# measured 961,385 bytes against the 950,000 guard, so the page had dropped to
+# five preview rows. The three per-club snapshot series (surplus.trajectory,
+# farm.trajectory_active, farm.prospect_trajectory) now live in the club's
+# shard beside the rows, the board keeps one receipt (shards.trajectories) and
+# the page draws the sparklines once the shard is in. The guard is unchanged.
 # --------------------------------------------------------------------------
 
 SHARD_DIRNAME = "ledger_clubs"
@@ -113,6 +120,11 @@ PREVIEW_N = 10
 PREVIEW_N_SMALL = 5
 PREVIEW_GUARD_BYTES = 950_000
 BOARD_CAP_BYTES = 1_000_000
+#: The three per-club snapshot series live in the shard, never on the board
+#: (owner answer VAL1-Q1); the board carries this receipt under shards.
+TRAJECTORY_KEYS = ("surplus.trajectory", "farm.trajectory_active", "farm.prospect_trajectory")
+TRAJECTORY_RECEIPT = ("surplus.trajectory, farm.trajectory_active and farm.prospect_trajectory live in "
+                      "each club's row file (ledger_clubs/CODE.json), not on this board")
 
 #: Farm reconciliation (owner decision D3): the leaf is a net figure written by
 #: storage.export_timeseries_json at one point of the nightly and the rows come
@@ -1088,7 +1100,6 @@ def build_all() -> tuple:
                 "options_left_0": sum(1 for p in tvp if (p.get("crunch") or {}).get("options_left") == 0),
                 "by_salary_basis": dict(Counter(p.get("salary_basis") or "none" for p in tvp)),
             },
-            "trajectory": trajectory.get(c) or [],
         }
         wins27, war27 = out.get("wins"), out.get("war")
         ratio = (float(war27) / (float(tax27) / 1e6)) if (war27 and tax27) else None
@@ -1334,7 +1345,6 @@ def build_all() -> tuple:
                               s.get("surplus_total_mm"), s.get("cost_basis_mm"), s.get("count") or 0,
                               s.get("surplus_per_fv_pt_mm")]
         farm["method"] = farm_method
-        farm["trajectory_active"] = trajectory_active.get(c) or []
         farm["n_prospects"] = len(prospect_rows)
         # graduates: debuts_lite rows for the club, two engines per row, never summed
         grad_rows = []
@@ -1479,10 +1489,11 @@ def build_all() -> tuple:
         shard_docs[c] = {
             "club": c, "statsapi_code": code, "board_generated_at": generated_at, "generated_at": generated_at,
             "calibration": None, "cba_banner": True,
-            "farm": {"prospects": prospect_rows, "graduates": grad_rows, "picks": picks, "prospect_trajectory": {}},
+            "farm": {"prospects": prospect_rows, "graduates": grad_rows, "picks": picks, "prospect_trajectory": {},
+                     "trajectory_active": trajectory_active.get(c) or []},
             "arbitration": {"ladders": ladders, "realized_rows": realized_rows},
             "contracts": {"paths": paths},
-            "surplus": {"rows_debuted": rows_debuted},
+            "surplus": {"rows_debuted": rows_debuted, "trajectory": trajectory.get(c) or []},
             "field_key": {}, "columns": {},
         }
 
@@ -1713,6 +1724,7 @@ def build_all() -> tuple:
         "trade_currency_basis": ("Trade Machine currency (trade_machine_surplus provisional); overlaps the "
                                  "MLB and farm legs by construction and is never added to them"),
         "trajectory_note": "since late June, no earlier history",
+        "trajectory_loading": "the series loads per club",
         "ratio_bases": (f"Spotrac CBT payroll {CLASS_YEAR} over team_win_projections {CLASS_YEAR} ({tw})"),
         "cost_plus_basis": ("descriptive index: a ratio of two served numbers, not a model. The denominator is "
                             f"Spotrac's {CLASS_YEAR} CBT payroll, which carries no arbitration or pre-arbitration "
@@ -1893,7 +1905,6 @@ def build_all() -> tuple:
         "payroll.s2027.split": "[active_usd, injured_usd, retained_usd, buried_usd]",
         "arbitration.rows": "[name, mlbam, token_2027, proj_2027_usd, lo_usd, hi_usd, years_left, war_2027, class, flags]",
         "arbitration.realized.seasons": "[season, n, actual_usd, ours_usd, ou_mkt_usd, ou_war_usd, war]; ou_mkt and ou_war are never combined",
-        "surplus.trajectory": "[snapshot_date, trade_value_mm sum]",
         "farm.pools": "year -> [pool_usd, status, picks [[pick_overall, slot_usd]]]",
         "farm.draft_paid": "year -> [n_picks, n_signed, n_unsigned, paid_usd, n_slotted, slot_usd_on_slotted, paid_usd_on_slotted, over_slot_usd, slot_coverage_pct, pool_usd, pool_used]; paid_usd is every round; pool_used = paid_usd_on_slotted / pool_usd, the round 1-10 slotted bonuses over the published pool (round 11+ bonuses above $150,000 are not added)",
         "farm.lottery": "[pick_pos, odds_pct, odds_top6_pct, wins, losses, snapshot_date, source]",
@@ -1955,7 +1966,14 @@ def build_all() -> tuple:
             "[key, name, pos, tv_mm, tv_lo_mm, tv_hi_mm, tv_tier, tv_grade, surplus_source, salary_basis, "
             "control_thru, control_why, in_contract_rows]; the trade board's debuted rows for the club; "
             "active rows are the farm ledger's prospect rows and are not repeated"),
-        "farm.prospect_trajectory": "key -> [[snapshot_date, trade_value_mm]] for the preview keys only",
+        "farm.prospect_trajectory": ("key -> [[snapshot_date, trade_value_mm]] for the preview keys only "
+                                     "(shard; the board's preview rows draw it once the shard is in)"),
+        "surplus.trajectory": ("[snapshot_date, trade_value_mm sum] over every row of the club on that "
+                               "snapshot (shard, moved off the board 2026-09-30)"),
+        "farm.trajectory_active": (
+            "[snapshot_date, sum of trade_value_mm over that snapshot's active-status rows]; each "
+            "snapshot's own actives, gross eFV basis, no bonus netting, so it is not the leaf's series "
+            "(shard, moved off the board 2026-09-30)"),
     }
     board_field_key = {
         "farm.preview": "same legend as farm.prospects, the top PREVIEW_N rows by surplus_mm (board)",
@@ -1976,9 +1994,6 @@ def build_all() -> tuple:
                                "now, not only on the drafting club; the prospect tracker carries ranked and "
                                "graded prospects, not every signed minor leaguer, so not tracked mixes released "
                                "players with players the tracker never carried"),
-        "farm.trajectory_active": (
-            "[snapshot_date, sum of trade_value_mm over that snapshot's active-status rows]; each "
-            "snapshot's own actives, gross eFV basis, no bonus netting, so it is not the leaf's series"),
         "arbitration.by_season": (
             "[season, arb_rung_usd, n_arb_rungs, prearb_rung_usd, n_prearb_rungs, n_null_rungs]; "
             "arb_rung_usd sums the season's arbitration rungs that carry a projection and prearb_rung_usd "
@@ -2179,7 +2194,7 @@ def build_all() -> tuple:
         sd["columns"] = {k: list(COLUMNS[k]) for k in
                          ("farm.prospects", "farm.graduates", "farm.picks", "arbitration.ladders",
                           "arbitration.realized.rows", "contracts.paths", "surplus.rows_debuted",
-                          "farm.prospect_trajectory")}
+                          "farm.prospect_trajectory", "farm.trajectory_active")}
 
     def _finalize(n: int) -> None:
         keys = []
@@ -2195,7 +2210,8 @@ def build_all() -> tuple:
             files[c] = stamp
             club_docs[c]["shard"] = dict(stamp, generated_at=generated_at)
         doc["shards"] = {"dir": SHARD_DIRNAME, "n": len(files), "files": files, "preview_n": n,
-                         "cap_bytes": SHARD_CAP_BYTES, "board_guard_bytes": PREVIEW_GUARD_BYTES}
+                         "cap_bytes": SHARD_CAP_BYTES, "board_guard_bytes": PREVIEW_GUARD_BYTES,
+                         "trajectories": TRAJECTORY_RECEIPT}
 
     _finalize(PREVIEW_N)
     if _doc_bytes(doc) > PREVIEW_GUARD_BYTES:
@@ -2305,6 +2321,8 @@ def _assert_document(doc: dict) -> None:
         assert sum(r[1] + r[3] for r in bs.values()) == d["arbitration"]["remaining_usd"], (c, "by_season != remaining")
         assert d["surplus"]["reconciliation"]["status"] == "exact", (c, d["surplus"]["reconciliation"])
         assert d["shard"]["path"] == f"{SHARD_DIRNAME}/{c}.json", c
+        assert ("trajectory" not in d["surplus"] and "trajectory_active" not in d["farm"]
+                and "prospect_trajectory" not in d["farm"]), (c, "a trajectory series on the board")
         for y, ps in d["farm"]["picks_summary"].items():
             assert len(ps) == len(COLUMNS["farm.picks_summary"]), (c, y)
             assert ps[2] + ps[3] + ps[4] == ps[1] and ps[4] >= 0, (c, y, "signed picks split")
@@ -2338,6 +2356,9 @@ def _assert_shards(doc: dict, shard_docs: dict) -> None:
         for year_rows in sd["farm"]["picks"].values():
             for row in year_rows:
                 assert len(row) == len(COLUMNS["farm.picks"]), (c, "farm.picks")
+        for series in (sd["surplus"]["trajectory"], sd["farm"]["trajectory_active"],
+                       *sd["farm"]["prospect_trajectory"].values()):
+            assert isinstance(series, list) and all(len(p) == 2 for p in series), (c, "trajectory point")
         for path, k in _walk_keys(sd):
             ks = str(k).lower()
             assert ks not in FORBIDDEN_KEYS, (c, path)

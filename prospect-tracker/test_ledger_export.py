@@ -817,7 +817,7 @@ NEW_COPY_STATIC = ("farm_dollar_is_not", "farm_reconcile", "farm_vintage_gap", "
                    "arb_prearb_rungs", "arb_two_populations", "arb_quantiles_dark", "arb_comps_dark", "arb_filing_dark",
                    "npv_identity", "sur_total_identity", "tv_reanchored", "opt_out_two_engines", "trade_currency_split", "sources_stamps",
                    "not_summed", "shown_rows", "band_row_only", "grad_preview_note", "arb_preview_note",
-                   "trade_preview_note", "paths_preview_note")
+                   "trade_preview_note", "paths_preview_note", "trajectory_loading")
 NEW_COPY_TEMPLATES = ("farm_dollar_is_template", "swartz_label_template")
 
 
@@ -871,33 +871,69 @@ def test_the_main_payload_carries_no_row_array_and_stays_under_one_megabyte(d, s
     full-preview board passes PREVIEW_GUARD_BYTES).
 
     Re-expressed 2026-09-30, while landing VAL_1 (owner answer FP2-1): the
-    guard fired for the first time, on a full-preview board of about 955 KB
-    (the nightly data added about 7.6 KB since 2026-09-25, VAL_1's level stamps
-    and copy about 0.7 KB, so it fires without VAL_1 too). The old check
-    read "board on disk under the line => full preview", which is false on
-    exactly the path where the guard fires, because the file on disk is then
-    the SMALL board. The guard is now checked on both paths: a full preview
-    must sit under the line, and a small preview must come from a full-preview
-    board that passed it. That byte count is rebuilt from the shards: the board
-    plus the preview rows the guard dropped, less one byte per club for a shard
-    byte-count stamp that can lose a digit (the only other part that moves)."""
+    guard fired for the first time, on a full-preview board of about 955 KB,
+    and the page dropped to five preview rows. Owner answer VAL1-Q1 the same
+    day: trim the payload and restore ten rows, the guard staying at 950,000.
+    The three per-club snapshot series moved into the shards (about 86 KB of
+    the board), so the built board must now carry the FULL preview AND sit
+    under the guard; PREVIEW_N_SMALL stays in the exporter as the fallback and
+    this test fails if it is ever taken again."""
     import ledger_export as L
     size = ART.stat().st_size
     assert size < L.BOARD_CAP_BYTES
     n = d["shards"]["preview_n"]
-    assert n in (L.PREVIEW_N, L.PREVIEW_N_SMALL) and d["shards"]["board_guard_bytes"] == L.PREVIEW_GUARD_BYTES
-    if n == L.PREVIEW_N:
-        assert size <= L.PREVIEW_GUARD_BYTES, "a board past the line kept the full preview"
-    else:
-        dropped = sum(len(json.dumps(r, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) + 1
-                      for c in d["clubs"] for r in _rows(shards[c], "farm.prospects")[n:L.PREVIEW_N])
-        full = size + dropped - len(d["clubs"])
-        assert full > L.PREVIEW_GUARD_BYTES, (full, "the guard only drops the preview when the board passes the line")
+    assert d["shards"]["board_guard_bytes"] == L.PREVIEW_GUARD_BYTES == 950_000
+    assert n == L.PREVIEW_N == 10, (n, "the guard dropped the preview; trim the board again or ask the owner")
+    assert size <= L.PREVIEW_GUARD_BYTES, (size, "a full-preview board past the guard")
     for c, club in d["clubs"].items():
         assert "prospects" not in club["farm"] and "graduates" not in club["farm"] and "picks" not in club["farm"], c
         assert "ladders" not in club["arbitration"] and "realized_rows" not in club["arbitration"], c
         assert "paths" not in club["contracts"] and "rows_debuted" not in club["surplus"], c
-        assert len(club["farm"]["preview"]) <= n, c
+        assert len(club["farm"]["preview"]) == min(n, club["farm"]["n_prospects"]), c
+
+
+def _history_rollups():
+    """The v1 roll-ups straight from storage.trade_value_history, the same
+    queries the exporter runs; skipped where the database is not on disk."""
+    import ledger_export as L
+    tr, ta = L._trade_trajectory(), L._trade_trajectory_active()
+    if not tr:
+        pytest.skip("storage.trade_value_history unavailable")
+    return tr, ta
+
+
+def test_the_trajectories_live_in_the_shards_with_the_v1_rollup_values_and_the_board_keeps_a_receipt(d, shards):
+    """Owner answer VAL1-Q1 (2026-09-30). No trajectory array rides on the main
+    board; each club's shard carries its trade currency series, its actives
+    series and the per-prospect series of the preview keys, each equal to the
+    v1 roll-up of storage.trade_value_history on every snapshot the shard
+    carries (a later nightly snapshot may extend the history, never rewrite
+    an earlier point the shard printed). The board keeps one receipt saying
+    where the series live, and the field key still names all three."""
+    import ledger_export as L
+    tr, ta = _history_rollups()
+    receipt = d["shards"]["trajectories"]
+    assert receipt == L.TRAJECTORY_RECEIPT and "ledger_clubs/CODE.json" in receipt
+    for key in L.TRAJECTORY_KEYS:
+        assert key in receipt and key in d["field_key"], key
+    n = d["shards"]["preview_n"]
+    keys = [r[0] for c in d["clubs"] for r in _rows(shards[c], "farm.prospects")[:n]]
+    per_player = L._player_trajectories(keys)
+    for c, club in d["clubs"].items():
+        for path, k, _v in _walk(club):
+            assert "traject" not in str(k), (c, path, "a trajectory key on the board")
+        s = shards[c]
+        for mine, v1 in ((s["surplus"]["trajectory"], tr.get(c) or []), (s["farm"]["trajectory_active"], ta.get(c) or [])):
+            assert mine, (c, "an empty series")
+            last = mine[-1][0]
+            assert mine == [p for p in v1 if p[0] <= last], (c, "the shard series is the v1 roll-up")
+        pt = s["farm"]["prospect_trajectory"]
+        assert set(pt) == {r[0] for r in _rows(s, "farm.prospects")[:n]}, c
+        for k, series in pt.items():
+            if series:
+                assert series == [p for p in per_player.get(k, []) if p[0] <= series[-1][0]], (c, k)
+        assert s["columns"]["farm.trajectory_active"] == L.COLUMNS["farm.trajectory_active"]
+        assert "surplus.trajectory" in s["field_key"] and "farm.trajectory_active" in s["field_key"]
 
 
 def test_every_shard_is_under_160_kb_names_its_club_and_the_index_matches_disk(d, shards):
@@ -1375,20 +1411,29 @@ def test_the_preview_is_the_top_n_of_the_shard_rows_and_n_is_published(d, shards
     assert "PREVIEW_N" in d["field_key"]["farm.preview"]
 
 
-def test_the_actives_trajectory_is_status_filtered_and_labelled_gross(d):
+def test_the_actives_trajectory_is_status_filtered_and_labelled_gross(d, shards):
+    """The two club series now ride in the shard (VAL1-Q1). Today's point equals
+    the rows' gross only when the snapshot is the served board's vintage: the
+    history is snapshotted by the monthly run, while a rebuild-only pass can
+    re-export trade_values.json later the same day (2026-09-30: the snapshot at
+    21:40Z predates the VAL_1, VAL_2 and ETA re-exports). Same vintage is read
+    off the artifacts: the trade currency series' point for that date equals
+    the served trade currency."""
     src = (ROOT / "ledger_export.py").read_text(encoding="utf-8")
     body = src[src.index("def _trade_trajectory_active"):src.index("def _player_trajectories")]
     assert "status = 'active'" in body and "GROUP BY org, snapshot_date" in body
     assert "gross" in d["copy"]["trajectory_active_basis"] and "each snapshot" in d["copy"]["trajectory_active_basis"]
     assert "not the leaf's series" in d["field_key"]["farm.trajectory_active"]
     for c, club in d["clubs"].items():
-        ta = club["farm"]["trajectory_active"]
+        ta = shards[c]["farm"]["trajectory_active"]
+        v1 = shards[c]["surplus"]["trajectory"]
         fr = club["farm"]["reconciliation"]
         assert all(len(p) == 2 for p in ta), c
         assert [p[0] for p in ta] == sorted(p[0] for p in ta), c
-        if ta and ta[-1][0] == fr["rows_generated_at"]:
+        same_vintage = (bool(v1) and v1[-1][0] == fr["rows_generated_at"]
+                        and abs(v1[-1][1] - club["surplus"]["trade_currency_mm"]) <= 0.15)
+        if ta and ta[-1][0] == fr["rows_generated_at"] and same_vintage:
             assert abs(ta[-1][1] - fr["rows_gross_mm"]) <= 0.15, (c, "today's snapshot is the rows' gross")
-        v1 = club["surplus"]["trajectory"]
         if ta and v1 and ta[-1][0] == v1[-1][0]:
             assert ta[-1][1] <= v1[-1][1] + 0.05, (c, "actives are a subset of the trade currency")
 

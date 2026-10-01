@@ -30,7 +30,9 @@
 //
 // THE DEPTH PASS (D5, 2026-09-24). The board carries a preview of each row
 // layer; the full rows live in /data/ledger_clubs/CODE.json and are fetched
-// once per club after the club page paints (ensureShard). Every row array is
+// once per club after the club page paints (ensureShard). Since 2026-09-30 the
+// club's snapshot series (trade currency, actives, per prospect) ride in the
+// same file, so the sparklines draw once it is in. Every row array is
 // indexed through the board's `columns` legend (colIdx / cv), never by a
 // positional guess. Three more rules ride the new blocks:
 //   4. A band (p10/p90, lo/hi) prints on its row and the footer under a band
@@ -761,8 +763,15 @@
     }
     var c = S.crunch;
     out += '<p class="ledger-note">40-man crunch: ' + esc(c.on_40_man) + " on the 40-man, " + esc(c.rule5_exposed) + " Rule 5 exposed, " + esc(c.options_left_0) + " out of options; " + esc(c.n_active) + " active and " + esc(c.n_debuted) + " debuted assets on the trade board.</p>";
-    out += "<h3>Trade currency trajectory</h3>" + spark(S.trajectory, 1) + '<p class="ledger-count">' + esc(copy("trajectory_note")) + "</p>";
+    var sh = shardOf(d.club);
+    out += "<h3>Trade currency trajectory</h3>" + (sh ? spark(sh.surplus && sh.surplus.trajectory, 1) + '<p class="ledger-count">' + esc(copy("trajectory_note")) + "</p>" : seriesPending(d.club));
     return out;
+  }
+  // The snapshot series live in the club's row file (the board carries only a
+  // receipt, shards.trajectories): a short loading line until the file is in,
+  // the dark line if the fetch failed, never an empty chart.
+  function seriesPending(code) {
+    return shardFailed(code) ? shardLine(code) : '<p class="ledger-count">' + esc(copy("trajectory_loading")) + "</p>";
   }
   function renderFarm(d) {
     var F = d.farm, L = F.leaves, meta = copy("farm_leaves") || {};
@@ -821,8 +830,11 @@
       }).join("") + "</tbody></table></div>" + '<p class="ledger-count">' + esc(copy("ifa_implied_basis")) + "</p>" +
       dark("IFA history", (DATA.sections.ifa_history || {}).blocked_on || "");
     out += "<h3>Farm score trajectory</h3>" + spark(F.score_history, 1);
-    if (F.trajectory_active && F.trajectory_active.length) {
-      out += "<h3>Active eFV surplus trajectory (gross)</h3>" + spark(F.trajectory_active, 1) + '<p class="ledger-count">' + esc(copy("trajectory_active_basis")) + "</p>";
+    var ta = shp && shp.farm && shp.farm.trajectory_active;
+    if (!shp) {
+      out += "<h3>Active eFV surplus trajectory (gross)</h3>" + seriesPending(d.club);
+    } else if (ta && ta.length) {
+      out += "<h3>Active eFV surplus trajectory (gross)</h3>" + spark(ta, 1) + '<p class="ledger-count">' + esc(copy("trajectory_active_basis")) + "</p>";
     }
     return out;
   }

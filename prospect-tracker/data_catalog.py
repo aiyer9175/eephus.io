@@ -482,13 +482,16 @@ ARTIFACTS = (
                  "with the two debuted-value engines side by side; every arbitration "
                  "rung with its fixed-spread band; the realized arbitration rows with "
                  "the MLBTR figure as a third column; every priced contract's WAR and "
-                 "surplus strips; the trade board's debuted rows. The club page fetches "
-                 "one file on demand; the index (bytes, sha256_16) lives in "
-                 "ledger_board.json under shards."),
+                 "surplus strips; the trade board's debuted rows; and, since "
+                 "2026-09-30, the club's snapshot series (trade currency, actives, "
+                 "each preview prospect) that the sparklines draw. The club page "
+                 "fetches one file on demand; the index (bytes, sha256_16) and a "
+                 "receipt naming the moved series live in ledger_board.json under "
+                 "shards."),
         "cadence": "daily", "stability": EXPERIMENTAL,
         "pinned_by": "test_ledger_export.py",
         "note": ("Written by ledger_export.write_shards from the bytes the board indexed "
-                 "(run_monthly d10e, right after the board). About 85-100 KB per file, "
+                 "(run_monthly d10e, right after the board). About 90-105 KB per file, "
                  "capped at 160 KB by test; tracked in git like mgmt_decisions/. Every "
                  "band prints per row and is never summed; no figure is recomputed "
                  "through value_framework; both deploy consumers ship the directory."),

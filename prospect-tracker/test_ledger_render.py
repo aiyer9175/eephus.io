@@ -158,8 +158,7 @@ SAMPLE = {
                         "realized": {"seasons": [[2023, 10, 35550000, 33544000, 2006000, -30109000, 6.35], [2024, 8, 30000000, 29000000, 1000000, -20000000, 5.0]],
                                      "n": 18, "ou_mkt_total_usd": 3006000, "ou_war_total_usd": -50109000}},
         "surplus": {"mlb_mm": 418.5, "mlb_by_salsrc_mm": {"contract": 300.1, "contract+arb": 118.4}, "farm_mm": 455.4, "total_mm": 873.9, "unit": "$M",
-                    "trade_currency_mm": 990.8, "crunch": {"n_active": 180, "n_debuted": 34, "on_40_man": 40, "rule5_exposed": 6, "options_left_0": 5, "by_salary_basis": {}},
-                    "trajectory": [["2026-06-25", 1100.2], ["2026-08-01", 1050.0], ["2026-09-23", 990.8]]},
+                    "trade_currency_mm": 990.8, "crunch": {"n_active": 180, "n_debuted": 34, "on_40_man": 40, "rule5_exposed": 6, "options_left_0": 5, "by_salary_basis": {}}},
         "indexes": {"usd_per_win": 3896629, "usd_per_war": 8053400, "cost_plus": 93, "cost_ratio_war_per_mm": 0.124, "orgsur_plus": 112.7,
                     "locked_pct": 0.828, "proj_wins_2027": 95.7, "proj_war_2027": 46.3, "cba_banner": True},
         "farm": {"leaves": {"fin_active_surplus": dict(LEAF, letter="A-", score_100=114.0, value=455.4, n=156),
@@ -629,6 +628,7 @@ SHARD_LAD = {
         "picks": {"2026": [[28, "1", "P One", 3200000, 3500000, 1, 300000, "p_one"], [60, "2", "Some Pick", 1500000, 1200000, 1, -300000, None],
                            [75, "3", "Unsigned Pick", 900000, 0, 0, None, None]]},
         "prospect_trajectory": {"p_one": [["2026-07-01", 90.0], ["2026-09-23", 100.1]], "p_two": []},
+        "trajectory_active": [["2026-06-25", 500.0], ["2026-09-23", 514.0]],
     },
     "arbitration": {
         "ladders": [["A Player", 1, "3.000", 2025, 1, 9, 3, [[2027, 1400000, 1100000, 1900000, "ARB 1"], [2028, 5200000, 3800000, 6600000, "ARB 2"]], [1.2, 1.4], 6600000, True, True],
@@ -643,7 +643,8 @@ SHARD_LAD = {
         ["andy_pages", [3.1, 3.0, 2.8, 2.5, 2.0], [1.0, 1.0, 0.9, 0.8, 0.5], [5.0, 5.0, 4.8, 4.5, 4.0], [50.0, 45.0, 40.0, None, None],
          51000000, 1.0, 52000000, 60.0, 20.0, 90.0, "A", "projection", "projection", "arb_ladder+class_closure", 2030, "class_closure", 4.0, [], [], True, 50990000]]},
     "surplus": {"rows_debuted": [["andy_pages", "Andy Pages", "CF", 60.0, 20.0, 90.0, "elite", "A", "projection", "arb_ladder+class_closure", 2030, "class_closure", True],
-                                 ["x_deb", "X Deb", "RP", 5.0, 1.0, 12.0, "role", "C", "prearb_min", "league_minimum", 2029, "proxy", False]]},
+                                 ["x_deb", "X Deb", "RP", 5.0, 1.0, 12.0, "role", "C", "prearb_min", "league_minimum", 2029, "proxy", False]],
+                "trajectory": [["2026-06-25", 1100.2], ["2026-08-01", 1050.0], ["2026-09-23", 990.8]]},
     "field_key": {}, "columns": COLUMNS2,
 }
 COPY2 = {
@@ -659,6 +660,7 @@ COPY2 = {
     "grad_preview_note": "the graduate rows load per club", "arb_preview_note": "the full ladder loads per club",
     "trade_preview_note": "the debuted trade rows load per club", "paths_preview_note": "the strips load per club",
     "trajectory_active_basis": "each snapshot's own actives, gross of bonuses", "band_row_only": "p10 to p90, eFV basis, per row only",
+    "trajectory_loading": "the series loads per club",
     "years_to_fa_dark": "control not started; service time is a proxy", "service_time_source": "PROXY", "ifa_slot_dark": "no slot",
     "arb_prearb_rungs": "board rows at the pre-arbitration minimum sit in this sum",
     "arb_two_populations": "neither is added to the other and neither is a payroll",
@@ -688,7 +690,6 @@ def _sample2():
     c = s["clubs"]["LAD"]
     c["farm"].update({
         "preview": [P_ONE, P_TWO], "n_prospects": 3, "n_graduates": 2, "picks_summary": {"2026": [3, 2, 1, 0, 1, 0]},
-        "trajectory_active": [["2026-06-25", 500.0], ["2026-09-23", 514.0]],
         "reconciliation": {"leaf_mm": 455.4, "leaf_cost_mm": 57.6, "leaf_n": 3, "leaf_source": "timeseries.org_summary tree.fin_active_surplus",
                            "leaf_generated_at": "2026-09-23T18:22:28Z", "rows_gross_mm": 514.0, "rows_cost_mm": 57.62, "rows_net_mm": 456.38,
                            "rows_source": "trade_values.json + timeseries.players", "rows_generated_at": "2026-09-23", "n_rows": 3, "n_with_bonus": 2,
@@ -778,6 +779,31 @@ def test_the_shard_rows_render_after_fetch_and_a_failed_fetch_leaves_a_dark_bloc
     assert COPY2["shard_failed"] in _block(other, "prospects"), "a missing file is a failed fetch, never a blank"
     wrong = _render2(shards={SHARD_URL_LAD: dict(SHARD_LAD, club="TBR")})
     assert COPY2["shard_failed"] in _block(wrong, "prospects"), "a file naming another club is refused"
+
+
+def test_the_trajectory_sparklines_draw_from_the_shard_and_wait_for_it_without_breaking():
+    """Owner answer VAL1-Q1 (2026-09-30): the club's snapshot series moved off
+    the board into its row file. Before the file arrives the two blocks print
+    the loading line and no chart; once it is in, both sparklines draw from the
+    shard's series; a failed fetch prints the dark line, never an empty chart."""
+    board = _sample2()
+    lad = board["clubs"]["LAD"]
+    assert "trajectory" not in lad["surplus"] and "trajectory_active" not in lad["farm"], "the fixture board is the trimmed shape"
+    pending = _render2(payload=board, shards={SHARD_URL_LAD: "pending"})
+    su, fa = _block(pending, "surplus"), _block(pending, "farm")
+    assert "<h3>Trade currency trajectory</h3>" in su and COPY2["trajectory_loading"] in su
+    assert "<h3>Active eFV surplus trajectory (gross)</h3>" in fa and COPY2["trajectory_loading"] in fa
+    assert 'class="ledger-spark-line"' not in su and COPY2["trajectory_active_basis"] not in fa
+    ready = _render2(payload=board, shards={SHARD_URL_LAD: SHARD_LAD})
+    su, fa = _block(ready, "surplus"), _block(ready, "farm")
+    assert 'class="ledger-spark"' in su and "2026-06-25 1100.2 to 2026-09-23 990.8" in su, "trade currency, from the shard"
+    assert COPY2["trajectory_loading"] not in su and "since late June" in su
+    assert "2026-06-25 500.0 to 2026-09-23 514.0" in fa and COPY2["trajectory_active_basis"] in fa, "actives, from the shard"
+    failed = _render2(payload=board, shards={SHARD_URL_LAD: "fail"})
+    su = _block(failed, "surplus")
+    assert COPY2["shard_failed"] in su and 'class="ledger-spark-line"' not in su and COPY2["trajectory_loading"] not in su
+    empty = _render2(payload=board, shards={SHARD_URL_LAD: dict(SHARD_LAD, farm=dict(SHARD_LAD["farm"], trajectory_active=[]))})
+    assert "Active eFV surplus trajectory" not in _block(empty, "farm"), "an empty actives series prints no block, as before the move"
 
 
 def test_a_shard_whose_vintage_differs_from_the_board_is_flagged_not_refused():
