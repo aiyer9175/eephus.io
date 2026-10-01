@@ -167,8 +167,9 @@ SAMPLE = {
                  "financial_roi": {"war_per_million": 2.394, "total_bonus_usd": 22144990, "grad_count_with_bonus": 32},
                  "method_surplus": {"draft": {"net_mm": 250.3, "count": 68}},
                  "pools": {"2021": [None, "not parsed", None], "2026": [3951900, "live", [[28, 3200000]]]},
-                 "draft_paid": {"2026": [16, 15, 1, 5384475, 6, 3951900, 4053975, 102075, 51.1, 3951900, 1.026, 220000, 2],
-                                "2021": [20, 18, 2, 6100000, 7, 4800000, 4900000, 100000, 50.0, None, None, None, None]},
+                 "draft_paid": {"2026": [16, 15, 1, 5384475, 6, 3951900, 4053975, 102075, 51.1, 3951900, 1.026, 220000, 2, 150000],
+                                "2021": [20, 18, 2, 6100000, 7, 4800000, 4900000, 100000, 50.0, None, None, 375000, 3, 125000],
+                                "2019": [40, 30, 10, 7100000, 8, 5000000, 5100000, 100000, 50.0, None, None, None, None]},
                  "slot_chips": {"nSlotted": 65, "overSlotShare": 0.2, "r1UnderShare": 0.5, "bonusHHI": 0.045, "prepDollarShare": 0.468, "label": "typical", "spendLabel": "top-heavy pool"},
                  "lottery": [28, None, None, 97, 60, "2026-09-23", "tankathon"], "pick_war": [2.579, 35, 28],
                  "ifa": {"2026": [5537500, 37, 997500, "Rubel Arias", 77.0, 7176328, 20]},
@@ -675,7 +676,8 @@ COPY2 = {
     "opt_out_two_engines": "player option seasons: opt-out not modelled; the trade board folds a probability in",
     "trade_currency_split": "it overlaps both legs and is never added to them", "shown_rows": "shown rows: a sum of expected values",
     "not_summed": "not summed", "sources_stamps": "each block names the artifact it was read from",
-    "r11_over_basis": "the part of each round 11 or later bonus above $150,000, summed",
+    "r11_over_basis": "the part of each round 11 or later bonus above the CBA threshold for its draft year, summed",
+    "r11_threshold_schedule": "CBA threshold: $125,000 for the 2017 to 2021 drafts; $150,000 for the 2022 to 2026 drafts",
 }
 
 
@@ -1110,15 +1112,23 @@ def test_the_2027_spotrac_estimate_says_it_is_surcharges_only_and_the_difference
     assert "surcharges alone" not in html and "surcharges only" not in html
 
 
-def test_round_11_over_150k_prints_beside_pool_used_and_never_in_it():
-    """Owner answer M10-3: the draft table keeps Pool used on rounds 1-10 and adds a
-    separate Round 11+ over $150K column; a draft before 2022 prints n/a."""
+def test_round_11_over_the_cba_threshold_prints_beside_pool_used_and_never_in_it():
+    """Owner answers M10-3 and M9M10-1 (b): the draft table keeps Pool used on rounds
+    1-10 and adds a separate Round 11+ over the CBA threshold column; the header's
+    tooltip carries the schedule and each cell's tooltip names its draft year's
+    figure ($125,000 for 2021, $150,000 for 2026). A row without a figure prints n/a."""
     html = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
     farm = _block(html, "farm")
-    assert "<th>Pool used</th><th>Round 11+ over $150K</th>" in farm
-    assert "<td>103%</td><td>$0.2M (2)</td></tr>" in farm, "2026: Pool used 1.026, the charge $220,000 on 2 picks"
-    assert "<td>2021</td>" in farm and "<td></td><td>n/a</td></tr>" in farm, "2021 ran under the earlier CBA"
-    assert "Round 11+ over $150K: " + COPY2["r11_over_basis"] in farm
+    assert ('<th>Pool used</th><th title="' + COPY2["r11_threshold_schedule"] +
+            '">Round 11+ over the CBA threshold</th>') in farm
+    assert "$150K" not in farm
+    assert ('<td>103%</td><td title="CBA threshold for the 2026 draft: $150,000">$0.2M (2)</td></tr>'
+            in farm), "2026: Pool used 1.026, the charge $220,000 on 2 picks"
+    assert ('<td>2021</td>' in farm and
+            '<td></td><td title="CBA threshold for the 2021 draft: $125,000">$0.4M (3)</td></tr>' in farm), \
+        "2021: the charge above $125,000, its own column"
+    assert '<td>2019</td>' in farm and "<td></td><td>n/a</td></tr>" in farm, "a row without a figure"
+    assert "Round 11+ over the CBA threshold: " + COPY2["r11_over_basis"] in farm
 
 
 # --------------------------------------------------------------------------

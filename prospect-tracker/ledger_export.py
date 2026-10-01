@@ -73,12 +73,12 @@ DRAFT_YEARS = tuple(range(2017, 2027))
 POOL_YEARS = ("2021", "2022", "2023", "2024", "2025", "2026")
 IFA_YEARS = (2021, 2022, 2023, 2024, 2025, 2026)
 
-#: Round 11+ bonus charge (owner answer M10-3, 2026-09-25): the part of a bonus
-#: above this figure for a pick after round 10 counts against the club's bonus
-#: pool under the 2022 CBA. Earlier drafts ran under the earlier CBA's threshold,
-#: which no file in this repo carries, so those years print no figure.
-R11_THRESHOLD_USD = 150_000
-R11_FIRST_DRAFT = 2022
+#: Round 11+ bonus charge (owner answers M10-3, 2026-09-25, and M9M10-1 (b),
+#: 2026-10-01): the part of a bonus above the CBA threshold for a pick after
+#: round 10 counts against the club's bonus pool. The threshold is read by draft
+#: year from data/cba_rules.json through fa_cba.draft_r11_threshold (dated,
+#: sourced records: 125,000 for the 2017-2021 drafts, 150,000 from 2022), never
+#: typed here.
 
 
 def _round_no(r: dict) -> int | None:
@@ -958,6 +958,19 @@ def build_all() -> tuple:
 
     # CBA rule inputs, resolved through fa_cba (never typed)
     thr = {s: fa_cba.cbt_threshold(s) for s in range(2017, 2028)}
+    r11_rule = {y: fa_cba.draft_r11_threshold(y) for y in DRAFT_YEARS}
+    assert not any(v["carry_forward"] for v in r11_rule.values()), "a served draft year past the encoded CBA"
+    r11_thr = {y: v["threshold_usd"] for y, v in r11_rule.items()}
+    # The schedule the header tooltip and the basis sentence print, one span per
+    # run of equal thresholds: "$125,000 for the 2017 to 2021 drafts; ...".
+    r11_spans = []
+    for y in DRAFT_YEARS:
+        if r11_spans and r11_spans[-1][2] == r11_thr[y]:
+            r11_spans[-1][1] = y
+        else:
+            r11_spans.append([y, y, r11_thr[y]])
+    r11_schedule = "; ".join(f"${t:,} for the {a} to {b} drafts" if a != b else f"${t:,} for the {a} draft"
+                             for a, b, t in r11_spans)
     T_now = thr[SEASON_NOW]["threshold_usd"]
     T_next = thr[CLASS_YEAR]["threshold_usd"]
     rates = fa_cba.cbt_tax_rates()
@@ -1096,6 +1109,11 @@ def build_all() -> tuple:
     first6 = {int(k): v for k, v in (slot_curve.get("fitted_first6_by_bucket") or {}).items()}
     bucket_keys = sorted(first6)
     draft_results = storage.load_draft_results()
+    r11_last_round = {}
+    for r in draft_results:
+        rn = _round_no(r)
+        if rn is not None and r.get("draft_year") in DRAFT_YEARS:
+            r11_last_round[r["draft_year"]] = max(rn, r11_last_round.get(r["draft_year"], 0))
     slot_cov = {}
     for y in DRAFT_YEARS:
         ys = [r for r in draft_results if r.get("draft_year") == y]
@@ -1437,14 +1455,13 @@ def build_all() -> tuple:
             paid = int(sum(r.get("bonus_usd") or 0 for r in mine))
             paid_slotted = int(sum(r.get("bonus_usd") or 0 for r in slotted))
             pool_usd = (pool_by_year.get(str(y)) or [None])[0]
-            # Round 11+ over the threshold: its own column, never in pool_used.
-            if y >= R11_FIRST_DRAFT:
-                r11 = [int(r["bonus_usd"]) - R11_THRESHOLD_USD for r in mine
-                       if _round_no(r) is not None and _round_no(r) > 10
-                       and (r.get("bonus_usd") or 0) > R11_THRESHOLD_USD]
-                r11_usd, n_r11 = int(sum(r11)), len(r11)
-            else:
-                r11_usd = n_r11 = None
+            # Round 11+ over the CBA threshold for this draft year: its own
+            # column, never in pool_used.
+            thr_r11 = r11_thr[y]
+            r11 = [int(r["bonus_usd"]) - thr_r11 for r in mine
+                   if _round_no(r) is not None and _round_no(r) > 10
+                   and (r.get("bonus_usd") or 0) > thr_r11]
+            r11_usd, n_r11 = int(sum(r11)), len(r11)
             # pool_used divides by the published pool, which is the sum of the
             # club's round 1-10 slot values; the numerator is the bonuses on those
             # slotted picks only. Rounds 11+ carry no slot_usd, so their bonuses
@@ -1456,7 +1473,7 @@ def build_all() -> tuple:
                 int(sum((r.get("bonus_usd") or 0) - (r.get("slot_usd") or 0) for r in slotted)),
                 slot_cov.get(str(y)), pool_usd,
                 round(paid_slotted / pool_usd, 3) if (pool_usd and paid_slotted) else None,
-                r11_usd, n_r11]
+                r11_usd, n_r11, thr_r11]
         sc = slot_orgs.get(c) or {}
         slot_chips = {k: sc.get(k) for k in ("nSlotted", "overSlotShare", "r1UnderShare", "bonusHHI",
                                               "prepDollarShare", "zOver", "zBonusHHI", "zPrepDollar",
@@ -2154,12 +2171,14 @@ def build_all() -> tuple:
         "slot_coverage_basis": "share of the league's draft_results rows for that year carrying slot_usd",
         "pool_used_basis": ("bonuses on the round 1-10 slotted picks over the published pool, which is "
                             "the sum of those slot values; the Paid column also counts rounds 11 and later, "
-                            "which carry no slot, and the part of their bonuses above $150,000 sits in its own "
-                            "column, not in Pool used"),
-        "r11_over_basis": (f"the part of each round 11 or later bonus above ${R11_THRESHOLD_USD:,}, summed, "
-                           "with the number of such picks; the CBA charges it to the bonus pool. "
-                           f"Drafts before {R11_FIRST_DRAFT} ran under the earlier CBA's threshold and "
-                           "print n/a"),
+                            "which carry no slot, and the part of their bonuses above the CBA threshold sits "
+                            "in its own column, not in Pool used"),
+        "r11_over_basis": ("the part of each round 11 or later bonus above the CBA threshold for its draft "
+                           f"year ({r11_schedule}; cba_rules, through fa_cba), summed, with the number of such "
+                           "picks; the CBA charges it to the bonus pool"
+                           + "".join(f". The {y} draft ran {r11_last_round[y]} rounds, so it has no such pick"
+                                     for y in DRAFT_YEARS if 0 < r11_last_round.get(y, 0) <= 10)),
+        "r11_threshold_schedule": f"CBA threshold: {r11_schedule}",
         "slot_window": slot_window,
         "slot_league": slot_league,
         "pick_war_label": ("expected first-6 WAR of the 2027 first-round pick (draft_slot_curve, validated; "
@@ -2381,7 +2400,7 @@ def build_all() -> tuple:
         "arbitration.rows": "[name, mlbam, token_2027, proj_2027_usd, lo_usd, hi_usd, years_left, war_2027, class, flags]",
         "arbitration.realized.seasons": "[season, n, actual_usd, ours_usd, ou_mkt_usd, ou_war_usd, war]; ou_mkt and ou_war are never combined",
         "farm.pools": "year -> [pool_usd, status, picks [[pick_overall, slot_usd]]]",
-        "farm.draft_paid": "year -> [n_picks, n_signed, n_unsigned, paid_usd, n_slotted, slot_usd_on_slotted, paid_usd_on_slotted, over_slot_usd, slot_coverage_pct, pool_usd, pool_used, r11_over_usd, n_r11_over]; paid_usd is every round; pool_used = paid_usd_on_slotted / pool_usd, the round 1-10 slotted bonuses over the published pool (round 11+ bonuses above $150,000 are not added); r11_over_usd, n_r11_over: the part of each round 11+ bonus above $150,000 summed, and the count of those picks, drafts from 2022 only (null before)",
+        "farm.draft_paid": "year -> [n_picks, n_signed, n_unsigned, paid_usd, n_slotted, slot_usd_on_slotted, paid_usd_on_slotted, over_slot_usd, slot_coverage_pct, pool_usd, pool_used, r11_over_usd, n_r11_over, r11_threshold_usd]; paid_usd is every round; pool_used = paid_usd_on_slotted / pool_usd, the round 1-10 slotted bonuses over the published pool (round 11+ bonuses above the CBA threshold are not added); r11_over_usd, n_r11_over: the part of each round 11+ bonus above r11_threshold_usd summed, and the count of those picks; r11_threshold_usd is that draft year's CBA threshold from cba_rules through fa_cba (" + r11_schedule + ")",
         "farm.lottery": "[pick_pos, odds_pct, odds_top6_pct, wins, losses, snapshot_date, source]",
         "farm.pick_war": "[expected_first6_war, bucket_upper_bound, pick_pos]",
         "farm.ifa": "class year -> [total_usd, signings, top_bonus, top_player, pool_pct_sum, implied_pool_usd, implied_n]",

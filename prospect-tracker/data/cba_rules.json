@@ -87,5 +87,62 @@
       "source": "https://www.mlb.com/glossary/transactions/qualifying-offer",
       "verify_status": "curated-unverified"
     }
+  ],
+  "draft_r11_bonus_thresholds": [
+    {
+      "regime": "cba_2017",
+      "effective_from": "2016-12-01",
+      "effective_to": "2021-12-01",
+      "first_draft": 2017,
+      "last_draft": 2021,
+      "threshold_usd": 125000,
+      "rule": "the part of a signing bonus above threshold_usd paid to a player selected after round 10 counts against the club's draft bonus pool",
+      "source": "https://www.mlb.com/news/2017-mlb-draft-bonus-pools-pick-values-c223686792",
+      "clause": "Any bonus money above $125,000 given to an individual player picked in rounds 11-40 also counts against a team's bonus pool.",
+      "source_note": "MLB.com, Jim Callis, '2017 MLB Draft bonus pools, pick values', published 2017-06-08, the first draft under the 2017-2021 Basic Agreement. The Basic Agreement's own text (copy at https://law.tulane.edu/sites/default/files/Files/TIBAC%20--%20MLB%20CBA.pdf, read 2026-10-01) carries no clause on the domestic draft bonus pool, so MLB's published draft rules are the source.",
+      "corroboration": [
+        {
+          "draft": 2016,
+          "url": "https://www.mlb.com/news/2016-draft-bonus-pools-pick-values-c170470526",
+          "quote": "Any bonus money in excess of $100,000 given to an individual player selected in rounds 11-40 also counts against a club's bonus pool.",
+          "note": "the 2012-2016 agreement's figure; the 125,000 figure starts with the 2017 draft"
+        },
+        {
+          "draft": 2018,
+          "url": "https://www.mlb.com/news/2018-mlb-draft-bonus-pools-pick-values-c269930084",
+          "quote": "Any bonus money above $125,000 given to an individual player picked in rounds 11-40 also counts against a team's allotment."
+        },
+        {
+          "draft": 2019,
+          "url": "https://www.mlb.com/news/2019-mlb-draft-pools-and-bonus-values",
+          "quote": "Any bonus money above $125,000 given to an individual player selected in rounds 11-40 also counts against a team's allotment."
+        },
+        {
+          "draft": 2022,
+          "url": "https://www.mlb.com/news/draft-rule-changes-with-new-cba",
+          "quote": "For players in rounds 11-20, the amount that won't count towards teams' bonus pools rises from $125,000 to $150,000.",
+          "note": "published 2022-03-11: the figure in force through the 2021 draft, which the 2022 CBA replaced"
+        }
+      ],
+      "draft_notes": {
+        "2020": "the 2020 draft ran five rounds, so no pick after round 10 exists and the threshold never applied"
+      },
+      "verify_status": "source-verified",
+      "verified_on": "2026-10-01"
+    },
+    {
+      "regime": "cba_2022",
+      "effective_from": "2022-03-10",
+      "effective_to": "2026-12-01",
+      "first_draft": 2022,
+      "last_draft": 2026,
+      "threshold_usd": 150000,
+      "rule": "the part of a signing bonus above threshold_usd paid to a player selected after round 10 counts against the club's draft bonus pool",
+      "source": "https://www.mlb.com/news/draft-rule-changes-with-new-cba",
+      "clause": "For players in rounds 11-20, the amount that won't count towards teams' bonus pools rises from $125,000 to $150,000.",
+      "source_note": "MLB.com, Jim Callis, 'Here's how the new CBA impacts the Draft', published 2022-03-11.",
+      "verify_status": "source-verified",
+      "verified_on": "2026-10-01"
+    }
   ]
 }

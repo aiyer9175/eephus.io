@@ -1374,38 +1374,50 @@ def test_draft_pool_usage_is_slotted_bonuses_over_the_pool(d):
     assert "its own column, not in Pool used" in d["copy"]["pool_used_basis"]
 
 
-def test_round_11_over_150k_is_its_own_column_and_reconciles_to_the_pick_rows(d, shards):
-    """Owner answer M10-3 (2026-09-25): Pool used keeps rounds 1-10; the part of each
-    round 11+ bonus above $150,000 (the CBA's pool charge) is a separate column,
-    draft_paid[11] with its pick count in [12]. Drafts before 2022 ran under the
-    earlier CBA's threshold and carry null. Per club and year it equals the shard's
-    pick rows recomputed (ints, no tolerance), and Pool used never includes it."""
+def test_round_11_over_the_cba_threshold_is_its_own_column_and_reconciles_to_the_pick_rows(d, shards):
+    """Owner answers M10-3 (2026-09-25) and M9M10-1 (b) (2026-10-01): Pool used keeps
+    rounds 1-10; the part of each round 11+ bonus above that draft year's CBA
+    threshold is a separate column, draft_paid[11] with its pick count in [12] and
+    the threshold in [13]. The threshold is read per draft year through
+    fa_cba.draft_r11_threshold (125,000 for 2017-2021, 150,000 from 2022), never
+    typed in the exporter. Per club and year it equals the shard's pick rows
+    recomputed (ints, no tolerance), and Pool used never includes it."""
+    import fa_cba
     import ledger_export as le
-    assert le.R11_THRESHOLD_USD == 150_000 and le.R11_FIRST_DRAFT == 2022
+    assert not hasattr(le, "R11_THRESHOLD_USD") and not hasattr(le, "R11_FIRST_DRAFT")
     P = "farm.picks"
     rd_i, b_i = _col(d, P, "round_label"), _col(d, P, "bonus_usd")
-    n_years = n_charged = 0
+    n_years = n_charged = n_early = 0
     for c, club in d["clubs"].items():
+        assert sorted(club["farm"]["draft_paid"]) == [str(y) for y in range(2017, 2027)], c
         for y, r in club["farm"]["draft_paid"].items():
-            assert len(r) == 13, (c, y, len(r))
-            if int(y) < 2022:
-                assert r[11] is None and r[12] is None, (c, y)
-                continue
+            assert len(r) == 14, (c, y, len(r))
+            thr = fa_cba.draft_r11_threshold(int(y))["threshold_usd"]
+            assert r[13] == thr == (125_000 if int(y) <= 2021 else 150_000), (c, y, r[13])
             rows = shards[c]["farm"]["picks"][y]
-            over = [int(p[b_i]) - 150_000 for p in rows
-                    if str(p[rd_i] or "").isdigit() and int(p[rd_i]) > 10 and (p[b_i] or 0) > 150_000]
+            over = [int(p[b_i]) - thr for p in rows
+                    if str(p[rd_i] or "").isdigit() and int(p[rd_i]) > 10 and (p[b_i] or 0) > thr]
             assert r[11] == sum(over) and r[12] == len(over), (c, y, r[11], r[12], over)
             assert r[11] <= r[3], (c, y, "the charge is part of Paid, all rounds")
             if r[9]:
                 assert r[10] == (round(r[6] / r[9], 3) if r[6] else None), (c, y, "Pool used stays rounds 1-10")
+            if y == "2020":
+                assert r[11] == 0 and r[12] == 0, (c, "the 2020 draft ran five rounds")
             n_years += 1
             n_charged += r[12] > 0
-    assert n_years >= 140 and n_charged > 50, (n_years, n_charged)
+            n_early += int(y) <= 2021 and r[12] > 0
+    assert n_years == 300 and n_charged > 150 and n_early > 60, (n_years, n_charged, n_early)
     fk = d["field_key"]["farm.draft_paid"]
-    assert "pool_used, r11_over_usd, n_r11_over]" in fk and "drafts from 2022 only" in fk
-    assert "$150,000" in d["copy"]["r11_over_basis"] and "print n/a" in d["copy"]["r11_over_basis"]
+    assert "pool_used, r11_over_usd, n_r11_over, r11_threshold_usd]" in fk and "null" not in fk
+    sched = "$125,000 for the 2017 to 2021 drafts; $150,000 for the 2022 to 2026 drafts"
+    assert sched in d["copy"]["r11_over_basis"] and sched in fk
+    assert d["copy"]["r11_threshold_schedule"] == "CBA threshold: " + sched
+    assert "The 2020 draft ran 5 rounds, so it has no such pick" in d["copy"]["r11_over_basis"]
+    assert "n/a" not in d["copy"]["r11_over_basis"] and "$150,000" not in d["copy"]["pool_used_basis"]
     js = JS.read_text(encoding="utf-8")
-    assert "<th>Pool used</th><th>Round 11+ over $150K</th>" in js and 'copy("r11_over_basis")' in js
+    assert ("<th>Pool used</th><th title=\"' + esc(copy(\"r11_threshold_schedule\")) + '\">"
+            "Round 11+ over the CBA threshold</th>") in js and 'copy("r11_over_basis")' in js
+    assert "$150K" not in js and "isNum(r[13])" in js
 
 
 def test_grad_contract_surplus_per_graduate_is_dark_and_the_mean_is_copied(d, org_summary):

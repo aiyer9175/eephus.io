@@ -854,14 +854,16 @@
       var p = F.pools[y];
       return "<div>" + esc(y) + "<b>" + esc(p[0] !== null ? money(p[0]) : p[1]) + "</b></div>";
     }).join("") + "</div>" + '<p class="ledger-count">' + esc(copy("pools_note")) + "</p>";
-    out += '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Draft</th><th>Picks</th><th>Signed</th><th>Paid, all rounds</th><th>Paid (slotted)</th><th>Slot (slotted)</th><th>Over slot</th><th>Slot coverage</th><th>Pool used</th><th>Round 11+ over $150K</th></tr></thead><tbody>' +
+    out += '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Draft</th><th>Picks</th><th>Signed</th><th>Paid, all rounds</th><th>Paid (slotted)</th><th>Slot (slotted)</th><th>Over slot</th><th>Slot coverage</th><th>Pool used</th><th title="' + esc(copy("r11_threshold_schedule")) + '">Round 11+ over the CBA threshold</th></tr></thead><tbody>' +
       Object.keys(F.draft_paid).sort().reverse().map(function (y) {
         var r = F.draft_paid[y];
-        // Round 11+ over $150K (owner answer M10-3): its own column, never in Pool used;
-        // a draft before the 2022 CBA carries null and prints n/a.
+        // Round 11+ over the CBA threshold (owner answers M10-3 and M9M10-1): its own
+        // column, never in Pool used; r[13] is that draft year's threshold, named in the
+        // cell's tooltip. A row without a figure prints n/a.
         var r11 = isNum(r[11]) ? money(r[11]) + " (" + r[12] + ")" : (r.length > 11 ? "n/a" : "");
-        return "<tr><td>" + esc(y) + "</td><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(money(r[3])) + "</td><td>" + esc(money(r[6])) + "</td><td>" + esc(money(r[5])) + " (" + esc(r[4]) + ")</td><td>" + signedMoney(r[7]) + "</td><td>" + esc(isNum(r[8]) ? num(r[8], 0) + "%" : "") + "</td><td>" + esc(isNum(r[10]) ? pct(r[10], 0) : "") + "</td><td>" + esc(r11) + "</td></tr>";
-      }).join("") + "</tbody></table></div>" + '<p class="ledger-count">Slot coverage: ' + esc(copy("slot_coverage_basis")) + ". Pool used: " + esc(copy("pool_used_basis")) + ". Round 11+ over $150K: " + esc(copy("r11_over_basis")) + ".</p>";
+        var r11Tip = isNum(r[13]) ? ' title="' + esc("CBA threshold for the " + y + " draft: $" + String(Math.round(Number(r[13]))).replace(/\B(?=(\d{3})+(?!\d))/g, ",")) + '"' : "";
+        return "<tr><td>" + esc(y) + "</td><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(money(r[3])) + "</td><td>" + esc(money(r[6])) + "</td><td>" + esc(money(r[5])) + " (" + esc(r[4]) + ")</td><td>" + signedMoney(r[7]) + "</td><td>" + esc(isNum(r[8]) ? num(r[8], 0) + "%" : "") + "</td><td>" + esc(isNum(r[10]) ? pct(r[10], 0) : "") + "</td><td" + r11Tip + ">" + esc(r11) + "</td></tr>";
+      }).join("") + "</tbody></table></div>" + '<p class="ledger-count">Slot coverage: ' + esc(copy("slot_coverage_basis")) + ". Pool used: " + esc(copy("pool_used_basis")) + ". Round 11+ over the CBA threshold: " + esc(copy("r11_over_basis")) + ".</p>";
     var shp = shardOf(d.club);
     if (shp && shp.farm && shp.farm.picks) out += renderPicks(shp.farm.picks, F.picks_summary || {});
     var sc = F.slot_chips || {}, lg = copy("slot_league") || {};

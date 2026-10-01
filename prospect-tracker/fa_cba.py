@@ -97,6 +97,35 @@ def cbt_threshold(season: int) -> dict:
     raise LookupError(f"no CBT threshold encoded for season {season}")
 
 
+def draft_r11_threshold(draft_year: int) -> dict:
+    """The bonus-pool threshold for a pick after round 10 in ``draft_year``:
+    the part of his bonus above ``threshold_usd`` counts against the club's
+    draft bonus pool. {threshold_usd, regime, carry_forward, verify_status,
+    source}. A draft past the last encoded regime resolves to its figure with
+    carry_forward=True; a draft before the first encoded one raises."""
+    rows = _rules().get("draft_r11_bonus_thresholds") or []
+    for r in rows:
+        if int(r["first_draft"]) <= draft_year <= int(r["last_draft"]):
+            return {
+                "threshold_usd": int(r["threshold_usd"]),
+                "regime": r.get("regime"),
+                "carry_forward": False,
+                "verify_status": r.get("verify_status", "curated-unverified"),
+                "source": r.get("source"),
+            }
+    if rows:
+        latest = max(rows, key=lambda r: int(r["last_draft"]))
+        if draft_year > int(latest["last_draft"]):
+            return {
+                "threshold_usd": int(latest["threshold_usd"]),
+                "regime": latest.get("regime"),
+                "carry_forward": True,
+                "verify_status": "explicitly-unknown",
+                "source": latest.get("source"),
+            }
+    raise LookupError(f"no round 11+ bonus threshold encoded for the {draft_year} draft")
+
+
 def cbt_surcharge_tiers() -> list[int]:
     """Dollar offsets above the base threshold where surcharge tiers begin."""
     return list(_rules()["cbt_surcharge_tiers_usd"]["tiers_above_threshold"])
