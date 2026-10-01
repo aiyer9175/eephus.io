@@ -129,7 +129,10 @@ STEP_TIMINGS_PATH = Path(__file__).resolve().parent / "logs" / "pipeline_steps_l
 def _provisional_nightly(log: logging.Logger, where: str) -> None:
     """PV-02: retain tonight's served provisional grade
     (provisional_history.retain) under the `provisional_retention` heartbeat.
-    Best-effort: a failure is logged and recorded, never raised."""
+    PV-04: then score every committed provisional freeze against the first
+    source grades ingested so far (provisional_track.update, append-only) under
+    the `provisional_track` heartbeat. Each half is best-effort on its own: a
+    failure is logged and recorded, never raised."""
     try:
         import provisional_history
         import job_heartbeat as _hb
@@ -143,6 +146,20 @@ def _provisional_nightly(log: logging.Logger, where: str) -> None:
         try:
             import job_heartbeat as _hb
             _hb.record("provisional_retention", ok=False, result=f"{where}: {_e}"[:120])
+        except Exception:                                     # noqa: BLE001
+            pass
+    try:
+        import provisional_track
+        import job_heartbeat as _hb
+        _res = provisional_track.update()
+        _hb.record("provisional_track", ok=(_res.get("status") == "ok"),
+                   result=f"{where}: {provisional_track.summary_line(_res)}"[:120])
+        log.info("provisional track (%s): %s", where, provisional_track.summary_line(_res))
+    except Exception as _e:                                   # noqa: BLE001
+        log.exception("provisional track failed (%s) - continuing", where)
+        try:
+            import job_heartbeat as _hb
+            _hb.record("provisional_track", ok=False, result=f"{where}: {_e}"[:120])
         except Exception:                                     # noqa: BLE001
             pass
 
@@ -2789,11 +2806,15 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # One request refreshes the live season's innings by position, so the card
         # bake below, the Defense board and Position Fit stop pairing current runs
         # with a July innings file. Rewrites only that season's key, atomically.
-        with _step("d9a. Provisional grade retention (provisional_history)", log):
+        with _step("d9a. Provisional grade retention + track (provisional_track_eval.json)", log):
             # PV-02. d9 just rewrote the served provisional grade, a gitignored
             # file, so it has no history unless it is kept here: a snapshot
             # under .cache/provisional_history/ (untracked) plus a small
-            # tracked digest. Heartbeat `provisional_retention`. Never aborts.
+            # tracked digest. Heartbeat `provisional_retention`.
+            # PV-04. Then score the committed freezes against the first source
+            # grades ingested so far (after d0 and, on a chained night, the
+            # monthly ingest), append-only, interim rows marked "window open".
+            # Heartbeat `provisional_track`. Neither half aborts the run.
             _provisional_nightly(log, "daily")
 
         with _step("d9b1. Refresh current-season fielding innings (fielding_innings.json)", log):

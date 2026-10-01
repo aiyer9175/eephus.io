@@ -556,6 +556,9 @@ _SIDECAR_GLOBS = (
     # the durable digest copy) and its tracked digest.
     ".cache/provisional_history/**/*",
     "data/provisional_history/digest.json",
+    # PV-04: the append-only provisional track record and its durable copy.
+    "data/provisional_track_eval.json",
+    ".cache/provisional_track/**/*",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -907,6 +910,9 @@ _SIDECAR_WRITE_TARGETS = (
     # PV-02: provisional_history.retain resolves its tracked digest at call
     # time; the snapshot store is the CACHE_DIR directory below.
     ("provisional_history", "DIGEST_PATH", "data/provisional_history/digest.json"),
+    # PV-04: provisional_track resolves both at call time (update / commit_rows).
+    ("provisional_track", "OUT_PATH", "data/provisional_track_eval.json"),
+    ("provisional_track", "LEDGER_PATH", ".cache/provisional_track/ledger.jsonl"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands
