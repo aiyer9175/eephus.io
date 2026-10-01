@@ -21750,8 +21750,16 @@ function renderInjuredActiveFilters() {
 // posterior expected surplus; its lo/hi band is never summed), read from the
 // artifact /trademachine/ reads. It is today's value of what each club
 // received, not the value on the trade date. Career WAR is context only and
-// never enters a total. A party with no trade value is unpriced: it is left
-// out of both sides and the card names no winner while any party is unpriced.
+// never enters a total. A party with no trade value is unpriced and counts as
+// $0 on the side that received him (owner answer M9-1, 2026-09-25): the card
+// still names a winner, and a footnote under it names every party valued at
+// zero, so the verdict never hides that a side holds an unpriced player.
+//
+// PAYLOAD (owner answer M10-1). The page reads the slim sidecar that
+// tools/export_trade_values.py writes beside the trade board: only the fields
+// this pricer and the debuted lead read, a fraction of the full board. When
+// the sidecar cannot be read the full board is read instead, so a missing
+// sidecar costs bytes, never a price.
 // ---------------------------------------------------------------------------
 const _TA_TV = { idx: null, loading: null };
 // Accent-folded name key: "Jose Soriano" with or without the accent -> jose_soriano;
@@ -21775,9 +21783,11 @@ function _taTradeValuesLoad() {
   if (_TA_TV.idx) return Promise.resolve(_TA_TV.idx);
   if (_TA_TV.loading) return _TA_TV.loading;
   const base = DATA_URL.replace(/[^/]+$/, "");
-  _TA_TV.loading = fetch(base + "trade_values.json", { cache: "no-cache" })
+  const get = (name) => fetch(base + name, { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
-    .catch(() => null)
+    .catch(() => null);
+  _TA_TV.loading = get("trade_values_slim.json")
+    .then(j => ((j && j.players) ? j : get("trade_values.json")))
     .then(j => { _TA_TV.idx = _taBuildIndex(j); _TA_TV.loading = null; return _TA_TV.idx; });
   return _TA_TV.loading;
 }
@@ -21811,11 +21821,11 @@ function _taPriceParty(idx, key, name, orgs) {
   if (!isFinite(mm)) return Object.assign(base, { value: null, kind: "unpriced", why: row.surplus_source || "no_price" });
   return Object.assign(base, { value: mm, kind: "tv" });
 }
-// Verdict for one trade: no winner while a price is loading or any party is
-// unpriced; otherwise the shared dead band decides balanced vs a winner.
-function _taVerdict(netDeltaA, unpriced, pending, band) {
+// Verdict for one trade: no winner while a price is loading; otherwise the
+// shared dead band decides balanced vs a winner. An unpriced party is already
+// in netDeltaA at $0, so it does not reach this function.
+function _taVerdict(netDeltaA, pending, band) {
   if (pending > 0) return "pending";
-  if (unpriced > 0) return "withheld";
   if (Math.abs(netDeltaA) < band) return "balanced";
   return netDeltaA > 0 ? "orgA" : "orgB";
 }
@@ -22089,8 +22099,8 @@ function renderRecentlyTraded() {
   // _taPriceParty. That is today's value of what each club received, not
   // the value on the trade date; the prospect side was already today's
   // baked surplus, so both sides now share one clock. Career WAR is
-  // context text only. A party with no trade value is unpriced: it is left
-  // out of both sides and the card names no winner. International bonus
+  // context text only. A party with no trade value is unpriced: he counts
+  // $0 on his side and a footnote on the card names him. International bonus
   // pool / cash considerations parsed from the trade narrative (e.g.
   // "$500,000 in international bonus pool space" -> +$0.5M) still credit
   // the side that received less.
@@ -22410,6 +22420,7 @@ function renderRecentlyTraded() {
     let unknownCount = 0, pendingCount = 0, aUnpriced = 0, bUnpriced = 0;
     for (const e of g.players) {
       if (e.val.value == null) {
+        // Unpriced: $0 on his side (owner answer M9-1), named in the footnote.
         if (e.val.kind === "pending") pendingCount++;
         else {
           unknownCount++;
@@ -22449,8 +22460,8 @@ function renderRecentlyTraded() {
     g.aCash = aCash; g.bCash = bCash;
     // Verdict: who won + by how much. Shared dead-band with the Trade Machine
     // so a sub-$5M edge reads as balanced, not a precise winner; no winner
-    // at all while any party is unpriced or the prices are still loading.
-    g.verdict = _taVerdict(g.netDeltaA, unknownCount, pendingCount, BALANCED_THRESHOLD_MM);
+    // while the prices are still loading. Unpriced parties are in at $0.
+    g.verdict = _taVerdict(g.netDeltaA, pendingCount, BALANCED_THRESHOLD_MM);
     g.winner = g.verdict === "orgA" ? g.orgA : g.verdict === "orgB" ? g.orgB : null;
   }
   // v33 - Trade GROUPING. Pull every tracked prospect from the same trade
@@ -22636,8 +22647,6 @@ function renderRecentlyTraded() {
           ? `<span style="color:var(--text-secondary);">Balanced trade</span>`
           : g.verdict === "pending"
           ? `<span style="color:var(--text-tertiary);">Pricing</span>`
-          : g.verdict === "withheld"
-          ? `<span style="color:var(--text-secondary);" title="A party in this trade has no trade value on file today, so the card names no winner.">No verdict · ${g.unknownCount} unpriced</span>`
           : `<span style="color:var(--up);font-weight:700;">${escapeHtml(g.winner)} +$${Math.abs(g.netDeltaA).toFixed(1)}M</span>`;
         const _tbsFor = (pp) => (pp ? (typeof tiebreakerScore === "function" ? tiebreakerScore(pp) : null) : null);
         const sidePlayerChips = (orgCode, highlightKeys = null) => {
@@ -22649,7 +22658,7 @@ function renderRecentlyTraded() {
             const isRowPlayer = highlightKeys && highlightKeys.has(e.p.player_key);
             const v = e.val;
             const valStr = v.value != null ? _taMM(v.value)
-                         : v.kind === "pending" ? "..." : "unpriced";
+                         : v.kind === "pending" ? "..." : "unpriced, $0";
             const tbsHere = (v.kind === "tv" && !v.debuted) ? _tbsFor(e.p) : null;
             const _srcLbl = { projection: "contract surplus over the club control window",
                               xfv: "eFV expected surplus over club control",
@@ -22665,7 +22674,7 @@ function renderRecentlyTraded() {
             const kindLbl = v.kind === "tv"
               ? `Value today ${_taMM(v.value)}: the Trade Machine price (${_srcLbl})${v.fv != null && !v.debuted ? ` · FV ${v.fv}` : ""}${tbsHere != null ? ` · TBS ${tbsHere}` : ""}${_warCtx}`
               : v.kind === "pending" ? "Loading trade values"
-              : `Unpriced (${_whyLbl}); left out of both totals, so the card names no winner${_warCtx}`;
+              : `Unpriced (${_whyLbl}); valued at $0 in this side's total${_warCtx}`;
             const vetTag = (v.debuted || (e.p._mlb_vet && v.kind !== "tv" && v.status == null))
               ? `<span style="font-size:8px;color:var(--neon-cyan);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;margin-right:1px;">MLB</span>` : "";
             const nameMarkup = e.p.player_key
@@ -22688,7 +22697,7 @@ function renderRecentlyTraded() {
             const _fvBadge = _fvNum != null
               ? `<span class="fv-badge ${fvClass(String(fvCeil(_fvNum)))}" style="font-size:8px;padding:0 3px;line-height:1.5;flex-shrink:0;">${fvCeil(_fvNum)}</span>`
               : "";
-            chips.push(`<span style="${wrapStyle}" title="${escapeHtml(kindLbl)}" data-ta-kind="${v.kind}" data-ta-key="${escapeHtml(v.key || "")}" data-ta-mm="${v.value != null ? v.value : ""}">${star}${vetTag}${nameMarkup}${_posLvl}${_fvBadge}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}</span></span>`);
+            chips.push(`<span style="${wrapStyle}" title="${escapeHtml(kindLbl)}" data-ta-kind="${v.kind}" data-ta-key="${escapeHtml(v.key || "")}" data-ta-mm="${v.value != null ? v.value : (v.kind === "unpriced" ? 0 : "")}">${star}${vetTag}${nameMarkup}${_posLvl}${_fvBadge}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}</span></span>`);
           }
           const ibp  = (orgCode === g.orgA) ? g.aIbp  : g.bIbp;
           const cash = (orgCode === g.orgA) ? g.aCash : g.bCash;
@@ -22749,7 +22758,7 @@ function renderRecentlyTraded() {
             <span style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0;min-width:52px;">${logo}<span style="font-family:var(--font-serif);font-size:11px;font-weight:700;color:${tone};">${escapeHtml(orgCode)}</span></span>
             <span style="color:var(--text-tertiary);font-size:9px;flex-shrink:0;letter-spacing:0.04em;">receives ▸</span>
             <span style="flex:1;min-width:0;display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:3px 6px;">${sidePlayerChips(orgCode, _hl)}</span>
-            <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;color:${tone};white-space:nowrap;margin-left:auto;flex-shrink:0;">${_taMM(received)}${unpriced ? ` <span style="color:var(--text-tertiary);font-weight:500;font-size:9px;">+ ${unpriced} unpriced</span>` : ""}${fvSuffix(split)}</span>
+            <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;color:${tone};white-space:nowrap;margin-left:auto;flex-shrink:0;">${_taMM(received)}${unpriced ? ` <span style="color:var(--text-tertiary);font-weight:500;font-size:9px;">incl. ${unpriced} unpriced at $0</span>` : ""}${fvSuffix(split)}</span>
           </div>`;
         };
         // Nest the card under its prospect row: pull it flush against the
@@ -22759,6 +22768,12 @@ function renderRecentlyTraded() {
         // top accent keep the "this belongs to the row above" read.
         const _railColor = (typeof orgColor === "function" && p.org) ? orgColor(p.org) : "var(--border)";
         const _asOf = _TA_TV.idx && _TA_TV.idx.asOf;
+        // Footnote (owner answer M9-1): every party with no trade value is
+        // named here, with the club that received him, as valued at $0.
+        const _unpricedParties = g.players.filter(e => e.val.value == null && e.val.kind === "unpriced");
+        const _unpricedFoot = _unpricedParties.length
+          ? `<div class="ta-unpriced-foot" style="font-size:9px;color:var(--text-tertiary);line-height:1.4;">Unpriced, valued at $0: ${_unpricedParties.map(e => `${escapeHtml(e.p.player_name || "")} (to ${escapeHtml(e.to || "?")})`).join(", ")}. No trade value on file today; the verdict counts ${_unpricedParties.length === 1 ? "him" : "them"} as zero.</div>`
+          : "";
         return `<div class="trade-audit-card is-traded" data-ta-verdict="${g.verdict}" data-ta-net="${g.netDeltaA}" style="grid-column:1 / -1;margin:-6px 0 8px 26px;padding:6px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-left:3px solid ${_railColor};border-top:2px solid ${winColor};border-radius:0 0 var(--radius-sm) var(--radius-sm);box-shadow:var(--shadow-card);font-size:10px;display:flex;flex-direction:column;gap:4px;line-height:1.5;">
           <div style="display:flex;align-items:baseline;gap:8px;width:100%;">
             <span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;flex-shrink:0;">↳ Trade Audit</span>
@@ -22767,6 +22782,7 @@ function renderRecentlyTraded() {
           </div>
           ${orgLine(g.orgA, aTone, g.aReceived, aSplit, g.aUnpriced)}
           ${orgLine(g.orgB, bTone, g.bReceived, bSplit, g.bUnpriced)}
+          ${_unpricedFoot}
         </div>`;
       })()}
       ${_groupClose}

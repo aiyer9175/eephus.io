@@ -21,6 +21,15 @@ repo, so its absence is normal and is logged rather than raised (the 2026-07-31
 lesson: `if exists()` made a missing declared input indistinguishable from an
 empty one).
 
+THE SLIM SIDECAR (owner answer M10-1, 2026-09-25). The PROSPX Transactions
+Trade Audit and the debuted Trade value lead read nine fields per player from
+the 4.9 MB board. write_slim_sidecar copies exactly those fields, with the
+board's generated_at, to data/trade_values_slim.json beside it, and it is
+written after the last pass from the file just written, so the two can never
+disagree. run_monthly's rebuild path calls the same function after its own
+export. The sidecar ships at data/ depth one, so both deploy consumers carry
+it with every other data/*.json file (deploy/data_exclude.txt does not list it).
+
 Usage:
     python tools/export_trade_values.py            # two passes, data/
     python tools/export_trade_values.py --passes 1 # diagnostic only
@@ -38,6 +47,37 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 log = logging.getLogger("export_trade_values")
+
+SLIM_NAME = "trade_values_slim.json"
+# Exactly the fields prospx/index.html reads off a trade-value row: the pricer
+# (_taBuildIndex / _taPriceParty) and the debuted lead (_dtvRow, which also
+# checks mlbam_id). trade_value_lo / trade_value_hi are never copied.
+SLIM_FIELDS = ("player_key", "mlbam_id", "player_name", "org", "status", "fv",
+               "position", "surplus_source", "trade_value_mm")
+
+
+def write_slim_sidecar(tv_path: Path | str, out_path: Path | str | None = None) -> int:
+    """Write the slim Transactions sidecar from a written trade_values.json.
+
+    Returns the number of rows written. out_path defaults to SLIM_NAME beside
+    tv_path, so a caller that redirects the board redirects the sidecar too.
+    """
+    tv_path = Path(tv_path)
+    out_path = Path(out_path) if out_path is not None else tv_path.parent / SLIM_NAME
+    doc = json.loads(tv_path.read_text(encoding="utf-8"))
+    rows = [{k: r.get(k) for k in SLIM_FIELDS} for r in (doc.get("players") or [])]
+    slim = {
+        "generated_at": doc.get("generated_at"),
+        "source": tv_path.name,
+        "fields": list(SLIM_FIELDS),
+        "count": len(rows),
+        "players": rows,
+    }
+    tmp = out_path.with_suffix(out_path.suffix + ".tmp")
+    tmp.write_text(json.dumps(slim, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    tmp.replace(out_path)
+    log.info("wrote %s (%d rows)", out_path, len(rows))
+    return len(rows)
 
 
 def _load_players(data_dir: Path) -> tuple[list, dict | None]:
@@ -60,13 +100,13 @@ def _load_players(data_dir: Path) -> tuple[list, dict | None]:
     return players, ts.get("level_norms")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--data-dir", default=str(ROOT / "data"))
     ap.add_argument("--passes", type=int, default=2,
                     help="2 is correct; 1 is a diagnostic that leaves the "
                          "platform re-point one step behind")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     data_dir = Path(args.data_dir)
@@ -86,6 +126,7 @@ def main() -> int:
         log.info("pass %d: exported %d players", i, n)
 
     log.info("wrote %s", out_path)
+    write_slim_sidecar(out_path, data_dir / SLIM_NAME)
     return 0
 
 

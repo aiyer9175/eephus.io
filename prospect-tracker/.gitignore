@@ -22,6 +22,7 @@ data/xfv_backgrade.json
 data/grpo_scores.json
 data/grpo_public.json
 data/trade_values.json
+data/trade_values_slim.json
 data/ifa_timeseries.json
 data/mlb_player_detail.json
 data/timeseries.json

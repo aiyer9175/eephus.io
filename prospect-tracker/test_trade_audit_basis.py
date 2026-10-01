@@ -19,14 +19,21 @@ Contract pinned here:
   * every party is priced at trade_values.json trade_value_mm (the posterior expected
     surplus, never its lo/hi band), by key first, then by an accent- and initial-folded
     name narrowed to the two clubs;
-  * a party with no trade value is unpriced, left out of both totals, and the card names
-    no winner; while the prices load the card names no winner either;
-  * on the served page every priced chip equals its trade_value_mm.
+  * a party with no trade value is unpriced and counts as $0 on the side that received
+    him (owner answer M9-1, 2026-09-25, replacing the withheld verdict): the card still
+    names a winner or reads balanced, and a footnote names every unpriced party as
+    valued at zero; while the prices load the card names no winner;
+  * on the served page every priced chip equals its trade_value_mm;
+  * the page reads the slim sidecar data/trade_values_slim.json (owner answer M10-1),
+    written by tools/export_trade_values.write_slim_sidecar from the board just
+    written, with every field the pricer and the debuted lead read; the full board is
+    the fallback only when the sidecar cannot be read.
 """
 from __future__ import annotations
 
 import json
 import re
+import sys
 import warnings
 from pathlib import Path
 
@@ -35,6 +42,8 @@ from conftest import load_data_doc, serve_site
 
 ROOT = Path(__file__).resolve().parent
 PROSPX = ROOT / "prospx" / "index.html"
+sys.path.insert(0, str(ROOT))
+from tools import export_trade_values as etv  # noqa: E402
 
 
 def _src() -> str:
@@ -75,7 +84,8 @@ def test_every_party_goes_through_the_one_pricer():
     body = _render_traded_src()
     assert body.count("_taPriceParty(_TA_TV.idx") == 2, (
         "tracked rows and narrative-named players must both price through _taPriceParty")
-    assert "_taVerdict(g.netDeltaA, unknownCount, pendingCount, BALANCED_THRESHOLD_MM)" in body
+    assert "_taVerdict(g.netDeltaA, pendingCount, BALANCED_THRESHOLD_MM)" in body
+    assert "withheld" not in _src(), "an unpriced party no longer withholds the verdict (M9-1)"
     assert "_taTradeValuesLoad()" in body
     assert "trade_value_lo" not in body and "trade_value_hi" not in body, (
         "the audit must never sum a quantile point")
@@ -86,20 +96,19 @@ def test_every_party_goes_through_the_one_pricer():
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
-def js():
+def js(tmp_path_factory):
     mr = pytest.importorskip("py_mini_racer")
     warnings.filterwarnings("ignore")
-    doc = _trade_values()
+    _trade_values()
     src = _src()
     ctx = mr.MiniRacer()
     for fn in ("_taFold", "_taBuildIndex", "_taPriceParty", "_taVerdict", "_taMM"):
         ctx.eval(_function_source(src, fn))
-    slim = {"generated_at": doc.get("generated_at"),
-            "players": [{k: r.get(k) for k in ("player_key", "player_name", "org", "status",
-                                               "fv", "position", "surplus_source",
-                                               "trade_value_mm")}
-                        for r in doc["players"]]}
-    ctx.eval("var IDX = _taBuildIndex(%s);" % json.dumps(slim))
+    # The index is built from what the page reads: the slim sidecar, written by the
+    # real writer from the served board into a tmp dir (never into data/).
+    out = tmp_path_factory.mktemp("slim") / etv.SLIM_NAME
+    etv.write_slim_sidecar(ROOT / "data" / "trade_values.json", out)
+    ctx.eval("var IDX = _taBuildIndex(%s);" % out.read_text(encoding="utf-8"))
     return ctx
 
 
@@ -151,13 +160,14 @@ def test_a_key_miss_falls_back_to_the_name_only_inside_the_two_clubs(js):
     assert outside["kind"] == "unpriced"
 
 
-def test_unknown_and_loading_parties_name_no_winner(js):
+def test_loading_names_no_winner_and_unpriced_is_zero(js):
     assert _price(js, None, "Nobody Anybody", ["NYY", "BOS"])["kind"] == "unpriced"
     assert json.loads(js.eval("JSON.stringify(_taPriceParty(null, 'x', 'X', null))"))["kind"] == "pending"
-    assert js.eval("_taVerdict(40, 1, 0, 5)") == "withheld"
-    assert js.eval("_taVerdict(40, 0, 2, 5)") == "pending"
-    assert js.eval("_taVerdict(4.9, 0, 0, 5)") == "balanced"
-    assert js.eval("_taVerdict(-5.1, 0, 0, 5)") == "orgB"
+    # an unpriced party is $0 inside netDeltaA, so the verdict reads only the net
+    assert js.eval("_taVerdict(40, 0, 5)") == "orgA"
+    assert js.eval("_taVerdict(40, 2, 5)") == "pending"
+    assert js.eval("_taVerdict(4.9, 0, 5)") == "balanced"
+    assert js.eval("_taVerdict(-5.1, 0, 5)") == "orgB"
     assert js.eval("_taMM(-0.4)") == "-$0.4M"
 
 
@@ -166,8 +176,9 @@ def test_unknown_and_loading_parties_name_no_winner(js):
 # ---------------------------------------------------------------------------
 
 _CARDS = """() => [...document.querySelectorAll('.trade-audit-card')].map(c => ({
-  verdict: c.getAttribute('data-ta-verdict'),
+  verdict: c.getAttribute('data-ta-verdict'), net: c.getAttribute('data-ta-net'),
   text: (c.innerText || '').replace(/\\s+/g, ' '),
+  foot: (c.querySelector('.ta-unpriced-foot') || {}).innerText || null,
   chips: [...c.querySelectorAll('[data-ta-kind]')].map(s => ({
     kind: s.getAttribute('data-ta-kind'), key: s.getAttribute('data-ta-key'),
     mm: s.getAttribute('data-ta-mm'), title: s.getAttribute('title') || ''})),
@@ -189,6 +200,8 @@ def test_served_audit_cards_use_the_trade_value():
             "try{localStorage.setItem('prospect-tracker.gate-unlocked','1')}catch(e){}")
         errs: list[str] = []
         page.on("pageerror", lambda err: errs.append(err.message))
+        fetched: list[str] = []
+        page.on("request", lambda r: fetched.append(r.url.split("?")[0].rsplit("/", 1)[-1]))
         page.goto(base + "prospx/index.html#tab=traded&acq=trade", wait_until="load", timeout=120_000)
         page.wait_for_function(
             "() => { const c = document.querySelectorAll('.trade-audit-card');"
@@ -197,19 +210,122 @@ def test_served_audit_cards_use_the_trade_value():
         cards = page.evaluate(_CARDS)
         browser.close()
     assert not errs, errs[:3]
+    if (ROOT / "data" / etv.SLIM_NAME).exists():
+        assert etv.SLIM_NAME in fetched and "trade_values.json" not in fetched, (
+            "the Transactions tab reads the slim sidecar, not the 4.9 MB board (M10-1)")
     assert len(cards) > 20
     priced = 0
     for c in cards:
         kinds = [ch["kind"] for ch in c["chips"]]
         assert "pending" not in kinds
-        if "unpriced" in kinds:
-            assert c["verdict"] == "withheld", f"a card with an unpriced party names a winner: {c['text'][:160]}"
+        assert c["verdict"] in ("orgA", "orgB", "balanced"), c["text"][:160]
+        n_unpriced = kinds.count("unpriced")
+        if n_unpriced:
+            assert c["foot"] and "Unpriced, valued at $0" in c["foot"], c["text"][:160]
+            assert c["foot"].count("(to ") == n_unpriced, "the footnote names every unpriced party"
         else:
-            assert c["verdict"] in ("orgA", "orgB", "balanced")
+            assert not c["foot"]
         for ch in c["chips"]:
+            if ch["kind"] == "unpriced":
+                assert ch["mm"] == "0" and "valued at $0" in ch["title"], ch
             assert "career WAR ×" not in ch["title"] and "realized career value" not in ch["title"]
             if ch["kind"] == "tv" and ch["key"]:
                 priced += 1
                 assert ch["key"] in tv, ch
                 assert float(ch["mm"]) == pytest.approx(tv[ch["key"]]), ch
     assert priced > 100, f"only {priced} priced chips on the served audit; the check proved little"
+
+
+# ---------------------------------------------------------------------------
+# 4. The slim sidecar (owner answer M10-1, 2026-09-25)
+# ---------------------------------------------------------------------------
+
+def _row_fields_read_by_the_page() -> set[str]:
+    """Every field prospx reads off a trade-value row: the pricer, the index and
+    the debuted lead all name their row `row` or `r`."""
+    src = _src()
+    fields: set[str] = set()
+    for fn in ("_taBuildIndex", "_taPriceParty", "_dtvRow", "_tvLeadFill", "debutedTradeValueMM"):
+        body = _function_source(src, fn)
+        fields |= set(re.findall(r"\b(?:row|r)\.([a-z_][a-z0-9_]*)", body))
+    return fields - {"length"}
+
+
+def test_the_sidecar_carries_every_field_the_page_reads():
+    read = _row_fields_read_by_the_page()
+    assert {"player_key", "trade_value_mm", "surplus_source", "mlbam_id"} <= read, read
+    missing = read - set(etv.SLIM_FIELDS)
+    assert not missing, f"prospx reads {sorted(missing)} off a trade-value row but the sidecar drops it"
+    assert "trade_value_lo" not in etv.SLIM_FIELDS and "trade_value_hi" not in etv.SLIM_FIELDS
+
+
+def test_the_writer_copies_exactly_the_slim_fields(tmp_path):
+    src = tmp_path / "trade_values.json"
+    src.write_text(json.dumps({
+        "generated_at": "2026-10-01T00:00:00Z", "calibration": {"version": "x"},
+        "players": [
+            {"player_key": "a_b", "mlbam_id": 1, "player_name": "A B", "org": "NYY",
+             "status": "debuted", "fv": None, "position": "SS", "surplus_source": "projection",
+             "trade_value_mm": 12.5, "trade_value_lo": -3.0, "trade_value_hi": 40.0, "contract": {}},
+            {"player_key": "c_d", "player_name": "C D", "trade_value_mm": None},
+        ]}), encoding="utf-8")
+    n = etv.write_slim_sidecar(src)
+    out = tmp_path / etv.SLIM_NAME
+    assert n == 2 and out.exists(), "the default output sits beside the board it was written from"
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    assert doc["generated_at"] == "2026-10-01T00:00:00Z" and doc["count"] == 2
+    assert doc["source"] == "trade_values.json" and doc["fields"] == list(etv.SLIM_FIELDS)
+    assert [list(r) for r in doc["players"]] == [list(etv.SLIM_FIELDS)] * 2
+    assert doc["players"][0]["trade_value_mm"] == 12.5 and doc["players"][1]["mlbam_id"] is None
+    assert "trade_value_lo" not in out.read_text(encoding="utf-8")
+
+
+def test_main_writes_both_outputs_under_the_data_dir_it_is_given(tmp_path, monkeypatch):
+    """The second output path follows --data-dir, so a redirected run never touches
+    the served data/trade_values_slim.json (the board writer is stubbed here)."""
+    import bayes_trade_value
+    real = ROOT / "data" / etv.SLIM_NAME
+    before = real.stat().st_mtime_ns if real.exists() else None
+    (tmp_path / "timeseries.json").write_text(json.dumps({"players": []}), encoding="utf-8")
+
+    def _fake_export(players, out_path, level_norms=None):
+        Path(out_path).write_text(json.dumps({"generated_at": "g", "players": [
+            {"player_key": "x", "player_name": "X", "trade_value_mm": 1.0}]}), encoding="utf-8")
+        return 1
+    monkeypatch.setattr(bayes_trade_value, "export_trade_values_json", _fake_export)
+    monkeypatch.setattr(bayes_trade_value, "_reset_cache", lambda: None)
+    assert etv.main(["--data-dir", str(tmp_path), "--passes", "1"]) == 0
+    slim = json.loads((tmp_path / etv.SLIM_NAME).read_text(encoding="utf-8"))
+    assert slim["count"] == 1 and slim["players"][0]["player_key"] == "x"
+    after = real.stat().st_mtime_ns if real.exists() else None
+    assert before == after, "a redirected run wrote the served sidecar"
+
+
+def test_the_page_reads_the_sidecar_first_and_the_full_board_only_as_fallback():
+    body = _function_source(_src(), "_taTradeValuesLoad")
+    i_slim, i_full = body.find('get("trade_values_slim.json")'), body.find('get("trade_values.json")')
+    assert 0 <= i_slim < i_full, "the sidecar is read first, the full board only when it cannot be"
+    assert etv.SLIM_NAME == "trade_values_slim.json"
+
+
+def test_the_nightly_rebuild_writes_the_sidecar_too():
+    rm = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    i_tv = rm.find('export_trade_values_json(tv_players, out_dir / "trade_values.json"')
+    i_slim = rm.find('write_slim_sidecar(out_dir / "trade_values.json")')
+    assert 0 <= i_tv < i_slim, "run_monthly's rebuild path must write the sidecar after the board"
+
+
+def test_the_sidecar_ships_in_both_deploy_consumers():
+    name = etv.SLIM_NAME
+    excluded = [ln.strip() for ln in (ROOT / "deploy" / "data_exclude.txt").read_text(
+        encoding="utf-8").splitlines() if ln.strip() and not ln.startswith("#")]
+    assert name not in excluded
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert "--include='/data/*.json'" in nightly, "the nightly rsync ships data/*.json at depth one"
+    wf = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf.exists():
+        assert "find data -maxdepth 1 \\( -name '*.json'" in wf.read_text(encoding="utf-8"), (
+            "the CI workflow copies data/*.json at depth one")
+    gi = (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    assert "data/trade_values.json" in gi and f"data/{name}" in gi, (
+        "the sidecar is rebuilt with the board every night, so it is ignored like the board")

@@ -1771,6 +1771,13 @@ def rebuild_only(out_dir: Path = Path("data"), *,
         n_tv = export_trade_values_json(tv_players, out_dir / "trade_values.json",
                                         level_norms=lnorms)
         log.info("trade values (rebuild): exported %d players", n_tv)
+        # The slim Transactions sidecar (owner answer M10-1): the same writer
+        # tools/export_trade_values.py runs, from the file just written.
+        try:
+            from tools.export_trade_values import write_slim_sidecar
+            write_slim_sidecar(out_dir / "trade_values.json")
+        except Exception:
+            log.exception("trade values slim sidecar failed in rebuild_only - continuing")
     except Exception:
         log.exception("trade value export crashed in rebuild_only — continuing")
 
