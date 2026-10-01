@@ -1337,6 +1337,9 @@ def build_ph_hitter_columns(hit_blob: dict | None) -> dict:
     ps = (hit_blob or {}).get("platoon_splits")
     ps_note = (f"platoon_splits.available {ps.get('available')}" if isinstance(ps, dict)
                else "no platoon_splits block")
+    if isinstance(ps, dict) and ps.get("estimator"):
+        # The per-hand construction, read by dark_clock (5e / 5f restart).
+        ps_note += f"; split_estimator {ps.get('estimator')}"
     out = {}
     for c in cols:
         out[c] = {"values": vals[c], "basis": (
@@ -2006,7 +2009,7 @@ def load_vintage(on_date: str, *, vintage_dir: Path | None = None) -> dict | Non
 # ---------------------------------------------------------------------------
 # DARK CLOCKS WHOSE START IS A FACT ABOUT A VINTAGE (M12-05, 2026-09-25)
 # ---------------------------------------------------------------------------
-# docs/diamond-betting.md registers two clocks that start at the first vintage
+# docs/diamond-betting.md registers clocks that start at the first vintage
 # whose OWN basis record meets a condition, and whose earliest admissible look
 # is four weeks later. The documents dated both looks off an expected
 # 2026-09-11.json that was never written (the store holds 2026-09-10, then
@@ -2016,13 +2019,28 @@ def load_vintage(on_date: str, *, vintage_dir: Path | None = None) -> dict | Non
 # and no outcome.
 #
 # 5e (handedness): the first vintage whose 5f hitter-column basis carries
-#   "platoon_splits.available True" (the 2026-09-10 restart rule).
+#   "platoon_splits.available True" AND the per-hand construction marker
+#   (the owner-signed restart of 2026-09-25: the per-hand HEM+ switched to the
+#   platoon-ratio estimator, so a vintage without the marker carries the old
+#   construction and cannot start the clock).
+# 5f (pinch-hit): the same condition re-dates its construction start; its look
+#   is also embargoed to after the 2027 regular season (_5F_LOOK_FLOOR).
 # 5i-B (park by bat side): the first vintage whose feature_basis shows
 #   lhb_share_vr n = 30 AND park_by_hand n >= 29.
 DARK_CLOCK_DAYS = 28
-DARK_CLOCK_FAMILIES = ("5e", "5i-B")
+DARK_CLOCK_FAMILIES = ("5e", "5f", "5i-B")
 _5E_BASIS_COLUMNS = ("lineup_dis_vs_lhp", "lineup_dis_vs_rhp",
                      "bench_adv_vs_lhp", "bench_adv_vs_rhp")
+#: The per-hand construction a 5e / 5f clock counts from. build_ph_hitter_columns
+#: writes "split_estimator <id>" into the basis from the hitter artifact's
+#: platoon_splits.estimator, and hem_plus.SPLIT_ESTIMATOR is pinned equal to the
+#: id here by a test, so the stamp and the condition cannot drift apart.
+SPLIT_ESTIMATOR_ID = "platoon_ratio_v1"
+_SPLIT_CONSTRUCTION_MARKER = f"split_estimator {SPLIT_ESTIMATOR_ID}"
+#: 5f's end-of-2027-regular-season embargo, as a code floor: the day after the
+#: latest regular-season final day since 2016 (2022-10-05). It can only delay a
+#: look; the look still waits for the last 2027 regular-season game to be final.
+_5F_LOOK_FLOOR = "2027-10-06"
 
 
 def _basis_n(fb: dict, col: str) -> int:
@@ -2041,9 +2059,13 @@ def dark_clock_condition(family: str, rec: dict | None) -> bool:
     fb = (rec or {}).get("feature_basis")
     if not isinstance(fb, dict):
         return False
-    if family == "5e":
-        return any("platoon_splits.available True" in str((fb.get(c) or {}).get("basis") or "")
-                   for c in _5E_BASIS_COLUMNS)
+    if family in ("5e", "5f"):
+        for c in _5E_BASIS_COLUMNS:
+            basis = str((fb.get(c) or {}).get("basis") or "")
+            if ("platoon_splits.available True" in basis
+                    and _SPLIT_CONSTRUCTION_MARKER in basis):
+                return True
+        return False
     if family == "5i-B":
         return _basis_n(fb, "lhb_share_vr") == 30 and _basis_n(fb, "park_by_hand") >= 29
     return False
@@ -2059,6 +2081,8 @@ def dark_clock(family: str, *, vintage_dir: Path | None = None) -> dict:
             break
     look = ((date.fromisoformat(first) + timedelta(days=DARK_CLOCK_DAYS)).isoformat()
             if first else None)
+    if look and family == "5f":
+        look = max(look, _5F_LOOK_FLOOR)
     return {"family": family, "first_vintage": first, "earliest_look": look,
             "days": DARK_CLOCK_DAYS}
 

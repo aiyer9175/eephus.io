@@ -932,9 +932,12 @@ def _write_fake_leaderboards(data_dir, *, offense: float, as_of: str = "2026-08-
 # The clock start is a fact about a vintage's own basis record, so it is read
 # off the store; a look before the derived date is refused.
 
-def _clock_rec(on: str, *, platoon: bool, lhb_n: int = 30, park_n: int = 29) -> dict:
-    fb = {"lineup_dis_vs_lhp": {"basis": "orders.vl; platoon_splits.available %s" % platoon,
-                                "n": 30},
+def _clock_rec(on: str, *, platoon: bool, lhb_n: int = 30, park_n: int = 29,
+               estimator: str | None = lv.SPLIT_ESTIMATOR_ID) -> dict:
+    basis = "orders.vl; platoon_splits.available %s" % platoon
+    if estimator:
+        basis += "; split_estimator %s" % estimator
+    fb = {"lineup_dis_vs_lhp": {"basis": basis, "n": 30},
           "lhb_share_vr": {"basis": "orders.vr", "n": lhb_n},
           "park_by_hand": {"basis": "fa_meta park_factors_by_hand", "n": park_n}}
     return {"schema": 5, "vintage_date": on, "covers_through": on,
@@ -983,3 +986,79 @@ def test_an_unstarted_clock_refuses_every_look(tmp_path):
     assert not lv.dark_look_allowed("5e", "2027-01-01", vintage_dir=vdir)
     with pytest.raises(ValueError):
         lv.dark_clock_condition("5x", {})
+
+
+# ---- the owner-signed 5e / 5f restart (2026-09-25) --------------------------
+# The per-hand HEM+ switched to the platoon-ratio estimator. A vintage written
+# under the old construction (available True, no marker) must not start either
+# clock, and both refuse every date before the new start plus 28 days.
+
+def test_old_construction_vintages_do_not_start_5e_or_5f(tmp_path):
+    vdir = _clock_store(tmp_path, {
+        "2026-09-13": _clock_rec("2026-09-13", platoon=True, estimator=None),
+        "2026-09-30": _clock_rec("2026-09-30", platoon=True, estimator=None),
+    })
+    for fam in ("5e", "5f"):
+        clk = lv.dark_clock(fam, vintage_dir=vdir)
+        assert clk["first_vintage"] is None and clk["earliest_look"] is None, clk
+        for d in ("2026-10-11", "2026-10-29", "2027-12-31"):
+            assert not lv.dark_look_allowed(fam, d, vintage_dir=vdir), (fam, d)
+    # 5i-B's condition does not read the per-hand construction and is unmoved.
+    assert lv.dark_clock("5i-B", vintage_dir=vdir)["first_vintage"] == "2026-09-13"
+
+
+def test_5e_restarts_at_the_first_new_construction_vintage(tmp_path):
+    vdir = _clock_store(tmp_path, {
+        "2026-09-13": _clock_rec("2026-09-13", platoon=True, estimator=None),
+        "2026-09-30": _clock_rec("2026-09-30", platoon=True, estimator=None),
+        "2026-10-02": _clock_rec("2026-10-02", platoon=True),
+        "2026-10-03": _clock_rec("2026-10-03", platoon=True),
+    })
+    clk = lv.dark_clock("5e", vintage_dir=vdir)
+    assert clk["first_vintage"] == "2026-10-02" and clk["earliest_look"] == "2026-10-30"
+    # the superseded 2026-10-11 floor no longer admits a look
+    for d in ("2026-10-11", "2026-10-29"):
+        assert not lv.dark_look_allowed("5e", d, vintage_dir=vdir), d
+    assert lv.dark_look_allowed("5e", "2026-10-30", vintage_dir=vdir)
+
+
+def test_the_marker_alone_does_not_start_the_clock(tmp_path):
+    """The restart rule keeps the 2026-09-10 condition: a marker on a night the
+    split feed was down is not a qualifying vintage."""
+    vdir = _clock_store(tmp_path, {
+        "2026-10-02": _clock_rec("2026-10-02", platoon=False),
+        "2026-10-03": _clock_rec("2026-10-03", platoon=True),
+    })
+    assert lv.dark_clock("5e", vintage_dir=vdir)["first_vintage"] == "2026-10-03"
+    assert not lv.dark_clock_condition(
+        "5e", _clock_rec("2026-10-04", platoon=True, estimator="season_shrink_v0"))
+
+
+def test_5f_is_embargoed_to_after_the_2027_regular_season(tmp_path):
+    vdir = _clock_store(tmp_path, {
+        "2026-09-30": _clock_rec("2026-09-30", platoon=True, estimator=None),
+        "2026-10-02": _clock_rec("2026-10-02", platoon=True),
+    })
+    clk = lv.dark_clock("5f", vintage_dir=vdir)
+    assert clk["first_vintage"] == "2026-10-02"
+    assert clk["earliest_look"] == "2027-10-06", clk
+    for d in ("2026-10-30", "2027-07-01", "2027-10-05"):
+        assert not lv.dark_look_allowed("5f", d, vintage_dir=vdir), d
+    assert lv.dark_look_allowed("5f", "2027-10-06", vintage_dir=vdir)
+    # a start late enough that start + 28 days passes the floor uses that date
+    (tmp_path / "late").mkdir()
+    late = _clock_store(tmp_path / "late", {
+        "2027-09-20": _clock_rec("2027-09-20", platoon=True)})
+    assert lv.dark_clock("5f", vintage_dir=late)["earliest_look"] == "2027-10-18"
+
+
+def test_the_capture_basis_carries_the_estimator_marker():
+    blob = {"platoon_splits": {"available": True, "estimator": lv.SPLIT_ESTIMATOR_ID},
+            "bat_side": {"available": True}, "teams": []}
+    out = lv.build_ph_hitter_columns(blob)
+    rec = {"feature_basis": {c: {"basis": v["basis"]} for c, v in out.items()}}
+    assert lv.dark_clock_condition("5e", rec) and lv.dark_clock_condition("5f", rec)
+    blob["platoon_splits"].pop("estimator")
+    out = lv.build_ph_hitter_columns(blob)
+    rec = {"feature_basis": {c: {"basis": v["basis"]} for c, v in out.items()}}
+    assert not lv.dark_clock_condition("5e", rec)
