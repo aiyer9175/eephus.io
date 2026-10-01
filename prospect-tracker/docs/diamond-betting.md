@@ -3924,6 +3924,14 @@ whichever way it lands:** `sp_tto3_bf` is mechanically correlated with
 read on the pair are both part of the result. A candidate that only reproduces
 the innings share has found nothing.
 
+**Note (2026-09-30), disclosure only.** The section "Starter workload: expected outs
+and pitches per start" (after 5l), registered the same day, is plan candidate N6(d):
+an expected-outs share that would REPLACE the innings share this gate names as its
+confound. It reads nothing of 5d-E. Its stage 1 never reads `sp_tto3_bf` or
+`sp_rest_days`, and its stage-2 look (not before 2027-07-01) reads `sp_tto3_bf` only
+as a dark column in a VIF table. It changes none of 5d-E's criteria, its twin, its
+variance-inflation read or its date.
+
 ### 5d-F. The home plate umpire is NOT SERVABLE, and this records why
 
 The umpire was scoped on 2026-09-07 and **no column was added**, because the
@@ -6813,6 +6821,14 @@ is recorded, without changing any threshold above: the 5c-B and 5c-C reads
 5g read (2027). Each tells the lane something about the innings-share neighbourhood
 the 5l members sit in; none is a read of a 5l column.
 
+Added 2026-09-30, disclosure only: the section "Starter workload: expected outs and
+pitches per start" (below) registers a per-pitcher pitch budget, the per-pitcher
+hook-rate close variant named under Disqualification below. Its stage 1 relates
+per-pitcher pitch counts only to the starter's own workload (his outs and pitches per
+start) on pre-2026 corpus games, and nothing to a game result, price, edge or ledger
+row; its moneyline look and any props flip wait for this section's `mgmt_policy_gate`
+block. No threshold above changes.
+
 **Whatever the effect size, neither column enters the model before that look.** Not
 as a served input, not as a slot tiebreak, not as a badge, not as a "context-adjusted"
 probability, not as a shadow-ledger tag, and not through the Dugout context block. A
@@ -6860,6 +6876,328 @@ runs; the disclosure is amended in and the result is reported whichever way it l
 If the parity fixture fails, no look is taken until it passes. If the power
 precondition is not on disk, no criterion may be read. **No number has been computed
 on either candidate.**
+
+---
+
+## 5m. Starter workload: expected outs and pitches per start (N6(d), pre-registered 2026-09-30)
+
+**Written before any code, builder, column, lab, flag or number on the candidate
+exists**, in the discipline of 5a, 5c, 5d, 5j and 5l. Nothing served reads anything in
+this section, and no served price, props fair line, slot, record row or page changes.
+Every name below that does not exist in code today is marked (to be built). Other
+sections, specs and tests refer to this section by its title, "Starter workload:
+expected outs and pitches per start", never by its letter: betting registrations take
+their letters in commit order.
+
+**Neighbouring looks recorded when this section commits: none.** At commit this
+document records no result for 5c-A (`xwoba_14`, `xwoba_30`), 5c-B
+(`lineup_strength`), 5c-C (`star_out`) or 5d (`pen_ip_l3`, `pen_b2b_arms`,
+`pen_arms_avail`, `pen_plus_avail`, `sp_tto3_bf`). The 5j precedent voids a
+registration written after a neighbouring look is recorded unless it discloses that
+look's result; there is no result to disclose, so nothing here says whether
+`sp_tto3_bf`'s verdict bears on this candidate. This section is committed before the
+5c-B and 5c-C look day (2026-10-05) and before the 5d read (2026-10-07).
+
+**The owner ask** (ask 16, 2026-09-30, verbatim): "Plug P/IP into the sports betting
+module to project how many pitches / IP a pitcher will throw in each game; use P/PA
+for hitters and lineups to tweak this based on the lineup each pitcher faces to
+calculate expected pitches and expected innings pitched."
+
+**What the served prices read today.** The served run prevention for a side is
+`z_prev`, the blend of the listed probable's SEM+ and the club's `bullpen_plus`,
+weighted by the starter's innings share w = ip_per_gs / 9, clipped to [0.25, 0.85],
+and 5.2 / 9 when `ip_per_gs` is missing (`betting_model._starter_share` and
+`game_prevention_z`, betting_model.py lines 2611-2645 at 64bf1bb3; `DEFAULT_SP_SHARE`
+at line 190). That share weights the model's one working term (b2). The same
+`ip_per_gs` sets every served props fair line: `props_fair_lines` (betting_export.py
+lines 4444-4513) takes expected_ip = ip_per_gs (else the projection line's ip / gs,
+else 5.2), clipped to [2.0, 7.5] at line 4491, and prices Strikeouts, Earned runs,
+Hits allowed and Outs recorded off it. No pitch count enters any served price, line,
+edge or slot.
+
+**The finding this section rests on, a definition and not a measurement of any
+price.** `ip_per_gs` divides ALL of a pitcher's innings, relief included, by his
+starts (`sem_plus.derive_rates`, sem_plus.py line 104, `ip_per_gs = ip / gs`), so a
+starter with relief outings is credited with longer starts than he made. It is a
+vintage pitcher column, 5j froze its `w_O` on it, and 5d-E and 5l name it as the share
+their candidates must beat, so it is NEVER redefined; a starts-only length rides as a
+new quantity. The size of the bias in 2025 is a disclosed read, below.
+
+**Disclosed, because 5c rule 1 turns on it.** No candidate, comparator, diagnostic,
+forecast or error was computed to write this section. The Part 8 design lane
+(pitch_metrics, 2026-09-30, read-only) read:
+
+- the cached StatsAPI season lines
+  (`.cache/fa_statsapi_{hitting,pitching}_{2008..2026}.json`) for pitch-count
+  coverage, league rates, spreads and year-to-year stability, among them league
+  starter P/IP 16.33 (2024), 16.32 (2025) and 16.38 (2026), and year-to-year r over
+  the 2021-2026 season pairs of 0.512 for starter P/IP and 0.697 for starter P/BF (334
+  pairs, 100+ IP both years), 0.778 for hitter P/PA (994 pairs, 300+ PA both years)
+  and 0.351 for reliever P/IP (367 pairs);
+- six StatsAPI requests saved in the lane's bundle, among them the 2025 role split
+  (starts 16.394 P/IP, 3.880 P/BF, 85.0 pitches per start over 4,860 starts; relief
+  16.614 P/IP), the AAA 2025 split (starts 16.955 P/IP) and the team split's 50-of-60
+  rows at the default limit;
+- the 2025 `ip_per_gs` measurement: of 249 true starters (GS / G at least 0.5), 89 had
+  relief outs, and `ip_per_gs` overstated the starts-only length by 0.5 IP or more for
+  48 of them (median 0.54 among those with relief, max 3.83 IP);
+- the `.cache/pbp_corpus` 2025 parity read: the first pitcher of each fielding half
+  gives 4,860 starts, 85.03 pitches per start, 16.392 P/IP and 3.870 P/BF, a per-start
+  mean of 15.56 outs, and per-start SDs of 16.2 pitches and 4.12 outs;
+- `.cache/milb_platoon`, the schemas of the MiLB caches, a working copy of
+  data/timeseries.json and the row keys of the HEAD leaderboards, none of which bears
+  on this candidate.
+
+**Named plainly: the 2025 `ip_per_gs` measurement and the 2025 corpus parity figures
+(4,860 starts, 85.0 pitches per start, and the per-start outs mean and spreads beside
+them) are READS OF 2025, A SEASON STAGE 1 SCORES,** and the 2024 league rate and the
+stability pairs that include 2024 or 2025 are reads of seasons stage 1 scores too.
+They sit beside the lane's other reads of 2026-09-30. Each is a marginal count or
+rate: the per-start outs mean and spreads are the stage-1 label's own 2025
+distribution, read once and disclosed here. No forecast of any start, no value of A0,
+C1, D1, D2 or the candidate, and no error of any of them was computed on any season.
+None of these reads was joined to a game result, a price, an edge or a ledger row. The
+writer of this section read the served code cited here and the corpus manifest (its
+season list, 2018, 2019 and 2021 to 2026, and its build validation counters), and no
+data value.
+
+**Family.** The candidate is plan candidate N6(d), G4-10 "starter expected outs"
+(docs/master-plan-2026-09-11-war-epoch-drivers-betting.md, the N6 row), the fourth
+member of the z_prev Holm family N6, m = 4 as tabled: F05-07 (the run-scale SEM+/REM+
+blend), F08-01 (the HR point as a betting estimand), G4-02 (the velocity form) and
+G4-10 (this section). m does not shrink if the other three are never registered: N6 is
+read by conservative Holm at family alpha 0.05, one-sided, and the smallest p is read
+at 0.05 / 4 = 0.0125. N6 is not RE, not MG, not the coefficient-vector family
+(7e-B/C/D), and not 5d's moneyline candidates. Stage 1's headline is a workload
+estimand in no Holm family; its two attribution contrasts are their own family of two
+(below).
+
+**The candidate, for the listed probable P on date D (every input dated strictly
+before D).**
+
+```
+n        = P's starts in the 365 days before D
+budget   = (pitches over those n starts + k_b * L_pgs) / (n + k_b)
+ppo      = (pitches over those n starts + k_o * L_ppo) / (outs over those n starts + k_o)
+r_L      = [ (pitches seen by the opposing club's hitters over its games in the
+             30 days before D + k_l * L_ppa) / (their PA + k_l) ] / L_ppa
+xOuts    = min(27, budget / (ppo * r_L))
+xIP      = xOuts / 3
+xPitches = budget
+```
+
+- L_pgs (league pitches per start), L_ppo (league pitches per out in starts) and L_ppa
+  (league pitches per PA) come from the prior complete season, pooled (sum over sum,
+  never a mean of player rates). In the corpus, the prior complete season of a 2021
+  date is 2019: 2020 is not in the corpus.
+- The priors come from a grid published and frozen here: k_b in {2, 4, 8, 16, 32}
+  starts, k_o in {15, 30, 60, 120, 240} outs, k_l in {100, 300, 1000, 3000} PA. They
+  are chosen once, by outs MAE on 2018-2019 only, before any later season is read (the
+  `betting_props_dark` burn-in idiom, betting_props_dark.py lines 59-90). The burn-in
+  scores the 2019 starts; 2018 games enter only as history for 2019's windows and
+  anchors, because the corpus holds no 2017 season to anchor a 2018 row. A tie goes to
+  the smallest priors in the order listed. The full grid table is published in the
+  artifact's burn-in block.
+- Clubs join via `trades.canonical_org`.
+- The opposing lineup is the club's own trailing hitting line over its last 30 days,
+  never a posted card: posted-card variants belong to 5j until its look.
+- The stage-2 share is clip(xOuts / 27, 0.25, 0.85), the served clip.
+- What the ask's two outputs are, exactly: expected innings is xIP and expected
+  pitches is xPitches, the budget. The lineup term moves outs and innings; in this
+  form it does not move pitches.
+
+**Comparators, named before anything is computed.**
+
+- A0, the incumbent, is the served props number: A0 = 3 x clip(P's season-to-date IP /
+  GS over ALL appearances, strictly before D, 2.0, 7.5), with 5.2 (the served float,
+  15.6 outs) when P has no start yet that season.
+- C1, tested (T2): C1 = (outs over P's starts in the 365 days before D + k_c x L_opg)
+  / (n + k_c), with L_opg the prior complete season's league outs per start and k_c
+  chosen on 2018-2019 from the k_b grid by the same rule. C1 is a same-window,
+  same-shrinkage, starts-only outs-per-start comparator: it differs from the candidate
+  only in carrying no pitch rates.
+- D2, tested (T1): the candidate with r_L = 1, on the same frozen k_b and k_o. It
+  isolates the opposing lineup's P/PA.
+- D1, reported and never tested: A0's form on starts only (season-to-date starts-only
+  IP / GS, the same clip and fallback), the pure definition repair.
+
+**Stage 1: the workload estimand.** Eval artifact data/starter_workload_eval.json (to
+be built), this section's own tracked artifact, with registry row
+`starter_workload_xouts` (to be built).
+
+- Data: `.cache/pbp_corpus` seasons 2018, 2019 and 2021-2025, regular season. NEVER
+  2026, neither as a scored row nor as history: 2026 holds the betting eval half. The
+  unit is a start, the first pitcher of each fielding half (archive-reconstruct
+  provenance, allowed and labelled per row under owner decision O22).
+- The estimand: outs recorded by the starter in the start (primary) and pitches he
+  threw (secondary). A start's own outs and pitches never enter its inputs.
+- Walk forward by date: every start on D is priced from games dated strictly before D,
+  and only then do D's games fold into the history.
+- Splits: 2018-2019 burn-in (the priors); 2021-2023 fixes the floor, 1 percent of A0's
+  outs MAE on 2021-2023, written to the artifact before any 2024 row is read;
+  2024-2025 scored once.
+- PASS needs all four, on outs unless named: (1) the paired improvement MAE(A0) minus
+  MAE(candidate), pooled over 2024-2025, has a game-clustered bootstrap lower bound
+  above 0 (B 2000, seed 20260930; games resampled with replacement, both starts of a
+  game together; the lower bound is the 5th percentile of the 2,000 replicate
+  improvements); (2) a positive point improvement in 2024 and in 2025 separately; (3)
+  the pooled point improvement at or above the floor, else PASS-BELOW-FLOOR, which
+  ships nothing; (4) the pitches MAE of `budget` no worse than that of P's
+  season-to-date pitches-per-start mean (L_pgs when P has no start yet that season),
+  on the pooled point estimate.
+- PASS, FAIL and PASS-BELOW-FLOOR are final.
+- Stage 1 never reads `sp_tto3_bf`, `sp_rest_days` or any `mg_` column; never the
+  management board, a decision ledger or any mgmt_ module; never a vintage record, a
+  2026 game feed, a price, an odds capture or a betting artifact. The lab names its
+  quantities budget, ppo and xouts, never by the dark column names below.
+- Reported whichever way it lands: RMSE and bias for every arm; every figure per
+  season and for April-May; openers (a trailing 365-day mean under 6 outs per start);
+  D1, D2 and C1; the count of starts with n = 0; the count of 2021 starts whose
+  365-day window reaches into the absent 2020 season; the grid table.
+
+**What a stage-1 pass can credit: the attribution family, tested.** Two contrasts form
+one Holm family, m = 2, family alpha 0.05 one-sided, on 2024-2025 with the same
+game-clustered bootstrap (B 2000, seed 20260930, the same resampled games as criterion
+1): (T1) the candidate against D2, improvement MAE(D2) minus MAE(candidate), the only
+contrast that isolates the opposing lineup's P/PA; (T2) the candidate against C1,
+improvement MAE(C1) minus MAE(candidate). Each one-sided p is (1 + the number of
+replicates with an improvement at or below 0) / (B + 1); the smaller p is read at
+0.025 and the larger at 0.05. D1 stays reported and untested. **The wording is
+pre-committed:** without a T2 pass, results copy, any props change and every later
+reference credit "starts-only length over a 365-day window", not pitch rates; without
+a T1 pass, nothing credits the opposing lineup's P/PA. T1 and T2 decide wording only:
+they do not change the stage-1 verdict, and the stage-2 candidate stays the one
+registered here.
+
+**When stage 1 runs.** Once, by tools/starter_workload_lab.py (to be built), under the
+crash protocol (a full dry run of the reporting path on fixtures with nulls; the run's
+stdout and stderr teed before anything else runs; on any exception after scoring
+began, stop without rerunning and put the question to the owner). Not before the later
+of 2026-10-11 and the owner's answer to PM-Q3 (DECISIONS_FOR_OWNER.md); if that answer
+is to wait for 5l, on the first admissible date after 5l's look is recorded. Never on
+a date that is another registered look's date (docs/*GATE*.md, this document, plan
+Part 8 section 8.B), and never between the fWAR label epoch's step A and its step Z
+entry. The lab refuses a 2026 season, an early date and a second run; its one-run
+guard reads both the artifact's stage-1 block and this section's results heading. The
+result is appended under this section as a heading
+`### Stage 1 result (run DATE, once): VERDICT`. The registry row lands with the lab
+code as `unvalidated`; the run commit sets the artifact and the verdict (PASS:
+`provisional`, dark; anything else: `deprecated`).
+
+**Stage 2: the moneyline price.** Runs only on a stage-1 PASS; on any other stage-1
+verdict it is recorded NOT READ.
+
+- The candidate share replaces w in `game_prevention_z`, side by side, and is fitted
+  by `fit_coefficients` on the VINTAGE_FIT_TARGET_GAMES (300) games immediately before
+  the eval half. The label is the moneyline result (home club wins, 0/1).
+  Regular-season games only. The 305 games of the 2026 fit window stay ungraded in
+  every mode of every artifact this section writes, and the 2027 look never reads a
+  2026 game as evidence.
+- Decision rule, ALL required, the 5l form: (1) paired Brier improvement at one-sided
+  t >= 1.645, and Holm in N6 (m = 4; with no other member read, its p must clear
+  0.0125); (2) paired log loss not worse on the point estimate; (3) the
+  permuted-pitcher twin: xOuts permuted across the date's probables, 200 draws, the
+  candidate's improvement above the 95th percentile of the twin improvements; (4) at
+  least VINTAGE_MIN_GRADED_GAMES (600) eval-half games with both probables populated,
+  behind the 300-game fit window; (5) the VIF read against `ip_per_gs`, `sp_tto3_bf`
+  and `mg_hook_pitches_l30` (as dark columns): a VIF above 5 against the innings share
+  fails the candidate as "reproduces the innings share", whatever (1) and (2) read.
+- The power precondition and the floor, the 5l form at N6's level: at n = 600,
+  one-sided 0.0125 and 80 percent power, the smallest detectable paired Brier
+  improvement is (2.241 + 0.842) x sd_d / sqrt(600) = 0.126 x sd_d, with sd_d measured
+  ONCE on the 300-game 2027 fit window from the candidate fit, before any eval-half
+  game is read, and recorded as in-sample and lenient. The floor is 0.0024 Brier, as
+  5l registered it (this section read no betting eval artifact). If 0.126 x sd_d
+  exceeds 0.0024 the look returns UNDERPOWERED without reading the eval half and waits
+  a year; a pass of (1) below 0.0024 is PASS-BELOW-FLOOR and does not ship.
+- PASS, FAIL and PASS-BELOW-FLOOR are final; UNDERPOWERED and NOT READ (a floor unmet)
+  wait for the next season's look.
+- The look: the first nightly on or after 2027-07-01 on which (4) holds AND 5l's
+  `mgmt_policy_gate` block exists (5l's look recorded) AND no other registered look
+  falls that day; otherwise it yields to the next such nightly and records the yield.
+  If (4) and 5l's block do not both hold by 2027-08-01, it waits for 2028. Tool:
+  tools/betting_workload_gate.py (to be built), which refuses an early run and a
+  second run. The result is appended under this section as a heading
+  `### Stage 2 result (run DATE, once): VERDICT`.
+- Reported whichever way it lands: the fitted coefficients, the twin distribution, the
+  VIF table, coverage per club, the candidate share against the served share, and
+  later the contaminated screen's reading.
+
+**Where both stages write, and why.** `betting_model.backtest()` rebuilds
+data/betting_model_eval.json from scratch every night (run_monthly step 9e-pre1), so a
+foreign block there is erased by the next nightly. Stage 1 writes
+data/starter_workload_eval.json and stage 2 writes a stage2 block in the same
+artifact; neither ever writes data/betting_model_eval.json. The one-run guard of each
+stage reads both the artifact and this section's results block.
+
+**The dark capture (to be built).** Pitcher columns `sp_n365`, `sp_budget`, `sp_ppo`,
+`sp_xouts` and team column `bat_ppa_l30`:
+
+- `sp_n365` is n; `sp_budget` and `sp_ppo` are the candidate's budget and ppo on the
+  priors stage 1 froze; `sp_xouts` is min(27, sp_budget / sp_ppo), the lineup-neutral
+  value; `bat_ppa_l30` is the club's shrunk P/PA over its last 30 days, the numerator
+  of r_L, that is (pitches seen plus k_l x L_ppa) / (PA plus k_l). The game's xOuts
+  takes r_L = bat_ppa_l30 / L_ppa from the opposing club inside a candidate function
+  nothing served calls (to be built). Each record's basis carries the raw counts
+  (starts, pitches, outs, PA) and the anchors.
+- The schema number is the next one after the last landed builder in commit order when
+  this builder commits. It does not wait for 5j's or 5l's builder: 5j's number may
+  move by a dated correction, and only 5l waits for 5j. A dated
+  `### Builder landed YYYY-MM-DD` amendment here names the schema number and the first
+  vintage night carrying the columns.
+- The builder lands before Opening Day 2027, after the stage-1 record exists (it reads
+  the priors frozen there) and only on a stage-1 PASS; otherwise no column is built.
+  It sits in betting_usage.py beside `build_schema4_team_columns`, reads
+  `.cache/game_feeds` dated strictly before D, and follows the 5d and 5l
+  vintage-safety rule (an incomplete or missing feed is excluded and counted in the
+  basis).
+- First-write-wins, a basis per record, None never zero (an `sp_n365` of 0 is a real
+  count), old records return None, and `inputs_as_of` never fills a column from live
+  files. A DARK tuple in betting_model.py; no served path reads the columns (AST and
+  string tests); a parity test against the corpus on one 2025 game and one 2026 game.
+- Until the `### Builder landed` amendment exists, no non-test module at the repo root
+  or under tools/ may name `sp_n365`, `sp_budget`, `sp_ppo`, `sp_xouts` or
+  `bat_ppa_l30`; test_betting_workload_registration.py asserts it.
+
+**Props: no props arm reads the candidate before the stage-2 look.**
+`SERVE_WORKLOAD_PROPS` (added only with its flip commit, default False) may not flip
+until BOTH 5l's `mgmt_policy_gate` block and this section's stage-2 look exist. The
+reason is mechanical: `props_value_bets` turns any cached props snapshot into edge, EV
+and Kelly rows, armed or not, and hands them to `provisional_picks` as slot candidates
+(betting_export.py lines 4883-4899 and 7017-7026), and a per-pitcher pitch budget is
+the close variant 5l names ("a per-pitcher hook rate", 5l's Disqualification
+paragraph). A stage-1 PASS licenses nothing served. The one registered earlier form is
+a FENCE: if the owner wants the workload number displayed before those looks, a fenced
+flag may show it only if candidate-derived props rows carry no market comparison,
+value row, slot candidacy, shadow row or record row, pinned by a test in the
+test_betting_mgmt_fence.py style, in a commit that also names every moved fair line.
+
+**Serving the game price.** No serving flag exists before a stage-2 PASS, because a
+serving path for an unmeasured feature is what 5c forbids (5h's rule as applied in
+5j). On a PASS: the contaminated screen (5c rule 4, in the 5l form: once, after the
+look, on the 2027 season-to-date form, labelled contaminated, disqualify-only), then
+ONE commit carrying `SERVE_STARTER_WORKLOAD` (to be built), the `MODEL_VERSION` bump,
+the `--context` re-run, the tripwire test and the persisted stage2 block. They move
+together or not at all. A flip is outward-facing and is the owner's call even on a
+PASS (7g).
+
+**Disqualification.** Any number relating the candidate, or a close variant, to a game
+result, a price, an edge, a slot, or a shadow, calibration or ledger row outside the
+stage-2 look voids it under 5c rule 1, on any game, whether computed before or after
+this commit. The close variants are: budget alone; ppo alone; other window lengths;
+season-to-date forms; the posted-card lineup ratio; a club-level version; C1; and the
+D1 and D2 diagnostics. The only admissible reads are stage 1 (workload only: the
+starter's own outs and pitches, on pre-2026 corpus games) and the stage-2 look. A
+voided candidate may return only as a new registration that discloses the early read.
+Registered looks of other sections on their own columns are not relations of this
+candidate.
+
+**Changes after the commit.** The schema number and the first vintage night are
+recorded by dated correction whenever they occur. Any other change is possible only by
+a dated correction recorded before any stage-1 number exists, on a fact established
+without outcomes; a change after that closes the section.
+
+**No number has been computed on this candidate.**
 
 ---
 
