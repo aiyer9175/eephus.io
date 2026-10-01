@@ -1,0 +1,1869 @@
+{
+ "registered": "2026-10-01",
+ "gate": "docs/COLLEGE_PIT_K_CHALLENGER_GATE.md",
+ "rule": "college_translation.load_cs_pitchers() (2024/2025 tracked rows carrying k_pct, the highest-pitch-count row per name) joined by norm_name to load_single_a() pitchers (earliest A/A+ season with >= 20 IP and a K%), exactly the incumbent pit_k pair construction in college_translation.build()",
+ "contents": "identities only: no college or Single-A rate is stored here",
+ "n_pairs": 232,
+ "by_cs_year": {
+  "2024": 224,
+  "2025": 8
+ },
+ "pairs": [
+  {
+   "name_key": "aaron savary",
+   "cs_name": "Savary, Aaron",
+   "pitcher_id": "808860",
+   "cs_year": 2025,
+   "cs_team": "IOW_HAW",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "aidan cremarosa",
+   "cs_name": "Cremarosa, Aidan",
+   "pitcher_id": "809093",
+   "cs_year": 2024,
+   "cs_team": "FRE_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "aidan haugh",
+   "cs_name": "Haugh, Aidan",
+   "pitcher_id": "815063",
+   "cs_year": 2024,
+   "cs_team": "NOR_TAR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "aidan major",
+   "cs_name": "Major, Aidan",
+   "pitcher_id": "802146",
+   "cs_year": 2024,
+   "cs_team": "WES_MOU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "aiden may",
+   "cs_name": "May, Aiden",
+   "pitcher_id": "801995",
+   "cs_year": 2024,
+   "cs_team": "ORE_BEA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "aiden moffett",
+   "cs_name": "Moffett, Aiden",
+   "pitcher_id": "1000110607",
+   "cs_year": 2024,
+   "cs_team": "LSU_TIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "aiven cabral",
+   "cs_name": "Cabral, Aiven",
+   "pitcher_id": "809685",
+   "cs_year": 2024,
+   "cs_team": "NOR_HUS",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "aj russell",
+   "cs_name": "Russell, AJ",
+   "pitcher_id": "1000215888",
+   "cs_year": 2024,
+   "cs_team": "TEN_VOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "alexander meckley",
+   "cs_name": "Meckley, Alexander",
+   "pitcher_id": "1000261737",
+   "cs_year": 2024,
+   "cs_team": "COA_CHA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "alton davis",
+   "cs_name": "Davis, Alton",
+   "pitcher_id": "1000110601",
+   "cs_year": 2024,
+   "cs_team": "ALA_CRI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "andres galan",
+   "cs_name": "Galan, Andres",
+   "pitcher_id": "1000070785",
+   "cs_year": 2024,
+   "cs_team": "CAL_BEA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "andrew healy",
+   "cs_name": "Healy, Andrew",
+   "pitcher_id": "804986",
+   "cs_year": 2024,
+   "cs_team": "DUK_BLU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "anthony watts",
+   "cs_name": "Watts, Anthony",
+   "pitcher_id": "1000232347",
+   "cs_year": 2024,
+   "cs_team": "IOW_HAW",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "austin newton",
+   "cs_name": "Newton, Austin",
+   "pitcher_id": "813282",
+   "cs_year": 2024,
+   "cs_team": "USF_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ben bybee",
+   "cs_name": "Bybee, Ben",
+   "pitcher_id": "1000138369",
+   "cs_year": 2024,
+   "cs_team": "ARK_RAZ",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ben jacobs",
+   "cs_name": "Jacobs, Ben",
+   "pitcher_id": "800624",
+   "cs_year": 2024,
+   "cs_team": "ARI_SUN",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "blake hammond",
+   "cs_name": "Hammond, Blake",
+   "pitcher_id": "1000120427",
+   "cs_year": 2024,
+   "cs_team": "SAN_BRO",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "blake morgan",
+   "cs_name": "Morgan, Blake",
+   "pitcher_id": "1000121589",
+   "cs_year": 2024,
+   "cs_team": "OLD_MON",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "blake purnell",
+   "cs_name": "Purnell, Blake",
+   "pitcher_id": "1000036034",
+   "cs_year": 2024,
+   "cs_team": "FLA_GAT",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "braden osbolt",
+   "cs_name": "Osbolt, Braden",
+   "pitcher_id": "1000235154",
+   "cs_year": 2024,
+   "cs_team": "KEN_OWL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "brady afthim",
+   "cs_name": "Afthim, Brady",
+   "pitcher_id": "1000122964",
+   "cs_year": 2024,
+   "cs_team": "UCO_HUS",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "braeden sloan",
+   "cs_name": "Sloan, Braeden",
+   "pitcher_id": "800630",
+   "cs_year": 2024,
+   "cs_team": "TCU_HFG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "brandon decker",
+   "cs_name": "Decker, Brandon",
+   "pitcher_id": "804698",
+   "cs_year": 2024,
+   "cs_team": "OAK_GOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "brennan stuprich",
+   "cs_name": "Stuprich, Brennan",
+   "pitcher_id": "1000098708",
+   "cs_year": 2024,
+   "cs_team": "SOU_LIO",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "brian walters",
+   "cs_name": "Walters, Brian",
+   "pitcher_id": "805758",
+   "cs_year": 2024,
+   "cs_team": "MIA_HUR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "brian zeldin",
+   "cs_name": "Zeldin, Brian",
+   "pitcher_id": "1000121636",
+   "cs_year": 2024,
+   "cs_team": "GEO_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "brody brecht",
+   "cs_name": "Brecht, Brody",
+   "pitcher_id": "701679",
+   "cs_year": 2024,
+   "cs_team": "IOW_HAW",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "brooks auger",
+   "cs_name": "Auger, Brooks",
+   "pitcher_id": "1000112669",
+   "cs_year": 2024,
+   "cs_team": "MSU_BDG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "bryce shaffer",
+   "cs_name": "Shaffer, Bryce",
+   "pitcher_id": "1000099515",
+   "cs_year": 2024,
+   "cs_team": "COA_CHA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cade citelli",
+   "cs_name": "Citelli, Cade",
+   "pitcher_id": "699530",
+   "cs_year": 2024,
+   "cs_team": "HOU_COU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cade obermueller",
+   "cs_name": "Obermueller, Cade",
+   "pitcher_id": "805261",
+   "cs_year": 2025,
+   "cs_team": "IOW_HAW",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cade vernon",
+   "cs_name": "Vernon, Cade",
+   "pitcher_id": "1000098754",
+   "cs_year": 2024,
+   "cs_team": "MUR_RAC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "caden wooster",
+   "cs_name": "Wooster, Caden",
+   "pitcher_id": "813770",
+   "cs_year": 2024,
+   "cs_team": "SAN_BRO",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "caedmon parker",
+   "cs_name": "Parker, Caedmon",
+   "pitcher_id": "696488",
+   "cs_year": 2024,
+   "cs_team": "TCU_HFG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "callan fang",
+   "cs_name": "Fang, Callan",
+   "pitcher_id": "1000240946",
+   "cs_year": 2024,
+   "cs_team": "HAR_CRI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "calvin schapira",
+   "cs_name": "Schapira, Calvin",
+   "pitcher_id": "681064",
+   "cs_year": 2024,
+   "cs_team": "SAN_TOR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cameron keshock",
+   "cs_name": "Keshock, Cameron",
+   "pitcher_id": "1000107581",
+   "cs_year": 2024,
+   "cs_team": "AUB_TIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cameron nohos",
+   "cs_name": "Nohos, Cameron",
+   "pitcher_id": "1000137663",
+   "cs_year": 2024,
+   "cs_team": "UIC_FLA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cameron tilly",
+   "cs_name": "Tilly, Cameron",
+   "pitcher_id": "10063139",
+   "cs_year": 2024,
+   "cs_team": "AUB_TIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "camron hill",
+   "cs_name": "Hill, Camron",
+   "pitcher_id": "701320",
+   "cs_year": 2024,
+   "cs_team": "GIT_YEL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cannon pickell",
+   "cs_name": "Pickell, Cannon",
+   "pitcher_id": "1000036901",
+   "cs_year": 2024,
+   "cs_team": "WCC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "carson dorsey",
+   "cs_name": "Dorsey, Carson",
+   "pitcher_id": "805955",
+   "cs_year": 2024,
+   "cs_team": "FLO_SEM",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "carson myers",
+   "cs_name": "Myers, Carson",
+   "pitcher_id": "1000126835",
+   "cs_year": 2024,
+   "cs_team": "AUB_TIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "carson swilling",
+   "cs_name": "Swilling, Carson",
+   "pitcher_id": "691018",
+   "cs_year": 2024,
+   "cs_team": "SAL_JAG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "carter holton",
+   "cs_name": "Holton, Carter",
+   "pitcher_id": "90000191801",
+   "cs_year": 2024,
+   "cs_team": "VAN_COM",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "casey hintz",
+   "cs_name": "Hintz, Casey",
+   "pitcher_id": "808750",
+   "cs_year": 2024,
+   "cs_team": "ARI_WIL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "chandler marsh",
+   "cs_name": "Marsh, Chandler",
+   "pitcher_id": "1000093807",
+   "cs_year": 2024,
+   "cs_team": "GEO_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "charlie weber",
+   "cs_name": "Weber, Charlie",
+   "pitcher_id": "1000161356",
+   "cs_year": 2024,
+   "cs_team": "SLU_BILL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "chase centala",
+   "cs_name": "Centala, Chase",
+   "pitcher_id": "694555",
+   "cs_year": 2024,
+   "cs_team": "UCF_KNI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "choyce diffey",
+   "cs_name": "Diffey, Choyce",
+   "pitcher_id": "1000213842",
+   "cs_year": 2024,
+   "cs_team": "UTM_SKY",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "christian becerra",
+   "cs_name": "Becerra, Christian",
+   "pitcher_id": "800875",
+   "cs_year": 2024,
+   "cs_team": "CAL_BEA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "christian foutch",
+   "cs_name": "Foutch, Christian",
+   "pitcher_id": "1000239273",
+   "cs_year": 2024,
+   "cs_team": "ARK_RAZ",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "christian little",
+   "cs_name": "Little, Christian",
+   "pitcher_id": "1000262621",
+   "cs_year": 2024,
+   "cs_team": "LSU_TIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "christian rodriguez",
+   "cs_name": "Rodriguez, Christian",
+   "pitcher_id": "691010",
+   "cs_year": 2024,
+   "cs_team": "CAL_FUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cody delvecchio",
+   "cs_name": "Delvecchio, Cody",
+   "pitcher_id": "805149",
+   "cs_year": 2024,
+   "cs_team": "UCLA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cole cheatham",
+   "cs_name": "Cheatham, Cole",
+   "pitcher_id": "1000241966",
+   "cs_year": 2024,
+   "cs_team": "MSU_BDG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cole gilley",
+   "cs_name": "Gilley, Cole",
+   "pitcher_id": "809126",
+   "cs_year": 2025,
+   "cs_team": "IU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cole peschl",
+   "cs_name": "Peschl, Cole",
+   "pitcher_id": "1000128700",
+   "cs_year": 2024,
+   "cs_team": "CAM_CAM",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cole reynolds",
+   "cs_name": "Reynolds, Cole",
+   "pitcher_id": "822636",
+   "cs_year": 2024,
+   "cs_team": "CHA_FOR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cole tolbert",
+   "cs_name": "Tolbert, Cole",
+   "pitcher_id": "10027824",
+   "cs_year": 2024,
+   "cs_team": "OLE_REB",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "colin daniel",
+   "cs_name": "Daniel, Colin",
+   "pitcher_id": "1000090849",
+   "cs_year": 2024,
+   "cs_team": "UAB_BLA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "colton shaw",
+   "cs_name": "Shaw, Colton",
+   "pitcher_id": "1000120977",
+   "cs_year": 2024,
+   "cs_team": "YAL_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "connor foley",
+   "cs_name": "Foley, Connor",
+   "pitcher_id": "805879",
+   "cs_year": 2024,
+   "cs_team": "IU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "connor wilford",
+   "cs_name": "Wilford, Connor",
+   "pitcher_id": "809949",
+   "cs_year": 2024,
+   "cs_team": "WAS_COU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "cooper mcgrath",
+   "cs_name": "McGrath, Cooper",
+   "pitcher_id": "822824",
+   "cs_year": 2024,
+   "cs_team": "NOR_HUS",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "danny macchiarola",
+   "cs_name": "Macchiarola, Danny",
+   "pitcher_id": "809059",
+   "cs_year": 2024,
+   "cs_team": "HOL_CRU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "dash albus",
+   "cs_name": "Albus, Dash",
+   "pitcher_id": "1000231953",
+   "cs_year": 2024,
+   "cs_team": "ABI_WIL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "davis chastain",
+   "cs_name": "Chastain, Davis",
+   "pitcher_id": "1000241035",
+   "cs_year": 2024,
+   "cs_team": "GEO_PAN",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "derek clark",
+   "cs_name": "Clark, Derek",
+   "pitcher_id": "1000132200",
+   "cs_year": 2024,
+   "cs_team": "WES_MOU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "derek vartanian",
+   "cs_name": "Vartanian, Derek",
+   "pitcher_id": "1000169115",
+   "cs_year": 2024,
+   "cs_team": "CAM_CAM",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "dominic fritton",
+   "cs_name": "Fritton, Dominic",
+   "pitcher_id": "1000138541",
+   "cs_year": 2024,
+   "cs_team": "NOR_WOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "donovan zsak",
+   "cs_name": "Zsak, Donovan",
+   "pitcher_id": "805124",
+   "cs_year": 2024,
+   "cs_team": "RUT_SCA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "drew christo",
+   "cs_name": "Christo, Drew",
+   "pitcher_id": "695513",
+   "cs_year": 2024,
+   "cs_team": "NEB",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "drew pestka",
+   "cs_name": "Pestka, Drew",
+   "pitcher_id": "1000161383",
+   "cs_year": 2024,
+   "cs_team": "JOH_LOG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "dusty revis",
+   "cs_name": "Revis, Dusty",
+   "pitcher_id": "1000297622",
+   "cs_year": 2024,
+   "cs_team": "WCC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "dylan brown",
+   "cs_name": "Brown, Dylan",
+   "pitcher_id": "1000164658",
+   "cs_year": 2024,
+   "cs_team": "OLD_MON",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "dylan carter",
+   "cs_name": "Carter, Dylan",
+   "pitcher_id": "701214",
+   "cs_year": 2024,
+   "cs_team": "ARK_RAZ",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "dylan crooks",
+   "cs_name": "Crooks, Dylan",
+   "pitcher_id": "1000093727",
+   "cs_year": 2024,
+   "cs_team": "OKL_SOO",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "dylan howard",
+   "cs_name": "Howard, Dylan",
+   "pitcher_id": "1000116341",
+   "cs_year": 2024,
+   "cs_team": "RAD_HIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "easton marks",
+   "cs_name": "Marks, Easton",
+   "pitcher_id": "1000191651",
+   "cs_year": 2024,
+   "cs_team": "NEV_WOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "eric hammond",
+   "cs_name": "Hammond, Eric",
+   "pitcher_id": "1000092911",
+   "cs_year": 2024,
+   "cs_team": "SOU_TRO",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ethan bell",
+   "cs_name": "Bell, Ethan",
+   "pitcher_id": "10009408",
+   "cs_year": 2024,
+   "cs_team": "EVA_ACE",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ethan lanthier",
+   "cs_name": "Lanthier, Ethan",
+   "pitcher_id": "822490",
+   "cs_year": 2024,
+   "cs_team": "KAN_JAY",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ethan walker",
+   "cs_name": "Walker, Ethan",
+   "pitcher_id": "1000232242",
+   "cs_year": 2024,
+   "cs_team": "LON_LAN",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "evan chrest",
+   "cs_name": "Chrest, Evan",
+   "pitcher_id": "805971",
+   "cs_year": 2024,
+   "cs_team": "JUD",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "evan gray",
+   "cs_name": "Gray, Evan",
+   "pitcher_id": "690367",
+   "cs_year": 2024,
+   "cs_team": "SLU_BILL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "evan siary",
+   "cs_name": "Siary, Evan",
+   "pitcher_id": "1000091987",
+   "cs_year": 2024,
+   "cs_team": "MSU_BDG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "evan truitt",
+   "cs_name": "Truitt, Evan",
+   "pitcher_id": "822462",
+   "cs_year": 2024,
+   "cs_team": "CHA_BUC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "everett catlett",
+   "cs_name": "Catlett, Everett",
+   "pitcher_id": "1000101362",
+   "cs_year": 2024,
+   "cs_team": "GEO_HOY",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "frank camarillo",
+   "cs_name": "Camarillo, Frank",
+   "pitcher_id": "1000196445",
+   "cs_year": 2024,
+   "cs_team": "SAN_GAU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "gabe craig",
+   "cs_name": "Craig, Gabe",
+   "pitcher_id": "700582",
+   "cs_year": 2024,
+   "cs_team": "BAY_BEA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "garrett gainey",
+   "cs_name": "Gainey, Garrett",
+   "pitcher_id": "822535",
+   "cs_year": 2024,
+   "cs_team": "SOU_GAM",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "garrett langrell",
+   "cs_name": "Langrell, Garrett",
+   "pitcher_id": "1000119901",
+   "cs_year": 2024,
+   "cs_team": "EKU_COL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "gavin bruni",
+   "cs_name": "Bruni, Gavin",
+   "pitcher_id": "696491",
+   "cs_year": 2024,
+   "cs_team": "OSU_BUC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "grant umberger",
+   "cs_name": "Umberger, Grant",
+   "pitcher_id": "802359",
+   "cs_year": 2024,
+   "cs_team": "TOL_ROC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "grayson grinsell",
+   "cs_name": "Grinsell, Grayson",
+   "pitcher_id": "1000110920",
+   "cs_year": 2025,
+   "cs_team": "ORE_DUC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "greysen carter",
+   "cs_name": "Carter, Greysen",
+   "pitcher_id": "701706",
+   "cs_year": 2024,
+   "cs_team": "VAN_COM",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "griffin kirn",
+   "cs_name": "Kirn, Griffin",
+   "pitcher_id": "822488",
+   "cs_year": 2024,
+   "cs_team": "QUI_HAW",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "harrison bodendorf",
+   "cs_name": "Bodendorf, Harrison",
+   "pitcher_id": "823746",
+   "cs_year": 2024,
+   "cs_team": "HAW_WAR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "hayden frank",
+   "cs_name": "Frank, Hayden",
+   "pitcher_id": "810070",
+   "cs_year": 2024,
+   "cs_team": "LIP_BIS",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "holden wilkerson",
+   "cs_name": "Wilkerson, Holden",
+   "pitcher_id": "1000125195",
+   "cs_year": 2024,
+   "cs_team": "VIR_KEY",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "hoss brewer",
+   "cs_name": "Brewer, Hoss",
+   "pitcher_id": "1000123781",
+   "cs_year": 2024,
+   "cs_team": "LIT_TRO",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "hunter dryden",
+   "cs_name": "Dryden, Hunter",
+   "pitcher_id": "1000099651",
+   "cs_year": 2024,
+   "cs_team": "WHI_PIR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "hunter hodges",
+   "cs_name": "Hodges, Hunter",
+   "pitcher_id": "808788",
+   "cs_year": 2024,
+   "cs_team": "TCU_HFG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "hunter omlid",
+   "cs_name": "Omlid, Hunter",
+   "pitcher_id": "804528",
+   "cs_year": 2024,
+   "cs_team": "ARI_SUN",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ivran romero",
+   "cs_name": "Romero, Ivran",
+   "pitcher_id": "813676",
+   "cs_year": 2024,
+   "cs_team": "SAN_TOR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jack anker",
+   "cs_name": "Anker, Jack",
+   "pitcher_id": "804985",
+   "cs_year": 2024,
+   "cs_team": "FRE_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jack bowery",
+   "cs_name": "Bowery, Jack",
+   "pitcher_id": "822817",
+   "cs_year": 2024,
+   "cs_team": "NOR_HUS",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jack martinez",
+   "cs_name": "Martinez, Jack",
+   "pitcher_id": "822956",
+   "cs_year": 2024,
+   "cs_team": "LOU_CAJ",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jack sokol",
+   "cs_name": "Sokol, Jack",
+   "pitcher_id": "1000168574",
+   "cs_year": 2024,
+   "cs_team": "PIT_UNI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jackson holmes",
+   "cs_name": "Holmes, Jackson",
+   "pitcher_id": "1000123793",
+   "cs_year": 2024,
+   "cs_team": "SLU_BILL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jackson steensma",
+   "cs_name": "Steensma, Jackson",
+   "pitcher_id": "10012353",
+   "cs_year": 2024,
+   "cs_team": "APP_MOU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jackson wells",
+   "cs_name": "Wells, Jackson",
+   "pitcher_id": "1000162800",
+   "cs_year": 2024,
+   "cs_team": "LIT_TRO",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jacob bimbi",
+   "cs_name": "Bimbi, Jacob",
+   "pitcher_id": "10005863",
+   "cs_year": 2024,
+   "cs_team": "WES_HIL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jacob frost",
+   "cs_name": "Frost, Jacob",
+   "pitcher_id": "1000238999",
+   "cs_year": 2024,
+   "cs_team": "KAN_WIL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jacob pruitt",
+   "cs_name": "Pruitt, Jacob",
+   "pitcher_id": "809131",
+   "cs_year": 2024,
+   "cs_team": "IND_SYC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jacob shafer",
+   "cs_name": "Shafer, Jacob",
+   "pitcher_id": "822465",
+   "cs_year": 2024,
+   "cs_team": "UNC_SEA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jadon bercovich",
+   "cs_name": "Bercovich, Jadon",
+   "pitcher_id": "1000039261",
+   "cs_year": 2024,
+   "cs_team": "SAN_AZT",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jake brink",
+   "cs_name": "Brink, Jake",
+   "pitcher_id": "1000233506",
+   "cs_year": 2024,
+   "cs_team": "COL_CHA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jakob guardado",
+   "cs_name": "Guardado, Jakob",
+   "pitcher_id": "824200",
+   "cs_year": 2024,
+   "cs_team": "PAC_TIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jakob wright",
+   "cs_name": "Wright, Jakob",
+   "pitcher_id": "1000114562",
+   "cs_year": 2024,
+   "cs_team": "CAL_MUS",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "james tallon",
+   "cs_name": "Tallon, James",
+   "pitcher_id": "810890",
+   "cs_year": 2024,
+   "cs_team": "DUK_BLU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jason doktorczyk",
+   "cs_name": "Doktorczyk, Jason",
+   "pitcher_id": "822503",
+   "cs_year": 2024,
+   "cs_team": "NEV_WOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jason reitz",
+   "cs_name": "Reitz, Jason",
+   "pitcher_id": "805279",
+   "cs_year": 2024,
+   "cs_team": "STM_GAE",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jay schueler",
+   "cs_name": "Schueler, Jay",
+   "pitcher_id": "1000299428",
+   "cs_year": 2024,
+   "cs_team": "SOU_UNI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jb middleton",
+   "cs_name": "Middleton, JB",
+   "pitcher_id": "822477",
+   "cs_year": 2024,
+   "cs_team": "SOU_GOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jimmy romano",
+   "cs_name": "Romano, Jimmy",
+   "pitcher_id": "695740",
+   "cs_year": 2024,
+   "cs_team": "DUK_BLU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "joey gartrell",
+   "cs_name": "Gartrell, Joey",
+   "pitcher_id": "1000121716",
+   "cs_year": 2024,
+   "cs_team": "POR_PIL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "josh sanders",
+   "cs_name": "Sanders, Josh",
+   "pitcher_id": "699560",
+   "cs_year": 2024,
+   "cs_team": "TEX_RAI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "jt etheridge",
+   "cs_name": "Etheridge, JT",
+   "pitcher_id": "1000138091",
+   "cs_year": 2024,
+   "cs_team": "LOU_CAJ",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "justin henschel",
+   "cs_name": "Henschel, Justin",
+   "pitcher_id": "1000235187",
+   "cs_year": 2024,
+   "cs_team": "FGCU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "justin loer",
+   "cs_name": "Loer, Justin",
+   "pitcher_id": "1000133171",
+   "cs_year": 2024,
+   "cs_team": "LSU_TIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "justin mitrovich",
+   "cs_name": "Mitrovich, Justin",
+   "pitcher_id": "10033488",
+   "cs_year": 2024,
+   "cs_team": "ELO_PHO",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "justin sinibaldi",
+   "cs_name": "Sinibaldi, Justin",
+   "pitcher_id": "1000101295",
+   "cs_year": 2024,
+   "cs_team": "RUT_SCA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "justin west",
+   "cs_name": "West, Justin",
+   "pitcher_id": "1000072765",
+   "cs_year": 2024,
+   "cs_team": "LOU_CAR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "kade brown",
+   "cs_name": "Brown, Kade",
+   "pitcher_id": "1000189998",
+   "cs_year": 2024,
+   "cs_team": "SAC_HOR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "kaleb corbett",
+   "cs_name": "Corbett, Kaleb",
+   "pitcher_id": "804254",
+   "cs_year": 2024,
+   "cs_team": "LOU_CAR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "kellan oakes",
+   "cs_name": "Oakes, Kellan",
+   "pitcher_id": "1000251456",
+   "cs_year": 2024,
+   "cs_team": "ORE_BEA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "kolten smith",
+   "cs_name": "Smith, Kolten",
+   "pitcher_id": "701368",
+   "cs_year": 2024,
+   "cs_team": "GEO_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "kyle ayers",
+   "cs_name": "Ayers, Kyle",
+   "pitcher_id": "695486",
+   "cs_year": 2024,
+   "cs_team": "TCU_HFG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "kyle mccoy",
+   "cs_name": "McCoy, Kyle",
+   "pitcher_id": "1000110052",
+   "cs_year": 2025,
+   "cs_team": "MAR_TER",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "kyson witherspoon",
+   "cs_name": "Witherspoon, Kyson",
+   "pitcher_id": "804817",
+   "cs_year": 2024,
+   "cs_team": "OKL_SOO",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "landon beidelschies",
+   "cs_name": "Beidelschies, Landon",
+   "pitcher_id": "804860",
+   "cs_year": 2024,
+   "cs_team": "OSU_BUC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "lebarron johnson",
+   "cs_name": "Johnson, Lebarron",
+   "pitcher_id": "694316",
+   "cs_year": 2024,
+   "cs_team": "TEX_LON",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "levi huesman",
+   "cs_name": "Huesman, Levi",
+   "pitcher_id": "702612",
+   "cs_year": 2024,
+   "cs_team": "VAN_COM",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "logan berrier",
+   "cs_name": "Berrier, Logan",
+   "pitcher_id": "1000079353",
+   "cs_year": 2024,
+   "cs_team": "MAR_TER",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "logan forsythe",
+   "cs_name": "Forsythe, Logan",
+   "pitcher_id": "1000110602",
+   "cs_year": 2024,
+   "cs_team": "MSU_BDG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "logan tabeling",
+   "cs_name": "Tabeling, Logan",
+   "pitcher_id": "805841",
+   "cs_year": 2024,
+   "cs_team": "ILL_ILL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "louis marinaro",
+   "cs_name": "Marinaro, Louis",
+   "pitcher_id": "1000139026",
+   "cs_year": 2024,
+   "cs_team": "STJ_RED",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "lp langevin",
+   "cs_name": "Langevin, LP",
+   "pitcher_id": "1000268014",
+   "cs_year": 2024,
+   "cs_team": "LOU_CAJ",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "luis rodriguez",
+   "cs_name": "Rodriguez, Luis",
+   "pitcher_id": "693543",
+   "cs_year": 2024,
+   "cs_team": "ALA_HOR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "luke cooper",
+   "cs_name": "Cooper, Luke",
+   "pitcher_id": "1000112755",
+   "cs_year": 2024,
+   "cs_team": "KEN_OWL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "luke dotson",
+   "cs_name": "Dotson, Luke",
+   "pitcher_id": "1000114079",
+   "cs_year": 2024,
+   "cs_team": "MSU_BDG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "luke jackson",
+   "cs_name": "Jackson, Luke",
+   "pitcher_id": "1000111317",
+   "cs_year": 2024,
+   "cs_team": "TEX_AGG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "luke johnson",
+   "cs_name": "Johnson, Luke",
+   "pitcher_id": "810022",
+   "cs_year": 2024,
+   "cs_team": "UMBC_RET",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "mac heuer",
+   "cs_name": "Heuer, Mac",
+   "pitcher_id": "1000137156",
+   "cs_year": 2024,
+   "cs_team": "TEX_RAI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "malachi witherspoon",
+   "cs_name": "Witherspoon, Malachi",
+   "pitcher_id": "802412",
+   "cs_year": 2024,
+   "cs_team": "OKL_SOO",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "marcus phillips",
+   "cs_name": "Phillips, Marcus",
+   "pitcher_id": "815071",
+   "cs_year": 2024,
+   "cs_team": "TEN_VOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "mathieu curtis",
+   "cs_name": "Curtis, Mathieu",
+   "pitcher_id": "813555",
+   "cs_year": 2024,
+   "cs_team": "USC_UPS",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "matt mcshane",
+   "cs_name": "McShane, Matt",
+   "pitcher_id": "1000123136",
+   "cs_year": 2024,
+   "cs_team": "STJ_HAW",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "matthew dalquist",
+   "cs_name": "Dalquist, Matthew",
+   "pitcher_id": "801574",
+   "cs_year": 2024,
+   "cs_team": "CSD_TRI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "matthew desmarets",
+   "cs_name": "DesMarets, Matthew",
+   "pitcher_id": "1000317827",
+   "cs_year": 2024,
+   "cs_team": "VER_VER",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "matthew tippie",
+   "cs_name": "Tippie, Matthew",
+   "pitcher_id": "1000122383",
+   "cs_year": 2024,
+   "cs_team": "TEX_BOB",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "max banks",
+   "cs_name": "Banks, Max",
+   "pitcher_id": "822514",
+   "cs_year": 2025,
+   "cs_team": "WAS_HUS",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "michael lombardi",
+   "cs_name": "Lombardi, Michael",
+   "pitcher_id": "1000115581",
+   "cs_year": 2024,
+   "cs_team": "TUL_GRE",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "michael ross",
+   "cs_name": "Ross, Michael",
+   "pitcher_id": "1000113913",
+   "cs_year": 2024,
+   "cs_team": "SAM_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "myles patton",
+   "cs_name": "Patton, Myles",
+   "pitcher_id": "811573",
+   "cs_year": 2024,
+   "cs_team": "LON_DIR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "nelson keljo",
+   "cs_name": "Keljo, Nelson",
+   "pitcher_id": "1000134232",
+   "cs_year": 2024,
+   "cs_team": "ORE_BEA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "nick conte",
+   "cs_name": "Conte, Nick",
+   "pitcher_id": "694921",
+   "cs_year": 2024,
+   "cs_team": "DUK_BLU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "noah beal",
+   "cs_name": "Beal, Noah",
+   "pitcher_id": "1000068742",
+   "cs_year": 2024,
+   "cs_team": "FRE_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "noah millikan",
+   "cs_name": "Millikan, Noah",
+   "pitcher_id": "1000123901",
+   "cs_year": 2024,
+   "cs_team": "PEN_QUA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "owen proksch",
+   "cs_name": "Proksch, Owen",
+   "pitcher_id": "810896",
+   "cs_year": 2024,
+   "cs_team": "DUK_BLU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "parker seay",
+   "cs_name": "Seay, Parker",
+   "pitcher_id": "703752",
+   "cs_year": 2024,
+   "cs_team": "ULM_WAR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "parker smith",
+   "cs_name": "Smith, Parker",
+   "pitcher_id": "809789",
+   "cs_year": 2024,
+   "cs_team": "RIC_OWL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "patrick forbes",
+   "cs_name": "Forbes, Patrick",
+   "pitcher_id": "1000115724",
+   "cs_year": 2024,
+   "cs_team": "LOU_CAR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "patrick galle",
+   "cs_name": "Galle, Patrick",
+   "pitcher_id": "1000090130",
+   "cs_year": 2024,
+   "cs_team": "OLE_REB",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "payton graham",
+   "cs_name": "Graham, Payton",
+   "pitcher_id": "1000213649",
+   "cs_year": 2024,
+   "cs_team": "GON_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "peyton fosher",
+   "cs_name": "Fosher, Peyton",
+   "pitcher_id": "10301005",
+   "cs_year": 2024,
+   "cs_team": "NEV_WOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "peyton havard",
+   "cs_name": "Havard, Peyton",
+   "pitcher_id": "1000052282",
+   "cs_year": 2024,
+   "cs_team": "LAM_CAR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "pico kohn",
+   "cs_name": "Kohn, Pico",
+   "pitcher_id": "1000091445",
+   "cs_year": 2024,
+   "cs_team": "MSU_BDG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "pierce coppola",
+   "cs_name": "Coppola, Pierce",
+   "pitcher_id": "1000092910",
+   "cs_year": 2024,
+   "cs_team": "FLA_GAT",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "preston howey",
+   "cs_name": "Howey, Preston",
+   "pitcher_id": "813796",
+   "cs_year": 2024,
+   "cs_team": "STM_GAE",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "raul garayzar",
+   "cs_name": "Garayzar, Raul",
+   "pitcher_id": "1000218932",
+   "cs_year": 2024,
+   "cs_team": "ARI_WIL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "reece wissinger",
+   "cs_name": "Wissinger, Reece",
+   "pitcher_id": "1000131265",
+   "cs_year": 2024,
+   "cs_team": "SOU_UNI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "reed moring",
+   "cs_name": "Moring, Reed",
+   "pitcher_id": "1000091864",
+   "cs_year": 2024,
+   "cs_team": "SAN_GAU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "reese lumpkin",
+   "cs_name": "Lumpkin, Reese",
+   "pitcher_id": "813609",
+   "cs_year": 2024,
+   "cs_team": "WIN_EAG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "reid easterly",
+   "cs_name": "Easterly, Reid",
+   "pitcher_id": "822498",
+   "cs_year": 2024,
+   "cs_team": "YAL_BUL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "riely hunsaker",
+   "cs_name": "Hunsaker, Riely",
+   "pitcher_id": "1000304273",
+   "cs_year": 2024,
+   "cs_team": "TEX_ISL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "riley huge",
+   "cs_name": "Huge, Riley",
+   "pitcher_id": "1000097776",
+   "cs_year": 2024,
+   "cs_team": "WIN_EAG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "riley kelly",
+   "cs_name": "Kelly, Riley",
+   "pitcher_id": "804465",
+   "cs_year": 2024,
+   "cs_team": "CAL_ANT",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "riley stanford",
+   "cs_name": "Stanford, Riley",
+   "pitcher_id": "1000066688",
+   "cs_year": 2024,
+   "cs_team": "GIT_YEL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "rj sales",
+   "cs_name": "Sales, RJ",
+   "pitcher_id": "1000091668",
+   "cs_year": 2024,
+   "cs_team": "UNC_SEA",
+   "single_a_season": 2025
+  },
+  {
+   "name_key": "robby porco",
+   "cs_name": "Porco, Robby",
+   "pitcher_id": "1000188473",
+   "cs_year": 2024,
+   "cs_team": "WES_MOU",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "rocco reid",
+   "cs_name": "Reid, Rocco",
+   "pitcher_id": "701793",
+   "cs_year": 2024,
+   "cs_team": "CLE_TIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ryan andrade",
+   "cs_name": "Andrade, Ryan",
+   "pitcher_id": "1000149918",
+   "cs_year": 2024,
+   "cs_team": "PIT_UNI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ryan cabarcas",
+   "cs_name": "Cabarcas, Ryan",
+   "pitcher_id": "1000013057",
+   "cs_year": 2024,
+   "cs_team": "FLO_PAN",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ryan desanto",
+   "cs_name": "DeSanto, Ryan",
+   "pitcher_id": "823756",
+   "cs_year": 2025,
+   "cs_team": "PEN_NIT",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ryan minckler",
+   "cs_name": "Minckler, Ryan",
+   "pitcher_id": "1000240515",
+   "cs_year": 2024,
+   "cs_team": "NIA_EAG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ryan prager",
+   "cs_name": "Prager, Ryan",
+   "pitcher_id": "696492",
+   "cs_year": 2024,
+   "cs_team": "TEX_AGG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ryan schiefer",
+   "cs_name": "Schiefer, Ryan",
+   "pitcher_id": "700987",
+   "cs_year": 2024,
+   "cs_team": "ARI_SUN",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "ryan smith",
+   "cs_name": "Smith, Ryan",
+   "pitcher_id": "10058266",
+   "cs_year": 2024,
+   "cs_team": "UIC_FLA",
+   "single_a_season": 2025
+  },
+  {
+   "name_key": "ryan verdugo",
+   "cs_name": "Verdugo, Ryan",
+   "pitcher_id": "1000125331",
+   "cs_year": 2024,
+   "cs_team": "CSU_BAK",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "sam highfill",
+   "cs_name": "Highfill, Sam",
+   "pitcher_id": "1000036984",
+   "cs_year": 2024,
+   "cs_team": "NOR_WOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "sam mettert",
+   "cs_name": "Mettert, Sam",
+   "pitcher_id": "805329",
+   "cs_year": 2024,
+   "cs_team": "STJ_RED",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "sam rochard",
+   "cs_name": "Rochard, Sam",
+   "pitcher_id": "1000078179",
+   "cs_year": 2024,
+   "cs_team": "TEN_WES",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "sam stuhr",
+   "cs_name": "Stuhr, Sam",
+   "pitcher_id": "1000109856",
+   "cs_year": 2024,
+   "cs_team": "POR_PIL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "sam tookoian",
+   "cs_name": "Tookoian, Sam",
+   "pitcher_id": "1000110964",
+   "cs_year": 2024,
+   "cs_team": "OLE_REB",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "scott rouse",
+   "cs_name": "Rouse, Scott",
+   "pitcher_id": "1000133849",
+   "cs_year": 2024,
+   "cs_team": "RAD_HIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "sean youngerman",
+   "cs_name": "Youngerman, Sean",
+   "pitcher_id": "823781",
+   "cs_year": 2024,
+   "cs_team": "WES_COL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "shane van dam",
+   "cs_name": "Van Dam, Shane",
+   "pitcher_id": "1000231663",
+   "cs_year": 2024,
+   "cs_team": "NOR_WOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "simon gregersen",
+   "cs_name": "Gregersen, Simon",
+   "pitcher_id": "809130",
+   "cs_year": 2024,
+   "cs_team": "IND_SYC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "tanner hall",
+   "cs_name": "Hall, Tanner",
+   "pitcher_id": "1000098907",
+   "cs_year": 2024,
+   "cs_team": "SOU_GOL",
+   "single_a_season": 2025
+  },
+  {
+   "name_key": "tanner jones",
+   "cs_name": "Jones, Tanner",
+   "pitcher_id": "1000268666",
+   "cs_year": 2024,
+   "cs_team": "TEX_AGG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "thatcher hurd",
+   "cs_name": "Hurd, Thatcher",
+   "pitcher_id": "1000039292",
+   "cs_year": 2024,
+   "cs_team": "LSU_TIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "thomas higgins",
+   "cs_name": "Higgins, Thomas",
+   "pitcher_id": "1000138117",
+   "cs_year": 2024,
+   "cs_team": "GEO_EAG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "trace baker",
+   "cs_name": "Baker, Trace",
+   "pitcher_id": "10036162",
+   "cs_year": 2024,
+   "cs_team": "UNC_SEA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "trendan parish",
+   "cs_name": "Parish, Trendan",
+   "pitcher_id": "701829",
+   "cs_year": 2024,
+   "cs_team": "TEX_RAI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "trent hodgdon",
+   "cs_name": "Hodgdon, Trent",
+   "pitcher_id": "695787",
+   "cs_year": 2024,
+   "cs_team": "USC_UPS",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "trey cooper",
+   "cs_name": "Cooper, Trey",
+   "pitcher_id": "1000093504",
+   "cs_year": 2024,
+   "cs_team": "LIB_FLA",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "trey pooser",
+   "cs_name": "Pooser, Trey",
+   "pitcher_id": "1000080959",
+   "cs_year": 2024,
+   "cs_team": "KEN_WIL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "tristan smith",
+   "cs_name": "Smith, Tristan",
+   "pitcher_id": "702280",
+   "cs_year": 2024,
+   "cs_team": "CLE_TIG",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "truman pauley",
+   "cs_name": "Pauley, Truman",
+   "pitcher_id": "1000258644",
+   "cs_year": 2024,
+   "cs_team": "HAR_CRI",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "tucker biven",
+   "cs_name": "Biven, Tucker",
+   "pitcher_id": "702712",
+   "cs_year": 2024,
+   "cs_team": "LOU_CAR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "tucker novotny",
+   "cs_name": "Novotny, Tucker",
+   "pitcher_id": "701512",
+   "cs_year": 2024,
+   "cs_team": "MIN_GOL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "tyler hampu",
+   "cs_name": "Hampu, Tyler",
+   "pitcher_id": "1000138078",
+   "cs_year": 2024,
+   "cs_team": "AUS_GOV",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "tyler schmitt",
+   "cs_name": "Schmitt, Tyler",
+   "pitcher_id": "831325",
+   "cs_year": 2025,
+   "cs_team": "ILL_ILL",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "will koger",
+   "cs_name": "Koger, Will",
+   "pitcher_id": "695572",
+   "cs_year": 2024,
+   "cs_team": "LOU_CAR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "will mccausland",
+   "cs_name": "McCausland, Will",
+   "pitcher_id": "1000213937",
+   "cs_year": 2024,
+   "cs_team": "STJ_HAW",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "wyatt lunsfordshenkman",
+   "cs_name": "Lunsford-Shenkman, Wyatt",
+   "pitcher_id": "701828",
+   "cs_year": 2024,
+   "cs_team": "ECU_PIR",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "wyatt parliament",
+   "cs_name": "Parliament, Wyatt",
+   "pitcher_id": "10026720",
+   "cs_year": 2024,
+   "cs_team": "VIR_TEC",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "xavier kolhosser",
+   "cs_name": "Kolhosser, Xavier",
+   "pitcher_id": "1000113954",
+   "cs_year": 2024,
+   "cs_team": "STJ_RED",
+   "single_a_season": 2026
+  },
+  {
+   "name_key": "xavier martinez",
+   "cs_name": "Martinez, Xavier",
+   "pitcher_id": "1000119625",
+   "cs_year": 2024,
+   "cs_team": "SOU_TRO",
+   "single_a_season": 2026
+  }
+ ]
+}

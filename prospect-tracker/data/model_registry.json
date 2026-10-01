@@ -334,6 +334,19 @@
    "artifact_age_days": 1
   },
   {
+   "model_id": "college_pitk_box_challenger",
+   "surface": "none served - registered challenger for the CollegeSavant pitcher K% leg (college_translation pit_k); docs/COLLEGE_PIT_K_CHALLENGER_GATE.md",
+   "predicts": "Single-A K% from the full-season NCAA box K% (100 * SO / (outs + H + BB), at least 20 NCAA IP) of the same season as the tracked college row",
+   "champion": "none - registered, not scored (one look 2026-11-02; input not in the database on the registration date)",
+   "baseline": "predict-the-Single-A-mean null AND the incumbent pit_k leg (tracked K%), both refit leave-one-out on the identical pairs; gated by docs/COLLEGE_PIT_K_CHALLENGER_GATE.md",
+   "metric": "LOO MAE on the subset S of the 232 frozen pit_k pairs carrying an NCAA box line; paired bootstrap 95% interval of the MAE gain vs each (2000 draws, seed 20261102); 200-shuffle permutation band; PASS = |S| >= 60 AND lower bound > 0 vs the null AND vs the incumbent AND skill above the permutation 95th percentile",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "provisional_kind": "data_blocked_stub",
+   "registration_status": "registered, not scored",
+   "notes": "Registered 2026-10-01 (owner answer M19-1, census M03-05 and M03-19) before any fit, look or fetch. Frozen pairs docs/college-pitk-challenger-2026-10-01/frozen_pairs.json (232 identities, tracked 2024 224 / 2025 8, no rates stored); scorer tools/college_pitk_challenger_lab.py refuses on any date but 2026-11-02 and refuses a second run. Precondition: NCAA pitching box lines for 2024 and 2025 fetched for the CollegeSavant pitchers (pitching side only, prospects.db only) before the look; on the registration date collegesavant_box_scores holds no pitching row. Earlier measurements on these pairs, disclosed in the gate: production eval pit_k LOO MAE 4.013 vs null 3.995 (skill -0.018, se 0.053, r2 0.033, n 232); census M03-04/M03-05 verifier probes (bootstrap -0.125 to 0.085, Spearman 0.139); M03-13 judge residual probes; W4 COL-XRV stuff+ covariate (deprecated, LOO 4.392 to 4.416). None used an NCAA box rate. PASS makes the challenger eligible only; serving it is a separate owner-signed task. FAIL moves this row to deprecated."
+  },
+  {
    "model_id": "collegesavant_stuff",
    "surface": "CollegeSavant pitcher pages stuff+ per pitch type (shipped display lineage, collegesavant/pitcher_pitch_data_*.js) - governance registration, W4 Part A",
    "predicts": "descriptive per-pitch-type college pitch quality (TrackMan physics), class-relative display scale",
