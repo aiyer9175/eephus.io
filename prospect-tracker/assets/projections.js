@@ -2286,16 +2286,24 @@
   // Savant percentile rows. Luck (wOBA minus xwOBA) is not a skill percentile:
   // painted on the percentile colours, the hitter whose results ran furthest
   // ahead of his contact reads as elite, so it keeps its number on a neutral chip.
+  // Colour (owner ask 2026-10-01): one colour per bar and chip from the shared
+  // percentile gradient (EephusTiers.pctColor), carried inline as --pct so the
+  // stylesheet paints the fill and the chip from it; the pctClass step stays on
+  // both as the fallback a browser without color-mix paints instead.
   function sliders(sc, sid) {
     if (!sc || !sc.metrics || !sc.metrics.length) return "";
     const isLuck = m => /^luck/i.test(String(m.label || ""));
-    const rows = sc.metrics.filter(m => !isLuck(m)).map(m => `
+    const rows = sc.metrics.filter(m => !isLuck(m)).map(m => {
+      const c = EephusTiers.pctColor(m.pct);
+      const v = c ? `--pct:${c};` : "";
+      return `
       <div class="mlbp-slider">
         <span class="mlbp-slider-label">${esc(m.label)}</span>
-        <div class="mlbp-slider-track"><div class="mlbp-slider-fill ${pctClass(m.pct)}" style="width:${m.pct}%;"></div>
-          <span class="mlbp-slider-pct ${pctClass(m.pct)}" style="left:${Math.min(94, Math.max(2, m.pct))}%;">${m.pct}</span></div>
+        <div class="mlbp-slider-track"><div class="mlbp-slider-fill ${pctClass(m.pct)}" style="${v}width:${m.pct}%;"></div>
+          <span class="mlbp-slider-pct ${pctClass(m.pct)}" style="${v}left:${Math.min(94, Math.max(2, m.pct))}%;">${m.pct}</span></div>
         <span class="mlbp-slider-val">${esc(m.value)}</span>
-      </div>`).join("");
+      </div>`;
+    }).join("");
     const luck = sc.metrics.find(isLuck);
     const luckHTML = luck
       ? `<div class="mlbp-luck"><span class="mlbp-luck-label">${esc(luck.label)}</span><span class="mlbp-luck-val">${esc(luck.value)}</span></div>` : "";

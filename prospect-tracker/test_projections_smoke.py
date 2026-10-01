@@ -614,6 +614,39 @@ def test_luck_leaves_the_percentile_colour_scale():
     assert sc.count('class="mlbp-slider"') == 1
 
 
+def test_statcast_bars_take_the_percentile_gradient_and_keep_the_fallback_step():
+    """Owner ask 2026-10-01: each bar and its chip carry one colour from the
+    shared percentile gradient (EephusTiers.pctColor) as an inline --pct, and
+    both keep their pctClass step, which site.css paints only where color-mix
+    is unsupported. The Luck chip stays neutral: no --pct, no step."""
+    sc = _section(_render("#player=vet_guy&ptab=hitting"), "hitting-statcast")
+    mix = "color-mix(in oklab, var(--vt-great) 50%, var(--vt-elite))"  # p = 95
+    assert f'class="mlbp-slider-fill is-elite" style="--pct:{mix};width:95%;"' in sc
+    assert f'class="mlbp-slider-pct is-elite" style="--pct:{mix};left:94%;">95<' in sc
+    luck = sc.split('class="mlbp-luck"', 1)[1]
+    assert "--pct" not in luck and "is-elite" not in luck
+    pit = _section(_render("#player=ace_arm&ptab=pitching"), "pitching-statcast")
+    mix = "color-mix(in oklab, var(--vt-great) 30%, var(--vt-elite))"  # p = 97
+    assert f'class="mlbp-slider-fill is-elite" style="--pct:{mix};width:97%;"' in pit
+
+
+def test_the_slider_css_paints_from_pct_and_falls_back_to_the_steps():
+    css = re.sub(r"/\*.*?\*/", "", (ROOT / "assets" / "site.css").read_text(encoding="utf-8"), flags=re.S)
+    assert re.search(r"\.mlbp-slider-fill\s*\{[^}]*background:\s*var\(--pct,", css)
+    chip = re.search(r"\.mlbp-slider-pct\s*\{([^}]*)\}", css).group(1)
+    assert "color: var(--pct," in chip and "var(--pct, var(--border))" in chip
+    assert "background: var(--bg-primary)" in chip, "the chip keeps its solid ground"
+    track = re.search(r"\.mlbp-slider-track\s*\{([^}]*)\}", css).group(1)
+    assert "var(--bg-tertiary)" in track and "--pct" not in track, "the track stays neutral"
+    m = re.search(r"@supports not \(color: color-mix\(in oklch, red, blue\)\) \{(.*?)\n\}", css, re.S)
+    assert m, "no color-mix fallback block"
+    for step in ("is-elite", "is-good", "is-avg", "is-low", "is-poor"):
+        assert f".mlbp-slider-fill.{step}" in m.group(1), step
+    # outside the fallback block no step paints a fill (the gradient owns it)
+    rest = css.replace(m.group(0), "")
+    assert ".mlbp-slider-fill.is-" not in rest
+
+
 # ---------------------------------------------------------------------------
 # Players TABLE (owner ask 2026-09-11: a table, not cards). The fixture's
 # first_season is 2026: vet_guy thru 2028, aav $25.0M.

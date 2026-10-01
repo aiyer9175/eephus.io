@@ -209,9 +209,59 @@
     return t ? "var(--vt-" + t + ")" : "";
   }
 
+  // ---- the percentile gradient (owner ask 2026-10-01) -----------------------
+  // A Savant percentile is already a rank, so it takes no cut ladder and no
+  // tier word: it walks the seven ruler colours CONTINUOUSLY. The stops are the
+  // ruler tokens at these percentiles; between two stops the colour is a
+  // color-mix in OKLAB of its two neighbours, returned as a CSS expression, so
+  // it resolves through the tokens of whichever theme is active and needs no
+  // JS colour math and no recompute on a theme toggle. OKLAB, not OKLCH: two
+  // stops (avg, below) are near-neutral, and an OKLCH hue arc from a grey to a
+  // colour detours through unrelated hues. Measured 2026-10-01 in Chromium,
+  // OKLCH painted p = 50 light rgb(0,106,116), the teal of the p = 90 stop
+  // rgb(12,110,120), and p = 30 dark a pink grey between two blue greys; OKLAB
+  // gives rgb(59,104,85) and rgb(160,165,176), with the same lightness.
+  // Red at the bottom is the Savant convention for a bottom percentile; it does
+  // not break the "poor is below zero" rule above, which is about tier WORDS on
+  // value ladders, and no tier class is emitted from here.
+  var PCT_STOPS = [[0, "poor"], [20, "below"], [40, "avg"], [60, "above"],
+                   [80, "good"], [90, "great"], [100, "elite"]];
+
+  function pctNum(p) {
+    if (p == null || p === "") return null;
+    var n = Number(p);
+    if (!isFinite(n)) return null;
+    return Math.min(100, Math.max(0, n));
+  }
+
+  // Index of the segment [stop i, stop i+1] that p falls in. An exact stop
+  // opens its own segment; 100 closes the last one. -1 for a missing value.
+  function pctSeg(p) {
+    var n = pctNum(p);
+    if (n == null) return -1;
+    for (var i = PCT_STOPS.length - 2; i > 0; i--) {
+      if (n >= PCT_STOPS[i][0]) return i;
+    }
+    return 0;
+  }
+
+  // "var(--vt-avg)" at a stop, "color-mix(in oklab, var(--vt-avg) 50%,
+  // var(--vt-above))" between two (the percentage is the LOWER stop's share,
+  // to one decimal), "" for a missing value.
+  function pctColor(p) {
+    var n = pctNum(p);
+    if (n == null) return "";
+    var i = pctSeg(n), a = PCT_STOPS[i], b = PCT_STOPS[i + 1];
+    var w = Math.round((b[0] - n) / (b[0] - a[0]) * 1000) / 10;
+    if (w >= 100) return "var(--vt-" + a[1] + ")";
+    if (w <= 0) return "var(--vt-" + b[1] + ")";
+    return "color-mix(in oklab, var(--vt-" + a[1] + ") " + w + "%, var(--vt-" + b[1] + "))";
+  }
+
   var API = { TIERS: TIERS, LADDERS: LADDERS, tier: tier, cls: cls,
               clsInk: clsInk, clsAvg: clsAvg, clsAvgInk: clsAvgInk,
-              varOf: varOf };
+              varOf: varOf, PCT_STOPS: PCT_STOPS, pctSeg: pctSeg,
+              pctColor: pctColor };
   if (typeof window !== "undefined") window.EephusTiers = API;
   if (typeof globalThis !== "undefined") globalThis.EephusTiers = API;
 })();

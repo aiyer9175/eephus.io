@@ -722,3 +722,68 @@ def test_the_ledger_hand_written_tier_classes_name_their_family():
         i = js.index("function " + fn + "(")
         j = js.index("\n  function ", i + 1)
         assert "zCls(" not in js[i:j] and "zCell(" not in js[i:j] and "EephusTiers" not in js[i:j], fn + " took a ladder"
+
+
+# --------------------------------------------------------------------------- #
+# 7. The percentile gradient (owner ask 2026-10-01)
+# --------------------------------------------------------------------------- #
+
+# The stop table EephusTiers.pctColor walks: the seven ruler tokens at these
+# percentiles, worst to best.
+PCT_STOPS = [(0, "poor"), (20, "below"), (40, "avg"), (60, "above"),
+             (80, "good"), (90, "great"), (100, "elite")]
+
+
+def _pct(ruler, p):
+    return ruler.eval(f"EephusTiers.pctColor({p!r})")
+
+
+def _seg(ruler, p):
+    return ruler.eval(f"EephusTiers.pctSeg({p!r})")
+
+
+def test_the_percentile_stops_are_the_ruler_tokens(ruler):
+    import json
+    assert [tuple(x) for x in json.loads(ruler.eval("JSON.stringify(EephusTiers.PCT_STOPS)"))] == PCT_STOPS
+    # worst to best is the ruler read backwards, every step used once
+    assert [t for _, t in PCT_STOPS] == TIERS[::-1]
+
+
+def test_the_ends_and_every_stop_are_one_token(ruler):
+    assert _pct(ruler, 0) == "var(--vt-poor)"
+    assert _pct(ruler, 100) == "var(--vt-elite)"
+    for p, t in PCT_STOPS:
+        assert _pct(ruler, p) == f"var(--vt-{t})", p
+    # out of range clamps to the ends; a missing value paints nothing
+    assert _pct(ruler, -3) == "var(--vt-poor)"
+    assert _pct(ruler, 104) == "var(--vt-elite)"
+    for missing in ("null", "undefined", '""', "NaN", '"abc"'):
+        assert ruler.eval(f"EephusTiers.pctColor({missing})") == "", missing
+        assert ruler.eval(f"EephusTiers.pctSeg({missing})") == -1, missing
+
+
+def test_the_segment_never_steps_back(ruler):
+    segs = [_seg(ruler, i / 2) for i in range(0, 201)]
+    assert segs[0] == 0 and segs[-1] == len(PCT_STOPS) - 2
+    assert all(b >= a for a, b in zip(segs, segs[1:])), segs
+    assert sorted(set(segs)) == list(range(len(PCT_STOPS) - 1))
+
+
+def test_between_stops_is_a_mix_of_its_two_neighbours(ruler):
+    """Every integer percentile off a stop is an OKLAB color-mix of exactly the
+    two stops around it, the percentage being the LOWER stop's share."""
+    stops = dict(PCT_STOPS)
+    for p in range(101):
+        if p in stops:
+            continue
+        lo = max(s for s in stops if s < p)
+        hi = min(s for s in stops if s > p)
+        w = round((hi - p) / (hi - lo) * 100, 1)
+        w_txt = str(int(w)) if w == int(w) else str(w)
+        want = (f"color-mix(in oklab, var(--vt-{stops[lo]}) {w_txt}%, "
+                f"var(--vt-{stops[hi]}))")
+        assert _pct(ruler, p) == want, (p, _pct(ruler, p), want)
+    # spot values a reader can check by eye
+    assert _pct(ruler, 50) == "color-mix(in oklab, var(--vt-avg) 50%, var(--vt-above))"
+    assert _pct(ruler, 97) == "color-mix(in oklab, var(--vt-great) 30%, var(--vt-elite))"
+    assert _pct(ruler, 12.5) == "color-mix(in oklab, var(--vt-poor) 37.5%, var(--vt-below))"
