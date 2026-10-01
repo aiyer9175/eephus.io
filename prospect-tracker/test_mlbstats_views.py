@@ -353,11 +353,11 @@ def test_wrc_plus_sits_right_after_hem_plus_in_every_view_that_shows_both():
     assert vis[-1] == "hem_plus" and "wrc_plus" not in vis, vis
 
 
-# All shows every column but the Baseball Savant display columns (allOff in
-# mlbstats.js: 5 reliever, 6 starter, 5 hitter, 9 defense), which sit on their
-# own views. With them All ran 1,249 to 1,431px against the 1,232px box at a
-# 1280 window and broke the fit budget test_mlbstats_fit.py holds it to.
-SAVANT_ALL_OFF = {
+# All carries EVERY column, the Baseball Savant display columns included (owner
+# answer M26-3, 2026-09-25: 5 reliever, 6 starter, 5 hitter and 9 defense Savant
+# columns). It runs wider than its box, so up to a 1440 window it may scroll
+# sideways inside its own frame, never the page (test_mlbstats_fit.py).
+SAVANT_COLS = {
     "rel": {"whiff_pct", "chase_pct", "z_contact_pct", "f_strike_pct", "fb_velo"},
     "sp": {"swstr_pct", "whiff_pct", "chase_pct", "z_contact_pct", "f_strike_pct", "fb_velo"},
     "hit": {"chase_pct", "whiff_pct", "z_contact_pct", "sweet_spot_pct", "pull_pct"},
@@ -367,30 +367,42 @@ SAVANT_ALL_OFF = {
 
 
 @pytest.mark.parametrize("hash_,fn,n,board", [
-    ("#section=bullpen&rcols=all", _render_bullpen, 25, "rel"),
-    ("#section=starters&scols=all", smoke._render_starters, 19, "sp"),
-    ("#section=hitters&hcols=all", smoke._render_hitters, 25, "hit"),
-    ("#section=defense&dcols=all", smoke._render_defense, 17, "def"),
+    ("#section=bullpen&rcols=all", _render_bullpen, 30, "rel"),
+    ("#section=starters&scols=all", smoke._render_starters, 25, "sp"),
+    ("#section=hitters&hcols=all", smoke._render_hitters, 30, "hit"),
+    ("#section=defense&dcols=all", smoke._render_defense, 26, "def"),
 ])
 def test_the_all_view_shows_every_column_and_wraps_only_spaced_headers(hash_, fn, n, board):
     html = fn(hash_)
     assert '<table class="mlbstats-table mlbstats-cv-all">' in html
     heads = _heads(html)
-    off = {k for cls, k, _ in heads if "mlbstats-cv-off" in cls.split()}
-    assert off == SAVANT_ALL_OFF[board], sorted(off ^ SAVANT_ALL_OFF[board])
-    assert len(heads) == n + len(off) and len(_visible(html)) == n
-    assert "mlbstats-cv-wide" not in _table(html)
-    heads = [h for h in heads if h[1] not in off]
+    assert len(heads) == n and len(_visible(html)) == n
+    assert SAVANT_COLS[board] <= set(_visible(html)), sorted(SAVANT_COLS[board] - set(_visible(html)))
+    assert "mlbstats-cv-off" not in _table(html) and "mlbstats-cv-wide" not in _table(html)
     for cls, key, tag in heads:
         label = re.search(r'data-export-text="([^"]*)"', tag).group(1)
         assert ("mlbstats-nw" in cls.split()) == (" " not in label), (key, label)
 
 
-def test_a_sort_on_a_savant_column_keeps_it_on_all():
-    """All leaves the Savant columns out, but never the column the board is
-    sorted on: a link sorted on Chase% still shows Chase% on All."""
-    vis = _visible(smoke._render_hitters("#section=hitters&hcols=all&hsort=chase_pct.d"))
-    assert "chase_pct" in vis and "whiff_pct" not in vis, vis
+def test_no_column_is_left_out_of_all():
+    """The 2026-09-25 allOff carve-out is gone: no column object may opt out of
+    All, and All's plan pushes every column it is handed."""
+    assert "allOff" not in JS
+
+
+# ONE Catching view with every catcher column, each sample count beside its rate
+# (owner answer M26-4, 2026-09-25). The Blocking and Throwing views it replaced
+# are retired ids that still resolve to it, from a link or a stored pick.
+CATCHING = ["name", "pos", "dem_plus", "frm_runs", "c_blk_runs", "c_blk_aa", "c_blk_pitches",
+            "c_cs_runs", "c_cs_aa", "c_sb_att", "c_pop", "c_exchange", "c_arm", "inn"]
+
+
+@pytest.mark.parametrize("view", ["catching", "blocking", "throwing"])
+def test_the_catching_view_and_its_retired_links(view):
+    html = smoke._render_defense("#section=defense&dcols=" + view)
+    assert _visible(html) == CATCHING, _visible(html)
+    assert 'data-colview="def:catching" aria-pressed="true"' in html
+    assert 'data-colview="def:blocking"' not in html and 'data-colview="def:throwing"' not in html
 
 
 def test_the_all_pill_says_it_may_scroll():
@@ -921,7 +933,7 @@ BOARD_ARRAYS = {"rel": "REL_COLS", "sp": "STARTER_COLS", "hit": "HITTER_COLS", "
 FROZEN_VIEWS = {"rel": ["standard", "skill", "value", "leverage", "all"],
                 "sp": ["standard", "skill", "value", "all"],
                 "hit": ["standard", "skill", "value", "batting", "all"],
-                "def": ["standard", "runs", "all"]}
+                "def": ["standard", "runs", "catching", "all"]}
 
 
 def _array_block(name: str) -> str:

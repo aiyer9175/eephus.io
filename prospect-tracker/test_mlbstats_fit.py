@@ -9,14 +9,21 @@ Owner ask 2026-09-11: "make it so that the chart fits on one screen without a
 need for horizontal scrolling". Before the column views the reliever and hitter
 boards ran 1,424 to 1,900px wide against a 1,352px container and scrolled
 sideways at every desktop width. The views (Standard, Skill, Value, Leverage,
-Batting, Runs) carry 9 to 13 columns each; All carries every column.
+Batting, Runs, Discipline, Catching) carry 9 to 14 columns each; All carries
+every column.
 
 THE BUDGET RULE, asserted on the SERVED page and the served data:
   * the page itself never scrolls sideways, at any width, on any board;
   * every named view (every view but All), qualified filter on and off, fits
-    its own table box at 768px and wider, and its phone subset fits at 390px;
-  * All fits at 1263px (a 1280 window with a classic 17px scrollbar) and wider;
-    narrower, All may scroll inside its own box, never the page;
+    its own table box at 768px and wider, and its phone subset fits at 390px,
+    with ONE recorded exception: the Defense Catching view fits from 1024px
+    and may scroll inside its own box below that (owner answer M26-4,
+    2026-09-25: one full Catching view, 826px against the 720px box at 768);
+  * All carries EVERY column, the Baseball Savant display columns included
+    (owner answer M26-3, 2026-09-25), so it may scroll sideways inside its own
+    box, never the page, with the name column frozen at the box's left edge.
+    Measured 2026-10-01: relievers 1,431px and hitters 1,385px against a box
+    that stops growing at 1,352px from a 1440 window up;
   * every eWAR column a board carries is visible on its Standard view, except
     on Defense at 640px and below, where the phone subset is the four fielding
     columns a reader opened that board for (spec 4.5, owner decision O4);
@@ -99,7 +106,11 @@ PAGES = [
 FOLD_PAGES = [p for p in PAGES if p[1] != "war" and "years=" not in p[2]][:5]
 WINDOW_PAGES = [p for p in PAGES if "years=" in p[2]]
 SIZES = [(390, 844), (768, 1024), (1024, 768), (1280, 800), (1440, 900)]
-ALL_FITS_FROM = 1263
+# Named views that may scroll inside their own box below a width, and the width
+# they must fit from. The Catching view is the one (owner answer M26-4).
+VIEW_FITS_FROM = {"def:catching": 1024}
+# The widths the owner's answers name for the All and Catching cases.
+ANSWER_WIDTHS = [(390, 844), (1024, 768), (1280, 800), (1440, 900)]
 # The one Standard view that drops its eWAR column below 641px: Defense keeps
 # Pos, DEM+, Fld and Inn there instead (spec 4.5). The same exception, from the
 # other side, is PHONE["def"] in test_mlbstats_views.py, whose
@@ -200,14 +211,18 @@ def _open(page, server, sec, hash_):
     page.wait_for_timeout(200)
 
 
-def _check(m, w, where, problems, all_only=False):
+def _check(m, w, where, problems, view=None):
     if m is None:
         problems.append("%s: no board table rendered" % where)
         return
     if m["page_overflow"] > 0:
         problems.append("%s: the PAGE scrolls sideways by %dpx" % (where, m["page_overflow"]))
     fits = m["sc_sw"] <= m["sc_cw"] and m["table_w"] <= m["sc_cw"]
-    must_fit = (w >= ALL_FITS_FROM) if m["all"] else (not all_only)
+    # All may scroll inside its own box at any width; a named view must fit
+    # unless it is narrower than the width its recorded exception names (the
+    # phone subset at 640px and below still has to fit).
+    from_w = VIEW_FITS_FROM.get(view)
+    must_fit = (not m["all"]) and not (from_w and PHONE_MAX < w < from_w)
     if must_fit and not fits:
         problems.append("%s: table %dpx does not fit its %dpx box" % (where, m["table_w"], m["sc_cw"]))
     if fits and not m["fit"]:
@@ -237,14 +252,14 @@ def test_every_board_and_view_fits_and_the_page_never_scrolls_sideways(browser, 
                     page.evaluate("(v) => document.querySelector('[data-colview=\"' + v + '\"]').click()", v)
                 where = "%dpx %s %s" % (w, label, v.split(":")[1] if v else "(one view)")
                 m = page.evaluate(_MEASURE, sec)
-                _check(m, w, where, problems)
+                _check(m, w, where, problems, v)
                 measured += 1
                 exempt = (w <= PHONE_MAX and sec in PHONE_EWAR_EXEMPT)
                 if m and (v is None or v.endswith(":standard")) and m["war_hidden"] and not exempt:
                     problems.append("%s: eWAR column hidden on the Standard view: %s" % (where, m["war_hidden"]))
                 if qual and m and not m["all"]:
                     page.evaluate("(id) => document.getElementById(id).click()", qual)
-                    _check(page.evaluate(_MEASURE, sec), w, where + " qualified off", problems)
+                    _check(page.evaluate(_MEASURE, sec), w, where + " qualified off", problems, v)
                     page.evaluate("(id) => document.getElementById(id).click()", qual)
                     measured += 1
     finally:
@@ -253,8 +268,38 @@ def test_every_board_and_view_fits_and_the_page_never_scrolls_sideways(browser, 
     assert not problems, "\n".join(problems)
 
 
-def test_the_all_view_fits_a_1280_window_with_a_classic_scrollbar(browser, server):
-    ctx = _context(browser, ALL_FITS_FROM, 800)
+_ALL_FRAME = r"""
+(sec) => {
+  const root = document.getElementById('mlbstats-section-' + sec);
+  const sc = root.querySelector('.mlbstats-scroll:has(> table.mlbstats-table)');
+  const t = sc.querySelector('table');
+  const shown = (el) => getComputedStyle(el).display !== 'none';
+  const heads = Array.from(t.querySelectorAll('thead th'));
+  sc.scrollLeft = sc.scrollWidth;
+  const name = t.querySelector('tbody td');
+  const out = {
+    all: t.classList.contains('mlbstats-cv-all'),
+    n_heads: heads.length, n_visible: heads.filter(shown).length,
+    n_off: t.querySelectorAll('.mlbstats-cv-off').length,
+    doc_sw: document.documentElement.scrollWidth, inner: window.innerWidth,
+    sc_sw: sc.scrollWidth, sc_cw: sc.clientWidth, scrolled: sc.scrollLeft,
+    name_left: name ? Math.round(name.getBoundingClientRect().left - sc.getBoundingClientRect().left) : null,
+  };
+  sc.scrollLeft = 0;
+  return out;
+}
+"""
+
+
+@pytest.mark.parametrize("size", ANSWER_WIDTHS, ids=["%dx%d" % s for s in ANSWER_WIDTHS])
+def test_the_all_view_carries_every_column_and_scrolls_only_inside_its_frame(browser, server, size):
+    """Owner answer M26-3: All keeps every column, the Baseball Savant display
+    columns included, and where that is wider than the box the TABLE scrolls,
+    inside its own frame, with the name frozen at its left edge; the page never
+    does. document.documentElement.scrollWidth equals the viewport at 390,
+    1024, 1280 and 1440."""
+    w, h = size
+    ctx = _context(browser, w, h)
     page = ctx.new_page()
     problems = []
     try:
@@ -263,11 +308,64 @@ def test_the_all_view_fits_a_1280_window_with_a_classic_scrollbar(browser, serve
             alls = [v for v in page.evaluate(_VIEWS, sec) if v.endswith(":all")]
             assert alls, label
             page.evaluate("(v) => document.querySelector('[data-colview=\"' + v + '\"]').click()", alls[0])
-            m = page.evaluate(_MEASURE, sec)
-            assert m and m["all"], label
-            _check(m, ALL_FITS_FROM, "%dpx %s all" % (ALL_FITS_FROM, label), problems, all_only=True)
+            page.wait_for_timeout(100)
+            m = page.evaluate(_ALL_FRAME, sec)
+            where = "%dpx %s all" % (w, label)
+            if not m["all"]:
+                problems.append("%s: the All pill did not open All" % where)
+            if m["n_off"] or m["n_visible"] != m["n_heads"]:
+                problems.append("%s: All shows %d of %d columns" % (where, m["n_visible"], m["n_heads"]))
+            if m["doc_sw"] != m["inner"]:
+                problems.append("%s: the page is %dpx wide in a %dpx viewport" % (where, m["doc_sw"], m["inner"]))
+            if m["sc_sw"] > m["sc_cw"]:
+                if m["scrolled"] <= 0:
+                    problems.append("%s: the table overflows its frame and the frame does not scroll" % where)
+                if m["name_left"] is None or abs(m["name_left"]) > 1:
+                    problems.append("%s: scrolled to the end, the name sits %rpx from the frame's edge"
+                                    % (where, m["name_left"]))
     finally:
         ctx.close()
+    assert not problems, "\n".join(problems)
+
+
+_ACTIVE_VIEW = r"""(sec) => {
+  const b = document.querySelector('#mlbstats-section-' + sec + ' [data-colview][aria-pressed="true"]');
+  return {view: b ? b.getAttribute('data-colview') : null, hash: location.hash,
+          doc_sw: document.documentElement.scrollWidth, inner: window.innerWidth,
+          pills: Array.from(document.querySelectorAll('#mlbstats-section-' + sec + ' [data-colview]'))
+                      .map(x => x.getAttribute('data-colview'))};
+}"""
+
+
+@pytest.mark.parametrize("size", ANSWER_WIDTHS, ids=["%dx%d" % s for s in ANSWER_WIDTHS])
+def test_the_catching_view_and_its_retired_links_resolve(browser, server, size):
+    """Owner answer M26-4: Blocking and Throwing are one Catching view. A link
+    or a stored pick naming either retired id opens Catching and rewrites the
+    hash to it; the page never scrolls sideways, and from 1024 the view fits."""
+    w, h = size
+    problems = []
+    for how, old in (("link", "blocking"), ("link", "throwing"), ("stored", "blocking"),
+                     ("stored", "throwing"), ("link", "catching")):
+        ctx = _context(browser, w, h)
+        if how == "stored":
+            ctx.add_init_script("try { localStorage.setItem('mlbstats.cols.def', '%s'); } catch (e) {}" % old)
+        page = ctx.new_page()
+        try:
+            _open(page, server, "defense", "section=defense" + ("&dcols=" + old if how == "link" else ""))
+            r = page.evaluate(_ACTIVE_VIEW, "defense")
+            m = page.evaluate(_MEASURE, "defense")
+            where = "%dpx %s %s" % (w, how, old)
+            if r["view"] != "def:catching":
+                problems.append("%s: opened %r, not def:catching" % (where, r["view"]))
+            if "dcols=catching" not in r["hash"]:
+                problems.append("%s: the hash reads %r" % (where, r["hash"]))
+            if any(p in r["pills"] for p in ("def:blocking", "def:throwing")):
+                problems.append("%s: a retired pill is still on the strip: %r" % (where, r["pills"]))
+            if r["doc_sw"] != r["inner"]:
+                problems.append("%s: the page is %dpx wide in a %dpx viewport" % (where, r["doc_sw"], r["inner"]))
+            _check(m, w, where, problems, "def:catching")
+        finally:
+            ctx.close()
     assert not problems, "\n".join(problems)
 
 

@@ -8966,7 +8966,7 @@
    ],
    "priority": 12,
    "definition": "How many pitches in the dirt a catcher keeps in front of him against what an average catcher would, and the runs that saves.",
-   "methodology": "From the Baseball Savant catcher-blocking leaderboard, read by season. Blocks above average compares each scored pitch with its expected block rate; blocking runs is Savant's run value of those blocks. The pitch count beside it says how many pitches the model scored. Display only on the /mlbstats/ Defense board (Blocking view): DEM+, eWAR and the team totals do not read it; framing stays FanGraphs'.",
+   "methodology": "From the Baseball Savant catcher-blocking leaderboard, read by season. Blocks above average compares each scored pitch with its expected block rate; blocking runs is Savant's run value of those blocks. The pitch count beside it says how many pitches the model scored. Display only on the /mlbstats/ Defense board (Catching view): DEM+, eWAR and the team totals do not read it; framing stays FanGraphs'.",
    "seeAlso": [
     "catcher_throwing",
     "framing_runs",
@@ -8990,7 +8990,7 @@
    ],
    "priority": 12,
    "definition": "How many runners a catcher throws out against the count an average catcher would, given the runner, the pitcher and the jump, and the runs that saves.",
-   "methodology": "From the Baseball Savant catcher-throwing leaderboard, read by season. The attempt count beside it is the sample. Display only on the /mlbstats/ Defense board (Throwing view): DEM+, eWAR and the team totals do not read it; framing stays FanGraphs'.",
+   "methodology": "From the Baseball Savant catcher-throwing leaderboard, read by season. The attempt count beside it is the sample. Display only on the /mlbstats/ Defense board (Catching view): DEM+, eWAR and the team totals do not read it; framing stays FanGraphs'.",
    "seeAlso": [
     "catcher_blocking",
     "pop_time",
@@ -9014,7 +9014,7 @@
    ],
    "priority": 11,
    "definition": "Seconds from the pitch hitting the catcher's glove to the throw reaching the fielder at second base. Exchange is catch to release; arm strength is the throw's speed in mph.",
-   "methodology": "From the Baseball Savant catcher-throwing leaderboard, averaged over his throws that season. Lower pop and exchange times are better. Display only on the /mlbstats/ Defense board (Throwing view): DEM+, eWAR and the team totals do not read it; framing stays FanGraphs'.",
+   "methodology": "From the Baseball Savant catcher-throwing leaderboard, averaged over his throws that season. Lower pop and exchange times are better. Display only on the /mlbstats/ Defense board (Catching view): DEM+, eWAR and the team totals do not read it; framing stays FanGraphs'.",
    "seeAlso": [
     "catcher_throwing"
    ],

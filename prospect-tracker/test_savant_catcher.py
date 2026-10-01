@@ -92,13 +92,11 @@ def test_every_column_renders_in_the_catching_view():
     keys = set(re.findall(r'^    \{ key: "([a-z0-9_]+)"', m.group(1), re.M))
     assert set(SC.COLUMNS) <= keys, sorted(set(SC.COLUMNS) - keys)
     reg = re.search(r"\n  var COL_VIEWS = \{\n(.*?)\n  \};", JS, re.S).group(1)
-    # Two views, Blocking and Throwing: nine columns in one view did not fit
-    # the 720px box at 768 (test_mlbstats_fit.py).
-    shown = set()
-    for vid, label in (("blocking", "Blocking"), ("throwing", "Throwing")):
-        view = re.search(r'\{ id: "%s", label: "%s",(.*?)\] \}' % (vid, label), reg, re.S)
-        assert view, vid
-        shown |= set(re.findall(r'"([a-z0-9_]+)"', view.group(1)))
+    # ONE Catching view with all nine columns (owner answer M26-4, 2026-09-25);
+    # below a 1024 window it may scroll inside its own frame (test_mlbstats_fit.py).
+    view = re.search(r'\{ id: "catching", label: "Catching",(.*?)\] \}', reg, re.S)
+    assert view
+    shown = set(re.findall(r'"([a-z0-9_]+)"', view.group(1)))
     assert set(SC.COLUMNS) <= shown, sorted(set(SC.COLUMNS) - shown)
 
 

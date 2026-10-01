@@ -497,3 +497,14 @@ per the webmaster handoff, never revert or merge).
 - Appendix A of the gate: filled from the design audit before step F.
 - The `label=` fingerprint term's exact string (step U): the storage owner's call; the
   requirement is only that it moves when the served label basis or its build moves.
+
+## Dated follow-ups after step Z
+
+These change no step above and no rule of this runbook; each runs after step Z is recorded.
+
+- 2026-10-01 (owner answer M26-2): on the FIRST nightly `data/mlb_projections.json` written
+  after the fWAR epoch's step Z, recompute the `warProspect` cuts in
+  `assets/eephus-tiers.js` by the recipe recorded in that file (the 0.1-grid cut vector
+  minimizing the cumulative-share L1 distance to the `war` ladder on the default view),
+  with no new method, then run `test_value_ruler.py`. Today's cuts are 1.7/0.9/0.7/0.6/0.4,
+  recomputed 2026-10-01 on a first-season-2027 file.

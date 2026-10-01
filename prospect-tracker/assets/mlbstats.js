@@ -600,15 +600,15 @@
       title: skillFipTitle("reliever", "REM+") },
     { key: "swstr_pct", label: "SwStr%", term: "swstr_pct", fmt: fPct, num: true,
       title: "Swinging strikes per pitch, from Baseball-Reference. The Starters board derives its SwStr% from Savant instead, a different count." },
-    { key: "whiff_pct", label: "Whiff%", allOff: true, term: "whiff_pct", fmt: fPct, num: true,
+    { key: "whiff_pct", label: "Whiff%", term: "whiff_pct", fmt: fPct, num: true,
       title: savantTitle("Misses per swing.") },
-    { key: "chase_pct", label: "Chase%", allOff: true, term: "chase_pct", fmt: fPct, num: true,
+    { key: "chase_pct", label: "Chase%", term: "chase_pct", fmt: fPct, num: true,
       title: savantTitle("Swings per pitch outside Savant's strike zone.") },
-    { key: "z_contact_pct", label: "Z-Contact%", allOff: true, term: "z_contact_pct", fmt: fPct, num: true, asc: true,
+    { key: "z_contact_pct", label: "Z-Contact%", term: "z_contact_pct", fmt: fPct, num: true, asc: true,
       title: savantTitle("Contact per swing at a pitch inside Savant's strike zone.") },
-    { key: "f_strike_pct", label: "F-Strike%", allOff: true, term: "f_strike_pct", fmt: fPct, num: true,
+    { key: "f_strike_pct", label: "F-Strike%", term: "f_strike_pct", fmt: fPct, num: true,
       title: savantTitle("Share of plate appearances that start with a strike.") },
-    { key: "fb_velo", label: "FB velo", allOff: true, term: "fb_velo", fmt: f1, num: true,
+    { key: "fb_velo", label: "FB velo", term: "fb_velo", fmt: f1, num: true,
       title: "Average fastball speed in mph, from the Baseball Savant custom leaderboard. Display only: no score on this board reads it." },
     { key: "era", label: "ERA", term: "era", fmt: f2, num: true, asc: true },
     { key: "gmli", label: "gmLI", term: "gmli", fmt: f2, num: true },
@@ -753,11 +753,12 @@
   // on is always shown, appended after the view's own columns if the view lacks
   // it, so an old link sorted on K% still shows K%. keys: null = every column.
   // History boards reuse the live views; a key a history array lacks is skipped.
-  // The All pill says what it costs on a narrow screen. All leaves out the
-  // Baseball Savant display columns (allOff on the column), which sit on their
-  // own views: with them All ran 1,249 to 1,431px against a 1,232px box at a
-  // 1280 window, and All must fit from 1263px (test_mlbstats_fit.py).
-  var ALL_TITLE = "Every column but the Baseball Savant display columns, which sit on their own views; on a narrow screen it scrolls inside the table.";
+  // The All pill says what it costs on a narrow screen. All carries EVERY
+  // column, the Baseball Savant display columns included (owner answer M26-3,
+  // 2026-09-25): it runs 1,249 to 1,431px, so up to a 1440 window it may scroll
+  // sideways inside its own table frame, never the page, with the name column
+  // held in place (test_mlbstats_fit.py).
+  var ALL_TITLE = "Every column, the Baseball Savant columns included; when the board is wider than the screen it scrolls sideways inside the table.";
   var COL_VIEWS = {
     rel: [
       { id: "standard", label: "Standard", phone: ["rem_plus", "war", "ip", "saves", "era"],
@@ -822,14 +823,15 @@
         keys: ["pos", "|", "fld_total", "fld_runs", "frm_runs", "|", "pos_runs", "pos_runs_fg", "def_runs", "|",
                "rate_1000_shrunk", "|", "inn"] },
       // Catchers' own work beyond framing, from Savant. Pick the C chip to read
-      // it as a catcher board; other positions show the columns blank. Two views,
-      // not one: all nine columns in one view ran 826px against the 720px box at
-      // 768, and every named view must fit from 768 (test_mlbstats_fit.py).
-      { id: "blocking", label: "Blocking", phone: ["dem_plus", "frm_runs", "c_blk_runs", "c_blk_aa"],
-        keys: ["pos", "|", "dem_plus", "frm_runs", "|", "c_blk_runs", "c_blk_aa", "c_blk_pitches", "|", "inn"] },
-      { id: "throwing", label: "Throwing", phone: ["c_cs_runs", "c_cs_aa", "c_sb_att", "c_pop"],
-        keys: ["pos", "|", "dem_plus", "|", "c_cs_runs", "c_cs_aa", "c_sb_att", "|",
-               "c_pop", "c_exchange", "c_arm", "|", "inn"] },
+      // it as a catcher board; other positions show the columns blank. ONE view
+      // with every column, each sample count beside its rate (owner answer
+      // M26-4, 2026-09-25): it runs about 826px, so below a 1024 window it may
+      // scroll sideways inside its own table frame, never the page. The
+      // Blocking and Throwing views it replaces still resolve here
+      // (VIEW_ALIAS below), so an old dcols= link or a stored pick lands on it.
+      { id: "catching", label: "Catching", phone: ["dem_plus", "frm_runs", "c_blk_runs", "c_cs_runs"],
+        keys: ["pos", "|", "dem_plus", "frm_runs", "|", "c_blk_runs", "c_blk_aa", "c_blk_pitches", "|",
+               "c_cs_runs", "c_cs_aa", "c_sb_att", "|", "c_pop", "c_exchange", "c_arm", "|", "inn"] },
       { id: "all", label: "All", phone: null, keys: null, title: ALL_TITLE }
     ],
     // Single-view boards: no view strip, only a phone subset.
@@ -858,10 +860,17 @@
   var COL_VIEW = { rel: "standard", sp: "standard", hit: "standard", def: "standard",
                    war: "standard" };
   var COL_VIEW_HASH = { rel: "rcols", sp: "scols", hit: "hcols", def: "dcols", war: "wcols" };
+  // Retired view ids and the view that replaced each, so a deep link or a
+  // stored pick naming one opens the replacement rather than Standard.
+  var VIEW_ALIAS = { def: { blocking: "catching", throwing: "catching" } };
+  function resolveView(board, id) {
+    var a = VIEW_ALIAS[board];
+    return (a && a[id]) || id;
+  }
   (function () {
     Object.keys(COL_VIEW).forEach(function (b) {
       try {
-        var s = window.localStorage.getItem("mlbstats.cols." + b);
+        var s = resolveView(b, window.localStorage.getItem("mlbstats.cols." + b));
         if (s && viewById(b, s)) COL_VIEW[b] = s;
       } catch (e) { /* localStorage optional */ }
     });
@@ -893,10 +902,8 @@
     if (sort && sort.key) phone[sort.key] = 1;
     var on = [], grp = {}, nextGrp = false;
     if (!v || !v.keys) {
-      // All: every column but the allOff ones (see ALL_TITLE), unless the
-      // board is sorted on one, which then shows the same way a pinned sort
-      // column does on a named view.
-      cols.forEach(function (c) { if (!c.allOff || (sort && sort.key === c.key)) on.push(c); });
+      // All: every column (see ALL_TITLE).
+      cols.forEach(function (c) { on.push(c); });
     } else {
       on.push(cols[0]);
       var keys = v.keys.slice();
@@ -2794,11 +2801,13 @@
     readWindow(h, "defense", "dseason", "dyears");
     readWindow(h, "war", "wseason", "wyears");
     syncSeasonVars();
-    // Column view per board (rcols / scols / hcols / dcols). An unknown view
-    // id is ignored, so the board opens on the stored view or Standard.
+    // Column view per board (rcols / scols / hcols / dcols). A retired id
+    // resolves to its replacement (VIEW_ALIAS); an unknown one is ignored, so
+    // the board opens on the stored view or Standard.
     Object.keys(COL_VIEW_HASH).forEach(function (b) {
       var m2 = new RegExp("(?:^#|[#&])" + COL_VIEW_HASH[b] + "=([a-z]+)\\b").exec(h);
-      if (m2 && viewById(b, m2[1])) COL_VIEW[b] = m2[1];
+      var id = m2 ? resolveView(b, m2[1]) : null;
+      if (id && viewById(b, id)) COL_VIEW[b] = id;
     });
     // Sort per board.
     readSort(h, "rsort", REL_COLS, relSort);
@@ -2986,17 +2995,17 @@
     { key: "hr9", label: "HR/9", fmt: f2, num: true, asc: true },
     // Savant custom leaderboard (savant_leaderboards.py), display only. SwStr%
     // is the one derived column: Savant whiff% x swing% (whiffs per pitch).
-    { key: "swstr_pct", label: "SwStr%", allOff: true, term: "swstr_pct", fmt: fPct, num: true,
+    { key: "swstr_pct", label: "SwStr%", term: "swstr_pct", fmt: fPct, num: true,
       title: "Whiffs per pitch, derived from the Baseball Savant custom leaderboard as whiff% x swing%. The Relievers board's SwStr% comes from Baseball-Reference, a different count. Display only: no score on this board reads it." },
-    { key: "whiff_pct", label: "Whiff%", allOff: true, term: "whiff_pct", fmt: fPct, num: true,
+    { key: "whiff_pct", label: "Whiff%", term: "whiff_pct", fmt: fPct, num: true,
       title: savantTitle("Misses per swing.") },
-    { key: "chase_pct", label: "Chase%", allOff: true, term: "chase_pct", fmt: fPct, num: true,
+    { key: "chase_pct", label: "Chase%", term: "chase_pct", fmt: fPct, num: true,
       title: savantTitle("Swings per pitch outside Savant's strike zone.") },
-    { key: "z_contact_pct", label: "Z-Contact%", allOff: true, term: "z_contact_pct", fmt: fPct, num: true, asc: true,
+    { key: "z_contact_pct", label: "Z-Contact%", term: "z_contact_pct", fmt: fPct, num: true, asc: true,
       title: savantTitle("Contact per swing at a pitch inside Savant's strike zone.") },
-    { key: "f_strike_pct", label: "F-Strike%", allOff: true, term: "f_strike_pct", fmt: fPct, num: true,
+    { key: "f_strike_pct", label: "F-Strike%", term: "f_strike_pct", fmt: fPct, num: true,
       title: savantTitle("Share of plate appearances that start with a strike.") },
-    { key: "fb_velo", label: "FB velo", allOff: true, term: "fb_velo", fmt: f1, num: true,
+    { key: "fb_velo", label: "FB velo", term: "fb_velo", fmt: f1, num: true,
       title: "Average fastball speed in mph, from the Baseball Savant custom leaderboard. Display only: no score on this board reads it." },
   ];
 
@@ -3532,15 +3541,15 @@
     { key: "k_pct", label: "K%", fmt: fPct, num: true, asc: true },
     { key: "babip", label: "BABIP", term: "babip", fmt: f3, num: true },
     // Savant custom leaderboard (savant_leaderboards.py), display only.
-    { key: "chase_pct", label: "Chase%", allOff: true, term: "chase_pct", fmt: fPct, num: true, asc: true,
+    { key: "chase_pct", label: "Chase%", term: "chase_pct", fmt: fPct, num: true, asc: true,
       title: savantTitle("Swings per pitch outside Savant's strike zone.") },
-    { key: "whiff_pct", label: "Whiff%", allOff: true, term: "whiff_pct", fmt: fPct, num: true, asc: true,
+    { key: "whiff_pct", label: "Whiff%", term: "whiff_pct", fmt: fPct, num: true, asc: true,
       title: savantTitle("Misses per swing.") },
-    { key: "z_contact_pct", label: "Z-Contact%", allOff: true, term: "z_contact_pct", fmt: fPct, num: true,
+    { key: "z_contact_pct", label: "Z-Contact%", term: "z_contact_pct", fmt: fPct, num: true,
       title: savantTitle("Contact per swing at a pitch inside Savant's strike zone.") },
-    { key: "sweet_spot_pct", label: "Sweet spot%", allOff: true, term: "sweet_spot_pct", fmt: fPct, num: true,
+    { key: "sweet_spot_pct", label: "Sweet spot%", term: "sweet_spot_pct", fmt: fPct, num: true,
       title: savantTitle("Share of batted balls hit at a launch angle of 8 to 32 degrees.") },
-    { key: "pull_pct", label: "Pull%", allOff: true, term: "pull_pct", fmt: fPct, num: true,
+    { key: "pull_pct", label: "Pull%", term: "pull_pct", fmt: fPct, num: true,
       title: savantTitle("Share of batted balls hit to the pull side.") },
   ];
 
@@ -4584,23 +4593,23 @@
     { key: "fld_pct", label: "Fld%", fmt: f3, num: true, title: "Fielding percentage (context)." },
     // Savant catcher blocking and throwing (savant_catcher.py), display only,
     // on rows whose primary position is C. No club total is built from them.
-    { key: "c_blk_runs", label: "Blk runs", allOff: true, term: "catcher_blocking", fmt: fSignedInt, num: true,
+    { key: "c_blk_runs", label: "Blk runs", term: "catcher_blocking", fmt: fSignedInt, num: true,
       title: "Runs saved by blocking pitches in the dirt, Savant's run value. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
-    { key: "c_blk_aa", label: "Blocks AA", allOff: true, term: "catcher_blocking", fmt: fSignedInt, num: true,
+    { key: "c_blk_aa", label: "Blocks AA", term: "catcher_blocking", fmt: fSignedInt, num: true,
       title: "Blocks above average on the pitches in the next column. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
-    { key: "c_blk_pitches", label: "Blk pitches", allOff: true, term: "catcher_blocking", fmt: fInt, num: true,
+    { key: "c_blk_pitches", label: "Blk pitches", term: "catcher_blocking", fmt: fInt, num: true,
       title: "Pitches received that the blocking model scores. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
-    { key: "c_cs_runs", label: "CS runs", allOff: true, term: "catcher_throwing", fmt: fSigned, num: true,
+    { key: "c_cs_runs", label: "CS runs", term: "catcher_throwing", fmt: fSigned, num: true,
       title: "Runs saved on stolen-base attempts, Savant's run value. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
-    { key: "c_cs_aa", label: "CS AA", allOff: true, term: "catcher_throwing", fmt: fSigned, num: true,
+    { key: "c_cs_aa", label: "CS AA", term: "catcher_throwing", fmt: fSigned, num: true,
       title: "Caught stealing above the expected count on the attempts in the next column. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
-    { key: "c_sb_att", label: "SB att", allOff: true, term: "catcher_throwing", fmt: fInt, num: true,
+    { key: "c_sb_att", label: "SB att", term: "catcher_throwing", fmt: fInt, num: true,
       title: "Stolen-base attempts with him catching. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
-    { key: "c_pop", label: "Pop 2B", allOff: true, term: "pop_time", fmt: f2, num: true, asc: true,
+    { key: "c_pop", label: "Pop 2B", term: "pop_time", fmt: f2, num: true, asc: true,
       title: "Average pop time on throws to second base, in seconds. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
-    { key: "c_exchange", label: "Exchange", allOff: true, term: "pop_time", fmt: f2, num: true, asc: true,
+    { key: "c_exchange", label: "Exchange", term: "pop_time", fmt: f2, num: true, asc: true,
       title: "Average time from catch to release, in seconds. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
-    { key: "c_arm", label: "C arm", allOff: true, term: "pop_time", fmt: f1, num: true,
+    { key: "c_arm", label: "C arm", term: "pop_time", fmt: f1, num: true,
       title: "Average arm strength on throws, in mph. From Baseball Savant's catcher leaderboards; catchers only. Display only: DEM+, eWAR and the team totals do not read it." },
     { key: "hem_plus", label: "HEM+", term: "hem_plus", fmt: hemCell, num: true, desc: true,
       title: "HEM+ from the Hitter board (ratio scale), for the glove vs bat read." },

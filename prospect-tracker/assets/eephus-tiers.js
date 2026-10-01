@@ -50,11 +50,21 @@
                                 2.8/24.2/38.6/21.6/11.8/1.0/0.0, was taken while the
                                 board printed the IF-HEALTHY path and is superseded.
                                 The CUTS did not move; the pool under them did.)
-     warProspect 1.5/0.9/0.7/0.6/0.4
+     warProspect 1.7/0.9/0.7/0.6/0.4
                                 #src=prospect PAINTED season cells
-                                (813, 2026-09-18b) 0.4/8.1/16.2/18.1/36.4/20.8
+                                (672, 2026-10-01) 0.4/8.0/16.2/18.5/37.6/19.2
                                 the same rows' 5y totals / seasons painted
-                                (183)              0.5/6.6/14.8/18.0/39.9/20.2
+                                (178)              0.6/6.7/12.9/19.7/42.1/18.0
+                                (was 1.5/0.9/0.7/0.6/0.4, fitted 2026-09-18b on 813
+                                cells: 0.4/8.1/16.2/18.1/36.4/20.8)
+       RECOMPUTED 2026-10-01 (owner answer M26-2) on that day's nightly
+       projections file (first season 2027) by the SAME recipe below,
+       no new method: only the elite cut moves, 1.5 to 1.7, which repaints 2 of
+       672 prospect season cells (2 of 178 prospects) from elite to great and no
+       5y total. On the drifted 2026-09-24 payload the old cuts had fallen out of
+       test_value_ruler's 10-point band. THEY RECOMPUTE AGAIN, by the same
+       recipe, on the first nightly projections file written after the fWAR
+       label epoch's step Z (dated line in docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md).
        WHY A SECOND WAR LADDER, and why it is not a softer one. On 2026-09-18
        the projections board stopped showing the if-healthy path and went to the
        expected value, which is the path surplus has always priced. A prospect
@@ -68,10 +78,12 @@
        ladder's own cumulative shares on the default view, so a prospect cell and
        a veteran cell painted one colour occupy the same RANK in their own
        population, which is the only claim a colour on this board makes. The
-       reference, re-measured 2026-09-18b on the SERVED board, is the war row
-       above: 0.6/8.0/19.6/16.4/41.8/13.6/0.0. The fit is bounded by tie mass --
-       813 cells over 17 distinct printed values -- so `good` lands 3.4 points
-       light and `below` 7.2 heavy; no 0.1-grid vector does better.
+       reference, re-measured 2026-10-01 on the SERVED board (500 default-view
+       cells), is 0.4/8.2/19.0/15.8/44.8/11.8/0.0. The fit is bounded by tie mass
+       -- 672 cells over 17 distinct printed values -- so `good` lands 2.8
+       points light, `avg` 7.2 light and `below` 7.4 heavy; no 0.1-grid vector
+       does better (cumulative L1 10.70, against 10.85 for an elite cut of 1.6
+       and 11.00 for the old 1.5).
 
        WHY THE OLD CUTS (1.1/0.65/0.45/0.30/0.15) ARE RETIRED. They were pinned
        to the war ladder's shares as measured on 2026-09-16, 2.8/24.2/38.6/
@@ -126,7 +138,9 @@
   // neg true: values under zero take `poor`; the ladder's last cut is >= 0.
   var LADDERS = {
     war:       { cuts: [6, 4, 3, 2.5, 1.5],            dir: "hi", neg: true,  round: r1 },
-    warProspect: { cuts: [1.5, 0.9, 0.7, 0.6, 0.4],    dir: "hi", neg: true,  round: r1 },
+    // Recomputed 2026-10-01; recompute again on the first nightly projections
+    // file after the fWAR epoch's step Z (see CUT TABLE PROVENANCE above).
+    warProspect: { cuts: [1.7, 0.9, 0.7, 0.6, 0.4],    dir: "hi", neg: true,  round: r1 },
     rosterWar: { cuts: [40, 35, 32, 29, 26],           dir: "hi", neg: false, round: r1 },
     z:         { cuts: [120, 113, 107, 100, 93],       dir: "hi", neg: false, round: Math.round },
     run:       { cuts: [140, 120, 107, 100, 93],       dir: "hi", neg: false, round: Math.round },
