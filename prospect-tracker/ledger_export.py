@@ -183,7 +183,7 @@ COLUMNS = {
                         "sur_total_usd", "tv_mm", "tv_lo_mm", "tv_hi_mm", "tv_grade", "surplus_source",
                         "band_basis", "salary_basis", "control_thru", "control_why",
                         "remaining_control_years", "player_opt_years", "club_opt_years", "reanchored",
-                        "npv_check_usd"],
+                        "npv_check_usd", "club_opt_declined"],
     "surplus.rows_debuted": ["key", "name", "pos", "tv_mm", "tv_lo_mm", "tv_hi_mm", "tv_tier", "tv_grade",
                              "surplus_source", "salary_basis", "control_thru", "control_why",
                              "in_contract_rows"],
@@ -1462,7 +1462,10 @@ def build_all() -> tuple:
                           v.get("surRos"), st, tvmm, tvr.get("trade_value_lo"), tvr.get("trade_value_hi"),
                           tvr.get("trade_value_grade"), src, tvr.get("band_basis"), tvr.get("salary_basis"),
                           tvr.get("control_thru"), tvr.get("control_why"), tvr.get("remaining_control_years"),
-                          po, co, re_, npv_of_strip(strip, rate)])
+                          po, co, re_, npv_of_strip(strip, rate),
+                          # the club option seasons the projection prices at $0
+                          # because the club would decline them (VAL2-Q2)
+                          list(v.get("salOptDecl") or [])])
         contracts["paths_summary"] = {"n_paths": len(paths), "n_reanchored": n_re,
                                       "n_opt_out_rows": n_opt_rows, "n_opt_out_seasons": n_opt_seasons}
         debuted = [p for p in tvp if p.get("status") == "debuted"]
@@ -1887,6 +1890,10 @@ def build_all() -> tuple:
         "tv_reanchored": ("re-anchored on the trade board (archetype posterior floor); the projections "
                           "figure is the contract row's"),
         "prearb_min_floor": (tv.get("prearb_basis") or {}).get("window_priced"),
+        "club_option_rule": ("a club option season the club would decline (salary above his value on the mean "
+                             "path) prices at $0, never below: declining is the club's right; an exercised "
+                             "club option prices as guaranteed salary, and player and mutual options are not "
+                             "club rights and keep their treatment"),
         "opt_out_two_engines": (
             "player option seasons: the salary path prices them as guaranteed (opt-out not modelled, "
             "salary_path); the trade board's value folds an opt-out probability into this row "
@@ -1964,11 +1971,12 @@ def build_all() -> tuple:
             "[key, war[5], war_p10[5], war_p90[5], sur_mm[5], sur_npv_usd, sur_ros_mm, sur_total_usd, "
             "tv_mm, tv_lo_mm, tv_hi_mm, tv_grade, surplus_source, band_basis, salary_basis, control_thru, "
             "control_why, remaining_control_years, player_opt_years, club_opt_years, reanchored, "
-            "npv_check_usd]; war and sur are per-season expected values (MLB Projections); war_p10/p90 "
+            "npv_check_usd, club_opt_declined]; war and sur are per-season expected values (MLB Projections); war_p10/p90 "
             "and tv_lo/hi print per row and are never summed; sur_npv_usd equals the contract row's; "
             "reanchored is true when tv_mm differs from sur_total_usd / 1e6 by more than 0.06 on a "
             "projection-sourced row; npv_check_usd is the NPV of the published strip at the platform "
-            "rate, printed beside sur_npv_usd as an identity check"),
+            "rate, printed beside sur_npv_usd as an identity check; club_opt_declined lists the club "
+            "option seasons the club would decline on the mean path, each priced at $0 in sur_mm"),
         "surplus.rows_debuted": (
             "[key, name, pos, tv_mm, tv_lo_mm, tv_hi_mm, tv_tier, tv_grade, surplus_source, salary_basis, "
             "control_thru, control_why, in_contract_rows]; the trade board's debuted rows for the club; "

@@ -817,6 +817,10 @@ function _tbCtrlBadge(p) {
     ? `P-opt ${_fmtYears(cc.player_opt_years)}` : null;
   const cOpts = cc.club_opt_years && cc.club_opt_years.length
     ? `C-opt ${_fmtYears(cc.club_opt_years)}` : null;
+  // The club's right (owner answer VAL2-Q2): the value beside this row already
+  // prices a club option the club would decline at $0, never below.
+  const _cDecl = Array.isArray(p.club_option_declined) && p.club_option_declined.length
+    ? `Club option ${_fmtYears(p.club_option_declined)} declined on the mean path: priced at $0, never below (the club's right)` : null;
 
   // ASK C (2026-09-16, decision D4 - the evaluator is one number per player by
   // design, so it gets the BASIS in the tooltip and not the strip). Where the
@@ -845,7 +849,7 @@ function _tbCtrlBadge(p) {
     ? `Not tendered from ${p.salary_cut_season}: carrying him through the rest of his arbitration years costs more than he is worth` : null;
   const _spBand = Array.isArray(p.surplus_salary_band_mm)
     ? `If the award lands at the band ends: $${p.surplus_salary_band_mm[0]}M to $${p.surplus_salary_band_mm[1]}M` : null;
-  const tip = [sal && `Salary: ${sal}/yr`, pOpts, cOpts,
+  const tip = [sal && `Salary: ${sal}/yr`, pOpts, cOpts, _cDecl,
                _spThru, _spBasis, _spBand, _spCut].filter(Boolean).join(" · ");
   // THE YEAR IS ON THE STRIP, not only in the title. A tooltip is unreachable
   // on touch and absent from the CSV, and the strip used to show `cc.phase`

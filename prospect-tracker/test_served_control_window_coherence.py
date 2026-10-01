@@ -92,7 +92,7 @@ def test_the_control_end_is_the_max_of_the_two_facts_on_every_row():
 _CARD_COPY_KEYS = ("war", "warP10", "warP90", "warTotal", "warTotalP10",
                    "warTotalP90", "sur", "surNpv", "surTotal", "surRos", "rosWar",
                    "rosFrac", "salPath", "salThru", "salSrc", "surSalLo",
-                   "surSalHi", "salCut", "salTrunc", "salOpt", "salVintage",
+                   "surSalHi", "salCut", "salTrunc", "salOpt", "salOptDecl", "salVintage",
                    "ctrlThru", "ctrlOpen", "ctrlEst", "ctrlWhy", "thru", "aav",
                    "warHit", "warPit", "warTail")
 

@@ -5304,6 +5304,14 @@ def _stamp_projection_bands(records: list, proj_rows: dict,
                 cc.pop("fa_year", None)
         if v.get("salCut") is not None:
             r["salary_cut_season"] = v.get("salCut")
+        # THE CLUB'S RIGHT (owner answer VAL2-Q2): the club option seasons the
+        # projection prices at $0 because the club would decline them. Copied,
+        # never re-derived, so the Trade Machine names the seasons the value
+        # it shows already floored.
+        if v.get("salOptDecl"):
+            r["club_option_declined"] = list(v["salOptDecl"])
+        else:
+            r.pop("club_option_declined", None)
     return n
 
 

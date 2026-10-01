@@ -1424,6 +1424,9 @@
     const sur = m.sur || [];
     const opts = {};
     (m.salOpt || []).forEach(x => { opts[x[0]] = x[1]; });
+    // The club's right (owner answer VAL2-Q2): a club option season the club
+    // would decline on the mean path prices at $0, never below.
+    const decl = new Set((m.salOptDecl || []).map(Number));
     const cells = [];
     const dTxt = (v) => v == null ? "" :
       `<span class="sp-d ${v >= 0 ? "proj-pos" : "proj-neg"}">${(v >= 0 ? "+" : "") + money(v * 1e6)}</span>`;
@@ -1437,12 +1440,14 @@
       const cls = cut ? "is-cut" : (src === "contract" ? "is-guar" : "is-est");
       const opn = opts[s];
       const yr = cut ? `${s} not tendered`
+        : (opn === "club" && decl.has(s)) ? `${s} club option, declined`
         : opn ? `${s} ${opn} option`
         : src === "contract" ? `${s} signed` : `${s} ${tok.toLowerCase()}`;
       const wTail = (t >= H && Array.isArray(m.warTail)) ? m.warTail[t - H] : null;
       const tip = cut
         ? "Carrying him through the rest of his arbitration years costs more than he is worth, so the club walks away here"
-        : opn === "club" ? "Club option season, priced as guaranteed salary; the club's choice to decline it is not modelled"
+        : (opn === "club" && decl.has(s)) ? "Club option season the club would decline: the salary is above his value on the mean path, so it prices at $0, never below (declining is the club's right)"
+        : opn === "club" ? "Club option season the club would exercise: it prices as guaranteed salary, worth more than it costs on the mean path"
         : opn ? "Priced as if the player stays; an opt out is not modelled"
         : (src === "contract" && t >= H)
         ? `Guaranteed salary on file; this season prices ${wTail != null ? `${fmtWar(wTail)} WAR` : "the WAR"} on the champion (Marcel) aging curve chained from the ${first + H - 1} WAR, past the five seasons the board prints`

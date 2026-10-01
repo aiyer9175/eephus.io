@@ -45,9 +45,11 @@ WHAT THIS MODULE DOES NOT DO
     window is not established (a grid that ends on a pre-arbitration token, or a
     grid with no priced step to chain from) the path is SHORT and says so
     through `truncated`, rather than being extended on a debut+6 proxy.
-  * It never re-prices an option season. Option years are stamped (`opt`) and
-    disclosed; pricing an opt-out needs an opt-out model with its own gate
-    (decision D10).
+  * It never re-prices an option season's SALARY. Option years are stamped
+    (`opt`) and disclosed; pricing an opt-out needs an opt-out model with its
+    own gate (decision D10). The one exception sits downstream of the path, in
+    the surplus: a CLUB option season the club would decline prices at zero,
+    never below (club_option_floor, owner answer VAL2-Q2).
   * It never reads `active_roster_days`, `debut+6` or `service_phase`.
 
 THE FLAG IS THE REVERT. `SALARY_PATH_MODE` defaults to "full" because the owner
@@ -887,6 +889,41 @@ def control_end(path: dict, thru, first_season: int, horizon: int) -> dict:
             "basis": path.get("src_mix") or ("contract" if thru else None)}
 
 
+# THE CLUB'S RIGHT (owner answer VAL2-Q2, 2026-09-30). A club option season the
+# club would decline prices at zero, never below: the club holds the right to
+# walk, so a losing club-option season contributes max(0, surplus). It is the
+# ONE rule every surface prices a contract with: proj_export applies it to the
+# served surplus (and to the award-band endpoints), and the trade board, the
+# Trade Machine and the Club Ledger read that surplus rather than re-pricing.
+# PLAYER and MUTUAL options are not club rights and keep their treatment: a
+# player option season still prices as if the player stays (the opt-out is not
+# modelled), and a mutual option is never a salary-path season (it exists only
+# on /fa/'s pending-option rows, priced by fa_class's explicit prior). The
+# decision is per season and taken on the mean path, like the tender cliff; the
+# curated data/contract_options.json is the only source of club option seasons
+# (Bobby Witt Jr. 2035-2037 today). False restores D10 (stamped, priced as
+# guaranteed), byte for byte.
+CLUB_OPTION_DECLINE = True
+
+
+def club_option_floor(seasons, d_usd):
+    """Apply the club's right to decline: `d_usd[t]` (undiscounted season
+    surplus, aligned to `seasons`) is floored at 0 on every priced club option
+    season. Returns `(d_usd_floored, declined_seasons)`; the input list is not
+    mutated. A season with no price (None) is left alone."""
+    out = list(d_usd)
+    declined = []
+    if not CLUB_OPTION_DECLINE:
+        return out, declined
+    for t, c in enumerate(seasons):
+        if t >= len(out) or out[t] is None or c.get("usd") is None:
+            continue
+        if c.get("opt") == "club" and out[t] < 0:
+            out[t] = 0.0
+            declined.append(int(c["season"]))
+    return out, declined
+
+
 def payload_options(path: dict):
     """`salOpt`: [[season, "club"|"player"], ...] for the seasons inside the
     window that carry an option. STAMPED AND DISCLOSED, NOT PRICED (D10).
@@ -900,7 +937,9 @@ def payload_options(path: dict):
     2027-2031 it lists 9 player-option seasons on 6 rows and no club option
     (the only club options in the file are Bobby Witt Jr 2035-2037). A club
     option Spotrac folded into `salary_by_year` is invisible here and is priced
-    as guaranteed money by rule 1, because nothing in this tree inventories
+    as guaranteed money by rule 1 unless the curated file names it (a named club
+    option season the club would decline prices at zero since VAL2-Q2, see
+    club_option_floor), because nothing in this tree inventories
     league-wide option years - that inventory is the blocking dependency on
     D10, and the curated row count ships beside the option census so a reader
     can see the coverage.

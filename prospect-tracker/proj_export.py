@@ -1173,6 +1173,9 @@ def _band_npv(path, war, dpw, r, which: str, run_cliff: bool) -> float:
         s = c["usd"] if s is None else s
         w = war[c["t"]] if c["t"] < len(war) else None
         d.append(_season_value_usd(w or 0.0, c["t"], dpw) - s)
+    # The club's right to decline a losing club option holds at the band
+    # endpoints too (sp.club_option_floor, owner answer VAL2-Q2).
+    d, _ = sp.club_option_floor(path["seasons"], d)
     if run_cliff:
         cuttable = [sp.is_cuttable(c) and c["usd"] is not None
                     for c in path["seasons"]]
@@ -1263,6 +1266,7 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
     buyout_rows = 0
     tail = {"rows": 0, "seasons": 0, "salary_usd": 0, "surplus_npv_usd": 0,
             "capped_rows": 0, "capped_seasons": 0}
+    opt_decl = {"rows": 0, "seasons": 0, "usd_added_npv": 0}
     last_h = FIRST_SEASON + HORIZON - 1
 
     for m in rows:
@@ -1328,6 +1332,18 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
             d = _season_value_usd(w or 0.0, c["t"], dpw) - c["usd"]
             d_usd.append(d)
             sur.append(round(d / 1e6, 1))
+        # THE CLUB'S RIGHT (owner answer VAL2-Q2): a club option season the
+        # club would decline prices at zero, never below. Before the tender
+        # cliff, so an arbitration season's continuation sees the floored value.
+        _raw_d = list(d_usd)
+        d_usd, opt_declined = sp.club_option_floor(seasons, d_usd)
+        for y in opt_declined:
+            t = y - FIRST_SEASON
+            sur[t] = round(d_usd[t] / 1e6, 1)
+            opt_decl["seasons"] += 1
+            opt_decl["usd_added_npv"] += int(-_raw_d[t] / ((1 + r) ** t))
+        if opt_declined:
+            opt_decl["rows"] += 1
         any_priced = any(x is not None for x in d_usd)
         raw_npv = sum(d / ((1 + r) ** t)
                       for t, d in enumerate(d_usd) if d is not None)
@@ -1438,6 +1454,12 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
         so = sp.payload_options(path)
         if so:
             m["salOpt"] = so
+        # The club option seasons the club would decline on the mean path,
+        # each priced at $0 in `sur` (sp.club_option_floor).
+        if opt_declined:
+            m["salOptDecl"] = opt_declined
+        else:
+            m.pop("salOptDecl", None)
         # The salary band ships only where the board publishes a genuine award
         # band. A contracted season and a pre-arbitration minimum carry lo == hi
         # by construction (dollars and a CBA rule are not estimates), so a row
@@ -1524,6 +1546,11 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
         # dollars that adds; the discounted surplus those seasons contribute;
         # and the rows whose guarantee outruns the champion path (priced only
         # as far as it reaches, and still labelled as clamped).
+        # THE CLUB'S RIGHT (owner answer VAL2-Q2): rows and club option
+        # seasons the club would decline on the mean path, each priced at $0
+        # rather than at its negative surplus, and the discounted dollars that
+        # floor adds back.
+        "club_option_decline": dict(opt_decl, enabled=bool(sp.CLUB_OPTION_DECLINE)),
         "contract_tail": dict(tail, enabled=bool(PRICE_CONTRACT_TAIL),
                               war_basis=("war_by_year_champ" if TAIL_SEAM == "champion_level"
                                          else "chain_aging_tail"),

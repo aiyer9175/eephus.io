@@ -705,7 +705,7 @@ def build_payload() -> dict:
                                             "rosFrac",
                                             "salPath", "salThru", "salSrc",
                                             "surSalLo", "surSalHi", "salCut",
-                                            "salTrunc", "salOpt", "salVintage",
+                                            "salTrunc", "salOpt", "salOptDecl", "salVintage",
                                             "ctrlThru", "ctrlOpen", "ctrlEst",
                                             "ctrlWhy",
                                             "thru", "aav", "warHit", "warPit",

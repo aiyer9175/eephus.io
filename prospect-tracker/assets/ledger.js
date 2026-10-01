@@ -550,6 +550,10 @@
     out += dd("Control", esc(P("control_thru") || "") + " " + esc(P("control_why") || "") + (isNum(P("remaining_control_years")) ? "; " + esc(P("remaining_control_years")) + " control years remaining" : ""));
     var po = P("player_opt_years") || [];
     if (po.length) out += dd("Player option " + po.join(", "), esc(copy("opt_out_two_engines")));
+    // The club's right (owner answer VAL2-Q2): a club option the club would
+    // decline is a $0 cell in the strip above, never a negative one.
+    var co = P("club_opt_years") || [], cd = P("club_opt_declined") || [];
+    if (co.length) out += dd("Club option " + co.join(", "), (cd.length ? "Declined on the mean path, priced at $0: " + esc(cd.join(", ")) + ". " : "") + esc(copy("club_option_rule")));
     return out;
   }
   function cellState(tok, cliff) {
