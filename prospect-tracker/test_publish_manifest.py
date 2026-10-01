@@ -239,6 +239,27 @@ def test_labs_dir_ships_in_neither_deploy_consumer():
     assert "data/_labs" not in _manifest_paths()
 
 
+
+def test_mlbtr_arb_ledger_is_a_lab_file_not_a_served_one():
+    """Owner answer M23-3 (2026-09-25): the MLB Trade Rumors arbitration
+    ledger (2,032 entries, fetched by no page) moved from data/ depth one,
+    which both deploy consumers ship, to data/_labs/, which neither ships. It
+    is not listed in data_exclude.txt on purpose: rsync --delete removes the
+    old webroot copy only while the name is unlisted. The panel loader and
+    the ingest tool both point at the lab path."""
+    import importlib.util
+    import arb_dataset
+    assert not (ROOT / "data" / "arb_ledger.json").exists()
+    assert "arb_ledger.json" not in _excluded_data_files()
+    src = (ROOT / "arb_dataset.py").read_text(encoding="utf-8")
+    assert '"data" / "_labs" / "arb_ledger.json"' in src
+    assert callable(arb_dataset.load_ledger)
+    spec = importlib.util.spec_from_file_location(
+        "_ingest_arb_ledger_probe", ROOT / "tools" / "ingest_arbitration_ledger.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert mod.LEDGER_PATH == ROOT / "data" / "_labs" / "arb_ledger.json"
+
 def test_excluded_data_is_not_a_registry_artifact():
     """model_registry.json eval artifacts are publicly hyperlinked from the
     glossary Models & Proofs table (assets/glossary.js renders <a href>

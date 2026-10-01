@@ -2,7 +2,10 @@
 # Unauthorized copying of this file, via any medium is strictly prohibited
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
-"""One-time arbitration ledger ingest from MLB Trade Rumors -> data/arb_ledger.json.
+"""One-time arbitration ledger ingest from MLB Trade Rumors -> data/_labs/arb_ledger.json.
+
+The ledger is a lab file: data/_labs/ ships in neither deploy consumer, so the
+MLBTR entries are not republished at a public URL (owner answer M23-3, 2026-09-25).
 
 WHY THIS IS NOT A SCRAPER IN THE PIPELINE
 Arbitration settles once a year, in January. There is nothing to poll. This is a
@@ -57,7 +60,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / ".cache" / "mlbtr"
-LEDGER_PATH = ROOT / "data" / "arb_ledger.json"
+LEDGER_PATH = ROOT / "data" / "_labs" / "arb_ledger.json"
 URLS_PATH = ROOT / "data" / "arb_source_urls.json"
 
 log = logging.getLogger("arb_ingest")
@@ -594,7 +597,7 @@ def main(argv=None) -> int:
     ap.add_argument("command", choices=("discover", "fetch", "build", "check"))
     ap.add_argument("--max-requests", type=int, default=DEFAULT_MAX_REQUESTS)
     ap.add_argument("--write", action="store_true",
-                    help="build/check: write data/arb_ledger.json")
+                    help="build/check: write data/_labs/arb_ledger.json")
     args = ap.parse_args(argv)
 
     if args.command == "discover":

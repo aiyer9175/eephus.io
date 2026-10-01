@@ -692,7 +692,8 @@ NOT claimed, and no clause below may be read as evidence for any of it:
   - C8': board rows whose grid carries at least 3 seasons (design-day pool 30
     rows, 29 of them with a prior arb token).
   - C9': board rows where the panel resolves a published MLBTR service-time
-    string out of `data/arb_ledger.json` (2,032 entries, class years
+    string out of `data/_labs/arb_ledger.json` (moved from `data/` on
+    2026-10-01, bytes unchanged; 2,032 entries, class years
     2022-2026, 501 in class 2026). Only 27 unique class-2026 entries carry an
     `mlbam` directly and 19 of those join the board, so the join runs through
     the panel's identity resolution and the shipped n is a MEASUREMENT, not a
@@ -721,7 +722,7 @@ NOT claimed, and no clause below may be read as evidence for any of it:
 | C7'a | the floor never lowers a total | floored NPV >= raw NPV on every row, and no floored season-surplus is negative on a cuttable season. Floored rows and dollars restored are recorded | any floored total below its raw total |
 | C7'b | the shipped stopping rule is not beaten by the rule it replaced | recompute the forward stopping rule (`t* = min{t : C_t < 0}`) on every path: backward induction >= forward on 100% of rows, with the count of rows where it is strictly greater recorded (that count is the bug the repair fixed) | any row where backward < forward |
 | C8' | closure's class CHAIN matches the grid | hold out the last season of every grid with >= 3 seasons, derive it by closure, compare the derived token and salary. Token accuracy 1.000 and salary MdAPE <= the board's arb-2+ MdAPE (0.158). **n must be published in the receipt**: the pool is 30 rows, 29 with a prior arb token, and Spotrac's grid increments the class by construction (0 non-consecutive chains measured), so this clause tests ARITHMETIC, not the horizon. A second tier is scored and reported: hide the last TWO seasons wherever the grid has >= 2 arb tokens | token accuracy < 1.000, or salary MdAPE above the board's own |
-| C9' | **the horizon itself.** The closure rule's implied last controlled season matches published service time | on every board row where the panel resolves an MLBTR service-time string (`data/arb_ledger.json`), derive remaining arbitration years from service time and compare with `K - k_last`. Criterion: **0 rows off by more than one season**, with the disagreement count and n published. If **n < 25** the verdict is pre-registered as **UNDERPOWERED**: the clause has not been scored, closure does not advance past its flag on this clause alone, and it is re-scored when n reaches 25 | any row off by more than one season, or (soft) n < 25, which blocks promotion rather than failing the model |
+| C9' | **the horizon itself.** The closure rule's implied last controlled season matches published service time | on every board row where the panel resolves an MLBTR service-time string (`data/_labs/arb_ledger.json`), derive remaining arbitration years from service time and compare with `K - k_last`. Criterion: **0 rows off by more than one season**, with the disagreement count and n published. If **n < 25** the verdict is pre-registered as **UNDERPOWERED**: the clause has not been scored, closure does not advance past its flag on this clause alone, and it is re-scored when n reaches 25 | any row off by more than one season, or (soft) n < 25, which blocks promotion rather than failing the model |
 
 C2', C7'b and C9' are the clauses that can fail on evidence. C1' and C3' are
 re-runs of a battery that passed. C4' to C6' and C7'a are code invariants: they

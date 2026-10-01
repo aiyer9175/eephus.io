@@ -357,13 +357,15 @@ def career_appearance_seasons():
 
 
 def load_ledger() -> dict[int, dict[int, dict]]:
-    """{mlbam or bbref-keyed: {class_year: entry}} from data/arb_ledger.json.
+    """{mlbam or bbref-keyed: {class_year: entry}} from data/_labs/arb_ledger.json.
 
     Returns {} when the ledger has not been ingested yet, so the panel builds
     without it and the coverage census reports the absence rather than the
     pipeline failing. Keyed by bbref id, which is what the MLBTR hrefs carry.
     """
-    path = ROOT / "data" / "arb_ledger.json"
+    # A lab file: data/_labs/ ships in neither deploy consumer (owner answer
+    # M23-3, 2026-09-25, moved it off the public webroot).
+    path = ROOT / "data" / "_labs" / "arb_ledger.json"
     if not path.exists():
         return {}
     try:

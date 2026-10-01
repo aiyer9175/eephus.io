@@ -623,7 +623,7 @@ def c9_horizon_against_published_service_time():
                else ("PASS" if not off_by_more else "FAIL"))
     return {
         "criterion": ("on every board row where the panel resolves an MLBTR "
-                      "service-time string (data/arb_ledger.json), derive remaining "
+                      "service-time string (data/_labs/arb_ledger.json), derive remaining "
                       "arbitration years from service time and compare with "
                       "K - k_last. Criterion: 0 rows off by more than one season, "
                       "with the disagreement count and n published. If n < 25 the "

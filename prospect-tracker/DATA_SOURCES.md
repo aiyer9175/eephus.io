@@ -200,7 +200,8 @@ between the sentinels.
   before any paid Diamond tier.
 - MLB Trade Rumors (`tools/ingest_arbitration_ledger.py`) is a hand-run,
   permanently cached, rate-limited ingest (MLBTR firewalls rapid requests),
-  never on the pipeline. `data/arb_ledger.json` republishes its projection
-  and tracker entries at a public URL that no page fetches; whether to keep
-  serving it is an open owner review item.
+  never on the pipeline. Its ledger is a lab file at
+  `data/_labs/arb_ledger.json`, which ships in neither deploy consumer, so
+  the projection and tracker entries are not republished (owner answer
+  M23-3, 2026-09-25). MLBTR keeps its /sources/ credit as a comparator.
 <!-- CURATED:END -->
