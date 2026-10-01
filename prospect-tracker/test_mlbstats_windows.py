@@ -843,3 +843,171 @@ def test_the_substrate_g_is_the_max_and_the_boards_g_is_the_pitching_side():
     assert blank_on_the_board, (
         "no row is blank on the board and present in the substrate, so the two "
         "G rules no longer differ and this pin is stale")
+
+
+# --------------------------------------------------------------------------- #
+# M17 (owner answers 2026-09-25): the Current *_3yr columns read the l3 window,
+# the window rebuilds nightly, and the REM+ pool rule is stated once
+# --------------------------------------------------------------------------- #
+_BOARD_3YR = (("hitter_leaderboards.json", "hitters", "hitters", "hitters", "hem_plus"),
+              ("starter_leaderboards.json", "starters", "starters", "starters", "sem_plus"),
+              ("bullpen_leaderboards.json", "relievers", "bullpen", "relievers", "rem_plus"),
+              ("defense_leaderboards.json", "fielders", "defense", "fielders", "dem_plus"))
+
+
+@pytest.mark.parametrize("fname,rblock,wboard,wblock,metric", _BOARD_3YR)
+def test_the_current_3yr_column_is_the_l3_window_index(fname, rblock, wboard, wblock,
+                                                       metric):
+    """Census M06-06, the spec's own test: for every mlbam on both the served
+    Current board and the served Last 3 window, the board's *_3yr equals the
+    window's index, with the window pool's percentile and tag beside it. One
+    2024-2026 number per player per page."""
+    board = _load(DATA / fname)
+    win = _load(DATA / "mlbstats_window_l3.json")
+    meta = board.get("multiyear") or {}
+    assert meta.get("kind") == "window" and meta.get("available"), meta
+    assert meta.get("source") == "mlbstats_window_l3.json"
+    assert meta.get("generated_at") == win.get("generated_at"), (
+        "the board was joined from another build of the window")
+    wrows = {int(r["mlbam"]): r for r in win["boards"][wboard][wblock]
+             if r.get(metric) is not None}
+    key = f"{metric}_3yr"
+    both = 0
+    for r in board[rblock]:
+        mid = r.get("mlbam")
+        w = wrows.get(int(mid)) if mid is not None else None
+        if w is None:
+            assert r.get(key) is None, (fname, mid, r.get(key))
+            continue
+        both += 1
+        assert r.get(key) == w[metric], (fname, mid, r.get(key), w[metric])
+        assert r.get(f"{key}_pct") == w.get(f"{metric}_pct"), (fname, mid)
+        assert r.get(f"{key}_tag") == w.get(f"{metric}_tag"), (fname, mid)
+    assert both == meta.get("n_stamped") and both > 0, (fname, both, meta.get("n_stamped"))
+
+
+def _win_doc(basis: dict, seasons=(2024, 2025, 2026)) -> dict:
+    return {"generated_at": "2026-10-01", **basis,
+            "window": {"key": "l3", "seasons": list(seasons)},
+            "panel_built_at": {str(seasons[-1]): "2026-10-01"},
+            "pool_stats": {"bullpen": {"rem_plus": {"n": 2, "mean": 99.5, "sd": 9.2}}},
+            "boards": {"bullpen": {"relievers": [
+                {"mlbam": 1, "rem_plus": 121, "rem_plus_pct": 90, "rem_plus_tag": "established"},
+                {"mlbam": 2, "rem_plus": 88, "rem_plus_pct": 12, "rem_plus_tag": "provisional"}]}}}
+
+
+def test_the_window_join_refuses_another_build_or_another_season(tmp_path):
+    """The guard join_war_rate_3yr applies: a window built beside another eWAR
+    build, or one that does not end at the board's season, blanks the column
+    rather than serving it."""
+    import bullpen_export as be
+    basis = be.served_war_basis()
+    p = tmp_path / "mlbstats_window_l3.json"
+    p.write_text(json.dumps(_win_doc(basis)), encoding="utf-8")
+    rows = [{"mlbam": 1}, {"mlbam": 2}, {"mlbam": 3}]
+    meta = be.join_window_3yr(rows, board="bullpen", block="relievers",
+                              metric="rem_plus", season=2026, path=p)
+    assert meta["available"] and meta["n_stamped"] == 2 and meta["kind"] == "window"
+    assert rows[0]["rem_plus_3yr"] == 121 and rows[0]["rem_plus_3yr_pct"] == 90
+    assert rows[1]["rem_plus_3yr_tag"] == "provisional"
+    assert "rem_plus_3yr" not in rows[2]
+    assert meta["panel_built_at"] == "2026-10-01" and meta["window"] == [2024, 2025, 2026]
+    assert meta["uncoloured"] is True and meta["pool"]["sd"] == 9.2
+    p.write_text(json.dumps(_win_doc({**basis, "ewar_generated_at": "1999-01-01"})),
+                 encoding="utf-8")
+    rows = [{"mlbam": 1}]
+    meta = be.join_window_3yr(rows, board="bullpen", block="relievers",
+                              metric="rem_plus", season=2026, path=p)
+    assert not meta["available"] and "refused" in meta and "rem_plus_3yr" not in rows[0]
+    p.write_text(json.dumps(_win_doc(basis, seasons=(2023, 2024, 2025))), encoding="utf-8")
+    meta = be.join_window_3yr(rows, board="bullpen", block="relievers",
+                              metric="rem_plus", season=2026, path=p)
+    assert not meta["available"] and "2026" in meta["refused"]
+
+
+def test_the_restamp_rejoins_only_the_3yr_keys(tmp_path):
+    """After the nightly window rebuild the boards are re-joined in place: the
+    old *_3yr keys are cleared first (so a refusal blanks them), only those keys
+    and the `multiyear` block move, and every other field stands."""
+    import bullpen_export as be
+    basis = be.served_war_basis()
+    (tmp_path / "mlbstats_window_l3.json").write_text(json.dumps(_win_doc(basis)),
+                                                      encoding="utf-8")
+    board = {"season": 2026, "as_of": "2026-09-30", "multiyear": {"source": "old"},
+             "relievers": [{"mlbam": 1, "rem_plus": 130, "rem_plus_3yr": 140,
+                            "rem_plus_3yr_pct": 99, "rem_plus_3yr_tag": "established"},
+                           {"mlbam": 7, "rem_plus": 95, "rem_plus_3yr": 97}]}
+    (tmp_path / "bullpen_leaderboards.json").write_text(json.dumps(board), encoding="utf-8")
+    out = be.restamp_window_3yr(data_dir=tmp_path, log=lambda *a, **k: None)
+    assert out["bullpen_leaderboards.json"] == 1
+    assert out["hitter_leaderboards.json"].startswith("skipped")
+    doc = json.loads((tmp_path / "bullpen_leaderboards.json").read_text(encoding="utf-8"))
+    a, b = doc["relievers"]
+    assert a["rem_plus_3yr"] == 121 and a["rem_plus_3yr_pct"] == 90 and a["rem_plus"] == 130
+    assert "rem_plus_3yr" not in b and b["rem_plus"] == 95
+    assert doc["multiyear"]["kind"] == "window" and doc["as_of"] == "2026-09-30"
+
+
+def test_the_live_panel_rebuilds_nightly_after_the_vintage_snapshot():
+    """Owner answer M17-1. run_daily rebuilds the windows (only the live season
+    is re-walked; completed seasons stay memoised), AFTER the 9e-pre vintage
+    snapshot and the 9e-pre0c eWAR board whose substrate the Overall window
+    folds, keeps basis_moved, and re-joins the four boards' 3yr columns. The
+    6b4k note says the owner reversed its old cadence line; STALE_DAYS is not
+    touched."""
+    src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    i_snap = src.index('_step("9e-pre. Leaderboard vintage snapshot')
+    i_ewar = src.index('_step("9e-pre0c. Refresh eWAR Leaderboard')
+    i_win = src.index('_step("9e-pre0d. Live-season window panel')
+    assert i_snap < i_ewar < i_win, "the window step left its place after the snapshot"
+    body = src[i_win:src.index("# --- 9e-pre-wx.", i_win)]
+    assert "_mwl.export(" in body and "_mwl.basis_moved(" in body
+    assert "_mwl.built_today(" in body
+    assert "restamp_window_3yr(" in body
+    k = src.index("# --- 6b4k.")
+    note = src[k:src.index("with _step(", k)]
+    assert "REVERSED" in note and "2026-09-25" in note
+    assert "ON THE LAB CADENCE, not nightly" not in note
+    assert "restamp_window_3yr(" in src[k:src.index("# --- 6b5.", k)]
+    assert lab.CACHE_DIR.name == "mlbstats_windows"
+
+
+def test_built_today_reads_the_index_stamp(tmp_path):
+    from datetime import date
+    p = tmp_path / "mlbstats_windows.json"
+    p.write_text(json.dumps({"generated_at": date.today().isoformat()}), encoding="utf-8")
+    assert lab.built_today(p) is True
+    p.write_text(json.dumps({"generated_at": "2026-09-18"}), encoding="utf-8")
+    assert lab.built_today(p) is (date.today().isoformat() == "2026-09-18")
+    assert lab.built_today(tmp_path / "absent.json") is False
+
+
+def test_the_rem_plus_pool_rule_is_stated_once():
+    """Census M06-06 asked for the REM+ opener rule to be reconciled between the
+    served board and the multi-year lab before the switch. The two filters were
+    one expression already (true reliever, not an opener); the residual gap the
+    census read (Daniel Lynch IV, 93 against 86) was pool membership: his 2026
+    line reached 10 starts in 56 games, past MAX_START_SHARE, so his 2026 season
+    left the reliever pool. Both paths now call rem_plus.pool_members, and the
+    window's per-season REM+ reproduces the served history exactly."""
+    import inspect
+
+    import rem_plus
+    from tools import rem_plus_lab
+    assert "pool_members(" in inspect.getsource(rem_plus.score_pool)
+    assert "rem_plus.pool_members(" in inspect.getsource(rem_plus_lab.load_season)
+    r = rem_plus.Reliever(key="1", name="Opener", team="TB", mlbam=1, g=20, gs=0,
+                          ip=20.0, tbf=80, so=20, bb=5, hbp=1, hr=2, er=8, r=8,
+                          pit=300, sts=None, sv=0, hld=0)
+    r.entry_inning = 1.0
+    s = rem_plus.Reliever(key="2", name="Swingman", team="TB", mlbam=2, g=20, gs=3,
+                          ip=40.0, tbf=170, so=40, bb=12, hbp=1, hr=4, er=18, r=19,
+                          pit=650, sts=None, sv=0, hld=0)
+    t = rem_plus.Reliever(key="3", name="Setup", team="TB", mlbam=3, g=60, gs=0,
+                          ip=60.0, tbf=240, so=70, bb=20, hbp=2, hr=5, er=20, r=22,
+                          pit=950, sts=None, sv=2, hld=20)
+    assert [x.mlbam for x in rem_plus.pool_members([r, s, t])] == [3]
+    idx, _windows = _served_windows()
+    per = ((idx.get("reproduction") or {}).get("per_season") or {}).get("rem_plus") or {}
+    if per.get("available"):
+        assert per["n_equal"] == per["n"], per

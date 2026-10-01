@@ -218,8 +218,9 @@ def load_season(y: int) -> dict:
         print(f"  {y}: leverage unavailable ({e})")
         leverage = {}
     rels = be.build_relievers(rows, leverage, swstr)
-    pool = [r for r in rels
-            if rem_plus.is_true_reliever(r) and not rem_plus._is_opener(r)]
+    # The served board's own pool rule (rem_plus.pool_members), so a per-season
+    # REM+ here is the one bullpen_export serves for that season.
+    pool = rem_plus.pool_members(rels)
     for r in pool:
         rem_plus.derive_rates(r)
     p = rem_plus.build_pool(pool)

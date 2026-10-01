@@ -72,6 +72,7 @@ def _export(tmp_path, monkeypatch, splits, admit):
     monkeypatch.setattr(se, "_join_war_ip_plus_3yr", lambda starters: {})
     monkeypatch.setattr(se, "_war_source_vintage", lambda as_of=None: {})
     monkeypatch.setattr(se, "MULTIYR_PATH", tmp_path / "missing.json")
+    monkeypatch.setattr(be, "WINDOW_L3_PATH", tmp_path / "missing_window_l3.json")
     monkeypatch.setattr(se, "EVAL_PATH", tmp_path / "missing_eval.json")
     monkeypatch.setattr(se, "ADMIT_TWO_WAY_TO_BOARD", admit)
     out = tmp_path / f"starters_{admit}.json"

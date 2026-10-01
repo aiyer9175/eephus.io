@@ -9,8 +9,8 @@ Pinned here:
   SHAPE. A response that lacks a requested field or names another season is
   refused and never overwrites the cache (Savant has served season-inert pages).
   JOIN. Values land on the row by mlbam, percent -> fraction; an empty cell
-  stays absent; the one derived column is the Starter SwStr%, whiff% x swing%,
-  and the reliever join does not derive it (that board keeps Baseball-Reference's).
+  stays absent; the one derived column is SwStr%, whiff% x swing%, derived only
+  when the caller asks (both pitcher boards ask since owner answer M17-4).
   COVERAGE. On the served boards the join reaches >= 99% of qualified rows and
   every board carries its provenance block.
   RENDER. Every served key has a column object and a Discipline view on its board.
@@ -85,11 +85,30 @@ def test_starter_join_stamps_fractions_and_the_one_derived_column():
     assert meta["use"].startswith("display only")
 
 
-def test_reliever_join_does_not_derive_swstr():
+def test_a_join_that_does_not_ask_leaves_swstr_alone():
     rows = [{"mlbam": 1, "qualified": True, "swstr_pct": 0.12}]
     meta = SL.join(rows, 2026, "pitcher", loader=lambda y, s: _csv([ROW_A]))
     assert rows[0]["swstr_pct"] == 0.12
     assert "swstr_pct" not in meta["columns"]
+
+
+def test_both_pitcher_boards_derive_swstr_from_savant():
+    """Owner answer M17-4: the Reliever board, its history and the Starter
+    board all take SwStr% from Savant whiff% x swing%; no board reads the
+    Baseball-Reference count any more."""
+    import bullpen_export as be
+    import starter_export as se
+    for mod in (be, se):
+        src = open(mod.__file__, encoding="utf-8").read()
+        assert 'derive_swstr=True' in src, mod.__name__
+    src = open(be.__file__, encoding="utf-8").read()
+    body = src[src.index("def export("):src.index("def _history_swstr(")]
+    assert "load_bref_swstr(" not in body, "a board still reads the Baseball-Reference SwStr%"
+    rows = [{"mlbam": 1, "qualified": True}]
+    be_meta = SL.join(rows, 2026, "pitcher", derive_swstr=True,
+                      loader=lambda y, s: _csv([ROW_A]))
+    assert rows[0]["swstr_pct"] == pytest.approx(0.15)
+    assert be_meta["columns"]["swstr_pct"]["formula"] == SL.DERIVED["swstr_pct"][0]
 
 
 def test_batter_join_carries_only_batter_columns():
@@ -144,10 +163,8 @@ def test_served_board_join_covers_qualified_rows(fname, key, side):
         # FB velo is absent for a pitcher Savant logs no fastball for.
         floor = 0.95 if col == "fb_velo" else 0.99
         assert have / len(q) >= floor, (fname, col, have, len(q))
-    if key == "starters":
-        assert "swstr_pct" in served
-    else:
-        assert "swstr_pct" not in served
+    # SwStr% is Savant's on both pitcher boards (M17-4), never on the hitters'.
+    assert ("swstr_pct" in served) == (side == "pitcher"), (fname, served)
 
 
 def _array_keys(name):
@@ -159,7 +176,7 @@ def _array_keys(name):
 @pytest.mark.parametrize("array,side,derived,board", [
     ("HITTER_COLS", "batter", False, "hit"),
     ("STARTER_COLS", "pitcher", True, "sp"),
-    ("REL_COLS", "pitcher", False, "rel")])
+    ("REL_COLS", "pitcher", True, "rel")])
 def test_every_served_key_has_a_column_and_a_discipline_view(array, side, derived, board):
     keys = _array_keys(array)
     want = {k for k, spec in SL.COLUMNS.items() if side in spec[3]}
@@ -172,3 +189,13 @@ def test_every_served_key_has_a_column_and_a_discipline_view(array, side, derive
     assert view, board
     listed = set(re.findall(r'"([a-z0-9_]+)"', view.group(1)))
     assert want <= listed, sorted(want - listed)
+
+
+def test_one_swstr_source_on_both_headers():
+    """Both pitcher boards' SwStr% headers name the one source, and neither
+    names Baseball-Reference."""
+    for array in ("STARTER_COLS", "REL_COLS"):
+        m = re.search(r"\n  var %s = \[\n(.*?)\n  \];" % array, JS, re.S)
+        col = re.search(r'\{ key: "swstr_pct".*?\},?\n', m.group(1), re.S).group(0)
+        assert "Baseball Savant" in col and "whiff% x swing%" in col, (array, col)
+        assert "Baseball-Reference" not in col, (array, col)

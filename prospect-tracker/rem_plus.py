@@ -417,11 +417,21 @@ def _round(v, n):
     return None if v is None else round(v, n)
 
 
+def pool_members(relievers: Iterable[Reliever]) -> list[Reliever]:
+    """THE REM+ POOL, stated once: true relievers (start share at most
+    MAX_START_SHARE) less openers. score_pool() and tools/rem_plus_lab
+    .load_season both read it, so the served per-season REM+ and the multi-year
+    lab's per-season REM+ are scored on one pool by construction (census M06-06
+    asked for the opener rule to be reconciled; the two filters were already
+    the same expression, and this keeps them from drifting apart)."""
+    return [r for r in relievers if is_true_reliever(r) and not _is_opener(r)]
+
+
 def score_pool(relievers: list[Reliever]) -> dict:
     """End to end: filter to true relievers, derive rates, build the pool, score
     REM+, assign roles per team, and roll up team bullpens. Returns a dict with
     'relievers', 'teams', and a 'pool' summary. Pure - callers supply the data."""
-    pool_input = [r for r in relievers if is_true_reliever(r) and not _is_opener(r)]
+    pool_input = pool_members(relievers)
     for r in pool_input:
         derive_rates(r)
     pool = build_pool(pool_input)

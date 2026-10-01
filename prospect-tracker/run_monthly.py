@@ -3015,6 +3015,40 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 except Exception:
                     log.exception("daily: ewar leaderboard refresh failed - continuing")
 
+        # --- 9e-pre0d. Live-season window panel (display only) ---------------
+        # Owner answer M17-1 (2026-09-25, census M06-03): the multi-year
+        # windows rebuild NIGHTLY, which reverses the old "lab cadence, not
+        # nightly" note on monthly 6b4k. Only the live season's panel is
+        # re-walked (about 75 s); completed seasons stay memoised under
+        # .cache/mlbstats_windows/. Placed AFTER the 9e-pre vintage snapshot
+        # like 9e-pre0b and 9e-pre0c (no model reads a window), and after
+        # 9e-pre0c because the Overall window folds the per-season substrate
+        # that step writes and the lab refuses a substrate on another eWAR build.
+        # Then the four boards 9e-pre0 wrote are re-joined from the new l3 file
+        # (answer M17-2), so the Current *_3yr column and the Last 3 view print
+        # one number. A window built today on the served basis (a chained
+        # monthly night whose 6b4k ran) is not rebuilt; a moved basis always
+        # is (basis_moved). Additive; never aborts.
+        with _step("9e-pre0d. Live-season window panel (mlbstats_window_*.json)", log):
+            # Writes mlbstats_window_l3.json, mlbstats_window_l5.json and
+            # mlbstats_windows.json, then re-joins the 3yr keys of
+            # hitter_leaderboards.json, starter_leaderboards.json,
+            # bullpen_leaderboards.json and defense_leaderboards.json.
+            try:
+                from tools import mlbstats_window_lab as _mwl
+                _win_idx = _mwl.INDEX_PATH
+                if _mwl.built_today(_win_idx) and not _mwl.basis_moved(_win_idx):
+                    log.info("daily: SKIP 9e-pre0d window rebuild: the windows "
+                             "were built today on the served eWAR basis")
+                else:
+                    log.info("daily windows: %d window(s) published",
+                             _mwl.export(log=log.info))
+                import bullpen_export as _be_win
+                _be_win.restamp_window_3yr(log=log.info)
+            except Exception:
+                log.exception("daily: live-season window panel failed - the "
+                              "previous windows and 3yr columns stand - continuing")
+
         # --- 9e-pre-wx. Forecast weather capture (DARK; ARMED 2026-09-11) ---
         # docs/diamond-betting.md section 5h. Captures the pregame forecast for
         # today's remaining games and tomorrow's into .cache/weather_forecasts/
@@ -6014,13 +6048,18 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # columns use. AFTER 6b4j, because the Overall window folds the
         # per-season substrate that step writes and the lab refuses to serve a
         # substrate on another eWAR build.
-        # ON THE LAB CADENCE, not nightly: these are frozen, vintage-stamped
-        # artifacts like every other lab block, and the expensive half is the
-        # per-season panel (the winProbability walk is about 75 seconds a
-        # season). Completed seasons memoise under .cache/mlbstats_windows/ and
-        # are built once; only the live season is re-derived. EEPHUS_LABS=1
-        # forces, the same escape hatch every other lab has.
-        # Additive; never aborts.
+        # THE OWNER REVERSED THIS STEP'S CADENCE NOTE ON 2026-09-25 (answer
+        # M17-1, census M06-03). It used to read "on the lab cadence, not
+        # nightly", which let a window's live-season slice lag the boards beside
+        # it by up to LAB_EVAL_FRESH_DAYS. The live-season panel is now rebuilt
+        # NIGHTLY by run_daily step 9e-pre0d (about 75 s: completed seasons
+        # memoise under .cache/mlbstats_windows/ and only the live season is
+        # re-walked), and the Current boards' HEM+ / SEM+ / REM+ / DEM+ 3yr
+        # columns read the l3 window it writes (answer M17-2). This monthly step
+        # keeps its cadence gate and its basis_moved override; the nightly step
+        # skips when this one built the windows today on the served basis.
+        # EEPHUS_LABS=1 forces, the same escape hatch every other lab has.
+        # STALE_DAYS is untouched by either step. Additive; never aborts.
         with _step("6b4k. Multi-year windows (mlbstats_window_*.json)", log):
             try:
                 from tools import mlbstats_window_lab
@@ -6040,6 +6079,13 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         _win_path, "6b4k multi-year windows", log):
                     _win_n = mlbstats_window_lab.export(log=log.info)
                     log.info("mlbstats windows: %d window(s) published", _win_n)
+                # 6b4 to 6b4i wrote the four boards BEFORE this step, so their
+                # *_3yr columns were joined from the previous window file.
+                # Re-join them from mlbstats_window_l3.json now (only those keys
+                # of hitter_leaderboards.json, starter_leaderboards.json,
+                # bullpen_leaderboards.json and defense_leaderboards.json move).
+                import bullpen_export as _be_win
+                _be_win.restamp_window_3yr(log=log.info)
             except Exception:
                 log.exception("multi-year window lab failed - continuing")
 

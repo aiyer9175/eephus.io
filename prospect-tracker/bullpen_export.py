@@ -14,8 +14,9 @@ sources (FanGraphs is 403-blocked here):
                Traded players come back as a single total under their most
                recent club, so there is no same-city ambiguity or multi-stint
                fragmentation (the trap Baseball-Reference's city-name Tm has).
-  SwStr%       optional enrichment from pybaseball.pitching_stats_bref (StatsAPI
-               has no swinging-strike count); best-effort, null when unavailable.
+  SwStr%       Baseball Savant whiff% x swing% (savant_leaderboards, the one
+               source both pitcher boards use since owner answer M17-4,
+               2026-09-25); display only, null when Savant has no row.
   LEVERAGE     mlb_leverage.fetch_season_leverage - gmLI / WPA / WPA-LI / SD / MD
                self-computed from the StatsAPI winProbability feed, joined by
                MLBAM id.
@@ -60,6 +61,10 @@ EVAL_PATH = DATA_DIR / "rem_plus_eval.json"
 MARKET_PATH = DATA_DIR / "riv_market_regate_eval.json"
 LEVCON_PATH = DATA_DIR / "leverage_consistency_eval.json"
 MULTIYR_PATH = DATA_DIR / "rem_plus_multiyear_eval.json"
+# The Last 3 window file the four Current-board *_3yr columns read since owner
+# answer M17-2 (2026-09-25); see join_window_3yr. The multiyear evals above stay
+# the gate record for those columns and are no longer read for display.
+WINDOW_L3_PATH = DATA_DIR / "mlbstats_window_l3.json"
 # frozen trailing-window vintage for WAR/PA+ and WAR/IP+ (all three anchor pools
 # live in one artifact, one block each); see join_war_rate_3yr
 WAR_RATE_MULTIYR_PATH = DATA_DIR / "war_rate_plus_multiyear_eval.json"
@@ -643,8 +648,13 @@ def rows_from_pitching_splits(splits: list[dict], season: int,
 
 
 def load_bref_swstr(season: int) -> dict:
-    """Optional SwStr% enrichment from Baseball-Reference (StatsAPI has no
-    swinging-strike count). {mlbam: swstr_pct}; {} on any failure."""
+    """SwStr% from Baseball-Reference (StatsAPI has no swinging-strike count).
+    {mlbam: swstr_pct}; {} on any failure.
+
+    NO BOARD READS THIS since owner answer M17-4 (2026-09-25): the Reliever
+    board and its history serve Savant whiff% x swing%, the Starter board's
+    source, so both pitcher boards print one count. It stays for
+    tools/rem_plus_lab.py, whose X-R1 experiment was measured on this count."""
     try:
         import pybaseball as pyb
         df = pyb.pitching_stats_bref(int(season))
@@ -791,52 +801,170 @@ def _join_leverage_consistency(relievers: list[dict]) -> int:
     return n
 
 
-def _join_rem_plus_3yr(relievers: list[dict]) -> dict:
-    """Stamp rem_plus_3yr / percentile / tag onto reliever rows from the committed
-    multi-year artifact (tools/rem_plus_lab.py, X-R2: 3-year IP-weighted REM+, a
-    more stable talent read than one season). Companion SKILL column - a longer
-    window of the same REM+ scale, not a new metric. Missing artifact or unmatched
-    player -> fields absent and the column renders blank.
+def _join_rem_plus_3yr(relievers: list[dict], season: Optional[int] = None) -> dict:
+    """Stamp rem_plus_3yr / percentile / tag onto reliever rows from the Last 3
+    window's REM+ (join_window_3yr). Companion SKILL column - the same REM+
+    recipe over three seasons, not a new metric. Unmatched arm -> fields absent
+    and the column renders blank."""
+    return join_window_3yr(relievers, board="bullpen", block="relievers",
+                           metric="rem_plus", season=season, who="arms")
 
-    VINTAGE, NOT PIPELINE OUTPUT. These values are read VERBATIM from a FROZEN
-    lab artifact; nothing here recomputes them, so a board row can show a
-    same-day 1-year REM+ beside a 3-year REM+ that was frozen weeks earlier, and
-    any arm who entered the pool after the lab last ran is simply blank. That
-    divergence is real and must not be silent, so this returns the artifact's
-    vintage block (generated_at / season / window / pool size) for the payload
-    to carry and the frontend to disclose. Computing the window in-pipeline
-    would need three seasons of StatsAPI pulls plus the lab's IP-weighting and
-    pct/tag banding conventions - a new pipeline stage with its own eval, not a
-    correctness fix - so this labels the divergence instead of unifying it."""
-    meta = {"source": MULTIYR_PATH.name, "n_stamped": 0, "available": False}
+
+#: The four Current-board *_3yr columns the Last 3 window feeds:
+#: (exporter module, board file, row block, window board, window block, metric,
+#: who). restamp_window_3yr walks this; each exporter's own join names its row.
+WINDOW_3YR_BOARDS = (
+    ("hitter_export", "hitter_leaderboards.json", "hitters", "hitters", "hitters",
+     "hem_plus", "hitters"),
+    ("starter_export", "starter_leaderboards.json", "starters", "starters", "starters",
+     "sem_plus", "starters"),
+    ("bullpen_export", "bullpen_leaderboards.json", "relievers", "bullpen", "relievers",
+     "rem_plus", "arms"),
+    ("defense_export", "defense_leaderboards.json", "fielders", "defense", "fielders",
+     "dem_plus", "fielders"),
+)
+
+
+def join_window_3yr(rows: list[dict], *, board: str, block: str, metric: str,
+                    season: Optional[int] = None, who: str = "players",
+                    path: Optional[Path] = None) -> dict:
+    """Stamp `<metric>_3yr` / `_pct` / `_tag` onto Current-board rows from the
+    Last 3 window file (tools/mlbstats_window_lab.py) and return the block the
+    payload serves under `multiyear`.
+
+    ONE 2024-2026 NUMBER PER PLAYER (owner answer M17-2, census M06-06). The
+    column used to be read from the multi-year eval's proposed_values, a lab
+    pass frozen on its own day, while the Last 3 view recomputed the same recipe
+    on a later build, so one page printed two values for one player over one
+    span (Yordan Alvarez 146 against 145). It now reads the window's own index,
+    so the two views agree by construction; the window is rebuilt nightly
+    (run_monthly 9e-pre0d) and restamp_window_3yr re-joins the boards after it.
+    The multiyear evals remain the gate record for the four registry rows.
+
+    UNCOLOURED, WITH THE WINDOW POOL'S PERCENTILE. `_pct` is the percentile
+    inside the window's published pool and `_tag` the window's established /
+    provisional tag (each lab's own thresholds). No value ruler travels onto a
+    window index (the window lab's docstring, point 2), so the page prints the
+    numeral without a band.
+
+    ONE BASIS OR NOTHING, the guard join_war_rate_3yr applies: the window file
+    stamps the eWAR build it was made beside (`war_provider`,
+    `ewar_generated_at`), and a mismatch with served_war_basis() REFUSES and the
+    column renders blank. So does a window that does not end at the board's
+    season. A blank column is honest; a column from another build is not."""
+    key = f"{metric}_3yr"
+    path = Path(path or WINDOW_L3_PATH)
+    meta = {"source": path.name, "kind": "window", "n_stamped": 0,
+            "available": False, "metric": metric}
     try:
-        art = json.loads(MULTIYR_PATH.read_text(encoding="utf-8"))
-        pv = art["proposed_values"]
-        players = pv["players"]
-    except (OSError, ValueError, KeyError):
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        wrows = doc["boards"][board][block]
+    except (OSError, ValueError, KeyError, TypeError):
+        meta["reason"] = f"{path.name} is absent or carries no {board} board"
         return meta
+    basis = {"war_provider": doc.get("war_provider") or "bwar",
+             "ewar_generated_at": doc.get("ewar_generated_at")}
+    served = served_war_basis()
+    meta.update(basis)
+    seasons = [int(y) for y in ((doc.get("window") or {}).get("seasons") or [])]
+    if basis != served:
+        meta["refused"] = (f"{path.name} was built beside {basis['war_provider']} "
+                           f"(eWAR build {basis['ewar_generated_at']}) and the board "
+                           f"serves {served['war_provider']} (eWAR build "
+                           f"{served['ewar_generated_at']}); re-run "
+                           f"tools/mlbstats_window_lab.py")
+        _log.warning("%s REFUSED: %s", key, meta["refused"])
+        return meta
+    if season is not None and (not seasons or seasons[-1] != int(season)):
+        meta["refused"] = (f"{path.name} covers {seasons} and the board is the "
+                           f"{season} season")
+        _log.warning("%s REFUSED: %s", key, meta["refused"])
+        return meta
+    by_id = {}
+    for w in wrows:
+        if w.get("mlbam") is not None and w.get(metric) is not None:
+            by_id[str(w["mlbam"])] = w
     n = 0
-    for r in relievers:
-        p = players.get(str(r.get("mlbam") or ""))
+    for r in rows:
+        p = by_id.get(str(r.get("mlbam") or ""))
         if not p:
             continue
-        r["rem_plus_3yr"] = p.get("rem_plus_3yr")
-        r["rem_plus_3yr_pct"] = p.get("pct")
-        r["rem_plus_3yr_tag"] = p.get("tag")
-        if r["rem_plus_3yr"] is not None:
-            n += 1
+        r[key] = p.get(metric)
+        r[f"{key}_pct"] = p.get(f"{metric}_pct")
+        r[f"{key}_tag"] = p.get(f"{metric}_tag")
+        n += 1
+    live = str(seasons[-1]) if seasons else None
+    pool = ((doc.get("pool_stats") or {}).get(board) or {}).get(metric) or {}
     meta.update({
-        "available": True,
-        "n_stamped": n,
-        "generated_at": art.get("generated_at"),
-        "season": pv.get("season"),
-        "window": pv.get("window"),
-        "n_in_artifact": len(players),
-        "note": (f"3-year REM+ is FROZEN lab output read verbatim from "
-                 f"{MULTIYR_PATH.name}, as of generated_at, not this board's "
-                 f"as_of. Arms who joined the pool since have no value."),
+        "available": True, "n_stamped": n,
+        "generated_at": doc.get("generated_at"),
+        "season": seasons[-1] if seasons else None,
+        "window": seasons,
+        "window_key": (doc.get("window") or {}).get("key"),
+        # The date the live season's slice of the window was read, which is
+        # what the column is current through.
+        "panel_built_at": (doc.get("panel_built_at") or {}).get(live) if live else None,
+        "n_in_artifact": len(by_id),
+        "pool": {k: pool.get(k) for k in ("n", "mean", "sd")},
+        "uncoloured": True,
+        "gate_record": f"{metric}_multiyear_eval.json",
+        "note": (f"3-year {metric.replace('_plus', '').upper()}+ is the Last 3 "
+                 f"window's index read from {path.name} (built "
+                 f"{doc.get('generated_at')}), the same value the Last 3 view "
+                 f"prints. The percentile is inside the window's pool; no value "
+                 f"ruler is carried onto it. {who.capitalize()} the window does "
+                 f"not publish have no value."),
     })
     return meta
+
+
+def restamp_window_3yr(*, data_dir: Optional[Path] = None, log=print) -> dict:
+    """Re-join the four Current boards' *_3yr columns from the Last 3 window
+    file now on disk, in place, and return {board file: n_stamped or reason}.
+
+    WHY THIS EXISTS. The boards are written before the window lab in both
+    pipeline paths (monthly 6b4..6b4i before 6b4k; nightly 9e-pre0 before
+    9e-pre0d, which must follow the 9e-pre vintage snapshot), so a board built
+    that night carries the PREVIOUS window. This re-reads only the window file
+    and rewrites only the *_3yr keys and the `multiyear` block: every other
+    byte the exporter wrote stands. The old keys are cleared first, so a refusal
+    blanks the column rather than leaving a value from another build. No
+    betting column or leaderboard vintage reads a *_3yr key (grep-checked
+    2026-10-01), so the rewrite after the snapshot moves no clock."""
+    ddir = Path(data_dir or DATA_DIR)
+    wpath = (ddir / WINDOW_L3_PATH.name) if data_dir else WINDOW_L3_PATH
+    out = {}
+    for _mod, fname, rblock, wboard, wblock, metric, who in WINDOW_3YR_BOARDS:
+        path = ddir / fname
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+            rows = doc[rblock]
+        except (OSError, ValueError, KeyError) as e:
+            out[fname] = f"skipped ({type(e).__name__})"
+            continue
+        key = f"{metric}_3yr"
+        keys = (key, f"{key}_pct", f"{key}_tag")
+        # Join onto id-only copies, then write back IN PLACE: a matched row
+        # keeps its keys where the exporter put them (so the served diff is the
+        # values that moved), and an unmatched row loses all three.
+        fresh = [{"mlbam": r.get("mlbam")} for r in rows]
+        meta = join_window_3yr(fresh, board=wboard, block=wblock, metric=metric,
+                               season=doc.get("season"), who=who,
+                               path=wpath)
+        for r, f in zip(rows, fresh):
+            for k in keys:
+                if key in f:
+                    r[k] = f.get(k)
+                else:
+                    r.pop(k, None)
+        doc["multiyear"] = meta
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(doc, indent=1), encoding="utf-8")
+        tmp.replace(path)
+        out[fname] = meta.get("n_stamped") if meta.get("available") else (
+            meta.get("refused") or meta.get("reason"))
+        log(f"  window 3yr restamp: {fname} {key} -> {out[fname]}")
+    return out
 
 
 _XREM_MIN_PA = 80.0   # min Savant batters-faced for a stable xwOBA-allowed read
@@ -845,12 +973,13 @@ _XREM_MIN_PA = 80.0   # min Savant batters-faced for a stable xwOBA-allowed read
 def _join_savant_custom(relievers: list[dict], season: int) -> dict:
     """Stamp the Savant custom-leaderboard DISPLAY columns (X05-01) onto the
     board rows by mlbam and return their provenance block. No score on this
-    board reads them. SwStr% is NOT derived here: this board keeps its
-    Baseball-Reference SwStr%, a different count. Fail-soft: any error serves an unavailable block
-    and blank columns."""
+    board reads them. SwStr% is derived here (whiff% x swing%), the Starter
+    board's formula: owner answer M17-4 (2026-09-25) moved this board off its
+    Baseball-Reference SwStr%, so both pitcher boards print one count. Fail-soft:
+    any error serves an unavailable block and blank columns."""
     try:
         import savant_leaderboards as _sl
-        return _sl.join(relievers, int(season), "pitcher")
+        return _sl.join(relievers, int(season), "pitcher", derive_swstr=True)
     except Exception as e:   # noqa: BLE001 - a display join must not take a board down
         return {"available": False, "reason": f"savant_leaderboards unavailable ({type(e).__name__})"}
 
@@ -1385,7 +1514,7 @@ def _join_war_ip_plus_3yr(relievers: list[dict]) -> dict:
     """Stamp war_ip_plus_3yr / percentile / tag from the frozen multi-year
     artifact (tools/war_rate_plus_lab.py), reliever block.
 
-    VINTAGE, NOT PIPELINE OUTPUT (same contract as _join_rem_plus_3yr): read
+    VINTAGE, NOT PIPELINE OUTPUT (the contract join_war_rate_3yr states): read
     VERBATIM from a frozen lab artifact, never recomputed here, so a row can show
     a same-day 1-year value beside a 3-year value frozen weeks earlier and an arm
     who entered the pool after the lab ran is blank. Returns the vintage block so
@@ -1512,7 +1641,6 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
     if not rows:
         log(f"  bullpen: no pitching data for {season} (source blocked or empty); skipping")
         return 0
-    swstr = load_bref_swstr(season)  # best-effort SwStr% enrichment
 
     log(f"  bullpen: computing leverage from StatsAPI winProbability"
         + (f" (first {leverage_limit} games)" if leverage_limit else " (full season)") + "...")
@@ -1525,15 +1653,16 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         _log.warning("leverage walk failed: %s", e)
         leverage, coverage = {}, {"games": 0, "games_total": 0}
 
-    relievers = build_relievers(rows, leverage, swstr)
+    # No SwStr% enrichment here: the Savant join below derives it (M17-4).
+    relievers = build_relievers(rows, leverage)
     scored = rem_plus.score_pool(relievers)
     n_lev = _join_leverage_consistency(scored["relievers"])
     if n_lev:
         log(f"  bullpen: gmLI-consistency joined for {n_lev} relievers")
-    r3_meta = _join_rem_plus_3yr(scored["relievers"])
+    r3_meta = _join_rem_plus_3yr(scored["relievers"], season)
     if r3_meta.get("n_stamped"):
         log(f"  bullpen: 3-year REM+ joined for {r3_meta['n_stamped']} relievers "
-            f"(frozen lab vintage {r3_meta.get('generated_at')})")
+            f"(Last 3 window built {r3_meta.get('generated_at')})")
     n_xr = _join_xrem_plus(scored["relievers"], season)
     sv_meta = _join_savant_custom(scored["relievers"], season)
     if sv_meta.get("available"):
@@ -1598,9 +1727,9 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         },
         "verdict": _verdict(),
         "backtest": _backtest(),
-        # Vintage of the FROZEN 3-year REM+ column (see _join_rem_plus_3yr):
-        # it is not regenerated by this run, so the frontend can disclose how
-        # old the 3yr number beside a live 1yr number actually is.
+        # Source and build date of the 3-year REM+ column: the Last 3 window
+        # (see join_window_3yr), so the frontend can say what date it is
+        # current through.
         "multiyear": r3_meta,
         # WAR/IP+ scale block (anchor pool + measured pool parameters) and the
         # vintage of its FROZEN 3-year companion, same disclosure contract.
@@ -1664,21 +1793,32 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     hist = {}
     basis_rows: list[dict] = []
     ewar_join: dict[str, dict] = {}
+    swstr_join: dict[str, dict] = {}
     for y in seasons:
         log(f"  bullpen-history: {y}...")
         rows = load_season_pitching(y)
         if not rows:
             log(f"  bullpen-history: no data for {y}; skipping")
             continue
-        swstr = load_bref_swstr(y)
         try:
             import mlb_leverage
             leverage, cov = mlb_leverage.fetch_season_leverage(y)
         except Exception as e:  # noqa: BLE001
             _log.warning("history leverage walk %s failed: %s", y, e)
             leverage, cov = {}, {"games": 0, "games_total": 0}
-        scored = rem_plus.score_pool(build_relievers(rows, leverage, swstr))
+        scored = rem_plus.score_pool(build_relievers(rows, leverage))
         qual = [r for r in scored["relievers"] if r.get("qualified")]
+        # SwStr% off that season's Savant custom leaderboard (whiff% x swing%),
+        # the live board's source (M17-4). Only swstr_pct reaches the history
+        # row (_HISTORY_FIELDS); a failed read leaves the column blank.
+        sv = _history_swstr(qual, y)
+        if sv.get("available"):
+            swstr_join[str(y)] = {"n_joined": sv.get("n_joined"),
+                                  "n_qualified": sv.get("n_qualified"),
+                                  "fetched_at": sv.get("fetched_at")}
+        else:
+            swstr_join[str(y)] = {"n_joined": 0, "reason": sv.get("reason") or
+                                  "no Savant rows for this season"}
         basis_rows.extend(basis_rows_for(qual, rows))
         board = [{k: r.get(k) for k in _HISTORY_FIELDS} for r in qual]
         # eWAR per (player, season), E6. Stamped on the SERVED row rather than
@@ -1719,6 +1859,10 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         **({"ewar_vintage": _war_source_vintage(as_of=date.today().isoformat())}
            if any("war" in r for y in hist.values() for r in y["relievers"])
            else {}),
+        # Where SwStr% comes from on these rows, season by season (M17-4).
+        "swstr_source": {"source": "Baseball Savant custom leaderboard",
+                         "formula": "whiff_percent * swing_percent / 10000",
+                         "per_season": swstr_join},
         "history": hist,
     }
     if write and hist:
@@ -1728,6 +1872,16 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         tmp.replace(out_path)
         log(f"  bullpen-history: wrote {out_path.name} ({len(hist)} seasons)")
     return payload
+
+
+def _history_swstr(rows: list[dict], season: int) -> dict:
+    """Savant SwStr% (whiff% x swing%) onto one past season's qualified rows,
+    through the same join the live board uses. Fail-soft, like the live join."""
+    try:
+        import savant_leaderboards as _sl
+        return _sl.join(rows, int(season), "pitcher", derive_swstr=True)
+    except Exception as e:   # noqa: BLE001 - a display column must not take a board down
+        return {"available": False, "reason": f"savant_leaderboards unavailable ({type(e).__name__})"}
 
 
 if __name__ == "__main__":

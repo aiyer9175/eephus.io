@@ -69,46 +69,15 @@ def _war_source_vintage(as_of: Optional[str] = None) -> dict:
                 "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
 
 
-def _join_hem_plus_3yr(hitters: list[dict]) -> dict:
-    """Stamp hem_plus_3yr / percentile / tag from the multi-year artifact
-    (tools/hem_plus_lab.py). Companion SKILL column; missing artifact or unmatched
-    player -> fields absent, column renders blank.
-
-    VINTAGE, NOT PIPELINE OUTPUT (mirrors bullpen_export._join_rem_plus_3yr):
-    the values are read VERBATIM from a FROZEN lab artifact, so a row can show a
-    same-day 1-year HEM+ beside a 3-year HEM+ frozen weeks earlier, and a hitter
-    who entered the pool after the lab ran is blank. Returns the artifact's
-    vintage block so the payload can carry it and the frontend can disclose it
-    instead of the divergence being silent."""
-    meta = {"source": MULTIYR_PATH.name, "n_stamped": 0, "available": False}
-    try:
-        art = json.loads(MULTIYR_PATH.read_text(encoding="utf-8"))
-        pv = art["proposed_values"]
-        players = pv["players"]
-    except (OSError, ValueError, KeyError):
-        return meta
-    n = 0
-    for h in hitters:
-        p = players.get(str(h.get("mlbam") or ""))
-        if not p:
-            continue
-        h["hem_plus_3yr"] = p.get("hem_plus_3yr")
-        h["hem_plus_3yr_pct"] = p.get("pct")
-        h["hem_plus_3yr_tag"] = p.get("tag")
-        if h["hem_plus_3yr"] is not None:
-            n += 1
-    meta.update({
-        "available": True,
-        "n_stamped": n,
-        "generated_at": art.get("generated_at"),
-        "season": pv.get("season"),
-        "window": pv.get("window"),
-        "n_in_artifact": len(players),
-        "note": (f"3-year HEM+ is FROZEN lab output read verbatim from "
-                 f"{MULTIYR_PATH.name}, as of generated_at, not this board's "
-                 f"as_of. Hitters who joined the pool since have no value."),
-    })
-    return meta
+def _join_hem_plus_3yr(hitters: list[dict], season: Optional[int] = None) -> dict:
+    """Stamp hem_plus_3yr / percentile / tag from the Last 3 window's HEM+
+    (bullpen_export.join_window_3yr: the value the Last 3 view prints, behind
+    the served-eWAR basis guard, uncoloured with the window pool's percentile).
+    Companion SKILL column; an unmatched hitter renders blank. MULTIYR_PATH
+    stays the gate record and is not read for display."""
+    from bullpen_export import join_window_3yr
+    return join_window_3yr(hitters, board="hitters", block="hitters",
+                           metric="hem_plus", season=season, who="hitters")
 
 
 @functools.lru_cache(maxsize=1)
@@ -1223,10 +1192,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         ps_meta["league_ratio"] = {s: round(v, 4) for s, v in mu.items()}
     log(f"  hitters: per-hand HEM+ {'available' if ps_meta['available'] else 'UNAVAILABLE'}"
         f" ({ps_meta.get('n_slots_split', 0)} of {ps_meta.get('n_slots', 0)} lineup slots)")
-    h3_meta = _join_hem_plus_3yr(scored["hitters"])
+    h3_meta = _join_hem_plus_3yr(scored["hitters"], season)
     if h3_meta.get("n_stamped"):
         log(f"  hitters: 3-year HEM+ joined for {h3_meta['n_stamped']} hitters "
-            f"(frozen lab vintage {h3_meta.get('generated_at')})")
+            f"(Last 3 window built {h3_meta.get('generated_at')})")
     wrc_meta = _join_wrc_plus(scored["hitters"], season)
     if wrc_meta.get("available"):
         log(f"  hitters: published wRC+ joined for {wrc_meta['n_stamped']}/"
@@ -1294,7 +1263,8 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "verdict": _verdict(), "backtest": _backtest(),
-        # Vintage of the FROZEN 3-year HEM+ column (see _join_hem_plus_3yr).
+        # Source and build date of the 3-year HEM+ column: the Last 3 window
+        # (see _join_hem_plus_3yr).
         "multiyear": h3_meta,
         # Provenance + coverage of the PUBLISHED wRC+ column, and the color
         # bands the frontend mirrors (see WRC_PLUS_BANDS).

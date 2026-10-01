@@ -316,6 +316,8 @@ def _def_export(tmp_path, monkeypatch, fielders, teams):
     monkeypatch.setattr(de, "_active_mlbam_ids", lambda season: None)
     monkeypatch.setattr(de, "HITTER_BOARD", tmp_path / "missing_hitters.json")
     monkeypatch.setattr(de, "MULTIYR_PATH", tmp_path / "missing_multiyr.json")
+    import bullpen_export as _be
+    monkeypatch.setattr(_be, "WINDOW_L3_PATH", tmp_path / "missing_window_l3.json")
     monkeypatch.setattr(de, "EVAL_PATH", tmp_path / "missing_eval.json")
     monkeypatch.setattr(de, "_war_source_vintage",
                         lambda as_of=None: {"artifact_generated_at": "2026-09-16",

@@ -721,3 +721,72 @@ def test_the_current_frozen_note_names_the_window_build():
     html = ctx.eval("__html['mlbstats-hitters-root'] || ''")
     assert "HEM+ 3yr as of 2026-08-30 (2024-2026)" in html
     assert "The Last 3 window recomputes the same 3-year recipe on its own build" in html
+
+
+# ---------------------------------------------------------------- M17: one 3yr number
+_THREE_YR = ("rem_plus_3yr", "sem_plus_3yr", "hem_plus_3yr", "dem_plus_3yr")
+
+
+def _window_sample() -> str:
+    """The hitter sample with the `multiyear` block the exporters serve since
+    owner answer M17-2: the Last 3 window's index, not a frozen artifact."""
+    sample = json.loads(smoke.HITTER_SAMPLE)
+    sample["multiyear"] = {"available": True, "kind": "window",
+                           "source": "mlbstats_window_l3.json",
+                           "generated_at": "2026-10-01", "season": 2026,
+                           "window": [2024, 2025, 2026], "window_key": "l3",
+                           "panel_built_at": "2026-09-30", "n_stamped": 14}
+    return json.dumps(sample)
+
+
+def _hitters_with(hash_: str, sample: str, **kw) -> str:
+    ctx = MiniRacer()
+    ctx.eval(smoke._hitter_prelude(hash_, sample) + _routes_js(**kw) + _DOC_STUB + JS)
+    return ctx.eval("__html['mlbstats-hitters-root'] || ''")
+
+
+def test_the_current_3yr_columns_carry_no_ladder():
+    """Owner answer M17-2: the Current HEM+ / SEM+ / REM+ / DEM+ 3yr columns
+    read the Last 3 window's index, so they print as the window does: the
+    numeral with no band. No column body routes through a ladder helper, and
+    the one cell builder they share paints the uncoloured window class."""
+    for key in _THREE_YR:
+        i = JS.index('{ key: "%s"' % key)
+        body = JS[i:JS.index('{ key: "', i + 10)]
+        for helper in INDEX_HELPERS:
+            assert helper + "(" not in body, (key, helper, body)
+        assert "win3yrCell(" in body, (key, body)
+    i = JS.index("function win3yrCell(")
+    body = JS[i:JS.index("\n  function ", i + 10)]
+    for helper in INDEX_HELPERS:
+        assert helper + "(" not in body, (helper, body)
+    assert 'class="mlbstats-winidx"' in body and "_pct" in body
+
+
+def test_the_current_3yr_cell_renders_uncoloured_with_the_window_percentile():
+    html = _hitters_with("#section=hitters&hcols=skill", _window_sample())
+    cells = _cells(html, "hem_plus_3yr")
+    assert cells and 'class="mlbstats-winidx">142<' in cells[0], cells[0]
+    assert "vt-" not in cells[0] and "p88" in cells[0], cells[0]
+
+
+def test_a_window_sourced_3yr_column_says_it_is_the_last_3_index():
+    """The board note names the window build and the date its live slice runs
+    through, and no longer says the two views can differ."""
+    html = _hitters_with("#section=hitters", _window_sample())
+    note = html[html.index("mlbstats-vintage"):]
+    note = note[:note.index("</div>")]
+    assert "HEM+ 3yr is the Last 3 index (2024-2026), built 2026-10-01, 2026 through 2026-09-30" \
+        in note, note
+    assert "can differ by a few points" not in note, note
+    assert "Frozen columns" not in note or "HEM+ 3yr as of" not in note, note
+
+
+def test_the_window_header_says_the_current_column_reads_it():
+    """On the Last 3 view the HEM+ header says the Current 3yr column is the same
+    number, once the live payload says so; an older payload keeps the frozen
+    sentence."""
+    html = _hitters_with("#section=hitters&hyears=2024-2026", _window_sample())
+    tag = {k: t for _, k, t in _heads(html)}["hem_plus"]
+    assert "reads this index, so the two print one number" in tag, tag
+    assert "separate, dated build" not in tag, tag

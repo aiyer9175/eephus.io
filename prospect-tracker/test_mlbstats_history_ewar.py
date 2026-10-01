@@ -287,7 +287,9 @@ def _hit_line(pid: int, *, pa: int = 600, h: int = 160, hr: int = 25,
 def _bullpen_history(monkeypatch, war, seasons=_SEASONS) -> dict:
     monkeypatch.setattr(be, "load_season_pitching",
                         lambda season: [_pit_line(i) for i in _PITCHER_IDS])
-    monkeypatch.setattr(be, "load_bref_swstr", lambda season: {})
+    # Offline: SwStr% comes off the Savant custom leaderboard since M17-4.
+    monkeypatch.setattr(be, "_history_swstr",
+                        lambda rows, season: {"available": False, "reason": "offline test"})
     import mlb_leverage
     monkeypatch.setattr(mlb_leverage, "fetch_season_leverage",
                         lambda season: ({}, {"games": 0, "games_total": 0}))

@@ -338,33 +338,14 @@ def _join_hem_plus(rows: list[dict], season: int) -> int:
     return n
 
 
-def _join_dem_plus_3yr(rows: list[dict]) -> dict:
-    """Frozen 3-year DEM+ from the lab's multi-year artifact (the
-    _join_hem_plus_3yr contract: vintage, not pipeline output)."""
-    meta = {"source": MULTIYR_PATH.name, "n_stamped": 0, "available": False}
-    try:
-        art = json.loads(MULTIYR_PATH.read_text(encoding="utf-8"))
-        pv = art["proposed_values"]
-        players = pv["players"]
-    except (OSError, ValueError, KeyError):
-        return meta
-    n = 0
-    for r in rows:
-        p = players.get(str(r.get("mlbam") or ""))
-        if not p:
-            continue
-        r["dem_plus_3yr"] = p.get("dem_plus_3yr")
-        r["dem_plus_3yr_pct"] = p.get("pct")
-        r["dem_plus_3yr_tag"] = p.get("tag")
-        n += int(p.get("dem_plus_3yr") is not None)
-    meta.update({"available": True, "n_stamped": n,
-                 "generated_at": art.get("generated_at"),
-                 "season": pv.get("season"), "window": pv.get("window"),
-                 "n_in_artifact": len(players),
-                 "note": (f"3-year DEM+ is FROZEN lab output read verbatim from "
-                          f"{MULTIYR_PATH.name}, as of generated_at, not this board's "
-                          f"as_of. Fielders who joined the pool since have no value.")})
-    return meta
+def _join_dem_plus_3yr(rows: list[dict], season: Optional[int] = None) -> dict:
+    """Stamp dem_plus_3yr / percentile / tag from the Last 3 window's DEM+
+    (bullpen_export.join_window_3yr: the value the Last 3 view prints, behind
+    the served-eWAR basis guard, uncoloured with the window pool's percentile).
+    MULTIYR_PATH stays the gate record and is not read for display."""
+    from bullpen_export import join_window_3yr
+    return join_window_3yr(rows, board="defense", block="fielders",
+                           metric="dem_plus", season=season, who="fielders")
 
 
 def _join_savant_catcher(rows: list[dict], season: int) -> dict:
@@ -612,7 +593,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     scored, src, fr = res["scored"], res["src"], res["framing"]
     pub, inn = src["published"], src["innings"]
     n_hem = _join_hem_plus(scored["fielders"], season)
-    d3 = _join_dem_plus_3yr(scored["fielders"])
+    d3 = _join_dem_plus_3yr(scored["fielders"], season)
     war_meta = _stamp_war(scored["fielders"], season)
     sc_meta = _join_savant_catcher(scored["fielders"], season)
     if sc_meta.get("available"):

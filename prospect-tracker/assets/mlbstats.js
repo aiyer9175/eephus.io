@@ -532,11 +532,7 @@
       vintage: "multiyear",
       get: function (r) { return r.rem_plus_3yr; },
       cell: function (r) {
-        if (r.rem_plus_3yr == null) return "";
-        var s = runCell(r.rem_plus_3yr);
-        if (r.rem_plus_3yr_pct != null) s += '<span class="proj-dim mlbstats-pct"> p' + fInt(r.rem_plus_3yr_pct) + "</span>";
-        if (r.rem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 40 IP in the trailing window">*</span>';
-        return s;
+        return r.rem_plus_3yr == null ? "" : win3yrCell(r, "rem_plus_3yr", "under 2 seasons or 40 IP");
       } },
     { key: "xrem_plus", label: "xREM+", term: "xrem_plus", num: true, desc: true, isRem: true,
       title: "REM+ scale on Savant xwOBA allowed. A deserved read beside REM+, not a replacement: xwOBA allowed did not beat FIP predictively. Tracked relievers only.",
@@ -599,7 +595,7 @@
     { key: "fip", label: "Skill FIP", term: "skill_fip", fmt: f2, num: true, asc: true,
       title: skillFipTitle("reliever", "REM+") },
     { key: "swstr_pct", label: "SwStr%", term: "swstr_pct", fmt: fPct, num: true,
-      title: "Swinging strikes per pitch, from Baseball-Reference. The Starters board derives its SwStr% from Savant instead, a different count." },
+      title: "Whiffs per pitch, derived from the Baseball Savant custom leaderboard as whiff% x swing%, the one source both pitcher boards use. Display only: no score on this board reads it." },
     { key: "whiff_pct", label: "Whiff%", term: "whiff_pct", fmt: fPct, num: true,
       title: savantTitle("Misses per swing.") },
     { key: "chase_pct", label: "Chase%", term: "chase_pct", fmt: fPct, num: true,
@@ -1513,8 +1509,9 @@
   // into the sentence whole, so every served index header read
   // "2024-2026: [object Object], each season scored..." (census M06-06).
   // `built` is the window file's generated_at; `frozen` is true when the
-  // Current board carries a frozen 3yr column over the same span.
-  function windowIndexCol(c, w, how, stats, built, frozen) {
+  // Current board carries a frozen 3yr column over the same span, and `same`
+  // when its 3yr column reads this window's own index (owner answer M17-2).
+  function windowIndexCol(c, w, how, stats, built, frozen, same) {
     var out = cloneCol(c), lbl = winLabel(w);
     var howTxt = (how && typeof how === "object") ? (how.formula || "") : String(how || "");
     out.labelExtra = '<span class="mlbstats-winspan">' + esc(lbl) + "</span>";
@@ -1532,7 +1529,8 @@
       + " p = percentile inside this window's pool; * = provisional."
       + (built ? " Built " + built + " by the window lab." : "")
       + (frozen ? " The Current board's frozen 3yr column is a separate, dated build of the same"
-        + " recipe, so the two can differ by a few points." : "");
+        + " recipe, so the two can differ by a few points." : "")
+      + (same ? " The Current board's 3yr column reads this index, so the two print one number." : "");
     out.cell = function (r) {
       var v = num(r[c.key]);
       if (v == null) return EM_DASH;
@@ -1549,6 +1547,22 @@
       return s;
     };
     return out;
+  }
+  // THE CURRENT BOARD'S 3yr COLUMNS ARE A WINDOW INDEX (owner answer M17-2,
+  // census M06-06): the exporters read HEM+ / SEM+ / REM+ / DEM+ 3yr from the
+  // Last 3 window file, so the cell prints the way windowIndexCol does: the
+  // numeral with no band (the ruler was cut on a one-season pool), the window
+  // pool's percentile, and the provisional star with the owning lab's floor.
+  function win3yrCell(r, key, floor) {
+    var v = num(r[key]);
+    if (v == null) return "";
+    var s = '<span class="mlbstats-winidx">' + fInt(v) + "</span>";
+    var p = num(r[key + "_pct"]);
+    if (p != null) s += '<span class="proj-dim mlbstats-pct"> p' + fInt(p) + "</span>";
+    if (r[key + "_tag"] === "provisional") {
+      s += '<span class="proj-dim" title="Provisional: ' + floor + ' in the trailing window">*</span>';
+    }
+    return s;
   }
   // Every column key this window's payload can fill. The board's own column
   // array MINUS this set is exactly what the window drops, which is why the
@@ -1569,14 +1583,27 @@
     var ends = winEnds(w), spans3 = ends.hi - ends.lo === 2, keys = {};
     sectionCols(sec).forEach(function (c) { keys[c.key] = 1; });
     var pool = ((doc.pool_stats || {})[LAB_BOARD[sec]]) || {};
+    // Does the Current board's 3yr column read THIS window (a `multiyear` block
+    // of kind "window", served since M17-2) or a frozen lab artifact?
+    var lm = (sectionLive(sec) || {}).multiyear;
+    var same = !!(lm && lm.kind === "window" && lm.window_key === (doc.window || {}).key);
     var out = [];
     sectionCols(sec).forEach(function (c) {
       if (!allow[c.key]) return;
+      var has3 = spans3 && !!keys[c.key + "_3yr"];
       out.push(idx[c.key] ? windowIndexCol(c, w, idx[c.key], pool[c.key], doc.generated_at || null,
-                                           spans3 && !!keys[c.key + "_3yr"])
+                                           has3 && !same, has3 && same)
                           : windowCountCol(c, w, spec));
     });
     return out;
+  }
+  // The live payload behind a section's Current board.
+  function sectionLive(sec) {
+    if (sec === "starters") return starterData;
+    if (sec === "hitters") return hitterData;
+    if (sec === "defense") return defenseData;
+    if (sec === "bullpen") return DATA;
+    return null;
   }
   // A sort key the window board does not carry falls back to the board's own
   // first numeric column, the rule readSort has always applied to a stale link.
@@ -1963,7 +1990,9 @@
   // date on either, is the whole reason those blocks exist.
   //
   // Payload key paths, confirmed against the served files:
-  //   <payload>.multiyear            -> REM+ 3yr / SEM+ 3yr / HEM+ 3yr
+  //   <payload>.multiyear            -> REM+ 3yr / SEM+ 3yr / HEM+ 3yr / DEM+ 3yr
+  //                                     (kind "window" since M17-2: the Last 3
+  //                                     window's index, not a frozen artifact)
   //   <payload>.multiyear_war_rate   -> WAR/IP+ 3yr / WAR/PA+ 3yr
   // Each block carries { available, source, generated_at, season, window,
   // n_stamped, n_in_artifact, note }. gmLI 3yr is frozen the same way (from
@@ -1982,6 +2011,13 @@
   function vintageTitle(b) {
     if (!b) return "";
     var w = vintageWindow(b);
+    if (b.kind === "window") {
+      return "LAST 3 WINDOW: read from " + (b.source || "the window lab") + ", built " + b.generated_at
+        + (w ? ", " + w : "") + (b.panel_built_at && b.season != null
+          ? ", " + b.season + " through " + b.panel_built_at : "")
+        + "; the value the Last 3 view prints. Uncoloured: no value ruler travels onto a"
+        + " window pool. p = percentile inside that pool. Blank for anyone the window does not publish.";
+    }
     return "FROZEN: read from " + (b.source || "a lab artifact") + ", generated " + b.generated_at
       + (w ? ", " + w : "") + "; as of that date, not this board's. Blank for anyone who joined"
       + " the pool since.";
@@ -2004,22 +2040,41 @@
   }
   // Compact board note. `cols` is [[payload key, column label], ...]; a block
   // that is absent or unavailable simply contributes nothing.
+  // A `multiyear` block of kind "window" (served since owner answer M17-2) is
+  // the Last 3 window's index, not a frozen artifact, and says so; an older
+  // payload without the kind keeps the frozen sentence it always had.
   function vintageNote(meta, cols, extra) {
-    var bits = [];
+    var bits = [], wins = [], frozen3 = false;
     (cols || []).forEach(function (p) {
       var b = vintageOf(meta, p[0]);
       if (!b) return;
       var w = vintageWindow(b);
+      if (b.kind === "window") {
+        wins.push(esc(p[1]) + " is the Last 3 index" + (w ? " (" + esc(w) + ")" : "")
+          + ", built " + esc(b.generated_at)
+          + (b.panel_built_at && b.season != null
+            ? ", " + esc(b.season) + " through " + esc(b.panel_built_at) : ""));
+        return;
+      }
+      if (p[0] === "multiyear") frozen3 = true;
       bits.push(esc(p[1]) + " as of " + esc(b.generated_at) + (w ? " (" + esc(w) + ")" : ""));
     });
     var ew = ewarTitle(meta);
-    if (!bits.length && !ew) return "";
-    return '<div class="mlbstats-note mlbstats-vintage">'
-      + (bits.length ? "<b>Frozen columns</b> (lab artifacts, not recomputed; blank for anyone who"
+    if (!bits.length && !wins.length && !ew) return "";
+    var parts = [];
+    if (wins.length) {
+      parts.push("<b>Window columns</b>: " + wins.join(", ") + ". The same value the Last 3 view"
+        + " prints, uncoloured because no value ruler travels onto a window pool; p is the"
+        + " percentile inside that pool.");
+    }
+    if (bits.length) {
+      parts.push("<b>Frozen columns</b> (lab artifacts, not recomputed; blank for anyone who"
         + " joined the pool later): " + bits.join(", ") + "." + (extra || "")
-        + " The Last 3 window recomputes the same 3-year recipe on its own build, dated in that"
-        + " view's stamp, so a player's 3yr value here and his Last 3 index can differ by a few points." : "")
-      + (ew ? (bits.length ? " " : "") + esc(ew) : "") + "</div>";
+        + (frozen3 ? " The Last 3 window recomputes the same 3-year recipe on its own build, dated in that"
+          + " view's stamp, so a player's 3yr value here and his Last 3 index can differ by a few points." : ""));
+    }
+    if (ew) parts.push(esc(ew));
+    return '<div class="mlbstats-note mlbstats-vintage">' + parts.join(" ") + "</div>";
   }
 
   // ---- render: shared table -------------------------------------------------
@@ -2928,11 +2983,7 @@
       vintage: "multiyear",
       get: function (r) { return r.sem_plus_3yr; },
       cell: function (r) {
-        if (r.sem_plus_3yr == null) return "";
-        var s = runCell(r.sem_plus_3yr);
-        if (r.sem_plus_3yr_pct != null) s += '<span class="proj-dim mlbstats-pct"> p' + fInt(r.sem_plus_3yr_pct) + "</span>";
-        if (r.sem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 120 IP in the trailing window">*</span>';
-        return s;
+        return r.sem_plus_3yr == null ? "" : win3yrCell(r, "sem_plus_3yr", "under 2 seasons or 120 IP");
       } },
     { key: "xsem_plus", label: "xSEM+", term: "xsem_plus", num: true, desc: true, isRem: true,
       title: "SEM+ scale on Savant xwOBA allowed. A deserved read beside SEM+, not a replacement: xwOBA allowed did not beat FIP predictively. Tracked starters only.",
@@ -2996,7 +3047,7 @@
     // Savant custom leaderboard (savant_leaderboards.py), display only. SwStr%
     // is the one derived column: Savant whiff% x swing% (whiffs per pitch).
     { key: "swstr_pct", label: "SwStr%", term: "swstr_pct", fmt: fPct, num: true,
-      title: "Whiffs per pitch, derived from the Baseball Savant custom leaderboard as whiff% x swing%. The Relievers board's SwStr% comes from Baseball-Reference, a different count. Display only: no score on this board reads it." },
+      title: "Whiffs per pitch, derived from the Baseball Savant custom leaderboard as whiff% x swing%, the one source both pitcher boards use. Display only: no score on this board reads it." },
     { key: "whiff_pct", label: "Whiff%", term: "whiff_pct", fmt: fPct, num: true,
       title: savantTitle("Misses per swing.") },
     { key: "chase_pct", label: "Chase%", term: "chase_pct", fmt: fPct, num: true,
@@ -3447,11 +3498,7 @@
       vintage: "multiyear",
       get: function (r) { return r.hem_plus_3yr; },
       cell: function (r) {
-        if (r.hem_plus_3yr == null) return "";
-        var s = hemCell(r.hem_plus_3yr);
-        if (r.hem_plus_3yr_pct != null) s += '<span class="proj-dim mlbstats-pct"> p' + fInt(r.hem_plus_3yr_pct) + "</span>";
-        if (r.hem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 600 PA in the trailing window">*</span>';
-        return s;
+        return r.hem_plus_3yr == null ? "" : win3yrCell(r, "hem_plus_3yr", "under 2 seasons or 600 PA");
       } },
     { key: "xhem_plus", label: "xHEM+", term: "xhem_plus", num: true, desc: true, isRem: true,
       title: "HEM+ scale on Savant xwOBA. Predicts next-year offense better than actual wOBA. Tracked hitters only.",
@@ -4565,11 +4612,7 @@
       vintage: "multiyear",
       get: function (r) { return r.dem_plus_3yr; },
       cell: function (r) {
-        if (r.dem_plus_3yr == null) return EM_DASH;
-        var s = remCell(r.dem_plus_3yr);
-        if (r.dem_plus_3yr_pct != null) s += '<span class="proj-dim mlbstats-pct"> p' + fInt(r.dem_plus_3yr_pct) + "</span>";
-        if (r.dem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 1,000 innings in the trailing window">*</span>';
-        return s;
+        return r.dem_plus_3yr == null ? EM_DASH : win3yrCell(r, "dem_plus_3yr", "under 2 seasons or 1,000 innings");
       } },
     { key: "dem_plus_pos_pct", label: "Pos %ile", fmt: fInt, num: true, desc: true,
       title: "DEM+ percentile among fielders at the same primary position." },
@@ -4622,7 +4665,7 @@
   ];
 
   // History rows (defense_history.json) carry the season line but not the
-  // frozen 3-year join, the per-position percentile, the shrunk rate or the
+  // 3-year window join, the per-position percentile, the shrunk rate or the
   // HEM+ join, so those columns drop rather than render blank. eWAR is NOT in
   // the list: it is a season count the history export joins per (player,
   // season), and coveredCols holds it back until a season carries it.

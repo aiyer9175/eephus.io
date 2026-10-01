@@ -8,7 +8,7 @@
 WHY THIS EXISTS
     The /mlbstats/ Hitter, Starter and Reliever boards carried no plate-discipline
     or contact columns at all, and the Starter board had no SwStr% (the Starter
-    record carries none; only the reliever board has a Baseball-Reference one).
+    record carries none).
     One Savant CSV per side and season returns them for every MLB player,
     keyed by MLBAM id, so the join is exact.
 
@@ -25,11 +25,12 @@ WHAT IS PINNED
     different season, is REFUSED: it never overwrites a good cache and it joins
     nothing.
 
-    The one derived column is the Starter board's SwStr%:
+    The one derived column is SwStr%, on BOTH pitcher boards:
         swstr_pct = whiff_percent * swing_percent / 10000
     (whiffs per swing times swings per pitch = whiffs per pitch). The reliever
-    board keeps its Baseball-Reference SwStr%, which is a different count, so the
-    reliever join does not derive it.
+    board and its history served Baseball-Reference's SwStr% until owner answer
+    M17-4 (2026-09-25) moved them here, so the two boards print one count. A
+    caller asks for it with derive_swstr=True.
 
 NETWORK MANNERS
     One request per side and season, >= 1 second apart, cached raw under

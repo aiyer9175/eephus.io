@@ -389,7 +389,7 @@ def _offline_starter_export(monkeypatch, tmp_path, war) -> dict:
     monkeypatch.setattr(se, "load_season_pitching", lambda season, positions=("P",): [
         dict(r) for r in lines if (r.get("pos") or "P") in positions])
     monkeypatch.setattr(se, "_active_mlbam_ids", lambda season: None)
-    monkeypatch.setattr(se, "_join_sem_plus_3yr", lambda s: {"n_stamped": 0})
+    monkeypatch.setattr(se, "_join_sem_plus_3yr", lambda s, season=None: {"n_stamped": 0})
     monkeypatch.setattr(se, "_join_xsem_plus", lambda s, season: 0)
     monkeypatch.setattr(se, "_join_war_ip_plus_3yr", lambda s: {"n_stamped": 0})
     monkeypatch.setattr(se, "_war_source_vintage", lambda as_of=None: {"as_of": as_of})

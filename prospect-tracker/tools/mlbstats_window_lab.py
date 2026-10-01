@@ -93,6 +93,10 @@ WHICH WINDOWS, AND WHY ONLY THESE
 `l3`  the trailing three seasons ending at the live season. It is the window the
       shipped `*_3yr` columns are already on, so the window board can be checked
       against a column that already ships (see `reproduction` on the artifact).
+      Since owner answer M17-2 (2026-09-25) the Current boards' HEM+, SEM+, REM+
+      and DEM+ 3yr columns READ this window (bullpen_export.join_window_3yr),
+      and run_monthly rebuilds it nightly (9e-pre0d), so `reproduction` now
+      measures the lab evals that stay the gate record, not a served column.
 `l5`  the trailing five seasons. It is the longest window that contains no 2020
       (every lab carries EXCLUDE_SEASONS = {2020}; 2022-2026 clears it) and no
       season outside the feed coverage of all six boards, and it roughly doubles
@@ -1579,6 +1583,19 @@ def basis_moved(index_path: Path | None = None) -> bool:
                 or doc.get("ewar_generated_at") != basis.get("ewar_generated_at"))
 
 
+def built_today(index_path: Path | None = None) -> bool:
+    """True when the window index was written today. The nightly live-panel
+    step (run_monthly 9e-pre0d) asks this AND basis_moved, so a monthly night
+    that already ran 6b4k in the same process does not walk the live season
+    twice, while a moved eWAR basis still forces the rebuild."""
+    path = Path(index_path or INDEX_PATH)
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return str(doc.get("generated_at") or "")[:10] == date.today().isoformat()
+
+
 # The Savant custom-leaderboard display columns (savant_leaderboards.py, X05-01)
 # reach the one-season boards as season rates with no denominator beside them,
 # so a window cannot repool them. One reason, keyed per column on each board.
@@ -1594,6 +1611,16 @@ _SAVANT_CATCHER_REASON = ("Baseball Savant's catcher blocking and throwing board
                           "are read for the live season only.")
 _SAVANT_CATCHER_KEYS = ("c_blk_runs", "c_blk_aa", "c_blk_pitches", "c_cs_runs",
                         "c_cs_aa", "c_sb_att", "c_pop", "c_exchange", "c_arm")
+
+
+# The Current boards' HEM+ / SEM+ / REM+ / DEM+ 3yr columns read THIS lab's l3
+# index since owner answer M17-2 (bullpen_export.join_window_3yr), so on a window
+# board the index column already is that number; the WAR-rate 3yr columns are
+# still the frozen war_rate_plus_lab artifact.
+_CURRENT_3YR_REASON = ("On the Current board this column is the Last 3 window's "
+                       "index; on a window board the index column carries the "
+                       "window's own value.")
+_FROZEN_3YR_REASON = "A frozen lab artifact with a window of its own."
 
 
 def columns_spec() -> dict:
@@ -1664,9 +1691,8 @@ def columns_spec() -> dict:
                 "luck_gap": "A difference of two season-pool numbers.",
                 "fwdhem_plus": "A forecast of next season.",
                 "pwoba": "A forecast of next season.",
-                "hem_plus_3yr": ("A frozen lab artifact with a window of its own. "
-                                 "It shows on a one-year view."),
-                "war_pa_plus_3yr": "The same frozen window.",
+                "hem_plus_3yr": _CURRENT_3YR_REASON,
+                "war_pa_plus_3yr": _FROZEN_3YR_REASON,
                 "war_pa_plus_adj": ("The park and pool adjustment behind WAR/PA+ "
                                     "is fitted on one season's pool, so the "
                                     "adjusted value cannot be re-weighted across "
@@ -1702,8 +1728,8 @@ def columns_spec() -> dict:
                 "xsem_plus": "Anchored to one season's pool.",
                 "xwoba_against": "The same anchoring and the same coverage gap.",
                 "luck": "A difference of two season-pool numbers.",
-                "sem_plus_3yr": "A frozen lab artifact with a window of its own.",
-                "war_ip_plus_3yr": "The same frozen window.",
+                "sem_plus_3yr": _CURRENT_3YR_REASON,
+                "war_ip_plus_3yr": _FROZEN_3YR_REASON,
                 "war_ip_plus_adj": ("The adjustment behind WAR/IP+ is fitted on "
                                     "one season's pool."),
                 "swstr_pct": ("Derived from two Baseball Savant season rates "
@@ -1749,16 +1775,17 @@ def columns_spec() -> dict:
             },
             "hidden": {
                 "fip": "Two season-pool parameters, as on the starter board.",
-                "swstr_pct": ("Swinging-strike rate reaches us as a rate with no "
-                              "pitch count behind it, so it cannot be repooled."),
+                "swstr_pct": ("Derived from two Baseball Savant season rates "
+                              "(whiff% x swing%) with no pitch count beside "
+                              "them, so it cannot be repooled."),
                 "gmli_3yr": ("Its source ships no date at all, so it cannot be "
                              "vintage-stamped beside columns that are. The "
                              "window computes its own gmLI by that module's "
                              "recipe instead."),
                 "xrem_plus": "Anchored to one season's pool.",
                 "xwoba_against": "The same anchoring and the same coverage gap.",
-                "rem_plus_3yr": "A frozen lab artifact with a window of its own.",
-                "war_ip_plus_3yr": "The same frozen window.",
+                "rem_plus_3yr": _CURRENT_3YR_REASON,
+                "war_ip_plus_3yr": _FROZEN_3YR_REASON,
                 "war_ip_plus_adj": ("The adjustment behind WAR/IP+ is fitted on "
                                     "one season's pool."),
                 "role": "Role is a season fact.",
@@ -1802,7 +1829,7 @@ def columns_spec() -> dict:
                 "dem_plus_pct": ("A percentile inside ONE season's pool. The "
                                  "window carries its own, beside its own value."),
                 "dem_plus_pos_pct": "The same, within a position.",
-                "dem_plus_3yr": "A frozen lab artifact with a window of its own.",
+                "dem_plus_3yr": _CURRENT_3YR_REASON,
                 "hem_plus": "Inherits the hitter board's anchoring.",
                 "tier": "A cut on a season pool.",
                 **{k: _SAVANT_CATCHER_REASON for k in _SAVANT_CATCHER_KEYS},
