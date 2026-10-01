@@ -201,3 +201,28 @@ def test_the_committed_artifact_reads_as_the_rules_say():
             a = r["result"]["ANY"]
             assert (a["level"]["n_first_fv"], a["level"]["median_lead_days"]) == (97, 48)
             assert round(a["selection"]["grade"]["auc"], 3) == 0.826
+
+
+def test_the_registry_rows_quote_the_artifact():
+    """PV-05: provisional_first_grade and the xfv_ungraded amendment print the spent
+    replay's figures exactly as data/provisional_track_eval.json carries them."""
+    p = ROOT / "data" / "provisional_track_eval.json"
+    if not p.exists():
+        pytest.skip("artifact not built")
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    bd = {r["run_id"]: r for r in doc["rows"]}[doc["latest"]["served_backdated|git:f6dc2c8a|spent"]]
+    a = bd["result"]["ANY"]
+    reg = {m["model_id"]: m for m in json.loads(
+        (ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))["models"]}
+    row = reg["provisional_first_grade"]
+    assert row["eval_artifact"] == "data/provisional_track_eval.json"
+    assert row["verdict"] == "provisional" and row["provisional_kind"] == "shipped_partial_measurement"
+    lg = a["level"]["grade"]
+    for want in (f"drew {a['level']['n_first_fv']} first grades",
+                 f"selection AUC {a['selection']['grade']['auc']:.3f}",
+                 f"level-rank null {a['selection']['null_level_rank']['auc']:.3f}",
+                 f"Spearman {lg['spearman']:.3f}", f"MAE {lg['mae']} against {lg['mae_null_const']}",
+                 f"Median lead {a['level']['median_lead_days']} days"):
+        assert want in row["notes"], want
+    xu = reg["xfv_ungraded"]["notes"]
+    assert f"MAE {lg['mae']} against {lg['mae_null_const']} for a constant, n {lg['n']}" in xu

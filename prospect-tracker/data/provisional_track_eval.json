@@ -1,0 +1,772 @@
+{
+ "schema": 1,
+ "generated_at": "2026-10-01T13:24:59+00:00",
+ "model_id": "provisional_first_grade",
+ "producer": "provisional_track.py (run_monthly daily step d9a)",
+ "spec": "_finalpass_2026-09-24/provisional/PROVISIONAL_V2.md section 4; ported from lane PG3 score_freeze.py",
+ "windows": {
+  "W6": "2027-04-15",
+  "W12": "2027-10-15"
+ },
+ "label_sources": [
+  "fangraphs",
+  "mlb_pipeline",
+  "mlb_pipeline_international",
+  "baseballamerica",
+  "espn",
+  "just_baseball"
+ ],
+ "label_rule": "first label-source opinion dated strictly after frozen_at and on or before the window end; an opinion's date is min(snapshot_date, UTC date of inserted_at), because the daily Pipeline Top 30 capture bumps snapshot_date in place",
+ "claim_rules": {
+  "level": "MAE below the freeze's constant with a paired bootstrap CI95 clear of 0",
+  "selection": "AUC above the level-rank null and above the incumbent grade, each paired CI95 clear of 0",
+  "read": "verdicts are read only at window end; an interim row says window open until <date>"
+ },
+ "legs": {
+  "prospective": "a committed freeze under data/provisional_freeze/, scored per window",
+  "served_backdated": "the served 2026-06-23 artifact (git f6dc2c8a) replayed to 2026-09-24; SPENT, never adjudicates a window"
+ },
+ "rule": "append-only per (leg, freeze, window): a row is added when the measured content changes, otherwise only its last_verified_at moves; the untracked .cache/provisional_track/ledger.jsonl copy is merged back on every write",
+ "reads_no_war": true,
+ "latest": {
+  "prospective|FREEZE_provisional_2026-09-25.json|W6": "prospective|FREEZE_provisional_2026-09-25.json|W6|2026-10-01",
+  "prospective|FREEZE_provisional_2026-09-25.json|W12": "prospective|FREEZE_provisional_2026-09-25.json|W12|2026-10-01",
+  "served_backdated|git:f6dc2c8a|spent": "served_backdated|git:f6dc2c8a|spent|2026-10-01"
+ },
+ "rows": [
+  {
+   "run_id": "prospective|FREEZE_provisional_2026-09-25.json|W6|2026-10-01",
+   "leg": "prospective",
+   "freeze": "FREEZE_provisional_2026-09-25.json",
+   "frozen_at": "2026-09-25",
+   "freeze_sha256_rows": "1bddcc1ae2ea010645647a9707cae6f6cad90ff6b2d8b31de4eb9b00d1890112",
+   "window": "W6",
+   "window_end": "2027-04-15",
+   "as_of": "2026-10-01",
+   "scored_through": "2026-10-01",
+   "status": "window open until 2027-04-15",
+   "verdict_readable": false,
+   "scorer_version": "pg3-port-1",
+   "result": {
+    "frozen_at": "2026-09-25",
+    "n_rows": 6066,
+    "sha256_rows": "1bddcc1ae2ea010645647a9707cae6f6cad90ff6b2d8b31de4eb9b00d1890112",
+    "eligible": 6064,
+    "dropped": {
+     "unresolved_kept_as_ungraded": 3333,
+     "opinion_on_or_before_freeze": 2
+    },
+    "coverage": {
+     "first_opinion_in_window": 0,
+     "matched_to_freeze": 0,
+     "unmatched_with_known_mlbam": 0,
+     "unmatched_no_mlbam": 0
+    },
+    "ANY": {
+     "n": 6064,
+     "graded_in_window": 0,
+     "base_rate": 0.0,
+     "selection": {
+      "p_g12": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.01043,
+       "brier_x2": 0.03561,
+       "sum_p_raw": 187.3
+      },
+      "p_g6": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.00935,
+       "brier_x2": 0.03155,
+       "sum_p_raw": 169.7
+      },
+      "grade": {
+       "n": 6046,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0
+      },
+      "null_level_rank": {
+       "auc": null
+      },
+      "null_younger": {
+       "auc": null
+      }
+     },
+     "level": {
+      "n_first_fv": 0
+     },
+     "top50_col": "p_g12",
+     "top50_hits": []
+    },
+    "FG": {
+     "n": 6064,
+     "graded_in_window": 0,
+     "base_rate": 0.0,
+     "selection": {
+      "p_g12": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.01043,
+       "brier_x2": 0.03561,
+       "sum_p_raw": 187.3
+      },
+      "p_g6": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.00935,
+       "brier_x2": 0.03155,
+       "sum_p_raw": 169.7
+      },
+      "grade": {
+       "n": 6046,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0
+      },
+      "null_level_rank": {
+       "auc": null
+      },
+      "null_younger": {
+       "auc": null
+      }
+     },
+     "level": {
+      "n_first_fv": 0
+     }
+    },
+    "MLBP": {
+     "n": 6064,
+     "graded_in_window": 0,
+     "base_rate": 0.0,
+     "selection": {
+      "p_g12": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.01043,
+       "brier_x2": 0.03561,
+       "sum_p_raw": 187.3
+      },
+      "p_g6": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.00935,
+       "brier_x2": 0.03155,
+       "sum_p_raw": 169.7
+      },
+      "grade": {
+       "n": 6046,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0
+      },
+      "null_level_rank": {
+       "auc": null
+      },
+      "null_younger": {
+       "auc": null
+      }
+     },
+     "level": {
+      "n_first_fv": 0
+     }
+    },
+    "BA": {
+     "n": 6064,
+     "graded_in_window": 0,
+     "base_rate": 0.0,
+     "selection": {
+      "p_g12": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.01043,
+       "brier_x2": 0.03561,
+       "sum_p_raw": 187.3
+      },
+      "p_g6": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.00935,
+       "brier_x2": 0.03155,
+       "sum_p_raw": 169.7
+      },
+      "grade": {
+       "n": 6046,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0
+      },
+      "null_level_rank": {
+       "auc": null
+      },
+      "null_younger": {
+       "auc": null
+      }
+     },
+     "level": {
+      "n_first_fv": 0
+     }
+    }
+   },
+   "claims": null,
+   "first_seen_at": "2026-10-01T13:24:59+00:00",
+   "last_verified_at": "2026-10-01T13:24:59+00:00",
+   "content_hash": "a05be130266009749be676db3ab9f4ee1ce6c2c0ac2348eaca9ec1e485623862"
+  },
+  {
+   "run_id": "prospective|FREEZE_provisional_2026-09-25.json|W12|2026-10-01",
+   "leg": "prospective",
+   "freeze": "FREEZE_provisional_2026-09-25.json",
+   "frozen_at": "2026-09-25",
+   "freeze_sha256_rows": "1bddcc1ae2ea010645647a9707cae6f6cad90ff6b2d8b31de4eb9b00d1890112",
+   "window": "W12",
+   "window_end": "2027-10-15",
+   "as_of": "2026-10-01",
+   "scored_through": "2026-10-01",
+   "status": "window open until 2027-10-15",
+   "verdict_readable": false,
+   "scorer_version": "pg3-port-1",
+   "result": {
+    "frozen_at": "2026-09-25",
+    "n_rows": 6066,
+    "sha256_rows": "1bddcc1ae2ea010645647a9707cae6f6cad90ff6b2d8b31de4eb9b00d1890112",
+    "eligible": 6064,
+    "dropped": {
+     "unresolved_kept_as_ungraded": 3333,
+     "opinion_on_or_before_freeze": 2
+    },
+    "coverage": {
+     "first_opinion_in_window": 0,
+     "matched_to_freeze": 0,
+     "unmatched_with_known_mlbam": 0,
+     "unmatched_no_mlbam": 0
+    },
+    "ANY": {
+     "n": 6064,
+     "graded_in_window": 0,
+     "base_rate": 0.0,
+     "selection": {
+      "p_g12": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.01043,
+       "brier_x2": 0.03561,
+       "sum_p_raw": 187.3
+      },
+      "p_g6": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.00935,
+       "brier_x2": 0.03155,
+       "sum_p_raw": 169.7
+      },
+      "grade": {
+       "n": 6046,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0
+      },
+      "null_level_rank": {
+       "auc": null
+      },
+      "null_younger": {
+       "auc": null
+      }
+     },
+     "level": {
+      "n_first_fv": 0
+     },
+     "top50_col": "p_g12",
+     "top50_hits": []
+    },
+    "FG": {
+     "n": 6064,
+     "graded_in_window": 0,
+     "base_rate": 0.0,
+     "selection": {
+      "p_g12": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.01043,
+       "brier_x2": 0.03561,
+       "sum_p_raw": 187.3
+      },
+      "p_g6": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.00935,
+       "brier_x2": 0.03155,
+       "sum_p_raw": 169.7
+      },
+      "grade": {
+       "n": 6046,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0
+      },
+      "null_level_rank": {
+       "auc": null
+      },
+      "null_younger": {
+       "auc": null
+      }
+     },
+     "level": {
+      "n_first_fv": 0
+     }
+    },
+    "MLBP": {
+     "n": 6064,
+     "graded_in_window": 0,
+     "base_rate": 0.0,
+     "selection": {
+      "p_g12": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.01043,
+       "brier_x2": 0.03561,
+       "sum_p_raw": 187.3
+      },
+      "p_g6": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.00935,
+       "brier_x2": 0.03155,
+       "sum_p_raw": 169.7
+      },
+      "grade": {
+       "n": 6046,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0
+      },
+      "null_level_rank": {
+       "auc": null
+      },
+      "null_younger": {
+       "auc": null
+      }
+     },
+     "level": {
+      "n_first_fv": 0
+     }
+    },
+    "BA": {
+     "n": 6064,
+     "graded_in_window": 0,
+     "base_rate": 0.0,
+     "selection": {
+      "p_g12": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.01043,
+       "brier_x2": 0.03561,
+       "sum_p_raw": 187.3
+      },
+      "p_g6": {
+       "n": 4161,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0,
+       "brier_raw": 0.00935,
+       "brier_x2": 0.03155,
+       "sum_p_raw": 169.7
+      },
+      "grade": {
+       "n": 6046,
+       "auc": null,
+       "ap": 0.0,
+       "prec_at_50": 0.0,
+       "prec_at_200": 0.0
+      },
+      "null_level_rank": {
+       "auc": null
+      },
+      "null_younger": {
+       "auc": null
+      }
+     },
+     "level": {
+      "n_first_fv": 0
+     }
+    }
+   },
+   "claims": null,
+   "first_seen_at": "2026-10-01T13:24:59+00:00",
+   "last_verified_at": "2026-10-01T13:24:59+00:00",
+   "content_hash": "159fc2f9933c3f9cadfd2f2c7bf6586ae3b6cc8dcc6b4ec9e510ce232290df1b"
+  },
+  {
+   "run_id": "served_backdated|git:f6dc2c8a|spent|2026-10-01",
+   "leg": "served_backdated",
+   "freeze": "git:f6dc2c8a",
+   "frozen_at": "2026-06-23",
+   "freeze_sha256_rows": "203abd7d5c7f593a5687aa1b55b799d4eb6a215223c9cb9ae51a9a803ce6ad33",
+   "window": "spent",
+   "window_end": "2026-09-24",
+   "as_of": "2026-10-01",
+   "scored_through": "2026-09-24",
+   "status": "spent: the served 2026-06-23 artifact replayed to 2026-09-24",
+   "verdict_readable": true,
+   "scorer_version": "pg3-port-1",
+   "result": {
+    "frozen_at": "2026-06-23",
+    "n_rows": 5791,
+    "sha256_rows": "203abd7d5c7f593a5687aa1b55b799d4eb6a215223c9cb9ae51a9a803ce6ad33",
+    "eligible": 5632,
+    "dropped": {
+     "unresolved_kept_as_ungraded": 2827,
+     "opinion_on_or_before_freeze": 159
+    },
+    "coverage": {
+     "first_opinion_in_window": 286,
+     "matched_to_freeze": 97,
+     "unmatched_with_known_mlbam": 179,
+     "unmatched_no_mlbam": 10
+    },
+    "ANY": {
+     "n": 5632,
+     "graded_in_window": 97,
+     "base_rate": 0.0172,
+     "selection": {
+      "grade": {
+       "n": 5632,
+       "auc": 0.8262,
+       "ap": 0.1028,
+       "prec_at_50": 0.16,
+       "prec_at_200": 0.135
+      },
+      "null_level_rank": {
+       "auc": 0.615
+      },
+      "null_younger": {
+       "auc": 0.5129
+      }
+     },
+     "level": {
+      "n_first_fv": 97,
+      "mean_first_fv": 36.03,
+      "median_lead_days": 48,
+      "label_dates": {
+       "2026-08-10": 43,
+       "2026-08-02": 22,
+       "2026-08-14": 14,
+       "2026-06-26": 11,
+       "2026-09-21": 2,
+       "2026-09-19": 1,
+       "2026-09-23": 1,
+       "2026-08-27": 1
+      },
+      "grade": {
+       "n": 97,
+       "spearman": 0.017,
+       "spearman_ci95": [
+        -0.191,
+        0.225
+       ],
+       "mae": 6.21,
+       "bias": -3.28,
+       "level_hit_share_2p5": 0.278,
+       "mae_null_const": 4.54,
+       "null_const": 35.0
+      }
+     },
+     "top50_col": "grade",
+     "top50_hits": [
+      {
+       "key": "mlbam_829398",
+       "name": "Franklin Primera",
+       "grade": 43.0,
+       "first": [
+        "2026-08-10",
+        45.0
+       ]
+      },
+      {
+       "key": "mlbam_834962",
+       "name": "Anthony DePino",
+       "grade": 43.0,
+       "first": [
+        "2026-08-14",
+        40.0
+       ]
+      },
+      {
+       "key": "mlbam_695722",
+       "name": "Boston Smith",
+       "grade": 42.9,
+       "first": [
+        "2026-08-02",
+        40.0
+       ]
+      },
+      {
+       "key": "mlbam_803385",
+       "name": "Jay Harry",
+       "grade": 42.2,
+       "first": [
+        "2026-08-10",
+        35.0
+       ]
+      },
+      {
+       "key": "mlbam_822966",
+       "name": "John Taylor",
+       "grade": 42.0,
+       "first": [
+        "2026-08-14",
+        40.0
+       ]
+      },
+      {
+       "key": "mlbam_832420",
+       "name": "Edian Espinal",
+       "grade": 41.2,
+       "first": [
+        "2026-08-31",
+        40.0
+       ]
+      },
+      {
+       "key": "mlbam_821122",
+       "name": "Alejandro Rivera",
+       "grade": 40.0,
+       "first": [
+        "2026-08-10",
+        30.0
+       ]
+      },
+      {
+       "key": "mlbam_830004",
+       "name": "Juan Fraide",
+       "grade": 40.0,
+       "first": [
+        "2026-08-10",
+        35.0
+       ]
+      }
+     ]
+    },
+    "FG": {
+     "n": 5632,
+     "graded_in_window": 33,
+     "base_rate": 0.0059,
+     "selection": {
+      "grade": {
+       "n": 5632,
+       "auc": 0.773,
+       "ap": 0.0232,
+       "prec_at_50": 0.02,
+       "prec_at_200": 0.035
+      },
+      "null_level_rank": {
+       "auc": 0.615
+      },
+      "null_younger": {
+       "auc": 0.4862
+      }
+     },
+     "level": {
+      "n_first_fv": 33,
+      "mean_first_fv": 39.39,
+      "median_lead_days": 40,
+      "label_dates": {
+       "2026-08-02": 22,
+       "2026-06-26": 11
+      },
+      "grade": {
+       "n": 33,
+       "spearman": -0.023,
+       "spearman_ci95": [
+        -0.376,
+        0.364
+       ],
+       "mae": 8.29,
+       "bias": -7.94,
+       "level_hit_share_2p5": 0.182,
+       "mae_null_const": 1.89,
+       "null_const": 37.5
+      }
+     }
+    },
+    "MLBP": {
+     "n": 5632,
+     "graded_in_window": 52,
+     "base_rate": 0.0092,
+     "selection": {
+      "grade": {
+       "n": 5632,
+       "auc": 0.8659,
+       "ap": 0.0916,
+       "prec_at_50": 0.14,
+       "prec_at_200": 0.085
+      },
+      "null_level_rank": {
+       "auc": 0.6596
+      },
+      "null_younger": {
+       "auc": 0.4863
+      }
+     },
+     "level": {
+      "n_first_fv": 52,
+      "mean_first_fv": 40.48,
+      "median_lead_days": 52.0,
+      "label_dates": {
+       "2026-08-14": 43,
+       "2026-09-19": 2,
+       "2026-09-21": 2,
+       "2026-09-23": 1,
+       "2026-08-27": 1,
+       "2026-08-31": 1,
+       "2026-09-13": 1,
+       "2026-08-16": 1
+      },
+      "grade": {
+       "n": 52,
+       "spearman": 0.228,
+       "spearman_ci95": [
+        -0.089,
+        0.47
+       ],
+       "mae": 6.96,
+       "bias": -6.64,
+       "level_hit_share_2p5": 0.25,
+       "mae_null_const": 0.48,
+       "null_const": 40.0
+      }
+     }
+    },
+    "BA": {
+     "n": 5632,
+     "graded_in_window": 49,
+     "base_rate": 0.0087,
+     "selection": {
+      "grade": {
+       "n": 5632,
+       "auc": 0.8554,
+       "ap": 0.0755,
+       "prec_at_50": 0.1,
+       "prec_at_200": 0.09
+      },
+      "null_level_rank": {
+       "auc": 0.5984
+      },
+      "null_younger": {
+       "auc": 0.5442
+      }
+     },
+     "level": {
+      "n_first_fv": 49,
+      "mean_first_fv": 31.73,
+      "median_lead_days": 48,
+      "label_dates": {
+       "2026-08-10": 49
+      },
+      "grade": {
+       "n": 49,
+       "spearman": 0.392,
+       "spearman_ci95": [
+        0.067,
+        0.648
+       ],
+       "mae": 4.45,
+       "bias": 2.07,
+       "level_hit_share_2p5": 0.327,
+       "mae_null_const": 4.08,
+       "null_const": 35.0
+      }
+     }
+    }
+   },
+   "claims": {
+    "set": "ANY",
+    "B": 1000,
+    "seed": 20260925,
+    "level": {
+     "grade": {
+      "n": 97,
+      "mae_minus_const": 1.676,
+      "ci95": [
+       0.7784,
+       2.6227
+      ],
+      "claim": false
+     }
+    },
+    "selection": {
+     "grade": {
+      "n": 5632,
+      "auc": 0.8262,
+      "minus_level_null": 0.2112,
+      "minus_level_null_ci95": [
+       0.1485,
+       0.2709
+      ],
+      "minus_incumbent": null,
+      "minus_incumbent_ci95": null,
+      "claim": true,
+      "note": "the incumbent is itself; only the level-rank null applies"
+     }
+    }
+   },
+   "first_seen_at": "2026-10-01T13:24:59+00:00",
+   "last_verified_at": "2026-10-01T13:24:59+00:00",
+   "content_hash": "0c8e0c6c1f60b2ac89ac195943e6e7164b3567c286c8391522885104bcfc3bfd"
+  }
+ ]
+}

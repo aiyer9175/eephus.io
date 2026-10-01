@@ -655,6 +655,10 @@ MODEL_GLOSSARY = {
     "xfv_provisional_prior": ["xfv"],
     "ifa_step_prior": ["xfv"],
     "provisional_calibration": "internal",
+    # PV-05 (2026-10-01): the served provisional grade scored against first source
+    # grades. Internal until PV-08 builds the Source Comparison track-record block and
+    # the card receipt that read its artifact; then it maps to the page that shows it.
+    "provisional_first_grade": "internal",
     # F-SIDE-FIX (2026-07-23, owner-authorized fairness-fix attempt under the
     # queued G1-as-NO-HARM re-registration): the 07-23 attempt is a loss ledger
     # - the capped top-band joint recalibration fixes pit over-representation
