@@ -28,6 +28,13 @@ document's design-day descriptives go stale with it and what each is restated
 from. No threshold, frame boundary, decision rule or criterion in this document
 is changed by that amendment.
 
+**AMENDED 2026-09-30, before any look: see section 23.** Owner answer EPOCH-Q2
+(2026-09-30) moves the battery to the `fwar` corpus built after the fWAR label
+epoch's step M, and moves the blast, power, S2 pre-flight and B0-COMPARE
+artifacts after the epoch's step Z. The ARM A, B0-GATE and ARM B dates keep their
+days if their producers are ready. No threshold, frame boundary, decision rule or
+criterion in this document is changed by that amendment.
+
 ---
 
 ## G-0. Honesty clause, first
@@ -1743,6 +1750,7 @@ the 5c amendment form and it is the only way this document changes.
 | 2026-09-18 | - | amended | - | AMENDMENT A-1 (section 21): the two-sided label defect is repaired; the design-day descriptives it moves are named and restated. No candidate scored, no look spent, no threshold moved |
 | 2026-09-18 | - | restated | - | REPAIR + RESTATEMENT (section 22): the label repair landed and every descriptive A-1 named as stale is restated from the repaired corpus. No candidate scored, no arm fitted, no look spent, no threshold moved |
 | 2026-09-30 | - | noted | - | CONTRACT TAIL (owner answer 2026-09-25, census M05-01 step 2): proj_export.PRICE_CONTRACT_TAIL prices a guaranteed contract past 2031 through its last season, those seasons on `warChamp` extended (the champion mean, insulated from both arms by 9.2), so neither SERVE flag moves them. It moves the served baselines 9.1 is read against: sum of `surNpv` $13,488.3M to $13,385.9M on the same 904 rows, 39 rows, Ohtani `surNpv` $211.7M to $155.3M. A flip's pre and post are both read on the tail-priced payload. No candidate scored, no look spent, no threshold moved |
+| 2026-09-30 | - | amended | - | AMENDMENT A-2 (section 23): owner answer EPOCH-Q2 (a), the battery runs on war_provider = fwar after the fWAR epoch's step M; the blast, power, S2 pre-flight and B0-COMPARE artifacts move after step Z; ARM A 2026-10-23, B0-GATE 2026-11-06 and ARM B 2026-11-13 keep their dates if their producers are ready, else a further amendment before 2026-10-23. No candidate scored, no look spent, no threshold moved |
 
 ---
 
@@ -2354,3 +2362,407 @@ on his innings while his batting WAR sat in the dependent variable.
 
 Measured and filed 2026-09-18. No candidate scored, no arm run, no look spent, no
 threshold moved. The row is appended to section 19.
+
+---
+
+## 23. AMENDMENT A-2, 2026-09-30: the battery moves to the fWAR corpus after the epoch's step M
+
+This section is an amendment under the form registered in section 19, in the shape
+A-1 set (section 21). It records an established fact about the DATA this battery is
+built on, filed before any look: the WAR basis that section 2 L3 and 4.6d pin,
+`ewar_v2`, retires as the label in the fWAR label epoch
+(`docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md`), whose step E deletes the corpus 4.6d
+names and whose step D + U leaves no code path that builds that corpus again (23.3).
+It executes owner answer EPOCH-Q2 of 2026-09-30. **It changes no decision rule, no
+threshold, no frame boundary and no primary criterion.**
+
+It never edits a line above it. Where an earlier section says `ewar_v2`, the override
+is stated here once: **read `fwar` where sections 2 L3, 4.6d, 5.1 and 11 say
+`ewar_v2`, from this amendment on.** The sentences in 4.8 and section 15 about a
+re-measure "on `ewar_v2`" are read under 23.2 (e). Section 23.5 lists what this
+amendment did not change, item by item, so the absence of a change is on the record
+rather than inferred.
+
+### 23.1 Standing: what admits this amendment
+
+`docs/diamond-betting.md` 5c, protocol rule 1, verbatim, as 21.1 quotes it:
+
+> "Each candidate gets its own gate section in this document before any number is
+> computed on it. The section names the estimand, the split, the criteria and the
+> thresholds, the way 11a and 11b do. **A candidate measured before its section
+> exists is disqualified, whatever it measured.**"
+
+And 21.1's reading of it, verbatim, which this amendment relies on in the same way:
+
+> Rule 1 binds a number computed ON A CANDIDATE. It does not reach a fact established
+> about the DATA, and the precedent in this repo says so in those words: 5c-B's
+> standing paragraph admits a section under rule 1 because it "was written ... before
+> any number related the column ... to a game outcome or a price", and the
+> `out_of_sample_skill` section's disclosure reads "Nothing was run. Every number
+> quoted below was already on the record."
+
+Section 19 of this document sets the bar for changing it:
+
+> "An amendment to this document is admissible **only before the arm's first look**,
+> on an established fact about the data, is filed with what moved on disk since this
+> document was committed, and **may not loosen any threshold in section 15**."
+
+All four conditions hold, and each is checkable:
+
+1. **Before the first look.** Today is 2026-09-30. The ARM A look is 2026-10-23 and
+   the ARM B look is 2026-11-13 (section 13); both are ahead. None of the three
+   producers (`tools/proj_shape_blast_lab.py`, `tools/proj_shape_mde_lab.py`,
+   `tools/proj_shape_gate.py`) exists, none of the three artifacts
+   (`data/proj_shape_blast.json`, `data/proj_shape_mde.json`,
+   `data/proj_shape_gate.json`) exists, and `test_proj_shape_gate.py` does not exist,
+   at HEAD or in the working tree (`git ls-files` and the filesystem, read
+   2026-09-30). Section 19 holds rows marked `registered`, `amended`, `restated` and
+   `noted` only: no run row and no VOID. The one registered date already behind us,
+   2026-09-25, passed with no producer and no artifact, so it scored no candidate and
+   spent no look (23.2 (f)).
+2. **An established fact about the data, not a number computed on a candidate.** The
+   facts are four, each from a dated record, and 23.3 quotes each: (i) the registered
+   epoch, `FWAR_LABEL_EPOCH_GATE.md`, committed alone at `3113b4f7` on 2026-09-17, part
+   7 rows D + U, E and M and clause (j) points 1 and 4; (ii) owner answer O3 + O4
+   (2026-09-17, in the owner decisions file): "Cache 2000-2010 (22 calls, no
+   credits), freeze the 2026 vintage ~10-05"; (iii) owner answer EPOCH-Q2 (a) of
+   2026-09-30, quoted below; (iv) the code facts in `fa_projection.py` and
+   `war_source.py` at HEAD. Nothing was computed to write this section: no corpus was
+   built, no `.cache` pickle was opened or counted, no lab was run, nothing was
+   fitted, no frame in 4.6 was opened, and no statistic in S1 through S8, A-SHAPE, B1
+   through B4 or the Holm family was computed on anything. That is the G-0 honesty
+   clause's standard, applied again.
+3. **Filed with what moved on disk.** 23.3.
+4. **Loosens no threshold in section 15.** 23.5. Every threshold is stated in WAR or
+   as a share and stands at its registered value on the new basis. None is re-scaled
+   to the `fwar` label in either direction, whatever that label's scale is against
+   `ewar_v2`: re-scaling would be re-deriving, which section 15 forbids.
+
+The owner answer this amendment executes, verbatim (EPOCH-Q2, answered 2026-09-30):
+
+> **Amend to fWAR**: amendment A-2 lands now (by 10-02) before any artifact; the
+> battery runs on the fWAR corpus after step M; the 10-02 and 10-09 artifacts come
+> after step Z; the 10-23, 11-06 and 11-13 looks keep their dates if their producers
+> are ready, else one more amendment before 10-23; no threshold moved
+
+**Why the order is amend, then the epoch, then the battery.** The reason 21.1 gave,
+applied again: amending first records which basis the battery runs on and which
+descriptives go stale **before** any of them is recomputed on the new label. Filing
+after step M would file an amendment against a corpus already in hand.
+
+### 23.2 What changes, exactly
+
+**(a) L3, one WAR basis.** Every arm, both comparators, the corpus and the
+re-measured calibration map run on **`war_provider = fwar`**: published fWAR, frozen
+per season, the vintage the epoch's fingerprint term `label=fwar@<vintage id>` names
+(part 7 row D + U; part 8's "frozen per-season fWAR vintage artifact with its
+`fetched_at`"). The artifact stamps the provider, and a run that cannot name its
+provider is still void. L3's pre-registered consequence widens: **every number scored
+on `ewar_v2`, including every number in section 22 (the restatement and the 22.5
+pre-view), and every number in `data/proj_horizon_eval.json` and
+`data/proj_calibration_eval.json`, is a prior and never a comparator.** L3 as written
+already names one basis for the whole corpus, so a corpus whose pre-2011 seasons sit
+on another basis (the epoch stamps such a cohort `war_basis: mixed`, its part 4 note 3
+and O4) is not one WAR basis. This amendment adds nothing to L3 there; it states it so
+it is not discovered at the look.
+
+**(b) 4.6d.** Its first item is read as: one `.cache/fa_corpus.pkl`, the corpus built
+on the facade default after the epoch's step M, with the same `first`/`last` for every
+arm and `war_provider = fwar`. Step E deletes the `ewar_v2` corpus
+(`.cache/fa_corpus.pkl`, `.cache/fa_fits_*.pkl`, `.cache/proj_ml_frame_*.pkl`) and step
+M retrains on the `fwar` corpus. Every other item of 4.6d is unchanged:
+`first_base = 2003`; `max_label_season = B - 1` per base; point-in-time
+`fp.fitted_models(corpus, B - 1)` for both arms; `champ_h1..h5` from the same
+`use_ml=False` path; the identical row population, row-matched by `run_rowmatch`; the
+L1 two-sided exclusion on both arms; one blend convention across both arms (4.2);
+`SEED = 20260611`, `deterministic=True`, `n_jobs=1`, `force_row_wise=True`; the same
+five quantiles, the same cross-quantile monotone sort and the same `_extend`.
+
+**(c) 5.1, B0.** B0 re-measures `proj_calibration_map` on the serving composition on
+**`fwar`**, in both cuts (B0-COMPARE and B0-GATE), under the protocol 5.1 registers.
+The champion-engine bWAR prior it publishes beside them stays a prior.
+
+**(d) Section 11, the unconditional sentence, restated in full for this battery.**
+Every artifact this gate writes carries this sentence in place of section 11's:
+
+> *"Every criterion in this battery is scored on `war_provider = fwar`. The
+> champion-versus-challenger numbers in `data/proj_horizon_eval.json` (2026-08-19) and
+> every cell of `data/proj_calibration_eval.json` (2026-07-25) predate the fWAR label
+> epoch (docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md) and are priors, not
+> comparators. Label seasons 2015 through 2025 were already scored on the shipped
+> challenger by `challenger_blocks.gate1_targets` and carry no confirming verdict
+> here."*
+
+**(e) M = 0.0065 stays frozen.** Its source numbers, the row-matched edge 0.0142 /
+0.0271 / 0.0279 / 0.0199 / 0.0106 (4.8), are now pre-epoch priors twice over: they
+predate the 2026-09-03/04 eWAR epoch and the fWAR label epoch. A re-measure of the
+engine-versus-champion edge on `fwar` scores no candidate, may be published, and moves
+nothing. Section 15 already says so for `ewar_v2`, and the sentences in 4.8 and
+section 15 are read for a re-measure on either basis.
+
+**(f) The clock.** This table replaces section 13's dates for these rows only; the
+rest of section 13 stands.
+
+| registered date | what | under A-2 |
+|---|---|---|
+| 2026-09-25 | `data/proj_shape_blast.json` (GATE 0.1, no fit) | **MISSED**, recorded as missed and not as a VOID: the date passed with no producer and no artifact, and it scored no candidate. Produced after the step Z entry exists in part 9 of `FWAR_LABEL_EPOCH_GATE.md`, on the served payload of that day, and before the power artifact. 0a's rule is unchanged: no arm is fitted before it exists |
+| 2026-10-02 | `data/proj_shape_mde.json` (power, section 3) | after the step Z entry and after the blast artifact; **DEV only**, plus simulation, as 3.1 registers |
+| 2026-10-09 | the S2 feasibility pre-flight (4.4a) and **B0-COMPARE** (5.1), both on the INCUMBENT | after the power artifact, and still before 2026-10-23 |
+| 2026-10-23 | **ARM A LOOK. Once.** | keeps its date |
+| 2026-11-06 | **B0-GATE** | keeps its date |
+| 2026-11-13 | **ARM B LOOK. Once.** | keeps its date |
+| 2027-02-15 | earliest re-read, as a NEW registration | unchanged |
+
+The three kept dates hold **provided** the producers exist and the blast artifact, the
+power artifact, and the S2 pre-flight with B0-COMPARE exist, in that order, before
+each of them. If they do not, a further amendment under section 19, filed before
+2026-10-23, moves the looks later. No date moves earlier than registered, and nothing
+this gate authorises is produced on 2026-10-23, 2026-11-06 or 2026-11-13 other than
+that day's registered item.
+
+Section 13's sentence that the dev frontier (4.4) "may be computed at any time after
+2026-10-02" is read as "at any time after the power artifact exists", because the
+frontier is fitted on the `fwar` corpus, which exists only after step M, and 3 forbids
+reading any criterion before the power artifact. Reading a GATE, CONFIRM or Tier-2
+number while computing it is still an early look and still disqualifies the arm.
+
+Two defaults are taken in this table and named so they can be checked. The owner
+answer names only the 10-02 and 10-09 artifacts; **the blast artifact moves with
+them**, because 0a orders it before anything is fitted and its own date had already
+passed. **The dev frontier's earliest date moves with the power artifact**, for the
+reason above; the move is later, never earlier.
+
+**(g) Frames: unchanged.** DEV (label seasons 2008 to 2011), GATE (2012 to 2014),
+CONFIRM (2026, now the frozen 2026 fWAR season, the vintage O3 + O4 freezes about
+2026-10-05) and TIER-2 (2015 to 2025) stay exactly as 4.6 tables them, with
+`first_base = 2003` and 4.6's cell table unchanged. Switching the basis does not
+un-read a season: G-0.1's ledger still governs, Tier-2 stays READ and veto-only
+(4.6a), and 4.6b's condition for opening CONFIRM is unchanged.
+
+### 23.3 What moved on disk since this document was committed
+
+**Commits since the registration `b0037654` (2026-09-18)** that touch
+`fa_projection.py`, `proj_ml.py`, `proj_eval.py`, `fa_market.py`, `war_source.py`,
+`tools/train_proj_models.py`, `proj_export.py`, `model/proj_lgbm/meta.json`,
+`data/proj_mean_blend.json` or `data/proj_star_blend.json`, from
+`git log b0037654..HEAD` read on 2026-09-30, oldest first:
+
+| commit | date | what it moved |
+|---|---|---|
+| `809902c6` | 2026-09-23 | A-1's repair: the side-keyed label in `fa_projection.py`, `proj_ml.py` and `proj_eval.py`, the `label_shape` stamp, `_corpus_label_shape_stale`, and the `war_provider` and `label_shape` keys `train()` now writes into bundle meta. Section 22 records it |
+| `e9f5d7e2` | 2026-09-23 | the live bundle retrained on the side-keyed label (`model/proj_lgbm/meta.json` in this file set): `train_hash` 4baf67400e5af498 to cb42b96eb5ea533c, `MODEL_VERSION` unchanged at `proj_lgbm_v1`, the mean and star blend stamps copied back unchanged. This is the retrain 21.6 item 4 and 22.4 left open |
+| `ee899d91` | 2026-09-24 | `proj_export.py`: the Team Win Totals card scores the served roll-up; the games-by-position strip reads the nightly fielding feed |
+| `d11ed73f` | 2026-09-24 | `proj_export.py`: each veteran counts for the club that holds him today, not his contract-feed club |
+| `4c3b1d48` | 2026-09-25 | `proj_export.py`: the `/projections/` methodology copy and accountability banner |
+| `1dc015e3` | 2026-09-25 | `fa_market.py`: the `/fa/` multi-year surplus range reads the P10 and P90 of contract value |
+| `5419c336` | 2026-09-25 | `fa_market.py`: a docstring and config comment on the flat5 $/WAR carry; no code path moves |
+| `410cccce` | 2026-09-30 | `fa_market.py`, `proj_export.py`: prospect and veteran surplus price at one $/WAR level (owner answer FP2-1) |
+| `36b93e16` | 2026-09-30 | `proj_export.py`: the contract tail, already noted in section 19 (its 2026-09-30 row) |
+
+Only `809902c6` (the label) and `e9f5d7e2` (the live bundle) touch what this battery
+fits or scores. The rest are export, pricing and copy changes; `410cccce` and
+`36b93e16` move section 9.1's dollar baselines and `d11ed73f` moves which club a
+veteran's row counts toward, and those baselines are restated under 23.4 group D. No
+commit since `b0037654` touched `war_source.py`, `tools/train_proj_models.py`,
+`data/proj_mean_blend.json` or `data/proj_star_blend.json`.
+
+**The live bundle's meta, read 2026-09-30** (`model/proj_lgbm/meta.json`, the keys
+22.4 says `train()` now writes): `"war_provider": "ewar_v2"`,
+`"label_shape": "side_keyed_v1"`, `train_hash` `cb42b96eb5ea533c`,
+`max_label_season` 2025. The bundle that serves today is on `ewar_v2`. Clause (j)
+point 4 of the epoch says the projections bundle "carries no such key today"; that was
+true on 2026-09-17 and the key has existed in meta since the section 22 repair. The
+clause's obligation, that the step D or E commit writes the corpus `war_provider`
+into the bundle, is unchanged by that.
+
+**The facade at HEAD.** `war_source.DEFAULT_PROVIDER` is `"ewar_v2"`
+(war_source.py:136) and `war_source.PROVIDERS` is `("bwar", "ewar_v2", "ewar_merged")`
+(war_source.py:133), so `fwar` is not yet a provider at all (the epoch's precondition
+E3, part 3). **Step D + U has not landed**, `../_pre_epoch_fwar_2026-10/` does not
+exist, and part 9 of the epoch document is empty: the epoch has not started.
+
+**The epoch's steps, quoted from `FWAR_LABEL_EPOCH_GATE.md` part 7 (committed
+`3113b4f7`):**
+
+- Row D + U: "flip `DEFAULT_PROVIDER` to `fwar`; ... move the fingerprint's `label=`
+  term from `ewar_v2@2026-09-03T12:35:09` to `fwar@<vintage id>`", in "ONE commit",
+  which "Writes the corpus `war_provider` into the projections bundle (clause (j)
+  point 4)".
+- Row E: "delete `fa_corpus.pkl`, `fa_fits_*`, `proj_ml_frame_*`", "keep
+  `.cache/war_daily`". `docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md` step E spells it as
+  `rm -f .cache/fa_corpus.pkl`, `rm -f .cache/fa_fits_*.pkl` and
+  `rm -f .cache/proj_ml_frame_*.pkl`.
+- Row M: "`tools/train_proj_models.py --final`", "corpus on `fwar`; the F-DEF arm;
+  four pins move together", "**Not before 2026-10-05** (clause (j) point 1)". The
+  runbook's step M: "`proj_ml` trains on `fa_projection._war_age_maps` labels, which
+  come from `war_source.stint_frame` under the flipped default (step D) through the
+  rebuilt corpus (step E)."
+- Clause (j) point 1: "**Step M does not run before 2026-10-05**, the later of the
+  two B4 looks." Point 4: "the commit that carries step D or step E writes the corpus
+  `war_provider` into the projections bundle".
+
+**The code facts that make the registered corpus unbuildable after step D**
+(`fa_projection.py` at HEAD, read only):
+
+- `_war_provider()` (fa_projection.py:245-248) returns `war_source.DEFAULT_PROVIDER`;
+  its docstring reads "The WAR basis a corpus built now is labelled on: the facade
+  default."
+- `build_corpus(first_season, last_season, force)` (fa_projection.py:288) takes no
+  provider parameter, and stamps `"war_provider": _war_provider()` on the corpus it
+  writes (fa_projection.py:470).
+- `_corpus_provider_stale` (fa_projection.py:251-266) returns a reason whenever a
+  cached corpus's `war_provider` differs from the facade default, and `build_corpus`
+  then rebuilds instead of accepting it (fa_projection.py:305-311). One fail-soft path
+  is disclosed: on a source failure `build_corpus` serves the cached corpus with a
+  logged "WAR BASIS MISMATCH" warning (fa_projection.py:328-336). A corpus served that
+  way is not one built as 4.6d registers, and after step E there is no cached corpus
+  for that path to serve.
+- So after step D a corpus on `ewar_v2` cannot be built as 4.6d registers it, and
+  after step E none is on disk. The battery as registered could not run after the
+  epoch; this amendment is what lets it run.
+
+**Dated owner answers.** O3 + O4 (2026-09-17): cache 2000 to 2010 and freeze the 2026
+fWAR vintage about 2026-10-05. EPOCH-Q2 (a) (2026-09-30), quoted in 23.1. The final-pass
+plan's Part 8 section 8.B proposes step A on 2026-10-07 or 10-08 and step Z about
+2026-10-11 to 10-13; those are PROPOSED dates in a plan, not a record, and 23.2 (f)
+keys on the part 9 step Z entry and not on them.
+
+### 23.4 The descriptives that go stale, and what each is restated from
+
+Grouped as 21.4 groups them. **Each group A to D is restated from the `fwar` corpus
+after the epoch's step M, by the incumbent-only method of section 22** (the champion
+and the shipped live bundle, nothing fitted, no candidate scored), in a later section
+of this document that contains nothing but measurements, **before the power
+artifact**. This amendment restates nothing; the numbers below are reprinted so the
+restatement can be checked against them rather than replacing them silently.
+
+"Before the power artifact" is a default: neither 21.4 nor 22.5 says whether a group
+is restated before or after the power artifact, and restating first keeps every
+design-day number the power artifact could be compared against on the new basis.
+
+#### A. The corpus census (L1, section 7, section 0's last row)
+
+As restated on `ewar_v2` in 22.2: **671 of 35,825** player-seasons carry rows on both
+sides; **6 of 671** hold identical `war`; **7** sit above the magnitude floor; the
+corpus label sum is **26,269.7**; and Ohtani's five seasons are tabled there. The
+floor count and the label sum are values of the label, so they are STALE under the
+basis change. 21.4 group A's reasoning that which player-seasons carry two rows is
+structural is carried, and the 671 is republished whether or not it moves.
+
+#### B. The frame descriptives (L8, 4.1 item 1)
+
+As restated in 22.3: hit **19,965 / 19,038 / 18,092 / 17,187 / 16,341**, pit
+**24,325 / 22,997 / 21,617 / 20,340 / 19,083**; **0.8185 / 0.7845** of base rows carry
+all five horizons; **90,623 + 108,362 = 198,985** long rows; and the label sums by
+horizon, hit **12,661.5 / 11,040.9 / 9,164.9 / 7,282.1 / 5,655.5** and pit **8,819.0 /
+7,533.7 / 6,192.1 / 4,914.3 / 3,773.7**. Row inclusion turns on `build_features`
+returning non-None, which the champion's curves and WAR map govern, and both are
+refitted on the new label (21.4 group B's reasoning); the label sums move with the
+label by construction. Restated from the call 22.3 used,
+`build_training_frame(corpus, 2003, 2025, use_cache=False)`, on the `fwar` corpus, and
+republished whether or not they move.
+
+#### C. The served descriptives (4.5, section 0)
+
+4.5's table as registered (`war` 278 / 0.4362 / 0.3668 / 0.1592 / 153; `warPTH` 447 /
+0.5749 / 0.4778 / 0.1834 / 279; `warChamp` 311 / 0.0670 / 0.0451 / 0.0000 / 0), section
+0's "0 of 311" and "153 of 278" and its `warPTH` 4,716.1 against `war` 2,925.6 and
+Ohtani 36.4 against 32.1, and the 22.5 pre-view on the repaired `ewar_v2` corpus
+(`war` 258 / 0.4514 / 0.3852 / 0.1628 / 146). **All STALE**: the champion curves move
+at steps D and E and the live bundle is retrained at step M. Restated from the first
+regeneration of `data/mlb_projections.json` after step M, counted by 4.5's rule under
+section 14's standing rule, with 22.5's incumbent pre-view repeated on the `fwar`
+corpus beside it.
+
+> **A-SHAPE's 0.2617 and 0.1192 are NOT re-derived** (section 15). A-1's disclosed
+> contingency (21.4 group C) carries over in its own terms: if the restated `war` RS2
+> mean or UAF already sits at or below its frozen bar, A-SHAPE becomes non-binding on
+> that leg, and that is recorded in `data/proj_shape_gate.json` in those words and not
+> repaired by moving the bar.
+
+#### D. The design-day baselines and bands (section 9)
+
+The baselines as registered in 9.1 (vets 5-year `war` sum 2,925.6, year-1 sum 852.0,
+median year-1 0.25, 895 `surNpv` rows, sum of `surNpv` $15,205,338,537, Ohtani
+`warTotal` 32.1 and `surNpv` / `surTotal` $401,046,245 / $409,804,789), as moved since
+by the section 19 row of 2026-09-30 (sum of `surNpv` $13,488.3M to $13,385.9M on 904
+rows, Ohtani `surNpv` $211.7M to $155.3M) and by `410cccce`'s single $/WAR level.
+**All STALE.** Restated from the regenerated `data/mlb_projections.json` and its
+downstream exports after the epoch's rebuild, on the payload a flip's pre and post are
+read against.
+
+> **The BANDS are frozen and are not re-derived**, exactly as 21.4 group D lists them:
+> plus or minus 5 percent, plus or minus 7.5 percent, plus or minus 10 rows, plus or
+> minus 0.05 WAR absolute, plus or minus 20 percent or 2.0 WAR whichever is larger,
+> the 50-row trigger, the Ohtani 4.0 WAR trigger, the Ohtani $75M `surNpv` trigger,
+> the 5-team Team Outlook trigger and the 0.95 Spearman trigger.
+
+9.2's insulation is against THE ARMS, as 21.4 group D recorded for the repair, and it
+does not hold against the epoch: clause (j) of the epoch states that `warY1Champ`
+"moves at step D (the `DEFAULT_PROVIDER` flip) and step E". So `warChamp`,
+`warY1Champ`, the Team Outlook WAR roll-up, `lockedPct` and `byYear[].war` are
+restated once at the epoch, and 9.2's assertion is checked against the restated
+values at each flag flip, exactly as written. The prospect rows price through
+`value_framework`, whose fitted artifact the epoch's step J rewrites; 9.2's claim that no ARM moves them
+stands, and their restated five-year sum (683.1 at registration) is published at the
+epoch rather than asserted here.
+
+#### E. What does NOT go stale, stated so it is not restated by mistake
+
+- Every number sourced from `data/proj_horizon_eval.json` (2026-08-19) and
+  `data/proj_calibration_eval.json` (2026-07-25): M's source edge and therefore
+  M = 0.0065; the three levers' priors and intervals; 3.3's planted effect sizes;
+  5.1's expectation that a B0-GATE cell lands near 40 percent of its published n; and
+  1.2's 65-cell selection disclosure. Part 7 of the epoch names neither file, and L3
+  already makes all of them priors; the epoch adds a second reason and changes nothing
+  about their status.
+- The READ LEDGER in G-0.1. A basis change does not un-read a season.
+- Every number in section 22. Those are measurements on `ewar_v2` that happened; they
+  stay on the record unedited, as priors and never as comparators (23.2 (a)).
+- 4.6b's `season_fraction` 0.947, which moves with the calendar and not with the basis.
+- 4.12's disk figures, a measurement of disk: step E deletes the frame caches, and
+  4.12 already states that the paragraph is replaced by the gate artifact's measured
+  wall time.
+
+### 23.5 What this amendment did NOT change, item by item
+
+- **No threshold in section 15.** `M = 0.0065`; S1b's +0.0130; A-SHAPE's 0.2617 and
+  0.1192; S3's 0.0200; S4's 0.0200 and [0.75, 0.87]; S5's 0.0050; S6's 0.0500; A0's
+  0.0050 and 0.0100; B3's +0.0100; B4's 0.0500; B2's 0.5 ratio and 0.01 WAR floor;
+  5.4a's 0.75 share; CONFIRM's n = 1,000; the VIF's 1.8; Tripwire 2's 10 points;
+  k = 3; the lambda grid {0, 0.05, 0.10, 0.20, 0.40, 0.80}; and every band in section 9.
+  **None is re-derived or re-scaled, in either direction.**
+- **No frame boundary.** DEV = label seasons 2008-2011, GATE = 2012-2014, CONFIRM =
+  2026, Tier-2 = 2015-2025, `first_base = 2003`, and 4.6's cell table stand exactly as
+  written. No base and no label season is added to or removed from any frame.
+- **4.1a's hyperparameters**, exactly as registered, with `LGBM_PARAMS_LONG_H` not
+  reintroduced under any name.
+- **The seeds.** `SEED = 20260611` for the fits; seed 20260918 for the paired bootstrap
+  and the permutation draws.
+- **L1's exclusion.** Every two-sided row stays excluded from every fitted and every
+  scored cell in both arms and from the comparator S's point-in-time refits, with its
+  disclosed consequence.
+- **No primary criterion and no decision rule.** S1 is still the primary; 4.4's two
+  forms and the pre-flight that selects between them; 4.3's comparator set and A0's
+  tolerance branch; 4.6a; 4.6b; 5.1's B0 split; 5.2's order; 5.3; 5.4a; 5.5 with k = 3,
+  5.5a, 5.5b and 5.5c; 12.2's failure responses; and section 11's sentences, other
+  than the basis restatement in 23.2 (d).
+- **The verdict vocabulary** in section 14, closed and unchanged.
+- **The VOID cap** in 4.11a: one void re-run per arm, and a second is VOID_CLOSED.
+- **The banned list** in section 15, every item.
+- **No flag default.** `SERVE_SHAPE_REFIT = False` and `SERVE_BIAS_LEVERS =
+  frozenset()` (8.2), and `MODEL_VERSION` stays derived from them (8.3).
+- **No estimand in section 1, and L2 unchanged.** Each side-keyed model still
+  estimates E[TOTAL player WAR given this side's line], now on `fwar`. No arm may make
+  a claim about two-way accuracy in either direction.
+- **No look date.** ARM A 2026-10-23, B0-GATE 2026-11-06, ARM B 2026-11-13 and
+  2027-02-15 stand. Only the three pre-look artifacts move, and only later (23.2 (f)).
+- **Sections 20, 21 and 22 are not edited**, and no line above this section is edited
+  apart from the header note and the section 19 row this amendment appends.
+- **No new criterion, clause, tripwire or verdict** is added. A gate that gains a
+  clause in an amendment is a gate that was re-registered.
+
+### 23.6 The record
+
+Filed 2026-09-30. No candidate scored, no arm run, no look spent, no threshold moved.
+The row is appended to section 19.
