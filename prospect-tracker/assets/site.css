@@ -2377,6 +2377,9 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 /* Row number on the current sort: generated content, so never in CSV or copy. */
 .mlbx .mlbstats-table tbody { counter-reset: mlbx-rank; }
 .mlbx .mlbstats-table tbody tr { counter-increment: mlbx-rank; }
+/* The season line the Overall caret opens is not a player: it takes no rank, so
+   the row after it keeps its own number (it printed 3 for rank 2 before). */
+.mlbx .mlbstats-table tbody tr.mlbx-seasonrow { counter-increment: none; }
 .mlbx .mlbstats-table tbody td.mlbstats-name::before { content: counter(mlbx-rank); display: inline-block;
   min-width: 2.2em; margin-right: 6px; text-align: right; color: var(--text-tertiary);
   font-family: var(--font-retro-mono); font-size: 10px; font-weight: 400; }
