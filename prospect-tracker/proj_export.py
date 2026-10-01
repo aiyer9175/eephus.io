@@ -39,6 +39,12 @@ keeps the clemens_2026 fraction ladder on purpose (docs/
 ARBITRATION_GATE.md section 6: a never-debuted player has no prior salary
 for the award model to raise off).
 
+Club: a veteran row's `team` is the club that holds him today
+(resolve_current_club). Where the Spotrac contract club differs, the row
+also carries `contract_club`, the club paying the salary. That field is
+AUDIT-ONLY (owner answer M23-2, 2026-09-25): no page reads it, it is
+written on those rows only, and their count is team_basis.n_off_contract_club.
+
 Run: python proj_export.py   (also wired into run_monthly after the FA
 refresh). Reads only caches + committed artifacts; never writes PROSPX
 data (read-only consumer, same contract as the FA module).
@@ -3028,6 +3034,33 @@ def _accountability_block() -> dict:
     }
 
 
+def _off_contract_club(v: dict) -> str | None:
+    """The Spotrac contract club of a veteran row when it differs from the
+    row's `team`, else None. One test for both the count in `team_basis` and
+    the audit-only `contract_club` field, so the two cannot disagree."""
+    _src, ct_club = _TEAM_BASIS_CENSUS.get(v.get("mlbam"), (None, None))
+    if ct_club and v.get("team") and ct_club != v["team"]:
+        return ct_club
+    return None
+
+
+def _stamp_contract_club(vets: list[dict]) -> int:
+    """AUDIT-ONLY (owner answer M23-2, 2026-09-25): write `contract_club`, the
+    Spotrac club paying the salary, on exactly the veteran rows where it
+    differs from the row's current `team`, and nowhere else. No page reads
+    it; it lets an audit see which club a traded player's contract was
+    scraped under without re-running the Spotrac join. Returns the number
+    of rows stamped, which equals team_basis.n_off_contract_club."""
+    n = 0
+    for v in vets:
+        v.pop("contract_club", None)
+        club = _off_contract_club(v)
+        if club:
+            v["contract_club"] = club
+            n += 1
+    return n
+
+
 def _team_basis_block(vets: list[dict]) -> dict:
     """The disclosure for the club every veteran row is counted under, read
     from the census _vet_club kept while the rows were built."""
@@ -3035,9 +3068,9 @@ def _team_basis_block(vets: list[dict]) -> dict:
     by_src: Counter = Counter()
     n_off_contract = 0
     for v in vets:
-        src, ct_club = _TEAM_BASIS_CENSUS.get(v.get("mlbam"), (None, None))
+        src, _ct_club = _TEAM_BASIS_CENSUS.get(v.get("mlbam"), (None, None))
         by_src[src or "none"] += 1
-        if ct_club and v.get("team") and ct_club != v["team"]:
+        if _off_contract_club(v):
             n_off_contract += 1
     return {
         "basis": "current_club",
@@ -3045,6 +3078,8 @@ def _team_basis_block(vets: list[dict]) -> dict:
         "n_rows": len(vets),
         "by_source": {k: by_src.get(k, 0) for k in (*CLUB_SOURCES, "none")},
         "n_off_contract_club": n_off_contract,
+        "contract_club_field": ("Audit-only: each of those rows carries contract_club, "
+                                "the Spotrac club paying the salary. No page reads it."),
         "note": ("The club that holds the player today: MLB's transaction feed for "
                  "a move this season, then the club StatsAPI shows him playing for "
                  "this season, then the Spotrac contract club, then his last "
@@ -3081,6 +3116,9 @@ def build_payload() -> dict:
                 season=FIRST_SEASON - 1)
     except Exception:                                          # noqa: BLE001
         log.warning("current-season overlay skipped (best-effort)", exc_info=True)
+    # Audit-only payer field (M23-2): after every consumer above has read the
+    # rows, so nothing in this build can price or roll up on it.
+    _stamp_contract_club(vets)
     cfg = vf._config()
     # One read of the escalation knob: the payload field and the dollars note
     # both say what _season_value_usd actually applied (0.0 in production).

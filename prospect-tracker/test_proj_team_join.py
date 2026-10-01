@@ -215,3 +215,43 @@ def test_projections_publish_where_each_club_came_from():
     assert tb and tb["basis"] == "current_club"
     assert sum(tb["by_source"].values()) == tb["n_rows"]
     assert tuple(tb["order"]) == pe.CLUB_SOURCES
+
+
+# --- contract_club: the audit-only payer field (owner answer M23-2, 2026-09-25)
+
+
+def test_contract_club_is_stamped_only_where_it_differs(monkeypatch):
+    census = {1: ("feed", "DET"), 2: ("contract", "NYY"), 3: ("season", None),
+              4: ("last_seen", "SEA")}
+    monkeypatch.setattr(pe, "_TEAM_BASIS_CENSUS", census)
+    vets = [{"mlbam": 1, "team": "LAD"}, {"mlbam": 2, "team": "NYY"},
+            {"mlbam": 3, "team": "BOS"}, {"mlbam": 4, "team": None},
+            {"mlbam": 5, "team": "ATL", "contract_club": "stale"}]
+    assert pe._stamp_contract_club(vets) == 1
+    assert vets[0]["contract_club"] == "DET"
+    assert [("contract_club" in v) for v in vets[1:]] == [False] * 4
+    assert pe._team_basis_block(vets)["n_off_contract_club"] == 1
+
+
+def test_served_contract_club_appears_only_where_it_differs():
+    proj = _load("mlb_projections.json")
+    tb = proj.get("team_basis") or {}
+    if "contract_club_field" not in tb:
+        pytest.skip("mlb_projections.json predates the contract_club field")
+    stamped = [v for v in proj.get("vets") or [] if "contract_club" in v]
+    same = [(v["name"], v.get("team")) for v in stamped
+            if not v["contract_club"] or v["contract_club"] == v.get("team")]
+    assert not same, f"contract_club equals the row's club on {len(same)} rows: {same[:8]}"
+    assert len(stamped) == tb["n_off_contract_club"]
+    assert not any("contract_club" in r for r in proj.get("prospects") or [])
+
+
+def test_no_page_reads_contract_club():
+    root = _DATA.parent
+    pages = [p for p in root.glob("assets/**/*.js")]
+    pages += [p for p in root.glob("**/*.html")
+              if not any(part.startswith((".", "_pre_epoch", "node_modules"))
+                         for part in p.relative_to(root).parts)]
+    hits = [str(p.relative_to(root)) for p in pages
+            if "contract_club" in p.read_text(encoding="utf-8", errors="ignore")]
+    assert not hits, f"contract_club is audit-only, but these read it: {hits}"
