@@ -69,6 +69,16 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function num(v) { return (v == null || isNaN(v)) ? null : Number(v); }
   function fInt(v) { var n = num(v); return n == null ? "-" : String(Math.round(n)); }
   // FV / 20-80 grades display rounded UP, never nearest (owner rule; mirrors
@@ -1481,10 +1491,10 @@
 
   function renderPosFit() {
     if (PF_ERROR) {
-      return '<div class="mlbstats-empty pal-load-error" role="alert">The position-fit model failed to load. '
-        + 'Refresh to retry. <button type="button" class="chip" id="pf-retry">Retry</button></div>';
+      return pxState("failed", "The position-fit model failed to load. "
+        + 'Refresh to retry. <button type="button" class="chip" id="pf-retry">Retry</button>', "pal-load-error");
     }
-    if (!PF) return empty("Loading the position-fit model…");
+    if (!PF) return pxState("loading", esc("Loading the position-fit model…"));
     var all = PF.rows || [];
     if (!all.length) return empty("No qualified hitters in the position-fit model yet.");
     var tabs = [["misplaced", "Misplaced hitters"], ["down", "Move down the spectrum"],
@@ -1551,18 +1561,18 @@
     }
     if (!DATA) {
       root.innerHTML = LOAD_ERROR
-        ? '<div class="mlbstats-empty pal-load-error" role="alert">Data failed to load. Refresh to retry; '
-          + 'if it persists the nightly build is mid-run. '
-          + '<button type="button" class="chip" id="pal-retry">Retry</button></div>'
+        ? pxState("failed", "Data failed to load. Refresh to retry; "
+          + "if it persists the nightly build is mid-run. "
+          + '<button type="button" class="chip" id="pal-retry">Retry</button>', "pal-load-error")
         // Names the ACTUAL source mix. This read "from Statcast", which is only
         // the arsenal and velocity half: role, rates and platoon splits are
         // StatsAPI (through bullpen_export) and the conversion WAR column is
         // Baseball-Reference.
-        : empty("The Alchemy Lab is being computed from Statcast arsenals, StatsAPI roles and "
-                + "platoon splits, and run-frame WAR. Check back shortly.");
+        : pxState("unmeasured", esc("The Alchemy Lab is being computed from Statcast arsenals, StatsAPI roles and "
+                + "platoon splits, and run-frame WAR. Check back shortly."));
       var retry = document.getElementById("pal-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = empty("Loading…");
+        root.innerHTML = pxState("loading", esc("Loading…"));
         load();
       });
       return;

@@ -69,6 +69,16 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function num(v, nd) {
     if (v === null || v === undefined || v !== v) return "";
     return Number(v).toFixed(nd === undefined ? 1 : nd);
@@ -218,7 +228,7 @@
       : "";
     return '<div class="hof-tablewrap mlbstats-scroll"><table class="hof-table"><thead><tr>' +
       '<th class="hof-c-rank mlbstats-col-rank">#</th>' + head + "</tr></thead><tbody>" +
-      (body || '<tr><td colspan="14" class="hof-empty">No players match.</td></tr>') +
+      (body || '<tr><td colspan="14">' + pxState("empty", "No players match.") + "</td></tr>") +
       "</tbody></table></div>" + more +
       '<p class="hof-count">' + rows.length + " players shown of " +
       (DATA[state.band] || []).length + " in this band.</p>";
@@ -406,10 +416,10 @@
     var root = el("hof-app-root");
     if (!root) return;
     if (LOAD_ERROR) {
-      root.innerHTML = '<p class="hof-note">' + esc(LOAD_ERROR) + "</p>";
+      root.innerHTML = pxState("failed", esc(LOAD_ERROR));
       return;
     }
-    if (!DATA) { root.innerHTML = '<p class="hof-note">Loading.</p>'; return; }
+    if (!DATA) { root.innerHTML = pxState("loading", "Loading."); return; }
     if (state.section === "method") { root.innerHTML = renderMethod(); return; }
     if (state.section === "franchises") { root.innerHTML = renderFranchises(); return; }
     if (state.section === "blocked") {

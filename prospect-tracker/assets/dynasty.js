@@ -146,6 +146,16 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
     });
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function num(v, d) { return (v == null || isNaN(v)) ? "-" : Number(v).toFixed(d == null ? 1 : d); }
   function f0(v) { return num(v, 0); }
   // EVERY NAME OPENS THE IN-PAGE CARD. It is assembled from the payload this
@@ -422,7 +432,7 @@
         hcols.map(function (c) { return cardCell(c, row, rk); }).join("") +
         '<div class="mlb-tape"><div class="mlb-tape-inner">' + chips + "</div></div></div>";
     }).join("");
-    if (!body) return '<div class="dyn-note">' + esc(opts.empty || "No rows to show yet.") + "</div>";
+    if (!body) return pxState(opts.emptyKind || "empty", esc(opts.empty || "No rows to show yet."));
     var head = '<div class="mlb-card-head ff-card-head dyn-card-head" style="grid-template-columns:' + tracks + '">' +
       hcols.map(function (c) { return sortBtn(c, st); }).join("") + "</div>";
     var bar = tcols.length
@@ -524,7 +534,8 @@
         stripeOf: dynStripe,
         hrefOf: function (d) { return hashFor(d.mlbam); },
         empty: filtersOn() ? "No prospect matches the current filter."
-          : "No dynasty rows yet; they fill on the nightly build."
+          : "No dynasty rows yet; they fill on the nightly build.",
+        emptyKind: filtersOn() ? "empty" : "unmeasured"
       });
   }
   function renderCallups() {
@@ -676,9 +687,8 @@
       loadRank();
       if (!S.rank) {
         return S.rankErr
-          ? '<div class="dyn-error" role="alert"><strong>The Fantasy Rank failed to load.</strong> ' +
-            esc(S.rankErr) + "</div>"
-          : '<div class="dyn-note">Loading the Fantasy Rank.</div>';
+          ? pxState("failed", "<strong>The Fantasy Rank failed to load.</strong> " + esc(S.rankErr), "dyn-error")
+          : pxState("loading", "Loading the Fantasy Rank.");
       }
     }
     var all = rankedRows();
@@ -752,9 +762,8 @@
       loadRank();
       if (!S.rank) {
         return poolBar() + explain + form + (S.rankErr
-          ? '<div class="dyn-error" role="alert"><strong>The Fantasy Rank failed to load.</strong> ' +
-            esc(S.rankErr) + "</div>"
-          : '<div class="dyn-note">Loading the Fantasy Rank.</div>');
+          ? pxState("failed", "<strong>The Fantasy Rank failed to load.</strong> " + esc(S.rankErr), "dyn-error")
+          : pxState("loading", "Loading the Fantasy Rank."));
       }
     }
     var list = rankedRows().map(function (d) {
@@ -1179,8 +1188,8 @@
   // ---- boot -----------------------------------------------------------------
   function errorState(msg) {
     var r = root();
-    if (r) r.innerHTML = '<div class="dyn-error" role="alert"><strong>Data failed to load.</strong> ' +
-      esc(msg || "") + ' <button type="button" id="dyn-retry" class="dyn-btn">Retry</button></div>';
+    if (r) r.innerHTML = pxState("failed", "<strong>Data failed to load.</strong> " +
+      esc(msg || "") + ' <button type="button" id="dyn-retry" class="dyn-btn">Retry</button>', "dyn-error");
     var rb = el("dyn-retry");
     if (rb) rb.addEventListener("click", boot);
   }

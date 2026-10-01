@@ -185,6 +185,16 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
     });
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function num(v, d) { return (v == null || isNaN(v)) ? "-" : Number(v).toFixed(d == null ? 1 : d); }
   // EVERY NAME OPENS THE IN-PAGE CARD, not the merged MLB page. The card is
   // assembled out of the payload already in this browser, so it works for every
@@ -1215,8 +1225,8 @@
   // ---- boot / load states ---------------------------------------------------
   function errorState(msg) {
     var r = root();
-    if (r) r.innerHTML = '<div class="rd-error" role="alert"><strong>Data failed to load.</strong> ' +
-      esc(msg || "") + ' <button type="button" id="rd-retry" class="rd-scorebtn">Retry</button></div>';
+    if (r) r.innerHTML = pxState("failed", "<strong>Data failed to load.</strong> " +
+      esc(msg || "") + ' <button type="button" id="rd-retry" class="rd-scorebtn">Retry</button>', "rd-error");
     var rb = el("rd-retry"); if (rb) rb.addEventListener("click", boot);
   }
   function notReady() {

@@ -183,6 +183,16 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
 
   /* Two-magnitude money, sign BEFORE the $. Missing data is DASH, never a
      dash glyph. */
@@ -351,19 +361,18 @@
     var root = el("arb-app-root");
     if (!root) return;
     if (boardErr) {
-      root.innerHTML = '<div class="state-message is-error" role="alert">' +
-        "Data failed to load. The nightly build may be mid-run." +
-        ' <button type="button" class="chip" id="arb-retry">Retry</button></div>';
+      root.innerHTML = pxState("failed", "Data failed to load. The nightly build may be mid-run." +
+        ' <button type="button" class="chip" id="arb-retry">Retry</button>');
       var b = el("arb-retry");
       if (b) b.onclick = function () { boardErr = false; load(); };
       return;
     }
     if (!board) {
-      root.innerHTML = '<div class="state-message is-loading">Loading the arbitration board</div>';
+      root.innerHTML = pxState("loading", "Loading the arbitration board");
       return;
     }
     if (!board.rows || !board.rows.length) {
-      root.innerHTML = '<div class="mlbstats-empty">The arbitration board is not built yet. Check back shortly.</div>';
+      root.innerHTML = pxState("unmeasured", "The arbitration board is not built yet. Check back shortly.");
       return;
     }
     var teams = {};
@@ -483,12 +492,11 @@
     var root = el("arb-panel-history");
     if (!root) return;
     if (histErr) {
-      root.innerHTML = '<div class="state-message is-error" role="alert">' +
-        "The history data failed to load.</div>";
+      root.innerHTML = pxState("failed", "The history data failed to load.");
       return;
     }
     if (!hist) {
-      root.innerHTML = '<div class="state-message is-loading">Loading arbitration history</div>';
+      root.innerHTML = pxState("loading", "Loading arbitration history");
       return;
     }
     var rows = hist.rows || [];
@@ -571,7 +579,7 @@
     var root = el("arb-panel-teams");
     if (!root) return;
     if (!board || !board.rows) {
-      root.innerHTML = '<div class="state-message is-loading">Loading</div>';
+      root.innerHTML = pxState("loading", "Loading");
       return;
     }
     var by = {};

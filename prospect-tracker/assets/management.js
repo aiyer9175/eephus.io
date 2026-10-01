@@ -47,6 +47,16 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function num(v, nd) {
     if (v === null || v === undefined || v !== v) return "";
     return Number(v).toFixed(nd === undefined ? 2 : nd);
@@ -255,8 +265,8 @@
     return (SHARD.key === key && SHARD.data) ? SHARD.data : null;
   }
   function shardNote() {
-    if (SHARD.error) return '<p class="mgmt-note">' + esc(SHARD.error) + "</p>";
-    if (SHARD.loading) return '<p class="mgmt-note">Loading the decisions of ' + esc(state.team) + " " + esc(state.cseason) + ".</p>";
+    if (SHARD.error) return pxState("unmeasured", esc(SHARD.error));
+    if (SHARD.loading) return pxState("loading", "Loading the decisions of " + esc(state.team) + " " + esc(state.cseason) + ".");
     return "";
   }
 
@@ -817,7 +827,7 @@
     var floors = c.floors || {};
     var fams = d.families || {};
     var out = '<section class="mgmt-block">' + controls(false);
-    if (!row) return out + '<p class="mgmt-note">No club-season row for ' + esc(state.team) + " " + esc(state.cseason) + ".</p></section>";
+    if (!row) return out + pxState("unmeasured", "No club-season row for " + esc(state.team) + " " + esc(state.cseason) + ".") + "</section>";
     var sapi = ((c.statsapi_codes || {})[row.club]) || "";
     var famLine = summedFamilies().map(function (f) {
       var v = row["mwpa_" + f];
@@ -1122,8 +1132,8 @@
   function render() {
     var root = el("mgmt-app-root");
     if (!root) return;
-    if (LOAD_ERROR) { root.innerHTML = '<p class="mgmt-note">' + esc(LOAD_ERROR) + "</p>"; return; }
-    if (!DATA) { root.innerHTML = '<p class="mgmt-note">Loading.</p>'; return; }
+    if (LOAD_ERROR) { root.innerHTML = pxState("failed", esc(LOAD_ERROR)); return; }
+    if (!DATA) { root.innerHTML = pxState("loading", "Loading."); return; }
     var s = state.section;
     if (s === "gate") root.innerHTML = renderGate() + renderBlocked();
     else if (s === "reference") root.innerHTML = renderReference();

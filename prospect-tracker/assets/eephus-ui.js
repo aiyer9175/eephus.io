@@ -938,7 +938,13 @@
     if (!inner) return;
     inner.innerHTML = '<div class="eph-formmsg info">Loading discussion…</div>';
     getComments().then(function (res) { renderForum(res.comments || [], res.thread); })
-      .catch(function () { inner.innerHTML = '<div class="eph-formmsg err">Could not load the discussion.</div>'; });
+      .catch(function () {
+        // The failed board (assets/eephus-state.js, plan 5.7 PX-12) when the
+        // page carries the state component; the old red line where it does not.
+        var S = window.EephusState;
+        inner.innerHTML = S ? S.html("failed", "Could not load the discussion.")
+          : '<div class="eph-formmsg err" role="alert">Could not load the discussion.</div>';
+      });
   }
 
   function sortComments(list) {

@@ -81,6 +81,16 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   // A winter's total spend runs to billions and "$4095M" is a number nobody
   // reads; $/WAR never leaves the millions. One formatter, two magnitudes.
   function money(usd) {
@@ -404,13 +414,13 @@
     if (rows) rows.style.display = "none";
     el.hidden = false;
     if (!DATA) {
-      el.innerHTML = `<div class="state-message is-loading">Loading the $/WAR series&hellip;</div>`;
+      el.innerHTML = pxState("loading", "Loading the $/WAR series&hellip;");
       await ensureData();
       if (!isActive()) return;
     }
     if (!DATA) {
-      el.innerHTML = `<div class="state-message is-error" role="alert">The $/WAR series
-        failed to load. <a href="#view=board">Back to the board</a>.</div>`;
+      el.innerHTML = pxState("failed", `The $/WAR series
+        failed to load. <a href="#view=board">Back to the board</a>.`);
       return;
     }
     render(el);

@@ -59,6 +59,16 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function num(v) { return (v === null || v === undefined || isNaN(v)) ? null : Number(v); }
   // Three decimals, ties AWAY from zero. toFixed() alone inherits the binary
   // representation, so the stored 1.2085 prints as 1.208 (the double sits a
@@ -422,7 +432,7 @@
       + viz(rows)
       + (rows.length
           ? '<div class="mlbstats-scroll">' + boardTable(rows) + "</div>"
-          : '<div class="mlbstats-empty">No venue matches that filter.</div>');
+          : pxState("empty", "No venue matches that filter."));
   }
 
   // ---- league spread --------------------------------------------------------
@@ -674,16 +684,15 @@
     var root = document.getElementById("parks-app-root");
     if (!root) return;
     if (LOAD_ERROR) {
-      root.innerHTML = '<div class="state-message is-error">'
-        + '<div class="state-message-title">Park factors did not load</div>'
-        + '<div class="state-message-body">The venue table lives at <code>/data/milb_park_factors.json</code>. '
-        + '<button type="button" class="chip" id="pk-retry">Retry</button></div></div>';
+      root.innerHTML = pxState("failed", '<strong>Park factors did not load</strong> '
+        + 'The venue table lives at <code>/data/milb_park_factors.json</code>. '
+        + '<button type="button" class="chip" id="pk-retry">Retry</button>');
       var rb = document.getElementById("pk-retry");
       if (rb) rb.addEventListener("click", load);
       return;
     }
     if (!DATA) {
-      root.innerHTML = '<div class="mlbstats-empty">Loading venues...</div>';
+      root.innerHTML = pxState("loading", "Loading venues...");
       return;
     }
     root.innerHTML = section === "method" ? renderMethod()

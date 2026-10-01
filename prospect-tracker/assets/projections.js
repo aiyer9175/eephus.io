@@ -52,6 +52,16 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
 
   // ORG abbreviation -> ESPN logo slug (same map as build_site/prospx).
   const ESPN_SLUGS = {
@@ -1969,7 +1979,7 @@
       + keyLad.cuts.map((c, i) => `<span class="tk-${EephusTiers.TIERS[i]}">${keyFmt(c)}</span>`).join("<i>/</i>")
       + `<i>/</i><span class="tk-${EephusTiers.TIERS[5]}">${keyTail}${keyFmt(keyLad.cuts[4])}</span></div>`;
     const table = `<div class="proj-board-wrap"><table class="proj-board-table${pros ? " is-pros" : ""}" data-export data-export-title="MLB Projections">${head}<tbody>${body}</tbody></table>`
-      + (body ? "" : `<div class="fa-sub proj-empty">No players match.</div>`) + `</div>`;
+      + (body ? "" : pxState("empty", "No players match.")) + `</div>`;
     root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main proj-board-main">` + boardHead + tierKey + tools + table
       + (list.length > state.limit ? `<div class="proj-more-wrap"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : "")
       + warMap + `</div>${projBoardSidebar(list)}</div>`;
@@ -3142,7 +3152,7 @@
     const back = document.getElementById("mlbp-back");
     if (back) back.onclick = (e) => { e.preventDefault(); state.player = null; syncToURL(); render(); };
     if (!DETAIL) {
-      root.innerHTML = `<div class="state-message is-loading">Loading player&hellip;</div>`;
+      root.innerHTML = pxState("loading", "Loading player&hellip;");
       if (!DETAIL_LOADING) {
         DETAIL_LOADING = true;
         fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
@@ -3150,7 +3160,7 @@
           .then(d => { DETAIL = d; if (state.player) renderPlayer(state.player); })
           .catch(() => {
             DETAIL_LOADING = false;
-            root.innerHTML = `<div class="state-message is-error" role="alert">Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="mlbp-detail-retry" type="button">Retry</button></div>`;
+            root.innerHTML = pxState("failed", `Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="mlbp-detail-retry" type="button">Retry</button>`);
             const retry = document.getElementById("mlbp-detail-retry");
             if (retry) retry.onclick = () => { if (state.player) renderPlayer(state.player); };
           });
@@ -3379,7 +3389,7 @@
   function loadData() {
     const root = document.getElementById("proj-rows");
     if (!root) return;
-    root.innerHTML = `<div class="state-message is-loading">Loading projections&hellip;</div>`;
+    root.innerHTML = pxState("loading", "Loading projections&hellip;");
     // photo_ctx.json rides its OWN chain, not a Promise.all with the board:
     // (a) its failure is non-fatal and must never reach the board's catch, and
     // (b) the projections smoke test drives this file in py_mini_racer with
@@ -3398,7 +3408,7 @@
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => { DATA = d; render(); })
       .catch(() => {
-        root.innerHTML = `<div class="state-message is-error" role="alert">Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="proj-retry" type="button">Retry</button></div>`;
+        root.innerHTML = pxState("failed", `Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="proj-retry" type="button">Retry</button>`);
         const retry = document.getElementById("proj-retry");
         if (retry) retry.onclick = loadData;
       });

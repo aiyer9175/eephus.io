@@ -60,6 +60,16 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
 
   // ORG abbreviation -> ESPN logo slug (same map as build_site/prospx).
   const ESPN_SLUGS = {
@@ -303,7 +313,7 @@
       state.classYear = Number(b.dataset.faClass) || null;
       state.player = null; syncToURL(); render();
     });
-    rows.innerHTML = `<div class="state-message is-loading">Loading free-agency data&hellip;</div>`;
+    rows.innerHTML = pxState("loading", "Loading free-agency data&hellip;");
     const clsName = state.classYear ? `fa_class_${state.classYear}` : "fa_class";
     try {
       await Promise.all([load(clsName), load("fa_archive"), load("fa_meta")]);
@@ -312,9 +322,9 @@
         rows.innerHTML = `<div class="state-message">The ${state.classYear - 1}-${String(state.classYear).slice(2)} class is not exported yet. <a href="#" onclick="location.hash='';return false;">Back to the current class</a>.</div>`;
         return;
       }
-      rows.innerHTML = `<div class="state-message is-error" role="alert">Data failed to load. If it
+      rows.innerHTML = pxState("failed", `Data failed to load. If it
         persists, the nightly build is mid-run.
-        <button class="chip" id="fa-retry" type="button">Retry</button></div>`;
+        <button class="chip" id="fa-retry" type="button">Retry</button>`);
       const retry = document.getElementById("fa-retry");
       if (retry) retry.onclick = () => render();   // load() re-fetches: failures are not cached
       return;
@@ -1046,7 +1056,7 @@
     const _vm = faValueMap(members);
     const valMap = _vm ? `<details class="fa-valmap"><summary>Value map &middot; rational value vs predicted price (current filters)</summary><div class="fa-valmap-wrap" data-export-chart data-export-title="FA value map - rational value vs predicted price">${_vm}</div></details>` : "";
     const table = `<div class="fa-board-wrap"><table class="fa-board-table" data-export data-export-title="MLB Free Agency class board">${head}<tbody>${body}</tbody></table>`
-      + (body ? "" : `<div class="fa-sub fa-empty">No free agents match these filters.</div>`) + `</div>`;
+      + (body ? "" : pxState("empty", "No free agents match these filters.")) + `</div>`;
 
     rows.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main fa-board-tmain">`
       + headEyebrow + filterBar + tools + table + valMap

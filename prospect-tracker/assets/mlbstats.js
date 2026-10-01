@@ -29,6 +29,16 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function num(v, d) { return (v == null || isNaN(v)) ? null : Number(v); }
   // The site's null marker. fa.js and projections.js both render an absent
   // value as this; mlbstats rendered an EMPTY CELL, so a missing number and a
@@ -1382,12 +1392,12 @@
   }); } catch (e) { /* no document events */ }
 
   // ---- the window board ------------------------------------------------------
-  function winLoading(txt) { return '<div class="mlbstats-empty">' + esc(txt) + "&hellip;</div>"; }
+  function winLoading(txt) { return pxState("loading", esc(txt) + "&hellip;"); }
   function winFailed(sec, txt) {
-    return '<div class="mlbstats-empty mlbstats-load-error" role="alert">' + esc(txt)
+    return pxState("failed", esc(txt)
       + " Refresh to retry; if it persists the nightly build is mid-run. "
       + '<button type="button" class="chip" data-mlbrange="' + esc(sec)
-      + ':current">Back to Current</button></div>';
+      + ':current">Back to Current</button>', "mlbstats-load-error");
   }
   // Returns "" when the window went away while this render was building it,
   // which is the caller's signal to render the season board instead. Nothing
@@ -2366,16 +2376,16 @@
   function renderRelieverHistory() {
     var pills = yearsRow("bullpen");
     if (HISTORY_ERROR) {
-      return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
-        + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
-        + '<button type="button" class="chip" id="mlbstats-history-retry">Retry</button></div>';
+      return pills + pxState("failed",
+        "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        + '<button type="button" class="chip" id="mlbstats-history-retry">Retry</button>', "mlbstats-load-error");
     }
     if (!HISTORY) {
       loadHistory();
-      return pills + '<div class="mlbstats-empty">Loading the ' + esc(relSeason) + " season leaderboard&hellip;</div>";
+      return pills + pxState("loading", "Loading the " + esc(relSeason) + " season leaderboard&hellip;");
     }
     if (HISTORY_LOADING) {
-      return pills + '<div class="mlbstats-empty">Loading the ' + esc(relSeason) + " season leaderboard&hellip;</div>";
+      return pills + pxState("loading", "Loading the " + esc(relSeason) + " season leaderboard&hellip;");
     }
     var yr = historyYear();
     if (!yr || !yr.relievers || !yr.relievers.length) {
@@ -2656,14 +2666,14 @@
     if (!root) return;
     if (!DATA) {
       root.innerHTML = LOAD_ERROR
-        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
-          + 'if it persists the nightly build is mid-run. '
-          + '<button type="button" class="chip" id="mlbstats-retry">Retry</button></div>'
-        : '<div class="mlbstats-empty">Bullpen Leaderboards are being computed from MLB play-by-play. '
-          + "Check back shortly.</div>";
+        ? pxState("failed", "Data failed to load. Refresh to retry; "
+          + "if it persists the nightly build is mid-run. "
+          + '<button type="button" class="chip" id="mlbstats-retry">Retry</button>', "mlbstats-load-error")
+        : pxState("unmeasured", 'Bullpen Leaderboards are being computed from MLB play-by-play. '
+          + "Check back shortly.");
       var retry = document.getElementById("mlbstats-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        root.innerHTML = pxState("loading", "Loading&hellip;");
         load();
       });
       return;
@@ -3239,16 +3249,16 @@
   function renderStarterHistory() {
     var pills = yearsRow("starters");
     if (STARTER_HISTORY_ERROR) {
-      return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
-        + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
-        + '<button type="button" class="chip" id="mlbstats-starter-history-retry">Retry</button></div>';
+      return pills + pxState("failed",
+        "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        + '<button type="button" class="chip" id="mlbstats-starter-history-retry">Retry</button>', "mlbstats-load-error");
     }
     if (!STARTER_HISTORY) {
       loadStarterHistory();
-      return pills + '<div class="mlbstats-empty">Loading the ' + esc(starterSeason) + " season leaderboard&hellip;</div>";
+      return pills + pxState("loading", "Loading the " + esc(starterSeason) + " season leaderboard&hellip;");
     }
     if (STARTER_HISTORY_LOADING) {
-      return pills + '<div class="mlbstats-empty">Loading the ' + esc(starterSeason) + " season leaderboard&hellip;</div>";
+      return pills + pxState("loading", "Loading the " + esc(starterSeason) + " season leaderboard&hellip;");
     }
     var yr = starterHistoryYear();
     if (!yr || !yr.starters || !yr.starters.length) {
@@ -3362,14 +3372,14 @@
     if (!root) return;
     if (!starterData) {
       root.innerHTML = starterErr
-        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
-          + 'if it persists the nightly build is mid-run. '
-          + '<button type="button" class="chip" id="mlbstats-starter-retry">Retry</button></div>'
-        : '<div class="mlbstats-empty">Starter Leaderboards are being computed from MLB play-by-play. '
-          + "Check back shortly.</div>";
+        ? pxState("failed", "Data failed to load. Refresh to retry; "
+          + "if it persists the nightly build is mid-run. "
+          + '<button type="button" class="chip" id="mlbstats-starter-retry">Retry</button>', "mlbstats-load-error")
+        : pxState("unmeasured", 'Starter Leaderboards are being computed from MLB play-by-play. '
+          + "Check back shortly.");
       var retry = document.getElementById("mlbstats-starter-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        root.innerHTML = pxState("loading", "Loading&hellip;");
         loadStarters();
       });
       return;
@@ -3772,16 +3782,16 @@
   function renderHitterHistory() {
     var pills = yearsRow("hitters");
     if (HITTER_HISTORY_ERROR) {
-      return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
-        + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
-        + '<button type="button" class="chip" id="mlbstats-hitter-history-retry">Retry</button></div>';
+      return pills + pxState("failed",
+        "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        + '<button type="button" class="chip" id="mlbstats-hitter-history-retry">Retry</button>', "mlbstats-load-error");
     }
     if (!HITTER_HISTORY) {
       loadHitterHistory();
-      return pills + '<div class="mlbstats-empty">Loading the ' + esc(hitterSeason) + " season leaderboard&hellip;</div>";
+      return pills + pxState("loading", "Loading the " + esc(hitterSeason) + " season leaderboard&hellip;");
     }
     if (HITTER_HISTORY_LOADING) {
-      return pills + '<div class="mlbstats-empty">Loading the ' + esc(hitterSeason) + " season leaderboard&hellip;</div>";
+      return pills + pxState("loading", "Loading the " + esc(hitterSeason) + " season leaderboard&hellip;");
     }
     var yr = hitterHistoryYear();
     if (!yr || !yr.hitters || !yr.hitters.length) {
@@ -4085,14 +4095,14 @@
     if (!root) return;
     if (!hitterData) {
       root.innerHTML = hitterErr
-        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
-          + 'if it persists the nightly build is mid-run. '
-          + '<button type="button" class="chip" id="mlbstats-hitter-retry">Retry</button></div>'
-        : '<div class="mlbstats-empty">Hitter Leaderboards are being computed from the MLB season. '
-          + "Check back shortly.</div>";
+        ? pxState("failed", "Data failed to load. Refresh to retry; "
+          + "if it persists the nightly build is mid-run. "
+          + '<button type="button" class="chip" id="mlbstats-hitter-retry">Retry</button>', "mlbstats-load-error")
+        : pxState("unmeasured", 'Hitter Leaderboards are being computed from the MLB season. '
+          + "Check back shortly.");
       var retry = document.getElementById("mlbstats-hitter-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        root.innerHTML = pxState("loading", "Loading&hellip;");
         loadHitters();
       });
       return;
@@ -4433,14 +4443,14 @@
     // blanks the board.
     if (leverageSeason !== "current") {
       if (leverageHistoryErr) {
-        return yearsRow("leverage") + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
-          + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
-          + '<button type="button" class="chip" id="mlbstats-leverage-history-retry">Retry</button></div>';
+        return yearsRow("leverage") + pxState("failed",
+          "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+          + '<button type="button" class="chip" id="mlbstats-leverage-history-retry">Retry</button>', "mlbstats-load-error");
       }
       if (!leverageHistory || leverageHistoryLoading) {
         if (!leverageHistory) loadLeverageHistory();
-        return yearsRow("leverage") + '<div class="mlbstats-empty">Loading the '
-          + esc(leverageSeason) + " season leaderboard&hellip;</div>";
+        return yearsRow("leverage") + pxState("loading", "Loading the "
+          + esc(leverageSeason) + " season leaderboard&hellip;");
       }
       if (!leverageHistory.history || !leverageHistory.history[leverageSeason]) {
         return yearsRow("leverage") + '<div class="mlbstats-empty">No leaderboard for the '
@@ -4469,14 +4479,14 @@
     if (!root) return;
     if (!leverageData) {
       root.innerHTML = leverageErr
-        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
-          + 'if it persists the nightly build is mid-run. '
-          + '<button type="button" class="chip" id="mlbstats-leverage-retry">Retry</button></div>'
-        : '<div class="mlbstats-empty">Leverage Leaderboards are being computed from the MLB win-probability '
-          + "feed. Check back shortly.</div>";
+        ? pxState("failed", "Data failed to load. Refresh to retry; "
+          + "if it persists the nightly build is mid-run. "
+          + '<button type="button" class="chip" id="mlbstats-leverage-retry">Retry</button>', "mlbstats-load-error")
+        : pxState("unmeasured", 'Leverage Leaderboards are being computed from the MLB win-probability '
+          + "feed. Check back shortly.");
       var retry = document.getElementById("mlbstats-leverage-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        root.innerHTML = pxState("loading", "Loading&hellip;");
         loadLeverage();
       });
       return;
@@ -4866,12 +4876,12 @@
     if (!DEFENSE_HISTORY && !DEFENSE_HISTORY_LOADING && !DEFENSE_HISTORY_ERROR) loadDefenseHistory();
     var pills = yearsRow("defense");
     if (DEFENSE_HISTORY_ERROR) {
-      return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
-        + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
-        + '<button type="button" class="chip" id="mlbstats-defense-history-retry">Retry</button></div>';
+      return pills + pxState("failed",
+        "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        + '<button type="button" class="chip" id="mlbstats-defense-history-retry">Retry</button>', "mlbstats-load-error");
     }
     if (!DEFENSE_HISTORY || DEFENSE_HISTORY_LOADING) {
-      return pills + '<div class="mlbstats-empty">Loading the ' + esc(defenseSeason) + " season leaderboard&hellip;</div>";
+      return pills + pxState("loading", "Loading the " + esc(defenseSeason) + " season leaderboard&hellip;");
     }
     var yr = defenseHistoryYear();
     if (!yr || !yr.fielders || !yr.fielders.length) {
@@ -4990,13 +5000,13 @@
     if (!root) return;
     if (!defenseData) {
       root.innerHTML = defenseErr
-        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
-          + 'if it persists the nightly build is mid-run. '
-          + '<button type="button" class="chip" id="mlbstats-defense-retry">Retry</button></div>'
-        : '<div class="mlbstats-empty">Defense Leaderboards are being computed. Check back shortly.</div>';
+        ? pxState("failed", "Data failed to load. Refresh to retry; "
+          + "if it persists the nightly build is mid-run. "
+          + '<button type="button" class="chip" id="mlbstats-defense-retry">Retry</button>', "mlbstats-load-error")
+        : pxState("unmeasured", "Defense Leaderboards are being computed. Check back shortly.");
       var retry = document.getElementById("mlbstats-defense-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        root.innerHTML = pxState("loading", "Loading&hellip;");
         loadDefense();
       });
       return;
@@ -5675,13 +5685,13 @@
     if (!root) return;
     if (!warRows().length) {
       root.innerHTML = warErr
-        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
-          + 'if it persists the nightly build is mid-run. '
-          + '<button type="button" class="chip" id="mlbstats-war-retry">Retry</button></div>'
-        : '<div class="mlbstats-empty">The eWAR board is being computed. Check back shortly.</div>';
+        ? pxState("failed", "Data failed to load. Refresh to retry; "
+          + "if it persists the nightly build is mid-run. "
+          + '<button type="button" class="chip" id="mlbstats-war-retry">Retry</button>', "mlbstats-load-error")
+        : pxState("unmeasured", "The eWAR board is being computed. Check back shortly.");
       var retry = document.getElementById("mlbstats-war-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        root.innerHTML = pxState("loading", "Loading&hellip;");
         loadWar();
       });
       return;

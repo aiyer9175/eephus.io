@@ -147,6 +147,16 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
     });
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function num(v, d) { return (v == null || isNaN(v)) ? "-" : Number(v).toFixed(d == null ? 1 : d); }
   function money(v) { return (v == null || isNaN(v)) ? "-" : ("$" + Math.round(v).toLocaleString()); }
   function hrefFor(mlbam) {
@@ -632,11 +642,13 @@
   };
   function emptyPanel(d) {
     var k = EMPTY_KINDS[d.empty_reason_kind] || null;
-    return '<div class="dfs-empty' + (k && k.bad ? " is-broken" : "") + '" role="status">' +
-      "<strong>" + esc(k ? k.head : "No slate to price") + "</strong>" +
-      "<span>" + esc(d.empty_reason || "") + "</span>" +
-      "<span>" + esc(k ? k.tail : "This page rebuilds every day.") + "</span>" +
-      "</div>";
+    // An outage draws the failed board; a quiet day draws the empty one. The
+    // box keeps role=status either way: the reason sentence is not an alert.
+    return pxState(k && k.bad ? "failed" : "empty",
+      "<strong>" + esc(k ? k.head : "No slate to price") + "</strong> " +
+      esc(d.empty_reason || "") + " " +
+      esc(k ? k.tail : "This page rebuilds every day."),
+      { cls: "dfs-empty" + (k && k.bad ? " is-broken" : ""), role: "status" });
   }
 
   // ---- the draftable slate, on the viewer's clock (owner decision 5) --------
@@ -1431,10 +1443,10 @@
       // The payload never arrived. The tabs are still wired, so the reader gets
       // a control that responds instead of four buttons that do nothing, and
       // the same honest message under every one of them.
-      html = '<div class="dfs-error" role="alert"><strong>Slate failed to load.</strong> ' +
+      html = pxState("failed", "<strong>Slate failed to load.</strong> " +
         esc(S.error) + ". The daily build may be mid-run. Every tab, the optimizer included, " +
         'needs the slate. <button type="button" id="dfs-retry" ' +
-        'class="dfs-btn">Retry</button></div>';
+        'class="dfs-btn">Retry</button>', "dfs-error");
     } else if (d.empty_reason) {
       html = emptyPanel(d) + (d.empty_reason_kind === "slate_closed" ? offBoardNote() : "");
     } else if (S.section === "value") html = renderValue();

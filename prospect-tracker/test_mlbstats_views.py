@@ -1625,7 +1625,8 @@ def test_a_failed_fetch_offers_the_retry_the_other_five_boards_offer():
     a full page reload, on the only section with no Retry. The loader is its
     own function now, and the guard sits on init, so the chip can rerun it."""
     html = _render_war("#section=war", status=502)
-    assert 'class="mlbstats-empty mlbstats-load-error" role="alert"' in html
+    # the failed pixel state (plan 5.7, PX-12) keeps the alert role and the hook class
+    assert 'class="px-state is-failed mlbstats-load-error" role="alert"' in html
     assert '<button type="button" class="chip" id="mlbstats-war-retry">Retry</button>' in html
     i = JS.index("function renderWar(")
     assert "loadWar();" in JS[i:JS.index("function initWar(")], "the Retry runs no loader"

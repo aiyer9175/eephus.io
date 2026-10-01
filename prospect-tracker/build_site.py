@@ -69,6 +69,10 @@ _NAV_VER = _asset_ver("assets/eephus-nav.js")
 # order, so the head position makes "the ruler is defined before a board renders"
 # deterministic rather than lucky.
 _TIERS_VER = _asset_ver("assets/eephus-tiers.js")
+# The pixel state component (final-pass plan 5.7, PX-11): rides the head block
+# beside the ruler for the same reason, since a module paints its loading line
+# the moment its own deferred script runs, before ACCOUNT_SCRIPTS.
+_STATE_VER = _asset_ver("assets/eephus-state.js")
 _ACCT_VER = _asset_ver("assets/eephus-account.js")
 # The pixel icon sprite (final-pass plan 5.7, PX-02), referenced by external
 # <use href="/assets/eephus-icons.svg?v=<hash>#i-key"> from _ico() below.
@@ -494,6 +498,35 @@ def _masthead_icon(key: str) -> str:
     16 x 16 drawing at 2x, before the title text; the stage chip after the
     title is unchanged."""
     return _ico(key, 32)
+
+
+# The pixel state scenes (final-pass plan 5.7, PX-11), byte-equal to the ART
+# table in assets/eephus-state.js (test_state_component.py pins the pair). The
+# build-time pages (the homepage rail and lead) draw their empty states from
+# here; every module draws its own through window.EephusState.
+_PX_STATE_ART = {
+    "empty": '<svg class="px-art" aria-hidden="true" width="64" height="32" viewBox="0 0 32 16" shape-rendering="crispEdges"><path class="s" d="M10 3h12v1h-12zM6 4h4v1h-4zM22 4h4v1h-4zM4 5h2v1h-2zM26 5h2v1h-2zM3 6h1v2h-1zM28 6h1v2h-1zM4 8h2v1h-2zM26 8h2v1h-2zM6 9h4v1h-4zM22 9h4v1h-4zM10 10h12v1h-12zM4 13h2v1h-2zM4 14h16v1h-16zM4 15h2v1h-2z"/><path class="k" d="M20 13h9v1h-9zM20 14h10v1h-10zM20 15h9v1h-9z"/></svg>',
+    "unmeasured": '<svg class="px-art" aria-hidden="true" width="64" height="32" viewBox="0 0 32 16" shape-rendering="crispEdges"><path class="s" d="M2 1h28v1h-28zM2 2h1v9h-1zM29 2h1v9h-1zM2 11h28v1h-28zM8 12h2v3h-2zM22 12h2v3h-2zM0 15h32v1h-32z"/><path class="k" d="M10 6h5v1h-5zM16 6h5v1h-5z"/></svg>',
+    "failed": '<svg class="px-art" aria-hidden="true" width="64" height="32" viewBox="0 0 32 16" shape-rendering="crispEdges"><path class="s" d="M2 1h28v1h-28zM2 2h1v9h-1zM29 2h1v9h-1zM2 11h28v1h-28zM8 12h2v3h-2zM22 12h2v3h-2zM0 15h32v1h-32z"/><path class="k" d="M13 3h5v1h-5zM13 4h1v2h-1zM13 6h4v1h-4zM13 7h1v2h-1zM13 9h5v1h-5z"/></svg>',
+}
+
+
+def _px_state(kind: str, msg_html: str, cls: str = "") -> str:
+    """One still pixel state box: empty, unmeasured or failed (the loader only
+    ever runs client side). msg_html is already escaped; the art is
+    aria-hidden and the message carries the meaning."""
+    if kind not in _PX_STATE_ART:
+        raise ValueError(f"no still pixel state {kind!r}")
+    role = ' role="alert"' if kind == "failed" else ""
+    return (f'<div class="px-state is-{kind}{" " + cls if cls else ""}"{role}>'
+            f'{_PX_STATE_ART[kind]}<div class="px-state-msg">{msg_html}</div></div>')
+
+
+# The 404 foul ball (PX-13): the wordmark's arc hooks left of the foul pole and
+# out of the park while the board reads 404. One shot of 0.9 s, CSS step-end
+# (site.css .px-foul); the base style is the final frame, so reduced motion and
+# a screenshot both see the finished play.
+_PX_404_ART = ('<svg class="px-art px-foul" aria-hidden="true" focusable="false" width="128" height="56" viewBox="0 0 64 28" shape-rendering="crispEdges"><path class="s" d="M30 2h1v1h-1zM29 3h1v1h-1zM31 3h1v1h-1zM30 4h1v1h-1zM36 4h25v1h-25zM29 5h1v1h-1zM31 5h1v1h-1zM36 5h1v13h-1zM60 5h1v13h-1zM30 6h1v1h-1zM29 7h1v1h-1zM31 7h1v1h-1zM30 8h1v1h-1zM29 9h1v1h-1zM31 9h1v1h-1zM36 18h25v1h-25zM42 19h1v1h-1zM54 19h1v1h-1zM0 20h28v1h-28zM29 20h35v1h-35zM0 21h1v5h-1zM8 21h1v5h-1zM16 21h1v5h-1zM24 21h1v5h-1zM32 21h1v5h-1zM40 21h1v5h-1zM48 21h1v5h-1zM56 21h1v5h-1zM0 26h28v1h-28zM29 26h35v1h-35zM0 27h64v1h-64z"/><path class="k" d="M28 1h1v26h-1zM43 8h1v1h-1zM47 8h3v1h-3zM55 8h1v1h-1zM42 9h2v1h-2zM46 9h1v3h-1zM50 9h1v1h-1zM54 9h2v1h-2zM41 10h1v1h-1zM43 10h1v2h-1zM49 10h2v1h-2zM53 10h1v1h-1zM55 10h1v2h-1zM40 11h1v1h-1zM48 11h1v1h-1zM50 11h1v3h-1zM52 11h1v1h-1zM40 12h5v1h-5zM46 12h2v1h-2zM52 12h5v1h-5zM43 13h1v2h-1zM46 13h1v1h-1zM55 13h1v2h-1zM47 14h3v1h-3z"/><rect class="t" x="23" y="16" width="1" height="1" style="animation-duration:0.04s"/><rect class="t" x="22" y="14" width="1" height="1" style="animation-duration:0.07s"/><rect class="t" x="21" y="11" width="1" height="1" style="animation-duration:0.11s"/><rect class="t" x="20" y="9" width="1" height="1" style="animation-duration:0.16s"/><rect class="t" x="19" y="7" width="1" height="1" style="animation-duration:0.21s"/><rect class="t" x="17" y="5" width="1" height="1" style="animation-duration:0.26s"/><rect class="t" x="16" y="3" width="1" height="1" style="animation-duration:0.32s"/><rect class="t" x="14" y="1" width="1" height="1" style="animation-duration:0.38s"/><rect class="t" x="11" y="0" width="1" height="1" style="animation-duration:0.45s"/><rect class="t" x="4" y="0" width="1" height="1" style="animation-duration:0.67s"/><rect class="t" x="1" y="2" width="1" height="1" style="animation-duration:0.72s"/><rect class="b" x="23" y="18" width="2" height="2" style="animation-delay:0.00s;animation-duration:0.07s"/><rect class="b" x="21" y="13" width="2" height="2" style="animation-delay:0.07s;animation-duration:0.07s"/><rect class="b" x="19" y="9" width="2" height="2" style="animation-delay:0.15s;animation-duration:0.07s"/><rect class="b" x="17" y="5" width="2" height="2" style="animation-delay:0.22s;animation-duration:0.07s"/><rect class="b" x="15" y="2" width="2" height="2" style="animation-delay:0.30s;animation-duration:0.07s"/><rect class="b" x="13" y="0" width="2" height="2" style="animation-delay:0.38s;animation-duration:0.07s"/><rect class="b" x="11" y="-1" width="2" height="2" style="animation-delay:0.45s;animation-duration:0.07s"/><rect class="b" x="8" y="-2" width="2" height="2" style="animation-delay:0.53s;animation-duration:0.07s"/><rect class="b" x="5" y="-2" width="2" height="2" style="animation-delay:0.60s;animation-duration:0.07s"/><rect class="b" x="2" y="-1" width="2" height="2" style="animation-delay:0.67s;animation-duration:0.07s"/><rect class="b z" x="-1" y="1" width="2" height="2" style="animation-duration:0.75s"/></svg>')
 
 
 def _prospx_subnav_section(href: str) -> str:
@@ -1120,6 +1153,7 @@ def page(title: str, active: str, body: str, description: str = "",
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 <script src="/assets/eephus-nav.js?v={_NAV_VER}" defer></script>
 <script src="/assets/eephus-tiers.js?v={_TIERS_VER}" defer></script>
+<script src="/assets/eephus-state.js?v={_STATE_VER}" defer></script>
 {ACCOUNT_CSS_LINK}
 </head>
 <body class="eephus-page">
@@ -3530,7 +3564,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # used to repeat on every row.
     sub = "".join(f'<a href="{href}">{_ico(_prospx_subnav_section(href), 12)}{html.escape(label)}</a>'
                   for label, href in PROSPX_SUBNAV)
-    feed = _feed_html(events, 12) or '<div class="feed-item" style="color:#6f8a76;">No recent activity.</div>'
+    feed = _feed_html(events, 12) or _px_state("empty", "No recent activity.")
     spotlight = _spotlight_html(players, spotlight_buckets)
     search = ('<input class="sb-search" type="search" placeholder="Search prospects…" aria-label="Search prospects" '
               "onkeydown=\"if(event.key==='Enter'&&this.value.trim()){location.href='/prospx/#q='+encodeURIComponent(this.value.trim());}\">")
@@ -3608,7 +3642,8 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
             '</article>'
         )
     else:
-        lead = '<article class="lead-story no-img"><div><div class="lead-kicker">Latest</div><h1>No articles yet</h1></div></article>'
+        lead = ('<article class="lead-story no-img"><div><div class="lead-kicker">Latest</div>'
+                + _px_state("empty", "<strong>No articles yet</strong>") + '</div></article>')
     sec = articles[1:4]
     if sec:
         secondary = ('<div class="secondary-stories">' + "".join(
@@ -6295,6 +6330,7 @@ def build_404() -> str:
     body = (
         '<div class="section-head"><h1>404: page not found</h1>'
         '<span class="section-sub">it does not exist, or it moved</span></div>'
+        f'<div class="px-404">{_PX_404_ART}</div>'
         '<div class="gl-intro">'
         f'<p><a href="/">Home</a> · {rail}</p>'
         '<p>Player search: <strong>Ctrl+K</strong> (⌘K on Mac).</p>'

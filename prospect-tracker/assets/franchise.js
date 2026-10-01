@@ -45,6 +45,16 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function isNum(v) { return v !== null && v !== undefined && v === v && v !== "" && isFinite(Number(v)); }
   function n1(v) { return isNum(v) ? Number(v).toFixed(1) : ""; }
   function n2(v) { return isNum(v) ? Number(v).toFixed(2) : ""; }
@@ -776,7 +786,7 @@
     var root = el("franchise-app-root");
     if (!root) return;
     if (!DATA) {
-      root.innerHTML = '<p class="fr-note">' + esc(LOAD_ERROR || "Loading") + "</p>";
+      root.innerHTML = LOAD_ERROR ? pxState("failed", esc(LOAD_ERROR)) : pxState("loading", esc("Loading"));
       return;
     }
     var m = el("franchise-masthead");

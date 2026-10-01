@@ -219,6 +219,16 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
     });
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function num(v, d) { return (v == null || isNaN(v)) ? "-" : Number(v).toFixed(d == null ? 1 : d); }
   function pct(v, d) { return (v == null || isNaN(v)) ? "-" : (Number(v) * 100).toFixed(d == null ? 1 : d) + "%"; }
   function signed(v, d) {
@@ -265,8 +275,8 @@
   }
   function note(text) { return '<div class="bt-note">' + text + "</div>"; }
   function empty(title, why) {
-    return '<div class="bt-empty"><strong>' + esc(title) + "</strong>" +
-      (why ? "<span>" + esc(why) + "</span>" : "") + "</div>";
+    return pxState("empty", "<strong>" + esc(title) + "</strong>" +
+      (why ? " " + esc(why) : ""));
   }
   // ---- sortable tables (owner ask 2026-09-05) --------------------------------
   // Every data table the module renders sorts on a header click, in both
@@ -1512,10 +1522,10 @@
       // number this module could publish.
       var why = (m && m.reason) || d.pick_reason || "";
       return '<div class="bt-pick bt-pick-empty">' + hd +
-        '<div class="bt-pick-sel bt-dim">Nothing qualifies today</div>' +
+        pxState("empty", '<div class="bt-pick-sel bt-dim">Nothing qualifies today</div>' +
         "<p>" + esc(why) + "</p>" +
         "<p>The floor is " + floorText(m) + ", the same for every slot, and it is " +
-        "never lowered to make a " + selNoun() + " appear.</p></div>";
+        "never lowered to make a " + selNoun() + " appear.</p>") + "</div>";
     }
     // THE REDACTED SLOT (D16). The preview slice keeps the whole trust surface
     // (validation state, record, publish blockers) and withholds the SELECTION
@@ -1713,8 +1723,8 @@
   // drawable, because a blank plot reads as a broken page.
   // ===========================================================================
   function chartAbsent(title, why) {
-    return '<div class="bt-chart-absent"><strong>' + esc(title) +
-      ": not measured yet.</strong> " + esc(why) + "</div>";
+    return pxState("unmeasured", "<strong>" + esc(title) +
+      ": not measured yet.</strong> " + esc(why));
   }
 
   // The reliability curve: predicted vs actual per decile, the diagonal as
@@ -3970,9 +3980,9 @@
       default: html = renderPick();
     }
     if (S.error && S.section !== "calculators" && S.section !== "mybets") {
-      html = '<div class="bt-error" role="alert"><strong>The betting payload failed to load.</strong> ' +
+      html = pxState("failed", "<strong>The betting payload failed to load.</strong> " +
         esc(S.error) + ". The nightly build may be mid-run. " +
-        '<button type="button" id="bt-retry" class="bt-btn">retry</button></div>' + html;
+        '<button type="button" id="bt-retry" class="bt-btn">retry</button>', "bt-error") + html;
     }
     // The share chip rides the two board sections only; there is nothing to
     // share about a calculator.
@@ -4181,8 +4191,6 @@
     ".bt-pos{color:var(--accent-green,#3a9)}.bt-neg{color:var(--accent-red,#c55)}",
     ".bt-dim{color:var(--text-tertiary)}",
     ".bt-note{font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);border-left:3px solid var(--accent-cyan,#2a7);padding:8px 10px;margin:8px 0}",
-    ".bt-empty{display:flex;flex-direction:column;gap:4px;border:1px dashed var(--border,#333);padding:14px;margin:10px 0;color:var(--text-secondary);font-size:12.5px}",
-    ".bt-empty strong{color:var(--text-primary);font-size:13px}",
     ".bt-error{border:1px solid var(--accent-red,#c55);padding:12px;margin:8px 0;color:var(--text-primary);background:var(--bg-secondary);font-size:12.5px}",
     ".bt-nopick{border:1px solid var(--accent-gold,#a80);padding:14px;margin:10px 0;background:var(--bg-secondary)}",
     ".bt-nopick-hd{font:700 14px/1 var(--font-retro,monospace);color:var(--text-primary);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}",
@@ -4197,6 +4205,8 @@
     // the heading, and loses only the accent that says "here is a pick".
     ".bt-pick-empty{border-color:var(--border,#333)}",
     ".bt-pick-empty .bt-pick-hd{color:var(--text-tertiary)}",
+    ".bt-pick-empty .px-state{margin:10px 0 0}",
+    ".bt-pick-empty .px-state p{margin:6px 0 0}",
     ".bt-pick-redacted{border-color:var(--accent-lilac,#a8f)}",
     ".bt-pick-redacted .bt-pick-hd{color:var(--accent-lilac,#a8f)}",
     ".bt-numchip-info{border-style:dashed}",
@@ -4353,8 +4363,6 @@
     ".bt-svg-pos{fill:var(--accent-green,#3a9)}",
     ".bt-svg-neg{fill:var(--accent-red,#c55)}",
     ".bt-cell-meter .bt-svg{max-width:130px;display:inline-block;vertical-align:middle}",
-    ".bt-chart-absent{border:1px dashed var(--border,#333);padding:8px 10px;margin:8px 0;font-size:12px;color:var(--text-secondary)}",
-    ".bt-chart-absent strong{color:var(--text-primary)}",
     ".bt-sha{font:600 10px/1 var(--font-retro-mono,var(--font-retro,monospace));color:var(--text-secondary);word-break:break-all}",
     ".bt-unpriced{white-space:normal}",
     // ---- Dugout context (In-Game Management) ------------------------------

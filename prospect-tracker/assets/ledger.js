@@ -62,6 +62,16 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
+  // loading, empty, unmeasured or failed, around a message this file escapes.
+  // The bare box is the fallback for a test harness that loads this file alone.
+  function pxState(kind, msg, opts) {
+    var S = typeof window !== "undefined" && window.EephusState;
+    if (S) return S.html(kind, msg, opts);
+    var cls = typeof opts === "string" ? opts : (opts && opts.cls) || "";
+    return '<div class="px-state is-' + kind + (cls ? " " + cls : "") + '"' +
+      (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
+  }
   function isNum(v) { return v !== null && v !== undefined && v === v && v !== ""; }
   function num(v, nd) { return isNum(v) ? Number(v).toFixed(nd === undefined ? 1 : nd) : ""; }
   function pct(v, nd) { return isNum(v) ? (Number(v) * 100).toFixed(nd === undefined ? 1 : nd) + "%" : ""; }
@@ -166,7 +176,7 @@
   function shardLine(code, previewNote) {
     var s = shardOf(code);
     if (s) return s.vintage_mismatch ? '<p class="ledger-count">' + flag(copy("shard_vintage")) + "</p>" : "";
-    if (shardFailed(code)) return dark("Per-club rows", copy("shard_failed"));
+    if (shardFailed(code)) return pxState("failed", "<strong>" + esc("Per-club rows") + "</strong> " + esc(copy("shard_failed")));
     return '<p class="ledger-count">' + esc(previewNote || copy("preview_note")) + "</p>";
   }
   function clubOf(code) { return DATA && DATA.clubs ? DATA.clubs[code] : null; }
@@ -1283,7 +1293,7 @@
     var root = el("ledger-app-root");
     if (!root) return;
     if (!DATA) {
-      root.innerHTML = '<p class="ledger-note">' + esc(LOAD_ERROR || "Loading") + "</p>";
+      root.innerHTML = LOAD_ERROR ? pxState("failed", esc(LOAD_ERROR)) : pxState("loading", esc("Loading"));
       return;
     }
     var m = el("ledger-masthead");
