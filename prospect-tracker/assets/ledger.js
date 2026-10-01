@@ -185,7 +185,7 @@
   var SECTION_RE = /(?:^#|[#&])section=(league|club|rules|method)\b/;
   var TEAM_RE = /(?:^#|[#&])team=([A-Z]{2,3})\b/;
   var SEASON_RE = /(?:^#|[#&])season=(20\d\d)\b/;
-  var BLOCK_RE = /(?:^#|[#&])block=(payroll|cbt|commitments|contracts|arbitration|surplus|farm|fa|prospects|graduates|trade)\b/;
+  var BLOCK_RE = /(?:^#|[#&])block=(payroll|cbt|commitments|contracts|arbitration|surplus|farm|fa|prospects|graduates|trade|options)\b/;
   function hashNow() {
     try { return (typeof location !== "undefined" && location.hash) || ""; } catch (e) { return ""; }
   }
@@ -347,7 +347,7 @@
       // Why the two footer means disagree: one sentence from the export,
       // pinned to the measured cause (the fetch stamps), never typed here.
       (copy("footer_means_note") ? '<p class="ledger-count ledger-foot-note">' + esc(copy("footer_means_note")) + "</p>" : "") +
-      renderQuadrant() + "</div>" +
+      renderQuadrant() + "</div>" + renderOptionsLeague() +
       '<p class="ledger-count">' + gl("Cost+", "cost_plus") + " pool: n " + esc(pool.n) + ", mean " + esc(num(pool.mean_index, 1)) +
       ", sd " + esc(num(pool.sd_index, 1)) + "; " + esc(copy("cost_plus_basis")) + ". " + esc(copy("cost_plus_registry")) + "</p>" +
       '<p class="ledger-note">' + esc(copy("surplus_ev")) + " " + esc(copy("surplus_no_tier")) + "</p>";
@@ -922,6 +922,86 @@
       '<p class="ledger-note">' + esc(copy("realized_sentence")) + "</p>";
     return out;
   }
+  // ---- the option and opt-out calendar (owner answer 2026-09-25) ------------
+  // One row per pending option or opt-out on this winter's free-agent class.
+  // The salary at stake prints plain on its own row and is never added up; the
+  // /fa/ price and P(exercise) print only where the export priced the option,
+  // and every other row says "terms only" and why.
+  var OPT_TYPE = { club_option: "club option", conditional_club_option: "conditional club option",
+                   player_option: "player option", opt_out: "opt-out", mutual_option: "mutual option", option: "option" };
+  function optCells(r) {
+    var C = "options.calendar", key = cv(C, r, "key"), state = cv(C, r, "state");
+    var sb = copy("options_salary_basis") || {}, st = copy("options_state") || {}, why = copy("options_unpriced") || {};
+    var proj = cv(C, r, "in_projections") ? ' <a class="ledger-src" href="/projections/#player=' + encodeURIComponent(key) + '">proj</a>' : "";
+    var sal = cv(C, r, "salary_usd");
+    var dec = state === "pending"
+      ? (cv(C, r, "decision_by") ? "by " + esc(cv(C, r, "decision_by")) : esc(copy("options_decision_unknown")))
+      : esc(st[state] || state) + (cv(C, r, "decided_on") ? " " + esc(cv(C, r, "decided_on")) : "");
+    var priced = !!cv(C, r, "priced");
+    var reason = cv(C, r, "unpriced_reason");
+    return {
+      player: '<a href="/fa/#player=' + encodeURIComponent(key) + '">' + esc(cv(C, r, "name")) + "</a> <span class=\"ledger-src\">" + esc(cv(C, r, "pos")) + "</span>" + proj,
+      type: esc(OPT_TYPE[cv(C, r, "type")] || cv(C, r, "type")),
+      holder: esc(cv(C, r, "holder") || ""),
+      stake: isNum(sal) ? esc(money(sal)) : '<span class="ledger-dark-cell">' + esc(copy("options_no_strike_short")) + "</span>",
+      basis: isNum(sal) ? esc(sb[cv(C, r, "salary_basis")] || "") : "",
+      decision: dec,
+      p: priced ? esc(pct(cv(C, r, "p_exercise"), 0)) : '<span class="ledger-flag" title="' + esc(why[reason] || "") + '">' + esc(copy("options_terms_only")) + "</span>",
+      value: priced ? esc(money(cv(C, r, "option_value_usd"))) : "",
+      why: priced ? "" : esc(why[reason] || "")
+    };
+  }
+  function optTable(rows, withClub) {
+    var head = "<tr>" + (withClub ? "<th>Club</th>" : "") + '<th class="lo-txt">Player</th><th class="lo-txt">Type</th>' +
+      '<th class="lc-col-hide lo-txt">Holder</th><th>At stake</th><th class="lc-col-hide lo-txt">Basis</th><th class="lc-col-hide lo-left">Decision</th><th>' + gl("P(exercise)", "enter_prob") + "</th>" +
+      '<th class="lc-col-hide">Option value</th><th class="lc-col-hide lo-txt">Why no price</th></tr>';
+    var body = rows.map(function (x) {
+      var o = optCells(x.r);
+      return "<tr>" + (withClub ? '<td><a href="#section=club&team=' + esc(x.club) + '&block=options" data-llink="1">' + esc(x.club) + "</a></td>" : "") +
+        '<td class="lo-txt">' + o.player + '</td><td class="lo-txt">' + o.type + '</td><td class="lc-col-hide lo-txt">' + o.holder + "</td><td>" + o.stake +
+        '</td><td class="lc-col-hide lo-txt">' + o.basis + '</td><td class="lc-col-hide lo-left">' + o.decision +
+        "</td><td>" + o.p + '</td><td class="lc-col-hide">' + o.value + '</td><td class="lc-col-hide lo-txt lo-why">' + o.why + "</td></tr>";
+    }).join("");
+    return '<div class="ledger-scroll"><table class="ledger-table ledger-options"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
+  }
+  function reasonLine(reasons) {
+    var why = copy("options_unpriced") || {}, ks = Object.keys(reasons || {});
+    if (!ks.length) return "";
+    return '<p class="ledger-count">' + esc(copy("options_terms_only")) + ": " + ks.map(function (k) { return esc(reasons[k]) + " where " + esc(why[k] || k); }).join("; ") + ".</p>";
+  }
+  function optNotes() {
+    return '<p class="ledger-count">' + esc(copy("options_decision_rule")) + "</p>" +
+      '<p class="ledger-count">' + esc(copy("options_p_exercise_basis")) + " " + esc(copy("options_value_basis")) + "</p>" +
+      '<p class="ledger-count">Source: ' + esc(copy("options_source")) + "; " + esc(copy("options_not_summed")) + "; " + esc(copy("options_resolved_note")) + ".</p>";
+  }
+  function renderOptions(d) {
+    var O = d.options_calendar;
+    if (!O) return "";
+    var out = '<p class="ledger-note">' + esc(copy("options_lede")) + "</p>";
+    if (!O.rows.length) return out + '<p class="ledger-count">' + esc(copy("options_none")) + " " + esc(copy("options_later")) + "</p>";
+    out += '<p class="ledger-count">' + esc(O.n) + " rows, " + esc(O.n_priced) + " priced by /fa/. " + esc(copy("options_later")) + "</p>";
+    var reasons = {};
+    O.rows.forEach(function (r) { var k = cv("options.calendar", r, "unpriced_reason"); if (k) reasons[k] = (reasons[k] || 0) + 1; });
+    out += optTable(O.rows.map(function (r) { return { r: r }; }), false);
+    return out + reasonLine(reasons) + optNotes();
+  }
+  function renderOptionsLeague() {
+    var S = DATA.league.options_calendar;
+    if (!S) return "";
+    var rows = [];
+    clubs().forEach(function (c) {
+      var O = clubOf(c).options_calendar;
+      (O ? O.rows : []).forEach(function (r) { rows.push({ club: c, r: r }); });
+    });
+    var dec = S.decision || {};
+    var reasons = S.unpriced_by_reason || {};
+    return '<section class="ledger-block ledger-options-league" id="ledger-options-league"><div class="ledger-eyebrow">Calendar</div><h2>' + esc(copy("options_title")) + "</h2>" +
+      '<p class="ledger-note">' + esc(copy("options_lede")) + "</p>" +
+      "<details><summary>" + esc(S.n_rows) + " " + esc(copy("options_league_summary")) + " " + esc(S.n_clubs) + " clubs, " + esc(S.n_priced) + " priced by /fa/" +
+      (dec.decision_by ? ", due by " + esc(dec.decision_by) : "") + "</summary>" +
+      optTable(rows, true) +
+      reasonLine(reasons) + optNotes() + "</details></section>";
+  }
   // A generic dt/dd for every column of a row (the expander lists them all),
   // formatted by the column's suffix: _mm in $M, _usd in dollars, booleans as
   // words. Nothing is summed here.
@@ -1079,6 +1159,7 @@
     out += block("prospects", "C7a", gl("Farm ledger", "farm_dollar"), 12, renderProspects(d));
     out += block("graduates", "C7b", gl("Graduates", "debuted_value"), 12, renderGraduates(d));
     out += block("fa", "C8", "Free agency ledger", 12, renderFa(d));
+    out += block("options", "C8a", esc(copy("options_title")), 12, renderOptions(d));
     out += block("links", "C9", "Into every module", 12, renderLinks(d));
     out += "</div>" + '<p class="ledger-foot">' + esc(copy("club_foot")) + " " + esc(copy("no_payroll_line")) + "</p>";
     return out;

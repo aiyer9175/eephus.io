@@ -2002,3 +2002,136 @@ def test_the_cost_plus_divisor_is_never_served_as_one_figure(d):
     js = JS.read_text(encoding="utf-8")
     body = js[js.index("function costParts("):js.index("function costTitle(")]
     assert "P.guaranteed_usd + " not in body and "+ P.arb_usd" not in body
+
+
+# --------------------------------------------------------------------------
+# The option and opt-out calendar (owner answer 2026-09-25, census M09-07)
+# --------------------------------------------------------------------------
+
+def test_the_options_calendar_carries_every_pending_class_option_once_at_its_club(d):
+    """Every fa_class member with a pending option lands on exactly one club's
+    calendar, with the class row's option price as the salary at stake and a
+    price only where fa_export band-priced the row."""
+    import ledger_export as LE
+    from trades import canonical_org
+    fa = json.loads((ROOT / "data" / "fa_class.json").read_text(encoding="utf-8"))
+    cols = d["columns"]["options.calendar"]
+    assert cols == LE.COLUMNS["options.calendar"]
+    i = {n: k for k, n in enumerate(cols)}
+    seen = {}
+    for code, c in d["clubs"].items():
+        O = c["options_calendar"]
+        assert O["n"] == len(O["rows"]) and O["n_priced"] == sum(1 for r in O["rows"] if r[i["priced"]])
+        assert set(O) == {"rows", "n", "n_priced"}, "counts only: no dollar total on the block"
+        for r in O["rows"]:
+            assert r[i["key"]] not in seen, r[i["key"]]
+            seen[r[i["key"]]] = (code, r)
+    pending = [m for m in fa["members"] if m.get("status") == "pending_option"]
+    assert pending, "the class carries pending options"
+    for m in pending:
+        code, r = seen[m["key"]]
+        assert code == canonical_org(m["from"]), m["key"]
+        assert r[i["type"]] == m["type"] and r[i["holder"]] == LE.OPTION_HOLDER[m["type"]]
+        assert r[i["salary_usd"]] == (int(m["optPrice"]) if m.get("optPrice") else None), m["key"]
+        assert r[i["salary_basis"]] == ("remaining_guarantee" if m["type"] == "opt_out" else "option_year_salary")
+        band = str(m.get("enterProbSrc") or "").startswith("band_priced") and m.get("optValue") is not None
+        assert r[i["priced"]] is band, m["key"]
+        if band:
+            p = m["enterProb"] if m["type"] == "opt_out" else 1 - m["enterProb"]
+            assert abs(r[i["p_exercise"]] - round(p, 3)) < 1e-9 and r[i["option_value_usd"]] == int(m["optValue"]), m["key"]
+            assert r[i["unpriced_reason"]] is None
+        else:
+            assert r[i["p_exercise"]] is None and r[i["option_value_usd"]] is None
+            assert r[i["unpriced_reason"]] in LE.OPTION_UNPRICED_REASONS, m["key"]
+        assert r[i["state"]] == "pending"
+        assert r[i["decision_by"]] == d["league"]["options_calendar"]["decision"]["decision_by"]
+    S = d["league"]["options_calendar"]
+    assert S["n_rows"] == len(seen) and S["n_priced"] == sum(1 for _c, r in seen.values() if r[i["priced"]])
+    assert S["n_unjoined"] == 0
+    assert sum(S["unpriced_by_reason"].values()) == S["n_rows"] - S["n_priced"]
+    assert d["sections"]["options_calendar"]["live"] is True
+    assert f"{S['n_priced']} of {S['n_rows']}" in d["sections"]["options_calendar"]["note"]
+    for path, k, _v in _walk(d["league"]["options_calendar"]):
+        assert not str(k).endswith("_usd"), (path, "the league summary carries counts, never a dollar figure")
+
+
+def test_the_options_calendar_rule_on_a_small_class():
+    """The pure builder: P(exercise) is 1 - P(enter) for a club or player option
+    and P(enter) for an opt-out; mutual, conditional, unprojected and strikeless
+    rows carry terms and a reason; a resolution event wins over the row status;
+    a row whose club is not one of the thirty is counted, never placed."""
+    import ledger_export as LE
+    band = {"enterProbSrc": "band_priced_club_side", "optValue": 5_000_000}
+
+    def mem(key, club, otype, price, p_enter, priced=False, **kw):
+        m = {"key": key, "name": key.upper(), "from": club, "status": "pending_option", "type": otype,
+             "optPrice": price, "enterProb": p_enter}
+        if priced:
+            m.update(band)
+        m.update(kw)
+        return m
+
+    members = [
+        mem("a", "TBR", "club_option", 20_000_000, 0.2, True),
+        mem("b", "SDP", "opt_out", 32_000_000, 0.6, True),
+        mem("c", "SDP", "player_option", 4_500_000, 0.35, True),
+        mem("d", "CHC", "mutual_option", 8_000_000, 0.85),
+        mem("e", "HOU", "conditional_club_option", 13_400_000, 0.5),
+        mem("f", "CLE", "club_option", 7_300_000, 0.69, noProj="no_recent_seasons"),
+        mem("g", "ARI", "mutual_option", 0, 0.85),
+        {"key": "h", "name": "H", "from": "TBR", "status": "locked", "type": "ufa"},
+        {"key": "i", "name": "I", "from": "MIL", "status": "locked", "type": "ufa"},
+        mem("j", "Cuba", "club_option", 1_000_000, None),
+    ]
+    events = [{"type": "option_declined", "key": "i", "date": "2026-11-03", "optPrice": 9_000_000},
+              {"type": "option_exercised", "key": "a", "date": "2026-11-02"},
+              {"type": "signing", "key": "h", "date": "2026-11-20"}]
+    clubs = {"TBR", "SDP", "CHC", "HOU", "CLE", "ARI", "MIL"}
+    by, S = LE.options_calendar(members, events, {"a", "b"}, "2026-11-05", clubs)
+    i = {n: k for k, n in enumerate(LE.COLUMNS["options.calendar"])}
+    rows = {r[0]: r for rs in by.values() for r in rs}
+    assert set(rows) == set("abcdefgi") and S["n_unjoined"] == 1, "the UFA h never enters; j's club is not one of the thirty"
+    a, b, c = rows["a"], rows["b"], rows["c"]
+    assert a[i["state"]] == "exercised" and a[i["decided_on"]] == "2026-11-02" and a[i["decision_by"]] is None
+    assert abs(a[i["p_exercise"]] - 0.8) < 1e-9, "a club option is exercised when the player does not enter"
+    assert abs(b[i["p_exercise"]] - 0.6) < 1e-9 and b[i["salary_basis"]] == "remaining_guarantee"
+    assert abs(c[i["p_exercise"]] - 0.65) < 1e-9 and c[i["holder"]] == "player"
+    assert [rows[k][i["unpriced_reason"]] for k in "defg"] == ["mutual", "conditional", "no_projection", "mutual"]
+    assert rows["g"][i["salary_usd"]] is None, "a zero option price is not on file, never $0"
+    assert rows["d"][i["p_exercise"]] is None and rows["d"][i["option_value_usd"]] is None, "a fixed prior is not a price"
+    assert rows["i"][i["state"]] == "declined" and rows["i"][i["type"]] == "option" and rows["i"][i["salary_usd"]] == 9_000_000
+    assert b[i["decision_by"]] == "2026-11-05" and a[i["in_projections"]] is True and c[i["in_projections"]] is False
+    assert [r[0] for r in by["TBR"]] == ["a"] and [r[0] for r in by["SDP"]] == ["b", "c"], "pending first, then the larger salary"
+    assert S["n_rows"] == 8 and S["n_priced"] == 3 and S["by_state"] == {"declined": 1, "exercised": 1, "pending": 6}
+    assert S["unpriced_by_reason"] == {"mutual": 2, "conditional": 1, "no_projection": 1, "no_band": 1}
+
+
+def test_the_decision_day_reads_the_season_calendar_on_disk(tmp_path):
+    import ledger_export as LE
+    assert LE.option_decision_by("2026-10-31") == "2026-11-05" and LE.option_decision_by(None) is None
+    assert LE.postseason_end_on_disk(2026, tmp_path) is None, "no cached calendar, no date"
+    (tmp_path / "season_2026.json").write_text(json.dumps({"seasons": [
+        {"seasonId": "2026", "regularSeasonStartDate": "2026-03-25", "regularSeasonEndDate": "2026-09-27",
+         "postSeasonEndDate": "2026-10-31"}]}), encoding="utf-8")
+    assert LE.postseason_end_on_disk(2026, tmp_path) == "2026-10-31"
+    assert LE.postseason_end_on_disk(2025, tmp_path) is None
+
+
+def test_the_options_calendar_copy_names_its_sources_and_its_limits(d):
+    import ledger_export as LE
+    cp = d["copy"]
+    for k in ("options_title", "options_lede", "options_decision_rule", "options_p_exercise_basis", "options_value_basis",
+              "options_not_summed", "options_none", "options_later", "options_source", "options_terms_only",
+              "options_decision_unknown", "options_resolved_note", "options_league_summary",
+              "options_no_strike_short"):
+        assert cp.get(k), k
+        assert chr(0x2014) not in cp[k] and chr(0x2013) not in cp[k], k
+    assert set(cp["options_unpriced"]) == set(LE.OPTION_UNPRICED_REASONS)
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    v = next(m["verdict"] for m in reg["models"] if m["model_id"] == "fa_penter")
+    assert f"fa_penter, {v}" in cp["options_p_exercise_basis"], "the registry verdict is quoted, never typed"
+    assert "never added" in cp["options_value_basis"] and "never added" in cp["options_not_summed"]
+    dec = d["league"]["options_calendar"]["decision"]
+    if dec["ws_scheduled_last_day"]:
+        assert dec["ws_scheduled_last_day"] in cp["options_decision_rule"]
+    assert any("options calendar" in s for s in d["what_this_page_does_not_claim"])

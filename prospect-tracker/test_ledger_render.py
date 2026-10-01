@@ -964,7 +964,7 @@ def test_the_debuted_trade_rows_take_no_ladder_and_print_their_source():
 
 
 def test_the_new_block_keys_are_anchored_in_the_router():
-    assert "(?:^#|[#&])block=(payroll|cbt|commitments|contracts|arbitration|surplus|farm|fa|prospects|graduates|trade)\\b" in JS
+    assert "(?:^#|[#&])block=(payroll|cbt|commitments|contracts|arbitration|surplus|farm|fa|prospects|graduates|trade|options)\\b" in JS
     html = _render2(shards={SHARD_URL_LAD: SHARD_LAD}, hash_="#section=club&team=LAD&block=prospects")
     for bid in ("trade", "prospects", "graduates"):
         assert 'id="ledger-block-%s"' % bid in html, bid
@@ -1119,3 +1119,110 @@ def test_round_11_over_150k_prints_beside_pool_used_and_never_in_it():
     assert "<td>103%</td><td>$0.2M (2)</td></tr>" in farm, "2026: Pool used 1.026, the charge $220,000 on 2 picks"
     assert "<td>2021</td>" in farm and "<td></td><td>n/a</td></tr>" in farm, "2021 ran under the earlier CBA"
     assert "Round 11+ over $150K: " + COPY2["r11_over_basis"] in farm
+
+
+# --------------------------------------------------------------------------
+# The option and opt-out calendar (owner answer 2026-09-25, census M09-07)
+# --------------------------------------------------------------------------
+
+OPT_COPY = {
+    "options_title": "Options and opt-outs, winter 2026-27",
+    "options_lede": "Every pending option and opt-out on this winter's class.",
+    "options_decision_rule": "Decided in the 5 days after the 2026 World Series ends.",
+    "options_decision_unknown": "5 days after the 2026 World Series",
+    "options_p_exercise_basis": "P(exercise) is read off the /fa/ P(enter).",
+    "options_value_basis": "Option value is never added to a salary.",
+    "options_unpriced": {"mutual": "a mutual option needs both sides to agree", "conditional": "the condition is not on file",
+                         "no_projection": "no projection", "no_strike": "the option salary is not on file", "no_band": "no band"},
+    "options_terms_only": "terms only",
+    "options_no_strike_short": "not on file",
+    "options_salary_basis": {"option_year_salary": "option-year salary", "remaining_guarantee": "remaining guarantee"},
+    "options_state": {"pending": "pending", "exercised": "exercised", "declined": "declined"},
+    "options_resolved_note": "a resolved row's date is the night the pipeline first saw it",
+    "options_not_summed": "salaries at stake are never added into a club figure",
+    "options_none": "No pending option or opt-out on this winter's free-agent class.",
+    "options_later": "Options in later seasons ride the contract ledger.",
+    "options_source": "the free-agent class rows",
+    "options_league_summary": "options and opt-outs at",
+}
+OPT_ROWS = [
+    ["a_one", "A One", "SP", 31.2, "club_option", "club", 20_000_000, "option_year_salary", "pending", None, "2026-11-05",
+     True, 0.797, 45_299_213, None, True],
+    ["b_two", "B Two", "RP", 35.0, "mutual_option", "both", 8_000_000, "option_year_salary", "pending", None, "2026-11-05",
+     False, None, None, "mutual", False],
+    ["c_three", "C Three", "SP", 31.3, "opt_out", "player", 32_000_000, "remaining_guarantee", "exercised", "2026-11-03", None,
+     True, 0.568, 30_195_249, None, True],
+]
+
+
+def _opt_payload(rows=None):
+    s = _copy.deepcopy(SAMPLE)
+    s["copy"].update(OPT_COPY)
+    s["columns"] = dict(COLUMNS2)
+    rows = OPT_ROWS if rows is None else rows
+    s["clubs"]["LAD"]["options_calendar"] = {"rows": rows, "n": len(rows), "n_priced": sum(1 for r in rows if r[11])}
+    s["league"]["options_calendar"] = {"n_rows": len(rows), "n_priced": sum(1 for r in rows if r[11]), "n_unjoined": 0,
+                                       "unpriced_by_reason": {"mutual": 1} if rows else {}, "n_clubs": 1 if rows else 0,
+                                       "decision": {"decision_by": "2026-11-05"}}
+    return s
+
+
+def test_the_options_calendar_prints_terms_and_prices_only_where_fa_priced_them():
+    html, _ = _render("club", payload=_opt_payload(), team="LAD", tiers=True)
+    assert html.index('id="ledger-block-fa"') < html.index('id="ledger-block-options"') < html.index('id="ledger-block-links"')
+    blk = _block(html, "options")
+    assert "Options and opt-outs, winter 2026-27" in blk and OPT_COPY["options_lede"] in blk
+    assert '<a href="/fa/#player=a_one">A One</a>' in blk and 'href="/projections/#player=a_one"' in blk
+    assert '<a href="/fa/#player=b_two">B Two</a>' in blk and "/projections/#player=b_two" not in blk, "no card, no link"
+    a = blk[blk.index("A One"):blk.index("</tr>", blk.index("A One"))]
+    assert "$20.0M" in a and "option-year salary" in a and "<td>80%</td>" in a and "$45.3M" in a and "by 2026-11-05" in a
+    b = blk[blk.index("B Two"):blk.index("</tr>", blk.index("B Two"))]
+    assert "$8.0M" in b and "terms only" in b and "a mutual option needs both sides to agree" in b and "%" not in b
+    c = blk[blk.index("C Three"):blk.index("</tr>", blk.index("C Three"))]
+    assert "remaining guarantee" in c and "exercised 2026-11-03" in c and "<td>57%</td>" in c
+    for total in (60_000_000, 28_000_000, 52_000_000, 40_000_000):
+        assert "$%.1fM" % (total / 1e6) not in blk, ("a summed salary at stake", total)
+    assert "vt-fam" not in blk, "a salary at stake takes no ruler"
+    assert "terms only: 1 where a mutual option needs both sides to agree" in blk
+    for k in ("options_decision_rule", "options_p_exercise_basis", "options_value_basis", "options_not_summed", "options_later"):
+        assert OPT_COPY[k] in blk, k
+    assert html.count("data-csv-primary") == 1, "the contract ledger stays the club CSV"
+    assert 'data-gl="enter_prob"' in blk
+
+
+def test_the_options_calendar_says_so_when_a_club_has_none_and_reads_its_columns_by_name():
+    html, _ = _render("club", payload=_opt_payload(rows=[]), team="LAD")
+    blk = _block(html, "options")
+    assert OPT_COPY["options_none"] in blk and "<table" not in blk
+    old, _ = _render("club", team="LAD")
+    assert 'id="ledger-block-options"' in old and "undefined" not in _block(old, "options"), "an older board renders an empty block"
+    body = _fn_body("optCells")
+    assert "cv(C, r, " in body and not re.search(r"\br\[\d+\]", body), "every calendar cell reads through the legend"
+
+
+def test_the_league_calendar_lists_every_club_row_behind_a_summary_and_links_the_club_block():
+    html, _ = _render("league", payload=_opt_payload(), tiers=True)
+    i = html.index('id="ledger-options-league"')
+    cal = html[i:html.index("</section>", i)]
+    assert "<details><summary>3 options and opt-outs at 1 clubs, 2 priced by /fa/, due by 2026-11-05</summary>" in cal
+    assert '<a href="#section=club&team=LAD&block=options" data-llink="1">LAD</a>' in cal
+    assert cal.count("<tr>") == 4 and "terms only" in cal and "vt-fam" not in cal
+    assert html.count("data-csv-primary") == 1, "the League board stays the league CSV"
+    assert html.index("ledger-quadrant") < i, "the calendar sits under the board and its chart"
+
+
+def test_the_served_options_calendar_renders_on_the_league_and_club_pages():
+    d = _served()
+    S = d["league"]["options_calendar"]
+    html, _ = _render("league", payload=d, tiers=True)
+    cal = html[html.index('id="ledger-options-league"'):]
+    cal = cal[:cal.index("</section>")]
+    assert cal.count("<tr>") == S["n_rows"] + 1 and "undefined" not in cal and "NaN" not in cal
+    for code, c in d["clubs"].items():
+        if not c["options_calendar"]["rows"]:
+            continue
+        club, _ = _render("club", payload=d, team=code, tiers=True)
+        blk = _block(club, "options")
+        assert blk.count("<tr>") == c["options_calendar"]["n"] + 1, code
+        assert "undefined" not in blk and "NaN" not in blk and "vt-fam" not in blk, code
+        assert blk.count("terms only</span>") == c["options_calendar"]["n"] - c["options_calendar"]["n_priced"], code

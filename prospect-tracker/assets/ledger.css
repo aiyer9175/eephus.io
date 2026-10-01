@@ -278,6 +278,15 @@
 .ledger-app .ledger-prospects .ledger-xp-row td, .ledger-app .ledger-graduates .ledger-xp-row td,
 .ledger-app .ledger-trade .ledger-xp-row td, .ledger-app .ledger-ladder-table .ledger-xp-row td { white-space: normal; }
 .ledger-app .ledger-dl .ledger-spark { max-width: 360px; }
+/* the options calendar: text columns read left and wrap; the price cells stay
+   right-aligned and on one line */
+.ledger-app .ledger-options th.lo-txt, .ledger-app .ledger-options td.lo-txt { text-align: left; white-space: normal; }
+.ledger-app .ledger-options td.lo-why { min-width: 16em; color: var(--text-tertiary); }
+.ledger-app .ledger-options th.lo-left, .ledger-app .ledger-options td.lo-left { text-align: left; }
+.ledger-app .ledger-options-league { margin-top: 16px; }
+@container ledgerblock (max-width: 560px) {
+  .ledger-app .ledger-options th, .ledger-app .ledger-options td { padding: 4px 4px; }
+}
 
 @media (max-width: 720px) {
   .ledger-app .ledger-block { padding: 10px 12px; }

@@ -103,6 +103,22 @@ COST_PLUS_SIDES = ("denominator in three parts: guaranteed 2027 salaries (the 20
 #: census leaves those contract rows out of the guaranteed AAV.
 TAX_FLOOR_NOT_GUARANTEED = ("club_option", "mutual_option")
 
+#: The option and opt-out calendar (owner answer 2026-09-25, 'more' batch 13,
+#: census M09-07): every pending option and opt-out on this winter's free-agent
+#: class, from fa_class.json (Spotrac's class rows as fa_export wrote them). The
+#: holder is a property of the type, never of a row.
+OPTION_HOLDER = {"club_option": "club", "conditional_club_option": "club", "player_option": "player",
+                 "opt_out": "player", "mutual_option": "both"}
+#: Option and opt-out decisions fall in the days right after the World Series:
+#: the window closes on the fifth day after its last game, the same day as the
+#: qualifying-offer deadline (fa_pipeline's option window). A contract can name
+#: its own date and no file here holds each contract's, so the calendar prints
+#: the latest day the window can close: the season's scheduled last postseason
+#: day (StatsAPI /seasons, on disk) plus these days.
+OPTION_DECISION_DAYS_AFTER_WS = 5
+#: Why a calendar row carries terms and no price, in the order tested.
+OPTION_UNPRICED_REASONS = ("mutual", "conditional", "no_projection", "no_strike", "no_band")
+
 #: Registry rows whose verdicts the Method tab quotes beside the numbers. The
 #: last three landed with the depth pass (D5, 2026-09-24): the salary path the
 #: contract strips read, the prospect rows of the projections board, and the
@@ -111,7 +127,8 @@ REGISTRY_IDS = ("arb_award", "team_win_projections", "prospect_surplus", "fa_mar
                 "fa_projection_marcel", "fa_team_fit", "fa_dpw_series", "draft_slot_curve",
                 "org_sur_plus", "dvm_plus_dollar", "farm_grades", "trade_machine_surplus",
                 "ifa_step_prior",
-                "control_window_salary_path", "mlb_projections_prospects", "xfv_provisional_prior")
+                "control_window_salary_path", "mlb_projections_prospects", "xfv_provisional_prior",
+                "fa_penter")
 
 # --------------------------------------------------------------------------
 # D5 depth pass (2026-09-24): one board plus thirty lazy per-club files.
@@ -207,6 +224,9 @@ COLUMNS = {
     "surplus.rows_debuted": ["key", "name", "pos", "tv_mm", "tv_lo_mm", "tv_hi_mm", "tv_tier", "tv_grade",
                              "surplus_source", "salary_basis", "control_thru", "control_why",
                              "in_contract_rows"],
+    "options.calendar": ["key", "name", "pos", "age", "type", "holder", "salary_usd", "salary_basis", "state",
+                         "decided_on", "decision_by", "priced", "p_exercise", "option_value_usd",
+                         "unpriced_reason", "in_projections"],
 }
 SHARD_ROW_KEYS = ("farm.prospects", "farm.graduates", "arbitration.ladders",
                   "arbitration.realized.rows", "contracts.paths", "surplus.rows_debuted")
@@ -484,6 +504,108 @@ def season_calendar_on_disk(season: int, cache_dir: Path | None = None) -> dict 
         days = (date.fromisoformat(str(end)) - date.fromisoformat(str(start))).days + 1
         return {"start": str(start), "end": str(end), "days": days}
     return None
+
+
+def postseason_end_on_disk(season: int, cache_dir: Path | None = None) -> str | None:
+    """The season's scheduled last postseason day (StatsAPI /seasons
+    postSeasonEndDate, the latest day a seventh World Series game can fall)
+    from the same cached payload, or None. Disk only."""
+    p = Path(cache_dir or SEASON_CALENDAR_DIR) / f"season_{int(season)}.json"
+    try:
+        raw = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    for row in (raw or {}).get("seasons") or []:
+        if str((row or {}).get("seasonId")) == str(int(season)) and row.get("postSeasonEndDate"):
+            try:
+                return date.fromisoformat(str(row["postSeasonEndDate"])[:10]).isoformat()
+            except ValueError:
+                return None
+    return None
+
+
+def option_decision_by(ws_last_day: str | None) -> str | None:
+    """The latest day this winter's option window can close: the scheduled last
+    postseason day plus OPTION_DECISION_DAYS_AFTER_WS, or None without it."""
+    if not ws_last_day:
+        return None
+    return date.fromordinal(date.fromisoformat(ws_last_day).toordinal()
+                            + OPTION_DECISION_DAYS_AFTER_WS).isoformat()
+
+
+def options_calendar(members: list, events: list, proj_keys, decision_by: str | None, clubs=None) -> tuple:
+    """(rows by club, summary): one row per pending option or opt-out on the
+    free-agent class, plus any the winter has already resolved. Every figure is
+    copied off the fa_class member (the salary at stake is its option price, the
+    value is fa_export's optValue); the one derivation is P(exercise) from the
+    served P(enter), and only where fa_export band-priced it: a club or player
+    option is exercised when the player does NOT enter the class (1 - P), an
+    opt-out when he does (P). Mutual and conditional rows, rows with no
+    projection and rows with no strike carry the terms and no price."""
+    ev = {}
+    for e in events or []:
+        if e.get("type") in ("option_exercised", "option_declined") and e.get("key"):
+            ev.setdefault(e["key"], e)
+    by_club: dict = defaultdict(list)
+    n_unjoined = 0
+    types: Counter = Counter()
+    reasons: Counter = Counter()
+    states: Counter = Counter()
+    n_priced = 0
+    for m in members or []:
+        key = m.get("key")
+        e = ev.get(key)
+        if m.get("status") not in ("pending_option", "option_exercised") and not e:
+            continue
+        otype = m.get("type") if m.get("type") in OPTION_HOLDER else "option"
+        price = m.get("optPrice") or (e or {}).get("optPrice")
+        if e:
+            state = "exercised" if e["type"] == "option_exercised" else "declined"
+        else:
+            state = "exercised" if m.get("status") == "option_exercised" else "pending"
+        src = str(m.get("enterProbSrc") or "")
+        p_enter = m.get("enterProb")
+        priced = (src.startswith("band_priced") and p_enter is not None and m.get("optValue") is not None
+                  and otype in ("club_option", "player_option", "opt_out"))
+        p_ex = None
+        if priced:
+            p_ex = round(float(p_enter), 3) if otype == "opt_out" else round(1.0 - float(p_enter), 3)
+            reason = None
+        elif otype == "mutual_option":
+            reason = "mutual"
+        elif otype == "conditional_club_option":
+            reason = "conditional"
+        elif m.get("noProj"):
+            reason = "no_projection"
+        elif not price:
+            reason = "no_strike"
+        else:
+            reason = "no_band"
+        row = [key, m.get("name"), m.get("pos"), m.get("age"), otype, OPTION_HOLDER.get(otype),
+               int(price) if price else None,
+               "remaining_guarantee" if otype == "opt_out" else "option_year_salary",
+               state, (e or {}).get("date"), decision_by if state == "pending" else None,
+               bool(priced), p_ex, int(m["optValue"]) if priced else None, reason,
+               bool(key and key in proj_keys)]
+        assert len(row) == len(COLUMNS["options.calendar"])
+        c = _canon(m.get("from"))
+        if not c or (clubs is not None and c not in clubs):
+            n_unjoined += 1
+            continue
+        by_club[c].append(row)
+        n_priced += 1 if priced else 0
+        types[otype] += 1
+        states[state] += 1
+        if reason:
+            reasons[reason] += 1
+    for c in by_club:
+        by_club[c].sort(key=lambda r: (r[8] != "pending", -(r[6] or 0), r[1] or ""))
+    n_rows = sum(len(v) for v in by_club.values())
+    summary = {"n_rows": n_rows, "n_priced": n_priced, "n_unjoined": n_unjoined,
+               "by_type": dict(sorted(types.items())), "by_state": dict(sorted(states.items())),
+               "unpriced_by_reason": {r: reasons[r] for r in OPTION_UNPRICED_REASONS if reasons[r]},
+               "n_clubs": len(by_club)}
+    return dict(by_club), summary
 
 
 def trade_cbt_slice(doc: dict, calendar: dict | None) -> dict:
@@ -957,6 +1079,12 @@ def build_all() -> tuple:
             continue
         locked_fa_by_club[c][0] += 1
         locked_fa_by_club[c][1] += float(w)
+    # The option and opt-out calendar: this winter's pending decisions off the
+    # class rows, the latest closing day off the on-disk season calendar.
+    ws_last_day = postseason_end_on_disk(SEASON_NOW)
+    decision_by = option_decision_by(ws_last_day)
+    opt_by_club, opt_summary = options_calendar(members, fa_class.get("events") or [], set(vets_by_key),
+                                                decision_by, set(clubs))
 
     # farm capital
     org_summary = {}
@@ -1509,6 +1637,9 @@ def build_all() -> tuple:
             "payroll": payroll_block, "cbt": cbt, "commitments": commitments,
             "contracts": contracts, "arbitration": arbitration, "surplus": surplus,
             "indexes": indexes, "farm": farm, "fa": fa, "links": links,
+            "options_calendar": {"rows": opt_by_club.get(c) or [],
+                                 "n": len(opt_by_club.get(c) or []),
+                                 "n_priced": sum(1 for r in (opt_by_club.get(c) or []) if r[11])},
         }
 
         # ==== D5 depth: the row layers, each reconciled to the v1 roll-up above ====
@@ -1850,6 +1981,11 @@ def build_all() -> tuple:
                                 "locked_fa_war": _r(sum(locked_fa_by_club[c][1] for c in clubs if c in locked_fa_by_club), 1),
                                 "locked_fa_not_in_projections": len(locked_keys) - n_locked_in_vets}},
         "quadrant": {"x": "cbt_payroll_2026", "y": "controlled_surplus_mm", "unit": "$M", "min_width_px": 700},
+        "options_calendar": dict(opt_summary, decision={
+            "season": SEASON_NOW, "days_after_ws": OPTION_DECISION_DAYS_AFTER_WS,
+            "ws_scheduled_last_day": ws_last_day, "decision_by": decision_by,
+            "source": "MLB StatsAPI /seasons postSeasonEndDate (cached)" if ws_last_day else None},
+            fa_class_generated_at=fa_class.get("generated_at")),
         "cba_banner": True,
     }
 
@@ -2181,6 +2317,54 @@ def build_all() -> tuple:
         "registry_sentence": ("provisional rows are labelled with the registry verdict quoted on the "
                               "Method tab; nothing on this page is scored by this page"),
     })
+    # ---- the option and opt-out calendar (M13_OPTIONS_CALENDAR) ----------------
+    penter = verdict_of.get("fa_penter") or "no registry row"
+    copy.update({
+        "options_title": f"Options and opt-outs, winter {SEASON_NOW}-{str(CLASS_YEAR)[2:]}",
+        "options_lede": (
+            "Every pending club, player and mutual option and opt-out on this winter's free-agent class, "
+            "with the salary at stake and the day the decision is due. Where the /fa/ export prices the "
+            "option, its modelled value and P(exercise) print beside the terms; every other row prints "
+            "the terms alone and says why."),
+        "options_decision_rule": (
+            f"Decided in the {OPTION_DECISION_DAYS_AFTER_WS} days after the {SEASON_NOW} World Series ends, "
+            "the same window as the qualifying offer. The date shown is the latest the window can close: "
+            f"{OPTION_DECISION_DAYS_AFTER_WS} days after the last scheduled postseason day"
+            + (f" ({ws_last_day}, MLB StatsAPI)" if ws_last_day else "")
+            + "; a shorter Series moves it earlier, and a contract can name its own date, which no file "
+            "here holds."),
+        "options_decision_unknown": f"{OPTION_DECISION_DAYS_AFTER_WS} days after the {SEASON_NOW} World Series",
+        "options_p_exercise_basis": (
+            "P(exercise) is the chance the holder uses the option: the club or the player picks up the "
+            "year, or the player opts out. It is read off the /fa/ P(enter) (fa_penter, "
+            f"{penter}): 1 minus P(enter) for a club or player option, P(enter) itself for an opt-out, "
+            "priced from the option salary against the market model's predicted AAV band (for an opt-out, "
+            "the remaining guarantee against the predicted guarantee). No option decision has scored it "
+            "yet."),
+        "options_value_basis": (
+            "Option value is the /fa/ export's modelled worth of the option to the side that holds it, "
+            "an expectation over the same band; on a player option or opt-out the club is short that "
+            "amount. It is not a salary and is never added to one."),
+        "options_unpriced": {
+            "mutual": "a mutual option needs both sides to agree; /fa/ holds a fixed prior, not a price",
+            "conditional": "the condition is not on file; /fa/ holds a fixed prior, not a price",
+            "no_projection": "/fa/ carries no projection for this player",
+            "no_strike": "the option salary is not on file",
+            "no_band": "/fa/ has no price band for this row",
+        },
+        "options_terms_only": "terms only",
+        "options_no_strike_short": "not on file",
+        "options_salary_basis": {"option_year_salary": "option-year salary",
+                                 "remaining_guarantee": "remaining guarantee"},
+        "options_state": {"pending": "pending", "exercised": "exercised", "declined": "declined"},
+        "options_resolved_note": "a resolved row's date is the night the pipeline first saw it, not a published date",
+        "options_not_summed": "salaries at stake print per row and are never added into a club figure",
+        "options_none": "No pending option or opt-out on this winter's free-agent class.",
+        "options_later": ("Options in later seasons of long-term deals ride each row of the contract "
+                          "ledger above."),
+        "options_source": "the free-agent class rows (Spotrac, through fa_export, daily)",
+        "options_league_summary": "options and opt-outs at",
+    })
     copy["farm_dollar_is"] = copy["farm_dollar_is_template"].format(calibration_version=tv_cal)
     copy["swartz_label"] = copy["swartz_label_template"].format(n_swartz=hist_n_swartz, n_a6=a6.get("n"))
 
@@ -2296,6 +2480,23 @@ def build_all() -> tuple:
             "farm_leaf_mm, trade_currency_served_mm, trade_rows_active_mm, trade_rows_debuted_mm, status}"),
         "contracts.paths_summary": "{n_paths, n_reanchored, n_opt_out_rows, n_opt_out_seasons}",
         "shard": "{path, bytes, sha256_16, generated_at}: the per-club row file this club's rows live in",
+        "options.calendar": (
+            "clubs.CODE.options_calendar.rows: [key, name, pos, age, type, holder, salary_usd, salary_basis, "
+            "state, decided_on, decision_by, priced, p_exercise, option_value_usd, unpriced_reason, "
+            "in_projections]; one row per fa_class member with a pending or resolved option; type is the "
+            "class row's (club_option, conditional_club_option, player_option, opt_out, mutual_option, or "
+            "option when a declined row was re-listed); holder club|player|both; salary_usd is the option "
+            "price on the class row (option_year_salary, or the remaining_guarantee for an opt-out), never "
+            "summed; state pending|exercised|declined; decided_on is the pipeline's first-seen date of a "
+            "resolution; decision_by is the latest day the window can close (pending rows); p_exercise and "
+            "option_value_usd only where priced (fa_export band-priced P(enter) and optValue): p_exercise = "
+            "1 - P(enter) for a club or player option, P(enter) for an opt-out; unpriced_reason one of "
+            "mutual|conditional|no_projection|no_strike|no_band; in_projections says whether "
+            "/projections/ carries the key"),
+        "league.options_calendar": (
+            "{n_rows, n_priced, n_unjoined, by_type, by_state, unpriced_by_reason, n_clubs, decision "
+            "{season, days_after_ws, ws_scheduled_last_day, decision_by, source}, fa_class_generated_at}; "
+            "counts only, no dollar total"),
     }
     field_key.update(shard_field_key)
     field_key.update(board_field_key)
@@ -2381,6 +2582,9 @@ def build_all() -> tuple:
             "arb_service_time": {"live": True, "note": "partial: sv on a minority of board rows; the class token is inferred elsewhere (flag 1)",
                                  "blocked_on": "published service time is on a minority of rows; the class token is inferred (flag bit 1)"},
             "opt_out_value": {"live": False, "blocked_on": copy["opt_out_two_engines"]},
+            "options_calendar": {"live": True,
+                                 "note": (f"partial: {opt_summary['n_priced']} of {opt_summary['n_rows']} rows "
+                                          "carry the /fa/ price and P(exercise); the rest print the terms")},
             "debuted_value_registry": {"live": True, "note": "partial: debuted_player_value has no registry row; prospect_surplus (validated) is its parent",
                                        "blocked_on": copy["grad_no_registry"]},
             "shard_rows": {"live": True, "note": "per-club row files; dark at render time only when the fetch fails (copy.shard_failed)"},
@@ -2468,7 +2672,8 @@ def build_all() -> tuple:
             "a dollar cost basis for the trade channel: FV given up is the Trade Machine's currency",
             "a per-graduate Grad-Contract Surplus: the org mean only is served (storage.py)",
             "arbitration comps, filing figures, hearing outcomes or per-rung residual quantiles: none is on any served row",
-            "a served opt-out value: player option seasons are priced as guaranteed by the salary path and folded as a probability by the trade board, and neither is an opt-out value",
+            "a served opt-out value on a contract row: player option seasons are priced as guaranteed by the salary path and folded as a probability by the trade board, and neither is an opt-out value; the options calendar quotes the /fa/ export's modelled value for this winter's pending opt-outs only, under that module's name",
+            "a sum of the salaries at stake in the options calendar: each prints on its own row",
             "a rank or grade of clubs by farm finance beyond the v1 fin_* leaves",
             "a betting or management figure: the ledger's only touches are two links",
         ],
@@ -2620,6 +2825,12 @@ def _assert_document(doc: dict) -> None:
         assert d["shard"]["path"] == f"{SHARD_DIRNAME}/{c}.json", c
         assert ("trajectory" not in d["surplus"] and "trajectory_active" not in d["farm"]
                 and "prospect_trajectory" not in d["farm"]), (c, "a trajectory series on the board")
+        oc = d["options_calendar"]
+        assert oc["n"] == len(oc["rows"]) and set(oc) == {"rows", "n", "n_priced"}, (c, "options calendar")
+        for row in oc["rows"]:
+            assert len(row) == len(COLUMNS["options.calendar"]), (c, "options.calendar")
+            assert (row[12] is not None) == (row[13] is not None) == bool(row[11]), (c, row[0], "price only where priced")
+            assert (row[14] is None) == bool(row[11]), (c, row[0], "an unpriced row names its reason")
         for y, ps in d["farm"]["picks_summary"].items():
             assert len(ps) == len(COLUMNS["farm.picks_summary"]), (c, y)
             assert ps[2] + ps[3] + ps[4] == ps[1] and ps[4] >= 0, (c, y, "signed picks split")
