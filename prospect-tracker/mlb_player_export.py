@@ -384,12 +384,14 @@ _SCOUT_SRC_LABELS = {"fangraphs": "FanGraphs", "mlb_pipeline": "MLB Pipeline",
 
 def _scout_report_slice(prospx: str, reports: dict) -> dict | None:
     """The single most-recent published scouting report for an ex-PROSPX player,
-    text capped at ~600 chars on a word boundary. NEVER bakes the whole report
-    set (scout_reports.json is 29MB); one latest blurb per player only."""
+    as the excerpt plus source link the scout_reports sidecar carries (owner
+    answer 2026-09-25, census X07-02 option b; report_excerpt.py). NEVER bakes
+    the whole report set; one latest excerpt per player only."""
+    from report_excerpt import report_excerpt
     rec = reports.get(prospx)
     if not rec:
         return None
-    best = None   # (date, source_key, text)
+    best = None   # (date, source_key, entry)
     for src in _SCOUT_SRC_LABELS:
         for it in rec.get(src) or []:
             txt = (it.get("text") or "").strip()
@@ -397,20 +399,17 @@ def _scout_report_slice(prospx: str, reports: dict) -> dict | None:
                 continue
             dt = it.get("date") or ""
             if best is None or dt > best[0]:
-                best = (dt, src, txt)
+                best = (dt, src, it)
     if not best:
         return None
-    dt, src, txt = best
-    truncated = len(txt) > 600
-    if truncated:
-        cut = txt[:600]
-        sp = cut.rfind(" ")
-        if sp > 400:
-            cut = cut[:sp]
-        txt = cut.rstrip()
+    dt, src, it = best
+    # The sidecar text is already an excerpt; cutting again is a no-op there and
+    # keeps an older full-text sidecar from reaching the card.
+    txt, cut = report_excerpt(it.get("text"))
     txt = strip_emdashes(txt)           # verbatim quote, dash-normalized to site policy
     return {"source": _SCOUT_SRC_LABELS.get(src, src), "date": dt or None,
-            "text": txt, "truncated": truncated}
+            "label": it.get("label"), "url": it.get("url"),
+            "text": txt, "truncated": bool(cut or it.get("truncated"))}
 
 
 def _record_skill_index_outage(missing: list[str], n_joined: int) -> None:

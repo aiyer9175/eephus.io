@@ -24361,11 +24361,11 @@ function _renderDraftCard(p) {
       : `${_draftSchoolLinkHTML(p)}${_commitSuffix}`;
   }
 
-  // Report (first source's writeup, truncated). The full writeup lives
-  // in tool_grades[source]._extras.report; expose a "more" toggle later.
+  // Report (first source's writeup, truncated). tool_grades[source]._extras.report
+  // holds the served excerpt (owner answer 2026-09-25), never the full text.
   // v31.7 - Trimmed from 260 → 140 chars to make room for the new
-  // college-stats chip strip below. Full report stays on the detail
-  // page; the card-level snippet is just a teaser.
+  // college-stats chip strip below. The detail page shows the excerpt
+  // with its source link; the card-level snippet is just a teaser.
   let report = "";
   for (const src in (p.tool_grades || {})) {
     const ext = (p.tool_grades[src] || {})._extras || {};
@@ -26780,8 +26780,8 @@ function _renderOverseasCard(p) {
 
   // First-source report (truncated, hover-to-expand via CSS).
   // v31.7 - Trimmed from 260 → 140 chars to make room for the
-  // headline overseas-stats chip strip below. Full report stays
-  // on the detail page.
+  // headline overseas-stats chip strip below. The detail page shows
+  // the excerpt with its source link.
   let report = "";
   for (const src in (p.tool_grades || {})) {
     const ext = (p.tool_grades[src] || {})._extras || {};
@@ -27059,12 +27059,20 @@ function _renderProspectScoutingReports(p) {
     const who = named.length ? `${escapeHtml(named.join(" / "))} ${named.length > 1 ? "publish" : "publishes"}` : "Sources publish";
     return `<div style="color:var(--text-tertiary);font-size:12px;padding:8px 0;">No scouting reports on file. ${who} writeups on a delay; check back after the next refresh.</div>`;
   }
+  // Each report is an excerpt of the publisher's text (owner answer
+  // 2026-09-25): a "View on <source>" link where the export knew the source's
+  // page for the player, otherwise the source and list are named.
   return sources.map((src, i) => {
     const ext = (tg[src] || {})._extras || {};
     const isOpen = i === 0 ? " open" : "";
+    const srcName = ext.report_source || SOURCE_LABELS[src] || src;
+    const link = _reportLinkHtml(ext.report_url, srcName);
+    const named = `${escapeHtml(srcName)}${ext.report_label ? `, ${escapeHtml(ext.report_label)}` : ""}`;
+    const foot = `<div style="padding:0 12px 10px;font-size:11px;color:var(--text-tertiary);">${ext.report_truncated ? "Excerpt. " : ""}${named}${link}</div>`;
     return `<details class="scout-src-details"${isOpen} style="margin-bottom:8px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
-      <summary style="cursor:pointer;font-family:var(--font-sans);font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;padding:8px 12px;color:var(--neon-cyan);">${escapeHtml(src)}</summary>
-      <div style="padding:0 12px 12px;font-size:12px;line-height:1.6;color:var(--text-primary);white-space:pre-wrap;">${escapeHtml(ext.report)}</div>
+      <summary style="cursor:pointer;font-family:var(--font-sans);font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;padding:8px 12px;color:var(--neon-cyan);">${escapeHtml(srcName)}</summary>
+      <div style="padding:0 12px 8px;font-size:12px;line-height:1.6;color:var(--text-primary);white-space:pre-wrap;">${escapeHtml(ext.report)}</div>
+      ${foot}
     </details>`;
   }).join("");
 }
@@ -31566,6 +31574,13 @@ function sourceLinkHtml(src, p, ids, label) {
   if (!u) return "";
   const lbl = label || SOURCE_LABELS[src] || src;
   return ` <a class="src-attr-link" href="${escapeHtml(u)}" target="_blank" rel="noopener" title="Open ${escapeHtml(lbl)} page in a new tab">View on ${escapeHtml(lbl)} ↗</a>`;
+}
+// "View on <source>" anchor for a served report excerpt's own link (the
+// exporters write it beside each excerpt, report_excerpt.py); empty string
+// when the report carries no link, so the caller names source and list.
+function _reportLinkHtml(url, label) {
+  if (!url || !/^https:\/\//.test(String(url))) return "";
+  return ` <a class="src-attr-link" href="${escapeHtml(url)}" target="_blank" rel="noopener" title="Open ${escapeHtml(label)} in a new tab">View on ${escapeHtml(label)} ↗</a>`;
 }
 // Pull the per-source id map for a player from the scout_reports sidecar.
 function sourceIdsFor(p) {
@@ -49772,6 +49787,7 @@ function renderPlayerDetail(key) {
       { key: "mlb_pipeline",  label: "MLB Pipeline" },
       { key: "espn",          label: "ESPN"         },
       { key: "just_baseball", label: "Just Baseball"},
+      { key: "baseballamerica", label: "Baseball America"},
     ];
     const sidecar = (DATA.scout_reports && DATA.scout_reports[p.player_key]) || null;
     const srIds = sourceIdsFor(p);   // per-source player ids for "View on <source>" links
@@ -49807,7 +49823,8 @@ function renderPlayerDetail(key) {
         let list = [];
         if (Array.isArray(r)) {
           list = r.filter(e => e && e.text && String(e.text).trim().length > 50)
-                  .map(e => ({ date: e.date, label: e.label, text: String(e.text).trim(), hash: e.hash }));
+                  .map(e => ({ date: e.date, label: e.label, text: String(e.text).trim(), hash: e.hash,
+                               url: e.url || null, truncated: !!e.truncated }));
         } else if (typeof r === "object" && r.text && String(r.text).trim().length > 50) {
           list = [{ date: r.date, label: r.label, text: String(r.text).trim() }];
         }
@@ -49873,8 +49890,8 @@ function renderPlayerDetail(key) {
       // swaps which one is visible.
       const renderedCycles = list.map((e, i) => `
         <div class="sr-cycle-body${i === 0 ? '' : ' is-hidden'}" data-sr-cycle="${i}">
-          <div class="sr-meta">${escapeHtml(s.label)} · published ${escapeHtml(e.date)}${e.label ? ` (${escapeHtml(e.label)})` : ""}${sourceLinkHtml(s.key, p, srIds, s.label)}</div>
-          <div class="sr-prose">${escapeHtml(e.text)}</div>
+          <div class="sr-meta">${escapeHtml(s.label)} · published ${escapeHtml(e.date)}${e.label ? ` (${escapeHtml(e.label)})` : ""}${_reportLinkHtml(e.url, s.label) || sourceLinkHtml(s.key, p, srIds, s.label)}</div>
+          <div class="sr-prose">${escapeHtml(e.text)}</div>${e.truncated ? `<div class="sr-meta">Excerpt. ${e.url ? `The full report is on ${escapeHtml(s.label)}.` : `The full report is published by ${escapeHtml(s.label)}${e.label ? ` (${escapeHtml(e.label)})` : ""}.`}</div>` : ""}
         </div>`).join("");
       return `<div class="sr-body${hidden ? ' is-hidden' : ''}" data-sr-body="${escapeHtml(s.key)}">
         ${srcLinkBlock}

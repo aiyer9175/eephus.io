@@ -73,6 +73,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from player_images import country_flag_svg_url, player_headshot_url
+from report_excerpt import excerpt_tools as _excerpt_tools
 from storage import (
     _grad_wag,
     load_career_stats,
@@ -673,9 +674,15 @@ def _build_league(league: str,
         if bucket:
             fv_dist[bucket] += 1
 
+        # Owner answer 2026-09-25 (census X07-02 option b): a report rides as an
+        # excerpt plus its source link or name; the full text stays in
+        # overseas_snapshots.tools_json.
         tool_grades: dict[str, dict] = {}
         for src, snap in latest.items():
-            tools = snap.get("tools") or {}
+            tools = _excerpt_tools(
+                snap.get("tools"), src, label=snap.get("interval_label"),
+                fg_id=player_meta.get("fg_player_id") if src == "fangraphs" else None,
+                mlbam_id=player_meta.get("mlbam_id")) or {}
             if tools:
                 tool_grades[src] = tools
 

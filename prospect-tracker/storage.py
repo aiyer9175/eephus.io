@@ -16761,6 +16761,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # consecutive cycles only appear once (very common for off-cycle
     # months where FG reposts the same report under a new label).
     import hashlib
+    from report_excerpt import excerpt_fields as _report_excerpt_fields
     scout_reports_sidecar: dict[str, dict[str, list[dict]]] = {}
     def _harvest_and_strip_reports(player_payload):
         pkey = player_payload.get("player_key")
@@ -16774,6 +16775,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         src_ids: dict[str, str] = {}
         for pt in (player_payload.get("points") or []):
             for src, info in (pt.get("per_source") or {}).items():
+                # Same-day extra rows (a second list on one date, e.g. a
+                # Pipeline team list beside its Top 100) rode into the boot,
+                # debuts, inactive, player_detail and debuts_full files with
+                # their full report text (census X07-02 follow-up,
+                # 2026-10-01). Their report is stripped and NOT harvested: the
+                # sidecar never read them, and 11 of them sit on common-name
+                # keys (kevin_smith, jose_ramirez, ...) where a second human's
+                # writeup would surface on the card as a new cycle.
+                for _xr in ((info or {}).get("extras") or []):
+                    _xt = _xr.get("tools") if isinstance(_xr, dict) else None
+                    _xex = _xt.get("_extras") if isinstance(_xt, dict) else None
+                    if isinstance(_xex, dict) and _xex.get("report"):
+                        _xex["report"] = None
                 tools = (info or {}).get("tools") or {}
                 ex = tools.get("_extras") or {}
                 if src == "fangraphs":
@@ -16792,6 +16806,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         # here mislabeled every other source's writeup on a
                         # multi-source day - e.g. an MLB Pipeline report stamped
                         # "TJ Pre-Season 2026" because TJStats shared the date.
+                        # The text is held whole until the walk ends so the
+                        # excerpt and link are cut once, with the final ids.
                         by_src_entries.setdefault(src, []).append({
                             "date": (info or {}).get("snapshot_date") or pt.get("snapshot_date"),
                             "label": (info or {}).get("interval_label") or pt.get("interval_label"),
@@ -16800,6 +16816,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         })
                     # Strip the inline report so it doesn't bloat boot.
                     ex["report"] = None
+        # Owner answer 2026-09-25 (census X07-02 option b): the served sidecar
+        # carries an excerpt of each report plus its source link, never the
+        # full text (report_excerpt.py). The hash stays the full text's, so
+        # dedup and the cycle identity are unchanged.
+        _mlbam = player_payload.get("mlbam_id")
+        for src, entries in by_src_entries.items():
+            for e in entries:
+                e.update(_report_excerpt_fields(
+                    e["text"], src, label=e.get("label"),
+                    fg_id=src_ids.get("fangraphs") if src == "fangraphs" else None,
+                    mlbam_id=_mlbam))
         # Reverse each list so newest is first (the walk was oldest-first).
         if by_src_entries or src_ids:
             for src in by_src_entries:

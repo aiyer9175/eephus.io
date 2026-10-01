@@ -47,6 +47,7 @@ import efv_alerts
 # and the artifact-date reader ONLY; refresh_stamps() is the sole writer in that
 # module and it runs under run_monthly, never here.
 import model_registry
+from report_excerpt import EXCERPT_MAX_CHARS as REPORT_EXCERPT_CHARS
 
 ROOT = Path(__file__).resolve().parent
 CONTENT = ROOT / "content"
@@ -6090,11 +6091,14 @@ def _sources_api_section() -> str:
     )
 
 
-# The sources whose full scouting-report text the site serves today: the
-# prospect cards read the scout_reports chunks, the draft cards read the
-# draft board payload. The /sources/ lede names them so the attribution page
-# says what is republished (census X07-02, 2026-09-24); test_claims_freshness
-# holds both tuples to the payloads.
+# The sources whose scouting reports the site shows today: the prospect cards
+# read the scout_reports chunks, the draft cards read the draft board payload.
+# Since the owner's answer of 2026-09-25 (census X07-02 option b) both carry an
+# excerpt of at most REPORT_EXCERPT_CHARS characters plus a link to the
+# source's page or the source and list named (report_excerpt.py); the full
+# text is not in the public data. The /sources/ lede names both sets;
+# test_claims_freshness holds the tuples to the payloads and
+# test_report_excerpt.py holds every served report to the excerpt limit.
 SCOUT_REPORT_SOURCES = ("FanGraphs", "MLB Pipeline", "Baseball America", "ESPN",
                         "Just Baseball")
 DRAFT_REPORT_SOURCES = ("FanGraphs", "MLB Pipeline", "Baseball America")
@@ -6113,7 +6117,7 @@ def build_sources() -> str:
 
     Trust page for the Open Beta: names every upstream the platform reads, what
     it's used for, and the editorial stance (consensus across sources; the lede
-    names whose full report text the cards carry). The second half (anchor #api) is the other direction of
+    names whose report excerpts the cards carry). The second half (anchor #api) is the other direction of
     the same question: which artifacts the platform PUBLISHES, on what cadence,
     and how stable each one is. See _sources_api_section for why the catalog
     lives on this route."""
@@ -6172,11 +6176,13 @@ def build_sources() -> str:
         '<span class="section-sub">upstreams we read, artifacts we publish</span></div>'
         '<div class="gl-intro">'
         "<p>PROSPX grades are a consensus of seven industry sources. A player's card shows "
-        "each source's own FV grade beside the consensus, and it carries the full text "
-        f"of the scouting reports {_name_series(SCOUT_REPORT_SOURCES)} have published on that "
-        "player, each labelled with its source and publication date. The draft board "
-        f"carries the full draft reports from {_name_series(DRAFT_REPORT_SOURCES)}. Trademarks, "
-        "data and report text belong to their owners.</p>"
+        "each source's own FV grade beside the consensus, and excerpts of the scouting "
+        f"reports {_name_series(SCOUT_REPORT_SOURCES)} have published on that player: the "
+        f"opening of each report, at most {REPORT_EXCERPT_CHARS} characters, labelled with its "
+        "source, list and publication date, with a View on link to the source's page where "
+        "we know it. The draft board shows excerpts of the draft reports from "
+        f"{_name_series(DRAFT_REPORT_SOURCES)} the same way. The full reports stay with their "
+        "publishers. Trademarks, data and report text belong to their owners.</p>"
         "<p>Sources with a question or concern: "
         '<a href="mailto:arkndjl@gmail.com">arkndjl@gmail.com</a>.</p>'
         '<p>Building on the data: <a href="#api">the data we publish</a>.</p>'

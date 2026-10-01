@@ -79,6 +79,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from player_images import college_logo_url, player_headshot_url
+from report_excerpt import excerpt_tools as _excerpt_tools
 from storage import (
     load_draft_canonical_keys,
     load_draft_lottery_odds,
@@ -584,10 +585,21 @@ def _build_class(year: int,
         if bucket:
             fv_dist[bucket] += 1
 
+        # Owner answer 2026-09-25 (census X07-02 option b): every draft report
+        # on the board is served as an excerpt plus its source link or name
+        # (report_excerpt.excerpt_tools); the full text stays in
+        # draft_snapshots.tools_json.
+        def _served_tools(snap):
+            return _excerpt_tools(
+                snap.get("tools"), snap.get("source"),
+                label=snap.get("interval_label"),
+                fg_id=player_meta.get("fg_player_id") if snap.get("source") == "fangraphs" else None,
+                mlbam_id=player_meta.get("mlbam_id"))
+
         # Per-source tool grades - keep latest only
         tool_grades: dict[str, dict] = {}
         for src, snap in latest.items():
-            tools = snap.get("tools") or {}
+            tools = _served_tools(snap) or {}
             if tools:
                 tool_grades[src] = tools
 
@@ -601,7 +613,7 @@ def _build_class(year: int,
                 "rank":          snap.get("rank"),
                 "fv":            snap.get("fv"),
                 "fv_plus":       bool(snap.get("fv_plus")),
-                "tools":         snap.get("tools"),
+                "tools":         _served_tools(snap),
             })
 
         # Pick / bonus / slot (post-draft only)

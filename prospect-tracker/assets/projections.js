@@ -3007,9 +3007,16 @@
     let reportHtml = "";
     const r = s.report;
     if (r && r.text) {
+      // An excerpt of the publisher's report (owner answer 2026-09-25): the
+      // link goes to the source's own page when one is known, otherwise the
+      // source and list are named.
+      const srcName = r.source || "Scouting report";
+      const srcLink = r.url
+        ? ` <a class="fa-player-link" href="${esc(r.url)}" target="_blank" rel="noopener">View on ${esc(srcName)} &#8599;</a>`
+        : "";
       reportHtml = `<div class="mlbp-scout-report">
-        <div class="fa-sub mlbp-scout-src">${esc(r.source || "Scouting report")}${r.date ? ` · ${esc(r.date)}` : ""}</div>
-        <p class="mlbp-scout-text">${esc(r.text)}${r.truncated ? "&hellip;" : ""}${p.origin && p.origin.prospx ? ` <a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(p.origin.prospx)}">full report &rarr;</a>` : ""}</p></div>`;
+        <div class="fa-sub mlbp-scout-src">${esc(srcName)}${r.label ? ` · ${esc(r.label)}` : ""}${r.date ? ` · ${esc(r.date)}` : ""}${r.truncated ? " · excerpt" : ""}</div>
+        <p class="mlbp-scout-text">${esc(r.text)}${srcLink}${p.origin && p.origin.prospx ? ` <a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(p.origin.prospx)}">prospect card &rarr;</a>` : ""}</p></div>`;
     }
     if (!pillsHtml && !reportHtml) return "";
     return section("scouting", "Scouting", "consensus 20-80 tools · latest report · via PROSPX", pillsHtml + reportHtml);

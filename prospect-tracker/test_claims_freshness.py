@@ -147,8 +147,15 @@ BANNED_CLAIM_FRAGMENTS = (
     # attribution note said no source's reports were republished wholesale
     # while the served scout_reports chunks carry 27,461 full write-ups from
     # five sources. The copy now states what the payload carries; see
-    # test_sources_copy_names_every_republished_report_source.
+    # test_sources_copy_names_every_excerpted_report_source.
     "reports are republished wholesale",
+    # Owner answer 2026-09-25 (census X07-02 option b): the payloads now serve
+    # an excerpt of each report plus a source link (report_excerpt.py,
+    # test_report_excerpt.py), so a surface saying the cards or the draft
+    # board carry the full report text is wrong again, the other way round.
+    "carries the full text of the scouting reports",
+    "carry the full text of the scouting reports",
+    "carries the full draft reports",
     # Census M06-04 (2026-09-25). The xHEM+ Blend column header on /mlbstats/
     # said it "Beats xwOBA alone on next-year offense out of sample" and the
     # fwdhem_plus glossary methodology said its gap floor sat above zero. The
@@ -538,11 +545,13 @@ _DRAFT_REPORT_SOURCE_LABELS = {
 }
 
 
-def test_sources_copy_names_every_republished_report_source():
+def test_sources_copy_names_every_excerpted_report_source():
     """Census X07-02: the /sources/ lede and the glossary attribution note
-    name every source whose full report text the served payloads carry, and
-    no source whose text they do not. The payloads are pipeline outputs
-    (gitignored), so a checkout without them skips."""
+    name every source whose report excerpts the served payloads carry, and
+    no source whose text they do not (excerpts since the owner's answer of
+    2026-09-25; test_report_excerpt.py holds the length and link rules). The
+    payloads are pipeline outputs (gitignored), so a checkout without them
+    skips."""
     chunks = sorted(p for p in (ROOT / "data").glob("scout_reports_*.json")
                     if p.stem.rsplit("_", 1)[-1].isdigit())
     draft_path = ROOT / "data" / "draft_timeseries.json"
