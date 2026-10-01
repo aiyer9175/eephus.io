@@ -20,7 +20,7 @@ asserts on the SERVED pages:
   - the computed animation-duration and iteration count of the wire ticker and
     a blink dot (homepage), the lamp loader (the shipped EephusState loading
     scene, drawn on the 404 page, which loads the component), the 404 foul
-    ball and a PROSPX card's foil edge are the same with and without the
+    ball and a PROSPX headshot's foil ring are the same with and without the
     preference, and none is 0.001ms;
   - no rule inside a (prefers-reduced-motion: reduce) query in any stylesheet
     the page loads (site.css, the PROSPX <style>, injected sheets) sets
@@ -118,6 +118,12 @@ _LAMP_JS = r"""
 """
 
 
+# A board headshot's foil ring. The bare .card-rarity-foil selector first
+# matched a rank diamond, which is static by spec and opts out of the loop
+# (A09, 2026-10-01).
+_FOIL_RING = "span.headshot.fv-headshot-ring.card-rarity-foil"
+
+
 def _seconds(v: str) -> float:
     v = v.split(",")[0].strip()
     return float(v[:-2]) / 1000 if v.endswith("ms") else float(v[:-1])
@@ -157,10 +163,10 @@ def measured():
 
             page.goto(base + "prospx/index.html", wait_until="load", timeout=30_000)
             try:
-                page.wait_for_selector(".card-rarity-foil", state="attached", timeout=45_000)
+                page.wait_for_selector(_FOIL_RING, state="attached", timeout=45_000)
             except Exception:
                 pass
-            res["foil"] = page.evaluate(_MEASURE_JS, ".card-rarity-foil")
+            res["foil"] = page.evaluate(_MEASURE_JS, _FOIL_RING)
             res["scan:prospx"] = page.evaluate(_SCAN_JS)
             out[mode] = res
             ctx.close()

@@ -2267,6 +2267,12 @@
         var(--refractor-legendary) border-box !important;
       box-shadow: 0 0 6px rgba(180,85,255,0.35), 0 1px 3px rgba(0,0,0,0.15) !important;
     }
+    /* The diamond is static, so it opts out of the generic .card-rarity-*
+       loops (foil-shift, chrome-shimmer, holo-shift, legendary-shift) it
+       would otherwise inherit. Those loops ran on every rarity diamond and
+       moved nothing, since the !important background above pins the
+       position (A09, 2026-10-01). Not a reduced-motion rule. */
+    .rank-num[class*="card-rarity-"] { animation: none; }
     /* Compact-density: shrink the diamond so it doesn't dominate the
        tight row. Same family of treatments as the other compact tweaks. */
     body.density-compact .rank-num {

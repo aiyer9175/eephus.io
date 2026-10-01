@@ -18,6 +18,9 @@ the SERVED page, and asserts the two runs measure the same:
   - A01: the headshot rarity rings on the /prospx/ board move. Their
     background-position was pinned by an !important background shorthand, so
     foil-shift, chrome-shimmer and holo-shift reported running and held still.
+  - A09: the rank diamonds run no loop. They are static by spec but inherited
+    the generic .card-rarity-* loops, which ran on every rarity diamond and
+    moved nothing; switching them off leaves each diamond pixel-identical.
 
 Playwright/chromium are OPTIONAL; the browser tests skip cleanly when they are
 unavailable (mirrors test_reduced_motion_runs.py)."""
@@ -65,6 +68,44 @@ async (tier) => {
 """
 
 
+# Every rank diamond carrying a rarity class, and how many run an animation.
+_DIAMONDS_JS = r"""
+() => {
+  const els = Array.from(document.querySelectorAll('.rank-num[class*="card-rarity-"]'));
+  return {count: els.length, looping: els.filter((e) => e.getAnimations().length > 0).length};
+}
+"""
+
+# The loops the diamonds inherited before A09 (the generic .card-rarity-*
+# rules), re-applied at the diamond's own specificity to rebuild the pre-change
+# frame for the pixel comparison.
+_PRE_A09_CSS = (
+    ".rank-num.card-rarity-foil{animation:foil-shift 8s linear infinite}"
+    ".rank-num.card-rarity-chrome{animation:chrome-shimmer 4.2s linear infinite}"
+    ".rank-num.card-rarity-holo{animation:holo-shift 6s linear infinite}"
+    ".rank-num.card-rarity-legendary{animation:legendary-shift 3s linear infinite}"
+)
+
+
+def _diamond_shots(page) -> dict:
+    """{tier: (served png, pre-change png)} for the first diamond of each tier."""
+    out = {}
+    for tier in RING_LOOPS:
+        loc = page.locator(".rank-num.card-rarity-" + tier).first
+        if not loc.count():
+            continue
+        loc.scroll_into_view_if_needed(timeout=10_000)
+        page.wait_for_timeout(200)
+        served = loc.screenshot(animations="allow")
+        page.evaluate("(css) => { const s = document.createElement('style'); s.id = 'pre-a09';"
+                      " s.textContent = css; document.head.appendChild(s); }", _PRE_A09_CSS)
+        page.wait_for_timeout(1000)
+        pre = loc.screenshot(animations="allow")
+        page.evaluate("() => document.getElementById('pre-a09').remove()")
+        out[tier] = (served, pre)
+    return out
+
+
 @pytest.fixture(scope="module")
 def measured():
     """{mode: {probe: result}} for both modes, from one chromium launch."""
@@ -92,6 +133,8 @@ def measured():
             page.wait_for_timeout(1000)
             for tier in RING_LOOPS:
                 res["ring:" + tier] = page.evaluate(_RING_JS, tier)
+            res["diamonds"] = page.evaluate(_DIAMONDS_JS)
+            res["diamond_shots"] = {t: a == b for t, (a, b) in _diamond_shots(page).items()}
             out[mode] = res
             ctx.close()
         browser.close()
@@ -121,3 +164,18 @@ def test_a01_headshot_rarity_rings_move(measured):
             assert loop[0]["iterations"] == float("inf"), loop
             assert loop[0]["state"] == "running", loop
         assert measured["reduce"]["ring:" + tier] == measured["no-preference"]["ring:" + tier]
+
+
+def test_a09_rank_diamonds_run_no_loop(measured):
+    """A09: no rarity diamond runs an animation, and each tier's diamond is
+    pixel-identical to the frame the inherited loops painted, under both motion
+    settings."""
+    for mode in MODES:
+        d = measured[mode]["diamonds"]
+        assert d["count"] > 0, f"no rarity diamond on the served board under {mode}"
+        assert d["looping"] == 0, f"{d['looping']} of {d['count']} diamonds run a loop under {mode}"
+        shots = measured[mode]["diamond_shots"]
+        assert "foil" in shots, shots
+        assert all(shots.values()), f"diamond frame changed under {mode}: {shots}"
+    assert measured["reduce"]["diamonds"] == measured["no-preference"]["diamonds"]
+    assert measured["reduce"]["diamond_shots"] == measured["no-preference"]["diamond_shots"]
