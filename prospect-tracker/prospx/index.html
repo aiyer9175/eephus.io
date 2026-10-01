@@ -16143,6 +16143,9 @@ function getFilteredActives() {
     // _applySortDir skips these keys (see _INTERNAL_DIR_MAIN_SORTS).
     const _rev = !!(state.sortRev && state.sortRev.sort);
     const _sval = p => {
+      // A debuted player sorts on the number his cell prints: the Trade Machine value
+      // when he is priced on his contract (B4_BOARD_SURPLUS).
+      if (_sk === "surplus_sv") { const tv = debutedTradeValueMM(p); if (tv != null) return tv; }
       // eFV is the primary surplus when present + the grade toggle is on eFV.
       const xf = getEfv(p);
       const useX = xf && xf.surplus_mm != null && _gradePrimary() === "xfv";
@@ -21898,12 +21901,9 @@ function _tvLeadFill() {
   if (!_TA_TV.idx) { _taTradeValuesLoad().then(() => { try { _tvLeadFill(); } catch (e) { /* non-critical */ } }); return; }
   slots.forEach(el => {
     el.setAttribute("data-tvlead-done", "1");
-    const row = _TA_TV.idx.byKey[el.getAttribute("data-tvlead-key")];
-    const mid = Number(el.getAttribute("data-tvlead-mlbam")) || null;
-    if (!row || row.surplus_source !== "projection" || row.trade_value_mm == null) return;
-    if (mid && row.mlbam_id != null && Number(row.mlbam_id) !== mid) return;
+    const row = _dtvRow(el.getAttribute("data-tvlead-key"), el.getAttribute("data-tvlead-mlbam"));
+    if (!row) return;
     const mm = Number(row.trade_value_mm);
-    if (!isFinite(mm)) return;
     const col = mm >= 50 ? "var(--up)" : mm >= 10 ? "var(--neon-cyan)" : mm < 0 ? "var(--down)" : "var(--text-primary)";
     const tip = "Trade value: the posterior expected surplus of his MLB contract over the club control window, "
       + "the same number the Trade Machine prints and /projections/ prices (surplus source: contract projection). "
@@ -21916,6 +21916,71 @@ function _tvLeadFill() {
          <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:${col};font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">${_taMM(mm)}</div>
        </div>`;
   });
+}
+
+// ---------------------------------------------------------------------------
+// DEBUTED VALUE LEAD, EVERY SURFACE (B4_BOARD_SURPLUS, owner answer FP4-1,
+// 2026-09-25). The Surplus value card above leads a debuted player with his
+// Trade Machine value; the board Surplus cell, its sort and sort pill, the phone
+// row, the card's Surplus tile, the GFX card (hero tile and surplus block) and the
+// compare card follow the same rule, so the card, the board and /trademachine/
+// print one number. One rule decides it (_dtvRow): the trade board row must be on
+// the contract-projection basis and carry the same mlbam id. Without such a row,
+// or until the artifact lands, a surface keeps the eFV figure it printed before;
+// the eFV figure stays visible as the second line wherever there is room.
+// ---------------------------------------------------------------------------
+function _dtvRow(key, mlbam) {
+  if (!_TA_TV.idx || !key) return null;
+  const row = _TA_TV.idx.byKey[key];
+  if (!row || row.surplus_source !== "projection" || row.trade_value_mm == null) return null;
+  const mid = Number(mlbam) || null;
+  if (mid && row.mlbam_id != null && Number(row.mlbam_id) !== mid) return null;
+  return isFinite(Number(row.trade_value_mm)) ? row : null;
+}
+let _dtvKicked = false;
+function debutedTradeValueMM(p) {
+  if (!p || p.status !== "debuted") return null;
+  if (!_TA_TV.idx) { _dtvKick(); return null; }
+  const row = _dtvRow(p.player_key, p.mlbam_id);
+  return row ? Number(row.trade_value_mm) : null;
+}
+// A debuted figure painted before the trade board is cached loads it once, then
+// repaints what is on screen so the Trade Machine value replaces the fallback.
+function _dtvKick() {
+  if (_dtvKicked || _TA_TV.idx) return;
+  _dtvKicked = true;
+  _taTradeValuesLoad().then(idx => {
+    if (!idx || !idx.ok) return;
+    try {
+      const ov = document.getElementById("gfx-overlay");
+      if (ov && ov.classList.contains("is-open") && typeof _gfxRefresh === "function") _gfxRefresh();
+      if (state.view && state.view.type === "player") renderPlayerDetail(state.view.key);
+      else render();
+    } catch (e) { /* the debuted lead is non-critical */ }
+  });
+}
+// The second figure under a Trade value lead: his prospect valuation on the grade
+// the board leads with (eFV while eFV is primary, the consensus engine otherwise).
+function _dtvSecondary(p) {
+  const xf = getEfv(p);
+  if (xf && xf.surplus_mm != null && _gradePrimary() === "xfv") {
+    return { label: "eFV prospect valuation", short: "eFV prospect", mm: Number(xf.surplus_mm) };
+  }
+  if (p && p.surplus && p.surplus.value_mm != null) {
+    return { label: "FV prospect valuation", short: "FV prospect", mm: Number(p.surplus.value_mm) };
+  }
+  return null;
+}
+function _dtvSurplusCellHTML(p, mm) {
+  const sec = _dtvSecondary(p);
+  const col = mm >= 50 ? "var(--up)" : mm >= 10 ? "var(--neon-cyan)" : mm < 0 ? "var(--down)" : "var(--text-primary)";
+  const tip = `Trade value ${_taMM(mm)}: the posterior expected surplus of his MLB contract over the club control window, `
+    + "the same number the Trade Machine prints (surplus source: contract projection)."
+    + (sec ? ` ${sec.label} ${fmtSvMM(sec.mm)}, priced as a prospect, not on his contract.` : "");
+  return `<div class="surplus-cell" title="${escapeHtml(tip)}">
+      <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${col};font-variant-numeric:tabular-nums;line-height:1.05;">${_taMM(mm)}</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);line-height:1.1;">trade value${sec ? ` · ${sec.short} ${fmtSvMM(sec.mm)}` : ""}</div>
+    </div>`;
 }
 
 function _ctrlWinLoad() {
@@ -23039,6 +23104,10 @@ function playerSurplusMM(p) {
 // primary grade). Falls back to the baked consensus surplus (playerSurplusMM)
 // when eFV has no value or the grade toggle is on consensus.
 function displaySurplusMM(p) {
+  // A debuted player priced on his MLB contract leads with the Trade Machine value
+  // (B4_BOARD_SURPLUS), the number his card and /trademachine/ print.
+  const tv = debutedTradeValueMM(p);
+  if (tv != null) return tv;
   const xf = (typeof getEfv === "function") ? getEfv(p) : null;
   if (xf && xf.surplus_mm != null && _gradePrimary() === "xfv") return xf.surplus_mm;
   return playerSurplusMM(p);
@@ -35300,6 +35369,11 @@ function _gfxSurplusBlock(p, P) {
   const fv = _efvG != null ? _efvG : p.fv_close;       // eFV grade (already nearest-rounded) or consensus
   const _fvIsEfv = _efvG != null;
   const surplus = (typeof displaySurplusMM === "function") ? displaySurplusMM(p) : baked.value_mm;
+  // Trade value lead (B4_BOARD_SURPLUS): the headline is the contract price, so the
+  // eFV dollar fan and its dollar statistics leave the block (they describe the
+  // prospect valuation, which rides as the first meta line instead).
+  const _tvLead = debutedTradeValueMM(p) != null;
+  const _tvSec = _tvLead ? _dtvSecondary(p) : null;
   const d = (_useEfv && _xf.dist) ? _xf.dist : (baked.dist || {});
   const bk = (p.debuted_value && p.debuted_value.posterior) ? p.debuted_value.posterior
            : (_useEfv && _xf.buckets) ? _xf.buckets : baked.buckets;
@@ -35313,24 +35387,25 @@ function _gfxSurplusBlock(p, P) {
   // Lead with the model's own confidence band (epistemic CI) - the canonical
   // uncertainty read - then the outcome distribution and risk meta.
   const _ci = (_useEfv && _xf.ci) ? _xf.ci : baked.ci;
-  if (_ci && _ci.lo_mm != null) {
+  if (!_tvLead && _ci && _ci.lo_mm != null) {
     const pct = _ci.cred != null ? Math.round(_ci.cred * 100) : 90;
     metaBits.push(`${pct}% CI ${fmtUsd(_ci.lo_mm)}-${fmtUsd(_ci.hi_mm)}`);
   }
-  if (d.p10_mm != null) metaBits.push(fmtFanRange(d.p10_mm, d.p90_mm, fmtUsd));
+  if (!_tvLead && d.p10_mm != null) metaBits.push(fmtFanRange(d.p10_mm, d.p90_mm, fmtUsd));
   if (pb != null) metaBits.push(`P(bust) ${pb}%`);
-  if (d.p_above_threshold != null && d.threshold_mm != null) metaBits.push(`P(>$${Math.round(d.threshold_mm)}M) ${Math.round(d.p_above_threshold * 100)}%`);
-  if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtUsd(d.risk_adjusted_mm)}`);
+  if (!_tvLead && d.p_above_threshold != null && d.threshold_mm != null) metaBits.push(`P(>$${Math.round(d.threshold_mm)}M) ${Math.round(d.p_above_threshold * 100)}%`);
+  if (!_tvLead && d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtUsd(d.risk_adjusted_mm)}`);
+  if (_tvSec) metaBits.unshift(`${_tvSec.label} ${fmtUsd(_tvSec.mm)}`);
   return `<div style="background:${P.bg};border:1px solid ${P.border};border-radius:8px;padding:16px 18px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:11px;border-bottom:1px solid ${P.border};margin-bottom:13px;">
       <div style="min-width:0;">
-        <div style="font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:${P.text3};font-weight:700;">Surplus value${scChip}</div>
-        <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};margin-top:4px;font-style:italic;">${_fvIsEfv ? "eFV" : "FV"} ${fv != null ? (_fvIsEfv ? fv : fvCeil(fv)) : " - "} ${isPit ? "pitcher" : "hitter"} · controlled seasons</div>
+        <div style="font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:${P.text3};font-weight:700;">${_tvLead ? "Trade value" : `Surplus value${scChip}`}</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};margin-top:4px;font-style:italic;">${_tvLead ? "MLB contract projection · Trade Machine" : `${_fvIsEfv ? "eFV" : "FV"} ${fv != null ? (_fvIsEfv ? fv : fvCeil(fv)) : " - "} ${isPit ? "pitcher" : "hitter"} · controlled seasons`}</div>
       </div>
-      <div style="font-family:var(--font-mono);font-size:30px;font-weight:800;color:${surplusColor};line-height:1;">${escapeHtml(fmtUsd(surplus))}</div>
+      <div style="font-family:var(--font-mono);font-size:30px;font-weight:800;color:${surplusColor};line-height:1;">${escapeHtml(_tvLead ? _taMM(surplus) : fmtUsd(surplus))}</div>
     </div>
     ${bk ? `<div style="font-family:var(--font-sans);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:${P.text3};font-weight:700;margin-bottom:7px;">Outcome mix</div>${renderBucketBar(bk, { height: 20, labels: true, legend: true })}` : ""}
-    ${(d.p50_mm != null && typeof renderSvDistribution === "function") ? `<div style="margin-top:15px;"><div style="font-family:var(--font-sans);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:${P.text3};font-weight:700;margin-bottom:7px;">Simulated outcome range</div>${renderSvDistribution(d, { height: 38, axis: true })}</div>` : ""}
+    ${(!_tvLead && d.p50_mm != null && typeof renderSvDistribution === "function") ? `<div style="margin-top:15px;"><div style="font-family:var(--font-sans);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:${P.text3};font-weight:700;margin-bottom:7px;">Simulated outcome range</div>${renderSvDistribution(d, { height: 38, axis: true })}</div>` : ""}
     ${metaBits.length ? `<div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};margin-top:12px;">${metaBits.join("  ·  ")}</div>` : ""}
   </div>`;
 }
@@ -35654,7 +35729,8 @@ function buildProspectCard(snap) {
     if (_cardLeadRank != null) tile("Board rank", `#${_cardLeadRank}`, accent);
     const _heroSv = displaySurplusMM(p);
     if (_heroSv != null && typeof fmtSvMM === "function") {
-      tile("Surplus", fmtSvMM(_heroSv), accent);
+      const _heroTv = debutedTradeValueMM(p) != null;
+      tile(_heroTv ? "Trade value" : "Surplus", _heroTv ? _taMM(_heroSv) : fmtSvMM(_heroSv), accent);
     }
     if (p.statcast_plus != null && isFinite(p.statcast_plus)) {
       const v = Math.round(p.statcast_plus);
@@ -36061,7 +36137,7 @@ function buildCompareCard(snap) {
              sc: (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null,
              rps: rpsObj ? rpsObj.plus : null,
              dvm: (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? Math.round(p.dollar_dvm_plus) : null,
-             surplus: displaySurplusMM(p) };
+             surplus: displaySurplusMM(p), svTrade: debutedTradeValueMM(p) != null };
   });
   const allPit = data.every(d => d.isPit), allHit = data.every(d => !d.isPit);
 
@@ -36104,7 +36180,16 @@ function buildCompareCard(snap) {
     ["Statcast+", d => d.sc, "high", v => v != null ? v : " - "],
     ["RPS+", d => d.rps, "high", v => v != null ? v : " - "],
     ["$DvM+", d => d.dvm, "high", v => v != null ? v : " - "],
-    ["Surplus", d => d.surplus, "high", v => fmtSurp(v)],
+    // A debuted player's figure is his Trade Machine value (B4_BOARD_SURPLUS); with
+    // a prospect beside him the two are different prices, so the row names both and
+    // marks no best.
+    (() => {
+      const nTv = data.filter(d => d.svTrade).length;
+      const mixed = nTv > 0 && nTv < data.length;
+      const lab = nTv === data.length ? "Trade value" : mixed ? "Surplus / trade value (TV)" : "Surplus";
+      return [lab, d => d.surplus, mixed ? null : "high",
+              (v, d) => (d && d.svTrade && v != null) ? _taMM(v) + (mixed ? " TV" : "") : fmtSurp(v)];
+    })(),
   ];
   if (allHit) rows.push(["AVG/OBP/SLG", d => null, null, () => null]); // placeholder dropped below
   if (allHit) { rows.pop(); rows.push(["OPS", d => (d.sl.ops != null ? Number(d.sl.ops) : null), "high", v => v != null ? v.toFixed(3).replace(/^0(?=\.)/, "") : " - "], ["HR", d => d.sl.hr, "high", v => v != null ? v : " - "], ["K%", d => (d.sl.k_pct != null ? Number(d.sl.k_pct) : null), "low", v => v != null ? v.toFixed(1) + "%" : " - "]); }
@@ -36117,7 +36202,7 @@ function buildCompareCard(snap) {
       const valid = nums.filter(v => v != null);
       let bestIdx = -1;
       if (dir && valid.length) { const best = dir === "high" ? Math.max(...valid) : Math.min(...valid); bestIdx = nums.findIndex(v => v === best); }
-      return `<tr><td style="text-align:left;padding:8px 12px;border-bottom:1px solid ${P.border};font-family:var(--font-sans);font-size:13px;font-weight:600;color:${P.text3};">${escapeHtml(label)}</td>${data.map((d, i) => `<td style="text-align:right;padding:8px 12px;border-bottom:1px solid ${P.border};font-family:var(--font-mono);font-size:16px;font-weight:${i === bestIdx ? "800" : "600"};color:${i === bestIdx ? d.color : P.text};">${escapeHtml(String(fmtv(vals[i])))}</td>`).join("")}</tr>`;
+      return `<tr><td style="text-align:left;padding:8px 12px;border-bottom:1px solid ${P.border};font-family:var(--font-sans);font-size:13px;font-weight:600;color:${P.text3};">${escapeHtml(label)}</td>${data.map((d, i) => `<td style="text-align:right;padding:8px 12px;border-bottom:1px solid ${P.border};font-family:var(--font-mono);font-size:16px;font-weight:${i === bestIdx ? "800" : "600"};color:${i === bestIdx ? d.color : P.text};">${escapeHtml(String(fmtv(vals[i], d)))}</td>`).join("")}</tr>`;
     }).join("")}</tbody></table>`;
 
   const sect = (t, body) => body ? `<div><div style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};margin-bottom:12px;border-bottom:1px solid ${P.border};padding-bottom:6px;">${t}</div>${body}</div>` : "";
@@ -37490,6 +37575,10 @@ const _PHYS_COL_ON = (() => {
 function _physColUiOn() { return _PHYS_COL_ON; }
 
 function makeSurplusCell(p) {
+  // A debuted player priced on his MLB contract leads with the Trade Machine value and
+  // keeps his prospect valuation as the second line (B4_BOARD_SURPLUS).
+  const _dtv = debutedTradeValueMM(p);
+  if (_dtv != null) return _dtvSurplusCellHTML(p, _dtv);
   // eFV is the primary FV site-wide, so surplus is the eFV surplus when available (and the
   // grade toggle is on eFV). Consensus surplus (p.surplus) is the fallback / toggle option.
   const xf = getEfv(p);
@@ -39327,6 +39416,7 @@ function _sortStatPill(p) {
   };
   const s = state.sort;
   if (s === "statcast_plus") { const v = getStatcastPlus(p); return _pillHTML("SC+", v == null ? null : String(Math.round(v))); }
+  if (s === "surplus_sv") { const tv = debutedTradeValueMM(p); if (tv != null) return _pillHTML("Trade value", _taMM(tv)); }
   if (surM[s]) { const v = surM[s][1](p.surplus); return _pillHTML(surM[s][0], v == null ? null : "$" + Number(v).toFixed(1) + "m"); }
   if (s === "surplus_pbust") { const v = p.surplus && p.surplus.dist && p.surplus.dist.p_bust; return _pillHTML("P(bust)", v == null ? null : Math.round(v * 100) + "%"); }
   if (s === "wag") { const v = _wagUnified() ? wagBaked(p) : (p.debuted_value && p.debuted_value.wag && p.debuted_value.wag.regressed_wag); return _pillHTML("WAG", v == null ? null : (v > 0 ? "+" : "") + Number(v).toFixed(1)); }
@@ -39363,16 +39453,21 @@ function _rowPhoneSignalsHTML(p) {
   const _xf = (typeof getEfv === "function") ? getEfv(p) : null;
   const _useX = !!(_xf && _xf.surplus_mm != null
                    && typeof _gradePrimary === "function" && _gradePrimary() === "xfv");
-  const sv = _useX ? _xf.surplus_mm
+  // A debuted player priced on his MLB contract reads his Trade Machine value (TV), as
+  // his desktop cell does (B4_BOARD_SURPLUS); the outcome bar is the prospect's, so it
+  // stays off that row.
+  const _dtv = debutedTradeValueMM(p);
+  const sv = _dtv != null ? _dtv
+           : _useX ? _xf.surplus_mm
            : ((p.surplus && p.surplus.value_mm != null) ? p.surplus.value_mm : null);
   if (sv != null && typeof fmtSvMM === "function") {
-    const buckets = _useX
+    const buckets = _dtv != null ? null : _useX
       ? _xf.p_bucket
       : ((p.debuted_value && p.debuted_value.posterior)
           ? p.debuted_value.posterior : (p.surplus || {}).buckets);
     const bar = (buckets && typeof renderBucketBar === "function")
       ? `<span class="rps-bar">${renderBucketBar(buckets, { height: 5 })}</span>` : "";
-    bits.push(`<span class="rps-item"><span class="rps-key">SV</span><span class="rps-val">${escapeHtml(fmtSvMM(sv))}</span>${bar}</span>`);
+    bits.push(`<span class="rps-item"><span class="rps-key"${_dtv != null ? ' title="Trade value: the Trade Machine price of his MLB contract"' : ""}>${_dtv != null ? "TV" : "SV"}</span><span class="rps-val">${escapeHtml(_dtv != null ? _taMM(sv) : fmtSvMM(sv))}</span>${bar}</span>`);
   }
   if (!bits.length) return "";
   return `<div class="row-phone-signals" aria-label="Movement and value signals">${bits.join("")}</div>`;
@@ -50926,6 +51021,13 @@ function renderPlayerDetail(key) {
     return { label: "ETA", value: etaDisplayYear(eta), sub: eta.confidence ? `${eta.confidence} conf` : "" };
   })();
   const _ovSurplus = (() => {
+    // A debuted player priced on his MLB contract leads with the Trade Machine value, as
+    // the Surplus value card does; his prospect valuation is the sub line (B4_BOARD_SURPLUS).
+    const _dtv = debutedTradeValueMM(p);
+    if (_dtv != null) {
+      const sec = _dtvSecondary(p);
+      return { label: "Trade value", value: _taMM(_dtv), sub: sec ? `${sec.short} ${fmtSvMM(sec.mm)}` : "" };
+    }
     // eFV surplus is primary (matches the Surplus-value card + the list); consensus baked SV is
     // the fallback where eFV abstains. Mirrors makeSurplusCell so the tile never contradicts it.
     const _xf = getEfv(p);
