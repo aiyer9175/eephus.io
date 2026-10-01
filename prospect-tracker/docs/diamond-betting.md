@@ -4226,6 +4226,72 @@ distribution is reported (the store has gaps: September so far has no
 stand as registered. The decision is 5e's alone: 5f and 5g still exclude
 postseason games.
 
+### Restart (2026-09-25, owner-signed): the per-hand HEM+ construction changes, and the clock restarts again
+
+Recorded under 5c rule 1, before any look and before any number relates the
+candidate to a game outcome or a price. **Nothing in this restart was measured
+against a game result.** The paragraphs above are left as written; where they
+date the clock, this restart supersedes them.
+
+**The owner's answer.** 2026-09-25 ('more' batch 17): switch `hem_plus_split` to
+the platoon-ratio estimator now, and the owner SIGNS the restart of the 5e
+(handedness) and 5f (pinch-hit) dark clocks.
+
+**Why the construction changes.** Census finding M06-05 (2026-09-24):
+`hem_plus.split_hem_plus` reuses the season shrink (each wOBA component regressed
+toward the hitter pool's mean by its own reliability constant) on the split's
+smaller denominator, so a thin split is pulled toward 100, the league, rather than
+toward the player's own level. On the served board (`hitter_leaderboards.json`
+dated 2026-09-30, the 270 hitters with a per-hand value on both hands in the
+constructed orders), the PA-weighted mean of the two hands minus season HEM+ has a
+slope of -0.15 on (season - 100); hitters at 125 or better lose 4.7 points on
+average (n 20) and hitters at 95 or below gain 2.2 (n 108). Yordan Alvarez reads
+159 on the season, 168 against right-handers (508 PA) and 112 against left-handers
+(184 PA). These are facts about how a column is built from hitter counting lines;
+no game, price or outcome was read to find them.
+
+**What the change moves.** The per-hand value on every slot of
+`teams[].orders.vl` and `teams[].orders.vr` and on every bench row's per-hand
+fields in `hitter_leaderboards.json`, and so every column built from them: this
+gate's `off_vs_lhp` and `off_vs_rhp`, and 5f's `lineup_dis_vs_lhp`,
+`lineup_dis_vs_rhp`, `bench_adv_vs_lhp` and `bench_adv_vs_rhp`. It moves no order
+(the nine and its sequence are still built on season HEM+ and the `_platoon_adj`
+heuristic), no season HEM+, no Offense+ and therefore no `z_off`: the served model
+and every served price are unchanged. The estimator itself is pre-registered in
+its own subsection below, before its constant is fitted.
+
+**No look was taken before this restart.** The floor this restart replaces was
+2026-10-11 (the 2026-09-25 correction above), `dark_look_allowed("5e", ...)`
+refused every earlier date, and no harness has computed the candidate, its twin or
+either criterion against any game. The stored `off_vs_lhp` / `off_vs_rhp` rows are
+kept as written (vintages are immutable) and carry the old construction.
+
+**The new earliest-look rule.** The same four-weeks-after-first-vintage rule as
+the 2026-09-10 restart, counted from the first vintage written under the NEW
+construction. A vintage is under the new construction when its own basis record
+says so: the 5f hitter-column basis carries both `platoon_splits.available True`
+and `split_estimator platoon_ratio_v1`, the marker the re-export stamps into the
+hitter artifact's `platoon_splits` block. Vintages are first-write-wins, so the
+first such file is the NEXT nightly vintage written after the re-export ships,
+never a file already on disk. Postseason nights count toward the four weeks and
+postseason games are graded, exactly as the 2026-09-11 amendment registered. The
+date is not typed here: `leaderboard_vintages.dark_clock("5e")` reads the start
+off the store, and `dark_look_allowed("5e", date)` refuses any date before the
+start plus 28 days, and every date while no vintage carries the marker
+(`test_leaderboard_vintages.py`).
+
+**Which games inform the candidate.** A game priced from a vintage that predates
+the first new-construction vintage carries the old column and is out of the 5e
+eval set; the resolver rule (newest same-season vintage strictly before the game)
+is unchanged, so the first informative games are the ones on the slate after the
+first new-construction vintage. The 2026 regular season ended 2026-09-27, so the
+2026 part of the eval set is postseason games only; the count by round is
+reported, as the 2026-09-11 amendment requires.
+
+**Not reopened.** The candidate, both criteria, the permuted twin, every threshold
+and the postseason ruling stand as registered. Only the column's construction and
+the clock's start move.
+
 ## 5f. The pinch-hit and bullpen-handedness gate (pre-registered 2026-09-11, schema 5)
 
 **Written before the schema bump it describes exists in code and before the
@@ -4348,6 +4414,38 @@ did not happen; nothing the management module measures may be read into this gat
 because today it is pinned to schema 3 only and the nine schema-4 columns (5d) are
 stored but never reach `_assemble_team_inputs`; the 5d harness needs that read path
 before its look.
+
+### Restart (2026-09-25, owner-signed): the construction start is re-dated
+
+Recorded under 5c rule 1 with the 5e restart of the same date (see it for the
+owner's answer, census finding M06-05 and the measurements). **Nothing in this
+restart was measured against a game result**, and no 5f look exists to have been
+taken: the first is the end of the 2027 regular season.
+
+**Why.** The four hitter-derived columns (`lineup_dis_vs_lhp`, `lineup_dis_vs_rhp`,
+`bench_adv_vs_lhp`, `bench_adv_vs_rhp`) are season-PA weighted `hem_plus_split`,
+and the candidate's `L` and `R` are 5e's `off_vs_lhp` and `off_vs_rhp`. All six
+change construction when `hem_plus_split` switches to the platoon-ratio estimator.
+`ph_share` and `pen_lhp_share` do not move.
+
+**What is re-dated.** The construction start. Where this section says "schema 5",
+read "schema 5 AND written under the new per-hand construction" (the basis marker
+the 5e restart names): the eval set is regular-season games whose vintage carries
+the marker; fit-half games whose vintage predates it enter with a delta of zero,
+which makes them identical to the served model's rows; and 5c rule 2's four weeks
+are four weeks of marker-carrying vintages. The 2026 regular season ended before
+the new construction, so the whole eval set is 2027 games.
+
+**What stands.** The end-of-2027-regular-season embargo (one look per season,
+after the last regular-season game, no other look in either direction), the power
+precondition, both criteria, the control, the postseason exclusion and every
+constant. `leaderboard_vintages.dark_clock("5f")` reads the construction start off
+the store and `dark_look_allowed("5f", date)` refuses any date before the start
+plus 28 days or before 2027-10-06, whichever is later. 2027-10-06 is a floor, not
+the look date: it is the day after the latest regular-season final day since 2016
+(2022-10-05), so it can only delay a look and never admit one early; the look
+still waits for the last 2027 regular-season game to be final, which a lockout or
+a late schedule moves later.
 
 ## 5g. Team fielding (`team_fld_runs`), schema 5 (pre-registered 2026-09-11)
 
