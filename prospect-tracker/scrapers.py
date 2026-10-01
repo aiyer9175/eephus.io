@@ -653,6 +653,17 @@ _SPLIT_KEYS: dict[tuple[str, int], str] = {
     ("jose_rodriguez", 836624): "jose_rodriguez_836624",      # MIL DSL SS b.2009-01-19
     ("michael_massey", 695602): "michael_massey__sa3037259",  # DET RHP b.2003-04-05
     ("carlos_rodriguez", 677578): "carlos_d_rodriguez",       # the OF b.2000-12-07
+    # 2026-10-01 - owner answer PVA-2, entry flores_joshua_834237 of
+    # identity_repairs.py, applied by tools/repair_identity_split_2026_09_30.py.
+    # A name search for "Joshua Flores" bound the MIL RHP's three keys (the
+    # bare slug and both FanGraphs fragments) to 832714, the BAL DSL catcher
+    # Jose Flores (b.2007-11-03), whose statline, transaction log and
+    # Baltimore signing then served on the reliever's row. Joshua is 834237
+    # (b.2007-06-14, 2025 MIL draft round 4). These pins route 832714 away
+    # from every Joshua key so a re-resolution cannot bind it back.
+    ("joshua_flores", 832714): "jose_flores_832714",
+    ("joshua_flores__noid", 832714): "jose_flores_832714",
+    ("joshua_flores__sa3069242", 832714): "jose_flores_832714",
 }
 
 

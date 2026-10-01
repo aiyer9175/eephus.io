@@ -4,8 +4,84 @@
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
 """
-repair_identity_split_2026_09_30.py - split the three merged debuted PROSPX
-identities the final-pass census found (M02-11, owner answer 2026-09-25 batch 4):
+repair_identity_split_2026_09_30.py - apply every repair in identity_repairs.py
+(the identity-repair list) to a prospects.db.
+
+Since 2026-10-01 this tool reads the list: one entry per repair (the board key,
+the wrong id, the right id, the proof, the date). Owner answer B4ID-2 folds it
+into the fWAR label epoch's step A as an idempotent, receipt-guarded pipeline
+step, so the deploy box repairs its own prospects.db on its first nightly after
+the epoch's code sync; step A only wires run_step() below. A repair that has a
+receipt for this DB is skipped; one with no receipt is dry-run, and written only
+behind a dated backup; a receipt row is appended only for a repair that refused
+nothing. Receipts: .cache/identity_repairs/receipts.jsonl (gitignored, so the
+box's nightly `git checkout -- .` cannot drop them).
+
+Two kinds of entry:
+  row_split  the 2026-09-30 M02-11 split below (the tables MOVES and on)
+  rebind     a board key bound to another human's MLBAM id (the Flores
+             repair below); generic, driven by the entry's own fields
+
+----------------------------------------------------------------------------
+REBIND flores_joshua_834237 (owner answer PVA-2, 2026-10-01; found by the
+PV_A scorer lane as its D7 and by B4_IDENTITY_SPLIT's C4b probe as an SIRP
+row serving a hitter line).
+
+The board row joshua_flores__sa3069242 is Joshua Flores, the Brewers RHP. It
+served MLBAM id 832714, which is Jose Flores, an Orioles DSL catcher, and with
+it Jose's DSL statline, his career line, his headshot binding, his transaction
+log and a Baltimore international signing. Two humans, proved from cached MLB
+pages (re-read 2026-10-01):
+
+  834237  Joshua Christian Flores, b. 2007-06-14 (Crown Point, IN), P, bats
+          R / throws R, drafted 2025 round 4 pick 125 by team 158 (Milwaukee),
+          Lake Central HS, active roster ACL Brewers (parent org Milwaukee).
+          Sources: .cache/mlb_pipeline_draft_2025.html, Apollo record
+          "Person:834237"; .cache/mlb_draft_api_2025.json (StatsAPI draft
+          2025: the same Person, signing bonus 722,500, pick value 599,600).
+  832714  Jose Flores, b. 2007-11-03, C, team 3130 (DSL Orioles Orange).
+          Sources: .cache/player_index.json (StatsAPI sport 16, season 2026:
+          C, birthDate 2007-11-03, current_team_id 3130);
+          data/rosters_by_org.json (C, DSL Orioles Orange, age 18.9); his own
+          StatsAPI transaction log, which the wrong id wrote onto all three
+          Flores keys: "Baltimore Orioles signed C Jose Flores" and "C Jose
+          Flores assigned to DSL Orioles Orange", both 2025-01-15.
+  The board row's own FanGraphs rows (fg id sa3069242; 2025-07-31,
+  2026-02-12, 2026-07-23, 2026-08-02) read SIRP MIL, signed 2025 in the
+  draft from Lake Central HS (IN) for 722,500: the StatsAPI draft record of
+  834237 to the dollar. 832714 is a catcher Baltimore signed on the
+  international market, so no MIL draft row can be his. First name, birth
+  date, side of the ball, club and acquisition all differ.
+  The players rows of all three Flores keys carry 2007-11-03, which is Jose's
+  StatsAPI birth date (the PlayerIndex refresh writes the bound id's date);
+  data/xfv_ungraded.json shows Jose at 2007-11-07 only because that file
+  approximates a birth date from the roster age.
+
+Writes (each guarded by the exact value it expects; see _repair_rebind):
+  player_photos  832714 unbound from joshua_flores__sa3069242 (player_key set
+                 NULL, its headshot context kept); 834237 bound to it ('milb',
+                 the house default until headshots.resolve_ctx runs)
+  players        birth_date 2007-11-03 -> 2007-06-14 on joshua_flores,
+                 joshua_flores__noid and joshua_flores__sa3069242
+  rows fetched through 832714, removed: the DSL hitter statline and career
+                 line on the board key, the Baltimore IFA acquisitions on
+                 the board key and joshua_flores__noid, and the "C Jose
+                 Flores" transaction logs on all three keys. The bare key's
+                 own MIL draft acquisition stays. The next ingest refetches
+                 through 834237.
+  id cache       joshua_flores and joshua_flores__noid 832714 -> 834237,
+                 joshua_flores__sa3069242 null -> 834237
+  Kept on purpose: roster_status rows (no debut, no 40-man, 0 options, no
+  injuries: identity-free and equally true of Joshua) and the derived
+  history (metric_snapshots, trade_value_history, grpo_score_history),
+  disclosed at run time. Forward pin: scrapers._SPLIT_KEYS routes 832714 to
+  jose_flores_832714 for all three keys, so a re-resolution cannot bind it
+  back. The served row moves at the next regeneration (owner answer B4ID-1:
+  no hand regeneration of data/xfv.json or the trade values).
+
+----------------------------------------------------------------------------
+ROW_SPLIT (2026-09-30): split the three merged debuted PROSPX identities the
+final-pass census found (M02-11, owner answer 2026-09-25 batch 4):
 
   jose_rodriguez     served as SS with a TOR RHP's MLB pitching line
   michael_massey     served as RHP with a KCR 2B's MLB hitting line
@@ -92,9 +168,11 @@ NOT DONE ON PURPOSE (disclosed at run time):
     not merges. Folding them is an alias decision for the C7 queue.
 
 Usage:
-    python tools/repair_identity_split_2026_09_30.py            # dry run
-    python tools/repair_identity_split_2026_09_30.py --apply    # write
+    python tools/repair_identity_split_2026_09_30.py            # dry run, every repair
+    python tools/repair_identity_split_2026_09_30.py --apply    # write + receipts
+    python tools/repair_identity_split_2026_09_30.py --only flores_joshua_834237
     python tools/repair_identity_split_2026_09_30.py --db PATH  # other DB
+    python tools/repair_identity_split_2026_09_30.py --step     # the step A entry
 
 --apply refuses to run unless a dated backup prospects.db.bak-identsplit-*
 sits beside the DB (pass --make-backup to take one first).
@@ -103,15 +181,22 @@ sits beside the DB (pass --make-backup to take one first).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sqlite3
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent.parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+import identity_repairs  # noqa: E402
+
 DEFAULT_DB = HERE / "prospects.db"
 ID_CACHE = HERE / ".cache" / "mlbam_ids.json"
+RECEIPTS = HERE / ".cache" / "identity_repairs" / "receipts.jsonl"
 BACKUP_TAG = "bak-identsplit"
 
 # ---------------------------------------------------------------------------
@@ -280,17 +365,15 @@ def _make_backup(db_path: Path) -> Path:
     return dest
 
 
-def repair(db_path: Path, apply: bool, cache_path: Path = ID_CACHE) -> int:
-    mode = "APPLY" if apply else "DRY-RUN"
-    print(f"=== repair_identity_split_2026_09_30 [{mode}] db={db_path} ===")
-    if not db_path.exists():
-        print(f"FATAL: db not found: {db_path}")
-        return 2
+def _tables(con) -> set[str]:
+    return {r[0] for r in con.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
 
-    con = sqlite3.connect(db_path)
-    con.row_factory = sqlite3.Row
+
+def _repair_m02_11(con, cache, refused: list[str]) -> tuple[int, int]:
+    """The 2026-09-30 row split (every row_split entry of the list).
+    Returns (DB writes, id-cache edits); edits `cache` in place."""
     changes = 0
-    refused: list[str] = []
 
     # ------------------------------------------------------------------
     # 1. snapshot moves
@@ -469,8 +552,7 @@ def repair(db_path: Path, apply: bool, cache_path: Path = ID_CACHE) -> int:
     # 5. derived history: disclose, do not move
     # ------------------------------------------------------------------
     print("\n-- derived history, REPORTED and left in place --")
-    tables = {r[0] for r in con.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    tables = _tables(con)
     for key in ("jose_rodriguez", "michael_massey", "carlos_rodriguez"):
         for t in DERIVED_TABLES:
             if t not in tables:
@@ -485,10 +567,8 @@ def repair(db_path: Path, apply: bool, cache_path: Path = ID_CACHE) -> int:
     # 6. the id cache (gitignored, derived; every edit value-guarded)
     # ------------------------------------------------------------------
     print("\n-- .cache/mlbam_ids.json --")
-    cache = None
     cache_changes = 0
-    if cache_path.exists():
-        cache = json.loads(cache_path.read_text(encoding="utf-8"))
+    if cache is not None:
         for key, (expect, value) in CACHE_FIX.items():
             cur = cache.get(key, _MISSING)
             if cur == value:
@@ -502,8 +582,225 @@ def repair(db_path: Path, apply: bool, cache_path: Path = ID_CACHE) -> int:
                 refused.append(f"cache[{key}] reads {cur}, expected "
                                f"{'absent' if expect is _MISSING else expect}")
     else:
-        _p("skip", f"{cache_path} not present")
+        _p("skip", "id cache not present")
+    return changes, cache_changes
 
+
+def _repair_rebind(con, cache, e: dict, refused: list[str]) -> tuple[int, int]:
+    """One `rebind` entry of the list: board_key served wrong_id. Re-bind it
+    to right_id and remove what wrong_id fetched. Every write is guarded by
+    the value it expects; anything else is refused and left alone.
+    Returns (DB writes, id-cache edits); edits `cache` in place."""
+    board, wrong, right = e["board_key"], e["wrong_id"], e["right_id"]
+    keys = (board, *e["fragment_keys"])
+    tables = _tables(con)
+    changes = 0
+    print(f"\n-- rebind {e['repair_id']}: {board} {wrong} -> {right} --")
+
+    # The forward pin must be in the code before the DB is touched: without
+    # it the next resolution could bind wrong_id back.
+    try:
+        from scrapers import split_key_for_mlbam
+        for k in keys:
+            got = split_key_for_mlbam(k, wrong)
+            if got != e["split_key"]:
+                refused.append(f"{e['repair_id']}: scrapers._SPLIT_KEYS lacks "
+                               f"({k}, {wrong}) -> {e['split_key']} (reads {got})")
+    except Exception as exc:                                  # noqa: BLE001
+        refused.append(f"{e['repair_id']}: scrapers pin check failed: {exc}")
+
+    # player_photos: unbind the wrong id, bind the right one.
+    r = con.execute("SELECT player_key FROM player_photos WHERE mlbam_id = ?",
+                    (wrong,)).fetchone()
+    if r is not None and r["player_key"] in keys:
+        _p("unbind", f"player_photos: {wrong} off {r['player_key']} "
+           "(headshot context kept)")
+        con.execute("UPDATE player_photos SET player_key = NULL, "
+                    "checked_at = datetime('now') WHERE mlbam_id = ? "
+                    "AND player_key = ?", (wrong, r["player_key"]))
+        changes += 1
+    else:
+        _p("ok", f"already repaired: {wrong} not bound to {', '.join(keys)}")
+    r = con.execute("SELECT player_key FROM player_photos WHERE mlbam_id = ?",
+                    (right,)).fetchone()
+    other = con.execute("SELECT mlbam_id FROM player_photos WHERE player_key = ? "
+                        "AND mlbam_id <> ?", (board, right)).fetchone()
+    if r is not None and r["player_key"] == board:
+        _p("ok", f"already bound: {right} -> {board}")
+    elif r is not None and r["player_key"]:
+        refused.append(f"player_photos: {right} is bound to {r['player_key']} - "
+                       f"NOT re-pointed to {board}")
+    elif other is not None:
+        refused.append(f"player_photos: {board} still carries id {other[0]}")
+    elif r is not None:
+        _p("bind", f"player_photos: {right} (unowned row) -> {board}")
+        con.execute("UPDATE player_photos SET player_key = ? WHERE mlbam_id = ? "
+                    "AND player_key IS NULL", (board, right))
+        changes += 1
+    else:
+        _p("bind", f"player_photos: {right} -> {board}")
+        con.execute("INSERT INTO player_photos (mlbam_id, headshot_ctx, player_key) "
+                    "VALUES (?, 'milb', ?)", (right, board))
+        changes += 1
+
+    # players.birth_date: the wrong human's date -> the right human's.
+    bd_wrong, bd_right = e["birth_date"]
+    for k in keys:
+        r = con.execute("SELECT birth_date FROM players WHERE player_key = ?",
+                        (k,)).fetchone()
+        if r is None:
+            _p("skip", f"players[{k}] absent")
+        elif r["birth_date"] == bd_right:
+            _p("ok", f"already repaired: players[{k}].birth_date {bd_right}")
+        elif r["birth_date"] in (bd_wrong, None, ""):
+            _p("restore", f"players[{k}].birth_date {r['birth_date']} -> {bd_right}")
+            con.execute("UPDATE players SET birth_date = ?, updated_at = datetime('now') "
+                        "WHERE player_key = ? AND (birth_date IS ? OR birth_date = ?)",
+                        (bd_right, k, r["birth_date"], r["birth_date"] or ""))
+            changes += 1
+        else:
+            refused.append(f"players[{k}].birth_date reads {r['birth_date']}, "
+                           f"expected {bd_wrong}")
+
+    # Rows fetched through the wrong id. A row without the marker is the
+    # key's own and stays.
+    for table, (col, needle) in e["foreign_rows"].items():
+        if table not in tables:
+            _p("skip", f"no {table} table")
+            continue
+        for k in keys:
+            for row in con.execute(f"SELECT rowid, {col} FROM {table} "
+                                   "WHERE player_key = ?", (k,)).fetchall():
+                if needle in str(row[1]):
+                    _p("remove", f"{table}[{k}]: fetched through {wrong}, "
+                       f"matched on {needle!r}")
+                    con.execute(f"DELETE FROM {table} WHERE rowid = ? "
+                                "AND player_key = ?", (row[0], k))
+                    changes += 1
+                else:
+                    _p("keep", f"{table}[{k}]: no {needle!r}, the key's own row")
+
+    for t in DERIVED_TABLES:
+        if t not in tables:
+            continue
+        n = con.execute(f"SELECT COUNT(*) FROM {t} WHERE player_key = ?",
+                        (board,)).fetchone()[0]
+        if n:
+            _p("disclose", f"{t}[{board}]: {n} row(s) computed while bound to {wrong}")
+
+    cache_changes = 0
+    if cache is not None:
+        for k in keys:
+            cur = cache.get(k, _MISSING)
+            if cur == right:
+                _p("ok", f"already repaired: cache[{k}] = {right}")
+            elif cur is _MISSING and k != board:
+                _p("skip", f"cache[{k}] absent")
+            elif cur is _MISSING or cur is None or cur == wrong:
+                _p("repoint", f"cache[{k}]: "
+                   f"{'absent' if cur is _MISSING else cur} -> {right}")
+                cache[k] = right
+                cache_changes += 1
+            else:
+                refused.append(f"cache[{k}] reads {cur}, expected {wrong} or null")
+    return changes, cache_changes
+
+
+# ---------------------------------------------------------------------------
+# Receipts
+# ---------------------------------------------------------------------------
+
+def entry_fingerprint(e: dict) -> str:
+    """Content hash of one list entry; a receipt names the entry it applied."""
+    blob = json.dumps(e, sort_keys=True, default=list).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()[:16]
+
+
+def load_receipts(receipt_path: Path = RECEIPTS) -> list[dict]:
+    if not receipt_path.exists():
+        return []
+    out = []
+    for line in receipt_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            try:
+                out.append(json.loads(line))
+            except ValueError:
+                continue
+    return out
+
+
+def receipted_ids(db_path: Path, receipt_path: Path = RECEIPTS) -> set[str]:
+    db = str(Path(db_path).resolve())
+    return {r["repair_id"] for r in load_receipts(receipt_path)
+            if r.get("db") == db and r.get("repair_id")}
+
+
+def _append_receipts(rows: list[dict], receipt_path: Path) -> None:
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    with receipt_path.open("a", encoding="utf-8", newline="\n") as fh:
+        for r in rows:
+            fh.write(json.dumps(r, sort_keys=True) + "\n")
+
+
+def repair(db_path: Path, apply: bool, cache_path: Path = ID_CACHE,
+           only: set[str] | None = None, entries=None,
+           receipt_path: Path = RECEIPTS) -> int:
+    """Apply the selected entries of the identity-repair list. Dry run unless
+    `apply`. On apply, one receipt row per selected entry that refused
+    nothing. Returns 0 clean, 1 something refused, 2 fatal."""
+    return repair_result(db_path, apply, cache_path, only, entries,
+                         receipt_path)["rc"]
+
+
+def repair_result(db_path: Path, apply: bool, cache_path: Path = ID_CACHE,
+                  only: set[str] | None = None, entries=None,
+                  receipt_path: Path = RECEIPTS) -> dict:
+    """repair() with the counts: {rc, db_writes, cache_edits, refused,
+    receipts}."""
+    out = {"rc": 2, "db_writes": 0, "cache_edits": 0, "refused": [],
+           "receipts": []}
+    mode = "APPLY" if apply else "DRY-RUN"
+    print(f"=== repair_identity_split_2026_09_30 [{mode}] db={db_path} ===")
+    entries = identity_repairs.REPAIRS if entries is None else tuple(entries)
+    errs = identity_repairs.schema_errors(entries)
+    if errs:
+        print("FATAL: the identity-repair list breaks its schema:")
+        for m in errs:
+            print(f"  {m}")
+        return out
+    if only:
+        unknown = set(only) - {e["repair_id"] for e in entries}
+        if unknown:
+            print(f"FATAL: unknown repair id(s): {sorted(unknown)}")
+            return out
+        entries = tuple(e for e in entries if e["repair_id"] in only)
+    if not db_path.exists():
+        print(f"FATAL: db not found: {db_path}")
+        return out
+
+    con = sqlite3.connect(db_path)
+    con.row_factory = sqlite3.Row
+    cache = None
+    if cache_path is not None and cache_path.exists():
+        cache = json.loads(cache_path.read_text(encoding="utf-8"))
+
+    # (entries covered, writes, cache edits, refused) per unit of work
+    units: list[tuple[tuple[dict, ...], int, int, list[str]]] = []
+    splits = tuple(e for e in entries if e["kind"] == "row_split")
+    if splits:
+        ref: list[str] = []
+        ch, cc = _repair_m02_11(con, cache, ref)
+        units.append((splits, ch, cc, ref))
+    for e in entries:
+        if e["kind"] == "rebind":
+            ref = []
+            ch, cc = _repair_rebind(con, cache, e, ref)
+            units.append(((e,), ch, cc, ref))
+
+    changes = sum(u[1] for u in units)
+    cache_changes = sum(u[2] for u in units)
+    refused = [m for u in units for m in u[3]]
     if refused:
         print("\n-- REFUSED (listed, NOT touched) --")
         for msg in refused:
@@ -514,27 +811,93 @@ def repair(db_path: Path, apply: bool, cache_path: Path = ID_CACHE) -> int:
         if cache is not None and cache_changes:
             # The exact format stats._save_id_cache writes.
             cache_path.write_text(json.dumps(cache, indent=2, sort_keys=True))
+        bak = _backup_present(db_path)
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        rows = []
+        for covered, ch, cc, ref in units:
+            if ref:
+                continue
+            for e in covered:
+                rows.append({
+                    "repair_id": e["repair_id"], "kind": e["kind"],
+                    "board_key": e["board_key"], "wrong_id": e["wrong_id"],
+                    "right_id": e["right_id"], "entry": entry_fingerprint(e),
+                    "db": str(Path(db_path).resolve()),
+                    "backup": bak.name if bak else None,
+                    "applied_at": now,
+                    "outcome": "applied" if (ch or cc) else "already_repaired",
+                    "db_writes": ch, "cache_edits": cc,
+                })
+        if rows and receipt_path is not None:
+            _append_receipts(rows, receipt_path)
+            out["receipts"] = rows
         print(f"\n=== APPLIED: {changes} DB write(s), {cache_changes} cache "
-              "edit(s) ===")
+              f"edit(s); {len(rows)} receipt row(s) ===")
     else:
         con.rollback()
         print(f"\n=== DRY-RUN: {changes} DB write(s), {cache_changes} cache "
               "edit(s) planned; re-run with --apply ===")
     con.close()
-    return 1 if refused else 0
+    out.update(rc=1 if refused else 0, db_writes=changes,
+               cache_edits=cache_changes, refused=refused)
+    return out
+
+
+def run_step(db_path: Path = DEFAULT_DB, cache_path: Path = ID_CACHE,
+             receipt_path: Path = RECEIPTS, make_backup: bool = True) -> dict:
+    """The receipt-guarded pipeline step (fWAR epoch step A wires this).
+
+    Repairs with a receipt for this DB are skipped. The rest are dry-run
+    first; when the dry run plans no write they are receipted as already
+    repaired, otherwise a dated backup is taken (once) and they are applied.
+    A repair that refuses anything gets no receipt and is retried next run.
+    Never raises on a refusal; returns a summary for the step's heartbeat."""
+    done = receipted_ids(db_path, receipt_path)
+    pending = {e["repair_id"] for e in identity_repairs.REPAIRS} - done
+    summary = {"receipted": sorted(done), "pending": sorted(pending),
+               "rc": 0, "backup": None}
+    if not pending:
+        return summary
+    dry = repair_result(db_path, apply=False, cache_path=cache_path,
+                        only=pending, receipt_path=None)
+    if dry["rc"] == 2:
+        summary["rc"] = 2
+        return summary
+    planned = bool(dry["db_writes"] or dry["cache_edits"])
+    if planned:
+        if make_backup:
+            summary["backup"] = _make_backup(db_path).name
+        elif _backup_present(db_path) is None:
+            summary["rc"] = 2
+            summary["refused"] = ["no backup beside the DB and make_backup=False"]
+            return summary
+    res = repair_result(db_path, apply=True, cache_path=cache_path,
+                        only=pending, receipt_path=receipt_path)
+    summary.update(rc=res["rc"], db_writes=res["db_writes"],
+                   cache_edits=res["cache_edits"], refused=res["refused"])
+    summary["receipted"] = sorted(receipted_ids(db_path, receipt_path))
+    return summary
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(
-        description="Split the jose_rodriguez, michael_massey and "
-                    "carlos_rodriguez merged identities (census M02-11).")
+        description="Apply the identity-repair list (identity_repairs.py) to "
+                    "prospects.db: the M02-11 split and every rebind.")
     ap.add_argument("--apply", action="store_true",
                     help="write the changes (default is a dry run)")
     ap.add_argument("--make-backup", action="store_true",
                     help="take a dated prospects.db.bak-identsplit-<date> copy first")
     ap.add_argument("--db", type=Path, default=DEFAULT_DB,
                     help=f"path to prospects.db (default: {DEFAULT_DB})")
+    ap.add_argument("--only", action="append", default=None, metavar="REPAIR_ID",
+                    help="limit to these repair ids (repeatable)")
+    ap.add_argument("--step", action="store_true",
+                    help="run the receipt-guarded step (skips receipted repairs)")
     args = ap.parse_args()
+    if args.step:
+        out = run_step(args.db)
+        print(json.dumps(out, indent=1))
+        return int(out["rc"])
     if args.apply:
         if args.make_backup:
             print(f"backup: {_make_backup(args.db)}")
@@ -544,7 +907,8 @@ def main() -> int:
                   "re-run with --make-backup")
             return 2
         print(f"backup present: {bak.name}")
-    return repair(args.db, apply=args.apply)
+    return repair(args.db, apply=args.apply,
+                  only=set(args.only) if args.only else None)
 
 
 if __name__ == "__main__":
