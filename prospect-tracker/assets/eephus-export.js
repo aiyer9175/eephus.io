@@ -279,7 +279,12 @@
   var _toastTimer = null;
   function toast(msg) {
     var t = document.getElementById("eephus-export-toast");
-    if (!t) { t = el("div", "eephus-export-toast"); t.id = "eephus-export-toast"; document.body.appendChild(t); }
+    if (!t) {
+      t = el("div", "eephus-export-toast"); t.id = "eephus-export-toast"; document.body.appendChild(t);
+      // A new toast needs one style flush at opacity 0 before is-on, or the
+      // first toast of a page skips its .15 s ease in (audit A07).
+      void t.offsetWidth;
+    }
     t.textContent = msg;
     t.classList.add("is-on");
     clearTimeout(_toastTimer);

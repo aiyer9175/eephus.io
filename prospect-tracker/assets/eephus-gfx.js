@@ -827,15 +827,22 @@
     else if (action === "share") flash(res === "shared" ? "Shared" : "Downloaded (share unsupported)");
     else flash("Downloaded");
   }
+  var _flashTimer = null;
   function flash(msg) {
     var ov = document.getElementById("egfx-overlay");
     if (!ov) return;
     var t = ov.querySelector(".egfx-flash") || (function () {
       var d = document.createElement("div"); d.className = "egfx-flash";
-      ov.querySelector(".egfx-modal").appendChild(d); return d;
+      ov.querySelector(".egfx-modal").appendChild(d);
+      // one style flush at opacity 0 so the first flash eases in too
+      void d.offsetWidth;
+      return d;
     })();
     t.textContent = msg; t.classList.add("is-show");
-    setTimeout(function () { t.classList.remove("is-show"); }, 1600);
+    // Keep the handle: a second flash inside 1.6 s restarts the hide timer
+    // instead of being hidden early by the first one (audit A15).
+    clearTimeout(_flashTimer);
+    _flashTimer = setTimeout(function () { t.classList.remove("is-show"); }, 1600);
   }
 
   function open(spec) {
