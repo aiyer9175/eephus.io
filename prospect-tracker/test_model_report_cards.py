@@ -333,6 +333,40 @@ def test_a_tie_with_the_parent_carries_no_star():
         assert "vs " + leg["baseline_label"] in html
 
 
+def test_hem_card_shows_both_parents_each_read_from_its_artifact():
+    """Owner answer M27-1 (2026-09-25): the HEM+ card shows raw wOBA (the
+    parent its gate names, 0.412 vs 0.409) AND OPS (the strongest parent in
+    the eval artifact, 0.412 vs 0.411), each labelled with what it is and
+    each read from data/hem_plus_eval.json, never typed. Neither is a
+    resolved win, so neither carries a star. The gate itself is unchanged:
+    it names raw wOBA, and OPS is shown, not added to the bar."""
+    ctx = _card_js()
+    row = next(m for m in _cards() if m["model_id"] == "hem_plus")
+    spec = row["card"]["derived_from"]["headline"]
+    doc = json.loads((HERE / row["eval_artifact"]).read_text(encoding="utf-8"))
+    want = {
+        "forward_spearman_vs_wOBA_next.raw_woba": ("raw wOBA (the parent its gate names)",
+                                                   "gap_ci_vs_raw_woba.lo95"),
+        "forward_spearman_vs_wOBA_next.ops": ("OPS (the strongest parent in its eval)",
+                                              "gap_ci_vs_ops.lo95"),
+    }
+    for base_path, (label, lo95) in want.items():
+        i = next(k for k, hs in enumerate(spec) if hs.get("baseline") == base_path)
+        assert spec[i]["champion"] == "forward_spearman_vs_wOBA_next.hem_plus"
+        assert spec[i]["resolvable"] == {"above_zero": lo95}
+        leg = row["card"]["headline"][i]
+        assert leg["baseline_label"] == label
+        assert leg["baseline"] == round(mr._dig_path(doc, base_path), 3)
+        assert leg["champion"] == round(doc["forward_spearman_vs_wOBA_next"]["hem_plus"], 3)
+        assert leg["resolvable"] is (mr._dig_path(doc, lo95) > 0)
+        html = _render(ctx, {"headline": [leg]})
+        assert "vs " + label in html
+        if leg["resolvable"] is False:
+            assert html.count(STAR) == 0 and "not a resolved win" in html
+    # the gate's parent stays the one the gate names
+    assert "raw wOBA" in doc["gate"]["bar"] and "OPS" not in doc["gate"]["bar"]
+
+
 def test_fwdhem_card_does_not_star_its_unresolved_lead():
     """The xHEM+ Blend card starred 0.461 over xwOBA 0.454 while the re-gate
     arm it quotes reads D4 v1 lo95 -0.0012 and its own notes say not

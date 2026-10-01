@@ -1322,7 +1322,15 @@
       "champion": 0.412,
       "baseline": 0.409,
       "better": "higher",
-      "baseline_label": "raw wOBA (its parent)",
+      "baseline_label": "raw wOBA (the parent its gate names)",
+      "resolvable": false
+     },
+     {
+      "label": "Next-year offense (Spearman)",
+      "champion": 0.412,
+      "baseline": 0.411,
+      "better": "higher",
+      "baseline_label": "OPS (the strongest parent in its eval)",
       "resolvable": false
      }
     ],
@@ -1342,6 +1350,13 @@
        "baseline": "forward_spearman_vs_wOBA_next.raw_woba",
        "resolvable": {
         "above_zero": "gap_ci_vs_raw_woba.lo95"
+       }
+      },
+      {
+       "champion": "forward_spearman_vs_wOBA_next.hem_plus",
+       "baseline": "forward_spearman_vs_wOBA_next.ops",
+       "resolvable": {
+        "above_zero": "gap_ci_vs_ops.lo95"
        }
       }
      ]
