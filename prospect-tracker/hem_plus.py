@@ -604,12 +604,45 @@ def build_batting_order(hitters: list["Hitter"], opp_hand: str,
 #: carries n / (n + K_PLATOON) of the weight). The card dims any per-hand number
 #: under this same floor. Unchanged by the 2026-10-01 estimator switch.
 PLATOON_OPTION_MIN_SPLIT_PA = 100
-#: HEM+ points the bench split must clear the starter's by. Measured under the
-#: per-hand construction before platoon_ratio_v1: the spread of (vs-LHP minus
-#: vs-RHP HEM+) within a bat side and sample band was 13.5 to 22.3, an upper
-#: bound on the noise in a difference of two splits; 15 is its low end. Not
-#: re-derived on the new construction (an owner question, 2026-10-01).
-PLATOON_OPTION_MARGIN = 15
+#: HEM+ points the bench split must clear the starter's by. Re-derived on
+#: platoon_ratio_v1 (owner answer M17HEM-1 (b), 2026-10-01) by the recipe that
+#: set the first value (tools/plt_margin_lab.py): the population SD of (vs-LHP
+#: minus vs-RHP HEM+) within a bat side and vs-LHP PA band, over cells of 8+
+#: hitters with both hands, its low end rounded up to a multiple of 5.
+#:   first construction, 2026-09-11 board: 13.5 to 22.3, 635 hitters -> 15
+#:   first construction, final 2026 lines: 13.23 to 22.70, 644 hitters -> 15
+#:   platoon_ratio_v1, final 2026 lines:   1.24 to 3.59, 644 hitters -> 5
+#: The spread collapsed because a hitter's own gap now carries about 5 percent
+#: of the weight, so his two hand numbers differ mostly by his bat side's league
+#: gap scaled by his level. The cells are frozen below; a test pins the margin
+#: to them and, when the lab's cached feeds exist, the cells to a rerun.
+PLATOON_OPTION_MARGIN = 5
+PLATOON_OPTION_MARGIN_DERIVATION = {
+    "estimator": "platoon_ratio_v1",
+    "season": 2026,
+    "n_hitters_both_hands": 644,
+    "min_cell_n": 8,
+    "bands": [[20, 60], [60, 100], [100, 150], [150, 250], [250, 900]],
+    "round_to": 5,
+    "cells": [
+        {"bats": "L", "vs_lhp_pa": [20, 60], "n": 51, "mean": -21.12, "sd": 1.96},
+        {"bats": "L", "vs_lhp_pa": [60, 100], "n": 35, "mean": -21.46, "sd": 1.93},
+        {"bats": "L", "vs_lhp_pa": [100, 150], "n": 28, "mean": -21.82, "sd": 1.85},
+        {"bats": "L", "vs_lhp_pa": [150, 250], "n": 48, "mean": -23.08, "sd": 3.59},
+        {"bats": "R", "vs_lhp_pa": [20, 60], "n": 93, "mean": 11.71, "sd": 1.24},
+        {"bats": "R", "vs_lhp_pa": [60, 100], "n": 56, "mean": 11.66, "sd": 1.65},
+        {"bats": "R", "vs_lhp_pa": [100, 150], "n": 69, "mean": 12.41, "sd": 1.86},
+        {"bats": "R", "vs_lhp_pa": [150, 250], "n": 72, "mean": 12.92, "sd": 2.76},
+        {"bats": "S", "vs_lhp_pa": [20, 60], "n": 23, "mean": -7.04, "sd": 1.71},
+        {"bats": "S", "vs_lhp_pa": [100, 150], "n": 8, "mean": -8.62, "sd": 1.58},
+        {"bats": "S", "vs_lhp_pa": [150, 250], "n": 19, "mean": -6.42, "sd": 3.13},
+    ],
+    "spread_low": 1.24,
+    "spread_high": 3.59,
+    "previous": {"margin": 15, "spread_low": 13.5, "spread_high": 22.3,
+                 "n_hitters_both_hands": 635, "board": "2026-09-11",
+                 "construction": "per-hand season shrink (before platoon_ratio_v1)"},
+}
 #: Defensive innings at a position that make a bat eligible there (rule 3). The
 #: fielding-innings feed carries innings only; 30 innings reproduces the
 #: fielding_positions 10-games-or-5-starts rule on 646 of 647 eligible

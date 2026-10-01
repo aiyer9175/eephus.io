@@ -1097,6 +1097,18 @@ def stamp_regulars_out(teams: list[dict], season: int, *,
             "n_labelled": n_lab, "n_unlabelled": n_unlab}
 
 
+def _margin_basis() -> dict:
+    """The PLT margin's derivation summary, from hem_plus's frozen record."""
+    d = hem_plus.PLATOON_OPTION_MARGIN_DERIVATION
+    return {"estimator": d["estimator"], "season": d["season"],
+            "n_hitters_both_hands": d["n_hitters_both_hands"],
+            "spread_low": d["spread_low"], "spread_high": d["spread_high"],
+            "round_to": d["round_to"],
+            "rule": ("population SD of (vs-LHP minus vs-RHP HEM+) within a bat side "
+                     "and vs-LHP PA band, cells of 8+ hitters; the low end rounded up "
+                     "to a multiple of 5")}
+
+
 def _lineup_cards_meta(teams: list[dict], pos_meta: dict, status_meta: dict,
                        split_available: bool) -> dict:
     """The lineup-card disclosure block: what resolved, and the three marker
@@ -1125,6 +1137,11 @@ def _lineup_cards_meta(teams: list[dict], pos_meta: dict, status_meta: dict,
         "constants": {"min_split_pa": hem_plus.PLATOON_OPTION_MIN_SPLIT_PA,
                       "margin": hem_plus.PLATOON_OPTION_MARGIN,
                       "min_pos_innings": hem_plus.PLATOON_OPTION_MIN_POS_INN},
+        # Where the margin came from (tools/plt_margin_lab.py): the low end of
+        # the within-side, within-band spread of a hitter's two hand numbers,
+        # rounded up to a multiple of 5. Frozen in hem_plus, echoed here so the
+        # glossary's figures trace to the payload.
+        "margin_basis": _margin_basis(),
         "n_platoon_options": n_opts,
         "n_withheld_by_floor": n_withheld,
         "n_regulars_out": n_out,

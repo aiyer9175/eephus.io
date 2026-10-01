@@ -134,7 +134,7 @@
   "source_url": "https://baseballsavant.mlb.com/leaderboard/custom?year=2026&type=batter&filter=&min=1&selections=pa,whiff_percent,swing_percent,oz_swing_percent,iz_contact_percent,f_strike_percent,sweet_spot_percent,pull_percent,fastball_avg_speed&chart=false&x=pa&y=pa&r=no&chartType=beeswarm&sort=pa&sortDir=desc&csv=true",
   "season": 2026,
   "side": "batter",
-  "fetched_at": "2026-09-30T13:16:43",
+  "fetched_at": "2026-10-01T17:14:06",
   "n_source_rows": 662,
   "n_board": 661,
   "n_joined": 661,
@@ -168,7 +168,7 @@
   "available": true,
   "n_stamped": 751,
   "n_hitters": 751,
-  "n_feed_codes": 1512,
+  "n_feed_codes": 1513,
   "n_teams_with_orders": 30,
   "n_teams_identical_orders": 0,
   "keys": {
@@ -206,31 +206,40 @@
    "available": true,
    "source": "statsapi season fielding (bulk), via defense_export.load_season_innings",
    "min_innings": 30.0,
-   "fetched_at": "2026-09-30T17:53:23+00:00",
+   "fetched_at": "2026-10-01T21:13:51+00:00",
    "n_fielders": 654,
    "n_nine": 270,
    "n_nine_resolved": 270,
-   "n_bench": 175,
-   "n_bench_resolved": 175
+   "n_bench": 178,
+   "n_bench_resolved": 178
   },
   "roster_status": {
    "available": true,
    "source": "cached StatsAPI 40-man rosters (statsapi_roster_40man_*), no fetch",
    "max_age_hours": 48.0,
-   "n_labelled": 16,
+   "n_labelled": 14,
    "n_unlabelled": 0
   },
   "constants": {
    "min_split_pa": 100,
-   "margin": 15,
+   "margin": 5,
    "min_pos_innings": 30.0
   },
-  "n_platoon_options": {
-   "vl": 7,
-   "vr": 12
+  "margin_basis": {
+   "estimator": "platoon_ratio_v1",
+   "season": 2026,
+   "n_hitters_both_hands": 644,
+   "spread_low": 1.24,
+   "spread_high": 3.59,
+   "round_to": 5,
+   "rule": "population SD of (vs-LHP minus vs-RHP HEM+) within a bat side and vs-LHP PA band, cells of 8+ hitters; the low end rounded up to a multiple of 5"
   },
-  "n_withheld_by_floor": 55,
-  "n_regulars_out": 16,
+  "n_platoon_options": {
+   "vl": 12,
+   "vr": 20
+  },
+  "n_withheld_by_floor": 82,
+  "n_regulars_out": 14,
   "display_only": "bench per-hand fields, slot_meta, platoon_options and regulars_out are display siblings of teams[].orders; no betting or vintage reader may use them"
  },
  "team_basis": {
@@ -244,8 +253,8 @@
  },
  "roster_filter": {
   "applied": true,
-  "n_active_roster_ids": 1060,
-  "n_dropped_from_constructions": 165,
+  "n_active_roster_ids": 1105,
+  "n_dropped_from_constructions": 147,
   "basis": "StatsAPI rosterType=active (26-man), so an optioned or injured player drops",
   "scope": "the constructed orders, lineup and bench ONLY. Offense+ and every other aggregate stay on the full season pool: HEM+ over PA already taken stands whether or not the player is hurt now, and Offense+ feeds betting_model and the leaderboard vintages behind the 600-game clock.",
   "on_failure": "a failed roster fetch filters NOTHING rather than blanking the charts; a player whose mlbam cannot be read is kept"
@@ -1471,6 +1480,9 @@
    "bb_pct": 0.1096,
    "k_pct": 0.2325,
    "babip": 0.295,
+   "hem_plus_3yr": 106,
+   "hem_plus_3yr_pct": 79,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 141,
    "xhem_plus": 120,
    "xwoba": 0.344,
@@ -1492,10 +1504,7 @@
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 48,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 106,
-   "hem_plus_3yr_pct": 79,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "672515",
@@ -1981,6 +1990,9 @@
    "bb_pct": 0.1447,
    "k_pct": 0.2579,
    "babip": 0.333,
+   "hem_plus_3yr": 111,
+   "hem_plus_3yr_pct": 87,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 132,
    "xhem_plus": 115,
    "xwoba": 0.338,
@@ -2002,10 +2014,7 @@
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 106,
    "war_pa_plus_3yr_pct": 78,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 111,
-   "hem_plus_3yr_pct": 87,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "682985",
@@ -2124,7 +2133,7 @@
    "hr": 25,
    "bb": 71,
    "sb": 0,
-   "woba": 0.35,
+   "woba": 0.351,
    "woba_raw": 0.356,
    "avg": 0.262,
    "obp": 0.36,
@@ -2641,6 +2650,9 @@
    "bb_pct": 0.12,
    "k_pct": 0.1733,
    "babip": 0.266,
+   "hem_plus_3yr": 107,
+   "hem_plus_3yr_pct": 80,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 130,
    "xhem_plus": 126,
    "xwoba": 0.353,
@@ -2662,10 +2674,7 @@
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 102,
    "war_pa_plus_3yr_pct": 58,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 107,
-   "hem_plus_3yr_pct": 80,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "621439",
@@ -3177,6 +3186,9 @@
    "bb_pct": 0.0878,
    "k_pct": 0.2023,
    "babip": 0.278,
+   "hem_plus_3yr": 114,
+   "hem_plus_3yr_pct": 89,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 128,
    "xhem_plus": 109,
    "xwoba": 0.329,
@@ -3198,10 +3210,7 @@
    "war_pa_plus_pct": 99,
    "war_pa_plus_3yr": 109,
    "war_pa_plus_3yr_pct": 89,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 114,
-   "hem_plus_3yr_pct": 89,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "681624",
@@ -3585,6 +3594,9 @@
    "bb_pct": 0.121,
    "k_pct": 0.2137,
    "babip": 0.318,
+   "hem_plus_3yr": 99,
+   "hem_plus_3yr_pct": 65,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 127,
    "xhem_plus": 107,
    "xwoba": 0.327,
@@ -3606,10 +3618,7 @@
    "war_pa_plus_pct": 86,
    "war_pa_plus_3yr": 98,
    "war_pa_plus_3yr_pct": 35,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 99,
-   "hem_plus_3yr_pct": 65,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "695506",
@@ -4058,7 +4067,7 @@
    "team": "LAD",
    "bats": "L",
    "hem_plus": 112,
-   "hem_plus_raw": 111.7,
+   "hem_plus_raw": 111.6,
    "qualified": true,
    "tier": "Above-avg",
    "pa": 657,
@@ -4127,6 +4136,9 @@
    "bb_pct": 0.1045,
    "k_pct": 0.1716,
    "babip": 0.291,
+   "hem_plus_3yr": 110,
+   "hem_plus_3yr_pct": 85,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 124,
    "xhem_plus": 104,
    "xwoba": 0.322,
@@ -4148,10 +4160,7 @@
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 108,
    "war_pa_plus_3yr_pct": 83,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 110,
-   "hem_plus_3yr_pct": 85,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "624424",
@@ -4583,6 +4592,9 @@
    "bb_pct": 0.12,
    "k_pct": 0.32,
    "babip": 0.333,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 47,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.305,
    "pwoba_pctile": 54,
    "whiff_pct": 0.306,
@@ -4593,10 +4605,7 @@
    "war": 0.3,
    "war_pa_plus_3yr": 93,
    "war_pa_plus_3yr_pct": 15,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 47,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "656811",
@@ -5264,6 +5273,9 @@
    "bb_pct": 0.1319,
    "k_pct": 0.3542,
    "babip": 0.312,
+   "hem_plus_3yr": 114,
+   "hem_plus_3yr_pct": 90,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 103,
    "xhem_plus": 103,
    "xwoba": 0.321,
@@ -5285,10 +5297,7 @@
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 109,
    "war_pa_plus_3yr_pct": 89,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 114,
-   "hem_plus_3yr_pct": 90,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "691182",
@@ -5315,6 +5324,9 @@
    "bb_pct": 0.1053,
    "k_pct": 0.1263,
    "babip": 0.284,
+   "hem_plus_3yr": 89,
+   "hem_plus_3yr_pct": 34,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.319,
    "pwoba_pctile": 75,
    "whiff_pct": 0.162,
@@ -5325,10 +5337,7 @@
    "war": 0.6,
    "war_pa_plus_3yr": 76,
    "war_pa_plus_3yr_pct": 0,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 89,
-   "hem_plus_3yr_pct": 34,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "679822",
@@ -5355,6 +5364,9 @@
    "bb_pct": 0.0688,
    "k_pct": 0.251,
    "babip": 0.327,
+   "hem_plus_3yr": 103,
+   "hem_plus_3yr_pct": 74,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 130,
    "xhem_plus": 106,
    "xwoba": 0.325,
@@ -5376,10 +5388,7 @@
    "war_pa_plus_pct": 76,
    "war_pa_plus_3yr": 105,
    "war_pa_plus_3yr_pct": 74,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 74,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "699024",
@@ -5668,6 +5677,9 @@
    "bb_pct": 0.0516,
    "k_pct": 0.2582,
    "babip": 0.328,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 44,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 133,
    "xhem_plus": 111,
    "xwoba": 0.332,
@@ -5689,10 +5701,7 @@
    "war_pa_plus_pct": 86,
    "war_pa_plus_3yr": 91,
    "war_pa_plus_3yr_pct": 11,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 44,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "694671",
@@ -6277,6 +6286,9 @@
    "bb_pct": 0.2593,
    "k_pct": 0.5185,
    "babip": 0.6,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 50,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.291,
    "pwoba_pctile": 26,
    "whiff_pct": 0.69,
@@ -6287,10 +6299,7 @@
    "war": 0.1,
    "war_pa_plus_3yr": 105,
    "war_pa_plus_3yr_pct": 72,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 50,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "621438",
@@ -6460,7 +6469,7 @@
    "hr": 0,
    "bb": 10,
    "sb": 0,
-   "woba": 0.329,
+   "woba": 0.33,
    "woba_raw": 0.332,
    "avg": 0.257,
    "obp": 0.422,
@@ -6470,6 +6479,9 @@
    "bb_pct": 0.2222,
    "k_pct": 0.1556,
    "babip": 0.321,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 46,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.306,
    "pwoba_pctile": 56,
    "whiff_pct": 0.169,
@@ -6480,10 +6492,7 @@
    "war": 0.0,
    "war_pa_plus_3yr": 88,
    "war_pa_plus_3yr_pct": 6,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 46,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "700652",
@@ -6950,6 +6959,9 @@
    "bb_pct": 0.1017,
    "k_pct": 0.1695,
    "babip": 0.25,
+   "hem_plus_3yr": 98,
+   "hem_plus_3yr_pct": 64,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.312,
    "pwoba_pctile": 65,
    "whiff_pct": 0.13,
@@ -6960,10 +6972,7 @@
    "war": 0.5,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 40,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 64,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "641487",
@@ -6972,7 +6981,7 @@
    "team": "SEA",
    "bats": "L",
    "hem_plus": 105,
-   "hem_plus_raw": 105.1,
+   "hem_plus_raw": 105.0,
    "qualified": true,
    "tier": "Average",
    "pa": 489,
@@ -7124,6 +7133,9 @@
    "bb_pct": 0.1277,
    "k_pct": 0.1844,
    "babip": 0.33,
+   "hem_plus_3yr": 110,
+   "hem_plus_3yr_pct": 84,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 124,
    "xhem_plus": 134,
    "xwoba": 0.364,
@@ -7145,10 +7157,7 @@
    "war_pa_plus_pct": 98,
    "war_pa_plus_3yr": 109,
    "war_pa_plus_3yr_pct": 86,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 110,
-   "hem_plus_3yr_pct": 84,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "664023",
@@ -7379,6 +7388,9 @@
    "bb_pct": 0.0891,
    "k_pct": 0.198,
    "babip": 0.362,
+   "hem_plus_3yr": 95,
+   "hem_plus_3yr_pct": 53,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 123,
    "xhem_plus": 120,
    "xwoba": 0.345,
@@ -7397,10 +7409,7 @@
    "war_pa_plus_raw": 108.5,
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 104.7,
-   "war_pa_plus_pct": 76,
-   "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 53,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_pct": 76
   },
   {
    "key": "681807",
@@ -7427,6 +7436,9 @@
    "bb_pct": 0.1308,
    "k_pct": 0.2757,
    "babip": 0.248,
+   "hem_plus_3yr": 107,
+   "hem_plus_3yr_pct": 81,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 93,
    "xhem_plus": 67,
    "xwoba": 0.271,
@@ -7448,10 +7460,7 @@
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 29,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 107,
-   "hem_plus_3yr_pct": 81,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "656537",
@@ -7478,6 +7487,9 @@
    "bb_pct": 0.0602,
    "k_pct": 0.3194,
    "babip": 0.311,
+   "hem_plus_3yr": 95,
+   "hem_plus_3yr_pct": 54,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 99,
    "xhem_plus": 80,
    "xwoba": 0.289,
@@ -7499,10 +7511,7 @@
    "war_pa_plus_pct": 80,
    "war_pa_plus_3yr": 106,
    "war_pa_plus_3yr_pct": 77,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 54,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "676914",
@@ -7529,6 +7538,9 @@
    "bb_pct": 0.1859,
    "k_pct": 0.3269,
    "babip": 0.188,
+   "hem_plus_3yr": 100,
+   "hem_plus_3yr_pct": 68,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 84,
    "xhem_plus": 79,
    "xwoba": 0.287,
@@ -7550,10 +7562,7 @@
    "war_pa_plus_pct": 18,
    "war_pa_plus_3yr": 98,
    "war_pa_plus_3yr_pct": 32,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 100,
-   "hem_plus_3yr_pct": 68,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "680977",
@@ -7580,6 +7589,9 @@
    "bb_pct": 0.0943,
    "k_pct": 0.1447,
    "babip": 0.312,
+   "hem_plus_3yr": 103,
+   "hem_plus_3yr_pct": 74,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 131,
    "xhem_plus": 98,
    "xwoba": 0.314,
@@ -7601,10 +7613,7 @@
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 105,
    "war_pa_plus_3yr_pct": 75,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 74,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "677800",
@@ -8141,6 +8150,9 @@
    "bb_pct": 0.1379,
    "k_pct": 0.2241,
    "babip": 0.182,
+   "hem_plus_3yr": 101,
+   "hem_plus_3yr_pct": 69,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.307,
    "pwoba_pctile": 57,
    "whiff_pct": 0.226,
@@ -8151,10 +8163,7 @@
    "war": 0.2,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 41,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 101,
-   "hem_plus_3yr_pct": 69,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "671732",
@@ -8232,6 +8241,9 @@
    "bb_pct": 0.1022,
    "k_pct": 0.2527,
    "babip": 0.261,
+   "hem_plus_3yr": 99,
+   "hem_plus_3yr_pct": 65,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 94,
    "xhem_plus": 84,
    "xwoba": 0.295,
@@ -8253,10 +8265,7 @@
    "war_pa_plus_pct": 56,
    "war_pa_plus_3yr": 106,
    "war_pa_plus_3yr_pct": 76,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 99,
-   "hem_plus_3yr_pct": 65,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "545341",
@@ -8436,6 +8445,9 @@
    "bb_pct": 0.0909,
    "k_pct": 0.2727,
    "babip": 0.167,
+   "hem_plus_3yr": 98,
+   "hem_plus_3yr_pct": 62,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.309,
    "pwoba_pctile": 61,
    "whiff_pct": 0.304,
@@ -8446,10 +8458,7 @@
    "war": 0.0,
    "war_pa_plus_3yr": 94,
    "war_pa_plus_3yr_pct": 17,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 62,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "676566",
@@ -8541,7 +8550,7 @@
    "team": "MIN",
    "bats": "L",
    "hem_plus": 102,
-   "hem_plus_raw": 102.1,
+   "hem_plus_raw": 102.0,
    "qualified": false,
    "tier": "Average",
    "pa": 94,
@@ -8559,6 +8568,9 @@
    "bb_pct": 0.1277,
    "k_pct": 0.1277,
    "babip": 0.324,
+   "hem_plus_3yr": 85,
+   "hem_plus_3yr_pct": 21,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.3,
    "pwoba_pctile": 46,
    "whiff_pct": 0.157,
@@ -8569,10 +8581,7 @@
    "war": 0.2,
    "war_pa_plus_3yr": 89,
    "war_pa_plus_3yr_pct": 7,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 85,
-   "hem_plus_3yr_pct": 21,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "663457",
@@ -8844,6 +8853,9 @@
    "bb_pct": 0.0368,
    "k_pct": 0.2868,
    "babip": 0.329,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 46,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 114,
    "xhem_plus": 98,
    "xwoba": 0.314,
@@ -8862,10 +8874,7 @@
    "war_pa_plus_raw": 110.7,
    "war_pa_plus_adj": 107,
    "war_pa_plus_adj_raw": 107.1,
-   "war_pa_plus_pct": 86,
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 46,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_pct": 86
   },
   {
    "key": "605137",
@@ -8943,6 +8952,9 @@
    "bb_pct": 0.1056,
    "k_pct": 0.236,
    "babip": 0.276,
+   "hem_plus_3yr": 95,
+   "hem_plus_3yr_pct": 55,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 105,
    "xhem_plus": 99,
    "xwoba": 0.315,
@@ -8964,10 +8976,7 @@
    "war_pa_plus_pct": 83,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 54,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 55,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "682515",
@@ -9077,6 +9086,9 @@
    "bb_pct": 0.0361,
    "k_pct": 0.253,
    "babip": 0.343,
+   "hem_plus_3yr": 97,
+   "hem_plus_3yr_pct": 60,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 109,
    "xhem_plus": 90,
    "xwoba": 0.303,
@@ -9098,10 +9110,7 @@
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 104,
    "war_pa_plus_3yr_pct": 68,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 97,
-   "hem_plus_3yr_pct": 60,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "673237",
@@ -9281,6 +9290,9 @@
    "bb_pct": 0.0811,
    "k_pct": 0.2095,
    "babip": 0.351,
+   "hem_plus_3yr": 98,
+   "hem_plus_3yr_pct": 64,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 107,
    "xhem_plus": 79,
    "xwoba": 0.287,
@@ -9302,10 +9314,7 @@
    "war_pa_plus_pct": 80,
    "war_pa_plus_3yr": 118,
    "war_pa_plus_3yr_pct": 99,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 64,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "621493",
@@ -9508,6 +9517,9 @@
    "bb_pct": 0.0865,
    "k_pct": 0.3633,
    "babip": 0.363,
+   "hem_plus_3yr": 101,
+   "hem_plus_3yr_pct": 69,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 106,
    "xhem_plus": 108,
    "xwoba": 0.328,
@@ -9529,10 +9541,7 @@
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 104,
    "war_pa_plus_3yr_pct": 68,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 101,
-   "hem_plus_3yr_pct": 69,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "691620",
@@ -9719,57 +9728,6 @@
    "war_pa_plus_3yr_tag": "established"
   },
   {
-   "key": "678218",
-   "mlbam": 678218,
-   "name": "Brandon Valenzuela",
-   "team": "TOR",
-   "bats": "S",
-   "hem_plus": 100,
-   "hem_plus_raw": 100.4,
-   "qualified": true,
-   "tier": "Average",
-   "pa": 271,
-   "ab": 239,
-   "hr": 9,
-   "bb": 29,
-   "sb": 2,
-   "woba": 0.322,
-   "woba_raw": 0.308,
-   "avg": 0.226,
-   "obp": 0.311,
-   "slg": 0.377,
-   "ops": 0.688,
-   "iso": 0.151,
-   "bb_pct": 0.107,
-   "k_pct": 0.2546,
-   "babip": 0.278,
-   "hem_plus_3yr": 100,
-   "hem_plus_3yr_pct": 67,
-   "hem_plus_3yr_tag": "provisional",
-   "wrc_plus": 96,
-   "xhem_plus": 97,
-   "xwoba": 0.313,
-   "luck_gap_woba": 0.307,
-   "luck_gap": 0.006,
-   "fwdhem_plus": 100,
-   "pwoba": 0.312,
-   "pwoba_pctile": 65,
-   "whiff_pct": 0.258,
-   "chase_pct": 0.285,
-   "z_contact_pct": 0.855,
-   "sweet_spot_pct": 0.378,
-   "pull_pct": 0.43,
-   "war": 1.6,
-   "war_pa_plus": 109,
-   "war_pa_plus_raw": 109.1,
-   "war_pa_plus_adj": 108,
-   "war_pa_plus_adj_raw": 108.3,
-   "war_pa_plus_pct": 80,
-   "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 83,
-   "war_pa_plus_3yr_tag": "provisional"
-  },
-  {
    "key": "670042",
    "mlbam": 670042,
    "name": "Luke Raley",
@@ -9896,6 +9854,9 @@
    "bb_pct": 0.0323,
    "k_pct": 0.3226,
    "babip": 0.257,
+   "hem_plus_3yr": 96,
+   "hem_plus_3yr_pct": 56,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.298,
    "pwoba_pctile": 41,
    "whiff_pct": 0.303,
@@ -9906,10 +9867,7 @@
    "war": 0.0,
    "war_pa_plus_3yr": 103,
    "war_pa_plus_3yr_pct": 65,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 56,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "694384",
@@ -10287,57 +10245,6 @@
    "war_pa_plus_3yr_tag": "established"
   },
   {
-   "key": "805300",
-   "mlbam": 805300,
-   "name": "Jakob Marsee",
-   "team": "MIA",
-   "bats": "L",
-   "hem_plus": 100,
-   "hem_plus_raw": 99.9,
-   "qualified": true,
-   "tier": "Average",
-   "pa": 616,
-   "ab": 516,
-   "hr": 11,
-   "bb": 78,
-   "sb": 23,
-   "woba": 0.321,
-   "woba_raw": 0.321,
-   "avg": 0.231,
-   "obp": 0.348,
-   "slg": 0.359,
-   "ops": 0.706,
-   "iso": 0.128,
-   "bb_pct": 0.1266,
-   "k_pct": 0.2045,
-   "babip": 0.284,
-   "hem_plus_3yr": 101,
-   "hem_plus_3yr_pct": 68,
-   "hem_plus_3yr_tag": "established",
-   "wrc_plus": 100,
-   "xhem_plus": 98,
-   "xwoba": 0.314,
-   "luck_gap_woba": 0.321,
-   "luck_gap": -0.007,
-   "fwdhem_plus": 100,
-   "pwoba": 0.315,
-   "pwoba_pctile": 70,
-   "whiff_pct": 0.18,
-   "chase_pct": 0.222,
-   "z_contact_pct": 0.919,
-   "sweet_spot_pct": 0.335,
-   "pull_pct": 0.403,
-   "war": 2.0,
-   "war_pa_plus": 103,
-   "war_pa_plus_raw": 102.5,
-   "war_pa_plus_adj": 101,
-   "war_pa_plus_adj_raw": 100.8,
-   "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 59,
-   "war_pa_plus_3yr_tag": "established"
-  },
-  {
    "key": "700932",
    "mlbam": 700932,
    "name": "Kyle Manzardo",
@@ -10389,6 +10296,57 @@
    "war_pa_plus_3yr_tag": "established"
   },
   {
+   "key": "805300",
+   "mlbam": 805300,
+   "name": "Jakob Marsee",
+   "team": "MIA",
+   "bats": "L",
+   "hem_plus": 100,
+   "hem_plus_raw": 99.9,
+   "qualified": true,
+   "tier": "Average",
+   "pa": 616,
+   "ab": 516,
+   "hr": 11,
+   "bb": 78,
+   "sb": 23,
+   "woba": 0.321,
+   "woba_raw": 0.321,
+   "avg": 0.231,
+   "obp": 0.348,
+   "slg": 0.359,
+   "ops": 0.706,
+   "iso": 0.128,
+   "bb_pct": 0.1266,
+   "k_pct": 0.2045,
+   "babip": 0.284,
+   "hem_plus_3yr": 101,
+   "hem_plus_3yr_pct": 68,
+   "hem_plus_3yr_tag": "established",
+   "wrc_plus": 100,
+   "xhem_plus": 98,
+   "xwoba": 0.314,
+   "luck_gap_woba": 0.321,
+   "luck_gap": -0.007,
+   "fwdhem_plus": 100,
+   "pwoba": 0.315,
+   "pwoba_pctile": 70,
+   "whiff_pct": 0.18,
+   "chase_pct": 0.222,
+   "z_contact_pct": 0.919,
+   "sweet_spot_pct": 0.335,
+   "pull_pct": 0.403,
+   "war": 2.0,
+   "war_pa_plus": 103,
+   "war_pa_plus_raw": 102.5,
+   "war_pa_plus_adj": 101,
+   "war_pa_plus_adj_raw": 100.8,
+   "war_pa_plus_pct": 56,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 59,
+   "war_pa_plus_3yr_tag": "established"
+  },
+  {
    "key": "650559",
    "mlbam": 650559,
    "name": "Bryan De La Cruz",
@@ -10413,6 +10371,9 @@
    "bb_pct": 0.0814,
    "k_pct": 0.2093,
    "babip": 0.333,
+   "hem_plus_3yr": 87,
+   "hem_plus_3yr_pct": 26,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.289,
    "pwoba_pctile": 23,
    "whiff_pct": 0.25,
@@ -10423,10 +10384,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 91,
    "war_pa_plus_3yr_pct": 12,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 87,
-   "hem_plus_3yr_pct": 26,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "690291",
@@ -10765,6 +10723,9 @@
    "bb_pct": 0.0952,
    "k_pct": 0.2143,
    "babip": 0.333,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 47,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.289,
    "pwoba_pctile": 23,
    "whiff_pct": 0.235,
@@ -10775,10 +10736,58 @@
    "war": 0.1,
    "war_pa_plus_3yr": 77,
    "war_pa_plus_3yr_pct": 0,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 47,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
+  },
+  {
+   "key": "678218",
+   "mlbam": 678218,
+   "name": "Brandon Valenzuela",
+   "team": "TOR",
+   "bats": "S",
+   "hem_plus": 99,
+   "hem_plus_raw": 99.3,
+   "qualified": true,
+   "tier": "Average",
+   "pa": 271,
+   "ab": 239,
+   "hr": 9,
+   "bb": 29,
+   "sb": 2,
+   "woba": 0.32,
+   "woba_raw": 0.304,
+   "avg": 0.222,
+   "obp": 0.307,
+   "slg": 0.372,
+   "ops": 0.68,
+   "iso": 0.151,
+   "bb_pct": 0.107,
+   "k_pct": 0.2546,
+   "babip": 0.272,
+   "hem_plus_3yr": 100,
+   "hem_plus_3yr_pct": 67,
+   "hem_plus_3yr_tag": "provisional",
+   "wrc_plus": 96,
+   "xhem_plus": 97,
+   "xwoba": 0.313,
+   "luck_gap_woba": 0.307,
+   "luck_gap": 0.006,
+   "fwdhem_plus": 99,
+   "pwoba": 0.311,
+   "pwoba_pctile": 63,
+   "whiff_pct": 0.258,
+   "chase_pct": 0.285,
+   "z_contact_pct": 0.855,
+   "sweet_spot_pct": 0.378,
+   "pull_pct": 0.43,
+   "war": 1.6,
+   "war_pa_plus": 109,
+   "war_pa_plus_raw": 109.1,
+   "war_pa_plus_adj": 108,
+   "war_pa_plus_adj_raw": 108.3,
+   "war_pa_plus_pct": 80,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 83,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "641598",
@@ -10805,6 +10814,9 @@
    "bb_pct": 0.1477,
    "k_pct": 0.3289,
    "babip": 0.247,
+   "hem_plus_3yr": 95,
+   "hem_plus_3yr_pct": 52,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 82,
    "xhem_plus": 89,
    "xwoba": 0.301,
@@ -10826,10 +10838,7 @@
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 96,
    "war_pa_plus_3yr_pct": 23,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 52,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "678577",
@@ -10939,6 +10948,9 @@
    "bb_pct": 0.1379,
    "k_pct": 0.2414,
    "babip": 0.245,
+   "hem_plus_3yr": 89,
+   "hem_plus_3yr_pct": 34,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.289,
    "pwoba_pctile": 23,
    "whiff_pct": 0.276,
@@ -10949,10 +10961,7 @@
    "war": -0.2,
    "war_pa_plus_3yr": 98,
    "war_pa_plus_3yr_pct": 36,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 89,
-   "hem_plus_3yr_pct": 34,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "694212",
@@ -11126,6 +11135,9 @@
    "bb_pct": 0.1667,
    "k_pct": 0.3333,
    "babip": 0.333,
+   "hem_plus_3yr": 105,
+   "hem_plus_3yr_pct": 77,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.292,
    "pwoba_pctile": 29,
    "whiff_pct": 0.286,
@@ -11136,10 +11148,7 @@
    "war": 0.0,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 28,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 105,
-   "hem_plus_3yr_pct": 77,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "543807",
@@ -11351,6 +11360,9 @@
    "bb_pct": 0.1119,
    "k_pct": 0.2022,
    "babip": 0.313,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 46,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 105,
    "xhem_plus": 96,
    "xwoba": 0.311,
@@ -11372,10 +11384,7 @@
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 104,
    "war_pa_plus_3yr_pct": 69,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 46,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "682634",
@@ -11568,6 +11577,9 @@
    "bb_pct": 0.1308,
    "k_pct": 0.3462,
    "babip": 0.286,
+   "hem_plus_3yr": 105,
+   "hem_plus_3yr_pct": 78,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 78,
    "xhem_plus": 66,
    "xwoba": 0.269,
@@ -11589,10 +11601,7 @@
    "war_pa_plus_pct": 14,
    "war_pa_plus_3yr": 98,
    "war_pa_plus_3yr_pct": 35,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 105,
-   "hem_plus_3yr_pct": 78,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "677942",
@@ -11670,6 +11679,9 @@
    "bb_pct": 0.1181,
    "k_pct": 0.3472,
    "babip": 0.284,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 32,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 91,
    "xhem_plus": 74,
    "xwoba": 0.28,
@@ -11691,10 +11703,7 @@
    "war_pa_plus_pct": 14,
    "war_pa_plus_3yr": 92,
    "war_pa_plus_3yr_pct": 13,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 32,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "806198",
@@ -11721,6 +11730,9 @@
    "bb_pct": 0.0977,
    "k_pct": 0.1805,
    "babip": 0.332,
+   "hem_plus_3yr": 98,
+   "hem_plus_3yr_pct": 63,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 102,
    "xhem_plus": 99,
    "xwoba": 0.315,
@@ -11742,10 +11754,7 @@
    "war_pa_plus_pct": 83,
    "war_pa_plus_3yr": 111,
    "war_pa_plus_3yr_pct": 94,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 63,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "664774",
@@ -11772,6 +11781,9 @@
    "bb_pct": 0.1301,
    "k_pct": 0.2466,
    "babip": 0.253,
+   "hem_plus_3yr": 99,
+   "hem_plus_3yr_pct": 66,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 89,
    "xhem_plus": 65,
    "xwoba": 0.268,
@@ -11793,10 +11805,7 @@
    "war_pa_plus_pct": 16,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 27,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 99,
-   "hem_plus_3yr_pct": 66,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "657041",
@@ -11805,7 +11814,7 @@
    "team": "ATL",
    "bats": "R",
    "hem_plus": 98,
-   "hem_plus_raw": 98.0,
+   "hem_plus_raw": 97.9,
    "qualified": true,
    "tier": "Average",
    "pa": 374,
@@ -11874,6 +11883,9 @@
    "bb_pct": 0.1404,
    "k_pct": 0.3333,
    "babip": 0.273,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 42,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 79,
    "xhem_plus": 88,
    "xwoba": 0.3,
@@ -11895,10 +11907,7 @@
    "war_pa_plus_pct": 14,
    "war_pa_plus_3yr": 93,
    "war_pa_plus_3yr_pct": 15,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 42,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "692216",
@@ -12085,6 +12094,38 @@
    "war_pa_plus_3yr_tag": "established"
   },
   {
+   "key": "683079",
+   "mlbam": 683079,
+   "name": "Omar Martinez",
+   "team": "LAA",
+   "bats": "L",
+   "hem_plus": 98,
+   "hem_plus_raw": 97.7,
+   "qualified": false,
+   "tier": "Average",
+   "pa": 3,
+   "ab": 3,
+   "hr": 0,
+   "bb": 0,
+   "sb": 0,
+   "woba": 0.318,
+   "woba_raw": 0.297,
+   "avg": 0.333,
+   "obp": 0.333,
+   "slg": 0.333,
+   "ops": 0.667,
+   "iso": 0.0,
+   "bb_pct": 0.0,
+   "k_pct": 0.3333,
+   "babip": 0.5,
+   "whiff_pct": 0.2,
+   "chase_pct": 0.286,
+   "z_contact_pct": 0.667,
+   "sweet_spot_pct": 0.0,
+   "pull_pct": 0.5,
+   "war": 0.0
+  },
+  {
    "key": "677649",
    "mlbam": 677649,
    "name": "Ezequiel Duran",
@@ -12134,38 +12175,6 @@
    "war_pa_plus_3yr": 106,
    "war_pa_plus_3yr_pct": 78,
    "war_pa_plus_3yr_tag": "established"
-  },
-  {
-   "key": "683079",
-   "mlbam": 683079,
-   "name": "Omar Martinez",
-   "team": "LAA",
-   "bats": "L",
-   "hem_plus": 98,
-   "hem_plus_raw": 97.7,
-   "qualified": false,
-   "tier": "Average",
-   "pa": 3,
-   "ab": 3,
-   "hr": 0,
-   "bb": 0,
-   "sb": 0,
-   "woba": 0.318,
-   "woba_raw": 0.297,
-   "avg": 0.333,
-   "obp": 0.333,
-   "slg": 0.333,
-   "ops": 0.667,
-   "iso": 0.0,
-   "bb_pct": 0.0,
-   "k_pct": 0.3333,
-   "babip": 0.5,
-   "whiff_pct": 0.2,
-   "chase_pct": 0.286,
-   "z_contact_pct": 0.667,
-   "sweet_spot_pct": 0.0,
-   "pull_pct": 0.5,
-   "war": 0.0
   },
   {
    "key": "665923",
@@ -12243,6 +12252,9 @@
    "bb_pct": 0.1198,
    "k_pct": 0.2727,
    "babip": 0.333,
+   "hem_plus_3yr": 111,
+   "hem_plus_3yr_pct": 86,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 106,
    "xhem_plus": 117,
    "xwoba": 0.341,
@@ -12264,10 +12276,7 @@
    "war_pa_plus_pct": 76,
    "war_pa_plus_3yr": 115,
    "war_pa_plus_3yr_pct": 98,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 111,
-   "hem_plus_3yr_pct": 86,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "676572",
@@ -12294,6 +12303,9 @@
    "bb_pct": 0.0769,
    "k_pct": 0.2308,
    "babip": 0.212,
+   "hem_plus_3yr": 82,
+   "hem_plus_3yr_pct": 15,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.298,
    "pwoba_pctile": 41,
    "whiff_pct": 0.302,
@@ -12304,10 +12316,7 @@
    "war": -0.3,
    "war_pa_plus_3yr": 95,
    "war_pa_plus_3yr_pct": 20,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 82,
-   "hem_plus_3yr_pct": 15,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "593428",
@@ -12496,6 +12505,9 @@
    "bb_pct": 0.0,
    "k_pct": 0.0,
    "babip": 0.0,
+   "hem_plus_3yr": 77,
+   "hem_plus_3yr_pct": 5,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.275,
    "pwoba_pctile": 5,
    "whiff_pct": 0.0,
@@ -12505,10 +12517,7 @@
    "war": 0.0,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 49,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 77,
-   "hem_plus_3yr_pct": 5,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "681190",
@@ -12566,6 +12575,9 @@
    "bb_pct": 0.0796,
    "k_pct": 0.3363,
    "babip": 0.22,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 47,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 80,
    "xhem_plus": 116,
    "xwoba": 0.339,
@@ -12587,10 +12599,7 @@
    "war_pa_plus_pct": 6,
    "war_pa_plus_3yr": 90,
    "war_pa_plus_3yr_pct": 10,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 47,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "666160",
@@ -12599,7 +12608,7 @@
    "team": "COL",
    "bats": "L",
    "hem_plus": 97,
-   "hem_plus_raw": 97.5,
+   "hem_plus_raw": 97.4,
    "qualified": true,
    "tier": "Average",
    "pa": 436,
@@ -13316,6 +13325,9 @@
    "bb_pct": 0.104,
    "k_pct": 0.1733,
    "babip": 0.267,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 42,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 106,
    "xhem_plus": 90,
    "xwoba": 0.303,
@@ -13337,10 +13349,7 @@
    "war_pa_plus_pct": 56,
    "war_pa_plus_3yr": 110,
    "war_pa_plus_3yr_pct": 90,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 42,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "815589",
@@ -13399,6 +13408,9 @@
    "bb_pct": 0.1333,
    "k_pct": 0.3333,
    "babip": 0.261,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 44,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.291,
    "pwoba_pctile": 26,
    "whiff_pct": 0.247,
@@ -13409,10 +13421,7 @@
    "war": 0.1,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 39,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 44,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "669384",
@@ -13581,6 +13590,57 @@
    "war": -0.1
   },
   {
+   "key": "678882",
+   "mlbam": 678882,
+   "name": "Ceddanne Rafaela",
+   "team": "BOS",
+   "bats": "R",
+   "hem_plus": 96,
+   "hem_plus_raw": 96.2,
+   "qualified": true,
+   "tier": "Average",
+   "pa": 576,
+   "ab": 541,
+   "hr": 16,
+   "bb": 22,
+   "sb": 17,
+   "woba": 0.316,
+   "woba_raw": 0.333,
+   "avg": 0.285,
+   "obp": 0.321,
+   "slg": 0.444,
+   "ops": 0.764,
+   "iso": 0.159,
+   "bb_pct": 0.0382,
+   "k_pct": 0.2031,
+   "babip": 0.336,
+   "hem_plus_3yr": 87,
+   "hem_plus_3yr_pct": 26,
+   "hem_plus_3yr_tag": "established",
+   "wrc_plus": 109,
+   "xhem_plus": 77,
+   "xwoba": 0.285,
+   "luck_gap_woba": 0.33,
+   "luck_gap": -0.045,
+   "fwdhem_plus": 89,
+   "pwoba": 0.305,
+   "pwoba_pctile": 54,
+   "whiff_pct": 0.248,
+   "chase_pct": 0.453,
+   "z_contact_pct": 0.849,
+   "sweet_spot_pct": 0.345,
+   "pull_pct": 0.343,
+   "war": 5.7,
+   "war_pa_plus": 118,
+   "war_pa_plus_raw": 118.2,
+   "war_pa_plus_adj": 125,
+   "war_pa_plus_adj_raw": 125.2,
+   "war_pa_plus_pct": 98,
+   "war_pa_plus_3yr": 113,
+   "war_pa_plus_3yr_pct": 95,
+   "war_pa_plus_3yr_tag": "established"
+  },
+  {
    "key": "668939",
    "mlbam": 668939,
    "name": "Adley Rutschman",
@@ -13656,6 +13716,9 @@
    "bb_pct": 0.0857,
    "k_pct": 0.2,
    "babip": 0.36,
+   "hem_plus_3yr": 83,
+   "hem_plus_3yr_pct": 17,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.292,
    "pwoba_pctile": 29,
    "whiff_pct": 0.299,
@@ -13666,10 +13729,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 90,
    "war_pa_plus_3yr_pct": 9,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 83,
-   "hem_plus_3yr_pct": 17,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "502054",
@@ -13696,6 +13756,9 @@
    "bb_pct": 0.1429,
    "k_pct": 0.3143,
    "babip": 0.111,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 45,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.28,
    "pwoba_pctile": 9,
    "whiff_pct": 0.345,
@@ -13706,10 +13769,7 @@
    "war": -0.4,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 29,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 45,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "691788",
@@ -13761,57 +13821,6 @@
    "war_pa_plus_3yr": 109,
    "war_pa_plus_3yr_pct": 87,
    "war_pa_plus_3yr_tag": "provisional"
-  },
-  {
-   "key": "683002",
-   "mlbam": 683002,
-   "name": "Gunnar Henderson",
-   "team": "BAL",
-   "bats": "L",
-   "hem_plus": 96,
-   "hem_plus_raw": 96.1,
-   "qualified": true,
-   "tier": "Average",
-   "pa": 702,
-   "ab": 623,
-   "hr": 24,
-   "bb": 67,
-   "sb": 10,
-   "woba": 0.316,
-   "woba_raw": 0.315,
-   "avg": 0.226,
-   "obp": 0.311,
-   "slg": 0.404,
-   "ops": 0.715,
-   "iso": 0.178,
-   "bb_pct": 0.0954,
-   "k_pct": 0.2222,
-   "babip": 0.263,
-   "hem_plus_3yr": 113,
-   "hem_plus_3yr_pct": 89,
-   "hem_plus_3yr_tag": "established",
-   "wrc_plus": 102,
-   "xhem_plus": 104,
-   "xwoba": 0.322,
-   "luck_gap_woba": 0.314,
-   "luck_gap": 0.008,
-   "fwdhem_plus": 101,
-   "pwoba": 0.33,
-   "pwoba_pctile": 86,
-   "whiff_pct": 0.233,
-   "chase_pct": 0.304,
-   "z_contact_pct": 0.856,
-   "sweet_spot_pct": 0.326,
-   "pull_pct": 0.426,
-   "war": 3.2,
-   "war_pa_plus": 106,
-   "war_pa_plus_raw": 105.7,
-   "war_pa_plus_adj": 106,
-   "war_pa_plus_adj_raw": 106.1,
-   "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 113,
-   "war_pa_plus_3yr_pct": 96,
-   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "677594",
@@ -13921,6 +13930,9 @@
    "bb_pct": 0.0939,
    "k_pct": 0.3204,
    "babip": 0.281,
+   "hem_plus_3yr": 105,
+   "hem_plus_3yr_pct": 76,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 88,
    "xhem_plus": 108,
    "xwoba": 0.328,
@@ -13942,10 +13954,7 @@
    "war_pa_plus_pct": 12,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 49,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 105,
-   "hem_plus_3yr_pct": 76,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "663609",
@@ -14132,6 +14141,9 @@
    "bb_pct": 0.0598,
    "k_pct": 0.3187,
    "babip": 0.324,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 32,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 97,
    "xhem_plus": 91,
    "xwoba": 0.304,
@@ -14153,10 +14165,7 @@
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 103,
    "war_pa_plus_3yr_pct": 60,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 32,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "675448",
@@ -14213,6 +14222,9 @@
    "bb_pct": 0.2,
    "k_pct": 0.4,
    "babip": 0.0,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 50,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.286,
    "pwoba_pctile": 19,
    "whiff_pct": 0.294,
@@ -14223,60 +14235,57 @@
    "war": -0.1,
    "war_pa_plus_3yr": 103,
    "war_pa_plus_3yr_pct": 64,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 50,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
-   "key": "678882",
-   "mlbam": 678882,
-   "name": "Ceddanne Rafaela",
-   "team": "BOS",
-   "bats": "R",
+   "key": "683002",
+   "mlbam": 683002,
+   "name": "Gunnar Henderson",
+   "team": "BAL",
+   "bats": "L",
    "hem_plus": 95,
-   "hem_plus_raw": 95.5,
+   "hem_plus_raw": 95.4,
    "qualified": true,
    "tier": "Average",
-   "pa": 576,
-   "ab": 541,
-   "hr": 16,
-   "bb": 22,
-   "sb": 17,
+   "pa": 702,
+   "ab": 623,
+   "hr": 24,
+   "bb": 67,
+   "sb": 10,
    "woba": 0.315,
-   "woba_raw": 0.332,
-   "avg": 0.283,
-   "obp": 0.319,
-   "slg": 0.442,
-   "ops": 0.761,
-   "iso": 0.159,
-   "bb_pct": 0.0382,
-   "k_pct": 0.2031,
-   "babip": 0.333,
-   "hem_plus_3yr": 87,
-   "hem_plus_3yr_pct": 26,
+   "woba_raw": 0.314,
+   "avg": 0.225,
+   "obp": 0.309,
+   "slg": 0.403,
+   "ops": 0.712,
+   "iso": 0.178,
+   "bb_pct": 0.0954,
+   "k_pct": 0.2222,
+   "babip": 0.261,
+   "hem_plus_3yr": 113,
+   "hem_plus_3yr_pct": 89,
    "hem_plus_3yr_tag": "established",
-   "wrc_plus": 109,
-   "xhem_plus": 77,
-   "xwoba": 0.285,
-   "luck_gap_woba": 0.33,
-   "luck_gap": -0.045,
-   "fwdhem_plus": 89,
-   "pwoba": 0.305,
-   "pwoba_pctile": 54,
-   "whiff_pct": 0.248,
-   "chase_pct": 0.453,
-   "z_contact_pct": 0.849,
-   "sweet_spot_pct": 0.345,
-   "pull_pct": 0.343,
-   "war": 5.7,
-   "war_pa_plus": 118,
-   "war_pa_plus_raw": 118.2,
-   "war_pa_plus_adj": 125,
-   "war_pa_plus_adj_raw": 125.2,
-   "war_pa_plus_pct": 98,
+   "wrc_plus": 102,
+   "xhem_plus": 104,
+   "xwoba": 0.322,
+   "luck_gap_woba": 0.314,
+   "luck_gap": 0.008,
+   "fwdhem_plus": 101,
+   "pwoba": 0.33,
+   "pwoba_pctile": 86,
+   "whiff_pct": 0.233,
+   "chase_pct": 0.304,
+   "z_contact_pct": 0.856,
+   "sweet_spot_pct": 0.326,
+   "pull_pct": 0.426,
+   "war": 3.2,
+   "war_pa_plus": 106,
+   "war_pa_plus_raw": 105.7,
+   "war_pa_plus_adj": 106,
+   "war_pa_plus_adj_raw": 106.1,
+   "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 113,
-   "war_pa_plus_3yr_pct": 95,
+   "war_pa_plus_3yr_pct": 96,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -14304,6 +14313,9 @@
    "bb_pct": 0.0667,
    "k_pct": 0.1333,
    "babip": 0.333,
+   "hem_plus_3yr": 87,
+   "hem_plus_3yr_pct": 29,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.292,
    "pwoba_pctile": 29,
    "whiff_pct": 0.088,
@@ -14314,10 +14326,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 102,
    "war_pa_plus_3yr_pct": 55,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 87,
-   "hem_plus_3yr_pct": 29,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "805999",
@@ -14679,6 +14688,9 @@
    "bb_pct": 0.1205,
    "k_pct": 0.3735,
    "babip": 0.366,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 41,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.291,
    "pwoba_pctile": 26,
    "whiff_pct": 0.405,
@@ -14689,10 +14701,7 @@
    "war": -0.3,
    "war_pa_plus_3yr": 98,
    "war_pa_plus_3yr_pct": 32,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 41,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "669208",
@@ -14783,6 +14792,9 @@
    "bb_pct": 0.0547,
    "k_pct": 0.2734,
    "babip": 0.27,
+   "hem_plus_3yr": 106,
+   "hem_plus_3yr_pct": 79,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 85,
    "xhem_plus": 84,
    "xwoba": 0.295,
@@ -14804,10 +14816,7 @@
    "war_pa_plus_pct": 56,
    "war_pa_plus_3yr": 104,
    "war_pa_plus_3yr_pct": 69,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 106,
-   "hem_plus_3yr_pct": 79,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "663584",
@@ -14866,6 +14875,9 @@
    "bb_pct": 0.0,
    "k_pct": 0.1429,
    "babip": 0.333,
+   "hem_plus_3yr": 84,
+   "hem_plus_3yr_pct": 19,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.288,
    "pwoba_pctile": 22,
    "whiff_pct": 0.091,
@@ -14876,10 +14888,7 @@
    "war": 0.1,
    "war_pa_plus_3yr": 82,
    "war_pa_plus_3yr_pct": 1,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 84,
-   "hem_plus_3yr_pct": 19,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "642715",
@@ -14957,6 +14966,9 @@
    "bb_pct": 0.12,
    "k_pct": 0.16,
    "babip": 0.176,
+   "hem_plus_3yr": 79,
+   "hem_plus_3yr_pct": 8,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.282,
    "pwoba_pctile": 12,
    "whiff_pct": 0.235,
@@ -14967,10 +14979,7 @@
    "war": -0.6,
    "war_pa_plus_3yr": 91,
    "war_pa_plus_3yr_pct": 12,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 79,
-   "hem_plus_3yr_pct": 8,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "666185",
@@ -14997,6 +15006,9 @@
    "bb_pct": 0.0,
    "k_pct": 0.5,
    "babip": 0.0,
+   "hem_plus_3yr": 84,
+   "hem_plus_3yr_pct": 18,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.284,
    "pwoba_pctile": 16,
    "whiff_pct": 0.333,
@@ -15007,10 +15019,7 @@
    "war": -0.2,
    "war_pa_plus_3yr": 88,
    "war_pa_plus_3yr_pct": 6,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 84,
-   "hem_plus_3yr_pct": 18,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "673995",
@@ -15481,6 +15490,9 @@
    "bb_pct": 0.0625,
    "k_pct": 0.2917,
    "babip": 0.276,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 33,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.302,
    "pwoba_pctile": 49,
    "whiff_pct": 0.25,
@@ -15491,10 +15503,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 100,
    "war_pa_plus_3yr_pct": 47,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 33,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "694514",
@@ -15553,6 +15562,9 @@
    "bb_pct": 0.0874,
    "k_pct": 0.2039,
    "babip": 0.338,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 50,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 115,
    "xhem_plus": 98,
    "xwoba": 0.314,
@@ -15574,10 +15586,7 @@
    "war_pa_plus_pct": 80,
    "war_pa_plus_3yr": 107,
    "war_pa_plus_3yr_pct": 82,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 50,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "671155",
@@ -15700,6 +15709,9 @@
    "bb_pct": 0.09,
    "k_pct": 0.18,
    "babip": 0.138,
+   "hem_plus_3yr": 96,
+   "hem_plus_3yr_pct": 56,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 66,
    "xhem_plus": 89,
    "xwoba": 0.302,
@@ -15721,10 +15733,7 @@
    "war_pa_plus_pct": 47,
    "war_pa_plus_3yr": 107,
    "war_pa_plus_3yr_pct": 80,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 56,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "678760",
@@ -15968,6 +15977,9 @@
    "bb_pct": 0.0617,
    "k_pct": 0.1975,
    "babip": 0.336,
+   "hem_plus_3yr": 75,
+   "hem_plus_3yr_pct": 3,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 103,
    "xhem_plus": 49,
    "xwoba": 0.246,
@@ -15989,10 +16001,7 @@
    "war_pa_plus_pct": 94,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 53,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 75,
-   "hem_plus_3yr_pct": 3,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "519317",
@@ -16019,6 +16028,9 @@
    "bb_pct": 0.0625,
    "k_pct": 0.3021,
    "babip": 0.345,
+   "hem_plus_3yr": 121,
+   "hem_plus_3yr_pct": 95,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.322,
    "pwoba_pctile": 78,
    "whiff_pct": 0.387,
@@ -16029,10 +16041,7 @@
    "war": 0.1,
    "war_pa_plus_3yr": 103,
    "war_pa_plus_3yr_pct": 62,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 121,
-   "hem_plus_3yr_pct": 95,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "643376",
@@ -16059,6 +16068,9 @@
    "bb_pct": 0.0793,
    "k_pct": 0.2423,
    "babip": 0.239,
+   "hem_plus_3yr": 101,
+   "hem_plus_3yr_pct": 70,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 92,
    "xhem_plus": 64,
    "xwoba": 0.267,
@@ -16080,10 +16092,7 @@
    "war_pa_plus_pct": 63,
    "war_pa_plus_3yr": 105,
    "war_pa_plus_3yr_pct": 74,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 101,
-   "hem_plus_3yr_pct": 70,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "669743",
@@ -16110,6 +16119,9 @@
    "bb_pct": 0.1179,
    "k_pct": 0.1795,
    "babip": 0.287,
+   "hem_plus_3yr": 103,
+   "hem_plus_3yr_pct": 73,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 91,
    "xhem_plus": 71,
    "xwoba": 0.277,
@@ -16131,10 +16143,7 @@
    "war_pa_plus_pct": 30,
    "war_pa_plus_3yr": 108,
    "war_pa_plus_3yr_pct": 84,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 73,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "605244",
@@ -16241,15 +16250,15 @@
    "bb_pct": 0.0714,
    "k_pct": 0.3333,
    "babip": 0.19,
+   "hem_plus_3yr": 98,
+   "hem_plus_3yr_pct": 63,
+   "hem_plus_3yr_tag": "provisional",
    "whiff_pct": 0.381,
    "chase_pct": 0.363,
    "z_contact_pct": 0.742,
    "sweet_spot_pct": 0.306,
    "pull_pct": 0.327,
-   "war": 0.0,
-   "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 63,
-   "hem_plus_3yr_tag": "provisional"
+   "war": 0.0
   },
   {
    "key": "663967",
@@ -16391,6 +16400,9 @@
    "bb_pct": 0.04,
    "k_pct": 0.16,
    "babip": 0.308,
+   "hem_plus_3yr": 78,
+   "hem_plus_3yr_pct": 6,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.279,
    "pwoba_pctile": 8,
    "whiff_pct": 0.221,
@@ -16401,10 +16413,7 @@
    "war": 0.0,
    "war_pa_plus_3yr": 94,
    "war_pa_plus_3yr_pct": 18,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 78,
-   "hem_plus_3yr_pct": 6,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "657656",
@@ -16530,6 +16539,9 @@
    "bb_pct": 0.0769,
    "k_pct": 0.0769,
    "babip": 0.1,
+   "hem_plus_3yr": 80,
+   "hem_plus_3yr_pct": 9,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.288,
    "pwoba_pctile": 22,
    "whiff_pct": 0.227,
@@ -16540,10 +16552,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 100,
    "war_pa_plus_3yr_pct": 46,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 80,
-   "hem_plus_3yr_pct": 9,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "686554",
@@ -16666,6 +16675,43 @@
    "war_pa_plus_3yr_tag": "established"
   },
   {
+   "key": "665506",
+   "mlbam": 665506,
+   "name": "Cristian Pache",
+   "team": "NYM",
+   "bats": "R",
+   "hem_plus": 93,
+   "hem_plus_raw": 92.9,
+   "qualified": false,
+   "tier": "Average",
+   "pa": 8,
+   "ab": 8,
+   "hr": 0,
+   "bb": 0,
+   "sb": 0,
+   "woba": 0.311,
+   "woba_raw": 0.111,
+   "avg": 0.125,
+   "obp": 0.125,
+   "slg": 0.125,
+   "ops": 0.25,
+   "iso": 0.0,
+   "bb_pct": 0.0,
+   "k_pct": 0.5,
+   "babip": 0.25,
+   "pwoba": 0.275,
+   "pwoba_pctile": 5,
+   "whiff_pct": 0.3,
+   "chase_pct": 0.273,
+   "z_contact_pct": 0.714,
+   "sweet_spot_pct": 0.25,
+   "pull_pct": 0.25,
+   "war": -0.1,
+   "war_pa_plus_3yr": 93,
+   "war_pa_plus_3yr_pct": 15,
+   "war_pa_plus_3yr_tag": "provisional"
+  },
+  {
    "key": "666176",
    "mlbam": 666176,
    "name": "Jo Adell",
@@ -16715,43 +16761,6 @@
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 40,
    "war_pa_plus_3yr_tag": "established"
-  },
-  {
-   "key": "665506",
-   "mlbam": 665506,
-   "name": "Cristian Pache",
-   "team": "NYM",
-   "bats": "R",
-   "hem_plus": 93,
-   "hem_plus_raw": 92.9,
-   "qualified": false,
-   "tier": "Average",
-   "pa": 8,
-   "ab": 8,
-   "hr": 0,
-   "bb": 0,
-   "sb": 0,
-   "woba": 0.311,
-   "woba_raw": 0.111,
-   "avg": 0.125,
-   "obp": 0.125,
-   "slg": 0.125,
-   "ops": 0.25,
-   "iso": 0.0,
-   "bb_pct": 0.0,
-   "k_pct": 0.5,
-   "babip": 0.25,
-   "pwoba": 0.275,
-   "pwoba_pctile": 5,
-   "whiff_pct": 0.3,
-   "chase_pct": 0.273,
-   "z_contact_pct": 0.714,
-   "sweet_spot_pct": 0.25,
-   "pull_pct": 0.25,
-   "war": -0.1,
-   "war_pa_plus_3yr": 93,
-   "war_pa_plus_3yr_pct": 15,
-   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "691907",
@@ -16912,6 +16921,9 @@
    "bb_pct": 0.0825,
    "k_pct": 0.1546,
    "babip": 0.29,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 32,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.299,
    "pwoba_pctile": 43,
    "whiff_pct": 0.169,
@@ -16922,10 +16934,7 @@
    "war": 0.1,
    "war_pa_plus_3yr": 91,
    "war_pa_plus_3yr_pct": 11,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 32,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "677347",
@@ -16952,6 +16961,9 @@
    "bb_pct": 0.1667,
    "k_pct": 0.4444,
    "babip": 0.0,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 45,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.281,
    "pwoba_pctile": 11,
    "whiff_pct": 0.378,
@@ -16962,10 +16974,7 @@
    "war": -0.5,
    "war_pa_plus_3yr": 107,
    "war_pa_plus_3yr_pct": 83,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 45,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "677587",
@@ -17158,6 +17167,9 @@
    "bb_pct": 0.0381,
    "k_pct": 0.2571,
    "babip": 0.352,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 49,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 93,
    "xhem_plus": 84,
    "xwoba": 0.295,
@@ -17179,10 +17191,7 @@
    "war_pa_plus_pct": 9,
    "war_pa_plus_3yr": 98,
    "war_pa_plus_3yr_pct": 32,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 49,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "683090",
@@ -17241,6 +17250,9 @@
    "bb_pct": 0.1038,
    "k_pct": 0.1475,
    "babip": 0.28,
+   "hem_plus_3yr": 81,
+   "hem_plus_3yr_pct": 12,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 80,
    "xhem_plus": 86,
    "xwoba": 0.297,
@@ -17262,10 +17274,7 @@
    "war_pa_plus_pct": 96,
    "war_pa_plus_3yr": 108,
    "war_pa_plus_3yr_pct": 85,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 81,
-   "hem_plus_3yr_pct": 12,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "691777",
@@ -17547,6 +17556,9 @@
    "bb_pct": 0.0973,
    "k_pct": 0.292,
    "babip": 0.412,
+   "hem_plus_3yr": 82,
+   "hem_plus_3yr_pct": 14,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 94,
    "xhem_plus": 58,
    "xwoba": 0.258,
@@ -17568,10 +17580,7 @@
    "war_pa_plus_pct": 47,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 42,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 82,
-   "hem_plus_3yr_pct": 14,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "656577",
@@ -17598,6 +17607,9 @@
    "bb_pct": 0.0274,
    "k_pct": 0.3288,
    "babip": 0.455,
+   "hem_plus_3yr": 83,
+   "hem_plus_3yr_pct": 16,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.273,
    "pwoba_pctile": 4,
    "whiff_pct": 0.301,
@@ -17608,10 +17620,7 @@
    "war": 0.4,
    "war_pa_plus_3yr": 98,
    "war_pa_plus_3yr_pct": 33,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 83,
-   "hem_plus_3yr_pct": 16,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "643289",
@@ -17689,6 +17698,9 @@
    "bb_pct": 0.104,
    "k_pct": 0.1618,
    "babip": 0.281,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 40,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 102,
    "xhem_plus": 97,
    "xwoba": 0.312,
@@ -17710,10 +17722,7 @@
    "war_pa_plus_pct": 47,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 49,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 40,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "682674",
@@ -17785,6 +17794,9 @@
    "bb_pct": 0.102,
    "k_pct": 0.2392,
    "babip": 0.298,
+   "hem_plus_3yr": 89,
+   "hem_plus_3yr_pct": 35,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 87,
    "xhem_plus": 77,
    "xwoba": 0.285,
@@ -17806,10 +17818,7 @@
    "war_pa_plus_pct": 16,
    "war_pa_plus_3yr": 94,
    "war_pa_plus_3yr_pct": 18,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 89,
-   "hem_plus_3yr_pct": 35,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "668885",
@@ -17887,6 +17896,9 @@
    "bb_pct": 0.1786,
    "k_pct": 0.25,
    "babip": 0.062,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 44,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.308,
    "pwoba_pctile": 59,
    "whiff_pct": 0.231,
@@ -17897,10 +17909,7 @@
    "war": -0.2,
    "war_pa_plus_3yr": 100,
    "war_pa_plus_3yr_pct": 45,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 44,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "672356",
@@ -17927,6 +17936,9 @@
    "bb_pct": 0.0537,
    "k_pct": 0.4027,
    "babip": 0.382,
+   "hem_plus_3yr": 78,
+   "hem_plus_3yr_pct": 6,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 80,
    "xhem_plus": 68,
    "xwoba": 0.272,
@@ -17948,10 +17960,7 @@
    "war_pa_plus_pct": 47,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 37,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 78,
-   "hem_plus_3yr_pct": 6,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "694362",
@@ -17978,6 +17987,9 @@
    "bb_pct": 0.0645,
    "k_pct": 0.2129,
    "babip": 0.352,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 48,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 99,
    "xhem_plus": 74,
    "xwoba": 0.28,
@@ -17999,10 +18011,7 @@
    "war_pa_plus_pct": 86,
    "war_pa_plus_3yr": 111,
    "war_pa_plus_3yr_pct": 93,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 48,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "514888",
@@ -18053,6 +18062,57 @@
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 100,
    "war_pa_plus_3yr_pct": 46,
+   "war_pa_plus_3yr_tag": "established"
+  },
+  {
+   "key": "686681",
+   "mlbam": 686681,
+   "name": "Michael Massey",
+   "team": "KC",
+   "bats": "L",
+   "hem_plus": 92,
+   "hem_plus_raw": 91.6,
+   "qualified": true,
+   "tier": "Average",
+   "pa": 452,
+   "ab": 423,
+   "hr": 13,
+   "bb": 21,
+   "sb": 3,
+   "woba": 0.309,
+   "woba_raw": 0.32,
+   "avg": 0.274,
+   "obp": 0.305,
+   "slg": 0.43,
+   "ops": 0.735,
+   "iso": 0.156,
+   "bb_pct": 0.0465,
+   "k_pct": 0.1659,
+   "babip": 0.303,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 31,
+   "hem_plus_3yr_tag": "established",
+   "wrc_plus": 99,
+   "xhem_plus": 93,
+   "xwoba": 0.307,
+   "luck_gap_woba": 0.316,
+   "luck_gap": -0.009,
+   "fwdhem_plus": 95,
+   "pwoba": 0.306,
+   "pwoba_pctile": 56,
+   "whiff_pct": 0.195,
+   "chase_pct": 0.388,
+   "z_contact_pct": 0.88,
+   "sweet_spot_pct": 0.365,
+   "pull_pct": 0.5,
+   "war": 2.0,
+   "war_pa_plus": 106,
+   "war_pa_plus_raw": 105.5,
+   "war_pa_plus_adj": 105,
+   "war_pa_plus_adj_raw": 105.1,
+   "war_pa_plus_pct": 67,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 69,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -18214,6 +18274,9 @@
    "bb_pct": 0.0752,
    "k_pct": 0.1842,
    "babip": 0.303,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 40,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 100,
    "xhem_plus": 76,
    "xwoba": 0.284,
@@ -18235,10 +18298,7 @@
    "war_pa_plus_pct": 80,
    "war_pa_plus_3yr": 107,
    "war_pa_plus_3yr_pct": 81,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 40,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "687093",
@@ -18316,6 +18376,9 @@
    "bb_pct": 0.0476,
    "k_pct": 0.3333,
    "babip": 0.308,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 25,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.309,
    "pwoba_pctile": 61,
    "whiff_pct": 0.318,
@@ -18326,10 +18389,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 93,
    "war_pa_plus_3yr_pct": 15,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 86,
-   "hem_plus_3yr_pct": 25,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "801501",
@@ -18439,6 +18499,9 @@
    "bb_pct": 0.0,
    "k_pct": 0.28,
    "babip": 0.235,
+   "hem_plus_3yr": 85,
+   "hem_plus_3yr_pct": 21,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.283,
    "pwoba_pctile": 14,
    "whiff_pct": 0.224,
@@ -18449,10 +18512,7 @@
    "war": -0.2,
    "war_pa_plus_3yr": 90,
    "war_pa_plus_3yr_pct": 8,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 85,
-   "hem_plus_3yr_pct": 21,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "665489",
@@ -18642,6 +18702,9 @@
    "bb_pct": 0.0916,
    "k_pct": 0.2366,
    "babip": 0.337,
+   "hem_plus_3yr": 90,
+   "hem_plus_3yr_pct": 36,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 83,
    "xhem_plus": 91,
    "xwoba": 0.304,
@@ -18663,10 +18726,7 @@
    "war_pa_plus_pct": 60,
    "war_pa_plus_3yr": 111,
    "war_pa_plus_3yr_pct": 94,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 36,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "681047",
@@ -18821,54 +18881,54 @@
    "war_pa_plus_3yr_tag": "established"
   },
   {
-   "key": "686681",
-   "mlbam": 686681,
-   "name": "Michael Massey",
-   "team": "KC",
+   "key": "683146",
+   "mlbam": 683146,
+   "name": "Brett Baty",
+   "team": "NYM",
    "bats": "L",
    "hem_plus": 91,
    "hem_plus_raw": 90.7,
    "qualified": true,
    "tier": "Average",
-   "pa": 452,
-   "ab": 423,
-   "hr": 13,
-   "bb": 21,
-   "sb": 3,
+   "pa": 473,
+   "ab": 420,
+   "hr": 11,
+   "bb": 44,
+   "sb": 5,
    "woba": 0.308,
-   "woba_raw": 0.318,
-   "avg": 0.272,
-   "obp": 0.303,
-   "slg": 0.428,
-   "ops": 0.731,
-   "iso": 0.156,
-   "bb_pct": 0.0465,
-   "k_pct": 0.1659,
-   "babip": 0.3,
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 31,
+   "woba_raw": 0.305,
+   "avg": 0.238,
+   "obp": 0.311,
+   "slg": 0.374,
+   "ops": 0.685,
+   "iso": 0.136,
+   "bb_pct": 0.093,
+   "k_pct": 0.2643,
+   "babip": 0.308,
+   "hem_plus_3yr": 97,
+   "hem_plus_3yr_pct": 61,
    "hem_plus_3yr_tag": "established",
-   "wrc_plus": 99,
-   "xhem_plus": 93,
-   "xwoba": 0.307,
-   "luck_gap_woba": 0.316,
-   "luck_gap": -0.009,
-   "fwdhem_plus": 95,
-   "pwoba": 0.305,
-   "pwoba_pctile": 54,
-   "whiff_pct": 0.195,
-   "chase_pct": 0.388,
-   "z_contact_pct": 0.88,
-   "sweet_spot_pct": 0.365,
-   "pull_pct": 0.5,
-   "war": 2.0,
-   "war_pa_plus": 106,
-   "war_pa_plus_raw": 105.5,
-   "war_pa_plus_adj": 105,
-   "war_pa_plus_adj_raw": 105.1,
-   "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 69,
+   "wrc_plus": 91,
+   "xhem_plus": 103,
+   "xwoba": 0.321,
+   "luck_gap_woba": 0.302,
+   "luck_gap": 0.019,
+   "fwdhem_plus": 99,
+   "pwoba": 0.304,
+   "pwoba_pctile": 53,
+   "whiff_pct": 0.293,
+   "chase_pct": 0.288,
+   "z_contact_pct": 0.808,
+   "sweet_spot_pct": 0.367,
+   "pull_pct": 0.35,
+   "war": 1.5,
+   "war_pa_plus": 102,
+   "war_pa_plus_raw": 102.4,
+   "war_pa_plus_adj": 101,
+   "war_pa_plus_adj_raw": 100.7,
+   "war_pa_plus_pct": 51,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 62,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -19046,6 +19106,9 @@
    "bb_pct": 0.0588,
    "k_pct": 0.2647,
    "babip": 0.25,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 49,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.288,
    "pwoba_pctile": 22,
    "whiff_pct": 0.218,
@@ -19056,10 +19119,7 @@
    "war": -0.5,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 40,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 49,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "624585",
@@ -19406,6 +19466,9 @@
    "bb_pct": 0.0476,
    "k_pct": 0.381,
    "babip": 0.273,
+   "hem_plus_3yr": 76,
+   "hem_plus_3yr_pct": 4,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.272,
    "pwoba_pctile": 3,
    "whiff_pct": 0.366,
@@ -19416,10 +19479,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 38,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 76,
-   "hem_plus_3yr_pct": 4,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "804606",
@@ -19580,6 +19640,9 @@
    "bb_pct": 0.0667,
    "k_pct": 0.3333,
    "babip": 0.294,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 23,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.283,
    "pwoba_pctile": 14,
    "whiff_pct": 0.209,
@@ -19590,61 +19653,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 95,
    "war_pa_plus_3yr_pct": 22,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 86,
-   "hem_plus_3yr_pct": 23,
-   "hem_plus_3yr_tag": "provisional"
-  },
-  {
-   "key": "683146",
-   "mlbam": 683146,
-   "name": "Brett Baty",
-   "team": "NYM",
-   "bats": "L",
-   "hem_plus": 90,
-   "hem_plus_raw": 89.9,
-   "qualified": true,
-   "tier": "Average",
-   "pa": 473,
-   "ab": 420,
-   "hr": 11,
-   "bb": 44,
-   "sb": 5,
-   "woba": 0.307,
-   "woba_raw": 0.303,
-   "avg": 0.236,
-   "obp": 0.309,
-   "slg": 0.371,
-   "ops": 0.681,
-   "iso": 0.136,
-   "bb_pct": 0.093,
-   "k_pct": 0.2643,
-   "babip": 0.304,
-   "hem_plus_3yr": 97,
-   "hem_plus_3yr_pct": 61,
-   "hem_plus_3yr_tag": "established",
-   "wrc_plus": 91,
-   "xhem_plus": 103,
-   "xwoba": 0.321,
-   "luck_gap_woba": 0.302,
-   "luck_gap": 0.019,
-   "fwdhem_plus": 99,
-   "pwoba": 0.304,
-   "pwoba_pctile": 53,
-   "whiff_pct": 0.293,
-   "chase_pct": 0.288,
-   "z_contact_pct": 0.808,
-   "sweet_spot_pct": 0.367,
-   "pull_pct": 0.35,
-   "war": 1.5,
-   "war_pa_plus": 102,
-   "war_pa_plus_raw": 102.4,
-   "war_pa_plus_adj": 101,
-   "war_pa_plus_adj_raw": 100.7,
-   "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 62,
-   "war_pa_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "687231",
@@ -19671,6 +19680,9 @@
    "bb_pct": 0.1019,
    "k_pct": 0.1975,
    "babip": 0.292,
+   "hem_plus_3yr": 84,
+   "hem_plus_3yr_pct": 20,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 65,
    "xhem_plus": 61,
    "xwoba": 0.262,
@@ -19692,10 +19704,7 @@
    "war_pa_plus_pct": 8,
    "war_pa_plus_3yr": 88,
    "war_pa_plus_3yr_pct": 6,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 84,
-   "hem_plus_3yr_pct": 20,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "695734",
@@ -19773,15 +19782,15 @@
    "bb_pct": 0.05,
    "k_pct": 0.175,
    "babip": 0.246,
+   "hem_plus_3yr": 83,
+   "hem_plus_3yr_pct": 16,
+   "hem_plus_3yr_tag": "provisional",
    "whiff_pct": 0.257,
    "chase_pct": 0.394,
    "z_contact_pct": 0.802,
    "sweet_spot_pct": 0.237,
    "pull_pct": 0.339,
-   "war": -0.4,
-   "hem_plus_3yr": 83,
-   "hem_plus_3yr_pct": 16,
-   "hem_plus_3yr_tag": "provisional"
+   "war": -0.4
   },
   {
    "key": "660821",
@@ -20025,6 +20034,9 @@
    "bb_pct": 0.1345,
    "k_pct": 0.2982,
    "babip": 0.209,
+   "hem_plus_3yr": 82,
+   "hem_plus_3yr_pct": 15,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 62,
    "xhem_plus": 64,
    "xwoba": 0.267,
@@ -20046,10 +20058,7 @@
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 100,
    "war_pa_plus_3yr_pct": 44,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 82,
-   "hem_plus_3yr_pct": 15,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "678009",
@@ -20076,6 +20085,9 @@
    "bb_pct": 0.0513,
    "k_pct": 0.2564,
    "babip": 0.346,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 43,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.296,
    "pwoba_pctile": 37,
    "whiff_pct": 0.203,
@@ -20086,10 +20098,7 @@
    "war": 0.1,
    "war_pa_plus_3yr": 106,
    "war_pa_plus_3yr_pct": 78,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 43,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "687637",
@@ -20167,6 +20176,9 @@
    "bb_pct": 0.1029,
    "k_pct": 0.2305,
    "babip": 0.243,
+   "hem_plus_3yr": 97,
+   "hem_plus_3yr_pct": 59,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 75,
    "xhem_plus": 71,
    "xwoba": 0.276,
@@ -20188,10 +20200,7 @@
    "war_pa_plus_pct": 12,
    "war_pa_plus_3yr": 105,
    "war_pa_plus_3yr_pct": 74,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 97,
-   "hem_plus_3yr_pct": 59,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "596103",
@@ -20218,6 +20227,9 @@
    "bb_pct": 0.1081,
    "k_pct": 0.2838,
    "babip": 0.333,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 40,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.278,
    "pwoba_pctile": 7,
    "whiff_pct": 0.279,
@@ -20228,10 +20240,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 94,
    "war_pa_plus_3yr_pct": 16,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 40,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "676356",
@@ -20411,8 +20420,11 @@
    "bb_pct": 0.1084,
    "k_pct": 0.2651,
    "babip": 0.255,
-   "pwoba": 0.286,
-   "pwoba_pctile": 19,
+   "hem_plus_3yr": 104,
+   "hem_plus_3yr_pct": 75,
+   "hem_plus_3yr_tag": "established",
+   "pwoba": 0.287,
+   "pwoba_pctile": 20,
    "whiff_pct": 0.325,
    "chase_pct": 0.205,
    "z_contact_pct": 0.75,
@@ -20421,10 +20433,7 @@
    "war": -0.4,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 31,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 104,
-   "hem_plus_3yr_pct": 75,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "687957",
@@ -20451,6 +20460,9 @@
    "bb_pct": 0.0724,
    "k_pct": 0.1316,
    "babip": 0.336,
+   "hem_plus_3yr": 90,
+   "hem_plus_3yr_pct": 36,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 109,
    "xhem_plus": 98,
    "xwoba": 0.314,
@@ -20469,10 +20481,7 @@
    "war_pa_plus_raw": 108.4,
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 105.8,
-   "war_pa_plus_pct": 76,
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 36,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_pct": 76
   },
   {
    "key": "645277",
@@ -20601,6 +20610,9 @@
    "bb_pct": 0.0722,
    "k_pct": 0.2722,
    "babip": 0.304,
+   "hem_plus_3yr": 82,
+   "hem_plus_3yr_pct": 13,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 80,
    "xhem_plus": 94,
    "xwoba": 0.309,
@@ -20622,10 +20634,7 @@
    "war_pa_plus_pct": 11,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 30,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 82,
-   "hem_plus_3yr_pct": 13,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "678391",
@@ -20802,6 +20811,9 @@
    "bb_pct": 0.0539,
    "k_pct": 0.2206,
    "babip": 0.291,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 30,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 88,
    "xhem_plus": 66,
    "xwoba": 0.269,
@@ -20823,10 +20835,7 @@
    "war_pa_plus_pct": 90,
    "war_pa_plus_3yr": 105,
    "war_pa_plus_3yr_pct": 74,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 30,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "605170",
@@ -20904,6 +20913,9 @@
    "bb_pct": 0.0928,
    "k_pct": 0.299,
    "babip": 0.298,
+   "hem_plus_3yr": 95,
+   "hem_plus_3yr_pct": 51,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.297,
    "pwoba_pctile": 39,
    "whiff_pct": 0.23,
@@ -20914,10 +20926,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 98,
    "war_pa_plus_3yr_pct": 34,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 51,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "693459",
@@ -20926,7 +20935,7 @@
    "team": "PIT",
    "bats": "R",
    "hem_plus": 88,
-   "hem_plus_raw": 88.4,
+   "hem_plus_raw": 88.3,
    "qualified": false,
    "tier": "Below-avg",
    "pa": 19,
@@ -21027,6 +21036,9 @@
    "bb_pct": 0.0,
    "k_pct": 0.2632,
    "babip": 0.286,
+   "hem_plus_3yr": 84,
+   "hem_plus_3yr_pct": 19,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.282,
    "pwoba_pctile": 12,
    "whiff_pct": 0.297,
@@ -21037,10 +21049,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 92,
    "war_pa_plus_3yr_pct": 13,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 84,
-   "hem_plus_3yr_pct": 19,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "677008",
@@ -21067,6 +21076,9 @@
    "bb_pct": 0.0,
    "k_pct": 0.4737,
    "babip": 0.4,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 31,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.28,
    "pwoba_pctile": 9,
    "whiff_pct": 0.432,
@@ -21077,10 +21089,7 @@
    "war": -0.2,
    "war_pa_plus_3yr": 87,
    "war_pa_plus_3yr_pct": 5,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 31,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "642215",
@@ -21107,6 +21116,9 @@
    "bb_pct": 0.0984,
    "k_pct": 0.3169,
    "babip": 0.284,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 50,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 74,
    "xhem_plus": 53,
    "xwoba": 0.251,
@@ -21128,10 +21140,7 @@
    "war_pa_plus_pct": 11,
    "war_pa_plus_3yr": 89,
    "war_pa_plus_3yr_pct": 7,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 50,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "571912",
@@ -21158,6 +21167,9 @@
    "bb_pct": 0.0833,
    "k_pct": 0.2917,
    "babip": 0.207,
+   "hem_plus_3yr": 87,
+   "hem_plus_3yr_pct": 28,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.273,
    "pwoba_pctile": 4,
    "whiff_pct": 0.263,
@@ -21168,10 +21180,7 @@
    "war": -0.3,
    "war_pa_plus_3yr": 90,
    "war_pa_plus_3yr_pct": 9,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 87,
-   "hem_plus_3yr_pct": 28,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "624641",
@@ -21188,7 +21197,7 @@
    "hr": 9,
    "bb": 7,
    "sb": 4,
-   "woba": 0.304,
+   "woba": 0.305,
    "woba_raw": 0.309,
    "avg": 0.247,
    "obp": 0.283,
@@ -21281,6 +21290,9 @@
    "bb_pct": 0.0984,
    "k_pct": 0.2049,
    "babip": 0.207,
+   "hem_plus_3yr": 109,
+   "hem_plus_3yr_pct": 83,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 55,
    "xhem_plus": 74,
    "xwoba": 0.281,
@@ -21302,10 +21314,7 @@
    "war_pa_plus_pct": 3,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 50,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 109,
-   "hem_plus_3yr_pct": 83,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "815873",
@@ -21581,6 +21590,9 @@
    "bb_pct": 0.05,
    "k_pct": 0.4,
    "babip": 0.2,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 38,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.285,
    "pwoba_pctile": 17,
    "whiff_pct": 0.5,
@@ -21591,10 +21603,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 92,
    "war_pa_plus_3yr_pct": 14,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 38,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "814430",
@@ -21653,6 +21662,9 @@
    "bb_pct": 0.08,
    "k_pct": 0.1657,
    "babip": 0.176,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 40,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 63,
    "xhem_plus": 68,
    "xwoba": 0.272,
@@ -21674,10 +21686,7 @@
    "war_pa_plus_pct": 4,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 27,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 40,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "668901",
@@ -21838,6 +21847,9 @@
    "bb_pct": 0.04,
    "k_pct": 0.36,
    "babip": 0.308,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 39,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.289,
    "pwoba_pctile": 23,
    "whiff_pct": 0.245,
@@ -21848,10 +21860,7 @@
    "war": -0.2,
    "war_pa_plus_3yr": 104,
    "war_pa_plus_3yr_pct": 66,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 39,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "607208",
@@ -21929,6 +21938,9 @@
    "bb_pct": 0.0741,
    "k_pct": 0.3926,
    "babip": 0.254,
+   "hem_plus_3yr": 113,
+   "hem_plus_3yr_pct": 88,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 57,
    "xhem_plus": 74,
    "xwoba": 0.281,
@@ -21950,10 +21962,7 @@
    "war_pa_plus_pct": 0,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 41,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 113,
-   "hem_plus_3yr_pct": 88,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "703492",
@@ -22165,6 +22174,9 @@
    "bb_pct": 0.1209,
    "k_pct": 0.3077,
    "babip": 0.191,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 25,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.281,
    "pwoba_pctile": 11,
    "whiff_pct": 0.361,
@@ -22175,10 +22187,42 @@
    "war": 0.0,
    "war_pa_plus_3yr": 95,
    "war_pa_plus_3yr_pct": 20,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 86,
-   "hem_plus_3yr_pct": 25,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
+  },
+  {
+   "key": "670097",
+   "mlbam": 670097,
+   "name": "Zack Short",
+   "team": "NYM",
+   "bats": "R",
+   "hem_plus": 87,
+   "hem_plus_raw": 86.8,
+   "qualified": false,
+   "tier": "Below-avg",
+   "pa": 62,
+   "ab": 50,
+   "hr": 0,
+   "bb": 8,
+   "sb": 0,
+   "woba": 0.303,
+   "woba_raw": 0.217,
+   "avg": 0.14,
+   "obp": 0.262,
+   "slg": 0.18,
+   "ops": 0.442,
+   "iso": 0.04,
+   "bb_pct": 0.129,
+   "k_pct": 0.3065,
+   "babip": 0.212,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 38,
+   "hem_plus_3yr_tag": "provisional",
+   "whiff_pct": 0.311,
+   "chase_pct": 0.271,
+   "z_contact_pct": 0.795,
+   "sweet_spot_pct": 0.294,
+   "pull_pct": 0.382,
+   "war": -0.3
   },
   {
    "key": "643446",
@@ -22230,41 +22274,6 @@
    "war_pa_plus_3yr": 102,
    "war_pa_plus_3yr_pct": 55,
    "war_pa_plus_3yr_tag": "established"
-  },
-  {
-   "key": "670097",
-   "mlbam": 670097,
-   "name": "Zack Short",
-   "team": "NYM",
-   "bats": "R",
-   "hem_plus": 87,
-   "hem_plus_raw": 86.8,
-   "qualified": false,
-   "tier": "Below-avg",
-   "pa": 62,
-   "ab": 50,
-   "hr": 0,
-   "bb": 8,
-   "sb": 0,
-   "woba": 0.303,
-   "woba_raw": 0.217,
-   "avg": 0.14,
-   "obp": 0.262,
-   "slg": 0.18,
-   "ops": 0.442,
-   "iso": 0.04,
-   "bb_pct": 0.129,
-   "k_pct": 0.3065,
-   "babip": 0.212,
-   "whiff_pct": 0.311,
-   "chase_pct": 0.271,
-   "z_contact_pct": 0.795,
-   "sweet_spot_pct": 0.294,
-   "pull_pct": 0.382,
-   "war": -0.3,
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 38,
-   "hem_plus_3yr_tag": "provisional"
   },
   {
    "key": "814154",
@@ -22355,6 +22364,9 @@
    "bb_pct": 0.0928,
    "k_pct": 0.1959,
    "babip": 0.244,
+   "hem_plus_3yr": 90,
+   "hem_plus_3yr_pct": 36,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 65,
    "xhem_plus": 98,
    "xwoba": 0.314,
@@ -22376,10 +22388,7 @@
    "war_pa_plus_pct": 6,
    "war_pa_plus_3yr": 96,
    "war_pa_plus_3yr_pct": 23,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 36,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "701305",
@@ -22406,6 +22415,9 @@
    "bb_pct": 0.0854,
    "k_pct": 0.378,
    "babip": 0.349,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 44,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.283,
    "pwoba_pctile": 14,
    "whiff_pct": 0.383,
@@ -22416,10 +22428,7 @@
    "war": 0.2,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 30,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 44,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "666139",
@@ -22695,6 +22704,9 @@
    "bb_pct": 0.0167,
    "k_pct": 0.1333,
    "babip": 0.292,
+   "hem_plus_3yr": 82,
+   "hem_plus_3yr_pct": 13,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.285,
    "pwoba_pctile": 17,
    "whiff_pct": 0.188,
@@ -22705,10 +22717,7 @@
    "war": 0.0,
    "war_pa_plus_3yr": 90,
    "war_pa_plus_3yr_pct": 10,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 82,
-   "hem_plus_3yr_pct": 13,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "630105",
@@ -22786,6 +22795,9 @@
    "bb_pct": 0.1016,
    "k_pct": 0.2276,
    "babip": 0.319,
+   "hem_plus_3yr": 81,
+   "hem_plus_3yr_pct": 12,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 88,
    "xhem_plus": 81,
    "xwoba": 0.291,
@@ -22807,10 +22819,7 @@
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 104,
    "war_pa_plus_3yr_pct": 71,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 81,
-   "hem_plus_3yr_pct": 12,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "657136",
@@ -22990,6 +22999,9 @@
    "bb_pct": 0.1157,
    "k_pct": 0.2645,
    "babip": 0.296,
+   "hem_plus_3yr": 83,
+   "hem_plus_3yr_pct": 16,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 82,
    "xhem_plus": 84,
    "xwoba": 0.294,
@@ -23011,10 +23023,7 @@
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 50,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 83,
-   "hem_plus_3yr_pct": 16,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "669221",
@@ -23041,6 +23050,9 @@
    "bb_pct": 0.0909,
    "k_pct": 0.3058,
    "babip": 0.243,
+   "hem_plus_3yr": 98,
+   "hem_plus_3yr_pct": 64,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 55,
    "xhem_plus": 68,
    "xwoba": 0.273,
@@ -23062,10 +23074,7 @@
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 109,
    "war_pa_plus_3yr_pct": 87,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 64,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "686611",
@@ -23258,6 +23267,9 @@
    "bb_pct": 0.0455,
    "k_pct": 0.3864,
    "babip": 0.375,
+   "hem_plus_3yr": 83,
+   "hem_plus_3yr_pct": 16,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.267,
    "pwoba_pctile": 2,
    "whiff_pct": 0.367,
@@ -23268,10 +23280,7 @@
    "war": -0.6,
    "war_pa_plus_3yr": 102,
    "war_pa_plus_3yr_pct": 56,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 83,
-   "hem_plus_3yr_pct": 16,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "694378",
@@ -23298,6 +23307,9 @@
    "bb_pct": 0.0529,
    "k_pct": 0.1938,
    "babip": 0.245,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 24,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 75,
    "xhem_plus": 91,
    "xwoba": 0.305,
@@ -23319,10 +23331,7 @@
    "war_pa_plus_pct": 18,
    "war_pa_plus_3yr": 91,
    "war_pa_plus_3yr_pct": 11,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 86,
-   "hem_plus_3yr_pct": 24,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "641857",
@@ -23400,6 +23409,9 @@
    "bb_pct": 0.0161,
    "k_pct": 0.1452,
    "babip": 0.275,
+   "hem_plus_3yr": 84,
+   "hem_plus_3yr_pct": 18,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.297,
    "pwoba_pctile": 39,
    "whiff_pct": 0.189,
@@ -23410,10 +23422,7 @@
    "war": 0.1,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 37,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 84,
-   "hem_plus_3yr_pct": 18,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "702616",
@@ -23542,6 +23551,9 @@
    "bb_pct": 0.0769,
    "k_pct": 0.3077,
    "babip": 0.125,
+   "hem_plus_3yr": 102,
+   "hem_plus_3yr_pct": 71,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.294,
    "pwoba_pctile": 33,
    "whiff_pct": 0.296,
@@ -23552,10 +23564,7 @@
    "war": -0.6,
    "war_pa_plus_3yr": 103,
    "war_pa_plus_3yr_pct": 62,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 102,
-   "hem_plus_3yr_pct": 71,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "500743",
@@ -23732,6 +23741,9 @@
    "bb_pct": 0.0,
    "k_pct": 0.3214,
    "babip": 0.278,
+   "hem_plus_3yr": 85,
+   "hem_plus_3yr_pct": 20,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.276,
    "pwoba_pctile": 6,
    "whiff_pct": 0.28,
@@ -23742,10 +23754,7 @@
    "war": -0.1,
    "war_pa_plus_3yr": 98,
    "war_pa_plus_3yr_pct": 33,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 85,
-   "hem_plus_3yr_pct": 20,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "694208",
@@ -23837,7 +23846,7 @@
    "team": "MIN",
    "bats": "R",
    "hem_plus": 85,
-   "hem_plus_raw": 84.7,
+   "hem_plus_raw": 84.6,
    "qualified": true,
    "tier": "Below-avg",
    "pa": 509,
@@ -23938,6 +23947,9 @@
    "bb_pct": 0.0714,
    "k_pct": 0.4286,
    "babip": 0.214,
+   "hem_plus_3yr": 100,
+   "hem_plus_3yr_pct": 66,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.294,
    "pwoba_pctile": 33,
    "whiff_pct": 0.348,
@@ -23948,10 +23960,7 @@
    "war": -0.5,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 29,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 100,
-   "hem_plus_3yr_pct": 66,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "669398",
@@ -24141,6 +24150,9 @@
    "bb_pct": 0.0538,
    "k_pct": 0.3274,
    "babip": 0.328,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 46,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 69,
    "xhem_plus": 48,
    "xwoba": 0.245,
@@ -24162,10 +24174,7 @@
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 52,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 46,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "663853",
@@ -24192,6 +24201,9 @@
    "bb_pct": 0.0685,
    "k_pct": 0.2877,
    "babip": 0.256,
+   "hem_plus_3yr": 96,
+   "hem_plus_3yr_pct": 58,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.301,
    "pwoba_pctile": 48,
    "whiff_pct": 0.338,
@@ -24202,10 +24214,7 @@
    "war": -0.4,
    "war_pa_plus_3yr": 107,
    "war_pa_plus_3yr_pct": 83,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 58,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "700246",
@@ -24269,6 +24278,9 @@
    "bb_pct": 0.037,
    "k_pct": 0.3704,
    "babip": 0.133,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 49,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.284,
    "pwoba_pctile": 16,
    "whiff_pct": 0.379,
@@ -24279,10 +24291,7 @@
    "war": -0.7,
    "war_pa_plus_3yr": 94,
    "war_pa_plus_3yr_pct": 19,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 49,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "672275",
@@ -24644,6 +24653,9 @@
    "bb_pct": 0.0536,
    "k_pct": 0.244,
    "babip": 0.312,
+   "hem_plus_3yr": 96,
+   "hem_plus_3yr_pct": 56,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 70,
    "xhem_plus": 79,
    "xwoba": 0.287,
@@ -24665,10 +24677,7 @@
    "war_pa_plus_pct": 6,
    "war_pa_plus_3yr": 98,
    "war_pa_plus_3yr_pct": 32,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 56,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "663743",
@@ -24746,6 +24755,9 @@
    "bb_pct": 0.0941,
    "k_pct": 0.4,
    "babip": 0.293,
+   "hem_plus_3yr": 80,
+   "hem_plus_3yr_pct": 9,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.27,
    "pwoba_pctile": 2,
    "whiff_pct": 0.352,
@@ -24756,10 +24768,7 @@
    "war": -0.3,
    "war_pa_plus_3yr": 92,
    "war_pa_plus_3yr_pct": 13,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 80,
-   "hem_plus_3yr_pct": 9,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "686452",
@@ -24786,6 +24795,9 @@
    "bb_pct": 0.0921,
    "k_pct": 0.2434,
    "babip": 0.239,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 33,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 53,
    "xhem_plus": 63,
    "xwoba": 0.266,
@@ -24807,10 +24819,7 @@
    "war_pa_plus_pct": 6,
    "war_pa_plus_3yr": 86,
    "war_pa_plus_3yr_pct": 4,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 33,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "805779",
@@ -24888,6 +24897,9 @@
    "bb_pct": 0.0769,
    "k_pct": 0.2222,
    "babip": 0.269,
+   "hem_plus_3yr": 87,
+   "hem_plus_3yr_pct": 27,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 57,
    "xhem_plus": 80,
    "xwoba": 0.289,
@@ -24909,10 +24921,7 @@
    "war_pa_plus_pct": 8,
    "war_pa_plus_3yr": 83,
    "war_pa_plus_3yr_pct": 2,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 87,
-   "hem_plus_3yr_pct": 27,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "687515",
@@ -24939,6 +24948,9 @@
    "bb_pct": 0.0331,
    "k_pct": 0.3058,
    "babip": 0.26,
+   "hem_plus_3yr": 89,
+   "hem_plus_3yr_pct": 35,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 47,
    "xhem_plus": 50,
    "xwoba": 0.248,
@@ -24960,10 +24972,7 @@
    "war_pa_plus_pct": 2,
    "war_pa_plus_3yr": 88,
    "war_pa_plus_3yr_pct": 6,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 89,
-   "hem_plus_3yr_pct": 35,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "628451",
@@ -24990,6 +24999,9 @@
    "bb_pct": 0.0385,
    "k_pct": 0.1154,
    "babip": 0.091,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 30,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.287,
    "pwoba_pctile": 20,
    "whiff_pct": 0.192,
@@ -25000,10 +25012,7 @@
    "war": -0.6,
    "war_pa_plus_3yr": 105,
    "war_pa_plus_3yr_pct": 75,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 30,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "666310",
@@ -25030,6 +25039,9 @@
    "bb_pct": 0.0714,
    "k_pct": 0.2449,
    "babip": 0.172,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 22,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.292,
    "pwoba_pctile": 29,
    "whiff_pct": 0.146,
@@ -25040,10 +25052,7 @@
    "war": -0.6,
    "war_pa_plus_3yr": 102,
    "war_pa_plus_3yr_pct": 55,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 86,
-   "hem_plus_3yr_pct": 22,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "670032",
@@ -25121,6 +25130,9 @@
    "bb_pct": 0.0286,
    "k_pct": 0.2286,
    "babip": 0.231,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 39,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.288,
    "pwoba_pctile": 22,
    "whiff_pct": 0.193,
@@ -25131,10 +25143,7 @@
    "war": -0.4,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 28,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 39,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "666969",
@@ -25343,6 +25352,9 @@
    "bb_pct": 0.0328,
    "k_pct": 0.2869,
    "babip": 0.26,
+   "hem_plus_3yr": 85,
+   "hem_plus_3yr_pct": 21,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 56,
    "xhem_plus": 63,
    "xwoba": 0.265,
@@ -25361,10 +25373,7 @@
    "war_pa_plus_raw": 98.2,
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 98.2,
-   "war_pa_plus_pct": 34,
-   "hem_plus_3yr": 85,
-   "hem_plus_3yr_pct": 21,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_pct": 34
   },
   {
    "key": "682177",
@@ -25493,6 +25502,9 @@
    "bb_pct": 0.0604,
    "k_pct": 0.1477,
    "babip": 0.304,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 50,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 85,
    "xhem_plus": 74,
    "xwoba": 0.28,
@@ -25514,10 +25526,7 @@
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 106,
    "war_pa_plus_3yr_pct": 79,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 50,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "694728",
@@ -25595,6 +25604,9 @@
    "bb_pct": 0.0971,
    "k_pct": 0.2282,
    "babip": 0.15,
+   "hem_plus_3yr": 81,
+   "hem_plus_3yr_pct": 12,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 51,
    "xhem_plus": 61,
    "xwoba": 0.262,
@@ -25616,10 +25628,7 @@
    "war_pa_plus_pct": 12,
    "war_pa_plus_3yr": 90,
    "war_pa_plus_3yr_pct": 8,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 81,
-   "hem_plus_3yr_pct": 12,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "671655",
@@ -25678,6 +25687,9 @@
    "bb_pct": 0.0588,
    "k_pct": 0.3137,
    "babip": 0.214,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 41,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.279,
    "pwoba_pctile": 8,
    "whiff_pct": 0.277,
@@ -25688,10 +25700,7 @@
    "war": -0.3,
    "war_pa_plus_3yr": 87,
    "war_pa_plus_3yr_pct": 5,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 41,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "669369",
@@ -25718,15 +25727,15 @@
    "bb_pct": 0.0612,
    "k_pct": 0.3673,
    "babip": 0.296,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 38,
+   "hem_plus_3yr_tag": "provisional",
    "whiff_pct": 0.323,
    "chase_pct": 0.396,
    "z_contact_pct": 0.764,
    "sweet_spot_pct": 0.214,
    "pull_pct": 0.286,
-   "war": -0.1,
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 38,
-   "hem_plus_3yr_tag": "provisional"
+   "war": -0.1
   },
   {
    "key": "686823",
@@ -25753,6 +25762,9 @@
    "bb_pct": 0.0,
    "k_pct": 0.1304,
    "babip": 0.1,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 38,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.299,
    "pwoba_pctile": 43,
    "whiff_pct": 0.08,
@@ -25763,10 +25775,7 @@
    "war": -0.5,
    "war_pa_plus_3yr": 94,
    "war_pa_plus_3yr_pct": 19,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 38,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "675659",
@@ -25857,6 +25866,9 @@
    "bb_pct": 0.0435,
    "k_pct": 0.1478,
    "babip": 0.25,
+   "hem_plus_3yr": 81,
+   "hem_plus_3yr_pct": 13,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 59,
    "xhem_plus": 30,
    "xwoba": 0.22,
@@ -25878,10 +25890,7 @@
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 100,
    "war_pa_plus_3yr_pct": 46,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 81,
-   "hem_plus_3yr_pct": 13,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "553869",
@@ -25908,6 +25917,9 @@
    "bb_pct": 0.038,
    "k_pct": 0.2447,
    "babip": 0.276,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 22,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 83,
    "xhem_plus": 66,
    "xwoba": 0.269,
@@ -25929,10 +25941,7 @@
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 48,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 86,
-   "hem_plus_3yr_pct": 22,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "669326",
@@ -25959,6 +25968,9 @@
    "bb_pct": 0.0658,
    "k_pct": 0.3553,
    "babip": 0.349,
+   "hem_plus_3yr": 74,
+   "hem_plus_3yr_pct": 2,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.257,
    "pwoba_pctile": 0,
    "whiff_pct": 0.406,
@@ -25969,10 +25981,7 @@
    "war": 0.0,
    "war_pa_plus_3yr": 103,
    "war_pa_plus_3yr_pct": 63,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 74,
-   "hem_plus_3yr_pct": 2,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "672613",
@@ -26031,6 +26040,9 @@
    "bb_pct": 0.0664,
    "k_pct": 0.2654,
    "babip": 0.282,
+   "hem_plus_3yr": 84,
+   "hem_plus_3yr_pct": 20,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 65,
    "xhem_plus": 68,
    "xwoba": 0.273,
@@ -26052,10 +26064,7 @@
    "war_pa_plus_pct": 38,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 50,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 84,
-   "hem_plus_3yr_pct": 20,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "800325",
@@ -26082,6 +26091,9 @@
    "bb_pct": 0.0849,
    "k_pct": 0.217,
    "babip": 0.315,
+   "hem_plus_3yr": 82,
+   "hem_plus_3yr_pct": 14,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 79,
    "xhem_plus": 83,
    "xwoba": 0.293,
@@ -26103,10 +26115,7 @@
    "war_pa_plus_pct": 76,
    "war_pa_plus_3yr": 111,
    "war_pa_plus_3yr_pct": 94,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 82,
-   "hem_plus_3yr_pct": 14,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "645305",
@@ -26133,15 +26142,15 @@
    "bb_pct": 0.0109,
    "k_pct": 0.2717,
    "babip": 0.328,
+   "hem_plus_3yr": 78,
+   "hem_plus_3yr_pct": 5,
+   "hem_plus_3yr_tag": "provisional",
    "whiff_pct": 0.218,
    "chase_pct": 0.346,
    "z_contact_pct": 0.845,
    "sweet_spot_pct": 0.365,
    "pull_pct": 0.381,
-   "war": 0.2,
-   "hem_plus_3yr": 78,
-   "hem_plus_3yr_pct": 5,
-   "hem_plus_3yr_tag": "provisional"
+   "war": 0.2
   },
   {
    "key": "701675",
@@ -26270,6 +26279,9 @@
    "bb_pct": 0.0532,
    "k_pct": 0.3191,
    "babip": 0.312,
+   "hem_plus_3yr": 85,
+   "hem_plus_3yr_pct": 22,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 63,
    "xhem_plus": 61,
    "xwoba": 0.263,
@@ -26291,10 +26303,7 @@
    "war_pa_plus_pct": 6,
    "war_pa_plus_3yr": 86,
    "war_pa_plus_3yr_pct": 3,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 85,
-   "hem_plus_3yr_pct": 22,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "664954",
@@ -26474,6 +26483,9 @@
    "bb_pct": 0.0654,
    "k_pct": 0.2026,
    "babip": 0.25,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 33,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 67,
    "xhem_plus": 56,
    "xwoba": 0.256,
@@ -26495,10 +26507,7 @@
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 104,
    "war_pa_plus_3yr_pct": 67,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 33,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "690984",
@@ -26525,6 +26534,9 @@
    "bb_pct": 0.0462,
    "k_pct": 0.1795,
    "babip": 0.257,
+   "hem_plus_3yr": 82,
+   "hem_plus_3yr_pct": 14,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 66,
    "xhem_plus": 84,
    "xwoba": 0.295,
@@ -26546,10 +26558,7 @@
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 95,
    "war_pa_plus_3yr_pct": 22,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 82,
-   "hem_plus_3yr_pct": 14,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "664059",
@@ -26576,6 +26585,9 @@
    "bb_pct": 0.0426,
    "k_pct": 0.3404,
    "babip": 0.25,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 30,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.279,
    "pwoba_pctile": 8,
    "whiff_pct": 0.318,
@@ -26586,10 +26598,7 @@
    "war": -0.3,
    "war_pa_plus_3yr": 106,
    "war_pa_plus_3yr_pct": 75,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 30,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "675961",
@@ -26616,6 +26625,9 @@
    "bb_pct": 0.0433,
    "k_pct": 0.2165,
    "babip": 0.333,
+   "hem_plus_3yr": 78,
+   "hem_plus_3yr_pct": 6,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 96,
    "xhem_plus": 50,
    "xwoba": 0.248,
@@ -26637,10 +26649,7 @@
    "war_pa_plus_pct": 92,
    "war_pa_plus_3yr": 109,
    "war_pa_plus_3yr_pct": 89,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 78,
-   "hem_plus_3yr_pct": 6,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "680574",
@@ -26766,6 +26775,9 @@
    "bb_pct": 0.0748,
    "k_pct": 0.2653,
    "babip": 0.337,
+   "hem_plus_3yr": 83,
+   "hem_plus_3yr_pct": 17,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 86,
    "xhem_plus": 63,
    "xwoba": 0.265,
@@ -26787,10 +26799,7 @@
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 101,
    "war_pa_plus_3yr_pct": 52,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 83,
-   "hem_plus_3yr_pct": 17,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "545121",
@@ -26868,6 +26877,9 @@
    "bb_pct": 0.036,
    "k_pct": 0.3063,
    "babip": 0.191,
+   "hem_plus_3yr": 97,
+   "hem_plus_3yr_pct": 61,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 49,
    "xhem_plus": 68,
    "xwoba": 0.272,
@@ -26889,10 +26901,7 @@
    "war_pa_plus_pct": 34,
    "war_pa_plus_3yr": 106,
    "war_pa_plus_3yr_pct": 76,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 97,
-   "hem_plus_3yr_pct": 61,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "694203",
@@ -27072,6 +27081,9 @@
    "bb_pct": 0.0714,
    "k_pct": 0.2857,
    "babip": 0.216,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 40,
+   "hem_plus_3yr_tag": "established",
    "pwoba": 0.278,
    "pwoba_pctile": 7,
    "whiff_pct": 0.31,
@@ -27082,10 +27094,7 @@
    "war": 0.1,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 39,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 40,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "543877",
@@ -27316,6 +27325,9 @@
    "bb_pct": 0.092,
    "k_pct": 0.3333,
    "babip": 0.255,
+   "hem_plus_3yr": 79,
+   "hem_plus_3yr_pct": 8,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.26,
    "pwoba_pctile": 1,
    "whiff_pct": 0.338,
@@ -27326,10 +27338,7 @@
    "war": -0.3,
    "war_pa_plus_3yr": 107,
    "war_pa_plus_3yr_pct": 83,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 79,
-   "hem_plus_3yr_pct": 8,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "691026",
@@ -27458,6 +27467,9 @@
    "bb_pct": 0.0519,
    "k_pct": 0.2403,
    "babip": 0.255,
+   "hem_plus_3yr": 87,
+   "hem_plus_3yr_pct": 28,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 69,
    "xhem_plus": 47,
    "xwoba": 0.243,
@@ -27479,10 +27491,7 @@
    "war_pa_plus_pct": 16,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 30,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 87,
-   "hem_plus_3yr_pct": 28,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "663368",
@@ -27509,6 +27518,9 @@
    "bb_pct": 0.099,
    "k_pct": 0.2178,
    "babip": 0.197,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 31,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 45,
    "xhem_plus": 62,
    "xwoba": 0.264,
@@ -27530,10 +27542,7 @@
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 102,
    "war_pa_plus_3yr_pct": 57,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 31,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "655316",
@@ -27611,6 +27620,9 @@
    "bb_pct": 0.06,
    "k_pct": 0.42,
    "babip": 0.16,
+   "hem_plus_3yr": 85,
+   "hem_plus_3yr_pct": 21,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.272,
    "pwoba_pctile": 3,
    "whiff_pct": 0.413,
@@ -27621,10 +27633,7 @@
    "war": -0.7,
    "war_pa_plus_3yr": 90,
    "war_pa_plus_3yr_pct": 9,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 85,
-   "hem_plus_3yr_pct": 21,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "678489",
@@ -27651,6 +27660,9 @@
    "bb_pct": 0.0977,
    "k_pct": 0.2644,
    "babip": 0.265,
+   "hem_plus_3yr": 77,
+   "hem_plus_3yr_pct": 4,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 72,
    "xhem_plus": 43,
    "xwoba": 0.238,
@@ -27672,10 +27684,7 @@
    "war_pa_plus_pct": 47,
    "war_pa_plus_3yr": 104,
    "war_pa_plus_3yr_pct": 65,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 77,
-   "hem_plus_3yr_pct": 4,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "687363",
@@ -27702,6 +27711,9 @@
    "bb_pct": 0.0821,
    "k_pct": 0.2359,
    "babip": 0.252,
+   "hem_plus_3yr": 78,
+   "hem_plus_3yr_pct": 5,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 51,
    "xhem_plus": 67,
    "xwoba": 0.271,
@@ -27723,10 +27735,7 @@
    "war_pa_plus_pct": 12,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 39,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 78,
-   "hem_plus_3yr_pct": 5,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "669087",
@@ -27817,6 +27826,9 @@
    "bb_pct": 0.062,
    "k_pct": 0.2868,
    "babip": 0.158,
+   "hem_plus_3yr": 108,
+   "hem_plus_3yr_pct": 82,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 33,
    "xhem_plus": 56,
    "xwoba": 0.255,
@@ -27838,10 +27850,7 @@
    "war_pa_plus_pct": 1,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 40,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 108,
-   "hem_plus_3yr_pct": 82,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "680728",
@@ -27868,6 +27877,9 @@
    "bb_pct": 0.066,
    "k_pct": 0.2843,
    "babip": 0.248,
+   "hem_plus_3yr": 90,
+   "hem_plus_3yr_pct": 35,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 52,
    "xhem_plus": 56,
    "xwoba": 0.256,
@@ -27889,10 +27901,7 @@
    "war_pa_plus_pct": 3,
    "war_pa_plus_3yr": 89,
    "war_pa_plus_3yr_pct": 7,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 35,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "696135",
@@ -28101,6 +28110,9 @@
    "bb_pct": 0.0462,
    "k_pct": 0.2308,
    "babip": 0.2,
+   "hem_plus_3yr": 83,
+   "hem_plus_3yr_pct": 15,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.268,
    "pwoba_pctile": 2,
    "whiff_pct": 0.21,
@@ -28111,10 +28123,7 @@
    "war": -0.5,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 38,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 83,
-   "hem_plus_3yr_pct": 15,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "691373",
@@ -28173,6 +28182,9 @@
    "bb_pct": 0.0588,
    "k_pct": 0.4176,
    "babip": 0.272,
+   "hem_plus_3yr": 82,
+   "hem_plus_3yr_pct": 14,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 53,
    "xhem_plus": 34,
    "xwoba": 0.225,
@@ -28194,10 +28206,7 @@
    "war_pa_plus_pct": 14,
    "war_pa_plus_3yr": 87,
    "war_pa_plus_3yr_pct": 5,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 82,
-   "hem_plus_3yr_pct": 14,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "592206",
@@ -28224,6 +28233,9 @@
    "bb_pct": 0.041,
    "k_pct": 0.2787,
    "babip": 0.228,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 48,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 50,
    "xhem_plus": 77,
    "xwoba": 0.285,
@@ -28245,10 +28257,7 @@
    "war_pa_plus_pct": 1,
    "war_pa_plus_3yr": 94,
    "war_pa_plus_3yr_pct": 16,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 48,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "805347",
@@ -28578,6 +28587,9 @@
    "bb_pct": 0.0759,
    "k_pct": 0.2207,
    "babip": 0.25,
+   "hem_plus_3yr": 90,
+   "hem_plus_3yr_pct": 37,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 54,
    "xhem_plus": 66,
    "xwoba": 0.27,
@@ -28599,10 +28611,7 @@
    "war_pa_plus_pct": 4,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 26,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 37,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "695681",
@@ -28629,6 +28638,9 @@
    "bb_pct": 0.0748,
    "k_pct": 0.3265,
    "babip": 0.271,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 32,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 49,
    "xhem_plus": 55,
    "xwoba": 0.254,
@@ -28650,10 +28662,7 @@
    "war_pa_plus_pct": 1,
    "war_pa_plus_3yr": 97,
    "war_pa_plus_3yr_pct": 31,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 32,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "665750",
@@ -28731,6 +28740,9 @@
    "bb_pct": 0.0064,
    "k_pct": 0.1859,
    "babip": 0.235,
+   "hem_plus_3yr": 81,
+   "hem_plus_3yr_pct": 11,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 46,
    "xhem_plus": 32,
    "xwoba": 0.222,
@@ -28752,10 +28764,7 @@
    "war_pa_plus_pct": 14,
    "war_pa_plus_3yr": 96,
    "war_pa_plus_3yr_pct": 25,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 81,
-   "hem_plus_3yr_pct": 11,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "686217",
@@ -28917,7 +28926,7 @@
    "team": "SEA",
    "bats": "S",
    "hem_plus": 76,
-   "hem_plus_raw": 75.8,
+   "hem_plus_raw": 75.7,
    "qualified": false,
    "tier": "Below-avg",
    "pa": 148,
@@ -28935,6 +28944,9 @@
    "bb_pct": 0.1081,
    "k_pct": 0.2838,
    "babip": 0.226,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 47,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 45,
    "xhem_plus": 47,
    "xwoba": 0.243,
@@ -28956,10 +28968,7 @@
    "war_pa_plus_pct": 14,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 39,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 47,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "642851",
@@ -28986,6 +28995,9 @@
    "bb_pct": 0.0562,
    "k_pct": 0.2697,
    "babip": 0.193,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 42,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.279,
    "pwoba_pctile": 8,
    "whiff_pct": 0.239,
@@ -28996,10 +29008,7 @@
    "war": -0.2,
    "war_pa_plus_3yr": 116,
    "war_pa_plus_3yr_pct": 98,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 42,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "683766",
@@ -29026,6 +29035,9 @@
    "bb_pct": 0.0407,
    "k_pct": 0.267,
    "babip": 0.286,
+   "hem_plus_3yr": 81,
+   "hem_plus_3yr_pct": 11,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 58,
    "xhem_plus": 41,
    "xwoba": 0.235,
@@ -29047,10 +29059,7 @@
    "war_pa_plus_pct": 34,
    "war_pa_plus_3yr": 104,
    "war_pa_plus_3yr_pct": 67,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 81,
-   "hem_plus_3yr_pct": 11,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "691785",
@@ -29508,6 +29517,9 @@
    "bb_pct": 0.0414,
    "k_pct": 0.3233,
    "babip": 0.333,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 48,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 68,
    "xhem_plus": 50,
    "xwoba": 0.248,
@@ -29529,10 +29541,7 @@
    "war_pa_plus_pct": 30,
    "war_pa_plus_3yr": 106,
    "war_pa_plus_3yr_pct": 78,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 48,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "666624",
@@ -29559,6 +29568,9 @@
    "bb_pct": 0.0571,
    "k_pct": 0.3333,
    "babip": 0.258,
+   "hem_plus_3yr": 90,
+   "hem_plus_3yr_pct": 35,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 31,
    "xhem_plus": 24,
    "xwoba": 0.211,
@@ -29580,10 +29592,7 @@
    "war_pa_plus_pct": 2,
    "war_pa_plus_3yr": 94,
    "war_pa_plus_3yr_pct": 16,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 35,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "622761",
@@ -29610,6 +29619,9 @@
    "bb_pct": 0.0498,
    "k_pct": 0.3122,
    "babip": 0.276,
+   "hem_plus_3yr": 76,
+   "hem_plus_3yr_pct": 3,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 52,
    "xhem_plus": 68,
    "xwoba": 0.272,
@@ -29631,10 +29643,39 @@
    "war_pa_plus_pct": 18,
    "war_pa_plus_3yr": 103,
    "war_pa_plus_3yr_pct": 59,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 76,
-   "hem_plus_3yr_pct": 3,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
+  },
+  {
+   "key": "644433",
+   "mlbam": 644433,
+   "name": "Chadwick Tromp",
+   "team": "LAD",
+   "bats": "R",
+   "hem_plus": 73,
+   "hem_plus_raw": 73.1,
+   "qualified": false,
+   "tier": "Below-avg",
+   "pa": 51,
+   "ab": 49,
+   "hr": 0,
+   "bb": 0,
+   "sb": 0,
+   "woba": 0.283,
+   "woba_raw": 0.15,
+   "avg": 0.163,
+   "obp": 0.16,
+   "slg": 0.184,
+   "ops": 0.344,
+   "iso": 0.02,
+   "bb_pct": 0.0,
+   "k_pct": 0.2549,
+   "babip": 0.216,
+   "whiff_pct": 0.243,
+   "chase_pct": 0.456,
+   "z_contact_pct": 0.871,
+   "sweet_spot_pct": 0.263,
+   "pull_pct": 0.342,
+   "war": -0.5
   },
   {
    "key": "676391",
@@ -29643,7 +29684,7 @@
    "team": "TOR",
    "bats": "R",
    "hem_plus": 73,
-   "hem_plus_raw": 73.2,
+   "hem_plus_raw": 73.1,
    "qualified": true,
    "tier": "Below-avg",
    "pa": 621,
@@ -29686,38 +29727,6 @@
    "war_pa_plus_3yr": 108,
    "war_pa_plus_3yr_pct": 84,
    "war_pa_plus_3yr_tag": "established"
-  },
-  {
-   "key": "644433",
-   "mlbam": 644433,
-   "name": "Chadwick Tromp",
-   "team": "LAD",
-   "bats": "R",
-   "hem_plus": 73,
-   "hem_plus_raw": 73.1,
-   "qualified": false,
-   "tier": "Below-avg",
-   "pa": 51,
-   "ab": 49,
-   "hr": 0,
-   "bb": 0,
-   "sb": 0,
-   "woba": 0.283,
-   "woba_raw": 0.15,
-   "avg": 0.163,
-   "obp": 0.16,
-   "slg": 0.184,
-   "ops": 0.344,
-   "iso": 0.02,
-   "bb_pct": 0.0,
-   "k_pct": 0.2549,
-   "babip": 0.216,
-   "whiff_pct": 0.243,
-   "chase_pct": 0.456,
-   "z_contact_pct": 0.871,
-   "sweet_spot_pct": 0.263,
-   "pull_pct": 0.342,
-   "war": -0.5
   },
   {
    "key": "677956",
@@ -29776,6 +29785,9 @@
    "bb_pct": 0.0306,
    "k_pct": 0.2092,
    "babip": 0.292,
+   "hem_plus_3yr": 74,
+   "hem_plus_3yr_pct": 2,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 74,
    "xhem_plus": 63,
    "xwoba": 0.266,
@@ -29797,10 +29809,7 @@
    "war_pa_plus_pct": 9,
    "war_pa_plus_3yr": 96,
    "war_pa_plus_3yr_pct": 23,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 74,
-   "hem_plus_3yr_pct": 2,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "641555",
@@ -30188,6 +30197,9 @@
    "bb_pct": 0.0778,
    "k_pct": 0.3167,
    "babip": 0.296,
+   "hem_plus_3yr": 87,
+   "hem_plus_3yr_pct": 27,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 41,
    "xhem_plus": 54,
    "xwoba": 0.253,
@@ -30209,10 +30221,7 @@
    "war_pa_plus_pct": 3,
    "war_pa_plus_3yr": 94,
    "war_pa_plus_3yr_pct": 17,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 87,
-   "hem_plus_3yr_pct": 27,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "677950",
@@ -30239,6 +30248,9 @@
    "bb_pct": 0.0333,
    "k_pct": 0.225,
    "babip": 0.226,
+   "hem_plus_3yr": 79,
+   "hem_plus_3yr_pct": 7,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 50,
    "xhem_plus": 75,
    "xwoba": 0.282,
@@ -30260,10 +30272,7 @@
    "war_pa_plus_pct": 20,
    "war_pa_plus_3yr": 96,
    "war_pa_plus_3yr_pct": 24,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 79,
-   "hem_plus_3yr_pct": 7,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "666971",
@@ -30290,6 +30299,9 @@
    "bb_pct": 0.0498,
    "k_pct": 0.1891,
    "babip": 0.248,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 51,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 49,
    "xhem_plus": 68,
    "xwoba": 0.273,
@@ -30311,10 +30323,7 @@
    "war_pa_plus_pct": 8,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 37,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 51,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "663837",
@@ -30392,6 +30401,9 @@
    "bb_pct": 0.1088,
    "k_pct": 0.2585,
    "babip": 0.165,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 47,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 7,
    "xhem_plus": 32,
    "xwoba": 0.222,
@@ -30413,10 +30425,7 @@
    "war_pa_plus_pct": 3,
    "war_pa_plus_3yr": 102,
    "war_pa_plus_3yr_pct": 55,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 47,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "665561",
@@ -30443,6 +30452,9 @@
    "bb_pct": 0.0211,
    "k_pct": 0.1579,
    "babip": 0.095,
+   "hem_plus_3yr": 84,
+   "hem_plus_3yr_pct": 19,
+   "hem_plus_3yr_tag": "provisional",
    "pwoba": 0.287,
    "pwoba_pctile": 20,
    "whiff_pct": 0.161,
@@ -30453,10 +30465,7 @@
    "war": -0.7,
    "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 42,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 84,
-   "hem_plus_3yr_pct": 19,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "593871",
@@ -30483,6 +30492,9 @@
    "bb_pct": 0.0621,
    "k_pct": 0.2483,
    "babip": 0.186,
+   "hem_plus_3yr": 101,
+   "hem_plus_3yr_pct": 68,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 20,
    "xhem_plus": 40,
    "xwoba": 0.234,
@@ -30504,10 +30516,7 @@
    "war_pa_plus_pct": 0,
    "war_pa_plus_3yr": 100,
    "war_pa_plus_3yr_pct": 43,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 101,
-   "hem_plus_3yr_pct": 68,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "665966",
@@ -30585,6 +30594,9 @@
    "bb_pct": 0.0085,
    "k_pct": 0.2137,
    "babip": 0.239,
+   "hem_plus_3yr": 88,
+   "hem_plus_3yr_pct": 32,
+   "hem_plus_3yr_tag": "established",
    "wrc_plus": 31,
    "xhem_plus": 51,
    "xwoba": 0.249,
@@ -30606,10 +30618,7 @@
    "war_pa_plus_pct": 1,
    "war_pa_plus_3yr": 94,
    "war_pa_plus_3yr_pct": 18,
-   "war_pa_plus_3yr_tag": "established",
-   "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 32,
-   "hem_plus_3yr_tag": "established"
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "623168",
@@ -30636,6 +30645,9 @@
    "bb_pct": 0.025,
    "k_pct": 0.15,
    "babip": 0.205,
+   "hem_plus_3yr": 79,
+   "hem_plus_3yr_pct": 9,
+   "hem_plus_3yr_tag": "provisional",
    "wrc_plus": 25,
    "xhem_plus": 42,
    "xwoba": 0.236,
@@ -30657,10 +30669,7 @@
    "war_pa_plus_pct": 11,
    "war_pa_plus_3yr": 105,
    "war_pa_plus_3yr_pct": 73,
-   "war_pa_plus_3yr_tag": "provisional",
-   "hem_plus_3yr": 79,
-   "hem_plus_3yr_pct": 9,
-   "hem_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "663647",
@@ -30723,7 +30732,7 @@
    "team_pa": 6520,
    "n_above_avg": 10,
    "heart_hem": 129,
-   "n_off_roster_dropped": 6,
+   "n_off_roster_dropped": 2,
    "lineup": [
     {
      "tier": "Elite",
@@ -30791,11 +30800,27 @@
     },
     {
      "tier": "Average",
+     "key": "681909",
+     "name": "Justin Dean",
+     "bats": "R",
+     "hem_plus": 101,
+     "pa": 10
+    },
+    {
+     "tier": "Average",
      "key": "665804",
      "name": "Miguel Amaya",
      "bats": "R",
      "hem_plus": 100,
      "pa": 254
+    },
+    {
+     "tier": "Average",
+     "key": "682634",
+     "name": "Kevin Alc\u00e1ntara",
+     "bats": "R",
+     "hem_plus": 98,
+     "pa": 28
     },
     {
      "tier": "Average",
@@ -30815,6 +30840,14 @@
     },
     {
      "tier": "Average",
+     "key": "701649",
+     "name": "James Triantos",
+     "bats": "R",
+     "hem_plus": 96,
+     "pa": 9
+    },
+    {
+     "tier": "Average",
      "key": "672356",
      "name": "Gabriel Arias",
      "bats": "R",
@@ -30828,6 +30861,14 @@
      "bats": "S",
      "hem_plus": 91,
      "pa": 266
+    },
+    {
+     "tier": "Average",
+     "key": "681230",
+     "name": "BJ Murray Jr.",
+     "bats": "S",
+     "hem_plus": 90,
+     "pa": 11
     },
     {
      "tier": "Below-avg",
@@ -31143,6 +31184,25 @@
       "L": 52,
       "R": 97
      }
+    },
+    {
+     "key": "682634",
+     "name": "Kevin Alc\u00e1ntara",
+     "bats": "R",
+     "hem_plus": 98,
+     "pa": 28,
+     "mlbam": 682634,
+     "pos": [
+      "DH"
+     ],
+     "hem_plus_split": {
+      "L": 102,
+      "R": 90
+     },
+     "split_pa": {
+      "L": 19,
+      "R": 9
+     }
     }
    ],
    "slot_meta": {
@@ -31206,9 +31266,22 @@
    },
    "platoon_options": {
     "vl": [],
-    "vr": [],
+    "vr": [
+     {
+      "starter_key": "663538",
+      "bench_key": "699393",
+      "pos": "2B",
+      "starter_split": 81,
+      "starter_split_pa": 516,
+      "starter_bats": "R",
+      "bench_split": 92,
+      "bench_split_pa": 219,
+      "bench_bats": "S",
+      "delta": 11
+     }
+    ],
     "n_withheld": {
-     "vl": 2,
+     "vl": 5,
      "vr": 0
     }
    },
@@ -31225,7 +31298,7 @@
    "team_pa": 6439,
    "n_above_avg": 10,
    "heart_hem": 123,
-   "n_off_roster_dropped": 7,
+   "n_off_roster_dropped": 6,
    "lineup": [
     {
      "tier": "Above-avg",
@@ -31346,6 +31419,14 @@
      "bats": "R",
      "hem_plus": 85,
      "pa": 252
+    },
+    {
+     "tier": "Below-avg",
+     "key": "672613",
+     "name": "Eliezer Alfonzo",
+     "bats": "S",
+     "hem_plus": 82,
+     "pa": 28
     }
    ],
    "orders": {
@@ -32287,11 +32368,23 @@
       "bench_split_pa": 123,
       "bench_bats": "R",
       "delta": 52
+     },
+     {
+      "starter_key": "641343",
+      "bench_key": "596142",
+      "pos": "1B",
+      "starter_split": 120,
+      "starter_split_pa": 160,
+      "starter_bats": "L",
+      "bench_split": 126,
+      "bench_split_pa": 123,
+      "bench_bats": "R",
+      "delta": 6
      }
     ],
     "vr": [],
     "n_withheld": {
-     "vl": 3,
+     "vl": 4,
      "vr": 0
     }
    },
@@ -32720,7 +32813,7 @@
       "3B"
      ],
      "hem_plus_split": {
-      "L": 70,
+      "L": 69,
       "R": 88
      },
      "split_pa": {
@@ -32855,7 +32948,20 @@
    },
    "platoon_options": {
     "vl": [],
-    "vr": [],
+    "vr": [
+     {
+      "starter_key": "669707",
+      "bench_key": "694378",
+      "pos": "SS",
+      "starter_split": 76,
+      "starter_split_pa": 219,
+      "starter_bats": "R",
+      "bench_split": 88,
+      "bench_split_pa": 194,
+      "bench_bats": "L",
+      "delta": 12
+     }
+    ],
     "n_withheld": {
      "vl": 2,
      "vr": 0
@@ -33393,7 +33499,32 @@
     }
    },
    "platoon_options": {
-    "vl": [],
+    "vl": [
+     {
+      "starter_key": "665862",
+      "bench_key": "642708",
+      "pos": "2B",
+      "starter_split": 84,
+      "starter_split_pa": 160,
+      "starter_bats": "L",
+      "bench_split": 98,
+      "bench_split_pa": 160,
+      "bench_bats": "R",
+      "delta": 14
+     },
+     {
+      "starter_key": "665862",
+      "bench_key": "683011",
+      "pos": "2B",
+      "starter_split": 84,
+      "starter_split_pa": 160,
+      "starter_bats": "L",
+      "bench_split": 93,
+      "bench_split_pa": 100,
+      "bench_bats": "R",
+      "delta": 9
+     }
+    ],
     "vr": [
      {
       "starter_key": "671218",
@@ -33426,7 +33557,7 @@
    "team_pa": 6677,
    "n_above_avg": 7,
    "heart_hem": 131,
-   "n_off_roster_dropped": 12,
+   "n_off_roster_dropped": 5,
    "lineup": [
     {
      "tier": "Elite",
@@ -33478,6 +33609,14 @@
     },
     {
      "tier": "Average",
+     "key": "664774",
+     "name": "LaMonte Wade Jr.",
+     "bats": "L",
+     "hem_plus": 98,
+     "pa": 146
+    },
+    {
+     "tier": "Average",
      "key": "676369",
      "name": "Nelson Vel\u00e1zquez",
      "bats": "R",
@@ -33502,11 +33641,27 @@
     },
     {
      "tier": "Average",
+     "key": "805672",
+     "name": "Collin Price",
+     "bats": "R",
+     "hem_plus": 93,
+     "pa": 13
+    },
+    {
+     "tier": "Average",
      "key": "514888",
      "name": "Jose Altuve",
      "bats": "R",
      "hem_plus": 92,
      "pa": 573
+    },
+    {
+     "tier": "Average",
+     "key": "805904",
+     "name": "Zach Cole",
+     "bats": "L",
+     "hem_plus": 90,
+     "pa": 53
     },
     {
      "tier": "Below-avg",
@@ -33515,6 +33670,14 @@
      "bats": "R",
      "hem_plus": 87,
      "pa": 568
+    },
+    {
+     "tier": "Below-avg",
+     "key": "701305",
+     "name": "Zach Dezenzo",
+     "bats": "R",
+     "hem_plus": 87,
+     "pa": 82
     },
     {
      "tier": "Below-avg",
@@ -33534,11 +33697,35 @@
     },
     {
      "tier": "Below-avg",
+     "key": "694728",
+     "name": "Brice Matthews",
+     "bats": "R",
+     "hem_plus": 82,
+     "pa": 233
+    },
+    {
+     "tier": "Below-avg",
      "key": "543877",
      "name": "Christian V\u00e1zquez",
      "bats": "R",
      "hem_plus": 80,
      "pa": 266
+    },
+    {
+     "tier": "Below-avg",
+     "key": "678489",
+     "name": "Jorge Barrosa",
+     "bats": "S",
+     "hem_plus": 79,
+     "pa": 174
+    },
+    {
+     "tier": "Below-avg",
+     "key": "662139",
+     "name": "Daulton Varsho",
+     "bats": "L",
+     "hem_plus": 77,
+     "pa": 526
     }
    ],
    "orders": {
@@ -33611,14 +33798,14 @@
      },
      {
       "slot": 7,
-      "key": "514888",
-      "name": "Jose Altuve",
-      "bats": "R",
-      "hem_plus": 92,
-      "pa": 573,
-      "platoon_adv": false,
-      "hem_plus_split": 88,
-      "split_pa": 435
+      "key": "662139",
+      "name": "Daulton Varsho",
+      "bats": "L",
+      "hem_plus": 77,
+      "pa": 526,
+      "platoon_adv": true,
+      "hem_plus_split": 82,
+      "split_pa": 391
      },
      {
       "slot": 8,
@@ -33633,14 +33820,14 @@
      },
      {
       "slot": 9,
-      "key": "543877",
-      "name": "Christian V\u00e1zquez",
+      "key": "514888",
+      "name": "Jose Altuve",
       "bats": "R",
-      "hem_plus": 80,
-      "pa": 266,
+      "hem_plus": 92,
+      "pa": 573,
       "platoon_adv": false,
-      "hem_plus_split": 77,
-      "split_pa": 203
+      "hem_plus_split": 88,
+      "split_pa": 435
      }
     ],
     "vl": [
@@ -33734,18 +33921,79 @@
      },
      {
       "slot": 9,
-      "key": "543877",
-      "name": "Christian V\u00e1zquez",
-      "bats": "R",
-      "hem_plus": 80,
-      "pa": 266,
-      "platoon_adv": true,
-      "hem_plus_split": 88,
-      "split_pa": 63
+      "key": "662139",
+      "name": "Daulton Varsho",
+      "bats": "L",
+      "hem_plus": 77,
+      "pa": 526,
+      "platoon_adv": false,
+      "hem_plus_split": 63,
+      "split_pa": 135
      }
     ]
    },
    "bench": [
+    {
+     "key": "543877",
+     "name": "Christian V\u00e1zquez",
+     "bats": "R",
+     "hem_plus": 80,
+     "pa": 266,
+     "mlbam": 543877,
+     "pos": [
+      "C"
+     ],
+     "hem_plus_split": {
+      "L": 88,
+      "R": 77
+     },
+     "split_pa": {
+      "L": 63,
+      "R": 203
+     }
+    },
+    {
+     "key": "694728",
+     "name": "Brice Matthews",
+     "bats": "R",
+     "hem_plus": 82,
+     "pa": 233,
+     "mlbam": 694728,
+     "pos": [
+      "CF",
+      "LF",
+      "2B"
+     ],
+     "hem_plus_split": {
+      "L": 89,
+      "R": 78
+     },
+     "split_pa": {
+      "L": 86,
+      "R": 147
+     }
+    },
+    {
+     "key": "678489",
+     "name": "Jorge Barrosa",
+     "bats": "S",
+     "hem_plus": 79,
+     "pa": 174,
+     "mlbam": 678489,
+     "pos": [
+      "CF",
+      "LF",
+      "RF"
+     ],
+     "hem_plus_split": {
+      "L": 76,
+      "R": 81
+     },
+     "split_pa": {
+      "L": 64,
+      "R": 110
+     }
+    },
     {
      "key": "669397",
      "name": "Nick Allen",
@@ -33768,6 +34016,27 @@
      }
     },
     {
+     "key": "664774",
+     "name": "LaMonte Wade Jr.",
+     "bats": "L",
+     "hem_plus": 98,
+     "pa": 146,
+     "mlbam": 664774,
+     "pos": [
+      "LF",
+      "1B",
+      "RF"
+     ],
+     "hem_plus_split": {
+      "L": 79,
+      "R": 100
+     },
+     "split_pa": {
+      "L": 16,
+      "R": 130
+     }
+    },
+    {
      "key": "694388",
      "name": "Joey Loperfido",
      "bats": "L",
@@ -33786,64 +34055,6 @@
       "L": 14,
       "R": 107
      }
-    },
-    {
-     "key": "676369",
-     "name": "Nelson Vel\u00e1zquez",
-     "bats": "R",
-     "hem_plus": 97,
-     "pa": 113,
-     "mlbam": 676369,
-     "pos": [
-      "LF"
-     ],
-     "hem_plus_split": {
-      "L": 101,
-      "R": 89
-     },
-     "split_pa": {
-      "L": 81,
-      "R": 32
-     }
-    },
-    {
-     "key": "828599",
-     "name": "Lucas Spence",
-     "bats": "L",
-     "hem_plus": 109,
-     "pa": 63,
-     "mlbam": 828599,
-     "pos": [
-      "CF"
-     ],
-     "hem_plus_split": {
-      "L": 93,
-      "R": 116
-     },
-     "split_pa": {
-      "L": 19,
-      "R": 44
-     }
-    },
-    {
-     "key": "669384",
-     "name": "Raynel Delgado",
-     "bats": "L",
-     "hem_plus": 96,
-     "pa": 41,
-     "mlbam": 669384,
-     "pos": [
-      "3B",
-      "2B"
-     ],
-     "hem_plus_split": {
-      "L": 80,
-      "R": 101
-     },
-     "split_pa": {
-      "L": 10,
-      "R": 31
-     }
     }
    ],
    "slot_meta": {
@@ -33853,16 +34064,16 @@
       "2B"
      ]
     },
-    "543877": {
-     "mlbam": 543877,
-     "pos": [
-      "C"
-     ]
-    },
     "572233": {
      "mlbam": 572233,
      "pos": [
       "1B"
+     ]
+    },
+    "662139": {
+     "mlbam": 662139,
+     "pos": [
+      "CF"
      ]
     },
     "665161": {
@@ -33908,24 +34119,26 @@
    },
    "platoon_options": {
     "vl": [],
-    "vr": [],
+    "vr": [
+     {
+      "starter_key": "701358",
+      "bench_key": "664774",
+      "pos": "RF",
+      "starter_split": 84,
+      "starter_split_pa": 421,
+      "starter_bats": "R",
+      "bench_split": 100,
+      "bench_split_pa": 130,
+      "bench_bats": "L",
+      "delta": 16
+     }
+    ],
     "n_withheld": {
-     "vl": 1,
+     "vl": 4,
      "vr": 0
     }
    },
-   "regulars_out": [
-    {
-     "key": "662139",
-     "mlbam": 662139,
-     "name": "Daulton Varsho",
-     "bats": "L",
-     "hem_plus": 77,
-     "pa": 526,
-     "status_code": "D10",
-     "status_label": "IL-10"
-    }
-   ],
+   "regulars_out": [],
    "team_war": 23.3,
    "team_war_n": 26,
    "platoon_applied": true
@@ -34475,6 +34688,18 @@
       "bench_split_pa": 170,
       "bench_bats": "R",
       "delta": 41
+     },
+     {
+      "starter_key": "666018",
+      "bench_key": "668723",
+      "pos": "1B",
+      "starter_split": 99,
+      "starter_split_pa": 190,
+      "starter_bats": "L",
+      "bench_split": 111,
+      "bench_split_pa": 170,
+      "bench_bats": "R",
+      "delta": 12
      }
     ],
     "vr": [
@@ -34489,10 +34714,22 @@
       "bench_split_pa": 196,
       "bench_bats": "L",
       "delta": 36
+     },
+     {
+      "starter_key": "650490",
+      "bench_key": "683748",
+      "pos": "DH",
+      "starter_split": 113,
+      "starter_split_pa": 484,
+      "starter_bats": "R",
+      "bench_split": 121,
+      "bench_split_pa": 196,
+      "bench_bats": "L",
+      "delta": 8
      }
     ],
     "n_withheld": {
-     "vl": 2,
+     "vl": 3,
      "vr": 0
     }
    },
@@ -34995,7 +35232,7 @@
     "vl": [],
     "vr": [],
     "n_withheld": {
-     "vl": 3,
+     "vl": 5,
      "vr": 0
     }
    },
@@ -36103,7 +36340,7 @@
     ],
     "vr": [],
     "n_withheld": {
-     "vl": 2,
+     "vl": 4,
      "vr": 0
     }
    },
@@ -36678,7 +36915,7 @@
     "vr": [],
     "n_withheld": {
      "vl": 1,
-     "vr": 1
+     "vr": 2
     }
    },
    "regulars_out": [
@@ -37228,7 +37465,7 @@
     "vl": [],
     "vr": [],
     "n_withheld": {
-     "vl": 1,
+     "vl": 2,
      "vr": 0
     }
    },
@@ -37578,7 +37815,7 @@
       "hem_plus": 96,
       "pa": 330,
       "platoon_adv": false,
-      "hem_plus_split": 78,
+      "hem_plus_split": 77,
       "split_pa": 41
      }
     ]
@@ -37784,7 +38021,7 @@
     ],
     "vr": [],
     "n_withheld": {
-     "vl": 2,
+     "vl": 3,
      "vr": 0
     }
    },
@@ -37801,7 +38038,7 @@
    "team_pa": 5900,
    "n_above_avg": 7,
    "heart_hem": 119,
-   "n_off_roster_dropped": 8,
+   "n_off_roster_dropped": 9,
    "lineup": [
     {
      "tier": "Above-avg",
@@ -37850,14 +38087,6 @@
      "bats": "R",
      "hem_plus": 101,
      "pa": 468
-    },
-    {
-     "tier": "Average",
-     "key": "671155",
-     "name": "Ivan Johnson",
-     "bats": "S",
-     "hem_plus": 94,
-     "pa": 19
     },
     {
      "tier": "Average",
@@ -38051,7 +38280,7 @@
       "hem_plus": 110,
       "pa": 498,
       "platoon_adv": true,
-      "hem_plus_split": 119,
+      "hem_plus_split": 118,
       "split_pa": 129
      },
      {
@@ -40072,10 +40301,23 @@
     }
    },
    "platoon_options": {
-    "vl": [],
+    "vl": [
+     {
+      "starter_key": "665019",
+      "bench_key": "668952",
+      "pos": "2B",
+      "starter_split": 85,
+      "starter_split_pa": 163,
+      "starter_bats": "L",
+      "bench_split": 95,
+      "bench_split_pa": 112,
+      "bench_bats": "R",
+      "delta": 10
+     }
+    ],
     "vr": [],
     "n_withheld": {
-     "vl": 0,
+     "vl": 1,
      "vr": 0
     }
    },
@@ -40088,7 +40330,7 @@
    "team": "NYM",
    "n_hitters": 22,
    "offense_plus": 99,
-   "offense_plus_raw": 98.89281426856456,
+   "offense_plus_raw": 98.9739324301149,
    "team_pa": 5831,
    "n_above_avg": 5,
    "heart_hem": 120,
@@ -40184,19 +40426,19 @@
     },
     {
      "tier": "Average",
+     "key": "683146",
+     "name": "Brett Baty",
+     "bats": "L",
+     "hem_plus": 91,
+     "pa": 473
+    },
+    {
+     "tier": "Average",
      "key": "620443",
      "name": "Luis Torrens",
      "bats": "R",
      "hem_plus": 91,
      "pa": 281
-    },
-    {
-     "tier": "Average",
-     "key": "683146",
-     "name": "Brett Baty",
-     "bats": "L",
-     "hem_plus": 90,
-     "pa": 473
     },
     {
      "tier": "Below-avg",
@@ -40315,10 +40557,10 @@
       "key": "683146",
       "name": "Brett Baty",
       "bats": "L",
-      "hem_plus": 90,
+      "hem_plus": 91,
       "pa": 473,
       "platoon_adv": true,
-      "hem_plus_split": 94,
+      "hem_plus_split": 95,
       "split_pa": 382
      },
      {
@@ -40427,10 +40669,10 @@
       "key": "683146",
       "name": "Brett Baty",
       "bats": "L",
-      "hem_plus": 90,
+      "hem_plus": 91,
       "pa": 473,
       "platoon_adv": false,
-      "hem_plus_split": 72,
+      "hem_plus_split": 73,
       "split_pa": 91
      }
     ]
@@ -42218,7 +42460,7 @@
     ],
     "vr": [],
     "n_withheld": {
-     "vl": 2,
+     "vl": 3,
      "vr": 0
     }
    },
@@ -42242,7 +42484,7 @@
    "team": "BAL",
    "n_hitters": 21,
    "offense_plus": 98,
-   "offense_plus_raw": 98.18338613164379,
+   "offense_plus_raw": 98.05983808518127,
    "team_pa": 5682,
    "n_above_avg": 6,
    "heart_hem": 118,
@@ -42309,7 +42551,7 @@
      "key": "683002",
      "name": "Gunnar Henderson",
      "bats": "L",
-     "hem_plus": 96,
+     "hem_plus": 95,
      "pa": 702
     },
     {
@@ -42444,7 +42686,7 @@
       "key": "683002",
       "name": "Gunnar Henderson",
       "bats": "L",
-      "hem_plus": 96,
+      "hem_plus": 95,
       "pa": 702,
       "platoon_adv": true,
       "hem_plus_split": 102,
@@ -42545,10 +42787,10 @@
       "key": "683002",
       "name": "Gunnar Henderson",
       "bats": "L",
-      "hem_plus": 96,
+      "hem_plus": 95,
       "pa": 702,
       "platoon_adv": false,
-      "hem_plus_split": 83,
+      "hem_plus_split": 82,
       "split_pa": 224
      },
      {
@@ -42790,18 +43032,18 @@
       "starter_key": "683002",
       "bench_key": "677942",
       "pos": "SS",
-      "starter_split": 83,
+      "starter_split": 82,
       "starter_split_pa": 224,
       "starter_bats": "L",
       "bench_split": 104,
       "bench_split_pa": 104,
       "bench_bats": "R",
-      "delta": 21
+      "delta": 22
      }
     ],
     "vr": [],
     "n_withheld": {
-     "vl": 5,
+     "vl": 6,
      "vr": 0
     }
    },
@@ -43381,7 +43623,7 @@
      }
     ],
     "n_withheld": {
-     "vl": 0,
+     "vl": 2,
      "vr": 0
     }
    },
@@ -43394,11 +43636,11 @@
    "team": "BOS",
    "n_hitters": 21,
    "offense_plus": 98,
-   "offense_plus_raw": 98.13573068094874,
+   "offense_plus_raw": 98.2238714613619,
    "team_pa": 6535,
    "n_above_avg": 4,
    "heart_hem": 126,
-   "n_off_roster_dropped": 7,
+   "n_off_roster_dropped": 1,
    "lineup": [
     {
      "tier": "Elite",
@@ -43415,6 +43657,14 @@
      "bats": "R",
      "hem_plus": 123,
      "pa": 329
+    },
+    {
+     "tier": "Above-avg",
+     "key": "681508",
+     "name": "Mickey Gasper",
+     "bats": "S",
+     "hem_plus": 118,
+     "pa": 225
     },
     {
      "tier": "Average",
@@ -43434,11 +43684,35 @@
     },
     {
      "tier": "Average",
+     "key": "701350",
+     "name": "Roman Anthony",
+     "bats": "L",
+     "hem_plus": 98,
+     "pa": 242
+    },
+    {
+     "tier": "Average",
      "key": "702332",
      "name": "Caleb Durbin",
      "bats": "R",
      "hem_plus": 97,
      "pa": 586
+    },
+    {
+     "tier": "Average",
+     "key": "807799",
+     "name": "Masataka Yoshida",
+     "bats": "L",
+     "hem_plus": 97,
+     "pa": 297
+    },
+    {
+     "tier": "Average",
+     "key": "678882",
+     "name": "Ceddanne Rafaela",
+     "bats": "R",
+     "hem_plus": 96,
+     "pa": 576
     },
     {
      "tier": "Average",
@@ -43466,11 +43740,11 @@
     },
     {
      "tier": "Average",
-     "key": "678882",
-     "name": "Ceddanne Rafaela",
-     "bats": "R",
-     "hem_plus": 95,
-     "pa": 576
+     "key": "691907",
+     "name": "Tsung-Che Cheng",
+     "bats": "L",
+     "hem_plus": 93,
+     "pa": 44
     },
     {
      "tier": "Average",
@@ -43481,12 +43755,28 @@
      "pa": 183
     },
     {
+     "tier": "Average",
+     "key": "678011",
+     "name": "Anthony Seigler",
+     "bats": "S",
+     "hem_plus": 92,
+     "pa": 173
+    },
+    {
      "tier": "Below-avg",
      "key": "657136",
      "name": "Connor Wong",
      "bats": "R",
      "hem_plus": 86,
      "pa": 238
+    },
+    {
+     "tier": "Below-avg",
+     "key": "663853",
+     "name": "Romy Gonzalez",
+     "bats": "R",
+     "hem_plus": 84,
+     "pa": 73
     },
     {
      "tier": "Below-avg",
@@ -43539,14 +43829,14 @@
      },
      {
       "slot": 3,
-      "key": "686765",
-      "name": "Nick Sogard",
-      "bats": "S",
-      "hem_plus": 98,
-      "pa": 277,
+      "key": "807799",
+      "name": "Masataka Yoshida",
+      "bats": "L",
+      "hem_plus": 97,
+      "pa": 297,
       "platoon_adv": true,
-      "hem_plus_split": 100,
-      "split_pa": 204
+      "hem_plus_split": 99,
+      "split_pa": 267
      },
      {
       "slot": 4,
@@ -43586,10 +43876,10 @@
       "key": "678882",
       "name": "Ceddanne Rafaela",
       "bats": "R",
-      "hem_plus": 95,
+      "hem_plus": 96,
       "pa": 576,
       "platoon_adv": false,
-      "hem_plus_split": 92,
+      "hem_plus_split": 93,
       "split_pa": 422
      },
      {
@@ -43662,28 +43952,6 @@
      },
      {
       "slot": 5,
-      "key": "686765",
-      "name": "Nick Sogard",
-      "bats": "S",
-      "hem_plus": 98,
-      "pa": 277,
-      "platoon_adv": true,
-      "hem_plus_split": 94,
-      "split_pa": 73
-     },
-     {
-      "slot": 6,
-      "key": "678882",
-      "name": "Ceddanne Rafaela",
-      "bats": "R",
-      "hem_plus": 95,
-      "pa": 576,
-      "platoon_adv": true,
-      "hem_plus_split": 105,
-      "split_pa": 154
-     },
-     {
-      "slot": 7,
       "key": "668939",
       "name": "Adley Rutschman",
       "bats": "S",
@@ -43692,6 +43960,28 @@
       "platoon_adv": true,
       "hem_plus_split": 90,
       "split_pa": 143
+     },
+     {
+      "slot": 6,
+      "key": "678882",
+      "name": "Ceddanne Rafaela",
+      "bats": "R",
+      "hem_plus": 96,
+      "pa": 576,
+      "platoon_adv": true,
+      "hem_plus_split": 105,
+      "split_pa": 154
+     },
+     {
+      "slot": 7,
+      "key": "807799",
+      "name": "Masataka Yoshida",
+      "bats": "L",
+      "hem_plus": 97,
+      "pa": 297,
+      "platoon_adv": false,
+      "hem_plus_split": 78,
+      "split_pa": 30
      },
      {
       "slot": 8,
@@ -43719,6 +44009,28 @@
    },
    "bench": [
     {
+     "key": "686765",
+     "name": "Nick Sogard",
+     "bats": "S",
+     "hem_plus": 98,
+     "pa": 277,
+     "mlbam": 686765,
+     "pos": [
+      "2B",
+      "1B",
+      "3B",
+      "SS"
+     ],
+     "hem_plus_split": {
+      "L": 94,
+      "R": 100
+     },
+     "split_pa": {
+      "L": 73,
+      "R": 204
+     }
+    },
+    {
      "key": "596115",
      "name": "Trevor Story",
      "bats": "R",
@@ -43735,6 +44047,26 @@
      "split_pa": {
       "L": 76,
       "R": 190
+     }
+    },
+    {
+     "key": "701350",
+     "name": "Roman Anthony",
+     "bats": "L",
+     "hem_plus": 98,
+     "pa": 242,
+     "mlbam": 701350,
+     "pos": [
+      "LF",
+      "RF"
+     ],
+     "hem_plus_split": {
+      "L": 83,
+      "R": 105
+     },
+     "split_pa": {
+      "L": 83,
+      "R": 159
      }
     },
     {
@@ -43757,6 +44089,27 @@
      }
     },
     {
+     "key": "681508",
+     "name": "Mickey Gasper",
+     "bats": "S",
+     "hem_plus": 118,
+     "pa": 225,
+     "mlbam": 681508,
+     "pos": [
+      "DH",
+      "C",
+      "1B"
+     ],
+     "hem_plus_split": {
+      "L": 110,
+      "R": 120
+     },
+     "split_pa": {
+      "L": 28,
+      "R": 197
+     }
+    },
+    {
      "key": "643396",
      "name": "Isiah Kiner-Falefa",
      "bats": "R",
@@ -43775,46 +44128,6 @@
      "split_pa": {
       "L": 56,
       "R": 127
-     }
-    },
-    {
-     "key": "663330",
-     "name": "Jahmai Jones",
-     "bats": "R",
-     "hem_plus": 96,
-     "pa": 181,
-     "mlbam": 663330,
-     "pos": [
-      "DH",
-      "LF"
-     ],
-     "hem_plus_split": {
-      "L": 98,
-      "R": 82
-     },
-     "split_pa": {
-      "L": 156,
-      "R": 25
-     }
-    },
-    {
-     "key": "681987",
-     "name": "Nate Eaton",
-     "bats": "R",
-     "hem_plus": 96,
-     "pa": 60,
-     "mlbam": 681987,
-     "pos": [
-      "CF",
-      "LF"
-     ],
-     "hem_plus_split": {
-      "L": 101,
-      "R": 89
-     },
-     "split_pa": {
-      "L": 35,
-      "R": 25
      }
     }
    ],
@@ -43865,55 +44178,54 @@
       "CF"
      ]
     },
-    "686765": {
-     "mlbam": 686765,
-     "pos": [
-      "2B",
-      "1B",
-      "3B",
-      "SS"
-     ]
-    },
     "702332": {
      "mlbam": 702332,
      "pos": [
       "3B"
      ]
+    },
+    "807799": {
+     "mlbam": 807799,
+     "pos": [
+      "DH",
+      "LF"
+     ]
     }
    },
    "platoon_options": {
-    "vl": [
+    "vl": [],
+    "vr": [
      {
-      "starter_key": "680776",
-      "bench_key": "663330",
-      "pos": "LF",
-      "starter_split": 64,
-      "starter_split_pa": 141,
-      "starter_bats": "L",
-      "bench_split": 98,
-      "bench_split_pa": 156,
-      "bench_bats": "R",
-      "delta": 34
+      "starter_key": "655316",
+      "bench_key": "686765",
+      "pos": "SS",
+      "starter_split": 74,
+      "starter_split_pa": 217,
+      "starter_bats": "R",
+      "bench_split": 100,
+      "bench_split_pa": 204,
+      "bench_bats": "S",
+      "delta": 26
+     },
+     {
+      "starter_key": "702332",
+      "bench_key": "686765",
+      "pos": "3B",
+      "starter_split": 94,
+      "starter_split_pa": 422,
+      "starter_bats": "R",
+      "bench_split": 100,
+      "bench_split_pa": 204,
+      "bench_bats": "S",
+      "delta": 6
      }
     ],
-    "vr": [],
     "n_withheld": {
-     "vl": 1,
+     "vl": 4,
      "vr": 0
     }
    },
-   "regulars_out": [
-    {
-     "key": "807799",
-     "mlbam": 807799,
-     "name": "Masataka Yoshida",
-     "bats": "L",
-     "hem_plus": 97,
-     "pa": 297,
-     "status_code": "40M",
-     "status_label": "Forty Man"
-    }
-   ],
+   "regulars_out": [],
    "team_war": 34.5,
    "team_war_n": 21,
    "platoon_applied": true
@@ -44468,7 +44780,7 @@
     "vr": [],
     "n_withheld": {
      "vl": 3,
-     "vr": 0
+     "vr": 1
     }
    },
    "regulars_out": [
@@ -45065,7 +45377,20 @@
     }
    },
    "platoon_options": {
-    "vl": [],
+    "vl": [
+     {
+      "starter_key": "800050",
+      "bench_key": "681807",
+      "pos": "RF",
+      "starter_split": 100,
+      "starter_split_pa": 179,
+      "starter_bats": "L",
+      "bench_split": 108,
+      "bench_split_pa": 148,
+      "bench_bats": "R",
+      "delta": 8
+     }
+    ],
     "vr": [],
     "n_withheld": {
      "vl": 4,
@@ -45081,7 +45406,7 @@
    "team": "KC",
    "n_hitters": 18,
    "offense_plus": 96,
-   "offense_plus_raw": 95.57841068917018,
+   "offense_plus_raw": 95.65787623066105,
    "team_pa": 5688,
    "n_above_avg": 7,
    "heart_hem": 110,
@@ -45137,19 +45462,19 @@
     },
     {
      "tier": "Average",
+     "key": "686681",
+     "name": "Michael Massey",
+     "bats": "L",
+     "hem_plus": 92,
+     "pa": 452
+    },
+    {
+     "tier": "Average",
      "key": "683090",
      "name": "Matthew Lugo",
      "bats": "R",
      "hem_plus": 92,
      "pa": 15
-    },
-    {
-     "tier": "Average",
-     "key": "686681",
-     "name": "Michael Massey",
-     "bats": "L",
-     "hem_plus": 91,
-     "pa": 452
     },
     {
      "tier": "Below-avg",
@@ -45259,10 +45584,10 @@
       "key": "686681",
       "name": "Michael Massey",
       "bats": "L",
-      "hem_plus": 91,
+      "hem_plus": 92,
       "pa": 452,
       "platoon_adv": true,
-      "hem_plus_split": 95,
+      "hem_plus_split": 96,
       "split_pa": 351
      },
      {
@@ -45371,7 +45696,7 @@
       "key": "686681",
       "name": "Michael Massey",
       "bats": "L",
-      "hem_plus": 91,
+      "hem_plus": 92,
       "pa": 452,
       "platoon_adv": false,
       "hem_plus_split": 76,
@@ -45612,8 +45937,8 @@
      }
     ],
     "n_withheld": {
-     "vl": 1,
-     "vr": 0
+     "vl": 2,
+     "vr": 1
     }
    },
    "regulars_out": [],
@@ -46166,9 +46491,22 @@
    },
    "platoon_options": {
     "vl": [],
-    "vr": [],
+    "vr": [
+     {
+      "starter_key": "686780",
+      "bench_key": "699625",
+      "pos": "C",
+      "starter_split": 78,
+      "starter_split_pa": 116,
+      "starter_bats": "R",
+      "bench_split": 88,
+      "bench_split_pa": 128,
+      "bench_bats": "L",
+      "delta": 10
+     }
+    ],
     "n_withheld": {
-     "vl": 3,
+     "vl": 4,
      "vr": 0
     }
    },
@@ -46185,7 +46523,7 @@
    "team_pa": 5490,
    "n_above_avg": 5,
    "heart_hem": 111,
-   "n_off_roster_dropped": 6,
+   "n_off_roster_dropped": 5,
    "lineup": [
     {
      "tier": "Above-avg",
@@ -46210,6 +46548,14 @@
      "bats": "L",
      "hem_plus": 103,
      "pa": 337
+    },
+    {
+     "tier": "Average",
+     "key": "682515",
+     "name": "Logan Porter",
+     "bats": "R",
+     "hem_plus": 101,
+     "pa": 6
     },
     {
      "tier": "Average",
@@ -46722,7 +47068,20 @@
    },
    "platoon_options": {
     "vl": [],
-    "vr": [],
+    "vr": [
+     {
+      "starter_key": "672724",
+      "bench_key": "624428",
+      "pos": "2B",
+      "starter_split": 73,
+      "starter_split_pa": 233,
+      "starter_bats": "R",
+      "bench_split": 83,
+      "bench_split_pa": 126,
+      "bench_bats": "L",
+      "delta": 10
+     }
+    ],
     "n_withheld": {
      "vl": 4,
      "vr": 0
@@ -46747,10 +47106,10 @@
   {
    "team": "TOR",
    "n_hitters": 23,
-   "offense_plus": 93,
-   "offense_plus_raw": 92.53892433910666,
+   "offense_plus": 92,
+   "offense_plus_raw": 92.48951686417502,
    "team_pa": 5485,
-   "n_above_avg": 9,
+   "n_above_avg": 8,
    "heart_hem": 107,
    "n_off_roster_dropped": 5,
    "lineup": [
@@ -46804,14 +47163,6 @@
     },
     {
      "tier": "Average",
-     "key": "678218",
-     "name": "Brandon Valenzuela",
-     "bats": "S",
-     "hem_plus": 100,
-     "pa": 271
-    },
-    {
-     "tier": "Average",
      "key": "657675",
      "name": "Rudy Martin Jr.",
      "bats": "L",
@@ -46825,6 +47176,14 @@
      "bats": "R",
      "hem_plus": 99,
      "pa": 517
+    },
+    {
+     "tier": "Average",
+     "key": "678218",
+     "name": "Brandon Valenzuela",
+     "bats": "S",
+     "hem_plus": 99,
+     "pa": 271
     },
     {
      "tier": "Average",
@@ -46903,14 +47262,14 @@
     "vr": [
      {
       "slot": 1,
-      "key": "678218",
-      "name": "Brandon Valenzuela",
-      "bats": "S",
-      "hem_plus": 100,
-      "pa": 271,
+      "key": "664770",
+      "name": "Nathan Lukes",
+      "bats": "L",
+      "hem_plus": 97,
+      "pa": 450,
       "platoon_adv": true,
-      "hem_plus_split": 103,
-      "split_pa": 192
+      "hem_plus_split": 102,
+      "split_pa": 364
      },
      {
       "slot": 2,
@@ -46925,14 +47284,14 @@
      },
      {
       "slot": 3,
-      "key": "664770",
-      "name": "Nathan Lukes",
-      "bats": "L",
-      "hem_plus": 97,
-      "pa": 450,
+      "key": "678218",
+      "name": "Brandon Valenzuela",
+      "bats": "S",
+      "hem_plus": 99,
+      "pa": 271,
       "platoon_adv": true,
       "hem_plus_split": 102,
-      "split_pa": 364
+      "split_pa": 192
      },
      {
       "slot": 4,
@@ -46975,7 +47334,7 @@
       "hem_plus": 91,
       "pa": 609,
       "platoon_adv": false,
-      "hem_plus_split": 88,
+      "hem_plus_split": 87,
       "split_pa": 455
      },
      {
@@ -47029,10 +47388,10 @@
       "key": "678218",
       "name": "Brandon Valenzuela",
       "bats": "S",
-      "hem_plus": 100,
+      "hem_plus": 99,
       "pa": 271,
       "platoon_adv": true,
-      "hem_plus_split": 95,
+      "hem_plus_split": 94,
       "split_pa": 79
      },
      {
