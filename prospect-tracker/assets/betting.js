@@ -2404,7 +2404,12 @@
         "</tr>";
     }).join("");
 
+    // THE SIMULATOR NEVER SEES A POSTSEASON GAME: it plays the bracket from final
+    // standings, so once the regular season is over these odds stop learning.
+    // The exporter derives the line from the payload's build date and the
+    // season's last regular-season date and leaves it null before then.
     return '<div class="bt-panel"><div class="bt-panel-hd">Futures</div>' +
+      (FUT.as_of_note ? '<p class="bt-note"><strong>' + esc(FUT.as_of_note) + "</strong></p>" : "") +
       '<p class="bt-note"><strong>There is no market on this board.</strong> ' +
       esc(nm.what_is_missing) + "</p>" +
       '<p class="bt-note">' + esc(nm.what_would_have_to_happen) + " " +

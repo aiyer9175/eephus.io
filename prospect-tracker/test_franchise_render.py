@@ -445,3 +445,23 @@ def test_roster_table_columns_take_the_family_mlbstats_applies():
 def test_the_board_payroll_column_names_the_cbt_basis():
     assert '["tax_payroll_2027", "CBT payroll ", 1, "cbt_payroll"]' in JS
     assert '"Payroll ", 1' not in JS
+
+
+def test_the_odds_section_prints_the_season_over_line_only_when_the_payload_has_one():
+    """F1 of the Part 8 intensity lane. The ODDS leaf quotes the Futures board,
+    whose simulator never sees a postseason game; once the regular season is
+    over the payload carries one line saying so, and the section prints it
+    above the tiles. Before then the copy key is empty and nothing prints."""
+    import copy as _copy
+    d = _served()
+    line = ("As of the end of the regular season (2026-10-01): postseason "
+            "results are not in these odds.")
+    p = _copy.deepcopy(d)
+    p["copy"]["odds_as_of"] = line
+    html, _ = _render(team="LAD", payload=p)
+    sec = html.split('data-frsec="odds"')[1]
+    assert line in sec
+    assert sec.index(line) < sec.index("fr-tiles"), "the line renders after the odds it qualifies"
+    p["copy"]["odds_as_of"] = ""
+    html, _ = _render(team="LAD", payload=p)
+    assert "postseason results are not in" not in html

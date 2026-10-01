@@ -2716,7 +2716,48 @@ def _fair_american(p, *, lo: float = 0.005, hi: float = 0.995):
     return round(-100.0 * p / (1.0 - p)) if p >= 0.5 else round(100.0 * (1.0 - p) / p)
 
 
-def build_futures(rows: list) -> dict:
+FUTURES_AS_OF_TEMPLATE = ("As of the end of the regular season ({build}): "
+                          "postseason results are not in these odds.")
+
+
+def futures_as_of_note(generated_at, regular_season_end) -> str | None:
+    """The one line the Futures board prints once the regular season is over.
+
+    THE SIMULATOR NEVER SEES A POSTSEASON GAME. It reads the regular-season
+    schedule only (proj_current asks StatsAPI for gameType R) and plays the
+    bracket from final standings, so from the first postseason game on it keeps
+    publishing pre-bracket odds and no series result reaches them. Nothing is
+    recomputed here; the line says what the numbers are.
+
+    Built from the payload's own two dates: the build date (the UTC date of
+    generated_at) and the season's last scheduled regular-season date. None
+    before that date, and None when either date is missing or unreadable, so a
+    regular-season build carries no line.
+    """
+    import datetime as _dt
+    if not generated_at or not regular_season_end:
+        return None
+    build, end = str(generated_at)[:10], str(regular_season_end)[:10]
+    try:
+        if _dt.date.fromisoformat(build) < _dt.date.fromisoformat(end):
+            return None
+    except ValueError:
+        return None
+    return FUTURES_AS_OF_TEMPLATE.format(build=build)
+
+
+def _regular_season_end_on_disk(season: int) -> str | None:
+    """regularSeasonEndDate for `season` from the cached StatsAPI /seasons
+    payload, or None. Disk only: the futures write fetches nothing new."""
+    try:
+        from mgmt_decisions import regular_season_end_on_disk
+        return regular_season_end_on_disk(season)
+    except Exception:                                          # noqa: BLE001
+        return None
+
+
+def build_futures(rows: list, *, season: int | None = None,
+                  regular_season_end: str | None = None) -> dict:
     """data/futures.json: the season-long outright board, model side only.
 
     THERE IS NO MARKET HERE AND THEREFORE NO EDGE. No futures price has ever
@@ -2776,9 +2817,13 @@ def build_futures(rows: list) -> dict:
             sims = mc["sims"]
             break
 
+    generated_at = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
     return {
-        "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": generated_at,
         "produced_by": "proj_export.build_futures",
+        "season": season,
+        "regular_season_end": regular_season_end,
+        "as_of_note": futures_as_of_note(generated_at, regular_season_end),
         "content_hash": digest,
         "sims": sims,
         "clubs": clubs,
@@ -3334,7 +3379,9 @@ def append_futures_ledger(fut: dict, *, season: int | None = None,
 
 
 def write_futures(rows: list) -> int:
-    fut = build_futures(rows)
+    season = FIRST_SEASON - 1
+    fut = build_futures(rows, season=season,
+                        regular_season_end=_regular_season_end_on_disk(season))
     # The forward record starts here, and it can only ever start once. Appending
     # BEFORE the write keeps futures.json and the ledger describing the same
     # build; content_hash is a digest of the clubs alone, so the summary block

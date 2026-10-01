@@ -1146,6 +1146,9 @@ def build() -> dict:
         "odds_ledger": (f"no market captured; ledger has {((futures.get('ledger') or {}).get('n_entries'))} entries, "
                         f"{((futures.get('ledger') or {}).get('n_resolved'))} resolved"),
         "odds_win_total_basis": futures.get("win_total_basis") or "",
+        # Quoted, never rebuilt: the futures payload derives it from its own build
+        # date and the season's last regular-season date, and it is empty before then.
+        "odds_as_of": futures.get("as_of_note") or "",
         "board_lede": "Thirty clubs on the Franchise Index, one column per graded branch and the headline descriptive figures; every row opens its club.",
         "board_foot": "index and branch scores are 100 + 10z across the 30 clubs and take the z ladder; every other column prints on its own scale, plain.",
         "load_error": "The Franchise Overview could not be loaded.",

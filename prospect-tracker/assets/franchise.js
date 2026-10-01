@@ -668,7 +668,11 @@
       tile("Pennant", esc(pct(s.pennant_pct, 1)), "World Series " + esc(pct(s.ws_pct, 1)), "", d.links.betting_futures) +
       tile(gl("Pythag vs actual", "pythag_pct"), esc(pct3(s.pythag_pct)), "actual " + esc(pct3(s.actual_pct)) + " &middot; " + esc(copy("pythag_label"))) +
       tile("Strength of schedule", esc(pct3(s.sos)), "rank " + esc(nInt(s.sos_rank)) + " &middot; IL out 60+: " + esc(nInt(s.il_out_60)));
-    return '<div class="fr-tiles">' + t + "</div>" +
+    // The season-over line comes from the Futures payload as written, so the two
+    // surfaces cannot disagree about when the odds stopped learning.
+    var asOf = copy("odds_as_of");
+    return (asOf ? '<p class="fr-note"><strong>' + esc(asOf) + "</strong></p>" : "") +
+      '<div class="fr-tiles">' + t + "</div>" +
       '<p class="fr-note">' + esc(copy("odds_interval")) + "</p>" +
       '<p class="fr-count">' + esc(copy("odds_ledger")) + ". " + esc(copy("odds_no_market")) + "</p>" +
       '<p class="fr-count">' + esc(copy("odds_win_total_basis")) + "</p>";

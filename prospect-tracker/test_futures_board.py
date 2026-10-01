@@ -236,3 +236,72 @@ def test_the_tab_says_there_is_no_market_before_it_shows_a_number():
     j = body.index("There is no market on this board")
     k = body.index("<table")
     assert j < k, "the board renders before it says there is no market beside it"
+
+
+# --------------------------------------------------------------------------
+# The season-over line (Part 8 intensity lane, finding F1)
+# --------------------------------------------------------------------------
+
+STAMP = ("As of the end of the regular season (2026-10-01): postseason results "
+         "are not in these odds.")
+
+
+def test_the_season_over_line_renders_from_the_two_payload_dates():
+    """The simulator reads the regular-season schedule only and plays the
+    bracket from final standings, so after the last regular-season game its
+    odds stop learning. The line is built from the build date and the season's
+    last regular-season date, and nothing else."""
+    assert pe.futures_as_of_note("2026-10-01T11:33:03+00:00", "2026-09-27") == STAMP
+    # on the last regular-season date itself the line is already shown
+    assert pe.futures_as_of_note("2026-09-27T23:00:00+00:00", "2026-09-27") == (
+        STAMP.replace("2026-10-01", "2026-09-27"))
+
+
+def test_the_season_over_line_is_absent_before_the_season_ends():
+    assert pe.futures_as_of_note("2026-09-26T23:59:59+00:00", "2026-09-27") is None
+    assert pe.futures_as_of_note("2026-06-01T12:00:00+00:00", "2026-09-27") is None
+    # no season calendar on disk: no line, rather than a guessed one
+    assert pe.futures_as_of_note("2026-10-01T11:33:03+00:00", None) is None
+    assert pe.futures_as_of_note(None, "2026-09-27") is None
+    assert pe.futures_as_of_note("2026-10-01T11:33:03+00:00", "not a date") is None
+
+
+def test_build_futures_carries_both_dates_and_the_derived_line():
+    """The two dates ride in the payload beside the line, so a reader can check
+    the line against them, and no probability is touched."""
+    f = pe.build_futures([], season=2026, regular_season_end="2026-09-27")
+    assert f["season"] == 2026 and f["regular_season_end"] == "2026-09-27"
+    assert f["as_of_note"] == pe.futures_as_of_note(f["generated_at"], "2026-09-27")
+    g = pe.build_futures([], season=2026, regular_season_end="2999-09-27")
+    assert g["as_of_note"] is None
+
+
+def test_the_served_line_agrees_with_the_served_dates(d):
+    if "regular_season_end" not in d:
+        pytest.skip("futures.json predates the season-over line; rebuild it")
+    assert d.get("as_of_note") == pe.futures_as_of_note(
+        d.get("generated_at"), d.get("regular_season_end"))
+
+
+def test_the_tab_prints_the_season_over_line_before_the_board():
+    i = JS.index("function renderFutures")
+    body = JS[i:i + 4000]
+    j = body.index("FUT.as_of_note")
+    k = body.index("<table")
+    assert j < k, "the season-over line renders after the odds it qualifies"
+    assert "postseason results are not in" not in JS, (
+        "the line is quoted from the payload, never composed in the tab")
+
+
+def test_the_registry_row_describes_the_talent_the_simulator_is_fed():
+    """F2. The simulator is fed the pure roster prior (talent = prior_by_team);
+    the record and Pythagorean blend reach only curWins. The row said blended."""
+    reg = json.loads((ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    row = {m["model_id"]: m for m in reg["models"]}["playoff_odds_sim"]
+    assert "blended" not in row["champion"]
+    assert "pure roster-talent prior" in row["champion"]
+    src = (ROOT / "proj_export.py").read_text(encoding="utf-8")
+    i = src.index("def _attach_current_season")
+    body = src[i:src.index("def _fair_american")]
+    assert "talent = {tm: prior_by_team.get(tm, 0.5)" in body
+    assert '"p": talent.get(tm, 0.5)' in body

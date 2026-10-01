@@ -321,6 +321,8 @@ def test_odds_quotes_the_playoff_odds_registry_row_and_the_monte_carlo_sentence(
     assert d["sections_status"]["odds"]["registry_row"] == "playoff_odds_sim"
     assert "odds_no_registry" not in d["copy"]
     assert d["copy"]["odds_interval"] == fu["what_the_intervals_are"]
+    # the season-over line is quoted from the Futures payload, never rebuilt here
+    assert d["copy"]["odds_as_of"] == (fu.get("as_of_note") or "")
     assert "Monte Carlo" in d["copy"]["odds_interval"]
     for c in clubs.values():
         o = c["sections"]["odds"]
