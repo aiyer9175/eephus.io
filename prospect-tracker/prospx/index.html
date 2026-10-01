@@ -33822,7 +33822,7 @@ function efvDetailCard(p) {
         <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Star Odds <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">2+ seasons of 4+ WAR</span></span>
         <span style="font-family:var(--font-mono);font-weight:700;color:${Number(p.surplus.star_odds) >= 0.20 ? "var(--up)" : Number(p.surplus.star_odds) >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)"};font-variant-numeric:tabular-nums;">${fmtStarOdds(p.surplus.star_odds)}</span>
       </div>` : ""}
-      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}${_v2 ? "eFV V2 keeps the consensus FV order inside each side and lets a small set of drivers move a prospect up or down it; the grade is the consensus value at his new rank, so the board, the outcome mix, P(bust) and the dollars all read one number. Its standing against consensus is measured out of sample on the Methodology page. The dollar surplus and its range are in the Surplus value card below. Provisional." : "eFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. Its ordering skill is measured against consensus FV out-of-sample on the Methodology page; the headline grade is on the familiar 20-80 scale, while the outcome mix uses the honest (typically lower) outcome-implied grade because scout FV runs optimistic. The dollar surplus + its range are in the Surplus value card below. Provisional."} <a href="/glossary/#g=xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}${_v2 ? "eFV V2 keeps the consensus FV order inside each side and lets a small set of drivers move a prospect up or down it; the grade is the consensus value at his new rank, so the board, the outcome mix, P(bust) and the dollars all read one number. Its standing against consensus is measured out of sample on the Methodology page. The dollar surplus and its range are in the Surplus value card below. Provisional." : "eFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. Its ordering skill is measured against consensus FV out-of-sample on the Methodology page; the headline grade is on the familiar 20-80 scale, while the outcome mix uses the honest (typically lower) outcome-implied grade because scout FV runs optimistic. " + ((efvFanHidden(x) && _gradePrimary() === "xfv") ? "The dollar surplus is in the Surplus value card below; graduate and bust cards show no eFV dollar range." : "The dollar surplus + its range are in the Surplus value card below.") + " Provisional."} <a href="/glossary/#g=xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
     </div>`;
 }
 
@@ -37656,8 +37656,9 @@ function renderBucketBar(buckets, opts) {
 // 50% the fan's P10 / P25 / P50 should sit on that floor if both read one mix. Where they
 // do not, the card says so instead of printing two numbers that cannot both hold. Pricing
 // the fan from the calibrated mix was gated (docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md) and
-// FAILED its registered read on 2026-09-30, so the note stays. Since eFV V2 (707bdabd) the
-// active board reads odds and dollars off one grade and one curve and never trips this.
+// FAILED its registered read on 2026-09-30. Since eFV V2 (707bdabd) the active board reads
+// odds and dollars off one grade and one curve and never trips this; graduate and bust cards
+// now drop the fan (efvFanHidden below), so the note is left on thin-sample provisional rows.
 const _EFV_FAN_FLOOR_MM = 1.0;   // the bust floor serves as $1.0M after rounding; above it is a real outcome
 function efvFanBasisConflict(x) {
   const d = x && x.dist;
@@ -37666,6 +37667,16 @@ function efvFanBasisConflict(x) {
   const above = v => v != null && isFinite(Number(v)) && Number(v) > _EFV_FAN_FLOOR_MM;
   return (pb >= 0.10 && above(d.p10_mm)) || (pb >= 0.25 && above(d.p25_mm))
       || (pb >= 0.50 && above(d.p50_mm));
+}
+// GRADUATE AND BUST CARDS DROP THE eFV FAN (owner answer VAL3-Q1, 2026-09-30). Every row
+// that trips efvFanBasisConflict outside two thin-sample provisional rows is a back-graded
+// one (717 debuted, 70 bust), and the registered read that would have priced their fan from
+// the calibrated odds failed. So the player card shows no eFV dollar fan and no surplus band
+// there; the calibrated P(bust), the grade and the headline value stay. The route is the eFV
+// row's own kind ("debuted" or "bust", written by efv_score.run_backgrade), the same field
+// the lock glyph reads. Active rows, provisional_capped included, keep the fan.
+function efvFanHidden(x) {
+  return !!(x && (x.kind === "debuted" || x.kind === "bust"));
 }
 function renderSvDistribution(dist, opts) {
   opts = opts || {};
@@ -48622,7 +48633,9 @@ function renderPlayerDetail(key) {
     const surplus = _useEfv ? _xf.surplus_mm
                   : _baked ? _baked.value_mm
                   : estimateSurplusValueMM(fv, _isPit, p.position, { player: p });
-    const _efvFan = (_useEfv && _xf.dist && _xf.dist.p50_mm != null)
+    // Graduate and bust rows render no eFV fan and no surplus band (efvFanHidden).
+    const _efvFanOff = !!(_useEfv && efvFanHidden(_xf));
+    const _efvFan = (_useEfv && !_efvFanOff && _xf.dist && _xf.dist.p50_mm != null)
       ? renderSvDistribution(_xf.dist, { height: 16, axis: true }) : "";
     // D4 - the eFV surplus credible band stated in words: band_p10_mm / band_p90_mm
     // from the xfv payload, an 80% band (P10 to P90) of SIMULATED SURPLUS DOLLARS.
@@ -48636,8 +48649,8 @@ function renderPlayerDetail(key) {
     // and it is the most decision-relevant fact on the card. It is also why the
     // expected surplus printed above it can sit ABOVE the 90th percentile. 4,825
     // of 9,505 eFV rows are in this state and every one of them showed nothing.
-    const _bandLo = _useEfv ? _xf.band_p10_mm : null;
-    const _bandHi = _useEfv ? _xf.band_p90_mm : null;
+    const _bandLo = (_useEfv && !_efvFanOff) ? _xf.band_p10_mm : null;
+    const _bandHi = (_useEfv && !_efvFanOff) ? _xf.band_p90_mm : null;
     const _bandFlat = (_bandLo != null && _bandHi != null
                        && !(Number(_bandHi) > Number(_bandLo)));
     const _bandTitle = _bandFlat
@@ -48883,13 +48896,14 @@ function renderPlayerDetail(key) {
       // Skip the baked P10-P90 when the eFV surplus band is already shown above
       // (the eFV fan + its Surplus band are the headline distribution); avoids two
       // near-identical dollar ranges on the same card.
-      if (d.p10_mm != null && !_efvFan) metaBits.push(fmtFanRange(d.p10_mm, d.p90_mm, fmtSvMM));
+      // A hidden eFV fan stays hidden here too: this fallback would otherwise redraw it.
+      if (d.p10_mm != null && !_efvFan && !_efvFanOff) metaBits.push(fmtFanRange(d.p10_mm, d.p90_mm, fmtSvMM));
       if (pb != null) metaBits.push(`<span style="color:${pb >= 40 ? 'var(--down)' : 'var(--text-secondary)'};">P(bust) ${pb}%</span>`);
       if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtSvMM(d.risk_adjusted_mm)}`);
       if (bk || d.p10_mm != null || metaBits.length) {
         bakedDetailRow = `<div style="padding-bottom:10px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
             ${(bk && !_gradeCardHasMix) ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Outcome mix</div>${renderBucketBar(bk, { height: 16, labels: true, legend: true })}` : ""}
-            ${(d.p10_mm != null && !_efvFan) ? `<div style="margin-top:10px;"><div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Simulated outcome range</div>${renderSvDistribution(d, { height: 30, axis: true })}</div>` : ""}
+            ${(d.p10_mm != null && !_efvFan && !_efvFanOff) ? `<div style="margin-top:10px;"><div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Simulated outcome range</div>${renderSvDistribution(d, { height: 30, axis: true })}</div>` : ""}
             ${metaBits.length ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);margin-top:8px;">${metaBits.join(" · ")}</div>` : ""}
           </div>`;
       }
