@@ -1257,6 +1257,14 @@ CREATE TABLE IF NOT EXISTS metric_snapshots (
                                         --  consensus_live_score, surplus_mm, …} — the
                                         --  Arkmetric family
     inserted_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    -- Source coverage (owner answer B4SP-2, 2026-10-01), recorded from
+    -- METRIC_SNAPSHOT_COVERAGE_START on, forward only; NULL source_n = not
+    -- recorded. Definitions: consensus.point_source_coverage.
+    source_n          INTEGER,          -- outlets whose FV entered the consensus FV
+    source_keys       TEXT,             -- those outlets, sorted, comma-joined
+    best_rank         INTEGER,          -- smallest league-wide rank >= 1 counted
+    best_rank_source  TEXT,             -- outlet of best_rank
+    best_rank_date    TEXT,             -- list date of best_rank
     PRIMARY KEY (player_key, snapshot_date)
 );
 CREATE INDEX IF NOT EXISTS idx_metric_snap_date ON metric_snapshots(snapshot_date);
@@ -1989,6 +1997,15 @@ def init_db():
         ):
             try:
                 con.execute(f"ALTER TABLE draft_lottery_odds ADD COLUMN {_col} {_ddl}")
+            except sqlite3.OperationalError:
+                pass  # column already exists
+        # 2026-10-01 - Migration: source coverage on metric_snapshots (owner
+        # answer B4SP-2). Nullable, no default and NEVER back-filled: rows
+        # written before METRIC_SNAPSHOT_COVERAGE_START keep NULL, the honest
+        # value, because the board's source list on those nights was not kept.
+        for _col, _ddl in METRIC_SNAPSHOT_COVERAGE_COLUMNS:
+            try:
+                con.execute(f"ALTER TABLE metric_snapshots ADD COLUMN {_col} {_ddl}")
             except sqlite3.OperationalError:
                 pass  # column already exists
 
@@ -3994,6 +4011,22 @@ _METRIC_SNAPSHOT_PAYLOAD_FIELDS = (
     "consensus_live_rank",
 )
 
+# Source coverage beside each metric_snapshots row (owner answer B4SP-2,
+# 2026-10-01): written by snapshot_board_metrics from
+# consensus.point_source_coverage, which holds the exact definitions. The
+# recorder landed on METRIC_SNAPSHOT_COVERAGE_START; no row dated earlier
+# carries coverage and none is ever back-filled. A row records coverage iff
+# source_n IS NOT NULL; the first recorded night is
+# metric_snapshot_coverage_start().
+METRIC_SNAPSHOT_COVERAGE_START = "2026-10-01"
+METRIC_SNAPSHOT_COVERAGE_COLUMNS = (
+    ("source_n",         "INTEGER"),
+    ("source_keys",      "TEXT"),
+    ("best_rank",        "INTEGER"),
+    ("best_rank_source", "TEXT"),
+    ("best_rank_date",   "TEXT"),
+)
+
 
 def _fv_tier_label(fv, fv_plus) -> str | None:
     """Coarse FV-tier bucket label used for cohorting ('60','55','50'…).
@@ -4007,7 +4040,8 @@ def _fv_tier_label(fv, fv_plus) -> str | None:
     return f"{base}+" if fv_plus else str(base)
 
 
-def snapshot_board_metrics(players: Iterable[dict], snapshot_date: str | None = None) -> int:
+def snapshot_board_metrics(players: Iterable[dict], snapshot_date: str | None = None,
+                           source_coverage: dict[str, dict] | None = None) -> int:
     """Capture the DERIVED board state (consensus rank/FV + Arkmetric family)
     for every player in a built timeseries, one row per player per calendar
     date. Idempotent: re-running on the same date overwrites that date's rows.
@@ -4015,9 +4049,41 @@ def snapshot_board_metrics(players: Iterable[dict], snapshot_date: str | None = 
     `players` is the list of serialized player dicts from timeseries.json
     (or the in-memory equivalent). Players with no consensus FV and no rank
     are skipped (nothing meaningful to snapshot).
+
+    `source_coverage` is consensus.source_coverage_by_player over the same
+    build ({player_key: {source_n, source_keys, best_rank, best_rank_source,
+    best_rank_date}}). When it is given, every row written records its
+    player's coverage; a board player missing from it (a key the build did not
+    produce) records NULL, never a made-up 0. When it is None the coverage
+    columns are left as they are: NULL on a new row, the recorded values on a
+    same-date re-run.
     """
     snapshot_date = snapshot_date or date.today().isoformat()
     n = 0
+    cov_cols = [c for c, _ddl in METRIC_SNAPSHOT_COVERAGE_COLUMNS]
+    if source_coverage is not None:
+        cov_update = "".join(f",\n                     {c}=excluded.{c}" for c in cov_cols)
+    else:
+        cov_update = ""
+    sql = (
+        """INSERT INTO metric_snapshots
+                     (player_key, snapshot_date, overall_rank, consensus_fv,
+                      fv_plus, fv_tier, org, position, status, is_pitcher,
+                      age, payload_json, inserted_at, """ + ", ".join(cov_cols) + """)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), """
+        + ", ".join("?" for _c in cov_cols) + """)
+                   ON CONFLICT(player_key, snapshot_date) DO UPDATE SET
+                     overall_rank=excluded.overall_rank,
+                     consensus_fv=excluded.consensus_fv,
+                     fv_plus=excluded.fv_plus,
+                     fv_tier=excluded.fv_tier,
+                     org=excluded.org,
+                     position=excluded.position,
+                     status=excluded.status,
+                     is_pitcher=excluded.is_pitcher,
+                     age=excluded.age,
+                     payload_json=excluded.payload_json,
+                     inserted_at=excluded.inserted_at""" + cov_update)
     with connect() as con:
         for p in players:
             if not isinstance(p, dict):
@@ -4035,32 +4101,34 @@ def snapshot_board_metrics(players: Iterable[dict], snapshot_date: str | None = 
                        if p.get(f) is not None}
             if surplus.get("value_mm") is not None:
                 payload["surplus_mm"] = surplus.get("value_mm")
+            cov = (source_coverage or {}).get(key)
+            if cov is not None:
+                cov_vals = tuple(cov.get(c) for c in cov_cols)
+            else:
+                cov_vals = (None,) * len(cov_cols)
             con.execute(
-                """INSERT INTO metric_snapshots
-                     (player_key, snapshot_date, overall_rank, consensus_fv,
-                      fv_plus, fv_tier, org, position, status, is_pitcher,
-                      age, payload_json, inserted_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-                   ON CONFLICT(player_key, snapshot_date) DO UPDATE SET
-                     overall_rank=excluded.overall_rank,
-                     consensus_fv=excluded.consensus_fv,
-                     fv_plus=excluded.fv_plus,
-                     fv_tier=excluded.fv_tier,
-                     org=excluded.org,
-                     position=excluded.position,
-                     status=excluded.status,
-                     is_pitcher=excluded.is_pitcher,
-                     age=excluded.age,
-                     payload_json=excluded.payload_json,
-                     inserted_at=excluded.inserted_at""",
+                sql,
                 (key, snapshot_date, rank, fv, fv_plus,
                  _fv_tier_label(fv, fv_plus), p.get("org"), p.get("position"),
                  p.get("status"),
                  1 if (p.get("position") or "").upper() in ("SP", "RP", "P", "SIRP", "MIRP", "RHP", "LHP") else 0,
-                 p.get("age"), json.dumps(payload)),
+                 p.get("age"), json.dumps(payload)) + cov_vals,
             )
             n += 1
     return n
+
+
+def metric_snapshot_coverage_start() -> str | None:
+    """The first snapshot date whose rows record source coverage (source_n
+    not NULL), or None before the first recording night."""
+    try:
+        with connect() as con:
+            row = con.execute(
+                "SELECT MIN(snapshot_date) FROM metric_snapshots "
+                "WHERE source_n IS NOT NULL").fetchone()
+    except sqlite3.OperationalError:
+        return None
+    return row[0] if row else None
 
 
 def snapshot_fa_penter(class_year: int, rows: Iterable[dict], *,

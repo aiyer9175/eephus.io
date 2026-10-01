@@ -1172,6 +1172,21 @@ class ConsensusPoint:
     # current-org logo. Live/Statcast surfaces ignore this (they want current org).
     org: str | None = None
 
+    # Source coverage, recorded nightly into metric_snapshots (owner answer
+    # B4SP-2, 2026-10-01). NOT exported: the timeseries serializer names its
+    # point fields one by one, so these ride in memory only. See
+    # point_source_coverage for the exact definitions.
+    #   fv_sources        outlets whose published FV entered avg_fv on this
+    #                     point (constant anchors excluded), sorted
+    #   best_rank         smallest league-wide rank (>= 1) among the ranks
+    #                     that entered avg_rank on this point; None when none
+    #   best_rank_source  the outlet that published best_rank
+    #   best_rank_date    that list's snapshot_date
+    fv_sources: list = field(default_factory=list)
+    best_rank: int | None = None
+    best_rank_source: str | None = None
+    best_rank_date: str | None = None
+
 
 @dataclass
 class PlayerTimeseries:
@@ -1354,6 +1369,9 @@ def compute_consensus_point(
     _synthetic_sources: set[str] = set()
     ranks: list[int] = []
     rank_implied_fvs: list[float] = []
+    # Coverage record (metric_snapshots, B4SP-2): which real outlets voted an
+    # FV on this point. The best league-wide rank is tracked by build_timeseries.
+    _fv_real_sources: set[str] = set()
 
     per_source: dict[str, dict] = {}
     contributing_sources: set[str] = set()
@@ -1433,6 +1451,7 @@ def compute_consensus_point(
                     explicit_fvs.append(fv_for_consensus)
                     _fv_weights.append((source_weights or {}).get(s.source, 1.0))
                     contributing_sources.add(s.source)
+                    _fv_real_sources.add(s.source)
         else:
             # Same-date same-source duplicate. Surface in `extras` so
             # the UI can render it as a second publication row; do NOT
@@ -1654,7 +1673,99 @@ def compute_consensus_point(
         dropped_off_sources=sorted(set(dropped_off_in_point)),
         consensus_fv_plus=consensus_fv_plus,
         org=_pit_org(day_snaps, event_date),
+        fv_sources=sorted(_fv_real_sources),
     )
+
+
+def point_source_coverage(point: ConsensusPoint | None) -> dict | None:
+    """The source-coverage record written beside each metric_snapshots row
+    (owner answer B4SP-2, 2026-10-01), read off the player's LATEST consensus
+    point, i.e. the board as it stands on the night of the snapshot.
+
+    Definitions (the v3 Spotlights hit rule reads these and nothing else):
+      source_n     the number of outlets whose published FV entered the board's
+                   consensus FV on that point. Each outlet's latest publication
+                   as of the night counts (the consensus forward-fills), outlet
+                   aliases fold into one outlet as the consensus folds them (MLB
+                   Pipeline International counts as mlb_pipeline), a second list
+                   from one outlet on the same date does not count twice, and the
+                   constant placeholders (CONSTANT_ANCHOR_SOURCES) never count.
+                   0 means recorded with no outlet grading the player.
+      source_keys  those outlets, sorted, comma-joined, so a new outlet can be
+                   told apart from one outlet leaving while another arrives.
+      best_rank    the smallest rank >= 1 the player holds on any outlet's most
+                   recent LEAGUE-WIDE list as of the night (_is_league_wide_rank:
+                   not an org list by label, not a board whose ranked rows name
+                   a single org, not an org position on a mixed FanGraphs board
+                   by the value-level detector). Each outlet keeps its latest
+                   league-wide list on its own, so a later org Top 30 from the
+                   same outlet does not hide its Top 100 rank; a same-day second
+                   league-wide list from one outlet competes too. Outlet aliases
+                   fold as in the consensus; constant placeholders never rank.
+                   None when the player holds no league-wide rank. A rank is
+                   forward-filled until the outlet ranks him on a newer
+                   league-wide list, so best_rank_date says how old it is.
+      best_rank_source, best_rank_date  the outlet and list date of best_rank
+                   (ties go to the alphabetically first outlet).
+    Returns None for a missing point (nothing recorded)."""
+    if point is None:
+        return None
+    srcs = list(getattr(point, "fv_sources", None) or [])
+    return {
+        "source_n": len(srcs),
+        "source_keys": ",".join(srcs),
+        "best_rank": getattr(point, "best_rank", None),
+        "best_rank_source": getattr(point, "best_rank_source", None),
+        "best_rank_date": getattr(point, "best_rank_date", None),
+    }
+
+
+def _single_org_rank_boards(snapshots: list[Snapshot]) -> set[tuple[str, str, str]]:
+    """(source, interval_label, snapshot_date) boards whose ranked rows name
+    exactly one org: an org list whatever its label says ('FanGraphs 2026
+    Pirates Top 50', 'tampa_bay_rays_2026'). A board whose rows carry no org at
+    all (the TJStats monthly Top 100s) is not judged by this rule."""
+    orgs: dict[tuple[str, str, str], set] = defaultdict(set)
+    for s in snapshots:
+        if s.rank is None:
+            continue
+        bucket = orgs[(s.source, s.interval_label or "", s.snapshot_date)]
+        if s.org:
+            bucket.add(s.org)
+    return {k for k, v in orgs.items() if len(v) == 1}
+
+
+def _is_league_wide_rank(s: Snapshot, org_ranked_rows: set,
+                         single_org_boards: set) -> bool:
+    """True when the row's rank is a league-wide rank >= 1 (the coverage
+    record's best_rank; see point_source_coverage)."""
+    if s.rank is None or s.source in CONSTANT_ANCHOR_SOURCES:
+        return False
+    try:
+        if int(s.rank) < 1:
+            return False
+    except (TypeError, ValueError):
+        return False
+    lbl = s.interval_label or ""
+    if "_org_" in lbl or _ORG_LIST_LABEL_RE.search(lbl) is not None:
+        return False
+    if (s.source, lbl, s.snapshot_date) in single_org_boards:
+        return False
+    if (s.player_key, s.source, lbl, s.snapshot_date) in org_ranked_rows:
+        return False
+    return True
+
+
+def source_coverage_by_player(timeseries) -> dict[str, dict]:
+    """{player_key: point_source_coverage(latest point)} over a built
+    timeseries; players with no points are left out."""
+    out: dict[str, dict] = {}
+    for p in timeseries or []:
+        pts = getattr(p, "points", None) or []
+        rec = point_source_coverage(pts[-1]) if pts else None
+        if rec is not None:
+            out[p.player_key] = rec
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -2117,6 +2228,10 @@ def build_timeseries(
     org_ranked_rows: set = set()
     if ORG_RANK_VALUE_DETECTOR:
         org_ranked_rows, _org_rank_diags = _org_ranked_snapshot_keys(snapshots)
+    # Source coverage record (owner answer B4SP-2): boards that are org lists
+    # by their one named org. Read only by the best_rank walk below; the
+    # consensus FV and avg_rank never see it.
+    single_org_boards = _single_org_rank_boards(snapshots)
     by_player: dict[str, list[Snapshot]] = defaultdict(list)
     for s in snapshots:
         by_player[s.player_key].append(s)
@@ -2183,10 +2298,22 @@ def build_timeseries(
         # without re-counting the FV.
         points: list[ConsensusPoint] = []
         latest_by_source: dict[str, list[Snapshot]] = {}
+        # Coverage record (B4SP-2): each outlet's latest LEAGUE-WIDE list,
+        # forward-filled on its own track so the outlet's later org list does
+        # not hide it. {outlet: [(rank, outlet, list_date), ...]}, one date.
+        latest_league_rank: dict[str, list[tuple[int, str, str]]] = {}
         for snap_date in sorted(by_date):
             for s in by_date[snap_date]:
                 if s.fv is not None and s.source not in CONSTANT_ANCHOR_SOURCES:
                     asof_fv_keys.add((s.source, s.snapshot_date))
+                if _is_league_wide_rank(s, org_ranked_rows, single_org_boards):
+                    _outlet = SOURCE_ALIASES.get(s.source, s.source)
+                    _entry = (int(s.rank), _outlet, s.snapshot_date)
+                    _prev = latest_league_rank.get(_outlet)
+                    if not _prev or s.snapshot_date > _prev[0][2]:
+                        latest_league_rank[_outlet] = [_entry]
+                    elif s.snapshot_date == _prev[0][2]:
+                        _prev.append(_entry)
                 prev_list = latest_by_source.get(s.source)
                 if not prev_list:
                     latest_by_source[s.source] = [s]
@@ -2225,6 +2352,10 @@ def build_timeseries(
                 org_ranked_rows=org_ranked_rows,
             )
             if pt is not None:
+                _best = min((e for lst in latest_league_rank.values() for e in lst),
+                            key=lambda e: (e[0], e[1]), default=None)
+                if _best is not None:
+                    pt.best_rank, pt.best_rank_source, pt.best_rank_date = _best
                 points.append(pt)
 
         # Graduation logic: a player is considered graduated as soon as ANY

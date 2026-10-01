@@ -5762,6 +5762,16 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # count and keep new_trades (small) live. all_snaps was last read by
         # _post_export_summary just above.
         _n_ts = len(timeseries)
+        # Source coverage for tonight's metric_snapshots rows (owner answer
+        # B4SP-2, 2026-10-01): outlet count and best league-wide rank off each
+        # player's latest consensus point, kept as one small dict because the
+        # build itself is freed below and the snapshot is taken after step 6.
+        try:
+            from consensus import source_coverage_by_player as _src_cov_by_player
+            _source_cov = _src_cov_by_player(timeseries)
+        except Exception:
+            log.exception("source coverage for metric_snapshots failed, recording none tonight")
+            _source_cov = None
         import gc as _gc
         all_snaps = timeseries = career_cache = statlines = statcast_metric_cache = \
             zone_metric_cache = arsenals = sabermetrics = tx_cache = draft_by_id = \
@@ -6369,8 +6379,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # only change on the monthly cadence). Idempotent (upsert-by-date).
         try:
             _ts = json.loads(out_path.read_text(encoding="utf-8"))
-            _n_metric = snapshot_board_metrics(_ts.get("players") or [])
-            log.info("metric_snapshots: captured board state for %d players", _n_metric)
+            _n_metric = snapshot_board_metrics(_ts.get("players") or [],
+                                               source_coverage=_source_cov)
+            log.info("metric_snapshots: captured board state for %d players "
+                     "(source coverage for %d)", _n_metric, len(_source_cov or {}))
             # Org-grain sibling: record the composite farm_rank so farm-system
             # rank movement accrues a server-side history (the de-noised
             # movement engine reads it on the NEXT export). Monthly-only, same
