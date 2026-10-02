@@ -118,6 +118,12 @@ OPTION_HOLDER = {"club_option": "club", "conditional_club_option": "club", "play
 OPTION_DECISION_DAYS_AFTER_WS = 5
 #: Why a calendar row carries terms and no price, in the order tested.
 OPTION_UNPRICED_REASONS = ("mutual", "conditional", "no_projection", "no_strike", "no_band")
+#: Later seasons (owner answer M13OC-2 (b), 2026-10-01): an option season on a
+#: contract row past this winter's class prints as terms with the season the
+#: contract file stamps and NO decision date, because the stored season does not
+#: say whether the decision falls after that season or before it. The chip's
+#: holder maps to the calendar's type.
+OPTION_KIND_TYPE = {"club": "club_option", "player": "player_option"}
 
 #: Registry rows whose verdicts the Method tab quotes beside the numbers. The
 #: last three landed with the depth pass (D5, 2026-09-24): the salary path the
@@ -227,6 +233,7 @@ COLUMNS = {
     "options.calendar": ["key", "name", "pos", "age", "type", "holder", "salary_usd", "salary_basis", "state",
                          "decided_on", "decision_by", "priced", "p_exercise", "option_value_usd",
                          "unpriced_reason", "in_projections"],
+    "options.later": ["key", "name", "pos", "age", "season_on_file", "type", "holder", "price_usd"],
 }
 SHARD_ROW_KEYS = ("farm.prospects", "farm.graduates", "arbitration.ladders",
                   "arbitration.realized.rows", "contracts.paths", "surplus.rows_debuted")
@@ -606,6 +613,36 @@ def options_calendar(members: list, events: list, proj_keys, decision_by: str | 
                "unpriced_by_reason": {r: reasons[r] for r in OPTION_UNPRICED_REASONS if reasons[r]},
                "n_clubs": len(by_club)}
     return dict(by_club), summary
+
+
+def later_option_rows(v: dict, opts: list, class_year: int) -> list:
+    """The later-season rows of one contract: one row per option season on the
+    contract row's chips ([season, holder, price_usd]) that falls after this
+    winter's class (season > class_year), copied as terms. The row carries the
+    season on file and never a decision date; the price is the curated option
+    price where the file holds one, else None (a zero is not on file)."""
+    out = []
+    for season, kind, price in opts or []:
+        if season is None or int(season) <= int(class_year):
+            continue
+        otype = OPTION_KIND_TYPE.get(kind, "option")
+        row = [v.get("key"), v.get("name"), v.get("pos"), v.get("age"), int(season), otype,
+               OPTION_HOLDER.get(otype), int(price) if price else None]
+        assert len(row) == len(COLUMNS["options.later"])
+        out.append(row)
+    return out
+
+
+def later_options_summary(by_club: dict, n_at_or_before_class_year: int) -> dict:
+    """Counts only for the league's Later seasons block: rows, contracts, clubs,
+    by type, rows whose option price is on file, and the contract option chips
+    at or before the class year that the block leaves to this winter's class."""
+    rows = [r for rs in by_club.values() for r in rs]
+    return {"n_rows": len(rows), "n_contracts": len({r[0] for r in rows}),
+            "n_clubs": sum(1 for rs in by_club.values() if rs),
+            "by_type": dict(sorted(Counter(r[5] for r in rows).items())),
+            "n_price_on_file": sum(1 for r in rows if r[7] is not None),
+            "n_at_or_before_class_year": int(n_at_or_before_class_year)}
 
 
 def trade_cbt_slice(doc: dict, calendar: dict | None) -> dict:
@@ -1190,6 +1227,9 @@ def build_all() -> tuple:
     # never written to the document (no single projected payroll is served)
     denom_by_club: dict = {}
     contract_disagreements = 0
+    # Later seasons of the options calendar (OPTIONS_CALENDAR_LATER_SEASONS)
+    later_by_club: dict = {}
+    n_later_early = 0
 
     for c in clubs:
         r26 = payroll.get((c, SEASON_NOW)) or {}
@@ -1303,6 +1343,7 @@ def build_all() -> tuple:
         # -- C5 contract ledger ----------------------------------------------------
         rows = []
         opts_all = []
+        later_rows = []
         for v in sorted(priced, key=lambda x: -(x.get("aav") or 0)):
             opts = [[s, kind, None] for s, kind in (v.get("salOpt") or [])]
             co = (options_file.get("players") or {}).get(v.get("key")) or {}
@@ -1336,9 +1377,13 @@ def build_all() -> tuple:
             opts = [list(best[k]) for k in sorted(best)]
             if opts:
                 opts_all.append([v.get("name"), opts])
+                later_rows.extend(later_option_rows(v, opts, CLASS_YEAR))
+                n_later_early += sum(1 for o in opts if int(o[0]) <= CLASS_YEAR)
             rows.append([v.get("key"), v.get("name"), v.get("pos"), v.get("age"), v.get("salSrc"),
                          v.get("aav"), v.get("thru"), v.get("ctrlThru"), v.get("ctrlWhy"),
                          v.get("surNpv"), v.get("salPath"), opts])
+        later_rows.sort(key=lambda r: (r[1] or "", r[4], r[6] or ""))
+        later_by_club[c] = later_rows
         unpriced_rows = [[v.get("key"), v.get("name"), v.get("pos"), v.get("salSrc")]
                          for v in sorted(unpriced, key=lambda x: x.get("name") or "")]
         d_players = []
@@ -1656,7 +1701,9 @@ def build_all() -> tuple:
             "indexes": indexes, "farm": farm, "fa": fa, "links": links,
             "options_calendar": {"rows": opt_by_club.get(c) or [],
                                  "n": len(opt_by_club.get(c) or []),
-                                 "n_priced": sum(1 for r in (opt_by_club.get(c) or []) if r[11])},
+                                 "n_priced": sum(1 for r in (opt_by_club.get(c) or []) if r[11]),
+                                 "later": {"rows": later_rows, "n": len(later_rows),
+                                           "n_contracts": len({r[0] for r in later_rows})}},
         }
 
         # ==== D5 depth: the row layers, each reconciled to the v1 roll-up above ====
@@ -2002,7 +2049,8 @@ def build_all() -> tuple:
             "season": SEASON_NOW, "days_after_ws": OPTION_DECISION_DAYS_AFTER_WS,
             "ws_scheduled_last_day": ws_last_day, "decision_by": decision_by,
             "source": "MLB StatsAPI /seasons postSeasonEndDate (cached)" if ws_last_day else None},
-            fa_class_generated_at=fa_class.get("generated_at")),
+            fa_class_generated_at=fa_class.get("generated_at"),
+            later=later_options_summary(later_by_club, n_later_early)),
         "cba_banner": True,
     }
 
@@ -2382,8 +2430,22 @@ def build_all() -> tuple:
         "options_resolved_note": "a resolved row's date is the night the pipeline first saw it, not a published date",
         "options_not_summed": "salaries at stake print per row and are never added into a club figure",
         "options_none": "No pending option or opt-out on this winter's free-agent class.",
-        "options_later": ("Options in later seasons of long-term deals ride each row of the contract "
-                          "ledger above."),
+        "options_later": ("Options in later seasons of long-term deals print apart under Later seasons, "
+                          "with the season on file and no decision date."),
+        "options_later_title": "Later seasons",
+        "options_later_lede": (
+            "Options in later seasons of long-term deals, one row per option season, copied from the "
+            "contract rows of the contract ledger: the option type, who holds it and the option-year "
+            "salary where the curated file holds one."),
+        "options_later_no_date": (
+            "The decision winter is not on file: the stored season does not say whether the decision "
+            "falls after that season or before it, so no decision date prints."),
+        "options_later_none": "No option in a later season of a long-term deal is on file for this club.",
+        "options_later_terms": ("Terms only: nothing in this block is priced, and no salary here is added "
+                                "into a club figure"),
+        "options_later_league_summary": "later-season options on",
+        "options_later_season_head": "Season on file",
+        "options_later_terms_head": "Option-year salary",
         "options_source": "the free-agent class rows (Spotrac, through fa_export, daily)",
         "options_league_summary": "options and opt-outs at",
     })
@@ -2517,8 +2579,18 @@ def build_all() -> tuple:
             "/projections/ carries the key"),
         "league.options_calendar": (
             "{n_rows, n_priced, n_unjoined, by_type, by_state, unpriced_by_reason, n_clubs, decision "
-            "{season, days_after_ws, ws_scheduled_last_day, decision_by, source}, fa_class_generated_at}; "
-            "counts only, no dollar total"),
+            "{season, days_after_ws, ws_scheduled_last_day, decision_by, source}, fa_class_generated_at, "
+            "later {n_rows, n_contracts, n_clubs, by_type, n_price_on_file, n_at_or_before_class_year}}; "
+            "counts only, no dollar total; n_at_or_before_class_year counts contract option chips at or "
+            "before the class year, which the later block leaves to this winter's class"),
+        "options.later": (
+            "clubs.CODE.options_calendar.later.rows: [key, name, pos, age, season_on_file, type, holder, "
+            "price_usd]; one row per option season on a contract row's chips past the class year "
+            "(season_on_file > class_year), the block also carrying n and n_contracts; season_on_file is "
+            "the season the contract file stamps, which does not say whether the decision falls after that "
+            "season or before it, so the row carries NO decision date; type club_option|player_option; "
+            "price_usd is the curated option-year salary where the file holds one, else null, never summed "
+            "and never priced"),
     }
     field_key.update(shard_field_key)
     field_key.update(board_field_key)
@@ -2606,7 +2678,9 @@ def build_all() -> tuple:
             "opt_out_value": {"live": False, "blocked_on": copy["opt_out_two_engines"]},
             "options_calendar": {"live": True,
                                  "note": (f"partial: {opt_summary['n_priced']} of {opt_summary['n_rows']} rows "
-                                          "carry the /fa/ price and P(exercise); the rest print the terms")},
+                                          "carry the /fa/ price and P(exercise); the rest print the terms; "
+                                          f"{sum(len(v) for v in later_by_club.values())} later-season option "
+                                          "seasons print as terms with no decision date")},
             "debuted_value_registry": {"live": True, "note": "partial: debuted_player_value has no registry row; prospect_surplus (validated) is its parent",
                                        "blocked_on": copy["grad_no_registry"]},
             "shard_rows": {"live": True, "note": "per-club row files; dark at render time only when the fetch fails (copy.shard_failed)"},
@@ -2696,6 +2770,7 @@ def build_all() -> tuple:
             "arbitration comps, filing figures, hearing outcomes or per-rung residual quantiles: none is on any served row",
             "a served opt-out value on a contract row: player option seasons are priced as guaranteed by the salary path and folded as a probability by the trade board, and neither is an opt-out value; the options calendar quotes the /fa/ export's modelled value for this winter's pending opt-outs only, under that module's name",
             "a sum of the salaries at stake in the options calendar: each prints on its own row",
+            "a decision date for an option in a later season of a long-term deal: the stored season does not say whether the decision falls after that season or before it, so the options calendar's Later seasons rows carry the season on file and no date",
             "a rank or grade of clubs by farm finance beyond the v1 fin_* leaves",
             "a betting or management figure: the ledger's only touches are two links",
         ],
@@ -2848,7 +2923,14 @@ def _assert_document(doc: dict) -> None:
         assert ("trajectory" not in d["surplus"] and "trajectory_active" not in d["farm"]
                 and "prospect_trajectory" not in d["farm"]), (c, "a trajectory series on the board")
         oc = d["options_calendar"]
-        assert oc["n"] == len(oc["rows"]) and set(oc) == {"rows", "n", "n_priced"}, (c, "options calendar")
+        assert oc["n"] == len(oc["rows"]) and set(oc) == {"rows", "n", "n_priced", "later"}, (c, "options calendar")
+        lat = oc["later"]
+        assert set(lat) == {"rows", "n", "n_contracts"} and lat["n"] == len(lat["rows"]), (c, "later seasons")
+        assert lat["n_contracts"] == len({r[0] for r in lat["rows"]}), (c, "later seasons")
+        for row in lat["rows"]:
+            assert len(row) == len(COLUMNS["options.later"]), (c, "options.later")
+            assert row[4] > doc["class_year"] and row[5] in OPTION_KIND_TYPE.values(), (c, row[0], "a later season")
+        assert not any("decision" in col or "date" in col for col in COLUMNS["options.later"]), "no decision date"
         for row in oc["rows"]:
             assert len(row) == len(COLUMNS["options.calendar"]), (c, "options.calendar")
             assert (row[12] is not None) == (row[13] is not None) == bool(row[11]), (c, row[0], "price only where priced")

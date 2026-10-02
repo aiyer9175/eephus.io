@@ -2040,7 +2040,7 @@ def test_the_options_calendar_carries_every_pending_class_option_once_at_its_clu
     for code, c in d["clubs"].items():
         O = c["options_calendar"]
         assert O["n"] == len(O["rows"]) and O["n_priced"] == sum(1 for r in O["rows"] if r[i["priced"]])
-        assert set(O) == {"rows", "n", "n_priced"}, "counts only: no dollar total on the block"
+        assert set(O) == {"rows", "n", "n_priced", "later"}, "counts only: no dollar total on the block"
         for r in O["rows"]:
             assert r[i["key"]] not in seen, r[i["key"]]
             seen[r[i["key"]]] = (code, r)
@@ -2153,3 +2153,80 @@ def test_the_options_calendar_copy_names_its_sources_and_its_limits(d):
     if dec["ws_scheduled_last_day"]:
         assert dec["ws_scheduled_last_day"] in cp["options_decision_rule"]
     assert any("options calendar" in s for s in d["what_this_page_does_not_claim"])
+
+
+# --------------------------------------------------------------------------
+# Later seasons of the options calendar (owner answer M13OC-2 (b), 2026-10-01)
+# --------------------------------------------------------------------------
+
+def test_the_later_seasons_block_lists_every_contract_option_past_the_class_once(d):
+    """Every option chip on a club's contract rows whose season falls after the
+    class year is one Later seasons row at that club (21 seasons on 6 contracts
+    on the 2026-10-02 build), with the chip's holder as its type and the chip's
+    curated price as its terms; the league block carries counts only."""
+    import ledger_export as LE
+    cols = d["columns"]["options.later"]
+    assert cols == LE.COLUMNS["options.later"]
+    i = {n: k for k, n in enumerate(cols)}
+    cy = d["class_year"]
+    n_rows = 0
+    contracts, clubs = set(), set()
+    for code, c in d["clubs"].items():
+        L = c["options_calendar"]["later"]
+        assert set(L) == {"rows", "n", "n_contracts"} and L["n"] == len(L["rows"])
+        names = {r[i["name"]] for r in L["rows"]}
+        assert L["n_contracts"] == len({r[i["key"]] for r in L["rows"]}) == len(names)
+        want = sorted((name, o[0], o[1], o[2]) for name, opts in c["contracts"]["options"] for o in opts if o[0] > cy)
+        got = sorted((r[i["name"]], r[i["season_on_file"]], r[i["holder"]], r[i["price_usd"]]) for r in L["rows"])
+        assert got == want, code
+        for r in L["rows"]:
+            assert r[i["season_on_file"]] > cy
+            assert r[i["type"]] == LE.OPTION_KIND_TYPE[r[i["holder"]]]
+            assert r[i["price_usd"]] is None or r[i["price_usd"]] > 0
+        n_rows += L["n"]
+        contracts |= {(code, r[i["key"]]) for r in L["rows"]}
+        clubs |= {code} if L["rows"] else set()
+    S = d["league"]["options_calendar"]["later"]
+    assert S["n_rows"] == n_rows and S["n_contracts"] == len(contracts) and S["n_clubs"] == len(clubs)
+    assert sum(S["by_type"].values()) == n_rows
+    assert n_rows >= 1, "the long-term deals on file carry later-season options"
+    for path, k, _v in _walk(S):
+        assert not str(k).endswith("_usd"), (path, "the league summary carries counts, never a dollar figure")
+
+
+def test_a_later_season_row_never_carries_a_decision_date(d):
+    """The no-date rule: the stored season does not say whether the decision
+    falls after that season or before it, so no column of the block is a date
+    and no cell holds one; the copy says so."""
+    import re as _re
+    import ledger_export as LE
+    assert not any("decision" in col or "date" in col or col.endswith("_on") or col.endswith("_by")
+                   for col in LE.COLUMNS["options.later"])
+    for c in d["clubs"].values():
+        for r in c["options_calendar"]["later"]["rows"]:
+            assert not any(isinstance(v, str) and _re.match(r"^\d{4}-\d{2}-\d{2}", v) for v in r), r
+    cp = d["copy"]
+    assert "not on file" in cp["options_later_no_date"] and "no decision date" in cp["options_later_no_date"]
+    for k in ("options_later", "options_later_title", "options_later_lede", "options_later_no_date",
+              "options_later_none", "options_later_terms", "options_later_league_summary",
+              "options_later_season_head", "options_later_terms_head"):
+        assert cp.get(k), k
+        assert chr(0x2014) not in cp[k] and chr(0x2013) not in cp[k], k
+    assert any("Later seasons" in s and "no date" in s for s in d["what_this_page_does_not_claim"])
+
+
+def test_the_later_seasons_rule_on_a_small_contract():
+    """The pure builder keeps the seasons past the class year, maps the holder to
+    a type, copies the curated price and leaves a zero or missing one null."""
+    import ledger_export as LE
+    v = {"key": "k", "name": "K", "pos": "SS", "age": 27}
+    opts = [[2027, "club", 9_000_000], [2030, "player", None], [2035, "club", 26_252_525], [2036, "club", 0]]
+    rows = LE.later_option_rows(v, opts, 2027)
+    i = {n: k for k, n in enumerate(LE.COLUMNS["options.later"])}
+    assert [r[i["season_on_file"]] for r in rows] == [2030, 2035, 2036], "the class-year option stays on the class calendar"
+    assert [r[i["type"]] for r in rows] == ["player_option", "club_option", "club_option"]
+    assert [r[i["holder"]] for r in rows] == ["player", "club", "club"]
+    assert [r[i["price_usd"]] for r in rows] == [None, 26_252_525, None], "a zero price is not on file"
+    S = LE.later_options_summary({"KCR": rows, "NYM": []}, 1)
+    assert S == {"n_rows": 3, "n_contracts": 1, "n_clubs": 1, "by_type": {"club_option": 2, "player_option": 1},
+                 "n_price_on_file": 1, "n_at_or_before_class_year": 1}

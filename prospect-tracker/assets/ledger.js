@@ -986,16 +986,60 @@
       '<p class="ledger-count">' + esc(copy("options_p_exercise_basis")) + " " + esc(copy("options_value_basis")) + "</p>" +
       '<p class="ledger-count">Source: ' + esc(copy("options_source")) + "; " + esc(copy("options_not_summed")) + "; " + esc(copy("options_resolved_note")) + ".</p>";
   }
+  // Later seasons (owner answer M13OC-2): one row per option season on a
+  // contract row past this winter's class, printed as terms with the season
+  // on file. No decision date prints, because the stored season does not say
+  // whether the decision falls after that season or before it.
+  function laterTable(rows, withClub) {
+    var C = "options.later";
+    var head = "<tr>" + (withClub ? "<th>Club</th>" : "") + '<th class="lo-txt">Player</th><th>' + esc(copy("options_later_season_head")) + "</th>" +
+      '<th class="lo-txt">Type</th><th class="lc-col-hide lo-txt">Holder</th><th>' + esc(copy("options_later_terms_head")) + "</th></tr>";
+    var body = rows.map(function (x) {
+      var r = x.r, key = cv(C, r, "key"), price = cv(C, r, "price_usd");
+      return "<tr>" + (withClub ? '<td><a href="#section=club&team=' + esc(x.club) + '&block=options" data-llink="1">' + esc(x.club) + "</a></td>" : "") +
+        '<td class="lo-txt"><a href="/projections/#player=' + encodeURIComponent(key) + '">' + esc(cv(C, r, "name")) + '</a> <span class="ledger-src">' + esc(cv(C, r, "pos")) + "</span></td>" +
+        "<td>" + esc(cv(C, r, "season_on_file")) + '</td><td class="lo-txt">' + esc(OPT_TYPE[cv(C, r, "type")] || cv(C, r, "type")) + "</td>" +
+        '<td class="lc-col-hide lo-txt">' + esc(cv(C, r, "holder") || "") + "</td>" +
+        "<td>" + (isNum(price) ? esc(money(price)) : '<span class="ledger-dark-cell">' + esc(copy("options_no_strike_short")) + "</span>") + "</td></tr>";
+    }).join("");
+    return '<div class="ledger-scroll"><table class="ledger-table ledger-options ledger-options-later"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
+  }
+  function laterNotes() {
+    return '<p class="ledger-count">' + esc(copy("options_later_no_date")) + "</p>" +
+      '<p class="ledger-count">Source: ' + esc(copy("options_note")) + " " + esc(copy("options_later_terms")) + ".</p>";
+  }
+  function renderLater(O) {
+    var L = O.later;
+    if (!L) return "";
+    var out = "<h3>" + esc(copy("options_later_title")) + "</h3>";
+    if (!L.rows.length) return out + '<p class="ledger-count">' + esc(copy("options_later_none")) + "</p>";
+    out += '<p class="ledger-note">' + esc(copy("options_later_lede")) + "</p>" +
+      '<p class="ledger-count">' + esc(L.n) + (L.n === 1 ? " option season on " : " option seasons on ") + esc(L.n_contracts) + (L.n_contracts === 1 ? " contract.</p>" : " contracts.</p>");
+    return out + laterTable(L.rows.map(function (r) { return { r: r }; }), false) + laterNotes();
+  }
   function renderOptions(d) {
     var O = d.options_calendar;
     if (!O) return "";
     var out = '<p class="ledger-note">' + esc(copy("options_lede")) + "</p>";
-    if (!O.rows.length) return out + '<p class="ledger-count">' + esc(copy("options_none")) + " " + esc(copy("options_later")) + "</p>";
+    if (!O.rows.length) return out + '<p class="ledger-count">' + esc(copy("options_none")) + " " + esc(copy("options_later")) + "</p>" + renderLater(O);
     out += '<p class="ledger-count">' + esc(O.n) + " rows, " + esc(O.n_priced) + " priced by /fa/. " + esc(copy("options_later")) + "</p>";
     var reasons = {};
     O.rows.forEach(function (r) { var k = cv("options.calendar", r, "unpriced_reason"); if (k) reasons[k] = (reasons[k] || 0) + 1; });
     out += optTable(O.rows.map(function (r) { return { r: r }; }), false);
-    return out + reasonLine(reasons) + optNotes();
+    return out + reasonLine(reasons) + optNotes() + renderLater(O);
+  }
+  function renderLaterLeague(S) {
+    var L = S.later;
+    if (!L) return "";
+    var rows = [];
+    clubs().forEach(function (c) {
+      var O = clubOf(c).options_calendar;
+      ((O && O.later) ? O.later.rows : []).forEach(function (r) { rows.push({ club: c, r: r }); });
+    });
+    return "<h3>" + esc(copy("options_later_title")) + "</h3>" +
+      "<details><summary>" + esc(L.n_rows) + " " + esc(copy("options_later_league_summary")) + " " + esc(L.n_contracts) + (L.n_contracts === 1 ? " contract at " : " contracts at ") + esc(L.n_clubs) + (L.n_clubs === 1 ? " club" : " clubs") + ", no decision date</summary>" +
+      '<p class="ledger-note">' + esc(copy("options_later_lede")) + "</p>" +
+      (rows.length ? laterTable(rows, true) : "") + laterNotes() + "</details>";
   }
   function renderOptionsLeague() {
     var S = DATA.league.options_calendar;
@@ -1012,7 +1056,7 @@
       "<details><summary>" + esc(S.n_rows) + " " + esc(copy("options_league_summary")) + " " + esc(S.n_clubs) + " clubs, " + esc(S.n_priced) + " priced by /fa/" +
       (dec.decision_by ? ", due by " + esc(dec.decision_by) : "") + "</summary>" +
       optTable(rows, true) +
-      reasonLine(reasons) + optNotes() + "</details></section>";
+      reasonLine(reasons) + optNotes() + "</details>" + renderLaterLeague(S) + "</section>";
   }
   // A generic dt/dd for every column of a row (the expander lists them all),
   // formatted by the column's suffix: _mm in $M, _usd in dollars, booleans as

@@ -1227,12 +1227,100 @@ def test_the_served_options_calendar_renders_on_the_league_and_club_pages():
     html, _ = _render("league", payload=d, tiers=True)
     cal = html[html.index('id="ledger-options-league"'):]
     cal = cal[:cal.index("</section>")]
-    assert cal.count("<tr>") == S["n_rows"] + 1 and "undefined" not in cal and "NaN" not in cal
+    later_at = cal.index("<h3>" + d["copy"]["options_later_title"] + "</h3>")
+    winter, later = cal[:later_at], cal[later_at:]
+    assert winter.count("<tr>") == S["n_rows"] + 1 and "undefined" not in cal and "NaN" not in cal
+    assert later.count("<tr>") == S["later"]["n_rows"] + 1 and "<details><summary>" in later
+    assert "by 20" not in later, "a later-season row prints no decision date"
     for code, c in d["clubs"].items():
-        if not c["options_calendar"]["rows"]:
+        L = c["options_calendar"]["later"]
+        if not c["options_calendar"]["rows"] and not L["rows"]:
             continue
         club, _ = _render("club", payload=d, team=code, tiers=True)
         blk = _block(club, "options")
-        assert blk.count("<tr>") == c["options_calendar"]["n"] + 1, code
+        h3 = "<h3>" + d["copy"]["options_later_title"] + "</h3>"
+        assert blk.count(h3) == 1, code
+        cw, cl = blk[:blk.index(h3)], blk[blk.index(h3):]
+        assert cw.count("<tr>") == (c["options_calendar"]["n"] + 1 if c["options_calendar"]["rows"] else 0), code
+        assert cl.count("<tr>") == (L["n"] + 1 if L["rows"] else 0), code
         assert "undefined" not in blk and "NaN" not in blk and "vt-fam" not in blk, code
-        assert blk.count("terms only</span>") == c["options_calendar"]["n"] - c["options_calendar"]["n_priced"], code
+        assert cw.count("terms only</span>") == c["options_calendar"]["n"] - c["options_calendar"]["n_priced"], code
+        assert "by 20" not in cl, code
+
+
+LATER_COPY = {
+    "options_later_title": "Later seasons",
+    "options_later_lede": "Options in later seasons of long-term deals, one row per option season.",
+    "options_later_no_date": "The decision winter is not on file, so no decision date prints.",
+    "options_later_none": "No option in a later season of a long-term deal is on file for this club.",
+    "options_later_terms": "terms only: nothing in this block is priced",
+    "options_later_league_summary": "later-season options on",
+    "options_later_season_head": "Season on file",
+    "options_later_terms_head": "Option-year salary",
+}
+LATER_ROWS = [
+    ["w_one", "W One", "SS", 27, 2030, "player_option", "player", None],
+    ["w_one", "W One", "SS", 27, 2035, "club_option", "club", 26_252_525],
+    ["w_one", "W One", "SS", 27, 2036, "club_option", "club", 26_252_525],
+]
+
+
+def _later_payload(rows=None, later=None):
+    s = _opt_payload(rows)
+    s["copy"].update(LATER_COPY)
+    later = LATER_ROWS if later is None else later
+    s["clubs"]["LAD"]["options_calendar"]["later"] = {"rows": later, "n": len(later),
+                                                      "n_contracts": len({r[0] for r in later})}
+    s["league"]["options_calendar"]["later"] = {"n_rows": len(later), "n_contracts": len({r[0] for r in later}),
+                                                "n_clubs": 1 if later else 0, "by_type": {},
+                                                "n_price_on_file": sum(1 for r in later if r[7]),
+                                                "n_at_or_before_class_year": 0}
+    return s
+
+
+def test_the_later_seasons_block_prints_terms_with_the_season_on_file_and_no_date():
+    html, _ = _render("club", payload=_later_payload(), team="LAD", tiers=True)
+    blk = _block(html, "options")
+    h3 = "<h3>Later seasons</h3>"
+    assert blk.count(h3) == 1 and blk.index("A One") < blk.index(h3), "the later block sits under the winter calendar"
+    later = blk[blk.index(h3):]
+    assert later.count("<tr>") == 4 and "<th>Season on file</th>" in later and "<th>Option-year salary</th>" in later
+    assert '<a href="/projections/#player=w_one">W One</a>' in later and "/fa/#player=w_one" not in later
+    a = later[later.index("<td>2030</td>"):]
+    a = a[:a.index("</tr>")]
+    assert "player option" in a and "not on file" in a
+    b = later[later.index("<td>2035</td>"):]
+    b = b[:b.index("</tr>")]
+    assert "club option" in b and "$26.3M" in b
+    assert "by 2026" not in later and "Decision" not in later and "P(exercise)" not in later, "no decision date, no price"
+    assert LATER_COPY["options_later_no_date"] in later and LATER_COPY["options_later_lede"] in later
+    assert "3 option seasons on 1 contract." in later
+    assert "$52.5M" not in later and "$78.8M" not in later, "no salary is summed"
+    assert "vt-fam" not in later
+    body = _fn_body("laterTable")
+    assert "cv(C, r, " in body and not re.search(r"\br\[\d+\]", body), "every later cell reads through the legend"
+
+
+def test_the_later_seasons_block_says_so_when_a_club_has_none_and_an_older_board_skips_it():
+    html, _ = _render("club", payload=_later_payload(later=[]), team="LAD")
+    blk = _block(html, "options")
+    assert "<h3>Later seasons</h3>" in blk and LATER_COPY["options_later_none"] in blk
+    assert blk.count("<table") == 1, "only the winter table"
+    old, _ = _render("club", payload=_opt_payload(), team="LAD")
+    assert "<h3>Later seasons</h3>" not in _block(old, "options"), "a board without the block renders without it"
+    none, _ = _render("club", payload=_later_payload(rows=[]), team="LAD")
+    nb = _block(none, "options")
+    assert OPT_COPY["options_none"] in nb and nb.count("<tr>") == 4, "a club with only later seasons still lists them"
+
+
+def test_the_league_calendar_gains_the_later_seasons_collapsed():
+    html, _ = _render("league", payload=_later_payload(), tiers=True)
+    i = html.index('id="ledger-options-league"')
+    cal = html[i:html.index("</section>", i)]
+    later = cal[cal.index("<h3>Later seasons</h3>"):]
+    assert ("<details><summary>3 later-season options on 1 contract at 1 club, no decision date</summary>"
+            in later)
+    assert later.count("<tr>") == 4 and later.count("</details>") == 1
+    assert '<a href="#section=club&team=LAD&block=options" data-llink="1">LAD</a>' in later
+    assert "by 2026" not in later
+    assert cal.index("</details>") < cal.index("<h3>Later seasons</h3>"), "the winter list closes first"
