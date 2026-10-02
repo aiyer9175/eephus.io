@@ -5873,8 +5873,11 @@ def build_glossary() -> str:
         f"kept apart ({_gl('value_framework', 'value framework')}). Missing data shows a dash.</p>"
         "</div>"
     )
+    # The module's display name from NAV_ITEMS rides on the app root, so the
+    # client labels a section with the module's current name, never a literal.
+    _gl_name = next(lbl for key, lbl, _ in nav_leaves() if key == "glossary")
     body = (
-        '<div class="gl-app">'
+        f'<div class="gl-app" data-module-name="{html.escape(_gl_name)}">'
         f'<div class="section-head"><h1>{_masthead_icon("glossary")}Glossary &amp; Methodology</h1>'
         '<span class="section-sub">terms, derivations, and each model\'s track record</span></div>'
         f"{intro}"
@@ -5892,6 +5895,7 @@ def build_glossary() -> str:
         # lesson; test_glossary_page_loads.test_view_chips_match_whitelist now
         # asserts all four agree.
         '<button class="chip" data-glossary-view="source-accuracy">Source Accuracy</button>'
+        '<button class="chip" data-glossary-view="source-updates">Source Updates</button>'
         '<button class="chip" data-glossary-view="library">Library</button>'
         # Outbound link (not a view toggle) to the full attribution page, so the
         # Data Sources & Attribution page is reachable from this section, not just
@@ -5908,6 +5912,7 @@ def build_glossary() -> str:
         '<div id="models-body" style="display:none;"></div>'
         '<div id="source-comparison-body" style="display:none;"></div>'
         '<div id="source-accuracy-body" style="display:none;"></div>'
+        '<div id="source-updates-body" style="display:none;"></div>'
         '<div id="library-body" style="display:none;"></div>'
         '<div id="glossary-rows"></div>'
         '</div>'
