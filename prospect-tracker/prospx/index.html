@@ -21955,8 +21955,15 @@ function openGlossaryPopover(anchorEl) {
     pop = document.createElement("div");
     pop.id = "glossary-popover";
     pop.className = "glossary-popover";
+    // QPRA02: a labelled dialog that takes focus, so a keyboard user lands on the
+    // definition and Escape hands focus back to the term.
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("tabindex", "-1");
     document.body.appendChild(pop);
   }
+  // Drop the listeners an earlier open left behind, so one Escape closes once.
+  if (pop._gpCleanup) pop._gpCleanup();
+  pop.setAttribute("aria-label", "Definition: " + entry.name);
   const formula = entry.formula
     ? `<div class="gp-formula">${escapeHtml(entry.formula)}</div>` : "";
   pop.innerHTML = `
@@ -21990,24 +21997,30 @@ function openGlossaryPopover(anchorEl) {
   pop.style.left = left + "px";
   pop.style.top = top + "px";
   pop.classList.add("is-open");
+  try { pop.focus({ preventScroll: true }); } catch (_) { pop.focus(); }
 
   // Outside-click dismissal - deferred so the click that opened the
   // popover doesn't immediately close it.
   setTimeout(() => {
+    const cleanup = () => {
+      document.removeEventListener("click", dismiss);
+      document.removeEventListener("keydown", escDismiss);
+      if (pop._gpCleanup === cleanup) pop._gpCleanup = null;
+    };
     const dismiss = (e) => {
       if (!pop.contains(e.target) && !e.target.closest(".g-term")) {
         pop.classList.remove("is-open");
-        document.removeEventListener("click", dismiss);
-        document.removeEventListener("keydown", escDismiss);
+        cleanup();
       }
     };
     const escDismiss = (e) => {
       if (e.key === "Escape") {
         pop.classList.remove("is-open");
-        document.removeEventListener("click", dismiss);
-        document.removeEventListener("keydown", escDismiss);
+        cleanup();
+        if (anchorEl.isConnected) anchorEl.focus();
       }
     };
+    pop._gpCleanup = cleanup;
     document.addEventListener("click", dismiss);
     document.addEventListener("keydown", escDismiss);
   }, 0);
@@ -34550,7 +34563,10 @@ function efvTooltip(x) {
     const _c = efvServedClaim();
     if (_c) parts.push(_c.text);
   } else {
-    parts.push("Predicts a calibrated 6-yr WAR outcome distribution from how comparable prospects actually turned out. Open the player for the full mix.");
+    // QPRC02: no calibration claim here. The Debuted tab measures the outcome mix
+    // (bust ECE) and the registry row xfv_dist_recalibration exists to fix a measured
+    // miscalibration, so the chip states what the number reads and points at the receipt.
+    parts.push("Reads a 6-yr WAR outcome mix from how comparable prospects turned out; its calibration is measured on the Debuted tab. Open the player for the full mix.");
   }
   return parts.join(" · ");
 }
@@ -40682,21 +40698,32 @@ function updateMeta() {
     agoTip = days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
   }
   const _n = v => (v != null ? Number(v).toLocaleString() : "…");
-  // SPR07 (smoke audit 2026-10-01): this total counts the SCOUTED pool (graded board rows
-  // plus draft-board and overseas rows, each listed by a scouting source), while the board
-  // below also ranks the provisional rows no source has graded, so its "Showing ... of N"
-  // counts a different pool. The label names the pool and the title gives the split, so
-  // the two totals read as two counts rather than a mismatch. No number changes.
-  const countTip = (totalProspects != null)
-    ? `Scouted prospects: ${_n(DATA.active_count)} graded on the prospect board, ` +
+  // SPR07 (smoke audit 2026-10-01) named the two totals; QPRC01 (quality audit 2026-10-02)
+  // made the words true. This total is the stored board actives plus draft-board and
+  // overseas rows. Not every board active carries a source grade: the rows no source has
+  // graded are listed, unranked, in the board's own "Not yet graded by any source"
+  // section, which also holds provisional rows outside this total, so "Showing ... of N"
+  // counts a larger pool. The title gives the ranked count the page computes. No number
+  // changes.
+  let countTip = "";
+  if (totalProspects != null) {
+    const _secOn = (typeof provSectionOn === "function") && provSectionOn();
+    const _ranked = (DATA.players || []).filter(p => p && !inProvSection(p)).length;
+    const _secTitle = String((provSectionInfo() || {}).title || "Not yet graded by any source")
+      .replace(/["<>&]/g, "");
+    countTip = `Prospects tracked: ${_n(DATA.active_count)} prospect board actives, ` +
       `${_n(draftCount)} on draft boards and ${_n(overseasCount)} overseas. ` +
-      `The board also ranks provisional prospects no scouting source has graded yet, ` +
-      `so its row count covers a different pool.`
-    : "";
+      (_secOn
+        ? `On the board, ${_n(_ranked)} of those actives carry a scouting-source grade and are ranked; ` +
+          `the rest are listed, unranked, under '${_secTitle}', a section that also lists ` +
+          `provisional rows outside this total, so the board's row count covers a larger pool.`
+        : `The board's row count also takes in provisional rows outside this total, ` +
+          `so it covers a larger pool.`);
+  }
   meta.innerHTML =
     `Last refresh: <code${agoTip ? ` title="Data generated ${agoTip}"` : ""}>${refreshedAt}</code>` +
     `<span class="dot">·</span><span class="meta-count"${countTip ? ` title="${countTip}"` : ""}>` +
-    `<strong>${_n(totalProspects)}</strong> scouted prospects tracked</span>`;
+    `<strong>${_n(totalProspects)}</strong> prospects tracked</span>`;
   // v19 - Section flavor-text element removed; the per-section count
   // strip was unnecessary chrome cluttering the tabs row. The active
   // filters chip strip (below) now carries the per-page status info.
@@ -48557,6 +48584,7 @@ function _pshToggleFold(el) {
   const gid = el.getAttribute("data-fold");
   const open = el.getAttribute("data-open") === "1";
   el.setAttribute("data-open", open ? "0" : "1");
+  el.setAttribute("aria-expanded", open ? "false" : "true");
   document.querySelectorAll('[data-foldgrp="' + gid + '"]').forEach(function (r) {
     r.style.display = open ? "none" : "";
   });
@@ -52237,12 +52265,14 @@ function renderPlayerDetail(key) {
   // Summary grid: the always-visible header tiles already carry slash / top
   // tools / ETA / Statcast, so this overview grid surfaces the COMPLEMENTARY
   // reads (health, value, momentum) rather than repeating them. Each links to
-  // its tab where applicable.
+  // its tab where applicable. The Health tile links only when the card has a
+  // Health tab (renderDetailTabs drops an empty tab, and a tile pointing at a
+  // missing tab was a dead control; QPRA02).
   const summaryGridHtml = `
     <div class="detail-title flush">Summary</div>
     ${_positionGamesSummary(p)}
     <div class="overview-tile-grid">
-      ${_ovTile(_ovHealth,    "health")}
+      ${_ovTile(_ovHealth,    (ilSection || healthSection) ? "health" : null)}
       ${_ovTile(_ovSurplus,   null)}
       ${_ovTile(_ovStock,     null)}
     </div>`;
@@ -55525,10 +55555,20 @@ function observeLazyCharts() {
 // can tab to it, AND a screen reader announces it as a button. We do
 // this in one DOM walk after each render rather than threading the
 // attrs through every renderXxx() function.
+var A11Y_CLICK_CONTROLS = ".g-term[data-term], tr.psh-fold-row, .overview-tile[onclick]";
 function decorateA11yRows() {
   document.querySelectorAll(".player-row[data-key], .spotlight-row[data-key], .debut-row[data-key], .farm-row[data-org], .pos-depth-card[data-key]").forEach(row => {
     if (!row.hasAttribute("tabindex")) row.setAttribute("tabindex", "0");
     if (!row.hasAttribute("role"))     row.setAttribute("role", "button");
+  });
+  // QPRA02: the click-only controls (glossary pills, the FV history fold rows, the
+  // Health overview tile) get the same pair; the #content keydown listener routes
+  // Enter and Space on them to .click().
+  document.querySelectorAll(A11Y_CLICK_CONTROLS).forEach(el => {
+    if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
+    if (!el.hasAttribute("role"))     el.setAttribute("role", "button");
+    if (el.matches("tr.psh-fold-row"))
+      el.setAttribute("aria-expanded", el.getAttribute("data-open") === "1" ? "true" : "false");
   });
 }
 
@@ -57493,8 +57533,20 @@ function attachHandlers() {
   // role are applied by decorateA11yRows after every render.
   document.getElementById("content").addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
+    // QPRA02: a focused click-only control (glossary pill, fold row, Health tile)
+    // fires its own click before the row branch sees the key.
+    const ctl = e.target.closest(A11Y_CLICK_CONTROLS);
+    if (ctl && ctl === e.target) {
+      e.preventDefault();
+      ctl.click();
+      return;
+    }
     const row = e.target.closest("[data-key], [data-org]");
     if (!row) return;
+    // The row handler skips a,button targets (the Q9_08 binding rule): Enter on a
+    // nested watch, compare or expand button runs that button, not the card.
+    const nested = e.target.closest("a,button");
+    if (nested && nested !== row && row.contains(nested)) return;
     e.preventDefault();
     if (row.dataset.key)      goToPlayer(row.dataset.key);
     else if (row.dataset.org) goToFarm(row.dataset.org);
