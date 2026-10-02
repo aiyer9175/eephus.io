@@ -5,8 +5,8 @@
 
 """Freeze published fWAR per season into data/fwar_vintage.json.
 
-    python tools/build_fwar_vintage.py --freeze 2011-2026            # PLAN: no network, no write
-    python tools/build_fwar_vintage.py --freeze 2011-2026 --write    # fetch, then write once
+    python tools/build_fwar_vintage.py --freeze 2000-2026            # PLAN: no network, no write
+    python tools/build_fwar_vintage.py --freeze 2000-2026 --write    # fetch, then write once
     python tools/build_fwar_vintage.py --verify                      # hashes + field presence
 
 fWAR label epoch, precondition E3 part 1 (docs/efv-2026-09-17/
@@ -16,6 +16,12 @@ overwritten (--refreeze is the only way past it, and the epoch program never
 passes it), an in-progress season is refused, the fetch goes straight to
 StatsAPI and never through the .cache payloads, and a run that fails any call
 writes nothing.
+
+2000 to 2010 are the pre-2011 path of owner answer O4 (22 calls, no credits):
+each calls pitching first, so the first call of a 2000-2026 run is the
+pre-2011 pitching probe, and a clean empty answer is recorded as ABSENT with
+the response it got (fwar_vintage rule 6); such a season is `mixed` and its
+consumers stamp `war_basis: mixed`.
 
 Without --write the tool only PLANS: it names every season it would fetch, the
 URLs, the call count and every refusal, and it touches neither the network nor

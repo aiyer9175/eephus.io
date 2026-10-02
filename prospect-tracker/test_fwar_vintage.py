@@ -247,3 +247,61 @@ def test_the_vintage_never_ships():
     assert "fwar_vintage.json" in [ln.strip() for ln in lines]
     assert FV.VINTAGE_PATH.name == "fwar_vintage.json"
     assert FV.VINTAGE_PATH.parent.name == "data"
+
+
+# --------------------------------------------------------------------------- pre-2011 (E3 part 5)
+_EMPTY = FV.FetchResponse(200, b'{"copyright": "x", "stats": []}')
+
+
+def test_the_pre_2011_path_accepts_2000_to_2010_in_22_calls_pitching_first():
+    fetch = FakeFetch()
+    blob = _freeze(None, range(2000, 2011), fetch=fetch)
+    assert len(fetch.calls) == 22
+    assert "group=pitching" in fetch.calls[0] and "season=2000" in fetch.calls[0]   # the probe
+    assert [("pitching" in u) for u in fetch.calls[:2]] == [True, False]
+    assert sorted(blob["seasons"], key=int) == [str(s) for s in range(2000, 2011)]
+    with pytest.raises(FV.FreezeError, match="before the first accepted season 2000"):
+        _freeze(None, [1999])
+
+
+def test_an_empty_pre_2011_pitching_answer_is_recorded_absent_with_its_response():
+    over = {(s, "pitching"): _EMPTY for s in range(2000, 2011)}
+    blob = _freeze(None, list(range(2009, 2011)) + [2011], fetch=FakeFetch(over))
+    gb = blob["seasons"]["2009"]["pitching"]
+    assert gb["status"] == "absent" and gb["rows"] == {} and gb["n_rows"] == 0
+    assert gb["http_status"] == 200 and gb["response"] == _EMPTY.body.decode()
+    assert gb["response_truncated"] is False and len(gb["raw_sha256"]) == 64
+    assert gb["fetched_at"] and gb["url"].endswith("limit=2000") and "season=2009" in gb["url"]
+    assert blob["seasons"]["2009"]["hitting"]["status"] == "frozen"
+    assert blob["seasons"]["2009"]["basis"] == "mixed"
+    assert blob["seasons"]["2011"]["basis"] == "fwar"
+    assert FV.verify(blob) == []
+    # the reader serves fWAR only on fwar seasons; the stamp says mixed for a cohort touching 2009
+    assert FV.fwar_seasons(blob) == [2011] and FV.mixed_seasons(blob) == [2009, 2010]
+    assert not any(s == 2009 for _, s in FV.side_targets(blob, "bat"))
+    assert FV.war_basis([2011], blob) == "fwar"
+    assert FV.war_basis([2009, 2011], blob) == "mixed"
+    assert FV.war_basis([2008], blob) == "mixed"            # never recorded is not fwar
+    # an absent block is frozen like any other: never refetched, never overwritten
+    with pytest.raises(FV.FreezeError, match="never overwritten"):
+        _freeze(blob, [2009])
+    # both groups absent: the season's basis is 'absent'
+    both = {(2005, g): _EMPTY for g in ("pitching", "hitting")}
+    assert _freeze(None, [2005], fetch=FakeFetch(both))["seasons"]["2005"]["basis"] == "absent"
+
+
+def test_only_a_clean_empty_answer_means_absent():
+    with pytest.raises(FV.FreezeError, match="no rows"):            # 2011+: empty is a failure
+        _freeze(None, [2011], fetch=FakeFetch({(2011, "pitching"): _EMPTY}))
+    with pytest.raises(FV.FreezeError, match="HTTP 404"):           # pre-2011 non-200 fails
+        _freeze(None, [2005], fetch=FakeFetch({(2005, "pitching"): FV.FetchResponse(404, b"")}))
+    with pytest.raises(FV.FreezeError, match="under MIN_ROWS"):      # partial fails
+        _freeze(None, [2005], fetch=FakeFetch(
+            {(2005, "pitching"): FV.FetchResponse(200, _body([_pit(1, 0.1)]))}))
+
+
+def test_the_rule_is_written_into_the_builder_docstring():
+    doc = FV.__doc__
+    assert "THE PRE-2011 PATH" in doc and "22" in doc and "war_basis: mixed" in doc
+    assert "PITCHING FIRST" in doc and "RECORDED AS ABSENT" in doc
+    assert "--freeze 2000-2026" in FV.BUILD_CMD

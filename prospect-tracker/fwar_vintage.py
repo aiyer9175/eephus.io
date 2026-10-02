@@ -54,6 +54,23 @@ THE RULES (builder):
      feed's row cap (possibly truncated), a season of the feed's era with no
      rows, or a group under MIN_ROWS rows fails the run and nothing is written.
   5. The write is atomic (a sibling temp file, then os.replace).
+  6. THE PRE-2011 PATH (E3 part 5, owner answer O4: "Cache 2000-2010 (22
+     calls, no credits)"). The builder accepts 2000 to 2010 beside the feed's
+     known era (FEED_FIRST_SEASON 2011): 11 seasons x 2 groups = the 22 calls
+     of O4. Before 2011 each season calls PITCHING FIRST, so on a run that
+     starts at 2000 the very first call is the pre-2011 pitching probe. A
+     pre-2011 group whose answer is HTTP 200 with no rows is not a failure: it
+     is RECORDED AS ABSENT, with the response it got (the HTTP status, the
+     body's sha256 and the body itself up to ABSENT_BODY_MAX characters), and
+     it is frozen like any other block (never refetched, never overwritten).
+     A season with one group absent has basis `mixed`, both absent `absent`,
+     and `fwar_seasons()` serves neither: every door of war_source's fwar
+     provider keeps the incumbent value on such a season and counts it, and a
+     downstream consumer whose cohort touches one stamps `war_basis: mixed`
+     and never `fwar` (FWAR_LABEL_EPOCH_GATE.md part 4.1 note 3; part 7 row
+     K). `war_basis(seasons)` is that stamp. A pre-2011 non-200, unparseable,
+     capped or partial (under MIN_ROWS) answer still fails the run (rule 4):
+     only a clean empty answer means "the feed does not publish this".
 
 THE READER. `load()` (memoised in `_CACHE`, the test seam, like ewar.load),
 `available()`, `fwar_seasons()` (the seasons whose every group is frozen),
@@ -85,8 +102,11 @@ SIDE_GROUP = {"bat": "hitting", "pit": "pitching"}
 #: 100.0% on MLBAM in every season 2011 to 2025 and is cached 2011 to 2026).
 FEED_FIRST_SEASON = 2011
 
-#: The earliest season the builder accepts.
-FIRST_ACCEPTED_SEASON = FEED_FIRST_SEASON
+#: The earliest season the builder accepts (O4: the pre-2011 cache, 2000-2010).
+FIRST_ACCEPTED_SEASON = 2000
+
+#: How much of an empty pre-2011 response body an absent block keeps verbatim.
+ABSENT_BODY_MAX = 4096
 
 #: The last day of each regular season the builder may meet as the CURRENT
 #: year. A current year missing here is refused as in progress.
@@ -108,7 +128,7 @@ FIELDS = {"hitting": HITTING_FIELDS, "pitching": PITCHING_FIELDS}
 #: Fields read off the split rather than off its `stat` block.
 _SPLIT_FIELDS = ("numTeams",)
 
-BUILD_CMD = "python tools/build_fwar_vintage.py --freeze 2011-2026 --write"
+BUILD_CMD = "python tools/build_fwar_vintage.py --freeze 2000-2026 --write"
 
 
 class FreezeError(RuntimeError):
@@ -240,6 +260,8 @@ def freeze_group(season: int, group: str, fetch: Callable[[str], FetchResponse],
     except (ValueError, AttributeError, TypeError, IndexError) as exc:
         raise FreezeError(f"{season} {group}: unparseable body ({type(exc).__name__})") from exc
     n = len(splits)
+    if n == 0 and int(season) < FEED_FIRST_SEASON:
+        return absent_group(season, group, url, at, resp)
     if n >= saber_feed.SABER_LIMIT:
         raise FreezeError(f"{season} {group}: {n} rows reaches the feed's cap "
                           f"{saber_feed.SABER_LIMIT}; the response may be truncated")
@@ -260,7 +282,25 @@ def freeze_group(season: int, group: str, fetch: Callable[[str], FetchResponse],
     return block
 
 
+def absent_group(season: int, group: str, url: str, at: str, resp: FetchResponse) -> dict:
+    """A pre-2011 group the feed answered with HTTP 200 and no rows (rule 6)."""
+    text = resp.body.decode("utf-8", errors="replace")
+    block = {
+        "group": group, "status": "absent", "url": url, "fetched_at": at,
+        "http_status": resp.status, "raw_sha256": hashlib.sha256(resp.body).hexdigest(),
+        "response": text[:ABSENT_BODY_MAX],
+        "response_truncated": len(text) > ABSENT_BODY_MAX,
+        "n_rows": 0, "n_players": 0, "n_multi_team": 0, "ambiguous_ids": [],
+        "n_string_refused": 0, "fields": list(FIELDS[group]), "rows": {},
+    }
+    block["content_sha256"] = group_content_sha(block)
+    return block
+
+
 def _call_order(season: int) -> tuple[str, ...]:
+    """Pitching first before 2011, so the first pre-2011 call is the probe."""
+    if int(season) < FEED_FIRST_SEASON:
+        return ("pitching", "hitting")
     return GROUPS
 
 
@@ -319,9 +359,10 @@ def freeze_seasons(existing: dict | None, seasons, *,
 
 
 def season_basis(season_block: dict) -> str:
-    """'fwar' when every group of the season is frozen, else 'mixed'."""
-    ok = all((season_block.get(g) or {}).get("status") == "frozen" for g in GROUPS)
-    return "fwar" if ok else "mixed"
+    """'fwar' when every group of the season is frozen, 'absent' when none
+    is, else 'mixed' (rule 6)."""
+    n = sum((season_block.get(g) or {}).get("status") == "frozen" for g in GROUPS)
+    return "fwar" if n == len(GROUPS) else ("absent" if n == 0 else "mixed")
 
 
 def verify(blob: dict) -> list[str]:
@@ -389,6 +430,15 @@ def mixed_seasons(blob: dict | None = None) -> list[int]:
     blob = load() if blob is None else blob
     return sorted(int(s) for s, sb in (blob.get("seasons") or {}).items()
                   if season_basis(sb) != "fwar")
+
+
+def war_basis(seasons, blob: dict | None = None) -> str:
+    """The stamp for a cohort whose label reads `seasons`: 'fwar' only when
+    every one of them is an fwar season of the vintage, else 'mixed' (rule 6;
+    gate part 4.1 note 3). A season the vintage never recorded is not fwar."""
+    blob = load() if blob is None else blob
+    ok = set(fwar_seasons(blob))
+    return "fwar" if all(int(s) in ok for s in seasons) else "mixed"
 
 
 def war_by_group(blob: dict, season: int, group: str) -> dict[int, float]:
