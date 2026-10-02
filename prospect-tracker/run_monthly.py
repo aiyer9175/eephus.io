@@ -369,6 +369,12 @@ SCHEDULED_EXPORTS = (
     # refusal never reaches INGEST RED. Appended BELOW ledger_export on purpose
     # (test_mgmt_export scans a fixed window above mgmt_export).
     "franchise_export",
+    # The postseason series cache (step d8p, postseason.py): the one
+    # postseason results source, 2000 to the live season. Watched because a
+    # failed fetch leaves yesterday's live file standing, which reads exactly
+    # like a quiet night. Appended BELOW franchise_export on purpose
+    # (test_mgmt_export scans a fixed window above mgmt_export).
+    "postseason_cache",
     # THE CLOSE-ODDS CAPTURE. Not an export this pipeline runs at all: it is
     # tools/betting_close_job.py, on its own cron, and that is exactly why it is
     # watched from here. The job exits 0 on every legitimate no-op, so a cron
@@ -3088,6 +3094,24 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     log.info("daily: detected %d trades (%d new)", len(new_trades), n_trades)
                 except Exception:
                     log.exception("daily: trade detection failed — continuing")
+
+        # --- d8p. Postseason series cache. ---------------------------------
+        # postseason.nightly fetches the live season's postseason series at
+        # most once a day, never before its regular season ends, and never a
+        # frozen (completed) season; completed seasons 2000 to 2025 ride the
+        # tracked copy under data/_labs/postseason/. Network, guarded: a
+        # failure writes nothing, so the frozen seasons and yesterday's live
+        # file stand, and files a red under postseason_cache.
+        with _step("d8p. Postseason series cache", log):
+            try:
+                import postseason as _postseason
+                _psr = _postseason.nightly(log=log)
+                _record_ingest("postseason_cache", True, _psr.get("n_series", 0),
+                               _psr.get("message", ""), log=log)
+            except Exception as e:                       # noqa: BLE001
+                log.exception("daily: postseason series cache failed - continuing")
+                _record_ingest("postseason_cache", False, 0,
+                               f"postseason cache failed: {e}", log=log)
 
         # OOM: free the whole-universe caches BEFORE d9. all_snaps + timeseries
         # (built at d1) are the largest structures in the daily frame and are
