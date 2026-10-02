@@ -425,6 +425,94 @@ def test_odds_quotes_the_playoff_odds_registry_row_and_the_monte_carlo_sentence(
         assert b["verdict"] == row["verdict"] and b["verdict_model"] == "playoff_odds_sim"
 
 
+# --------------------------------------------------------------------------
+# RFR01 (2026-10-02): a settled season's ODDS agree with its SEASON tiles
+# --------------------------------------------------------------------------
+
+def test_served_settled_odds_agree_with_the_final_standings_and_the_bracket_seeds(clubs):
+    """Over the SERVED artifacts. Once futures.json is built past
+    regular_season_end, every club's Division equals its division_champ flag,
+    Bye is 1 only for bracket seeds 1 and 2 per league, Playoffs only for a
+    seeded club, and Projected wins with both ends of its band equal the final
+    wins. A phantom game once served CLE 74.9% Division beside 'division
+    champion' and NYY 93.5 projected wins on a 93-68 final."""
+    import franchise_export as fe
+    from trades import canonical_org
+    fu = _load("futures.json")
+    if not fe.futures_settled(fu):
+        pytest.skip("futures.json is not past regular_season_end")
+    bs = _load("bracket_sim.json")
+    # bracket_sim lists the 12 postseason clubs only; a club it omits is unseeded
+    seeds = {canonical_org(r["team"]): r.get("seed") for r in bs["clubs"]}
+    assert set(seeds) <= set(clubs) and len(seeds) == 12
+    for lg in ("AL", "NL"):
+        got = sorted(r["seed"] for r in bs["clubs"] if r["league"] == lg and r.get("seed"))
+        assert got == [1, 2, 3, 4, 5, 6], (lg, got)
+    seeds = {code: seeds.get(code) for code in clubs}
+    for code, c in clubs.items():
+        o, s = c["sections"]["odds"], c["sections"]["season"]
+        assert o["division_pct"] == float(s["division_champ"]), (code, o["division_pct"], s["division_champ"])
+        assert o["bye_pct"] == (1.0 if seeds[code] in (1, 2) else 0.0), (code, o["bye_pct"], seeds[code])
+        assert o["playoff_pct"] == (1.0 if seeds[code] else 0.0), (code, o["playoff_pct"], seeds[code])
+        assert o["proj_wins"] == s["wins"] and o["p10"] == o["p90"] == s["wins"], (code, o["proj_wins"], o["p10"], o["p90"], s["wins"])
+    assert fe.settled_odds_disagreements(list(clubs.values()), fu, seeds) == []
+
+
+def _odds_doc(code, wins, champ, odds):
+    return {"code": code, "sections": {"season": {"wins": wins, "division_champ": champ}, "odds": odds}}
+
+
+PHANTOM = [  # the served 2026-10-01 rows, one phantom game in futures.json
+    _odds_doc("CLE", 85, True, {"division_pct": 0.749, "bye_pct": 0.749, "playoff_pct": 1.0,
+                                "proj_wins": 85, "p10": 85, "p90": 85}),
+    _odds_doc("NYY", 93, False, {"division_pct": 0.0, "bye_pct": 0.0, "playoff_pct": 1.0,
+                                 "proj_wins": 93.5, "p10": 93, "p90": 94}),
+]
+PHANTOM_SEEDS = {"CLE": 2, "NYY": 4}
+
+
+def test_the_settled_odds_guard_names_every_phantom_field_and_only_after_the_end_date():
+    import franchise_export as fe
+    after = {"season": fe.SEASON_NOW, "generated_at": "2026-10-02T01:28:32+00:00", "regular_season_end": "2026-09-27"}
+    bad = fe.settled_odds_disagreements(PHANTOM, after, PHANTOM_SEEDS)
+    assert bad == [["CLE", "division_pct", 0.749, 1.0], ["CLE", "bye_pct", 0.749, 1.0],
+                   ["NYY", "proj_wins", 93.5, 93], ["NYY", "p90", 94, 93]]
+    # without the bracket the seed-based fields are not checked
+    assert [r[:2] for r in fe.settled_odds_disagreements(PHANTOM, after, None)] == [
+        ["CLE", "division_pct"], ["NYY", "proj_wins"], ["NYY", "p90"]]
+    # in season, on the end date itself, another season, or no dates: nothing is settled
+    for fu in ({**after, "generated_at": "2026-09-20T04:00:00+00:00"},
+               {**after, "generated_at": "2026-09-27T04:00:00+00:00"},
+               {**after, "season": fe.SEASON_NOW - 1},
+               {**after, "regular_season_end": None}, {}):
+        assert fe.futures_settled(fu) is False
+        assert fe.settled_odds_disagreements(PHANTOM, fu, PHANTOM_SEEDS) == []
+
+
+def test_export_refuses_a_settled_season_whose_odds_contradict_the_standings(tmp_path, monkeypatch):
+    import franchise_export as fe
+    fu = _load("futures.json")
+    if not fe.futures_settled(fu):
+        pytest.skip("futures.json is not past regular_season_end")
+    real = fe._j
+
+    def phantom(name, base=fe.DATA):
+        doc = real(name, base)
+        if name == "futures.json":
+            doc = json.loads(json.dumps(doc))
+            for row in doc["clubs"]:
+                if row["team"] == "NYY":
+                    row["projWins"], row["winTotalP90"] = row["projWins"] + 0.5, row["winTotalP90"] + 1
+        return doc
+    monkeypatch.setattr(fe, "_j", phantom)
+    monkeypatch.setattr(fe, "OUT", tmp_path / "franchise_board.json")
+    with pytest.raises(fe.FranchiseRefusal) as exc:
+        fe.build()
+    assert "odds:" in str(exc.value) and "'NYY', 'proj_wins'" in str(exc.value)
+    assert fe.main() == 2
+    assert not (tmp_path / "franchise_board.json").exists(), "a refusal never writes"
+
+
 def test_every_section_verdict_equals_its_registry_row(d, clubs):
     reg = {m["model_id"]: m for m in _load("model_registry.json")["models"]}
     quoted = {r["model_id"] for r in d["accountability"]["registry_verdicts"]}

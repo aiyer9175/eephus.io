@@ -144,6 +144,49 @@ def _bracket_overlay(reg_rows: dict) -> tuple[dict | None, str | None]:
             "verdict": row.get("verdict"), "clubs": clubs,
             "generated_at": doc.get("generated_at")}, None
 
+
+def futures_settled(futures: dict) -> bool:
+    """True when futures.json was built AFTER this season's last scheduled
+    regular-season date (the UTC date of its generated_at strictly past
+    regular_season_end). On the end date itself the last games may still be
+    unplayed, so that day is not yet settled. False when either date is
+    missing or unreadable, or the payload is another season's."""
+    if (futures or {}).get("season") != SEASON_NOW:
+        return False
+    built, end = str(futures.get("generated_at") or "")[:10], str(futures.get("regular_season_end") or "")[:10]
+    try:
+        return date.fromisoformat(built) > date.fromisoformat(end)
+    except ValueError:
+        return False
+
+
+def settled_odds_disagreements(club_docs: list, futures: dict, seeds: dict | None) -> list:
+    """[[code, field, served, expected], ...] where a settled season's ODDS
+    tiles contradict the SEASON tiles on the same club page (RFR01).
+
+    Once the regular season is over nothing is left to simulate, so the season
+    simulator's Division is 1 for the division champion and 0 for everyone
+    else, Projected wins and both ends of its band equal the final wins, and,
+    while the bracket simulator serves (`seeds` is {code: seed or None}), Bye
+    is 1 only for seeds 1 and 2 and Playoffs only for a seeded club. A phantom
+    game in futures.json (SMOKE_8, 2026-10-01) broke every one of these on 5
+    clubs. Empty before the season is settled."""
+    if not futures_settled(futures):
+        return []
+    out = []
+    for d in club_docs:
+        code, o, s = d["code"], d["sections"]["odds"], d["sections"]["season"]
+        want = {"division_pct": 1.0 if s.get("division_champ") else 0.0,
+                "proj_wins": s.get("wins"), "p10": s.get("wins"), "p90": s.get("wins")}
+        if seeds is not None:
+            seed = seeds.get(code)
+            want["bye_pct"] = 1.0 if seed in (1, 2) else 0.0
+            want["playoff_pct"] = 1.0 if seed is not None else 0.0
+        for field, exp in want.items():
+            if o.get(field) != exp:
+                out.append([code, field, o.get(field), exp])
+    return out
+
 #: Key names the writer refuses to emit anywhere in the document.
 FORBIDDEN_KEYS = {"revenue", "revenues", "valuation", "valuations", "tv_money", "rsn",
                   "pennants", "titles", "manager_skill", "decision_quality", "hof_plaques"}
@@ -221,8 +264,9 @@ TENDENCY_PANELS = (
 
 
 class FranchiseRefusal(RuntimeError):
-    """Raised when fewer than 30 clubs resolve on a graded branch. The caller
-    leaves the previous file on disk and files a red under franchise_export."""
+    """Raised when fewer than 30 clubs resolve on a graded branch, or when a
+    settled season's ODDS contradict its final standings. The caller leaves the
+    previous file on disk and files a red under franchise_export."""
 
 
 # --------------------------------------------------------------------------
@@ -1375,6 +1419,11 @@ def build() -> dict:
     }
     if bracket:
         doc["basis"]["bracket_sim"] = bracket["generated_at"]
+    seeds = {c: (bracket["clubs"].get(c) or {}).get("seed") for c in codes} if bracket else None
+    settled_bad = settled_odds_disagreements(club_docs, futures, seeds)
+    if settled_bad:
+        raise FranchiseRefusal(f"odds: {len(settled_bad)} ODDS fields contradict the final standings "
+                               f"after regular_season_end {futures.get('regular_season_end')}: {settled_bad[:8]}")
     _assert_document(doc)
     return doc
 

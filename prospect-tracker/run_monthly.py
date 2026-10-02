@@ -2264,8 +2264,9 @@ def _export_ledger_board(log) -> bool:
 
 def _export_franchise_board(log) -> bool:
     """Write the Franchise board (the body of nightly step 6b7d). True on a
-    write. A refusal (fewer than 30 clubs on a graded branch) or a raise leaves
-    the previous file on disk and files a red under "franchise_export"."""
+    write. A refusal (fewer than 30 clubs on a graded branch, or a settled
+    season's ODDS contradicting the final standings) or a raise leaves the
+    previous file on disk and files a red under "franchise_export"."""
     try:
         import franchise_export as _fr
         _frd = _fr.build()
