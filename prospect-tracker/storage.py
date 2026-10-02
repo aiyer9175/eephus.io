@@ -2883,7 +2883,9 @@ def upsert_career_war(by_key: dict[str, dict]) -> int:
        "career_war": 4.3,                             # sum(seasons)
        "war_per_yr": 2.15,                            # career_war / n
        "war_seasons_count": 2,
-       "source": "bbref" | "ewar_v2",
+       "source": "bbref" | "ewar_v2" | "fwar",
+       # fWAR label epoch (E3): an fwar row keeps the incumbent beside it,
+       # "seasons_ewar_v2": {...}, plus its "fwar_coverage" receipt
        # eWAR epoch (2026-09-03) only, written by the ewar_v2 provider and by
        # tools/rebase_career_war_to_ewar.py:
        "seasons_bwar": {"2023": 1.4, "2024": 2.9, ...},   # the bWAR frame
@@ -2897,7 +2899,7 @@ def upsert_career_war(by_key: dict[str, dict]) -> int:
     pitchers eWAR re-prices runs on FIP within role (ewar.py).
 
     MERGE RULES. `seasons` unions old-then-new (new wins per year), and so do
-    `seasons_bwar`, `seasons_pa` and `seasons_ip` when either side carries
+    `seasons_bwar`, `seasons_ewar_v2`, `seasons_pa` and `seasons_ip` when either side carries
     them; the aggregates are recomputed over the merged `seasons`. A legacy
     payload (none of those) merges as it always did and drops nothing: an old
     map on file survives the merge untouched (so a rebase, which writes no
@@ -2925,6 +2927,8 @@ def upsert_career_war(by_key: dict[str, dict]) -> int:
                 old = {}
                 old_seasons = {}
                 old_bwar = {}
+            # the payload's own served series, before the union below rewrites it
+            _payload_seasons = dict(rec.get("seasons") or {})
             if old_seasons:
                 merged = dict(old_seasons)
                 merged.update(rec.get("seasons") or {})
@@ -2953,6 +2957,23 @@ def upsert_career_war(by_key: dict[str, dict]) -> int:
                 if merged_bwar != (rec.get("seasons_bwar") or {}):
                     rec = dict(rec)
                     rec["seasons_bwar"] = merged_bwar
+            # fWAR label epoch (E3): the incumbent eWAR v2 series an fwar row keeps
+            # (gate part 4.1 note 2) merges by the same union rule, so a narrow
+            # refetch cannot delete it. A payload from the incumbent's provider
+            # ('ewar_v2', or 'bbref' on a row it never rebased) carries no map of
+            # its own: its seasons ARE the incumbent, so on a row that already
+            # keeps one they refresh it, exactly as a bbref payload refreshes
+            # seasons_bwar. A row and a payload with no map: nothing changes.
+            _old_inc = old.get("seasons_ewar_v2") if isinstance(old.get("seasons_ewar_v2"), dict) else {}
+            _new_inc = rec.get("seasons_ewar_v2") or {}
+            if not _new_inc and _old_inc and rec.get("source") in ("ewar_v2", "bbref"):
+                _new_inc = _payload_seasons
+            if _old_inc or _new_inc:
+                _merged_inc = dict(_old_inc)
+                _merged_inc.update(_new_inc)
+                if _merged_inc != (rec.get("seasons_ewar_v2") or {}):
+                    rec = dict(rec)
+                    rec["seasons_ewar_v2"] = _merged_inc
             # Measured exposure (decision 14c) merges by the same union rule, so a
             # narrow-window refetch or a rebase keeps the exposure of the seasons it
             # did not touch. A payload and a row with neither map: nothing changes.
