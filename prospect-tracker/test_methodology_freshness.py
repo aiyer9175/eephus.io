@@ -164,7 +164,7 @@ MODEL_GLOSSARY = {
     "surplus_downside_risk": ["risk_adjusted_surplus"],
     "prospect_greeks": ["prospect_greeks"],
     "star_odds": ["star_odds"],
-    "upgrade_option": ["opt_pct"],   # Tier 2 grade-option layer; surfaced as the PROSPX OPT% column
+    "upgrade_option": ["opt_pct"],   # Tier 2 grade-option layer; surfaced as the PROSPX player-page PLUS% line
     # Tier 2 cross-source scale map; shapes the live consensus_fv scale. The
     # normalized_source_grade entry (2026-07-29) is the reader-facing version:
     # why a consensus can land outside the range of the grades on the card.

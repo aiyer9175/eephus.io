@@ -260,8 +260,9 @@ in our data (60 FV about 221 hitter observations) and grade mobility at the top 
 net-downgrade risk the frozen-at-grade intrinsic ignores. A config-prior mode
 (labelled literature anchor: a 45 FV position player upgrades at roughly 20 percent)
 is available as a cross-check. Report: `reports/upgrade_option.md`; eval:
-`data/upgrade_option_eval.json`. Surfaced 2026-07-05 as the opt-in OPT% column on
-the PROSPX active board (`#optpct`; provisional, negatives shown honestly).
+`data/upgrade_option_eval.json`. Surfaced 2026-07-05 as a PROSPX board column; since
+2026-09-30 a PLUS% line on the player-page eFV card, under Star Odds (provisional,
+negatives shown as they are).
 
 ## 10. Cross-source grade normalization (`grade_normalization.py`)
 
@@ -303,7 +304,7 @@ graders. Report: `reports/grade_normalization.md` (the 2026-07-04 snapshot); eva
   universe comparison (793 of 1005 ranked).
 - Safety flags enabled: the mlb_trade_lookup per-season kernel (opt-out) and the
   PROSPX Star Odds column.
-- Tier 2 surfaced: OPT% is an opt-in PROSPX column; the cross-source normalized
+- Tier 2 surfaced: PLUS% (OPT%) is a line on the PROSPX player page; the cross-source normalized
   consensus is now the live consensus scale (`ADOPT_NORMALIZED_CONSENSUS`).
 
 ## Open items

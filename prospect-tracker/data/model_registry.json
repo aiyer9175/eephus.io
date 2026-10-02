@@ -2637,14 +2637,14 @@
   },
   {
    "model_id": "upgrade_option",
-   "surface": "PROSPX active board PLUS% column (on by default; #optpct=0 hides it); report reports/upgrade_option.md",
+   "surface": "PROSPX player page PLUS% line (eFV card, under Star Odds; off the board since 2026-09-30); report reports/upgrade_option.md",
    "predicts": "grade-transition option value: OPT% = option / total (the share of a grade's value that comes from the chance of upgrading before graduating)",
    "champion": "absorbing-Markov option valuation over our dated grade history (clemens_2026 table payoff)",
    "baseline": "intrinsic value under frozen-grade transitions",
    "metric": "OPT% by grade; acceptance 45 FV hitter OPT% > 0.50 and 60 FV OPT% well below it",
    "eval_artifact": "data/upgrade_option_eval.json",
    "verdict": "provisional",
-   "notes": "SHIPPED 2026-07-04 (Tier 2). Grade modeled as a role-split absorbing Markov chain (grades 35-70 plus graduated and out, annual step), estimated from prospects.db snapshots (fangraphs + mlb_pipeline pooled to one grade per player per year), Laplace-smoothed; graduated = debuts.json, out = inactive.json, and a still-active player's last year is censored (no fabricated transitions). Payoff = the clemens_2026 table value of the grade a player graduates from. Low grades are option-dominated (45 FV hitter OPT% about 60%, thick data); high grades run low or negative OPT% because they are thin (60 FV about 221 hitter obs) and grade mobility at the top is net-downgrade risk the frozen intrinsic ignores. SURFACED 2026-07-05 as an opt-in OPT% column on the PROSPX active board (since launched: on by default and labelled PLUS%, #optpct=0 hides it; payload surplus.opt_pct via value_framework.published_opt_pct, snapped by FV tier). Provisional: negative high-grade values are shown honestly.",
+   "notes": "SHIPPED 2026-07-04 (Tier 2). Grade modeled as a role-split absorbing Markov chain (grades 35-70 plus graduated and out, annual step), estimated from prospects.db snapshots (fangraphs + mlb_pipeline pooled to one grade per player per year), Laplace-smoothed; graduated = debuts.json, out = inactive.json, and a still-active player's last year is censored (no fabricated transitions). Payoff = the clemens_2026 table value of the grade a player graduates from. Low grades are option-dominated (45 FV hitter OPT% about 60%, thick data); high grades run low or negative OPT% because they are thin (60 FV about 221 hitter obs) and grade mobility at the top is net-downgrade risk the frozen intrinsic ignores. SURFACED 2026-07-05 as an opt-in OPT% column on the PROSPX active board (since launched: on by default and labelled PLUS%, #optpct=0 hides it; payload surplus.opt_pct via value_framework.published_opt_pct, snapped by FV tier). Provisional: negative high-grade values are shown honestly. MOVED 2026-09-30 (owner answer M29-1): off the PROSPX board to the player-page eFV card, under Star Odds; the board CSV keeps plus_pct.",
    "last_checked": "2026-10-02",
    "stale": false,
    "artifact_age_days": 90

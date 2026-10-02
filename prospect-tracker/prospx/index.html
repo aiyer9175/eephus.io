@@ -1754,7 +1754,7 @@
          niche axis that held a fixed column while higher-value reads sat behind
          flags, so it now rides the same opt-in convention (#phys / ?phys, default
          OFF) and adds its track back through .has-phys. Its slot is BETWEEN MiLB
-         and ETA, so unlike Star Odds / PLUS% it cannot simply be appended - hence
+         and ETA, so unlike Star Odds it cannot simply be appended - hence
          the written-out combinations below. Sort keys (ht/wt/bmi) keep working
          whether or not the column is painted. */
       grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.55fr 0.75fr;
@@ -1764,30 +1764,40 @@
       row-gap: 0;                      /* tightened so toolstrip sits flush below meta */
       align-items: center;
     }
-    /* Optional columns (opt-in flags). Phys (#phys) INSERTS a track after MiLB;
-       Star Odds (#starodds) and PLUS% (#optpct) each APPEND one track to the right
-       of Surplus. Three independent flags = eight states, written out so the grid
-       stays column-aligned in every one. Rules are ordered by specificity
-       (one-class, then two-class, then three-class) so the most specific
-       combination always wins. Mobile overrides below keep the 3-col collapse
-       (every one of these cells is desktop-only). */
+    /* Optional columns. Phys (#phys) INSERTS a track after MiLB; Star Odds (#starodds,
+       on by default) APPENDS one. Two flags, four states. The active board (the only
+       board that sets .has-star-odds) gives the content-sized columns fixed widths
+       (rank 64, eFV 72, ETA 72, Star Odds 88) and hands the rest to Player, FV history,
+       MiLB and Surplus through minmax(0, fr): a wide screen widens the cells that wrap,
+       and a nowrap child can never size a track in one grid but not the other.
+       PLUS% left the board 2026-09-30 (owner answer M29-1); its width went to Player
+       and MiLB. Measured 2026-09-30 and 2026-10-02, 390-1920px, both themes. Mobile
+       overrides below keep the 3-col collapse (every one of these cells is
+       desktop-only). */
     .col-header.has-phys, .player-row.has-phys {
       grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr;
     }
-    .col-header.has-star-odds, .player-row.has-star-odds,
-    .col-header.has-opt-pct, .player-row.has-opt-pct {
-      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.55fr 0.75fr 0.6fr;
+    .col-header.has-star-odds, .player-row.has-star-odds {
+      grid-template-columns: minmax(0, 1.9fr) 64px 72px minmax(0, 1.4fr) minmax(0, 1.7fr) 72px minmax(0, 0.8fr) 88px;
     }
-    .col-header.has-star-odds.has-opt-pct, .player-row.has-star-odds.has-opt-pct {
-      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.55fr 0.75fr 0.6fr 0.6fr;
+    .col-header.has-phys.has-star-odds, .player-row.has-phys.has-star-odds {
+      grid-template-columns: minmax(0, 1.9fr) 64px 72px minmax(0, 1.4fr) minmax(0, 1.7fr) minmax(88px, 0.7fr) 72px minmax(0, 0.8fr) 88px;
     }
-    .col-header.has-phys.has-star-odds, .player-row.has-phys.has-star-odds,
-    .col-header.has-phys.has-opt-pct, .player-row.has-phys.has-opt-pct {
-      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr 0.6fr;
+    @media (min-width: 901px) and (max-width: 1199px) {
+      .col-header.has-star-odds, .player-row.has-star-odds {
+        grid-template-columns: minmax(0, 1.9fr) 64px 64px minmax(0, 1.2fr) minmax(0, 1.7fr) 64px minmax(0, 0.85fr) 72px;
+      }
+      .col-header.has-phys.has-star-odds, .player-row.has-phys.has-star-odds {
+        grid-template-columns: minmax(0, 1.9fr) 64px 64px minmax(0, 1.2fr) minmax(0, 1.7fr) minmax(88px, 0.7fr) 64px minmax(0, 0.85fr) 72px;
+      }
     }
-    .col-header.has-phys.has-star-odds.has-opt-pct,
-    .player-row.has-phys.has-star-odds.has-opt-pct {
-      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr 0.6fr 0.6fr;
+    /* Wide board: 1400-1499 before the 240px context rail opens, and 1700+ where the
+       rail sits beside a capped board. 1500-1699 keeps the list above because the rail
+       narrows the board to 1194-1374px. */
+    @media (min-width: 1400px) and (max-width: 1499px), (min-width: 1700px) {
+      .col-header.has-star-odds, .player-row.has-star-odds {
+        grid-template-columns: minmax(0, 1.7fr) 64px 72px minmax(0, 1.6fr) minmax(0, 1.7fr) 72px minmax(0, 0.8fr) 88px;
+      }
     }
     /* v20 - Tool-grade-strip is a FULL-WIDTH tape: it spans every column in
        its own bottom row so the complete tool set (up to 11 pitcher pills)
@@ -3338,6 +3348,43 @@
       padding-top: 0;
       margin-top: 0;
     }
+    /* M29 S1 (owner answer M29-2): on the active board the watch, compare and expand
+       buttons ride the right end of row 2 (.row-actions), so the name and meta line
+       get the identity row's full width. Measured name stack 44 -> 159px at 1024 and
+       126 -> 245px at 1440. */
+    .player-row > .player-row-toolstrip.has-actions { display: flex; align-items: center; column-gap: 8px; }
+    .player-row-toolstrip.has-actions > :not(.row-actions) { min-width: 0; }
+    .player-row-toolstrip.has-actions > .tool-grade-strip { flex: 1 1 auto; width: auto; }
+    .player-row-toolstrip.has-actions > .row-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; flex: none; }
+    /* M29 S2 / S6: whole units never split across lines. */
+    .player-meta .pos-cluster { white-space: nowrap; }
+    .surplus-cell .sv-botline > span { white-space: nowrap; }
+    /* M29 S7: shorter header labels where the tracks are narrow (titles unchanged). */
+    @media (max-width: 1199px) { .col-header .hdr-more { display: none; } }
+    @media (max-width: 900px)  { .col-header .hdr-efv  { display: none; } }
+    /* M29 B1: the in-org rank under the rank diamond ("TBR #1"). */
+    .rank-cell-stack .rank-org {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      line-height: 1.1;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    /* M29 A1: age vs level and the date he reached the level, under the ETA year. */
+    .eta-cell .eta-avl-block { margin-top: 2px; line-height: 1.15; }
+    .eta-cell .eta-avl {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .eta-cell .eta-reached {
+      font-size: 9px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
     .tool-grade-strip {
       display: flex;
       /* Default: WRAP so the FULL tool set stays visible on spacious cards. A
@@ -3547,12 +3594,30 @@
        gap:4px replaces the old margin-right:6px on .level-pill so
        sibling pills (.stat-pill, .rps-plus-pill) inherit consistent
        inter-chip spacing. */
+    /* M29 S4/S5: the cell is three block lines (pill row, slash line, detail line).
+       The pill row is a block flex row so it wraps inside its own box; each stat in
+       the slash and detail lines is a nowrap .milb-seg, so a wrap falls between
+       stats and never inside one ("wRC+ 105" cut to "wRC+ 10" was the defect). */
     .milb-pill-row {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       flex-wrap: wrap;
       gap: 4px;
+      row-gap: 2px;
       line-height: 1.4;
+    }
+    body.density-compact .milb-cell .milb-pill-row > .stat-pill,
+    body.density-compact .milb-cell .milb-pill-row > .rps-plus-pill,
+    body.density-compact .milb-cell .milb-pill-row > .level-pill { padding-left: 4px; padding-right: 4px; }
+    .milb-cell .milb-line { min-width: 0; }
+    .milb-cell .milb-slash { color: var(--text-primary); }
+    .milb-cell .milb-detail { color: var(--text-tertiary); text-wrap: balance; }
+    .milb-cell .milb-seg { white-space: nowrap; }
+    @media (min-width: 901px) and (max-width: 1199px) {
+      .player-row .milb-cell .milb-detail { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+    }
+    @media (min-width: 901px) and (max-width: 1023px) {
+      .player-row .milb-cell .milb-ev-chip-strip { display: none; }
     }
     .level-pill {
       display: inline-flex;
@@ -7106,27 +7171,23 @@
            Rank column at 44px so "RANK" header fits without wrapping. */
         grid-template-columns: 1fr 44px 0.5fr;
       }
-      /* Keep the mobile 3-col collapse even when Phys / Star Odds / PLUS% are
-         surfaced - the desktop .has-phys / .has-star-odds / .has-opt-pct
-         multi-track rules outweigh the base mobile selector, so re-override here at
-         matching-or-higher specificity + later in source. Every one of those cells
-         is desktop-only, so mobile drops them like the other dense columns. The
-         three-class selector is listed so the 10-track desktop rule (specificity
-         0,4,0) is beaten at mobile width. */
+      /* Keep the mobile 3-col collapse even when Phys / Star Odds are surfaced -
+         the desktop .has-phys / .has-star-odds multi-track rules outweigh the base
+         mobile selector, so re-override here at matching specificity, later in
+         source. Two flags, four states: the two-class pair beats the desktop 0,3,0
+         rule by coming later. Every one of those cells is desktop-only, so mobile
+         drops them like the other dense columns. M29 P1: the active board's eFV
+         badge track is a fixed 64px (it needs 64, and 0.5fr handed it 87px at 390
+         and 210px at 768); the base rule above keeps 0.5fr for the other boards. */
       .col-header.has-phys, .player-row.has-phys,
       .col-header.has-star-odds, .player-row.has-star-odds,
-      .col-header.has-opt-pct, .player-row.has-opt-pct,
-      .col-header.has-star-odds.has-opt-pct, .player-row.has-star-odds.has-opt-pct,
-      .col-header.has-phys.has-star-odds, .player-row.has-phys.has-star-odds,
-      .col-header.has-phys.has-opt-pct, .player-row.has-phys.has-opt-pct,
-      .col-header.has-phys.has-star-odds.has-opt-pct,
-      .player-row.has-phys.has-star-odds.has-opt-pct {
-        grid-template-columns: 1fr 44px 0.5fr;
+      .col-header.has-phys.has-star-odds, .player-row.has-phys.has-star-odds {
+        grid-template-columns: minmax(0, 1fr) 44px 64px;
       }
       /* H4 - the dense right-hand cells are hidden on phones. The old list named
          `.phys-cell`, a class the phys cluster stopped emitting (it renders
          `.phys-cluster`), and never covered the plain `desktop-only` wrappers
-         around Surplus / Star Odds / PLUS% at all - so those four cells were still
+         around Surplus / Star Odds at all - so those cells were still
          grid children at phone width and, being pinned to grid-row 1 by the base
          rule, spilled into implicit columns 4+ past the card's right edge. Hiding
          every direct `.desktop-only` child of a row collapses the phone card back
@@ -7141,9 +7202,13 @@
       .col-header .desktop-only { display: none; }
       /* v43 - Mobile keeps the signature FV-history "stock chart": surface it as
          a compact full-width strip at the BOTTOM of the card (desktop hides it
-         in the dense grid). `grid-column: 1 / 6` spans all five mobile tracks - 
-         a bare `1 / -1` mis-resolves against the auto-placed items and collapses
-         to ~3 tracks. Card height -> auto so the chart + tool strip render in
+         in the dense grid). M29 P2: `grid-column: 1 / -1` spans the three explicit
+         mobile tracks. Every dense cell is display:none above and
+         playerExpandedMetaHTML returns "", so row 1 holds exactly three items; the
+         old `1 / 6` created two empty implicit tracks and two extra 8px gaps, which
+         walked the row's columns up to 16px off the header's at 390px. This rule is
+         shared, so the watchlist board and the farm roster get the same fix.
+         Card height -> auto so the chart + tool strip render in
          full without clipping; both span the full card width. Scoped to the
          standard prospect card so injured / traded / leaderboard / farm-roster
          variants keep their own mobile collapse. */
@@ -7164,10 +7229,10 @@
            row 1), but here the card is height:auto and this cell is a fixed 42px
            with the density-compact chart rendering ~60px, so hidden would crop the
            sparkline's top FV label + bottom year labels. Mobile renders it in full. */
-        display: flex; grid-column: 1 / 6; grid-row: 3; height: 42px; align-self: stretch; overflow: visible;
+        display: flex; grid-column: 1 / -1; grid-row: 3; height: 42px; align-self: stretch; overflow: visible;
       }
       .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .player-row-toolstrip {
-        grid-column: 1 / 6; grid-row: 2;
+        grid-column: 1 / -1; grid-row: 2;
       }
       /* Cell caps off for the same reason as the card: they guard a fixed height
          budget the phone layout does not have, and clipping here would only ever
@@ -8828,6 +8893,10 @@
         width: 44px; height: 44px; min-height: 44px;
         font-size: var(--fs-lg);
       }
+      /* M29 P3: the board's row actions ride row 2; compare and expand match the
+         watch button's 44px target there. */
+      .row-actions .compare-add-btn.is-compact,
+      .row-actions .row-expand-btn { width: 44px; height: 44px; }
 
       /* --- Dense tables → horizontally scrollable so columns never squish
          below legible size. display:block keeps an anonymous table inside
@@ -14074,6 +14143,10 @@ function _syncFromURLBody() {
   if (p.has("srev")) {
     for (const k of p.get("srev").split(",").filter(Boolean)) state.sortRev[k] = true;
   }
+  // PLUS% left the board 2026-09-30 (owner answer M29-1) and lives on the player page. A
+  // saved #sort=opt_pct link lands on the default eFV order; its reverse flag is dropped
+  // so it cannot flip the eFV board.
+  if (state.sort === "opt_pct") { state.sort = "xfv"; delete state.sortRev.sort; }
   if (p.has("dftpool"))   state.draftPool     = p.get("dftpool");
   if (p.has("dftside"))   state.draftSide     = p.get("dftside");
   if (p.has("dftpos"))    state.draftPos      = p.get("dftpos");
@@ -14436,7 +14509,7 @@ const REVERSE_SORT_PAIRS = {
 // keys still reverse via the flag in _applySortDir.
 const _INTERNAL_DIR_MAIN_SORTS = new Set([
   "surplus_sv", "surplus_risk", "surplus_p10", "surplus_p90",
-  "surplus_pbust", "wag", "star_odds", "opt_pct",
+  "surplus_pbust", "wag", "star_odds",
   "tool", "t_plus", "conviction", "fv", "xfv",
 ]);
 
@@ -14531,10 +14604,43 @@ function syncSortHeaderActive() {
   }
 }
 
-function makeEtaCell(p) {
+// M29 A1 (owner answer M29-2): age vs level and the date he reached the level, as two
+// small lines under the board's ETA year. Descriptive only (storage age_level.py, no model
+// claim). Blank on provisional rows, whose baseline the browser cannot rebuild; the date
+// prints only when the last recorded move lands on the level the age read is taken at.
+const _AVL_TIER_FG = { "very-young": "--level-very-young-fg", young: "--level-young-fg",
+  neutral: "--level-neutral-fg", old: "--level-old-fg", "too-old": "--level-too-old-fg" };
+function etaAgeVsLevelHTML(p) {
+  if (!p || p._is_provisional) return "";
+  const a = p.age_vs_level;
+  const v = a && a.diff != null && a.diff !== "" ? Number(a.diff) : null;
+  if (v == null || !isFinite(v)) return "";
+  const lvl = (p.statline && p.statline.level) || null;
+  const shown = Math.abs(v).toFixed(1);
+  const zero = Number(shown) === 0;
+  const signed = `${zero ? "" : (v > 0 ? "+" : "-")}${shown}y`;
+  const tok = _AVL_TIER_FG[a.tier] || "--text-secondary";
+  let tip = `Age vs level: ${zero ? "the same age as" : `${shown} years ${v > 0 ? "older" : "younger"} than`} the median player at ${lvl || "his level"}.`;
+  let reached = "";
+  const lcs = Array.isArray(p.level_changes) ? p.level_changes : [];
+  const lc = lcs.length ? lcs[lcs.length - 1] : null;
+  const m = lc && lvl && lc.to_level === lvl ? /^(\d{4})-(\d{2})-(\d{2})/.exec(String(lc.date || "")) : null;
+  if (m) {
+    const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(m[2]) - 1];
+    if (mon) {
+      const yr = Number(m[1]);
+      const label = yr === new Date().getFullYear() ? `${lvl} ${mon} ${Number(m[3])}` : `${lvl} ${yr}`;
+      reached = `<div class="eta-reached">${escapeHtml(label)}</div>`;
+      tip += ` Reached ${lvl} on ${mon} ${Number(m[3])}, ${yr}.`;
+    }
+  }
+  return `<div class="eta-avl-block" title="${escapeHtml(tip)}"><div class="eta-avl" style="color:var(${tok});">${signed}</div>${reached}</div>`;
+}
+function makeEtaCell(p, opts) {
+  const avlHTML = (opts && opts.ageVsLevel) ? etaAgeVsLevelHTML(p) : "";
   const eta = etaServed(p);
   if (!eta || eta.year == null) {
-    return `<div class="eta-cell" style="color:var(--text-tertiary);font-size:13px;"> - </div>`;
+    return `<div class="eta-cell" style="color:var(--text-tertiary);font-size:13px;"> - ${avlHTML}</div>`;
   }
   const thisYear = new Date().getFullYear();
   const diff = eta.year - thisYear;
@@ -14556,7 +14662,7 @@ function makeEtaCell(p) {
     ? `<span style="font-family:var(--font-serif);font-style:italic;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;margin-right:3px;" title="${halfBucket === 'Early' ? 'Apr-Jun debut window' : 'Jul-Sep debut window'} - blends fractional ETA distance + current-level bias">${halfBucket}</span>`
     : '';
   return `<div class="eta-cell" title="${eta.confidence ? eta.confidence + ' confidence' : 'ETA estimate'}${halfBucket ? ` · ${halfBucket} ${eta.year}` : ''}">
-    ${halfChip}<span class="eta-year ${cls}">${eta.year}</span>
+    ${halfChip}<span class="eta-year ${cls}">${eta.year}</span>${avlHTML}
   </div>`;
 }
 
@@ -14815,18 +14921,25 @@ function _lvlPlus(sl) {
   const v = sl.wrc_plus_level;
   return v != null ? v : (sl.ops_plus_level != null ? sl.ops_plus_level : null);
 }
-function formatLevelStatline(row) {
-  if (!row) return " - ";
+// The stat line as its parts. opts.dropPlus drops the trailing "wRC+ N" (the board's MiLB
+// cell passes it only when the pill above already prints the same rounded N).
+function formatLevelStatlineParts(row, opts) {
+  if (!row) return [];
   if (row.is_pitcher) {
     return [
       row.era != null ? `${row.era} ERA` : null,
       row.whip != null ? `${row.whip} WHIP` : null,
       row.ip != null ? `${row.ip} IP` : null,
-    ].filter(Boolean).join(" · ") || " - ";
+    ].filter(Boolean);
   }
-  return `${row.avg ?? " - "}/${row.obp ?? " - "}/${row.slg ?? " - "}`
-    + (row.hr != null ? ` · ${row.hr} HR` : "")
-    + (_lvlPlus(row) != null ? ` · wRC+ ${Math.round(_lvlPlus(row))}` : "");
+  const parts = [`${row.avg ?? " - "}/${row.obp ?? " - "}/${row.slg ?? " - "}`];
+  if (row.hr != null) parts.push(`${row.hr} HR`);
+  if (_lvlPlus(row) != null && !(opts && opts.dropPlus)) parts.push(`wRC+ ${Math.round(_lvlPlus(row))}`);
+  return parts;
+}
+function formatLevelStatline(row) {
+  if (!row) return " - ";
+  return formatLevelStatlineParts(row).join(" · ") || " - ";
 }
 
 function levelStatlinesHTML(p, opts = {}) {
@@ -14865,14 +14978,26 @@ function levelStatlinesHTML(p, opts = {}) {
   const compact = opts.compact !== false;
   const hideCurrentLevelLabel = !!opts.hideCurrentLevelLabel;
   const displayLevel = currentDisplayLevel(p);
+  // opts.segments (the board's MiLB cell only): each stat is a nowrap .milb-seg, so the
+  // line wraps between stats and never inside one, and opts.dropPlusEqualTo drops the
+  // trailing "wRC+ N" when it repeats the pill's rounded N. Every other caller keeps the
+  // one-run nowrap line.
+  const segs = !!opts.segments;
   const pieces = rows.map(r => {
     const lvl = r.level || "?";
     const isCurrent = displayLevel && lvl === displayLevel;
     const showLevelLabel = !(hideCurrentLevelLabel && isCurrent);
     const tip = isCurrent ? `Current level ${lvl}` : `${r.season || new Date().getFullYear()} stats at ${lvl}`;
-    return `<span style="display:${compact ? "inline-flex" : "flex"};align-items:baseline;gap:5px;${compact ? "margin-right:8px;" : "margin-bottom:2px;"}min-width:0;" title="${escapeHtml(tip)}">
+    const dropPlus = segs && opts.dropPlusEqualTo != null && _lvlPlus(r) != null
+      && Math.round(_lvlPlus(r)) === Math.round(opts.dropPlusEqualTo);
+    const text = segs
+      ? (formatLevelStatlineParts(r, { dropPlus }).map(s => `<span class="milb-seg">${escapeHtml(s)}</span>`).join(" · ") || " - ")
+      : escapeHtml(formatLevelStatline(r));
+    const wrapStyle = segs ? "display:flex;align-items:baseline;gap:5px;min-width:0;"
+      : `display:${compact ? "inline-flex" : "flex"};align-items:baseline;gap:5px;${compact ? "margin-right:8px;" : "margin-bottom:2px;"}min-width:0;`;
+    return `<span style="${wrapStyle}" title="${escapeHtml(tip)}">
       ${showLevelLabel ? `<span class="level-pill ${isCurrent ? "level-neutral" : "level-old"}" style="font-size:9px;padding:1px 5px;">${escapeHtml(lvl)}</span>` : ""}
-      <span style="color:var(--text-primary);font-family:var(--font-mono);font-size:${compact ? "11px" : "12px"};white-space:nowrap;">${escapeHtml(formatLevelStatline(r))}</span>
+      <span style="color:var(--text-primary);font-family:var(--font-mono);font-size:${compact ? "11px" : "12px"};${segs ? "min-width:0;" : "white-space:nowrap;"}">${text}</span>
     </span>`;
   });
   // "Stats pending" ghost row for a player promoted to a level with no stats
@@ -14912,16 +15037,21 @@ function makeMilbCell(p) {
   // stacked 3 slash lines and clipped the fixed-height card (Jenkins /
   // Lombard), and "highest" (not "current") keeps a rehab CPX stint from
   // displacing the real level. The detail page keeps the full table.
-  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true, recentSeasons: 1, maxRows: 1, highestFirst: true });
+  // M29 S3: the slash line wraps only between stats, and drops its trailing "wRC+ N"
+  // when the wRC+ pill above prints the same rounded N (a multi-level line whose number
+  // differs keeps it; its level pill labels it).
+  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true, recentSeasons: 1, maxRows: 1, highestFirst: true,
+    segments: true, dropPlusEqualTo: isPitcher ? null : _lvlPlus(sl) });
   // Key-stat detail line: K%/BB% + HR/9 (P) or ISO/HR/HH (H). OPS+/ERA-
   // were promoted to a pill on the top row (next to Level + RPS+), so
-  // they're no longer in this prose detail line.
-  const detail = isPitcher
+  // they're no longer in this prose detail line. M29 S4: each item is a nowrap
+  // .milb-seg, so the line breaks between items and never inside one.
+  const detailItems = isPitcher
     ? [
         sl.k_pct != null ? `K% ${sl.k_pct.toFixed(1)}` : null,
         sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
         sl.hr_per_9 != null ? `HR/9 ${sl.hr_per_9.toFixed(2)}` : null,
-      ].filter(Boolean).join(" · ")
+      ].filter(Boolean)
     : (() => {
         const _ex = _getFgExtras(p);
         const _hh = _ex && _ex.hard_hit_pct != null ? (_ex.hard_hit_pct * 100).toFixed(0) + "%" : null;
@@ -14931,8 +15061,9 @@ function makeMilbCell(p) {
           sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
           sl.k_pct != null ? `K% ${sl.k_pct.toFixed(1)}` : null,
           _hh != null ? `HH ${_hh}` : null,
-        ].filter(Boolean).join(" · ");
+        ].filter(Boolean);
       })();
+  const detail = detailItems.map(s => `<span class="milb-seg">${escapeHtml(s)}</span>`).join(" · ");
   const seasonTag = sl.is_prior_season && sl.season
     ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats yet - showing ${sl.season}">${sl.season}</span>`
     : "";
@@ -14986,7 +15117,9 @@ function makeMilbCell(p) {
                 : v >= 110 ? "var(--up)"
                 : v <= 90  ? "var(--down)"
                 :            "var(--text-secondary)";
-    return `<span class="stat-pill g-term" data-term="krp_plus" style="color:${color};border-color:${color};" title="KRP+ ${v}: K-backed run prevention, a below-level ERA an above-level strikeout rate supports. 100 = pool average, 10 pts ≈ 1 std-dev.">KRP+ ${v}</span>`;
+    // M29 S5: the pill prints the nearest integer like the other + stats (formatMetric
+    // "plus"); the tooltip keeps the decimal.
+    return `<span class="stat-pill g-term" data-term="krp_plus" style="color:${color};border-color:${color};" title="KRP+ ${v}: K-backed run prevention, a below-level ERA an above-level strikeout rate supports. 100 = pool average, 10 pts ≈ 1 std-dev.">KRP+ ${formatMetric(v, "plus")}</span>`;
   })();
   // v30.7 - Baseline EV chips (hitters with tracked contact_quality).
   // Always-on whenever statcast_metrics has data - not gated on
@@ -14997,10 +15130,12 @@ function makeMilbCell(p) {
   const detailWithSc = detail
     + (evChips        ? `<span class="milb-ev-chip-strip">${evChips}</span>` : "")
     + (scOutlierChips ? `<span class="milb-sc-chip-strip">${scOutlierChips}</span>` : "");
+  // M29 S4: three block lines (pill row, slash line, detail line) instead of inline runs
+  // joined by <br/>, so each wraps inside its own box.
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
-    <span class="milb-pill-row"><span class="level-pill ${levelClass}"${levelTip}>${displayLevel}</span>${seasonTag}${plusPill}${rpsPill}${scPlusPill}${krpPill}${headline}</span>
-    <br/><span style="color: var(--text-primary);">${slashLine}</span>
-    <br/><span style="color: var(--text-tertiary);">${detailWithSc}</span>
+    <div class="milb-pill-row"><span class="level-pill ${levelClass}"${levelTip}>${displayLevel}</span>${seasonTag}${plusPill}${rpsPill}${scPlusPill}${krpPill}${headline}</div>
+    <div class="milb-line milb-slash">${slashLine}</div>
+    <div class="milb-line milb-detail">${detailWithSc}</div>
   </div>`;
 }
 
@@ -16417,22 +16552,6 @@ function getFilteredActives() {
       if (bm) return -1;
       return (_rev ? (av - bv) : (bv - av)) || fvCmpDesc(a, b);
     });
-  } else if (state.sort === "opt_pct") {
-    // OPT% (upgrade-option layer), descending. Missing sinks; FV is the tiebreak.
-    // Negative values (high-grade downgrade risk) sort below positive ones.
-    const _op = p => (p.surplus && p.surplus.opt_pct != null)
-                      ? Number(p.surplus.opt_pct) : null;
-    // Reverse flag handled inside the comparator so no-data rows stay at
-    // the bottom in both directions (_applySortDir skips this key).
-    const _rev = !!(state.sortRev && state.sortRev.sort);
-    pool.sort((a, b) => {
-      const av = _op(a), bv = _op(b);
-      const am = (av == null || !isFinite(av)), bm = (bv == null || !isFinite(bv));
-      if (am && bm) return fvCmpDesc(a, b);
-      if (am) return 1;
-      if (bm) return -1;
-      return (_rev ? (av - bv) : (bv - av)) || fvCmpDesc(a, b);
-    });
   } else if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
   } else if (state.sort === "age_vs_level") {
@@ -16560,7 +16679,7 @@ function getFilteredActives() {
   }
   // v29 - Honor the universal column-sort direction flag (set when the
   // user clicks the same header twice for a non-_asc/_desc key).
-  // Surplus / Star Odds / PLUS% (and the rest of the surplus block) apply
+  // Surplus / Star Odds (and the rest of the surplus block) apply
   // the reverse flag inside their own comparators so no-data rows stay
   // pinned at the bottom in both directions; blanket-reversing them here
   // would float every null row to the top, so skip those keys.
@@ -18237,10 +18356,10 @@ function renderActives() {
   renderActiveContextRail();
   const filtered = getFilteredActives();
   _gfxSet("active", "prospect", filtered, {});
-  // Star Odds + OPT% columns: each flag-gated (#starodds / #optpct) and degrades on
-  // payload presence - only surfaces when a filtered prospect carries the field.
+  // Star Odds column: flag-gated (#starodds) and degrades on payload presence - only
+  // surfaces when a filtered prospect carries the field. PLUS% left the board
+  // 2026-09-30 (owner answer M29-1) for a line on the player page's eFV card.
   const starOddsOn = _starOddsShow(filtered);
-  const optPctOn = _optPctShow(filtered);
   // H10 - Ht/Wt/BMI is now flag-gated the same way (#phys), default OFF. No
   // payload gate: every player carries some physical profile, so presence would
   // never dark the column - the flag is the whole switch.
@@ -18260,19 +18379,18 @@ function renderActives() {
   // says "Consensus FV · stock" so the source of the value is explicit.
   // Both still click-to-sort by FV (FV-derived rank == consensus FV).
   // Every column is now click-to-sort - Player (alpha), MiLB level, etc.
-  const header = `<div class="col-header${physOn ? " has-phys" : ""}${starOddsOn ? " has-star-odds" : ""}${optPctOn ? " has-opt-pct" : ""}">
-    <span class="sort-header" data-sort-key="name_asc" title="Player name + meta line: pos · org · age · handedness (LHB/RHB/SHB or LHP/RHP). Click to sort alphabetically.">Player · pos · org · age · B/T</span>
-    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV rank - our outcome-grounded ranking (primary). Diamond border matches the rarity tier. Click to sort.">eFV Rank</span>
+  const header = `<div class="col-header${physOn ? " has-phys" : ""}${starOddsOn ? " has-star-odds" : ""}">
+    <span class="sort-header" data-sort-key="name_asc" title="Player name + meta line: pos · org · age · handedness (LHB/RHB/SHB or LHP/RHP). Click to sort alphabetically.">Player<span class="hdr-more"> · pos · org · age · B/T</span></span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV rank - our outcome-grounded ranking (primary). Diamond border matches the rarity tier. The line under the diamond is his place inside his org on the same eFV order. Click to sort."><span class="hdr-efv">eFV </span>Rank</span>
     <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV - our outcome-grounded Future Value (primary grade). Click to sort by eFV.">eFV · FV</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline - hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
     ${physOn ? `<span class="desktop-only" style="text-align:center;white-space:nowrap;" title="Physical profile: Height · Weight · BMI (colored by z-score vs same-position-bucket peers). Click Ht, Wt, or BMI to sort by that dimension; click the same one again to reverse.">
       <span class="sort-header" data-sort-key="ht_desc" title="Sort by height (tallest first; click again to reverse)">Ht</span> · <span class="sort-header" data-sort-key="wt_desc" title="Sort by weight (heaviest first; click again to reverse)">Wt</span> · <span class="sort-header" data-sort-key="bmi_desc" title="Sort by BMI (highest first; click again to reverse)">BMI</span>
     </span>` : ""}
-    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first. Below the year: years older (+) or younger (-) than the median player at his current level, and the date he reached it.">ETA</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="surplus_sv" title="Expected MLB surplus value ($M) from the career-path mixture engine, with the outcome-bucket bar (bust→star). Click to sort by expected SV.">Surplus</span>
     ${starOddsOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="star_odds" title="Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.">Star Odds</span>` : ""}
-    ${optPctOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="opt_pct" title="PLUS%: share of this grade's value from the chance of upgrading before graduating (upgrade-option layer, provisional). Low tiers option-rich; high grades run low/negative (top-end downgrade risk).">PLUS%</span>` : ""}
   </div>`;
 
   // PV-07: on the default eFV order the "Not yet graded by any source" section opens with
@@ -18293,29 +18411,32 @@ function renderActives() {
       if (!prev || !inProvSection(prev)) _head = provSectionHeadHTML(_secN, false);
       else if (i === 0) _head = provSectionHeadHTML(_secN, true);
     }
+    // M29 (owner answer M29-2): the watch, compare and expand buttons ride the right end
+    // of row 2, so the name and meta line get the identity row's full width. The click
+    // handlers are delegated by class and attribute, so nothing else moves with them.
+    const _summary = makeListRowSummary(p);
     return `${_head}
-      <div class="player-row${physOn ? " has-phys" : ""}${starOddsOn ? " has-star-odds" : ""}${optPctOn ? " has-opt-pct" : ""}" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
+      <div class="player-row${physOn ? " has-phys" : ""}${starOddsOn ? " has-star-odds" : ""}" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
         <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
           <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
           <div class="player-name-stack" style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
             ${playerMetaHTML(p)}
-          </div>
-          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
-          <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
-          <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></div>${arsenalLineHTML(p)}
+          </div></div>${arsenalLineHTML(p)}
         </div>
-        <div class="rank-cell-stack">${efvRankNumHTML(p)}${rankTrendHTML(p)}</div>
+        <div class="rank-cell-stack">${efvRankNumHTML(p)}${rankTrendHTML(p)}${rankOrgLineHTML(p)}</div>
         <div style="text-align:center;">${efvBadgeHTML(p)}${fvTrendHTML(p)}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${lazyLineChartHTML(p)}</div>
         ${makeMilbCell(p)}
         ${physOn ? physClusterHTML(p) : ""}
-        ${makeEtaCell(p)}
+        ${makeEtaCell(p, { ageVsLevel: true })}
         <div class="desktop-only" style="align-self:center;min-width:0;">${makeSurplusCell(p)}</div>
         ${starOddsOn ? makeStarOddsCell(p) : ""}
-        ${optPctOn ? makeOptPctCell(p) : ""}
         ${playerExpandedMetaHTML(p)}
-        ${makeListRowSummary(p) ? `<div class="player-row-toolstrip">${makeListRowSummary(p)}</div>` : ""}
+        <div class="player-row-toolstrip has-actions">${_summary}<span class="row-actions">
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
+          <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
+          <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></span></div>
       </div>
     `;
   }).join("");
@@ -34578,6 +34699,19 @@ function efvRankNumHTML(p) {
     : `Board rank #${n} - still the eFV board ordering. The Consensus toggle changes which GRADE leads the cells${state.sort === "fv" ? " and orders the rows by consensus FV" : ""}; PROSPX does not publish a consensus-FV rank.`;
   return `<div class="rank-num ${rankNumRarityClass(p)}" title="${escapeHtml(tip)}"><span class="rank-num-inner">#${n}</span></div>`;
 }
+// M29 B1 (owner answer M29-2): the in-org rank as a line under the board's rank diamond,
+// e.g. "TBR #1". Read live from getEfvOrgRank (the roster tab's order), never the baked
+// p.org_rank, which is one run stale. A not-yet-graded section row has no org rank and
+// prints nothing. Shown on phones too (the rank cell stays at every width).
+function rankOrgLineHTML(p) {
+  if (!p || !p.org) return "";
+  const o = (typeof getEfvOrgRank === "function") ? getEfvOrgRank(p) : null;
+  if (!o || o.rank == null) return "";
+  const pool = provSectionOn() ? "graded prospects" : "prospects, provisional ones included";
+  const tip = `His place inside the ${p.org} system on the eFV board order: #${o.rank} of ${o.total} ${pool}. `
+    + "It stays on the eFV order when the board is switched to Consensus.";
+  return `<div class="rank-org" title="${escapeHtml(tip)}">${escapeHtml(p.org)} #${o.rank}</div>`;
+}
 // Detail-page header: eFV as the primary big grade, consensus FV as the reference line.
 // Falls back to the consensus fvBadge when eFV abstains (no pro track record).
 function efvDetailHeaderHTML(p, fvBadge, lead) {
@@ -34773,6 +34907,22 @@ function efvDetailCard(p) {
          Healthy eFV <b style="color:var(--accent-il);">${Math.round(x.xfv_grade_healthy)}</b>
          <span style="color:var(--text-tertiary);">currently ${efvGradeDisplay(x)}, injury penalty ${Math.round((1 - x.injury_factor) * 100)}%</span>
        </div>` : "";
+  // FanGraphs-table reads keyed to the CONSENSUS FV tier and role (p.surplus), not to
+  // the eFV grade above. PLUS% moved here from the board 2026-09-30 (owner answer
+  // M29-1); one bordered block holds whichever of the two lines renders.
+  const _so = (p && p.surplus) ? p.surplus.star_odds : null;
+  const _op = (p && p.surplus) ? p.surplus.opt_pct : null;
+  const starLine = _so != null ? `<div style="display:flex;justify-content:space-between;align-items:baseline;" title="Star Odds: FanGraphs 2026 published probability of two or more seasons of four or more WAR during team control, for this player's FV and role. This is the SAME value shown in the board's Star Odds column. It is distinct from the outcome-mix Elite share above.">
+        <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Star Odds <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">2+ seasons of 4+ WAR</span></span>
+        <span style="font-family:var(--font-mono);font-weight:700;color:${Number(_so) >= 0.20 ? "var(--up)" : Number(_so) >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)"};font-variant-numeric:tabular-nums;">${fmtStarOdds(_so)}</span>
+      </div>` : "";
+  const plusLine = _op != null ? `<div class="efv-plus-line" style="display:flex;justify-content:space-between;align-items:baseline;" title="${escapeHtml(PLUS_TIP)}">
+        <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;"><span class="g-term" data-term="opt_pct">PLUS%</span> <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">value from upgrade chances</span></span>
+        <span class="efv-plus-val" style="font-family:var(--font-mono);font-weight:700;color:${optPctColor(_op)};font-variant-numeric:tabular-nums;">${fmtOptPct(_op)}</span>
+      </div>` : "";
+  const tierReadsHTML = (starLine || plusLine)
+    ? `<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border-light);font-size:11px;display:flex;flex-direction:column;gap:6px;">${starLine}${plusLine}</div>`
+    : "";
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
@@ -34788,10 +34938,7 @@ function efvDetailCard(p) {
       ${factorsHTML}
       ${healthyHTML}
       ${bucketBar ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin:10px 0 4px;">Projected outcome mix (6-yr)</div>${bucketBar}` : ""}
-      ${(p && p.surplus && p.surplus.star_odds != null) ? `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--border-light);font-size:11px;" title="Star Odds: FanGraphs 2026 published probability of two or more seasons of four or more WAR during team control, for this player's FV and role. This is the SAME value shown in the board's Star Odds column. It is distinct from the outcome-mix Elite share above.">
-        <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Star Odds <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">2+ seasons of 4+ WAR</span></span>
-        <span style="font-family:var(--font-mono);font-weight:700;color:${Number(p.surplus.star_odds) >= 0.20 ? "var(--up)" : Number(p.surplus.star_odds) >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)"};font-variant-numeric:tabular-nums;">${fmtStarOdds(p.surplus.star_odds)}</span>
-      </div>` : ""}
+      ${tierReadsHTML}
       <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}${_v2 ? "eFV V2 keeps the consensus FV order inside each side and lets a small set of drivers move a prospect up or down it; the grade is the consensus value at his new rank, so the board, the outcome mix, P(bust) and the dollars all read one number. Its standing against consensus is measured out of sample on the Methodology page. The dollar surplus and its range are in the Surplus value card below. Provisional." : "eFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. Its ordering skill is measured against consensus FV out-of-sample on the Methodology page; the headline grade is on the familiar 20-80 scale, while the outcome mix uses the honest (typically lower) outcome-implied grade because scout FV runs optimistic. " + ((efvFanHidden(x) && _gradePrimary() === "xfv") ? "The dollar surplus is in the Surplus value card below; graduate and bust cards show no eFV dollar range." : "The dollar surplus + its range are in the Surplus value card below.") + " Provisional."} <a href="/glossary/#g=xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
     </div>`;
 }
@@ -38295,12 +38442,22 @@ function svCiText(s) {
 // stays dark until it is regenerated. Mirrors the Risk / Window column-flag
 // convention used elsewhere.
 const STAR_ODDS_DEFAULT = true;   // launched: on by default; force off per-view with #starodds=0
-function _starOddsUiOn() {
+// LATCHED at script-evaluation time like _PHYS_COL_ON below (M29, the boot defect the
+// 2026-09-25 board anatomy found): syncToURL() rebuilds location.hash from state and
+// drops every key it does not own, and it ran before the board settled, so a link
+// opened as #starodds=0 lost its key and the next render painted the column anyway.
+// A key still in the live hash (typed mid-session) wins; otherwise the boot value holds.
+const _STAR_ODDS_BOOT = (() => {
   const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("starodds");
   if (h != null) return h !== "0";
   const q = new URLSearchParams(location.search || "").get("starodds");
   if (q != null) return q !== "0";
   return STAR_ODDS_DEFAULT;
+})();
+function _starOddsUiOn() {
+  const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("starodds");
+  if (h != null) return h !== "0";
+  return _STAR_ODDS_BOOT;
 }
 // True only when the flag is on AND at least one row in the given set carries
 // the field - keeps the column dark on payloads that predate star_odds.
@@ -38334,16 +38491,14 @@ function _starTierOf(fv) {
   if (v < 65) return "60-65";
   return "65+";
 }
-// H5 - micro-bar primitive shared by the Star Odds + PLUS% cells. The Surplus
-// cell draws an outcome-bucket bar while the two numeric columns beside it were
-// bare digits, so the board spoke two visual languages for the same kind of
-// quantity. This emits the SAME `.sv-bucket-bar` geometry renderBucketBar does
-// (flex track, 2px radius, 1px --border-light hairline, colored segment + unfilled
-// remainder) at a shorter height, so the three columns read as one family.
-// Scale is the honest one: the full track is the full probability range, so a
-// 13.5% Star Odds bar really is 13.5% of the track - never a re-scaled "punchier"
-// domain. `opts.signed` centers zero at mid-track and draws left of the baseline,
-// which PLUS% needs because high grades run net negative.
+// H5 - micro-bar primitive for the Star Odds cell. The Surplus cell draws an
+// outcome-bucket bar while the numeric column beside it was bare digits, so the
+// board spoke two visual languages for the same kind of quantity. This emits the
+// SAME `.sv-bucket-bar` geometry renderBucketBar does (flex track, 2px radius, 1px
+// --border-light hairline, colored segment + unfilled remainder) at a shorter
+// height, so the columns read as one family. Scale is the honest one: the full
+// track is the full probability range, so a 13.5% Star Odds bar really is 13.5% of
+// the track - never a re-scaled "punchier" domain.
 function renderShareMicroBar(frac, color, tip, opts) {
   opts = opts || {};
   const v = Number(frac);
@@ -38353,19 +38508,6 @@ function renderShareMicroBar(frac, color, tip, opts) {
     `<div class="sv-bucket-bar" role="img" aria-label="${escapeHtml(aria)}" title="${escapeHtml(tip || "")}"`
     + ` style="display:flex;width:100%;height:${h}px;border-radius:2px;overflow:hidden;`
     + `border:1px solid var(--border-light);background:var(--bg-tertiary);">${inner}</div>`;
-  if (opts.signed) {
-    // Symmetric track: -100% .. 0 .. +100%, zero pinned at mid-track. The dotted
-    // hairline always lands on the 50% mark (it rides the element that ENDS
-    // there), so a negative bar reads as growing leftward off the baseline.
-    const w = Math.min(50, Math.abs(v) * 50);
-    const tick = "border-right:1px dotted var(--text-tertiary);";
-    const pad = v < 0 ? (50 - w) : 50;
-    return shell(
-      `<div style="width:${pad.toFixed(2)}%;height:100%;${v < 0 ? "" : tick}"></div>`
-      + `<div style="width:${w.toFixed(2)}%;height:100%;background:${color};${v < 0 ? tick : ""}"></div>`
-      + `<div style="flex:1;height:100%;"></div>`,
-      "signed share");
-  }
   const w = Math.max(0, Math.min(100, v * 100));
   return shell(
     `<div style="width:${w.toFixed(2)}%;height:100%;background:${color};"></div>`
@@ -38418,59 +38560,43 @@ function makeStarOddsCell(p) {
   return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);color:${col};" title="${escapeHtml(tip)}"><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.05;">${fmtStarOdds(v)}</div>${bar}${realizedLine}</div>`;
 }
 
-// OPT% (upgrade-option layer): the share of a grade's value that comes from the
-// chance of UPGRADING before graduating. Own opt-in flag (#optpct=0 to hide),
-// payload-presence gated exactly like Star Odds. High grades run LOW or NEGATIVE
-// (top-end downgrade risk), so the formatter + color ramp tolerate negatives.
-const OPT_PCT_DEFAULT = true;   // launched: on by default; force off per-view with #optpct=0
-function _optPctUiOn() {
-  const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("optpct");
-  if (h != null) return h !== "0";
-  const q = new URLSearchParams(location.search || "").get("optpct");
-  if (q != null) return q !== "0";
-  return OPT_PCT_DEFAULT;
-}
-function _optPctShow(rows) {
-  return _optPctUiOn() && Array.isArray(rows)
-    && rows.some(p => p && p.surplus && p.surplus.opt_pct != null);
-}
-// OPT% as a signed percent, no decimals (e.g. "60%", "-7%"); dash when absent.
+// PLUS% (upgrade-option layer, p.surplus.opt_pct): the share of a grade's value that
+// comes from the chance of UPGRADING before graduating. It left the board 2026-09-30
+// (owner answer M29-1) and is a line on the player page's eFV card, under Star Odds
+// (efvDetailCard). High grades run LOW or NEGATIVE (top-end downgrade risk), so the
+// formatter and the color ramp tolerate negatives. The board CSV keeps plus_pct.
+// PLUS% as a signed percent, no decimals (e.g. "60%", "-7%"); dash when absent.
 function fmtOptPct(v) {
   if (v == null || !isFinite(v)) return " - ";
   return `${(Number(v) * 100).toFixed(0)}%`;
 }
-// One centered OPT% cell (desktop-only grid child). Bright when option-rich,
-// muted at/below zero (a high grade with net downgrade risk is not "good news").
-function makeOptPctCell(p) {
-  const v = (p && p.surplus && p.surplus.opt_pct != null) ? Number(p.surplus.opt_pct) : null;
-  const col = (v == null || !isFinite(v)) ? "var(--text-tertiary)"
-            : v >= 0.5 ? "var(--up)"
-            : v >= 0.2 ? "var(--neon-cyan)"
-            : v >= 0 ? "var(--text-primary)"
-            : "var(--text-tertiary)";
-  const tip = "PLUS%: share of this grade's value that comes from the chance of upgrading to a better grade before graduating (upgrade-option layer, provisional). Low tiers are option-rich; high grades run low or negative because grade mobility at the top is net downgrade risk.";
-  // H5 - matching micro-bar, SIGNED: the zero baseline sits mid-track so a
-  // net-negative option layer draws to the left of it instead of vanishing.
-  // Same primitive/geometry as the Surplus cell's outcome-bucket bar.
-  const bar = renderShareMicroBar(v, col, `${fmtOptPct(v)} on a -100% .. 0 .. +100% track; the dotted hairline is zero. ${tip}`, { signed: true });
-  return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);color:${col};" title="${escapeHtml(tip)}"><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.05;">${fmtOptPct(v)}</div>${bar}</div>`;
+// Bright when option-rich, muted below zero (a high grade with net downgrade risk is
+// not "good news"). The ramp the board column used.
+function optPctColor(v) {
+  const n = Number(v);
+  if (v == null || !isFinite(n)) return "var(--text-tertiary)";
+  return n >= 0.5 ? "var(--up)"
+       : n >= 0.2 ? "var(--neon-cyan)"
+       : n >= 0 ? "var(--text-primary)"
+       : "var(--text-tertiary)";
 }
+const PLUS_TIP = "PLUS%: the share of this grade's value that comes from the chance of upgrading to a better grade before graduating (upgrade-option layer, provisional). Read at this player's consensus FV tier (nearest 5) and role, not at the eFV grade above. Low tiers are option-rich; high grades run low or negative because grade mobility at the top is net downgrade risk.";
 
 // ── Ht/Wt/BMI (phys) column ─────────────────────────────────────────────────
 // H10 - the physical-profile cluster held a PERMANENT board track for a niche
-// axis while higher-value reads (Star Odds, PLUS%) sat behind flags. It now uses
+// axis while higher-value reads (Star Odds) sat behind flags. It now uses
 // the same opt-in convention, defaulting OFF: surface it per-view with #phys=1
 // (or ?phys=1). Nothing else changes - the ht_desc / wt_desc / bmi_desc sort keys
 // keep working whether or not the column is painted, so a reader who sorts by
 // height from a saved URL still gets the ordering, and every value stays on the
 // player detail page. Column-alignment is handled by the `.has-phys` grid rules.
 const PHYS_COL_DEFAULT = false;   // niche axis: off unless explicitly asked for
-// LATCHED at script-evaluation time, deliberately unlike the two flags above.
+// LATCHED at script-evaluation time, like the #starodds flag above (#starodds defaults
+// ON and latches its boot value too, because losing an explicit =0 was not a no-op).
 // syncToURL() rebuilds location.hash from state and drops every key it does not
 // own, so a lazily-read flag would evaporate the first time the reader touched a
-// filter. #starodds / #optpct default ON, so losing their key is a no-op and they
-// can afford to re-read; a default-OFF flag cannot. This runs before the first
-// render, while location still holds the URL the reader actually opened.
+// filter. This runs before the first render, while location still holds the URL the
+// reader actually opened.
 const _PHYS_COL_ON = (() => {
   const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("phys");
   if (h != null) return h !== "0";
@@ -38549,13 +38675,15 @@ function makeSurplusCell(p) {
   // Bottom meta line: P(bust), WAG (grads), and $DvM+ - whichever are present.
   const botBits = [];
   if (pb != null)  botBits.push(`<span style="color:${pb >= 40 ? 'var(--down)' : 'var(--text-tertiary)'};">bust ${pb}%</span>`);
-  if (wag != null) botBits.push(`WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(1)}`);
+  if (wag != null) botBits.push(`<span>WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(1)}</span>`);
   if (dvm != null) botBits.push(`<span style="color:${dollarDvmColor(dvm)};">$DvM+ ${Math.round(dvm)}</span>`);
+  // M29 S6: each bit is a nowrap span (.sv-botline > span), so "bust N%" and "$DvM+ N"
+  // never split across lines.
   return `<div class="surplus-cell" title="${escapeHtml(tip)}">
       <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${svColor};font-variant-numeric:tabular-nums;line-height:1.05;">${fmtSvMM(s.value_mm)}</div>
       ${buckets ? renderBucketBar(buckets, { height: 7 }) : ""}
       ${d.p10_mm != null ? renderSvDistribution(d, { height: 13 }) : ""}
-      ${botBits.length ? `<div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);line-height:1.1;">${botBits.join(" · ")}</div>` : ""}
+      ${botBits.length ? `<div class="sv-botline" style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);line-height:1.1;">${botBits.join(" · ")}</div>` : ""}
     </div>`;
 }
 
@@ -39497,7 +39625,9 @@ function playerMetaHTML(p, opts = {}) {
   // duplicated IL state per row. The pill is more glanceable.
   const orgLogo = orgMeta && orgMeta.logoHTML != null ? orgMeta.logoHTML : teamLogoHTML(p.org, "sm");
   const orgLabel = orgMeta && orgMeta.labelHTML != null ? orgMeta.labelHTML : `<span>${escapeHtml(p.org ?? " - ")}</span>`;
-  return `<div class="player-meta">${positionLabel} · <span class="org-cluster">${orgLogo}${orgLabel}</span>${ageHand}${rosterTag}</div>`;
+  // M29 S2: the position list is one nowrap unit, so a wrap falls between the position,
+  // org and age/B-T clusters and never inside "SS / 2B / 3B".
+  return `<div class="player-meta"><span class="pos-cluster">${positionLabel} · </span><span class="org-cluster">${orgLogo}${orgLabel}</span>${ageHand}${rosterTag}</div>`;
 }
 
 // "Current level" resolver - returns the player's most-recent assignment
@@ -56510,7 +56640,9 @@ function krpPlusPillHTML(p) {
   const x = getEfv(p);
   const v = x && x.krp_plus != null ? x.krp_plus : null;
   if (v == null) return "";
-  return _plusPill("KRP+", v, _plusClass,
+  // M29 S5: the pill prints the nearest integer (formatMetric "plus"), like the other +
+  // stats; the tooltip keeps the decimal.
+  return _plusPill("KRP+", Number(formatMetric(v, "plus")), () => _plusClass(v),
     `KRP+ ${v} · K-backed run prevention: a below-level ERA that an above-level strikeout rate supports, standardized over the active pitcher pool (the eFV model's run-prevention × missing-bats interaction). 100 = pool average, 10 pts ≈ 1 std-dev.`,
     "krp_plus");
 }

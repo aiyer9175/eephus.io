@@ -419,12 +419,18 @@ _BOUNDS_JS = """(sel) => {
 }"""
 
 
-@pytest.mark.parametrize("section,header,row", [
-    ("active", ".col-header", ".player-row"),
-    ("injured", ".col-header", ".player-row"),
-    ("spotlights", ".spotlight-header", ".spotlight-row"),
+@pytest.mark.parametrize("section,header,row,width", [
+    # The active board at three widths (M29, 2026-10-02): 1440 is the wide desktop
+    # list, 1024 the narrow-desktop list (901-1199), and 390 the phone collapse, where
+    # the chart and tool strips used to span `1 / 6` on a 3-track grid and walked
+    # the row's columns 16px off the header's.
+    ("active", ".col-header", ".player-row", 390),
+    ("active", ".col-header", ".player-row", 1024),
+    ("active", ".col-header", ".player-row", 1440),
+    ("injured", ".col-header", ".player-row", 1440),
+    ("spotlights", ".spotlight-header", ".spotlight-row", 1440),
 ])
-def test_prospx_header_shares_the_row_column_boundaries(server, section, header, row):
+def test_prospx_header_shares_the_row_column_boundaries(server, section, header, row, width):
     """Every column boundary in the header must land on the row's boundary.
 
     1.0px of tolerance, not 0: it absorbs sub-pixel fr distribution, and the
@@ -436,17 +442,20 @@ def test_prospx_header_shares_the_row_column_boundaries(server, section, header,
     with sync_playwright() as p:
         browser = p.chromium.launch()
         try:
-            page = browser.new_page(viewport={"width": 1440, "height": 1200})
+            page = browser.new_page(viewport={"width": width, "height": 1200})
             page.goto(server + "prospx/", wait_until="load", timeout=120_000)
             page.wait_for_selector(".player-row", timeout=90_000)
             page.wait_for_timeout(2500)
-            page.click(f'[data-section="{section}"]', timeout=30_000)
-            page.wait_for_timeout(3000)
+            # At 640px and below the section tabs sit in a collapsed menu, and the
+            # MiLB board (the active section) is already the landing view.
+            if not (section == "active" and width <= 640):
+                page.click(f'[data-section="{section}"]', timeout=30_000)
+                page.wait_for_timeout(3000)
 
             m = page.evaluate(_BOUNDS_JS, [header, row])
             assert not m.get("err"), f"{section}: {m.get('err')}"
             assert m["worst"] <= 1.0, (
-                f"prospx {section}: {header} and {row} disagree by "
+                f"prospx {section} at {width}px: {header} and {row} disagree by "
                 f"{m['worst']}px at column boundary {m['idx']} across {m['n']} "
                 f"rows (header column-gap {m['hdrGap']}, row {m['rowGap']}). "
                 "They are independent grids - a gap, border or padding change "
