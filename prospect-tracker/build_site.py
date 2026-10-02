@@ -6208,8 +6208,9 @@ def _sources_api_section() -> str:
 # read the scout_reports chunks, the draft cards read the draft board payload.
 # Since the owner's answer of 2026-09-25 (census X07-02 option b) both carry an
 # excerpt of at most REPORT_EXCERPT_CHARS characters plus a link to the
-# source's page or the source and list named (report_excerpt.py); the full
-# text is not in the public data. The /sources/ lede names both sets;
+# source's page for the player or, since the owner's answer of 2026-10-01
+# (REPEX-1 option b), to the source's page for the list (report_excerpt.py);
+# the full text is not in the public data. The /sources/ lede names both sets;
 # test_claims_freshness holds the tuples to the payloads and
 # test_report_excerpt.py holds every served report to the excerpt limit.
 SCOUT_REPORT_SOURCES = ("FanGraphs", "MLB Pipeline", "Baseball America", "ESPN",
@@ -6292,8 +6293,9 @@ def build_sources() -> str:
         "each source's own FV grade beside the consensus, and excerpts of the scouting "
         f"reports {_name_series(SCOUT_REPORT_SOURCES)} have published on that player: the "
         f"opening of each report, at most {REPORT_EXCERPT_CHARS} characters, labelled with its "
-        "source, list and publication date, with a View on link to the source's page where "
-        "we know it. The draft board shows excerpts of the draft reports from "
+        "source, list and publication date, with a View on link to the player's page at the "
+        "source where we know it and otherwise to the source's page for that list. The draft "
+        "board shows excerpts of the draft reports from "
         f"{_name_series(DRAFT_REPORT_SOURCES)} the same way. The full reports stay with their "
         "publishers. Trademarks, data and report text belong to their owners.</p>"
         "<p>Sources with a question or concern: "

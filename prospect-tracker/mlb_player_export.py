@@ -407,9 +407,15 @@ def _scout_report_slice(prospx: str, reports: dict) -> dict | None:
     # keeps an older full-text sidecar from reaching the card.
     txt, cut = report_excerpt(it.get("text"))
     txt = strip_emdashes(txt)           # verbatim quote, dash-normalized to site policy
-    return {"source": _SCOUT_SRC_LABELS.get(src, src), "date": dt or None,
-            "label": it.get("label"), "url": it.get("url"),
-            "text": txt, "truncated": bool(cut or it.get("truncated"))}
+    out = {"source": _SCOUT_SRC_LABELS.get(src, src), "date": dt or None,
+           "label": it.get("label"), "url": it.get("url"),
+           "text": txt, "truncated": bool(cut or it.get("truncated"))}
+    # No page of the player's own: the publisher's list page the sidecar
+    # carries (owner answer 2026-10-01, REPEX-1 option b).
+    if not out["url"] and it.get("list_url"):
+        out["list_url"] = it.get("list_url")
+        out["list_page"] = bool(it.get("list_page"))
+    return out
 
 
 def _record_skill_index_outage(missing: list[str], n_joined: int) -> None:

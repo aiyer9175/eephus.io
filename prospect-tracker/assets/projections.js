@@ -3034,11 +3034,15 @@
     if (r && r.text) {
       // An excerpt of the publisher's report (owner answer 2026-09-25): the
       // link goes to the source's own page when one is known, otherwise the
-      // source and list are named.
+      // source and list are named and the link goes to the publisher's list
+      // page (owner answer 2026-10-01, REPEX-1 b), saying it lands on a list.
       const srcName = r.source || "Scouting report";
+      const listText = r.list_page ? `View the list on ${srcName}` : `View lists on ${srcName}`;
       const srcLink = r.url
         ? ` <a class="fa-player-link" href="${esc(r.url)}" target="_blank" rel="noopener">View on ${esc(srcName)} &#8599;</a>`
-        : "";
+        : (r.list_url && /^https:\/\//.test(String(r.list_url)))
+          ? ` <a class="fa-player-link" href="${esc(r.list_url)}" target="_blank" rel="noopener" title="${esc(r.list_page ? `The page for ${r.label || "the list"}, not a player page` : `The ${srcName} prospect lists, not a player page`)}">${esc(listText)} &#8599;</a>`
+          : "";
       reportHtml = `<div class="mlbp-scout-report">
         <div class="fa-sub mlbp-scout-src">${esc(srcName)}${r.label ? ` · ${esc(r.label)}` : ""}${r.date ? ` · ${esc(r.date)}` : ""}${r.truncated ? " · excerpt" : ""}</div>
         <p class="mlbp-scout-text">${esc(r.text)}${srcLink}${p.origin && p.origin.prospx ? ` <a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(p.origin.prospx)}">prospect card &rarr;</a>` : ""}</p></div>`;

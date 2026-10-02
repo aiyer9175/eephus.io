@@ -27507,12 +27507,14 @@ function _renderProspectScoutingReports(p) {
   }
   // Each report is an excerpt of the publisher's text (owner answer
   // 2026-09-25): a "View on <source>" link where the export knew the source's
-  // page for the player, otherwise the source and list are named.
+  // page for the player, otherwise the source and list are named and the link
+  // goes to the publisher's list page (owner answer 2026-10-01, REPEX-1 b).
   return sources.map((src, i) => {
     const ext = (tg[src] || {})._extras || {};
     const isOpen = i === 0 ? " open" : "";
     const srcName = ext.report_source || SOURCE_LABELS[src] || src;
-    const link = _reportLinkHtml(ext.report_url, srcName);
+    const link = _reportLinkHtml(ext.report_url, srcName)
+      || _reportListLinkHtml(ext.report_list_url, ext.report_list_page, srcName, ext.report_label);
     const named = `${escapeHtml(srcName)}${ext.report_label ? `, ${escapeHtml(ext.report_label)}` : ""}`;
     const foot = `<div style="padding:0 12px 10px;font-size:11px;color:var(--text-tertiary);">${ext.report_truncated ? "Excerpt. " : ""}${named}${link}</div>`;
     return `<details class="scout-src-details"${isOpen} style="margin-bottom:8px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
@@ -32046,6 +32048,18 @@ function sourceLinkHtml(src, p, ids, label) {
 function _reportLinkHtml(url, label) {
   if (!url || !/^https:\/\//.test(String(url))) return "";
   return ` <a class="src-attr-link" href="${escapeHtml(url)}" target="_blank" rel="noopener" title="Open ${escapeHtml(label)} in a new tab">View on ${escapeHtml(label)} ↗</a>`;
+}
+// Link for an excerpt with no page of the player's own (owner answer
+// 2026-10-01, REPEX-1 option b): the publisher's page for the list the report
+// ran in (isListPage) or, when no page is recorded for that list, the
+// publisher's home page for its lists. The text says it lands on a list.
+function _reportListLinkHtml(url, isListPage, label, listName) {
+  if (!url || !/^https:\/\//.test(String(url))) return "";
+  const text = isListPage ? `View the list on ${label}` : `View lists on ${label}`;
+  const title = isListPage
+    ? `Open ${listName || "the list"} on ${label} in a new tab (the list page, not a player page)`
+    : `Open the ${label} prospect lists in a new tab${listName ? `; this report ran in ${listName}` : ""}`;
+  return ` <a class="src-attr-link" href="${escapeHtml(url)}" target="_blank" rel="noopener" title="${escapeHtml(title)}">${escapeHtml(text)} ↗</a>`;
 }
 // Pull the per-source id map for a player from the scout_reports sidecar.
 function sourceIdsFor(p) {
@@ -50529,7 +50543,8 @@ function renderPlayerDetail(key) {
         if (Array.isArray(r)) {
           list = r.filter(e => e && e.text && String(e.text).trim().length > 50)
                   .map(e => ({ date: e.date, label: e.label, text: String(e.text).trim(), hash: e.hash,
-                               url: e.url || null, truncated: !!e.truncated }));
+                               url: e.url || null, truncated: !!e.truncated,
+                               list_url: e.list_url || null, list_page: !!e.list_page }));
         } else if (typeof r === "object" && r.text && String(r.text).trim().length > 50) {
           list = [{ date: r.date, label: r.label, text: String(r.text).trim() }];
         }
@@ -50595,7 +50610,7 @@ function renderPlayerDetail(key) {
       // swaps which one is visible.
       const renderedCycles = list.map((e, i) => `
         <div class="sr-cycle-body${i === 0 ? '' : ' is-hidden'}" data-sr-cycle="${i}">
-          <div class="sr-meta">${escapeHtml(s.label)} · published ${escapeHtml(e.date)}${e.label ? ` (${escapeHtml(e.label)})` : ""}${_reportLinkHtml(e.url, s.label) || sourceLinkHtml(s.key, p, srIds, s.label)}</div>
+          <div class="sr-meta">${escapeHtml(s.label)} · published ${escapeHtml(e.date)}${e.label ? ` (${escapeHtml(e.label)})` : ""}${_reportLinkHtml(e.url, s.label) || _reportListLinkHtml(e.list_url, e.list_page, s.label, e.label) || sourceLinkHtml(s.key, p, srIds, s.label)}</div>
           <div class="sr-prose">${escapeHtml(e.text)}</div>${e.truncated ? `<div class="sr-meta">Excerpt. ${e.url ? `The full report is on ${escapeHtml(s.label)}.` : `The full report is published by ${escapeHtml(s.label)}${e.label ? ` (${escapeHtml(e.label)})` : ""}.`}</div>` : ""}
         </div>`).join("");
       return `<div class="sr-body${hidden ? ' is-hidden' : ''}" data-sr-body="${escapeHtml(s.key)}">

@@ -27,9 +27,14 @@ never cut mid-word and never longer than EXCERPT_MAX_CHARS.
 report_url() returns a link only where a real address for the report is known:
 the player's own page at FanGraphs (stored FanGraphs id) or MLB Pipeline (MLBAM
 id), the ESPN article a list was scraped from, or the Just Baseball board page.
-Baseball America pages need an id we do not store, so those excerpts name the
-source and the list instead. test_report_excerpt.py pins both rules over the
-served payloads.
+Baseball America pages need an id we do not store.
+
+report_list_url() gives every excerpt without such a link a link to the
+publisher's LIST page instead (owner answer 2026-10-01, REPEX-1 option b): the
+page the ingest recorded for that list and year where there is one, otherwise
+the publisher's home page for that list family. The site's link text says it
+lands on a list, not the player. test_report_excerpt.py pins both rules over
+the served payloads.
 """
 
 from __future__ import annotations
@@ -136,25 +141,122 @@ def report_url(src: str, *, label: str | None = None, fg_id=None,
     return None
 
 
+# The publisher's home page for each list family, linked when the ingest
+# recorded no page for the list itself. MLB Pipeline and ESPN are the pages
+# /sources/ names; the FanGraphs Board and the Baseball America rankings hub
+# are the pages named in the owner's REPEX-1 answer (both serve 200 in the
+# Wayback Machine, 2026-09-17 and 2026-06-30; both refuse scripted clients).
+LIST_FAMILY_HOMES = {
+    "fangraphs": "https://www.fangraphs.com/prospects/the-board",
+    "mlb_pipeline": "https://www.mlb.com/prospects",
+    "mlb_pipeline_draft": "https://www.mlb.com/milb/prospects/draft",
+    "baseballamerica": "https://www.baseballamerica.com/rankings/",
+    "baseballamerica_draft": "https://www.baseballamerica.com/rankings/",
+    "espn": "https://www.espn.com/mlb/",
+    "espn_draft": "https://www.espn.com/mlb/",
+    "just_baseball": "https://www.justbaseball.com/",
+}
+
+# The year-keyed MLB Pipeline page forms the scrapers fetch
+# (scrapers.MLB_PIPELINE_INTERVALS, MLB_PIPELINE_ORG_INTERVALS,
+# MLB_PIPELINE_DRAFT_HISTORY_INTERVALS, run_mlb_pipeline_live), for a label in a
+# year the module constants do not enumerate. A draft label always takes the
+# year-keyed page: the current class's recorded page (/milb/prospects/draft) is
+# a rolling one that moves on to the next class after the draft.
+_PIPE_TOP100 = re.compile(r"^MLB Pipeline (?:Live )?(\d{4})(?: Top 100$|-\d\d-\d\d$)")
+_PIPE_DRAFT = re.compile(r"^MLB Pipeline (\d{4}) Draft Top \d+$")
+_PIPE_ORG = re.compile(r"^MLB Pipeline (\d{4}) (.+) Top 30$")
+
+_LIST_PAGES: dict[str, str] | None = None
+_ORG_SLUGS: dict[str, str] | None = None
+
+
+def _recorded_list_pages() -> tuple[dict[str, str], dict[str, str]]:
+    """{list label: page the ingest fetched it from} for every list a scraper
+    module constant records, and {team label: MLB Pipeline org slug}."""
+    global _LIST_PAGES, _ORG_SLUGS
+    if _LIST_PAGES is None:
+        pages: dict[str, str] = {}
+        slugs: dict[str, str] = {}
+        try:
+            import scrapers as S
+            for url, label, *_rest in S.MLB_PIPELINE_INTERVALS:
+                pages[label] = url
+            for url, label, *_rest in S.MLB_PIPELINE_ORG_INTERVALS:
+                pages[label] = url
+            for url, label, *_rest in S.MLB_PIPELINE_DRAFT_HISTORY_INTERVALS:
+                pages[label] = url
+            for url, label, *_rest in S.MLB_INTERNATIONAL_INTERVALS:
+                pages[label] = url
+            for url, label, *_rest in S.ESPN_INTERVALS:
+                pages[label] = url
+            for url, label, *_rest in S.ESPN_DRAFT_INTERVALS:
+                pages[label] = url
+            slugs = {S._slug_to_label(s): s for s in S.MLB_PIPELINE_ORG_SLUGS}
+        except Exception:                      # noqa: BLE001 - links are optional
+            pages, slugs = {}, {}
+        _LIST_PAGES, _ORG_SLUGS = pages, slugs
+    return _LIST_PAGES, _ORG_SLUGS
+
+
+def report_list_url(src: str, label: str | None = None) -> tuple[str, bool] | None:
+    """(url, is_list_page) for the publisher's list this report came from.
+
+    is_list_page is True when the url is the recorded page of that list and
+    year, False when it is the publisher's home page for the list family (no
+    page recorded for the list). None only for a source the site does not
+    name."""
+    lab = (label or "").strip()
+    if src in ("mlb_pipeline", "mlb_pipeline_draft"):
+        m = _PIPE_DRAFT.match(lab)
+        if m:
+            return f"https://www.mlb.com/milb/prospects/{m.group(1)}/draft/", True
+    pages, slugs = _recorded_list_pages()
+    if lab and lab in pages:
+        return pages[lab], True
+    if src == "mlb_pipeline":
+        m = _PIPE_TOP100.match(lab)
+        if m:
+            return f"https://www.mlb.com/milb/prospects/{m.group(1)}/top100/", True
+        m = _PIPE_ORG.match(lab)
+        if m and m.group(2) in slugs:
+            return f"https://www.mlb.com/prospects/{m.group(1)}/{slugs[m.group(2)]}", True
+    if src == "just_baseball":
+        jb = _publisher_urls()[1]
+        if jb:
+            return jb, True
+    home = LIST_FAMILY_HOMES.get(src)
+    return (home, False) if home else None
+
+
 def excerpt_fields(text, src: str, *, label: str | None = None, fg_id=None,
                    mlbam_id=None) -> dict:
     """The served fields for one report: the excerpt, whether it was cut, the
-    source's name and the link (None when only the name and list are known)."""
+    source's name and the link (None when no page of the player's own is
+    known). An excerpt without that link carries list_url, the publisher's
+    list page, and list_page (False when list_url is the list family's home
+    page because no page is recorded for the list itself)."""
     exc, cut = report_excerpt(text)
-    return {
+    out = {
         "text": exc,
         "truncated": cut,
         "source": REPORT_SOURCE_NAMES.get(src, src),
         "url": report_url(src, label=label, fg_id=fg_id, mlbam_id=mlbam_id),
     }
+    if out["url"] is None:
+        lst = report_list_url(src, label)
+        if lst:
+            out["list_url"], out["list_page"] = lst
+    return out
 
 
 def excerpt_tools(tools, src: str, *, label: str | None = None, fg_id=None,
                   mlbam_id=None):
     """A copy of a snapshot's tools dict with `_extras.report` replaced by the
     excerpt and the link fields added beside it (report_truncated,
-    report_source, report_label, report_url). Tools without a report come back
-    unchanged (the same object)."""
+    report_source, report_label, report_url, and report_list_url plus
+    report_list_page where report_url is None). Tools without a report come
+    back unchanged (the same object)."""
     if not isinstance(tools, dict):
         return tools
     ex = tools.get("_extras")
@@ -169,6 +271,9 @@ def excerpt_tools(tools, src: str, *, label: str | None = None, fg_id=None,
     new_ex["report_source"] = f["source"]
     new_ex["report_label"] = label
     new_ex["report_url"] = f["url"]
+    if "list_url" in f:
+        new_ex["report_list_url"] = f["list_url"]
+        new_ex["report_list_page"] = f["list_page"]
     out = dict(tools)
     out["_extras"] = new_ex
     return out
