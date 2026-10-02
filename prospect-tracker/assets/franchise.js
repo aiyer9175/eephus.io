@@ -257,9 +257,10 @@
         '<text class="fr-svg-mono" x="' + bx + '" y="' + (yMid + R + 25) + '" text-anchor="middle" style="font-size:9px;fill:' + v + '">' + esc(n1(b.score)) + "</text>";
       if (b.provisional) {
         // THE PROVISIONAL CHIP ON THE BUBBLE (owner decision D6 alternative).
-        var cw = 58, cx = bx + R - 10, cy = yMid - R - 2;
-        g += '<rect class="fr-svg-chip" x="' + (cx - cw / 2) + '" y="' + (cy - 6) + '" width="' + cw + '" height="11"/>' +
-          '<text class="fr-svg-chip-text" x="' + cx + '" y="' + (cy + 2.5) + '" text-anchor="middle">' + esc(copy("outlook_chip")) + "</text>";
+        // 9px text (was 7px, under any reading size) on a 74 x 13 chip
+        var cw = 74, cx = bx + R - 10, cy = yMid - R - 2;
+        g += '<rect class="fr-svg-chip" x="' + (cx - cw / 2) + '" y="' + (cy - 7) + '" width="' + cw + '" height="13"/>' +
+          '<text class="fr-svg-chip-text" x="' + cx + '" y="' + (cy + 3) + '" text-anchor="middle">' + esc(copy("outlook_chip")) + "</text>";
       }
     });
     var m = desc.length, pstep = areaW / m;

@@ -109,6 +109,22 @@
      (WIRE ticker, sidebar feed) are deliberately excluded: gold on near-black
      is already high contrast and that palette is theme-fixed on purpose. */
   --text-gold:     #7D5F08;
+  /* READING INKS for the other accent hues (2026-10-02, QUAL_2). The same
+     problem as gold above: as reading text on the warm paper, accent cyan
+     #0E7C86 measured 4.35:1 (the backtested badge, the PAL top tier, the FA
+     MLB block label, paper text on the selected projections tab), the violet
+     #b47cff MLB pool tag on /trademachine/ 2.54:1 and the green Control and
+     VALUE chips 4.04 / 4.28:1 on their own tints. Each ink keeps its hue and
+     measures on primary / secondary / tertiary paper: cyan 5.48 / 5.72 / 5.00,
+     violet 6.09 / 6.36 / 5.57, green 5.78 / 6.03 / 5.28; amber IS --text-gold.
+     Only text (and the one selected-tab fill that carries paper text) uses
+     them; borders, rules, fills and charts keep the accent and neon tokens.
+     The dark block aliases each to its neon twin, so dark does not move.
+     test_qual_light_theme_ink.py pins the table. */
+  --text-cyan:     #0B6B74;
+  --text-amber:    var(--text-gold);
+  --text-violet:   #6B3FB8;
+  --text-green:    #1A6B32;
   --border:        #C9C1AE;
   --border-light:  #E2DCC9;
   /* BUGFIX 2026-08-05: --border-subtle was referenced in nine places and DEFINED
@@ -351,6 +367,11 @@
      dark theme needs no bronze; the alias keeps every repointed rule on one
      token name across both themes. */
   --text-gold:     var(--accent-gold);
+  /* the reading inks alias their neon twins: dark already passes */
+  --text-cyan:     var(--accent-cyan);
+  --text-amber:    var(--accent-gold);
+  --text-violet:   var(--neon-violet);
+  --text-green:    var(--accent-green);
   --border:        #2B2B31;
   --border-light:  #1D1D21;
   --accent-gold:   #FFD700;   /* refractor gold */
@@ -1938,7 +1959,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    cannot, so the VALUE and OVERPAY pills carried a muddy light-palette tint
    against the Topps-Chrome field. color-mix keeps the tint tied to whichever
    token is live, which is the pattern .fa-type-opt below already uses. */
-.fa-app .fa-verdict-value { color: var(--accent-green); border-color: var(--accent-green);
+.fa-app .fa-verdict-value { color: var(--text-green); border-color: var(--accent-green);
   background: color-mix(in srgb, var(--accent-green) 8%, transparent); }
 .fa-app .fa-verdict-overpay { color: var(--accent-red); border-color: var(--accent-red);
   background: color-mix(in srgb, var(--accent-red) 8%, transparent); }
@@ -1999,7 +2020,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .fa-app .fa-block i { font-style: normal; font-family: var(--font-retro-mono); font-size: 8px;
   font-weight: 700; letter-spacing: 0.06em; padding: 1px 3px; margin-left: 3px;
   border: 1px solid var(--border); color: var(--text-tertiary); vertical-align: 1px; }
-.fa-app .fa-block-mlb i { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.fa-app .fa-block-mlb i { border-color: var(--accent-cyan); color: var(--text-cyan); }
 .fa-app .fa-block-prospect i { border-color: var(--accent-gold); color: var(--text-gold); }
 @media (max-width: 1100px) {
   .fa-app .fa-board-layout { grid-template-columns: 1fr; }
@@ -2448,7 +2469,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-family: var(--font-retro-mono); font-size: 9.5px; letter-spacing: .03em;
   text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 6px; }
 .tier-key b { font-weight: 700; letter-spacing: .05em; }
-.tier-key i { font-style: normal; opacity: .45; }
+.tier-key i { font-style: normal; color: var(--text-tertiary); }
 .tier-key span { font-weight: 700; font-variant-numeric: tabular-nums; }
 .tier-key .tk-elite { color: var(--vt-elite); }
 .tier-key .tk-great { color: var(--vt-great); }
@@ -2701,9 +2722,9 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   font-weight: 700; letter-spacing: .02em; text-transform: uppercase; padding: 1px 5px;
   margin-top: 3px; border: 1px solid var(--border); color: var(--text-tertiary);
   white-space: nowrap; }
-.pal-tier--t1 { color: var(--accent-cyan); border-color: var(--accent-cyan); }
+.pal-tier--t1 { color: var(--text-cyan); border-color: var(--accent-cyan); }
 .pal-tier--t2 { color: var(--accent-green); border-color: var(--accent-green); }
-.pal-tier--t3 { color: var(--accent-gold); border-color: var(--accent-gold); }
+.pal-tier--t3 { color: var(--text-gold); border-color: var(--accent-gold); }
 .pal-tier--t4 { color: var(--text-tertiary); border-color: var(--border); }
 /* prospect-watch SEVERITY: quarters of the 20-point swing band, so the ramp runs
    warn-orange (a full band past the boundary), gold, then the neutral listing
@@ -2713,7 +2734,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   border: 1px solid var(--border); color: var(--text-tertiary); white-space: nowrap;
   vertical-align: middle; cursor: help; }
 .pal-sev--severe { color: var(--accent-orange); border-color: var(--accent-orange); }
-.pal-sev--marked { color: var(--accent-gold); border-color: var(--accent-gold); }
+.pal-sev--marked { color: var(--text-gold); border-color: var(--accent-gold); }
 .pal-sev--modest { color: var(--text-secondary); }
 .pal-tier-legend { font-size: 10.5px; color: var(--text-tertiary); margin: 0 0 12px;
   padding: 7px 10px; border: 1px dashed var(--border); background: var(--bg-secondary); }
@@ -2726,7 +2747,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .pal-scorecard .pal-sc-note, .mlbstats-scorecard .pal-sc-note { flex: 1 1 320px; font-size: 10.5px; color: var(--text-tertiary); }
 /* positive accountability affordance: a validated model should advertise it */
 .bp-validated { font-family: var(--font-retro-mono); font-size: 9.5px; letter-spacing: .04em;
-  text-transform: uppercase; color: var(--accent-cyan); border: 1px solid var(--accent-cyan);
+  text-transform: uppercase; color: var(--text-cyan); border: 1px solid var(--accent-cyan);
   padding: 1px 6px; }
 .pal-mix-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
 .pal-mix-card { border: 1px solid var(--border); background: var(--bg-secondary); padding: 12px; }
@@ -2773,7 +2794,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .proj-app .proj-ct { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
   letter-spacing: 0.04em; padding: 1px 6px; border: 1px solid var(--border);
   white-space: nowrap; cursor: help; }
-.proj-app .proj-ct-signed { color: var(--accent-green); border-color: var(--accent-green);
+.proj-app .proj-ct-signed { color: var(--text-green); border-color: var(--accent-green);
   background: color-mix(in srgb, var(--accent-green) 12%, transparent); }
 .proj-app .proj-ct-expiring { color: var(--text-gold); border-color: var(--accent-gold);
   background: color-mix(in srgb, var(--accent-gold) 12%, transparent); }
@@ -3731,7 +3752,9 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--text-tertiary);
 }
 .mlbp-tabs .chip.mlbp-tab[aria-selected="true"] {
-  background: var(--neon-cyan); color: var(--bg-primary); border-color: var(--neon-cyan);
+  /* the cyan READING ink as the fill: paper text on --neon-cyan read 4.35:1
+     in light; on --text-cyan it reads 5.48. Dark aliases the same cyan. */
+  background: var(--text-cyan); color: var(--bg-primary); border-color: var(--text-cyan);
 }
 .mlbp-tabs .chip.mlbp-tab:focus-visible { outline: 2px solid var(--neon-cyan); outline-offset: 2px; }
 .mlbp-tabpanel { width: 100%; min-width: 0; }
@@ -4737,7 +4760,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .fa-app .fa-board-table .fa-sort-ind { display: inline-block; min-width: 0.9em; text-align: left; }
 /* Second word under the first (the projections unit-line idiom), so "WAR y1"
    and "WAR deal" fit a 44px column instead of ellipsizing their own label. */
-.fa-app .fa-th-unit { display: block; font-size: 9px; letter-spacing: 0.04em; opacity: 0.8; }
+.fa-app .fa-th-unit { display: block; font-size: 9px; letter-spacing: 0.04em; }
 .fa-app .fa-board-table .fc-rank, .fa-app .fa-board-table .fc-player { text-align: left; }
 .fa-app .fa-board-table tbody tr[data-key] { cursor: pointer; }
 /* The hover surface is --bg-secondary, where the projections table uses
