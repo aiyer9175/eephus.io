@@ -986,7 +986,7 @@ function _tbPopulateSelectFilters() {
 function _tbWorryBadge(w) {
   if (!w || w.score < 0.15) return "";
   const label = w.type === "approach" ? "approach" : w.type === "contact_quality" ? "contact" : "skills";
-  const col = w.score > 0.5 ? "var(--neon-red)" : "var(--neon-amber)";
+  const col = w.score > 0.5 ? "var(--neon-red)" : "var(--text-amber)";
   return `<span style="font-size:10px;color:${col}" title="Worriedness ${(w.score*100).toFixed(0)}% - ${label} signal">⚠ ${label}</span>`;
 }
 // § CRUNCH chip: flags roster-decision exposure (Rule 5 must-protect, out of
@@ -999,11 +999,13 @@ function _tbCrunchChip(c) {
   else if (c.on_40_man && c.options_left === 1) bits.push("1-opt");
   if (!bits.length) return "";
   const sc = c.score || 0;
-  const col = sc >= 55 ? "var(--neon-red)" : sc >= 30 ? "var(--neon-amber)" : "var(--text-secondary)";
+  // text takes the amber READING ink (the neon read 2.13:1 on light paper); the border keeps the neon
+  const col = sc >= 55 ? "var(--neon-red)" : sc >= 30 ? "var(--text-amber)" : "var(--text-secondary)";
+  const bord = sc >= 55 ? "var(--neon-red)" : sc >= 30 ? "var(--neon-amber)" : "var(--text-secondary)";
   const tip = `Roster crunch ${sc}: ${c.rule5_exposed ? "Rule 5 exposed this November; " : ""}`
     + `${c.on_40_man ? "on the 40-man" : "off the 40-man"} · ${c.options_left} option${c.options_left === 1 ? "" : "s"} left`
     + `${c.service_phase && c.service_phase !== "none" ? " · " + escapeHtml(c.service_phase) : ""}`;
-  return ` <span class="chip" style="padding:1px 5px;font-size:9px;color:${col};border-color:${col};" title="${tip}">${bits.join(" ")}</span>`;
+  return ` <span class="chip" style="padding:1px 5px;font-size:9px;color:${col};border-color:${bord};" title="${tip}">${bits.join(" ")}</span>`;
 }
 function _tbCtrlBadge(p) {
   const ctrl   = p.remaining_control_years;
@@ -1018,7 +1020,7 @@ function _tbCtrlBadge(p) {
     const sal = cc.current_salary_mm
       ? `$${cc.current_salary_mm < 1 ? (cc.current_salary_mm*1000).toFixed(0)+"k" : cc.current_salary_mm.toFixed(1)+"M"}`
       : null;
-    return `<span style="font-size:10px;color:var(--neon-amber);">${escapeHtml([sal, fa].filter(Boolean).join(" · "))}</span>`;
+    return `<span style="font-size:10px;color:var(--text-amber);">${escapeHtml([sal, fa].filter(Boolean).join(" · "))}</span>`;
   }
 
   // MLB player: full contract spec
@@ -1088,14 +1090,14 @@ function _tbCtrlBadge(p) {
   // season in progress, so dropping the +1 here shifted every row one band
   // darker than the sort that sits beside it.
   const _ctSpan = _ctThru != null ? (_ctThru - _tbCurSeason() + 1) : ctrl;
-  const col = _ctSpan >= 5 ? "var(--neon-green)" : _ctSpan >= 2 ? "var(--neon-amber)" : "var(--text-secondary)";
+  const col = _ctSpan >= 5 ? "var(--neon-green)" : _ctSpan >= 2 ? "var(--text-amber)" : "var(--text-secondary)";
   const head = _ctThru != null
     ? `Ctrl thru ${_ctThru}${_ctOpen ? "+" : ""}`
     : _tbPhaseWord(phase);
   const parts = [
     head ? `<span style="font-weight:600;${p.control_est ? "border-bottom:1px dashed currentColor;" : ""}">${escapeHtml(head)}</span>` : "",
     sal  ? `<span style="color:${col}">${sal}</span>` : "",
-    pOpts ? `<span style="color:var(--neon-amber);font-size:9px;" title="Player can opt out">${escapeHtml(pOpts)}</span>` : "",
+    pOpts ? `<span style="color:var(--text-amber);font-size:9px;" title="Player can opt out">${escapeHtml(pOpts)}</span>` : "",
     cOpts ? `<span style="color:var(--text-secondary);font-size:9px;" title="Team holds option">${escapeHtml(cOpts)}</span>` : "",
   ].filter(Boolean).join(" · ");
 
@@ -1259,7 +1261,7 @@ function _renderTBRows() {
     const org   = escapeHtml(p.org || "");   // may be empty for some players
     const name  = escapeHtml(p.player_name || "?");
     const isMlb = _tbIsMlb(p);
-    const statusCol = isMlb ? "var(--neon-violet)" : "var(--neon-green)";
+    const statusCol = isMlb ? "var(--text-violet)" : "var(--neon-green)";
     const statusLbl = isMlb ? "MLB" : "MiLB";
     // Range tooltip. The band is NAMED, because two different ones ship: an eFV
     // credible interval on a prospect-era surplus, and (since 2026-08-03) the
@@ -1347,8 +1349,9 @@ function _renderTBRows() {
     // shifts the surplus, which is now the platform eFV/Projections value). Click -> group.
     const grpoSc = p.grpo_breakout_score;
     if (grpoSc != null && grpoSc >= 0.55) {   // only flag genuine breakout signals
-      const grpoCol = grpoSc >= 0.70 ? "var(--neon-green)" : "var(--neon-amber)";
-      signals += ` <button class="chip" style="padding:1px 5px;font-size:9px;color:${grpoCol};border-color:${grpoCol};"
+      const grpoCol = grpoSc >= 0.70 ? "var(--neon-green)" : "var(--text-amber)";
+      const grpoBord = grpoSc >= 0.70 ? "var(--neon-green)" : "var(--neon-amber)";
+      signals += ` <button class="chip" style="padding:1px 5px;font-size:9px;color:${grpoCol};border-color:${grpoBord};"
         onclick="event.stopPropagation();_tbShowGroup('${escapeHtml(p.player_key||'')}');"
         title="GRPO within-cohort breakout score ${(grpoSc*100).toFixed(0)}% (provisional; does not move the surplus). Click for the profile group.">
         ▲${(grpoSc*100).toFixed(0)}
@@ -1556,7 +1559,7 @@ function _tbShowGroup(playerKey) {
   } else {
     const rows = members.map((m, i) => {
       const bs = m.breakout_score != null ? (m.breakout_score * 100).toFixed(0) + "%" : " - ";
-      const bsCol = (m.breakout_score || 0) >= 0.60 ? "var(--neon-green)" : (m.breakout_score || 0) >= 0.45 ? "var(--neon-amber)" : "var(--text-secondary)";
+      const bsCol = (m.breakout_score || 0) >= 0.60 ? "var(--neon-green)" : (m.breakout_score || 0) >= 0.45 ? "var(--text-amber)" : "var(--text-secondary)";
       const avl = m.age_vs_level != null ? `${m.age_vs_level > 0 ? "+" : ""}${Number(m.age_vs_level).toFixed(1)}yr` : " - ";
       const mHref = m.player_key ? "/prospx/#player=" + encodeURIComponent(m.player_key) : "";
       const mName = escapeHtml(m.player_name || "?");

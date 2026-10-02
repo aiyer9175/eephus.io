@@ -15,7 +15,10 @@
 
 .fr-app .fr-lede { font-size: 15px; line-height: 1.55; margin: 6px 0 14px; max-width: 74ch; }
 .fr-app .fr-note { font-size: 13px; line-height: 1.5; opacity: .85; margin: 8px 0; max-width: 78ch; }
-.fr-app .fr-count { font-size: 12px; opacity: .6; margin: 6px 0; }
+/* tile titles, tile lines and the count notes are dimmed by COLOUR, not by
+   opacity: opacity composited the text and every chip and dollar inside it
+   toward the paper (a .fr-pos dollar at 2.44:1, a verdict chip at 3.05:1) */
+.fr-app .fr-count { font-size: 12px; color: var(--text-secondary); margin: 6px 0; }
 .fr-app .fr-basis { font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); margin: 2px 0 6px; }
 .fr-app .fr-pos { color: var(--up); }
 .fr-app .fr-neg { color: var(--down); }
@@ -62,8 +65,8 @@
 .fr-app .fr-svg-node { fill: var(--bg-secondary); }
 .fr-app .fr-svg-leaf { fill: var(--bg-secondary); stroke: var(--border-light); }
 .fr-app .fr-svg-desc { stroke: var(--text-tertiary); }
-.fr-app .fr-svg-chip { fill: var(--accent-gold); }
-.fr-app .fr-svg-chip-text { font-family: var(--font-mono); fill: var(--bg-secondary); font-size: 7px; letter-spacing: .06em; text-transform: uppercase; }
+.fr-app .fr-svg-chip { fill: var(--text-gold); }
+.fr-app .fr-svg-chip-text { font-family: var(--font-mono); fill: var(--bg-secondary); font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
 
 /* the tree wrap: tri-state chip strip, then the canopy or the full SVG */
 .fr-app .fr-tree-wrap { border: 1px solid var(--border-light); background: var(--bg-secondary); margin: 8px 0 0; overflow: hidden; }
@@ -131,15 +134,15 @@
    line in a tile may wrap anywhere inside its 162px phone cell. */
 .fr-app .fr-tile { flex: 1 1 200px; border: 1px solid var(--border-light); padding: 8px 10px; min-width: 0; }
 .fr-app .fr-tile-linked:hover { border-color: var(--text-secondary); }
-.fr-app .fr-tile-title { font-size: 13px; opacity: .8; min-width: 0; overflow-wrap: anywhere; }
+.fr-app .fr-tile-title { font-size: 13px; color: var(--text-secondary); min-width: 0; overflow-wrap: anywhere; }
 .fr-app .fr-tile-big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 2px 0; font-family: var(--font-mono); min-width: 0; overflow-wrap: anywhere; }
-.fr-app .fr-tile-sub { font-size: 12px; opacity: .7; line-height: 1.4; min-width: 0; overflow-wrap: anywhere; }
+.fr-app .fr-tile-sub { font-size: 12px; color: var(--text-secondary); line-height: 1.4; min-width: 0; overflow-wrap: anywhere; }
 /* a verdict chip in a tile line follows a space, so it needs no margin of its
    own; without one, a chip that drops to its own line gets the full tile width */
 .fr-app .fr-tile-sub .fr-verdict { margin-left: 0; }
 .fr-app .fr-tile-open { display: inline-block; margin-top: 5px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--border-light); padding: 2px 7px; color: var(--text-primary); text-decoration: none; }
 .fr-app .fr-tile-open:hover, .fr-app .fr-tile-open:focus-visible { border-color: var(--text-secondary); }
-.fr-app .fr-chip-prov { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 0 5px; margin-left: 6px; vertical-align: middle; }
+.fr-app .fr-chip-prov { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--accent-gold); color: var(--text-gold); padding: 0 5px; margin-left: 6px; vertical-align: middle; }
 @media (max-width: 720px) {
   .fr-app .fr-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fr-app .fr-tile-big { font-size: 20px; }
