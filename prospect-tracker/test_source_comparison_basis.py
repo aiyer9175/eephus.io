@@ -181,6 +181,36 @@ def test_progress_section_reads_the_ledger_row_not_the_backtest():
     assert "bt.generated_at" in code
 
 
+
+# ---------------------------------------------------------------------------
+# PV-08 Provisional track record (PROVISIONAL_V2.md section 4): SERVED and BACKCAST
+# as two tables, every number read from its artifact at render time.
+
+@pytest.mark.parametrize("name", ["_ptServedTable", "_ptBackcastTable", "_ptVerdict",
+                                  "_methProvTrackSection"])
+def test_provisional_track_renderers_carry_no_statistic_literal(name):
+    code = _fn_code(_js(), name)
+    code = re.sub(r'[\w-]+="[^"$]*"', "", code)
+    hits = _STAT_LITERAL.findall(code)
+    assert not hits, f"{name} carries a numeric literal that reads as a statistic: {hits}"
+    assert not re.search(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", code), f"{name} types a date"
+
+
+def test_provisional_track_reads_its_two_artifacts_and_never_pools_them():
+    js = _js()
+    load = _fn_code(js, "_loadProvTrack")
+    assert 'fetch("/data/provisional_track_eval.json"' in load
+    assert 'fetch("/data/provisional_v2_eval.json"' in load
+    served, back = _fn_code(js, "_ptServedTable"), _fn_code(js, "_ptBackcastTable")
+    assert "SERVED" in served and "backcast" not in served.lower()
+    assert "b.backcast" in back and ".rows" not in back.replace("t1.", "").replace("t2.", "")
+    sec = _fn_code(js, "_methProvTrackSection")
+    assert "_ptServedTable(t)" in sec and "_ptBackcastTable(s.backcast)" in sec
+    # an open window prints the row's own status, never a verdict
+    assert "r.status" in _fn_code(js, "_ptVerdict")
+    rsc = _fn_code(js, "renderSourceComparison")
+    assert "_methProvTrackSection()" in rsc
+
 # ---------------------------------------------------------------------------
 # Rendered layer
 

@@ -51,6 +51,13 @@ date it is scored through. Before a window closes the row says "window open unti
 also appended to .cache/provisional_track/ledger.jsonl (untracked) and merged back
 before each write, because the deploy box runs `git checkout -- .` nightly.
 
+THE RECEIPTS (PV-08). The artifact also carries `by_player`: per committed freeze, one
+compact row per eligible frozen player with the frozen served grade and, once it exists,
+the first label-source opinion after the freeze (date, source, FV, days later). It is the
+latest state, rebuilt on every write and never appended; the PROSPX card prints it as
+"Frozen <date> at X; first graded <date> by <source> at Y, N days later", or "window open
+until <date>" before a first grade.
+
 THE SERVED RETROSPECTIVE. The 2026-06-23 served artifact (git f6dc2c8a) rebuilt as a
 backdated freeze and scored to 2026-09-24 is the only served record with labels. It is
 SPENT (the freezes' constants and recalibration were fitted on it), kept as leg
@@ -496,6 +503,82 @@ def build_rows(as_of: str, *, freeze_dir=None, data_dir=None, db_path=None, B: i
     return out
 
 
+#: Source names as a receipt prints them.
+SOURCE_NAMES = {"fangraphs": "FanGraphs", "mlb_pipeline": "MLB Pipeline",
+                "mlb_pipeline_international": "MLB Pipeline", "baseballamerica": "Baseball America",
+                "espn": "ESPN", "just_baseball": "Just Baseball"}
+RECEIPT_COLUMNS = ["grade", "first_date", "first_source", "first_fv", "first_label", "lead_days",
+                   "player_key"]
+
+
+def _fv_label(source: str, fv) -> str | None:
+    """The first grade as its source published it: FanGraphs 35+ is coded 37.5 by
+    opinions(), so it prints back as 35+; any other grade rounds UP (the FV rule)."""
+    if fv is None:
+        return None
+    fv = float(fv)
+    if source == "fangraphs" and abs((fv - 2.5) % 5) < 1e-9:
+        return f"{int(round(fv - 2.5))}+"
+    import math
+    return str(int(math.ceil(fv - 1e-9)))
+
+
+def receipts(as_of: str, *, freeze_dir=None, m2k: dict | None = None,
+             opin: dict | None = None, data_dir=None, db_path=None) -> dict:
+    """PV-08 card receipts: for every eligible row of every committed freeze, the frozen
+    served grade and, once it exists, the first label-source opinion after the freeze
+    (date, source, FV, days later), scored through min(as_of, the freeze's last window
+    end). Latest state only: rebuilt on every write, never appended. Reads the same
+    opinions and identity maps as score(), so a receipt and the scored row cannot
+    disagree about who was graded or when."""
+    m2k = identity(data_dir) if m2k is None else m2k
+    opin = opinions(db_path) if opin is None else opin
+    srcs = set(SETS["ANY"])
+    out = {}
+    for p in freeze_files(freeze_dir):
+        fz = json.loads(p.read_text(encoding="utf-8"))
+        F = fz["frozen_at"]
+        if as_of <= F:
+            continue
+        wins = fz.get("windows") or WINDOWS
+        wend = max(wins.values())
+        through = min(as_of, wend)
+        rows = {}
+        n_first = 0
+        for r in fz["rows"]:
+            k = str(r["key"])
+            pk = k if not k.startswith("mlbam_") else m2k.get(str(r.get("mlbam") or k[6:]))
+            ops = opin.get(pk, []) if pk else []
+            if any(d <= F for d, _, _ in ops):
+                continue
+            after = sorted((d, s, fv) for d, s, fv in ops if s in srcs and F < d <= through)
+            first = None
+            if after:
+                d0 = after[0][0]
+                same = [o for o in after if o[0] == d0]
+                withfv = [o for o in same if o[2] is not None]
+                first = (withfv or same)[0]
+                n_first += 1
+            g = r.get("grade")
+            row = [round(float(g), 1) if g is not None else None]
+            if first:
+                lead = (datetime.date.fromisoformat(first[0]) - datetime.date.fromisoformat(F)).days
+                row += [first[0], first[1], first[2], _fv_label(first[1], first[2]), lead]
+            else:
+                row += [None, None, None, None, None]
+            row.append(pk if (pk and pk != k) else None)
+            rows[k] = row
+        out[p.name] = {"frozen_at": F, "windows": dict(sorted(wins.items(), key=lambda kv: kv[1])),
+                       "scored_through": through, "n_rows": len(rows), "n_first_graded": n_first,
+                       "rows": rows}
+    return {"as_of": as_of, "columns": list(RECEIPT_COLUMNS), "source_names": dict(SOURCE_NAMES),
+            "note": ("one row per eligible frozen player, keyed by the freeze key: the frozen "
+                     "served grade, then the first label-source opinion after the freeze "
+                     "(null until one arrives); player_key is set where the freeze key is an "
+                     "mlbam key that now resolves. Latest state, rebuilt on every write."),
+            "freezes": out}
+
+
 def _read_jsonl(path: Path) -> list[dict]:
     rows = []
     try:
@@ -559,8 +642,8 @@ def _latest(rows: list[dict]) -> dict:
     return out
 
 
-def _doc(rows: list[dict], now_iso: str) -> dict:
-    return {
+def _doc(rows: list[dict], now_iso: str, by_player: dict | None = None) -> dict:
+    doc = {
         "schema": SCHEMA,
         "generated_at": now_iso,
         "model_id": MODEL_ID,
@@ -581,6 +664,29 @@ def _doc(rows: list[dict], now_iso: str) -> dict:
         "latest": _latest(rows),
         "rows": rows,
     }
+    if by_player is not None:
+        doc["by_player"] = by_player
+    return doc
+
+
+def _dumps(doc: dict) -> str:
+    """indent=1 like every other eval artifact, except each receipt row, which prints on
+    one line (6,000 rows at eight lines each would bloat the file for no reader)."""
+    blocks = {}
+    bp = doc.get("by_player")
+    if isinstance(bp, dict):
+        doc = dict(doc, by_player=dict(bp, freezes={}))
+        for i, (name, fz) in enumerate((bp.get("freezes") or {}).items()):
+            tok = f"__RECEIPT_ROWS_{i}__"
+            blocks[tok] = fz.get("rows") or {}
+            doc["by_player"]["freezes"][name] = dict(fz, rows=tok)
+    text = json.dumps(doc, indent=1, ensure_ascii=False)
+    for tok, rows in blocks.items():
+        body = ",\n".join(f"     {json.dumps(k, ensure_ascii=False)}: "
+                           f"{json.dumps(v, separators=(',', ':'), ensure_ascii=False)}"
+                           for k, v in rows.items())
+        text = text.replace(json.dumps(tok), ("{\n" + body + "\n    }") if rows else "{}")
+    return text + "\n"
 
 
 def _paths(out_path, ledger_path, data_dir):
@@ -592,7 +698,7 @@ def _paths(out_path, ledger_path, data_dir):
 
 
 def commit_rows(cands: list[dict], *, out_path=None, ledger_path=None, data_dir=None,
-                now_iso: str | None = None) -> dict:
+                now_iso: str | None = None, by_player: dict | None = None) -> dict:
     out, led = _paths(out_path, ledger_path, data_dir)
     now_iso = now_iso or _now_iso()
     try:
@@ -604,7 +710,9 @@ def commit_rows(cands: list[dict], *, out_path=None, ledger_path=None, data_dir=
     rows, appended = apply(rows, cands, now_iso)
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_name(out.name + ".tmp")
-    tmp.write_text(json.dumps(_doc(rows, now_iso), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    if by_player is None:
+        by_player = prev.get("by_player")
+    tmp.write_text(_dumps(_doc(rows, now_iso, by_player)), encoding="utf-8")
     tmp.replace(out)
     in_ledger = {r.get("run_id") for r in durable}
     _append_jsonl(led, [r for r in rows if r.get("run_id") not in in_ledger])
@@ -618,10 +726,13 @@ def update(as_of: str | None = None, *, out_path=None, ledger_path=None, data_di
     """The nightly entry point: score every freeze as of today and append what changed."""
     as_of = as_of or datetime.date.today().isoformat()
     now_iso = now_iso or _now_iso()
+    m2k = identity(data_dir)
+    opin = opinions(db_path)
     cands = build_rows(as_of, freeze_dir=freeze_dir, data_dir=data_dir, db_path=db_path, B=B,
-                       retrospective=retrospective, now_iso=now_iso)
+                       retrospective=retrospective, now_iso=now_iso, m2k=m2k, opin=opin)
+    rec = receipts(as_of, freeze_dir=freeze_dir, m2k=m2k, opin=opin)
     res = commit_rows(cands, out_path=out_path, ledger_path=ledger_path, data_dir=data_dir,
-                      now_iso=now_iso)
+                      now_iso=now_iso, by_player=rec)
     res["as_of"] = as_of
     res["n_candidates"] = len(cands)
     return res

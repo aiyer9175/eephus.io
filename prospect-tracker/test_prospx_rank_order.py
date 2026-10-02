@@ -26,6 +26,12 @@ of 4,679 graded rows and the "Last board #N" pill (detail header, GFX card) read
 that never happened. The pill is retired, and the leaderboard rank caps and the scatter
 rank axis read the rank the chip prints (boardRankOf). Re-basing the baked rank itself is
 an owner question (canonical pool) and is not pinned here.
+
+PV-07 (owner answers PG-Q1 / PG-Q2, 2026-09-25) answered it: rows no label source has
+graded leave the shared rank for the section "Not yet graded by any source", which sorts
+after every graded row. The live rank and the baked overall_rank now count the same pool,
+the graded rows, so a printed #N is the row's position among graded rows; a section row
+prints no rank (its chance of a first grade instead) and holds its place in the section.
 """
 from __future__ import annotations
 
@@ -57,7 +63,7 @@ def test_one_comparator_serves_every_board_order_site():
     assert m, "boardCmp is missing from prospx/index.html"
     assert "efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b)" in m.group(1)
     for site in ("pool.sort(boardCmp);",            # board branch, rank map, provOrgRank
-                 "byOrg[o].sort(boardCmp);",        # org-rank map
+                 ".filter(p => !inProvSection(p)).sort(boardCmp);",   # org-rank map (PV-07)
                  "_wlPool.sort(boardCmp);",         # watchlist top prospect
                  "_orgPool.sort(boardCmp);",        # farm top 3
                  "return boardCmp(a, b);",          # farm roster default sort
@@ -101,8 +107,15 @@ _MEASURE = """() => {
   buildEfvRankMap();
   _EFV_ORG_RANK = null;
   const f = getFilteredActives();
-  let mis = 0, ge10 = 0, maxAbs = 0, first = null;
+  let mis = 0, ge10 = 0, maxAbs = 0, first = null, secMis = 0, nSec = 0;
+  const nGraded = f.filter(p => !inProvSection(p)).length;
   for (let i = 0; i < f.length; i++) {
+    if (inProvSection(f[i])) {
+      nSec++;
+      const sp = provSectionPos(f[i]);
+      if (getEfvRank(f[i]) != null || !sp || sp.pos !== i + 1 - nGraded) secMis++;
+      continue;
+    }
     const r = getEfvRank(f[i]);
     if (r !== i + 1) {
       mis++;
@@ -116,7 +129,7 @@ _MEASURE = """() => {
   for (const p of f) if (p && p.org) orgs[p.org] = 1;
   let orgMis = 0, orgRows = 0;
   for (const o of Object.keys(orgs)) {
-    const pool = oneRowOrgPool(o).filter(p => p && p.player_key)
+    const pool = oneRowOrgPool(o).filter(p => p && p.player_key && !inProvSection(p))
       .sort((a, b) => efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b));
     pool.forEach((p, i) => {
       orgRows++;
@@ -125,7 +138,7 @@ _MEASURE = """() => {
     });
   }
   return {sort: state.sort, n: f.length, nProv: f.filter(p => p._is_provisional).length,
-          mis, ge10, maxAbs, first, orgMis, orgRows};
+          mis, ge10, maxAbs, first, orgMis, orgRows, secMis, nSec, nGraded};
 }"""
 
 
@@ -140,6 +153,9 @@ def test_rank_chip_equals_board_position(booted_page):
     assert m["orgRows"] > 0
     assert m["orgMis"] == 0, (
         f"{m['orgMis']} of {m['orgRows']} org ranks differ from the roster's order")
+    assert m["secMis"] == 0, (
+        f"{m['secMis']} of {m['nSec']} section rows carry a board rank or a section place "
+        "that is not their position below the graded rows")
     assert not errs, "JS errors:\n  " + "\n  ".join(errs)
 
 
@@ -152,10 +168,17 @@ def test_printed_chips_read_in_order_on_every_page(booted_page):
       for (let pg = 1; pg <= pages; pg++) {
         state.pages.actives = pg;
         render();
-        const chips = Array.from(document.querySelectorAll('#rows .player-row .rank-num-inner'))
-          .map(e => Number(e.textContent.replace(/[^0-9]/g, '')));
-        chips.forEach((c, i) => {
+        const rows = Array.from(document.querySelectorAll('#rows .player-row'));
+        rows.forEach((row, i) => {
+          const el = row.querySelector('.rank-num-inner');
+          if (!el) return;
+          const t = el.textContent;
           seen++;
+          if (row.querySelector('.rank-num-prov')) {          // PV-07 section row: no rank
+            if (t.includes('#')) { bad++; if (firstBad == null) firstBad = [pg, i, t]; }
+            return;
+          }
+          const c = Number(t.replace(/[^0-9]/g, ''));
           if (c !== (pg - 1) * size + i + 1) { bad++; if (firstBad == null) firstBad = [pg, i, c]; }
         });
       }
@@ -208,7 +231,9 @@ def test_detail_header_prints_one_overall_rank(booted_page):
 
 def test_cold_deep_link_prints_the_board_rank(booted_page):
     """A shared player link never loaded the provisional pool, so its header printed a
-    graded-only rank (Andrew Bolivar #2511 on the link, #3728 on the board)."""
+    graded-only rank (Andrew Bolivar #2511 on the link, #3728 on the board). Since PV-07
+    the board ranks graded rows only too, so the cold link, the board and the baked rank
+    print one number."""
     import json
     board, _ = booted_page
     ts = ROOT / "data" / "timeseries.json"
@@ -239,4 +264,6 @@ def test_cold_deep_link_prints_the_board_rank(booted_page):
             " return [getEfvRank(p), p.overall_rank]; }", key)
     finally:
         page.close()
-    assert live != baked, "this row's live and baked ranks agree; the check proved nothing"
+    assert live == baked, (
+        f"{key}: the cold link prints #{live} and the baked board rank is #{baked}; since "
+        "PV-07 both count the graded pool, so they must agree")

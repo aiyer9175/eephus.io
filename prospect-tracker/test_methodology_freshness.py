@@ -661,12 +661,12 @@ MODEL_GLOSSARY = {
     "ifa_step_prior": ["xfv"],
     "provisional_calibration": "internal",
     # PV-05 (2026-10-01): the served provisional grade scored against first source
-    # grades. Internal until PV-08 builds the Source Comparison track-record block and
-    # the card receipt that read its artifact; then it maps to the page that shows it.
-    "provisional_first_grade": "internal",
-    # PV-06 (2026-10-02): provisional v2 heads and their BACKCAST. Internal until PV-07
-    # builds the board section that reads data/provisional_v2.json.
-    "provisional_v2": "internal",
+    # grades. PV-08 (2026-10-02) built its surfaces, the Source Comparison Provisional
+    # track record block and the PROSPX card receipt; the xfv_ungraded entry documents both.
+    "provisional_first_grade": ["xfv_ungraded"],
+    # PV-06 (2026-10-02): provisional v2 heads and their BACKCAST. PV-07 (2026-10-02) built
+    # the board section that reads data/provisional_v2.json; documented in the same entry.
+    "provisional_v2": ["xfv_ungraded"],
     # F-SIDE-FIX (2026-07-23, owner-authorized fairness-fix attempt under the
     # queued G1-as-NO-HARM re-registration): the 07-23 attempt is a loss ledger
     # - the capped top-band joint recalibration fixes pit over-representation

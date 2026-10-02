@@ -49,13 +49,20 @@ def _num(v) -> str:
     return str(int(v)) if v == int(v) else ("%.1f" % v)
 
 
-def test_glossary_does_not_place_provisional_grades_off_the_board():
+def test_glossary_places_provisional_grades_where_the_board_puts_them():
+    """Census M01-06 pinned "ranks on the PROSPX board" while the rows were interleaved.
+    PV-07 (owner answers PG-Q1 / PG-Q2, 2026-09-25) moved them into their own section with
+    no board rank, so the entry now has to say that, and must not claim the old interleave."""
     e = _entry()
     text = " ".join(str(e.get(k) or "") for k in ("definition", "methodology", "formula"))
-    assert "not in the board rank" not in text
     assert "farm-detail rosters" not in text
     assert "hard cap" not in text
-    assert re.search(r"ranks on the PROSPX board", text)
+    assert "ranks on the PROSPX board among the graded players" not in text
+    assert "Not yet graded by any source" in text
+    assert "no board or org rank" in text
+    assert "production grade" in text
+    # PVA-3: the WAR correlations carry their scope.
+    assert "source-GRADED labelled pool" in e["methodology"]
 
 
 def test_glossary_knee_and_ceiling_equal_the_served_grade_map():

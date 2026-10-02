@@ -3885,6 +3885,118 @@ function _methProgressSection(bt) {
     ${_methProgressTable(prog)}`;
 }
 
+// ---- Provisional track record (PV-08, PROVISIONAL_V2.md section 4) ----------
+// Two tables, never pooled. SERVED: the provisional grade the site served (and the
+// committed freezes of it), scored by provisional_track.py against the first source
+// grades that arrived later; a frozen record is read only when its window closes, and
+// until then the row prints its own "window open until <date>". BACKCAST: the
+// forward-chained development read of the v2 first-grade model, labelled as such by its
+// artifact and adjudicating nothing. Every number is read from the two artifacts at
+// render time; none is typed here.
+function _loadProvTrack() {
+  if (_S.provTrack || _S.provTrackLoading) return;
+  _S.provTrackLoading = true;
+  const rerender = () => { if (_S.view === "source-comparison") renderSourceComparison(); };
+  const get = p => p.then(r => (r.ok ? r.json() : null)).catch(() => null);
+  Promise.all([
+    get(fetch("/data/provisional_track_eval.json", { cache: "no-cache" })),
+    get(fetch("/data/provisional_v2_eval.json", { cache: "no-cache" })),
+  ]).then(([track, backcast]) => { _S.provTrack = { track, backcast }; rerender(); });
+}
+
+function _ptFmt(v, d) { return (v == null || isNaN(Number(v))) ? "-" : Number(v).toFixed(d); }
+function _ptN(v) { return v == null ? "-" : Number(v).toLocaleString("en-US"); }
+
+// The rows a reader should see: the latest row of every (leg, freeze, window).
+function _ptLatestRows(t) {
+  const rows = (t && Array.isArray(t.rows)) ? t.rows : [];
+  const ids = new Set(Object.values((t && t.latest) || {}));
+  const out = ids.size ? rows.filter(r => ids.has(r.run_id)) : rows.slice(-3);
+  const legOrder = r => (r.leg === "prospective" ? 0 : 1);
+  return out.slice().sort((a, b) => legOrder(a) - legOrder(b)
+    || String(a.window_end || "").localeCompare(String(b.window_end || "")));
+}
+
+function _ptVerdict(r) {
+  if (!r.verdict_readable) return `<span class="sacc-verdict-null">${escapeHtml(r.status || "window open")}</span>`;
+  const c = r.claims || {};
+  const lv = Object.entries(c.level || {}).map(([k, v]) => `level (${escapeHtml(k)}): ${v && v.claim ? "claim" : "no claim"}`);
+  const sel = Object.entries(c.selection || {}).map(([k, v]) => `who (${escapeHtml(k)}): ${v && v.claim ? "claim" : "no claim"}`);
+  const spent = r.leg === "served_backdated" ? `<br><span class="sacc-chip-warn">spent, adjudicates nothing</span>` : "";
+  return `<span class="sacc-verdict-null">${[...lv, ...sel].join("; ") || "-"}</span>${spent}`;
+}
+
+function _ptServedTable(t) {
+  const rows = _ptLatestRows(t);
+  if (!rows.length) return "";
+  const body = rows.map(r => {
+    const res = r.result || {}, A = res.ANY || {}, sel = A.selection || {}, lev = A.level || {};
+    const g = sel.grade || {}, p12 = sel.p_g12 || {}, lv = lev.grade || {};
+    const who = `${_ptFmt(g.auc, 3)}${p12.auc != null ? `<br><span class="meth-sub">frozen P ${_ptFmt(p12.auc, 3)}</span>` : ""}`;
+    const nul = (sel.null_level_rank || {}).auc;
+    const level = lv.mae != null ? `${_ptFmt(lv.mae, 2)} vs ${_ptFmt(lv.mae_null_const, 2)}` : "-";
+    const leg = r.leg === "served_backdated"
+      ? `Served ${escapeHtml(r.frozen_at || "")}<br><span class="meth-sub">replayed to ${escapeHtml(r.window_end || "")}</span>`
+      : `Frozen ${escapeHtml(r.frozen_at || "")}<br><span class="meth-sub">${escapeHtml(r.window || "")} window to ${escapeHtml(r.window_end || "")}</span>`;
+    return `<tr><td>${leg}</td><td>${escapeHtml(r.scored_through || "")}</td><td>${_ptN(res.eligible)}</td>
+      <td>${_ptN(A.graded_in_window)}</td><td>${who}</td><td>${_ptFmt(nul, 3)}</td>
+      <td>${level}<br><span class="meth-sub">n ${_ptN(lev.n_first_fv)}</span></td>
+      <td>${lev.median_lead_days != null ? _ptN(lev.median_lead_days) + " d" : "-"}</td><td>${_ptVerdict(r)}</td></tr>`;
+  }).join("");
+  return `<div class="meth-chart scx-provtrack-served">
+    <div class="meth-table-title">SERVED: what the site showed, scored against the first grades that came later</div>
+    <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Record</th><th>Scored through</th><th>Eligible</th><th>First graded</th><th>Who: AUC</th><th>Level-rank null</th><th>Level: MAE vs constant</th><th>Median lead</th><th>Verdict</th></tr></thead><tbody>${body}</tbody></table></div>
+    <p class="meth-note">${escapeHtml(((r0) => r0 ? r0[0].toUpperCase() + r0.slice(1) + "." : "")((t.claim_rules || {}).read || ""))} ${escapeHtml(t.label_rule ? "Label: " + t.label_rule + "." : "")} Who: how well the grade ordered the players a label source graded first (AUC, where one half is a coin flip). Level: the mean miss against that first grade, beside a constant guess.</p>
+  </div>`;
+}
+
+function _ptBackcastTable(b) {
+  const bc = b && b.backcast;
+  if (!bc) return "";
+  const t1 = [], t2 = [];
+  for (const anchor of ["oct", "jun"]) {
+    const a = bc[anchor] || {};
+    for (const [head, h] of Object.entries(a.T1 || {})) {
+      const p = h.pooled || {};
+      t1.push(`<tr><td>${escapeHtml(anchor === "oct" ? "Oct" : "Jun")}</td><td>${escapeHtml(head.replace("_", " "))}</td><td>${escapeHtml((h.test_anchors || []).join(", "))}</td><td>${_ptN(p.n)}</td><td>${_ptN(p.pos)}</td><td>${_ptFmt(p.auc, 3)}</td><td>${_ptFmt(p.null_level_rank_auc, 3)}</td><td>${_ptFmt(p.ap, 3)}</td></tr>`);
+    }
+    for (const [src, h] of Object.entries(a.T2 || {})) {
+      const p = h.pooled || {};
+      const ci = Array.isArray(p.mae_minus_const_ci95) ? `${_ptFmt(p.mae_minus_const_ci95[0], 3)} to ${_ptFmt(p.mae_minus_const_ci95[1], 3)}` : "-";
+      t2.push(`<tr><td>${escapeHtml(anchor === "oct" ? "Oct" : "Jun")}</td><td>${escapeHtml(src === "FG" ? "FanGraphs" : src === "MLBP" ? "MLB Pipeline" : src)}</td><td>${_ptN(p.n)}</td><td>${_ptFmt(p.mae, 3)}</td><td>${_ptFmt(p.mae_const, 3)}</td><td>${_ptFmt(p.mae_minus_const, 3)}<br><span class="meth-sub">${ci}</span></td></tr>`);
+    }
+  }
+  if (!t1.length && !t2.length) return "";
+  return `<div class="meth-chart scx-provtrack-backcast">
+    <div class="meth-table-title">${escapeHtml(b.label || "BACKCAST")}: the first-grade model on earlier anchors <span class="sacc-chip-warn">development read</span></div>
+    ${t1.length ? `<div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Anchor</th><th>Head</th><th>Test anchors</th><th>n</th><th>First graded</th><th>AUC</th><th>Level-rank null</th><th>AP</th></tr></thead><tbody>${t1.join("")}</tbody></table></div>` : ""}
+    ${t2.length ? `<div class="table-scroll-x" style="margin-top:8px;"><table class="meth-table"><thead><tr><th>Anchor</th><th>Expected first grade</th><th>n</th><th>MAE</th><th>Constant MAE</th><th>Difference (CI95)</th></tr></thead><tbody>${t2.join("")}</tbody></table></div>` : ""}
+    <p class="meth-note">${escapeHtml(b.label_note || "")}</p>
+  </div>`;
+}
+
+function _methProvTrackSection() {
+  _loadProvTrack();
+  const s = _S.provTrack;
+  if (!s || (!s.track && !s.backcast)) return "";
+  const t = s.track || {};
+  const served = s.track ? _ptServedTable(t) : "";
+  const back = _ptBackcastTable(s.backcast);
+  if (!served && !back) return "";
+  // The one-line summary is the spent served replay's own numbers, when present.
+  const sp = _ptLatestRows(t).find(r => r.leg === "served_backdated");
+  let lead = "";
+  if (sp) {
+    const A = (sp.result || {}).ANY || {}, g = (A.selection || {}).grade || {}, lv = (A.level || {}).grade || {};
+    lead = `<p class="meth-window">On the served ${escapeHtml(sp.frozen_at || "")} record replayed to ${escapeHtml(sp.window_end || "")}, the provisional grade ordered who a label source graded first at AUC ${_ptFmt(g.auc, 3)} against a level-rank null of ${_ptFmt(((A.selection || {}).null_level_rank || {}).auc, 3)} (${_ptN(A.graded_in_window)} first grades), and missed the first grade by ${_ptFmt(lv.mae, 2)} on average against ${_ptFmt(lv.mae_null_const, 2)} for a constant.${(lv.mae != null && lv.mae_null_const != null && Number(lv.mae) >= Number(lv.mae_null_const)
+      && g.auc != null && Number(g.auc) > Number(((A.selection || {}).null_level_rank || {}).auc || 1)) ?" It finds who is next but not the level, so the PROSPX board lists players no source has graded in their own section, ordered by the chance of a first grade, and not in the eFV rank." : ""}</p>`;
+  }
+  return `<div class="source-comp-wrap scx-provtrack">
+    <h2 class="meth-h" id="provisional-track-record">Provisional track record</h2>
+    ${lead}${served}${back}
+  </div>`;
+}
+
 function renderSourceComparison() {
   const el = document.getElementById("source-comparison-body");
   if (!el) return;
@@ -3969,7 +4081,7 @@ function renderSourceComparison() {
   el.innerHTML = `<div class="source-comp-wrap">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Empirical backtest · resolved cohorts only</div>
     ${backtestHTML}
-  </div>` + _methScoreboardHTML() + _methModelUpgrades();
+  </div>` + _methProvTrackSection() + _methScoreboardHTML() + _methModelUpgrades();
   // Generate GFX: spec built at click time from the loaded artifacts; a click
   // before the data resolves (or with the engine absent) is a clean no-op.
   const gfxBtn = document.getElementById("gl-scx-gfx");

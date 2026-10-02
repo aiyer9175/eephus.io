@@ -226,10 +226,13 @@ def test_pitchers_take_the_consensus_order_when_no_pitcher_driver_is_admitted():
 
 def test_fingerprint_names_the_served_model(monkeypatch):
     import storage
-    assert storage.board_basis_fingerprint().split("|")[-1] == "served=" + S.fingerprint_term()
+    # Parsed by term, not by tail: PV-07 (2026-10-02) appended section= after served=.
+    def _term(fp):
+        return dict(t.split("=", 1) for t in fp.split("|") if "=" in t)["served"]
+    assert _term(storage.board_basis_fingerprint()) == S.fingerprint_term()
     monkeypatch.setenv("EEPHUS_SERVE_EFV_V2", "0")
     assert S.fingerprint_term() == "efv_v1"
-    assert storage.board_basis_fingerprint().endswith("|served=efv_v1")
+    assert "|served=efv_v1|" in storage.board_basis_fingerprint() + "|"
 
 
 def test_source_comparison_scores_the_served_model():

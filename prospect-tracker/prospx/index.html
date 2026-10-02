@@ -14437,7 +14437,7 @@ const REVERSE_SORT_PAIRS = {
 const _INTERNAL_DIR_MAIN_SORTS = new Set([
   "surplus_sv", "surplus_risk", "surplus_p10", "surplus_p90",
   "surplus_pbust", "wag", "star_odds", "opt_pct",
-  "tool", "t_plus", "conviction", "fv",
+  "tool", "t_plus", "conviction", "fv", "xfv",
 ]);
 
 // v29 - Universal post-sort direction helper. Each renderer that owns
@@ -16306,7 +16306,15 @@ function getFilteredActives() {
     // eFV (our outcome-grounded grade) descending -- the PRIMARY board ranking.
     // efvRankValue falls back to consensus FV for players with no pro track record
     // (where eFV abstains) so they interleave by consensus instead of vanishing.
-    pool.sort(boardCmp);
+    // PV-07: the "Not yet graded by any source" section sits below every graded row in
+    // both directions; the reverse flag flips the graded block only (the section keeps its
+    // chance order), so xfv handles its own direction (_INTERNAL_DIR_MAIN_SORTS).
+    const _rev = !!(state.sortRev && state.sortRev.sort);
+    pool.sort((a, b) => {
+      const sa = inProvSection(a), sb = inProvSection(b);
+      if (sa !== sb || sa) return boardCmp(a, b);
+      return _rev ? boardCmp(b, a) : boardCmp(a, b);
+    });
   } else if (state.sort === "fv") {
     // Consensus FV, highest first (consensusSortCmp). Reverse flag handled inside the
     // comparator so placeholder and no-consensus rows stay pinned to the bottom in both
@@ -18267,13 +18275,25 @@ function renderActives() {
     ${optPctOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="opt_pct" title="PLUS%: share of this grade's value from the chance of upgrading before graduating (upgrade-option layer, provisional). Low tiers option-rich; high grades run low/negative (top-end downgrade risk).">PLUS%</span>` : ""}
   </div>`;
 
+  // PV-07: on the default eFV order the "Not yet graded by any source" section opens with
+  // its own header row where it starts, and a short "continued" line atop any later page.
+  const _secHead = provSectionOn() && state.sort === "xfv"
+    && !(state.toolSortKey && state.toolSortKey !== "off")
+    && !(state.statcastSortKey && state.statcastSortKey !== "off");
+  const _secN = _secHead ? filtered.reduce((n, q) => n + (inProvSection(q) ? 1 : 0), 0) : 0;
   const rows = pagedRows.map((p, i) => {
     const latest = p.points[p.points.length - 1];
     // Snap FV to the nearest 5-grade tier so data-fv-tier matches the CSS rules (tier-anchored at
     // 80/75/.../20). Sourced via fvTierAttr -> rarityFvOf so the border tier keys off eFV (the
     // primary grade), consistent with the eFV rank + badge in this same row.
     const fvTier = fvTierAttr(p);
-    return `
+    let _head = "";
+    if (_secHead && inProvSection(p)) {
+      const prev = filtered[rankOffset + i - 1];
+      if (!prev || !inProvSection(prev)) _head = provSectionHeadHTML(_secN, false);
+      else if (i === 0) _head = provSectionHeadHTML(_secN, true);
+    }
+    return `${_head}
       <div class="player-row${physOn ? " has-phys" : ""}${starOddsOn ? " has-star-odds" : ""}${optPctOn ? " has-opt-pct" : ""}" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
         <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
           <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
@@ -18830,6 +18850,12 @@ function rarityFvOf(player) {
   // rings, dark-theme phosphor starfield) keys off it. Consensus FV is the fallback when eFV
   // abstains - which keeps draft / overseas / not-yet-eFV-rated prospects on their published grade
   // (getEfv returns null for those cohorts and for synthetic {fv_close:...} callers).
+  // PV-07: a not-yet-graded row's card number is its expected first grade, so the rarity
+  // ramp keys off that and the production grade never lights a rarity border.
+  if (typeof inProvSection === "function" && inProvSection(player)) {
+    const ef = provExpectedFirst(player);
+    if (ef != null) return ef;
+  }
   const x = (typeof getEfv === "function") ? getEfv(player) : null;
   // Key the rarity tier off the DISPLAYED (ceil) grade via efvGradeDisplay, NOT the raw
   // grade -- otherwise two prospects that both show e.g. 63 can land in different border
@@ -32298,6 +32324,7 @@ let _EFV_SERVED = null;
 let _EFV_RANK = null;     // player_key -> 1-based eFV rank over the active board (lazy)
 let _EFV_PREV_RANK = null; // player_key -> eFV rank by PREVIOUS grade (drives the rank-spot delta chip)
 let _EFV_TIE_COUNT = null; // board value -> how many players share it exactly (tie-block guard)
+let _PROV_SECTION_POS = {}; // player_key -> {pos, total} inside the not-yet-graded section (PV-07)
 (function loadEfv() {
   fetch("/data/xfv.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
@@ -32461,6 +32488,8 @@ let _EFV_UNG = null, _EFV_UNG_LOADING = false;
 // farm views and every rank read (buildEfvRankMap / buildEfvOrgRankMap) request it,
 // because the board rank counts these rows. Re-renders once it lands.
 function ensureEfvUngraded() {
+  // The section's order and card numbers (provisional_v2) travel with the rows they order.
+  if (typeof ensureProvV2 === "function" && provSectionOn()) ensureProvV2();
   if (_EFV_UNG !== null || _EFV_UNG_LOADING) return;
   _EFV_UNG_LOADING = true;
   fetch("/data/xfv_ungraded.json", { cache: "no-cache" })
@@ -32494,6 +32523,224 @@ function _buildProvPlayers() {
 }
 function provPlayers() { if (_PROV_PLAYERS === null) _buildProvPlayers(); return _PROV_PLAYERS || []; }
 function provPlayerByKey(key) { if (_PROV_BY_KEY === null) _buildProvPlayers(); return (_PROV_BY_KEY && _PROV_BY_KEY[key]) || null; }
+// ═══════════════════════════════════════════════════════════════════════════
+// THE "NOT YET GRADED BY ANY SOURCE" SECTION (PV-07, owner answers PG-Q1, PG-Q2 and
+// PG-Q3, 2026-09-25; spec PROVISIONAL_V2.md section 3).
+// ═══════════════════════════════════════════════════════════════════════════
+// A row no label source has ever graded leaves the shared eFV rank: the provisional-only
+// rows synthesized above, and the board actives storage marks source_graded === false
+// (the performance-anchor and draft-signing rows). They sort after every graded row, in
+// their own section, ordered by the recalibrated chance of a first grade by the W12
+// window end (data/provisional_v2.json p_any_w12), and carry no board or org rank. The
+// card leads with the expected first grade on the FanGraphs scale and the chance of a
+// first grade by the W6 window end (the next list cycle), and keeps today's map value as
+// a secondary "production grade". Trade values and farm points keep their inputs (PG-Q2):
+// nothing here touches a grade, a surplus or a farm total.
+// The switch and its rejoin rule are served by storage (timeseries `prov_section`,
+// derived from the provisional track record): rows rejoin the rank only after a frozen
+// window shows a level win. An older payload without the block keeps the old interleave.
+let _PROV_V2 = null, _PROV_V2_LOADING = false;
+function ensureProvV2() {
+  if (_PROV_V2 !== null || _PROV_V2_LOADING) return;
+  _PROV_V2_LOADING = true;
+  fetch("/data/provisional_v2.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      const by = {};
+      for (const r of ((j && j.rows) || [])) if (r && r.mlbam != null) by[String(r.mlbam)] = r;
+      _PROV_V2 = { by, anchor: (j && j.anchor) || {}, universe: (j && j.universe) || "",
+                   as_of: (j && j.as_of) || null };
+      _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_TIE_COUNT = null; _EFV_ORG_RANK = null; _PROV_ORGRANK = {};
+      scheduleRender(); })
+    .catch(() => { _PROV_V2 = { by: {}, anchor: {}, universe: "", as_of: null }; });
+}
+function provSectionInfo() {
+  return (typeof DATA !== "undefined" && DATA && DATA.prov_section) || null;
+}
+function provSectionOn() { const s = provSectionInfo(); return !!(s && s.on); }
+function inProvSection(p) {
+  if (!p || !provSectionOn()) return false;
+  if (p.status === "debuted" || p.debut_date) return false;
+  return !!(p._is_provisional || p.source_graded === false);
+}
+function provV2Of(p) {
+  if (!p || !_PROV_V2 || p.mlbam_id == null) return null;
+  return _PROV_V2.by[String(p.mlbam_id)] || null;
+}
+function _provNum(v) { return (v != null && v !== "" && isFinite(Number(v))) ? Number(v) : null; }
+// "2027-04-15" -> "Apr 15, 2027", parsed by hand so no time zone moves the day.
+function _provDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+  if (!m) return iso ? String(iso) : "";
+  const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(m[2]) - 1] || m[2];
+  return `${mon} ${Number(m[3])}, ${m[1]}`;
+}
+// The window ends the served anchor names (W6 = the next list cycle, W12 = a year).
+function provWindowEnd(w) {
+  const a = (_PROV_V2 && _PROV_V2.anchor) || {};
+  return a[w + "_end"] || null;
+}
+// A chance as the card prints it: nearest whole percent, "<1%" below half a point.
+function _provPct(v) {
+  if (v == null) return null;
+  const pc = v * 100;
+  return pc < 0.5 ? "<1%" : `${Math.round(pc)}%`;
+}
+// {p, txt, end, endLabel} for P(first grade by window w), or null outside the model.
+function provChance(p, w) {
+  const r = provV2Of(p);
+  const v = r ? _provNum(r["p_any_" + String(w).toLowerCase()]) : null;
+  if (v == null) return null;
+  const end = provWindowEnd(w);
+  return { p: v, txt: _provPct(v), end, endLabel: end ? _provDate(end) : "the window end" };
+}
+// Expected first grade if FanGraphs grades him, on the FanGraphs scale (35+ = 37.5).
+// A model estimate, not a published grade, so it rounds to nearest like eFV.
+function provExpectedFirst(p) {
+  const r = provV2Of(p);
+  const v = r ? _provNum(r.fv_first_fg) : null;
+  return v == null ? null : Math.round(v);
+}
+// Today's map value, relabelled (PG-Q3). "production grade" where the provisional map
+// produced it (a provisional-only row or a routed board row); a draft-signing row's
+// served grade is not a production read, so it keeps the eFV name.
+function provProductionGrade(p) {
+  const x = (typeof getEfv === "function") ? getEfv(p) : null;
+  const v = efvBoardValue(x);
+  if (v == null) return null;
+  const prodMap = !!(x && (x.xfv_ungraded || x.grade_basis === "provisional_capped"));
+  return { val: Math.round(v), raw: v, prodMap,
+           word: prodMap ? "production grade" : "eFV", Word: prodMap ? "Production grade" : "eFV",
+           short: prodMap ? "prod" : "eFV" };
+}
+// Section order: the W12 chance descending, rows the model does not cover after it, then
+// the production grade, then the board's own tiebreak chain.
+function provSectionCmp(a, b) {
+  const pa = _provNum((provV2Of(a) || {}).p_any_w12), pb = _provNum((provV2Of(b) || {}).p_any_w12);
+  if (pa == null && pb != null) return 1;
+  if (pb == null && pa != null) return -1;
+  if (pa != null && pb != null && pa !== pb) return pb - pa;
+  return efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b);
+}
+const _PROV_SRC_NAMES = { fangraphs: "FanGraphs", mlb_pipeline: "MLB Pipeline",
+  mlb_pipeline_international: "MLB Pipeline", baseballamerica: "Baseball America",
+  espn: "ESPN", just_baseball: "Just Baseball" };
+function provLabelSourcesText() {
+  const s = provSectionInfo();
+  const names = [...new Set(((s && s.label_sources) || []).map(k => _PROV_SRC_NAMES[k] || k))];
+  if (!names.length) return "any label source";
+  return names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " or " + names[names.length - 1];
+}
+// The section header row on the board (default eFV order only).
+function provSectionHeadHTML(n, continued) {
+  const s = provSectionInfo() || {};
+  const e12 = provWindowEnd("W12"), e6 = provWindowEnd("W6");
+  const nxt = s.next_window_end ? _provDate(s.next_window_end) : null;
+  const title = escapeHtml(s.title || "Not yet graded by any source");
+  if (continued) {
+    return `<div class="prov-section-head is-continued" style="margin:6px 0 4px;padding:6px 12px;border:1px dashed var(--border);border-radius:var(--radius-sm,4px);background:var(--bg-tertiary);font-size:11px;color:var(--text-secondary);"><strong style="color:var(--text-primary);">${title}</strong>, continued</div>`;
+  }
+  return `<div class="prov-section-head" role="heading" aria-level="3" style="margin:14px 0 6px;padding:10px 12px;border:1px dashed var(--border);border-radius:var(--radius-sm,4px);background:var(--bg-tertiary);font-size:12px;color:var(--text-secondary);line-height:1.5;">
+      <div><strong style="color:var(--text-primary);font-size:13px;">${title}</strong> · ${Number(n).toLocaleString()} player${n === 1 ? "" : "s"}${e12 ? ` · ordered by the chance of a first grade by ${escapeHtml(_provDate(e12))}` : ""}</div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:3px;">No grade from ${escapeHtml(provLabelSourcesText())} yet, so no board rank. Each row shows the expected first grade on the FanGraphs scale, the chance of a first grade${e6 ? ` by ${escapeHtml(_provDate(e6))}` : ""}, and the production grade from his MiLB line. These rows rejoin the board rank only after a frozen window shows the expected first grade beating a constant${nxt ? `; the next window closes ${escapeHtml(nxt)}` : ""}. <a href="/glossary/#view=source-comparison" style="color:var(--neon-cyan);">Track record</a></div>
+    </div>`;
+}
+// The board grade cell for a section row (PG-Q3): expected first grade, the production
+// grade beneath it.
+function provBadgeHTML(p) {
+  const ef = provExpectedFirst(p);
+  const pg = provProductionGrade(p);
+  const c6 = provChance(p, "W6");
+  const s = _PROV_V2 ? (_PROV_V2.universe || "") : "";
+  const tip = ef != null
+    ? `Expected first grade ${ef} on the FanGraphs scale, if FanGraphs grades him (a model estimate, not a published grade).${c6 ? ` Chance of a first grade from any label source by ${c6.endLabel}: ${c6.txt}.` : ""}${pg ? ` ${pg.Word} ${pg.val}.` : ""}`
+    : `No first-grade estimate: outside the model's universe${s ? ` (${s})` : ""}.${pg ? ` ${pg.Word} ${pg.val}.` : ""}`;
+  const main = ef != null
+    ? `<span class="fv-badge ${fvClass(String(ef))} is-prov-first" style="border-style:dashed;" title="${escapeHtml(tip)}">${ef}</span>`
+    : `<span style="color:var(--text-tertiary);" title="${escapeHtml(tip)}"> - </span>`;
+  const sub = pg ? _gradeSub(pg.short, String(pg.val), `${pg.Word} ${pg.val} (${pg.prodMap ? "today's map value" : "the served grade"}, ranked nowhere)`) : "";
+  return `<div style="display:flex;flex-direction:column;align-items:center;">${main}${sub}</div>`;
+}
+// The detail-page header for a section row (efvDetailHeaderHTML delegates here).
+function provDetailHeaderHTML(p, labelStyle, lead) {
+  const ef = provExpectedFirst(p);
+  const pg = provProductionGrade(p);
+  const c6 = provChance(p, "W6"), c12 = provChance(p, "W12");
+  const line = "margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.35;";
+  const badge = ef != null
+    ? `<span class="fv-badge ${fvClass(String(ef))} size-lg" style="margin-top:4px;border-style:dashed;" title="${escapeHtml("A model estimate of the first FV FanGraphs would publish (35+ counts as 37.5), not a published grade.")}">${ef}</span>`
+    : `<span style="display:inline-block;margin-top:4px;font-family:var(--font-mono);font-size:18px;color:var(--text-tertiary);"> - </span>`;
+  const chance = c6
+    ? `<div class="prov-chance-line" style="${line}">Chance of a first grade by ${escapeHtml(c6.endLabel)} <b style="color:var(--text-secondary);">${escapeHtml(c6.txt)}</b>${c12 ? ` · by ${escapeHtml(c12.endLabel)} <b style="color:var(--text-secondary);">${escapeHtml(c12.txt)}</b>` : ""}</div>`
+    : `<div class="prov-chance-line" style="${line}">No first-grade estimate: outside the model's universe</div>`;
+  const prod = pg
+    ? `<div class="prov-production-line" style="${line}" title="${escapeHtml((pg.prodMap ? "Today's map value from his translated MiLB line." : "The served grade, from his signing.") + " It ranks nowhere: the board rank counts graded players only.")}">${escapeHtml(pg.Word)} <b style="color:var(--text-secondary);">${pg.val}</b></div>`
+    : "";
+  return `<div style="${labelStyle}">${lead}<span>Expected first grade · FanGraphs scale</span></div>`
+    + badge + chance + prod
+    + `<div style="${line}">not yet graded by any source</div>`;
+}
+// The board rank cell for a section row: no rank, the chance of a first grade instead.
+function provRankCellHTML(p) {
+  const c6 = provChance(p, "W6");
+  const tip = c6
+    ? `Not yet graded by any source, so no board rank. Chance of a first grade from ${provLabelSourcesText()} by ${c6.endLabel}: ${c6.txt}.`
+    : "Not yet graded by any source, so no board rank, and outside the first-grade model's universe.";
+  return `<div class="rank-num rank-num-prov" title="${escapeHtml(tip)}" style="border-style:dashed;"><span class="rank-num-inner" style="font-size:11px;">${c6 ? escapeHtml(c6.txt) : " - "}</span></div>`;
+}
+// PV-08 card receipt (data/provisional_track_eval.json by_player, never a typed number):
+// "Frozen <date> at X; first graded <date> by <source> at Y, N days later", or the open
+// window before a first grade.
+let _PROV_TRACK = null, _PROV_TRACK_LOADING = false;
+function ensureProvTrack() {
+  if (_PROV_TRACK !== null || _PROV_TRACK_LOADING) return;
+  _PROV_TRACK_LOADING = true;
+  fetch("/data/provisional_track_eval.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _PROV_TRACK = (j && j.by_player) || {}; scheduleRender(); })
+    .catch(() => { _PROV_TRACK = {}; });
+}
+function provReceipt(p) {
+  if (!p || !_PROV_TRACK || !_PROV_TRACK.freezes) return null;
+  const cols = _PROV_TRACK.columns || [];
+  const ix = k => cols.indexOf(k);
+  const names = _PROV_TRACK.source_names || {};
+  let best = null;
+  for (const [fname, fz] of Object.entries(_PROV_TRACK.freezes)) {
+    const rows = (fz && fz.rows) || {};
+    let row = rows[p.player_key];
+    if (!row && p.mlbam_id != null) row = rows["mlbam_" + p.mlbam_id];
+    if (!row) {
+      for (const k in rows) { if (rows[k][ix("player_key")] === p.player_key) { row = rows[k]; break; } }
+    }
+    if (row && (!best || String(fz.frozen_at) > String(best.fz.frozen_at))) best = { fname, fz, row };
+  }
+  if (!best) return null;
+  const r = best.row, fz = best.fz;
+  const g = r[ix("grade")];
+  const fd = r[ix("first_date")];
+  const wins = Object.values(fz.windows || {}).sort();
+  const open = wins.find(w => String(w) > String(fz.scored_through || "")) || null;
+  return { frozen_at: fz.frozen_at, grade: g, first_date: fd,
+           source: fd ? (names[r[ix("first_source")]] || r[ix("first_source")]) : null,
+           label: fd ? r[ix("first_label")] : null, lead: fd ? r[ix("lead_days")] : null,
+           open_until: open };
+}
+function provReceiptHTML(p) {
+  if (typeof ensureProvTrack === "function") ensureProvTrack();
+  const rc = provReceipt(p);
+  if (!rc) return "";
+  const g = rc.grade != null ? Number(rc.grade).toFixed(1) : null;
+  let txt = `Frozen ${_provDate(rc.frozen_at)}${g != null ? ` at ${g}` : ""}`;
+  if (rc.first_date) {
+    txt += `; first graded ${_provDate(rc.first_date)} by ${rc.source}${rc.label != null ? ` at ${rc.label}` : ""}, ${rc.lead} day${rc.lead === 1 ? "" : "s"} later`;
+  } else if (rc.open_until) {
+    txt += `; window open until ${_provDate(rc.open_until)}`;
+  } else {
+    txt += "; no first grade inside the window";
+  }
+  return `<div class="prov-receipt" style="margin-top:8px;padding:6px 9px;border-left:2px solid var(--border);background:var(--bg-tertiary);border-radius:3px;font-family:var(--font-mono);font-size:10.5px;color:var(--text-secondary);line-height:1.45;" title="The production grade frozen on that date, and the first label-source opinion after it (provisional track record). The freeze is committed and never rewritten.">${escapeHtml(txt)}.</div>`;
+}
 // THE SAME PLAYER WAS ON THE BOARD TWICE. 2,636 keys carry BOTH a graded row (the
 // fabricated FV-35 performance anchor, which the outcome curve maps to its floor for
 // 2,434 of them) and a synthesized provisional row, and every pool below concat-ed the
@@ -32580,16 +32827,20 @@ function oneRowOrgPool(org) {
 let _PROV_ORGRANK = {};
 function provOrgRank(p) {
   if (!p || !p.org) return null;
-  if (!_PROV_ORGRANK[p.org]) {
-    const pool = _dedupeProvPool(
+  const _ck = p.org + (inProvSection(p) ? "|section" : "");
+  if (!_PROV_ORGRANK[_ck]) {
+    let pool = _dedupeProvPool(
       (DATA.players || []).filter(q => q && q.org === p.org && q.status !== "debuted" && !q.debut_date),
       provPlayers().filter(q => q.org === p.org));
+    // PV-07: a section row's place is among the org's not-yet-graded rows, never a rank
+    // among its graded prospects.
+    if (inProvSection(p)) pool = pool.filter(q => inProvSection(q));
     pool.sort(boardCmp);
     const m = {};
     pool.forEach((q, i) => { if (q.player_key) m[q.player_key] = i + 1; });
-    _PROV_ORGRANK[p.org] = { map: m, total: pool.length };
+    _PROV_ORGRANK[_ck] = { map: m, total: pool.length };
   }
-  const c = _PROV_ORGRANK[p.org];
+  const c = _PROV_ORGRANK[_ck];
   const r = c.map[p.player_key];
   return r ? { rank: r, total: c.total } : null;
 }
@@ -33722,7 +33973,13 @@ function efvRankValue(p) {
 // involved a provisional row, which left those rows in payload key order (grouped by
 // org) while the board ordered them by the fvCmpDesc chain: 3,201 of 8,071 rank chips
 // printed a number that was not their row position.
+// PV-07: every graded row sorts before every row of the "Not yet graded by any source"
+// section, which orders itself by provSectionCmp. Off (an older payload with no
+// prov_section block), inProvSection is false for every row and this is the old order.
 function boardCmp(a, b) {
+  const sa = inProvSection(a), sb = inProvSection(b);
+  if (sa !== sb) return sa ? 1 : -1;
+  if (sa) return provSectionCmp(a, b);
   return efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b);
 }
 function buildEfvRankMap() {
@@ -33739,6 +33996,12 @@ function buildEfvRankMap() {
   // until the ungraded file lands, at which point the rank map rebuilds with them folded in.
   let pool = _dedupeProvPool(DATA.players.filter(p => p && p.player_key), provPlayers());
   pool.sort(boardCmp);
+  // PV-07: the rank counts graded rows only; a section row gets its place in the section
+  // (_PROV_SECTION_POS, the order the board prints) and no board rank.
+  _PROV_SECTION_POS = {};
+  const _sec = pool.filter(p => inProvSection(p));
+  _sec.forEach((p, i) => { _PROV_SECTION_POS[p.player_key] = { pos: i + 1, total: _sec.length }; });
+  pool = pool.filter(p => !inProvSection(p));
   pool.forEach((p, i) => { _EFV_RANK[p.player_key] = i + 1; });
   // TIE-BLOCK census. On the raw-grade board ~3.1k of ~4.5k rows sit on the 20.0
   // provisional floor, so for those players the rank NUMBER is decided by the tiebreak
@@ -33775,8 +34038,15 @@ function getEfvRank(p) {
 // baked rank ranks graded rows only and differed from the chip on 4,493 of 4,679 rows).
 function boardRankOf(p) {
   if (!p) return null;
+  if (inProvSection(p)) return null;   // PV-07: no board rank, never the baked fallback
   const r = getEfvRank(p);
   return r != null ? r : (p.overall_rank != null ? Number(p.overall_rank) : null);
+}
+// A section row's place in the "Not yet graded by any source" section ({pos, total}).
+function provSectionPos(p) {
+  if (!p || !inProvSection(p)) return null;
+  if (_EFV_RANK == null) buildEfvRankMap();
+  return _PROV_SECTION_POS[p.player_key] || null;
 }
 // Canonical ORG rank: the player's position within their org's pool (graded +
 // provisional) under the SAME eFV ordering as the roster tab / farm preview /
@@ -33793,9 +34063,11 @@ function buildEfvOrgRankMap() {
     (byOrg[o] = byOrg[o] || []).push(p);
   });
   for (const o in byOrg) {
-    byOrg[o].sort(boardCmp);
-    byOrg[o].forEach((p, i) => {
-      _EFV_ORG_RANK[p.player_key] = { rank: i + 1, total: byOrg[o].length };
+    // PV-07: the org rank counts the org's graded rows only; its section rows get no org
+    // rank (provOrgRank gives their place among the org's not-yet-graded rows).
+    const ranked = byOrg[o].filter(p => !inProvSection(p)).sort(boardCmp);
+    ranked.forEach((p, i) => {
+      _EFV_ORG_RANK[p.player_key] = { rank: i + 1, total: ranked.length };
     });
   }
 }
@@ -34171,6 +34443,9 @@ function efvBadgeHTML(p, opts) {
   // basis (a numeric compare value, not a display grade) so it is derived separately below.
   const gb = gradeBlock(p, opts);
   const primary = gb.primary;
+  // PV-07 / PG-Q3: on the eFV lead, a not-yet-graded row shows its expected first grade
+  // (FanGraphs scale) with the production grade beneath it, not a board grade.
+  if (primary === "xfv" && inProvSection(p)) return provBadgeHTML(p);
   const x = gb.x;
   const consLabel = gb.consLabel;
   const consNum = (x && x.consensus_fv != null) ? x.consensus_fv
@@ -34252,6 +34527,9 @@ function efvCompactBadge(p, opts) {
 // So: show the live board rank in BOTH modes (baked overall_rank only as the fallback) and
 // say in the tooltip what basis it is on.
 function efvRankNumHTML(p) {
+  // PV-07: a not-yet-graded row has no board rank; the cell carries its chance of a first
+  // grade instead, and never falls back to a baked rank.
+  if (inProvSection(p)) return provRankCellHTML(p);
   const n = (typeof getEfvRank === "function" ? getEfvRank(p) : null) ?? p.overall_rank ?? null;
   if (n == null) {
     return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner"> - </span></div>`;
@@ -34268,6 +34546,10 @@ function efvDetailHeaderHTML(p, fvBadge, lead) {
   // passes its card-foil rarity sprite (PX-24) so it sits beside the grade.
   lead = lead || "";
   const labelStyle = "display:flex;justify-content:flex-end;align-items:center;gap:6px;font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;";
+  // PV-07 / PG-Q3: a not-yet-graded player's card leads with the expected first grade on
+  // the FanGraphs scale and the chance of a first grade by the next list window, and keeps
+  // today's map value as a secondary production grade.
+  if (inProvSection(p)) return provDetailHeaderHTML(p, labelStyle, lead);
   const gb = gradeBlock(p);
   const x = gb.x;
   if (!(x && x.xfv_grade != null)) {
@@ -34372,7 +34654,13 @@ function efvDetailCard(p) {
   // so a graduate (kind debuted; efv_score flags it provisional when it has no MiLB line)
   // never gets them; its title says the grade is the one locked at debut.
   const _priorAnch = !!(x.xfv_provisional && x.kind !== "debuted");
-  const provBanner = x.xfv_ungraded
+  // PV-07 / PG-Q3: a not-yet-graded player's map value is his PRODUCTION GRADE, ranked
+  // nowhere; the banner says so and carries the PV-08 receipt.
+  const _inSec = inProvSection(p);
+  const _pg = _inSec ? provProductionGrade(p) : null;
+  const provBanner = _inSec
+    ? `<div class="prov-section-banner" style="border:1px dashed var(--neon-cyan);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:rgba(0,200,220,0.05);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong style="color:var(--neon-cyan);">Not yet graded by any source</strong> - no ${escapeHtml(provLabelSourcesText())} grade has been published for this prospect, so he carries no board rank. The number below is his ${escapeHtml(_pg ? _pg.word : "production grade")}${_pg && _pg.prodMap ? ", today's provisional-map value from his translated MiLB stats" : ""}; the card leads with the expected first grade on the FanGraphs scale and the chance of a first grade. <a href="/glossary/#g=xfv_ungraded" style="color:var(--neon-cyan);">Methodology →</a>${provReceiptHTML(p)}</div>`
+    : x.xfv_ungraded
     ? `<div style="border:1px dashed var(--neon-cyan);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:rgba(0,200,220,0.05);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong style="color:var(--neon-cyan);">Provisional eFV</strong> - no scouting source has graded this prospect yet. This grade is a <strong>production-only leading indicator</strong> from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards), not a source-anchored eFV. <a href="/glossary/#g=xfv_ungraded" style="color:var(--neon-cyan);">Methodology →</a></div>`
     : _priorAnch
     ? `<div style="border:1px dashed var(--border-light);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:var(--bg-tertiary);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong>Prior-anchored eFV</strong> - drafted or signed but no pro track record yet, so eFV starts at the consensus prior. A small gap between eFV and consensus FV here is placement on the 20-80 scale when ranked among all graded prospects, not a model penalty. The model read goes live once pro playing time arrives.</div>`
@@ -34449,11 +34737,12 @@ function efvDetailCard(p) {
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <div class="detail-title" style="margin:0;"${x.grade_basis === "provisional_capped" ? ` title="${escapeHtml(efvScaleNote(x))}"` : ""}>${x.xfv_ungraded ? "Provisional eFV · production-only" : x.grade_basis === "provisional_capped" ? "eFV · provisional scale (no source grade)" : _v2 ? (x.xfv_provisional ? "eFV V2 · consensus order, no pro record yet" : "eFV V2 · consensus order, reordered by drivers") : _priorAnch ? "eFV · prior-anchored (awaiting pro debut)" : x.xfv_provisional ? "eFV · locked at debut" : "eFV · outcome-grounded grade"}</div>
-        <span class="fv-badge ${fvClass(String(efvGradeDisplay(x)))} size-sm"${x.xfv_ungraded ? ' style="border-style:dashed;"' : ""} title="${escapeHtml(efvTooltip(x))}">${efvGradeDisplay(x)}</span>
+        <div class="detail-title" style="margin:0;"${x.grade_basis === "provisional_capped" ? ` title="${escapeHtml(efvScaleNote(x))}"` : ""}>${(_pg && _pg.prodMap) ? "Production grade · provisional map, ranked nowhere" : x.xfv_ungraded ? "Provisional eFV · production-only" : x.grade_basis === "provisional_capped" ? "eFV · provisional scale (no source grade)" : _v2 ? (x.xfv_provisional ? "eFV V2 · consensus order, no pro record yet" : "eFV V2 · consensus order, reordered by drivers") : _priorAnch ? "eFV · prior-anchored (awaiting pro debut)" : x.xfv_provisional ? "eFV · locked at debut" : "eFV · outcome-grounded grade"}</div>
+        <span class="fv-badge ${fvClass(String(efvGradeDisplay(x)))} size-sm"${(x.xfv_ungraded || _inSec) ? ' style="border-style:dashed;"' : ""} title="${escapeHtml(_inSec && _pg ? `${_pg.Word} ${_pg.val}: ${_pg.prodMap ? "today's map value" : "the served grade"}, ranked nowhere. The board rank counts graded players only.` : efvTooltip(x))}">${efvGradeDisplay(x)}</span>
       </div>
       ${claimHTML}
       ${placeHTML}
+      ${_inSec ? "" : provReceiptHTML(p)}
       ${x.krp_plus != null ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:11px;color:var(--text-tertiary);">
         ${krpPlusPillHTML(p)}<span>K-backed run prevention: a below-level ERA the strikeouts support.</span>
       </div>` : ""}
@@ -36023,7 +36312,8 @@ function buildProspectCard(snap) {
   // where eFV abstains) - it used to hardcode "Consensus FV" over an eFV number.
   // Mirrors the detail-page header labels (efvDetailHeaderHTML).
   const fvBadgeLabel = _xgC != null
-    ? ((_xC && _xC.xfv_ungraded) ? "Provisional eFV" : "eFV")
+    ? (inProvSection(p) && provProductionGrade(p) && provProductionGrade(p).prodMap ? "Production grade"
+       : (_xC && _xC.xfv_ungraded) ? "Provisional eFV" : "eFV")
     : "Consensus FV";
   const sl = p.statline || {};
   const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
@@ -48782,8 +49072,18 @@ function renderPlayerDetail(key) {
   // Org pill on the CANONICAL eFV org rank (same ordering as the roster tab),
   // baked org_rank / provisional map as fallbacks only.
   const _efvOrg = (typeof getEfvOrgRank === "function") ? getEfvOrgRank(p) : null;
-  const _provOrg = (p._is_provisional && typeof provOrgRank === "function") ? provOrgRank(p) : null;
-  const rankPills = (_efvOverall != null || p.overall_rank != null || _efvOrg || p.org_rank != null || wagRankPill || liveRankPill || _provOrg)
+  // PV-07: a not-yet-graded player has no board or org rank; his pills give his place in
+  // the section and among his org's not-yet-graded players, both in the chance order.
+  const _inSec = inProvSection(p);
+  const _secPos = _inSec ? provSectionPos(p) : null;
+  const _provOrg = ((p._is_provisional || _inSec) && typeof provOrgRank === "function") ? provOrgRank(p) : null;
+  const rankPills = _inSec
+    ? ((_secPos || _provOrg)
+      ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+        ${_secPos ? rankPill("Not yet graded", "#" + _secPos.pos.toLocaleString() + " of " + _secPos.total.toLocaleString(), "var(--text-secondary)") : ""}
+        ${_provOrg ? rankPill(escapeHtml(p.org || "?") + " not yet graded", "#" + _provOrg.rank.toLocaleString() + " of " + _provOrg.total.toLocaleString(), "var(--text-secondary)") : ""}
+      </div>` : "")
+    : (_efvOverall != null || p.overall_rank != null || _efvOrg || p.org_rank != null || wagRankPill || liveRankPill || _provOrg)
     ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
         ${_efvOverall != null ? rankPill("Overall eFV", "#" + _efvOverall, "var(--neon-violet)")
           : (p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : "")}
@@ -49348,12 +49648,12 @@ function renderPlayerDetail(key) {
       // Provisional prospects have no scout snapshots, but DO have a per-season eFV trajectory:
       // each past MiLB season re-scored with TODAY's production-only model, not the grade the
       // site served at the time (that record is .cache/provisional_history/). Label it so.
-      ? `<div class="detail-title">eFV history <span class="detail-title-sub">each MiLB season re-scored with the current model · no source grades to chart</span></div>${makeProvisionalEfvChart(_provEfvHist, { width: 360, height: 150 })}`
+      ? `<div class="detail-title">${inProvSection(p) ? "Production grade history" : "eFV history"} <span class="detail-title-sub">each MiLB season re-scored with the current model · no source grades to chart</span></div>${makeProvisionalEfvChart(_provEfvHist, { width: 360, height: 150 })}`
       : _provSingle
         // One pro season on record: a single dot on the same frame. The old text fallback
         // ("not enough FV updates") described a scouting cadence these players are not on -
         // no source has graded them at all, so no number of updates was ever coming.
-        ? `<div class="detail-title">eFV <span class="detail-title-sub">production-only grade from his first pro season · no source grades to chart</span></div>${makeProvisionalEfvChart(_provSingle, { width: 360, height: 150 })}
+        ? `<div class="detail-title">${inProvSection(p) ? "Production grade" : "eFV"} <span class="detail-title-sub">production-only grade from his first pro season · no source grades to chart</span></div>${makeProvisionalEfvChart(_provSingle, { width: 360, height: 150 })}
            <div style="color:var(--text-tertiary);font-size:11px;margin-top:4px;">One pro season on record, so there is no trajectory yet. A second season turns this dot into a line.</div>`
         : p._is_provisional
           ? `<div style="color:var(--text-tertiary);font-size:12px;">No season-by-season eFV to chart yet. No scouting source has graded this prospect, so the trajectory has to come from his own pro seasons.</div>`

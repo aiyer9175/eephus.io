@@ -5059,7 +5059,7 @@
   },
   {
    "id": "xfv_ungraded",
-   "term": "Provisional eFV (ungraded)",
+   "term": "Production grade (provisional eFV)",
    "category": "custom-index",
    "module": [
     "prospx"
@@ -5067,11 +5067,15 @@
    "aliases": [
     "provisional eFV",
     "ungraded eFV",
-    "prov eFV"
+    "prov eFV",
+    "production grade",
+    "not yet graded",
+    "expected first grade",
+    "chance of a first grade"
    ],
    "priority": 6,
-   "definition": "A PROVISIONAL Future Value for prospects who have played pro ball but have no grade from any source: DSL / CPX breakouts the ranking cycle has not reached, plus deep-system depth. It ranks on the PROSPX board among the graded players by grade, and shows on farm rosters and its own detail page, always with a dashed badge and a small 'p'. Most land 20-30; real production breakouts reach the 40s, where a soft ceiling compresses the top so an unscouted player cannot run away from the scale.",
-   "methodology": "The flagship eFV is anchored on consensus FV and abstains without a source grade, so ungraded players get a production-only model: a ridge on the same translated MiLB production features (level-relative K / BB / OBP / ISO against contemporaneous norms, age for level, multi-season peaks, track record) without the consensus-FV feature (hitters keep level reached; pitchers drop it because it rewards quad-A org arms). Forward-chained, the served grade's rank correlation (Spearman) with realized WAR is 0.27 for hitters (n 1,032) and 0.11 for pitchers (n 895), from data/xfv_ungraded_eval.json. The WAR prediction maps through a linear grade curve with a soft knee: above the knee the grade is compressed toward a ceiling, so the order is kept but a thin sample cannot print a top-prospect grade. A typical org filler reads about 22-25. A leading indicator: it ranks on the board and in the farm-system top-end and depth pool, with no consensus anchor behind it.",
+   "definition": "A PROVISIONAL grade for prospects who have played pro ball but have no grade from any label source (FanGraphs, MLB Pipeline, Baseball America, ESPN, Just Baseball): DSL / CPX breakouts the ranking cycle has not reached, plus deep-system depth. On the PROSPX board these players sit in their own section, 'Not yet graded by any source', below every graded prospect and with no board or org rank, ordered by the chance of a first grade. Their card leads with the expected first grade on the FanGraphs scale and the chance of a first grade by the next list window, and shows this map value beneath them, relabelled the production grade, with a dashed badge. Most land 20-30; real production breakouts reach the 40s, where a soft ceiling compresses the top so an unscouted player cannot run away from the scale. Trade values and the farm top-end and depth pool still read it.",
+   "methodology": "The flagship eFV is anchored on consensus FV and abstains without a source grade, so ungraded players get a production-only model: a ridge on the same translated MiLB production features (level-relative K / BB / OBP / ISO against contemporaneous norms, age for level, multi-season peaks, track record) without the consensus-FV feature (hitters keep level reached; pitchers drop it because it rewards quad-A org arms). Forward-chained and scored on the source-GRADED labelled pool, the served grade's rank correlation (Spearman) with realized WAR is 0.27 for hitters (n 1,032) and 0.11 for pitchers (n 895), from data/xfv_ungraded_eval.json: that is WAR skill on players a source has already graded, not skill at the grade a source will give an ungraded player. Scored against the first source grade instead (data/provisional_track_eval.json, shown on Source Comparison under Provisional track record), it orders who is graded next but does not predict the level, so the board keeps these players out of the eFV rank. Their section order and the card's lead numbers come from the first-grade model (data/provisional_v2.json): the chance that a label source grades the player inside 6 and 12 months of the anchor, recalibrated to the latest closed anchor's base rate, and the expected first FV if FanGraphs grades him (35+ counted as 37.5). They rejoin the eFV rank only after a frozen window shows that expected first grade beating a constant. The WAR prediction maps through a linear grade curve with a soft knee: above the knee the grade is compressed toward a ceiling, so the order is kept but a thin sample cannot print a top-prospect grade. A typical org filler reads about 22-25. Each card also carries a receipt: the grade frozen on the freeze date and, once it arrives, the first source grade after it.",
    "formula": "provisional eFV = max( 20 , BASE + SLOPE * model E[6yr WAR] ), compressed above KNEE toward CEIL (no consensus-FV anchor). Hitters: 27 + 3.8 * WAR, knee 43, ceiling 49. Pitchers: 25 + 4.5 * WAR, knee 34, ceiling 38.",
    "example": "Anthony Potestio (NYY, Single-A, age 21.9) has no source grade. A .513 OBP and .351 ISO over 80 plate appearances put his provisional eFV at 46.8 on the 2026-09-24 build, shown as 47: above the hitter knee of 43, so it sits in the compressed band.",
    "seeAlso": [

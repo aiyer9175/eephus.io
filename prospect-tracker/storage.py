@@ -5205,7 +5205,13 @@ _NO_BOARD_SORT_KEY = -1e9
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-09-25"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-10-02"   # STRICTLY-AFTER gate: see load_rank_history.
+# Bumped 2026-10-02 for PV-07 (owner answers PG-Q1 / PG-Q2, 2026-09-25): the board rank
+# now counts only rows that carry a label-source opinion. The 2,701 board actives with no
+# such opinion (the performance-anchor and draft-signing rows) leave the shared rank for
+# the PROSPX section "Not yet graded by any source" (PROV_SECTION_ON below), so every
+# graded row below the first of them re-ranks once for a reason that is not player
+# movement. Grades did not move; the fingerprint gained the section= term with it.
 # Bumped 2026-09-25 for DS-02: eFV V2 became the board number (the consensus value at
 # V2's order rank inside each side) and board_sort_key became V2's order index, so every
 # consensus-graded row re-ranks once for a reason that is not player movement. Landed
@@ -5343,7 +5349,13 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a9
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017"
                            "|label=ewar_v2@2026-09-03T12:35:09"
-                           "|injsides=pit|served=efv_v2@f903b813")
+                           "|injsides=pit|served=efv_v2@f903b813"
+                           "|section=label_graded")
+# section= added 2026-10-02 with PV-07 and the epoch bump. Every earlier term names how a
+# grade is made; none of them can see WHICH rows the rank counts. Moving the rows with no
+# label-source opinion out of the shared rank re-numbers every graded row below the first
+# of them while all thirteen earlier terms stay byte-identical. "label_graded" while
+# PROV_SECTION_ON holds, "all" if the section is ever folded back in.
 # served= added 2026-09-25 with DS-02 and the epoch bump. Every term before it names how
 # eFV v1 turns a prediction into a grade; none of them can see WHICH eFV serves. Serving
 # V2 moves every consensus-graded grade and rank while all eleven earlier terms stay
@@ -5581,10 +5593,108 @@ def board_basis_fingerprint() -> str:
         served = _v2s.fingerprint_term()
     except Exception:
         served = "unavailable"
+    # RANKED POOL, added 2026-10-02 with PV-07 (see the note at the pinned constant).
+    section = "label_graded" if PROV_SECTION_ON else "all"
     return (f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
             f"|feats={feats}|stale={stale}|floorroute={floorroute}|gradanchor={anchor}"
             f"|disp={disp}|gradenorm={gradenorm}|label={label}|injsides={injsides}"
-            f"|served={served}")
+            f"|served={served}|section={section}")
+
+
+# ── THE "NOT YET GRADED BY ANY SOURCE" SECTION (PV-07, 2026-10-02) ──────────────
+# Owner answers PG-Q1 and PG-Q2 (2026-09-25, DECISIONS_FOR_OWNER.md; spec
+# _finalpass_2026-09-24/provisional/PROVISIONAL_V2.md section 3): the provisional grade
+# has no level skill against the first source grade (Spearman 0.017, MAE 6.21 against a
+# constant's 4.54, data/provisional_track_eval.json served_backdated leg), so a row that
+# no label source has ever graded does not sit in the shared board rank. The
+# provisional-only rows (client-side, from xfv_ungraded.json) and the board actives with
+# no label-source opinion form their own PROSPX section, ordered there by the chance of a
+# first grade (data/provisional_v2.json). Trade values and farm points keep their inputs
+# (PG-Q2): nothing here touches a grade, a surplus or the farm pool.
+#
+# The rows rejoin the shared rank ONLY on a frozen level win: a closed prospective window
+# whose level claim on the frozen expected first grade holds (provisional_track claims
+# level.fv_fg_pred). That is a necessary condition, not an automatic switch: flipping
+# PROV_SECTION_ON to False is a reviewed change, and test_prospx_prov_section refuses it
+# while prov_section_state() reports no such win.
+PROV_SECTION_ON = True
+#: The label sources, the same set provisional_track.SETS["ANY"] scores first grades on
+#: (pinned equal by test_prospx_prov_section). tjstats, performance_ingest and
+#: draft_signing are not label sources: the last two are the fabricated performance
+#: anchor and the signing-bonus anchor.
+PROV_SECTION_LABEL_SOURCES = ("fangraphs", "mlb_pipeline", "mlb_pipeline_international",
+                              "baseballamerica", "espn", "just_baseball")
+PROV_SECTION_TITLE = "Not yet graded by any source"
+
+
+def _point_sources(pt) -> set:
+    """Every source a consensus point names: its per_source keys plus
+    sources_contributing. Works on a PlayerTimeseries point or a served point dict."""
+    if isinstance(pt, dict):
+        ps, sc = pt.get("per_source"), pt.get("sources_contributing")
+    else:
+        ps, sc = getattr(pt, "per_source", None), getattr(pt, "sources_contributing", None)
+    out = set((ps or {}).keys()) if isinstance(ps, dict) else set()
+    out.update(s for s in (sc or []) if isinstance(s, str))
+    return out
+
+
+def has_label_source_opinion(points) -> bool:
+    """True when any point of the series names a label source (an opinion ever given,
+    the PG3 probe-7 definition). An empty series answers False."""
+    lab = set(PROV_SECTION_LABEL_SOURCES)
+    return any(_point_sources(pt) & lab for pt in (points or []))
+
+
+def row_in_prov_section(p: dict) -> bool:
+    """Does this served active row leave the shared rank? Reads the export's
+    `source_graded` flag; a payload from before the flag falls back to the row's points,
+    and a row with neither (a synthetic or pre-flag payload) stays ranked."""
+    if not PROV_SECTION_ON or not isinstance(p, dict):
+        return False
+    flag = p.get("source_graded")
+    if flag is None:
+        pts = p.get("points")
+        if not pts:
+            return False
+        flag = has_label_source_opinion(pts)
+    return not bool(flag)
+
+
+def prov_section_state(path: Path | None = None) -> dict:
+    """The served description of the section, derived from data/provisional_track_eval.json:
+    whether a frozen window has shown the level win the rejoin rule needs, and the next
+    window end. Written to the payload top level as `prov_section`."""
+    p = Path(path) if path is not None else Path(__file__).parent / "data" / "provisional_track_eval.json"
+    level_win, closed, open_until = False, [], []
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        doc = {}
+    latest = set((doc.get("latest") or {}).values())
+    for r in doc.get("rows") or []:
+        if r.get("leg") != "prospective" or (latest and r.get("run_id") not in latest):
+            continue
+        if r.get("verdict_readable"):
+            closed.append(r.get("window_end"))
+            lv = ((r.get("claims") or {}).get("level") or {}).get("fv_fg_pred") or {}
+            if lv.get("claim") is True:
+                level_win = True
+        elif r.get("window_end"):
+            open_until.append(r.get("window_end"))
+    return {
+        "on": bool(PROV_SECTION_ON),
+        "title": PROV_SECTION_TITLE,
+        "label_sources": list(PROV_SECTION_LABEL_SOURCES),
+        "order": "chance of a first grade by the W12 window end (data/provisional_v2.json p_any_w12)",
+        "rejoin_rule": ("rows rejoin the shared rank only after a closed prospective window shows "
+                        "the frozen expected first grade beating the constant (level claim, "
+                        "paired CI95 clear of 0)"),
+        "level_win": level_win,
+        "windows_closed": sorted(w for w in closed if w),
+        "next_window_end": min(open_until) if open_until else None,
+        "read_from": "data/provisional_track_eval.json",
+    }
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
@@ -5685,11 +5795,20 @@ def rebake_board_ranks(out_path: Path, *, xfv_by_key: dict | None = None,
 
     rows: list[tuple] = []
     n_without_tail = 0
+    # PV-07: a row with no label-source opinion carries no shared rank (see
+    # PROV_SECTION_ON). Its rank fields are cleared here, so a payload exported before the
+    # section re-bakes onto it, and a cleared row that had a rank counts as moved.
+    section_rows: list[dict] = []
     for p in players:
         tail = p.get("board_key_tail")
         if tail is None:
             if p.get("overall_rank") is not None:
                 n_without_tail += 1
+            continue
+        if p.get("source_graded") is None and p.get("points"):
+            p["source_graded"] = has_label_source_opinion(p["points"])
+        if row_in_prov_section(p):
+            section_rows.append(p)
             continue
         fallback_fv, upside, tbs, rank_key, org_key = (list(tail) + [None] * 5)[:5]
         rec = xfv.get(p.get("player_key")) or {}
@@ -5741,6 +5860,17 @@ def rebake_board_ranks(out_path: Path, *, xfv_by_key: dict | None = None,
         p["rank_movement"] = mv
         if i <= 10:
             top.append((i, pk, grade))
+    for p in section_rows:
+        if p.get("overall_rank") is not None:
+            moved += 1
+        tail = p.get("board_key_tail") or []
+        org = str((list(tail) + [None] * 5)[4] or "?")
+        p["overall_rank"] = None
+        p["org_rank"] = None
+        p["org_rank_total"] = org_totals.get(org, 0)
+        p["prev_overall_rank"] = None
+        p["rank_movement"] = None
+    payload["prov_section"] = dict(prov_section_state(), n_board_rows=len(section_rows))
 
     # Every other top-level block (run, data_freshness, generated_at) passes through
     # untouched: this rewrites rank fields only, and a re-bake that dropped the
@@ -5777,15 +5907,20 @@ def rebake_board_ranks(out_path: Path, *, xfv_by_key: dict | None = None,
                             "UPDATE metric_snapshots SET overall_rank = ? "
                             "WHERE player_key = ? AND snapshot_date = ?",
                             [(p["overall_rank"], p["player_key"], today)
-                             for _, p, _, _ in rows if p.get("player_key")])
+                             for _, p, _, _ in rows if p.get("player_key")]
+                            + [(None, p["player_key"], today)
+                               for p in section_rows if p.get("player_key")])
                         lg.info("rebake_board_ranks: refreshed overall_rank on %d "
                                 "metric_snapshots rows dated %s", n_today, today)
             except sqlite3.OperationalError as e:           # pragma: no cover
                 lg.warning("rebake_board_ranks: metric_snapshots not updated (%s)", e)
     msg = (f"{len(rows)} active rows re-ranked on the current eFV file, {moved} moved"
+           + (f", {len(section_rows)} rows in the not-yet-graded section carry no shared rank"
+              if section_rows else "")
            + (f", {n_without_tail} rows without a tail left alone" if n_without_tail else ""))
     lg.info("rebake_board_ranks: %s", msg)
     return {"written": written, "n_active": len(rows), "n_moved": moved,
+            "n_section": len(section_rows),
             "n_without_tail": n_without_tail, "message": msg, "top": top}
 
 
@@ -11665,18 +11800,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # when the move is within the dead-band, or when the player sits in a deep
             # tie block (_rank_meaningful); the eFV grade move on `stock` carries the
             # immediate signal. Best-effort.
-            "rank_movement": _rank_movement(p.player_key,
-                                            overall_rank_by_key.get(p.player_key),
-                                            _ser_board_grade),
+            "rank_movement": (_rank_movement(p.player_key,
+                                             overall_rank_by_key.get(p.player_key),
+                                             _ser_board_grade)
+                              if p.player_key in overall_rank_by_key else None),
             # This player's own overall_rank at the previous post-epoch snapshot (same
             # field, one run back — never a re-sort on a different key). Drives the
             # rank-trend arrow. None for players new to the board, for every player until
             # two post-epoch snapshots exist, and for tie-block players whose rank number
             # is tiebreak order rather than grade order.
             "prev_overall_rank": (prev_overall_rank_by_key.get(p.player_key)
-                                  if _rank_meaningful(_ser_board_grade) else None),
+                                  if (_rank_meaningful(_ser_board_grade)
+                                      and p.player_key in overall_rank_by_key) else None),
             "org_rank": org_rank_by_key.get(p.player_key),
             "org_rank_total": org_size_by_key.get(p.player_key),
+            # PV-07: has any label source (storage.PROV_SECTION_LABEL_SOURCES) ever given
+            # this active row an opinion? False puts it in the PROSPX section "Not yet
+            # graded by any source" with no shared rank. None off the active list.
+            "source_graded": _source_graded_by_key.get(p.player_key),
             # The non-model terms of THE board ordering for this row (consensus fallback
             # grade, '+' flag, TBS proxy, avg_rank, org key). Read by storage.rebake_board_ranks
             # only, never displayed; None for graduated / inactive rows.
@@ -12488,8 +12629,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # provisional floor exactly, so for those players the rank NUMBER is produced by the
     # tiebreak chain rather than by the grade. _rank_meaningful reads this to withhold
     # rank movement / rank deltas that are tie-order churn, not player movement.
+    # PV-07: the shared rank counts only rows with a label-source opinion (PROV_SECTION_ON);
+    # the rest keep their place in the payload order and carry no overall/org rank.
+    _source_graded_by_key: dict[str, bool] = {
+        _p.player_key: has_label_source_opinion(_p.points) for _p in actives}
+    _ranked_actives = [_p for _p in actives
+                       if not PROV_SECTION_ON or _source_graded_by_key.get(_p.player_key)]
     _board_grade_tie_count.clear()
-    for _p in actives:
+    for _p in _ranked_actives:
         _g = _board_grade(_p.player_key,
                           _p.points[-1].consensus_fv_raw if _p.points else None)
         if _g is not None:
@@ -12504,10 +12651,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     org_size_by_key: dict[str, int] = {}
     org_counters: dict[str, int] = {}
     org_totals: dict[str, int] = {}
-    for p in actives:
+    for p in _ranked_actives:
         org_key = _active_display_org(p) or "?"
         org_totals[org_key] = org_totals.get(org_key, 0) + 1
-    for i, p in enumerate(actives, start=1):
+    for p in actives:
+        org_size_by_key[p.player_key] = org_totals.get(_active_display_org(p) or "?", 0)
+    for i, p in enumerate(_ranked_actives, start=1):
         overall_rank_by_key[p.player_key] = i
         org_key = _active_display_org(p) or "?"
         org_counters[org_key] = org_counters.get(org_key, 0) + 1
@@ -17384,6 +17533,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "debut_count": len(grads),
         "inactive_cutoff": cutoff.isoformat(),
         "prospect_savant_count": savant_matched,
+        # PV-07: the "Not yet graded by any source" section's served description (on/off,
+        # label sources, rejoin rule and its state), derived from
+        # data/provisional_track_eval.json; PROSPX reads it to split the board.
+        "prov_section": dict(prov_section_state(), n_board_rows=sum(
+            1 for _k, _v in _source_graded_by_key.items() if not _v)),
         "players":    active_payload,
         "spotlights": spotlight_payload,
         # Standout single games of active prospects (see the harvest note above);

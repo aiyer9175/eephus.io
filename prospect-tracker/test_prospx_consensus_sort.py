@@ -224,3 +224,47 @@ def test_rank_by_consensus_sorts_the_rendered_board(booted_page):
     assert rev["tierUp"] == 0, (
         "reversing the consensus sort floated placeholder or no-consensus rows to the top")
     assert not errs, "JS errors:\n  " + "\n  ".join(errs)
+
+
+# ---------------------------------------------------------------------------
+# 5. PV-07: the default eFV order keeps the not-yet-graded section last
+# ---------------------------------------------------------------------------
+# Owner answers PG-Q1 / PG-Q2 (2026-09-25): rows no label source has graded leave the
+# shared eFV rank for the "Not yet graded by any source" section. In the consensus sort
+# they already sank (no consensus grade); in the default eFV order they now sit below
+# every graded row, in both directions, under one section header, with no "#" rank.
+
+_MEASURE_XFV = """() => {
+  const f = getFilteredActives();
+  const flags = f.map(p => inProvSection(p));
+  const first = flags.indexOf(true), lastGraded = flags.lastIndexOf(false);
+  const rankedSec = f.filter(p => inProvSection(p) && boardRankOf(p) != null).length;
+  return {sort: state.sort, on: provSectionOn(), n: f.length, nsec: flags.filter(Boolean).length,
+          first, lastGraded, rankedSec};
+}"""
+
+
+def test_default_order_puts_the_section_after_every_graded_row(booted_page):
+    page, errs = booted_page
+    page.click("[data-grade-toggle='xfv']")
+    page.select_option("#sort-select", "xfv")
+    page.wait_for_timeout(1500)
+    m = page.evaluate(_MEASURE_XFV)
+    if not m["on"]:
+        pytest.skip("served payload carries no prov_section block (exported before PV-07)")
+    assert m["nsec"] > 0
+    assert m["first"] == m["lastGraded"] + 1, f"a section row sits above a graded row: {m}"
+    assert m["rankedSec"] == 0, "a section row carries a board rank"
+    page.evaluate("() => { state.sortRev = state.sortRev || {}; state.sortRev.sort = true; }")
+    rev = page.evaluate(_MEASURE_XFV)
+    page.evaluate("() => { state.sortRev.sort = false; }")
+    assert rev["first"] == rev["lastGraded"] + 1, "reversing the eFV order floated the section up"
+    # the section header renders once, on the page where the section starts
+    pg = page.evaluate("""() => { const n = state.pageSizes.actives || 50;
+      const f = getFilteredActives(); return Math.floor(f.findIndex(p => inProvSection(p)) / n) + 1; }""")
+    page.evaluate("(pg) => { state.pages.actives = pg; render(); }", pg)
+    page.wait_for_timeout(800)
+    heads = page.evaluate("() => document.querySelectorAll('#rows .prov-section-head:not(.is-continued)').length")
+    assert heads == 1
+    page.evaluate("() => { state.pages.actives = 1; render(); }")
+    assert not errs, "JS errors:\n  " + "\n  ".join(errs)

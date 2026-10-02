@@ -114,3 +114,41 @@ def test_xfv_ungraded_json_carries_the_shape_the_catalog_promises():
         grade = next(iter(d["by_player"].values()))
         # the row's whole promise is "still carries a number"
         assert isinstance(grade, (int, float, dict)), type(grade)
+
+
+# --------------------------------------------------------------------------- #
+# PV-07 (owner answers PG-Q1 / PG-Q2, 2026-09-25): a SECOND partition, on the board.
+# flagship_owns asks "is there a consensus grade?", and the fabricated performance
+# anchor (performance_ingest, FV 35) answers yes. The board section asks "has any LABEL
+# source ever graded him?", and that anchor answers no. The two predicates are different
+# on purpose: a routed row keeps its flagship-owned eFV entry (trade values and farm
+# points keep their inputs) while it leaves the shared rank for the section.
+# --------------------------------------------------------------------------- #
+def test_a_performance_anchor_row_is_flagship_owned_but_in_the_section():
+    import storage
+    anchor_only = {"fv_raw": 35.0, "points": [
+        {"per_source": {"performance_ingest": {"fv_published": 35.0}},
+         "sources_contributing": ["performance_ingest"]}]}
+    assert efv_ungraded.flagship_owns(anchor_only) is True
+    assert storage.row_in_prov_section(anchor_only) is True
+    graded = {"fv_raw": 40.0, "points": [{"per_source": {"fangraphs": {"fv_published": 40.0}}}]}
+    assert efv_ungraded.flagship_owns(graded) is True
+    assert storage.row_in_prov_section(graded) is False
+
+
+def test_the_board_partition_has_no_gap_and_no_overlap():
+    """Every served active row is ranked or in the section, never both, never neither."""
+    import json
+    from pathlib import Path
+    import storage
+    p = Path(__file__).resolve().parent / "data" / "timeseries.json"
+    if not p.exists():
+        pytest.skip("timeseries.json not built in this tree")
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    if "prov_section" not in doc:
+        pytest.skip("payload predates the section")
+    actives = [r for r in doc["players"] if r.get("board_key_tail") is not None]
+    ranked = {r["player_key"] for r in actives if r.get("overall_rank") is not None}
+    section = {r["player_key"] for r in actives if storage.row_in_prov_section(r)}
+    assert not ranked & section
+    assert ranked | section == {r["player_key"] for r in actives}

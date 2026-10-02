@@ -226,3 +226,68 @@ def test_the_registry_rows_quote_the_artifact():
         assert want in row["notes"], want
     xu = reg["xfv_ungraded"]["notes"]
     assert f"MAE {lg['mae']} against {lg['mae_null_const']} for a constant, n {lg['n']}" in xu
+
+
+# --- PV-08 receipts (by_player) ----------------------------------------------------
+
+def test_receipts_record_the_frozen_grade_and_the_first_grade_after_it(tmp_path):
+    w = _world(tmp_path, [
+        # ann: FanGraphs 35+ after the freeze (coded 37.5), then Pipeline later
+        ("ann", "fangraphs", "2026-11-06", "2026-11-06 21:00:00", 37.5),
+        ("ann", "mlb_pipeline", "2027-01-22", "2027-01-22 05:00:00", 40.0),
+        # bob: an opinion before the freeze, so he is not eligible and has no receipt
+        ("bob", "baseballamerica", "2026-08-10", "2026-08-10 03:00:00", 35.0),
+    ])
+    rec = T.receipts("2026-12-01", freeze_dir=w["freeze_dir"], m2k=T.identity(w["data_dir"]),
+                     opin=T.opinions(w["db_path"]))
+    assert rec["columns"] == T.RECEIPT_COLUMNS
+    fz = rec["freezes"]["FREEZE_provisional_2026-09-25.json"]
+    assert fz["frozen_at"] == "2026-09-25" and fz["scored_through"] == "2026-12-01"
+    rows = fz["rows"]
+    assert "mlbam_2" not in rows, "a pre-freeze opinion drops the row, as score() does"
+    col = {c: i for i, c in enumerate(T.RECEIPT_COLUMNS)}
+    ann = rows["mlbam_1"]
+    assert ann[col["grade"]] == 40.0, "the frozen grade is the freeze file's own value"
+    assert ann[col["first_date"]] == "2026-11-06" and ann[col["first_source"]] == "fangraphs"
+    assert ann[col["first_label"]] == "35+" and ann[col["lead_days"]] == 42
+    assert ann[col["player_key"]] == "ann"
+    cal = rows["mlbam_3"]
+    assert cal[col["grade"]] == 30.0 and cal[col["first_date"]] is None
+    assert fz["n_first_graded"] == 1
+    # Nothing to receipt on the freeze day itself.
+    assert T.receipts("2026-09-25", freeze_dir=w["freeze_dir"], m2k={}, opin={})["freezes"] == {}
+
+
+def test_receipts_ride_the_artifact_and_survive_a_rows_only_commit(tmp_path):
+    w = _world(tmp_path, [("ann", "fangraphs", "2026-11-06", "2026-11-06 21:00:00", 40.0)])
+    out, led = tmp_path / "eval.json", tmp_path / "cache" / "ledger.jsonl"
+    T.update("2026-11-07", out_path=out, ledger_path=led, freeze_dir=w["freeze_dir"],
+             data_dir=w["data_dir"], db_path=w["db_path"], B=20, retrospective=False,
+             now_iso="2026-11-07T09:00:00+00:00")
+    text = out.read_text(encoding="utf-8")
+    doc = json.loads(text)
+    rows = doc["by_player"]["freezes"]["FREEZE_provisional_2026-09-25.json"]["rows"]
+    assert set(rows) == {"mlbam_1", "mlbam_2", "mlbam_3"}
+    # one receipt per line: the compact block, not one value per line
+    assert '"mlbam_1": [40.0,"2026-11-06","fangraphs",40.0,"40",42,"ann"]' in text
+    # a commit that brings no receipts keeps the previous block
+    T.commit_rows([], out_path=out, ledger_path=led, now_iso="2026-11-08T09:00:00+00:00")
+    assert json.loads(out.read_text(encoding="utf-8"))["by_player"] == doc["by_player"]
+
+
+def test_the_committed_receipts_copy_the_freeze_grades():
+    p = ROOT / "data" / "provisional_track_eval.json"
+    if not p.exists():
+        pytest.skip("artifact not built")
+    bp = json.loads(p.read_text(encoding="utf-8")).get("by_player")
+    if not bp:
+        pytest.skip("artifact predates the receipts block")
+    fz = json.loads(FREEZE.read_text(encoding="utf-8"))
+    frozen = {str(r["key"]): r.get("grade") for r in fz["rows"]}
+    rows = bp["freezes"][FREEZE.name]["rows"]
+    gi = bp["columns"].index("grade")
+    assert len(rows) > 5000
+    bad = [k for k, v in rows.items()
+           if (v[gi] is None) != (frozen.get(k) is None)
+           or (v[gi] is not None and abs(v[gi] - round(float(frozen[k]), 1)) > 1e-9)]
+    assert not bad, f"receipt grades that are not the freeze's: {bad[:5]}"
