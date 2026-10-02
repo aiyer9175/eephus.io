@@ -449,3 +449,87 @@ def test_a_non_development_artifact_yields_no_dev_row():
     with pytest.raises(ValueError):
         P.build_dev_rows({}, sources=[], date="2026-09-25", trigger="whenever",
                          now_iso="2026-09-25T00:00:00Z")
+
+
+# ---------------------------------------------------------------------------
+# SG_5 (efv2026 plan item N7): the frozen 2026 list's frames, registered before
+# any read. No row exists yet; these pin where a future row may land.
+
+LV2026 = {
+    "lv_2026_surrogate": {"role": "tilted", "tilted": True,
+                          "tilt_toward": ("efv on arrival via the timing head; "
+                                          "stat readers on production"),
+                          "label": "List vintage 2026, one-season surrogate",
+                          "note": ("surrogate outcome, tilted by construction, a V2 "
+                                   "lead expected by construction, never a claim")},
+    "lv_2026_r3": {"role": "tilted", "tilted": True, "tilt_toward": "efv",
+                   "label": "List vintage 2026, R3 at RT 2029",
+                   "note": "the timing head's own target; tilted, descriptive"},
+    "lv_2026_w3": {"role": "secondary", "tilted": False,
+                   "label": "List vintage 2026, W3 at RT 2031",
+                   "note": ("the frozen frame's registered long-run primary; never "
+                            "the headline")},
+}
+#: The registry before SG_5, by frame id.
+_PRE_SG5_FRAMES = {"vm", "vm2", "vm_dev", "lv_dev", "vm_oos_dev", "lv_res", "vm_pros",
+                   "predebut", "all_vintages", "disagreement"}
+
+
+def test_lv2026_frames_are_registered_as_specified():
+    assert set(P.FRAMES) == _PRE_SG5_FRAMES | set(LV2026)
+    for fid, meta in LV2026.items():
+        assert P.FRAMES[fid] == meta, fid
+        assert "basis_key" not in P.FRAMES[fid]
+
+
+def test_lv2026_frames_are_never_charted():
+    excluded = ("tilted", "secondary", "superseded")
+    for fid in LV2026:
+        assert fid not in P.CHART_FRAMES
+        assert P.FRAMES[fid]["role"] in excluded
+    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
+    m = re.search(r"const _PROG_CHART_FRAMES = \[([^\]]*)\]", js)
+    assert m, "_PROG_CHART_FRAMES not found"
+    assert not set(re.findall(r'"([^"]+)"', m.group(1))) & set(LV2026)
+
+
+def test_lv2026_frames_can_never_become_the_headline(arts):
+    assert not set(P.BASIS_TO_FRAME.values()) & set(LV2026)
+    for table in (P.BY_FRAME_KEY, P.DEFAULT_FRAME_VERSION, P.ROLE_CHANGES):
+        assert not set(table) & set(LV2026)
+    sb = json.loads((arts / P.SB_NAME).read_text(encoding="utf-8"))
+    for fid in LV2026:
+        # A verdict whose basis names the frame still finds no headline frame.
+        fake = json.loads(json.dumps(sb))
+        fake["accuracy"]["head_to_head_verdict"]["basis"] = fid
+        rows = P.build_rows(fake, None, MV, sources=[], date="2026-10-02",
+                            trigger="nightly", now_iso="2026-10-02T00:00:00Z")
+        assert not [r for r in rows if r["frame"] in LV2026]
+        assert P._doc([], fake, "2026-10-02T00:00:00Z",
+                      {"headline_frame": "vm2"})["headline_frame"] == "vm2"
+    _run(arts)
+    doc = _doc(arts)
+    assert doc["headline_frame"] == "vm2"
+    assert not [r for r in doc["rows"] if r["frame"] in LV2026], "no lv_2026 row exists yet"
+    assert not set(doc["chart"]["series_frames"]) & set(LV2026)
+    for fid in LV2026:
+        assert doc["frames"][fid] == LV2026[fid]
+
+
+def test_lv2026_registration_changes_no_existing_row():
+    """Every stored row keeps its frame's role, its content and its hash: the
+    registry gained frames and moved none."""
+    if not SERVED.exists():
+        pytest.skip("data/efv_progress.json not built")
+    doc = json.loads(SERVED.read_text(encoding="utf-8"))
+    rows = doc["rows"]
+    assert not [r for r in rows if r["frame"] in LV2026]
+    assert P.restamp_roles(rows) == rows
+    for r in rows:
+        assert r["frame"] in _PRE_SG5_FRAMES
+        assert r.get("content_hash") == P.content_hash(r)
+    for fid, meta in (doc.get("frames") or {}).items():
+        if fid in LV2026:
+            continue
+        for key in ("role", "tilted", "label", "basis_key", "tilt_toward"):
+            assert P.FRAMES[fid].get(key) == meta.get(key), (fid, key)

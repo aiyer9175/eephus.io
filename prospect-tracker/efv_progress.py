@@ -175,6 +175,25 @@ FRAMES = {
     "disagreement": {"role": "secondary", "tilted": False,
                      "label": "Biggest disagreements",
                      "note": "latest pre-debut consensus read"},
+    # SG_5 (efv2026 plan item N7; the 2026 surrogate gate draft, s6.2 and s6.3):
+    # the frozen 2026 preseason list's frames. Registered before any read so a row
+    # can only ever land as tilted or secondary: none is charted (CHART_FRAMES) and
+    # none carries a basis_key, so none can become the headline. No row exists yet.
+    # Under efv2026 OQ2 = A no one-season surrogate read ever runs, so
+    # lv_2026_surrogate stays a registered frame with no row.
+    "lv_2026_surrogate": {"role": "tilted", "tilted": True,
+                          "tilt_toward": ("efv on arrival via the timing head; "
+                                          "stat readers on production"),
+                          "label": "List vintage 2026, one-season surrogate",
+                          "note": ("surrogate outcome, tilted by construction, a V2 "
+                                   "lead expected by construction, never a claim")},
+    "lv_2026_r3": {"role": "tilted", "tilted": True, "tilt_toward": "efv",
+                   "label": "List vintage 2026, R3 at RT 2029",
+                   "note": "the timing head's own target; tilted, descriptive"},
+    "lv_2026_w3": {"role": "secondary", "tilted": False,
+                   "label": "List vintage 2026, W3 at RT 2031",
+                   "note": ("the frozen frame's registered long-run primary; never "
+                            "the headline")},
 }
 
 #: Registered role changes, applied to every stored row of the frame on each
