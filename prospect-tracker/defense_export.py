@@ -41,10 +41,15 @@ the page never types a frame and the eWAR v3 switch rewrites it with no code
 change here.
 
 Run: `python defense_export.py [season]`  or  `python defense_export.py history`.
+The board joins HEM+ from data/hitter_leaderboards.json, so it is rebuilt AFTER
+the hitter board on every path that writes that board: run_monthly 6b4g then
+6b4i, run_daily 9e-pre0 then 9e-pre0b, and `python hitter_export.py`, which
+runs this exporter itself once its own board is written.
 """
 from __future__ import annotations
 
 import functools
+import hashlib
 import json
 import logging
 import sys
@@ -320,22 +325,49 @@ def framing_check(fielders: list[Fielder], *, log=print, file_red: bool = True) 
             "reason": reason}
 
 
-def _join_hem_plus(rows: list[dict], season: int) -> int:
-    """HEM+ beside DEM+ so the glove-versus-bat chart has both numbers."""
+def hem_plus_digest(hem_by_id: dict) -> str:
+    """A content receipt of the hitter board's HEM+ column: sha256 over the
+    sorted (mlbam, hem_plus) pairs, first 16 hex characters. It moves IFF a
+    served HEM+ value moves, so a restamp of the hitter file that leaves the
+    column alone (an eWAR vintage stamp) does not read as a new board."""
+    pairs = sorted((str(k), v) for k, v in hem_by_id.items()
+                   if k is not None and v is not None)
+    return hashlib.sha256(json.dumps(pairs).encode("utf-8")).hexdigest()[:16]
+
+
+def _join_hem_plus(rows: list[dict], season: int) -> dict:
+    """HEM+ beside DEM+ so the glove-versus-bat chart has both numbers.
+
+    Returns the `hem_plus_join` block, which names the hitter board it read
+    (generated_at, as_of, and a digest of its HEM+ column), so a reader can tell
+    the two boards apart when the hitter board is rebuilt without this one
+    (audit RML03: a hand run of hitter_export left 5 of 652 HEM+ values a build
+    behind). hitter_export's own entry point and both run_monthly paths run this
+    exporter AFTER the hitter board for that reason (test_defense_hem_join)."""
+    meta = {"n_stamped": 0, "source": HITTER_BOARD.name,
+            "note": "HEM+ joined from hitter_leaderboards.json for the glove-versus-bat chart"}
     try:
         doc = json.loads(HITTER_BOARD.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return 0
+        meta["reason"] = f"{HITTER_BOARD.name} is absent or unreadable"
+        return meta
+    meta.update({"hitter_generated_at": doc.get("generated_at"),
+                 "hitter_as_of": doc.get("as_of"),
+                 "hitter_season": doc.get("season")})
     if int(doc.get("season") or 0) != int(season):
-        return 0
+        meta["reason"] = (f"{HITTER_BOARD.name} is the {doc.get('season')} season "
+                          f"and this board is {season}")
+        return meta
     by = {h.get("mlbam"): h.get("hem_plus") for h in doc.get("hitters") or []}
+    meta["hem_plus_digest"] = hem_plus_digest(by)
     n = 0
     for r in rows:
         v = by.get(r.get("mlbam"))
         if v is not None:
             r["hem_plus"] = v
             n += 1
-    return n
+    meta["n_stamped"] = n
+    return meta
 
 
 def _join_dem_plus_3yr(rows: list[dict], season: Optional[int] = None) -> dict:
@@ -592,7 +624,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         return 0
     scored, src, fr = res["scored"], res["src"], res["framing"]
     pub, inn = src["published"], src["innings"]
-    n_hem = _join_hem_plus(scored["fielders"], season)
+    hem_meta = _join_hem_plus(scored["fielders"], season)
     d3 = _join_dem_plus_3yr(scored["fielders"], season)
     war_meta = _stamp_war(scored["fielders"], season)
     sc_meta = _join_savant_catcher(scored["fielders"], season)
@@ -654,8 +686,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # throwing display columns (see _join_savant_catcher). Rows only: no
         # club total is built from them.
         "savant_catcher": sc_meta,
-        "hem_plus_join": {"n_stamped": n_hem,
-                          "note": "HEM+ joined from hitter_leaderboards.json for the glove-versus-bat chart"},
+        "hem_plus_join": hem_meta,
         "ewar_join": war_meta,
         # WHICH BUILD the eWAR column on these rows comes from, and whether it
         # has fallen behind the frame under it (audit F10-02 / F11-01). Present

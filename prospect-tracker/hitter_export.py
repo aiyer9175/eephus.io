@@ -24,6 +24,8 @@ live-board column only: export_history does not carry it, so a past-season board
 drops it rather than rendering a blank column.
 
 Run: `python hitter_export.py [season]`  or  `python hitter_export.py history`.
+The live run also rebuilds the Defense board afterwards (export_then_defense),
+because that board joins this one's HEM+.
 Wired into run_monthly (best-effort). NETWORK-GATED + BEST-EFFORT: nothing
 fetches at import; any pull failure logs and returns 0 rather than aborting.
 """
@@ -1395,6 +1397,24 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     return payload
 
 
+def export_then_defense(season: Optional[int] = None, *, log=print) -> int:
+    """The standalone entry point: write the hitter board, then the Defense
+    board that joins HEM+ from it.
+
+    THE DEFECT THIS CLOSES (audit RML03, 2026-10-01). data/defense_leaderboards
+    copies hem_plus off this board by MLBAM for the glove-versus-bat chart and
+    the Standard view. Both run_monthly paths already run the defense export
+    after this one, but a hand run of `python hitter_export.py` (the per-hand
+    HEM+ change, d4a76a62 and 24c56eca) rewrote this board alone and left 5 of
+    652 fielders on the previous build's HEM+ until the next nightly. A board
+    that did not write (0 hitters) leaves the Defense board alone."""
+    n = export(season, log=log)
+    if n:
+        import defense_export
+        defense_export.export(season, log=log)
+    return n
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     if len(sys.argv) > 1 and sys.argv[1] == "history":
@@ -1402,4 +1422,4 @@ if __name__ == "__main__":
         export_history(_yrs)
     else:
         _season = int(sys.argv[1]) if len(sys.argv) > 1 else None
-        export(_season)
+        export_then_defense(_season)
