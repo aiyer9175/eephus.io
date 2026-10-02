@@ -14575,19 +14575,21 @@ function etaServed(p) {
 // Returns "" when no signal is available at all.
 // MLB sample behind the sabermetrics chip: the career_stats MLB row for the
 // sabermetrics season (PA for hitters, IP for pitchers), or null when none is on file.
-// The served MLB rows carry AB and never PA, so PA is the row's pa when present, else
-// AB x 1.1, the same reading storage._mlb_exposure_measured uses; the tooltip names
-// the AB on file beside the PA it implies.
+// PA is the row's measured plate appearances (pa_measured, owner answer M7M8-2 (c):
+// the StatsAPI season line, written by the nightly) when present; else the row's pa;
+// else AB x 1.1, the estimate storage._mlb_exposure_measured uses. The tooltip says
+// which: "412 PA, measured" or "180 AB, about 198 PA, estimated as AB x 1.1".
 function mlbSabermetricSample(player) {
   const sm = (player && player.sabermetrics) || {};
   const rows = (player && player.career_stats) || [];
   const row = rows.find(r => r && r.level === "MLB" && r.season === sm.season);
   if (!row) return null;
   if (sm.is_pitcher) return row.ip != null ? { n: Number(row.ip), unit: "IP", text: `${Number(row.ip)} IP` } : null;
+  if (row.pa_measured != null) return { n: Number(row.pa_measured), unit: "PA", measured: true, text: `${Number(row.pa_measured)} PA, measured` };
   if (row.pa != null) return { n: Number(row.pa), unit: "PA", text: `${Number(row.pa)} PA` };
   if (row.ab == null) return null;
   const pa = Number(row.ab) * 1.1;
-  return { n: pa, unit: "PA", text: `${Number(row.ab)} AB, about ${Math.round(pa)} PA` };
+  return { n: pa, unit: "PA", measured: false, text: `${Number(row.ab)} AB, about ${Math.round(pa)} PA, estimated as AB x 1.1` };
 }
 // Owner answer M8-4 (2026-09-25): a stabilization floor, 100 PA for a hitter and 30 IP
 // for a pitcher, under which the Debuted cell hides an MLB wRC+ / xFIP chip.

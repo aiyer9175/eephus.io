@@ -2887,6 +2887,26 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: leaderboard gamelogs build failed — continuing")
 
+        # --- d5f. Measured MLB PA on the stored career rows. ---------------
+        # Owner answer M7M8-2 (c), 2026-10-01: the migration step that writes
+        # measured plate appearances onto stored MLB hitter rows from the cached
+        # StatsAPI season lines (storage.backfill_career_pa_measured). Forward only
+        # and idempotent; it runs on every night (a monthly night reaches it through
+        # the chained daily) and ahead of d9, whose export ships the field to the
+        # Debuted MLB chip floor. Reads no network and never moves fetched_at.
+        with _step("d5f. Measured MLB PA backfill (career_stats)", log):
+            try:
+                from storage import backfill_career_pa_measured
+                _pa = backfill_career_pa_measured()
+                log.info("daily: measured MLB PA: %d of %d MLB hitter rows filled tonight, "
+                         "%d already carried it, %d AB mismatch, %d no cached line, "
+                         "%d no id, %d season not cached (%d players updated)",
+                         _pa["filled"], _pa["mlb_hitter_rows"], _pa["already"],
+                         _pa["ab_mismatch"], _pa["no_line"], _pa["no_id"],
+                         _pa["no_cached_season"], _pa["players_updated"])
+            except Exception:
+                log.exception("daily: measured MLB PA backfill failed, continuing")
+
         # --- 6. Roster status (fresh tx + cached career stats). -----------
         with _step("d6. Roster status", log):
             if chained:

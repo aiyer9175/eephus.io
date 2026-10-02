@@ -1667,6 +1667,20 @@ def date_today_iso() -> str:
 # recent N so the table stays scannable.
 CAREER_SEASONS_KEPT = 5
 
+# MEASURED MLB PLATE APPEARANCES on a stored career row (owner answer M7M8-2 (c),
+# 2026-10-01). The StatsAPI season line carries plateAppearances; the stored MLB rows
+# used to keep only atBats, so every PA reader estimated PA as AB x 1.1. A hitter's
+# MLB row now carries the measured count under this key, absent where nothing was
+# measured (a pitcher row, a MiLB row, a legacy row the backfill could not match).
+#
+# Its own key, NOT "pa": about ten readers already take a career row's `pa` before
+# its `ab` (storage._mlb_exposure_measured / _mlb_exposure_pa_ip for the WAG exposure,
+# bayes_trade_value's sample sizes, the prospx career table's PA column and volume
+# weights), so writing measured PA under `pa` would move trade values, WAG labels and
+# printed career tables at once. Those readers keep the AB x 1.1 estimate until the
+# owner chooses to move them; the Debuted MLB chip floor is the one reader of this key.
+MEASURED_PA_FIELD = "pa_measured"
+
 # Sport id -> level for a yearByYear split. The sport id carries the
 # classification the league had IN THAT SEASON, which a league name cannot:
 # before the 2021 realignment the Midwest and South Atlantic leagues were
@@ -1781,6 +1795,8 @@ def _row_from_split(s: dict, is_pitcher: bool) -> dict:
             "k_pct":  round(100 * so / pa, 1) if pa else None,
             "is_pitcher": False,
         })
+        if row["level"] == "MLB" and stat.get("plateAppearances") is not None:
+            row[MEASURED_PA_FIELD] = int(pa)
     return row
 
 
@@ -1854,6 +1870,8 @@ def _combine_stints(splits: list[dict], is_pitcher: bool) -> dict:
             "k_pct":  round(100 * so / pa, 1) if pa else None,
             "is_pitcher": False,
         })
+        if base["level"] == "MLB" and all(st.get("plateAppearances") is not None for st in S):
+            base[MEASURED_PA_FIELD] = pa
     return base
 
 
@@ -2098,6 +2116,8 @@ def _career_row_from_bulk_split(split: dict, group: str) -> dict | None:
             "k_pct":  round(100 * so / pa, 1) if pa else None,
             "is_pitcher": False,
         })
+        if label == "MLB" and stat.get("plateAppearances") is not None:
+            row[MEASURED_PA_FIELD] = int(pa)
     return row
 
 
@@ -2232,6 +2252,114 @@ def merge_bulk_into_career_cache(
         updates[key] = merged
         career_cache[key] = merged
     return updates
+
+
+# ---------------------------------------------------------------------------
+# Measured MLB PA backfill (owner answer M7M8-2 (c), 2026-10-01)
+# ---------------------------------------------------------------------------
+# Rows stored before MEASURED_PA_FIELD existed carry AB only, and a graduate's
+# career rows are never refetched (his career is frozen), so the forward write
+# alone would leave every Debuted row on the AB x 1.1 estimate. The backfill
+# reads the league-wide StatsAPI season lines the FA corpus already caches
+# (.cache/fa_statsapi_hitting_<season>.json, playerPool=All, one season-total
+# line per player) and writes the line's plateAppearances onto a stored MLB
+# hitter row ONLY where the line's atBats equals the row's ab: the same id, the
+# same season and the same at-bats is the same sample. A row whose AB differs
+# (a graduate's mid-season row frozen before the season ended) keeps no
+# measured PA, because the season total would not be the sample the row prints.
+
+def load_statsapi_hitting_pa(cache_dir: Path | None = None) -> dict[int, dict[int, tuple[int, int]]]:
+    """{season: {mlbam_id: (atBats, plateAppearances)}} from every cached
+    fa_statsapi_hitting_<season>.json. No HTTP. A player with more than one
+    line in a season is left out of that season (the line is then not one
+    season total)."""
+    cache_dir = Path(cache_dir) if cache_dir is not None else CACHE_DIR
+    out: dict[int, dict[int, tuple[int, int]]] = {}
+    for path in sorted(cache_dir.glob("fa_statsapi_hitting_*.json")):
+        m = _re.fullmatch(r"fa_statsapi_hitting_(\d{4})\.json", path.name)
+        if not m:
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(payload, dict):
+            blocks = payload.get("stats") or []
+            splits = (blocks[0].get("splits") or []) if blocks else []
+        else:
+            splits = payload or []
+        lines: dict[int, tuple[int, int]] = {}
+        dup: set[int] = set()
+        for s in splits:
+            pid = (s.get("player") or {}).get("id")
+            st = s.get("stat") or {}
+            if not pid or st.get("plateAppearances") is None or st.get("atBats") is None:
+                continue
+            pid = int(pid)
+            if pid in lines:
+                dup.add(pid)
+                continue
+            lines[pid] = (int(st["atBats"]), int(st["plateAppearances"]))
+        for pid in dup:
+            lines.pop(pid, None)
+        if lines:
+            out[int(m.group(1))] = lines
+    return out
+
+
+def fill_measured_pa(career_by_key: dict[str, list[dict]],
+                     id_candidates: dict[str, list[int]],
+                     season_lines: dict[int, dict[int, tuple[int, int]]]) -> dict:
+    """Write MEASURED_PA_FIELD onto stored MLB hitter rows from cached season
+    lines, in place. Idempotent: a row that already carries the field is left
+    alone. `id_candidates` lists each key's mlbam ids in preference order; the
+    first id whose line has the row's AB wins. Returns
+    {"changed": {key: rows}, "counts": {...}} with the keys whose rows moved."""
+    counts = {"mlb_hitter_rows": 0, "already": 0, "filled": 0,
+              "no_cached_season": 0, "no_id": 0, "no_line": 0, "ab_mismatch": 0}
+    changed: dict[str, list[dict]] = {}
+    for key, rows in career_by_key.items():
+        touched = False
+        for row in rows or []:
+            if not isinstance(row, dict) or row.get("level") != "MLB" or row.get("is_pitcher"):
+                continue
+            counts["mlb_hitter_rows"] += 1
+            if row.get(MEASURED_PA_FIELD) is not None:
+                counts["already"] += 1
+                continue
+            try:
+                season = int(row.get("season") or 0)
+                ab = int(row.get("ab"))
+            except (TypeError, ValueError):
+                counts["no_line"] += 1
+                continue
+            lines = season_lines.get(season)
+            if lines is None:
+                counts["no_cached_season"] += 1
+                continue
+            ids = id_candidates.get(key) or []
+            if not ids:
+                counts["no_id"] += 1
+                continue
+            hit = None
+            seen_line = False
+            for mid in ids:
+                line = lines.get(int(mid))
+                if line is None:
+                    continue
+                seen_line = True
+                if line[0] == ab:
+                    hit = line[1]
+                    break
+            if hit is None:
+                counts["ab_mismatch" if seen_line else "no_line"] += 1
+                continue
+            row[MEASURED_PA_FIELD] = hit
+            counts["filled"] += 1
+            touched = True
+        if touched:
+            changed[key] = rows
+    return {"changed": changed, "counts": counts}
 
 
 # ---------------------------------------------------------------------------

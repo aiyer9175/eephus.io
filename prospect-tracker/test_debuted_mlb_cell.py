@@ -13,8 +13,9 @@ a .294/.395 AAA line). 826 of 2,764 served debuted rows carry a non-MLB statline
 Contract pinned here, over every served debuted row:
   * a statline whose level is not MLB prints its level tag;
   * the wRC+ / xFIP chip is hidden when the MLB sample on file is under the
-    100 PA / 30 IP floor (owner answer M8-4, 2026-09-25; PA is AB x 1.1 when the row
-    carries no PA), and names the sample when shown.
+    100 PA / 30 IP floor (owner answer M8-4, 2026-09-25), and names the sample when
+    shown. PA is the row's measured pa_measured where the nightly wrote it (owner
+    answer M7M8-2 (c), 2026-10-01), else AB x 1.1; the tooltip says which.
 """
 from __future__ import annotations
 
@@ -74,9 +75,28 @@ def test_fixture_aaa_line_under_tiny_mlb_sample(js):
     assert "wRC+" in _cell(js, row)
     row["career_stats"][0]["ab"] = 180
     html = _cell(js, row)
-    assert "wRC+" in html and "2026 MLB 180 AB, about 198 PA" in html
-    row["career_stats"][0]["pa"] = 120  # a measured PA wins over the AB estimate
+    assert "wRC+" in html and "2026 MLB 180 AB, about 198 PA, estimated as AB x 1.1" in html
+    row["career_stats"][0]["pa"] = 120  # a row pa wins over the AB estimate
     assert "2026 MLB 120 PA" in _cell(js, row)
+
+
+def test_measured_pa_path_wins_over_the_estimate(js):
+    row = {"statline": {"level": "MLB", "season": 2026, "is_prior_season": False, "is_pitcher": False},
+           "sabermetrics": {"season": 2026, "is_pitcher": False, "wrc_plus": 120.0},
+           "career_stats": [{"season": 2026, "level": "MLB", "ab": 88, "pa_measured": 100}]}
+    html = _cell(js, row)   # 88 AB estimates 97 PA (hidden); 100 measured PA clears the floor
+    assert "wRC+" in html and "2026 MLB 100 PA, measured" in html and "estimated" not in html
+    row["career_stats"][0].update(ab=92, pa_measured=99)   # 92 AB would estimate 101 PA
+    assert "wRC+" not in _cell(js, row)
+    row["career_stats"][0].update(pa=150)                  # measured beats a row pa too
+    assert "wRC+" not in _cell(js, row)
+    del row["career_stats"][0]["pa_measured"]
+    html = _cell(js, row)
+    assert "wRC+" in html and "2026 MLB 150 PA" in html
+    sample = json.loads(js.eval("JSON.stringify(mlbSabermetricSample(%s))" % json.dumps(
+        {"sabermetrics": row["sabermetrics"],
+         "career_stats": [{"season": 2026, "level": "MLB", "ab": 200}]})))
+    assert sample["measured"] is False and sample["n"] == pytest.approx(220.0)
 
 
 def test_pitcher_chip_needs_thirty_innings(js):
@@ -118,6 +138,8 @@ def test_every_served_non_mlb_line_is_tagged(js):
             c = cs[0]
             if sm.get("is_pitcher"):
                 n = c.get("ip")
+            elif c.get("pa_measured") is not None:
+                n = c["pa_measured"]
             else:
                 n = c.get("pa") if c.get("pa") is not None else (
                     c["ab"] * 1.1 if c.get("ab") is not None else None)

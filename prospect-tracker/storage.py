@@ -2801,6 +2801,78 @@ def load_career_stats() -> dict[str, list[dict]]:
     return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
 
 
+def _career_pa_id_candidates(keys) -> dict[str, list[int]]:
+    """{player_key: [mlbam ids]} for the measured-PA backfill, in the order the
+    export binds a row to its id: the statline's mlbam_id, then the durable
+    player_photos binding (a key bound to two ids is left out, as the export
+    does), then the resolver's id cache, read raw so its TTL never clears it
+    here. The backfill's AB match is the identity check on top of this."""
+    keys = set(keys)
+    cands: dict[str, list[int]] = {k: [] for k in keys}
+
+    def _add(k, mid):
+        if k not in cands or mid in (None, ""):
+            return
+        try:
+            mid = int(mid)
+        except (TypeError, ValueError):
+            return
+        if mid not in cands[k]:
+            cands[k].append(mid)
+
+    try:
+        for k, sl in load_statlines().items():
+            _add(k, (sl or {}).get("mlbam_id"))
+    except sqlite3.OperationalError:
+        pass
+    durable: dict[str, int] = {}
+    multi: set[str] = set()
+    for mid_s, pk in load_mlbam_player_keys().items():
+        try:
+            mid = int(mid_s)
+        except (TypeError, ValueError):
+            continue
+        if pk in durable and durable[pk] != mid:
+            multi.add(pk)
+        durable[pk] = mid
+    for pk, mid in durable.items():
+        if pk not in multi:
+            _add(pk, mid)
+    try:
+        from stats import ID_CACHE_FILE
+        raw = json.loads(ID_CACHE_FILE.read_text(encoding="utf-8")) if ID_CACHE_FILE.exists() else {}
+    except (OSError, ValueError):
+        raw = {}
+    for k, mid in (raw or {}).items():
+        _add(k, mid)
+    return cands
+
+
+def backfill_career_pa_measured(cache_dir: Path | None = None) -> dict:
+    """Idempotent migration of the stored career_stats rows (owner answer M7M8-2
+    (c), 2026-10-01): write measured plate appearances (stats.MEASURED_PA_FIELD)
+    onto every stored MLB hitter row the cached StatsAPI season lines can match
+    (same id, same season, same AB). A row keeps no measured PA where nothing
+    matches, so its readers keep the AB x 1.1 estimate. Rewrites payload_json
+    only: fetched_at drives the monthly freshness skip and must not move. Forward
+    only and safe to run every night; a second run changes nothing."""
+    from stats import fill_measured_pa, load_statsapi_hitting_pa
+    career = load_career_stats()
+    lines = load_statsapi_hitting_pa(cache_dir)
+    res = fill_measured_pa(career, _career_pa_id_candidates(career.keys()), lines)
+    changed = res["changed"]
+    if changed:
+        with connect() as con:
+            con.executemany(
+                "UPDATE career_stats SET payload_json = ? WHERE player_key = ?",
+                [(json.dumps(rows), key) for key, rows in changed.items()],
+            )
+    counts = dict(res["counts"])
+    counts["players_updated"] = len(changed)
+    counts["cached_seasons"] = sorted(lines)
+    return counts
+
+
 def upsert_career_war(by_key: dict[str, dict]) -> int:
     """Upsert one career-WAR aggregate per graduate. Skips empty payloads.
 
@@ -17204,8 +17276,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if v:
                 lite[k] = v
         # career_stats: MLB rows only, the fields the WAG / WAR-rate helpers
-        # read (gradWarPerYr / gradPersonalFullSeason season fractions).
-        cs_slim = [{f: r.get(f) for f in ("season", "level", "ip", "pa", "ab")
+        # read (gradWarPerYr / gradPersonalFullSeason season fractions), plus the
+        # measured PA (stats.MEASURED_PA_FIELD) the Debuted MLB chip floor reads.
+        cs_slim = [{f: r.get(f) for f in ("season", "level", "ip", "pa", "ab", "pa_measured")
                     if r.get(f) is not None}
                    for r in (g.get("career_stats") or [])
                    if isinstance(r, dict)
