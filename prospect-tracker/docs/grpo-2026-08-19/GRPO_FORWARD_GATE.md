@@ -154,5 +154,88 @@ artifact generated_at=2026-08-19 scored_count=4690
 
 ## 6. Eval results
 
-PENDING. First admissible look 2026-09-18 (section 3). Do not fill before a
-matured cohort exists; fill with verbatim lab output only.
+### 30-day look, run 2026-10-02 at HEAD 53d68e25 (python -u tools/grpo_forward_lab.py)
+
+```
+GRPO forward read (docs/grpo-2026-08-19/GRPO_FORWARD_GATE.md, section 2 frozen 2026-08-19)
+run date 2026-10-02, HEAD 53d68e25, seed 20260819, permutations 1000
+archive: 145298 rows, 31 snapshot dates (2026-08-19 to 2026-10-02), null scores 0
+board: 90 metric_snapshots nights, latest 2026-10-02
+monthly cohorts (primary): 2026-08-19, 2026-09-03, 2026-10-01
+hit rule: consensus FV +5.0 or more, base night on the cohort date or up to 3 days before, end night first on or after cohort + W
+
+PRIMARY (monthly cohorts, top decile), 30-day window:
+  cohort 2026-08-19: base 2026-08-19, end 2026-09-18, archived 4690, null scores 0, flagged 470 (scoreable 463, hits 0), Control B 468 (scoreable 451, hits 0)
+  cohort 2026-09-03: not matured
+  cohort 2026-10-01: not matured
+  cohorts matured: 1; flagged n: 470
+  badge hit rate:     0.0000 [0.0000, 0.0082] (0/463)
+  Control A (shuffle): 0.0000 [0.0000, 0.0000] (1000 permutations)
+  Control B (FV only): 0.0000 [0.0000, 0.0084] (0/451)
+  G-1 vs Control A: not cleared; G-2 vs Control B: not cleared
+  ladder: zero information
+SENSITIVITY chip cut (monthly cohorts, score >= 0.55) (sensitivity, no verdict weight), 30-day window:
+  cohort 2026-08-19: base 2026-08-19, end 2026-09-18, archived 4690, null scores 0, flagged 1892 (scoreable 1875, hits 0), Control B 468 (scoreable 451, hits 0)
+  cohort 2026-09-03: not matured
+  cohort 2026-10-01: not matured
+  cohorts matured: 1; flagged n: 1892
+  badge hit rate:     0.0000 [0.0000, 0.0020] (0/1875)
+  Control A (shuffle): 0.0000 [0.0000, 0.0000] (1000 permutations)
+  Control B (FV only): 0.0000 [0.0000, 0.0084] (0/451)
+  G-1 vs Control A: not cleared; G-2 vs Control B: not cleared
+  ladder: zero information (sensitivity only)
+SENSITIVITY daily cohorts (top decile) (sensitivity, no verdict weight), 30-day window:
+  cohort 2026-08-19: base 2026-08-19, end 2026-09-18, archived 4690, null scores 0, flagged 470 (scoreable 463, hits 0), Control B 468 (scoreable 451, hits 0)
+  cohort 2026-08-20: base 2026-08-20, end 2026-09-19, archived 4692, null scores 0, flagged 472 (scoreable 469, hits 0), Control B 468 (scoreable 453, hits 0)
+  cohort 2026-08-21: base 2026-08-21, end 2026-09-21, archived 4695, null scores 0, flagged 472 (scoreable 466, hits 0), Control B 468 (scoreable 453, hits 0)
+  cohort 2026-08-23: base 2026-08-23, end 2026-09-23, archived 4695, null scores 0, flagged 471 (scoreable 467, hits 0), Control B 468 (scoreable 453, hits 0)
+  cohort 2026-08-24: base 2026-08-24, end 2026-09-23, archived 4695, null scores 0, flagged 478 (scoreable 473, hits 0), Control B 469 (scoreable 454, hits 0)
+  cohort 2026-08-27: base 2026-08-27, end 2026-09-26, archived 4693, null scores 0, flagged 471 (scoreable 465, hits 0), Control B 468 (scoreable 454, hits 0)
+  cohort 2026-08-30: base 2026-08-30, end 2026-09-30, archived 4688, null scores 0, flagged 472 (scoreable 468, hits 0), Control B 468 (scoreable 456, hits 0)
+  cohort 2026-08-31: base 2026-08-31, end 2026-09-30, archived 4693, null scores 0, flagged 475 (scoreable 472, hits 0), Control B 468 (scoreable 456, hits 0)
+  cohort 2026-09-03: not matured
+  cohort 2026-09-04: not matured
+  cohort 2026-09-05: not matured
+  cohort 2026-09-06: not matured
+  cohort 2026-09-07: not matured
+  cohort 2026-09-09: not matured
+  cohort 2026-09-10: not matured
+  cohort 2026-09-11: not matured
+  cohort 2026-09-13: not matured
+  cohort 2026-09-14: not matured
+  cohort 2026-09-16: not matured
+  cohort 2026-09-17: not matured
+  cohort 2026-09-18: not matured
+  cohort 2026-09-19: not matured
+  cohort 2026-09-21: not matured
+  cohort 2026-09-23: not matured
+  cohort 2026-09-24: not matured
+  cohort 2026-09-25: not matured
+  cohort 2026-09-26: not matured
+  cohort 2026-09-27: not matured
+  cohort 2026-09-30: not matured
+  cohort 2026-10-01: not matured
+  cohort 2026-10-02: not matured
+  cohorts matured: 8; flagged n: 3781
+  badge hit rate:     0.0000 [0.0000, 0.0010] (0/3743)
+  Control A (shuffle): 0.0000 [0.0000, 0.0000] (1000 permutations)
+  Control B (FV only): 0.0000 [0.0000, 0.0011] (0/3630)
+  G-1 vs Control A: not cleared; G-2 vs Control B: not cleared
+  ladder: zero information (sensitivity only)
+
+PRIMARY (monthly cohorts, top decile), 60-day window:
+  cohort 2026-08-19: not matured
+  cohort 2026-09-03: not matured
+  cohort 2026-10-01: not matured
+  window: not matured, no verdict
+
+PRIMARY (monthly cohorts, top decile), 90-day window:
+  cohort 2026-08-19: not matured
+  cohort 2026-09-03: not matured
+  cohort 2026-10-01: not matured
+  window: not matured, no verdict
+
+kill rule: not yet evaluable (1 of 6 matured monthly cohorts on the 30-day window)
+pricing: grpo_fv_adj stays 0.0 (gate section 0); this read moves no served number
+wrote grpo_forward_eval.json: windows recorded 30-day
+```
