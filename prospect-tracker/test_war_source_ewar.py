@@ -404,7 +404,7 @@ def test_frames_reflect_the_explicit_bwar_request_and_the_pin():
             assert war_source._FRAME_PIN == "bwar"
         assert war_source._FRAME_PIN is None
         with pytest.raises(ValueError):
-            with war_source._frames_pinned("fwar"):
+            with war_source._frames_pinned("no_such_provider"):
                 pass
 
 

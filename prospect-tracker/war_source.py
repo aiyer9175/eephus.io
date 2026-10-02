@@ -49,6 +49,31 @@ PROVIDER CONTRACT (eWAR epoch, owner decision 2026-09-03, locked).
              and LABEL series, not the input.
   'ewar_merged'  Declared, not servable (Will's pitcher eWAR + SDR fielding);
              raises DataUnavailable naming the missing handoff.
+  'fwar'     PUBLISHED fWAR, the fWAR label epoch's label (owner O1 and O2,
+             2026-09-17; docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md),
+             servable through every door and NOT the default (the epoch's
+             step D flips DEFAULT_PROVIDER, in one commit with the epoch bump
+             and the label= fingerprint term). It reads ONLY the frozen
+             vintage data/fwar_vintage.json (fwar_vintage.py; written once by
+             tools/build_fwar_vintage.py at EPOCH_D9_FREEZE), never the live
+             sabermetrics feed, and it is built ON the incumbent: every door
+             first computes the 'ewar_v2' answer, then replaces it with fWAR
+             where the vintage has the (mlbam, season) in an fwar season
+             (both groups frozen) and keeps the incumbent value elsewhere,
+             recorded, never silent. So the eWAR v2 series stays
+             reconstructible beside it (gate part 4.1 note 2): the aggregate
+             carries `seasons_ewar_v2` beside `seasons_bwar`, the frames carry
+             `WAR_ewar_v2` beside `WAR_bwar`. A player-season's fWAR is the
+             hitting group's war plus the pitching group's war (the bWAR
+             aggregate's two-frame summing rule). On the frames the side
+             total is split across a player-season's stints exactly as
+             _ewar_frame splits eWAR v2 (the bWAR stint plus a share of the
+             delta in proportion to PA or IPouts, equal shares without that
+             column; _exposure_split is the one implementation); a stint whose
+             bWAR is blank counts as 0.0 there, so a side the feed prices and
+             B-Ref left blank still lands on the frame. DataUnavailable when
+             the vintage is absent (it is absent until EPOCH_D9_FREEZE) or
+             when the incumbent's artifact is.
 
 THE BASIS DECISION IS NOT AN ACCURACY CLAIM. The eval record
 (data/ewar_eval.json) is: gate 1 team wins r 0.8595 vs bWAR 0.8803 (a
@@ -129,11 +154,16 @@ class DataUnavailable(RuntimeError):
 
 
 #: Every provider id this facade recognises. Declared != servable. 'bwar'
-#: stays first: it is the INPUT frame the other two are built on.
-PROVIDERS: tuple[str, ...] = ("bwar", "ewar_v2", "ewar_merged")
+#: stays first: it is the INPUT frame the others are built on.
+PROVIDERS: tuple[str, ...] = ("bwar", "ewar_v2", "ewar_merged", "fwar")
 
-#: The served and label WAR site-wide (owner decision 2026-09-03).
+#: The served and label WAR site-wide (owner decision 2026-09-03). The fWAR
+#: label epoch's step D moves it to 'fwar'; nothing before step D does.
 DEFAULT_PROVIDER: str = "ewar_v2"
+
+#: How to write the frozen vintage 'fwar' serves from (EPOCH_D9_FREEZE runs it
+#: once; equal to fwar_vintage.BUILD_CMD, pinned by test).
+FWAR_BUILD_CMD: str = "python tools/build_fwar_vintage.py --freeze 2000-2026 --write"
 
 #: How to (re)build the artifact 'ewar_v2' serves from. The 2011 floor is the
 #: first season the eFV first-6yr label pool reaches; the FIP corpus prices
@@ -197,14 +227,40 @@ def _ewar_missing_message() -> str:
     )
 
 
+def _fwar_available() -> bool:
+    """True when 'fwar' can serve: a memoised vintage (fwar_vintage._CACHE, the
+    test seam) or data/fwar_vintage.json on disk."""
+    import fwar_vintage
+    return fwar_vintage.available()
+
+
+def _fwar_missing_message() -> str:
+    import fwar_vintage
+    return (
+        f"WAR provider 'fwar' is declared but its frozen vintage is missing: "
+        f"{fwar_vintage.VINTAGE_PATH} (data/fwar_vintage.json, written once by "
+        f"tools/build_fwar_vintage.py at EPOCH_D9_FREEZE). Build it: "
+        f"{FWAR_BUILD_CMD}. 'fwar' never reads the live sabermetrics feed, and "
+        f"nothing falls back to another provider on its own."
+    )
+
+
 def _require(provider: str) -> None:
     """Validate a provider id. ValueError on an unknown id; DataUnavailable
-    (with the missing input named) on a declared-but-absent one."""
+    (with the missing input named) on a declared-but-absent one. 'fwar' needs
+    its frozen vintage AND the incumbent's artifact it is built on."""
     if provider not in PROVIDERS:
         raise ValueError(
             f"unknown WAR provider {provider!r}; known providers: {PROVIDERS}")
     if provider == "ewar_merged":
         raise DataUnavailable(_UNAVAILABLE[provider])
+    if provider == "fwar":
+        if not _fwar_available():
+            raise DataUnavailable(_fwar_missing_message())
+        if not _ewar_available():
+            raise DataUnavailable(
+                "WAR provider 'fwar' keeps the incumbent eWAR v2 series beside "
+                "it, and that series' artifact is missing. " + _ewar_missing_message())
     if provider == "ewar_v2" and not _ewar_available():
         raise DataUnavailable(_ewar_missing_message())
 
@@ -295,6 +351,11 @@ def career_war_bulk(targets: list[tuple[str, int, bool]],
     # last target wins per key, mirroring stats' result[player_key] overwrite
     mlbam_by_key = {key: mid for key, mid, _ in targets}
     blob = _payload()
+    if provider == "fwar":
+        idx = fwar_index()
+        return {key: _fwar_aggregate(_ewar_aggregate(agg, mlbam_by_key.get(key), blob),
+                                     mlbam_by_key.get(key), idx)
+                for key, agg in base.items()}
     return {key: _ewar_aggregate(agg, mlbam_by_key.get(key), blob)
             for key, agg in base.items()}
 
@@ -330,6 +391,82 @@ def _ewar_aggregate(agg: dict, mlbam, blob: dict) -> dict:
     return out
 
 
+# --- the fwar transform (the funnel and the rebase tool share it) -----------
+
+def fwar_index(vintage: dict | None = None) -> dict:
+    """What the fwar transform reads from the frozen vintage, built once per
+    call site: {"totals": {(mlbam, season): hitting war + pitching war},
+    "fwar_years": {seasons whose every group is frozen}, "vintage_id": id}."""
+    import fwar_vintage
+    blob = fwar_vintage.load() if vintage is None else vintage
+    return {"totals": fwar_vintage.season_totals(blob),
+            "fwar_years": set(fwar_vintage.fwar_seasons(blob)),
+            "vintage_id": blob.get("vintage_id")}
+
+
+def fwar_seasons_from_incumbent(incumbent: dict, mlbam, idx: dict
+                                ) -> tuple[dict[str, float], dict]:
+    """THE SHARED FWAR TRANSFORM CONTRACT (war_source's 'fwar' funnel and
+    tools/rebase_career_war.py --provider fwar call this one function, so the
+    two agree bit for bit by construction):
+
+        for season, inc in incumbent.items():
+            if mlbam and int(season) in fwar_years and (mlbam, season) in totals:
+                seasons[season] = round(totals[(mlbam, season)], 2)
+            else:
+                seasons[season] = inc                 # the eWAR v2 value, kept
+
+    The season SET is the incumbent's: the transform moves values, it never adds
+    or drops a season. Returns (seasons, receipt) where the receipt counts
+    n_fwar, n_fallback_pre (a season the vintage does not serve as fwar: before
+    its window, or recorded mixed or absent, which is the pre-2011 rule) and
+    n_fallback_post (an fwar season with no feed row for this mlbam), with the
+    years of each, and `war_basis` ('fwar' only when every season came from the
+    vintage, else 'mixed'; gate part 4.1 note 3)."""
+    totals = idx["totals"]
+    years = idx["fwar_years"]
+    seasons: dict[str, float] = {}
+    pre: list[int] = []
+    post: list[int] = []
+    for yr_s, inc in sorted(incumbent.items(), key=lambda kv: int(kv[0])):
+        yr = int(yr_s)
+        tot = totals.get((int(mlbam), yr)) if (mlbam and yr in years) else None
+        if tot is None:
+            seasons[str(yr_s)] = inc
+            (post if (mlbam and yr in years) else pre).append(yr)
+        else:
+            seasons[str(yr_s)] = round(float(tot), 2)
+    n = len(seasons)
+    receipt = {"n_seasons": n, "n_fwar": n - len(pre) - len(post),
+               "n_fallback_pre": len(pre), "n_fallback_post": len(post),
+               "fallback_pre_years": pre, "fallback_post_years": post,
+               "war_basis": "fwar" if not (pre or post) else "mixed"}
+    return seasons, receipt
+
+
+def _fwar_aggregate(inc: dict, mlbam, idx: dict) -> dict:
+    """One eWAR v2 aggregate (the incumbent) -> its fwar payload: the served
+    `seasons` move to fWAR, `seasons_ewar_v2` keeps the incumbent, and
+    `seasons_bwar` and `ewar_coverage` ride along from the incumbent."""
+    inc_seasons = dict(inc.get("seasons") or {})
+    seasons, rec = fwar_seasons_from_incumbent(inc_seasons, mlbam, idx)
+    career = round(sum(seasons.values()), 2)
+    n = len(seasons)
+    out = dict(inc)
+    out.update({
+        "seasons": seasons,
+        "career_war": career,
+        "war_per_yr": round(career / n, 2) if n else 0.0,
+        "war_seasons_count": n,
+        "source": "fwar",
+        "seasons_ewar_v2": inc_seasons,
+        "fwar_coverage": {"vintage_id": idx.get("vintage_id"),
+                          "mlbam": int(mlbam) if mlbam else None,
+                          "incumbent_source": inc.get("source"), **rec},
+    })
+    return out
+
+
 def career_war_table(*, provider: str = DEFAULT_PROVIDER) -> dict[str, dict]:
     """The persisted per-player aggregate the sites read:
     {player_key: aggregate} from the career_war sqlite table
@@ -342,7 +479,11 @@ def career_war_table(*, provider: str = DEFAULT_PROVIDER) -> dict[str, dict]:
     carries ('ewar_v2' with `seasons_bwar` beside it, or 'bbref' = bWAR on a
     row the rebase has not reached). A not-yet-rebased table therefore serves
     bWAR under provider 'ewar_v2' and SAYS SO per row; coverage_report()
-    totals it. Re-transforming here would hide that state behind a read."""
+    totals it. Re-transforming here would hide that state behind a read.
+
+    Provider 'fwar' follows the same rule: the table as stored. The epoch's step
+    C (tools/rebase_career_war.py --provider fwar) is what writes fwar rows, each
+    carrying `seasons_ewar_v2` and `seasons_bwar` beside the served `seasons`."""
     _require(provider)
     import storage
     return storage.load_career_war()
@@ -442,8 +583,18 @@ def side_war_by_season(*, provider: str = DEFAULT_PROVIDER
     served map was overlaid with. A side whose bWAR frame was not read (the map
     has no cell for it) records a receipt marked `measured: False` instead of a
     count, and ewar_vintage then reports `stale` None with a reason naming that
-    side: absent, never a clean zero. Provider 'bwar' records nothing."""
+    side: absent, never a clean zero. Provider 'bwar' records nothing.
+
+    Provider 'fwar' starts from the 'ewar_v2' map (the incumbent, built and
+    receipted exactly as above) and overlays the frozen vintage per side:
+    "bat" := the hitting group's war and "pit" := the pitching group's war for
+    every (mlbam, fwar season) the vintage carries, under the same blank-row
+    rule (a 0.0 side the incumbent map lacks is not added). Every other cell
+    keeps the incumbent value. Its receipt is fwar_frame_diagnostics()
+    (door "side_map")."""
     _require(provider)
+    if provider == "fwar":
+        return _fwar_side_map()
     import mlb_player_export
     # pinned for both providers: _war_daily reads stint_frame on the default
     with _frames_pinned("bwar"):
@@ -523,6 +674,34 @@ def side_war_by_season(*, provider: str = DEFAULT_PROVIDER
     return out
 
 
+def _fwar_side_map() -> dict[int, dict[int, dict[str, float]]]:
+    """side_war_by_season for provider 'fwar' (see its docstring)."""
+    import fwar_vintage
+    out = side_war_by_season(provider="ewar_v2")
+    blob = fwar_vintage.load()
+    for side in _SIDES:
+        rec = {"door": "side_map", "covered_player_seasons": 0, "added": 0,
+               "skipped_blank": 0, "delta_sum": 0.0,
+               "vintage_player_seasons": 0, "vintage_id": blob.get("vintage_id")}
+        targets = fwar_vintage.side_targets(blob, side)
+        rec["vintage_player_seasons"] = len(targets)
+        for (mid, season), val in targets.items():
+            cell = out.get(mid, {}).get(season, {})
+            pre = cell.get(side)
+            if pre is None and float(val) == 0.0:
+                rec["skipped_blank"] += 1      # the blank-row rule
+                continue
+            if pre is None:
+                rec["added"] += 1
+            else:
+                rec["covered_player_seasons"] += 1
+                rec["delta_sum"] += float(val) - float(pre)
+            out.setdefault(mid, {}).setdefault(season, {})[side] = float(val)
+        rec["rows"] = sum(1 for by in out.values() for c in by.values() if side in c)
+        _FWAR_FRAME_DIAG[side] = rec
+    return out
+
+
 # ---------------------------------------------------------------------------
 # the stint frame + run-value decomposition
 # ---------------------------------------------------------------------------
@@ -546,8 +725,11 @@ def condensed_frame(side: str, *, provider: str = DEFAULT_PROVIDER):
     import pybaseball as pyb
     fn = pyb.bwar_bat if side == "bat" else pyb.bwar_pitch
     raw = fn()
-    if _frame_provider(provider) == "bwar":
+    fp = _frame_provider(provider)
+    if fp == "bwar":
         return raw
+    if fp == "fwar":
+        return _fwar_frame(raw, side, door="condensed")
     return _ewar_frame(raw, side, door="condensed")
 
 
@@ -572,6 +754,10 @@ def stint_frame(side: str, *, provider: str = DEFAULT_PROVIDER,
     weight 0.0) but the same distribution runs so the frame stays correct if
     fielding ever does. Note the decomposition columns still describe the
     bWAR row: WAR is FIP-repriced, WAA / runs_above_avg are not.
+
+    Provider 'fwar' is the 'ewar_v2' frame plus WAR_ewar_v2 (the incumbent's
+    WAR), with WAR replaced on every row whose (mlbam, fwar season) the frozen
+    vintage carries, by the same exposure split (_fwar_frame).
 
     THE ASYMMETRY THIS GUARDS (2026-08-04, root-caused 2026-08-06). The
     docstring here used to say both calls were "cached by pybaseball". Only one
@@ -600,8 +786,11 @@ def stint_frame(side: str, *, provider: str = DEFAULT_PROVIDER,
     _require(provider)
     _check_side(side, "stint-frame")
     raw = _bwar_stint_frame(side, allow_stale)
-    if _frame_provider(provider) == "bwar":
+    fp = _frame_provider(provider)
+    if fp == "bwar":
         return raw
+    if fp == "fwar":
+        return _fwar_frame(raw, side, door="stint")
     return _ewar_frame(raw, side, door="stint")
 
 
@@ -971,33 +1160,27 @@ def _artifact_side_targets(blob: dict, side: str
     return out
 
 
-def _ewar_frame(df, side: str, *, door: str):
-    """Replace WAR on a war_daily frame with the eWAR v2 series (stint_frame
-    docstring). Adds WAR_bwar (the original). Keeps every other column and
-    the row order. Rows without an artifact block keep bWAR."""
+def _exposure_split(out, side: str, war, targets: dict):
+    """THE STINT SPLIT, one implementation for 'ewar_v2' and 'fwar'.
+
+    `war` is the per-row base series (bWAR on both providers), `targets` maps
+    (mlbam, season) to a tuple (side total, B-Ref side total or None). For every
+    row with an mlbam, a season and a base value whose player-season has a
+    target, the new value is
+
+        base + (side total - sum of the player-season's bases) * weight
+
+    with weight the row's share of the player-season's PA (bat) or IPouts
+    (pit), or an equal share when that column is absent or sums to zero. So the
+    stints of a covered player-season sum to its side total. Returns None when
+    no row is covered, else (cov_idx, w, grp, new_war): the covered index, the
+    per-row frame (war, expo, g, tgt, bart), its groupby on g and the new
+    values in cov_idx order."""
     import numpy as np
     import pandas as pd
 
-    blob = _payload()
-    targets = _artifact_side_targets(blob, side)
-    out = df.copy()
-    out["WAR_bwar"] = out["WAR"]
-    receipt = {
-        "door": door, "rows": int(len(out)), "covered_rows": 0,
-        "covered_player_seasons": 0, "artifact_player_seasons": len(targets),
-        "bwar_revised": 0, "bwar_revised_by_season": {}, "delta_sum": 0.0,
-        # the served numerator's build (the live season's, on a nightly artifact)
-        # and the frozen series' build; one stamp on a hand build
-        "artifact_generated_at": blob.get("live_built_at") or blob.get("generated_at"),
-        "artifact_label_build_at": blob.get("generated_at"),
-    }
-    if not len(out) or not targets:
-        _EWAR_FRAME_DIAG[side] = receipt
-        return out
-
     mid = pd.to_numeric(out["mlb_ID"], errors="coerce")
     yr = pd.to_numeric(out["year_ID"], errors="coerce")
-    war = pd.to_numeric(out["WAR"], errors="coerce")
     ok = mid.notna() & yr.notna() & war.notna()
     ok_idx = ok[ok].index
     keys = list(zip(mid[ok_idx].astype("int64").tolist(),
@@ -1005,8 +1188,7 @@ def _ewar_frame(df, side: str, *, door: str):
     hit = [targets.get(k) for k in keys]
     cov_pos = [i for i, h in enumerate(hit) if h is not None]
     if not cov_pos:
-        _EWAR_FRAME_DIAG[side] = receipt
-        return out
+        return None
     cov_idx = ok_idx[cov_pos]
     expo_col = _EXPOSURE_COL[side]
     if expo_col in out.columns:
@@ -1032,6 +1214,101 @@ def _ewar_frame(df, side: str, *, door: str):
                       w["expo"].values / np.where(esum.values > 0, esum.values, 1.0),
                       1.0 / n.values)
     new_war = w["war"].values + (w["tgt"].values - fsum.values) * weight
+    return cov_idx, w, grp, new_war
+
+
+#: {side: receipt} for the last 'fwar' read per side in this process: a frame
+#: transform (door "stint" / "condensed") or the side map (door "side_map").
+_FWAR_FRAME_DIAG: dict[str, dict] = {}
+
+
+def fwar_frame_diagnostics() -> dict[str, dict]:
+    """Receipts from the last 'fwar' read per side:
+      door                     "stint" / "condensed" / "side_map"
+      rows                     frame rows (side_map: cells carrying the side)
+      covered_rows             frame rows that took an fWAR value
+      covered_player_seasons   distinct (mlbam, season) that took one
+      vintage_player_seasons   (mlbam, fwar season) the vintage carries for the side
+      vintage_unplaced         of those, how many have no row on this frame
+                               (the frames cannot carry a player-season B-Ref
+                               has no stint for; the aggregate can)
+      added / skipped_blank    side_map only: cells the incumbent map lacked
+                               that fWAR added, and 0.0 sides not added
+      delta_sum                sum over covered rows of (fWAR - incumbent)
+      vintage_id               the frozen vintage's id
+    Empty until a frame or the side map has been read on provider 'fwar'."""
+    return {k: dict(v) for k, v in _FWAR_FRAME_DIAG.items()}
+
+
+def _fwar_frame(df, side: str, *, door: str):
+    """A war_daily frame on provider 'fwar' (module docstring, 'fwar'): the
+    'ewar_v2' frame (WAR = eWAR v2, WAR_bwar added) plus WAR_ewar_v2 := that
+    incumbent WAR, then WAR := the bWAR stint plus a PA / IPouts share of
+    (fWAR side total - the player-season's bWAR sum) on every row whose
+    (mlbam, fwar season) the vintage carries. A blank bWAR stint counts as
+    0.0 in that split. Rows the vintage does not reach keep the incumbent."""
+    import numpy as np
+    import pandas as pd
+    import fwar_vintage
+
+    out = _ewar_frame(df, side, door=door)
+    out["WAR_ewar_v2"] = out["WAR"]
+    blob = fwar_vintage.load()
+    side_t = fwar_vintage.side_targets(blob, side)
+    receipt = {"door": door, "rows": int(len(out)), "covered_rows": 0,
+               "covered_player_seasons": 0, "vintage_player_seasons": len(side_t),
+               "vintage_unplaced": len(side_t), "delta_sum": 0.0,
+               "vintage_id": blob.get("vintage_id")}
+    if not len(out) or not side_t:
+        _FWAR_FRAME_DIAG[side] = receipt
+        return out
+    base = pd.to_numeric(out["WAR_bwar"], errors="coerce").fillna(0.0)
+    targets = {k: (v, None) for k, v in side_t.items()}
+    split = _exposure_split(out, side, base, targets)
+    if split is None:
+        _FWAR_FRAME_DIAG[side] = receipt
+        return out
+    cov_idx, w, grp, new_war = split
+    inc = pd.to_numeric(out.loc[cov_idx, "WAR_ewar_v2"], errors="coerce").fillna(0.0)
+    out.loc[cov_idx, "WAR"] = new_war
+    n_ps = int(w["g"].nunique())
+    receipt.update({"covered_rows": int(len(cov_idx)), "covered_player_seasons": n_ps,
+                    "vintage_unplaced": len(side_t) - n_ps,
+                    "delta_sum": float(np.sum(new_war - inc.values))})
+    _FWAR_FRAME_DIAG[side] = receipt
+    return out
+
+
+def _ewar_frame(df, side: str, *, door: str):
+    """Replace WAR on a war_daily frame with the eWAR v2 series (stint_frame
+    docstring). Adds WAR_bwar (the original). Keeps every other column and
+    the row order. Rows without an artifact block keep bWAR."""
+    import numpy as np
+    import pandas as pd
+
+    blob = _payload()
+    targets = _artifact_side_targets(blob, side)
+    out = df.copy()
+    out["WAR_bwar"] = out["WAR"]
+    receipt = {
+        "door": door, "rows": int(len(out)), "covered_rows": 0,
+        "covered_player_seasons": 0, "artifact_player_seasons": len(targets),
+        "bwar_revised": 0, "bwar_revised_by_season": {}, "delta_sum": 0.0,
+        # the served numerator's build (the live season's, on a nightly artifact)
+        # and the frozen series' build; one stamp on a hand build
+        "artifact_generated_at": blob.get("live_built_at") or blob.get("generated_at"),
+        "artifact_label_build_at": blob.get("generated_at"),
+    }
+    if not len(out) or not targets:
+        _EWAR_FRAME_DIAG[side] = receipt
+        return out
+
+    war = pd.to_numeric(out["WAR"], errors="coerce")
+    split = _exposure_split(out, side, war, targets)
+    if split is None:
+        _EWAR_FRAME_DIAG[side] = receipt
+        return out
+    cov_idx, w, grp, new_war = split
     out.loc[cov_idx, "WAR"] = new_war
 
     per = grp.agg(fsum=("war", "sum"), bart=("bart", "first"))
