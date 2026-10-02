@@ -121,6 +121,42 @@ def _token_step(tok: str):
     return (int(m.group(1)), bool(m.group(2))) if m else (None, False)
 
 
+def _number_bare_arb(ladder: list, base: dict) -> list:
+    """Give a bare "ARB" rung its arbitration step from the panel label.
+
+    Spotrac's own arbitration estimate pill reads "ARB" with no step, and
+    spotrac._resolve_bare_arb numbers it only when the same row carries a
+    numbered token (42 players on 2026-10-01 had none, nearly all in their
+    final arbitration year with 2028 UFA). The step then comes from the
+    player's latest panel season: arbitration step a in that season makes the
+    rung a plus the seasons between, carrying the Super Two marker when the
+    label says so; no step there makes the first bare rung ARB 1 and each
+    later one a step up from the rung before. A step past 4 is held at 4:
+    Spotrac says he is still arbitration-eligible that season, and 4 is the
+    last step there is. A numbered rung is never touched."""
+    if not any(tok == "ARB" for _y, tok in ladder):
+        return ladder
+    a = base.get("arb_year")
+    bs = int(base.get("season") or 0)
+    s2 = base.get("super_two") is True
+    out = []
+    prev = None
+    for y, tok in ladder:
+        if tok == "ARB":
+            if a:
+                step = int(a) + (int(y) - bs)
+            elif prev:
+                step = prev + 1
+            else:
+                step = 1
+            step = max(1, min(4, step))
+            tok = f"ARB {step}" + (" (S2)" if s2 else "")
+        st, _ = _token_step(tok)
+        prev = st if st else prev
+        out.append((y, tok))
+    return out
+
+
 def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
                 s1=None, s2=None, defl=None, banded=None) -> dict:
     """The projections board: every player with remaining arbitration years,
@@ -152,13 +188,20 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
 
     rows = []
     for mlbam, sby in status.items():
+        # REMAINING seasons only (defect RVA01, 2026-10-01). The board prices
+        # `season` onward; a status token for a season already played (a
+        # 2026 PRE-ARB cell on a club-control table) is history, and pricing
+        # it put a completed season's league minimum into `tot` and from there
+        # into the Club Ledger's remaining arbitration figure.
         ladder = sorted((y, s) for y, s in sby.items()
-                        if s.startswith("ARB") or s == "PRE-ARB")
+                        if int(y) >= int(season)
+                        and (s.startswith("ARB") or s == "PRE-ARB"))
         if not ladder:
             continue
         base = by_player.get(mlbam)
         if not base:
             continue
+        ladder = _number_bare_arb(ladder, base)
         pw = proj.get(mlbam)
         prior = base.get("salary")
         steps = []

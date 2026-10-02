@@ -347,6 +347,72 @@ def _year_cell_status(cell_text: str) -> str | None:
     return s.upper()
 
 
+# SPOTRAC'S OWN ARBITRATION ESTIMATE (defect RML01, 2026-10-01). An unset
+# club-control season can render as a dollar pill carrying the class
+# pill-estimate, e.g. "$10,500,000 ARB" for Jarren Duran's 2027 (the pill end
+# reads "ARB" or "PRE", never the arbitration step). It is Spotrac's projection
+# of a salary nobody has agreed, so it is a STATUS cell, not a contract cell:
+# before this, the 171 "ARB" and 17 "PRE" estimate cells on the 30 cached pages
+# (2026-10-01) were read as signed salary, the 2027 ARB token was lost and
+# /arbitration/ never priced the rung (16 clubs with no priced 2027 rung).
+#
+# Only a LABELLED estimate is a status. An estimate pill whose end reads a
+# payroll share ("2.0%") or nothing at all is a prorated or obligation dollar
+# figure for a season already being paid (73 such cells, all but one in 2026)
+# and stays money.
+_ESTIMATE_LABEL_RE = re.compile(r"^(ARB(?:\s*[1-4](?:\s*\(S2\))?)?|PRE(?:-ARB)?)$", re.I)
+_NUMBERED_ARB_RE = re.compile(r"^ARB ([1-4])( \(S2\))?$")
+
+
+def _estimate_cell_status(cell) -> str | None:
+    """The status a Spotrac pill-estimate cell stands for, or None when the
+    cell is not a labelled estimate. "PRE" reads as PRE-ARB; "ARB" stays a
+    bare "ARB" here and _resolve_bare_arb numbers it from the row."""
+    pill = cell.find(class_="pill-estimate")
+    if pill is None:
+        return None
+    end = pill.find(class_="pill-end")
+    label = re.sub(r"\s+", " ", end.get_text(strip=True) if end else "").strip()
+    if not label or not _ESTIMATE_LABEL_RE.match(label):
+        return None
+    label = label.upper()
+    if label.startswith("PRE"):
+        return "PRE-ARB"
+    m = re.match(r"^ARB\s*([1-4])(\s*\(S2\))?$", label)
+    if m:
+        return f"ARB {m.group(1)}" + (" (S2)" if m.group(2) else "")
+    return "ARB"
+
+
+def _resolve_bare_arb(status_by_year: dict[int, str]) -> None:
+    """Number a bare "ARB" year from the row's own numbered tokens, in place.
+
+    The step is one per season, so "2028: ARB 3" makes 2027 ARB 2 and
+    "2027: ARB 1" makes 2028 ARB 2; the Super Two marker travels with the
+    step it came from. A PRE-ARB year immediately before makes it ARB 1. A
+    year the row cannot number stays "ARB" (the arbitration export numbers
+    those from the player's panel label)."""
+    numbered = {y: _NUMBERED_ARB_RE.match(t) for y, t in status_by_year.items()}
+    numbered = {y: (int(m.group(1)), bool(m.group(2))) for y, m in numbered.items() if m}
+    for y in sorted(status_by_year):
+        if status_by_year[y] != "ARB":
+            continue
+        later = sorted(yy for yy in numbered if yy > y)
+        earlier = sorted(yy for yy in numbered if yy < y)
+        step, s2 = None, False
+        if later:
+            k, s2 = numbered[later[0]]
+            step = k - (later[0] - y)
+        elif earlier:
+            k, s2 = numbered[earlier[-1]]
+            step = k + (y - earlier[-1])
+        elif status_by_year.get(y - 1) == "PRE-ARB":
+            step = 1
+        if step is None or step < 1 or step > 4:
+            continue
+        status_by_year[y] = f"ARB {step}" + (" (S2)" if s2 else "")
+
+
 def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
     """Parse one Spotrac yearly contract table (dataTable-active /
     dataTable-injured / dataTable-dead share the same structure).
@@ -435,7 +501,8 @@ def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
             if col_idx >= len(tds):
                 continue
             cell = tds[col_idx]
-            status = _year_cell_status(cell.get_text(strip=True))
+            status = (_estimate_cell_status(cell)
+                      or _year_cell_status(cell.get_text(strip=True)))
             if status is not None:
                 status_by_year[year] = status
                 continue
@@ -446,6 +513,7 @@ def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
                 salary_by_year[year] = int(raw)
             except ValueError:
                 continue
+        _resolve_bare_arb(status_by_year)
         if not salary_by_year and not status_by_year:
             # Neither money nor a status on file — player is either on a
             # 1-year deal that already ended (rare) or unsigned. Skip.
