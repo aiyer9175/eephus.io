@@ -338,8 +338,23 @@
       won: num(s.won) || 0, lost: num(s.lost) || 0, push: num(s.push) || 0,
       net_units: num(s.net_units), roi_pct: num(s.roi_pct),
       avg_clv_pct: num(s.avg_clv_pct), beat_close_rate: num(s.beat_close_rate),
-      asof: doc.generated_at || null
+      asof: doc.generated_at || null,
+      // THE ROW NOTES (RBE05, 2026-10-02): the headline sentence and each
+      // regular-season row's note when a row behind the record carried the
+      // slate total-lean caveat. Joined by record_summary; rows never change.
+      disclosure: s.disclosure_note || null,
+      rowNotes: (Array.isArray(s.disclosures) ? s.disclosures : []).filter(function (d) {
+        return d && d.scope === "regular_season" && d.note;
+      }).map(function (d) { return d.note; })
     };
+  }
+  function disclosureHTML(rec) {
+    if (!rec || (!rec.disclosure && !(rec.rowNotes || []).length)) return "";
+    return '<div class="dm-disclosure" data-dm-disclosure="1">' +
+      (rec.disclosure ? "<p><strong>" + esc(rec.disclosure) + "</strong></p>" : "") +
+      (rec.rowNotes || []).map(function (n) {
+        return '<p class="dm-fine">' + esc(n) + "</p>";
+      }).join("") + "</div>";
   }
   function fromRows(rows) {
     if (!Array.isArray(rows)) return null;
@@ -392,6 +407,7 @@
         (clv ? statRow("Average closing line value", signedPct(rec.avg_clv_pct)) +
                statRow("Beat the closing line", ratePct(rec.beat_close_rate)) : "") +
       "</div>" +
+      disclosureHTML(rec) +
       "<p>Flat 1 unit per pick, append only. " + (clv
         ? "Closing line value: posted odds against the closing odds.</p>"
         : "Graded on realized results; closing line value is not captured.</p>") +
@@ -561,6 +577,8 @@
     ".dm-stat-lbl{font:600 10px/1.2 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em}",
     ".dm-stat-val{font:700 15px/1 var(--font-retro,monospace);color:var(--text-primary)}",
     ".dm-btn{font:600 13px/1 var(--font-retro,monospace);padding:9px 14px;border:1px solid var(--accent-cyan,#2a7);background:transparent;color:var(--accent-cyan,#2a7);cursor:pointer;margin-top:6px}",
+    ".dm-disclosure{border-left:3px solid var(--accent-gold,#a80);padding:4px 0 4px 10px;margin:10px 0;overflow-wrap:anywhere}",
+    ".dm-disclosure p{margin:4px 0;font-size:13px}",
     ".dm-btn:hover{background:var(--bg-hover,transparent)}",
     ".dm-btn[disabled]{opacity:.6;cursor:default}",
     ".diamond-app .article-grid{margin-bottom:4px}"

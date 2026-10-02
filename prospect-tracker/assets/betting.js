@@ -70,10 +70,11 @@
   var AUX_URL = {
     learning: "/data/betting_learning.json",
     evald: "/data/betting_model_eval.json",
-    clv: "/data/betting_clv.json"
+    clv: "/data/betting_clv.json",
+    subledger: "/data/betting_subledger.json"
   };
-  var AUX = { learning: null, evald: null, clv: null };
-  var AUX_STATE = { learning: null, evald: null, clv: null };
+  var AUX = { learning: null, evald: null, clv: null, subledger: null };
+  var AUX_STATE = { learning: null, evald: null, clv: null, subledger: null };
 
   var S = { data: null, section: "potd", error: null, legs: [], bets: [], betsSource: "local",
             // Team Bets has two views over the same rows: the game cards and
@@ -2618,18 +2619,115 @@
   // moved to its own tab. What is here is the record itself, the closing-line
   // grade on the positions in it, and the pre-registered list of conditions a
   // pick has to clear before it may enter the record at all.
-  // ROI BY TAG (A6, 2026-08-16), horizontal SVG bars off the learning
-  // artifact's shadow_by_tag block, on the Record tab BECAUSE that is where a
-  // reader hunts for a track record, labelled "paper bets, not the record" in
-  // the heading so the placement cannot mislead. Polarity encoding: the
-  // page's own green/red for positive/negative, with the tag name and the
-  // number as text on every bar, never colour alone. The tags stay separate
-  // for the section 7a reason: a pooled ROI measures a mixture nobody bet.
+  // ROI BY TAG (A6, 2026-08-16), horizontal SVG bars on the Record tab BECAUSE
+  // that is where a reader hunts for a track record, labelled "paper bets, not
+  // the record" in the heading so the placement cannot mislead. Polarity
+  // encoding: the page's own green/red for positive/negative, with the tag name
+  // and the number as text on every bar, never colour alone.
+  // ONE BAR PER MARKET PER TAG (RBE08, 2026-10-02). The bars used to read the
+  // learning artifact's shadow_by_tag block, which sums moneyline, runline and
+  // total under each tag, beneath a caption saying tags are never pooled. They
+  // now read the sub-ledger's by_market_by_tag cells, the level the section 7a
+  // rule names, on one shared scale. If the sub-ledger does not load, the
+  // pooled tag bars draw under a caption that says they are pooled.
+  var ROI_MARKETS = ["moneyline", "runline", "total"];
+
+  function roiBars(entries, maxAbs, aria) {
+    var W = 340, RH = 22, LBL = 96, MID = LBL + (W - LBL) / 2;
+    var H = entries.length * RH + 16;
+    var s = ['<svg class="bt-svg bt-svg-roi" viewBox="0 0 ' + (W + 84) + " " + H +
+             '" role="img" aria-label="' + esc(aria) + '">'];
+    s.push('<line class="bt-svg-grid" x1="' + MID + '" y1="2" x2="' + MID +
+           '" y2="' + (H - 14) + '"/>');
+    s.push('<text class="bt-svg-axis" x="' + MID + '" y="' + (H - 4) +
+           '" text-anchor="middle">0%</text>');
+    entries.forEach(function (e, i) {
+      var t = e.t;
+      var y = i * RH + 3;
+      var half = (W - LBL) / 2 - 2;
+      var w = Math.min(half, Math.abs(t.roi) / maxAbs * half);
+      var x = t.roi < 0 ? MID - w : MID;
+      var tip = e.tip + ": " + t.won + "-" + t.lost + (t.push ? "-" + t.push : "") +
+        ", " + signed(t.net_units, 2) + "u, ROI " + pct(t.roi, 1) +
+        " on " + t.n_settled + " settled paper bets";
+      s.push('<text class="bt-svg-axis" x="' + (LBL - 4) + '" y="' + (y + RH / 2 + 2) +
+             '" text-anchor="end">' + esc(e.label) + "</text>");
+      s.push('<rect class="' + (t.roi < 0 ? "bt-svg-neg" : "bt-svg-pos") +
+             '" x="' + x.toFixed(1) + '" y="' + y + '" width="' +
+             Math.max(1, w).toFixed(1) + '" height="' + (RH - 5) +
+             '" data-roi="' + esc(t.roi) + '" data-n="' + esc(t.n_settled) +
+             '"><title>' + esc(tip) + "</title></rect>");
+      s.push('<text class="bt-svg-axis" x="' + (W + 4) + '" y="' + (y + RH / 2 + 2) +
+             '">' + esc(pct(t.roi, 1) + " (" + t.n_settled + ")") + "</text>");
+    });
+    s.push("</svg>");
+    return s.join("");
+  }
+
+  function roiMarketOrder(cells) {
+    var extra = Object.keys(cells).filter(function (m) {
+      return ROI_MARKETS.indexOf(m) < 0;
+    }).sort();
+    return ROI_MARKETS.filter(function (m) { return cells[m]; }).concat(extra);
+  }
+
   function roiByTagPanel() {
-    var L = ((aux("learning") || {}).latest) || {};
-    var byTag = L.shadow_by_tag || null;
     var rows = ['<div class="bt-panel-hd">ROI by selection rule (paper bets, ' +
                 "not the record)</div>"];
+    var sub = aux("subledger");
+    var cells = (sub && sub.by_market_by_tag) || null;
+    if (!cells && auxState("subledger") === "pending") {
+      rows.push(pxState("loading", esc(auxMissing("subledger"))));
+      return '<div class="bt-panel">' + rows.join("") + "</div>";
+    }
+    if (cells) return roiByMarketPanel(rows, sub, cells);
+    return roiPooledPanel(rows);
+  }
+
+  function roiByMarketPanel(rows, sub, cells) {
+    var markets = roiMarketOrder(cells);
+    var maxAbs = 0, nCells = 0;
+    markets.forEach(function (m) {
+      Object.keys(cells[m] || {}).forEach(function (k) {
+        var t = cells[m][k] || {};
+        if (t.roi == null) return;
+        nCells++;
+        maxAbs = Math.max(maxAbs, Math.abs(t.roi));
+      });
+    });
+    if (!nCells) {
+      rows.push(chartAbsent("ROI by tag", "no market and tag has a settled paper row yet."));
+      return '<div class="bt-panel">' + rows.join("") + "</div>";
+    }
+    maxAbs = maxAbs || 1;
+    markets.forEach(function (m) {
+      var tags = Object.keys(cells[m] || {}).sort().filter(function (k) {
+        return (cells[m][k] || {}).roi != null;
+      });
+      if (!tags.length) return;
+      rows.push('<div class="bt-panel-sub" data-bt-roi-market="' + esc(m) + '">' +
+        esc(m.charAt(0).toUpperCase() + m.slice(1)) + "</div>");
+      rows.push('<div class="bt-chart">' + roiBars(tags.map(function (k) {
+        return { label: k, t: cells[m][k], tip: m + ", " + k };
+      }), maxAbs, "paper-bet ROI per selection rule, " + m) + "</div>");
+    });
+    rows.push(note("<strong>Paper bets, not the record.</strong> Settled " +
+      gl("shadow ledger", "shadow_ledger") + " rows at board prices, one bar per " +
+      "market per selection rule, settled count in brackets; none was a published " +
+      selNoun() + ". No bar sums two markets or two tags: a combined ROI measures a " +
+      "mixture nobody bet." +
+      (sub.scope === "regular_season"
+        ? " Regular season only; postseason paper rows are a sub-ledger of their own."
+        : "") +
+      " Cells: " + esc(AUX_URL.subledger) + ", by_market_by_tag."));
+    return '<div class="bt-panel">' + rows.join("") + "</div>";
+  }
+
+  // The fallback when the sub-ledger did not load: the learning artifact's tag
+  // totals, which are pooled across markets, drawn under a caption that says so.
+  function roiPooledPanel(rows) {
+    var L = ((aux("learning") || {}).latest) || {};
+    var byTag = L.shadow_by_tag || null;
     if (!byTag) {
       rows.push(chartAbsent("ROI by tag",
         (auxState("learning") === "ok"
@@ -2648,38 +2746,16 @@
       maxAbs = Math.max(maxAbs, Math.abs(byTag[k].roi));
     });
     maxAbs = maxAbs || 1;
-    var W = 340, RH = 22, LBL = 96, MID = LBL + (W - LBL) / 2;
-    var H = meas.length * RH + 16;
-    var s = ['<svg class="bt-svg bt-svg-roi" viewBox="0 0 ' + (W + 60) + " " + H +
-             '" role="img" aria-label="paper-bet ROI per selection rule">'];
-    s.push('<line class="bt-svg-grid" x1="' + MID + '" y1="2" x2="' + MID +
-           '" y2="' + (H - 14) + '"/>');
-    s.push('<text class="bt-svg-axis" x="' + MID + '" y="' + (H - 4) +
-           '" text-anchor="middle">0%</text>');
-    meas.forEach(function (k, i) {
-      var t = byTag[k];
-      var y = i * RH + 3;
-      var half = (W - LBL) / 2 - 2;
-      var w = Math.min(half, Math.abs(t.roi) / maxAbs * half);
-      var x = t.roi < 0 ? MID - w : MID;
-      var tip = k + ": " + t.won + "-" + t.lost + (t.push ? "-" + t.push : "") +
-        ", " + signed(t.net_units, 2) + "u, ROI " + pct(t.roi, 1) +
-        " on " + t.n_settled + " settled paper bets";
-      s.push('<text class="bt-svg-axis" x="' + (LBL - 4) + '" y="' + (y + RH / 2 + 2) +
-             '" text-anchor="end">' + esc(k) + "</text>");
-      s.push('<rect class="' + (t.roi < 0 ? "bt-svg-neg" : "bt-svg-pos") +
-             '" x="' + x.toFixed(1) + '" y="' + y + '" width="' +
-             Math.max(1, w).toFixed(1) + '" height="' + (RH - 5) +
-             '"><title>' + esc(tip) + "</title></rect>");
-      s.push('<text class="bt-svg-axis" x="' + (W + 4) + '" y="' + (y + RH / 2 + 2) +
-             '">' + esc(pct(t.roi, 1)) + "</text>");
-    });
-    s.push("</svg>");
-    rows.push('<div class="bt-chart">' + s.join("") + "</div>");
+    rows.push('<div class="bt-panel-sub" data-bt-roi-market="pooled">' +
+      "Pooled across markets</div>");
+    rows.push('<div class="bt-chart">' + roiBars(meas.map(function (k) {
+      return { label: k, t: byTag[k], tip: k + ", pooled across markets" };
+    }), maxAbs, "paper-bet ROI per selection rule, pooled across markets") + "</div>");
     rows.push(note("<strong>Paper bets, not the record.</strong> Settled " +
       gl("shadow ledger", "shadow_ledger") + " rows per selection rule at board " +
-      "prices; none was a published " + selNoun() + ". Tags are never pooled: a " +
-      "combined ROI measures a mixture nobody bet."));
+      "prices; none was a published " + selNoun() + ". <strong>Each bar is pooled " +
+      "across markets</strong> (moneyline, runline and total), a mixture nobody bet: " +
+      "the per-market split in " + esc(AUX_URL.subledger) + " did not load."));
     return '<div class="bt-panel">' + rows.join("") + "</div>";
   }
 
@@ -2845,7 +2921,23 @@
       kv("Net units", signed(ps.net_units, 2)) +
       kv("ROI", ps.roi_pct == null ? "-" : signed(ps.roi_pct, 2) + "%") +
       kv("Open", ps.n_open) + "</div>" +
+      recordDisclosures(r, "postseason", ps.disclosure_note) +
       (ps.note ? note(esc(ps.note)) : "");
+  }
+
+  // THE ROW NOTES BESIDE THE RECORD (RBE05, 2026-10-02). A record row that
+  // carried the slate total-lean caveat says so here, joined at read time by
+  // betting_export.record_summary because the row itself is never edited. The
+  // headline sentence comes first, then each row's own note.
+  function recordDisclosures(r, scope, headline) {
+    var rows = ((r || {}).disclosures || []).filter(function (d) {
+      return d && d.scope === scope && d.note;
+    });
+    if (!headline && !rows.length) return "";
+    return '<div class="bt-note bt-record-disclosure" data-bt-disclosure="' + esc(scope) + '">' +
+      (headline ? "<strong>" + esc(headline) + "</strong>" : "") +
+      rows.map(function (d) { return "<p>" + esc(d.note) + "</p>"; }).join("") +
+      "</div>";
   }
 
   function recordPanel(r) {
@@ -2872,6 +2964,7 @@
           : "") +
         kv("Open", r.n_open) +
         "</div>" +
+        recordDisclosures(r, "regular_season", r.disclosure_note) +
         (r.scope_note ? note(esc(r.scope_note)) : "") +
         postseasonRecordBlock(r);
     }
@@ -4382,6 +4475,7 @@
     ".bt-pos{color:var(--accent-green,#3a9)}.bt-neg{color:var(--accent-red,#c55)}",
     ".bt-dim{color:var(--text-tertiary)}",
     ".bt-note{font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);border-left:3px solid var(--accent-cyan,#2a7);padding:8px 10px;margin:8px 0}",
+    ".bt-record-disclosure{border-left-color:var(--accent-gold,#a80);overflow-wrap:anywhere}.bt-record-disclosure p{margin:6px 0 0}",
     ".bt-error{border:1px solid var(--accent-red,#c55);padding:12px;margin:8px 0;color:var(--text-primary);background:var(--bg-secondary);font-size:12.5px}",
     ".bt-nopick{border:1px solid var(--accent-gold,#a80);padding:14px;margin:10px 0;background:var(--bg-secondary)}",
     ".bt-nopick-hd{font:700 14px/1 var(--font-retro,monospace);color:var(--text-primary);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}",

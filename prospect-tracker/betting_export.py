@@ -1690,8 +1690,109 @@ def _merged_rows(rows: list[dict], clv: dict | None, settlement: dict | None) ->
     return out
 
 
+#: WHEN THE TOTAL-LEAN BAR LANDED (commit 54106feb, 2026-09-25 20:21:48 EDT).
+#: BAR_TOTAL_LEAN_SLOTS (owner decision 2026-09-25) keeps a total carrying the
+#: slate-lean caveat out of the slots and so off the record. A record row that
+#: carries that caveat was posted before this instant or while the bar was off,
+#: and the record says which beside the row (RBE05).
+TOTAL_LEAN_BAR_AT = "2026-09-26T00:21:48+00:00"
+
+
+def _iso_dt(s) -> datetime | None:
+    if not s:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _published_slot_row(slate_date, slot, *, root: Path | None = None) -> dict:
+    """The slot row the slate's lock published under `slot`, read-only, or {}.
+
+    This is a DISCLOSURE read and not the lock: `load_slot_lock` refuses a
+    lock under pytest that the test run did not write, which is right for the
+    lock and wrong here, where the question is only what the published row
+    said. `root` is the published_slots directory, for tests."""
+    if not slate_date or not slot:
+        return {}
+    p = (Path(root) / f"{slate_date}.json") if root is not None else \
+        published_slots_dir() / f"{slate_date}.json"
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    ent = ((obj or {}).get("slots") or {}).get(slot) or {}
+    row = ent.get("row") if isinstance(ent, dict) else None
+    return row if isinstance(row, dict) else {}
+
+
+def record_row_disclosures(rows: list[dict], *,
+                           slots_root: Path | None = None) -> list[dict]:
+    """One note per record row that carried the slate total-lean caveat (RBE05).
+
+    THE ROW IS NEVER EDITED. The record is append-only under a sha256 chain, so
+    a disclosure the row lacks is joined at read time, like a result. Rows
+    written after 2026-10-02 carry `total_level_caveat` themselves (see
+    `record_row`); an earlier row is matched to the slot row its slate's lock
+    published, and only when that slot row is the same bet (its `bet_id`
+    recomputed from the lock equals the row's), so a lock that re-selected
+    cannot lend its caveat to another bet."""
+    bar_at = _iso_dt(TOTAL_LEAN_BAR_AT)
+    out = []
+    for r in rows or []:
+        cav, source = r.get("total_level_caveat"), "record row"
+        if not cav:
+            s = _published_slot_row(r.get("slate_date"), r.get("slot"), root=slots_root)
+            if s.get("total_level_caveat") and bet_id(
+                    r.get("slate_date"), s.get("game_pk"), s.get("market"),
+                    s.get("side"), s.get("point")) == r.get("bet_id"):
+                cav, source = s["total_level_caveat"], "published slot lock"
+        if not cav:
+            continue
+        posted = _iso_dt(r.get("posted_at"))
+        before = bool(posted and bar_at and posted < bar_at)
+        when = (posted.strftime("%Y-%m-%d %H:%M UTC") if posted else "at an unrecorded time")
+        if before:
+            mins = int((bar_at - posted).total_seconds() // 60)
+            timing = (f"It was posted {when}, {mins} minutes before the owner barred a "
+                      "caveated total from the slots (2026-09-26 00:21 UTC, owner "
+                      "decision 2026-09-25), so under the rule in force now it would "
+                      "not have been published.")
+        else:
+            timing = (f"It was posted {when}, after the bar on caveated totals "
+                      "landed, so the bar was off when it published.")
+        out.append({
+            "bet_id": r.get("bet_id"), "slate_date": r.get("slate_date"),
+            "slot": r.get("slot"), "selection": r.get("selection"),
+            "scope": "postseason" if bset.is_postseason(r) else "regular_season",
+            "kind": "total_level_caveat", "source": source,
+            "total_level_caveat": cav, "posted_at": r.get("posted_at"),
+            "bar_at": TOTAL_LEAN_BAR_AT, "predates_bar": before,
+            "note": (f"{r.get('selection') or 'This row'} ({r.get('slate_date')}) carried "
+                     f"the slate total-lean caveat when it was published: \"{cav}\" "
+                     f"{timing} The row stands because the record is append-only."),
+        })
+    return out
+
+
+def _disclosure_note(notes: list[dict], n_rows: int) -> str | None:
+    """The one sentence a headline carries when rows behind it were caveated."""
+    if not notes:
+        return None
+    k = len(notes)
+    pre = sum(1 for d in notes if d.get("predates_bar"))
+    return (f"{k} of {n_rows} row{'' if n_rows == 1 else 's'} behind this record "
+            f"carried the slate total-lean caveat, which says the lean is a known "
+            f"model shape and not value; {pre} of {k} "
+            f"{'was' if pre == 1 else 'were'} posted before caveated totals were "
+            "barred from the slots. Read the result with that note.")
+
+
 def record_summary(rows: list[dict] | None = None, clv: dict | None = None,
-                   settlement: dict | None = None) -> dict:
+                   settlement: dict | None = None, *,
+                   slots_root: Path | None = None) -> dict:
     """W-L, net units, ROI, beat-close rate and average CLV. Every field is
     None or zero until the record actually has rows: an empty record reports
     an empty record, it does not report a 0% ROI as if 0 bets were graded.
@@ -1735,6 +1836,15 @@ def record_summary(rows: list[dict] | None = None, clv: dict | None = None,
         "Postseason rows, tallied apart from the regular-season record and never "
         "added to it. The pricer was fitted and graded on regular-season games "
         "only; these rows are priced by owner decision of 2026-10-01.")
+    # THE ROW NOTES (RBE05, 2026-10-02): every row that carried the slate
+    # total-lean caveat says so beside the record, and each headline names how
+    # many of its rows did. No count, unit or result moves.
+    notes = record_row_disclosures(rows, slots_root=slots_root)
+    out["disclosures"] = notes
+    out["disclosure_note"] = _disclosure_note(
+        [d for d in notes if d["scope"] == "regular_season"], len(regular))
+    post_block["disclosure_note"] = _disclosure_note(
+        [d for d in notes if d["scope"] == "postseason"], len(post))
     out["postseason"] = post_block
     out["stake_policy"] = "flat 1 unit"
     # The rolling hash of the record these numbers were computed over, so a
@@ -2323,6 +2433,16 @@ def record_row(slot_row: dict, *, slate_date: str, evald: dict | None,
         "model_prob": slot_row.get("model_prob"),
         "market_fair_prob": slot_row.get("market_fair_prob"),
         "ev_per_unit": slot_row.get("ev_per_unit"),
+        # THE ROW'S OWN DISCLOSURE TRAVELS WITH IT (RBE05, 2026-10-02). The
+        # record's first row was an Over carrying the slate total-lean caveat,
+        # and the row dropped it along with the Poisson caveat and the push
+        # probability, so the record could not say what the slot had said.
+        # `p_push` also makes `ev_per_unit` recomputable from the row alone:
+        # on a whole-number total the EV is scaled by (1 - p_push). Each is
+        # None when the slot row did not carry it.
+        "total_level_caveat": slot_row.get("total_level_caveat"),
+        "caveat": slot_row.get("caveat"),
+        "p_push": slot_row.get("p_push"),
         "min_edge_used": slot_row.get("min_edge_used"),
         "provisional": bool(slot_row.get("provisional")),
         # THE VERSION THAT PRICED THE ROW, not the version running now. A row

@@ -1203,7 +1203,8 @@ BAD_FETCH = "var fetch = function () { return FR(new Error('HTTP 404')); };\n"
 _ROUTE_NAMES = {"main": "/data/betting.json", "preview": "/data/betting_preview.json",
                 "learning": "/data/betting_learning.json",
                 "evald": "/data/betting_model_eval.json",
-                "clv": "/data/betting_clv.json"}
+                "clv": "/data/betting_clv.json",
+                "subledger": "/data/betting_subledger.json"}
 
 
 def _fetch_js(**routes) -> str:
@@ -2169,7 +2170,13 @@ def test_benchmark_ladder_absent_state_names_the_missing_block(live_ctx):
 def test_roi_by_tag_bars_are_labelled_paper_bets_not_the_record(charts_ctx):
     """Horizontal bars off shadow_by_tag, polarity red/green, tag name and
     number as text on every bar, on the Record tab under a heading that says
-    what they are NOT. The tag with no settled rows draws no bar."""
+    what they are NOT. The tag with no settled rows draws no bar.
+
+    This fixture routes no sub-ledger, so the panel draws its FALLBACK: the
+    learning artifact's tag totals, which sum the three markets, captioned as
+    pooled (RBE08, 2026-10-02). It may not claim the tags are never pooled
+    over a pooled figure; test_betting_record_labels.py holds the per-market
+    cells."""
     html = charts_ctx.eval("__show('record')")
     text = _visible_text(html)
     assert "ROI by selection rule (paper bets, not the record)" in text
@@ -2179,7 +2186,8 @@ def test_roi_by_tag_bars_are_labelled_paper_bets_not_the_record(charts_ctx):
     assert roi.count("bt-svg-pos") == 1        # potd_band, +20%
     assert "board_all" in roi and "potd_band" in roi
     assert "longshot" not in roi               # roi null, nothing to draw
-    assert "never pooled" in text
+    assert "pooled across markets" in text
+    assert "never pooled" not in text
 
 
 def test_roi_by_tag_absent_state_names_the_reason(live_ctx):
