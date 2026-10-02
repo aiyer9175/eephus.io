@@ -1013,9 +1013,10 @@
     if (gated()) {
       chips.push('<a class="bt-chip bt-chip-warn bt-chip-link" href="/diamond/">preview slice</a>');
     }
+    var nGames = S.data.n_games || 0;
     host.innerHTML = '<div class="bt-asof">' +
-      esc(S.data.slate_date || "") + " slate &middot; " + (S.data.n_games || 0) +
-      " games priced &middot; " + chips.join(" ") + "</div>" + staleLine();
+      esc(S.data.slate_date || "") + " slate &middot; " + nGames +
+      (nGames === 1 ? " game" : " games") + " priced &middot; " + chips.join(" ") + "</div>" + staleLine();
     wireGl(host);
   }
 
@@ -2448,7 +2449,7 @@
     var rows = b.clubs.map(function (c) {
       return "<tr>" + '<td class="bt-l">' + esc(c.team) + "</td>" +
         "<td>" + esc(c.seed) + "</td>" +
-        '<td class="bt-l">' + esc(c.series_now_text || "") + "</td>" +
+        '<td class="bt-l bt-br-now">' + esc(c.series_now_text || "") + "</td>" +
         "<td>" + brPct(c.p_round_now) + "</td>" +
         "<td>" + brPct(c.reach_lcs_pct) + "</td>" +
         "<td>" + brPct(c.pennant_pct) + "</td>" +
@@ -2476,8 +2477,11 @@
   }
 
   function renderFutures() {
-    if (FUT_ERR) return '<p class="bt-note">' + esc(FUT_ERR) + "</p>";
-    if (!FUT) { loadFutures(); return '<p class="bt-note">Loading.</p>'; }
+    // The shared lamp states (assets/eephus-state.js): loading while the board
+    // fetch is out, failed (role=alert) when it rejects. The bracket fetch
+    // settles to null on a failure, so a missing bracket still draws the board.
+    if (FUT_ERR) return pxState("failed", esc(FUT_ERR));
+    if (!FUT) { loadFutures(); return pxState("loading", esc("Loading the futures board.")); }
     if (!FUT.clubs || !FUT.clubs.length) {
       return '<p class="bt-note">' + esc(FUT.empty_reason || "No board.") + "</p>";
     }
@@ -4278,7 +4282,9 @@
     ".bt-asof{font-size:12px;color:var(--text-tertiary);margin:4px 0}",
     ".bt-stale{border-left:3px solid var(--accent-gold,#a80);padding:6px 10px;margin:6px 0;font-size:12.5px;color:var(--text-primary)}",
     ".bt-pick.bt-pick-past{border-color:var(--accent-gold,#a80)}",
-    ".bt-chip{font:600 10px/1 var(--font-retro,monospace);border:1px solid var(--border,#333);padding:3px 6px;margin-left:4px;text-transform:uppercase;letter-spacing:.03em}",
+    // A chip is one unit: it never breaks inside its border box, and the 2px
+    // top and bottom margin keeps a wrapped row of chips off the row above.
+    ".bt-chip{display:inline-block;white-space:nowrap;font:600 10px/1 var(--font-retro,monospace);border:1px solid var(--border,#333);padding:3px 6px;margin:2px 0 2px 4px;text-transform:uppercase;letter-spacing:.03em}",
     ".bt-chip-ok{color:var(--accent-green,#3a9);border-color:var(--accent-green,#3a9)}",
     ".bt-chip-warn{color:var(--text-primary);border-color:var(--accent-gold,#a80);border-width:1.5px}",
     ".bt-chip-stage{color:var(--accent-lilac,#a8f);border-color:var(--accent-lilac,#a8f)}",
@@ -4545,6 +4551,9 @@
     ".bt-headline-hd{font-size:13.5px}",
     ".bt-kv{grid-template-columns:minmax(0,1fr)}",
     ".bt-table td.bt-gate-need{max-width:24ch}",
+    // The bracket's Series now sentence wraps at phone width so the first
+    // probability column starts inside the scroller instead of past its edge.
+    ".bt-table td.bt-br-now{white-space:normal;min-width:96px;max-width:140px;line-height:1.25}",
     ".bt-gate-more > summary{display:list-item;list-style:none}",
     ".bt-gate-sum{font:600 10px/1.3 var(--font-retro,monospace);color:var(--accent-cyan,#2a7);cursor:pointer;text-transform:uppercase;letter-spacing:.04em;padding:3px 0}",
     ".bt-pick-sel{font-size:17px}",
