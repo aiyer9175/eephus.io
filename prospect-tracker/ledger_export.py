@@ -2227,9 +2227,9 @@ def build_all() -> tuple:
             "it is what the club roll-up sums."),
         "farm_dollar_is_not": (
             "It is not a trade price (the Trade Machine re-anchors debuted players and adds a roster "
-            "crunch), not the club-control-window surplus the MLB Projections board prices for the "
-            "prospects it carries (a different window and a different discount), not a quantile, and "
-            "not a realized figure: no farm dollar has been earned. Quantiles on these rows are never "
+            "crunch), not a quantile, and not a realized figure: no farm dollar has been earned. The "
+            "MLB Projections board prints this same eFV surplus for the prospects it carries and does "
+            "not reprice them. Quantiles on these rows are never "
             "summed, and a row's number is never added to a number on another basis."),
         "farm_reconcile": (
             "The roll-up leaf is the sum over active prospects of eFV expected surplus minus the "

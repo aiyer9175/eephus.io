@@ -53,20 +53,20 @@ BOARD = """{
  "vets":[
   {"key":"vet_guy","name":"Vet Guy","pos":"SS","age":29.4,"team":"NYY","src":"vet",
    "war":[3.0,2.8,2.6,2.4,2.2],"warP10":[1.2,1.1,1.0,0.9,0.8],"warP90":[4.8,4.6,4.4,4.2,4.0],
-   "warTotal":13.0,"warTotalP10":5.0,"warTotalP90":22.0,
+   "warTotal":13.0,"warTotalP10Comon":5.0,"warTotalP90Comon":22.0,
    "thru":2028,"aav":25000000,"surNpv":40000000}
  ],
  "prospects":[
   {"key":"efv_kid","name":"Efv Kid","pos":"SS","age":20.1,"team":"BOS","src":"prospect",
    "fv":50.4,"consensus_fv":50,"fv_source":"xfv","eta":2026,
    "war":[1.0,1.5,2.0,2.5,3.0],"warP10":[0,0.2,0.4,0.6,0.8],"warP90":[3,4,5,5.5,6],
-   "warTotal":10.0,"warTotalP10":2.0,"warTotalP90":23.5,
+   "warTotal":10.0,"warTotalP10Comon":2.0,"warTotalP90Comon":23.5,
    "warPTH":[2.0,2.6,3.2,3.8,4.4],"warTotalPTH":16.0,"warPeak":4.4,
    "bucketLo":"bust","bucketHi":"star","pBust":0.3,"surNpv":30000000},
   {"key":"cons_kid","name":"Cons Kid","pos":"OF","age":19.5,"team":"SEA","src":"prospect",
    "fv":45.2,"consensus_fv":45.2,"fv_source":"consensus","eta":2027,
    "war":[0.8,1.2,1.6,2.0],"warP10":[0,0,0.2,0.4],"warP90":[2.5,3.5,4.5,5],
-   "warTotal":5.6,"warTotalP10":0.6,"warTotalP90":15.5,
+   "warTotal":5.6,"warTotalP10Comon":0.6,"warTotalP90Comon":15.5,
    "bucketLo":"bust","bucketHi":"solid","pBust":0.45,"surNpv":12000000}
  ],
  "team_outlook":[]
@@ -83,8 +83,8 @@ DETAIL = json.dumps({"players": {
         "key": "vet_guy", "name": "Vet Guy", "pos": "SS", "age": 29.4, "team": "NYY",
         "mlbam": 545361, "isPit": False,
         "proj": {"war": [3.0, 2.8, 2.6, 2.4, 2.2], "warP10": [1.2, 1.1, 1.0, 0.9, 0.8],
-                 "warP90": [4.8, 4.6, 4.4, 4.2, 4.0], "warTotal": 13.0, "warTotalP10": 5.0,
-                 "warTotalP90": 22.0, "surNpv": 40000000, "thru": 2028, "aav": 25000000},
+                 "warP90": [4.8, 4.6, 4.4, 4.2, 4.0], "warTotal": 13.0, "warTotalP10Comon": 5.0,
+                 "warTotalP90Comon": 22.0, "surNpv": 40000000, "thru": 2028, "aav": 25000000},
         "career": [{"y": 2025, "pa": 600, "avg": ".300", "obp": ".380", "slg": ".500",
                     "ops": ".880", "hr": 30, "sb": 10, "bbPct": 11, "kPct": 18, "iso": 0.2,
                     "war": 5.1}],
@@ -843,7 +843,7 @@ def test_prospect_view_shows_grade_eta_and_bust_as_columns():
 
 def test_total_band_stays_withdrawn():
     """F-01: the summed P10-P90 total band is miscalibrated and never rendered.
-    The fixture's warTotalP10/P90 (22.0, 23.5, 15.5) are numbers nothing else
+    The fixture's warTotalP10Comon/P90Comon (22.0, 23.5, 15.5) are numbers nothing else
     on the board produces."""
     for h in ("", "#src=prospect"):
         board = _board(_render(h))

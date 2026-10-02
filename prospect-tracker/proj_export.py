@@ -1092,8 +1092,13 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         m["warTotal"] = round(sum(m["war"]), 1)
         m["warTotalPTH"] = round(sum(m.get("warPTH") or m["war"]), 1)  # if-healthy display total
         if p10_arr:
-            m["warTotalP10"] = round(sum(p10_arr), 1)
-            m["warTotalP90"] = round(sum(p90_arr), 1)
+            # RVA09 (2026-10-02): a sum of per-season quantiles is not a quantile
+            # of the total, so it ships under the Comon suffix, the name
+            # fa_export gives the same comonotone sum. A plain warTotalP10 /
+            # warTotalP90 on /fa/ is the copula-simulated total; here it would
+            # have been the sum under the same name.
+            m["warTotalP10Comon"] = round(sum(p10_arr), 1)
+            m["warTotalP90Comon"] = round(sum(p90_arr), 1)
         if ct:
             _apply_contract(m, ct)
             # A resolved collision winner takes the plain key back (links/joins).
@@ -1813,8 +1818,20 @@ def _prospect_rows(dpw: float) -> list[dict]:
         def _wtot(series):
             return round(sum(series[:_in_win]), 1)
 
-        sv = vf.surplus_value_mm(float(price_fv), is_pit, pos, age=age,
-                                 eta_years=max(0.0, eta_yr - (FIRST_SEASON - 1)))
+        # RVA02 (2026-10-02): ONE PROSPECT, ONE SURPLUS. The prospect's surplus is
+        # the eFV export's surplus_mm for the same player, the number the Trade
+        # Machine board (trade_value_mm), PROSPX and the Club Ledger farm row
+        # serve. This module used to reprice it here through
+        # vf.surplus_value_mm(price_fv, eta_years = shipped ETA - 2026), whole
+        # seasons from the shipped ETA, while the eFV export prices the same
+        # grade on the timeseries surplus record's own eta_years. On the
+        # 2026-10-01 payload that put 54 of 178 prospects above every other
+        # surface (derek_curiel $79.2M against $78.1M, enddy_azocar $25.3M
+        # against $23.3M, ratio up to 1.086). A prospect number recomputed
+        # through value_framework is on the Club Ledger NEVER list, so the row
+        # now copies the eFV figure and prices nothing itself.
+        _sx = _rec.get("surplus_mm")
+        sv = float(_sx) if isinstance(_sx, (int, float)) else None
         # PRIME/TALENT display path (warPTH) + headline peak: reconciled to the
         # industry-style prime anchor so the board shows "what he is if he
         # sticks" (a 62-FV SS ~ 3-4 WAR, star ceiling ~5) instead of the
@@ -1838,8 +1855,11 @@ def _prospect_rows(dpw: float) -> list[dict]:
             # seasons before debut (see P-PWINDOW above). The arrays themselves
             # keep the full control window for the card path.
             "warTotal": _wtot(mean_path),
-            "warTotalP10": _wtot(paths[lo_b]),
-            "warTotalP90": _wtot(paths[hi_b]),
+            # RVA09: the SUM of the per-season P10 / P90 bucket path, served
+            # under the Comon suffix fa_export already uses for a summed
+            # quantile. It is not the P10 / P90 of the total.
+            "warTotalP10Comon": _wtot(paths[lo_b]),
+            "warTotalP90Comon": _wtot(paths[hi_b]),
             # Prime/talent display path (not used for $): board WAR cells.
             "warPTH": [round(w, 2) for w in prime["mean"]] if prime else None,
             "warPTHP10": [round(w, 2) for w in prime["p10"]] if prime else None,
@@ -1850,7 +1870,7 @@ def _prospect_rows(dpw: float) -> list[dict]:
             "warPeak": prime["peak"] if prime else None,
             "bucketLo": _BUCKET_ORDER[lo_b], "bucketHi": _BUCKET_ORDER[hi_b],
             "pBust": round(probs[0], 3),
-            "surNpv": int(sv * 1e6) if sv is not None else None,
+            "surNpv": int(round(sv * 1e6)) if sv is not None else None,
         }))
     out.sort(key=lambda m: -(m.get("warTotal") or 0))
     return out
@@ -3224,7 +3244,9 @@ def build_payload() -> dict:
     re_anchor = (cfg["dollars_per_war"].get("_fa_reanchor") or {})
     return {
         "generated_at": date.today().isoformat(),
-        # Which dollar calibration priced surNpv on the prospect rows.
+        # Which dollar calibration priced surNpv on the veteran rows. Prospect
+        # surNpv is copied from the eFV export (RVA02), which carries its own
+        # stamp; test_calibration_vintage holds the two stamps equal.
         "calibration": vf.calibration_stamp(),
         "first_season": FIRST_SEASON, "horizon": HORIZON,
         # Provenance for the rest-of-season control leg (surRos / surTotal):
@@ -3254,7 +3276,8 @@ def build_payload() -> dict:
         "accountability": _accountability_block(),
         "notes": [
             "veterans: proj_lgbm_v1 quantile heads (horizons 1-5) stacked on the FA module's Marcel champion; war = the median head lifted toward the quantile-implied mean where it sits below it, bands = the P10/P90 heads; warChamp = the champion mean path (the FA pricing path and the Team Outlook sum basis); rows the heads cannot score fall back to the champion with Gate-1 residual-quantile bands",
-            "prospects: P(bucket|FV) x calibrated per-bucket WAR trajectories from projected debut age, starting at the PROSPX ETA; floor/ceiling = 10th/90th-percentile OUTCOME buckets",
+            "prospects: P(bucket|FV) x calibrated per-bucket WAR trajectories from projected debut age, starting at the PROSPX ETA; floor/ceiling = 10th/90th-percentile OUTCOME buckets; surNpv = the eFV surplus (the eFV export's surplus_mm, the figure the Trade Machine board serves), copied and not repriced here",
+            "quantile totals: warTotalP10Comon / warTotalP90Comon are the SUM of the per-season P10 / P90, not the P10 / P90 of the total, and are never printed as a range",
             f"dollars: convex tier pricing at the {FIRST_SEASON} ex-ante FA $/WAR level "
             "(the one written series /fa/ prices the class on; prospect seasons price at the same level), "
             + (f"escalated {_dpw_infl * 100:.1f}%/yr" if _dpw_infl else "flat across seasons")

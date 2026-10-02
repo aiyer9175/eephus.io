@@ -89,8 +89,8 @@ def test_the_control_end_is_the_max_of_the_two_facts_on_every_row():
 # --rebuild-only the card sat one vintage behind the board on 143 surplus rows
 # and one control window, and a check over the four ctrl keys alone saw only
 # the one row.
-_CARD_COPY_KEYS = ("war", "warP10", "warP90", "warTotal", "warTotalP10",
-                   "warTotalP90", "sur", "surNpv", "surTotal", "surRos", "rosWar",
+_CARD_COPY_KEYS = ("war", "warP10", "warP90", "warTotal", "warTotalP10Comon",
+                   "warTotalP90Comon", "sur", "surNpv", "surTotal", "surRos", "rosWar",
                    "rosFrac", "salPath", "salThru", "salSrc", "surSalLo",
                    "surSalHi", "salCut", "salTrunc", "salOpt", "salOptDecl", "salVintage",
                    "ctrlThru", "ctrlOpen", "ctrlEst", "ctrlWhy", "thru", "aav",

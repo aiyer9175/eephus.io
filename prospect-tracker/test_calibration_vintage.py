@@ -207,6 +207,88 @@ def test_the_same_player_is_worth_the_same_on_every_surface():
         f"board row carries another human's: {bad[:10]}")
 
 
+def test_a_prospect_is_worth_the_same_on_every_surface():
+    """RVA02 (2026-10-02): the prospect half of the invariant above. A prospect's
+    /projections/ Surplus is the eFV export's surplus_mm, the number the trade
+    board (trade_value_mm), PROSPX and the Club Ledger farm row serve. proj_export
+    used to reprice it through value_framework on whole seasons from the shipped
+    ETA, and 54 of 178 rows sat above every other surface (derek_curiel $79.2M
+    against $78.1M). Joined on the player key, which all three artifacts share
+    for a tracked prospect."""
+    projp = DATA / "mlb_projections.json"
+    if not projp.exists():
+        pytest.skip("mlb_projections.json not built on this machine")
+    pros = json.loads(projp.read_text(encoding="utf-8")).get("prospects") or []
+    xfv = (_load("xfv.json").get("by_player") or {})
+    tv = {r.get("player_key"): r for r in (_load("trade_values.json").get("players") or [])}
+    n, bad = 0, []
+    for m in pros:
+        if m.get("surNpv") is None:
+            continue
+        n += 1
+        mine = m["surNpv"] / 1e6
+        x = (xfv.get(m["key"]) or {}).get("surplus_mm")
+        t = (tv.get(m["key"]) or {}).get("trade_value_mm")
+        if x is None or abs(mine - float(x)) > 0.15:
+            bad.append((m["key"], "eFV export", round(mine, 2), x))
+        if t is None or abs(mine - float(t)) > 0.15:
+            bad.append((m["key"], "trade board", round(mine, 2), t))
+    assert n > 100, n
+    assert not bad, f"{len(bad)} prospect surplus disagreements, first ten: {bad[:10]}"
+
+
+def _summed_quantile_fields(row, horizon, first_season):
+    """Fields named warTotalP10 / warTotalP90 that equal the sum of the row's
+    per-season P10 / P90 (over the whole array or over the calendar window a
+    prospect's ETA-aligned array covers)."""
+    out = []
+    for fld, arr_key in (("warTotalP10", "warP10"), ("warTotalP90", "warP90")):
+        arr = row.get(arr_key)
+        if fld not in row or not arr:
+            continue
+        sums = {round(sum(arr), 2), round(sum(arr[:horizon]), 2)}
+        if row.get("eta"):
+            in_win = max(0, horizon - (int(row["eta"]) - first_season))
+            sums.add(round(sum(arr[:in_win]), 2))
+        if row[fld] is not None and any(abs(float(row[fld]) - s) <= 0.1 for s in sums):
+            out.append((row.get("key"), fld, row[fld]))
+    return out
+
+
+def test_no_served_quantile_total_is_a_sum_of_season_quantiles():
+    """RVA09 (2026-10-02): /fa/ serves warTotalP10 / warTotalP90 as the
+    copula-simulated total and names the per-season quantile sum
+    warTotalP10Comon / warTotalP90Comon. /projections/ and the player card served
+    the SUM under the plain name on every priced veteran (1,400 of 1,400), so one
+    field name meant two quantities. A summed quantile may only ship under the
+    Comon suffix; the sum is still served there, and this test checks that too so
+    it cannot pass on an artifact that simply lost the bands."""
+    projp, detp = DATA / "mlb_projections.json", DATA / "mlb_player_detail.json"
+    if not (projp.exists() and detp.exists()):
+        pytest.skip("artifacts not built on this machine")
+    proj = json.loads(projp.read_text(encoding="utf-8"))
+    det = json.loads(detp.read_text(encoding="utf-8")).get("players") or {}
+    H, first = int(proj.get("horizon") or 5), int(proj.get("first_season") or 0)
+    rows = [("mlb_projections.json", m) for m in (proj.get("vets") or []) + (proj.get("prospects") or [])]
+    rows += [("mlb_player_detail.json", dict(v.get("proj") or {}, key=k)) for k, v in det.items()]
+    bad, comon = [], 0
+    for name, row in rows:
+        bad += [(name,) + b for b in _summed_quantile_fields(row, H, first)]
+        if row.get("warTotalP10Comon") is not None and row.get("warP10"):
+            comon += 1
+    assert not bad, f"{len(bad)} summed quantiles under a plain total name, first ten: {bad[:10]}"
+    assert comon > 1000, ("the Comon sums are no longer served", comon)
+
+
+def test_the_summed_quantile_check_catches_the_old_name():
+    """Mutation: a row carrying the old plain-name sum must fail the check."""
+    row = {"key": "x", "warP10": [1.0, 1.0, 0.5], "warP90": [3.0, 3.0, 2.0],
+           "warTotalP10": 2.5, "warTotalP90": 8.0}
+    assert len(_summed_quantile_fields(row, 5, 2027)) == 2
+    row = {"key": "x", "warP10": [1.0, 1.0, 0.5], "warTotalP10Comon": 2.5}
+    assert _summed_quantile_fields(row, 5, 2027) == []
+
+
 def test_no_human_appears_twice_on_the_trade_board():
     """One human, one row, one price. Keyed on the slug, the board carried the
     same player twice wherever the prospect feed and projections spelled him

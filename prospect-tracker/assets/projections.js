@@ -1766,7 +1766,7 @@
       // survives a CSV. Empty on a veteran row, which has no prime path.
       + `<th class="pc-csv" hidden data-export-text="Prime ${H}y WAR (prospects, talent anchor)"></th>`
       + th("sur", "Surplus", "pc-sur",
-          `Veterans: production value minus salary over the club control window, through ${first + H - 1} at most - contracted dollars where a contract exists, the league minimum for pre-arbitration seasons, the projected award for arbitration seasons. A guarantee that runs past ${first + H - 1} is priced through its last season, those seasons on the champion (Marcel) aging curve chained from the ${first + H - 1} WAR; an unsigned season past ${first + H - 1} carries no price. Prospects: surplus over the 7-season valuation window from their ETA.`, "Surplus")
+          `Veterans: production value minus salary over the club control window, through ${first + H - 1} at most - contracted dollars where a contract exists, the league minimum for pre-arbitration seasons, the projected award for arbitration seasons. A guarantee that runs past ${first + H - 1} is priced through its last season, those seasons on the champion (Marcel) aging curve chained from the ${first + H - 1} WAR; an unsigned season past ${first + H - 1} carries no price. Prospects: the eFV surplus the Trade Machine board serves, over the 7-season valuation window from their ETA.`, "Surplus")
       + seasons.map((s, t) => th("y" + t,
           `<span class="proj-sr-sm">${String(s).slice(0, 2)}</span>${String(s).slice(2)}`
             + (state.cells === "war" ? "" : `<span class="proj-th-unit">${esc(cellLbl)}</span>`),
@@ -1832,7 +1832,7 @@
       const _tlS = isPros ? null : horizonTail(m);
       const _tpS = (isPros || _tlS) ? null : pricedTail(m);
       const surTip = isPros
-        ? "Prospect surplus value over the 7-season valuation window from his projected ETA"
+        ? "Prospect surplus: the eFV surplus the Trade Machine board serves for him, over the 7-season valuation window from his projected ETA (not repriced here)"
         : _tlS
         ? `${m.surRos != null ? "Rest of this season plus " : ""}NPV of (convex production value − salary) over ${_tlS.first}-${_tlS.end} only, not the whole club control window. ${horizonTailText(m, _tlS)}`
         : _tpS
@@ -3272,8 +3272,9 @@
   // Board spec for the Generate GFX modal: the league projection board as a
   // column leaderboard (projected window eWAR, contract surplus).
   //
-  // THE P10-P90 TOTAL RANGE COLUMN IS GONE (2026-09-11). warTotalP10/P90 are
-  // sums of per-season quantiles (proj_export sums p10_arr), the F-01 defect
+  // THE P10-P90 TOTAL RANGE COLUMN IS GONE (2026-09-11). warTotalP10Comon/P90Comon
+  // (named warTotalP10/P90 before RVA09) are sums of per-season quantiles
+  // (proj_export sums p10_arr), the F-01 defect
   // the on-site board already dropped: a sum of P10s is not the P10 of the
   // total. The graphic kept printing it after the board stopped.
   function _projBoardSpec(top) {

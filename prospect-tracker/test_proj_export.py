@@ -174,10 +174,10 @@ def test_efv_grade_matches_prospx_board():
 def test_bucket_ordering_floor_mean_ceiling():
     d = _payload()
     for m in d["vets"] + d["prospects"]:
-        if m.get("warTotalP10") is None:
+        if m.get("warTotalP10Comon") is None:
             continue
-        assert m["warTotalP10"] <= m["warTotal"] + 0.11, m["name"]
-        assert m["warTotal"] <= m["warTotalP90"] + 0.11, m["name"]
+        assert m["warTotalP10Comon"] <= m["warTotal"] + 0.11, m["name"]
+        assert m["warTotal"] <= m["warTotalP90Comon"] + 0.11, m["name"]
 
 
 def test_vet_surplus_only_on_priced_seasons():

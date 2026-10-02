@@ -698,8 +698,8 @@ def build_payload() -> dict:
              # guaranteed season past the horizon is priced on, the champion
              # aging curve chained from the 2031 WAR.
              "proj": {k: v.get(k) for k in ("war", "warP10", "warP90",
-                                            "warTotal", "warTotalP10",
-                                            "warTotalP90", "sur", "surNpv",
+                                            "warTotal", "warTotalP10Comon",
+                                            "warTotalP90Comon", "sur", "surNpv",
                                             "surTotal", "surRos", "rosWar",
                                             "rosFrac",
                                             "salPath", "salThru", "salSrc",
