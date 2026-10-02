@@ -134,6 +134,21 @@ def test_tokens_equal_the_site_css_decks(decks):
         assert _resolve(dark, name, light).upper() == dv.upper(), (name, "dark")
 
 
+# BR-02 (PB-Q1 B, stepped): the site.css decks define every brand token of
+# assets/brand/tokens.css with the same value, except the --wm-g* gradient
+# stops, which only direction A uses and which stay out of site.css.
+def test_site_css_carries_the_brand_tokens(decks):
+    css = (BRAND / "tokens.css").read_text(encoding="utf-8")
+    for sel, deck in zip((":root", '[data-theme="dark"]'), decks):
+        want = _deck(css, sel)
+        brand = {k: v for k, v in want.items() if not k.startswith("wm-g")}
+        assert len(brand) == 19, (sel, sorted(brand))
+        for name, value in brand.items():
+            assert name in deck, (sel, name)
+            assert " ".join(deck[name].split()) == " ".join(value.split()), (sel, name)
+        assert not [k for k in deck if k.startswith("wm-g")], sel
+
+
 def test_ramp_equals_the_iridescent_stops(decks):
     for theme, deck in zip(("light", "dark"), decks):
         stops = re.findall(r"(#[0-9A-Fa-f]{6})\s+([\d.]+)%", deck["iridescent"])
