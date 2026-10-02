@@ -1366,3 +1366,31 @@ def test_per_source_verdict_words_come_from_the_holm_family():
             leg = cell.get(metric) or {}
             if leg.get("verdict"):
                 assert leg["holm"]["reject_holm"] is True, (cell["label"], metric)
+
+
+# RPR11 (served-number reconciliation, 2026-10-01). The Source Comparison hero
+# printed eFV against the best public source (MLB Pipeline on vm2) and then the
+# 0.030 floor head_to_head_verdict publishes for eFV against PROSPX CONSENSUS;
+# that pair's own floor is 0.0235. The floor printed after a pair's estimate is
+# now that pair's floor, so the clause is called with the pair's key, and the
+# consensus sentence is called with consensus's key.
+# test_source_comparison_hero_floor.py runs the banner on the served artifact.
+def test_hero_floor_names_the_pair_it_belongs_to():
+    js = _read_text("assets/glossary.js").replace("\r\n", "\n")
+    m = re.search(r"function _methHeroBanner\(bt\) \{(.*?)\n\}\n", js, re.S)
+    assert m, "_methHeroBanner not found in assets/glossary.js (renamed?)"
+    code = "\n".join(ln for ln in m.group(1).split("\n")
+                     if not ln.lstrip().startswith("//"))
+    assert re.search(r"for the best public source \(\$\{escapeHtml\(bestPub\[0\]\)\}\)"
+                     r"[^`]*point estimate\$\{_hhFloorClause\(bt, bestKey\)\}", code), (
+        "the hero's best-source estimate is not followed by that pair's floor")
+    assert re.search(r"Against PROSPX consensus[^`]*point estimate"
+                     r"\$\{_hhFloorClause\(bt, \"prospx_consensus\"\)\}", code), (
+        "the consensus sentence is not followed by the consensus floor")
+    assert "_hhPairFloor(bt, bestKey)" in code, (
+        "the hero's resolvability is not read from the best pair's floor")
+    f = re.search(r"function _hhPairFloor\(bt, key\) \{(.*?)\n\}\n", js, re.S)
+    assert f, "_hhPairFloor not found in assets/glossary.js (renamed?)"
+    assert "head_to_head_vs_sources" in f.group(1) and "vs.basis !== hh.basis" in f.group(1)
+    assert not _HARDCODED_DECIMAL_RE.findall(f.group(1)), (
+        "_hhPairFloor carries a hard-coded accuracy constant")

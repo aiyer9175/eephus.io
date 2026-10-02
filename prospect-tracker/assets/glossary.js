@@ -1393,22 +1393,29 @@ function _methAccuracyChart(bt) {
     // take the max over the raters, difference against it, and let the
     // artifact's own floor decide whether the difference may be called a lead.
     // The fragment is ratcheted in test_claims_freshness.BANNED_CLAIM_FRAGMENTS.
-    const pubs = [["PROSPX consensus", c], ["MLB Pipeline", mlb], ["FanGraphs", fg]]
+    const pubs = [["PROSPX consensus", c, "prospx_consensus"], ["MLB Pipeline", mlb, "mlb_pipeline"], ["FanGraphs", fg, "fangraphs"]]
       .filter(pr => pr[1] && pr[1].spearman != null);
     const bestPub = pubs.length
       ? pubs.reduce((a, b) => (b[1].spearman > a[1].spearman ? b : a)) : null;
     const lead = bestPub ? (x.spearman - bestPub[1].spearman) : null;
     const ahead = (lead != null && lead > 0);
-    const resolvable = !!(hh && hh.resolvable === true);
+    // RPR11: the lead is against the best source, so the floor quoted beside it
+    // and the call it decides are that pair's, not consensus's (_hhPairFloor).
+    const bestFloor = bestPub ? _hhPairFloor(bt, bestPub[2]) : null;
+    const resolvable = !!(bestFloor && bestFloor.resolvable === true);
+    // A gap that clears the uncorrected floor but not the Holm one misses the
+    // Holm floor; quote the floor it actually misses.
+    const missFloor = !bestFloor ? null
+      : (bestFloor.clearsUncorrected && bestFloor.holmFloor != null) ? bestFloor.holmFloor : bestFloor.mde95;
     const cls = (ahead && resolvable) ? "is-good" : "";
     const bestTxt = bestPub
       ? `${f3(bestPub[1].spearman)} for the best of them, ${escapeHtml(bestPub[0])}` : "";
     const head = (lead == null)
       ? `eFV orders realized WAR at Spearman ${f3(x.spearman)}`
       : (ahead && resolvable)
-        ? `eFV orders realized WAR ahead of every source measured here, by a margin this backtest can resolve: Spearman ${f3(x.spearman)} against ${bestTxt}, a lead of +${lead.toFixed(3)} against a floor of ${f3(hh && hh.mde95)}`
+        ? `eFV orders realized WAR ahead of every source measured here, by a margin this backtest can resolve: Spearman ${f3(x.spearman)} against ${bestTxt}, a lead of +${lead.toFixed(3)} against a floor of ${f3(bestFloor && bestFloor.mde95)}`
         : ahead
-          ? `eFV orders realized WAR ahead of every source measured here, but not by enough to call it: Spearman ${f3(x.spearman)} against ${bestTxt}, a lead of +${lead.toFixed(3)} that sits inside the ${f3(hh && hh.mde95)} this backtest can resolve at 95%`
+          ? `eFV orders realized WAR ahead of every source measured here, but not by enough to call it: Spearman ${f3(x.spearman)} against ${bestTxt}, a lead of +${lead.toFixed(3)} that does not clear the ${f3(missFloor)} floor this backtest publishes for that pair`
           : `eFV and the best source measured here are indistinguishable: Spearman ${f3(x.spearman)} for eFV against ${bestTxt}, a ${lead.toFixed(3)} point estimate, so no ordering claim is made in either direction`;
     const rowTxt = pubs.map(pr => `${f3(pr[1].spearman)} ${escapeHtml(pr[0])}`).join(", ");
     verdict = `<p class="meth-verdict ${cls}">Out of sample and leakage-free, on the ${n} players eFV and the boards both grade, ${head}. The full row: eFV ${f3(x.spearman)}, ${rowTxt}. A wider gap you may have seen quoted compares eFV on its own rows against the boards on all of theirs, and about half of that one is the row difference rather than the ordering.</p>`;
@@ -2925,21 +2932,69 @@ function _disagreementRead(det) {
   };
 }
 
-function _hhFloorClause(bt) {
+// THE FLOOR BELONGS TO ONE PAIR (RPR11, 2026-10-02). The hero printed eFV
+// against the best public source, which on the vm2 frame is MLB Pipeline
+// (0.393 against 0.398), and then attached head_to_head_verdict's 0.030. That
+// floor is the E_refit floor of eFV against PROSPX CONSENSUS, carried from vm1;
+// the eFV against MLB Pipeline floor is the in-run E_cond 0.0235 in
+// head_to_head_vs_sources. So the sentence floor-checked one pair with
+// another pair's floor. This returns the floor of eFV against `key` on the
+// headline rows, read from the artifact: the consensus pair from
+// head_to_head_verdict (its Holm cell also needs that verdict to agree), any
+// other source from its own Spearman cell, whose verdict word exists only when
+// the cell survives the Holm family. A cell on another basis, or one with no
+// floor, returns null and the caller prints no floor rather than a wrong one.
+function _hhPairFloor(bt, key) {
   const hh = _hhVerdict(bt);
-  if (!hh || hh.mde95 == null) return ".";
+  if (!hh) return null;
+  if (!key || key === "prospx_consensus") {
+    if (hh.mde95 == null) return null;
+    return {
+      mde95: hh.mde95,
+      estimator: hh.mde95_estimator || hh.estimator || "",
+      resolvable: hh.resolvable === true,
+      carriedFrom: hh.mde95_status === "carried" ? String(hh.mde95_carried_from || "earlier") : null,
+      clearsUncorrected: null,
+      holmFloor: null,
+    };
+  }
+  const vs = bt && bt.accuracy && bt.accuracy.head_to_head_vs_sources;
+  if (!vs || vs.basis !== hh.basis || !vs.sources) return null;
+  const leg = vs.sources[key] && vs.sources[key].spearman;
+  if (!leg || leg.mde95 == null) return null;
+  return {
+    mde95: leg.mde95,
+    estimator: leg.mde95_estimator || "",
+    resolvable: !!leg.verdict,
+    carriedFrom: leg.mde95_status === "carried" ? String(leg.mde95_carried_from || "earlier") : null,
+    clearsUncorrected: leg.clears_e_cond_floor === true,
+    holmFloor: (leg.holm && leg.holm.mde95_holm != null) ? leg.holm.mde95_holm : null,
+  };
+}
+
+// The floor clause for eFV against `key` (PROSPX consensus when omitted). It
+// ends the sentence; the caller adds the "unresolved, not a win" reading.
+function _hhFloorClause(bt, key) {
+  const hh = _hhVerdict(bt);
+  const fl = hh ? _hhPairFloor(bt, key) : null;
+  if (!fl) return ".";
   // f3 is declared `const` INSIDE four other functions and is NOT module-scope.
   // Referencing it here threw ReferenceError, which took out _methHeroBanner and
   // with it the whole source-comparison view - the page rendered nothing at all.
   // A local formatter is the fix; do not reach for the outer ones.
   const fmt = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
-  const est = hh.estimator ? ` ${escapeHtml(hh.estimator)}` : "";
+  const est = fl.estimator ? ` ${escapeHtml(fl.estimator)}` : "";
   // A floor carried from an earlier frame says so where it is printed.
-  const carried = hh.mde95_status === "carried"
-    ? ` (carried from the ${escapeHtml(String(hh.mde95_carried_from || "earlier"))} frame, not re-measured on this one)` : "";
-  return hh.resolvable
-    ? `, clearing its${est} noise floor of ${fmt(hh.mde95)}${carried}.`
-    : ` that does NOT clear its${est} noise floor of ${fmt(hh.mde95)}${carried}. We report that as unresolved, not as a win.`;
+  const carried = fl.carriedFrom
+    ? ` (carried from the ${escapeHtml(fl.carriedFrom)} frame, not re-measured on this one)` : "";
+  const holm = fl.holmFloor != null;
+  if (fl.resolvable) {
+    return `, clearing its${est} noise floor of ${fmt(fl.mde95)}${carried}${holm ? " and the correction for testing several sources at once" : ""}.`;
+  }
+  if (fl.clearsUncorrected && holm) {
+    return ` that clears its${est} noise floor of ${fmt(fl.mde95)} but not the ${fmt(fl.holmFloor)} floor after the correction for testing several sources at once.`;
+  }
+  return ` that does NOT clear its${est} noise floor of ${fmt(fl.mde95)}${carried}.`;
 }
 
 function _methHeroBanner(bt) {
@@ -2966,7 +3021,7 @@ function _methHeroBanner(bt) {
   const x = p.xfv, c = p.prospx_consensus, fg = p.fangraphs, mlb = p.mlb_pipeline;
   if (!x || x.spearman == null) return "";
   const f3 = v => (v == null ? "-" : v.toFixed(3));
-  const pubs = [["PROSPX consensus", c], ["MLB Pipeline", mlb], ["FanGraphs", fg]]
+  const pubs = [["PROSPX consensus", c, "prospx_consensus"], ["MLB Pipeline", mlb, "mlb_pipeline"], ["FanGraphs", fg, "fangraphs"]]
     .filter(pr => pr[1] && pr[1].spearman != null);
   const bestPub = pubs.length ? pubs.reduce((a, b) => (b[1].spearman > a[1].spearman ? b : a)) : null;
   const lead = (bestPub && x.spearman != null) ? (x.spearman - bestPub[1].spearman) : null;
@@ -2976,6 +3031,12 @@ function _methHeroBanner(bt) {
   // the entire source-comparison view and the suite stayed green because the
   // view-walk test accepted the empty state as a pass.
   const hhv = _hhVerdict(bt);
+  // RPR11: the lead printed is against the best public source, so the floor and
+  // its resolvability are that pair's (_hhPairFloor), never consensus's floor
+  // beside another source's estimate.
+  const bestKey = bestPub ? bestPub[2] : null;
+  const bestFloor = hhv ? _hhPairFloor(bt, bestKey) : null;
+  const consFloor = hhv ? _hhPairFloor(bt, "prospx_consensus") : null;
   const tile = (lbl, v, isEfv) => `<div class="meth-find-card${isEfv ? " scx-hero-efv" : ""}">
     <div class="meth-find-stat">${f3(v)}</div>
     <div class="meth-find-label">${escapeHtml(lbl)}</div>
@@ -2993,7 +3054,7 @@ function _methHeroBanner(bt) {
   // Both directions now come from the measurement, and the floor decides whether
   // any of it may be called a lead at all.
   const ahead = (lead != null && lead > 0);
-  const resolvable = !!(hhv && hhv.resolvable);
+  const resolvable = !!(bestFloor && bestFloor.resolvable);
   const headline = (lead == null)
     ? "eFV grades prospects on what they actually <em>became</em>."
     : (ahead && resolvable)
@@ -3002,13 +3063,26 @@ function _methHeroBanner(bt) {
         ? "eFV grades prospects on what they actually <em>became</em>, and out of sample it ranks ahead of every public source - by a margin we still cannot call a win."
         : "eFV grades prospects on what they actually <em>became</em>, and out of sample it is statistically indistinguishable from the best public scouting grade.";
   const leadClause = (lead != null && bestPub)
-    ? `, ${f3(x.spearman)} against ${f3(bestPub[1].spearman)} for the best public source (${escapeHtml(bestPub[0])}), a ${lead >= 0 ? "+" : ""}${lead.toFixed(3)} point estimate`
+    ? `, ${f3(x.spearman)} against ${f3(bestPub[1].spearman)} for the best public source (${escapeHtml(bestPub[0])}), a ${lead >= 0 ? "+" : ""}${lead.toFixed(3)} point estimate${_hhFloorClause(bt, bestKey)}`
+    : _hhFloorClause(bt);
+  // eFV has to beat PROSPX consensus (owner, 2026-09-24). When the best public
+  // source is another rater, the consensus pair is stated too, with the floor
+  // head_to_head_verdict publishes for it.
+  // The verdict's own delta when it publishes one, so this figure matches the
+  // head-to-head verdict printed further down the view.
+  const consLead = (hhv && hhv.delta != null) ? Number(hhv.delta)
+    : (c && c.spearman != null) ? (x.spearman - c.spearman) : null;
+  const consClause = (lead != null && bestKey && bestKey !== "prospx_consensus" && c && c.spearman != null && consLead != null)
+    ? ` Against PROSPX consensus, the grade eFV has to beat, it reads ${f3(x.spearman)} against ${f3(c.spearman)}, a ${consLead >= 0 ? "+" : ""}${consLead.toFixed(3)} point estimate${_hhFloorClause(bt, "prospx_consensus")}`
     : "";
+  const printed = [lead != null ? bestFloor : consFloor, consClause ? consFloor : null].filter(Boolean);
+  const unresolvedTail = printed.some(f => !f.resolvable)
+    ? " We report a gap that does not clear its floor as unresolved, not as a win." : "";
   const verbPhrase = ahead ? "it grades ahead of every one of them" : "it lands level with the best of them";
   return `<div class="source-comp-hero">
     <div class="source-comp-hero-kicker">A different kind of Future Value</div>
     <h2 class="source-comp-hero-title">${headline}</h2>
-    <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV is a model trained on resolved outcomes and scored the honest way: leakage-free, forward-chained, on the same players, the same window AND the same vintage as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - ${verbPhrase}${leadClause}${_hhFloorClause(bt)}</p>
+    <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV is a model trained on resolved outcomes and scored the honest way: leakage-free, forward-chained, on the same players, the same window AND the same vintage as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - ${verbPhrase}${leadClause}${consClause}${unresolvedTail}</p>
     <div class="meth-findings source-comp-hero-tiles">${tiles}</div>
     <p class="source-comp-hero-foot">Ordering skill = Spearman correlation between the preseason grade and realized MLB WAR (higher is better). The full method, per-FV-tier and per-archetype breakdowns, and the honest limits are all below - nothing cherry-picked.${_hhPopulationClause(bt)}</p>
   </div>`;
