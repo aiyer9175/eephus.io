@@ -180,6 +180,24 @@ def test_site_css_dark_overrides_theme_tokens(css_text):
         )
 
 
+# BR-02 (owner ask 2): the pixel brand tokens are defined in the light deck
+# and overridden in the dark deck, so the stepped arc flips with the theme.
+BRAND_TOKENS = (
+    [f"--ramp-{i}" for i in range(1, 6)] + [f"--arc-{i}" for i in range(1, 9)]
+    + ["--iridescent-steps", "--ball-face"] + [f"--seam-{i}" for i in range(1, 5)]
+)
+
+
+@pytest.mark.parametrize("token", BRAND_TOKENS)
+def test_brand_token_defined_in_both_decks(css_text, token):
+    light = re.search(r"^:root \{$(.*?)^\}", css_text, re.M | re.S)
+    dark = re.search(r'^\[data-theme="dark"\] \{$(.*?)^\}', css_text, re.M | re.S)
+    assert light and dark
+    pattern = re.compile(rf"^\s*{re.escape(token)}\s*:", re.M)
+    assert pattern.search(light.group(1)), f"{token} missing from the site.css :root deck"
+    assert pattern.search(dark.group(1)), f"{token} missing from the site.css dark deck"
+
+
 def test_no_undefined_border_color_token():
     # The token is --border; --border-color was never defined anywhere and left
     # the /projections/ compare button AND the PROSPX Trade Machine cards

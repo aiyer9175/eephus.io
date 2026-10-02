@@ -153,6 +153,29 @@
   --shadow-card: 0 1px 0 rgba(15,27,45,.05), 0 1px 2px rgba(15,27,45,.04);
   --shadow-card-hover: 0 2px 6px rgba(15,27,45,.12), 0 0 0 1px rgba(14,43,77,.10);
   --iridescent: linear-gradient(90deg,#B91C1C 0%,#C9A227 35%,#1F7A3A 65%,#0E2B4D 100%);
+  /* Pixel brand tokens (BR-02, owner ask 2; PB-Q1 B stepped). The ramp is the
+     --iridescent stops above; --arc-* mixes them at each band centre and
+     --iridescent-steps is the banded twin. Values equal assets/brand/tokens.css
+     (tools/pixel_brand.py). No rule reads them yet. */
+  --ramp-1: #B91C1C;
+  --ramp-2: #C9A227;
+  --ramp-3: #1F7A3A;
+  --ramp-4: #0E2B4D;
+  --ramp-5: var(--ramp-4);
+  --arc-1: color-mix(in srgb, var(--ramp-1) 82%, var(--ramp-2));
+  --arc-2: color-mix(in srgb, var(--ramp-1) 46%, var(--ramp-2));
+  --arc-3: color-mix(in srgb, var(--ramp-1) 11%, var(--ramp-2));
+  --arc-4: color-mix(in srgb, var(--ramp-2) 71%, var(--ramp-3));
+  --arc-5: color-mix(in srgb, var(--ramp-2) 29%, var(--ramp-3));
+  --arc-6: color-mix(in srgb, var(--ramp-3) 89%, var(--ramp-4));
+  --arc-7: color-mix(in srgb, var(--ramp-3) 54%, var(--ramp-4));
+  --arc-8: color-mix(in srgb, var(--ramp-3) 18%, var(--ramp-4));
+  --iridescent-steps: linear-gradient(90deg, var(--arc-1) 0.0% 12.5%, var(--arc-2) 12.5% 25.0%, var(--arc-3) 25.0% 37.5%, var(--arc-4) 37.5% 50.0%, var(--arc-5) 50.0% 62.5%, var(--arc-6) 62.5% 75.0%, var(--arc-7) 75.0% 87.5%, var(--arc-8) 87.5% 100.0%);
+  --ball-face: #F6F1E4;
+  --seam-1: var(--ramp-1);
+  --seam-2: var(--ramp-2);
+  --seam-3: var(--ramp-3);
+  --seam-4: var(--ramp-4);
   --accent-cyan:   #0E7C86;   /* terminal/feed accent (light) */
   /* THE VALUE RULER (2026-09-16). Seven steps that rank a number against its
      OWN metric: elite, great, good, above, avg, below, and poor, which is
@@ -414,6 +437,26 @@
   --accent-lilac: #9B8CFF;
   --logo-dot: var(--accent-lilac);
   --iridescent: linear-gradient(90deg,#00D9FF 0%,#B47CFF 30%,#FF4FD8 55%,#FFD700 78%,#4FFF9E 100%);
+  /* Pixel brand tokens, dark ramp (BR-02). The seams skip the ramp's gold. */
+  --ramp-1: #00D9FF;
+  --ramp-2: #B47CFF;
+  --ramp-3: #FF4FD8;
+  --ramp-4: #FFD700;
+  --ramp-5: #4FFF9E;
+  --arc-1: color-mix(in srgb, var(--ramp-1) 79%, var(--ramp-2));
+  --arc-2: color-mix(in srgb, var(--ramp-1) 38%, var(--ramp-2));
+  --arc-3: color-mix(in srgb, var(--ramp-2) 95%, var(--ramp-3));
+  --arc-4: color-mix(in srgb, var(--ramp-2) 45%, var(--ramp-3));
+  --arc-5: color-mix(in srgb, var(--ramp-3) 95%, var(--ramp-4));
+  --arc-6: color-mix(in srgb, var(--ramp-3) 40%, var(--ramp-4));
+  --arc-7: color-mix(in srgb, var(--ramp-4) 85%, var(--ramp-5));
+  --arc-8: color-mix(in srgb, var(--ramp-4) 28%, var(--ramp-5));
+  --iridescent-steps: linear-gradient(90deg, var(--arc-1) 0.0% 12.5%, var(--arc-2) 12.5% 25.0%, var(--arc-3) 25.0% 37.5%, var(--arc-4) 37.5% 50.0%, var(--arc-5) 50.0% 62.5%, var(--arc-6) 62.5% 75.0%, var(--arc-7) 75.0% 87.5%, var(--arc-8) 87.5% 100.0%);
+  --ball-face: #F6F1E4;
+  --seam-1: var(--ramp-1);
+  --seam-2: var(--ramp-2);
+  --seam-3: var(--ramp-3);
+  --seam-4: var(--ramp-5);
   --grain: rgba(255,255,255,.035);
   --grain2: rgba(120,200,224,.04);
   --shadow-card: 0 1px 0 rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.4);
