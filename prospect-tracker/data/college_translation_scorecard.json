@@ -1,0 +1,267 @@
+{
+ "generated": "2026-10-02",
+ "generated_from": "college_translation.build",
+ "model": "college_translation",
+ "frame": "the served fit's own matched pairs: CollegeSavant name -> statlines earliest A/A+ season (load_single_a); box legs pair the draft prospect's college box line the same way",
+ "method": "leave-one-out: refit without each pair and predict it; null = the Single-A mean of the other pairs; skill = null MAE - model MAE with its paired standard error; Spearman rank correlation of the held-out predictions; P10-P90 coverage of the held-out bands; leave-one-season-out on the college season where a season and its complement each hold at least 12 pairs",
+ "loso_min_pairs": 12,
+ "legs": {
+  "hit_k": {
+   "pairs": 217,
+   "pairs_by_college_season": {
+    "2024": 199,
+    "2025": 18
+   },
+   "r2": 0.172,
+   "mae": 5.323,
+   "null_mae": 5.9,
+   "skill": 0.577,
+   "skill_se": 0.161,
+   "spearman": 0.426,
+   "p10_p90_coverage": 0.802,
+   "target_coverage": 0.8,
+   "leave_one_season_out": [
+    {
+     "season": 2024,
+     "n_test": 199,
+     "n_train": 18,
+     "run": true,
+     "mae": 5.431,
+     "null_mae": 5.992,
+     "p10_p90_coverage": 0.749
+    },
+    {
+     "season": 2025,
+     "n_test": 18,
+     "n_train": 199,
+     "run": true,
+     "mae": 4.749,
+     "null_mae": 5.424,
+     "p10_p90_coverage": 0.944
+    }
+   ]
+  },
+  "hit_bb": {
+   "pairs": 217,
+   "pairs_by_college_season": {
+    "2024": 199,
+    "2025": 18
+   },
+   "r2": 0.021,
+   "mae": 3.67,
+   "null_mae": 3.754,
+   "skill": 0.084,
+   "skill_se": 0.043,
+   "spearman": 0.148,
+   "p10_p90_coverage": 0.829,
+   "target_coverage": 0.8,
+   "leave_one_season_out": [
+    {
+     "season": 2024,
+     "n_test": 199,
+     "n_train": 18,
+     "run": true,
+     "mae": 3.641,
+     "null_mae": 3.762,
+     "p10_p90_coverage": 0.784
+    },
+    {
+     "season": 2025,
+     "n_test": 18,
+     "n_train": 199,
+     "run": true,
+     "mae": 3.38,
+     "null_mae": 3.494,
+     "p10_p90_coverage": 0.944
+    }
+   ]
+  },
+  "hit_ops": {
+   "pairs": 217,
+   "pairs_by_college_season": {
+    "2024": 199,
+    "2025": 18
+   },
+   "r2": 0.007,
+   "mae": 0.131,
+   "null_mae": 0.131,
+   "skill": -0.0,
+   "skill_se": 0.001,
+   "spearman": -0.014,
+   "p10_p90_coverage": 0.853,
+   "target_coverage": 0.8,
+   "leave_one_season_out": [
+    {
+     "season": 2024,
+     "n_test": 199,
+     "n_train": 18,
+     "run": true,
+     "mae": 0.132,
+     "null_mae": 0.132,
+     "p10_p90_coverage": 0.774
+    },
+    {
+     "season": 2025,
+     "n_test": 18,
+     "n_train": 199,
+     "run": true,
+     "mae": 0.129,
+     "null_mae": 0.128,
+     "p10_p90_coverage": 0.944
+    }
+   ]
+  },
+  "pit_k": {
+   "pairs": 232,
+   "pairs_by_college_season": {
+    "2024": 224,
+    "2025": 8
+   },
+   "r2": 0.033,
+   "mae": 4.013,
+   "null_mae": 3.995,
+   "skill": -0.018,
+   "skill_se": 0.053,
+   "spearman": 0.106,
+   "p10_p90_coverage": 0.776,
+   "target_coverage": 0.8,
+   "leave_one_season_out": [
+    {
+     "season": 2024,
+     "n_test": 224,
+     "n_train": 8,
+     "run": false
+    },
+    {
+     "season": 2025,
+     "n_test": 8,
+     "n_train": 224,
+     "run": false
+    }
+   ]
+  },
+  "pit_bb": {
+   "pairs": 232,
+   "pairs_by_college_season": {
+    "2024": 224,
+    "2025": 8
+   },
+   "r2": 0.112,
+   "mae": 3.138,
+   "null_mae": 3.38,
+   "skill": 0.242,
+   "skill_se": 0.084,
+   "spearman": 0.327,
+   "p10_p90_coverage": 0.819,
+   "target_coverage": 0.8,
+   "leave_one_season_out": [
+    {
+     "season": 2024,
+     "n_test": 224,
+     "n_train": 8,
+     "run": false
+    },
+    {
+     "season": 2025,
+     "n_test": 8,
+     "n_train": 224,
+     "run": false
+    }
+   ]
+  },
+  "box_k": {
+   "pairs": 86,
+   "pairs_by_college_season": {
+    "2024": 1,
+    "2025": 29,
+    "2026": 47,
+    "unknown": 9
+   },
+   "r2": 0.257,
+   "mae": 4.584,
+   "null_mae": 5.493,
+   "skill": 0.909,
+   "skill_se": 0.276,
+   "spearman": 0.503,
+   "p10_p90_coverage": 0.814,
+   "target_coverage": 0.8,
+   "leave_one_season_out": [
+    {
+     "season": 2024,
+     "n_test": 1,
+     "n_train": 85,
+     "run": false
+    },
+    {
+     "season": 2025,
+     "n_test": 29,
+     "n_train": 57,
+     "run": true,
+     "mae": 5.546,
+     "null_mae": 6.448,
+     "p10_p90_coverage": 0.69
+    },
+    {
+     "season": 2026,
+     "n_test": 47,
+     "n_train": 39,
+     "run": true,
+     "mae": 5.029,
+     "null_mae": 5.855,
+     "p10_p90_coverage": 0.851
+    }
+   ]
+  },
+  "box_bb": {
+   "pairs": 86,
+   "pairs_by_college_season": {
+    "2024": 1,
+    "2025": 29,
+    "2026": 47,
+    "unknown": 9
+   },
+   "r2": 0.076,
+   "mae": 3.663,
+   "null_mae": 3.658,
+   "skill": -0.006,
+   "skill_se": 0.103,
+   "spearman": 0.141,
+   "p10_p90_coverage": 0.791,
+   "target_coverage": 0.8,
+   "leave_one_season_out": [
+    {
+     "season": 2024,
+     "n_test": 1,
+     "n_train": 85,
+     "run": false
+    },
+    {
+     "season": 2025,
+     "n_test": 29,
+     "n_train": 57,
+     "run": true,
+     "mae": 3.498,
+     "null_mae": 3.634,
+     "p10_p90_coverage": 0.759
+    },
+    {
+     "season": 2026,
+     "n_test": 47,
+     "n_train": 39,
+     "run": true,
+     "mae": 3.958,
+     "null_mae": 4.063,
+     "p10_p90_coverage": 0.809
+    }
+   ]
+  }
+ },
+ "receipts": {
+  "hitters": 210,
+  "pitchers": 230,
+  "skipped": {
+   "draft_record_names_another_player": 5,
+   "name_matches_several_players": 4
+  }
+ }
+}

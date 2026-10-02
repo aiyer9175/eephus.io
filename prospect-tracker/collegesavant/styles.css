@@ -107,6 +107,8 @@
   border: 1px solid var(--gold); padding: 0 4px;
 }
 .trans-note { font-size: 11px; color: var(--muted); line-height: 1.5; margin: 10px 0 0; }
+.receipt-title { margin-top: 14px; }
+.receipt-links { font-size: 12px; }
 
 /* College Team Tendencies - a dense agate stat table (the broadsheet anchor). */
 .tt-board { margin-top: 4px; }

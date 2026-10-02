@@ -347,6 +347,17 @@
    "notes": "Registered 2026-10-02 (owner answer M20-3, census M03-13) before any career-label fit, score or pair count. Frame: CollegeSavant players joined by identity (resolve_draft_keys, the M03-06 join, commit 61b75abd, then draft_players.promoted_key, then career_stats), no name-only fallback. One look 2026-11-09, output under docs/college-career-refit-2026-11-09/ only; looking earlier disqualifies. PASS makes a leg eligible only; serving it is a separate owner-signed task that moves the served LOO MAE, coverage and trust copy. Disclosed earlier measurements: production eval (hit_k r2 0.172 LOO MAE 5.323; pit_k r2 0.033 LOO MAE 4.013 vs 3.995) and the census M03-13 judge probes against the earliest career_stats A/A+ season (hitters outside the fit n 186 mean residual -3.68 MAE 6.88; pitchers n 217 mean +2.21 MAE 5.04)."
   },
   {
+   "model_id": "college_translation_scorecard",
+   "surface": "CollegeSavant What-to-trust copy (hitter and pitcher MiLB Projections pages, player-page projection notes, Draft Prospects notes) and the per-player Actual Single-A receipts; read from CS_TRANSLATION.scorecard",
+   "predicts": "n/a - out-of-sample scorecard of the served college_translation fit, per leg (hit_k, hit_bb, hit_ops, pit_k, pit_bb, box_k, box_bb)",
+   "champion": "the served college_translation fit (statlines earliest A/A+ labels), scored on its own matched pairs",
+   "baseline": "predict-the-Single-A-mean null of the other pairs (leave-one-out) and, for leave-one-season-out, of the training seasons",
+   "metric": "per leg: pairs n; LOO MAE vs the null (skill with paired se); Spearman rank correlation of the held-out predictions; held-out P10-P90 coverage (target 0.80); leave-one-season-out on the college season where a season and its complement each hold >= 12 pairs",
+   "eval_artifact": "data/college_translation_scorecard.json",
+   "verdict": "provisional",
+   "notes": "Added 2026-10-02 (owner answer M20-3, census M03-13). Written by college_translation.build() beside college_translation_eval.json; its LOO MAE, null MAE, skill se and coverage equal the eval's factors.*.loo on every leg (test-held). First reading: hit_k 217 pairs, LOO MAE 5.323 vs 5.900, Spearman 0.43, coverage 0.80; pit_k 232 pairs, 4.013 vs 3.995, Spearman 0.11; pit_bb 3.138 vs 3.380, Spearman 0.33. Leave-one-season-out runs for the hitter legs (2024 199 pairs, 2025 18) and the box legs (2025, 2026), not for the pitcher legs (2025 holds 8 pairs). Receipts: 210 hitters and 230 pitchers carry their realized line; 5 skipped where the draft record names another player, 4 where the name matches several players. The refit on career_stats labels is registered separately (college_translation_career_refit)."
+  },
+  {
    "model_id": "college_pitk_box_challenger",
    "surface": "none served - registered challenger for the CollegeSavant pitcher K% leg (college_translation pit_k); docs/COLLEGE_PIT_K_CHALLENGER_GATE.md",
    "predicts": "Single-A K% from the full-season NCAA box K% (100 * SO / (outs + H + BB), at least 20 NCAA IP) of the same season as the tracked college row",

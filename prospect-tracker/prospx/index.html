@@ -29724,6 +29724,9 @@ async function renderDraftDetail(key) {
     root.innerHTML = `<div class="state-message">Unknown draft prospect: ${escapeHtml(key)}. <a href="#" onclick="goHome();return false;">Back to list</a>.</div>`;
     return;
   }
+  // The CollegeSavant bridge feeds the College Stats tab's tracked block
+  // (owner answer M20-3); cached after the first draftee, empty on failure.
+  await _loadCsEquiv();
   const { p, cls } = hit;
   const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
   const fvLbl = fvInt != null ? `${fvInt}` : null;  // v26
@@ -30101,10 +30104,46 @@ async function renderDraftDetail(key) {
         </table>
       </div>`;
   })();
+  // College tracked (CollegeSavant), owner answer M20-3: the tracked college
+  // profile with CS+ and key percentiles as the CollegeSavant page prints them
+  // (computed once, server side, by college_translation.py), the projected
+  // Single-A chips, the realized Single-A line when the fit paired him, and a
+  // link to his CollegeSavant page. It renders with or without a
+  // college_stats payload, so the 2017-2024 classes (none on file) get it too.
+  const _csTrackedHtml = (() => {
+    const b = _csEntry(p.player_key);
+    if (!b || !b.cs || !b.cs.slug) return "";
+    const isPit = b.cs.side === "pit";
+    const csUrl = (isPit ? "/collegesavant/pitcher_index.html" : "/collegesavant/")
+      + `#/player/${encodeURIComponent(b.cs.year)}/${encodeURIComponent(b.cs.slug)}`;
+    const chip = (label, value, sub) => `<span style="display:inline-flex;align-items:baseline;gap:4px;padding:3px 7px;margin:0 6px 6px 0;border:1px solid var(--border-light);border-radius:4px;background:var(--bg-secondary);font-size:11px;color:var(--text-secondary);">${escapeHtml(label)} <strong style="font-family:var(--font-mono);color:var(--text-primary);">${escapeHtml(String(value))}</strong>${sub ? `<span style="color:var(--text-tertiary);">${escapeHtml(sub)}</span>` : ""}</span>`;
+    const head = (t) => `<div style="margin:8px 0 4px;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${t}</div>`;
+    const csPlus = b.cs_plus != null ? chip("CS+", b.cs_plus, "") : "";
+    const pcts = Object.entries(b.pct || {}).map(([l, v]) => chip(l, v, "pctl")).join("");
+    const proj = (b.headline || []).map(h => chip(h.label, h.value, `${h.band}${h.flag ? " · " + h.flag : ""}`)).join("");
+    const a = b.actual_single_a;
+    let actual = "";
+    if (a) {
+      const f1 = (x) => x == null ? " - " : x.toFixed(1) + "%";
+      const f3 = (x) => x == null ? " - " : x.toFixed(3).replace(/^0(?=\.)/, "");
+      const sample = isPit ? (a.ip != null ? `${a.ip} IP` : "") : (a.games != null ? `${a.games} G` : "");
+      actual = head(`Actual Single-A · ${a.season} ${escapeHtml(a.level || "")}${sample ? " · " + sample : ""}${a.identity === "name" ? " · matched by name" : ""}`)
+        + chip("K%", f1(a.k_pct), "") + chip("BB%", f1(a.bb_pct), "") + (isPit ? "" : chip("OPS", f3(a.ops), ""))
+        + `<div style="font-size:11px;color:var(--text-tertiary);line-height:1.5;">His earliest A or A+ season on file, the line the projection is fit on; the CollegeSavant page prints each miss against the projection refit without him.</div>`;
+    }
+    return `<div class="detail-title" style="margin-top:14px;">College tracked (CollegeSavant) <span class="detail-title-sub">${escapeHtml(String(b.cs.year))} ${isPit ? "pitcher" : "hitter"} · CS+ 100 = the ${escapeHtml(String(b.cs.year))} tracked pool average${b.cs.pool_n ? ` (${Number(b.cs.pool_n).toLocaleString()} ${isPit ? "arms" : "hitters"})` : ""} · percentiles within that pool</span></div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:6px;">
+        <div>${csPlus}${pcts}</div>
+        ${proj ? head("Projected Single-A (CollegeSavant)") + `<div>${proj}</div>` : ""}
+        ${actual}
+        <div style="margin-top:6px;font-size:12px;"><a href="${csUrl}" style="color:var(--neon-cyan);">Open on CollegeSavant</a></div>
+      </div>`;
+  })();
+  const _collegeTabHtml = _collegeStatsHtml + _csTrackedHtml;
   const tabs = [
     { key: "overview",    label: "Overview",          html: overviewHtml },
     { key: "scouting",    label: "Tools & Scouting",  html: toolsScoutingHtml },
-    { key: "college",     label: "College Stats",     html: _collegeStatsHtml },
+    { key: "college",     label: "College Stats",     html: _collegeTabHtml },
     { key: "acquisition", label: "Acquisition",        html: acquisitionHtml },
   ];
   const tabBar = renderDetailTabs(tabs, state.prospectTab, "prospect");

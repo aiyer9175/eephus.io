@@ -215,6 +215,8 @@ MODEL_GLOSSARY = {
     "pal_stuff_xrv": ["stuff_plus_aaa"],   # W3: per-type aStuff+ sidecar + PAL pitch-add ranking (display)
     "college_stuff_translation": "internal",  # W4 loss ledger (college stuff+ K% covariate FAIL)
     "college_pitk_box_challenger": "internal",  # registered 2026-10-01, not scored; serves nothing
+    "college_translation_career_refit": "internal",  # registered 2026-10-02, not scored; serves nothing
+    "college_translation_scorecard": ["single_a_equivalent"],  # the What-to-trust copy and receipts read it
     "collegesavant_stuff": ["collegesavant_stuff_plus"],  # W4 governance of the shipped display lineage
     "advancement_pace": ["advancement_pace_plus"],        # W5 descriptive display (contract: never a model input)
     # eFV holistic program 2026-07-24 (docs/efv-2026-07-24/GATES.md):

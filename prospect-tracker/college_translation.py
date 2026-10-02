@@ -48,6 +48,7 @@ section unchanged, and name-only matches that don't resolve are simply omitted.
 """
 from __future__ import annotations
 
+import bisect
 import json
 import math
 import os
@@ -348,12 +349,12 @@ def _equiv_headline(sa: dict, side: str) -> list[dict]:
     return chips
 
 
-def load_single_a(con, key_name: dict):
-    """Return {slug: {hit:{k_pct,bb_pct,ops}, pit:{k_pct,bb_pct}}} from the
-    earliest qualifying Single-A (A / A+) season on file. Pitcher K%/BB% use the
-    stored rate (from actual batters faced) when present, falling back to the
-    K/9, BB/9 via BF_PER_9 conversion only when it is missing. Pitcher seasons
-    gated at >= 20 IP."""
+def _single_a_rows(con, key_name: dict):
+    """Every qualifying Single-A (A / A+) statlines row per normalized name,
+    split hit / pit. Tuples lead with the fields the fit reads (hitters:
+    season, K%, BB%, OPS; pitchers: season, K%, BB%) and then carry the row's
+    identity for the receipts (hitters: player_key, level, games; pitchers:
+    player_key, level, IP)."""
     hit, pit = {}, {}
     for pk, pj in con.execute("SELECT player_key, payload_json FROM statlines"):
         try:
@@ -393,7 +394,7 @@ def load_single_a(con, key_name: dict):
                 bp = (float(bb9) / BF_PER_9 * 100.0) if bb9 is not None else None
             else:
                 bp = float(bp)
-            pit.setdefault(slug, []).append((season, kp, bp))
+            pit.setdefault(slug, []).append((season, kp, bp, pk, d.get("level"), round(ip, 1)))
         else:
             if d.get("k_pct") is None or d.get("bb_pct") is None:
                 continue
@@ -403,7 +404,18 @@ def load_single_a(con, key_name: dict):
             except ValueError:
                 ops = None
             hit.setdefault(slug, []).append(
-                (season, float(d["k_pct"]), float(d["bb_pct"]), ops))
+                (season, float(d["k_pct"]), float(d["bb_pct"]), ops, pk, d.get("level"),
+                 d.get("games")))
+    return hit, pit
+
+
+def load_single_a(con, key_name: dict):
+    """Return {slug: {hit:{k_pct,bb_pct,ops}, pit:{k_pct,bb_pct}}} from the
+    earliest qualifying Single-A (A / A+) season on file. Pitcher K%/BB% use the
+    stored rate (from actual batters faced) when present, falling back to the
+    K/9, BB/9 via BF_PER_9 conversion only when it is missing. Pitcher seasons
+    gated at >= 20 IP."""
+    hit, pit = _single_a_rows(con, key_name)
     # keep the earliest qualifying season per player (closest to the college line)
     hit = {s: sorted(v)[0] for s, v in hit.items()}
     pit = {s: sorted(v)[0] for s, v in pit.items()}
@@ -485,6 +497,238 @@ def _loo_mae_cov(cs, pro, cs_key, pro_idx):
             "skill": round(g_mean, 3), "skill_se": round(g_sd / math.sqrt(m), 3),
             "p10_p90_coverage": round(inside / m, 3),
             "target_coverage": 0.80, "n": m}
+
+
+# --------------------------------------------------------------------------- #
+# Out-of-sample scorecard (owner answer M20-3): the same leave-one-out test as
+# _loo_mae_cov, keeping each held-out prediction so the scorecard can also
+# report rank correlation, and a leave-one-season-out read where the college
+# seasons allow it. Written to data/college_translation_scorecard.json; the
+# CollegeSavant What-to-trust copy reads it.
+# --------------------------------------------------------------------------- #
+LOSO_MIN_PAIRS = 12   # a held-out season, and its training side, need this many
+
+
+def _loo_items(cs, pro, cs_key, pro_idx):
+    """[(slug, college x, Single-A y, held-out prediction, held-out band_sd,
+    college season)] in the order _loo_mae_cov scores them."""
+    items = [(s, float(v[cs_key]), float(pro[s][pro_idx]), v.get("year"))
+             for s, v in cs.items()
+             if s in pro and v.get(cs_key) is not None and pro[s][pro_idx] is not None]
+    out = []
+    for i, (slug, x, y, yr) in enumerate(items):
+        train = items[:i] + items[i + 1:]
+        f = _fit([a[1] for a in train], [a[2] for a in train])
+        if f:
+            out.append((slug, x, y, _predict(f, x), f["band_sd"], yr))
+    return out
+
+
+def _ranks(xs):
+    order = sorted(range(len(xs)), key=lambda i: xs[i])
+    r = [0.0] * len(xs)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and xs[order[j + 1]] == xs[order[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            r[order[k]] = (i + j) / 2 + 1
+        i = j + 1
+    return r
+
+
+def _spearman(a, b):
+    if len(a) < 3:
+        return None
+    ra, rb = _ranks(a), _ranks(b)
+    ma, mb = sum(ra) / len(ra), sum(rb) / len(rb)
+    num = sum((x - ma) * (y - mb) for x, y in zip(ra, rb))
+    den = math.sqrt(sum((x - ma) ** 2 for x in ra) * sum((y - mb) ** 2 for y in rb))
+    return round(num / den, 3) if den else None
+
+
+def _season_holdout(items):
+    """Leave-one-season-out on the college season: fit on every other season,
+    score the held-out one against the training mean. Run only for a season
+    with LOSO_MIN_PAIRS pairs and as many outside it."""
+    seasons = sorted({it[3] for it in items if it[3] is not None})
+    out = []
+    for s in seasons:
+        test = [it for it in items if it[3] == s]
+        train = [it for it in items if it[3] != s]
+        row = {"season": s, "n_test": len(test), "n_train": len(train)}
+        if len(test) < LOSO_MIN_PAIRS or len(train) < LOSO_MIN_PAIRS:
+            row["run"] = False
+            out.append(row)
+            continue
+        f = _fit([a[1] for a in train], [a[2] for a in train])
+        ym = sum(a[2] for a in train) / len(train)
+        err = [abs(y - _predict(f, x)) for _, x, y, _ in test]
+        nul = [abs(y - ym) for _, x, y, _ in test]
+        inside = sum(1 for _, x, y, _ in test
+                     if abs(y - _predict(f, x)) <= 1.2816 * f["band_sd"])
+        row.update(run=True, mae=round(sum(err) / len(err), 3),
+                   null_mae=round(sum(nul) / len(nul), 3),
+                   p10_p90_coverage=round(inside / len(test), 3))
+        out.append(row)
+    return out
+
+
+def scorecard_leg(cs, pro, cs_key, pro_idx, factor):
+    """(one leg's out-of-sample scorecard, {slug: held-out prediction}), or
+    (None, {}) under the leave-one-out minimum."""
+    held = _loo_items(cs, pro, cs_key, pro_idx)
+    n = len(held)
+    if n < 12:
+        return None, {}
+    err = [abs(y - p) for _, _, y, p, _, _ in held]
+    y_sum = sum(y for _, _, y, _, _, _ in held)
+    nul = [abs(y - (y_sum - y) / (n - 1)) for _, _, y, _, _, _ in held]
+    gains = [b - a for a, b in zip(err, nul)]
+    g = sum(gains) / n
+    g_sd = math.sqrt(sum((x - g) ** 2 for x in gains) / (n - 1)) if n > 1 else 0.0
+    inside = sum(1 for _, _, y, p, sd, _ in held if abs(y - p) <= 1.2816 * sd)
+    by_season: dict = {}
+    for it in held:
+        k = str(it[5]) if it[5] is not None else "unknown"
+        by_season[k] = by_season.get(k, 0) + 1
+    leg = {
+        "pairs": n,
+        "pairs_by_college_season": dict(sorted(by_season.items())),
+        "r2": factor.get("r2"),
+        "mae": round(sum(err) / n, 3),
+        "null_mae": round(sum(nul) / n, 3),
+        "skill": round(g, 3),
+        "skill_se": round(g_sd / math.sqrt(n), 3),
+        "spearman": _spearman([it[3] for it in held], [it[2] for it in held]),
+        "p10_p90_coverage": round(inside / n, 3),
+        "target_coverage": 0.80,
+        "leave_one_season_out": _season_holdout([(s, x, y, yr) for s, x, y, _, _, yr in held]),
+    }
+    return leg, {it[0]: it[3] for it in held}
+
+
+# --------------------------------------------------------------------------- #
+# Receipts (owner answer M20-3): the realized Single-A line the fit paired with
+# a CollegeSavant player, exactly as load_single_a picks it (the earliest
+# qualifying A/A+ statlines season), with the identity it rests on.
+# --------------------------------------------------------------------------- #
+def single_a_receipt(side: str, v: dict, rows: list, milb_key):
+    """(receipt, None) or (None, reason). rows are the player's _single_a_rows
+    tuples; the earliest one is the fit's label."""
+    if not rows:
+        return None, None
+    row = sorted(rows)[0]
+    pk_i = 4 if side == "hit" else 3
+    pk = row[pk_i]
+    try:
+        if int(row[0]) < int(v.get("year") or 0):
+            return None, "pro_season_before_college_season"
+    except (TypeError, ValueError):
+        return None, "no_season"
+    if milb_key:
+        if pk != milb_key:
+            return None, "draft_record_names_another_player"
+        identity = "draft_record"
+    else:
+        if len({r[pk_i] for r in rows}) > 1:
+            return None, "name_matches_several_players"
+        identity = "name"
+    rec = {"season": int(row[0]), "level": row[pk_i + 1], "k_pct": round(row[1], 1),
+           "bb_pct": round(row[2], 1) if row[2] is not None else None,
+           "pro_key": pk, "identity": identity, "in_fit": True}
+    if side == "hit":
+        rec["ops"] = round(row[3], 3) if row[3] is not None else None
+        rec["games"] = row[6]
+    else:
+        rec["ip"] = row[5]
+    return rec, None
+
+
+# --------------------------------------------------------------------------- #
+# CS+ and key percentiles for the PROSPX draftee card, ported from the
+# CollegeSavant apps (computeCSPlus / computePercentiles in collegesavant/app.js
+# and pitcher_app.js) so PROSPX reads one server number instead of a second JS
+# copy; test_collegesavant_receipts.py holds the port to the JS on the payloads.
+# --------------------------------------------------------------------------- #
+CSPLUS_GROUPS = {
+    "hit": [[("90th_percentile_exit_velocity", 1), ("barrel_pct", 1), ("hard_hit_pct", 1)],
+            [("zone_contact_pct", 1), ("whiff_pct", -1), ("chase_pct", -1)]],
+    "pit": [[("stuff_plus", 1), ("swinging_strike_pct", 1), ("chase_pct", 1)],
+            [("barrel_pct", -1), ("hard_hit_pct", -1), ("xwoba_against", -1)]],
+}
+# (key, label, higher is better) as the apps' METRICS / ALL_METRICS carry them.
+KEY_PERCENTILES = {
+    "hit": [("xwoba", "xwOBA", True), ("90th_percentile_exit_velocity", "90th EV", True),
+            ("barrel_pct", "Barrel %", True), ("chase_pct", "Chase %", False),
+            ("whiff_pct", "Whiff %", False), ("k_pct", "K %", False), ("bb_pct", "BB %", True)],
+    "pit": [("stuff_plus", "Stuff+", True), ("avg_fastball_velo", "Avg FB Velo", True),
+            ("avg_extension", "Extension", True), ("swinging_strike_pct", "SwStr %", True),
+            ("xwoba_against", "xwOBA Against", False), ("k_pct", "K %", True),
+            ("bb_pct", "BB %", False)],
+}
+
+
+def _num(x):
+    try:
+        f = float(x)
+    except (TypeError, ValueError):
+        return None
+    return f if math.isfinite(f) else None
+
+
+def _js_round(x: float) -> int:
+    return math.floor(x + 0.5)
+
+
+def cs_slug(side: str, r: dict) -> str:
+    return (slugify_cs(r.get("hitter_name")) if side == "hit"
+            else slugify_cs("{}-{}".format(r.get("pitcher_name"), r.get("pitcher_id"))))
+
+
+def cs_profile(pool: list, side: str) -> dict:
+    """slug -> {cs_plus, pct: {label: percentile}} over one season's pool, the
+    numbers the CollegeSavant page prints for that season."""
+    stats = {}
+    for grp in CSPLUS_GROUPS[side]:
+        for key, _d in grp:
+            vals = [x for x in (_num(r.get(key)) for r in pool) if x is not None]
+            if not vals:
+                stats[key] = (0.0, 1.0)
+                continue
+            m = sum(vals) / len(vals)
+            sd = math.sqrt(sum((x - m) ** 2 for x in vals) / len(vals))
+            stats[key] = (m, sd or 1.0)
+    pools = {key: sorted(x for x in (_num(r.get(key)) for r in pool) if x is not None)
+             for key, _l, _h in KEY_PERCENTILES[side]}
+    out = {}
+    for r in pool:
+        gz = []
+        for grp in CSPLUS_GROUPS[side]:
+            zs = []
+            for key, d in grp:
+                val = _num(r.get(key))
+                if val is None:
+                    continue
+                m, sd = stats[key]
+                zs.append(d * (val - m) / sd)
+            if zs:
+                gz.append(sum(zs) / len(zs))
+        csp = _js_round(100 + 10 * (sum(gz) / len(gz))) if gz else None
+        pct = {}
+        for key, label, hb in KEY_PERCENTILES[side]:
+            val, pl = _num(r.get(key)), pools[key]
+            if val is None or len(pl) < 2:
+                continue
+            less = bisect.bisect_left(pl, val)
+            equal = bisect.bisect_right(pl, val) - less
+            p = _js_round((less + 0.5 * equal) / len(pl) * 100)
+            if not hb:
+                p = 100 - p
+            pct[label] = max(1, min(99, p))
+        out[cs_slug(side, r)] = {"cs_plus": csp, "pct": pct}
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -637,7 +881,11 @@ def build(out_dir: Path | None = None) -> dict:
     with storage.connect() as con:
         key_name = _key_to_name(con)
         cs_h, cs_p = load_cs_hitters(), load_cs_pitchers()
-        sa_h, sa_p = load_single_a(con, key_name)
+        # load_single_a's pick, built here from the full row lists so the
+        # receipts can name the identity each pair rests on.
+        rows_h, rows_p = _single_a_rows(con, key_name)
+        sa_h = {s_: sorted(v_)[0] for s_, v_ in rows_h.items()}
+        sa_p = {s_: sorted(v_)[0] for s_, v_ in rows_p.items()}
 
         F = {}
         for key, cs, pro, ck, pi in [
@@ -701,7 +949,8 @@ def build(out_dir: Path | None = None) -> dict:
             nm = draft_name.get(pk)
             if nm and (b.get("k_pct") is not None or b.get("bb_pct") is not None):
                 box_cs[nm] = {"k_pct": b["k_pct"] * 100 if b.get("k_pct") is not None else None,
-                              "bb_pct": b["bb_pct"] * 100 if b.get("bb_pct") is not None else None}
+                              "bb_pct": b["bb_pct"] * 100 if b.get("bb_pct") is not None else None,
+                              "year": b.get("season")}
         for bkey, bck, bpi in [("box_k", "k_pct", 1), ("box_bb", "bb_pct", 2)]:
             bxs, bys = _pairs(box_cs, sa_h, bck, bpi)
             bf = _fit(bxs, bys)
@@ -730,6 +979,75 @@ def build(out_dir: Path | None = None) -> dict:
         (out_dir / "college_translation_eval.json").write_text(
             json.dumps(eval_doc, indent=1), encoding="utf-8")
 
+        # Out-of-sample scorecard on the same pairs (owner answer M20-3): the
+        # leave-one-out numbers above plus rank correlation and a
+        # leave-one-season-out read, and each pair's held-out prediction for
+        # the per-player receipts.
+        sc_legs, held_out = {}, {}
+        for key, cs, pro, ck, pi in [
+            ("hit_k", cs_h, sa_h, "k_pct", 1), ("hit_bb", cs_h, sa_h, "bb_pct", 2),
+            ("hit_ops", cs_h, sa_h, "xwoba", 3), ("pit_k", cs_p, sa_p, "k_pct", 1),
+            ("pit_bb", cs_p, sa_p, "bb_pct", 2), ("box_k", box_cs, sa_h, "k_pct", 1),
+            ("box_bb", box_cs, sa_h, "bb_pct", 2),
+        ]:
+            if key not in F:
+                continue
+            leg, preds = scorecard_leg(cs, pro, ck, pi, F[key])
+            if leg:
+                sc_legs[key] = leg
+                held_out[key] = preds
+        promoted = {pk: pr for pk, pr in con.execute(
+            "SELECT player_key, promoted_key FROM draft_players")}
+        receipt_skips: dict = {}
+        n_receipts = {"hit": 0, "pit": 0}
+
+        def receipt_for(side, slug_norm, v, pks):
+            rows = (rows_h if side == "hit" else rows_p).get(slug_norm)
+            sa = sa_h if side == "hit" else sa_p
+            if not rows or slug_norm not in sa:
+                return None
+            milb = promoted.get(pks[0]) if pks else None
+            rec, why = single_a_receipt(side, v, rows, milb)
+            if not rec:
+                if why:
+                    receipt_skips[why] = receipt_skips.get(why, 0) + 1
+                return None
+            legs = (("k_pct", "hit_k"), ("bb_pct", "hit_bb"), ("ops", "hit_ops")) if side == "hit" \
+                else (("k_pct", "pit_k"), ("bb_pct", "pit_bb"))
+            ho = {}
+            for stat, leg in legs:
+                pr = held_out.get(leg, {}).get(slug_norm)
+                if pr is not None:
+                    ho[stat] = round(pr, 3 if stat == "ops" else 1)
+            rec["held_out"] = ho
+            n_receipts[side] += 1
+            return rec
+
+        # CS+ and key percentiles per (side, season) pool, for the PROSPX card.
+        _pools = {"hit": _first_array(CS / "hitter_year_data.js", "window.HITTER_DATA"),
+                  "pit": _first_array(CS / "pitcher_data.js", "window.PITCHER_DATA")}
+        _prof_cache: dict = {}
+
+        def profile(side, year, slug):
+            if (side, year) not in _prof_cache:
+                pool = [r for r in _pools[side] if r.get("year") == year]
+                _prof_cache[(side, year)] = (cs_profile(pool, side), len(pool))
+            prof, n = _prof_cache[(side, year)]
+            return prof.get(slug), n
+
+        def bridge_extras(side, v, slug, pks, rec):
+            prof, n = profile(side, v.get("year"), slug)
+            ex = {"cs": {"slug": slug, "year": v.get("year"), "side": side, "pool_n": n}}
+            if prof:
+                ex["cs_plus"] = prof["cs_plus"]
+                ex["pct"] = prof["pct"]
+            milb = promoted.get(pks[0]) if pks else None
+            if milb:
+                ex["milb_key"] = milb
+            if rec:
+                ex["actual_single_a"] = rec
+            return ex
+
         translations, bridge = {}, {}
         pk_to_cs = {}  # draft player_key -> {slug, year, side}: prospects that ALSO
         n_box = 0      # have a CollegeSavant tracked page, so the board can link to it
@@ -747,9 +1065,17 @@ def build(out_dir: Path | None = None) -> dict:
             if box_pk:
                 entry["box"] = box_hit[box_pk]
                 n_box += 1
+            if pks:
+                entry["draft_key"] = pks[0]
+                if promoted.get(pks[0]):
+                    entry["milb_key"] = promoted[pks[0]]
+            rec = receipt_for("hit", slug_norm, v, pks)
+            if rec:
+                entry["actual_single_a"] = rec
             translations[slug] = entry
             for k in pks:
-                bridge[k] = {"side": "hit", "headline": _equiv_headline(t, "hit"), "name": v["name"]}
+                bridge[k] = {"side": "hit", "headline": _equiv_headline(t, "hit"), "name": v["name"],
+                             **bridge_extras("hit", v, slug, pks, rec)}
                 pk_to_cs.setdefault(k, {"slug": slug, "year": v.get("year"), "side": "hit"})
         for slug_norm, v in cs_p.items():
             stuff_wt = (cs_stuff.get((str(v.get("pitcher_id")), v.get("year")))
@@ -762,6 +1088,7 @@ def build(out_dir: Path | None = None) -> dict:
             # client-side T[pitcher.slug] lookup misses and the board renders empty.
             slug = slugify_cs("{}-{}".format(v["name"], v.get("pitcher_id")))
             pks = keys_for(slug_norm, v)
+            rec = None
             if slug not in translations:
                 # Pitchers project from the season with the most pitches among
                 # the seasons that carry K% / BB% (2026 rows carry neither), and
@@ -771,10 +1098,18 @@ def build(out_dir: Path | None = None) -> dict:
                 if box_pk:
                     entry["box"] = box_pit[box_pk]
                     n_box += 1
+                if pks:
+                    entry["draft_key"] = pks[0]
+                    if promoted.get(pks[0]):
+                        entry["milb_key"] = promoted[pks[0]]
+                rec = receipt_for("pit", slug_norm, v, pks)
+                if rec:
+                    entry["actual_single_a"] = rec
                 translations[slug] = entry
             for k in pks:
                 if k not in bridge:
-                    bridge[k] = {"side": "pit", "headline": _equiv_headline(t, "pit"), "name": v["name"]}
+                    bridge[k] = {"side": "pit", "headline": _equiv_headline(t, "pit"), "name": v["name"],
+                                 **bridge_extras("pit", v, slug, pks, rec)}
                 pk_to_cs.setdefault(k, {"slug": slug, "year": v.get("year"), "side": "pit"})
         # CollegeSavant-universe NCAA box scores (tracked players who are NOT
         # draft prospects), attached by slug where we have no draft-prospect box.
@@ -803,8 +1138,32 @@ def build(out_dir: Path | None = None) -> dict:
                             "skill_se": (f.get("loo") or {}).get("skill_se"),
                             "coverage": (f.get("loo") or {}).get("p10_p90_coverage")}
                         for k, f in F.items()}
+        scorecard = {
+            "generated": __import__("datetime").date.today().isoformat(),
+            "generated_from": "college_translation.build",
+            "model": "college_translation",
+            "frame": "the served fit's own matched pairs: CollegeSavant name -> statlines "
+                     "earliest A/A+ season (load_single_a); box legs pair the draft "
+                     "prospect's college box line the same way",
+            "method": "leave-one-out: refit without each pair and predict it; null = the "
+                      "Single-A mean of the other pairs; skill = null MAE - model MAE with "
+                      "its paired standard error; Spearman rank correlation of the held-out "
+                      "predictions; P10-P90 coverage of the held-out bands; "
+                      "leave-one-season-out on the college season where a season and its "
+                      "complement each hold at least %d pairs" % LOSO_MIN_PAIRS,
+            "loso_min_pairs": LOSO_MIN_PAIRS,
+            "legs": sc_legs,
+            "receipts": {"hitters": n_receipts["hit"], "pitchers": n_receipts["pit"],
+                         "skipped": dict(sorted(receipt_skips.items()))},
+        }
+        (out_dir / "college_translation_scorecard.json").write_text(
+            json.dumps(scorecard, indent=1), encoding="utf-8")
         payload = {"generated_from": "college_translation.build", "translations": translations,
                    "eval": eval_summary, "low_signal_r2": LOW_SIGNAL_R2,
+                   "scorecard": {k: {kk: leg[kk] for kk in ("pairs", "r2", "mae", "null_mae", "skill",
+                                                            "skill_se", "spearman", "p10_p90_coverage",
+                                                            "leave_one_season_out")}
+                                 for k, leg in sc_legs.items()},
                    "caveat": eval_doc["caveat"]}
         (out_dir / "collegesavant_translation.js").write_text(
             "window.CS_TRANSLATION = " + json.dumps(payload) + ";\n", encoding="utf-8")

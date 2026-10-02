@@ -967,10 +967,19 @@ function upperFirst(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
+// What to trust reads the out-of-sample scorecard college_translation.py
+// writes (embedded here as CS_TRANSLATION.scorecard, owner answer M20-3); the
+// eval summary passed in is the fallback for a sidecar without one.
+function trustData(fallback) {
+  const S = window.CS_TRANSLATION && window.CS_TRANSLATION.scorecard;
+  return S && Object.keys(S).length ? S : (fallback || {});
+}
+
 // legs: [[eval key, reader-facing name]]. opts.brief drops the numbers (the
 // player-page note); opts.unflagged says the surface prints no flag chip.
-function trustSentence(E, legs, opts) {
+function trustSentence(E0, legs, opts) {
   const o = opts || {};
+  const E = trustData(E0);
   const have = legs.filter(([k]) => E[k] && E[k].r2 != null);
   if (!have.length) return "No backtest is on file, so no projection is marked as trusted.";
   const bar = `r² ${lowSignalR2().toFixed(2)}`;
@@ -983,6 +992,12 @@ function trustSentence(E, legs, opts) {
       // Under two standard errors of the paired gain, the leg has no
       // measurable edge over that mean, whichever way the point estimate leans.
       if (f.skill_se != null && Math.abs(f.null_mae - f.mae) < 2 * f.skill_se) s += ", no measurable edge over it";
+    }
+    if (f.spearman != null) s += `, rank correlation ${f.spearman.toFixed(2)}`;
+    if (f.p10_p90_coverage != null) s += `, P10-P90 coverage ${Math.round(f.p10_p90_coverage * 100)}%`;
+    const held = (f.leave_one_season_out || []).filter((r) => r.run);
+    if (held.length) {
+      s += `; held out by college season: ${held.map((r) => `${r.season} MAE ${r.mae.toFixed(3)} against ${r.null_mae.toFixed(3)}`).join(", ")}`;
     }
     return s + ")";
   };
@@ -1143,7 +1158,51 @@ function renderTranslation(player, kind) {
       expectation, fit on our own college-to-Single-A pairs. Not adjusted for schedule
       strength or park. The band is the P10-P90 range, so a wider band means less certain.
       ${trustSentence(E, [["hit_k", "strikeout rate"], ["hit_bb", "walk rate"], ["hit_ops", "OPS"]], { brief: true })}</p>
+      ${renderReceipt(t, "hit")}
     </section>`;
+}
+
+// The realized Single-A line the fit paired with this player (owner answer
+// M20-3): his earliest A or A+ season on file, exactly as the fit reads it,
+// with each miss measured against the projection refit without him (the
+// leave-one-out test the scorecard scores). Links to his PROSPX draft card and
+// MiLB card when a draft record names them.
+function renderReceipt(t, side) {
+  const a = t && t.actual_single_a;
+  const links = [];
+  if (t && t.draft_key) links.push(`<a class="cs-college-link" href="/prospx/#draft=${encodeURIComponent(t.draft_key)}">Open on PROSPX</a>`);
+  if (t && t.milb_key) links.push(`<a class="cs-college-link" href="/prospx/#player=${encodeURIComponent(t.milb_key)}">MiLB card</a>`);
+  if (!a && !links.length) return "";
+  let body = "";
+  if (a) {
+    const ho = a.held_out || {};
+    const pct = (x) => (x == null ? "--" : x.toFixed(1) + "%");
+    const dec = (x) => (x == null ? "--" : x.toFixed(3).replace(/^0(?=\.)/, ""));
+    const signed = (x, d) => {
+      const r = Number(Math.abs(x).toFixed(d));
+      return (r === 0 ? "" : x > 0 ? "+" : "-") + r.toFixed(d);
+    };
+    const row = (label, actual, held, fmt, d, unit) => {
+      if (actual == null) return "";
+      const miss = held != null ? `${signed(actual - held, d)}${unit} vs ${fmt(held)} held out` : "no held-out projection";
+      return `<div class="trans-row receipt-row"><span class="trans-label">${label}</span><span class="trans-val">${fmt(actual)}</span><span class="trans-band">${miss}</span></div>`;
+    };
+    const rows = [
+      row("Actual A K%", a.k_pct, ho.k_pct, pct, 1, " pts"),
+      row("Actual A BB%", a.bb_pct, ho.bb_pct, pct, 1, " pts"),
+      side === "hit" ? row("Actual A OPS", a.ops, ho.ops, dec, 3, "") : "",
+    ].join("");
+    const sample = side === "hit" ? (a.games != null ? `${a.games} games` : "") : (a.ip != null ? `${a.ip} IP` : "");
+    const S = (window.CS_TRANSLATION && window.CS_TRANSLATION.scorecard) || {};
+    const n = (S[side === "hit" ? "hit_k" : "pit_k"] || {}).pairs;
+    body = `<div class="panel-title receipt-title"><span>Actual Single-A</span><span>${a.season} ${escapeHtml(a.level || "")}${sample ? ` · ${sample}` : ""}${a.identity === "name" ? " · matched by name" : ""}</span></div>
+      <div class="trans-grid">
+        <div class="trans-head"><span></span><span>Actual</span><span>Miss</span></div>
+        ${rows}
+      </div>
+      <p class="trans-note">The line the projection is fit on: his earliest A or A+ season on file. He is one of the ${n != null ? `${n.toLocaleString()} ` : ""}pairs behind the fit, so each miss is measured against the projection refit without him (leave-one-out), the test the scorecard scores.${a.identity === "name" ? " Paired by name: no draft record on file names his pro player key." : ""}</p>`;
+  }
+  return body + (links.length ? `<p class="trans-note receipt-links">${links.join(" · ")}</p>` : "");
 }
 
 // Conventional college box score (real outcomes: AVG/OBP/SLG/ISO/wOBA/wRC+) for
