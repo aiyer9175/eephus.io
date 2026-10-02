@@ -52,6 +52,11 @@
   let _RCPT = {};          // fetch path -> parsed payload (or {__error:true})
   let _RCPT_LOADING = {};  // fetch path -> in-flight guard
   let _RCPT_SPECS = null;  // entry id -> receipt spec, built lazily by _receiptSpecs()
+  // Glossary data state (SRE04, 2026-10-01): "loading" until eephus-gl.js
+  // resolves data/glossary.json, then "ready"; "failed" on a rejected fetch.
+  // Until "ready" every view paints the shared pixel state box
+  // (assets/eephus-state.js) instead of an empty page under the search box.
+  let _GL_STATE = "loading";
 
   function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -808,6 +813,13 @@
     }
     const bar = document.getElementById("gl-termbar");
     if (bar) bar.style.display = _S.view === "terms" ? "" : "none";
+    // The group chips and A-Z strip stay hidden until the terms exist, so a
+    // loading or failed page shows no empty bordered bar above the state box.
+    for (const id of ["gl-cats", "gl-az"]) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = _GL_STATE === "ready" ? "" : "none";
+    }
+    if (_GL_STATE !== "ready") { _paintGlState(document.getElementById(ids[_S.view])); return; }
     if (_S.view === "guide") renderGuide();
     else if (_S.view === "methodology") renderMethodology();
     else if (_S.view === "source-comparison") renderSourceComparison();
@@ -834,10 +846,44 @@
     const start = () => {
       GL = window.EEPHUS_GLOSSARY || {};
       GROUPS = window.EEPHUS_GLOSSARY_GROUPS || {};
+      _GL_STATE = "ready";
       render();
     };
     if (window.EEPHUS_GLOSSARY) start();
-    else window.addEventListener("eephus-glossary-ready", start, { once: true });
+    else {
+      window.addEventListener("eephus-glossary-ready", start, { once: true });
+      window.addEventListener("eephus-glossary-failed", () => {
+        if (_GL_STATE !== "ready") { _GL_STATE = "failed"; render(); }
+      });
+      _GL_STATE = window.EEPHUS_GLOSSARY_FAILED ? "failed" : "loading";
+      render();
+    }
+  }
+
+  // The loading or failed box for the active view while data/glossary.json is
+  // outstanding. The message is plain copy; Retry asks eephus-gl.js to fetch
+  // again and puts the loader back up until it answers.
+  function _paintGlState(el) {
+    if (!el) return;
+    const S = window.EephusState;
+    if (_GL_STATE === "failed") {
+      const msg = "The glossary could not be loaded. Check your connection and try again." +
+        '<div style="margin-top:12px;"><button class="chip" type="button" id="gl-load-retry">Retry</button></div>';
+      el.innerHTML = S ? S.html("failed", msg, "gl-load-state")
+        : `<div class="state-message gl-load-state" role="alert">${msg}</div>`;
+      const rb = document.getElementById("gl-load-retry");
+      if (rb) rb.onclick = () => {
+        const G = window.EEPHUS_GL;
+        if (!G || !G.reload) { location.reload(); return; }
+        _GL_STATE = "loading";
+        render();
+        G.reload();
+      };
+      return;
+    }
+    const msg = "Loading the glossary...";
+    el.innerHTML = S ? S.html("loading", msg, "gl-load-state")
+      : `<div class="state-message gl-load-state" role="status">${msg}</div>`;
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

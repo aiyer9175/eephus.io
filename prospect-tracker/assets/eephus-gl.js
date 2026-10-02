@@ -15,6 +15,8 @@
 //                                 example, visual_html, related, module}
 //   window.EEPHUS_GLOSSARY_GROUPS category → display group
 //   'eephus-glossary-ready'       window event fired once loaded
+//   'eephus-glossary-failed'      window event fired when the fetch rejects
+//                                 (window.EEPHUS_GLOSSARY_FAILED is then true)
 // window.EEPHUS_QK_EXTRA optional hook: q => [{label, sub, href}] - 
 //                                 PROSPX registers prospect search through it
 //   window.EEPHUS_GL.wire(root)   scan a container for [data-gl] term spans:
@@ -69,26 +71,39 @@
     return "/data/glossary.json" + (v ? "?v=" + encodeURIComponent(v) : "");
   }
 
-  fetch(glossaryURL())
-    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-    .then(d => {
-      const map = {};
-      for (const e of d.entries || []) {
-        map[e.id] = { name: e.term, short: e.definition, long: e.methodology,
-                      aliases: e.aliases || [], category: e.category,
-                      priority: e.priority, formula: e.formula, example: e.example,
-                      visual_html: e.visual, related: e.seeAlso || [],
-                      module: e.module || [], shelf: e.shelf, origin: e.origin };
-      }
-      window.EEPHUS_GLOSSARY = map;
-      window.EEPHUS_GLOSSARY_GROUPS = d.groups || {};
-      READY = true;
-      window.dispatchEvent(new Event("eephus-glossary-ready"));
-    })
-    // Glossary data is optional enrichment (tooltips + ⌘K palette). If it
-    // can't load, degrade silently rather than logging to every visitor's
-    // console - the site stays fully functional without it.
-    .catch(() => {});
+  // The url is fixed once here: document.currentScript is only set while this
+  // file first runs, so a later reload() must not call glossaryURL() again.
+  const GL_URL = glossaryURL();
+  function load() {
+    window.EEPHUS_GLOSSARY_FAILED = false;
+    fetch(GL_URL)
+      .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(d => {
+        const map = {};
+        for (const e of d.entries || []) {
+          map[e.id] = { name: e.term, short: e.definition, long: e.methodology,
+                        aliases: e.aliases || [], category: e.category,
+                        priority: e.priority, formula: e.formula, example: e.example,
+                        visual_html: e.visual, related: e.seeAlso || [],
+                        module: e.module || [], shelf: e.shelf, origin: e.origin };
+        }
+        window.EEPHUS_GLOSSARY = map;
+        window.EEPHUS_GLOSSARY_GROUPS = d.groups || {};
+        READY = true;
+        window.dispatchEvent(new Event("eephus-glossary-ready"));
+      })
+      // Glossary data is optional enrichment (tooltips + ⌘K palette). If it
+      // can't load, degrade silently rather than logging to every visitor's
+      // console - the site stays fully functional without it. The /glossary/
+      // page has nothing to show without this data, so a failure is announced
+      // (flag + 'eephus-glossary-failed') for it to paint a failed state with a
+      // Retry that calls EEPHUS_GL.reload(). Tooltips and the palette ignore it.
+      .catch(() => {
+        window.EEPHUS_GLOSSARY_FAILED = true;
+        window.dispatchEvent(new Event("eephus-glossary-failed"));
+      });
+  }
+  load();
 
   function resolve(q) {
     const map = window.EEPHUS_GLOSSARY || {};
@@ -419,5 +434,5 @@
     else window.addEventListener("eephus-glossary-ready", scan, { once: true });
   }
 
-  window.EEPHUS_GL = { open: qkOpen, wire, resolve };
+  window.EEPHUS_GL = { open: qkOpen, wire, resolve, reload: load };
 })();
