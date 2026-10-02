@@ -449,7 +449,10 @@
   .eph-modal { max-width: 100%; }
   .eph-team-grid { grid-template-columns: repeat(5, 1fr); }
   .eph-comment.is-reply { margin-left: 14px; }
-  .eph-nav-account .eph-acct-btn .eph-acct-label { display: none; }
+  /* QHOA01/QMLA04/QREA04: the header label is clipped, not display:none, so the
+     button keeps its name; scoped to the header so the homepage drawer button
+     keeps its visible Sign in text. */
+  .eephus-nav .eph-nav-account .eph-acct-btn .eph-acct-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   /* SHO03: with the label hidden the control shrank to 31 x 38 px beside four
      44 x 44 px neighbours; hold it to the same 44 px touch target. */
   .eephus-nav .eph-nav-account .eph-acct-btn { box-sizing: border-box; min-width: 44px; min-height: 44px; justify-content: center; }

@@ -681,7 +681,7 @@
       node.innerHTML =
         '<button class="eph-acct-btn eph-bell" data-act="bell" title="Notifications" aria-label="Notifications">' +
           '<span aria-hidden="true">🔔</span><span class="eph-bell-count" hidden>0</span></button>' +
-        '<button class="eph-acct-btn" data-act="menu">' + avatarHTML(prof, "sm") +
+        '<button class="eph-acct-btn" data-act="menu" aria-label="' + esc("Account menu, " + prof.username) + '">' + avatarHTML(prof, "sm") +
           '<span class="eph-acct-label">' + esc(prof.username) + "</span>" +
           (prof._preview ? '<span class="eph-demo-flag">preview</span>' : "") +
           '<span class="eph-caret">▼</span></button>' +
@@ -695,7 +695,7 @@
           '<div class="eph-menu-sep"></div>' +
           '<button data-act="signout">Sign out</button></div>';
     } else {
-      node.innerHTML = '<button class="eph-acct-btn" data-act="signin"><span aria-hidden="true">◔</span><span class="eph-acct-label">Sign in</span></button>';
+      node.innerHTML = '<button class="eph-acct-btn" data-act="signin" aria-label="Sign in"><span aria-hidden="true">◔</span><span class="eph-acct-label">Sign in</span></button>';
     }
     controls.appendChild(node);
     var menu = qs(".eph-acct-menu", node);
