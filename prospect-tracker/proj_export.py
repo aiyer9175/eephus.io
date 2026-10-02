@@ -2585,17 +2585,56 @@ def _current_blend(rec: dict, prior_pct: float,
     }
 
 
+def _season_is_complete(regular_season_end: str | None, today=None) -> bool:
+    """True once `today` is on or after the season's last scheduled
+    regular-season date. False when the date is missing or unreadable, so an
+    unknown calendar keeps the old fetch-failure fallback."""
+    import datetime as _dt
+    if not regular_season_end:
+        return False
+    try:
+        end = _dt.date.fromisoformat(str(regular_season_end)[:10])
+    except ValueError:
+        return False
+    return (today or _dt.date.today()) >= end
+
+
+def _final_standings_order(standings: dict[str, dict]) -> dict[str, tuple]:
+    """{org: key} that orders a settled field the way the league did: the
+    division leader (divisionRank 1, the rule franchise_export.division_champions
+    reads) first in its division, wild cards by wildCardRank, and division
+    winners by leagueRank. Lower ranks higher. Used only on a wins tie."""
+    out: dict[str, tuple] = {}
+    for org, rec in standings.items():
+        div_rank = rec.get("divRank")
+        lg_rank = rec.get("leagueRank") or 99
+        leader = div_rank == 1
+        out[org] = (0 if leader else 1,
+                    lg_rank if leader else (rec.get("wcRank") or 99),
+                    lg_rank, org)
+    return out
+
+
 def _attach_current_season(rows: list[dict], standings: dict[str, dict],
                            il_out60: dict[str, int] | None = None,
-                           season: int | None = None) -> str | None:
+                           season: int | None = None, *,
+                           regular_season_end: str | None = None,
+                           today=None) -> str | None:
     """Overlay the `current` block onto each team_outlook row IN PLACE and return
-    the schedule-source flag ('live' | 'balanced_fallback' | None). rows carry the
-    2027 view; `standings` is standings_now(2026). No-op returning None when
-    `standings` is empty (degraded/offline) - the 2027 output is left untouched."""
+    the schedule-source flag ('live' | 'balanced_fallback' | 'season_complete' |
+    None). rows carry the 2027 view; `standings` is standings_now(2026). No-op
+    returning None when `standings` is empty (degraded/offline) - the 2027 output
+    is left untouched.
+
+    `regular_season_end` defaults to the cached StatsAPI /seasons date. Once
+    `today` is on or after it and the live schedule lists nothing, the season is
+    over: no game is scheduled, and the final standings decide the field."""
     if not standings:
         return None
     season = season or (FIRST_SEASON - 1)
     il_out60 = il_out60 or {}
+    if regular_season_end is None:
+        regular_season_end = _regular_season_end_on_disk(season)
 
     # 1) blend: pure talent prior (2027 team win total / 162) + actual + Pythag.
     prior_by_team: dict[str, float] = {}
@@ -2627,7 +2666,17 @@ def _attach_current_season(rows: list[dict], standings: dict[str, dict],
                   for r in rows if r.get("current")}
     sched = pc.remaining_schedule(season, played=played_now)
     sched_source = "live"
-    if not sched:
+    if not sched and _season_is_complete(regular_season_end, today):
+        # THE SEASON IS OVER, SO NOTHING IS LEFT TO PLAY. The fallback below
+        # fills 162 - gamesPlayed per club, and a club whose season ended at 161
+        # (a rainout never made up) got a phantom game against a club already
+        # done. Measured 2026-10-01: NYY 93-68 and BAL 79-82 each drew one, the
+        # mirrored pairs gave BOS and CHW one too, and CHW 84-78 winning its
+        # phantom tied CLE 85-77 for the AL Central, served as CLE Division
+        # 74.9 percent and CHW 25.1 percent after the season had ended.
+        sched = {}
+        sched_source = "season_complete"
+    elif not sched:
         # fallback needs a per-team games-remaining estimate: 162 - gamesPlayed.
         gr = {r["team"]: max(0, 162 - (r["current"]["gamesPlayed"] or 0))
               for r in rows if r.get("current")}
@@ -2673,7 +2722,11 @@ def _attach_current_season(rows: list[dict], standings: dict[str, dict],
                         "p": talent.get(tm, 0.5),
                         "league": rec.get("league"), "div": rec.get("div")}
     pairs = pc.remaining_pairs(season) if sched_source == "live" else _pairs_from_sched(sched)
-    odds = pc.simulate_playoffs(mc_teams, pairs)
+    # A settled field breaks a wins tie by the league's own final ranks, not
+    # by a draw, so Division, Bye and Playoffs land on 0 or 1.
+    tiebreak = (_final_standings_order({tm: standings[tm] for tm in mc_teams})
+                if sched_source == "season_complete" else None)
+    odds = pc.simulate_playoffs(mc_teams, pairs, tiebreak=tiebreak)
     for r in rows:
         cur = r.get("current")
         if cur is None:

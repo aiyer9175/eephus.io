@@ -225,7 +225,11 @@ def test_overlay_preserves_2027_fields(monkeypatch):
                 "rs": 500, "ra": 400, "runDiff": 100, "divGb": 0.0,
                 "league": 103, "div": 201, "pythagWins": 57, "pythagLosses": 38},
     }
-    src = pe._attach_current_season(rows, standings, season=2026)
+    # A 95-game fixture is mid-season, so its build date is pinned there: on or
+    # after the season's last date an empty schedule means the season is over.
+    import datetime as _dt
+    src = pe._attach_current_season(rows, standings, season=2026,
+                                    today=_dt.date(2026, 7, 15))
     assert src == "balanced_fallback"
     new_keys = {"current", "curWins", "curPct"}
     for r, b in zip(rows, base):

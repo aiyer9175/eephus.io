@@ -580,7 +580,8 @@ def _bracket_once(seeds_by_lg: dict, wins: dict, ph_home: dict,
 def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
                       n_sims: int | None = None, home_edge: float | None = None,
                       seed: int | None = None,
-                      bracket: bool = True) -> dict[str, dict]:
+                      bracket: bool = True,
+                      tiebreak: dict[str, tuple] | None = None) -> dict[str, dict]:
     """Rest-of-season Monte Carlo -> per-team odds under the current MLB bracket
     (3 division winners + 3 wildcards per league).
 
@@ -604,6 +605,12 @@ def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
     blank for all thirty clubs with nobody told. So the shape is checked once,
     up front, and a field that does not qualify gets the six original keys and
     nothing else.
+
+    `tiebreak` ({org: sortable key, lower ranks higher}) replaces the coin flips
+    on a wins tie with a fixed order. The caller passes it only once the regular
+    season is over, built from the final standings' own ranks, so a settled
+    field is seeded the way the league seeded it rather than by a draw. Left
+    None, every draw below is exactly what it was.
     """
     if not teams:
         return {}
@@ -673,12 +680,18 @@ def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
                     continue
                 best = max(m for m in (wins[o] for o in members))
                 tied = [o for o in members if wins[o] == best]
-                w = tied[rng.randrange(len(tied))]
+                if tiebreak is not None:
+                    w = min(tied, key=lambda o: tiebreak[o])
+                else:
+                    w = tied[rng.randrange(len(tied))]
                 div_winners.add(w)
                 division[w] += 1
             # wildcards: top-3 by wins among non-division-winners in the league
             rest = [o for o in lg_orgs if o not in div_winners]
-            rest.sort(key=lambda o: (wins[o], rng.random()), reverse=True)
+            if tiebreak is not None:
+                rest.sort(key=lambda o: (-wins[o], tiebreak[o]))
+            else:
+                rest.sort(key=lambda o: (wins[o], rng.random()), reverse=True)
             wc = set(rest[:3])
             for o in wc:
                 wildcard[o] += 1
@@ -695,8 +708,11 @@ def simulate_playoffs(teams: dict[str, dict], pairs: list[tuple[str, str]], *,
                 # postseason feature is not allowed to move a regular-season
                 # number, and the test that pins byte-identity across
                 # bracket=False is what caught it.
-                dw = sorted(div_winners, key=lambda o: (wins[o], post.random()),
-                            reverse=True)
+                if tiebreak is not None:
+                    dw = sorted(div_winners, key=lambda o: (-wins[o], tiebreak[o]))
+                else:
+                    dw = sorted(div_winners, key=lambda o: (wins[o], post.random()),
+                                reverse=True)
                 if len(dw) == 3 and len(rest) >= 3:
                     seeds_by_lg[lg] = tuple(dw) + tuple(rest[:3])
         if do_bracket and len(seeds_by_lg) == 2:
