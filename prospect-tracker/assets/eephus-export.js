@@ -636,6 +636,12 @@
       ".eephus-export-chip{position:absolute;top:4px;right:4px;z-index:6;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;cursor:pointer;color:var(--text-tertiary,#777);background:var(--bg-secondary,#fff);border:1px solid var(--border,#ccc);border-radius:0;opacity:0;transition:opacity .12s ease,color .12s ease,border-color .12s ease;}",
       ".eephus-exportable:hover > .eephus-export-chip,.eephus-export-chip:focus-visible{opacity:.85;}",
       ".eephus-export-chip:hover{opacity:1;color:var(--accent-lilac,#6E56CF);border-color:var(--accent-lilac,#6E56CF);}",
+      // the chip (22 px wide at right:4px) sits over the right end of the header
+      // row, so the last header cell keeps 30 px clear and a right-aligned label
+      // never runs under it. Keyed on the table selectors as well as the host
+      // class: the class lands a scan after render, and a board that measures
+      // its own fit (mlbstats markFit) must measure with the reserve in place.
+      ".eephus-exportable > table > thead > tr > th:last-child,:is(" + TABLE_SEL + ") > thead > tr > th:last-child{padding-right:30px;}",
       ".eephus-export-menu{position:fixed;z-index:9999;min-width:208px;background:var(--bg-secondary,#fff);border:1px solid var(--border,#ccc);box-shadow:var(--shadow-card-hover,0 4px 16px rgba(0,0,0,.2));font-family:var(--font-retro,monospace);padding:4px;}",
       ".ex-menu-head{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary,#777);padding:6px 8px 4px;}",
       ".ex-menu-item{display:flex;align-items:baseline;justify-content:space-between;gap:10px;width:100%;text-align:left;background:transparent;border:0;cursor:pointer;padding:6px 8px;color:var(--text-primary,#111);font-family:inherit;font-size:12.5px;}",
