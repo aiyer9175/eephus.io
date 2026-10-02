@@ -583,18 +583,59 @@
   // The one sentence the pick section leads with. Built from the gate the
   // reader can actually count, so it reads "600 needed, 0 today" rather than
   // "the model is unvalidated" with no way to check the claim.
+  //
+  // IT NAMES THE GATE THAT IS ACTUALLY CLOSED (RBE02, 2026-10-02). It used to
+  // read vintage_sample unconditionally, so with 777 graded against 600 needed
+  // it blamed an open gate while graded_price_history was the closed one. The
+  // vintage sentence now prints only while vintage_sample is the closed gate.
+  function closedGates(v) {
+    return (((v || {}).gate || {}).gates || []).filter(function (g) {
+      return g && g.open === false;
+    });
+  }
   function noPickHeadline(v) {
     var lead = "No " + selNoun() + ": ";
     if (!v) return lead + "this payload carries no validation state; the model is unvalidated.";
     if (v.available === false) {
       return lead + (v.reason || "the validation state is unknown") + ".";
     }
-    var g = gateById(v, "vintage_sample");
-    if (g) {
+    var g = closedGates(v)[0] || null;
+    if (g && g.id === "vintage_sample") {
       return lead + "the model is unvalidated until " + g.need + " exist; " +
         haveText(g) + " today.";
     }
+    if (g) {
+      var gate = v.gate || {};
+      var tally = (gate.n_open != null && gate.n_gates != null)
+        ? "; " + gate.n_open + " of " + gate.n_gates + " gates are open" : "";
+      return lead + "the model is unvalidated while the " + g.id + " gate is closed (" +
+        haveText(g) + " in hand)" + tally + ".";
+    }
     return lead + "the model is unvalidated and no minimum edge has been measured.";
+  }
+  // PAST THE SAMPLE BAR (RBE03, 2026-10-02). "777 of 600" read as a shortfall
+  // that does not exist. The header chip, the topline under the slots and the
+  // record label in betting_export.provisional_record_label take one branch:
+  // below the bar they print "N of M", at or past it "N graded, past M".
+  function pastSampleBar(vin) {
+    var have = (vin || {}).n_graded, need = (vin || {}).min_graded_games_for_min_edge;
+    return typeof have === "number" && typeof need === "number" && have >= need;
+  }
+  function vintageChipText(vin) {
+    vin = vin || {};
+    if (pastSampleBar(vin)) {
+      return "vintage graded " + vin.n_graded + ", past " +
+        vin.min_graded_games_for_min_edge + " needed";
+    }
+    return "vintage graded " + (vin.n_graded == null ? "-" : vin.n_graded) + " of " +
+      vin.min_graded_games_for_min_edge;
+  }
+  function closedGateNames(v) {
+    var ids = closedGates(v).map(function (g) { return String(g.id); });
+    if (!ids.length) return "";
+    if (ids.length === 1) return "the " + ids[0] + " gate is closed";
+    return "the " + ids.slice(0, -1).join(", ") + " and " + ids[ids.length - 1] +
+      " gates are closed";
   }
 
   // THE VINTAGE BLURB HAS TWO DOORS, AND THE SERVED ONE IS THE STALE ONE
@@ -999,9 +1040,7 @@
       chips.push('<span class="bt-chip bt-chip-warn">' + esc(v.headline_mode) + " numbers</span>");
       var vin = v.vintage || {};
       if (vin.min_graded_games_for_min_edge != null) {
-        chips.push('<span class="bt-chip bt-chip-warn">vintage graded ' +
-          (vin.n_graded == null ? "-" : vin.n_graded) + " of " +
-          vin.min_graded_games_for_min_edge + "</span>");
+        chips.push('<span class="bt-chip bt-chip-warn">' + vintageChipText(vin) + "</span>");
       }
     }
     if (boardClock().all) {
@@ -1709,7 +1748,12 @@
         " above clear " + floorText(m) + ".");
     }
     var s = "<strong>Not validated.</strong> ";
-    if (need != null) {
+    if (pastSampleBar(vin)) {
+      var shut = closedGateNames(v);
+      s += "The vintage backtest has graded " + have + " games, past the " + need +
+        " needed to measure an edge threshold" + (shut ? ", but " + shut : "") +
+        ", so the " + selNounPl() + " above clear " + floorText(m) + ".";
+    } else if (need != null) {
       s += "The vintage backtest has graded " + (have == null ? "-" : have) +
         " of the " + need + " games needed to measure an edge threshold, so the " +
         selNounPl() + " above clear " + floorText(m) + ".";
@@ -2035,7 +2079,9 @@
       kv("Measured arrivals per day", rate ? num(rate.per_day, 2) : "not measured") +
       kv("Counted over", rate ? (rate.window_days + " days from " + esc(rate.window_from))
                               : "-") +
-      kv("Short by", (have != null && need != null) ? (need - have) + " games" : "-") +
+      // Never negative (RBE01, 2026-10-02): past the bar this read "-177 games".
+      kv("Short by", (have != null && need != null)
+        ? (have >= need ? "0 games (met)" : (need - have) + " games") : "-") +
       kv("Days at that rate", eta && eta.days != null ? eta.days : "not projected") +
       "</div>");
     if (eta && eta.is_projection) {

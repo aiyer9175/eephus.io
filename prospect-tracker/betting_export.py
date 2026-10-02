@@ -2065,8 +2065,22 @@ def provisional_record_label(evald: dict | None, *, min_edge: float,
     if n is None or need is None:
         got = ("the eval artifact does not report how many games the honest backtest "
                "has graded")
-    else:
+    elif n < need:
         got = f"{n} of the {need} games the honest backtest needs are graded"
+    else:
+        # PAST THE SAMPLE BAR (RBE03, 2026-10-02). "777 of the 600" read as a
+        # shortfall that does not exist. Once the count clears its bar the
+        # sentence says so and names the gate that still keeps the model
+        # unvalidated, read off the same artifact's gate list.
+        got = f"{n} graded, past the {need} games the honest backtest needs"
+        closed = [str(g.get("id")) for g in
+                  ((evald or {}).get("min_edge_gate") or {}).get("gates") or []
+                  if isinstance(g, dict) and g.get("id") and g.get("open") is False]
+        if len(closed) == 1:
+            got += f", but the {closed[0]} gate is closed"
+        elif closed:
+            got += (", but the " + ", ".join(closed[:-1]) + " and "
+                    + closed[-1] + " gates are closed")
     # The verdict word comes from model_verdict, the same function status.model
     # reads, so the label and the status chip cannot drift apart. Today that
     # word is "unvalidated". "Selection", not the pick noun: this label only
