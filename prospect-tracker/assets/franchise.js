@@ -684,13 +684,23 @@
     return tile("Pennant (" + esc(b.label) + ")", esc(pct(b.pennant_pct, 1)),
       "World Series " + esc(pct(b.ws_pct, 1)) + " &middot; as of " + esc(b.as_of) + " " + chip, "", d.links.betting_futures);
   }
+  // STRENGTH OF SCHEDULE is measured over the games still on the schedule, so
+  // once none are left (the regular season is over) the overlay carries no sos
+  // and no rank. The tile then prints the page's null glyph and drops the rank
+  // fragment; the IL line stays (smoke audit SCL05).
+  function sosTile(s) {
+    var has = isNum(s.sos);
+    var big = has ? esc(pct3(s.sos)) : '<span title="not measured">-</span>';
+    var rank = has && isNum(s.sos_rank) ? "rank " + esc(nInt(s.sos_rank)) + " &middot; " : "";
+    return tile("Strength of schedule", big, rank + "IL out 60+: " + esc(isNum(s.il_out_60) ? nInt(s.il_out_60) : "-"));
+  }
   function secOdds(d) {
     var s = d.sections.odds;
     var t = tile("Projected wins " + esc(DATA.season_now), esc(n1(s.proj_wins)), "band " + esc(nInt(s.p10)) + " to " + esc(nInt(s.p90)) + " &middot; " + esc(s.record || ""), "", d.links.betting_futures) +
       tile("Playoffs", esc(pct(s.playoff_pct, 1)), "division " + esc(pct(s.division_pct, 1)) + " &middot; bye " + esc(pct(s.bye_pct, 1)), "", d.links.betting_futures) +
       pennantTile(d, s) +
       tile(gl("Pythag vs actual", "pythag_pct"), esc(pct3(s.pythag_pct)), "actual " + esc(pct3(s.actual_pct)) + " &middot; " + esc(copy("pythag_label"))) +
-      tile("Strength of schedule", esc(pct3(s.sos)), "rank " + esc(nInt(s.sos_rank)) + " &middot; IL out 60+: " + esc(nInt(s.il_out_60)));
+      sosTile(s);
     // The season-over line comes from the Futures payload as written, so the two
     // surfaces cannot disagree about when the odds stopped learning. While the
     // bracket simulator serves, the reworded stamp and its line come from that

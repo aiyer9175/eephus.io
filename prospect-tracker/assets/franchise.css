@@ -104,7 +104,13 @@
 .fr-app .fr-block h2 { font-size: 16px; margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
 .fr-app .fr-block h2 .fr-sec-title { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
 .fr-app .fr-block h3 { font-size: 13.5px; margin: 14px 0 4px; }
-.fr-app .fr-verdict { font-size: 10px; margin-left: 4px; vertical-align: middle; }
+/* a verdict chip wraps inside its tile: the Pennant tile's postseason_bracket_sim
+   chip is wider than a 162px phone tile and, held to one line by .eephus-beta,
+   ran 57px into the next tile (smoke audit SCL01) */
+.fr-app .fr-verdict {
+  font-size: 10px; margin-left: 4px; vertical-align: middle;
+  display: inline-block; max-width: 100%; white-space: normal; overflow-wrap: anywhere;
+}
 .fr-app .fr-open { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0 8px; font-size: 11px; color: var(--text-tertiary); }
 .fr-app .fr-open a { border: 1px solid var(--border-light); padding: 2px 8px; font-size: 11.5px; white-space: nowrap; color: var(--text-primary); text-decoration: none; }
 .fr-app .fr-open a:hover { border-color: var(--text-secondary); }
@@ -128,6 +134,9 @@
 .fr-app .fr-tile-title { font-size: 13px; opacity: .8; min-width: 0; overflow-wrap: anywhere; }
 .fr-app .fr-tile-big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 2px 0; font-family: var(--font-mono); min-width: 0; overflow-wrap: anywhere; }
 .fr-app .fr-tile-sub { font-size: 12px; opacity: .7; line-height: 1.4; min-width: 0; overflow-wrap: anywhere; }
+/* a verdict chip in a tile line follows a space, so it needs no margin of its
+   own; without one, a chip that drops to its own line gets the full tile width */
+.fr-app .fr-tile-sub .fr-verdict { margin-left: 0; }
 .fr-app .fr-tile-open { display: inline-block; margin-top: 5px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--border-light); padding: 2px 7px; color: var(--text-primary); text-decoration: none; }
 .fr-app .fr-tile-open:hover, .fr-app .fr-tile-open:focus-visible { border-color: var(--text-secondary); }
 .fr-app .fr-chip-prov { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 0 5px; margin-left: 6px; vertical-align: middle; }
