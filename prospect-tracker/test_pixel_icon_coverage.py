@@ -245,3 +245,40 @@ def test_prospx_theme_toggle_swaps_glyphs_not_text():
     assert 'icon.textContent = theme === "dark"' not in text
     assert '.theme-icon [data-theme-glyph]' in text
     assert 'data-theme-glyph="light"' in text and 'data-theme-glyph="dark" hidden' in text
+
+
+# ------------------------------------------------ the wire pictograms (PX-17)
+
+_KNOWN_WIRE = ("up", "down", "promo", "demo", "il", "debut", "trade", "signing")
+
+
+@pytest.mark.parametrize("typ", _KNOWN_WIRE)
+def test_wire_rows_draw_the_event_pictogram(typ):
+    """The sidebar feed, the /news/ row and the WIRE ticker draw the type's 12 px
+    icon inside the type's own coloured span instead of a text glyph."""
+    feed = B._feed_item_html(typ, "GLYPH", "t", "k", None, "Name", "val")
+    news = B._news_item_html(typ, "GLYPH", "t", "k", None, "Name", "val", "", {})
+    tick = B._ticker_html([("2026-10-01", typ, "GLYPH", "text", "k", None, "Name", "val")])
+    want = (12, _sym(typ))
+    for html in (feed, news):
+        assert f'<span class="feed-val {typ}"><svg class="ico"' in html
+        assert _icons(html) == [want]
+        assert "GLYPH" not in html
+    assert f'<span class="{typ}"><svg class="ico"' in tick
+    assert _icons(tick) == [want, want] and "GLYPH" not in tick  # the track loops twice
+
+
+def test_an_unknown_wire_type_keeps_its_text_glyph():
+    html = B._feed_item_html("other", "◆", "t", "k", None, "Name", "val")
+    assert _icons(html) == [] and "◆val" in html
+
+
+def test_trade_on_the_wire_panel_is_panel_ink_not_gold():
+    """Owner answer PX-Q3: the trade pictogram (and the untyped ticker glyph)
+    take the panel's own ink; gold on the dark panel means elite FV only."""
+    css = _src("assets/site.css")
+    for sel in (".home-ticker .ticker-track .trade", ".home-ticker .ticker-track .glyph",
+                ".feed-item .g.trade, .feed-item .feed-val.trade"):
+        m = re.search(re.escape(sel) + r"\s*\{([^}]*)\}", css)
+        assert m, sel
+        assert "color: inherit" in m.group(1) and "gold" not in m.group(1), sel

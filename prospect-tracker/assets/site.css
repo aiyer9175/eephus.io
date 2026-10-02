@@ -1147,10 +1147,10 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .home-ticker .ticker-track a:hover { text-decoration: underline; }
 .home-ticker .ticker-track .up { color: #6ee7a8; } .home-ticker .ticker-track .down { color: #ff8a8a; }
 .home-ticker .ticker-track .signing { color: #b47cff; }   /* FA winter wire */
-.home-ticker .ticker-track .glyph { color: var(--accent-gold); }
+.home-ticker .ticker-track .glyph { color: inherit; }   /* panel ink (owner answer PX-Q3) */
 .home-ticker .ticker-track .promo { color: #6ee7a8; } .home-ticker .ticker-track .demo { color: #ff8a8a; }
 .home-ticker .ticker-track .il { color: #ffb454; } .home-ticker .ticker-track .debut { color: #4ee0ff; }
-.home-ticker .ticker-track .trade { color: var(--accent-gold); }
+.home-ticker .ticker-track .trade { color: inherit; }   /* panel ink: the arrows carry the type (PX-Q3) */
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* ---- shell grid ---- */
@@ -1271,7 +1271,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .feed-item .g.demo,  .feed-item .feed-val.demo  { color: #ff8a8a; }
 .feed-item .g.il,    .feed-item .feed-val.il    { color: #ffb454; }
 .feed-item .g.debut, .feed-item .feed-val.debut { color: #4ee0ff; }
-.feed-item .g.trade, .feed-item .feed-val.trade { color: var(--accent-gold); }
+.feed-item .g.trade, .feed-item .feed-val.trade { color: inherit; } /* panel ink, never gold (owner answer PX-Q3) */
 .feed-item .g.signing, .feed-item .feed-val.signing { color: #b47cff; } /* FA winter wire - refractor violet */
 
 /* ---- /news/ expanded Prospect News page ---- */
@@ -1526,8 +1526,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .row-logo { width: 24px; height: 24px; flex: none; object-fit: contain; }
 .row-name { flex: 1; min-width: 0; font-family: var(--font-retro); font-weight: 700; font-size: 14px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row-meta { font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); flex: none; }
-.row-spark { width: 58px; height: 20px; flex: none; display: inline-flex; align-items: center; opacity: .9; }
-.row-spark svg { width: 58px; height: 20px; display: block; }
+.row-spark { width: 56px; height: 20px; flex: none; display: inline-flex; align-items: center; opacity: .9; }
+.row-spark svg { width: 56px; height: 20px; display: block; }
 .row-delta { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700; flex: none; font-variant-numeric: tabular-nums; min-width: 46px; text-align: right; }
 .row-delta.up { color: var(--accent-green); } .row-delta.down { color: var(--accent-red); }
 /* Neutral delta - a value that rounds to zero is not a gain or a loss. Prevents
@@ -1844,6 +1844,53 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .px-foul .z { opacity: 1; animation-name: px-hide; }
 @keyframes px-hide { 0%, 100% { opacity: 0; } }
 @keyframes px-show { 0%, 100% { opacity: 1; } }
+/* ---- pixel visualizations (final-pass plan 5.7, PX-14 to PX-19, PX-24) ----
+   Static drawings on whole pixels, tokens only. Each one sits beside the
+   numbers it draws and never replaces them: the table, the cell and the
+   printed grade stay.
+   Wire pictograms (PX-17): the event type's 12 px icon inside the type's own
+   colour; trade takes the panel's ink (owner answer PX-Q3). */
+.feed-item .feed-val .ico { vertical-align: -2px; margin-right: 3px; }
+.home-ticker .ticker-track .ico { vertical-align: -1px; }
+/* V3 step sparkline (PX-16): one run per board snapshot, dotted grade rules
+   at every multiple of 5. Drawn at its own integer size. */
+.px-spark { display: block; max-width: 100%; height: auto; shape-rendering: crispEdges; }
+.px-spark .gl { fill: var(--border); }
+/* V1 tied-game line score (PX-14), the ballpark lamp idiom: one lamp row per
+   point from 50%, top halves dim, bottom halves ink, unlit lamps the board. */
+.px-lamp-wrap { margin: 4px 0 6px; }
+.px-lamp { display: block; shape-rendering: crispEdges; }
+.px-lamp .lo { fill: var(--border-light); }
+.px-lamp .lr { fill: var(--text-secondary); }
+.px-lamp .lt { fill: var(--text-dim); }
+.px-lamp .lb { fill: var(--text-primary); }
+.px-lamp text { fill: var(--text-tertiary); font: 700 11px var(--font-retro-mono); }
+.px-lamp-key { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0 10px;
+  font: 11px/16px var(--font-retro-mono); color: var(--text-secondary); }
+.px-lamp-key .px-lk { display: inline-block; width: 6px; height: 6px; margin-right: 5px; vertical-align: 0; }
+.px-lamp-key .px-lk.t { background: var(--text-dim); }
+.px-lamp-key .px-lk.b { background: var(--text-primary); }
+/* V4 key strips (PX-19). The ruler key: a 6-cell meter per --vt-* step with
+   its word (EephusTiers.key), lit cells counting the step, a second channel
+   beside the colour. The FV key: the card-foil sprite and the rank diamond
+   the board draws, with the threshold number only. */
+.vt-key { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; list-style: none;
+  margin: 6px 0 0; padding: 0; font: 11px/16px var(--font-retro-mono); color: var(--text-secondary); }
+.vt-key li { display: inline-flex; align-items: center; gap: 5px; }
+.vt-meter { display: block; flex: none; shape-rendering: crispEdges; }
+.vt-meter .off { fill: var(--border); }
+.vt-meter .on { fill: currentColor; }
+.px-fvkey { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; list-style: none;
+  margin: 0 0 8px; padding: 6px 10px; border: 1px solid var(--border); background: var(--bg-secondary);
+  font: 700 11px/16px var(--font-retro-mono); color: var(--text-primary); max-width: 100%; box-sizing: border-box; }
+.px-fvkey li { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.px-fvkey .kh { color: var(--text-tertiary); letter-spacing: .06em; text-transform: uppercase; }
+/* doubled class: outranks the board's own body.density-compact .rank-num size */
+.px-fvkey .rank-num.rank-num { width: 12px; height: 12px; margin: 0 2px; box-shadow: none; flex: none; }
+/* The card-foil rarity sprite (PX-24): the card outline with one foil corner
+   per FV threshold and a centre stone at 70, in the brand accent. */
+.cf-badge { display: inline-flex; flex: none; color: var(--text-primary); --ico-accent: var(--accent-lilac); }
+.cf-badge .ico { display: block; }
 .fa-app .fa-thin { color: var(--text-gold); cursor: help; }
 /* Handedness token on the class board (B:L bat side / T:R throwing hand). Small,
    monospaced and helpable - it is a scanning aid, not a headline number. */

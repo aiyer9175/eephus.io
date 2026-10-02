@@ -78,6 +78,8 @@ def _local_asset_refs(html: str) -> list[str]:
         u = url.strip()
         if u.startswith(("http://", "https://", "//", "#")):
             continue  # external, or a same-document <use href="#id"> - not ours
+        if u.startswith("${"):
+            continue  # a JS template built at runtime off a stamped static ref (prospx pxIcoHTML)
         path = u.split("#", 1)[0].split("?", 1)[0]
         if path.startswith("/data/"):
             continue  # runtime-stamped payload, long-cached on purpose

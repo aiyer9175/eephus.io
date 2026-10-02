@@ -100,3 +100,28 @@ def test_hardcoded_hex_color_count_bounded(style_block):
         f"found {len(matches)} hardcoded hex `color:` outside token "
         f"definitions — Phase 1 caps this at 30. Examples: {matches[:5]}"
     )
+
+
+# ---------------------------------------------------------------------------
+# T4 (final-pass plan 5.7.4), extended for PX-14 to PX-19 and PX-24: the pixel
+# visualization, key-strip and card-foil sprite rules in assets/site.css paint
+# through tokens only (no hex, no rgb, no gradient), so both themes resolve
+# them; the PROSPX <style> budget above is untouched by them.
+# ---------------------------------------------------------------------------
+
+_PX_VIZ_SEL = re.compile(r"\.(?:px-spark|px-lamp|px-lamp-wrap|px-lamp-key|px-lk|vt-key|vt-meter|px-fvkey|cf-badge)(?![\w-])")
+
+
+def test_pixel_viz_and_key_rules_use_tokens_only():
+    css = (Path(__file__).parent / "assets" / "site.css").read_text(encoding="utf-8")
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    rules = [(sel.strip(), body) for sel, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css)
+             if _PX_VIZ_SEL.search(sel)]
+    assert len(rules) >= 15, "the PX viz / key rules moved out of assets/site.css"
+    bad = [f"{sel} {{{body.strip()}}}" for sel, body in rules
+           if re.search(r"#[0-9a-fA-F]{3,8}\b|\brgba?\(|gradient\(", body)]
+    assert not bad, bad
+
+
+def test_px_viz_rules_live_outside_the_prospx_style(style_block):
+    assert not _PX_VIZ_SEL.search(style_block)

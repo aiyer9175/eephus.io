@@ -500,6 +500,14 @@ def _masthead_icon(key: str) -> str:
     return _ico(key, 32)
 
 
+def _wire_glyph(typ: str, glyph: str) -> str:
+    """The wire pictogram (PX-17): a known event type draws its 12 px icon,
+    which takes the colour of the type's own span (trade in the panel's ink,
+    owner answer PX-Q3); an unknown type keeps its text glyph. The GFX blob
+    keeps the text glyph for the canvas painter (PX-18)."""
+    return _ico(_WIRE_ICON[typ], 12) if typ in _WIRE_ICON else html.escape(glyph or "")
+
+
 # The pixel state scenes (final-pass plan 5.7, PX-11), byte-equal to the ART
 # table in assets/eephus-state.js (test_state_component.py pins the pair). The
 # build-time pages (the homepage rail and lead) draw their empty states from
@@ -1561,9 +1569,9 @@ def _mover_unit(p: dict) -> str:
 def _row_mover(p: dict, d: int) -> str:
     up = d > 0
     # Mini FV-history sparkline - reinforces the stock-chart identity. Colored
-    # by direction; the curve stays smooth (the sharp-corner rule is for UI
-    # chrome, not plotted lines).
-    spark = _fv_sparkline(p.get("points"), "var(--accent-green)" if up else "var(--accent-red)", w=58, h=20)
+    # by direction; drawn as the pixel step line (PX-16): 56 x 20, so eight
+    # snapshots get 7 px each and no column is resampled.
+    spark = _fv_sparkline(p.get("points"), "var(--accent-green)" if up else "var(--accent-red)", w=56, h=20)
     spark_html = f'<span class="row-spark">{spark}</span>' if spark else '<span class="row-spark"></span>'
     # Rank + team logo lead the row (same idiom as Top Prospects); position +
     # FV chip sit before the move delta so a mover reads like a ranked entry
@@ -1923,7 +1931,7 @@ def _feed_item_html(typ, glyph, text, key, org, name, val, cat: str = "") -> str
     data_cat = f' data-cat="{html.escape(cat)}"' if cat else ""
     return (f'<a class="feed-item" href="{_player_href(key)}"{data_cat}>'
             f'{logo}<span class="feed-name">{html.escape(name or text)}</span>'
-            f'<span class="feed-val {typ}">{glyph} {html.escape(val)}</span></a>')
+            f'<span class="feed-val {typ}">{_wire_glyph(typ, glyph)}{html.escape(val)}</span></a>')
 
 def _news_detail(p: dict, typ: str) -> str:
     """Scouting line under a player's name on the /news/ page: position, age,
@@ -1965,7 +1973,7 @@ def _news_item_html(typ, glyph, text, key, org, name, val, cat, pmap) -> str:
             f'{logo}'
             f'<span class="news-main"><span class="feed-name">{html.escape(name or text)}</span>{meta}</span>'
             f'{fv}'
-            f'<span class="feed-val {typ}">{glyph} {html.escape(val)}</span></a>')
+            f'<span class="feed-val {typ}">{_wire_glyph(typ, glyph)}{html.escape(val)}</span></a>')
 
 def _feed_html(events: list, n: int = 12) -> str:
     # Day-grouped wire (homepage sidebar): a thin per-date header carries the
@@ -1991,7 +1999,7 @@ def _ticker_html(events: list, n: int = 14) -> str:
         href = _player_href(key) if key else "/prospx/#tab=spotlights"
         logo = _team_logo(org, "tk-logo") if org else ""
         items.append(f'<a href="{html.escape(href)}" tabindex="-1">{logo}'
-                     f'<span class="{cls}">{glyph}</span> {html.escape(text)}</a>')
+                     f'<span class="{cls}">{_wire_glyph(typ, glyph)}</span> {html.escape(text)}</a>')
     if not items:
         items = ['<span><span class="glyph">◆</span> PROSPX - live prospect wire</span>']
     return " ".join(items * 2)  # duplicated for seamless scroll
@@ -2248,17 +2256,59 @@ def build_news(data: dict | None = None) -> str:
                 "changes and Free Agency signings, filterable by type.",
                 url=f"{SITE_ORIGIN}/news/")
 
+def _fv_step_runs(n: int, w: int) -> list:
+    """Integer [x0, x1) column spans for n board snapshots across w pixels.
+    With n <= w every snapshot owns one run of whole pixels (the widths differ
+    by at most 1 px, so the line fills the box); with more snapshots than
+    pixels each pixel column shows the snapshot standing at its left edge."""
+    if n <= w:
+        return [(i, i * w // n, (i + 1) * w // n) for i in range(n)]
+    return [(x * n // w, x, x + 1) for x in range(w)]
+
+
 def _fv_sparkline(points: list, color: str, w: int = 150, h: int = 34) -> str:
+    """The consensus FV history as a pixel STEP line (final-pass plan 5.7,
+    PX-16, V3). Board snapshots are discrete, so each value is held flat until
+    the next board rather than interpolated between them: one 2 px run per
+    snapshot, a 2 px riser where the grade changed. The dotted rules are the
+    grade lines at every multiple of 5 inside the band, so a reader sees which
+    band the line crossed without an axis. Every coordinate is a whole pixel
+    and the box is drawn at its own w x h (integer), so nothing is resampled."""
     vals = [pt.get("consensus_fv_raw") for pt in (points or []) if pt.get("consensus_fv_raw") is not None]
     if len(vals) < 2:
         return ""
-    lo, hi = min(vals), max(vals)
-    span = (hi - lo) or 1
-    step = w / (len(vals) - 1)
-    pts = " ".join(f"{i*step:.1f},{h-2-((v-lo)/span)*(h-4):.1f}" for i, v in enumerate(vals))
-    return (f'<svg viewBox="0 0 {w} {h}" style="width:100%;height:{h}px;display:block;">'
-            f'<polyline points="{pts}" fill="none" stroke="{color}" stroke-width="2" '
-            'stroke-linejoin="round" stroke-linecap="round"/></svg>')
+    w, h = int(w), int(h)
+    lo = math.floor(min(vals) / 5) * 5 - 2.5
+    hi = math.ceil(max(vals) / 5) * 5 + 2.5
+    k = (h - 2) / (hi - lo)
+
+    def y_of(v: float) -> int:
+        return int(round((hi - v) * k))
+
+    rules = []
+    g = math.ceil(lo / 5) * 5
+    while g <= hi:
+        rules.append("".join(f"M{x} {y_of(g)}h1v1h-1z" for x in range(0, w, 2)))
+        g += 5
+    runs = [[x0, x1, y_of(vals[i])] for i, x0, x1 in _fv_step_runs(len(vals), w)]
+    if len(vals) > w:  # one run per pixel column: merge the flat stretches
+        merged = [runs[0]]
+        for r in runs[1:]:
+            if r[2] == merged[-1][2]:
+                merged[-1][1] = r[1]
+            else:
+                merged.append(r)
+        runs = merged
+    ink, prev = [], None
+    for x0, x1, y in runs:
+        if prev is not None and prev != y:
+            a, b = sorted((prev, y))
+            ink.append(f"M{max(x0 - 1, 0)} {a}h2v{b - a + 2}h-2z")
+        ink.append(f"M{x0} {y}h{x1 - x0}v2h-{x1 - x0}z")
+        prev = y
+    return (f'<svg class="px-spark" width="{w}" height="{h}" viewBox="0 0 {w} {h}" aria-hidden="true">'
+            f'<path class="gl" d="{"".join(rules)}"/>'
+            f'<path class="ln" fill="{color}" d="{"".join(ink)}"/></svg>')
 
 def _spotlight_card(label: str, p: dict, chip: str, spark_color: str) -> str:
     """ONE spotlight card - the baseball-card markup every rotation slot shares.
@@ -2274,7 +2324,9 @@ def _spotlight_card(label: str, p: dict, chip: str, spark_color: str) -> str:
     # where the face sits in a 480x720 source.
     url = _headshot_url(p.get("mlbam_id"), 84, 128)   # unified chain (resolves milb-only ids)
     photo = f"background-image:url('{url}');" if url else ""
-    spark = _fv_sparkline(p.get("points"), spark_color)
+    # 120 x 34: the card's text column is about 123 px wide at the 292 px
+    # sidebar, so the pixel step line draws at its own size, never scaled.
+    spark = _fv_sparkline(p.get("points"), spark_color, w=120, h=34)
     return (
         f'<div class="sb-group"><div class="sb-group-label">{html.escape(label)}</div>'
         f'<a class="spotlight{holo}" href="{_player_href(p.get("player_key"))}" style="text-decoration:none;color:inherit;">'

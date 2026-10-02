@@ -438,6 +438,54 @@
       esc(DATA.gate_frozen_at) + "</p></section>";
   }
 
+  // ---- PX-14 the tied-game line score (V1, the ballpark lamp idiom) --------
+  // Drawn from the same rows as the table under it, which stays and keeps every
+  // number. A half lights round(100 x (p - 0.5)) lamp rows: up from the 50%
+  // rule when the team coming to bat wins more than half, down when it wins
+  // fewer. Top halves dim, bottom halves ink. Each bar is ONE rect filled with
+  // a 4 px lamp pattern, so the runs merge instead of drawing a rect per lamp.
+  // Measured, unpriced, no red or green. Renderer budget 3 KB (PX-14 test).
+  function tiedLamps(rows) {
+    var by = {}, up = 1, dn = 1, last = 0;
+    (rows || []).forEach(function (r) {
+      var p = Number(r.batting_team_win_prob);
+      if (r.batting_team_win_prob == null || !isFinite(p) || !(r.inning >= 1)) return;
+      var n = Math.round(p * 100 - 50);
+      by[r.inning + r.half] = n;
+      if (n > up) up = n;
+      if (-n > dn) dn = -n;
+      if (r.inning > last) last = r.inning;
+    });
+    if (!last) return "";
+    var G = 36, L = 4, W = last * G - L, gh = (up + 1 + dn) * L, H = gh + 14, out = "";
+    var pat = function (c) {
+      return '<pattern id="mgmt-lp-' + c + '" width="4" height="4" patternUnits="userSpaceOnUse">' +
+        '<rect class="' + c + '" width="3" height="3"/></pattern>';
+    };
+    var bar = function (c, x, y, w, h) {
+      return '<rect fill="url(#mgmt-lp-' + c + ')" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '"/>';
+    };
+    for (var i = 1; i <= last; i++) {
+      var x = (i - 1) * G;
+      out += bar("lo", x, 0, 32, gh) + bar("lr", x, up * L, 32, L);
+      [["top", "lt", 0], ["bottom", "lb", 16]].forEach(function (h) {
+        var n = by[i + h[0]];
+        if (n == null) return;
+        out += '<g data-half="' + i + h[0] + '" data-lamps="' + n + '">' + (n > 0 ? bar(h[1], x + h[2], (up - n) * L, 16, n * L)
+          : n < 0 ? bar(h[1], x + h[2], (up + 1) * L, 16, -n * L) : "") + "</g>";
+      });
+      out += '<text x="' + (x + 15) + '" y="' + (gh + 12) + '" text-anchor="middle">' + i + "</text>";
+    }
+    return '<div class="px-lamp-wrap mlbstats-scroll"><svg class="px-lamp" width="' + W + '" height="' + H +
+      '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Lamp bars by inning: points above or below 50 percent ' +
+      'for the team coming to bat in a tied game, top half then bottom half; every value is in the table below">' +
+      "<defs>" + ["lo", "lr", "lt", "lb"].map(pat).join("") + "</defs>" + out + "</svg></div>" +
+      '<p class="px-lamp-key"><span><i class="px-lk t"></i>top half (visitors bat)</span>' +
+      '<span><i class="px-lk b"></i>bottom half (home bats)</span>' +
+      "<span>each lamp row is 1 point from 50%; the middle rule is 50%</span></p>";
+  }
+  // ---- PX-14 end
+
   // ---- the reference tables ------------------------------------------------
   function renderReference() {
     var ref = DATA.reference;
@@ -476,6 +524,7 @@
       head + "</thead><tbody>" + body + "</tbody></table></div>" +
       "<h2>Coming to bat in a tied game</h2>" +
       '<p class="mgmt-note">' + esc(ref.half_inning_start.note) + "</p>" +
+      tiedLamps(ref.half_inning_start.tied_game) +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' +
       "<th>Inning</th><th>Half</th><th>Win probability</th><th>Games</th>" +
       "</tr></thead><tbody>" +

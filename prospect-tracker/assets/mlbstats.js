@@ -536,12 +536,18 @@
     return collapsible(id,
       '<span class="mlbstats-fold-lead">' + lead + "</span>"
       + '<span class="mlbstats-fold-hint">how to read this board</span>',
-      body + VALUE_RULER_NOTE, { collapsed: true, cls: "mlbstats-fold" });
+      body + VALUE_RULER_NOTE + rulerKey(), { collapsed: true, cls: "mlbstats-fold" });
   }
   // One sentence, once, on every board that carries a ladder. Terse on the page;
-  // the seven steps and the cuts are behind the glossary hook, per house rule.
+  // the cuts are behind the glossary hook, per house rule.
   var VALUE_RULER_NOTE = '<p class="mlbstats-note"><span data-gl="value_ruler">'
     + "Colour reads on the value ruler.</span></p>";
+  // The ruler key under it (final-pass plan 5.7, PX-19): the step words with a
+  // pixel meter each. Every family on these boards is an index family, which
+  // never reaches the below-zero step, so the key stops at `below`.
+  function rulerKey() {
+    return (typeof EephusTiers !== "undefined" && EephusTiers.keyHTML) ? EephusTiers.keyHTML({ neg: false }) : "";
+  }
   function bindCollapse(root) {
     root.querySelectorAll("[data-collapse]").forEach(function (el) {
       var head = el.querySelector(".mlbstats-collapse-head");

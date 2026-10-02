@@ -258,10 +258,43 @@
     return "color-mix(in oklab, var(--vt-" + a[1] + ") " + w + "%, var(--vt-" + b[1] + "))";
   }
 
+  // ---- the ruler key (final-pass plan 5.7, PX-19, V4) ------------------------
+  // A 6-cell pixel meter per step beside its word, lit cells counting the step
+  // (elite 6 down to poor 0), so the colour gets a second channel that is not
+  // colour. It sits once in a ruler board's header; no cell gets a meter. Words
+  // only: the cuts belong to each metric and stay behind the value_ruler
+  // glossary hook. An index family can never reach `poor`, so { neg: false }
+  // drops that step from the key.
+  var METER_LIT = { elite: 6, great: 5, good: 4, above: 3, avg: 2, below: 1, poor: 0 };
+
+  function meter(t) {
+    var n = METER_LIT[t], out = "";
+    if (n == null) return "";
+    for (var i = 0; i < 6; i++) {
+      out += '<rect class="' + (i < n ? "on" : "off") + '" x="' + i * 3 + '" y="0" width="2" height="4"/>';
+    }
+    return '<svg class="vt-meter" width="34" height="8" viewBox="0 0 17 4" aria-hidden="true" focusable="false">'
+      + out + "</svg>";
+  }
+
+  function keyHTML(opts) {
+    var steps = opts && opts.neg === false ? TIERS.slice(0, 6) : TIERS;
+    return '<ul class="vt-key" aria-label="Value ruler key">' + steps.map(function (t) {
+      return '<li class="vt-' + t + '">' + meter(t) + "<span>" + t + "</span></li>";
+    }).join("") + "</ul>";
+  }
+
+  // Draw the key into `el` (a ruler board header) and return it.
+  function key(el, opts) {
+    if (el) el.innerHTML = keyHTML(opts);
+    return el;
+  }
+
   var API = { TIERS: TIERS, LADDERS: LADDERS, tier: tier, cls: cls,
               clsInk: clsInk, clsAvg: clsAvg, clsAvgInk: clsAvgInk,
               varOf: varOf, PCT_STOPS: PCT_STOPS, pctSeg: pctSeg,
-              pctColor: pctColor };
+              pctColor: pctColor, METER_LIT: METER_LIT, meter: meter,
+              keyHTML: keyHTML, key: key };
   if (typeof window !== "undefined") window.EephusTiers = API;
   if (typeof globalThis !== "undefined") globalThis.EephusTiers = API;
 })();
