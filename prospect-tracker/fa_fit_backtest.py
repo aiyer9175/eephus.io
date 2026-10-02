@@ -156,6 +156,31 @@ def _sn_float(v, dash: float | None = 0.0) -> float | None:
         return None
 
 
+def _sn_wcgb(v) -> float | None:
+    """SIGNED wild-card games back for numeric readers: positive is behind the
+    last wild-card spot, negative is ahead of it. StatsAPI prints a club ahead
+    of the cutoff with a leading plus, and '+9.5' means 9.5 games AHEAD, which a
+    bare float() reads as 9.5 behind (STANDINGS_PLAN F7). So '+9.5' gives -9.5,
+    '4.5' gives 4.5, and '-' (a division leader, or the club holding the last
+    spot) gives None, as it always has here. The standings page's own parser,
+    standings_core.parse_standings (STANDINGS_1), keeps the magnitude instead,
+    wcgb 9.5 with wc_ahead true, so the page can print MLB's '+9.5'; the two
+    conventions differ on purpose and are not unified."""
+    if isinstance(v, str) and v.strip().startswith("+"):
+        ahead = _sn_float(v.strip()[1:], dash=None)
+        if ahead is None:
+            return None
+        return -ahead if ahead else 0.0
+    return _sn_float(v, dash=None)
+
+
+# What the last standings_now(season) call returned, by season: the number of
+# clubs it parsed, 0 for the {} of a failed fetch or parse. run_monthly's
+# statsapi_standings ingest row reads this after proj_export's current-season
+# attach, so the nightly's own read is watched without a second fetch.
+STANDINGS_NOW_CLUBS: dict[int, int] = {}
+
+
 def standings_now(season: int) -> dict[str, dict]:
     """Widened live-standings read for the current-season Team Outlook view.
     {org: {wins, losses, pct, gamesPlayed, rs, ra, runDiff, gb, divGb, wcGb,
@@ -167,7 +192,11 @@ def standings_now(season: int) -> dict[str, dict]:
 
     pythagWins/Losses come from StatsAPI's built-in xWinLoss expectedRecord
     (present on standingsTypes=regularSeason); None when the block is absent,
-    in which case the blend computes Pythag from rs/ra itself."""
+    in which case the blend computes Pythag from rs/ra itself.
+
+    wcGb is signed games back (see _sn_wcgb): StatsAPI's '+9.5' is stored as
+    -9.5, a club 9.5 games ahead of the last wild-card spot."""
+    STANDINGS_NOW_CLUBS[int(season)] = 0
     fr = _fetch(_STANDINGS_URL.format(season=season),
                 f"statsapi_standings_{season}", accept_json=True)
     if fr.status != 200 or not fr.body:
@@ -206,7 +235,9 @@ def standings_now(season: int) -> dict[str, dict]:
                     "rs": rs, "ra": ra, "runDiff": run_diff,
                     "gb": _sn_float(tr.get("gamesBack")),
                     "divGb": _sn_float(tr.get("divisionGamesBack")),
-                    "wcGb": _sn_float(tr.get("wildCardGamesBack"), dash=None),
+                    # Signed games back: positive behind the last wild-card
+                    # spot, negative ahead ('+9.5' -> -9.5); None for '-'.
+                    "wcGb": _sn_wcgb(tr.get("wildCardGamesBack")),
                     "divRank": _sn_int(tr.get("divisionRank")),
                     "leagueRank": _sn_int(tr.get("leagueRank")),
                     "wcRank": _sn_int(tr.get("wildCardRank")),
@@ -217,6 +248,7 @@ def standings_now(season: int) -> dict[str, dict]:
     except (ValueError, TypeError):
         log.warning("standings_now %d unparseable", season)
         return {}
+    STANDINGS_NOW_CLUBS[int(season)] = len(out)
     return out
 
 
