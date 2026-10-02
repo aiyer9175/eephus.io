@@ -1,18 +1,16 @@
 # Team headshots
 
-Drop a headshot here named by the member's **first name** (lowercase), then run
-`python build_site.py`. The Development Team page picks it up automatically - no
-JSON editing needed.
+The Masthead (/team/) reads every person from `data/team.json`; each entry's
+`photo` field names its file here (for example `"/assets/team/noah.jpg"`), and
+`null` shows the person's initials in the card's photo window instead.
 
-- Accepted: `noah.jpg`, `will.jpg`, `michael.png`, `anirudh.webp`, `joseph.jpg`,
-  `charlie.jpg` (extensions tried in order: jpg, jpeg, png, webp).
-- Until a file exists, the card shows a monogram (the member's initials) - so the
-  page never has a broken image.
-- Photos render **rectangular with sharp corners** (portrait, `object-fit: cover`,
-  framed from the top). Aim for a roughly portrait/square source ≥ 320px wide.
-- To use a different path/filename, set `"photo": "/assets/team/whatever.jpg"` on
-  that member's entry in `content/team.json` (overrides the auto-detect).
+- Format: square JPEG, 600 x 600, RGB (no alpha), progressive. The card's photo
+  window crops it with `object-fit: cover`, framed a little above centre.
+- Processing a new photo: crop to a square around the face, resize to 600 x 600
+  with Lanczos resampling, flatten any alpha, save as JPEG (quality about 90).
+- A file is only shown when it exists, so a missing photo never draws a broken
+  image.
 
-Note: these must be images the member is OK publishing. We do **not** pull photos
-from LinkedIn - that violates LinkedIn's terms and their image URLs are signed and
-expire (they'd break). Ask each person for a headshot to drop in here.
+Note: these must be images the person is OK publishing. We do **not** pull photos
+from LinkedIn: that violates LinkedIn's terms and their image URLs are signed and
+expire. Ask each person for a headshot to drop in here.

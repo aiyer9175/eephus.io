@@ -4,7 +4,7 @@
  * Written by Noah J. Dengler (@ARKNDJL), 2026 */
 
 // =============================================================================
-// eephus.io - Franchise Overview (/franchise/)
+// eephus.io - Franchises (/franchise/)
 // =============================================================================
 // Renders data/franchise_board.json (franchise_export.py): one page per club,
 // re-serving what every module already publishes, on the scale it was computed
@@ -792,7 +792,7 @@
       ] };
     });
     return {
-      kind: "board", module: "Franchise", accentToken: "--accent-cyan",
+      kind: "board", module: "Franchises", accentToken: "--accent-cyan",
       title: d.name + " " + copy("root_eyebrow"),
       subtitle: (d.index.letter || "-") + " #" + d.index.rank + " of " + DATA.league.n + " (" + n1(d.index.score) + ") " + copy("root_sentence"),
       url: "eephus.io/franchise/#team=" + d.code, filenameBase: "eephus-franchise-" + String(d.code).toLowerCase(),
@@ -890,7 +890,7 @@
         ensureTeam();
         render();
       })
-      .catch(function () { LOAD_ERROR = "The Franchise Overview could not be loaded."; render(); });
+      .catch(function () { LOAD_ERROR = "Franchises could not be loaded."; render(); });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

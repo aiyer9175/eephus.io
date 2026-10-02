@@ -1,0 +1,500 @@
+{
+  "set": "eephus.io Masthead 2026",
+  "groups": [
+    {
+      "key": "developers",
+      "label": "Developers",
+      "order": 1,
+      "number_prefix": "",
+      "icon": "team",
+      "empty": "No developers are listed yet."
+    },
+    {
+      "key": "writers",
+      "label": "Writers and Analysts",
+      "order": 2,
+      "number_prefix": "W",
+      "icon": "b-writing",
+      "empty": "Scouting reports and articles are by the eephus.io writers; bylines appear with each piece."
+    }
+  ],
+  "credits": {
+    "built": "Built",
+    "co-built": "Co-built",
+    "co-created": "Co-created",
+    "created": "Created",
+    "assisted": "Assisted",
+    "tested": "Tested",
+    "wrote": "Wrote"
+  },
+  "badges": {
+    "site": {
+      "label": "eephus.io platform",
+      "icon": "home"
+    },
+    "pipeline": {
+      "label": "Data pipeline",
+      "icon": "b-pipeline"
+    },
+    "prospx": {
+      "label": "PROSPX",
+      "icon": "prospx"
+    },
+    "spotlights": {
+      "label": "PROSPX Spotlights",
+      "icon": "px-spotlights"
+    },
+    "efv": {
+      "label": "eFV",
+      "icon": "b-efv"
+    },
+    "ewar": {
+      "label": "eWAR",
+      "icon": "b-ewar"
+    },
+    "sdr": {
+      "label": "SDR",
+      "icon": "b-sdr"
+    },
+    "swingplus": {
+      "label": "Swing+",
+      "icon": "b-swingplus"
+    },
+    "defense": {
+      "label": "Prospect Defensive Value",
+      "icon": "defense"
+    },
+    "collegesavant": {
+      "label": "CollegeSavant",
+      "icon": "collegesavant"
+    },
+    "franchise": {
+      "label": "Franchises",
+      "icon": "franchise"
+    },
+    "fa": {
+      "label": "Free Agency",
+      "icon": "fa"
+    },
+    "projections": {
+      "label": "Projections",
+      "icon": "projections"
+    },
+    "mlbstats": {
+      "label": "MLB Stats",
+      "icon": "mlbstats"
+    },
+    "pal": {
+      "label": "Alchemy Lab",
+      "icon": "pal"
+    },
+    "trademachine": {
+      "label": "Trade Machine",
+      "icon": "trademachine"
+    },
+    "arbitration": {
+      "label": "Arbitration",
+      "icon": "arbitration"
+    },
+    "ledger": {
+      "label": "Club Ledger",
+      "icon": "ledger"
+    },
+    "management": {
+      "label": "In-Game Management",
+      "icon": "management"
+    },
+    "hof": {
+      "label": "Hall of Fame",
+      "icon": "hof"
+    },
+    "fantasy": {
+      "label": "Fantasy",
+      "icon": "fantasy"
+    },
+    "betting": {
+      "label": "Sports Betting",
+      "icon": "betting"
+    },
+    "models": {
+      "label": "Model Accountability",
+      "icon": "models"
+    },
+    "library": {
+      "label": "Library",
+      "icon": "glossary"
+    },
+    "parks": {
+      "label": "MiLB Park Factors",
+      "icon": "parks"
+    },
+    "news": {
+      "label": "Prospect News",
+      "icon": "news"
+    },
+    "scores": {
+      "label": "Scores / Standings",
+      "icon": "b-scores"
+    },
+    "awards": {
+      "label": "Awards",
+      "icon": "b-awards"
+    },
+    "scouting": {
+      "label": "Scouting reports",
+      "icon": "b-scouting"
+    },
+    "trends": {
+      "label": "League Trends",
+      "icon": "b-trends"
+    },
+    "fscore": {
+      "label": "F-SCORE",
+      "icon": "b-fscore"
+    },
+    "pixel": {
+      "label": "Pixel system",
+      "icon": "b-pixel"
+    },
+    "backend": {
+      "label": "Port and backend",
+      "icon": "b-backend"
+    },
+    "accounts": {
+      "label": "Accounts and forums",
+      "icon": "forums"
+    },
+    "bugtest": {
+      "label": "Bug testing",
+      "icon": "b-bugtest"
+    },
+    "process": {
+      "label": "Creation process",
+      "icon": "b-process"
+    },
+    "writing": {
+      "label": "Writing",
+      "icon": "b-writing"
+    }
+  },
+  "members": [
+    {
+      "key": "noah-j-dengler",
+      "name": "Noah J. Dengler",
+      "group": "developers",
+      "order": 1,
+      "owner": true,
+      "role": "Owner and founder",
+      "role_extra": "Lead developer",
+      "photo": "/assets/team/noah.jpg",
+      "watermark": "@ARKNDJL",
+      "front": {
+        "handle": "ARKNDJL",
+        "linkedin": "noahjdengler",
+        "email": "arkndjl@gmail.com",
+        "website": "https://arkndjl.net/",
+        "github": "arkndjl",
+        "school": "New York University"
+      },
+      "badges": [
+        {
+          "key": "site",
+          "credit": "built"
+        },
+        {
+          "key": "pipeline",
+          "credit": "built"
+        },
+        {
+          "key": "prospx",
+          "credit": "built"
+        },
+        {
+          "key": "efv",
+          "credit": "built"
+        },
+        {
+          "key": "ewar",
+          "credit": "built"
+        },
+        {
+          "key": "mlbstats",
+          "credit": "built"
+        },
+        {
+          "key": "projections",
+          "credit": "built"
+        },
+        {
+          "key": "fa",
+          "credit": "built"
+        },
+        {
+          "key": "franchise",
+          "credit": "built"
+        },
+        {
+          "key": "trademachine",
+          "credit": "built"
+        },
+        {
+          "key": "arbitration",
+          "credit": "built"
+        },
+        {
+          "key": "ledger",
+          "credit": "built"
+        },
+        {
+          "key": "management",
+          "credit": "built"
+        },
+        {
+          "key": "hof",
+          "credit": "built"
+        },
+        {
+          "key": "pal",
+          "credit": "built"
+        },
+        {
+          "key": "fantasy",
+          "credit": "built"
+        },
+        {
+          "key": "betting",
+          "credit": "built"
+        },
+        {
+          "key": "models",
+          "credit": "built"
+        },
+        {
+          "key": "library",
+          "credit": "built"
+        },
+        {
+          "key": "parks",
+          "credit": "built"
+        },
+        {
+          "key": "news",
+          "credit": "built"
+        },
+        {
+          "key": "collegesavant",
+          "credit": "co-created"
+        },
+        {
+          "key": "spotlights",
+          "credit": "co-created"
+        },
+        {
+          "key": "pixel",
+          "credit": "built"
+        },
+        {
+          "key": "writing",
+          "credit": "wrote"
+        }
+      ],
+      "back": [
+        "Founder, architect and lead developer of eephus.io: a Python data pipeline over SQLite, a static site generator, six MLB modules, a prospect board covering 10,000 players, and the retro card-and-newspaper design system, built and shipped from the first commit.",
+        "Data engineering: ingest from the MLB Stats API, Baseball Savant, Spotrac, FanGraphs, MLB Pipeline, Baseball America, ESPN and TJStats into a versioned snapshot store; identity resolution across sources with alias ledgers and two-humans proofs; point-in-time vintages so every backtest reads only what was knowable on the day; nightly and monthly jobs with ingest health, heartbeats and atomic artifact writes.",
+        "eFV, the outcome-grounded Future Value model: a leakage-clean feature matrix from translated minor-league production, age-for-level and scout grades, Kaplan-Meier censoring for unresolved cohorts, a ridge WAR projection forward-chained over eleven cohort years, an outcome-curve grade map, bootstrap detectable-effect floors, permutation and zero-information controls, Holm-corrected claim cells and TOST equivalence, all pre-registered in gate documents before a number is read.",
+        "eWAR: a WAR frame that keeps the Baseball-Reference run environment and swaps pitching onto FIP, rebuilt for 15,000 player-seasons, with a consensus grade that weights each outlet by measured accuracy and a label-free noise triad (FIML) that sizes each source's grade noise.",
+        "MLB Stats Arkmetrics: REM+, SEM+, HEM+, xHEM+ and RIV+, empirical-Bayes shrunk indexes validated on forward year-to-year persistence with bootstrap confidence intervals; win-probability and leverage computed from play-by-play feeds for 17,000 games.",
+        "MLB Projections and Free Agency: a Marcel-style league-wide engine with LightGBM quantile heads, aging curves and a team-wins simulator calibrated on retro seasons; a free-agent market model for years, guarantee and AAV with three pre-registered gates, deferral NPV pricing, team-fit ranking scored by mean reciprocal rank, and an arbitration salary predictor.",
+        "Trade Machine and surplus value: an expected-value surplus framework (tiered dollars per WAR, control years, isotonic calibration on resolved cohorts) shared by every module, a Bayesian and Kalman trade valuation, and a forward stability instrument over 250,000 snapshot rows.",
+        "Sports Betting: a run-scoring regression on the site's own team indexes with a Skellam margin model, proportional de-vig, closing-line value, a paper shadow ledger with per-tag records, market publishability gates, and a vintage backtest against the home-team constant on out-of-sample games.",
+        "Alchemy Lab: starter and reliever role-conversion fit scores, a pitch-add recommender from arsenal gaps and platoon splits, and a reverse-platoon radar, validated as a sign check on 95 real conversions.",
+        "CollegeSavant translation, farm-system grading, draft and international boards, a mock-draft model scored against the real draft, and entity pages for every org, school and country.",
+        "The Library (the unified glossary), the Arkmetric standard, and a model registry that ties every shipped model to a committed evaluation artifact, a verdict and a freshness clock, with committed losses beside the wins.",
+        "Engineering practice: 3,500 tests run in a chunked suite with mutation checks on new guards, Playwright and headless-JS smoke tests on every surface, copy lint, content-hash cache busting, and pre-registered measurement before any accuracy claim ships.",
+        "Skills used here: Python (pandas, numpy, scikit-learn, LightGBM, scipy), SQL and SQLite, statistics (empirical Bayes, survival analysis, bootstrap inference, calibration, ranking metrics), JavaScript, HTML and CSS, REST APIs and scraping, git, cron and deploy operations on Linux and Windows, technical writing and site design."
+      ]
+    },
+    {
+      "key": "will-cahoon",
+      "name": "Will Cahoon",
+      "group": "developers",
+      "order": 2,
+      "role": "Model developer",
+      "photo": "/assets/team/will.jpg",
+      "watermark": "@willcolqhn",
+      "front": {
+        "handle": "WillColqhn",
+        "linkedin": "will-cahoon-b94308396",
+        "github": "willclq",
+        "school": "Utah College"
+      },
+      "badges": [
+        {
+          "key": "ewar",
+          "credit": "co-built"
+        },
+        {
+          "key": "sdr",
+          "credit": "created"
+        },
+        {
+          "key": "swingplus",
+          "credit": "created"
+        },
+        {
+          "key": "defense",
+          "credit": "created"
+        },
+        {
+          "key": "collegesavant",
+          "credit": "assisted"
+        },
+        {
+          "key": "prospx",
+          "credit": "assisted"
+        },
+        {
+          "key": "projections",
+          "credit": "assisted"
+        },
+        {
+          "key": "fa",
+          "credit": "assisted"
+        },
+        {
+          "key": "writing",
+          "credit": "wrote"
+        }
+      ],
+      "back": [
+        "eWAR: instrumental in building the site's WAR frame.",
+        "SDR: created SDR, the defensive run metric; its method is in the repository, and eWAR's fielding leg waits on its data.",
+        "Swing+: a bat-tracking swing-quality model (bat speed, swing length, attack angle and path tilt, intercept point) that scores each hitter's tracked MLB swings. It rides the player cards, the GFX hero rail, and MLB Projections.",
+        "Prospect Defensive Value: a model of expected MLB positional run value from a prospect's listed position, body frame, and age.",
+        "Advancement Pace: the method behind the MiLB ladder-advancement pace display, which the site rebuilds on its own MiLB season data.",
+        "The position-migration thesis behind the position chips.",
+        "CollegeSavant stuff models: the college TrackMan xRV family, which CollegeSavant displays as scored.",
+        "Assisted with development of PROSPX, MLB Projections and MLB Free Agency.",
+        "Writing and analysis, including the Shortstops Galore article."
+      ]
+    },
+    {
+      "key": "michael-behrens",
+      "name": "Michael Behrens",
+      "group": "developers",
+      "order": 3,
+      "role": "Webmaster and backend",
+      "photo": "/assets/team/michael.jpg",
+      "watermark": null,
+      "front": {
+        "handle": "b____tech",
+        "linkedin": "michael-behrens-",
+        "github": "baron-git",
+        "school": "University of Oklahoma"
+      },
+      "badges": [
+        {
+          "key": "backend",
+          "credit": "built"
+        },
+        {
+          "key": "accounts",
+          "credit": "built"
+        },
+        {
+          "key": "site",
+          "credit": "assisted"
+        }
+      ],
+      "back": [
+        "Webmaster and backend developer for eephus.io.",
+        "Runs the hosting and the Cloudflare layer in front of the site.",
+        "Leads the port of the site to its new backend.",
+        "Built the account and forum implementation."
+      ]
+    },
+    {
+      "key": "joseph-gillis",
+      "name": "Joseph Gillis",
+      "group": "developers",
+      "order": 4,
+      "role": "Co-creator, CollegeSavant",
+      "photo": "/assets/team/joseph.jpg",
+      "watermark": null,
+      "front": {
+        "linkedin": "josephdgil",
+        "github": "jgillisBU",
+        "school": "Boston University"
+      },
+      "badges": [
+        {
+          "key": "collegesavant",
+          "credit": "co-created"
+        }
+      ],
+      "back": [
+        "Co-created CollegeSavant: built its framework, which the owner then carried onto the site's theme."
+      ]
+    },
+    {
+      "key": "anirudh-iyer",
+      "name": "Anirudh Iyer",
+      "group": "developers",
+      "order": 5,
+      "role": "Co-creator, Spotlights",
+      "photo": "/assets/team/anirudh.jpg",
+      "watermark": null,
+      "front": {
+        "linkedin": "anirudh-iyer-193086229",
+        "github": "aiyer9175",
+        "school": "University of California, Los Angeles"
+      },
+      "badges": [
+        {
+          "key": "spotlights",
+          "credit": "co-created"
+        },
+        {
+          "key": "trademachine",
+          "credit": "co-created"
+        },
+        {
+          "key": "bugtest",
+          "credit": "tested"
+        },
+        {
+          "key": "process",
+          "credit": "assisted"
+        }
+      ],
+      "back": [
+        "Co-created the PROSPX Spotlights section: built its framework, which the owner then carried onto the site's theme.",
+        "Co-created the Trade Machine: built its prospect trade-value board and the trade value policy behind it (contract overrides, extension detection, fallback sourcing).",
+        "Bug testing across the site.",
+        "Assisted with the site's creation process."
+      ]
+    },
+    {
+      "key": "charlie-mortellite",
+      "name": "Charlie Mortellite",
+      "group": "developers",
+      "order": 6,
+      "role": "Bug testing",
+      "photo": null,
+      "watermark": null,
+      "front": {
+        "linkedin": "charlie-mortellite-a8b8222a3",
+        "school": "Merrimack College"
+      },
+      "badges": [
+        {
+          "key": "bugtest",
+          "credit": "tested"
+        }
+      ],
+      "back": [
+        "Bug testing across the site."
+      ]
+    }
+  ]
+}

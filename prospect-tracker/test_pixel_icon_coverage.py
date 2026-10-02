@@ -191,14 +191,19 @@ def test_masthead_draws_one_32px_icon_first_in_the_h1(key):
         assert B._stage_chip(key) in h1, "the stage chip is untouched"
 
 
-def test_team_badges_are_24px_symbols():
+def test_team_badges_are_sprite_symbols():
+    """The Masthead's attribution badges (TEAM_1, 2026-10-02): one 16 px symbol
+    per credit on a card front, one 12 px symbol per row of the back's table,
+    every one drawn from the sprite; nothing on the page is gold."""
     out = B.build_team()
-    marks = re.findall(r'<span class="team-badge-mark">(.*?)</span></span>', out, re.S)
-    assert marks
-    for m in marks:
-        icons = _icons(m)
-        assert len(icons) == 1 and icons[0][0] == 24, m[:120]
-    assert "accent-gold" not in "".join(re.findall(r'--badge-accent:[^"]*', out))
+    front = re.findall(r'<li class="tc-badge"[^>]*>(.*?)</li>', out, re.S)
+    rows = re.findall(r'<tr data-badge="[\w-]+"><td>(.*?)</td>', out, re.S)
+    assert front and rows
+    for m in front:
+        assert [w for w, _s in _icons(m)] == [16], m[:120]
+    for m in rows:
+        assert [w for w, _s in _icons(m)] == [12], m[:120]
+    assert "accent-gold" not in out
 
 
 # ------------------------------------------------- the hand-kept pages

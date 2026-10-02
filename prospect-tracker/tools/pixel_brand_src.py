@@ -150,7 +150,7 @@ MODULES = (
      "Prospect analytics: outcome-grounded eFV grades, surplus value, and scouting consensus."),
     ("collegesavant", "CollegeSavant", "/collegesavant/",
      "Percentile profiles for college hitters and pitchers."),
-    ("franchise", "Franchise Overview", "/franchise/",
+    ("franchise", "Franchises", "/franchise/",
      "One page per club: the Franchise Index and its three graded branches."),
     ("fa", "MLB Free Agency", "/fa/",
      "The free-agent class: projected contracts with floor, mean and ceiling bands."),

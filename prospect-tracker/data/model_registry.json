@@ -1870,7 +1870,7 @@
   },
   {
    "model_id": "postseason_bracket_sim",
-   "surface": "the Pennant and World Series columns and the postseason table of the Futures panel on /betting/, and the Pennant tile of the Franchise ODDS section, during the postseason only, labelled implied, no market; data/bracket_sim.json",
+   "surface": "the Pennant and World Series columns and the postseason table of the Futures panel on /betting/, and the Pennant tile of the Franchises ODDS section, during the postseason only, labelled implied, no market; data/bracket_sim.json",
    "predicts": "per postseason club, P(win each remaining round), P(pennant) and P(World Series), from the bracket state",
    "champion": "bracket_v1: exact series recursion over the posted bracket; per game the served betting_game_prob p_home where the board prices the game, else the literature Elo (1500, K 4, 24 points home) over the 2026 regular-season finals, frozen at the first run; formats and home field per docs/betting-2026-10/BRACKET_SIM_GATE.md",
    "baseline": "the coin bracket: the same state, every unplayed game at 0.5",

@@ -99,7 +99,7 @@ def test_no_figure_is_typed_into_the_page_html():
     assert 'id="franchise-masthead"' in h
     for cls in ("fa-app", "mlbstats-app", "fr-app", "mlbstats-sectionnav"):
         assert cls in h
-    assert "<title>Franchise Overview - eephus.io</title>" in h
+    assert "<title>Franchises - eephus.io</title>" in h
     assert "eephus-gfx.js" in h and "franchise.js" in h and "franchise.css" in h and "eephus-tiers.js" in h
     code_lines = [ln for ln in JS.splitlines() if not ln.strip().startswith("//")]
     assert not re.search(r'"\$\d[\d.,]*M?"', "\n".join(code_lines)), "a dollar figure is typed into the JS"
@@ -201,7 +201,7 @@ def test_letters_print_in_neutral_ink_and_only_scores_are_tiered():
 def test_gfx_export_uses_the_eephus_gfx_header_helper_not_data_egfx():
     assert "data-egfx" not in JS
     assert "EEPHUS_GFX.open(" in JS and "EEPHUS_GFX.chipHTML(" in JS
-    assert 'kind: "board", module: "Franchise"' in JS
+    assert 'kind: "board", module: "Franchises"' in JS
     assert "_gfxHeader" not in JS, "the PROSPX inline helper is not importable; the shared modal draws the header"
 
 

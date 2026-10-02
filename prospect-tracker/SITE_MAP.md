@@ -14,7 +14,7 @@ fetch strings.
 | 1 | `home` | Home | `/` | - |
 | 2 | `prospx` | PROSPX | `/prospx/` | - |
 | 3 | `collegesavant` | CollegeSavant | `/collegesavant/` | - |
-| 4 | `franchise` | Franchise | `/franchise/` | MLB Modules |
+| 4 | `franchise` | Franchises | `/franchise/` | MLB Modules |
 | 5 | `fa` | Free Agency | `/fa/` | MLB Modules |
 | 6 | `projections` | Projections | `/projections/` | MLB Modules |
 | 7 | `mlbstats` | MLB Stats | `/mlbstats/` | MLB Modules |
@@ -30,7 +30,7 @@ fetch strings.
 | 17 | `articles` | Articles | `/articles/` | - |
 | 18 | `forums` | Forums | `/forums/` | - |
 | 19 | `glossary` | Library | `/glossary/` | - |
-| 20 | `team` | Developers | `/team/` | - |
+| 20 | `team` | Masthead | `/team/` | - |
 
 ## PROSPX sub-sections (`build_site.PROSPX_SUBNAV`)
 
@@ -84,13 +84,14 @@ payloads are real page traffic and are attributed to every page loading it).
 | `/parks/` | `build_site.build_parks()` | `assets/parks.js` | `milb_park_factors.json`, `player_links.json`, `xfv_park_line_eval.json` | MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off) |
 | `/hof/` | `build_site.build_hof()` | `assets/hof.js` | `hof_board.json`, `player_links.json` | Hall of Fame: career WAR / WAR7 / JAWS for every ten-season player, reproduced from Baseball-Reference's own daily WAR file, in three bands (eligible, active, not yet eligible) with the ballot record joined. No Hall line and no snub list; each dark section names its blocker, and Franchises credits every inductee to one franchise under the owner's 2026-09-25 rule. |
 | `/management/` | `build_site.build_management()` | `assets/eephus-teampick.js`, `assets/management.js` | `management_board.json`, `player_links.json` | In-Game Management: every stolen-base attempt since 2018 priced against win probability with a league-average runner. NO per-club plus metric, because the gate battery returned a BOUNDED null (split-half 0.069 inside a permutation band, detection floor 0.0005 wins per attempt). Ships the league result, the club STYLE board, and the run-expectancy and half-inning-start reference tables. |
-| `/franchise/` | `build_site.build_franchise()` | `assets/eephus-teampick.js`, `assets/franchise.js` | `franchise_board.json`, `player_links.json` | Franchise Overview: the org-level grade tree per club (Franchise Index = weighted mean of ROSTER / OUTLOOK / FARM branch scores, re-standardised across 30 clubs, descriptive) with twelve sections that re-serve every module's numbers for the club on their own scales; no HoF tile, no pennants, no decision-quality grade. |
+| `/franchise/` | `build_site.build_franchise()` | `assets/eephus-teampick.js`, `assets/franchise.js` | `franchise_board.json`, `player_links.json` | Franchises: the org-level grade tree per club (Franchise Index = weighted mean of ROSTER / OUTLOOK / FARM branch scores, re-standardised across 30 clubs, descriptive) with twelve sections that re-serve every module's numbers for the club on their own scales; no HoF tile, no pennants, no decision-quality grade. |
+| `/franchises/` | `build_site.build_franchises_redirect()` | server-rendered | - | redirect stub: the Franchises module lives at /franchise/ (hash-preserving) |
 | `/ledger/` | `build_site.build_ledger()` | `assets/eephus-teampick.js`, `assets/ledger.js` | `arbitration.json`, `ledger_board.json`, `player_links.json` |  |
 | `/models/` | `build_site.build_models()` | `assets/accountability.js` | - | Model Accountability hub: data/model_registry.json rendered server-side, with freshness and the ledger's own gaps counted; assets/accountability.js only filters what is already in the DOM |
 | `/glossary/` | `build_site.build_glossary()` | `assets/glossary.js` | `arbitration_eval.json`, `ba_consensus_eval.json`, `deferrals.json`, `editorial_eval.json`, `efv_progress.json`, `eta_eval.json`, `fa_dpw_series.json`, `fa_gate1_eval.json`, `fa_gate2_eval.json`, `fa_gate3_eval.json`, `farm_grade_eval.json`, `glossary.json`, `hem_plus_eval.json`, `ifa_step_prior_eval.json`, `model_registry.json`, `phem_marcel_lite_eval.json`, `player_links.json`, `provisional_track_eval.json`, `provisional_v2_eval.json`, `rem_plus_eval.json`, `sem_plus_eval.json`, `source_backtest.json`, `source_cohort_accuracy.json`, `source_updates.json`, `source_weights.json`, `statcast_plus_eval.json`, `surplus_backtest_real.json`, `value_framework_fitted.json`, `war_rate_plus_eval.json`, `xfv_denoised_baseline_eval.json`, `xfv_provisional_prior_eval.json`, `xfv_reliability.json`, `xfv_scoreboard_eval.json`, `xfv_side_calibration_eval.json`, `xfv_statcast_line_eval.json`, `xfv_valuation_curve.json`, `xhem_plus_eval.json`, `xhem_served_regate_eval.json` | Library: unified glossary + methodology / model accountability |
 | `/library/` | `build_site.build_library_redirect()` | server-rendered | - | redirect stub: the Library's name resolves to /glossary/ (hash-preserving) |
 | `/teams/` | `build_site.build_teams_redirect()` | server-rendered | - | redirect stub: the old Teams module now lives in /projections/ Team Outlook |
-| `/team/` | `build_site.build_team()` | server-rendered | - | Developers page (content/team.json) |
+| `/team/` | `build_site.build_team()` | `assets/team.js` | `player_links.json` | Masthead: the staff page and the one place credits live (data/team.json) |
 | `/sources/` | `build_site.build_sources()` | server-rendered | - | data-source credits page |
 | `/report/` | `build_site.build_bug_report()` | server-rendered | - | bug-report page |
 | `/404.html` | `build_site.build_404()` | server-rendered | - | not-found page (served by host for unknown routes) |

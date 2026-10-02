@@ -1,0 +1,221 @@
+/* Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Noah J. Dengler (@ARKNDJL), 2026 */
+
+/* /team/ - the Masthead (owner decisions TEAM-1 to TEAM-7, 2026-10-02).
+   Every person is a baseball card in the PROSPX player-card idiom: a fixed
+   2.5 by 3.5 card (300 x 420 px, so the pixel type stays on whole pixels at
+   every width), the photo window in a notched pixel frame, the name plate in
+   the wordmark face, the role as the position line, the group as the team
+   line, the card number, and the credit badges as the front's stats line.
+   The back is a card back: a stat table of every credit, the record lines and
+   the set name. Tokens only (no raw colour); square corners; the brand ramp
+   appears once, as the owner's foil edge (TEAM-3), and nowhere else.
+   Motion: the turn is whole-pixel steps (step-end per keyframe) and the dark
+   foil shimmer is steps(16); both base styles are the still frame, and both
+   run under Reduce Motion as without it (owner rule, 2026-10-01). */
+
+.tc-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+.tc-group { margin: 0 0 32px; }
+.tc-group-head {
+  display: flex; align-items: center; gap: 8px; margin: 0 0 14px; padding: 0 0 6px;
+  font-family: var(--font-logo); font-size: 24px; line-height: 28px; font-weight: 700;
+  color: var(--text-primary); border-bottom: 1px solid var(--border);
+}
+.tc-group-count {
+  margin-left: auto; font-family: var(--font-retro); font-size: 12px; line-height: 16px;
+  font-weight: 400; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .06em;
+}
+.tc-grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, 300px); gap: 24px 20px;
+}
+@media (max-width: 640px) { .tc-grid { justify-content: center; } }
+.tc-slot { margin: 0; padding: 0; }
+
+/* ---- the card ---------------------------------------------------------- */
+.tc-card { width: 300px; height: 420px; scroll-margin-top: 90px; }
+.tc-inner {
+  position: relative; display: grid; width: 100%; height: 100%; box-sizing: border-box;
+  border: 2px solid var(--text-primary); background: var(--bg-secondary);
+  color: var(--text-primary); font-family: var(--font-retro);
+}
+.tc-card:target .tc-inner { outline: 2px solid var(--accent-cyan); outline-offset: 3px; }
+.tc-face {
+  grid-area: 1 / 1; display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  padding: 10px 12px; box-sizing: border-box; overflow: hidden;
+}
+.tc-back { visibility: hidden; background: var(--bg-tertiary); }
+.tc-card.is-flipped .tc-front { visibility: hidden; }
+.tc-card.is-flipped .tc-back { visibility: visible; }
+.tc-front { cursor: pointer; }
+
+.tc-top, .tc-back-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  font-size: 12px; line-height: 16px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text-tertiary); margin: 0 0 6px;
+}
+.tc-no { font-family: var(--font-retro-mono); font-weight: 700; color: var(--text-primary); }
+.tc-set { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* The photo window: a 2 px ink frame with notched pixel corners. */
+.tc-photo {
+  position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
+  border: 2px solid var(--text-primary); background: var(--bg-tertiary);
+  clip-path: polygon(2px 0, calc(100% - 2px) 0, calc(100% - 2px) 2px, 100% 2px,
+    100% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 100%,
+    2px 100%, 2px calc(100% - 2px), 0 calc(100% - 2px), 0 2px, 2px 2px);
+}
+.tc-photo img {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  object-fit: cover; object-position: center 22%; z-index: 1;
+}
+.tc-mono {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-logo); font-size: 48px; font-weight: 700; color: var(--text-tertiary);
+}
+/* The founder plate (TEAM-3): scorebook ink on the photo's lower edge. */
+.tc-plate {
+  position: absolute; left: 6px; bottom: 6px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px;
+  background: var(--bg-primary); color: var(--text-primary); border: 2px solid var(--text-primary);
+  font-size: 12px; line-height: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  --ico-accent: var(--accent-lilac);
+}
+
+.tc-nameplate {
+  margin: 8px 0 4px; padding: 2px 6px;
+  background: var(--text-primary); color: var(--bg-primary);
+}
+.tc-name {
+  margin: 0; font-family: var(--font-logo); font-size: 24px; line-height: 28px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: inherit;
+}
+.tc-pos, .tc-team {
+  margin: 0 0 4px; font-size: 12px; line-height: 16px; text-transform: uppercase; letter-spacing: .04em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tc-pos { color: var(--text-secondary); font-weight: 700; }
+.tc-team { display: flex; align-items: center; gap: 4px; color: var(--text-tertiary); }
+
+/* The stats line: credit badges, compact (16 px icons). */
+.tc-stats { display: flex; align-items: flex-start; gap: 6px; margin: 4px 0 6px; min-height: 16px; }
+.tc-badges { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.tc-badge { display: inline-flex; color: var(--text-primary); --ico-accent: var(--accent-lilac); }
+.tc-more {
+  flex: none; height: 16px; padding: 0 4px; border: 1px solid var(--text-primary);
+  background: var(--bg-primary); color: var(--text-primary); font: 700 12px/14px var(--font-retro);
+  cursor: pointer;
+}
+
+.tc-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; }
+.tc-btn {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 2px 8px;
+  border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary);
+  font: 400 12px/16px var(--font-retro); text-transform: uppercase; letter-spacing: .04em; cursor: pointer;
+}
+.tc-btn:hover { border-color: var(--text-primary); }
+.tc-btn[aria-pressed="true"] { border-color: var(--text-primary); background: var(--bg-tertiary); }
+.tc-btn[hidden] { display: none; }
+
+/* ---- the back ---------------------------------------------------------- */
+.tc-back-head { flex-wrap: wrap; row-gap: 0; padding: 0 0 6px; border-bottom: 2px solid var(--text-primary); }
+.tc-back-name { font-weight: 700; color: var(--text-primary); }
+.tc-back-pos { flex-basis: 100%; color: var(--text-secondary); }
+.tc-back-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  margin: 6px 0; padding-right: 2px; font-size: 12px; line-height: 16px; color: var(--text-secondary);
+}
+.tc-table { width: 100%; border-collapse: collapse; margin: 0 0 8px; }
+.tc-table th {
+  padding: 0 4px; text-align: left; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  background: var(--text-primary); color: var(--bg-primary);
+}
+.tc-table th:last-child, .tc-table td:last-child { text-align: right; white-space: nowrap; }
+.tc-table td { padding: 2px 4px; border-bottom: 1px dashed var(--border); color: var(--text-primary); }
+.tc-table td:first-child { display: flex; align-items: center; gap: 6px; --ico-accent: var(--accent-lilac); }
+.tc-back-h {
+  margin: 0 0 4px; font-size: 12px; line-height: 16px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text-primary);
+}
+.tc-bio { list-style: none; margin: 0 0 8px; padding: 0; }
+.tc-bio li { margin: 0 0 6px; padding-left: 6px; border-left: 2px solid var(--border); }
+.tc-vitals { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; margin: 0 0 8px; }
+.tc-vitals dt { font-weight: 700; text-transform: uppercase; color: var(--text-tertiary); }
+.tc-vitals dd { margin: 0; color: var(--text-primary); }
+.tc-socials { display: flex; flex-wrap: wrap; gap: 6px; }
+.tc-soc {
+  display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px;
+  border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-secondary);
+}
+.tc-soc:hover { color: var(--text-primary); border-color: var(--text-primary); }
+.tc-soc svg { width: 12px; height: 12px; display: block; fill: currentColor; }
+.tc-setname { font-size: 12px; line-height: 16px; color: var(--text-tertiary); min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- the 'to be named' card (an empty group) --------------------------- */
+.tc-card.is-unnamed .tc-inner { border-style: dashed; border-color: var(--border); }
+.tc-card.is-unnamed .tc-front { cursor: default; }
+.tc-card.is-unnamed .tc-photo { display: flex; align-items: center; justify-content: center; }
+.tc-photo .px-state.tc-state {
+  margin: 0 10px; flex-direction: column; align-items: center; text-align: center;
+  background: var(--bg-primary);
+}
+.tc-card.is-unnamed .tc-nameplate { background: var(--bg-tertiary); color: var(--text-tertiary); }
+
+/* ---- the owner's foil (TEAM-3): the set's one legendary edge ------------
+   Light: a still foil edge in the banded brand ramp. Dark: the refractor
+   shimmer, the dark ramp mirrored so the loop has no seam, moved in 16 steps.
+   test_team_masthead.py pins that exactly one card carries .is-owner. */
+.tc-card.is-owner .tc-inner {
+  border: 4px solid transparent;
+  background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+    var(--iridescent-steps) border-box;
+}
+.tc-card.is-owner .tc-back {
+  background: linear-gradient(var(--bg-tertiary), var(--bg-tertiary));
+}
+[data-theme="dark"] .tc-card.is-owner .tc-inner {
+  background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+    linear-gradient(90deg, var(--ramp-1), var(--ramp-2), var(--ramp-3), var(--ramp-4), var(--ramp-5),
+      var(--ramp-4), var(--ramp-3), var(--ramp-2), var(--ramp-1)) border-box;
+  background-size: 100% 100%, 200% 100%;
+  background-position: 0 0, 0 0;
+  animation: tc-holo 3.2s steps(16, end) infinite;
+}
+@keyframes tc-holo {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 0, 200% 0; }
+}
+
+/* ---- the turn: whole-pixel steps ---------------------------------------
+   team.js adds tc-turn-a or tc-turn-b (alternating, so a second turn restarts
+   the animation) and toggles .is-flipped. The card narrows to an edge in three
+   steps and opens on the other face in three; each face's visibility swaps at
+   the half (step-end per keyframe). The base style is the settled face. */
+.tc-card.tc-turn-a .tc-inner { animation: tc-turn-a .24s steps(3, end); }
+.tc-card.tc-turn-b .tc-inner { animation: tc-turn-b .24s steps(3, end); }
+[data-theme="dark"] .tc-card.is-owner.tc-turn-a .tc-inner { animation: tc-turn-a .24s steps(3, end), tc-holo 3.2s steps(16, end) infinite; }
+[data-theme="dark"] .tc-card.is-owner.tc-turn-b .tc-inner { animation: tc-turn-b .24s steps(3, end), tc-holo 3.2s steps(16, end) infinite; }
+@keyframes tc-turn-a { 0% { transform: scaleX(1); } 50% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+@keyframes tc-turn-b { 0% { transform: scaleX(1); } 50% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+.tc-card.tc-turn-a:not(.is-flipped) .tc-front, .tc-card.tc-turn-a.is-flipped .tc-back { animation: tc-in-a .24s step-end; }
+.tc-card.tc-turn-a:not(.is-flipped) .tc-back, .tc-card.tc-turn-a.is-flipped .tc-front { animation: tc-out-a .24s step-end; }
+.tc-card.tc-turn-b:not(.is-flipped) .tc-front, .tc-card.tc-turn-b.is-flipped .tc-back { animation: tc-in-b .24s step-end; }
+.tc-card.tc-turn-b:not(.is-flipped) .tc-back, .tc-card.tc-turn-b.is-flipped .tc-front { animation: tc-out-b .24s step-end; }
+@keyframes tc-in-a { 0% { visibility: hidden; } 50% { visibility: visible; } }
+@keyframes tc-in-b { 0% { visibility: hidden; } 50% { visibility: visible; } }
+@keyframes tc-out-a { 0% { visibility: visible; } 50% { visibility: hidden; } }
+@keyframes tc-out-b { 0% { visibility: visible; } 50% { visibility: hidden; } }
+
+/* ---- Reduce Motion: stated, not omitted ----------------------------------
+   The owner's policy (2026-10-01, site.css prefers-reduced-motion section):
+   the site's minimal animations run with or without the preference. The turn
+   is three whole-pixel steps and the foil sixteen; both are restated here so
+   the policy is explicit for this page. */
+@media (prefers-reduced-motion: reduce) {
+  .tc-card.tc-turn-a .tc-inner { animation: tc-turn-a .24s steps(3, end); }
+  .tc-card.tc-turn-b .tc-inner { animation: tc-turn-b .24s steps(3, end); }
+  [data-theme="dark"] .tc-card.is-owner .tc-inner { animation: tc-holo 3.2s steps(16, end) infinite; }
+}
