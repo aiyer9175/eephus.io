@@ -2207,14 +2207,154 @@ def _rebake_mlb_player_detail(log, label: str) -> None:
         log.exception("%s: mlb player detail re-bake failed - continuing", label)
 
 
+# --------------------------------------------------------------------------- #
+# The Club Ledger and Franchise boards: one writer each, two callers
+# --------------------------------------------------------------------------- #
+# Owner answer LEDTRIM-1 = (c), 2026-10-01. A standalone --rebuild-only
+# rewrote trade_values.json, mlb_projections.json and the timeseries farm
+# roll-up (org_summary) but never the two boards that read them, so the
+# ledger and franchise boards stayed one vintage behind their inputs until the
+# next nightly (measured 2026-09-30 when they were finally rebuilt: farm rank
+# moved on 5 clubs, Cost+ on 4, the financial letter on PIT and SFG, the
+# franchise rank on 8). The nightly steps d10e and 6b7d and the rebuild tail
+# below call the same two writers, so the paths cannot write them differently.
+
+#: What the rebuild tail needs on disk before it rebuilds the ledger: the
+#: timeseries (its org_summary is the farm roll-up the farm block copies), and
+#: the trade board and the projections board rebuild_only has just written.
+REBUILD_LEDGER_INPUTS = ("timeseries.json", "trade_values.json", "mlb_projections.json")
+#: The franchise board's FIN section quotes the ledger board, so it needs that
+#: file too, and it runs only when the ledger rebuilt in the same pass.
+REBUILD_FRANCHISE_INPUTS = REBUILD_LEDGER_INPUTS + ("ledger_board.json",)
+#: The directory both exporters read (ledger_export.DATA, franchise_export.DATA).
+_EXPORTER_DATA_DIR = Path(__file__).resolve().parent / "data"
+
+
+def _export_ledger_board(log) -> bool:
+    """Write the Club Ledger board, its thirty per-club row files and the
+    Trade Machine CBT slice (the body of nightly step d10e). True on a write.
+    A failure leaves the previous files on disk and files a red under
+    "ledger_export" (SCHEDULED_EXPORTS)."""
+    try:
+        import ledger_export as _lg
+        _lgd, _lgs = _lg.build_all()
+        _lg.OUT.write_text(
+            json.dumps(_lgd, ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8")
+        # D5 (2026-09-24): the thirty per-club row files beside the board,
+        # tracked like data/mgmt_decisions; written from the bytes the
+        # board indexed so shards.files matches disk.
+        _lg.write_shards(_lgd, _lgs)
+        # M27-4 (2026-09-25): the Trade Machine's CBT slice, read off
+        # the board just written so the two never disagree.
+        _lg.write_trade_cbt(_lgd)
+        _lg_n = sum(int((d.get("contracts") or {}).get("n_priced") or 0)
+                    for d in _lgd["clubs"].values())
+        log.info("ledger: %d clubs, %d priced contract rows",
+                 len(_lgd["clubs"]), _lg_n)
+        _record_ingest("ledger_export", True, len(_lgd["clubs"]),
+                       f"club ledger board, {_lg_n} priced rows", "mlb", log)
+        return True
+    except Exception as e:                # noqa: BLE001
+        log.exception("ledger export failed - continuing")
+        _record_ingest("ledger_export", False, 0, f"ledger export raised: {e}",
+                       "mlb", log)
+        return False
+
+
+def _export_franchise_board(log) -> bool:
+    """Write the Franchise board (the body of nightly step 6b7d). True on a
+    write. A refusal (fewer than 30 clubs on a graded branch) or a raise leaves
+    the previous file on disk and files a red under "franchise_export"."""
+    try:
+        import franchise_export as _fr
+        _frd = _fr.build()
+        _fr.OUT.write_text(
+            json.dumps(_frd, ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8")
+        _fr_top = min(_frd["clubs"], key=lambda d: d["index"]["rank"])
+        log.info("franchise: %d clubs; #1 %s index %s",
+                 len(_frd["clubs"]), _fr_top["code"], _fr_top["index"]["score"])
+        _record_ingest("franchise_export", True, len(_frd["clubs"]),
+                       "franchise board", "mlb", log)
+        return True
+    except Exception as e:                # noqa: BLE001
+        # A refusal is a result, not a crash: the exporter declined to
+        # publish and the committed board stands. Matched by name so a
+        # failed import cannot leave the alias unbound in this clause.
+        if type(e).__name__ == "FranchiseRefusal":
+            log.warning("franchise board REFUSED: %s; the previous file stands", e)
+            _record_ingest("franchise_export", False, 0,
+                           f"franchise export refused: {e}", "mlb", log)
+        else:
+            log.exception("franchise export failed - continuing")
+            _record_ingest("franchise_export", False, 0,
+                           f"franchise export raised: {e}", "mlb", log)
+        return False
+
+
+def _rebuild_ledger_and_franchise(out_dir: Path, log) -> dict:
+    """The rebuild-only tail: the ledger board, then the franchise board. Each
+    is skipped with a logged reason when its inputs are not there, and the file
+    on disk stands. Returns {"ledger": s, "franchise": s} where s is "written",
+    "failed" or "skipped: <reason>"."""
+    data_dir = _EXPORTER_DATA_DIR
+    try:
+        same_dir = Path(out_dir).resolve() == Path(data_dir).resolve()
+    except OSError:
+        same_dir = False
+    if not same_dir:
+        why = (f"this rebuild wrote to {out_dir}, but both exporters read {data_dir}, "
+               "so the inputs this pass wrote are not the ones they would read")
+        log.warning("rebuild_only: ledger board SKIPPED: %s; the board on disk stands", why)
+        log.warning("rebuild_only: franchise board SKIPPED: %s; the board on disk stands", why)
+        return {"ledger": f"skipped: {why}", "franchise": f"skipped: {why}"}
+
+    res: dict = {}
+    missing = [n for n in REBUILD_LEDGER_INPUTS if not (Path(data_dir) / n).is_file()]
+    if missing:
+        why = "input missing: " + ", ".join(missing)
+        log.warning("rebuild_only: ledger board SKIPPED: %s; the board on disk stands", why)
+        res["ledger"] = f"skipped: {why}"
+    else:
+        res["ledger"] = "written" if _export_ledger_board(log) else "failed"
+
+    missing = [n for n in REBUILD_FRANCHISE_INPUTS if not (Path(data_dir) / n).is_file()]
+    if missing:
+        why = "input missing: " + ", ".join(missing)
+    elif res["ledger"] != "written":
+        why = ("the ledger board did not rebuild in this pass and the franchise FIN "
+               "section quotes it")
+    else:
+        why = None
+    if why:
+        log.warning("rebuild_only: franchise board SKIPPED: %s; the board on disk stands", why)
+        res["franchise"] = f"skipped: {why}"
+    else:
+        res["franchise"] = "written" if _export_franchise_board(log) else "failed"
+    log.info("rebuild_only: ledger %s; franchise %s", res["ledger"], res["franchise"])
+    return res
+
+
 def rebuild_only_cli(out_dir: Path = Path("data")) -> None:
     """The standalone `--rebuild-only` entry point. rebuild_only() re-writes
     mlb_projections.json and trade_values.json but never the player cards (the
     nightly does that at d9b2), so a standalone pass re-bakes them here, after
     rebuild_only's frame (and its in-memory timeseries) is gone: the OOM note
-    at the proj_export block is why this is not inside rebuild_only."""
+    at the proj_export block is why this is not inside rebuild_only.
+
+    Then the Club Ledger board and the Franchise board (owner answer LEDTRIM-1,
+    2026-10-01), in the order their inputs require: after rebuild_only's
+    trade-value export and the timeseries farm roll-up, the ledger first, the
+    franchise board second (its FIN section quotes the ledger). They sit here,
+    not inside rebuild_only, because the nightly calls rebuild_only at d9 and
+    writes both boards later at d10e and 6b7d, after the FA re-export and the
+    bracket simulator they also read. A standalone rebuild runs no site build:
+    the caller's build_site comes after this returns."""
     rebuild_only(out_dir=out_dir)
-    _rebake_mlb_player_detail(logging.getLogger("rebuild_only"), label="rebuild_only")
+    log = logging.getLogger("rebuild_only")
+    _rebake_mlb_player_detail(log, label="rebuild_only")
+    _rebuild_ledger_and_franchise(out_dir, log)
 
 
 def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
@@ -3722,29 +3862,10 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # d10d are taken, hence the letter. A failure leaves the previous file
         # on disk and files a red under "ledger_export" (SCHEDULED_EXPORTS).
         with _step("d10e. Club Ledger board (ledger_board.json)", log):
-            try:
-                import ledger_export as _lg
-                _lgd, _lgs = _lg.build_all()
-                _lg.OUT.write_text(
-                    json.dumps(_lgd, ensure_ascii=False, separators=(",", ":")),
-                    encoding="utf-8")
-                # D5 (2026-09-24): the thirty per-club row files beside the board,
-                # tracked like data/mgmt_decisions; written from the bytes the
-                # board indexed so shards.files matches disk.
-                _lg.write_shards(_lgd, _lgs)
-                # M27-4 (2026-09-25): the Trade Machine's CBT slice, read off
-                # the board just written so the two never disagree.
-                _lg.write_trade_cbt(_lgd)
-                _lg_n =sum(int((d.get("contracts") or {}).get("n_priced") or 0)
-                            for d in _lgd["clubs"].values())
-                log.info("ledger: %d clubs, %d priced contract rows",
-                         len(_lgd["clubs"]), _lg_n)
-                _record_ingest("ledger_export", True, len(_lgd["clubs"]),
-                               f"club ledger board, {_lg_n} priced rows", "mlb", log)
-            except Exception as e:                # noqa: BLE001
-                log.exception("ledger export failed - continuing")
-                _record_ingest("ledger_export", False, 0, f"ledger export raised: {e}",
-                               "mlb", log)
+            # The writer is shared with the standalone rebuild-only tail
+            # (_export_ledger_board, owner answer LEDTRIM-1), so the two paths
+            # write the board, its shards and the CBT slice the same way.
+            _export_ledger_board(log)
 
         # --- d10f. The postseason bracket simulator -----------------------
         with _step("d10f. Postseason bracket simulator (bracket_sim.json)", log):
@@ -3782,30 +3903,9 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             # disk and files a red under "franchise_export". The comment sits
             # inside the _step body on purpose: tools/gen_audit_docs.py credits
             # a phase's text from its _step line to the next one, so a comment
-            # above the line would credit these files to d10e.
-            try:
-                import franchise_export as _fr
-                _frd = _fr.build()
-                _fr.OUT.write_text(
-                    json.dumps(_frd, ensure_ascii=False, separators=(",", ":")),
-                    encoding="utf-8")
-                _fr_top = min(_frd["clubs"], key=lambda d: d["index"]["rank"])
-                log.info("franchise: %d clubs; #1 %s index %s",
-                         len(_frd["clubs"]), _fr_top["code"], _fr_top["index"]["score"])
-                _record_ingest("franchise_export", True, len(_frd["clubs"]),
-                               "franchise board", "mlb", log)
-            except Exception as e:                # noqa: BLE001
-                # A refusal is a result, not a crash: the exporter declined to
-                # publish and the committed board stands. Matched by name so a
-                # failed import cannot leave the alias unbound in this clause.
-                if type(e).__name__ == "FranchiseRefusal":
-                    log.warning("franchise board REFUSED: %s; the previous file stands", e)
-                    _record_ingest("franchise_export", False, 0,
-                                   f"franchise export refused: {e}", "mlb", log)
-                else:
-                    log.exception("franchise export failed - continuing")
-                    _record_ingest("franchise_export", False, 0,
-                                   f"franchise export raised: {e}", "mlb", log)
+            # above the line would credit these files to d10e. The writer is
+            # shared with the standalone rebuild-only tail (LEDTRIM-1).
+            _export_franchise_board(log)
 
         finish_run(run_id, new_snapshots=0, stat_lines=0,
                    notes=f"DAILY: {n_il} on IL, {n_debuts} debuts, {n_trades} new trades")

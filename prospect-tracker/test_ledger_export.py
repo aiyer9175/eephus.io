@@ -1083,8 +1083,12 @@ def test_the_shards_are_catalogued_shipped_and_written_by_the_step():
     rm = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
     i = rm.index("d10e. Club Ledger board")
     step = rm[i:i + 2500]
-    assert "_lgd, _lgs = _lg.build_all()" in step and "_lg.write_shards(_lgd, _lgs)" in step
-    assert step.index("_lg.OUT.write_text(") < step.index("_lg.write_shards("), "the board is written first, then the shards"
+    # The step's writer is shared with the rebuild-only tail (owner answer
+    # LEDTRIM-1), so the write order is pinned on that one writer.
+    assert "_export_ledger_board(log)" in step
+    body = rm.split("def _export_ledger_board(", 1)[1].split("\ndef ", 1)[0]
+    assert "_lgd, _lgs = _lg.build_all()" in body and "_lg.write_shards(_lgd, _lgs)" in body
+    assert body.index("_lg.OUT.write_text(") < body.index("_lg.write_shards("), "the board is written first, then the shards"
     nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
     assert "--include='/data/ledger_clubs/***'" in nightly
     wf = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
