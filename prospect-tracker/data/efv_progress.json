@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-02T16:24:22Z",
+ "generated_at": "2026-10-02T23:08:19Z",
  "headline_frame": "vm2",
  "frames": {
   "vm": {
@@ -6386,6 +6386,47 @@
    "note": "latest pre-debut consensus read",
    "last_verified_at": "2026-10-02T16:24:22Z",
    "content_hash": "f5ecdc49fd42a0d650aa58497d3b7c7add41723f024642a49dd08a67438ef6a8"
+  },
+  {
+   "run_id": "2026-10-02T23:07:53Z|lv_dev|72d48b77",
+   "date": "2026-10-02",
+   "trigger": "efv_change",
+   "model_id": "efv_label_pool",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "8318051d",
+    "label": "ewar_v2@2026-09-03T12:35:09",
+    "resolved_through": 2025,
+    "provider": "ewar_v2"
+   },
+   "frame": "lv_dev",
+   "frame_version": null,
+   "role": "development",
+   "tilted": false,
+   "window": [
+    2011,
+    2019
+   ],
+   "n": 5962,
+   "n_by_side": {
+    "hit": 3053,
+    "pit": 2909
+   },
+   "raters": {},
+   "deltas": {},
+   "resolvable": null,
+   "verdict": "counts only, no score",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/efv_label_pool_census.json",
+     "generated_at": "2026-10-02T23:07:53Z",
+     "sha256": "dc30359c03094f01ba100c0b1405200b6d865d05037f4d99f5ca77b255119839"
+    }
+   ],
+   "note": "label pool census, no score",
+   "last_verified_at": "2026-10-02T23:08:19Z",
+   "content_hash": "72d48b77fb388b25487f65452651d9a43170c49268d16815714160bea622f2fb"
   }
  ],
  "backfill": {
