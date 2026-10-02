@@ -11,7 +11,9 @@ pixel); the letters are PixelMplus12's own bitmap, sampled from the vendored
 TTF and never redrawn; the palette mirrors equal the site.css decks; every DOM
 fragment is token-only, integer, aria-hidden and small; the ball is 4 s wide
 (plus 1 at odd s); the arc is symmetric and never shrinks toward the apex; the
-favicon carries exactly the 16, 32 and 48 strikes; the motion is step-end
+favicon carries exactly the 16, 32 and 48 strikes, the app icons are strike 32
+at whole scales, and FAVICON_LINKS and the footer mark switch with the
+PIXEL_BRAND flag (BR-04); the motion is step-end
 only, plays once, and stops under reduced motion, hover included.
 """
 from __future__ import annotations
@@ -26,7 +28,7 @@ from pathlib import Path
 import pytest
 from fontTools.pens.pointInsidePen import PointInsidePen
 from fontTools.ttLib import TTFont
-from PIL import Image, ImageChops
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "tools"))
@@ -279,17 +281,116 @@ def test_run_tables_are_non_decreasing():
 
 # ------------------------------------------------------------- raster art
 def _same(a: Image.Image, b: Image.Image) -> bool:
-    return a.size == b.size and not ImageChops.difference(a.convert("RGBA"), b.convert("RGBA")).getbbox()
+    return PB.same_pixels(a, b)
+
+
+def test_the_pixel_comparison_sees_an_opaque_change(tmp_path):
+    # ImageChops.difference(...).getbbox() reads only alpha on RGBA, so two
+    # opaque images that differ used to compare equal (--check and _same).
+    a = Image.new("RGB", (4, 4), (12, 12, 14))
+    b = a.copy()
+    b.putpixel((1, 2), (13, 12, 14))
+    assert _same(a, a.copy()) and not _same(a, b)
+    a.save(tmp_path / "a.png")
+    b.save(tmp_path / "b.png")
+    assert not PB.same_image(tmp_path / "a.png", tmp_path / "b.png")
 
 
 def test_favicon_ico_carries_exactly_16_32_48_each_its_strike():
-    ico = Image.open(PIXEL / "favicon.ico")
+    ico = Image.open(BRAND / "favicon.ico")
     assert sorted(ico.ico.sizes()) == [(16, 16), (32, 32), (48, 48)]
     want = PB.favicon_strikes()
     for n in (16, 32, 48):
         assert _same(ico.ico.getimage((n, n)), want[n]), n
-    assert _same(Image.open(PIXEL / "favicon-16.png"), want[16])
-    assert _same(Image.open(PIXEL / "favicon-32.png"), want[32])
+    assert _same(want[48], PB.ball_png(24, scale=2))
+    assert _same(Image.open(BRAND / "favicon-16.png"), want[16])
+    assert _same(Image.open(BRAND / "favicon-32.png"), want[32])
+
+
+# BR-04 / PB-04: PX-23 already serves the hinted strikes; the pixel set in
+# assets/brand/ is drawn from the same anatomy, so the two agree to the pixel.
+def test_served_favicons_are_the_pixel_set_strikes():
+    ico, brand_ico = Image.open(ROOT / "favicon.ico"), Image.open(BRAND / "favicon.ico")
+    assert sorted(ico.ico.sizes()) == sorted(brand_ico.ico.sizes())
+    for sz in ico.ico.sizes():
+        assert _same(ico.ico.getimage(sz), brand_ico.ico.getimage(sz)), sz
+    for name in ("favicon-16.png", "favicon-32.png"):
+        assert _same(Image.open(ROOT / "assets" / name), Image.open(BRAND / name)), name
+    served_svg = (ROOT / "assets" / "favicon.svg").read_bytes().replace(b"\r\n", b"\n")
+    assert served_svg == (BRAND / "favicon.svg").read_bytes()
+
+
+def _ball_cells(im, box):
+    """(x, y) of every opaque pixel of ball strike 32 placed at box, scaled."""
+    x0, y0, scale = box
+    rows = PB.ball(32)
+    return {(x0 + x * scale + dx, y0 + y * scale + dy)
+            for y, r in enumerate(rows) for x, ch in enumerate(r) if ch != "."
+            for dx in range(scale) for dy in range(scale)}
+
+
+@pytest.mark.parametrize("name", sorted(PB.APP_ICONS))
+def test_app_icon_is_strike_32_at_whole_scale_on_the_dark_field(name):
+    size, scale, border = PB.APP_ICONS[name]
+    im = Image.open(BRAND / name)
+    assert im.size == (size, size) and im.mode == "RGB", (im.size, im.mode)
+    n = 32 * scale
+    x0 = (size - n) // 2
+    ball = PB.ball_png(32, "light", scale)
+    assert _same(im.crop((x0, x0, x0 + n, x0 + n)).convert("RGBA"),
+                 Image.alpha_composite(im.crop((x0, x0, x0 + n, x0 + n)).convert("RGBA"), ball))
+    lilac = PB.hx(SRC.APP_ICON_BORDER)
+    edge = [im.getpixel((t, 0)) for t in range(size)] + [im.getpixel((0, t)) for t in range(size)]
+    if border:
+        assert set(edge) == {lilac}, name
+    else:
+        assert lilac not in edge, name
+        # maskable: every ball pixel sits inside the 80 percent safe circle
+        c = size / 2
+        far = max(((x + .5 - c) ** 2 + (y + .5 - c) ** 2) ** .5 for x, y in _ball_cells(im, (x0, x0, scale)))
+        assert far <= .4 * size, far
+
+
+def test_brand_manifest_is_the_served_one_with_its_icons_in_assets_brand():
+    served = json.loads((ROOT / "assets" / "site.webmanifest").read_text(encoding="utf-8"))
+    raw = (BRAND / "site.webmanifest").read_bytes()
+    assert b"\r" not in raw
+    doc = json.loads(raw.decode("utf-8"))
+    assert {k: v for k, v in doc.items() if k != "icons"} == {k: v for k, v in served.items() if k != "icons"}
+    assert len(doc["icons"]) == len(served["icons"])
+    for icon, old in zip(doc["icons"], served["icons"]):
+        assert icon["src"] == old["src"].replace("/assets/", "/assets/brand/", 1), icon
+        path = ROOT / icon["src"].lstrip("/")
+        assert path.exists(), icon["src"]
+        if icon["type"] == "image/png":
+            w, h = Image.open(path).size
+            assert icon["sizes"] == f"{w}x{h}", icon
+
+
+def test_favicon_links_follow_the_pixel_brand_flag():
+    import build_site as B
+    assert B.PIXEL_BRAND is False
+    assert B.FAVICON_LINKS == B._FAVICON_LINKS_LEGACY
+    legacy = re.findall(r'href="([^"]+)"', B._FAVICON_LINKS_LEGACY)
+    pixel = re.findall(r'href="([^"]+)"', B._FAVICON_LINKS_PIXEL)
+    assert len(pixel) == len(legacy) == 5
+    for old, new in zip(legacy, pixel):
+        assert new == "/assets/brand/" + old.rsplit("/", 1)[1], (old, new)
+        assert (ROOT / new.lstrip("/")).exists(), new
+    assert re.sub(r'href="[^"]+"', "", B._FAVICON_LINKS_PIXEL) == re.sub(r'href="[^"]+"', "", B._FAVICON_LINKS_LEGACY)
+
+
+@pytest.mark.parametrize("flag", [False, True])
+def test_footer_mark_is_the_16_px_strike_under_either_flag(monkeypatch, flag):
+    import build_site as B
+    monkeypatch.setattr(B, "PIXEL_BRAND", flag)
+    img = re.search(r'<img src="([^"]+)"[^>]*>', B._footer())
+    assert img, "no footer mark"
+    tag, src = img.group(0), img.group(1)
+    assert src == ("/assets/brand/favicon-16.png" if flag else "/assets/favicon-16.png")
+    assert 'width="16" height="16"' in tag and "width:16px;height:16px" in tag
+    assert "image-rendering:pixelated" in tag
+    assert _same(Image.open(ROOT / src.lstrip("/")), PB.ball_png(16))
 
 
 def _palette(theme):
@@ -301,7 +402,7 @@ def _palette(theme):
                                         for t in ("light", "dark")] + [("favicon-16.png", "light"),
                                                                        ("favicon-32.png", "light")])
 def test_strikes_have_no_anti_aliasing(name, theme):
-    im = Image.open(PIXEL / name).convert("RGBA")
+    im = Image.open((BRAND if name.startswith("favicon") else PIXEL) / name).convert("RGBA")
     pal = _palette(theme)
     for count, (r, g, b, a) in im.getcolors(1 << 16):
         assert a in (0, 255), (name, a)

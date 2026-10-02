@@ -16,14 +16,19 @@ not move with a Pillow or libm upgrade.
 Writes ONLY these two folders, never data/ (the pytest-revert trap):
     assets/brand/     DOM fragments: wordmark-s2/s4/s6.svg (token-only, aria-hidden),
                       wordmark.css (classes and step-end motion), tokens.css (the
-                      token block BR-02 moves into site.css)
+                      token block BR-02 moves into site.css); the favicon and
+                      app-icon set (BR-04 / PB-04): favicon.ico (16/32/48, each an
+                      exact strike), favicon.svg, favicon-16.png (the footer mark),
+                      favicon-32.png, apple-touch-icon.png, icon-192.png,
+                      icon-512.png, icon-maskable-512.png, and site.webmanifest
+                      (the served manifest with its icons moved here)
     branding/pixel/   sheets and exported art: brand-sheet-{light,dark}.png,
                       glyphs.json (the sampled letters), wordmark PNG strikes,
-                      favicon.ico (16/32/48, each an exact strike), favicon.svg,
-                      favicon-16.png (the footer mark), favicon-32.png, app icons,
                       share-default.png, og/<module>.png, marks/*.svg, eephus-arc.gif
-Nothing on the site references either folder yet (BR-03 to BR-09 and PX-23
-swap them in).
+The served pages read the icon set from assets/brand/ only when build_site.py's
+PIXEL_BRAND flag is on (FAVICON_LINKS and the footer mark switch with it); the
+served favicon.ico, assets/favicon.svg, favicon-16.png and favicon-32.png are
+PX-23's copies of the same strikes. BR-03 and BR-05 to BR-09 swap in the rest.
 
     python tools/pixel_brand.py                   write into the repo
     python tools/pixel_brand.py --out DIR         same relative paths under DIR
@@ -46,7 +51,7 @@ from pathlib import Path
 
 from fontTools.pens.pointInsidePen import PointInsidePen
 from fontTools.ttLib import TTFont
-from PIL import Image, ImageChops
+from PIL import Image
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -57,7 +62,8 @@ TTF_BOLD = ROOT / "branding" / "fonts" / "PixelMplus12-Bold.ttf"
 TTF_REG = ROOT / "branding" / "fonts" / "PixelMplus12-Regular.ttf"
 ICONS_JSON = ROOT / "assets" / "eephus-icons.json"   # PX-01's bitmap table
 OUT_DIRS = ("assets/brand", "branding/pixel")        # the only folders written
-TEXT_SUFFIXES = (".svg", ".css", ".json")
+TEXT_SUFFIXES = (".svg", ".css", ".json", ".webmanifest")
+MANIFEST = ROOT / "assets" / "site.webmanifest"      # the served manifest (BR-04 input)
 STYLES = ("stepped", "hinted", "lamps")
 SEAMS = ("inward", "outward")
 U = 1000 / 12           # one font pixel in font units
@@ -732,6 +738,26 @@ def app_icon(size, scale, seams, border=True):
     return img.convert("RGB")
 
 
+# The icon set BR-04 writes under assets/brand/ (file name -> what draws it).
+APP_ICONS = {
+    "apple-touch-icon.png": (180, 4, True),
+    "icon-192.png": (192, 4, True),
+    "icon-512.png": (512, 12, True),
+    "icon-maskable-512.png": (512, 9, False),   # no border: a platform mask crops the edge
+}
+BRAND_ICON_DIR = "assets/brand/"
+
+
+def brand_manifest():
+    """The served web manifest with every icon moved to assets/brand/: the
+    same name, colours and sizes, read from assets/site.webmanifest (LF)."""
+    text = MANIFEST.read_text(encoding="utf-8").replace("\r\n", "\n")
+    out = text.replace('"src": "/assets/', '"src": "/' + BRAND_ICON_DIR)
+    doc = json.loads(out)
+    assert doc["icons"] and all(i["src"].startswith("/" + BRAND_ICON_DIR) for i in doc["icons"]), doc["icons"]
+    return out
+
+
 def gif_frames(style, seams, s=4):
     """The pitch as frames on the dark field colour: arc run by run, then the drop."""
     comp = compose(s, style, seams)
@@ -835,15 +861,17 @@ def build(out: Path, style: str = SRC.STYLE, seams: str = SRC.SEAMS):
         put_img(P + f"brand-sheet-{theme}.png", sheet(theme, style, seams))
         for s in SRC.FRAGMENT_SCALES:
             put_img(P + f"wordmark-s{s}-{theme}.png", to_png(compose(s, style, seams), theme))
+    # The favicon and app-icon set (BR-04, assets/brand/): served only through
+    # build_site.py's PIXEL_BRAND flag; the manifest points at the same folder.
+    I = BRAND_ICON_DIR
     fav = favicon_strikes(seams)
-    put_img(P + "favicon.ico", fav[48], sizes=[(16, 16), (32, 32), (48, 48)], append_images=[fav[16], fav[32]])
-    put_img(P + "favicon-16.png", fav[16])
-    put_img(P + "favicon-32.png", fav[32])
-    put_text(P + "favicon.svg", standalone_svg(ball(16, seams), "light", "eephus.io", 1))
-    put_img(P + "apple-touch-icon.png", app_icon(180, 4, seams))
-    put_img(P + "icon-192.png", app_icon(192, 4, seams))
-    put_img(P + "icon-512.png", app_icon(512, 12, seams))
-    put_img(P + "icon-maskable-512.png", app_icon(512, 9, seams, border=False))
+    put_img(I + "favicon.ico", fav[48], sizes=[(16, 16), (32, 32), (48, 48)], append_images=[fav[16], fav[32]])
+    put_img(I + "favicon-16.png", fav[16])
+    put_img(I + "favicon-32.png", fav[32])
+    put_text(I + "favicon.svg", standalone_svg(ball(16, seams), "light", "eephus.io", 1))
+    for name, (size, scale, border) in APP_ICONS.items():
+        put_img(I + name, app_icon(size, scale, seams, border=border))
+    put_text(I + "site.webmanifest", brand_manifest())
     put_img(P + "share-default.png", og_card(style, seams))
     bits = icons()
     if bits:
@@ -869,20 +897,24 @@ def _frames(im):
         yield im.convert("RGBA")
 
 
+def same_pixels(a: Image.Image, b: Image.Image) -> bool:
+    """Every RGBA value equal. (ImageChops.difference(...).getbbox() is not a
+    pixel test on RGBA: Pillow's getbbox reads only the alpha band by default,
+    so two opaque images of the same size always passed it.)"""
+    a, b = a.convert("RGBA"), b.convert("RGBA")
+    return a.size == b.size and a.tobytes() == b.tobytes()
+
+
 def same_image(a: Path, b: Path) -> bool:
     ia, ib = Image.open(a), Image.open(b)
     if a.suffix == ".ico":
         sa, sb = sorted(ia.ico.sizes()), sorted(ib.ico.sizes())
         if sa != sb:
             return False
-        return all(not ImageChops.difference(ia.ico.getimage(sz).convert("RGBA"),
-                                             ib.ico.getimage(sz).convert("RGBA")).getbbox() for sz in sa)
+        return all(same_pixels(ia.ico.getimage(sz), ib.ico.getimage(sz)) for sz in sa)
     if getattr(ia, "n_frames", 1) != getattr(ib, "n_frames", 1):
         return False
-    for fa, fb in zip(_frames(ia), _frames(ib)):
-        if fa.size != fb.size or ImageChops.difference(fa, fb).getbbox():
-            return False
-    return True
+    return all(same_pixels(fa, fb) for fa, fb in zip(_frames(ia), _frames(ib)))
 
 
 def check(out: Path = ROOT, style: str = SRC.STYLE, seams: str = SRC.SEAMS) -> list[str]:

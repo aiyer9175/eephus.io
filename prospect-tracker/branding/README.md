@@ -280,11 +280,14 @@ branding/
     icons-sheet-light.png       the pixel icon set, light review sheet
     icons-sheet-dark.png        the pixel icon set, dark review sheet
     (and the pixel brand outputs of tools/pixel_brand.py: sheets, ball
-     strikes, favicons, app icons, share cards, marks; not served yet)
+     strikes, share cards, marks; not served yet)
 
 assets/
   eephus-icons.svg              the pixel icon sprite (served)
   eephus-icons.json             the same bitmaps for the canvas painters (served)
+  brand/                        tools/pixel_brand.py's DOM fragments and the pixel
+                                favicon and app-icon set with its manifest (served
+                                only when build_site.py's PIXEL_BRAND is on)
 
 tools/
   pixel_icons.py                source and generator of the pixel icon set
