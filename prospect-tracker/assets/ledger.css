@@ -89,6 +89,11 @@
 .ledger-app .ledger-table .ledger-th-tag { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; opacity: .6; margin-left: 4px; }
 .ledger-app .ledger-mini { width: 100%; border-collapse: collapse; font-size: 12px; }
 .ledger-app .ledger-mini td { padding: 2px 0; border-bottom: 1px solid var(--border-subtle); }
+/* The Method tab's Sections table: a note may break a long token (a dotted
+   source path) anywhere, so the table fits a 390 px phone with its keys whole
+   (finding M09-23: it ran 4 px past the page at 390). Scoped to this one
+   table: on a money column the same rule would split "$198.6M / $198.6M". */
+.ledger-app .ledger-sections td:last-child { overflow-wrap: anywhere; }
 .ledger-app .ledger-mini td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 
 /* the League board: sticky first column and a CONTAINER query that keeps four

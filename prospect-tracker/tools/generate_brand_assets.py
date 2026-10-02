@@ -6,7 +6,9 @@
 
 Writes (web-served):
     favicon.ico                    (root; crawlers request /favicon.ico unconditionally)
+    assets/favicon.svg             (the SVG favicon: ball strike 16, crisp edges)
     assets/favicon-32.png          (32x32 PNG, wired in <head>)
+    assets/favicon-16.png          (16x16 PNG, the footer mark)
     assets/apple-touch-icon.png    (180x180, opaque, P/X monogram, per Apple spec)
     assets/icon-192.png            (192x192 PWA icon, full mark)
     assets/icon-512.png            (512x512 PWA icon, full mark)
@@ -16,8 +18,9 @@ Writes (web-served):
 And assembles the documented export bundle under branding/ (copies of the
 web assets + the hand-authored SVGs + the generated cards).
 
-assets/favicon.svg + branding/marks/*.svg are hand-authored vector twins and
-are not drawn here. These are COMMITTED artifacts - run this script once when
+The favicons and the footer mark are the hand-tuned ball strikes of
+tools/pixel_brand.py (PX-23); branding/marks/*.svg are hand-authored vector
+twins and are not drawn here. These are COMMITTED artifacts - run this script once when
 the brand changes, review the output, and commit. The nightly build never runs
 it, so every box serves byte-identical icons regardless of installed fonts.
 
@@ -26,11 +29,13 @@ light-theme ramp (cardinal / gold / green / navy), plus the interlocking P/X
 gothic monogram at >=48px - drawn here with PIL rather than rasterized from the
 SVG so this script has no extra deps.
 
-Usage:  python tools/generate_brand_assets.py
+Usage:  python tools/generate_brand_assets.py              every artifact
+        python tools/generate_brand_assets.py --favicons  the favicon set only
 """
 from __future__ import annotations
 
 import shutil
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -210,16 +215,37 @@ def _y2k_icon(size: int, ball_frac: float = 0.76, monogram: bool = True,
 
 
 def make_favicons() -> None:
-    # The tiny favicons stay the clean ball (legible at 16px on a browser tab).
-    ico_sizes = [16, 32, 48]
-    base = _ball(48)
-    base.save(ROOT / "favicon.ico", sizes=[(s, s) for s in ico_sizes])
-    _ball(32).save(ROOT / "assets" / "favicon-32.png")
+    """The tiny favicons and the footer mark: the clean ball, hand-hinted
+    (owner answer PX-Q4, final-pass plan 5.7 PX-23).
+
+    They are NOT drawn here any more. A 48 px drawing downsampled to 16 read as
+    an "O" on a browser tab (Part 8 defect F6), so every small size is now its
+    own hand-tuned strike from tools/pixel_brand.py (pixel_brand_src.py holds
+    the pixels): 16 and 32 are exact strikes, 48 is strike 24 at 2x, the SVG
+    favicon is strike 16 on a 16-unit grid with crisp edges, and the footer
+    mark is strike 16 drawn 1:1. Same anatomy at every size: cream face, navy
+    rim, the inward ") (" seams (owner answer PB-Q2) in the light ramp. No
+    font, no RNG, no anti-aliasing, so every box writes the same bytes."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import pixel_brand as PB  # noqa: E402  (tools/ sibling, fontTools + PIL)
+
+    fav = PB.favicon_strikes()
+    fav[48].save(ROOT / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)],
+                 append_images=[fav[16], fav[32]])
+    fav[32].save(ROOT / "assets" / "favicon-32.png")
+    fav[16].save(ROOT / "assets" / "favicon-16.png")
+    (ROOT / "assets" / "favicon.svg").write_bytes(
+        PB.standalone_svg(PB.ball(16), "light", "eephus.io", 1).encode("utf-8"))
+    print("wrote favicon.ico (16/32/48 strikes), assets/favicon-32.png, "
+          "assets/favicon-16.png (footer mark), assets/favicon.svg (strike 16)")
+
+
+def make_apple_touch() -> None:
     # apple-touch-icon: the Y2K-gothic dark-holo treatment (home-screen pin).
     # These represent eephus.io (the site), so they use the CLEAN ball - the
     # P/X monogram is reserved for PROSPX-specific art.
     _y2k_icon(180, ball_frac=0.74, monogram=False).save(ROOT / "assets" / "apple-touch-icon.png")
-    print("wrote favicon.ico, assets/favicon-32.png, assets/apple-touch-icon.png")
+    print("wrote assets/apple-touch-icon.png")
 
 
 def make_app_icons() -> None:
@@ -481,6 +507,7 @@ def assemble_branding() -> None:
         (ROOT / "assets" / "favicon.svg",            B / "icons" / "favicon.svg"),
         (ROOT / "favicon.ico",                       B / "icons" / "favicon.ico"),
         (ROOT / "assets" / "favicon-32.png",         B / "icons" / "favicon-32.png"),
+        (ROOT / "assets" / "favicon-16.png",         B / "icons" / "favicon-16.png"),
         (ROOT / "assets" / "apple-touch-icon.png",   B / "icons" / "apple-touch-icon.png"),
         (ROOT / "assets" / "icon-192.png",           B / "icons" / "icon-192.png"),
         (ROOT / "assets" / "icon-512.png",           B / "icons" / "icon-512.png"),
@@ -501,8 +528,21 @@ def assemble_branding() -> None:
     print(f"assembled branding/ bundle ({n} artifacts copied)")
 
 
+FAVICON_BUNDLE = ("favicon.svg", "favicon.ico", "favicon-32.png", "favicon-16.png")
+
+
 if __name__ == "__main__":
+    if "--favicons" in sys.argv[1:]:
+        # The PX-23 set only: the hinted favicons and footer mark, plus their
+        # copies in branding/icons/. Leaves every other committed image alone.
+        make_favicons()
+        for name in FAVICON_BUNDLE:
+            src = (ROOT / name) if name == "favicon.ico" else (ROOT / "assets" / name)
+            shutil.copy2(src, ROOT / "branding" / "icons" / name)
+        print(f"copied {len(FAVICON_BUNDLE)} favicon artifacts into branding/icons/")
+        sys.exit(0)
     make_favicons()
+    make_apple_touch()
     make_app_icons()
     make_transparent_ball()
     make_share_card()

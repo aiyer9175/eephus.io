@@ -122,7 +122,10 @@ footers.
 outline, two seam arcs in the ramp (`marks/compact-mark.svg`). This is the
 eephus.io compact mark, and the favicon and the whole app-icon set are derived
 from it - the CLEAN ball, no monogram. Use it where the full wordmark will not
-fit: the favicon, app icons, the mobile header, small chips, loaders.
+fit: the favicon, app icons, the mobile header, small chips, loaders. At 16
+and 32 px (the favicon and the footer mark) it is drawn as hand-tuned pixel
+strikes of the same ball (owner answer PX-Q4), since a downsampled drawing
+reads as an "O" at tab size.
 
 **PROSPX mark, the px-ball + monogram.** The same ball with the interlocking P/X
 gothic monogram (`marks/px-ball-monogram.svg`), at 48px and up. This is the
@@ -143,6 +146,60 @@ height; px-ball no smaller than 16px (ball-only below 40px).
 - Do not place the light mark on a busy photo without the cream card behind it.
 - One mark per surface. The badge is defined in several spots in code for
   historical reasons; treat this folder as canonical and do not fork a new one.
+
+## Pixel icon set
+
+The pixel icons extend the marks, draw none of them. They label the places a
+reader scans a list (menus, the rail, PROSPX tabs, cards, mastheads, the wire);
+the top bar stays text. Each style sits in its own place (owner answer PX-Q1,
+2026-09-24): scorebook ink for the icons, the ballpark lamp grid for the loader,
+the four board states, the 404 and the tied-game line score, and card foil only
+on the PROSPX player card and its FV key.
+
+The rules:
+
+1. Grid: every icon is a 12 x 12 core placed at (2,2) in a 16 x 16 `<symbol>`.
+   One drawing, three sizes.
+2. Sizes, and nothing else (18 px and em sizes are banned):
+   - 12 px, the core (`viewBox="2 2 12 12"`): menus, PROSPX tabs, the wire,
+     the newsday graphic rows and the image-export title;
+   - 16 px, the full symbol: the rail and cards;
+   - 24 px, the core at 2x: /team/ badges and the Generate GFX board title;
+   - 32 px, the full symbol at 2x: mastheads.
+3. Strokes: vertical stems 2 px, horizontal rules 1 px, masses solid,
+   diagonals step one row per row. That is the PixelMplus12 Bold rule, so an
+   icon weighs what its label weighs.
+4. One accent: ink is `currentColor` (the label's own token). Each icon has at
+   most one accent group, `var(--ico-accent,currentColor)`: ink at rest,
+   `--accent-lilac` on hover, focus and the current page. Nothing moves.
+5. Zero raw hex, zero gradients, zero `rx`, zero circles, zero opacity in the
+   sprite. Canvas and PNG exports may use raw hex.
+6. The ramp never enters an icon. It stays the 2 px active underline and
+   appears in new work once: the loader's dotted one-lamp track, behind a mask.
+7. Gold: never. Red: never as a frame. Green and red only where the site
+   already uses them.
+8. No ball, no monogram, no wordmark letters in any icon. PROSPX gets a
+   card-with-portrait glyph.
+
+One source, three outputs. `tools/pixel_icons.py` holds every drawing as plain
+rows of pixels and writes the sprite (`assets/eephus-icons.svg`, one
+`<symbol id="i-key">` per icon, `fill="currentColor"` and crisp edges on each),
+the same bitmaps for canvas painters (`assets/eephus-icons.json`) and the review
+sheets (`branding/pixel/icons-sheet-light.png`, `-dark.png`);
+`python tools/pixel_icons.py --check` fails when a committed output is stale.
+Pages draw an icon with `build_site._ico(key, size)`, a `<use>` of the sprite
+stamped with its content hash; the hand-kept pages are restamped by
+`restamp_hand_authored_pages()`. The canvas exports (image export and Generate
+GFX) paint the JSON bitmaps with `EephusExport.pxIcon`, at a whole-number scale
+only, and fetch the table at export time, never on page load.
+
+**Open: the `.io` colour.** Three places disagree. This guide says gold on
+light (Color, Logo usage), `assets/site.css` serves lilac in both themes
+(`--logo-dot`), and the image-export frame (`_brandCompose` in
+`assets/eephus-export.js`) paints it gold on light. It is flagged here, not
+resolved: the owner's answer to PB-Q3 (2026-09-30, lilac in both themes) lands
+with the pixel brand pass (PB-08 for the export frame, PB-09 for this guide).
+Until then the site is the reference, per the rule at the top of this guide.
 
 ## The dark-mode starfield
 
@@ -204,9 +261,10 @@ branding/
     compact-mark-dark.svg       px-ball, dark-surface variant
     px-ball-monogram.svg        px-ball + P/X monogram - the PROSPX mark only
   icons/
-    favicon.svg                 vector favicon (ball only)
-    favicon.ico                 16/32/48 multi-res
-    favicon-32.png              32px PNG
+    favicon.svg                 SVG favicon, ball strike 16 (crisp edges)
+    favicon.ico                 16/32/48, each its own hand-tuned strike
+    favicon-32.png              32px PNG, ball strike 32
+    favicon-16.png              16px PNG, ball strike 16 (the footer mark)
     apple-touch-icon.png        180px, clean ball on the dark holo field
     icon-192.png                PWA, clean ball (eephus.io)
     icon-512.png                PWA, clean ball (eephus.io)
@@ -218,7 +276,25 @@ branding/
     eephus-arc.gif              matted GIF (one-bit transparency fallback)
   social/
     share-default.png           1200x630 default Open Graph card
+  pixel/
+    icons-sheet-light.png       the pixel icon set, light review sheet
+    icons-sheet-dark.png        the pixel icon set, dark review sheet
+    (and the pixel brand outputs of tools/pixel_brand.py: sheets, ball
+     strikes, favicons, app icons, share cards, marks; not served yet)
+
+assets/
+  eephus-icons.svg              the pixel icon sprite (served)
+  eephus-icons.json             the same bitmaps for the canvas painters (served)
+
+tools/
+  pixel_icons.py                source and generator of the pixel icon set
+  pixel_brand_src.py            the pixel brand's hand decisions (ball strikes)
+  pixel_brand.py                renders the pixel brand outputs
+  generate_brand_assets.py      the committed raster brand art
 ```
 
-Regenerate the raster artifacts with `python tools/generate_brand_assets.py`.
-The SVG marks, the manifest, and this guide are hand-authored.
+Regenerate the raster artifacts with `python tools/generate_brand_assets.py`
+(`--favicons` rewrites only the favicon set and the footer mark, from the ball
+strikes of `tools/pixel_brand.py`). Regenerate the icon set with
+`python tools/pixel_icons.py`. The SVG marks, the manifest, and this guide are
+hand-authored.

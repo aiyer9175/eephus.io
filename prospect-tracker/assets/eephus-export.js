@@ -488,13 +488,17 @@
     var ew = g.measureText("eephus").width;
     g.fillStyle = dark ? "#9B8CFF" : "#C9A227";
     g.fillText(".io", pad + ew, by);
-    // title (right-aligned)
+    // title (right-aligned), the module icon at 12 px left of it (PX-18)
     if (title) {
       g.font = "700 " + (15 * S) + "px " + _LOGO;
-      g.fillStyle = dark ? "#A6ABB5" : "#4A5468";
+      var tc = dark ? "#A6ABB5" : "#4A5468";
+      g.fillStyle = tc;
+      var tt = _clip(title, 64);
       g.textAlign = "right";
-      g.fillText(_clip(title, 64), W - pad, by - 3 * S);
+      g.fillText(tt, W - pad, by - 3 * S);
       g.textAlign = "left";
+      var ik = routeIcon();
+      if (ik) pxIcon(g, ik, W - pad - Math.ceil(g.measureText(tt).width) - 20 * S, by - 15 * S, S, tc);
     }
     // content
     g.drawImage(content, pad, pad + headH);
@@ -509,9 +513,77 @@
   function _clip(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
   function _slug(s) { return (String(s || "eephus") .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")) || "eephus"; }
 
+  // ---- pixel icon painter (final-pass plan 5.7, PX-18) ----------------------
+  // A canvas cannot draw an external <use>, so the exports paint the icon set's
+  // own bitmaps (the 12 x 12 core of each symbol, written by tools/pixel_icons.py
+  // beside the sprite) with fillRect, one rect per horizontal run. The table is
+  // fetched on the first export only, never on page load, and is stamped with the
+  // sprite's own ?v= (one generator writes both). A failed fetch paints nothing:
+  // the export falls back to its text-only frame.
+  var _iconTable = null, _iconsReady = null;
+  function _iconsURL() {
+    var u = document.querySelector('use[href*="/assets/eephus-icons.svg"]');
+    var m = u ? /\?v=([^#"']+)/.exec(u.getAttribute("href") || "") : null;
+    return "/assets/eephus-icons.json" + (m ? "?v=" + m[1] : "");
+  }
+  function loadIcons() {
+    if (_iconsReady) return _iconsReady;
+    _iconsReady = Promise.resolve().then(function () {
+      if (typeof fetch !== "function") return null;
+      return fetch(_iconsURL()).then(function (r) { return r.ok ? r.json() : null; });
+    }).catch(function () { return null; }).then(function (t) {
+      _iconTable = (t && typeof t === "object") ? t : null;
+      return _iconTable;
+    });
+    return _iconsReady;
+  }
+  function _iconRows(key) {
+    var e = _iconTable && _iconTable[key];
+    if (e && e.alias) e = _iconTable[e.alias];
+    return (e && e.rows && e.rows.length) ? e.rows : null;
+  }
+  function hasIcon(key) { return !!_iconRows(key); }
+  // Paint icon `key` with its top-left at (x, y) in the context's own units.
+  // The scale is a whole number of pixels per bitmap cell and the origin is
+  // snapped to whole units, so with the exports' integer supersample every cell
+  // lands on whole device pixels: no blurred edge, at any format. Ink ("#") and
+  // the accent group ("+") both take `hex` (an icon at rest has its accent in
+  // its ink, plan 5.7.1 rule 4) unless `accentHex` is given. Returns the width
+  // painted (12 x scale), or 0 when the table or the key is missing.
+  function pxIcon(ctx, key, x, y, scale, hex, accentHex) {
+    var rows = _iconRows(key);
+    if (!rows || !ctx) return 0;
+    var s = Math.max(1, Math.round(Number(scale) || 1));
+    var x0 = Math.round(Number(x) || 0), y0 = Math.round(Number(y) || 0);
+    var prev = ctx.fillStyle;
+    for (var r = 0; r < rows.length; r++) {
+      var row = String(rows[r]);
+      var c = 0;
+      while (c < row.length) {
+        var ch = row.charAt(c);
+        if (ch !== "#" && ch !== "+") { c++; continue; }
+        var c1 = c;
+        while (c1 < row.length && row.charAt(c1) === ch) c1++;
+        ctx.fillStyle = (ch === "+" && accentHex) ? accentHex : hex;
+        ctx.fillRect(x0 + c * s, y0 + r * s, (c1 - c) * s, s);
+        c = c1;
+      }
+    }
+    ctx.fillStyle = prev;
+    return rows[0].length * s;
+  }
+  // The icon key of the module this page belongs to: the first path segment
+  // (/fa/ is "fa", /mlbstats/ is "mlbstats"), which is the icon set's own key
+  // for every module route. "" when the page has no icon (the homepage).
+  function routeIcon() {
+    var seg = String((location && location.pathname) || "/").split("/")[1] || "";
+    seg = seg.replace(/\.html?$/, "");
+    return hasIcon(seg) ? seg : "";
+  }
+
   function exportImage(host, action, kind) {
     toast("Rendering image…");
-    return Promise.all([_ensureH2C(), _awaitFonts()]).then(function (r) {
+    return Promise.all([_ensureH2C(), _awaitFonts(), loadIcons()]).then(function (r) {
       var h2c = r[0];
       var target = kind === "chart" ? (host.querySelector("svg") || host)
                                     : (host.matches("table") ? host : (host.querySelector("table") || host));
@@ -663,6 +735,11 @@
     formats: formats,
     copyText: copyText,
     toast: toast,
+    // the pixel icon painter (PX-18), shared with the Generate GFX engine
+    loadIcons: loadIcons,
+    hasIcon: hasIcon,
+    pxIcon: pxIcon,
+    routeIcon: routeIcon,
     copyTable: function (host, fmt) {
       var model = scrape(host);
       var built = buildText(model, fmt || "markdown");

@@ -1303,7 +1303,7 @@
     var oj = A.org_join || {};
     out += "<h3>Club join</h3><table class=\"ledger-mini\">" + Object.keys(oj).map(function (k) { return "<tr><td>" + esc(k) + "</td><td>" + esc(Array.isArray(oj[k]) ? oj[k].join(" to ") : oj[k]) + "</td></tr>"; }).join("") + "</table>";
     out += "<h3>What this page does not claim</h3><ul>" + DATA.what_this_page_does_not_claim.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul>";
-    out += "<h3>Sections</h3><table class=\"ledger-mini\">" + Object.keys(DATA.sections).map(function (k) {
+    out += "<h3>Sections</h3><table class=\"ledger-mini ledger-sections\">" + Object.keys(DATA.sections).map(function (k) {
       var s = DATA.sections[k];
       return "<tr><td>" + esc(k) + "</td><td>" + esc(s.live ? "live" : "dark: " + (s.blocked_on || s.note || "")) + "</td></tr>";
     }).join("") + "</table>";

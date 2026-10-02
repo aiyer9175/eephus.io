@@ -31,11 +31,13 @@
 //
 //   EEPHUS_GFX.open(spec)   spec = {
 //     kind:"board"|"card"|"newsday"|"sourcecomp", module, accentToken?, title,
-//     subtitle?, url, filenameBase, caption?,
+//     subtitle?, url, filenameBase, caption?, icon? (a board's pixel icon key;
+//     default: the page's route, e.g. "fa" on /fa/),
 //     board?: { columns:[{label, frac, narrowFrac?, align?, wideOnly?}],
 //               rows:[{ cells:[{ t, sub?, c? }] }], counts?:[10,25,50] },
 //     card?:  <EEPHUS_HUB.drawCard opts>,
-//     items?: [{name, sub?, type?, val?, c?, shot?, logo?}] (newsday),
+//     items?: [{name, sub?, type?, val?, c?, shot?, logo?, ico?, glyph?}] (newsday;
+//              ico is the wire pictogram key "ev-<type>", glyph its text fallback),
 //     dateLabel?: "Jul 23, 2026" (newsday),
 //     comp?:  { tiles:[{stat, label, sub?}],
 //               panels:[{title, lo, hi, star?, rows:[{label, v, isEfv?, c?}]}],
@@ -113,6 +115,12 @@
         : [[0, "#B91C1C"], [0.35, "#C9A227"], [0.65, "#1F7A3A"], [1, "#0E2B4D"]],
     };
   }
+  // The pixel icon painter (PX-18) is owned by eephus-export.js, which every
+  // page carrying this engine loads; null leaves every frame text-only.
+  function pxPainter() {
+    var X = window.EephusExport;
+    return (X && typeof X.pxIcon === "function" && typeof X.hasIcon === "function") ? X : null;
+  }
   // Force (or restore) the document theme. theme "light"|"dark" forces it; any
   // other value restores `orig` (null/undefined = remove the attribute).
   function forceTheme(theme, orig) {
@@ -160,9 +168,14 @@
     P.ramp.forEach(function (s) { ramp.addColorStop(s[0], s[1]); });
     g.fillStyle = ramp; g.fillRect(PAD, 66, W - 2 * PAD, 3);
 
-    // title + subtitle
+    // title + subtitle; the module's pixel icon at 24 px (the 12 px core at 2x)
+    // left of the title, on the title's baseline, in the title's ink (PX-18)
     g.fillStyle = fg; g.font = "700 34px " + MONO;
-    g.fillText(spec.title || "", PAD, 108);
+    var titleX = PAD, X = pxPainter();
+    var ik = X ? (spec.icon || X.routeIcon()) : "";
+    if (ik && X.hasIcon(ik)) titleX = PAD + X.pxIcon(g, ik, PAD, 108 - 24, 2, fg) + 12;
+    g.fillStyle = fg;
+    g.fillText(fitTxt(g, spec.title || "", W - PAD - titleX), titleX, 108);
     if (spec.subtitle) {
       g.fillStyle = sub; g.font = "15px " + MONO;
       g.fillText(spec.subtitle, PAD, 134);
@@ -445,12 +458,21 @@
         g.fillStyle = sub; g.font = "700 " + Math.max(10, Math.round(S * 0.38)) + "px " + MONO;
         g.fillText(ini, x0 + S / 2 - g.measureText(ini).width / 2, cy + S * 0.14);
       }
-      // colored event value, right-aligned; team logo chip just left of it
+      // colored event value, right-aligned; team logo chip just left of it.
+      // The event's wire pictogram (PX-18, the 12 px icon the /news/ rows draw)
+      // leads the value in the value's own colour; trade has no colour key, so
+      // it takes the frame's ink (owner answer PX-Q3). With no icon table the
+      // row keeps its text glyph.
       g.font = "700 " + valF + "px " + MONO;
       var vt = String(it.val || "");
+      var Xp = pxPainter();
+      var icoOn = !!(it.ico && Xp && Xp.hasIcon(it.ico));
+      if (!icoOn && it.glyph) vt = it.glyph + " " + vt;
+      var vcol = colorOf(it.c);
       var vx = x0 + colW - g.measureText(vt).width;
-      g.fillStyle = colorOf(it.c);
+      g.fillStyle = vcol;
       g.fillText(vt, vx, cy + valF * 0.35);
+      if (icoOn) vx -= Xp.pxIcon(g, it.ico, vx - 18, cy - 6, 1, vcol) + 6;
       var valLeft = vx;
       var lg = logos[r];
       if (lg) {
@@ -675,6 +697,9 @@
 
   async function renderCanvas() {
     await awaitFonts();
+    // The icon bitmaps load here, at export time, never on page load (PX-18).
+    var X = pxPainter();
+    if (X && X.loadIcons) await X.loadIcons();
     var fmt = FORMATS[_opts.format] || FORMATS.wide;
     if (_spec.kind === "card") {
       // The unified card has its own 16:9-ish geometry; format control is hidden.

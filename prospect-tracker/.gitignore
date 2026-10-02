@@ -166,6 +166,7 @@ Thumbs.db
 # and the nightly build must serve byte-identical icons without regenerating.
 # (favicon.ico / favicon.svg aren't *.png, so they need no exception.)
 !assets/favicon-32.png
+!assets/favicon-16.png
 !assets/apple-touch-icon.png
 !assets/share-default.png
 # article hero/inline images are authored content, not build output -

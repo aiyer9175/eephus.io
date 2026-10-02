@@ -4290,6 +4290,27 @@
       margin: 0 auto 8px;
     }
     .state-message code { font-size: 12px; }
+    /* The player-miss card back (final-pass plan 5.7, PX-20). An unknown
+       #player= key shows a blank card back in the card-foil idiom (owner answer
+       PX-Q1: card foil only on the PROSPX player card) beside the unchanged
+       message, which keeps the meaning. Static, aria-hidden, tokens only. */
+    .cf-miss { display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 16px 24px; padding: 3rem 1rem; }
+    .cf-miss .state-message { padding: 0; max-width: 360px; text-align: left; }
+    .cf-miss .state-message::before { content: none; }
+    .cf-cardback { width: 168px; flex: none; box-sizing: border-box; padding: 8px 10px;
+      border: 2px solid var(--text-primary); background: var(--bg-secondary);
+      color: var(--text-secondary); font: 12px/16px var(--font-retro-mono); text-align: left; }
+    [data-theme="dark"] .cf-cardback { border-color: var(--border); }
+    .cf-cardback .n { display: block; padding-bottom: 6px; margin-bottom: 6px;
+      border-bottom: 1px solid var(--text-primary); color: var(--text-primary);
+      font: 700 16px/16px var(--font-logo); }
+    .cf-cardback table { width: 100%; margin-top: 6px; border-collapse: collapse;
+      font-variant-numeric: tabular-nums; }
+    .cf-cardback th, .cf-cardback td { padding: 0; border: 0; background: none;
+      text-align: right; font: inherit; letter-spacing: 0; text-transform: none; }
+    .cf-cardback th { color: var(--text-dim); }
+    .cf-cardback th:first-child, .cf-cardback td:first-child { text-align: left; }
     /* Optional two-line empty state: an emphasized headline + muted body.
        Used for "future class not scouted yet"-style placeholders. */
     .state-message-title {
@@ -10528,7 +10549,7 @@
 
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
-<script src="/assets/eephus-export.js?v=d0911e2c" defer></script>
+<script src="/assets/eephus-export.js?v=4f4d2fda" defer></script>
 <script src="/assets/eephus-csv.js?v=4a00e52b" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
@@ -48589,6 +48610,13 @@ function makeSourceFvHistory(points, opts = {}) {
     ${table}`;
 }
 
+// The player-miss card back (final-pass plan 5.7, PX-20; the card-foil idiom,
+// owner answer PX-Q1): a blank card numbered 404 with dashed stat lines. Pure
+// decoration, so aria-hidden; the message beside it says what happened.
+const PX_CARD_BACK = '<div class="cf-cardback" aria-hidden="true"><span class="n">No. 404</span>Not on this roster.'
+  + '<table><tr><th>YR</th><th>G</th><th>PA</th><th>WAR</th></tr>'
+  + '<tr><td>--</td><td>--</td><td>--</td><td>--</td></tr>'
+  + '<tr><td>--</td><td>--</td><td>--</td><td>--</td></tr></table></div>';
 function renderPlayerDetail(key) {
   try {
   const p = findPlayer(key);
@@ -48601,7 +48629,8 @@ function renderPlayerDetail(key) {
       root.innerHTML = `<div class="state-message">Loading prospect…</div>`;
       return;
     }
-    root.innerHTML = `<div class="state-message">Unknown prospect: ${escapeHtml(key)}. <a href="#" onclick="goHome();return false;">Back to list</a>.</div>`;
+    // The miss shows the card back (PX-20) beside the unchanged message.
+    root.innerHTML = `<div class="cf-miss">${PX_CARD_BACK}<div class="state-message">Unknown prospect: ${escapeHtml(key)}. <a href="#" onclick="goHome();return false;">Back to list</a>.</div></div>`;
     return;
   }
 
@@ -58124,7 +58153,7 @@ window.PROSPX = {
      The flagship app had no footer/copyright at all; this gives it the same
      closing mark + version + links the editorial pages carry. -->
 <footer class="eephus-footer">
-  <span><img src="/assets/favicon.svg" alt="" aria-hidden="true" style="width:18px;height:18px;vertical-align:-4px;margin-right:7px">eephus.io - sabermetrics · &beta; v1.0</span>
+  <span><img src="/assets/favicon-16.png" alt="" aria-hidden="true" width="16" height="16" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:7px">eephus.io - sabermetrics · &beta; v1.0</span>
   <nav class="eephus-footer-links" aria-label="Footer">
     <a href="/">Home</a>
     <a href="/collegesavant/">CollegeSavant</a>

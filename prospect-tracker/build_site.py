@@ -632,9 +632,12 @@ def _footer() -> str:
         f'<a href="{html.escape(DISCORD_URL)}" target="_blank" rel="noopener noreferrer">Discord</a>'
     )
     # Footer carries the compact mark (the favicon ball) so the identity closes
-    # every page - it reads on both themes (cream face, navy outline).
-    mark = ('<img src="/assets/favicon.svg" alt="" aria-hidden="true" '
-            'style="width:18px;height:18px;vertical-align:-4px;margin-right:7px">')
+    # every page - it reads on both themes (cream face, navy outline). It is the
+    # hand-tuned 16 px ball strike (owner answer PX-Q4, PX-23), drawn 1:1 at
+    # 16 px with pixelated scaling so no browser resamples it; the old 18 px
+    # draw of the vector ball read as an "O".
+    mark = ('<img src="/assets/favicon-16.png" alt="" aria-hidden="true" width="16" height="16" '
+            'style="width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:7px">')
     return (
         '<footer class="eephus-footer">\n'
         f'  <span>{mark}eephus.io - sabermetrics · {html.escape(EEPHUS_VERSION)}</span>\n'
@@ -2118,7 +2121,8 @@ def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None) -> s
 # Inline wire-up for the /news/ Generate GFX affordances: the header chip
 # builds the whole-digest board spec; each date header's "GFX m/d" chip builds
 # a per-date card spec (kind:"newsday") that renders EVERY item from that date
-# with headshots + team logos. Both read the embedded data blob and hand off
+# with headshots + team logos and each event's wire pictogram (the canvas
+# painter, PX-18, with the text glyph as its fallback). Both read the embedded data blob and hand off
 # to the shared EEPHUS_GFX engine (same modal the FA / Projections surfaces
 # use). Twitter-card 1200px width; the per-date card grows taller as needed.
 _NEWS_GFX_JS = """<script>
@@ -2181,7 +2185,7 @@ _NEWS_GFX_JS = """<script>
       .map(function(e){
         return {name:e.name||'',sub:[e.pos,e.org].filter(Boolean).join(' - '),
                 type:TYPE[e.typ]||e.typ||'',
-                val:(e.glyph?e.glyph+' ':'')+(e.val||''),c:CLR[e.typ]||null,
+                val:e.val||'',glyph:e.glyph||'',ico:TYPE[e.typ]?'ev-'+e.typ:'',c:CLR[e.typ]||null,
                 shot:shotURL(e),logo:logoURL(e)};
       });
     var dt=new Date(day+'T12:00:00');

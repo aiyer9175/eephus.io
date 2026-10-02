@@ -1,16 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44">
-  <!-- eephus.io favicon: the PROSPX baseball mark (vector twin of the px-ball
-       inline SVG; fixed light-theme colors because favicons can't read CSS
-       custom properties - cream face, navy outline, ramp-painted seams). -->
-  <defs>
-    <linearGradient id="seam" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#B91C1C"/>
-      <stop offset="35%" stop-color="#C9A227"/>
-      <stop offset="65%" stop-color="#1F7A3A"/>
-      <stop offset="100%" stop-color="#0E2B4D"/>
-    </linearGradient>
-  </defs>
-  <circle cx="22" cy="22" r="19" fill="#F6F1E4" stroke="#0F1B2D" stroke-width="3"/>
-  <path d="M 32 8 Q 40 22 32 36" fill="none" stroke="url(#seam)" stroke-width="3.4" stroke-linecap="round"/>
-  <path d="M 12 8 Q 4 22 12 36" fill="none" stroke="url(#seam)" stroke-width="3.4" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="eephus.io"><path fill="#0E2B4D" d="M10 8h1v2h-1zM11 10h1v2h-1zM12 12h1v1h-1z"/><path fill="#0F1B2D" d="M6 0h4v1h-4zM4 1h2v1h-2zM10 1h2v1h-2zM3 2h1v1h-1zM12 2h1v1h-1zM2 3h1v1h-1zM13 3h1v1h-1zM1 4h1v2h-1zM14 4h1v2h-1zM0 6h1v4h-1zM15 6h1v4h-1zM1 10h1v2h-1zM14 10h1v2h-1zM2 12h1v1h-1zM13 12h1v1h-1zM3 13h1v1h-1zM12 13h1v1h-1zM4 14h2v1h-2zM10 14h2v1h-2zM6 15h4v1h-4z"/><path fill="#1F7A3A" d="M12 3h1v1h-1zM11 4h1v2h-1zM10 6h1v2h-1z"/><path fill="#B91C1C" d="M3 3h1v1h-1zM4 4h1v2h-1zM5 6h1v2h-1z"/><path fill="#C9A227" d="M5 8h1v2h-1zM4 10h1v2h-1zM3 12h1v1h-1z"/><path fill="#F6F1E4" d="M6 1h4v1h-4zM4 2h8v2h-8zM2 4h2v2h-2zM5 4h6v2h-6zM12 4h2v2h-2zM1 6h4v4h-4zM6 6h4v4h-4zM11 6h4v4h-4zM2 10h2v2h-2zM5 10h6v2h-6zM12 10h2v2h-2zM4 12h8v2h-8zM6 14h4v1h-4z"/></svg>
