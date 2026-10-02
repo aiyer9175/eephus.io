@@ -236,7 +236,8 @@ def test_prospx_section_tabs_and_glossary_tab_carry_their_icons():
     for sec, inner in tabs:
         assert _icons(inner) == [(12, _sym(sec))], sec
     gl = re.search(r'<a class="section-tab section-tab-link" href="/glossary/"[^>]*>(.*?)</a>', text, re.S).group(1)
-    assert _icons(gl) == [(12, "glossary")]
+    # The glossary module reads "Library" and draws i-library (owner ask 2026-10-02).
+    assert _icons(gl) == [(12, _sym("glossary"))] == [(12, "library")]
     assert "section-tab-glyph" not in text
 
 

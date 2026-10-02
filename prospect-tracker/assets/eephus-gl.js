@@ -262,7 +262,7 @@
       return;
     }
     if (!_qkResults.length) {
-      el.innerHTML = `<div class="qk-empty">No match - <a href="/glossary/">view the full glossary</a></div>`;
+      el.innerHTML = `<div class="qk-empty">No match - <a href="/glossary/">view the full Library</a></div>`;
       return;
     }
     el.innerHTML = _qkResults.map((r, i) => `

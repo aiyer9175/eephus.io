@@ -343,6 +343,13 @@ def _headshot_url(mlbam, box_w: int = 84, box_h: int | None = None) -> str | Non
 # (MiLB + amateur). This is the SINGLE source - _nav(), the sidebar, and the
 # hand-maintained static nav copies (prospx + the two CollegeSavant pages) all
 # mirror it; test_collegesavant_nav_in_sync guards the static copies.
+# The glossary module's display name (owner ask 2026-10-02, "rename glossary
+# to Library"). The module KEY "glossary", the URL /glossary/ and the data file
+# names stay, so every link already shared keeps working; /library/ is a
+# redirect stub to /glossary/. Every place a reader sees the module's name
+# reads this constant, never a literal.
+GLOSSARY_DISPLAY_NAME = "Library"
+
 NAV_ITEMS = [
     ("home",     "Home",             "/"),
     ("prospx",   "PROSPX",           "/prospx/"),
@@ -387,7 +394,7 @@ NAV_ITEMS = [
     ]},
     ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
-    ("glossary", "Glossary",         "/glossary/"),
+    ("glossary", GLOSSARY_DISPLAY_NAME, "/glossary/"),
     ("team",     "Developers",        "/team/"),
 ]
 
@@ -465,8 +472,12 @@ def _merge_icon_maps(*maps: dict) -> dict:
     return out
 
 
+# A nav key whose drawing is named for its display name, not its key: the
+# glossary module reads "Library" and draws i-library (owner ask 2026-10-02).
+_NAV_ICON = {"glossary": "library"}
+
 ICON_FOR = _merge_icon_maps(
-    {k: k for k, _label, _href in nav_leaves()},
+    {k: _NAV_ICON.get(k, k) for k, _label, _href in nav_leaves()},
     {k: k for k in ("models", "parks", "news", "history", "watchlist")},
     _PX_SECTION_ICON,
     _WIRE_ICON,
@@ -622,7 +633,7 @@ def _footer() -> str:
         # nobody looking for an API looks under "Data Sources", and a page you
         # cannot find is the same as a page that does not exist.
         f'<a href="/sources/#api">Public Data</a>'
-        f'<a href="/glossary/">Glossary</a>'
+        f'<a href="/glossary/">{GLOSSARY_DISPLAY_NAME}</a>'
         # The pass page. It has a nav group, but the editorial surfaces are
         # where a reader decides the site is worth funding, so the footer
         # carries the address on every page too.
@@ -3626,8 +3637,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # The unicode glyph map this replaced was a third icon vocabulary.
     # Lifecycle sigils live on module mastheads, not here.
     sidebar_labels = {"fa": "MLB Free Agency", "projections": "MLB Projections",
-                      "collegesavant": "CollegeSavant",
-                      "glossary": "Glossary & Methodology"}
+                      "collegesavant": "CollegeSavant"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
         if key == "home":
@@ -3806,7 +3816,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     terms = _glossary_teaser_terms()
     slug, term, defn = terms[datetime.now().timetuple().tm_yday % len(terms)]
     glossary = (f'<div class="glossary-teaser"><span>Today\'s term: <strong>{html.escape(term)}</strong> - {html.escape(defn)}</span>'
-                f'<a href="/glossary/#g={slug}">Glossary →</a></div>')
+                f'<a href="/glossary/#g={slug}">{GLOSSARY_DISPLAY_NAME} →</a></div>')
 
     callout = _date_callout()
     otd = _this_day_html(graduates, players)
@@ -4924,7 +4934,7 @@ def build_diamond() -> str:
             f'<p>Diamond is live at ${price} a month. The rest of eephus.io stays free.</p>'
             f'<p>Founding members (preview users) pay ${founding} a month, held for a year.</p>'
             '<p class="diamond-fine">Diamond funds the free site: the board, projections, free agency '
-            'model, glossary and articles stay open to everyone.</p>'
+            f'model, {GLOSSARY_DISPLAY_NAME} and articles stay open to everyone.</p>'
             '</div>'
         )
     else:
@@ -4935,7 +4945,7 @@ def build_diamond() -> str:
             'eephus.io stays free.</p>'
             f'<p>Founding rate: ${founding} a month, held for a year, for everyone using the preview.</p>'
             '<p class="diamond-fine">Diamond funds the free site: the board, projections, free agency '
-            'model, glossary and articles stay open to everyone.</p>'
+            f'model, {GLOSSARY_DISPLAY_NAME} and articles stay open to everyone.</p>'
             '</div>'
         )
     gets = [
@@ -4996,7 +5006,7 @@ def build_diamond() -> str:
     gate_faq = (
         ("Is any of this gated right now?",
          f"Yes. Member modules are ${price} a month. The free site is unchanged: the prospect board, "
-         "projections, free agency model, glossary and articles stay public.")
+         f"projections, free agency model, {GLOSSARY_DISPLAY_NAME} and articles stay public.")
         if gated else
         ("Is any of this gated right now?",
          "No. Every Diamond page is public and free while we build it: no paywall, no card form, no "
@@ -5809,7 +5819,7 @@ def build_models() -> str:
         f'<p>Registry vintage: <strong>{html.escape(_fmt_iso_date(reg.get("checked_at")))}</strong>. '
         f'Version <code>{html.escape(str(reg.get("version") or ""))}</code>. Source: '
         '<a href="/data/model_registry.json"><code>data/model_registry.json</code></a>; each row\'s '
-        'full note is on the <a href="/glossary/#view=models">glossary ledger</a>.</p>'
+        f'full note is on the <a href="/glossary/#view=models">{GLOSSARY_DISPLAY_NAME} ledger</a>.</p>'
         '</div>'
         f'<div class="acct-tiles">{tiles}</div>'
         '<div class="section-head"><h2>Freshness</h2>'
@@ -5853,7 +5863,7 @@ def build_glossary() -> str:
     )
     body = (
         '<div class="gl-app">'
-        f'<div class="section-head"><h1>{_masthead_icon("glossary")}Glossary &amp; Methodology</h1>'
+        f'<div class="section-head"><h1>{_masthead_icon("glossary")}{GLOSSARY_DISPLAY_NAME}</h1>'
         '<span class="section-sub">terms, derivations, and each model\'s track record</span></div>'
         f"{intro}"
         '<div class="filter-bar"><span class="gl-microlabel">View</span>'
@@ -5870,14 +5880,16 @@ def build_glossary() -> str:
         # lesson; test_glossary_page_loads.test_view_chips_match_whitelist now
         # asserts all four agree.
         '<button class="chip" data-glossary-view="source-accuracy">Source Accuracy</button>'
-        '<button class="chip" data-glossary-view="library">Library</button>'
+        # The page-index view keeps its key and URL (#view=library); its chip
+        # reads "Page Index" now that the module itself is the Library.
+        '<button class="chip" data-glossary-view="library">Page Index</button>'
         # Outbound link (not a view toggle) to the full attribution page, so the
         # Data Sources & Attribution page is reachable from this section, not just
         # the footer. The trailing arrow signals it navigates away.
         '<a class="chip gl-chip-out" href="/sources/">Data Sources &amp; Attribution →</a>'
         '</div>'
         '<div id="gl-termbar">'
-        '<input id="gl-search" class="gl-search" type="search" placeholder="Search terms, abbreviations, definitions…" aria-label="Search glossary">'
+        '<input id="gl-search" class="gl-search" type="search" placeholder="Search terms, abbreviations, definitions…" aria-label="Search Library terms">'
         '<div class="filter-bar" id="gl-cats"></div>'
         '<div id="gl-az"></div>'
         '</div>'
@@ -5904,9 +5916,9 @@ def build_glossary() -> str:
         f'<script src="/data/value_framework.js?v={_asset_ver("data/value_framework.js")}" defer></script>'
         f'<script src="/assets/glossary.js?v={_GLAPP_VER}" defer></script>'
     )
-    return page("Glossary & Methodology - eephus.io", "glossary", body,
-                "Definitions, model mechanics and methodology for every metric on eephus.io, "
-                "with each model's track record.",
+    return page(f"{GLOSSARY_DISPLAY_NAME} - eephus.io", "glossary", body,
+                f"The eephus.io {GLOSSARY_DISPLAY_NAME}: definitions, model mechanics and "
+                "methodology for every metric on the site, with each model's track record.",
                 url=f"{SITE_ORIGIN}/glossary/")
 
 def build_article_page(a: dict) -> str:
@@ -6513,6 +6525,28 @@ def build_teams_redirect() -> str:
 </body></html>
 """
 
+
+def build_library_redirect() -> str:
+    """/library/ (owner ask 2026-10-02): the glossary module reads "Library",
+    so its new name resolves. The page lives at /glossary/ for link stability;
+    this stub is noindex, names /glossary/ as canonical, and carries the hash
+    across (/library/#view=models opens /glossary/#view=models). It stays in
+    deploy/publish_paths.txt: a redirect that does not ship is a 404."""
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{GLOSSARY_DISPLAY_NAME} - eephus.io</title>
+{FAVICON_LINKS}
+<meta name="robots" content="noindex">
+<link rel="canonical" href="{SITE_ORIGIN}/glossary/">
+<meta http-equiv="refresh" content="0; url=/glossary/">
+<script>location.replace("/glossary/"+(location.hash||""));</script>
+</head><body>
+<p style="font-family:monospace;padding:2rem;">The {GLOSSARY_DISPLAY_NAME} lives at
+<a href="/glossary/">/glossary/</a>.</p>
+</body></html>
+"""
+
 # --------------------------------------------------------------------------- #
 # Derived BROWSER payloads
 # --------------------------------------------------------------------------- #
@@ -7107,6 +7141,7 @@ def main() -> None:
     _write("ledger/index.html", build_ledger())
     _write("models/index.html", build_models())
     _write("glossary/index.html", build_glossary())
+    _write("library/index.html", build_library_redirect())
     _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())
     _write("sources/index.html", build_sources())

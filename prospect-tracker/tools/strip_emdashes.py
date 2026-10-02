@@ -64,6 +64,7 @@ TARGETS: list[str] = [
     "news/index.html",
     "sources/index.html",
     "teams/index.html",
+    "library/index.html",
     "report/index.html",
     "collegesavant/index.html",
     "404.html",
