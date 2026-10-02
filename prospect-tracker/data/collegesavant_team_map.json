@@ -1,0 +1,5199 @@
+{
+ "generated_from": "college_team_map.build",
+ "ncaa_list": {
+  "year": 2026,
+  "schools": 308
+ },
+ "learned_codes": 67,
+ "codes": 518,
+ "mapped": 154,
+ "rows": 9133,
+ "mapped_rows": 4588,
+ "by_source": {
+  "dict+ncaa": 88,
+  "learned+ncaa": 66
+ },
+ "with_espn_logo": 73,
+ "table": [
+  {
+   "code": "ABI_WIL",
+   "name": "Abilene Christian",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Abilene Christian' is NCAA D-I 'Abilene Christian', the only D-I school its letters fit",
+   "ncaa": "Abilene Christian",
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "ADR_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "ADR_DIR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "AIR_FOR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "AKR_ZIP",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 17
+  },
+  {
+   "code": "ALA_ANM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "ALA_CRI",
+   "name": "Alabama",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Alabama' is NCAA D-I 'Alabama'",
+   "ncaa": "Alabama",
+   "espn_id": 333,
+   "learned": "Alabama",
+   "rows": 32
+  },
+  {
+   "code": "ALA_HOR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 9
+  },
+  {
+   "code": "ALA_LIO",
+   "name": null,
+   "source": null,
+   "note": "letters 'ALA' fit 6 D-I schools; dictionary 'Alabama' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 18
+  },
+  {
+   "code": "ALB_GRE",
+   "name": "Albany",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Albany' is NCAA D-I 'UAlbany', the only D-I school its letters fit",
+   "ncaa": "UAlbany",
+   "espn_id": null,
+   "learned": null,
+   "rows": 23
+  },
+  {
+   "code": "ALC_BRA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "ALV_CCO",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Alvin Community College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "AND_TRO",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 17
+  },
+  {
+   "code": "ANG_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "ANG_STA",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Angelo State University' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 9
+  },
+  {
+   "code": "APP_MOU",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 24
+  },
+  {
+   "code": "ARI_SUN",
+   "name": "Arizona State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Arizona State' is NCAA D-I 'Arizona St.'",
+   "ncaa": "Arizona St.",
+   "espn_id": 9,
+   "learned": "Arizona State",
+   "rows": 26
+  },
+  {
+   "code": "ARI_WIL",
+   "name": "Arizona",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Arizona' is NCAA D-I 'Arizona'",
+   "ncaa": "Arizona",
+   "espn_id": 12,
+   "learned": "Arizona",
+   "rows": 29
+  },
+  {
+   "code": "ARK_LIO",
+   "name": null,
+   "source": null,
+   "note": "letters 'ARK' fit 5 D-I schools; dictionary 'Arkansas' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "ARK_RAZ",
+   "name": "Arkansas",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Arkansas' is NCAA D-I 'Arkansas'",
+   "ncaa": "Arkansas",
+   "espn_id": 8,
+   "learned": "Arkansas",
+   "rows": 35
+  },
+  {
+   "code": "ARL_MAV",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "ARM_BLA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 24
+  },
+  {
+   "code": "ASU_RED",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 35
+  },
+  {
+   "code": "AUB_TIG",
+   "name": "Auburn",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Auburn' is NCAA D-I 'Auburn'",
+   "ncaa": "Auburn",
+   "espn_id": 2,
+   "learned": "Auburn",
+   "rows": 40
+  },
+  {
+   "code": "AUB_UNI",
+   "name": null,
+   "source": null,
+   "note": "2 payload codes share the letters 'AUB'; dictionary 'Auburn' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "AUG_UNI1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "AUS_GOV",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "AVE_MAR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "BAL_CAR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "BAR_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "BAY_BEA",
+   "name": "Baylor",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Baylor' is NCAA D-I 'Baylor'",
+   "ncaa": "Baylor",
+   "espn_id": 239,
+   "learned": "Baylor",
+   "rows": 31
+  },
+  {
+   "code": "BEL_ABB",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "BEL_BRU",
+   "name": null,
+   "source": null,
+   "note": "letters 'BEL' fit 2 D-I schools; dictionary 'Belmont' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "BEL_KNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "BEL_UNI",
+   "name": null,
+   "source": null,
+   "note": "letters 'BEL' fit 2 D-I schools; dictionary 'Belmont' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "BET_WIL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 8
+  },
+  {
+   "code": "BGS_FAL",
+   "name": null,
+   "source": null,
+   "note": "letters 'BGS' fit 0 D-I schools; dictionary 'Bowling Green' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "BIN_BEA",
+   "name": "Binghamton",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Binghamton' is NCAA D-I 'Binghamton', the only D-I school its letters fit",
+   "ncaa": "Binghamton",
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "BIO_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "BIR_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "BLI_JC",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "BOC_EAG",
+   "name": "Boston College",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Boston College' is NCAA D-I 'Boston College'",
+   "ncaa": "Boston College",
+   "espn_id": 103,
+   "learned": null,
+   "rows": 37
+  },
+  {
+   "code": "BOS_PAR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "BRA_BRA",
+   "name": "Bradley",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Bradley' is NCAA D-I 'Bradley', the only D-I school its letters fit",
+   "ncaa": "Bradley",
+   "espn_id": null,
+   "learned": null,
+   "rows": 26
+  },
+  {
+   "code": "BRI_EAG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "BRO_BEA",
+   "name": null,
+   "source": null,
+   "note": "letters 'BRO' fit 2 D-I schools; dictionary 'Brown' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 24
+  },
+  {
+   "code": "BRY_BUL",
+   "name": "Bryant",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Bryant' is NCAA D-I 'Bryant', the only D-I school its letters fit",
+   "ncaa": "Bryant",
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "BUC_BIS",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "BUS_BEA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "BUT_BUL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 32
+  },
+  {
+   "code": "BYU_COU",
+   "name": "BYU",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'BYU' is NCAA D-I 'BYU', the only D-I school its letters fit",
+   "ncaa": "BYU",
+   "espn_id": 252,
+   "learned": null,
+   "rows": 29
+  },
+  {
+   "code": "CAL_AGO",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 24
+  },
+  {
+   "code": "CAL_ANT",
+   "name": "UC Irvine",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'UC Irvine' is NCAA D-I 'UC Irvine'",
+   "ncaa": "UC Irvine",
+   "espn_id": 2542,
+   "learned": "UC Irvine",
+   "rows": 18
+  },
+  {
+   "code": "CAL_BEA",
+   "name": "California",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'California' is NCAA D-I 'California'",
+   "ncaa": "California",
+   "espn_id": 25,
+   "learned": "California",
+   "rows": 32
+  },
+  {
+   "code": "CAL_FUL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 38
+  },
+  {
+   "code": "CAL_HIG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 14
+  },
+  {
+   "code": "CAL_LAN",
+   "name": null,
+   "source": null,
+   "note": "letters 'CAL' fit 9 D-I schools; dictionary 'California' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 17
+  },
+  {
+   "code": "CAL_MAT",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 34
+  },
+  {
+   "code": "CAL_MUS",
+   "name": "Cal Poly",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Cal Poly' is NCAA D-I 'Cal Poly'",
+   "ncaa": "Cal Poly",
+   "espn_id": null,
+   "learned": "Cal Poly",
+   "rows": 31
+  },
+  {
+   "code": "CAM_CAM",
+   "name": null,
+   "source": null,
+   "note": "2 payload codes share the letters 'CAM'; dictionary 'Campbell' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 34
+  },
+  {
+   "code": "CAM_UNI1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "CAN_GRI",
+   "name": null,
+   "source": null,
+   "note": "letters 'CAN' fit 2 D-I schools; dictionary 'Canisius' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "CAR_EAG",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Carson-Newman' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 12
+  },
+  {
+   "code": "CAT_IND",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Catawba College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "CAT_VAL1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "CCU_BLD",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "CEN_BEA",
+   "name": null,
+   "source": null,
+   "note": "letters 'CEN' fit 4 D-I schools; dictionary 'Central Arkansas' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 7
+  },
+  {
+   "code": "CEN_COL",
+   "name": null,
+   "source": null,
+   "note": "letters 'CEN' fit 4 D-I schools; dictionary 'Central Arkansas' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 13
+  },
+  {
+   "code": "CEN_COL1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 12
+  },
+  {
+   "code": "CEN_MIC",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 18
+  },
+  {
+   "code": "CHA_BUC",
+   "name": null,
+   "source": null,
+   "note": "letters 'CHA' fit 4 D-I schools; dictionary 'Charlotte' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 37
+  },
+  {
+   "code": "CHA_FOR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "CHA_UNI",
+   "name": null,
+   "source": null,
+   "note": "letters 'CHA' fit 4 D-I schools; dictionary 'Charlotte' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "CHO_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "CIN_BEA",
+   "name": "Cincinnati",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Cincinnati' is NCAA D-I 'Cincinnati'",
+   "ncaa": "Cincinnati",
+   "espn_id": 2132,
+   "learned": "Cincinnati",
+   "rows": 30
+  },
+  {
+   "code": "CIT_BUL",
+   "name": "The Citadel",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'The Citadel' is NCAA D-I 'The Citadel', the only D-I school its letters fit",
+   "ncaa": "The Citadel",
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "CLA_CLA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 8
+  },
+  {
+   "code": "CLE_CLE2",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 16
+  },
+  {
+   "code": "CLE_TIG",
+   "name": "Clemson",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Clemson' is NCAA D-I 'Clemson'",
+   "ncaa": "Clemson",
+   "espn_id": 228,
+   "learned": "Clemson",
+   "rows": 34
+  },
+  {
+   "code": "CLU_KIN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "COA_CHA",
+   "name": null,
+   "source": null,
+   "note": "letters 'COA' fit 2 D-I schools; dictionary 'Coastal Carolina' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "COA_COU",
+   "name": null,
+   "source": null,
+   "note": "letters 'COA' fit 2 D-I schools; dictionary 'Coastal Carolina' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "COK_COB",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "COL_CHA",
+   "name": "College of Charleston",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'College of Charleston' is NCAA D-I 'Col. of Charleston'",
+   "ncaa": "Col. of Charleston",
+   "espn_id": null,
+   "learned": "College of Charleston",
+   "rows": 22
+  },
+  {
+   "code": "COL_COM",
+   "name": null,
+   "source": null,
+   "note": "letters 'COL' fit 5 D-I schools; dictionary 'College of Charleston' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "COL_CUG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 7
+  },
+  {
+   "code": "COL_LION",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 23
+  },
+  {
+   "code": "COL_SPA",
+   "name": null,
+   "source": null,
+   "note": "letters 'COL' fit 5 D-I schools; dictionary 'College of Charleston' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "CON_CHI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "CON_TOR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "CON_UNI2",
+   "name": null,
+   "source": null,
+   "note": "letters 'CON' fit 2 D-I schools; dictionary 'Connecticut' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "COP_STA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "COR_BRE",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "COW_COU",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "CRE_BLU",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "CRL_SND",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "CSD_TRI",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'UC San Diego' does not fit the code letters",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 18
+  },
+  {
+   "code": "CSI_EAG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "CSU_BAK",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 16
+  },
+  {
+   "code": "CUM_PAT",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Cumberland College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "CUM_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "CYP_CHR",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Cypress College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 11
+  },
+  {
+   "code": "DAL_COM",
+   "name": null,
+   "source": null,
+   "note": "2 payload codes share the letters 'DAL'; dictionary 'Dallas Baptist' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 15
+  },
+  {
+   "code": "DAL_PAT",
+   "name": "Dallas Baptist",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Dallas Baptist' is NCAA D-I 'DBU'",
+   "ncaa": "DBU",
+   "espn_id": 2169,
+   "learned": "Dallas Baptist",
+   "rows": 31
+  },
+  {
+   "code": "DAR_GRE",
+   "name": "Dartmouth",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Dartmouth' is NCAA D-I 'Dartmouth', the only D-I school its letters fit",
+   "ncaa": "Dartmouth",
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "DAV_WIL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "DAY_FLY",
+   "name": "Dayton",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Dayton' is NCAA D-I 'Dayton', the only D-I school its letters fit",
+   "ncaa": "Dayton",
+   "espn_id": null,
+   "learned": null,
+   "rows": 32
+  },
+  {
+   "code": "DEL_BLU",
+   "name": null,
+   "source": null,
+   "note": "letters 'DEL' fit 2 D-I schools; dictionary 'Delaware' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "DEL_HOR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 10
+  },
+  {
+   "code": "DEP_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "DES_MOI3",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "DES_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "DIX_STE",
+   "name": "Utah Tech University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Utah Tech University' is NCAA D-I 'Utah Tech'",
+   "ncaa": "Utah Tech",
+   "espn_id": null,
+   "learned": null,
+   "rows": 38
+  },
+  {
+   "code": "DUK_BLU",
+   "name": "Duke",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Duke' is NCAA D-I 'Duke', the only D-I school its letters fit",
+   "ncaa": "Duke",
+   "espn_id": 150,
+   "learned": null,
+   "rows": 32
+  },
+  {
+   "code": "EAS_NEW",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "EAS_TEX",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "EC",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "ECU_PIR",
+   "name": "East Carolina",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'East Carolina' is NCAA D-I 'East Carolina'",
+   "ncaa": "East Carolina",
+   "espn_id": 151,
+   "learned": "East Carolina",
+   "rows": 27
+  },
+  {
+   "code": "EIU_PAN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "EKU_COL",
+   "name": "Eastern Kentucky",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Eastern Kentucky' is NCAA D-I 'Eastern Ky.', the only D-I school its letters fit",
+   "ncaa": "Eastern Ky.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "ELL_COM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "ELO_PHO",
+   "name": "Elon",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Elon' is NCAA D-I 'Elon', the only D-I school its letters fit",
+   "ncaa": "Elon",
+   "espn_id": null,
+   "learned": null,
+   "rows": 26
+  },
+  {
+   "code": "EMO_HEN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 7
+  },
+  {
+   "code": "EMU_EAG",
+   "name": "Eastern Michigan",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Eastern Michigan' is NCAA D-I 'Eastern Mich.', the only D-I school its letters fit",
+   "ncaa": "Eastern Mich.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "ERS_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "ETS_BUC",
+   "name": "East Tennessee State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'East Tennessee State' is NCAA D-I 'ETSU'",
+   "ncaa": "ETSU",
+   "espn_id": null,
+   "learned": "East Tennessee State",
+   "rows": 21
+  },
+  {
+   "code": "EVA_ACE",
+   "name": "Evansville",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Evansville' is NCAA D-I 'Evansville', the only D-I school its letters fit",
+   "ncaa": "Evansville",
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "FAI_STA",
+   "name": "Fairfield University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Fairfield University' is NCAA D-I 'Fairfield'",
+   "ncaa": "Fairfield",
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "FAU_OWL",
+   "name": null,
+   "source": null,
+   "note": "2 payload codes share the letters 'FAU'; dictionary 'Florida Atlantic' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 23
+  },
+  {
+   "code": "FAU_UNI",
+   "name": null,
+   "source": null,
+   "note": "2 payload codes share the letters 'FAU'; dictionary 'Florida Atlantic' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "FDU_KNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 15
+  },
+  {
+   "code": "FGCU",
+   "name": "Florida Gulf Coast",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Florida Gulf Coast' is NCAA D-I 'FGCU'",
+   "ncaa": "FGCU",
+   "espn_id": null,
+   "learned": "Florida Gulf Coast",
+   "rows": 29
+  },
+  {
+   "code": "FLA_GAT",
+   "name": "Florida",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Florida' is NCAA D-I 'Florida'",
+   "ncaa": "Florida",
+   "espn_id": 57,
+   "learned": "Florida",
+   "rows": 27
+  },
+  {
+   "code": "FLO_MEM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 8
+  },
+  {
+   "code": "FLO_NAT",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "FLO_PAN",
+   "name": null,
+   "source": null,
+   "note": "letters 'FLO' fit 9 D-I schools; dictionary 'Florida State' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "FLO_RAT",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "FLO_SEM",
+   "name": "Florida State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Florida State' is NCAA D-I 'Florida St.'",
+   "ncaa": "Florida St.",
+   "espn_id": 52,
+   "learned": "Florida State",
+   "rows": 32
+  },
+  {
+   "code": "FNT_COM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "FOR_MAS",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 10
+  },
+  {
+   "code": "FOR_RAM",
+   "name": null,
+   "source": null,
+   "note": "letters 'FOR' fit 3 D-I schools; dictionary 'Fordham' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "FRA_MAR1",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Francis Marion University' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "FRE_BUL",
+   "name": "Fresno State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Fresno State' is NCAA D-I 'Fresno St.'",
+   "ncaa": "Fresno St.",
+   "espn_id": 278,
+   "learned": "Fresno State",
+   "rows": 29
+  },
+  {
+   "code": "FRE_PAC",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "GAR_RUN",
+   "name": "Gardner Webb University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Gardner Webb University' is NCAA D-I 'Gardner-Webb'",
+   "ncaa": "Gardner-Webb",
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "GAS_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "GEO_BUL",
+   "name": "Georgia",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Georgia' is NCAA D-I 'Georgia'",
+   "ncaa": "Georgia",
+   "espn_id": 61,
+   "learned": "Georgia",
+   "rows": 38
+  },
+  {
+   "code": "GEO_COL",
+   "name": null,
+   "source": null,
+   "note": "letters 'GEO' fit 8 D-I schools; dictionary 'Georgia' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "GEO_COL1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "GEO_EAG",
+   "name": null,
+   "source": null,
+   "note": "letters 'GEO' fit 8 D-I schools; dictionary 'Georgia' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "GEO_FOX",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 17
+  },
+  {
+   "code": "GEO_GWI",
+   "name": null,
+   "source": null,
+   "note": "letters 'GEO' fit 8 D-I schools; dictionary 'Georgia' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "GEO_HOY",
+   "name": null,
+   "source": null,
+   "note": "letters 'GEO' fit 8 D-I schools; dictionary 'Georgia' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 23
+  },
+  {
+   "code": "GEO_PAN",
+   "name": null,
+   "source": null,
+   "note": "letters 'GEO' fit 8 D-I schools; dictionary 'Georgia' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 39
+  },
+  {
+   "code": "GEO_PAT",
+   "name": "George Mason",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'George Mason' is NCAA D-I 'George Mason'",
+   "ncaa": "George Mason",
+   "espn_id": null,
+   "learned": "George Mason",
+   "rows": 27
+  },
+  {
+   "code": "GEO_SOU",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 14
+  },
+  {
+   "code": "GIT_YEL",
+   "name": "Georgia Tech",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Georgia Tech' is NCAA D-I 'Georgia Tech'",
+   "ncaa": "Georgia Tech",
+   "espn_id": 59,
+   "learned": "Georgia Tech",
+   "rows": 31
+  },
+  {
+   "code": "GOL_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "GON_BUL",
+   "name": "Gonzaga",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Gonzaga' is NCAA D-I 'Gonzaga', the only D-I school its letters fit",
+   "ncaa": "Gonzaga",
+   "espn_id": null,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "GRA_CAN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "GRA_COL",
+   "name": null,
+   "source": null,
+   "note": "letters 'GRA' fit 3 D-I schools; dictionary 'Grand Canyon' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "GRA_TIG",
+   "name": null,
+   "source": null,
+   "note": "letters 'GRA' fit 3 D-I schools; dictionary 'Grand Canyon' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "GUI_TEC",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "GUL_COM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "GVU_VIK",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "Gol_W",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Gold West College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "HAN_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "HAR_CRI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "HAR_SIM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "HAW_WAR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "HBU_HUS",
+   "name": "Houston Christian",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Houston Christian' is NCAA D-I 'Houston Christian', the only D-I school its letters fit",
+   "ncaa": "Houston Christian",
+   "espn_id": null,
+   "learned": null,
+   "rows": 26
+  },
+  {
+   "code": "HEN_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "HIG_PAN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 35
+  },
+  {
+   "code": "HOF_PRI",
+   "name": "Hofstra",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Hofstra' is NCAA D-I 'Hofstra', the only D-I school its letters fit",
+   "ncaa": "Hofstra",
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "HOL_CRU",
+   "name": "Holy Cross",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Holy Cross' is NCAA D-I 'Holy Cross'",
+   "ncaa": "Holy Cross",
+   "espn_id": null,
+   "learned": null,
+   "rows": 18
+  },
+  {
+   "code": "HOU_COU",
+   "name": null,
+   "source": null,
+   "note": "letters 'HOU' fit 3 D-I schools; dictionary 'Houston' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 36
+  },
+  {
+   "code": "HOW_PAY",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "HUN_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "HUT_COM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "ILL_ILL",
+   "name": "Illinois",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Illinois' is NCAA D-I 'Illinois'",
+   "ncaa": "Illinois",
+   "espn_id": 356,
+   "learned": null,
+   "rows": 39
+  },
+  {
+   "code": "ILL_RED",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 26
+  },
+  {
+   "code": "ILL_WES",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Illinois Wesleyan College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "IND_HIL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "IND_SYC",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "IND_WES",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "ION_GAE",
+   "name": "Iona",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Iona' is NCAA D-I 'Iona', the only D-I school its letters fit",
+   "ncaa": "Iona",
+   "espn_id": null,
+   "learned": null,
+   "rows": 18
+  },
+  {
+   "code": "IOW_CEN",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Iowa Central Community College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "IOW_HAW",
+   "name": "Iowa",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Iowa' is NCAA D-I 'Iowa'",
+   "ncaa": "Iowa",
+   "espn_id": 2294,
+   "learned": "Iowa",
+   "rows": 47
+  },
+  {
+   "code": "IOW_LAK",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "IU",
+   "name": "Indiana",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Indiana' is NCAA D-I 'Indiana'",
+   "ncaa": "Indiana",
+   "espn_id": 84,
+   "learned": "Indiana",
+   "rows": 51
+  },
+  {
+   "code": "IWC",
+   "name": "Incarnate Word",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Incarnate Word' is NCAA D-I 'UIW'",
+   "ncaa": "UIW",
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "Irv_Val",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "JAC_GAM",
+   "name": "Jacksonville State",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Jacksonville State' is NCAA D-I 'Jacksonville St.'",
+   "ncaa": "Jacksonville St.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "JAC_TIG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "JEF_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "JMU_DUK",
+   "name": "James Madison",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'James Madison' is NCAA D-I 'James Madison', the only D-I school its letters fit",
+   "ncaa": "James Madison",
+   "espn_id": 256,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "JOH_COU1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "JOH_LOG",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'John A. Logan College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "JON_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "JUD",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Jacksonville University' does not fit the code letters",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "KAN_C",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "KAN_JAY",
+   "name": "Kansas",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Kansas' is NCAA D-I 'Kansas'",
+   "ncaa": "Kansas",
+   "espn_id": 2305,
+   "learned": "Kansas",
+   "rows": 34
+  },
+  {
+   "code": "KAN_WIL",
+   "name": "Kansas State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Kansas State' is NCAA D-I 'Kansas St.'",
+   "ncaa": "Kansas St.",
+   "espn_id": 2306,
+   "learned": "Kansas State",
+   "rows": 25
+  },
+  {
+   "code": "KAS_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "KEI_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "KEN_OWL",
+   "name": null,
+   "source": null,
+   "note": "letters 'KEN' fit 6 D-I schools; dictionary 'Kennesaw State' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": "Tennessee",
+   "rows": 32
+  },
+  {
+   "code": "KEN_WIL",
+   "name": "Kentucky",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Kentucky' is NCAA D-I 'Kentucky'",
+   "ncaa": "Kentucky",
+   "espn_id": 96,
+   "learned": "Kentucky",
+   "rows": 31
+  },
+  {
+   "code": "KIN_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "KS_GF",
+   "name": "Kent State",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Kent State' is NCAA D-I 'Kent St.'",
+   "ncaa": "Kent St.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "LAF_LEP",
+   "name": null,
+   "source": null,
+   "note": "letters 'LAF' fit 2 D-I schools; dictionary 'Lafayette' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "LAK_LAN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "LAM_CAR",
+   "name": "Lamar",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Lamar' is NCAA D-I 'Lamar University', the only D-I school its letters fit",
+   "ncaa": "Lamar University",
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "LAN_BEA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "LAN_COM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 13
+  },
+  {
+   "code": "LEB_VAL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 13
+  },
+  {
+   "code": "LEE_FLA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "LEH_MOU",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "LEN_BEA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 29
+  },
+  {
+   "code": "LET_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "LEW_CLA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "LIB_FLA",
+   "name": "Liberty",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Liberty' is NCAA D-I 'Liberty', the only D-I school its letters fit",
+   "ncaa": "Liberty",
+   "espn_id": 2335,
+   "learned": null,
+   "rows": 35
+  },
+  {
+   "code": "LIM_STO",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "LIN_BEN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "LIN_CCW",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Linfield University' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "LIN_MEM",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Lincoln Memorial University' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 15
+  },
+  {
+   "code": "LIN_TCO",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Lincoln Trail College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "LIN_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 24
+  },
+  {
+   "code": "LIP_BIS",
+   "name": "Lipscomb",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Lipscomb' is NCAA D-I 'Lipscomb', the only D-I school its letters fit",
+   "ncaa": "Lipscomb",
+   "espn_id": null,
+   "learned": null,
+   "rows": 35
+  },
+  {
+   "code": "LIT_TRO",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "LON_DIR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "LON_ISL22",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "LON_LAN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 45
+  },
+  {
+   "code": "LOU_BUL",
+   "name": null,
+   "source": null,
+   "note": "letters 'LOU' fit 7 D-I schools; dictionary 'Louisville' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "LOU_CAJ",
+   "name": "Louisiana-Lafayette",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Louisiana-Lafayette' is NCAA D-I 'Louisiana'",
+   "ncaa": "Louisiana",
+   "espn_id": null,
+   "learned": "Louisiana-Lafayette",
+   "rows": 35
+  },
+  {
+   "code": "LOU_CAR",
+   "name": "Louisville",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Louisville' is NCAA D-I 'Louisville'",
+   "ncaa": "Louisville",
+   "espn_id": 97,
+   "learned": "Louisville",
+   "rows": 35
+  },
+  {
+   "code": "LOU_COL",
+   "name": null,
+   "source": null,
+   "note": "letters 'LOU' fit 7 D-I schools; dictionary 'Louisville' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "LOW_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "LOY_LIO",
+   "name": "Loyola Marymount",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Loyola Marymount' is NCAA D-I 'LMU (CA)', the only D-I school its letters fit",
+   "ncaa": "LMU (CA)",
+   "espn_id": null,
+   "learned": null,
+   "rows": 36
+  },
+  {
+   "code": "LSU_TIG",
+   "name": "Louisiana State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Louisiana State' is NCAA D-I 'LSU'",
+   "ncaa": "LSU",
+   "espn_id": 99,
+   "learned": "Louisiana State",
+   "rows": 34
+  },
+  {
+   "code": "LUB_CHR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "LYN_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "MAI_BLA",
+   "name": "Maine",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Maine' is NCAA D-I 'Maine', the only D-I school its letters fit",
+   "ncaa": "Maine",
+   "espn_id": null,
+   "learned": null,
+   "rows": 8
+  },
+  {
+   "code": "MAN_JAS",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 15
+  },
+  {
+   "code": "MAR_HAR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "MAR_HAW",
+   "name": null,
+   "source": null,
+   "note": "letters 'MAR' fit 9 D-I schools; dictionary 'Marshall' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 8
+  },
+  {
+   "code": "MAR_LIO",
+   "name": null,
+   "source": null,
+   "note": "letters 'MAR' fit 9 D-I schools; dictionary 'Marshall' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "MAR_RED",
+   "name": null,
+   "source": null,
+   "note": "letters 'MAR' fit 9 D-I schools; dictionary 'Marshall' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "MAR_TER",
+   "name": "Maryland",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Maryland' is NCAA D-I 'Maryland'",
+   "ncaa": "Maryland",
+   "espn_id": 120,
+   "learned": null,
+   "rows": 40
+  },
+  {
+   "code": "MAR_THU",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "MAR_UNI2",
+   "name": null,
+   "source": null,
+   "note": "letters 'MAR' fit 9 D-I schools; dictionary 'Marshall' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "MAS_INS",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "MCH_COU2",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "MCL_HIL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "MCM_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 13
+  },
+  {
+   "code": "MCN_COW",
+   "name": "McNeese",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'McNeese' is NCAA D-I 'McNeese', the only D-I school its letters fit",
+   "ncaa": "McNeese",
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "MER_BEA",
+   "name": null,
+   "source": null,
+   "note": "letters 'MER' fit 3 D-I schools; dictionary 'Mercer' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 32
+  },
+  {
+   "code": "MER_COL1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "MEX_LOB",
+   "name": null,
+   "source": null,
+   "note": "letters 'MEX' fit 2 D-I schools; dictionary 'New Mexico' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "MIA_HUR",
+   "name": "Miami",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Miami' is NCAA D-I 'Miami (FL)'",
+   "ncaa": "Miami (FL)",
+   "espn_id": 2390,
+   "learned": "Miami",
+   "rows": 29
+  },
+  {
+   "code": "MIA_RED",
+   "name": null,
+   "source": null,
+   "note": "letters 'MIA' fit 2 D-I schools; dictionary 'Miami' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 14
+  },
+  {
+   "code": "MIC_SPA",
+   "name": "Michigan State",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Michigan State' is NCAA D-I 'Michigan St.'",
+   "ncaa": "Michigan St.",
+   "espn_id": 127,
+   "learned": null,
+   "rows": 37
+  },
+  {
+   "code": "MIC_WOL",
+   "name": "Michigan",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Michigan' is NCAA D-I 'Michigan'",
+   "ncaa": "Michigan",
+   "espn_id": 130,
+   "learned": "Michigan",
+   "rows": 44
+  },
+  {
+   "code": "MID_GEO",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Middle Georgia State' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "MIL_COL",
+   "name": null,
+   "source": null,
+   "note": "letters 'MIL' fit 2 D-I schools; dictionary 'Milwaukee' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "MIL_UNI2",
+   "name": null,
+   "source": null,
+   "note": "letters 'MIL' fit 2 D-I schools; dictionary 'Milwaukee' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "MIN_GOL",
+   "name": "Minnesota",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Minnesota' is NCAA D-I 'Minnesota'",
+   "ncaa": "Minnesota",
+   "espn_id": 135,
+   "learned": null,
+   "rows": 40
+  },
+  {
+   "code": "MIS_BEA",
+   "name": "Missouri State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Missouri State' is NCAA D-I 'Missouri St.'",
+   "ncaa": "Missouri St.",
+   "espn_id": null,
+   "learned": "Missouri State",
+   "rows": 32
+  },
+  {
+   "code": "MIS_COL1",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Mississippi College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "MIS_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "MIZ_TIG",
+   "name": "Missouri",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Missouri' is NCAA D-I 'Missouri'",
+   "ncaa": "Missouri",
+   "espn_id": 142,
+   "learned": "Missouri",
+   "rows": 30
+  },
+  {
+   "code": "MOB_ARE",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "MON_COL",
+   "name": null,
+   "source": null,
+   "note": "letters 'MON' fit 2 D-I schools; dictionary 'Monmouth' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "MON_HAW",
+   "name": null,
+   "source": null,
+   "note": "letters 'MON' fit 2 D-I schools; dictionary 'Monmouth' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 26
+  },
+  {
+   "code": "MOR_EAG",
+   "name": "Morehead State",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Morehead State' is NCAA D-I 'Morehead St.', the only D-I school its letters fit",
+   "ncaa": "Morehead St.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "MOU_OLV",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Mount Olive University' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "MOU_VER1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "MOY_MOY",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "MSM_MTN",
+   "name": "Mt. St. Mary's",
+   "source": "dict+ncaa",
+   "note": "dictionary entry \"Mt. St. Mary's\" is NCAA D-I \"Mount St. Mary's\"",
+   "ncaa": "Mount St. Mary's",
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "MSU_BDG",
+   "name": "Mississippi State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Mississippi State' is NCAA D-I 'Mississippi St.'",
+   "ncaa": "Mississippi St.",
+   "espn_id": 344,
+   "learned": "Mississippi State",
+   "rows": 37
+  },
+  {
+   "code": "MT",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Memphis University' does not fit the code letters",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 34
+  },
+  {
+   "code": "MTSU_BLU",
+   "name": "Middle Tennessee State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Middle Tennessee State' is NCAA D-I 'Middle Tenn.'",
+   "ncaa": "Middle Tenn.",
+   "espn_id": null,
+   "learned": "Middle Tennessee State",
+   "rows": 22
+  },
+  {
+   "code": "MUR_RAC",
+   "name": "Murray State",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Murray State' is NCAA D-I 'Murray St.', the only D-I school its letters fit",
+   "ncaa": "Murray St.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "NAV_COL",
+   "name": null,
+   "source": null,
+   "note": "2 payload codes share the letters 'NAV'; dictionary 'Navy' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "NAV_MID",
+   "name": null,
+   "source": null,
+   "note": "2 payload codes share the letters 'NAV'; dictionary 'Navy' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 15
+  },
+  {
+   "code": "NCA_BUL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "NCB",
+   "name": "Northern Colorado University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Northern Colorado University' is NCAA D-I 'Northern Colo.'",
+   "ncaa": "Northern Colo.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "NEB",
+   "name": "Nebraska",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Nebraska' is NCAA D-I 'Nebraska'",
+   "ncaa": "Nebraska",
+   "espn_id": 158,
+   "learned": "Nebraska",
+   "rows": 48
+  },
+  {
+   "code": "NEV_WOL",
+   "name": null,
+   "source": null,
+   "note": "letters 'NEV' fit 2 D-I schools; dictionary 'Nevada' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 36
+  },
+  {
+   "code": "NEW_HAV",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "NEW_PRI",
+   "name": null,
+   "source": null,
+   "note": "letters 'NEW' fit 4 D-I schools; dictionary 'New Orleans' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "NEW_WLV",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "NIA_EAG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 16
+  },
+  {
+   "code": "NIC_COL",
+   "name": "Nicholls",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Nicholls' is NCAA D-I 'Nicholls', the only D-I school its letters fit",
+   "ncaa": "Nicholls",
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "NIU_HUS",
+   "name": "Northern Illinois",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Northern Illinois' is NCAA D-I 'NIU', the only D-I school its letters fit",
+   "ncaa": "NIU",
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "NJI_HIG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 18
+  },
+  {
+   "code": "NMS_AGG",
+   "name": "New Mexico State",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'New Mexico State' is NCAA D-I 'New Mexico St.', the only D-I school its letters fit",
+   "ncaa": "New Mexico St.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "NOF_OSP",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "NOK_NOR",
+   "name": "Northern Kentucky University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Northern Kentucky University' is NCAA D-I 'Northern Ky.'",
+   "ncaa": "Northern Ky.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "NOR_AGG",
+   "name": null,
+   "source": null,
+   "note": "letters 'NOR' fit 15 D-I schools; dictionary 'North Carolina' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 23
+  },
+  {
+   "code": "NOR_BIS",
+   "name": null,
+   "source": null,
+   "note": "letters 'NOR' fit 15 D-I schools; dictionary 'North Carolina' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 26
+  },
+  {
+   "code": "NOR_CAT",
+   "name": "Northwestern",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Northwestern' is NCAA D-I 'Northwestern'",
+   "ncaa": "Northwestern",
+   "espn_id": 77,
+   "learned": null,
+   "rows": 34
+  },
+  {
+   "code": "NOR_DEM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 16
+  },
+  {
+   "code": "NOR_GEO3",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 26
+  },
+  {
+   "code": "NOR_GRE",
+   "name": null,
+   "source": null,
+   "note": "letters 'NOR' fit 15 D-I schools; dictionary 'North Carolina' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "NOR_HUS",
+   "name": "Northeastern",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Northeastern' is NCAA D-I 'Northeastern'",
+   "ncaa": "Northeastern",
+   "espn_id": null,
+   "learned": "Northeastern",
+   "rows": 26
+  },
+  {
+   "code": "NOR_IOW",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "NOR_IOW2",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "NOR_OKL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "NOR_RAI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "NOR_SPA",
+   "name": null,
+   "source": null,
+   "note": "letters 'NOR' fit 15 D-I schools; dictionary 'North Carolina' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "NOR_TAR",
+   "name": "North Carolina",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'North Carolina' is NCAA D-I 'North Carolina'",
+   "ncaa": "North Carolina",
+   "espn_id": 153,
+   "learned": "North Carolina",
+   "rows": 29
+  },
+  {
+   "code": "NOR_TEX",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 8
+  },
+  {
+   "code": "NOR_WOL",
+   "name": "North Carolina State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'North Carolina State' is NCAA D-I 'NC State'",
+   "ncaa": "NC State",
+   "espn_id": 152,
+   "learned": "North Carolina State",
+   "rows": 35
+  },
+  {
+   "code": "NOT_IRI",
+   "name": "Notre Dame",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Notre Dame' is NCAA D-I 'Notre Dame', the only D-I school its letters fit",
+   "ncaa": "Notre Dame",
+   "espn_id": 87,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "NOV_SOU",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "OAK_GOL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "OGL_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "OHI_BOB",
+   "name": null,
+   "source": null,
+   "note": "letters 'OHI' fit 3 D-I schools; dictionary 'Ohio' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 23
+  },
+  {
+   "code": "OKL_COW",
+   "name": "Oklahoma State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Oklahoma State' is NCAA D-I 'Oklahoma St.'",
+   "ncaa": "Oklahoma St.",
+   "espn_id": 197,
+   "learned": "Oklahoma State",
+   "rows": 34
+  },
+  {
+   "code": "OKL_SOO",
+   "name": "Oklahoma",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Oklahoma' is NCAA D-I 'Oklahoma'",
+   "ncaa": "Oklahoma",
+   "espn_id": 201,
+   "learned": "Oklahoma",
+   "rows": 31
+  },
+  {
+   "code": "OLD_MON",
+   "name": "Old Dominion",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Old Dominion' is NCAA D-I 'Old Dominion'",
+   "ncaa": "Old Dominion",
+   "espn_id": 295,
+   "learned": "Old Dominion",
+   "rows": 36
+  },
+  {
+   "code": "OLE_REB",
+   "name": "Ole Miss",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Ole Miss' is NCAA D-I 'Ole Miss', the only D-I school its letters fit",
+   "ncaa": "Ole Miss",
+   "espn_id": 145,
+   "learned": null,
+   "rows": 37
+  },
+  {
+   "code": "ORA_COA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "ORA_GOL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 32
+  },
+  {
+   "code": "ORE_BEA",
+   "name": "Oregon State",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Oregon State' is NCAA D-I 'Oregon St.'",
+   "ncaa": "Oregon St.",
+   "espn_id": 204,
+   "learned": "Oregon State",
+   "rows": 35
+  },
+  {
+   "code": "ORE_DUC",
+   "name": "Oregon",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Oregon' is NCAA D-I 'Oregon'",
+   "ncaa": "Oregon",
+   "espn_id": 2483,
+   "learned": null,
+   "rows": 42
+  },
+  {
+   "code": "OSU_BUC",
+   "name": "Ohio State",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Ohio State' is NCAA D-I 'Ohio St.'",
+   "ncaa": "Ohio St.",
+   "espn_id": 194,
+   "learned": null,
+   "rows": 47
+  },
+  {
+   "code": "PAC_BOX",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "PAC_LUT",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "PAC_TIG",
+   "name": null,
+   "source": null,
+   "note": "3 payload codes share the letters 'PAC'; dictionary 'Pacific' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "PAN_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "PAT_HEN",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Patrick & Henry Community College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "PEN_NIT",
+   "name": "Penn State",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Penn State' is NCAA D-I 'Penn St.'",
+   "ncaa": "Penn St.",
+   "espn_id": 213,
+   "learned": null,
+   "rows": 38
+  },
+  {
+   "code": "PEN_QUA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "PEP_WAV",
+   "name": "Pepperdine University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Pepperdine University' is NCAA D-I 'Pepperdine'",
+   "ncaa": "Pepperdine",
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "PER_BAS6",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "PER_STA",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Peru State College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "PIT_PAN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 9
+  },
+  {
+   "code": "PIT_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 15
+  },
+  {
+   "code": "POI_PAR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "POI_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "POM_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 18
+  },
+  {
+   "code": "POR_PIL",
+   "name": "Portland",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Portland' is NCAA D-I 'Portland'",
+   "ncaa": "Portland",
+   "espn_id": null,
+   "learned": "Portland",
+   "rows": 25
+  },
+  {
+   "code": "PRA_PAN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 12
+  },
+  {
+   "code": "PRE_BLH",
+   "name": "Presbyterian College",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Presbyterian College' is NCAA D-I 'Presbyterian'",
+   "ncaa": "Presbyterian",
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "PRI_TIG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 23
+  },
+  {
+   "code": "PUR_BOI",
+   "name": "Purdue",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Purdue' is NCAA D-I 'Purdue'",
+   "ncaa": "Purdue",
+   "espn_id": 2509,
+   "learned": null,
+   "rows": 43
+  },
+  {
+   "code": "PUR_FOR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 9
+  },
+  {
+   "code": "QUI_BOB",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "QUI_HAW",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "QUN_RYL",
+   "name": "Queens University Charlotte",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Queens University Charlotte' is NCAA D-I 'Queens (NC)'",
+   "ncaa": "Queens (NC)",
+   "espn_id": null,
+   "learned": null,
+   "rows": 26
+  },
+  {
+   "code": "RAD_HIG",
+   "name": "Radford University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Radford University' is NCAA D-I 'Radford'",
+   "ncaa": "Radford",
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "RED_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "REI_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "RHO_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "RHO_RAM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "RIC_OWL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "RIC_SPI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "RID_BRO",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 17
+  },
+  {
+   "code": "RIV_CIT",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Riverside City College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "RLC_WRS",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "ROC_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "RUT_SCA",
+   "name": "Rutgers",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Rutgers' is NCAA D-I 'Rutgers'",
+   "ncaa": "Rutgers",
+   "espn_id": 164,
+   "learned": null,
+   "rows": 43
+  },
+  {
+   "code": "SAC_HOR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "SAC_PIO",
+   "name": "Sacred Heart University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Sacred Heart University' is NCAA D-I 'Sacred Heart'",
+   "ncaa": "Sacred Heart",
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "SAD_GAU",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "SAL_JAG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 34
+  },
+  {
+   "code": "SAL_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "SAM_BEA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 23
+  },
+  {
+   "code": "SAM_BUL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "SAN_AZT",
+   "name": "San Diego State University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'San Diego State University' is NCAA D-I 'San Diego St.'",
+   "ncaa": "San Diego St.",
+   "espn_id": 21,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "SAN_BRO",
+   "name": "Santa Clara",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Santa Clara' is NCAA D-I 'Santa Clara'",
+   "ncaa": "Santa Clara",
+   "espn_id": null,
+   "learned": "Santa Clara",
+   "rows": 29
+  },
+  {
+   "code": "SAN_DON",
+   "name": "University of San Francisco",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'University of San Francisco' is NCAA D-I 'San Francisco'",
+   "ncaa": "San Francisco",
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "SAN_GAU",
+   "name": "UC Santa Barbara",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'UC Santa Barbara' is NCAA D-I 'UC Santa Barbara'",
+   "ncaa": "UC Santa Barbara",
+   "espn_id": 2540,
+   "learned": "UC Santa Barbara",
+   "rows": 33
+  },
+  {
+   "code": "SAN_JAC",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "SAN_SPA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "SAN_TOR",
+   "name": "San Diego",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'San Diego' is NCAA D-I 'San Diego'",
+   "ncaa": "San Diego",
+   "espn_id": null,
+   "learned": "San Diego",
+   "rows": 29
+  },
+  {
+   "code": "SBU_SEA",
+   "name": "Stony Brook University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Stony Brook University' is NCAA D-I 'Stony Brook'",
+   "ncaa": "Stony Brook",
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "SEA_RED",
+   "name": "Seattle",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Seattle' is NCAA D-I 'Seattle U', the only D-I school its letters fit",
+   "ncaa": "Seattle U",
+   "espn_id": null,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "SET_PIR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 32
+  },
+  {
+   "code": "SEW_TIG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "SIE_SAI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 17
+  },
+  {
+   "code": "SIU_SAL",
+   "name": "Southern Illinois University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Southern Illinois University' is NCAA D-I 'Southern Ill.'",
+   "ncaa": "Southern Ill.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "SLC_CCB",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Salt Lake Community College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 9
+  },
+  {
+   "code": "SLU_BILL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 13
+  },
+  {
+   "code": "SMU_SAI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "SOU_ARK1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "SOU_COM1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "SOU_COU",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "SOU_GAM",
+   "name": "South Carolina",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'South Carolina' is NCAA D-I 'South Carolina'",
+   "ncaa": "South Carolina",
+   "espn_id": 2579,
+   "learned": "South Carolina",
+   "rows": 33
+  },
+  {
+   "code": "SOU_GOL",
+   "name": "Southern Mississippi",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Southern Mississippi' is NCAA D-I 'Southern Miss.'",
+   "ncaa": "Southern Miss.",
+   "espn_id": null,
+   "learned": "Southern Mississippi",
+   "rows": 36
+  },
+  {
+   "code": "SOU_IND16",
+   "name": "Southern Indiana",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Southern Indiana' is NCAA D-I 'Southern Ind.'",
+   "ncaa": "Southern Ind.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "SOU_JAC",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "SOU_JAG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "SOU_LIO",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "SOU_NEV",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "SOU_ORE",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 14
+  },
+  {
+   "code": "SOU_RED",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "SOU_TRO",
+   "name": "Southern California",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Southern California' is NCAA D-I 'Southern California'",
+   "ncaa": "Southern California",
+   "espn_id": 30,
+   "learned": "Southern California",
+   "rows": 47
+  },
+  {
+   "code": "SOU_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "SOU_WES",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Southwestern University' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 17
+  },
+  {
+   "code": "SPU_PEA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 12
+  },
+  {
+   "code": "ST._EDW",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'St. Edwards University' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "STA_CAR",
+   "name": "Stanford",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Stanford' is NCAA D-I 'Stanford'",
+   "ncaa": "Stanford",
+   "espn_id": 24,
+   "learned": "Stanford",
+   "rows": 29
+  },
+  {
+   "code": "STB_BON",
+   "name": "St. Bonaventure",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'St. Bonaventure' is NCAA D-I 'St. Bonaventure'",
+   "ncaa": "St. Bonaventure",
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "STE_HAT",
+   "name": "Stetson University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Stetson University' is NCAA D-I 'Stetson'",
+   "ncaa": "Stetson",
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "STE_INS",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "STE_LUM",
+   "name": "Stephen F. Austin",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Stephen F. Austin' is NCAA D-I 'SFA'",
+   "ncaa": "SFA",
+   "espn_id": null,
+   "learned": null,
+   "rows": 16
+  },
+  {
+   "code": "STJ_HAW",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 26
+  },
+  {
+   "code": "STJ_RED",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 32
+  },
+  {
+   "code": "STM_GAE",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "STM_RAT",
+   "name": null,
+   "source": null,
+   "note": "dictionary \"St. Mary's University Texas\" is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "STO_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 15
+  },
+  {
+   "code": "STU_BOB",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 24
+  },
+  {
+   "code": "SUN_C",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "TAM_SPA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "TAR_TEX",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "TCU_HFG",
+   "name": "Texas Christian",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Texas Christian' is NCAA D-I 'TCU'",
+   "ncaa": "TCU",
+   "espn_id": 2628,
+   "learned": "Texas Christian",
+   "rows": 31
+  },
+  {
+   "code": "TEM_LEO",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Temple College' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "TEN_TEC",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 15
+  },
+  {
+   "code": "TEN_VOL",
+   "name": "Tennessee",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Tennessee' is NCAA D-I 'Tennessee'",
+   "ncaa": "Tennessee",
+   "espn_id": 2633,
+   "learned": "Tennessee",
+   "rows": 35
+  },
+  {
+   "code": "TEN_WES",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "TEX_A&M",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "TEX_A&M1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "TEX_AGG",
+   "name": "Texas A&M",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Texas A&M' is NCAA D-I 'Texas A&M'",
+   "ncaa": "Texas A&M",
+   "espn_id": 245,
+   "learned": "Texas A&M",
+   "rows": 35
+  },
+  {
+   "code": "TEX_BOB",
+   "name": null,
+   "source": null,
+   "note": "letters 'TEX' fit 10 D-I schools; dictionary 'Texas' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "TEX_ISL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 16
+  },
+  {
+   "code": "TEX_LON",
+   "name": "Texas",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Texas' is NCAA D-I 'Texas'",
+   "ncaa": "Texas",
+   "espn_id": 251,
+   "learned": "Texas",
+   "rows": 31
+  },
+  {
+   "code": "TEX_LUT",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "TEX_RAI",
+   "name": "Texas Tech",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Texas Tech' is NCAA D-I 'Texas Tech'",
+   "ncaa": "Texas Tech",
+   "espn_id": 2641,
+   "learned": "Texas Tech",
+   "rows": 38
+  },
+  {
+   "code": "TEX_TIG",
+   "name": null,
+   "source": null,
+   "note": "letters 'TEX' fit 10 D-I schools; dictionary 'Texas' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 7
+  },
+  {
+   "code": "THO_M",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'St. Thomas University' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "TJC_APA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "TOL_ROC",
+   "name": "Toledo University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Toledo University' is NCAA D-I 'Toledo'",
+   "ncaa": "Toledo",
+   "espn_id": null,
+   "learned": null,
+   "rows": 15
+  },
+  {
+   "code": "TOW_TIG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 37
+  },
+  {
+   "code": "TRA_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "TRE_VAL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "TRI_TIG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 9
+  },
+  {
+   "code": "TRI_TRO",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "TRO_T",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 15
+  },
+  {
+   "code": "TRO_TRJ",
+   "name": "Troy University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Troy University' is NCAA D-I 'Troy'",
+   "ncaa": "Troy",
+   "espn_id": 2653,
+   "learned": null,
+   "rows": 35
+  },
+  {
+   "code": "TUF_UNI",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "TUL_GRE",
+   "name": "Tulane",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Tulane' is NCAA D-I 'Tulane'",
+   "ncaa": "Tulane",
+   "espn_id": 2655,
+   "learned": "Tulane",
+   "rows": 23
+  },
+  {
+   "code": "TUS_PIO",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Tusculum University' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 24
+  },
+  {
+   "code": "UAB_BLA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "UCF_KNI",
+   "name": "Central Florida",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Central Florida' is NCAA D-I 'UCF'",
+   "ncaa": "UCF",
+   "espn_id": 2116,
+   "learned": "Central Florida",
+   "rows": 30
+  },
+  {
+   "code": "UCLA",
+   "name": "UCLA",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'UCLA' is NCAA D-I 'UCLA'",
+   "ncaa": "UCLA",
+   "espn_id": 26,
+   "learned": "UCLA",
+   "rows": 36
+  },
+  {
+   "code": "UCO_HUS",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "UIC_FLA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "ULM_WAR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 39
+  },
+  {
+   "code": "UMASS_RIV",
+   "name": "UMass Lowell",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'UMass Lowell' is NCAA D-I 'UMass Lowell'",
+   "ncaa": "UMass Lowell",
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "UMA_AMH",
+   "name": "Umass Amherst",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Umass Amherst' is NCAA D-I 'Massachusetts'",
+   "ncaa": "Massachusetts",
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "UMA_BOS",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "UMBC_RET",
+   "name": "UMBC",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'UMBC' is NCAA D-I 'UMBC'",
+   "ncaa": "UMBC",
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "UNC_SEA",
+   "name": "UNC Wilmington",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'UNC Wilmington' is NCAA D-I 'UNCW'",
+   "ncaa": "UNCW",
+   "espn_id": null,
+   "learned": "UNC Wilmington",
+   "rows": 36
+  },
+  {
+   "code": "UNC_SPA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 22
+  },
+  {
+   "code": "UNI_ARK",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 7
+  },
+  {
+   "code": "UNI_DAL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "UNI_FOR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "UNI_NOR1",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Northwestern Ohio' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "UNI_PIK",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'UPike' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "UNI_SAI1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "UNI_TEX",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'UT Tyler' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 26
+  },
+  {
+   "code": "UNI_WES",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "UNL_REB",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 34
+  },
+  {
+   "code": "UNO_MAV",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 25
+  },
+  {
+   "code": "USC_BEA",
+   "name": null,
+   "source": null,
+   "note": "letters 'USC' fit 4 D-I schools; dictionary 'USC Upstate' not unique",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "USC_UPS",
+   "name": "USC Upstate",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'USC Upstate' is NCAA D-I 'USC Upstate'",
+   "ncaa": "USC Upstate",
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "USF_BUL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "UTA_UTE",
+   "name": "Utah",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Utah' is NCAA D-I 'Utah'",
+   "ncaa": "Utah",
+   "espn_id": 254,
+   "learned": null,
+   "rows": 32
+  },
+  {
+   "code": "UTA_WOL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 30
+  },
+  {
+   "code": "UTM_SKY",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 16
+  },
+  {
+   "code": "UTR_VAQ",
+   "name": "UT Rio Grande Valley",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'UT Rio Grande Valley' is NCAA D-I 'UTRGV'",
+   "ncaa": "UTRGV",
+   "espn_id": null,
+   "learned": null,
+   "rows": 24
+  },
+  {
+   "code": "UTS_EAG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "UTS_ROA",
+   "name": "UT San Antonio",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'UT San Antonio' is NCAA D-I 'UTSA'",
+   "ncaa": "UTSA",
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "UWM_PAN",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 24
+  },
+  {
+   "code": "VAL_CRU",
+   "name": "Valparaiso University",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Valparaiso University' is NCAA D-I 'Valparaiso'",
+   "ncaa": "Valparaiso",
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "VAN_COM",
+   "name": "Vanderbilt",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Vanderbilt' is NCAA D-I 'Vanderbilt'",
+   "ncaa": "Vanderbilt",
+   "espn_id": 238,
+   "learned": "Vanderbilt",
+   "rows": 32
+  },
+  {
+   "code": "VAS_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "VCU_RAM",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 33
+  },
+  {
+   "code": "VER_CHA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "VER_VER",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "VIL_WIL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 23
+  },
+  {
+   "code": "VIR_CAV",
+   "name": "Virginia",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Virginia' is NCAA D-I 'Virginia'",
+   "ncaa": "Virginia",
+   "espn_id": 258,
+   "learned": "Virginia",
+   "rows": 35
+  },
+  {
+   "code": "VIR_KEY",
+   "name": "Virginia Military Institute",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Virginia Military Institute' is NCAA D-I 'VMI'",
+   "ncaa": "VMI",
+   "espn_id": null,
+   "learned": null,
+   "rows": 28
+  },
+  {
+   "code": "VIR_TEC",
+   "name": "Virginia Tech",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Virginia Tech' is NCAA D-I 'Virginia Tech'",
+   "ncaa": "Virginia Tech",
+   "espn_id": 259,
+   "learned": "Virginia Tech",
+   "rows": 34
+  },
+  {
+   "code": "VIR_WIS",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Virginia University at Wise' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "WAB_VAL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "WAG_SEA",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 17
+  },
+  {
+   "code": "WAK_DEA",
+   "name": "Wake Forest",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'Wake Forest' is NCAA D-I 'Wake Forest'",
+   "ncaa": "Wake Forest",
+   "espn_id": 154,
+   "learned": "Wake Forest",
+   "rows": 34
+  },
+  {
+   "code": "WAK_TEC",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "WAR_UNI1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 4
+  },
+  {
+   "code": "WAS_COU",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "WAS_HUS",
+   "name": "Washington",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Washington' is NCAA D-I 'Washington'",
+   "ncaa": "Washington",
+   "espn_id": 264,
+   "learned": null,
+   "rows": 41
+  },
+  {
+   "code": "WCC",
+   "name": "Western Carolina",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Western Carolina' is NCAA D-I 'Western Caro.'",
+   "ncaa": "Western Caro.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 32
+  },
+  {
+   "code": "WES_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "WES_FLO5",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "WES_HIL",
+   "name": "Western Kentucky",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Western Kentucky' is NCAA D-I 'Western Ky.'",
+   "ncaa": "Western Ky.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 38
+  },
+  {
+   "code": "WES_MOU",
+   "name": "West Virginia",
+   "source": "learned+ncaa",
+   "note": "draft-roster vote 'West Virginia' is NCAA D-I 'West Virginia'",
+   "ncaa": "West Virginia",
+   "espn_id": 277,
+   "learned": "West Virginia",
+   "rows": 34
+  },
+  {
+   "code": "WES_TEX",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'West Texas A&M' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 5
+  },
+  {
+   "code": "WHA_JUC",
+   "name": null,
+   "source": null,
+   "note": "dictionary 'Wharton County JUCO' is not one NCAA D-I school",
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 6
+  },
+  {
+   "code": "WHI_COL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 3
+  },
+  {
+   "code": "WHI_COL1",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "WHI_PIR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "WIC_SHO",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 24
+  },
+  {
+   "code": "WIN_BUL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 10
+  },
+  {
+   "code": "WIN_EAG",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 21
+  },
+  {
+   "code": "WIU_LEA",
+   "name": "Western Illinois",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Western Illinois' is NCAA D-I 'Western Ill.'",
+   "ncaa": "Western Ill.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "WMI_BRO",
+   "name": "Western Michigan",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Western Michigan' is NCAA D-I 'Western Mich.'",
+   "ncaa": "Western Mich.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 17
+  },
+  {
+   "code": "WM_TRI",
+   "name": "William & Mary",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'William & Mary' is NCAA D-I 'William & Mary'",
+   "ncaa": "William & Mary",
+   "espn_id": null,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "WOF_TER",
+   "name": "Wofford",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Wofford' is NCAA D-I 'Wofford', the only D-I school its letters fit",
+   "ncaa": "Wofford",
+   "espn_id": null,
+   "learned": null,
+   "rows": 23
+  },
+  {
+   "code": "WRI_RAI",
+   "name": "Wright State",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Wright State' is NCAA D-I 'Wright St.'",
+   "ncaa": "Wright St.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 27
+  },
+  {
+   "code": "WVN_MN2",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 1
+  },
+  {
+   "code": "XAV_MUS",
+   "name": "Xavier",
+   "source": "dict+ncaa",
+   "note": "dictionary letters entry 'Xavier' is NCAA D-I 'Xavier', the only D-I school its letters fit",
+   "ncaa": "Xavier",
+   "espn_id": null,
+   "learned": null,
+   "rows": 31
+  },
+  {
+   "code": "YAK_VAL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 2
+  },
+  {
+   "code": "YAL_BUL",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 19
+  },
+  {
+   "code": "YOU_HAR",
+   "name": null,
+   "source": null,
+   "note": null,
+   "ncaa": null,
+   "espn_id": null,
+   "learned": null,
+   "rows": 20
+  },
+  {
+   "code": "YSU_PEN",
+   "name": "Youngstown State",
+   "source": "dict+ncaa",
+   "note": "dictionary entry 'Youngstown State' is NCAA D-I 'Youngstown St.'",
+   "ncaa": "Youngstown St.",
+   "espn_id": null,
+   "learned": null,
+   "rows": 9
+  }
+ ]
+}

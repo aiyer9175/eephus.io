@@ -167,8 +167,16 @@ def test_new_features_actually_render():
 def test_shared_team_resolver_resolves_codes():
     ctx = MiniRacer()
     ctx.eval((CS / "team_names.js").read_text(encoding="utf-8"))
-    assert ctx.eval('formatTeamName("TEX_LON")') == "Texas Longhorns"
-    assert ctx.eval('formatTeamName("OSU_BUC")') == "Ohio State Buckeyes"
+    # Verified codes print the school only (owner answer M20-1): no mascot part
+    # is verified by the NCAA list or the learned map.
+    assert ctx.eval('formatTeamName("TEX_LON")') == "Texas"
+    assert ctx.eval('formatTeamName("OSU_BUC")') == "Ohio State"
+    # The old dictionaries composed wrong schools; these now read verified.
+    assert ctx.eval('formatTeamName("ARI_WIL")') == "Arizona"           # was "Arizona State Wildcats"
+    assert ctx.eval('formatTeamName("TEX_AGG")') == "Texas A&M"         # was "Texas Aggies"
+    # Unverified codes print as the code, even where a dictionary guessed.
+    assert ctx.eval('formatTeamName("NEV_WOL")') == "NEV WOL"           # was "Nevada Wolverines"
+    assert ctx.eval('formatTeamName("GEO_PAN")') == "GEO PAN"           # was "Georgia Panthers"
     # An unknown code prints as the code, spaced and upper-cased: never a raw
     # underscore code and never an invented title-cased school (census M03-11).
     assert ctx.eval('formatTeamName("ZZZ_QQQ")') == "ZZZ QQQ"
@@ -202,7 +210,8 @@ def test_every_payload_code_is_named_or_printed_as_code():
 def test_pitcher_page_loads_shared_resolver_first():
     html = (CS / "pitcher_index.html").read_text(encoding="utf-8")
     assert html.index('<script src="team_names.js') < html.index('<script src="pitcher_app.js')
-    assert "const TEAM_CODE_NAMES" not in (CS / "pitcher_app.js").read_text(encoding="utf-8")
+    src = (CS / "pitcher_app.js").read_text(encoding="utf-8")
+    assert "const TEAM_CODE_NAMES" not in src and "const TEAM_LOGOS" not in src
 
 
 # ---------------------------------------------------------------------------

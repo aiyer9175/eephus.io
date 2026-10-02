@@ -234,33 +234,50 @@ class _NcaaBrowser:
 # ---------------------------------------------------------------------------
 # 1. school -> NCAA team-id map (HTTP, server-rendered)
 # ---------------------------------------------------------------------------
+def _parse_inst_team_list(body: str) -> list[tuple[str, int]]:
+    """The institution list page -> [(school as NCAA prints it, team_id)]."""
+    soup = BeautifulSoup(body, "html.parser")
+    out: list[tuple[str, int]] = []
+    for a in soup.find_all("a", href=re.compile(r"/teams/\d+")):
+        m = re.search(r"/teams/(\d+)", a["href"])
+        school = a.get_text(strip=True)
+        if m and school:
+            out.append((school, int(m.group(1))))
+    return out
+
+
+def d1_team_list(year: int, force: bool = False, cache_only: bool = False,
+                 browser: "_NcaaBrowser | None" = None) -> list[tuple[str, int]]:
+    """[(school, ncaa_team_id)] for D-I baseball in `year`. cache_only reads the
+    cached page whatever its age and never touches the network (the team-name
+    generator runs offline)."""
+    url = INST_TEAM_LIST.format(year=year)
+    cache_key = f"ncaa_inst_team_list_{year}"
+    if cache_only:
+        p = CACHE_DIR / f"{cache_key}.html"
+        body = p.read_text(encoding="utf-8") if p.exists() else None
+    else:
+        # Wait for real team links so we read the post-Incapsula content, not
+        # the challenge shell (replaces the old blind delay).
+        body = (browser.html(url, cache_key, force=force,
+                             wait_selector="a[href*='/teams/']") if browser is not None
+                else _ncaa_get(url, cache_key, force=force))
+    if not body:
+        log.warning("ncaa inst_team_list %s: fetch failed", year)
+        return []
+    return _parse_inst_team_list(body)
+
+
 def fetch_d1_team_map(year: int, force: bool = False,
-                      browser: "_NcaaBrowser | None" = None) -> dict[str, int]:
+                      browser: "_NcaaBrowser | None" = None,
+                      cache_only: bool = False) -> dict[str, int]:
     """Return {normalized_school: ncaa_team_id} for D-I baseball in `year`.
 
     The institution list is server-rendered HTML, but Incapsula gates it, so
     we fetch it through the shared browser session when one is supplied
     (falling back to a cached copy / plain HTTP otherwise)."""
-    url = INST_TEAM_LIST.format(year=year)
-    cache_key = f"ncaa_inst_team_list_{year}"
-    # Wait for real team links so we read the post-Incapsula content, not the
-    # challenge shell (replaces the old blind delay).
-    body = (browser.html(url, cache_key, force=force,
-                         wait_selector="a[href*='/teams/']") if browser is not None
-            else _ncaa_get(url, cache_key, force=force))
-    if not body:
-        log.warning("ncaa inst_team_list %s: fetch failed", year)
-        return {}
-    soup = BeautifulSoup(body, "html.parser")
-    out: dict[str, int] = {}
-    for a in soup.find_all("a", href=re.compile(r"/teams/\d+")):
-        m = re.search(r"/teams/(\d+)", a["href"])
-        if not m:
-            continue
-        school = a.get_text(strip=True)
-        if not school:
-            continue
-        out[_norm_school(school)] = int(m.group(1))
+    out = {_norm_school(s): tid for s, tid in
+           d1_team_list(year, force=force, cache_only=cache_only, browser=browser)}
     log.info("ncaa team map %s: %d D-I schools", year, len(out))
     return out
 

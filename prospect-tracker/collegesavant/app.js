@@ -1,10 +1,10 @@
 const CSV_PATH = "b1g_2025_hitter_xwoba_min30pa.csv";
 
 // Real school names for team codes (owner ask 2026-06-12: badges read
-// "Minnesota", never "MIN_GOL"). Unknown codes fall back to a cleaned slug.
-// formatTeamName + the full national school-code dicts now live in the shared
-// collegesavant/team_names.js (loaded before this file on the hitter page), so
-// the 3,600-row national set resolves real school names instead of raw codes.
+// "Minnesota", never "MIN_GOL"). formatTeamName lives in the shared, generated
+// collegesavant/team_names.js (loaded before this file): a code prints its
+// school only when college_team_map.py verified it against the NCAA D-I list
+// and the learned code-to-school map, and prints as the code otherwise.
 
 // `gl` is the data/glossary.json slug for this metric, when one exists; it wires
 // the same site-wide hover tooltip the rest of eephus uses. Metrics with no slug
@@ -36,24 +36,8 @@ function glLabel(metric) {
   return metric && metric.gl ? `<span class="g-term" data-gl="${metric.gl}">${text}</span>` : text;
 }
 
-const TEAM_LOGOS = {
-  ILL_ILL: "logos/ILL_ILL.png",
-  IU: "logos/IU.png",
-  IOW_HAW: "logos/IOW_HAW.png",
-  MAR_TER: "logos/MAR_TER.png",
-  MIC_SPA: "logos/MIC_SPA.png",
-  MIC_WOL: "logos/MIC_WOL.png",
-  MIN_GOL: "logos/MIN_GOL.png",
-  NEB: "logos/NEB.png",
-  NOR_CAT: "logos/NOR_CAT.png",
-  ORE_DUC: "logos/ORE_DUC.png",
-  OSU_BUC: "logos/OSU_BUC.png",
-  PEN_NIT: "logos/PEN_NIT.png",
-  PUR_BOI: "logos/PUR_BOI.png",
-  RUT_SCA: "logos/RUT_SCA.png",
-  SOU_TRO: "logos/SOU_TRO.png",
-  WAS_HUS: "logos/WAS_HUS.png",
-};
+// Team logos: teamLogoUrl(code) in the generated team_names.js (a local
+// collegesavant/logos file, else the verified school's ESPN NCAA logo).
 
 const HOME_WIDGET_METRICS = [
   { key: "cs_plus", label: "CS+ (pro profile)" },
@@ -581,7 +565,7 @@ function renderTopWidget(metric, q = qualifier()) {
           <a class="widget-row" href="#/player/${player.year}/${player.slug}">
             <span class="widget-rank">${index + 1}</span>
             <span class="widget-name">${escapeHtml(displayName(player.hitter_name))}</span>
-            <span class="widget-team">${TEAM_LOGOS[player.team] ? `<img class="widget-logo" src="${TEAM_LOGOS[player.team]}" alt="" loading="lazy" onerror="this.remove()">` : ""}${escapeHtml(formatTeamName(player.team))}</span>
+            <span class="widget-team">${teamLogoUrl(player.team) ? `<img class="widget-logo" src="${teamLogoUrl(player.team)}" alt="" loading="lazy" onerror="this.remove()">` : ""}${escapeHtml(formatTeamName(player.team))}</span>
             <strong>${metric.key === "cs_plus" ? Math.round(state.csPlus && state.csPlus.get(player.slug)) : formatMetric(player[metric.key], metric.fmt)}</strong>
           </a>
         `).join("")}
@@ -667,7 +651,7 @@ function renderLeaderboard() {
       const cls = c.key === "cs_plus" && Number.isFinite(v) ? (v >= 110 ? "tt-pos" : v <= 90 ? "tt-neg" : "") : "";
       return `<td class="tt-col ${cls}${c.key === state.sortKey ? " is-sorted" : ""}">${lbFmt(c.fmt, v)}</td>`;
     }).join("");
-    const logo = TEAM_LOGOS[p.team] ? `<img class="tt-logo" src="${TEAM_LOGOS[p.team]}" alt="" loading="lazy" onerror="this.remove()">` : "";
+    const logo = teamLogoUrl(p.team) ? `<img class="tt-logo" src="${teamLogoUrl(p.team)}" alt="" loading="lazy" onerror="this.remove()">` : "";
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${logo}<a class="proj-name" href="#/player/${p.year}/${p.slug}">${escapeHtml(displayName(p.hitter_name))}</a><span class="tt-n">${escapeHtml(formatTeamName(p.team))}</span></td>
       ${cells}</tr>`;
@@ -678,7 +662,7 @@ function renderLeaderboard() {
       ${renderYearSelect()}
       <select class="select-box" data-team-filter data-team-picker="college" aria-label="Filter by team">
         <option value="all">All teams</option>
-        ${teams.map((t) => `<option value="${escapeHtml(t)}"${TEAM_LOGOS[t] ? ` data-logo="${TEAM_LOGOS[t]}"` : ""} ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
+        ${teams.map((t) => `<option value="${escapeHtml(t)}"${teamLogoUrl(t) ? ` data-logo="${teamLogoUrl(t)}"` : ""} ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
       </select>
       ${qualifierControl(qual)}
       <button class="control-button" type="button" data-reset>Reset</button>
@@ -822,8 +806,8 @@ function renderTeams() {
       const cls = m.fmt === "plus" && Number.isFinite(v) ? (v >= 110 ? "tt-pos" : v <= 90 ? "tt-neg" : "") : "";
       return `<td class="tt-col ${cls}${m.key === sortKey ? " is-sorted" : ""}">${fmtVal(m, v)}</td>`;
     }).join("");
-    const logo = TEAM_LOGOS[r.team]
-      ? `<img class="tt-logo" src="${TEAM_LOGOS[r.team]}" alt="" loading="lazy" onerror="this.remove()">` : "";
+    const logo = teamLogoUrl(r.team)
+      ? `<img class="tt-logo" src="${teamLogoUrl(r.team)}" alt="" loading="lazy" onerror="this.remove()">` : "";
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${logo}<span>${escapeHtml(formatTeamName(r.team))}</span><span class="tt-n">${r.n} batters</span></td>
       ${cells}</tr>`;
@@ -835,7 +819,7 @@ function renderTeams() {
         ${TEAM_TENDENCY_METRICS.map((m) => `<option value="${m.key}" ${m.key === sortKey ? "selected" : ""}>Rank by ${m.label}</option>`).join("")}
       </select>
     </section>
-    <p class="note-line">College team tendencies for ${state.year}: every team with at least ${TEAM_MIN_BATTERS} tracked batters, aggregated across its hitters. Team CS+ is the mean of its hitters' CS+ (100 = the ${state.year} pool average, ${poolText(state.year)}). Top EV is the team's single hardest-hit ball; the rest are team averages.</p>
+    <p class="note-line">College team tendencies for ${state.year}: every team with at least ${TEAM_MIN_BATTERS} tracked batters, aggregated across its hitters. Team CS+ is the mean of its hitters' CS+ (100 = the ${state.year} pool average, ${poolText(state.year)}). Top EV is the team's single hardest-hit ball; the rest are team averages. ${escapeHtml(teamMapNote())}</p>
     <section class="leaderboard tt-board">
       <div class="tt-scroll"><table class="tt-table">
         <thead><tr><th class="tt-rank">#</th><th class="tt-team">Team</th>${head}</tr></thead>
@@ -1078,7 +1062,7 @@ function renderProjections() {
   const fk = legFlag(E, "hit_k"), fb = legFlag(E, "hit_bb"), fo = legFlag(E, "hit_ops");
   const body = list.map((x, i) => {
     const sa = x.t.single_a;
-    const logo = TEAM_LOGOS[x.p.team] ? `<img class="tt-logo" src="${TEAM_LOGOS[x.p.team]}" alt="" loading="lazy" onerror="this.remove()">` : "";
+    const logo = teamLogoUrl(x.p.team) ? `<img class="tt-logo" src="${teamLogoUrl(x.p.team)}" alt="" loading="lazy" onerror="this.remove()">` : "";
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${logo}<a class="proj-name" href="#/player/${x.p.year}/${x.p.slug}">${escapeHtml(displayName(x.p.hitter_name))}</a>${sourceSeasonTag(x.t, state.year)}</td>
       <td class="tt-col">${plusPill(x.cs, "CS+")}</td>
@@ -1269,7 +1253,7 @@ function renderPlayer(player) {
         accentToken: "--accent-red",
         name: displayName(player.hitter_name),
         meta: `${formatTeamName(player.team) || player.teamLabel || ""} · ${player.year} · college hitter`,
-        headshotURL: TEAM_LOGOS[player.team] || null,
+        headshotURL: LOCAL_TEAM_LOGOS.has(player.team) ? `logos/${player.team}.png` : null,
         url: `eephus.io/collegesavant/#/player/${player.year}/${player.slug}`,
         filename: `eephus-collegesavant-${player.slug}.png`,
         caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
@@ -1438,7 +1422,7 @@ function slugify(name) {
 function teamLogo(player, size = "") {
   const label = player.team || player.initials;
   const title = formatTeamName(player.team) || player.teamLabel || label;
-  const logo = TEAM_LOGOS[player.team];
+  const logo = teamLogoUrl(player.team);
   const image = logo
     ? `<img src="${logo}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">`
     : "";

@@ -84,16 +84,11 @@ function activeHeadlineMetrics() {
   return [STUFF_METRIC, ...activePitcherMetrics()];
 }
 
-// Only these team codes have a logo PNG in collegesavant/logos/; gate <img>
-// emission on this set so non-listed schools do not fire 404 image requests.
-const TEAM_LOGOS = new Set([
-  "ILL_ILL", "IOW_HAW", "IU", "MAR_TER", "MIC_SPA", "MIC_WOL", "MIN_GOL",
-  "NEB", "NOR_CAT", "ORE_DUC", "OSU_BUC", "PEN_NIT", "PUR_BOI", "RUT_SCA",
-  "SOU_TRO", "WAS_HUS",
-]);
+// Team logos: teamLogoUrl(code) in the generated team_names.js (a local
+// collegesavant/logos file, else the verified school's ESPN NCAA logo).
 
-// TEAM_CODE_NAMES / SCHOOL_NAMES / MASCOT_NAMES and formatTeamName live in the
-// shared team_names.js, loaded before this file.
+// TEAM_MAP, formatTeamName and teamLogoUrl live in the shared, generated
+// team_names.js, loaded before this file.
 
 const state = {
   allPitchers: [],
@@ -570,7 +565,7 @@ function renderTopWidget(metric, q = qualifier()) {
           <a class="widget-row" href="#/player/${pitcher.year}/${pitcher.slug}">
             <span class="widget-rank">${index + 1}</span>
             <span class="widget-name">${escapeHtml(displayName(pitcher.pitcher_name))}</span>
-            <span class="widget-team">${pitcher.team && TEAM_LOGOS.has(pitcher.team) ? `<img class="widget-logo" src="logos/${escapeHtml(pitcher.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : ""}${escapeHtml(formatTeamName(pitcher.team))}</span>
+            <span class="widget-team">${teamLogoUrl(pitcher.team) ? `<img class="widget-logo" src="${escapeHtml(teamLogoUrl(pitcher.team))}" alt="" loading="lazy" onerror="this.remove()">` : ""}${escapeHtml(formatTeamName(pitcher.team))}</span>
             <strong>${metric.key === "cs_plus" ? Math.round(state.csPlus && state.csPlus.get(pitcher.slug)) : formatMetric(pitcher[metric.key], metric.fmt)}</strong>
           </a>
         `).join("")}
@@ -652,7 +647,7 @@ function renderLeaderboard() {
       const cls = c.key === "cs_plus" && Number.isFinite(v) ? (v >= 110 ? "tt-pos" : v <= 90 ? "tt-neg" : "") : "";
       return `<td class="tt-col ${cls}${c.key === state.sortKey ? " is-sorted" : ""}">${lbFmt(c.fmt, v)}</td>`;
     }).join("");
-    const logo = p.team && TEAM_LOGOS.has(p.team) ? `<img class="tt-logo" src="logos/${escapeHtml(p.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : "";
+    const logo = teamLogoUrl(p.team) ? `<img class="tt-logo" src="${escapeHtml(teamLogoUrl(p.team))}" alt="" loading="lazy" onerror="this.remove()">` : "";
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${logo}<a class="proj-name" href="#/player/${p.year}/${p.slug}">${escapeHtml(displayName(p.pitcher_name))}</a><span class="tt-n">${escapeHtml(formatTeamName(p.team))}</span></td>
       ${cells}</tr>`;
@@ -663,7 +658,7 @@ function renderLeaderboard() {
       ${renderYearSelect()}
       <select class="select-box" data-team-filter data-team-picker="college" aria-label="Filter by team">
         <option value="all">All teams</option>
-        ${teams.map((t) => `<option value="${escapeHtml(t)}"${TEAM_LOGOS.has(t) ? ` data-logo="logos/${escapeHtml(t)}.png"` : ""} ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
+        ${teams.map((t) => `<option value="${escapeHtml(t)}"${teamLogoUrl(t) ? ` data-logo="${escapeHtml(teamLogoUrl(t))}"` : ""} ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
       </select>
       ${qualifierControl(qual)}
       <button class="control-button" type="button" data-reset>Reset</button>
@@ -772,7 +767,7 @@ function _wireCsShare(pitcher, pct) {
       accentToken: "--accent-red",
       name: displayName(pitcher.pitcher_name),
       meta: `${formatTeamName(pitcher.team)} · ${pitcher.year} · college pitcher`,
-      headshotURL: TEAM_LOGOS.has(pitcher.team) ? `logos/${pitcher.team}.png` : null,
+      headshotURL: LOCAL_TEAM_LOGOS.has(pitcher.team) ? `logos/${pitcher.team}.png` : null,
       url: `eephus.io/collegesavant/pitcher_index.html#/player/${pitcher.year}/${pitcher.slug}`,
       filename: `eephus-collegesavant-${pitcher.slug}.png`,
       caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
@@ -1026,7 +1021,7 @@ function renderProjections() {
   const list = listed.slice(0, LEADERBOARD_LIMIT);
   const body = list.map((x, i) => {
     const sa = x.t.single_a;
-    const logo = x.p.team && TEAM_LOGOS.has(x.p.team) ? `<img class="tt-logo" src="logos/${escapeHtml(x.p.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : "";
+    const logo = teamLogoUrl(x.p.team) ? `<img class="tt-logo" src="${escapeHtml(teamLogoUrl(x.p.team))}" alt="" loading="lazy" onerror="this.remove()">` : "";
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${logo}<a class="proj-name" href="#/player/${x.p.year}/${x.p.slug}">${escapeHtml(displayName(x.p.pitcher_name))}</a>${sourceSeasonTag(x.t, state.year)}</td>
       <td class="tt-col">${plusPill(x.cs, "CS+")}</td>
@@ -1089,7 +1084,7 @@ function renderTeams() {
         ${TEAM_TENDENCY_METRICS.map((m) => `<option value="${m.key}" ${m.key === sortKey ? "selected" : ""}>Rank by ${m.label}</option>`).join("")}
       </select>
     </section>
-    <p class="note-line">College pitching-staff tendencies for ${state.year}: every staff with at least ${TEAM_MIN_ARMS} tracked arms, aggregated across its pitchers. Team CS+ is the mean of its arms' CS+ (100 = the ${state.year} pool average, ${poolText(state.year)}).</p>
+    <p class="note-line">College pitching-staff tendencies for ${state.year}: every staff with at least ${TEAM_MIN_ARMS} tracked arms, aggregated across its pitchers. Team CS+ is the mean of its arms' CS+ (100 = the ${state.year} pool average, ${poolText(state.year)}). ${escapeHtml(teamMapNote())}</p>
     <section class="leaderboard tt-board">
       <div class="tt-scroll"><table class="tt-table">
         <thead><tr><th class="tt-rank">#</th><th class="tt-team">Staff</th>${head}</tr></thead>
@@ -1537,7 +1532,7 @@ function renderYearSelect(years = state.availableYears) {
 
 function teamBadge(pitcher, size = "") {
   const team = pitcher.team || "";
-  const logo = team ? `logos/${escapeHtml(team)}.png` : "";
+  const logo = teamLogoUrl(team) ? escapeHtml(teamLogoUrl(team)) : "";
   return `
     <div class="team-logo ${pitcher.teamClass} ${size}" style="${teamStyle(team)}" title="${escapeHtml(formatTeamName(team))}">
       ${logo ? `<img src="${logo}" alt="" onload="this.parentElement.classList.add('has-logo')" onerror="this.remove()">` : ""}
