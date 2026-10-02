@@ -2310,9 +2310,18 @@ def _fv_sparkline(points: list, color: str, w: int = 150, h: int = 34) -> str:
             ink.append(f"M{max(x0 - 1, 0)} {a}h2v{b - a + 2}h-2z")
         ink.append(f"M{x0} {y}h{x1 - x0}v2h-{x1 - x0}z")
         prev = y
-    return (f'<svg class="px-spark" width="{w}" height="{h}" viewBox="0 0 {w} {h}" aria-hidden="true">'
+    # The direction tokens become a class, so the stylesheet paints the line
+    # (.px-spark.up / .dn); any other colour keeps an explicit fill.
+    cls = _SPARK_DIR.get(color.replace(" ", ""))
+    fill = "" if cls else f' fill="{color}"'
+    return (f'<svg class="px-spark{" " + cls if cls else ""}" width="{w}" height="{h}" '
+            f'viewBox="0 0 {w} {h}" aria-hidden="true">'
             f'<path class="gl" d="{"".join(rules)}"/>'
-            f'<path class="ln" fill="{color}" d="{"".join(ink)}"/></svg>')
+            f'<path class="ln"{fill} d="{"".join(ink)}"/></svg>')
+
+
+_SPARK_DIR = {"var(--accent-green)": "up", "var(--up)": "up",
+              "var(--accent-red)": "dn", "var(--down)": "dn"}
 
 def _spotlight_card(label: str, p: dict, chip: str, spark_color: str) -> str:
     """ONE spotlight card - the baseball-card markup every rotation slot shares.

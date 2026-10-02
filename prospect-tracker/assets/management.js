@@ -442,9 +442,9 @@
   // Drawn from the same rows as the table under it, which stays and keeps every
   // number. A half lights round(100 x (p - 0.5)) lamp rows: up from the 50%
   // rule when the team coming to bat wins more than half, down when it wins
-  // fewer. Top halves dim, bottom halves ink. Each bar is ONE rect filled with
-  // a 4 px lamp pattern, so the runs merge instead of drawing a rect per lamp.
-  // Measured, unpriced, no red or green. Renderer budget 3 KB (PX-14 test).
+  // fewer. Top halves cyan, bottom halves lilac (site.css). Each bar is ONE rect
+  // filled with a 4 px lamp pattern, so the runs merge instead of drawing a rect
+  // per lamp. Measured, unpriced, no red or green. Renderer budget 3 KB (PX-14 test).
   function tiedLamps(rows) {
     var by = {}, up = 1, dn = 1, last = 0;
     (rows || []).forEach(function (r) {

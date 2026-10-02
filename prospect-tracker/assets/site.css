@@ -1853,23 +1853,31 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .feed-item .feed-val .ico { vertical-align: -2px; margin-right: 3px; }
 .home-ticker .ticker-track .ico { vertical-align: -1px; }
 /* V3 step sparkline (PX-16): one run per board snapshot, dotted grade rules
-   at every multiple of 5. Drawn at its own integer size. */
+   at every multiple of 5. Drawn at its own integer size. The line and its
+   risers take the direction colour from the class, as the bundle draws them
+   (.up green, .dn red), so the fill comes from the sheet and never from a
+   var() inside a presentation attribute. */
 .px-spark { display: block; max-width: 100%; height: auto; shape-rendering: crispEdges; }
 .px-spark .gl { fill: var(--border); }
+.px-spark.up .ln { fill: var(--accent-green); }
+.px-spark.dn .ln { fill: var(--accent-red); }
 /* V1 tied-game line score (PX-14), the ballpark lamp idiom: one lamp row per
-   point from 50%, top halves dim, bottom halves ink, unlit lamps the board. */
+   point from 50%, unlit lamps the board. Lit lamps are coloured (owner ask
+   2026-10-02): top halves (visitors bat) cyan, bottom halves (home bats) the
+   lilac accent. Neither is red or green, so no half reads as a verdict, and
+   the two series still pair by position as well as by hue. */
 .px-lamp-wrap { margin: 4px 0 6px; }
 .px-lamp { display: block; shape-rendering: crispEdges; }
 .px-lamp .lo { fill: var(--border-light); }
 .px-lamp .lr { fill: var(--text-secondary); }
-.px-lamp .lt { fill: var(--text-dim); }
-.px-lamp .lb { fill: var(--text-primary); }
+.px-lamp .lt { fill: var(--accent-cyan); }
+.px-lamp .lb { fill: var(--accent-lilac); }
 .px-lamp text { fill: var(--text-tertiary); font: 700 11px var(--font-retro-mono); }
 .px-lamp-key { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0 10px;
   font: 11px/16px var(--font-retro-mono); color: var(--text-secondary); }
 .px-lamp-key .px-lk { display: inline-block; width: 6px; height: 6px; margin-right: 5px; vertical-align: 0; }
-.px-lamp-key .px-lk.t { background: var(--text-dim); }
-.px-lamp-key .px-lk.b { background: var(--text-primary); }
+.px-lamp-key .px-lk.t { background: var(--accent-cyan); }
+.px-lamp-key .px-lk.b { background: var(--accent-lilac); }
 /* V4 key strips (PX-19). The ruler key: a 6-cell meter per --vt-* step with
    its word (EephusTiers.key), lit cells counting the step, a second channel
    beside the colour. The FV key: the card-foil sprite and the rank diamond

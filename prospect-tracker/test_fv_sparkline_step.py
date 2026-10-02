@@ -28,7 +28,7 @@ def _pts(vals):
 
 def _paths(svg: str) -> tuple[str, str]:
     gl = re.search(r'<path class="gl" d="([^"]*)"', svg).group(1)
-    ln = re.search(r'<path class="ln" fill="[^"]+" d="([^"]*)"', svg).group(1)
+    ln = re.search(r'<path class="ln"(?: fill="[^"]+")? d="([^"]*)"', svg).group(1)
     return gl, ln
 
 
