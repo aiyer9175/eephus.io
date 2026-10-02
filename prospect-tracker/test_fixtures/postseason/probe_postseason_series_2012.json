@@ -1,0 +1,1100 @@
+{
+ "series": [
+  {
+   "series": {
+    "id": "W_1",
+    "gameType": "W"
+   },
+   "games": [
+    {
+     "gamePk": 345630,
+     "gameType": "W",
+     "officialDate": "2012-10-24",
+     "gamesInSeries": 7,
+     "seriesDescription": "World Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345631,
+     "gameType": "W",
+     "officialDate": "2012-10-25",
+     "gamesInSeries": 7,
+     "seriesDescription": "World Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345632,
+     "gameType": "W",
+     "officialDate": "2012-10-27",
+     "gamesInSeries": 7,
+     "seriesDescription": "World Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345633,
+     "gameType": "W",
+     "officialDate": "2012-10-28",
+     "gamesInSeries": 7,
+     "seriesDescription": "World Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": false
+      }
+     }
+    }
+   ]
+  },
+  {
+   "series": {
+    "id": "F_2",
+    "gameType": "F"
+   },
+   "games": [
+    {
+     "gamePk": 345595,
+     "gameType": "F",
+     "officialDate": "2012-10-05",
+     "gamesInSeries": 1,
+     "seriesDescription": "NL Wild Card Game",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 144,
+        "name": "Atlanta Braves"
+       },
+       "isWinner": false
+      }
+     }
+    }
+   ]
+  },
+  {
+   "series": {
+    "id": "F_1",
+    "gameType": "F"
+   },
+   "games": [
+    {
+     "gamePk": 345594,
+     "gameType": "F",
+     "officialDate": "2012-10-05",
+     "gamesInSeries": 1,
+     "seriesDescription": "AL Wild Card Game",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 110,
+        "name": "Baltimore Orioles"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 140,
+        "name": "Texas Rangers"
+       },
+       "isWinner": false
+      }
+     }
+    }
+   ]
+  },
+  {
+   "series": {
+    "id": "D_1",
+    "gameType": "D"
+   },
+   "games": [
+    {
+     "gamePk": 345596,
+     "gameType": "D",
+     "officialDate": "2012-10-06",
+     "gamesInSeries": 5,
+     "seriesDescription": "AL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 133,
+        "name": "Oakland Athletics"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345597,
+     "gameType": "D",
+     "officialDate": "2012-10-07",
+     "gamesInSeries": 5,
+     "seriesDescription": "AL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 133,
+        "name": "Oakland Athletics"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345598,
+     "gameType": "D",
+     "officialDate": "2012-10-09",
+     "gamesInSeries": 5,
+     "seriesDescription": "AL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 133,
+        "name": "Oakland Athletics"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345599,
+     "gameType": "D",
+     "officialDate": "2012-10-10",
+     "gamesInSeries": 5,
+     "seriesDescription": "AL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 133,
+        "name": "Oakland Athletics"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345600,
+     "gameType": "D",
+     "officialDate": "2012-10-11",
+     "gamesInSeries": 5,
+     "seriesDescription": "AL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 133,
+        "name": "Oakland Athletics"
+       },
+       "isWinner": false
+      }
+     }
+    }
+   ]
+  },
+  {
+   "series": {
+    "id": "D_3",
+    "gameType": "D"
+   },
+   "games": [
+    {
+     "gamePk": 345606,
+     "gameType": "D",
+     "officialDate": "2012-10-06",
+     "gamesInSeries": 5,
+     "seriesDescription": "NL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 113,
+        "name": "Cincinnati Reds"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345607,
+     "gameType": "D",
+     "officialDate": "2012-10-07",
+     "gamesInSeries": 5,
+     "seriesDescription": "NL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 113,
+        "name": "Cincinnati Reds"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345608,
+     "gameType": "D",
+     "officialDate": "2012-10-09",
+     "gamesInSeries": 5,
+     "seriesDescription": "NL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 113,
+        "name": "Cincinnati Reds"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345609,
+     "gameType": "D",
+     "officialDate": "2012-10-10",
+     "gamesInSeries": 5,
+     "seriesDescription": "NL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 113,
+        "name": "Cincinnati Reds"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345610,
+     "gameType": "D",
+     "officialDate": "2012-10-11",
+     "gamesInSeries": 5,
+     "seriesDescription": "NL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 113,
+        "name": "Cincinnati Reds"
+       },
+       "isWinner": false
+      }
+     }
+    }
+   ]
+  },
+  {
+   "series": {
+    "id": "D_2",
+    "gameType": "D"
+   },
+   "games": [
+    {
+     "gamePk": 345601,
+     "gameType": "D",
+     "officialDate": "2012-10-07",
+     "gamesInSeries": 5,
+     "seriesDescription": "AL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 147,
+        "name": "New York Yankees"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 110,
+        "name": "Baltimore Orioles"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345602,
+     "gameType": "D",
+     "officialDate": "2012-10-08",
+     "gamesInSeries": 5,
+     "seriesDescription": "AL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 147,
+        "name": "New York Yankees"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 110,
+        "name": "Baltimore Orioles"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345603,
+     "gameType": "D",
+     "officialDate": "2012-10-10",
+     "gamesInSeries": 5,
+     "seriesDescription": "AL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 110,
+        "name": "Baltimore Orioles"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 147,
+        "name": "New York Yankees"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345604,
+     "gameType": "D",
+     "officialDate": "2012-10-11",
+     "gamesInSeries": 5,
+     "seriesDescription": "AL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 110,
+        "name": "Baltimore Orioles"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 147,
+        "name": "New York Yankees"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345605,
+     "gameType": "D",
+     "officialDate": "2012-10-12",
+     "gamesInSeries": 5,
+     "seriesDescription": "AL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 110,
+        "name": "Baltimore Orioles"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 147,
+        "name": "New York Yankees"
+       },
+       "isWinner": true
+      }
+     }
+    }
+   ]
+  },
+  {
+   "series": {
+    "id": "D_4",
+    "gameType": "D"
+   },
+   "games": [
+    {
+     "gamePk": 345611,
+     "gameType": "D",
+     "officialDate": "2012-10-07",
+     "gamesInSeries": 5,
+     "seriesDescription": "NL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 120,
+        "name": "Washington Nationals"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345612,
+     "gameType": "D",
+     "officialDate": "2012-10-08",
+     "gamesInSeries": 5,
+     "seriesDescription": "NL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 120,
+        "name": "Washington Nationals"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345613,
+     "gameType": "D",
+     "officialDate": "2012-10-10",
+     "gamesInSeries": 5,
+     "seriesDescription": "NL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 120,
+        "name": "Washington Nationals"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345614,
+     "gameType": "D",
+     "officialDate": "2012-10-11",
+     "gamesInSeries": 5,
+     "seriesDescription": "NL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 120,
+        "name": "Washington Nationals"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345615,
+     "gameType": "D",
+     "officialDate": "2012-10-12",
+     "gamesInSeries": 5,
+     "seriesDescription": "NL Division Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 120,
+        "name": "Washington Nationals"
+       },
+       "isWinner": false
+      }
+     }
+    }
+   ]
+  },
+  {
+   "series": {
+    "id": "L_1",
+    "gameType": "L"
+   },
+   "games": [
+    {
+     "gamePk": 345616,
+     "gameType": "L",
+     "officialDate": "2012-10-13",
+     "gamesInSeries": 7,
+     "seriesDescription": "AL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 147,
+        "name": "New York Yankees"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345617,
+     "gameType": "L",
+     "officialDate": "2012-10-14",
+     "gamesInSeries": 7,
+     "seriesDescription": "AL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 147,
+        "name": "New York Yankees"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345618,
+     "gameType": "L",
+     "officialDate": "2012-10-16",
+     "gamesInSeries": 7,
+     "seriesDescription": "AL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 147,
+        "name": "New York Yankees"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345619,
+     "gameType": "L",
+     "officialDate": "2012-10-18",
+     "gamesInSeries": 7,
+     "seriesDescription": "AL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "D"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 147,
+        "name": "New York Yankees"
+       }
+      },
+      "home": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       }
+      }
+     }
+    },
+    {
+     "gamePk": 345619,
+     "gameType": "L",
+     "officialDate": "2012-10-18",
+     "gamesInSeries": 7,
+     "seriesDescription": "AL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 147,
+        "name": "New York Yankees"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 116,
+        "name": "Detroit Tigers"
+       },
+       "isWinner": true
+      }
+     }
+    }
+   ]
+  },
+  {
+   "series": {
+    "id": "L_2",
+    "gameType": "L"
+   },
+   "games": [
+    {
+     "gamePk": 345623,
+     "gameType": "L",
+     "officialDate": "2012-10-14",
+     "gamesInSeries": 7,
+     "seriesDescription": "NL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345624,
+     "gameType": "L",
+     "officialDate": "2012-10-15",
+     "gamesInSeries": 7,
+     "seriesDescription": "NL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345625,
+     "gameType": "L",
+     "officialDate": "2012-10-17",
+     "gamesInSeries": 7,
+     "seriesDescription": "NL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345626,
+     "gameType": "L",
+     "officialDate": "2012-10-18",
+     "gamesInSeries": 7,
+     "seriesDescription": "NL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345627,
+     "gameType": "L",
+     "officialDate": "2012-10-19",
+     "gamesInSeries": 7,
+     "seriesDescription": "NL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      },
+      "home": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": false
+      }
+     }
+    },
+    {
+     "gamePk": 345628,
+     "gameType": "L",
+     "officialDate": "2012-10-21",
+     "gamesInSeries": 7,
+     "seriesDescription": "NL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      }
+     }
+    },
+    {
+     "gamePk": 345629,
+     "gameType": "L",
+     "officialDate": "2012-10-22",
+     "gamesInSeries": 7,
+     "seriesDescription": "NL Championship Series",
+     "status": {
+      "abstractGameState": "Final",
+      "codedGameState": "F"
+     },
+     "teams": {
+      "away": {
+       "team": {
+        "id": 138,
+        "name": "St. Louis Cardinals"
+       },
+       "isWinner": false
+      },
+      "home": {
+       "team": {
+        "id": 137,
+        "name": "San Francisco Giants"
+       },
+       "isWinner": true
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -241,6 +241,7 @@ Data-sanity spot checks (confirms the site matches the intended local build):
   it cannot be rebuilt, because each entry froze that day's bracket and board.
   Back it up with `.cache/betting/`. `data/bracket_sim_record.json` and
   `data/bracket_sim.json` are derived re-renders published by rsync.
+- **Postseason results.** The 26 files `data/_labs/postseason/statsapi_postseason_{2000..2025}.json` are tracked and never published (neither deploy consumer ships `data/_labs/`), so this box's checkout and its nightly `git checkout -- .` carry every completed postseason; the live season is fetched by run_daily step d8p on this box itself into `.cache/statsapi_postseason_{Y}.json`.
 - **Why those two betting directories are not "just cache".** `.cache/odds/` is
   the immutable price evidence: a closing line that was not captured near first
   pitch is gone, and every CLV grade on the public record is derived from it.

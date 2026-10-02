@@ -1,0 +1,953 @@
+{
+ "season": 2012,
+ "fetched_at": "2026-10-02T18:30:52+00:00",
+ "complete": true,
+ "body": {
+  "series": [
+   {
+    "series": {
+     "id": "W_1",
+     "gameType": "W"
+    },
+    "games": [
+     {
+      "gamePk": 345630,
+      "gameType": "W",
+      "gamesInSeries": 7,
+      "seriesDescription": "World Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345631,
+      "gameType": "W",
+      "gamesInSeries": 7,
+      "seriesDescription": "World Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345632,
+      "gameType": "W",
+      "gamesInSeries": 7,
+      "seriesDescription": "World Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345633,
+      "gameType": "W",
+      "gamesInSeries": 7,
+      "seriesDescription": "World Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": false
+       }
+      }
+     }
+    ]
+   },
+   {
+    "series": {
+     "id": "F_2",
+     "gameType": "F"
+    },
+    "games": [
+     {
+      "gamePk": 345595,
+      "gameType": "F",
+      "gamesInSeries": 1,
+      "seriesDescription": "NL Wild Card Game",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 144
+        },
+        "isWinner": false
+       }
+      }
+     }
+    ]
+   },
+   {
+    "series": {
+     "id": "F_1",
+     "gameType": "F"
+    },
+    "games": [
+     {
+      "gamePk": 345594,
+      "gameType": "F",
+      "gamesInSeries": 1,
+      "seriesDescription": "AL Wild Card Game",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 110
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 140
+        },
+        "isWinner": false
+       }
+      }
+     }
+    ]
+   },
+   {
+    "series": {
+     "id": "D_1",
+     "gameType": "D"
+    },
+    "games": [
+     {
+      "gamePk": 345596,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "AL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 133
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345597,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "AL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 133
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345598,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "AL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 133
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345599,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "AL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 133
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345600,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "AL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 133
+        },
+        "isWinner": false
+       }
+      }
+     }
+    ]
+   },
+   {
+    "series": {
+     "id": "D_3",
+     "gameType": "D"
+    },
+    "games": [
+     {
+      "gamePk": 345606,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "NL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 113
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345607,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "NL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 113
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345608,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "NL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 113
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345609,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "NL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 113
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345610,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "NL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 113
+        },
+        "isWinner": false
+       }
+      }
+     }
+    ]
+   },
+   {
+    "series": {
+     "id": "D_2",
+     "gameType": "D"
+    },
+    "games": [
+     {
+      "gamePk": 345601,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "AL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 147
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 110
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345602,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "AL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 147
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 110
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345603,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "AL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 110
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 147
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345604,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "AL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 110
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 147
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345605,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "AL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 110
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 147
+        },
+        "isWinner": true
+       }
+      }
+     }
+    ]
+   },
+   {
+    "series": {
+     "id": "D_4",
+     "gameType": "D"
+    },
+    "games": [
+     {
+      "gamePk": 345611,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "NL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 120
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345612,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "NL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 120
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345613,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "NL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 120
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345614,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "NL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 120
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345615,
+      "gameType": "D",
+      "gamesInSeries": 5,
+      "seriesDescription": "NL Division Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 120
+        },
+        "isWinner": false
+       }
+      }
+     }
+    ]
+   },
+   {
+    "series": {
+     "id": "L_1",
+     "gameType": "L"
+    },
+    "games": [
+     {
+      "gamePk": 345616,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "AL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 147
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345617,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "AL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 147
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345618,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "AL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 147
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345619,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "AL Championship Series",
+      "status": {
+       "codedGameState": "D"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 147
+        }
+       },
+       "home": {
+        "team": {
+         "id": 116
+        }
+       }
+      }
+     },
+     {
+      "gamePk": 345619,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "AL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 147
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 116
+        },
+        "isWinner": true
+       }
+      }
+     }
+    ]
+   },
+   {
+    "series": {
+     "id": "L_2",
+     "gameType": "L"
+    },
+    "games": [
+     {
+      "gamePk": 345623,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "NL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345624,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "NL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345625,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "NL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345626,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "NL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345627,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "NL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       },
+       "home": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": false
+       }
+      }
+     },
+     {
+      "gamePk": 345628,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "NL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       }
+      }
+     },
+     {
+      "gamePk": 345629,
+      "gameType": "L",
+      "gamesInSeries": 7,
+      "seriesDescription": "NL Championship Series",
+      "status": {
+       "codedGameState": "F"
+      },
+      "teams": {
+       "away": {
+        "team": {
+         "id": 138
+        },
+        "isWinner": false
+       },
+       "home": {
+        "team": {
+         "id": 137
+        },
+        "isWinner": true
+       }
+      }
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,406 @@
+{
+ "records": [
+  {
+   "division": {
+    "id": 201
+   },
+   "teamRecords": [
+    {
+     "divisionRank": "1",
+     "clinchIndicator": "z",
+     "clinched": true,
+     "divisionChamp": true,
+     "wins": 95,
+     "losses": 67,
+     "team": {
+      "id": 147,
+      "name": "Yankees"
+     }
+    },
+    {
+     "divisionRank": "2",
+     "clinchIndicator": "w",
+     "clinched": true,
+     "divisionChamp": false,
+     "wins": 93,
+     "losses": 69,
+     "team": {
+      "id": 110,
+      "name": "Orioles"
+     }
+    },
+    {
+     "divisionRank": "3",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 90,
+     "losses": 72,
+     "team": {
+      "id": 139,
+      "name": "Rays"
+     }
+    },
+    {
+     "divisionRank": "4",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 73,
+     "losses": 89,
+     "team": {
+      "id": 141,
+      "name": "Blue Jays"
+     }
+    },
+    {
+     "divisionRank": "5",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 69,
+     "losses": 93,
+     "team": {
+      "id": 111,
+      "name": "Red Sox"
+     }
+    }
+   ]
+  },
+  {
+   "division": {
+    "id": 202
+   },
+   "teamRecords": [
+    {
+     "divisionRank": "1",
+     "clinchIndicator": "y",
+     "clinched": true,
+     "divisionChamp": true,
+     "wins": 88,
+     "losses": 74,
+     "team": {
+      "id": 116,
+      "name": "Tigers"
+     }
+    },
+    {
+     "divisionRank": "2",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 85,
+     "losses": 77,
+     "team": {
+      "id": 145,
+      "name": "White Sox"
+     }
+    },
+    {
+     "divisionRank": "3",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 72,
+     "losses": 90,
+     "team": {
+      "id": 118,
+      "name": "Royals"
+     }
+    },
+    {
+     "divisionRank": "4",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 68,
+     "losses": 94,
+     "team": {
+      "id": 114,
+      "name": "Indians"
+     }
+    },
+    {
+     "divisionRank": "5",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 66,
+     "losses": 96,
+     "team": {
+      "id": 142,
+      "name": "Twins"
+     }
+    }
+   ]
+  },
+  {
+   "division": {
+    "id": 200
+   },
+   "teamRecords": [
+    {
+     "divisionRank": "1",
+     "clinchIndicator": "y",
+     "clinched": true,
+     "divisionChamp": true,
+     "wins": 94,
+     "losses": 68,
+     "team": {
+      "id": 133,
+      "name": "Athletics"
+     }
+    },
+    {
+     "divisionRank": "2",
+     "clinchIndicator": "w",
+     "clinched": true,
+     "divisionChamp": false,
+     "wins": 93,
+     "losses": 69,
+     "team": {
+      "id": 140,
+      "name": "Rangers"
+     }
+    },
+    {
+     "divisionRank": "3",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 89,
+     "losses": 73,
+     "team": {
+      "id": 108,
+      "name": "Angels"
+     }
+    },
+    {
+     "divisionRank": "4",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 75,
+     "losses": 87,
+     "team": {
+      "id": 136,
+      "name": "Mariners"
+     }
+    }
+   ]
+  },
+  {
+   "division": {
+    "id": 204
+   },
+   "teamRecords": [
+    {
+     "divisionRank": "1",
+     "clinchIndicator": "z",
+     "clinched": true,
+     "divisionChamp": true,
+     "wins": 98,
+     "losses": 64,
+     "team": {
+      "id": 120,
+      "name": "Nationals"
+     }
+    },
+    {
+     "divisionRank": "2",
+     "clinchIndicator": "w",
+     "clinched": true,
+     "divisionChamp": false,
+     "wins": 94,
+     "losses": 68,
+     "team": {
+      "id": 144,
+      "name": "Braves"
+     }
+    },
+    {
+     "divisionRank": "3",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 81,
+     "losses": 81,
+     "team": {
+      "id": 143,
+      "name": "Phillies"
+     }
+    },
+    {
+     "divisionRank": "4",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 74,
+     "losses": 88,
+     "team": {
+      "id": 121,
+      "name": "Mets"
+     }
+    },
+    {
+     "divisionRank": "5",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 69,
+     "losses": 93,
+     "team": {
+      "id": 146,
+      "name": "Marlins"
+     }
+    }
+   ]
+  },
+  {
+   "division": {
+    "id": 205
+   },
+   "teamRecords": [
+    {
+     "divisionRank": "1",
+     "clinchIndicator": "y",
+     "clinched": true,
+     "divisionChamp": true,
+     "wins": 97,
+     "losses": 65,
+     "team": {
+      "id": 113,
+      "name": "Reds"
+     }
+    },
+    {
+     "divisionRank": "2",
+     "clinchIndicator": "w",
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 88,
+     "losses": 74,
+     "team": {
+      "id": 138,
+      "name": "Cardinals"
+     }
+    },
+    {
+     "divisionRank": "3",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 83,
+     "losses": 79,
+     "team": {
+      "id": 158,
+      "name": "Brewers"
+     }
+    },
+    {
+     "divisionRank": "4",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 79,
+     "losses": 83,
+     "team": {
+      "id": 134,
+      "name": "Pirates"
+     }
+    },
+    {
+     "divisionRank": "5",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 61,
+     "losses": 101,
+     "team": {
+      "id": 112,
+      "name": "Cubs"
+     }
+    },
+    {
+     "divisionRank": "6",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 55,
+     "losses": 107,
+     "team": {
+      "id": 117,
+      "name": "Astros"
+     }
+    }
+   ]
+  },
+  {
+   "division": {
+    "id": 203
+   },
+   "teamRecords": [
+    {
+     "divisionRank": "1",
+     "clinchIndicator": "y",
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 94,
+     "losses": 68,
+     "team": {
+      "id": 137,
+      "name": "Giants"
+     }
+    },
+    {
+     "divisionRank": "2",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 86,
+     "losses": 76,
+     "team": {
+      "id": 119,
+      "name": "Dodgers"
+     }
+    },
+    {
+     "divisionRank": "3",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 81,
+     "losses": 81,
+     "team": {
+      "id": 109,
+      "name": "D-backs"
+     }
+    },
+    {
+     "divisionRank": "4",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 76,
+     "losses": 86,
+     "team": {
+      "id": 135,
+      "name": "Padres"
+     }
+    },
+    {
+     "divisionRank": "5",
+     "clinchIndicator": null,
+     "clinched": false,
+     "divisionChamp": false,
+     "wins": 64,
+     "losses": 98,
+     "team": {
+      "id": 115,
+      "name": "Rockies"
+     }
+    }
+   ]
+  }
+ ]
+}

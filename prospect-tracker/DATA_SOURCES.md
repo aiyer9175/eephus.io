@@ -27,6 +27,7 @@ happen inside the called module, so this file alone cannot split them).
 | d6. Roster status | - |
 | d7. Auto-debut detection | - |
 | d8. Trade detection | - |
+| d8p. Postseason series cache | - |
 | d8b. eWAR live-season rebuild (ewar.json) | ewar.json |
 | d9. Rebuild timeseries (no scrape) | fielding_innings.json, mlb_player_detail.json, mlb_projections.json, trade_values.json, xfv.json |
 | d9a. Provisional grade retention + track (provisional_track_eval.json) | provisional_track_eval.json |
