@@ -1234,6 +1234,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* Sidebar brand = the merged arc-wordmark at 20px (the arc IS the flourish - 
    the old iridescent underline is gone with it). */
 .sb-brand .wm { font-family: var(--font-retro-mono); font-weight: 700; font-size: 20px; letter-spacing: .03em; color: var(--text-primary); text-decoration: none; }
+/* The sidebar .io takes the logo accent like the nav and the hero (F16). */
+.sb-brand .wm .dot { color: var(--logo-dot); }
 .sb-search { width: 100%; font-family: var(--font-retro); font-size: 13px; padding: 8px 10px; margin-bottom: 18px;
   background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); }
 .sb-search::placeholder { color: var(--text-tertiary); }
@@ -1386,6 +1388,15 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .eephus-wordmark-merged { position: relative; display: inline-block; line-height: 1; padding-top: .67em; margin: 0; font-family: var(--font-logo); }
 .eephus-wordmark-merged .ew-arc { position: absolute; left: -1%; width: 102%; top: .04em; height: .48em; overflow: visible; }
 .eephus-wordmark-merged .ew-ball { position: absolute; left: 50%; top: -.08em; width: .26em; height: .26em; transform: translateX(-50%); color: var(--text-primary); }
+/* The arc and the ball rim read the ramp tokens (F1), so the dark deck gets
+   the dark ramp; the stop-color attributes in the markup (build_site.py and
+   the three hand-kept navs) are a light fallback only. The fourth stop is
+   --ramp-5: navy on paper (the light deck aliases it to --ramp-4), mint on
+   the dark field, skipping the dark ramp's gold (FV data, not chrome). */
+.eephus-wordmark-merged .ew-arc stop:nth-of-type(1) { stop-color: var(--ramp-1); }
+.eephus-wordmark-merged .ew-arc stop:nth-of-type(2) { stop-color: var(--ramp-2); }
+.eephus-wordmark-merged .ew-arc stop:nth-of-type(3) { stop-color: var(--ramp-3); }
+.eephus-wordmark-merged .ew-arc stop:nth-of-type(4) { stop-color: var(--ramp-5); }
 .masthead .eephus-logo { display: inline-flex; align-items: flex-end; gap: 14px; }
 /* β + @eephus_io chips stack beside the wordmark (β on top, X under),
    bottom-aligned with the lettering. */
@@ -1417,13 +1428,22 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* ---- Logo load animation: "the eephus" ----
    Homepage hero only (.eephus-logo--animate). One short shot on load: the lob
    arc traces in left to right, then the ball drops onto the apex and settles.
-   It never loops. The nav/sidebar lockups are static. The arc path carries
-   pathLength="100" (build_site.py) so the dash math is resolution-independent. */
-/* Robust by construction: the base path has NO dash (fully drawn), so if the
+   It never loops. The nav/sidebar lockups are static. */
+/* Fallback by construction: the base path has NO dash (fully drawn), so if the
    animation never runs - unsupported, an odd browser - the arc
    is simply visible. The keyframe sets the hidden start; `backwards` holds it
    only while the animation is live. The logo can never get stuck invisible. */
-.eephus-logo--animate .ew-arc path {
+/* The dash is in em (F2, 2026-10-02). The arc keeps vector-effect:
+   non-scaling-stroke, so its dash is measured in screen space, where the arc
+   runs 4.68em (sidebar, .03em tracking) to 4.77em (nav and hero, .04em)
+   (Chromium: 93.6 px at 20 px, 104.8 px at 22 px, 304.9 px at 64 px). A 4.8em
+   dash behind a 4.8em offset hides it all and traces it from the left. The
+   old pathLength="100" dash came out 100 screen px long, so it slid with a gap
+   and the arc popped in whole at the end.
+   The load shot runs on the two outer SVGs (the dash inherits into the path)
+   and the hover replay on the pieces inside them (F3), so the end of a hover
+   never restarts the load shot. */
+.eephus-logo--animate .ew-arc {
   animation: ew-arc-draw .8s cubic-bezier(.22,.61,.36,1) backwards;
 }
 .eephus-logo--animate .ew-ball {
@@ -1431,8 +1451,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   animation: ew-ball-settle .36s cubic-bezier(.34,1.56,.64,1) .6s backwards;
 }
 @keyframes ew-arc-draw {
-  from { stroke-dasharray: 100; stroke-dashoffset: 100; }
-  to   { stroke-dasharray: 100; stroke-dashoffset: 0; }
+  from { stroke-dasharray: 4.8em; stroke-dashoffset: 4.8em; }
+  to   { stroke-dasharray: 4.8em; stroke-dashoffset: 0; }
 }
 @keyframes ew-ball-settle {
   0%   { opacity: 0; transform: translateX(-50%) translateY(-.18em) scale(.7); }
@@ -1441,25 +1461,28 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 /* Hover-replay: hovering ANY eephus.io wordmark (hero, nav, sidebar) re-traces
    the arc and re-settles the ball, so the animation is always discoverable and
-   verifiable even if the one-shot on load was missed. Distinct keyframe names so
-   the hover actually re-triggers. It runs under Reduce Motion like every
-   animation here. */
+   verifiable even if the one-shot on load was missed. It rides the pieces
+   inside the two SVGs (the path, the ball's circle and seams), not the SVGs the
+   load shot rides, so leaving the hover never replays the load shot (F3). The
+   ball pieces move in the ball's own 24-unit box: -16.6 and 2.8 units are the
+   load shot's -.18em and .03em at the ball's .26em size. It runs under Reduce
+   Motion like every animation here. */
 .eephus-wordmark-merged { cursor: pointer; }
 .eephus-wordmark-merged:hover .ew-arc path {
   animation: ew-arc-redraw .8s cubic-bezier(.22,.61,.36,1) backwards;
 }
-.eephus-wordmark-merged:hover .ew-ball {
-  transform-origin: center bottom;
+.eephus-wordmark-merged:hover .ew-ball > * {
+  transform-box: view-box; transform-origin: 12px 24px;
   animation: ew-ball-resettle .42s cubic-bezier(.34,1.56,.64,1) .5s backwards;
 }
 @keyframes ew-arc-redraw {
-  from { stroke-dasharray: 100; stroke-dashoffset: 100; }
-  to   { stroke-dasharray: 100; stroke-dashoffset: 0; }
+  from { stroke-dasharray: 4.8em; stroke-dashoffset: 4.8em; }
+  to   { stroke-dasharray: 4.8em; stroke-dashoffset: 0; }
 }
 @keyframes ew-ball-resettle {
-  0%   { opacity: 0; transform: translateX(-50%) translateY(-.18em) scale(.7); }
-  70%  { opacity: 1; transform: translateX(-50%) translateY(.03em) scale(1.05); }
-  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  0%   { opacity: 0; transform: translateY(-16.6px) scale(.7); }
+  70%  { transform: translateY(2.8px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
 }
 /* The logo's one-shot draw-on and the hover replay both run under Reduce
    Motion (owner, 2026-10-01). */
@@ -1468,6 +1491,63 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    the wordmark reads like backlit chrome on the holo field. Dark only. */
 [data-theme="dark"] .masthead .nameplate {
   text-shadow: 0 0 10px rgba(155, 140, 255, 0.35), 0 0 3px rgba(0, 217, 255, 0.22);
+}
+
+/* ---- Pixel wordmark (PB-03, owner ask 2; build_site.PIXEL_BRAND, off until
+   its own flip commit) ----
+   The rules between the two markers are assets/brand/wordmark.css, written by
+   tools/pixel_brand.py, verbatim (test_pixel_brand_motion.py keeps them in
+   step). Every fill is a token; every animation is step-end and plays once;
+   the base style of every piece is its finished frame. The hero fragments
+   (s 6 and s 4) carry wm-px--play: the pitch and one glint per page view.
+   Hover replays on the inner groups (.wm-h, .wm-bh), so leaving never replays.
+   Like every animation on the site it runs under Reduce Motion (owner,
+   2026-10-01). */
+/* pixel-wordmark:begin */
+.eephus-wordmark-px { display: inline-block; position: relative; line-height: 0; margin: 0; }
+.eephus-wordmark-px .wm-txt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wm-px { display: block; overflow: visible; shape-rendering: crispEdges; }
+.wm-px .wm-ink { fill: var(--text-primary); }
+.wm-px .wm-dot { fill: var(--logo-dot); }
+.wm-px .wm-k { fill: var(--text-primary); }
+.wm-px .wm-c { fill: var(--ball-face); }
+.wm-px .wm-a { fill: var(--seam-1); }
+.wm-px .wm-b { fill: var(--seam-2); }
+.wm-px .wm-d { fill: var(--seam-3); }
+.wm-px .wm-e { fill: var(--seam-4); }
+.wm-px .wm-b0 { fill: var(--arc-1); }
+.wm-px .wm-b1 { fill: var(--arc-2); }
+.wm-px .wm-b2 { fill: var(--arc-3); }
+.wm-px .wm-b3 { fill: var(--arc-4); }
+.wm-px .wm-b4 { fill: var(--arc-5); }
+.wm-px .wm-b5 { fill: var(--arc-6); }
+.wm-px .wm-b6 { fill: var(--arc-7); }
+.wm-px .wm-b7 { fill: var(--arc-8); }
+.wm-px .wm-glint path { fill: var(--logo-dot); opacity: 0; }
+@keyframes wm-on { from { opacity: 0; } }
+@keyframes wm-on-h { from { opacity: 0; } }
+@keyframes wm-drop { 0% { opacity: 0; } 1% { opacity: 1; transform: translateY(calc(-2 * var(--u))); } 34% { transform: translateY(calc(-1 * var(--u))); } 67% { transform: translateY(var(--nudge)); } }
+@keyframes wm-drop-h { 0% { opacity: 0; } 1% { opacity: 1; transform: translateY(calc(-2 * var(--u))); } 34% { transform: translateY(calc(-1 * var(--u))); } 67% { transform: translateY(var(--nudge)); } }
+@keyframes wm-flash { from { opacity: 1; } to { opacity: 1; } }
+.wm-px--play .wm-s { animation: wm-on 1ms step-end backwards; animation-delay: calc(var(--i) * var(--step)); }
+.wm-px--play .wm-ball { animation: wm-drop 240ms step-end backwards; animation-delay: var(--drop-at); }
+.wm-px--play .wm-glint .g1 { animation: wm-flash 120ms step-end var(--glint-at) 1; }
+.wm-px--play .wm-glint .g2 { animation: wm-flash 120ms step-end calc(var(--glint-at) + 120ms) 1; }
+.wm-px--play .wm-glint .g3 { animation: wm-flash 120ms step-end calc(var(--glint-at) + 240ms) 1; }
+.eephus-wordmark-px:hover .wm-h { animation: wm-on-h 1ms step-end backwards; animation-delay: calc(var(--i) * var(--step)); }
+.eephus-wordmark-px:hover .wm-bh { animation: wm-drop-h 240ms step-end backwards; animation-delay: var(--drop-at); }
+/* pixel-wordmark:end */
+.eephus-wordmark-px { cursor: pointer; }
+/* The hero carries the s 6 lockup and its s 4 phone twin; one shows. */
+.masthead .eephus-wordmark-px > svg.wm-px:nth-of-type(2) { display: none; }
+@media (max-width: 539.98px) {
+  .masthead .eephus-wordmark-px > svg.wm-px:nth-of-type(1) { display: none; }
+  .masthead .eephus-wordmark-px > svg.wm-px:nth-of-type(2) { display: block; }
+}
+/* Dark: the hero keeps its neon glow with the same two colours, moved from
+   text-shadow (the pixel lockup has no text to shadow) to drop-shadow. */
+[data-theme="dark"] .masthead .eephus-wordmark-px .wm-px {
+  filter: drop-shadow(0 0 10px rgba(155, 140, 255, 0.35)) drop-shadow(0 0 3px rgba(0, 217, 255, 0.22));
 }
 
 /* ---- On-theme scrollbars (one token set, shared with PROSPX's inline copy).

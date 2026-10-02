@@ -682,8 +682,11 @@ def _footer() -> str:
 EEPHUS_VERSION = "β v1.0"
 # PIXEL_BRAND (owner ask 2, Part 8 pixel_branding lane): the pixel brand swap.
 # Off by default, and off builds byte-identical pages. On, FAVICON_LINKS and the
-# footer mark read the pixel set in assets/brand/ (BR-04). It flips in its own
-# commit after the fWAR label epoch's step Z entry.
+# footer mark read the pixel set in assets/brand/ (BR-04), and (PB-03, PB-Q1 B
+# Stepped) every eephus.io wordmark (nav, homepage sidebar, homepage hero) and
+# the three hand-kept navs serve the committed pixel lockup from assets/brand/
+# (tools/pixel_brand.py) instead of the live-text-plus-vector mark. It flips in
+# its own commit after the fWAR label epoch's step Z entry.
 PIXEL_BRAND = False
 FAVICON_LINKS = _FAVICON_LINKS_PIXEL if PIXEL_BRAND else _FAVICON_LINKS_LEGACY
 BETA_BADGE = (
@@ -815,8 +818,37 @@ def _discord_link(cls: str = "") -> str:
 # masthead gradient (vector-effect keeps the stroke crisp under the
 # stretch-to-width scaling); the ball is its own fixed-aspect SVG so it can
 # never squash, punches through via .eephus-logo-ball (theme-aware bg fill),
-# and the seam rides currentColor.
+# and the seam rides currentColor. The four stop-color attributes are the
+# light ramp as a fallback only: assets/site.css sets every stop from the
+# --ramp-* tokens, so the dark deck gets the dark ramp (F1). The path carries
+# no pathLength: under vector-effect Chromium scaled the 100-unit dash
+# against the wrong length, so the draw slid instead of tracing (F2); the
+# dash is now set in em in site.css, measured against the arc's real length.
+#
+# PIXEL_BRAND on: the committed pixel lockup for the placement (s 2 in the nav
+# and the sidebar; s 6 on the hero with the s 4 phone twin, switched by a
+# media query under 540 px), the words kept as visually hidden text.
+_PIXEL_WORDMARK_SCALES = {"mast": (6, 4)}
+
+
+@functools.lru_cache(maxsize=None)
+def pixel_wordmark_fragment(scale: int) -> str:
+    """The committed DOM fragment assets/brand/wordmark-s{scale}.svg, byte for
+    byte (tools/pixel_brand.py writes it; nothing here edits it)."""
+    return (ROOT / "assets" / "brand" / f"wordmark-s{scale}.svg").read_bytes().decode("utf-8").strip()
+
+
+def pixel_wordmark(uid: str, tag: str = "h1") -> str:
+    """The PIXEL_BRAND lockup: the placement's fragment(s) plus the words as
+    visually hidden text, so the homepage h1 stays an h1 that reads eephus.io."""
+    svgs = "".join(pixel_wordmark_fragment(s) for s in _PIXEL_WORDMARK_SCALES.get(uid, (2,)))
+    return (f'<{tag} class="nameplate eephus-wordmark-px">{svgs}'
+            f'<span class="wm-txt">eephus.io</span></{tag}>')
+
+
 def eephus_merged_wordmark(uid: str, tag: str = "h1") -> str:
+    if PIXEL_BRAND:
+        return pixel_wordmark(uid, tag)
     grad = f"eephus-arc-{uid}" # per-instance gradient id - two marks per page
     arc = (
         f'<svg class="ew-arc" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">'
@@ -824,7 +856,7 @@ def eephus_merged_wordmark(uid: str, tag: str = "h1") -> str:
         '<stop offset="0%" stop-color="#B91C1C"/><stop offset="38%" stop-color="#C9A227"/>'
         '<stop offset="68%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>'
         '</linearGradient></defs>'
-        f'<path d="M 3 30 Q 50 -24 97 30" pathLength="100" fill="none" stroke="url(#{grad})" '
+        f'<path d="M 3 30 Q 50 -24 97 30" fill="none" stroke="url(#{grad})" '
         'stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>'
         f'<svg class="ew-ball" viewBox="0 0 24 24" aria-hidden="true">'
         f'<circle class="eephus-logo-ball" cx="12" cy="12" r="8.5" stroke="url(#{grad})" stroke-width="3"/>'
@@ -871,7 +903,8 @@ def eephus_logo_lockup(badge: bool = True) -> str:
     ) if badge else ""
     # eephus-logo--animate plays the one-shot arc-draw + ball-settle on the
     # homepage hero only (the nav/sidebar lockups stay static). It plays under
-    # Reduce Motion as well; see assets/site.css.
+    # Reduce Motion as well; see assets/site.css. Under PIXEL_BRAND the hero
+    # fragments carry their own one-shot (wm-px--play), so the class is inert.
     return f'<div class="eephus-logo eephus-logo--animate">{eephus_merged_wordmark("mast")}{chips}</div>'
 
 # --------------------------------------------------------------------------- #
@@ -7115,9 +7148,27 @@ def _restamp_html(text: str) -> str:
     return text
 
 
+# The nav lockup inside each hand-kept page's brand link: today's vector mark,
+# or a pixel lockup an earlier PIXEL_BRAND build wrote (so a regenerated
+# fragment re-syncs). One line each, no nested <span class="nameplate">.
+_HAND_NAV_LOCKUP_RE = re.compile(
+    r'(<a class="eephus-wordmark" href="/" aria-label="eephus\.io home">)'
+    r'(<span class="nameplate eephus-wordmark-merged">.*?eephus<span class="dot">\.io</span></span>'
+    r'|<span class="nameplate eephus-wordmark-px">.*?<span class="wm-txt">eephus\.io</span></span>)'
+    r'(</a>)')
+
+
+def pixel_brand_hand_nav(text: str) -> str:
+    """PB-03: the hand-kept nav lockup replaced by the generated s 2 pixel
+    lockup, byte for byte what _nav() serves. Nothing else on the page moves."""
+    return _HAND_NAV_LOCKUP_RE.sub(
+        lambda m: m.group(1) + pixel_wordmark("nav", tag="span") + m.group(3), text, count=1)
+
+
 def restamp_hand_authored_pages() -> None:
     """Stamp every /assets/ stylesheet, script and <use> ref in the
-    hand-authored pages with the asset's current content hash (_restamp_html)."""
+    hand-authored pages with the asset's current content hash (_restamp_html).
+    With PIXEL_BRAND on, the nav lockup is synced to the pixel lockup too."""
     for rel in HAND_AUTHORED_PAGES:
         path = ROOT / rel
         if not path.exists():
@@ -7125,6 +7176,8 @@ def restamp_hand_authored_pages() -> None:
             continue
         original = path.read_text(encoding="utf-8")
         stamped = _restamp_html(original)
+        if PIXEL_BRAND:
+            stamped = pixel_brand_hand_nav(stamped)
         if stamped != original:
             path.write_text(stamped, encoding="utf-8")
             print(f"  restamped {rel}")

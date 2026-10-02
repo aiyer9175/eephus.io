@@ -31,6 +31,3 @@
 .wm-px--play .wm-glint .g3 { animation: wm-flash 120ms step-end calc(var(--glint-at) + 240ms) 1; }
 .eephus-wordmark-px:hover .wm-h { animation: wm-on-h 1ms step-end backwards; animation-delay: calc(var(--i) * var(--step)); }
 .eephus-wordmark-px:hover .wm-bh { animation: wm-drop-h 240ms step-end backwards; animation-delay: var(--drop-at); }
-@media (prefers-reduced-motion: reduce) {
-  .wm-px .wm-s, .wm-px .wm-h, .wm-px .wm-ball, .wm-px .wm-bh, .wm-px .wm-glint path { animation: none !important; }
-}

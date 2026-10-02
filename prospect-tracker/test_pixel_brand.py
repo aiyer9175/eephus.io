@@ -13,8 +13,8 @@ fragment is token-only, integer, aria-hidden and small; the ball is 4 s wide
 (plus 1 at odd s); the arc is symmetric and never shrinks toward the apex; the
 favicon carries exactly the 16, 32 and 48 strikes, the app icons are strike 32
 at whole scales, and FAVICON_LINKS and the footer mark switch with the
-PIXEL_BRAND flag (BR-04); the motion is step-end
-only, plays once, and stops under reduced motion, hover included.
+PIXEL_BRAND flag (BR-04); the motion is step-end only and plays once, under
+Reduce Motion as without it (site policy, owner 2026-10-01).
 """
 from __future__ import annotations
 
@@ -224,10 +224,11 @@ def test_wordmark_css_fills_are_tokens_and_motion_is_step_end_once():
         assert "step-end" in a, a
         assert "infinite" not in a, a
     assert "transition" not in css
-    rm = re.search(r"@media \(prefers-reduced-motion: reduce\) \{(.*?)\n\}", css, re.S).group(1)
-    for sel in (".wm-s", ".wm-h", ".wm-ball", ".wm-bh", ".wm-glint path"):
-        assert sel in rm, sel
-    assert "animation: none !important" in rm
+    # The site policy (owner, 2026-10-01; plan 5.7.1 amendment) runs every
+    # animation under Reduce Motion as without it, superseding PB-03's
+    # "reduced motion stops everything": no rule may still the marks.
+    assert "prefers-reduced-motion" not in css
+    assert "animation: none" not in css
     animated = {m.group(1).split()[-1] for m in re.finditer(r"([^{}\n]+)\{[^{}]*animation:\s*wm-", css)}
     assert animated <= {".wm-s", ".wm-h", ".wm-ball", ".wm-bh", ".g1", ".g2", ".g3"}, animated
 

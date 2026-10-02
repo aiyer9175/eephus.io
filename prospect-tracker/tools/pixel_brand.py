@@ -28,7 +28,9 @@ Writes ONLY these two folders, never data/ (the pytest-revert trap):
 The served pages read the icon set from assets/brand/ only when build_site.py's
 PIXEL_BRAND flag is on (FAVICON_LINKS and the footer mark switch with it); the
 served favicon.ico, assets/favicon.svg, favicon-16.png and favicon-32.png are
-PX-23's copies of the same strikes. BR-03 and BR-05 to BR-09 swap in the rest.
+PX-23's copies of the same strikes. Behind the same flag build_site.py reads the
+assets/brand wordmark fragments (BR-03), and assets/site.css carries
+wordmark.css's rules; BR-05 to BR-09 swap in the rest.
 
     python tools/pixel_brand.py                   write into the repo
     python tools/pixel_brand.py --out DIR         same relative paths under DIR
@@ -177,8 +179,10 @@ def wordmark_css():
     The base style of every piece is its finished frame; an animation only hides
     or offsets it for a moment, so a browser that runs none of it shows the
     finished mark. step-end only (whole-pixel frames, no tweening), one
-    iteration, no script. prefers-reduced-motion stops every piece, hover
-    included. Hover replays on inner groups, so leaving the hover never replays.
+    iteration, no script. Hover replays on inner groups, so leaving the hover
+    never replays. No reduced-motion rule: the site policy (owner, 2026-10-01,
+    assets/site.css) runs every animation as it runs without the preference,
+    and it supersedes PB-03's 'reduced motion stops everything'.
     """
     m = SRC.MOTION
     drop, fr = m["drop_ms"], m["glint_frame_ms"]
@@ -216,10 +220,6 @@ def wordmark_css():
         "animation-delay: calc(var(--i) * var(--step)); }",
         f".eephus-wordmark-px:hover .wm-bh {{ animation: wm-drop-h {drop}ms step-end backwards; "
         "animation-delay: var(--drop-at); }",
-        "@media (prefers-reduced-motion: reduce) {",
-        "  .wm-px .wm-s, .wm-px .wm-h, .wm-px .wm-ball, .wm-px .wm-bh, .wm-px .wm-glint path "
-        "{ animation: none !important; }",
-        "}",
     ]
     return "\n".join(css) + "\n"
 
