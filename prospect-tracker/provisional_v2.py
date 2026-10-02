@@ -60,8 +60,12 @@ here is on the eFV scale, and nothing here feeds eFV.
 ARTIFACTS. data/provisional_v2.json (the served anchor's rows) and
 data/provisional_v2_eval.json (forward-chained backcast, labelled BACKCAST: each test
 anchor is scored by models trained only on earlier anchors, with the shift fitted on the
-anchor before it; plus the reproduction of the frozen 2026-09-25 candidate). Nothing on
-the site reads either yet (board section PV-07 waits on owner questions Q1-Q3).
+anchor before it; plus the reproduction of the frozen 2026-09-25 candidate). The PROSPX
+board section (PV-07) reads the rows; the Source Comparison page (PV-08) reads the eval's
+label, label_note and backcast block only. Labs
+write their own blocks into the eval file (LAB_BLOCKS: pv10_draftee from
+tools/provisional_draftee_lab.py, pv11_alevel when that arm reads); a rebuild here
+carries them forward unchanged.
 
 REPRODUCTION. On the lane's own frame (test_fixtures/provisional_v2_pg2_frame_2026-09-25.csv.xz)
 the port returns the frozen p_g6 / p_g12 of all 4,163 rows exactly. On the live inputs it
@@ -124,6 +128,9 @@ RIDGE_ALPHA = 10.0
 CAPTURE_FLOOR = 0.5
 BOOT_B = 1000
 BOOT_SEED = 7
+#: Eval-file blocks written by other producers, carried forward by build(): the PV-10
+#: draftee head (tools/provisional_draftee_lab.py) and the PV-11 A-level arm.
+LAB_BLOCKS = ("pv10_draftee", "pv11_alevel")
 
 # Feature groups, in the lane frame's column order (LightGBM column sampling is by index).
 AL = ["age", "lvr", "age_rel", "n_seasons", "n_levels", "maxlvr_y", "lv_gain", "dsl"]
@@ -1045,6 +1052,17 @@ def _write_rows_doc(path: Path, head: dict, rows: list[dict]) -> None:
     tmp.replace(path)
 
 
+def carried_blocks(path) -> dict:
+    """The LAB_BLOCKS already in the eval file at `path` (empty when it is absent or unreadable)."""
+    try:
+        old = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(old, dict):
+        return {}
+    return {k: old[k] for k in LAB_BLOCKS if k in old}
+
+
 def _write_json(path: Path, doc: dict) -> None:
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -1123,6 +1141,7 @@ def build(persist: bool = True, as_of: str | None = None, *, out_path=None, eval
         ep = Path(eval_path) if eval_path else (EVAL_PATH if real else d / "provisional_v2_eval.json")
         op.parent.mkdir(parents=True, exist_ok=True)
         _write_rows_doc(op, meta, rows)
+        ev.update(carried_blocks(ep))
         _write_json(ep, ev)
     return {"status": "ok", "as_of": as_of, "anchor": f"{atype} {y}", "n_rows": len(rows), "meta": meta,
             "eval": ev, "rows": rows}

@@ -1766,5 +1766,1595 @@
     "p_g12_spearman": 0.9829
    }
   }
+ },
+ "pv10_draftee": {
+  "label": "BACKCAST",
+  "generated_at": "2026-10-02T11:58:56+00:00",
+  "as_of": "2026-10-02",
+  "producer": "tools/provisional_draftee_lab.py",
+  "predeclaration": "docs/provisional-v2/PV10_DRAFTEE_HEAD_PREDECLARED.md",
+  "predeclared_commit": "17bcae23",
+  "label_note": "development read of the PV-10 draftee head (players with no pro line), forward-chained on the 2017 to 2025 draft classes: each test class is scored only by models trained on earlier classes. It adjudicates nothing and nothing is served from it.",
+  "reads_no_war": true,
+  "served": false,
+  "feeds_efv": false,
+  "params": {
+   "n_estimators": 300,
+   "learning_rate": 0.03,
+   "num_leaves": 15,
+   "min_child_samples": 40,
+   "subsample": 0.8,
+   "subsample_freq": 1,
+   "colsample_bytree": 0.8,
+   "random_state": 7,
+   "verbose": -1
+  },
+  "features_ped0": [
+   "d_logpick",
+   "d_round",
+   "d_logslot",
+   "d_hs",
+   "d_jc",
+   "d_age",
+   "d_logrank",
+   "d_ranked",
+   "pitcher"
+  ],
+  "features_ped1": [
+   "d_logpick",
+   "d_round",
+   "d_logslot",
+   "d_hs",
+   "d_jc",
+   "d_age",
+   "d_logrank",
+   "d_ranked",
+   "pitcher",
+   "d_logbonus",
+   "d_bonus_over_slot",
+   "d_signed"
+  ],
+  "draft_end": {
+   "2017": "2017-06-14",
+   "2018": "2018-06-06",
+   "2019": "2019-06-05",
+   "2020": "2020-06-11",
+   "2021": "2021-07-13",
+   "2022": "2022-07-19",
+   "2023": "2023-07-11",
+   "2024": "2024-07-16",
+   "2025": "2025-07-14"
+  },
+  "capture_floor": 0.5,
+  "universe": {
+   "DRAFT": {
+    "2017": {
+     "drafted": 1215,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 7,
+     "universe": 1208
+    },
+    "2018": {
+     "drafted": 1214,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 2,
+     "universe": 1212
+    },
+    "2019": {
+     "drafted": 1217,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 1,
+     "universe": 1216
+    },
+    "2020": {
+     "drafted": 160,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 2,
+     "universe": 158
+    },
+    "2021": {
+     "drafted": 612,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 6,
+     "universe": 606
+    },
+    "2022": {
+     "drafted": 616,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 0,
+     "universe": 616
+    },
+    "2023": {
+     "drafted": 614,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 3,
+     "universe": 611
+    },
+    "2024": {
+     "drafted": 615,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 2,
+     "universe": 613
+    },
+    "2025": {
+     "drafted": 615,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 3,
+     "universe": 612
+    }
+   },
+   "SIGNED": {
+    "2017": {
+     "drafted": 1215,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 7,
+     "universe": 1208
+    },
+    "2018": {
+     "drafted": 1214,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 141,
+     "universe": 1073
+    },
+    "2019": {
+     "drafted": 1217,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 196,
+     "universe": 1021
+    },
+    "2020": {
+     "drafted": 160,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 122,
+     "universe": 38
+    },
+    "2021": {
+     "drafted": 612,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 133,
+     "universe": 479
+    },
+    "2022": {
+     "drafted": 616,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 160,
+     "universe": 456
+    },
+    "2023": {
+     "drafted": 614,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 135,
+     "universe": 479
+    },
+    "2024": {
+     "drafted": 615,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 124,
+     "universe": 491
+    },
+    "2025": {
+     "drafted": 615,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 150,
+     "universe": 465
+    }
+   },
+   "NOLINE_OCT": {
+    "2017": {
+     "drafted": 1215,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 1,
+     "out_line_in_class_season": 895,
+     "universe": 319
+    },
+    "2018": {
+     "drafted": 1214,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 14,
+     "out_line_in_class_season": 895,
+     "universe": 305
+    },
+    "2019": {
+     "drafted": 1217,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 38,
+     "out_line_in_class_season": 752,
+     "universe": 427
+    },
+    "2020": {
+     "drafted": 160,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 121,
+     "out_line_in_class_season": 1,
+     "universe": 38
+    },
+    "2021": {
+     "drafted": 612,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 23,
+     "out_line_in_class_season": 474,
+     "universe": 115
+    },
+    "2022": {
+     "drafted": 616,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 50,
+     "out_line_in_class_season": 404,
+     "universe": 162
+    },
+    "2023": {
+     "drafted": 614,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 43,
+     "out_line_in_class_season": 428,
+     "universe": 143
+    },
+    "2024": {
+     "drafted": 615,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 67,
+     "out_line_in_class_season": 259,
+     "universe": 289
+    },
+    "2025": {
+     "drafted": 615,
+     "out_pro_line_before_class": 0,
+     "out_opinion_on_or_before_anchor": 88,
+     "out_line_in_class_season": 247,
+     "universe": 280
+    }
+   }
+  },
+  "DRAFT": {
+   "T1": {
+    "ANY_PRE": {
+     "label": "PRE_ANY",
+     "window": "first grade after the last day of the draft and on or before Apr 15 of the next year",
+     "features": [
+      "d_logpick",
+      "d_round",
+      "d_logslot",
+      "d_hs",
+      "d_jc",
+      "d_age",
+      "d_logrank",
+      "d_ranked",
+      "pitcher"
+     ],
+     "test_classes": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+     ],
+     "classes_left_out": {
+      "2025": "label capture gap: mlb_pipeline 48 rows against an earlier median of 1001; mlb_pipeline_international 0 rows against an earlier median of 42"
+     },
+     "pooled": {
+      "n": 3820,
+      "pos": 1154,
+      "base_rate": 0.3021,
+      "auc": 0.9227,
+      "ap": 0.8807,
+      "null_draft_order_auc": 0.9313,
+      "null_draft_order_ap": 0.8932,
+      "auc_ci95": [
+       0.9115,
+       0.9326
+      ],
+      "ap_ci95": [
+       0.8621,
+       0.8972
+      ],
+      "auc_minus_draft_order": -0.0086,
+      "auc_minus_draft_order_ci95": [
+       -0.0145,
+       -0.0024
+      ],
+      "ap_minus_draft_order": -0.0125,
+      "ap_minus_draft_order_ci95": [
+       -0.023,
+       -0.0023
+      ],
+      "boot_b": 1000,
+      "null_predraft_rank_auc": 0.9203,
+      "logistic_auc": 0.9347,
+      "brier_raw": 0.08438,
+      "class_mean_auc": 0.9121,
+      "class_mean_null_draft_order_auc": 0.913
+     },
+     "by_class": {
+      "2019": {
+       "n": 1216,
+       "pos": 219,
+       "base_rate": 0.1801,
+       "auc": 0.9499,
+       "ap": 0.8829,
+       "null_draft_order_auc": 0.955,
+       "null_predraft_rank_auc": 0.948,
+       "logistic_auc": 0.9601,
+       "brier_raw": 0.05941,
+       "brier_train_rate": 0.15003,
+       "sum_p": 152.9,
+       "train_classes": [
+        2017,
+        2018
+       ]
+      },
+      "2020": {
+       "n": 158,
+       "pos": 135,
+       "base_rate": 0.8544,
+       "auc": 0.9208,
+       "ap": 0.9859,
+       "null_draft_order_auc": 0.9002,
+       "null_predraft_rank_auc": 0.9337,
+       "logistic_auc": 0.9433,
+       "brier_raw": 0.07697,
+       "brier_train_rate": 0.62386,
+       "sum_p": 132.3,
+       "train_classes": [
+        2017,
+        2018,
+        2019
+       ]
+      },
+      "2021": {
+       "n": 606,
+       "pos": 189,
+       "base_rate": 0.3119,
+       "auc": 0.8765,
+       "ap": 0.8325,
+       "null_draft_order_auc": 0.8881,
+       "null_predraft_rank_auc": 0.8711,
+       "logistic_auc": 0.8864,
+       "brier_raw": 0.10379,
+       "brier_train_rate": 0.23277,
+       "sum_p": 168.9,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020
+       ]
+      },
+      "2022": {
+       "n": 616,
+       "pos": 214,
+       "base_rate": 0.3474,
+       "auc": 0.9074,
+       "ap": 0.8821,
+       "null_draft_order_auc": 0.9247,
+       "null_predraft_rank_auc": 0.9134,
+       "logistic_auc": 0.9291,
+       "brier_raw": 0.09797,
+       "brier_train_rate": 0.24973,
+       "sum_p": 190.8,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021
+       ]
+      },
+      "2023": {
+       "n": 611,
+       "pos": 200,
+       "base_rate": 0.3273,
+       "auc": 0.9094,
+       "ap": 0.8832,
+       "null_draft_order_auc": 0.9046,
+       "null_predraft_rank_auc": 0.8929,
+       "logistic_auc": 0.9169,
+       "brier_raw": 0.09589,
+       "brier_train_rate": 0.23296,
+       "sum_p": 209.5,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+       ]
+      },
+      "2024": {
+       "n": 613,
+       "pos": 197,
+       "base_rate": 0.3214,
+       "auc": 0.9088,
+       "ap": 0.8735,
+       "null_draft_order_auc": 0.9055,
+       "null_predraft_rank_auc": 0.8886,
+       "logistic_auc": 0.912,
+       "brier_raw": 0.0915,
+       "brier_train_rate": 0.22708,
+       "sum_p": 204.6,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+       ]
+      }
+     }
+    },
+    "FG_PRE": {
+     "label": "PRE_FG",
+     "window": "first grade after the last day of the draft and on or before Apr 15 of the next year",
+     "features": [
+      "d_logpick",
+      "d_round",
+      "d_logslot",
+      "d_hs",
+      "d_jc",
+      "d_age",
+      "d_logrank",
+      "d_ranked",
+      "pitcher"
+     ],
+     "test_classes": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "classes_left_out": {},
+     "pooled": {
+      "n": 4432,
+      "pos": 1236,
+      "base_rate": 0.2789,
+      "auc": 0.9055,
+      "ap": 0.8495,
+      "null_draft_order_auc": 0.925,
+      "null_draft_order_ap": 0.8712,
+      "auc_ci95": [
+       0.8948,
+       0.9161
+      ],
+      "ap_ci95": [
+       0.8313,
+       0.8679
+      ],
+      "auc_minus_draft_order": -0.0195,
+      "auc_minus_draft_order_ci95": [
+       -0.0268,
+       -0.0132
+      ],
+      "ap_minus_draft_order": -0.0217,
+      "ap_minus_draft_order_ci95": [
+       -0.032,
+       -0.012
+      ],
+      "boot_b": 1000,
+      "null_predraft_rank_auc": 0.9158,
+      "logistic_auc": 0.924,
+      "brier_raw": 0.09175,
+      "class_mean_auc": 0.9102,
+      "class_mean_null_draft_order_auc": 0.9082
+     },
+     "by_class": {
+      "2019": {
+       "n": 1216,
+       "pos": 209,
+       "base_rate": 0.1719,
+       "auc": 0.9503,
+       "ap": 0.8567,
+       "null_draft_order_auc": 0.9538,
+       "null_predraft_rank_auc": 0.9487,
+       "logistic_auc": 0.9595,
+       "brier_raw": 0.07995,
+       "brier_train_rate": 0.14649,
+       "sum_p": 109.4,
+       "train_classes": [
+        2017,
+        2018
+       ]
+      },
+      "2020": {
+       "n": 158,
+       "pos": 133,
+       "base_rate": 0.8418,
+       "auc": 0.917,
+       "ap": 0.9843,
+       "null_draft_order_auc": 0.8857,
+       "null_predraft_rank_auc": 0.9335,
+       "logistic_auc": 0.9438,
+       "brier_raw": 0.08859,
+       "brier_train_rate": 0.64125,
+       "sum_p": 122.9,
+       "train_classes": [
+        2017,
+        2018,
+        2019
+       ]
+      },
+      "2021": {
+       "n": 606,
+       "pos": 176,
+       "base_rate": 0.2904,
+       "auc": 0.8618,
+       "ap": 0.8037,
+       "null_draft_order_auc": 0.8719,
+       "null_predraft_rank_auc": 0.8585,
+       "logistic_auc": 0.8686,
+       "brier_raw": 0.11236,
+       "brier_train_rate": 0.22344,
+       "sum_p": 147.8,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020
+       ]
+      },
+      "2022": {
+       "n": 616,
+       "pos": 197,
+       "base_rate": 0.3198,
+       "auc": 0.8908,
+       "ap": 0.8439,
+       "null_draft_order_auc": 0.9099,
+       "null_predraft_rank_auc": 0.8983,
+       "logistic_auc": 0.9114,
+       "brier_raw": 0.10976,
+       "brier_train_rate": 0.23798,
+       "sum_p": 178.4,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021
+       ]
+      },
+      "2023": {
+       "n": 611,
+       "pos": 176,
+       "base_rate": 0.2881,
+       "auc": 0.9029,
+       "ap": 0.857,
+       "null_draft_order_auc": 0.9024,
+       "null_predraft_rank_auc": 0.8858,
+       "logistic_auc": 0.9101,
+       "brier_raw": 0.0972,
+       "brier_train_rate": 0.21385,
+       "sum_p": 196.2,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+       ]
+      },
+      "2024": {
+       "n": 613,
+       "pos": 172,
+       "base_rate": 0.2806,
+       "auc": 0.8956,
+       "ap": 0.8416,
+       "null_draft_order_auc": 0.8966,
+       "null_predraft_rank_auc": 0.8783,
+       "logistic_auc": 0.9025,
+       "brier_raw": 0.09476,
+       "brier_train_rate": 0.20764,
+       "sum_p": 190.3,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+       ]
+      },
+      "2025": {
+       "n": 612,
+       "pos": 173,
+       "base_rate": 0.2827,
+       "auc": 0.9528,
+       "ap": 0.9117,
+       "null_draft_order_auc": 0.9371,
+       "null_predraft_rank_auc": 0.9364,
+       "logistic_auc": 0.9593,
+       "brier_raw": 0.06905,
+       "brier_train_rate": 0.20776,
+       "sum_p": 183.8,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+       ]
+      }
+     }
+    },
+    "MLBP_PRE": {
+     "label": "PRE_MLBP",
+     "window": "first grade after the last day of the draft and on or before Apr 15 of the next year",
+     "features": [
+      "d_logpick",
+      "d_round",
+      "d_logslot",
+      "d_hs",
+      "d_jc",
+      "d_age",
+      "d_logrank",
+      "d_ranked",
+      "pitcher"
+     ],
+     "test_classes": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+     ],
+     "classes_left_out": {
+      "2025": "label capture gap: mlb_pipeline 48 rows against an earlier median of 1001; mlb_pipeline_international 0 rows against an earlier median of 42"
+     },
+     "pooled": {
+      "n": 3820,
+      "pos": 818,
+      "base_rate": 0.2141,
+      "auc": 0.9697,
+      "ap": 0.914,
+      "null_draft_order_auc": 0.9631,
+      "null_draft_order_ap": 0.9104,
+      "auc_ci95": [
+       0.9633,
+       0.9757
+      ],
+      "ap_ci95": [
+       0.894,
+       0.9321
+      ],
+      "auc_minus_draft_order": 0.0066,
+      "auc_minus_draft_order_ci95": [
+       0.0025,
+       0.0111
+      ],
+      "ap_minus_draft_order": 0.0036,
+      "ap_minus_draft_order_ci95": [
+       -0.0076,
+       0.015
+      ],
+      "boot_b": 1000,
+      "null_predraft_rank_auc": 0.9611,
+      "logistic_auc": 0.9732,
+      "brier_raw": 0.04955,
+      "class_mean_auc": 0.9609,
+      "class_mean_null_draft_order_auc": 0.9497
+     },
+     "by_class": {
+      "2019": {
+       "n": 1216,
+       "pos": 133,
+       "base_rate": 0.1094,
+       "auc": 0.9769,
+       "ap": 0.9014,
+       "null_draft_order_auc": 0.9747,
+       "null_predraft_rank_auc": 0.9688,
+       "logistic_auc": 0.9789,
+       "brier_raw": 0.02796,
+       "brier_train_rate": 0.09742,
+       "sum_p": 136.7,
+       "train_classes": [
+        2017,
+        2018
+       ]
+      },
+      "2020": {
+       "n": 158,
+       "pos": 116,
+       "base_rate": 0.7342,
+       "auc": 0.9356,
+       "ap": 0.9786,
+       "null_draft_order_auc": 0.9185,
+       "null_predraft_rank_auc": 0.9296,
+       "logistic_auc": 0.9368,
+       "brier_raw": 0.09562,
+       "brier_train_rate": 0.58406,
+       "sum_p": 110.1,
+       "train_classes": [
+        2017,
+        2018,
+        2019
+       ]
+      },
+      "2021": {
+       "n": 606,
+       "pos": 139,
+       "base_rate": 0.2294,
+       "auc": 0.9533,
+       "ap": 0.8755,
+       "null_draft_order_auc": 0.9562,
+       "null_predraft_rank_auc": 0.9507,
+       "logistic_auc": 0.9693,
+       "brier_raw": 0.0574,
+       "brier_train_rate": 0.18538,
+       "sum_p": 128.5,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020
+       ]
+      },
+      "2022": {
+       "n": 616,
+       "pos": 148,
+       "base_rate": 0.2403,
+       "auc": 0.9762,
+       "ap": 0.9379,
+       "null_draft_order_auc": 0.9545,
+       "null_predraft_rank_auc": 0.9603,
+       "logistic_auc": 0.9737,
+       "brier_raw": 0.05554,
+       "brier_train_rate": 0.19081,
+       "sum_p": 141.7,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021
+       ]
+      },
+      "2023": {
+       "n": 611,
+       "pos": 139,
+       "base_rate": 0.2275,
+       "auc": 0.9567,
+       "ap": 0.91,
+       "null_draft_order_auc": 0.9383,
+       "null_predraft_rank_auc": 0.9465,
+       "logistic_auc": 0.9576,
+       "brier_raw": 0.063,
+       "brier_train_rate": 0.18023,
+       "sum_p": 147.6,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+       ]
+      },
+      "2024": {
+       "n": 613,
+       "pos": 143,
+       "base_rate": 0.2333,
+       "auc": 0.9664,
+       "ap": 0.9159,
+       "null_draft_order_auc": 0.9559,
+       "null_predraft_rank_auc": 0.9555,
+       "logistic_auc": 0.9686,
+       "brier_raw": 0.05334,
+       "brier_train_rate": 0.18315,
+       "sum_p": 138.6,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+       ]
+      }
+     }
+    },
+    "ANY_G12": {
+     "label": "G12_ANY",
+     "window": "first grade after the last day of the draft and on or before Oct 15 of the next year",
+     "features": [
+      "d_logpick",
+      "d_round",
+      "d_logslot",
+      "d_hs",
+      "d_jc",
+      "d_age",
+      "d_logrank",
+      "d_ranked",
+      "pitcher"
+     ],
+     "test_classes": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+     ],
+     "classes_left_out": {},
+     "pooled": {
+      "n": 2604,
+      "pos": 963,
+      "base_rate": 0.3698,
+      "auc": 0.9043,
+      "ap": 0.8915,
+      "null_draft_order_auc": 0.9074,
+      "null_draft_order_ap": 0.8969,
+      "auc_ci95": [
+       0.8896,
+       0.9184
+      ],
+      "ap_ci95": [
+       0.8739,
+       0.9074
+      ],
+      "auc_minus_draft_order": -0.0031,
+      "auc_minus_draft_order_ci95": [
+       -0.0109,
+       0.0049
+      ],
+      "ap_minus_draft_order": -0.0054,
+      "ap_minus_draft_order_ci95": [
+       -0.0149,
+       0.0036
+      ],
+      "boot_b": 1000,
+      "null_predraft_rank_auc": 0.8955,
+      "logistic_auc": 0.9126,
+      "brier_raw": 0.10175,
+      "class_mean_auc": 0.898,
+      "class_mean_null_draft_order_auc": 0.8937
+     },
+     "by_class": {
+      "2020": {
+       "n": 158,
+       "pos": 137,
+       "base_rate": 0.8671,
+       "auc": 0.9128,
+       "ap": 0.9864,
+       "null_draft_order_auc": 0.8815,
+       "null_predraft_rank_auc": 0.9162,
+       "logistic_auc": 0.9287,
+       "brier_raw": 0.07911,
+       "brier_train_rate": 0.62179,
+       "sum_p": 134.2,
+       "train_classes": [
+        2017,
+        2018
+       ]
+      },
+      "2021": {
+       "n": 606,
+       "pos": 200,
+       "base_rate": 0.33,
+       "auc": 0.8696,
+       "ap": 0.8555,
+       "null_draft_order_auc": 0.8742,
+       "null_predraft_rank_auc": 0.866,
+       "logistic_auc": 0.8797,
+       "brier_raw": 0.11047,
+       "brier_train_rate": 0.24861,
+       "sum_p": 186.6,
+       "train_classes": [
+        2017,
+        2018,
+        2019
+       ]
+      },
+      "2022": {
+       "n": 616,
+       "pos": 221,
+       "base_rate": 0.3588,
+       "auc": 0.9119,
+       "ap": 0.9002,
+       "null_draft_order_auc": 0.9169,
+       "null_predraft_rank_auc": 0.9091,
+       "logistic_auc": 0.9251,
+       "brier_raw": 0.09887,
+       "brier_train_rate": 0.25738,
+       "sum_p": 196.6,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020
+       ]
+      },
+      "2023": {
+       "n": 611,
+       "pos": 201,
+       "base_rate": 0.329,
+       "auc": 0.9015,
+       "ap": 0.8725,
+       "null_draft_order_auc": 0.9019,
+       "null_predraft_rank_auc": 0.8901,
+       "logistic_auc": 0.9113,
+       "brier_raw": 0.09763,
+       "brier_train_rate": 0.23437,
+       "sum_p": 208.4,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021
+       ]
+      },
+      "2024": {
+       "n": 613,
+       "pos": 204,
+       "base_rate": 0.3328,
+       "auc": 0.8944,
+       "ap": 0.8629,
+       "null_draft_order_auc": 0.894,
+       "null_predraft_rank_auc": 0.876,
+       "logistic_auc": 0.8977,
+       "brier_raw": 0.10598,
+       "brier_train_rate": 0.23255,
+       "sum_p": 219.9,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+       ]
+      }
+     }
+    }
+   },
+   "T2": {
+    "FG": {
+     "scale": "FanGraphs FV scale; 35+ / 40+ coded as the half step (35+ = 37.5)",
+     "features": [
+      "d_logpick",
+      "d_round",
+      "d_logslot",
+      "d_hs",
+      "d_jc",
+      "d_age",
+      "d_logrank",
+      "d_ranked",
+      "pitcher"
+     ],
+     "estimator": "ridge alpha 10.0",
+     "label": "FG first FV inside the PRE window",
+     "test_classes": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "classes_left_out": {},
+     "pooled": {
+      "n": 1236,
+      "mae": 1.53,
+      "bias": 0.022,
+      "spearman": 0.705,
+      "share_within_2p5": 0.813,
+      "mae_const": 3.025,
+      "share_within_2p5_const": 0.438,
+      "mae_minus_const": -1.495,
+      "mae_minus_const_ci95": [
+       -1.636,
+       -1.377
+      ],
+      "mean_label": 40.696,
+      "mean_pred": 40.718
+     },
+     "by_side": {
+      "hit": {
+       "n": 593,
+       "mae": 1.633,
+       "mae_const": 3.207
+      },
+      "pit": {
+       "n": 643,
+       "mae": 1.435,
+       "mae_const": 2.858
+      }
+     },
+     "by_class": {
+      "2019": {
+       "n": 209,
+       "n_train": 260,
+       "mae": 1.339,
+       "mae_const": 3.505
+      },
+      "2020": {
+       "n": 133,
+       "n_train": 469,
+       "mae": 1.267,
+       "mae_const": 2.872
+      },
+      "2021": {
+       "n": 176,
+       "n_train": 602,
+       "mae": 1.378,
+       "mae_const": 2.781
+      },
+      "2022": {
+       "n": 197,
+       "n_train": 778,
+       "mae": 1.692,
+       "mae_const": 3.232
+      },
+      "2023": {
+       "n": 176,
+       "n_train": 975,
+       "mae": 1.65,
+       "mae_const": 2.863
+      },
+      "2024": {
+       "n": 172,
+       "n_train": 1151,
+       "mae": 1.765,
+       "mae_const": 2.927
+      },
+      "2025": {
+       "n": 173,
+       "n_train": 1323,
+       "mae": 1.578,
+       "mae_const": 2.841
+      }
+     }
+    },
+    "MLBP": {
+     "scale": "MLB Pipeline FV scale (incl. international lists)",
+     "features": [
+      "d_logpick",
+      "d_round",
+      "d_logslot",
+      "d_hs",
+      "d_jc",
+      "d_age",
+      "d_logrank",
+      "d_ranked",
+      "pitcher"
+     ],
+     "estimator": "ridge alpha 10.0",
+     "label": "MLBP first FV inside the PRE window",
+     "test_classes": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+     ],
+     "classes_left_out": {
+      "2025": "label capture gap: mlb_pipeline 48 rows against an earlier median of 1001; mlb_pipeline_international 0 rows against an earlier median of 42"
+     },
+     "pooled": {
+      "n": 816,
+      "mae": 2.947,
+      "bias": 0.646,
+      "spearman": 0.711,
+      "share_within_2p5": 0.474,
+      "mae_const": 4.701,
+      "share_within_2p5_const": 0.364,
+      "mae_minus_const": -1.755,
+      "mae_minus_const_ci95": [
+       -1.937,
+       -1.559
+      ],
+      "mean_label": 46.324,
+      "mean_pred": 46.969
+     },
+     "by_side": {
+      "hit": {
+       "n": 437,
+       "mae": 3.053,
+       "mae_const": 5.01
+      },
+      "pit": {
+       "n": 379,
+       "mae": 2.824,
+       "mae_const": 4.346
+      }
+     },
+     "by_class": {
+      "2019": {
+       "n": 132,
+       "n_train": 269,
+       "mae": 2.213,
+       "mae_const": 4.057
+      },
+      "2020": {
+       "n": 115,
+       "n_train": 401,
+       "mae": 2.584,
+       "mae_const": 4.353
+      },
+      "2021": {
+       "n": 139,
+       "n_train": 516,
+       "mae": 3.04,
+       "mae_const": 4.465
+      },
+      "2022": {
+       "n": 148,
+       "n_train": 655,
+       "mae": 3.174,
+       "mae_const": 4.807
+      },
+      "2023": {
+       "n": 139,
+       "n_train": 803,
+       "mae": 3.096,
+       "mae_const": 5.032
+      },
+      "2024": {
+       "n": 143,
+       "n_train": 942,
+       "mae": 3.444,
+       "mae_const": 5.376
+      }
+     }
+    }
+   }
+  },
+  "SIGNED": {
+   "T1": {
+    "ANY_PRE": {
+     "label": "PRE_ANY",
+     "window": "first grade after Aug 2 of the draft year and on or before Apr 15 of the next year",
+     "features": [
+      "d_logpick",
+      "d_round",
+      "d_logslot",
+      "d_hs",
+      "d_jc",
+      "d_age",
+      "d_logrank",
+      "d_ranked",
+      "pitcher",
+      "d_logbonus",
+      "d_bonus_over_slot",
+      "d_signed"
+     ],
+     "test_classes": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+     ],
+     "classes_left_out": {
+      "2025": "label capture gap: mlb_pipeline 48 rows against an earlier median of 1001; mlb_pipeline_international 0 rows against an earlier median of 42"
+     },
+     "pooled": {
+      "n": 2964,
+      "pos": 298,
+      "base_rate": 0.1005,
+      "auc": 0.8334,
+      "ap": 0.4973,
+      "null_draft_order_auc": 0.8221,
+      "null_draft_order_ap": 0.411,
+      "auc_ci95": [
+       0.808,
+       0.8583
+      ],
+      "ap_ci95": [
+       0.4355,
+       0.5587
+      ],
+      "auc_minus_draft_order": 0.0113,
+      "auc_minus_draft_order_ci95": [
+       -0.0091,
+       0.0313
+      ],
+      "ap_minus_draft_order": 0.0863,
+      "ap_minus_draft_order_ci95": [
+       0.0325,
+       0.1295
+      ],
+      "boot_b": 1000,
+      "null_predraft_rank_auc": 0.8003,
+      "logistic_auc": 0.8541,
+      "brier_raw": 0.06826,
+      "class_mean_auc": 0.8123,
+      "class_mean_null_draft_order_auc": 0.7846
+     },
+     "by_class": {
+      "2019": {
+       "n": 1021,
+       "pos": 24,
+       "base_rate": 0.0235,
+       "auc": 0.8503,
+       "ap": 0.2842,
+       "null_draft_order_auc": 0.852,
+       "null_predraft_rank_auc": 0.8279,
+       "logistic_auc": 0.8355,
+       "brier_raw": 0.02127,
+       "brier_train_rate": 0.02598,
+       "sum_p": 21.7,
+       "train_classes": [
+        2017,
+        2018
+       ],
+       "compare_auc": 0.8428
+      },
+      "2020": {
+       "n": 38,
+       "pos": 15,
+       "base_rate": 0.3947,
+       "auc": 0.9043,
+       "ap": 0.8155,
+       "null_draft_order_auc": 0.7652,
+       "null_predraft_rank_auc": 0.7362,
+       "logistic_auc": 0.8899,
+       "brier_raw": 0.12454,
+       "brier_train_rate": 0.34998,
+       "sum_p": 12.7,
+       "train_classes": [
+        2017,
+        2018,
+        2019
+       ],
+       "compare_auc": 0.7797
+      },
+      "2021": {
+       "n": 479,
+       "pos": 62,
+       "base_rate": 0.1294,
+       "auc": 0.6947,
+       "ap": 0.4282,
+       "null_draft_order_auc": 0.718,
+       "null_predraft_rank_auc": 0.693,
+       "logistic_auc": 0.715,
+       "brier_raw": 0.09894,
+       "brier_train_rate": 0.1168,
+       "sum_p": 39.5,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020
+       ],
+       "compare_auc": 0.676
+      },
+      "2022": {
+       "n": 456,
+       "pos": 54,
+       "base_rate": 0.1184,
+       "auc": 0.8019,
+       "ap": 0.5286,
+       "null_draft_order_auc": 0.842,
+       "null_predraft_rank_auc": 0.8165,
+       "logistic_auc": 0.8845,
+       "brier_raw": 0.07815,
+       "brier_train_rate": 0.10643,
+       "sum_p": 47.2,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021
+       ],
+       "compare_auc": 0.7516
+      },
+      "2023": {
+       "n": 479,
+       "pos": 68,
+       "base_rate": 0.142,
+       "auc": 0.8053,
+       "ap": 0.4829,
+       "null_draft_order_auc": 0.7572,
+       "null_predraft_rank_auc": 0.7485,
+       "logistic_auc": 0.8237,
+       "brier_raw": 0.09863,
+       "brier_train_rate": 0.12588,
+       "sum_p": 69.8,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+       ],
+       "compare_auc": 0.771
+      },
+      "2024": {
+       "n": 491,
+       "pos": 75,
+       "base_rate": 0.1527,
+       "auc": 0.8176,
+       "ap": 0.5903,
+       "null_draft_order_auc": 0.7731,
+       "null_predraft_rank_auc": 0.7483,
+       "logistic_auc": 0.8299,
+       "brier_raw": 0.09285,
+       "brier_train_rate": 0.13407,
+       "sum_p": 71.2,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+       ],
+       "compare_auc": 0.7855
+      }
+     },
+     "compare": {
+      "features": [
+       "d_logpick",
+       "d_round",
+       "d_logslot",
+       "d_hs",
+       "d_jc",
+       "d_age",
+       "d_logrank",
+       "d_ranked",
+       "pitcher"
+      ],
+      "pooled_compare": {
+       "n": 2964,
+       "pos": 298,
+       "base_rate": 0.1005,
+       "auc": 0.8094,
+       "ap": 0.4138,
+       "null_draft_order_auc": 0.8221,
+       "null_draft_order_ap": 0.411,
+       "auc_ci95": [
+        0.7817,
+        0.836
+       ],
+       "ap_ci95": [
+        0.3557,
+        0.4808
+       ],
+       "auc_minus_draft_order": -0.0127,
+       "auc_minus_draft_order_ci95": [
+        -0.0312,
+        0.0041
+       ],
+       "ap_minus_draft_order": 0.0028,
+       "ap_minus_draft_order_ci95": [
+        -0.0347,
+        0.0413
+       ],
+       "boot_b": 1000
+      },
+      "model_minus_compare": {
+       "auc": 0.024,
+       "auc_ci95": [
+        0.0116,
+        0.0376
+       ],
+       "ap": 0.0834,
+       "ap_ci95": [
+        0.0422,
+        0.1188
+       ]
+      }
+     }
+    }
+   }
+  },
+  "NOLINE_OCT": {
+   "T1": {
+    "ANY_PRE": {
+     "label": "PRE_ANY",
+     "window": "first grade after Oct 15 of the draft year and on or before Apr 15 of the next year",
+     "features": [
+      "d_logpick",
+      "d_round",
+      "d_logslot",
+      "d_hs",
+      "d_jc",
+      "d_age",
+      "d_logrank",
+      "d_ranked",
+      "pitcher"
+     ],
+     "test_classes": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+     ],
+     "classes_left_out": {
+      "2025": "label capture gap: mlb_pipeline 48 rows against an earlier median of 1001; mlb_pipeline_international 0 rows against an earlier median of 42"
+     },
+     "pooled": {
+      "n": 1174,
+      "pos": 100,
+      "base_rate": 0.0852,
+      "auc": 0.8578,
+      "ap": 0.4313,
+      "null_draft_order_auc": 0.8675,
+      "null_draft_order_ap": 0.3995,
+      "auc_ci95": [
+       0.8198,
+       0.8913
+      ],
+      "ap_ci95": [
+       0.3394,
+       0.5302
+      ],
+      "auc_minus_draft_order": -0.0097,
+      "auc_minus_draft_order_ci95": [
+       -0.0342,
+       0.0145
+      ],
+      "ap_minus_draft_order": 0.0318,
+      "ap_minus_draft_order_ci95": [
+       -0.0482,
+       0.1004
+      ],
+      "boot_b": 1000,
+      "null_predraft_rank_auc": 0.8142,
+      "logistic_auc": 0.8582,
+      "brier_raw": 0.06628,
+      "class_mean_auc": 0.7739,
+      "class_mean_null_draft_order_auc": 0.8082
+     },
+     "by_class": {
+      "2019": {
+       "n": 427,
+       "pos": 5,
+       "base_rate": 0.0117,
+       "auc": 0.7664,
+       "ap": 0.0718,
+       "null_draft_order_auc": 0.7882,
+       "null_predraft_rank_auc": 0.7455,
+       "logistic_auc": 0.8114,
+       "brier_raw": 0.01495,
+       "brier_train_rate": 0.01161,
+       "sum_p": 3.2,
+       "train_classes": [
+        2017,
+        2018
+       ]
+      },
+      "2020": {
+       "n": 38,
+       "pos": 15,
+       "base_rate": 0.3947,
+       "auc": 0.6522,
+       "ap": 0.5837,
+       "null_draft_order_auc": 0.7652,
+       "null_predraft_rank_auc": 0.7362,
+       "logistic_auc": 0.629,
+       "brier_raw": 0.27508,
+       "brier_train_rate": 0.38295,
+       "sum_p": 9.8,
+       "train_classes": [
+        2017,
+        2018,
+        2019
+       ]
+      },
+      "2021": {
+       "n": 115,
+       "pos": 9,
+       "base_rate": 0.0783,
+       "auc": 0.8532,
+       "ap": 0.5099,
+       "null_draft_order_auc": 0.8187,
+       "null_predraft_rank_auc": 0.7044,
+       "logistic_auc": 0.761,
+       "brier_raw": 0.05637,
+       "brier_train_rate": 0.07462,
+       "sum_p": 6.7,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020
+       ]
+      },
+      "2022": {
+       "n": 162,
+       "pos": 14,
+       "base_rate": 0.0864,
+       "auc": 0.8284,
+       "ap": 0.4551,
+       "null_draft_order_auc": 0.8721,
+       "null_predraft_rank_auc": 0.7905,
+       "logistic_auc": 0.8682,
+       "brier_raw": 0.0666,
+       "brier_train_rate": 0.08178,
+       "sum_p": 8.0,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021
+       ]
+      },
+      "2023": {
+       "n": 143,
+       "pos": 17,
+       "base_rate": 0.1189,
+       "auc": 0.7358,
+       "ap": 0.3987,
+       "null_draft_order_auc": 0.789,
+       "null_predraft_rank_auc": 0.746,
+       "logistic_auc": 0.7834,
+       "brier_raw": 0.09161,
+       "brier_train_rate": 0.11104,
+       "sum_p": 9.5,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+       ]
+      },
+      "2024": {
+       "n": 289,
+       "pos": 40,
+       "base_rate": 0.1384,
+       "auc": 0.8072,
+       "ap": 0.4584,
+       "null_draft_order_auc": 0.8159,
+       "null_predraft_rank_auc": 0.7861,
+       "logistic_auc": 0.8232,
+       "brier_raw": 0.10589,
+       "brier_train_rate": 0.1276,
+       "sum_p": 22.7,
+       "train_classes": [
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+       ]
+      }
+     }
+    }
+   }
+  },
+  "identity_coverage": {
+   "graded_keys": 7445,
+   "mapped:debuts": 140,
+   "mapped:draft_players": 3,
+   "mapped:name_unique": 2203,
+   "mapped:rosters": 12,
+   "mapped:statlines": 4699,
+   "mapped:timeseries": 99,
+   "unmapped:ambiguous_name": 164,
+   "unmapped:no_name": 125
+  },
+  "verdict": {
+   "rule": "pre-declared, section 5 of docs/provisional-v2/PV10_DRAFTEE_HEAD_PREDECLARED.md",
+   "selection": "draft order is the head: the fitted pedigree head does not beat a zero-fit pick-order rank on both AUC and AP with CI95 above 0, so no fitted head is proposed",
+   "level": {
+    "FG": "below the constant (MAE minus constant CI95 below 0)",
+    "MLBP": "below the constant (MAE minus constant CI95 below 0)"
+   }
+  }
  }
 }
