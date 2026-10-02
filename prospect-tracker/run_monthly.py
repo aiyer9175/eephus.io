@@ -917,8 +917,8 @@ def _chain_daily_and_stamp(out_path: Path, log: logging.Logger, chain) -> str:
 
     The stamp here covers only the path where the chain died before reaching
     its own. Without it a failed chain would serve the step-5 export, whose
-    run block was read before finish_run and which carries no data_freshness
-    block at all, so the site would lose its "as of" line entirely.
+    run and data_freshness blocks were read before finish_run, so the site's
+    "as of" line would name the previous run.
 
     `chain` is a zero-argument callable so the ordering above can be tested
     without running a pipeline. Returns "chained" or "fallback".
@@ -1467,8 +1467,9 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     that stamp the same 74MB file themselves once their own run is finished
     (run_daily's d9). Their stamp is strictly newer, so writing here first is
     a second writer to a file a two-writer race truncated once. Standalone
-    callers keep the default: the stamp is what puts the data_freshness block
-    in the file, and export_timeseries_json does not write one."""
+    callers keep the default: export_timeseries_json writes a data_freshness
+    block read mid-run, and the stamp is what moves it and the run block onto
+    the finished run."""
     _utf8_console()
     logging.basicConfig(
         level=logging.INFO,
@@ -4013,10 +4014,9 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         log.exception("DAILY run %s failed", run_id)
         finish_run(run_id, new_snapshots=0, stat_lines=0, notes="DAILY: failed")
         # A crash after d9 leaves a freshly exported timeseries.json whose run
-        # block was read before finish_run and which has no data_freshness
-        # block at all, because export_timeseries_json does not write one. d9
-        # no longer stamps, so this is the path that keeps the site's "as of"
-        # line from disappearing on a partial night.
+        # and data_freshness blocks were read before finish_run, so they name
+        # the previous run. d9 no longer stamps, so this is the path that moves
+        # the site's "as of" line onto this run on a partial night.
         _patch_export_run_summary(out_dir / "timeseries.json", log)
         # Same reasoning as the monthly crash path: publish what we know
         # about which sources landed before the failure.

@@ -272,8 +272,8 @@ def test_a_monthly_success_path_stamps_the_run_summary_exactly_once():
 def test_a_failed_chain_still_leaves_a_stamped_summary(tmp_path, monkeypatch):
     """The reason the redundant stamp was left in place for a year. If the
     chained daily dies before its own stamp, the served file is the step-5
-    export: its run block was read before finish_run and it has no
-    data_freshness block at all, so the site loses its "as of" line."""
+    export: its run and data_freshness blocks were read before finish_run,
+    so the site's "as of" line names the previous run."""
     target = tmp_path / "timeseries.json"
     target.write_text(json.dumps({"players": [], "run": {"id": 1}}),
                       encoding="utf-8")
@@ -294,7 +294,7 @@ def test_a_failed_chain_still_leaves_a_stamped_summary(tmp_path, monkeypatch):
     payload = json.loads(target.read_text(encoding="utf-8"))
     assert payload["run"]["id"] == 7, "the fallback must refresh the run block"
     assert payload["data_freshness"]["last_run_kind"] == "daily", (
-        "and the freshness block, which only the stamp writes")
+        "and the freshness block, which the stamp refreshes")
 
 
 def test_a_successful_chain_is_not_stamped_twice(tmp_path, monkeypatch):
@@ -324,5 +324,6 @@ def test_rebuild_only_can_defer_its_stamp_to_the_caller():
     sig = inspect.signature(run_monthly.rebuild_only)
     assert "stamp_summary" in sig.parameters
     assert sig.parameters["stamp_summary"].default is True, (
-        "standalone callers must keep the stamp: export_timeseries_json does "
-        "not write a data_freshness block, only the stamp does")
+        "standalone callers must keep the stamp: export_timeseries_json reads "
+        "its data_freshness block mid-run, only the stamp moves it onto the "
+        "finished run")

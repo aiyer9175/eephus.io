@@ -5670,6 +5670,9 @@ def rebake_board_ranks(out_path: Path, *, xfv_by_key: dict | None = None,
         if i <= 10:
             top.append((i, pk, grade))
 
+    # Every other top-level block (run, data_freshness, generated_at) passes through
+    # untouched: this rewrites rank fields only, and a re-bake that dropped the
+    # freshness stamps would blank the PROSPX tab "as of" lines (RPR09).
     from datetime import datetime as _dt, timezone as _tz
     payload["board_rank_rebake"] = {
         "at": _dt.now(_tz.utc).isoformat(timespec="seconds"),
@@ -17294,6 +17297,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # block. Absent, the client runs exactly as before (audit F25).
         **({"wag_definition": WAG_DEFINITION} if WAG_UNIFIED else {}),
         "run": latest_run_summary(),
+        # The two-track "as of" stamps (grades, transactions/IL) the PROSPX tab
+        # freshness lines and build_site read. Stamped HERE so every path that
+        # regenerates this payload carries them (RPR09, 2026-10-02): a payload
+        # re-exported outside run_monthly used to ship with no block at all, and
+        # the Transactions, Injured List and Time Machine stamps rendered empty.
+        # run_monthly._patch_export_run_summary still refreshes it after
+        # finish_run, so a pipeline night ends on the finished run's stamps.
+        "data_freshness": data_freshness(),
         "total_tracked": len(active_payload) + len(graduate_payload) + len(inactive_payload),
         "active_count": len(actives),
         "inactive_count": len(inactives),

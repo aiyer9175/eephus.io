@@ -182,10 +182,11 @@ def _tree_is_mid_pipeline():
     stale, and from inside a test that state is INDISTINGUISHABLE from the
     pipeline defect these checks exist to catch.
 
-    So the checks skip in that state rather than reporting a defect they cannot
-    tell apart from housekeeping. The pipeline-ORDER test below does not skip:
-    it reads source text, which no suite run can move, and it is the check that
-    actually guards the production behaviour.
+    The homepage check skips in that state, because index.html is rebuilt by a
+    separate step. The served-rank check does NOT (RPR06): it only uses the
+    reason in its failure message, since a restored eFV file produces this same
+    state and is a real defect. The pipeline-ORDER test above reads source text,
+    which no suite run can move.
     """
     import json as _j
     from datetime import datetime, timezone
@@ -233,6 +234,14 @@ def test_served_overall_rank_is_on_the_served_efv_file():
     """A dry re-bake of the served payload on the served eFV file must move nothing:
     that is the statement 'the baked rank and the board agree'.
 
+    IT NEVER SKIPS ON A STALE STAMP (RPR06, 2026-10-02). It used to skip whenever
+    data/xfv.json was newer than board_rank_rebake.at, and that is exactly the state a
+    `git revert` of data/xfv.json produces: on 2026-10-01 the rebake ran on the split
+    eFV file, 87b3b999 restored the earlier file, and 3,034 of 4,690 baked ranks (16
+    inside the top 300, first at #26) disagreed with the board while this test skipped.
+    A newer eFV file is not an excuse, it is the defect: the replay below is the whole
+    check, and it is a pure function of the two served files.
+
     WHEN THIS GOES RED AFTER A SUITE RUN, IT IS USUALLY POLLUTION, NOT A BUG IN
     THE PIPELINE. data/timeseries.json is GITIGNORED, so conftest's end-of-session
     revert cannot see it: that guard works off `git diff --name-only`, and an
@@ -248,16 +257,92 @@ def test_served_overall_rank_is_on_the_served_efv_file():
     displayed order disagrees with the file it claims to be ranked on, which is
     the defect the whole re-bake seam was built to fix.
     """
-    stale, why = _tree_is_mid_pipeline()
-    if stale:
-        pytest.skip(why)
     _served()
+    _, why = _tree_is_mid_pipeline()
     out = storage.rebake_board_ranks(ROOT / "data" / "timeseries.json", write=False,
                                      update_metric_snapshots=False, rank_history={})
     assert out["n_active"] > 1000
     assert out["n_moved"] == 0, (
-        f"{out['n_moved']} served ranks disagree with the served eFV file; the pipeline "
-        f"skipped storage.rebake_board_ranks (top: {out['top'][:5]})")
+        f"{out['n_moved']} served ranks disagree with the served eFV file "
+        f"(top: {out['top'][:5]}). {why or 'The pipeline skipped storage.rebake_board_ranks.'} "
+        "Repair: `python tools/rebake_board_ranks.py`.")
+
+
+def test_served_timeseries_carries_the_data_freshness_block():
+    """The PROSPX Transactions, Injured List and Time Machine tabs print their "as of"
+    line from data_freshness. On 2026-10-01 a regeneration outside run_monthly served a
+    payload without it and all three rendered empty (RPR09)."""
+    payload = _served()
+    fresh = payload.get("data_freshness") or {}
+    assert fresh.get("transactions_updated_at") and fresh.get("grades_updated_at"), (
+        f"data/timeseries.json carries no usable data_freshness block: {fresh!r}")
+    assert fresh.get("last_run_kind") in ("daily", "monthly")
+
+
+def test_served_surplus_pill_matches_the_board_surplus_tooltip():
+    """PROSPX prints a prospect's consensus surplus twice: the card's Sur+ pill reads
+    timeseries players[].surplus.value_mm and the board's surplus tooltip reads
+    data/xfv.json consensus_surplus_mm. efv_score copies the second from the first at
+    regen time, so on a pipeline's own output they agree; a payload re-exported (or an
+    eFV file restored) without the other leaves the two printing different dollars
+    (RPR08: kaiden_mccarthy $19.8M vs $19.5M, 52 of 4,677 rows on 2026-10-01).
+    The repair is the nightly rebuild-only pass, which exports then regenerates eFV."""
+    payload = _served()
+    xfv = json.loads((ROOT / "data" / "xfv.json").read_text(encoding="utf-8")).get("by_player") or {}
+    n, bad = 0, []
+    for p in payload.get("players") or []:
+        s = (p.get("surplus") or {}).get("value_mm")
+        c = (xfv.get(p.get("player_key")) or {}).get("consensus_surplus_mm")
+        if s is None or c is None:
+            continue
+        n += 1
+        if abs(float(s) - float(c)) > 0.05:
+            bad.append((p["player_key"], s, c))
+    assert n > 1000, f"only {n} rows carry both surplus figures"
+    assert not bad, (
+        f"{len(bad)} of {n} Sur+ pills disagree with the board surplus tooltip by more than "
+        f"$0.05M, first {bad[:5]} (timeseries generated_at {payload.get('generated_at')}); "
+        "the payload and data/xfv.json come from different runs")
+
+
+# ── 5. the freshness block rides every regeneration path ──────────────────────
+def test_rebake_keeps_the_data_freshness_block(tmp_path):
+    pl = _payload()
+    fresh = {"grades_updated_at": "2026-09-30T04:00:00",
+             "transactions_updated_at": "2026-09-30T18:06:30", "last_run_kind": "daily"}
+    pl["data_freshness"] = dict(fresh)
+    pl["run"] = {"id": 534}
+    p = tmp_path / "timeseries.json"
+    p.write_text(json.dumps(pl), encoding="utf-8")
+    storage.rebake_board_ranks(p, xfv_by_key=_xfv(), rank_history={},
+                               update_metric_snapshots=False)
+    got = json.loads(p.read_text(encoding="utf-8"))
+    assert got["data_freshness"] == fresh
+    assert got["run"] == {"id": 534}
+
+
+def test_export_timeseries_json_stamps_the_data_freshness_block(tmp_path, monkeypatch):
+    """A payload exported outside run_monthly (no _patch_export_run_summary after it)
+    must still carry the two-track stamps, read from the runs table."""
+    from consensus import build_timeseries
+    from scrapers import Snapshot
+    monkeypatch.setattr(storage, "DB_PATH", tmp_path / "test.db")
+    storage.init_db()
+    storage.insert_snapshots([Snapshot(
+        source="fangraphs", snapshot_date="2026-02-16", interval_label="FG 2026 Report",
+        player_key="fresh_player", player_name="Fresh Player", position="SS", org="PIT",
+        rank=1, fv=50.0, status="active")])
+    with storage.connect() as con:
+        con.execute("INSERT INTO runs (started_at, finished_at, notes) VALUES "
+                    "('2026-09-30T04:00:00','2026-09-30T04:30:00','500 players')")
+        con.execute("INSERT INTO runs (started_at, finished_at, notes) VALUES "
+                    "('2026-09-30T18:00:00','2026-09-30T18:06:30','DAILY: 0 on IL')")
+    out = tmp_path / "out.json"
+    storage.export_timeseries_json(build_timeseries(storage.load_all_snapshots()), out)
+    fresh = json.loads(out.read_text(encoding="utf-8")).get("data_freshness")
+    assert fresh == {"grades_updated_at": "2026-09-30T04:30:00",
+                     "transactions_updated_at": "2026-09-30T18:06:30",
+                     "last_run_kind": "daily"}
 
 
 def test_homepage_top_prospects_are_the_first_five_baked_ranks():
