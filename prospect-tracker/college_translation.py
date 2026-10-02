@@ -155,13 +155,72 @@ def _key_to_name(con) -> dict:
     return out
 
 
-def _draft_keys(con) -> dict:
-    """normalized college name -> the draft prospect's player_key, so a college
-    translation can be attached to the matching PROSPX draft record."""
-    out = {}
-    for pk, nm in con.execute("SELECT player_key, player_name FROM draft_players"):
-        out.setdefault(norm_name(nm), pk)
+def _draft_index(con) -> dict:
+    """normalized name -> [(draft_year, player_key, school)] over draft_players,
+    every record kept (a name can carry an HS record and later college ones)."""
+    out: dict[str, list] = {}
+    for pk, nm, yr, school, ptype in con.execute(
+            "SELECT player_key, player_name, draft_year, school, player_type FROM draft_players"):
+        try:
+            yr = int(yr)
+        except (TypeError, ValueError):
+            continue
+        # A record the store or its school string marks as a high-school
+        # draftee is never a college line's record. (A college type is not
+        # trusted the other way: prep-year rows are often typed college.)
+        if (ptype or "").upper().startswith("HS") or _HS_SCHOOL.search(school or ""):
+            continue
+        out.setdefault(norm_name(nm), []).append((yr, pk, school or ""))
     return out
+
+
+_HS_SCHOOL = re.compile(r"\bHS\b|High School", re.IGNORECASE)
+
+
+def _school_token(s) -> str:
+    return re.sub(r"[^a-z]", "", (s or "").lower())
+
+
+def resolve_draft_keys(index: dict, name_norm: str, cs_year, team_school=None) -> list:
+    """The draft records a CollegeSavant line belongs to (census M03-06).
+
+    The old join took the first draft_players row by name, so 75 of 505 bridge
+    keys sat on a prep-year record (Caglianone's 2021 record, not 2024). A
+    college line from season Y can only belong to a draft record of year >= Y:
+    the primary key is the earliest such record (a tie inside one class breaks
+    on the school the team code resolves to), and a later record of the same
+    name at the same school (the player re-drafted) rides along. player_type is
+    not read: the store now types most prep-year rows as college. Returns []
+    when no record of year >= Y exists."""
+    try:
+        y = int(cs_year)
+    except (TypeError, ValueError):
+        return []
+    cands = sorted(r for r in index.get(name_norm, ()) if r[0] >= y)
+    if not cands:
+        return []
+    first_year = cands[0][0]
+    same = [r for r in cands if r[0] == first_year]
+    want = _school_token(team_school)
+    if want and len(same) > 1:
+        same.sort(key=lambda r: _school_token(r[2]) != want)
+    primary = same[0]
+    out = [primary[1]]
+    ps = _school_token(primary[2])
+    for r in cands:
+        if r[1] not in out and r[0] > first_year and ps and _school_token(r[2]) == ps:
+            out.append(r[1])
+    return out
+
+
+def _team_schools() -> dict:
+    """CS team code -> learned school, for the same-class tie-break only. Empty
+    when the learner cannot run (no draft store, no payloads)."""
+    try:
+        import college_stats as _cst
+        return _cst._learn_code_schools(_cst._cs_universe())
+    except Exception:
+        return {}
 
 
 def _ncaa_box_to_display(payload, season, school):
@@ -623,7 +682,12 @@ def build(out_dir: Path | None = None) -> dict:
         # Also build the PROSPX BRIDGE sidecar keyed by the matching draft
         # prospect's player_key, so PROSPX can merge a Single-A-equivalent block
         # onto its draft records with no rebuild. Additive and safe-when-empty.
-        draft_keys = _draft_keys(con)
+        draft_index = _draft_index(con)
+        team_school = _team_schools()
+
+        def keys_for(slug_norm, v):
+            return resolve_draft_keys(draft_index, slug_norm, v.get("year"),
+                                      team_school.get((v.get("team") or "").strip()))
         box_hit, box_pit = _draft_statlines(con)
 
         # Box-stat -> Single-A factors: project a Single-A line for the Draft
@@ -678,14 +742,15 @@ def build(out_dir: Path | None = None) -> dict:
             # from (the latest season for hitters), so a season's board can
             # print it beside a row whose line is from another season (RML05).
             entry = {"side": "hit", "single_a": t, "source_season": v.get("year")}
-            pk = draft_keys.get(slug_norm)
-            if pk and pk in box_hit:
-                entry["box"] = box_hit[pk]
+            pks = keys_for(slug_norm, v)
+            box_pk = next((k for k in pks if k in box_hit), None)
+            if box_pk:
+                entry["box"] = box_hit[box_pk]
                 n_box += 1
             translations[slug] = entry
-            if pk:
-                bridge[pk] = {"side": "hit", "headline": _equiv_headline(t, "hit"), "name": v["name"]}
-                pk_to_cs.setdefault(pk, {"slug": slug, "year": v.get("year"), "side": "hit"})
+            for k in pks:
+                bridge[k] = {"side": "hit", "headline": _equiv_headline(t, "hit"), "name": v["name"]}
+                pk_to_cs.setdefault(k, {"slug": slug, "year": v.get("year"), "side": "hit"})
         for slug_norm, v in cs_p.items():
             stuff_wt = (cs_stuff.get((str(v.get("pitcher_id")), v.get("year")))
                         if cs_stuff else None)
@@ -696,21 +761,21 @@ def build(out_dir: Path | None = None) -> dict:
             # same-named arms), so key pitcher translations the same way or the
             # client-side T[pitcher.slug] lookup misses and the board renders empty.
             slug = slugify_cs("{}-{}".format(v["name"], v.get("pitcher_id")))
+            pks = keys_for(slug_norm, v)
             if slug not in translations:
                 # Pitchers project from the season with the most pitches among
                 # the seasons that carry K% / BB% (2026 rows carry neither), and
                 # that season travels with the entry (RML05).
                 entry = {"side": "pit", "single_a": t, "source_season": v.get("year")}
-                pk = draft_keys.get(slug_norm)
-                if pk and pk in box_pit:
-                    entry["box"] = box_pit[pk]
+                box_pk = next((k for k in pks if k in box_pit), None)
+                if box_pk:
+                    entry["box"] = box_pit[box_pk]
                     n_box += 1
                 translations[slug] = entry
-            pk = draft_keys.get(slug_norm)
-            if pk and pk not in bridge:
-                bridge[pk] = {"side": "pit", "headline": _equiv_headline(t, "pit"), "name": v["name"]}
-            if pk:
-                pk_to_cs.setdefault(pk, {"slug": slug, "year": v.get("year"), "side": "pit"})
+            for k in pks:
+                if k not in bridge:
+                    bridge[k] = {"side": "pit", "headline": _equiv_headline(t, "pit"), "name": v["name"]}
+                pk_to_cs.setdefault(k, {"slug": slug, "year": v.get("year"), "side": "pit"})
         # CollegeSavant-universe NCAA box scores (tracked players who are NOT
         # draft prospects), attached by slug where we have no draft-prospect box.
         # NCAA bb%/k% arrive as percentages; rescale to the decimal convention the

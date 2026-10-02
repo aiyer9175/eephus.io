@@ -27,31 +27,7 @@
    ],
    "name": "Condon, Charlie"
   },
-  "draft_2022_colby_backus": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "26.6%",
-     "band": "18-35%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "14.1%",
-     "band": "8-20%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".781",
-     "band": ".566-.997",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Backus, Colby"
-  },
-  "draft_2021_jac_caglianone": {
+  "draft_2024_jac_caglianone": {
    "side": "hit",
    "headline": [
     {
@@ -99,7 +75,7 @@
    ],
    "name": "Kurtz, Nick"
   },
-  "draft_2021_braden_montgomery": {
+  "draft_2024_braden_montgomery": {
    "side": "hit",
    "headline": [
     {
@@ -195,7 +171,7 @@
    ],
    "name": "Dickinson, Daniel"
   },
-  "draft_2020_corey_collins": {
+  "draft_2024_corey_collins": {
    "side": "hit",
    "headline": [
     {
@@ -411,7 +387,7 @@
    ],
    "name": "Schubart, Nolan"
   },
-  "draft_2022_malcolm_moore": {
+  "draft_2024_malcolm_moore": {
    "side": "hit",
    "headline": [
     {
@@ -651,6 +627,30 @@
    ],
    "name": "Ford, Henry"
   },
+  "draft_2026_henry_ford": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "26.2%",
+     "band": "18-35%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.5%",
+     "band": "6-19%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".752",
+     "band": ".537-.967",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Ford, Henry"
+  },
   "draft_2024_blake_wright": {
    "side": "hit",
    "headline": [
@@ -699,7 +699,7 @@
    ],
    "name": "Walton, Aaron"
   },
-  "draft_2023_daniel_cuvet": {
+  "draft_2026_daniel_cuvet": {
    "side": "hit",
    "headline": [
     {
@@ -915,7 +915,7 @@
    ],
    "name": "Hadeen, Woody"
   },
-  "draft_2021_will_taylor": {
+  "draft_2024_will_taylor": {
    "side": "hit",
    "headline": [
     {
@@ -963,7 +963,7 @@
    ],
    "name": "Thomas, Jared"
   },
-  "draft_2022_gavin_kilen": {
+  "draft_2025_gavin_kilen": {
    "side": "hit",
    "headline": [
     {
@@ -1179,7 +1179,7 @@
    ],
    "name": "DeBarge, Kyle"
   },
-  "draft_2021_peyton_stovall": {
+  "draft_2024_peyton_stovall": {
    "side": "hit",
    "headline": [
     {
@@ -1251,7 +1251,7 @@
    ],
    "name": "White, Mason"
   },
-  "draft_2022_jared_jones": {
+  "draft_2024_jared_jones": {
    "side": "hit",
    "headline": [
     {
@@ -1275,19 +1275,19 @@
    ],
    "name": "Jones, Jared"
   },
-  "draft_2021_eddie_saldivar": {
+  "draft_2025_jared_jones": {
    "side": "hit",
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.5%",
-     "band": "16-33%",
+     "value": "27.8%",
+     "band": "19-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "5-18%",
+     "value": "13.3%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
@@ -1297,7 +1297,7 @@
      "flag": "experimental"
     }
    ],
-   "name": "Saldivar, Eddie"
+   "name": "Jones, Jared"
   },
   "draft_2024_tommy_white": {
    "side": "hit",
@@ -1347,30 +1347,6 @@
    ],
    "name": "Ferrer, Jaime"
   },
-  "draft_2020_harold_coll": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.0%",
-     "band": "16-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.5%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".747",
-     "band": ".531-.962",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Coll, Harold"
-  },
   "draft_2024_casey_cook": {
    "side": "hit",
    "headline": [
@@ -1395,7 +1371,31 @@
    ],
    "name": "Cook, Casey"
   },
-  "draft_2022_jalin_flores": {
+  "draft_2024_jalin_flores": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "26.5%",
+     "band": "18-35%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "11.9%",
+     "band": "6-18%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".746",
+     "band": ".531-.962",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Flores, Jalin"
+  },
+  "draft_2025_jalin_flores": {
    "side": "hit",
    "headline": [
     {
@@ -1611,30 +1611,6 @@
    ],
    "name": "Thach, Tanner"
   },
-  "draft_2019_mac_bingham": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "26.0%",
-     "band": "18-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".745",
-     "band": ".530-.961",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Bingham, Mac"
-  },
   "draft_2024_ryan_stafford": {
    "side": "hit",
    "headline": [
@@ -1731,30 +1707,6 @@
    ],
    "name": "Curley, Dean"
   },
-  "draft_2019_jonathan_french": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "29.8%",
-     "band": "21-38%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.1%",
-     "band": "7-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".745",
-     "band": ".529-.960",
-     "flag": "experimental"
-    }
-   ],
-   "name": "French, Jonathan"
-  },
   "draft_2024_jj_wetherholt": {
    "side": "hit",
    "headline": [
@@ -1827,53 +1779,29 @@
    ],
    "name": "Phelps, Tre"
   },
-  "draft_2022_jayson_jones": {
+  "draft_2026_tre_phelps": {
    "side": "hit",
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.8%",
-     "band": "20-37%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".744",
-     "band": ".528-.959",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Jones, Jayson"
-  },
-  "draft_2018_noah_davis": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.3%",
+     "value": "22.1%",
      "band": "14-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "5-18%",
+     "value": "11.9%",
+     "band": "6-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".743",
-     "band": ".528-.959",
+     "value": ".744",
+     "band": ".529-.959",
      "flag": "experimental"
     }
    ],
-   "name": "Davis, Noah"
+   "name": "Phelps, Tre"
   },
   "draft_2025_kane_kepley": {
    "side": "hit",
@@ -1923,30 +1851,6 @@
    ],
    "name": "Diaw, Khadim"
   },
-  "draft_2019_jaden_brown": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "28.8%",
-     "band": "20-37%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.9%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".743",
-     "band": ".527-.958",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Brown, Jaden"
-  },
   "draft_2024_blake_burke": {
    "side": "hit",
    "headline": [
@@ -1994,30 +1898,6 @@
     }
    ],
    "name": "Christian, Jakob"
-  },
-  "draft_2019_matt_mccormick": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "26.0%",
-     "band": "18-35%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.5%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".743",
-     "band": ".527-.958",
-     "flag": "experimental"
-    }
-   ],
-   "name": "McCormick, Matt"
   },
   "draft_2024_zach_ehrhard": {
    "side": "hit",
@@ -2331,30 +2211,6 @@
    ],
    "name": "Dreiling, Dylan"
   },
-  "draft_2023_cal_fisher": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "30.4%",
-     "band": "22-39%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".740",
-     "band": ".525-.956",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Fisher, Cal"
-  },
   "draft_2024_cole_messina": {
    "side": "hit",
    "headline": [
@@ -2379,30 +2235,6 @@
    ],
    "name": "Messina, Cole"
   },
-  "draft_2022_brady_neal": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "28.3%",
-     "band": "20-37%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.4%",
-     "band": "7-20%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".740",
-     "band": ".525-.956",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Neal, Brady"
-  },
   "draft_2024_derek_bender": {
    "side": "hit",
    "headline": [
@@ -2426,30 +2258,6 @@
     }
    ],
    "name": "Bender, Derek"
-  },
-  "draft_2022_luke_heyman": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "30.1%",
-     "band": "22-39%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".740",
-     "band": ".525-.955",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Heyman, Luke"
   },
   "draft_2026_justin_lebron": {
    "side": "hit",
@@ -2499,7 +2307,7 @@
    ],
    "name": "Caron, Josh"
   },
-  "draft_2021_payton_green": {
+  "draft_2024_payton_green": {
    "side": "hit",
    "headline": [
     {
@@ -2595,7 +2403,7 @@
    ],
    "name": "Hines, Hunter"
   },
-  "draft_2022_paxton_kling": {
+  "draft_2025_paxton_kling": {
    "side": "hit",
    "headline": [
     {
@@ -2667,7 +2475,7 @@
    ],
    "name": "Gourson, Duce"
   },
-  "draft_2023_roch_cholowsky": {
+  "draft_2026_roch_cholowsky": {
    "side": "hit",
    "headline": [
     {
@@ -2763,7 +2571,7 @@
    ],
    "name": "Mathis, Cole"
   },
-  "draft_2021_jonathan_vastine": {
+  "draft_2024_jonathan_vastine": {
    "side": "hit",
    "headline": [
     {
@@ -2859,30 +2667,6 @@
    ],
    "name": "Saucke II, Casey"
   },
-  "draft_2023_campbell_smithwick": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "27.5%",
-     "band": "19-36%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "14.9%",
-     "band": "9-21%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".736",
-     "band": ".521-.951",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Smithwick, Campbell"
-  },
   "draft_2025_easton_carmichael": {
    "side": "hit",
    "headline": [
@@ -2907,7 +2691,7 @@
    ],
    "name": "Carmichael, Easton"
   },
-  "draft_2023_zion_rose": {
+  "draft_2026_zion_rose": {
    "side": "hit",
    "headline": [
     {
@@ -3003,7 +2787,7 @@
    ],
    "name": "Brunson, Chase"
   },
-  "draft_2023_cameron_johnson": {
+  "draft_2026_cameron_johnson": {
    "side": "hit",
    "headline": [
     {
@@ -3075,54 +2859,6 @@
    ],
    "name": "Reese, Ace"
   },
-  "draft_2021_alex_ulloa": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.0%",
-     "band": "16-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".734",
-     "band": ".519-.949",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Ulloa, Alex"
-  },
-  "draft_2019_bobby_zmarzlak": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "27.9%",
-     "band": "19-36%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.3%",
-     "band": "7-20%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".734",
-     "band": ".519-.949",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Zmarzlak, Bobby"
-  },
   "draft_2026_kyle_johnson": {
    "side": "hit",
    "headline": [
@@ -3170,30 +2906,6 @@
     }
    ],
    "name": "Galvan, Rylan"
-  },
-  "draft_2021_michael_braswell_iii": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.6%",
-     "band": "17-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".733",
-     "band": ".517-.948",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Braswell, Michael"
   },
   "draft_2026_ryan_cooney": {
    "side": "hit",
@@ -3339,30 +3051,6 @@
    ],
    "name": "Penney, Jack"
   },
-  "draft_2020_slade_wilks": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "27.1%",
-     "band": "19-36%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.4%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".732",
-     "band": ".516-.947",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Wilks, Slade"
-  },
   "draft_2026_jarren_advincula": {
    "side": "hit",
    "headline": [
@@ -3507,7 +3195,7 @@
    ],
    "name": "Cannarella, Cam"
   },
-  "draft_2024_rodney_green": {
+  "draft_2024_rodney_green_jr": {
    "side": "hit",
    "headline": [
     {
@@ -3602,30 +3290,6 @@
     }
    ],
    "name": "Robbins, Aiden"
-  },
-  "draft_2023_nolan_souza": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "29.6%",
-     "band": "21-38%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "7-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".730",
-     "band": ".514-.945",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Souza, Nolan"
   },
   "draft_2025_wehiwa_aloy": {
    "side": "hit",
@@ -3795,7 +3459,7 @@
    ],
    "name": "Guzman, Adonys"
   },
-  "draft_2022_anthony_silva": {
+  "draft_2024_anthony_silva": {
    "side": "hit",
    "headline": [
     {
@@ -3867,30 +3531,6 @@
    ],
    "name": "Gallaher, Gavin"
   },
-  "draft_2019_hayden_travinski": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "29.5%",
-     "band": "21-38%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.6%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".727",
-     "band": ".511-.942",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Travinski, Hayden"
-  },
   "draft_2026_cashel_dugger": {
    "side": "hit",
    "headline": [
@@ -3914,30 +3554,6 @@
     }
    ],
    "name": "Dugger, Cashel"
-  },
-  "draft_2022_jack_crighton": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.9%",
-     "band": "16-33%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".726",
-     "band": ".511-.941",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Crighton, Jack"
   },
   "draft_2025_mason_neville": {
    "side": "hit",
@@ -4059,30 +3675,6 @@
    ],
    "name": "Tinney, Carson"
   },
-  "draft_2020_tj_mccants": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "27.3%",
-     "band": "19-36%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.8%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".725",
-     "band": ".510-.940",
-     "flag": "experimental"
-    }
-   ],
-   "name": "McCants, TJ"
-  },
   "draft_2025_cody_miller": {
    "side": "hit",
    "headline": [
@@ -4155,54 +3747,6 @@
    ],
    "name": "Quinn-Irons, James"
   },
-  "draft_2022_brock_wills": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "26.4%",
-     "band": "18-35%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.6%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".725",
-     "band": ".509-.940",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Wills, Brock"
-  },
-  "draft_2022_carter_garate": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.9%",
-     "band": "15-32%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".726",
-     "band": ".511-.941",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Garate, Carter"
-  },
   "draft_2026_carson_kerce": {
    "side": "hit",
    "headline": [
@@ -4227,31 +3771,7 @@
    ],
    "name": "Kerce, Carson"
   },
-  "draft_2022_eric_snow": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.8%",
-     "band": "14-31%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.8%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".724",
-     "band": ".509-.939",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Snow, Eric"
-  },
-  "draft_2022_isaiah_jackson": {
+  "draft_2025_isaiah_jackson": {
    "side": "hit",
    "headline": [
     {
@@ -4274,30 +3794,6 @@
     }
    ],
    "name": "Jackson, Isaiah"
-  },
-  "draft_2023_steven_milam": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.8%",
-     "band": "16-33%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".724",
-     "band": ".508-.939",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Milam, Steven"
   },
   "draft_2025_rj_austin": {
    "side": "hit",
@@ -4323,31 +3819,7 @@
    ],
    "name": "Austin, RJ"
   },
-  "draft_2020_chad_born": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "19.1%",
-     "band": "10-28%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.4%",
-     "band": "5-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".723",
-     "band": ".508-.938",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Born, Chad"
-  },
-  "draft_2023_will_gasparino": {
+  "draft_2026_will_gasparino": {
    "side": "hit",
    "headline": [
     {
@@ -4370,30 +3842,6 @@
     }
    ],
    "name": "Gasparino, Will"
-  },
-  "draft_2021_davis_diaz": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.8%",
-     "band": "17-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.6%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".722",
-     "band": ".507-.938",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Diaz, Davis"
   },
   "draft_2025_jake_mccutcheon": {
    "side": "hit",
@@ -4467,31 +3915,7 @@
    ],
    "name": "Hedges, Ethan"
   },
-  "draft_2018_jarrett_ford": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.9%",
-     "band": "16-33%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".721",
-     "band": ".505-.936",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Ford, Jarrett"
-  },
-  "draft_2023_roman_martin": {
+  "draft_2026_roman_martin": {
    "side": "hit",
    "headline": [
     {
@@ -4514,30 +3938,6 @@
     }
    ],
    "name": "Martin, Roman"
-  },
-  "draft_2022_chris_stanfield": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "27.1%",
-     "band": "18-36%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.4%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".721",
-     "band": ".505-.936",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Stanfield, Chris"
   },
   "draft_2026_alex_sosa": {
    "side": "hit",
@@ -4610,30 +4010,6 @@
     }
    ],
    "name": "McLain, Nick"
-  },
-  "draft_2023_cam_clayton": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.9%",
-     "band": "17-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.5%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".720",
-     "band": ".505-.935",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Clayton, Cam"
   },
   "draft_2025_alex_lodise": {
    "side": "hit",
@@ -4731,7 +4107,7 @@
    ],
    "name": "Lavey, Robbie"
   },
-  "draft_2022_maximus_martin": {
+  "draft_2025_maximus_martin": {
    "side": "hit",
    "headline": [
     {
@@ -4803,6 +4179,30 @@
    ],
    "name": "Shelton, Colby"
   },
+  "draft_2025_colby_shelton": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "34.3%",
+     "band": "26-43%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "11.7%",
+     "band": "5-18%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".719",
+     "band": ".503-.934",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Shelton, Colby"
+  },
   "draft_2025_ryan_weingartner": {
    "side": "hit",
    "headline": [
@@ -4826,54 +4226,6 @@
     }
    ],
    "name": "Weingartner, Ryan"
-  },
-  "draft_2019_dylan_brewer": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.1%",
-     "band": "16-33%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.0%",
-     "band": "7-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".718",
-     "band": ".502-.933",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Brewer, Dylan"
-  },
-  "draft_2019_josh_hahn": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "35.0%",
-     "band": "26-44%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.5%",
-     "band": "5-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".718",
-     "band": ".502-.933",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Hahn, Josh"
   },
   "draft_2024_caden_kendle": {
    "side": "hit",
@@ -4923,6 +4275,30 @@
    ],
    "name": "Boser, Bobby"
   },
+  "draft_2025_bobby_boser": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "32.2%",
+     "band": "24-41%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.0%",
+     "band": "6-18%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".717",
+     "band": ".502-.933",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Boser, Bobby"
+  },
   "draft_2026_eric_guevara": {
    "side": "hit",
    "headline": [
@@ -4946,30 +4322,6 @@
     }
    ],
    "name": "Guevara, Eric"
-  },
-  "draft_2022_jayden_hylton": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "30.9%",
-     "band": "22-39%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.1%",
-     "band": "5-17%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".717",
-     "band": ".502-.933",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Hylton, Jayden"
   },
   "draft_2026_mulivai_levu": {
    "side": "hit",
@@ -5139,102 +4491,6 @@
    ],
    "name": "Dowd, Brayden"
   },
-  "draft_2023_colin_barczi": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "29.3%",
-     "band": "21-38%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.2%",
-     "band": "7-20%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".500-.930",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Barczi, Colin"
-  },
-  "draft_2019_cesar_valero": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "31.9%",
-     "band": "23-40%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".500-.930",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Valero, Cesar"
-  },
-  "draft_2023_dylan_cupp": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.4%",
-     "band": "17-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.5%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".500-.930",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Cupp, Dylan"
-  },
-  "draft_2021_malakhi_knight": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "28.0%",
-     "band": "20-36%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".714",
-     "band": ".499-.929",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Knight, Malakhi"
-  },
   "draft_2026_andrew_williamson": {
    "side": "hit",
    "headline": [
@@ -5258,78 +4514,6 @@
     }
    ],
    "name": "Williamson, Andrew"
-  },
-  "draft_2023_treyson_hughes": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "26.8%",
-     "band": "18-35%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".714",
-     "band": ".499-.929",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Hughes, Treyson"
-  },
-  "draft_2021_rene_lastres": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "32.4%",
-     "band": "24-41%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "5-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".714",
-     "band": ".498-.929",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Lastres, Rene"
-  },
-  "draft_2021_michael_robertson": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "29.2%",
-     "band": "21-38%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.4%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".714",
-     "band": ".498-.929",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Robertson, Michael"
   },
   "draft_2025_landyn_vidourek": {
    "side": "hit",
@@ -5355,7 +4539,7 @@
    ],
    "name": "Vidourek, Landyn"
   },
-  "draft_2021_cody_schrier": {
+  "draft_2024_cody_schrier": {
    "side": "hit",
    "headline": [
     {
@@ -5402,30 +4586,6 @@
     }
    ],
    "name": "Gray, Murf"
-  },
-  "draft_2019_isaac_nunez": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "26.5%",
-     "band": "18-35%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".712",
-     "band": ".497-.927",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Nunez, Isaac"
   },
   "draft_2026_daniel_jackson": {
    "side": "hit",
@@ -5475,7 +4635,7 @@
    ],
    "name": "Johnson, Camden"
   },
-  "draft_2023_ryder_helfrick": {
+  "draft_2026_ryder_helfrick": {
    "side": "hit",
    "headline": [
     {
@@ -5498,150 +4658,6 @@
     }
    ],
    "name": "Helfrick, Ryder"
-  },
-  "draft_2019_connor_walsh": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "28.3%",
-     "band": "20-37%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".708",
-     "band": ".493-.924",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Walsh, Connor"
-  },
-  "draft_2019_michael_carpentier": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.3%",
-     "band": "17-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "5-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".708",
-     "band": ".493-.923",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Carpentier Jr., Michael"
-  },
-  "draft_2020_steven_ondina": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.6%",
-     "band": "17-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "5-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".708",
-     "band": ".493-.923",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Ondina, Steven"
-  },
-  "draft_2018_kameron_guangorena": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "15-32%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.0%",
-     "band": "7-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".707",
-     "band": ".492-.922",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Guangorena, Kameron"
-  },
-  "draft_2022_payton_brennan": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "31.5%",
-     "band": "23-40%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.8%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".707",
-     "band": ".491-.922",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Brennan, Payton"
-  },
-  "draft_2020_tre_hondras": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.3%",
-     "band": "16-33%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "5-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".706",
-     "band": ".491-.921",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Hondras, Tre"
   },
   "draft_2025_ethan_frey": {
    "side": "hit",
@@ -5667,7 +4683,7 @@
    ],
    "name": "Frey, Ethan"
   },
-  "draft_2023_antonio_jimenez": {
+  "draft_2025_antonio_jimenez": {
    "side": "hit",
    "headline": [
     {
@@ -5691,7 +4707,7 @@
    ],
    "name": "Jimenez, Antonio"
   },
-  "draft_2023_trent_caraway": {
+  "draft_2025_trent_caraway": {
    "side": "hit",
    "headline": [
     {
@@ -5714,30 +4730,6 @@
     }
    ],
    "name": "Caraway, Trent"
-  },
-  "draft_2019_peyton_miller": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.9%",
-     "band": "17-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "5-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".702",
-     "band": ".487-.917",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Miller, Peyton"
   },
   "draft_2024_payton_tolle": {
    "side": "hit",
@@ -5811,54 +4803,6 @@
    ],
    "name": "Phillips, Trace"
   },
-  "draft_2019_ethan_vecrumba": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "32.0%",
-     "band": "24-40%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.1%",
-     "band": "5-17%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".695",
-     "band": ".480-.910",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Vecrumba, Ethan"
-  },
-  "draft_2022_jeric_curtis": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "30.9%",
-     "band": "22-39%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.8%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".694",
-     "band": ".479-.909",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Curtis, Jeric"
-  },
   "draft_2025_brody_donay": {
    "side": "hit",
    "headline": [
@@ -5883,30 +4827,6 @@
    ],
    "name": "Donay, Brody"
   },
-  "draft_2021_drake_varnado": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "34.1%",
-     "band": "26-43%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "5-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".684",
-     "band": ".469-.900",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Varnado, Drake"
-  },
   "draft_2027_hogan_denny": {
    "side": "hit",
    "headline": [
@@ -5930,30 +4850,6 @@
     }
    ],
    "name": "Denny, Hogan"
-  },
-  "draft_2021_noah_miller": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.4%",
-     "band": "14-31%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "5-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".740",
-     "band": ".525-.955",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Miller, Noah"
   },
   "draft_2027_jake_hanley": {
    "side": "hit",
@@ -6003,30 +4899,6 @@
    ],
    "name": "Dickerson, Korbyn"
   },
-  "draft_2020_lukas_cook": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "26.7%",
-     "band": "18-35%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "5-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".718",
-     "band": ".502-.933",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Cook, Lukas"
-  },
   "draft_2027_jackson_hotchkiss": {
    "side": "hit",
    "headline": [
@@ -6050,24 +4922,6 @@
     }
    ],
    "name": "Hotchkiss, Jackson"
-  },
-  "draft_2023_cole_stokes": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.4%",
-     "band": "19-32%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.4%",
-     "band": "8-19%",
-     "flag": null
-    }
-   ],
-   "name": "Stokes, Cole"
   },
   "draft_2026_dylan_vigue": {
    "side": "pit",
@@ -6122,24 +4976,6 @@
     }
    ],
    "name": "Govel, Grant"
-  },
-  "draft_2022_jaxon_jordan": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.3%",
-     "band": "19-32%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.5%",
-     "band": "8-19%",
-     "flag": null
-    }
-   ],
-   "name": "Jordan, Jaxon"
   },
   "draft_2026_tyner_horn": {
    "side": "pit",
@@ -6231,24 +5067,6 @@
    ],
    "name": "Hunter, Caden"
   },
-  "draft_2021_drew_christo": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.6%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.4%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Christo, Drew"
-  },
   "draft_2027_landon_mack": {
    "side": "pit",
    "headline": [
@@ -6285,24 +5103,6 @@
    ],
    "name": "McCoy, Kyle"
   },
-  "draft_2021_max_debiec": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.7%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "14.6%",
-     "band": "9-20%",
-     "flag": null
-    }
-   ],
-   "name": "Debiec, Max"
-  },
   "draft_2025_grayson_grinsell": {
    "side": "pit",
    "headline": [
@@ -6320,24 +5120,6 @@
     }
    ],
    "name": "Grinsell, Grayson"
-  },
-  "draft_2022_david_lally_jr": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.8%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.8%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Lally, David"
   },
   "draft_2025_jason_reitz": {
    "side": "pit",
@@ -6519,42 +5301,6 @@
    ],
    "name": "Cunningham, Bryce"
   },
-  "draft_2021_ryan_higgins": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.1%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.9%",
-     "band": "7-17%",
-     "flag": null
-    }
-   ],
-   "name": "Higgins, Ryan"
-  },
-  "draft_2022_colby_holcombe": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.5%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "7-17%",
-     "flag": null
-    }
-   ],
-   "name": "Holcombe, Colby"
-  },
   "draft_2024_ryan_johnson": {
    "side": "pit",
    "headline": [
@@ -6591,24 +5337,6 @@
    ],
    "name": "Foley, Connor"
   },
-  "draft_2019_chandler_freeman": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.7%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "7-17%",
-     "flag": null
-    }
-   ],
-   "name": "Freeman, Chandler"
-  },
   "draft_2025_patrick_forbes": {
    "side": "pit",
    "headline": [
@@ -6627,7 +5355,7 @@
    ],
    "name": "Forbes, Patrick"
   },
-  "draft_2023_joey_volchko": {
+  "draft_2026_joey_volchko": {
    "side": "pit",
    "headline": [
     {
@@ -6717,7 +5445,7 @@
    ],
    "name": "Phillips, Marcus"
   },
-  "draft_2021_chase_burns": {
+  "draft_2024_chase_burns": {
    "side": "pit",
    "headline": [
     {
@@ -6824,24 +5552,6 @@
     }
    ],
    "name": "Holmes, Bridger"
-  },
-  "draft_2022_yoel_tejeda_jr": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.2%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.4%",
-     "band": "8-19%",
-     "flag": null
-    }
-   ],
-   "name": "Tejeda Jr., Yoel"
   },
   "draft_2024_dennis_colleran": {
    "side": "pit",
@@ -6987,24 +5697,6 @@
    ],
    "name": "Neighbors, Tyson"
   },
-  "draft_2020_storm_hierholzer": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.7%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "15.7%",
-     "band": "10-21%",
-     "flag": null
-    }
-   ],
-   "name": "Hierholzer, Storm"
-  },
   "draft_2024_parker_smith": {
    "side": "pit",
    "headline": [
@@ -7076,24 +5768,6 @@
     }
    ],
    "name": "Neely, Brandon"
-  },
-  "draft_2022_andrew_dutkanych": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.5%",
-     "band": "19-32%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.5%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Dutkanych, Andrew"
   },
   "draft_2024_michael_massey": {
    "side": "pit",
@@ -7203,7 +5877,7 @@
    ],
    "name": "Arnold, Jamie"
   },
-  "draft_2022_jurrangelo_cijntje": {
+  "draft_2024_jurrangelo_cijntje": {
    "side": "pit",
    "headline": [
     {
@@ -7221,7 +5895,7 @@
    ],
    "name": "Cijntje, Jurrangelo"
   },
-  "draft_2023_liam_peterson": {
+  "draft_2026_liam_peterson": {
    "side": "pit",
    "headline": [
     {
@@ -7239,7 +5913,7 @@
    ],
    "name": "Peterson, Liam"
   },
-  "draft_2021_thatcher_hurd": {
+  "draft_2024_thatcher_hurd": {
    "side": "pit",
    "headline": [
     {
@@ -7347,24 +6021,6 @@
    ],
    "name": "Dudan, Jacob"
   },
-  "draft_2023_parker_detmers": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.4%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "8-18%",
-     "flag": null
-    }
-   ],
-   "name": "Detmers, Parker"
-  },
   "draft_2025_payton_graham": {
    "side": "pit",
    "headline": [
@@ -7400,42 +6056,6 @@
     }
    ],
    "name": "Carter, Greysen"
-  },
-  "draft_2021_caedmon_parker": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.9%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.6%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Parker, Caedmon"
-  },
-  "draft_2023_josh_rivera": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.7%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.7%",
-     "band": "8-19%",
-     "flag": null
-    }
-   ],
-   "name": "Rivera, Josh"
   },
   "draft_2026_tyler_fay": {
    "side": "pit",
@@ -7473,24 +6093,6 @@
    ],
    "name": "Cranton, Hunter"
   },
-  "draft_2019_carter_rustad": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.5%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.3%",
-     "band": "5-16%",
-     "flag": null
-    }
-   ],
-   "name": "Rustad, Carter"
-  },
   "draft_2024_brock_moore": {
    "side": "pit",
    "headline": [
@@ -7509,24 +6111,6 @@
    ],
    "name": "Moore, Brock"
   },
-  "draft_2022_kyle_ayers": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.3%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "7-17%",
-     "flag": null
-    }
-   ],
-   "name": "Ayers, Kyle"
-  },
   "draft_2026_gabe_gaeckle": {
    "side": "pit",
    "headline": [
@@ -7544,24 +6128,6 @@
     }
    ],
    "name": "Gaeckle, Gabe"
-  },
-  "draft_2020_grant_richardson": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.9%",
-     "band": "19-32%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.3%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Richardson, Grant"
   },
   "draft_2024_mason_marriott": {
    "side": "pit",
@@ -7598,42 +6164,6 @@
     }
    ],
    "name": "Smith, Hagen"
-  },
-  "draft_2022_jack_oconnor": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.3%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.9%",
-     "band": "7-17%",
-     "flag": null
-    }
-   ],
-   "name": "O'Connor, Jack"
-  },
-  "draft_2019_dylan_eskew": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.0%",
-     "band": "16-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.5%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Eskew, Dylan"
   },
   "draft_2025_brian_curley": {
    "side": "pit",
@@ -7707,7 +6237,7 @@
    ],
    "name": "Causey, AJ"
   },
-  "draft_2023_james_ellwanger": {
+  "draft_2025_james_ellwanger": {
    "side": "pit",
    "headline": [
     {
@@ -7724,24 +6254,6 @@
     }
    ],
    "name": "Ellwanger, James"
-  },
-  "draft_2023_aidan_smith": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.1%",
-     "band": "16-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "19.7%",
-     "band": "14-25%",
-     "flag": null
-    }
-   ],
-   "name": "Smith, Aidan"
   },
   "draft_2026_isaac_morton": {
    "side": "pit",
@@ -7761,43 +6273,7 @@
    ],
    "name": "Morton, Isaac"
   },
-  "draft_2019_joe_charles": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Charles, Joe"
-  },
-  "draft_2020_jacob_young": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.7%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.8%",
-     "band": "9-19%",
-     "flag": null
-    }
-   ],
-   "name": "Young, Jacob"
-  },
-  "draft_2021_janzen_keisel": {
+  "draft_2024_janzen_keisel": {
    "side": "pit",
    "headline": [
     {
@@ -7816,6 +6292,24 @@
    "name": "Keisel, Janzen"
   },
   "draft_2025_aidan_teel": {
+   "side": "pit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "23.6%",
+     "band": "17-30%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "13.0%",
+     "band": "8-18%",
+     "flag": null
+    }
+   ],
+   "name": "Teel, Aidan"
+  },
+  "draft_2026_aidan_teel": {
    "side": "pit",
    "headline": [
     {
@@ -7923,24 +6417,6 @@
    ],
    "name": "Eagen, Daniel"
   },
-  "draft_2022_kassius_thomas": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.0%",
-     "band": "16-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.6%",
-     "band": "8-19%",
-     "flag": null
-    }
-   ],
-   "name": "Thomas, Kassius"
-  },
   "draft_2025_tanner_franklin": {
    "side": "pit",
    "headline": [
@@ -7958,24 +6434,6 @@
     }
    ],
    "name": "Franklin, Tanner"
-  },
-  "draft_2022_gavin_guidry": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.9%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.6%",
-     "band": "8-19%",
-     "flag": null
-    }
-   ],
-   "name": "Guidry, Gavin"
   },
   "draft_2024_travis_smith": {
    "side": "pit",
@@ -8103,24 +6561,6 @@
    ],
    "name": "Kleinschmit, Ethan"
   },
-  "draft_2021_pierce_coppola": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.8%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.5%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Coppola, Pierce"
-  },
   "draft_2026_brett_renfrow": {
    "side": "pit",
    "headline": [
@@ -8192,24 +6632,6 @@
     }
    ],
    "name": "Holobetz, John"
-  },
-  "draft_2019_trevor_hinkel": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.2%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.5%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Hinkel, Trevor"
   },
   "draft_2024_chase_allsup": {
    "side": "pit",
@@ -8283,25 +6705,7 @@
    ],
    "name": "Witherspoon, Kyson"
   },
-  "draft_2021_logan_henderson": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.4%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "15.1%",
-     "band": "10-20%",
-     "flag": null
-    }
-   ],
-   "name": "Henderson, Logan"
-  },
-  "draft_2021_gage_jump": {
+  "draft_2024_gage_jump": {
    "side": "pit",
    "headline": [
     {
@@ -8319,7 +6723,7 @@
    ],
    "name": "Jump, Gage"
   },
-  "draft_2021_matt_ager": {
+  "draft_2024_matt_ager": {
    "side": "pit",
    "headline": [
     {
@@ -8336,24 +6740,6 @@
     }
    ],
    "name": "Ager, Matt"
-  },
-  "draft_2021_will_koger": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.6%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.5%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Koger, Will"
   },
   "draft_2024_brody_brecht": {
    "side": "pit",
@@ -8373,24 +6759,6 @@
    ],
    "name": "Brecht, Brody"
   },
-  "draft_2022_hayden_murphy": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.3%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.6%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Murphy, Hayden"
-  },
   "draft_2026_ricky_ojeda": {
    "side": "pit",
    "headline": [
@@ -8409,7 +6777,7 @@
    ],
    "name": "Ojeda, Ricky"
   },
-  "draft_2022_tristan_smith": {
+  "draft_2024_tristan_smith": {
    "side": "pit",
    "headline": [
     {
@@ -8463,24 +6831,6 @@
    ],
    "name": "Stuhr, Sam"
   },
-  "draft_2023_cameron_tilly": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.1%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Tilly, Cameron"
-  },
   "draft_2024_drew_beam": {
    "side": "pit",
    "headline": [
@@ -8517,25 +6867,7 @@
    ],
    "name": "Wright, Jakob"
   },
-  "draft_2021_daniel_brooks": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.2%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.4%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Brooks, Daniel"
-  },
-  "draft_2022_riley_kelly": {
+  "draft_2025_riley_kelly": {
    "side": "pit",
    "headline": [
     {
@@ -8570,24 +6902,6 @@
     }
    ],
    "name": "Bucknam, Micah"
-  },
-  "draft_2019_antoine_harris": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.8%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.8%",
-     "band": "9-19%",
-     "flag": null
-    }
-   ],
-   "name": "Harris, Antoine"
   },
   "draft_2026_josh_mcdevitt": {
    "side": "pit",
@@ -8661,24 +6975,6 @@
    ],
    "name": "Candiotti, Clark"
   },
-  "draft_2027_cole_cheatham": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.3%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.1%",
-     "band": "8-18%",
-     "flag": null
-    }
-   ],
-   "name": "Cheatham, Cole"
-  },
   "draft_2025_griffin_stieg": {
    "side": "pit",
    "headline": [
@@ -8714,24 +7010,6 @@
     }
    ],
    "name": "Hertzler, Cole"
-  },
-  "draft_2023_matthew_dallas": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.2%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.4%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Dallas, Matthew"
   },
   "draft_2025_nate_snead": {
    "side": "pit",
@@ -8823,24 +7101,6 @@
    ],
    "name": "Marionneaux, Dylan"
   },
-  "draft_2023_christian_rodriguez": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.1%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "6-16%",
-     "flag": null
-    }
-   ],
-   "name": "Rodriguez, Christian"
-  },
   "draft_2026_ryan_peterson": {
    "side": "pit",
    "headline": [
@@ -8858,24 +7118,6 @@
     }
    ],
    "name": "Peterson, Ryan"
-  },
-  "draft_2022_levi_huesman": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.0%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.7%",
-     "band": "8-19%",
-     "flag": null
-    }
-   ],
-   "name": "Huesman, Levi"
   },
   "draft_2024_brady_tygart": {
    "side": "pit",
@@ -8913,7 +7155,7 @@
    ],
    "name": "Radel, Jack"
   },
-  "draft_2021_josh_hartle": {
+  "draft_2024_josh_hartle": {
    "side": "pit",
    "headline": [
     {
@@ -8949,24 +7191,6 @@
    ],
    "name": "Santucci, Jonathan"
   },
-  "draft_2023_tate_mcguire": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.7%",
-     "band": "19-32%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.4%",
-     "band": "8-19%",
-     "flag": null
-    }
-   ],
-   "name": "McGuire, Tate"
-  },
   "draft_2025_kade_anderson": {
    "side": "pit",
    "headline": [
@@ -8984,24 +7208,6 @@
     }
    ],
    "name": "Anderson, Kade"
-  },
-  "draft_2023_tanner_hall": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.2%",
-     "band": "5-15%",
-     "flag": null
-    }
-   ],
-   "name": "Hall, Tanner"
   },
   "draft_2024_griffin_herring": {
    "side": "pit",
@@ -9022,6 +7228,24 @@
    "name": "Herring, Griffin"
   },
   "draft_2025_shane_sdao": {
+   "side": "pit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "24.8%",
+     "band": "18-31%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "10.4%",
+     "band": "5-16%",
+     "flag": null
+    }
+   ],
+   "name": "Sdao, Shane"
+  },
+  "draft_2026_shane_sdao": {
    "side": "pit",
    "headline": [
     {
@@ -9147,24 +7371,6 @@
    ],
    "name": "Doyle, Liam"
   },
-  "draft_2023_nolan_stevens": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.9%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.6%",
-     "band": "5-16%",
-     "flag": null
-    }
-   ],
-   "name": "Stevens, Nolan"
-  },
   "draft_2026_jason_decaro": {
    "side": "pit",
    "headline": [
@@ -9182,24 +7388,6 @@
     }
    ],
    "name": "DeCaro, Jason"
-  },
-  "draft_2020_theo_millas": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.5%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.3%",
-     "band": "5-16%",
-     "flag": null
-    }
-   ],
-   "name": "Millas, Theo"
   },
   "draft_2024_lp_langevin": {
    "side": "pit",
@@ -9237,60 +7425,6 @@
    ],
    "name": "Arvidson, Brandon"
   },
-  "draft_2019_randon_hostert": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.0%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.2%",
-     "band": "5-15%",
-     "flag": null
-    }
-   ],
-   "name": "Hostert, Randon"
-  },
-  "draft_2023_olin_johnson": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.6%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Johnson, Olin"
-  },
-  "draft_2019_andre_duplantier": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.1%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.9%",
-     "band": "7-17%",
-     "flag": null
-    }
-   ],
-   "name": "Duplantier, Andre"
-  },
   "draft_2025_sawyer_hawks": {
    "side": "pit",
    "headline": [
@@ -9308,24 +7442,6 @@
     }
    ],
    "name": "Hawks, Sawyer"
-  },
-  "draft_2023_aidan_keenan": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.9%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "17.0%",
-     "band": "12-22%",
-     "flag": null
-    }
-   ],
-   "name": "Keenan, Aidan"
   },
   "draft_2024_luke_jewett": {
    "side": "pit",
@@ -9345,42 +7461,6 @@
    ],
    "name": "Jewett, Luke"
   },
-  "draft_2022_bradley_loftin": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.0%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.0%",
-     "band": "5-15%",
-     "flag": null
-    }
-   ],
-   "name": "Loftin, Bradley"
-  },
-  "draft_2021_coleman_willis": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.3%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "16.4%",
-     "band": "11-22%",
-     "flag": null
-    }
-   ],
-   "name": "Willis, Coleman"
-  },
   "draft_2024_jacob_kmatz": {
    "side": "pit",
    "headline": [
@@ -9398,24 +7478,6 @@
     }
    ],
    "name": "Kmatz, Jacob"
-  },
-  "draft_2023_justin_lee": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.5%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Lee, Justin"
   },
   "draft_2026_james_guyette": {
    "side": "pit",
@@ -9452,42 +7514,6 @@
     }
    ],
    "name": "Jacobs, Ben"
-  },
-  "draft_2018_randy_abshier": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.9%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.1%",
-     "band": "5-15%",
-     "flag": null
-    }
-   ],
-   "name": "Abshier, Randy"
-  },
-  "draft_2023_joseph_gonzalez": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.4%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Gonzalez, Joseph"
   },
   "draft_2025_justin_lamkin": {
    "side": "pit",
@@ -9543,24 +7569,6 @@
    ],
    "name": "New, Cody"
   },
-  "draft_2020_ryan_hagenow": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.7%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Hagenow, Ryan"
-  },
   "draft_2024_trey_yesavage": {
    "side": "pit",
    "headline": [
@@ -9579,24 +7587,6 @@
    ],
    "name": "Yesavage, Trey"
   },
-  "draft_2019_dawson_netz": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.7%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.3%",
-     "band": "5-16%",
-     "flag": null
-    }
-   ],
-   "name": "Netz, Dawson"
-  },
   "draft_2025_jared_spencer": {
    "side": "pit",
    "headline": [
@@ -9614,24 +7604,6 @@
     }
    ],
    "name": "Spencer, Jared"
-  },
-  "draft_2019_ryan_sleeper": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.5%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "14.2%",
-     "band": "9-19%",
-     "flag": null
-    }
-   ],
-   "name": "Sleeper, Ryan"
   },
   "draft_2024_mason_molina": {
    "side": "pit",
@@ -9705,7 +7677,7 @@
    ],
    "name": "Holton, Carter"
   },
-  "draft_2023_ethan_mcelvain": {
+  "draft_2026_ethan_mcelvain": {
    "side": "pit",
    "headline": [
     {
@@ -9759,42 +7731,6 @@
    ],
    "name": "Moore, Ben"
   },
-  "draft_2019_seth_tomczak": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.5%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.4%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Tomczak, Seth"
-  },
-  "draft_2021_devin_futrell": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.3%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.4%",
-     "band": "5-16%",
-     "flag": null
-    }
-   ],
-   "name": "Futrell, Devin"
-  },
   "draft_2026_bo_rhudy": {
    "side": "pit",
    "headline": [
@@ -9812,24 +7748,6 @@
     }
    ],
    "name": "Rhudy, Bo"
-  },
-  "draft_2019_tyler_nesbitt": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.1%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.2%",
-     "band": "8-18%",
-     "flag": null
-    }
-   ],
-   "name": "Nesbitt, Tyler"
   },
   "draft_2025_sean_episcope": {
    "side": "pit",
@@ -9921,24 +7839,6 @@
    ],
    "name": "Burns, Thomas"
   },
-  "draft_2028_alex_rodriguez": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.4%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "14.5%",
-     "band": "9-20%",
-     "flag": null
-    }
-   ],
-   "name": "Rodriguez, Alex"
-  },
   "draft_2025_nelson_keljo": {
    "side": "pit",
    "headline": [
@@ -9993,42 +7893,6 @@
    ],
    "name": "Youngerman, Sean"
   },
-  "draft_2023_tanner_witt": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.8%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.4%",
-     "band": "8-19%",
-     "flag": null
-    }
-   ],
-   "name": "Witt, Tanner"
-  },
-  "draft_2023_derek_schaefer": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "14.0%",
-     "band": "9-19%",
-     "flag": null
-    }
-   ],
-   "name": "Schaefer, Derek"
-  },
   "draft_2024_brian_holiday": {
    "side": "pit",
    "headline": [
@@ -10046,42 +7910,6 @@
     }
    ],
    "name": "Holiday, Brian"
-  },
-  "draft_2022_gavin_van_kempen": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.3%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.9%",
-     "band": "7-17%",
-     "flag": null
-    }
-   ],
-   "name": "Van Kempen, Gavin"
-  },
-  "draft_2023_grant_taylor": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.0%",
-     "band": "18-32%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.0%",
-     "band": "6-16%",
-     "flag": null
-    }
-   ],
-   "name": "Taylor, Grant"
   },
   "draft_2025_landon_beidelschies": {
    "side": "pit",
@@ -10101,24 +7929,6 @@
    ],
    "name": "Beidelschies, Landon"
   },
-  "draft_2022_zach_crotchfelt": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.5%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.5%",
-     "band": "8-19%",
-     "flag": null
-    }
-   ],
-   "name": "Crotchfelt, Zach"
-  },
   "draft_2024_kyle_robinson": {
    "side": "pit",
    "headline": [
@@ -10136,24 +7946,6 @@
     }
    ],
    "name": "Robinson, Kyle"
-  },
-  "draft_2027_joseph_webb": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.5%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.3%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Webb, Joseph"
   },
   "draft_2024_braden_davis": {
    "side": "pit",
@@ -10173,24 +7965,6 @@
    ],
    "name": "Davis, Braden"
   },
-  "draft_2021_bransen_kuehl": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.0%",
-     "band": "16-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.4%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Kuehl, Bransen"
-  },
   "draft_2026_cole_carlon": {
    "side": "pit",
    "headline": [
@@ -10209,24 +7983,6 @@
    ],
    "name": "Carlon, Cole"
   },
-  "draft_2022_carter_young": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "21.7%",
-     "band": "15-28%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.2%",
-     "band": "5-15%",
-     "flag": null
-    }
-   ],
-   "name": "Young, Carter"
-  },
   "draft_2024_ryan_prager": {
    "side": "pit",
    "headline": [
@@ -10244,78 +8000,6 @@
     }
    ],
    "name": "Prager, Ryan"
-  },
-  "draft_2022_spencer_jones": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.4%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Jones, Spencer"
-  },
-  "draft_2022_grayson_saunier": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.1%",
-     "band": "16-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.8%",
-     "band": "6-16%",
-     "flag": null
-    }
-   ],
-   "name": "Saunier, Grayson"
-  },
-  "draft_2023_colin_fisher": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.0%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.1%",
-     "band": "6-16%",
-     "flag": null
-    }
-   ],
-   "name": "Fisher, Colin"
-  },
-  "draft_2019_brett_thomas": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.3%",
-     "band": "8-18%",
-     "flag": null
-    }
-   ],
-   "name": "Thomas, Brett"
   },
   "draft_2026_dominic_voegele": {
    "side": "pit",
@@ -10353,60 +8037,6 @@
    ],
    "name": "Jean, Antoine"
   },
-  "draft_2022_matthew_grabmann": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.1%",
-     "band": "16-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "14.2%",
-     "band": "9-19%",
-     "flag": null
-    }
-   ],
-   "name": "Grabmann, Matthew"
-  },
-  "draft_2023_jacob_wilson": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.2%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.3%",
-     "band": "5-16%",
-     "flag": null
-    }
-   ],
-   "name": "Wilson, Jacob"
-  },
-  "draft_2023_colton_hartman": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.5%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "7-17%",
-     "flag": null
-    }
-   ],
-   "name": "Hartman, Colton"
-  },
   "draft_2025_jack_anker": {
    "side": "pit",
    "headline": [
@@ -10443,25 +8073,7 @@
    ],
    "name": "Taylor, Zane"
   },
-  "draft_2021_dylan_smith": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.6%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.5%",
-     "band": "5-16%",
-     "flag": null
-    }
-   ],
-   "name": "Smith, Dylan"
-  },
-  "draft_2023_zane_adams": {
+  "draft_2025_zane_adams": {
    "side": "pit",
    "headline": [
     {
@@ -10478,42 +8090,6 @@
     }
    ],
    "name": "Adams, Zane"
-  },
-  "draft_2021_eric_hammond": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.5%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.3%",
-     "band": "8-18%",
-     "flag": null
-    }
-   ],
-   "name": "Hammond, Eric"
-  },
-  "draft_2021_peyton_wilson": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "23.3%",
-     "band": "17-30%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "7-18%",
-     "flag": null
-    }
-   ],
-   "name": "Wilson, Peyton"
   },
   "draft_2026_logan_reddemann": {
    "side": "pit",
@@ -10550,42 +8126,6 @@
     }
    ],
    "name": "Marohn, Ryan"
-  },
-  "draft_2018_rye_gunter": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "24.3%",
-     "band": "18-31%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "6-16%",
-     "flag": null
-    }
-   ],
-   "name": "Gunter, Rye"
-  },
-  "draft_2026_logan_schmidt": {
-   "side": "pit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.6%",
-     "band": "16-29%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "6-17%",
-     "flag": null
-    }
-   ],
-   "name": "Schmidt, Logan"
   },
   "draft_2026_trey_beard": {
    "side": "pit",
