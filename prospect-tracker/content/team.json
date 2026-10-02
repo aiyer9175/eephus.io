@@ -13,7 +13,7 @@
       "Sports Betting: a run-scoring regression on the site's own team indexes with a Skellam margin model, proportional de-vig, closing-line value, a paper shadow ledger with per-tag records, market publishability gates, and an honest vintage backtest that beats the home-team constant on out-of-sample games.",
       "Alchemy Lab: starter and reliever role-conversion fit scores, a pitch-add recommender from arsenal gaps and platoon splits, and a reverse-platoon radar, validated as a sign check on 95 real conversions.",
       "CollegeSavant translation, farm-system grading, draft and international boards, a mock-draft model scored against the real draft, and entity pages for every org, school and country.",
-      "The unified Glossary, the Arkmetric standard, and a model registry that ties every shipped model to a committed evaluation artifact, a verdict and a freshness clock, with committed losses beside the wins.",
+      "The Library (the unified glossary), the Arkmetric standard, and a model registry that ties every shipped model to a committed evaluation artifact, a verdict and a freshness clock, with committed losses beside the wins.",
       "Engineering practice: 3,500 tests run in a chunked suite with mutation checks on new guards, Playwright and headless-JS smoke tests on every surface, copy lint, content-hash cache busting, and pre-registered measurement before any accuracy claim ships.",
       "Skills used here: Python (pandas, numpy, scikit-learn, LightGBM, scipy), SQL and SQLite, statistics (empirical Bayes, survival analysis, bootstrap inference, calibration, ranking metrics), JavaScript, HTML and CSS, REST APIs and scraping, git, cron and deploy operations on Linux and Windows, technical writing and site design."
     ],

@@ -600,7 +600,7 @@
     h += "<p>Runs per game, scored plus allowed, at the venue by its clubs, divided by the same "
       + "clubs' road rate over the same span, then league-centered and shrunk. Above 1.00 the park "
       + 'adds offense. <a class="g-term" href="/glossary/#g=milb_park_factor" '
-      + 'data-gl="milb_park_factor">Glossary entry</a>.</p>';
+      + 'data-gl="milb_park_factor">Library entry</a>.</p>';
     h += "<h3>How it is built</h3><ul>"
       + "<li>StatsAPI schedule, regular season, final scores. Sports "
       + esc((m.sports || []).join(", ")) + " (Triple-A through the DSL), seasons "

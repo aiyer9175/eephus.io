@@ -755,7 +755,7 @@
   // the FA module's glossary link, deep-linked to the Platform & Methodology
   // group). Rendered into the filter bar on every view so switching is one
   // click and the glossary is always at hand.
-  const GLOSSARY_CHIP = ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Platform & Methodology")}" title="Projection and methodology terms in the site glossary"><span class="chip-glyph" aria-hidden="true">§</span>Glossary</a>`;
+  const GLOSSARY_CHIP = ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Platform & Methodology")}" title="Projection and methodology terms in the Library"><span class="chip-glyph" aria-hidden="true">§</span>Library</a>`;
   function viewChips(active) {
     const c = (v, label, title) =>
       `<button class="chip${active === v ? " active" : ""}" data-pv="${v}"${title ? ` title="${esc(title)}"` : ""}>${label}</button>`;
@@ -1374,7 +1374,7 @@
         </div>
         ${tableFor(m.eval_artifact)}
         ${m.notes ? `<details class="proj-acct-notes"><summary class="fa-sub">Methodology and disclosures</summary><div class="fa-note">${esc(m.notes)}</div></details>` : ""}
-        ${fresh ? `<div class="fa-sub proj-acct-fresh">${fresh} &middot; <a href="${glHref}">methodology glossary</a></div>` : ""}
+        ${fresh ? `<div class="fa-sub proj-acct-fresh">${fresh} &middot; <a href="${glHref}">methodology in the Library</a></div>` : ""}
       </div>`;
     }).join("");
     root.innerHTML = `<div class="mlbp-page">

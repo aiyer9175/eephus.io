@@ -51,6 +51,7 @@ glossary
 history
 hof
 ledger
+library
 management
 mlbstats
 models

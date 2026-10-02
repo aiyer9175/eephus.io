@@ -2362,7 +2362,7 @@
   // unified glossary entry, which carries the method.
   function explainer(term, html) {
     return '<div class="mlbstats-note mlbstats-explainer">' + html
-      + ' <a href="/glossary/#g=' + encodeURIComponent(term) + '">Glossary</a></div>';
+      + ' <a href="/glossary/#g=' + encodeURIComponent(term) + '">Library</a></div>';
   }
   function remExplainer() {
     return explainer("rem_plus", gloss("REM+", "rem_plus")

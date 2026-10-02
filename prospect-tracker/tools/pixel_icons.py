@@ -271,18 +271,22 @@ ICONS = [
         "..###.......",
         "..##........",
         "..#........."]),
-    ("glossary", "Glossary", "nav", [
-        "...######...",
-        "..##....##..",
-        "..##........",
-        "...####.....",
-        "..##..###...",
-        "..##....##..",
-        "...###..##..",
-        ".....####...",
-        "........##..",
-        "..##....##..",
-        "...######..."]),
+    # The Library (owner ask 2026-10-02, LIBRARY_2): an open book in place of
+    # the old section-sign drawing. Outer page edges are the 2 px stems, the
+    # page tops step down one row per row to the 2 px spine, the bottom is one
+    # 1 px rule, and the text lines on both pages are the one accent group.
+    # The module key stays "glossary"; it is an alias of this drawing below.
+    ("library", "Library", "nav", [
+        "###......###",
+        "##.##..##.##",
+        "##...##...##",
+        "##.++##++.##",
+        "##...##...##",
+        "##.++##++.##",
+        "##...##...##",
+        "##.++##++.##",
+        "##...##...##",
+        "############"]),
     ("team", "Developers", "nav", [
         "############",
         "############",
@@ -710,6 +714,10 @@ ICONS = [
 ALIASES = [
     ("ev-debut", "Debut", "wire", "px-debuted"),
     ("ev-trade", "Trade", "wire", "trademachine"),
+    # The /glossary/ route keeps its key: assets/eephus-export.js routeIcon()
+    # and the GFX share card read the icon key off the URL's first path
+    # segment, so i-glossary stays as the Library drawing under the old key.
+    ("glossary", "Library", "nav", "library"),
 ]
 
 

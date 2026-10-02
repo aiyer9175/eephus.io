@@ -227,7 +227,7 @@
       // a direct #g= anchor (the reader asked for THIS entry's full read).
       parts.push(entryCard(slug, e, _S.term === slug));
     }
-    root.innerHTML = parts.join("") || `<div class="state-message">No glossary terms match.</div>`;
+    root.innerHTML = parts.join("") || `<div class="state-message">No terms match.</div>`;
     _wireReceipts(root);
     if (_S.term) {
       const card = document.getElementById("g-" + _S.term);
@@ -874,7 +874,7 @@
     if (!el) return;
     const S = window.EephusState;
     if (_GL_STATE === "failed") {
-      const msg = "The glossary could not be loaded. Check your connection and try again." +
+      const msg = "The Library could not be loaded. Check your connection and try again." +
         '<div style="margin-top:12px;"><button class="chip" type="button" id="gl-load-retry">Retry</button></div>';
       el.innerHTML = S ? S.html("failed", msg, "gl-load-state")
         : `<div class="state-message gl-load-state" role="alert">${msg}</div>`;
@@ -888,7 +888,7 @@
       };
       return;
     }
-    const msg = "Loading the glossary...";
+    const msg = "Loading the Library...";
     el.innerHTML = S ? S.html("loading", msg, "gl-load-state")
       : `<div class="state-message gl-load-state" role="status">${msg}</div>`;
   }
@@ -2034,7 +2034,7 @@ function renderGuide() {
 
   el.innerHTML = `
   <div class="guide-wrap">
-    <p class="guide-intro">Every number on the site resolves to a glossary entry. This page labels the elements you'll see on a player card, the FV history chart, and a farm-system page, then shows how the metrics build on one another. Click any underlined term for its definition.</p>
+    <p class="guide-intro">Every number on the site resolves to a Library entry. This page labels the elements you'll see on a player card, the FV history chart, and a farm-system page, then shows how the metrics build on one another. Click any underlined term for its definition.</p>
 
     <h2 class="meth-h">Anatomy of a player card</h2>
     <div class="guide-anat">${cardAnatomy}</div>
@@ -4940,7 +4940,7 @@ function _libraryGroups() {
       ["/pal/#pitchadd", "Alchemy Lab · Pitch Add", "which pitch each arm should add next"],
       ["/pal/#platoon", "Alchemy Lab · Platoon", "platoon-split profiles and pairings"],
       ["/pal/#prospects", "Alchemy Lab · Prospect Watch", "the pipeline read through the lab's conversion lenses"],
-      ["/glossary/#view=models", "Glossary · Models & Proofs", "the same ledger as /models/, read inside the glossary: every predictive model with its verdict and eval artifact, next to the terms it defines"],
+      ["/glossary/#view=models", "Library · Models & Proofs", "the same ledger as /models/, read inside the Library: every predictive model with its verdict and eval artifact, next to the terms it defines"],
       ["/glossary/#view=source-updates", _suPageTitle("Source Updates"), "the dates each prospect outlet published a list or changed a live list, newest first, grouped by outlet"],
     ] },
   { title: "Player pages",
@@ -4971,7 +4971,7 @@ function renderLibrary() {
     </div>`;
   };
   el.innerHTML = `<div class="source-comp-wrap">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Library · every standalone page on the site</div>
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Page Index · every standalone page on the site</div>
     <h2 class="meth-h">The page index</h2>
     <p class="meth-note">Everything on eephus.io that has its own address, in one place: the full pages, the deep-linkable artifact views inside each module, and the per-player cards. Every route here is public and stable.</p>
     <div class="meth-tables">${_libraryGroups().map(group).join("")}</div>

@@ -714,7 +714,7 @@ ARTIFACTS = (
     # ---- reference -------------------------------------------------------
     {
         "file": "glossary.json", "group": "reference",
-        "title": "Glossary",
+        "title": "Library terms",
         "what": ("Every metric on the site with its definition, scale convention and provenance. "
                  "The tooltip layer reads this file."),
         "cadence": "on change", "stability": STABLE,
