@@ -2127,6 +2127,29 @@ the xwOBA pair by 5c-A".
   supersedes, for the pair only, the 2026-09-11 corrections' "keep the ~2026-09-17
   date": it is later than that date and never earlier.
 
+#### Closure, recorded 2026-10-02: the pair closes for 2026 without a verdict
+
+This closes "The look: once, on 2026-09-28, kill date 2026-10-06." above.
+- **The look code does not exist** at main HEAD 842b5f64 on 2026-10-02. The pair's mode
+  in the look runner (the seam, the row builder, the residual fit, the b = 0 identity check,
+  the parity check, the twin, control 2, the report) is unbuilt, and so is the guard: the
+  date refusal and the outcome-field refusal "in the form of
+  `tools/ph_gate.check_look_date` and `refuse_outcome_fields`". `tools/ph_gate.py` carries
+  functions of those two names, but they are 5f's pinch-hit gate module (its date guard
+  refuses before the end of the 2027 regular season) and are not wired to this pair.
+- **No build is scheduled before the 2026-10-06 kill date.** The writer slots of the gap
+  from 2026-10-04 to the epoch's step A belong to the fWAR epoch's preconditions (plan
+  Part 8, 8.C 'The gap (Sun 10-04 to step A), in order').
+- **So the pair closes for 2026 without a verdict**, under the look paragraph's own text:
+  "If the read has not run by then, the pair closes for 2026 without a verdict and the
+  record says why." It is recorded now, with the 7h re-read, rather than on 2026-10-06.
+- **The look record.** Neither the b = 0 identity check nor the counts report ran on the
+  real store, because no runner exists to run them. No number relating `xwoba_14`,
+  `xwoba_30` or a close variant to an outcome or a price was computed, so the embargo
+  held and nothing is disqualified.
+- **A later test.** In the look paragraph's words: "There is no second read on 2026 data;
+  a 2027 test is a new registration under N9." That registration discloses this closure.
+
 
 ### 5c-B. The B4 availability gate: `lineup_strength`, look 2026-10-05 (drafted 2026-09-11, revised 2026-09-16)
 
@@ -10153,6 +10176,30 @@ betting_model.py --score-kernel`).
 - **Where it lands.** The criteria ride verbatim in `SCORE_KERNEL_GATE_CRITERIA` (to be
   built). The grid persists at `data/betting_model_eval.json -> score_kernel`. The result
   is appended as `### Result (run DATE, once): VERDICT, and ...`.
+
+#### Closure, recorded 2026-10-02: 7i closes for 2026 without a verdict
+
+- **The look code does not exist** at main HEAD 842b5f64 on 2026-10-02: no
+  `score_kernel_gate`, no `python betting_model.py --score-kernel` switch, no
+  `SCORE_KERNEL_GATE_CRITERIA`, no reference table, no date guard and no fixture tests. A
+  search of every `.py` file under `prospect-tracker/` for `score_kernel` finds nothing.
+- **No build is scheduled before the 2026-10-06 kill date.** The writer slots of the gap
+  from 2026-10-04 to the epoch's step A belong to the fWAR epoch's preconditions (plan
+  Part 8, 8.C 'The gap (Sun 10-04 to step A), in order'), and nothing before 2026-10-04
+  builds it.
+- **So 7i closes for 2026 without a verdict**, under this section's own text: "If it has
+  not run by then, 7i closes without a verdict and the text records why." It is recorded
+  now, with the 7h re-read, rather than on 2026-10-06.
+- **No look happened.** No reference was built, and no number relating the kernel, the
+  twin or the sensitivity arm to an outcome or a price was computed, at any game's lambdas,
+  2026 or pre-2026. Nothing is forfeited, and no result block is written.
+- **Order against the 7h re-read.** 7h ran alone on 2026-10-02 (FAIL, recorded under 7h).
+  7i did not run.
+- **A later test is a new candidate.** In this section's words: "After the look, changing
+  the seasons, the inclusion rules, the floors, the tilt, the top-code or any criterion
+  makes a new candidate. It needs its own section, and it is graded on games this look did
+  not see." With no look taken, a 2027 test of the kernel is a new registration under N9,
+  graded on 2027 games, and it discloses this closure and both 7h reads.
 
 ### If it passes: the flip, and what moves
 
