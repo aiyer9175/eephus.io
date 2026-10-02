@@ -2505,11 +2505,12 @@ def _otd_debut_row(g: dict, d: "date", data_cat: str = "") -> str:
     nm = html.escape(g.get("player_name") or "")
     pos = g.get("position") or ""
     logo = _team_logo(_debut_org(g), "otd-logo")
+    pos_tail = (" · " + html.escape(pos)) if pos else ""
     cat = f' data-cat="{data_cat}"' if data_cat else ""
     return (
         f'<a class="otd-row" href="{_player_href(g.get("player_key"))}"{cat}>'
         f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
-        f'<span class="otd-body">{logo} <strong>{nm}</strong> debuted{(" · " + html.escape(pos)) if pos else ""}</span>'
+        f'<span class="otd-body" title="{nm} debuted{pos_tail}">{logo} <strong>{nm}</strong> debuted{pos_tail}</span>'
         f'{_wag_badge(g)}{_fv_pill(g)}</a>'
     )
 
@@ -2522,11 +2523,12 @@ def _otd_trade_row(p: dict, tr: dict, d: "date", data_cat: str = "") -> str:
     logos = (f'{_team_logo(tr.get("from_org"), "otd-logo")}'
              f'<span class="otd-arrow">→</span>'
              f'{_team_logo(tr.get("to_org"), "otd-logo")}')
+    pos_tail = (" · " + html.escape(pos)) if pos else ""
     cat = f' data-cat="{data_cat}"' if data_cat else ""
     return (
         f'<a class="otd-row otd-trade" href="{_player_href(p.get("player_key"))}"{cat}>'
         f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
-        f'<span class="otd-body">{logos} <strong>{nm}</strong>{(" · " + html.escape(pos)) if pos else ""} traded</span>'
+        f'<span class="otd-body" title="→ {nm}{pos_tail} traded">{logos} <strong>{nm}</strong>{pos_tail} traded</span>'
         f'{_fv_pill(p)}</a>'
     )
 
@@ -2828,9 +2830,10 @@ def build_this_day(data: dict | None = None) -> str:
         verb = _HIST_TX_VERBS.get(code, "moved")
         logo = _team_logo(_org_from_team_name(team), "otd-logo")
         cat = "trade" if code == "TR" else "signing"
+        pos_tail = (" · " + html.escape(pos)) if pos else ""
         inner = (f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
-                 f'<span class="otd-body">{logo} <strong>{nm}</strong> {verb}'
-                 f'{(" · " + html.escape(pos)) if pos else ""}</span>')
+                 f'<span class="otd-body" title="{nm} {verb}{pos_tail}">{logo} <strong>{nm}</strong> {verb}'
+                 f'{pos_tail}</span>')
         if p:
             tx_rows.append(f'<a class="otd-row" href="{_player_href(key)}" data-cat="{cat}">{inner}{_fv_pill(p)}</a>')
         else:
@@ -2851,9 +2854,10 @@ def build_this_day(data: dict | None = None) -> str:
         pos = (p or {}).get("position") or ""
         d = date.fromisoformat(dt)
         label = f"{il_type} IL".strip() if il_type else "IL"
+        pos_tail = (" · " + html.escape(pos)) if pos else ""
         inner = (f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
-                 f'<span class="otd-body">✚ <strong>{nm}</strong> placed on the {html.escape(label)}'
-                 f'{(" · " + html.escape(pos)) if pos else ""}</span>')
+                 f'<span class="otd-body" title="✚ {nm} placed on the {html.escape(label)}{pos_tail}">'
+                 f'✚ <strong>{nm}</strong> placed on the {html.escape(label)}{pos_tail}</span>')
         if p:
             il_rows.append(f'<a class="otd-row" href="{_player_href(key)}" data-cat="il">{inner}{_fv_pill(p)}</a>')
         else:

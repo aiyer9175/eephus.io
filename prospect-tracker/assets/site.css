@@ -1505,8 +1505,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    item keeps min-width:auto (= min-content), so a module whose nowrap content
    (On This Day rows / kicker) is wider than the single-column mobile track
    pushed the whole page past the viewport (375px: documentElement scrollWidth
-   409). The inner .otd-body / .kicker h2 already ellipsize, so shrinking the
-   module is clean. */
+   409). The inner .kicker h2 ellipsizes and .otd-body ellipsizes above 480px
+   and wraps to a second line at or below it (SHO02), so shrinking the module
+   is clean. */
 .home-module { padding-bottom: 8px; min-width: 0; }
 .home-module.full { grid-column: 1 / -1; }
 
@@ -1573,6 +1574,20 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .otd-when { flex: none; font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--text-gold); text-transform: uppercase; white-space: nowrap; }
 .otd-body { flex: 1; min-width: 0; font-family: var(--font-retro); font-size: 14px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .otd-body strong { color: var(--text-primary); }
+/* SHO02: at phone width the single-line ellipsis cut the position (and the
+   signing verb) off most rows, so the line wraps to two lines here instead.
+   Wider viewports keep the one-line ellipsis; the span's title holds the
+   full line either way. */
+@media (max-width: 480px) {
+  .otd-body { white-space: normal; overflow: visible; text-overflow: clip; }
+}
+/* SHO03: with the account control held to 44 px (eephus-account.css) the
+   phone top line of brand, four controls and hamburger needs 399 px at the
+   8 px cluster gap, so the hamburger dropped to a second line at 390. A 4 px
+   gap inside the control cluster at 400 px and below brings it to 387 px. */
+@media (max-width: 400px) {
+  .eephus-nav .eephus-nav-controls { gap: 4px; }
+}
 /* WAG chip - how the player panned out vs. their grade. Reuses .row-delta
    coloring (up/down/flat); sits between the body and the "Ny ago" stamp. */
 .otd-wag { flex: none; font-size: 12px; min-width: 0; }

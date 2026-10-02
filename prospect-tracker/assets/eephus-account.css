@@ -450,5 +450,8 @@
   .eph-team-grid { grid-template-columns: repeat(5, 1fr); }
   .eph-comment.is-reply { margin-left: 14px; }
   .eph-nav-account .eph-acct-btn .eph-acct-label { display: none; }
+  /* SHO03: with the label hidden the control shrank to 31 x 38 px beside four
+     44 x 44 px neighbours; hold it to the same 44 px touch target. */
+  .eephus-nav .eph-nav-account .eph-acct-btn { box-sizing: border-box; min-width: 44px; min-height: 44px; justify-content: center; }
   .eph-embed { max-width: 100%; }
 }
