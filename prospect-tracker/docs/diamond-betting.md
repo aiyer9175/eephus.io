@@ -9569,6 +9569,115 @@ is arithmetic on the recorded t and n.
 Nothing in this block was measured against a game result. It adds no new number: the
 expectation is arithmetic on the recorded t and n.
 
+### Result (run 2026-10-02, once): FAIL, and the Poisson total keeps serving
+
+**The late date.** The read was registered for 2026-09-28 and ran on 2026-10-02 at 15:31
+-0400, four days late, under the block's slip rule ("it runs on the first day it can, no
+later than 2026-10-06, under the same window, code and invocation"). No box, cache, feed or
+readiness failure caused the slip: no session ran the read between 2026-09-28 and
+2026-10-01, and plan Part 8 (8.B 'The clock: the fWAR epoch calendar') had slotted it for
+2026-10-04. It ran on the first day it was dispatched. The window is fixed at games dated on
+or before 2026-09-27, so the slip moves no game into or out of it. This is still the one
+read.
+
+**The look record: none.** The 7h, 7i and 5c-A sections record no look, and `git log
+--since=2026-09-11` holds no commit that ran `total_calibration_gate`, any of the five
+other functions named under "What counts as a look", or `--total-calibration`. Nothing was
+forfeited.
+
+**Ordering.** 7i did not run: its look code does not exist (closure recorded under 7i's
+"The look", 2026-10-02). So 7h ran alone, and first.
+
+**Withholding.** The 5k registration and the two Holm-family amendments (5d-C and 5h-A)
+were all committed before the read, in d79067a5 (2026-09-11 19:56:47 -0400). The per-line
+rates are printed below, not withheld. This printout now exists, so any later amendment to
+5d-C, 5h or 5k names it.
+
+**Readiness, in the worktree, before the read.** The top-up ran first in the main tree,
+`python -c "import betting_model as bm; bm.build_game_cache(refresh=True)"`, which logged
+"StatsAPI returned 14 final games for 2026-09-27..2026-10-02" and left 2,429 cached 2026
+rows, last date 2026-09-27. The readiness one-liner, verbatim, printed `853 229 229`:
+- old gradable (dated on or before 2026-09-10): 853, equal to the first run's 305 + 548;
+- new in window (2026-09-11 to 2026-09-27): 229;
+- new gradable: 229, above the floor of 50.
+
+**What ran.** The read one-liner, verbatim, in a detached worktree of 37e9382d whose
+`prospect-tracker/.cache` was a directory junction to the main tree's `.cache`:
+- worktree commit 37e9382d00b2dd56dc4b890decdd2be5183f0b64;
+- `betting_model.py` blob 873713d04c06d6493f601d549babcc6a4777c733;
+- `leaderboard_vintages.py` blob d69aa9be27882fc41bb9fc86beaf9410d5faa1e9;
+- main tree HEAD 6deecb7d55ec63b209c12494876597bba123141d;
+- Python 3.13.9 (Anaconda), numpy 2.3.5;
+- `MODEL_VERSION` `betting_runs_v1`; `SERVE_TOTAL_CALIBRATION`, `SERVE_RIDGE_FIT`,
+  `SERVE_RUN_DISPERSION`, `SERVE_ATH_PARK`, `SERVE_RUNLINE_TIE_SPLIT`,
+  `SERVE_TOTAL_LEVEL`, `SERVE_TOTAL_DISPERSION`, `SERVE_PROB_CALIBRATION` and
+  `VINTAGE_FIT_WINDOW_GROWS` all False; `SERVE_PRICER` absent. These were printed from
+  the imported worktree module before the read and match the flag table above.
+
+Before the read, the reporting line was dry-run on a hand-made dict of None values (no
+game touched), and the read's stdout and stderr were teed to disk. It exited 0.
+
+`n_window` 2,429, `n_gradable` 1,082, `n_skipped` 1,347 (games with no vintage strictly
+before them, never graded on the fallback), last date in the window 2026-09-27.
+
+| split | cut | fit / eval | a | b | grid log loss delta | t | lines not worse | pass |
+|---|---|---|---|---|---|---|---|---|
+| anchored | 2026-08-01 | 305 / 777 | 0.472 | -0.246 | -0.0041 | -0.31 | 2 of 4 | no |
+| 0.6 | 2026-08-26 | 642 / 440 | 0.552 | -0.213 | -0.0016 | -0.10 | 2 of 4 | no |
+| 0.7 | 2026-09-03 | 752 / 330 | 0.564 | -0.188 | -0.0013 | -0.07 | 1 of 4 | no |
+| 0.8 | 2026-09-11 | 853 / 229 | 0.566 | -0.188 | -0.0099 | -0.44 | 2 of 4 | no |
+
+The delta is Poisson minus candidate, so a negative value means the mapped total scored
+worse than the Poisson on the point estimate. The cuts land where the block said they
+would: the anchored cut holds, 0.6 and 0.7 move to 2026-08-26 and 2026-09-03, and the 0.8
+cut is the first new date, with the first run's 853 games as its fit half.
+
+**The anchored reproduction.** Cut 2026-08-01 (registered 2026-08-01), n_fit 305 (305), a
+0.472 (0.472; printed 0.47218), b -0.246 (-0.246; printed -0.24622). All four match, so
+the read is not VOID.
+
+Over rates on each eval half: observed, served Poisson, and mapped.
+
+| split | line | observed | Poisson | mapped |
+|---|---|---|---|---|
+| anchored | 7.5 | 0.578 | 0.653 | 0.513 |
+| anchored | 8.5 | 0.501 | 0.519 | 0.448 |
+| anchored | 9.5 | 0.402 | 0.388 | 0.387 |
+| anchored | 10.5 | 0.324 | 0.273 | 0.329 |
+| 0.6 | 7.5 | 0.611 | 0.642 | 0.529 |
+| 0.6 | 8.5 | 0.530 | 0.509 | 0.452 |
+| 0.6 | 9.5 | 0.425 | 0.380 | 0.381 |
+| 0.6 | 10.5 | 0.341 | 0.267 | 0.315 |
+| 0.7 | 7.5 | 0.597 | 0.655 | 0.544 |
+| 0.7 | 8.5 | 0.518 | 0.523 | 0.466 |
+| 0.7 | 9.5 | 0.421 | 0.393 | 0.393 |
+| 0.7 | 10.5 | 0.324 | 0.278 | 0.325 |
+| 0.8 | 7.5 | 0.620 | 0.657 | 0.546 |
+| 0.8 | 8.5 | 0.537 | 0.525 | 0.468 |
+| 0.8 | 9.5 | 0.441 | 0.395 | 0.394 |
+| 0.8 | 10.5 | 0.319 | 0.280 | 0.326 |
+
+**The verdict.** No split passes either check, so under the rule fixed before the run the
+grid is FAIL (`verdict` "fail", `ship` false). The first read's point-estimate gain at the
+anchored split (+0.0112 on 548 games) is negative on 777 (-0.0041), and the 229 new games
+graded alone at the 0.8 split read -0.0099 (t -0.44). The fitted (a, b) stay in the first
+run's range (a 0.47 to 0.57, b -0.19 to -0.25). What moved is the eval games: more of them
+went over 7.5 and 8.5 than in the fit halves (anchored fit half 0.534 and 0.433, eval half
+0.578 and 0.501), and the map prices both lines below the observed rate (0.513 and 0.448
+on the anchored eval half). At 8.5 the Poisson (0.519) sat closer to the observed rate
+than the map did.
+
+**What follows, by the block's own text.**
+- `SERVE_TOTAL_CALIBRATION` stays False. Nothing was flipped and no owner question is
+  raised.
+- The Poisson total keeps serving, and the Over lean stays DISCLOSED on every affected row
+  (owner answer 2026-09-11).
+- 7h closes. "This is the only re-read 7h gets." A later look at the map, on 2027 games
+  included, is a new candidate with its own section under 5c rule 1, and that section
+  discloses both 7h reads.
+- The late-season reading belongs to 5k, 5d-C and 5h, read on 2026-10-07 in one Holm
+  family.
+
 ## 7i. The score kernel: one joint distribution fitted on pre-2026 finals (pre-registered 2026-09-11)
 
 **Written before any reference table, tilt or gate for this candidate exists in code,
