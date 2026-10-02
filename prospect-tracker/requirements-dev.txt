@@ -9,5 +9,6 @@
 -r requirements.txt
 playwright>=1.40
 ruff>=0.5
-pillow>=10        # tools/generate_brand_assets.py
+pillow>=10        # tools/generate_brand_assets.py, tools/pixel_brand.py
+fonttools>=4.40   # tools/pixel_brand.py (glyphs sampled from the vendored TTF)
 packaging>=23     # tools/freeze_constraints.py marker evaluation
