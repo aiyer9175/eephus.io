@@ -891,10 +891,21 @@
    "metric": "implied from Gate-2-validated projections",
    "eval_artifact": "data/dpw_forecast_eval.json",
    "verdict": "validated",
-   "notes": "NPV-basis numerator since Phase 2. Next-winter FORECAST challenge measured (data/dpw_forecast_eval.json): flat-5% carry MAPE 0.102 BEAT fitted trend (0.122) and trend+CBT (0.132) - incumbent assumption retains; candidates stay implemented in winter_dpw. 2026-08-19 refresh (writer reconstructed after the 8fecb2f5 dead-file sweep deleted fit_dpw_forecast.py): flat-5% MAPE 0.1043 vs trend 0.1046 vs trend+CBT 0.1313 (n=9); winner still flat5, though the fitted trend closed to within 0.0003. ONE SERIES, ONE LEVEL (VAL_1, owner decision FP2-1 2026-09-25, landed 2026-09-30): fa_market.write_dpw_series is the only writer of data/fa_dpw_series.json (nightly as the first step of the rebuild, and from the Gate 2 persist, which used to write its own copy with no level). The file carries pricing.level_usd, the level for the 2026-27 class: the 2025-26 winter's signings-implied $16.46M carried forward at the series' own trend (4.2 percent) to $17.14M. The /fa/ class board, veteran seasons on /projections/ and prospect surplus (the clemens_2026 tier shape rescaled to it) all read that one level, so a prospect win and a veteran win cost the same inside Trade Machine and Club Ledger totals.",
+   "notes": "NPV-basis numerator since Phase 2. Next-winter FORECAST challenge measured (data/dpw_forecast_eval.json): flat-5% carry MAPE 0.102 BEAT fitted trend (0.122) and trend+CBT (0.132) - incumbent assumption retains; candidates stay implemented in winter_dpw. 2026-08-19 refresh (writer reconstructed after the 8fecb2f5 dead-file sweep deleted fit_dpw_forecast.py): flat-5% MAPE 0.1043 vs trend 0.1046 vs trend+CBT 0.1313 (n=9); winner still flat5, though the fitted trend closed to within 0.0003. ONE SERIES, ONE LEVEL (VAL_1, owner decision FP2-1 2026-09-25, landed 2026-09-30): fa_market.write_dpw_series is the only writer of data/fa_dpw_series.json (nightly as the first step of the rebuild, and from the Gate 2 persist, which used to write its own copy with no level). The file carries pricing.level_usd, the level for the 2026-27 class: the 2025-26 winter's signings-implied $16.46M carried forward at the series' own trend (4.2 percent) to $17.14M. The /fa/ class board, veteran seasons on /projections/ and prospect surplus (the clemens_2026 tier shape rescaled to it) all read that one level, so a prospect win and a veteran win cost the same inside Trade Machine and Club Ledger totals. THE PROJECTED PATH (VAL_5): docs/dpw-2026-09-25/DPW_PATH_GATE.md registers, before any read, the one forecast question about this series (whether a growth rule built from it forecasts the level one to five winters ahead better than the rule behind the served escalator) and the blind ledger that follows; its verdict will live only in the dpw_path_gate block of data/dpw_forecast_eval.json. Nothing is scored yet.",
    "last_checked": "2026-10-02",
    "stale": false,
    "artifact_age_days": 44
+  },
+  {
+   "model_id": "dpw_path",
+   "surface": "the one projected per-season $/WAR path (data/fa_dpw_series.json dpw_path block, dpw_path.py), behind value_framework.SERVE_DPW_PATH and fa_market.WRITE_DPW_PATH_BLOCK, both off; nothing serves it",
+   "predicts": "the $/WAR level of seasons N+1 to N+5 (the registered question); the served default carries the last realized winter at the owner escalator, a convention, not a forecast",
+   "champion": "carry_const (dpw_path.DPW_PATH_METHOD)",
+   "baseline": "carry_destale, the served carry (incumbent I); carry_zero (floor F); one challenger robust_drift",
+   "metric": "registered, not computed: PV-weighted squared anchor-scaled error over 8 forward-chained origins 2018-2025, 30 pairs (docs/dpw-2026-09-25/DPW_PATH_GATE.md sections 5 to 7)",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "Registered 2026-10-02 (docs/dpw-2026-09-25/DPW_PATH_GATE.md); the build lands behind two switches that default off and serves nothing. No eval artifact: model_registry.validate rejects an unvalidated row that carries one, and nothing has been scored. At the one look this row gains data/dpw_forecast_eval.json and moves by outcome per the registration's section 15 table; no outcome makes it validated. Expected verdict NULL_UNDERPOWERED, which would not be evidence that constant growth is right."
   },
   {
    "model_id": "fa_guar_band",

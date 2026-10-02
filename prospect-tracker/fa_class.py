@@ -246,7 +246,17 @@ def dollars_per_war_for_season(season: int, current_season: int | None = None) -
     per-winter series estimated from the FA-signing corpus itself
     (data/fa_dpw_series.json, Stage-3 market model — the nearest winter's
     rate when the exact season is absent). FALLBACK (documented v1): the
-    framework's flat rate de-escalated by its configured inflation."""
+    framework's flat rate de-escalated by its configured inflation.
+
+    Unified $/WAR path mode (VAL_5 row 15): a season after N reads the written
+    path; seasons at or before N are unchanged (the backward half is out of
+    scope), and the 0.05 fallbacks raise rather than fire silently."""
+    import value_framework as _vfm
+    if _vfm.dpw_path_active():
+        if season > _vfm.last_realized_winter():
+            return float(_vfm.price_level(season))
+        if "dollars_per_war_inflation" not in _vf_config():
+            raise _vfm.DpwPathError("dollars_per_war_inflation absent in unified $/WAR path mode")
     series = _dpw_series()
     if series:
         if season in series:

@@ -1021,7 +1021,7 @@
       + ` &middot; <span data-gl="contract_surplus">surplus</span> &middot; <span data-gl="deal_plus">Deal+</span>`;
     const headEyebrow = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">${cls.class_year - 1}-${String(cls.class_year).slice(2)} Class Board</span>
-      <span class="newsprint-eyebrow-meta">${members.length} shown of ${cls.members.length} &middot; sorted by ${esc(sortName)} ${arrow} &middot; winter <span data-gl="winter_dpw">$/WAR</span> (ex-ante) ${money(cls.dpw_usd)}, escalating ${((cls.dpw_infl ?? 0.05) * 100).toFixed(1)}%/yr &middot; ${gl} &middot; <button class="chip egfx-chip" id="fa-gfx-btn" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></span>
+      <span class="newsprint-eyebrow-meta">${members.length} shown of ${cls.members.length} &middot; sorted by ${esc(sortName)} ${arrow} &middot; winter <span data-gl="winter_dpw">$/WAR</span> (ex-ante) ${money(cls.dpw_usd)}, ${cls.pricing_basis ? `each season at its own level on the one written path (escalator ${(cls.pricing_basis.g_ref * 100).toFixed(2)}%/yr, discounted at ${(cls.pricing_basis.nominal_rate * 100).toFixed(2)}%)` : `escalating ${((cls.dpw_infl ?? 0.05) * 100).toFixed(1)}%/yr`} &middot; ${gl} &middot; <button class="chip egfx-chip" id="fa-gfx-btn" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></span>
     </div>`;
     const nUfa = cls.members.filter(m => !isOption(m)).length;
     const nOpt = cls.members.length - nUfa;
@@ -1543,11 +1543,14 @@
     // ceiling eWAR, and that season's escalated $/WAR level. The mean bars
     // ride below as the visual.
     const infl = cls.dpw_infl ?? 0.05;
+    // The unified $/WAR path (VAL_5): when the payload carries the written path,
+    // each season prints its own level from it; otherwise the legacy escalation.
+    const pathBy = cls.dpw_path_by_season || null;
     const yearRows = (m.warPath || []).map((w, i) => {
       const season = cls.class_year + i;
       const lo = (m.warPathP10 || [])[i];
       const hi = (m.warPathP90 || [])[i];
-      const dpwT = cls.dpw_usd * Math.pow(1 + infl, i);
+      const dpwT = (pathBy && pathBy[season] != null) ? pathBy[season] : cls.dpw_usd * Math.pow(1 + infl, i);
       const inTerm = m.projYears != null && i < m.projYears;
       return `<tr${inTerm ? "" : ' class="fa-dim"'}>
         <td>${season}${inTerm ? "" : '<span class="fa-sub" title="Beyond the predicted term"> +</span>'}</td>
@@ -1555,7 +1558,7 @@
         <td>${lo != null ? formatMetric(lo, "war") : EM_DASH}</td>
         <td><strong>${formatMetric(w, "war")}</strong></td>
         <td>${hi != null ? formatMetric(hi, "war") : EM_DASH}</td>
-        <td title="The winter's ex-ante $/WAR escalated ${(infl * 100).toFixed(0)}%/yr to this season">${money(dpwT)}</td>
+        <td title="${pathBy ? "This season's level on the one written $/WAR path" : `The winter's ex-ante $/WAR escalated ${(infl * 100).toFixed(0)}%/yr to this season`}">${money(dpwT)}</td>
       </tr>`;
     }).join("");
     const wp = (m.warPath || []).map((w, i) =>

@@ -67,6 +67,8 @@ from __future__ import annotations
 
 import json
 import math
+import os
+from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -286,6 +288,301 @@ def _apply_fa_implied_reanchor(cfg: dict) -> dict:
     return cfg
 
 
+# =============================================================================
+# The projected per-season $/WAR path (VAL_5): one reader, two switches
+# =============================================================================
+# docs/dpw-2026-09-25/DPW_PATH_GATE.md section 11 and the design's section 4.3.
+# SERVE_DPW_PATH is a committed constant and dpw_path_on() is its ONE read site.
+# EEPHUS_SERVE_DPW_PATH=0 forces it OFF at call time; no environment value turns
+# it ON. While it is off, or while data/fa_dpw_series.json carries no dpw_path
+# block (the one writer writes the block only while fa_market.WRITE_DPW_PATH_BLOCK
+# is on), every consumer runs its legacy branch verbatim.
+#
+# In unified mode every consumer prices season s at its own level
+# V(w, s) = K(w) x P(s) / F (I1) and discounts it by d(s) = (1 + R)^-(s - B) to
+# the one base season B, unclipped (I2); the path P is the written one, R the
+# stored owner rate. Gate 2 never reads any of this: the path never enters
+# winter_dpw, _destale_rate, disc_war, dollars_per_war_by_winter, MarketModel,
+# discount_rate or dollars_per_war_inflation.
+SERVE_DPW_PATH = False
+DPW_STAGES = ("U1a", "U1b", "U1c", "U2")
+_DPW_FORCED: dict | None = None
+
+
+class DpwPathError(ValueError):
+    """A unified-mode call the path refuses (an ETA with no origin, no block)."""
+
+
+def dpw_path_on() -> bool:
+    """THE one read site of SERVE_DPW_PATH."""
+    if os.environ.get("EEPHUS_SERVE_DPW_PATH") == "0":
+        return False
+    if _DPW_FORCED is not None:
+        return bool(_DPW_FORCED["on"])
+    return bool(SERVE_DPW_PATH)
+
+
+@contextmanager
+def dpw_path_forced(on: bool, stages=None, series_path=None):
+    """For tests, tools/dpw_path_gate.py and tools/dpw_blast_radius.py ONLY
+    (test_dpw_flag_off_identity.py fails on any other caller).
+
+    ``stages`` (a subset of DPW_STAGES) switches the levers on one at a time for
+    the prediction-only blast radius: U1a the base season (OD-3), U1b the nominal
+    rate with the escalator path, the companion salary legs and the cliff rate
+    (OD-2, OD-4), U1c the Trade Machine convention (OD-5), U2 the level basis
+    (OD-1). None means every stage. ``series_path`` makes the accessors read the
+    named copy of the series file instead of the live data/fa_dpw_series.json
+    (the lab prices from a copy of the amendment commit's file). No served path
+    reads either."""
+    global _DPW_FORCED
+    if stages is not None:
+        bad = set(stages) - set(DPW_STAGES)
+        if bad:
+            raise ValueError(f"unknown dpw_path stages {sorted(bad)}")
+    prev = _DPW_FORCED
+    _DPW_FORCED = {"on": bool(on), "stages": None if stages is None else frozenset(stages),
+                   "series_path": str(series_path) if series_path else None}
+    _dpw_file_at.cache_clear()
+    try:
+        yield
+    finally:
+        _DPW_FORCED = prev
+        _dpw_file_at.cache_clear()
+
+
+@lru_cache(maxsize=4)
+def _dpw_file_at(path: str) -> dict:
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _dpw_file() -> dict:
+    sp = (_DPW_FORCED or {}).get("series_path")
+    return _dpw_file_at(sp or str(_DPW_SERIES_PATH))
+
+
+def _dpw_block() -> dict | None:
+    blk = _dpw_file().get("dpw_path")
+    if not isinstance(blk, dict) or not (blk.get("path") or {}).get("usd_by_season"):
+        return None
+    return blk
+
+
+def dpw_path_active() -> bool:
+    """Unified mode: the switch on AND a dpw_path block on file. A missing file,
+    a missing block or the switch OFF gives the legacy branch verbatim."""
+    return dpw_path_on() and _dpw_block() is not None
+
+
+def dpw_stage(name: str) -> bool:
+    if not dpw_path_active():
+        return False
+    st = (_DPW_FORCED or {}).get("stages")
+    return True if st is None else name in st
+
+
+def _dpw_cache_key():
+    """What a cached price depends on beyond its arguments: None while OFF."""
+    if not dpw_path_on():
+        return None
+    return (dpw_basis_id(), tuple(sorted((_DPW_FORCED or {}).get("stages") or ())),
+            (_DPW_FORCED or {}).get("stages") is None, (_DPW_FORCED or {}).get("series_path"))
+
+
+def _require_block() -> dict:
+    blk = _dpw_block() if dpw_path_on() else None
+    if blk is None:
+        raise DpwPathError("a unified $/WAR path accessor was called while the path is not serving")
+    return blk
+
+
+def dpw_basis_id() -> str | None:
+    if not dpw_path_on():
+        return None
+    blk = _dpw_block()
+    return blk.get("basis_id") if blk else None
+
+
+def dpw_option(name: str) -> str:
+    """A recorded owner convention by option code (OD-1 level_basis, OD-2 R,
+    OD-3 base_season, OD-4 companion_mode, OD-5 trade_machine, OD-8
+    calibration), as the writer stored it in the block; the recommended default
+    when no answer is recorded. Before the U1c stage the Trade Machine reads keep."""
+    import dpw_path as _dp
+    blk = _require_block()
+    if name == "trade_machine" and not dpw_stage("U1c"):
+        return "keep"
+    return str((blk.get("options") or {}).get(name) or _dp.CONVENTION_DEFAULTS[name])
+
+
+def pricing_base_season() -> int:
+    """B, the base season every priced season is dated from; equals
+    proj_export.FIRST_SEASON (I6), rolled at the post-season step."""
+    return int(_require_block()["clock"]["base_season"])
+
+
+def last_realized_winter() -> int:
+    """N = B - 1, the last realized winter."""
+    return int(_require_block()["clock"]["last_realized_winter"])
+
+
+def discount_base_season(legacy_base: float | None = None) -> float:
+    """The season d(s) discounts to: B under OD-3 base_2027, B - 1 under
+    base_2026. Before the U1a stage, the caller's own legacy base."""
+    if not dpw_stage("U1a") and legacy_base is not None:
+        return float(legacy_base)
+    b = pricing_base_season()
+    if dpw_stage("U1a") and dpw_option("base_season") == "base_2026":
+        return float(b - 1)
+    return float(b)
+
+
+def nominal_rate() -> float:
+    """R. Under a net valuation-set form (net_flat, and clemens_2026's literal
+    net_7_flat) the stored owner rate (OD-2; the literal default 0.113763);
+    under rate_minus_growth the set's own nominal rate. Before the U1b stage the
+    legacy discount_rate."""
+    blk = _require_block()
+    if not dpw_stage("U1b"):
+        return float(_config()["discount_rate"])
+    import valuation_sets as _vs
+    if _vs.discount_form(active_valuation_set()) == "net_flat":
+        return float(blk["discount"]["R_nominal"])
+    return float(_config()["discount_rate"])
+
+
+def g_ref() -> float:
+    """The escalator of the written path (0 before the U1b stage, which prices a
+    flat path). Under rate_minus_growth this is g_ref, never the set's own growth."""
+    blk = _require_block()
+    return float(blk["discount"]["g_ref"]) if dpw_stage("U1b") else 0.0
+
+
+def net_rate() -> float:
+    """(1 + R)/(1 + g_ref) - 1 under BOTH forms; only where a WAR denominator needs it."""
+    return (1.0 + nominal_rate()) / (1.0 + g_ref()) - 1.0
+
+
+def _path_usd() -> dict[int, float]:
+    return {int(k): float(v) for k, v in _require_block()["path"]["usd_by_season"].items()}
+
+
+def price_level(season: float) -> float:
+    """P(season) in USD: the written path, ln interpolated between seasons and
+    carried at g_ref past its last season and before its first (disclosed), at
+    the OD-1 level (U2) or with VAL_1's level F before U2; flat before U1b."""
+    import dpw_path as _dp
+    blk = _require_block()
+    path = _path_usd()
+    b = pricing_base_season()
+    gx = float(blk["discount"]["g_ref"])
+    p_b = _dp.interpolate_level(path, b, gx)
+    shape = _dp.interpolate_level(path, season, gx) / p_b if dpw_stage("U1b") else 1.0
+    return (p_b if dpw_stage("U2") else _flat_rate_usd()) * shape
+
+
+def season_value_usd(war: float, season: float) -> float:
+    """V(w, s) = K(w) x P(s) / F, the season on the convex tier curve at its own level."""
+    return tiered_war_value_usd(war) * price_level(season) / _flat_rate_usd()
+
+
+def season_discount(season: float, legacy_base: float | None = None) -> float:
+    """d(s) = (1 + R)^-(s - B) for EVERY forward-priced season, s < B included
+    (unclipped, so a season before B compounds forward)."""
+    return (1.0 + nominal_rate()) ** -(float(season) - discount_base_season(legacy_base))
+
+
+def _index_value(table: dict, season: float, mode: str, growth: float | None) -> float:
+    t = {int(k): float(v) for k, v in table.items()}
+    lo, hi = min(t), max(t)
+    s = float(season)
+    if s > hi:
+        if mode == "neutral_follow_path":
+            return t[hi] * price_level(s) / price_level(hi)
+        if mode == "own_trends":
+            return t[hi] * (1.0 + float(growth or 0.0)) ** (s - hi)
+        return t[hi]
+    if s <= lo:
+        return t[lo]
+    a = int(math.floor(s))
+    if a == s:
+        return t[a]
+    w = s - a
+    return math.exp((1.0 - w) * math.log(t[a]) + w * math.log(t[a + 1]))
+
+
+def league_min_for(season: float, legacy: float | None = None) -> float:
+    """The league minimum of a season (USD), read from the block the writer wrote
+    (salary_index.league_min_by_season: tabled seasons the CBA table, season B
+    what salary_path serves, later seasons the OD-4 mode; dpw_companion.py is the
+    one reader of salary_path). Before the U1b stage the caller's legacy value,
+    or the engine's own flat minimum when the caller has none."""
+    if not dpw_stage("U1b"):
+        if legacy is not None:
+            return float(legacy)
+        return float(_config()["service_time"]["league_min_usd"])
+    si = _require_block()["salary_index"]
+    return _index_value(si["league_min_by_season"], season, si.get("mode"),
+                        si.get("league_min_growth"))
+
+
+def arb_index_scale(season: float) -> float:
+    """The arbitration index of a season relative to its last tabled level, by the
+    OD-4 mode (neutral_follow_path: the path's ratio; own_trends: the index's own
+    trend; flat_nominal: 1). Applied inside a priced surplus only; the published
+    salary path and /arbitration/ stay unscaled. 1.0 before the U1b stage."""
+    if not dpw_stage("U1b"):
+        return 1.0
+    si = _require_block()["salary_index"]
+    return _index_value(si["arb_index_scale_by_season"], season, si.get("mode"),
+                        si.get("arb_growth"))
+
+
+def fa_season_factor(class_year: int, t: int, legacy_infl: float, legacy_dpw: float) -> float:
+    """Row 11: the factor on K(w) for season t of free-agent class c in unified
+    mode, P(c + t)/F x (1 + R)^-t: each season at its own level, discounted to
+    the class year (the transaction date, I2's exception; a cross-surface
+    aggregate converts by d(c)), with no escalator on top of a level that
+    already carries within-contract growth. Before the U1b stage the legacy
+    in-run carry at the legacy rate, at the U2 level."""
+    f = _flat_rate_usd()
+    if not dpw_stage("U1b"):
+        r = float(_config()["discount_rate"])
+        return (float(legacy_dpw) / f) * (price_level(pricing_base_season()) / f)             * (1.0 + float(legacy_infl)) ** t / (1.0 + r) ** t
+    return price_level(int(class_year) + t) / f * (1.0 + nominal_rate()) ** -t
+
+
+def dpw_path_summary() -> dict:
+    """The served path summary a snapshot or payload carries while ON."""
+    blk = _require_block()
+    return {"basis_id": blk.get("basis_id"), "method": (blk.get("path") or {}).get("method"),
+            "base_season": pricing_base_season(), "last_realized_winter": last_realized_winter(),
+            "nominal_rate": nominal_rate(), "g_ref": g_ref(), "net_rate": net_rate(),
+            "usd_by_season": dict((blk.get("path") or {}).get("usd_by_season") or {}),
+            "kind_by_season": dict((blk.get("path") or {}).get("kind_by_season") or {}),
+            "band": {k: dict(((blk.get("path") or {}).get("band") or {}).get(k) or {})
+                     for k in ("p10", "p90")},
+            "level_basis": dpw_option("level_basis")}
+
+
+def _priced_origin(eta_origin) -> float:
+    """I6: the calendar year an eta_years was measured from; a call with no ETA
+    takes origin N."""
+    return float(eta_origin) if eta_origin is not None else float(last_realized_winter())
+
+
+def _check_eta_origin(eta_years, eta_origin) -> None:
+    """In unified mode a caller that passes eta_years must say which calendar year
+    it was measured from (storage and bayes the calendar year, efv_score the
+    stamped eta_origin_year, a debut-now caller N); a silent default would price a
+    prospect one season early for nine months a year (x1.07)."""
+    if eta_years is not None and eta_origin is None and dpw_path_active():
+        raise DpwPathError("unified $/WAR path: eta_years passed without eta_origin")
+
+
 @lru_cache(maxsize=1)
 def _config() -> dict:
     """Load + validate the YAML config (the hand-edited source of truth). A
@@ -320,6 +617,7 @@ def _reset_caches() -> None:
     _config.cache_clear()
     _fitted.cache_clear()
     _bucket_sv_usd.cache_clear()
+    _dpw_file_at.cache_clear()
     _calibrated_midpoints.cache_clear()
     _bayes_theta_draws.cache_clear()
     _fv_war_scale.cache_clear()
@@ -946,7 +1244,7 @@ def p_bucket_credible(fv, is_pitcher, *, cred=None, draws=None, seed=None) -> di
 
 
 def sv_credible_interval(fv, is_pitcher, position=None, *, cred=None, age=None,
-                         eta_years=None, draws=None, seed=None) -> dict | None:
+                         eta_years=None, draws=None, seed=None, eta_origin=None) -> dict | None:
     """EPISTEMIC credible interval on the EXPECTED surplus value ($M): the
     hierarchical P(bucket|FV) posterior propagated through the bucket SVs. This
     is the parameter/model uncertainty -- distinct from (and combinable with) the
@@ -954,7 +1252,8 @@ def sv_credible_interval(fv, is_pitcher, position=None, *, cred=None, age=None,
     cells and in extrapolation. (For FV below the Edwards bridge, point_mm uses
     the anchor while the interval reflects the bucket-pipeline spread.)"""
     import numpy as np
-    point = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta_years)
+    point = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta_years,
+                             eta_origin=eta_origin)
     cred = float(cred if cred is not None else _config()["fit"]["bayes"].get("credible_mass", 0.90))
     try:
         f = float(fv)
@@ -978,7 +1277,8 @@ def sv_credible_interval(fv, is_pitcher, position=None, *, cred=None, age=None,
     # FV for the pipeline region and at bridge_to for the (cutover, bridge) bridge,
     # so the interval brackets the SAME quantity as point_mm.
     bucket_sv = _effective_bucket_sv(is_pitcher, position, da, ee,
-                                     _war_scale_for(f if f >= bridge_to else bridge_to, _role_key(is_pitcher)))
+                                     _war_scale_for(f if f >= bridge_to else bridge_to, _role_key(is_pitcher)),
+                                     eta_origin)
     draw_fv = f if f >= bridge_to else bridge_to
     d = p_bucket_posterior_draws(draw_fv, is_pitcher, draws=draws, seed=seed)
     if d is None:
@@ -988,7 +1288,7 @@ def sv_credible_interval(fv, is_pitcher, position=None, *, cred=None, age=None,
         base = pipe
         regime = "pipeline"
     else:
-        anchor = _lowtier_anchor_usd(cutover, role, ee)
+        anchor = _lowtier_anchor_usd(cutover, role, ee, eta_origin)
         t = (f - cutover) / (bridge_to - cutover)
         base = anchor * (1 - t) + pipe * t
         regime = "bridge"
@@ -1223,7 +1523,7 @@ def _aged_trajectory(role: str, level: float, debut_age: float | None) -> list[f
 
 
 def _service_path_surplus_usd(season_wars: list[float], super_two: bool,
-                              eta_years: float = 0.0) -> float:
+                              eta_years: float = 0.0, eta_origin: float | None = None) -> float:
     """Discounted sum over control years of (season market value - season salary),
     with performance-adaptive arbitration. Standard path = pre_arb_years league-min
     years then escalating-fraction arb years; super-two converts one pre-arb year
@@ -1232,7 +1532,12 @@ def _service_path_surplus_usd(season_wars: list[float], super_two: bool,
     Timing: control season k lands `eta_years + k` calendar years out. Each
     season's surplus is grown by $/WAR inflation and discounted at discount_rate;
     the two net to ((1+inflation)/(1+discount_rate))^(eta_years+k). With
-    inflation = 0 and eta_years = 0 this is exactly the prior 1/(1+r)^k discount."""
+    inflation = 0 and eta_years = 0 this is exactly the prior 1/(1+r)^k discount.
+
+    Unified $/WAR path mode (VAL_5): see _service_path_surplus_unified_usd; the
+    legacy branch below is unchanged and eta_origin is ignored there."""
+    if dpw_path_active():
+        return _service_path_surplus_unified_usd(season_wars, super_two, eta_years, eta_origin)
     markets = [tiered_war_value_usd(w) for w in season_wars]
     salaries = _service_path_salaries(season_wars, markets, super_two)
     cfg = _config()
@@ -1245,6 +1550,52 @@ def _service_path_surplus_usd(season_wars: list[float], super_two: bool,
     net = (1.0 + infl) / (1.0 + r)
     return sum((markets[t] - salaries[t]) * (net ** (float(eta_years) + t))
                for t in range(len(season_wars)))
+
+
+def _service_path_surplus_unified_usd(season_wars: list[float], super_two: bool,
+                                      eta_years: float = 0.0,
+                                      eta_origin: float | None = None) -> float:
+    """Unified mode (I1, I2, I6): control season t is the calendar season
+    s_t = eta_origin + eta_years + t, so the priced season does not depend on
+    which year the caller measured the ETA from. Each season is priced at its own
+    level V(w, s_t), its salary by season (row 2), and discounted by d(s_t) to B,
+    unclipped."""
+    origin = _priced_origin(eta_origin)
+    s0 = origin + float(eta_years)
+    seasons = [s0 + t for t in range(len(season_wars))]
+    markets = [season_value_usd(w, s) for w, s in zip(season_wars, seasons)]
+    salaries = _service_path_salaries_unified(season_wars, seasons, super_two)
+    return sum((markets[t] - salaries[t]) * season_discount(seasons[t], legacy_base=origin)
+               for t in range(len(season_wars)))
+
+
+def _service_path_salaries_unified(season_wars: list[float], seasons: list[float],
+                                   super_two: bool) -> list[float]:
+    """Row 2 in unified mode: the league minimum of the season (league_min_for,
+    which reads the CBA table and fixes the flat 0.76M against the tabled 0.78M);
+    arbitration on the prior_season basis as max(minimum, frac x the prior
+    season's WAR priced at the market of season s_t), and on the current_season
+    basis frac x this season's market, so arbitration tracks the price of a win
+    by construction under every OD-4 option."""
+    cfg = _config()
+    st = cfg["service_time"]
+    legacy_min = float(st["league_min_usd"])
+    pre_arb, arb_fracs = _arb_ladder(st, super_two)
+    arb_basis = str(st.get("arb_basis", "current_season"))
+    out: list[float] = []
+    for t, s in enumerate(seasons):
+        lm = league_min_for(s, legacy=legacy_min)
+        if t < pre_arb:
+            out.append(lm)
+            continue
+        i = t - pre_arb
+        frac = arb_fracs[i] if i < len(arb_fracs) else arb_fracs[-1]
+        if arb_basis == "prior_season":
+            w_prior = season_wars[t - 1] if t > 0 else season_wars[t]
+            out.append(max(lm, frac * season_value_usd(w_prior, s)))
+        else:
+            out.append(frac * season_value_usd(season_wars[t], s))
+    return out
 
 
 def _arb_ladder(st: dict, super_two: bool) -> tuple[int, list[float]]:
@@ -1302,10 +1653,22 @@ def _service_path_salaries(season_wars: list[float], markets: list[float],
     return out
 
 
-@lru_cache(maxsize=512)
 def _bucket_sv_usd(role: str, reliever: bool,
                    debut_age: float | None = None, eta_years: float = 0.0,
-                   war_scale: float = 1.0) -> tuple[float, ...]:
+                   war_scale: float = 1.0, eta_origin: float | None = None) -> tuple[float, ...]:
+    """The cached per-bucket surplus values (see _bucket_sv_usd_cached), keyed on
+    (dpw_path_on(), the path's basis id) as well, so a switch never serves a stale
+    cache. eta_origin only enters the key in unified mode."""
+    key = _dpw_cache_key()
+    eo = (None if eta_origin is None else float(eta_origin)) if key is not None else None
+    return _bucket_sv_usd_cached(role, reliever, debut_age, eta_years, war_scale, eo, key)
+
+
+@lru_cache(maxsize=512)
+def _bucket_sv_usd_cached(role: str, reliever: bool,
+                          debut_age: float | None = None, eta_years: float = 0.0,
+                          war_scale: float = 1.0, eta_origin: float | None = None,
+                          _dpw_key=None) -> tuple[float, ...]:
     """The 5 per-bucket surplus values ($USD), given timing + the FV-dependent
     `war_scale` (scales bucket WAR levels per FV). `debut_age` reshapes each
     bucket's trajectory along the aging curve and `eta_years` discounts the
@@ -1320,12 +1683,16 @@ def _bucket_sv_usd(role: str, reliever: bool,
     out = []
     for b in range(_N_BUCKETS):
         wars = _bucket_season_wars(role, b, reliever, debut_age, war_scale)
-        sv_std = _service_path_surplus_usd(wars, False, eta_years)
-        sv_s2 = _service_path_surplus_usd(wars, True, eta_years) if f > 0 else sv_std
+        sv_std = _service_path_surplus_usd(wars, False, eta_years, eta_origin)
+        sv_s2 = _service_path_surplus_usd(wars, True, eta_years, eta_origin) if f > 0 else sv_std
         sv = (1.0 - f) * sv_std + f * sv_s2
         floor = float(floors[_BUCKETS[b]].get("surplus_floor_usd", 0))
         out.append(max(floor, sv))
     return tuple(out)
+
+
+_bucket_sv_usd.cache_clear = _bucket_sv_usd_cached.cache_clear
+_bucket_sv_usd.cache_info = _bucket_sv_usd_cached.cache_info
 
 
 def _round_timing(debut_age: float | None, eta_years: float) -> tuple[float | None, float]:
@@ -1360,15 +1727,16 @@ def _pitcher_rp_by_bucket(position: str | None) -> list[float]:
 
 def _effective_bucket_sv(is_pitcher: bool, position: str | None,
                          debut_age: float | None, eta_years: float,
-                         war_scale: float = 1.0) -> tuple[float, ...]:
+                         war_scale: float = 1.0,
+                         eta_origin: float | None = None) -> tuple[float, ...]:
     """Per-bucket surplus ($USD) with the pitcher role-outcome layer applied, at
     the FV-dependent `war_scale`. Hitters: the plain bucket SVs. Pitchers: each
     bucket blends the full-SP value and the bullpen-capped RP value by
     P(reliever|bucket), with an optional injury/attrition haircut."""
     if not is_pitcher:
-        return _bucket_sv_usd("hitter", False, debut_age, eta_years, war_scale)
-    sp = _bucket_sv_usd("pitcher", False, debut_age, eta_years, war_scale)   # full 200-IP-band SP
-    rp = _bucket_sv_usd("pitcher", True, debut_age, eta_years, war_scale)    # bullpen-capped RP
+        return _bucket_sv_usd("hitter", False, debut_age, eta_years, war_scale, eta_origin)
+    sp = _bucket_sv_usd("pitcher", False, debut_age, eta_years, war_scale, eta_origin)   # full 200-IP-band SP
+    rp = _bucket_sv_usd("pitcher", True, debut_age, eta_years, war_scale, eta_origin)    # bullpen-capped RP
     p_rp = _pitcher_rp_by_bucket(position)
     haz = float(_config().get("pitcher_role_mix", {}).get("injury_hazard", 0.0))
     out = []
@@ -1398,14 +1766,15 @@ def pitcher_role_split(fv, is_pitcher: bool, position: str | None = None) -> dic
 
 def bucket_surplus_usd(is_pitcher: bool, position: str | None = None, *,
                        age: float | None = None, eta_years: float | None = None,
-                       fv: float | None = None) -> dict[str, float]:
+                       fv: float | None = None,
+                       eta_origin: float | None = None) -> dict[str, float]:
     """Public view of the per-bucket surplus constants (transparency / snapshot /
     comparison test), with the pitcher role-outcome layer applied. `fv` applies the
     FV-dependent WAR scale (None -> base shape, the per-bucket reference levels)."""
     debut_age, eta_eff = _resolve_timing(age, eta_years)
     da, ee = _round_timing(debut_age, eta_eff)
     ws = _war_scale_for(fv, _role_key(is_pitcher)) if fv is not None else 1.0
-    svs = _effective_bucket_sv(is_pitcher, position, da, ee, ws)
+    svs = _effective_bucket_sv(is_pitcher, position, da, ee, ws, eta_origin)
     return {b: svs[i] for i, b in enumerate(_BUCKETS)}
 
 
@@ -1447,7 +1816,8 @@ def _pipeline_surplus_from_svs(fv: float, is_pitcher: bool, svs) -> float:
     return sum(p * s for p, s in zip(probs, svs))
 
 
-def _lowtier_anchor_usd(fv: float, role: str, eta_years: float = 0.0) -> float:
+def _lowtier_anchor_usd(fv: float, role: str, eta_years: float = 0.0,
+                        eta_origin: float | None = None) -> float:
     cfg = _config()
     a = cfg["lowtier_anchor"]
     val = float(a["anchor_usd_40fv_position"])
@@ -1456,6 +1826,11 @@ def _lowtier_anchor_usd(fv: float, role: str, eta_years: float = 0.0) -> float:
     anchor_fv = float(a["anchor_fv"])
     if fv < anchor_fv:
         val *= math.exp(-float(a["decay_per_point"]) * (anchor_fv - fv))
+    if dpw_path_active():
+        # Row 3, unified: the lump at its debut season's level, discounted to B.
+        s = _priced_origin(eta_origin) + float(eta_years)
+        return val * price_level(s) / _flat_rate_usd() * season_discount(
+            s, legacy_base=_priced_origin(eta_origin))
     # Discount the anchor lump from projected debut, consistent with the pipeline.
     infl = float(cfg.get("dollars_per_war_inflation", 0.0))
     r = float(cfg["discount_rate"])
@@ -1464,7 +1839,8 @@ def _lowtier_anchor_usd(fv: float, role: str, eta_years: float = 0.0) -> float:
 
 
 def point_estimate_surplus_usd(fv: float | None, is_pitcher: bool, position: str | None = None,
-                               *, age: float | None = None, eta_years: float | None = None) -> float | None:
+                               *, age: float | None = None, eta_years: float | None = None,
+                               eta_origin: float | None = None) -> float | None:
     """COLLAPSED comparator (NOT the production path). Mirrors the v1 mistake of
     aggregating BEFORE the nonlinear transforms: collapse the outcome mixture to
     a single expected per-season WAR (E[X]) on a flat trajectory, then value that
@@ -1506,14 +1882,15 @@ def point_estimate_surplus_usd(fv: float | None, is_pitcher: bool, position: str
     s2 = st["super_two"]
     fr = float(s2["fraction"]) if s2.get("enabled") else 0.0
     _, eta_eff = _resolve_timing(age, eta_years)
-    sv = ((1.0 - fr) * _service_path_surplus_usd(wars, False, eta_eff)
-          + fr * _service_path_surplus_usd(wars, True, eta_eff))
+    sv = ((1.0 - fr) * _service_path_surplus_usd(wars, False, eta_eff, eta_origin)
+          + fr * _service_path_surplus_usd(wars, True, eta_eff, eta_origin))
     return max(0.0, sv * position_multiplier(position))
 
 
 def expected_surplus_usd(fv: float | None, is_pitcher: bool, position: str | None = None,
                          *, age: float | None = None, eta_years: float | None = None,
-                         apply_position_mult: bool = True) -> float | None:
+                         apply_position_mult: bool = True,
+                         eta_origin: float | None = None) -> float | None:
     """Expected cost-controlled surplus value in USD for a prospect at continuous
     FV, given optional timing (current `age` + `eta_years` to debut). Below the
     Edwards cutover uses the direct dollar anchor; in (cutover, bridge) it
@@ -1523,9 +1900,14 @@ def expected_surplus_usd(fv: float | None, is_pitcher: bool, position: str | Non
 
     `position` ALWAYS drives the pitcher role-outcome layer (SP/RP/generic curve
     selection). `apply_position_mult=False` gates ONLY the (default-off) market-
-    scarcity $ multiplier -- it does NOT discard the role tag."""
+    scarcity $ multiplier -- it does NOT discard the role tag.
+
+    `eta_origin` (VAL_5, I6) is the calendar year the caller's eta_years was
+    measured from. It is ignored in legacy mode; in unified $/WAR path mode the
+    priced seasons are dated from it, and passing eta_years without it raises."""
     if fv is None:
         return None
+    _check_eta_origin(eta_years, eta_origin)
     try:
         f = float(fv)
     except (TypeError, ValueError):
@@ -1542,15 +1924,16 @@ def expected_surplus_usd(fv: float | None, is_pitcher: bool, position: str | Non
     cutover = float(a["cutover_fv"])
     bridge_to = float(a["bridge_to_fv"])
     if f <= cutover:
-        base = _lowtier_anchor_usd(f, role, ee)
+        base = _lowtier_anchor_usd(f, role, ee, eta_origin)
     elif f < bridge_to:
-        lo = _lowtier_anchor_usd(cutover, role, ee)
-        svs_b = _effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(bridge_to, role))
+        lo = _lowtier_anchor_usd(cutover, role, ee, eta_origin)
+        svs_b = _effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(bridge_to, role),
+                                     eta_origin)
         hi = _pipeline_surplus_from_svs(bridge_to, is_pitcher, svs_b)
         t = (f - cutover) / (bridge_to - cutover)
         base = lo * (1 - t) + hi * t
     else:
-        svs = _effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(f, role))
+        svs = _effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(f, role), eta_origin)
         base = _pipeline_surplus_from_svs(f, is_pitcher, svs)
     # C6 MONOTONICITY FLOOR (2026-07-31, docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md).
     # A better grade must never be worth less money inside a role.
@@ -1573,7 +1956,7 @@ def expected_surplus_usd(fv: float | None, is_pitcher: bool, position: str | Non
     # This is deliberately NOT the sub-cutover re-anchoring work, which the gate requires
     # be kept separate: nothing here moves the anchor, it only stops other branches
     # undercutting it.
-    base = max(base, _lowtier_anchor_usd(min(f, cutover), role, ee))
+    base = max(base, _lowtier_anchor_usd(min(f, cutover), role, ee, eta_origin))
     if apply_position_mult:
         base *= position_multiplier(position)  # 1.0 unless market_scarcity enabled
     return max(0.0, base)
@@ -1651,10 +2034,15 @@ def calibration_stamp() -> dict:
     the one written series, two artifacts on the same map but priced at two
     levels would otherwise carry identical stamps."""
     cal = _config().get("calibration", {}) or {}
-    return {"version": calibration_version(),
-            "enabled": bool(cal.get("enabled")),
-            "method": str(cal.get("method", "linear")).lower(),
-            "dpw_level_usd": int(round(_flat_rate_usd()))}
+    stamp = {"version": calibration_version(),
+             "enabled": bool(cal.get("enabled")),
+             "method": str(cal.get("method", "linear")).lower(),
+             "dpw_level_usd": int(round(_flat_rate_usd()))}
+    # VAL_5: the $/WAR path basis, stamped ONLY while the unified path serves,
+    # so OFF artifacts stay byte-identical.
+    if dpw_path_active():
+        stamp["pricing_basis_id"] = dpw_basis_id()
+    return stamp
 
 
 def calibration_level_scale() -> float:
@@ -1725,6 +2113,7 @@ def surplus_value_mm(
     apply_position_mult: bool = True,
     age: float | None = None,
     eta_years: float | None = None,
+    eta_origin: float | None = None,
 ) -> float | None:
     """Expected 6yr cost-controlled surplus value in $M for a prospect at FV.
 
@@ -1743,7 +2132,7 @@ def surplus_value_mm(
     if fv is None:
         return None
     usd = expected_surplus_usd(fv, is_pitcher, position, age=age, eta_years=eta_years,
-                               apply_position_mult=apply_position_mult)
+                               apply_position_mult=apply_position_mult, eta_origin=eta_origin)
     if usd is None:
         return None
     return round(apply_calibration(usd / 1e6, fv, is_pitcher), 1)
@@ -1889,28 +2278,30 @@ def _normalized_bucket_probs(bucket_probs) -> list[float]:
     return [v / tot for v in w]
 
 
-def _mixture_bucket_values(fv, is_pitcher, position, age=None, eta_years=None):
+def _mixture_bucket_values(fv, is_pitcher, position, age=None, eta_years=None, eta_origin=None):
     """(curve probs, per-bucket dollar values in USD, expected_surplus_usd) at FV.
 
     The per-bucket values are the role-mixed bucket surpluses rescaled so that the
     curve's own mixture mean equals expected_surplus_usd (anchor, bridge and C6 floor
     included). They are what one bucket is worth on this player's timing, whatever
     weight that bucket is given. (None, None, None) for a bad FV."""
-    mean_usd = expected_surplus_usd(fv, is_pitcher, position, age=age, eta_years=eta_years)
+    mean_usd = expected_surplus_usd(fv, is_pitcher, position, age=age, eta_years=eta_years,
+                                    eta_origin=eta_origin)
     if mean_usd is None:
         return None, None, None
     f = float(fv)
     debut_age, eta_eff = _resolve_timing(age, eta_years)
     da, ee = _round_timing(debut_age, eta_eff)
     probs = p_bucket_given_fv(f, is_pitcher)
-    bucket_sv = list(_effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(f, _role_key(is_pitcher))))
+    bucket_sv = list(_effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(f, _role_key(is_pitcher)),
+                                          eta_origin))
     pipeline_mean = sum(p * s for p, s in zip(probs, bucket_sv))
     scale = (mean_usd / pipeline_mean) if pipeline_mean > 0 else 0.0
     return probs, [s * scale for s in bucket_sv], mean_usd
 
 
 def mixture_surplus_usd(fv, is_pitcher, position=None, bucket_probs=None, *,
-                        age=None, eta_years=None) -> float | None:
+                        age=None, eta_years=None, eta_origin=None) -> float | None:
     """Expected surplus (USD) of the bucket mixture at FV weighted by `bucket_probs`.
 
     docs/efv-2026-09-25/SURPLUS_ODDS_GATE.md, the candidate: the bucket dollar values
@@ -1920,7 +2311,8 @@ def mixture_surplus_usd(fv, is_pitcher, position=None, bucket_probs=None, *,
     inflate the non-bust buckets to hold the old mean). bucket_probs=None returns
     expected_surplus_usd exactly."""
     probs, eff_sv, mean_usd = _mixture_bucket_values(fv, is_pitcher, position,
-                                                     age=age, eta_years=eta_years)
+                                                     age=age, eta_years=eta_years,
+                                                     eta_origin=eta_origin)
     if probs is None:
         return None
     if bucket_probs is None:
@@ -1930,7 +2322,7 @@ def mixture_surplus_usd(fv, is_pitcher, position=None, bucket_probs=None, *,
 
 
 def _sv_draws_mm(fv, is_pitcher, position, n, seed=None, age=None, eta_years=None, fv_sd=0.0,
-                 bucket_probs=None):
+                 bucket_probs=None, eta_origin=None):
     """Monte Carlo SV draws ($M): sample bucket ~ P(bucket|FV), then a
     mean-preserving within-bucket Gamma (bust = point mass at $0). The bucket
     means are scaled so the mixture mean equals the (anchor/timing-adjusted)
@@ -1953,7 +2345,8 @@ def _sv_draws_mm(fv, is_pitcher, position, n, seed=None, age=None, eta_years=Non
     distribution exactly."""
     import numpy as np
     probs, eff_sv, mean_usd = _mixture_bucket_values(fv, is_pitcher, position,
-                                                     age=age, eta_years=eta_years)
+                                                     age=age, eta_years=eta_years,
+                                                     eta_origin=eta_origin)
     if probs is None:
         return None, None, None
     if bucket_probs is not None:
@@ -2003,7 +2396,7 @@ def _sv_draws_mm(fv, is_pitcher, position, n, seed=None, age=None, eta_years=Non
 
 def sv_draws(fv, is_pitcher, position=None, *, draws=None, seed=None,
              age=None, eta_years=None, fv_dispersion=None, source_fvs=None, n_sources=None,
-             bucket_probs=None):
+             bucket_probs=None, eta_origin=None):
     """Raw Monte Carlo SV draws ($M, numpy array) for a prospect -- e.g. for the
     backtest's PIT / interval-coverage checks. None for bad FV. Source-disagreement
     spread (Prompt I) is applied when fv_dispersion / source_fvs is supplied.
@@ -2011,7 +2404,8 @@ def sv_draws(fv, is_pitcher, position=None, *, draws=None, seed=None,
     n = _mc_draws(draws)
     fv_sd, _, _ = _resolve_fv_sd(fv_dispersion, source_fvs, n_sources)
     out, _, _ = _sv_draws_mm(fv, is_pitcher, position, n, seed=seed, age=age,
-                             eta_years=eta_years, fv_sd=fv_sd, bucket_probs=bucket_probs)
+                             eta_years=eta_years, fv_sd=fv_sd, bucket_probs=bucket_probs,
+                             eta_origin=eta_origin)
     return out
 
 
@@ -2030,6 +2424,7 @@ def sv_distribution(
     source_fvs=None,
     n_sources: int | None = None,
     bucket_probs=None,
+    eta_origin: float | None = None,
 ) -> dict | None:
     """STANDARD OUTPUT CONTRACT -- the full surplus-value distribution for a
     prospect (not just its mean). Returns the `output` dict:
@@ -2065,7 +2460,7 @@ def sv_distribution(
     fv_sd, dispersion, n_src = _resolve_fv_sd(fv_dispersion, source_fvs, n_sources)
     sv_mm, probs, mean_usd = _sv_draws_mm(fv, is_pitcher, position, n,
                                           seed=seed, age=age, eta_years=eta_years, fv_sd=fv_sd,
-                                          bucket_probs=bucket_probs)
+                                          bucket_probs=bucket_probs, eta_origin=eta_origin)
     if sv_mm is None:
         return None
     out = _dist_output(sv_mm, float(probs[_BUCKETS.index("bust")]), mean_usd / 1e6,
@@ -2171,7 +2566,8 @@ def system_surplus_distribution(prospects, *, draws=None, seed=None, correlation
         fv_sd, _, _ = _resolve_fv_sd(pr.get("fv_dispersion"), pr.get("source_fvs"), pr.get("n_sources"))
         d, _, mean_usd = _sv_draws_mm(pr.get("fv"), bool(pr.get("is_pitcher")), pr.get("position"),
                                       n, seed=base_seed, age=pr.get("age"),
-                                      eta_years=pr.get("eta_years"), fv_sd=fv_sd)
+                                      eta_years=pr.get("eta_years"), fv_sd=fv_sd,
+                                      eta_origin=pr.get("eta_origin"))
         if d is None:
             continue
         sorted_draws.append(np.sort(np.asarray(d, dtype=float)))
@@ -2231,7 +2627,12 @@ def _remaining_path_surplus_usd(season_wars: list[float], start_k: int, super_tw
     """Value control seasons [start_k:] on the ACTUAL service clock (salary by
     absolute service year), discounting from NOW (the player is already in MLB,
     so the first remaining season is undiscounted). start_k=0 reproduces the
-    full prospect path at eta=0 exactly."""
+    full prospect path at eta=0 exactly.
+
+    Unified $/WAR path mode (VAL_5, row 4): see
+    _remaining_path_surplus_unified_usd; the legacy branch below is unchanged."""
+    if dpw_path_active():
+        return _remaining_path_surplus_unified_usd(season_wars, start_k, super_two)
     cfg = _config()
     st = cfg["service_time"]
     league_min = float(st["league_min_usd"])
@@ -2260,6 +2661,38 @@ def _remaining_path_surplus_usd(season_wars: list[float], start_k: int, super_tw
             else:
                 salary = frac * market   # matches _service_path_salaries exactly (no floor)
         total += (market - salary) * (net ** (k - start_k))
+    return total
+
+
+def _remaining_path_surplus_unified_usd(season_wars: list[float], start_k: int,
+                                        super_two: bool) -> float:
+    """Row 4, unified: the remaining control seasons are calendar seasons
+    s = N + 1 + (k - start_k) (the first remaining season is season B whatever
+    the caller's calendar year), priced at their own level with salaries by
+    season (row 2), discounted by d(s) to B."""
+    cfg = _config()
+    st = cfg["service_time"]
+    legacy_min = float(st["league_min_usd"])
+    pre_arb, arb_fracs = _arb_ladder(st, super_two)
+    arb_basis = str(st.get("arb_basis", "current_season"))
+    first = float(last_realized_winter() + 1)
+    total = 0.0
+    start_k = int(start_k)
+    for k in range(start_k, len(season_wars)):
+        s = first + (k - start_k)
+        market = season_value_usd(season_wars[k], s)
+        lm = league_min_for(s, legacy=legacy_min)
+        if k < pre_arb:
+            salary = lm
+        else:
+            i = k - pre_arb
+            frac = arb_fracs[i] if i < len(arb_fracs) else arb_fracs[-1]
+            if arb_basis == "prior_season":
+                w_prior = season_wars[k - 1] if k > 0 else season_wars[k]
+                salary = max(lm, frac * season_value_usd(w_prior, s))
+            else:
+                salary = frac * market
+        total += (market - salary) * season_discount(s, legacy_base=first)
     return total
 
 
@@ -2353,9 +2786,13 @@ def _realized_consumed_usd(consumed_seasons) -> float:
     ACTUAL recorded fWAR and ACTUAL salary paid (no projection). Each season:
     fWAR * $/WAR(that season) - salary_paid; compounded to present value at the
     discount rate (most recent season = now). consumed_seasons: list of dicts
-    {fwar, salary_mm, [dpw_mm]} oldest-first."""
+    {fwar, salary_mm, [dpw_mm]} oldest-first.
+
+    Unified $/WAR path mode (VAL_5, row 27): see _realized_consumed_unified_usd."""
     if not consumed_seasons:
         return 0.0
+    if dpw_path_active():
+        return _realized_consumed_unified_usd(consumed_seasons)
     flat = _flat_rate_usd()
     r = float(_config()["discount_rate"])
     n = len(consumed_seasons)
@@ -2372,6 +2809,71 @@ def _realized_consumed_usd(consumed_seasons) -> float:
             market_usd = fwar * dpw
         total += (market_usd - salary_usd) * ((1.0 + r) ** (n - 1 - i))   # compound past -> now
     return total
+
+
+def _realized_level_ratio() -> float:
+    """price_level(B) / F: the consumed seasons' market priced at the level of the
+    remaining leg (row 27)."""
+    return price_level(pricing_base_season()) / _flat_rate_usd()
+
+
+def _realized_consumed_unified_usd(consumed_seasons) -> float:
+    """Row 27, unified: each consumed season's MARKET term (either branch) times
+    price_level(B)/F, so the realized leg prices at the remaining leg's level;
+    salaries paid stay as given (realized_consumed_seasons scales its own
+    market-linked estimates); compounding stays at discount_rate, the backward
+    item this design leaves out of scope."""
+    k = _realized_level_ratio()
+    flat = _flat_rate_usd()
+    r = float(_config()["discount_rate"])
+    n = len(consumed_seasons)
+    total = 0.0
+    for i, s in enumerate(consumed_seasons):
+        fwar = float(s.get("fwar", 0.0))
+        salary_usd = float(s.get("salary_mm", 0.0)) * 1e6
+        if s.get("market_mm") is not None:
+            market_usd = float(s["market_mm"]) * 1e6
+        else:
+            dpw = float(s["dpw_mm"]) * 1e6 if s.get("dpw_mm") is not None else flat
+            market_usd = fwar * dpw
+        total += (market_usd * k - salary_usd) * ((1.0 + r) ** (n - 1 - i))
+    return total
+
+
+def _realized_consumed_seasons_unified(rows, salary_by_year, super_two) -> list[dict]:
+    """Row 27, unified: the engine's market-linked salary ESTIMATES (arbitration
+    frac x market, the post-control fair market) scale by price_level(B)/F with
+    the market they are netted against; salary_by_year actuals and the
+    league-minimum floor stay nominal at their table values. market_mm stays at
+    the level F (the realized leg applies the ratio once)."""
+    k = _realized_level_ratio()
+    cfg = _config()
+    st = cfg["service_time"]
+    league_min_mm = float(st["league_min_usd"]) / 1e6
+    control_years = int(st["control_years"])
+    pre_arb, arb_fracs = _arb_ladder(st, super_two)
+    sby = salary_by_year or {}
+    arb_basis = str(st.get("arb_basis", "current_season"))
+    markets_mm = [tiered_war_value_usd(w) / 1e6 for _, w in rows]
+    consumed = []
+    for t, (yr, war) in enumerate(rows):
+        market_mm = markets_mm[t]
+        actual = sby.get(yr, sby.get(str(yr)))
+        if actual is not None and float(actual) > 0:
+            salary_mm = float(actual) / 1e6
+        elif t < pre_arb:
+            salary_mm = league_min_mm
+        elif t < control_years:
+            i = t - pre_arb
+            frac = arb_fracs[i] if i < len(arb_fracs) else arb_fracs[-1]
+            base_mkt = markets_mm[t - 1] if (arb_basis == "prior_season" and t > 0) else market_mm
+            salary_mm = max(league_min_mm, frac * base_mkt * k)
+        else:
+            salary_mm = max(league_min_mm, market_mm * k)
+        consumed.append({"fwar": war, "salary_mm": round(salary_mm, 4),
+                         "market_mm": round(market_mm, 4),
+                         "dpw_mm": round(dollars_per_war(war), 6), "year": yr})
+    return consumed
 
 
 def realized_consumed_seasons(season_wars_by_year, *, salary_by_year=None,
@@ -2412,6 +2914,8 @@ def realized_consumed_seasons(season_wars_by_year, *, salary_by_year=None,
     if not rows:
         return []
     rows.sort(key=lambda t: t[0])
+    if dpw_path_active():
+        return _realized_consumed_seasons_unified(rows, salary_by_year, super_two)
 
     cfg = _config()
     st = cfg["service_time"]
@@ -3811,14 +4315,17 @@ def _bucket_star_prob(role: str, bucket_idx: int, reliever: bool,
 
 
 def star_odds(fv: float | None, is_pitcher: bool, position: str | None = None,
-              *, age: float | None = None, eta_years: float | None = None) -> float | None:
+              *, age: float | None = None, eta_years: float | None = None,
+              eta_origin: float | None = None) -> float | None:
     """P(the player posts >= min_seasons control seasons of >= threshold WAR) --
     the published "odds of becoming a star" (default 2 seasons of 4+ WAR). Averaged
     over the outcome-bucket mixture P(bucket|FV); pitchers blend the SP and
     bullpen-capped RP paths by P(reliever|bucket) (a capped reliever essentially
     cannot clear 4 WAR, so pitcher star odds run below hitter). Timing-aware via
     age/ETA. Uses the active valuation set (control-year window + star definition).
-    None when FV is missing."""
+    None when FV is missing. `eta_origin` (VAL_5, I6) is accepted for a uniform
+    engine signature and never read: the odds price no dollars and never move
+    with the $/WAR path."""
     if fv is None:
         return None
     probs = p_bucket_given_fv(float(fv), is_pitcher)
@@ -4070,7 +4577,17 @@ def fit_tier_reconciliation(set_id: str = "clemens_2026", *,
 
 def build_snapshot() -> dict:
     """Build the full JSON snapshot for frontend consumption. Deterministic from
-    the committed config + fitted files (no model fitting here)."""
+    the committed config + fitted files (no model fitting here). While the
+    unified $/WAR path serves (VAL_5, row 26) it also carries a dpw_path summary;
+    OFF it is the legacy snapshot byte for byte."""
+    snap = _build_snapshot_body()
+    if dpw_path_active():
+        snap["dpw_path"] = dpw_path_summary()
+    return snap
+
+
+def _build_snapshot_body() -> dict:
+    """The snapshot body (see build_snapshot)."""
     cfg = _config()
     fitted = _fitted()
     dpw = cfg["dollars_per_war"]

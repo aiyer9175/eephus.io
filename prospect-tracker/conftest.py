@@ -568,6 +568,13 @@ _SIDECAR_GLOBS = (
     "data/bracket_sim*.json",
     ".cache/bracket_sim/**/*",
     ".cache/bracket/**/*",
+    # VAL_5: the one $/WAR series (whose writer gains the dpw_path block), the
+    # gate's eval artifact (the tool's carry-forward and the lab's block), the
+    # owner record and the prospective ledger. A test writes none of them.
+    "data/fa_dpw_series.json",
+    "data/dpw_forecast_eval.json",
+    "data/dpw_path_owner.json",
+    "data/dpw_path_ledger.json",
 )
 
 #: The small directories the PER-TEST watch re-lists, so a file a test CREATES
@@ -933,6 +940,14 @@ _SIDECAR_WRITE_TARGETS = (
     ("bracket_sim", "RECORD_PATH", ".cache/bracket_sim/record.json"),
     ("bracket_sim", "RECORD_DERIVED_PATH", "data/bracket_sim_record.json"),
     ("bracket_sim", "BOARD_PATH", "data/betting.json"),
+    # VAL_5: the one writer's output and its readers, the files the dpw_path
+    # block code reads, and the eval tool's output, all resolved at call time.
+    ("fa_market", "DPW_SERIES_PATH", "data/fa_dpw_series.json"),
+    ("value_framework", "_DPW_SERIES_PATH", "data/fa_dpw_series.json"),
+    ("fa_class", "_DPW_SERIES_PATH", "data/fa_dpw_series.json"),
+    ("fa_market", "DPW_OWNER_PATH", "data/dpw_path_owner.json"),
+    ("fa_market", "DPW_EVAL_PATH", "data/dpw_forecast_eval.json"),
+    ("tools.fit_dpw_forecast", "DEFAULT_OUT", "data/dpw_forecast_eval.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands

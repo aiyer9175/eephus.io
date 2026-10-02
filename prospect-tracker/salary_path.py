@@ -261,6 +261,29 @@ def league_min_usd(season: int, table=None) -> int:
     return int(t[last if s > last else min(t)])
 
 
+_DEFLATOR_SERIES = None
+
+
+def arb_deflator_series() -> dict | None:
+    """The league-wide arbitration salary index by season (arb_model.fit_deflator
+    on the board's panel, the series board_raise_fn re-inflates with), for the
+    $/WAR path's companion legs (VAL_5, OD-4 own_trends). Memoized; None on a
+    cold tree."""
+    global _DEFLATOR_SERIES
+    if _DEFLATOR_SERIES is None:
+        try:
+            import arb_dataset as A
+            import arb_model as Mod
+            panel = A.build_panel(log=None)
+            sc = A.scored_rows(panel["rows"])
+            seasons = sorted({r["season"] for r in sc})
+            _DEFLATOR_SERIES = dict(Mod.fit_deflator(sc, base_year=seasons[0])) or "unavailable"
+        except Exception as exc:                  # pragma: no cover - defensive
+            _log.warning("salary_path: arb deflator unavailable: %s", exc)
+            _DEFLATOR_SERIES = "unavailable"
+    return None if _DEFLATOR_SERIES == "unavailable" else _DEFLATOR_SERIES
+
+
 def board_raise_fn():
     """The SAME arb-2+ estimator the /arbitration/ board serves, as a callable
     `(prior_usd, cls, season, s2, league_min_usd) -> (pred, lo, hi)`.

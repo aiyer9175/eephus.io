@@ -243,6 +243,12 @@ def _discount_rate() -> float:
 
 
 def _dpw_inflation() -> float:
+    cfg = _vf_config()
+    if "dollars_per_war_inflation" not in cfg:
+        # VAL_5 row 28: in unified $/WAR path mode a silent 0.05 fallback raises.
+        import value_framework as _vfm
+        if _vfm.dpw_path_active():
+            raise _vfm.DpwPathError("dollars_per_war_inflation absent in unified $/WAR path mode")
     return float(_vf_config().get("dollars_per_war_inflation", 0.05))
 
 
@@ -440,7 +446,8 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
                       age: int | None, curves: dict, war_map: dict,
                       league: dict, in_progress: tuple[int, float] | None = None,
                       use_ml: bool | None = None,
-                      ml_models: dict | None = None) -> dict | None:
+                      ml_models: dict | None = None,
+                      p20: bool = False) -> dict | None:
     """WAR by contract year: year 1 from the full Marcel engine; later
     years decay the WAR rate and playing time along the SAME aging curves
     (war_rate per-600/250 deltas + pt deltas at the advancing age).
@@ -458,9 +465,13 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     the h5 head along the champion's relative decay (the documented seam:
     nothing beyond h5 is validatable). The champion path is ALWAYS
     computed (stack features + extrapolation + fallback); ``use_ml=False``
-    pins the champion (gates, eval baselines, feature assembly)."""
+    pins the champion (gates, eval baselines, feature assembly).
+
+    ``p20`` (default off; only the $/WAR path writer's enrichment sets it)
+    applies correction P20 of docs/dpw-2026-09-25/DPW_PATH_GATE.md section 1.1
+    inside the projection's playing-time formula."""
     proj = fp.project_player(hist, side, class_year, curves, league, age,
-                             in_progress=in_progress)
+                             in_progress=in_progress, p20=p20)
     if proj is None:
         return None
     war1 = fp.war_from_projection(proj, side, war_map, league, class_year)
@@ -894,7 +905,8 @@ DPW_SERIES_FIRST_WINTER = 2015
 
 
 def build_dpw_series_payload(class_year: int,
-                             enriched: list[dict] | None = None) -> dict:
+                             enriched: list[dict] | None = None, *,
+                             force: bool = False) -> dict:
     """The one written $/WAR series and the level every surplus prices at.
 
     usd_per_war_by_winter: the per-winter signings-implied series
@@ -932,19 +944,29 @@ def build_dpw_series_payload(class_year: int,
                         "shape rescaled to this level)"],
         }
     from fa_backtest import GATE2_MODEL_VERSION
-    return {"method": DPW_SERIES_METHOD,
-            "model_version": GATE2_MODEL_VERSION,
-            "usd_per_war_by_winter": {str(k): v for k, v in sorted(series.items())},
-            "breakdown": dpw_breakdowns(enriched),
-            "pricing": pricing}
+    payload = {"method": DPW_SERIES_METHOD,
+               "model_version": GATE2_MODEL_VERSION,
+               "usd_per_war_by_winter": {str(k): v for k, v in sorted(series.items())},
+               "breakdown": dpw_breakdowns(enriched),
+               "pricing": pricing}
+    # VAL_5: the dpw_path block, ONLY while the committed block switch is on
+    # (off in every commit before the fWAR epoch's step Z; no environment
+    # override). Off, the payload is VAL_1's keys exactly.
+    if WRITE_DPW_PATH_BLOCK:
+        _apply_dpw_path_block(payload, class_year, force)
+    return payload
 
 
-def write_dpw_series(class_year: int, enriched: list[dict] | None = None) -> dict:
+def write_dpw_series(class_year: int, enriched: list[dict] | None = None, *,
+                     force: bool = False) -> dict:
     """Write data/fa_dpw_series.json, the ONLY writer of the file. Called once a
     night by run_monthly.rebuild_only before anything prices a prospect or a
     veteran, and by the Gate 2 persist (fa_backtest.run_market_gate), which
-    used to write its own copy. Returns the pricing block."""
-    payload = build_dpw_series_payload(class_year, enriched)
+    used to write its own copy. Returns the pricing block.
+
+    ``force`` (VAL_5) recomputes the dpw_path block regardless of its basis key;
+    it does nothing while WRITE_DPW_PATH_BLOCK is off."""
+    payload = build_dpw_series_payload(class_year, enriched, force=force)
     DPW_SERIES_PATH.write_text(json.dumps(payload, indent=1), encoding="utf-8")
     fa_class._dpw_series.cache_clear()
     # value_framework caches its config for the life of the process, and the
@@ -975,12 +997,394 @@ def written_pricing_level_usd(class_year: int) -> float | None:
     """The one $/WAR level for ``class_year``: the written pricing.level_usd
     when the file prices that class, else winter_dpw over the written series
     (a future class carries the same anchor further). None when no series is
-    written."""
+    written. In unified $/WAR path mode (VAL_5 row 15) a class after B reads P(c)."""
+    import value_framework as _vfm
+    if _vfm.dpw_path_active() and int(class_year) > _vfm.pricing_base_season():
+        return float(_vfm.price_level(int(class_year)))
     block = _written_doc().get("pricing") or {}
     if block.get("level_usd") and int(block.get("class_year") or -1) == int(class_year):
         return float(block["level_usd"])
     series = written_dpw_series(through=class_year - 1)
     return winter_dpw(series, class_year) if series else None
+
+
+# ============================================================================
+# THE projected per-season $/WAR path block (VAL_5, owner ask 2026-09-25)
+# ============================================================================
+# docs/dpw-2026-09-25/DPW_PATH_GATE.md. The one writer above writes a dpw_path
+# block into the one series file ONLY while this committed switch is on. It has
+# NO environment override, and it is off until the wiring commit after the fWAR
+# label epoch's step Z: until then every caller (the nightly rebuild step, the
+# Gate 2 persist, a hand run) writes VAL_1's keys only, and
+# test_gate2_untouched_by_path.py asserts that no caller writes a dpw_path key.
+WRITE_DPW_PATH_BLOCK = False
+DPW_PATH_SCHEMA = "dpw_path_v2"
+DPW_OWNER_PATH = Path(__file__).parent / "data" / "dpw_path_owner.json"
+DPW_EVAL_PATH = Path(__file__).parent / "data" / "dpw_forecast_eval.json"
+P20_SEASON = 2020
+# The seven environment switches the FA projection reads at call time
+# (registration F20), with the module function that resolves each.
+PROJECTION_SWITCHES = ("EEPHUS_PT_RISK", "EEPHUS_PIT_IP_AGE", "EEPHUS_PT_TJ", "EEPHUS_FA_REALWAR",
+                       "EEPHUS_FA_DEF", "EEPHUS_FA_PTFIT", "EEPHUS_FA_MARCEL")
+
+
+class DpwPathRefused(RuntimeError):
+    """The writer refuses to write the dpw_path block."""
+
+
+def projection_switch_stamps() -> dict:
+    """For each of the seven switches: the raw environment value (None when
+    unset) and the value the projection resolves. The block may only be written
+    while every raw value is unset or equals the resolved default."""
+    import os
+    resolvers = {"EEPHUS_PT_RISK": (fp._pt_risk_enabled, lambda: fp.PT_RISK_DEFAULT),
+                 "EEPHUS_PIT_IP_AGE": (fp._pit_ip_age_enabled, lambda: fp.PIT_IP_AGE_DEFAULT),
+                 "EEPHUS_PT_TJ": (fp._pt_tj_enabled, lambda: fp.PT_TJ_DEFAULT),
+                 "EEPHUS_FA_REALWAR": (fp._realwar_enabled, lambda: fp.REALWAR_DEFAULT),
+                 "EEPHUS_FA_DEF": (fp._def_enabled, lambda: fp.DEF_FEATURE_DEFAULT),
+                 "EEPHUS_FA_PTFIT": (fp._pt_fit_mode, lambda: fp.PT_FIT_DEFAULT),
+                 "EEPHUS_FA_MARCEL": (fp._marcel_weights,
+                                      lambda: [float(x) for x in fp._pcfg()["marcel_weights"]])}
+    out = {}
+    for name in PROJECTION_SWITCHES:
+        resolve, default = resolvers[name]
+        resolved = resolve()
+        dflt = default()
+        if isinstance(resolved, list):
+            resolved = [float(x) for x in resolved]
+        out[name] = {"raw": os.environ.get(name), "resolved": resolved, "default": dflt}
+    return out
+
+
+def _refuse_on_switch_override(stamps: dict) -> None:
+    bad = [k for k, v in stamps.items() if v["raw"] is not None and v["resolved"] != v["default"]]
+    if bad:
+        raise DpwPathRefused("dpw_path block refused: projection switches overridden in the "
+                             "environment: " + ", ".join(sorted(bad)))
+
+
+def _deal_schedule(s: dict) -> list[dict] | None:
+    """The deferral-ledger cash schedule of a signing, scaled so its nominal total
+    equals the sticker (exactly as npv_guarantee_usd scales it); None for a level
+    deal."""
+    entry = (_deferral_ledger().get(f"{s.get('player_key')}:{s.get('class_year')}")
+             if s.get("player_key") else None)
+    if not entry or not entry.get("schedule"):
+        return None
+    total = sum(r["amount_usd"] for r in entry["schedule"])
+    scale = float(s["guarantee_usd"]) / total if total else 1.0
+    return [{"year_offset": r["year_offset"], "amount_usd": r["amount_usd"] * scale}
+            for r in entry["schedule"]]
+
+
+def _truth_rows(enriched: list[dict]) -> list[dict]:
+    """One row per priced deal on the truth's basis: G_i, the level-equivalent
+    sticker (registration section 1; never npv_guarantee_usd), and the WAR
+    discounted at discount_rate."""
+    import dpw_path as dp
+    r = _discount_rate()
+    rows = []
+    for s in enriched:
+        cw = s.get("_war_path")
+        if not cw or not s.get("guarantee_usd") or not s.get("years"):
+            continue
+        disc = disc_war(cw, int(s["years"]))
+        if disc <= 0:
+            continue
+        sticker = float(s["guarantee_usd"])
+        sched = _deal_schedule(s)
+        g = (sticker if sched is None else dp.level_equivalent_sticker(
+            sticker, int(s["years"]), [(x["year_offset"], x["amount_usd"]) for x in sched], r))
+        rows.append({"class_year": int(s["class_year"]), "years": int(s["years"]), "G": g,
+                     "disc": disc, "scheduled": sched is not None, "_s": s})
+    return rows
+
+
+def _thin_filter(agg: dict) -> dict[int, float]:
+    return {y: v["g"] / v["w"] for y, v in sorted(agg.items()) if v["w"] > 20 and v["n"] >= 25}
+
+
+def truth_by_winter(enriched: list[dict]) -> dict[int, float]:
+    """A(W) = sum G_i / sum disc_war_r(i), the deal filter and thin-winter rule
+    of dollars_per_war_by_winter (estimator sticker_leveleq_r_over_disc_war_r_p20_v1
+    when the enrichment carries P20)."""
+    agg: dict[int, dict] = defaultdict(lambda: {"g": 0.0, "w": 0.0, "n": 0})
+    for row in _truth_rows(enriched):
+        a = agg[row["class_year"]]
+        a["g"] += row["G"]
+        a["w"] += row["disc"]
+        a["n"] += 1
+    return _thin_filter(agg)
+
+
+def scheduled_share_by_winter(enriched: list[dict]) -> dict[int, dict]:
+    """Per winter: the count of scheduled (deferral-ledger) deals and their share
+    of the truth's numerator (I-4; properties of the series, not errors)."""
+    agg: dict[int, dict] = defaultdict(lambda: {"n": 0, "g": 0.0, "g_sched": 0.0})
+    for row in _truth_rows(enriched):
+        a = agg[row["class_year"]]
+        a["g"] += row["G"]
+        if row["scheduled"]:
+            a["n"] += 1
+            a["g_sched"] += row["G"]
+    return {y: {"n_scheduled": v["n"], "share": (v["g_sched"] / v["g"]) if v["g"] else 0.0}
+            for y, v in sorted(agg.items())}
+
+
+def term_mix_index_by_winter(enriched: list[dict]) -> dict:
+    """The descriptive term-mix index (registration 5.1), per winter, with the
+    buckets that dropped."""
+    import dpw_path as dp
+    by: dict[int, list] = defaultdict(list)
+    for row in _truth_rows(enriched):
+        by[row["class_year"]].append((row["years"], row["G"], row["disc"]))
+    out, dropped = {}, {}
+    for y in sorted(by):
+        idx, drop = dp.term_mix_index(by[y])
+        if idx is not None:
+            out[y] = idx
+        if drop:
+            dropped[y] = drop
+    return {"weights": dict(dp.TERM_MIX_WEIGHTS), "by_winter": out, "dropped_buckets": dropped}
+
+
+def winter_level_se(enriched: list[dict], winter: int, B: int = 500,
+                    seed: int = 20260925) -> float | None:
+    """tau_W: the SE of ln A(W) from a within-winter deal bootstrap on the truth's
+    basis (B draws, the given seed). None when the winter has no priced deal."""
+    import random
+    rows = [r for r in _truth_rows(enriched) if r["class_year"] == int(winter)]
+    if len(rows) < 2:
+        return None
+    rng = random.Random(int(seed))
+    logs = []
+    n = len(rows)
+    for _ in range(int(B)):
+        g = w = 0.0
+        for _i in range(n):
+            r = rows[rng.randrange(n)]
+            g += r["G"]
+            w += r["disc"]
+        if g > 0 and w > 0:
+            logs.append(math.log(g / w))
+    return statistics.stdev(logs) if len(logs) >= 2 else None
+
+
+def pricing_dpw_by_winter(signings: list[dict], R: float, r_net: float) -> dict[int, float]:
+    """The round-trip first-season price (OD-1 option round_trip): per winter,
+    sum PV_R(cash_i) / sum of WAR discounted at r_net. Level deals pay AAV over
+    the term at offsets 0..years-1; deferral-ledger deals pay their scheduled
+    cash. The same deal filter and thin-winter rule."""
+    agg: dict[int, dict] = defaultdict(lambda: {"g": 0.0, "w": 0.0, "n": 0})
+    for s in signings:
+        cw = s.get("_war_path")
+        if not cw or not s.get("guarantee_usd") or not s.get("years"):
+            continue
+        years = int(s["years"])
+        war = cw["war_by_year"][:max(1, years)]
+        den = sum(w / ((1.0 + r_net) ** t) for t, w in enumerate(war))
+        if den <= 0:
+            continue
+        sched = _deal_schedule(s)
+        if sched is None:
+            aav = float(s["guarantee_usd"]) / max(years, 1)
+            cash = sum(aav / ((1.0 + R) ** t) for t in range(max(years, 1)))
+        else:
+            cash = sum(x["amount_usd"] / ((1.0 + R) ** x["year_offset"]) for x in sched)
+        a = agg[int(s["class_year"])]
+        a["g"] += cash
+        a["w"] += den
+        a["n"] += 1
+    return _thin_filter(agg)
+
+
+def _sha_bytes(p: Path) -> str:
+    import hashlib
+    try:
+        return hashlib.sha256(p.read_bytes()).hexdigest()
+    except OSError:
+        return ""
+
+
+def _estimator_code_sha() -> str:
+    import hashlib
+    import inspect
+    import dpw_path as dp
+    parts = [inspect.getsource(f) for f in (disc_war, dollars_per_war_by_winter, contract_war_path,
+                                            enriched_signings, _truth_rows, truth_by_winter,
+                                            pricing_dpw_by_winter, winter_level_se,
+                                            fp.project_player)]
+    parts.append(Path(dp.__file__).read_text(encoding="utf-8"))
+    return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+
+
+def _read_json(p: Path) -> dict | None:
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _cba_block(base_season: int) -> dict:
+    import dpw_path as dp
+    rules = fa_cba._rules()
+    regimes = rules.get("cba_regimes") or []
+    expires = max((r.get("effective_to") or "" for r in regimes), default="")
+    return {"expires": expires, "cbt_after_2026": "explicitly-unknown",
+            "regime_break": dp.regime_break(rules, int(base_season)),
+            "new_agreement_encoded": any((r.get("effective_from") or "") > dp.STRUCTURE_FROM
+                                         for r in regimes)}
+
+
+def build_dpw_path_block(class_year: int, *, force: bool = False,
+                         previous: dict | None = None) -> dict:
+    """The dpw_path block of DESIGN_v2 section 4.1, built by the one writer.
+
+    Its own enrichment runs through N = B - 1 with P20 (not VAL_1's N + 1), the
+    truth is the growth-free level-equivalent sticker series, the served level
+    follows the recorded OD-1 option (round-trip by default), R is the recorded
+    OD-2 value or the LITERAL default 0.113763, g_ref follows the OD-7 rule as
+    the gate block's owner_at_amendment holds it (rule (a) with no record), the
+    method is DPW_PATH_METHOD under the SERVE CONDITION. The enrichment is
+    skipped and the block on disk carried forward while its basis key is
+    unchanged; force=True recomputes it regardless."""
+    import hashlib
+    import dpw_companion
+    import dpw_path as dp
+    import value_framework as vfm
+    from proj_export import FIRST_SEASON
+    B = int(FIRST_SEASON)
+    N = B - 1
+    switches = projection_switch_stamps()
+    _refuse_on_switch_override(switches)
+    owner_doc = _read_json(DPW_OWNER_PATH)
+    if owner_doc is not None:
+        dp.validate_owner_doc(owner_doc)
+    gate = (_read_json(DPW_EVAL_PATH) or {}).get("dpw_path_gate")
+    options = {name: dp.convention(owner_doc, name) for name in dp.CONVENTION_IDS}
+    R = dp.nominal_rate_from_owner(owner_doc)
+    rule = dp.g_ref_rule(gate)
+    method = dp.resolve_method(gate)
+    r = _discount_rate()
+    fp.build_corpus()
+    key_src = {"corpus_sha": _sha_bytes(fp.CORPUS_CACHE),
+               "deferrals_sha": _sha_bytes(Path(__file__).parent / "data" / "deferrals.json"),
+               "war_provider": fp._war_provider(), "estimator_code_sha": _estimator_code_sha(),
+               "projection_switches": {k: [v["raw"], v["resolved"]] for k, v in switches.items()},
+               "discount_rate": r, "R": R, "g_ref_rule": rule, "B": B, "p20": True,
+               "options": options, "method": method, "schema": DPW_PATH_SCHEMA}
+    basis_key = dp.sha256_of(key_src)
+    prev = previous if previous is not None else (_written_doc().get("dpw_path") or {})
+    if not force and prev.get("basis_key") == basis_key:
+        return prev
+    enriched = enriched_signings(DPW_SERIES_FIRST_WINTER, N, p20=True)
+    truth = truth_by_winter(enriched)
+    if N not in truth:
+        raise DpwPathRefused(f"the truth series has no winter {N}")
+    g = dp.g_ref_value(rule, truth, N, previous=prev.get("discount"))
+    r_net = (1.0 + R) / (1.0 + g) - 1.0
+    if options["level_basis"] == "sticker":
+        served = dict(truth)
+        served_est = {"id": dp.TRUTH_ESTIMATOR_ID, "numerator_rate": r, "denominator_rate": r}
+        note = "equals truth.by_winter"
+    else:
+        served = pricing_dpw_by_winter(enriched, R, r_net)
+        served_est = {"id": dp.ROUND_TRIP_ESTIMATOR_ID, "numerator_rate": R, "denominator_rate": r_net}
+        note = "scheduled cash discounted at R"
+    if N not in served:
+        raise DpwPathRefused(f"the served level has no winter {N}")
+    g_a = dp.g_robust(truth, N) if method == "robust_drift" else None
+    path = dp.build_path(served[N], N, method=method, g_ref=g, g_a=g_a)
+    tau = {}
+    for w in sorted(truth):
+        se = winter_level_se(enriched, w, B=dp.BAND_B, seed=dp.BAND_SEED)
+        if se is not None:
+            tau[w] = se
+    band = dp.band(path, N, truth, tau.get(N, 0.0), method)
+    sched = scheduled_share_by_winter(enriched)
+    tmi = term_mix_index_by_winter(enriched)
+    truth_obj = {"estimator": {"id": dp.TRUTH_ESTIMATOR_ID, "numerator_rate": r, "denominator_rate": r,
+                               "scheduled_deals": ("level-equivalent sticker = sticker x PV_r(schedule) "
+                                                   "/ PV_r(level)")},
+                 "by_winter": {str(k): v for k, v in sorted(truth.items())},
+                 "tau_by_winter": {str(k): v for k, v in sorted(tau.items())},
+                 "scheduled_share_by_winter": {str(k): v for k, v in sched.items()},
+                 "term_mix_index": {"weights": tmi["weights"],
+                                    "by_winter": {str(k): v for k, v in tmi["by_winter"].items()},
+                                    "dropped_buckets": {str(k): v for k, v in tmi["dropped_buckets"].items()}}}
+    truth_obj["sha256"] = dp.sha256_of({k: truth_obj[k] for k in
+                                        ("estimator", "by_winter", "tau_by_winter", "term_mix_index")})
+    import valuation_sets as vsets
+    from datetime import datetime, timezone
+    disc = {"form_served": vsets.discount_form(vfm.active_valuation_set()),
+            "form_literal": vsets.discount_form_literal(vfm.active_valuation_set()), "R_nominal": R,
+            "R_source": ("owner OD-2" if dp.last_answer(owner_doc, "OD-2") else
+                         "default 0.113763 = (1.07)(1.0409) - 1 at L4(c)"),
+            "g_ref": g, "g_ref_rule": rule, "g_ref_measured_at_n": N,
+            "g_ref_source": {"keep_0409": "owner L4(c) | OD-7 rule (a)",
+                             "remeasure_served_rule": "OD-7 rule (b)",
+                             "zero_if_floor": "OD-7 rule (c)"}[rule],
+            "r_net": r_net, "r_net_derivation": "(1 + R)/(1 + g_ref) - 1"}
+    tiers = vfm._config()["dollars_per_war"]["tiered"]["rates"]
+    flat = float(vfm._config()["dollars_per_war"]["flat"])
+    block = {
+        "schema": DPW_PATH_SCHEMA,
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "enrichment": {"war_provider": key_src["war_provider"], "corpus_sha": key_src["corpus_sha"],
+                       "deferrals_sha": key_src["deferrals_sha"],
+                       "estimator_code_sha": key_src["estimator_code_sha"], "enriched_through": N,
+                       "p20": True, "use_ml": False,
+                       "fit_season_by_class": {str(y): y - 1 for y in range(DPW_SERIES_FIRST_WINTER, N + 1)},
+                       "projection_switches": {k: {"raw": v["raw"], "resolved": v["resolved"]}
+                                               for k, v in switches.items()}},
+        "truth": truth_obj,
+        "served_level": {"basis": options["level_basis"], "estimator": served_est,
+                         "by_winter": {str(k): v for k, v in sorted(served.items())},
+                         "deferral_rebase_note": note},
+        "clock": {"base_season": B, "last_realized_winter": N,
+                  "rule": "B = proj_export.FIRST_SEASON, rolled at the post-season step; N = B - 1"},
+        "discount": disc,
+        "path": {"method": method, "params": {"g": g, "g_A": g_a},
+                 "forecast_through": N + dp.FORECAST_HORIZON,
+                 "usd_by_season": {str(k): v for k, v in sorted(path.items())},
+                 "kind_by_season": {str(k): v for k, v in dp.path_kinds(N, method).items()},
+                 "taper": ({"seasons": [N + dp.FORECAST_HORIZON + k for k in range(1, dp.TAPER_SEASONS + 1)],
+                            "rule": "(1 - k/5) of the h = 5 log deviation"} if method == "robust_drift" else None),
+                 "cba_label": "conditional on the expired CBA's structure",
+                 "band": {"p10": {str(k): v for k, v in band["p10"].items()},
+                          "p90": {str(k): v for k, v in band["p90"].items()},
+                          "kind": {str(k): v for k, v in band["kind"].items()},
+                          "s_d": band["s_d"], "n_d": band["n_d"], "c_m": band["c_m"],
+                          "formula": band["formula"],
+                          "ev_factor_unapplied": {str(k): v for k, v in band["ev_factor_unapplied"].items()}}},
+        "salary_index": dpw_companion.salary_index_block(B, path, options["companion_mode"],
+                                                         dp.WRITTEN_THROUGH),
+        "tier_shape": {k: float(v) / flat for k, v in tiers.items()},
+        "cba": _cba_block(B),
+        "options": {**options, "source": "data/dpw_path_owner.json"},
+        "gate": {"doc": "docs/dpw-2026-09-25/DPW_PATH_GATE.md",
+                 "verdict_source": "data/dpw_forecast_eval.json dpw_path_gate (the only verdict copy)"},
+        "basis_key": basis_key,
+    }
+    block["basis_id"] = hashlib.sha256(dp.canonical_json(
+        [truth_obj["sha256"], block["served_level"], block["clock"], block["discount"],
+         block["path"]["usd_by_season"], block["salary_index"]["mode"], block["options"]])
+        .encode("utf-8")).hexdigest()[:12]
+    return block
+
+
+def _apply_dpw_path_block(payload: dict, class_year: int, force: bool) -> None:
+    """While WRITE_DPW_PATH_BLOCK is on: add the block, and while the unified path
+    serves set VAL_1's pricing.level_usd to P(B) with pricing.source dpw_path, so
+    every reader of the one level reads the unified one (DESIGN_v2 row 32)."""
+    import value_framework as vfm
+    block = build_dpw_path_block(class_year, force=force)
+    payload["dpw_path"] = block
+    if vfm.dpw_path_on() and payload.get("pricing"):
+        b = str(block["clock"]["base_season"])
+        payload["pricing"] = {**payload["pricing"],
+                              "level_usd": int(round(float(block["path"]["usd_by_season"][b]))),
+                              "source": "dpw_path"}
 
 
 # ============================================================================
@@ -1004,6 +1408,13 @@ def rational_value_usd(war_by_year: list[float], class_year: int,
     uses), rescaled so the curve's overall level matches this winter's
     ex-ante FA $/WAR. One convex shape, two modules, one source of truth."""
     from value_framework import tiered_war_value_usd
+    import value_framework as _vfm
+    if _vfm.dpw_path_active():
+        # VAL_5 row 11: each season at its own level, discounted to the class
+        # year at R (I2's exception); dpw and the escalator are not read.
+        _i = _dpw_inflation() if infl is None else float(infl)
+        return int(sum(tiered_war_value_usd(w) * _vfm.fa_season_factor(class_year, t, _i, dpw_usd)
+                       for t, w in enumerate(war_by_year)))
     r = _discount_rate()
     infl = _dpw_inflation() if infl is None else float(infl)
     level = dpw_usd / float(_vf_config()["dollars_per_war"]["flat"])
@@ -1027,6 +1438,17 @@ def rational_value_draws_usd(sims, class_year: int, dpw_usd: float,
     horizon residual Spearman (0.45 at lag 1, fa_mc) says is false."""
     import numpy as np
     from value_framework import tiered_war_value_usd
+    import value_framework as _vfm
+    if _vfm.dpw_path_active():
+        # VAL_5 row 11, as rational_value_usd.
+        _i = _dpw_inflation() if infl is None else float(infl)
+        arr = np.asarray(sims, dtype=float)
+        total = np.zeros(arr.shape[0])
+        for t in range(arr.shape[1]):
+            col = np.fromiter((tiered_war_value_usd(w) for w in arr[:, t]),
+                              dtype=float, count=arr.shape[0])
+            total += col * _vfm.fa_season_factor(class_year, t, _i, dpw_usd)
+        return total
     r = _discount_rate()
     infl = _dpw_inflation() if infl is None else float(infl)
     level = dpw_usd / float(_vf_config()["dollars_per_war"]["flat"])
@@ -1083,7 +1505,8 @@ def expected_rational_value_usd(path: dict, years: int, class_year: int,
         _dpw_inflation() if infl is None else float(infl), _discount_rate())
 
 
-def deferral_npv_usd(schedule: list[dict] | None, guarantee_usd: int) -> dict:
+def deferral_npv_usd(schedule: list[dict] | None, guarantee_usd: int, *,
+                     rate: float | None = None) -> dict:
     """Sticker vs NPV guarantee. ``schedule`` rows: {year_offset, amount_usd}
     (from data/deferrals.json / fa_overrides when available). Without
     a schedule the guarantee is assumed level over the term — documented.
@@ -1093,8 +1516,12 @@ def deferral_npv_usd(schedule: list[dict] | None, guarantee_usd: int) -> dict:
     captures only the DEFERRAL-vs-level difference — exactly the quantity
     the deferral ledger documents. Discounting every level contract too
     would just rescale all targets by an annuity factor without changing
-    the model comparison, while making the displayed numbers unfamiliar."""
-    r = _discount_rate()
+    the model comparison, while making the displayed numbers unfamiliar.
+
+    ``rate`` (VAL_5): the rate to discount at; the default is _discount_rate(),
+    so Gate 2, the $/WAR truth and every legacy caller keep 0.07. The Club
+    Ledger passes its one platform rate in unified $/WAR path mode."""
+    r = _discount_rate() if rate is None else float(rate)
     if not schedule:
         return {"sticker_usd": guarantee_usd, "npv_usd": guarantee_usd,
                 "method": "no_deferral_schedule_on_file"}
@@ -2311,10 +2738,15 @@ def comps_anchor(s: dict, pool: list[dict], infl: float,
 # Corpus enrichment (point-in-time, cached per winter via fitted_models)
 # ============================================================================
 
-def enriched_signings(first_year: int = 2015, last_year: int = 2026) -> list[dict]:
+def enriched_signings(first_year: int = 2015, last_year: int = 2026, *,
+                      p20: bool = False) -> list[dict]:
     """Every stored MLB-deal signing enriched with its point-in-time
     contract WAR path and signing age. Skips (and counts) players without
-    corpus history — never fakes an input."""
+    corpus history — never fakes an input.
+
+    ``p20`` (default off) is correction P20 of the $/WAR path gate; only that
+    writer's own enrichment sets it, so Gate 1, Gate 2, the in-run /fa/ series
+    and every served projection are untouched."""
     corpus = fp.build_corpus()
     league = corpus["league"]
     by_player: dict[str, dict[int, dict]] = {"hit": defaultdict(dict), "pit": defaultdict(dict)}
@@ -2360,7 +2792,7 @@ def enriched_signings(first_year: int = 2015, last_year: int = 2026) -> list[dic
             age_row = next((h for h in hist if h.get("age")), None)
             age = (age_row["age"] + (year - age_row["season"])) if age_row else None
             path = contract_war_path(hist, side, year, int(s["years"]), age,
-                                     curves, war_map, league, use_ml=False)
+                                     curves, war_map, league, use_ml=False, p20=p20)
             if path is None or age is None:
                 skipped += 1
                 continue

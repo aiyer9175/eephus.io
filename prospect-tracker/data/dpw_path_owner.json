@@ -1,0 +1,79 @@
+{
+ "schema": "dpw_path_owner_v1",
+ "_doc": [
+  "The owner's answers to the projected $/WAR path questions (VAL_5), append-only and hash-chained: each row carries prev_sha256, the sha256 of the previous row's canonical JSON (64 zeros for the first). A changed answer is a NEW row, never an edit; where an id has several rows, the last row for that id in chain order binds.",
+  "The writer reads the conventions (OD-1 to OD-5, OD-8) from here by option CODE. OD-6 and OD-7 are read ONLY from the dpw_path_gate block's owner_at_amendment (and OD-7 option zero_if_floor only from owner_after_look), as they stood in the pre-look amendment commit (docs/dpw-2026-09-25/DPW_PATH_GATE.md sections 9, 12). Excluded from the public webroot."
+ ],
+ "answers": [
+  {
+   "id": "OD-6",
+   "date": "2026-09-30",
+   "question": "If the forecast passes on the past winters everyone has seen",
+   "answer": "**Serve at the past-winter pass** (the owner departed from the recommended \"wait for two unseen winters\"); two misses in a row on new winters reverse it",
+   "option": "serve_at_dev_pass",
+   "source": "_audit_2026-09-09/DECISIONS_FOR_OWNER.md:606",
+   "committed_with": "The unified $/WAR path plumbing is built behind switches that default off, and nothing served moves",
+   "prev_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  {
+   "id": "OD-7",
+   "date": "2026-09-30",
+   "question": "The yearly raise rule",
+   "answer": "Re-measure by the served rule on the corrected (2020-prorated) series at the switch-on, re-applied each year (recommended); OD-2 comes back at the flip",
+   "option": "remeasure_served_rule",
+   "source": "_audit_2026-09-09/DECISIONS_FOR_OWNER.md:607",
+   "committed_with": "The unified $/WAR path plumbing is built behind switches that default off, and nothing served moves",
+   "prev_sha256": "7790ed7aecc5ef20936c64dfc772c0f27ae8bf0d7d47803b1e5cffff5c7abec9"
+  },
+  {
+   "id": "OD-2",
+   "date": "2026-09-30",
+   "question": "Discount rate",
+   "answer": "11.38 percent (keeps the 09-17 L4(c) lock; recommended)",
+   "option": "r_0113763",
+   "source": "_audit_2026-09-09/DECISIONS_FOR_OWNER.md:608",
+   "committed_with": "The unified $/WAR path plumbing is built behind switches that default off, and nothing served moves",
+   "prev_sha256": "4ad9354f92cd7f516c5700105ada4fed8f6fca9096bcf00c0f013be5d050b8fb"
+  },
+  {
+   "id": "OD-1",
+   "date": "2026-09-30",
+   "question": "Starting price of a win",
+   "answer": "First-season (round-trip) price (recommended); accepts the named band breaches (veteran surplus about -21 percent, ten top-100 Trade Machine rows moving $33M to $53M)",
+   "option": "round_trip",
+   "source": "_audit_2026-09-09/DECISIONS_FOR_OWNER.md:609",
+   "committed_with": "The unified $/WAR path plumbing is built behind switches that default off, and nothing served moves",
+   "prev_sha256": "ae6aea36e74963cae94c9800405cdfc01b746e1fe007ddbdee12474798bcb840"
+  },
+  {
+   "id": "OD-3",
+   "date": "2026-09-30",
+   "question": "Which season every page counts as \"now\"",
+   "answer": "2027 everywhere (recommended): prospect surplus +7 percent raw (+$777M, +7.2 percent after calibration)",
+   "option": "base_2027",
+   "source": "_audit_2026-09-09/DECISIONS_FOR_OWNER.md:617",
+   "committed_with": "The unified $/WAR path plumbing is built behind switches that default off, and nothing served moves",
+   "prev_sha256": "cd4c6199891a56dc1c5f38ee3e1a24a7f1ee6d655a151670fccdc8fddc16e6f7"
+  },
+  {
+   "id": "OD-4",
+   "date": "2026-09-30",
+   "question": "League minimum and arbitration growth after the CBA-tabled seasons",
+   "answer": "Owner (verbatim): **\"Each index's own history, and create+land the prospect arbitration model\"** -> minimum at its own trend (about 5.4 percent a year), arbitration at 2.2 percent a year; AND build and land M11 (prospect arbitration seasons priced through the arbitration model), whose rungs this rule then governs",
+   "option": "own_trends",
+   "source": "_audit_2026-09-09/DECISIONS_FOR_OWNER.md:618",
+   "committed_with": "The unified $/WAR path plumbing is built behind switches that default off, and nothing served moves",
+   "prev_sha256": "ba015034475a457ae7aefdf00dd37c281dd4bc561a97428b00e6fa0479de7789"
+  },
+  {
+   "id": "OD-5",
+   "date": "2026-09-30",
+   "question": "The Trade Machine's backup pricing rates",
+   "answer": "Align with every other page (recommended; no served Trade Machine number moves today)",
+   "option": "align",
+   "source": "_audit_2026-09-09/DECISIONS_FOR_OWNER.md:619",
+   "committed_with": "The unified $/WAR path plumbing is built behind switches that default off, and nothing served moves",
+   "prev_sha256": "55ccf4f355945bb22aaed419a04e22e1473bd4a8bb76858e36c14c6b57305c29"
+  }
+ ]
+}

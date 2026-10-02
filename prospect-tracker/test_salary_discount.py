@@ -118,3 +118,25 @@ def test_prior_vs_current_basis_differ_on_rising_path():
         markets_d = [vf.tiered_war_value_usd(w) for w in wars]
         current = vf._service_path_salaries(wars, markets_d, False)
     assert prior[3] < current[3]
+
+
+# --------------------------------------------------------------------------
+# ON twins (VAL_5, the unified $/WAR path, SYNTHETIC series; DESIGN_v2 I3, I5)
+# --------------------------------------------------------------------------
+def test_on_twin_one_eta_year_is_exactly_one_over_107(tmp_path):
+    """Unified mode, carry_const at the default R: one ETA year multiplies every
+    season's value leg by exactly 1/1.07, and the whole surplus too once every
+    season is after s_T under the neutral companion mode."""
+    import dpw_testkit as kit
+    wars = [1.2, 2.0, 2.6, 3.1, 2.4, 1.9]
+    with kit.unified(tmp_path):
+        def value_leg(eta, origin=2026):
+            return sum(vf.season_value_usd(w, origin + eta + t) * vf.season_discount(origin + eta + t)
+                       for t, w in enumerate(wars))
+        for eta in (0.0, 0.5, 1.0, 3.0):
+            assert value_leg(eta + 1.0) == pytest.approx(value_leg(eta) / 1.07, rel=1e-12)
+        s_t = int(vf._require_block()["salary_index"]["s_T"])
+        eta0 = float(s_t - 2026 + 1)
+        v0 = vf._service_path_surplus_usd(wars, False, eta0, 2026)
+        v1 = vf._service_path_surplus_usd(wars, False, eta0 + 1.0, 2026)
+        assert v1 == pytest.approx(v0 / 1.07, rel=1e-12)

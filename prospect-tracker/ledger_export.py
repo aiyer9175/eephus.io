@@ -926,6 +926,11 @@ def npv_of_strip(sur_mm, rate: float) -> int:
         if s is None:
             continue
         total += float(s) * 1e6 / ((1.0 + rate) ** t)
+    import value_framework as _vfm
+    if _vfm.dpw_path_active():
+        # VAL_5 row 16: proj_export's unified surNpv carries the base factor
+        # d(B) (1 under OD-3 base_2027), so the identity keeps it too.
+        total *= _vfm.season_discount(CLASS_YEAR)
     return int(round(total))
 
 
@@ -1199,6 +1204,14 @@ def build_all() -> tuple:
 
     # deferrals (curated ledger, platform rate read off the engine)
     rate = float(fa_market._discount_rate())
+    import value_framework as _vfm
+    _dpw_unified = _vfm.dpw_path_active()
+    if _dpw_unified:
+        # VAL_5 row 16: ONE platform rate, the stored nominal R, for the strip
+        # NPV, the surplus-basis copy, accountability.discount_rate AND the
+        # displayed deferral NPVs (deferred money is nominal cash), so every
+        # label prints the rate passed to the computation it labels.
+        rate = float(_vfm.nominal_rate())
     deferral_ledger = fa_market._deferral_ledger()
     deferral_unmatched = sum(1 for dk in deferral_ledger
                              if dk.rsplit(":", 1)[0] not in vets_by_key)
@@ -1398,6 +1411,9 @@ def build_all() -> tuple:
                 n_no_def += 1
                 continue
             npv = fa_market.deferral_npv_usd(entry.get("schedule"), int(entry.get("sticker_usd") or 0))
+            if _dpw_unified:
+                npv = fa_market.deferral_npv_usd(entry.get("schedule"),
+                                                 int(entry.get("sticker_usd") or 0), rate=rate)
             d_sticker += int(entry.get("sticker_usd") or 0)
             d_npv += int(npv["npv_usd"])
             d_players.append([v.get("name"), int(entry.get("sticker_usd") or 0), int(npv["npv_usd"]),

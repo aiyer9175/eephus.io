@@ -333,6 +333,20 @@ def _compute_surplus(career_war: float | None, war_seasons: int | None,
     if aav_usd is None or years_remaining is None or years_remaining <= 0:
         return (None, None)
     rate = max(0.0, min(6.0, float(career_war) / float(war_seasons)))
+    import value_framework as _vfm
+    if _vfm.dpw_path_active():
+        # VAL_5 row 23: season B + i at its own level, net of the AAV, discounted
+        # by d(s) to the base season (the legacy figure is flat and undiscounted).
+        b = _vfm.pricing_base_season()
+        base_age = age if age is not None else 28
+        proj_war = 0.0
+        total = 0.0
+        for i in range(int(years_remaining)):
+            season_war = max(0.0, rate - max(0.0, 0.4 * (base_age + i - 29)))
+            proj_war += season_war
+            total += ((_vfm.season_value_usd(season_war, b + i) - float(aav_usd))
+                      * _vfm.season_discount(b + i))
+        return (round(proj_war, 2), round(total / 1_000_000.0, 1))
     # Aging-curve adjusted future seasons.
     proj_war = 0.0
     season_market_usd = 0.0

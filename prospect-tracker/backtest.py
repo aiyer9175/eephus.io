@@ -639,6 +639,85 @@ def make_synthetic_cohort(*, years: Sequence[int] = (2012, 2013, 2014, 2015, 201
 # =============================================================================
 # Orchestration + report
 # =============================================================================
+# =============================================================================
+# The knots-only calibration entry (VAL_5, docs/dpw-2026-09-25/DPW_PATH_GATE.md 0a)
+# =============================================================================
+# The ONE sanctioned refit path under the $/WAR path registration: it builds the
+# predictions and the realized targets and fits the binned isotonic map, and it
+# computes nothing else. No by_fv_tier table (a realized statistic by
+# consensus-FV cell, which docs/PROSPECT_ANCHOR_GATE.md forbids), no sensitivity
+# table, no PIT, no slope, no bias and no held-out statistic: run_backtest
+# computes all of those, which is why the refit never calls it.
+KNOTS_TARGET_PRICINGS = ("today_flat", "today_path")
+
+
+def _realized_today_path_mm(realized: RealizedRecord, listing_year: int, n: int) -> float:
+    """The today-path-priced target: realized season s of listing L re-dated to
+    N + (s - L) and priced as the engine prices that season today (WAR at the
+    written path's level, the minimum and arbitration by the companion index,
+    discounted by season_discount), inside the control window realized_sv_pv uses.
+    A salary within 5 percent of its season's league minimum is a minimum season
+    (re-dated by the minimum's index); any other salary moves with the
+    arbitration index. That split is an approximation, disclosed."""
+    import salary_path as _sp
+    if realized.debut_year is None or not realized.seasons:
+        return 0.0
+    cum_service = 0.0
+    total = 0.0
+    for s in sorted(realized.seasons, key=lambda s: s.year):
+        if realized.released_year is not None and s.year > realized.released_year:
+            break
+        if cum_service >= _CONTROL_SERVICE_YEARS * _SERVICE_FULL_DAYS:
+            break
+        d = n + (s.year - listing_year)
+        value = s.fwar * vf.price_level(d) / 1e6
+        lm_s = _sp.league_min_usd(s.year) / 1e6
+        if lm_s and s.salary_mm <= 1.05 * lm_s:
+            salary = s.salary_mm * (vf.league_min_for(d, legacy=lm_s * 1e6) / 1e6) / lm_s
+        else:
+            salary = s.salary_mm * vf.arb_index_scale(d)
+        total += (value - salary) * vf.season_discount(d)
+        cum_service += s.service_days
+    return total
+
+
+def fit_calibration_knots(records: Sequence[PlayerRecord], *, target_pricing: str,
+                          n_bins: int = 25) -> dict:
+    """Fit the binned isotonic calibration map ONLY.
+
+    target_pricing "today_flat" is v3's target (every realized season at today's
+    flat $/WAR, discounted at discount_rate from the listing year) against the raw
+    engine prediction at the listing; "today_path" (unified $/WAR path mode only)
+    re-dates each listing to N and prices predictions and targets on the written
+    path, so the map corrects the WAR layer and cannot learn the path away.
+    Returns {n_players, n_bins, target_pricing, fitted_correction} and nothing
+    else."""
+    if target_pricing not in KNOTS_TARGET_PRICINGS:
+        raise ValueError(f"target_pricing must be one of {KNOTS_TARGET_PRICINGS}")
+    recs = [r for r in records if r.listing.pre_debut]
+    if target_pricing == "today_path":
+        if not vf.dpw_path_active():
+            raise ValueError("today_path needs the unified $/WAR path")
+        n = vf.last_realized_winter()
+        pred = [(vf.expected_surplus_usd(r.listing.fv, r.listing.is_pitcher, r.listing.position,
+                                         age=r.listing.age_at_listing, eta_years=r.listing.eta_years,
+                                         eta_origin=n) or 0.0) / 1e6 for r in recs]
+        real = [_realized_today_path_mm(r.realized, r.listing.listing_year, n) for r in recs]
+    else:
+        flat = vf.dollars_per_war_flat()
+        dpw_by_year = {y: {"overall": flat} for y in range(2014, 2035)}
+        disc = float(vf._config()["discount_rate"])
+        pred = [(vf.expected_surplus_usd(r.listing.fv, r.listing.is_pitcher, r.listing.position,
+                                         age=r.listing.age_at_listing,
+                                         eta_years=r.listing.eta_years) or 0.0) / 1e6 for r in recs]
+        real = [realized_sv_pv(r.realized, r.listing.listing_year, discount_rate=disc,
+                               dpw_by_year=dpw_by_year) for r in recs]
+    corr = fit_isotonic_binned(np.asarray(pred, dtype=float), np.asarray(real, dtype=float),
+                               n_bins=n_bins)
+    return {"n_players": len(recs), "n_bins": int(n_bins), "target_pricing": target_pricing,
+            "fitted_correction": corr}
+
+
 def run_backtest(records: Sequence[PlayerRecord], *, discount_rate: float,
                  dpw_by_year: dict, draws: int = 4000, correction_method: str = "isotonic",
                  tiered: bool = False, inflation: float = 0.0) -> dict:

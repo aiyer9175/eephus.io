@@ -1646,6 +1646,9 @@ def build_live_matrix(side: str = "hit"):
                "position": rec.get("position"),
                "age_now": _f(rec.get("age")),
                "eta_years": _f(surplus.get("eta_years")),
+               # VAL_5 (I6): the origin storage stamps beside eta_years, ON only.
+               **({"eta_origin_year": int(surplus["eta_origin_year"])}
+                  if surplus.get("eta_origin_year") is not None else {}),
                "consensus_surplus_mm": _f(surplus.get("value_mm")),
                # current injury signals (for the live injury penalty)
                "il_on": 1 if il.get("is_on_il") else 0,

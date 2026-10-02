@@ -554,6 +554,14 @@ def defensive_floor_mm(position: str | None, def_grade: float | None,
     # discounted per season. It is additive on top of the mixture-priced posterior
     # and is intentionally EXEMPT from the convex per-season kernel (there is no
     # volatile WAR distribution to transform-first here). Left as-is by design.
+    if vf.dpw_path_active() and vf.dpw_option("trade_machine") == "align":
+        # VAL_5 row 21, OD-5 align: the 1-to-2 tier rate at each season's own
+        # level, s = N + yr, discounted by d(s) to the base season.
+        n = vf.last_realized_winter()
+        flat = float(vf._config()["dollars_per_war"]["flat"])
+        pv = sum(grade_scale * base_war * dpw * vf.price_level(n + yr) / flat
+                 * vf.season_discount(n + yr) for yr in range(1, yrs + 1))
+        return round(pv, 2)
     pv = sum(
         grade_scale * base_war * dpw / (1.0 + rate) ** yr
         for yr in range(1, yrs + 1)
@@ -1665,6 +1673,15 @@ def _gross_war_pv(true_talent_war: float, remaining_years: float,
     """
     if remaining_years <= 0 or not true_talent_war:
         return 0.0
+    if vf.dpw_path_active() and vf.dpw_option("trade_machine") == "align":
+        # VAL_5 row 20, OD-5 align: season s = N + yr_offset at its own level,
+        # discounted by d(s) (yr_offset 1 is season B, undiscounted).
+        n = vf.last_realized_winter()
+        tot = 0.0
+        for yr_offset in range(1, int(remaining_years) + 1):
+            war = max(0.0, true_talent_war * _aging_factor(age, yr_offset, is_pitcher, position))
+            tot += vf.season_value_usd(war, n + yr_offset) / 1e6 * vf.season_discount(n + yr_offset)
+        return round(tot, 1)
     discount  = 0.09
     inflation = 0.05
     total = 0.0
@@ -1701,6 +1718,17 @@ def _contract_surplus_mm(player: dict, true_talent_war: float,
     today_year   = date.today().year
     discount     = 0.09
     inflation    = 0.05
+    # VAL_5 (I6, row 20). In unified $/WAR path mode the loop's season is
+    # N + yr_offset under BOTH OD-5 answers (a clock fix: from January until
+    # FIRST_SEASON rolls the calendar year skips season B's salary and option
+    # rows). Under align the rates and the PV date move too: each season at its
+    # own level, discounted at R to the base season; keep retains the 0.09 and
+    # 0.05 literals with yr_offset 1 discounted once.
+    _dpw_unified = vf.dpw_path_active()
+    _dpw_align = _dpw_unified and vf.dpw_option("trade_machine") == "align"
+    _loop_origin = vf.last_realized_winter() if _dpw_unified else today_year
+    if _dpw_align:
+        discount = vf.nominal_rate()
 
     roster      = player.get("roster_status") or {}
     debut       = roster.get("mlb_debut_date") or ""
@@ -1720,7 +1748,7 @@ def _contract_surplus_mm(player: dict, true_talent_war: float,
 
     total = 0.0
     for yr_offset in range(1, int(remaining_years) + 1):
-        year = today_year + yr_offset
+        year = _loop_origin + yr_offset
 
         # Projected WAR with aging curve
         af  = _aging_factor(age_now, yr_offset, is_pitcher, player.get("position"))
@@ -1729,6 +1757,8 @@ def _contract_surplus_mm(player: dict, true_talent_war: float,
         # Market value (with $/WAR inflation)
         raw_mv = tiered_war_value_usd(war) / 1e6
         mv     = raw_mv * (1.0 + inflation) ** yr_offset
+        if _dpw_align:
+            mv = vf.season_value_usd(war, year) / 1e6
 
         # Salary: known if non-zero in Spotrac data, else estimated
         sal_raw = salary_by_yr.get(str(year))
@@ -1798,6 +1828,9 @@ def _contract_surplus_mm(player: dict, true_talent_war: float,
         total += annual_surplus * p_still_here / (1.0 + discount) ** yr_offset
 
     # Allow negative totals: underwater contracts are real trade liabilities.
+    if _dpw_align:
+        # (1 + R)^-yr_offset x (1 + R) = d(N + yr_offset) under base B.
+        total *= (1.0 + discount) * vf.season_discount(_loop_origin + 1)
     return round(total, 1)
 
 
@@ -2619,7 +2652,8 @@ def archetype_policy_adjustment(
         else:
             _tag("young_elite_stuff_pitcher")
             pct = float(yesp.get("posterior_floor_prior_pct", 0.65))
-            starter_prior = surplus_value_mm(fv_v, True, "SP", age=age_v, eta_years=0.0) or prior_surplus_mm
+            starter_prior = surplus_value_mm(fv_v, True, "SP", age=age_v, eta_years=0.0,
+                                             eta_origin=date.today().year) or prior_surplus_mm
             out["posterior_floor_mm"] = max(
                 float(out["posterior_floor_mm"]),
                 float(starter_prior) * pct,
@@ -3314,7 +3348,8 @@ def bayesian_trade_value(
         _games_d    = float(_first_d.get("games") or 0) if war_seasons <= 1 else 80
         BLEND_GAMES = 80.0   # fully on contract surplus after 80 MLB games in first season
         if war_seasons == 1 and _games_d < BLEND_GAMES and fv is not None:
-            _fv_surplus   = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta) or 0.0
+            _fv_surplus   = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta,
+                                             eta_origin=date.today().year) or 0.0
             _blend_weight = _games_d / BLEND_GAMES          # 0 = pure FV; 1 = pure contract
             posterior_surplus_mm = (1.0 - _blend_weight) * _fv_surplus + _blend_weight * contract_surplus
         else:
@@ -3328,7 +3363,8 @@ def bayesian_trade_value(
             and fv >= 52.0
             and _has_top100_pedigree(player)
         ):
-            _fv_surplus = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta) or posterior_surplus_mm
+            _fv_surplus = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta,
+                                           eta_origin=date.today().year) or posterior_surplus_mm
             if fv >= 65.0:
                 _early_debut_floor = max(_fv_surplus * 1.05, 140.0)
             elif fv >= 62.0:
@@ -3454,7 +3490,8 @@ def bayesian_trade_value(
         fv_effective = round(fv or 35.0, 1)
 
         # § PRIOR: prospect FV-based surplus (on the published FV, un-shifted)
-        prior_surplus_mm = surplus_value_mm(fv_effective, is_pitcher, position, age=age, eta_years=eta) or 0.0
+        prior_surplus_mm = surplus_value_mm(fv_effective, is_pitcher, position, age=age, eta_years=eta,
+                                            eta_origin=date.today().year) or 0.0
         inputs_available.append("fv")
 
         # § PRIOR PRECISION: scale by pedigree + age-for-level + source count
@@ -3498,7 +3535,8 @@ def bayesian_trade_value(
             roll_label           = "prior_only"
 
         if age is not None and (fv or 0.0) >= 50.0 and age <= 24.0:
-            raw_prior = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta) or prior_surplus_mm
+            raw_prior = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta,
+                                         eta_origin=date.today().year) or prior_surplus_mm
             floor_mult = 1.30 if (fv or 0.0) < 55.0 else 1.12
             prospect_floor = round(raw_prior * floor_mult, 1)
             if posterior_surplus_mm < prospect_floor:
@@ -3511,7 +3549,8 @@ def bayesian_trade_value(
             and (fv or 0.0) >= 52.0
             and _has_top100_pedigree(player)
         ):
-            raw_prior = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta) or prior_surplus_mm
+            raw_prior = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta,
+                                         eta_origin=date.today().year) or prior_surplus_mm
             top100_floor = max(raw_prior * 1.65, 55.0 if (fv or 0.0) >= 54.0 else 48.0)
             if posterior_surplus_mm < top100_floor:
                 posterior_surplus_mm = round(top100_floor, 1)
@@ -3539,7 +3578,8 @@ def bayesian_trade_value(
             and (fv or 0.0) >= 50.0
             and not older_nonimpact_suppressed
         ):
-            raw_prior = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta) or prior_surplus_mm
+            raw_prior = surplus_value_mm(fv, is_pitcher, position, age=age, eta_years=eta,
+                                         eta_origin=date.today().year) or prior_surplus_mm
             fv_v = float(fv or 0.0)
             if fv_v >= 55.0:
                 rarity_floor = max(raw_prior * 1.35, 60.0)
@@ -4478,6 +4518,7 @@ def _projection_band_mm(v: dict | None, dpw: float | None, disc: float,
         mid = season_value(float(war[t]), t, dpw)
         d_lo += (mid - season_value(float(p10[t]), t, dpw)) / ((1.0 + disc) ** t)
         d_hi += (season_value(float(p90[t]), t, dpw) - mid) / ((1.0 + disc) ** t)
+    _dpw_u = vf.dpw_path_active()
     # THE CONTRACT TAIL'S RANGE (owner answer VAL2-Q3, 2026-09-30). The point
     # value prices every guaranteed season past the five printed ones on
     # warTail, so the range now does too, on that season's own P10/P90
@@ -4512,6 +4553,16 @@ def _projection_band_mm(v: dict | None, dpw: float | None, disc: float,
     # here is war[0], exactly what the priced leg used.
     ros_frac, ros_war = _safe_float(v.get("rosFrac")), _safe_float(v.get("rosWar"))
     ros_w0 = _safe_float(war[0]) if war else None
+    if _dpw_u:
+        # VAL_5 row 30 (not governed by OD-5): the projected seasons sit at d(B)
+        # on R (the caller passes R), and the rest-of-season leg follows row 9,
+        # season N at its own level compounded to B, as proj_export prices it.
+        _d0 = vf.season_discount(vf.pricing_base_season())
+        d_lo, d_hi = d_lo * _d0, d_hi * _d0
+        _n_now = vf.last_realized_winter()
+
+        def season_value(w, t, dpw):                      # noqa: F811
+            return vf.season_value_usd(w, _n_now) * vf.season_discount(_n_now)
     if ros_frac and ros_war is not None and ros_w0 is not None and p10 and p90:
         mid = season_value(ros_w0, 0, dpw)
         d_lo += ros_frac * (mid - season_value(float(p10[0]), 0, dpw))
@@ -4798,6 +4849,17 @@ def _prearb_priced(data_dir) -> dict:
         return {}
     first = int(first)
     lm = _league_min_usd_fn()
+    _dpw_u = vf.dpw_path_active()
+    if _dpw_u:
+        # VAL_5 row 31 (not governed by OD-5): R, the season's own minimum
+        # (league_min_for), d(B), and row 9's rule for the rest-of-season leg,
+        # so the R5.1 NPV reproduces proj_export's surNpv on the same WAR path.
+        disc = vf.nominal_rate()
+        _lm_legacy = lm
+
+        def lm(s):                                        # noqa: F811
+            return vf.league_min_for(s, legacy=_lm_legacy(s))
+        _d0 = vf.season_discount(first)
     floor = _career_floor_season(det)
     phases = _service_phase_index(dd)
 
@@ -4852,10 +4914,15 @@ def _prearb_priced(data_dir) -> dict:
         if now_prearb and ros_frac > 0.0 and w0 is not None:
             ros_war = w0 * ros_frac                   # PUBLISHED (display) WAR
             ros_d = ros_frac * (season_value(w0, 0, dpw) - lm(first - 1))
+            if _dpw_u:
+                ros_d = ros_frac * (vf.season_value_usd(w0, first - 1) - lm(first - 1)) \
+                    * vf.season_discount(first - 1)
             shadow["surRos"] = round(ros_d / 1e6, 1)
             shadow["rosWar"] = round(ros_war, 2)
             shadow["rosFrac"] = round(ros_frac, 3)
             meta["rest_of_season_priced"] = True
+        if _dpw_u:
+            npv *= _d0
         if n_priced:
             shadow["sur"] = sur
             shadow["surNpv"] = int(npv)
@@ -4970,6 +5037,8 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         _disc = float(vf._config()["discount_rate"])
     except (KeyError, TypeError, ValueError):
         _disc = 0.07
+    if vf.dpw_path_active():
+        _disc = vf.nominal_rate()                 # VAL_5 row 30: the band at R
 
     roster = _roster_seasons_index(dd)                       # pk -> (last_mlb_season, n_seasons)
     current_season = max((ls for ls, _ in roster.values()), default=None)

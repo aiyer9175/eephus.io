@@ -271,6 +271,19 @@ def expected_tier_value_usd(point_path, p10_path, p90_path, years: int,
     docs/fa-2026-09-06/QUAD_CONVERGENCE.md so it is one decision and not two."""
     from value_framework import _config as _vf_config
     from value_framework import tiered_war_value_usd
+    import value_framework as _vfm
+    if _vfm.dpw_path_active():
+        # VAL_5 row 11: each season at its own level, discounted to the class
+        # year at R; dpw_usd and the escalator enter only before the U1b stage.
+        tot = 0.0
+        nq = len(taus)
+        for t in range(max(1, int(years))):
+            pt = float(point_path[t]) if t < len(point_path) else 0.0
+            lo = float(p10_path[t]) if p10_path and t < len(p10_path) else pt
+            hi = float(p90_path[t]) if p90_path and t < len(p90_path) else pt
+            acc = sum(tiered_war_value_usd(two_piece_quantile(pt, lo, hi, u)) for u in taus)
+            tot += (acc / nq) * _vfm.fa_season_factor(class_year, t, infl, dpw_usd)
+        return int(tot)
     level = dpw_usd / float(_vf_config()["dollars_per_war"]["flat"])
     total = 0.0
     n = len(taus)
@@ -293,6 +306,16 @@ def jensen_gap_usd(point_path, p10_path, p90_path, years: int,
     """The correction, itemized: value-of-the-mean vs mean-of-the-value."""
     from value_framework import _config as _vf_config
     from value_framework import tiered_war_value_usd
+    import value_framework as _vfm
+    if _vfm.dpw_path_active():
+        naive = sum(tiered_war_value_usd(float(point_path[t]) if t < len(point_path) else 0.0)
+                    * _vfm.fa_season_factor(class_year, t, infl, dpw_usd)
+                    for t in range(max(1, int(years))))
+        exact = expected_tier_value_usd(point_path, p10_path, p90_path, years,
+                                        class_year, dpw_usd, infl, discount)
+        return {"value_of_mean_usd": int(naive), "mean_of_value_usd": exact,
+                "gap_usd": int(exact - naive),
+                "gap_pct": (100.0 * (exact - naive) / naive) if naive else None}
     level = dpw_usd / float(_vf_config()["dollars_per_war"]["flat"])
     naive = 0.0
     for t in range(max(1, int(years))):

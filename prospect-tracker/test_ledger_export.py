@@ -2230,3 +2230,66 @@ def test_the_later_seasons_rule_on_a_small_contract():
     S = LE.later_options_summary({"KCR": rows, "NYM": []}, 1)
     assert S == {"n_rows": 3, "n_contracts": 1, "n_clubs": 1, "by_type": {"club_option": 2, "player_option": 1},
                  "n_price_on_file": 1, "n_at_or_before_class_year": 1}
+
+
+
+# ---------------------------------------------------------------------------
+# VAL_5, the unified $/WAR path (DESIGN_v2 rows 16 and 18), SYNTHETIC series
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("base", ["base_2027", "base_2026"])
+def test_unified_strip_identity_at_the_strip_rate(tmp_path, base):
+    """npv_of_strip(sur, strip_rate) reproduces the unified surNpv rule:
+    d(B) x sum d_t / (1 + R)^t, at the one platform rate R."""
+    import dpw_testkit as kit
+    import value_framework as vf
+    from ledger_export import npv_of_strip
+    sur = [12.3, 8.1, None, -2.4, 5.0]
+    with kit.unified(tmp_path, options={"base_season": base}):
+        r = vf.nominal_rate()
+        want = vf.season_discount(vf.pricing_base_season()) * sum(
+            s * 1e6 / (1 + r) ** t for t, s in enumerate(sur) if s is not None)
+        assert npv_of_strip(sur, r) == int(round(want))
+    assert npv_of_strip(sur, 0.07) == int(round(sum(
+        s * 1e6 / 1.07 ** t for t, s in enumerate(sur) if s is not None)))
+
+
+def test_each_rate_label_prints_the_rate_its_computation_used():
+    """One platform rate: the strip NPV, the deferral NPVs, their labels, the
+    surplus-basis copy and accountability.discount_rate all read the one
+    variable `rate`, which unified mode sets to the stored nominal R and passes
+    to deferral_npv_usd(rate=) (legacy mode: deferral_npv_usd's own default,
+    which is the same _discount_rate())."""
+    import inspect
+    import fa_market
+    import ledger_export
+    src = inspect.getsource(ledger_export.build_all)
+    assert "rate = float(fa_market._discount_rate())" in src
+    assert "rate = float(_vfm.nominal_rate())" in src
+    assert "rate=rate)" in src
+    assert "npv_of_strip(strip, rate)" in src
+    body = inspect.getsource(ledger_export)
+    assert '"deferral_rate_label": f"NPV at the platform {_pct_str(rate)} rate"' in body
+    assert '"discount_rate": rate,' in body
+    sched = [{"year_offset": t, "amount_usd": 10e6} for t in (0, 1, 10)]
+    a = fa_market.deferral_npv_usd(sched, 30_000_000)
+    b = fa_market.deferral_npv_usd(sched, 30_000_000, rate=fa_market._discount_rate())
+    c = fa_market.deferral_npv_usd(sched, 30_000_000, rate=0.113763)
+    assert a == b and c["npv_usd"] < a["npv_usd"]
+
+
+def test_unified_salary_index_lives_inside_the_priced_surplus_only(tmp_path):
+    """sur = value - salPath x idx; the published salary path stays unscaled."""
+    import dpw_testkit as kit
+    import proj_export
+    seasons = [{"t": 0, "season": 2027, "usd": 780_000.0, "src": "minimum"},
+               {"t": 1, "season": 2028, "usd": 4_000_000.0, "src": "arb", "cls": "arb1"},
+               {"t": 2, "season": 2029, "usd": 9_000_000.0, "src": "contract"}]
+    war = [2.0, 2.5, 3.0]
+    with kit.unified(tmp_path, companion_mode="own_trends"):
+        d_usd, sur = proj_export._unified_path_surplus(seasons, war, 17e6)
+        for c, d in zip(seasons, d_usd):
+            idx = proj_export._unified_salary_index(c)
+            want = proj_export._season_value_usd(war[c["t"]], c["t"], 17e6) - c["usd"] * idx
+            assert d == pytest.approx(want, rel=1e-12)
+        assert proj_export._unified_salary_index(seasons[2]) == 1.0
+    assert [c["usd"] for c in seasons] == [780_000.0, 4_000_000.0, 9_000_000.0]

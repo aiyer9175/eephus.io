@@ -7370,6 +7370,7 @@ from value_framework import (
     realized_consumed_seasons as _realized_consumed_seasons,
     active_valuation_set as _active_valuation_set,
     star_odds as _star_odds,
+    dpw_path_active as _vf_dpw_path_active,
     published_star_odds as _published_star_odds,
     published_opt_pct as _published_opt_pct,
     _BUCKETS as _SV_BUCKET_ORDER,
@@ -7408,7 +7409,7 @@ def _eta_years_from(eta, today_year):
 
 
 def _build_surplus_payload(fv, is_pitcher, position, *, age=None, eta_years=None,
-                           fv_dispersion=None, n_sources=None):
+                           fv_dispersion=None, n_sources=None, eta_origin=None):
     """Bake value_framework's per-prospect engine outputs into the export so the
     frontend renders the SAME numbers the engine computes -- not a timing-naive
     client-side curve lookup:
@@ -7421,7 +7422,13 @@ def _build_surplus_payload(fv, is_pitcher, position, *, age=None, eta_years=None
     numerical hiccup degrades to the bare point value rather than sinking the export."""
     if fv is None:
         return None
-    point = _estimate_surplus_mm(fv, is_pitcher, position, age=age, eta_years=eta_years)
+    # VAL_5 (I6): eta_years is measured from the calendar year; the engine is told
+    # so, and prices the season from it in unified $/WAR path mode. eta_years,
+    # the odds placement and debut_age are unchanged in both modes.
+    if eta_origin is None:
+        eta_origin = date.today().year
+    point = _estimate_surplus_mm(fv, is_pitcher, position, age=age, eta_years=eta_years,
+                                 eta_origin=eta_origin)
     if point is None:
         return None
     # Store the is_pitcher the value was actually baked with, so the K rollup
@@ -7445,7 +7452,8 @@ def _build_surplus_payload(fv, is_pitcher, position, *, age=None, eta_years=None
         _so_pub = _published_star_odds(fv, is_pitcher)
         if _so_pub is not None:
             out["star_odds"] = round(float(_so_pub), 4)
-        _so_model = _star_odds(fv, is_pitcher, position, age=age, eta_years=eta_years)
+        _so_model = _star_odds(fv, is_pitcher, position, age=age, eta_years=eta_years,
+                               eta_origin=eta_origin)
         if _so_model is not None:
             out["star_odds_model"] = round(float(_so_model), 4)
     except Exception:
@@ -7461,6 +7469,9 @@ def _build_surplus_payload(fv, is_pitcher, position, *, age=None, eta_years=None
         pass
     if eta_years is not None:
         out["eta_years"] = round(float(eta_years), 2)
+        if _vf_dpw_path_active():
+            # VAL_5 (I6): the origin beside eta_years, ON only (absent OFF).
+            out["eta_origin_year"] = int(eta_origin)
     # Outcome-bucket probabilities P(bucket|FV) over the five career buckets
     # (bust/bench/regular/good/star) -- the prior shown as the stacked bar for a
     # prospect (debuted players override this with the Bayes posterior).
@@ -7473,13 +7484,14 @@ def _build_surplus_payload(fv, is_pitcher, position, *, age=None, eta_years=None
         pass
     try:
         ci = _sv_credible_interval(fv, is_pitcher, position, age=age,
-                                   eta_years=eta_years, draws=_SURPLUS_CI_DRAWS)
+                                   eta_years=eta_years, draws=_SURPLUS_CI_DRAWS,
+                                   eta_origin=eta_origin)
         if ci and ci.get("point_mm") is not None:
             out["ci"] = {"lo_mm": ci["lo_mm"], "median_mm": ci["median_mm"],
                          "hi_mm": ci["hi_mm"], "cred": ci["cred"], "regime": ci.get("regime")}
         dist = _sv_distribution(fv, is_pitcher, position, age=age, eta_years=eta_years,
                                 fv_dispersion=fv_dispersion, n_sources=n_sources,
-                                draws=_SURPLUS_DIST_DRAWS)
+                                draws=_SURPLUS_DIST_DRAWS, eta_origin=eta_origin)
         if dist:
             pcts = dist.get("percentiles", {})
             # Carry the FULL percentile set the engine emits (p10/p25/p50/p75/p90
@@ -13114,7 +13126,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # (currently never-firing) fallback stays on the same basis.
         _surplus_mm = _xsurplus(p.player_key, _estimate_surplus_mm(
             fv_raw, is_pitcher_p, p.position,
-            age=age, eta_years=PROSPECT_ETA_FALLBACK_YEARS))
+            age=age, eta_years=PROSPECT_ETA_FALLBACK_YEARS, eta_origin=date.today().year))
         if _surplus_mm is not None:
             _bonus_mm = (float(acq_rec.get("bonus_usd") or 0) / 1_000_000.0)
             _net_mm = _surplus_mm - _bonus_mm

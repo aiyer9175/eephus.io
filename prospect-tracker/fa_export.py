@@ -633,6 +633,27 @@ def _contract_orgs() -> dict[str, str]:
 
 
 def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
+    """The /fa/ class payload. In unified $/WAR path mode (VAL_5, rows 11 and 24)
+    it carries the written path by season and its band, the level of the class
+    season P(c) and the pricing basis; the escalator stamp goes (rational value
+    no longer reads it). OFF it is the legacy payload byte for byte."""
+    payload = _build_fa_class_payload_body(class_year)
+    import value_framework as _vfm
+    if _vfm.dpw_path_active():
+        summ = _vfm.dpw_path_summary()
+        seasons = range(int(class_year), int(class_year) + fm.MAX_PATH_YEARS)
+        payload["dpw_usd"] = int(round(_vfm.price_level(int(class_year))))
+        payload.pop("dpw_infl", None)
+        payload["dpw_path_by_season"] = {str(s): int(round(_vfm.price_level(s))) for s in seasons}
+        band = summ.get("band") or {}
+        payload["dpw_path_band"] = {k: {s: v for s, v in (band.get(k) or {}).items()
+                                        if int(s) in seasons} for k in ("p10", "p90")}
+        payload["pricing_basis"] = {k: summ[k] for k in ("basis_id", "method", "base_season",
+                                                         "nominal_rate", "g_ref", "level_basis")}
+    return payload
+
+
+def _build_fa_class_payload_body(class_year: int = CLASS_YEAR) -> dict:
     corpus = fp.build_corpus()
     league = corpus["league"]
     curves, war_map = fp.fitted_models(corpus, class_year - 1)
@@ -829,6 +850,17 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     rational = fm.expected_rational_value_usd(
                         path, yrs, class_year, dpw, infl=destale)
                     deal_plus = round(100 * rational / max(guar, 1))
+                    import value_framework as _vfm
+                    if _vfm.dpw_path_active() and _vfm.dpw_stage("U2") \
+                            and _vfm.dpw_option("level_basis") == "round_trip":
+                        # VAL_5 row 13: under the round-trip level the price is
+                        # the predicted guarantee's cash in PV at R (level over
+                        # the predicted years); the verdict edges are re-cut in
+                        # the flip commit under M14-2's procedure.
+                        _R = _vfm.nominal_rate()
+                        _ny = max(1, int(round(float(yrs))))
+                        _pv = sum((guar / _ny) / ((1.0 + _R) ** t) for t in range(_ny))
+                        deal_plus = round(100 * rational / max(_pv, 1))
                     # Probability buckets: floor/ceiling WAR paths (Gate-1
                     # empirical quantiles decayed along the aging curves),
                     # priced as paths. This is the surplus range for a

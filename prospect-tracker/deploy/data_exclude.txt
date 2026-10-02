@@ -16,6 +16,9 @@
 # E0 label-arm matrix was retracted on 2026-09-24, and the MLB Trade
 # Rumors arbitration ledger (arb_ledger.json) on 2026-10-01. Label-shaped names
 # at depth one are pinned by test_publish_manifest.py.
+# VAL_5: the owner's verbatim answers to the projected $/WAR path questions.
+# No page reads it; the gate block that ships carries option codes only.
+dpw_path_owner.json
 xfv_hitter_matrix.json
 xfv_pitcher_matrix.json
 xfv_live_hitter_matrix.json

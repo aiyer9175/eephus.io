@@ -780,7 +780,7 @@
     banner.innerHTML = `<div class="fa-note fa-sources">
       ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${DATA.n_vets} veterans (proj_lgbm_v1 on the <span data-gl="fa_projection_engine">FA projection engine</span>; /fa/ prices on its Marcel champion)
       &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
-      &middot; priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons"}
+      &middot; priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.pricing_basis ? `, each season at its own level on the one written path (escalator ${(DATA.pricing_basis.g_ref * 100).toFixed(2)}%/yr, discounted at ${(DATA.pricing_basis.nominal_rate * 100).toFixed(2)}%)` : (DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons")}
       &middot; WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window, unsigned seasons through ${first + (DATA.horizon || 5) - 1} at most and a longer guarantee through its last season on the champion aging curve chained from the ${first + (DATA.horizon || 5) - 1} WAR
       &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
     const gfxBtn = document.getElementById("proj-board-gfx");

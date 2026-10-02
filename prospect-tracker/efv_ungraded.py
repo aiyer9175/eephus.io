@@ -731,8 +731,11 @@ def build(persist: bool = True) -> dict:
                 # exposure as 0 crushed real prospects to org-filler grades.
                 if statline is not None and _expo < (_MIN_EXPO_BF if is_pit else _MIN_EXPO_PA):
                     grade = min(grade, _SUBFLOOR_GRADE)
-                surplus = vf.expected_surplus_usd(grade, is_pit, pos, age=age, eta_years=eta)
-                dist = vf.sv_distribution(grade, is_pit, pos, age=age, eta_years=eta) or {}
+                _eo = date.today().year           # VAL_5 (I6): eta counts from today
+                surplus = vf.expected_surplus_usd(grade, is_pit, pos, age=age, eta_years=eta,
+                                                  eta_origin=_eo)
+                dist = vf.sv_distribution(grade, is_pit, pos, age=age, eta_years=eta,
+                                          eta_origin=_eo) or {}
                 pcts = dist.get("percentiles") or {}
                 probs = vf.p_bucket_given_fv(grade, is_pit) or []
                 # THIN-SAMPLE CONDITIONAL (see the block above _LEVEL_ETA). The head

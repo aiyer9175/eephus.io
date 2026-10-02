@@ -1573,14 +1573,32 @@ def realwar_residual(proj: dict, side: str, war_map: dict) -> tuple[float, float
     return rate * (den / (den + REALWAR_K[side])), den
 
 
+P20_SEASON = 2020
+P20_FACTOR = 162.0 / 60.0
+
+
+def _p20_scale(exposure: float, season: int) -> float:
+    """Correction P20: a 2020 playing-time exposure scaled to a 162-game season."""
+    return exposure * P20_FACTOR if int(season) == P20_SEASON else exposure
+
+
 def project_player(history: list[dict], side: str, target_season: int,
                    curves: dict, league: dict, age: int | None,
                    role: str | None = None,
-                   in_progress: tuple[int, float] | None = None) -> dict | None:
+                   in_progress: tuple[int, float] | None = None,
+                   p20: bool = False) -> dict | None:
     """Project one player's ``target_season`` from up to three prior
     seasons (the rows must be corpus-shaped). Returns the component dict +
     assembled composites (wRC+/FIP) + playing time — WAR attaches later
-    via the fitted map. None when no usable history exists."""
+    via the fitted map. None when no usable history exists.
+
+    ``p20`` is correction P20 of docs/dpw-2026-09-25/DPW_PATH_GATE.md
+    section 1.1, OFF by default everywhere: inside the playing-time formula
+    ONLY, every exposure read from the 60-game 2020 season (the hitter terms
+    e1, e2, e3 and the pitcher terms ip1, ip2, ip3, including their use in the
+    bounce term) is multiplied by 162/60. Rates, their exposure weights, the
+    aging curves, the WAR map and every other season are unchanged. Only the
+    $/WAR path writer's enrichment sets it."""
     cfg = _pcfg()
     weights = _marcel_weights()
     expo_key = "pa" if side == "hit" else "bf"
@@ -1644,6 +1662,9 @@ def project_player(history: list[dict], side: str, target_season: int,
     pt_cfg = cfg["playing_time"]["hit" if side == "hit" else "pit"]
     e1 = next((_pt_expo(h, expo_key) for h in hist if h["season"] == target_season - 1), 0)
     e2 = next((_pt_expo(h, expo_key) for h in hist if h["season"] == target_season - 2), 0)
+    if p20:
+        e1 = _p20_scale(e1, target_season - 1)
+        e2 = _p20_scale(e2, target_season - 2)
     _ptmode = _pt_fit_mode()
 
     def _bounce(vals: list[float]) -> float:
@@ -1655,6 +1676,8 @@ def project_player(history: list[dict], side: str, target_season: int,
         if _ptmode in ("hit", "both"):
             e3 = next((_pt_expo(h, expo_key) for h in hist
                        if h["season"] == target_season - 3), 0)
+            if p20:
+                e3 = _p20_scale(e3, target_season - 3)
             b = PT_FIT_COEF["hit"]
             pt = b[0] + b[1] * e1 + b[2] * e2 + b[3] * _bounce([e1, e2, e3])
         else:
@@ -1663,9 +1686,14 @@ def project_player(history: list[dict], side: str, target_season: int,
         base_ip = pt_cfg["base_ip_sp"] if role == "SP" else pt_cfg["base_ip_rp"]
         ip1 = next((_pt_expo(h, "ip") for h in hist if h["season"] == target_season - 1), 0)
         ip2 = next((_pt_expo(h, "ip") for h in hist if h["season"] == target_season - 2), 0)
+        if p20:
+            ip1 = _p20_scale(ip1, target_season - 1)
+            ip2 = _p20_scale(ip2, target_season - 2)
         if _ptmode == "both":
             ip3 = next((_pt_expo(h, "ip") for h in hist
                         if h["season"] == target_season - 3), 0)
+            if p20:
+                ip3 = _p20_scale(ip3, target_season - 3)
             b = PT_FIT_COEF["pit_SP" if role == "SP" else "pit_RP"]
             ip = b[0] + b[1] * ip1 + b[2] * ip2 + b[3] * _bounce([ip1, ip2, ip3])
         else:

@@ -789,3 +789,16 @@ def test_an_exact_zero_is_always_a_clamped_value(monkeypatch):
     cross = vf.calibration_zero_cross_mm()
     assert vf.apply_calibration(cross * 0.5) == 0.0
     assert vf.apply_calibration(cross * 1.5) > 0.0
+
+
+
+def test_on_twin_pv_monotone_decreasing_in_eta(tmp_path) -> None:
+    """VAL_5 ON twin of test_pv_monotone_decreasing_in_eta: in unified $/WAR path
+    mode (SYNTHETIC series) more years to debut still means a lower PV."""
+    import dpw_testkit as kit
+    with kit.unified(tmp_path):
+        vals = [vf.surplus_value_mm(55, False, "SS", age=22, eta_years=e, eta_origin=2026)
+                for e in (0, 1, 2, 3, 4)]
+    for i in range(len(vals) - 1):
+        assert vals[i + 1] <= vals[i] + 1e-9, f"PV rose with ETA: {vals}"
+    assert vals[-1] < vals[0]

@@ -351,3 +351,16 @@ def test_stamped_artifacts_match_the_live_config():
     if stale:
         pytest.xfail(f"artifacts built on a superseded calibration (regen owed): "
                      f"{stale} vs live {live}")
+
+
+
+def test_the_pricing_basis_is_stamped_only_while_the_path_serves(tmp_path):
+    """VAL_5 (DESIGN_v2 section 6 item 6): calibration_stamp() gains
+    pricing_basis_id ONLY in unified mode, so OFF artifacts stay byte-identical."""
+    import dpw_testkit as kit
+    off = vf.calibration_stamp()
+    assert "pricing_basis_id" not in off
+    with kit.unified(tmp_path, basis_id="synthetic00042"):
+        on = vf.calibration_stamp()
+    assert on["pricing_basis_id"] == "synthetic00042"
+    assert {k: v for k, v in on.items() if k != "pricing_basis_id"}.keys() == off.keys()

@@ -253,6 +253,27 @@ def tier_table(set_id: str, role: str) -> dict[str, dict]:
 # value_framework._apply_valuation_overlay for NON-default sets only (the default
 # set's params are documentation; the base config stays authoritative).
 # =============================================================================
+def discount_form_literal(set_id: str) -> str:
+    """The set's literal discount.form string (clemens_2026: net_7_flat). Read-only."""
+    disc = (load(set_id).get("params") or {}).get("discount")
+    if not disc:
+        raise ValuationSetError(f"{set_id}: no discount block")
+    return str(disc.get("form", "net_flat"))
+
+
+def discount_form(set_id: str) -> str:
+    """The set's discount FORM for the unified $/WAR path (VAL_5, I7): the literal
+    strings net_7_flat and net_flat both map to net_flat, rate_minus_growth is
+    returned as is, and any other string raises. Read-only: the resolved config
+    dict is not changed."""
+    form = discount_form_literal(set_id)
+    if form in ("net_7_flat", "net_flat"):
+        return "net_flat"
+    if form == "rate_minus_growth":
+        return form
+    raise ValuationSetError(f"{set_id}: unknown discount.form '{form}'")
+
+
 def engine_params(set_id: str) -> dict:
     """Partial value_framework config overlay for the set's ``params`` block.
     Returns {} when the set carries no params. Units: musd -> usd here."""

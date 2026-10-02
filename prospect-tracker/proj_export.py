@@ -623,7 +623,11 @@ def _resolve_contracts(mlbams, names: dict[int, str], contracts: dict[str, dict]
 
 def _season_value_usd(war: float, t: int, dpw_level: float) -> float:
     """One projected season priced on the platform's convex tier curve at
-    the winter's ex-ante $/WAR level, escalated t seasons out."""
+    the winter's ex-ante $/WAR level, escalated t seasons out. In unified
+    $/WAR path mode (VAL_5 row 6) season FIRST_SEASON + t at its own level;
+    dpw_level and the escalator are not read."""
+    if vf.dpw_path_active():
+        return vf.season_value_usd(war, FIRST_SEASON + t)
     base_flat = float(vf._config()["dollars_per_war"]["flat"])
     infl = float(vf._config().get("dollars_per_war_inflation", 0.05))
     return vf.tiered_war_value_usd(war) * (dpw_level / base_flat) * ((1 + infl) ** t)
@@ -642,9 +646,107 @@ def _ros_surplus_usd(war_now: float, cur_sal: float, ros_frac: float,
     `war_now` is WHATEVER THE TALENT BASIS PRODUCED (see ROS_TALENT_BASIS): the
     de-aged in-progress-season talent by default, war[0] under "first_season".
     This function does not know or care which; it only prorates.
+
+    Unified $/WAR path mode (VAL_5 row 9): the in-progress season N at its own
+    level, compounded forward to B by d(N) (unclipped).
     """
+    if vf.dpw_path_active():
+        n = FIRST_SEASON - 1
+        return float(ros_frac) * (vf.season_value_usd(float(war_now), n)
+                                  - float(cur_sal)) * vf.season_discount(n)
     return float(ros_frac) * (_season_value_usd(float(war_now), 0, dpw_level)
                               - float(cur_sal))
+
+
+# ============================================================================
+# The projected per-season $/WAR path (VAL_5): the unified branches
+# ============================================================================
+# While value_framework.dpw_path_active() is False every function above runs
+# its legacy branch verbatim. While it is True (the flip, after the fWAR
+# label epoch's step Z): season FIRST_SEASON + t is priced at its own level
+# (row 6), discounted by d(s) at the stored nominal rate R to the base season
+# (rows 7-8, the tender cliff included), the in-progress season compounds
+# forward to B (row 9), and arbitration and minimum seasons carry the companion
+# index inside the priced surplus only, published per season as salIdx beside
+# salPath, which itself stays unscaled (row 18).
+
+def _unified_salary(c: dict) -> float:
+    """The salary a priced season nets in unified mode (row 18): a contracted
+    season its contract dollars; an arbitration season the projected award x
+    the arbitration index; a pre-arbitration season the projected minimum x the
+    minimum's index (league_min_for over the carried table minimum)."""
+    usd = float(c["usd"])
+    if c.get("src") == "contract":
+        return usd
+    s = int(c["season"])
+    if sp.is_cuttable(c):
+        return usd * vf.arb_index_scale(s)
+    carried = float(sp.league_min_usd(s))
+    return usd * (vf.league_min_for(s, legacy=carried) / carried) if carried else usd
+
+
+def _unified_salary_index(c: dict) -> float:
+    if c.get("src") == "contract":
+        return 1.0
+    usd = float(c["usd"])
+    return _unified_salary(c) / usd if usd else 1.0
+
+
+def _unified_path_surplus(seasons, war_px, dpw):
+    """(d_usd, sur) of a salary path in unified mode: V(w, s) - salary x index."""
+    d_usd, sur = [], []
+    for c in seasons:
+        if c["usd"] is None:
+            d_usd.append(None)
+            sur.append(None)
+            continue
+        w = war_px[c["t"]] if c["t"] < len(war_px) else None
+        d = _season_value_usd(w or 0.0, c["t"], dpw) - _unified_salary(c)
+        d_usd.append(d)
+        sur.append(round(d / 1e6, 1))
+    return d_usd, sur
+
+
+def _band_npv_unified(path, war, dpw, r, which: str, run_cliff: bool) -> float:
+    """_band_npv in unified mode: the award band endpoint carries the same index
+    as the point salary, the discount is the stored R and the base factor d(B)."""
+    d = []
+    for c in path["seasons"]:
+        if c["usd"] is None:
+            d.append(None)
+            continue
+        s = c.get(which)
+        s = c["usd"] if s is None else s
+        w = war[c["t"]] if c["t"] < len(war) else None
+        d.append(_season_value_usd(w or 0.0, c["t"], dpw) - float(s) * _unified_salary_index(c))
+    d, _ = sp.club_option_floor(path["seasons"], d)
+    d0 = vf.season_discount(FIRST_SEASON)
+    if run_cliff:
+        cuttable = [sp.is_cuttable(c) and c["usd"] is not None
+                    for c in path["seasons"]]
+        npv, _ = sp.tender_cliff([x or 0.0 for x in d], cuttable, r)
+        return npv * d0
+    return d0 * sum(x / ((1 + r) ** t) for t, x in enumerate(d) if x is not None)
+
+
+def _stamp_dpw_path(payload: dict) -> dict:
+    """Row 10 in unified mode: the stamps name P(B), the path by season and the
+    pricing basis; the escalator stamp goes (unified mode never reads it)."""
+    b = FIRST_SEASON
+    payload["dpw_usd"] = int(round(vf.price_level(b)))
+    payload.pop("dpw_infl", None)
+    payload["dpw_path_by_season"] = {str(s): int(round(vf.price_level(s)))
+                                     for s in range(b, b + HORIZON)}
+    payload["pricing_basis"] = vf.dpw_path_summary()
+    notes = payload.get("notes") or []
+    for i, n in enumerate(notes):
+        if isinstance(n, str) and n.startswith("dollars:"):
+            notes[i] = ("dollars: each season priced on the convex tier curve at its own level on the "
+                        f"one written $/WAR path ({vf.dpw_option('level_basis')} basis, escalator "
+                        f"{vf.g_ref() * 100:.2f}%/yr), discounted at the stored nominal rate "
+                        f"{vf.nominal_rate() * 100:.4f}% to {vf.discount_base_season():.0f}; "
+                        + n.split("; ", 1)[1] if "; " in n else n)
+    return payload
 
 
 def _winter_dpw(first_season: int) -> float:
@@ -668,6 +770,12 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
     frac = fp.season_fraction(league, FIRST_SEASON - 1)
     in_prog = (FIRST_SEASON - 1, frac)
     r = float(vf._config()["discount_rate"])
+    _unified = vf.dpw_path_active()
+    if _unified:
+        # VAL_5 rows 7-8: contracts discount at the stored nominal rate R, and
+        # d(B) is the base factor (1 under OD-3 base_2027).
+        r = vf.nominal_rate()
+        _d0 = vf.season_discount(FIRST_SEASON)
     # REST-OF-SEASON CONTROL (2026-08-03). Fraction of the in-progress season
     # still to be played. season_fraction() returns the ELAPSED share and falls
     # back to 1.0 when the league PA substrate is missing, so a broken estimate
@@ -758,6 +866,8 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             d_usd = v_usd - s_usd
             sur.append(round(d_usd / 1e6, 1))
             npv += d_usd / ((1 + r) ** t)
+        if _unified:
+            npv *= _d0
         if any_sal:
             m["sur"] = sur
             m["surNpv"] = int(npv)
@@ -1248,6 +1358,8 @@ def _band_npv(path, war, dpw, r, which: str, run_cliff: bool) -> float:
     published pair bracket the published `surTotal` rather than a number no
     surface shows.
     """
+    if vf.dpw_path_active():
+        return _band_npv_unified(path, war, dpw, r, which, run_cliff)
     d = []
     for c in path["seasons"]:
         if c["usd"] is None:
@@ -1417,6 +1529,10 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
             d = _season_value_usd(w or 0.0, c["t"], dpw) - c["usd"]
             d_usd.append(d)
             sur.append(round(d / 1e6, 1))
+        _unified = vf.dpw_path_active()
+        if _unified:
+            # VAL_5 row 18: the companion index inside the priced surplus only.
+            d_usd, sur = _unified_path_surplus(seasons, war_px, dpw)
         # THE CLUB'S RIGHT (owner answer VAL2-Q2): a club option season the
         # club would decline prices at zero, never below. Before the tender
         # cliff, so an arbitration season's continuation sees the floored value.
@@ -1436,6 +1552,8 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
         npv = raw_npv
         if mode == "full" and any_priced:
             npv, cut = sp.apply_cliff(path, d_usd, r)
+        if _unified:
+            npv *= vf.season_discount(FIRST_SEASON)
         if cut is not None:
             for t in range(cut, len(sur)):
                 sur[t] = None
@@ -1526,6 +1644,10 @@ def _apply_salary_paths(rows, dpw, r, contracts=None, say=None) -> dict:
         if pl:
             m["salPath"] = pl
             m["salVintage"] = vintage
+            if _unified:
+                # salIdx: the index each salPath season was netted at (row 18).
+                m["salIdx"] = [round(_unified_salary_index(c), 6) for c in seasons
+                               if c["usd"] is not None]
         if path["last_controlled"] is not None:
             m["salThru"] = path["last_controlled"]
         if path["truncated"]:
@@ -3207,6 +3329,15 @@ def _team_basis_block(vets: list[dict]) -> dict:
 
 
 def build_payload() -> dict:
+    """The /projections/ payload. In unified $/WAR path mode (VAL_5 row 10) the
+    stamps name P(B), the path by season and the pricing basis."""
+    payload = _build_payload_body()
+    if vf.dpw_path_active():
+        _stamp_dpw_path(payload)
+    return payload
+
+
+def _build_payload_body() -> dict:
     corpus = fp.build_corpus()
     names = _display_names()
     from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key, _SPOTRAC_TEAM_SLUGS
@@ -3238,6 +3369,8 @@ def build_payload() -> dict:
     # rows, so nothing in this build can price or roll up on it.
     _stamp_contract_club(vets)
     cfg = vf._config()
+    if vf.dpw_path_active() and "dollars_per_war_inflation" not in cfg:
+        raise vf.DpwPathError("dollars_per_war_inflation absent in unified $/WAR path mode")
     # One read of the escalation knob: the payload field and the dollars note
     # both say what _season_value_usd actually applied (0.0 in production).
     _dpw_infl = float(cfg.get("dollars_per_war_inflation", 0.05))

@@ -1509,8 +1509,19 @@ def _surplus_odds_flag() -> bool:
     return SURPLUS_FROM_SERVED_ODDS_DEFAULT
 
 
+def _eta_origin_of(r) -> int:
+    """VAL_5 (I6): the calendar year an eta_years was measured from: the origin
+    storage stamps beside it (unified $/WAR path mode only), else this run's
+    calendar year (the fallback ETA, and every row priced OFF)."""
+    for src in (r or {}, (r or {}).get("surplus") or {}):
+        o = src.get("eta_origin_year") if isinstance(src, dict) else None
+        if o is not None:
+            return int(o)
+    return date.today().year
+
+
 def _reprice_surplus_on_display(s: dict, is_pit: bool, pos, age=None, eta=None,
-                                odds=None) -> None:
+                                odds=None, eta_origin=None) -> None:
     """Re-price the surplus DOLLARS (surplus_mm + band + the surplus fan) off the DISPLAYED
     20-80 grade (xfv_grade_display) instead of the honestly-deflated realized grade, so the
     dollars a prospect shows match the eFV grade the site displays and the /projections/
@@ -1551,6 +1562,7 @@ def _reprice_surplus_on_display(s: dict, is_pit: bool, pos, age=None, eta=None,
         kw["age"] = age
     if eta is not None:
         kw["eta_years"] = eta
+        kw["eta_origin"] = eta_origin if eta_origin is not None else date.today().year
     if odds is not None and _surplus_odds_flag():
         # SURPLUS_ODDS_GATE candidate: the served odds weight the buckets, each bucket
         # keeps its dollar value at the display grade, so the fan's bust share IS p_bust.
@@ -1901,8 +1913,10 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; consensus at its own grade), so the
         # eFV and consensus columns share one pricing basis.
-        xfv_surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=1.0)
-        cons_surplus = vf.expected_surplus_usd(cons_fv, is_pit, pos, age=age, eta_years=1.0)
+        xfv_surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=1.0,
+                                              eta_origin=date.today().year)
+        cons_surplus = vf.expected_surplus_usd(cons_fv, is_pit, pos, age=age, eta_years=1.0,
+                                               eta_origin=date.today().year)
         dist = vf.sv_distribution(_odds_grade, is_pit, pos) or {}
         pcts = dist.get("percentiles") or {}
         _cx = lambda v: _cal_mm(v, _odds_grade, is_pit)
@@ -2385,6 +2399,7 @@ def _v2_entry(r, side: str, p: dict, v1e: dict | None) -> dict:
     probs = vf.p_bucket_given_fv(grade, is_pit) or []
     pos = r.get("position")
     age, eta = _v2_price_ctx(r)
+    eta_origin = _eta_origin_of(r) if r.get("eta_years") is not None else date.today().year
     delta, placeholder, is_floor = consensus_delta(
         round(grade, 1), round(cons_fv, 1), anchor_constant_only=False,
         grade_from_outcome_map=False)
@@ -2555,6 +2570,7 @@ def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=No
     scored, skipped_no_track = [], 0
     krp_disp_raw = {}                                     # KRP+ DISPLAY pool: player_key -> _krp_display_raw (decoupled from the model's zeroed x_era_k; LANE H2)
     _price_ctx = {}                                       # pk -> (age, eta), for the post-rank surplus re-price
+    _origin_ctx = {}                                      # pk -> the calendar year eta counts from (VAL_5, I6)
     _odds_ctx = {}                                        # pk -> served odds (SURPLUS_ODDS_GATE)
     _rank_exact = {}                                      # pk -> UNROUNDED rank_war (tie-group display sort)
     for r in live:
@@ -2692,6 +2708,8 @@ def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=No
         # consensus-surplus writer, so the two adjacent columns agree on debut timing.
         eta = float(eta) if eta is not None else PROSPECT_ETA_FALLBACK_YEARS
         _price_ctx[r["player_key"]] = (age, eta)
+        _origin_ctx[r["player_key"]] = (_eta_origin_of(r) if r.get("eta_years") is not None
+                                        else date.today().year)
         # OUTCOME-ANCHORED GRADE + PINNED ODDS BASIS -- see run() for the full statement.
         # This is THE board number (storage.BOARD_GRADE_FIELD): the inverse of the pooled
         # empirical curve E[first-6yr bWAR | consensus FV]. The board re-ranked when this
@@ -2790,8 +2808,11 @@ def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=No
         _odds_ctx[r["player_key"]] = list(probs) if probs else None
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; percentiles pointwise - monotone).
-        xfv_surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=eta)
-        dist = vf.sv_distribution(_odds_grade, is_pit, pos, age=age, eta_years=eta) or {}
+        _eo = _origin_ctx.get(r["player_key"], date.today().year)
+        xfv_surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=eta,
+                                              eta_origin=_eo)
+        dist = vf.sv_distribution(_odds_grade, is_pit, pos, age=age, eta_years=eta,
+                                  eta_origin=_eo) or {}
         pcts = dist.get("percentiles") or {}
         _cx = lambda v, _g=_odds_grade: _cal_mm(v, _g, is_pit)
         def _mm(v):
@@ -2955,7 +2976,8 @@ def run_live(persist: bool = True, side: str = "hit", *, overlays=None, stack=No
     for s in scored:
         _age, _eta = _price_ctx.get(s["player_key"], (None, PROSPECT_ETA_FALLBACK_YEARS))
         _reprice_surplus_on_display(s, is_pit, s.get("position"), age=_age, eta=_eta,
-                                    odds=_odds_ctx.get(s["player_key"]))
+                                    odds=_odds_ctx.get(s["player_key"]),
+                                    eta_origin=_origin_ctx.get(s["player_key"]))
 
     # KRP+ (K-backed Run Prevention) DISPLAY PILL: standardize the DISPLAY raw
     # (_krp_display_raw; LANE H2 decouple) over the live pitcher pool onto the
@@ -3343,6 +3365,7 @@ def run_backgrade(persist: bool = True) -> dict:
         disp = _map_grade(gmap[side], rank_war)
         if disp is None:
             continue
+        _eo = date.today().year                      # VAL_5 (I6)
         if kind == "debuted":
             age, eta = _age_at(rec.get("birth_date"), milb_yr), 0.5
         else:
@@ -3354,6 +3377,8 @@ def run_backgrade(persist: bool = True) -> dict:
             # fallback (F3) when no priced eta exists (e.g. inactive.json rows).
             _eta_src = (rec.get("surplus") or {}).get("eta_years")
             eta = float(_eta_src) if _eta_src is not None else PROSPECT_ETA_FALLBACK_YEARS
+            if _eta_src is not None:
+                _eo = _eta_origin_of(rec)
         pos = rec.get("position")
         # OUTCOME-ANCHORED GRADE + PINNED ODDS BASIS -- see run() for the full statement.
         # The backgrade path flips WITH the other two on purpose: data/xfv.json carries
@@ -3401,8 +3426,10 @@ def run_backgrade(persist: bool = True) -> dict:
         probs = _odds_cal.recalibrate_bucket(probs, is_pit)
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; percentiles pointwise - monotone).
-        surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=eta)
-        dist = vf.sv_distribution(_odds_grade, is_pit, pos, age=age, eta_years=eta) or {}
+        surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=eta,
+                                          eta_origin=_eo)
+        dist = vf.sv_distribution(_odds_grade, is_pit, pos, age=age, eta_years=eta,
+                                  eta_origin=_eo) or {}
         pcts = dist.get("percentiles") or {}
         _cx = lambda v, _g=_odds_grade: _cal_mm(v, _g, is_pit)
         entry = {
@@ -3446,7 +3473,7 @@ def run_backgrade(persist: bool = True) -> dict:
         }
         # Surplus dollars on the DISPLAYED (quantile) grade, consistent with the live board.
         _reprice_surplus_on_display(entry, is_pit, pos, age=age, eta=eta,
-                                    odds=list(probs) if probs else None)
+                                    odds=list(probs) if probs else None, eta_origin=_eo)
         if not row.get("milb"):
             entry["xfv_provisional"] = True          # prior-anchored (no pro track record)
         if inj < 1.0:

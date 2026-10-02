@@ -2232,7 +2232,7 @@ function _gxSurplus() {
     <div class="gx-step"><span class="gx-step-n">3</span><span class="gx-step-t">× $${dpw.toFixed(2)}M / WAR</span><span class="gx-step-v">${_fmtMM2(gross)} gross</span></div>
     <div class="gx-step"><span class="gx-step-n">4</span><span class="gx-step-t">− cost (3×$${lgMin}M pre-arb + arb ${arbFr.map(f => f).join("/")})</span><span class="gx-step-v">−${_fmtMM2(cost)}</span></div>
     <div class="gx-step gx-step-sum"><span class="gx-step-n">=</span><span class="gx-step-t">framework surplus</span><span class="gx-step-v">${_fmtMM2(framework)}</span></div>
-    <div class="gx-surplus-final">Published surplus value <b>${_fmtMM2(published)}</b><div class="gx-surplus-note">The published figure additionally probability-weights the outcome distribution and discounts future years at ${vf.discount_rate != null ? `${(Number(vf.discount_rate) * 100).toFixed(0)}%/yr` : "the platform rate"}, so it differs slightly from the flat framework walk above.</div></div>`);
+    <div class="gx-surplus-final">Published surplus value <b>${_fmtMM2(published)}</b><div class="gx-surplus-note">The published figure additionally probability-weights the outcome distribution and discounts future years at ${vf.dpw_path ? `${(Number(vf.dpw_path.nominal_rate) * 100).toFixed(2)}%/yr nominal, with each season's win priced on the one written path growing ${(Number(vf.dpw_path.g_ref) * 100).toFixed(2)}%/yr` : (vf.discount_rate != null ? `${(Number(vf.discount_rate) * 100).toFixed(0)}%/yr` : "the platform rate")}, so it differs slightly from the flat framework walk above.</div></div>`);
   if (window.EEPHUS_GL) { const _o = document.getElementById("gx-surplus-out"); if (_o) window.EEPHUS_GL.wire(_o); }
 }
 function _byId(id) { return document.getElementById(id); }
@@ -2530,7 +2530,8 @@ function _methIndustryHTML() {
     const w = winters[winters.length - 1];
     if (w && byW[w] != null) dpwLine = ` The signings-implied series reads $${_rn(Number(byW[w]) / 1e6, 1)}M per WAR for the ${escapeHtml(w)} winter (<a href="${_IND_DPW}" target="_blank" rel="noopener">fa_dpw_series.json</a>).`;
   }
-  const drate = (vf.discount_rate != null) ? `${_rn(Number(vf.discount_rate) * 100, 0)}%/yr` : "the platform rate";
+  const drate = vf.dpw_path ? `${_rn(Number(vf.dpw_path.nominal_rate) * 100, 2)}%/yr nominal`
+    : ((vf.discount_rate != null) ? `${_rn(Number(vf.discount_rate) * 100, 0)}%/yr` : "the platform rate");
   const blockE = `<div class="meth-table-wrap">
     <div class="meth-table-title">The economics layer <span class="meth-sub">expectations, NPV, and a moving $/WAR</span></div>
     <p class="meth-note"><strong>A price is an expectation, not a median.</strong> The median outcome of a low-tier prospect is a bust worth nothing, so a median-target price floors at $0 and calls every lottery ticket free. The trade engine consumes surplus as a price, and a price is a mean: since the EV reframe the correction map targets the conditional mean and the $0 floor is gone. The calibration receipt is <a href="/data/surplus_backtest_real.json" target="_blank" rel="noopener">surplus_backtest_real.json</a>, also rendered on the Surplus value entry in Terms.</p>

@@ -521,7 +521,7 @@ def gate2_notes(discount_rate: float) -> list[str]:
 
 
 def run_market_gate(persist: bool = True, challenger: bool = False,
-                    persist_dpw: bool = True) -> dict:
+                    persist_dpw: bool = False) -> dict:
     """Gate 2. ``challenger=True`` additionally scores the WS-2f LightGBM
     challenger (fa_market_ml.MarketModelML) on the same folds — identical
     train/test rows, identical comps baseline, identical NPV targets.
@@ -530,8 +530,11 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
     data/fa_dpw_series.json alone. That coupling is this module's single biggest
     write hazard: fa_dpw_series.json is the $/WAR level the ENTIRE valuation
     engine prices against, and until 2026-07-30 there was no way to refresh the
-    published gate verdict after a model change without also rewriting it. The
-    default keeps the historical behaviour, so no existing caller changes."""
+    published gate verdict after a model change without also rewriting it.
+    The default is False since VAL_5 (2026-10-02): the one writer already runs
+    first in every rebuild, and an owner-decided Gate 2 re-persist must ask for
+    the series write by name. With fa_market.WRITE_DPW_PATH_BLOCK off, that write
+    carries VAL_1's keys only."""
     import fa_market as fm
     enriched = fm.enriched_signings(2015, 2026)
     # The rate every NPV in this table is priced at (deferral_npv_usd reads the
