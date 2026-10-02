@@ -22,8 +22,8 @@ Writes ONLY these two folders, never data/ (the pytest-revert trap):
                       favicon.ico (16/32/48, each an exact strike), favicon.svg,
                       favicon-16.png (the footer mark), favicon-32.png, app icons,
                       share-default.png, og/<module>.png, marks/*.svg, eephus-arc.gif
-Nothing on the site references either folder yet (BR-03 to BR-09 and PX-23
-swap them in).
+build_site.py reads the assets/brand fragments behind PIXEL_BRAND (BR-03), and
+assets/site.css carries wordmark.css's rules; BR-04 to BR-09 swap in the rest.
 
     python tools/pixel_brand.py                   write into the repo
     python tools/pixel_brand.py --out DIR         same relative paths under DIR
@@ -171,8 +171,10 @@ def wordmark_css():
     The base style of every piece is its finished frame; an animation only hides
     or offsets it for a moment, so a browser that runs none of it shows the
     finished mark. step-end only (whole-pixel frames, no tweening), one
-    iteration, no script. prefers-reduced-motion stops every piece, hover
-    included. Hover replays on inner groups, so leaving the hover never replays.
+    iteration, no script. Hover replays on inner groups, so leaving the hover
+    never replays. No reduced-motion rule: the site policy (owner, 2026-10-01,
+    assets/site.css) runs every animation as it runs without the preference,
+    and it supersedes PB-03's 'reduced motion stops everything'.
     """
     m = SRC.MOTION
     drop, fr = m["drop_ms"], m["glint_frame_ms"]
@@ -210,10 +212,6 @@ def wordmark_css():
         "animation-delay: calc(var(--i) * var(--step)); }",
         f".eephus-wordmark-px:hover .wm-bh {{ animation: wm-drop-h {drop}ms step-end backwards; "
         "animation-delay: var(--drop-at); }",
-        "@media (prefers-reduced-motion: reduce) {",
-        "  .wm-px .wm-s, .wm-px .wm-h, .wm-px .wm-ball, .wm-px .wm-bh, .wm-px .wm-glint path "
-        "{ animation: none !important; }",
-        "}",
     ]
     return "\n".join(css) + "\n"
 
