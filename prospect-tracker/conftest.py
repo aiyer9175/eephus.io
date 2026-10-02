@@ -559,6 +559,9 @@ _SIDECAR_GLOBS = (
     # PV-04: the append-only provisional track record and its durable copy.
     "data/provisional_track_eval.json",
     ".cache/provisional_track/**/*",
+    # PV-06: provisional v2, the served heads and their BACKCAST eval.
+    "data/provisional_v2.json",
+    "data/provisional_v2_eval.json",
     # BRACKET_SIM_BUILD: the postseason bracket simulator's payload, its
     # first-write-wins forward record (source of truth and derived copy) and
     # the StatsAPI receipts it caches.
@@ -919,6 +922,10 @@ _SIDECAR_WRITE_TARGETS = (
     # PV-04: provisional_track resolves both at call time (update / commit_rows).
     ("provisional_track", "OUT_PATH", "data/provisional_track_eval.json"),
     ("provisional_track", "LEDGER_PATH", ".cache/provisional_track/ledger.jsonl"),
+    # PV-06: provisional_v2.build resolves both at call time (efv_export.regen_all
+    # calls it when persisting).
+    ("provisional_v2", "OUT_PATH", "data/provisional_v2.json"),
+    ("provisional_v2", "EVAL_PATH", "data/provisional_v2_eval.json"),
     # BRACKET_SIM_BUILD: bracket_sim.run resolves all four at call time. The
     # board is only READ there (gate 3.1); it is listed so the rule has no
     # exception, the same reasoning as the results-cache readers above.

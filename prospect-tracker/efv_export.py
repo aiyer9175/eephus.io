@@ -832,6 +832,17 @@ def regen_all(persist: bool = True, include_eval: bool = False) -> dict:
         efv_ungraded.build(persist)
     except Exception:
         log.exception("efv_ungraded.build failed -- continuing without ungraded grades")
+    # PROVISIONAL v2 (PV-06): for the same source-ungraded universe, the chance of a first
+    # grade within the next list cycle (ANY / FanGraphs / Pipeline x 6 / 12 months) and the
+    # expected first FV on each source's own scale, plus its forward-chained BACKCAST eval
+    # (data/provisional_v2.json, data/provisional_v2_eval.json). Reads grades and the MiLB /
+    # draft caches only, never WAR; feeds nothing above. Skipped when not persisting.
+    if persist:
+        try:
+            import provisional_v2
+            provisional_v2.build(persist)
+        except Exception:
+            log.exception("provisional_v2.build failed -- continuing without provisional v2")
     # C1: refresh the shipped-distribution reliability curves + drift tripwire.
     # Diagnostic only (no served number depends on them); regen_all previously
     # omitted it, leaving data/xfv_reliability.json stale. Best-effort.
