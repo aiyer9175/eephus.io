@@ -727,7 +727,7 @@ function csLeaderboardSpec(rows, col, dir) {
     title: `CollegeSavant · ${col.label} Leaders`,
     subtitle: `${state.year} college pitchers · sorted by ${col.label}${dir < 0 ? " (high → low)" : " (low → high)"} · ${rows.length} qualified`,
     url: "eephus.io/collegesavant/pitcher_index.html", filenameBase: `eephus-collegesavant-pitchers-${col.key}`,
-    caption: "college tracked-skill leaders · CollegeSavant by Joseph Gillis",
+    caption: "college tracked-skill leaders · CollegeSavant",
     board: { defaultCount: 25, counts: [10, 25, 50], legend: `CS+ 100 = ${state.year} pool average (${poolText(state.year)})`, columns: [
       { label: "#", frac: 0.06 },
       { label: "Pitcher", frac: 0.42 },
@@ -770,7 +770,7 @@ function _wireCsShare(pitcher, pct) {
       headshotURL: LOCAL_TEAM_LOGOS.has(pitcher.team) ? `logos/${pitcher.team}.png` : null,
       url: `eephus.io/collegesavant/pitcher_index.html#/player/${pitcher.year}/${pitcher.slug}`,
       filename: `eephus-collegesavant-${pitcher.slug}.png`,
-      caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
+      caption: "college percentiles vs the qualified pool · CollegeSavant",
     });
   });
 }

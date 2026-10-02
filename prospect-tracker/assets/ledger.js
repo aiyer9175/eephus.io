@@ -1191,7 +1191,7 @@
       farm_tree: "Farm system tree", org_tendencies: "Org tendencies", farm_board: "Farm board", ifa_board: "IFA board", draft_board: "Draft board",
       roster_board: "Roster board", team_outlook: "Team Outlook", fa_fits: "FA fits", fa_archive: "FA archive", arbitration_teams: "Arbitration by club",
       trade_board: "Trade board", mlbstats_war: "MLB Stats: eWAR by club", mlbstats_bullpen: "MLB Stats: bullpen by club", betting_teams: "Betting teams",
-      fantasy_dynasty: "Fantasy dynasty", management_club: "In-Game Management", franchise: "Franchise hub" };
+      fantasy_dynasty: "Fantasy dynasty", management_club: "In-Game Management", franchise: "Franchises" };
     return '<div class="ledger-links">' + Object.keys(labels).map(function (k) {
       return L[k] ? '<a href="' + esc(L[k]) + '">' + esc(labels[k]) + "</a>" : "";
     }).join("") + "</div>";

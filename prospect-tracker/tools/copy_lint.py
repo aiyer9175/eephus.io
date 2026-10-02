@@ -74,7 +74,7 @@ _NEEDLES = (
 # content/articles/* is owner editorial (long-form essays where normal English
 # like "crucial" is the author's own voice), so it's ADVISORY, not hard-fail.
 PURE_COPY = {
-    "README.md", "data/glossary.json", "content/team.json",
+    "README.md", "data/glossary.json", "data/team.json",
     "assets/team/README.md",
 }
 

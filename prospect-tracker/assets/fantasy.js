@@ -475,7 +475,7 @@
         if (mt && mt.delta != null) {
           var md = (mt.delta > 0 ? "+" : "") + num(mt.delta, 0);
           chip = ' <span class="ff-mech ' + (mt.delta > 0 ? "ff-mech-up" : "ff-mech-down") +
-            '" title="Mechanics trend: per-season Swing+ (Will Cahoon) moved ' + md + " from " +
+            '" title="Mechanics trend: per-season Swing+ moved ' + md + " from " +
             esc(mt.from) + " to " + esc(mt.to) + '. Context only - never part of this ranking.">mech trend ' + md + "</span>";
         }
         // Both sides are in wOBA points (hitters xwOBA minus wOBA, pitchers
@@ -491,7 +491,7 @@
     // large luck gap regresses rather than persists. So this note states the
     // gap direction and stops: no "due to improve", no luck causality in the
     // column headers. The screen posture line mirrors the registry row.
-    return '<div class="fantasy-note">Regression screen from the expected-stat gaps, in wOBA points (hitters: xwOBA minus wOBA; pitchers: wOBA minus xwOBA allowed). A positive gap means results sit behind the expected stats (buy-low screen); negative means results sit ahead (sell-high screen). Whether a gap closes or persists is unmeasured: this is a screen, it reorders nothing served elsewhere and prices nothing. A mech trend chip flags a 5+ point move in per-season Swing+ (Will Cahoon) - swing-mechanics context only, never part of the ranking.</div>' +
+    return '<div class="fantasy-note">Regression screen from the expected-stat gaps, in wOBA points (hitters: xwOBA minus wOBA; pitchers: wOBA minus xwOBA allowed). A positive gap means results sit behind the expected stats (buy-low screen); negative means results sit ahead (sell-high screen). Whether a gap closes or persists is unmeasured: this is a screen, it reorders nothing served elsewhere and prices nothing. A mech trend chip flags a 5+ point move in per-season Swing+, swing-mechanics context only, never part of the ranking.</div>' +
       '<div class="fantasy-cols">' + col(sec.buy_low, "Buy-Low (behind x-stats)", "ff-pos") + col(sec.sell_high, "Sell-High (ahead of x-stats)", "ff-neg") + "</div>";
   }
   // ALREADY A CARD GRID: 30 team cards of 5 arms each. Untouched.

@@ -823,14 +823,14 @@ def test_franchise_is_a_watched_scheduled_export():
 def test_franchise_is_first_in_nav_items_and_the_static_copies():
     import build_site
     grp = next(i for i in build_site.NAV_ITEMS if isinstance(i, dict) and i["group"] == "MLB Modules")
-    assert grp["children"][0] == ("franchise", "Franchise", "/franchise/")
+    assert grp["children"][0] == ("franchise", "Franchises", "/franchise/")
     assert build_site.MODULE_STAGE["franchise"][0] == "β"
     assert "not a forecast" in build_site.MODULE_STAGE["franchise"][1]
     for rel in ("prospx/index.html", "collegesavant/index.html", "collegesavant/pitcher_index.html"):
         # The leaves carry a 12 px pixel icon before the label (PX-04/PX-10);
         # the slot order is what this pins, so the icon markup is set aside.
         s = re.sub(r'<svg class="ico"[^>]*>.*?</svg>', "", _src(rel))
-        i = s.index('<a href="/franchise/" role="menuitem">Franchise</a>')
+        i = s.index('<a href="/franchise/" role="menuitem">Franchises</a>')
         assert i < s.index('<a href="/fa/" role="menuitem">Free Agency</a>'), rel
     assert 'franchise_export.py' in _src("tools/strip_emdashes.py")
     assert '"franchise/index.html"' in _src("tools/strip_emdashes.py")

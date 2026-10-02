@@ -47,6 +47,7 @@ fa
 fantasy
 forums
 franchise
+franchises
 glossary
 history
 hof

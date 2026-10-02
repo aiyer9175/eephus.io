@@ -11,7 +11,7 @@ Reads `content/` and writes the static pages that share the PROSPX theme
     /              -> index.html              (Home: brand hero + module cards)
     /articles/     -> articles/index.html     (grid of article cards, newest first)
     /articles/<s>/ -> articles/<slug>/index.html  (one page per content/articles/<slug>.md)
-    /team/         -> team/index.html          (from content/team.json)
+    /team/         -> team/index.html          (the Masthead, from data/team.json)
 
 PROSPX lives at /prospx/index.html and is NOT touched by this script (its nav +
 asset paths were wired once, by hand). `run_monthly.py` (the data pipeline that
@@ -129,9 +129,13 @@ _MGMT_CSS_VER = _asset_ver("assets/management.css")
 # /ledger/ - Club Ledger (2026-09-23, D1).
 _LEDGER_VER = _asset_ver("assets/ledger.js")
 _LEDGER_CSS_VER = _asset_ver("assets/ledger.css")
-# /franchise/ - Franchise Overview (2026-09-23, D3): the org-level grade tree.
+# /franchise/ - Franchises (2026-09-23, D3): the org-level grade tree.
+# /franchises/ -> a noindex redirect to /franchise/ (the TEAM-1 rename).
 _FRANCHISE_VER = _asset_ver("assets/franchise.js")
 _FRANCHISE_CSS_VER = _asset_ver("assets/franchise.css")
+# /team/ - the Masthead (TEAM-5, 2026-10-02): the baseball-card staff page.
+_TEAM_VER = _asset_ver("assets/team.js")
+_TEAM_CSS_VER = _asset_ver("assets/team.css")
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /models/ - the model accountability hub. Client is filter-only: every row,
 # count and date on that page is server-rendered here at build time, so the
@@ -348,10 +352,12 @@ NAV_ITEMS = [
     ("prospx",   "PROSPX",           "/prospx/"),
     ("collegesavant", "CollegeSavant", "/collegesavant/"),
     {"group": "MLB Modules", "key": "mlb", "children": [
-        # Franchise (2026-09-23, D3): the hub before the modules, FIRST in the
-        # group by owner decision. The hand-kept static copies carry the same
-        # entry in the same slot (test_collegesavant_nav_in_sync).
-        ("franchise",   "Franchise",   "/franchise/"),
+        # Franchises (2026-09-23, D3; renamed from "Franchise" 2026-10-02,
+        # owner decision TEAM-1, key and URL unchanged): the hub before the
+        # modules, FIRST in the group by owner decision. The hand-kept static
+        # copies carry the same entry in the same slot
+        # (test_collegesavant_nav_in_sync).
+        ("franchise",   "Franchises",  "/franchise/"),
         ("fa",          "Free Agency", "/fa/"),
         ("projections", "Projections", "/projections/"),
         ("mlbstats",    "MLB Stats",   "/mlbstats/"),
@@ -388,7 +394,9 @@ NAV_ITEMS = [
     ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
     ("glossary", "Glossary",         "/glossary/"),
-    ("team",     "Developers",        "/team/"),
+    # The Masthead (owner decision TEAM-5, 2026-10-02): the staff page, with
+    # the Developers and the Writers and Analysts groups. Key and URL kept.
+    ("team",     "Masthead",          "/team/"),
 ]
 
 def _nav_is_group(item) -> bool:
@@ -674,7 +682,7 @@ MODULE_STAGE = {
     # Club Ledger (2026-09-23). Slot 0 is the SIGIL the rows above carry, not the
     # word: the shell writes sigil plus word itself, as the legacy shells do.
     "ledger": ("β", "Beta. Descriptive ledger: no payroll forecast, no revenue"),
-    # Franchise (2026-09-23). Slot 0 is the sigil, as the rows above.
+    # Franchises (2026-09-23). Slot 0 is the sigil, as the rows above.
     "franchise": ("β", "Beta. Franchise Index is a descriptive rank, not a forecast"),
     "forums": ("β", "Forums is in beta"),
     "parks": ("β", "Beta. Display only: no model reads these factors"),
@@ -731,13 +739,10 @@ BETTING_DISCLAIMER = (
     '</div>'
 )
 
-# Dev byline - the same "Created by" signature PROSPX renders above its
-# masthead (prospx/index.html .build-banner). FA + Projections carry it too
-# (owner ask 2026-06-12); the .build-banner rule lives in assets/site.css.
-CREATED_BY_BANNER = (
-    '<div class="build-banner" aria-label="Build version">Created by '
-    '<span aria-hidden="true">🜎</span> Noah J. Dengler / @ARKNDJL</div>'
-)
+# The dev byline that sat above every module masthead is gone (owner decision
+# TEAM-2, 2026-10-02): attribution lives on the Masthead (/team/) only. It
+# carried no build version, so nothing moved to the Library's release notes.
+# The .section-head--byline wrapper stays as the stacked-title layout.
 
 # Modern X (Twitter) glyph - module-level so social links on every surface share
 # one mark. (build_team keeps its own local copy for the per-member chips.)
@@ -1011,23 +1016,26 @@ def _fmt_date(s: str) -> str:
             return s
 
 def _member_slug(name: str) -> str:
-    """Stable per-person anchor slug for a Development Team card (e.g.
-    'Will Cahoon' -> 'will-cahoon'). Used by both the team-card id and the
-    article byline deep-link so they always line up."""
+    """Stable per-person anchor slug for a Masthead card (e.g.
+    'Will Cahoon' -> 'will-cahoon'). data/team.json keys follow it, so the
+    card id and the article byline deep-link always line up."""
     return re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
 
 def _team_index() -> dict:
-    """name(lowercased) -> {slug, handle} from content/team.json - the single
-    source of truth for dev-team identity + X handles. Empty on any error."""
+    """name(lowercased) -> {slug, handle} from data/team.json (the Masthead
+    roster) - the single source of truth for team identity + X handles. The
+    slug is the member's key, which is also the card's #member-<key> anchor.
+    Empty on any error."""
     idx: dict = {}
     try:
-        members = json.loads((CONTENT / "team.json").read_text(encoding="utf-8"))
+        members = json.loads((ROOT / "data" / "team.json").read_text(encoding="utf-8"))["members"]
     except Exception:
         return idx
     for m in members:
         nm = (m.get("name") or "").strip()
         if nm:
-            idx[nm.lower()] = {"slug": _member_slug(nm), "handle": (m.get("handle") or None)}
+            idx[nm.lower()] = {"slug": m.get("key") or _member_slug(nm),
+                               "handle": ((m.get("front") or {}).get("handle") or None)}
     return idx
 
 def _byline(meta: dict, sep: str = " · ", link_handle: bool = True) -> str:
@@ -1036,7 +1044,7 @@ def _byline(meta: dict, sep: str = " · ", link_handle: bool = True) -> str:
     # @handle as text there, and only deep-link on the standalone article page.
     author = (meta.get("author", "") or "").strip()
     member = _team_index().get(author.lower())  # None for guest authors
-    # Author name → their Development Team card (deep-linked) when they're on the
+    # Author name → their Masthead card (deep-linked) when they're on the
     # team and we're allowed to emit a link; otherwise plain text. No broken
     # anchors - a guest author with no card simply isn't linked.
     if author and member and link_handle:
@@ -3906,7 +3914,7 @@ def build_fa() -> str:
     _fa_winters = len(_cached_data_json("fa_archive.json").get("winters") or []) or 12
     body = (
         '<div class="fa-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>{_masthead_icon("fa")}MLB Free Agency '
+        f'<div class="section-head section-head--byline"><div class="section-head-titles"><h1>{_masthead_icon("fa")}MLB Free Agency '
         f'{_stage_chip("fa")}</h1></div>'
         f'<span class="section-sub">the {_fa_span} class · projected contracts, '
         f'{_gl("rational_value", "rational value")}, team fits · {_fa_winters} archived winters</span></div>'
@@ -3938,7 +3946,6 @@ def build_fa() -> str:
 # deal-builder mount above it: the board is the surface with the table.
 _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     <span class="newsprint-eyebrow-label">Trade Machine</span>
-    <span class="newsprint-eyebrow-meta">module by Anirudh Iyer</span>
   </div>
   <div id="trade-machine"></div>
   <div class="tm-ros-note" style="margin:10px 0 2px;max-width:760px;color:var(--text-secondary);font-size:11px;line-height:1.55;">
@@ -4045,7 +4052,7 @@ def build_projections() -> str:
     #view=trademachine bookmarks there)."""
     body = (
         '<div class="fa-app proj-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>{_masthead_icon("projections")}MLB Projections '
+        f'<div class="section-head section-head--byline"><div class="section-head-titles"><h1>{_masthead_icon("projections")}MLB Projections '
         f'{_stage_chip("projections")}</h1></div>'
         f'<span class="section-sub">five-year {_gl("ewar", "eWAR")} paths for every MLB player · '
         f'{_gl("proj_buckets", "floor / mean / ceiling")} · surplus over the club control window, a longer guarantee through its last season · '
@@ -4259,7 +4266,6 @@ def build_arbitration() -> str:
     body = (
         '<div class="fa-app mlbstats-app arb-app">'
         '<div class="section-head section-head--byline"><div class="section-head-titles">'
-        + CREATED_BY_BANNER
         + '<h1>' + _masthead_icon("arbitration") + 'Arbitration Predictor ' + _stage_chip("arbitration") + '</h1></div>'
         '<span class="section-sub">Projected '
         + _gl("arb_award_model", "arbitration awards")
@@ -4302,7 +4308,7 @@ def build_trademachine() -> str:
         # id="proj-view-trademachine" is kept for trademachine.js, which scopes its
         # filter + collapse wiring to that id; .tm-app carries the standalone theming.
         '<div class="fa-app proj-app tm-app" id="proj-view-trademachine">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>{_masthead_icon("trademachine")}Trade Machine '
+        f'<div class="section-head section-head--byline"><div class="section-head-titles"><h1>{_masthead_icon("trademachine")}Trade Machine '
         f'{_stage_chip("trademachine")}</h1></div>'
         f'<span class="section-sub">{_gl("surplus_value", "surplus")} in one currency: prospects on eFV, '
         'MLB players on projections, then the Bayesian trade-value board</span></div>'
@@ -4344,7 +4350,7 @@ def build_mlbstats() -> str:
         # site.css is scoped under it, because .mlbstats-app is shared by ten
         # module roots (test_mlbx_css_scope.py pins the scope).
         '<div class="fa-app mlbstats-app mlbx">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("mlbstats")}MLB Stats {_stage_chip("mlbstats")}</h1></div>'
         f'<span class="section-sub">Every player by {_gl("ewar", "eWAR")}, then hitters '
         f'({_gl("hem_plus", "HEM+")}), starters ({_gl("sem_plus", "SEM+")}), relievers '
@@ -4450,7 +4456,7 @@ def build_pal() -> str:
     gate = (_cached_data_json("pal.json").get("backtest") or {}).get("gate") or {}
     body = (
         '<div class="fa-app mlbstats-app pal-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("pal")}Alchemy Lab {_stage_chip("pal")}</h1></div>'
         f'<span class="section-sub">Role and position {_gl("pal_conversion", "conversions")}. '
         f'{_gl("sp_rp_fit", "SP to RP")} {_pal_gate_clause(gate, "SP->RP")}; '
@@ -4623,7 +4629,7 @@ def build_fantasy() -> str:
     )
     body = (
         '<div class="fa-app mlbstats-app fantasy-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("fantasy")}Fantasy {_stage_chip("fantasy")}</h1></div>'
         '<span class="section-sub">Redraft, dynasty and DFS on one projection engine.</span>'
         f'{_partof_diamond()}</div>'
@@ -4844,7 +4850,7 @@ def build_betting() -> str:
     and the route notes, for a surface that cannot yet make a betting claim."""
     body = (
         '<div class="fa-app mlbstats-app betting-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("betting")}Sports Betting {_stage_chip("betting")}</h1></div>'
         f'<span class="section-sub">Model probability vs the {_gl("devig", "de-vigged")} book price. '
         'Each published pick records its timestamp, book, odds and a flat one-unit stake; the '
@@ -5077,7 +5083,7 @@ def build_diamond() -> str:
         f'extra{"" if n_ex == 1 else "s"}, each labeled with its state today')
     body = (
         '<div class="fa-app mlbstats-app diamond-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("diamond")}Diamond Pass {_stage_chip("diamond")}</h1></div>'
         f'<span class="section-sub">{sub}</span></div>'
         f'{banner}'
@@ -5151,7 +5157,7 @@ def build_parks() -> str:
     strip, and sitemap.xml."""
     body = (
         '<div class="fa-app mlbstats-app parks-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("parks")}MiLB Park Factors {_stage_chip("parks")}</h1></div>'
         f'<span class="section-sub">Run and home-run {_gl("milb_park_factor", "park factors")} for every '
         'affiliated venue, Triple-A through the DSL: home vs road scoring, league-centered, shrunk toward '
@@ -5219,7 +5225,7 @@ def build_management() -> str:
     typed here: the masthead names two glossary terms and nothing else."""
     body = (
         '<div class="fa-app mlbstats-app mgmt-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("management")}In-Game Management {_stage_chip("management")}</h1></div>'
         '<span class="section-sub">Every in-game decision the play corpus can name, with the '
         f'{_gl("realized_mwpa", "realized win probability")} it governed beside the priced '
@@ -5284,7 +5290,7 @@ def build_ledger() -> str:
     franchise page links with."""
     body = (
         '<div class="fa-app mlbstats-app ledger-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("ledger")}Club Ledger {_stage_chip("ledger")}</h1></div>'
         f'<span class="section-sub" id="ledger-masthead">Every club\'s {_gl("cbt_payroll", "CBT payroll")}, '
         f'commitments and {_gl("controlled_surplus", "controlled surplus")}, on the scale each was computed on.</span></div>'
@@ -5313,7 +5319,8 @@ def build_ledger() -> str:
 
 
 def build_franchise() -> str:
-    """The /franchise/ Franchise Overview module (2026-09-23, D3).
+    """The /franchise/ Franchises module (2026-09-23, D3; named Franchise
+    Overview until the owner's TEAM-1 rename on 2026-10-02).
 
     A HUB, NOT A MODEL. One page per club re-serving what every module already
     publishes, on the scale each was computed on, with a labelled basis and a
@@ -5343,12 +5350,12 @@ def build_franchise() -> str:
     #view=board|club, #tree=hidden|canopy|full, #sec=<branch key>."""
     body = (
         '<div class="fa-app mlbstats-app fr-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>{_masthead_icon("franchise")}Franchise Overview {_stage_chip("franchise")}</h1></div>'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
+        f'<h1>{_masthead_icon("franchise")}Franchises {_stage_chip("franchise")}</h1></div>'
         f'<span class="section-sub" id="franchise-masthead">The {_gl("franchise_index", "Franchise Index")} of every club '
         f'and the {_gl("franchise_branch_score", "branch scores")} beneath it, re-standardised across 30 clubs, '
         'with every number on the scale it was computed on.</span></div>'
-        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Franchise sections">'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Franchises sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-frsection="club" role="tab" aria-selected="true">Club</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-frsection="board" role="tab" aria-selected="false">Board</button>'
         '</div>'
@@ -5362,7 +5369,7 @@ def build_franchise() -> str:
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/franchise.js?v={_FRANCHISE_VER}" defer></script>'
     )
-    return page("Franchise Overview - eephus.io", "franchise", body,
+    return page("Franchises - eephus.io", "franchise", body,
                 "One page per club: the Franchise Index and its three graded branches (roster eWAR, "
                 "the provisional 2027 projection, the PROSPX farm composite), re-standardised across "
                 "30 clubs, with nine descriptive sections re-serving the season, finances, free agency, "
@@ -5399,7 +5406,7 @@ def build_hof() -> str:
     unreachable before that); the three static nav copies carry it too."""
     body = (
         '<div class="fa-app mlbstats-app hof-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("hof")}Hall of Fame {_stage_chip("hof")}</h1></div>'
         f'<span class="section-sub">Career WAR, {_gl("war7", "WAR7")} and {_gl("jaws", "JAWS")} for '
         'every ten-season player, reproduced from Baseball-Reference\'s daily WAR file, with the '
@@ -5800,7 +5807,7 @@ def build_models() -> str:
 
     body = (
         f'<div class="fa-app mlbstats-app acct-app" data-acct-stale-days="{model_registry.STALE_DAYS}">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("models")}Model Accountability</h1></div>'
         '<span class="section-sub">Every model with a predictive claim, its '
         f'{_gl("model_verdict", "verdict")}, and the eval artifact behind it, read from the registry '
@@ -5933,232 +5940,305 @@ def build_article_page(a: dict) -> str:
     return page(f'{a["title"]} - eephus.io', "articles", body, a.get("summary", ""),
                 image=image, url=f"{SITE_ORIGIN}/articles/{slug}/", og_type="article")
 
-def build_team() -> str:
-    team = json.loads((CONTENT / "team.json").read_text(encoding="utf-8"))
-    # Twitter / LinkedIn icon SVGs (same marks as the old masthead chips, rehomed
-    # here on the team page where per-person socials belong).
-    _TW_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 '
-               '8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 '
-               '17.52h1.833L7.084 4.126H5.117z"/></svg>')
-    _LI_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 '
-               '0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 '
-               '5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 '
-               '0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>')
-    # Personal website - globe glyph (stroke-style, rides currentColor like the rest).
-    _WEB_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm7.93 '
-                '9h-3.46a15.6 15.6 0 0 0-1.21-5.07A8.03 8.03 0 0 1 19.93 11zM12 4.06c.93 1.28 1.85 3.7 2.16 '
-                '6.94H9.84c.31-3.24 1.23-5.66 2.16-6.94zM4.07 13h3.46c.18 1.85.6 3.6 1.21 5.07A8.03 8.03 0 0 1 4.07 '
-                '13zm3.46-2H4.07a8.03 8.03 0 0 1 4.67-5.07A15.6 15.6 0 0 0 7.53 11zM12 19.94c-.93-1.28-1.85-3.7-2.16-6.94h4.32c-.31 '
-                '3.24-1.23 5.66-2.16 6.94zm3.26-1.87c.61-1.47 1.03-3.22 1.21-5.07h3.46a8.03 8.03 0 0 1-4.67 5.07z"/></svg>')
-    # GitHub mark.
-    _GH_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 '
+TEAM_JSON = DATA_DIR / "team.json"
+# How many credit badges the card FRONT shows before the rest fold behind a
+# "+N" control that turns the card over (the back carries every credit).
+TEAM_FRONT_BADGES = 10
+
+
+def _load_team() -> dict:
+    """data/team.json, the Masthead roster (owner decisions TEAM-1 to TEAM-7,
+    2026-10-02): groups, the badge catalogue and one entry per member. A data
+    edit adds a writer or a credit; nothing about a person is typed here."""
+    return json.loads(TEAM_JSON.read_text(encoding="utf-8"))
+
+
+_COPYRIGHT_RE = re.compile(r"Copyright \(C\) \d{4} [^(\n]+\((@[A-Za-z0-9_]+)\)")
+
+
+@functools.lru_cache(maxsize=1)
+def _watermark_counts() -> dict:
+    """{watermark: tracked source files whose copyright header carries it}.
+
+    Read off the tree at build time (git ls-files, then the first 300 bytes of
+    each .py / .js / .css), so the count on a card back is derived from the
+    repository rather than typed. Empty when git is unavailable: the card then
+    prints the mark without a count."""
+    import subprocess
+    try:
+        out = subprocess.run(["git", "ls-files", "-z", "--", "*.py", "*.js", "*.css"],
+                             cwd=ROOT, capture_output=True, timeout=30, check=True).stdout
+    except Exception:
+        return {}
+    counts: dict = {}
+    for rel in out.decode("utf-8", "replace").split("\0"):
+        if not rel:
+            continue
+        try:
+            with open(ROOT / rel, "rb") as fh:
+                head = fh.read(300).decode("utf-8", "replace")
+        except OSError:
+            continue
+        m = _COPYRIGHT_RE.search(head)
+        if m:
+            counts[m.group(1)] = counts.get(m.group(1), 0) + 1
+    return counts
+
+
+def _initials(name: str) -> str:
+    parts = [p for p in name.split() if p[:1].isalpha()]
+    if not parts:
+        return "?"
+    return (parts[0][0] + (parts[-1][0] if len(parts) > 1 else parts[0][1:2])).upper()
+
+
+# Social marks on a card back: third-party brand glyphs, drawn as given (the
+# pixel set never redraws a third-party mark), riding currentColor.
+_SOC_SVG = {
+    "x": ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 '
+          '8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 '
+          '17.52h1.833L7.084 4.126H5.117z"/></svg>'),
+    "linkedin": ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 '
+                 '0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 '
+                 '5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 '
+                 '0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>'),
+    "web": ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm7.93 '
+            '9h-3.46a15.6 15.6 0 0 0-1.21-5.07A8.03 8.03 0 0 1 19.93 11zM12 4.06c.93 1.28 1.85 3.7 2.16 '
+            '6.94H9.84c.31-3.24 1.23-5.66 2.16-6.94zM4.07 13h3.46c.18 1.85.6 3.6 1.21 5.07A8.03 8.03 0 0 1 4.07 '
+            '13zm3.46-2H4.07a8.03 8.03 0 0 1 4.67-5.07A15.6 15.6 0 0 0 7.53 11zM12 19.94c-.93-1.28-1.85-3.7-2.16-6.94h4.32c-.31 '
+            '3.24-1.23 5.66-2.16 6.94zm3.26-1.87c.61-1.47 1.03-3.22 1.21-5.07h3.46a8.03 8.03 0 0 1-4.67 5.07z"/></svg>'),
+    "github": ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 '
                '9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 '
                '18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 '
                '2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 '
                '1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 '
                '2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 '
                '3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 '
-               '22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>')
-    # Email - classic envelope mark (rides currentColor like the rest).
-    _MAIL_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 '
-                 '2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>')
-    def _initials(name: str) -> str:
-        parts = [p for p in name.split() if p[:1].isalpha()]
-        if not parts:
-            return "?"
-        return (parts[0][0] + (parts[-1][0] if len(parts) > 1 else parts[0][1:2])).upper()
-    def _team_photo(m: dict) -> str | None:
-        # Explicit `photo` path wins; otherwise auto-detect assets/team/<first>.<ext>
-        # so a member just drops a file (e.g. assets/team/noah.jpg) and rebuilds - 
-        # no JSON edit, and no 404 since we only emit <img> when the file exists.
-        if m.get("photo"):
-            return m["photo"]
-        slug = (m["name"].split() or [""])[0].lower()
-        for ext in ("jpg", "jpeg", "png", "webp"):
-            if (ROOT / "assets" / "team" / f"{slug}.{ext}").exists():
-                return f"/assets/team/{slug}.{ext}"
-        return None
-    # Credit badges: a LOGO mark per credit (no text), the role name on hover.
-    # A crown perches on every "Creator" badge (the founder mark); non-creator
-    # roles (e.g. Site Design) wear the mark alone. Marks ride currentColor so
-    # the per-module accent (and both themes) flow through one style hook.
-    _CROWN = ('<svg class="team-badge-crown" viewBox="0 0 24 14" aria-hidden="true">'
-              '<path d="M2 12h20l-1.6-8-4.9 4L12 2 8.5 8 3.6 4z" fill="currentColor" '
-              'stroke="rgba(0,0,0,.28)" stroke-width="0.5" stroke-linejoin="round"/>'
-              '<circle cx="2" cy="3.2" r="1.3" fill="currentColor"/>'
-              '<circle cx="12" cy="1.3" r="1.4" fill="currentColor"/>'
-              '<circle cx="22" cy="3.2" r="1.3" fill="currentColor"/></svg>')
-    # PX-08: each credit wears its module's pixel icon at 24 px (the 12 x 12
-    # core at 2x), the same drawing as the nav, rail and masthead, which
-    # retires the ten hand-drawn 24 px marks that were a fourth icon
-    # vocabulary. Site design wears the pen (the drawing the wire's signing
-    # pictogram uses) and any unmapped role, Writer and Analyst included, the
-    # Articles pilcrow. The two gold accents became primary ink: the pixel set
-    # draws no icon in gold (plan 5.7.1 line 7).
-    def _badge_for(note: str) -> str:
-        n = note.lower()
-        if "prospx" in n:                         key, accent = "prospx", "var(--text-primary)"
-        elif "projection" in n:                   key, accent = "projections", "var(--accent-cyan)"
-        elif "free agency" in n:                  key, accent = "fa", "var(--accent-green)"
-        elif "collegesavant" in n or "college" in n: key, accent = "collegesavant", "var(--accent-lilac)"
-        elif "eephus" in n:                       key, accent = "home", "var(--text-primary)"
-        elif "stats" in n:                        key, accent = "mlbstats", "var(--neon-amber)"
-        elif "alchemy" in n:                      key, accent = "pal", "var(--neon-violet)"
-        elif "webmaster" in n or "web" in n:      key, accent = "team", "var(--accent-navy)"
-        elif "design" in n:                       key, accent = "ev-signing", "var(--text-secondary)"
-        elif "trade" in n:                        key, accent = "trademachine", "var(--accent-orange)"
-        else:                                     key, accent = "articles", "var(--accent-red)"   # Writer/Analyst + any unmapped role
-        mark = _ico(key, 24)
-        creator = "creator" in n or "lead" in n or "webmaster" in n   # crown any lead/creator/webmaster role
-        cls = "team-badge" + (" is-creator" if creator else "")
-        label = html.escape(note)
-        return (f'<span class="{cls}" title="{label}" aria-label="{label}" '
-                f'style="--badge-accent:{accent}">{_CROWN if creator else ""}'
-                f'<span class="team-badge-mark">{mark}</span></span>')
-    # School affiliation: the school's wordmark mark (or an image at school_logo,
-    # if a member provides one) plus the full name. Add a school to _SCHOOL_MARKS
-    # to give its short mark a brand color.
-    _SCHOOL_MARKS = {"New York University": {"short": "NYU", "color": "#57068C", "logo": "nyu.png"},
-                     "University of Oklahoma": {"short": "OU", "color": "#841617", "logo": "ou.png"},
-                     "Boston University": {"short": "BU", "color": "#CC0000", "logo": "bu.png"},
-                     "Utah College": {"short": "UTAH", "color": "#CC0000", "logo": "utah.png"},
-                     "University of California, Los Angeles": {"short": "UCLA", "color": "#2774AE", "logo": "ucla.png"},
-                     "Merrimack College": {"short": "MACK", "color": "#003263", "logo": "merrimack.png"}}
-    def _school_html(m: dict) -> str:
-        school = (m.get("school") or "").strip()
-        if not school:
-            return ""
-        sm = _SCHOOL_MARKS.get(school) or {}
-        # Logo image (explicit school_logo, or the school's default) is used ONLY
-        # when the file exists on disk - otherwise we fall back to the wordmark so
-        # a missing file never renders a broken icon. A bare filename resolves
-        # under assets/team/; an absolute path is used as given.
-        logo = (m.get("school_logo") or sm.get("logo") or "").strip()
-        mark = ""
-        if logo:
-            rel = logo.lstrip("/") if "/" in logo else f"assets/team/{logo}"
-            if (ROOT / rel).exists():
-                mark = (f'<img class="team-school-logo" src="/{html.escape(rel)}" '
-                        f'alt="{html.escape(school)} logo" loading="lazy">')
-        if not mark and sm.get("short"):
-            mark = f'<span class="team-school-mark" style="color:{sm["color"]};">{html.escape(sm["short"])}</span>'
-        return f'<div class="team-school" title="{html.escape(school)}">{mark}<span>{html.escape(school)}</span></div>'
-    cards = []
-    for m in team:
-        handle = (m.get("handle") or "").lstrip("@")
-        linkedin = (m.get("linkedin") or "").strip().rstrip("/").rsplit("/", 1)[-1]
-        # Headshot: provided image (rectangular, sharp) over a monogram fallback
-        # that shows when there's no photo or the file 404s - never a broken image.
-        mono = f'<span class="team-monogram" aria-hidden="true">{html.escape(_initials(m["name"]))}</span>'
-        photo = _team_photo(m)
-        if photo:
-            img = (f'<img src="{html.escape(photo)}" alt="{html.escape(m["name"])}" '
-                   f'loading="lazy" onerror="this.style.display=\'none\'">')
-            photo_html = f'<div class="team-photo">{mono}{img}</div>'
-        else:
-            photo_html = f'<div class="team-photo">{mono}</div>'
-        chips = []
-        if handle:
-            chips.append(f'<a class="team-soc" href="https://x.com/{html.escape(handle)}" target="_blank" '
-                         f'rel="noopener" title="Twitter / X - @{html.escape(handle)}" aria-label="Twitter / X - @{html.escape(handle)}">{_TW_SVG}</a>')
-        if linkedin:
-            chips.append(f'<a class="team-soc" href="https://www.linkedin.com/in/{html.escape(linkedin)}/" target="_blank" '
-                         f'rel="noopener" title="LinkedIn - {html.escape(m["name"])}" aria-label="LinkedIn - {html.escape(m["name"])}">{_LI_SVG}</a>')
-        email = (m.get("email") or "").strip()
-        if email:
-            chips.append(f'<a class="team-soc" href="mailto:{html.escape(email)}" '
-                         f'title="Email - {html.escape(email)}" aria-label="Email - {html.escape(email)}">{_MAIL_SVG}</a>')
-        website = (m.get("website") or "").strip()
-        if website:
-            _host = website.split("//", 1)[-1].strip("/")
-            chips.append(f'<a class="team-soc" href="{html.escape(website)}" target="_blank" '
-                         f'rel="noopener" title="Website - {html.escape(_host)}" aria-label="Website - {html.escape(_host)}">{_WEB_SVG}</a>')
-        github = (m.get("github") or "").strip().rstrip("/").rsplit("/", 1)[-1]
-        if github:
-            chips.append(f'<a class="team-soc" href="https://github.com/{html.escape(github)}" target="_blank" '
-                         f'rel="noopener" title="GitHub - {html.escape(github)}" aria-label="GitHub - {html.escape(github)}">{_GH_SVG}</a>')
-        socials_html = f'<div class="team-socials">{"".join(chips)}</div>' if chips else ""
-        # Optional credit pills (e.g. "PROSPX Creator"). `note` may be a single
-        # string or a list - members with several credits get one pill each,
-        # wrapped in a flex row so they reflow cleanly inside the card.
-        notes = m.get("note")
-        if isinstance(notes, str):
-            notes = [notes]
-        notes = [n for n in (notes or []) if n]
-        # Module credit badges (a logo mark per role, a crown on creator/lead/webmaster
-        # roles, full role name on hover) render on the FRONT face under the socials.
-        note_html = (
-            '<div class="team-notes">'
-            + "".join(_badge_for(n) for n in notes)
-            + "</div>"
-        ) if notes else ""
-        slug = _member_slug(m["name"])
-        # Back face: the owner fills in the specific sections / models / metrics
-        # each developer built later. Optional `back` field in team.json (a list
-        # of strings, or a preformatted HTML string) drives it; absent -> a plain
-        # placeholder so the flip always has something to show.
-        back = m.get("back")
-        if isinstance(back, str) and back.strip():
-            back_body = back
-        elif isinstance(back, list) and back:
-            back_body = ('<ul class="team-back-list">'
-                         + "".join(f'<li>{html.escape(str(b))}</li>' for b in back if b)
-                         + "</ul>")
-        else:
-            back_body = '<p class="team-back-empty">Detailed contributions coming soon.</p>'
-        front_face = (
-            f'<div class="card team-card-face team-card-front">{photo_html}'
-            f'<p class="name">{html.escape(m["name"])}</p>{_school_html(m)}{socials_html}{note_html}'
-            '<span class="team-flip-hint" aria-hidden="true">flip &#8635;</span></div>'
-        )
-        back_face = (
-            '<div class="card team-card-face team-card-back">'
-            f'<div class="team-back-head">{html.escape(m["name"])}</div>{back_body}'
-            '<span class="team-flip-hint" aria-hidden="true">back &#8635;</span></div>'
-        )
-        cards.append(
-            f'<div class="team-card team-flip" id="member-{slug}" tabindex="0" role="button" '
-            f'aria-pressed="false" aria-label="{html.escape(m["name"])}: flip for contributions">'
-            f'<div class="team-card-inner">{front_face}{back_face}</div></div>'
+               '22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>'),
+    "mail": ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 '
+             '2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>'),
+}
+
+
+def _team_socials(m: dict) -> str:
+    f = m.get("front") or {}
+    name = html.escape(m["name"])
+    chips = []
+
+    def chip(href: str, label: str, key: str, external: bool = True) -> None:
+        tgt = ' target="_blank" rel="noopener noreferrer"' if external else ""
+        chips.append(f'<a class="tc-soc" href="{html.escape(href)}"{tgt} title="{html.escape(label)}" '
+                     f'aria-label="{html.escape(label)}">{_SOC_SVG[key]}</a>')
+
+    handle = (f.get("handle") or "").lstrip("@")
+    if handle:
+        chip(f"https://x.com/{handle}", f"X: @{handle}", "x")
+    linkedin = (f.get("linkedin") or "").strip().rstrip("/").rsplit("/", 1)[-1]
+    if linkedin:
+        chip(f"https://www.linkedin.com/in/{linkedin}/", f"LinkedIn: {m['name']}", "linkedin")
+    email = (f.get("email") or "").strip()
+    if email:
+        chip(f"mailto:{email}", f"Email: {email}", "mail", external=False)
+    website = (f.get("website") or "").strip()
+    if website:
+        chip(website, f"Website: {website.split('//', 1)[-1].strip('/')}", "web")
+    github = (f.get("github") or "").strip().rstrip("/").rsplit("/", 1)[-1]
+    if github:
+        chip(f"https://github.com/{github}", f"GitHub: {github}", "github")
+    if not chips:
+        return ""
+    return f'<div class="tc-socials" aria-label="{name}: profiles">{"".join(chips)}</div>'
+
+
+def _team_card_number(group: dict, order: int) -> str:
+    return f'{group.get("number_prefix", "")}{order:02d}'
+
+
+def _team_card(m: dict, group: dict, team: dict) -> str:
+    """One Masthead card in the PROSPX player-card idiom (TEAM-7): a 2.5 by 3.5
+    front with the photo window, the name plate, the role as the position line,
+    the group as the team line, the card number and the credit badges as the
+    stats line; a card back with the stat table of every credit, the record
+    lines and the set name. The owner's card (owner: true, exactly one) wears
+    the set's one legendary foil edge and the founder plate (TEAM-3)."""
+    key = m["key"]
+    name = m["name"]
+    e_name = html.escape(name)
+    no = _team_card_number(group, int(m["order"]))
+    owner = bool(m.get("owner"))
+    catalogue = team["badges"]
+    credits = team.get("credits", {})
+    badges = [b for b in (m.get("badges") or []) if b.get("key") in catalogue]
+
+    def badge_label(b: dict) -> tuple[str, str]:
+        return catalogue[b["key"]]["label"], credits.get(b.get("credit", ""), "")
+
+    # ---- front
+    photo = m.get("photo")
+    if photo and not (ROOT / photo.lstrip("/")).exists():
+        photo = None
+    mono = f'<span class="tc-mono" aria-hidden="true">{html.escape(_initials(name))}</span>'
+    img = (f'<img src="{html.escape(photo)}" alt="{e_name}" width="600" height="600" loading="lazy" '
+           f'onerror="this.remove()">') if photo else ""
+    plate = (f'<span class="tc-plate">{_ico("b-founder", 12)}<span>Owner and founder</span></span>'
+             if owner else "")
+    pos = html.escape(m.get("role") or "")
+    if m.get("role_extra"):
+        pos += " · " + html.escape(m["role_extra"])
+    shown = badges if len(badges) <= TEAM_FRONT_BADGES + 1 else badges[:TEAM_FRONT_BADGES]
+    rest = len(badges) - len(shown)
+    chips = []
+    for b in shown:
+        label, credit = badge_label(b)
+        tip = f"{label}: {credit}" if credit else label
+        chips.append(f'<li class="tc-badge" data-badge="{html.escape(b["key"])}" title="{html.escape(tip)}">'
+                     f'{_ico(catalogue[b["key"]]["icon"], 16)}'
+                     f'<span class="visually-hidden">{html.escape(tip)}</span></li>')
+    more = (f'<button class="tc-more" type="button" data-flip="back" '
+            f'aria-label="{rest} more credits on the back of {e_name}\'s card">+{rest}</button>'
+            if rest else "")
+    stats = (f'<div class="tc-stats"><ul class="tc-badges" aria-label="{e_name}: credits">{"".join(chips)}</ul>'
+             f'{more}</div>') if chips else '<div class="tc-stats"></div>'
+    group_line = f'{_ico(group.get("icon") or "team", 12)}<span>{html.escape(group["label"])}</span>'
+    front = (
+        '<div class="tc-face tc-front">'
+        f'<div class="tc-top"><span class="tc-no">No. {no}</span>'
+        f'<span class="tc-set">{html.escape(team.get("set", ""))}</span></div>'
+        f'<div class="tc-photo">{mono}{img}{plate}</div>'
+        f'<div class="tc-nameplate"><h3 class="tc-name">{e_name}</h3></div>'
+        f'<p class="tc-pos">{pos}</p>'
+        f'<p class="tc-team">{group_line}</p>'
+        f'{stats}'
+        '<div class="tc-foot">'
+        f'<button class="tc-btn tc-flipbtn" type="button" data-flip="back" '
+        f'aria-label="Turn {e_name}\'s card to the back">{_ico("b-flip", 12)}<span>Back</span></button>'
+        f'<button class="tc-btn tc-gfx" type="button" data-gfx hidden '
+        f'aria-label="Share {e_name}\'s card as an image">Share</button>'
+        '</div></div>'
+    )
+
+    # ---- back
+    rows = []
+    for b in badges:
+        label, credit = badge_label(b)
+        rows.append(f'<tr data-badge="{html.escape(b["key"])}"><td>{_ico(catalogue[b["key"]]["icon"], 12)}'
+                    f'<span>{html.escape(label)}</span></td><td>{html.escape(credit)}</td></tr>')
+    table = ('<table class="tc-table"><caption class="visually-hidden">'
+             f'{e_name}: modules and systems</caption>'
+             '<thead><tr><th scope="col">Module or system</th><th scope="col">Credit</th></tr></thead>'
+             f'<tbody>{"".join(rows)}</tbody></table>') if rows else ""
+    back_lines = [ln for ln in (m.get("back") or []) if isinstance(ln, str) and ln.strip()]
+    bio = ('<h4 class="tc-back-h">Record</h4><ul class="tc-bio">'
+           + "".join(f"<li>{html.escape(ln)}</li>" for ln in back_lines) + "</ul>") if back_lines else ""
+    vitals = []
+    school = ((m.get("front") or {}).get("school") or "").strip()
+    if school:
+        vitals.append(f"<dt>School</dt><dd>{html.escape(school)}</dd>")
+    mark = m.get("watermark")
+    if mark:
+        n = _watermark_counts().get(mark)
+        files = f", {n:,} source file{'s' if n != 1 else ''}" if n else ""
+        vitals.append(f"<dt>Code mark</dt><dd>{html.escape(mark)}{files}</dd>")
+    vit = f'<dl class="tc-vitals">{"".join(vitals)}</dl>' if vitals else ""
+    back = (
+        '<div class="tc-face tc-back">'
+        f'<div class="tc-back-head"><span class="tc-no">No. {no}</span>'
+        f'<span class="tc-back-name">{e_name}</span>'
+        f'<span class="tc-back-pos">{pos}</span></div>'
+        f'<div class="tc-back-body" tabindex="0" role="region" aria-label="{e_name}: credits and record">'
+        f'{table}{bio}{vit}{_team_socials(m)}</div>'
+        '<div class="tc-foot">'
+        f'<span class="tc-setname">{html.escape(team.get("set", ""))} · No. {no}</span>'
+        f'<button class="tc-btn tc-flipbtn" type="button" data-flip="front" '
+        f'aria-label="Turn {e_name}\'s card to the front">{_ico("b-flip", 12)}<span>Front</span></button>'
+        '</div></div>'
+    )
+    cls = "tc-card" + (" is-owner" if owner else "")
+    badge_keys = ",".join(b["key"] for b in badges)
+    return (f'<li class="tc-slot"><article class="{cls}" id="member-{html.escape(key)}" '
+            f'data-member="{html.escape(key)}" data-no="{no}" data-badges="{html.escape(badge_keys)}" '
+            f'aria-label="{e_name}, card {no}">'
+            f'<div class="tc-inner">{front}{back}</div></article></li>')
+
+
+def _team_placeholder(group: dict, team: dict) -> str:
+    """The 'to be named' face for a group with no members yet, on the same
+    card template, carrying the group's honest empty state through the state
+    component (no invented names)."""
+    no = _team_card_number(group, 1)
+    state = _px_state("empty", html.escape(group.get("empty") or ""), "tc-state")
+    return (
+        '<li class="tc-slot"><article class="tc-card is-unnamed" '
+        f'aria-label="{html.escape(group["label"])}: to be named">'
+        '<div class="tc-inner"><div class="tc-face tc-front">'
+        f'<div class="tc-top"><span class="tc-no">No. {no}</span>'
+        f'<span class="tc-set">{html.escape(team.get("set", ""))}</span></div>'
+        f'<div class="tc-photo">{state}</div>'
+        '<div class="tc-nameplate"><h3 class="tc-name">To be named</h3></div>'
+        f'<p class="tc-team">{_ico(group.get("icon") or "team", 12)}'
+        f'<span>{html.escape(group["label"])}</span></p>'
+        '</div></div></article></li>'
+    )
+
+
+def build_team() -> str:
+    """/team/ - the Masthead (owner decisions TEAM-1 to TEAM-7, 2026-10-02).
+
+    The site's staff page and the one place attribution lives: the 'Created by'
+    byline that sat on every module masthead is gone (TEAM-2). Two groups,
+    Developers and Writers and Analysts, each a set of baseball cards ordered
+    by the data file's order field (TEAM-6), every member and every credit read
+    from data/team.json. Layout chosen: the cards stay, as trading cards (front
+    first; the full credit table and the record on the back), because a card
+    front reads at 390 and 1280 alike and the back holds the long record
+    without crowding the grid. assets/team.js turns the cards (whole-pixel
+    steps), remembers the set-wide 'show the backs' choice per viewer, and
+    hands one card to the GFX engine as a 2x PNG."""
+    team = _load_team()
+    groups = sorted(team["groups"], key=lambda g: g.get("order", 0))
+    members = team["members"]
+    sections = []
+    for g in groups:
+        mine = sorted((m for m in members if m.get("group") == g["key"]), key=lambda m: m["order"])
+        cards = "".join(_team_card(m, g, team) for m in mine) if mine else _team_placeholder(g, team)
+        count = (f'{len(mine)} card{"s" if len(mine) != 1 else ""}' if mine else "to be named")
+        gid = f'tc-g-{html.escape(g["key"])}'
+        sections.append(
+            f'<section class="tc-group" data-group="{html.escape(g["key"])}" aria-labelledby="{gid}">'
+            f'<h2 class="tc-group-head" id="{gid}">{_ico(g.get("icon") or "team", 16)}'
+            f'<span>{html.escape(g["label"])}</span><span class="tc-group-count">{count}</span></h2>'
+            f'<ol class="tc-grid">{cards}</ol></section>'
         )
     follow = (
         '<div class="team-follow"><span class="team-follow-label">Follow</span>'
         f'{_x_link("eephus_io")}{_x_link("MLBPROSPX")}{_discord_link()}</div>'
     )
     mission = (
-        "<p class=\"team-mission\">eephus.io is built by the development team below, college "
-        "students working toward careers in baseball. Contact any of us for questions, "
-        "feedback or opportunities.</p>"
-        # This leaf is labeled "Developers" in the nav, so a developer arriving
-        # here looking for the data finds a pointer instead of a dead end. The
-        # catalog itself lives on /sources/ (see _sources_api_section for why).
-        "<p class=\"team-mission\">Building on the data? Every model artifact is public JSON, "
-        "catalogued on <a href=\"/sources/#api\">the public data page</a>.</p>"
+        '<p class="team-mission">The people who build, run and write eephus.io. Every module and '
+        'system on the site carries its builder&#39;s badge here, and this page is the only place '
+        'the site keeps its credits. Turn a card over for the full record.</p>'
+        '<p class="team-mission">Building on the data? Every model artifact is public JSON, '
+        'catalogued on <a href="/sources/#api">the public data page</a>.</p>'
     )
-    # Click / keyboard flip: toggles .is-flipped on a card. Clicks on the social
-    # links (or any future back-face link/button) do NOT flip, so links still
-    # work. Self-contained inline script (page() inserts body raw); plain ASCII,
-    # no em-dashes (copy gate scans generated HTML).
-    flip_js = (
-        '<script>(function(){'
-        'function toggle(card){var f=card.classList.toggle("is-flipped");'
-        'card.setAttribute("aria-pressed",f?"true":"false");}'
-        'document.querySelectorAll(".team-flip").forEach(function(card){'
-        'card.addEventListener("click",function(e){'
-        'if(e.target.closest("a,button"))return;toggle(card);});'
-        'card.addEventListener("keydown",function(e){'
-        'if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle(card);}});'
-        '});})();</script>'
+    toolbar = (
+        '<div class="tc-toolbar"><button class="tc-btn tc-flipall" type="button" aria-pressed="false">'
+        f'{_ico("b-flip", 16)}<span>Show card backs</span></button></div>'
     )
     body = (
-        f'<div class="section-head"><h1>{_masthead_icon("team")}Developers</h1></div>'
-        f'{mission}'
-        f'{follow}'
-        f'<div class="team-grid">{"".join(cards)}</div>'
-        f'{flip_js}'
+        f'<div class="section-head"><h1>{_masthead_icon("team")}Masthead</h1>'
+        '<span class="section-sub">who builds, runs and writes the site</span></div>'
+        f'{mission}{follow}{toolbar}'
+        f'<div class="tc-set-wrap" data-set="{html.escape(team.get("set", ""))}">{"".join(sections)}</div>'
+        f'<link rel="stylesheet" href="/assets/team.css?v={_TEAM_CSS_VER}">'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/team.js?v={_TEAM_VER}" defer></script>'
     )
-    return page("Developers - eephus.io", "team", body, "The team behind eephus.io.",
+    return page("Masthead - eephus.io", "team", body,
+                "The people who build, run and write eephus.io: the developers and the writers "
+                "and analysts, with every module and system credited to the person who built it.",
                 url=f"{SITE_ORIGIN}/team/")
+
 
 # --------------------------------------------------------------------------- #
 # /teams/ - RETIRED standalone module (merged into MLB Projections
@@ -6510,6 +6590,30 @@ def build_teams_redirect() -> str:
 </head><body>
 <p style="font-family:monospace;padding:2rem;">The Teams dashboard moved into
 <a href="/projections/#view=teams">MLB Projections &rarr; Team Outlook</a>.</p>
+</body></html>
+"""
+
+
+def build_franchises_redirect() -> str:
+    """/franchises/ -> /franchise/ (owner decision TEAM-1, 2026-10-02).
+
+    The module's display name became "Franchises" while its key and URL stayed
+    /franchise/, so the plural address a reader might type resolves too. A
+    canonical, noindex stub on the build_teams_redirect shape that carries the
+    incoming hash across, so /franchises/#team=NYY opens that club. It ships
+    (deploy/publish_paths.txt) and stays out of the sitemap like /teams/."""
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Franchises - eephus.io</title>
+{FAVICON_LINKS}
+<meta name="robots" content="noindex">
+<link rel="canonical" href="{SITE_ORIGIN}/franchise/">
+<meta http-equiv="refresh" content="0; url=/franchise/">
+<script>location.replace("/franchise/"+(location.hash||""));</script>
+</head><body>
+<p style="font-family:monospace;padding:2rem;">Franchises lives at
+<a href="/franchise/">/franchise/</a>.</p>
 </body></html>
 """
 
@@ -7104,6 +7208,7 @@ def main() -> None:
     _write("hof/index.html", build_hof())
     _write("management/index.html", build_management())
     _write("franchise/index.html", build_franchise())
+    _write("franchises/index.html", build_franchises_redirect())
     _write("ledger/index.html", build_ledger())
     _write("models/index.html", build_models())
     _write("glossary/index.html", build_glossary())

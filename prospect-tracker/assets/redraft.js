@@ -760,7 +760,7 @@
       gl("xwOBA", "xwoba") + " allowed. One column per side. Positive: results behind " +
       "the expected stats; negative: ahead. Whether a gap closes or persists is unmeasured. " +
       "mech trend: a 5+ point move in per-season " + gl("Swing+", "swing_plus") +
-      " (Will Cahoon), context only, not in the ranking.</div>" +
+      ", context only, not in the ranking.</div>" +
       '<div class="rd-cols">' + col(sec.buy_low, "Buy-Low (behind x-stats)", "rd-pos", "buy-low") +
       col(sec.sell_high, "Sell-High (ahead of x-stats)", "rd-neg", "sell-high") + "</div>";
   }

@@ -105,7 +105,7 @@
 
   function moduleBadges(e) {
     const LBL = { prospx: "PROSPX", fa: "MLB FA", foundations: "FOUNDATIONS",
-                  platform: "PLATFORM" };
+                  platform: "PLATFORM", franchise: "FRANCHISES" };
     return (e.module || []).map(m =>
       `<span class="gl-mod gl-mod--${m}">${LBL[m] || m.toUpperCase()}</span>`).join("");
   }
@@ -4909,7 +4909,7 @@ function _libraryGroups() {
       ["/history/", "Today in Prospect History", "debut anniversaries, prospect trades, signings, and IL moves that landed on today's calendar date"],
       ["/news/", "Prospect News", "the full de-noised event wire: debuts, trades, promotions, IL, grade changes, FA signings"],
       ["/articles/", "Articles", "long-form editorial pieces, newest first"],
-      ["/team/", "Developers", "who builds and runs the site"],
+      ["/team/", "Masthead", "who builds, runs and writes the site: the one page that carries the credits"],
     ] },
   { title: "In-module artifact pages",
     sub: "deep-linkable views inside the module apps",

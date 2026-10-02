@@ -41,7 +41,10 @@
 //     dateLabel?: "Jul 23, 2026" (newsday),
 //     comp?:  { tiles:[{stat, label, sub?}],
 //               panels:[{title, lo, hi, star?, rows:[{label, v, isEfv?, c?}]}],
-//               note? } (sourcecomp) }
+//               note? } (sourcecomp),
+//     draw?:  async function (env) -> canvas (kind:"draw"; the caller paints a
+//             fixed-geometry object, a Masthead card, at env.scale backing
+//             pixels with env.palette and env.px, the pixel icon painter) }
 //   EEPHUS_GFX.chipHTML(id, label?)   a ready "Generate GFX" chip button
 (function () {
   "use strict";
@@ -714,6 +717,10 @@
       // Fixed Twitter-card geometry; format control is hidden.
       return renderSourceComp(_spec);
     }
+    if (_spec.kind === "draw" && typeof _spec.draw === "function") {
+      // The caller owns the geometry (a Masthead card is 300 x 420 at 2x).
+      return await _spec.draw({ scale: SCALE, palette: palette(accentToken()), px: X });
+    }
     return renderBoard(_spec, fmt);
   }
 
@@ -789,7 +796,8 @@
     // card, newsday AND sourcecomp own their geometry (newsday: fixed 1200w,
     // auto height, every item always drawn; sourcecomp: fixed Twitter card) -
     // Format + Show only apply to boards. Theme + Accent stay live for all.
-    var noBoard = _spec.kind === "card" || _spec.kind === "newsday" || _spec.kind === "sourcecomp";
+    var noBoard = _spec.kind === "card" || _spec.kind === "newsday" || _spec.kind === "sourcecomp" ||
+      _spec.kind === "draw";
     ov.querySelector(".egfx-ctrl-format").style.display = noBoard ? "none" : "";
     ov.querySelector(".egfx-ctrl-count").style.display = noBoard ? "none" : "";
     ov.querySelector("#egfx-format").value = _opts.format;

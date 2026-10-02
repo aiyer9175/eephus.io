@@ -272,15 +272,6 @@
      ladder is the last resort. (This token has never carried Roboto Mono, only
      the copy tokens above do.) */
   --font-logo: "PixelMplus12","MS Gothic","MS UI Gothic","Osaka",ui-monospace,Consolas,monospace;
-  /* DARKENED 2026-08-05. #C8A2C8 measured 1.95:1 on the warm paper, the worst
-     text ratio on the site: the dev byline was a pale lilac on a pale cream at
-     11px uppercase, and .build-banner then multiplied it by an opacity of .95.
-     Same hue, carried down to a plum that measures 5.33:1 on --bg-primary, so
-     the signature keeps its identity and becomes readable. The DARK value is
-     untouched: #D9B8E8 on the near-black field already measures 11.1:1.
-     PROSPX's own :root still wins inside that app, so this moves the editorial
-     and module mastheads only. */
-  --byline-lilac:  #7E5385;   /* dev byline (build-banner) text */
   /* Font aliases - the editorial pages, the /projections/ .mlbp player cards,
      and the homepage cross-module strip reference these. Without them at the
      shared :root they fell back to UA serif/sans and lost the MS-Gothic
@@ -419,7 +410,6 @@
   --vt-avg:   #B4B9C4;
   --vt-below: var(--text-dim);
   --vt-poor:  var(--accent-red);
-  --byline-lilac:  #D9B8E8;   /* lifted lilac for the near-black surface - mirrors PROSPX B2 */
   --text-on-accent: #05080F;            /* near-black text on the bright refractor accents */
   --bg-hover: rgba(0, 217, 255, 0.08);  /* cyan-tinted hover on the dark surface */
   /* Scrollbars (dark): charcoal thumb that reads on near-black, a faint track so
@@ -853,13 +843,12 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    Stats names all four leaderboard sections). Matches the phone stacking rule below. */
 .section-head--byline { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 6px; }
 .section-head--byline .section-head-titles { display: flex; flex-direction: column; min-width: 0; }
-.section-head--byline .section-head-titles .build-banner { margin: 0 0 6px; }
 .section-head--byline .section-sub { max-width: 78ch; }
 /* DELETED 2026-08-05: the developer-badge family (.lead-dev-badge + .ldb-*,
    .dev-plus-badge + .dpb-*, .dev-plus-card + .dpc-*). Thirty-five lines of
    badge, hover ledger and pop-card for markup that no surface emits: the
-   credit moved onto .build-banner (the byline line the .section-head--byline
-   rules just above lay out) and onto the /team/ cards. Verified against
+   credit moved onto a masthead byline (itself removed 2026-10-02, TEAM-2)
+   and onto the /team/ cards. Verified against
    build_site.py, every assets/*.js, prospx/index.html, collegesavant/*.html,
    content/ and config/: zero references outside this file. */
 
@@ -894,119 +883,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .back-link:hover { text-decoration: underline; }
 
 /* ---- team ---- */
-.team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-/* Deep-linked card (e.g. /team/#member-will-cahoon) gets a brief gold accent. */
-.team-card { scroll-margin-top: 90px; }
-.team-card:target { outline: 2px solid var(--accent-gold); outline-offset: 3px; }
-/* Headshot - rectangular, sharp corners (circular is reserved for account
-   avatars). Provided <img> sits above a monogram that shows through when there's
-   no photo or the file fails to load. */
-.team-card .team-photo {
-  position: relative; width: 100%; height: 168px; margin: 0 0 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-tertiary); overflow: hidden;
-}
-.team-card .team-photo img {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; object-position: center top; z-index: 1;
-}
-.team-card .team-monogram {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-retro-mono); font-size: 2.6rem; font-weight: 700;
-  letter-spacing: .04em; color: var(--text-tertiary);
-}
-.team-card .team-photo::after {   /* thin iridescent baseline, like the card rules */
-  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
-  background: var(--iridescent); z-index: 2;
-}
+/* The /team/ card rules moved to assets/team.css with the Masthead (owner
+   decisions TEAM-3 to TEAM-7, 2026-10-02); the page text rule stays here. */
 .team-mission { max-width: 760px; margin: 4px 0 20px; font-size: 15px; line-height: 1.6; color: var(--text-secondary); }
-.team-card .name { font-family: var(--font-retro-mono); font-size: 1.1rem; font-weight: 700; margin: 0; letter-spacing: .02em; }
-.team-card .team-school { display: inline-flex; align-items: center; gap: 7px; margin-top: 9px;
-  font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-secondary); }
-.team-card .team-school-mark { font-weight: 800; letter-spacing: .02em; font-size: 14px; }
-.team-card .team-school-logo { height: 26px; width: auto; display: block; }
-/* align-items:flex-end + container top headroom keep every badge box on one
-   line (crowns float above uniformly) instead of crowned boxes sitting lower. */
-.team-card .team-notes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 11px; margin: 18px 0 2px; }
-/* Credit badge: a logo mark (no text), the role name surfaced on hover via the
-   native title. A crown perches above "Creator" badges. The mark rides the
-   per-module accent passed in as --badge-accent; the crown stays gold. */
-.team-card .team-badge {
-  position: relative; display: inline-flex; align-items: center; justify-content: center;
-  width: 40px; height: 40px; flex: none; overflow: visible; cursor: help;
-  background: var(--bg-secondary); border: 1px solid var(--border);
-  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
-}
-.team-card .team-badge:hover {
-  transform: translateY(-2px);
-  border-color: var(--badge-accent, var(--accent-gold));
-  box-shadow: 0 4px 14px rgba(0,0,0,.18);
-}
-.team-card .team-badge-mark { display: inline-flex; color: var(--badge-accent, var(--text-primary)); }
-.team-card .team-badge-mark svg { width: 24px; height: 24px; display: block; }
-.team-card .team-badge-crown {
-  position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
-  width: 20px; height: 12px; color: var(--accent-gold);
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
-}
-.team-card .handle { font-size: 13px; color: var(--accent-navy); margin: 6px 0 0; }
-.team-card .handle a { color: var(--accent-navy); text-decoration: none; }
-.team-card .handle a:hover { text-decoration: underline; }
-/* Per-member Twitter / LinkedIn chips (sharp corners, on-theme). */
-.team-card .team-socials { display: flex; gap: 8px; margin-top: 10px; }
-.team-card .team-soc {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px;
-  border: 1px solid var(--border);
-  background: var(--bg-tertiary); color: var(--text-secondary);
-  text-decoration: none;
-  transition: background .12s, color .12s, border-color .12s;
-}
-.team-card .team-soc:hover { background: var(--bg-secondary); color: var(--text-primary); border-color: var(--text-tertiary); }
-.team-card .team-soc svg { width: 15px; height: 15px; display: block; fill: currentColor; }
-
-/* ---- team card flip (click / Enter / Space) ---------------------------------
-   The outer .team-flip is the 3D perspective wrapper (keeps the id + :target so
-   deep links still resolve); the rotating .team-card-inner carries the two .card
-   faces. The .card chrome (incl. overflow:hidden + the iridescent top bar) lives
-   ON the faces, NEVER on the rotating parent, or it clips the 3D. Front stays in
-   normal flow (defines the box height); back is absolutely positioned over it. */
-/* Uniform card size: stretch every card to its row's tallest sibling (with a floor)
-   so a member with 10 badges and one with none read as the same card. */
-.team-grid { align-items: stretch; }
-.team-flip { perspective: 1200px; cursor: pointer; }
-.team-flip:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 3px; }
-.team-card-inner {
-  position: relative; width: 100%; height: 100%; min-height: 340px;
-  transition: transform .6s cubic-bezier(.2,.7,.3,1);
-  transform-style: preserve-3d;
-}
-.team-flip.is-flipped .team-card-inner { transform: rotateY(180deg); }
-.team-card-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.team-card-back {
-  position: absolute; inset: 0; transform: rotateY(180deg);
-  overflow: auto; display: flex; flex-direction: column;
-}
-/* Only the visible face is interactive (front links must not intercept when
-   flipped; back links must work once flipped). */
-.team-flip .team-card-back { pointer-events: none; }
-.team-flip.is-flipped .team-card-back { pointer-events: auto; }
-.team-flip.is-flipped .team-card-front { pointer-events: none; }
-.team-back-head {
-  font-family: var(--font-retro-mono); font-size: 1.05rem; font-weight: 700;
-  letter-spacing: .02em; margin: 0 0 10px; padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-.team-back-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
-.team-back-list li { margin: 2px 0; }
-.team-back-empty { font-size: 13px; color: var(--text-tertiary); font-style: italic; margin: 6px 0; }
-.team-flip-hint {
-  margin-top: auto; align-self: flex-end; padding-top: 10px;
-  font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--text-tertiary); opacity: .7;
-}
-.team-card-front { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
-/* The flip keeps its transition under Reduce Motion (owner, 2026-10-01). */
 
 /* ---- footer ---- */
 .eephus-footer {
@@ -1021,24 +900,6 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   font-family: var(--font-retro-mono);
 }
 .eephus-footer-links a:hover { color: var(--text-primary); text-decoration: underline; }
-
-/* ---- dev byline (Created by ... on FA / Projections mastheads) ----
-   Mirrors PROSPX's .build-banner inline rule so the signature reads
-   identically on every module. */
-.build-banner {
-  display: inline-block;
-  font-family: var(--font-retro);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--byline-lilac);
-  margin: 0 0 8px;
-  /* The opacity: 0.95 that used to sit here is gone with the lilac re-tune: it
-     bought nothing visually and it is the same composite-toward-the-surface
-     move that put the dim text under AA (see --text-dim). */
-  font-weight: 600;
-  user-select: text;
-}
 
 /* ---- mobile ---- */
 /* Phone treatment: the old full-width swipe strip hid half the links with no

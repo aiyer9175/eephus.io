@@ -210,7 +210,7 @@ def test_no_surface_asserts_an_unearned_accuracy_claim():
     banned = ("out-ranks consensus", "OUT-RANKS", "out-ranks the scouting industry")
     # glossary.js is exempt: its two occurrences are inside _methEfvVerdict branches
     # that only render when beat.length says the measurement earned them.
-    targets = ["data/glossary.json", "content/team.json", "prospx/index.html"]
+    targets = ["data/glossary.json", "data/team.json", "prospx/index.html"]
     bad = []
     for t in targets:
         p = root / t

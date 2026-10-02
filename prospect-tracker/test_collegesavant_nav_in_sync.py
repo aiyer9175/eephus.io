@@ -81,3 +81,14 @@ def test_static_nav_matches_build_site(page: Path):
         f"{page.name}: nav has {link_count} links but nav_leaves() has "
         f"{len(leaves)} - a stale/extra link drifted in."
     )
+
+
+@pytest.mark.parametrize("page", STATIC_NAV_PAGES, ids=lambda p: f"{p.parent.name}/{p.name}")
+def test_static_nav_carries_the_2026_10_02_renames(page: Path):
+    """Owner decisions TEAM-1 and TEAM-5 (2026-10-02): the Franchise module is
+    'Franchises' and the staff page is the 'Masthead', on every hand-kept nav
+    copy as in NAV_ITEMS (the keys and URLs are unchanged)."""
+    nav = _NAV_RE.search(page.read_text(encoding="utf-8")).group(1)
+    assert re.search(r'href="/franchise/"[^>]*>(?:<svg.*?</svg>)?Franchises</a>', nav, re.S), page.name
+    assert re.search(r'href="/team/"[^>]*>.*?Masthead</a>', nav, re.S), page.name
+    assert ">Franchise<" not in nav and ">Developers<" not in nav, page.name

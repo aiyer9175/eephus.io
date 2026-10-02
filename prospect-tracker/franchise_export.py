@@ -2,7 +2,7 @@
 # Unauthorized copying of this file, via any medium is strictly prohibited
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
-"""Build data/franchise_board.json, the payload behind /franchise/ (Franchise).
+"""Build data/franchise_board.json, the payload behind /franchise/ (Franchises).
 
 WHAT THIS PAGE IS. A hub. It re-serves numbers the other modules already
 publish, on the scale each was computed on, with a labelled basis and a deep
@@ -1296,7 +1296,7 @@ def build() -> dict:
         "odds_as_of": futures.get("as_of_note") or "",
         "board_lede": "Thirty clubs on the Franchise Index, one column per graded branch and the headline descriptive figures; every row opens its club.",
         "board_foot": "index and branch scores are 100 + 10z across the 30 clubs and take the z ladder; every other column prints on its own scale, plain.",
-        "load_error": "The Franchise Overview could not be loaded.",
+        "load_error": "Franchises could not be loaded.",
         "tree_hidden": "Hide the tree; show only the root card",
         "tree_canopy": "Root and the twelve branches",
         "tree_full": "The full three-column tree with every leaf",
