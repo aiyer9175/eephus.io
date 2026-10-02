@@ -10189,7 +10189,7 @@
           <button class="chip"        data-lb-stat="hr"      title="Home runs">HR</button>
           <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
           <button class="chip" data-lb-stat="hit_level_plus" title="OPS vs level mean - surfaces hitters whose OPS is great BECAUSE the level is hard">OPS+ lvl</button>
-          <button class="chip" data-lb-stat="rps_plus" title="RPS+ - level-anchored rate performance score, re-anchored to the player's age x position-group cohort. 100 = cohort mean; it is a RATIO index like wRC+, so +10 means 10% above the cohort mean, not one standard deviation. Active-board scale only: the Draft and Overseas sections carry their own 100+15z indexes (RPS-Draft+, RPS-Intl+). Hitters only.">RPS+</button>
+          <button class="chip" data-lb-stat="rps_plus" title="RPS+ - level-anchored rate performance score, re-anchored to the player's age x position-group cohort. 100 = cohort mean; it is a RATIO index like wRC+, so +10 means 10% above the cohort mean, not one standard deviation. Active-board scale only: the Draft and Overseas sections carry their own 100 + 15-point indexes (RPS-Draft+ on fixed college anchors, RPS-Intl+ as a z-score within its cohort). Hitters only.">RPS+</button>
           <button class="chip" data-lb-stat="iso_plus" title="ISO+ - isolated power indexed to level-average ISO (100 = league-average power). Hitters only.">ISO+</button>
           <button class="chip" data-lb-stat="pow_plus" title="POW+ - power index: ISO+ (the performance axis, HR-rate retired as collinear) + Statcast hard-hit/barrel + Power grade (100 = average). Hitters only.">POW+</button>
           <button class="chip" data-lb-stat="pd_plus" title="PD+ - plate-discipline index: BB%−K% vs level (100 = level average, 10 points = 1 std-dev of the differential) blended 70/30 with the Pitch-Selection grade. Hitters only.">PD+</button>
@@ -11538,7 +11538,7 @@ function _tiebreakerScoreRaw(p, opts) {
   const toolPlus = (p.tool_plus != null) ? p.tool_plus : null;
   // 2026-08-19 three-scales resolution (owner default): the shared payload key
   // `rps_plus` is retired. Each surface serves its own name and scale:
-  //   draft    -> rps_draft_plus (100+15z vs the draft class, clamp 60-140)
+  //   draft    -> rps_draft_plus (100 + 15 x a fixed-anchor college score, clamp 60-140)
   //   overseas -> rps_intl_plus  (100+15z vs the league cohort, pitcher sign-flipped)
   //   actives  -> browser cohort RATIO (getRpsPlus, clamp 0-250; no baked field)
   const rpsDraftPlus = (p.rps_draft_plus != null) ? p.rps_draft_plus : null;
@@ -23670,8 +23670,8 @@ function makeWarChart(g) {
 // Never touches DATA.prospects / DATA.debuts / DATA.farms - the schema
 // firewall is on the Python side; this is just the rendering counterpart.
 // The active board's ratio RPS+ never appears here - amateurs share no
-// cohort with MiLB. The payload's own index is rps_draft_plus (100+15z off
-// college perf, clamp 60-140); it feeds the draft TBS branch only.
+// cohort with MiLB. The payload's own index is rps_draft_plus (100 + 15 x a
+// fixed-anchor college score, clamp 60-140); it feeds the draft TBS branch only.
 // =============================================================================
 
 // Format USD as compact (e.g. $8.95M, $675K). Returns " - " for missing.
@@ -55320,7 +55320,7 @@ function getRpsPlus(p) {
 // THE single RPS+ number for any ACTIVE-board surface that wants a bare
 // integer (chips, pills, leaderboard). This is the active scale: a cohort
 // RATIO index (100 * (raw+100) / (cohort mean+100), position-adjusted,
-// clamp 0-250). It is NOT the 100+15z indexes the draft (rps_draft_plus)
+// clamp 0-250). It is NOT the 100 + 15-point indexes the draft (rps_draft_plus)
 // and overseas (rps_intl_plus) payloads serve; those never flow through
 // here. Null when the player has no qualifying sample.
 // 2026-08-19 (three-scales resolution): the `statline.rps_plus` preference

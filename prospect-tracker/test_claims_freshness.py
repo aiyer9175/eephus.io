@@ -169,6 +169,17 @@ BANNED_CLAIM_FRAGMENTS = (
     # 0.5157 vs AAV": the leverage-weighted lab variant on 271 name-matched
     # signings, under REM+'s name. It now prints REM+ on the re-gate's 232.
     "market fit &rho;",
+    # RECON_13 (served-number reconciliation, 2026-10-01). RPR12: the eFV
+    # example described the v1 ridge (translated walk and strikeout rates) on a
+    # board that serves V2. RML06: RPS-Draft+ was called a z against the draft
+    # class while draft_export scores fixed anchors (classes average about
+    # 109). RML08: HEM+ and SEM+ were anchored on "qualified" players while the
+    # code anchors on 50+ PA hitters and 20+ IP starters.
+    "contact-and-discipline hitter consensus has at 45",
+    "z(college performance vs class)",
+    "100+15z vs the draft class",
+    "average qualified hitter",
+    "average qualified starter",
 )
 
 # Copy surfaces the ratchet scans. content/*.json is globbed at test time.
@@ -371,12 +382,26 @@ GLOSSARY_CLAIMS = (
      "data/hem_plus_multiyear_eval.json", ("hem_3yr_forward_rho",), "abs", 0.005),
     ("hem_plus_3yr", "1yr forward rho, same set", r"against (0\.\d+) for one season",
      "data/hem_plus_multiyear_eval.json", ("hem_1yr_forward_rho_on_3yr_set",), "abs", 0.005),
+    # RML07 (served-number reconciliation, 2026-10-01): the xhem_plus headline
+    # quoted the eval-normalized construction (0.45 against 0.41) while the
+    # registry row's standing rule requires the SERVED construction's number.
+    # The headline is pinned to the re-gate's D4 rung; the 0.4543 figure is
+    # pinned to the original artifact as the labelled reproduction.
     ("xhem_plus", "n forward pairs", r"ex-2020, (\d+) pairs\)",
-     "data/xhem_plus_eval.json", ("n_forward_pairs",), "abs", 0.5),
-    ("xhem_plus", "forward rho xwOBA", r"xwOBA predicts next-year wOBA at a Spearman correlation of (0\.\d+)",
-     "data/xhem_plus_eval.json", ("forward_spearman_vs_wOBA_next", "xwoba"), "abs", 0.005),
-    ("xhem_plus", "forward rho actual wOBA", r"against (0\.\d+) for actual wOBA",
-     "data/xhem_plus_eval.json", ("forward_spearman_vs_wOBA_next", "actual_woba"), "abs", 0.005),
+     "data/xhem_served_regate_eval.json", ("n_forward_pairs", "A1"), "abs", 0.5),
+    ("xhem_plus", "served rho xHEM+", r"as served predicts next-year wOBA at a Spearman correlation of (0\.\d+)",
+     "data/xhem_served_regate_eval.json",
+     ("arms", "A1_xhem_plus", "ladder", "D4", "v1", "rho_primary"), "abs", 0.005),
+    ("xhem_plus", "served rho actual wOBA", r"against (0\.\d+) for actual wOBA",
+     "data/xhem_served_regate_eval.json",
+     ("arms", "A1_xhem_plus", "ladder", "D4", "v1", "rho_baseline"), "abs", 0.005),
+    ("xhem_plus", "served gap lo95", r"gap confidence floor (0\.\d+) above zero",
+     "data/xhem_served_regate_eval.json",
+     ("arms", "A1_xhem_plus", "ladder", "D4", "v1", "gap_ci", "lo95"), "abs", 0.0005),
+    ("xhem_plus", "reproduction rho xwOBA", r"eval-normalized construction reads (0\.\d+) against",
+     "data/xhem_plus_eval.json", ("forward_spearman_vs_wOBA_next", "xwoba"), "abs", 0.00005),
+    ("xhem_plus", "reproduction rho actual wOBA", r"eval-normalized construction reads 0\.\d+ against (0\.\d+)",
+     "data/xhem_plus_eval.json", ("forward_spearman_vs_wOBA_next", "actual_woba"), "abs", 0.00005),
     ("pwoba", "n gate pairs", r"\((\d+) out-of-sample pairs\)",
      "data/phem_marcel_lite_eval.json", ("hitters", "n_gate"), "abs", 0.5),
     ("pwoba", "gate rho projected wOBA", r"Spearman correlation of (0\.\d+) against",
@@ -1394,3 +1419,127 @@ def test_hero_floor_names_the_pair_it_belongs_to():
     assert "head_to_head_vs_sources" in f.group(1) and "vs.basis !== hh.basis" in f.group(1)
     assert not _HARDCODED_DECIMAL_RE.findall(f.group(1)), (
         "_hhPairFloor carries a hard-coded accuracy constant")
+
+
+# RECON_13 (served-number reconciliation, 2026-10-01): five glossary formulas
+# and definitions held to the served artifact or the code constant they
+# describe. Each test reads the served file, so the copy cannot drift from the
+# object it names without a failure here.
+
+def _admitted_drivers(side_receipt):
+    """Driver keys that move a side's order index on the served fit."""
+    if not side_receipt or side_receipt.get("consensus_only"):
+        return []
+    keys = []
+    for head, w in (("skill", "w_skill"), ("timing", "w_time")):
+        h = side_receipt.get(head) or {}
+        if (side_receipt.get(w) or 0) > 0:
+            keys += [k for k in h.get("keys") or []
+                     if ((h.get("admission") or {}).get(k) or {}).get("admitted", True)]
+    return keys
+
+
+def test_efv_formula_states_the_v2_order_rule_and_the_served_drivers():
+    """RPR12. The served board grade is eFV V2 (grade_basis efv_v2): the
+    consensus value of the side at the V2 order index. The formula names that
+    rule and lists exactly the drivers data/xfv.json's receipt admits; the v1
+    formula survives only labelled as the graduates' locked grade."""
+    e = _glossary_entry("xfv")
+    formula = e["formula"]
+    meta = _read_json("data/xfv.json")["meta"]
+    assert meta["served_model"]["grade_basis"] == "efv_v2"
+    assert "consensus FV value" in formula and "order_idx" in formula
+    receipt = meta["served_model"]["receipt"]
+    m = re.search(r"admitted drivers on the served fit \(data/xfv\.json "
+                  r"meta\.served_model\.receipt\): hitters ([a-z_, ]+); pitchers ([a-z_ ]+?) ",
+                  formula)
+    assert m, "the eFV formula no longer lists the receipt's admitted drivers"
+
+    def _listed(txt):
+        txt = txt.strip()
+        return [] if txt == "none" else [k.strip() for k in txt.split(",")]
+
+    assert _listed(m.group(1)) == _admitted_drivers(receipt["hit"]), (
+        m.group(1), _admitted_drivers(receipt["hit"]))
+    assert _listed(m.group(2)) == _admitted_drivers(receipt["pit"]), (
+        m.group(2), _admitted_drivers(receipt["pit"]))
+    v1_at = formula.find("outcome_implied_fv")
+    assert v1_at > formula.find("GRADUATES AND BUSTS, eFV v1") >= 0, (
+        "the v1 formula must sit under its graduates label")
+
+
+def test_xhem_headline_quotes_the_served_regate_to_two_decimals():
+    """RML07. The headline is the served construction (rung D4, v1), quoted to
+    two decimals, and the re-gate artifact is named."""
+    text = _glossary_entry("xhem_plus")["methodology"]
+    d4 = _read_json("data/xhem_served_regate_eval.json")["arms"]["A1_xhem_plus"]["ladder"]["D4"]["v1"]
+    m = re.search(r"as served predicts next-year wOBA at a Spearman correlation of "
+                  r"(0\.\d\d) against (0\.\d\d) for actual wOBA", text)
+    assert m, "xhem_plus headline sentence changed shape"
+    assert float(m.group(1)) == round(d4["rho_primary"], 2)
+    assert float(m.group(2)) == round(d4["rho_baseline"], 2)
+    assert "data/xhem_served_regate_eval.json" in text
+    assert "labelled reproduction" in text
+
+
+def test_hem_and_sem_anchor_copy_names_the_code_pool():
+    """RML08. 100 is the pool the code anchors on, not 'qualified' players."""
+    import hem_plus
+    import sem_plus
+    hem = _glossary_entry("hem_plus")["definition"]
+    sem = _glossary_entry("sem_plus")["definition"]
+    m = re.search(r"hitters with (\d+)\+ plate appearances", hem)
+    assert m and float(m.group(1)) == hem_plus.POOL_MIN_PA, hem[:200]
+    m = re.search(r"starters with (\d+)\+ innings", sem)
+    assert m and float(m.group(1)) == sem_plus.POOL_MIN_IP, sem[:200]
+    m = re.search(r"starters with (\d+)\+ innings", _glossary_entry("sem_plus")["formula"])
+    assert m and float(m.group(1)) == sem_plus.POOL_MIN_IP
+    js = _read_text("assets/mlbstats.js")
+    assert f"hitters with {int(hem_plus.POOL_MIN_PA)}+ PA" in js
+    assert f"starters with {int(sem_plus.POOL_MIN_IP)}+ IP" in js
+
+
+def test_rps_draft_copy_states_the_fixed_anchors_and_the_served_centre():
+    """RML06. RPS-Draft+ scores fixed college anchors, not a class z. The copy
+    quotes the anchors draft_export._college_perf_z applies (recovered by
+    calling it) and a class centre the served classes actually sit near."""
+    import statistics
+    import draft_export as dx
+
+    def z(payload, pitcher=False):
+        return dx._college_perf_z({"is_pitcher": pitcher, "trail": [{"payload": payload}]})
+
+    # The anchors the copy quotes, checked against the function itself.
+    assert z({"wrc_plus": 100.0}) == 0.0 and z({"wrc_plus": 130.0}) == 1.0
+    assert z({"ops": 0.850}) == 0.0 and z({"ops": 1.000}) == 1.0
+    assert z({"fip": 4.0}, True) == 0.0 and z({"fip": 2.5}, True) == 1.0
+    assert z({"era": 2.5}, True) == 1.0
+    e = _glossary_entry("rps_plus")
+    meth, form = e["methodology"], e["formula"]
+    for frag in ("(wRC+ - 100) / 30", "(OPS - 0.850) / 0.150", "(4.00 - FIP) / 1.5"):
+        assert frag in meth and frag in form, frag
+    centres = []
+    for cls in _read_json("data/draft_timeseries.json")["classes"]:
+        vals = [p["rps_draft_plus"] for p in cls.get("prospects") or []
+                if p.get("rps_draft_plus") is not None]
+        if len(vals) >= 30:
+            centres.append(statistics.mean(vals))
+    assert centres, "no served draft class carries rps_draft_plus"
+    m = re.search(r"a class averages about (\d+)", meth)
+    assert m, "rps_plus methodology no longer states the class centre"
+    assert all(abs(float(m.group(1)) - c) <= 2.0 for c in centres), (m.group(1), centres)
+
+
+def test_fa_floor_copy_discloses_the_zero_floor():
+    """RVA04. /fa/ season P10 is the Gate-1 band decayed through a path that
+    stops at zero; while any served season P10 sits at exactly 0.0 the
+    glossary formula and the warbar tooltip must say so."""
+    members = _read_json("data/fa_class.json").get("members") or []
+    if not any(v == 0.0 for m in members for v in (m.get("warPathP10") or [])):
+        pytest.skip("no served /fa/ season P10 at exactly 0.0")
+    formula = _glossary_entry("proj_buckets")["formula"]
+    fa_line = [ln for ln in formula.split("\n") if ln.startswith("/fa/: season floor")]
+    assert fa_line and "truncated at 0 WAR" in fa_line[0], fa_line
+    js = _read_text("assets/fa.js")
+    assert "season P10, floored at 0 WAR" in js
+    assert len(formula.split("\n")) == len(set(formula.split("\n"))), "duplicate formula line"

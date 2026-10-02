@@ -1559,7 +1559,7 @@
       </tr>`;
     }).join("");
     const wp = (m.warPath || []).map((w, i) =>
-      `<div class="fa-warbar" title="${cls.class_year + i}: ${formatMetric(w, "war")} eWAR${(m.warPathP10 || [])[i] != null ? ` (season P10 ${formatMetric(m.warPathP10[i], "war")} / P90 ${formatMetric(m.warPathP90[i], "war")})` : ""}"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>${String(cls.class_year + i).slice(2)}</span></div>`).join("");
+      `<div class="fa-warbar" title="${cls.class_year + i}: ${formatMetric(w, "war")} eWAR${(m.warPathP10 || [])[i] != null ? ` (season P10, floored at 0 WAR, ${formatMetric(m.warPathP10[i], "war")} / P90 ${formatMetric(m.warPathP90[i], "war")})` : ""}"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>${String(cls.class_year + i).slice(2)}</span></div>`).join("");
     // The same endpoint-labelled trend the $/WAR rail uses, over the projected
     // WAR path. The bars beside it are a shape; this is the shape WITH numbers
     // on both ends, which is what a decline curve actually needs to be read.
@@ -1612,7 +1612,7 @@
       ${yearRows ? `<h3>Season-by-season projection</h3>
       <p class="fa-note">Mean is the <span data-gl="fa_projection_engine">Marcel champion</span> path this page prices on. /projections/ shows the proj_lgbm_v1 path for the same seasons, which can differ: ML paths failed the <span data-gl="fa_gates">Gate 2</span> market test, so contracts stay priced on the champion.${m.warSource === "mlb_projections" ? " Past the projection's fifth season this path continues along the champion aging curve /projections/ chains a contract past its fifth season on, from this page's own value for that season, so where the two pages' fifth seasons differ, the later seasons differ in the same proportion." : ""}</p>
       <table class="detail-table fa-year-table">
-      <thead><tr><th>Season</th><th>Age</th><th><span data-gl="proj_buckets" title="This season's own 10th percentile. The column is not a path: no career sits at its P10 every season">Season P10</span></th><th>Mean</th><th><span data-gl="proj_buckets" title="This season's own 90th percentile, read the same way">Season P90</span></th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
+      <thead><tr><th>Season</th><th>Age</th><th><span data-gl="proj_buckets" title="This season's own 10th percentile, floored at 0 WAR. The column is not a path: no career sits at its P10 every season">Season P10</span></th><th>Mean</th><th><span data-gl="proj_buckets" title="This season's own 90th percentile, read the same way">Season P90</span></th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
       <tbody>${yearRows}</tbody></table>` : ""}
       ${warTrend ? `<div class="fa-war-trend" title="Projected eWAR by season">${warTrend}</div>` : ""}
       ${wp ? `<div class="fa-warpath" title="Projected eWAR by season; hover a bar for P10/P90">${wp}</div>` : ""}

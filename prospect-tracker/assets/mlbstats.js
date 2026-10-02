@@ -3000,7 +3000,7 @@
   // Section 2: Starter Leaderboards (SEM+ starter run-prevention skill).
   // ---------------------------------------------------------------------------
   // A parallel of the reliever section: SEM+ is a starter's pure run-prevention
-  // skill (100 = average qualified starter), and durability (IP, GS, average
+  // skill (100 = the IP-weighted average of starters with 20+ IP), and durability (IP, GS, average
   // start length) rides context columns so workload never moves the skill
   // number. Renders into #mlbstats-starters-root; reuses every shared helper
   // (renderTable / sortRows / gloss / remCell / explainer / season pills).
@@ -3150,7 +3150,7 @@
   // reliever REM+ one, wired to the glossary tooltip (data-gl) + deep link.
   function semExplainer() {
     return explainer("sem_plus", gloss("SEM+", "sem_plus")
-      + ": FIP-based run-prevention skill, sample-shrunk; 100 is an average qualified starter, 110 is"
+      + ": FIP-based run-prevention skill, sample-shrunk; 100 is the IP-weighted average of starters with 20+ IP, 110 is"
       + " 10% better. IP, GS and IP/GS are context and do not move it.");
   }
 
@@ -3511,7 +3511,7 @@
   // Section 3: Hitter Leaderboards (HEM+ offensive-rate skill).
   // ---------------------------------------------------------------------------
   // The hitter analog of the reliever/starter sections: HEM+ is a hitter's pure
-  // offensive-rate skill (100 = average qualified hitter), a sample-shrunk wOBA;
+  // offensive-rate skill (100 = the PA-weighted average of hitters with 50+ PA), a sample-shrunk wOBA;
   // volume (PA), baserunning (SB), and the slash line ride context columns so
   // they never move the skill number. Renders into #mlbstats-hitters-root; reuses
   // every shared helper. Tabs mirror the pitching sections: Hitters / Team
@@ -3696,7 +3696,7 @@
 
   function hemExplainer() {
     return explainer("hem_plus", gloss("HEM+", "hem_plus")
-      + ": sample-shrunk wOBA on the wRC+ scale; 100 = an average qualified hitter. PA, SB and the"
+      + ": sample-shrunk wOBA on the wRC+ scale; 100 = the PA-weighted average of hitters with 50+ PA. PA, SB and the"
       + " slash line are context and do not move it.");
   }
 
