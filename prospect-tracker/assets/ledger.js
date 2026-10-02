@@ -1307,9 +1307,12 @@
     else if (s === "method") root.innerHTML = renderMethod();
     else root.innerHTML = renderLeague();
     if (s === "club" && state.team) {
-      // the hash's block key: scroll to the named block once per team
+      // the hash's block key: scroll to the named block once per team, and
+      // count it done only once the club's rows have settled (ready or
+      // failed): the rows land above the block, so the preview's scroll
+      // runs again on the render that follows the shard (SCL03)
       if (state.block && SCROLLED !== state.team + ":" + state.block) {
-        SCROLLED = state.team + ":" + state.block;
+        if (SHARD_STATE[state.team] === "ready" || SHARD_STATE[state.team] === "failed") SCROLLED = state.team + ":" + state.block;
         try { var blk = el("ledger-block-" + state.block); if (blk && blk.scrollIntoView) blk.scrollIntoView(); } catch (e) { /* optional */ }
       }
       // the per-club rows, fetched AFTER the preview has painted
@@ -1367,9 +1370,14 @@
         if (href.indexOf("#") !== 0) return;
         e.preventDefault();
         try { if (typeof history !== "undefined" && history.replaceState) history.replaceState(null, "", href); } catch (err) { /* optional */ }
+        // the link names the whole destination: a block it leaves out is no
+        // block, and a block it names is scrolled to even when visited before
+        state.block = ""; SCROLLED = "";
         readHash();
-        render();
+        // to the top BEFORE the render, so the block scroll the render makes
+        // for a link that names a block is not undone (SCL02)
         try { if (typeof window !== "undefined" && window.scrollTo) window.scrollTo(0, 0); } catch (err) { /* optional */ }
+        render();
       });
     });
   }
