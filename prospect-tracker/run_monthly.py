@@ -413,6 +413,13 @@ SCHEDULED_EXPORTS = (
     # the open season's play corpus and the management chain on it. A skip on
     # an unchanged corpus files ok=True with the reason; a raise files a red.
     "mgmt_nightly",
+    # The nightly's own StatsAPI standings read (fa_fit_backtest.standings_now,
+    # called by proj_export's current-season attach; step d9-std inside
+    # rebuild_only, STANDINGS_9). It returns {} on a failed read, and Team
+    # Outlook, Futures, Franchise and F-SCORE then degrade with nothing saying
+    # so. Filed off what the read returned and the cache file's age; it never
+    # fetches.
+    "statsapi_standings",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -462,6 +469,104 @@ def _record_ingest(source: str, ok: bool, n_rows: int = 0, message: str = "",
                      f" - {message}" if message else "")
         else:
             log.error("ingest health: %s FAILED (%d rows) %s", source, n_rows, message)
+
+
+# The nightly standings read's health row (STANDINGS_9, STANDINGS_PLAN 4.5).
+STATSAPI_STANDINGS_CLUBS = 30
+STATSAPI_STANDINGS_MAX_AGE_H = 48.0
+
+
+def _statsapi_standings_health(season: int, *, log: logging.Logger | None = None,
+                               reads: dict | None = None,
+                               cache_dir: Path | None = None,
+                               calendar_dir: Path | None = None,
+                               today: date | None = None,
+                               now_ts: float | None = None,
+                               record=None) -> tuple[bool, int, str]:
+    """File the `statsapi_standings` ingest row for the nightly's own standings
+    read, fa_fit_backtest.standings_now(season), which proj_export's
+    current-season attach has just made. Reads only what is already in this
+    process and on disk, and NEVER FETCHES:
+
+      * how many clubs that call returned (fa_fit_backtest.STANDINGS_NOW_CLUBS,
+        or `reads` in a test); no entry means the call never ran this pass;
+      * the cache file .cache/statsapi_standings_{season}.json and its mtime;
+      * the regular-season dates from the cached StatsAPI /seasons payload
+        (.cache/fantasy_schedule/season_{season}.json).
+
+    ok when the read returned all 30 clubs and, during the regular season, the
+    cache file is under 48 hours old. Red when standings_now returned {} or
+    fewer than 30 clubs, did not run, or (in season) the file is 48 hours old
+    or absent. Outside the regular season, or with no calendar on disk, the
+    age is printed and not judged. The message names the cache path and its
+    modification time either way. Returns (ok, n_clubs, message)."""
+    root = Path(__file__).resolve().parent
+    cache_dir = Path(cache_dir) if cache_dir is not None else root / ".cache"
+    calendar_dir = (Path(calendar_dir) if calendar_dir is not None
+                    else root / ".cache" / "fantasy_schedule")
+    today = today or date.today()
+    now_ts = time.time() if now_ts is None else float(now_ts)
+    if reads is None:
+        _fb = sys.modules.get("fa_fit_backtest")
+        reads = dict(getattr(_fb, "STANDINGS_NOW_CLUBS", None) or {})
+    n = reads.get(int(season))
+
+    path = cache_dir / f"statsapi_standings_{int(season)}.json"
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        mtime = None
+    age_h = None if mtime is None else max(0.0, (now_ts - mtime) / 3600.0)
+
+    start = end = None
+    try:
+        cal = json.loads((calendar_dir / f"season_{int(season)}.json")
+                         .read_text(encoding="utf-8"))
+        for row in (cal or {}).get("seasons") or []:
+            if str((row or {}).get("seasonId")) == str(int(season)):
+                start = row.get("regularSeasonStartDate")
+                end = row.get("regularSeasonEndDate")
+                break
+    except (OSError, ValueError):
+        pass
+    in_season = None
+    if start and end:
+        in_season = str(start) <= today.isoformat() <= str(end)
+
+    problems = []
+    if n is None:
+        problems.append(f"standings_now({season}) did not run in this pass")
+    elif n == 0:
+        problems.append(f"standings_now({season}) returned {{}}")
+    elif n < STATSAPI_STANDINGS_CLUBS:
+        problems.append(f"standings_now({season}) returned {n} of "
+                        f"{STATSAPI_STANDINGS_CLUBS} clubs")
+    if in_season:
+        if mtime is None:
+            problems.append("the cache file is absent during the regular season")
+        elif age_h >= STATSAPI_STANDINGS_MAX_AGE_H:
+            problems.append(f"the cache file is {age_h:.1f} h old during the "
+                            f"regular season (limit {STATSAPI_STANDINGS_MAX_AGE_H:.0f} h)")
+
+    if mtime is None:
+        stamp = f"cache {path} absent"
+    else:
+        stamp = (f"cache {path} modified "
+                 f"{datetime.fromtimestamp(mtime, tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}"
+                 f" ({age_h:.1f} h old)")
+    if in_season is None:
+        window = "regular-season dates not on disk, age not judged"
+    elif in_season:
+        window = f"in the regular season ({start} to {end})"
+    else:
+        window = f"outside the regular season ({start} to {end}), age not judged"
+    ok = not problems
+    head = (f"standings_now({season}) returned {n} of {STATSAPI_STANDINGS_CLUBS} clubs"
+            if ok else "; ".join(problems))
+    message = f"{head}; {stamp}; {window}"
+    (record or _record_ingest)("statsapi_standings", ok, int(n or 0), message,
+                               scope=str(int(season)), log=log)
+    return ok, int(n or 0), message
 
 
 # ===========================================================================
@@ -1804,6 +1909,21 @@ def rebuild_only(out_dir: Path = Path("data"), *,
                  "(post eFV regen, pre trade-value export)", int(_n_proj) // 1024)
     except Exception:
         log.exception("proj_export crashed in rebuild_only - continuing")
+
+    # The nightly standings read's health row (STANDINGS_9). proj_export above
+    # made the season's one standings_now read through its current-season
+    # attach; this files what that read returned and the cache file's age under
+    # `statsapi_standings` (SCHEDULED_EXPORTS), so a stopped read prints
+    # INGEST RED instead of Team Outlook, Futures and Franchise going quietly
+    # null. Disk and memory only: it never fetches.
+    with _step("d9-std. Nightly standings read health (statsapi_standings)", log):
+        try:
+            from proj_export import FIRST_SEASON as _proj_first_season
+            _statsapi_standings_health(_proj_first_season - 1, log=log)
+        except Exception as _e:                          # noqa: BLE001
+            log.exception("statsapi_standings health check crashed - continuing")
+            _record_ingest("statsapi_standings", False, 0,
+                           f"health check crashed: {type(_e).__name__}: {_e}", log=log)
 
     # GRPO breakout scores — runs before trade values so scores can adjust FV priors.
     # Parse the 66MB timeseries.json ONCE; reused by the GRPO + trade-value blocks below
