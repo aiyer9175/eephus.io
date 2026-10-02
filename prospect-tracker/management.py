@@ -597,10 +597,9 @@ def corpus_built_at(corpus: Path | None = None):
     return m.get("built_at")
 
 
-def main(argv=None) -> int:
-    argv = list(sys.argv[1:] if argv is None else argv)
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout,
-                        format="%(asctime)s %(levelname)s: %(message)s")
+def build() -> dict:
+    """The management_running.json payload on the corpus at CORPUS (main writes it;
+    the nightly step mgmt_nightly.py calls this and write())."""
     df = attempts()
     art = summarize(df)
     art["corpus_built_at"] = corpus_built_at()
@@ -617,8 +616,20 @@ def main(argv=None) -> int:
                                          for v in (_m.get("seasons") or {}).values()))
     except (OSError, ValueError):
         art["games_in_corpus"] = None
+    return art
+
+
+def write(art: dict) -> None:
+    OUT.write_text(json.dumps(art, indent=1) + "\n", encoding="utf-8")
+
+
+def main(argv=None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout,
+                        format="%(asctime)s %(levelname)s: %(message)s")
+    art = build()
     if "--dry-run" not in argv:
-        OUT.write_text(json.dumps(art, indent=1) + "\n", encoding="utf-8")
+        write(art)
     print(f"priced attempts: {art['n_attempts_priced']:,}  "
           f"excluded {art['excluded']}")
     c = art["attempt_census"]

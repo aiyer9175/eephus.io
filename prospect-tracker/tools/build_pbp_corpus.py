@@ -928,8 +928,15 @@ def index_by_season(cache_dir: Path, seasons=None, limit=None) -> dict:
 
 def build(cache_dir: Path, out_dir: Path, *, seasons=None, limit=None,
           force=False, dry_run=False, sample=None, seed=17,
-          flush_games: int = 400) -> dict:
-    """Build (or resume) the corpus. Returns the manifest dict."""
+          flush_games: int = 400, paths_by_season: dict | None = None,
+          season_extra: dict | None = None) -> dict:
+    """Build (or resume) the corpus. Returns the manifest dict.
+
+    ``paths_by_season`` hands in an index the caller already holds ({season:
+    [path, ...]}), so the nightly open-season refresh does not re-sniff the
+    19,000 files of the seasons it keeps frozen. ``season_extra`` is merged
+    into the manifest row of each season this call writes (the refresh stamps
+    its source fingerprint there)."""
     t0 = time.time()
     cache_dir, out_dir = Path(cache_dir), Path(out_dir)
     if not cache_dir.is_dir():
@@ -938,8 +945,12 @@ def build(cache_dir: Path, out_dir: Path, *, seasons=None, limit=None,
     all_json = sorted(cache_dir.glob("*.json"))
     _log.info("cache: %d files under %s", len(all_json), cache_dir)
 
-    by_season = index_by_season(cache_dir, seasons=seasons,
-                                limit=None if sample else limit)
+    if paths_by_season is not None:
+        by_season = {int(s): sorted(Path(p) for p in v)
+                     for s, v in paths_by_season.items()}
+    else:
+        by_season = index_by_season(cache_dir, seasons=seasons,
+                                    limit=None if sample else limit)
     if sample:
         rng = random.Random(seed)
         for s, paths in list(by_season.items()):
@@ -1041,6 +1052,7 @@ def build(cache_dir: Path, out_dir: Path, *, seasons=None, limit=None,
             # way a 19,132-game build gets finished.
             "counters": {k: v for k, v in diag.items() if k != "runs_worst"},
             "validation": rates(diag),
+            **(season_extra or {}),
         }
         _log.info("season %d: %d games, %d plays, %d pitches, %d events in %.1fs",
                   season, games, counts["plays"], counts["pitches"],
@@ -1055,6 +1067,150 @@ def build(cache_dir: Path, out_dir: Path, *, seasons=None, limit=None,
         manifest_path(out_dir).write_text(
             json.dumps(man, indent=1, sort_keys=True), encoding="utf-8")
     return man
+
+
+# --------------------------------------------------------------------------
+# the nightly open-season refresh (owner answer 2026-09-25, census M10-05)
+# --------------------------------------------------------------------------
+#: Per-file ledger of the open season's cache files, beside the manifest:
+#: {name: [size, mtime_ns, sniffed season, sha1 or null]}. It lets the nightly
+#: hash only the files that are new or were rewritten since the last night.
+OPEN_SOURCES = "open_season_sources.json"
+
+
+def _sha1_file(path: Path) -> str:
+    import hashlib
+    h = hashlib.sha1()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def frozen_game_pks(out_dir: Path, seasons) -> set:
+    """Every game_pk the frozen seasons' plays tables hold (one column read)."""
+    import pyarrow.parquet as pq
+    pks: set = set()
+    for s in seasons:
+        t = pq.read_table(table_path(out_dir, "plays", s), columns=["game_pk"])
+        pks.update(int(v) for v in t.column("game_pk").to_pylist() if v is not None)
+    return pks
+
+
+def refresh_open_season(cache_dir: Path | None = None, out_dir: Path | None = None,
+                        season: int | None = None, *, force: bool = False) -> dict:
+    """Rebuild the OPEN season's tables when its win-probability files changed.
+
+    Completed seasons stay frozen: every season below ``season`` already in the
+    manifest as complete is never re-read, re-sniffed or rewritten here, and a
+    cache file whose game_pk sits in one of them is skipped by name. The open
+    season's source set is fingerprinted by content (sha1 per file, hashed only
+    when a file's size or mtime moved, so a TTL re-fetch of identical bytes does
+    not count as a change), and the season is rebuilt only when that fingerprint
+    differs from the one stamped on its manifest row.
+
+    Returns {"status": ..., "season", "games", "games_before", "fingerprint",
+    "built_at", "why"} where status is one of:
+      rebuilt            the open season's tables were rewritten
+      unchanged          the fingerprint matches; nothing was written but the
+                         per-file ledger
+      no_cache           no win_prob cache on this machine
+      no_frozen_corpus   no completed season on disk (the deploy box carries no
+                         corpus; building the open season alone there would leave
+                         a one-season corpus behind the ledger)
+      no_season_games    the cache holds no game of the open season yet
+      cache_shrank       the cache holds fewer open-season games than the built
+                         season (a pruned cache); the built tables stand
+    """
+    cache_dir = Path(cache_dir or DEFAULT_CACHE)
+    out_dir = Path(out_dir or DEFAULT_OUT)
+    season = int(season or datetime.now(timezone.utc).year)
+    res = {"status": None, "season": season, "games": None, "games_before": None,
+           "fingerprint": None, "built_at": None, "why": ""}
+    if not cache_dir.is_dir():
+        res.update(status="no_cache", why=f"no win_prob cache at {cache_dir}")
+        return res
+    man = load_manifest(out_dir)
+    blocks = man.get("seasons") or {}
+    frozen = sorted(int(s) for s, b in blocks.items()
+                    if str(s).isdigit() and int(s) < season and b.get("complete")
+                    and all(table_path(out_dir, t, int(s)).exists() for t in TABLES))
+    if not frozen:
+        res.update(status="no_frozen_corpus",
+                   why=f"no completed season of the play corpus at {out_dir}")
+        return res
+    frozen_pks = frozen_game_pks(out_dir, frozen)
+
+    side_p = out_dir / OPEN_SOURCES
+    side: dict = {}
+    try:
+        side = json.loads(side_p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        side = {}
+    known = side.get("files") or {} if side.get("season") == season else {}
+    files: dict = {}
+    for p in sorted(cache_dir.glob("*.json")):
+        try:
+            pk = int(p.stem)
+        except ValueError:
+            continue
+        if pk in frozen_pks:
+            continue
+        try:
+            st = p.stat()
+        except OSError:
+            continue
+        prev = known.get(p.name)
+        if prev and prev[0] == st.st_size and prev[1] == st.st_mtime_ns:
+            files[p.name] = prev
+            continue
+        s = sniff_season(p)
+        digest = _sha1_file(p) if s == season else None
+        files[p.name] = [st.st_size, st.st_mtime_ns, s, digest]
+    open_names = sorted(n for n, v in files.items() if v[2] == season)
+    other_season_not_in_corpus = sum(1 for v in files.values()
+                                     if v[2] is not None and v[2] != season)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    side_p.write_text(json.dumps({"season": season, "files": files}, sort_keys=True),
+                      encoding="utf-8")
+    prior = blocks.get(str(season)) or {}
+    res["games_before"] = prior.get("games")
+    res["other_season_files_not_in_corpus"] = other_season_not_in_corpus
+    res["frozen_seasons"] = frozen
+    if not open_names:
+        res.update(status="no_season_games",
+                   why=f"the win_prob cache holds no {season} game")
+        return res
+    import hashlib
+    fp = hashlib.sha1("".join(f"{n}:{files[n][3]}\n" for n in open_names)
+                      .encode("ascii")).hexdigest()
+    res["fingerprint"] = fp
+    on_disk = all(table_path(out_dir, t, season).exists() for t in TABLES)
+    # A season's game set only grows. Fewer files than the built season holds
+    # means a pruned cache (the disk preflight prunes win_prob), and rebuilding
+    # from it would publish a smaller season, so the tables on disk stand.
+    if on_disk and prior.get("complete") and len(open_names) < int(prior.get("games") or 0):
+        res.update(status="cache_shrank", games=prior.get("games"),
+                   built_at=man.get("built_at"),
+                   why=(f"the cache holds {len(open_names):,} {season} games against "
+                        f"{prior.get('games'):,} in the built season; the built tables stand"))
+        return res
+    if (not force and on_disk and prior.get("complete")
+            and prior.get("source_fingerprint") == fp):
+        res.update(status="unchanged", games=prior.get("games"),
+                   built_at=man.get("built_at"),
+                   why=(f"the {season} win-probability files are unchanged "
+                        f"({len(open_names):,} games, fingerprint {fp[:12]})"))
+        return res
+    new = build(cache_dir, out_dir, seasons={season}, force=True,
+                paths_by_season={season: [cache_dir / n for n in open_names]},
+                season_extra={"source_fingerprint": fp,
+                              "source_files": len(open_names)})
+    blk = (new.get("seasons") or {}).get(str(season)) or {}
+    res.update(status="rebuilt", games=blk.get("games"), built_at=new.get("built_at"),
+               why=(f"{season} rebuilt from {len(open_names):,} win-probability files "
+                    f"({res['games_before']} games before, {blk.get('games')} now)"))
+    return res
 
 
 def main(argv=None) -> int:

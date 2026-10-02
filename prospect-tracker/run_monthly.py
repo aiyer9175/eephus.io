@@ -409,6 +409,10 @@ SCHEDULED_EXPORTS = (
     # the Futures panel falls back to the end-of-season stamp. Watched so the
     # deploy shell prints the red instead of the page going quietly stale.
     "bracket_sim",
+    # The In-Game Management nightly (step 9e-pre0e, owner answer 2026-09-25):
+    # the open season's play corpus and the management chain on it. A skip on
+    # an unchanged corpus files ok=True with the reason; a raise files a red.
+    "mgmt_nightly",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -3324,6 +3328,44 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: live-season window panel failed - the "
                               "previous windows and 3yr columns stand - continuing")
+
+        # --- 9e-pre0e. In-Game Management nightly (owner answer 2026-09-25) --
+        with _step("9e-pre0e. In-Game Management nightly (management_board.json)", log):
+            # Census M10-05: the play corpus was rebuilt only by hand, so
+            # /management/ sat on the last hand rebuild while the win_prob
+            # cache grew nightly. mgmt_nightly.run rebuilds the OPEN season's
+            # corpus tables when its win_prob files changed (completed seasons
+            # stay frozen), then re-runs management.py, mgmt_bunt.py, the
+            # decision ledger with its shard writer and mgmt_export, writing
+            # management_running.json, management_bunt.json,
+            # management_decisions.json, management_baseline.json, the
+            # data/mgmt_decisions/ shards of the open season and
+            # management_board.json. An unchanged corpus skips the chain and
+            # the heartbeat says why. Placed AFTER 9e-pre0 (its bullpen walk
+            # fills the win_prob cache) and after the 9e-pre vintage snapshot
+            # (no model reads this), and BEFORE 9e and 6b7d, whose Dugout
+            # blocks read the board written here. No priced cell reads it.
+            # Offline; never aborts.
+            try:
+                import job_heartbeat as _hb
+                import mgmt_nightly as _mgn
+                _mn = _mgn.run(log_fn=log.info)
+                _mn_why = f"{_mn['status']}: {_mn.get('why') or ''}"
+                log.info("mgmt nightly: %s", _mn_why)
+                _hb.record("mgmt_nightly", ok=True, result=_mn_why[:200])
+                _record_ingest("mgmt_nightly", True,
+                               int((_mn.get("corpus") or {}).get("games") or 0),
+                               _mn_why[:200], "mlb", log)
+            except Exception as _e:
+                log.exception("daily: management nightly failed - the committed "
+                              "management artifacts stand - continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("mgmt_nightly", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
+                _record_ingest("mgmt_nightly", False, 0,
+                               f"management nightly raised: {_e}"[:200], "mlb", log)
 
         # --- 9e-pre-wx. Forecast weather capture (DARK; ARMED 2026-09-11) ---
         # docs/diamond-betting.md section 5h. Captures the pregame forecast for
@@ -6419,8 +6461,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         #
         # OFFLINE BY CONSTRUCTION: it reads the play corpus, the daily WAR
         # frames and the raw win_prob feed heads; nothing fetches. The ledger
-        # moves only when the corpus is rebuilt by hand (M-CORPUS-4 nightly
-        # incremental is not built). WITHOUT THE CORPUS (the deploy box carries
+        # moves when the corpus moves: the daily step 9e-pre0e rebuilds the open
+        # season's corpus nightly and re-runs this ledger on it (owner answer
+        # 2026-09-25). WITHOUT THE CORPUS (the deploy box carries
         # none) the step writes nothing and records nothing: the committed
         # artifacts stand, and a "not built" stub must never overwrite them,
         # which is what served four tabs dark with an operator instruction.
@@ -6429,7 +6472,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                    "(management_baseline.json, mgmt_decisions shards)", log):
             try:
                 import mgmt_decisions as _mdc
-                _mdd = _mdc.build()
+                # Completed seasons stay frozen (owner answer 2026-09-25): their
+                # shards on disk keep their bytes; the open season's are written.
+                _mdd = _mdc.build(freeze_before=date.today().year)
                 if _mdd.get("status") == "built":
                     _mdc.OUT.write_text(
                         json.dumps(_mdd, ensure_ascii=False, separators=(",", ":")),

@@ -1,8 +1,8 @@
 {
  "status": "built",
- "generated_at": "2026-09-25T10:10:12Z",
+ "generated_at": "2026-10-02T13:00:12Z",
  "produced_by": "mgmt_bunt.price",
- "corpus_built_at": "2026-09-25T10:06:36+00:00",
+ "corpus_built_at": "2026-10-02T12:59:41+00:00",
  "seasons": [
   2018,
   2019,
@@ -13,28 +13,28 @@
   2025,
   2026
  ],
- "n_plate_appearances": 996176,
- "n_bunts_priced": 11013,
+ "n_plate_appearances": 998469,
+ "n_bunts_priced": 11037,
  "min_cell": 25,
  "excluded": {
-  "two_outs": 472640,
+  "two_outs": 473744,
   "unpriceable_state": 0,
-  "thin_cell": 43
+  "thin_cell": 44
  },
- "total_decision_value_wins": -55.999,
- "dv_per_bunt_mean": -0.00508,
+ "total_decision_value_wins": -55.713,
+ "dv_per_bunt_mean": -0.00505,
  "by_situation": {
   "sacrifice": {
-   "n_bunts_priced": 8365,
-   "n_bunt_hits": 1293,
-   "total_decision_value_wins": -74.544,
-   "dv_per_bunt_mean": -0.00891
+   "n_bunts_priced": 8386,
+   "n_bunt_hits": 1297,
+   "total_decision_value_wins": -74.371,
+   "dv_per_bunt_mean": -0.00887
   },
   "for_a_hit": {
-   "n_bunts_priced": 2648,
-   "n_bunt_hits": 1247,
-   "total_decision_value_wins": 18.545,
-   "dv_per_bunt_mean": 0.007
+   "n_bunts_priced": 2651,
+   "n_bunt_hits": 1250,
+   "total_decision_value_wins": 18.658,
+   "dv_per_bunt_mean": 0.00704
   }
  },
  "situations": {
@@ -48,52 +48,52 @@
    "base": 0,
    "bases": "empty",
    "situation": "for_a_hit",
-   "n_bunt": 1692,
-   "n_alt": 356543,
-   "n_bunt_hit": 806,
-   "e_dwe_bunt": 0.00843,
+   "n_bunt": 1694,
+   "n_alt": 357370,
+   "n_bunt_hit": 808,
+   "e_dwe_bunt": 0.00847,
    "e_dwe_alt": -0.0001,
-   "dv_per_bunt": 0.00853,
-   "dv_total": 14.4291
+   "dv_per_bunt": 0.00857,
+   "dv_total": 14.51
   },
   {
    "outs": 0,
    "base": 1,
    "bases": "1B",
    "situation": "sacrifice",
-   "n_bunt": 2793,
-   "n_alt": 82480,
-   "n_bunt_hit": 406,
-   "e_dwe_bunt": -0.01173,
-   "e_dwe_alt": -5e-05,
-   "dv_per_bunt": -0.01168,
-   "dv_total": -32.6333
+   "n_bunt": 2803,
+   "n_alt": 82673,
+   "n_bunt_hit": 409,
+   "e_dwe_bunt": -0.01166,
+   "e_dwe_alt": -4e-05,
+   "dv_per_bunt": -0.01162,
+   "dv_total": -32.5706
   },
   {
    "outs": 0,
    "base": 2,
    "bases": "2B",
    "situation": "sacrifice",
-   "n_bunt": 1336,
-   "n_alt": 21947,
+   "n_bunt": 1338,
+   "n_alt": 21990,
    "n_bunt_hit": 201,
-   "e_dwe_bunt": -0.00902,
-   "e_dwe_alt": 0.00272,
-   "dv_per_bunt": -0.01173,
-   "dv_total": -15.6757
+   "e_dwe_bunt": -0.00894,
+   "e_dwe_alt": 0.0027,
+   "dv_per_bunt": -0.01165,
+   "dv_total": -15.5829
   },
   {
    "outs": 0,
    "base": 3,
    "bases": "1B+2B",
    "situation": "sacrifice",
-   "n_bunt": 1774,
-   "n_alt": 19710,
+   "n_bunt": 1781,
+   "n_alt": 19756,
    "n_bunt_hit": 227,
    "e_dwe_bunt": -0.00553,
-   "e_dwe_alt": -0.00045,
-   "dv_per_bunt": -0.00508,
-   "dv_total": -9.0195
+   "e_dwe_alt": -0.00043,
+   "dv_per_bunt": -0.0051,
+   "dv_total": -9.0828
   },
   {
    "outs": 0,
@@ -101,38 +101,38 @@
    "bases": "1B+3B",
    "situation": "sacrifice",
    "n_bunt": 161,
-   "n_alt": 7163,
+   "n_alt": 7189,
    "n_bunt_hit": 30,
    "e_dwe_bunt": -0.00291,
-   "e_dwe_alt": 0.0016,
-   "dv_per_bunt": -0.00451,
-   "dv_total": -0.7265
+   "e_dwe_alt": 0.00156,
+   "dv_per_bunt": -0.00447,
+   "dv_total": -0.7195
   },
   {
    "outs": 1,
    "base": 0,
    "bases": "empty",
    "situation": "for_a_hit",
-   "n_bunt": 956,
-   "n_alt": 259529,
-   "n_bunt_hit": 441,
-   "e_dwe_bunt": 0.00441,
+   "n_bunt": 957,
+   "n_alt": 260110,
+   "n_bunt_hit": 442,
+   "e_dwe_bunt": 0.00444,
    "e_dwe_alt": 0.00011,
-   "dv_per_bunt": 0.00431,
-   "dv_total": 4.116
+   "dv_per_bunt": 0.00433,
+   "dv_total": 4.1478
   },
   {
    "outs": 1,
    "base": 1,
    "bases": "1B",
    "situation": "sacrifice",
-   "n_bunt": 1263,
-   "n_alt": 104112,
+   "n_bunt": 1264,
+   "n_alt": 104362,
    "n_bunt_hit": 211,
-   "e_dwe_bunt": -0.01069,
+   "e_dwe_bunt": -0.0107,
    "e_dwe_alt": 0.00033,
-   "dv_per_bunt": -0.01102,
-   "dv_total": -13.9205
+   "dv_per_bunt": -0.01103,
+   "dv_total": -13.9358
   },
   {
    "outs": 1,
@@ -140,12 +140,12 @@
    "bases": "2B",
    "situation": "sacrifice",
    "n_bunt": 106,
-   "n_alt": 35181,
+   "n_alt": 35245,
    "n_bunt_hit": 38,
    "e_dwe_bunt": 0.00088,
-   "e_dwe_alt": 0.00053,
+   "e_dwe_alt": 0.00052,
    "dv_per_bunt": 0.00035,
-   "dv_total": 0.0371
+   "dv_total": 0.0375
   },
   {
    "outs": 1,
@@ -153,12 +153,12 @@
    "bases": "1B+2B",
    "situation": "sacrifice",
    "n_bunt": 316,
-   "n_alt": 36640,
+   "n_alt": 36722,
    "n_bunt_hit": 45,
    "e_dwe_bunt": -0.01935,
-   "e_dwe_alt": -0.00108,
-   "dv_per_bunt": -0.01828,
-   "dv_total": -5.7759
+   "e_dwe_alt": -0.00106,
+   "dv_per_bunt": -0.01829,
+   "dv_total": -5.7812
   },
   {
    "outs": 1,
@@ -166,25 +166,25 @@
    "bases": "3B",
    "situation": "sacrifice",
    "n_bunt": 87,
-   "n_alt": 10670,
+   "n_alt": 10694,
    "n_bunt_hit": 24,
    "e_dwe_bunt": 0.01836,
-   "e_dwe_alt": 0.00399,
-   "dv_per_bunt": 0.01437,
-   "dv_total": 1.25
+   "e_dwe_alt": 0.00397,
+   "dv_per_bunt": 0.01439,
+   "dv_total": 1.252
   },
   {
    "outs": 1,
    "base": 5,
    "bases": "1B+3B",
    "situation": "sacrifice",
-   "n_bunt": 473,
-   "n_alt": 15678,
-   "n_bunt_hit": 98,
-   "e_dwe_bunt": 0.00545,
-   "e_dwe_alt": 0.00184,
-   "dv_per_bunt": 0.00361,
-   "dv_total": 1.7064
+   "n_bunt": 474,
+   "n_alt": 15715,
+   "n_bunt_hit": 99,
+   "e_dwe_bunt": 0.0056,
+   "e_dwe_alt": 0.00181,
+   "dv_per_bunt": 0.00379,
+   "dv_total": 1.7961
   },
   {
    "outs": 1,
@@ -192,48 +192,48 @@
    "bases": "2B+3B",
    "situation": "sacrifice",
    "n_bunt": 56,
-   "n_alt": 10177,
+   "n_alt": 10215,
    "n_bunt_hit": 13,
    "e_dwe_bunt": 0.0048,
-   "e_dwe_alt": 0.00099,
-   "dv_per_bunt": 0.00381,
-   "dv_total": 0.2135
+   "e_dwe_alt": 0.00094,
+   "dv_per_bunt": 0.00387,
+   "dv_total": 0.2166
   }
  ],
  "independent_control": {
   "source": "StatsAPI wp_home_before / wpa_home, converted to the batting team's frame and divided by 100 (those columns are percentage points, not probabilities)",
-  "total_wins": -3.235,
+  "total_wins": -2.911,
   "by_situation_wins": {
-   "sacrifice": -20.727,
-   "for_a_hit": 17.492
+   "sacrifice": -20.507,
+   "for_a_hit": 17.595
   },
-  "model_over_control": 17.311,
+  "model_over_control": 19.136,
   "reconciliation": {
    "identity": "total = the bunts' own summed change, by result, minus the alternative's cell mean times the bunt count; exact for both the model and the control",
    "by_result": {
     "sacrifice": {
-     "n": 4847,
-     "model_wins": -54.813,
-     "control_wins": -10.692,
-     "gap_wins": -44.121
+     "n": 4861,
+     "model_wins": -54.819,
+     "control_wins": -10.657,
+     "gap_wins": -44.162
     },
     "bunt_hit": {
-     "n": 2540,
-     "model_wins": 139.273,
-     "control_wins": 131.066,
-     "gap_wins": 8.207
+     "n": 2547,
+     "model_wins": 139.703,
+     "control_wins": 131.44,
+     "gap_wins": 8.263
     },
     "bunt_out": {
-     "n": 2090,
-     "model_wins": -70.554,
-     "control_wins": -70.28,
-     "gap_wins": -0.274
+     "n": 2091,
+     "model_wins": -70.63,
+     "control_wins": -70.347,
+     "gap_wins": -0.283
     },
     "reached_or_double_play": {
-     "n": 990,
-     "model_wins": -42.779,
-     "control_wins": -40.546,
-     "gap_wins": -2.233
+     "n": 992,
+     "model_wins": -42.832,
+     "control_wins": -40.588,
+     "gap_wins": -2.244
     },
     "strike_three_on_a_bunt": {
      "n": 546,
@@ -243,12 +243,12 @@
     }
    },
    "alternative_offset": {
-    "model_wins": 4.306,
-    "control_wins": -8.695,
-    "gap_wins": 13.001
+    "model_wins": 4.314,
+    "control_wins": -8.719,
+    "gap_wins": 13.033
    }
   },
-  "largest_gap_sentence": "The two models part most on sacrifice (4,847 bunts): -54.8 wins on the house model against -10.7 on the feed's.",
+  "largest_gap_sentence": "The two models part most on sacrifice (4,861 bunts): -54.8 wins on the house model against -10.7 on the feed's.",
   "is_realized_wpa": true,
   "why_it_is_not_the_metric": "it is the REALIZED win-probability change of the plays that happened, so it carries outcome variance the decision did not choose. It is here to check the sign and the size of the modelled number against a win-expectancy model this repo did not build."
  },

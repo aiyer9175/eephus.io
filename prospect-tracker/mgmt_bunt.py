@@ -452,9 +452,15 @@ def main(argv=None) -> int:
         print(f"{c['outs']:>4} {c['bases']:<10} {c['n_bunt']:>7} {c['n_alt']:>7} "
               f"{c['dv_per_bunt']:>+9.5f} {c['dv_total']:>+9.3f}")
     if not a.dry:
-        OUT.write_text(json.dumps(out, indent=1), encoding="utf-8")
+        write(out)
         print("wrote", OUT)
     return 0
+
+
+def write(out: dict) -> None:
+    """management_bunt.json as main writes it (the nightly step mgmt_nightly.py calls
+    price() and this)."""
+    OUT.write_text(json.dumps(out, indent=1), encoding="utf-8")
 
 
 if __name__ == "__main__":

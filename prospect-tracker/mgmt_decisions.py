@@ -1470,9 +1470,14 @@ def split_agent_at_change(game_pks_in_order, change_after_pk) -> tuple[list, lis
 
 def build(*, corpus: Path | None = None, seasons=None, shards: bool = True,
           shard_dir: Path | None = None, baseline_out: Path | None = None,
-          write_baseline: bool = True) -> dict:
+          write_baseline: bool = True, freeze_before: int | None = None) -> dict:
     """Build the ledger over every season on disk, write the shards and the baseline,
-    and return the summary artifact (data/management_decisions.json)."""
+    and return the summary artifact (data/management_decisions.json).
+
+    `freeze_before` (the pipeline passes the current year): a season below it is
+    complete, and its shards already on disk are never rewritten (mgmt_shards
+    write_season frozen=True). The ledger rows of every season are still built,
+    because the club rows, the families block and the baseline read them all."""
     import pandas as pd
     import mgmt_baseline
     import mgmt_shards
@@ -1530,7 +1535,9 @@ def build(*, corpus: Path | None = None, seasons=None, shards: bool = True,
             thin_by_family.setdefault(f, {"decisions_in_thin_cells": 0})
             thin_by_family[f]["decisions_in_thin_cells"] += n
         if shards:
-            idx_rows = mgmt_shards.write_season(rows, sdir, season)
+            idx_rows = mgmt_shards.write_season(
+                rows, sdir, season,
+                frozen=freeze_before is not None and int(season) < int(freeze_before))
             index.extend(idx_rows)
             written |= {(e["season"], e["club"]) for e in idx_rows}
         for r in rows:

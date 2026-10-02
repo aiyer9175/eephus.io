@@ -281,10 +281,29 @@ def expand(payload: dict) -> list:
     return rows
 
 
-def write_season(rows: list, out_dir: Path | None = None, season=None) -> list:
+def _on_disk(p: Path):
+    """The shard already at `p`, parsed, or None."""
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def write_season(rows: list, out_dir: Path | None = None, season=None, *,
+                 frozen: bool = False) -> list:
     """Write one shard per club found in `rows` (one season). Returns the index rows
     [{season, club, n, bytes}]. Rows are copied and compacted; the caller's rows are
-    left whole."""
+    left whole.
+
+    A shard whose content equals the file on disk (every key but generated_at) is
+    NOT rewritten, so a rebuild on an unchanged corpus leaves every byte alone and
+    generated_at keeps the date the content last changed. Before 2026-10-02 every
+    run restamped all 240 files with nothing else moving. With `frozen` (a completed
+    season, owner answer 2026-09-25) a shard already on disk is never rewritten even
+    when its content would move: the bunt family prices its cells on the pooled
+    corpus, so a growing open season moves dv_cell on earlier seasons' bunt rows in
+    the fourth or fifth decimal, and a completed season stays as it was last built.
+    A frozen shard missing from disk is still written."""
     out_dir = Path(out_dir or SHARD_DIR)
     out_dir.mkdir(parents=True, exist_ok=True)
     by_club: dict = {}
@@ -295,8 +314,19 @@ def write_season(rows: list, out_dir: Path | None = None, season=None) -> list:
     for club in sorted(by_club):
         s = int(season if season is not None else by_club[club][0]["season"])
         p = out_dir / shard_name(s, club)
+        old = _on_disk(p)
+        if frozen and old is not None and old.get("schema_version") == SCHEMA_VERSION:
+            index.append({"season": s, "club": club, "n": old.get("n"),
+                          "bytes": p.stat().st_size})
+            continue
         payload = compact_season(by_club[club], s, club, stamp)
-        p.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        if old is not None and {k: v for k, v in old.items() if k != "generated_at"} == {
+                k: v for k, v in json.loads(text).items() if k != "generated_at"}:
+            index.append({"season": s, "club": club, "n": payload["n"],
+                          "bytes": p.stat().st_size})
+            continue
+        p.write_text(text, encoding="utf-8")
         index.append({"season": s, "club": club, "n": payload["n"], "bytes": p.stat().st_size})
     return index
 

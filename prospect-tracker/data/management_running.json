@@ -1,21 +1,21 @@
 {
- "generated_at": "2026-09-25T10:06:45+00:00",
+ "generated_at": "2026-10-02T12:59:42+00:00",
  "produced_by": "management.py",
  "family": "running game: the stolen base decision",
- "n_attempts_priced": 14178,
+ "n_attempts_priced": 14207,
  "excluded": {
   "prior_state_change": 373,
   "origin_base_empty": 19,
   "no_play_row_to_price_from": 0,
-  "two_outs_crosses_the_boundary": 11985,
+  "two_outs_crosses_the_boundary": 12009,
   "unpriceable_state": 0
  },
  "attempt_census": {
-  "from_the_events_table": 24036,
-  "from_the_play_result_only": 2519,
+  "from_the_events_table": 24082,
+  "from_the_play_result_only": 2526,
   "play_result_already_an_event_row": 0,
-  "total": 26555,
-  "priced_plus_excluded": 26555,
+  "total": 26608,
+  "priced_plus_excluded": 26608,
   "reconciles": true,
   "seasons": [
    "2018",
@@ -37,34 +37,34 @@
  },
  "by_target": {
   "2B": {
-   "n": 12150,
-   "success_rate": 0.7504,
+   "n": 12171,
+   "success_rate": 0.7503,
    "mean_breakeven_p": 0.7562,
    "median_breakeven_p": 0.7465,
-   "share_of_attempts_below_their_own_breakeven": 0.5334,
+   "share_of_attempts_below_their_own_breakeven": 0.5319,
    "swing_weighted_breakeven_p": 0.7529,
-   "mean_dv": -0.00019,
-   "sum_dv_wins": -2.31,
-   "mean_er": 0.000316,
-   "sum_er_wins": 3.84,
-   "mean_swing_on_success": 0.07728,
-   "mean_swing_on_failure": 0.07558,
-   "swing_ratio_failure_over_success": 0.9781
+   "mean_dv": -0.000196,
+   "sum_dv_wins": -2.39,
+   "mean_er": 0.000307,
+   "sum_er_wins": 3.74,
+   "mean_swing_on_success": 0.07724,
+   "mean_swing_on_failure": 0.0756,
+   "swing_ratio_failure_over_success": 0.9787
   },
   "3B": {
-   "n": 1966,
-   "success_rate": 0.7614,
-   "mean_breakeven_p": 0.7344,
-   "median_breakeven_p": 0.7385,
-   "share_of_attempts_below_their_own_breakeven": 0.6536,
+   "n": 1974,
+   "success_rate": 0.7619,
+   "mean_breakeven_p": 0.7345,
+   "median_breakeven_p": 0.7386,
+   "share_of_attempts_below_their_own_breakeven": 0.655,
    "swing_weighted_breakeven_p": 0.7311,
-   "mean_dv": 0.003052,
-   "sum_dv_wins": 6.0,
-   "mean_er": 0.000161,
-   "sum_er_wins": 0.32,
-   "mean_swing_on_success": 0.10006,
-   "mean_swing_on_failure": 0.09906,
-   "swing_ratio_failure_over_success": 0.99
+   "mean_dv": 0.003094,
+   "sum_dv_wins": 6.11,
+   "mean_er": 0.000201,
+   "sum_er_wins": 0.4,
+   "mean_swing_on_success": 0.10016,
+   "mean_swing_on_failure": 0.09893,
+   "swing_ratio_failure_over_success": 0.9878
   },
   "HOME": {
    "n": 62,
@@ -126,10 +126,10 @@
    "sum_er_wins": 1.85
   },
   "2026": {
-   "n": 2013,
+   "n": 2042,
    "success_rate": 0.7581,
-   "sum_dv_wins": 0.9,
-   "sum_er_wins": 1.48
+   "sum_dv_wins": 0.93,
+   "sum_er_wins": 1.46
   }
  },
  "why_execution_residual_does_not_sum_to_zero": "ER is priced against the group's OWN mean success rate, so successes and failures balance in count but need not balance in value: sum ER equals the sum over attempts of (success minus league_p) times the win-probability swing, an identity this artifact checks. RESOLVED 2026-09-06. On the full population the swing on failed attempts ran about 1.5 times the swing on successful ones, which invited a behavioural reading (defences hold runners better when it matters). It was MECHANICAL. Once the two-out attempts are excluded, and with them every caught stealing that ends an inning, the ratio falls to 1.00 on steals of second and 1.05 on steals of third. The asymmetry was the third out, not the defence. Whatever residual remains is small enough that the execution term now nearly sums to zero, which is what it should do when it is priced against its own group's mean.",
@@ -139,8 +139,8 @@
  "third_out_handling": "a caught stealing with two down ends the half-inning, and the resulting state is valued as the NEXT half-inning from the other team's point of view. Pricing it as two-outs-bases-empty would understate the cost of the worst possible time to be thrown out.",
  "two_out_attempts_are_excluded": "with nobody out or one out a caught stealing leaves the inning alive, so both sides of the comparison come from the same monotone model. With two out it ends the inning, so the alternative comes from the measured half-inning-start table instead, and nothing calibrates the two estimators against each other. Across three builds of the engine that mismatch priced between 8.7% and 19.2% of attempts so that being CAUGHT STEALING HELPED the batting team, carrying up to 22.6% of the total decision value. Those attempts are excluded and counted. Pricing them needs an inning-level model that predicts the boundary and the mid-inning state together, which has not been built.",
  "not_yet_attributed_to_managers": "this artifact stops at the attempt. Attributing an attempt to a manager needs the manager entity (M-MWAR-2), and no MWAR number may be published before the gate battery runs.",
- "corpus_built_at": "2026-09-25T10:06:36+00:00",
- "net_dv_wins": -0.38587859673429215,
- "sum_abs_dv_wins": 48.09059956419568,
- "games_in_corpus": 19393
+ "corpus_built_at": "2026-10-02T12:59:41+00:00",
+ "net_dv_wins": -0.3611009373661975,
+ "sum_abs_dv_wins": 48.1575367290983,
+ "games_in_corpus": 19437
 }

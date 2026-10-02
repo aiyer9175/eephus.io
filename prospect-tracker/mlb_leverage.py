@@ -69,9 +69,18 @@ def get_win_probability(game_pk: int, *, game_date: str | None = None) -> list:
     ttl = feed_cache._ttl_for_date(game_date)
     if path.exists() and time.time() - path.stat().st_mtime <= ttl:
         try:
-            return _plays_of(json.loads(path.read_text(encoding="utf-8")))
+            cached = _plays_of(json.loads(path.read_text(encoding="utf-8")))
         except (json.JSONDecodeError, OSError):
-            pass  # corrupt/partial cache - re-fetch
+            cached = None  # corrupt/partial cache - re-fetch
+        # The date-derived FINAL_TTL is trusted only for a play list that ends
+        # the game, the same gate feed_cache.get_game_feed puts on its feeds
+        # (_looks_final). Game 823062 (2026-07-07, MIL at STL) was cached an
+        # hour after first pitch holding one pre-game advisory, and the date
+        # TTL served that partial list as final for three months, so the play
+        # corpus carried the game with no plate appearance in it.
+        if cached is not None and (ttl < feed_cache.FINAL_TTL
+                                   or plays_end_the_game(cached)):
+            return cached
     time.sleep(0.04)
     resp = feed_cache.SESSION.get(f"{WP_API}/{game_pk}/winProbability", timeout=30)
     resp.raise_for_status()
@@ -80,6 +89,20 @@ def get_win_probability(game_pk: int, *, game_date: str | None = None) -> list:
     tmp.write_text(json.dumps(data), encoding="utf-8")
     tmp.replace(path)  # atomic
     return _plays_of(data)
+
+
+def plays_end_the_game(plays) -> bool:
+    """Does this play list end the game? True when its last play leaves the home
+    win probability at 0 or 100, which is how every finished game in the corpus
+    ends (a rain-shortened game included: its last row is the delay advisory at
+    0 or 100). A list cut off before the end reads False, so it is re-fetched."""
+    if not plays:
+        return False
+    wp = (plays[-1] or {}).get("homeTeamWinProbability")
+    try:
+        return round(float(wp), 6) in (0.0, 100.0)
+    except (TypeError, ValueError):
+        return False
 
 
 def season_game_pks(season: int, *, game_type: str = "R") -> list[tuple[int, str]]:
