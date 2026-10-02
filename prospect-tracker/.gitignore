@@ -177,6 +177,9 @@ Thumbs.db
 !assets/icon-192.png
 !assets/icon-512.png
 !assets/icon-maskable-512.png
+# The pixel favicon and app-icon set (tools/pixel_brand.py, BR-04), served
+# behind build_site.py's PIXEL_BRAND flag.
+!assets/brand/*.png
 # Per-player Open Graph cards (Pass C) live under assets/share/.
 !assets/share/
 !assets/share/*.png

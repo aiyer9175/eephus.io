@@ -572,13 +572,27 @@ THEME_BTN = (
 # identity), and theme-color for the mobile browser chrome (navy on light,
 # near-black on dark). The artifacts are committed (tools/generate_brand_assets.py
 # regenerates them when the brand changes); hand-edited pages (prospx,
-# collegesavant) carry the same literal block.
-FAVICON_LINKS = (
+# collegesavant) carry the same literal block. FAVICON_LINKS itself is chosen
+# by the PIXEL_BRAND flag beside EEPHUS_VERSION below.
+_FAVICON_LINKS_LEGACY = (
     '<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">\n'
     '<link rel="icon" href="/favicon.ico" sizes="32x32">\n'
     '<link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">\n'
     '<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">\n'
     '<link rel="manifest" href="/assets/site.webmanifest">\n'
+    '<meta name="theme-color" content="#0E2B4D" media="(prefers-color-scheme: light)">\n'
+    '<meta name="theme-color" content="#0C0C0E" media="(prefers-color-scheme: dark)">'
+)
+# The pixel set (BR-04, tools/pixel_brand.py writes assets/brand/): the favicon
+# strikes 16/32/48 (pixel-equal to the served PX-23 copies), the app icons as
+# ball strike 32 at 4x, 4x, 12x and 9x on the dark field, and a manifest whose
+# icons point at the same folder.
+_FAVICON_LINKS_PIXEL = (
+    '<link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">\n'
+    '<link rel="icon" href="/assets/brand/favicon.ico" sizes="32x32">\n'
+    '<link rel="icon" href="/assets/brand/favicon-32.png" type="image/png" sizes="32x32">\n'
+    '<link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">\n'
+    '<link rel="manifest" href="/assets/brand/site.webmanifest">\n'
     '<meta name="theme-color" content="#0E2B4D" media="(prefers-color-scheme: light)">\n'
     '<meta name="theme-color" content="#0C0C0E" media="(prefers-color-scheme: dark)">'
 )
@@ -635,8 +649,10 @@ def _footer() -> str:
     # every page - it reads on both themes (cream face, navy outline). It is the
     # hand-tuned 16 px ball strike (owner answer PX-Q4, PX-23), drawn 1:1 at
     # 16 px with pixelated scaling so no browser resamples it; the old 18 px
-    # draw of the vector ball read as an "O".
-    mark = ('<img src="/assets/favicon-16.png" alt="" aria-hidden="true" width="16" height="16" '
+    # draw of the vector ball read as an "O". Under PIXEL_BRAND it reads the
+    # same strike from the pixel set in assets/brand/.
+    src = "/assets/brand/favicon-16.png" if PIXEL_BRAND else "/assets/favicon-16.png"
+    mark = (f'<img src="{src}" alt="" aria-hidden="true" width="16" height="16" '
             'style="width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:7px">')
     return (
         '<footer class="eephus-footer">\n'
@@ -653,6 +669,12 @@ def _footer() -> str:
 # hand-edited file) and points back to this constant in a comment.
 # --------------------------------------------------------------------------- #
 EEPHUS_VERSION = "β v1.0"
+# PIXEL_BRAND (owner ask 2, Part 8 pixel_branding lane): the pixel brand swap.
+# Off by default, and off builds byte-identical pages. On, FAVICON_LINKS and the
+# footer mark read the pixel set in assets/brand/ (BR-04). It flips in its own
+# commit after the fWAR label epoch's step Z entry.
+PIXEL_BRAND = False
+FAVICON_LINKS = _FAVICON_LINKS_PIXEL if PIXEL_BRAND else _FAVICON_LINKS_LEGACY
 BETA_BADGE = (
     f'<span class="eephus-beta" title="eephus.io is in beta - version 1.0">'
     f'{html.escape(EEPHUS_VERSION)}</span>'

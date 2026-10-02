@@ -12,7 +12,8 @@ dark, and checks what the pixel work promised on every page it touched:
   ico_paint   every on-page icon paints at least 2 colours in its box, and on
               dark none of its pixels is pure black (an unfilled symbol)
   footer      the footer mark is the 16 px ball strike (PX-23): one image,
-              /assets/favicon-16.png, drawn at 16 x 16 from a 16 x 16 file
+              /assets/favicon-16.png (or its pixel-equal copy in assets/brand/
+              under PIXEL_BRAND, BR-04), drawn at 16 x 16 from a 16 x 16 file
   fence       nothing pixel-drawn sits inside a priced betting card
               (.bt-game-probs, the Dugout fence), and that block's markup is
               the same in every theme and width
@@ -52,6 +53,9 @@ import threading
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+# The footer mark's two homes: PX-23's served strike, and the same strike in
+# the pixel set build_site.py reads under PIXEL_BRAND (BR-04).
+FOOTER_MARKS = ("/assets/favicon-16.png", "/assets/brand/favicon-16.png")
 
 PAGES = (
     ("home", "/"),
@@ -218,7 +222,7 @@ def run(base: str, out: Path, pages=PAGES, widths=WIDTHS, themes=THEMES) -> dict
                             fail.append(f"{tag}: {len(bad_paint)} icon(s) do not paint: " + "; ".join(bad_paint[:6]))
                         if m["foot"]:
                             f = m["foot"]
-                            if (len(f) != 1 or not f[0]["src"].endswith("/assets/favicon-16.png")
+                            if (len(f) != 1 or not f[0]["src"].endswith(FOOTER_MARKS)
                                     or (f[0]["w"], f[0]["h"]) != (16, 16)
                                     or (f[0]["nw"], f[0]["nh"]) != (16, 16) or not f[0]["complete"]):
                                 fail.append(f"{tag}: footer mark is not the 16 px strike: {f}")
