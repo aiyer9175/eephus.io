@@ -7,57 +7,57 @@
  "caveat": "Not adjusted for strength of schedule or park (no conference/park table held). Bands are P10-P90 and widen with thinner support. hit_ops is experimental: college tracked data barely forecasts Single-A production in our matched sample.",
  "factors": {
   "hit_k": {
-   "x_mean": 19.168,
-   "y_mean": 26.486,
-   "slope": 0.3876,
-   "ols_slope": 0.4235,
-   "band_sd": 6.659,
-   "r2": 0.171,
-   "n": 216,
+   "x_mean": 19.193,
+   "y_mean": 26.5,
+   "slope": 0.3881,
+   "ols_slope": 0.4239,
+   "band_sd": 6.644,
+   "r2": 0.172,
+   "n": 217,
    "loo": {
-    "mae": 5.343,
-    "null_mae": 5.912,
-    "skill": 0.569,
+    "mae": 5.323,
+    "null_mae": 5.9,
+    "skill": 0.577,
     "skill_se": 0.161,
-    "p10_p90_coverage": 0.801,
+    "p10_p90_coverage": 0.802,
     "target_coverage": 0.8,
-    "n": 216
+    "n": 217
    }
   },
   "hit_bb": {
-   "x_mean": 12.279,
-   "y_mean": 12.622,
-   "slope": 0.141,
-   "ols_slope": 0.1541,
-   "band_sd": 4.903,
-   "r2": 0.018,
-   "n": 216,
+   "x_mean": 12.242,
+   "y_mean": 12.592,
+   "slope": 0.1504,
+   "ols_slope": 0.1642,
+   "band_sd": 4.904,
+   "r2": 0.021,
+   "n": 217,
    "loo": {
-    "mae": 3.666,
-    "null_mae": 3.743,
-    "skill": 0.077,
-    "skill_se": 0.04,
+    "mae": 3.67,
+    "null_mae": 3.754,
+    "skill": 0.084,
+    "skill_se": 0.043,
     "p10_p90_coverage": 0.829,
     "target_coverage": 0.8,
-    "n": 216
+    "n": 217
    }
   },
   "hit_ops": {
    "x_mean": 0.381,
-   "y_mean": 0.734,
-   "slope": 0.234,
-   "ols_slope": 0.2556,
+   "y_mean": 0.733,
+   "slope": 0.2314,
+   "ols_slope": 0.2527,
    "band_sd": 0.168,
    "r2": 0.007,
-   "n": 216,
+   "n": 217,
    "loo": {
     "mae": 0.131,
     "null_mae": 0.131,
     "skill": -0.0,
     "skill_se": 0.001,
-    "p10_p90_coverage": 0.856,
+    "p10_p90_coverage": 0.853,
     "target_coverage": 0.8,
-    "n": 216
+    "n": 217
    }
   },
   "pit_k": {
@@ -134,7 +134,7 @@
   }
  },
  "matched_pairs": {
-  "hitters_with_single_a": 216,
+  "hitters_with_single_a": 217,
   "pitchers_with_single_a": 232
  }
 }

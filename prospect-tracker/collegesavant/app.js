@@ -1018,6 +1018,24 @@ function trustSentence(E, legs, opts) {
 }
 
 // ---- College -> Single-A Projections section -------------------------------
+// The translation is built from ONE college season per player and carries it
+// as source_season (college_translation.py). A row on another season's board,
+// and a player page for another season, print that season beside the
+// projection, so no season's label sits on another season's line (RML05).
+function sourceSeason(t) {
+  const s = t && Number(t.source_season);
+  return Number.isFinite(s) && s > 0 ? s : null;
+}
+function sourceSeasonTag(t, year) {
+  const s = sourceSeason(t);
+  return s != null && s !== year ? ` <span class="trans-flag src-season">from ${s} line</span>` : "";
+}
+function offSeasonNote(listed, year, noun) {
+  const off = listed.filter((x) => { const s = sourceSeason(x.t); return s != null && s !== year; }).length;
+  if (!off) return "";
+  return ` ${off.toLocaleString()} of the ${listed.length.toLocaleString()} listed ${noun} project from another season's college line, printed beside the name.`;
+}
+
 // A dedicated home for the translation: an honest "how accurate is this" panel
 // from the leave-one-out backtest, then a board of every hitter's projected
 // Single-A line (expected + P10-P90 band), ranked by CS+ (the pro profile).
@@ -1062,7 +1080,7 @@ function renderProjections() {
     const sa = x.t.single_a;
     const logo = TEAM_LOGOS[x.p.team] ? `<img class="tt-logo" src="${TEAM_LOGOS[x.p.team]}" alt="" loading="lazy" onerror="this.remove()">` : "";
     return `<tr><td class="tt-rank">${i + 1}</td>
-      <td class="tt-team">${logo}<a class="proj-name" href="#/player/${x.p.year}/${x.p.slug}">${escapeHtml(displayName(x.p.hitter_name))}</a></td>
+      <td class="tt-team">${logo}<a class="proj-name" href="#/player/${x.p.year}/${x.p.slug}">${escapeHtml(displayName(x.p.hitter_name))}</a>${sourceSeasonTag(x.t, state.year)}</td>
       <td class="tt-col">${plusPill(x.cs, "CS+")}</td>
       <td class="tt-col"${fk ? MUTED_CELL : ""}>${pband(sa.k_pct)}</td>
       <td class="tt-col"${fb ? MUTED_CELL : ""}>${pband(sa.bb_pct)}</td>
@@ -1085,7 +1103,7 @@ function renderProjections() {
     </table></div></section>
     <p class="trans-note">Coverage near 80% means the P10-P90 bands are sized to the data. Rows below r² ${lowSignalR2().toFixed(2)} are flagged and shown for context. Not adjusted for schedule strength or park (no conference / park table held). Stuff and tracked skills are descriptive (the CS+ index), not pro outcome forecasts.</p>
     <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} hitters listed · ranked by CS+ (pro profile)</span></div>
-    <p class="note-line">${listed.length.toLocaleString()} of ${projected.length.toLocaleString()} hitter${projected.length === 1 ? "" : "s"} with a projection listed, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ compares against the whole ${state.year} pool.${listed.length > list.length ? ` Showing the top ${list.length}.` : ""}</p>
+    <p class="note-line">${listed.length.toLocaleString()} of ${projected.length.toLocaleString()} hitter${projected.length === 1 ? "" : "s"} with a projection listed, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ compares against the whole ${state.year} pool. Each hitter projects from one college season, the latest on file.${offSeasonNote(listed, state.year, "hitters")}${listed.length > list.length ? ` Showing the top ${list.length}.` : ""}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th><th class="tt-col">CS+</th><th class="tt-col">${legHead("Proj A K%", fk)}</th><th class="tt-col">${legHead("Proj A BB%", fb)}</th><th class="tt-col">${legHead("Proj A OPS", fo)}</th></tr></thead>
       <tbody>${body || `<tr><td colspan="6" class="note-line">No projections for this year.</td></tr>`}</tbody>
@@ -1125,17 +1143,19 @@ function renderTranslation(player, kind) {
   ].join("");
   if (!rows.trim()) return "";
   const E = (window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {};
+  const src = sourceSeason(t);
+  const other = src != null && src !== player.year;
   return `
     <section class="panel trans-panel">
       <div class="panel-title">
         <span class="g-term" data-gl="single_a_equivalent">Projected Single-A</span>
-        <span>expected · P10-P90 band</span>
+        <span>expected · P10-P90 band${src != null ? ` · from the ${src} line` : ""}</span>
       </div>
       <div class="trans-grid">
         <div class="trans-head"><span></span><span>Expected</span><span>P10 - P90</span></div>
         ${rows}
       </div>
-      <p class="trans-note">Matched-pair projection from this college line to a Single-A
+      <p class="trans-note">${other ? `<span class="trans-flag src-season">from ${src} line</span> Not this ${player.year} line: each hitter projects from one college season, the latest on file. ` : ""}Matched-pair projection from ${src != null ? `the ${src} college line` : "this college line"} to a Single-A
       expectation, fit on our own college-to-Single-A pairs. Not adjusted for schedule
       strength or park. The band is the P10-P90 range, so a wider band means less certain.
       ${trustSentence(E, [["hit_k", "strikeout rate"], ["hit_bb", "walk rate"], ["hit_ops", "OPS"]], { brief: true })}</p>

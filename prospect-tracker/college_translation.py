@@ -674,7 +674,10 @@ def build(out_dir: Path | None = None) -> dict:
             if not t:
                 continue
             slug = slugify_cs(v["name"])
-            entry = {"side": "hit", "single_a": t}
+            # source_season names the college line this projection is built
+            # from (the latest season for hitters), so a season's board can
+            # print it beside a row whose line is from another season (RML05).
+            entry = {"side": "hit", "single_a": t, "source_season": v.get("year")}
             pk = draft_keys.get(slug_norm)
             if pk and pk in box_hit:
                 entry["box"] = box_hit[pk]
@@ -694,7 +697,10 @@ def build(out_dir: Path | None = None) -> dict:
             # client-side T[pitcher.slug] lookup misses and the board renders empty.
             slug = slugify_cs("{}-{}".format(v["name"], v.get("pitcher_id")))
             if slug not in translations:
-                entry = {"side": "pit", "single_a": t}
+                # Pitchers project from the season with the most pitches among
+                # the seasons that carry K% / BB% (2026 rows carry neither), and
+                # that season travels with the entry (RML05).
+                entry = {"side": "pit", "single_a": t, "source_season": v.get("year")}
                 pk = draft_keys.get(slug_norm)
                 if pk and pk in box_pit:
                     entry["box"] = box_pit[pk]
