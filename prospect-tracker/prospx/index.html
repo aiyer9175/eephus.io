@@ -39971,9 +39971,21 @@ function updateMeta() {
     agoTip = days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
   }
   const _n = v => (v != null ? Number(v).toLocaleString() : "…");
+  // SPR07 (smoke audit 2026-10-01): this total counts the SCOUTED pool (graded board rows
+  // plus draft-board and overseas rows, each listed by a scouting source), while the board
+  // below also ranks the provisional rows no source has graded, so its "Showing ... of N"
+  // counts a different pool. The label names the pool and the title gives the split, so
+  // the two totals read as two counts rather than a mismatch. No number changes.
+  const countTip = (totalProspects != null)
+    ? `Scouted prospects: ${_n(DATA.active_count)} graded on the prospect board, ` +
+      `${_n(draftCount)} on draft boards and ${_n(overseasCount)} overseas. ` +
+      `The board also ranks provisional prospects no scouting source has graded yet, ` +
+      `so its row count covers a different pool.`
+    : "";
   meta.innerHTML =
     `Last refresh: <code${agoTip ? ` title="Data generated ${agoTip}"` : ""}>${refreshedAt}</code>` +
-    `<span class="dot">·</span><strong>${_n(totalProspects)}</strong> prospects tracked`;
+    `<span class="dot">·</span><span class="meta-count"${countTip ? ` title="${countTip}"` : ""}>` +
+    `<strong>${_n(totalProspects)}</strong> scouted prospects tracked</span>`;
   // v19 - Section flavor-text element removed; the per-section count
   // strip was unnecessary chrome cluttering the tabs row. The active
   // filters chip strip (below) now carries the per-page status info.
