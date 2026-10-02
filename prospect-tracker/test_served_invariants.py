@@ -98,21 +98,71 @@ def test_the_playoff_identity_holds_on_every_club():
     assert not bad, f"divisionPct + wildcardPct != playoffPct: {bad[:8]}"
 
 
-def test_every_club_plays_a_whole_season():
-    """Twenty of thirty clubs were projected over 161 games because live games
-    counted as neither played nor remaining."""
-    rows = _outlook()
+def _decided_games(record) -> int | None:
+    """W + L from a futures.json club record such as "93-68"; None when unreadable."""
+    try:
+        wins, losses = str(record).split("-")
+        return int(wins) + int(losses)
+    except (TypeError, ValueError):
+        return None
+
+
+def _season_short_rows(rows, decided: dict, season_over: bool) -> list:
+    """Rows whose season does not add up. A row passes when gamesPlayed +
+    remGames == 162, or, once the regular season is over, when remGames is 0 and
+    gamesPlayed equals the club's decided games (W + L) on the futures board."""
     short = []
     for r in rows:
         c = r.get("current") or {}
         gp, rem = c.get("gamesPlayed"), c.get("remGames")
         if gp is None or rem is None:
             continue
-        if gp + rem != 162:
-            short.append((r.get("team"), gp, rem, 162 - gp - rem))
+        if gp + rem == 162:
+            continue
+        if season_over and rem == 0 and gp == decided.get(r.get("team")):
+            continue
+        short.append((r.get("team"), gp, rem, 162 - gp - rem))
+    return short
+
+
+def test_every_club_plays_a_whole_season():
+    """Twenty of thirty clubs were projected over 161 games because live games
+    counted as neither played nor remaining. On 2026-10-02 the law became games
+    scheduled rather than 162: in 2026 NYY (93-68) and BAL (79-82) finished at 161
+    games with one rainout never made up, so a final build serves them 161 + 0, and
+    that passes only when futures.json's record shows the same 161 decided games
+    after its regular_season_end."""
+    rows = _outlook()
+    decided: dict = {}
+    season_over = False
+    fpath = DATA / "futures.json"
+    if fpath.exists():
+        try:
+            fut = json.loads(fpath.read_text(encoding="utf-8"))
+        except ValueError:
+            fut = {}
+        for c in fut.get("clubs") or []:
+            n = _decided_games(c.get("record"))
+            if c.get("team") and n is not None:
+                decided[c["team"]] = n
+        end = str(fut.get("regular_season_end") or "")[:10]
+        built = str(_load("mlb_projections.json").get("generated_at") or "")[:10]
+        season_over = bool(end) and bool(built) and built >= end
+    short = _season_short_rows(rows, decided, season_over)
     assert not short, (
         f"clubs whose season does not add up to 162: {short[:8]}. A club short a "
         "game is projected over a schedule it does not have")
+
+
+def test_a_final_season_short_a_rainout_is_whole():
+    """Pure case for the games-scheduled law: a 161 + 0 club whose record has 161
+    decided games passes once the season is over; a 160 + 0 club does not."""
+    rows = [{"team": "AAA", "current": {"gamesPlayed": 161, "remGames": 0}},
+            {"team": "BBB", "current": {"gamesPlayed": 160, "remGames": 0}}]
+    decided = {"AAA": _decided_games("93-68"), "BBB": _decided_games("79-82")}
+    assert decided == {"AAA": 161, "BBB": 161}
+    assert _season_short_rows(rows, decided, True) == [("BBB", 160, 0, 2)]
+    assert [s[0] for s in _season_short_rows(rows, decided, False)] == ["AAA", "BBB"]
 
 
 def test_the_postseason_rounds_are_nested():
