@@ -4085,10 +4085,11 @@
        count, just different chart in the sixth slot. Gap tightened
        8px (was 10px) to give the WAG/WAR sparklines a touch more
        breathing room without changing card height/width.
-       # | Player | Debut | FV | WAG / season | WAR / season | MLB level | MLB stats */
+       DEBUTED_TRADE_VALUE_COLUMN (2026-10-02): a Trade value track after FV.
+       # | Player | Debut | FV | Trade value | WAG / season | WAR / season | MLB level | MLB stats */
     .debut-header, .debut-row {
       display: grid;
-      grid-template-columns: 32px 1.3fr 1fr 0.45fr 1.1fr 1.1fr 0.7fr 1.1fr;
+      grid-template-columns: 32px 1.3fr 0.9fr 0.45fr 0.8fr 1fr 1fr 0.6fr 1.1fr;
       gap: 8px;
       align-items: center;
     }
@@ -4152,6 +4153,29 @@
       background: rgba(31, 122, 58, 0.10);
       color: var(--neon-green);
       border-color: var(--neon-green);
+    }
+    /* Debuted list Trade value cell: the card's $X.XM lead, the prospect
+       valuation under it, a dash where no contract projection exists. */
+    .debut-tv-cell {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+    .debut-tv-lead {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.05;
+      color: var(--text-primary);
+    }
+    .debut-tv-lead.is-none, .debut-tv-lead.is-pending {
+      font-weight: 400;
+      color: var(--text-tertiary);
+    }
+    .debut-tv-sub {
+      font-size: 9px;
+      line-height: 1.15;
+      margin-top: 2px;
+      color: var(--text-tertiary);
     }
     /* Phase B1 - Breakout Signal pill. Two tiers:
          tier-warm (score 75-84): amber glow, "watch list" energy.
@@ -7156,10 +7180,19 @@
       .col-header.is-leaderboard > span:nth-child(n+5),
       .player-row.is-leaderboard > div:nth-child(n+5) { display: none; }
       .debut-header, .debut-row {
-        grid-template-columns: 28px 1.2fr 0.5fr 1fr;
+        grid-template-columns: 28px 1.2fr 0.5fr 0.75fr;
       }
       .debut-header .desktop-only, .debut-row .debut-date-cell,
       .debut-row .debut-level-cell { display: none; }
+      /* DEBUTED_TRADE_VALUE_COLUMN: the phone row is two lines. Line one is
+         #, player, FV and Trade value; MLB stats spans line two under the
+         player. The WAG and WAR sparklines (desktop-only) leave the row as
+         they leave the header, and the Debut and Level headers leave with
+         the cells they label, so every header sits over its own cell. */
+      .debut-row .desktop-only,
+      .debut-header .debut-date-cell, .debut-header .debut-level-cell { display: none; }
+      .debut-header > span:last-child,
+      .debut-row > .milb-cell:last-child { grid-column: 2 / -1; }
       /* SPR05: the Level header lands in the 28px first track, where
          "LEVEL" broke mid-word (LEVE / L). Print "Lvl" on one line; the
          full word stays in the title and for screen readers. */
@@ -9943,6 +9976,8 @@
                 title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat - favors debuts with a strong sample-size-adjusted track record.">WAR/year</button>
         <button class="chip" data-debut-sort="fv_close"
                 title="Highest final consensus FV (the FV when the player debuted) first">Final FV</button>
+        <button class="chip" data-debut-sort="trade_value"
+                title="Trade value, highest first: the Trade Machine price of his MLB contract projection. Debuted players with no contract projection sink to the bottom in either direction.">Trade value</button>
         <button class="chip" data-debut-sort="vs_fv_proj"
                 title="WAG (WAR Above Grade): WAR per MLB season minus what the eFV grade at debut implied over the same seasons, shrunk toward 0 on a thin sample. Shown once measured MLB exposure reaches 200 PA or 80 IP; graduates without a WAG sink to the bottom. Highest first.">WAG (high)</button>
         <button class="chip" data-debut-sort="vs_fv_proj_low"
@@ -22215,6 +22250,58 @@ function _dtvSurplusCellHTML(p, mm) {
     </div>`;
 }
 
+// ---------------------------------------------------------------------------
+// DEBUTED LIST TRADE VALUE COLUMN (owner answer B4BS-1 (b), 2026-10-01). The
+// Debuted list prints the trade value the card leads with, on desktop and on the
+// phone row: the same rule (debutedTradeValueMM, so _dtvRow), the card's $X.XM
+// spelling (_taMM) and colour, and the prospect valuation as the second line.
+// A row with no contract-projection trade row prints a dash. The trade board is
+// read lazily, once, when the tab opens, through _taTradeValuesLoad: the slim
+// sidecar first, the full board only when the sidecar cannot be read.
+// ---------------------------------------------------------------------------
+let _debutTvKicked = false;
+function _debutTvKick() {
+  if (_debutTvKicked || _TA_TV.idx) return;
+  _debutTvKicked = true;
+  _taTradeValuesLoad().then(() => {
+    try { if (state.section === "debuts" && !state.view) render(); } catch (e) { /* the column is non-critical */ }
+  });
+}
+// The sort key: the trade value, or null (no row, or the board not read yet).
+function _debutTvSortValue(g) {
+  return _TA_TV.idx ? debutedTradeValueMM(g) : null;
+}
+// The second line follows the Debuted list's own Lead grade toggle.
+function _debutTvSecondary(g) {
+  const xf = getEfv(g);
+  if (xf && xf.surplus_mm != null && (state.debutGrade || "xfv") === "xfv") {
+    return { label: "eFV prospect valuation", short: "eFV prospect", mm: Number(xf.surplus_mm) };
+  }
+  if (g && g.surplus && g.surplus.value_mm != null) {
+    return { label: "FV prospect valuation", short: "FV prospect", mm: Number(g.surplus.value_mm) };
+  }
+  return null;
+}
+function _debutTvCellHTML(g) {
+  const sec = _debutTvSecondary(g);
+  const sub = sec ? `<div class="debut-tv-sub">${sec.short} ${fmtSvMM(sec.mm)}</div>` : "";
+  const secTip = sec ? ` ${sec.label} ${fmtSvMM(sec.mm)}, priced as a prospect, not on his contract.` : "";
+  if (!_TA_TV.idx) {
+    return `<div class="debut-tv-cell" title="Loading trade values"><div class="debut-tv-lead is-pending">...</div>${sub}</div>`;
+  }
+  const mm = debutedTradeValueMM(g);
+  if (mm == null) {
+    const why = _TA_TV.idx.ok
+      ? "No trade value: no MLB contract projection on the Trade Machine for him."
+      : "Trade values could not be read.";
+    return `<div class="debut-tv-cell" title="${escapeHtml(why + secTip)}"><div class="debut-tv-lead is-none">-</div>${sub}</div>`;
+  }
+  const col = mm >= 50 ? "var(--up)" : mm >= 10 ? "var(--neon-cyan)" : mm < 0 ? "var(--down)" : "var(--text-primary)";
+  const tip = `Trade value ${_taMM(mm)}: the posterior expected surplus of his MLB contract over the club control window, `
+    + "the same number the Trade Machine prints (surplus source: contract projection)." + secTip;
+  return `<div class="debut-tv-cell" title="${escapeHtml(tip)}"><div class="debut-tv-lead" style="color:${col};">${_taMM(mm)}</div>${sub}</div>`;
+}
+
 function _ctrlWinLoad() {
   if (_CTRLWIN.loading) return;
   _CTRLWIN.loading = true;
@@ -31532,6 +31619,9 @@ function renderDebuts() {
   // C1/C2 - kick the lazy fetch of the eFV-vs-consensus track-record artifacts;
   // the collapsed panel at the top of this list renders once they land.
   try { ensureEfvTrack(); } catch (e) { /* artifacts optional */ }
+  // The Trade value column reads the trade board once, lazily; the rows paint
+  // now and repaint when it lands.
+  try { _debutTvKick(); } catch (e) { /* the column is non-critical */ }
   const filtered = getFilteredGrads();
 
   // Build a render order based on the active sort. For date-sort we keep
@@ -31562,6 +31652,7 @@ function renderDebuts() {
     <span>Player · pos · org · age</span>
     <span class="debut-date-cell sort-header" data-debut-sort="date" title="Sort by debut date (newest first)">Debut</span>
     <span class="sort-header" data-debut-sort="fv_close" title="Sort by FV at debut (high to low)" style="text-align:center;">FV</span>
+    <span class="sort-header debut-tv-head" data-debut-sort="trade_value" title="Sort by trade value: the Trade Machine price of his MLB contract projection, highest first; click again for lowest first. A dash means no contract projection; those rows stay at the bottom." style="text-align:center;">Trade value</span>
     <span class="desktop-only sort-header" data-debut-sort="vs_fv_proj" title="Sort by WAG - WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG / season</span>
     <span class="desktop-only" style="text-align:center;" title="Raw eWAR per MLB season - hover any bar for the year-by-year value">WAR / season</span>
     <span class="debut-level-cell" title="Level"><span class="debut-lvl-long">Level</span><span class="debut-lvl-short" aria-hidden="true">Lvl</span></span>
@@ -31614,6 +31705,18 @@ function renderDebuts() {
       const r = gradWarPerYr(g);
       return r ? r.war_per_yr : null;
     }));
+  } else if (sortMode === "trade_value") {
+    // Highest first; the reverse flag flips only the priced rows, so the rows
+    // with no trade value (a dash) stay at the bottom in either direction.
+    const _tv = new Map();
+    const priced = [], unpriced = [];
+    for (const g of filtered) {
+      const v = _debutTvSortValue(g);
+      if (v == null) unpriced.push(g); else { _tv.set(g, v); priced.push(g); }
+    }
+    priced.sort((a, b) => _tv.get(b) - _tv.get(a));
+    if (state.sortRev && state.sortRev.debutSort) priced.reverse();
+    orderedGrads = priced.concat(unpriced);
   } else if (sortMode === "fv_close") {
     orderedGrads = filtered.slice().sort((a, b) =>
       (fvCmpDesc(a, b))
@@ -31643,8 +31746,9 @@ function renderDebuts() {
     // Date sort: preserve the group-by-date pass below.
     orderedGrads = null;
   }
-  // v29 - Universal direction-flip honored on the flat-list path.
-  if (orderedGrads) _applySortDir(orderedGrads, "debutSort");
+  // v29 - Universal direction-flip honored on the flat-list path. The trade
+  // value sort applies the flag itself (above).
+  if (orderedGrads && sortMode !== "trade_value") _applySortDir(orderedGrads, "debutSort");
   _gfxSet("debuts", "graduate", orderedGrads || filtered, {});
 
   const renderRow = (g, rank, pillClassOverride, sublabel) => {
@@ -31702,7 +31806,8 @@ function renderDebuts() {
     // so the reader can see the sort key without hovering. Current-season
     // WAR is always shown in the MLB stats cell via gradCurrentWarHTML,
     // so the inline tag here is reserved for the two cumulative sorts.
-    // (vs_fv_proj is handled by the always-on wagPill above.)
+    // (vs_fv_proj is handled by the always-on wagPill above; trade_value has
+    // its own column on desktop and on the phone row, so it carries no tag.)
     let warTag = "";
     const curWar = currentSeasonBwar(g);
     if (sortMode === "war" && curWar != null) {
@@ -31745,6 +31850,7 @@ function renderDebuts() {
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
         <div style="text-align:center;">${efvBadgeHTML(g, { primary: state.debutGrade || "xfv" })}</div>
+        ${_debutTvCellHTML(g)}
         <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
         <div class="desktop-only" style="text-align:center;">${(function(){
           const warSpark = makeWarChart(g);
@@ -35062,7 +35168,8 @@ function _gfxSubtitle(total, cap) {
   } else if (snap.section === "debuts") {
     parts.push("ranked " + ({ vs_fv_proj: "by WAG", vs_fv_proj_low: "by lowest WAG", warwag: "by WARWAG",
       wag_pct: "by WAG percentile", war: "by current WAR", career_war: "by career WAR",
-      war_per_yr: "by WAR/yr", fv_close: "by FV", date: "newest debuts first" }[state.debutSort] || "newest first"));
+      war_per_yr: "by WAR/yr", fv_close: "by FV", trade_value: "by trade value",
+      date: "newest debuts first" }[state.debutSort] || "newest first"));
   } else if (snap.section === "draft") {
     parts.push("ranked " + (state.draftSort && state.draftSort !== "fv" ? "by " + String(state.draftSort).replace(/_/g, " ") : "by consensus FV"));
   } else if (snap.section === "overseas") {
