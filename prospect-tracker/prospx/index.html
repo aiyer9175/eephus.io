@@ -14469,7 +14469,7 @@ function syncSortHeaderActive() {
 }
 
 function makeEtaCell(p) {
-  const eta = p.eta;
+  const eta = etaServed(p);
   if (!eta || eta.year == null) {
     return `<div class="eta-cell" style="color:var(--text-tertiary);font-size:13px;"> - </div>`;
   }
@@ -14510,6 +14510,16 @@ function etaDisplayYear(eta) {
   if (!eta || eta.year == null) return " - ";
   const w = etaHalfWord(eta);
   return w ? `${w} ${eta.year}` : String(eta.year);
+}
+// RPR04 2026-10-02: the ETA a surface may print for a player. ETA is the estimated MLB
+// ARRIVAL year (glossary eta), so a graduate (status "debuted") has none: the producer
+// still carries the last pre-debut estimate on every graduate record (2,767 of 2,767
+// rows in the debuts slice on 2026-10-02, 2,723 of them later than the debut year), and printing it put
+// 'Late 2028, P(debut) 1y 77%' under a 'Debuted 2022-04-09' pill. The debut date is the
+// arrival; the record keeps the field, only the display drops it.
+function etaServed(p) {
+  if (!p || p.status === "debuted") return null;
+  return p.eta || null;
 }
 
 // ─── Headline-stat helper ───────────────────────────────────────────────────
@@ -17228,7 +17238,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
   const displayLevel = currentDisplayLevel(p);
   const signals = [
     fv != null ? { key: "Consensus FV", value: fvCeil(fv) } : null,
-    p.eta && p.eta.year != null ? { key: "ETA", value: p.eta.year } : null,
+    (etaServed(p) || {}).year != null ? { key: "ETA", value: p.eta.year } : null,
     displayLevel ? { key: "Level", value: displayLevel } : null,
     p.age != null ? { key: "Age", value: p.age.toFixed(1) } : null,
   ].filter(Boolean);
@@ -33706,7 +33716,11 @@ function gradeBlock(p, opts) {
            provisional: !!(x && x.xfv_ungraded),
            // Source-GRADED but no pro track record yet (fresh draftees/signees):
            // eFV is anchored to the consensus prior, not a model read.
-           priorAnchored: !!(x && x.xfv_provisional && !x.xfv_ungraded),
+           // RPR05 2026-10-02: never on a graduate. efv_score sets xfv_provisional on any
+           // row with no MiLB line, debuted ones included (666 of them on 2026-10-02), and
+           // the header then told a player with an MLB debut he was awaiting a pro debut.
+           // A debuted row's eFV is the grade locked at debut (locked below).
+           priorAnchored: !!(x && x.xfv_provisional && !x.xfv_ungraded && x.kind !== "debuted"),
            locked: !!(x && x.kind === "debuted") };
 }
 // efvGradeBand(x): the OUTCOME-distribution band expressed on the grade (20-80) scale.
@@ -33882,7 +33896,7 @@ function efvTooltip(x) {
     const d = efvMinusConsensusDisplay(x);
     parts.push(`Consensus FV ${efvConsensusDisplay(x)}${d != null ? ` (${efvDeltaText(d)})` : ""}`);
   }
-  if (x.xfv_provisional && !x.xfv_ungraded)
+  if (x.xfv_provisional && !x.xfv_ungraded && !locked)
     parts.push("Prior-anchored: no pro track record yet - the grade starts at the consensus prior, and any small gap vs consensus FV is 20-80 rank placement, not a penalty");
   // TWO-SCALE DISCLOSURE. This is the row-level surface: the board mixes the flagship
   // and provisional maps in one column, and the tooltip is where a reader asks what a
@@ -34103,7 +34117,11 @@ function efvDetailHeaderHTML(p, fvBadge) {
           + ` · prior-anchored · awaiting pro debut</div>`
         : `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
           + `Consensus FV <b style="color:var(--text-secondary);">${efvConsensusDisplay(x)}</b>`
-          + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">eFV ${dtxt}</span>` : "") + `</div>`);
+          + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">eFV ${dtxt}</span>` : "")
+          // RPR05: a graduate's header says what its grade is (the tooltip's 'FINAL grade,
+          // locked at MLB debut') in place of the prior-anchored wording it used to borrow.
+          + (gb.locked ? ` · <span title="${escapeHtml("The eFV grade was fixed at the player's MLB debut and does not move after it.")}">locked at debut</span>` : "")
+          + `</div>`);
 }
 // S-XLINE measurement annotation (xline_note on the xfv.json entry): covered
 // AAA 2023+ players have their current-season line blended with Statcast
@@ -34155,9 +34173,13 @@ function efvDetailCard(p) {
   if (!(x && x.xfv_grade != null)) return "";
   // Provisional (source-ungraded) prospects get a clear banner: this is a production-only
   // leading indicator, not a source-anchored grade.
+  // RPR05: the prior-anchored banner and title describe a player with no pro record yet,
+  // so a graduate (kind debuted; efv_score flags it provisional when it has no MiLB line)
+  // never gets them; its title says the grade is the one locked at debut.
+  const _priorAnch = !!(x.xfv_provisional && x.kind !== "debuted");
   const provBanner = x.xfv_ungraded
     ? `<div style="border:1px dashed var(--neon-cyan);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:rgba(0,200,220,0.05);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong style="color:var(--neon-cyan);">Provisional eFV</strong> - no scouting source has graded this prospect yet. This grade is a <strong>production-only leading indicator</strong> from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards), not a source-anchored eFV. <a href="/glossary/#g=xfv_ungraded" style="color:var(--neon-cyan);">Methodology →</a></div>`
-    : x.xfv_provisional
+    : _priorAnch
     ? `<div style="border:1px dashed var(--border-light);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:var(--bg-tertiary);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong>Prior-anchored eFV</strong> - drafted or signed but no pro track record yet, so eFV starts at the consensus prior. A small gap between eFV and consensus FV here is placement on the 20-80 scale when ranked among all graded prospects, not a model penalty. The model read goes live once pro playing time arrives.</div>`
     : "";
   const bucketBar = x.p_bucket ? renderBucketBar(x.p_bucket, { height: 18, labels: true, legend: true }) : "";
@@ -34232,7 +34254,7 @@ function efvDetailCard(p) {
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <div class="detail-title" style="margin:0;"${x.grade_basis === "provisional_capped" ? ` title="${escapeHtml(efvScaleNote(x))}"` : ""}>${x.xfv_ungraded ? "Provisional eFV · production-only" : x.grade_basis === "provisional_capped" ? "eFV · provisional scale (no source grade)" : _v2 ? (x.xfv_provisional ? "eFV V2 · consensus order, no pro record yet" : "eFV V2 · consensus order, reordered by drivers") : x.xfv_provisional ? "eFV · prior-anchored (awaiting pro debut)" : "eFV · outcome-grounded grade"}</div>
+        <div class="detail-title" style="margin:0;"${x.grade_basis === "provisional_capped" ? ` title="${escapeHtml(efvScaleNote(x))}"` : ""}>${x.xfv_ungraded ? "Provisional eFV · production-only" : x.grade_basis === "provisional_capped" ? "eFV · provisional scale (no source grade)" : _v2 ? (x.xfv_provisional ? "eFV V2 · consensus order, no pro record yet" : "eFV V2 · consensus order, reordered by drivers") : _priorAnch ? "eFV · prior-anchored (awaiting pro debut)" : x.xfv_provisional ? "eFV · locked at debut" : "eFV · outcome-grounded grade"}</div>
         <span class="fv-badge ${fvClass(String(efvGradeDisplay(x)))} size-sm"${x.xfv_ungraded ? ' style="border-style:dashed;"' : ""} title="${escapeHtml(efvTooltip(x))}">${efvGradeDisplay(x)}</span>
       </div>
       ${claimHTML}
@@ -36007,7 +36029,7 @@ function buildProspectCard(snap) {
   if (blurb.length > 260) { const cut = blurb.slice(0, 260); const d = cut.lastIndexOf(". "); blurb = d > 150 ? cut.slice(0, d + 1) : cut.trim() + "…"; }
   const blurbHTML = blurb ? `<div style="font-family:var(--font-retro);font-size:16px;line-height:1.55;color:${P.text2};font-style:italic;border-left:3px solid ${accent};padding-left:15px;">${escapeHtml(blurb)}</div>` : "";
 
-  const eta = p.eta || {};
+  const eta = etaServed(p) || {};
   // v45 - density pass: the hero meta carries height/weight (phys profile)
   // and a rank line (overall + org), filling the dead space every variant
   // had under the name block. Bloomberg rule: empty space is unspent signal.
@@ -39792,7 +39814,7 @@ function _sortStatPill(p) {
   if (s === "surplus_pbust") { const v = p.surplus && p.surplus.dist && p.surplus.dist.p_bust; return _pillHTML("P(bust)", v == null ? null : Math.round(v * 100) + "%"); }
   if (s === "wag") { const v = _wagUnified() ? wagBaked(p) : (p.debuted_value && p.debuted_value.wag && p.debuted_value.wag.regressed_wag); return _pillHTML("WAG", v == null ? null : (v > 0 ? "+" : "") + Number(v).toFixed(1)); }
   if (s === "age_vs_level") { const v = p.age_vs_level && p.age_vs_level.diff; return _pillHTML("Age vs level", v == null ? null : (v > 0 ? "+" : "") + Number(v).toFixed(1)); }
-  if (s === "eta") { const v = p.eta && p.eta.year; return _pillHTML("ETA", v == null ? null : String(v)); }
+  if (s === "eta") { const v = (etaServed(p) || {}).year; return _pillHTML("ETA", v == null ? null : String(v)); }
   if (s === "stock_movers") { const v = (p.fv_close != null && p.fv_open != null) ? (p.fv_close - p.fv_open) : null; return _pillHTML("FV move", v == null ? null : (v > 0 ? "+" : "") + v); }
   return "";
 }
@@ -39813,7 +39835,7 @@ function _rowPhoneSignalsHTML(p) {
   if (rankMove) bits.push(`<span class="rps-item"><span class="rps-key">RANK</span>${rankMove}</span>`);
   const fvMove = (typeof fvTrendHTML === "function") ? fvTrendHTML(p) : "";
   if (fvMove) bits.push(`<span class="rps-item"><span class="rps-key">STOCK</span>${fvMove}</span>`);
-  const etaYear = (p.eta && p.eta.year) ? p.eta.year : null;
+  const etaYear = (etaServed(p) && p.eta.year) ? p.eta.year : null;
   if (etaYear != null) {
     const label = (typeof etaDisplayYear === "function") ? etaDisplayYear(p.eta) : String(etaYear);
     bits.push(`<span class="rps-item"><span class="rps-key">ETA</span><span class="rps-val">${escapeHtml(String(label))}</span></span>`);
@@ -48721,7 +48743,9 @@ function renderPlayerDetail(key) {
   // Highlight tiles: FV high/low/open/close, age vs level, ETA. The
   // age-vs-level subline cites the empirical mean age at the prospect's
   // current level so users can see what we're comparing against.
-  const eta = p.eta || {};
+  // RPR04: a graduate has no ETA (etaServed), so the ETA tile, its P(debut) line and the
+  // Details-tab ETA breakdown all drop; the Debuted pill carries the arrival date.
+  const eta = etaServed(p) || {};
   const sl = p.statline || {};
   const levelNorm = (DATA.level_norms || {})[sl.level] || {};
   const ageNorm = levelNorm.age || {};
@@ -48966,10 +48990,10 @@ function renderPlayerDetail(key) {
   const tiles = [
     ["Age vs. level", ageTileValue, ageSub],
     [perfTileLabel,  perfTileValue, perfTileSub],
-    ["ETA",          etaDisplayYear(eta),
+    etaServed(p) ? ["ETA",          etaDisplayYear(eta),
       [eta.confidence ? `${eta.confidence} confidence` : "",
        (typeof debutProbLine === "function" && sl.level) ? debutProbLine(sl.level) : ""]
-        .filter(Boolean).join(" · ")],
+        .filter(Boolean).join(" · ")] : null,
     topToolTile,
     keyStatcastTile,
     swingTile,
@@ -51486,7 +51510,7 @@ function renderPlayerDetail(key) {
     return { label: "Health", value: "Healthy", tone: "up" };
   })();
   const _ovEta = (() => {
-    const eta = p.eta || {};
+    const eta = etaServed(p) || {};
     if (!eta.year) return null;
     return { label: "ETA", value: etaDisplayYear(eta), sub: eta.confidence ? `${eta.confidence} conf` : "" };
   })();
@@ -56106,7 +56130,7 @@ function makeCompareStatTable(players) {
     ["eFV",          p => gradeBlock(p).efvVal,                       { hi: true,  fmt: v => String(v) }],
     ["Consensus FV", p => p.fv_close,                                 { hi: true,  fmt: v => String(fvCeil(v)) }],
     ["Level",        p => (p.statline || {}).level || null,           { categorical: true }],
-    ["ETA",          p => (p.eta || {}).year || null,                 { hi: false, fmt: v => String(v) }],
+    ["ETA",          p => (etaServed(p) || {}).year || null,                { hi: false, fmt: v => String(v) }],
     ["Games (PA/IP volume)", p => {
       const sl = p.statline || {};
       return sl.is_pitcher ? (sl.ip != null ? Number(sl.ip) : null) : (sl.games != null ? sl.games : null);
