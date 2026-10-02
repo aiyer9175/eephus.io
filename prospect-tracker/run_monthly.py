@@ -1327,6 +1327,65 @@ def _career_rows_need_org_stint_backfill(rows: list[dict] | None) -> bool:
     return False
 
 
+# A to AAA sports of the StatsAPI league census (milb_history's cache). Sport 15 is
+# the pre-2021 short-season A, folded to A there and in stats._YBY_SPORT_LEVEL.
+_CENSUS_SPORT_LEVEL = {11: "AAA", 12: "AA", 13: "A+", 14: "A", 15: "A"}
+# Seasons back from the current one that the level-line check reads. A career table
+# keeps 5 seasons, and a gap year or two (injury, a season abroad) still lands inside.
+CENSUS_CHECK_SEASONS = 10
+
+
+def _league_level_index(seasons, groups=("hitting", "pitching")) -> dict:
+    """{(group, mlbam): {(season, level), ...}} for every A to AAA line with any
+    playing time (PA for hitters, batters faced for pitchers) in the cached StatsAPI
+    league census. Cache only: an absent file adds nothing, so a cold cache can
+    never force a re-fetch, it can only miss one."""
+    from milb_history import season_splits
+    out: dict = {}
+    for group in groups:
+        exp_key = "pa" if group == "hitting" else "bf"
+        for yr in seasons:
+            for sport, level in _CENSUS_SPORT_LEVEL.items():
+                try:
+                    rows = season_splits(sport, int(yr), group, fetch=False)
+                except Exception:                              # noqa: BLE001
+                    continue
+                for r in rows or []:
+                    mid = r.get("mlbam")
+                    try:
+                        n = int(r.get(exp_key) or 0)
+                    except (TypeError, ValueError):
+                        n = 0
+                    if not mid or n <= 0:
+                        continue
+                    out.setdefault((group, int(mid)), set()).add((int(yr), level))
+    return out
+
+
+def _career_missing_league_lines(rows: list[dict] | None, mlbam, is_pitcher: bool,
+                                 index: dict) -> list[tuple[int, str]]:
+    """(season, level) A to AAA lines the league census records for this player that
+    his cached career table lacks, from the table's oldest kept season on.
+
+    WHY (RPR10, 2026-10-02). The bulk season endpoint returns the qualified pool
+    only, so a player qualified at one level comes back with that level alone, the
+    bulk merge replaces his whole season with it, and the per-player yearByYear pass
+    then skipped him as bulk-covered. When the season ended the one-level row froze:
+    Aroon Escobar's 2025 read AA 22 AB with his 316 PA at A and 198 at A+ gone, Josh
+    Kasevich's 2024 read AAA with no AA line (393 PA). An empty list means the table
+    is complete or there is nothing to compare (no id, no cached rows)."""
+    if not mlbam or not rows:
+        return []
+    have = {(int(r.get("season") or 0), r.get("level"))
+            for r in rows if isinstance(r, dict)}
+    seasons = [s for s, _lvl in have if s]
+    if not seasons:
+        return []
+    floor = min(seasons)
+    want = index.get(("pitching" if is_pitcher else "hitting", int(mlbam))) or set()
+    return sorted(x for x in want if x[0] >= floor and x not in have)
+
+
 def ingest_source_article_drops(out_dir: Path, log: logging.Logger) -> tuple[int, int]:
     """Ingest local source article text drops into snapshots + source_events."""
     try:
@@ -5021,6 +5080,21 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 if p.status == "debuted"
                 and _career_rows_need_org_stint_backfill(career_cache.get(p.player_key))
             ]
+            # A cached table missing a level line the league census records is
+            # never skipped as bulk-covered or fresh: the bulk pass is the
+            # qualified pool only and is what dropped the line (see
+            # _career_missing_league_lines).
+            _census_idx = _league_level_index(
+                range(season - CENSUS_CHECK_SEASONS, season + 1))
+            incomplete_keys = {
+                key for key, _name, is_p in non_grad_players
+                if _career_missing_league_lines(career_cache.get(key),
+                                                ids_by_key.get(key), is_p,
+                                                _census_idx)
+            }
+            log.info("career tables missing a league-census A to AAA line: %d "
+                     "non-graduated players (re-fetched from yearByYear)",
+                     len(incomplete_keys))
             cs_tasks: list[tuple[str, int, bool]] = []
             skipped_fresh = 0
             skipped_bulk = 0
@@ -5034,14 +5108,16 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 # in the bulk WITHOUT prior-season rows fall through so
                 # yearByYear can backfill the detail-page career history.
                 has_current_year_level_change = key in current_year_level_change_keys
+                missing_lines = key in incomplete_keys
                 if (key in keys_with_bulk_2026
                         and not has_current_year_level_change
+                        and not missing_lines
                         and len(career_cache.get(key, [])) > 1):
                     skipped_bulk += 1
                     continue
                 if not force_refetch and _is_career_fresh(
                         career_meta.get(key), CAREER_STATS_FRESH_DAYS
-                ) and not has_current_year_level_change:
+                ) and not has_current_year_level_change and not missing_lines:
                     skipped_fresh += 1
                     continue
                 cs_tasks.append((key, mlbam, is_p))

@@ -1667,6 +1667,39 @@ def date_today_iso() -> str:
 # recent N so the table stays scannable.
 CAREER_SEASONS_KEPT = 5
 
+# Sport id -> level for a yearByYear split. The sport id carries the
+# classification the league had IN THAT SEASON, which a league name cannot:
+# before the 2021 realignment the Midwest and South Atlantic leagues were
+# Class A (sport 14) and the Florida State, Carolina and California leagues
+# were High-A (sport 13), the reverse of today. Reading the name gave Leandro
+# Cedeno's 2019 Midwest League season (sport 14, 396 PA) as A+, and the name
+# table's one-letter key 'A' matched the 'a' in 'Gulf Coast League'. Sport 15
+# (short-season A, retired after 2020) folds to A and sport 16 splits DSL from
+# CPX by league, the same convention milb_history uses for the league cache.
+_YBY_SPORT_LEVEL = {1: "MLB", 11: "AAA", 12: "AA", 13: "A+", 14: "A", 15: "A",
+                    16: "CPX"}
+
+
+def _is_dsl_league(league_name: str | None) -> bool:
+    """True for the foreign rookie leagues (Dominican and Venezuelan Summer
+    Leagues). The season endpoint names the Dominican league 'DSL', the
+    yearByYear endpoint 'Dominican Summer League'; both must read as DSL."""
+    name = (league_name or "").strip()
+    low = name.lower()
+    return name.upper() in ("DSL", "VSL") or "dominican" in low or "venezuelan" in low
+
+
+def _level_from_sport(sport_id, league_name: str | None) -> str | None:
+    """Level for a split whose sport id is known, else None (the caller falls
+    back to the league-name table)."""
+    try:
+        label = _YBY_SPORT_LEVEL.get(int(sport_id))
+    except (TypeError, ValueError):
+        return None
+    if label == "CPX" and _is_dsl_league(league_name):
+        return "DSL"
+    return label
+
 
 def _level_label_from(league_name: str, sport_name: str) -> str | None:
     """Map a split's league/sport name to a short level label (MLB/AAA/…/DSL).
@@ -1893,7 +1926,12 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
         league = s.get("league") or {}
         sport_name = (league.get("sport") or {}).get("name") or ""
         league_name = league.get("name") or ""
-        label = _level_label_from(league_name, sport_name)
+        # The split's own sport id first (the level that season, see
+        # _YBY_SPORT_LEVEL); the league-name table only when no id is given.
+        sport_id = ((s.get("sport") or {}).get("id")
+                    or (team.get("sport") or {}).get("id"))
+        label = (_level_from_sport(sport_id, league_name)
+                 or _level_label_from(league_name, sport_name))
         if label is None or label not in LEVEL_ORDER:
             continue
         s["_level"] = label
@@ -1979,7 +2017,10 @@ def _career_row_from_bulk_split(split: dict, group: str) -> dict | None:
     # bucket. (No-op for non-rookie sports since the labels won't match.)
     league = split.get("league") or {}
     league_name = league.get("name") or ""
-    if label == "CPX" and "dominican" in league_name.lower():
+    # This endpoint names the Dominican league 'DSL', not 'Dominican Summer
+    # League', so a substring test for 'dominican' never fired and 160 current-
+    # season DSL lines were cached as CPX (2026-10-02).
+    if label == "CPX" and _is_dsl_league(league_name):
         label = "DSL"
     season = split.get("season")
     if not season:
@@ -2075,9 +2116,17 @@ def bulk_fetch_season_stats(
     so they can be merged into career_cache directly.
 
     When a player has stints at multiple levels in the same season, every
-    (season, level) row is retained. When a player has multiple org stints
-    at the same level, the row carries the same `stints` payload as the
-    per-player yearByYear path.
+    (season, level) row the endpoint returns is retained. When a player has
+    multiple org stints at the same level, the row carries the same `stints`
+    payload as the per-player yearByYear path.
+
+    The endpoint answers with the QUALIFIED pool only (no playerPool
+    parameter): measured 2026-10-02, 124 Triple-A hitters for 2026 against
+    927 under playerPool=ALL. So a player qualified at one level and not at
+    another comes back with one of his levels, and the merge below replaces
+    his whole season with it. run_monthly's per-player pass re-fetches every
+    such player from yearByYear (_career_missing_league_lines), which is
+    where the missing level lines come back.
     """
     from collections import OrderedDict
 
