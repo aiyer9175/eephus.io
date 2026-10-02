@@ -334,6 +334,19 @@
    "artifact_age_days": 0
   },
   {
+   "model_id": "college_translation_career_refit",
+   "surface": "none served - registered refit of the CollegeSavant college -> Single-A translation (college_translation) on career_stats labels; docs/COLLEGE_CAREER_REFIT_GATE.md",
+   "predicts": "the career Single-A line (every A and A+ season on or after the college source season in career_stats, pooled: hitters K%, BB%, OPS at-bat weighted, at least 100 AB; pitchers K%, BB% innings weighted, at least 20 IP) from the same college tracked inputs as the served legs",
+   "champion": "none - registered, not scored (one look 2026-11-09; no career-label fit exists on the registration date)",
+   "baseline": "the production fit (statlines earliest A/A+ labels, refit leave-one-out where a scored pair is a production pair) AND the predict-the-mean null, both scored on the same career-label frame; gated by docs/COLLEGE_CAREER_REFIT_GATE.md",
+   "metric": "per leg (hit_k, hit_bb, hit_ops, pit_k, pit_bb): LOO MAE against the career label; paired bootstrap 95% interval of the gain over production and over the null (2000 draws, seed 20261109); held-out P10-P90 coverage; PASS = n >= 100 AND both lower bounds > 0 AND coverage in [0.75, 0.85]",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "provisional_kind": "data_blocked_stub",
+   "registration_status": "registered, not scored",
+   "notes": "Registered 2026-10-02 (owner answer M20-3, census M03-13) before any career-label fit, score or pair count. Frame: CollegeSavant players joined by identity (resolve_draft_keys, the M03-06 join, commit 61b75abd, then draft_players.promoted_key, then career_stats), no name-only fallback. One look 2026-11-09, output under docs/college-career-refit-2026-11-09/ only; looking earlier disqualifies. PASS makes a leg eligible only; serving it is a separate owner-signed task that moves the served LOO MAE, coverage and trust copy. Disclosed earlier measurements: production eval (hit_k r2 0.172 LOO MAE 5.323; pit_k r2 0.033 LOO MAE 4.013 vs 3.995) and the census M03-13 judge probes against the earliest career_stats A/A+ season (hitters outside the fit n 186 mean residual -3.68 MAE 6.88; pitchers n 217 mean +2.21 MAE 5.04)."
+  },
+  {
    "model_id": "college_pitk_box_challenger",
    "surface": "none served - registered challenger for the CollegeSavant pitcher K% leg (college_translation pit_k); docs/COLLEGE_PIT_K_CHALLENGER_GATE.md",
    "predicts": "Single-A K% from the full-season NCAA box K% (100 * SO / (outs + H + BB), at least 20 NCAA IP) of the same season as the tracked college row",

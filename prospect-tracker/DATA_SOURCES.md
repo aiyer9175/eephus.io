@@ -23,6 +23,7 @@ happen inside the called module, so this file alone cannot split them).
 | d5c. Current-season stat lines | - |
 | d5d. Incremental Statcast metrics | leaderboard_gamelogs.json |
 | d5e. Leaderboard game logs (leaderboard_gamelogs.json) | leaderboard_gamelogs.json |
+| d5f. Measured MLB PA backfill (career_stats) | - |
 | d6. Roster status | - |
 | d7. Auto-debut detection | - |
 | d8. Trade detection | - |
