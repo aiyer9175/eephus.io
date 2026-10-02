@@ -948,6 +948,12 @@ _SIDECAR_WRITE_TARGETS = (
     ("fa_market", "DPW_OWNER_PATH", "data/dpw_path_owner.json"),
     ("fa_market", "DPW_EVAL_PATH", "data/dpw_forecast_eval.json"),
     ("tools.fit_dpw_forecast", "DEFAULT_OUT", "data/dpw_forecast_eval.json"),
+    # VAL_5 commit 2b: the gate lab writes its block and ledger rows, and reads
+    # the owner record and the series file, through these.
+    ("tools.dpw_path_gate", "EVAL_PATH", "data/dpw_forecast_eval.json"),
+    ("tools.dpw_path_gate", "LEDGER_PATH", "data/dpw_path_ledger.json"),
+    ("tools.dpw_path_gate", "OWNER_PATH", "data/dpw_path_owner.json"),
+    ("tools.dpw_path_gate", "SERIES_PATH", "data/fa_dpw_series.json"),
 )
 
 #: Directory constants, redirected so a path BUILT from one at call time lands
