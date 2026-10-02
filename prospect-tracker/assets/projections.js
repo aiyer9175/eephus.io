@@ -31,14 +31,21 @@
     const z = n === 0 ? 0 : n;                       // collapse -0 -> 0
     const sign = z > 0 ? "+" : (z < 0 ? "-" : "");   // zero is unsigned
     const abs = Math.abs(z);
+    // A value that ROUNDS to zero at the printed precision is zero and prints
+    // unsigned. toFixed keeps the sign of a tiny negative, so -0.01 at one
+    // decimal printed "-0.0" (218 board cells on /projections/, 2026-10-02), and
+    // the signed types put a "+" or "-" on a printed 0.00. Both helpers read
+    // the ROUNDED figure, never z itself.
+    const fixed = (x, d) => (Number(x.toFixed(d)) === 0 ? (0).toFixed(d) : x.toFixed(d));
+    const signAt = d => (Number(abs.toFixed(d)) === 0 ? "" : sign);
     switch (type) {
       case "int":      return String(Math.round(z));
-      case "war":      return z.toFixed(1);
-      case "rate":     return sign + abs.toFixed(2);
-      case "surplusM": return sign + "$" + abs.toFixed(1) + "M";
-      case "moneyM":   return (z < 0 ? "-" : "") + "$"
+      case "war":      return fixed(z, 1);
+      case "rate":     return signAt(2) + abs.toFixed(2);
+      case "surplusM": return signAt(1) + "$" + abs.toFixed(1) + "M";
+      case "moneyM":   return (z < 0 && signAt(1) ? "-" : "") + "$"
                             + (abs >= 100 ? abs.toFixed(0) : abs.toFixed(1)) + "M";
-      case "pct":      return z.toFixed(1) + "%";
+      case "pct":      return fixed(z, 1) + "%";
       default:         return String(z);
     }
   }

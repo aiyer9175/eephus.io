@@ -22,15 +22,30 @@ rest-of-season control pricing shipped. A liability displayed as an asset.
 
 `moneyM` now carries a minus but never a plus: the leading "+" belongs to
 surplusM, where direction is the point, and is noise on a contract guarantee.
+
+RVA10 (2026-10-01): the -0 collapse only caught an exact -0. A tiny negative
+such as -0.01 still printed "-0.0" through toFixed, which is how 218 /projections/
+board season cells (george_springer 2031 among them) printed a signed zero. Every
+mirror, PROSPX included, now prints a value that ROUNDS to zero at its type's
+precision as the unsigned zero. The behavioural tests below run the shipped
+function bodies under a JS runtime (node, or the VS Code Electron binary run as
+node) and skip only when the box has neither.
 """
 
 from __future__ import annotations
 
+import json
+import os
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).parent
-MIRRORS = ["assets/fa.js", "assets/projections.js"]
+MIRRORS = ["assets/fa.js", "assets/projections.js", "assets/mlbstats.js"]
+PROSPX = "prospx/index.html"
 
 
 def _extract(js: str, name: str = "formatMetric") -> str:
@@ -107,3 +122,116 @@ def test_null_token_is_shared_and_is_not_a_real_em_dash():
         assert m.group(2) == " - ", (
             f"{path}: null token is {m.group(2)!r}, expected ' - '")
         assert "—" not in m.group(2) and "–" not in m.group(2)
+
+
+# --- behaviour: a value that rounds to zero prints the unsigned zero ---------
+
+_STUB = r"""
+var fs = require("fs");
+var EM_DASH = " - ";
+var args = process.argv.slice(-2);
+eval(fs.readFileSync(args[0], "utf8"));
+var cases = JSON.parse(fs.readFileSync(args[1], "utf8"));
+process.stdout.write(JSON.stringify(cases.map(function (c) { return formatMetric(c[0], c[1]); })));
+"""
+
+
+def _runtime():
+    node = shutil.which("node")
+    if node:
+        return [node], {}
+    code = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Microsoft VS Code" / "Code.exe"
+    if code.exists():
+        return [str(code)], {"ELECTRON_RUN_AS_NODE": "1"}
+    return None, None
+
+
+def _run(path: str, cases: list, tmp_path: Path) -> list[str]:
+    """formatMetric(value, type) for every case, from the SHIPPED body in `path`."""
+    cmd, extra = _runtime()
+    if cmd is None:
+        pytest.skip("no JS runtime (node or VS Code) on this box")
+    js = (ROOT / path).read_text(encoding="utf-8")
+    tag = re.sub(r"\W", "_", path)
+    src = tmp_path / f"{tag}.js"
+    src.write_text(_extract(js), encoding="utf-8")
+    payload = tmp_path / f"{tag}.json"
+    payload.write_text(json.dumps(cases), encoding="utf-8")
+    out = subprocess.run(cmd + ["-e", _STUB, str(src), str(payload)], capture_output=True,
+                         text=True, env=dict(os.environ, **extra), timeout=60)
+    assert out.returncode == 0, out.stderr
+    return json.loads(out.stdout)
+
+
+# Values that round to zero at each type's printed precision (the three the
+# audit named, plus the positive twins), and the unsigned zero each must print.
+_ONE_DP = [-0.01, -0.049, -0.0004, 0.01, 0.049, 0.0004, -0.0]
+_TWO_DP = [-0.0004, -0.0049, -0.004, 0.0004, 0.0049, -0.0]
+_INT = [-0.4, -0.049, -0.0004, 0.4, 0.0004, -0.0]
+_ZERO = {
+    "war": (_ONE_DP, "0.0"), "pct": (_ONE_DP, "0.0%"), "surplusM": (_ONE_DP, "$0.0M"),
+    "moneyM": (_ONE_DP, "$0.0M"), "rate": (_TWO_DP, "0.00"), "int": (_INT, "0"),
+}
+_ZERO_PROSPX = {
+    "war": (_ONE_DP, "0.0"), "pct": (_ONE_DP, "0.0%"), "surplusM": (_ONE_DP, "$0.0M"),
+    "rate": (_TWO_DP, "0.00"), "wag": (_TWO_DP, "0.00"), "int": (_INT, "0"),
+    "plus": (_INT, "0"), "netfv": (_INT, "0"), "fv": ([-0.4, -0.0004, -0.0], "0"),
+}
+# A figure that does NOT round to zero keeps its sign: the repair must not eat
+# a real negative (moneyM carrying the minus is the defect this file began with).
+_SIGNED = [(-0.06, "war", "-0.1"), (-0.049, "rate", "-0.05"), (-0.006, "rate", "-0.01"),
+           (0.006, "rate", "+0.01"), (-0.06, "surplusM", "-$0.1M"), (0.06, "surplusM", "+$0.1M"),
+           (-0.06, "pct", "-0.1%"), (-1.25, "war", "-1.3"), (-0.6, "int", "-1")]
+_SIGNED_MODULE = _SIGNED + [(-0.06, "moneyM", "-$0.1M"), (-150, "moneyM", "-$150M"),
+                            (0.06, "moneyM", "$0.1M")]
+_SIGNED_PROSPX = _SIGNED + [(-0.006, "wag", "-0.01"), (-0.6, "netfv", "-1"), (0.6, "netfv", "+1")]
+
+
+def _zero_cases(table):
+    return [(v, t, want) for t, (vals, want) in table.items() for v in vals]
+
+
+@pytest.mark.parametrize("path", MIRRORS + [PROSPX])
+def test_a_value_that_rounds_to_zero_prints_the_unsigned_zero(path, tmp_path):
+    table = _ZERO_PROSPX if path == PROSPX else _ZERO
+    cases = _zero_cases(table)
+    got = _run(path, [[v, t] for v, t, _ in cases], tmp_path)
+    bad = [(v, t, g, w) for (v, t, w), g in zip(cases, got) if g != w]
+    assert not bad, f"{path}: (value, type, printed, expected) {bad}"
+
+
+@pytest.mark.parametrize("path", MIRRORS + [PROSPX])
+def test_a_real_negative_keeps_its_sign(path, tmp_path):
+    cases = _SIGNED_PROSPX if path == PROSPX else _SIGNED_MODULE
+    got = _run(path, [[v, t] for v, t, _ in cases], tmp_path)
+    bad = [(v, t, g, w) for (v, t, w), g in zip(cases, got) if g != w]
+    assert not bad, f"{path}: (value, type, printed, expected) {bad}"
+
+
+def test_prospx_and_the_mirrors_print_the_shared_types_alike(tmp_path):
+    vals = [-123.456, -1.25, -0.06, -0.049, -0.01, -0.0049, -0.0004, -0.0, 0, 0.0004,
+            0.01, 0.049, 0.06, 1.25, 123.456, None, "", "x"]
+    cases = [[v, t] for t in ("int", "war", "rate", "surplusM", "pct") for v in vals]
+    ref = _run(PROSPX, cases, tmp_path)
+    for path in MIRRORS:
+        assert _run(path, cases, tmp_path) == ref, path
+
+
+def test_projections_board_prints_no_signed_zero_season_cell(tmp_path):
+    """The served path: every board season cell the /projections/ board can
+    print (the first `horizon` seasons of each row's expected path), formatted
+    by the shipped projections.js formatMetric, holds no "-0.0"."""
+    data = ROOT / "data" / "mlb_projections.json"
+    if not data.exists():
+        pytest.skip("data/mlb_projections.json absent (gitignored build artifact)")
+    doc = json.loads(data.read_text(encoding="utf-8"))
+    h = int(doc.get("horizon") or 5)
+    cells = [(m["key"], doc["first_season"] + t, w)
+             for grp in ("vets", "prospects") for m in doc.get(grp) or []
+             for t, w in enumerate((m.get("war") or [])[:h]) if w is not None]
+    got = _run("assets/projections.js", [[w, "war"] for _, _, w in cells], tmp_path)
+    signed = [(k, s, w, g) for (k, s, w), g in zip(cells, got) if g in ("-0.0", "+0.0")]
+    assert not signed, f"{len(signed)} board cells print a signed zero, e.g. {signed[:5]}"
+    spr = [g for (k, s, w), g in zip(cells, got) if k == "george_springer" and -0.05 < w < 0]
+    for g in spr:
+        assert g == "0.0", g
