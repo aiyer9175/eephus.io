@@ -1,107 +1,112 @@
 {
-  "generated": "2026-07-01",
+  "generated": "2026-10-02",
   "seed": 20260701,
   "deterministic": true,
   "method": {
     "question": "sensitivity of prospect surplus values to the $/WAR level: shape fixed, level scaled by -20/-10/+10/+20 percent",
-    "injection": "in-process scale of the loaded config's dollars_per_war block (flat + all three tier rates) by (1 + shift), derived caches cleared, config restored after; the same level-only rescale the fa_dpw_series re-anchor performs at load (tier shape preserved); value_framework.py not modified",
+    "injection": "in-process scale of the loaded config's dollars_per_war block (flat + all three tier rates, and the FV 40 anchor) by (1 + shift), derived caches cleared, config restored after; the same level-only rescale the fa_dpw_series re-anchor performs at load (tier shape preserved); value_framework.py not modified",
     "population": "all active prospects in data/timeseries.json with a baked surplus block; inputs replicated from the baked payload (fv_used, is_pitcher, position, age, eta_years)",
     "held_fixed": [
       "league_min_usd",
       "arb fractions",
       "discount_rate",
       "dollars_per_war_inflation",
-      "lowtier Edwards anchor",
-      "isotonic output calibration (fit at baseline level)"
+      "isotonic output calibration knots (applied in the level's dollar unit, as production applies them)"
+    ],
+    "scaled_with_level": [
+      "flat",
+      "tier rates",
+      "FV 40 anchor"
     ],
     "value_basis": "production calibrated surplus in $M, unrounded (surplus_value_mm before its 0.1 rounding); raw pre-calibration Spearman reported as a cross-check",
     "rank_tiebreak": "surplus descending, then player_key"
   },
   "baseline": {
-    "flat_usd_per_war": 13025154,
+    "flat_usd_per_war": 17143641,
     "tier_rates_usd_per_war": {
-      "lt_1": 7732992,
-      "1_to_2": 9718939,
-      "2plus": 15122048
+      "lt_1": 10178124,
+      "1_to_2": 12792018,
+      "2plus": 19903563
     },
     "fa_reanchor": {
       "applied": true,
-      "winters": [
-        2024,
-        2025,
-        2026
-      ],
-      "level_usd": 13025154,
+      "method": "fa_winter_level",
+      "class_year": 2027,
+      "level_usd": 17143641,
       "base_flat_usd": 11740000,
-      "scale": 1.1095,
-      "method": "fa_signings_implied trailing mean; tier shape preserved"
+      "scale": 1.4603,
+      "anchor_winter": 2026,
+      "carry_rate": 0.041565,
+      "series": "data/fa_dpw_series.json pricing.level_usd",
+      "shape": "clemens_2026 tier ratios and the FV 40 anchor rescaled to the level"
     },
     "replication": {
-      "n_players": 4000,
+      "n_players": 4691,
       "share_exact_at_0p1_rounding": 1.0,
       "median_abs_diff_mm": 0.0,
       "p95_abs_diff_mm": 0.0,
       "note": "recomputed baseline vs the baked surplus.value_mm in timeseries.json; small diffs reflect build-time age/ETA drift"
     },
-    "total_board_surplus_mm": 9185.9
+    "n_pinned_at_calibration_floor": 3102,
+    "total_board_surplus_mm": 17030.1
   },
   "shifts": {
     "-20%": {
       "level_multiplier": 0.8,
-      "flat_usd_per_war": 10420123,
-      "spearman_vs_baseline_calibrated": 0.975869,
-      "spearman_vs_baseline_calibrated_fv45plus": 0.999956,
-      "spearman_vs_baseline_raw": 0.999589,
+      "flat_usd_per_war": 13714913,
+      "spearman_vs_baseline_calibrated": 0.999997,
+      "spearman_vs_baseline_calibrated_fv45plus": 0.999982,
+      "spearman_vs_baseline_raw": 0.999998,
       "top50": {
         "n_entering": 0,
         "n_leaving": 0,
-        "max_rank_move_of_baseline_top50": 2,
+        "max_rank_move_of_baseline_top50": 1,
         "entering": [],
         "leaving": []
       },
       "fv_tier_median_change": {
         "FV 35-40": {
-          "n": 3043,
-          "median_change_mm": 0.0,
-          "median_change_pct": 0.0
+          "n": 4009,
+          "median_change_mm": -0.2,
+          "median_change_pct": -20.0
         },
         "FV 40-45": {
-          "n": 703,
-          "median_change_mm": 0.0,
-          "median_change_pct": 0.0
+          "n": 430,
+          "median_change_mm": -1.27,
+          "median_change_pct": -20.86
         },
         "FV 45-50": {
-          "n": 155,
-          "median_change_mm": -2.46,
-          "median_change_pct": -25.84
+          "n": 148,
+          "median_change_mm": -7.95,
+          "median_change_pct": -20.89
         },
         "FV 50-55": {
-          "n": 81,
-          "median_change_mm": -2.22,
-          "median_change_pct": -12.98
+          "n": 24,
+          "median_change_mm": -12.7,
+          "median_change_pct": -20.61
         },
         "FV 55-60": {
-          "n": 14,
-          "median_change_mm": -10.43,
-          "median_change_pct": -27.09
+          "n": 9,
+          "median_change_mm": -18.07,
+          "median_change_pct": -20.47
         },
         "FV 60+": {
-          "n": 4,
-          "median_change_mm": -15.81,
-          "median_change_pct": -24.24
+          "n": 1,
+          "median_change_mm": -29.0,
+          "median_change_pct": -20.32
         }
       },
-      "n_unchanged_players": 3497,
-      "n_pinned_at_calibration_floor": 3326,
-      "total_board_surplus_mm": 8277.1,
-      "total_change_pct": -9.89
+      "n_unchanged_players": 0,
+      "n_pinned_at_calibration_floor": 3102,
+      "total_board_surplus_mm": 13504.4,
+      "total_change_pct": -20.7
     },
     "-10%": {
       "level_multiplier": 0.9,
-      "flat_usd_per_war": 11722638,
-      "spearman_vs_baseline_calibrated": 0.986384,
-      "spearman_vs_baseline_calibrated_fv45plus": 0.999992,
-      "spearman_vs_baseline_raw": 0.999915,
+      "flat_usd_per_war": 15429277,
+      "spearman_vs_baseline_calibrated": 0.999999,
+      "spearman_vs_baseline_calibrated_fv45plus": 0.999996,
+      "spearman_vs_baseline_raw": 1.0,
       "top50": {
         "n_entering": 0,
         "n_leaving": 0,
@@ -111,47 +116,47 @@
       },
       "fv_tier_median_change": {
         "FV 35-40": {
-          "n": 3043,
-          "median_change_mm": 0.0,
-          "median_change_pct": 0.0
+          "n": 4009,
+          "median_change_mm": -0.1,
+          "median_change_pct": -10.0
         },
         "FV 40-45": {
-          "n": 703,
-          "median_change_mm": 0.0,
-          "median_change_pct": 0.0
+          "n": 430,
+          "median_change_mm": -0.64,
+          "median_change_pct": -10.43
         },
         "FV 45-50": {
-          "n": 155,
-          "median_change_mm": -0.79,
-          "median_change_pct": -12.9
+          "n": 148,
+          "median_change_mm": -3.98,
+          "median_change_pct": -10.45
         },
         "FV 50-55": {
-          "n": 81,
-          "median_change_mm": -1.1,
-          "median_change_pct": -7.16
+          "n": 24,
+          "median_change_mm": -6.35,
+          "median_change_pct": -10.3
         },
         "FV 55-60": {
-          "n": 14,
-          "median_change_mm": -5.22,
-          "median_change_pct": -13.54
+          "n": 9,
+          "median_change_mm": -9.03,
+          "median_change_pct": -10.23
         },
         "FV 60+": {
-          "n": 4,
-          "median_change_mm": -7.9,
-          "median_change_pct": -12.12
+          "n": 1,
+          "median_change_mm": -14.5,
+          "median_change_pct": -10.16
         }
       },
-      "n_unchanged_players": 3497,
-      "n_pinned_at_calibration_floor": 3312,
-      "total_board_surplus_mm": 8697.4,
-      "total_change_pct": -5.32
+      "n_unchanged_players": 0,
+      "n_pinned_at_calibration_floor": 3102,
+      "total_board_surplus_mm": 15268.3,
+      "total_change_pct": -10.35
     },
     "+10%": {
       "level_multiplier": 1.1,
-      "flat_usd_per_war": 14327669,
-      "spearman_vs_baseline_calibrated": 0.998732,
-      "spearman_vs_baseline_calibrated_fv45plus": 0.999995,
-      "spearman_vs_baseline_raw": 0.999977,
+      "flat_usd_per_war": 18858005,
+      "spearman_vs_baseline_calibrated": 1.0,
+      "spearman_vs_baseline_calibrated_fv45plus": 1.0,
+      "spearman_vs_baseline_raw": 1.0,
       "top50": {
         "n_entering": 0,
         "n_leaving": 0,
@@ -161,96 +166,96 @@
       },
       "fv_tier_median_change": {
         "FV 35-40": {
-          "n": 3043,
-          "median_change_mm": 0.0,
-          "median_change_pct": 0.0
+          "n": 4009,
+          "median_change_mm": 0.1,
+          "median_change_pct": 10.0
         },
         "FV 40-45": {
-          "n": 703,
-          "median_change_mm": 0.0,
-          "median_change_pct": 0.0
+          "n": 430,
+          "median_change_mm": 0.64,
+          "median_change_pct": 10.42
         },
         "FV 45-50": {
-          "n": 155,
-          "median_change_mm": 1.46,
-          "median_change_pct": 16.34
+          "n": 148,
+          "median_change_mm": 3.97,
+          "median_change_pct": 10.43
         },
         "FV 50-55": {
-          "n": 81,
-          "median_change_mm": 2.99,
-          "median_change_pct": 15.46
+          "n": 24,
+          "median_change_mm": 6.34,
+          "median_change_pct": 10.29
         },
         "FV 55-60": {
-          "n": 14,
-          "median_change_mm": 5.22,
-          "median_change_pct": 13.54
+          "n": 9,
+          "median_change_mm": 9.02,
+          "median_change_pct": 10.22
         },
         "FV 60+": {
-          "n": 4,
-          "median_change_mm": 7.9,
-          "median_change_pct": 12.12
+          "n": 1,
+          "median_change_mm": 14.49,
+          "median_change_pct": 10.16
         }
       },
-      "n_unchanged_players": 3495,
-      "n_pinned_at_calibration_floor": 3289,
-      "total_board_surplus_mm": 9749.0,
-      "total_change_pct": 6.13
+      "n_unchanged_players": 0,
+      "n_pinned_at_calibration_floor": 3102,
+      "total_board_surplus_mm": 18789.9,
+      "total_change_pct": 10.33
     },
     "+20%": {
       "level_multiplier": 1.2,
-      "flat_usd_per_war": 15630184,
-      "spearman_vs_baseline_calibrated": 0.998618,
-      "spearman_vs_baseline_calibrated_fv45plus": 0.999983,
-      "spearman_vs_baseline_raw": 0.999957,
+      "flat_usd_per_war": 20572369,
+      "spearman_vs_baseline_calibrated": 0.999999,
+      "spearman_vs_baseline_calibrated_fv45plus": 0.999996,
+      "spearman_vs_baseline_raw": 0.999999,
       "top50": {
         "n_entering": 0,
         "n_leaving": 0,
-        "max_rank_move_of_baseline_top50": 0,
+        "max_rank_move_of_baseline_top50": 1,
         "entering": [],
         "leaving": []
       },
       "fv_tier_median_change": {
         "FV 35-40": {
-          "n": 3043,
-          "median_change_mm": 0.0,
-          "median_change_pct": 0.0
+          "n": 4009,
+          "median_change_mm": 0.2,
+          "median_change_pct": 20.0
         },
         "FV 40-45": {
-          "n": 703,
-          "median_change_mm": 0.0,
-          "median_change_pct": 0.0
+          "n": 430,
+          "median_change_mm": 1.26,
+          "median_change_pct": 20.82
         },
         "FV 45-50": {
-          "n": 155,
-          "median_change_mm": 2.98,
-          "median_change_pct": 37.5
+          "n": 148,
+          "median_change_mm": 7.93,
+          "median_change_pct": 20.85
         },
         "FV 50-55": {
-          "n": 81,
-          "median_change_mm": 5.99,
-          "median_change_pct": 31.27
+          "n": 24,
+          "median_change_mm": 12.67,
+          "median_change_pct": 20.57
         },
         "FV 55-60": {
-          "n": 14,
-          "median_change_mm": 10.43,
-          "median_change_pct": 27.09
+          "n": 9,
+          "median_change_mm": 18.04,
+          "median_change_pct": 20.44
         },
         "FV 60+": {
-          "n": 4,
-          "median_change_mm": 15.81,
-          "median_change_pct": 24.24
+          "n": 1,
+          "median_change_mm": 28.99,
+          "median_change_pct": 20.32
         }
       },
-      "n_unchanged_players": 3495,
-      "n_pinned_at_calibration_floor": 3289,
-      "total_board_surplus_mm": 10330.0,
-      "total_change_pct": 12.45
+      "n_unchanged_players": 0,
+      "n_pinned_at_calibration_floor": 3102,
+      "total_board_surplus_mm": 20547.9,
+      "total_change_pct": 20.66
     }
   },
   "notes": [
-    "FV at or below 40 uses the Edwards fixed-dollar anchor (by design, the production fa_dpw re-anchor does not scale it either), so those players' raw surplus is identical under every level shift; the 40-45 bridge moves only through its pipeline component.",
-    "The full-board calibrated Spearman dips at -20 percent because more small raw values fall below the first isotonic knot and join the tie block at the calibration floor; it is tie compression, not reordering. The raw Spearman and the FV 45+ calibrated Spearman both stay above 0.999.",
-    "Per-tier median percent changes can exceed the shift because the isotonic output calibration has locally steep and flat segments; raw pre-calibration surplus scales close to one for one with the level."
+    "No player carries an identical calibrated surplus under any level shift. The FV 40 anchor is rescaled with the level here, as the production fa_winter_level re-anchor rescales it at load.",
+    "The full-board calibrated Spearman runs 0.999997 to 1.000000 against a raw Spearman of 0.999998 to 1.000000. The calibration floor is one tie block: 3102 players sit on it at baseline and 3102 across the shifts.",
+    "FV 45 and up tier median changes run 1.02 to 1.04 times the shift. The isotonic output calibration is applied in the level's own dollar unit (value_framework.calibration_level_scale), as production applies it."
   ],
-  "takeaway": "A 20 percent error in the dollars-per-WAR level would change price tags, not the pecking order: among the FV 45 and up prospects that drive rankings and trade value, rank correlation with the baseline stays above 0.9999, nobody enters or leaves the top 50, and no baseline top-50 player moves more than 2 spots. Below FV 45, values sit on the fixed Edwards dollar anchor and the calibration floor, so tier medians there do not move at all, while FV 45 and up tier medians move about 7 to 38 percent under 10 to 20 percent level shifts, locally amplified or damped by the isotonic output calibration. Rankings and tier comparisons are therefore stable to how the market level is estimated, and the absolute dollar figures carry that uncertainty at roughly the size of the shift."
+  "takeaway": "A 20 percent error in the dollars-per-WAR level would change price tags, not the pecking order: among the FV 45 and up prospects that drive rankings and trade value, rank correlation with the baseline stays above 0.9999, nobody enters or leaves the top 50, and no baseline top-50 player moves more than 1 spot. Below FV 45, tier medians move 10 to 21 percent; FV 45 and up tier medians move about 10 to 21 percent under 10 to 20 percent level shifts, 1.02 to 1.04 times the shift. The absolute dollar figures carry the level's uncertainty at roughly the size of the shift."
 }

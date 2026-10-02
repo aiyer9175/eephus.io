@@ -877,6 +877,10 @@ MODEL_GLOSSARY = {
     "playoff_odds_sim": ["mlb_projections", "fa_projection_engine"],
     "mgmt_running_game": "internal",
     "mgmt_board_export": "internal",
+    # The bunt family (registered 2026-10-02, audit RFR02) is internal for the
+    # same reason as the running game: a league result whose explaining
+    # sentences are derived into the payload, and no plus metric.
+    "mgmt_bunt_dv": "internal",
     # The decision ledger trio (2026-09-23, D2 Wave A). NOT internal: realized
     # mWPA, DVS and the five style z-scores are reader-facing figures on the
     # Clubs, Decisions and League tabs, and each has a glossary entry that says

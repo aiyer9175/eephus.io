@@ -14,6 +14,7 @@ without registering it, and the suite goes red."""
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import model_registry as mr
@@ -51,6 +52,52 @@ def test_known_models_are_registered():
         assert required in ids, f"model dropped from registry: {required}"
 
 
+def _webroot_excludes() -> set:
+    """data/ basenames deploy/data_exclude.txt holds back from the webroot."""
+    path = ROOT / "deploy" / "data_exclude.txt"
+    if not path.exists():
+        return set()
+    return {ln.strip() for ln in path.read_text(encoding="utf-8").splitlines()
+            if ln.strip() and not ln.strip().startswith("#")}
+
+
+def _served_eval_artifacts() -> dict:
+    """{path: [payload names]} for every string `eval_artifact` value found at
+    any depth inside a served data/*.json payload (the registry itself and the
+    files the webroot excludes are skipped)."""
+    found: dict = {}
+    skip = _webroot_excludes() | {"model_registry.json"}
+
+    def walk(obj, name):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if k == "eval_artifact" and isinstance(v, str) and v.strip():
+                    found.setdefault(v.strip(), []).append(name)
+                else:
+                    walk(v, name)
+        elif isinstance(obj, list):
+            for v in obj:
+                walk(v, name)
+
+    for p in sorted((ROOT / "data").glob("*.json")):
+        if p.name in skip:
+            continue
+        try:
+            doc = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        walk(doc, p.name)
+    return found
+
+
+def test_the_served_eval_artifact_scan_sees_the_bunt_receipt():
+    """The scan above is only worth its cost if it reaches the case that
+    escaped the globs: the /management/ board names data/management_bunt.json."""
+    served = _served_eval_artifacts()
+    assert "data/management_bunt.json" in served, sorted(served)[:10]
+    assert "management_board.json" in served["data/management_bunt.json"]
+
+
 def test_every_eval_artifact_is_registered():
     """THE STANDING RULE (owner directive 2026-06-11): every committed
     eval/gate artifact must belong to a registered model. New models
@@ -71,6 +118,12 @@ def test_every_eval_artifact_is_registered():
         referenced |= set(re.findall(r"data/[\w.\-]+\.json", m.get("notes") or ""))
     on_disk = {f"data/{p.name}" for p in (ROOT / "data").glob("*_eval*.json")}
     on_disk |= {f"data/{p.name}" for p in (ROOT / "data").glob("*gate*_eval.json")}
+    # Audit RFR02 (2026-10-02): a served section can name its own receipt under
+    # any filename. /management/'s Bunt section names data/management_bunt.json,
+    # which no glob above can see, and it went unregistered while its sibling
+    # (management_running.json) had a row. So every eval_artifact a served
+    # payload names counts as an eval artifact too.
+    on_disk |= set(_served_eval_artifacts())
     unregistered = on_disk - referenced
     # gate artifacts referenced under their canonical names still count
     unregistered = {u for u in unregistered
@@ -214,8 +267,13 @@ def test_stale_threshold_is_reachable():
 #
 # This is a RATCHET, not an allowlist to grow. A new entry here means a new
 # row whose age the registry cannot honestly state. When an artifact learns to
-# stamp itself (any of generated_at / run_at / fit_date / as_of / date at the
-# top level), delete its line; the test stays green as the set shrinks.
+# stamp itself (any key in model_registry._GENERATED_AT_KEYS at the top level),
+# delete its line; the test stays green as the set shrinks.
+#
+# 2026-10-02 (audit RVA08): surplus_sensitivity, xfv_gradenorm_basis_eval,
+# xfv_injury_history_eval and xfv_wrc_eval were never undated. They stamp
+# themselves under the bare key `generated`, which the registry did not read
+# until that key joined _GENERATED_AT_KEYS; their lines are deleted.
 UNDATED_EVAL_ARTIFACTS = frozenset({
     "data/_am_crossmodel_agelevel_eval.json",
     "data/college_translation_eval.json",
@@ -224,12 +282,9 @@ UNDATED_EVAL_ARTIFACTS = frozenset({
     # removed 2026-08-19, all four now self-date via their writers.
     "data/proj_def_feature_eval.json",
     "data/prospect_def_value_eval.json",
-    "data/surplus_sensitivity.json",
     "data/value_framework_fitted.json",
     "data/xfv_cap_sweep_eval.json",
     "data/xfv_generality_eval.json",
-    "data/xfv_gradenorm_basis_eval.json",
-    "data/xfv_injury_history_eval.json",
     "data/xfv_lambda_reselect_eval.json",
     "data/xfv_odds_calibration_slope_eval.json",
     "data/xfv_overlay_uncapped_eval.json",
@@ -239,7 +294,6 @@ UNDATED_EVAL_ARTIFACTS = frozenset({
     "data/xfv_tbs2_eval.json",
     "data/xfv_tools.json",
     "data/xfv_weight_recal_eval.json",
-    "data/xfv_wrc_eval.json",
     # Not JSON, so _artifact_date cannot read a stamp out of it at all.
     "docs/efv-2026-07-30/EFV_LANE_GATES.md",
     "docs/efv-sb-athleticism-2026-08-05/results.json",
@@ -277,6 +331,88 @@ def test_no_new_undated_eval_artifact():
         "so the age it reports there is the checkout, not the measurement. Add a "
         "top-level generated_at (or run_at / fit_date / as_of / date) to the "
         "artifact's generator. Extending UNDATED_EVAL_ARTIFACTS is not the fix.")
+
+
+# A top-level key an artifact uses to say when it was produced. Inputs' dates
+# (corpus_built_at, ewar_generated_at, split_date, ...) do not match: they date
+# what the run read, not the run.
+_STAMP_KEY_RE = re.compile(
+    r"^(generated(_at|_utc|_on)?|as_of(_date)?|fit_date|run_date|date|"
+    r"(run|built|written|produced|created|updated|stamped|started|finished|completed)_at)$")
+
+
+def _eval_artifact_paths() -> set:
+    """Every data/*eval*.json plus every JSON eval_artifact a registry row names."""
+    paths = {p for p in (ROOT / "data").glob("*eval*.json")}
+    for m in mr.load()["models"]:
+        art = (m.get("eval_artifact") or "").strip()
+        if art.endswith(".json"):
+            paths.add(ROOT / art)
+    return {p for p in paths if p.exists()}
+
+
+def test_the_stamp_keys_cover_every_artifact_date(tmp_path):
+    """Audit RVA08 (2026-10-02). surplus_sensitivity.json dated itself
+    `generated: 2026-07-01`, a key _GENERATED_AT_KEYS did not read, so the row
+    aged by file mtime and served stale False at 90 days while the artifact's
+    own stamp said 92. Three more artifacts used the same key. Any artifact that
+    carries a production stamp must be dated by the registry's reader; a new
+    stamp key fails here, naming the file and the key."""
+    probe = tmp_path / "probe_eval.json"
+    probe.write_text(json.dumps({"generated": "2026-07-01"}), encoding="utf-8")
+    assert mr._artifact_date(probe) is not None, "the bare `generated` key is not read"
+    missed = []
+    for p in sorted(_eval_artifact_paths()):
+        if p.stat().st_size > mr._MAX_STAMP_PARSE_BYTES:
+            continue
+        try:
+            doc = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(doc, dict):
+            continue
+        keys = [k for k, v in doc.items()
+                if _STAMP_KEY_RE.match(k) and isinstance(v, str) and v[:4].isdigit()
+                and mr._parse_stamp(v) is not None]
+        if keys and mr._artifact_date(p) is None:
+            missed.append((p.relative_to(ROOT).as_posix(), keys))
+    assert not missed, (
+        "eval artifacts that date themselves under a key model_registry does not "
+        f"read: {missed}. Add the key to model_registry._GENERATED_AT_KEYS.")
+
+
+# A sentence that presents a count as live ("served today", "currently") and
+# carries no ISO date goes false the day the count moves. Audit RBE10: the
+# betting_props_pmf surface said 177 players and 558 prop rows "are served
+# today" after the regular season had ended and the table was empty.
+_LIVE_RE = re.compile(
+    r"(?<![-\w])(today|currently|right now|is live|are live|is served|are served|"
+    r"now serves|tonight|at present|so far)(?![-\w])", re.I)
+_ISO_DATE_RE = re.compile(r"20\d\d-\d\d-\d\d")
+
+
+def _undated_live_counts(reg: dict) -> list:
+    out = []
+    for m in reg["models"]:
+        for field in ("surface", "baseline", "metric"):
+            for sent in re.split(r"(?<=[.;])\s+|\n+", m.get(field) or ""):
+                if (_LIVE_RE.search(sent) and re.search(r"\d", sent)
+                        and not _ISO_DATE_RE.search(sent)):
+                    out.append((m["model_id"], field, sent[:160]))
+    return out
+
+
+def test_no_row_quotes_a_live_served_count_without_a_date():
+    """surface, baseline and metric are rendered verbatim on /models/ and the
+    glossary ledger. A count stated as live there must carry the date it was
+    read, or name the artifact key it is read from instead."""
+    bad = _undated_live_counts(mr.load())
+    assert not bad, (
+        f"registry text quoting a live count with no date: {bad}. Date the "
+        "reading (YYYY-MM-DD) or cite the artifact key instead of the number.")
+    fixture = {"models": [{"model_id": "x", "surface": (
+        "THE TABLE IS LIVE: 177 players carrying 558 prop rows are served today.")}]}
+    assert _undated_live_counts(fixture), "the detector no longer sees the RBE10 sentence"
 
 
 def test_freshness_prefers_the_artifacts_own_stamp_over_mtime():

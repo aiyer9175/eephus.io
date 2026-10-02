@@ -24,8 +24,11 @@ Method (level scaled, shape fixed):
     is_pitcher flag, position, age, and the baked eta_years (None where no
     ETA, matching the engine's default path).
   * Held fixed at shipped values: league minimum, arbitration fractions,
-    discount rate, $/WAR inflation, the Edwards FV<=40 dollar anchor, and the
-    isotonic output calibration (fit at the baseline level). So the analysis
+    discount rate, $/WAR inflation, and the isotonic output calibration knots
+    (applied in the level's own dollar unit, as value_framework does since
+    VAL_1). The Edwards FV 40 anchor moves with the level when the
+    fa_winter_level re-anchor is in force, because that re-anchor rescales it
+    at load; under the older re-anchor it is held fixed. So the analysis
     answers: everything as shipped, but the market level itself is off by X%.
   * Deterministic: the point-surplus path has no Monte Carlo. SEED is a
     documented constant for provenance only (nothing stochastic runs).
@@ -88,14 +91,29 @@ class LevelScaler:
     re-anchor does at load. set(1.0) restores the baseline."""
 
     def __init__(self):
-        dpw = vf._config()["dollars_per_war"]
+        cfg = vf._config()
+        dpw = cfg["dollars_per_war"]
         self._dpw = dpw
         self.base_flat = float(dpw["flat"])
         self.base_rates = {k: float(v) for k, v in dpw["tiered"]["rates"].items()}
+        # The fa_winter_level re-anchor (value_framework._apply_fa_winter_level)
+        # rescales the FV 40 anchor with the level as well as the rates, so a
+        # level error under that method moves the anchor too. The older
+        # signings-implied re-anchor left it fixed, and so does this tool when
+        # that is the method in force.
+        re_meta = dpw.get("_fa_reanchor") or {}
+        self._anchor = cfg.get("lowtier_anchor") or {}
+        self.scales_anchor = bool(re_meta.get("applied")) and \
+            re_meta.get("method") == "fa_winter_level" and \
+            self._anchor.get("anchor_usd_40fv_position") is not None
+        self.base_anchor = (float(self._anchor["anchor_usd_40fv_position"])
+                            if self.scales_anchor else None)
 
     def set(self, mult: float) -> None:
         self._dpw["flat"] = self.base_flat * mult
         self._dpw["tiered"]["rates"] = {k: v * mult for k, v in self.base_rates.items()}
+        if self.scales_anchor:
+            self._anchor["anchor_usd_40fv_position"] = self.base_anchor * mult
         _clear_derived()
 
 
@@ -225,16 +243,31 @@ def main() -> dict:
     scaler = LevelScaler()
     fa_meta = vf._config()["dollars_per_war"].get("_fa_reanchor") or {}
     # Isotonic calibration floor (the bottom knot's y): raw values below the
-    # first knot all map here, forming a tie block in the deep low tier.
+    # first knot all map here, forming a tie block in the deep low tier. Since
+    # VAL_1 (2026-09-25) apply_calibration works in the map's own dollar unit,
+    # s * f(x / s), so the floor a calibrated value lands on is y0 * s at the
+    # CURRENT level, not the bare knot. Comparing against the bare knot counted
+    # 0 pinned players at every shift once s left 1.0.
     try:
-        iso_floor = float(vf._config()["calibration"]["isotonic"]["y_mm"][0])
+        iso_y0 = float(vf._config()["calibration"]["isotonic"]["y_mm"][0])
     except (KeyError, IndexError, TypeError, ValueError):
-        iso_floor = None
+        iso_y0 = None
+
+    def _floor_now():
+        return None if iso_y0 is None else iso_y0 * vf.calibration_level_scale()
+
+    def _n_pinned(cal):
+        floor = _floor_now()
+        if floor is None:
+            return None
+        return sum(1 for c in cal if abs(c - floor) < 1e-9)
+
     hi_idx = [i for i, r in enumerate(rows) if r["fv"] >= 45.0]
 
     # Baseline (multiplier 1.0) + replication check against the shipped numbers.
     scaler.set(1.0)
     base_cal, base_raw = compute_scenario(rows)
+    base_pinned = _n_pinned(base_cal)
     diffs = [abs(round(c, 1) - r["baked_mm"]) for c, r in zip(base_cal, rows)]
     replication = {
         "n_players": len(rows),
@@ -265,9 +298,7 @@ def main() -> dict:
             "fv_tier_median_change": tier_median_changes(rows, base_cal, cal),
             "n_unchanged_players": sum(1 for b, c in zip(base_cal, cal)
                                        if abs(b - c) < 1e-9),
-            "n_pinned_at_calibration_floor": (
-                sum(1 for c in cal if abs(c - iso_floor) < 1e-9)
-                if iso_floor is not None else None),
+            "n_pinned_at_calibration_floor": _n_pinned(cal),
             "total_board_surplus_mm": round(sum(cal), 1),
             "total_change_pct": round(100.0 * (sum(cal) - sum(base_cal)) / sum(base_cal), 2),
         }
@@ -284,31 +315,70 @@ def main() -> dict:
     churn_clause = (f"at most {max_churn} players enter or leave the top 50"
                     if max_churn else "nobody enters or leaves the top 50")
     rho_floor = math.floor(min_rho45 * 1e4) / 1e4   # truncate so "above X" is literally true
+    spots = "spot" if max_move == 1 else "spots"
+    order_holds = max_churn == 0 and min_rho45 >= 0.999
+    lead = ("would change price tags, not the pecking order"
+            if order_holds else "would change price tags and, in part, the pecking order")
+    # Every clause below is read off the numbers this run computed. The 2026-07-01
+    # prose was typed for the level of that day (FV 40 anchor fixed, calibration
+    # applied in bare knots) and read false once the fa_winter_level re-anchor
+    # and VAL_1 moved both with the level.
+    lo_pcts = [abs(t["median_change_pct"])
+               for s in shifts_out.values()
+               for label, t in s["fv_tier_median_change"].items()
+               if label.startswith(("FV 35", "FV 40")) and t["median_change_pct"] is not None]
+    if not lo_pcts or max(lo_pcts) == 0:
+        lo_clause = "Below FV 45, tier medians do not move at all"
+    else:
+        lo_clause = (f"Below FV 45, tier medians move {min(lo_pcts):.0f} to "
+                     f"{max(lo_pcts):.0f} percent")
+    ratios = [abs(t["median_change_pct"]) / abs(100.0 * float(lab_shift))
+              for lab_shift, s in zip(SHIFTS, shifts_out.values())
+              for label, t in s["fv_tier_median_change"].items()
+              if not label.startswith(("FV 35", "FV 40")) and t["median_change_pct"] is not None]
     takeaway = (
-        f"A 20 percent error in the dollars-per-WAR level would change price tags, not the "
-        f"pecking order: among the FV 45 and up prospects that drive rankings and trade value, "
-        f"rank correlation with the baseline stays above {rho_floor:.4f}, {churn_clause}, and "
-        f"no baseline top-50 player moves more than {max_move} spots. "
-        f"Below FV 45, values sit on the fixed Edwards dollar anchor and the calibration "
-        f"floor, so tier medians there do not move at all, while FV 45 and up tier medians "
-        f"move about {min(hi_pcts):.0f} to {max(hi_pcts):.0f} percent under 10 to 20 percent "
-        f"level shifts, locally amplified or damped by the isotonic output calibration. "
-        f"Rankings and tier comparisons are therefore stable to how the market level is "
-        f"estimated, and the absolute dollar figures carry that uncertainty at roughly the "
-        f"size of the shift."
+        f"A 20 percent error in the dollars-per-WAR level {lead}: among the FV 45 and up "
+        f"prospects that drive rankings and trade value, rank correlation with the baseline "
+        f"stays above {rho_floor:.4f}, {churn_clause}, and no baseline top-50 player moves "
+        f"more than {max_move} {spots}. "
+        f"{lo_clause}; FV 45 and up tier medians move about {min(hi_pcts):.0f} to "
+        f"{max(hi_pcts):.0f} percent under 10 to 20 percent level shifts, "
+        f"{min(ratios):.2f} to {max(ratios):.2f} times the shift. "
+        f"The absolute dollar figures carry the level's uncertainty at roughly the size of "
+        f"the shift."
     )
+    unch = [s["n_unchanged_players"] for s in shifts_out.values()]
+    pinned = [s["n_pinned_at_calibration_floor"] for s in shifts_out.values()
+              if s["n_pinned_at_calibration_floor"] is not None]
+    full_rho = [s["spearman_vs_baseline_calibrated"] for s in shifts_out.values()]
+    raw_rho = [s["spearman_vs_baseline_raw"] for s in shifts_out.values()]
+    def _span(vals, fmt="{}"):
+        lo, hi = min(vals), max(vals)
+        return fmt.format(lo) if lo == hi else f"{fmt.format(lo)} to {fmt.format(hi)}"
+
+    unch_clause = ("No player carries an identical calibrated surplus under any level shift."
+                   if max(unch) == 0 else
+                   f"{_span(unch)} of {len(rows)} players carry an identical calibrated "
+                   "surplus under a level shift.")
+    floor_moves = bool(pinned) and base_pinned is not None and \
+        (min(pinned) != max(pinned) or min(pinned) != base_pinned)
     notes = [
-        ("FV at or below 40 uses the Edwards fixed-dollar anchor (by design, the production "
-         "fa_dpw re-anchor does not scale it either), so those players' raw surplus is "
-         "identical under every level shift; the 40-45 bridge moves only through its "
-         "pipeline component."),
-        ("The full-board calibrated Spearman dips at -20 percent because more small raw "
-         "values fall below the first isotonic knot and join the tie block at the "
-         "calibration floor; it is tie compression, not reordering. The raw Spearman and "
-         "the FV 45+ calibrated Spearman both stay above 0.999."),
-        ("Per-tier median percent changes can exceed the shift because the isotonic output "
-         "calibration has locally steep and flat segments; raw pre-calibration surplus "
-         "scales close to one for one with the level."),
+        (unch_clause + " "
+         + ("The FV 40 anchor is rescaled with the level here, as the production "
+            "fa_winter_level re-anchor rescales it at load."
+            if scaler.scales_anchor else
+            "The FV 40 anchor is held at its shipped dollars, as the re-anchor in force "
+            "leaves it.")),
+        (f"The full-board calibrated Spearman runs {_span(full_rho, '{:.6f}')} against a raw "
+         f"Spearman of {_span(raw_rho, '{:.6f}')}."
+         + (f" The calibration floor is one tie block: {base_pinned} players sit on it at "
+            f"baseline and {_span(pinned)} across the shifts"
+            + (", so a full-board dip below the raw Spearman is tie compression, not "
+               "reordering." if floor_moves else ".")
+            if pinned and base_pinned is not None else "")),
+        (f"FV 45 and up tier median changes run {min(ratios):.2f} to {max(ratios):.2f} times "
+         "the shift. The isotonic output calibration is applied in the level's own dollar "
+         "unit (value_framework.calibration_level_scale), as production applies it."),
     ]
 
     payload = {
@@ -319,7 +389,9 @@ def main() -> dict:
             "question": ("sensitivity of prospect surplus values to the $/WAR level: "
                          "shape fixed, level scaled by -20/-10/+10/+20 percent"),
             "injection": ("in-process scale of the loaded config's dollars_per_war block "
-                          "(flat + all three tier rates) by (1 + shift), derived caches "
+                          "(flat + all three tier rates"
+                          + (", and the FV 40 anchor" if scaler.scales_anchor else "")
+                          + ") by (1 + shift), derived caches "
                           "cleared, config restored after; the same level-only rescale the "
                           "fa_dpw_series re-anchor performs at load (tier shape preserved); "
                           "value_framework.py not modified"),
@@ -327,8 +399,12 @@ def main() -> dict:
                            "surplus block; inputs replicated from the baked payload "
                            "(fv_used, is_pitcher, position, age, eta_years)"),
             "held_fixed": ["league_min_usd", "arb fractions", "discount_rate",
-                           "dollars_per_war_inflation", "lowtier Edwards anchor",
-                           "isotonic output calibration (fit at baseline level)"],
+                           "dollars_per_war_inflation",
+                           "isotonic output calibration knots (applied in the level's "
+                           "dollar unit, as production applies them)"]
+                          + ([] if scaler.scales_anchor else ["lowtier Edwards anchor"]),
+            "scaled_with_level": (["flat", "tier rates", "FV 40 anchor"]
+                                  if scaler.scales_anchor else ["flat", "tier rates"]),
             "value_basis": ("production calibrated surplus in $M, unrounded "
                             "(surplus_value_mm before its 0.1 rounding); raw "
                             "pre-calibration Spearman reported as a cross-check"),
@@ -339,6 +415,7 @@ def main() -> dict:
             "tier_rates_usd_per_war": {k: round(v) for k, v in scaler.base_rates.items()},
             "fa_reanchor": fa_meta,
             "replication": replication,
+            "n_pinned_at_calibration_floor": base_pinned,
             "total_board_surplus_mm": round(sum(base_cal), 1),
         },
         "shifts": shifts_out,

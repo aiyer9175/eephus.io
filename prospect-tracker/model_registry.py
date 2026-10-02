@@ -271,7 +271,16 @@ def _rederive_cards(reg: dict) -> None:
 # mtime to the moment of checkout, so an mtime-only freshness map reports the
 # whole registry as brand new on the deploy box - exactly where staleness
 # matters most. Read the artifact's own stamp when it carries one.
-_GENERATED_AT_KEYS = ("generated_at", "run_at", "fit_date", "as_of", "date")
+#
+# `generated` joined the list on 2026-10-02 (audit RVA08): four eval artifacts
+# date themselves under that bare key and nothing else (surplus_sensitivity,
+# xfv_gradenorm_basis_eval, xfv_injury_history_eval, xfv_wrc_eval), so their
+# rows were aged by mtime and surplus_sensitivity read 90 days and not stale
+# while its own stamp said 92. Order is preference: generated_at still wins
+# where a file carries both. test_the_stamp_keys_cover_every_artifact_date
+# fails when an artifact dates itself under a key this list does not read.
+_GENERATED_AT_KEYS = ("generated_at", "run_at", "fit_date", "as_of", "date",
+                      "generated")
 # Parsing guard: a handful of eval artifacts are multi-MB. Age is advisory, so
 # skip the parse rather than pay it, and fall back to mtime for those.
 _MAX_STAMP_PARSE_BYTES = 4_000_000
