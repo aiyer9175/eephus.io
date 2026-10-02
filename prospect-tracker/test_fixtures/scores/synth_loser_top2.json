@@ -1,0 +1,751 @@
+{
+"game": {
+"gamePk": 900101,
+"gameType": "R",
+"season": "2026",
+"gameDate": "2026-06-01T23:10:00Z",
+"officialDate": "2026-06-01",
+"doubleHeader": "N",
+"gameNumber": 1,
+"scheduledInnings": 9,
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"teams": {
+"away": {
+"team": {
+"id": 113,
+"name": "Cincinnati Reds",
+"teamName": "Reds"
+},
+"score": 2,
+"isWinner": false,
+"leagueRecord": {
+"wins": 1,
+"losses": 1
+}
+},
+"home": {
+"team": {
+"id": 119,
+"name": "Los Angeles Dodgers",
+"teamName": "Dodgers"
+},
+"score": 3,
+"isWinner": true,
+"leagueRecord": {
+"wins": 1,
+"losses": 1
+}
+}
+},
+"linescore": {
+"currentInning": 2,
+"scheduledInnings": 9,
+"innings": [
+{
+"num": 1,
+"away": {
+"runs": 1
+},
+"home": {
+"runs": 2
+}
+},
+{
+"num": 2,
+"away": {
+"runs": 1
+},
+"home": {
+"runs": 1
+}
+}
+],
+"teams": {
+"away": {
+"runs": 2,
+"hits": 5,
+"errors": 0
+},
+"home": {
+"runs": 3,
+"hits": 6,
+"errors": 0
+}
+}
+},
+"decisions": {
+"winner": {
+"id": 2,
+"fullName": "Pitcher 2"
+},
+"loser": {
+"id": 1,
+"fullName": "Pitcher 1"
+}
+},
+"venue": {
+"id": 22,
+"name": "Dodger Stadium"
+}
+},
+"wp": [
+{
+"result": {
+"type": "atBat",
+"event": "Home Run",
+"eventType": "home_run",
+"rbi": 1,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 0,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 0
+},
+"matchup": {
+"batter": {
+"id": 101,
+"fullName": "Batter 101"
+},
+"pitcher": {
+"id": 2,
+"fullName": "Pitcher 2"
+}
+},
+"runners": [],
+"playEvents": [
+{
+"playId": "p0",
+"isPitch": true,
+"details": {
+"code": "X"
+}
+}
+],
+"homeTeamWinProbability": 20.0,
+"homeTeamWinProbabilityAdded": -30.0,
+"leverageIndex": 1.0,
+"atBatIndex": 0
+},
+{
+"result": {
+"type": "atBat",
+"event": "Double",
+"eventType": "double",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 1,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 1,
+"isComplete": true
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 0
+},
+"matchup": {
+"batter": {
+"id": 201,
+"fullName": "Batter 201"
+},
+"pitcher": {
+"id": 1,
+"fullName": "Pitcher 1"
+}
+},
+"runners": [],
+"playEvents": [
+{
+"playId": "p1",
+"isPitch": true,
+"details": {
+"code": "X"
+}
+}
+],
+"homeTeamWinProbability": 41.0,
+"homeTeamWinProbabilityAdded": 21.0,
+"leverageIndex": 1.2,
+"atBatIndex": 1
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 2,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 2,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 1,
+"isComplete": true
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 0
+},
+"matchup": {
+"batter": {
+"id": 202,
+"fullName": "Batter 202"
+},
+"pitcher": {
+"id": 1,
+"fullName": "Pitcher 1"
+}
+},
+"runners": [],
+"playEvents": [
+{
+"playId": "p2",
+"isPitch": true,
+"details": {
+"code": "X"
+}
+}
+],
+"homeTeamWinProbability": 62.0,
+"homeTeamWinProbabilityAdded": 21.0,
+"leverageIndex": 1.1,
+"atBatIndex": 2
+},
+{
+"result": {
+"type": "atBat",
+"event": "Home Run",
+"eventType": "home_run",
+"rbi": 1,
+"awayScore": 2,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 3,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 2,
+"isComplete": true
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 0
+},
+"matchup": {
+"batter": {
+"id": 102,
+"fullName": "Batter 102"
+},
+"pitcher": {
+"id": 2,
+"fullName": "Pitcher 2"
+}
+},
+"runners": [],
+"playEvents": [
+{
+"playId": "p3",
+"isPitch": true,
+"details": {
+"code": "X"
+}
+}
+],
+"homeTeamWinProbability": 37.0,
+"homeTeamWinProbabilityAdded": -25.0,
+"leverageIndex": 1.5,
+"atBatIndex": 3
+},
+{
+"result": {
+"type": "atBat",
+"event": "Double",
+"eventType": "double",
+"rbi": 0,
+"awayScore": 2,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 4,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 0
+},
+"matchup": {
+"batter": {
+"id": 203,
+"fullName": "Batter 203"
+},
+"pitcher": {
+"id": 1,
+"fullName": "Pitcher 1"
+}
+},
+"runners": [],
+"playEvents": [
+{
+"playId": "p4",
+"isPitch": true,
+"details": {
+"code": "X"
+}
+}
+],
+"homeTeamWinProbability": 58.0,
+"homeTeamWinProbabilityAdded": 21.0,
+"leverageIndex": 1.4,
+"atBatIndex": 4
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 2,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 5,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 204,
+"fullName": "Batter 204"
+},
+"pitcher": {
+"id": 1,
+"fullName": "Pitcher 1"
+}
+},
+"runners": [],
+"playEvents": [
+{
+"playId": "p5",
+"isPitch": true,
+"details": {
+"code": "X"
+}
+}
+],
+"homeTeamWinProbability": 79.0,
+"homeTeamWinProbabilityAdded": 21.0,
+"leverageIndex": 1.3,
+"atBatIndex": 5
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 1,
+"awayScore": 2,
+"homeScore": 3,
+"isOut": false
+},
+"about": {
+"atBatIndex": 6,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 205,
+"fullName": "Batter 205"
+},
+"pitcher": {
+"id": 1,
+"fullName": "Pitcher 1"
+}
+},
+"runners": [],
+"playEvents": [
+{
+"playId": "p6",
+"isPitch": true,
+"details": {
+"code": "X"
+}
+}
+],
+"homeTeamWinProbability": 100.0,
+"homeTeamWinProbabilityAdded": 21.0,
+"leverageIndex": 2.0,
+"atBatIndex": 6
+}
+],
+"box": {
+"copyright": "Copyright 2026 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+"teams": {
+"away": {
+"team": {
+"id": 113
+},
+"players": {
+"ID101": {
+"person": {
+"id": 101,
+"fullName": "Batter 101",
+"boxscoreName": "Batter 101"
+},
+"position": {
+"code": "7",
+"abbreviation": "LF"
+},
+"battingOrder": "100",
+"stats": {
+"batting": {
+"atBats": 3,
+"hits": 1,
+"homeRuns": 1,
+"rbi": 1,
+"plateAppearances": 3,
+"doubles": 0,
+"triples": 0,
+"baseOnBalls": 0,
+"strikeOuts": 0,
+"runs": 0,
+"hitByPitch": 0,
+"stolenBases": 0,
+"leftOnBase": 0
+},
+"pitching": {}
+}
+},
+"ID102": {
+"person": {
+"id": 102,
+"fullName": "Batter 102",
+"boxscoreName": "Batter 102"
+},
+"position": {
+"code": "7",
+"abbreviation": "RF"
+},
+"battingOrder": "200",
+"stats": {
+"batting": {
+"atBats": 3,
+"hits": 1,
+"homeRuns": 1,
+"rbi": 1,
+"plateAppearances": 3,
+"doubles": 0,
+"triples": 0,
+"baseOnBalls": 0,
+"strikeOuts": 0,
+"runs": 0,
+"hitByPitch": 0,
+"stolenBases": 0,
+"leftOnBase": 0
+},
+"pitching": {}
+}
+},
+"ID1": {
+"person": {
+"id": 1,
+"fullName": "Pitcher 1",
+"boxscoreName": "Pitcher 1"
+},
+"position": {
+"code": "1",
+"abbreviation": "P"
+},
+"stats": {
+"batting": {},
+"pitching": {
+"outs": 6,
+"runs": 3,
+"earnedRuns": 3,
+"hits": 3,
+"baseOnBalls": 1,
+"strikeOuts": 4,
+"homeRuns": 1,
+"numberOfPitches": 60,
+"strikes": 40,
+"battersFaced": 9,
+"gamesStarted": 1,
+"wins": 0,
+"losses": 1,
+"saves": 0,
+"holds": 0,
+"blownSaves": 0
+}
+}
+}
+},
+"batters": [
+101,
+102
+],
+"pitchers": [
+1
+],
+"battingOrder": [
+101,
+102
+]
+},
+"home": {
+"team": {
+"id": 119
+},
+"players": {
+"ID201": {
+"person": {
+"id": 201,
+"fullName": "Batter 201",
+"boxscoreName": "Batter 201"
+},
+"position": {
+"code": "7",
+"abbreviation": "SS"
+},
+"battingOrder": "100",
+"stats": {
+"batting": {
+"atBats": 3,
+"hits": 1,
+"homeRuns": 0,
+"rbi": 0,
+"plateAppearances": 3,
+"doubles": 0,
+"triples": 0,
+"baseOnBalls": 0,
+"strikeOuts": 0,
+"runs": 0,
+"hitByPitch": 0,
+"stolenBases": 0,
+"leftOnBase": 0
+},
+"pitching": {}
+}
+},
+"ID202": {
+"person": {
+"id": 202,
+"fullName": "Batter 202",
+"boxscoreName": "Batter 202"
+},
+"position": {
+"code": "7",
+"abbreviation": "CF"
+},
+"battingOrder": "200",
+"stats": {
+"batting": {
+"atBats": 3,
+"hits": 1,
+"homeRuns": 0,
+"rbi": 2,
+"plateAppearances": 3,
+"doubles": 0,
+"triples": 0,
+"baseOnBalls": 0,
+"strikeOuts": 0,
+"runs": 0,
+"hitByPitch": 0,
+"stolenBases": 0,
+"leftOnBase": 0
+},
+"pitching": {}
+}
+},
+"ID203": {
+"person": {
+"id": 203,
+"fullName": "Batter 203",
+"boxscoreName": "Batter 203"
+},
+"position": {
+"code": "7",
+"abbreviation": "1B"
+},
+"battingOrder": "300",
+"stats": {
+"batting": {
+"atBats": 3,
+"hits": 1,
+"homeRuns": 0,
+"rbi": 0,
+"plateAppearances": 3,
+"doubles": 0,
+"triples": 0,
+"baseOnBalls": 0,
+"strikeOuts": 0,
+"runs": 0,
+"hitByPitch": 0,
+"stolenBases": 0,
+"leftOnBase": 0
+},
+"pitching": {}
+}
+},
+"ID204": {
+"person": {
+"id": 204,
+"fullName": "Batter 204",
+"boxscoreName": "Batter 204"
+},
+"position": {
+"code": "7",
+"abbreviation": "3B"
+},
+"battingOrder": "400",
+"stats": {
+"batting": {
+"atBats": 3,
+"hits": 1,
+"homeRuns": 0,
+"rbi": 0,
+"plateAppearances": 3,
+"doubles": 0,
+"triples": 0,
+"baseOnBalls": 0,
+"strikeOuts": 0,
+"runs": 0,
+"hitByPitch": 0,
+"stolenBases": 0,
+"leftOnBase": 0
+},
+"pitching": {}
+}
+},
+"ID205": {
+"person": {
+"id": 205,
+"fullName": "Batter 205",
+"boxscoreName": "Batter 205"
+},
+"position": {
+"code": "7",
+"abbreviation": "C"
+},
+"battingOrder": "500",
+"stats": {
+"batting": {
+"atBats": 3,
+"hits": 1,
+"homeRuns": 0,
+"rbi": 1,
+"plateAppearances": 3,
+"doubles": 0,
+"triples": 0,
+"baseOnBalls": 0,
+"strikeOuts": 0,
+"runs": 0,
+"hitByPitch": 0,
+"stolenBases": 0,
+"leftOnBase": 0
+},
+"pitching": {}
+}
+},
+"ID2": {
+"person": {
+"id": 2,
+"fullName": "Pitcher 2",
+"boxscoreName": "Pitcher 2"
+},
+"position": {
+"code": "1",
+"abbreviation": "P"
+},
+"stats": {
+"batting": {},
+"pitching": {
+"outs": 6,
+"runs": 2,
+"earnedRuns": 2,
+"hits": 3,
+"baseOnBalls": 1,
+"strikeOuts": 4,
+"homeRuns": 1,
+"numberOfPitches": 60,
+"strikes": 40,
+"battersFaced": 9,
+"gamesStarted": 1,
+"wins": 1,
+"losses": 0,
+"saves": 0,
+"holds": 0,
+"blownSaves": 0
+}
+}
+}
+},
+"batters": [
+201,
+202,
+203,
+204,
+205
+],
+"pitchers": [
+2
+],
+"battingOrder": [
+201,
+202,
+203,
+204,
+205
+]
+}
+},
+"officials": []
+}
+}

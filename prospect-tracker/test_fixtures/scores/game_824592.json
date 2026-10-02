@@ -1,0 +1,163 @@
+{
+"gamePk": 824592,
+"gameType": "R",
+"season": "2026",
+"gameDate": "2026-05-31T18:10:00Z",
+"officialDate": "2026-05-31",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"doubleHeader": "N",
+"gameNumber": 1,
+"scheduledInnings": 9,
+"teams": {
+"away": {
+"team": {
+"id": 116,
+"name": "Detroit Tigers",
+"abbreviation": "DET",
+"teamName": "Tigers"
+},
+"score": 1,
+"isWinner": false,
+"leagueRecord": {
+"wins": 22,
+"losses": 38
+}
+},
+"home": {
+"team": {
+"id": 145,
+"name": "Chicago White Sox",
+"abbreviation": "CWS",
+"teamName": "White Sox"
+},
+"score": 2,
+"isWinner": true,
+"leagueRecord": {
+"wins": 32,
+"losses": 27
+}
+}
+},
+"linescore": {
+"currentInning": 9,
+"scheduledInnings": 9,
+"innings": [
+{
+"num": 1,
+"home": {
+"runs": 0
+},
+"away": {
+"runs": 1
+}
+},
+{
+"num": 2,
+"home": {
+"runs": 0
+},
+"away": {
+"runs": 0
+}
+},
+{
+"num": 3,
+"home": {
+"runs": 0
+},
+"away": {
+"runs": 0
+}
+},
+{
+"num": 4,
+"home": {
+"runs": 0
+},
+"away": {
+"runs": 0
+}
+},
+{
+"num": 5,
+"home": {
+"runs": 0
+},
+"away": {
+"runs": 0
+}
+},
+{
+"num": 6,
+"home": {
+"runs": 0
+},
+"away": {
+"runs": 0
+}
+},
+{
+"num": 7,
+"home": {
+"runs": 2
+},
+"away": {
+"runs": 0
+}
+},
+{
+"num": 8,
+"home": {
+"runs": 0
+},
+"away": {
+"runs": 0
+}
+},
+{
+"num": 9,
+"home": {},
+"away": {
+"runs": 0
+}
+}
+],
+"teams": {
+"away": {
+"runs": 1,
+"hits": 4,
+"errors": 0
+},
+"home": {
+"runs": 2,
+"hits": 6,
+"errors": 0
+}
+}
+},
+"decisions": {
+"winner": {
+"id": 685126,
+"fullName": "Brandon Eisert"
+},
+"loser": {
+"id": 623454,
+"fullName": "Drew Anderson"
+},
+"save": {
+"id": 699823,
+"fullName": "Tyler Davis"
+}
+},
+"venue": {
+"id": 4,
+"name": "Rate Field"
+}
+}

@@ -1,0 +1,8367 @@
+[
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 0,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 0,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 690993,
+"fullName": "Colt Keith"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 690993,
+"fullName": "Colt Keith"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "game_advisory",
+"event": "Game Advisory",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "game_advisory",
+"event": "Game Advisory",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "game_advisory",
+"event": "Game Advisory",
+"isOut": false
+}
+},
+{
+"playId": "b4e1262f-8141-3259-a342-fe2fcde436ec",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "43f062dd-bc83-322f-b09f-a2e1615c086a",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 52.2,
+"homeTeamWinProbabilityAdded": 2.200000000000003,
+"atBatIndex": 0
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 0,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 1,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"postOnFirst": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "6745d2fc-e423-3320-b9c5-e0ecd71c1a7b",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 49.8,
+"homeTeamWinProbabilityAdded": -2.4000000000000057,
+"leverageIndex": 0.63,
+"atBatIndex": 1
+},
+{
+"result": {
+"type": "atBat",
+"event": "Double",
+"eventType": "double",
+"rbi": 1,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 2,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": true
+},
+"count": {
+"balls": 3,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"postOnSecond": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Double",
+"eventType": "double",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "3B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Double",
+"eventType": "double",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "3B",
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Double",
+"eventType": "double",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+},
+"responsiblePitcher": {
+"id": 680732
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "153d9727-a14e-354d-854e-2943a52fdc22",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "1dbaae15-05dd-35e3-80cc-5eb6d9e76f85",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "dc7e5c3d-95b3-3920-bcfb-ce4d1e2e5fe1",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "3644e237-73ae-3b99-a02c-6224ee1e2a4f",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "b4493b0b-df84-3e55-93ec-bafce16505ae",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "f438f769-f715-336c-bcb7-ee13d113f167",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "E",
+"isOut": false,
+"description": "In play, run(s)",
+"call": {
+"code": "E"
+}
+}
+}
+],
+"homeTeamWinProbability": 38.6,
+"homeTeamWinProbabilityAdded": -11.199999999999996,
+"leverageIndex": 1.21,
+"atBatIndex": 2
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 3,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 3,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 681481,
+"fullName": "Kerry Carpenter"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"postOnSecond": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 681481,
+"fullName": "Kerry Carpenter"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "6d074b0b-076d-31aa-861e-9daaa896cad4",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "da2daa60-cf01-3801-b969-4ce24448266d",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "2a405c95-6f68-3d0d-a62d-6a0f427b9ce9",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"isPitch": false,
+"index": 3,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "2f21ff08-ed28-31c6-a7f9-b0307279b4d7",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "d658e4b2-7ee7-324f-b545-c6ee2241eb19",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "*B",
+"isOut": false,
+"description": "Ball In Dirt",
+"call": {
+"code": "*B"
+}
+}
+},
+{
+"playId": "83983fb8-4580-4c22-b6e7-e02176f35c25",
+"isPitch": false,
+"index": 6,
+"type": "stepoff",
+"details": {
+"code": "PSO",
+"isOut": false
+}
+},
+{
+"playId": "54e88168-853b-435c-b730-f7f97d53c17c",
+"isPitch": false,
+"index": 7,
+"type": "stepoff",
+"details": {
+"code": "PSO",
+"isOut": false
+}
+},
+{
+"playId": "7c89e155-6863-34c9-9174-89a98e3e9374",
+"isPitch": true,
+"index": 8,
+"type": "pitch",
+"details": {
+"code": "*B",
+"isOut": false,
+"description": "Ball In Dirt",
+"call": {
+"code": "*B"
+}
+}
+},
+{
+"playId": "98079bfd-23ee-3c4e-85b6-1ca28f4afcc5",
+"isPitch": true,
+"index": 9,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 41.8,
+"homeTeamWinProbabilityAdded": 3.1999999999999957,
+"leverageIndex": 1.15,
+"atBatIndex": 3
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 4,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 0,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 682985,
+"fullName": "Riley Greene"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 682985,
+"fullName": "Riley Greene"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "d6a012db-fc80-3b3c-8bc7-fc261992c9ce",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "*B",
+"isOut": false,
+"description": "Ball In Dirt",
+"call": {
+"code": "*B"
+}
+}
+},
+{
+"playId": "0e1d4454-849b-315f-be46-d7f0e93019cf",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "4512c918-e20b-415a-b7b5-52a5d68e8253",
+"isPitch": false,
+"index": 2,
+"type": "stepoff",
+"details": {
+"code": "PSO",
+"isOut": false
+}
+},
+{
+"playId": "541a1952-3621-3424-8608-16ed035d5127",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 44.800000000000004,
+"homeTeamWinProbabilityAdded": 3.000000000000007,
+"leverageIndex": 1.12,
+"atBatIndex": 4
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 5,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 803011,
+"fullName": "Sam Antonacci"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 803011,
+"fullName": "Sam Antonacci"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "9359060c-c8c0-3146-b9b9-e7d5888e7762",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "41706ebc-09c3-309b-9e64-c4196a9ff0dc",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "d0e34489-2f2a-33c2-8d37-09e62bc363ea",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "e9521bef-8dbc-390c-8dc8-98e29a2bc496",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"isPitch": false,
+"index": 4,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "5cd68239-7ccd-3146-8a97-9dadfd4a262c",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "e05267d1-3e7f-3ef0-ac12-ad76f8174bd6",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "d10404f8-4357-34a5-9a7f-57ea96d3ade0",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 42.4,
+"homeTeamWinProbabilityAdded": -2.4000000000000057,
+"leverageIndex": 0.91,
+"atBatIndex": 5
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 6,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 678246,
+"fullName": "Miguel Vargas"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 678246,
+"fullName": "Miguel Vargas"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "356fffd4-c7db-3ef6-8291-ebdd172a0418",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "812b6bca-4a34-367f-8280-1dc852594ff0",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "36647428-b917-3524-ae20-ce6a9c1ec462",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "24e40c2d-5a5c-3156-968a-725e4ae92665",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 40.699999999999996,
+"homeTeamWinProbabilityAdded": -1.7000000000000028,
+"leverageIndex": 0.67,
+"atBatIndex": 6
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 7,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 643217,
+"fullName": "Andrew Benintendi"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 643217,
+"fullName": "Andrew Benintendi"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "0778a007-233f-320f-b6b2-71d664db8a0c",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "eb923db7-fc41-3bf2-aa1d-229e0177d057",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 39.7,
+"homeTeamWinProbabilityAdded": -0.9999999999999929,
+"leverageIndex": 0.42,
+"atBatIndex": 7
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 8,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 663837,
+"fullName": "Matt Vierling"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663837,
+"fullName": "Matt Vierling"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "7954757e-c3c9-3a9e-a1f0-31a6961255b7",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ef2a285c-4cc9-3c5a-847c-183daf559c62",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "7ab4ba9f-4a96-3539-a379-37579f56d5b1",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "3f4eafa1-00a2-3d1c-afca-cfa7fdfff376",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"isPitch": false,
+"index": 4,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "cb4928be-d62c-3080-95a5-6c7434813dea",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 41.8,
+"homeTeamWinProbabilityAdded": 2.0999999999999943,
+"leverageIndex": 0.82,
+"atBatIndex": 8
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 9,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 672761,
+"fullName": "Wenceel Pérez"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 672761,
+"fullName": "Wenceel Pérez"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "bbcc13eb-5ad6-3ba2-82a7-474521bec7f3",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f87d3f24-7d5f-39ce-9875-268450999b5e",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "4c6b689f-7aba-3ffd-baa4-6e2401b15795",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 43.3,
+"homeTeamWinProbabilityAdded": 1.5,
+"leverageIndex": 0.61,
+"atBatIndex": 9
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 10,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 656716,
+"fullName": "Zach McKinstry"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656716,
+"fullName": "Zach McKinstry"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "546291d5-c222-3755-9f5b-cf1913fc0e64",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "114bb8af-2bc6-3b3c-b4f1-8d4625ea4cb4",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "29960d5f-767b-3ec4-a232-88cdf6931beb",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "7d66af51-e6a1-3e49-b78a-c14b400a337f",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "02782ec8-ebe1-3e59-a3c0-42982b289620",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "b93eecff-6f95-3920-8176-21c8cc920f95",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "8e9a2a3a-e46a-385b-9094-e013862eb9b4",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 44.3,
+"homeTeamWinProbabilityAdded": 1.0,
+"leverageIndex": 0.4,
+"atBatIndex": 10
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pop Out",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 11,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 695657,
+"fullName": "Colson Montgomery"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Pop Out",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 695657,
+"fullName": "Colson Montgomery"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "ae4c4bea-95be-38ad-a381-f1b3a9c464b8",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "90f2dabc-f203-34e8-9af3-11e0daeb9ced",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "d919bd23-5d79-34cb-bf01-aa08bc348efd",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 41.8,
+"homeTeamWinProbabilityAdded": -2.5,
+"leverageIndex": 0.98,
+"atBatIndex": 11
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 12,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 3,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "e9ea9e91-1545-3feb-aae4-a62146cfff0d",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "4a446809-b513-355a-ac1b-d5f62be71b54",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "eac4c045-ec47-3509-acf5-164cf0d53d11",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "f6237d03-c1dd-31b3-b193-390dbaa7e5e9",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 40.0,
+"homeTeamWinProbabilityAdded": -1.7999999999999972,
+"leverageIndex": 0.72,
+"atBatIndex": 12
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 13,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "371baa52-011c-3849-8fe2-0d158b1a1e67",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "1558c6ad-b7c5-3b2b-b9cb-447b4764f968",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "9920cc46-8596-32b7-9b80-440f3a1e255d",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "18f284e8-83b1-3fd2-985c-1fc1ba002807",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "6070a5a6-071c-3b51-b15a-18a7448db35c",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "777517e6-c2bc-3e51-a2b1-cfe48e58f31f",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "bd217a3d-18da-3521-b48f-18d4c9dda96b",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "4fc9d932-9a60-3249-bb67-ef128b18e66e",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 38.800000000000004,
+"homeTeamWinProbabilityAdded": -1.1999999999999957,
+"leverageIndex": 0.46,
+"atBatIndex": 13
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 14,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 668670,
+"fullName": "Jake Rogers"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 668670,
+"fullName": "Jake Rogers"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "18e027bd-b2c1-3ae6-ad82-afdf987ba91d",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "92301739-14fe-36a9-bc8f-c81744d02198",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "c41bcb9b-4c07-3cc4-b3f5-46141b15499e",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "47413e91-8645-3521-af9e-b6d120ebcfe4",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 41.0,
+"homeTeamWinProbabilityAdded": 2.1999999999999957,
+"leverageIndex": 0.85,
+"atBatIndex": 14
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 15,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 690993,
+"fullName": "Colt Keith"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 690993,
+"fullName": "Colt Keith"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "aeaa315e-08b8-305d-b3cf-e33d186c28bd",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "888b8293-4cf1-3e18-913d-3e8de0fde748",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "81f6bd72-7607-3cd1-94df-0f1a3f6e7247",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "8228c53e-6288-3619-81c7-2d51bd546854",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "45fac378-a105-3722-a7d4-e52cbaede665",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "69db247b-2dd2-32c2-b4c2-cf1c36a815ac",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 42.6,
+"homeTeamWinProbabilityAdded": 1.6000000000000014,
+"leverageIndex": 0.64,
+"atBatIndex": 15
+},
+{
+"result": {
+"type": "atBat",
+"event": "Walk",
+"eventType": "walk",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 16,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 4,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"postOnFirst": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Walk",
+"eventType": "walk",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "e40baa87-4ac5-3258-8418-31813018800b",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "0cf1808b-7e98-3ecc-8307-f6d609fef94f",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "b55563df-5083-3f13-9c61-2ada2a4ffd14",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ef17d59b-49c1-341c-bff2-4f47dbd43422",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"isPitch": false,
+"index": 4,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "24354765-66be-377b-8ddf-76755ff767d8",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "a41d4fe1-f177-3666-b0b9-523c324cbfe6",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "de0e0287-e83c-34e2-b6d0-29854f1b688c",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "63728cd1-70d7-3be8-bf24-23b2ad13425a",
+"isPitch": true,
+"index": 8,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+}
+],
+"homeTeamWinProbability": 41.4,
+"homeTeamWinProbabilityAdded": -1.2000000000000028,
+"leverageIndex": 0.42,
+"atBatIndex": 16
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 17,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Stolen Base 2B",
+"eventType": "stolen_base_2b",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+}
+},
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "3be6ce6a-6e81-3d02-a78e-8a435ea9f190",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "bfb201d5-ca2a-3544-9792-327d1df55cf1",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "stolen_base_2b",
+"event": "Stolen Base 2B",
+"isOut": false
+}
+},
+{
+"playId": "8a36a531-87fb-3fd9-aa65-a68af0b940d3",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "b9b8ac67-64c1-3a2a-bb0b-2347e710c177",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "366ba107-fe0a-3040-8e13-4986a4039675",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": true,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+}
+],
+"homeTeamWinProbability": 43.7,
+"homeTeamWinProbabilityAdded": 3.3999999999999986,
+"leverageIndex": 0.89,
+"atBatIndex": 17
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pop Out",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 18,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 671976,
+"fullName": "Tristan Peters"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Pop Out",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 671976,
+"fullName": "Tristan Peters"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "fa38ec58-6586-3e05-b38d-66627034addd",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 40.9,
+"homeTeamWinProbabilityAdded": -2.8000000000000043,
+"leverageIndex": 1.07,
+"atBatIndex": 18
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pop Out",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 19,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 691011,
+"fullName": "Drew Romo"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Pop Out",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 691011,
+"fullName": "Drew Romo"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "2da3abd2-9ee8-365c-be7c-4c23c4ba05df",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "f66b8cbe-94d1-3521-8fc7-0ae0eb640861",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 39.0,
+"homeTeamWinProbabilityAdded": -1.8999999999999986,
+"leverageIndex": 0.78,
+"atBatIndex": 19
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 20,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 807747,
+"fullName": "Rikuu Nishida"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+},
+"postOnFirst": {
+"id": 807747,
+"fullName": "Rikuu Nishida"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 807747,
+"fullName": "Rikuu Nishida"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "a29c3d4b-ca32-3157-ba8d-a61930d56448",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 40.400000000000006,
+"homeTeamWinProbabilityAdded": 1.4000000000000057,
+"leverageIndex": 0.5,
+"atBatIndex": 20
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pop Out",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 21,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 803011,
+"fullName": "Sam Antonacci"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Pop Out",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 803011,
+"fullName": "Sam Antonacci"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "6c08a335-64c1-3d13-bb26-a1cde67d7af9",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "28bd9e0e-1fe1-3c0a-838a-05ae622035bb",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 37.7,
+"homeTeamWinProbabilityAdded": -2.700000000000003,
+"leverageIndex": 1.09,
+"atBatIndex": 21
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 22,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 0
+},
+"matchup": {
+"batter": {
+"id": 681481,
+"fullName": "Kerry Carpenter"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"postOnFirst": {
+"id": 681481,
+"fullName": "Kerry Carpenter"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 681481,
+"fullName": "Kerry Carpenter"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "30955e38-8d2d-3058-9ce6-6fb14d0a8755",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "5b8441bb-9fbb-35d7-b231-f816d5602187",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 34.1,
+"homeTeamWinProbabilityAdded": -3.6000000000000014,
+"leverageIndex": 0.9,
+"atBatIndex": 22
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 23,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 682985,
+"fullName": "Riley Greene"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"postOnFirst": {
+"id": 681481,
+"fullName": "Kerry Carpenter"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 682985,
+"fullName": "Riley Greene"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "6931471e-9474-36fb-960d-c04907654fb8",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "16dc0acb-97e3-3127-9f96-4606754cb55d",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "a90f8e65-8c0d-3cde-82e4-164143e415f8",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "6fc438c5-4c87-3f2a-8b0a-325b20e612dc",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "8d622556-05f3-3c9d-87c5-87a93e15469d",
+"isPitch": false,
+"index": 4,
+"type": "pickoff",
+"details": {
+"code": "1",
+"isOut": false
+}
+},
+{
+"playId": "1cf60657-1667-3497-9e73-c91d3f4ea257",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "a5e04eb1-39cd-3056-9925-80041663b1ec",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 37.5,
+"homeTeamWinProbabilityAdded": 3.3999999999999986,
+"leverageIndex": 1.47,
+"atBatIndex": 23
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pop Out",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 24,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 663837,
+"fullName": "Matt Vierling"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"postOnFirst": {
+"id": 681481,
+"fullName": "Kerry Carpenter"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Pop Out",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663837,
+"fullName": "Matt Vierling"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "62f5cc25-7040-3c46-8085-5b89bf435f3b",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "7d975086-acb6-328a-a3a1-f8d4e19c48dc",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "1ee1df49-11e5-3110-a8ff-50c8731272d7",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "cb873ea8-4223-3c27-8e1a-597e1656b055",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 40.400000000000006,
+"homeTeamWinProbabilityAdded": 2.9000000000000057,
+"leverageIndex": 1.25,
+"atBatIndex": 24
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 25,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 3,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 672761,
+"fullName": "Wenceel Pérez"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 672761,
+"fullName": "Wenceel Pérez"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "aadb3dac-21ad-3b6f-a695-7c7088278606",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "8f452c72-eb71-3ff8-be0c-3f643518d3aa",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "8089ddeb-fc37-3b77-9cd3-c85c6cd3ad96",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "db41cdda-5cc7-35ca-b426-af6e003dce5b",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "8fc4bb2d-13fb-3984-9f62-dd0720de60e0",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": true,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+}
+],
+"homeTeamWinProbability": 42.8,
+"homeTeamWinProbabilityAdded": 2.3999999999999915,
+"leverageIndex": 0.94,
+"atBatIndex": 25
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 26,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 678246,
+"fullName": "Miguel Vargas"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 678246,
+"fullName": "Miguel Vargas"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "ccff6f45-0cda-376a-82ab-d04ae92bb6f1",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "73f0c2fa-14cd-3a25-aac8-8e9e85db9d91",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "68440364-7fdf-3f0e-9aff-bcd7910253c3",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "eed2f933-0e94-3199-a219-3e4ea46665f7",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "babc8b13-3227-37a0-9fe6-daf118251726",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 39.800000000000004,
+"homeTeamWinProbabilityAdded": -2.999999999999993,
+"leverageIndex": 1.18,
+"atBatIndex": 26
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 27,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 643217,
+"fullName": "Andrew Benintendi"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 643217,
+"fullName": "Andrew Benintendi"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "f96a1fff-4e75-32ee-9c81-d4d316d1f504",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 37.6,
+"homeTeamWinProbabilityAdded": -2.200000000000003,
+"leverageIndex": 0.87,
+"atBatIndex": 27
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 28,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 3,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 695657,
+"fullName": "Colson Montgomery"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 695657,
+"fullName": "Colson Montgomery"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "67a64658-0795-30cd-a24c-0753266abd22",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "af6e47a6-6a2f-3718-8bf3-6db6d93160da",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "015be3d6-a096-3e8c-99f1-6381b38dae9c",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"isPitch": false,
+"index": 3,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "ac582a68-afc1-318c-b624-41b6406b7200",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": true,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+}
+],
+"homeTeamWinProbability": 36.199999999999996,
+"homeTeamWinProbabilityAdded": -1.4000000000000057,
+"leverageIndex": 0.56,
+"atBatIndex": 28
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 29,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 656716,
+"fullName": "Zach McKinstry"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656716,
+"fullName": "Zach McKinstry"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "1ba6a97c-65e7-304d-94d4-1c73ffac943f",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 38.6,
+"homeTeamWinProbabilityAdded": 2.4000000000000057,
+"leverageIndex": 0.94,
+"atBatIndex": 29
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 30,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 668670,
+"fullName": "Jake Rogers"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 668670,
+"fullName": "Jake Rogers"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "d7a52f9f-e8c4-3041-8ae3-1bff1f5b9c92",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "53ab88b7-f441-399a-a9f2-fa0600421dd2",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "4a51cc46-7656-3c54-9853-ab4fffcb0f01",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 40.400000000000006,
+"homeTeamWinProbabilityAdded": 1.8000000000000043,
+"leverageIndex": 0.71,
+"atBatIndex": 30
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 31,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 690993,
+"fullName": "Colt Keith"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 690993,
+"fullName": "Colt Keith"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "8ec9ea79-a938-3652-bb32-f12a2fe8c20c",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "6a6641a6-a128-3a16-91d3-de3286119d4c",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 41.5,
+"homeTeamWinProbabilityAdded": 1.0999999999999943,
+"leverageIndex": 0.47,
+"atBatIndex": 31
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 32,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "97ba8dcc-59b3-3352-bbf0-1b0e5ce91c78",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 38.2,
+"homeTeamWinProbabilityAdded": -3.299999999999997,
+"leverageIndex": 1.33,
+"atBatIndex": 32
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 33,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 1,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "9c6fb646-6ceb-33ea-b24f-d11f75419206",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "9eca284e-1132-339d-a8aa-353b95c97f31",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "3e5e0bd8-b984-30b2-819f-851ec854a208",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "270023cb-833d-316a-a53f-c3fa7036c0cc",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "c01a504e-9a10-3c86-a1ff-199522f2b6c9",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 35.699999999999996,
+"homeTeamWinProbabilityAdded": -2.500000000000007,
+"leverageIndex": 0.99,
+"atBatIndex": 33
+},
+{
+"result": {
+"type": "atBat",
+"event": "Double",
+"eventType": "double",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 34,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 1,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 671976,
+"fullName": "Tristan Peters"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+},
+"postOnSecond": {
+"id": 671976,
+"fullName": "Tristan Peters"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Double",
+"eventType": "double",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 671976,
+"fullName": "Tristan Peters"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "c4fe1d8f-12ce-3949-a0c9-cab4cd5eba42",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "e7638454-3b02-39f0-89da-bd42e7e6def3",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "56cecf72-86a2-340e-9e24-73b3e62c4400",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ad473a08-ee88-3983-97d5-b6f7c6e31584",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 39.1,
+"homeTeamWinProbabilityAdded": 3.4000000000000057,
+"leverageIndex": 0.64,
+"atBatIndex": 34
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 35,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 691011,
+"fullName": "Drew Romo"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 691011,
+"fullName": "Drew Romo"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "436a5d4a-3954-3df0-b956-24e5a1e839ab",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "a4c16a11-7515-3576-893e-0cdad4cdd519",
+"isPitch": false,
+"index": 1,
+"type": "pickoff",
+"details": {
+"code": "2",
+"isOut": false
+}
+},
+{
+"playId": "0a34d7cd-1f74-37ab-bb66-9c5f7c438dff",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 34.0,
+"homeTeamWinProbabilityAdded": -5.100000000000001,
+"leverageIndex": 1.92,
+"atBatIndex": 35
+},
+{
+"result": {
+"type": "atBat",
+"event": "Walk",
+"eventType": "walk",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 36,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 6,
+"isComplete": true,
+"hasReview": true,
+"isScoringPlay": false
+},
+"count": {
+"balls": 4,
+"strikes": 2,
+"outs": 0
+},
+"matchup": {
+"batter": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"postOnFirst": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Walk",
+"eventType": "walk",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "f5647c70-95a8-3760-9f6b-5509b7597d8e",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "9a6da158-8788-3ffd-826b-1d64a8466bfe",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "53a82a6c-5c46-3af4-93c7-5077961be95b",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "797dde20-907d-353f-94cb-c97b066d464a",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"isPitch": false,
+"index": 4,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "b89e94be-4bbd-3e90-97eb-5bb43be29130",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "c7711757-4fd6-3755-bc54-d089ceeacb9f",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+}
+],
+"homeTeamWinProbability": 30.2,
+"homeTeamWinProbabilityAdded": -3.8000000000000007,
+"leverageIndex": 0.97,
+"atBatIndex": 36,
+"reviewDetails": {
+"isOverturned": true,
+"inProgress": false,
+"reviewType": "MJ",
+"challengeTeamId": 116
+}
+},
+{
+"result": {
+"type": "atBat",
+"event": "Lineout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 37,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"postOnFirst": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Lineout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "970efe68-6da0-3f6a-9273-932781b6d818",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "b519a7bd-b461-3159-b09d-d353be57037e",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "b886994c-ffe0-3530-b347-b7d69cbc49c5",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "7ce48692-3517-3677-996a-5cff1cda2947",
+"isPitch": false,
+"index": 3,
+"type": "pickoff",
+"details": {
+"code": "1",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 4,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "f20de58c-3afa-34a9-9e12-2b364274c249",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "68624874-25d2-3b04-bb34-5bb154dea8b4",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "b4a07288-3367-3f6a-9240-89f3554e2bda",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "385ecfd3-b277-3f18-857b-1547dbe7ad63",
+"isPitch": true,
+"index": 8,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 33.800000000000004,
+"homeTeamWinProbabilityAdded": 3.600000000000005,
+"leverageIndex": 1.56,
+"atBatIndex": 37
+},
+{
+"result": {
+"type": "atBat",
+"event": "Walk",
+"eventType": "walk",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 38,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 4,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 663330,
+"fullName": "Jahmai Jones"
+},
+"pitcher": {
+"id": 669684,
+"fullName": "Chris Murphy"
+},
+"postOnFirst": {
+"id": 663330,
+"fullName": "Jahmai Jones"
+},
+"postOnSecond": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Walk",
+"eventType": "walk",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+}
+},
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Walk",
+"eventType": "walk",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663330,
+"fullName": "Jahmai Jones"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "offensive_substitution",
+"event": "Offensive Substitution",
+"isOut": false
+}
+},
+{
+"playId": "84efc25a-e397-3ee6-bdcb-9b67c7bf1dc3",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "79131b20-fe95-3279-a3a9-9d0a95e60a4c",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f2731e16-50fd-3930-8a21-b6587d575da6",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"isPitch": false,
+"index": 6,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "26cdbcad-bdf2-3721-ad00-c06b8d8bc42e",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f50865c0-bdcf-3f5b-84c9-040dfa0d085f",
+"isPitch": true,
+"index": 8,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ad4be36c-af22-35f3-848d-14ae2d405603",
+"isPitch": true,
+"index": 9,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "59a6ed2c-5faa-4961-ada0-4035d0e48347",
+"isPitch": false,
+"index": 10,
+"type": "stepoff",
+"details": {
+"code": "PSO",
+"isOut": false
+}
+},
+{
+"playId": "6b247725-514e-37ac-851b-a5cb1a6c8f4c",
+"isPitch": true,
+"index": 11,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+}
+],
+"homeTeamWinProbability": 29.9,
+"homeTeamWinProbabilityAdded": -3.9000000000000057,
+"leverageIndex": 1.35,
+"atBatIndex": 38
+},
+{
+"result": {
+"type": "atBat",
+"event": "Grounded Into DP",
+"eventType": "grounded_into_double_play",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 39,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 682985,
+"fullName": "Riley Greene"
+},
+"pitcher": {
+"id": 669684,
+"fullName": "Chris Murphy"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": null,
+"outBase": "2B",
+"isOut": true
+},
+"details": {
+"event": "Grounded Into DP",
+"eventType": "grounded_into_double_play",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663330,
+"fullName": "Jahmai Jones"
+}
+}
+},
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Grounded Into DP",
+"eventType": "grounded_into_double_play",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 682985,
+"fullName": "Riley Greene"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "9399e558-61a8-3ab3-86b7-16780bb96e09",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "0d6f55c6-053a-3faa-9468-bdff6b5384fc",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 39.6,
+"homeTeamWinProbabilityAdded": 9.700000000000003,
+"leverageIndex": 2.06,
+"atBatIndex": 39
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 40,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 807747,
+"fullName": "Rikuu Nishida"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 807747,
+"fullName": "Rikuu Nishida"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"playId": "eef5a1b4-1bce-31c3-8a1c-3e78af3320e8",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "aca7f01c-882a-33f7-b5a7-d15c5e3410b2",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "6815292c-8bc6-3c1a-8542-a6c1da5fa504",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"isPitch": false,
+"index": 4,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "28230163-a755-352d-88a7-e6a4aa57cf41",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "f84d2a80-a6c9-339a-a8d4-c62f8cb99ad6",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 35.6,
+"homeTeamWinProbabilityAdded": -4.0,
+"leverageIndex": 1.56,
+"atBatIndex": 40
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pop Out",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 41,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 803011,
+"fullName": "Sam Antonacci"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Pop Out",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 803011,
+"fullName": "Sam Antonacci"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "6f8569ab-0029-3706-a11d-351ad03b1ef1",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "b98e8ebf-5a63-34b7-af73-7af7ad87d124",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 32.7,
+"homeTeamWinProbabilityAdded": -2.8999999999999986,
+"leverageIndex": 1.17,
+"atBatIndex": 41
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 42,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 678246,
+"fullName": "Miguel Vargas"
+},
+"pitcher": {
+"id": 672456,
+"fullName": "Keider Montero"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 678246,
+"fullName": "Miguel Vargas"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "8f3ffb8d-feec-3659-b696-fb56df4a0940",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "0db7380d-a711-35e2-bea2-4e0d03dae815",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 30.8,
+"homeTeamWinProbabilityAdded": -1.9000000000000021,
+"leverageIndex": 0.76,
+"atBatIndex": 42
+},
+{
+"result": {
+"type": "atBat",
+"event": "Walk",
+"eventType": "walk",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 43,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 4,
+"strikes": 0,
+"outs": 0
+},
+"matchup": {
+"batter": {
+"id": 663837,
+"fullName": "Matt Vierling"
+},
+"pitcher": {
+"id": 669684,
+"fullName": "Chris Murphy"
+},
+"postOnFirst": {
+"id": 663837,
+"fullName": "Matt Vierling"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Walk",
+"eventType": "walk",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663837,
+"fullName": "Matt Vierling"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "530be8ed-6661-3b4d-b10d-a58957cd1359",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "0dd05a7b-af8c-3300-967e-e8b9dff16816",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "efbdaeef-5016-3fb3-b097-05259fd4613f",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ea236a30-24e3-3598-9978-aff816ad8356",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+}
+],
+"homeTeamWinProbability": 27.0,
+"homeTeamWinProbabilityAdded": -3.8000000000000007,
+"leverageIndex": 0.97,
+"atBatIndex": 43
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 44,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 672761,
+"fullName": "Wenceel Pérez"
+},
+"pitcher": {
+"id": 669684,
+"fullName": "Chris Murphy"
+},
+"postOnFirst": {
+"id": 663837,
+"fullName": "Matt Vierling"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 672761,
+"fullName": "Wenceel Pérez"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "5c862e53-1ced-3b2d-bcb8-52416aed8a9b",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"playId": "d84046e9-8d7d-387f-b473-a9d3f3ff10df",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "d13fccbf-4853-3d32-9e0d-dd67d5fa7493",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "3d45c809-ba7b-3a33-8f45-f6ea3ecffb55",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "aac71a52-b305-391f-ba45-02807665db44",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "*B",
+"isOut": false,
+"description": "Ball In Dirt",
+"call": {
+"code": "*B"
+}
+}
+},
+{
+"playId": "d9fd6faa-2c9f-3dc0-8c20-6102197f659d",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 30.599999999999998,
+"homeTeamWinProbabilityAdded": 3.599999999999998,
+"leverageIndex": 1.55,
+"atBatIndex": 44
+},
+{
+"result": {
+"type": "atBat",
+"event": "Walk",
+"eventType": "walk",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 45,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 4,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 656716,
+"fullName": "Zach McKinstry"
+},
+"pitcher": {
+"id": 669684,
+"fullName": "Chris Murphy"
+},
+"postOnFirst": {
+"id": 656716,
+"fullName": "Zach McKinstry"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": null,
+"outBase": "2B",
+"isOut": true
+},
+"details": {
+"event": "Pickoff Caught Stealing 2B",
+"eventType": "pickoff_caught_stealing_2b",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663837,
+"fullName": "Matt Vierling"
+}
+}
+},
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Walk",
+"eventType": "walk",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656716,
+"fullName": "Zach McKinstry"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "62c84ad1-3b50-35ef-9074-067c56e0c6dc",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "4f33e233-95af-3e69-a081-571fa8fe84bc",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "10accf0d-a76f-3914-9776-18bf9f25ae9b",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "3c194770-0e5d-3e29-8625-64e83271b110",
+"isPitch": false,
+"index": 3,
+"type": "pickoff",
+"details": {
+"code": "1",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 4,
+"type": "action",
+"details": {
+"eventType": "pickoff_caught_stealing_2b",
+"event": "Pickoff Caught Stealing 2B",
+"isOut": true
+}
+},
+{
+"playId": "e84d5aba-79bc-3fa9-9057-7310eabd21ce",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "T",
+"isOut": false,
+"description": "Foul Tip",
+"call": {
+"code": "T"
+}
+}
+},
+{
+"playId": "222f1510-63bd-3f54-b392-159a80ab40a3",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "055f51de-566f-3eed-86d8-7eb1c140ddc8",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+}
+],
+"homeTeamWinProbability": 33.800000000000004,
+"homeTeamWinProbabilityAdded": -1.29999999999999,
+"leverageIndex": 1.35,
+"atBatIndex": 45
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 46,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 3,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 668670,
+"fullName": "Jake Rogers"
+},
+"pitcher": {
+"id": 685126,
+"fullName": "Brandon Eisert"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 668670,
+"fullName": "Jake Rogers"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"playId": "4e8bb7ce-6eb4-3894-9e96-44c6d4fb044e",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "c3d94f8e-37a8-35ec-b1e8-55d63b930b4e",
+"isPitch": false,
+"index": 3,
+"type": "pickoff",
+"details": {
+"code": "1",
+"isOut": false
+}
+},
+{
+"playId": "c4bff017-d9fa-3f57-87e5-201e9cd3961a",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"isPitch": false,
+"index": 5,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "31fef575-2645-3519-aa4a-0e57150e911f",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "805d3c2d-f432-3851-9d1b-754ad31ff281",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "0329f35c-315f-35b5-bbe4-99e0752983d1",
+"isPitch": true,
+"index": 8,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "21c4d2c6-53a5-3fcb-904a-ebb4eaf92c99",
+"isPitch": true,
+"index": 9,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "ddf2b3e2-b9f1-3a8b-89fe-10deb44fdb34",
+"isPitch": true,
+"index": 10,
+"type": "pitch",
+"details": {
+"code": "*B",
+"isOut": false,
+"description": "Ball In Dirt",
+"call": {
+"code": "*B"
+}
+}
+},
+{
+"playId": "4384f843-f4d7-3cfe-9361-3aa2bb441050",
+"isPitch": true,
+"index": 11,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 36.4,
+"homeTeamWinProbabilityAdded": 2.5999999999999943,
+"leverageIndex": 1.04,
+"atBatIndex": 46
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 47,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 643217,
+"fullName": "Andrew Benintendi"
+},
+"pitcher": {
+"id": 623454,
+"fullName": "Drew Anderson"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 643217,
+"fullName": "Andrew Benintendi"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"playId": "efbaf950-cda6-36e7-9030-1064bbe263c1",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "6bbdfc9d-79f1-3fc1-adf0-efed69dc2c42",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 31.6,
+"homeTeamWinProbabilityAdded": -4.799999999999997,
+"leverageIndex": 1.9,
+"atBatIndex": 47
+},
+{
+"result": {
+"type": "atBat",
+"event": "Home Run",
+"eventType": "home_run",
+"rbi": 1,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 48,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": true
+},
+"count": {
+"balls": 3,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 695657,
+"fullName": "Colson Montgomery"
+},
+"pitcher": {
+"id": 623454,
+"fullName": "Drew Anderson"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Home Run",
+"eventType": "home_run",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 695657,
+"fullName": "Colson Montgomery"
+},
+"responsiblePitcher": {
+"id": 623454
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "a2c2313c-8eb3-31a2-bfb1-e7e7ce88e138",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "cc547cb6-2ed7-397f-90f5-45af85929047",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "c0f60e05-fe78-30bf-b824-b2f02fc557eb",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"isPitch": false,
+"index": 3,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "96320767-75b8-3ff0-814f-d9a4b52333be",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "7ff4fcea-9482-3f8c-b6a9-62de73efed40",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ff3bdafb-5045-36f9-a56f-b51626604ece",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "452d1588-8b5f-3f6a-b77d-25746acd9971",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "E",
+"isOut": false,
+"description": "In play, run(s)",
+"call": {
+"code": "E"
+}
+}
+}
+],
+"homeTeamWinProbability": 55.00000000000001,
+"homeTeamWinProbabilityAdded": 23.400000000000006,
+"leverageIndex": 1.44,
+"atBatIndex": 48
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 49,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+},
+"pitcher": {
+"id": 623454,
+"fullName": "Drew Anderson"
+},
+"postOnFirst": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "0c85fac7-74d5-3eef-afba-5d77655e205e",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "f292c47a-7d39-30ca-9b68-d40835dc112e",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 59.0,
+"homeTeamWinProbabilityAdded": 3.999999999999993,
+"leverageIndex": 1.17,
+"atBatIndex": 49
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 50,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+},
+"pitcher": {
+"id": 623454,
+"fullName": "Drew Anderson"
+},
+"postOnFirst": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+},
+"postOnSecond": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "9e3e5c25-f253-3e2f-ac56-2ec5efcfa21e",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "94ac7c2c-c7a6-34fc-b767-acb1e705ff3f",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 64.8,
+"homeTeamWinProbabilityAdded": 5.799999999999997,
+"leverageIndex": 2.06,
+"atBatIndex": 50
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 1,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 51,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": true
+},
+"count": {
+"balls": 0,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 671976,
+"fullName": "Tristan Peters"
+},
+"pitcher": {
+"id": 623454,
+"fullName": "Drew Anderson"
+},
+"postOnFirst": {
+"id": 671976,
+"fullName": "Tristan Peters"
+},
+"postOnSecond": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 671976,
+"fullName": "Tristan Peters"
+}
+}
+},
+{
+"movement": {
+"originBase": "2B",
+"start": "2B",
+"end": "3B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+}
+}
+},
+{
+"movement": {
+"originBase": "2B",
+"start": "3B",
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+},
+"responsiblePitcher": {
+"id": 623454
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"playId": "31712de4-2425-3469-b25e-561572436a9c",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "747b5a67-0ef1-3f3f-874d-1216a95ccce6",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "fdbd88ab-1e92-3828-acad-15baeb44735b",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "26725898-60f0-3d97-8f3e-1dfa70a2f068",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"isPitch": false,
+"index": 5,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "03b56b26-b9d5-3877-8bde-9670c1ac38d1",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "b849f07c-2f13-3ae5-9395-0c6a6c95b7be",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "E",
+"isOut": false,
+"description": "In play, run(s)",
+"call": {
+"code": "E"
+}
+}
+}
+],
+"homeTeamWinProbability": 81.89999999999999,
+"homeTeamWinProbabilityAdded": 17.099999999999994,
+"leverageIndex": 3.09,
+"atBatIndex": 51
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 52,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 691011,
+"fullName": "Drew Romo"
+},
+"pitcher": {
+"id": 623454,
+"fullName": "Drew Anderson"
+},
+"postOnFirst": {
+"id": 671976,
+"fullName": "Tristan Peters"
+},
+"postOnThird": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 691011,
+"fullName": "Drew Romo"
+}
+}
+},
+{
+"movement": {
+"originBase": "2B",
+"start": "2B",
+"end": "3B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 694378,
+"fullName": "Jacob Gonzalez"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "23fbbc01-6421-3192-a717-9a8f47e9eeda",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "9feea10a-95cf-3870-ae01-b0927942a22e",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "307ecdf2-fd42-36bc-b574-a516e33449e9",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "5a4aab43-3e73-37a8-9391-0491c67efac0",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "d9f0de7a-de25-394e-88b6-e54dedb1acbf",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "b5687c5c-5e08-412b-8a68-1fe253581d09",
+"isPitch": false,
+"index": 5,
+"type": "stepoff",
+"details": {
+"code": "PSO",
+"isOut": false
+}
+},
+{
+"playId": "052015a5-3e1e-30fd-a345-09c7a35e4bef",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 78.9,
+"homeTeamWinProbabilityAdded": -2.999999999999986,
+"leverageIndex": 1.55,
+"atBatIndex": 52
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pickoff Caught Stealing 2B",
+"eventType": "pickoff_caught_stealing_2b",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 53,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 545341,
+"fullName": "Randal Grichuk"
+},
+"pitcher": {
+"id": 663947,
+"fullName": "Tyler Holton"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": null,
+"outBase": "2B",
+"isOut": true
+},
+"details": {
+"event": "Pickoff Caught Stealing 2B",
+"eventType": "pickoff_caught_stealing_2b",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 671976,
+"fullName": "Tristan Peters"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "offensive_substitution",
+"event": "Offensive Substitution",
+"isOut": false
+}
+},
+{
+"playId": "cf82dfca-df28-32f0-94cf-48b6627b15ea",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "1493c044-e383-3901-9f46-ab58b67dc708",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "fb8529ba-6ecd-3c0c-84e8-5dfd9ef3399e",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "*B",
+"isOut": false,
+"description": "Ball In Dirt",
+"call": {
+"code": "*B"
+}
+}
+},
+{
+"playId": "667fc26f-d844-3295-8189-dc87f9852d4f",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "bdb9e6db-d085-3262-9b26-87642efb21a6",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "4f941084-995a-3826-b6a3-6768b07d4171",
+"isPitch": false,
+"index": 8,
+"type": "pickoff",
+"details": {
+"code": "1",
+"isOut": true
+}
+}
+],
+"homeTeamWinProbability": 74.5,
+"homeTeamWinProbabilityAdded": -4.400000000000006,
+"leverageIndex": 1.67,
+"atBatIndex": 53
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 54,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 701678,
+"fullName": "Hao-Yu  Lee"
+},
+"pitcher": {
+"id": 663542,
+"fullName": "Bryan Hudson"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 701678,
+"fullName": "Hao-Yu  Lee"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "offensive_substitution",
+"event": "Offensive Substitution",
+"isOut": false
+}
+},
+{
+"playId": "87666c58-545c-3824-8325-08a6a9e9583c",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "42d66475-aa80-3ee3-988a-2f09823e1353",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "aa7a60d6-9e82-3c18-8d94-80d356ab4487",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "83bed790-68ec-3ee0-b9d4-55f2a28e4069",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "1e869759-e228-3274-9419-61396d61a588",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "50ad61c7-2f01-3ee7-840b-f8d9118bd949",
+"isPitch": true,
+"index": 8,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": true,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+}
+],
+"homeTeamWinProbability": 79.9,
+"homeTeamWinProbabilityAdded": 5.400000000000006,
+"leverageIndex": 2.14,
+"atBatIndex": 54
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 55,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+},
+"pitcher": {
+"id": 663542,
+"fullName": "Bryan Hudson"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 805808,
+"fullName": "Kevin McGonigle"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "3953c2b1-893d-3e91-a17c-b6c0267a470f",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "8135a1ba-fc53-3020-b018-d79a049e8c89",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "fafc4a3f-1795-3b4c-89a4-a744b2fda96a",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "edfbf334-0d14-317f-9530-4b088c9faf89",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 84.0,
+"homeTeamWinProbabilityAdded": 4.099999999999994,
+"leverageIndex": 1.61,
+"atBatIndex": 55
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 56,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+},
+"pitcher": {
+"id": 663542,
+"fullName": "Bryan Hudson"
+},
+"postOnFirst": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 679529,
+"fullName": "Spencer Torkelson"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "d4b380a6-2b91-3c34-a901-38bd141f7629",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 80.9,
+"homeTeamWinProbabilityAdded": -3.0999999999999943,
+"leverageIndex": 1.05,
+"atBatIndex": 56
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 57,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 663330,
+"fullName": "Jahmai Jones"
+},
+"pitcher": {
+"id": 663542,
+"fullName": "Bryan Hudson"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663330,
+"fullName": "Jahmai Jones"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "809734ba-7dfe-3403-86c9-96bc11b7b024",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 86.7,
+"homeTeamWinProbabilityAdded": 5.799999999999997,
+"leverageIndex": 2.29,
+"atBatIndex": 57
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 58,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 545341,
+"fullName": "Randal Grichuk"
+},
+"pitcher": {
+"id": 669724,
+"fullName": "Brenan Hanifee"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 545341,
+"fullName": "Randal Grichuk"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 3,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"playId": "ee20f8a0-3b35-3b89-8632-9b451374e32a",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "85a13daa-ad83-3c1a-907d-86d8ef37eb02",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "1b6e91ca-a1dd-3267-95bc-06de17b1151d",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "6309ba63-e053-35f2-bf05-cab789b2976b",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "025573d0-36f7-3259-9460-536474892968",
+"isPitch": true,
+"index": 8,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "b3878e31-7f14-33a1-89e0-619353c318e4",
+"isPitch": true,
+"index": 9,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 85.3,
+"homeTeamWinProbabilityAdded": -1.4000000000000057,
+"leverageIndex": 0.53,
+"atBatIndex": 58
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 59,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 803011,
+"fullName": "Sam Antonacci"
+},
+"pitcher": {
+"id": 669724,
+"fullName": "Brenan Hanifee"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 803011,
+"fullName": "Sam Antonacci"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "fafa9704-55e0-319c-9fd5-98842ac9df0a",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 84.3,
+"homeTeamWinProbabilityAdded": -1.0,
+"leverageIndex": 0.42,
+"atBatIndex": 59
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 60,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 678246,
+"fullName": "Miguel Vargas"
+},
+"pitcher": {
+"id": 669724,
+"fullName": "Brenan Hanifee"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 678246,
+"fullName": "Miguel Vargas"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "6fceddec-6745-3987-afd6-cedb2f1273aa",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 83.5,
+"homeTeamWinProbabilityAdded": -0.7999999999999972,
+"leverageIndex": 0.3,
+"atBatIndex": 60
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pop Out",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 61,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 9,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 682985,
+"fullName": "Riley Greene"
+},
+"pitcher": {
+"id": 663542,
+"fullName": "Bryan Hudson"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Pop Out",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 682985,
+"fullName": "Riley Greene"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "defensive_substitution",
+"event": "Defensive Sub",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "d7cf9ed2-f54c-37c5-b20b-8bff1d7c1ef8",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "fccc42bd-c6a5-3d15-bdbf-fd8f334ca92d",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "c6855b9c-230b-3146-8b55-69b38e6c26f5",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "7732afe0-944b-3cc0-b146-9e847c5486c4",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "15f33f7f-5c65-3b7e-b943-b5c72c71c738",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 90.8,
+"homeTeamWinProbabilityAdded": 7.299999999999997,
+"leverageIndex": 2.87,
+"atBatIndex": 61
+},
+{
+"result": {
+"type": "atBat",
+"event": "Lineout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 62,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 9,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 663837,
+"fullName": "Matt Vierling"
+},
+"pitcher": {
+"id": 699823,
+"fullName": "Tyler Davis"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Lineout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663837,
+"fullName": "Matt Vierling"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"playId": "e37f5728-9089-328b-8aec-75b597e75d23",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "77e2b1f1-e11b-3ae1-a6e4-306c24ba0af1",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 96.3,
+"homeTeamWinProbabilityAdded": 5.5,
+"leverageIndex": 2.19,
+"atBatIndex": 62
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pop Out",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 63,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 9,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 1,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 672761,
+"fullName": "Wenceel Pérez"
+},
+"pitcher": {
+"id": 699823,
+"fullName": "Tyler Davis"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Pop Out",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 672761,
+"fullName": "Wenceel Pérez"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "4ef808de-03fc-39bd-b2da-4d52d84aab5b",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "1384577b-7288-3c80-b487-4313842921d4",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "44dd623c-1911-377a-a212-eae4b80d608c",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "db855f9d-22f1-3574-8a88-a677cb6188cc",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 100.0,
+"homeTeamWinProbabilityAdded": 3.700000000000003,
+"leverageIndex": 1.45,
+"atBatIndex": 63
+}
+]

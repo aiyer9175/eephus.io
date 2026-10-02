@@ -1,0 +1,668 @@
+{
+"dates": [
+{
+"date": "2025-09-30",
+"games": [
+{
+"gamePk": 813072,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-09-30T17:08:00Z",
+"officialDate": "2025-09-30",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'A' Game 1",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 1,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"score": 2,
+"isWinner": true,
+"team": {
+"id": 116,
+"name": "Detroit Tigers"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"score": 1,
+"isWinner": false,
+"team": {
+"id": 114,
+"name": "Cleveland Guardians"
+}
+}
+},
+"venue": {
+"id": 5,
+"name": "Progressive Field"
+},
+"broadcasts": []
+},
+{
+"gamePk": 813066,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-09-30T19:08:00Z",
+"officialDate": "2025-09-30",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "NL Wild Card 'B' Game 1",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 1,
+"seriesDescription": "NL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"score": 1,
+"isWinner": false,
+"team": {
+"id": 135,
+"name": "San Diego Padres"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"score": 3,
+"isWinner": true,
+"team": {
+"id": 112,
+"name": "Chicago Cubs"
+}
+}
+},
+"venue": {
+"id": 17,
+"name": "Wrigley Field"
+},
+"broadcasts": []
+},
+{
+"gamePk": 813074,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-09-30T22:08:00Z",
+"officialDate": "2025-09-30",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'B' Game 1",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 1,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"score": 3,
+"isWinner": true,
+"team": {
+"id": 111,
+"name": "Boston Red Sox"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"score": 1,
+"isWinner": false,
+"team": {
+"id": 147,
+"name": "New York Yankees"
+}
+}
+},
+"venue": {
+"id": 3313,
+"name": "Yankee Stadium"
+},
+"broadcasts": []
+},
+{
+"gamePk": 813069,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-10-01T01:08:00Z",
+"officialDate": "2025-09-30",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "NL Wild Card 'A' Game 1",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 1,
+"seriesDescription": "NL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"score": 5,
+"isWinner": false,
+"team": {
+"id": 113,
+"name": "Cincinnati Reds"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"score": 10,
+"isWinner": true,
+"team": {
+"id": 119,
+"name": "Los Angeles Dodgers"
+}
+}
+},
+"venue": {
+"id": 22,
+"name": "Dodger Stadium"
+},
+"broadcasts": []
+}
+]
+},
+{
+"date": "2025-10-01",
+"games": [
+{
+"gamePk": 813071,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-10-01T17:08:00Z",
+"officialDate": "2025-10-01",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'A' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 1,
+"losses": 1,
+"ties": 0,
+"pct": ".500"
+},
+"score": 1,
+"isWinner": false,
+"team": {
+"id": 116,
+"name": "Detroit Tigers"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 1,
+"ties": 0,
+"pct": ".500"
+},
+"score": 6,
+"isWinner": true,
+"team": {
+"id": 114,
+"name": "Cleveland Guardians"
+}
+}
+},
+"venue": {
+"id": 5,
+"name": "Progressive Field"
+},
+"broadcasts": []
+},
+{
+"gamePk": 813064,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-10-01T19:08:00Z",
+"officialDate": "2025-10-01",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "NL Wild Card 'B' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "NL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 1,
+"losses": 1,
+"ties": 0,
+"pct": ".500"
+},
+"score": 3,
+"isWinner": true,
+"team": {
+"id": 135,
+"name": "San Diego Padres"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 1,
+"ties": 0,
+"pct": ".500"
+},
+"score": 0,
+"isWinner": false,
+"team": {
+"id": 112,
+"name": "Chicago Cubs"
+}
+}
+},
+"venue": {
+"id": 17,
+"name": "Wrigley Field"
+},
+"broadcasts": []
+},
+{
+"gamePk": 813070,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-10-01T22:08:00Z",
+"officialDate": "2025-10-01",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'B' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 1,
+"losses": 1,
+"ties": 0,
+"pct": ".500"
+},
+"score": 3,
+"isWinner": false,
+"team": {
+"id": 111,
+"name": "Boston Red Sox"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 1,
+"ties": 0,
+"pct": ".500"
+},
+"score": 4,
+"isWinner": true,
+"team": {
+"id": 147,
+"name": "New York Yankees"
+}
+}
+},
+"venue": {
+"id": 3313,
+"name": "Yankee Stadium"
+},
+"broadcasts": []
+},
+{
+"gamePk": 813068,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-10-02T01:08:00Z",
+"officialDate": "2025-10-01",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "NL Wild Card 'A' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "NL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 2,
+"ties": 0,
+"pct": ".000"
+},
+"score": 4,
+"isWinner": false,
+"team": {
+"id": 113,
+"name": "Cincinnati Reds"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 2,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"score": 8,
+"isWinner": true,
+"team": {
+"id": 119,
+"name": "Los Angeles Dodgers"
+}
+}
+},
+"venue": {
+"id": 22,
+"name": "Dodger Stadium"
+},
+"broadcasts": []
+}
+]
+},
+{
+"date": "2025-10-02",
+"games": [
+{
+"gamePk": 813073,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-10-02T19:08:00Z",
+"officialDate": "2025-10-02",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'A' Game 3",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 3,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 2,
+"losses": 1,
+"ties": 0,
+"pct": ".667"
+},
+"score": 6,
+"isWinner": true,
+"team": {
+"id": 116,
+"name": "Detroit Tigers"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 2,
+"ties": 0,
+"pct": ".333"
+},
+"score": 3,
+"isWinner": false,
+"team": {
+"id": 114,
+"name": "Cleveland Guardians"
+}
+}
+},
+"venue": {
+"id": 5,
+"name": "Progressive Field"
+},
+"broadcasts": []
+},
+{
+"gamePk": 813059,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-10-02T21:08:00Z",
+"officialDate": "2025-10-02",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "NL Wild Card 'B' Game 3",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 3,
+"seriesDescription": "NL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 1,
+"losses": 2,
+"ties": 0,
+"pct": ".333"
+},
+"score": 1,
+"isWinner": false,
+"team": {
+"id": 135,
+"name": "San Diego Padres"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 2,
+"losses": 1,
+"ties": 0,
+"pct": ".667"
+},
+"score": 3,
+"isWinner": true,
+"team": {
+"id": 112,
+"name": "Chicago Cubs"
+}
+}
+},
+"venue": {
+"id": 17,
+"name": "Wrigley Field"
+},
+"broadcasts": []
+},
+{
+"gamePk": 813065,
+"gameType": "F",
+"season": "2025",
+"gameDate": "2025-10-03T00:08:00Z",
+"officialDate": "2025-10-02",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'B' Game 3",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 3,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 1,
+"losses": 2,
+"ties": 0,
+"pct": ".333"
+},
+"score": 0,
+"isWinner": false,
+"team": {
+"id": 111,
+"name": "Boston Red Sox"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 2,
+"losses": 1,
+"ties": 0,
+"pct": ".667"
+},
+"score": 4,
+"isWinner": true,
+"team": {
+"id": 147,
+"name": "New York Yankees"
+}
+}
+},
+"venue": {
+"id": 3313,
+"name": "Yankee Stadium"
+},
+"broadcasts": []
+}
+]
+}
+]
+}
