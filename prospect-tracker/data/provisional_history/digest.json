@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-01T13:12:11+00:00",
+ "generated_at": "2026-10-02T16:12:28+00:00",
  "what": "one row per build of data/xfv_ungraded.json (the served provisional grade); the full rows live in the snapshot file each row names under .cache/provisional_history/",
  "producer": "provisional_history.py (run_monthly daily step d9a)",
  "rule": "append-only; a row is added when a build date or its rows hash is new; the untracked .cache/provisional_history/digest.jsonl copy is merged back so the box's nightly git checkout cannot drop a row",
@@ -35,6 +35,46 @@
    "n_with_p_bust": 6071,
    "n_with_p_first_grade": 0,
    "snapshot": "2026/2026-10-01.json.gz"
+  },
+  {
+   "date": "2026-10-01",
+   "retained_at": "2026-10-02T00:49:16+00:00",
+   "artifact_sha256": "424fab3cc046bf61dd832608bd8668d335dc9a8e48381888e41ed3b30e0247aa",
+   "sha256_rows": "0bcead230e8a6c18c626f0f40703c586845c5ae0bd325ea298467b23ab00c81b",
+   "n_rows": 6067,
+   "n_by_side": {
+    "H": 2439,
+    "P": 3628
+   },
+   "grade": {
+    "median": 26.6,
+    "p90": 32.3,
+    "max": 47.2
+   },
+   "n_grade_ge_35": 308,
+   "n_with_p_bust": 6067,
+   "n_with_p_first_grade": 0,
+   "snapshot": "2026/2026-10-01_0bcead230e8a.json.gz"
+  },
+  {
+   "date": "2026-10-02",
+   "retained_at": "2026-10-02T16:12:28+00:00",
+   "artifact_sha256": "fb824dfd0bb096675eb0fc9bca201af5ad10abbdc2d577a8b05c9cd51f379f6c",
+   "sha256_rows": "200c8dbf0078c2d0ae705f1e39e41b98e45c130c7bf5e9fe1e7e9021c659d94c",
+   "n_rows": 6067,
+   "n_by_side": {
+    "H": 2439,
+    "P": 3628
+   },
+   "grade": {
+    "median": 26.6,
+    "p90": 32.3,
+    "max": 47.2
+   },
+   "n_grade_ge_35": 308,
+   "n_with_p_bust": 6067,
+   "n_with_p_first_grade": 0,
+   "snapshot": "2026/2026-10-02.json.gz"
   }
  ]
 }

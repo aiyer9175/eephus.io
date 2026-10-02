@@ -1,5 +1,5 @@
 {
-"generated_at": "2026-09-30",
+"generated_at": "2026-10-02",
 "valuation_set": "clemens_2026",
 "war_window": "7-season valuation window (published ctrl_war basis)",
 "star_def": {
@@ -23,9 +23,9 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 1772,
-"surplus_mm_median": 0.6,
-"war6_median": -0.42,
+"n": 1775,
+"surplus_mm_median": 0.5,
+"war6_median": -0.43,
 "p_star_median": 0.001
 }
 },
@@ -43,9 +43,9 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 183,
+"n": 185,
 "surplus_mm_median": 4.2,
-"war6_median": 1.06,
+"war6_median": 1.05,
 "p_star_median": 0.004
 }
 },
@@ -63,9 +63,9 @@
 "star_odds": 0.0001
 },
 "live": {
-"n": 108,
-"surplus_mm_median": 12.1,
-"war6_median": 1.96,
+"n": 107,
+"surplus_mm_median": 12.2,
+"war6_median": 1.94,
 "p_star_median": 0.006
 }
 },
@@ -83,9 +83,9 @@
 "star_odds": 0.0007
 },
 "live": {
-"n": 32,
-"surplus_mm_median": 24.2,
-"war6_median": 3.55,
+"n": 31,
+"surplus_mm_median": 24.8,
+"war6_median": 3.53,
 "p_star_median": 0.011
 }
 },
@@ -105,7 +105,7 @@
 "live": {
 "n": 37,
 "surplus_mm_median": 40.8,
-"war6_median": 4.5,
+"war6_median": 4.49,
 "p_star_median": 0.016
 }
 },
@@ -143,10 +143,10 @@
 "star_odds": 0.0166
 },
 "live": {
-"n": 11,
-"surplus_mm_median": 78.4,
-"war6_median": 8.49,
-"p_star_median": 0.064
+"n": 10,
+"surplus_mm_median": 78.2,
+"war6_median": 8.29,
+"p_star_median": 0.06
 }
 },
 "60": {
@@ -163,7 +163,7 @@
 "star_odds": 0.0567
 },
 "live": {
-"n": 2
+"n": 3
 }
 },
 "65": {
@@ -216,7 +216,7 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 2107,
+"n": 2108,
 "surplus_mm_median": 0.4,
 "war6_median": 0.39,
 "p_star_median": 0.0
@@ -256,9 +256,9 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 54,
-"surplus_mm_median": 11.0,
-"war6_median": 1.63,
+"n": 55,
+"surplus_mm_median": 10.6,
+"war6_median": 1.62,
 "p_star_median": 0.002
 }
 },
@@ -277,8 +277,8 @@
 },
 "live": {
 "n": 50,
-"surplus_mm_median": 20.6,
-"war6_median": 2.45,
+"surplus_mm_median": 20.4,
+"war6_median": 2.44,
 "p_star_median": 0.003
 }
 },
@@ -298,7 +298,7 @@
 "live": {
 "n": 13,
 "surplus_mm_median": 37.4,
-"war6_median": 3.01,
+"war6_median": 3.0,
 "p_star_median": 0.004
 }
 },
@@ -318,7 +318,7 @@
 "live": {
 "n": 22,
 "surplus_mm_median": 54.3,
-"war6_median": 3.63,
+"war6_median": 3.62,
 "p_star_median": 0.006
 }
 },

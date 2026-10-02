@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-01",
+ "generated_at": "2026-10-02",
  "hit_rules": {
   "riser": {
    "fv_delta": 5.0,
@@ -18,19 +18,19 @@
   30,
   60
  ],
- "flags_logged": 7611,
+ "flags_logged": 7695,
  "flags_matured": 5835,
- "flags_pending": 1776,
+ "flags_pending": 1860,
  "by_flag_type": {
   "faller": {
    "matured_cohorts": 64,
    "horizons": {
     "h30": {
      "n": 1125,
-     "hit_rate": 0.1547,
+     "hit_rate": 0.1556,
      "ci": [
-      0.1347,
-      0.177
+      0.1356,
+      0.1779
      ],
      "control_n": 4978,
      "control_rate": 0.0,
@@ -41,17 +41,17 @@
      "clears_control": true
     },
     "h60": {
-     "n": 931,
-     "hit_rate": 0.2524,
+     "n": 939,
+     "hit_rate": 0.2492,
      "ci": [
-      0.2256,
-      0.2813
+      0.2226,
+      0.2779
      ],
-     "control_n": 4023,
-     "control_rate": 0.0467,
+     "control_n": 4063,
+     "control_rate": 0.0,
      "control_ci": [
-      0.0406,
-      0.0537
+      0.0,
+      0.0009
      ],
      "clears_control": true
     }
@@ -67,39 +67,39 @@
    "horizons": {
     "h30": {
      "n": 650,
-     "hit_rate": 0.2831,
+     "hit_rate": 0.2292,
      "ci": [
-      0.2498,
-      0.3189
+      0.1986,
+      0.2631
      ],
      "control_n": 2787,
-     "control_rate": 0.2278,
+     "control_rate": 0.2235,
      "control_ci": [
-      0.2127,
-      0.2438
+      0.2085,
+      0.2394
      ],
-     "clears_control": true
+     "clears_control": false
     },
     "h60": {
-     "n": 453,
-     "hit_rate": 0.3333,
+     "n": 462,
+     "hit_rate": 0.2835,
      "ci": [
-      0.2915,
-      0.378
+      0.2444,
+      0.3263
      ],
-     "control_n": 1843,
-     "control_rate": 0.2946,
+     "control_n": 1886,
+     "control_rate": 0.3038,
      "control_ci": [
-      0.2743,
-      0.3159
+      0.2835,
+      0.325
      ],
      "clears_control": false
     }
    },
    "kill_rule": {
     "eligible": true,
-    "fails_to_clear": false,
-    "verdict_recommendation": "keep-measuring"
+    "fails_to_clear": true,
+    "verdict_recommendation": "deprecated"
    }
   },
   "riser": {
@@ -107,39 +107,39 @@
    "horizons": {
     "h30": {
      "n": 4060,
-     "hit_rate": 0.1874,
+     "hit_rate": 0.1677,
      "ci": [
-      0.1757,
-      0.1997
+      0.1566,
+      0.1795
      ],
      "control_n": 17687,
-     "control_rate": 0.2009,
+     "control_rate": 0.1949,
      "control_ci": [
-      0.1951,
-      0.2069
+      0.1891,
+      0.2008
      ],
      "clears_control": false
     },
     "h60": {
-     "n": 2633,
-     "hit_rate": 0.2955,
+     "n": 2698,
+     "hit_rate": 0.2832,
      "ci": [
-      0.2784,
-      0.3132
+      0.2665,
+      0.3005
      ],
-     "control_n": 11151,
-     "control_rate": 0.2762,
+     "control_n": 11442,
+     "control_rate": 0.2797,
      "control_ci": [
-      0.268,
-      0.2846
+      0.2715,
+      0.288
      ],
-     "clears_control": true
+     "clears_control": false
     }
    },
    "kill_rule": {
     "eligible": true,
-    "fails_to_clear": false,
-    "verdict_recommendation": "keep-measuring"
+    "fails_to_clear": true,
+    "verdict_recommendation": "deprecated"
    }
   }
  },
@@ -154,12 +154,12 @@
   "registered": "2026-10-01",
   "n_scored": {
    "h30": 4620,
-   "h60": 3066
+   "h60": 3127
   },
   "board_nights": {
    "first": "2026-06-06",
-   "last": "2026-09-30",
-   "count": 88
+   "last": "2026-10-02",
+   "count": 90
   },
   "by_flag_type": {
    "faller": {
@@ -170,11 +170,11 @@
      "2026-08"
     ],
     "flag_counts": {
-     "flags": 1338,
+     "flags": 1347,
      "no_board_row_at_emit": 0,
      "no_cell": 0,
-     "empty_pool": 100,
-     "matched": 1238
+     "empty_pool": 101,
+     "matched": 1246
     },
     "median_pool": 4,
     "horizons": {
@@ -183,39 +183,39 @@
       "players": 52,
       "unscoreable": 81,
       "hit_rate": 0.0639,
-      "control_n": 3375,
-      "control_players": 179,
-      "control_rate": 0.0806,
+      "control_n": 3368,
+      "control_players": 188,
+      "control_rate": 0.0802,
       "ci": [
        0.0267,
        0.1162
       ],
       "control_ci": [
-       0.0449,
-       0.1223
+       0.0457,
+       0.1215
       ],
-      "gap": -0.0167,
+      "gap": -0.0162,
       "gap_ci": [
-       -0.0703,
-       0.0445
+       -0.0728,
+       0.0439
       ],
-      "gap_lo95": -0.0703,
-      "gap_hi95": 0.0445,
+      "gap_lo95": -0.0728,
+      "gap_hi95": 0.0439,
       "verdict": "inside",
       "clears_control": false,
-      "verdict_text": "inside: flag 0.0639 vs matched control 0.0806, gap 95% CI -0.0703 to +0.0445 (clustered by player)",
+      "verdict_text": "inside: flag 0.0639 vs matched control 0.0802, gap 95% CI -0.0728 to +0.0439 (clustered by player)",
       "by_month": {
        "2026-06": {
         "n": 382,
         "hit_rate": 0.0288,
-        "control_n": 1343,
-        "control_rate": 0.0343
+        "control_n": 1333,
+        "control_rate": 0.0353
        },
        "2026-07": {
         "n": 402,
         "hit_rate": 0.1269,
-        "control_n": 1398,
-        "control_rate": 0.1602
+        "control_n": 1401,
+        "control_rate": 0.1577
        },
        "2026-08": {
         "n": 186,
@@ -226,48 +226,48 @@
       }
      },
      "h60": {
-      "n": 732,
+      "n": 739,
       "players": 46,
-      "unscoreable": 132,
-      "hit_rate": 0.2254,
-      "control_n": 2690,
-      "control_players": 161,
-      "control_rate": 0.2736,
+      "unscoreable": 133,
+      "hit_rate": 0.2233,
+      "control_n": 2704,
+      "control_players": 169,
+      "control_rate": 0.2596,
       "ci": [
-       0.1121,
-       0.3607
+       0.111,
+       0.3565
       ],
       "control_ci": [
-       0.1769,
-       0.3843
+       0.1618,
+       0.3727
       ],
-      "gap": -0.0482,
+      "gap": -0.0363,
       "gap_ci": [
-       -0.2032,
-       0.1202
+       -0.1916,
+       0.1236
       ],
-      "gap_lo95": -0.2032,
-      "gap_hi95": 0.1202,
+      "gap_lo95": -0.1916,
+      "gap_hi95": 0.1236,
       "verdict": "inside",
       "clears_control": false,
-      "verdict_text": "inside: flag 0.2254 vs matched control 0.2736, gap 95% CI -0.2032 to +0.1202 (clustered by player)",
+      "verdict_text": "inside: flag 0.2233 vs matched control 0.2596, gap 95% CI -0.1916 to +0.1236 (clustered by player)",
       "by_month": {
        "2026-06": {
         "n": 357,
         "hit_rate": 0.3025,
-        "control_n": 1327,
-        "control_rate": 0.318
+        "control_n": 1317,
+        "control_rate": 0.2969
        },
        "2026-07": {
         "n": 368,
         "hit_rate": 0.1549,
-        "control_n": 1342,
-        "control_rate": 0.234
+        "control_n": 1345,
+        "control_rate": 0.2312
        },
        "2026-08": {
-        "n": 7,
+        "n": 14,
         "hit_rate": 0.0,
-        "control_n": 21,
+        "control_n": 42,
         "control_rate": 0.0
        }
       }
@@ -287,52 +287,52 @@
      "2026-08"
     ],
     "flag_counts": {
-     "flags": 817,
+     "flags": 824,
      "no_board_row_at_emit": 0,
      "no_cell": 0,
-     "empty_pool": 126,
-     "matched": 691
+     "empty_pool": 127,
+     "matched": 697
     },
-    "median_pool": 7,
+    "median_pool": 8,
     "horizons": {
      "h30": {
       "n": 551,
       "players": 27,
       "unscoreable": 8,
       "hit_rate": 0.0163,
-      "control_n": 2238,
-      "control_players": 163,
-      "control_rate": 0.0018,
+      "control_n": 2300,
+      "control_players": 169,
+      "control_rate": 0.0057,
       "ci": [
        0.0,
        0.0489
       ],
       "control_ci": [
        0.0,
-       0.0049
+       0.015
       ],
-      "gap": 0.0145,
+      "gap": 0.0107,
       "gap_ci": [
-       -0.003,
-       0.0471
+       -0.0098,
+       0.0444
       ],
-      "gap_lo95": -0.003,
-      "gap_hi95": 0.0471,
+      "gap_lo95": -0.0098,
+      "gap_hi95": 0.0444,
       "verdict": "inside",
       "clears_control": false,
-      "verdict_text": "inside: flag 0.0163 vs matched control 0.0018, gap 95% CI -0.0030 to +0.0471 (clustered by player)",
+      "verdict_text": "inside: flag 0.0163 vs matched control 0.0057, gap 95% CI -0.0098 to +0.0444 (clustered by player)",
       "by_month": {
        "2026-06": {
         "n": 165,
         "hit_rate": 0.0182,
-        "control_n": 646,
-        "control_rate": 0.0046
+        "control_n": 672,
+        "control_rate": 0.0045
        },
        "2026-07": {
         "n": 229,
         "hit_rate": 0.0262,
-        "control_n": 878,
-        "control_rate": 0.0011
+        "control_n": 914,
+        "control_rate": 0.0109
        },
        "2026-08": {
         "n": 157,
@@ -343,48 +343,48 @@
       }
      },
      "h60": {
-      "n": 378,
+      "n": 385,
       "players": 25,
       "unscoreable": 29,
-      "hit_rate": 0.0053,
-      "control_n": 1550,
-      "control_players": 139,
-      "control_rate": 0.0013,
+      "hit_rate": 0.0052,
+      "control_n": 1644,
+      "control_players": 148,
+      "control_rate": 0.0012,
       "ci": [
        0.0,
-       0.0183
+       0.018
       ],
       "control_ci": [
        0.0,
-       0.0046
+       0.0042
       ],
       "gap": 0.004,
       "gap_ci": [
-       -0.0037,
-       0.017
+       -0.0036,
+       0.0168
       ],
-      "gap_lo95": -0.0037,
-      "gap_hi95": 0.017,
+      "gap_lo95": -0.0036,
+      "gap_hi95": 0.0168,
       "verdict": "inside",
       "clears_control": false,
-      "verdict_text": "inside: flag 0.0053 vs matched control 0.0013, gap 95% CI -0.0037 to +0.0170 (clustered by player)",
+      "verdict_text": "inside: flag 0.0052 vs matched control 0.0012, gap 95% CI -0.0036 to +0.0168 (clustered by player)",
       "by_month": {
        "2026-06": {
         "n": 165,
         "hit_rate": 0.0,
-        "control_n": 655,
-        "control_rate": 0.0031
+        "control_n": 681,
+        "control_rate": 0.0029
        },
        "2026-07": {
         "n": 208,
         "hit_rate": 0.0096,
-        "control_n": 870,
+        "control_n": 906,
         "control_rate": 0.0
        },
        "2026-08": {
-        "n": 5,
+        "n": 12,
         "hit_rate": 0.0,
-        "control_n": 25,
+        "control_n": 57,
         "control_rate": 0.0
        }
       }
@@ -404,11 +404,11 @@
      "2026-08"
     ],
     "flag_counts": {
-     "flags": 5456,
+     "flags": 5524,
      "no_board_row_at_emit": 0,
      "no_cell": 4,
-     "empty_pool": 1049,
-     "matched": 4403
+     "empty_pool": 1066,
+     "matched": 4454
     },
     "median_pool": 6,
     "horizons": {
@@ -417,8 +417,8 @@
       "players": 143,
       "unscoreable": 262,
       "hit_rate": 0.0042,
-      "control_n": 11910,
-      "control_players": 298,
+      "control_n": 11936,
+      "control_players": 300,
       "control_rate": 0.0006,
       "ci": [
        0.0003,
@@ -430,25 +430,25 @@
       ],
       "gap": 0.0036,
       "gap_ci": [
-       -0.0002,
-       0.0099
+       -0.0003,
+       0.01
       ],
-      "gap_lo95": -0.0002,
-      "gap_hi95": 0.0099,
+      "gap_lo95": -0.0003,
+      "gap_hi95": 0.01,
       "verdict": "inside",
       "clears_control": false,
-      "verdict_text": "inside: flag 0.0042 vs matched control 0.0006, gap 95% CI -0.0002 to +0.0099 (clustered by player)",
+      "verdict_text": "inside: flag 0.0042 vs matched control 0.0006, gap 95% CI -0.0003 to +0.0100 (clustered by player)",
       "by_month": {
        "2026-06": {
         "n": 871,
         "hit_rate": 0.0023,
-        "control_n": 3281,
+        "control_n": 3299,
         "control_rate": 0.0012
        },
        "2026-07": {
         "n": 1174,
         "hit_rate": 0.0077,
-        "control_n": 4409,
+        "control_n": 4417,
         "control_rate": 0.0007
        },
        "2026-08": {
@@ -460,48 +460,48 @@
       }
      },
      "h60": {
-      "n": 1956,
-      "players": 120,
-      "unscoreable": 279,
-      "hit_rate": 0.0143,
-      "control_n": 7479,
-      "control_players": 227,
+      "n": 2003,
+      "players": 122,
+      "unscoreable": 287,
+      "hit_rate": 0.014,
+      "control_n": 7689,
+      "control_players": 242,
       "control_rate": 0.0025,
       "ci": [
        0.0005,
-       0.0312
+       0.0315
       ],
       "control_ci": [
        0.0,
-       0.0067
+       0.0065
       ],
-      "gap": 0.0118,
+      "gap": 0.0115,
       "gap_ci": [
-       -0.0024,
-       0.0291
+       -0.0017,
+       0.0289
       ],
-      "gap_lo95": -0.0024,
-      "gap_hi95": 0.0291,
+      "gap_lo95": -0.0017,
+      "gap_hi95": 0.0289,
       "verdict": "inside",
       "clears_control": false,
-      "verdict_text": "inside: flag 0.0143 vs matched control 0.0025, gap 95% CI -0.0024 to +0.0291 (clustered by player)",
+      "verdict_text": "inside: flag 0.0140 vs matched control 0.0025, gap 95% CI -0.0017 to +0.0289 (clustered by player)",
       "by_month": {
        "2026-06": {
         "n": 813,
         "hit_rate": 0.0221,
-        "control_n": 3134,
+        "control_n": 3152,
         "control_rate": 0.0041
        },
        "2026-07": {
         "n": 1096,
         "hit_rate": 0.0091,
-        "control_n": 4151,
+        "control_n": 4159,
         "control_rate": 0.0014
        },
        "2026-08": {
-        "n": 47,
+        "n": 94,
         "hit_rate": 0.0,
-        "control_n": 194,
+        "control_n": 378,
         "control_rate": 0.0
        }
       }
@@ -515,10 +515,10 @@
    }
   },
   "diagnostics": {
-   "level_asof_matches_stored_flag_level": 0.9621,
-   "level_rows": 7607,
-   "board_fv_differs_from_stored_flag_fv_by_more_than_1": 0.0238,
-   "fv_rows": 7611
+   "level_asof_matches_stored_flag_level": 0.9581,
+   "level_rows": 7691,
+   "board_fv_differs_from_stored_flag_fv_by_more_than_1": 0.0239,
+   "fv_rows": 7695
   },
   "conventions": {
    "basis": "both legs on metric_snapshots consensus_fv: base = board row on the emit date (or up to 3 days earlier), end = first board night on or after emit + horizon; no board row at either end = unscoreable, out of numerator and denominator",
@@ -535,17 +535,17 @@
    "h30": {
     "before": {
      "n": 1125,
-     "hit_rate": 0.1547,
+     "hit_rate": 0.1556,
      "control_rate": 0.0,
      "clears_control": true
     },
     "after": {
      "n": 970,
      "hit_rate": 0.0639,
-     "control_rate": 0.0806,
+     "control_rate": 0.0802,
      "gap_ci": [
-      -0.0703,
-      0.0445
+      -0.0728,
+      0.0439
      ],
      "verdict": "inside",
      "clears_control": false
@@ -553,18 +553,18 @@
    },
    "h60": {
     "before": {
-     "n": 931,
-     "hit_rate": 0.2524,
-     "control_rate": 0.0467,
+     "n": 939,
+     "hit_rate": 0.2492,
+     "control_rate": 0.0,
      "clears_control": true
     },
     "after": {
-     "n": 732,
-     "hit_rate": 0.2254,
-     "control_rate": 0.2736,
+     "n": 739,
+     "hit_rate": 0.2233,
+     "control_rate": 0.2596,
      "gap_ci": [
-      -0.2032,
-      0.1202
+      -0.1916,
+      0.1236
      ],
      "verdict": "inside",
      "clears_control": false
@@ -579,17 +579,17 @@
    "h30": {
     "before": {
      "n": 650,
-     "hit_rate": 0.2831,
-     "control_rate": 0.2278,
-     "clears_control": true
+     "hit_rate": 0.2292,
+     "control_rate": 0.2235,
+     "clears_control": false
     },
     "after": {
      "n": 551,
      "hit_rate": 0.0163,
-     "control_rate": 0.0018,
+     "control_rate": 0.0057,
      "gap_ci": [
-      -0.003,
-      0.0471
+      -0.0098,
+      0.0444
      ],
      "verdict": "inside",
      "clears_control": false
@@ -597,25 +597,25 @@
    },
    "h60": {
     "before": {
-     "n": 453,
-     "hit_rate": 0.3333,
-     "control_rate": 0.2946,
+     "n": 462,
+     "hit_rate": 0.2835,
+     "control_rate": 0.3038,
      "clears_control": false
     },
     "after": {
-     "n": 378,
-     "hit_rate": 0.0053,
-     "control_rate": 0.0013,
+     "n": 385,
+     "hit_rate": 0.0052,
+     "control_rate": 0.0012,
      "gap_ci": [
-      -0.0037,
-      0.017
+      -0.0036,
+      0.0168
      ],
      "verdict": "inside",
      "clears_control": false
     }
    },
    "kill_rule": {
-    "before": "keep-measuring",
+    "before": "deprecated",
     "after": "deprecated"
    }
   },
@@ -623,8 +623,8 @@
    "h30": {
     "before": {
      "n": 4060,
-     "hit_rate": 0.1874,
-     "control_rate": 0.2009,
+     "hit_rate": 0.1677,
+     "control_rate": 0.1949,
      "clears_control": false
     },
     "after": {
@@ -632,8 +632,8 @@
      "hit_rate": 0.0042,
      "control_rate": 0.0006,
      "gap_ci": [
-      -0.0002,
-      0.0099
+      -0.0003,
+      0.01
      ],
      "verdict": "inside",
      "clears_control": false
@@ -641,25 +641,25 @@
    },
    "h60": {
     "before": {
-     "n": 2633,
-     "hit_rate": 0.2955,
-     "control_rate": 0.2762,
-     "clears_control": true
+     "n": 2698,
+     "hit_rate": 0.2832,
+     "control_rate": 0.2797,
+     "clears_control": false
     },
     "after": {
-     "n": 1956,
-     "hit_rate": 0.0143,
+     "n": 2003,
+     "hit_rate": 0.014,
      "control_rate": 0.0025,
      "gap_ci": [
-      -0.0024,
-      0.0291
+      -0.0017,
+      0.0289
      ],
      "verdict": "inside",
      "clears_control": false
     }
    },
    "kill_rule": {
-    "before": "keep-measuring",
+    "before": "deprecated",
     "after": "deprecated"
    }
   }

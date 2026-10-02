@@ -41,7 +41,7 @@
    "notes": "Shipped 2026-07-23 (W5): 3,026 tracked hitters incl. debut-frozen; ap_-prefixed fields (eFV level_rank scale-collision hazard respected); DSL folded into Rk=1 per source semantics; entries 2015+ (divergence from source 2009 panel, documented); 2020 gap + 2026 in-progress footnotes baked. model_eligible false by contract - any predictive use requires renegotiation with the author.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 0
   },
   {
    "model_id": "age_rel_outperformance",
@@ -355,7 +355,10 @@
    "metric": "per leg: pairs n; LOO MAE vs the null (skill with paired se); Spearman rank correlation of the held-out predictions; held-out P10-P90 coverage (target 0.80); leave-one-season-out on the college season where a season and its complement each hold >= 12 pairs",
    "eval_artifact": "data/college_translation_scorecard.json",
    "verdict": "provisional",
-   "notes": "Added 2026-10-02 (owner answer M20-3, census M03-13). Written by college_translation.build() beside college_translation_eval.json; its LOO MAE, null MAE, skill se and coverage equal the eval's factors.*.loo on every leg (test-held). First reading: hit_k 217 pairs, LOO MAE 5.323 vs 5.900, Spearman 0.43, coverage 0.80; pit_k 232 pairs, 4.013 vs 3.995, Spearman 0.11; pit_bb 3.138 vs 3.380, Spearman 0.33. Leave-one-season-out runs for the hitter legs (2024 199 pairs, 2025 18) and the box legs (2025, 2026), not for the pitcher legs (2025 holds 8 pairs). Receipts: 210 hitters and 230 pitchers carry their realized line; 5 skipped where the draft record names another player, 4 where the name matches several players. The refit on career_stats labels is registered separately (college_translation_career_refit)."
+   "notes": "Added 2026-10-02 (owner answer M20-3, census M03-13). Written by college_translation.build() beside college_translation_eval.json; its LOO MAE, null MAE, skill se and coverage equal the eval's factors.*.loo on every leg (test-held). First reading: hit_k 217 pairs, LOO MAE 5.323 vs 5.900, Spearman 0.43, coverage 0.80; pit_k 232 pairs, 4.013 vs 3.995, Spearman 0.11; pit_bb 3.138 vs 3.380, Spearman 0.33. Leave-one-season-out runs for the hitter legs (2024 199 pairs, 2025 18) and the box legs (2025, 2026), not for the pitcher legs (2025 holds 8 pairs). Receipts: 210 hitters and 230 pitchers carry their realized line; 5 skipped where the draft record names another player, 4 where the name matches several players. The refit on career_stats labels is registered separately (college_translation_career_refit).",
+   "last_checked": "2026-10-02",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "college_pitk_box_challenger",
@@ -756,7 +759,7 @@
    "notes": "Phase 4b WS-8 (2026-06-11): FIRST scoring vs actual debuts. v38 hand-set bases ran ~1.5y LATE on debuted players; bases recalibrated to censoring-aware KM medians (washed-out players never leave the risk set - NOT survivor medians). Forward-chained on identical rows: MAE 1.448 vs 1.993, within-1y .571 vs .405. DISCLOSED trade: overdue censored-actives 803->904 of 2,345. DSL base stays hand-set (debut curve never crosses 50%). Live signals (SC+/health nudges; the org-tendency nudges until their 2026-09-30 removal) not reconstructable per vintage - unscored. Reruns monthly. LEVEL-NORM PARK ADJUSTMENT DEFERRED (documented): needs full-season AAA/AA ball-by-ball exports that are not on disk; export_aaa_ball_by_ball.py exists, the season-scale fetch is the lift. PER-LEVEL BIAS SHAVE SHIPPED (2026-06-25): the KM recalibration cut the global bias 1.85->1.03 but left the heuristic running ~1yr LATE on debuted players (residual_by_level: A+ +2, DSL +4). New eta.LEVEL_BIAS_ADJ applies a conservative shrunk forward-chained -0.5yr final shave at every minor level (estimate_eta level_bias_adj hook; passed by the live caller storage.py, NOT the backtest champion so the gate stays apples-to-apples). Gate-validated (eta_eval bias_corrected_forward_chained): debuted MAE 1.439->1.232, within-1y 0.578->0.659, bias 1.09->0.75, exact 0.21->0.26. OVERDUE GUARDRAIL (the survivor-bias check): the shave pulls censored-active ETAs earlier so 'overdue' rose +99 (328->427) - in line with the previously-ACCEPTED KM trade (+101); the aggressive cap-1.0 (+207) and level-differentiated (+171) variants over-corrected and were rejected for cap-0.5. Live ETAs update on the next run_monthly (storage regenerates them).\n\nKM REFIT RE-ADJUDICATED 2026-08-04: NO SHIP, BASE_YEARS HELD AT v39. The nightly regen moved the KM artifact under the hand-set table (A+ 3.0 vs refit 3.25, CPX 4.25 vs 4.5 - TWO cells, not the one the test names). Both are rounding-boundary crossings driven by cohort accounting, not new evidence: debuted rose only +5 while censored_active rose +144, so fresh still-active non-debuted rows entered the risk set and pushed the survival curve later. Scored on identical rows (n=3,454 debuted) through the live estimate_eta path, the refit LOSES BOTH legs of the criterion v39 shipped on: MAE 1.440 -> 1.490 and within-1y 0.579 -> 0.561, paired bootstrap P(refit better) = 0.000 on each, and of the 253 rows it moves 212 get WORSE and 41 better. Each disputed cell also loses on its own, so it is not a joint artifact. NOTE the overdue guardrail did NOT refuse it and could not have: the refit pushes ETAs LATER so overdue FALLS 345 -> 331, and that guardrail exists for the opposite hazard. It is refused purely on accuracy.\n\nEMPIRICAL-TABLE GATE 2026-08-19: NO SHIP, v39 HELD. The forward-chained survivor-median table (eta_eval challenger_empirical_table_forward_chained) wins the row-matched debuted frame decisively (MAE 0.869 vs 1.471, dMAE +0.602 = 12x the player-clustered MDE95 of 0.050; pooled challenger+fallback 0.998 vs champion 1.422) but FAILS the overdue guardrail 4x over (censored-active overdue 902 -> 1355 of 2,311, +453 vs the frozen +110 limit; v39 precedent +101): it is fit on debuted players only and prices every still-active prospect as a survivor. Refused on the unconditional leg, exactly the hazard the KM v39 bases were built to avoid. Loss block: data/eta_eval.json empirical_table_gate_2026_08_19; gate doc docs/eta-2026-08-19/ETA_EMPIRICAL_TABLE_GATE.md; lab tools/eta_empirical_gate.py. Do not re-run without a cure-aware refit. NOTE: eta_backtest.run() rebuilds data/eta_eval.json and does not yet carry the gate block forward; the pinned test in test_eta_backtest.py goes red at the next monthly rerun as the signal to add the carry-forward.\n\nSERVED ETA FLIPPED TO THE FANGRAPHS BLEND, ARM B (2026-09-30): the champion heuristic below (v39 bases, LEVEL_BIAS_ADJ, FORTYMAN_ADJ; the CH40 of the blend gate) is now the model leg of the served ETA, and where a FanGraphs list dated this year publishes an eta_year the served year is max(next open season, rnd(0.5 x CH40 + 0.5 x FanGraphs) - on40). The one registered look (docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md, data/eta_eval.json fg_blend_gate_2026_09_25) read SHIP CANDIDATE with arm B recommended; see row eta_fg_blend for its numbers and the blast radius. This row's card still scores the heuristic alone against the naive table on the 2018-2023 graduate frame; the served blend's card is on eta_fg_blend.\n\nORG PROMOTION MULTIPLIERS REMOVED (2026-09-30, owner answer ETA-3): the section 7 keep-or-remove gate of docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md (data/eta_eval.json org_timing_gate_2026_09_25, the one registered look) found the KEEP arm (point-in-time org tendencies) and the REMOVE arm give the same debut year on all 1,394 rows of the 2024 frame (debuted MAE 0.992 both, overdue 205 both), verdict REMOVE. storage.py's served estimate_eta call now passes org_promotion_tendency=None: no H1/H2 half-season multiplier, no aggressiveness floor multiplier, no org nudge on eta_half. The functions stay in eta.py for the gate lab only. Measured on the same inputs: of 4,665 served ETAs 45 years move, all one year earlier, all in CLE, LAD and CHW (the H1-heavy orgs whose post-break term goes from -0.15 to the league -0.25 on 471 rows); eta_half moves on 294 rows; no eFV grade moves. The gate frame's zero did not carry over because its listing dates were pre-break, where the half-season multiplier barely acts.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 1,
+   "artifact_age_days": 0,
    "card": {
     "n": 3501,
     "window": "graduate cohort, forward-chained, both arms on the same rows",
@@ -818,7 +821,7 @@
    "notes": "One registered look, 2026-09-30 (second run; the first crashed at a report-only sort after scoring and recorded nothing; owner rule ETA-1 allowed a one-line repair, 6ca2e8f4, and one rerun that reproduced all eleven scored lines byte for byte). Fresh frame: the 2024 list, 1,394 rows, outcomes through 2026-09-27; the 2020/2021 lists never built; development vintages spent. Row-matched (446 debuted rows with a clean FanGraphs year): CH40 MAE 1.0224, arm A 0.861 (dMAE +0.1614, MDE95 0.0563, CI95 +0.1054 to +0.2152), arm B 0.8094 (dMAE +0.2130, MDE95 0.0605, CI95 +0.1547 to +0.2735), both Holm pass; within-1y CH40 0.7377, A 0.8453, B 0.8408, both CI above zero; pooled (503 debuted) CH40 0.992, A 0.8489, B 0.8032; overdue on 871 censored-active rows CH40 205, A and B 201 (delta -4 against +110). C6 B over A dMAE +0.0516 (CI95 +0.0269 to +0.0785), overdue +0. VERDICT: SHIP CANDIDATE (both arms), recommended arm B. Section 7 org-multiplier gate: KEEP and REMOVE give the same year on every row (moved 0), so the registered recommendation is REMOVE, the owner's call. A 2026 live shadow (4,486 rows) is frozen in the block and scored after the 2028 regular season. SERVED 2026-09-30 (owner answer ETA-2; eta.ETA_FG_BLEND_ARM = 'B'). Served call: storage.py applies eta.apply_fg_blend on the champion result with FanGraphs' year from the prospect's latest consensus point, counted only when that FanGraphs entry is from a list dated in the serving year (the gate's FG(V) rule; the first regen without that rule blended 489 prospects on 2018-2025 lists, e.g. a 2020 year moving a 2031 champion to 2027). Blast radius on the regenerated board (4,665 served ETAs): 1,153 blended, 590 move (484 later, 106 earlier; +2 47, +1 437, -1 96, -2 9, -3 1), 55 of the top 100; PROSPX surplus moves on 482 rows (total -394.5M), eFV surplus_mm on 477 rows (total -379.1M), no eFV grade moves. Blocks: data/eta_eval.json fg_blend_gate_2026_09_25 and org_timing_gate_2026_09_25; lab tools/eta_fg_blend_gate.py. Owner answer ETA-3 (2026-09-30): removed from the served call; measured blast on row eta.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 1,
+   "artifact_age_days": 0,
    "card": {
     "n": 446,
     "window": "2024 list, debuted rows with a clean FanGraphs year, outcomes through 2026-09-27 (one registered look)",
@@ -1715,7 +1718,7 @@
    "notes": "deliberately descriptive; no predictive claims made or measured",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 0
   },
   {
    "model_id": "overseas_translation",
@@ -2373,7 +2376,7 @@
    "notes": "Scoring machinery: editorial_eval.py, wired into run_monthly. Two versions live side by side in data/editorial_eval.json. v1 (top-level by_flag_type) is unchanged because the GRPO forward gate froze its design on it; the census audit (M02-04, X01-10, two verifiers CONFIRMED) found it scores flags from the stored flag FV and controls from the source-snapshot median, draws controls as the first unflagged players by key, excludes every ever-flagged key, counts daily cohorts and uses row-level Wilson intervals. v2 (registered 2026-10-01 on the owner's answer of 2026-09-25) scores both legs on the point-in-time board history, draws seeded random matched controls, counts calendar-month cohorts and clusters the intervals by player; its hit is the FV leg of HIT_RULES only, since the board history carries no source ranks or source counts. The served receipts (Spotlights tab, /glossary/) and this row's card read the v2 block; the per-type rates, verdicts, kill-rule recommendations and the v1-to-v2 before/after table live in the artifact, not here. Any bucket change under the kill rule is the owner's decision. Source coverage recording (owner answer B4SP-2, 2026-10-01): from the first run_monthly after the recorder landed on 2026-10-01 (storage.METRIC_SNAPSHOT_COVERAGE_START), every metric_snapshots row also records source_n and source_keys (the outlets whose published FV entered the board's consensus FV that night; constant placeholders excluded) and best_rank, best_rank_source and best_rank_date (the best rank on any outlet's latest league-wide list; org lists excluded); definitions in consensus.point_source_coverage. Forward only, never back-filled: the first recorded night is the earliest snapshot_date with source_n not null (storage.metric_snapshot_coverage_start()), and a v3 may score the new-source and top-100 legs only for flags whose base night is on or after it. v2 does not read these columns. Verdict stays provisional.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 1,
+   "artifact_age_days": 0,
    "card": {
     "window": "v2 re-score, 30-day window, board history from the first flags (2026-06-11)",
     "headline": [
@@ -2389,20 +2392,20 @@
      {
       "label": "Rebound flags: board FV up 5+ within 30 days",
       "champion": 0.0163,
-      "baseline": 0.0018,
+      "baseline": 0.0057,
       "better": "higher",
       "baseline_label": "matched control",
       "resolvable": false,
-      "verdict": "inside: flag 0.0163 vs matched control 0.0018, gap 95% CI -0.0029 to +0.0475 (clustered by player)"
+      "verdict": "inside: flag 0.0163 vs matched control 0.0057, gap 95% CI -0.0098 to +0.0444 (clustered by player)"
      },
      {
       "label": "Faller flags: board FV down 5+ within 30 days",
       "champion": 0.0639,
-      "baseline": 0.0792,
+      "baseline": 0.0802,
       "better": "higher",
       "baseline_label": "matched control",
       "resolvable": false,
-      "verdict": "inside: flag 0.0639 vs matched control 0.0792, gap 95% CI -0.0708 to +0.0463 (clustered by player)"
+      "verdict": "inside: flag 0.0639 vs matched control 0.0802, gap 95% CI -0.0728 to +0.0439 (clustered by player)"
      }
     ],
     "derived_from": {
@@ -2450,7 +2453,7 @@
    "notes": "SHIPPED 2026-07-04. The displayed Star Odds are the FanGraphs 2026 published tier figures for the player's FV and role (exact by construction, config/valuation_sets/clemens_2026.yaml); hitters run higher than pitchers because a bullpen outcome rarely clears 4 WAR. Our own mixture Poisson-binomial model computes a per-player version from the outcome-bucket distribution; under the v47 realized (bust-heavy) WAR anchors it runs below the published tiers, so it is shown as a diagnostic only. Phase 5 calibration is the forcing function that reconciles the model aggregates to the published table. Current max absolute tier deviation is about 0.64 (pitcher 70 FV), above the 0.1 tolerance, so the gate does not pass and the verdict stays provisional. H-2/H-3 (2026-07-05): the PROSPX Star Odds cell now discloses the RESOLVED-cohort realized star rate + n beside the published FG value (by role + FV tier, from realized_calibration); published numbers unchanged. Realized contradicts published at mid tiers (pitcher FV 60-65 realized 2.8%% vs published 30.5%%, n=36; hitter 50-55 6.4%% vs 15.5%%). star_label_view.json + star_odds_eval.json are now regenerated on the pipeline cadence (previously a manual tool run only, so they silently went stale). LOSS-LEDGER 2026-07-06: a fitted eFV->star_prob overlay (centered-logistic on FV; Platt recal of the published logit) was tested forward-chained by debut class, per role, and LOST to the published table out-of-sample on BOTH Brier and LogLoss (hitter 0.0869 vs 0.0842; pitcher 0.0317 vs 0.0293) -- the tiny positive class (66 resolved stars, 15 pitchers) overfits vintage noise while the industry prior generalizes; published stays the displayed value. The by-tier realized disclosure now suppresses its bold 'X% real' line below n=30 so thin one-star tiers do not over-claim.\n\n2026-08-19 reading: gate max_abs_dev 0.6439 vs tolerance_abs 0.1, pass false; the FAIL grades the internal diagnostic only, nothing served. Diagnostic demotion verified this date: no surface serves the model odds (served cell = surplus.star_odds = published FG table exact; payload field star_odds_model has zero frontend readers; prospx reads only realized_calibration.roles from the eval). Builder tools/build_star_odds_artifacts.py now stamps gate.diagnostic_only=true plus a diagnostic_note; that lands in data/star_odds_eval.json on the next pipeline regen and is not yet on disk this date.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 0
   },
   {
    "model_id": "statcast_alevel_display",
@@ -2503,7 +2506,7 @@
    "notes": "2026-06-12 SHIPPED: trained on 1.19M AAA pitches (2023-24), validated season-out on 571K 2025 pitches - pitch-level r .021 (per-pitch RV is mostly batted-ball noise; expected scale), pitcher-level r .280 (n=638). Forward gate (graduates 2024+, strictly pre-debut AAA season, >=100 MLB BF): r .230 vs first-MLB ERA (inv), r .550 vs first-MLB K% (n=17 - small, published as required). 1,372 pitchers in the sidecar. Agreement check vs external tjStuff+ deferred until per-season MLB Stf+ rows accumulate (documented). Provisional per the SC+ precedent: real measurement, small forward cohort. 2026-08-19 reading: artifact regenerated - pitcher-level OOS r 0.2797 (n=638), pitch-level 0.0213; forward gate n=20 per leg: K% r 0.4822, ERA-inv r -0.0954 - the ERA leg is NOW SIGN-WRONG at an unpowered n, published as required; copy stays constrained to K%/whiff claims only.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 0
   },
   {
    "model_id": "stuff_plus_external",
@@ -3708,7 +3711,7 @@
    "notes": "Split out (H-4, 2026-07-05) from the deprecated [[xfv_isotonic_calibration]] loss ledger so a live surface no longer depends on a rendered-nowhere experiment artifact. Carries only the shipped distribution's 'before' curves; the isotonic recalibration failed its gate and is not shown. Regenerated by tools/efv_isotonic_lab.py alongside the loss ledger.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 0
   },
   {
    "model_id": "xfv_relief_shape",
@@ -4657,7 +4660,7 @@
    "notes": "2026-09-06: 560-game acceptance sample, 70 random games from every season the cache holds (2018, 2019, 2021-2026; no 2017, no 2020), 42,269 plays. Base occupancy agreement 1.000000 on 41,220 comparable plays; identity 0.999903 (4 misses, all right bag wrong man, a pinch runner substituted in an earlier play with no base field). 933 plays excluded as non-comparable: a pickoff error, balk or steal ahead of pitch one means the reconstruction reports the START of the play while the offense block reports the FIRST PITCH. Outs 0 mismatches / 42,269, runs 0 mismatches / 42,269. 19 invalid states (0.000450), ALL one payload defect: a force_out described as 'grounds into a force out, RUNNER out at 3rd' omits the trailing runner's 1B-to-2B advance; no advance is inferred and the healing pass restores him at his next movement. Independent end-to-end check on written parquet: summed runs_scored_on_play equals the final score in 150/150 games; bases empty 56.93%, bases loaded 2.340%. Four defects were found and fixed by measurement, each mutation-tested in test_pbp_corpus.py: lead-runner-first sort 94.80%, stepwise placement 99.63%, unaliased mid-play pinch runner 99.88%, 'end' value '4B' (undocumented, means reached home) losing a run. leverage_index is null on exactly 1.00 play per game (the leadoff plate appearance), a null not a zero. NOT refetchable in practice: excluded from prune_cache.SAFE_CACHES and now ENFORCED via EXCLUDED in _cache_files, which was previously documentation referenced by no code. [registry: the lane proposed verdict 'pass', which is not in the enum ('validated', 'provisional', 'unvalidated', 'deprecated'); recorded as 'provisional' (measured, not forward-validated against a named baseline).] [artifact note: (validation block, per season and aggregated)]",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 6
+   "artifact_age_days": 0
   },
   {
    "model_id": "xfv_driver_auc_leg",
@@ -4672,7 +4675,7 @@
    "last_checked": "2026-10-02",
    "stale": false,
    "basis": "11-fold-pair-weighted-2014-2024",
-   "artifact_age_days": 25
+   "artifact_age_days": 26
   },
   {
    "model_id": "hof_benchmark_shelf",
@@ -4686,7 +4689,7 @@
    "notes": "2026-09-06 lane hof_data. PROVIDER PINNED TO bWAR (WAR_PROVIDER='bwar'): eWAR covers 2011-2026 only and war_source.DEFAULT_PROVIDER is 'ewar_v2', so the pin is load-bearing and no public entry point accepts a provider (test_no_public_entry_point_accepts_a_provider). All 15 reproduction cells exact; two of them (Johnson career 168.35, Mays WAR7 73.55) need HALF-UP rounding, Python's half-to-even round() puts both a tenth low. Eligible universe E = 3,620 of 23,786 at as_of_year 2026 (10+ seasons with a WAR row, last season <= 2021). Classes SP 1057 / OF 972 / MI 789 / RP 306 / C 267 / 1B-DH 229. TWO DISCLOSED WEAKNESSES: (1) no position source in the repo, so position_class infers from the B-Ref run components (1953+) or the positional-adjustment rate alone (before 1953); the rate-only fallback scores 72.2 percent agreement over 1,239 modern careers, 81.1 percent excluding catchers, and recovers 0 of 135 catchers, so the C class is EMPTY before 1953 and those catchers sit in MI. (2) no ballot source in the repo, so label_bbwaa / label_any / label_frame raise BallotSourceMissing naming data/hof_ballots.json (H-DATA-2) and hall_line returns line=None until a caller supplies the class size. Negro Leagues INCLUDED per owner decision 13 (8,072 batting and 3,171 pitching rows over 2,263 players on the four long-running leagues, reproducing the plan's count exactly); era_factor exposes the schedule ratio (E Negro Leagues median 2.10) and is NEVER applied to any WAR column. [registry: the lane proposed verdict 'green', which is not in the enum ('validated', 'provisional', 'unvalidated', 'deprecated'); recorded as 'provisional' (measured, not forward-validated against a named baseline).] [artifact note: none (no artifact written; reproduction_check() computes the comparison in process from .cache/war_daily)] [registry 2026-09-06: reproduction_check() now COMMITS its result to data/hof_benchmark_repro.json with a generated_at stamp, rather than computing in process and leaving no record. 5 players, 15 published figures, all exact after half-up rounding to the tenth. The artifact states plainly that agreement on the benchmark shelf is a correctness check on a reimplementation and is NOT evidence for any Hall of Fame claim.]",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 25
+   "artifact_age_days": 26
   },
   {
    "model_id": "betting_props_pmf",
@@ -4762,7 +4765,7 @@
    "notes": "2026-09-06 (A-CLAIM-7). THE ORDER IS FINE: the sort key inverts against the evaluated object on 3.3% of untied hitter pairs and 3.9% of pitcher pairs, rho 0.9876 and 0.9855, reproducing the figures the 2026-09-05 plan projected. THE FLAGSHIP MAP IS EXACTLY MONOTONE: zero inversions over ~880,000 untied pairs across both sides, so efv_score.py's monotonicity docstring is true where it applies. THE PROVISIONAL MAP IS NOT: served to 1,091 hitters (51% of the side) and 1,386 pitchers (58%), it inverts against the model's own predicted WAR on 25.4% and 48.8% of untied pairs, and half is what independence looks like. Every provisional row carries consensus FV exactly 35.0, so this basis IS the no-published-opinion population A-CLAIM-12 counts, reached from the other direction. Routing (pairs graded through different maps) accounts for 57.9% of all hitter grade discordance and 37.8% of pitcher. NOT NECESSARILY A DEFECT: a player with no professional track record is graded off a prior rather than off a ridge prediction nobody should trust yet. It had never been measured, and it bounds what the head-to-head result covers.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 25
+   "artifact_age_days": 26
   },
   {
    "model_id": "win_expectancy_state",
@@ -4794,7 +4797,7 @@
    "notes": "2026-09-06. 13,971 priced attempts over 2018-2026. THE FINDING: the league steals second at a 75.00% success rate against a swing-weighted break-even of 75.03%, so eight seasons of decision value sum to -0.19 wins. Managers collectively run the stolen base at almost exactly the point of indifference. Stealing third is worth +4.31 wins (76.1% against 72.8%); stealing home is worth -2.33 (25.8% against 55.8%). TWO-OUT ATTEMPTS ARE EXCLUDED, 9,328 of them, about 40% [CORRECTED 2026-09-11, audit F02-01: 11,783 of 26,139, about 45%. The caught stealings that END a plate appearance live only on the play's own result and were never read]: with two down a caught stealing ends the inning, so the alternative is priced by a different estimator from the hold, and that mismatch valued up to 19.2% of attempts so that being caught stealing HELPED. AN OPEN QUESTION WAS CLOSED BY THE SAME EXCLUSION: failed attempts appeared to carry 1.5 times the win-probability swing of successful ones, which invited a reading about defences bearing down; it was mechanical, and with the inning-ending attempts removed the ratio is 1.00. PROVISIONAL AND NOT ATTRIBUTED: no number here is assigned to a manager, because the manager entity and the gate battery (split-half stability, placebo, persistence, captured share) have not been built. [2026-09-06, gate result: the family is a bounded NULL. Season-controlled split-half r 0.0691 inside [-0.1504, 0.1243], ICC 0.00538, implied true between-agent spread 0.0130 wins per team-season. No decision value may be attributed to an agent from this family, and the manager entity is NOT worth fetching for it.] RE-VALIDATED 2026-09-10 after audit finding F07-02: the win model was fitted and queried on a POST-play score against a PRE-play base-out state, so every decision on this surface was priced on leaked values. Refit on the honest state; the gate battery was re-run rather than assumed and its verdict is unchanged (DESCRIPTIVE ONLY, split-half 0.1098 inside its null band). The league running-game net flipped sign (+1.79 to -0.75 wins) and the served Brier claim reversed (the MLB feed now leads 0.157516 to 0.157678). CENSUS REPAIRED 2026-09-11 (audit F02-01): management.py read the corpus events table alone, and a steal that ends a plate appearance is not a playEvent but the play's own result, so 2,475 attempts that exist only there, such as a caught stealing for the third out, were neither priced nor counted while the artifact said the excluded attempts were counted. Both tables are read now and the artifact's attempt_census holds priced plus excluded equal to the corpus count (13,973 + 12,166 = 26,139). The few recovered attempts below two out joined the priced pool, so stealing third now reads +5.99 wins on 1,934 attempts. The gate was re-run: DESCRIPTIVE ONLY, split-half 0.1085 inside [-0.1501, 0.1272].",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 6
+   "artifact_age_days": 0
   },
   {
    "model_id": "hof_ballot_panel",
@@ -4810,7 +4813,7 @@
    "notes": "2026-09-06 (H-DATA-2). 4,440 ballot rows over 86 election years, 96.6% carrying a bbref id; five years carried no election and are listed apart from failures so nobody tries to fill them. THE ROUTE SPLIT WAS 342-TO-12 WRONG BEFORE IT WAS CHECKED: StatsAPI's notes field is EMPTY on 333 of 354 recipients and several of the 21 that carry one say things like 'No cap logo on plaque', so defaulting an empty note to the writers reported twelve committee inductees when the committees have elected more players than the writers. Routes now come from the ballot tables, with a committee-only adjacent-year rule because the era committees vote in December for the following summer's class; 80.2% resolved, and the remainder are the 1930s-40s committee era and the 2006 Negro Leagues election, none of whom appeared on a player ballot. FOUR PARSER DEFECTS, each found against the live page: a dotted player id (sabatc.01), a non-breaking space inside every marked name, an enshrinement marker that is a perfect outcome leak and is now named bref_hof_marker_as_of_scrape so nobody uses it as a feature, and a latin-1 double-decode that silently broke the join for every accented player. Baseball-Reference's own HoF Monitor, Standards and JAWS columns are captured in the same pass as the H-DATA-4 answer key.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 25
+   "artifact_age_days": 26
   },
   {
    "model_id": "hof_label_ledger",
@@ -4826,7 +4829,7 @@
    "notes": "2026-09-06 (H-PRED-1). A CENSORED PLAYER NEVER CARRIES A ZERO, asserted by assert_no_censored_zero over the real frame rather than by prose: a zero there says the voters decided no about somebody they have not finished deciding on, it biases every recent cohort toward zero, it does it hardest to the best candidates, and it is silent. A player who NEVER APPEARED on a ballot is also censored, not zero, because the screening committee's decision not to list him is a different event from the writers voting him down and this panel cannot tell them apart. THE ONE ARBITRARY CONSTANT is COMMITTEE_HORIZON_YEARS, default 25: the era committees never formally close and have elected players fifty years after retirement, so on a strict reading no non-inductee is ever a resolved zero and the negative class is empty. The horizon is marked an assumption where it is defined and label_sensitivity() publishes what 15, 20, 30 and 40 would do instead.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 25
+   "artifact_age_days": 26
   },
   {
    "model_id": "mwar_running_gate",
@@ -4970,7 +4973,7 @@
    "notes": "2026-09-06. THE LEAGUE STEALS SECOND AT ITS OWN BREAK-EVEN: 75.00 percent success against a swing-weighted break-even of 75.03 percent over 11,977 attempts, which is -0.19 wins for the entire league across eight seasons. Steals of third PAY (+4.31 wins on 1,932 attempts, 76.14 percent against a 72.84 percent break-even) and steals of home do not (-2.33 on 62). Net across 19,130 games: +1.79 wins, against an absolute redistributable pool of 30.96. 57.18 percent of steal-of-second attempts sit BELOW their own break-even while the aggregate is a coin, because the good spots carry more swing. WHICH BREAK-EVEN MATTERS: the swing-weighted one. A reader comparing the success rate against the MEDIAN break-even gets the sign wrong on second. 9,328 two-out attempts are EXCLUDED and counted [CORRECTED 2026-09-11, audit F02-01: that count missed the two-out caught stealings that ended a plate appearance, which were neither priced nor counted. The repaired count is 11,783 of 26,139 attempts, and the page now states the census beside the table]: a caught stealing with two down ends the inning, so the alternative comes from the measured half-inning-start table while the hold comes from the smooth model, and nothing calibrates those two estimators against each other. Across three builds that mismatch priced 8.7 to 19.2 percent of attempts so that being CAUGHT STEALING HELPED the batting team.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 6
+   "artifact_age_days": 0
   },
   {
    "model_id": "mgmt_bunt_dv",
@@ -4986,7 +4989,7 @@
    "notes": "Registered 2026-10-02 (audit RFR02): the Bunt section shipped naming this artifact as its eval_artifact and no registry row carried it, while its sibling priced counterfactual, mgmt_running_game, has its own row. 2026-09-25 reading (artifact generated_at 2026-09-25, corpus through 2026-09-24, seasons 2018 to 2026 without 2020): 11,013 bunts priced, -55.999 wins in total. Sacrifices with a runner on: 8,365 bunts, -74.544 wins (-0.00891 each). Bunts for a hit with the bases empty: 2,648 bunts, 18.545 wins (0.007 each), 1,247 of them hits. Excluded and counted: 472,640 two-out plate appearances and 43 in thin cells. THE INDEPENDENT CONTROL DISAGREES ON SIZE: the realized StatsAPI win-probability change totals -3.235 wins (sacrifice -20.727, for a hit 17.492), and the reconciliation puts most of the gap on the sacrifice result itself. THE SELECTION PROBLEM IS NOT SOLVED: managers bunt with the batters they least want swinging, so this prices the bunt as deployed and is biased against the bunt as a tactic; removing it needs the per-batter plate appearance model (M-ENG-1), which does not exist. No plus metric, no per-club column, no manager figure: the running-game battery found per-agent decision value does not repeat between halves of a season, and nothing has shown this family behaves differently. The realized control is never summed with any other family's realized figure.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 6
+   "artifact_age_days": 0
   },
   {
    "model_id": "mgmt_board_export",

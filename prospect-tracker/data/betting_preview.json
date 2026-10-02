@@ -1,10 +1,10 @@
 {
- "generated_at": "2026-10-01T18:11:30+00:00",
- "slate_date": "2026-10-01",
+ "generated_at": "2026-10-02T16:24:21+00:00",
+ "slate_date": "2026-10-03",
  "status": {
   "odds_feed": "ok",
   "odds_note": "odds feed configured",
-  "odds_captured_at": "2026-09-30T17:54:11+00:00",
+  "odds_captured_at": "2026-10-02T16:24:20+00:00",
   "odds_kind": "open",
   "model": "unvalidated",
   "model_registry_verdict": "provisional",
@@ -15,53 +15,53 @@
     "file": "hitter_leaderboards.json",
     "present": true,
     "n_orgs": 30,
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-02"
    },
    "rotation": {
     "file": "starter_leaderboards.json",
     "present": true,
     "n_orgs": 30,
-    "as_of": "2026-09-30"
+    "as_of": "2026-10-02"
    },
    "bullpen": {
     "file": "bullpen_leaderboards.json",
     "present": true,
     "n_orgs": 30,
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-02"
    },
    "n_orgs_joined": 30
   },
-  "n_slate_games": 1,
-  "n_events_dropped_in_progress": 4,
+  "n_slate_games": 4,
+  "n_events_dropped_in_progress": 0,
   "n_games_unpriced_time_mismatch": 0,
   "n_runline_refused": 0,
   "runline_refusals": [],
-  "slate_rule": "first_open_slate",
+  "slate_rule": "first_open_priced_slate",
   "slate_candidates": [
-   {
-    "date": "2026-10-01",
-    "n_games": 1,
-    "n_bettable": 1,
-    "open": true,
-    "n_priceable": 0,
-    "n_started": 0,
-    "n_pregame": 1,
-    "n_called_off": 0,
-    "n_playable": 1,
-    "pregame_share": 1.0,
-    "min_pregame_share": 0.5,
-    "why_not": null
-   },
    {
     "date": "2026-10-03",
     "n_games": 4,
     "n_bettable": 4,
     "open": true,
-    "n_priceable": 0,
+    "n_priceable": 4,
     "n_started": 0,
     "n_pregame": 4,
     "n_called_off": 0,
     "n_playable": 4,
+    "pregame_share": 1.0,
+    "min_pregame_share": 0.5,
+    "why_not": null
+   },
+   {
+    "date": "2026-10-04",
+    "n_games": 2,
+    "n_bettable": 2,
+    "open": true,
+    "n_priceable": 0,
+    "n_started": 0,
+    "n_pregame": 2,
+    "n_called_off": 0,
+    "n_playable": 2,
     "pregame_share": 1.0,
     "min_pregame_share": 0.5,
     "why_not": null
@@ -71,7 +71,7 @@
   "slate_called_off": null,
   "started_rows_dropped": {
    "n": 0,
-   "n_on_slate": 1,
+   "n_on_slate": 4,
    "games": [],
    "reason": "first pitch has passed, so the game is no longer on the book's pregame board and carries no price to show",
    "basis": "StatsAPI status or a first pitch at or before now, the same two signals the slate rule reads",
@@ -79,36 +79,36 @@
   },
   "called_off_rows_dropped": {
    "n": 0,
-   "n_on_slate": 1,
+   "n_on_slate": 4,
    "games": [],
    "reason": "the game will not be played on this date, so there is nothing here to price and a posted number would grade as a void",
    "basis": "the StatsAPI status string, or the coded and detailed states in the cached schedule document data/fantasy.json drops"
   },
   "odds_slate": {
-   "board_slate": "2026-10-01",
-   "snapshot_slate": "2026-09-30",
-   "snapshot_captured_at": "2026-09-30T17:54:11+00:00",
-   "snapshot_age_hours": 24.3,
-   "matched": false,
-   "match_rule": null,
-   "n_pregame_events_on_board_slate": 0,
-   "mismatch": true,
-   "reason": "ODDS SLATE MISMATCH: the board is the 2026-10-01 slate and the newest cached snapshot is stamped 2026-09-30, captured 2026-09-30T17:54:11+00:00, and carries no game on the board slate that has not already started. Every price below is for a different slate, so no pick is published against it"
+   "board_slate": "2026-10-03",
+   "snapshot_slate": "2026-10-03",
+   "snapshot_captured_at": "2026-10-02T16:24:20+00:00",
+   "snapshot_age_hours": 0.0,
+   "matched": true,
+   "match_rule": "slate_label",
+   "n_pregame_events_on_board_slate": 4,
+   "mismatch": false,
+   "reason": "the cached snapshot is stamped for the 2026-10-03 slate"
   },
-  "odds_slate_mismatch": true,
-  "odds_snapshot_age_hours": 24.3,
+  "odds_slate_mismatch": false,
+  "odds_snapshot_age_hours": 0.0,
   "stale_board": false,
   "feed_health": {
-   "generated_at": "2026-10-01T18:11:30+00:00",
+   "generated_at": "2026-10-02T16:24:21+00:00",
    "window_days": 14,
    "source": ".cache/odds",
-   "n_slates": 11,
+   "n_slates": 12,
    "n_slates_with_close": 0,
-   "n_slates_missing_close": 11,
+   "n_slates_missing_close": 12,
    "n_unreadable_files": 0,
    "ever_captured_close": false,
    "hours_since_last_close": null,
-   "hours_since_last_open": 24.29,
+   "hours_since_last_open": 0.0,
    "close_stale_hours": 36.0,
    "close_job_last_run": null,
    "close_job_last_reason": null,
@@ -116,15 +116,6 @@
    "close_job_ever_ran": false,
    "red": true,
    "slates": [
-    {
-     "slate_date": "2026-09-16",
-     "open": 1,
-     "close": 0,
-     "unknown": 0,
-     "first_capture": "2026-09-16T15:16:35+00:00",
-     "last_capture": "2026-09-16T15:16:35+00:00",
-     "clv_gradable": false
-    },
     {
      "slate_date": "2026-09-17",
      "open": 1,
@@ -214,14 +205,30 @@
      "first_capture": "2026-09-30T17:54:11+00:00",
      "last_capture": "2026-09-30T17:54:11+00:00",
      "clv_gradable": false
+    },
+    {
+     "slate_date": "2026-10-01",
+     "open": 1,
+     "close": 0,
+     "unknown": 0,
+     "first_capture": "2026-10-02T00:50:05+00:00",
+     "last_capture": "2026-10-02T00:50:05+00:00",
+     "clv_gradable": false
+    },
+    {
+     "slate_date": "2026-10-03",
+     "open": 2,
+     "close": 0,
+     "unknown": 0,
+     "first_capture": "2026-10-02T16:13:15+00:00",
+     "last_capture": "2026-10-02T16:24:20+00:00",
+     "clv_gradable": false
     }
    ],
    "diagnosis": "no close snapshot has ever been captured AND the close job has never run on this machine (no heartbeat at .cache/betting/close_job_heartbeat.json), so the scheduler is not reaching it: install the entry from deploy/betting-crontab.example with `crontab -e` on the box, then confirm with `python tools/betting_close_job.py --why`. CLV is unrecoverable for every slate above",
    "why_not_a_heartbeat": "data/job_heartbeat.json is git-tracked and deploy/nightly-build.sh reverts it before every pipeline, so a close-job heartbeat cannot survive to be read; this is measured off .cache/odds/ instead"
   },
-  "empty_reasons": [
-   "ODDS SLATE MISMATCH: the board is the 2026-10-01 slate and the newest cached snapshot is stamped 2026-09-30, captured 2026-09-30T17:54:11+00:00, and carries no game on the board slate that has not already started. Every price below is for a different slate, so no pick is published against it"
-  ]
+  "empty_reasons": []
  },
  "model": {
   "version": "betting_runs_v2",
@@ -231,7 +238,7 @@
   "validation": {
    "available": true,
    "artifact": "data/betting_model_eval.json",
-   "generated_at": "2026-09-30T17:55:04+00:00",
+   "generated_at": "2026-10-02T16:15:12+00:00",
    "model_version": "betting_runs_v2",
    "validated": false,
    "gates_picks": false,
@@ -251,17 +258,17 @@
      "mode": "contaminated",
      "honest": false,
      "n": 2429,
-     "brier": 0.23904,
+     "brier": 0.23907,
      "brier_flat_500": 0.25,
      "brier_home_base": 0.24918,
-     "accuracy": 0.578,
+     "accuracy": 0.5764,
      "key": "in_sample",
      "skill_vs_home_base": {
-      "delta": 0.010146,
-      "sd": 0.09577,
-      "t": 5.221,
+      "delta": 0.010111,
+      "sd": 0.09557,
+      "t": 5.214,
       "beats_baseline_95": true,
-      "n_for_95": 241,
+      "n_for_95": 242,
       "baseline": 0.5286
      }
     },
@@ -270,17 +277,17 @@
      "mode": "contaminated",
      "honest": false,
      "n": 747,
-     "brier": 0.23455,
+     "brier": 0.23463,
      "brier_flat_500": 0.25,
      "brier_home_base": 0.24811,
-     "accuracy": 0.5944,
+     "accuracy": 0.5957,
      "key": "forward",
      "skill_vs_home_base": {
-      "delta": 0.013558,
-      "sd": 0.08598,
-      "t": 4.31,
+      "delta": 0.013473,
+      "sd": 0.08578,
+      "t": 4.293,
       "beats_baseline_95": true,
-      "n_for_95": 109,
+      "n_for_95": 110,
       "baseline": 0.5435
      }
     },
@@ -309,7 +316,7 @@
    ],
    "vintage": {
     "status": "graded",
-    "n_vintages": 51,
+    "n_vintages": 53,
     "n_gradable": 1082,
     "n_graded": 777,
     "n_skipped_no_vintage": 1347,
@@ -340,14 +347,14 @@
    },
    "coverage": {
     "schema": 5,
-    "n_vintages": 51,
+    "n_vintages": 53,
     "n_vintages_backfilled": 10,
-    "n_vintages_live": 41,
+    "n_vintages_live": 43,
     "n_vintages_unknown_provenance": 0,
-    "n_vintages_with_parks": 50,
+    "n_vintages_with_parks": 52,
     "n_vintages_neutral_park": 1,
     "first": "2026-07-05",
-    "last": "2026-09-30",
+    "last": "2026-10-02",
     "missing_dates": [
      "2026-07-06",
      "2026-07-08",
@@ -387,8 +394,8 @@
      "2026-09-22",
      "2026-09-25"
     ],
-    "span_days": 88,
-    "latest_cutoff": "2026-09-30",
+    "span_days": 90,
+    "latest_cutoff": "2026-10-02",
     "earliest_gradable_game_date": "2026-07-06",
     "vintage_age_days": {
      "basis": "graded game dates",
@@ -398,7 +405,7 @@
      "max_days": 13,
      "mean_days": 2.43
     },
-    "note": "51 vintages (10 backfilled, 41 live), 37 missing days inside the span; a game is gradable when a vintage cutoff of the SAME SEASON is strictly before it"
+    "note": "53 vintages (10 backfilled, 43 live), 37 missing days inside the span; a game is gradable when a vintage cutoff of the SAME SEASON is strictly before it"
    },
    "n_games_completed": 2429,
    "gate": {
@@ -651,13 +658,13 @@
        "reason": "every swept sample is one (market, tag) sub-ledger",
        "finding": "L14-05"
       },
-      "why": "an edge threshold is a claim about EV against real prices; 39 dates of odds snapshots are cached. The sweep runs per (market, tag) sub-ledger and one opens only if it individually clears - a pooled ROI measures a mixture nobody bet, and a tag pools three markets the same way four tags pool four selection rules. The scalar floor then needs every market with rows to have cleared, because one number filters all of them",
+      "why": "an edge threshold is a claim about EV against real prices; 40 dates of odds snapshots are cached. The sweep runs per (market, tag) sub-ledger and one opens only if it individually clears - a pooled ROI measures a mixture nobody bet, and a tag pools three markets the same way four tags pool four selection rules. The scalar floor then needs every market with rows to have cleared, because one number filters all of them",
       "pooled_is_not_sweepable": "`have_pooled` is the union of every tag and every market and is never swept; see by_market_tag for the sub-ledgers that are"
      }
     ],
     "n_open": 2,
     "n_gates": 3,
-    "odds_snapshot_dates": 39,
+    "odds_snapshot_dates": 40,
     "sweep": {
      "n_rows": 417,
      "reason": "no sub-ledger cleared: 10 (market, tag) cell(s) present and none of them produced an ROI lower bound above zero on 100+ of its own settled rows",
@@ -702,9 +709,96 @@
   "affiliates": "eephus.io takes no affiliate money from any sportsbook and links to none.",
   "staking": "Every row on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
  },
- "pick_of_the_day": null,
+ "pick_of_the_day": {
+  "side": "home",
+  "label": "MIL -1.5",
+  "model_prob": 0.63098,
+  "fair_odds": -171,
+  "p_push": null,
+  "book": "fanduel",
+  "odds": 106,
+  "decimal": 2.06,
+  "implied_prob": 0.48544,
+  "market_fair_prob": 0.49204,
+  "edge": 0.13894,
+  "ev_per_unit": 0.29982,
+  "ev_per_unit_if_no_push": 0.29982,
+  "kelly_full": 0.28285,
+  "book_title": "FanDuel",
+  "point": -1.5,
+  "tie_atom": {
+   "p_tie": 0.10636,
+   "split_served": true,
+   "model_prob_if_split": 0.63098,
+   "shift_if_split": 0.0,
+   "edge_if_split": 0.13894,
+   "n_games": 2429,
+   "n_extra_inning_games": 209,
+   "n_home_wins": 102,
+   "n_home_wins_by_2plus": 10,
+   "n_away_wins": 107,
+   "n_away_wins_by_2plus": 56
+  },
+  "market": "runline",
+  "game_pk": 849830,
+  "matchup": "SDP at MIL",
+  "start": "2026-10-04T00:30:00Z",
+  "evidence_closed": false,
+  "game_type": "D",
+  "postseason_label": "never graded on a postseason game",
+  "slot": "pick_of_the_day",
+  "slot_label": "Model Watch: largest disagreement",
+  "slot_frame": "watch",
+  "stake_units": 1.0,
+  "suggested_units": 1.0,
+  "provisional": true,
+  "min_edge_used": 0.06,
+  "kelly_quarter": 0.07071,
+  "market_policy": "any",
+  "caveat": "this is a runline or total, and the margin model is a Poisson difference that underdisperses real run scoring, so its probabilities sit too close to the middle; treat this edge as the softest of the three markets Published 2026-10-02T00:59:58+00:00 and served from the lock: the current board would select a different side; the row above is the one that was published and it stands.",
+  "tag_record": {
+   "available": true,
+   "tag": "potd_band",
+   "n_settled": 28,
+   "won": 15,
+   "lost": 13,
+   "push": 0,
+   "net_units": -1.267,
+   "roi": -0.0452,
+   "small_n": true,
+   "sweep_floor": 100,
+   "source": "betting_shadow.summary() by_tag"
+  },
+  "published_at": "2026-10-02T00:59:58+00:00",
+  "locked": true,
+  "lock_note": "a slot is published once per slate: the first build that fills it writes the row to the lock, and every later build of the same slate serves that row verbatim. A later build never re-selects the slot; what it would select now rides beside the published row as since_published",
+  "model_version": "betting_runs_v2",
+  "context_version": "betting_runs_v2",
+  "since_published": {
+   "published_at": "2026-10-02T00:59:58+00:00",
+   "now_selected": {
+    "game_pk": 849830,
+    "matchup": "SDP at MIL",
+    "market": "moneyline",
+    "side": "home",
+    "point": null,
+    "label": "MIL",
+    "book": "betrivers",
+    "odds": -186,
+    "edge": 0.16143,
+    "model_prob": 0.81995,
+    "ev_per_unit": 0.26076
+   },
+   "status": "different_side",
+   "note": "the current board would select a different side; the row above is the one that was published and it stands",
+   "game_status": "Preview",
+   "game_called_off": false,
+   "game_started": false
+  },
+  "provisional_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 777 graded, past the 600 games the honest backtest needs, but the graded_price_history gate is closed, and no minimum-edge threshold exists. Recorded before the result."
+ },
  "longshot_of_the_day": null,
- "pick_reason": "ODDS SLATE MISMATCH: the board is the 2026-10-01 slate and the newest cached snapshot is stamped 2026-09-30, captured 2026-09-30T17:54:11+00:00, and carries no game on the board slate that has not already started. Every price below is for a different slate, so no pick is published against it",
+ "pick_reason": "highest model win probability among sides clearing the provisional floor on any priced market, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value Published 2026-10-02T00:59:58+00:00 and served from the lock: the current board would select a different side; the row above is the one that was published and it stands.",
  "pick_meta": {
   "provisional": true,
   "min_edge": 0.06,
@@ -721,9 +815,9 @@
     "slot_frame": "watch",
     "rule": "highest model win probability among sides clearing the provisional floor on any priced market, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value",
     "band": "american odds from -199 to +199",
-    "present": false,
-    "reason": "ODDS SLATE MISMATCH: the board is the 2026-10-01 slate and the newest cached snapshot is stamped 2026-09-30, captured 2026-09-30T17:54:11+00:00, and carries no game on the board slate that has not already started. Every price below is for a different slate, so no pick is published against it",
-    "n_candidates": 0,
+    "present": true,
+    "reason": "highest model win probability among sides clearing the provisional floor on any priced market, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value",
+    "n_candidates": 3,
     "provisional": true,
     "min_edge": 0.06,
     "basis": "provisional_policy_floor",
@@ -741,7 +835,39 @@
      "small_n": true,
      "sweep_floor": 100,
      "source": "betting_shadow.summary() by_tag"
-    }
+    },
+    "current_board": {
+     "reason": "highest model win probability among sides clearing the provisional floor on any priced market, restricted to american odds from -199 to +199; ties go to the price nearest -110, then to the higher expected value",
+     "min_edge": 0.06,
+     "provisional": true,
+     "basis": "provisional_policy_floor",
+     "n_candidates": 9
+    },
+    "locked": true,
+    "published_at": "2026-10-02T00:59:58+00:00",
+    "lock_note": "a slot is published once per slate: the first build that fills it writes the row to the lock, and every later build of the same slate serves that row verbatim. A later build never re-selects the slot; what it would select now rides beside the published row as since_published",
+    "since_published": {
+     "published_at": "2026-10-02T00:59:58+00:00",
+     "now_selected": {
+      "game_pk": 849830,
+      "matchup": "SDP at MIL",
+      "market": "moneyline",
+      "side": "home",
+      "point": null,
+      "label": "MIL",
+      "book": "betrivers",
+      "odds": -186,
+      "edge": 0.16143,
+      "model_prob": 0.81995,
+      "ev_per_unit": 0.26076
+     },
+     "status": "different_side",
+     "note": "the current board would select a different side; the row above is the one that was published and it stands",
+     "game_status": "Preview",
+     "game_called_off": false,
+     "game_started": false
+    },
+    "disclosure": "Published 2026-10-02T00:59:58+00:00 and served from the lock: the current board would select a different side; the row above is the one that was published and it stands."
    },
    "longshot_of_the_day": {
     "slot": "longshot_of_the_day",
@@ -751,7 +877,7 @@
     "rule": "highest expected value per unit among sides clearing the provisional floor at american odds of +200 or longer",
     "band": "american odds of +200 or longer",
     "present": false,
-    "reason": "ODDS SLATE MISMATCH: the board is the 2026-10-01 slate and the newest cached snapshot is stamped 2026-09-30, captured 2026-09-30T17:54:11+00:00, and carries no game on the board slate that has not already started. Every price below is for a different slate, so no pick is published against it",
+    "reason": "9 side(s) cleared the 6.0% provisional floor on this slate and none of them are priced at american odds of +200 or longer",
     "n_candidates": 0,
     "provisional": true,
     "min_edge": 0.06,
@@ -773,21 +899,58 @@
     }
    }
   },
-  "blocked": true,
-  "blocked_reason": "ODDS SLATE MISMATCH: the board is the 2026-10-01 slate and the newest cached snapshot is stamped 2026-09-30, captured 2026-09-30T17:54:11+00:00, and carries no game on the board slate that has not already started. Every price below is for a different slate, so no pick is published against it"
+  "n_floor_clearing_sides": 9,
+  "n_floor_clearing_sides_before_policy": 9,
+  "n_total_lean_barred_sides": 0,
+  "total_lean_bar": true,
+  "market_policy": "any",
+  "market_policy_legs": {
+   "dispersion_bars": false,
+   "ledger_bars": false
+  },
+  "markets_eligible": "any priced market: moneyline, runline, total, props when armed (owner decision 2026-09-05, section 7d); the dispersion and ledger legs ride the row as disclosure"
  },
  "slot_lock": {
   "policy": "a slot is published once per slate: the first build that fills it writes the row to the lock, and every later build of the same slate serves that row verbatim. A later build never re-selects the slot; what it would select now rides beside the published row as since_published",
-  "slate_date": "2026-10-01",
+  "slate_date": "2026-10-03",
   "schema": 1,
   "write": true,
-  "locked": {},
+  "locked": {
+   "pick_of_the_day": {
+    "published_at": "2026-10-02T00:59:58+00:00",
+    "model_version": "betting_runs_v2",
+    "disclosure": "Published 2026-10-02T00:59:58+00:00 and served from the lock: the current board would select a different side; the row above is the one that was published and it stands.",
+    "since_published": {
+     "published_at": "2026-10-02T00:59:58+00:00",
+     "now_selected": {
+      "game_pk": 849830,
+      "matchup": "SDP at MIL",
+      "market": "moneyline",
+      "side": "home",
+      "point": null,
+      "label": "MIL",
+      "book": "betrivers",
+      "odds": -186,
+      "edge": 0.16143,
+      "model_prob": 0.81995,
+      "ev_per_unit": 0.26076
+     },
+     "status": "different_side",
+     "note": "the current board would select a different side; the row above is the one that was published and it stands",
+     "game_status": "Preview",
+     "game_called_off": false,
+     "game_started": false
+    }
+   }
+  },
   "created": [],
-  "served_from_lock": [],
-  "applied": false,
+  "served_from_lock": [
+   "pick_of_the_day"
+  ],
+  "applied": true,
   "may_lock": true,
-  "path": ".cache/betting/published_slots/2026-10-01.json",
-  "reason": "both slots are blocked on this build (ODDS SLATE MISMATCH: the board is the 2026-10-01 slate and the newest cached snapshot is stamped 2026-09-30, captured 2026-09-30T17:54:11+00:00, and carries no game on the board slate that has not already started. Every price below is for a different slate, so no pick is published against it), so the lock is neither written nor served; the hard stop on a slot without a market stands"
+  "path": ".cache/betting/published_slots/2026-10-03.json",
+  "reason": "served from the lock: pick_of_the_day"
  },
  "pick_blockers": [
   {
@@ -816,7 +979,7 @@
    "trailing": 200,
    "basis": "n_min mirrors betting_shadow.MIN_BETS_FOR_SWEEP and z is betting_model.Z_95_ONE_SIDED; the dwell of 3 and the trailing 200 are POLICY chosen for hysteresis, not measured (docs/diamond-betting.md section 7b)"
   },
-  "last_evaluation_date": "2026-10-01",
+  "last_evaluation_date": "2026-10-02",
   "today_note": null,
   "note": "under the any-market policy every priced market may fill a slot and reach the public record; the two legs below ride the row as disclosure and bar nothing (owner decision 2026-09-05, docs/diamond-betting.md 7d). The shadow and calibration ledgers keep recording closed markets, and only their evidence can re-open one.",
   "markets": {
@@ -888,14 +1051,14 @@
     "market": "total",
     "publishable": true,
     "policy_override": true,
-    "reason": "eligible under the any-market slot policy (owner decision 2026-09-05, section 7d); the legs ride the row as disclosure: excluded by both legs: excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate; LEDGER-CLOSED: resolved worse than a coin for 3 consecutive evaluations (closed 2026-09-26T18:42:27+00:00); re-opens when the trailing 200 games fail the same test for 3 consecutive evaluations. Today: mean Brier 0.2641 on 267 canonical games resolves worse than a coin (t 1.9583 at the one-sided 95% bar of 1.645)",
-    "both_legs": true,
+    "reason": "eligible under the any-market slot policy (owner decision 2026-09-05, section 7d); the legs ride the row as disclosure: excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate",
+    "both_legs": false,
     "dispersion_leg": {
      "publishable": false,
      "reason": "excluded while the dispersion correction is unserved (section 11a): the margin model that prices this market did not clear its pre-registered gate"
     },
     "ledger_leg": {
-     "status": "ledger_closed",
+     "status": "open",
      "verdict": "worse_than_coin",
      "n_games": 267,
      "brier": 0.2641,
@@ -910,10 +1073,10 @@
       "worse_than_coin_95": false,
       "window": 200
      },
-     "consecutive_worse": 3,
-     "consecutive_recovered": 2,
+     "consecutive_worse": 0,
+     "consecutive_recovered": 3,
      "dwell_need": 3,
-     "reason": "LEDGER-CLOSED: resolved worse than a coin for 3 consecutive evaluations (closed 2026-09-26T18:42:27+00:00); re-opens when the trailing 200 games fail the same test for 3 consecutive evaluations. Today: mean Brier 0.2641 on 267 canonical games resolves worse than a coin (t 1.9583 at the one-sided 95% bar of 1.645)"
+     "reason": "mean Brier 0.2641 on 267 canonical games resolves worse than a coin (t 1.9583 at the one-sided 95% bar of 1.645)"
     }
    },
    "props_pitcher_strikeouts": {
@@ -1051,12 +1214,12 @@
   "tolerance": 0.03,
   "min_games": 8,
   "z": 1.645,
-  "n": 0,
+  "n": 4,
   "n_positive_edge": {
-   "over": 0,
-   "under": 0
+   "over": 3,
+   "under": 1
   },
-  "mean_gap_runs": null,
+  "mean_gap_runs": 0.478,
   "mean_gap_runs_note": "the model's EXPECTED total minus the posted line, published as a description and not tested: a line sits where real totals split, about a run under their mean, so this reads positive for a model whose level is right",
   "total_level_served": false,
   "surface": "disclosure; no price, edge or ledger reads this block, and while BAR_TOTAL_LEAN_SLOTS holds (owner decision 2026-09-25) a total side carrying its caveat fills no slot and never reaches the public record",
@@ -1064,7 +1227,10 @@
   "fires": false,
   "direction": null,
   "caveat": null,
-  "reason": "0 priced total(s) on this slate; nothing to average"
+  "mean_lean": 0.06467,
+  "sd": 0.09725,
+  "t": 1.33,
+  "reason": "4 priced totals, under the 8-game floor"
  },
  "record_publish_blockers": [
   {
@@ -1076,10 +1242,10 @@
   },
   {
    "id": "odds_slate",
-   "open": false,
+   "open": true,
    "need": "the board priced against its own slate's snapshot",
-   "have": "ODDS SLATE MISMATCH: the board is the 2026-10-01 slate and the newest cached snapshot is stamped 2026-09-30, captured 2026-09-30T17:54:11+00:00, and carries no game on the board slate that has not already started. Every price below is for a different slate, so no pick is published against it",
-   "reason": "the cached snapshot cannot price this board's slate; a selection against another slate's prices is worse than no selection"
+   "have": "matched",
+   "reason": "the snapshot the board was priced from belongs to this slate"
   },
   {
    "id": "dispersion_gate",
@@ -1094,8 +1260,8 @@
    "need": "the append-only JSONL under .cache/betting/ to be authoritative, and its chain to extend the last published chain_sha",
    "have": {
     "backend": "jsonl",
-    "chain_sha": "fe113aaf4505ae11a64af6a41938ae74da3bd2597bd876cb91a0e209d9177d26",
-    "published_chain_sha": "fe113aaf4505ae11a64af6a41938ae74da3bd2597bd876cb91a0e209d9177d26",
+    "chain_sha": "14102c2556fdf11fa8de2eeff38d540ec5e8c33d18b10ec6bca84da803fdd42b",
+    "published_chain_sha": "14102c2556fdf11fa8de2eeff38d540ec5e8c33d18b10ec6bca84da803fdd42b",
     "chain_extends": true,
     "chain_check_armed": true
    },
@@ -1106,7 +1272,7 @@
    "open": true,
    "need": "every record row older than 36h settled, or the reason it is not settled named on the sidecar",
    "have": {
-    "n_rows": 1,
+    "n_rows": 2,
     "n_stale": 0,
     "n_stale_named": 0,
     "n_stale_unnamed": 0
@@ -1115,13 +1281,13 @@
    "stale": []
   }
  ],
- "record_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 777 of the 600 games the honest backtest needs are graded, and no minimum-edge threshold exists. Recorded before the result.",
+ "record_label": "Provisional. This selection clears a 6.0% floor that was chosen as policy, not measured. The model is unvalidated: 777 graded, past the 600 games the honest backtest needs, but the graded_price_history gate is closed, and no minimum-edge threshold exists. Recorded before the result.",
  "record_storage": {
   "backend": "jsonl",
   "authoritative_path": ".cache/betting/record.jsonl",
   "durable": true,
-  "n_rows": 1,
-  "chain_sha": "fe113aaf4505ae11a64af6a41938ae74da3bd2597bd876cb91a0e209d9177d26",
+  "n_rows": 2,
+  "chain_sha": "14102c2556fdf11fa8de2eeff38d540ec5e8c33d18b10ec6bca84da803fdd42b",
   "derived_path": "data/betting_record.json",
   "path_basis": "relative to the site checkout root",
   "why": "the append-only log under .cache/ is untracked, so the nightly `git checkout -- .` cannot revert it; data/betting_record.json is re-rendered from it every build"
@@ -1131,105 +1297,739 @@
   "n_needed": 600,
   "source": "data/betting_model_eval.json vintage block"
  },
- "n_games": 1,
+ "n_games": 4,
  "team_bets": [
   {
-   "game_pk": 849844,
-   "date": "2026-10-01",
-   "start": "2026-10-02T00:00:00Z",
+   "game_pk": 849829,
+   "date": "2026-10-03",
+   "start": "2026-10-03T17:00:00Z",
    "status": "Preview",
    "double_header": false,
-   "game_type": "F",
+   "game_type": "D",
    "postseason_label": "never graded on a postseason game",
-   "series": "NL Wild Card Series",
-   "odds_event_id": null,
-   "odds_commence_time": null,
-   "venue": "Truist Park",
+   "series": "AL Division Series",
+   "odds_event_id": "5d13b613a334039f0694d8c95af28728",
+   "odds_commence_time": "2026-10-03T17:01:00Z",
+   "venue": "Progressive Field",
    "home": {
+    "org": "CLE",
+    "team": "Cleveland Guardians",
+    "probable": {
+     "mlbam": 800048,
+     "name": "Parker Messick"
+    },
+    "offense_plus": 97.0,
+    "bullpen_plus": 107.0
+   },
+   "away": {
+    "org": "CHW",
+    "team": "Chicago White Sox",
+    "probable": null,
+    "offense_plus": 102.0,
+    "bullpen_plus": 104.0
+   },
+   "model": {
+    "p_home": 0.60326,
+    "p_away": 0.39674,
+    "lam_home": 4.347,
+    "lam_away": 3.589,
+    "fair_total": 7.94,
+    "park_index": 0.98,
+    "home_prevention": {
+     "starter_plus": 125.0,
+     "bullpen_plus": 107.0,
+     "starter_share": 0.647,
+     "blend_plus": 118.6,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 97.0,
+     "bullpen_plus": 104.0,
+     "starter_share": 0.56,
+     "blend_plus": 100.1,
+     "source": "rotation-average"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "CLE",
+     "model_prob": 0.60326,
+     "fair_odds": -152,
+     "p_push": null,
+     "book": "betrivers",
+     "odds": -141,
+     "decimal": 1.7092,
+     "implied_prob": 0.58507,
+     "market_fair_prob": 0.57755,
+     "edge": 0.02571,
+     "ev_per_unit": 0.03109,
+     "ev_per_unit_if_no_push": 0.03109,
+     "kelly_full": 0.04384,
+     "book_title": "BetRivers",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "CHW",
+     "model_prob": 0.39674,
+     "fair_odds": 152,
+     "p_push": null,
+     "book": "betonlineag",
+     "odds": 131,
+     "decimal": 2.31,
+     "implied_prob": 0.4329,
+     "market_fair_prob": 0.42245,
+     "edge": -0.02571,
+     "ev_per_unit": -0.08353,
+     "ev_per_unit_if_no_push": -0.08353,
+     "kelly_full": 0.0,
+     "book_title": "BetOnline.ag",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "CLE -1.5",
+     "model_prob": 0.39831,
+     "fair_odds": 151,
+     "p_push": null,
+     "book": "fanduel",
+     "odds": 150,
+     "decimal": 2.5,
+     "implied_prob": 0.4,
+     "market_fair_prob": 0.38849,
+     "edge": 0.00982,
+     "ev_per_unit": -0.00423,
+     "ev_per_unit_if_no_push": -0.00423,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": -1.5,
+     "tie_atom": {
+      "p_tie": 0.13924,
+      "split_served": true,
+      "model_prob_if_split": 0.39831,
+      "shift_if_split": 0.0,
+      "edge_if_split": 0.00982,
+      "n_games": 2429,
+      "n_extra_inning_games": 209,
+      "n_home_wins": 102,
+      "n_home_wins_by_2plus": 10,
+      "n_away_wins": 107,
+      "n_away_wins_by_2plus": 56
+     }
+    },
+    {
+     "side": "away",
+     "label": "CHW +1.5",
+     "model_prob": 0.60169,
+     "fair_odds": -151,
+     "p_push": null,
+     "book": "betus",
+     "odds": -170,
+     "decimal": 1.5882,
+     "implied_prob": 0.62964,
+     "market_fair_prob": 0.61151,
+     "edge": -0.00982,
+     "ev_per_unit": -0.0444,
+     "ev_per_unit_if_no_push": -0.0444,
+     "kelly_full": 0.0,
+     "book_title": "BetUS",
+     "point": 1.5,
+     "tie_atom": {
+      "p_tie": 0.13924,
+      "split_served": true,
+      "model_prob_if_split": 0.60169,
+      "shift_if_split": 0.0,
+      "edge_if_split": -0.00982,
+      "n_games": 2429,
+      "n_extra_inning_games": 209,
+      "n_home_wins": 102,
+      "n_home_wins_by_2plus": 10,
+      "n_away_wins": 107,
+      "n_away_wins_by_2plus": 56
+     }
+    }
+   ],
+   "runline_refused": null,
+   "total": {
+    "line": 7.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 7.0",
+      "model_prob": 0.62615,
+      "fair_odds": -167,
+      "p_push": 0.14068,
+      "book": "lowvig",
+      "odds": 107,
+      "decimal": 2.07,
+      "implied_prob": 0.48309,
+      "market_fair_prob": 0.46691,
+      "edge": 0.15924,
+      "ev_per_unit": 0.25448,
+      "ev_per_unit_if_no_push": 0.29614,
+      "kelly_full": 0.27676,
+      "book_title": "LowVig.ag",
+      "point": 7.0
+     },
+     {
+      "side": "under",
+      "label": "Under 7.0",
+      "model_prob": 0.37385,
+      "fair_odds": 167,
+      "p_push": 0.14068,
+      "book": "betrivers",
+      "odds": -112,
+      "decimal": 1.8929,
+      "implied_prob": 0.52829,
+      "market_fair_prob": 0.53309,
+      "edge": -0.15924,
+      "ev_per_unit": -0.25122,
+      "ev_per_unit_if_no_push": -0.29234,
+      "kelly_full": 0.0,
+      "book_title": "BetRivers",
+      "point": 7.0
+     }
+    ],
+    "p_push": 0.14068
+   },
+   "market": {
+    "moneyline_hold_pct": 2.474,
+    "total_hold_pct": 3.466,
+    "moneyline_fair_book": "betonlineag",
+    "moneyline_hold_range": [
+     2.474,
+     4.568
+    ],
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "lowvig",
+    "total_hold_range": [
+     3.466,
+     4.983
+    ],
+    "total_n_books_on_line": 8,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 2.963,
+    "fair_book_rule": "min_hold",
+    "n_books_rejected": {
+     "moneyline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "runline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "total": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 8
+     }
+    },
+    "max_book_lag_minutes": {
+     "moneyline": 2.183,
+     "runline": 2.183,
+     "total": 1.867
+    },
+    "stale_book_max_lag_minutes": 15.0,
+    "consensus_fair_max_distance": 0.05,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 849828,
+   "date": "2026-10-03",
+   "start": "2026-10-03T20:00:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "game_type": "D",
+   "postseason_label": "never graded on a postseason game",
+   "series": "NL Division Series",
+   "odds_event_id": "1632ced04d65127cf6172d3a2c2e2d16",
+   "odds_commence_time": "2026-10-03T20:00:00Z",
+   "venue": "UNIQLO Field at Dodger Stadium",
+   "home": {
+    "org": "LAD",
+    "team": "Los Angeles Dodgers",
+    "probable": null,
+    "offense_plus": 107.0,
+    "bullpen_plus": 109.0
+   },
+   "away": {
     "org": "ATL",
     "team": "Atlanta Braves",
-    "probable": {
-     "mlbam": 678061,
-     "name": "Ray Kerr"
-    },
+    "probable": null,
     "offense_plus": 101.0,
     "bullpen_plus": 112.0
    },
-   "away": {
-    "org": "PHI",
-    "team": "Philadelphia Phillies",
-    "probable": {
-     "mlbam": 605400,
-     "name": "Aaron Nola"
-    },
-    "offense_plus": 98.0,
-    "bullpen_plus": 106.0
-   },
    "model": {
-    "p_home": 0.60089,
-    "p_away": 0.39911,
-    "lam_home": 4.872,
-    "lam_away": 4.088,
-    "fair_total": 8.96,
-    "park_index": 1.0,
+    "p_home": 0.60868,
+    "p_away": 0.39132,
+    "lam_home": 4.89,
+    "lam_away": 4.046,
+    "fair_total": 8.94,
+    "park_index": 1.02,
     "home_prevention": {
+     "starter_plus": 113.0,
+     "bullpen_plus": 109.0,
+     "starter_share": 0.666,
+     "blend_plus": 111.7,
+     "source": "rotation-average"
+    },
+    "away_prevention": {
      "starter_plus": 102.0,
      "bullpen_plus": 112.0,
      "starter_share": 0.668,
      "blend_plus": 105.3,
      "source": "rotation-average"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "LAD",
+     "model_prob": 0.60868,
+     "fair_odds": -156,
+     "p_push": null,
+     "book": "lowvig",
+     "odds": -205,
+     "decimal": 1.4878,
+     "implied_prob": 0.67213,
+     "market_fair_prob": 0.65622,
+     "edge": -0.04754,
+     "ev_per_unit": -0.09441,
+     "ev_per_unit_if_no_push": -0.09441,
+     "kelly_full": 0.0,
+     "book_title": "LowVig.ag",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "ATL",
+     "model_prob": 0.39132,
+     "fair_odds": 156,
+     "p_push": null,
+     "book": "betonlineag",
+     "odds": 184,
+     "decimal": 2.84,
+     "implied_prob": 0.35211,
+     "market_fair_prob": 0.34378,
+     "edge": 0.04754,
+     "ev_per_unit": 0.11135,
+     "ev_per_unit_if_no_push": 0.11135,
+     "kelly_full": 0.06052,
+     "book_title": "BetOnline.ag",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "LAD -1.5",
+     "model_prob": 0.4157,
+     "fair_odds": 141,
+     "p_push": null,
+     "book": "fanduel",
+     "odds": 102,
+     "decimal": 2.02,
+     "implied_prob": 0.49505,
+     "market_fair_prob": 0.48416,
+     "edge": -0.06846,
+     "ev_per_unit": -0.16029,
+     "ev_per_unit_if_no_push": -0.16029,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": -1.5,
+     "tie_atom": {
+      "p_tie": 0.13045,
+      "split_served": true,
+      "model_prob_if_split": 0.4157,
+      "shift_if_split": 0.0,
+      "edge_if_split": -0.06846,
+      "n_games": 2429,
+      "n_extra_inning_games": 209,
+      "n_home_wins": 102,
+      "n_home_wins_by_2plus": 10,
+      "n_away_wins": 107,
+      "n_away_wins_by_2plus": 56
+     }
+    },
+    {
+     "side": "away",
+     "label": "ATL +1.5",
+     "model_prob": 0.5843,
+     "fair_odds": -141,
+     "p_push": null,
+     "book": "lowvig",
+     "odds": -112,
+     "decimal": 1.8929,
+     "implied_prob": 0.52829,
+     "market_fair_prob": 0.51584,
+     "edge": 0.06846,
+     "ev_per_unit": 0.10602,
+     "ev_per_unit_if_no_push": 0.10602,
+     "kelly_full": 0.11874,
+     "book_title": "LowVig.ag",
+     "point": 1.5,
+     "tie_atom": {
+      "p_tie": 0.13045,
+      "split_served": true,
+      "model_prob_if_split": 0.5843,
+      "shift_if_split": 0.0,
+      "edge_if_split": 0.06846,
+      "n_games": 2429,
+      "n_extra_inning_games": 209,
+      "n_home_wins": 102,
+      "n_home_wins_by_2plus": 10,
+      "n_away_wins": 107,
+      "n_away_wins_by_2plus": 56
+     }
+    }
+   ],
+   "runline_refused": null,
+   "total": {
+    "line": 8.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 8.0",
+      "model_prob": 0.61786,
+      "fair_odds": -162,
+      "p_push": 0.13267,
+      "book": "betmgm",
+      "odds": -105,
+      "decimal": 1.9524,
+      "implied_prob": 0.51219,
+      "market_fair_prob": 0.5,
+      "edge": 0.11786,
+      "ev_per_unit": 0.17894,
+      "ev_per_unit_if_no_push": 0.20631,
+      "kelly_full": 0.21662,
+      "book_title": "BetMGM",
+      "point": 8.0
+     },
+     {
+      "side": "under",
+      "label": "Under 8.0",
+      "model_prob": 0.38214,
+      "fair_odds": 162,
+      "p_push": 0.13267,
+      "book": "betrivers",
+      "odds": -105,
+      "decimal": 1.9524,
+      "implied_prob": 0.51219,
+      "market_fair_prob": 0.5,
+      "edge": -0.11786,
+      "ev_per_unit": -0.22022,
+      "ev_per_unit_if_no_push": -0.25391,
+      "kelly_full": 0.0,
+      "book_title": "BetRivers",
+      "point": 8.0
+     }
+    ],
+    "p_push": 0.13267
+   },
+   "market": {
+    "moneyline_hold_pct": 2.424,
+    "total_hold_pct": 3.382,
+    "moneyline_fair_book": "betonlineag",
+    "moneyline_hold_range": [
+     2.424,
+     4.779
+    ],
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "lowvig",
+    "total_hold_range": [
+     3.382,
+     5.137
+    ],
+    "total_n_books_on_line": 7,
+    "runline_fair_book": "mybookieag",
+    "runline_hold_pct": 3.271,
+    "fair_book_rule": "min_hold",
+    "n_books_rejected": {
+     "moneyline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "runline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 8
+     },
+     "total": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 7
+     }
+    },
+    "max_book_lag_minutes": {
+     "moneyline": 2.183,
+     "runline": 1.55,
+     "total": 1.867
+    },
+    "stale_book_max_lag_minutes": 15.0,
+    "consensus_fair_max_distance": 0.05,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 849835,
+   "date": "2026-10-03",
+   "start": "2026-10-03T22:30:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "game_type": "D",
+   "postseason_label": "never graded on a postseason game",
+   "series": "AL Division Series",
+   "odds_event_id": "cb4d07dc15440acf3d9ebe1ad41756c1",
+   "odds_commence_time": "2026-10-03T22:31:00Z",
+   "venue": "Tropicana Field",
+   "home": {
+    "org": "TBR",
+    "team": "Tampa Bay Rays",
+    "probable": {
+     "mlbam": 656876,
+     "name": "Drew Rasmussen"
+    },
+    "offense_plus": 102.0,
+    "bullpen_plus": 110.0
+   },
+   "away": {
+    "org": "NYY",
+    "team": "New York Yankees",
+    "probable": {
+     "mlbam": 543037,
+     "name": "Gerrit Cole"
+    },
+    "offense_plus": 103.0,
+    "bullpen_plus": 102.0
+   },
+   "model": {
+    "p_home": 0.63535,
+    "p_away": 0.36465,
+    "lam_home": 4.227,
+    "lam_away": 3.257,
+    "fair_total": 7.48,
+    "park_index": 0.944,
+    "home_prevention": {
+     "starter_plus": 132.0,
+     "bullpen_plus": 110.0,
+     "starter_share": 0.637,
+     "blend_plus": 124.0,
+     "source": "probable"
     },
     "away_prevention": {
-     "starter_plus": 90.0,
-     "bullpen_plus": 106.0,
-     "starter_share": 0.59,
-     "blend_plus": 96.6,
+     "starter_plus": 108.0,
+     "bullpen_plus": 102.0,
+     "starter_share": 0.641,
+     "blend_plus": 105.8,
      "source": "probable"
     }
    },
    "moneyline": [
     {
      "side": "home",
-     "label": "ATL",
-     "model_prob": 0.60089,
-     "fair_odds": -151,
+     "label": "TBR",
+     "model_prob": 0.63535,
+     "fair_odds": -174,
      "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
+     "book": "betus",
+     "odds": -130,
+     "decimal": 1.7692,
+     "implied_prob": 0.56523,
+     "market_fair_prob": 0.55201,
+     "edge": 0.08334,
+     "ev_per_unit": 0.12406,
+     "ev_per_unit_if_no_push": 0.12406,
+     "kelly_full": 0.16129,
+     "book_title": "BetUS",
+     "point": null
     },
     {
      "side": "away",
-     "label": "PHI",
-     "model_prob": 0.39911,
-     "fair_odds": 151,
+     "label": "NYY",
+     "model_prob": 0.36465,
+     "fair_odds": 174,
      "p_push": null,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "ev_per_unit_if_no_push": null,
-     "kelly_full": null
+     "book": "betonlineag",
+     "odds": 118,
+     "decimal": 2.18,
+     "implied_prob": 0.45872,
+     "market_fair_prob": 0.44799,
+     "edge": -0.08334,
+     "ev_per_unit": -0.20506,
+     "ev_per_unit_if_no_push": -0.20506,
+     "kelly_full": 0.0,
+     "book_title": "BetOnline.ag",
+     "point": null
     }
    ],
-   "runline": null,
+   "runline": [
+    {
+     "side": "home",
+     "label": "TBR -1.5",
+     "model_prob": 0.42489,
+     "fair_odds": 135,
+     "p_push": null,
+     "book": "fanduel",
+     "odds": 176,
+     "decimal": 2.76,
+     "implied_prob": 0.36232,
+     "market_fair_prob": 0.35825,
+     "edge": 0.06664,
+     "ev_per_unit": 0.1727,
+     "ev_per_unit_if_no_push": 0.1727,
+     "kelly_full": 0.09812,
+     "book_title": "FanDuel",
+     "point": -1.5,
+     "tie_atom": {
+      "p_tie": 0.14002,
+      "split_served": true,
+      "model_prob_if_split": 0.42489,
+      "shift_if_split": 0.0,
+      "edge_if_split": 0.06664,
+      "n_games": 2429,
+      "n_extra_inning_games": 209,
+      "n_home_wins": 102,
+      "n_home_wins_by_2plus": 10,
+      "n_away_wins": 107,
+      "n_away_wins_by_2plus": 56
+     }
+    },
+    {
+     "side": "away",
+     "label": "NYY +1.5",
+     "model_prob": 0.57511,
+     "fair_odds": -135,
+     "p_push": null,
+     "book": "mybookieag",
+     "odds": -192,
+     "decimal": 1.5208,
+     "implied_prob": 0.65755,
+     "market_fair_prob": 0.64175,
+     "edge": -0.06664,
+     "ev_per_unit": -0.12537,
+     "ev_per_unit_if_no_push": -0.12537,
+     "kelly_full": 0.0,
+     "book_title": "MyBookie.ag",
+     "point": 1.5,
+     "tie_atom": {
+      "p_tie": 0.14002,
+      "split_served": true,
+      "model_prob_if_split": 0.57511,
+      "shift_if_split": 0.0,
+      "edge_if_split": -0.06664,
+      "n_games": 2429,
+      "n_extra_inning_games": 209,
+      "n_home_wins": 102,
+      "n_home_wins_by_2plus": 10,
+      "n_away_wins": 107,
+      "n_away_wins_by_2plus": 56
+     }
+    }
+   ],
    "runline_refused": null,
    "total": {
-    "line": null,
-    "sides": null,
-    "p_push": null,
-    "fair_total": 8.96
+    "line": 7.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 7.0",
+      "model_prob": 0.55425,
+      "fair_odds": -124,
+      "p_push": 0.14664,
+      "book": "lowvig",
+      "odds": 103,
+      "decimal": 2.03,
+      "implied_prob": 0.49261,
+      "market_fair_prob": 0.47646,
+      "edge": 0.07779,
+      "ev_per_unit": 0.10679,
+      "ev_per_unit_if_no_push": 0.12514,
+      "kelly_full": 0.12149,
+      "book_title": "LowVig.ag",
+      "point": 7.0
+     },
+     {
+      "side": "under",
+      "label": "Under 7.0",
+      "model_prob": 0.44575,
+      "fair_odds": 124,
+      "p_push": 0.14664,
+      "book": "bovada",
+      "odds": -110,
+      "decimal": 1.9091,
+      "implied_prob": 0.52381,
+      "market_fair_prob": 0.52354,
+      "edge": -0.07779,
+      "ev_per_unit": -0.12717,
+      "ev_per_unit_if_no_push": -0.14903,
+      "kelly_full": 0.0,
+      "book_title": "Bovada",
+      "point": 7.0
+     }
+    ],
+    "p_push": 0.14664
    },
-   "market": null
+   "market": {
+    "moneyline_hold_pct": 2.393,
+    "total_hold_pct": 3.39,
+    "moneyline_fair_book": "betonlineag",
+    "moneyline_hold_range": [
+     2.393,
+     4.575
+    ],
+    "moneyline_n_books_on_line": 9,
+    "total_fair_book": "lowvig",
+    "total_hold_range": [
+     3.39,
+     4.945
+    ],
+    "total_n_books_on_line": 7,
+    "runline_fair_book": "lowvig",
+    "runline_hold_pct": 3.002,
+    "fair_book_rule": "min_hold",
+    "n_books_rejected": {
+     "moneyline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "runline": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 9
+     },
+     "total": {
+      "hold": 0,
+      "stale": 0,
+      "consensus": 0,
+      "on_line": 7
+     }
+    },
+    "max_book_lag_minutes": {
+     "moneyline": 2.183,
+     "runline": 2.183,
+     "total": 1.867
+    },
+    "stale_book_max_lag_minutes": 15.0,
+    "consensus_fair_max_distance": 0.05,
+    "devig_method": "proportional"
+   }
   }
  ],
  "record": {
@@ -1244,14 +2044,31 @@
   "n_clv_graded": 0,
   "beat_close_rate": null,
   "avg_clv_pct": null,
-  "n_rows_all": 1,
-  "n_postseason_rows": 0,
+  "n_rows_all": 2,
+  "n_postseason_rows": 1,
   "scope": "regular_season",
   "scope_note": "Regular-season rows only. Postseason rows (StatsAPI game types F, D, L and W) are excluded from these counts and reported as their own sub-ledger under postseason, because the model has never been fitted or graded on a postseason game; pricing the postseason is an owner decision of 2026-10-01.",
+  "disclosures": [
+   {
+    "bet_id": "a9eac0a8f35381b8",
+    "slate_date": "2026-09-26",
+    "slot": "pick_of_the_day",
+    "selection": "Over 8.0",
+    "scope": "regular_season",
+    "kind": "total_level_caveat",
+    "source": "published slot lock",
+    "total_level_caveat": "Slate leans Over: model Over probability 11.2 pts above market on 8 totals (8 positive-edge Overs). Known model shape, not value: the total is priced as a Poisson centred on expected runs; real totals split lower. Fit window: Over 8.5 priced 50.9%, hit 43.3%.",
+    "posted_at": "2026-09-25T23:34:23+00:00",
+    "bar_at": "2026-09-26T00:21:48+00:00",
+    "predates_bar": true,
+    "note": "Over 8.0 (2026-09-26) carried the slate total-lean caveat when it was published: \"Slate leans Over: model Over probability 11.2 pts above market on 8 totals (8 positive-edge Overs). Known model shape, not value: the total is priced as a Poisson centred on expected runs; real totals split lower. Fit window: Over 8.5 priced 50.9%, hit 43.3%.\" It was posted 2026-09-25 23:34 UTC, 47 minutes before the owner barred a caveated total from the slots (2026-09-26 00:21 UTC, owner decision 2026-09-25), so under the rule in force now it would not have been published. The row stands because the record is append-only."
+   }
+  ],
+  "disclosure_note": "1 of 1 row behind this record carried the slate total-lean caveat, which says the lean is a known model shape and not value; 1 of 1 was posted before caveated totals were barred from the slots. Read the result with that note.",
   "postseason": {
-   "n_rows": 0,
+   "n_rows": 1,
    "n_settled": 0,
-   "n_open": 0,
+   "n_open": 1,
    "won": 0,
    "lost": 0,
    "push": 0,
@@ -1263,14 +2080,15 @@
    "label": "never graded on a postseason game",
    "by_game_type": {
     "F": 0,
-    "D": 0,
+    "D": 1,
     "L": 0,
     "W": 0
    },
-   "note": "Postseason rows, tallied apart from the regular-season record and never added to it. The pricer was fitted and graded on regular-season games only; these rows are priced by owner decision of 2026-10-01."
+   "note": "Postseason rows, tallied apart from the regular-season record and never added to it. The pricer was fitted and graded on regular-season games only; these rows are priced by owner decision of 2026-10-01.",
+   "disclosure_note": null
   },
   "stake_policy": "flat 1 unit",
-  "chain_sha": "fe113aaf4505ae11a64af6a41938ae74da3bd2597bd876cb91a0e209d9177d26",
+  "chain_sha": "14102c2556fdf11fa8de2eeff38d540ec5e8c33d18b10ec6bca84da803fdd42b",
   "chain_note": "sha256 folded row by row over the record; a record that still contains an archived value as one of its prefix hashes is an append, and one that does not is a rewrite"
  },
  "dugout_context": {
@@ -1278,15 +2096,15 @@
   "blocker": null,
   "source_module": "In-Game Management",
   "source": "/data/management_board.json",
-  "board_generated_at": "2026-09-30T17:22:06+00:00",
-  "corpus_built_at": "2026-09-25T10:06:36+00:00",
+  "board_generated_at": "2026-10-02T15:40:41+00:00",
+  "corpus_built_at": "2026-10-02T12:59:41+00:00",
   "season": 2026,
-  "through": "2026-09-24",
+  "through": "2026-09-27",
   "season_rows_present": true,
   "season_note": null,
   "head": "Dugout context, not priced",
   "not_priced_sentence": "Dugout context sits beside the price and enters none of it. No probability, edge, expected value, Kelly figure, slot, badge or record row on this page reads anything from In-Game Management, and no In-Game Management figure is a pricer input.",
-  "source_label": "Source: In-Game Management, club-season 2026 through 2026-09-24, corpus built 2026-09-25T10:06:36+00:00, read from data/management_board.json.",
+  "source_label": "Source: In-Game Management, club-season 2026 through 2026-09-27, corpus built 2026-10-02T12:59:41+00:00, read from data/management_board.json.",
   "style_head": "Style this season",
   "style_sentence": "Style, not skill: each is a signed z-score across the thirty club-seasons of its season, sign as measured. Not an index, no ladder, no plus sign; a frequency has no good direction, and these repeat because they are policy.",
   "style_columns": [
@@ -1355,7 +2173,7 @@
    "hook_median_pitches": 89.0,
    "hook_p10": 64.0,
    "hook_p90": 102.0,
-   "hook_n": 38486
+   "hook_n": 38575
   },
   "realized_head": "Realized value this season, per family, never summed",
   "realized_sentence": "Realized value, not skill. Each figure is the win probability that actually moved after the decision, credited to the club that made it, from the decision to the last play it governed. What the alternative would have produced, the reliever not used, the batter not lifted, the pitch not thrown, is not observed, so this is a record of what happened after a manager acted and not a measure of how well he chose. A reliever who pitched well after a poor choice and a hitter who homered after a bad matchup are both in these numbers.",
@@ -1410,112 +2228,430 @@
   "no_cross_family_total": true,
   "below_floor_template": "below the floor of {floor} ({n} this season)",
   "games": {
-   "849844": {
-    "away": "PHI",
-    "home": "ATL"
+   "849829": {
+    "away": "CHW",
+    "home": "CLE"
+   },
+   "849828": {
+    "away": "ATL",
+    "home": "LAD"
+   },
+   "849835": {
+    "away": "NYY",
+    "home": "TBR"
+   },
+   "849830": {
+    "away": "SDP",
+    "home": "MIL"
    }
   },
   "clubs": {
-   "PHI": {
-    "club": "PHI",
-    "statsapi_code": "PHI",
+   "CHW": {
+    "club": "CHW",
+    "statsapi_code": "CWS",
     "season": 2026,
-    "games": 159,
-    "partial": true,
-    "n_all": 1303,
-    "mean_li": 1.326,
-    "share_li_high": 0.36,
+    "games": 162,
+    "partial": false,
+    "n_all": 1697,
+    "mean_li": 1.455,
+    "share_li_high": 0.384,
     "style": {
-     "z_hook": 1.93,
-     "z_pen": -0.04,
-     "z_bench": -1.81,
-     "z_ibb": -0.92,
-     "z_visit": -1.34
+     "z_hook": -1.45,
+     "z_pen": 0.36,
+     "z_bench": 2.43,
+     "z_ibb": 0.51,
+     "z_visit": 0.15
     },
     "rates": {
-     "hook_median_pitches": 94.0,
-     "pen_per_game": 3.277,
-     "bench_per_game": 0.786,
-     "ibb_per_game": 0.069,
-     "visit_per_game": 2.503
+     "hook_median_pitches": 83.5,
+     "pen_per_game": 3.34,
+     "bench_per_game": 1.605,
+     "ibb_per_game": 0.136,
+     "visit_per_game": 3.019
     },
     "shape": {
-     "hook_median_pitches": 94.0,
-     "pen_per_game": 3.277,
+     "hook_median_pitches": 83.5,
+     "pen_per_game": 3.34,
      "league_hook_median_pitches": 89.0,
      "li_at_entry": null,
      "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
     },
     "counts": {
-     "n_pitching_change": 521,
-     "n_pinch_hit": 97,
-     "n_pinch_run": 28,
-     "n_intentional_walk": 11,
-     "n_bunt": 72,
-     "n_steal": 47
+     "n_pitching_change": 541,
+     "n_pinch_hit": 217,
+     "n_pinch_run": 43,
+     "n_intentional_walk": 22,
+     "n_bunt": 142,
+     "n_steal": 55
     },
     "realized": {
-     "mwpa_pitching_change": -2.237,
-     "mwpa_pinch_hit": 1.584,
-     "mwpa_pinch_run": 2.389,
-     "mwpa_intentional_walk": 0.355,
-     "mwpa_bunt": -0.63,
-     "mwpa_steal": 0.216
+     "mwpa_pitching_change": -0.778,
+     "mwpa_pinch_hit": -0.918,
+     "mwpa_pinch_run": -2.085,
+     "mwpa_intentional_walk": 0.726,
+     "mwpa_bunt": 0.377,
+     "mwpa_steal": -0.277
     },
-    "link": "/management/#section=clubs&team=PHI&season=2026",
-    "drill_link": "/management/#section=decisions&team=PHI&season=2026&family={family}",
-    "link_label": "Open PHI on In-Game Management",
+    "link": "/management/#section=clubs&team=CHW&season=2026",
+    "drill_link": "/management/#section=decisions&team=CHW&season=2026&family={family}",
+    "link_label": "Open CHW on In-Game Management",
+    "row_note": null
+   },
+   "CLE": {
+    "club": "CLE",
+    "statsapi_code": "CLE",
+    "season": 2026,
+    "games": 162,
+    "partial": false,
+    "n_all": 1522,
+    "mean_li": 1.489,
+    "share_li_high": 0.412,
+    "style": {
+     "z_hook": 0.99,
+     "z_pen": 0.98,
+     "z_bench": 0.08,
+     "z_ibb": -0.82,
+     "z_visit": -1.07
+    },
+    "rates": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.432,
+     "bench_per_game": 1.148,
+     "ibb_per_game": 0.074,
+     "visit_per_game": 2.593
+    },
+    "shape": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.432,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 556,
+     "n_pinch_hit": 158,
+     "n_pinch_run": 28,
+     "n_intentional_walk": 12,
+     "n_bunt": 95,
+     "n_steal": 101
+    },
+    "realized": {
+     "mwpa_pitching_change": 5.089,
+     "mwpa_pinch_hit": -2.332,
+     "mwpa_pinch_run": 1.361,
+     "mwpa_intentional_walk": -0.219,
+     "mwpa_bunt": -0.658,
+     "mwpa_steal": 0.688
+    },
+    "link": "/management/#section=clubs&team=CLE&season=2026",
+    "drill_link": "/management/#section=decisions&team=CLE&season=2026&family={family}",
+    "link_label": "Open CLE on In-Game Management",
     "row_note": null
    },
    "ATL": {
     "club": "ATL",
     "statsapi_code": "ATL",
     "season": 2026,
-    "games": 159,
-    "partial": true,
-    "n_all": 1213,
-    "mean_li": 1.468,
-    "share_li_high": 0.424,
+    "games": 162,
+    "partial": false,
+    "n_all": 1232,
+    "mean_li": 1.458,
+    "share_li_high": 0.42,
     "style": {
-     "z_hook": -0.67,
-     "z_pen": -1.19,
-     "z_bench": -0.27,
-     "z_ibb": -0.39,
-     "z_visit": -2.31
+     "z_hook": -0.64,
+     "z_pen": -1.24,
+     "z_bench": -0.36,
+     "z_ibb": -0.41,
+     "z_visit": -2.33
     },
     "rates": {
      "hook_median_pitches": 86.0,
-     "pen_per_game": 3.107,
-     "bench_per_game": 1.082,
-     "ibb_per_game": 0.094,
-     "visit_per_game": 2.164
+     "pen_per_game": 3.105,
+     "bench_per_game": 1.062,
+     "ibb_per_game": 0.093,
+     "visit_per_game": 2.154
     },
     "shape": {
      "hook_median_pitches": 86.0,
-     "pen_per_game": 3.107,
+     "pen_per_game": 3.105,
      "league_hook_median_pitches": 89.0,
      "li_at_entry": null,
      "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
     },
     "counts": {
-     "n_pitching_change": 494,
+     "n_pitching_change": 503,
      "n_pinch_hit": 144,
      "n_pinch_run": 28,
      "n_intentional_walk": 15,
-     "n_bunt": 50,
+     "n_bunt": 51,
      "n_steal": 46
     },
     "realized": {
-     "mwpa_pitching_change": 8.6,
+     "mwpa_pitching_change": 8.451,
      "mwpa_pinch_hit": 0.115,
      "mwpa_pinch_run": -0.116,
      "mwpa_intentional_walk": 0.439,
-     "mwpa_bunt": 0.502,
+     "mwpa_bunt": 0.571,
      "mwpa_steal": 0.254
     },
     "link": "/management/#section=clubs&team=ATL&season=2026",
     "drill_link": "/management/#section=decisions&team=ATL&season=2026&family={family}",
     "link_label": "Open ATL on In-Game Management",
+    "row_note": null
+   },
+   "LAD": {
+    "club": "LAD",
+    "statsapi_code": "LAD",
+    "season": 2026,
+    "games": 162,
+    "partial": false,
+    "n_all": 1373,
+    "mean_li": 1.428,
+    "share_li_high": 0.394,
+    "style": {
+     "z_hook": 0.99,
+     "z_pen": 0.23,
+     "z_bench": -0.14,
+     "z_ibb": 1.85,
+     "z_visit": -1.52
+    },
+    "rates": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.321,
+     "bench_per_game": 1.105,
+     "ibb_per_game": 0.198,
+     "visit_per_game": 2.438
+    },
+    "shape": {
+     "hook_median_pitches": 91.0,
+     "pen_per_game": 3.321,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 538,
+     "n_pinch_hit": 163,
+     "n_pinch_run": 16,
+     "n_intentional_walk": 32,
+     "n_bunt": 52,
+     "n_steal": 52
+    },
+    "realized": {
+     "mwpa_pitching_change": 3.855,
+     "mwpa_pinch_hit": 0.609,
+     "mwpa_pinch_run": -0.593,
+     "mwpa_intentional_walk": 0.613,
+     "mwpa_bunt": -0.435,
+     "mwpa_steal": 0.255
+    },
+    "link": "/management/#section=clubs&team=LAD&season=2026",
+    "drill_link": "/management/#section=decisions&team=LAD&season=2026&family={family}",
+    "link_label": "Open LAD on In-Game Management",
+    "row_note": null
+   },
+   "NYY": {
+    "club": "NYY",
+    "statsapi_code": "NYY",
+    "season": 2026,
+    "games": 161,
+    "partial": false,
+    "n_all": 1525,
+    "mean_li": 1.447,
+    "share_li_high": 0.414,
+    "style": {
+     "z_hook": 0.66,
+     "z_pen": 0.16,
+     "z_bench": -0.93,
+     "z_ibb": -0.67,
+     "z_visit": 0.13
+    },
+    "rates": {
+     "hook_median_pitches": 90.0,
+     "pen_per_game": 3.311,
+     "bench_per_game": 0.95,
+     "ibb_per_game": 0.081,
+     "visit_per_game": 3.012
+    },
+    "shape": {
+     "hook_median_pitches": 90.0,
+     "pen_per_game": 3.311,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 533,
+     "n_pinch_hit": 118,
+     "n_pinch_run": 35,
+     "n_intentional_walk": 13,
+     "n_bunt": 90,
+     "n_steal": 93
+    },
+    "realized": {
+     "mwpa_pitching_change": 6.597,
+     "mwpa_pinch_hit": -1.217,
+     "mwpa_pinch_run": 2.298,
+     "mwpa_intentional_walk": 0.392,
+     "mwpa_bunt": -0.047,
+     "mwpa_steal": 0.185
+    },
+    "link": "/management/#section=clubs&team=NYY&season=2026",
+    "drill_link": "/management/#section=decisions&team=NYY&season=2026&family={family}",
+    "link_label": "Open NYY on In-Game Management",
+    "row_note": null
+   },
+   "TBR": {
+    "club": "TBR",
+    "statsapi_code": "TB",
+    "season": 2026,
+    "games": 162,
+    "partial": false,
+    "n_all": 1698,
+    "mean_li": 1.442,
+    "share_li_high": 0.399,
+    "style": {
+     "z_hook": -2.26,
+     "z_pen": -0.44,
+     "z_bench": 0.18,
+     "z_ibb": 1.18,
+     "z_visit": 0.91
+    },
+    "rates": {
+     "hook_median_pitches": 81.0,
+     "pen_per_game": 3.222,
+     "bench_per_game": 1.167,
+     "ibb_per_game": 0.167,
+     "visit_per_game": 3.284
+    },
+    "shape": {
+     "hook_median_pitches": 81.0,
+     "pen_per_game": 3.222,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 522,
+     "n_pinch_hit": 136,
+     "n_pinch_run": 53,
+     "n_intentional_walk": 27,
+     "n_bunt": 225,
+     "n_steal": 105
+    },
+    "realized": {
+     "mwpa_pitching_change": 8.953,
+     "mwpa_pinch_hit": -1.206,
+     "mwpa_pinch_run": -0.054,
+     "mwpa_intentional_walk": 1.188,
+     "mwpa_bunt": 0.243,
+     "mwpa_steal": 0.175
+    },
+    "link": "/management/#section=clubs&team=TBR&season=2026",
+    "drill_link": "/management/#section=decisions&team=TBR&season=2026&family={family}",
+    "link_label": "Open TBR on In-Game Management",
+    "row_note": null
+   },
+   "SDP": {
+    "club": "SDP",
+    "statsapi_code": "SD",
+    "season": 2026,
+    "games": 162,
+    "partial": false,
+    "n_all": 1682,
+    "mean_li": 1.446,
+    "share_li_high": 0.425,
+    "style": {
+     "z_hook": -1.61,
+     "z_pen": 0.77,
+     "z_bench": -0.68,
+     "z_ibb": 0.1,
+     "z_visit": 1.16
+    },
+    "rates": {
+     "hook_median_pitches": 83.0,
+     "pen_per_game": 3.401,
+     "bench_per_game": 1.0,
+     "ibb_per_game": 0.117,
+     "visit_per_game": 3.37
+    },
+    "shape": {
+     "hook_median_pitches": 83.0,
+     "pen_per_game": 3.401,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 551,
+     "n_pinch_hit": 119,
+     "n_pinch_run": 43,
+     "n_intentional_walk": 19,
+     "n_bunt": 143,
+     "n_steal": 87
+    },
+    "realized": {
+     "mwpa_pitching_change": 5.386,
+     "mwpa_pinch_hit": -2.342,
+     "mwpa_pinch_run": 0.977,
+     "mwpa_intentional_walk": -0.07,
+     "mwpa_bunt": -0.819,
+     "mwpa_steal": 0.098
+    },
+    "link": "/management/#section=clubs&team=SDP&season=2026",
+    "drill_link": "/management/#section=decisions&team=SDP&season=2026&family={family}",
+    "link_label": "Open SDP on In-Game Management",
+    "row_note": null
+   },
+   "MIL": {
+    "club": "MIL",
+    "statsapi_code": "MIL",
+    "season": 2026,
+    "games": 162,
+    "partial": false,
+    "n_all": 1711,
+    "mean_li": 1.439,
+    "share_li_high": 0.399,
+    "style": {
+     "z_hook": -1.29,
+     "z_pen": -0.95,
+     "z_bench": 0.3,
+     "z_ibb": -0.29,
+     "z_visit": 1.57
+    },
+    "rates": {
+     "hook_median_pitches": 84.0,
+     "pen_per_game": 3.148,
+     "bench_per_game": 1.191,
+     "ibb_per_game": 0.099,
+     "visit_per_game": 3.512
+    },
+    "shape": {
+     "hook_median_pitches": 84.0,
+     "pen_per_game": 3.148,
+     "league_hook_median_pitches": 89.0,
+     "li_at_entry": null,
+     "li_at_entry_blocker": "Entries by leverage at entry and inherited runners scored live in the per-club decision ledger files, which this page never reads; the club page draws them."
+    },
+    "counts": {
+     "n_pitching_change": 510,
+     "n_pinch_hit": 144,
+     "n_pinch_run": 49,
+     "n_intentional_walk": 16,
+     "n_bunt": 158,
+     "n_steal": 103
+    },
+    "realized": {
+     "mwpa_pitching_change": 7.449,
+     "mwpa_pinch_hit": -1.942,
+     "mwpa_pinch_run": -1.008,
+     "mwpa_intentional_walk": 0.229,
+     "mwpa_bunt": 0.734,
+     "mwpa_steal": -0.035
+    },
+    "link": "/management/#section=clubs&team=MIL&season=2026",
+    "drill_link": "/management/#section=decisions&team=MIL&season=2026&family={family}",
+    "link_label": "Open MIL on In-Game Management",
     "row_note": null
    }
   }

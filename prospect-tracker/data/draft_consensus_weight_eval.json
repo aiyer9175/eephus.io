@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-05T17:00:58Z",
+ "generated_at": "2026-10-02T15:52:19Z",
  "raters": [
   "fangraphs",
   "mlb_pipeline_draft"
@@ -13,22 +13,22 @@
  ],
  "common_n": 672,
  "per_source_spearman": {
-  "fangraphs": 0.2396,
-  "mlb_pipeline_draft": 0.2041
+  "fangraphs": 0.2398,
+  "mlb_pipeline_draft": 0.1997
  },
  "live_weights": {
-  "fangraphs": 1.0655,
-  "mlb_pipeline_draft": 0.9345
+  "fangraphs": 1.0746,
+  "mlb_pipeline_draft": 0.9254
  },
  "pooled": {
   "n": 672,
   "equal": {
-   "spearman": 0.2354,
-   "auc": 0.6913
+   "spearman": 0.2324,
+   "auc": 0.7075
   },
   "weighted": {
-   "spearman": 0.2372,
-   "auc": 0.6899
+   "spearman": 0.2342,
+   "auc": 0.7062
   }
  },
  "loo_cv": {
@@ -37,8 +37,8 @@
     "year": 2018,
     "n": 185,
     "train_weights": {
-     "fangraphs": 1.0705,
-     "mlb_pipeline_draft": 0.9295
+     "fangraphs": 1.0772,
+     "mlb_pipeline_draft": 0.9228
     },
     "debut_rate": 0.5081
    },
@@ -46,8 +46,8 @@
     "year": 2019,
     "n": 193,
     "train_weights": {
-     "fangraphs": 1.0512,
-     "mlb_pipeline_draft": 0.9488
+     "fangraphs": 1.056,
+     "mlb_pipeline_draft": 0.944
     },
     "debut_rate": 0.4767
    },
@@ -55,17 +55,17 @@
     "year": 2020,
     "n": 162,
     "train_weights": {
-     "fangraphs": 1.0486,
-     "mlb_pipeline_draft": 0.9514
+     "fangraphs": 1.0567,
+     "mlb_pipeline_draft": 0.9433
     },
-    "debut_rate": 0.4259
+    "debut_rate": 0.4321
    },
    {
     "year": 2021,
     "n": 132,
     "train_weights": {
-     "fangraphs": 1.081,
-     "mlb_pipeline_draft": 0.919
+     "fangraphs": 1.0964,
+     "mlb_pipeline_draft": 0.9036
     },
     "debut_rate": 0.5076
    }
@@ -73,12 +73,12 @@
   "pooled": {
    "n": 672,
    "equal": {
-    "spearman": 0.2354,
-    "auc": 0.6913
+    "spearman": 0.2324,
+    "auc": 0.7075
    },
    "weighted": {
-    "spearman": 0.2285,
-    "auc": 0.6874
+    "spearman": 0.2273,
+    "auc": 0.7035
    }
   }
  },

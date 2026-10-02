@@ -1,45 +1,45 @@
 {
- "generated_at": "2026-09-11T23:32:59+00:00",
+ "generated_at": "2026-10-02T16:15:12+00:00",
  "model_version": "betting_runs_v2",
  "season": "2026",
- "n_games": 2201,
- "lg_rpg": 4.4827,
- "home_win_rate": 0.5279,
- "extra_inning_games": 193,
- "extra_inning_home_rate_raw": 0.4819,
- "extra_inning_home_rate_shrunk": 0.4881,
+ "n_games": 2429,
+ "lg_rpg": 4.4811,
+ "home_win_rate": 0.5286,
+ "extra_inning_games": 209,
+ "extra_inning_home_rate_raw": 0.488,
+ "extra_inning_home_rate_shrunk": 0.4919,
  "extra_inning_runline_split": {
-  "n_games": 2201,
-  "n_extra_inning_games": 193,
-  "n_home_wins": 93,
+  "n_games": 2429,
+  "n_extra_inning_games": 209,
+  "n_home_wins": 102,
   "n_home_wins_by_2plus": 10,
-  "n_away_wins": 100,
-  "n_away_wins_by_2plus": 51,
-  "home_by_2plus_given_home_win": 0.1075,
-  "away_by_2plus_given_away_win": 0.51
+  "n_away_wins": 107,
+  "n_away_wins_by_2plus": 56,
+  "home_by_2plus_given_home_win": 0.098,
+  "away_by_2plus_given_away_win": 0.5234
  },
  "extra_inning_runline_split_fitted": {
-  "n_games": 2201,
-  "n_extra_inning_games": 193,
-  "n_home_wins": 93,
+  "n_games": 2429,
+  "n_extra_inning_games": 209,
+  "n_home_wins": 102,
   "n_home_wins_by_2plus": 10,
-  "n_away_wins": 100,
-  "n_away_wins_by_2plus": 51,
-  "home_by_2plus_given_home_win": 0.1075,
-  "away_by_2plus_given_away_win": 0.51
+  "n_away_wins": 107,
+  "n_away_wins_by_2plus": 56,
+  "home_by_2plus_given_home_win": 0.098,
+  "away_by_2plus_given_away_win": 0.5234
  },
  "extra_inning_runline_split_note": "how often each side that won in extra innings won by two or more, read off the same extra-inning games as extra_inning_home_rate; the runline's share of the tie is tie_home times the home conditional and (1 - tie_home) times the away one; no prior is applied because the asymmetry is the walk-off and a pooled prior would erase it; served through SERVE_RUNLINE_TIE_SPLIT (owner decision 2026-09-11, ahead of the runline margin gate, which still decides its successor)",
- "home_field_runs_adj": 0.2046,
- "diff_shrink": 0.82,
- "diff_shrink_log_loss": 0.675031,
+ "home_field_runs_adj": 0.2138,
+ "diff_shrink": 0.86,
+ "diff_shrink_log_loss": 0.67084,
  "diff_shrink_note": "run-differential shrink fitted by log loss on completed games; below 1.0 means the raw predictor separated clubs further than the results did, and the fair total is untouched by it",
  "run_dispersion_alpha": null,
- "run_dispersion_alpha_fitted": 0.27986,
+ "run_dispersion_alpha_fitted": 0.27208,
  "prob_calibration": null,
  "prob_calibration_fitted": {
-  "a": 1.00476,
-  "b": -0.00052,
-  "n": 2201
+  "a": 1.01105,
+  "b": -0.0012,
+  "n": 2429
  },
  "prob_calibration_note": "Platt p' = sigmoid(a*logit(p) + b) on the moneyline only, docs/diamond-betting.md section 11b; served null until both gate arms pass, and the fitted pair is expected near identity because diff_shrink already absorbs the response scale in-sample",
  "total_level": null,
@@ -47,8 +47,8 @@
   "basis": "vintage FIT half only (_vintage_cut_index), served coefficients and corrections on dated features; the eval half and the market are not read",
   "criteria": "TOTAL_LEVEL_GATE_CRITERIA",
   "served": false,
-  "centre": -0.1711,
-  "mean": -0.0042,
+  "centre": -0.1275,
+  "mean": 0.0266,
   "n": 305,
   "lines": [
    7.5,
@@ -56,40 +56,40 @@
    9.5,
    10.5
   ],
-  "mean_model_total": 8.8108,
+  "mean_model_total": 8.78,
   "mean_actual_total": 8.8066,
   "median_actual_total": 8.0,
-  "log_loss_incumbent": 2.867567,
-  "log_loss_centre": 2.8633,
-  "log_loss_mean": 2.867361,
+  "log_loss_incumbent": 2.885181,
+  "log_loss_centre": 2.882801,
+  "log_loss_mean": 2.886272,
   "per_line": [
    {
     "line": 7.5,
     "observed_over": 0.5344,
-    "model_over_incumbent": 0.6414,
-    "model_over_centre": 0.6208,
-    "model_over_mean": 0.6409
+    "model_over_incumbent": 0.6368,
+    "model_over_centre": 0.6215,
+    "model_over_mean": 0.64
    },
    {
     "line": 8.5,
     "observed_over": 0.4328,
-    "model_over_incumbent": 0.5132,
-    "model_over_centre": 0.4912,
-    "model_over_mean": 0.5127
+    "model_over_incumbent": 0.509,
+    "model_over_centre": 0.4926,
+    "model_over_mean": 0.5124
    },
    {
     "line": 9.5,
     "observed_over": 0.3869,
-    "model_over_incumbent": 0.3889,
-    "model_over_centre": 0.3677,
-    "model_over_mean": 0.3884
+    "model_over_incumbent": 0.3854,
+    "model_over_centre": 0.3697,
+    "model_over_mean": 0.3887
    },
    {
     "line": 10.5,
     "observed_over": 0.3213,
-    "model_over_incumbent": 0.2791,
-    "model_over_centre": 0.2605,
-    "model_over_mean": 0.2786
+    "model_over_incumbent": 0.2765,
+    "model_over_centre": 0.2627,
+    "model_over_mean": 0.2794
    }
   ],
   "status": "fitted",
@@ -103,7 +103,7 @@
   "basis": "vintage FIT half only (_vintage_cut_index), served coefficients and corrections on dated features; the eval half and the market are not read",
   "criteria": "TOTAL_DISPERSION_GATE_CRITERIA",
   "served": false,
-  "alpha": 0.98755,
+  "alpha": 1.01671,
   "n": 305,
   "lines": [
    7.5,
@@ -111,32 +111,32 @@
    9.5,
    10.5
   ],
-  "log_loss_poisson": 2.867567,
-  "log_loss_nb": 2.709421,
+  "log_loss_poisson": 2.885181,
+  "log_loss_nb": 2.715712,
   "per_line": [
    {
     "line": 7.5,
     "observed_over": 0.5344,
-    "model_over_poisson": 0.6414,
-    "model_over_nb": 0.4793
+    "model_over_poisson": 0.6368,
+    "model_over_nb": 0.4749
    },
    {
     "line": 8.5,
     "observed_over": 0.4328,
-    "model_over_poisson": 0.5132,
-    "model_over_nb": 0.4196
+    "model_over_poisson": 0.509,
+    "model_over_nb": 0.416
    },
    {
     "line": 9.5,
     "observed_over": 0.3869,
-    "model_over_poisson": 0.3889,
-    "model_over_nb": 0.3657
+    "model_over_poisson": 0.3854,
+    "model_over_nb": 0.3629
    },
    {
     "line": 10.5,
     "observed_over": 0.3213,
-    "model_over_poisson": 0.2791,
-    "model_over_nb": 0.3175
+    "model_over_poisson": 0.2765,
+    "model_over_nb": 0.3154
    }
   ],
   "status": "fitted",
@@ -148,8 +148,8 @@
   "basis": "vintage FIT half only (_vintage_cut_index); the eval half and the market are not read",
   "criteria": "TOTAL_CALIBRATION_GATE_CRITERIA",
   "served": false,
-  "a": 0.27149,
-  "b": -0.27512,
+  "a": 0.25092,
+  "b": -0.2739,
   "n": 305,
   "lines": [
    7.5,
@@ -157,32 +157,32 @@
    9.5,
    10.5
   ],
-  "log_loss_poisson": 2.867567,
-  "log_loss_mapped": 2.69468,
+  "log_loss_poisson": 2.885181,
+  "log_loss_mapped": 2.69715,
   "per_line": [
    {
     "line": 7.5,
     "observed_over": 0.5344,
-    "model_over_poisson": 0.6414,
-    "model_over_mapped": 0.4736
+    "model_over_poisson": 0.6368,
+    "model_over_mapped": 0.4696
    },
    {
     "line": 8.5,
     "observed_over": 0.4328,
-    "model_over_poisson": 0.5132,
-    "model_over_mapped": 0.4358
+    "model_over_poisson": 0.509,
+    "model_over_mapped": 0.4346
    },
    {
     "line": 9.5,
     "observed_over": 0.3869,
-    "model_over_poisson": 0.3889,
-    "model_over_mapped": 0.4001
+    "model_over_poisson": 0.3854,
+    "model_over_mapped": 0.4015
    },
    {
     "line": 10.5,
     "observed_over": 0.3213,
-    "model_over_poisson": 0.2791,
-    "model_over_mapped": 0.3659
+    "model_over_poisson": 0.2765,
+    "model_over_mapped": 0.3697
    }
   ],
   "status": "fitted",
@@ -190,21 +190,21 @@
   "n_fit_games": 305
  },
  "total_level_note": "one additive constant on the Poisson TOTAL mean, fitted on the vintage fit half by over/under log loss at the fixed lines 7.5 to 10.5; the moneyline and the runline never read it. The model's mean total is right on that half; the constant corrects where a Poisson puts its middle, which is the mean, while real run totals split lower. docs/diamond-betting.md section 7f",
- "run_dispersion_rows": 4402,
- "run_dispersion_loglik_nb2": -10785.119,
- "run_dispersion_loglik_poisson": -11664.785,
+ "run_dispersion_rows": 4858,
+ "run_dispersion_loglik_nb2": -11876.401,
+ "run_dispersion_loglik_poisson": -12806.121,
  "run_dispersion_note": "NB2 run dispersion, var = lam + alpha*lam^2, by conditional MLE on both scoring sides given the model's own lambda; Poisson (alpha 0) underdisperses real run scoring by a measured var/mean of 2.34 per side and 2.37 on the margin. Served only because the pre-registered four-criterion gate in docs/diamond-betting.md section 11 passed on a held-out half; `run_dispersion` in betting_model_eval.json carries it",
  "home_field_note": "the runs regression recovers almost no home field because a home team leading after the top of the ninth never bats; the adjustment restores the observed home win rate as a run differential, leaving the fair total unchanged",
  "coefficients": {
-  "b0": 4.450690971340028,
-  "b1": 0.2519811014304892,
-  "b2": -0.30330748031217897,
-  "b3": 3.923944840747188,
-  "b4": 0.052837965338945164,
+  "b0": 4.447526788641083,
+  "b1": 0.2342551126470185,
+  "b2": -0.3392376501292443,
+  "b3": 3.839735521526793,
+  "b4": 0.03605236456253586,
   "source": "fitted",
-  "n_rows": 4402,
-  "rmse": 3.1547688069269633,
-  "r2": 0.04386598077157333
+  "n_rows": 4858,
+  "rmse": 3.1310421273256885,
+  "r2": 0.04762796338839581
  },
  "source_note": "fit on completed games read out of .cache/game_feeds, offline; team inputs are season-to-date leaderboards, so this fit is IN-SAMPLE and cannot validate the model"
 }

@@ -1,32 +1,32 @@
 {
- "generated_at": "2026-09-05",
+ "generated_at": "2026-10-02",
  "scope": "PITCHERS",
- "n_scored": 1966,
+ "n_scored": 1979,
  "calibration_scale": {
   "a": -0.007,
-  "b": 1.069
+  "b": 1.07
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
   "mean_abs_delta": 0.53,
   "max_up": 4.9,
   "max_down": -4.6,
-  "share_within_2_grades": 0.94
+  "share_within_2_grades": 0.936
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 4.96,
-  "max_up": 8.6,
+  "mean_abs_delta": 4.93,
+  "max_up": 8.7,
   "max_down": -20.5
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1935,
-  "n": 528,
+  "spearman_adj_vs_consensus_miss": 0.1933,
+  "n": 542,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 13757.0,
-  "consensus": 14071.6
+  "xfv": 20677.5,
+  "consensus": 21213.1
  },
  "example_up_adjustments": [
   {
@@ -46,30 +46,30 @@
   {
    "player_key": "demarcus_evans",
    "consensus_fv": 40.1,
-   "xfv_grade": 46.5,
-   "delta": 6.4,
+   "xfv_grade": 46.4,
+   "delta": 6.3,
    "realized_war_6yr": 0.04
   },
   {
    "player_key": "james_karinchak",
    "consensus_fv": 40.2,
-   "xfv_grade": 46.0,
+   "xfv_grade": 46.1,
    "delta": 5.8,
    "realized_war_6yr": 2.55
   },
   {
-   "player_key": "angel_perdomo",
-   "consensus_fv": 38.0,
-   "xfv_grade": 43.6,
+   "player_key": "kyle_cody",
+   "consensus_fv": 37.8,
+   "xfv_grade": 43.3,
    "delta": 5.6,
-   "realized_war_6yr": 0.53
+   "realized_war_6yr": 0.35
   },
   {
-   "player_key": "connor_brogdon",
-   "consensus_fv": 38.3,
-   "xfv_grade": 43.8,
-   "delta": 5.5,
-   "realized_war_6yr": -0.51
+   "player_key": "angel_perdomo",
+   "consensus_fv": 38.0,
+   "xfv_grade": 43.5,
+   "delta": 5.6,
+   "realized_war_6yr": 0.53
   }
  ],
  "example_down_adjustments": [

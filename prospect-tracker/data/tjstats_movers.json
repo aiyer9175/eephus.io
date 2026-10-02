@@ -1,14 +1,24 @@
 {
- "as_of": "2026-09-05",
- "captured_at": "2026-09-05T17:25:35+00:00",
- "older_captured_at": "2026-09-05T16:24:11+00:00",
+ "as_of": "2026-10-02",
+ "captured_at": "2026-10-02T16:25:18+00:00",
+ "older_captured_at": "2026-10-02T15:02:19+00:00",
  "older_board": "Post-Draft 2026",
- "newer_board": "Live 2026-09-05",
+ "newer_board": "Live 2026-10-02",
  "movers": [
   {
    "player_key": "angeibel_gomez",
    "name": "Angeibel Gomez",
    "mlbam_id": "825412",
+   "rank": 99,
+   "prev_rank": null,
+   "rank_delta": null,
+   "fv_delta": null,
+   "status": "entered"
+  },
+  {
+   "player_key": "yostin_pena",
+   "name": "Yostin Pena",
+   "mlbam_id": "829769",
    "rank": 100,
    "prev_rank": null,
    "rank_delta": null,

@@ -73,28 +73,28 @@
    "n_rows": 331
   },
   "2026/alevel_signals.json": {
-   "as_of": "2026-09-24",
+   "as_of": "2026-10-02",
    "bytes": 44347,
    "completeness": "complete",
    "n_rows": 717
   },
   "2026/astuff_plus.json": {
-   "as_of": "2026-09-24",
-   "bytes": 78151,
+   "as_of": "2026-10-02",
+   "bytes": 78435,
    "completeness": "complete",
    "n_rows": 331
   },
   "2026/pitch_arsenals.json": {
-   "as_of": "2026-09-24",
-   "bytes": 288977,
+   "as_of": "2026-10-02",
+   "bytes": 290680,
    "completeness": "complete",
-   "n_rows": 673
+   "n_rows": 677
   },
   "2026/sabermetrics.json": {
-   "as_of": "2026-09-24",
-   "bytes": 101281,
+   "as_of": "2026-10-02",
+   "bytes": 101689,
    "completeness": "complete",
-   "n_rows": 1251
+   "n_rows": 1256
   },
   "2026/savant_minors.json": {
    "as_of": "2026-06-23",
@@ -103,31 +103,31 @@
    "n_rows": 918
   },
   "2026/statcast_metrics.json": {
-   "as_of": "2026-09-24",
-   "bytes": 3631513,
+   "as_of": "2026-10-02",
+   "bytes": 3639108,
    "completeness": "complete",
-   "n_rows": 8169
+   "n_rows": 8183
   },
   "2026/statlines.json": {
-   "as_of": "2026-09-24",
-   "bytes": 1023123,
+   "as_of": "2026-10-02",
+   "bytes": 1023981,
    "completeness": "complete",
-   "n_rows": 7538
+   "n_rows": 7544
   },
   "2026/swing_plus.json": {
-   "as_of": "2026-09-24",
-   "bytes": 11681,
+   "as_of": "2026-10-02",
+   "bytes": 11685,
    "completeness": "complete",
    "n_rows": 277
   },
   "2026/zone_metrics.json": {
-   "as_of": "2026-09-24",
-   "bytes": 2420094,
+   "as_of": "2026-10-02",
+   "bytes": 2423546,
    "completeness": "complete",
-   "n_rows": 9475
+   "n_rows": 9488
   }
  },
- "generated_at": "2026-09-24",
+ "generated_at": "2026-10-02",
  "live_season": 2026,
  "retention_rule": "seasons earlier than live_season are written once and frozen; the live season merges by key and never drops a row",
  "savant_minors_history_check": {
@@ -148,6 +148,6 @@
   }
  },
  "schema": 1,
- "total_bytes": 11333438,
+ "total_bytes": 11347742,
  "what_this_is": "EV-03 modern-signal retention (docs/efv-v2/PROGRAM.md 3.4). Per-season, as-of-dated snapshots of prospect signals whose live sources keep one season. NOT served: depth-two data directory neither deploy consumer ships, no catalog row."
 }
