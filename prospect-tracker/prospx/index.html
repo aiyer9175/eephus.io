@@ -776,7 +776,10 @@
       border-top: 1px solid var(--border-light);
       border-bottom: 1px solid var(--border-light);
       position: sticky;
-      top: 0;
+      /* SPR02: park beneath the sticky .section-tabs bar (top 0, z 50), which
+         covered this strip once the page scrolled. _watchSectionTabsHeight()
+         writes the bar's live height to the root; 74px is its desktop height. */
+      top: var(--px-section-tabs-h, 74px);
       z-index: 30;
       background: var(--bg-primary);
       backdrop-filter: blur(8px);
@@ -4105,6 +4108,9 @@
       display: block;
       color: var(--col-header-fg) !important;
     }
+    /* SPR05: the Level header prints "Lvl" in the narrow grid (see the
+       max-width:900px block); wider screens keep "Level". */
+    .debut-header .debut-lvl-short { display: none; }
     .debut-row {
       position: relative;
       padding: 12px 14px 12px 18px;
@@ -7154,6 +7160,15 @@
       }
       .debut-header .desktop-only, .debut-row .debut-date-cell,
       .debut-row .debut-level-cell { display: none; }
+      /* SPR05: the Level header lands in the 28px first track, where
+         "LEVEL" broke mid-word (LEVE / L). Print "Lvl" on one line; the
+         full word stays in the title and for screen readers. */
+      .debut-header .debut-level-cell { white-space: nowrap; }
+      .debut-header .debut-lvl-long {
+        position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+        overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+      }
+      .debut-header .debut-lvl-short { display: inline; }
       .spotlight-header, .spotlight-row {
         grid-template-columns: 28px 1fr 0.45fr;
       }
@@ -8792,6 +8807,17 @@
          the bottom FB/SL/CB/CH grade strip and in the pill's tooltip. --- */
       .player-row .row-tag.arsenal-mini,
       .spotlight-row .row-tag.arsenal-mini { display: none; }
+
+      /* SPR02: the phone section bar is 52px tall (the disclosure row). */
+      .detail-tabs { top: var(--px-section-tabs-h, 52px); }
+
+      /* SPR03: the identity row held the headshot, the name and three
+         buttons on one line, so the flex:1 name column fell to 0px and the
+         name broke a word a line. Give the name a floor and let the buttons
+         drop to their own line (they keep their 44px targets). !important
+         beats the inline min-width:0 the row templates carry. */
+      .player-row-idrow { flex-wrap: wrap; row-gap: 4px; }
+      .player-row-idrow > .player-name-stack { min-width: 96px !important; }
 
       /* --- Tighten loose vertical space on the densest views. --- */
       .detail-page-header { padding: 10px 12px 10px 14px; gap: 8px; }
@@ -31521,7 +31547,7 @@ function renderDebuts() {
     <span class="sort-header" data-debut-sort="fv_close" title="Sort by FV at debut (high to low)" style="text-align:center;">FV</span>
     <span class="desktop-only sort-header" data-debut-sort="vs_fv_proj" title="Sort by WAG - WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG / season</span>
     <span class="desktop-only" style="text-align:center;" title="Raw eWAR per MLB season - hover any bar for the year-by-year value">WAR / season</span>
-    <span class="debut-level-cell">Level</span>
+    <span class="debut-level-cell" title="Level"><span class="debut-lvl-long">Level</span><span class="debut-lvl-short" aria-hidden="true">Lvl</span></span>
     <span class="sort-header" data-debut-sort="war" title="Sort by current-season eWAR (high to low)">MLB stats</span>
   </div>`;
 
@@ -31687,9 +31713,9 @@ function renderDebuts() {
     return `
       <div class="debut-row" data-key="${escapeHtml(g.player_key)}" style="${orgStripe(g.org)}">
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(g)}"><span class="rank-num-inner">#${rank}</span></div>${rankTrendHTML(g)}</div>
-        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(g, 50)}${optionsDotsHTML(g)}</span>
-          <div style="min-width:0;flex:1;">
+          <div class="player-name-stack" style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(g.player_name)}${wagPill}${warTag}</div>
             ${playerMetaHTML(g, { showIL: false, showRoster: false })}
           </div>
@@ -57595,23 +57621,88 @@ function populateOrgFilter() {
   }
 }
 
+// SPR02: the sticky .detail-tabs strip parks beneath the sticky .section-tabs
+// bar. The bar's height changes with the viewport and with the phone
+// disclosure, so a ResizeObserver writes it to the root as
+// --px-section-tabs-h (the CSS falls back to the measured 74px / 52px).
+let _sectionTabsRO = null;
+function _watchSectionTabsHeight() {
+  const bar = document.getElementById("section-tabs");
+  if (!bar) return;
+  const write = () => {
+    document.documentElement.style.setProperty("--px-section-tabs-h", bar.offsetHeight + "px");
+  };
+  write();
+  if ("ResizeObserver" in window) {
+    if (_sectionTabsRO) _sectionTabsRO.disconnect();
+    _sectionTabsRO = new ResizeObserver(write);
+    _sectionTabsRO.observe(bar);
+  } else {
+    window.addEventListener("resize", write);
+  }
+}
+
+// SPR04: the board payload failed to load. Keep the PROSPX section nav, paint
+// the pixel state component's failed kind (role=alert) into the board host
+// with reader-facing copy and a Retry that re-runs the boot, and set the
+// header meta line to a short failed note. Developer detail goes to the
+// console only.
+function _pxStateHTML(kind, msg) {
+  const S = window.EephusState;
+  if (S) return S.html(kind, msg);
+  return '<div class="px-state is-' + kind + '"' +
+    (kind === "failed" ? ' role="alert"' : (kind === "loading" ? ' role="status" aria-live="polite"' : "")) +
+    '><div class="px-state-msg">' + msg + "</div></div>";
+}
+function _renderBootFailure(content, detail) {
+  console.error("PROSPX: could not load " + DATA_URL + ": " + detail);
+  const meta = document.getElementById("meta-line");
+  if (meta) meta.textContent = "Prospect data did not load.";
+  const frag = document.getElementById("main-template").content.cloneNode(true);
+  const nav = frag.querySelector("#section-tabs");
+  content.innerHTML = "";
+  if (nav) content.appendChild(nav);
+  const host = document.createElement("div");
+  host.className = "px-boot-host";
+  content.appendChild(host);
+  host.innerHTML = _pxStateHTML("failed",
+    'The prospect board could not load. Try again in a moment. ' +
+    '<button class="chip" type="button" data-px-retry>Retry</button>');
+  const retry = () => {
+    if (meta) meta.textContent = "Loading…";
+    host.innerHTML = _pxStateHTML("loading", "Loading prospect data…");
+    _bootProspx();
+  };
+  host.querySelector("[data-px-retry]").addEventListener("click", retry);
+  _watchSectionTabsHeight();
+  if (!nav) return;
+  // The nav stays usable: the phone disclosure opens, and picking a section
+  // records it in the hash and retries the load, which then lands there.
+  const toggle = nav.querySelector("#section-tabs-toggle");
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      const open = nav.classList.toggle("is-open");
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
+  nav.querySelectorAll("button.section-tab[data-section]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const sec = btn.dataset.section;
+      history.replaceState(null, "", sec === "active" ? location.pathname + location.search : "#tab=" + sec);
+      retry();
+    });
+  });
+}
+
 // =============================================================================
 // BOOT
 // =============================================================================
-(async () => {
+async function _bootProspx() {
   DATA = await loadData();
   const content = document.getElementById("content");
 
   if (DATA.__error) {
-    content.innerHTML = `
-      <div class="state-message is-error">
-        Could not load <code>${DATA_URL}</code>: ${escapeHtml(DATA.__error)}
-        <br><br>
-        <span style="color: var(--text-tertiary);">
-          Generate the data first by running <code>python run_monthly.py</code> in the project root,<br>
-          then refresh this page. See <code>README.md</code> for setup.
-        </span>
-      </div>`;
+    _renderBootFailure(content, DATA.__error);
     return;
   }
   if (!DATA.players || DATA.players.length === 0) {
@@ -57644,6 +57735,7 @@ function populateOrgFilter() {
   const tpl = document.getElementById("main-template");
   content.innerHTML = "";
   content.appendChild(tpl.content.cloneNode(true));
+  _watchSectionTabsHeight();
   // Section markup is now live - inject the per-list Generate GFX buttons.
   if (typeof _gfxInjectListButtons === "function") _gfxInjectListButtons();
 
@@ -57760,7 +57852,8 @@ function populateOrgFilter() {
       setTimeout(_warm, 0);
     }
   }
-})();
+}
+_bootProspx();
 
 // eephus.io reuse shim - exposes the handful of PROSPX primitives the account/
 // forum layer reuses (single source of truth for any number/logo a post or
