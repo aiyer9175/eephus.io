@@ -1,0 +1,417 @@
+[
+{
+"result": {
+"event": "Double"
+},
+"about": {
+"atBatIndex": 0,
+"halfInning": "top",
+"inning": 1,
+"startTime": "2026-09-30T21:11:24.387Z",
+"endTime": "2026-09-30T21:12:46.765Z",
+"isComplete": true
+},
+"playEvents": [
+{
+"startTime": "2026-09-30T20:14:34.184Z",
+"endTime": "2026-09-30T20:46:03.717Z"
+},
+{
+"startTime": "2026-09-30T20:46:03.717Z",
+"endTime": "2026-09-30T21:11:36.602Z"
+},
+{
+"startTime": "2026-09-30T21:11:26.641Z",
+"endTime": "2026-09-30T21:11:26.642Z"
+},
+{
+"playId": "bcb8e4e7-6c1b-367d-8492-67899abbb68d",
+"startTime": "2026-09-30T21:11:26.643Z",
+"endTime": "2026-09-30T21:11:41.386Z"
+},
+{
+"playId": "1efcf881-c427-3be4-8949-c73dafd63634",
+"startTime": "2026-09-30T21:11:41.386Z",
+"endTime": "2026-09-30T21:11:58.196Z"
+},
+{
+"playId": "21df4def-4e5f-32ec-9c5b-688fa6e03848",
+"startTime": "2026-09-30T21:11:58.196Z",
+"endTime": "2026-09-30T21:12:16.739Z"
+},
+{
+"playId": "20f29b52-5037-3d23-9b65-6461ad079988",
+"startTime": "2026-09-30T21:12:16.739Z",
+"endTime": "2026-09-30T21:12:46.765Z"
+}
+],
+"homeTeamWinProbability": 44.1,
+"homeTeamWinProbabilityAdded": -5.899999999999999,
+"atBatIndex": 0
+},
+{
+"result": {
+"event": "Single"
+},
+"about": {
+"atBatIndex": 1,
+"halfInning": "top",
+"inning": 1,
+"startTime": "2026-09-30T21:12:47.755Z",
+"endTime": "2026-09-30T21:13:15.020Z",
+"isComplete": true
+},
+"playEvents": [
+{
+"playId": "20415d2c-6b03-31a8-92f9-3bdfe749ae86",
+"startTime": "2026-09-30T21:13:00.981Z",
+"endTime": "2026-09-30T21:13:15.020Z"
+}
+],
+"homeTeamWinProbability": 37.2,
+"homeTeamWinProbabilityAdded": -6.899999999999999,
+"atBatIndex": 1
+},
+{
+"result": {
+"event": "Field Error"
+},
+"about": {
+"atBatIndex": 2,
+"halfInning": "top",
+"inning": 1,
+"startTime": "2026-09-30T21:13:20.090Z",
+"endTime": "2026-09-30T21:16:02.266Z",
+"isComplete": true
+},
+"playEvents": [
+{
+"playId": "652e7739-150d-3cbd-bf4a-bd42150b4047",
+"startTime": "2026-09-30T21:13:40.598Z",
+"endTime": "2026-09-30T21:14:00.985Z"
+},
+{
+"playId": "3de65154-3d55-3044-b70a-3dee015d5c57",
+"startTime": "2026-09-30T21:14:00.985Z",
+"endTime": "2026-09-30T21:14:26.950Z"
+},
+{
+"playId": "98588573-d6a6-3538-827a-18dcb5801f30",
+"startTime": "2026-09-30T21:14:26.950Z",
+"endTime": "2026-09-30T21:14:47.179Z"
+},
+{
+"playId": "466cee28-3824-31fc-a865-012455915fb8",
+"startTime": "2026-09-30T21:14:47.179Z",
+"endTime": "2026-09-30T21:15:15.920Z"
+},
+{
+"playId": "07863d9d-bc8b-3b91-b370-cad1c549836d",
+"startTime": "2026-09-30T21:15:15.920Z",
+"endTime": "2026-09-30T21:15:38.374Z"
+},
+{
+"playId": "ac1753b5-1ae6-34c5-916e-e8cd5b93930e",
+"startTime": "2026-09-30T21:15:38.374Z",
+"endTime": "2026-09-30T21:16:02.266Z"
+}
+],
+"homeTeamWinProbability": 32.4,
+"homeTeamWinProbabilityAdded": -4.800000000000004,
+"atBatIndex": 2
+},
+{
+"result": {
+"event": "Strikeout"
+},
+"about": {
+"atBatIndex": 3,
+"halfInning": "top",
+"inning": 1,
+"startTime": "2026-09-30T21:17:00.942Z",
+"endTime": "2026-09-30T21:18:53.374Z",
+"isComplete": true
+},
+"playEvents": [
+{
+"startTime": "2026-09-30T21:16:04.886Z",
+"endTime": "2026-09-30T21:17:03.220Z"
+},
+{
+"playId": "8c5e2689-76e3-3eaf-96ea-3d679012864c",
+"startTime": "2026-09-30T21:17:03.220Z",
+"endTime": "2026-09-30T21:17:22.784Z"
+},
+{
+"startTime": "2026-09-30T21:17:22.784Z",
+"endTime": "2026-09-30T21:17:32.437Z"
+},
+{
+"playId": "54c7773e-4061-30fe-8952-a5ed9ad3308d",
+"startTime": "2026-09-30T21:17:32.437Z",
+"endTime": "2026-09-30T21:17:53.045Z"
+},
+{
+"playId": "d6e191b7-58b2-3fa6-bf69-f3be3a1a2f25",
+"startTime": "2026-09-30T21:17:53.045Z",
+"endTime": "2026-09-30T21:18:08.046Z"
+},
+{
+"startTime": "2026-09-30T21:18:08.046Z",
+"endTime": "2026-09-30T21:18:25.722Z"
+},
+{
+"playId": "92d8bc71-7853-3042-9aec-ef733fb90dcc",
+"startTime": "2026-09-30T21:18:25.722Z",
+"endTime": "2026-09-30T21:18:48.327Z"
+},
+{
+"playId": "287e2f25-f296-3504-9aa9-17492d391a64",
+"startTime": "2026-09-30T21:18:48.327Z",
+"endTime": "2026-09-30T21:18:53.374Z"
+}
+],
+"homeTeamWinProbability": 36.8,
+"homeTeamWinProbabilityAdded": 4.399999999999999,
+"atBatIndex": 3
+},
+{
+"result": {
+"event": "Single"
+},
+"about": {
+"atBatIndex": 4,
+"halfInning": "top",
+"inning": 1,
+"startTime": "2026-09-30T21:18:53.837Z",
+"endTime": "2026-09-30T21:20:13.840Z",
+"isComplete": true
+},
+"playEvents": [
+{
+"playId": "b5d02828-d917-31b5-8873-225dc93166ca",
+"startTime": "2026-09-30T21:19:16.795Z",
+"endTime": "2026-09-30T21:20:13.840Z"
+}
+],
+"homeTeamWinProbability": 22.400000000000002,
+"homeTeamWinProbabilityAdded": -14.399999999999995,
+"atBatIndex": 4
+},
+{
+"result": {
+"event": "Single"
+},
+"about": {
+"atBatIndex": 5,
+"halfInning": "top",
+"inning": 1,
+"startTime": "2026-09-30T21:20:12.287Z",
+"endTime": "2026-09-30T21:21:21.008Z",
+"isComplete": true
+},
+"playEvents": [
+{
+"playId": "7053ffb9-ecac-3b7c-ae69-0df2c595655e",
+"startTime": "2026-09-30T21:20:12.287Z",
+"endTime": "2026-09-30T21:20:37.361Z"
+},
+{
+"playId": "57aff327-24e3-379d-a526-f4f9d7255e46",
+"startTime": "2026-09-30T21:20:37.361Z",
+"endTime": "2026-09-30T21:20:57.342Z"
+},
+{
+"playId": "eaed79a2-ffcc-3065-8cc4-b6a7752ef8c4",
+"startTime": "2026-09-30T21:20:57.342Z",
+"endTime": "2026-09-30T21:21:21.008Z"
+}
+],
+"homeTeamWinProbability": 17.1,
+"homeTeamWinProbabilityAdded": -5.300000000000001,
+"atBatIndex": 5
+},
+{
+"result": {
+"event": "Single"
+},
+"about": {
+"atBatIndex": 6,
+"halfInning": "top",
+"inning": 1,
+"startTime": "2026-09-30T21:22:00.260Z",
+"endTime": "2026-09-30T21:24:27.986Z",
+"isComplete": true
+},
+"playEvents": [
+{
+"startTime": "2026-09-30T21:21:24.547Z",
+"endTime": "2026-09-30T21:22:02.542Z"
+},
+{
+"playId": "2c01c3a7-b9b1-31e2-8e2d-c2f976f734bf",
+"startTime": "2026-09-30T21:22:02.542Z",
+"endTime": "2026-09-30T21:22:22.519Z"
+},
+{
+"playId": "63789201-9c2c-365a-be45-9cd491f61063",
+"startTime": "2026-09-30T21:22:22.519Z",
+"endTime": "2026-09-30T21:22:38.408Z"
+},
+{
+"playId": "d78b86cb-2e06-3f1e-9d6f-534b4c708915",
+"startTime": "2026-09-30T21:22:38.408Z",
+"endTime": "2026-09-30T21:23:00.795Z"
+},
+{
+"playId": "fe38083a-7732-3be2-a661-af945f824f01",
+"startTime": "2026-09-30T21:23:00.795Z",
+"endTime": "2026-09-30T21:23:17.242Z"
+},
+{
+"playId": "3fc9593a-a180-3fdc-ad1c-5c7b258a2da0",
+"startTime": "2026-09-30T21:23:17.242Z",
+"endTime": "2026-09-30T21:23:46.730Z"
+},
+{
+"playId": "e3bacfc1-176f-3355-906d-fe88fe46b89e",
+"startTime": "2026-09-30T21:23:46.730Z",
+"endTime": "2026-09-30T21:24:06.075Z"
+},
+{
+"playId": "646cdab7-324f-3ae4-95c5-e0789fa0b1ef",
+"startTime": "2026-09-30T21:24:06.075Z",
+"endTime": "2026-09-30T21:24:27.986Z"
+}
+],
+"homeTeamWinProbability": 15.4,
+"homeTeamWinProbabilityAdded": -1.700000000000001,
+"atBatIndex": 6
+},
+{
+"result": {
+"event": "Strikeout"
+},
+"about": {
+"atBatIndex": 7,
+"halfInning": "top",
+"inning": 1,
+"startTime": "2026-09-30T21:24:29.472Z",
+"endTime": "2026-09-30T21:26:02.273Z",
+"isComplete": true
+},
+"playEvents": [
+{
+"playId": "5616b781-4848-3f85-b698-06fd93a51522",
+"startTime": "2026-09-30T21:24:46.842Z",
+"endTime": "2026-09-30T21:25:02.845Z"
+},
+{
+"playId": "23e3ec79-d257-34e7-a14e-c71b00cc5ce0",
+"startTime": "2026-09-30T21:25:02.845Z",
+"endTime": "2026-09-30T21:25:22.676Z"
+},
+{
+"playId": "ca1aa533-0c60-3be5-ae3c-59254104d2cc",
+"startTime": "2026-09-30T21:25:22.676Z",
+"endTime": "2026-09-30T21:25:40.490Z"
+},
+{
+"startTime": "2026-09-30T21:25:40.490Z",
+"endTime": "2026-09-30T21:25:55.694Z"
+},
+{
+"playId": "a950e7da-a0bb-3f8c-ba45-b7aa49bc3d5a",
+"startTime": "2026-09-30T21:25:55.694Z",
+"endTime": "2026-09-30T21:26:02.273Z"
+}
+],
+"homeTeamWinProbability": 17.5,
+"homeTeamWinProbabilityAdded": 2.0999999999999996,
+"atBatIndex": 7
+},
+{
+"result": {
+"event": "Walk"
+},
+"about": {
+"atBatIndex": 8,
+"halfInning": "top",
+"inning": 1,
+"startTime": "2026-09-30T21:26:02.747Z",
+"endTime": "2026-09-30T21:29:12.546Z",
+"isComplete": true
+},
+"playEvents": [
+{
+"playId": "e62f801d-71bb-35b7-a356-da0681e853ad",
+"startTime": "2026-09-30T21:26:26.148Z",
+"endTime": "2026-09-30T21:26:35.736Z"
+},
+{
+"startTime": "2026-09-30T21:26:35.736Z",
+"endTime": "2026-09-30T21:27:03.012Z",
+"homeTeamWinProbability": 16.900000000000002,
+"homeTeamWinProbabilityAdded": -0.5999999999999979
+},
+{
+"playId": "78289c70-dab2-301b-b729-4f635624be98",
+"startTime": "2026-09-30T21:27:03.012Z",
+"endTime": "2026-09-30T21:27:27.368Z"
+},
+{
+"playId": "8bca1d65-1cda-3ba8-a558-e70198283614",
+"startTime": "2026-09-30T21:27:27.368Z",
+"endTime": "2026-09-30T21:27:49.534Z"
+},
+{
+"startTime": "2026-09-30T21:27:49.534Z",
+"endTime": "2026-09-30T21:28:04.491Z"
+},
+{
+"playId": "cd1fde06-5d15-387e-9314-6dd262cfd7b4",
+"startTime": "2026-09-30T21:28:04.491Z",
+"endTime": "2026-09-30T21:28:26.960Z"
+},
+{
+"playId": "178c82f2-1674-38f2-a850-b2c076945d2e",
+"startTime": "2026-09-30T21:28:26.960Z",
+"endTime": "2026-09-30T21:28:50.600Z"
+},
+{
+"startTime": "2026-09-30T21:28:50.600Z",
+"endTime": "2026-09-30T21:29:03.536Z"
+},
+{
+"playId": "1d5cae2f-082a-332b-a9d9-8a5ea2b5de28",
+"startTime": "2026-09-30T21:29:03.536Z",
+"endTime": "2026-09-30T21:29:12.546Z"
+}
+],
+"homeTeamWinProbability": 16.1,
+"homeTeamWinProbabilityAdded": -0.8000000000000007,
+"atBatIndex": 8
+},
+{
+"result": {
+"event": "Mound Visit"
+},
+"about": {
+"atBatIndex": 9,
+"halfInning": "top",
+"inning": 1,
+"startTime": "2026-09-30T21:29:15.503Z",
+"endTime": "2026-09-30T21:29:15.502Z",
+"isComplete": false
+},
+"playEvents": [
+{
+"startTime": "2026-09-30T21:29:15.502Z",
+"endTime": "2026-09-30T21:29:15.502Z"
+}
+],
+"homeTeamWinProbability": 16.900000000000002,
+"homeTeamWinProbabilityAdded": 0.8000000000000007,
+"atBatIndex": 9
+}
+]

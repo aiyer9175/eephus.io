@@ -130,6 +130,9 @@ TARGETS: list[str] = [
     "bullpen_export.py",
     "pal_export.py",
     "source_backtest.py",
+    # MLB Scores (2026-10-02, SCORES_1_CORE_RULES): the pure core whose play
+    # text, why sentences and reasons land in the scores payloads verbatim.
+    "scores_core.py",
 ]
 
 EM = "—"

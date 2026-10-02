@@ -1,0 +1,2926 @@
+{
+"dates": [
+{
+"date": "2026-09-29",
+"games": [
+{
+"gamePk": 849845,
+"gameType": "F",
+"season": "2026",
+"gameDate": "2026-09-29T18:00:00Z",
+"officialDate": "2026-09-29",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": false,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "NL Wild Card 'A' Game 1",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 1,
+"seriesDescription": "NL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"score": 3,
+"isWinner": false,
+"team": {
+"id": 143,
+"name": "Philadelphia Phillies",
+"abbreviation": "PHI",
+"teamName": "Phillies",
+"shortName": "Philadelphia"
+},
+"probablePitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"score": 5,
+"isWinner": true,
+"team": {
+"id": 144,
+"name": "Atlanta Braves",
+"abbreviation": "ATL",
+"teamName": "Braves",
+"shortName": "Atlanta"
+},
+"probablePitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+}
+},
+"linescore": {
+"currentInning": 9,
+"inningHalf": "Top",
+"inningState": "Top",
+"isTopInning": true,
+"scheduledInnings": 9,
+"balls": 1,
+"strikes": 2,
+"outs": 3,
+"innings": [
+{
+"num": 1,
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+},
+"away": {
+"runs": 1,
+"hits": 1,
+"errors": 0
+}
+},
+{
+"num": 2,
+"home": {
+"runs": 1,
+"hits": 2,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+}
+},
+{
+"num": 3,
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+}
+},
+{
+"num": 4,
+"home": {
+"runs": 0,
+"hits": 1,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+}
+},
+{
+"num": 5,
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 1,
+"errors": 0
+}
+},
+{
+"num": 6,
+"home": {
+"runs": 1,
+"hits": 2,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 1,
+"errors": 0
+}
+},
+{
+"num": 7,
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+},
+"away": {
+"runs": 2,
+"hits": 2,
+"errors": 0
+}
+},
+{
+"num": 8,
+"home": {
+"runs": 3,
+"hits": 2,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+}
+},
+{
+"num": 9,
+"home": {
+"hits": 0,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 1,
+"errors": 0
+}
+}
+],
+"teams": {
+"away": {
+"runs": 3,
+"hits": 6,
+"errors": 0
+},
+"home": {
+"runs": 5,
+"hits": 7,
+"errors": 0
+}
+},
+"offense": {
+"batter": {
+"id": 681082,
+"fullName": "Bryson Stott"
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+}
+},
+"defense": {
+"batter": {
+"id": 628452,
+"fullName": "Raisel Iglesias"
+},
+"pitcher": {
+"id": 628452,
+"fullName": "Raisel Iglesias"
+},
+"first": {
+"id": 621566,
+"fullName": "Matt Olson"
+},
+"second": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"third": {
+"id": 663586,
+"fullName": "Austin Riley"
+}
+}
+},
+"decisions": {
+"winner": {
+"id": 669276,
+"fullName": "Dylan Lee"
+},
+"loser": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+},
+"save": {
+"id": 628452,
+"fullName": "Raisel Iglesias"
+}
+},
+"venue": {
+"id": 4705,
+"name": "Truist Park"
+},
+"broadcasts": [
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "94 WIP",
+"type": "FM",
+"callSign": "WIP",
+"isNational": false
+},
+{
+"name": "680 AM/93.7 FM The Fan",
+"type": "AM",
+"callSign": "680 AM",
+"isNational": false
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "106.1 Rumba",
+"type": "AM",
+"callSign": "106.1 FM",
+"isNational": false
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "La Mejor 1600/1460/1130 AM",
+"type": "AM",
+"callSign": "1600 AM",
+"isNational": false
+}
+],
+"seriesStatus": {
+"gameNumber": 1,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "NL Wild Card Series",
+"winningTeam": {
+"id": 144
+},
+"losingTeam": {
+"id": 143
+}
+},
+"weather": {
+"condition": "Sunny",
+"temp": "80",
+"wind": "3 mph, Calm"
+},
+"flags": {
+"noHitter": false,
+"perfectGame": false,
+"awayTeamNoHitter": false,
+"awayTeamPerfectGame": false,
+"homeTeamNoHitter": false,
+"homeTeamPerfectGame": false
+},
+"lineups": {
+"homePlayers": [
+{
+"id": 686948,
+"fullName": "Drake Baldwin",
+"primaryPosition": {
+"abbreviation": "C"
+}
+},
+{
+"id": 660670,
+"fullName": "Ronald Acuña Jr.",
+"primaryPosition": {
+"abbreviation": "RF"
+}
+},
+{
+"id": 621566,
+"fullName": "Matt Olson",
+"primaryPosition": {
+"abbreviation": "1B"
+}
+},
+{
+"id": 643289,
+"fullName": "Mauricio Dubón",
+"primaryPosition": {
+"abbreviation": "LF"
+}
+},
+{
+"id": 671739,
+"fullName": "Michael Harris II",
+"primaryPosition": {
+"abbreviation": "CF"
+}
+},
+{
+"id": 645277,
+"fullName": "Ozzie Albies",
+"primaryPosition": {
+"abbreviation": "2B"
+}
+},
+{
+"id": 663586,
+"fullName": "Austin Riley",
+"primaryPosition": {
+"abbreviation": "3B"
+}
+},
+{
+"id": 573262,
+"fullName": "Mike Yastrzemski",
+"primaryPosition": {
+"abbreviation": "DH"
+}
+},
+{
+"id": 673490,
+"fullName": "Ha-Seong Kim",
+"primaryPosition": {
+"abbreviation": "SS"
+}
+}
+],
+"awayPlayers": [
+{
+"id": 607208,
+"fullName": "Trea Turner",
+"primaryPosition": {
+"abbreviation": "SS"
+}
+},
+{
+"id": 656941,
+"fullName": "Kyle Schwarber",
+"primaryPosition": {
+"abbreviation": "DH"
+}
+},
+{
+"id": 547180,
+"fullName": "Bryce Harper",
+"primaryPosition": {
+"abbreviation": "RF"
+}
+},
+{
+"id": 664761,
+"fullName": "Alec Bohm",
+"primaryPosition": {
+"abbreviation": "1B"
+}
+},
+{
+"id": 656537,
+"fullName": "Derek Hill",
+"primaryPosition": {
+"abbreviation": "CF"
+}
+},
+{
+"id": 650559,
+"fullName": "Bryan De La Cruz",
+"primaryPosition": {
+"abbreviation": "LF"
+}
+},
+{
+"id": 681082,
+"fullName": "Bryson Stott",
+"primaryPosition": {
+"abbreviation": "2B"
+}
+},
+{
+"id": 624641,
+"fullName": "Edmundo Sosa",
+"primaryPosition": {
+"abbreviation": "3B"
+}
+},
+{
+"id": 592663,
+"fullName": "J.T. Realmuto",
+"primaryPosition": {
+"abbreviation": "C"
+}
+}
+]
+}
+}
+]
+},
+{
+"date": "2026-09-30",
+"games": [
+{
+"gamePk": 849846,
+"gameType": "F",
+"season": "2026",
+"gameDate": "2026-09-30T21:00:00Z",
+"officialDate": "2026-09-30",
+"status": {
+"abstractGameState": "Live",
+"codedGameState": "I",
+"detailedState": "In Progress",
+"statusCode": "I",
+"startTimeTBD": false,
+"abstractGameCode": "L"
+},
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'A' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"score": 4,
+"team": {
+"id": 145,
+"name": "Chicago White Sox"
+},
+"probablePitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"score": 0,
+"team": {
+"id": 117,
+"name": "Houston Astros"
+},
+"probablePitcher": {
+"id": 686613,
+"fullName": "Hunter Brown"
+}
+}
+},
+"linescore": {
+"currentInning": 1,
+"inningHalf": "Bottom",
+"inningState": "Bottom",
+"isTopInning": false,
+"scheduledInnings": 9,
+"balls": 0,
+"strikes": 1,
+"outs": 0,
+"innings": [
+{
+"num": 1,
+"home": {
+"hits": 0,
+"errors": 2
+},
+"away": {
+"runs": 4,
+"hits": 5,
+"errors": 0
+}
+}
+],
+"teams": {
+"away": {
+"runs": 4,
+"hits": 5,
+"errors": 0
+},
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 2
+}
+},
+"offense": {
+"batter": {
+"id": 665161,
+"fullName": "Jeremy Peña"
+},
+"pitcher": {
+"id": 805123,
+"fullName": "AJ Blubaugh"
+}
+},
+"defense": {
+"batter": {
+"id": 691019,
+"fullName": "Kyle Teel"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"first": {
+"id": 808959,
+"fullName": "Munetaka Murakami"
+},
+"second": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+},
+"third": {
+"id": 678246,
+"fullName": "Miguel Vargas"
+}
+}
+},
+"venue": {
+"id": 2392,
+"name": "Daikin Park"
+},
+"broadcasts": [],
+"seriesStatus": {
+"gameNumber": 2,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "AL Wild Card Series",
+"winningTeam": {
+"id": 145
+},
+"losingTeam": {
+"id": 117
+}
+}
+},
+{
+"gamePk": 849846,
+"gameType": "F",
+"season": "2026",
+"gameDate": "2026-09-30T21:00:00Z",
+"officialDate": "2026-09-30",
+"status": {
+"abstractGameState": "Preview",
+"codedGameState": "P",
+"detailedState": "Pre-Game",
+"statusCode": "P",
+"startTimeTBD": false,
+"abstractGameCode": "P"
+},
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'A' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"team": {
+"id": 145,
+"name": "Chicago White Sox",
+"abbreviation": "CWS",
+"teamName": "White Sox",
+"shortName": "Chi White Sox"
+},
+"probablePitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"team": {
+"id": 117,
+"name": "Houston Astros",
+"abbreviation": "HOU",
+"teamName": "Astros",
+"shortName": "Houston"
+},
+"probablePitcher": {
+"id": 686613,
+"fullName": "Hunter Brown"
+}
+}
+},
+"linescore": {
+"scheduledInnings": 9,
+"innings": [],
+"teams": {
+"away": {},
+"home": {}
+}
+},
+"venue": {
+"id": 2392,
+"name": "Daikin Park"
+},
+"broadcasts": [
+{
+"name": "Peacock/NBCSN",
+"type": "TV",
+"callSign": "Peacock",
+"isNational": true
+},
+{
+"name": "Peacock/NBCSN",
+"type": "TV",
+"callSign": "Peacock",
+"isNational": true
+},
+{
+"name": "Peacock/NBCSN",
+"type": "TV",
+"callSign": "Peacock",
+"isNational": true
+},
+{
+"name": "KBME 790 AM/94.5 FM HD-2",
+"type": "AM",
+"callSign": "KBME",
+"isNational": false
+},
+{
+"name": "ESPN Chicago WMVP 1000 AM",
+"type": "AM",
+"callSign": "WMVP",
+"isNational": false
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "TUDN",
+"type": "AM",
+"callSign": "TUDN",
+"isNational": false
+},
+{
+"name": "KLTN-TUDN 102.9 FM",
+"type": "AM",
+"callSign": "TUDN 102.9",
+"isNational": false
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+}
+],
+"seriesStatus": {
+"gameNumber": 2,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "AL Wild Card Series",
+"winningTeam": {
+"id": 145
+},
+"losingTeam": {
+"id": 117
+}
+},
+"weather": {
+"condition": "Roof Closed",
+"temp": "73",
+"wind": "0 mph, None"
+},
+"flags": {
+"noHitter": false,
+"perfectGame": false,
+"awayTeamNoHitter": false,
+"awayTeamPerfectGame": false,
+"homeTeamNoHitter": false,
+"homeTeamPerfectGame": false
+},
+"lineups": {
+"awayPlayers": [
+{
+"id": 803011,
+"fullName": "Sam Antonacci",
+"primaryPosition": {
+"abbreviation": "LF"
+}
+},
+{
+"id": 691019,
+"fullName": "Kyle Teel",
+"primaryPosition": {
+"abbreviation": "C"
+}
+},
+{
+"id": 678246,
+"fullName": "Miguel Vargas",
+"primaryPosition": {
+"abbreviation": "3B"
+}
+},
+{
+"id": 808959,
+"fullName": "Munetaka Murakami",
+"primaryPosition": {
+"abbreviation": "1B"
+}
+},
+{
+"id": 643217,
+"fullName": "Andrew Benintendi",
+"primaryPosition": {
+"abbreviation": "DH"
+}
+},
+{
+"id": 671976,
+"fullName": "Tristan Peters",
+"primaryPosition": {
+"abbreviation": "CF"
+}
+},
+{
+"id": 805367,
+"fullName": "Chase Meidroth",
+"primaryPosition": {
+"abbreviation": "2B"
+}
+},
+{
+"id": 695731,
+"fullName": "Braden Montgomery",
+"primaryPosition": {
+"abbreviation": "RF"
+}
+},
+{
+"id": 695657,
+"fullName": "Colson Montgomery",
+"primaryPosition": {
+"abbreviation": "SS"
+}
+}
+]
+}
+},
+{
+"gamePk": 849848,
+"gameType": "F",
+"season": "2026",
+"gameDate": "2026-10-01T00:00:00Z",
+"officialDate": "2026-09-30",
+"status": {
+"abstractGameState": "Preview",
+"codedGameState": "S",
+"detailedState": "Scheduled",
+"statusCode": "S",
+"startTimeTBD": false,
+"abstractGameCode": "P"
+},
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'B' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"team": {
+"id": 111,
+"name": "Boston Red Sox",
+"abbreviation": "BOS",
+"teamName": "Red Sox",
+"shortName": "Boston"
+},
+"probablePitcher": {
+"id": 543243,
+"fullName": "Sonny Gray"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"team": {
+"id": 147,
+"name": "New York Yankees",
+"abbreviation": "NYY",
+"teamName": "Yankees",
+"shortName": "NY Yankees"
+},
+"probablePitcher": {
+"id": 608331,
+"fullName": "Max Fried"
+}
+}
+},
+"linescore": {
+"scheduledInnings": 9,
+"innings": [],
+"teams": {
+"away": {},
+"home": {}
+}
+},
+"venue": {
+"id": 3313,
+"name": "Yankee Stadium"
+},
+"broadcasts": [
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "WFAN 660/101.9 FM",
+"type": "AM",
+"callSign": "WFAN",
+"isNational": false
+},
+{
+"name": "WEEI 93.7",
+"type": "FM",
+"callSign": "WEEI",
+"isNational": false
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "WADO 1280",
+"type": "AM",
+"callSign": "WADO",
+"isNational": false
+},
+{
+"name": "WCCM 1490 AM (SP)",
+"type": "AM",
+"callSign": "WCCM",
+"isNational": false
+},
+{
+"name": "WESX 1230 AM (SP)",
+"type": "AM",
+"callSign": "WESX",
+"isNational": false
+}
+],
+"seriesStatus": {
+"gameNumber": 2,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "AL Wild Card Series",
+"winningTeam": {
+"id": 147
+},
+"losingTeam": {
+"id": 111
+}
+},
+"flags": {
+"noHitter": false,
+"perfectGame": false,
+"awayTeamNoHitter": false,
+"awayTeamPerfectGame": false,
+"homeTeamNoHitter": false,
+"homeTeamPerfectGame": false
+}
+},
+{
+"gamePk": 849841,
+"gameType": "F",
+"season": "2026",
+"gameDate": "2026-09-30T18:00:00Z",
+"officialDate": "2026-09-30",
+"status": {
+"abstractGameState": "Live",
+"codedGameState": "P",
+"detailedState": "Warmup",
+"statusCode": "PW",
+"startTimeTBD": false,
+"abstractGameCode": "L"
+},
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "NL Wild Card 'A' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "NL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"score": 0,
+"team": {
+"id": 143,
+"name": "Philadelphia Phillies",
+"abbreviation": "PHI",
+"teamName": "Phillies",
+"shortName": "Philadelphia"
+},
+"probablePitcher": {
+"id": 650911,
+"fullName": "Cristopher Sánchez"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"score": 0,
+"team": {
+"id": 144,
+"name": "Atlanta Braves",
+"abbreviation": "ATL",
+"teamName": "Braves",
+"shortName": "Atlanta"
+},
+"probablePitcher": {
+"id": 641816,
+"fullName": "Tyler Mahle"
+}
+}
+},
+"linescore": {
+"currentInning": 1,
+"inningHalf": "Top",
+"inningState": "Top",
+"isTopInning": true,
+"scheduledInnings": 9,
+"balls": 0,
+"strikes": 0,
+"outs": 0,
+"innings": [
+{
+"num": 1,
+"home": {
+"hits": 0,
+"errors": 0
+},
+"away": {
+"hits": 0,
+"errors": 0
+}
+}
+],
+"teams": {
+"away": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+},
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+}
+},
+"offense": {
+"batter": {
+"id": 607208,
+"fullName": "Trea Turner"
+},
+"pitcher": {
+"id": 650911,
+"fullName": "Cristopher Sánchez"
+}
+},
+"defense": {
+"batter": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr."
+},
+"pitcher": {
+"id": 641816,
+"fullName": "Tyler Mahle"
+},
+"first": {
+"id": 621566,
+"fullName": "Matt Olson"
+},
+"second": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"third": {
+"id": 663586,
+"fullName": "Austin Riley"
+}
+}
+},
+"venue": {
+"id": 4705,
+"name": "Truist Park"
+},
+"broadcasts": [
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "94 WIP",
+"type": "FM",
+"callSign": "WIP",
+"isNational": false
+},
+{
+"name": "680 AM/93.7 FM The Fan",
+"type": "AM",
+"callSign": "680 AM",
+"isNational": false
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "106.1 Rumba",
+"type": "AM",
+"callSign": "106.1 FM",
+"isNational": false
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "La Mejor 1600/1460/1130 AM",
+"type": "AM",
+"callSign": "1600 AM",
+"isNational": false
+}
+],
+"seriesStatus": {
+"gameNumber": 2,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "NL Wild Card Series",
+"winningTeam": {
+"id": 144
+},
+"losingTeam": {
+"id": 143
+}
+},
+"weather": {
+"condition": "Partly Cloudy",
+"temp": "83",
+"wind": "4 mph, L To R"
+},
+"flags": {
+"noHitter": false,
+"perfectGame": false,
+"awayTeamNoHitter": false,
+"awayTeamPerfectGame": false,
+"homeTeamNoHitter": false,
+"homeTeamPerfectGame": false
+},
+"lineups": {
+"homePlayers": [
+{
+"id": 660670,
+"fullName": "Ronald Acuña Jr.",
+"primaryPosition": {
+"abbreviation": "RF"
+}
+},
+{
+"id": 686948,
+"fullName": "Drake Baldwin",
+"primaryPosition": {
+"abbreviation": "DH"
+}
+},
+{
+"id": 645277,
+"fullName": "Ozzie Albies",
+"primaryPosition": {
+"abbreviation": "2B"
+}
+},
+{
+"id": 621566,
+"fullName": "Matt Olson",
+"primaryPosition": {
+"abbreviation": "1B"
+}
+},
+{
+"id": 643289,
+"fullName": "Mauricio Dubón",
+"primaryPosition": {
+"abbreviation": "LF"
+}
+},
+{
+"id": 663586,
+"fullName": "Austin Riley",
+"primaryPosition": {
+"abbreviation": "3B"
+}
+},
+{
+"id": 671739,
+"fullName": "Michael Harris II",
+"primaryPosition": {
+"abbreviation": "CF"
+}
+},
+{
+"id": 669221,
+"fullName": "Sean Murphy",
+"primaryPosition": {
+"abbreviation": "C"
+}
+},
+{
+"id": 673490,
+"fullName": "Ha-Seong Kim",
+"primaryPosition": {
+"abbreviation": "SS"
+}
+}
+],
+"awayPlayers": [
+{
+"id": 607208,
+"fullName": "Trea Turner",
+"primaryPosition": {
+"abbreviation": "SS"
+}
+},
+{
+"id": 656941,
+"fullName": "Kyle Schwarber",
+"primaryPosition": {
+"abbreviation": "DH"
+}
+},
+{
+"id": 547180,
+"fullName": "Bryce Harper",
+"primaryPosition": {
+"abbreviation": "RF"
+}
+},
+{
+"id": 664761,
+"fullName": "Alec Bohm",
+"primaryPosition": {
+"abbreviation": "1B"
+}
+},
+{
+"id": 681082,
+"fullName": "Bryson Stott",
+"primaryPosition": {
+"abbreviation": "2B"
+}
+},
+{
+"id": 669016,
+"fullName": "Brandon Marsh",
+"primaryPosition": {
+"abbreviation": "LF"
+}
+},
+{
+"id": 624641,
+"fullName": "Edmundo Sosa",
+"primaryPosition": {
+"abbreviation": "3B"
+}
+},
+{
+"id": 702222,
+"fullName": "Justin Crawford",
+"primaryPosition": {
+"abbreviation": "CF"
+}
+},
+{
+"id": 592663,
+"fullName": "J.T. Realmuto",
+"primaryPosition": {
+"abbreviation": "C"
+}
+}
+]
+}
+},
+{
+"gamePk": 900004,
+"gameType": "E",
+"season": "2026",
+"gameDate": "2026-09-29T18:00:00Z",
+"officialDate": "2026-09-29",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"isTie": true,
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "NL Wild Card 'A' Game 1",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 1,
+"seriesDescription": "NL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"score": 3,
+"isWinner": false,
+"team": {
+"id": 143,
+"name": "Philadelphia Phillies",
+"abbreviation": "PHI",
+"teamName": "Phillies",
+"shortName": "Philadelphia"
+},
+"probablePitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"score": 3,
+"isWinner": false,
+"team": {
+"id": 144,
+"name": "Atlanta Braves",
+"abbreviation": "ATL",
+"teamName": "Braves",
+"shortName": "Atlanta"
+},
+"probablePitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+}
+},
+"linescore": {
+"currentInning": 9,
+"inningHalf": "Top",
+"inningState": "Top",
+"isTopInning": true,
+"scheduledInnings": 9,
+"balls": 1,
+"strikes": 2,
+"outs": 3,
+"innings": [
+{
+"num": 1,
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+},
+"away": {
+"runs": 1,
+"hits": 1,
+"errors": 0
+}
+},
+{
+"num": 2,
+"home": {
+"runs": 1,
+"hits": 2,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+}
+},
+{
+"num": 3,
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+}
+},
+{
+"num": 4,
+"home": {
+"runs": 0,
+"hits": 1,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+}
+},
+{
+"num": 5,
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 1,
+"errors": 0
+}
+},
+{
+"num": 6,
+"home": {
+"runs": 1,
+"hits": 2,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 1,
+"errors": 0
+}
+},
+{
+"num": 7,
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+},
+"away": {
+"runs": 2,
+"hits": 2,
+"errors": 0
+}
+},
+{
+"num": 8,
+"home": {
+"runs": 1,
+"hits": 2,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 0,
+"errors": 0
+}
+},
+{
+"num": 9,
+"home": {
+"hits": 0,
+"errors": 0
+},
+"away": {
+"runs": 0,
+"hits": 1,
+"errors": 0
+}
+}
+],
+"teams": {
+"away": {
+"runs": 3,
+"hits": 6,
+"errors": 0
+},
+"home": {
+"runs": 3,
+"hits": 7,
+"errors": 0
+}
+},
+"offense": {
+"batter": {
+"id": 681082,
+"fullName": "Bryson Stott"
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+}
+},
+"defense": {
+"batter": {
+"id": 628452,
+"fullName": "Raisel Iglesias"
+},
+"pitcher": {
+"id": 628452,
+"fullName": "Raisel Iglesias"
+},
+"first": {
+"id": 621566,
+"fullName": "Matt Olson"
+},
+"second": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"third": {
+"id": 663586,
+"fullName": "Austin Riley"
+}
+}
+},
+"venue": {
+"id": 4705,
+"name": "Truist Park"
+},
+"broadcasts": [
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "94 WIP",
+"type": "FM",
+"callSign": "WIP",
+"isNational": false
+},
+{
+"name": "680 AM/93.7 FM The Fan",
+"type": "AM",
+"callSign": "680 AM",
+"isNational": false
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "106.1 Rumba",
+"type": "AM",
+"callSign": "106.1 FM",
+"isNational": false
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "La Mejor 1600/1460/1130 AM",
+"type": "AM",
+"callSign": "1600 AM",
+"isNational": false
+}
+],
+"seriesStatus": {
+"gameNumber": 1,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "NL Wild Card Series",
+"winningTeam": {
+"id": 144
+},
+"losingTeam": {
+"id": 143
+}
+},
+"weather": {
+"condition": "Sunny",
+"temp": "80",
+"wind": "3 mph, Calm"
+},
+"flags": {
+"noHitter": false,
+"perfectGame": false,
+"awayTeamNoHitter": false,
+"awayTeamPerfectGame": false,
+"homeTeamNoHitter": false,
+"homeTeamPerfectGame": false
+},
+"lineups": {
+"homePlayers": [
+{
+"id": 686948,
+"fullName": "Drake Baldwin",
+"primaryPosition": {
+"abbreviation": "C"
+}
+},
+{
+"id": 660670,
+"fullName": "Ronald Acuña Jr.",
+"primaryPosition": {
+"abbreviation": "RF"
+}
+},
+{
+"id": 621566,
+"fullName": "Matt Olson",
+"primaryPosition": {
+"abbreviation": "1B"
+}
+},
+{
+"id": 643289,
+"fullName": "Mauricio Dubón",
+"primaryPosition": {
+"abbreviation": "LF"
+}
+},
+{
+"id": 671739,
+"fullName": "Michael Harris II",
+"primaryPosition": {
+"abbreviation": "CF"
+}
+},
+{
+"id": 645277,
+"fullName": "Ozzie Albies",
+"primaryPosition": {
+"abbreviation": "2B"
+}
+},
+{
+"id": 663586,
+"fullName": "Austin Riley",
+"primaryPosition": {
+"abbreviation": "3B"
+}
+},
+{
+"id": 573262,
+"fullName": "Mike Yastrzemski",
+"primaryPosition": {
+"abbreviation": "DH"
+}
+},
+{
+"id": 673490,
+"fullName": "Ha-Seong Kim",
+"primaryPosition": {
+"abbreviation": "SS"
+}
+}
+],
+"awayPlayers": [
+{
+"id": 607208,
+"fullName": "Trea Turner",
+"primaryPosition": {
+"abbreviation": "SS"
+}
+},
+{
+"id": 656941,
+"fullName": "Kyle Schwarber",
+"primaryPosition": {
+"abbreviation": "DH"
+}
+},
+{
+"id": 547180,
+"fullName": "Bryce Harper",
+"primaryPosition": {
+"abbreviation": "RF"
+}
+},
+{
+"id": 664761,
+"fullName": "Alec Bohm",
+"primaryPosition": {
+"abbreviation": "1B"
+}
+},
+{
+"id": 656537,
+"fullName": "Derek Hill",
+"primaryPosition": {
+"abbreviation": "CF"
+}
+},
+{
+"id": 650559,
+"fullName": "Bryan De La Cruz",
+"primaryPosition": {
+"abbreviation": "LF"
+}
+},
+{
+"id": 681082,
+"fullName": "Bryson Stott",
+"primaryPosition": {
+"abbreviation": "2B"
+}
+},
+{
+"id": 624641,
+"fullName": "Edmundo Sosa",
+"primaryPosition": {
+"abbreviation": "3B"
+}
+},
+{
+"id": 592663,
+"fullName": "J.T. Realmuto",
+"primaryPosition": {
+"abbreviation": "C"
+}
+}
+]
+}
+},
+{
+"gamePk": 900005,
+"gameType": "F",
+"season": "2026",
+"gameDate": "2026-10-01T00:00:00Z",
+"officialDate": "2026-09-30",
+"status": {
+"abstractGameState": "Preview",
+"codedGameState": "S",
+"detailedState": "Scheduled",
+"statusCode": "S",
+"startTimeTBD": false,
+"abstractGameCode": "P"
+},
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'B' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"team": {
+"id": 111,
+"name": "Boston Red Sox",
+"abbreviation": "BOS",
+"teamName": "Red Sox",
+"shortName": "Boston"
+},
+"probablePitcher": {
+"id": 543243,
+"fullName": "Sonny Gray"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"team": {
+"id": 147,
+"name": "Atlanta Braves — home",
+"abbreviation": "NYY",
+"teamName": "Yankees",
+"shortName": "NY Yankees"
+},
+"probablePitcher": {
+"id": 608331,
+"fullName": "Max Fried"
+}
+}
+},
+"linescore": {
+"scheduledInnings": 9,
+"innings": [],
+"teams": {
+"away": {},
+"home": {}
+}
+},
+"venue": {
+"id": 4705,
+"name": "Truist Park – Lot A"
+},
+"broadcasts": [
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "WFAN 660/101.9 FM",
+"type": "AM",
+"callSign": "WFAN",
+"isNational": false
+},
+{
+"name": "WEEI 93.7",
+"type": "FM",
+"callSign": "WEEI",
+"isNational": false
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "WADO 1280",
+"type": "AM",
+"callSign": "WADO",
+"isNational": false
+},
+{
+"name": "WCCM 1490 AM (SP)",
+"type": "AM",
+"callSign": "WCCM",
+"isNational": false
+},
+{
+"name": "WESX 1230 AM (SP)",
+"type": "AM",
+"callSign": "WESX",
+"isNational": false
+}
+],
+"seriesStatus": {
+"gameNumber": 2,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "AL Wild Card Series",
+"winningTeam": {
+"id": 147
+},
+"losingTeam": {
+"id": 111
+}
+},
+"flags": {
+"noHitter": false,
+"perfectGame": false,
+"awayTeamNoHitter": false,
+"awayTeamPerfectGame": false,
+"homeTeamNoHitter": false,
+"homeTeamPerfectGame": false
+}
+}
+]
+},
+{
+"date": "2026-09-27",
+"games": [
+{
+"gamePk": 823490,
+"gameType": "R",
+"season": "2026",
+"gameDate": "2026-09-27T17:05:00Z",
+"officialDate": "2026-09-27",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "C",
+"detailedState": "Cancelled",
+"statusCode": "CR",
+"startTimeTBD": false,
+"reason": "Rain",
+"abstractGameCode": "F"
+},
+"gameNumber": 1,
+"doubleHeader": "N",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 3,
+"seriesDescription": "Regular Season",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 79,
+"losses": 82,
+"ties": 0,
+"pct": ".491"
+},
+"team": {
+"id": 110,
+"name": "Baltimore Orioles",
+"abbreviation": "BAL",
+"teamName": "Orioles",
+"shortName": "Baltimore"
+},
+"probablePitcher": {
+"id": 669358,
+"fullName": "Shane Baz"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 93,
+"losses": 68,
+"ties": 0,
+"pct": ".578"
+},
+"team": {
+"id": 147,
+"name": "New York Yankees",
+"abbreviation": "NYY",
+"teamName": "Yankees",
+"shortName": "NY Yankees"
+},
+"probablePitcher": {
+"id": 695684,
+"fullName": "Elmer Rodríguez"
+}
+}
+},
+"venue": {
+"id": 3313,
+"name": "Yankee Stadium"
+},
+"broadcasts": [
+{
+"name": "YES",
+"type": "TV",
+"callSign": "YES",
+"isNational": false
+},
+{
+"name": "WFAN 660/101.9 FM",
+"type": "AM",
+"callSign": "WFAN",
+"isNational": false
+},
+{
+"name": "98 Rock 97.9 FM",
+"type": "FM",
+"callSign": "98 Rock",
+"isNational": false
+},
+{
+"name": "WADO 1280",
+"type": "AM",
+"callSign": "WADO",
+"isNational": false
+},
+{
+"name": "MASN",
+"type": "TV",
+"callSign": "MASN",
+"isNational": false
+},
+{
+"name": "WBAL 1090 AM",
+"type": "AM",
+"callSign": "WBAL 1090",
+"isNational": false
+}
+],
+"seriesStatus": {
+"gameNumber": 3,
+"totalGames": 3,
+"isTied": true,
+"isOver": false,
+"wins": 1,
+"losses": 1,
+"description": "Regular Season"
+}
+}
+]
+},
+{
+"date": "2026-10-01",
+"games": [
+{
+"gamePk": 849844,
+"gameType": "F",
+"season": "2026",
+"gameDate": "2026-10-01T18:00:00Z",
+"officialDate": "2026-10-01",
+"status": {
+"abstractGameState": "Preview",
+"codedGameState": "S",
+"detailedState": "Scheduled",
+"statusCode": "S",
+"startTimeTBD": false,
+"abstractGameCode": "P"
+},
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "NL Wild Card 'A' Game 3",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 3,
+"seriesDescription": "NL Wild Card Series",
+"ifNecessary": "Y",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"team": {
+"id": 143,
+"name": "Philadelphia Phillies",
+"abbreviation": "PHI",
+"teamName": "Phillies",
+"shortName": "Philadelphia"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"team": {
+"id": 144,
+"name": "Atlanta Braves",
+"abbreviation": "ATL",
+"teamName": "Braves",
+"shortName": "Atlanta"
+}
+}
+},
+"linescore": {
+"scheduledInnings": 9,
+"innings": [],
+"teams": {
+"away": {},
+"home": {}
+}
+},
+"venue": {
+"id": 4705,
+"name": "Truist Park"
+},
+"broadcasts": [
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "94 WIP",
+"type": "FM",
+"callSign": "WIP",
+"isNational": false
+},
+{
+"name": "680 AM/93.7 FM The Fan",
+"type": "AM",
+"callSign": "680 AM",
+"isNational": false
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "106.1 Rumba",
+"type": "AM",
+"callSign": "106.1 FM",
+"isNational": false
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "La Mejor 1600/1460/1130 AM",
+"type": "AM",
+"callSign": "1600 AM",
+"isNational": false
+}
+],
+"seriesStatus": {
+"gameNumber": 3,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "NL Wild Card Series",
+"winningTeam": {
+"id": 144
+},
+"losingTeam": {
+"id": 143
+}
+}
+},
+{
+"gamePk": 900001,
+"gameType": "F",
+"season": "2026",
+"gameDate": "2026-10-01T00:00:00Z",
+"officialDate": "2026-09-30",
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "D",
+"detailedState": "Postponed",
+"statusCode": "DR",
+"startTimeTBD": false,
+"reason": "Rain",
+"abstractGameCode": "F"
+},
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'B' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"team": {
+"id": 111,
+"name": "Boston Red Sox",
+"abbreviation": "BOS",
+"teamName": "Red Sox",
+"shortName": "Boston"
+},
+"probablePitcher": {
+"id": 543243,
+"fullName": "Sonny Gray"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"team": {
+"id": 147,
+"name": "New York Yankees",
+"abbreviation": "NYY",
+"teamName": "Yankees",
+"shortName": "NY Yankees"
+},
+"probablePitcher": {
+"id": 608331,
+"fullName": "Max Fried"
+}
+}
+},
+"venue": {
+"id": 3313,
+"name": "Yankee Stadium"
+},
+"broadcasts": [
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "WFAN 660/101.9 FM",
+"type": "AM",
+"callSign": "WFAN",
+"isNational": false
+},
+{
+"name": "WEEI 93.7",
+"type": "FM",
+"callSign": "WEEI",
+"isNational": false
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "WADO 1280",
+"type": "AM",
+"callSign": "WADO",
+"isNational": false
+},
+{
+"name": "WCCM 1490 AM (SP)",
+"type": "AM",
+"callSign": "WCCM",
+"isNational": false
+},
+{
+"name": "WESX 1230 AM (SP)",
+"type": "AM",
+"callSign": "WESX",
+"isNational": false
+}
+],
+"seriesStatus": {
+"gameNumber": 2,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "AL Wild Card Series",
+"winningTeam": {
+"id": 147
+},
+"losingTeam": {
+"id": 111
+}
+},
+"flags": {
+"noHitter": false,
+"perfectGame": false,
+"awayTeamNoHitter": false,
+"awayTeamPerfectGame": false,
+"homeTeamNoHitter": false,
+"homeTeamPerfectGame": false
+},
+"rescheduleDate": "2026-10-01",
+"rescheduleGameDate": "2026-10-01T17:05:00Z"
+},
+{
+"gamePk": 900002,
+"gameType": "F",
+"season": "2026",
+"gameDate": "2026-09-30T21:00:00Z",
+"officialDate": "2026-09-30",
+"status": {
+"abstractGameState": "Live",
+"codedGameState": "U",
+"detailedState": "Suspended: Rain",
+"statusCode": "UR",
+"startTimeTBD": false,
+"reason": "Rain",
+"abstractGameCode": "L"
+},
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "AL Wild Card 'A' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"score": 4,
+"team": {
+"id": 145,
+"name": "Chicago White Sox"
+},
+"probablePitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"score": 0,
+"team": {
+"id": 117,
+"name": "Houston Astros"
+},
+"probablePitcher": {
+"id": 686613,
+"fullName": "Hunter Brown"
+}
+}
+},
+"linescore": {
+"currentInning": 1,
+"inningHalf": "Bottom",
+"inningState": "Bottom",
+"isTopInning": false,
+"scheduledInnings": 9,
+"balls": 0,
+"strikes": 1,
+"outs": 0,
+"innings": [
+{
+"num": 1,
+"home": {
+"hits": 0,
+"errors": 2
+},
+"away": {
+"runs": 4,
+"hits": 5,
+"errors": 0
+}
+}
+],
+"teams": {
+"away": {
+"runs": 4,
+"hits": 5,
+"errors": 0
+},
+"home": {
+"runs": 0,
+"hits": 0,
+"errors": 2
+}
+},
+"offense": {
+"batter": {
+"id": 665161,
+"fullName": "Jeremy Peña"
+},
+"pitcher": {
+"id": 805123,
+"fullName": "AJ Blubaugh"
+}
+},
+"defense": {
+"batter": {
+"id": 691019,
+"fullName": "Kyle Teel"
+},
+"pitcher": {
+"id": 680732,
+"fullName": "Sean Burke"
+},
+"first": {
+"id": 808959,
+"fullName": "Munetaka Murakami"
+},
+"second": {
+"id": 805367,
+"fullName": "Chase Meidroth"
+},
+"third": {
+"id": 678246,
+"fullName": "Miguel Vargas"
+}
+}
+},
+"venue": {
+"id": 2392,
+"name": "Daikin Park"
+},
+"broadcasts": [],
+"seriesStatus": {
+"gameNumber": 2,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "AL Wild Card Series",
+"winningTeam": {
+"id": 145
+},
+"losingTeam": {
+"id": 117
+}
+},
+"resumeDate": "2026-10-01"
+},
+{
+"gamePk": 900003,
+"gameType": "F",
+"season": "2026",
+"gameDate": "2026-10-01T23:10:00Z",
+"officialDate": "2026-09-30",
+"status": {
+"abstractGameState": "Preview",
+"codedGameState": "S",
+"detailedState": "Scheduled",
+"statusCode": "S",
+"startTimeTBD": false,
+"abstractGameCode": "P"
+},
+"gameNumber": 2,
+"doubleHeader": "S",
+"description": "AL Wild Card 'B' Game 2",
+"scheduledInnings": 9,
+"gamesInSeries": 3,
+"seriesGameNumber": 2,
+"seriesDescription": "AL Wild Card Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 1,
+"ties": 0,
+"pct": ".000"
+},
+"team": {
+"id": 111,
+"name": "Boston Red Sox",
+"abbreviation": "BOS",
+"teamName": "Red Sox",
+"shortName": "Boston"
+},
+"probablePitcher": {
+"id": 543243,
+"fullName": "Sonny Gray"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 1,
+"losses": 0,
+"ties": 0,
+"pct": "1.000"
+},
+"team": {
+"id": 147,
+"name": "New York Yankees",
+"abbreviation": "NYY",
+"teamName": "Yankees",
+"shortName": "NY Yankees"
+},
+"probablePitcher": {
+"id": 608331,
+"fullName": "Max Fried"
+}
+}
+},
+"linescore": {
+"scheduledInnings": 9,
+"innings": [],
+"teams": {
+"away": {},
+"home": {}
+}
+},
+"venue": {
+"id": 3313,
+"name": "Yankee Stadium"
+},
+"broadcasts": [
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "NBC/Peacock",
+"type": "TV",
+"callSign": "NBC",
+"isNational": true
+},
+{
+"name": "WFAN 660/101.9 FM",
+"type": "AM",
+"callSign": "WFAN",
+"isNational": false
+},
+{
+"name": "WEEI 93.7",
+"type": "FM",
+"callSign": "WEEI",
+"isNational": false
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "Universo/Peacock",
+"type": "TV",
+"callSign": "Universo",
+"isNational": true
+},
+{
+"name": "WADO 1280",
+"type": "AM",
+"callSign": "WADO",
+"isNational": false
+},
+{
+"name": "WCCM 1490 AM (SP)",
+"type": "AM",
+"callSign": "WCCM",
+"isNational": false
+},
+{
+"name": "WESX 1230 AM (SP)",
+"type": "AM",
+"callSign": "WESX",
+"isNational": false
+}
+],
+"seriesStatus": {
+"gameNumber": 2,
+"totalGames": 3,
+"isTied": false,
+"isOver": false,
+"wins": 1,
+"losses": 0,
+"description": "AL Wild Card Series",
+"winningTeam": {
+"id": 147
+},
+"losingTeam": {
+"id": 111
+}
+},
+"flags": {
+"noHitter": false,
+"perfectGame": false,
+"awayTeamNoHitter": false,
+"awayTeamPerfectGame": false,
+"homeTeamNoHitter": false,
+"homeTeamPerfectGame": false
+}
+}
+]
+},
+{
+"date": "2026-10-03",
+"games": [
+{
+"gamePk": 849830,
+"gameType": "D",
+"season": "2026",
+"gameDate": "2026-10-03T08:33:00Z",
+"officialDate": "2026-10-03",
+"status": {
+"abstractGameState": "Preview",
+"codedGameState": "S",
+"detailedState": "Scheduled",
+"statusCode": "S",
+"startTimeTBD": true,
+"abstractGameCode": "P"
+},
+"gameNumber": 1,
+"doubleHeader": "N",
+"description": "NLDS 'A' Game 1",
+"scheduledInnings": 9,
+"gamesInSeries": 5,
+"seriesGameNumber": 1,
+"seriesDescription": "NL Division Series",
+"ifNecessary": "N",
+"teams": {
+"away": {
+"leagueRecord": {
+"wins": 0,
+"losses": 0,
+"ties": 0,
+"pct": ".000"
+},
+"team": {
+"id": 5533,
+"name": "SD/CHC",
+"abbreviation": "SD/CHC",
+"teamName": "SD/CHC",
+"shortName": "SD/CHC"
+}
+},
+"home": {
+"leagueRecord": {
+"wins": 0,
+"losses": 0,
+"ties": 0,
+"pct": ".000"
+},
+"team": {
+"id": 158,
+"name": "Milwaukee Brewers",
+"abbreviation": "MIL",
+"teamName": "Brewers",
+"shortName": "Milwaukee"
+},
+"probablePitcher": {
+"id": 694819,
+"fullName": "Jacob Misiorowski"
+}
+}
+},
+"linescore": {
+"scheduledInnings": 9,
+"innings": [],
+"teams": {
+"away": {},
+"home": {}
+}
+},
+"venue": {
+"id": 32,
+"name": "American Family Field"
+},
+"broadcasts": [
+{
+"name": "FOX / FS1",
+"type": "TV",
+"callSign": "FOX/FS1",
+"isNational": true
+},
+{
+"name": "FOX / FS1",
+"type": "TV",
+"callSign": "FOX/FS1",
+"isNational": true
+},
+{
+"name": "WTMJ 620",
+"type": "AM",
+"callSign": "WTMJ",
+"isNational": false
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "ESPN Radio",
+"type": "AM",
+"callSign": "ESPN",
+"isNational": true
+},
+{
+"name": "Fox Deportes / FOX ONE",
+"type": "TV",
+"callSign": "FOX Dep.",
+"isNational": true
+},
+{
+"name": "Fox Deportes / FOX ONE",
+"type": "TV",
+"callSign": "FOX Dep.",
+"isNational": true
+},
+{
+"name": "TUDN",
+"type": "AM",
+"callSign": "TUDN",
+"isNational": false
+}
+],
+"seriesStatus": {
+"gameNumber": 1,
+"totalGames": 5,
+"isTied": true,
+"isOver": false,
+"wins": 0,
+"losses": 0,
+"description": "NL Division Series"
+}
+}
+]
+}
+]
+}

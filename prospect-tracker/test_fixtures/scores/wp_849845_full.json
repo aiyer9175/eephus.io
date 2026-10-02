@@ -1,0 +1,8808 @@
+[
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 0,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 0,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 607208,
+"fullName": "Trea Turner"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 607208,
+"fullName": "Trea Turner"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "game_advisory",
+"event": "Game Advisory",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "game_advisory",
+"event": "Game Advisory",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "game_advisory",
+"event": "Game Advisory",
+"isOut": false
+}
+},
+{
+"playId": "31f788a6-629a-392c-9661-aff80f47ed85",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "06e9b8ca-a6e8-3d57-96c6-667451c28ba6",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "e21d33bb-ee2e-31c7-a81b-f64501412e47",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "e6798213-fe89-34cc-a0d1-0c5675b12e8b",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 52.2,
+"homeTeamWinProbabilityAdded": 2.200000000000003,
+"atBatIndex": 0
+},
+{
+"result": {
+"type": "atBat",
+"event": "Walk",
+"eventType": "walk",
+"rbi": 0,
+"awayScore": 0,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 1,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 4,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+},
+"postOnFirst": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Walk",
+"eventType": "walk",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "b2f2de1a-51cc-32f9-aee9-e0c485f6ed66",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "70783632-5de0-3c59-9169-74543f760b1a",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "b19aa15d-df55-39cb-b5cb-a20b69091977",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "e062b1df-af30-3246-ad57-6d1a8d207db3",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "847ba9e4-8271-3ffe-827b-5f50bc7e2d10",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"isPitch": false,
+"index": 5,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "da6ce12b-6be9-3251-9644-02c60474e239",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "ed0e9ec6-7a93-3a6d-9377-08b48b483190",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+}
+],
+"homeTeamWinProbability": 49.8,
+"homeTeamWinProbabilityAdded": -2.4000000000000057,
+"leverageIndex": 0.63,
+"atBatIndex": 1
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 0,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 2,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 547180,
+"fullName": "Bryce Harper"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+},
+"postOnFirst": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 547180,
+"fullName": "Bryce Harper"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "de00ce8f-a45d-3c23-9da6-9e220a7eb31f",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "87be9da5-de4a-3cdb-abbe-7d7ea3e6d772",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ec9d8068-c1ab-3f1b-af55-1a71866e054b",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ad8e34a6-f00c-3b1b-a621-1de43f7e0269",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "66b1288a-6657-3b07-91d2-4f93762fcb52",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 52.6,
+"homeTeamWinProbabilityAdded": 2.8000000000000043,
+"leverageIndex": 1.21,
+"atBatIndex": 2
+},
+{
+"result": {
+"type": "atBat",
+"event": "Double",
+"eventType": "double",
+"rbi": 1,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 3,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": true
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 664761,
+"fullName": "Alec Bohm"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+},
+"postOnSecond": {
+"id": 664761,
+"fullName": "Alec Bohm"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Double",
+"eventType": "double",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 664761,
+"fullName": "Alec Bohm"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "3B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Double",
+"eventType": "double",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "3B",
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Double",
+"eventType": "double",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+},
+"responsiblePitcher": {
+"id": 519242
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "1af37953-e76a-37ad-a2e9-efd632e654b2",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "3c8a3fde-eb81-32e8-a3fb-3a3178799c81",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "2755c53b-0340-41e7-849c-c91aba991c32",
+"isPitch": false,
+"index": 2,
+"type": "stepoff",
+"details": {
+"code": "PSO",
+"isOut": false
+}
+},
+{
+"playId": "85dcd1b9-6fc7-369a-a5f0-d4c63fe69968",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "a06d8a40-9355-3cb6-9c0e-5ffe6e1a4998",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "1101d66a-0061-3f91-bb19-42ed74b82b58",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "E",
+"isOut": false,
+"description": "In play, run(s)",
+"call": {
+"code": "E"
+}
+}
+}
+],
+"homeTeamWinProbability": 41.8,
+"homeTeamWinProbabilityAdded": -10.800000000000004,
+"leverageIndex": 0.88,
+"atBatIndex": 3
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 4,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 656537,
+"fullName": "Derek Hill"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656537,
+"fullName": "Derek Hill"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "1f7c6257-c21f-3a09-a28f-98cc0467d1ac",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "c6344cfd-b6a5-379e-a375-caf5c1bfb76d",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 44.800000000000004,
+"homeTeamWinProbabilityAdded": 3.000000000000007,
+"leverageIndex": 1.12,
+"atBatIndex": 4
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 5,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 686948,
+"fullName": "Drake Baldwin"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 686948,
+"fullName": "Drake Baldwin"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "65612697-2977-3bdf-bc54-53dd95d18c05",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "c6dcedb5-cdc9-3907-b439-a9d11b3f45c4",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "b891729a-892a-323f-98ff-6e2929d17e9b",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "96e332ba-1cfe-3aae-bdb7-7d092b88f056",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "2be30293-0cc4-3755-81f8-b73c2bc46de5",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 42.4,
+"homeTeamWinProbabilityAdded": -2.4000000000000057,
+"leverageIndex": 0.91,
+"atBatIndex": 5
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 6,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr."
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr."
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "77a38af5-a77e-3261-bab7-b4b51058a71a",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 40.699999999999996,
+"homeTeamWinProbabilityAdded": -1.7000000000000028,
+"leverageIndex": 0.67,
+"atBatIndex": 6
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 7,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 1,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 3,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 621566,
+"fullName": "Matt Olson"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 621566,
+"fullName": "Matt Olson"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "a56cfcb5-54a8-3ebb-bc4a-682b8ef20fe3",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "eb9da874-8ad5-34da-b346-ef0468188834",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "12ff30db-bcf6-3745-abd6-72e3a58b1f32",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "18fe0e42-b1bb-38ba-a6fb-fff0b70cf6f2",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 39.7,
+"homeTeamWinProbabilityAdded": -0.9999999999999929,
+"leverageIndex": 0.42,
+"atBatIndex": 7
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 8,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "1e1ce2a7-c557-3c93-8bf4-18c3528d2b63",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 41.8,
+"homeTeamWinProbabilityAdded": 2.0999999999999943,
+"leverageIndex": 0.82,
+"atBatIndex": 8
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 9,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 3,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 681082,
+"fullName": "Bryson Stott"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 681082,
+"fullName": "Bryson Stott"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "eb4b4f4b-6736-3ccb-9dc7-0a4f9194f95b",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "5543b4f6-b62d-3c42-99d4-9f54a5c7438a",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "d3016275-ddff-38fd-a0c3-3a2c7d93c5bd",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "53ec3526-0f24-3417-82d1-b920200d75ca",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 43.3,
+"homeTeamWinProbabilityAdded": 1.5,
+"leverageIndex": 0.61,
+"atBatIndex": 9
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 10,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 3,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 624641,
+"fullName": "Edmundo Sosa"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 624641,
+"fullName": "Edmundo Sosa"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "62bafd5a-699e-3edc-99dc-995dcd0f0106",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "750136fb-80ab-31b2-a059-317db55da9ff",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "ab8cd061-2e15-3e61-a803-acc5c6279914",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "W",
+"isOut": true,
+"description": "Swinging Strike (Blocked)",
+"call": {
+"code": "W"
+}
+}
+}
+],
+"homeTeamWinProbability": 44.3,
+"homeTeamWinProbabilityAdded": 1.0,
+"leverageIndex": 0.4,
+"atBatIndex": 10
+},
+{
+"result": {
+"type": "atBat",
+"event": "Double",
+"eventType": "double",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 11,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 0
+},
+"matchup": {
+"batter": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+},
+"postOnSecond": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Double",
+"eventType": "double",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "846ffb18-4c42-36ce-af7d-4d7b9cdaaa82",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "cee2d155-4be5-30e5-8704-6906583b92a1",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 51.0,
+"homeTeamWinProbabilityAdded": 6.700000000000003,
+"leverageIndex": 0.98,
+"atBatIndex": 11
+},
+{
+"result": {
+"type": "atBat",
+"event": "Sac Bunt",
+"eventType": "sac_bunt",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 12,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 671739,
+"fullName": "Michael Harris II"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+},
+"postOnThird": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Sac Bunt",
+"eventType": "sac_bunt",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+}
+},
+{
+"movement": {
+"originBase": "2B",
+"start": "2B",
+"end": "3B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Sac Bunt",
+"eventType": "sac_bunt",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "ecd2c83a-5b15-3699-bc50-d5bcd98fba8f",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 49.5,
+"homeTeamWinProbabilityAdded": -1.5,
+"leverageIndex": 1.4,
+"atBatIndex": 12
+},
+{
+"result": {
+"type": "atBat",
+"event": "Walk",
+"eventType": "walk",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": false
+},
+"about": {
+"atBatIndex": 13,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 4,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+},
+"postOnFirst": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"postOnThird": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Walk",
+"eventType": "walk",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "70bf5fde-8b40-3885-89f9-0526881fc42b",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "4ac4c9c7-d7ef-3f91-a8d9-868667d71acd",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "07b1f2a8-0c52-32c4-9885-df383bd64a8d",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "*B",
+"isOut": false,
+"description": "Ball In Dirt",
+"call": {
+"code": "*B"
+}
+}
+},
+{
+"playId": "7459faaf-e3a9-3811-85ec-de5fd80c36f9",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "0672ed33-aa55-3624-ae3a-316b99c68ec1",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+}
+],
+"homeTeamWinProbability": 51.7,
+"homeTeamWinProbabilityAdded": 2.200000000000003,
+"leverageIndex": 1.52,
+"atBatIndex": 13
+},
+{
+"result": {
+"type": "atBat",
+"event": "Fielders Choice Out",
+"eventType": "fielders_choice_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 0,
+"isOut": true
+},
+"about": {
+"atBatIndex": 14,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 663586,
+"fullName": "Austin Riley"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+},
+"postOnFirst": {
+"id": 663586,
+"fullName": "Austin Riley"
+},
+"postOnThird": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": "3B",
+"start": "3B",
+"end": null,
+"outBase": "4B",
+"isOut": true
+},
+"details": {
+"event": "Fielders Choice Out",
+"eventType": "fielders_choice_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "3B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Fielders Choice Out",
+"eventType": "fielders_choice_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+}
+}
+},
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Fielders Choice Out",
+"eventType": "fielders_choice_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663586,
+"fullName": "Austin Riley"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "c3422356-d87e-3fc9-b77f-9f9e780b3e63",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "c5e6c431-9fbb-3fc1-9ff4-d39774e62556",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "3c54ffe6-80d9-3f04-b8aa-ea456ada6e9d",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 44.3,
+"homeTeamWinProbabilityAdded": -7.400000000000006,
+"leverageIndex": 2.07,
+"atBatIndex": 14
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 1,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 15,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": true
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 573262,
+"fullName": "Mike Yastrzemski"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+},
+"postOnFirst": {
+"id": 573262,
+"fullName": "Mike Yastrzemski"
+},
+"postOnThird": {
+"id": 663586,
+"fullName": "Austin Riley"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 573262,
+"fullName": "Mike Yastrzemski"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663586,
+"fullName": "Austin Riley"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "2B",
+"end": "3B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663586,
+"fullName": "Austin Riley"
+}
+}
+},
+{
+"movement": {
+"originBase": "3B",
+"start": "3B",
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"responsiblePitcher": {
+"id": 666200
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "0011de1f-3071-3315-9219-7c347c0163a0",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "E",
+"isOut": false,
+"description": "In play, run(s)",
+"call": {
+"code": "E"
+}
+}
+}
+],
+"homeTeamWinProbability": 55.1,
+"homeTeamWinProbabilityAdded": 10.800000000000004,
+"leverageIndex": 2.08,
+"atBatIndex": 15
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 16,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 2,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 3,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 673490,
+"fullName": "Ha-Seong Kim"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 673490,
+"fullName": "Ha-Seong Kim"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"playId": "6920164d-3e77-3ea7-b11e-53673a807e8d",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "81799e44-7cfd-3b0f-b5fd-319bcbb643dd",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "dd3d3711-6a13-3f7d-aeda-44cd7f64ebe0",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "cbd384f0-47d3-3dc8-b215-7633abbba181",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "eea7697b-daae-325c-8a7a-e68437b4ea5c",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "337986a1-bc1c-3f75-92ad-7643a6ca7234",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "T",
+"isOut": true,
+"description": "Foul Tip",
+"call": {
+"code": "T"
+}
+}
+}
+],
+"homeTeamWinProbability": 50.0,
+"homeTeamWinProbabilityAdded": -5.100000000000001,
+"leverageIndex": 1.96,
+"atBatIndex": 16
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 17,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 592663,
+"fullName": "J.T. Realmuto"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 592663,
+"fullName": "J.T. Realmuto"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "b294f9a1-5b21-3a3e-ab16-426c866127ac",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "2a2541f9-e85c-387d-b28c-9443043cf845",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "6107efea-1281-3876-8a4b-7ad3cb956a57",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 52.5,
+"homeTeamWinProbabilityAdded": 2.5,
+"leverageIndex": 0.98,
+"atBatIndex": 17
+},
+{
+"result": {
+"type": "atBat",
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 18,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 607208,
+"fullName": "Trea Turner"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+},
+"postOnFirst": {
+"id": 607208,
+"fullName": "Trea Turner"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 607208,
+"fullName": "Trea Turner"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "9af92434-966a-353f-9ade-8ab28c2029be",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "2f6655e3-f2f6-39b7-a76b-02b4229e6f61",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "612799c1-f2a5-3752-9297-6e31f9432ca5",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "H",
+"isOut": false,
+"description": "Hit By Pitch",
+"call": {
+"code": "H"
+}
+}
+}
+],
+"homeTeamWinProbability": 49.7,
+"homeTeamWinProbabilityAdded": -2.799999999999997,
+"leverageIndex": 0.73,
+"atBatIndex": 18
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pop Out",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 19,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+},
+"postOnFirst": {
+"id": 607208,
+"fullName": "Trea Turner"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Pop Out",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "6198cd83-1d2d-3cf8-9349-140d286355ba",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "49dbd609-d100-3bd1-9a58-dfec79b2619c",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "ca8a101b-d786-30da-b0c9-424bba2e5ab5",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "8392596a-4a8d-3383-bc19-748668ce3145",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "c402d571-ffbc-3c29-b434-9eaefd46d075",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 53.0,
+"homeTeamWinProbabilityAdded": 3.299999999999997,
+"leverageIndex": 1.38,
+"atBatIndex": 19
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pickoff Caught Stealing 2B",
+"eventType": "pickoff_caught_stealing_2b",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 20,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 547180,
+"fullName": "Bryce Harper"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": null,
+"outBase": "2B",
+"isOut": true
+},
+"details": {
+"event": "Pickoff Caught Stealing 2B",
+"eventType": "pickoff_caught_stealing_2b",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 607208,
+"fullName": "Trea Turner"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "7fd810dc-1f10-3524-ae46-21e04fb156e2",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "9097dac2-3acf-4259-94d0-0f56c96c4bd5",
+"isPitch": false,
+"index": 1,
+"type": "pickoff",
+"details": {
+"code": "1",
+"isOut": true
+}
+}
+],
+"homeTeamWinProbability": 55.50000000000001,
+"homeTeamWinProbabilityAdded": 2.500000000000007,
+"leverageIndex": 1.01,
+"atBatIndex": 20
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 21,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 686948,
+"fullName": "Drake Baldwin"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 686948,
+"fullName": "Drake Baldwin"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "1f0f48ab-a65d-377e-9ffb-66db544ec69e",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "298ed512-2913-36ff-aeab-4b7edbb127f2",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "feec0b7d-8251-3ac9-858e-2688863b3838",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "4248654d-1d41-3b45-bb9c-3ef72486e64a",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"isPitch": false,
+"index": 4,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "13f2356c-bf33-3c81-9f31-18362d96720a",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 53.0,
+"homeTeamWinProbabilityAdded": -2.500000000000007,
+"leverageIndex": 0.98,
+"atBatIndex": 21
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 22,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr."
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr."
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "8e4b5c24-cc21-3993-8e5c-273b92b9ce99",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "80daa8c1-5359-312c-8dbb-24a774949f89",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "5d8079f2-5a64-3671-b522-960e6598d087",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "46650ac2-7bcb-3513-b909-4de53bbb1c56",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "7e9aa5bb-eaa4-3337-ab2e-541d71b3b51e",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "f8ad0a25-07d4-3dad-ab79-c3aa03158535",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 51.2,
+"homeTeamWinProbabilityAdded": -1.7999999999999972,
+"leverageIndex": 0.73,
+"atBatIndex": 22
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 23,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 3,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 621566,
+"fullName": "Matt Olson"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 621566,
+"fullName": "Matt Olson"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "f0b805b0-b9c7-3fb0-a29f-83e8c95824d3",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "3383a804-9a26-3af0-bd5e-d5389907a84a",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "78880793-03f8-34b4-9d08-4d20618b3352",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "e26301de-20cb-3670-a194-c05c97815b93",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "ad5d042d-9edb-3c87-a0b2-ddcc08584bf2",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 50.0,
+"homeTeamWinProbabilityAdded": -1.2000000000000028,
+"leverageIndex": 0.48,
+"atBatIndex": 23
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 24,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 547180,
+"fullName": "Bryce Harper"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 547180,
+"fullName": "Bryce Harper"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "76650f6a-596c-3f15-af63-c40662e1a5c9",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f3589331-e6b9-3bb7-867b-97308ad890af",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "491e11fa-481a-3cbf-9087-c486b3d7e379",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 52.7,
+"homeTeamWinProbabilityAdded": 2.700000000000003,
+"leverageIndex": 1.07,
+"atBatIndex": 24
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 25,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 664761,
+"fullName": "Alec Bohm"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 664761,
+"fullName": "Alec Bohm"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "20f5623e-1d8a-3f54-bf5e-9cff4a4ff03e",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "a5919a17-be50-3798-8519-e59d7d7b2898",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f69e36fc-6740-361d-aeda-93724e6ed847",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 54.7,
+"homeTeamWinProbabilityAdded": 2.0,
+"leverageIndex": 0.79,
+"atBatIndex": 25
+},
+{
+"result": {
+"type": "atBat",
+"event": "Bunt Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 26,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 656537,
+"fullName": "Derek Hill"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Bunt Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656537,
+"fullName": "Derek Hill"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "3aa74068-4df7-316d-a9b5-6d60544d3115",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "8724ae56-3c2b-302a-a7f2-2787afae8707",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 56.00000000000001,
+"homeTeamWinProbabilityAdded": 1.3000000000000043,
+"leverageIndex": 0.52,
+"atBatIndex": 26
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 27,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "b8cb27aa-67f8-3bf2-b8d1-fa3b8feeead6",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "9ed2e28d-a429-3e78-b00a-29a743de56f5",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "200ba02d-8d05-3241-859b-77744a0fef23",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "T",
+"isOut": false,
+"description": "Foul Tip",
+"call": {
+"code": "T"
+}
+}
+},
+{
+"playId": "f90b11ac-67ab-3780-be03-579835a59a47",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "91653029-de08-3778-a987-64646a4034e4",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 53.300000000000004,
+"homeTeamWinProbabilityAdded": -2.700000000000003,
+"leverageIndex": 1.06,
+"atBatIndex": 27
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 28,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 671739,
+"fullName": "Michael Harris II"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+},
+"postOnFirst": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "8140b432-5995-325e-ad5c-2541bb09fbb3",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "b07e306d-76ca-3724-b309-ceea05bf9916",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "0bbdbcd9-934d-357c-9a1e-7f4e0c6bca70",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 56.3,
+"homeTeamWinProbabilityAdded": 2.999999999999993,
+"leverageIndex": 0.79,
+"atBatIndex": 28
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 29,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+},
+"postOnSecond": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "30ccffbe-2eaa-3941-96b5-d443d68892ab",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "bdffd77d-eb55-3abf-a70c-5ae63ba0804b",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "*B",
+"isOut": false,
+"description": "Ball In Dirt",
+"call": {
+"code": "*B"
+}
+}
+},
+{
+"playId": "2b012589-c424-3ba7-9c52-9e9bddf08e85",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "fd091cd8-7af4-3dab-8efe-e821e7891f00",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "a333e19d-a411-3e31-b945-e036964d8c7e",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 54.2,
+"homeTeamWinProbabilityAdded": -2.0999999999999943,
+"leverageIndex": 1.48,
+"atBatIndex": 29
+},
+{
+"result": {
+"type": "atBat",
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 30,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 663586,
+"fullName": "Austin Riley"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+},
+"postOnFirst": {
+"id": 663586,
+"fullName": "Austin Riley"
+},
+"postOnSecond": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663586,
+"fullName": "Austin Riley"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "86fbeb1d-8977-359f-b096-d5afd3df60da",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "T",
+"isOut": false,
+"description": "Foul Tip",
+"call": {
+"code": "T"
+}
+}
+},
+{
+"playId": "fb230f81-2ba6-32fb-a4fc-f6552ccad6eb",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "H",
+"isOut": false,
+"description": "Hit By Pitch",
+"call": {
+"code": "H"
+}
+}
+}
+],
+"homeTeamWinProbability": 55.300000000000004,
+"homeTeamWinProbabilityAdded": 1.1000000000000014,
+"leverageIndex": 1.57,
+"atBatIndex": 30
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 31,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 4,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 573262,
+"fullName": "Mike Yastrzemski"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 573262,
+"fullName": "Mike Yastrzemski"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "16c2da0c-b882-346d-9766-3f445ba5755a",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "44b66bc3-920e-3584-90d3-df6957d8faf5",
+"isPitch": false,
+"index": 1,
+"type": "pickoff",
+"details": {
+"code": "2",
+"isOut": false
+}
+},
+{
+"playId": "90a66d37-3c37-387a-9193-0633a3e19625",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 50.0,
+"homeTeamWinProbabilityAdded": -5.300000000000004,
+"leverageIndex": 2.11,
+"atBatIndex": 31
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 32,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "8cd7fa31-1c83-3176-97dc-815546489ff5",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "ef5e0057-45c8-31a3-82a7-eb3da2fa84d2",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "2c47a834-6cee-3831-a687-642e8ce563fd",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "65f65bb2-ed6d-30d2-8652-254ae622e114",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 53.0,
+"homeTeamWinProbabilityAdded": 3.0,
+"leverageIndex": 1.17,
+"atBatIndex": 32
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 33,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 681082,
+"fullName": "Bryson Stott"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 681082,
+"fullName": "Bryson Stott"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "118b1b7c-e300-32b9-9f60-48d6de550c01",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "1c67d08d-2154-3b72-899a-2f3043f03563",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "00a84a63-e90f-3384-9514-ff1a6b61e382",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "f8f59a17-ac36-30d2-9eea-18e3430df175",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "c910486b-04d4-3699-b816-356d655aa8a1",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 55.2,
+"homeTeamWinProbabilityAdded": 2.200000000000003,
+"leverageIndex": 0.88,
+"atBatIndex": 33
+},
+{
+"result": {
+"type": "atBat",
+"event": "Double",
+"eventType": "double",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 34,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 624641,
+"fullName": "Edmundo Sosa"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+},
+"postOnSecond": {
+"id": 624641,
+"fullName": "Edmundo Sosa"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Double",
+"eventType": "double",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 624641,
+"fullName": "Edmundo Sosa"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "acf2c94e-731a-31a2-97f0-db3c05d83a9d",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "f6a1f77a-ef8e-3e96-8359-c525311beac3",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "9373d0b9-e2c4-3071-9e3e-1a9a21637182",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "f3d285e3-f1c5-3124-adc3-bf09bf8caff7",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "67b52aac-1fcf-3b6a-9a2e-67800d427003",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "f73a22fd-0923-31b6-8854-f1a953809e00",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 52.1,
+"homeTeamWinProbabilityAdded": -3.1000000000000014,
+"leverageIndex": 0.58,
+"atBatIndex": 34
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 35,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 592663,
+"fullName": "J.T. Realmuto"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 592663,
+"fullName": "J.T. Realmuto"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "fdfcd966-29a8-391c-a39d-fe5cdaf3b007",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "879ab85b-b71b-3203-b1c8-a680d7132f7d",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ad3a26b6-fe97-3486-a220-7299dedd8aba",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "ff9b5fa6-91c7-31dd-bad4-0047fbad04fe",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"isPitch": false,
+"index": 4,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "e74c2b1e-4980-3e3b-b84a-b0da13264cc2",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 56.699999999999996,
+"homeTeamWinProbabilityAdded": 4.599999999999994,
+"leverageIndex": 1.73,
+"atBatIndex": 35
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 36,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 673490,
+"fullName": "Ha-Seong Kim"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 673490,
+"fullName": "Ha-Seong Kim"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "8639a9ac-9169-38fe-8a7b-9825f810d9e9",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "c47a1d6a-5f6a-3329-897d-ba02fd3db58d",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "43661d34-ba6b-3555-ac63-0bc3bff23bb4",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"isPitch": false,
+"index": 3,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "1907385d-6bae-32b6-81c0-e66788718680",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "4aea6992-e4a7-3e13-9177-6d5707af96c5",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "W",
+"isOut": true,
+"description": "Swinging Strike (Blocked)",
+"call": {
+"code": "W"
+}
+}
+}
+],
+"homeTeamWinProbability": 53.7,
+"homeTeamWinProbabilityAdded": -2.999999999999993,
+"leverageIndex": 1.16,
+"atBatIndex": 36
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 37,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 686948,
+"fullName": "Drake Baldwin"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 686948,
+"fullName": "Drake Baldwin"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "c2ac0e4d-f3ee-3c23-bbe1-15b69cc8bcf3",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "bdb8b64e-7539-35dd-b817-9d51fd7949ab",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "43c61204-c449-32ff-a720-0d263f6b49ed",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "8a9fb241-3948-3e08-96a4-1cedd07df7c3",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "d6c1d179-5de2-3fd2-886c-196ae1c26256",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f8280355-461c-31ce-a35b-22eb7984eac3",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": true,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+}
+],
+"homeTeamWinProbability": 51.5,
+"homeTeamWinProbabilityAdded": -2.200000000000003,
+"leverageIndex": 0.88,
+"atBatIndex": 37
+},
+{
+"result": {
+"type": "atBat",
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 38,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr."
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+},
+"postOnFirst": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr."
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr."
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "285a8a81-4880-34da-a9a1-e91c3270582c",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "e323579b-6244-38bd-ac23-09c3a65e85e2",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "d39b8189-eecf-3845-82ea-10b9db52a2fb",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "H",
+"isOut": false,
+"description": "Hit By Pitch",
+"call": {
+"code": "H"
+}
+}
+}
+],
+"homeTeamWinProbability": 53.1,
+"homeTeamWinProbabilityAdded": 1.6000000000000014,
+"leverageIndex": 0.59,
+"atBatIndex": 38
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 39,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 5,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 621566,
+"fullName": "Matt Olson"
+},
+"pitcher": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 621566,
+"fullName": "Matt Olson"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "4e5ba680-7fea-37f3-a0a6-e865f260bb93",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "c76d5884-bcb6-3a0f-a209-f1cd503cd62e",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 50.0,
+"homeTeamWinProbabilityAdded": -3.1000000000000014,
+"leverageIndex": 1.23,
+"atBatIndex": 39
+},
+{
+"result": {
+"type": "atBat",
+"event": "Pop Out",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 40,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 607208,
+"fullName": "Trea Turner"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Pop Out",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 607208,
+"fullName": "Trea Turner"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "1a367e4e-753e-3d23-8bfc-2a3a9cfa6f8c",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "6dddf1d2-dba7-3c60-8201-9edcf5e439e1",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "8f32d4a9-0a77-3c9a-9569-941acd0fe979",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 53.400000000000006,
+"homeTeamWinProbabilityAdded": 3.4000000000000057,
+"leverageIndex": 1.32,
+"atBatIndex": 40
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 41,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+},
+"postOnFirst": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "2aeb2f31-435f-34b7-bd40-f72ff33ca61f",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "09561840-78b2-3bfc-a6d2-ed2dd4277a68",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "T",
+"isOut": false,
+"description": "Foul Tip",
+"call": {
+"code": "T"
+}
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "e1577482-8e5a-3f14-b8ed-5d024827f99a",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 49.7,
+"homeTeamWinProbabilityAdded": -3.700000000000003,
+"leverageIndex": 1.0,
+"atBatIndex": 41
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 42,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 3,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 547180,
+"fullName": "Bryce Harper"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+},
+"postOnFirst": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 547180,
+"fullName": "Bryce Harper"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "e2c69fa4-76af-36a4-a316-84ea3646ec98",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "68f7df5e-671d-38a2-9986-fcf1ed61212b",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "1d4fabd7-6c5b-38d9-bfa3-e693e449ed9c",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"isPitch": false,
+"index": 3,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "e7b9b6d6-5352-3ba9-81a0-0ed9e32eedc4",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "92f2f576-6d7b-3ccf-a5f5-2cb869e6670a",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 54.0,
+"homeTeamWinProbabilityAdded": 4.299999999999997,
+"leverageIndex": 1.84,
+"atBatIndex": 42
+},
+{
+"result": {
+"type": "atBat",
+"event": "Forceout",
+"eventType": "force_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 43,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 664761,
+"fullName": "Alec Bohm"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": null,
+"outBase": "2B",
+"isOut": true
+},
+"details": {
+"event": "Forceout",
+"eventType": "force_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+}
+}
+},
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Forceout",
+"eventType": "force_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 664761,
+"fullName": "Alec Bohm"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "9c3f52b5-e25a-3904-9669-1399f675cf2a",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "85a33aca-8911-39b1-a8a6-411f7526f53e",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 57.599999999999994,
+"homeTeamWinProbabilityAdded": 3.5999999999999943,
+"leverageIndex": 1.39,
+"atBatIndex": 43
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": true
+},
+"about": {
+"atBatIndex": 44,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+},
+"pitcher": {
+"id": 686934,
+"fullName": "Alex McFarlane"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"playId": "27939727-3d33-3014-bcf9-1f42fbe4d616",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "5555f25d-40c2-3e71-a6a8-573007ca3df8",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "095e9c98-f3e8-3f28-8f34-9e6de8827125",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "4896d3e0-4547-34eb-9563-2aa3baa0bb74",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 54.2,
+"homeTeamWinProbabilityAdded": -3.3999999999999915,
+"leverageIndex": 1.3,
+"atBatIndex": 44
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 1,
+"isOut": false
+},
+"about": {
+"atBatIndex": 45,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 671739,
+"fullName": "Michael Harris II"
+},
+"pitcher": {
+"id": 686934,
+"fullName": "Alex McFarlane"
+},
+"postOnFirst": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "296d9d3e-ea0d-35d2-9356-fd833dd30c74",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "cb976ae6-9368-3785-a570-1f1803017c21",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 57.8,
+"homeTeamWinProbabilityAdded": 3.5999999999999943,
+"leverageIndex": 1.0,
+"atBatIndex": 45
+},
+{
+"result": {
+"type": "atBat",
+"event": "Triple",
+"eventType": "triple",
+"rbi": 1,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 46,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": true
+},
+"count": {
+"balls": 1,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"pitcher": {
+"id": 686934,
+"fullName": "Alex McFarlane"
+},
+"postOnThird": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "3B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Triple",
+"eventType": "triple",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Triple",
+"eventType": "triple",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 671739,
+"fullName": "Michael Harris II"
+},
+"responsiblePitcher": {
+"id": 686934
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "5347349b-9986-38ae-94ef-7a4a8fe9c6e8",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "d5c854a2-2fa7-3b3b-bb09-9848def28389",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "b027e643-e98b-38ee-9e90-a8285211c905",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "E",
+"isOut": false,
+"description": "In play, run(s)",
+"call": {
+"code": "E"
+}
+}
+}
+],
+"homeTeamWinProbability": 79.3,
+"homeTeamWinProbabilityAdded": 21.5,
+"leverageIndex": 1.81,
+"atBatIndex": 46
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 47,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 1,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 663586,
+"fullName": "Austin Riley"
+},
+"pitcher": {
+"id": 686934,
+"fullName": "Alex McFarlane"
+},
+"postOnThird": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 663586,
+"fullName": "Austin Riley"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"playId": "3cc58fb4-caa8-3a3e-a8f6-0c9693db9dff",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "*B",
+"isOut": false,
+"description": "Ball In Dirt",
+"call": {
+"code": "*B"
+}
+}
+},
+{
+"playId": "556d8930-6494-34fc-8699-95da4d53aed7",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f354336d-336d-3220-811c-f460a5bd0d6f",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "W",
+"isOut": false,
+"description": "Swinging Strike (Blocked)",
+"call": {
+"code": "W"
+}
+}
+},
+{
+"playId": "14420e07-a4b9-3295-a6f8-8f11473387c7",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 73.2,
+"homeTeamWinProbabilityAdded": -6.099999999999994,
+"leverageIndex": 1.43,
+"atBatIndex": 47
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 48,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 6,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 3,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 573262,
+"fullName": "Mike Yastrzemski"
+},
+"pitcher": {
+"id": 686934,
+"fullName": "Alex McFarlane"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 573262,
+"fullName": "Mike Yastrzemski"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "17e996bb-240a-3df6-9f52-777e4da2727c",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "15e9131f-b50d-34c2-9efd-cfed6cc7c61c",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "cb0d814e-1bbc-308b-a4c7-5c80100acfe4",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 69.19999999999999,
+"homeTeamWinProbabilityAdded": -4.000000000000014,
+"leverageIndex": 1.46,
+"atBatIndex": 48
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 49,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 656537,
+"fullName": "Derek Hill"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656537,
+"fullName": "Derek Hill"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "55905307-ca8e-3641-88c6-05d89b996005",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "f2a932ad-cf2a-3ffd-b707-38157a346dfe",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "d820c4ad-a019-33e3-b790-b3b06b8971c2",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "W",
+"isOut": true,
+"description": "Swinging Strike (Blocked)",
+"call": {
+"code": "W"
+}
+}
+}
+],
+"homeTeamWinProbability": 73.6,
+"homeTeamWinProbabilityAdded": 4.400000000000006,
+"leverageIndex": 1.71,
+"atBatIndex": 49
+},
+{
+"result": {
+"type": "atBat",
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 50,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+},
+"postOnFirst": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "e50308f6-afa0-3bf5-8da7-849b6d725185",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f67948fc-25ce-3821-ace2-1a5a52451afc",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "aa8e070b-90b3-3726-94b0-b539ddd5673d",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "e47df5fe-e522-3b8d-8a1e-0d68f9885676",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "H",
+"isOut": false,
+"description": "Hit By Pitch",
+"call": {
+"code": "H"
+}
+}
+}
+],
+"homeTeamWinProbability": 68.60000000000001,
+"homeTeamWinProbabilityAdded": -4.999999999999986,
+"leverageIndex": 1.27,
+"atBatIndex": 50
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 51,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 1,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 681082,
+"fullName": "Bryson Stott"
+},
+"pitcher": {
+"id": 519242,
+"fullName": "Chris Sale"
+},
+"postOnFirst": {
+"id": 681082,
+"fullName": "Bryson Stott"
+},
+"postOnThird": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 681082,
+"fullName": "Bryson Stott"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "2B",
+"end": "3B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "45ab4ca3-88c2-3dc9-86aa-49de2a8143b6",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "L",
+"isOut": false,
+"description": "Foul Bunt",
+"call": {
+"code": "L"
+}
+}
+},
+{
+"playId": "da0f387f-835e-3d95-9314-5212d528ebfd",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "a41ffe38-f2de-3de0-94d8-739fe9b9dab2",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "c60b68e7-5488-3ffd-9d8d-60f63a5ee176",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 56.3,
+"homeTeamWinProbabilityAdded": -12.300000000000011,
+"leverageIndex": 2.42,
+"atBatIndex": 51
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 1,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 52,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 1,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 702222,
+"fullName": "Justin Crawford"
+},
+"pitcher": {
+"id": 800311,
+"fullName": "Didier Fuentes"
+},
+"postOnFirst": {
+"id": 681082,
+"fullName": "Bryson Stott"
+},
+"postOnThird": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 702222,
+"fullName": "Justin Crawford"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "offensive_substitution",
+"event": "Offensive Substitution",
+"isOut": false
+}
+},
+{
+"playId": "3a5bf3d5-00f8-316d-b442-ebabde5f4ff5",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "9994347e-727d-3286-964c-13ae9defc339",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "6ecf6c67-743c-3529-9e78-b07b0e001f78",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "1c5ab3d8-5eca-3e27-957c-f854e763339b",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "b6ad4b3b-b74d-3ce1-87f4-b59f4c4ec0a1",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 69.19999999999999,
+"homeTeamWinProbabilityAdded": 12.899999999999991,
+"leverageIndex": 3.6,
+"atBatIndex": 52
+},
+{
+"result": {
+"type": "atBat",
+"event": "Triple",
+"eventType": "triple",
+"rbi": 2,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 53,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": true
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 592663,
+"fullName": "J.T. Realmuto"
+},
+"pitcher": {
+"id": 800311,
+"fullName": "Didier Fuentes"
+},
+"postOnThird": {
+"id": 592663,
+"fullName": "J.T. Realmuto"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "3B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Triple",
+"eventType": "triple",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 592663,
+"fullName": "J.T. Realmuto"
+}
+}
+},
+{
+"movement": {
+"originBase": "3B",
+"start": "3B",
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Triple",
+"eventType": "triple",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+},
+"responsiblePitcher": {
+"id": 519242
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Triple",
+"eventType": "triple",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 681082,
+"fullName": "Bryson Stott"
+},
+"responsiblePitcher": {
+"id": 519242
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "cfa7858a-409e-37f9-8a17-f98f441cba34",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "92b5d040-38b8-3812-8a74-af75eaf6617c",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "E",
+"isOut": false,
+"description": "In play, run(s)",
+"call": {
+"code": "E"
+}
+}
+}
+],
+"homeTeamWinProbability": 31.8,
+"homeTeamWinProbabilityAdded": -37.39999999999999,
+"leverageIndex": 3.69,
+"atBatIndex": 53
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 54,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 2,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 607208,
+"fullName": "Trea Turner"
+},
+"pitcher": {
+"id": 800311,
+"fullName": "Didier Fuentes"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 607208,
+"fullName": "Trea Turner"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "36fabfc9-5177-34bb-8cd5-f66d13382237",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "7481dc55-4fef-3747-9647-f3c661eaa18a",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "1b7843f0-1ed9-3f80-b8ad-65e51fbe2349",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "0011d304-fad9-354e-a1c9-2a6fde7f8fa1",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "5f63a2ea-2cc4-3267-b0f0-8e22682972ec",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 36.4,
+"homeTeamWinProbabilityAdded": 4.599999999999998,
+"leverageIndex": 1.71,
+"atBatIndex": 54
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 55,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 642086,
+"fullName": "Dominic Smith"
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 642086,
+"fullName": "Dominic Smith"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 3,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 4,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 5,
+"type": "action",
+"details": {
+"eventType": "offensive_substitution",
+"event": "Offensive Substitution",
+"isOut": false
+}
+},
+{
+"playId": "d1725b2d-3c30-3bd4-b7bd-b2c65975bbed",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "b669da43-598e-3a8e-8228-6a3aedb16151",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"isPitch": false,
+"index": 8,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "73904a5f-4552-3673-833d-be46b1f5ad06",
+"isPitch": true,
+"index": 9,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "f046425d-51f9-305f-a3d9-bd51431eec03",
+"isPitch": true,
+"index": 10,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f66662eb-5e8a-3a7d-b9c2-7da2a7085d6c",
+"isPitch": true,
+"index": 11,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 31.6,
+"homeTeamWinProbabilityAdded": -4.799999999999997,
+"leverageIndex": 1.9,
+"atBatIndex": 55
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 56,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 686948,
+"fullName": "Drake Baldwin"
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 686948,
+"fullName": "Drake Baldwin"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "8a5187d9-80aa-35eb-8b64-124fd29c7911",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "b2a858d5-7f5c-393d-91f2-0eae5981d367",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 27.900000000000002,
+"homeTeamWinProbabilityAdded": -3.6999999999999993,
+"leverageIndex": 1.44,
+"atBatIndex": 56
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 57,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 7,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 1,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr."
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr."
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "988d8432-66d6-3a30-809e-085054502938",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "e98f1814-aadf-35a7-aa41-1cdb57eafdbb",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "8658df0c-504b-3deb-a1bd-7afdf68b86f7",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f646d6f5-4e9e-3535-98fa-836b256393d3",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "21daebf3-c052-3303-bbed-fea163bda601",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 25.5,
+"homeTeamWinProbabilityAdded": -2.400000000000002,
+"leverageIndex": 0.96,
+"atBatIndex": 57
+},
+{
+"result": {
+"type": "atBat",
+"event": "Strikeout",
+"eventType": "strikeout",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 58,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 3,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+},
+"pitcher": {
+"id": 669276,
+"fullName": "Dylan Lee"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Strikeout",
+"eventType": "strikeout",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 656941,
+"fullName": "Kyle Schwarber"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "defensive_substitution",
+"event": "Defensive Sub",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"playId": "1f98140d-408e-3f92-8863-bbba0c2de509",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "3d4613bf-001a-3a97-86bf-5e51392955ee",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "f5168540-2fdb-39ce-963c-57dcd85ad69e",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "18753738-5c7f-31ea-bfa1-f4484ee26796",
+"isPitch": true,
+"index": 6,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": true,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+}
+],
+"homeTeamWinProbability": 27.800000000000004,
+"homeTeamWinProbabilityAdded": 2.3000000000000043,
+"leverageIndex": 0.9,
+"atBatIndex": 58
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 59,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 3,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 547180,
+"fullName": "Bryce Harper"
+},
+"pitcher": {
+"id": 669276,
+"fullName": "Dylan Lee"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 547180,
+"fullName": "Bryce Harper"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "d18f4e18-e12b-3bde-ba6e-ec4ee0788eac",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "cecf4d09-ab39-3efe-9eaf-c91d4897dfc3",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ab4587dc-94fb-33f0-b488-acc1b192a753",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "ac05f036-7089-352b-8ab3-9e10e58a007e",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"playId": "9be66016-e789-3635-831a-bd1f228d1d73",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "eae6864d-877d-3da5-88a5-fc3e484d8cbb",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 29.599999999999998,
+"homeTeamWinProbabilityAdded": 1.7999999999999936,
+"leverageIndex": 0.7,
+"atBatIndex": 59
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 60,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 2,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 664761,
+"fullName": "Alec Bohm"
+},
+"pitcher": {
+"id": 669276,
+"fullName": "Dylan Lee"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 664761,
+"fullName": "Alec Bohm"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "d914a63e-f4e5-3413-8e6c-619001d695d1",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "37019fe1-bf95-3bf5-9828-f470d6bce627",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "ed6ed5c3-2480-319b-aa27-c56ef320efbc",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "89622b02-ad4e-3406-8a6a-7636be672b51",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "b2f33f9c-1724-30b8-b15d-9a8c91be2ce7",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "5c479a65-584b-3d5e-88ad-476f67e4d4a3",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 30.8,
+"homeTeamWinProbabilityAdded": 1.2000000000000028,
+"leverageIndex": 0.49,
+"atBatIndex": 60
+},
+{
+"result": {
+"type": "atBat",
+"event": "Lineout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 61,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 1
+},
+"matchup": {
+"batter": {
+"id": 621566,
+"fullName": "Matt Olson"
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Lineout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 621566,
+"fullName": "Matt Olson"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "10614537-b3dd-3726-aa3a-5e23c714a3c7",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "6739ebc0-5be4-3afb-b2b1-3c5afb1f1113",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 24.5,
+"homeTeamWinProbabilityAdded": -6.300000000000001,
+"leverageIndex": 2.47,
+"atBatIndex": 61
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": true
+},
+"about": {
+"atBatIndex": 62,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 643289,
+"fullName": "Mauricio Dubón"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "23332b12-7124-37c5-b23c-e5fdaa93ed75",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 19.7,
+"homeTeamWinProbabilityAdded": -4.800000000000001,
+"leverageIndex": 1.9,
+"atBatIndex": 62
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 63,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 2,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 671739,
+"fullName": "Michael Harris II"
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+},
+"postOnFirst": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "91bff9ad-c532-3157-ad26-94d26c9a6be8",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "30949f36-e39c-345a-b3e7-40b175a204bf",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "30b56ae4-31d9-34cf-b06a-9540f55cb126",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 23.3,
+"homeTeamWinProbabilityAdded": 3.6000000000000014,
+"leverageIndex": 1.28,
+"atBatIndex": 63
+},
+{
+"result": {
+"type": "atBat",
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 2,
+"isOut": false
+},
+"about": {
+"atBatIndex": 64,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 8,
+"isComplete": true,
+"hasReview": true,
+"isScoringPlay": false
+},
+"count": {
+"balls": 4,
+"strikes": 2,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+},
+"postOnFirst": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"postOnSecond": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "2B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 671739,
+"fullName": "Michael Harris II"
+}
+}
+},
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Hit By Pitch",
+"eventType": "hit_by_pitch",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "58a05ed2-802f-3592-988c-620980bddf34",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "fd7c5b23-c5cc-3411-b8f0-0db6501688ca",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "5606627e-d1ab-3385-92d4-fd88d31b6ca6",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "4548b184-750f-31eb-83c7-489016fb05aa",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "F",
+"isOut": false,
+"description": "Foul",
+"call": {
+"code": "F"
+}
+}
+},
+{
+"playId": "0b418697-097d-337a-9d81-2f57f5ab6210",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "f79f0720-9608-4f85-8a2a-4ec26a16c7e3",
+"isPitch": false,
+"index": 5,
+"type": "stepoff",
+"details": {
+"code": "PSO",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 6,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "5c3c6696-bd87-36c0-bc60-0951b1d58936",
+"isPitch": true,
+"index": 7,
+"type": "pitch",
+"details": {
+"code": "H",
+"isOut": false,
+"description": "Hit By Pitch",
+"call": {
+"code": "H"
+}
+}
+}
+],
+"homeTeamWinProbability": 28.999999999999996,
+"homeTeamWinProbabilityAdded": 5.699999999999996,
+"leverageIndex": 2.72,
+"atBatIndex": 64,
+"reviewDetails": {
+"isOverturned": false,
+"inProgress": false,
+"reviewType": "MI",
+"challengeTeamId": 144
+}
+},
+{
+"result": {
+"type": "atBat",
+"event": "Home Run",
+"eventType": "home_run",
+"rbi": 3,
+"awayScore": 3,
+"homeScore": 5,
+"isOut": false
+},
+"about": {
+"atBatIndex": 65,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": true
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 663586,
+"fullName": "Austin Riley"
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Home Run",
+"eventType": "home_run",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 663586,
+"fullName": "Austin Riley"
+},
+"responsiblePitcher": {
+"id": 661395
+}
+}
+},
+{
+"movement": {
+"originBase": "2B",
+"start": "2B",
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Home Run",
+"eventType": "home_run",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 671739,
+"fullName": "Michael Harris II"
+},
+"responsiblePitcher": {
+"id": 661395
+}
+}
+},
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": "score",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Home Run",
+"eventType": "home_run",
+"isScoringEvent": true,
+"rbi": true,
+"runner": {
+"id": 645277,
+"fullName": "Ozzie Albies"
+},
+"responsiblePitcher": {
+"id": 661395
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"playId": "29f38552-151c-3d65-bdbd-3173fa3d6f3a",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "E",
+"isOut": false,
+"description": "In play, run(s)",
+"call": {
+"code": "E"
+}
+}
+}
+],
+"homeTeamWinProbability": 92.7,
+"homeTeamWinProbabilityAdded": 63.7,
+"leverageIndex": 4.97,
+"atBatIndex": 65
+},
+{
+"result": {
+"type": "atBat",
+"event": "Groundout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 5,
+"isOut": true
+},
+"about": {
+"atBatIndex": 66,
+"halfInning": "bottom",
+"isTopInning": false,
+"inning": 8,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 573262,
+"fullName": "Mike Yastrzemski"
+},
+"pitcher": {
+"id": 661395,
+"fullName": "Jhoan Duran"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Groundout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 573262,
+"fullName": "Mike Yastrzemski"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "de671f28-e8ca-30b9-9464-9ce277c96d6c",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "e70537c8-fedc-3bd0-b26c-d7d1e6fb23bc",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 92.4,
+"homeTeamWinProbabilityAdded": -0.29999999999999716,
+"leverageIndex": 0.14,
+"atBatIndex": 66
+},
+{
+"result": {
+"type": "atBat",
+"event": "Single",
+"eventType": "single",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 5,
+"isOut": false
+},
+"about": {
+"atBatIndex": 67,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 9,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 0,
+"strikes": 0,
+"outs": 0
+},
+"matchup": {
+"batter": {
+"id": 669016,
+"fullName": "Brandon Marsh"
+},
+"pitcher": {
+"id": 628452,
+"fullName": "Raisel Iglesias"
+},
+"postOnFirst": {
+"id": 669016,
+"fullName": "Brandon Marsh"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": "1B",
+"outBase": null,
+"isOut": false
+},
+"details": {
+"event": "Single",
+"eventType": "single",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 669016,
+"fullName": "Brandon Marsh"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "defensive_switch",
+"event": "Defensive Switch",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 1,
+"type": "action",
+"details": {
+"eventType": "pitching_substitution",
+"event": "Pitching Substitution",
+"isOut": false
+}
+},
+{
+"isPitch": false,
+"index": 2,
+"type": "action",
+"details": {
+"eventType": "offensive_substitution",
+"event": "Offensive Substitution",
+"isOut": false
+}
+},
+{
+"playId": "12b05906-99c5-37a6-a059-f890c2994656",
+"isPitch": true,
+"index": 3,
+"type": "pitch",
+"details": {
+"code": "D",
+"isOut": false,
+"description": "In play, no out",
+"call": {
+"code": "D"
+}
+}
+}
+],
+"homeTeamWinProbability": 84.39999999999999,
+"homeTeamWinProbabilityAdded": -8.000000000000014,
+"leverageIndex": 1.54,
+"atBatIndex": 67
+},
+{
+"result": {
+"type": "atBat",
+"event": "Grounded Into DP",
+"eventType": "grounded_into_double_play",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 5,
+"isOut": true
+},
+"about": {
+"atBatIndex": 68,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 9,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 0,
+"outs": 2
+},
+"matchup": {
+"batter": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+},
+"pitcher": {
+"id": 628452,
+"fullName": "Raisel Iglesias"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": "1B",
+"start": "1B",
+"end": null,
+"outBase": "2B",
+"isOut": true
+},
+"details": {
+"event": "Grounded Into DP",
+"eventType": "grounded_into_double_play",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 669016,
+"fullName": "Brandon Marsh"
+}
+}
+},
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Grounded Into DP",
+"eventType": "grounded_into_double_play",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 650559,
+"fullName": "Bryan De La Cruz"
+}
+}
+}
+],
+"playEvents": [
+{
+"playId": "571980be-acf2-3700-b678-c77fb5962b69",
+"isPitch": true,
+"index": 0,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "aaee43a3-53b8-3b62-8577-486bf599f4ef",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 98.8,
+"homeTeamWinProbabilityAdded": 14.400000000000006,
+"leverageIndex": 3.07,
+"atBatIndex": 68
+},
+{
+"result": {
+"type": "atBat",
+"event": "Flyout",
+"eventType": "field_out",
+"rbi": 0,
+"awayScore": 3,
+"homeScore": 5,
+"isOut": true
+},
+"about": {
+"atBatIndex": 69,
+"halfInning": "top",
+"isTopInning": true,
+"inning": 9,
+"isComplete": true,
+"hasReview": false,
+"isScoringPlay": false
+},
+"count": {
+"balls": 1,
+"strikes": 2,
+"outs": 3
+},
+"matchup": {
+"batter": {
+"id": 681082,
+"fullName": "Bryson Stott"
+},
+"pitcher": {
+"id": 628452,
+"fullName": "Raisel Iglesias"
+}
+},
+"runners": [
+{
+"movement": {
+"originBase": null,
+"start": null,
+"end": null,
+"outBase": "1B",
+"isOut": true
+},
+"details": {
+"event": "Flyout",
+"eventType": "field_out",
+"isScoringEvent": false,
+"rbi": false,
+"runner": {
+"id": 681082,
+"fullName": "Bryson Stott"
+}
+}
+}
+],
+"playEvents": [
+{
+"isPitch": false,
+"index": 0,
+"type": "action",
+"details": {
+"eventType": "mound_visit",
+"event": "Mound Visit",
+"isOut": false
+}
+},
+{
+"playId": "4f27d593-6970-38d8-9473-71ec9e388075",
+"isPitch": true,
+"index": 1,
+"type": "pitch",
+"details": {
+"code": "C",
+"isOut": false,
+"description": "Called Strike",
+"call": {
+"code": "C"
+}
+}
+},
+{
+"playId": "c8507162-f136-37f8-ab8b-831ca9a69944",
+"isPitch": true,
+"index": 2,
+"type": "pitch",
+"details": {
+"code": "S",
+"isOut": false,
+"description": "Swinging Strike",
+"call": {
+"code": "S"
+}
+}
+},
+{
+"isPitch": false,
+"index": 3,
+"type": "action",
+"details": {
+"eventType": "batter_timeout",
+"event": "Batter Timeout",
+"isOut": false
+}
+},
+{
+"playId": "80411aa9-b199-3859-a4cc-2e97b0f477b9",
+"isPitch": true,
+"index": 4,
+"type": "pitch",
+"details": {
+"code": "B",
+"isOut": false,
+"description": "Ball",
+"call": {
+"code": "B"
+}
+}
+},
+{
+"playId": "d6066bd3-487b-35a2-8d16-c5de9365eaf6",
+"isPitch": true,
+"index": 5,
+"type": "pitch",
+"details": {
+"code": "X",
+"isOut": true,
+"description": "In play, out(s)",
+"call": {
+"code": "X"
+}
+}
+}
+],
+"homeTeamWinProbability": 100.0,
+"homeTeamWinProbabilityAdded": 1.2000000000000028,
+"leverageIndex": 0.46,
+"atBatIndex": 69
+}
+]

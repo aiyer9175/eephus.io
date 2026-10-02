@@ -1,0 +1,792 @@
+{
+"copyright": "Copyright 2026 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+"gamePk": 849845,
+"gameData": {
+"datetime": {
+"dateTime": "2026-09-29T18:00:00Z",
+"originalDate": "2026-09-29",
+"officialDate": "2026-09-29",
+"dayNight": "day",
+"time": "2:00",
+"ampm": "PM"
+},
+"status": {
+"abstractGameState": "Final",
+"codedGameState": "F",
+"detailedState": "Final",
+"statusCode": "F",
+"startTimeTBD": false,
+"abstractGameCode": "F"
+},
+"teams": {
+"away": {
+"id": 143,
+"name": "Philadelphia Phillies",
+"abbreviation": "PHI",
+"teamName": "Phillies"
+},
+"home": {
+"id": 144,
+"name": "Atlanta Braves",
+"abbreviation": "ATL",
+"teamName": "Braves"
+}
+},
+"players": {
+"ID669016": {
+"id": 669016,
+"fullName": "Brandon Marsh",
+"useLastName": "Marsh",
+"lastName": "Marsh",
+"boxscoreName": "Marsh",
+"mlbDebutDate": "2021-07-18",
+"primaryPosition": {
+"code": "7",
+"abbreviation": "LF"
+}
+},
+"ID689266": {
+"id": 689266,
+"fullName": "Dylan Dodd",
+"useLastName": "Dodd",
+"lastName": "Dodd",
+"boxscoreName": "Dodd",
+"mlbDebutDate": "2023-04-04",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID621237": {
+"id": 621237,
+"fullName": "José Alvarado",
+"useLastName": "Alvarado",
+"lastName": "Alvarado",
+"boxscoreName": "Alvarado",
+"mlbDebutDate": "2017-05-03",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID650911": {
+"id": 650911,
+"fullName": "Cristopher Sánchez",
+"useLastName": "Sánchez",
+"lastName": "Sánchez",
+"boxscoreName": "Sánchez, C",
+"mlbDebutDate": "2021-06-06",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID650559": {
+"id": 650559,
+"fullName": "Bryan De La Cruz",
+"useLastName": "De La Cruz",
+"lastName": "De La Cruz",
+"boxscoreName": "De La Cruz, B",
+"mlbDebutDate": "2021-04-11",
+"primaryPosition": {
+"code": "9",
+"abbreviation": "RF"
+}
+},
+"ID547180": {
+"id": 547180,
+"fullName": "Bryce Harper",
+"useLastName": "Harper",
+"lastName": "Harper",
+"boxscoreName": "Harper, B",
+"mlbDebutDate": "2012-04-28",
+"primaryPosition": {
+"code": "3",
+"abbreviation": "1B"
+}
+},
+"ID663158": {
+"id": 663158,
+"fullName": "Robert Suarez",
+"useLastName": "Suarez",
+"lastName": "Suarez",
+"boxscoreName": "Suarez, R",
+"mlbDebutDate": "2022-04-07",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID592663": {
+"id": 592663,
+"fullName": "J.T. Realmuto",
+"useLastName": "Realmuto",
+"lastName": "Realmuto",
+"boxscoreName": "Realmuto",
+"mlbDebutDate": "2014-06-05",
+"primaryPosition": {
+"code": "2",
+"abbreviation": "C"
+}
+},
+"ID554430": {
+"id": 554430,
+"fullName": "Zack Wheeler",
+"useLastName": "Wheeler",
+"lastName": "Wheeler",
+"boxscoreName": "Wheeler",
+"mlbDebutDate": "2013-06-18",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID671739": {
+"id": 671739,
+"fullName": "Michael Harris II",
+"useLastName": "Harris II",
+"lastName": "Harris",
+"boxscoreName": "Harris II",
+"mlbDebutDate": "2022-05-28",
+"primaryPosition": {
+"code": "8",
+"abbreviation": "CF"
+}
+},
+"ID682989": {
+"id": 682989,
+"fullName": "Victor Mederos",
+"useLastName": "Mederos",
+"lastName": "Mederos",
+"boxscoreName": "Mederos",
+"mlbDebutDate": "2023-06-30",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID664761": {
+"id": 664761,
+"fullName": "Alec Bohm",
+"useLastName": "Bohm",
+"lastName": "Bohm",
+"boxscoreName": "Bohm",
+"mlbDebutDate": "2020-08-13",
+"primaryPosition": {
+"code": "5",
+"abbreviation": "3B"
+}
+},
+"ID642133": {
+"id": 642133,
+"fullName": "Rowdy Tellez",
+"useLastName": "Tellez",
+"lastName": "Tellez",
+"boxscoreName": "Tellez",
+"mlbDebutDate": "2018-09-05",
+"primaryPosition": {
+"code": "3",
+"abbreviation": "1B"
+}
+},
+"ID800311": {
+"id": 800311,
+"fullName": "Didier Fuentes",
+"useLastName": "Fuentes",
+"lastName": "Fuentes",
+"boxscoreName": "Fuentes",
+"mlbDebutDate": "2025-06-20",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID676551": {
+"id": 676551,
+"fullName": "Brewer Hicklen",
+"useLastName": "Hicklen",
+"lastName": "Hicklen",
+"boxscoreName": "Hicklen",
+"mlbDebutDate": "2022-05-26",
+"primaryPosition": {
+"code": "9",
+"abbreviation": "RF"
+}
+},
+"ID641835": {
+"id": 641835,
+"fullName": "Tim Mayza",
+"useLastName": "Mayza",
+"lastName": "Mayza",
+"boxscoreName": "Mayza",
+"mlbDebutDate": "2017-08-15",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID686948": {
+"id": 686948,
+"fullName": "Drake Baldwin",
+"useLastName": "Baldwin",
+"lastName": "Baldwin",
+"boxscoreName": "Baldwin, D",
+"mlbDebutDate": "2025-03-27",
+"primaryPosition": {
+"code": "2",
+"abbreviation": "C"
+}
+},
+"ID656941": {
+"id": 656941,
+"fullName": "Kyle Schwarber",
+"useLastName": "Schwarber",
+"lastName": "Schwarber",
+"boxscoreName": "Schwarber",
+"mlbDebutDate": "2015-06-16",
+"primaryPosition": {
+"code": "10",
+"abbreviation": "DH"
+}
+},
+"ID805249": {
+"id": 805249,
+"fullName": "Otto Kemp",
+"useLastName": "Kemp",
+"lastName": "Kemp",
+"boxscoreName": "Kemp",
+"mlbDebutDate": "2025-06-07",
+"primaryPosition": {
+"code": "7",
+"abbreviation": "LF"
+}
+},
+"ID621566": {
+"id": 621566,
+"fullName": "Matt Olson",
+"useLastName": "Olson",
+"lastName": "Olson",
+"boxscoreName": "Olson",
+"mlbDebutDate": "2016-09-12",
+"primaryPosition": {
+"code": "3",
+"abbreviation": "1B"
+}
+},
+"ID642086": {
+"id": 642086,
+"fullName": "Dominic Smith",
+"useLastName": "Smith",
+"lastName": "Smith",
+"boxscoreName": "Smith, D",
+"mlbDebutDate": "2017-08-11",
+"primaryPosition": {
+"code": "10",
+"abbreviation": "DH"
+}
+},
+"ID669221": {
+"id": 669221,
+"fullName": "Sean Murphy",
+"useLastName": "Murphy",
+"lastName": "Murphy",
+"boxscoreName": "Murphy, S",
+"mlbDebutDate": "2019-05-19",
+"primaryPosition": {
+"code": "2",
+"abbreviation": "C"
+}
+},
+"ID596117": {
+"id": 596117,
+"fullName": "Garrett Stubbs",
+"useLastName": "Stubbs",
+"lastName": "Stubbs",
+"boxscoreName": "Stubbs, G",
+"mlbDebutDate": "2019-05-28",
+"primaryPosition": {
+"code": "2",
+"abbreviation": "C"
+}
+},
+"ID645277": {
+"id": 645277,
+"fullName": "Ozzie Albies",
+"useLastName": "Albies",
+"lastName": "Albies",
+"boxscoreName": "Albies",
+"mlbDebutDate": "2017-08-01",
+"primaryPosition": {
+"code": "4",
+"abbreviation": "2B"
+}
+},
+"ID686934": {
+"id": 686934,
+"fullName": "Alex McFarlane",
+"useLastName": "McFarlane",
+"lastName": "McFarlane",
+"boxscoreName": "McFarlane",
+"mlbDebutDate": "2026-07-22",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID656550": {
+"id": 656550,
+"fullName": "Grant Holmes",
+"useLastName": "Holmes",
+"lastName": "Holmes",
+"boxscoreName": "Holmes, G",
+"mlbDebutDate": "2024-06-16",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID605400": {
+"id": 605400,
+"fullName": "Aaron Nola",
+"useLastName": "Nola",
+"lastName": "Nola",
+"boxscoreName": "Nola, A",
+"mlbDebutDate": "2015-07-21",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID573262": {
+"id": 573262,
+"fullName": "Mike Yastrzemski",
+"useLastName": "Yastrzemski",
+"lastName": "Yastrzemski",
+"boxscoreName": "Yastrzemski",
+"mlbDebutDate": "2019-05-25",
+"primaryPosition": {
+"code": "7",
+"abbreviation": "LF"
+}
+},
+"ID691725": {
+"id": 691725,
+"fullName": "Andrew Painter",
+"useLastName": "Painter",
+"lastName": "Painter",
+"boxscoreName": "Painter",
+"mlbDebutDate": "2026-03-31",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID608718": {
+"id": 608718,
+"fullName": "Brent Suter",
+"useLastName": "Suter",
+"lastName": "Suter",
+"boxscoreName": "Suter",
+"mlbDebutDate": "2016-08-19",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID666200": {
+"id": 666200,
+"fullName": "Jesús Luzardo",
+"useLastName": "Luzardo",
+"lastName": "Luzardo",
+"boxscoreName": "Luzardo",
+"mlbDebutDate": "2019-09-11",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID669276": {
+"id": 669276,
+"fullName": "Dylan Lee",
+"useLastName": "Lee",
+"lastName": "Lee",
+"boxscoreName": "Lee, D",
+"mlbDebutDate": "2021-10-01",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID702222": {
+"id": 702222,
+"fullName": "Justin Crawford",
+"useLastName": "Crawford",
+"lastName": "Crawford",
+"boxscoreName": "Crawford",
+"mlbDebutDate": "2026-03-26",
+"primaryPosition": {
+"code": "8",
+"abbreviation": "CF"
+}
+},
+"ID624641": {
+"id": 624641,
+"fullName": "Edmundo Sosa",
+"useLastName": "Sosa",
+"lastName": "Sosa",
+"boxscoreName": "Sosa, E",
+"mlbDebutDate": "2018-09-23",
+"primaryPosition": {
+"code": "7",
+"abbreviation": "LF"
+}
+},
+"ID661395": {
+"id": 661395,
+"fullName": "Jhoan Duran",
+"useLastName": "Duran",
+"lastName": "Duran",
+"boxscoreName": "Duran, J",
+"mlbDebutDate": "2022-04-08",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID663897": {
+"id": 663897,
+"fullName": "Luke Williams",
+"useLastName": "Williams",
+"lastName": "Williams",
+"boxscoreName": "Williams, L",
+"mlbDebutDate": "2021-06-08",
+"primaryPosition": {
+"code": "6",
+"abbreviation": "SS"
+}
+},
+"ID680742": {
+"id": 680742,
+"fullName": "Jonathan Bowlan",
+"useLastName": "Bowlan",
+"lastName": "Bowlan",
+"boxscoreName": "Bowlan",
+"mlbDebutDate": "2023-09-27",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID643289": {
+"id": 643289,
+"fullName": "Mauricio Dubón",
+"useLastName": "Dubón",
+"lastName": "Dubón",
+"boxscoreName": "Dubón",
+"mlbDebutDate": "2019-07-07",
+"primaryPosition": {
+"code": "7",
+"abbreviation": "LF"
+}
+},
+"ID641816": {
+"id": 641816,
+"fullName": "Tyler Mahle",
+"useLastName": "Mahle",
+"lastName": "Mahle",
+"boxscoreName": "Mahle",
+"mlbDebutDate": "2017-08-27",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID663767": {
+"id": 663767,
+"fullName": "Chase Shugart",
+"useLastName": "Shugart",
+"lastName": "Shugart",
+"boxscoreName": "Shugart",
+"mlbDebutDate": "2024-08-15",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID519242": {
+"id": 519242,
+"fullName": "Chris Sale",
+"useLastName": "Sale",
+"lastName": "Sale",
+"boxscoreName": "Sale",
+"mlbDebutDate": "2010-08-06",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID681082": {
+"id": 681082,
+"fullName": "Bryson Stott",
+"useLastName": "Stott",
+"lastName": "Stott",
+"boxscoreName": "Stott",
+"mlbDebutDate": "2022-04-08",
+"primaryPosition": {
+"code": "4",
+"abbreviation": "2B"
+}
+},
+"ID665561": {
+"id": 665561,
+"fullName": "Rafael Marchán",
+"useLastName": "Marchán",
+"lastName": "Marchán",
+"boxscoreName": "Marchán",
+"mlbDebutDate": "2020-09-14",
+"primaryPosition": {
+"code": "2",
+"abbreviation": "C"
+}
+},
+"ID660670": {
+"id": 660670,
+"fullName": "Ronald Acuña Jr.",
+"useLastName": "Acuña Jr.",
+"lastName": "Acuña",
+"boxscoreName": "Acuña Jr.",
+"mlbDebutDate": "2018-04-25",
+"primaryPosition": {
+"code": "9",
+"abbreviation": "RF"
+}
+},
+"ID678061": {
+"id": 678061,
+"fullName": "Ray Kerr",
+"useLastName": "Kerr",
+"lastName": "Kerr",
+"boxscoreName": "Kerr",
+"mlbDebutDate": "2022-04-24",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID680577": {
+"id": 680577,
+"fullName": "DaShawn Keirsey Jr.",
+"useLastName": "Keirsey Jr. ",
+"lastName": "Keirsey",
+"boxscoreName": "Keirsey Jr.",
+"mlbDebutDate": "2024-09-05",
+"primaryPosition": {
+"code": "8",
+"abbreviation": "CF"
+}
+},
+"ID621383": {
+"id": 621383,
+"fullName": "Tanner Banks",
+"useLastName": "Banks",
+"lastName": "Banks",
+"boxscoreName": "Banks",
+"mlbDebutDate": "2022-04-10",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID628452": {
+"id": 628452,
+"fullName": "Raisel Iglesias",
+"useLastName": "Iglesias",
+"lastName": "Iglesias",
+"boxscoreName": "Iglesias, R",
+"mlbDebutDate": "2015-04-12",
+"primaryPosition": {
+"code": "1",
+"abbreviation": "P"
+}
+},
+"ID663586": {
+"id": 663586,
+"fullName": "Austin Riley",
+"useLastName": "Riley",
+"lastName": "Riley",
+"boxscoreName": "Riley, A",
+"mlbDebutDate": "2019-05-15",
+"primaryPosition": {
+"code": "5",
+"abbreviation": "3B"
+}
+},
+"ID673490": {
+"id": 673490,
+"fullName": "Ha-Seong Kim",
+"useLastName": "Kim",
+"lastName": "Kim",
+"boxscoreName": "Kim, Ha",
+"mlbDebutDate": "2021-04-01",
+"primaryPosition": {
+"code": "6",
+"abbreviation": "SS"
+}
+},
+"ID607208": {
+"id": 607208,
+"fullName": "Trea Turner",
+"useLastName": "Turner",
+"lastName": "Turner",
+"boxscoreName": "Turner",
+"mlbDebutDate": "2015-08-21",
+"primaryPosition": {
+"code": "6",
+"abbreviation": "SS"
+}
+},
+"ID656537": {
+"id": 656537,
+"fullName": "Derek Hill",
+"useLastName": "Hill",
+"lastName": "Hill",
+"boxscoreName": "Hill, D",
+"mlbDebutDate": "2020-09-04",
+"primaryPosition": {
+"code": "8",
+"abbreviation": "CF"
+}
+}
+},
+"venue": {
+"id": 4705,
+"name": "Truist Park",
+"fieldInfo": {
+"capacity": 40819,
+"turfType": "Grass",
+"roofType": "Open",
+"leftLine": 335,
+"left": 375,
+"leftCenter": 385,
+"center": 400,
+"rightCenter": 375,
+"rightLine": 325
+},
+"location": {
+"city": "Atlanta",
+"state": "Georgia",
+"elevation": 1001
+}
+},
+"weather": {
+"condition": "Sunny",
+"temp": "80",
+"wind": "3 mph, Calm"
+},
+"gameInfo": {
+"attendance": 30127,
+"firstPitch": "2026-09-29T18:16:00.000Z",
+"gameDurationMinutes": 146
+},
+"review": {
+"hasChallenges": true,
+"away": {
+"used": 0,
+"remaining": 2
+},
+"home": {
+"used": 1,
+"remaining": 1
+}
+},
+"absChallenges": {
+"hasChallenges": true,
+"away": {
+"usedSuccessful": 1,
+"usedFailed": 0,
+"remaining": 2
+},
+"home": {
+"usedSuccessful": 1,
+"usedFailed": 1,
+"remaining": 1
+}
+},
+"flags": {
+"noHitter": false,
+"perfectGame": false,
+"awayTeamNoHitter": false,
+"awayTeamPerfectGame": false,
+"homeTeamNoHitter": false,
+"homeTeamPerfectGame": false
+},
+"probablePitchers": {
+"away": {
+"id": 666200,
+"fullName": "Jesús Luzardo"
+},
+"home": {
+"id": 519242,
+"fullName": "Chris Sale"
+}
+},
+"moundVisits": {
+"away": {
+"used": 3,
+"remaining": 1
+},
+"home": {
+"used": 1,
+"remaining": 3
+}
+}
+},
+"liveData": {
+"boxscore": {
+"officials": [
+{
+"official": {
+"id": 605670,
+"fullName": "Dan Merzel"
+},
+"officialType": "Home Plate"
+},
+{
+"official": {
+"id": 644760,
+"fullName": "Adam Beck"
+},
+"officialType": "First Base"
+},
+{
+"official": {
+"id": 483919,
+"fullName": "Mark Ripperger"
+},
+"officialType": "Second Base"
+},
+{
+"official": {
+"id": 490319,
+"fullName": "Jordan Baker"
+},
+"officialType": "Third Base"
+},
+{
+"official": {
+"id": 598411,
+"fullName": "Nestor Ceja"
+},
+"officialType": "Left Field"
+},
+{
+"official": {
+"id": 605671,
+"fullName": "Charlie Ramos"
+},
+"officialType": "Right Field"
+}
+]
+}
+}
+}
