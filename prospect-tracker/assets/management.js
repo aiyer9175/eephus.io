@@ -601,7 +601,7 @@
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table mgmt-table--census"><thead><tr>' +
       "<th>Family</th><th>Decisions</th><th>Mean LI</th><th>" + gl("Realized", "realized_mwpa") +
       ' <span class="mgmt-th-tag">wins, realized</span></th><th>Windows within the family</th>' +
-      "<th>" + gl("DVS", "dvs") + " identity</th><th>Thin cells</th><th>Gate</th></tr></thead><tbody>" +
+      "<th>" + gl("DVS", "dvs") + " identity</th><th>Thin cells, all seasons</th><th>Gate</th></tr></thead><tbody>" +
       rows + "</tbody></table></div>" +
       '<p class="mgmt-note"><b>Sums</b>: ' + esc(d.overlap_note) + "</p>" +
       '<p class="mgmt-note"><b>Value above state</b>: ' + esc(d.dvs_note) + "</p>" +
@@ -1005,13 +1005,25 @@
   }
 
   // ---- the per-decision drill-down -----------------------------------------
+  // Why a decision with a realized mWPA carries no DVS: a steal has none by
+  // design (its value above holding is its DV), and every other valued family
+  // leaves DVS null only where its baseline cell holds fewer decisions than the
+  // baseline's min_cell. A decision with no realized mWPA has nothing to explain.
+  function dvsNullReason(r) {
+    if (r.dvs != null || r.mwpa == null) return "";
+    return r.family === "steal" ? "none" : "thin";
+  }
+  function thinCellTitle() {
+    var mc = (((DATA.decisions || {}).baseline) || {}).min_cell;
+    return mc == null ? "thin cell" : "cell n below " + mc;
+  }
   function detailCard(r) {
     var who = r.in_name ? esc(r.in_name) + (r.out_name ? " for " + esc(r.out_name) : "") : (r.pitcher_name ? esc(r.pitcher_name) : (r.ejected_name ? esc(r.ejected_name) : ""));
     var pairs = [
       ["Situation", esc(situation(r)) + (r.li == null ? "" : ", LI " + num(r.li, 2))],
       ["Game", esc(r.date || "") + ", " + (r.home ? "vs " : "at ") + esc(r.opp || "")],
       ["Realized " + gl("mWPA", "realized_mwpa"), r.mwpa == null ? "not valued" : '<span class="' + signCls(r.mwpa) + '">' + signed(r.mwpa, 4) + "</span> wins, realized"],
-      [gl("DVS", "dvs"), r.dvs == null ? (r.mwpa == null ? "" : (r.family === "steal" ? "none: a steal's value above holding is its DV, below" : "thin cell")) : '<span class="' + signCls(r.dvs) + '">' + signed(r.dvs, 4) + "</span> wins above state"],
+      [gl("DVS", "dvs"), r.dvs == null ? ({ none: "none: a steal's value above holding is its DV, below", thin: "thin cell" })[dvsNullReason(r)] || "" : '<span class="' + signCls(r.dvs) + '">' + signed(r.dvs, 4) + "</span> wins above state"],
       ["Window", r.family === "steal" ? "the steal itself, between two plays, on the house win expectancy table" : esc(r.win_len || 0) + " plays"],
       ["Flags", (r.flags || []).map(function (f) { return '<span class="mgmt-flag">' + esc(f.replace(/_/g, " ")) + "</span>"; }).join(" ") || "none"]
     ];
@@ -1086,6 +1098,13 @@
           if (c.kind === "base") return "<td>" + esc(BASE_LABEL[r.base]) + "</td>";
           if (c.kind === "fam") return "<td>" + esc(famLabel(r.family)) + "</td>";
           if (c.kind === "kind") return "<td>" + esc(String(r.kind || "").replace(/_/g, " ")) + "</td>";
+          if (c.key === "dvs" && v == null) {
+            // A blank DVS beside a realized mWPA read like the window-less rows;
+            // the list now says why, in the drill-down card's words.
+            var why = dvsNullReason(r);
+            if (why === "thin") return '<td title="' + esc(thinCellTitle()) + '">thin</td>';
+            if (why === "none") return '<td title="a steal has no DVS; its value above holding is its DV">none</td>';
+          }
           if (c.kind === "signed") return signedCell(v, c.nd);
           if (c.kind === "flags") return "<td>" + (r.flags || []).map(function (f) { return '<span class="mgmt-flag">' + esc(f.replace(/_/g, " ")) + "</span>"; }).join("") + "</td>";
           if (c.nd != null) return "<td>" + num(v, c.nd) + "</td>";

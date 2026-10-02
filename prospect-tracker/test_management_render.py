@@ -496,3 +496,74 @@ def test_the_csv_control_exports_the_decision_listing_not_an_open_card():
         assert _ATTRS.get("data-csv-export") == "in-game-management-" + sec, sec
     csv = (ROOT / "assets" / "eephus-csv.js").read_text(encoding="utf-8")
     assert 'getAttribute("data-csv-primary")' in csv, "the helper prefers a marked table"
+
+
+# --------------------------------------------------------------------------
+# Null labels (RFR03, RFR05): a blank cell says why it is blank
+# --------------------------------------------------------------------------
+
+def _served_board_and_shard(season: int, club: str):
+    board = ROOT / "data" / "management_board.json"
+    shard = ROOT / "data" / "mgmt_decisions" / ("%d-%s.json" % (season, club))
+    if not board.exists() or not shard.exists():
+        pytest.skip("served management board or shard not built")
+    return (json.loads(board.read_text(encoding="utf-8")),
+            json.loads(shard.read_text(encoding="utf-8")))
+
+
+def test_a_null_dvs_in_the_decision_list_says_why():
+    """RFR03. On the served 2021-ARI shard the listing drew a thin-cell DVS as an
+    empty cell, indistinguishable from a steal (no DVS by design) and from a row
+    with nothing valued. Every listed row with a realized mWPA and a null DVS now
+    prints "thin" (titled with the baseline's min_cell), a steal prints "none",
+    and only a row with no realized mWPA stays blank."""
+    board, shard = _served_board_and_shard(2021, "ARI")
+    rows = mgmt_shards.expand(shard)[:500]
+    html, _ = _render2("#section=decisions&team=ARI&season=2021", payload=board,
+                       shards={"/data/mgmt_decisions/2021-ARI.json": shard})
+    body = html.split("<tbody>")[1].split("</tbody>")[0]
+    trs = re.findall(r'<tr data-mrow="([^"]+)"[^>]*>(.*?)</tr>', body)
+    assert len(trs) == len(rows)
+    head = re.findall(r'<th[^>]*data-dsort="([^"]+)"', html)
+    col = head.index("dvs")
+    min_cell = board["decisions"]["baseline"]["min_cell"]
+    thin = none = blank = 0
+    for (rid, tr), r in zip(trs, rows):
+        assert rid == "%d:%d:%d" % (r["game_pk"], r["ab"], r["idx"])
+        cell = re.findall(r"<td[^>]*>.*?</td>", tr)[col]
+        if r.get("dvs") is not None:
+            assert re.fullmatch(r"<td[^>]*>[+-]?\d+\.\d{4}</td>", cell), (rid, cell)
+        elif r.get("mwpa") is None:
+            assert cell == "<td></td>", rid
+            blank += 1
+        elif r["family"] == "steal":
+            assert cell.endswith(">none</td>"), (rid, cell)
+            none += 1
+        else:
+            assert cell == '<td title="cell n below %d">thin</td>' % min_cell, (rid, cell)
+            thin += 1
+    assert thin > 0 and none > 0, (thin, none)
+    # the drill-down card keeps its own wording for the same row
+    t = next(r for r in rows if r.get("dvs") is None and r.get("mwpa") is not None and r["family"] != "steal")
+    card, _ = _render2("#section=decisions&team=ARI&season=2021&game=%d&ab=%d" % (t["game_pk"], t["ab"]),
+                       payload=board, shards={"/data/mgmt_decisions/2021-ARI.json": shard})
+    assert "thin cell" in card.split('id="mgmt-detail"')[1].split("</table>")[0]
+
+
+def test_the_census_thin_column_states_it_pools_every_season():
+    """RFR05. The thin-cell count is pooled over every season in the corpus (the
+    pitching change's n is families.n, not n_by_season), so with one season
+    selected the header says so instead of sitting beside that season's count."""
+    p = ROOT / "data" / "management_board.json"
+    if not p.exists():
+        pytest.skip("management_board.json not built")
+    board = json.loads(p.read_text(encoding="utf-8"))
+    fam = board["decisions"]["families"]["pitching_change"]
+    html, _ = _render2("#section=league&season=2019", payload=board)
+    assert "<th>Thin cells, all seasons</th>" in html and "<th>Thin cells</th>" not in html
+    row = re.findall(r"<tr><td>Pitching changes</td>.*?</tr>", html)[0]
+    tds = re.findall(r"<td[^>]*>(.*?)</td>", row)
+    assert tds[1] == str(fam["n_by_season"]["2019"]), "the Decisions cell is the selected season"
+    assert tds[6].endswith(" of %d in %d of %d cells" % (fam["n"], fam["thin_cells"]["cells_thin"],
+                                                         fam["thin_cells"]["cells_total"]))
+    assert fam["n"] == sum(fam["n_by_season"].values()), "the pooled n is the sum over seasons"
