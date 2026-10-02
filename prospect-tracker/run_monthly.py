@@ -426,6 +426,10 @@ SCHEDULED_EXPORTS = (
     # so. Filed off what the read returned and the cache file's age; it never
     # fetches.
     "statsapi_standings",
+    # The Source Updates list on /glossary/ (step d10g: source_updates.json,
+    # owner ask 2026-10-02). Read-only over the snapshot tables; a raise or a
+    # payload over its size line leaves the previous file and files a red here.
+    "source_updates_export",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -2420,6 +2424,28 @@ REBUILD_FRANCHISE_INPUTS = REBUILD_LEDGER_INPUTS + ("ledger_board.json",)
 _EXPORTER_DATA_DIR = Path(__file__).resolve().parent / "data"
 
 
+def _export_source_updates(log) -> bool:
+    """Write data/source_updates.json (the body of nightly step d10g). True on
+    a write. A failure leaves the previous file on disk and files a red under
+    "source_updates_export" (SCHEDULED_EXPORTS)."""
+    try:
+        import source_updates_export as _su
+        _sud = _su.build()
+        _sun = _su.write(_sud)
+        _n_rows = sum(len(s["lists"]) for u in _sud["updates"] for s in u["sets"])
+        log.info("source updates: %d updates, %d list rows, %d bytes, through %s",
+                 len(_sud["updates"]), _n_rows, _sun, _sud["through"])
+        _record_ingest("source_updates_export", True, _n_rows,
+                       f"{len(_sud['updates'])} updates through {_sud['through']}",
+                       "prospects", log)
+        return True
+    except Exception as e:                # noqa: BLE001
+        log.exception("source updates export failed - continuing")
+        _record_ingest("source_updates_export", False, 0,
+                       f"source updates export raised: {e}", "prospects", log)
+        return False
+
+
 def _export_ledger_board(log) -> bool:
     """Write the Club Ledger board, its thirty per-club row files and the
     Trade Machine CBT slice (the body of nightly step d10e). True on a write.
@@ -4155,6 +4181,17 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 log.exception("bracket simulator failed - continuing")
                 _record_ingest("bracket_sim", False, 0,
                                f"bracket simulator raised: {e}", "mlb", log)
+
+        # --- d10g. Source update dates ------------------------------------
+        with _step("d10g. Source update dates (source_updates.json)", log):
+            # The Source Updates list on /glossary/ (owner ask 2026-10-02): one
+            # row per (source, list, list date) read from the snapshot tables,
+            # read-only. AFTER every ingest step of the night (d0 to d0b-ii, the
+            # TJStats second capture d10c and the ESPN probe d10d), so a list
+            # captured tonight is dated tonight. Idempotent: the same database
+            # writes the same rows; only the `built` stamp moves. The comment
+            # sits inside the _step body for tools/gen_audit_docs.py.
+            _export_source_updates(log)
 
         # --- 6b7d. Franchise board ----------------------------------------
         with _step("6b7d. Franchise board (franchise_board.json)", log):

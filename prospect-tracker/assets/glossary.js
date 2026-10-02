@@ -6,13 +6,14 @@
 // =============================================================================
 // eephus.io unified Glossary & Methodology app (/glossary/)
 // =============================================================================
-// Seven views: Terms (search + group nav + A-Z index + entry cards, with
+// Eight views: Terms (search + group nav + A-Z index + entry cards, with
 // artifact-derived receipt blocks on model entries via _receiptSpecs) ·
 // How to Read (annotated anatomy guide) · Methodology (derivations +
 // the industry-comparison section at #industry-comparison + interactive
 // teaching widgets + PDF export) · Source Comparison (the
 // empirical source-vs-source backtest) · Source Accuracy (the
-// who-grades-which-cohort measurement) · Models & Proofs (the model
+// who-grades-which-cohort measurement) · Source Updates (the dates each
+// outlet published a list) · Models & Proofs (the model
 // registry ledger) · Library (index of every standalone page). The
 // authoritative list is the view whitelist in syncFromURL below.
 // The guide/methodology/backtest
@@ -44,6 +45,10 @@
   let _SACC = null;            // cached source_cohort_accuracy.json (or {__error:true})
   let _SACC_LOADING = false;   // in-flight guard against a double fetch
   let _SACC_TAB = "read-first"; // active sub-tab in the Source Accuracy view
+  // Source Updates view state (owner ask 2026-10-02). Module scope for the
+  // same TDZ reason as _SACC: the renderer is hoisted and boot can run first.
+  let _SU = null;              // cached source updates payload (or {__error:true})
+  let _SU_LOADING = false;     // in-flight guard against a double fetch
   // Receipt-block + industry-comparison artifact cache (2026-08-19). One map
   // keyed by fetch path, shared by the Terms-view receipt blocks and the
   // Methodology "Our tables vs the industry's" section, so an artifact two
@@ -77,7 +82,7 @@
     const p = new URLSearchParams(location.hash.slice(1));
     if (p.has("view")) {
       const v = p.get("view");
-      if (["terms", "guide", "methodology", "source-comparison", "source-accuracy", "models", "library"].includes(v)) _S.view = v;
+      if (["terms", "guide", "methodology", "source-comparison", "source-accuracy", "source-updates", "models", "library"].includes(v)) _S.view = v;
     }
     if (p.has("cat")) _S.cat = p.get("cat");
     if (p.has("q")) _S.q = p.get("q");
@@ -803,6 +808,7 @@
     const ids = { terms: "glossary-rows", guide: "guide-body",
                   methodology: "methodology-body", "source-comparison": "source-comparison-body",
                   "source-accuracy": "source-accuracy-body",
+                  "source-updates": "source-updates-body",
                   models: "models-body", library: "library-body" };
     document.querySelectorAll("[data-glossary-view]").forEach(b => {
       b.classList.toggle("active", b.dataset.glossaryView === _S.view);
@@ -824,6 +830,7 @@
     else if (_S.view === "methodology") renderMethodology();
     else if (_S.view === "source-comparison") renderSourceComparison();
     else if (_S.view === "source-accuracy") renderSourceAccuracy();
+    else if (_S.view === "source-updates") renderSourceUpdates();
     else if (_S.view === "models") renderModels();
     else if (_S.view === "library") renderLibrary();
     else renderTerms();
@@ -4933,6 +4940,7 @@ function _libraryGroups() {
       ["/pal/#platoon", "Alchemy Lab · Platoon", "platoon-split profiles and pairings"],
       ["/pal/#prospects", "Alchemy Lab · Prospect Watch", "the pipeline read through the lab's conversion lenses"],
       ["/glossary/#view=models", "Glossary · Models & Proofs", "the same ledger as /models/, read inside the glossary: every predictive model with its verdict and eval artifact, next to the terms it defines"],
+      ["/glossary/#view=source-updates", _suPageTitle("Source Updates"), "the dates each prospect outlet published a list or changed a live list, newest first, grouped by outlet"],
     ] },
   { title: "Player pages",
     sub: "per-player cards, addressable by URL",
@@ -4967,6 +4975,134 @@ function renderLibrary() {
     <p class="meth-note">Everything on eephus.io that has its own address, in one place: the full pages, the deep-linkable artifact views inside each module, and the per-player cards. Every route here is public and stable.</p>
     <div class="meth-tables">${_libraryGroups().map(group).join("")}</div>
   </div>`;
+}
+
+// ---- Source Updates view ---------------------------------------------------
+// The dates each outlet published a list (owner ask 2026-10-02), read from
+// the source updates payload that source_updates_export.py writes in nightly
+// step d10g. One line per update in the owner's form "<Source> Update -
+// <Month D, YYYY>", grouped by outlet, newest first, with the list names
+// beneath. A list, not a table: every update is one <li>. The label and every
+// long-form date come from the payload; this view formats no date of its own.
+// Hoisted functions only (no const at this depth), for the TDZ reason the
+// Library view gives above.
+function _suPageTitle(section) {
+  // The module's display name rides on the shell (build_site reads it from
+  // NAV_ITEMS), so a rename of the module renames this label with it.
+  const app = document.querySelector(".gl-app");
+  const mod = app && app.dataset ? (app.dataset.moduleName || "") : "";
+  return mod ? `${mod} · ${section}` : section;
+}
+
+function _suSlug(s) {
+  return "su-" + String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function _suLabelHTML(u) {
+  const lab = String(u.label || "");
+  const i = lab.lastIndexOf(" - ");
+  if (i < 0) return escapeHtml(lab);
+  return `${escapeHtml(lab.slice(0, i + 3))}<time datetime="${escapeHtml(u.date)}">${escapeHtml(lab.slice(i + 3))}</time>`;
+}
+
+function _suListsText(u) {
+  return (u.sets || []).map(s => {
+    const lists = s.lists || [];
+    let txt = s.family && lists.length > 1
+      ? `${s.family}, ${lists.length} club lists`
+      : lists.map(l => (l.length > 2 ? l[2] : l[0])).join("; ");
+    if (s.basis === "changed") txt += " (changed since the previous nightly fetch)";
+    else if (s.basis === "first_fetch") txt += " (first nightly fetch on record)";
+    return txt;
+  }).join("; ");
+}
+
+function _suRefetchedText(rows) {
+  const groups = [];
+  rows.forEach(r => {
+    const name = r.family || r.name;
+    let g = groups.find(x => x.name === name && x.last === r.last_fetch_long);
+    if (!g) { g = { name, last: r.last_fetch_long, n: 0 }; groups.push(g); }
+    g.n += 1;
+  });
+  return groups.map(g => `${g.name}${g.n > 1 ? `, ${g.n} club lists` : ""} (last fetched ${g.last})`).join("; ");
+}
+
+function _suSourceHTML(src, ups, refetched) {
+  const S = window.EephusState;
+  const id = _suSlug(src.source);
+  const item = u => `<li class="su-item"><strong class="su-label">${_suLabelHTML(u)}</strong>` +
+    `<div class="su-lists">${escapeHtml(_suListsText(u))}</div></li>`;
+  let body;
+  if (!ups.length) {
+    const msg = "No dated update is on record for this outlet.";
+    body = S ? S.html("unmeasured", msg, "su-state") : `<div class="state-message su-state">${msg}</div>`;
+  } else {
+    const head = ups.slice(0, 10), rest = ups.slice(10);
+    body = `<ul class="sacc-leg-list su-list">${head.map(item).join("")}</ul>` + (rest.length
+      ? `<details class="su-more"><summary>Show ${rest.length} earlier update${rest.length === 1 ? "" : "s"}</summary>` +
+        `<ul class="sacc-leg-list su-list">${rest.map(item).join("")}</ul></details>`
+      : "");
+  }
+  const n = src.n_updates || 0;
+  const last = src.last_label
+    ? `<p class="meth-window su-last">Last update: <strong>${_suLabelHTML({ label: src.last_label, date: src.last })}</strong></p>` : "";
+  const count = `<p class="meth-note su-count">${n} update${n === 1 ? "" : "s"} · ${src.n_lists || 0} list${src.n_lists === 1 ? "" : "s"}` +
+    `${src.first_long ? ` · first on record ${escapeHtml(src.first_long)}` : ""}</p>`;
+  const re = refetched.length
+    ? `<p class="meth-note su-refetched">Refetched each night under one name, so no publication date is on record: ${escapeHtml(_suRefetchedText(refetched))}.</p>` : "";
+  return `<section class="su-src" aria-labelledby="${id}">` +
+    `<h3 class="meth-h3 su-head" id="${id}">${escapeHtml(src.source)} <span class="gl-count">${n}</span></h3>` +
+    `${last}${count}${body}${re}</section>`;
+}
+
+function renderSourceUpdates() {
+  const el = document.getElementById("source-updates-body");
+  if (!el) return;
+  if (!_SU && !_SU_LOADING) {
+    _SU_LOADING = true;
+    fetch("/data/source_updates.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { _SU = j || { __error: true }; _SU_LOADING = false;
+        if (_S.view === "source-updates") renderSourceUpdates(); })
+      .catch(() => { _SU = { __error: true }; _SU_LOADING = false;
+        if (_S.view === "source-updates") renderSourceUpdates(); });
+  }
+  const S = window.EephusState;
+  const box = (kind, msg) => (S ? S.html(kind, msg, "su-state")
+    : `<div class="state-message su-state"${kind === "failed" ? ' role="alert"' : ""}>${msg}</div>`);
+  const shell = inner => `<div class="source-comp-wrap su-wrap">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Source updates · when each outlet published</div>
+    <h2 class="meth-h">Source Updates</h2>
+    <p class="meth-note">One line per date an outlet published a new list, newest first, read from the dates our database stores each list under. A live list we fetch every night counts on the nights its players, ranks or grades changed.</p>
+    ${inner}
+  </div>`;
+  const d = _SU;
+  if (!d) { el.innerHTML = shell(box("loading", "Loading the source update dates...")); return; }
+  if (d.__error || !Array.isArray(d.updates) || !Array.isArray(d.sources)) {
+    el.innerHTML = shell(box("failed", "The source update dates could not be loaded." +
+      '<div style="margin-top:12px;"><button class="chip" type="button" id="gl-su-retry">Retry</button></div>'));
+    const rb = document.getElementById("gl-su-retry");
+    if (rb) rb.onclick = () => { _SU = null; _SU_LOADING = false; renderSourceUpdates(); };
+    return;
+  }
+  if (!d.sources.length) {
+    el.innerHTML = shell(box("empty", "No source update is on record yet."));
+    return;
+  }
+  const stamp = `<p class="meth-note su-stamp">Through ${escapeHtml(d.through_long || "")}` +
+    `${d.built ? ` · built ${escapeHtml(String(d.built).replace("T", " ").replace(/:\d\dZ$/, " UTC"))}` : ""}</p>`;
+  const jump = `<div class="filter-bar sacc-tabs su-jump" role="group" aria-label="Jump to an outlet"><span class="gl-microlabel">Outlet</span>` +
+    d.sources.map(s => `<button class="chip" type="button" data-su-jump="${_suSlug(s.source)}">${escapeHtml(s.source)}</button>`).join("") +
+    `</div>`;
+  const blocks = d.sources.map(s => _suSourceHTML(s,
+    d.updates.filter(u => u.source === s.source),
+    (d.refetched || []).filter(r => r.source === s.source))).join("");
+  el.innerHTML = shell(stamp + jump + blocks);
+  el.querySelectorAll("[data-su-jump]").forEach(b => b.onclick = () => {
+    const h = document.getElementById(b.dataset.suJump);
+    if (h) { h.setAttribute("tabindex", "-1"); h.scrollIntoView({ block: "start" }); h.focus({ preventScroll: true }); }
+  });
 }
 
 })();
