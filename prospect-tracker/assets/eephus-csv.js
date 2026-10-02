@@ -84,12 +84,23 @@
     return visible || first;
   }
 
+  // The count rides the button as "N rows", so it must be the number of rows
+  // the file holds. scrape() in eephus-export.js drops every row carrying
+  // data-export-skip (an opened season line or detail line), and this count
+  // applies the same rule, so opening a line never adds one to the label.
+  function isSkipRow(tr) {
+    return !!(tr && tr.getAttribute && tr.getAttribute("data-export-skip") != null);
+  }
+
   function dataRowCount(table) {
     if (!table) return 0;
     var body = table.tBodies && table.tBodies.length ? table.tBodies[0] : null;
-    if (body) return body.rows.length;
-    // No <tbody>: fall back to total rows minus the header row.
-    return Math.max(0, (table.rows ? table.rows.length : 0) - 1);
+    var rows = body ? body.rows : (table.rows || []);
+    var n = 0;
+    for (var i = 0; i < rows.length; i++) if (!isSkipRow(rows[i])) n++;
+    if (body) return n;
+    // No <tbody>: fall back to the countable rows minus the header row.
+    return Math.max(0, n - 1);
   }
 
   // ---- CSV text ------------------------------------------------------------
@@ -243,9 +254,12 @@
   function boot() {
     injectCSS();
     scan(document);
+    // Rows added or removed re-count through childList; a row that gains or
+    // loses data-export-skip in place re-counts through the attribute filter.
     try {
       new MutationObserver(schedule).observe(document.body,
-        { childList: true, subtree: true });
+        { childList: true, subtree: true,
+          attributes: true, attributeFilter: ["data-export-skip"] });
     } catch (e) { /* observer unavailable: the first scan still stands */ }
   }
 
@@ -256,6 +270,7 @@
     modelToCSV: modelToCSV,
     toCSV: toCSV,
     targetTable: targetTable,
+    rowCount: dataRowCount,
   };
 
   if (document.body) boot();
