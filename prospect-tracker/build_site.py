@@ -1372,6 +1372,26 @@ def _fv_pill(p: dict) -> str:
 def _meta(*parts) -> str:
     return html.escape(" · ".join(str(x) for x in parts if x))
 
+# Baseball America's 2023 org boards print "CP" as the position line of every
+# catcher (61 rows on the 2023-02-15 boards, all catchers, no other board), and
+# a graduate whose last board was BA 2023 carries that token into debuts.json
+# (16 debuted catchers on 2026-10-01: Bo Naylor, Francisco Alvarez, Gabriel
+# Moreno and others). Every other reader of a position string takes CP for a
+# closer, so the page printed "debuted · CP" for a catcher. The printed label
+# says what the player is: CP prints as C. Display only: the position field and
+# every model read of it stay as they are (SHO01).
+_POS_LABEL_FIX = {"CP": "C"}
+
+
+def _pos_label(pos) -> str:
+    """The position as a page prints it. Unchanged unless a "/" token is in
+    _POS_LABEL_FIX, so "OF / C" and every other label keeps its own spelling."""
+    s = str(pos or "")
+    toks = s.split("/")
+    if not any(t.strip().upper() in _POS_LABEL_FIX for t in toks):
+        return s
+    return "/".join(_POS_LABEL_FIX.get(t.strip().upper(), t.strip()) for t in toks)
+
 # --------------------------------------------------------------------------- #
 # Real consensus-grade movement, computed from the player's own points[].
 #
@@ -1554,7 +1574,7 @@ def _row_mover(p: dict, d: int) -> str:
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
             f'{rank_html}{_team_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
-            f'<span class="row-meta">{_meta(p.get("position"))}</span>'
+            f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>'
             f'{spark_html}{_fv_pill(p)}'
             f'<span class="row-delta {"up" if up else "down"}">{"▲" if up else "▼"} {"+" if up else ""}{d}</span></a>')
 
@@ -1562,7 +1582,7 @@ def _row_top(p: dict, rank: int) -> str:
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
             f'<span class="row-rank">{rank}</span>{_team_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
-            f'<span class="row-meta">{_meta(p.get("position"))}</span>{_fv_pill(p)}</a>')
+            f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>{_fv_pill(p)}</a>')
 
 def display_metric_for(p: dict) -> dict:
     """Single source of truth for which realized metric a player's shared
@@ -1657,7 +1677,7 @@ def _row_grad(g: dict) -> str:
     return (f'<a class="row-link" href="{_player_href(g.get("player_key"))}">'
             f'{rank_html}{date_html}{_team_logo(g.get("org"))}'
             f'<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
-            f'<span class="row-meta">{_meta(g.get("position"))}</span>{_fv_pill(g)}</a>')
+            f'<span class="row-meta">{_meta(_pos_label(g.get("position")))}</span>{_fv_pill(g)}</a>')
 
 def _recent_trades_html(players: list, n: int = 5) -> str:
     """'Recent Trades' module - the latest prospect trades from the tracked
@@ -1693,7 +1713,7 @@ def _recent_trades_html(players: list, n: int = 5) -> str:
             f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
             f'{rank_html}{logos}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
-            f'<span class="row-meta">{_meta(p.get("position"))}</span>'
+            f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>'
             f'<span class="row-meta">{dt[5:7]}/{dt[8:10]}</span>'
             # FV chip trails the row so it lines up with the Recent Debuts
             # FV column beside it (both modules end with a flush-right pill).
@@ -1913,7 +1933,7 @@ def _news_detail(p: dict, typ: str) -> str:
         return ""
     parts = []
     if p.get("position"):
-        parts.append(str(p["position"]))
+        parts.append(_pos_label(p["position"]))
     if p.get("age") is not None:
         parts.append(f'{p["age"]:.1f} yo')
     if p.get("overall_rank"):
@@ -2071,7 +2091,7 @@ def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None) -> s
             recent if max_events is None else recent[:max_events]):
         p = pmap.get(key) or {}
         it = {"date": dt, "typ": typ, "glyph": glyph,
-              "name": name or text, "pos": p.get("position") or "",
+              "name": name or text, "pos": _pos_label(p.get("position")),
               "org": org or "", "val": val}
         mlbam = p.get("mlbam_id")
         if mlbam:
@@ -2261,7 +2281,7 @@ def _spotlight_card(label: str, p: dict, chip: str, spark_color: str) -> str:
         f'<div class="sp-photo" style="{photo}"></div>'
         '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;">'
         f'<div class="sp-name">{html.escape(p.get("player_name") or "")}</div>'
-        f'<div class="sp-meta">{_meta(p.get("position"), p.get("org"))}</div>'
+        f'<div class="sp-meta">{_meta(_pos_label(p.get("position")), p.get("org"))}</div>'
         # flex-wrap + nowrap chip: under the wide MS-Gothic metrics the pill +
         # delta can outgrow the narrow sidebar column - wrap the chip as a unit
         # below the pill instead of letting it overflow into the card border.
@@ -2503,7 +2523,7 @@ def _otd_debut_row(g: dict, d: "date", data_cat: str = "") -> str:
     they play now - this is a history row. WAG sits LEFT of the FV chip so
     every row's FV chip lines up in the same right-hand column."""
     nm = html.escape(g.get("player_name") or "")
-    pos = g.get("position") or ""
+    pos = _pos_label(g.get("position"))
     logo = _team_logo(_debut_org(g), "otd-logo")
     pos_tail = (" · " + html.escape(pos)) if pos else ""
     cat = f' data-cat="{data_cat}"' if data_cat else ""
@@ -2519,7 +2539,7 @@ def _otd_trade_row(p: dict, tr: dict, d: "date", data_cat: str = "") -> str:
     """One trade-anniversary row (shared by the homepage module and /history/):
     the trade's from->to org logos, point-in-time."""
     nm = html.escape(p.get("player_name") or "")
-    pos = p.get("position") or ""
+    pos = _pos_label(p.get("position"))
     logos = (f'{_team_logo(tr.get("from_org"), "otd-logo")}'
              f'<span class="otd-arrow">→</span>'
              f'{_team_logo(tr.get("to_org"), "otd-logo")}')
@@ -2825,7 +2845,7 @@ def build_this_day(data: dict | None = None) -> str:
     for dt, code, key, team in tx_today[:TX_CAP]:
         p = pmap.get(key)
         nm = html.escape((p or {}).get("player_name") or _name_from_key(key))
-        pos = (p or {}).get("position") or ""
+        pos = _pos_label((p or {}).get("position"))
         d = date.fromisoformat(dt)
         verb = _HIST_TX_VERBS.get(code, "moved")
         logo = _team_logo(_org_from_team_name(team), "otd-logo")
@@ -2851,7 +2871,7 @@ def build_this_day(data: dict | None = None) -> str:
     for dt, key, il_type in il_today:
         p = pmap.get(key)
         nm = html.escape((p or {}).get("player_name") or _name_from_key(key))
-        pos = (p or {}).get("position") or ""
+        pos = _pos_label((p or {}).get("position"))
         d = date.fromisoformat(dt)
         label = f"{il_type} IL".strip() if il_type else "IL"
         pos_tail = (" · " + html.escape(pos)) if pos else ""
@@ -3123,7 +3143,7 @@ def _cross_module_strip() -> str:
             # an MLB seed resolves on the projections key of the row's human
             f'{html.escape(_tm_seed_key(p))}">'
             f'<span class="xmod-name">{html.escape(p.get("player_name") or "")}</span>'
-            f'<span class="xmod-sub">{html.escape(p.get("position") or "")} · {html.escape(p.get("org") or "")}</span>'
+            f'<span class="xmod-sub">{html.escape(_pos_label(p.get("position")))} · {html.escape(p.get("org") or "")}</span>'
             f'<span class="xmod-val">${p["trade_value_mm"]:.0f}M</span></a>'
             for p in top)
         if rows:
