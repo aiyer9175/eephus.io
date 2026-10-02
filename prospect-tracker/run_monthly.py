@@ -4221,7 +4221,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         write_ingest_health(out_dir, "daily", log)
         # d11. Rebuild the static site from the fresh data. Without this the daily
         # data refresh (trades/promos/IL/debuts to today, refreshed MiLB statlines)
-        # never reaches the browser -- the homepage "Prospect News" wire, /news/, and
+        # never reaches the browser -- the homepage "MLB News" wire, /news/, and
         # the player pages are build-time artifacts that freeze at the last build.
         # main() chains run_daily() at its tail, so this single step also rebuilds
         # the site on a full monthly run. Best-effort: a build failure must not fail

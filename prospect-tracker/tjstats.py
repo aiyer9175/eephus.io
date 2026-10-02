@@ -612,7 +612,7 @@ def export_movers(out_path: Path | None = None) -> dict | None:
 
     Diffs the newest live board against the most recent NAMED monthly
     snapshot and persists the big moves twice:
-      * data/tjstats_movers.json - the homepage Prospect Wire reads this
+      * data/tjstats_movers.json - the homepage MLB News feed reads this
         at build time (build_site._collect_events), same pattern as the
         FA events block.
       * source_events upsert (source='tjstats') - the per-player export

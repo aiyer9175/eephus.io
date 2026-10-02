@@ -4914,7 +4914,7 @@ function _libraryGroups() {
       ["/parks/", "MiLB Park Factors", "run environments for every affiliated park; the Methodology tab (/parks/#method) documents the estimator"],
       ["/sources/", "Data Sources & Attribution", "every upstream the platform reads, what it is used for, and the editorial stance"],
       ["/history/", "Today in Prospect History", "debut anniversaries, prospect trades, signings, and IL moves that landed on today's calendar date"],
-      ["/news/", "Prospect News", "the full de-noised event wire: debuts, trades, promotions, IL, grade changes, FA signings"],
+      ["/news/", "MLB News", "the full de-noised event wire: debuts, trades, promotions, IL, grade changes, FA signings"],
       ["/articles/", "Articles", "long-form editorial pieces, newest first"],
       ["/team/", "Developers", "who builds and runs the site"],
     ] },

@@ -3,7 +3,7 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""Prospect Wire FV-item dating - the first-seen ledger.
+"""MLB News feed FV-item dating - the first-seen ledger.
 
 The daily Live snapshot re-stamps its point's snapshot_date on every run,
 so a grade change detected against it re-dates daily and pins the player

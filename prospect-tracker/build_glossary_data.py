@@ -179,7 +179,7 @@ NEW_ENTRIES = [
      "seeAlso": []},
     {"id": "wire_ticker", "term": "WIRE", "category": "site-feature",
      "aliases": ["prospect wire", "ticker"], "priority": 83,
-     "definition": "The homepage event feed and scrolling ticker: debuts, promotions, trades, IL moves, real FV changes, and free-agency winter events, each dated and color-coded by type. FV items are real grade changes only - composite movement scores never masquerade as news.",
+     "definition": "MLB News, the homepage event feed and ticker: debuts, promotions, trades, IL moves, real FV changes and free-agency winter events, dated and color-coded by type. FV items are real grade changes only; composite movement scores are not shown as news.",
      "seeAlso": ["stock_arrow", "first_seen_dates"]},
     # wRC+ - INDUSTRY entry, re-homed here 2026-07-31.
     #
