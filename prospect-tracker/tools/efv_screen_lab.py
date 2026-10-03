@@ -197,16 +197,20 @@ CANDIDATES: tuple[dict, ...] = (
               "(EFV3_B3): the base refit on the lifted frame against the base")},
     {"name": "pick_overall_time_hit", "side": "hit", "head": "timing", "kind": "column",
      "retest": True,
-     "column": {"source": "frame_key", "key": "pick_overall", "transform": "log1p"},
+     "column": {"source": "module", "module": "efv_pick_features",
+                "attr": "screen_column"},
      "what": ("named re-test of the closed F-VM pick arm (D-1) on lv_dev, timing head "
-              "only (D4); EFV3_B4 supplies the draft_history join, the sidecar pick "
-              "stands in until it lands")},
+              "only (D4): the draft_history pick joined on the outcome-blind id with "
+              "draft year strictly below V, else the sidecar pick known at V, log1p "
+              "(EFV3_B4)")},
     {"name": "pick_overall_time_pit", "side": "pit", "head": "timing", "kind": "column",
      "retest": True,
-     "column": {"source": "frame_key", "key": "pick_overall", "transform": "log1p"},
+     "column": {"source": "module", "module": "efv_pick_features",
+                "attr": "screen_column"},
      "what": ("named re-test of the closed F-VM pick arm (D-1) on lv_dev, timing head "
-              "only (D4); EFV3_B4 supplies the draft_history join, the sidecar pick "
-              "stands in until it lands")},
+              "only (D4): the draft_history pick joined on the outcome-blind id with "
+              "draft year strictly below V, else the sidecar pick known at V, log1p "
+              "(EFV3_B4)")},
 )
 
 
