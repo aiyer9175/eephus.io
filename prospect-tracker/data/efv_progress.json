@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-03T01:45:06Z",
+ "generated_at": "2026-10-03T02:16:11Z",
  "headline_frame": "vm2",
  "frames": {
   "vm": {
@@ -6509,6 +6509,47 @@
    "note": "outcome-blind resolver with the SIDE and RECENCY tiebreaks, coverage by route: ambiguous 122, name_recency 126, name_side 161, name_unique 5391, no_candidate 130; tiebreak probes name_recency BALANCED, name_side BALANCED; no score",
    "last_verified_at": "2026-10-03T01:45:06Z",
    "content_hash": "23843a69dacda078adf83db4ab3050a3c1be85bfb045519813a6a339d792165c"
+  },
+  {
+   "run_id": "2026-10-03T02:16:08+00:00|lv_dev|aa6ba53d",
+   "date": "2026-10-03",
+   "trigger": "efv_change",
+   "model_id": "efv_bust_pool_ids",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "a9b21ddd",
+    "label": "ewar_v2",
+    "resolved_through": 2025,
+    "provider": "ewar_v2"
+   },
+   "frame": "lv_dev",
+   "frame_version": null,
+   "role": "development",
+   "tilted": false,
+   "window": [
+    2011,
+    2019
+   ],
+   "n": 1967,
+   "n_by_side": {
+    "hit": 843,
+    "pit": 1124
+   },
+   "raters": {},
+   "deltas": {},
+   "resolvable": null,
+   "verdict": "bust pool ids, counts only, no score",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/efv_bust_pool_receipt.json",
+     "generated_at": "2026-10-03T02:16:08+00:00",
+     "sha256": "cbfa44c444fc2ae9cd249031e6f66501c0e47e9b7616a11b891ec1c5b5c80e52"
+    }
+   ],
+   "note": "outcome-blind ids for 1063 of 1303 no-id bust rows; symmetry SYMMETRY_OK (hit gap 5.97, pit gap 6.35 points); balance probe CONSTANT; flag efv_dataset.BUST_POOL_IDS off; no score",
+   "last_verified_at": "2026-10-03T02:16:11Z",
+   "content_hash": "aa6ba53dcb0576bc5eaad7ddbe6b7fb3de36797b14eb73016db2032d36f1ace7"
   }
  ],
  "backfill": {

@@ -321,6 +321,19 @@ NEVER_RESOLUTION_AGE = 27
 NEVER_RESOLUTION_STALE_LIST_YEARS = 5
 NEVER_RESOLUTION_ROUTES = ("no_affiliated_line", "age_27", "stale_list")
 
+# BUST POOL IDS (EFV3 lane A, G7; tools/efv_bust_pool_resolve.py). Off, the never-MLB
+# loop below reads each inactive.json record's own id and the build is the incumbent
+# byte for byte (the file is never opened: bust_pool_ids() is called behind the flag).
+# On, a never-MLB row with NO stored id takes the outcome-blind id the tool resolved
+# from its printed name, last list year and side, so _milb_features and Arm R's never
+# rule read it; a row with a stored id never changes. The builder refuses the file while
+# its symmetry block is blocked (debuted and bust coverage under the same resolver more
+# than SYMMETRY_MAX_GAP_POINTS apart on a side). The fWAR epoch's part 6 ride list is
+# frozen without this factor: the flag flips only after epoch step Z and under Arm R's
+# own clauses, never by editing this line inside the epoch.
+BUST_POOL_IDS = False
+BUST_POOL_IDS_FILE = "efv_bust_pool_ids.json"
+
 # BUST-MLB's cut (3.2): REACHED and a six-season label under 3.0, the engine's 0.5 WAR
 # per season band and the exact event tools/_prem_odds.bust_label scores. Pinned equal
 # to that function by test_bust2_union_invariant.py.
@@ -1565,6 +1578,51 @@ def _apply_never_resolution(rows: list[dict], acct: dict) -> None:
     acct["arm_r"] = census
 
 
+class BustPoolIdsBlocked(RuntimeError):
+    """The id file's symmetry clause blocks its use in a training matrix."""
+
+
+def bust_pool_ids(path=None) -> dict[str, int]:
+    """{player_key: person id} from data/efv_bust_pool_ids.json, the outcome-blind ids
+    tools/efv_bust_pool_resolve.py resolved for never-MLB rows with no stored id.
+    Called only behind BUST_POOL_IDS. Raises BustPoolIdsBlocked when the file's
+    symmetry block says the debuted and bust coverage gap is over the limit, and
+    returns {} when the file is absent (the build then reads no pool id)."""
+    p = Path(path) if path else DATA_DIR / BUST_POOL_IDS_FILE
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("bust_pool_ids: %s unreadable; no pool id applied", p)
+        return {}
+    sym = doc.get("symmetry") or {}
+    if sym.get("blocked"):
+        raise BustPoolIdsBlocked(
+            f"{p.name}: symmetry {sym.get('verdict')}; the ids may not enter a matrix")
+    out: dict[str, int] = {}
+    for r in doc.get("rows") or []:
+        pid, pk = r.get("person_id"), r.get("player_key")
+        if pk and pid:
+            try:
+                out[str(pk)] = int(pid)
+            except (TypeError, ValueError):
+                continue
+    return out
+
+
+def _with_bust_pool_id(rec: dict, pool: dict[str, int], acct: dict) -> dict:
+    """The record with its pool id attached, or the same record object untouched:
+    while BUST_POOL_IDS is off, when the record carries its own id, or when the pool
+    has no id for its key. Counted in acct only when an id is attached, so the
+    flag-off accounting is byte-identical."""
+    if not BUST_POOL_IDS or rec.get("mlbam_id"):
+        return rec
+    pid = pool.get(rec.get("player_key"))
+    if not pid:
+        return rec
+    acct["bust_pool_id_applied"] = acct.get("bust_pool_id_applied", 0) + 1
+    return dict(rec, mlbam_id=int(pid))
+
+
 def bust2_category(row: dict) -> str:
     """One matrix row's section 3.2 category, read from the row alone.
 
@@ -1715,6 +1773,8 @@ def build_matrix(side: str = "hit"):
     # --- busts (never reached MLB) ---
     mlb_ids = _mlb_exposed_ids()
     debuted_keys = {r["player_key"] for r in rows}
+    # BUST_POOL_IDS: the file is opened only while the flag is on.
+    bust_pool = bust_pool_ids() if BUST_POOL_IDS else {}
     for rec in inact:
         acct["bust_seen"] += 1
         pk = rec.get("player_key")
@@ -1730,6 +1790,9 @@ def build_matrix(side: str = "hit"):
             if rec is None:
                 acct["bust_identity_excluded"] = acct.get("bust_identity_excluded", 0) + 1
                 continue
+        # BUST_POOL_IDS: a no-id row takes its outcome-blind pool id here, before the
+        # F1 guard, the MiLB block and Arm R read it; a no-op while the flag is off.
+        rec = _with_bust_pool_id(rec, bust_pool, acct)
         # F1 bust-loop guard (audit 2026-07-24): a record whose mlbam id has
         # real MLB (sport-1) stat lines, or whose player_key already carries
         # career_war seasons, is NOT a never-MLB bust - the hardcoded 0.0

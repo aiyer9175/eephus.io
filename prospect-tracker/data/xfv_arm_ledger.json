@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-03T01:45:05+00:00",
+ "generated_at": "2026-10-03T02:16:11+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
  "n_arms": 80,
  "by_lane": {
@@ -1849,9 +1849,31 @@
     -0.0231,
     0.0116
    ]
+  },
+  {
+   "lane": "bust pool id balance (EFV3 G7)",
+   "artifact": "efv_bust_pool_receipt.json",
+   "probe": "G7:balance.bust_id_resolved",
+   "verdict": "CONSTANT",
+   "generated_at": "2026-10-03T02:16:08+00:00",
+   "reason": "W3 > 0 does not vary over the pool rows on lv_dev: an F-LV label reads the record's own id and career_war row, never a pool id, so every pool row keeps W3 0 whether or not the resolver found it; the read carries no information about the ids and says so",
+   "ci95": {
+    "hit": [
+     0.0,
+     0.0
+    ],
+    "pit": [
+     0.0,
+     0.0
+    ]
+   },
+   "partial": {
+    "hit": 0.0,
+    "pit": 0.0
+   }
   }
  ],
- "n_probes": 44,
+ "n_probes": 45,
  "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
  "sources_pending": [
