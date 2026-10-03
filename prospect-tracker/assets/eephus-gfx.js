@@ -124,6 +124,30 @@
     var X = window.EephusExport;
     return (X && typeof X.pxIcon === "function" && typeof X.hasIcon === "function") ? X : null;
   }
+  // The header brand (owner ask 2, PB-08 / BR-08). Under PIXEL_BRAND (the
+  // page serves the pixel lockup) it is the lockup itself, painted by
+  // eephus-export.js from its committed strike at a whole scale (letters 2 px
+  // per font pixel, so the s 4 strike at 1:1 on the 2x canvas) with the
+  // letters' baseline on the header baseline. If the strike did not load, the
+  // lowercase words with the lilac .io (owner answer PB-Q3). With the flag off
+  // the header keeps its capitals.
+  var LOCKUP_U = 2 * SCALE;
+  function lockupPainter() {
+    var X = window.EephusExport;
+    return (X && typeof X.pxLockup === "function" && typeof X.pixelBrand === "function" &&
+            X.pixelBrand()) ? X : null;
+  }
+  function brandHead(g, P, x, base) {
+    var L = lockupPainter();
+    g.fillStyle = P.fg; g.font = "700 26px " + P.MONO;
+    if (!L) { g.fillText("EEPHUS.IO", x, base); return; }
+    var box = L.lockupBox(LOCKUP_U, SCALE);
+    if (box && L.pxLockup(g, x, base - box.base, LOCKUP_U, SCALE, P.dark)) return;
+    g.fillText("eephus", x, base);
+    var ew = g.measureText("eephus").width;
+    g.fillStyle = tok("--logo-dot", P.dark ? "#9B8CFF" : "#6E56CF");
+    g.fillText(".io", x + ew, base);
+  }
   // Force (or restore) the document theme. theme "light"|"dark" forces it; any
   // other value restores `orig` (null/undefined = remove the attribute).
   function forceTheme(theme, orig) {
@@ -160,8 +184,7 @@
 
     // header: brand + module eyebrow + date, iridescent rule
     g.textBaseline = "alphabetic";
-    g.fillStyle = fg; g.font = "700 26px " + MONO;
-    g.fillText("EEPHUS.IO", PAD, 50);
+    brandHead(g, P, PAD, 50);
     g.fillStyle = accent; g.font = "700 22px " + MONO;
     g.fillText(String(spec.module || "").toUpperCase(), PAD + 196, 50);
     var today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -394,8 +417,7 @@
 
     // header: brand + module eyebrow + generated-on date, iridescent rule
     g.textBaseline = "alphabetic";
-    g.fillStyle = fg; g.font = "700 26px " + MONO;
-    g.fillText("EEPHUS.IO", PAD, 50);
+    brandHead(g, P, PAD, 50);
     g.fillStyle = accent; g.font = "700 22px " + MONO;
     g.fillText(String(spec.module || "").toUpperCase(), PAD + 196, 50);
     var today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -552,8 +574,7 @@
 
     // header: brand + module eyebrow + date, iridescent rule (house)
     g.textBaseline = "alphabetic";
-    g.fillStyle = fg; g.font = "700 26px " + MONO;
-    g.fillText("EEPHUS.IO", PAD, 50);
+    brandHead(g, P, PAD, 50);
     g.fillStyle = accent; g.font = "700 22px " + MONO;
     g.fillText(String(spec.module || "").toUpperCase(), PAD + 196, 50);
     var today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -703,6 +724,9 @@
     // The icon bitmaps load here, at export time, never on page load (PX-18).
     var X = pxPainter();
     if (X && X.loadIcons) await X.loadIcons();
+    // the header lockup's strike, for the theme this render paints (PB-08)
+    var L = lockupPainter();
+    if (L && L.loadLockup) await L.loadLockup(LOCKUP_U, palette().dark);
     var fmt = FORMATS[_opts.format] || FORMATS.wide;
     if (_spec.kind === "card") {
       // The unified card has its own 16:9-ish geometry; format control is hidden.

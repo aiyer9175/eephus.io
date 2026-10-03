@@ -412,7 +412,8 @@ def _palette(theme):
                                         for t in ("light", "dark")] + [("favicon-16.png", "light"),
                                                                        ("favicon-32.png", "light")])
 def test_strikes_have_no_anti_aliasing(name, theme):
-    im = Image.open((BRAND if name.startswith("favicon") else PIXEL) / name).convert("RGBA")
+    served = name.startswith("favicon") or any(name.startswith(f"wordmark-s{s}-") for s in SRC.EXPORT_SCALES)
+    im = Image.open((BRAND if served else PIXEL) / name).convert("RGBA")
     pal = _palette(theme)
     for count, (r, g, b, a) in im.getcolors(1 << 16):
         assert a in (0, 255), (name, a)

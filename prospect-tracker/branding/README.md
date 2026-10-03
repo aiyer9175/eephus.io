@@ -212,6 +212,12 @@ guide said gold on light, `assets/site.css` served lilac in both themes
 (2026-09-30) is lilac in both themes, as the site serves it. This guide (Color,
 Logo usage) and the portable marks now say lilac; the export frame follows with
 its pixel lockup (PB-08).
+PB-08 is built behind `build_site.PIXEL_BRAND`: with the flag on, the
+image-export frame and the three Generate GFX headers (which set "EEPHUS.IO"
+in capitals) paint the pixel lockup itself from its committed strikes
+(`assets/brand/wordmark-s{2,4}-{light,dark}.png`, lilac `.io`) at a whole
+number of device pixels per strike pixel (`EephusExport.pxLockup`); with it
+off they keep today's text.
 
 ## Pixel marks
 
@@ -368,7 +374,8 @@ branding/
     icons-sheet-dark.png        the pixel icon set, dark review sheet
     brand-sheet-light.png       the pixel marks review sheet: lockups, ball strikes,
     brand-sheet-dark.png          favicon strikes, the PROSPX mark
-    wordmark-s{2,4,6}-*.png     the lockup strikes, equal to the DOM fragments
+    wordmark-s6-*.png           the s 6 lockup strikes, equal to the DOM fragments
+                                (s 2 and s 4 live in assets/brand/)
     glyphs.json                 the sampled PixelMplus12 glyphs and the font's sha256
     og/<module>.png             the per-module share cards (not served yet)
 
@@ -376,8 +383,10 @@ assets/
   eephus-icons.svg              the pixel icon sprite (served)
   eephus-icons.json             the same bitmaps for the canvas painters (served)
   brand/                        tools/pixel_brand.py's DOM fragments and the pixel
-                                favicon and app-icon set with its manifest (served
-                                only when build_site.py's PIXEL_BRAND is on)
+                                favicon and app-icon set with its manifest, and the
+                                s 2 and s 4 wordmark strikes the canvas exports
+                                paint (served only when build_site.py's
+                                PIXEL_BRAND is on)
 
 tools/
   pixel_icons.py                source and generator of the pixel icon set
