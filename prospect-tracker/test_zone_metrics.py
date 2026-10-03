@@ -154,3 +154,89 @@ def test_cpx_taken_pitch_model_calibrates_missing_zone_feed():
     )
 
     assert predicted == [5, 14]
+
+
+def _synthetic_split_rows(seed: int, n_splits: int) -> dict[tuple[str, str, bool], list[PitchRow]]:
+    import random
+
+    rng = random.Random(seed)
+    out: dict[tuple[str, str, bool], list[PitchRow]] = {}
+    levels = ["MLB", "AAA", "AA", "A+", "A", "CPX"]
+    for i in range(n_splits):
+        level = levels[i % len(levels)]
+        rows = []
+        for _ in range(rng.randint(0, 40)):
+            row = _pitch(rng.choice([1, 5, 9, 11, 14, None]), rng.choice(["C", "B", "S", "X"]))
+            row.pitch_x_gameday = rng.uniform(40.0, 210.0)
+            row.pitch_y_gameday = rng.uniform(100.0, 400.0)
+            row.k_zone_top = rng.uniform(3.2, 3.8)
+            row.k_zone_bot = rng.uniform(1.4, 1.9)
+            rows.append(row)
+        out[(f"p{i}", level, bool(i % 3 == 0))] = rows
+    return out
+
+
+def _fit_forest(seed: int, n_classes: int, labels_from):
+    import random
+
+    from sklearn.ensemble import RandomForestClassifier
+
+    rng = random.Random(seed)
+    X = [[rng.uniform(40.0, 210.0), rng.uniform(100.0, 400.0), rng.uniform(3.2, 3.8), rng.uniform(1.4, 1.9)]
+         for _ in range(600)]
+    y = [labels_from(x, n_classes) for x in X]
+    clf = RandomForestClassifier(n_estimators=25, max_depth=6, min_samples_leaf=3, random_state=seed, n_jobs=1)
+    clf.fit(X, y)
+    return clf
+
+
+def test_batched_predict_matches_per_split_predict_for_both_models():
+    """One predict per model labels every split exactly as one call per split does."""
+    import numpy as np
+
+    zone_ids = sorted(zone_metrics.IN_ZONE | zone_metrics.OUT_ZONE)
+    clf = _fit_forest(1, len(zone_ids), lambda x, n: zone_ids[int(x[0] + x[1]) % n])
+    taken = _fit_forest(2, 2, lambda x, n: int(x[1] > 250.0))
+    taken_pitch_models = {"CPX": taken}
+    splits = _synthetic_split_rows(seed=7, n_splits=60)
+
+    per_split = {
+        key: zone_metrics._predict_zone_ids(rows, clf, taken_pitch_model=taken_pitch_models.get(key[1]))
+        for key, rows in splits.items() if rows
+    }
+    for chunk_rows in (zone_metrics.PREDICT_CHUNK_ROWS, 7, 1):
+        batched = zone_metrics._predict_zone_ids_by_split(
+            splits, clf, taken_pitch_models, chunk_rows=chunk_rows,
+        )
+        assert set(batched) == set(per_split)
+        for key in per_split:
+            assert np.array_equal(np.asarray(per_split[key]), np.asarray(batched[key])), key
+            assert len(batched[key]) == len(splits[key])
+        mlb_keys = [k for k in per_split if k[1] != "CPX"]
+        cpx_keys = [k for k in per_split if k[1] == "CPX"]
+        assert mlb_keys and cpx_keys
+        assert np.array_equal(
+            np.concatenate([np.asarray(per_split[k]) for k in mlb_keys]),
+            np.concatenate([np.asarray(batched[k]) for k in mlb_keys]),
+        )
+        assert np.array_equal(
+            np.concatenate([np.asarray(per_split[k]) for k in cpx_keys]),
+            np.concatenate([np.asarray(batched[k]) for k in cpx_keys]),
+        )
+        assert set(np.concatenate([np.asarray(batched[k]) for k in cpx_keys]).tolist()) <= {5, 14}
+
+
+def test_batched_predict_falls_back_to_the_mlb_classifier_without_a_taken_pitch_model():
+    calls = []
+
+    class _Counting:
+        def predict(self, features):
+            calls.append(len(features))
+            return [14 for _feature in features]
+
+    splits = _synthetic_split_rows(seed=3, n_splits=12)
+    batched = zone_metrics._predict_zone_ids_by_split(splits, _Counting(), {"CPX": None})
+    non_empty = {k: v for k, v in splits.items() if v}
+    assert set(batched) == set(non_empty)
+    assert all(batched[k] == [14] * len(v) for k, v in non_empty.items())
+    assert calls == [sum(len(v) for v in non_empty.values())]
