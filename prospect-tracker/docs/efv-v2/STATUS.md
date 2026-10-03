@@ -117,3 +117,4 @@ rather than 0.020.
 ## Dated log
 
 - 2026-10-02: screening lab registered, no result. Section 10 of `docs/efv-v2/EFV_V2_GATE.md` (still DRAFT) registers wave 1, seven arms frozen at `d9fe7db4`; no lab number exists on the frozen label.
+- 2026-10-02: the exploratory screening run (EFV3_B5, gate s10.11) was made on the eWAR v2 label at lab commit `9c541e92`, to a file outside the repository; no verdict, nothing admitted, no row under `data/`; its floors are advisory and the registered run derives its own. Still no lab number on the frozen label.
