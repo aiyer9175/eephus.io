@@ -60,7 +60,9 @@ def test_the_gate_is_a_draft_until_its_preconditions_hold():
 
 def test_results_section_is_empty():
     t = _text()
-    body = t.split("## 9. Results", 1)[1].strip()
+    # s9 runs to the next rule or heading (s10, the screening lab, follows it)
+    body = re.split(r"\n(?:---|## )", t.split("## 9. Results", 1)[1], maxsplit=1)[0]
+    body = body.strip()
     assert body.startswith("(Empty.") and body.count("\n") == 0
 
 
@@ -266,3 +268,66 @@ def test_the_statistic_groups_nothing_by_grade():
 def test_the_draft_names_no_fv_cell_stratum():
     t = _text().lower()
     assert not re.search(r"\bfv ?(35|40|45|50|55|60|65)\+? (cell|band|bucket|tier)", t)
+
+
+# ---------------------------------------------------------------------------
+# 5. s10, the screening lab (EFV3_B6): registered text, no number from any read
+# ---------------------------------------------------------------------------
+
+LAB = ROOT / "tools" / "efv_screen_lab.py"
+
+
+def _s10() -> str:
+    t = _text()
+    assert "## 10. Screening lab" in t
+    return t.split("## 10. Screening lab", 1)[1]
+
+
+def _lab_wave() -> list[str]:
+    """The frozen wave-1 names off the lab's source (no import: the lab pulls in the
+    frame builders)."""
+    tree = ast.parse(LAB.read_text(encoding="utf-8"))
+    for node in tree.body:
+        target = (node.target if isinstance(node, ast.AnnAssign) else
+                  node.targets[0] if isinstance(node, ast.Assign) else None)
+        if isinstance(target, ast.Name) and target.id == "CANDIDATES":
+            return [kv.value for d in node.value.elts
+                    for k, kv in zip(d.keys, d.values)
+                    if isinstance(k, ast.Constant) and k.value == "name"]
+    raise AssertionError("CANDIDATES not found in the lab")
+
+
+def test_s10_lists_the_lab_s_frozen_wave_and_nothing_else():
+    s10 = _s10()
+    if not LAB.exists():
+        pytest.skip("tools/efv_screen_lab.py absent")
+    wave = _lab_wave()
+    assert len(wave) == 7
+    table = s10.split("### 10.9", 1)[1].split("### 10.10", 1)[0]
+    listed = re.findall(r"^\| `(\w+)` \|", table, flags=re.M)
+    assert listed == wave
+    assert "m = 7" in s10 and "`seasons_at_level_pit` is not screened" in s10
+    assert "seasons_at_level_pit" not in wave
+
+
+def test_s10_carries_the_registered_rule():
+    s10 = _s10()
+    for s in ("B 2000", "seed 20260906", "one-sided 95% lower bound", "Three N(0,1) noise",
+              "500-draw permutation null", "kill rule 1", "2026-11-15", "EPOCH_RUN",
+              "Z1_RUN", "consensus-FV cell", "PROSPECT_ANCHOR_GATE",
+              "NOT_ADJUDICATED_EXPLORATORY"):
+        assert s in s10, s
+    for clause in "abcdefg":
+        assert f"({clause})" in s10, clause
+    for v in ("PASS", "VETO_ON_AUC", "NULL", "NULL_AUC_ONLY", "NULL_HOLM",
+              "NOT_ADJUDICATED_NO_RHO_FLOOR", "NOT_ADJUDICATED_NO_AUC_FLOOR",
+              "NOT_ADJUDICATED_NO_HOLM"):
+        assert f"`{v}`" in s10, v
+
+
+def test_s10_holds_no_number_from_a_read():
+    s10 = _s10()
+    # rule constants only (B 2000, 500 draws, alpha 0.05, 1.645): no rho, delta, floor,
+    # interval or share
+    assert not re.search(r"(?<![\w.])[+-]?0\.\d{3,}", s10)
+    assert not re.search(r"\d+(\.\d+)? ?(%|percent)\b", s10.replace("95%", ""))

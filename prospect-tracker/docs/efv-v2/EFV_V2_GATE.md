@@ -258,6 +258,15 @@ or later carries status `reserved_vm` (`efv_labels.labels_for`). Policy, registe
   development read (2 frames); and DS-16 (2 frames, s7), logged as probes when it runs.
 - Owner-asked driver lanes of 2026-09-25 (frame projectability, 21 outcome probes; FanGraphs
   PV and PV-for-ETA) keep their own probe records and are added here at registration.
+- The screening lab, wave 1 (s10), counted under its own names. Seven arms in one Holm
+  family (m 7): four text arms, the MiLB floor coverage arm and two pick re-tests. The
+  floors: three N(0,1) noise columns per head and per side (hitters, pitchers, both sides
+  pooled), in the floor mode in force and again for the other mode's receipt. Per column
+  arm, its twin and its 500-draw permutation null. The DS-03 balance probes, per side, on
+  `report_absent` (text), `pick_missing` (pick), and `milb_absent` and `level_prev_missing`
+  at both floors (the MiLB floor lift). EFV3_B1's floors-only dry run and the one exploratory
+  run (EFV3_B5), both on the eWAR v2 label. Each is a look at lv_dev, and none is evidence on
+  its own.
 
 At nominal 95% intervals, 14 to 17 spurious CI-excluding reads are expected from the 275 to
 347 looks alone. No development CI is evidence on its own; only a reserved read can be.
@@ -309,3 +318,243 @@ ONE read of the assembled V2 on the eWAR v2 label, run after this draft is commi
 ## 9. Results
 
 (Empty. Filled only by the look runner after the status line reads REGISTERED.)
+
+---
+
+## 10. Screening lab
+
+Written 2026-10-02 into this DRAFT, before the lab's registered run and before its
+exploratory run, from `EFV3_PLAN.md` s4 and `LANE_B.md` s4.5 and s7 (the eFV frontier v3
+plan, `_finalpass_2026-09-24/efv3/`). This section is part of what P5 freezes: it changes
+with the rest of this file and with nothing else. The lab is `tools/efv_screen_lab.py`. It
+admits a column to the candidate list of s4.2 and to nothing else. It moves no served
+number, reads no reserved frame (the R-LV list vintages 2020 and 2021 and the R-VM debut
+cohorts from 2025 stay outside it, guard asserted before any score), and re-runs no closed
+arm on the frame it was closed on. No number from any read appears in this section. No
+statistic of the lab, its inputs or its artifacts is cut by consensus-FV cell
+(`docs/PROSPECT_ANCHOR_GATE.md`); its only groupings are side, vintage and fold.
+
+### 10.1 Frame, folds and label
+
+- Frame: lv_dev only, `efv_vintage_frame.build_frame(side, V)` at list vintages 2017, 2018
+  and 2019 (the vintages V2 is scored on, s2.1). Six (side, vintage) groups; three folds per
+  side.
+- Label: W3 (`efv_labels.labels_for_frame`). A B9b `reserved_vm` row is kept at W3 = 0 and
+  counted in the run's receipt (s5).
+- Training for fold V: `efv_v2_model.lv_training_rows`, labelled F-LV rows at vintages below
+  V plus the v1 matrices at decision years below V, with every V-frame player excluded
+  (s4.5).
+- vm_dev is not a screening frame. Its rows sit at the debut year, where consensus has
+  already absorbed the record, and every closed arm was read there. It may be shown beside
+  the lv_dev result of an admitted candidate as a description, never as a verdict.
+
+### 10.2 Base and candidate
+
+- Base: V2 as assembled (s4), its `order_idx` per row, with the weights of
+  `data/efv_v2_assembly.json` re-derived once on the frozen label (P5).
+- Candidate: the same assembly with one extra column offered to one declared head (skill or
+  timing), admitted or refused inside each fold by DS-06 (`efv_v2_model.admission_for_key`,
+  the rule of s4.2). A refused column leaves the candidate equal to the base in that fold.
+  That is a null, not an error. A row without a value imputes at the fold's observed
+  training mean, as a sidecar driver does (DS-04).
+- The coverage arm `milb_floor_2005` has no column. Its candidate is the base refit and
+  scored on the F-LV frame built with the MiLB floor lifted to 2005
+  (`efv_vintage_frame.MILB_FLOOR_LV`), paired row by row with the base. The per-side
+  withhold that the DS-03 re-run set on the lifted frame
+  (`efv_vintage_frame.MILB_FLOOR_LV_WITHHELD`, EFV3_B3) applies as committed.
+
+### 10.3 Statistic and estimator
+
+- Primary: `efv_v2_stat.within`, the within (side, vintage) statistic of s3.1, groups of at
+  least 20 rows. Secondary: pooled after the identical output map (s3.2, s3.3). Contributor
+  AUC at `w*` (s3.5) may veto and may not credit; it is not a member of the Holm family.
+- Delta: `efv_v2_stat.paired_delta` with the within statistic, candidate minus base on
+  identical rows. E_cond (scores fixed, players resampled), paired, player-clustered, B 2000,
+  seed 20260906.
+- The admission claim is the one-sided 95% lower bound of the within delta, lb95 = delta
+  minus mde95 (mde95 = 1.645 x SD of the drawn deltas), printed beside the point.
+
+### 10.4 The floor rule
+
+- Floors are derived in the run that uses them, before any arm is read, and the artifact
+  writes `floors` before `arms`.
+- Three N(0,1) noise columns per head and per side (hitters, pitchers, and both sides pooled
+  for the coverage arm) go through the identical pipeline. The MAX mde95 over the three is
+  the head's feature-add floor on that side, for the within, pooled and AUC legs. The
+  coverage arm reads against the larger of the two heads' floors on both sides pooled.
+- Floor mode, disclosed (`--floor-mode`, default `forced`). In the floor derivation alone,
+  the noise column is admitted without the DS-06 rule and refit, so the floor measures what
+  a column that is admitted moves by chance. The literal reading (`admitted`: the noise
+  column sent through DS-06 as well) leaves a floor undefined wherever no noise column is
+  admitted in any fold. An undefined floor is recorded as none, never as 0, and every arm on
+  that head and side then reads `NOT_ADJUDICATED_NO_RHO_FLOOR`. Every artifact writes the
+  other mode's floors beside the mode in force (`floors_other`). The twin and the
+  permutation null always go through the identical admission.
+- No floor value is written here. The registered run's measured floor is the floor.
+
+### 10.5 Controls
+
+On every column arm:
+
+- the zero-information twin: the column permuted within (side, vintage) and sent through the
+  same admission and refit; a twin at or above the candidate is no result (kill rule 5);
+- a 500-draw permutation null of the within delta (one-sided p), each draw through the
+  identical admission and refit;
+- the per-fold deltas with their signs (three folds per side) and the DS-06 per-vintage
+  signs beside them;
+- the contributor AUC delta against its own noise floor (veto only);
+- the DS-03 balance probe on the missingness indicator of any column with a missing value
+  (partial given the consensus percentile, player-clustered CI95, 500 draws, the
+  `tools/efv_identity_balance.py` pattern): `report_absent` for the text family and
+  `pick_missing` for the pick re-test.
+
+The coverage arm has no column to permute. It carries no twin and no permutation null, and
+its p for the Holm step is the bootstrap one-sided p of the within delta (the share of E_cond
+draws at or below 0), disclosed in the arm. Its balance probes are the DS-03 re-run of
+`milb_absent` and `level_prev_missing` on the lifted frame (EFV3_B3), which sets the per-side
+withhold before the lab runs.
+
+### 10.6 The Holm family
+
+One family per wave over every registered (candidate, side) arm; wave 1 has m = 7. The family
+is formed after every arm is measured, not inside the measuring loop (the
+`apply_holm_verdicts` pattern, `docs/EFV_GATE_STANDARD.md` s3.1 point 3). An arm's p is the
+one-sided permutation p of its within delta. m is the registered size even when an arm cannot
+be measured: an absent arm never shrinks the correction. AUC does not enlarge the family
+(PROGRAM.md s2.1). Alpha 0.05, Holm step-down.
+
+### 10.7 The admission rule
+
+Pre-registered, quoted verbatim from `LANE_B.md` s4.5:
+
+> ADMITTED to the V2 candidate list (not to the served grade) only if all of: (a) within
+> delta's one-sided 95% lower bound above 0 and point at or above the floor of its head and
+> side; (b) Holm-adjusted permutation p below 0.05 inside the wave family; (c) the twin
+> inside its floor; (d) DS-06 admitted the column in every one of the three folds and the
+> fold deltas share a sign; (e) contributor AUC delta not adverse beyond its floor; (f) for a
+> column with any missingness, the DS-03 balance probe reads BALANCED; (g) the pooled
+> secondary is not adverse beyond its own floor (reported; a disagreement between the two
+> statistics is disclosed, S1 reconciliation).
+
+Readings fixed here, as the lab implements them:
+
+- The coverage arm: (c) does not apply, (d) reads as "the fold deltas share a sign" (no
+  column is admitted or refused), and (b) uses the substituted p of s10.5.
+- (f): a probe whose indicator does not vary on the training rows reads CONSTANT and meets
+  (f); a probe that reads IMBALANCED fails it.
+- A column that its builder withholds, or that cannot be built on the run's tree, is not
+  measured. It carries no verdict, still counts in m, and is never admitted.
+
+### 10.8 The verdict vocabulary
+
+A registered run emits the eight strings of `docs/EFV_GATE_STANDARD.md` s3.1 and no other:
+`PASS` (read here as admitted to the candidate list, and still not a claim), `VETO_ON_AUC`,
+`NULL`, `NULL_AUC_ONLY`, `NULL_HOLM`, `NOT_ADJUDICATED_NO_RHO_FLOOR`,
+`NOT_ADJUDICATED_NO_AUC_FLOOR` and `NOT_ADJUDICATED_NO_HOLM`. The composite of (a), (c), (d),
+(f) and (g) plays the role the standard gives "rho clears"; (e) is the AUC veto; (b) is the
+Holm step. An absence never reads as `PASS`. A ninth string, `NOT_ADJUDICATED_EXPLORATORY`,
+is reserved to the exploratory run of s10.11; the registered run never writes it, and
+nothing under `data/` carries it.
+
+### 10.9 Wave 1, frozen
+
+Seven arms, one Holm family (m = 7), frozen in `tools/efv_screen_lab.py` `CANDIDATES` at
+commit `d9fe7db4` (EFV3_B1, 2026-10-02). Commit `59fe8427` (EFV3_B4) changed only where the
+two pick columns read their values (the pick builder in place of the sidecar stand-in); every
+name, side, head, kind and re-test flag is as `d9fe7db4` froze it. Nothing is added to wave 1
+after this section is committed (kill rule 1).
+
+| arm | side | head | kind | builder |
+|---|---|---|---|---|
+| `txt_skill_hit` | hit | skill | column | `efv_text_features` (EFV3_B2): fold-fitted tf-idf ridge scalar on the W3 percentile residual |
+| `txt_skill_pit` | pit | skill | column | as `txt_skill_hit` |
+| `txt_time_hit` | hit | timing | column | `efv_text_features`: the same scalar fitted on the R3 target |
+| `txt_time_pit` | pit | timing | column | as `txt_time_hit` |
+| `milb_floor_2005` | both, pooled | none | coverage | `efv_vintage_frame.MILB_FLOOR_LV` (EFV3_B3): the base refit on the lifted F-LV frame |
+| `pick_overall_time_hit` | hit | timing | column, named re-test | `efv_pick_features` (EFV3_B4): log1p of the pick joined on the outcome-blind id with draft year strictly below V, else the sidecar pick known at V |
+| `pick_overall_time_pit` | pit | timing | column, named re-test | as `pick_overall_time_hit` |
+
+The text family's rules (EFV3_B2, `LANE_B.md` s3): list vintages 2011 and 2012 are dropped
+(backfilled reports); a per-row anachronism filter runs from 2013; grade strings are
+stripped before tokenizing; tokenizer, idf and ridge are fit per fold on vintages strictly
+below V with every V-frame player excluded; consensus enters only as u_c. A skill text
+column is offered on a side only where `report_absent` reads BALANCED under DS-03
+(`efv_text_features.offered_columns`); a withheld column is recorded as s10.7 says.
+
+### 10.10 The named re-test, and what is not screened
+
+- `pick_overall_time_hit` and `pick_overall_time_pit` are a named re-test of the closed F-VM
+  arm D-1 `pick_overall` on lv_dev, a frame it was never read on, timing head only
+  (`DRIVER_SYSTEM_V2.md` D4: pick and bonus are never a rank feature). It is not
+  re-shopping. It is named before any read, it carries its re-test flag in the artifact and
+  in the arm ledger, it counts in s6 under its own name, it reads on a frame other than the
+  one that closed it, and it may not be re-run on vm_dev.
+- `seasons_at_level_pit` is not screened. `data/efv_v2_assembly.json` lists
+  `seasons_at_level` under `scrapped.pit` as the pitcher block of owner answer DS-Q2 (a
+  locked owner decision). `data/efv_v2_dev_eval.json` already carries it in H0's lv_dev
+  pitcher candidate list, so it has been read on F-LV. Its record is
+  `data/model_registry.json` `xfv_repeat_level` (E1, 2026-07-30). A re-test would be
+  re-shopping.
+- Also not screened: vm_dev, the 39 closed arms of `data/xfv_arm_ledger.json`, and any
+  lambda, correction family or new grade source offered as a margin lever.
+
+### 10.11 The exploratory run (disclosure)
+
+One exploratory run of wave 1 on the eWAR v2 label, the label on disk before the fWAR
+freeze (EFV3_B5), writes its floors, twins, per-fold signs and balance probes to a file
+outside `data/`. It writes no `data/` file, no ledger row and no progress row, and it is not
+committed. Its artifact carries `screening.exploratory` true. It forms no verdict: every arm
+reads `NOT_ADJUDICATED_EXPLORATORY` and nothing is admitted. Its floors are advisory; the
+registered run derives its own. EFV3_B1's floors-only dry run of the lab (scratchpad, eWAR v2
+label) is a development read of the same kind and formed no verdict. At this commit the
+exploratory run has not run. Both count in s6.
+
+### 10.12 Calendar
+
+1. The one registered run (EFV3_B7) reads the frozen fWAR label after EPOCH_RUN and Z1_RUN,
+   with this section committed first: the same seven arms, family, seed and rule, and floors
+   derived in that run.
+2. Admitted candidates enter s4.2 by a dated amendment before the status line changes. Every
+   other arm is recorded with its verdict string and its numbers in `docs/efv-v2/STATUS.md`
+   and the arm ledger, not in this section.
+3. Hard cutoff, owner answer E3-Q3 (the unified form of lane B's E3-Q21; option A, taken
+   2026-10-02 under the standing instruction): EV-12 commits after both registered screens
+   (this wave and the five-arm model-class screen of `docs/efv-v2/MODEL_CLASS_SCREEN.md`) or
+   on 2026-11-15, whichever comes first. A survivor that arrives after the status line
+   changes, or after 2026-11-15, waits for the 2027 registration. The reserved read date (not
+   before 2026-12-01) does not move.
+4. The registered run does not run on a registered look's date (`docs/*GATE*.md`), among
+   them 2026-10-23, 2026-11-06 and 2026-11-13 (projections looks), 2026-11-20 (the Prospect
+   Anchor look) and 2026-12-01 (the eFV reserved read).
+5. Wave 2 (roster counts, the Statcast chain's second link, any FanGraphs-text-only column)
+   runs only after wave 1's registered run is on the ledger, as its own family, registered in
+   this section before it runs.
+
+### 10.13 Publication
+
+The registered run writes `data/xfv_screen_wave1.json` (the registration echo, the label id,
+the guards, `floors` before `arms`, the Holm family, the probes). Its arms join
+`data/xfv_arm_ledger.json` through `tools/efv_arm_ledger.py`. Each measured arm is a
+development row of `data/efv_progress.json`: model_id
+`efv_v2_screen:wave1:<candidate>:<side>`, resolvable null, `screening.exploratory` false. An
+admitted column enters `efv_v2_model.skill_candidates` or `timing_candidates` behind a module
+flag `V2_SCREEN_CANDIDATES_ON` that defaults off (EFV3_B7). With the flag off the served heads
+and `data/efv_v2_assembly.json` stay byte-identical; only the look runner reads an admitted
+column, inside the look.
+
+### 10.14 Families with no vintage-matched source (recorded, not screened)
+
+No source dated inside the row's window exists for these families at any labelled
+development or reserved vintage, so the lab cannot screen them. They are recorded here so no
+later lane re-discovers the absence (`LANE_B.md` s7).
+
+| family | why there is no source at a labelled vintage | first possible read |
+|---|---|---|
+| IL stints | `il_history` begins 2017 and holds few stints a year before 2026 | when back-population reaches 100 pre-cutoff stints on the resolved cohort (the revival trigger of `data/xfv_injury_history_eval.json`) |
+| Signing bonus before the 2017 classes | `acquisitions.bonus_usd` and `data/draft_bonus_slot.json` begin with the 2017 classes; `draft_history` carries picks only | never, unless a pre-2017 bonus table is ingested from a file the owner already has |
+| College production for draftees | CollegeSavant covers the 2021 and later classes, `draft_statlines` 2022 on, `.cache/amateur_leagues` 2021 on | a count-only StatsAPI probe of the college sport id for 2005 to 2020 decides (EFV3_B9); otherwise the 2021 class resolves W3 about 2029 |
+| AAA and FSL Statcast, A-ball signals | tracking begins 2021 (FSL) and 2023 (AAA); the DB tables hold 2026 only; `data/signal_snapshots/` holds 2023 on | FSL-era V 2022 at RT 2027; AAA-era V 2024 at RT 2029; the chain's second link is screenable now (wave 2) |
+| Modern pitch-level data, pitch rates | AAA pitch files begin 2023; `data/milb_pitch_rates.json` is 2026 only | as AAA Statcast; pitch rates per Q10_11, which owns their admission |
+| Tracked physical data | bat speed 2023 on (AAA), bat tracking 2024 on, sprint and arm MLB only | 2027 and later (program D6) |
+| eBR runner record | not built (`.cache/ebr` is empty) | after the eBR plan's integration task |
+| BA, ESPN, Just Baseball and TJStats report text | first published 2023, 2025, 2026 and 2026 | R-LV never; V 2023 at RT 2027 (W3) |

@@ -113,3 +113,7 @@ rather than 0.020.
   (V 2020 and 2021) or R-VM (2025+ debuts) be read, once each, not before 2026-12-01.
 - Serving V2 on the board (DS_F_serve_v2, owner answer DS-Q1) is a separate task; nothing here
   moves the served grade.
+
+## Dated log
+
+- 2026-10-02: screening lab registered, no result. Section 10 of `docs/efv-v2/EFV_V2_GATE.md` (still DRAFT) registers wave 1, seven arms frozen at `d9fe7db4`; no lab number exists on the frozen label.
