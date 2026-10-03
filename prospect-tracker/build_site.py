@@ -961,6 +961,39 @@ def render_markdown(text: str) -> str:
         body = body.replace(f"<p>{token}</p>", embed).replace(token, embed)
     return body
 
+def _png_size(path: Path) -> tuple[int, int] | None:
+    """(width, height) from a PNG's IHDR chunk, or None if not a readable PNG."""
+    try:
+        with open(path, "rb") as fh:
+            head = fh.read(24)
+    except OSError:
+        return None
+    if len(head) < 24 or head[:8] != b"\x89PNG\r\n\x1a\n" or head[12:16] != b"IHDR":
+        return None
+    return int.from_bytes(head[16:20], "big"), int.from_bytes(head[20:24], "big")
+
+_ARTICLE_IMG_RE = re.compile(r"<img\b([^>]*?)\s*/?>", re.I)
+
+def _size_article_images(body_html: str) -> str:
+    """Give every inline article image that points at a local PNG its intrinsic
+    width and height (read from the file header, so the page reserves the box
+    and does not shift as images arrive) plus loading="lazy" and
+    decoding="async" (bloat finding AS15: nine inline PNGs, 838 KB, loaded
+    eagerly with no size). The stylesheet's `.article-body img { max-width:
+    100%; height: auto; }` keeps the rendered size responsive. A tag that
+    already carries a width, or names a file we cannot size, is left alone."""
+    def fix(m: re.Match) -> str:
+        attrs = m.group(1)
+        if re.search(r"\bwidth\s*=", attrs, re.I):
+            return m.group(0)
+        src = re.search(r'\bsrc\s*=\s*"(/assets/[^"?#]+\.png)"', attrs, re.I)
+        size = _png_size(ROOT / src.group(1).lstrip("/")) if src else None
+        if not size:
+            return m.group(0)
+        return (f'<img{attrs} width="{size[0]}" height="{size[1]}" '
+                f'loading="lazy" decoding="async">')
+    return _ARTICLE_IMG_RE.sub(fix, body_html)
+
 # --------------------------------------------------------------------------- #
 # Prospect deep-linking - turn the first mention of a known player's name into a
 # link to their PROSPX detail page (/prospx/#player=<key>), the same deep link the
@@ -1064,7 +1097,7 @@ def parse_article(path: Path) -> dict:
                     meta[k.strip()] = v.strip()
     meta.setdefault("title", path.stem.replace("-", " ").title())
     meta["slug"] = path.stem
-    meta["body_html"] = _linkify_players(render_markdown(body))
+    meta["body_html"] = _linkify_players(_size_article_images(render_markdown(body)))
     meta["date_sort"] = meta.get("date", "")
     meta["date_disp"] = _fmt_date(meta.get("date", ""))
     return meta
