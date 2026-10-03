@@ -541,6 +541,10 @@ _SIDECAR_GLOBS = (
     # append-only records a test must never write into.
     "data/efv_progress.json",
     ".cache/efv_progress/**/*",
+    # LIBRARY_11: the Model Updates record and its durable untracked copy,
+    # append-only like the progress ledger it copies from.
+    "data/model_updates.json",
+    ".cache/model_updates/**/*",
     # EV-09: the development read of eFV v2 champion H0, a spent-frame record
     # the progress ledger copies from.
     "data/efv_v2_dev_eval.json",
@@ -890,6 +894,11 @@ _SIDECAR_WRITE_TARGETS = (
     ("fantasy_rank", "RANK_PATH", "data/fantasy_rank.json"),
     ("fantasy_rank", "MODEL_CACHE", ".cache/fantasy_rank_model.json"),
     ("fantasy_rank", "EVAL_PATH", "data/fantasy_rank_eval.json"),
+    # LIBRARY_11: the Model Updates record and its durable copy. Both resolve
+    # at call time (model_updates._resolve), so a test that names no path
+    # writes the mirror.
+    ("model_updates", "OUT_PATH", "data/model_updates.json"),
+    ("model_updates", "LEDGER_PATH", ".cache/model_updates/ledger.jsonl"),
     ("tools.betting_calibration", "LEDGER_PATH",
      ".cache/betting/calibration.jsonl"),
     # The close-job WRITER itself: `p = path or HEARTBEAT_PATH` and

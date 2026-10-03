@@ -1,0 +1,18 @@
+{
+ "schema": 1,
+ "rule": "hand-kept dated notes for the Model Updates timetable; each becomes one event of layer note; validated by model_updates.validate_notes",
+ "fields": {
+  "date": "YYYY-MM-DD, YYYY-MM or a day range YYYY-MM-DD/DD, printed as written",
+  "model_id": "a registry model_id, a ledger alias (efv_v1), or null",
+  "family": "required when model_id is null: a family of the route table",
+  "text": "a dated fact: no dash, no banned word, no verdict word; any number other than a year, a date or a version label needs source.key",
+  "origin": [
+   "methodology changelog",
+   "model upgrades panel",
+   "xfv entry v1 history",
+   "other"
+  ],
+  "source": "{path, key} of the artifact a figure came from, or {commit}"
+ },
+ "notes": []
+}
