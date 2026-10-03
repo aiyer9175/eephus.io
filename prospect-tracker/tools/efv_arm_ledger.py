@@ -972,7 +972,10 @@ def main(argv=None) -> int:
         dest = Path(argv[i + 1])
         lst = derive_z1_arm_list()
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(json.dumps(lst, indent=1) + "\n", encoding="utf-8")
+        # LF bytes, written as bytes: the registration pins this file by sha256, and a
+        # platform newline translation would change the bytes it pins (.gitattributes
+        # keeps git from converting them on checkout).
+        dest.write_bytes((json.dumps(lst, indent=1) + "\n").encode("utf-8"))
         for f, v in lst["families"].items():
             print(f"  {f:9s} alpha {v['alpha']:<6} arms {v['arms']:4d}  holm legs "
                   f"{v['holm_legs']}")
