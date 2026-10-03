@@ -91,11 +91,11 @@ def draft_picks(year: int) -> list[dict]:
 def war_by_player(provider: str | None = None) -> dict[int, dict[int, float]]:
     """{mlbam: {season: WAR}} from the war_daily stint frames (bat + pitch
     summed), read through the war_source facade on ``provider`` (None = the
-    facade DEFAULT, eWAR v2 since 2026-09-03), so the slot curve prices picks
-    on the served basis; provider='bwar' reproduces the shipped fit's inputs.
-    Under eWAR only pitcher-seasons move (FIP re-pricing within role); the
-    batting side equals bWAR until the SDR defense drop. The refit itself is
-    the rebuild wave's (re-anchor cascade), not this lane's."""
+    facade DEFAULT: published fWAR, the training label, since the fWAR label
+    epoch's step D + U on 2026-10-03; eWAR v2 from 2026-09-03 to then), so the
+    slot curve prices picks on the label basis; provider='bwar' reproduces the
+    2026-06-11 fit's inputs. The refit itself is the rebuild wave's (runbook
+    step K), not this lane's."""
     import war_source
     provider = provider or war_source.DEFAULT_PROVIDER
     out: dict[int, dict[int, float]] = {}
@@ -110,6 +110,45 @@ def war_by_player(provider: str | None = None) -> dict[int, dict[int, float]]:
             seasons = out.setdefault(mid, {})
             seasons[yr] = seasons.get(yr, 0.0) + war
     return out
+
+
+def _war_basis_sentence(provider: str) -> str:
+    """The conventions sentence, true of the provider the fit read (the fWAR label
+    epoch, runbook step K: a fixed eWAR v2 sentence would misdescribe an fwar fit)."""
+    if provider == "fwar":
+        return ("war_source provider fwar (war_daily stint frames, bat+pitch summed): "
+                "FanGraphs' published WAR from the frozen per-season vintage on every "
+                "(mlbam, season) the vintage carries, split across stints by PA / IPouts, "
+                "and the eWAR v2 value on the rows it does not reach (war_basis_receipt)")
+    if provider == "ewar_v2":
+        return (f"war_source provider {provider} (war_daily stint frames, "
+                "bat+pitch summed), the platform basis; eWAR v2 = FIP-repriced "
+                "pitching within role, position players equal bWAR until the SDR drop")
+    return f"war_source provider {provider} (war_daily stint frames, bat+pitch summed)"
+
+
+def _war_basis_receipt(provider: str) -> dict | None:
+    """Per-side coverage of the fwar frame the fit read (war_source's own receipt)."""
+    if provider != "fwar":
+        return None
+    import war_source
+    diag = getattr(war_source, "_FWAR_FRAME_DIAG", {}) or {}
+    return {side: {k: diag[side].get(k) for k in ("rows", "covered_rows",
+                                                   "covered_player_seasons",
+                                                   "vintage_player_seasons",
+                                                   "vintage_unplaced", "vintage_id")}
+            for side in ("bat", "pit") if side in diag}
+
+
+def _war_basis_stamp(provider: str) -> str:
+    """'fwar' when the frozen vintage carries every season the draft window can reach
+    (DRAFT_YEARS[0] through LAST_FULL_SEASON), else 'mixed' (gate part 7 row K, O4)."""
+    if provider != "fwar":
+        return provider
+    import fwar_vintage
+    seasons = {int(s) for s in (fwar_vintage.load().get("seasons") or {})}
+    need = set(range(min(DRAFT_YEARS), LAST_FULL_SEASON + 1))
+    return "fwar" if need <= seasons else "mixed"
 
 
 def _window_war(seasons: dict[int, float], n: int | None) -> float:
@@ -242,9 +281,9 @@ def run(persist: bool = True) -> dict:
         "career_fit_years": [min(CAREER_FIT_YEARS), max(CAREER_FIT_YEARS)],
         "accounting": acct,
         "conventions": {
-            "war_basis": (f"war_source provider {war_provider} (war_daily stint frames, "
-                          "bat+pitch summed), the platform basis; eWAR v2 = FIP-repriced "
-                          "pitching within role, position players equal bWAR until the SDR drop"),
+            "war_basis": _war_basis_sentence(war_provider),
+            "war_basis_stamp": _war_basis_stamp(war_provider),
+            "war_basis_receipt": _war_basis_receipt(war_provider),
             "unsigned": "excluded when the person reappears in a later draft",
             "never_mlb": "scores 0 (the expectation includes busts)",
             "fit": "weighted decreasing isotonic (PAVA) on per-pick means, picks 1-500",

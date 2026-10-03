@@ -132,12 +132,15 @@ def build_label_view() -> dict:
             "min_seasons": _STAR_MIN_SEASONS, "war_threshold": _STAR_WAR,
             "control_years": _CONTROL_YEARS, "window": "debut_year .. debut_year+6",
         },
-        "source": "REAL realized MLB WAR: prospects.db career_war (per-season bWAR) "
-                  "joined to data/debuts.json debut years. No synthesized outcomes.",
+        "source": "REAL realized MLB WAR: prospects.db career_war (per-season WAR on the "
+                  "training label basis: FanGraphs' published WAR, frozen per season, since "
+                  "the fWAR label epoch of 2026-10-03) joined to data/debuts.json debut "
+                  "years. No synthesized outcomes.",
         "control_note": "No true MLB service-time field exists; 'control seasons' is "
                         "the debut+0..+6 proxy (existing efv_dataset convention). "
-                        "Windows with debut_year > 2019 are not fully resolved through "
-                        f"{_RESOLVED_THROUGH} (window_resolved=false) and may undercount stars.",
+                        f"Windows with debut_year > {_RESOLVED_THROUGH - _CONTROL_YEARS + 1} "
+                        f"are not fully resolved through {_RESOLVED_THROUGH} "
+                        "(window_resolved=false) and may undercount stars.",
         "counts": {
             "n_players": n,
             "n_star_window": n_star,
