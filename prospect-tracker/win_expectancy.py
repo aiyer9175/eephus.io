@@ -154,19 +154,6 @@ def base_code(on_first, on_second, on_third) -> int:
     return (1 if on_first else 0) | (2 if on_second else 0) | (4 if on_third else 0)
 
 
-def half_innings_remaining(inning, half) -> int:
-    """How many half-innings are left after this one, at regulation length.
-
-    Floored at zero, so extra innings all read as "no regulation time left",
-    which is what they are. This is the clock the model prices a lead against:
-    the same one-run lead is worth much more with two half-innings left than
-    with fifteen.
-    """
-    inn = min(int(inning), INNING_CAP)
-    rem = 2 * (INNING_CAP - inn) + (1 if str(half).startswith("top") else 0)
-    return max(0, rem)
-
-
 def innings_left(inning, half) -> tuple[int, int]:
     """(half-innings left for the BATTING team, for the FIELDING team), counting
     the current one for the batting side.

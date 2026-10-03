@@ -55,7 +55,6 @@ built to retire.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -863,10 +862,3 @@ def counts() -> dict:
         "experimental": sum(1 for r in rows if r["stability"] == EXPERIMENTAL),
         "withheld": len(excluded_files()),
     }
-
-
-def as_json() -> str:
-    """The catalog as JSON. Handy for a consumer who would rather read the
-    index than scrape the page."""
-    return json.dumps({"artifacts": catalog_rows(), "counts": counts()},
-                      ensure_ascii=False, indent=2)

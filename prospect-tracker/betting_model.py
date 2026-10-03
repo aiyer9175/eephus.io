@@ -2843,11 +2843,6 @@ def _nb2_side_pmf(lam: float, r: float, k_max: int) -> list[float]:
     return p if s <= 0 else [v / s for v in p]
 
 
-def _side_pmf(lam: float, r: float | None, k_max: int) -> list[float]:
-    """One scoring side's run pmf. `r is None` means Poisson, EXACTLY."""
-    return _poisson_pmf(lam, k_max) if r is None else _nb2_side_pmf(lam, r, k_max)
-
-
 def _score_joint(lam_home: float, lam_away: float, r: float | None = None,
                  k_max: int = 24, total_k_max: int = 40) -> tuple[dict, list[float]]:
     """(margin distribution, total pmf) from ONE pass over the joint grid.

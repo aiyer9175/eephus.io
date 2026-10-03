@@ -43,7 +43,7 @@ import logging
 import re as _re
 import time
 import unicodedata as _uc
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Iterable
@@ -598,7 +598,3 @@ def detect_trades(
     api_trades = trades_from_api(api_records, tracked_players)
 
     return reconcile_trades(api_trades, inferred)
-
-
-def trade_to_dict(t: Trade) -> dict:
-    return asdict(t)

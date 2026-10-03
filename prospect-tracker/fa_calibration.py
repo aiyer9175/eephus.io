@@ -155,14 +155,6 @@ def crps_normal(y: float, mu: float, sigma: float) -> float:
     return sigma * (z * (2.0 * cdf - 1.0) + 2.0 * pdf - 1.0 / math.sqrt(math.pi))
 
 
-def log_score_normal(y: float, mu: float, sigma: float) -> float:
-    """Negative log predictive density under a Gaussian fit to the band.
-    Reported alongside CRPS because the two disagree in an informative way:
-    the log score punishes tail misses far harder."""
-    s = max(float(sigma), 1e-9)
-    return 0.5 * math.log(2 * math.pi * s * s) + 0.5 * ((y - mu) / s) ** 2
-
-
 def sigma_from_band(lo: float, hi: float, lo_tau: float = 0.10,
                     hi_tau: float = 0.90) -> float:
     """Gaussian-equivalent sigma implied by a central band. The FA path

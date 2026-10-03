@@ -342,10 +342,6 @@ def _pool_stats(values: dict) -> dict:
             "sd": _r(statistics.pstdev(xs), 3) if xs else None}
 
 
-def _money_m(usd) -> float | None:
-    return _r(float(usd) / 1e6, 1) if usd is not None else None
-
-
 # --------------------------------------------------------------------------
 # readers
 # --------------------------------------------------------------------------
@@ -460,15 +456,6 @@ def _venues() -> dict:
 
 def load_spine() -> dict:
     return _j(SPINE.name) or {}
-
-
-def spine_org_of(team_id: str, season: int, spine: dict) -> str | None:
-    """The canonical org a B-Ref team_ID belonged to in `season`, or None."""
-    for org, intervals in (spine.get("orgs") or {}).items():
-        for iv in intervals:
-            if iv["team_id"] == team_id and iv["first"] <= season <= iv["last"]:
-                return org
-    return None
 
 
 def _bwar_by_org(spine: dict) -> tuple[dict, dict]:

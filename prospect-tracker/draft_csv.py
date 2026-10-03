@@ -23,7 +23,6 @@ so the four sub-CSV shapes stay in lockstep with the MiLB ingest.
 
 from __future__ import annotations
 
-import csv
 import logging
 import re
 import shutil
@@ -564,40 +563,3 @@ def backfill_processed(processed_dir: Path | None = None) -> tuple[int, int]:
     log.info("draft_csv: backfilled %d snapshots from %d processed set(s)",
              snaps_total, sets)
     return (snaps_total, sets)
-
-
-# ---------------------------------------------------------------------------
-# Manual draft_results.csv fallback
-# ---------------------------------------------------------------------------
-
-# Columns: year, pick_overall, team, player_name, school, bonus_usd, signed
-def ingest_manual_results(csv_path: Path) -> int:
-    """Load a manual draft_results.csv. Useful when MLB.com's tracker is
-    slow to update or wrong. Each row is upserted into draft_results."""
-    if not csv_path.exists():
-        return 0
-    rows: list[dict] = []
-    with csv_path.open(encoding="utf-8-sig", newline="") as f:
-        reader = csv.DictReader(f)
-        for r in reader:
-            year = _to_int(r.get("year"))
-            pick = _to_int(r.get("pick_overall"))
-            team = _str_or_none(r.get("team"))
-            name = _str_or_none(r.get("player_name"))
-            if not (year and pick and team and name):
-                continue
-            rows.append({
-                "draft_year":   year,
-                "pick_overall": pick,
-                "round_label":  _str_or_none(r.get("round_label")),
-                "pick_in_round": _to_int(r.get("pick_in_round")),
-                "team":         team,
-                "player_key":   draft_player_key(year, name),
-                "player_name":  fix_mojibake(name),
-                "school":       _str_or_none(r.get("school")),
-                "slot_usd":     _to_int(r.get("slot_usd")),
-                "bonus_usd":    _to_int(r.get("bonus_usd")),
-                "signed":       1 if (r.get("signed") or "").strip().lower() in {"1", "true", "yes", "y"} else 0,
-                "source":       "manual",
-            })
-    return upsert_draft_results(rows)
