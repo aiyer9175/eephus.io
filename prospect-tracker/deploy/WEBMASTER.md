@@ -230,7 +230,13 @@ Data-sanity spot checks (confirms the site matches the intended local build):
   then force one `EEPHUS_FULL=1 .../nightly-build.sh` to ingest them.
 - State worth backing up: `prospects.db` (cron above), `.cache/` and, inside it
   and named separately because it is the one directory that CANNOT be rebuilt,
-  **`.cache/betting/`** and **`.cache/odds/`**. Everything
+  **`.cache/betting/`** and **`.cache/odds/`**, plus two append-only ledgers that
+  also cannot be rebuilt: **`.cache/efv_progress/ledger.jsonl`** (the dated rows
+  behind `data/efv_progress.json`, the glossary Source Comparison record) and
+  **`.cache/provisional_track/`** (the ledger behind
+  `data/provisional_track_eval.json`). Both are untracked so they survive the
+  nightly `git checkout -- .`, which also means a box rebuild loses them unless
+  they are backed up. Everything
   else rebuilds from the repo. Note that `data/scout_reports.json` on the webroot
   is a frozen fallback (it is publish-excluded but survives via rsync without
   `--delete-excluded`); its live content ships via the chunked

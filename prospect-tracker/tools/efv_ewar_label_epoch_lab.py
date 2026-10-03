@@ -38,7 +38,7 @@ every comparison is paired and the only thing that varies is the WAR series:
 Run:
     python tools/efv_ewar_label_epoch_lab.py            # clauses b, c, d, e
     python tools/efv_ewar_label_epoch_lab.py --quick    # small B, for wiring checks
-    python tools/efv_ewar_label_epoch_lab.py --blast    # clause f, needs the snapshot
+    python tools/efv_ewar_label_epoch_lab.py --blast    # clause f, needs the snapshot (snapshot_dir)
 """
 
 from __future__ import annotations
@@ -68,7 +68,32 @@ sys.path.insert(0, str(ROOT / "tools"))
 import efv_mde_lab as M                     # noqa: E402  the floors' own primitives
 
 OUT_PATH = ROOT / "data" / "xfv_ewar_label_epoch_eval.json"
-SNAP_DIR = ROOT.parent / "_pre_epoch_2026-09"
+
+# The 2026-09-04 epoch's pre-epoch snapshot (runbook step A). It sat beside the git root as
+# `_pre_epoch_2026-09/` until the owner MOVED it, not deleted it (owner answer 2026-09-25,
+# batch 6), into a dated archive that is a sibling of the git root and carries a sha256
+# MANIFEST.json. The environment variable overrides the location; otherwise the archive path
+# is read, and `--blast` stops with an error naming both when neither is a directory.
+SNAP_ENV = "EWAR_PRE_EPOCH_SNAPSHOT"
+SNAP_ARCHIVE = ROOT.parents[1] / "_archive_2026-09-25" / "_pre_epoch_2026-09"
+
+
+def snapshot_dir() -> Path:
+    """The snapshot directory clause (f) diffs against, resolved at call time."""
+    env = os.environ.get(SNAP_ENV, "").strip()
+    if env:
+        p = Path(env)
+        if p.is_dir():
+            return p
+        raise SystemExit(f"{SNAP_ENV}={env} is not a directory; point it at the 2026-09-04 "
+                         f"epoch's snapshot or unset it to read {SNAP_ARCHIVE}. "
+                         "Clause (f) cannot be measured.")
+    if SNAP_ARCHIVE.is_dir():
+        return SNAP_ARCHIVE
+    raise SystemExit(f"no pre-epoch snapshot: {SNAP_ENV} is unset and {SNAP_ARCHIVE} does not "
+                     "exist. The 2026-09-04 epoch's evidence was moved to that archive on "
+                     f"2026-09-25; restore it there or set {SNAP_ENV}. "
+                     "Clause (f) cannot be measured.")
 
 SEED = 20260807                 # the standard's seed; do not change
 SIDES = ("hit", "pit")
@@ -515,11 +540,10 @@ def run(B_cond: int, B_refit: int, B_perm: int, write: bool = True) -> dict:
 # ------------------------------------------------------------------ clause (f)
 def blast(write: bool = True) -> dict:
     """Diff the served artifacts against the pre-epoch snapshot (runbook step A)."""
-    if not SNAP_DIR.exists():
-        raise SystemExit(f"no snapshot at {SNAP_DIR}; clause (f) cannot be measured")
+    snap = snapshot_dir()
 
     def _load(name):
-        a = SNAP_DIR / name
+        a = snap / name
         b = ROOT / "data" / name
         if not a.exists() or not b.exists():
             return None, None
@@ -531,7 +555,7 @@ def blast(write: bool = True) -> dict:
     # test_published_payload_hygiene refuses absolute build-machine paths in published
     # payloads for exactly that reason. Record the directory NAME, which is the part a
     # reader needs in order to know which snapshot this was diffed against.
-    out: dict = {"snapshot": SNAP_DIR.name,
+    out: dict = {"snapshot": snap.name,
                  "snapshot_note": "a sibling directory of the repo root, not published"}
     old, new = _load("xfv.json")
     if old and new:

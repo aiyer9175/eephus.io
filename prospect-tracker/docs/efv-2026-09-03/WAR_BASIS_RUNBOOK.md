@@ -49,6 +49,7 @@ that gate overrides this runbook. The copy list below is also not a constant: it
 `farm_grade_eval.json`, which is not in the 2026-09 directory, and omits `debuts.json`,
 `xfv_hitter_matrix.json`, `xfv_pitcher_matrix.json` and `player_transactions.bak.json.gz`,
 which are, so the list a given epoch actually needs is stated by that epoch's gate.
+**Where the 2026-09-04 epoch's evidence lives now (2026-10-02):** MOVED, not deleted (owner answer 2026-09-25, batch 6), from `../_pre_epoch_2026-09/` to `C:/Users/noah/baseball-projects/_archive_2026-09-25/_pre_epoch_2026-09/` with a sha256 `MANIFEST.json` beside it; `tools/efv_ewar_label_epoch_lab.py --blast` reads it there unless `EWAR_PRE_EPOCH_SNAPSHOT` names another directory.
 
     cd C:/Users/noah/baseball-projects/BaseballR/prospect-tracker
     git status --short | grep -v "^ M data/"       # code tree clean apart from data/ churn

@@ -19,6 +19,12 @@ is filled in afterwards and nothing above part 9 may be edited once results exis
   other gate pins. It asserts that every clause (a) to (l) is present, that (a) to (h) are
   byte-identical to the predecessor, and that part 9 records no result.
 - The registration that follows this one: clause (k).
+- History, 2026-10-02 (a location note, no clause changes): the 2026-09-04 epoch's evidence
+  that part 3 and part 7 step A name as `../_pre_epoch_2026-09/` was MOVED, not deleted
+  (owner answer 2026-09-25, batch 6), to `C:/Users/noah/baseball-projects/_archive_2026-09-25/_pre_epoch_2026-09/`,
+  a sibling of the git root, beside a sha256 `MANIFEST.json`; `tools/efv_ewar_label_epoch_lab.py
+  --blast` reads it there unless `EWAR_PRE_EPOCH_SNAPSHOT` names another directory. Step A's
+  own destination and its refusal rule are unchanged.
 
 ## 0. What kind of decision this is
 
