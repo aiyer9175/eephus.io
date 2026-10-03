@@ -1727,3 +1727,5 @@ rows is refreshed daily. Fourth, sequence the ML rewrite after the port, because
 shipped bundles are Python pickles with no portable export, so nothing in Odin can score
 anything until that export exists. And the test suite never has to be reimplemented: Odin
 writes artifacts, Python asserts over them, the rsync stays behind the same exit code.
+
+Addendum 2026-10-03 (CLEAN_2_SAMPLES_UNTRACK): data/sources/samples/ drops from 157 tracked files (75,649,573 bytes) to 57 (44,146,066 bytes). 99 probe payloads that no code, test, registry.yaml sample_path, doc, memory note or deploy file names were untracked and kept locally under .cache/source_samples/ (not ported), and draft_2024_slotbonus_probe.json, a sha1 copy of draft_2024_01.json, was removed. The port copies the 57 kept files; the 100 blobs stay in history.
