@@ -287,6 +287,54 @@ TARGET_SEASONS = 6
 SERVICE_ALIGNED_WINDOW = False
 _SERVICE_YEAR_CUT_MMDD = "04-15"
 
+# ARM R, the never-MLB resolution fix (docs/efv-2026-10-02/BUST2_GATE.md; plan
+# docs/master-plan-2026-09-11-war-epoch-drivers-betting.md sections 3.2 and 3.3; the fWAR
+# label epoch's clause (i) factor F3, docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md part 6).
+#
+# DEFAULT FALSE, and off is the incumbent to the byte: _apply_never_resolution below
+# returns before it reads anything while this is False, so a matrix built today
+# reproduces the shipped one exactly (pinned by test_never_resolution_arm_r.py on a
+# fixture and by the two temp builds of commit EPOCH_ARMS_LAB/2). The epoch turns it on
+# through tools/efv_fwar_epoch_arms.py, never by editing this line.
+#
+# WHAT IT DOES, as section 3.2 records it (recorded conventions, never fitted). Every
+# never-MLB row (kind == "bust") is BUST-NEVER when it is RESOLVED by any one of:
+#   (1) no affiliated line in either of the two latest seasons with MiLB data on disk at
+#       the build (the id must be known, so the lookup can be made);
+#   (2) age NEVER_RESOLUTION_AGE (27) or older on July 1 of RESOLVED_THROUGH;
+#   (3) with neither an id nor a birth date, a last list year at or before
+#       RESOLVED_THROUGH - NEVER_RESOLUTION_STALE_LIST_YEARS (5).
+# Every other never-MLB row is CENSORED-NEVER: kept in the matrix and excluded from
+# every fit and score "like bust_recent" (3.2). The exclusion rides the SAME marker,
+# `bust_recent`, that every pool consumer already filters on (efv_model, efv_score,
+# _prem_odds, the labs), so no consumer needs a second filter; `arm_r_resolved_by`
+# names the route beside it. The TARGET is unchanged (3.3, O6 D-B2): a bust is 0.0 and
+# a negative six-season label stays negative (no L1 flooring, part 6).
+#
+# The incumbent rule this replaces while on: `bust_recent` = last list 2024 or later.
+# Under the arm a recently listed row can RESOLVE (age, or no affiliated line) and a
+# long-unlisted row can stay CENSORED (still playing affiliated ball), which is the
+# defect plan 3.1 records (203 hitter and 192 pitcher rows at full weight while still
+# affiliated).
+NEVER_RESOLUTION_ARM_R = False
+NEVER_RESOLUTION_AGE = 27
+NEVER_RESOLUTION_STALE_LIST_YEARS = 5
+NEVER_RESOLUTION_ROUTES = ("no_affiliated_line", "age_27", "stale_list")
+
+# BUST-MLB's cut (3.2): REACHED and a six-season label under 3.0, the engine's 0.5 WAR
+# per season band and the exact event tools/_prem_odds.bust_label scores. Pinned equal
+# to that function by test_bust2_union_invariant.py.
+BUST2_MLB_SUM_WAR = 3.0
+
+# Which per-season series of a career_war payload the label is summed from. "seasons"
+# is the served series (whatever war_source.DEFAULT_PROVIDER wrote); the epoch's arm
+# builder sets "seasons_ewar_v2" for the E0 and F1 arms after step C has rebased the
+# table to fwar (gate part 4.1 note 2: the incumbent stays reconstructible from the
+# table itself). A payload that lacks the named key falls back to its `seasons`, which
+# is the rebase tool's own definition of a row's incumbent, and the fallback is COUNTED
+# in the accounting. With the default the read is the incumbent line, unchanged.
+LABEL_SEASONS_KEY = "seasons"
+
 # 2011 through RESOLVED_THROUGH - 1. (2011-2016 arrive via the MLB Pipeline
 # backfill, now in debuts.json after the rebuild, captured directly with no
 # augment needed.)
@@ -1363,6 +1411,167 @@ def _injury_features(il_dates, cutoff: str | None):
 
 
 # ---------------------------------------------------------------------------
+# the label series (LABEL_SEASONS_KEY) and ARM R (NEVER_RESOLUTION_ARM_R)
+# ---------------------------------------------------------------------------
+
+def _label_seasons(payload: dict) -> tuple[dict, int]:
+    """(the {year: war} series the label sums, fell_back) for one career_war payload.
+
+    With LABEL_SEASONS_KEY at its default the read is `payload.get("seasons") or {}`,
+    the incumbent line. Off the default the named key is read when the payload carries
+    it as a dict (an empty dict counts: a row with no seasons is a row with no
+    seasons), else `seasons`, and fell_back is 1 for that row."""
+    if LABEL_SEASONS_KEY == "seasons":
+        return (payload.get("seasons") or {}), 0
+    alt = payload.get(LABEL_SEASONS_KEY)
+    if isinstance(alt, dict):
+        return alt, 0
+    return (payload.get("seasons") or {}), 1
+
+
+def milb_seasons_on_disk() -> list[int]:
+    """Seasons with at least one MINOR-sport season cache on disk, newest first.
+
+    "MiLB data on disk at the build" (FWAR gate part 6) is read from milb_history's
+    cache directory and never fetched: the two newest entries are the window Arm R's
+    first route reads. The MLB (sport 1) cache does not count as MiLB data."""
+    seasons: set[int] = set()
+    for p in mh.CACHE_DIR.glob("*_*_*.json"):
+        parts = p.stem.split("_")
+        if len(parts) != 3 or not (parts[1].isdigit() and parts[2].isdigit()):
+            continue
+        if int(parts[1]) in mh.MINOR_SPORTS:
+            seasons.add(int(parts[2]))
+    return sorted(seasons, reverse=True)
+
+
+def _has_affiliated_line(mlbam, season: int) -> bool:
+    """True when the id has a non-MLB stat line in `season` in EITHER group's cache.
+    Cache-only (fetch=False): "on disk" means on disk."""
+    for group in ("hitting", "pitching"):
+        rows = mh.player_index(int(season), group, fetch=False).get(int(mlbam)) or []
+        if any(r.get("level") != "MLB" for r in rows):
+            return True
+    return False
+
+
+def _age_on_july_1(birth_date, year: int) -> int | None:
+    """Completed years of age on July 1 of `year`, or None without a parseable date."""
+    try:
+        by, bm, bd = (int(str(birth_date)[0:4]), int(str(birth_date)[5:7]),
+                      int(str(birth_date)[8:10]))
+    except (TypeError, ValueError):
+        return None
+    if not (1 <= bm <= 12 and 1 <= bd <= 31):
+        return None
+    return int(year) - by - (1 if (bm, bd) > (7, 1) else 0)
+
+
+def never_resolution(mlbam, birth_date, last_list_year, latest_seasons,
+                     resolved_through: int | None = None, affiliated=None) -> str | None:
+    """The route that RESOLVES a never-MLB row under section 3.2, or None (CENSORED-NEVER).
+
+    `latest_seasons` is milb_seasons_on_disk()'s list (newest first); the first route
+    reads its two newest entries and is unavailable with fewer than two, because "either
+    of the two latest seasons" cannot be read off one. `affiliated(mlbam, season)` is
+    injectable for tests; the default reads the cache. Routes are tried in the recorded
+    order and the first that fires names the row."""
+    rt = RESOLVED_THROUGH if resolved_through is None else int(resolved_through)
+    affiliated = _has_affiliated_line if affiliated is None else affiliated
+    window = list(latest_seasons or [])[:2]
+    if mlbam and len(window) == 2:
+        if not any(affiliated(mlbam, s) for s in window):
+            return "no_affiliated_line"
+    age = _age_on_july_1(birth_date, rt)
+    if age is not None and age >= NEVER_RESOLUTION_AGE:
+        return "age_27"
+    if (not mlbam and not birth_date and last_list_year is not None
+            and int(last_list_year) <= rt - NEVER_RESOLUTION_STALE_LIST_YEARS):
+        return "stale_list"
+    return None
+
+
+def _apply_never_resolution(rows: list[dict], acct: dict) -> None:
+    """ARM R over the never-MLB rows of a built matrix, in place. A NO-OP while
+    NEVER_RESOLUTION_ARM_R is False: it returns before reading a row, the cache
+    directory or any date, so the flag-off build is the incumbent byte for byte.
+
+    While on: every kind == "bust" row is re-marked. `bust_recent` becomes the
+    CENSORED-NEVER marker (True = excluded from every fit and score, the incumbent
+    exclusion every consumer already honours), `weight` follows it (1.0 resolved, 0.5
+    excluded, as the incumbent marker weighted), `arm_r_resolved_by` names the route or
+    None, and `acct["arm_r"]` carries the census the BUST2 registration asks for first
+    (the resolved-to-censored count) beside the on-disk window it read."""
+    if not NEVER_RESOLUTION_ARM_R:
+        return
+    latest = milb_seasons_on_disk()
+    census = {"milb_seasons_on_disk_window": latest[:2],
+              "resolved_through": RESOLVED_THROUGH,
+              "bust_rows": 0, "censored_never": 0,
+              "resolved_to_censored": 0, "censored_to_resolved": 0}
+    for route in NEVER_RESOLUTION_ROUTES:
+        census[f"resolved_{route}"] = 0
+    for r in rows:
+        if r.get("kind") != "bust":
+            continue
+        census["bust_rows"] += 1
+        cutoff = str(r.get("cutoff") or "")
+        last_year = int(cutoff[:4]) if cutoff[:4].isdigit() else None
+        route = never_resolution(r.get("mlbam_id"), r.get("birth_date"), last_year, latest)
+        was_excluded = bool(r.get("bust_recent"))
+        resolved = route is not None
+        r["bust_recent"] = not resolved
+        r["weight"] = 1.0 if resolved else 0.5
+        r["arm_r_resolved_by"] = route
+        if resolved:
+            census[f"resolved_{route}"] += 1
+            if was_excluded:
+                census["censored_to_resolved"] += 1
+        else:
+            census["censored_never"] += 1
+            if not was_excluded:
+                census["resolved_to_censored"] += 1
+    # the report's bust_recent_excluded_from_label reads this counter, and the terminal
+    # block below decrements it per row it resolves, so it must count the arm's marks
+    acct["bust_recent_flagged"] = census["censored_never"]
+    acct["arm_r"] = census
+
+
+def bust2_category(row: dict) -> str:
+    """One matrix row's section 3.2 category, read from the row alone.
+
+    REACHED is kind == "debuted" (every debuted row carries career_war seasons; the
+    outright-derived debut with no stat line sits in neither pool, plan 3.1). A resolved
+    debuted row is BUST-MLB under BUST2_MLB_SUM_WAR, else NON-BUST; a censored debuted
+    row is UNRESOLVED-MLB (no 3.2 category: the union invariant reads resolved rows
+    only). A never-MLB row is BUST-NEVER when its pool marker says resolved and
+    CENSORED-NEVER when `bust_recent` excludes it (the incumbent rule or Arm R's)."""
+    if row.get("kind") == "debuted":
+        if row.get("censored"):
+            return "UNRESOLVED-MLB"
+        return ("BUST-MLB" if float(row.get("target_resolved") or 0.0) < BUST2_MLB_SUM_WAR
+                else "NON-BUST")
+    if row.get("kind") == "bust":
+        return "CENSORED-NEVER" if row.get("bust_recent") else "BUST-NEVER"
+    return "NOT-LABELLED"
+
+
+def is_resolved_row(row: dict) -> bool:
+    """A row the union invariant reads: a fully observed debuted row or a resolved
+    never-MLB row."""
+    return bust2_category(row) in ("BUST-MLB", "NON-BUST", "BUST-NEVER")
+
+
+def served_bust_event(target_resolved) -> int:
+    """The served realized-bust event on a resolved row: the six-season sum under
+    BUST2_MLB_SUM_WAR (tools/_prem_odds.bust_label's 0.5 WAR per season band, which a
+    never-MLB row's 0.0 label satisfies). Written as the average so the two agree in
+    floating point as well as in intent."""
+    return 1 if (float(target_resolved) / float(TARGET_SEASONS)) < (
+        BUST2_MLB_SUM_WAR / float(TARGET_SEASONS)) else 0
+
+
+# ---------------------------------------------------------------------------
 # cohort
 # ---------------------------------------------------------------------------
 
@@ -1373,11 +1582,14 @@ def build_matrix(side: str = "hit"):
 
     with storage.connect() as con:
         cw = {}
+        label_key_fallback = 0
         for r in con.execute("SELECT player_key, payload_json FROM career_war"):
             try:
-                seasons = (json.loads(r["payload_json"]) or {}).get("seasons") or {}
+                payload = json.loads(r["payload_json"]) or {}
             except ValueError:
                 continue
+            seasons, fell_back = _label_seasons(payload)
+            label_key_fallback += fell_back
             cw[r["player_key"]] = {int(y): float(w) for y, w in seasons.items()}
 
     acct = {"debuted_seen": 0, "debuted_hitter": 0, "debuted_no_pre_fv": 0,
@@ -1385,6 +1597,10 @@ def build_matrix(side: str = "hit"):
             "bust_seen": 0, "bust_hitter": 0, "bust_no_fv": 0, "bust_kept": 0,
             "bust_recent_flagged": 0,
             "bust_mlb_exposure_rerouted": 0, "bust_mlb_exposure_dropped": 0}
+    if LABEL_SEASONS_KEY != "seasons":
+        # recorded only off the default, so the default report is byte-identical
+        acct["label_seasons_key"] = LABEL_SEASONS_KEY
+        acct["label_seasons_key_fallback_rows"] = label_key_fallback
     rows = []
 
     # --- debuted ---
@@ -1562,6 +1778,11 @@ def build_matrix(side: str = "hit"):
             row["milb_unavailable"] = True
         acct["bust_kept"] += 1
         rows.append(row)
+
+    # ARM R (NEVER_RESOLUTION_ARM_R): a no-op that reads nothing while the flag is off.
+    # Before the sidecars on purpose: a terminal transaction (retired, banned) below still
+    # resolves a row the arm left censored, exactly as it resolves a bust_recent row.
+    _apply_never_resolution(rows, acct)
 
     # sidecars
     acq, il = _load_sidecars({r["player_key"] for r in rows})
