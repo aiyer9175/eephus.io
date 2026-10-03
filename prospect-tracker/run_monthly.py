@@ -2636,6 +2636,39 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
     n_il = n_debuts = n_trades = 0
 
     try:
+        # --- d00. Registered identity repairs (receipt-guarded) -----------
+        # Owner answers B4ID-2 (b) and PVA-2 (2026-10-01): every repair in
+        # identity_repairs.REPAIRS runs ONCE per database through
+        # tools/repair_identity_split_2026_09_30.run_step, which skips the
+        # repairs this DB already holds a receipt for
+        # (.cache/identity_repairs/receipts.jsonl), takes one dated backup
+        # before any write, refuses a row whose cached Pipeline pages are
+        # missing (listed under `refused`, retried the next night) and never
+        # raises. It runs before every exporter so the deploy box's first
+        # nightly after the code sync repairs its own prospects.db; nobody runs
+        # the script by hand on the box. Wired by the fWAR label epoch's step A
+        # (EPOCH_RUN, 2026-10-03).
+        with _step("d00. Registered identity repairs", log):
+            _idr_rc = 2
+            try:
+                from tools import repair_identity_split_2026_09_30 as _idr
+                _idr_summary = _idr.run_step()
+                _idr_rc = int(_idr_summary.get("rc") or 0)
+                log.info("identity repairs: receipted %d, pending %d, rc %s, backup %s, refused %s",
+                         len(_idr_summary.get("receipted") or []),
+                         len(_idr_summary.get("pending") or []), _idr_rc,
+                         _idr_summary.get("backup"), _idr_summary.get("refused") or [])
+                _idr_result = (("ok" if _idr_rc == 0 else "refused")
+                               + f"; receipted {len(_idr_summary.get('receipted') or [])}")
+            except Exception as _idr_e:                    # noqa: BLE001
+                log.exception("identity repairs step crashed - continuing")
+                _idr_result = f"{type(_idr_e).__name__}: {_idr_e}"
+            try:
+                import job_heartbeat as _idr_hb
+                _idr_hb.record("identity_repairs", ok=(_idr_rc == 0), result=_idr_result[:120])
+            except Exception:                              # noqa: BLE001
+                pass
+
         # --- d0. TJStats Live board (daily point-in-time capture) ---------
         # TJStats updates continuously, so a daily Live pull gives finer Time
         # Machine resolution AND keeps TJStats's present-day consensus contribution
