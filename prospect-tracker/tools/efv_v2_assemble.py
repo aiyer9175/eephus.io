@@ -103,6 +103,33 @@ def build_frames() -> dict[str, dict[int, tuple[list[dict], list[dict]]]]:
     return out
 
 
+def milb_floor_receipt(frames) -> dict:
+    """The MiLB floor the frame rows were read at (EFV3_B3, lane B M1): the frame's
+    constant, the served default, the floor every row carries, and the block count by
+    vintage. Names the lift in the registration so P5's one re-derivation of the DS-08
+    rule is read against the frame it ran on."""
+    by_v: dict = {}
+    keys: set[int] = set()
+    for side, frames_by_v in frames.items():
+        for V in sorted(frames_by_v):
+            rr = frames_by_v[V][0]
+            keys |= {int(r.get("milb_floor") or 0) for r in rr}
+            by_v.setdefault(side, {})[str(V)] = {
+                "rows": len(rr), "with_milb_block": sum(1 for r in rr if r.get("milb"))}
+    return {"lv_floor": F.MILB_FLOOR_LV,
+            "served_default": F.D.MILB_FLOOR_DEFAULT,
+            "withheld_sides": sorted(F.MILB_FLOOR_LV_WITHHELD),
+            "floor_by_side": {s: F.lv_milb_floor(s) for s in F.SIDES},
+            "lifted_sides": sorted(s for s in F.SIDES
+                                   if F.lv_milb_floor(s) < F.D.MILB_FLOOR_DEFAULT),
+            "row_floor_keys": sorted(keys),
+            "with_milb_block_by_vintage": by_v,
+            "receipt": "data/efv_milb_floor_coverage.json (tools/efv_milb_floor_coverage.py)",
+            "note": ("the v1 matrices and the live board read the served default; only "
+                     "this frame walks back to lv_floor, on the outcome-blind id, on the "
+                     "sides the DS-03 re-run left BALANCED")}
+
+
 def coverage(frames) -> dict:
     out = {}
     for side, by_v in frames.items():
@@ -118,6 +145,7 @@ def coverage(frames) -> dict:
                                           if r.get("pl_rev_at_read") is not None)}
         out[side] = {"protection": DRV.protection_coverage(rows), "bmi": bmi,
                      "pl_rev": pl}
+    out["milb_floor"] = milb_floor_receipt(frames)
     out["protection_feed"] = {
         "months_on_disk": sum(DRV.league_tx_months(max(F.DEV_VINTAGES) - 1).values()),
         "first_month": "%d-%02d" % DRV.LEAGUE_TX_FIRST,
