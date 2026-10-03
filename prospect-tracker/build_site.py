@@ -634,13 +634,18 @@ FEEDBACK_MAILTO = (
 # placeholder card plus the mailto fallback until the form is wired up.
 BUG_FORM_URL = ""
 
+# Display name of the /news/ event feed (owner rename 2026-10-02). The rail
+# head, ticker tag, footer link, /news/ h1 and title and the GFX cards read
+# this one constant; the URL stays /news/.
+NEWS_LABEL = "MLB News"
+
 def _footer() -> str:
     """The shared page footer: identity line left, useful links right.
     Every editorial surface and the homepage emit the same block."""
     year = date.today().year
     links = (
         f'<a href="/team/">About</a>'
-        f'<a href="/news/">Prospect News</a>'
+        f'<a href="/news/">{NEWS_LABEL}</a>'
         # /history/ (Today in Prospect History) is a full generated surface but
         # carried NO nav entry anywhere - its only inbound link was the homepage
         # module's "See all" kicker, so it was unreachable from every other page.
@@ -2067,7 +2072,7 @@ def _feed_html(events: list, n: int = 12) -> str:
 def _ticker_html(events: list, n: int = 14) -> str:
     # Each item is a mouse-clickable link to the player (or spotlights), color-
     # coded by type. tabindex=-1 keeps it out of the keyboard/AT path - the
-    # ticker is aria-hidden decoration; the sidebar Prospect Wire feed is the
+    # ticker is aria-hidden decoration; the sidebar MLB News feed is the
     # accessible, keyboard-navigable equivalent.
     items = []
     known = ("up", "down", "promo", "demo", "il", "debut", "trade", "signing")
@@ -2078,7 +2083,7 @@ def _ticker_html(events: list, n: int = 14) -> str:
         items.append(f'<a href="{html.escape(href)}" tabindex="-1">{logo}'
                      f'<span class="{cls}">{_wire_glyph(typ, glyph)}</span> {html.escape(text)}</a>')
     if not items:
-        items = ['<span><span class="glyph">◆</span> PROSPX - live prospect wire</span>']
+        items = [f'<span><span class="glyph">◆</span> {NEWS_LABEL} · live</span>']
     return " ".join(items * 2)  # duplicated for seamless scroll
 
 def _news_recent_events(events: list, window_days: int = 30,
@@ -2243,10 +2248,10 @@ _NEWS_GFX_JS = """<script>
     var mon=now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
     var iso=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+
             String(now.getDate()).padStart(2,'0');
-    return {kind:'board',module:'Prospect News',accentToken:'--accent-lilac',
-      title:'Prospect News - '+mon,
+    return {kind:'board',module:'MLB News',accentToken:'--accent-lilac',
+      title:'MLB News - '+mon,
       subtitle:evs.length+' moves - debuts, trades, promos, FV',
-      url:'eephus.io/news',filenameBase:'prospect-news-'+iso,format:'twitter',
+      url:'eephus.io/news',filenameBase:'mlb-news-'+iso,format:'twitter',
       board:{defaultCount:25,counts:[10,25,50],columns:[
         {label:'Date',frac:0.10},
         {label:'Type',frac:0.15},
@@ -2264,10 +2269,10 @@ _NEWS_GFX_JS = """<script>
       });
     var dt=new Date(day+'T12:00:00');
     var lbl=isNaN(+dt)?day:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    return {kind:'newsday',module:'Prospect News',accentToken:'--accent-lilac',
-      title:'Prospect News - '+lbl,dateLabel:lbl,
+    return {kind:'newsday',module:'MLB News',accentToken:'--accent-lilac',
+      title:'MLB News - '+lbl,dateLabel:lbl,
       subtitle:items.length+(items.length===1?' update':' updates')+' - every move from this date',
-      url:'eephus.io/news',filenameBase:'prospect-news-'+day,items:items};
+      url:'eephus.io/news',filenameBase:'mlb-news-'+day,items:items};
   }
   var chip=document.getElementById('news-gfx-chip');
   if(chip)chip.addEventListener('click',function(){
@@ -2282,11 +2287,13 @@ _NEWS_GFX_JS = """<script>
 </script>"""
 
 def build_news(data: dict | None = None) -> str:
-    """/news/ - the expanded Prospect News page: the full recent event feed
-    (debuts, trades, promotions/demotions, IL, FV grade changes, FA signings),
+    """/news/ - the expanded MLB News page: the full recent event feed
+    (debuts, trades, promotions/demotions, IL, FV grade changes, FA signings
+    and option decisions),
     day-grouped with category filter chips. Same event pipeline + row markup as
     the homepage sidebar feed, just a wider window. Reached by clicking the
-    Prospect News header (sidebar feed or top ticker) on the homepage."""
+    MLB News header (sidebar feed or top ticker) on the homepage. The name is
+    NEWS_LABEL; the URL stays /news/."""
     data = data or load_site_data() or {}
     events = _collect_events(data.get("players") or [], data.get("graduates") or [],
                              _load_fa_events_for_wire())
@@ -2309,8 +2316,8 @@ def build_news(data: dict | None = None) -> str:
         for c, lbl in chip_defs)
     body = (
         '<div class="news-app">'
-        f'<div class="section-head"><h1>{_masthead_icon("news")}Prospect News</h1>'
-        '<span class="section-sub">debuts, trades, level moves, IL, eFV changes and FA signings</span>'
+        f'<div class="section-head"><h1>{_masthead_icon("news")}{NEWS_LABEL}</h1>'
+        '<span class="section-sub">debuts, trades, level moves, IL, eFV changes, FA signings and options</span>'
         f'{_gfx_chip_html("news-gfx-chip")}</div>'
         f'<p class="news-intro">The {_gl("wire_ticker", "wire")}, last ~30 days, newest first. '
         'Grade rows show eFV moves of 2 or more; a row reading &quot;to eFV floor&quot; or &quot;off eFV floor&quot; is the player reaching or leaving the model floor, not a re-grade. A date header opens Time Machine on that date.</p>'
@@ -2329,9 +2336,12 @@ def build_news(data: dict | None = None) -> str:
         + f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         + f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
     )
-    return page("Prospect News - eephus.io", "news", body,
-                "The eephus.io prospect wire: debuts, trades, promotions, IL moves, eFV grade "
-                "changes and Free Agency signings, filterable by type.",
+    # Claims rule C9: this names what the feed carries today. The words "MLB
+    # transactions" join it in the commit that serves MLB rows (Q9_22c).
+    return page(f"{NEWS_LABEL} - eephus.io", "news", body,
+                f"{NEWS_LABEL} on eephus.io: prospect level moves, MLB debuts, trades, IL "
+                "moves, eFV grade changes, free-agency signings and option decisions, "
+                "filterable by type.",
                 url=f"{SITE_ORIGIN}/news/")
 
 def _fv_step_runs(n: int, w: int) -> list:
@@ -3680,8 +3690,8 @@ _HOME_DRAWER_JS = '''<script>
 
 
 def build_home(articles: list[dict], data: dict | None = None) -> str:
-    """Homepage = sidebar + newspaper-style main, with live PROSPX modules + a
-    prospect wire feed read from the build-time data layer."""
+    """Homepage = sidebar + newspaper-style main, with live PROSPX modules + the
+    MLB News feed read from the build-time data layer."""
     data = data or {}
     players = data.get("players") or []
     org_summary = data.get("org_summary") or []
@@ -3746,9 +3756,9 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '<div class="sb-account eephus-nav-controls"></div>'
         f'{search}'
         f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav">{"".join(nav)}</nav></div>'
-        # Prospect News feed sits high (where the PROSPX sub-nav used to be);
+        # MLB News feed sits high (where the PROSPX sub-nav used to be);
         # the PROSPX sub-nav drops below the spotlight feature.
-        f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><a href="/news/" title="All prospect news"><span class="blip"></span>Prospect News<span class="feed-head-more">all →</span></a></div>{feed}</div></div>'
+        f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><a href="/news/" title="All {NEWS_LABEL}"><span class="blip"></span>{NEWS_LABEL}<span class="feed-head-more">all →</span></a></div>{feed}</div></div>'
         f'{spotlight}'
         f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{_ico("prospx", 12)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
         '</aside>'
@@ -3756,10 +3766,10 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     )
 
     # ---- top wire ticker ----
-    # Decorative scrolling marquee - duplicates the accessible Prospect Wire feed
+    # Decorative scrolling marquee - duplicates the accessible MLB News feed
     # in the sidebar, so it's hidden from assistive tech (aria-hidden) to avoid
     # reading the same items twice / announcing a moving region.
-    ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><a href="/news/"><span class="blip"></span>News</a></span>'
+    ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><a href="/news/"><span class="blip"></span>{NEWS_LABEL}</a></span>'
               f'<div class="ticker-track">{_ticker_html(events)}</div></div>')
 
     # ---- masthead ----

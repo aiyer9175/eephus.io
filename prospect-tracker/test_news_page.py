@@ -3,13 +3,13 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""Smoke test for the expanded Prospect News page (/news/) and the homepage
+"""Smoke test for the expanded MLB News page (/news/) and the homepage
 entry points into it.
 
 Mirrors test_glossary_page_loads.py: boots the built static pages in headless
 Chromium and asserts the page renders day-grouped feed rows, the type-filter
 chips actually hide non-matching rows (and empty day blocks), and the homepage
-"Prospect News" section header links to /news/.
+"MLB News" section header links to /news/.
 
 The pages under test are the committed build artifacts (news/index.html,
 index.html). Playwright is an OPTIONAL dependency; tests skip cleanly without
@@ -111,5 +111,5 @@ def test_homepage_news_header_links_to_news(server, browser):
         page.close()
 
     assert not page_errors, "JS errors on homepage:\n  " + "\n  ".join(page_errors)
-    assert href == "/news/", f"sidebar Prospect News header href was {href!r}"
+    assert href == "/news/", f"sidebar MLB News header href was {href!r}"
     assert "/news/" in url, f"clicking the header did not navigate to /news/: {url}"
