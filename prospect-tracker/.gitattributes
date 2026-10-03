@@ -12,6 +12,8 @@ data/provisional_freeze/** -text
 # let git convert their line endings (core.autocrlf=true on the owner's box).
 assets/brand/** -text
 branding/pixel/** -text
+branding/marks/** -text
+branding/animated/*.svg -text
 
 # The Z1 driver re-test arm list is pinned by sha256 in its registration and checked by
 # the retest mode's --sha; never let git convert its bytes.

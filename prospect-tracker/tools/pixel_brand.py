@@ -13,7 +13,7 @@ no RNG, no anti-aliasing (every pixel is one flat colour, alpha 0 or 255),
 integer scales only, and the share-card field is integer arithmetic so it does
 not move with a Pillow or libm upgrade.
 
-Writes ONLY these two folders, never data/ (the pytest-revert trap):
+Writes ONLY these folders, never data/ (the pytest-revert trap):
     assets/brand/     DOM fragments: wordmark-s2/s4/s6.svg (token-only, aria-hidden),
                       wordmark.css (classes and step-end motion), tokens.css (the
                       token block BR-02 moves into site.css); the favicon and
@@ -22,9 +22,13 @@ Writes ONLY these two folders, never data/ (the pytest-revert trap):
                       favicon-32.png, apple-touch-icon.png, icon-192.png,
                       icon-512.png, icon-maskable-512.png, and site.webmanifest
                       (the served manifest with its icons moved here)
-    branding/pixel/   sheets and exported art: brand-sheet-{light,dark}.png,
-                      glyphs.json (the sampled letters), wordmark PNG strikes,
-                      share-default.png, og/<module>.png, marks/*.svg, eephus-arc.gif
+    branding/pixel/   review sheets: brand-sheet-{light,dark}.png, glyphs.json
+                      (the sampled letters), wordmark PNG strikes, og/<module>.png
+    branding/marks/, branding/animated/, branding/social/, branding/icons/
+                      the export bundle (PB-09 / BR-09): the portable marks (raw
+                      hex, letters as paths, no font), the animated mark (frames,
+                      GIF, self-contained SVG), the default share card, the
+                      Twitter/X avatars and banners, the transparent balls
 The served pages read the icon set from assets/brand/ only when build_site.py's
 PIXEL_BRAND flag is on (FAVICON_LINKS and the footer mark switch with it); the
 served favicon.ico, assets/favicon.svg, favicon-16.png and favicon-32.png are
@@ -45,6 +49,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import shutil
 import sys
 import tempfile
@@ -63,7 +68,10 @@ ROOT = HERE.parent
 TTF_BOLD = ROOT / "branding" / "fonts" / "PixelMplus12-Bold.ttf"
 TTF_REG = ROOT / "branding" / "fonts" / "PixelMplus12-Regular.ttf"
 ICONS_JSON = ROOT / "assets" / "eephus-icons.json"   # PX-01's bitmap table
-OUT_DIRS = ("assets/brand", "branding/pixel")        # the only folders written
+OUT_DIRS = ("assets/brand", "branding/pixel",         # the only folders written
+            "branding/marks", "branding/animated", "branding/social", "branding/icons")
+# Folders --check scans for stale files (every file in them is generated).
+OWNED_DIRS = ("assets/brand", "branding/marks", "branding/social", "branding/animated/frames")
 TEXT_SUFFIXES = (".svg", ".css", ".json", ".webmanifest")
 MANIFEST = ROOT / "assets" / "site.webmanifest"      # the served manifest (BR-04 input)
 STYLES = ("stepped", "hinted", "lamps")
@@ -268,6 +276,8 @@ def used_chars():
     bold = set(SRC.TEXT) | set(SRC.DEFAULT_CARD_TAG) | {c for _, t, _, _ in SRC.MODULES for c in t}
     reg = set("eephus.io") | {c for _, _, r, line in SRC.MODULES for c in r + line}
     reg |= {c for c in "".join(_SHEET_LABELS)}
+    bold |= set("PROSPX")                                  # the PROSPX banner title
+    reg |= {c for t in SRC.BANNER_TAGS.values() for c in t}
     return "".join(sorted(bold)), "".join(sorted(reg))
 
 
@@ -758,8 +768,10 @@ def brand_manifest():
     return out
 
 
-def gif_frames(style, seams, s=4):
-    """The pitch as frames on the dark field colour: arc run by run, then the drop."""
+def pitch_frames(style, seams, s=SRC.ANIMATED_SCALE):
+    """The pitch as transparent frames, dark theme, one every gif_frame_ms: the
+    arc run by run, then the ball's drop; the last frame is the finished mark.
+    branding/animated/frames/ (the alpha video source) holds them as written."""
     comp = compose(s, style, seams)
     step, drop, nudge, _ = timeline(comp)
     m = SRC.MOTION
@@ -769,11 +781,119 @@ def gif_frames(style, seams, s=4):
         k = (t - drop) / m["drop_ms"]
         show = t >= drop
         dy = 0 if not show or k >= 1 else (-2 * s if k < .34 else -s if k < .67 else nudge)
-        f = to_png(comp, "dark", pad=3 * s, reveal=reveal, ball_dy=dy, show_ball=show)
+        frames.append(to_png(comp, "dark", pad=SRC.ANIMATED_PAD_U * s, reveal=reveal, ball_dy=dy, show_ball=show))
+    return frames
+
+
+def gif_frames(style, seams, s=SRC.ANIMATED_SCALE):
+    """The pitch frames matted on the dark field colour (GIF has one-bit alpha)."""
+    frames = []
+    for f in pitch_frames(style, seams, s):
         matte = Image.new("RGBA", f.size, SRC.FIELD_BASE + (255,))
         matte.alpha_composite(f)
         frames.append(matte.convert("RGB"))
     return frames
+
+
+def _drop_keyframes():
+    """The ball drop's keyframes exactly as wordmark_css() writes them."""
+    css = wordmark_css()
+    i = css.index("@keyframes wm-drop ") + len("@keyframes wm-drop ")
+    return css[i:css.index("\n", i)]
+
+
+def animated_svg(theme, style=SRC.STYLE, seams=SRC.SEAMS, s=SRC.ANIMATED_SCALE):
+    """The self-contained animated mark: the hero fragment's pitch (arc run by
+    run, then the ball's whole-pixel drop) with its own CSS and raw hex, which
+    exported art may carry. Every rule is step-end and plays once; the base
+    style of every piece is its finished frame, so a viewer that runs no CSS
+    animation shows the finished mark. No hover and no glint: an image has no
+    pointer, and the glint belongs to a page view."""
+    comp = compose(s, style, seams)
+    frag = lockup_svg(comp, "arc", play=True, glint=False)
+    var = re.search(r' style="([^"]*)"', frag[:frag.index(">")]).group(1)
+    inner = frag[frag.index(">") + 1:-len("</svg>")]
+    pad = SRC.ANIMATED_PAD_U * s
+    W, H = comp["W"] + 2 * pad, comp["H"] + 2 * pad
+    keys = ["ink", "dot", "k", "c", "a", "b", "d", "e"] + [f"b{i}" for i in range(SRC.BANDS)]
+    fills = " ".join(f".wm-{k} {{ fill: {key_hex(k, theme)}; }}" for k in keys)
+    drop = SRC.MOTION["drop_ms"]
+    css = (f"{fills} @keyframes wm-on {{ from {{ opacity: 0; }} }} @keyframes wm-drop {_drop_keyframes()} "
+           ".wm-s { animation: wm-on 1ms step-end backwards; animation-delay: calc(var(--i) * var(--step)); } "
+           f".wm-ball {{ animation: wm-drop {drop}ms step-end backwards; animation-delay: var(--drop-at); }}")
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
+            f'shape-rendering="crispEdges" role="img" aria-label="eephus.io" style="{var}">'
+            "<!-- Generated by tools/pixel_brand.py from tools/pixel_brand_src.py: the eephus.io pitch, "
+            "played once in whole-pixel steps; the last frame is the static mark. -->"
+            f"<style>{css}</style><g transform=\"translate({pad} {pad})\">{inner}</g></svg>\n")
+
+
+def _bordered_field(W, H, origin):
+    """The dark field with the app icons' lilac pixel border."""
+    img = field(W, H, origin)
+    px = img.load()
+    col = hx(SRC.APP_ICON_BORDER) + (255,)
+    for i in range(max(2, min(W, H) // 44)):
+        for x in range(W):
+            px[x, i] = px[x, H - 1 - i] = col
+        for y in range(H):
+            px[i, y] = px[W - 1 - i, y] = col
+    return img
+
+
+def avatar(prospx, seams=SRC.SEAMS):
+    """A 400 x 400 avatar: the clean ball (eephus.io) or the PROSPX mark, light
+    face on the bordered dark field, at a whole scale, centred."""
+    n = SRC.AVATAR_SIZE
+    img = _bordered_field(n, n, (50, 42))
+    mark = pxmark_png("light", SRC.AVATAR_PX_SCALE) if prospx else ball_png(32, "light", SRC.AVATAR_BALL_SCALE, seams)
+    img.alpha_composite(mark, ((n - mark.width) // 2, (n - mark.height) // 2))
+    return img.convert("RGB")
+
+
+def _ink_width(rows):
+    """Columns up to the last inked one (drops the face's trailing gap)."""
+    return max(x for r in rows for x, v in enumerate(r) if v != ".") + 1
+
+
+def banner(prospx, style=SRC.STYLE, seams=SRC.SEAMS):
+    """A 1500 x 500 banner: the dark field with pixel stars, the mark centred
+    (the eephus.io lockup, or the PROSPX mark beside its title as the PROSPX
+    masthead sets them) over one line, every letter the brand face's bitmap."""
+    W, H = SRC.BANNER_W, SRC.BANNER_H
+    img = field(W, H, (50, 28))
+    ink, sub = hx(tok("text-primary", "dark")), hx(tok("text-secondary", "dark"))
+    line, ts = SRC.BANNER_TAGS["prospx" if prospx else "eephus"], SRC.BANNER_TAG_SCALE
+    tag = text_png(ts, line, sub, bold=False)
+    tag = tag.crop((0, 0, _ink_width(["".join(r) for r in text_rows(line, bold=False)]) * ts, tag.height))
+    gap = 10 * SRC.BANNER_TAG_SCALE
+    if prospx:
+        mark, st = pxmark_png("light", SRC.BANNER_PX_SCALE), SRC.BANNER_TITLE_SCALE
+        rows = ["".join(r) for r in text_rows("PROSPX")]
+        tw, sp = _ink_width(rows) * st, 4 * st
+        lock = Image.new("RGBA", (mark.width + sp + tw, mark.height), (0, 0, 0, 0))
+        lock.alpha_composite(mark, (0, 0))
+        # the capitals fill glyph rows 1 to 9; centre that band on the mark
+        title = rows_png(rows, {"#": ink}, st).crop((0, 0, tw, 12 * st))
+        lock.alpha_composite(title, (mark.width + sp, (mark.height - 9 * st) // 2 - st))
+    else:
+        lock = to_png(compose(SRC.BANNER_LOCKUP_SCALE, style, seams), "dark")
+    y0 = (H - lock.height - gap - tag.height) // 2
+    x0 = (W - lock.width) // 2
+    stars(img, 120, seed=2, avoid=[(x0 - 40, y0 - 40, x0 + lock.width + 40, y0 + lock.height + gap + tag.height + 40)])
+    img.alpha_composite(lock, (x0, y0))
+    img.alpha_composite(tag, ((W - tag.width) // 2, y0 + lock.height + gap))
+    return img.convert("RGB")
+
+
+def transparent_ball(size, monogram, seams=SRC.SEAMS):
+    """branding/icons/ball-transparent[-monogram]-<size>.png: the light mark on
+    a clear canvas at the largest whole scale that fits, centred."""
+    k = size // (SRC.PX_SIZE if monogram else 32)
+    mark = pxmark_png("light", k) if monogram else ball_png(32, "light", k, seams)
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    img.alpha_composite(mark, ((size - mark.width) // 2, (size - mark.height) // 2))
+    return img
 
 
 def gif_palette_frames(frames):
@@ -872,21 +992,36 @@ def build(out: Path, style: str = SRC.STYLE, seams: str = SRC.SEAMS):
     for name, (size, scale, border) in APP_ICONS.items():
         put_img(I + name, app_icon(size, scale, seams, border=border))
     put_text(I + "site.webmanifest", brand_manifest())
-    put_img(P + "share-default.png", og_card(style, seams))
     bits = icons()
     if bits:
         for key, title, route, line in SRC.MODULES:
             put_img(P + f"og/{key}.png", og_card(style, seams, key, title, line, route, bits))
+
+    # The export bundle (PB-09 / BR-09): branding/marks, animated, social, icons.
+    M, A, S = "branding/marks/", "branding/animated/", "branding/social/"
     for theme, suffix in (("light", ""), ("dark", "-dark")):
-        put_text(P + f"marks/eephus-wordmark{suffix}.svg",
+        put_text(M + f"eephus-wordmark{suffix}.svg",
                  standalone_svg(compose(SRC.STRIKES["og_small"], style, seams), theme, "eephus.io"))
-        put_text(P + f"marks/compact-mark{suffix}.svg", standalone_svg(ball(32, seams), theme, "eephus.io"))
-    put_text(P + "marks/px-ball-monogram.svg", standalone_svg(pxmark(), "light", "PROSPX", SRC.PX_MIN_SCALE))
+        put_text(M + f"compact-mark{suffix}.svg", standalone_svg(ball(32, seams), theme, "eephus.io"))
+        put_text(A + f"eephus-arc{suffix}.svg", animated_svg(theme, style, seams))
+    put_text(M + "px-ball-monogram.svg", standalone_svg(pxmark(), "light", "PROSPX", SRC.PX_MIN_SCALE))
+    pitch = pitch_frames(style, seams)
+    for old in (out / A / "frames").glob("frame_*.png"):
+        old.unlink()                        # the frame count follows the timeline
+    for i, f in enumerate(pitch):
+        put_img(A + f"frames/frame_{i:03d}.png", f)
     fr = gif_palette_frames(gif_frames(style, seams))
     m = SRC.MOTION
     # No loop key: the GIF plays once and holds the finished mark (nothing loops).
-    put_img(P + "eephus-arc.gif", fr[0], save_all=True, append_images=fr[1:],
+    put_img(A + "eephus-arc.gif", fr[0], save_all=True, append_images=fr[1:],
             duration=[m["gif_frame_ms"]] * (len(fr) - 1) + [m["gif_hold_ms"]])
+    put_img(S + "share-default.png", og_card(style, seams))
+    for name, prospx in (("eephus", False), ("prospx", True)):
+        put_img(S + f"twitter-avatar-{name}.png", avatar(prospx, seams))
+        put_img(S + f"twitter-banner-{name}.png", banner(prospx, style, seams))
+    for size in SRC.TRANSPARENT_SIZES:
+        put_img(f"branding/icons/ball-transparent-{size}.png", transparent_ball(size, False, seams))
+        put_img(f"branding/icons/ball-transparent-monogram-{size}.png", transparent_ball(size, True, seams))
     return w
 
 
@@ -932,9 +1067,8 @@ def check(out: Path = ROOT, style: str = SRC.STYLE, seams: str = SRC.SEAMS) -> l
                     bad.append(f"text drift {rel}")
             elif not same_image(a, b):
                 bad.append(f"pixel drift {rel}")
-        brand = out / "assets" / "brand"
-        if brand.exists():
-            for p in sorted(brand.rglob("*")):
+        for d in OWNED_DIRS:
+            for p in sorted((out / d).rglob("*")):
                 rel = p.relative_to(out).as_posix()
                 if p.is_file() and rel not in written:
                     bad.append(f"stale {rel}")
