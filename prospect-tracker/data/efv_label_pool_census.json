@@ -1,0 +1,2229 @@
+{
+ "generated_at": "2026-10-02T23:07:53Z",
+ "produced_by": "tools/efv_label_pool_census.py",
+ "model_id": "efv_label_pool",
+ "role": "development",
+ "adjudicates": "nothing; a census of the label pool, counts only, no score",
+ "label": {
+  "provider": "ewar_v2",
+  "resolved_through": 2025,
+  "resolved_through_plus_1": 2026,
+  "id": "ewar_v2@2026-09-03T12:35:09"
+ },
+ "guards": {
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "reserved_lv_guard_called_without_sha": {
+   "2020": "ReservedFrameError",
+   "2021": "ReservedFrameError"
+  },
+  "r_vm_first_debut_year": 2025,
+  "reserved_vm_pins": [],
+  "vintages_built": [
+   2011,
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2022,
+   2023,
+   2024,
+   2025,
+   2026
+  ],
+  "no_rater_score": true,
+  "anchor_gate": "nothing grouped by consensus-FV level (docs/PROSPECT_ANCHOR_GATE.md)"
+ },
+ "strata": [
+  "source",
+  "list_year",
+  "vintage",
+  "side",
+  "debut_cohort",
+  "id_how",
+  "bust_class",
+  "label_view"
+ ],
+ "code": {
+  "commit": "8318051d902eedd4659376cccdddea03886de99f",
+  "tool_sha256": "ee5155f847d5018bade1a1c970ee55dc64f9048008d5e89351be85ebfb606e7f",
+  "frame_module_sha256": "e7ce2bf6c2595d50ff2636d488881333a1c9a5295a351ff64d3636b75e7c4a5d",
+  "resolver_sha256": "863cadcc03ddbcd145eaf827dd8ce9ef7354fd3ba96f7a88e9a1fddd6b30e7de"
+ },
+ "snapshots": {
+  "source_table": "prospects.db snapshots",
+  "snapshot_rows": 66887,
+  "window_mmdd": [
+   "-01-01",
+   "-05-01"
+  ],
+  "rule": "a row is FV-graded when its fv column is set; the window is source_backtest's preseason window on the snapshot date; real_grader is False for the non-rater and constant-anchor sources",
+  "by": [
+   "source",
+   "list_year"
+  ],
+  "rows": [
+   {
+    "source": "auto_detect",
+    "list_year": 2010,
+    "rows": 46,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2010-04-01",
+    "last_snapshot": "2010-04-01",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2011,
+    "rows": 98,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2011-04-01",
+    "last_snapshot": "2011-04-01",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2012,
+    "rows": 98,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2012-04-01",
+    "last_snapshot": "2012-04-01",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2013,
+    "rows": 134,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2013-04-01",
+    "last_snapshot": "2013-04-01",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2014,
+    "rows": 130,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2014-04-01",
+    "last_snapshot": "2014-04-01",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2015,
+    "rows": 142,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2015-04-01",
+    "last_snapshot": "2015-09-03",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2016,
+    "rows": 93,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2016-04-01",
+    "last_snapshot": "2016-09-21",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2017,
+    "rows": 62,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2017-04-01",
+    "last_snapshot": "2017-09-20",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2018,
+    "rows": 83,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2018-03-29",
+    "last_snapshot": "2018-09-23",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2019,
+    "rows": 155,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2019-03-28",
+    "last_snapshot": "2019-11-20",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2020,
+    "rows": 163,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2020-04-01",
+    "last_snapshot": "2020-11-20",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2021,
+    "rows": 191,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2021-04-01",
+    "last_snapshot": "2021-11-19",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2022,
+    "rows": 221,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2022-04-01",
+    "last_snapshot": "2022-11-15",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2023,
+    "rows": 229,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2023-03-30",
+    "last_snapshot": "2023-11-14",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2024,
+    "rows": 230,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2024-03-20",
+    "last_snapshot": "2024-09-29",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2025,
+    "rows": 240,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2025-03-18",
+    "last_snapshot": "2025-11-18",
+    "real_grader": false
+   },
+   {
+    "source": "auto_detect",
+    "list_year": 2026,
+    "rows": 251,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2026-03-26",
+    "last_snapshot": "2026-09-25",
+    "real_grader": false
+   },
+   {
+    "source": "baseballamerica",
+    "list_year": 2023,
+    "rows": 874,
+    "fv_rows": 874,
+    "fv_players": 874,
+    "fv_rows_in_window": 874,
+    "fv_players_in_window": 874,
+    "in_window_share": 1.0,
+    "first_snapshot": "2023-02-15",
+    "last_snapshot": "2023-02-15",
+    "real_grader": true
+   },
+   {
+    "source": "baseballamerica",
+    "list_year": 2024,
+    "rows": 844,
+    "fv_rows": 844,
+    "fv_players": 844,
+    "fv_rows_in_window": 844,
+    "fv_players_in_window": 844,
+    "in_window_share": 1.0,
+    "first_snapshot": "2024-02-15",
+    "last_snapshot": "2024-02-15",
+    "real_grader": true
+   },
+   {
+    "source": "baseballamerica",
+    "list_year": 2025,
+    "rows": 871,
+    "fv_rows": 871,
+    "fv_players": 871,
+    "fv_rows_in_window": 871,
+    "fv_players_in_window": 871,
+    "in_window_share": 1.0,
+    "first_snapshot": "2025-02-15",
+    "last_snapshot": "2025-02-15",
+    "real_grader": true
+   },
+   {
+    "source": "baseballamerica",
+    "list_year": 2026,
+    "rows": 1967,
+    "fv_rows": 1867,
+    "fv_players": 1163,
+    "fv_rows_in_window": 883,
+    "fv_players_in_window": 883,
+    "in_window_share": 0.473,
+    "first_snapshot": "2026-02-15",
+    "last_snapshot": "2026-08-10",
+    "real_grader": true
+   },
+   {
+    "source": "baseballamerica_statcast_by_age",
+    "list_year": 2026,
+    "rows": 41,
+    "fv_rows": 0,
+    "fv_players": 0,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": null,
+    "first_snapshot": "2026-06-03",
+    "last_snapshot": "2026-06-03",
+    "real_grader": true
+   },
+   {
+    "source": "draft_signing",
+    "list_year": 2026,
+    "rows": 138,
+    "fv_rows": 138,
+    "fv_players": 138,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": 0.0,
+    "first_snapshot": "2026-07-23",
+    "last_snapshot": "2026-10-02",
+    "real_grader": false
+   },
+   {
+    "source": "espn",
+    "list_year": 2025,
+    "rows": 100,
+    "fv_rows": 100,
+    "fv_players": 100,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": 0.0,
+    "first_snapshot": "2025-08-20",
+    "last_snapshot": "2025-08-20",
+    "real_grader": true
+   },
+   {
+    "source": "espn",
+    "list_year": 2026,
+    "rows": 250,
+    "fv_rows": 250,
+    "fv_players": 153,
+    "fv_rows_in_window": 100,
+    "fv_players_in_window": 100,
+    "in_window_share": 0.4,
+    "first_snapshot": "2026-01-27",
+    "last_snapshot": "2026-08-20",
+    "real_grader": true
+   },
+   {
+    "source": "fangraphs",
+    "list_year": 2017,
+    "rows": 670,
+    "fv_rows": 670,
+    "fv_players": 670,
+    "fv_rows_in_window": 670,
+    "fv_players_in_window": 670,
+    "in_window_share": 1.0,
+    "first_snapshot": "2017-02-15",
+    "last_snapshot": "2017-02-15",
+    "real_grader": true
+   },
+   {
+    "source": "fangraphs",
+    "list_year": 2018,
+    "rows": 1723,
+    "fv_rows": 1723,
+    "fv_players": 1124,
+    "fv_rows_in_window": 735,
+    "fv_players_in_window": 735,
+    "in_window_share": 0.4266,
+    "first_snapshot": "2018-02-15",
+    "last_snapshot": "2018-08-01",
+    "real_grader": true
+   },
+   {
+    "source": "fangraphs",
+    "list_year": 2019,
+    "rows": 2225,
+    "fv_rows": 2224,
+    "fv_players": 1389,
+    "fv_rows_in_window": 990,
+    "fv_players_in_window": 990,
+    "in_window_share": 0.4451,
+    "first_snapshot": "2019-02-13",
+    "last_snapshot": "2019-07-31",
+    "real_grader": true
+   },
+   {
+    "source": "fangraphs",
+    "list_year": 2020,
+    "rows": 2449,
+    "fv_rows": 2449,
+    "fv_players": 1323,
+    "fv_rows_in_window": 1184,
+    "fv_players_in_window": 1184,
+    "in_window_share": 0.4835,
+    "first_snapshot": "2020-02-13",
+    "last_snapshot": "2020-08-01",
+    "real_grader": true
+   },
+   {
+    "source": "fangraphs",
+    "list_year": 2021,
+    "rows": 2714,
+    "fv_rows": 2714,
+    "fv_players": 1476,
+    "fv_rows_in_window": 1272,
+    "fv_players_in_window": 1270,
+    "in_window_share": 0.4687,
+    "first_snapshot": "2021-02-01",
+    "last_snapshot": "2021-11-08",
+    "real_grader": true
+   },
+   {
+    "source": "fangraphs",
+    "list_year": 2022,
+    "rows": 2726,
+    "fv_rows": 2726,
+    "fv_players": 1454,
+    "fv_rows_in_window": 1274,
+    "fv_players_in_window": 1258,
+    "in_window_share": 0.4674,
+    "first_snapshot": "2022-02-01",
+    "last_snapshot": "2022-11-09",
+    "real_grader": true
+   },
+   {
+    "source": "fangraphs",
+    "list_year": 2023,
+    "rows": 2572,
+    "fv_rows": 2571,
+    "fv_players": 1333,
+    "fv_rows_in_window": 1205,
+    "fv_players_in_window": 1183,
+    "in_window_share": 0.4687,
+    "first_snapshot": "2023-02-01",
+    "last_snapshot": "2023-11-06",
+    "real_grader": true
+   },
+   {
+    "source": "fangraphs",
+    "list_year": 2024,
+    "rows": 2503,
+    "fv_rows": 2503,
+    "fv_players": 1308,
+    "fv_rows_in_window": 1203,
+    "fv_players_in_window": 1164,
+    "in_window_share": 0.4806,
+    "first_snapshot": "2024-02-01",
+    "last_snapshot": "2024-11-13",
+    "real_grader": true
+   },
+   {
+    "source": "fangraphs",
+    "list_year": 2025,
+    "rows": 2801,
+    "fv_rows": 2801,
+    "fv_players": 1467,
+    "fv_rows_in_window": 1329,
+    "fv_players_in_window": 1285,
+    "in_window_share": 0.4745,
+    "first_snapshot": "2025-02-01",
+    "last_snapshot": "2025-11-13",
+    "real_grader": true
+   },
+   {
+    "source": "fangraphs",
+    "list_year": 2026,
+    "rows": 4120,
+    "fv_rows": 4120,
+    "fv_players": 1556,
+    "fv_rows_in_window": 1051,
+    "fv_players_in_window": 1051,
+    "in_window_share": 0.2551,
+    "first_snapshot": "2026-02-05",
+    "last_snapshot": "2026-08-02",
+    "real_grader": true
+   },
+   {
+    "source": "just_baseball",
+    "list_year": 2026,
+    "rows": 426,
+    "fv_rows": 426,
+    "fv_players": 158,
+    "fv_rows_in_window": 26,
+    "fv_players_in_window": 26,
+    "in_window_share": 0.061,
+    "first_snapshot": "2026-03-04",
+    "last_snapshot": "2026-08-27",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2011,
+    "rows": 341,
+    "fv_rows": 152,
+    "fv_players": 132,
+    "fv_rows_in_window": 152,
+    "fv_players_in_window": 132,
+    "in_window_share": 1.0,
+    "first_snapshot": "2011-01-22",
+    "last_snapshot": "2011-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2012,
+    "rows": 699,
+    "fv_rows": 453,
+    "fv_players": 380,
+    "fv_rows_in_window": 453,
+    "fv_players_in_window": 380,
+    "in_window_share": 1.0,
+    "first_snapshot": "2012-01-22",
+    "last_snapshot": "2012-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2013,
+    "rows": 700,
+    "fv_rows": 696,
+    "fv_players": 595,
+    "fv_rows_in_window": 696,
+    "fv_players_in_window": 595,
+    "in_window_share": 1.0,
+    "first_snapshot": "2013-01-22",
+    "last_snapshot": "2013-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2014,
+    "rows": 680,
+    "fv_rows": 676,
+    "fv_players": 579,
+    "fv_rows_in_window": 676,
+    "fv_players_in_window": 579,
+    "in_window_share": 1.0,
+    "first_snapshot": "2014-01-22",
+    "last_snapshot": "2014-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2015,
+    "rows": 997,
+    "fv_rows": 993,
+    "fv_players": 894,
+    "fv_rows_in_window": 993,
+    "fv_players_in_window": 894,
+    "in_window_share": 1.0,
+    "first_snapshot": "2015-01-22",
+    "last_snapshot": "2015-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2016,
+    "rows": 1000,
+    "fv_rows": 997,
+    "fv_players": 896,
+    "fv_rows_in_window": 997,
+    "fv_players_in_window": 896,
+    "in_window_share": 1.0,
+    "first_snapshot": "2016-01-22",
+    "last_snapshot": "2016-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2017,
+    "rows": 1000,
+    "fv_rows": 996,
+    "fv_players": 894,
+    "fv_rows_in_window": 996,
+    "fv_players_in_window": 894,
+    "in_window_share": 1.0,
+    "first_snapshot": "2017-01-22",
+    "last_snapshot": "2017-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2018,
+    "rows": 1001,
+    "fv_rows": 995,
+    "fv_players": 893,
+    "fv_rows_in_window": 995,
+    "fv_players_in_window": 893,
+    "in_window_share": 1.0,
+    "first_snapshot": "2018-01-22",
+    "last_snapshot": "2018-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2019,
+    "rows": 1001,
+    "fv_rows": 995,
+    "fv_players": 895,
+    "fv_rows_in_window": 995,
+    "fv_players_in_window": 895,
+    "in_window_share": 1.0,
+    "first_snapshot": "2019-01-22",
+    "last_snapshot": "2019-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2020,
+    "rows": 999,
+    "fv_rows": 961,
+    "fv_players": 860,
+    "fv_rows_in_window": 961,
+    "fv_players_in_window": 860,
+    "in_window_share": 1.0,
+    "first_snapshot": "2020-01-22",
+    "last_snapshot": "2020-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2021,
+    "rows": 1000,
+    "fv_rows": 977,
+    "fv_players": 876,
+    "fv_rows_in_window": 977,
+    "fv_players_in_window": 876,
+    "in_window_share": 1.0,
+    "first_snapshot": "2021-01-22",
+    "last_snapshot": "2021-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2022,
+    "rows": 1002,
+    "fv_rows": 1000,
+    "fv_players": 897,
+    "fv_rows_in_window": 1000,
+    "fv_players_in_window": 897,
+    "in_window_share": 1.0,
+    "first_snapshot": "2022-01-22",
+    "last_snapshot": "2022-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2023,
+    "rows": 1001,
+    "fv_rows": 1001,
+    "fv_players": 900,
+    "fv_rows_in_window": 1001,
+    "fv_players_in_window": 900,
+    "in_window_share": 1.0,
+    "first_snapshot": "2023-01-22",
+    "last_snapshot": "2023-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2024,
+    "rows": 1003,
+    "fv_rows": 1002,
+    "fv_players": 900,
+    "fv_rows_in_window": 1002,
+    "fv_players_in_window": 900,
+    "in_window_share": 1.0,
+    "first_snapshot": "2024-01-22",
+    "last_snapshot": "2024-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2025,
+    "rows": 1002,
+    "fv_rows": 1000,
+    "fv_players": 900,
+    "fv_rows_in_window": 1000,
+    "fv_players_in_window": 900,
+    "in_window_share": 1.0,
+    "first_snapshot": "2025-01-22",
+    "last_snapshot": "2025-01-22",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline",
+    "list_year": 2026,
+    "rows": 9235,
+    "fv_rows": 9233,
+    "fv_players": 1193,
+    "fv_rows_in_window": 48,
+    "fv_players_in_window": 48,
+    "in_window_share": 0.0052,
+    "first_snapshot": "2026-01-22",
+    "last_snapshot": "2026-10-02",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline_international",
+    "list_year": 2021,
+    "rows": 27,
+    "fv_rows": 27,
+    "fv_players": 27,
+    "fv_rows_in_window": 27,
+    "fv_players_in_window": 27,
+    "in_window_share": 1.0,
+    "first_snapshot": "2021-01-15",
+    "last_snapshot": "2021-01-15",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline_international",
+    "list_year": 2022,
+    "rows": 42,
+    "fv_rows": 42,
+    "fv_players": 42,
+    "fv_rows_in_window": 42,
+    "fv_players_in_window": 42,
+    "in_window_share": 1.0,
+    "first_snapshot": "2022-01-15",
+    "last_snapshot": "2022-01-15",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline_international",
+    "list_year": 2023,
+    "rows": 40,
+    "fv_rows": 40,
+    "fv_players": 40,
+    "fv_rows_in_window": 40,
+    "fv_players_in_window": 40,
+    "in_window_share": 1.0,
+    "first_snapshot": "2023-01-15",
+    "last_snapshot": "2023-01-15",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline_international",
+    "list_year": 2024,
+    "rows": 43,
+    "fv_rows": 43,
+    "fv_players": 43,
+    "fv_rows_in_window": 43,
+    "fv_players_in_window": 43,
+    "in_window_share": 1.0,
+    "first_snapshot": "2024-01-15",
+    "last_snapshot": "2024-01-15",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline_international",
+    "list_year": 2025,
+    "rows": 43,
+    "fv_rows": 43,
+    "fv_players": 43,
+    "fv_rows_in_window": 43,
+    "fv_players_in_window": 43,
+    "in_window_share": 1.0,
+    "first_snapshot": "2025-01-15",
+    "last_snapshot": "2025-01-15",
+    "real_grader": true
+   },
+   {
+    "source": "mlb_pipeline_international",
+    "list_year": 2026,
+    "rows": 50,
+    "fv_rows": 50,
+    "fv_players": 50,
+    "fv_rows_in_window": 0,
+    "fv_players_in_window": 0,
+    "in_window_share": 0.0,
+    "first_snapshot": "2026-09-30",
+    "last_snapshot": "2026-09-30",
+    "real_grader": true
+   },
+   {
+    "source": "performance_ingest",
+    "list_year": 2026,
+    "rows": 2999,
+    "fv_rows": 2999,
+    "fv_players": 2999,
+    "fv_rows_in_window": 223,
+    "fv_players_in_window": 223,
+    "in_window_share": 0.0744,
+    "first_snapshot": "2026-01-01",
+    "last_snapshot": "2026-10-02",
+    "real_grader": false
+   },
+   {
+    "source": "tjstats",
+    "list_year": 2026,
+    "rows": 8402,
+    "fv_rows": 8387,
+    "fv_players": 156,
+    "fv_rows_in_window": 200,
+    "fv_players_in_window": 110,
+    "in_window_share": 0.0238,
+    "first_snapshot": "2026-01-22",
+    "last_snapshot": "2026-10-02",
+    "real_grader": true
+   }
+  ],
+  "by_source": {
+   "auto_detect": {
+    "rows": 2566,
+    "fv_rows": 0,
+    "first": "2010-04-01",
+    "last": "2026-09-25",
+    "list_years": []
+   },
+   "baseballamerica": {
+    "rows": 4556,
+    "fv_rows": 4456,
+    "first": "2023-02-15",
+    "last": "2026-08-10",
+    "list_years": [
+     2023,
+     2024,
+     2025,
+     2026
+    ]
+   },
+   "baseballamerica_statcast_by_age": {
+    "rows": 41,
+    "fv_rows": 0,
+    "first": "2026-06-03",
+    "last": "2026-06-03",
+    "list_years": []
+   },
+   "draft_signing": {
+    "rows": 138,
+    "fv_rows": 138,
+    "first": "2026-07-23",
+    "last": "2026-10-02",
+    "list_years": [
+     2026
+    ]
+   },
+   "espn": {
+    "rows": 350,
+    "fv_rows": 350,
+    "first": "2025-08-20",
+    "last": "2026-08-20",
+    "list_years": [
+     2025,
+     2026
+    ]
+   },
+   "fangraphs": {
+    "rows": 24503,
+    "fv_rows": 24501,
+    "first": "2017-02-15",
+    "last": "2026-08-02",
+    "list_years": [
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024,
+     2025,
+     2026
+    ]
+   },
+   "just_baseball": {
+    "rows": 426,
+    "fv_rows": 426,
+    "first": "2026-03-04",
+    "last": "2026-08-27",
+    "list_years": [
+     2026
+    ]
+   },
+   "mlb_pipeline": {
+    "rows": 22661,
+    "fv_rows": 22127,
+    "first": "2011-01-22",
+    "last": "2026-10-02",
+    "list_years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024,
+     2025,
+     2026
+    ]
+   },
+   "mlb_pipeline_international": {
+    "rows": 245,
+    "fv_rows": 245,
+    "first": "2021-01-15",
+    "last": "2026-09-30",
+    "list_years": [
+     2021,
+     2022,
+     2023,
+     2024,
+     2025,
+     2026
+    ]
+   },
+   "performance_ingest": {
+    "rows": 2999,
+    "fv_rows": 2999,
+    "first": "2026-01-01",
+    "last": "2026-10-02",
+    "list_years": [
+     2026
+    ]
+   },
+   "tjstats": {
+    "rows": 8402,
+    "fv_rows": 8387,
+    "first": "2026-01-22",
+    "last": "2026-10-02",
+    "list_years": [
+     2026
+    ]
+   }
+  }
+ },
+ "frame": {
+  "by": [
+   "side",
+   "vintage"
+  ],
+  "builder": "efv_vintage_frame.build_frame(side, V, milb=False, sidecars=False)",
+  "rule": "a row is a (player, V) with a real grader published inside the V preseason window and no major league line before V; id_how is the outcome-blind resolver's route (efv_identity), record_id is the record's stored id (audit only, never an input)",
+  "rows": [
+   {
+    "side": "hit",
+    "vintage": 2011,
+    "rows": 69,
+    "id_how": {
+     "name_unique": 65,
+     "ambiguous": 3,
+     "no_candidate": 1,
+     "other": 0
+    },
+    "blind_id_present": 65,
+    "record_id_present": 3,
+    "with_consensus": 69,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2011,
+    "rows": 58,
+    "id_how": {
+     "name_unique": 55,
+     "ambiguous": 1,
+     "no_candidate": 2,
+     "other": 0
+    },
+    "blind_id_present": 55,
+    "record_id_present": 1,
+    "with_consensus": 58,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2012,
+    "rows": 189,
+    "id_how": {
+     "name_unique": 180,
+     "ambiguous": 8,
+     "no_candidate": 1,
+     "other": 0
+    },
+    "blind_id_present": 180,
+    "record_id_present": 6,
+    "with_consensus": 189,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2012,
+    "rows": 170,
+    "id_how": {
+     "name_unique": 163,
+     "ambiguous": 7,
+     "no_candidate": 0,
+     "other": 0
+    },
+    "blind_id_present": 163,
+    "record_id_present": 8,
+    "with_consensus": 170,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2013,
+    "rows": 268,
+    "id_how": {
+     "name_unique": 251,
+     "ambiguous": 14,
+     "no_candidate": 3,
+     "other": 0
+    },
+    "blind_id_present": 251,
+    "record_id_present": 36,
+    "with_consensus": 268,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2013,
+    "rows": 246,
+    "id_how": {
+     "name_unique": 229,
+     "ambiguous": 15,
+     "no_candidate": 2,
+     "other": 0
+    },
+    "blind_id_present": 229,
+    "record_id_present": 26,
+    "with_consensus": 246,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2014,
+    "rows": 260,
+    "id_how": {
+     "name_unique": 242,
+     "ambiguous": 13,
+     "no_candidate": 5,
+     "other": 0
+    },
+    "blind_id_present": 242,
+    "record_id_present": 78,
+    "with_consensus": 260,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2014,
+    "rows": 245,
+    "id_how": {
+     "name_unique": 227,
+     "ambiguous": 17,
+     "no_candidate": 1,
+     "other": 0
+    },
+    "blind_id_present": 227,
+    "record_id_present": 43,
+    "with_consensus": 245,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2015,
+    "rows": 397,
+    "id_how": {
+     "name_unique": 368,
+     "ambiguous": 22,
+     "no_candidate": 7,
+     "other": 0
+    },
+    "blind_id_present": 368,
+    "record_id_present": 155,
+    "with_consensus": 397,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2015,
+    "rows": 388,
+    "id_how": {
+     "name_unique": 358,
+     "ambiguous": 25,
+     "no_candidate": 5,
+     "other": 0
+    },
+    "blind_id_present": 358,
+    "record_id_present": 90,
+    "with_consensus": 388,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2016,
+    "rows": 405,
+    "id_how": {
+     "name_unique": 368,
+     "ambiguous": 22,
+     "no_candidate": 15,
+     "other": 0
+    },
+    "blind_id_present": 368,
+    "record_id_present": 226,
+    "with_consensus": 405,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2016,
+    "rows": 405,
+    "id_how": {
+     "name_unique": 371,
+     "ambiguous": 32,
+     "no_candidate": 2,
+     "other": 0
+    },
+    "blind_id_present": 371,
+    "record_id_present": 160,
+    "with_consensus": 405,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2017,
+    "rows": 472,
+    "id_how": {
+     "name_unique": 418,
+     "ambiguous": 35,
+     "no_candidate": 19,
+     "other": 0
+    },
+    "blind_id_present": 418,
+    "record_id_present": 319,
+    "with_consensus": 472,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2017,
+    "rows": 469,
+    "id_how": {
+     "name_unique": 424,
+     "ambiguous": 35,
+     "no_candidate": 10,
+     "other": 0
+    },
+    "blind_id_present": 424,
+    "record_id_present": 244,
+    "with_consensus": 469,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2018,
+    "rows": 450,
+    "id_how": {
+     "name_unique": 394,
+     "ambiguous": 37,
+     "no_candidate": 19,
+     "other": 0
+    },
+    "blind_id_present": 394,
+    "record_id_present": 355,
+    "with_consensus": 450,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2018,
+    "rows": 439,
+    "id_how": {
+     "name_unique": 398,
+     "ambiguous": 37,
+     "no_candidate": 4,
+     "other": 0
+    },
+    "blind_id_present": 398,
+    "record_id_present": 301,
+    "with_consensus": 439,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2019,
+    "rows": 543,
+    "id_how": {
+     "name_unique": 469,
+     "ambiguous": 51,
+     "no_candidate": 23,
+     "other": 0
+    },
+    "blind_id_present": 469,
+    "record_id_present": 476,
+    "with_consensus": 543,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2019,
+    "rows": 489,
+    "id_how": {
+     "name_unique": 439,
+     "ambiguous": 38,
+     "no_candidate": 12,
+     "other": 0
+    },
+    "blind_id_present": 439,
+    "record_id_present": 380,
+    "with_consensus": 489,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2020,
+    "rows": 821,
+    "id_how": null,
+    "blind_id_present": null,
+    "record_id_present": null,
+    "with_consensus": null,
+    "built": false,
+    "copied_from": {
+     "path": "docs/efv-v2/PROGRAM.md",
+     "section": "s2.4"
+    }
+   },
+   {
+    "side": "pit",
+    "vintage": 2020,
+    "rows": 478,
+    "id_how": null,
+    "blind_id_present": null,
+    "record_id_present": null,
+    "with_consensus": null,
+    "built": false,
+    "copied_from": {
+     "path": "docs/efv-v2/PROGRAM.md",
+     "section": "s2.4"
+    }
+   },
+   {
+    "side": "hit",
+    "vintage": 2021,
+    "rows": 906,
+    "id_how": null,
+    "blind_id_present": null,
+    "record_id_present": null,
+    "with_consensus": null,
+    "built": false,
+    "copied_from": {
+     "path": "docs/efv-v2/PROGRAM.md",
+     "section": "s2.4"
+    }
+   },
+   {
+    "side": "pit",
+    "vintage": 2021,
+    "rows": 462,
+    "id_how": null,
+    "blind_id_present": null,
+    "record_id_present": null,
+    "with_consensus": null,
+    "built": false,
+    "copied_from": {
+     "path": "docs/efv-v2/PROGRAM.md",
+     "section": "s2.4"
+    }
+   },
+   {
+    "side": "hit",
+    "vintage": 2022,
+    "rows": 655,
+    "id_how": {
+     "name_unique": 550,
+     "ambiguous": 57,
+     "no_candidate": 48,
+     "other": 0
+    },
+    "blind_id_present": 550,
+    "record_id_present": 617,
+    "with_consensus": 655,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2022,
+    "rows": 613,
+    "id_how": {
+     "name_unique": 527,
+     "ambiguous": 50,
+     "no_candidate": 36,
+     "other": 0
+    },
+    "blind_id_present": 527,
+    "record_id_present": 562,
+    "with_consensus": 613,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2023,
+    "rows": 632,
+    "id_how": {
+     "name_unique": 520,
+     "ambiguous": 62,
+     "no_candidate": 50,
+     "other": 0
+    },
+    "blind_id_present": 520,
+    "record_id_present": 616,
+    "with_consensus": 632,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2023,
+    "rows": 642,
+    "id_how": {
+     "name_unique": 523,
+     "ambiguous": 49,
+     "no_candidate": 70,
+     "other": 0
+    },
+    "blind_id_present": 523,
+    "record_id_present": 615,
+    "with_consensus": 642,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2024,
+    "rows": 646,
+    "id_how": {
+     "name_unique": 517,
+     "ambiguous": 70,
+     "no_candidate": 59,
+     "other": 0
+    },
+    "blind_id_present": 517,
+    "record_id_present": 641,
+    "with_consensus": 646,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2024,
+    "rows": 612,
+    "id_how": {
+     "name_unique": 501,
+     "ambiguous": 49,
+     "no_candidate": 62,
+     "other": 0
+    },
+    "blind_id_present": 501,
+    "record_id_present": 603,
+    "with_consensus": 612,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2025,
+    "rows": 655,
+    "id_how": {
+     "name_unique": 502,
+     "ambiguous": 62,
+     "no_candidate": 91,
+     "other": 0
+    },
+    "blind_id_present": 502,
+    "record_id_present": 651,
+    "with_consensus": 655,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2025,
+    "rows": 654,
+    "id_how": {
+     "name_unique": 512,
+     "ambiguous": 53,
+     "no_candidate": 89,
+     "other": 0
+    },
+    "blind_id_present": 512,
+    "record_id_present": 651,
+    "with_consensus": 654,
+    "built": true
+   },
+   {
+    "side": "hit",
+    "vintage": 2026,
+    "rows": 590,
+    "id_how": {
+     "name_unique": 453,
+     "ambiguous": 52,
+     "no_candidate": 85,
+     "other": 0
+    },
+    "blind_id_present": 453,
+    "record_id_present": 578,
+    "with_consensus": 590,
+    "built": true
+   },
+   {
+    "side": "pit",
+    "vintage": 2026,
+    "rows": 618,
+    "id_how": {
+     "name_unique": 455,
+     "ambiguous": 49,
+     "no_candidate": 114,
+     "other": 0
+    },
+    "blind_id_present": 455,
+    "record_id_present": 578,
+    "with_consensus": 618,
+    "built": true
+   }
+  ],
+  "dev_totals": {
+   "vintages": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "rows": 5962,
+   "by_side": {
+    "hit": 3053,
+    "pit": 2909
+   },
+   "id_how": {
+    "name_unique": 5419,
+    "ambiguous": 412,
+    "no_candidate": 131,
+    "other": 0
+   },
+   "record_id_present": 2907
+  },
+  "later_totals": {
+   "vintages": [
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+   ],
+   "rows": 6317
+  },
+  "reserved_copied": {
+   "vintages": [
+    2020,
+    2021
+   ],
+   "path": "docs/efv-v2/PROGRAM.md",
+   "section": "s2.4",
+   "sha256": "3886eddec5dee5150c22fa6e99a2c82a4503ea8b657d88b80c2b3e3df6b8d238",
+   "quote": "V 2020 (W3 resolvable now: 821 hit / 478 pit rows) and V 2021 (W3 resolves at the 2026 freeze: 906 / 462)",
+   "rows": 2667
+  }
+ },
+ "debut_cohorts": {
+  "by": [
+   "debut_cohort"
+  ],
+  "source_file": "data/debuts.json",
+  "window": "the debut year's preseason window (efv_vintage_frame.window_bounds), closed at the debut day",
+  "rule": "in_window_consensus_read: a point inside the window with a consensus_fv; fangraphs_and_pipeline_both: both SCORED_SOURCES published an fv inside the window; with_career_war_row: the player_key has a career_war row (presence only, no value read)",
+  "rows": [
+   {
+    "debut_cohort": 2011,
+    "debuts": 97,
+    "in_window_consensus_read": 26,
+    "fangraphs_and_pipeline_both": 0,
+    "with_career_war_row": 97,
+    "with_record_id": 1,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2012,
+    "debuts": 98,
+    "in_window_consensus_read": 53,
+    "fangraphs_and_pipeline_both": 0,
+    "with_career_war_row": 98,
+    "with_record_id": 3,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2013,
+    "debuts": 134,
+    "in_window_consensus_read": 102,
+    "fangraphs_and_pipeline_both": 0,
+    "with_career_war_row": 134,
+    "with_record_id": 3,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2014,
+    "debuts": 132,
+    "in_window_consensus_read": 88,
+    "fangraphs_and_pipeline_both": 0,
+    "with_career_war_row": 132,
+    "with_record_id": 5,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2015,
+    "debuts": 146,
+    "in_window_consensus_read": 123,
+    "fangraphs_and_pipeline_both": 0,
+    "with_career_war_row": 146,
+    "with_record_id": 10,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2016,
+    "debuts": 96,
+    "in_window_consensus_read": 77,
+    "fangraphs_and_pipeline_both": 0,
+    "with_career_war_row": 96,
+    "with_record_id": 28,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2017,
+    "debuts": 93,
+    "in_window_consensus_read": 61,
+    "fangraphs_and_pipeline_both": 50,
+    "with_career_war_row": 88,
+    "with_record_id": 69,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2018,
+    "debuts": 114,
+    "in_window_consensus_read": 83,
+    "fangraphs_and_pipeline_both": 75,
+    "with_career_war_row": 111,
+    "with_record_id": 94,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2019,
+    "debuts": 171,
+    "in_window_consensus_read": 137,
+    "fangraphs_and_pipeline_both": 124,
+    "with_career_war_row": 162,
+    "with_record_id": 159,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2020,
+    "debuts": 184,
+    "in_window_consensus_read": 155,
+    "fangraphs_and_pipeline_both": 136,
+    "with_career_war_row": 174,
+    "with_record_id": 179,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2021,
+    "debuts": 208,
+    "in_window_consensus_read": 150,
+    "fangraphs_and_pipeline_both": 128,
+    "with_career_war_row": 194,
+    "with_record_id": 205,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2022,
+    "debuts": 260,
+    "in_window_consensus_read": 205,
+    "fangraphs_and_pipeline_both": 173,
+    "with_career_war_row": 237,
+    "with_record_id": 258,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2023,
+    "debuts": 243,
+    "in_window_consensus_read": 204,
+    "fangraphs_and_pipeline_both": 172,
+    "with_career_war_row": 228,
+    "with_record_id": 243,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2024,
+    "debuts": 240,
+    "in_window_consensus_read": 184,
+    "fangraphs_and_pipeline_both": 160,
+    "with_career_war_row": 217,
+    "with_record_id": 240,
+    "reserved_vm": false
+   },
+   {
+    "debut_cohort": 2025,
+    "debuts": 243,
+    "in_window_consensus_read": 176,
+    "fangraphs_and_pipeline_both": 149,
+    "with_career_war_row": 219,
+    "with_record_id": 243,
+    "reserved_vm": true
+   },
+   {
+    "debut_cohort": 2026,
+    "debuts": 262,
+    "in_window_consensus_read": 174,
+    "fangraphs_and_pipeline_both": 136,
+    "with_career_war_row": 233,
+    "with_record_id": 262,
+    "reserved_vm": true
+   }
+  ],
+  "records": 2767,
+  "undated": 0,
+  "outside_cohort_range": {
+   "2010": 46
+  },
+  "r_vm_first_debut_year": 2025
+ },
+ "bust_pool": {
+  "by": [
+   "bust_class"
+  ],
+  "source_file": "data/inactive.json",
+  "classifier": "efv_labels.reached_class (BUST2)",
+  "latest_milb_seasons": [
+   2026,
+   2025
+  ],
+  "rule": "id_1_birth_1 means the record carries an mlbam_id and a birth date; the last list year is the latest snapshot year on the record's points; the no-id no-birth rows flip to never when that year is at or before RESOLVED_THROUGH - NEVER_LIST_LAG",
+  "never_list_lag": 5,
+  "never_age": 27,
+  "rows": [
+   {
+    "bust_class": "never",
+    "rows": 1579,
+    "by_id_birth": {
+     "id_0_birth_0": 918,
+     "id_1_birth_1": 661
+    },
+    "by_last_list_year": {
+     "2012": 4,
+     "2013": 80,
+     "2014": 38,
+     "2015": 125,
+     "2016": 123,
+     "2017": 282,
+     "2018": 273,
+     "2019": 232,
+     "2020": 93,
+     "2021": 101,
+     "2022": 108,
+     "2023": 83,
+     "2024": 12,
+     "2025": 2,
+     "2026": 16,
+     "none": 7
+    },
+    "no_id_no_birth_by_last_list_year": {
+     "2012": 4,
+     "2013": 78,
+     "2014": 36,
+     "2015": 107,
+     "2016": 88,
+     "2017": 225,
+     "2018": 188,
+     "2019": 142,
+     "2020": 50
+    }
+   },
+   {
+    "bust_class": "censored_never",
+    "rows": 711,
+    "by_id_birth": {
+     "id_0_birth_0": 381,
+     "id_0_birth_1": 3,
+     "id_1_birth_1": 327
+    },
+    "by_last_list_year": {
+     "2013": 4,
+     "2014": 1,
+     "2016": 2,
+     "2017": 4,
+     "2018": 8,
+     "2019": 7,
+     "2020": 6,
+     "2021": 140,
+     "2022": 163,
+     "2023": 199,
+     "2024": 12,
+     "2025": 3,
+     "2026": 41,
+     "none": 121
+    },
+    "no_id_no_birth_by_last_list_year": {
+     "2021": 102,
+     "2022": 71,
+     "2023": 43,
+     "2024": 8,
+     "2025": 3,
+     "2026": 40,
+     "none": 114
+    }
+   },
+   {
+    "bust_class": "reached",
+    "rows": 47,
+    "by_id_birth": {
+     "id_0_birth_0": 1,
+     "id_1_birth_0": 2,
+     "id_1_birth_1": 44
+    },
+    "by_last_list_year": {
+     "2021": 10,
+     "2022": 6,
+     "2023": 6,
+     "2026": 25
+    },
+    "no_id_no_birth_by_last_list_year": {
+     "2023": 1
+    }
+   }
+  ],
+  "records": 2337
+ },
+ "identity_join": {
+  "source_table": "prospects.db career_war",
+  "default_provider": "ewar_v2",
+  "rule": "provider is the stored row's source field; the id route is the first of: the debuts.json record carries an mlbam_id, the key is in data/sources/mlbam_id_overrides.json, the key is in debuts.json without an id, the key is not in debuts.json",
+  "rows": 2685,
+  "by_provider": {
+   "ewar_v2": {
+    "rows": 2550,
+    "id_route": {
+     "debuts_json_id": 1847,
+     "override_asset_id": 697,
+     "no_id": 0,
+     "key_not_in_debuts": 6
+    }
+   },
+   "bbref": {
+    "rows": 135,
+    "id_route": {
+     "debuts_json_id": 0,
+     "override_asset_id": 0,
+     "no_id": 69,
+     "key_not_in_debuts": 66
+    }
+   }
+  },
+  "debuts_records_without_id": 765,
+  "debuts_without_id_covered_by_override_asset": 696,
+  "override_asset": {
+   "path": "data/sources/mlbam_id_overrides.json",
+   "entries": 735,
+   "sha256": "0c8096f3f25590c1f21e9e89def1e0382e665357feaa8b19a9a13ae34a860929"
+  }
+ },
+ "label_views": {
+  "by": [
+   "label_view"
+  ],
+  "resolved_through": 2025,
+  "rule": "counts only: a vintage's rows are the frame rows of (b) (R-LV copied, never built); a cohort's debuts are the rows of (c); faithfulness numbers are parsed from the committed PROGRAM.md text and are label-to-label, no rater enters",
+  "rows": [
+   {
+    "label_view": "L6",
+    "definition": "first six MLB seasons, censored tail projected (efv_dataset._label_6yr)",
+    "unit": "debut_cohort",
+    "resolves_when": "debut year + 5 <= RESOLVED_THROUGH",
+    "resolved_at_rt": {
+     "debut_cohorts": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "debuts": 1265,
+     "with_career_war_row": 1238,
+     "reserved_vm_inside": []
+    },
+    "resolved_at_rt_plus_1": {
+     "debut_cohorts": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+     ],
+     "debuts": 1473,
+     "with_career_war_row": 1432,
+     "reserved_vm_inside": []
+    },
+    "added_at_rt_plus_1": {
+     "debut_cohorts": [
+      2021
+     ],
+     "debuts": 208
+    },
+    "standing": "the training label and F-VM scoring label",
+    "faithfulness_to_six_season": {
+     "hit": null,
+     "pit": null,
+     "note": "the six-season label itself"
+    }
+   },
+   {
+    "label_view": "W3",
+    "definition": "WAR over the first three MLB seasons, 0 if no debut in V..V+3",
+    "unit": "vintage",
+    "resolves_when": "V + 5 <= RESOLVED_THROUGH",
+    "resolved_at_rt": {
+     "vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "rows": 7261,
+     "reserved_lv_inside": [
+      2020
+     ]
+    },
+    "resolved_at_rt_plus_1": {
+     "vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+     ],
+     "rows": 8629,
+     "reserved_lv_inside": [
+      2020,
+      2021
+     ]
+    },
+    "added_at_rt_plus_1": {
+     "vintages": [
+      2021
+     ],
+     "rows": 1368
+    },
+    "standing": "the F-LV scoring label",
+    "faithfulness_to_six_season": {
+     "hit": 0.787,
+     "pit": 0.821,
+     "section": "s2.2",
+     "quote": "rho(W3, six-season) 0.787 hit / 0.821\npit",
+     "path": "docs/efv-v2/PROGRAM.md",
+     "sha256": "3886eddec5dee5150c22fa6e99a2c82a4503ea8b657d88b80c2b3e3df6b8d238"
+    }
+   },
+   {
+    "label_view": "W2",
+    "definition": "WAR over the first two MLB seasons, 0 if no debut in V..V+3",
+    "unit": "vintage",
+    "resolves_when": "V + 4 <= RESOLVED_THROUGH",
+    "resolved_at_rt": {
+     "vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+     ],
+     "rows": 8629,
+     "reserved_lv_inside": [
+      2020,
+      2021
+     ]
+    },
+    "resolved_at_rt_plus_1": {
+     "vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+     ],
+     "rows": 9897,
+     "reserved_lv_inside": [
+      2020,
+      2021
+     ]
+    },
+    "added_at_rt_plus_1": {
+     "vintages": [
+      2022
+     ],
+     "rows": 1268
+    },
+    "standing": "hazard component, not a scoring label",
+    "faithfulness_to_six_season": {
+     "hit": null,
+     "pit": null,
+     "section": "s2.2",
+     "note": "PROGRAM.md s2.2: W2, R3 and AA2 lose the grader ordering or are hazard components; not scoring labels"
+    }
+   },
+   {
+    "label_view": "R3",
+    "definition": "reached within V..V+3",
+    "unit": "vintage",
+    "resolves_when": "V + 3 <= RESOLVED_THROUGH",
+    "resolved_at_rt": {
+     "vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+     ],
+     "rows": 9897,
+     "reserved_lv_inside": [
+      2020,
+      2021
+     ]
+    },
+    "resolved_at_rt_plus_1": {
+     "vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "rows": 11171,
+     "reserved_lv_inside": [
+      2020,
+      2021
+     ]
+    },
+    "added_at_rt_plus_1": {
+     "vintages": [
+      2023
+     ],
+     "rows": 1274
+    },
+    "standing": "timing-head target only, not a scoring label",
+    "faithfulness_to_six_season": {
+     "hit": null,
+     "pit": null,
+     "section": "s2.2",
+     "note": "PROGRAM.md s2.2: W2, R3 and AA2 lose the grader ordering or are hazard components; not scoring labels"
+    }
+   },
+   {
+    "label_view": "first_2",
+    "definition": "two observed seasons from the debut (R-VM look 1, L-D)",
+    "unit": "debut_cohort",
+    "resolves_when": "debut year + 1 <= RESOLVED_THROUGH",
+    "resolved_at_rt": {
+     "debut_cohorts": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+     ],
+     "debuts": 2216,
+     "with_career_war_row": 2114,
+     "reserved_vm_inside": []
+    },
+    "resolved_at_rt_plus_1": {
+     "debut_cohorts": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "debuts": 2459,
+     "with_career_war_row": 2333,
+     "reserved_vm_inside": [
+      2025
+     ]
+    },
+    "added_at_rt_plus_1": {
+     "debut_cohorts": [
+      2025
+     ],
+     "debuts": 243
+    },
+    "standing": "the R-VM look-1 label by design",
+    "faithfulness_to_six_season": {
+     "hit": 0.739,
+     "pit": 0.705,
+     "section": "s3.3",
+     "quote": "first-2 vs six-season 0.739 hit / 0.705 pit",
+     "path": "docs/efv-v2/PROGRAM.md",
+     "sha256": "3886eddec5dee5150c22fa6e99a2c82a4503ea8b657d88b80c2b3e3df6b8d238"
+    }
+   }
+  ]
+ },
+ "floor_curve": {
+  "z95": 1.645,
+  "formula": "mde95(n) = z95 * sd_ref * sqrt(n_ref / n)",
+  "rule": "the scaling PROGRAM.md s2.5 already uses; a floor of a different frame type is not a function of n alone (LANE_A.md s2); the lv E_refit floor is unmeasured (EV-05 owes it) and is not drawn",
+  "n": [
+   829,
+   858,
+   995,
+   1179,
+   1266,
+   1464,
+   1864,
+   149,
+   176,
+   210,
+   2667,
+   5529
+  ],
+  "references": [
+   {
+    "id": "vm_econd_within",
+    "frame_type": "vm",
+    "estimator": "E_cond",
+    "statistic": "within",
+    "sd_ref": 0.00886,
+    "n_ref": 803,
+    "n_clusters_ref": 803,
+    "path": "data/efv_v2_dev_eval.json",
+    "key": "ds16.frames.vm_dev.deltas.v2_vs_prospx_consensus.spearman.sd",
+    "generated_at": "2026-09-25T21:28:38Z",
+    "sha256": "6dfab7511688b01d4de3ae5eae31d568a55730ce69afc4b980b1891f8357cecf"
+   },
+   {
+    "id": "lv_econd_within",
+    "frame_type": "lv",
+    "estimator": "E_cond",
+    "statistic": "within",
+    "sd_ref": 0.00944,
+    "n_ref": 2862,
+    "n_clusters_ref": 1753,
+    "path": "data/efv_v2_dev_eval.json",
+    "key": "ds16.frames.lv_dev.deltas.v2_vs_prospx_consensus.spearman.sd",
+    "generated_at": "2026-09-25T21:28:38Z",
+    "sha256": "6dfab7511688b01d4de3ae5eae31d568a55730ce69afc4b980b1891f8357cecf"
+   },
+   {
+    "id": "vm_erefit_pooled",
+    "frame_type": "vm",
+    "estimator": "E_refit",
+    "statistic": "pooled",
+    "sd_ref": 0.01844,
+    "n_ref": 802,
+    "n_clusters_ref": null,
+    "path": "data/xfv_headtohead_frame_eval.json",
+    "key": "vintage_matched.sd (n from point.vintage_matched.n_rows)",
+    "generated_at": "2026-08-13T18:02:12Z",
+    "sha256": "2b60e835572cbfddda5acd5503daf6985d6090d2a4198a50196cc0a91d60b0d4"
+   }
+  ],
+  "curve": {
+   "vm_econd_within": {
+    "829": 0.0143,
+    "858": 0.0141,
+    "995": 0.0131,
+    "1179": 0.012,
+    "1266": 0.0116,
+    "1464": 0.0108,
+    "1864": 0.0096,
+    "149": 0.0338,
+    "176": 0.0311,
+    "210": 0.0285,
+    "2667": 0.008,
+    "5529": 0.0056
+   },
+   "lv_econd_within": {
+    "829": 0.0289,
+    "858": 0.0284,
+    "995": 0.0263,
+    "1179": 0.0242,
+    "1266": 0.0233,
+    "1464": 0.0217,
+    "1864": 0.0192,
+    "149": 0.0681,
+    "176": 0.0626,
+    "210": 0.0573,
+    "2667": 0.0161,
+    "5529": 0.0112
+   },
+   "vm_erefit_pooled": {
+    "829": 0.0298,
+    "858": 0.0293,
+    "995": 0.0272,
+    "1179": 0.025,
+    "1266": 0.0241,
+    "1464": 0.0225,
+    "1864": 0.0199,
+    "149": 0.0704,
+    "176": 0.0648,
+    "210": 0.0593,
+    "2667": 0.0166,
+    "5529": 0.0116
+   }
+  }
+ },
+ "epoch": "the eFV label is in an epoch (docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md); label.provider and label.resolved_through stamp this census, and a run after the epoch is a new census, never an edit of this one"
+}
