@@ -1,0 +1,1793 @@
+{
+ "schema": "efv_label_horizon_2026/1",
+ "generated_at": "2026-10-03T01:11:35Z",
+ "produced_by": "tools/efv_label_horizon_2026.py",
+ "task": "EFV3_A9_LABEL_HORIZON_2026",
+ "model_id": "efv_label_horizon",
+ "role": "development",
+ "adjudicates": "nothing; the label builder's own terms, counts, and label-to-label correlations; no rater enters and nothing is grouped by an FV cell",
+ "label": {
+  "provider": "ewar_v2",
+  "resolved_through": 2025,
+  "resolved_through_after": 2026,
+  "id": "ewar_v2@2026-09-03T12:35:09",
+  "frozen_fwar_vintage": {
+   "path": "data/fwar_vintage.json",
+   "vintage_id": "2026-10-02-0341299c20ec",
+   "fwar_seasons": [
+    2000,
+    2026
+   ],
+   "seasons_read_here": [
+    2014,
+    2024
+   ],
+   "sha256": "7d388e8510df1033252720713afd5b570a7f8a3b96058647d2da509d4ac27917"
+  }
+ },
+ "guards": {
+  "reserved_debut_cohorts_never_read": [
+   2020,
+   2021,
+   2025,
+   2026
+  ],
+  "r_vm_first_debut_year": 2025,
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "reserved_vm_pins": [],
+  "outcome_cohorts_read": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019
+  ],
+  "max_season_read": 2024,
+  "no_rater_score": true,
+  "anchor_gate": "no statistic by consensus-FV cell (docs/PROSPECT_ANCHOR_GATE.md)",
+  "service_aligned_window": false
+ },
+ "code": {
+  "commit": "9166ab8cc6fba24fe3a80fbee0413ca020ec8ced",
+  "tool_sha256": "042456014b0c5750821465377fe757f64fd686fbd6456228cdb0f5c5f6895cc1",
+  "efv_dataset_sha256": "8ee001350be6dd3ad9c1d9795bd4de8b610bed067bbb536a42dbc38ed8270a96"
+ },
+ "inputs": {
+  "matrices": {
+   "hit": {
+    "path": "data/xfv_hitter_matrix.json",
+    "sha256": "c7ffda9e3a98ac35d8cec74b6e3ff2525a8fd1b97897a6e87640d9374654f096"
+   },
+   "pit": {
+    "path": "data/xfv_pitcher_matrix.json",
+    "sha256": "a76236ca81bf4a718dddaaa86bb778b8bf349839f35e0ed27f037bb7eb1d629d"
+   }
+  },
+  "census": {
+   "path": "data/efv_label_pool_census.json",
+   "sha256": "dc30359c03094f01ba100c0b1405200b6d865d05037f4d99f5ca77b255119839"
+  },
+  "mde_floor": {
+   "path": "data/xfv_mde_floor.json",
+   "sha256": "f5b38a9bca43f8f52c0080dfaf392c6988e61746aca2fbeb9d0084a283f8c093"
+  }
+ },
+ "builder_terms": {
+  "2025": {
+   "2014": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2015": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2016": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2017": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2018": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2019": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2020": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2021": {
+    "observed_seasons": 5,
+    "observed_fraction": 0.833,
+    "weight": 0.833,
+    "censored": true
+   },
+   "2022": {
+    "observed_seasons": 4,
+    "observed_fraction": 0.667,
+    "weight": 0.667,
+    "censored": true
+   },
+   "2023": {
+    "observed_seasons": 3,
+    "observed_fraction": 0.5,
+    "weight": 0.5,
+    "censored": true
+   },
+   "2024": {
+    "observed_seasons": 2,
+    "observed_fraction": 0.333,
+    "weight": 0.333,
+    "censored": true
+   }
+  },
+  "2026": {
+   "2014": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2015": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2016": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2017": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2018": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2019": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2020": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2021": {
+    "observed_seasons": 6,
+    "observed_fraction": 1.0,
+    "weight": 1.0,
+    "censored": false
+   },
+   "2022": {
+    "observed_seasons": 5,
+    "observed_fraction": 0.833,
+    "weight": 0.833,
+    "censored": true
+   },
+   "2023": {
+    "observed_seasons": 4,
+    "observed_fraction": 0.667,
+    "weight": 0.667,
+    "censored": true
+   },
+   "2024": {
+    "observed_seasons": 3,
+    "observed_fraction": 0.5,
+    "weight": 0.5,
+    "censored": true
+   },
+   "2025": {
+    "observed_seasons": 2,
+    "observed_fraction": 0.333,
+    "weight": 0.333,
+    "censored": true
+   }
+  }
+ },
+ "cohorts": {
+  "by": [
+   "debut_cohort",
+   "side"
+  ],
+  "scored_years": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "rule": "rows: debuted matrix rows by debut_year; scored_rows: consensus_fv_raw present and the cohort in efv_model.SCORED_YEARS (the forward-chained pool); weight: the stored row weight for a resolved row, the builder's term for a censored row; moves: censored rows whose builder term turns resolved at 2026 (counted, never read)",
+  "pins_against_stored_matrix_terms": {
+   "weight": 0,
+   "observed_seasons": 0,
+   "censored_flag": 0
+  },
+  "rows": [
+   {
+    "debut_cohort": 2014,
+    "side": "hit",
+    "rows": 50,
+    "scored_rows": 50,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 50.0,
+     "weight_mass_scored": 50.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 50.0,
+     "weight_mass_scored": 50.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2014,
+    "side": "pit",
+    "rows": 53,
+    "scored_rows": 53,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 53.0,
+     "weight_mass_scored": 53.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 53.0,
+     "weight_mass_scored": 53.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2015,
+    "side": "hit",
+    "rows": 63,
+    "scored_rows": 63,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 63.0,
+     "weight_mass_scored": 63.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 63.0,
+     "weight_mass_scored": 63.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2015,
+    "side": "pit",
+    "rows": 72,
+    "scored_rows": 72,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 72.0,
+     "weight_mass_scored": 72.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 72.0,
+     "weight_mass_scored": 72.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2016,
+    "side": "hit",
+    "rows": 43,
+    "scored_rows": 43,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 43.0,
+     "weight_mass_scored": 43.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 43.0,
+     "weight_mass_scored": 43.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2016,
+    "side": "pit",
+    "rows": 51,
+    "scored_rows": 51,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 51.0,
+     "weight_mass_scored": 51.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 51.0,
+     "weight_mass_scored": 51.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2017,
+    "side": "hit",
+    "rows": 52,
+    "scored_rows": 52,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 52.0,
+     "weight_mass_scored": 52.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 52.0,
+     "weight_mass_scored": 52.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2017,
+    "side": "pit",
+    "rows": 32,
+    "scored_rows": 32,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 32.0,
+     "weight_mass_scored": 32.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 32.0,
+     "weight_mass_scored": 32.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2018,
+    "side": "hit",
+    "rows": 51,
+    "scored_rows": 51,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 51.0,
+     "weight_mass_scored": 51.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 51.0,
+     "weight_mass_scored": 51.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2018,
+    "side": "pit",
+    "rows": 56,
+    "scored_rows": 56,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 56.0,
+     "weight_mass_scored": 56.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 56.0,
+     "weight_mass_scored": 56.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2019,
+    "side": "hit",
+    "rows": 75,
+    "scored_rows": 75,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 75.0,
+     "weight_mass_scored": 75.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 75.0,
+     "weight_mass_scored": 75.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2019,
+    "side": "pit",
+    "rows": 78,
+    "scored_rows": 78,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 78.0,
+     "weight_mass_scored": 78.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 78.0,
+     "weight_mass_scored": 78.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2020,
+    "side": "hit",
+    "rows": 60,
+    "scored_rows": 60,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 60.0,
+     "weight_mass_scored": 60.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 60.0,
+     "weight_mass_scored": 60.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2020,
+    "side": "pit",
+    "rows": 107,
+    "scored_rows": 107,
+    "censored_rows_at_2025": 0,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 107.0,
+     "weight_mass_scored": 107.0
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 107.0,
+     "weight_mass_scored": 107.0
+    },
+    "delta_weight_mass_all": 0.0,
+    "delta_weight_mass_scored": 0.0,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2021,
+    "side": "hit",
+    "rows": 75,
+    "scored_rows": 75,
+    "censored_rows_at_2025": 73,
+    "resolved_by_terminal_event": 2,
+    "rt_2025": {
+     "observed_seasons": 5,
+     "observed_fraction": 0.833,
+     "weight": 0.833,
+     "censored": true,
+     "weight_mass_all": 62.809,
+     "weight_mass_scored": 62.809
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 75.0,
+     "weight_mass_scored": 75.0
+    },
+    "delta_weight_mass_all": 12.191,
+    "delta_weight_mass_scored": 12.191,
+    "moves_censored_to_resolved_at_2026": 73
+   },
+   {
+    "debut_cohort": 2021,
+    "side": "pit",
+    "rows": 108,
+    "scored_rows": 108,
+    "censored_rows_at_2025": 107,
+    "resolved_by_terminal_event": 1,
+    "rt_2025": {
+     "observed_seasons": 5,
+     "observed_fraction": 0.833,
+     "weight": 0.833,
+     "censored": true,
+     "weight_mass_all": 90.131,
+     "weight_mass_scored": 90.131
+    },
+    "rt_2026": {
+     "observed_seasons": 6,
+     "observed_fraction": 1.0,
+     "weight": 1.0,
+     "censored": false,
+     "weight_mass_all": 108.0,
+     "weight_mass_scored": 108.0
+    },
+    "delta_weight_mass_all": 17.869,
+    "delta_weight_mass_scored": 17.869,
+    "moves_censored_to_resolved_at_2026": 107
+   },
+   {
+    "debut_cohort": 2022,
+    "side": "hit",
+    "rows": 128,
+    "scored_rows": 128,
+    "censored_rows_at_2025": 128,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 4,
+     "observed_fraction": 0.667,
+     "weight": 0.667,
+     "censored": true,
+     "weight_mass_all": 85.376,
+     "weight_mass_scored": 85.376
+    },
+    "rt_2026": {
+     "observed_seasons": 5,
+     "observed_fraction": 0.833,
+     "weight": 0.833,
+     "censored": true,
+     "weight_mass_all": 106.624,
+     "weight_mass_scored": 106.624
+    },
+    "delta_weight_mass_all": 21.248,
+    "delta_weight_mass_scored": 21.248,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2022,
+    "side": "pit",
+    "rows": 100,
+    "scored_rows": 100,
+    "censored_rows_at_2025": 100,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 4,
+     "observed_fraction": 0.667,
+     "weight": 0.667,
+     "censored": true,
+     "weight_mass_all": 66.7,
+     "weight_mass_scored": 66.7
+    },
+    "rt_2026": {
+     "observed_seasons": 5,
+     "observed_fraction": 0.833,
+     "weight": 0.833,
+     "censored": true,
+     "weight_mass_all": 83.3,
+     "weight_mass_scored": 83.3
+    },
+    "delta_weight_mass_all": 16.6,
+    "delta_weight_mass_scored": 16.6,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2023,
+    "side": "hit",
+    "rows": 94,
+    "scored_rows": 94,
+    "censored_rows_at_2025": 93,
+    "resolved_by_terminal_event": 1,
+    "rt_2025": {
+     "observed_seasons": 3,
+     "observed_fraction": 0.5,
+     "weight": 0.5,
+     "censored": true,
+     "weight_mass_all": 47.5,
+     "weight_mass_scored": 47.5
+    },
+    "rt_2026": {
+     "observed_seasons": 4,
+     "observed_fraction": 0.667,
+     "weight": 0.667,
+     "censored": true,
+     "weight_mass_all": 63.031,
+     "weight_mass_scored": 63.031
+    },
+    "delta_weight_mass_all": 15.531,
+    "delta_weight_mass_scored": 15.531,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2023,
+    "side": "pit",
+    "rows": 128,
+    "scored_rows": 128,
+    "censored_rows_at_2025": 127,
+    "resolved_by_terminal_event": 1,
+    "rt_2025": {
+     "observed_seasons": 3,
+     "observed_fraction": 0.5,
+     "weight": 0.5,
+     "censored": true,
+     "weight_mass_all": 64.5,
+     "weight_mass_scored": 64.5
+    },
+    "rt_2026": {
+     "observed_seasons": 4,
+     "observed_fraction": 0.667,
+     "weight": 0.667,
+     "censored": true,
+     "weight_mass_all": 85.709,
+     "weight_mass_scored": 85.709
+    },
+    "delta_weight_mass_all": 21.209,
+    "delta_weight_mass_scored": 21.209,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2024,
+    "side": "hit",
+    "rows": 91,
+    "scored_rows": 91,
+    "censored_rows_at_2025": 91,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 2,
+     "observed_fraction": 0.333,
+     "weight": 0.333,
+     "censored": true,
+     "weight_mass_all": 30.303,
+     "weight_mass_scored": 30.303
+    },
+    "rt_2026": {
+     "observed_seasons": 3,
+     "observed_fraction": 0.5,
+     "weight": 0.5,
+     "censored": true,
+     "weight_mass_all": 45.5,
+     "weight_mass_scored": 45.5
+    },
+    "delta_weight_mass_all": 15.197,
+    "delta_weight_mass_scored": 15.197,
+    "moves_censored_to_resolved_at_2026": 0
+   },
+   {
+    "debut_cohort": 2024,
+    "side": "pit",
+    "rows": 119,
+    "scored_rows": 119,
+    "censored_rows_at_2025": 119,
+    "resolved_by_terminal_event": 0,
+    "rt_2025": {
+     "observed_seasons": 2,
+     "observed_fraction": 0.333,
+     "weight": 0.333,
+     "censored": true,
+     "weight_mass_all": 39.627,
+     "weight_mass_scored": 39.627
+    },
+    "rt_2026": {
+     "observed_seasons": 3,
+     "observed_fraction": 0.5,
+     "weight": 0.5,
+     "censored": true,
+     "weight_mass_all": 59.5,
+     "weight_mass_scored": 59.5
+    },
+    "delta_weight_mass_all": 19.873,
+    "delta_weight_mass_scored": 19.873,
+    "moves_censored_to_resolved_at_2026": 0
+   }
+  ],
+  "totals": {
+   "hit": {
+    "rows": 782,
+    "scored_rows": 782,
+    "weight_mass_all_2025": 619.988,
+    "weight_mass_all_2026": 684.155,
+    "weight_mass_scored_2025": 619.988,
+    "weight_mass_scored_2026": 684.155,
+    "rows_censored_to_resolved_at_2026": 73,
+    "censored_rows_2025": 385,
+    "censored_rows_2026": 312,
+    "delta_weight_mass_all": 64.167,
+    "delta_weight_mass_scored": 64.167
+   },
+   "pit": {
+    "rows": 904,
+    "scored_rows": 904,
+    "weight_mass_all_2025": 709.958,
+    "weight_mass_all_2026": 785.509,
+    "weight_mass_scored_2025": 709.958,
+    "weight_mass_scored_2026": 785.509,
+    "rows_censored_to_resolved_at_2026": 107,
+    "censored_rows_2025": 453,
+    "censored_rows_2026": 346,
+    "delta_weight_mass_all": 75.551,
+    "delta_weight_mass_scored": 75.551
+   }
+  }
+ },
+ "folds": [
+  {
+   "fold": 2014,
+   "hit": {
+    "train_rows": 0,
+    "train_mass_2025": 0,
+    "train_mass_2026": 0,
+    "test_rows": 50,
+    "test_mass_2025": 50.0,
+    "test_mass_2026": 50.0
+   },
+   "pit": {
+    "train_rows": 0,
+    "train_mass_2025": 0,
+    "train_mass_2026": 0,
+    "test_rows": 53,
+    "test_mass_2025": 53.0,
+    "test_mass_2026": 53.0
+   }
+  },
+  {
+   "fold": 2015,
+   "hit": {
+    "train_rows": 50,
+    "train_mass_2025": 50.0,
+    "train_mass_2026": 50.0,
+    "test_rows": 63,
+    "test_mass_2025": 63.0,
+    "test_mass_2026": 63.0
+   },
+   "pit": {
+    "train_rows": 53,
+    "train_mass_2025": 53.0,
+    "train_mass_2026": 53.0,
+    "test_rows": 72,
+    "test_mass_2025": 72.0,
+    "test_mass_2026": 72.0
+   }
+  },
+  {
+   "fold": 2016,
+   "hit": {
+    "train_rows": 113,
+    "train_mass_2025": 113.0,
+    "train_mass_2026": 113.0,
+    "test_rows": 43,
+    "test_mass_2025": 43.0,
+    "test_mass_2026": 43.0
+   },
+   "pit": {
+    "train_rows": 125,
+    "train_mass_2025": 125.0,
+    "train_mass_2026": 125.0,
+    "test_rows": 51,
+    "test_mass_2025": 51.0,
+    "test_mass_2026": 51.0
+   }
+  },
+  {
+   "fold": 2017,
+   "hit": {
+    "train_rows": 156,
+    "train_mass_2025": 156.0,
+    "train_mass_2026": 156.0,
+    "test_rows": 52,
+    "test_mass_2025": 52.0,
+    "test_mass_2026": 52.0
+   },
+   "pit": {
+    "train_rows": 176,
+    "train_mass_2025": 176.0,
+    "train_mass_2026": 176.0,
+    "test_rows": 32,
+    "test_mass_2025": 32.0,
+    "test_mass_2026": 32.0
+   }
+  },
+  {
+   "fold": 2018,
+   "hit": {
+    "train_rows": 208,
+    "train_mass_2025": 208.0,
+    "train_mass_2026": 208.0,
+    "test_rows": 51,
+    "test_mass_2025": 51.0,
+    "test_mass_2026": 51.0
+   },
+   "pit": {
+    "train_rows": 208,
+    "train_mass_2025": 208.0,
+    "train_mass_2026": 208.0,
+    "test_rows": 56,
+    "test_mass_2025": 56.0,
+    "test_mass_2026": 56.0
+   }
+  },
+  {
+   "fold": 2019,
+   "hit": {
+    "train_rows": 259,
+    "train_mass_2025": 259.0,
+    "train_mass_2026": 259.0,
+    "test_rows": 75,
+    "test_mass_2025": 75.0,
+    "test_mass_2026": 75.0
+   },
+   "pit": {
+    "train_rows": 264,
+    "train_mass_2025": 264.0,
+    "train_mass_2026": 264.0,
+    "test_rows": 78,
+    "test_mass_2025": 78.0,
+    "test_mass_2026": 78.0
+   }
+  },
+  {
+   "fold": 2020,
+   "hit": {
+    "train_rows": 334,
+    "train_mass_2025": 334.0,
+    "train_mass_2026": 334.0,
+    "test_rows": 60,
+    "test_mass_2025": 60.0,
+    "test_mass_2026": 60.0
+   },
+   "pit": {
+    "train_rows": 342,
+    "train_mass_2025": 342.0,
+    "train_mass_2026": 342.0,
+    "test_rows": 107,
+    "test_mass_2025": 107.0,
+    "test_mass_2026": 107.0
+   }
+  },
+  {
+   "fold": 2021,
+   "hit": {
+    "train_rows": 394,
+    "train_mass_2025": 394.0,
+    "train_mass_2026": 394.0,
+    "test_rows": 75,
+    "test_mass_2025": 62.809,
+    "test_mass_2026": 75.0
+   },
+   "pit": {
+    "train_rows": 449,
+    "train_mass_2025": 449.0,
+    "train_mass_2026": 449.0,
+    "test_rows": 108,
+    "test_mass_2025": 90.131,
+    "test_mass_2026": 108.0
+   }
+  },
+  {
+   "fold": 2022,
+   "hit": {
+    "train_rows": 469,
+    "train_mass_2025": 456.809,
+    "train_mass_2026": 469.0,
+    "test_rows": 128,
+    "test_mass_2025": 85.376,
+    "test_mass_2026": 106.624
+   },
+   "pit": {
+    "train_rows": 557,
+    "train_mass_2025": 539.131,
+    "train_mass_2026": 557.0,
+    "test_rows": 100,
+    "test_mass_2025": 66.7,
+    "test_mass_2026": 83.3
+   }
+  },
+  {
+   "fold": 2023,
+   "hit": {
+    "train_rows": 597,
+    "train_mass_2025": 542.185,
+    "train_mass_2026": 575.624,
+    "test_rows": 94,
+    "test_mass_2025": 47.5,
+    "test_mass_2026": 63.031
+   },
+   "pit": {
+    "train_rows": 657,
+    "train_mass_2025": 605.831,
+    "train_mass_2026": 640.3,
+    "test_rows": 128,
+    "test_mass_2025": 64.5,
+    "test_mass_2026": 85.709
+   }
+  },
+  {
+   "fold": 2024,
+   "hit": {
+    "train_rows": 691,
+    "train_mass_2025": 589.685,
+    "train_mass_2026": 638.655,
+    "test_rows": 91,
+    "test_mass_2025": 30.303,
+    "test_mass_2026": 45.5
+   },
+   "pit": {
+    "train_rows": 785,
+    "train_mass_2025": 670.331,
+    "train_mass_2026": 726.009,
+    "test_rows": 119,
+    "test_mass_2025": 39.627,
+    "test_mass_2026": 59.5
+   }
+  }
+ ],
+ "entering_cohort": {
+  "debut_cohort": 2025,
+  "reserved_vm": true,
+  "admitted_by_DEBUT_YEARS_at_2026": true,
+  "builder_terms_at_2026": {
+   "observed_seasons": 2,
+   "observed_fraction": 0.333,
+   "weight": 0.333,
+   "censored": true
+  },
+  "debuts": 243,
+  "in_window_consensus_read": 176,
+  "with_career_war_row": 219,
+  "pins": [],
+  "note": "enters the matrix at the epoch's step F at weight 0.333; reserved_vm_pins keep it out of SCORED_YEARS and CANDIDATE_YEARS until the R-VM look record exists, so it is not in W_after"
+ },
+ "margin_arithmetic": {
+  "source": "data/xfv_mde_floor.json (tools/efv_mde_lab.py mde 2000: paired bootstrap over the whole pool, train and test resampled together, refit every draw, seed 20260807; one-sided 95% = 1.645 x sd)",
+  "formula": "mde95_after = mde95_onesided_before x sqrt(W_before / W_after), W the pair-weight mass of the scored pool (row weight = observed_seasons / 6)",
+  "rule": "the sqrt rescaling PROGRAM.md s2.5 and the census floor curve already use; it is arithmetic on a published sd, not a measured floor, and the measured floor on the fWAR label is the epoch's step G",
+  "sides": {
+   "hit": {
+    "n_ref_rows": 755,
+    "matrix_rows_ref": 845,
+    "sd_ref": 0.02712,
+    "mde95_onesided_ref": 0.0446,
+    "scored_rows_today": 782,
+    "W_before": 619.988,
+    "W_after": 684.155,
+    "W_ratio": 1.1035,
+    "mde95_onesided_after": 0.0425,
+    "rows_version": "the scored row count is unchanged by the clock, so a row-count floor does not move; only the mass moves"
+   },
+   "pit": {
+    "n_ref_rows": 892,
+    "matrix_rows_ref": 983,
+    "sd_ref": 0.02585,
+    "mde95_onesided_ref": 0.0425,
+    "scored_rows_today": 904,
+    "W_before": 709.958,
+    "W_after": 785.509,
+    "W_ratio": 1.1064,
+    "mde95_onesided_after": 0.0404,
+    "rows_version": "the scored row count is unchanged by the clock, so a row-count floor does not move; only the mass moves"
+   }
+  }
+ },
+ "label_views": {
+  "by": [
+   "label_view",
+   "side"
+  ],
+  "resolved_through": {
+   "before": 2025,
+   "after": 2026
+  },
+  "window_convention": "debut_year .. debut_year + k - 1 (SERVICE_ALIGNED_WINDOW off)",
+  "outcome_cohorts_read": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019
+  ],
+  "max_season_read": 2024,
+  "coverage": {
+   "ewar_v2": {
+    "hit": {
+     "rows": 334,
+     "with_series": 334
+    },
+    "pit": {
+     "rows": 342,
+     "with_series": 342
+    }
+   },
+   "fwar_frozen": {
+    "hit": {
+     "rows": 334,
+     "with_mlbam_id": 330,
+     "with_a_line_in_window": 328,
+     "note": "joined by MLBAM id (matrix row, debuts.json, override asset); a row with an id and no line in its window is a zero label, like the builder"
+    },
+    "pit": {
+     "rows": 342,
+     "with_mlbam_id": 337,
+     "with_a_line_in_window": 331,
+     "note": "joined by MLBAM id (matrix row, debuts.json, override asset); a row with an id and no line in its window is a zero label, like the builder"
+    }
+   }
+  },
+  "ewar_reconciliation_to_matrix_label": {
+   "hit": {
+    "six_season_sum_equals_target_resolved": 334,
+    "of": 334
+   },
+   "pit": {
+    "six_season_sum_equals_target_resolved": 342,
+    "of": 342
+   }
+  },
+  "prior_measurement": {
+   "path": "_finalpass_2026-09-24/efv2/E2_data_labels/probe_labels.json (bundle, outside the repo)",
+   "key": "debuted_frame_firstk_vs_L6",
+   "cohorts": [
+    2011,
+    2020
+   ],
+   "label": "ewar_v2",
+   "rows": {
+    "hit.first2": {
+     "n": 491,
+     "rho_vs_L6": 0.739
+    },
+    "hit.first3": {
+     "n": 491,
+     "rho_vs_L6": 0.8711
+    },
+    "pit.first2": {
+     "n": 543,
+     "rho_vs_L6": 0.7051
+    },
+    "pit.first3": {
+     "n": 543,
+     "rho_vs_L6": 0.876
+    }
+   }
+  },
+  "views": {
+   "first3": {
+    "definition": "summed WAR over the first 3 MLB seasons from the debut year",
+    "k": 3,
+    "resolves_when": "debut_year + 2 <= RESOLVED_THROUGH",
+    "resolved_cohorts": {
+     "2025": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "2026": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+     ]
+    },
+    "l6_resolved_cohorts": {
+     "2025": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "2026": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+     ]
+    },
+    "rows_resolved_without_projection": {
+     "2025": {
+      "hit": 691,
+      "pit": 785
+     },
+     "2026": {
+      "hit": 782,
+      "pit": 904
+     }
+    },
+    "rows_beyond_l6": {
+     "2025": {
+      "cohorts": [
+       2021,
+       2022,
+       2023
+      ],
+      "hit": 297,
+      "pit": 336
+     },
+     "2026": {
+      "cohorts": [
+       2022,
+       2023,
+       2024
+      ],
+      "hit": 313,
+      "pit": 347
+     }
+    },
+    "debuts_json": {
+     "2025": {
+      "cohorts_beyond_l6": [
+       2021,
+       2022,
+       2023
+      ],
+      "debuts": 711,
+      "with_career_war_row": 659,
+      "source": "data/efv_label_pool_census.json debut_cohorts (presence only)"
+     },
+     "2026": {
+      "cohorts_beyond_l6": [
+       2022,
+       2023,
+       2024
+      ],
+      "debuts": 743,
+      "with_career_war_row": 682,
+      "source": "data/efv_label_pool_census.json debut_cohorts (presence only)"
+     }
+    },
+    "share_of_six_season_mass": {
+     "censoring_gate_profile": {
+      "first_k_share": 0.403,
+      "profile": [
+       0.08,
+       0.138,
+       0.185,
+       0.215,
+       0.202,
+       0.179
+      ],
+      "path": "docs/efv-2026-08-07b/LABEL_CENSORING_GATE.md",
+      "key": "season_share_profile_diagnostic (988 fully resolved debuts, pooled)"
+     },
+     "development_rows": {
+      "ewar_v2.hit": 0.424,
+      "ewar_v2.pit": 0.429,
+      "fwar_frozen.hit": 0.421,
+      "fwar_frozen.pit": 0.439
+     }
+    },
+    "projection_bias_removed": {
+     "at_n_obs": 3,
+     "path": "docs/efv-2026-08-07b/LABEL_CENSORING_GATE.md",
+     "section": "6.2 by_n_obs_and_side",
+     "hit": {
+      "mean_bias": -0.964,
+      "ci95": [
+       -1.267,
+       -0.658
+      ],
+      "n": 460
+     },
+     "pit": {
+      "mean_bias": -0.45,
+      "ci95": [
+       -0.706,
+       -0.208
+      ],
+      "n": 528
+     }
+    },
+    "correlation_with_l6": {
+     "ewar_v2": {
+      "hit": {
+       "n": 334,
+       "B": 2000,
+       "seed": 20260906,
+       "cluster": "row (one row per player per side)",
+       "spearman": 0.8756,
+       "spearman_ci95": [
+        0.8361,
+        0.9099
+       ],
+       "pearson": 0.8888,
+       "pearson_ci95": [
+        0.8548,
+        0.9174
+       ],
+       "label_to_label": true,
+       "cohorts": [
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019
+       ]
+      },
+      "pit": {
+       "n": 342,
+       "B": 2000,
+       "seed": 20260906,
+       "cluster": "row (one row per player per side)",
+       "spearman": 0.8563,
+       "spearman_ci95": [
+        0.8062,
+        0.8947
+       ],
+       "pearson": 0.8499,
+       "pearson_ci95": [
+        0.7992,
+        0.8951
+       ],
+       "label_to_label": true,
+       "cohorts": [
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019
+       ]
+      }
+     },
+     "fwar_frozen": {
+      "hit": {
+       "n": 330,
+       "B": 2000,
+       "seed": 20260906,
+       "cluster": "row (one row per player per side)",
+       "spearman": 0.8882,
+       "spearman_ci95": [
+        0.8488,
+        0.9172
+       ],
+       "pearson": 0.8853,
+       "pearson_ci95": [
+        0.8505,
+        0.9147
+       ],
+       "label_to_label": true,
+       "cohorts": [
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019
+       ]
+      },
+      "pit": {
+       "n": 337,
+       "B": 2000,
+       "seed": 20260906,
+       "cluster": "row (one row per player per side)",
+       "spearman": 0.8695,
+       "spearman_ci95": [
+        0.8281,
+        0.9045
+       ],
+       "pearson": 0.8648,
+       "pearson_ci95": [
+        0.8179,
+        0.9047
+       ],
+       "label_to_label": true,
+       "cohorts": [
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019
+       ]
+      }
+     }
+    }
+   },
+   "first4": {
+    "definition": "summed WAR over the first 4 MLB seasons from the debut year",
+    "k": 4,
+    "resolves_when": "debut_year + 3 <= RESOLVED_THROUGH",
+    "resolved_cohorts": {
+     "2025": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+     ],
+     "2026": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ]
+    },
+    "l6_resolved_cohorts": {
+     "2025": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+     ],
+     "2026": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+     ]
+    },
+    "rows_resolved_without_projection": {
+     "2025": {
+      "hit": 597,
+      "pit": 657
+     },
+     "2026": {
+      "hit": 691,
+      "pit": 785
+     }
+    },
+    "rows_beyond_l6": {
+     "2025": {
+      "cohorts": [
+       2021,
+       2022
+      ],
+      "hit": 203,
+      "pit": 208
+     },
+     "2026": {
+      "cohorts": [
+       2022,
+       2023
+      ],
+      "hit": 222,
+      "pit": 228
+     }
+    },
+    "debuts_json": {
+     "2025": {
+      "cohorts_beyond_l6": [
+       2021,
+       2022
+      ],
+      "debuts": 468,
+      "with_career_war_row": 431,
+      "source": "data/efv_label_pool_census.json debut_cohorts (presence only)"
+     },
+     "2026": {
+      "cohorts_beyond_l6": [
+       2022,
+       2023
+      ],
+      "debuts": 503,
+      "with_career_war_row": 465,
+      "source": "data/efv_label_pool_census.json debut_cohorts (presence only)"
+     }
+    },
+    "share_of_six_season_mass": {
+     "censoring_gate_profile": {
+      "first_k_share": 0.618,
+      "profile": [
+       0.08,
+       0.138,
+       0.185,
+       0.215,
+       0.202,
+       0.179
+      ],
+      "path": "docs/efv-2026-08-07b/LABEL_CENSORING_GATE.md",
+      "key": "season_share_profile_diagnostic (988 fully resolved debuts, pooled)"
+     },
+     "development_rows": {
+      "ewar_v2.hit": 0.644,
+      "ewar_v2.pit": 0.641,
+      "fwar_frozen.hit": 0.64,
+      "fwar_frozen.pit": 0.638
+     }
+    },
+    "projection_bias_removed": {
+     "at_n_obs": 4,
+     "path": "docs/efv-2026-08-07b/LABEL_CENSORING_GATE.md",
+     "section": "6.2 by_n_obs_and_side",
+     "hit": {
+      "mean_bias": -0.34,
+      "ci95": [
+       -0.541,
+       -0.135
+      ],
+      "n": 460
+     },
+     "pit": {
+      "mean_bias": -0.184,
+      "ci95": [
+       -0.347,
+       -0.028
+      ],
+      "n": 528
+     }
+    },
+    "correlation_with_l6": {
+     "ewar_v2": {
+      "hit": {
+       "n": 334,
+       "B": 2000,
+       "seed": 20260906,
+       "cluster": "row (one row per player per side)",
+       "spearman": 0.9508,
+       "spearman_ci95": [
+        0.9273,
+        0.9676
+       ],
+       "pearson": 0.9543,
+       "pearson_ci95": [
+        0.9392,
+        0.9659
+       ],
+       "label_to_label": true,
+       "cohorts": [
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019
+       ]
+      },
+      "pit": {
+       "n": 342,
+       "B": 2000,
+       "seed": 20260906,
+       "cluster": "row (one row per player per side)",
+       "spearman": 0.9256,
+       "spearman_ci95": [
+        0.8948,
+        0.9499
+       ],
+       "pearson": 0.9412,
+       "pearson_ci95": [
+        0.9219,
+        0.9575
+       ],
+       "label_to_label": true,
+       "cohorts": [
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019
+       ]
+      }
+     },
+     "fwar_frozen": {
+      "hit": {
+       "n": 330,
+       "B": 2000,
+       "seed": 20260906,
+       "cluster": "row (one row per player per side)",
+       "spearman": 0.9582,
+       "spearman_ci95": [
+        0.9387,
+        0.9713
+       ],
+       "pearson": 0.954,
+       "pearson_ci95": [
+        0.9398,
+        0.9648
+       ],
+       "label_to_label": true,
+       "cohorts": [
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019
+       ]
+      },
+      "pit": {
+       "n": 337,
+       "B": 2000,
+       "seed": 20260906,
+       "cluster": "row (one row per player per side)",
+       "spearman": 0.933,
+       "spearman_ci95": [
+        0.9022,
+        0.9565
+       ],
+       "pearson": 0.944,
+       "pearson_ci95": [
+        0.9275,
+        0.9585
+       ],
+       "label_to_label": true,
+       "cohorts": [
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019
+       ]
+      }
+     }
+    }
+   }
+  }
+ },
+ "admission_rule": {
+  "standing": "SECONDARY label views, reported beside the primary, never a frame change",
+  "primary": {
+   "vm": "L6, the six-season label (efv_dataset._label_6yr), censored tail projected at the observed rate, weight observed_seasons / 6",
+   "lv": "W3 (efv_labels.labels_for), WAR over the first three seasons, 0 if no debut in V..V+3"
+  },
+  "rules": [
+   "A secondary view is reported beside the primary in the same table, with its own n, its own floor from the same resampler, and the word SECONDARY; it never replaces the primary before a reserved read, and no ship decision, weight, order or claim reads it.",
+   "A view enters the screening lab (EFV3_B1) as a label family 'label_view' with members first3 and first4: the candidate arm is the base assembly scored against the view instead of the primary, on the same development folds, with the same statistic, the same noise-column floors and its own Holm family; it admits nothing to the assembly.",
+   "A view enters the matrix (EFV3_D1 / D2) as a LABEL-VIEW axis beside the outcome thresholds (1, 2, 3, 4 career WAR): every cell declares which label it was scored against, and a cell on a secondary view carries the word SECONDARY and its target-validity note.",
+   "Target validity is stated plainly wherever a view is printed: the industry FV frame is six-year value (the five FanGraphs FV-to-WAR tables, the Clemens kernel and the served grade are all six-season quantities), so a first-k view measures a different quantity, and its gain is rows resolved without projection, not accuracy.",
+   "On a reserved frame a view is read only by the look that owns the frame, in the same run, as a secondary row; a view never opens a reserved frame on its own.",
+   "The 2026 season is a label season only after the epoch's step D+U moves RESOLVED_THROUGH; before that no view reads a 2025 or 2026 line (this tool reads through 2024)."
+  ]
+ },
+ "calibration_record": [
+  {
+   "surface": "the training label (efv_dataset._label_6yr; efv_model fits target_censored)",
+   "file": "efv_dataset.py",
+   "clock": "RESOLVED_THROUGH = 2025 (DEBUT_YEARS derived from it)",
+   "reads_2026_after_epoch": "yes, at step D+U when the constant moves and step F rebuilds both matrices",
+   "task": "EPOCH_RUN (steps D+U, F)"
+  },
+  {
+   "surface": "W3, W2, R3 and the never-resolution labels on the list-vintage frames (efv_labels.labels_for; the V2 P5 re-derivation and DS-16 re-run read them)",
+   "file": "efv_labels.py",
+   "clock": "resolved_through() returns efv_dataset.RESOLVED_THROUGH",
+   "reads_2026_after_epoch": "yes, with efv_dataset; P5 re-derives data/efv_v2_assembly.json once on the frozen label",
+   "task": "EPOCH_RUN then EFV_V2_GATE P5"
+  },
+  {
+   "surface": "the FV-to-WAR anchors (value_framework fv_to_6yr_avg_war; empirical_anchors)",
+   "file": "value_framework.py, empirical_anchors.py",
+   "clock": "no RESOLVED_THROUGH: the cohort is snapshot years reference_year - 9 to - 6 (2017 to 2020 in 2026) and realized is the first six stored MLB seasons as the career_war table holds them",
+   "reads_2026_after_epoch": "yes, once step C rebases career_war to fwar and step J runs value_framework.py --fit (then re-applies the sub-45 knots); note the window is calendar-lagged, not clock-gated, so a 2020 listing's late debut is summed short",
+   "task": "EPOCH_RUN (steps C, J)"
+  },
+  {
+   "surface": "the pooled FV -> outcome curve, THE eFV grade map (fv_outcome_pooled_grade)",
+   "file": "tools/fv_outcome_curve_pooled.py",
+   "clock": "no own clock: matrix rows with censored == False",
+   "reads_2026_after_epoch": "yes, through the rebuilt matrices; the 2021 cohort joins the uncensored pool",
+   "task": "EPOCH_RUN (step I after F)"
+  },
+  {
+   "surface": "the calibration knots (backtest.fit_calibration_knots; CAL_KNOTS_REFIT_17M)",
+   "file": "backtest.py",
+   "clock": "no RESOLVED_THROUGH: realized seasons priced from the PlayerRecord's realized series as stored",
+   "reads_2026_after_epoch": "yes, through the career_war table after step C; the refit is its own queued task and must run after step C to read 2026",
+   "task": "CAL_KNOTS_REFIT_17M (after EPOCH_RUN step C)"
+  },
+  {
+   "surface": "the star label and star_odds_model",
+   "file": "tools/build_star_odds_artifacts.py",
+   "clock": "_RESOLVED_THROUGH = 2025, moved with efv_dataset's by decision O2",
+   "reads_2026_after_epoch": "yes, at step N",
+   "task": "EPOCH_RUN (step N)"
+  },
+  {
+   "surface": "the consensus accuracy backtest and the Source Comparison ledger stamp",
+   "file": "source_backtest.py, efv_progress.py",
+   "clock": "stamps efv_dataset.RESOLVED_THROUGH into the receipt and model_version",
+   "reads_2026_after_epoch": "yes, at step Q and the ledger refresh",
+   "task": "EPOCH_RUN (step Q)"
+  },
+  {
+   "surface": "the Clemens anchors (clemens_2026 valuation set: the published FV-to-outcome and $/WAR tables)",
+   "file": "value_framework.py",
+   "clock": "none: a published external table, never re-measured on our label",
+   "reads_2026_after_epoch": "not applicable; coherence with the label is by construction once the label is published fWAR (gate part 1)",
+   "task": "none"
+  }
+ ],
+ "progress_ledger": {
+  "appended": false,
+  "reason": "data/efv_progress.json rows are frame rows (a row is added when a frame's measured content changes) and the frame registry has no label-pool frame; no row type for a label-pool note exists, so none is appended"
+ },
+ "epoch": "the eFV label is in an epoch (docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md): label.resolved_through stamps this read; a run after step D+U is a new read, never an edit"
+}
