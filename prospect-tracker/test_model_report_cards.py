@@ -194,10 +194,12 @@ def test_a_validated_derived_card_shows_a_resolved_win():
     floor the verdict needs an owner look, and this is where that surfaces.
     An artifact that states no resolvability for any leg (eta_eval.json and
     draft_slot_curve.json carry no interval) cannot resolve one, so such a card
-    needs a strict win on the plain comparison, as a typed card did."""
+    needs a strict win on the plain comparison, as a typed card did. A
+    `contest: false` card is a descriptive contrast, not the registered
+    benchmark, so it is no proof either way and is not held to this."""
     problems = []
     for m in _derived_cards():
-        if m["verdict"] != "validated":
+        if m["verdict"] != "validated" or m["card"].get("contest") is False:
             continue
         declares = any("resolvable" in hs
                        for hs in m["card"]["derived_from"]["headline"])
@@ -398,6 +400,244 @@ def test_resolvable_can_be_read_from_a_gap_lower_bound():
     spec["headline"][0]["champion"] = {"above_zero": "ci.lo95"}
     with pytest.raises(ValueError):
         mr.derive_card({"card": dict(card, derived_from=spec)}, art)
+
+
+# --------------------------------------------------------------------------- #
+# The edge fields (LIBRARY_10, 2026-10-03)
+# --------------------------------------------------------------------------- #
+# The Model Updates edge column prints an interval or a resolvable margin for
+# every scored leg, and the card is the single source of a leg's numbers. So a
+# card leg names the path of its improvement interval (gap_ci), its one-sided
+# paired t and its detection floor (mde95) the same way it names its champion,
+# carries a short literal `stat`, and a descriptive contrast says so with
+# `contest: false`. These pin that every such number is read, never typed, and
+# that the star still follows the evidence.
+NEW_CARDS = {
+    "betting_game_prob": [
+        ("vintage.brier", "vintage.brier_home_base", "vintage.n",
+         {"t": "vintage.skill_vs_home_base.t"}),
+        ("benchmarks.tiers.market_open_devig.same_games.model",
+         "benchmarks.tiers.market_open_devig.brier",
+         "benchmarks.tiers.market_open_devig.n", {}),
+    ],
+    "arb_award": [
+        ("results.arb1.mdape_champion", "results.arb1.mdape_bar", "results.arb1.n_paired",
+         {"mde95": "results.arb1.mde95_onesided"}),
+        ("results.arb2plus.mdape_champion", "results.arb2plus.mdape_bar",
+         "results.arb2plus.n_paired", {"mde95": "results.arb2plus.mde95_onesided"}),
+        ("a6_swartz.ours_mdape", "a6_swartz.swartz_mdape", "a6_swartz.n", {}),
+    ],
+    "ewar": [
+        ("gate_1_team_wins.ewar.r", "gate_1_team_wins.bwar.r",
+         "gate_1_team_wins.n_team_seasons", {}),
+        ("gate_2_pitcher_persistence.self_r_ewar_fip",
+         "gate_2_pitcher_persistence.self_r_bwar_ra",
+         "gate_2_pitcher_persistence.n_pairs", {}),
+    ],
+    "team_win_projections": [
+        ("retro_backtest.ship_decision.holdout_mae.served_recentered",
+         "retro_backtest.ship_decision.holdout_mae.baseline_prior_wins", None, {}),
+    ],
+}
+
+
+def _artifact(m):
+    return json.loads((HERE / m["eval_artifact"]).read_text(encoding="utf-8"))
+
+
+def test_every_edge_path_resolves_to_a_number_in_the_rows_own_artifact():
+    problems = []
+    for m in _derived_cards():
+        doc = _artifact(m)
+        for hs in m["card"]["derived_from"]["headline"]:
+            paths = [hs[k] for k in ("t", "mde95") if k in hs]
+            if "gap_ci" in hs:
+                paths += [hs["gap_ci"]["lo"], hs["gap_ci"]["hi"]]
+            for p in paths:
+                v = mr._dig_path(doc, p)
+                if not mr._typed(v, "number"):
+                    problems.append(f"{m['model_id']}: {p} is {v!r}, not a number")
+            if "gap_ci" in hs:
+                lo = mr._dig_path(doc, hs["gap_ci"]["lo"])
+                hi = mr._dig_path(doc, hs["gap_ci"]["hi"])
+                if lo > hi:
+                    problems.append(f"{m['model_id']}: gap lo {lo} above hi {hi}")
+    assert not problems, "\n".join(problems)
+
+
+def test_every_card_leg_carries_a_short_stat():
+    """The edge column prints `Result (<stat>): ...`; a leg with no stat would
+    fall back to the registry `metric` prose, four of which carry a banned
+    word."""
+    missing = [f"{m['model_id']} {h['label']!r}" for m in _cards()
+               for h in m["card"]["headline"]
+               if not (isinstance(h.get("stat"), str) and h["stat"].strip()
+                       and len(h["stat"]) <= mr.CARD_STAT_MAX)]
+    assert not missing, "card legs with no short stat: " + "; ".join(missing)
+
+
+def test_the_interval_paths_of_the_plan_are_wired():
+    rows = {m["model_id"]: m for m in _cards()}
+    want = {
+        "hem_plus": ["gap_ci_vs_avg.lo95", "gap_ci_vs_raw_woba.lo95", "gap_ci_vs_ops.lo95"],
+        "hem_plus_3yr": ["gap_ci_3yr_minus_1yr.lo95"],
+        "rem_plus": ["gap_ci_vs_RA9_next.vs_era.lo95", "gap_ci_vs_RA9_next.vs_raw_fip.lo95"],
+        "sem_plus": ["gap_ci_vs_era.lo95", "gap_ci_vs_raw_fip.lo95"],
+        "dem_plus": ["gap_ci_vs_fld_pct.lo95", "gap_ci_vs_raw_rate.lo95"],
+        "xhem_plus": ["arms.A1_xhem_plus.ladder.D4.v1.gap_ci.lo95"],
+        "fwdhem_plus": ["arms.A2_fwdhem_plus.ladder.D4.v1.gap_ci.lo95"],
+        "eta_fg_blend": ["fg_blend_gate_2026_09_25.clauses.B.boot_vs_CH40.ci_dMAE.0",
+                         "fg_blend_gate_2026_09_25.clauses.B.boot_vs_CH40.ci_dW1.0"],
+        "spotlights_movement": [f"v2.by_flag_type.{f}.horizons.h30.gap_lo95"
+                                for f in ("riser", "rebound", "faller")],
+    }
+    for mid, los in want.items():
+        got = [hs["gap_ci"]["lo"] for hs in rows[mid]["card"]["derived_from"]["headline"]]
+        assert got == los, f"{mid}: gap_ci lo paths {got}"
+    for mid, legs in (("consensus_fv", ["auc"]), ("source_track_record", ["spearman", "auc"])):
+        got = [hs["mde95"] for hs in rows[mid]["card"]["derived_from"]["headline"]]
+        assert got == [f"accuracy.consensus_vs_inputs.{lg}.mde95" for lg in legs], mid
+    assert [h["stat"] for h in rows["spotlights_movement"]["card"]["headline"]] == [
+        "riser hit rate", "rebound hit rate", "faller hit rate"]
+
+
+def test_a_leg_whose_interval_covers_zero_carries_no_star():
+    ctx = _card_js()
+    checked = 0
+    for m in _cards():
+        for h in m["card"]["headline"]:
+            gap = h.get("gap_ci")
+            if gap is None:
+                continue
+            assert gap["lo"] <= gap["hi"], f"{m['model_id']}: {gap}"
+            if gap["lo"] <= 0:
+                checked += 1
+                assert h.get("resolvable") is False, (m["model_id"], h["label"])
+                assert _render(ctx, {"headline": [h]}).count(STAR) == 0, (
+                    f"{m['model_id']} {h['label']!r}: a star on an interval that "
+                    "reaches zero")
+    assert checked >= 6, "the covered-interval legs (HEM+ x2, DEM+, fwdHEM+, spotlights) went missing"
+
+
+def test_a_covered_interval_demotes_even_without_an_artifact_flag():
+    card = {"headline": [{"label": "x", "champion": 0.42, "baseline": 0.40,
+                          "better": "higher"}],
+            "derived_from": {"headline": [{"champion": "m", "baseline": "b",
+                                           "gap_ci": {"lo": "g.0", "hi": "g.1"}}]}}
+    covered = mr.derive_card({"card": card}, {"m": 0.42, "b": 0.40, "g": [-0.01, 0.05]})
+    assert covered["headline"][0]["resolvable"] is False
+    assert covered["headline"][0]["gap_ci"] == {"lo": -0.01, "hi": 0.05}
+    cleared = mr.derive_card({"card": card}, {"m": 0.42, "b": 0.40, "g": [0.01, 0.05]})
+    assert "resolvable" not in cleared["headline"][0]
+    assert _render(_card_js(), {"headline": cleared["headline"]}).count(STAR) == 1
+
+
+def test_a_short_t_and_a_gap_inside_its_floor_demote_the_leg():
+    base = {"label": "x", "champion": 0.24, "baseline": 0.25, "better": "lower"}
+    for spec_extra, art_extra, want in (
+            ({"t": "t"}, {"t": 1.2}, False), ({"t": "t"}, {"t": 2.0}, None),
+            ({"mde95": "f"}, {"f": 0.02}, False), ({"mde95": "f"}, {"f": 0.005}, None)):
+        card = {"headline": [dict(base)], "derived_from": {"headline": [
+            dict({"champion": "m", "baseline": "b"}, **spec_extra)]}}
+        got = mr.derive_card({"card": card}, dict({"m": 0.24, "b": 0.25}, **art_extra))
+        assert got["headline"][0].get("resolvable") is want, (spec_extra, art_extra)
+
+
+def test_the_gap_orientation_flips_a_lower_is_better_model_minus_baseline_gap():
+    card = {"headline": [{"label": "x", "champion": 1.0, "baseline": 1.2,
+                          "better": "lower"}],
+            "derived_from": {"headline": [{"champion": "m", "baseline": "b",
+                                           "gap_ci": {"lo": "lo", "hi": "hi",
+                                                      "orientation": "model_minus_baseline"}}]}}
+    got = mr.derive_card({"card": card}, {"m": 1.0, "b": 1.2, "lo": -0.3, "hi": -0.1})
+    assert got["headline"][0]["gap_ci"] == {"lo": 0.1, "hi": 0.3}
+    assert "resolvable" not in got["headline"][0]
+    import pytest
+    bad = json.loads(json.dumps(card))
+    bad["derived_from"]["headline"][0]["gap_ci"]["orientation"] = "sideways"
+    with pytest.raises(ValueError):
+        mr.derive_card({"card": bad}, {"m": 1.0, "b": 1.2, "lo": -0.3, "hi": -0.1})
+    flipped = json.loads(json.dumps(card))
+    del flipped["derived_from"]["headline"][0]["gap_ci"]["orientation"]
+    with pytest.raises(ValueError):    # lo above hi once read as written
+        mr.derive_card({"card": flipped}, {"m": 1.0, "b": 1.2, "lo": 0.3, "hi": 0.1})
+
+
+def test_a_no_contest_card_prints_no_star():
+    ctx = _card_js()
+    rows = {m["model_id"]: m for m in _cards()}
+    assert rows["draft_slot_curve"]["card"].get("contest") is False
+    for m in _cards():
+        if m["card"].get("contest") is not False:
+            continue
+        for h in m["card"]["headline"]:
+            assert h.get("resolvable") is False
+            assert _render(ctx, {"headline": [h]}).count(STAR) == 0, m["model_id"]
+
+
+def test_the_four_new_cards_equal_their_artifact_exactly():
+    rows = {m["model_id"]: m for m in _cards()}
+    for mid, legs in NEW_CARDS.items():
+        m = rows.get(mid)
+        assert m, f"{mid} has no card"
+        spec = m["card"]["derived_from"]
+        doc = _artifact(m)
+        dig = spec.get("digits")
+        rd = (lambda v: round(v, dig)) if dig is not None else (lambda v: v)
+        heads = m["card"]["headline"]
+        assert len(heads) == len(legs), mid
+        for h, hs, (champ, base, n, extra) in zip(heads, spec["headline"], legs):
+            assert hs["champion"] == champ and hs["baseline"] == base, (mid, hs)
+            assert h["champion"] == rd(mr._dig_path(doc, champ)), (mid, champ)
+            assert h["baseline"] == rd(mr._dig_path(doc, base)), (mid, base)
+            if n is not None:
+                assert hs["n"] == n and h["n"] == mr._dig_path(doc, n), (mid, n)
+            for k, p in extra.items():
+                assert hs[k] == p and h[k] == rd(mr._dig_path(doc, p)), (mid, k)
+            assert isinstance(h.get("baseline_label"), str) and h["baseline_label"].strip()
+            assert isinstance(h.get("stat"), str) and h["stat"].strip()
+    # the card-level n is the betting window's own count
+    assert rows["betting_game_prob"]["card"]["n"] == _artifact(
+        rows["betting_game_prob"])["vintage"]["n"]
+
+
+def test_mlb_projections_prospects_card_shows_the_mae_leg_it_loses():
+    row = next(m for m in _cards() if m["model_id"] == "mlb_projections_prospects")
+    spec = row["card"]["derived_from"]["headline"]
+    assert {"champion": "baseline_pooled_oos.mae",
+            "baseline": "challenger_pooled_oos.mae"} in spec
+    leg = row["card"]["headline"][spec.index({"champion": "baseline_pooled_oos.mae",
+                                              "baseline": "challenger_pooled_oos.mae"})]
+    assert leg["better"] == "lower"
+    assert _render(_card_js(), {"headline": [leg]}).count(STAR) == int(_champ_beats(leg))
+
+
+def test_validate_rejects_a_typed_interval_and_an_unknown_field():
+    import copy
+    reg = mr.load()
+    row = next(m for m in reg["models"] if m["model_id"] == "hem_plus")
+
+    def problems_with(mutate):
+        r = copy.deepcopy(reg)
+        target = next(m for m in r["models"] if m["model_id"] == "hem_plus")
+        mutate(target["card"])
+        return [p for p in mr.validate(r) if p.startswith("hem_plus:")]
+
+    assert problems_with(lambda c: None) == []
+    # a typed interval number on a leg whose spec names no path
+    assert problems_with(lambda c: c["derived_from"]["headline"][0].pop("gap_ci"))
+    # a typed number in place of the interval's path
+    assert problems_with(lambda c: c["derived_from"]["headline"][0].update(
+        gap_ci={"lo": -0.01, "hi": 0.02}))
+    assert problems_with(lambda c: c["derived_from"]["headline"][0].update(t=2.1))
+    assert problems_with(lambda c: c["headline"][0].update(mde95=0.01))
+    # unknown fields, on the spec and on the stored leg
+    assert problems_with(lambda c: c["derived_from"]["headline"][0].update(lead="x"))
+    assert problems_with(lambda c: c["headline"][0].update(lead=True))
+    # stat length and contest type
+    assert problems_with(lambda c: c["headline"][0].update(stat="x" * (mr.CARD_STAT_MAX + 1)))
+    assert problems_with(lambda c: c.update(contest="no"))
+    assert row["card"]["headline"][0]["stat"] == "Spearman"
 
 
 # --------------------------------------------------------------------------- #

@@ -98,7 +98,67 @@
    "notes": "SHIPPED 2026-08-09. arb-1 PASSES at 3.29x its floor (MdAPE 0.2545 vs 0.4284) and clears its zero-information control by 2.08x, where the control permutes the production block within (season, arb-step) cells and keeps prior salary, step and season attached. That control still gains +0.084 on its own, so roughly 39% of the naive model-beats-baseline margin is STRUCTURE rather than player production. || arb-2-and-later is a NULL at 0.83x its floor and the board therefore serves the banded multiplier there, not the model. Permuting production makes the arb2+ model WORSE than the baseline, so signal exists; the margin is simply below the floor. Power limit, recorded as a null. || A6 NULL, and the most useful number here: on 261 settled seasons where MLB Trade Rumors published a Matt Swartz projection, Swartz reads MdAPE 0.0811 against our 0.2156 - 2.66x more accurate, consistently at every step (arb1 0.0851/0.2183, arb2 0.0822/0.2038, arb3 0.0758/0.2112). Not mysterious: Swartz prices the counting stats arbitration panels reward and this champion excludes them because nothing here projects them forward, which is what lets one model serve both a backtest and a forecast. Swartz is the better estimate of a KNOWN season and does not exist for an unplayed one. || SCOPE: only seasons whose arbitration step comes from published service time are scored (2022-2026, 1,043 rows, 585 players). Substitute sources measure 0.66 and 0.70 agreement against that ground truth and agree with each other 53%, so the planned 2011-2026 backtest is WITHDRAWN. || Projections past 2026 assume the 2022 CBA structure survives its 2026-12-01 expiry; that is not estimated from data and no published interval covers it.\n\n2026-08-19 GATE C VERIFICATION: the C1-C6 battery had NEVER been scored on the shipped 2026-08-09 pricing (ea9cb564); the debt is closed with a protocol frozen first (docs/ARBITRATION_GATE.md section 9b) and ALL SIX CLAUSES PASS (block gate_c_verification in this artifact; pins in test_arb_gatec_verify.py). C1: served per-player chain window MAE $2.215M vs clemens_2026 $4.927M vs fitted ladder $5.372M (264 paired players of a 269 pool, discounted nominal window total at 0.07); the gains clear their MDE95 floors 4.98x and 3.51x (player-clustered paired bootstrap, B=1000, seed 20260819, refit every draw). C2 PASS by pipeline independence (the surplus backtest producer predates the ship and never reads the arb paths; resolved MAE 10.4771 pre==post). C3 blast-radius ratio 0.450 vs bound 1.25. C4 Spearman(pre, post) 1.0000 on 981 common rows - a regression guard, not evidence. C5 0/190 ladder-step violations. C6 0/194 prospects arb-priced. Population drift recorded, not reconciled: 95 served arb_projection rows today vs ship-day 103 (nightly regen; ship-day roster recoverable from ea9cb564). RETAINED-SALARY SEMANTICS ADJUDICATED CORRECT (gate doc section 10, spotrac.py comment updated): aav_usd is the EMPLOYING-CLUB obligation AAV, which is what the surplus/trade consumers must price - Arenado serves off ARI's active table at $5.5M AAV with STL's retained $27.36M excluded; admitting retained rows would win the highest-AAV tiebreak and overcharge an acquirer $21.9M/yr. Two caveats recorded, neither a defect: obligation AAV is not income AAV, and Castellanos serves off a $304,492 SD dead-money row.\n\n2026-09-16 SCOPE EXTENSION (owner ask C, registered as the control_window_salary_path row and GATE C2, docs/ARBITRATION_GATE.md section 11): this model now supplies the salary leg of surplus for the WHOLE club-controlled population, not only the 108 no-contract rows the 2026-08-09 pricing reached. Nothing in the award model changed and no number in this row moves; what changed is who reads it, and the claim that makes is a COVERAGE claim, which is why it is gated and verdicted on a row of its own. Registered honestly: the owner ordered that path served in full on 2026-09-16 before any clause of GATE C2 had been scored, so C2' (realized 2026 awards against what the path projected) and C3' (this row's own Swartz contrast, a standing NULL) are now clauses that can move a SERVED surplus number, by the SALARY_PATH_MODE flag, rather than clauses that gate a candidate.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 54
+   "artifact_age_days": 54,
+   "card": {
+    "window": "forward-chained by arbitration class year; the MLB Trade Rumors leg on the rows it published",
+    "headline": [
+     {
+      "label": "Arbitration salary error, first trip (MdAPE)",
+      "stat": "MdAPE, arb-1",
+      "champion": 0.255,
+      "baseline": 0.428,
+      "better": "lower",
+      "baseline_label": "intercept plus one WAR term",
+      "n": 409,
+      "mde95": 0.053,
+      "resolvable": true
+     },
+     {
+      "label": "Arbitration salary error, later trips (MdAPE)",
+      "stat": "MdAPE, arb-2+",
+      "champion": 0.158,
+      "baseline": 0.181,
+      "better": "lower",
+      "baseline_label": "median step multiplier",
+      "n": 379,
+      "mde95": 0.028,
+      "resolvable": false
+     },
+     {
+      "label": "Arbitration salary error, identical rows (MdAPE)",
+      "stat": "MdAPE vs MLBTR",
+      "champion": 0.216,
+      "baseline": 0.081,
+      "better": "lower",
+      "baseline_label": "MLB Trade Rumors projection",
+      "n": 261
+     }
+    ],
+    "derived_from": {
+     "digits": 3,
+     "headline": [
+      {
+       "champion": "results.arb1.mdape_champion",
+       "baseline": "results.arb1.mdape_bar",
+       "n": "results.arb1.n_paired",
+       "mde95": "results.arb1.mde95_onesided",
+       "resolvable": "results.arb1.resolvable"
+      },
+      {
+       "champion": "results.arb2plus.mdape_champion",
+       "baseline": "results.arb2plus.mdape_bar",
+       "n": "results.arb2plus.n_paired",
+       "mde95": "results.arb2plus.mde95_onesided",
+       "resolvable": "results.arb2plus.resolvable"
+      },
+      {
+       "champion": "a6_swartz.ours_mdape",
+       "baseline": "a6_swartz.swartz_mdape",
+       "n": "a6_swartz.n"
+      }
+     ]
+    }
+   }
   },
   {
    "model_id": "arb_fa_link",
@@ -235,7 +295,49 @@
    "notes": "SCREEN, NOT A SIGNAL, AND IT NOW GRADES FOR THE FIRST TIME AND LOSES. VERDICT FLIPPED unvalidated -> provisional on 2026-08-10 along the FLIP PATH this row pre-registered ('once vintage-dated leaderboard snapshots exist, re-run backtest(), set eval_artifact to data/betting_model_eval.json and verdict to provisional'). Both conditions are met: as of 2026-08-16, 21 vintages exist, 507 games are gradable and 258 are graded on features dated strictly before each game. PROVISIONAL MEANS MEASURED AND SHORT, NOT WORKING. The honest vintage grade, 2026-07-06 to 2026-08-15, n=258 as of 2026-08-16: Brier 0.2505 against 0.24818 for the constant home-field baseline and 0.25 flat, paired skill delta -0.002313 at t -0.746, so it does NOT beat the baseline and the loss is still a NULL at this n rather than a resolved defeat. Worth saying plainly: the honest deficit GREW as the sample grew - n 221 to 258 moved the delta from -0.000907 to -0.002313 and the t from -0.248 to -0.746, the opposite direction from a null converging on zero. Accuracy 0.5078 against a 0.5426 home-win rate, log loss 0.69411 against 0.69315 flat, total MAE 3.531, all as of 2026-08-16. 600 graded games are required before min_edge may be fitted at all, so the sample is 43% of its own gate as of 2026-08-16. The artifact still carries validated:false, contaminated:true, gates_picks:false and min_edge:null, and the in-sample and forward-split blocks in it are CONTAMINATED by construction (season-to-date leaderboards contain the games being graded); only the `vintage` block is out of sample and it is the one quoted above. 11 of the eval games price on a NEUTRAL park because their vintage record predates the park column, and the live park index is deliberately NOT borrowed, which would leak the in-progress season. RUN DISPERSION, section 11a: the NB2 arm wins the runline on the away side (delta +0.014955, t 3.345) and loses it on the home side (-0.002909, t -0.679) at the shipped split; V1 of the pre-registration named no side and the first run scored the home side alone, which is why criterion 2 was amended to the both-sides sum. Under the amendment the gate passes at split quantiles 0.6 (t 3.076) and 0.7 (t 2.849) and fails at 0.8 (t 1.244), the other three criteria pass at all three, and the pre-declared all-three-splits rule therefore returns INDETERMINATE rather than a pass: a verdict that moves with the split point is a verdict about the split point. served=false, served_alpha=null, alpha 0.277 measured but not served. No pick is published: pick_of_the_day stays null. Runbook docs/diamond-betting.md. NEXT FLIP: validated only after the 600-game vintage sample clears the paired-Brier gate and a season of published CLV-graded picks exists. 2026-08-19 reading: n=269 graded (23 vintages, split 2026-07-30, window 2026-07-06 to 2026-08-19), Brier 0.24792 vs 0.24784 home constant and 0.25 flat, paired delta -0.000082 at t -0.028 - the honest deficit SHRANK vs the 08-16 note (-0.002313 at t -0.746 on n=258) and is again a plain null at this n. Log loss 0.68896 vs 0.69315 flat, accuracy 0.5428 vs a 0.5465 home-win rate, total MAE 3.438. Still 45% of the 600-game min_edge gate; no pick published.\n\n2026-08-19 DARK-CAPTURE BUILDERS (B3/B4): the four schema-3 candidate columns (xwoba_14, xwoba_30, lineup_strength, star_out) now build inside leaderboard_vintages.reduce_current on the nightly snapshot path, satisfying B4's builder-on-the-nightly-path precondition; every null carries its basis and feature_basis.n counts STORED fills (dry run 2026-08-19: all four columns 30/30 clubs). CLOCK: the 2026-08-19 vintage was written pre-builder with stated nulls and snapshot() is first-write-wins, so the rule-2 capture clock for these columns starts with the 2026-08-20 vintage; earliest admissible first B3/B4 look ~2026-09-17 under the strict 4-week floor. Fence: test_schema3_builders.py.\n\n2026-08-19 PROPS GRADER (the section-7c named unlock, docs/diamond-betting.md): betting_settle.grade_props/settle_props now grades the four registered props markets (pitcher_strikeouts, batter_total_bases, batter_hits, batter_home_runs) off cached StatsAPI box scores (.cache/game_feeds/), team-leg conventions one level down: push on an exact whole-number line, void only for no action in a Final game (stake returned), live/missing-feed/ambiguous-name rows stay OPEN rather than guessed. Both the shadow and calibration ledgers settle; the props leg runs FIRST in betting_settle.run, isolated in its own try, on the run_monthly path, so props settle automatically the moment rows exist. Inert-safety verified live: zero props rows exist yet, so nothing settled and no byte was written; each props tag's 100-settled-row min_edge clock starts only when its rows exist and settle, never pooled with the team tags. Fence: test_props_grader.py (15 standalone tests incl. market-registration sync against betting_ingest.PROPS_MARKETS and betting_calibration.PROPS_CAL_MARKETS, per-tag isolation, idempotent re-settlement, contained props-leg failure). 2026-09-05: SLOT MARKET POLICY any (owner decision, docs/diamond-betting.md 7d): every priced market is eligible for both slots and the record; runline/total carry the dispersion caveat and a ledger-closed market carries the evidence caveat on the row. Selection rule unchanged; the accuracy-and-ROI selection bake-off is the registered next lane. Same-day reading: vintage n=472, Brier 0.24398 vs home-base 0.2482, paired t 2.058, beats_baseline_95 true, so the out_of_sample_skill gate is OPEN and the older 'loses to always-home' reading is stale. POSTSEASON (owner decision 2026-10-01, INT-A1): the model's evidence is regular-season only. Every coefficient this row describes was fitted on, and every game it was graded on is, a regular-season game (StatsAPI gameType R, betting_model.completed_games); the verdict and every metric above describe regular-season games and nothing else. /betting/ prices postseason games (F, D, L, W) by owner decision of 2026-10-01, not on evidence: each postseason card, slot, paper row and public record row carries game_type and the label 'never graded on a postseason game', the record and the paper ledger report those rows as their own postseason sub-ledger beside the regular-season counts, and no gate, sweep or readiness count reads them (docs/diamond-betting.md 8a, task BET_POSTSEASON_PRICING).\n\n2026-10-01 reading: vintage n 777 graded, home-field constant 0.5431 (vintage.skill_vs_home_base.baseline, equal to vintage.home_win_rate), paired skill delta +0.005474 at t 3.371, beats_baseline_95 true. [Corrected 2026-10-02, audit RBE09: the baseline field typed 0.5475 on the vintage rows, a value from an earlier reading; it now names the artifact key it is read from.]",
    "stale": false,
    "artifact_age_days": 0,
-   "last_checked": "2026-10-02"
+   "last_checked": "2026-10-02",
+   "card": {
+    "n": 777,
+    "window": "graded vintage games of the season; the market leg on the games with a cached opening capture only",
+    "headline": [
+     {
+      "label": "Game win probability error (Brier)",
+      "stat": "Brier",
+      "champion": 0.2427,
+      "baseline": 0.2481,
+      "better": "lower",
+      "baseline_label": "home-field constant",
+      "n": 777,
+      "t": 3.371
+     },
+     {
+      "label": "Game win probability error (Brier), captured games",
+      "stat": "Brier",
+      "champion": 0.2431,
+      "baseline": 0.222,
+      "better": "lower",
+      "baseline_label": "de-vigged opening market",
+      "n": 461
+     }
+    ],
+    "derived_from": {
+     "n": "vintage.n",
+     "digits": 4,
+     "headline": [
+      {
+       "champion": "vintage.brier",
+       "baseline": "vintage.brier_home_base",
+       "n": "vintage.n",
+       "t": "vintage.skill_vs_home_base.t"
+      },
+      {
+       "champion": "benchmarks.tiers.market_open_devig.same_games.model",
+       "baseline": "benchmarks.tiers.market_open_devig.brier",
+       "n": "benchmarks.tiers.market_open_devig.n"
+      }
+     ]
+    }
+   }
   },
   {
    "model_id": "betting_prob_calibration",
@@ -439,7 +541,9 @@
       "better": "higher",
       "resolvable": true,
       "verdict": "the blend wins",
-      "baseline_label": "best single input"
+      "baseline_label": "best single input",
+      "stat": "AUC",
+      "mde95": 0.0078
      }
     ],
     "derived_from": {
@@ -449,7 +553,8 @@
        "champion": "accuracy.consensus_vs_inputs.auc.consensus",
        "baseline": "accuracy.consensus_vs_inputs.auc.best_input",
        "resolvable": "accuracy.consensus_vs_inputs.auc.resolvable",
-       "verdict": "accuracy.consensus_vs_inputs.auc.verdict"
+       "verdict": "accuracy.consensus_vs_inputs.auc.verdict",
+       "mde95": "accuracy.consensus_vs_inputs.auc.mde95"
       }
      ]
     }
@@ -575,7 +680,9 @@
       "champion": 29.51,
       "baseline": 0.29,
       "better": "higher",
-      "baseline_label": "picks 301-500"
+      "baseline_label": "picks 301-500",
+      "stat": "mean career eWAR",
+      "resolvable": false
      }
     ],
     "derived_from": {
@@ -587,7 +694,8 @@
        "baseline": "realized_career_by_bucket_2005_14.500.mean_war"
       }
      ]
-    }
+    },
+    "contest": false
    }
   },
   {
@@ -769,14 +877,16 @@
       "champion": 1.434,
       "baseline": 1.977,
       "better": "lower",
-      "baseline_label": "naive level-to-years table"
+      "baseline_label": "naive level-to-years table",
+      "stat": "MAE, years"
      },
      {
       "label": "Within one year",
       "champion": 0.583,
       "baseline": 0.379,
       "better": "higher",
-      "baseline_label": "naive level-to-years table"
+      "baseline_label": "naive level-to-years table",
+      "stat": "within 1 year"
      }
     ],
     "derived_from": {
@@ -831,14 +941,24 @@
       "champion": 0.8094,
       "baseline": 1.0224,
       "better": "lower",
-      "baseline_label": "CH40 champion alone"
+      "baseline_label": "CH40 champion alone",
+      "stat": "MAE, years",
+      "gap_ci": {
+       "lo": 0.1547,
+       "hi": 0.2735
+      }
      },
      {
       "label": "Within one year",
       "champion": 0.8408,
       "baseline": 0.7377,
       "better": "higher",
-      "baseline_label": "CH40 champion alone"
+      "baseline_label": "CH40 champion alone",
+      "stat": "within 1 year",
+      "gap_ci": {
+       "lo": 0.0739,
+       "hi": 0.1368
+      }
      }
     ],
     "derived_from": {
@@ -847,11 +967,19 @@
      "headline": [
       {
        "champion": "fg_blend_gate_2026_09_25.clauses.B.row_matched.B.mae",
-       "baseline": "fg_blend_gate_2026_09_25.clauses.B.row_matched.CH40.mae"
+       "baseline": "fg_blend_gate_2026_09_25.clauses.B.row_matched.CH40.mae",
+       "gap_ci": {
+        "lo": "fg_blend_gate_2026_09_25.clauses.B.boot_vs_CH40.ci_dMAE.0",
+        "hi": "fg_blend_gate_2026_09_25.clauses.B.boot_vs_CH40.ci_dMAE.1"
+       }
       },
       {
        "champion": "fg_blend_gate_2026_09_25.clauses.B.row_matched.B.within_1y",
-       "baseline": "fg_blend_gate_2026_09_25.clauses.B.row_matched.CH40.within_1y"
+       "baseline": "fg_blend_gate_2026_09_25.clauses.B.row_matched.CH40.within_1y",
+       "gap_ci": {
+        "lo": "fg_blend_gate_2026_09_25.clauses.B.boot_vs_CH40.ci_dW1.0",
+        "hi": "fg_blend_gate_2026_09_25.clauses.B.boot_vs_CH40.ci_dW1.1"
+       }
       }
      ]
     }
@@ -883,7 +1011,45 @@
    "notes": "COMPANION ARTIFACT: data/xfv_ewar_label_epoch_eval.json carries the label-epoch measurement (cross-label matrix, TOST, controls, coverage) and is registered on its own row, xfv_ewar_label_epoch.\n\n=== 2026-09-04 reading: THE LABEL EPOCH RAN. NO ACCURACY GAIN. ===\ncareer_war rebased to eWAR v2 (tools/rebase_career_war_to_ewar.py --reapply): 2,531 of 2,666 rows on ewar_v2, 135 left on bbref because they resolve to no mlbam by any route, 10,893 of 10,983 receipted seasons served by eWAR (99.2 percent, 90 in-window fallbacks). Matrices, evals, floors, the pooled FV outcome curve and the empirical anchors were all rebuilt on it; BOARD_RANK_BASIS_EPOCH bumped to 2026-09-04 and BOARD_BASIS_FINGERPRINT gained a label= term that names the provider and the artifact build.\nMEASURED (data/xfv_ewar_label_epoch_eval.json, gate docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md section 9, seed 20260807, B=2000 every leg). Same-label margin difference, eWAR minus bWAR: HIT +0.00006, E_cond CI95 [-0.00148, +0.00182], TOST at the registered 0.02 margin says RULED OUT, i.e. equivalent. PIT -0.01823, E_cond CI95 [-0.04747, +0.00962], UNDECIDED; the permutation null gives p=0.0635 and the zero-information twin does NOT reproduce it (+0.00253 against -0.01823). Per-fold signs split 6/5 hit and 5/6 pit over 11 folds. So the swap did not improve eFV, and on the pitcher side the point estimate is a small loss that does not clear its own null. This CONFIRMS the R3a record below rather than overturning it, now on the full rebuild rather than a lane. The flip stands as an owner BASIS decision; no copy may claim an accuracy gain.\nDEFECT FOUND AND MEASURED, not fixed: the pitching swap applies to POSITION PLAYERS who throw mop-up innings. 273 seasons on 179 players across the table; 90 of 845 debuted hitter rows carry one, mean label inflation +0.071 WAR and max +1.71 WAR, because FIP strips the balls in play that are most of the damage in a blowout inning and the censored tail projection then multiplies it. Cost to the decision quantity is +0.00020 hit and -0.00099 pit, two orders below any floor, so it did not block the epoch. It is still a label-value defect and it propagates to the outcome curve, the WAG survivor anchors and surplus dollars, which this measurement does not cover. The lab's `nopp` basis is the ready-made measurement for whoever takes the model-definition decision.\nCOVERAGE (clause c) clears 90 percent on every band and side, pitchers included: hit 99.2 / 98.7 / 99.3 percent and pit 96.4 / 97.7 / 99.2 percent across the 2011-2015, 2016-2019 and 2020-2025 debut bands.\n\n=== 2026-09-03 reading: SERVED BASIS EPOCH, wave 1 (owner decision, locked) ===\nThe owner moved the site's served and label WAR series from bWAR to eWAR v2 in ONE epoch (display, eFV labels, WAG, anchors, surplus, arbitration, farm grades, projections). This is a BASIS decision, not an accuracy verdict: the gate record below stands unchanged (team wins r 0.8595 vs bWAR 0.8803, a descriptive loss by construction for any FIP WAR; pitcher persistence 0.3617 vs 0.1768, 2.0x; eFV label swap R3a -0.0011 hit / -0.0115 pit, floor-sized and unexcluded), and every 'do not flip' line under this block is the record as of 2026-08-04, superseded by the owner's call and not by a new measurement.\nCONSUMERS NOW (wave 1, code only): war_source.py serves 'ewar_v2' as DEFAULT_PROVIDER, read from data/ewar.json via ewar.ewar_for and never re-derived ('bwar' stays the byte-exact input path, 'ewar_merged' still refuses). The career_war funnel (stats.fetch_career_war_bulk -> war_source.career_war_bulk -> storage.upsert_career_war) rewrites seasons from the artifact with the per-year bWAR fallback recorded, keeps seasons_bwar, and stamps source 'ewar_v2' plus ewar_coverage. Direct readers on the facade default: mlb_player_export (per-season WAR with war_bwar beside it where it differs at 1dp), the hitter/starter/bullpen WAR-rate boards, pal_export, mlb_trade_lookup, tools/fit_draft_slot_curve.py; fa_projection labels its corpus on the facade default (corpus['war_provider'] stamp, cache keys suffixed by provider); arb_dataset rebases its WAR column through the facade transform.\nARTIFACT: rebuilt 2026-09-03 over 2011-2026, the full eFV label window; the 2016-2025 blocks are byte-identical to the 2026-08-04 build and the gate record reproduces exactly. Every position-player block has ewb == bwb (21,454 batting blocks, 0 differences), so hitters equal bWAR until the SDR defense drop; the league-sum identity holds on all sixteen seasons (max deviation 0.0, replacement scales 0.9966 to 1.0018).\nOWED TO THE REBUILD WAVE, gated on the design audit (docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md): the career_war rebase (tools/rebase_career_war_to_ewar.py, dry-run only so far), eFV matrices/evals/floors, the FV outcome curve and the FV_EXPECTED_WAR/survivor anchors plus the prospx FV_WAR_ANCHORS mirror, the draft slot curve, the war_rate_plus vintages, the fingerprint label= term with the BOARD_RANK_BASIS_EPOCH bump, the golden restamp, the projections retrain, the arbitration re-fit. Verdict stays provisional: no gate moved, and the label epoch gate (docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md) has not run.\n\n=== record as of 2026-08-04 (superseded on the basis question by the block above) ===\nBuilt 2026-08-04 for the owner ask to move WAR off bWAR. fWAR was NOT an option: FanGraphs is Cloudflare-403 from this box (docs/efv-2026-07-30/DEFENSIVE_SOURCE_PROBE.md) and pybaseball's FG endpoint 403s, so eWAR is built from components already on disk.\n\nVERDICT: DO NOT flip the site basis. eWAR LOSES the headline gate (team wins r 0.8595 vs bWAR 0.8803, zero-param MAE 4.306 vs 3.787) and WINS the persistence gate (FIP pitching self-r 0.3617 vs 0.1768 on the same 1,677 pairs, a 2.0x gain, and it forecasts NEXT year's actual runs above average better than THIS year's actual runs does, 0.2573 vs 0.1768).\n\nLosing gate 1 was EXPECTED and is not evidence against the pitching swap. Gate 1 rewards describing the season that happened; B-Ref prices pitchers on the runs they actually allowed, which is most of what decided the games, so a runs-allowed WAR is close to mechanically fitted to team wins. FIP deliberately discards sequencing and balls in play, so it must fit worse in sample. ANY FIP-based WAR, fWAR included, loses this test.\n\nTHE ATTRIBUTION ARMS ARE THE REAL RESULT, because they run one swap at a time. The PITCHING swap costs same-season r (0.8595) and moves next-season signal to 0.2524 against the bWAR baseline 0.2481. READ THAT SECOND NUMBER WITH THE CORRECTION BELOW: it is a NULL, not a win. The pitching swap's forward case is at the PITCHER level (gate 2), not the team level. The FIELDING swap loses BOTH (0.8777 same-season, 0.2255 next-season) and therefore did not earn its place. Mechanical cause, and it generalises: Statcast OAA is a RANGE metric. It carries no outfield or infield ARM value, no catcher framing or blocking, no first-base scoops, no double-play pivot; B-Ref rfield does. Swapping OAA in for rfield is not a better metric for the SAME quantity, it is a better metric for a NARROWER one, and the value it drops is real. Catchers have zero OAA coverage by construction. data/savant_arm.json exists but is arm STRENGTH in mph from 2020, not runs, so it cannot close the gap without a model that does not exist.\n\nFACE VALIDITY on the pitching half: it reproduces the known bWAR/fWAR divergences BY NAME and in the right direction, Aaron Nola 2018 9.69 -> 6.14 and Mike Minor 2019 7.99 -> 4.67, both toward their published fWAR. League sums land on the season target every year (about 999) so the accounting identity holds.\n\nWHAT WOULD CHANGE THE VERDICT: an arm-value and catcher-framing run model so the fielding swap covers the same quantity rfield does; a BLEND of OAA and rfield rather than a replacement is CLOSED, do not re-run: it was built, swept over w = 0 to 1 and is monotone decreasing on BOTH the pooled and the full-schedule basis (see the v2 section); or re-running gate 1 against team runs scored and runs allowed separately instead of wins, which would separate component accuracy from the Pythagorean noise both series inherit.\n\nNEXT STEP IF PURSUED: the pitching component is the part that is safe today, and the natural consumer is a FORWARD-looking one (eFV labels, projections) rather than a descriptive display, because forward use is exactly where a 2.1x persistence gain pays and where losing the descriptive gate does not matter. That is an owner call and it is a coordinated re-anchor, not a ride-along: it would require refitting the FV outcome curve, FV_EXPECTED_WAR, the survivor curve, the prospx FV_WAR_ANCHORS mirror, the draft slot curve and the empirical anchors, plus a label= term in BOARD_BASIS_FINGERPRINT.\n\n=== v2, 2026-08-04: THE STATCAST FIELDING SWAP IS REMOVED ===\nv1 replaced rfield with the Statcast read wherever Statcast covered the innings. v2 does not use Statcast fielding at all. A blend axis was built specifically to rescue it - w = weight on the Statcast read over covered innings, rfield taking the rest - and the grid over 2016-2025 (300 team-seasons, pitching swap on throughout, so w=0 is the pitching-only arm) settled it:\n    w      wins r   wins mae0   next-yr r   prevention |r|\n    0.00   0.8595     4.306      0.2524         0.3780\n    0.25   0.8636     4.260      0.2491         0.3759\n    0.50   0.8667     4.251      0.2452         0.3718\n    0.75   0.8684     4.277      0.2408         0.3652\n    1.00   0.8686     4.347      0.2359         0.3559\n    bWAR   0.8803     3.787      0.2481         0.4290\nBOTH FORWARD-LOOKING LEGS ARE MONOTONE DECREASING IN w, across five points and two independent gates. There is no weight at which the Statcast read pays for itself, so this is not a threshold to tune around. At w=0 eWAR loses same-season fit (0.8595 vs 0.8803) and is a NULL on the forward leg, NOT a win - see the correction section below, which supersedes any earlier claim that 0.2524 vs 0.2481 was a win.\n\nNEW GATE 1b (team runs), added because team WINS are runs put through the Pythagorean relation and that noise is large enough to bury a component whose whole effect is a few runs a season - which fielding is. Components are scored against what they CAUSE: offence vs runs scored, fielding+pitching vs runs allowed, total vs run differential. It needed no new fetch; the cached StatsAPI standings already carried runsScored/runsAllowed and standings() was discarding them. The OFFENCE ARM IS AN EXACT NULL CONTROL at every w (r 0.3132 for both series), which is what licenses trusting the prevention comparison: no component leaked.\n\nEndpoints verified on real rows before any result was read: w=1.0 reproduces the v1 default to 0.0 across all team-seasons, w=0.0 reproduces bWAR's rfield to 0.0 across 6,640 batter-seasons.\n\nCATCHER FRAMING: probed and REFUSED. Savant's catcher-framing leaderboard responds and rv_tot is genuinely framing runs (validated internally - the per-zone integers sum to it), but the season parameter is INERT: year/season/startYear all return one identical undated payload (md5 b389177d5e). Ingesting it would assign a single snapshot to ten seasons. Recorded in the artifact so the next attempt starts from 'where does a season-resolved source live'.\n\nA home-run regression variant on the FIP leg is implemented and DEFAULT OFF (fip_hr_shrink_k). It is deliberately not called xFIP: the corpus has no batted-ball profile, so there is no fly-ball denominator, and it regresses the HR rate itself instead. GATED 2026-08-04, NO SHIP - see the R2e.2 section below.\n\nVerdict UNCHANGED at provisional and eWAR still ships to NO consumer. It loses the descriptive gate and wins the forward one; the natural first use remains a forward-looking consumer (eFV labels), which is R3 and is gated.\n\nR2b, THE ERA TEST (2026-08-04, read off the per-season attribution the v2 rebuild emits). The range-only account of why the fielding swap loses makes a testable prediction: once Savant folded outfield ARM into its fielding run value around 2022, the metric covers more of what rfield covers, so the loss should SHRINK. It does. Mean fielding-swap delta against the per-season bWAR baseline: -0.0368 for 2016-2021 against -0.0194 for 2022-2025, a 1.90x narrowing; excluding the 60-game 2020 season, whose -0.0800 is the largest single value and a small-sample artifact, it is -0.0282 against -0.0194, still 1.45x. The direction is right and the mechanism is supported.\nBUT IT IS NOT ELIMINATED. Every post-2022 season is still individually NEGATIVE (-0.0048, -0.0285, -0.0344, -0.0099), so even in the era where FRV is broadest the swap still costs same-season fit. That residual is what the range-only story does not cover, and the obvious candidates are the components the OF-arm addition never touched: catcher framing and blocking (zero OAA coverage by construction) and infield throwing.\nCONSEQUENCE FOR THE WEIGHT: an era-aware w was the reason to run this, and the answer is DO NOT make w era-conditional. The optimum is at or near 0 in BOTH eras, so splitting the weight by era would add a parameter to buy nothing. w=0 stands whole-window. Sample is small (n=4 post) and the pre group carries a COVID outlier, so this is a supporting read, not a headline.\n\n=== CORRECTION 2026-08-04: THE FORWARD-LEG \"WIN\" WAS NOT REAL ===\nEarlier revisions of this row, of ewar.py and of commit 744d525 all claimed that at w=0 eWAR BEATS bWAR on the forward leg, 0.2524 vs 0.2481. It does not. Refuted by two independent reviewers and reproduced from source before anything was edited. Three reasons, any one fatal:\n  SCALE CONTAMINATION. 60 of the 270 forward pairs straddle the 60-game 2020 season, putting a 60-game season on one axis and a 162-game season on the other. Those 60 pairs correlate about -0.53 and drag the pooled r from roughly 0.59 down to 0.25. On full-schedule pairs only (both seasons >= 140 team games, n=210) it reads 0.5920 vs 0.5913, a delta of +0.0006.\n  A ZERO-INFORMATION CONTROL BEATS IT. Shuffling the per-team eWAR-minus-bWAR delta across teams produces an absolute delta at least as large 82.3% of the time and beats bWAR outright in 27.3% of shuffles.\n  IT IS CARRIED BY TWO PAIRS. Per year-pair eWAR wins 4 of 9 and LOSES the four most recent; the pooled edge comes from 2016->2017 (+0.176) and the COVID pair 2020->2021 (+0.119).\nWHAT SURVIVES, and the distinction is the point: the w-grid that decided v2 is untouched. Re-run on full-schedule pairs the forward delta runs +0.0006 / -0.0019 / -0.0057 / -0.0108 / -0.0173 across w = 0 to 1, still MONOTONE DECREASING, so dropping Statcast fielding was right and is not an artifact of the 2020 problem. The w-grid compares eWAR variants against each other; the bWAR comparison is a different question and it is a null. eWAR's real case is at the PITCHER level (gate 2), where the persistence gain survives its controls, and it does not survive aggregation to the team. gate_team_wins now emits next_season_wins_full_schedule_only so this is visible in the artifact rather than only in prose.\n\n=== TWO CONTROLS THAT COULD NOT FAIL, both fixed 2026-08-04 ===\n1. EVAL WINDOW. evaluate() computed `last` to exclude the in-progress season and then passed it to TWO of six blocks. Persistence, coverage, accounting and face-validity ran UNWINDOWED, so the artifact declared eval_window [2016,2025] while four of its blocks measured 2016-2026: 148 of 1825 gate-2 pairs (8.1%) had the three-week-old 2026 as their y+1 target, and accounting reported a 2026 row with 3364 team-games inside a \"max_abs_deviation 0.0\" pass. Fixed by windowing the model ONCE (_window_model) and handing identical rows to every block. NO VERDICT MOVED, which is why it had gone unnoticed: gate 2 goes 0.3664/0.1769 -> 0.3617/0.1768 self and 0.2548 -> 0.2573 forecast, on 1,677 pairs rather than 1,825. What was wrong was the artifact describing a population it had not measured.\n2. THE UNSHRUNK-FIELDING SENSITIVITY WAS BIT-IDENTICAL to the gate it claims to vary. The OAA reliability shrinkage multiplies the Statcast fielding term, and at the shipped w=0.0 that term is multiplied by zero, so an unshrunk build at the default reproduced gate 1 to the last decimal. Now pinned at fielding_blend_w=1.0, and evaluate() asserts the block is live and stamps `degenerate` rather than trusting the caller. Post-fix it MOVES: gate 1 r 0.8644 unshrunk against 0.8595 shipped.\n\n=== R2e.2 HOME-RUN SHRINK: NO SHIP, and it did not fail ===\nIt PASSED its own pre-registered rule in sample. Forecast leg (min_ip 50): k None 0.2548, 100 0.2665, 200 0.2725, 400 0.2782, 800 0.2782. Two discriminating controls rule out generic reliability weighting: the same exposure shrink on ALL THREE FIP rates gives 0.2222 at k=800 (worse than doing nothing) and on the K rate alone gives 0.1825, against 0.2782 for HR-only. The effect is home-run specific, exactly as hypothesised. DECLINED on two grounds the in-sample curve cannot see: it does not transport (+0.0017 on a temporal holdout, and the argmax moves k=1600 -> k=400 between eras, so it is fitting the era), and it collides with the w=0 decision (it drives the team forward leg monotonically below bWAR, 0.2421 at k=400). Re-open only with a shrink target that is not a single global k.\n\n=== R2e.3 RELIEVER LEVERAGE: RECORD AND STOP ===\nLeverage is priced UPSTREAM and survives the FIP swap intact. B-Ref's reliever chaining lives in war_daily's WAA_adj, the identity WAR = WAA + WAA_adj + WAR_rep holds to a residual sd of 0.0029, and build() ingests WAR whole and never decomposes it. The alternative is dead on its own gate too: our gmLI (mlb_leverage) and B-Ref's are the same number, r = 0.9947 on 993 reliever-seasons, with a clean shuffle control at +0.0015. Do NOT re-propose crediting relievers with our own gmLI; it is a measured null.\n\n=== R3a eFV LABEL SWAP: NO SHIP. UNSUPPORTED, NOT CLOSED ===\nThe owner's original hypothesis was that a better WAR label makes eFV more accurate. Decision quantity is the model-versus-consensus MARGIN with BOTH scored on the SAME labels, because swapping the label changes what \"right\" means and absolute rho is uninterpretable. DELTA = -0.0011 (hit) and -0.0115 (pit), both NEGATIVE, against MDE floors of 0.017 and 0.016. Coverage was not the obstacle: 98.6% of hit and 99.1% of pit test-fold rows carry an eWAR label, because the scored folds are debut years 2020-2023 and eWAR starts in 2016.\nTHE NULL IS NOT TIGHT ENOUGH TO CLOSE THE QUESTION. The lane's bootstrap held both fitted models FIXED, but the eWAR arm refits ridge and OLS on the new label, so model-estimation variance belongs in the sampling distribution. Adding it moves pit sd 0.0164 -> 0.0210 and the CI90 upper bound to +0.0206, ABOVE the 0.016 floor; the original single-seed CI90 upper of +0.0147 also sits within Monte Carlo error of the floor, and 10 of 40 reseeds put it at or above. So: no evidence of benefit, do NOT flip (R3c is NOT triggered), and do not write down that the hypothesis is closed. \"Unsupported\" is the honest and weaker claim.\n\nR3a HIGHER-POWERED RE-TEST (owner-authorised, 2026-08-04): the question is STILL NOT CLOSED, and the original headline got WEAKER. Design pre-registered before running: add the 2019 fold (test 71, train 80) to take the scored pitcher population from 434 to 505 rows, and raise the full-refit paired bootstrap from B=400 to B=2000. The 2024 fold was deliberately EXCLUDED despite being larger, because a 2024 debut has only 2 of 6 label seasons resolved against 6 for 2019, so it would buy rows by degrading what the label means.\nRESULTS. The base 4-fold arm reproduces exactly at DELTA -0.0115. On 5 folds DELTA is -0.0001, so the \"eWAR moved the wrong way on pitchers\" reading is FOLD-DEPENDENT and must not be quoted as stable. sd went 0.0210 -> 0.02393, WIDER, not narrower. The pre-registered prediction was a roughly 7% shrink from +16% n and it was WRONG: it treated all rows as equally informative, when the 2019 fold trains on 80 rows against 151+ for the folds it joins and therefore carries more noise than information (the margin over consensus falls from +0.0286 to +0.0104 on the bWAR label too). CI90 [-0.0469, +0.0311], upper bound still well above the 0.016 floor.\nVERDICT UNCHANGED: unsupported, not closed, do not flip. WHAT WOULD ACTUALLY CLOSE IT: not a re-slice of this cohort, which cannot be partitioned into enough power, but debut years maturing to six fully resolved label seasons. Revisit when 2021+ debuts resolve.\n\n=== R3b FA GATE: NO SHIP, and the mechanism generalises ===\nfa_backtest Gate 1 with the realized label swapped to eWAR: margin over the Marcel carry-forward baseline is -0.0387 WAR on pitchers against a pre-registered floor of +0.020, CI95 [-0.0472, -0.0309], negative in all six scored targets. The premise is HALF refuted, which is the interesting part: the eWAR pitching label really IS more forecastable (label r 0.5033 -> 0.5779, persistence 0.4528 -> 0.5823), but a 5/4/3 carry-forward IS a persistence bet, so a more persistent label helps the NAIVE BASELINE more than it helps the model. A cleaner label raises the floor before it raises the ceiling. Expect this anywhere a model is scored as margin-over-carry.",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 28
+   "artifact_age_days": 28,
+   "card": {
+    "window": "2016-2025, eWAR and bWAR on identical rows",
+    "headline": [
+     {
+      "label": "Team WAR against team wins (r)",
+      "stat": "team-wins r",
+      "champion": 0.8595,
+      "baseline": 0.8803,
+      "better": "higher",
+      "baseline_label": "bWAR",
+      "n": 300
+     },
+     {
+      "label": "Pitcher value, year to year (r)",
+      "stat": "pitcher persistence r",
+      "champion": 0.3617,
+      "baseline": 0.1768,
+      "better": "higher",
+      "baseline_label": "bWAR on runs allowed",
+      "n": 1677
+     }
+    ],
+    "derived_from": {
+     "digits": 4,
+     "headline": [
+      {
+       "champion": "gate_1_team_wins.ewar.r",
+       "baseline": "gate_1_team_wins.bwar.r",
+       "n": "gate_1_team_wins.n_team_seasons"
+      },
+      {
+       "champion": "gate_2_pitcher_persistence.self_r_ewar_fip",
+       "baseline": "gate_2_pitcher_persistence.self_r_bwar_ra",
+       "n": "gate_2_pitcher_persistence.n_pairs"
+      }
+     ]
+    }
+   }
   },
   {
    "model_id": "fa_dpw_series",
@@ -947,7 +1113,8 @@
       "baseline": 11.12,
       "better": "lower",
       "baseline_label": "nearest-comps median",
-      "resolvable": true
+      "resolvable": true,
+      "stat": "MAE, guarantee $M"
      }
     ],
     "derived_from": {
@@ -1044,7 +1211,8 @@
       "baseline": 0.624,
       "better": "lower",
       "resolvable": true,
-      "baseline_label": "5/4/3 carry-forward"
+      "baseline_label": "5/4/3 carry-forward",
+      "stat": "MAE, WAR"
      }
     ],
     "derived_from": {
@@ -1166,7 +1334,8 @@
       "champion": 0.509,
       "baseline": 0.227,
       "better": "higher",
-      "baseline_label": "prospect count"
+      "baseline_label": "prospect count",
+      "stat": "Spearman"
      }
     ],
     "derived_from": {
@@ -1298,7 +1467,12 @@
       "better": "higher",
       "baseline_label": "Savant xwOBA alone",
       "resolvable": false,
-      "verdict": "DEMOTED: not separable from its baseline on the SERVED construction at this n under either convention."
+      "verdict": "DEMOTED: not separable from its baseline on the SERVED construction at this n under either convention.",
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": -0.001,
+       "hi": 0.016
+      }
      }
     ],
     "derived_from": {
@@ -1309,7 +1483,11 @@
        "champion": "arms.A2_fwdhem_plus.ladder.D4.v1.rho_primary",
        "baseline": "arms.A2_fwdhem_plus.ladder.D4.v1.rho_baseline",
        "resolvable": "arms.A2_fwdhem_plus.ladder.D4.v1.lo95_gt_0",
-       "verdict": "arms.A2_fwdhem_plus.verdict_reason"
+       "verdict": "arms.A2_fwdhem_plus.verdict_reason",
+       "gap_ci": {
+        "lo": "arms.A2_fwdhem_plus.ladder.D4.v1.gap_ci.lo95",
+        "hi": "arms.A2_fwdhem_plus.ladder.D4.v1.gap_ci.hi95"
+       }
       }
      ]
     }
@@ -1366,7 +1544,12 @@
       "baseline": 0.235,
       "better": "higher",
       "baseline_label": "AVG",
-      "resolvable": true
+      "resolvable": true,
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": 0.145,
+       "hi": 0.209
+      }
      },
      {
       "label": "Next-year offense (Spearman)",
@@ -1374,7 +1557,12 @@
       "baseline": 0.409,
       "better": "higher",
       "baseline_label": "raw wOBA (the parent its gate names)",
-      "resolvable": false
+      "resolvable": false,
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": -0.01,
+       "hi": 0.017
+      }
      },
      {
       "label": "Next-year offense (Spearman)",
@@ -1382,7 +1570,12 @@
       "baseline": 0.411,
       "better": "higher",
       "baseline_label": "OPS (the strongest parent in its eval)",
-      "resolvable": false
+      "resolvable": false,
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": -0.013,
+       "hi": 0.016
+      }
      }
     ],
     "derived_from": {
@@ -1394,6 +1587,10 @@
        "baseline": "forward_spearman_vs_wOBA_next.avg",
        "resolvable": {
         "above_zero": "gap_ci_vs_avg.lo95"
+       },
+       "gap_ci": {
+        "lo": "gap_ci_vs_avg.lo95",
+        "hi": "gap_ci_vs_avg.hi95"
        }
       },
       {
@@ -1401,6 +1598,10 @@
        "baseline": "forward_spearman_vs_wOBA_next.raw_woba",
        "resolvable": {
         "above_zero": "gap_ci_vs_raw_woba.lo95"
+       },
+       "gap_ci": {
+        "lo": "gap_ci_vs_raw_woba.lo95",
+        "hi": "gap_ci_vs_raw_woba.hi95"
        }
       },
       {
@@ -1408,6 +1609,10 @@
        "baseline": "forward_spearman_vs_wOBA_next.ops",
        "resolvable": {
         "above_zero": "gap_ci_vs_ops.lo95"
+       },
+       "gap_ci": {
+        "lo": "gap_ci_vs_ops.lo95",
+        "hi": "gap_ci_vs_ops.hi95"
        }
       }
      ]
@@ -1437,7 +1642,12 @@
       "baseline": 0.428,
       "better": "higher",
       "baseline_label": "single-season HEM+",
-      "resolvable": true
+      "resolvable": true,
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": 0.004,
+       "hi": 0.049
+      }
      }
     ],
     "derived_from": {
@@ -1449,6 +1659,10 @@
        "baseline": "hem_1yr_forward_rho_on_3yr_set",
        "resolvable": {
         "above_zero": "gap_ci_3yr_minus_1yr.lo95"
+       },
+       "gap_ci": {
+        "lo": "gap_ci_3yr_minus_1yr.lo95",
+        "hi": "gap_ci_3yr_minus_1yr.hi95"
        }
       }
      ]
@@ -1475,7 +1689,12 @@
       "baseline": 0.0111,
       "better": "higher",
       "resolvable": true,
-      "baseline_label": "fielding percentage"
+      "baseline_label": "fielding percentage",
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": 0.3815,
+       "hi": 0.5176
+      }
      },
      {
       "label": "Next-year fielding rate (Spearman)",
@@ -1483,7 +1702,12 @@
       "baseline": 0.4531,
       "better": "higher",
       "baseline_label": "raw rate (its parent)",
-      "resolvable": false
+      "resolvable": false,
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": -0.0039,
+       "hi": 0.0172
+      }
      }
     ],
     "derived_from": {
@@ -1492,13 +1716,21 @@
       {
        "champion": "forward_spearman_vs_rate_next.dem_plus",
        "baseline": "forward_spearman_vs_rate_next.fld_pct",
-       "resolvable": "gate.clauses_v1.beats_fld_pct"
+       "resolvable": "gate.clauses_v1.beats_fld_pct",
+       "gap_ci": {
+        "lo": "gap_ci_vs_fld_pct.lo95",
+        "hi": "gap_ci_vs_fld_pct.hi95"
+       }
       },
       {
        "champion": "forward_spearman_vs_rate_next.dem_plus",
        "baseline": "forward_spearman_vs_rate_next.raw_rate",
        "resolvable": {
         "above_zero": "gap_ci_vs_raw_rate.lo95"
+       },
+       "gap_ci": {
+        "lo": "gap_ci_vs_raw_rate.lo95",
+        "hi": "gap_ci_vs_raw_rate.hi95"
        }
       }
      ]
@@ -1677,7 +1909,16 @@
       "champion": 0.193,
       "baseline": 0.154,
       "better": "higher",
-      "baseline_label": "MiLB-stats ridge"
+      "baseline_label": "MiLB-stats ridge",
+      "stat": "Spearman"
+     },
+     {
+      "label": "First-three-year WAR error (MAE)",
+      "champion": 1.548,
+      "baseline": 1.509,
+      "better": "lower",
+      "baseline_label": "MiLB-stats ridge",
+      "stat": "MAE, first-3y WAR"
      }
     ],
     "derived_from": {
@@ -1687,6 +1928,10 @@
       {
        "champion": "baseline_pooled_oos.spearman",
        "baseline": "challenger_pooled_oos.spearman"
+      },
+      {
+       "champion": "baseline_pooled_oos.mae",
+       "baseline": "challenger_pooled_oos.mae"
       }
      ]
     }
@@ -2071,7 +2316,12 @@
       "baseline": 0.09,
       "better": "higher",
       "baseline_label": "ERA",
-      "resolvable": true
+      "resolvable": true,
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": 0.088,
+       "hi": 0.202
+      }
      },
      {
       "label": "Next-year run prevention (Spearman)",
@@ -2079,7 +2329,12 @@
       "baseline": 0.211,
       "better": "higher",
       "baseline_label": "raw FIP (its parent)",
-      "resolvable": true
+      "resolvable": true,
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": 0.001,
+       "hi": 0.05
+      }
      }
     ],
     "derived_from": {
@@ -2091,6 +2346,10 @@
        "baseline": "forward_spearman_vs_RA9_next.era",
        "resolvable": {
         "above_zero": "gap_ci_vs_RA9_next.vs_era.lo95"
+       },
+       "gap_ci": {
+        "lo": "gap_ci_vs_RA9_next.vs_era.lo95",
+        "hi": "gap_ci_vs_RA9_next.vs_era.hi95"
        }
       },
       {
@@ -2098,6 +2357,10 @@
        "baseline": "forward_spearman_vs_RA9_next.raw_fip",
        "resolvable": {
         "above_zero": "gap_ci_vs_RA9_next.vs_raw_fip.lo95"
+       },
+       "gap_ci": {
+        "lo": "gap_ci_vs_RA9_next.vs_raw_fip.lo95",
+        "hi": "gap_ci_vs_RA9_next.vs_raw_fip.hi95"
        }
       }
      ]
@@ -2234,7 +2497,12 @@
       "baseline": 0.284,
       "better": "higher",
       "baseline_label": "ERA",
-      "resolvable": true
+      "resolvable": true,
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": 0.08,
+       "hi": 0.184
+      }
      },
      {
       "label": "Next-year run prevention (Spearman)",
@@ -2242,7 +2510,12 @@
       "baseline": 0.382,
       "better": "higher",
       "baseline_label": "raw FIP (its parent)",
-      "resolvable": true
+      "resolvable": true,
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": 0.018,
+       "hi": 0.051
+      }
      }
     ],
     "derived_from": {
@@ -2254,6 +2527,10 @@
        "baseline": "forward_spearman_vs_RA9_next.era",
        "resolvable": {
         "above_zero": "gap_ci_vs_era.lo95"
+       },
+       "gap_ci": {
+        "lo": "gap_ci_vs_era.lo95",
+        "hi": "gap_ci_vs_era.hi95"
        }
       },
       {
@@ -2261,6 +2538,10 @@
        "baseline": "forward_spearman_vs_RA9_next.raw_fip",
        "resolvable": {
         "above_zero": "gap_ci_vs_raw_fip.lo95"
+       },
+       "gap_ci": {
+        "lo": "gap_ci_vs_raw_fip.lo95",
+        "hi": "gap_ci_vs_raw_fip.hi95"
        }
       }
      ]
@@ -2333,7 +2614,9 @@
       "better": "higher",
       "resolvable": false,
       "verdict": "not resolvable at this power",
-      "baseline_label": "best single source"
+      "baseline_label": "best single source",
+      "stat": "Spearman",
+      "mde95": 0.0121
      },
      {
       "label": "Useful-asset AUC, consensus blend vs best single source",
@@ -2342,7 +2625,9 @@
       "better": "higher",
       "resolvable": true,
       "verdict": "the blend wins",
-      "baseline_label": "best single source"
+      "baseline_label": "best single source",
+      "stat": "AUC",
+      "mde95": 0.0078
      }
     ],
     "derived_from": {
@@ -2352,13 +2637,15 @@
        "champion": "accuracy.consensus_vs_inputs.spearman.consensus",
        "baseline": "accuracy.consensus_vs_inputs.spearman.best_input",
        "resolvable": "accuracy.consensus_vs_inputs.spearman.resolvable",
-       "verdict": "accuracy.consensus_vs_inputs.spearman.verdict"
+       "verdict": "accuracy.consensus_vs_inputs.spearman.verdict",
+       "mde95": "accuracy.consensus_vs_inputs.spearman.mde95"
       },
       {
        "champion": "accuracy.consensus_vs_inputs.auc.consensus",
        "baseline": "accuracy.consensus_vs_inputs.auc.best_input",
        "resolvable": "accuracy.consensus_vs_inputs.auc.resolvable",
-       "verdict": "accuracy.consensus_vs_inputs.auc.verdict"
+       "verdict": "accuracy.consensus_vs_inputs.auc.verdict",
+       "mde95": "accuracy.consensus_vs_inputs.auc.mde95"
       }
      ]
     }
@@ -2387,7 +2674,12 @@
       "better": "higher",
       "baseline_label": "matched control",
       "resolvable": false,
-      "verdict": "inside: flag 0.0042 vs matched control 0.0006, gap 95% CI -0.0003 to +0.0100 (clustered by player)"
+      "verdict": "inside: flag 0.0042 vs matched control 0.0006, gap 95% CI -0.0003 to +0.0100 (clustered by player)",
+      "stat": "riser hit rate",
+      "gap_ci": {
+       "lo": -0.0003,
+       "hi": 0.01
+      }
      },
      {
       "label": "Rebound flags: board FV up 5+ within 30 days",
@@ -2396,7 +2688,12 @@
       "better": "higher",
       "baseline_label": "matched control",
       "resolvable": false,
-      "verdict": "inside: flag 0.0163 vs matched control 0.0057, gap 95% CI -0.0098 to +0.0444 (clustered by player)"
+      "verdict": "inside: flag 0.0163 vs matched control 0.0057, gap 95% CI -0.0098 to +0.0444 (clustered by player)",
+      "stat": "rebound hit rate",
+      "gap_ci": {
+       "lo": -0.0098,
+       "hi": 0.0444
+      }
      },
      {
       "label": "Faller flags: board FV down 5+ within 30 days",
@@ -2405,7 +2702,12 @@
       "better": "higher",
       "baseline_label": "matched control",
       "resolvable": false,
-      "verdict": "inside: flag 0.0639 vs matched control 0.0802, gap 95% CI -0.0728 to +0.0439 (clustered by player)"
+      "verdict": "inside: flag 0.0639 vs matched control 0.0802, gap 95% CI -0.0728 to +0.0439 (clustered by player)",
+      "stat": "faller hit rate",
+      "gap_ci": {
+       "lo": -0.0728,
+       "hi": 0.0439
+      }
      }
     ],
     "derived_from": {
@@ -2418,7 +2720,11 @@
        "resolvable": {
         "above_zero": "v2.by_flag_type.riser.horizons.h30.gap_lo95"
        },
-       "verdict": "v2.by_flag_type.riser.horizons.h30.verdict_text"
+       "verdict": "v2.by_flag_type.riser.horizons.h30.verdict_text",
+       "gap_ci": {
+        "lo": "v2.by_flag_type.riser.horizons.h30.gap_lo95",
+        "hi": "v2.by_flag_type.riser.horizons.h30.gap_hi95"
+       }
       },
       {
        "champion": "v2.by_flag_type.rebound.horizons.h30.hit_rate",
@@ -2426,7 +2732,11 @@
        "resolvable": {
         "above_zero": "v2.by_flag_type.rebound.horizons.h30.gap_lo95"
        },
-       "verdict": "v2.by_flag_type.rebound.horizons.h30.verdict_text"
+       "verdict": "v2.by_flag_type.rebound.horizons.h30.verdict_text",
+       "gap_ci": {
+        "lo": "v2.by_flag_type.rebound.horizons.h30.gap_lo95",
+        "hi": "v2.by_flag_type.rebound.horizons.h30.gap_hi95"
+       }
       },
       {
        "champion": "v2.by_flag_type.faller.horizons.h30.hit_rate",
@@ -2434,7 +2744,11 @@
        "resolvable": {
         "above_zero": "v2.by_flag_type.faller.horizons.h30.gap_lo95"
        },
-       "verdict": "v2.by_flag_type.faller.horizons.h30.verdict_text"
+       "verdict": "v2.by_flag_type.faller.horizons.h30.verdict_text",
+       "gap_ci": {
+        "lo": "v2.by_flag_type.faller.horizons.h30.gap_lo95",
+        "hi": "v2.by_flag_type.faller.horizons.h30.gap_hi95"
+       }
       }
      ]
     },
@@ -2607,7 +2921,29 @@
    "notes": "2026-06-12 v2 (retro-backtest-driven, proj_backtest.py): the 83-win-Dodgers level bug had two roots - the exposure-floor universe hid ~40% of league WAR from the roll-up, and the live path summed the ML quantile heads whose median-like points total ~520 league WAR vs the champion mean ~1,100 (right-skew). Roll-up now sums champion means (warY1Champ) + sub-floor depth pool + cohort intercepts (side x age, fit 2022-24, won the 2025 holdout 7.71 vs 7.76); league sums to 2,430 with remainder ~0. Player-level engine measured near-unbiased (pooled bias -0.04, n=8,866). Artifact carries the full retro block.\n\nRE-MEASURED 2026-08-04 on post-F-DEF paths, and three claims above are now STALE, kept only as the 2026-06-12 record. (1) The cohort intercepts no longer win: a fresh refit loses its own holdout 7.27 vs 7.21 plain, the THIRD consecutive measurement against it (06-12 won 7.71 vs 7.76, 07-31 lost 7.29 vs 7.19, today loses). F-DEF did not rehabilitate it. (2) The player engine is no longer near-unbiased: pooled bias is +0.049, and the pooled figure UNDERSTATES by 1.75x because 4,019 of the 8,866 scored rows are players with no roster spot whose actual WAR is 0 by construction; on assigned-roster rows only, bias is +0.086 (n=4,847). (3) The league remainder is not ~0, it is 3.02 wins per team.\n\nTHE REMAINDER DECOMPOSES, and it is mostly a stale constant rather than a roster gap: the SERVED 06-12 intercept vector contributes sum_coh -69.6, and dropping it takes the remainder 3.02 -> 0.70. The genuine roster+depth level gap is 0.70 wins per team (932.8 + 45.1 = 977.9 against the 1000 benchmark); the other 2.32 is the vector, which is net negative because 55% of current vet slots sit in the 30+ bands where it carries -0.138 to -0.201. The committed vector is MAE-NEUTRAL on today's paths (7.18 vs 7.21 plain), so dropping it trades a level convention against nothing measured: OWNER CALL, not a gate outcome.\n\nSEPARATE AND UNRESOLVED: shape improved (player MAE 0.593 -> 0.541, better in 8 of 8 cohorts) while the ROSTER LEVEL got worse on identical rows. The engine under-projects real 2025 rosters by 88.1 WAR where the 06-12 engine was within 8.3. Recentering forces 2,430, so no recentered MAE can see this; raw holdout MAE moved 7.73 -> 8.31. Attribution: comparing against the 07-31 post-E3 figure of 8.56, F-DEF IMPROVED the un-recentered level and the bulk of the drop is E3. The served roster_war_sum crossing 900 (886.2 -> 932.8) is NOT evidence the per-player level regression was repaired - the served roll-up is propped by body count (1,324 vet slots + 311 depth) while the per-player deficit widened.\n\nRESOLVED 2026-08-04. proj_backtest was re-run and PERSISTED, so ship_decision.challenger_wins is now false and _cohort_intercepts() returns {}: the stale 2026-06-12 vector NO LONGER SERVES. The league remainder fell 3.02 -> 0.69 wins per team on the next export and roster_war_sum reads 932.9, so test_recenter_remainder_near_zero is GREEN for the first time since 2026-07-30 and the platform has no deliberate red left.\n\nThe decision was closer than the 07-31 framing implied, and the new served arm is what showed it. Scoring the vector proj_export ACTUALLY SERVES (which the challenger-vs-incumbent gate never did) gives 2025 holdout MAE 7.18 against plain recentering 7.21 - so on the holdout alone the vector looked BEST of the four arms. Across all four targets it is a coin flip: 2022 9.60 vs 9.54, 2023 9.63 vs 9.68, 2024 7.23 vs 7.18, 2025 7.18 vs 7.21, i.e. 2 wins and 2 losses, all inside noise on 30 teams. Dropping it therefore costs nothing resolvable and buys back 2.3 wins per team of league accounting, while removing a June fit that fails its own re-derivation. Quoting the holdout number alone would have argued the other way; the four-season view is the honest one.\n\nSTILL OPEN, and the artifact now carries the series: the assigned-roster LEVEL deficit is persistent and large, not a 2025 artifact. Predicted minus actual assigned WAR runs -131.6 (2022), -83.7 (2023), -114.9 (2024), -88.1 (2025) against a stable ~920 actual. Recentering forces the league to a constant so no recentered MAE can see it. Confirmed too: pooled player bias understates by 1.75x - assigned_only is +0.086 on n=5,029 while the 3,837 unassigned rows carry bias -0.0 and r 0.0 by construction, contributing nothing but dilution.\n\n2026-08-19 SERVE-VECTOR TRIPWIRE wired into the team_outlook_eval refresh (proj_export._write_team_outlook_eval): serve_vector_flag is computed AT WRITE TIME from retro_backtest.ship_decision.holdout_mae (served_recentered vs recentered; None when the retro block is absent), so the owner call above now has a standing meter instead of a one-off measurement. Current read: flag FALSE - served 7.18 vs plain 7.21 on the holdout retro fold. Pins in test_arb_gatec_verify.py (flag must match the row's own retro block).\n\n2026-09-24 CARD REPAIR. The Accountability table printed the cohort-intercept challenger arm, which has not served since 2026-08-04, and its foot read 'baseline retained' after the carry-forward figure, so one card stated three different holdout outcomes. The table now prints the arm the ship decision serves (proj_export._accountability_block served_arm: uniform recentering today) with the carry-forward's r beside its MAE, and the metric line carries no hardcoded figures (its 7.3-10.2 range matched no arm in the artifact). served_recentered and serve_vector_tripwire still score the 2026-06-12 vector as proj_backtest read it on 2026-08-04; that vector does not serve, and the tripwire now says so (vector_serving false).",
    "last_checked": "2026-10-02",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 0,
+   "card": {
+    "window": "retro backtest, 2025 season held out, actual rosters",
+    "headline": [
+     {
+      "label": "Team wins error, 2025 holdout (MAE)",
+      "stat": "MAE, wins",
+      "champion": 7.18,
+      "baseline": 7.24,
+      "better": "lower",
+      "baseline_label": "prior-season wins carried forward"
+     }
+    ],
+    "derived_from": {
+     "digits": 2,
+     "headline": [
+      {
+       "champion": "retro_backtest.ship_decision.holdout_mae.served_recentered",
+       "baseline": "retro_backtest.ship_decision.holdout_mae.baseline_prior_wins"
+      }
+     ]
+    }
+   }
   },
   {
    "model_id": "tool_grade_tables",
@@ -4134,7 +4470,12 @@
       "better": "higher",
       "baseline_label": "actual wOBA",
       "resolvable": true,
-      "verdict": "The SERVED construction clears its baseline under BOTH conventions after Holm (k=2)."
+      "verdict": "The SERVED construction clears its baseline under BOTH conventions after Holm (k=2).",
+      "stat": "Spearman",
+      "gap_ci": {
+       "lo": 0.024,
+       "hi": 0.077
+      }
      }
     ],
     "derived_from": {
@@ -4145,7 +4486,11 @@
        "champion": "arms.A1_xhem_plus.ladder.D4.v1.rho_primary",
        "baseline": "arms.A1_xhem_plus.ladder.D4.v1.rho_baseline",
        "resolvable": "arms.A1_xhem_plus.ladder.D4.v1.lo95_gt_0",
-       "verdict": "arms.A1_xhem_plus.verdict_reason"
+       "verdict": "arms.A1_xhem_plus.verdict_reason",
+       "gap_ci": {
+        "lo": "arms.A1_xhem_plus.ladder.D4.v1.gap_ci.lo95",
+        "hi": "arms.A1_xhem_plus.ladder.D4.v1.gap_ci.hi95"
+       }
       }
      ]
     }
