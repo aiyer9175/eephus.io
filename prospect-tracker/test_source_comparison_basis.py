@@ -244,6 +244,58 @@ def test_provisional_track_reads_its_two_artifacts_and_never_pools_them():
     rsc = _fn_code(js, "renderSourceComparison")
     assert "_methProvTrackSection()" in rsc
 
+
+# ---------------------------------------------------------------------------
+# EFV3_A8 label pool panel (EFV3_PLAN.md sections 3 and 6): counts and floors
+# read from the label pool census, never a rho, an AUC or a delta.
+
+_LP_FUNCS = ["_loadLabelPool", "_lpFrameAgg", "_lpFramesTable", "_lpCohortTable",
+             "_lpJoinTable", "_lpFloorChart", "_lpViewsTable", "_methLabelPoolSection"]
+_LP_WHITELIST = {"source", "list_year", "vintage", "side", "debut_cohort", "id_how",
+                 "bust_class", "label_view"}
+
+
+@pytest.mark.parametrize("name", _LP_FUNCS)
+def test_label_pool_panel_carries_no_statistic_literal(name):
+    code = re.sub(r'[\w-]+="[^"$]*"', "", _fn_code(_js(), name))
+    hits = _STAT_LITERAL.findall(code)
+    assert not hits, f"{name} carries a numeric literal that reads as a statistic: {hits}"
+    assert not re.search(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", code), f"{name} types a date"
+
+
+def test_label_pool_panel_reads_only_the_census_and_no_score():
+    js = _js()
+    load = _fn_code(js, "_loadLabelPool")
+    assert 'fetch("/data/efv_label_pool_census.json"' in load
+    code = "\n".join(_fn_code(js, n) for n in _LP_FUNCS)
+    assert code.count("fetch(") == 1, "the label pool panel fetches a second artifact"
+    # No score key is read: the census carries label-to-label faithfulness numbers
+    # (copied rho values), and the panel prints none of them.
+    for key in ("faithfulness", "spearman", ".auc", ".delta", "ci95", "rho"):
+        assert key not in code.lower(), f"the label pool panel reads {key}"
+    # Nothing grouped by a consensus FV level (docs/PROSPECT_ANCHOR_GATE.md).
+    # (the artifact's own name, efv_label_pool_census, is not an FV cell)
+    assert not re.search(r"\bfv\b|_fv|(?<!e)fv_|tier", code, re.I), "the panel names an FV cell"
+    rsc = _fn_code(js, "renderSourceComparison")
+    assert "_methLabelPoolSection()" in rsc
+
+
+def test_label_pool_min_lag_matches_the_backtest():
+    js = _js()
+    m = re.search(r"const _LP_VM_MIN_LAG = (\d+);", js)
+    assert m, "_LP_VM_MIN_LAG not found"
+    src = (ROOT / "source_backtest.py").read_text(encoding="utf-8")
+    py = re.search(r"^MIN_LAG_YEARS = (\d+)", src, re.M)
+    assert py and int(py.group(1)) == int(m.group(1))
+
+
+def test_label_pool_census_strata_stay_on_the_whitelist():
+    p = ROOT / "data" / "efv_label_pool_census.json"
+    if not p.exists():
+        pytest.skip("data/efv_label_pool_census.json absent")
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    assert set(doc.get("strata") or []) <= _LP_WHITELIST
+
 # ---------------------------------------------------------------------------
 # Rendered layer
 

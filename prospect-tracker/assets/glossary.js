@@ -3975,6 +3975,245 @@ function _methProgressSection(bt) {
     ${_progScreenBlock(prog)}`;
 }
 
+// ---- Label pool panel (EFV3_A8; EFV3_PLAN.md sections 3 and 6) --------------
+// The rows the eFV program can be trained and read on, from the label pool
+// census: rows per frame with the outcome-blind identity route, the floor each
+// frame size could resolve, which label views resolve this year and next, and
+// the census stamp (WAR provider, resolved_through). Counts and floors only:
+// no grade is scored here, no rho, AUC or delta prints, nothing is grouped by
+// a consensus FV level, and the reserved frames show their published counts
+// and nothing else. Same lazy idiom as _loadProgress; an absent artifact drops
+// the panel and never the view.
+function _loadLabelPool() {
+  if (_S.labelPool || _S.labelPoolLoading) return;
+  _S.labelPoolLoading = true;
+  const rerender = () => { if (_S.view === "source-comparison") renderSourceComparison(); };
+  fetch("/data/efv_label_pool_census.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _S.labelPool = j || { __error: true }; rerender(); })
+    .catch(() => { _S.labelPool = { __error: true }; rerender(); });
+}
+
+// source_backtest.MIN_LAG_YEARS (test-pinned): a debut cohort enters the
+// vintage-matched frame once this many seasons separate it from the census year.
+const _LP_VM_MIN_LAG = 3;
+const _LP_PROVIDERS = { ewar_v2: "eWAR v2", ewar_merged: "eWAR merged", bwar: "Baseball-Reference WAR", fwar: "FanGraphs WAR" };
+const _LP_ROUTES = [["name_unique", "name, unique"], ["name_side", "side tiebreak"],
+  ["name_recency", "recency tiebreak"], ["ambiguous", "ambiguous"], ["no_candidate", "no candidate"], ["other", "other"]];
+const _LP_RESOLVED = ["name_unique", "name_side", "name_recency"];
+// Row counts the plan names (LANE_A.md section 2); a count the census does not
+// list prints without a caption.
+const _LP_N_CAPTIONS = { 149: "R-VM look 1, both scored sources", 176: "R-VM look 1, consensus present",
+  210: "R-VM look 1 as first registered", 829: "vm2 today", 858: "vm2 rule ceiling",
+  995: "consensus-present rule ceiling", 1179: "vm plus the 2024 cohort", 1266: "vm plus 2025 and 2026 after R-VM",
+  1464: "vm plus Pipeline-only 2011 to 2016 debuts", 1864: "vm rows for a two-hundredths E_refit floor",
+  2667: "R-LV", 5529: "lv_dev plus R-LV after the look" };
+
+function _lpN(v) { return v == null ? "-" : Number(v).toLocaleString("en-US"); }
+function _lpPct(num, den) { return den ? `${(100 * Number(num) / Number(den)).toFixed(1)}%` : "-"; }
+function _lpWar(p) { return _LP_PROVIDERS[p] ? `${_LP_PROVIDERS[p]} (${escapeHtml(p)})` : escapeHtml(String(p || "unknown")); }
+
+// [2011, 2012, 2013, 2016] -> "2011 to 2013, 2016"
+function _lpYears(ys) {
+  const a = (Array.isArray(ys) ? ys : []).map(Number).filter(y => !isNaN(y)).sort((x, y) => x - y);
+  if (!a.length) return "none";
+  const runs = [];
+  let s = a[0], p = a[0];
+  a.slice(1).concat([NaN]).forEach(y => {
+    if (y === p + 1) { p = y; return; }
+    runs.push(s === p ? String(s) : `${s} to ${p}`);
+    s = y; p = y;
+  });
+  return runs.join(", ");
+}
+
+// Sum the census frame rows of the given list vintages.
+function _lpFrameAgg(rows, vintages) {
+  const want = new Set((vintages || []).map(Number));
+  const out = { rows: 0, hit: 0, pit: 0, how: {}, built: true };
+  rows.filter(r => want.has(Number(r.vintage))).forEach(r => {
+    const n = Number(r.rows || 0);
+    out.rows += n;
+    out[r.side] = (out[r.side] || 0) + n;
+    if (r.built === false || !r.id_how) { out.built = false; return; }
+    Object.entries(r.id_how).forEach(([k, v]) => { out.how[k] = (out.how[k] || 0) + Number(v || 0); });
+  });
+  return out;
+}
+
+function _lpFramesTable(c) {
+  const fr = c.frame || {}, rows = Array.isArray(fr.rows) ? fr.rows : [];
+  const routes = _LP_ROUTES.filter(([k]) => k !== "other" || rows.some(r => r.id_how && Number(r.id_how.other || 0) > 0));
+  const res = fr.reserved_copied || {};
+  const lines = [
+    ["lv_dev", "development, spent", (fr.dev_totals || {}).vintages],
+    ["R-LV", "reserved, never built", res.vintages],
+    ["Later list vintages", "W3 not yet resolved", (fr.later_totals || {}).vintages],
+  ].filter(l => Array.isArray(l[2]) && l[2].length).map(([name, role, vs]) => {
+    const a = _lpFrameAgg(rows, vs);
+    const head = `<td>${escapeHtml(name)}<br><span class="meth-sub">${escapeHtml(role)}</span></td><td>${escapeHtml(_lpYears(vs))}</td><td>${_lpN(a.rows)}<br><span class="meth-sub">${_lpN(a.hit)} hit / ${_lpN(a.pit)} pit</span></td>`;
+    if (!a.built) {
+      return `<tr>${head}<td colspan="${routes.length + 1}" class="meth-sub">identity not read: counts copied from ${escapeHtml(res.path || "the program document")} ${escapeHtml(res.section || "")}</td></tr>`;
+    }
+    const ok = _LP_RESOLVED.reduce((t, k) => t + Number(a.how[k] || 0), 0);
+    return `<tr>${head}<td>${_lpN(ok)}<br><span class="meth-sub">${_lpPct(ok, a.rows)}</span></td>${routes.map(([k]) => `<td>${_lpN(a.how[k] || 0)}<br><span class="meth-sub">${_lpPct(a.how[k] || 0, a.rows)}</span></td>`).join("")}</tr>`;
+  }).join("");
+  if (!lines) return "";
+  return `<div class="meth-table-title">List-vintage frames (W3 label): rows and how the outcome-blind resolver found each player</div>
+    <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Frame</th><th>List vintages</th><th>Rows</th><th>Resolved</th>${routes.map(([, l]) => `<th>${escapeHtml(l)}</th>`).join("")}</tr></thead><tbody>${lines}</tbody></table></div>
+    <p class="meth-note">${escapeHtml(fr.rule || "")}. A resolved row gains its pre-list minor league block; an ambiguous or no-candidate row is still scored, without that block.</p>`;
+}
+
+function _lpCohortTable(c) {
+  const dc = c.debut_cohorts || {}, rows = Array.isArray(dc.rows) ? dc.rows : [];
+  if (!rows.length) return "";
+  const asOf = Number(String(c.generated_at || "").slice(0, 4));
+  const inVm = r => !r.reserved_vm && Number(r.fangraphs_and_pipeline_both || 0) > 0
+    && !isNaN(asOf) && asOf - Number(r.debut_cohort) >= _LP_VM_MIN_LAG;
+  const vm = rows.filter(inVm);
+  const sum = k => vm.reduce((t, r) => t + Number(r[k] || 0), 0);
+  const vmYears = _lpYears(vm.map(r => r.debut_cohort));
+  const rvm = rows.filter(r => r.reserved_vm);
+  const body = rows.map(r => {
+    const d = Number(r.debuts || 0);
+    const tag = r.reserved_vm ? ` <span class="sacc-chip-warn">R-VM, counts only</span>` : (inVm(r) ? ` <span class="meth-sub">vm</span>` : "");
+    return `<tr><td>${escapeHtml(String(r.debut_cohort))}${tag}</td><td>${_lpN(d)}</td>
+      <td>${_lpN(r.in_window_consensus_read)}<br><span class="meth-sub">${_lpPct(r.in_window_consensus_read || 0, d)}</span></td>
+      <td>${_lpN(r.fangraphs_and_pipeline_both)}<br><span class="meth-sub">${_lpPct(r.fangraphs_and_pipeline_both || 0, d)}</span></td>
+      <td>${_lpN(r.with_record_id)}<br><span class="meth-sub">${_lpPct(r.with_record_id || 0, d)}</span></td>
+      <td>${_lpN(r.with_career_war_row)}<br><span class="meth-sub">${_lpPct(r.with_career_war_row || 0, d)}</span></td></tr>`;
+  }).join("");
+  const lead = vm.length
+    ? `<p class="meth-window"><strong>Vintage-matched frames, debut cohorts ${escapeHtml(vmYears)}:</strong> the vm2 rule (FanGraphs and MLB Pipeline both graded the player inside the debut year's preseason window) holds at most ${_lpN(sum("fangraphs_and_pipeline_both"))} rows, and the progress ledger above prints the rows vm2 scores. The consensus-present rule (vm3, not built) would hold at most ${_lpN(sum("in_window_consensus_read"))}.${rvm.length ? ` The reserved R-VM cohorts (${escapeHtml(_lpYears(rvm.map(r => r.debut_cohort)))}) print their counts and nothing else.` : ""}</p>` : "";
+  return `${lead}<div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Debut cohort</th><th>Debuts</th><th>Consensus read in window</th><th>FanGraphs and Pipeline both</th><th>Identity: debuts record id</th><th>Label row (career_war)</th></tr></thead><tbody>${body}</tbody></table></div>
+    <p class="meth-note">${escapeHtml(dc.rule || "")}.</p>`;
+}
+
+function _lpJoinTable(c) {
+  const ij = c.identity_join || {}, bp = ij.by_provider || {};
+  const provs = Object.keys(bp);
+  if (!provs.length) return "";
+  const cols = [["debuts_json_id", "debuts record id"], ["override_asset_id", "override asset id"], ["no_id", "in debuts, no id"], ["key_not_in_debuts", "not in debuts"]];
+  const body = provs.map(p => {
+    const x = bp[p] || {}, n = Number(x.rows || 0), ir = x.id_route || {};
+    return `<tr><td>${_lpWar(p)}</td><td>${_lpN(n)}</td>${cols.map(([k]) => `<td>${_lpN(ir[k] || 0)}<br><span class="meth-sub">${_lpPct(ir[k] || 0, n)}</span></td>`).join("")}</tr>`;
+  }).join("");
+  return `<div class="meth-table-title">The label join at the epoch: label rows by provider and identity route</div>
+    <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Provider</th><th>Rows</th>${cols.map(([, l]) => `<th>${escapeHtml(l)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>
+    <p class="meth-note">${escapeHtml(ij.rule || "")}. The FanGraphs WAR feed joins on the MLBAM id, so a label row with no id by any route cannot take the new label at the epoch's join (FWAR_LABEL_EPOCH_GATE.md, precondition E2).</p>`;
+}
+
+// mde95(n) per frame type, drawn from the census: each reference is one measured
+// point (filled), its sqrt-scaled curve is dashed, and the census's own listed
+// row counts sit on the curves as hollow marks. Every number is the artifact's.
+function _lpFloorChart(c) {
+  const fc = c.floor_curve || {}, refs = Array.isArray(fc.references) ? fc.references : [];
+  const z = Number(fc.z95), curve = fc.curve || {};
+  const ns = (Array.isArray(fc.n) ? fc.n : []).map(Number).filter(n => n > 0);
+  if (!refs.length || isNaN(z) || !ns.length) return "";
+  const cols = ["var(--text-cyan)", "var(--text-amber)", "var(--text-violet)"];
+  const dashes = ["6,4", "2,3", "9,3,2,3"];
+  const narrow = (window.innerWidth || 1024) < 600;
+  const W = narrow ? 340 : 580, H = narrow ? 240 : 260, ML = narrow ? 44 : 52, MR = narrow ? 10 : 16, MT = 14, MB = 40;
+  const iW = W - ML - MR, iH = H - MT - MB;
+  const allN = ns.concat(refs.map(r => Number(r.n_ref)).filter(n => n > 0));
+  const lx0 = Math.log10(Math.min(...allN)) - 0.06, lx1 = Math.log10(Math.max(...allN)) + 0.06;
+  const mde = (r, n) => z * Number(r.sd_ref) * Math.sqrt(Number(r.n_ref) / n);
+  const yMax = Math.max(...refs.map(r => mde(r, Math.pow(10, lx0)))) * 1.05;
+  const sx = n => ML + ((Math.log10(n) - lx0) / (lx1 - lx0)) * iW;
+  const sy = v => MT + iH - (v / yMax) * iH;
+  const raw = yMax / 5, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const yStep = [1, 2, 5, 10].map(k => k * mag).find(s => s >= raw) || raw;
+  const dec = Math.max(0, -Math.floor(Math.log10(yStep)));
+  const grid = [];
+  for (let v = 0; v <= yMax + yStep / 1000; v += yStep) {
+    const y = sy(v).toFixed(1);
+    grid.push(`<line x1="${ML}" y1="${y}" x2="${ML + iW}" y2="${y}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,3"/>`,
+      `<text x="${ML - 6}" y="${y}" dy="3" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${v.toFixed(dec)}</text>`);
+  }
+  const xt = [100, 200, 500, 1000, 2000, 5000].filter(n => Math.log10(n) >= lx0 && Math.log10(n) <= lx1).map(n =>
+    `<line x1="${sx(n).toFixed(1)}" y1="${MT}" x2="${sx(n).toFixed(1)}" y2="${MT + iH}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,3"/><text x="${sx(n).toFixed(1)}" y="${MT + iH + 14}" text-anchor="middle" font-size="10" fill="var(--text-secondary)">${_lpN(n)}</text>`).join("");
+  const series = refs.map((r, i) => {
+    const col = cols[i % cols.length], pts = [];
+    for (let k = 0; k <= 60; k++) {
+      const n = Math.pow(10, lx0 + (lx1 - lx0) * k / 60);
+      pts.push(`${sx(n).toFixed(1)},${sy(mde(r, n)).toFixed(1)}`);
+    }
+    const name = `${r.frame_type} ${r.estimator}, ${r.statistic}`;
+    const pv = curve[r.id] || {};
+    const hollow = ns.filter(n => pv[n] != null).map(n =>
+      `<circle cx="${sx(n).toFixed(1)}" cy="${sy(Number(pv[n])).toFixed(1)}" r="3" fill="var(--bg-secondary)" stroke="${col}" stroke-width="1.4"><title>${escapeHtml(name)}: n ${_lpN(n)}${_LP_N_CAPTIONS[n] ? ` (${escapeHtml(_LP_N_CAPTIONS[n])})` : ""}, floor ${Number(pv[n]).toFixed(4)}, scaled from the measured point</title></circle>`).join("");
+    const nr = Number(r.n_ref), my = mde(r, nr);
+    const measured = `<circle cx="${sx(nr).toFixed(1)}" cy="${sy(my).toFixed(1)}" r="5" fill="${col}" stroke="var(--bg-secondary)" stroke-width="1"><title>measured: ${escapeHtml(name)}, n ${_lpN(nr)}${r.n_clusters_ref != null ? ` (${_lpN(r.n_clusters_ref)} players)` : ""}, bootstrap SD ${escapeHtml(String(r.sd_ref))}, floor ${my.toFixed(4)}; source ${escapeHtml(r.path || "")} (${escapeHtml(r.key || "")}), generated ${escapeHtml(String(r.generated_at || "").slice(0, 10))}</title></circle>`;
+    return `<polyline points="${pts.join(" ")}" fill="none" stroke="${col}" stroke-width="1.6" stroke-dasharray="${dashes[i % dashes.length]}"/>${hollow}${measured}`;
+  }).join("");
+  const legend = refs.map((r, i) => `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${cols[i % cols.length]};border-radius:50%;"></span>${escapeHtml(`${r.frame_type} frame, ${r.estimator}, ${r.statistic}`)}: measured at n ${_lpN(r.n_ref)} in ${escapeHtml(r.path || "")}</span>`).join("")
+    + `<span class="meth-legend-key"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="var(--text-secondary)" stroke-width="1.6" stroke-dasharray="4,3"/></svg>scaled by the square root of the row count</span>`
+    + `<span class="meth-legend-key"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3" fill="var(--bg-secondary)" stroke="var(--text-secondary)" stroke-width="1.4"/></svg>a row count the census lists</span>`;
+  const head = refs.map(r => `<th>${escapeHtml(`${r.frame_type} ${r.estimator}, ${r.statistic}`)}</th>`).join("");
+  const body = ns.slice().sort((a, b) => a - b).map(n => `<tr><td>${_lpN(n)}</td><td class="meth-sub">${escapeHtml(_LP_N_CAPTIONS[n] || "")}</td>${refs.map(r => {
+    const v = (curve[r.id] || {})[n];
+    return `<td>${v == null ? "-" : Number(v).toFixed(4)}</td>`;
+  }).join("")}</tr>`).join("");
+  return `<div class="meth-chart">
+    <div class="meth-chart-title">The floor by frame size <span class="meth-sub">${escapeHtml(fc.formula || "")}; paired bootstrap, B 2000, player-clustered, one-sided z ${escapeHtml(String(fc.z95))}</span></div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Smallest resolvable difference by number of rows, per frame type, from the label pool census">
+      ${grid.join("")}${xt}
+      <line x1="${ML}" y1="${MT + iH}" x2="${ML + iW}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
+      <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
+      ${series}
+      <text x="${ML + iW / 2}" y="${H - 6}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)">rows in the frame (log scale)</text>
+    </svg>
+    <div class="meth-legend">${legend}</div>
+    <p class="meth-note">Each curve is the smallest difference between eFV and PROSPX consensus that the registered read could resolve at that many rows of its frame type, not a result: no grade is scored here, a smaller floor is not a lead, and until a registered read clears its floor a difference inside it is a tie. ${escapeHtml(fc.rule || "")}.</p>
+    <details class="scx-label-pool-floors"><summary>The floor at each row count the census lists</summary>
+      <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Rows</th><th>What the count is</th>${head}</tr></thead><tbody>${body}</tbody></table></div>
+      <p class="meth-note">Every value is the smallest difference the registered read could resolve at that n, copied from the census, and not a result.</p>
+    </details>
+  </div>`;
+}
+
+function _lpViewsTable(c) {
+  const lv = c.label_views || {}, rows = Array.isArray(lv.rows) ? lv.rows : [];
+  if (!rows.length) return "";
+  const rt = (c.label || {}).resolved_through;
+  const rt1 = (c.label || {}).resolved_through_plus_1;
+  const cell = x => {
+    if (!x) return "-";
+    const ys = x.vintages || x.debut_cohorts || [];
+    const n = x.rows != null ? `${_lpN(x.rows)} rows` : x.debuts != null ? `${_lpN(x.debuts)} debuts` : "";
+    const resv = (x.reserved_lv_inside || []).length ? ` <span class="sacc-chip-warn">includes R-LV ${escapeHtml(_lpYears(x.reserved_lv_inside))}</span>`
+      : (x.reserved_vm_inside || []).length ? ` <span class="sacc-chip-warn">includes R-VM ${escapeHtml(_lpYears(x.reserved_vm_inside))}</span>` : "";
+    return `${escapeHtml(_lpYears(ys))}<br><span class="meth-sub">${n}</span>${resv}`;
+  };
+  const body = rows.map(r => `<tr><td><strong>${escapeHtml(String(r.label_view || "").replace(/_/g, "-"))}</strong><br><span class="meth-sub">${escapeHtml(r.unit === "vintage" ? "list vintage" : "debut cohort")}</span></td>
+    <td class="meth-sub">${escapeHtml(r.definition || "")}</td><td class="meth-sub">${escapeHtml(r.resolves_when || "")}</td>
+    <td>${cell(r.resolved_at_rt)}</td><td>${cell(r.resolved_at_rt_plus_1)}</td>
+    <td>${cell(r.added_at_rt_plus_1)}</td><td class="meth-sub">${escapeHtml(r.standing || "")}</td></tr>`).join("");
+  return `<div class="meth-table-title">Label views: which vintages and cohorts resolve at resolved_through ${escapeHtml(String(rt))} and ${escapeHtml(String(rt1))}</div>
+    <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Label</th><th>Definition</th><th>Resolves when</th><th>At ${escapeHtml(String(rt))}</th><th>At ${escapeHtml(String(rt1))}</th><th>Added</th><th>Standing</th></tr></thead><tbody>${body}</tbody></table></div>
+    <p class="meth-note">Counts only. A view that resolves more rows is not a better label: W3 scores the list vintages and the six-season label the debut cohorts, the shorter views are hazard components, a timing target or the R-VM look-1 label by design, and no new scoring label is registered. A change of label is never a gain in accuracy (FWAR_LABEL_EPOCH_GATE.md clause (l)).</p>`;
+}
+
+function _methLabelPoolSection() {
+  _loadLabelPool();
+  const c = _S.labelPool;
+  if (!c || c.__error || !c.label) return "";
+  const lb = c.label || {};
+  const when = String(c.generated_at || "").slice(0, 10);
+  const commit = String((c.code || {}).commit || "").slice(0, 8);
+  const stamp = `<p class="meth-window"><strong>Census of ${escapeHtml(when)}:</strong> label WAR from ${_lpWar(lb.provider)}, resolved through ${escapeHtml(String(lb.resolved_through))} <span class="sacc-chip-warn">label ${escapeHtml(String(lb.id || lb.provider || ""))}</span>${commit ? ` <span class="meth-sub">code ${escapeHtml(commit)}</span>` : ""}. ${escapeHtml(c.epoch ? c.epoch.charAt(0).toUpperCase() + c.epoch.slice(1) + "." : "")} This panel counts rows and draws floors; it scores no grade, and a larger pool is not a lead.</p>`;
+  return `<div class="scx-label-pool">
+    <h2 class="meth-h" id="label-pool">The label pool: rows, identity and floors</h2>
+    ${stamp}
+    <div class="meth-chart">${_lpFramesTable(c)}</div>
+    <div class="meth-chart">${_lpCohortTable(c)}</div>
+    ${_lpFloorChart(c)}
+    <div class="meth-chart">${_lpViewsTable(c)}</div>
+    <details class="scx-label-pool-join"><summary>The label join at the epoch</summary><div class="meth-chart">${_lpJoinTable(c)}</div></details>
+  </div>`;
+}
+
 // ---- Provisional track record (PV-08, PROVISIONAL_V2.md section 4) ----------
 // Two tables, never pooled. SERVED: the provisional grade the site served (and the
 // committed freezes of it), scored by provisional_track.py against the first source
@@ -4126,6 +4365,7 @@ function renderSourceComparison() {
     backtestHTML = `
       ${_methHeroBanner(bt)}
       ${_methProgressSection(bt)}
+      ${_methLabelPoolSection()}
       ${_scxGfxBarHTML()}
       <h2 class="meth-h">The full head-to-head</h2>
       <p class="meth-window">eFV is the primary grade, our outcome-grounded model. The test: a leakage-free, forward-chained backtest of eFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} ${_excludedSourcesClause(bt)}</p>
