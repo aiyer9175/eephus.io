@@ -159,7 +159,10 @@ def _age_at(bd: str | None, V: int) -> float:
         return float("nan")
 
 
-def build_rows() -> tuple[list[dict], dict]:
+def build_rows(milb_floor: int | None = None) -> tuple[list[dict], dict]:
+    """`milb_floor` is handed to efv_vintage_frame.build_frame unchanged: None builds
+    the frame as the program reads it; tools/efv_milb_floor_coverage.py passes a floor
+    to re-run the balance on a candidate frame (EFV3_B3) without touching this receipt."""
     universe = F.load_universe()
     war = L.war_seasons_table()
     leaky = _leaky_index()
@@ -169,7 +172,7 @@ def build_rows() -> tuple[list[dict], dict]:
     for V in F.DEV_VINTAGES:
         F.guard_score_request(V, purpose="identity balance")
         for side in F.SIDES:
-            frame = F.build_frame(side, V, universe=universe)
+            frame = F.build_frame(side, V, universe=universe, milb_floor=milb_floor)
             receipt["frame_rows"] += len(frame)
             labs = L.labels_for_frame(frame, universe=universe, war=war)
             for r, lab in zip(frame, labs):

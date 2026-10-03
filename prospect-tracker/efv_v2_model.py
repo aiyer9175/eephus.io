@@ -562,7 +562,11 @@ def lv_model_row(row: dict) -> dict:
               "is_ifa": row.get("is_ifa"), "is_college": row.get("is_college"),
               "il_stints_pre": row.get("il_stints_pre"),
               "il_any_pre": row.get("il_any_pre")})
-    if m["milb"] is None and (int(row["vintage"]) <= 2015 or not row.get("mlbam_id")):
+    # "unavailable" means the cache floor left at most one readable season before V;
+    # the frame records the floor it read at (milb_floor), so the cut slides with it
+    # (2014 floor: V <= 2015, the rule as shipped; MILB_FLOOR_LV 2005: no vintage).
+    floor = int(row.get("milb_floor") or F.D.MILB_FLOOR_DEFAULT)
+    if m["milb"] is None and (int(row["vintage"]) <= floor + 1 or not row.get("mlbam_id")):
         m["milb_unavailable"] = True
     return m
 

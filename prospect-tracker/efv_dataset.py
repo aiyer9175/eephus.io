@@ -942,9 +942,17 @@ def _consecutive_at_level(seasons: list[dict]) -> int:
 
 
 _MILB_FIRST_SEASON = 2015          # StatsAPI MiLB coverage floor for this build
+#: The earliest MiLB season _milb_features walks back to by default. The served v1
+#: matrices, the live board, efv_score, efv_ungraded and efv_proxy all read at this
+#: floor and never pass another; only the list-vintage frame (efv_vintage_frame,
+#: MILB_FLOOR_LV) lifts it, and only for itself. The on-disk cache reaches 2005
+#: (.cache/milb_stats, every sport id), but a lift on the DEBUTED frame measured a
+#: regression on 2026-07-24 (era-distant survivors), so this default stays put.
+MILB_FLOOR_DEFAULT = 2014
 
 
-def _pace_from_entry(seasons: list[dict], final: dict) -> dict:
+def _pace_from_entry(seasons: list[dict], final: dict,
+                     first_season_floor: int = MILB_FLOOR_DEFAULT) -> dict:
     """Rungs climbed per season since the player's OBSERVED entry level.
 
     `seasons` is newest-first, so seasons[-1] is his first observed pro season.
@@ -971,21 +979,36 @@ def _pace_from_entry(seasons: list[dict], final: dict) -> dict:
     if entry_season is not None and cur_season is not None:
         span = int(cur_season) - int(entry_season)
     pace = ((cur_rank - entry_rank) / span) if span > 0 else 0.0
+    # Left-censor guard: an entry at the floor season or the one after it may be a
+    # truncated career, not an entry. At the default floor that is the literal
+    # _MILB_FIRST_SEASON rule (> 2015); a lifted floor slides the same two-season
+    # guard with it (floor 2005: observed from 2007 on).
+    censor_year = _MILB_FIRST_SEASON + (int(first_season_floor) - MILB_FLOOR_DEFAULT)
     observed = 1.0 if (entry_season is not None
-                       and int(entry_season) > _MILB_FIRST_SEASON) else 0.0
+                       and int(entry_season) > censor_year) else 0.0
     return {"entry_level_rank": entry_rank,
             "pace_from_entry": round(pace, 4),
             "entry_observed": observed}
 
 
 def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
-                   annotate: bool = False, cutoff: str | None = None):
+                   annotate: bool = False, cutoff: str | None = None,
+                   first_season_floor: int = MILB_FLOOR_DEFAULT):
     """Translated production from the MiLB ladder strictly before the decision year
     (StatsAPI; season-and-level norms are contemporaneous = leakage-safe). Returns the
     FINAL pre-decision season's rates (the current-state read) PLUS multi-season PEAK
     production + season count (a fuller read than one snapshot -- a player who posted an
     elite K-BB% two levels ago carries that signal). Mirrors prospect_path._features +
     a clean age-rel-level.
+
+    first_season_floor is the earliest season the walk reaches (inclusive). At the
+    default (MILB_FLOOR_DEFAULT, 2014) the walk and every read it makes are the ones
+    the served matrices were built with. A lower floor (the list-vintage frame passes
+    efv_vintage_frame.MILB_FLOOR_LV) reads the 2005 to 2013 cache files from disk only:
+    those seasons are never fetched, and a season with no file simply adds no row. The
+    era enters a pre-2014 season the same way every season enters: through
+    _resolved_norms(season, level), the contemporaneous level-season norm. No era
+    indicator is emitted.
 
     annotate=True (LIVE builds only) additionally surfaces the S-XLINE measurement
     annotation for the FINAL season row as base["xline_note"] (what the Statcast
@@ -1016,9 +1039,14 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
             first_season = min(first_season, _cy if _cm >= 10 else _cy - 1)
         except (ValueError, IndexError):
             pass
-    for season in range(first_season, 2013, -1):
-        rows = [r for r in (mh.player_index(season, group).get(int(mlbam)) or [])
-                if r.get("level") != "MLB"]
+    floor = int(first_season_floor)
+    for season in range(first_season, floor - 1, -1):
+        if season >= MILB_FLOOR_DEFAULT:
+            idx = mh.player_index(season, group)
+        else:
+            # below the default floor: cache-only, never a network call
+            idx = mh.player_index(season, group, fetch=False)
+        rows = [r for r in (idx.get(int(mlbam)) or []) if r.get("level") != "MLB"]
         if not rows:
             continue
         # PRIMARY level = the highest level where the player got meaningful exposure that
@@ -1157,7 +1185,7 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
         # Emitted UNCONDITIONALLY: _fit_lgbm_mono indexes feats[k] with no
         # default, so a feature that appears only sometimes crashes the eval.
         # These enter no model until a gate says so (efv_model.PACE_FROM_ENTRY).
-        **_pace_from_entry(seasons, final),
+        **_pace_from_entry(seasons, final, floor),
     }
     keep = ("k_rel", "bb_rel", "era_rel", "rates_missing") if side == "pit" \
         else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "ops_rel", "sb_rate_rel",

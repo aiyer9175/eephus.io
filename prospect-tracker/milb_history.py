@@ -202,9 +202,19 @@ def _f(v) -> float | None:
         return None
 
 
+#: Seasons before this one are read from the cache files only (.cache/milb_stats holds
+#: 2005 to 2013 for every sport id); player_index never fetches them whatever the caller
+#: passes, and a season with no file is simply empty. warm_cache is the one deliberate
+#: writer of those files.
+FETCH_FLOOR_SEASON = 2014
+
+
 @lru_cache(maxsize=64)
 def player_index(season: int, group: str, fetch: bool = True) -> dict[int, list[dict]]:
-    """{mlbam: [season rows across the ladder]} for one season+group."""
+    """{mlbam: [season rows across the ladder]} for one season+group. A season before
+    FETCH_FLOOR_SEASON is cache-only: no file, no rows, no network call."""
+    if int(season) < FETCH_FLOOR_SEASON:
+        fetch = False
     out: dict[int, list[dict]] = {}
     for sport in ALL_SPORTS:
         for r in season_splits(sport, season, group, fetch=fetch):

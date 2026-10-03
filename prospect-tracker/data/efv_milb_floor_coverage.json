@@ -1,0 +1,1542 @@
+{
+ "generated_at": "2026-10-03T01:07:36+00:00",
+ "produced_by": "tools/efv_milb_floor_coverage.py",
+ "role": "development",
+ "adjudicates": "nothing; a coverage receipt and the DS-03 balance re-run the lift is pre-registered against",
+ "what": "F-LV MiLB block coverage at efv_dataset.MILB_FLOOR_DEFAULT and at efv_vintage_frame.MILB_FLOOR_LV, by (side, vintage), and the floor each side reads at",
+ "floors": {
+  "default": 2014,
+  "lifted_lv": 2005,
+  "withheld_sides": [
+   "pit"
+  ],
+  "floor_by_side": {
+   "hit": 2005,
+   "pit": 2014
+  },
+  "fetch_floor_season": 2014,
+  "entry_observed_rule": "entry season after the floor season and the one following it (the shipped guard, slid with the floor)"
+ },
+ "guards": {
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "r_vm_first_debut_year": 2025,
+  "vintages_read": [
+   2011,
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019
+  ],
+  "reserved_vm_pins": []
+ },
+ "code": {
+  "commit": "9166ab8cc6fba24fe3a80fbee0413ca020ec8ced"
+ },
+ "by_vintage": {
+  "hit": {
+   "2011": {
+    "rows": 69,
+    "with_milb_block": {
+     "default_floor": 0,
+     "lifted_floor": 63,
+     "gained": 63
+    },
+    "n_milb_seasons": {
+     "default_floor": {},
+     "lifted_floor": {
+      "1": 24,
+      "2": 17,
+      "3": 12,
+      "4": 6,
+      "5": 4
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": null,
+     "lifted_floor": 0.9365
+    },
+    "latest_block_season": 2010,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 63,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2012": {
+    "rows": 189,
+    "with_milb_block": {
+     "default_floor": 0,
+     "lifted_floor": 169,
+     "gained": 169
+    },
+    "n_milb_seasons": {
+     "default_floor": {},
+     "lifted_floor": {
+      "1": 40,
+      "2": 66,
+      "3": 32,
+      "4": 20,
+      "5": 8,
+      "6": 3
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": null,
+     "lifted_floor": 0.9822
+    },
+    "latest_block_season": 2011,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 169,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2013": {
+    "rows": 268,
+    "with_milb_block": {
+     "default_floor": 0,
+     "lifted_floor": 250,
+     "gained": 250
+    },
+    "n_milb_seasons": {
+     "default_floor": {},
+     "lifted_floor": {
+      "1": 72,
+      "2": 53,
+      "3": 57,
+      "4": 40,
+      "5": 21,
+      "6": 5,
+      "7": 2
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": null,
+     "lifted_floor": 0.992
+    },
+    "latest_block_season": 2012,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 250,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2014": {
+    "rows": 260,
+    "with_milb_block": {
+     "default_floor": 0,
+     "lifted_floor": 240,
+     "gained": 240
+    },
+    "n_milb_seasons": {
+     "default_floor": {},
+     "lifted_floor": {
+      "1": 52,
+      "2": 79,
+      "3": 42,
+      "4": 36,
+      "5": 25,
+      "6": 5,
+      "7": 1
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": null,
+     "lifted_floor": 1.0
+    },
+    "latest_block_season": 2013,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 240,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2015": {
+    "rows": 397,
+    "with_milb_block": {
+     "default_floor": 365,
+     "lifted_floor": 367,
+     "gained": 2
+    },
+    "n_milb_seasons": {
+     "default_floor": {
+      "1": 365
+     },
+     "lifted_floor": {
+      "1": 81,
+      "2": 93,
+      "3": 104,
+      "4": 37,
+      "5": 38,
+      "6": 12,
+      "7": 2
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": 0.0,
+     "lifted_floor": 1.0
+    },
+    "latest_block_season": 2014,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 2,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2016": {
+    "rows": 405,
+    "with_milb_block": {
+     "default_floor": 363,
+     "lifted_floor": 364,
+     "gained": 1
+    },
+    "n_milb_seasons": {
+     "default_floor": {
+      "1": 86,
+      "2": 277
+     },
+     "lifted_floor": {
+      "1": 84,
+      "2": 82,
+      "3": 96,
+      "4": 66,
+      "5": 18,
+      "6": 11,
+      "7": 6,
+      "8": 1
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": 0.0,
+     "lifted_floor": 1.0
+    },
+    "latest_block_season": 2015,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 1,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2017": {
+    "rows": 472,
+    "with_milb_block": {
+     "default_floor": 416,
+     "lifted_floor": 416,
+     "gained": 0
+    },
+    "n_milb_seasons": {
+     "default_floor": {
+      "1": 107,
+      "2": 88,
+      "3": 221
+     },
+     "lifted_floor": {
+      "1": 106,
+      "2": 87,
+      "3": 77,
+      "4": 78,
+      "5": 37,
+      "6": 14,
+      "7": 10,
+      "8": 4,
+      "9": 3
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": 0.2524,
+     "lifted_floor": 1.0
+    },
+    "latest_block_season": 2016,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 0,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2018": {
+    "rows": 450,
+    "with_milb_block": {
+     "default_floor": 390,
+     "lifted_floor": 391,
+     "gained": 1
+    },
+    "n_milb_seasons": {
+     "default_floor": {
+      "1": 88,
+      "2": 100,
+      "3": 69,
+      "4": 133
+     },
+     "lifted_floor": {
+      "1": 89,
+      "2": 100,
+      "3": 68,
+      "4": 53,
+      "5": 47,
+      "6": 20,
+      "7": 8,
+      "8": 4,
+      "9": 1,
+      "10": 1
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": 0.4821,
+     "lifted_floor": 0.9974
+    },
+    "latest_block_season": 2017,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 1,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2019": {
+    "rows": 543,
+    "with_milb_block": {
+     "default_floor": 465,
+     "lifted_floor": 465,
+     "gained": 0
+    },
+    "n_milb_seasons": {
+     "default_floor": {
+      "1": 137,
+      "2": 95,
+      "3": 108,
+      "4": 59,
+      "5": 66
+     },
+     "lifted_floor": {
+      "1": 137,
+      "2": 95,
+      "3": 108,
+      "4": 59,
+      "5": 34,
+      "6": 19,
+      "7": 6,
+      "8": 6,
+      "9": 1
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": 0.729,
+     "lifted_floor": 1.0
+    },
+    "latest_block_season": 2018,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 0,
+    "milb_floor_keys": [
+     2005
+    ]
+   }
+  },
+  "pit": {
+   "2011": {
+    "rows": 58,
+    "with_milb_block": {
+     "default_floor": 0,
+     "lifted_floor": 47,
+     "gained": 47
+    },
+    "n_milb_seasons": {
+     "default_floor": {},
+     "lifted_floor": {
+      "1": 19,
+      "2": 9,
+      "3": 11,
+      "4": 5,
+      "5": 3
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": null,
+     "lifted_floor": 0.8936
+    },
+    "latest_block_season": 2010,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 47,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2012": {
+    "rows": 170,
+    "with_milb_block": {
+     "default_floor": 0,
+     "lifted_floor": 141,
+     "gained": 141
+    },
+    "n_milb_seasons": {
+     "default_floor": {},
+     "lifted_floor": {
+      "1": 46,
+      "2": 36,
+      "3": 26,
+      "4": 24,
+      "5": 7,
+      "6": 2
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": null,
+     "lifted_floor": 0.9716
+    },
+    "latest_block_season": 2011,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 141,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2013": {
+    "rows": 246,
+    "with_milb_block": {
+     "default_floor": 0,
+     "lifted_floor": 227,
+     "gained": 227
+    },
+    "n_milb_seasons": {
+     "default_floor": {},
+     "lifted_floor": {
+      "1": 74,
+      "2": 60,
+      "3": 37,
+      "4": 25,
+      "5": 22,
+      "6": 7,
+      "7": 2
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": null,
+     "lifted_floor": 0.9868
+    },
+    "latest_block_season": 2012,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 227,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2014": {
+    "rows": 245,
+    "with_milb_block": {
+     "default_floor": 0,
+     "lifted_floor": 223,
+     "gained": 223
+    },
+    "n_milb_seasons": {
+     "default_floor": {},
+     "lifted_floor": {
+      "1": 58,
+      "2": 78,
+      "3": 48,
+      "4": 25,
+      "5": 10,
+      "6": 4
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": null,
+     "lifted_floor": 1.0
+    },
+    "latest_block_season": 2013,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 223,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2015": {
+    "rows": 388,
+    "with_milb_block": {
+     "default_floor": 344,
+     "lifted_floor": 352,
+     "gained": 8
+    },
+    "n_milb_seasons": {
+     "default_floor": {
+      "1": 344
+     },
+     "lifted_floor": {
+      "1": 90,
+      "2": 83,
+      "3": 90,
+      "4": 47,
+      "5": 27,
+      "6": 11,
+      "7": 2,
+      "8": 1,
+      "9": 1
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": 0.0,
+     "lifted_floor": 0.9972
+    },
+    "latest_block_season": 2014,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 8,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2016": {
+    "rows": 405,
+    "with_milb_block": {
+     "default_floor": 364,
+     "lifted_floor": 365,
+     "gained": 1
+    },
+    "n_milb_seasons": {
+     "default_floor": {
+      "1": 99,
+      "2": 265
+     },
+     "lifted_floor": {
+      "1": 81,
+      "2": 95,
+      "3": 73,
+      "4": 62,
+      "5": 36,
+      "6": 15,
+      "7": 3
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": 0.0,
+     "lifted_floor": 1.0
+    },
+    "latest_block_season": 2015,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 1,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2017": {
+    "rows": 469,
+    "with_milb_block": {
+     "default_floor": 416,
+     "lifted_floor": 417,
+     "gained": 1
+    },
+    "n_milb_seasons": {
+     "default_floor": {
+      "1": 80,
+      "2": 103,
+      "3": 233
+     },
+     "lifted_floor": {
+      "1": 79,
+      "2": 89,
+      "3": 92,
+      "4": 65,
+      "5": 47,
+      "6": 26,
+      "7": 15,
+      "8": 4
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": 0.1875,
+     "lifted_floor": 0.9976
+    },
+    "latest_block_season": 2016,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 1,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2018": {
+    "rows": 439,
+    "with_milb_block": {
+     "default_floor": 390,
+     "lifted_floor": 390,
+     "gained": 0
+    },
+    "n_milb_seasons": {
+     "default_floor": {
+      "1": 73,
+      "2": 103,
+      "3": 89,
+      "4": 125
+     },
+     "lifted_floor": {
+      "1": 73,
+      "2": 100,
+      "3": 75,
+      "4": 68,
+      "5": 41,
+      "6": 17,
+      "7": 11,
+      "8": 5
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": 0.4282,
+     "lifted_floor": 1.0
+    },
+    "latest_block_season": 2017,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 0,
+    "milb_floor_keys": [
+     2005
+    ]
+   },
+   "2019": {
+    "rows": 489,
+    "with_milb_block": {
+     "default_floor": 425,
+     "lifted_floor": 425,
+     "gained": 0
+    },
+    "n_milb_seasons": {
+     "default_floor": {
+      "1": 81,
+      "2": 111,
+      "3": 100,
+      "4": 71,
+      "5": 62
+     },
+     "lifted_floor": {
+      "1": 81,
+      "2": 111,
+      "3": 97,
+      "4": 65,
+      "5": 46,
+      "6": 15,
+      "7": 8,
+      "8": 1,
+      "9": 1
+     }
+    },
+    "entry_observed_share": {
+     "default_floor": 0.6612,
+     "lifted_floor": 1.0
+    },
+    "latest_block_season": 2018,
+    "block_season_before_v": true,
+    "final_season_before_default_floor": 0,
+    "milb_floor_keys": [
+     2005
+    ]
+   }
+  }
+ },
+ "as_built": {
+  "hit": {
+   "floor": 2005,
+   "with_milb_block_by_vintage": {
+    "2011": 63,
+    "2012": 169,
+    "2013": 250,
+    "2014": 240,
+    "2015": 367,
+    "2016": 364,
+    "2017": 416,
+    "2018": 391,
+    "2019": 465
+   },
+   "row_floor_keys": [
+    2005
+   ]
+  },
+  "pit": {
+   "floor": 2014,
+   "with_milb_block_by_vintage": {
+    "2011": 0,
+    "2012": 0,
+    "2013": 0,
+    "2014": 0,
+    "2015": 344,
+    "2016": 364,
+    "2017": 416,
+    "2018": 390,
+    "2019": 425
+   },
+   "row_floor_keys": [
+    2014
+   ]
+  }
+ },
+ "totals": {
+  "hit": {
+   "rows": 3053,
+   "with_milb_block_default": 1999,
+   "with_milb_block_lifted": 2725,
+   "with_milb_block_as_built": 2725,
+   "every_block_season_before_v": true
+  },
+  "pit": {
+   "rows": 2909,
+   "with_milb_block_default": 1939,
+   "with_milb_block_lifted": 2587,
+   "with_milb_block_as_built": 1939,
+   "every_block_season_before_v": true
+  }
+ },
+ "norms": {
+  "rule": "efv_dataset._resolved_norms(season, level): contemporaneous level-season median, else the prior season's, else the static per-group prior; no era indicator is emitted",
+  "counts": {
+   "hitting": {
+    "contemporaneous": 24,
+    "prior_season": 0,
+    "static_prior": 0
+   },
+   "pitching": {
+    "contemporaneous": 24,
+    "prior_season": 0,
+    "static_prior": 0
+   }
+  },
+  "by_season_level": {
+   "hitting": {
+    "2005:AAA": {
+     "source": "contemporaneous",
+     "n": 664
+    },
+    "2009:A": {
+     "source": "contemporaneous",
+     "n": 761
+    },
+    "2010:A": {
+     "source": "contemporaneous",
+     "n": 741
+    },
+    "2010:A+": {
+     "source": "contemporaneous",
+     "n": 477
+    },
+    "2010:AA": {
+     "source": "contemporaneous",
+     "n": 471
+    },
+    "2010:AAA": {
+     "source": "contemporaneous",
+     "n": 672
+    },
+    "2010:CPX": {
+     "source": "contemporaneous",
+     "n": 506
+    },
+    "2011:A": {
+     "source": "contemporaneous",
+     "n": 743
+    },
+    "2011:A+": {
+     "source": "contemporaneous",
+     "n": 459
+    },
+    "2011:AA": {
+     "source": "contemporaneous",
+     "n": 467
+    },
+    "2011:AAA": {
+     "source": "contemporaneous",
+     "n": 684
+    },
+    "2011:CPX": {
+     "source": "contemporaneous",
+     "n": 521
+    },
+    "2011:DSL": {
+     "source": "contemporaneous",
+     "n": 464
+    },
+    "2012:A": {
+     "source": "contemporaneous",
+     "n": 731
+    },
+    "2012:A+": {
+     "source": "contemporaneous",
+     "n": 466
+    },
+    "2012:AA": {
+     "source": "contemporaneous",
+     "n": 481
+    },
+    "2012:AAA": {
+     "source": "contemporaneous",
+     "n": 703
+    },
+    "2012:CPX": {
+     "source": "contemporaneous",
+     "n": 514
+    },
+    "2013:A": {
+     "source": "contemporaneous",
+     "n": 736
+    },
+    "2013:A+": {
+     "source": "contemporaneous",
+     "n": 461
+    },
+    "2013:AA": {
+     "source": "contemporaneous",
+     "n": 459
+    },
+    "2013:AAA": {
+     "source": "contemporaneous",
+     "n": 704
+    },
+    "2013:CPX": {
+     "source": "contemporaneous",
+     "n": 539
+    },
+    "2013:DSL": {
+     "source": "contemporaneous",
+     "n": 475
+    }
+   },
+   "pitching": {
+    "2009:A+": {
+     "source": "contemporaneous",
+     "n": 479
+    },
+    "2010:A": {
+     "source": "contemporaneous",
+     "n": 775
+    },
+    "2010:A+": {
+     "source": "contemporaneous",
+     "n": 489
+    },
+    "2010:AA": {
+     "source": "contemporaneous",
+     "n": 503
+    },
+    "2010:AAA": {
+     "source": "contemporaneous",
+     "n": 745
+    },
+    "2010:CPX": {
+     "source": "contemporaneous",
+     "n": 476
+    },
+    "2010:DSL": {
+     "source": "contemporaneous",
+     "n": 477
+    },
+    "2011:A": {
+     "source": "contemporaneous",
+     "n": 787
+    },
+    "2011:A+": {
+     "source": "contemporaneous",
+     "n": 483
+    },
+    "2011:AA": {
+     "source": "contemporaneous",
+     "n": 493
+    },
+    "2011:AAA": {
+     "source": "contemporaneous",
+     "n": 715
+    },
+    "2011:CPX": {
+     "source": "contemporaneous",
+     "n": 518
+    },
+    "2012:A": {
+     "source": "contemporaneous",
+     "n": 796
+    },
+    "2012:A+": {
+     "source": "contemporaneous",
+     "n": 500
+    },
+    "2012:AA": {
+     "source": "contemporaneous",
+     "n": 495
+    },
+    "2012:AAA": {
+     "source": "contemporaneous",
+     "n": 748
+    },
+    "2012:CPX": {
+     "source": "contemporaneous",
+     "n": 489
+    },
+    "2012:DSL": {
+     "source": "contemporaneous",
+     "n": 478
+    },
+    "2013:A": {
+     "source": "contemporaneous",
+     "n": 781
+    },
+    "2013:A+": {
+     "source": "contemporaneous",
+     "n": 509
+    },
+    "2013:AA": {
+     "source": "contemporaneous",
+     "n": 511
+    },
+    "2013:AAA": {
+     "source": "contemporaneous",
+     "n": 748
+    },
+    "2013:CPX": {
+     "source": "contemporaneous",
+     "n": 512
+    },
+    "2013:DSL": {
+     "source": "contemporaneous",
+     "n": 492
+    }
+   }
+  }
+ },
+ "ds03_rerun": {
+  "tool": "tools/efv_identity_balance.py build_rows(milb_floor) + balance",
+  "label": {
+   "provider": "ewar_v2",
+   "resolved_through": 2025
+  },
+  "seed": 20260925,
+  "B": 500,
+  "indicators": {
+   "id_unresolved": "no outcome-blind id (efv_identity)",
+   "milb_absent": "no MiLB block on the outcome-blind id (the V2 absence flag)",
+   "level_prev_missing": "no minor league line in V - 1 on the outcome-blind id",
+   "age_prev_missing": "no minor league age in V - 1 on the outcome-blind id",
+   "acq_unknown_at_v": "acquisition record not known before V",
+   "record_id_missing": "the record's own stored id is absent (the leak B4 names)",
+   "record_birth_missing": "the record's stored birth date is absent",
+   "leaky_level_missing": "no V - 1 level under the leaky counterfactual resolver"
+  },
+  "withhold_indicators": [
+   "milb_absent",
+   "level_prev_missing"
+  ],
+  "rule": "a side is withheld when milb_absent or level_prev_missing is BALANCED at the default floor and not at the lifted floor",
+  "runs": {
+   "default_floor": {
+    "floor": 2014,
+    "rows": {
+     "frame_rows": 5962,
+     "no_consensus": 0,
+     "label_none": 0,
+     "dropped_rvm_players": 26,
+     "by_how": {
+      "name_unique": 5391,
+      "ambiguous": 409,
+      "no_candidate": 130
+     },
+     "rows_scored": 5930
+    },
+    "balance": {
+     "hit": {
+      "id_unresolved": {
+       "n": 3036,
+       "n_with": 296,
+       "n_without": 2740,
+       "w3_pos_share_with": 0.2095,
+       "w3_pos_share_without": 0.2672,
+       "w3_pos_gap": -0.0577,
+       "r3_share_with": 0.277,
+       "r3_share_without": 0.4409,
+       "partial": -0.038,
+       "ci95": [
+        -0.0994,
+        0.0391
+       ],
+       "B_used": 500,
+       "verdict": "BALANCED"
+      },
+      "milb_absent": {
+       "n": 3036,
+       "n_with": 1051,
+       "n_without": 1985,
+       "w3_pos_share_with": 0.3159,
+       "w3_pos_share_without": 0.2327,
+       "w3_pos_gap": 0.0831,
+       "r3_share_with": 0.4672,
+       "r3_share_without": 0.4025,
+       "partial": -0.0113,
+       "ci95": [
+        -0.082,
+        0.0503
+       ],
+       "B_used": 500,
+       "verdict": "BALANCED"
+      },
+      "level_prev_missing": {
+       "n": 3036,
+       "n_with": 341,
+       "n_without": 2695,
+       "w3_pos_share_with": 0.2082,
+       "w3_pos_share_without": 0.2683,
+       "w3_pos_gap": -0.0601,
+       "r3_share_with": 0.2727,
+       "r3_share_without": 0.4442,
+       "partial": -0.0396,
+       "ci95": [
+        -0.1082,
+        0.0214
+       ],
+       "B_used": 500,
+       "verdict": "BALANCED"
+      },
+      "age_prev_missing": {
+       "n": 3036,
+       "n_with": 341,
+       "n_without": 2695,
+       "w3_pos_share_with": 0.2082,
+       "w3_pos_share_without": 0.2683,
+       "w3_pos_gap": -0.0601,
+       "r3_share_with": 0.2727,
+       "r3_share_without": 0.4442,
+       "partial": -0.0396,
+       "ci95": [
+        -0.1019,
+        0.0168
+       ],
+       "B_used": 500,
+       "verdict": "BALANCED"
+      },
+      "acq_unknown_at_v": {
+       "n": 3036,
+       "n_with": 1458,
+       "n_without": 1578,
+       "w3_pos_share_with": 0.2236,
+       "w3_pos_share_without": 0.2966,
+       "w3_pos_gap": -0.073,
+       "r3_share_with": 0.3567,
+       "r3_share_without": 0.488,
+       "partial": -0.126,
+       "ci95": [
+        -0.1716,
+        -0.0798
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "record_id_missing": {
+       "n": 3036,
+       "n_with": 1399,
+       "n_without": 1637,
+       "w3_pos_share_with": 0.223,
+       "w3_pos_share_without": 0.2944,
+       "w3_pos_gap": -0.0714,
+       "r3_share_with": 0.3524,
+       "r3_share_without": 0.4869,
+       "partial": -0.1249,
+       "ci95": [
+        -0.1664,
+        -0.0812
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "record_birth_missing": {
+       "n": 3036,
+       "n_with": 1411,
+       "n_without": 1625,
+       "w3_pos_share_with": 0.2268,
+       "w3_pos_share_without": 0.2917,
+       "w3_pos_gap": -0.0649,
+       "r3_share_with": 0.3586,
+       "r3_share_without": 0.4825,
+       "partial": -0.1205,
+       "ci95": [
+        -0.1663,
+        -0.0795
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "leaky_level_missing": {
+       "n": 3036,
+       "n_with": 608,
+       "n_without": 2428,
+       "w3_pos_share_with": 0.0345,
+       "w3_pos_share_without": 0.3184,
+       "w3_pos_gap": -0.2838,
+       "r3_share_with": 0.0411,
+       "r3_share_without": 0.521,
+       "partial": -0.2443,
+       "ci95": [
+        -0.2771,
+        -0.2074
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      }
+     },
+     "pit": {
+      "id_unresolved": {
+       "n": 2894,
+       "n_with": 243,
+       "n_without": 2651,
+       "w3_pos_share_with": 0.1605,
+       "w3_pos_share_without": 0.2931,
+       "w3_pos_gap": -0.1326,
+       "r3_share_with": 0.3292,
+       "r3_share_without": 0.424,
+       "partial": -0.1131,
+       "ci95": [
+        -0.1829,
+        -0.0433
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "milb_absent": {
+       "n": 2894,
+       "n_with": 968,
+       "n_without": 1926,
+       "w3_pos_share_with": 0.3481,
+       "w3_pos_share_without": 0.2487,
+       "w3_pos_gap": 0.0994,
+       "r3_share_with": 0.4866,
+       "r3_share_without": 0.3806,
+       "partial": -0.0604,
+       "ci95": [
+        -0.1314,
+        0.0086
+       ],
+       "B_used": 500,
+       "verdict": "BALANCED"
+      },
+      "level_prev_missing": {
+       "n": 2894,
+       "n_with": 368,
+       "n_without": 2526,
+       "w3_pos_share_with": 0.212,
+       "w3_pos_share_without": 0.2922,
+       "w3_pos_gap": -0.0802,
+       "r3_share_with": 0.3451,
+       "r3_share_without": 0.4264,
+       "partial": -0.0838,
+       "ci95": [
+        -0.136,
+        -0.0215
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "age_prev_missing": {
+       "n": 2894,
+       "n_with": 368,
+       "n_without": 2526,
+       "w3_pos_share_with": 0.212,
+       "w3_pos_share_without": 0.2922,
+       "w3_pos_gap": -0.0802,
+       "r3_share_with": 0.3451,
+       "r3_share_without": 0.4264,
+       "partial": -0.0838,
+       "ci95": [
+        -0.1397,
+        -0.0174
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "acq_unknown_at_v": {
+       "n": 2894,
+       "n_with": 1720,
+       "n_without": 1174,
+       "w3_pos_share_with": 0.2169,
+       "w3_pos_share_without": 0.3773,
+       "w3_pos_gap": -0.1605,
+       "r3_share_with": 0.3017,
+       "r3_share_without": 0.5835,
+       "partial": -0.2244,
+       "ci95": [
+        -0.2728,
+        -0.181
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "record_id_missing": {
+       "n": 2894,
+       "n_with": 1656,
+       "n_without": 1238,
+       "w3_pos_share_with": 0.218,
+       "w3_pos_share_without": 0.3675,
+       "w3_pos_gap": -0.1495,
+       "r3_share_with": 0.2947,
+       "r3_share_without": 0.5784,
+       "partial": -0.1955,
+       "ci95": [
+        -0.2433,
+        -0.1479
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "record_birth_missing": {
+       "n": 2894,
+       "n_with": 1656,
+       "n_without": 1238,
+       "w3_pos_share_with": 0.2192,
+       "w3_pos_share_without": 0.3659,
+       "w3_pos_gap": -0.1467,
+       "r3_share_with": 0.2959,
+       "r3_share_without": 0.5767,
+       "partial": -0.1916,
+       "ci95": [
+        -0.2352,
+        -0.1431
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "leaky_level_missing": {
+       "n": 2894,
+       "n_with": 810,
+       "n_without": 2084,
+       "w3_pos_share_with": 0.0642,
+       "w3_pos_share_without": 0.3666,
+       "w3_pos_gap": -0.3024,
+       "r3_share_with": 0.0864,
+       "r3_share_without": 0.5441,
+       "partial": -0.2641,
+       "ci95": [
+        -0.3015,
+        -0.225
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      }
+     }
+    }
+   },
+   "lifted_floor": {
+    "floor": 2005,
+    "rows": {
+     "frame_rows": 5962,
+     "no_consensus": 0,
+     "label_none": 0,
+     "dropped_rvm_players": 26,
+     "by_how": {
+      "name_unique": 5391,
+      "ambiguous": 409,
+      "no_candidate": 130
+     },
+     "rows_scored": 5930
+    },
+    "balance": {
+     "hit": {
+      "id_unresolved": {
+       "n": 3036,
+       "n_with": 296,
+       "n_without": 2740,
+       "w3_pos_share_with": 0.2095,
+       "w3_pos_share_without": 0.2672,
+       "w3_pos_gap": -0.0577,
+       "r3_share_with": 0.277,
+       "r3_share_without": 0.4409,
+       "partial": -0.038,
+       "ci95": [
+        -0.0994,
+        0.0391
+       ],
+       "B_used": 500,
+       "verdict": "BALANCED"
+      },
+      "milb_absent": {
+       "n": 3036,
+       "n_with": 326,
+       "n_without": 2710,
+       "w3_pos_share_with": 0.2025,
+       "w3_pos_share_without": 0.2686,
+       "w3_pos_gap": -0.0662,
+       "r3_share_with": 0.2638,
+       "r3_share_without": 0.4443,
+       "partial": -0.0441,
+       "ci95": [
+        -0.1097,
+        0.0158
+       ],
+       "B_used": 500,
+       "verdict": "BALANCED"
+      },
+      "level_prev_missing": {
+       "n": 3036,
+       "n_with": 341,
+       "n_without": 2695,
+       "w3_pos_share_with": 0.2082,
+       "w3_pos_share_without": 0.2683,
+       "w3_pos_gap": -0.0601,
+       "r3_share_with": 0.2727,
+       "r3_share_without": 0.4442,
+       "partial": -0.0396,
+       "ci95": [
+        -0.1082,
+        0.0214
+       ],
+       "B_used": 500,
+       "verdict": "BALANCED"
+      },
+      "age_prev_missing": {
+       "n": 3036,
+       "n_with": 341,
+       "n_without": 2695,
+       "w3_pos_share_with": 0.2082,
+       "w3_pos_share_without": 0.2683,
+       "w3_pos_gap": -0.0601,
+       "r3_share_with": 0.2727,
+       "r3_share_without": 0.4442,
+       "partial": -0.0396,
+       "ci95": [
+        -0.1019,
+        0.0168
+       ],
+       "B_used": 500,
+       "verdict": "BALANCED"
+      },
+      "acq_unknown_at_v": {
+       "n": 3036,
+       "n_with": 1458,
+       "n_without": 1578,
+       "w3_pos_share_with": 0.2236,
+       "w3_pos_share_without": 0.2966,
+       "w3_pos_gap": -0.073,
+       "r3_share_with": 0.3567,
+       "r3_share_without": 0.488,
+       "partial": -0.126,
+       "ci95": [
+        -0.1716,
+        -0.0798
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "record_id_missing": {
+       "n": 3036,
+       "n_with": 1399,
+       "n_without": 1637,
+       "w3_pos_share_with": 0.223,
+       "w3_pos_share_without": 0.2944,
+       "w3_pos_gap": -0.0714,
+       "r3_share_with": 0.3524,
+       "r3_share_without": 0.4869,
+       "partial": -0.1249,
+       "ci95": [
+        -0.1664,
+        -0.0812
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "record_birth_missing": {
+       "n": 3036,
+       "n_with": 1411,
+       "n_without": 1625,
+       "w3_pos_share_with": 0.2268,
+       "w3_pos_share_without": 0.2917,
+       "w3_pos_gap": -0.0649,
+       "r3_share_with": 0.3586,
+       "r3_share_without": 0.4825,
+       "partial": -0.1205,
+       "ci95": [
+        -0.1663,
+        -0.0795
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "leaky_level_missing": {
+       "n": 3036,
+       "n_with": 608,
+       "n_without": 2428,
+       "w3_pos_share_with": 0.0345,
+       "w3_pos_share_without": 0.3184,
+       "w3_pos_gap": -0.2838,
+       "r3_share_with": 0.0411,
+       "r3_share_without": 0.521,
+       "partial": -0.2443,
+       "ci95": [
+        -0.2771,
+        -0.2074
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      }
+     },
+     "pit": {
+      "id_unresolved": {
+       "n": 2894,
+       "n_with": 243,
+       "n_without": 2651,
+       "w3_pos_share_with": 0.1605,
+       "w3_pos_share_without": 0.2931,
+       "w3_pos_gap": -0.1326,
+       "r3_share_with": 0.3292,
+       "r3_share_without": 0.424,
+       "partial": -0.1131,
+       "ci95": [
+        -0.1829,
+        -0.0433
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "milb_absent": {
+       "n": 2894,
+       "n_with": 320,
+       "n_without": 2574,
+       "w3_pos_share_with": 0.1812,
+       "w3_pos_share_without": 0.2945,
+       "w3_pos_gap": -0.1132,
+       "r3_share_with": 0.3219,
+       "r3_share_without": 0.4277,
+       "partial": -0.1156,
+       "ci95": [
+        -0.1723,
+        -0.0565
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "level_prev_missing": {
+       "n": 2894,
+       "n_with": 368,
+       "n_without": 2526,
+       "w3_pos_share_with": 0.212,
+       "w3_pos_share_without": 0.2922,
+       "w3_pos_gap": -0.0802,
+       "r3_share_with": 0.3451,
+       "r3_share_without": 0.4264,
+       "partial": -0.0838,
+       "ci95": [
+        -0.136,
+        -0.0215
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "age_prev_missing": {
+       "n": 2894,
+       "n_with": 368,
+       "n_without": 2526,
+       "w3_pos_share_with": 0.212,
+       "w3_pos_share_without": 0.2922,
+       "w3_pos_gap": -0.0802,
+       "r3_share_with": 0.3451,
+       "r3_share_without": 0.4264,
+       "partial": -0.0838,
+       "ci95": [
+        -0.1397,
+        -0.0174
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "acq_unknown_at_v": {
+       "n": 2894,
+       "n_with": 1720,
+       "n_without": 1174,
+       "w3_pos_share_with": 0.2169,
+       "w3_pos_share_without": 0.3773,
+       "w3_pos_gap": -0.1605,
+       "r3_share_with": 0.3017,
+       "r3_share_without": 0.5835,
+       "partial": -0.2244,
+       "ci95": [
+        -0.2728,
+        -0.181
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "record_id_missing": {
+       "n": 2894,
+       "n_with": 1656,
+       "n_without": 1238,
+       "w3_pos_share_with": 0.218,
+       "w3_pos_share_without": 0.3675,
+       "w3_pos_gap": -0.1495,
+       "r3_share_with": 0.2947,
+       "r3_share_without": 0.5784,
+       "partial": -0.1955,
+       "ci95": [
+        -0.2433,
+        -0.1479
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "record_birth_missing": {
+       "n": 2894,
+       "n_with": 1656,
+       "n_without": 1238,
+       "w3_pos_share_with": 0.2192,
+       "w3_pos_share_without": 0.3659,
+       "w3_pos_gap": -0.1467,
+       "r3_share_with": 0.2959,
+       "r3_share_without": 0.5767,
+       "partial": -0.1916,
+       "ci95": [
+        -0.2352,
+        -0.1431
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      },
+      "leaky_level_missing": {
+       "n": 2894,
+       "n_with": 810,
+       "n_without": 2084,
+       "w3_pos_share_with": 0.0642,
+       "w3_pos_share_without": 0.3666,
+       "w3_pos_gap": -0.3024,
+       "r3_share_with": 0.0864,
+       "r3_share_without": 0.5441,
+       "partial": -0.2641,
+       "ci95": [
+        -0.3015,
+        -0.225
+       ],
+       "B_used": 500,
+       "verdict": "IMBALANCED"
+      }
+     }
+    }
+   }
+  },
+  "reading": {
+   "hit": {
+    "withheld": false,
+    "because": []
+   },
+   "pit": {
+    "withheld": true,
+    "because": [
+     {
+      "indicator": "milb_absent",
+      "default_floor": "BALANCED",
+      "lifted_floor": "IMBALANCED",
+      "partial_lifted": -0.1156,
+      "ci95_lifted": [
+       -0.1723,
+       -0.0565
+      ]
+     }
+    ]
+   },
+   "withheld_sides": [
+    "pit"
+   ],
+   "code_withheld_sides": [
+    "pit"
+   ],
+   "code_agrees": true
+  },
+  "committed_receipt_untouched": "data/efv_identity_balance.json"
+ },
+ "not_in_efv_progress": "no score is read here; the lifted frame is scored only by the screening lab (EFV3_B7) as the arm milb_floor_2005 against the default-floor base"
+}

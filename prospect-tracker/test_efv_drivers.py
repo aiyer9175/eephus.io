@@ -155,7 +155,7 @@ def _syn_name(i: int) -> str:
 def synthetic(monkeypatch):
     recs, feats = _synthetic()
 
-    def milb(mlbam, V, birth, side="hit", annotate=False, cutoff=None):
+    def milb(mlbam, V, birth, side="hit", annotate=False, cutoff=None, **kw):
         return dict(feats[(int(mlbam), int(V))])
 
     monkeypatch.setattr(F.D, "_milb_features", milb)

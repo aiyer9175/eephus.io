@@ -19,6 +19,11 @@ row carries is dated inside the V preseason window:
     prior       efv_dataset._prior_features on that same latest in-window point.
     milb        efv_dataset._milb_features(person, V, birth, side, cutoff=V-01-01), so
                 the last MiLB season read is V - 1 (its season ended before the window).
+                The walk reaches back to MILB_FLOOR_LV (2005, the cache's first season)
+                on THIS frame only (lane B M1, E3-Q22), on the sides where the DS-03
+                re-run stayed BALANCED (MILB_FLOOR_LV_WITHHELD names the rest): the
+                served matrices and the live board keep efv_dataset.MILB_FLOOR_DEFAULT.
+                Every row carries the floor it was read at as `milb_floor`.
                 `person` is the OUTCOME-BLIND id from efv_identity (DS-03, bug B4): the
                 printed name matched against the people in affiliated minor league ball
                 before V, never the id the record carries (records gained ids mostly on
@@ -76,8 +81,33 @@ GATE_DOC = "docs/efv-v2/EFV_V2_GATE.md"
 GATE_STATUS_PREFIX = "Registration status:"
 GATE_STATUS_REGISTERED = "Registration status: REGISTERED"
 SIDES = ("hit", "pit")
+#: The earliest MiLB season a row of THIS frame reads (efv_dataset._milb_features
+#: first_season_floor). 2005 is the first season on disk for every sport id. The
+#: 2026-07-24 lift on the debuted frame was NO-SHIP (era-distant survivors); its
+#: revival condition, symmetric availability, holds here because busts and debuts are
+#: resolved by the same outcome-blind name index (DS-03). The v1 matrices never read
+#: this constant. Screened as the arm milb_floor_2005 against a frame built with
+#: milb_floor=efv_dataset.MILB_FLOOR_DEFAULT (EFV3_PLAN.md s4, wave 1).
+MILB_FLOOR_LV: int = 2005
+#: Sides whose rows keep efv_dataset.MILB_FLOOR_DEFAULT: the lift is pre-registered to
+#: hold only where the DS-03 balance probe stays BALANCED on milb_absent and
+#: level_prev_missing after it (EFV3_B3). Re-run 2026-10-02 on the lifted frame, eWAR
+#: v2 label, same inputs both ways (data/efv_milb_floor_coverage.json, ds03_rerun):
+#: hitters milb_absent BALANCED at both floors (partial -0.0113 then -0.0441, CI95
+#: -0.1097 to +0.0158 lifted); pitchers milb_absent BALANCED at the default floor
+#: (-0.0604, CI95 -0.1314 to +0.0086) and IMBALANCED lifted (-0.1156, CI95 -0.1723 to
+#: -0.0565; 243 of the 320 absent rows are id_unresolved, itself IMBALANCED on
+#: pitchers at either floor). So the pitcher side is withheld; a lab may still build
+#: it with milb_floor=MILB_FLOOR_LV, and admission criterion (f) then reads this row.
+MILB_FLOOR_LV_WITHHELD: frozenset[str] = frozenset({"pit"})
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+
+
+def lv_milb_floor(side: str) -> int:
+    """The MiLB floor a row of (side) reads at when the caller names none: MILB_FLOOR_LV,
+    or the served default on a withheld side."""
+    return int(D.MILB_FLOOR_DEFAULT if side in MILB_FLOOR_LV_WITHHELD else MILB_FLOOR_LV)
 
 
 class ReservedFrameError(RuntimeError):
@@ -228,14 +258,20 @@ def window_bounds(vintage: int, debut_date: str | None) -> tuple[str, str]:
 # ---------------------------------------------------------------------------
 
 def frame_row(rec: dict, side: str, vintage: int, *, excl: frozenset[str] | None = None,
-              milb: bool = True, index: ID.NameIndex | None = None) -> dict | None:
+              milb: bool = True, index: ID.NameIndex | None = None,
+              milb_floor: int | None = None) -> dict | None:
     """The F-LV row for one record at vintage V, or None when he is not in the frame.
     Callers go through build_frame, which applies the reserved guard first.
 
     Membership reads facts dated before the window (a published debut before it, a
     major league line before V) off the record. The id every INPUT is keyed on is the
-    outcome-blind efv_identity resolution (`index` is the name index through V - 1)."""
+    outcome-blind efv_identity resolution (`index` is the name index through V - 1).
+    `milb_floor` is the earliest MiLB season the block walks back to; None means
+    lv_milb_floor(side) (MILB_FLOOR_LV, or the served default on a withheld side), and
+    the screening lab passes efv_dataset.MILB_FLOOR_DEFAULT for the base arm. The row
+    records it as `milb_floor` whether or not a block was read."""
     V = int(vintage)
+    floor = lv_milb_floor(side) if milb_floor is None else int(milb_floor)
     if not D._side_match(rec, side):
         return None
     if excl is None:
@@ -305,10 +341,11 @@ def frame_row(rec: dict, side: str, vintage: int, *, excl: frozenset[str] | None
         "prior": D._prior_features(rec, asof, side),
         "milb": None,
         "milb_last_season": None,
+        "milb_floor": floor,
     }
     if milb:
         feats = D._milb_features(ident.person_id, V, rec.get("birth_date"), side,
-                                 cutoff=lo)
+                                 cutoff=lo, first_season_floor=floor)
         row["milb"] = feats
         row["milb_last_season"] = (feats or {}).get("milb_season")
     return row
@@ -341,8 +378,9 @@ def _attach_sidecars(rows: list[dict]) -> None:
 
 def build_frame(side: str, vintage: int, *, gate_sha: str | None = None,
                 universe: dict[str, dict] | None = None, milb: bool = True,
-                sidecars: bool = True) -> list[dict]:
-    """Every F-LV row for (side, V). Reserved vintages raise without the gate sha."""
+                sidecars: bool = True, milb_floor: int | None = None) -> list[dict]:
+    """Every F-LV row for (side, V). Reserved vintages raise without the gate sha.
+    `milb_floor` as in frame_row (None: MILB_FLOOR_LV)."""
     if side not in SIDES:
         raise ValueError(f"side must be one of {SIDES}, got {side!r}")
     guard_score_request(vintage, gate_sha=gate_sha, purpose="frame")
@@ -353,7 +391,8 @@ def build_frame(side: str, vintage: int, *, gate_sha: str | None = None,
     index = ID.build_index(int(vintage) - 1)
     rows = []
     for rec in universe.values():
-        r = frame_row(rec, side, vintage, excl=excl, milb=milb, index=index)
+        r = frame_row(rec, side, vintage, excl=excl, milb=milb, index=index,
+                      milb_floor=milb_floor)
         if r is not None:
             rows.append(r)
     rows.sort(key=lambda r: r["player_key"])
