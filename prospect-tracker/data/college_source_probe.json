@@ -1,0 +1,1495 @@
+{
+ "generated_at": "2026-10-03T02:10:26+00:00",
+ "produced_by": "tools/college_source_probe.py",
+ "role": "development",
+ "adjudicates": "nothing; a count-only coverage receipt for the college production family (EFV3_B9, lane B E3-Q24 option A by default); no stat read, no label, no correlation, no fit, no feature",
+ "what": "StatsAPI sportId 22 and 17 season splits 2005 to 2020 through amateur_leagues.season_splits (cached beside the 2021+ files), and the share of F-LV development is_college rows whose outcome-blind mlbam_id has a sport-22 line in a season below the draft year",
+ "probe": {
+  "seasons": [
+   2005,
+   2006,
+   2007,
+   2008,
+   2009,
+   2010,
+   2011,
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020
+  ],
+  "sports": {
+   "22": "amateur",
+   "17": "winter"
+  },
+  "sport_note": "22 is the amateur family (CBB, CCBL, APP, MLBDL); 17 is the winter family (AFL, LIDOM, LMP, LVBP, PWL, CS, ABL), the second id the task names",
+  "groups": [
+   "hitting",
+   "pitching"
+  ],
+  "calls": 64,
+  "fetch_enabled": true,
+  "fail_soft": true,
+  "cache_pattern": ".cache/amateur_leagues/<group>_<sport>_<season>.json",
+  "line_keys_read": [
+   "mlbam",
+   "season",
+   "league"
+  ],
+  "data_amateur_leagues_json_untouched": true
+ },
+ "guards": {
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "r_vm_first_debut_year": 2025,
+  "vintages_read": [
+   2011,
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019
+  ],
+  "reserved_vm_pins": []
+ },
+ "code": {
+  "commit": "d8f246b9c25fe6b1150c8c16b890e2fac6991946"
+ },
+ "by_season": {
+  "2005": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 155,
+     "players": 155,
+     "leagues": {
+      "AFL": 105,
+      "CS": 50
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 145,
+     "players": 145,
+     "leagues": {
+      "AFL": 96,
+      "CS": 49
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2006": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 733,
+     "players": 733,
+     "leagues": {
+      "AFL": 99,
+      "CS": 52,
+      "HWB": 66,
+      "LIDOM": 154,
+      "LMP": 148,
+      "LVBP": 214
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 750,
+     "players": 750,
+     "leagues": {
+      "AFL": 121,
+      "CS": 47,
+      "HWB": 55,
+      "LIDOM": 149,
+      "LMP": 168,
+      "LVBP": 210
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2007": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 752,
+     "players": 752,
+     "leagues": {
+      "AFL": 127,
+      "CS": 51,
+      "HWB": 62,
+      "LIDOM": 148,
+      "LMP": 162,
+      "LVBP": 202
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 807,
+     "players": 807,
+     "leagues": {
+      "AFL": 151,
+      "CS": 52,
+      "HWB": 62,
+      "LIDOM": 178,
+      "LMP": 158,
+      "LVBP": 206
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2008": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 858,
+     "players": 858,
+     "leagues": {
+      "AFL": 104,
+      "CS": 56,
+      "HWB": 59,
+      "LBPPR": 101,
+      "LIDOM": 167,
+      "LMP": 164,
+      "LVBP": 207
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 917,
+     "players": 917,
+     "leagues": {
+      "AFL": 118,
+      "CS": 55,
+      "HWB": 59,
+      "LBPPR": 104,
+      "LIDOM": 194,
+      "LMP": 154,
+      "LVBP": 233
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2009": {
+   "22": {
+    "hitting": {
+     "rows": 24,
+     "players": 24,
+     "leagues": {
+      "CBB": 24
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 9,
+     "players": 9,
+     "leagues": {
+      "CBB": 9
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 800,
+     "players": 800,
+     "leagues": {
+      "AFL": 103,
+      "CS": 56,
+      "LBPPR": 101,
+      "LIDOM": 180,
+      "LMP": 146,
+      "LVBP": 214
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 852,
+     "players": 852,
+     "leagues": {
+      "AFL": 125,
+      "CS": 53,
+      "LBPPR": 94,
+      "LIDOM": 183,
+      "LMP": 161,
+      "LVBP": 236
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2010": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 874,
+     "players": 874,
+     "leagues": {
+      "ABL": 107,
+      "AFL": 94,
+      "CS": 54,
+      "LBPPR": 104,
+      "LIDOM": 149,
+      "LMP": 151,
+      "LVBP": 215
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 952,
+     "players": 952,
+     "leagues": {
+      "ABL": 112,
+      "AFL": 126,
+      "CS": 56,
+      "LBPPR": 93,
+      "LIDOM": 166,
+      "LMP": 167,
+      "LVBP": 232
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2011": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 876,
+     "players": 876,
+     "leagues": {
+      "ABL": 121,
+      "AFL": 96,
+      "CS": 56,
+      "LBPPR": 71,
+      "LIDOM": 178,
+      "LMP": 161,
+      "LVBP": 193
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 942,
+     "players": 942,
+     "leagues": {
+      "ABL": 126,
+      "AFL": 125,
+      "CS": 56,
+      "LBPPR": 73,
+      "LIDOM": 191,
+      "LMP": 154,
+      "LVBP": 217
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2012": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 908,
+     "players": 908,
+     "leagues": {
+      "ABL": 125,
+      "AFL": 103,
+      "CS": 54,
+      "LIDOM": 177,
+      "LMP": 154,
+      "LVBP": 195,
+      "PWL": 100
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 967,
+     "players": 967,
+     "leagues": {
+      "ABL": 110,
+      "AFL": 120,
+      "CS": 56,
+      "LIDOM": 189,
+      "LMP": 157,
+      "LVBP": 236,
+      "PWL": 99
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2013": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 901,
+     "players": 901,
+     "leagues": {
+      "ABL": 109,
+      "AFL": 98,
+      "CS": 73,
+      "LIDOM": 178,
+      "LMP": 161,
+      "LVBP": 199,
+      "PWL": 83
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 995,
+     "players": 995,
+     "leagues": {
+      "ABL": 102,
+      "AFL": 123,
+      "CS": 67,
+      "LIDOM": 189,
+      "LMP": 157,
+      "LVBP": 270,
+      "PWL": 87
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2014": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 940,
+     "players": 940,
+     "leagues": {
+      "ABL": 121,
+      "AFL": 97,
+      "CS": 67,
+      "LIDOM": 199,
+      "LMP": 161,
+      "LVBP": 201,
+      "PWL": 94
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 1017,
+     "players": 1017,
+     "leagues": {
+      "ABL": 102,
+      "AFL": 120,
+      "CS": 65,
+      "LIDOM": 209,
+      "LMP": 165,
+      "LVBP": 264,
+      "PWL": 92
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2015": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 957,
+     "players": 957,
+     "leagues": {
+      "ABL": 127,
+      "AFL": 103,
+      "CS": 73,
+      "LIDOM": 190,
+      "LMP": 177,
+      "LVBP": 208,
+      "PWL": 79
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 1009,
+     "players": 1009,
+     "leagues": {
+      "ABL": 119,
+      "AFL": 127,
+      "CS": 66,
+      "LIDOM": 195,
+      "LMP": 162,
+      "LVBP": 271,
+      "PWL": 69
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2016": {
+   "22": {
+    "hitting": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 0,
+     "players": 0,
+     "leagues": {},
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 930,
+     "players": 930,
+     "leagues": {
+      "ABL": 120,
+      "AFL": 104,
+      "CS": 71,
+      "LIDOM": 169,
+      "LMP": 174,
+      "LVBP": 202,
+      "PWL": 90
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 998,
+     "players": 998,
+     "leagues": {
+      "ABL": 106,
+      "AFL": 125,
+      "CS": 69,
+      "LIDOM": 193,
+      "LMP": 168,
+      "LVBP": 263,
+      "PWL": 74
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2017": {
+   "22": {
+    "hitting": {
+     "rows": 316,
+     "players": 316,
+     "leagues": {
+      "CBB": 316
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 161,
+     "players": 161,
+     "leagues": {
+      "CBB": 161
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 873,
+     "players": 873,
+     "leagues": {
+      "ABL": 128,
+      "AFL": 104,
+      "CS": 70,
+      "LIDOM": 169,
+      "LMP": 170,
+      "LVBP": 179,
+      "PWL": 53
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 967,
+     "players": 967,
+     "leagues": {
+      "ABL": 124,
+      "AFL": 124,
+      "CS": 69,
+      "LIDOM": 196,
+      "LMP": 175,
+      "LVBP": 229,
+      "PWL": 50
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2018": {
+   "22": {
+    "hitting": {
+     "rows": 558,
+     "players": 558,
+     "leagues": {
+      "CBB": 558
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 293,
+     "players": 293,
+     "leagues": {
+      "CBB": 293
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 942,
+     "players": 942,
+     "leagues": {
+      "ABL": 168,
+      "AFL": 102,
+      "CS": 76,
+      "LIDOM": 177,
+      "LMP": 172,
+      "LVBP": 181,
+      "PWL": 66
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 1012,
+     "players": 1012,
+     "leagues": {
+      "ABL": 140,
+      "AFL": 120,
+      "CS": 66,
+      "LIDOM": 206,
+      "LMP": 198,
+      "LVBP": 212,
+      "PWL": 70
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2019": {
+   "22": {
+    "hitting": {
+     "rows": 601,
+     "players": 601,
+     "leagues": {
+      "CBB": 601
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 380,
+     "players": 380,
+     "leagues": {
+      "CBB": 380
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 974,
+     "players": 974,
+     "leagues": {
+      "ABL": 162,
+      "AFL": 127,
+      "CS": 81,
+      "LIDOM": 166,
+      "LMP": 201,
+      "LVBP": 146,
+      "PWL": 91
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 1031,
+     "players": 1031,
+     "leagues": {
+      "ABL": 132,
+      "AFL": 141,
+      "CS": 83,
+      "LIDOM": 188,
+      "LMP": 222,
+      "LVBP": 184,
+      "PWL": 81
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  },
+  "2020": {
+   "22": {
+    "hitting": {
+     "rows": 316,
+     "players": 316,
+     "leagues": {
+      "CBB": 316
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 231,
+     "players": 231,
+     "leagues": {
+      "CBB": 231
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   },
+   "17": {
+    "hitting": {
+     "rows": 727,
+     "players": 727,
+     "leagues": {
+      "ABL": 89,
+      "CS": 79,
+      "LIDOM": 148,
+      "LMP": 200,
+      "LVBP": 153,
+      "PWL": 58
+     },
+     "cached": true,
+     "fetch_error": null
+    },
+    "pitching": {
+     "rows": 850,
+     "players": 850,
+     "leagues": {
+      "ABL": 97,
+      "CS": 84,
+      "LIDOM": 185,
+      "LMP": 223,
+      "LVBP": 191,
+      "PWL": 70
+     },
+     "cached": true,
+     "fetch_error": null
+    }
+   }
+  }
+ },
+ "season_summary": {
+  "22": {
+   "label": "amateur",
+   "rows_by_season": {
+    "2005": 0,
+    "2006": 0,
+    "2007": 0,
+    "2008": 0,
+    "2009": 33,
+    "2010": 0,
+    "2011": 0,
+    "2012": 0,
+    "2013": 0,
+    "2014": 0,
+    "2015": 0,
+    "2016": 0,
+    "2017": 477,
+    "2018": 851,
+    "2019": 981,
+    "2020": 547
+   },
+   "rows_total": 2889,
+   "first_populated_season": 2009,
+   "populated_seasons": [
+    2009,
+    2017,
+    2018,
+    2019,
+    2020
+   ],
+   "all_probed_seasons_empty": false,
+   "fetch_failures": []
+  },
+  "17": {
+   "label": "winter",
+   "rows_by_season": {
+    "2005": 300,
+    "2006": 1483,
+    "2007": 1559,
+    "2008": 1775,
+    "2009": 1652,
+    "2010": 1826,
+    "2011": 1818,
+    "2012": 1875,
+    "2013": 1896,
+    "2014": 1957,
+    "2015": 1966,
+    "2016": 1928,
+    "2017": 1840,
+    "2018": 1954,
+    "2019": 2005,
+    "2020": 1577
+   },
+   "rows_total": 27411,
+   "first_populated_season": 2005,
+   "populated_seasons": [
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+   ],
+   "all_probed_seasons_empty": false,
+   "fetch_failures": []
+  }
+ },
+ "frame_counts": {
+  "hit": {
+   "2011": {
+    "rows": 69,
+    "with_consensus": 69,
+    "with_milb": 65
+   },
+   "2012": {
+    "rows": 189,
+    "with_consensus": 189,
+    "with_milb": 175
+   },
+   "2013": {
+    "rows": 268,
+    "with_consensus": 268,
+    "with_milb": 259
+   },
+   "2014": {
+    "rows": 260,
+    "with_consensus": 260,
+    "with_milb": 249
+   },
+   "2015": {
+    "rows": 397,
+    "with_consensus": 397,
+    "with_milb": 383
+   },
+   "2016": {
+    "rows": 405,
+    "with_consensus": 405,
+    "with_milb": 380
+   },
+   "2017": {
+    "rows": 472,
+    "with_consensus": 472,
+    "with_milb": 441
+   },
+   "2018": {
+    "rows": 450,
+    "with_consensus": 450,
+    "with_milb": 418
+   },
+   "2019": {
+    "rows": 543,
+    "with_consensus": 543,
+    "with_milb": 501
+   }
+  },
+  "pit": {
+   "2011": {
+    "rows": 58,
+    "with_consensus": 58,
+    "with_milb": 0
+   },
+   "2012": {
+    "rows": 170,
+    "with_consensus": 170,
+    "with_milb": 0
+   },
+   "2013": {
+    "rows": 246,
+    "with_consensus": 246,
+    "with_milb": 0
+   },
+   "2014": {
+    "rows": 245,
+    "with_consensus": 245,
+    "with_milb": 0
+   },
+   "2015": {
+    "rows": 388,
+    "with_consensus": 388,
+    "with_milb": 360
+   },
+   "2016": {
+    "rows": 405,
+    "with_consensus": 405,
+    "with_milb": 386
+   },
+   "2017": {
+    "rows": 469,
+    "with_consensus": 469,
+    "with_milb": 444
+   },
+   "2018": {
+    "rows": 439,
+    "with_consensus": 439,
+    "with_milb": 416
+   },
+   "2019": {
+    "rows": 489,
+    "with_consensus": 489,
+    "with_milb": 450
+   }
+  }
+ },
+ "college_coverage": {
+  "rule": "is_college rows (acquisition method draft, age 21 or more in the draft year, known before V) whose outcome-blind mlbam_id has a sport-22 line in a season strictly below acq_year; same_group reads the side's group, either_group reads both",
+  "by_vintage": {
+   "hit": {
+    "2011": {
+     "rows": 69,
+     "is_college_rows": 0,
+     "is_college_with_id": 0,
+     "draft_years": {},
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": null,
+      "either_group": null
+     },
+     "share_of_is_college_with_id": {
+      "same_group": null,
+      "either_group": null
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2012": {
+     "rows": 189,
+     "is_college_rows": 0,
+     "is_college_with_id": 0,
+     "draft_years": {},
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": null,
+      "either_group": null
+     },
+     "share_of_is_college_with_id": {
+      "same_group": null,
+      "either_group": null
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2013": {
+     "rows": 268,
+     "is_college_rows": 0,
+     "is_college_with_id": 0,
+     "draft_years": {},
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": null,
+      "either_group": null
+     },
+     "share_of_is_college_with_id": {
+      "same_group": null,
+      "either_group": null
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2014": {
+     "rows": 260,
+     "is_college_rows": 0,
+     "is_college_with_id": 0,
+     "draft_years": {},
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": null,
+      "either_group": null
+     },
+     "share_of_is_college_with_id": {
+      "same_group": null,
+      "either_group": null
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2015": {
+     "rows": 397,
+     "is_college_rows": 0,
+     "is_college_with_id": 0,
+     "draft_years": {},
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": null,
+      "either_group": null
+     },
+     "share_of_is_college_with_id": {
+      "same_group": null,
+      "either_group": null
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2016": {
+     "rows": 405,
+     "is_college_rows": 13,
+     "is_college_with_id": 13,
+     "draft_years": {
+      "2015": 13
+     },
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "share_of_is_college_with_id": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2017": {
+     "rows": 472,
+     "is_college_rows": 37,
+     "is_college_with_id": 37,
+     "draft_years": {
+      "2015": 14,
+      "2016": 23
+     },
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "share_of_is_college_with_id": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2018": {
+     "rows": 450,
+     "is_college_rows": 71,
+     "is_college_with_id": 71,
+     "draft_years": {
+      "2015": 13,
+      "2016": 25,
+      "2017": 33
+     },
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "share_of_is_college_with_id": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "with_college_line_any_probed_season": 4
+    },
+    "2019": {
+     "rows": 543,
+     "is_college_rows": 110,
+     "is_college_with_id": 110,
+     "draft_years": {
+      "2015": 7,
+      "2016": 25,
+      "2017": 29,
+      "2018": 49
+     },
+     "with_college_line_below_draft_year": {
+      "same_group": 3,
+      "either_group": 3
+     },
+     "share_of_is_college_rows": {
+      "same_group": 0.0273,
+      "either_group": 0.0273
+     },
+     "share_of_is_college_with_id": {
+      "same_group": 0.0273,
+      "either_group": 0.0273
+     },
+     "with_college_line_any_probed_season": 9
+    }
+   },
+   "pit": {
+    "2011": {
+     "rows": 58,
+     "is_college_rows": 0,
+     "is_college_with_id": 0,
+     "draft_years": {},
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": null,
+      "either_group": null
+     },
+     "share_of_is_college_with_id": {
+      "same_group": null,
+      "either_group": null
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2012": {
+     "rows": 170,
+     "is_college_rows": 0,
+     "is_college_with_id": 0,
+     "draft_years": {},
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": null,
+      "either_group": null
+     },
+     "share_of_is_college_with_id": {
+      "same_group": null,
+      "either_group": null
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2013": {
+     "rows": 246,
+     "is_college_rows": 0,
+     "is_college_with_id": 0,
+     "draft_years": {},
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": null,
+      "either_group": null
+     },
+     "share_of_is_college_with_id": {
+      "same_group": null,
+      "either_group": null
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2014": {
+     "rows": 245,
+     "is_college_rows": 0,
+     "is_college_with_id": 0,
+     "draft_years": {},
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": null,
+      "either_group": null
+     },
+     "share_of_is_college_with_id": {
+      "same_group": null,
+      "either_group": null
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2015": {
+     "rows": 388,
+     "is_college_rows": 0,
+     "is_college_with_id": 0,
+     "draft_years": {},
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": null,
+      "either_group": null
+     },
+     "share_of_is_college_with_id": {
+      "same_group": null,
+      "either_group": null
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2016": {
+     "rows": 405,
+     "is_college_rows": 12,
+     "is_college_with_id": 12,
+     "draft_years": {
+      "2015": 12
+     },
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "share_of_is_college_with_id": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2017": {
+     "rows": 469,
+     "is_college_rows": 28,
+     "is_college_with_id": 28,
+     "draft_years": {
+      "2015": 12,
+      "2016": 16
+     },
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "share_of_is_college_with_id": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "with_college_line_any_probed_season": 0
+    },
+    "2018": {
+     "rows": 439,
+     "is_college_rows": 69,
+     "is_college_with_id": 67,
+     "draft_years": {
+      "2015": 11,
+      "2016": 23,
+      "2017": 35
+     },
+     "with_college_line_below_draft_year": {
+      "same_group": 0,
+      "either_group": 0
+     },
+     "share_of_is_college_rows": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "share_of_is_college_with_id": {
+      "same_group": 0.0,
+      "either_group": 0.0
+     },
+     "with_college_line_any_probed_season": 2
+    },
+    "2019": {
+     "rows": 489,
+     "is_college_rows": 127,
+     "is_college_with_id": 124,
+     "draft_years": {
+      "2015": 6,
+      "2016": 23,
+      "2017": 53,
+      "2018": 45
+     },
+     "with_college_line_below_draft_year": {
+      "same_group": 2,
+      "either_group": 2
+     },
+     "share_of_is_college_rows": {
+      "same_group": 0.0157,
+      "either_group": 0.0157
+     },
+     "share_of_is_college_with_id": {
+      "same_group": 0.0161,
+      "either_group": 0.0161
+     },
+     "with_college_line_any_probed_season": 8
+    }
+   }
+  },
+  "totals": {
+   "hit": {
+    "rows": 3053,
+    "is_college_rows": 231,
+    "is_college_with_id": 231,
+    "with_college_line_below_draft_year": {
+     "same_group": 3,
+     "either_group": 3
+    },
+    "share_of_is_college_rows": {
+     "same_group": 0.013,
+     "either_group": 0.013
+    },
+    "with_college_line_any_probed_season": 13
+   },
+   "pit": {
+    "rows": 2909,
+    "is_college_rows": 236,
+    "is_college_with_id": 231,
+    "with_college_line_below_draft_year": {
+     "same_group": 2,
+     "either_group": 2
+    },
+    "share_of_is_college_rows": {
+     "same_group": 0.0085,
+     "either_group": 0.0085
+    },
+    "with_college_line_any_probed_season": 10
+   }
+  }
+ },
+ "family_status": {
+  "status": "source present before 2021; development coverage 5 of 467 is_college rows (0.0107)",
+  "why": "sportId 22 returned rows for [2009, 2017, 2018, 2019, 2020] (rows by season in season_summary); 5 of 467 F-LV development is_college rows carry a college line below their draft year, at {'hit': {'2019': 3}, 'pit': {'2019': 2}}",
+  "sport22_populated_seasons": [
+   2009,
+   2017,
+   2018,
+   2019,
+   2020
+  ],
+  "sport22_rows_by_season": {
+   "2005": 0,
+   "2006": 0,
+   "2007": 0,
+   "2008": 0,
+   "2009": 33,
+   "2010": 0,
+   "2011": 0,
+   "2012": 0,
+   "2013": 0,
+   "2014": 0,
+   "2015": 0,
+   "2016": 0,
+   "2017": 477,
+   "2018": 851,
+   "2019": 981,
+   "2020": 547
+  },
+  "dev_is_college_rows": 467,
+  "dev_rows_with_prior_college_line": 5,
+  "dev_rows_with_prior_college_line_by_vintage": {
+   "hit": {
+    "2019": 3
+   },
+   "pit": {
+    "2019": 2
+   }
+  },
+  "reserved_note": "list vintages 2020 and 2021 are R-LV and were not built; nothing here reads them"
+ },
+ "not_in_efv_progress": "no score is read here; nothing enters any ledger"
+}
