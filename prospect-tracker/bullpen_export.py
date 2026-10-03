@@ -119,6 +119,72 @@ _TMAP_CACHE = Path(__file__).parent / ".cache" / "team_abbrev_map.json"
 
 
 # --------------------------------------------------------------------------- #
+# closed-season disk cache (.cache/pal/). A season before the calendar year is
+# final: its StatsAPI season lines, its platoon splits and its Savant arsenal
+# and velocity tables do not move, yet the Alchemy Lab's eight-season sweep
+# (pal_export) refetched them on every monthly night, about 200 s of immutable
+# inputs (bloat finding RU09, 2026-10-02). Each file carries a schema stamp and
+# a stamp mismatch refetches; the live season is never cached; a failed or
+# empty fetch never writes a file. The payload is the raw response (StatsAPI)
+# or the fetched frame's records (Savant), so every parse path is unchanged.
+# Refetchable, so the directory sits in tools/prune_cache.SAFE_CACHES.
+# --------------------------------------------------------------------------- #
+CLOSED_SEASON_CACHE_DIR = Path(__file__).parent / ".cache" / "pal"
+CLOSED_SEASON_CACHE_SCHEMA = 1
+
+
+def season_is_closed(year: int) -> bool:
+    """True for a season before the calendar year: its inputs are final."""
+    return int(year) < date.today().year
+
+
+def closed_season_cache_path(kind: str, year: int, name: Optional[str] = None) -> Path:
+    """<dir>/<kind>/<year>.json, or <dir>/<kind>/<year>/<name>.json for a
+    per-player family such as the platoon splits."""
+    base = CLOSED_SEASON_CACHE_DIR / kind
+    if name is None:
+        return base / f"{int(year)}.json"
+    return base / str(int(year)) / f"{name}.json"
+
+
+def closed_season_cache_read(kind: str, year: int, name: Optional[str] = None):
+    """The cached payload, or None when the season is live, the file is absent
+    or unreadable, or its stamp is not the current schema (so a schema bump
+    refetches everything once)."""
+    if not season_is_closed(year):
+        return None
+    try:
+        d = json.loads(closed_season_cache_path(kind, year, name).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if (not isinstance(d, dict) or d.get("schema") != CLOSED_SEASON_CACHE_SCHEMA
+            or d.get("kind") != kind or d.get("year") != int(year)):
+        return None
+    return d.get("payload")
+
+
+def closed_season_cache_write(kind: str, year: int, payload,
+                              name: Optional[str] = None) -> bool:
+    """Store a fetched payload for a closed season. A live season or an empty
+    payload is never written, and a write failure only logs: the cache is an
+    optimization, not a contract."""
+    if not season_is_closed(year) or not payload:
+        return False
+    path = closed_season_cache_path(kind, year, name)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text(json.dumps({"schema": CLOSED_SEASON_CACHE_SCHEMA, "kind": kind,
+                                   "year": int(year), "payload": payload}),
+                       encoding="utf-8")
+        tmp.replace(path)
+    except (OSError, TypeError, ValueError) as e:
+        _log.warning("closed-season cache write %s/%s failed: %s", kind, year, e)
+        return False
+    return True
+
+
+# --------------------------------------------------------------------------- #
 # silent-empty plumbing. guard_nonempty_block is shared by the four /mlbstats/
 # exporters; record_ingest / _ingest_red are the export layer's ingest-health
 # client generally (ifa_export and fa_export file through them too) so the
@@ -580,14 +646,23 @@ def load_season_pitching(season: int, positions: tuple = ("P",)) -> list[dict]:
     "pitching") (disk-cached, 2000-2026 on hand) and hand them to
     rows_from_pitching_splits below, which is the same mapping this function
     applies. arb_metrics does exactly that.
+
+    A CLOSED season (before the calendar year) reads its raw response back from
+    .cache/pal/season_pitching/<year>.json after the first fetch; the live
+    season is fetched every call (see closed_season_cache_read).
     """
-    try:
-        data = _get_json("stats", {
-            "stats": "season", "group": "pitching", "season": int(season),
-            "sportId": 1, "gameType": "R", "playerPool": "all", "limit": 3000})
-    except Exception as e:
-        _log.warning("StatsAPI season pitching (%s) failed: %s", season, e)
-        return []
+    data = closed_season_cache_read("season_pitching", season)
+    if data is None:
+        try:
+            data = _get_json("stats", {
+                "stats": "season", "group": "pitching", "season": int(season),
+                "sportId": 1, "gameType": "R", "playerPool": "all", "limit": 3000})
+        except Exception as e:
+            _log.warning("StatsAPI season pitching (%s) failed: %s", season, e)
+            return []
+        fetched = data.get("stats") or []
+        if fetched and fetched[0].get("splits"):
+            closed_season_cache_write("season_pitching", season, data)
     stats = data.get("stats") or []
     if not stats:
         return []

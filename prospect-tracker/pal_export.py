@@ -39,7 +39,14 @@ re-gating RP->SP by expanding the event set.
 
 Run: `python pal_export.py`. Wired into run_monthly (best-effort). NETWORK-GATED:
 nothing fetches at import; any pull failure logs and degrades (a null component
-just drops from the renormalized blend) rather than aborting."""
+just drops from the renormalized blend) rather than aborting.
+
+CLOSED-SEASON CACHE (2026-10-03, bloat finding RU09). Seasons before the
+calendar year are final, so their season pitching, platoon splits, arsenal and
+velocity pulls are kept under .cache/pal/ with a schema stamp
+(bullpen_export.closed_season_cache_read / _write) and only the live season is
+refetched; the parse paths are unchanged and pal.json is byte-identical on a
+cold and a warm cache."""
 from __future__ import annotations
 
 import concurrent.futures as cf
@@ -127,16 +134,22 @@ def _num(v):
 # --------------------------------------------------------------------------- #
 @functools.lru_cache(maxsize=16)
 def load_arsenal(year: int) -> dict:
-    """{mlbam: [ {pitch, usage(0-1), whiff(0-1), est_woba, hard_hit(0-1)} ]}."""
-    try:
-        import pybaseball as pyb
-        df = pyb.statcast_pitcher_arsenal_stats(int(year))
-    except Exception as e:
-        _log.warning("arsenal_stats(%s) failed: %s", year, e)
-        return {}
+    """{mlbam: [ {pitch, usage(0-1), whiff(0-1), est_woba, hard_hit(0-1)} ]}.
+
+    A closed season's fetched frame is kept as records under .cache/pal/arsenal/
+    (bullpen_export.closed_season_cache_read); the live season fetches every run."""
+    records = be.closed_season_cache_read("arsenal", year)
+    if records is None:
+        try:
+            import pybaseball as pyb
+            records = pyb.statcast_pitcher_arsenal_stats(int(year)).to_dict("records")
+        except Exception as e:
+            _log.warning("arsenal_stats(%s) failed: %s", year, e)
+            return {}
+        be.closed_season_cache_write("arsenal", year, records)
     out: dict = {}
     try:
-        for r in df.to_dict("records"):
+        for r in records:
             pid = r.get("player_id")
             if pid is None:
                 continue
@@ -154,17 +167,20 @@ def load_arsenal(year: int) -> dict:
 
 @functools.lru_cache(maxsize=16)
 def load_velo(year: int) -> dict:
-    """{mlbam: top-fastball avg velo}."""
-    try:
-        import pybaseball as pyb
-        df = pyb.statcast_pitcher_pitch_arsenal(int(year))
-    except Exception as e:
-        _log.warning("pitch_arsenal velo(%s) failed: %s", year, e)
-        return {}
+    """{mlbam: top-fastball avg velo}. Closed seasons read .cache/pal/velo/."""
+    records = be.closed_season_cache_read("velo", year)
+    if records is None:
+        try:
+            import pybaseball as pyb
+            records = pyb.statcast_pitcher_pitch_arsenal(int(year)).to_dict("records")
+        except Exception as e:
+            _log.warning("pitch_arsenal velo(%s) failed: %s", year, e)
+            return {}
+        be.closed_season_cache_write("velo", year, records)
     out: dict = {}
     fb_cols = ["ff_avg_speed", "si_avg_speed", "fc_avg_speed"]
     try:
-        for r in df.to_dict("records"):
+        for r in records:
             pid = r.get("pitcher")
             if pid is None:
                 continue
@@ -182,9 +198,15 @@ def _platoon_one(pid_year):
     url = (f"{STATSAPI}/people/{pid}/stats?stats=statSplits&sitCodes=vl,vr"
            f"&group=pitching&season={year}&gameType=R")
     try:
-        req = U.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with U.urlopen(req, timeout=20) as r:
-            d = json.load(r)
+        # a closed season's raw split response is kept per pitcher under
+        # .cache/pal/platoon/<year>/; the live season is fetched every run
+        d = be.closed_season_cache_read("platoon", year, name=str(pid))
+        if d is None:
+            req = U.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with U.urlopen(req, timeout=20) as r:
+                d = json.load(r)
+            if d.get("stats"):
+                be.closed_season_cache_write("platoon", year, d, name=str(pid))
         vals, tbf = {}, {}
         for s in d.get("stats", []):
             for sp in (s.get("splits") or []):

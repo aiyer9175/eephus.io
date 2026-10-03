@@ -63,6 +63,8 @@ SAFE_CACHES: tuple[str, ...] = (
     "milb_stats",         # bulk MiLB season stats (current season TTL-refreshed)
     "proj_current",       # /schedule pulls, one date-keyed file per calendar day
     "fantasy_schedule",   # /schedule probables, new date-keyed files daily
+    "pal",                # Alchemy Lab closed-season pulls (season pitching,
+                          # platoon splits, Savant arsenal and velocity)
 )
 
 # Hash-keyed caches: files are named by an md5 of (version|url) or (url), so a
