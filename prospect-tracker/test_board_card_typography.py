@@ -183,6 +183,20 @@ def test_prospx_export_warms_the_logo_face():
     assert re.search(r"\d\s*px\s+PixelMplus12", text), "prospx warms no logo weight"
 
 
+def test_prospx_loads_no_cdn_webfont_and_warms_only_the_self_hosted_face():
+    """Bloat finding AS18 (2026-10-03): the Google Fonts Roboto Mono stylesheet
+    was render-blocking for the last fallback rung under PixelMplus12. With it
+    gone, a fonts.load warmup naming Roboto Mono would wait on a face the page
+    no longer declares, so every warmup must name PixelMplus12."""
+    text = PROSPX.read_text(encoding="utf-8")
+    for host in ("fonts.googleapis.com", "fonts.gstatic.com"):
+        assert not re.search(r"<link\b[^>]*" + re.escape(host), text), f"prospx still links {host}"
+    m = re.search(r"\[([^\]]*PixelMplus12[^\]]*)\]\.forEach\(spec", text)
+    assert m, "the GFX fonts.load warmup list moved"
+    specs = re.findall(r'"([^"]+)"', m.group(1))
+    assert specs and all(s.endswith("PixelMplus12") for s in specs), specs
+
+
 def test_font_face_does_not_declare_a_retired_family():
     css = SITE_CSS.read_text(encoding="utf-8")
     for block in re.findall(r"@font-face\s*\{[^}]*\}", css, re.S):
