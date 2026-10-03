@@ -954,5 +954,612 @@
   "not_in_efv_progress": "the text columns are scored only by the screening lab; this probe writes no progress row and no ledger row",
   "seed": 20260925,
   "B": 500
+ },
+ "pick": {
+  "generated_at": "2026-10-03T00:57:11+00:00",
+  "produced_by": "tools/efv_pick_balance.py",
+  "builder": "efv_pick_features.py",
+  "role": "development",
+  "adjudicates": "nothing; the DS-03 missingness receipt for the pick family",
+  "frame": "lv_dev (F-LV, list vintages 2011 to 2019), W3 on the ewar_v2 label",
+  "label": {
+   "provider": "ewar_v2",
+   "resolved_through": 2025
+  },
+  "guards": {
+   "reserved_lv": [
+    2020,
+    2021
+   ],
+   "r_vm_first_debut_year": 2025,
+   "reserved_vm_pins": [],
+   "vintages_read": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019
+   ]
+  },
+  "code": {
+   "commit": "5e50eaa7cb8211057a8c03cc0c4841926f023a59",
+   "builder_sha256": "42fd400d9105a5662f7eb8e6cea455a6cfb5c46818fd5327b3d643cb08b5f31a",
+   "tool_sha256": "7e1c1990d7fb183158dac0a516a16d96c1314ea475e8532aaf4d904670098e25"
+  },
+  "rows": {
+   "frame_rows": 5962,
+   "no_consensus": 0,
+   "label_none": 0,
+   "dropped_rvm_players": 26,
+   "vintages": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "rows_scored": 5930
+  },
+  "indicator": {
+   "pick_missing": "no draft pick known at V on the row: no draft_history pick dated before V on the outcome-blind id and no sidecar pick known at V"
+  },
+  "balance": {
+   "hit": {
+    "pick_missing": {
+     "n": 3036,
+     "n_with": 1123,
+     "n_without": 1913,
+     "w3_pos_share_with": 0.2342,
+     "w3_pos_share_without": 0.2776,
+     "w3_pos_gap": -0.0434,
+     "r3_share_with": 0.3793,
+     "r3_share_without": 0.4516,
+     "partial": -0.0347,
+     "ci95": [
+      -0.0807,
+      0.0099
+     ],
+     "B_used": 500,
+     "verdict": "BALANCED"
+    }
+   },
+   "pit": {
+    "pick_missing": {
+     "n": 2894,
+     "n_with": 802,
+     "n_without": 2092,
+     "w3_pos_share_with": 0.2531,
+     "w3_pos_share_without": 0.293,
+     "w3_pos_gap": -0.0399,
+     "r3_share_with": 0.4239,
+     "r3_share_without": 0.413,
+     "partial": -0.0178,
+     "ci95": [
+      -0.0687,
+      0.0356
+     ],
+     "B_used": 500,
+     "verdict": "BALANCED"
+    }
+   }
+  },
+  "admissible_clause_f": {
+   "hit": true,
+   "pit": true
+  },
+  "offered_columns": {
+   "hit": [
+    "pick_overall_time_hit"
+   ],
+   "pit": [
+    "pick_overall_time_pit"
+   ]
+  },
+  "head": "timing",
+  "coverage": {
+   "by_side_vintage": {
+    "hit:2011": {
+     "rows": 69,
+     "id_resolved": 65,
+     "draft_history_pre_v": 46,
+     "sidecar_only": 0,
+     "sidecar_known": 0,
+     "with_pick": 46,
+     "missing": 23,
+     "draft_years": {
+      "2006": 2,
+      "2007": 5,
+      "2008": 5,
+      "2009": 17,
+      "2010": 17
+     },
+     "max_draft_year": 2010,
+     "median_pick": 49,
+     "sidecar_both": 0,
+     "sidecar_agrees": 0,
+     "sidecar_disagrees": 0
+    },
+    "hit:2012": {
+     "rows": 189,
+     "id_resolved": 180,
+     "draft_history_pre_v": 129,
+     "sidecar_only": 0,
+     "sidecar_known": 0,
+     "with_pick": 129,
+     "missing": 60,
+     "draft_years": {
+      "2007": 6,
+      "2008": 9,
+      "2009": 30,
+      "2010": 47,
+      "2011": 37
+     },
+     "max_draft_year": 2011,
+     "median_pick": 59,
+     "sidecar_both": 0,
+     "sidecar_agrees": 0,
+     "sidecar_disagrees": 0
+    },
+    "hit:2013": {
+     "rows": 268,
+     "id_resolved": 251,
+     "draft_history_pre_v": 178,
+     "sidecar_only": 2,
+     "sidecar_known": 17,
+     "with_pick": 180,
+     "missing": 88,
+     "draft_years": {
+      "2007": 3,
+      "2008": 6,
+      "2009": 31,
+      "2010": 38,
+      "2011": 51,
+      "2012": 49
+     },
+     "max_draft_year": 2012,
+     "median_pick": 62,
+     "sidecar_both": 15,
+     "sidecar_agrees": 15,
+     "sidecar_disagrees": 0
+    },
+    "hit:2014": {
+     "rows": 260,
+     "id_resolved": 242,
+     "draft_history_pre_v": 169,
+     "sidecar_only": 3,
+     "sidecar_known": 39,
+     "with_pick": 172,
+     "missing": 88,
+     "draft_years": {
+      "2007": 1,
+      "2008": 1,
+      "2009": 13,
+      "2010": 21,
+      "2011": 33,
+      "2012": 56,
+      "2013": 44
+     },
+     "max_draft_year": 2013,
+     "median_pick": 69,
+     "sidecar_both": 36,
+     "sidecar_agrees": 36,
+     "sidecar_disagrees": 0
+    },
+    "hit:2015": {
+     "rows": 397,
+     "id_resolved": 368,
+     "draft_history_pre_v": 265,
+     "sidecar_only": 5,
+     "sidecar_known": 82,
+     "with_pick": 270,
+     "missing": 127,
+     "draft_years": {
+      "2008": 2,
+      "2009": 3,
+      "2010": 20,
+      "2011": 30,
+      "2012": 74,
+      "2013": 77,
+      "2014": 59
+     },
+     "max_draft_year": 2014,
+     "median_pick": 89,
+     "sidecar_both": 77,
+     "sidecar_agrees": 76,
+     "sidecar_disagrees": 1
+    },
+    "hit:2016": {
+     "rows": 405,
+     "id_resolved": 368,
+     "draft_history_pre_v": 257,
+     "sidecar_only": 5,
+     "sidecar_known": 128,
+     "with_pick": 262,
+     "missing": 143,
+     "draft_years": {
+      "2009": 1,
+      "2010": 6,
+      "2011": 15,
+      "2012": 40,
+      "2013": 71,
+      "2014": 53,
+      "2015": 71
+     },
+     "max_draft_year": 2015,
+     "median_pick": 91,
+     "sidecar_both": 123,
+     "sidecar_agrees": 114,
+     "sidecar_disagrees": 9
+    },
+    "hit:2017": {
+     "rows": 472,
+     "id_resolved": 418,
+     "draft_history_pre_v": 276,
+     "sidecar_only": 9,
+     "sidecar_known": 183,
+     "with_pick": 285,
+     "missing": 187,
+     "draft_years": {
+      "2008": 1,
+      "2010": 4,
+      "2011": 9,
+      "2012": 19,
+      "2013": 59,
+      "2014": 46,
+      "2015": 68,
+      "2016": 70
+     },
+     "max_draft_year": 2016,
+     "median_pick": 87,
+     "sidecar_both": 174,
+     "sidecar_agrees": 147,
+     "sidecar_disagrees": 27
+    },
+    "hit:2018": {
+     "rows": 450,
+     "id_resolved": 394,
+     "draft_history_pre_v": 269,
+     "sidecar_only": 12,
+     "sidecar_known": 221,
+     "with_pick": 281,
+     "missing": 169,
+     "draft_years": {
+      "2008": 1,
+      "2009": 1,
+      "2010": 1,
+      "2011": 7,
+      "2012": 6,
+      "2013": 34,
+      "2014": 34,
+      "2015": 53,
+      "2016": 66,
+      "2017": 66
+     },
+     "max_draft_year": 2017,
+     "median_pick": 81,
+     "sidecar_both": 209,
+     "sidecar_agrees": 188,
+     "sidecar_disagrees": 21
+    },
+    "hit:2019": {
+     "rows": 543,
+     "id_resolved": 469,
+     "draft_history_pre_v": 286,
+     "sidecar_only": 14,
+     "sidecar_known": 280,
+     "with_pick": 300,
+     "missing": 243,
+     "draft_years": {
+      "2011": 2,
+      "2012": 4,
+      "2013": 7,
+      "2014": 17,
+      "2015": 42,
+      "2016": 66,
+      "2017": 57,
+      "2018": 91
+     },
+     "max_draft_year": 2018,
+     "median_pick": 79,
+     "sidecar_both": 266,
+     "sidecar_agrees": 247,
+     "sidecar_disagrees": 19
+    },
+    "pit:2011": {
+     "rows": 58,
+     "id_resolved": 55,
+     "draft_history_pre_v": 46,
+     "sidecar_only": 0,
+     "sidecar_known": 0,
+     "with_pick": 46,
+     "missing": 12,
+     "draft_years": {
+      "2006": 3,
+      "2007": 3,
+      "2008": 9,
+      "2009": 12,
+      "2010": 19
+     },
+     "max_draft_year": 2010,
+     "median_pick": 50,
+     "sidecar_both": 0,
+     "sidecar_agrees": 0,
+     "sidecar_disagrees": 0
+    },
+    "pit:2012": {
+     "rows": 170,
+     "id_resolved": 163,
+     "draft_history_pre_v": 137,
+     "sidecar_only": 0,
+     "sidecar_known": 0,
+     "with_pick": 137,
+     "missing": 33,
+     "draft_years": {
+      "2006": 2,
+      "2007": 7,
+      "2008": 18,
+      "2009": 21,
+      "2010": 39,
+      "2011": 50
+     },
+     "max_draft_year": 2011,
+     "median_pick": 81,
+     "sidecar_both": 0,
+     "sidecar_agrees": 0,
+     "sidecar_disagrees": 0
+    },
+    "pit:2013": {
+     "rows": 246,
+     "id_resolved": 229,
+     "draft_history_pre_v": 196,
+     "sidecar_only": 0,
+     "sidecar_known": 12,
+     "with_pick": 196,
+     "missing": 50,
+     "draft_years": {
+      "2007": 6,
+      "2008": 16,
+      "2009": 23,
+      "2010": 45,
+      "2011": 57,
+      "2012": 49
+     },
+     "max_draft_year": 2012,
+     "median_pick": 88,
+     "sidecar_both": 12,
+     "sidecar_agrees": 12,
+     "sidecar_disagrees": 0
+    },
+    "pit:2014": {
+     "rows": 245,
+     "id_resolved": 227,
+     "draft_history_pre_v": 180,
+     "sidecar_only": 1,
+     "sidecar_known": 20,
+     "with_pick": 181,
+     "missing": 64,
+     "draft_years": {
+      "2005": 1,
+      "2007": 1,
+      "2008": 2,
+      "2009": 6,
+      "2010": 25,
+      "2011": 48,
+      "2012": 48,
+      "2013": 49
+     },
+     "max_draft_year": 2013,
+     "median_pick": 84,
+     "sidecar_both": 19,
+     "sidecar_agrees": 19,
+     "sidecar_disagrees": 0
+    },
+    "pit:2015": {
+     "rows": 388,
+     "id_resolved": 358,
+     "draft_history_pre_v": 284,
+     "sidecar_only": 1,
+     "sidecar_known": 49,
+     "with_pick": 285,
+     "missing": 103,
+     "draft_years": {
+      "2008": 1,
+      "2009": 5,
+      "2010": 17,
+      "2011": 51,
+      "2012": 61,
+      "2013": 67,
+      "2014": 82
+     },
+     "max_draft_year": 2014,
+     "median_pick": 106,
+     "sidecar_both": 48,
+     "sidecar_agrees": 47,
+     "sidecar_disagrees": 1
+    },
+    "pit:2016": {
+     "rows": 405,
+     "id_resolved": 371,
+     "draft_history_pre_v": 288,
+     "sidecar_only": 4,
+     "sidecar_known": 88,
+     "with_pick": 292,
+     "missing": 113,
+     "draft_years": {
+      "2007": 1,
+      "2009": 1,
+      "2010": 11,
+      "2011": 37,
+      "2012": 41,
+      "2013": 55,
+      "2014": 68,
+      "2015": 74
+     },
+     "max_draft_year": 2015,
+     "median_pick": 122,
+     "sidecar_both": 84,
+     "sidecar_agrees": 75,
+     "sidecar_disagrees": 9
+    },
+    "pit:2017": {
+     "rows": 469,
+     "id_resolved": 424,
+     "draft_history_pre_v": 319,
+     "sidecar_only": 7,
+     "sidecar_known": 148,
+     "with_pick": 326,
+     "missing": 143,
+     "draft_years": {
+      "2006": 1,
+      "2007": 1,
+      "2009": 1,
+      "2010": 9,
+      "2011": 21,
+      "2012": 32,
+      "2013": 42,
+      "2014": 72,
+      "2015": 69,
+      "2016": 71
+     },
+     "max_draft_year": 2016,
+     "median_pick": 110,
+     "sidecar_both": 141,
+     "sidecar_agrees": 109,
+     "sidecar_disagrees": 32
+    },
+    "pit:2018": {
+     "rows": 439,
+     "id_resolved": 398,
+     "draft_history_pre_v": 293,
+     "sidecar_only": 11,
+     "sidecar_known": 206,
+     "with_pick": 304,
+     "missing": 135,
+     "draft_years": {
+      "2009": 1,
+      "2010": 1,
+      "2011": 12,
+      "2012": 10,
+      "2013": 22,
+      "2014": 53,
+      "2015": 56,
+      "2016": 81,
+      "2017": 57
+     },
+     "max_draft_year": 2017,
+     "median_pick": 104,
+     "sidecar_both": 195,
+     "sidecar_agrees": 162,
+     "sidecar_disagrees": 33
+    },
+    "pit:2019": {
+     "rows": 489,
+     "id_resolved": 439,
+     "draft_history_pre_v": 321,
+     "sidecar_only": 13,
+     "sidecar_known": 276,
+     "with_pick": 334,
+     "missing": 155,
+     "draft_years": {
+      "2011": 3,
+      "2012": 4,
+      "2013": 8,
+      "2014": 30,
+      "2015": 44,
+      "2016": 86,
+      "2017": 76,
+      "2018": 70
+     },
+     "max_draft_year": 2018,
+     "median_pick": 120,
+     "sidecar_both": 263,
+     "sidecar_agrees": 230,
+     "sidecar_disagrees": 33
+    }
+   },
+   "transform": "log1p",
+   "head": "timing",
+   "retest_of": "D-1:pick_overall",
+   "indicator": "pick_missing",
+   "draft_files": {
+    "dir": ".cache/draft_history",
+    "years": [
+     2005,
+     2006,
+     2007,
+     2008,
+     2009,
+     2010,
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018
+    ],
+    "first": 2005,
+    "last": 2018
+   }
+  },
+  "settings": {
+   "transform": "log1p",
+   "join_id": "mlbam_id (outcome-blind, efv_identity)",
+   "draft_year_rule": "latest draft year strictly below V",
+   "fallback": "acquisitions sidecar pick_overall when acq_known_at_v"
+  },
+  "registration": {
+   "draft_history_pre_v_lane_b": {
+    "2011": {
+     "hit": [
+      46,
+      69
+     ],
+     "pit": [
+      46,
+      58
+     ]
+    },
+    "2019": {
+     "hit": [
+      286,
+      543
+     ],
+     "pit": [
+      321,
+      489
+     ]
+    }
+   },
+   "sidecar_pick_known_lane_b": "0 rows before V 2013",
+   "retest_of": {
+    "arm": "D-1:pick_overall",
+    "frame": "vm (F-VM, debut year)",
+    "delta_rho": {
+     "hit": -0.00171,
+     "pit": -0.00759
+    },
+    "floor_rho": {
+     "hit": 0.0194,
+     "pit": 0.0172
+    },
+    "cleared_own_floor": false
+   },
+   "head": "timing",
+   "head_rule": "DRIVER_SYSTEM_V2 D4: pick and bonus are never a rank feature",
+   "source": "SP/efv3/LANE_B.md F-B7; data/xfv_arm_ledger.json"
+  },
+  "not_in_efv_progress": "the pick column is scored only by the screening lab; this probe writes no progress row and no ledger row",
+  "seed": 20260925,
+  "B": 500
  }
 }
