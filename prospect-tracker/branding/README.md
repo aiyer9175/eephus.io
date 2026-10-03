@@ -200,6 +200,12 @@ light (Color, Logo usage), `assets/site.css` serves lilac in both themes
 resolved: the owner's answer to PB-Q3 (2026-09-30, lilac in both themes) lands
 with the pixel brand pass (PB-08 for the export frame, PB-09 for this guide).
 Until then the site is the reference, per the rule at the top of this guide.
+PB-08 is built behind `build_site.PIXEL_BRAND`: with the flag on, the
+image-export frame and the three Generate GFX headers (which set "EEPHUS.IO"
+in capitals) paint the pixel lockup itself from its committed strikes
+(`assets/brand/wordmark-s{2,4}-{light,dark}.png`, lilac `.io`) at a whole
+number of device pixels per strike pixel (`EephusExport.pxLockup`); with it
+off they keep today's text.
 
 ## The dark-mode starfield
 
@@ -286,8 +292,10 @@ assets/
   eephus-icons.svg              the pixel icon sprite (served)
   eephus-icons.json             the same bitmaps for the canvas painters (served)
   brand/                        tools/pixel_brand.py's DOM fragments and the pixel
-                                favicon and app-icon set with its manifest (served
-                                only when build_site.py's PIXEL_BRAND is on)
+                                favicon and app-icon set with its manifest, and the
+                                s 2 and s 4 wordmark strikes the canvas exports
+                                paint (served only when build_site.py's
+                                PIXEL_BRAND is on)
 
 tools/
   pixel_icons.py                source and generator of the pixel icon set

@@ -478,16 +478,23 @@
     var c = document.createElement("canvas"); c.width = W; c.height = H;
     var g = c.getContext("2d");
     g.fillStyle = dark ? "#0C0C0E" : "#F4F0E6"; g.fillRect(0, 0, W, H);
-    // wordmark
+    // wordmark: under PIXEL_BRAND the pixel lockup (letters 2 px per font pixel
+    // in frame units, the s 4 strike at 1:1 on the 2x canvas), top at the pad,
+    // with the title on its baseline; otherwise the text wordmark. The .io is
+    // lilac in both themes under the flag (owner answer PB-Q3).
     var fs = 30 * S;
+    var pb = pixelBrand();
+    var lk = pb ? pxLockup(g, pad, pad, 2 * S, 1, dark) : null;
+    var by = lk ? pad + lk.base : pad + fs;
     g.textBaseline = "alphabetic";
     g.font = "700 " + fs + "px " + _LOGO;
-    g.fillStyle = dark ? "#ECEEF2" : "#0F1B2D";
-    var by = pad + fs;
-    g.fillText("eephus", pad, by);
-    var ew = g.measureText("eephus").width;
-    g.fillStyle = dark ? "#9B8CFF" : "#C9A227";
-    g.fillText(".io", pad + ew, by);
+    if (!lk) {
+      g.fillStyle = dark ? "#ECEEF2" : "#0F1B2D";
+      g.fillText("eephus", pad, by);
+      var ew = g.measureText("eephus").width;
+      g.fillStyle = dark ? "#9B8CFF" : (pb ? "#6E56CF" : "#C9A227");
+      g.fillText(".io", pad + ew, by);
+    }
     // title (right-aligned), the module icon at 12 px left of it (PX-18)
     if (title) {
       g.font = "700 " + (15 * S) + "px " + _LOGO;
@@ -581,9 +588,99 @@
     return hasIcon(seg) ? seg : "";
   }
 
+  // ---- pixel lockup painter (owner ask 2, PB-08 / BR-08) -------------------
+  // Under build_site.PIXEL_BRAND every page serves the pixel lockup, and the
+  // exports paint the same lockup from its committed PNG strikes
+  // (tools/pixel_brand.py writes them to assets/brand/ beside the DOM
+  // fragments) instead of setting the words in a font. With the flag off no
+  // page carries the lockup, nothing is fetched and every frame keeps its text
+  // wordmark. A strike is drawn only at a whole number of device
+  // pixels per strike pixel, from a whole device pixel, with smoothing off, so
+  // every lockup pixel is a flat square (the _pxIcon idea). The strikes load at
+  // export time, never on page load; a failed load leaves the text wordmark.
+  // Strike geometry, pinned to the generator by test_pixel_lockup_painter.py:
+  // scale -> [width, height] in strike pixels; the letters' baseline sits
+  // LOCKUP_BASE_U font pixels under the strike's top edge.
+  var LOCKUP_STRIKES = { 4: [220, 84], 2: [110, 42] };
+  var LOCKUP_BASE_U = 19;
+  var _lockupImg = {}, _lockupReady = {};
+  // The flag is read off the page: only the pixel lockup carries its words as
+  // the visually hidden .wm-txt span (build_site.pixel_wordmark). A read, never
+  // a write: the lockup's motion stays CSS only.
+  var PIXEL_BRAND_PROBE = ".nameplate > .wm-txt";
+  function pixelBrand() {
+    try { return !!document.querySelector(PIXEL_BRAND_PROBE); } catch (e) { return false; }
+  }
+  // The strike that paints letters u device pixels per font pixel: the largest
+  // committed scale that divides u, at the whole factor u / scale (s 4 at 1 is
+  // the strike drawn for that size, not s 2 doubled). null when none divides u.
+  function lockupStrike(u) {
+    u = Math.round(Number(u) || 0);
+    var scales = [4, 2];
+    for (var i = 0; i < scales.length; i++) {
+      if (u >= scales[i] && u % scales[i] === 0) return { s: scales[i], k: u / scales[i] };
+    }
+    return null;
+  }
+  function _lockupKey(s, dark) { return "s" + s + "-" + (dark ? "dark" : "light"); }
+  function loadLockup(u, dark) {
+    var st = lockupStrike(u);
+    if (!st) return Promise.resolve(null);
+    var key = _lockupKey(st.s, dark);
+    if (_lockupReady[key]) return _lockupReady[key];
+    var url = "/assets/brand/wordmark-" + key + ".png";
+    _lockupReady[key] = Promise.resolve().then(function () {
+      if (typeof fetch !== "function" || typeof Image !== "function") return null;
+      // no-cache revalidates: the strike carries no ?v= stamp of its own
+      return fetch(url, { cache: "no-cache" }).then(function (r) { return r.ok ? r.blob() : null; });
+    }).then(function (blob) {
+      if (!blob) return null;
+      return new Promise(function (resolve) {
+        var img = new Image();
+        var src = URL.createObjectURL(blob);
+        img.onload = function () { URL.revokeObjectURL(src); resolve(img); };
+        img.onerror = function () { URL.revokeObjectURL(src); resolve(null); };
+        img.src = src;
+      });
+    }).catch(function () { return null; }).then(function (img) {
+      var dim = LOCKUP_STRIKES[st.s];
+      // a strike whose size is not the pinned geometry paints nothing
+      _lockupImg[key] = (img && img.width === dim[0] && img.height === dim[1]) ? img : null;
+      return _lockupImg[key];
+    });
+    return _lockupReady[key];
+  }
+  // The lockup box in the context's own units (unit = device pixels per unit):
+  // { w, h, base } with base the letters' baseline under the top edge, or null.
+  function lockupBox(u, unit) {
+    var st = lockupStrike(u);
+    if (!st) return null;
+    var d = Math.max(1, Math.round(Number(unit) || 1));
+    var dim = LOCKUP_STRIKES[st.s];
+    return { w: dim[0] * st.k / d, h: dim[1] * st.k / d, base: LOCKUP_BASE_U * u / d };
+  }
+  // Paint the lockup with its top-left at (x, y) in the context's units, letters
+  // u device pixels per font pixel. Returns the box painted, or null when the
+  // strike is not loaded (the caller sets its text wordmark instead).
+  function pxLockup(ctx, x, y, u, unit, dark) {
+    var st = lockupStrike(u);
+    var box = lockupBox(u, unit);
+    var img = st ? _lockupImg[_lockupKey(st.s, dark)] : null;
+    if (!ctx || !box || !img) return null;
+    var d = Math.max(1, Math.round(Number(unit) || 1));
+    var x0 = Math.round((Number(x) || 0) * d) / d, y0 = Math.round((Number(y) || 0) * d) / d;
+    var smooth = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, x0, y0, box.w, box.h);
+    ctx.imageSmoothingEnabled = smooth;
+    return box;
+  }
+
   function exportImage(host, action, kind) {
     toast("Rendering image…");
-    return Promise.all([_ensureH2C(), _awaitFonts(), loadIcons()]).then(function (r) {
+    var jobs = [_ensureH2C(), _awaitFonts(), loadIcons()];
+    if (pixelBrand()) jobs.push(loadLockup(4, _dark()));   // the frame's lockup: u 4 device px
+    return Promise.all(jobs).then(function (r) {
       var h2c = r[0];
       var target = kind === "chart" ? (host.querySelector("svg") || host)
                                     : (host.matches("table") ? host : (host.querySelector("table") || host));
@@ -740,6 +837,12 @@
     hasIcon: hasIcon,
     pxIcon: pxIcon,
     routeIcon: routeIcon,
+    // the pixel lockup painter (PB-08), shared with the Generate GFX engine
+    pixelBrand: pixelBrand,
+    lockupStrike: lockupStrike,
+    lockupBox: lockupBox,
+    loadLockup: loadLockup,
+    pxLockup: pxLockup,
     copyTable: function (host, fmt) {
       var model = scrape(host);
       var built = buildText(model, fmt || "markdown");

@@ -47,6 +47,9 @@ STRIKES = {"nav": 2, "sidebar": 2, "prospx_title": 3, "hero_phone": 4, "hero": 6
 # only, the desktop strike and its phone twin; the nav replays on hover only).
 PLAY_SCALES = (4, 6)
 FRAGMENT_SCALES = (2, 4, 6)
+# The PNG strikes the canvas exports paint (BR-08, PB-08): served from
+# assets/brand/ beside their DOM fragments; the s 6 strike stays review art.
+EXPORT_SCALES = (2, 4)
 
 # ---------------------------------------------------------------- ball
 # Ball strike size per lockup scale: 4 u, plus 1 at odd s so it centres on

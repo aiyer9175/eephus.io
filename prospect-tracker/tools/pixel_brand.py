@@ -21,9 +21,11 @@ Writes ONLY these two folders, never data/ (the pytest-revert trap):
                       exact strike), favicon.svg, favicon-16.png (the footer mark),
                       favicon-32.png, apple-touch-icon.png, icon-192.png,
                       icon-512.png, icon-maskable-512.png, and site.webmanifest
-                      (the served manifest with its icons moved here)
+                      (the served manifest with its icons moved here); the
+                      wordmark PNG strikes s 2 and s 4 (SRC.EXPORT_SCALES), which
+                      the canvas exports paint under PIXEL_BRAND (BR-08)
     branding/pixel/   sheets and exported art: brand-sheet-{light,dark}.png,
-                      glyphs.json (the sampled letters), wordmark PNG strikes,
+                      glyphs.json (the sampled letters), the s 6 wordmark strikes,
                       share-default.png, og/<module>.png, marks/*.svg, eephus-arc.gif
 The served pages read the icon set from assets/brand/ only when build_site.py's
 PIXEL_BRAND flag is on (FAVICON_LINKS and the footer mark switch with it); the
@@ -860,7 +862,9 @@ def build(out: Path, style: str = SRC.STYLE, seams: str = SRC.SEAMS):
     for theme in ("light", "dark"):
         put_img(P + f"brand-sheet-{theme}.png", sheet(theme, style, seams))
         for s in SRC.FRAGMENT_SCALES:
-            put_img(P + f"wordmark-s{s}-{theme}.png", to_png(compose(s, style, seams), theme))
+            # The strikes the canvas exports paint are served (BR-08); the rest are review art.
+            home = "assets/brand/" if s in SRC.EXPORT_SCALES else P
+            put_img(home + f"wordmark-s{s}-{theme}.png", to_png(compose(s, style, seams), theme))
     # The favicon and app-icon set (BR-04, assets/brand/): served only through
     # build_site.py's PIXEL_BRAND flag; the manifest points at the same folder.
     I = BRAND_ICON_DIR
