@@ -17,12 +17,31 @@ Training per fold: efv_v2_model.lv_training_rows at vintages below V with every 
 player excluded, exactly as efv_v2_model.v2_lv_scores trains. vm_dev is never screened.
 
 BASE AND CANDIDATE. The base is V2 as assembled (order_idx, weights from
-data/efv_v2_assembly.json). A candidate is the same assembly with ONE extra column
-offered to ONE declared head (skill or timing) through efv_v2_model.fit_v2(extra=...),
-admitted or refused inside each fold by efv_v2_model.admission_for_key (DS-06). A refused
-column leaves the candidate equal to the base in that fold: the honest null, not an error.
-Column keys carry efv_v2_model.V2_SCREEN_PREFIX so a no-value row imputes at the fold's
-observed training mean like every sidecar driver (has_block_means).
+data/efv_v2_assembly.json) on the frame efv_v2_assemble.build_frames builds. A candidate
+is the same assembly with ONE extra column offered to ONE declared head (skill or timing)
+through efv_v2_model.fit_v2(extra=...), admitted or refused inside each fold by
+efv_v2_model.admission_for_key (DS-06). A refused column leaves the candidate equal to
+the base in that fold: the honest null, not an error. Column keys carry
+efv_v2_model.V2_SCREEN_PREFIX so a no-value row imputes at the fold's observed training
+mean like every sidecar driver (has_block_means).
+
+THE TEXT COLUMN (source "text"; EFV3_B5 wired it, EFV3_B2 built it). The lab hands one
+value per (V, player_key) slot, so the fold-fitted text scalar is STACKED OUT OF
+VINTAGE: the value at (v, pk) is efv_text_features.fold_columns' prediction for the v
+rows from a tokenizer, idf and ridge fit on the text vintages strictly below v with
+every v-frame player excluded (GATE s4.5). No row's value reads its own label, and the
+lab's fold V test rows read a fit on vintages below V. The dropped vintages (2011, 2012)
+and the first text vintage (nothing earlier to fit on) carry no value. A head the DS-03
+verdict withholds on a side (efv_text_features.offered_columns) is not built: the arm
+is recorded as unavailable, counted in m, never admitted (gate s10.7).
+
+THE COVERAGE ARM (kind "coverage"; EFV3_B3). A frame change has no column. The arm's
+candidate is the base assembly refit on frames built with the named
+efv_vintage_frame attribute at `candidate`; its base is the same assembly refit on
+frames built with the attribute at `base` (the served default floor); the two are paired
+row by row on the players both score. The lab's shared frame (the base of every column
+arm and of the floors) is build_frames as the tree builds it, whatever floor that is,
+and the arm's receipt records the floor every frame was read at per side.
 
 STATISTIC. efv_v2_stat.within primary (size-weighted within-(side, vintage) Spearman,
 MIN_GROUP_ROWS 20), pooled after the identical output map secondary, contributor AUC at
@@ -138,6 +157,10 @@ FLOOR_MODE_DEFAULT = "forced"
 B_BAL = 500
 ALPHA = 0.05
 FROZEN_DATE = "2026-10-02"
+#: The commit that froze CANDIDATES (EFV3_B1; docs/efv-v2/EFV_V2_GATE.md s10.9). Later
+#: commits changed only where a column reads its values, never a name, side, head,
+#: kind or re-test flag (test_wave_one_is_frozen).
+FROZEN_COMMIT = "d9fe7db4"
 CANDIDATE_KEY = f"{H.V2_SCREEN_PREFIX}cand"
 #: The eight verdict strings of docs/EFV_GATE_STANDARD.md s3.1. A registered run emits
 #: nothing else.
@@ -159,42 +182,47 @@ ADMISSION_RULE = (
 
 #: WAVE 1, frozen 2026-10-02 (LANE_B.md s4.3; EFV3_PLAN.md s4): seven arms, one Holm
 #: family. `column` says where the values come from: a frame-row key (with an optional
-#: transform) or a builder module's function `fn(side, frames) -> {(V, player_key):
-#: value | None}` (EFV3_B2 text, EFV3_B4 pick). A column whose source is absent on the
-#: run's tree is recorded as unavailable and measured by nothing; it still counts in m.
+#: transform), a builder module's function `fn(side, frames) -> {(V, player_key):
+#: value | None}` (EFV3_B4 pick), or the text family's stacked fold fit (source "text",
+#: EFV3_B2 through text_column_values). A column whose source is absent on the run's
+#: tree, or that its builder withholds, is recorded as unavailable and measured by
+#: nothing; it still counts in m.
 #: `kind` "coverage" is a frame change (EFV3_B3): the candidate is the base refit on
-#: frames built with the named efv_vintage_frame attribute overridden, read on both
-#: sides pooled; it has no head and takes the larger of the two heads' pooled floors.
+#: frames built with the named efv_vintage_frame attribute at `candidate`, against the
+#: same refit on frames built with it at `base`, read on both sides pooled; it has no
+#: head and takes the larger of the two heads' pooled floors.
 #: seasons_at_level_pit is NOT here (owner DS-Q2; data/efv_v2_assembly.json scrapped.pit;
 #: already read on lv_dev in H0's pitcher list). pick_overall is a named re-test of a
 #: closed F-VM arm (D-1) on a frame it was never read on, timing head only (D4).
 CANDIDATES: tuple[dict, ...] = (
     {"name": "txt_skill_hit", "side": "hit", "head": "skill", "kind": "column",
      "retest": False,
-     "column": {"source": "module", "module": "efv_text_features",
-                "attr": "screen_column", "arg": "txt_skill"},
+     "column": {"source": "text", "module": "efv_text_features", "head": "skill",
+                "construction": "stacked out of vintage (text_column_values)"},
      "what": "fold-fitted tf-idf ridge scalar on the W3 percentile residual (EFV3_B2)"},
     {"name": "txt_skill_pit", "side": "pit", "head": "skill", "kind": "column",
      "retest": False,
-     "column": {"source": "module", "module": "efv_text_features",
-                "attr": "screen_column", "arg": "txt_skill"},
+     "column": {"source": "text", "module": "efv_text_features", "head": "skill",
+                "construction": "stacked out of vintage (text_column_values)"},
      "what": "fold-fitted tf-idf ridge scalar on the W3 percentile residual (EFV3_B2)"},
     {"name": "txt_time_hit", "side": "hit", "head": "timing", "kind": "column",
      "retest": False,
-     "column": {"source": "module", "module": "efv_text_features",
-                "attr": "screen_column", "arg": "txt_time"},
+     "column": {"source": "text", "module": "efv_text_features", "head": "time",
+                "construction": "stacked out of vintage (text_column_values)"},
      "what": "the same text scalar fitted on the R3 target, timing head (EFV3_B2)"},
     {"name": "txt_time_pit", "side": "pit", "head": "timing", "kind": "column",
      "retest": False,
-     "column": {"source": "module", "module": "efv_text_features",
-                "attr": "screen_column", "arg": "txt_time"},
+     "column": {"source": "text", "module": "efv_text_features", "head": "time",
+                "construction": "stacked out of vintage (text_column_values)"},
      "what": "the same text scalar fitted on the R3 target, timing head (EFV3_B2)"},
     {"name": "milb_floor_2005", "side": BOTH, "head": None, "kind": "coverage",
      "retest": False,
      "column": {"source": "frame_attr", "attr": "MILB_FLOOR_LV", "candidate": 2005,
                 "base": 2014},
      "what": ("the MiLB block floor lifted from 2014 to 2005 on the F-LV frame only "
-              "(EFV3_B3): the base refit on the lifted frame against the base")},
+              "(EFV3_B3): the base assembly refit on frames built at the lifted floor "
+              "against the same refit on frames built at the served default floor, "
+              "paired row by row; the per-side withhold applies as committed")},
     {"name": "pick_overall_time_hit", "side": "hit", "head": "timing", "kind": "column",
      "retest": True,
      "column": {"source": "module", "module": "efv_pick_features",
@@ -279,7 +307,7 @@ def label_id() -> str:
 def registration_echo(candidates=CANDIDATES, *, B: int = B_DEFAULT, n_perm: int = N_PERM,
                       folds=FOLDS, floor_mode: str = FLOOR_MODE_DEFAULT) -> dict:
     return {
-        "wave": WAVE, "frozen": FROZEN_DATE,
+        "wave": WAVE, "frozen": FROZEN_DATE, "frozen_commit": FROZEN_COMMIT,
         "candidates": [{k: c[k] for k in ("name", "side", "head", "kind", "retest")}
                        for c in candidates],
         "family_size": len(candidates),
@@ -697,11 +725,96 @@ def frame_key_values(frames: dict, side: str, key: str, transform: str | None = 
     return out
 
 
+_REPORTS_CACHE: dict = {}
+
+
+def _reports_for(vs, *, T) -> dict:
+    """efv_text_features.load_reports over the vintages, read once per range (a year
+    before the first vintage, so a carried-forward report is seen)."""
+    lo, hi = f"{min(vs) - 1}-01-01", f"{max(vs)}-05-01"
+    if (lo, hi) not in _REPORTS_CACHE:
+        _REPORTS_CACHE[(lo, hi)] = T.load_reports(lo=lo, hi=hi)
+    return _REPORTS_CACHE[(lo, hi)]
+
+
+def text_column_values(head: str, side: str, frames: dict, *, reports: dict | None = None,
+                       train: list[dict] | None = None,
+                       balance_path: Path | None = None) -> dict:
+    """{(V, player_key): value | None} for one text head on one side, stacked out of
+    vintage (module docstring): at each vintage v the text fit of
+    efv_text_features.fold_columns is trained on the labelled rows of the text vintages
+    strictly below v with every v-frame player excluded, and scores the v rows. `train`
+    is the labelled row list (efv_v2_model.lv_training_rows: player_key, decision_year,
+    fv, target = W3, reached = R3); it is built from `frames` when not handed in. A head
+    withheld on the side (efv_text_features.offered_columns, the DS-03 verdict on
+    report_absent) raises ColumnUnavailable before any read."""
+    import efv_text_features as T
+    if head not in T.COLUMN_HEADS:
+        raise ValueError(f"head must be one of {T.COLUMN_HEADS}, got {head!r}")
+    if side not in SIDES:
+        raise ValueError(f"side must be one of {SIDES}, got {side!r}")
+    name = T.column_name(head, side)
+    if head not in T.offered_columns(side, balance_path):
+        raise ColumnUnavailable(
+            f"{name} withheld: report_absent reads {T.balance_verdict(side, balance_path)!r} "
+            f"on {side} (efv_text_features.offered_columns, gate s10.7)")
+    by_v = frames.get(side) or {}
+    vs = sorted(int(V) for V in by_v)
+    if not vs:
+        raise ColumnUnavailable(f"no frames on side {side}")
+    for V in vs:
+        F.guard_score_request(V, purpose="text column")
+    reports = _reports_for(vs, T=T) if reports is None else reports
+    if train is None:
+        train = H.lv_training_rows(side, by_v)
+    text: dict = {}
+    for V in vs:
+        for r in T.attach_text(by_v[V][0], reports):
+            text[(V, r["player_key"])] = r.get("report_text")
+    labelled = {(int(r["decision_year"]), r["player_key"]): r for r in train}
+    out: dict = {}
+    for V in vs:
+        rows_v = by_v[V][0]
+        in_frame = {r["player_key"] for r in rows_v}
+        for r in rows_v:
+            out[(V, r["player_key"])] = None
+        if V in T.DROPPED_VINTAGES:
+            continue
+        tr_keys = sorted((v, pk) for (v, pk) in labelled
+                         if T.FIRST_TEXT_VINTAGE <= v < V and pk not in in_frame)
+        if not tr_keys:
+            continue
+        tr = [{"player_key": pk, "vintage": v, "fv": float(labelled[(v, pk)]["fv"]),
+               "report_text": text.get((v, pk))} for (v, pk) in tr_keys]
+        target = [labelled[k]["target"] for k in tr_keys]
+        event = [labelled[k]["reached"] for k in tr_keys]
+        test = [{"player_key": r["player_key"], "vintage": V,
+                 "fv": (r.get("grades") or {}).get(CONS),
+                 "report_text": text.get((V, r["player_key"]))} for r in rows_v]
+        res = T.fold_columns(side, V, tr, test, target=target, event=event, offered=(head,))
+        for r in rows_v:
+            v = (res["columns"].get(r["player_key"]) or {}).get(name)
+            out[(V, r["player_key"])] = None if v is None else float(v)
+    return out
+
+
 def column_values(cand: dict, frames: dict) -> dict:
     """The candidate's values on its side(s), by its declared source."""
     spec = cand["column"]
     src = spec.get("source")
     sides = SIDES if cand["side"] == BOTH else (cand["side"],)
+    if src == "text":
+        try:
+            __import__(spec.get("module") or "efv_text_features")
+        except ImportError as exc:
+            raise ColumnUnavailable(f"builder module {spec.get('module')} absent: {exc}")
+        out = {}
+        for s in sides:
+            out.update(text_column_values(spec["head"], s, frames))
+        if all(v is None for v in out.values()):
+            raise ColumnUnavailable(f"text head {spec['head']!r} carries no value on "
+                                    f"{', '.join(sides)}")
+        return out
     if src == "frame_key":
         out = {}
         for s in sides:
@@ -902,10 +1015,10 @@ def permutation_null(frame: Frame, side: str, head: str, key: str, values: dict,
             "status": "derived"}
 
 
-def _rater_block(frame: Frame, sides, cand_order: dict) -> dict:
+def _rater_block(frame: Frame, sides, cand_order: dict, base_order: dict | None = None) -> dict:
     """Rater stats (within, pooled, AUC) on the scored rows: the candidate, the base,
     consensus and each scored source on the rows it grades."""
-    cols = _columns(frame, sides, cand_order)
+    cols = _columns(frame, sides, cand_order, base_order)
     keys, groups, y, pos, a, b, cons, grades = cols
     out = {}
 
@@ -927,8 +1040,9 @@ def _rater_block(frame: Frame, sides, cand_order: dict) -> dict:
     return out
 
 
-def _vs_consensus(frame: Frame, sides, order: dict, *, B: int) -> dict:
-    cols = _columns(frame, sides, order)
+def _vs_consensus(frame: Frame, sides, order: dict, *, B: int,
+                  base_order: dict | None = None) -> dict:
+    cols = _columns(frame, sides, order, base_order)
     keys, groups, y, pos, a, b, cons, _g = cols
     cc = (keys, groups, y, pos, a, list(cons), cons, _g)
     return {"spearman": _delta(cc, "within", B=B, seed=SEED),
@@ -1171,29 +1285,68 @@ def build_frames_with(overrides: dict | None = None) -> dict:
             setattr(F, k, v)
 
 
-def coverage_values(frame: Frame, cand: dict, weights: dict, *, B: int) -> tuple[Frame, dict]:
-    """A coverage arm is not a column: the candidate is the base assembly refit and
-    scored on frames built under the override, paired row by row with the base."""
+def frame_floor_receipt(frames: dict) -> dict:
+    """The MiLB floor the rows of each side were read at (the `milb_floor` key every
+    F-LV row carries) and the rows with a block, per vintage. Counts only."""
+    out: dict = {}
+    for side in SIDES:
+        by_v = frames.get(side) or {}
+        floors: set = set()
+        blocks = {}
+        for V in sorted(by_v):
+            rows = by_v[V][0]
+            floors |= {int(r["milb_floor"]) for r in rows if r.get("milb_floor") is not None}
+            blocks[str(int(V))] = {"rows": len(rows),
+                                   "with_milb_block": sum(1 for r in rows if r.get("milb"))}
+        out[side] = {"milb_floor": sorted(floors), "by_vintage": blocks}
+    return out
+
+
+def coverage_frames(frame: Frame, cand: dict, weights: dict) -> dict:
+    """The coverage arm's two Frames: the candidate on frames built with the named
+    attribute at `candidate`, the base on frames built with it at `base`. Each carries
+    its floor receipt."""
     spec = cand["column"]
-    alt = build_frames_with({spec["attr"]: spec["candidate"]})
-    other = Frame.from_frames(alt, weights=weights, folds=frame.folds, label=frame.label)
-    other.absent_ok = dict(frame.absent_ok)
+    out = {}
+    for role in ("candidate", "base"):
+        raw = build_frames_with({spec["attr"]: spec[role]})
+        fr = Frame.from_frames(raw, weights=weights, folds=frame.folds, label=frame.label)
+        fr.absent_ok = dict(frame.absent_ok)
+        out[role] = {"frame": fr, "receipt": frame_floor_receipt(raw),
+                     "override": {spec["attr"]: spec[role]}}
+    return out
+
+
+def coverage_orders(fr: Frame) -> dict:
+    """{(V, player_key): base order_idx} over both sides and every fold of a Frame."""
     order = {}
     for s in SIDES:
-        for V in frame.folds:
-            for pk, idx in other.base(s, V)["order"].items():
+        for V in fr.folds:
+            for pk, idx in fr.base(s, V)["order"].items():
                 order[(V, pk)] = idx
-    return other, order
+    return order
+
+
+def coverage_values(frame: Frame, cand: dict, weights: dict, *, B: int | None = None,
+                    built: dict | None = None) -> tuple[dict, dict, dict]:
+    """A coverage arm is not a column: the candidate is the base assembly refit and
+    scored on frames built at `candidate`, paired row by row with the same refit on
+    frames built at `base`. Returns (built frames, candidate order, base order)."""
+    built = coverage_frames(frame, cand, weights) if built is None else built
+    return (built, coverage_orders(built["candidate"]["frame"]),
+            coverage_orders(built["base"]["frame"]))
 
 
 def measure_coverage_arm(frame: Frame, cand: dict, weights: dict, floors: dict, *,
-                         B: int) -> dict:
-    """The coverage arm's numbers: candidate order from the overridden frame, base
-    order from the frame, paired on the players both score. No permutation null (no
-    column to permute) and no twin: both are recorded as not applicable."""
-    other, order = coverage_values(frame, cand, weights, B=B)
+                         B: int, built: dict | None = None) -> dict:
+    """The coverage arm's numbers: candidate order from the frames built at
+    `candidate`, base order from the frames built at `base`, paired on the players
+    both score, read on the shared frame's scored rows (label, consensus, contributor
+    flag). No permutation null (no column to permute) and no twin: both are recorded
+    as not applicable. `built` hands in the two Frames (tests)."""
+    built, order, base_order = coverage_values(frame, cand, weights, B=B, built=built)
     side, name = cand["side"], cand["name"]
-    cols = _columns(frame, SIDES, order)
+    cols = _columns(frame, SIDES, order, base_order)
     within = _delta(cols, "within", B=B, seed=SEED)
     pooled = _delta(cols, "pooled", B=B, seed=SEED)
     auc = _delta(cols, "auc", B=B, seed=SEED)
@@ -1207,7 +1360,15 @@ def measure_coverage_arm(frame: Frame, cand: dict, weights: dict, floors: dict, 
         "model_id": f"{MODEL_ID}:{name}:{side}",
         "measured": True, "unavailable": None,
         "column": {"source": cand["column"], "n_slots": len(cols[0]),
-                   "counts_candidate": other.counts, "counts_base": frame.counts},
+                   "counts_candidate": built["candidate"]["frame"].counts,
+                   "counts_base": built["base"]["frame"].counts,
+                   "frames": {role: {"override": built[role]["override"],
+                                     "floor_receipt": built[role]["receipt"]}
+                              for role in ("candidate", "base")},
+                   "shared_frame": {"floor_by_side": {s: F.lv_milb_floor(s) for s in SIDES},
+                                    "note": "the lab's shared frame is build_frames as "
+                                            "the tree builds it; the arm pairs its own "
+                                            "two frames"}},
         "n": len(cols[0]), "folds": {}, "admitted_folds": None, "n_folds": 0,
         "fold_deltas": fd, "fold_signs_agree": len(signs) <= 1,
         "within": dict(within, floor=f_w), "pooled": dict(pooled, floor=f_p),
@@ -1232,8 +1393,8 @@ def measure_coverage_arm(frame: Frame, cand: dict, weights: dict, floors: dict, 
         "verdict": None, "clauses": None, "not_adjudicated": [], "holm_joint_row": None,
         "_order": order,
     }
-    raters = _rater_block(frame, SIDES, order)
-    vs_c = _vs_consensus(frame, SIDES, order, B=B)
+    raters = _rater_block(frame, SIDES, order, base_order)
+    vs_c = _vs_consensus(frame, SIDES, order, B=B, base_order=base_order)
     arm["frame"] = {
         "frame_version": "lv1_v2", "window": [min(frame.folds), max(frame.folds)],
         "n": len(cols[0]),

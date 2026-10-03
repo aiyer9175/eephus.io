@@ -354,7 +354,7 @@ def test_no_fv_or_consensus_grouping_in_the_lab():
             low = node.value.lower()
             assert not any(t in low for t in _BANNED_TOKENS), node.value
     src = LAB_SRC.read_text(encoding="utf-8")
-    assert "—" not in src and "–" not in src
+    assert "\u2014" not in src and "\u2013" not in src
 
 
 def test_the_guard_trips_on_2020():
@@ -455,3 +455,137 @@ def test_the_arm_ledger_reads_the_arm_with_its_own_floor(frame, floors, tmp_path
     assert r["cleared_own_floor"] is (arm["within"]["delta"] >= arm["floor_rho"])
     assert r["side"] == "hit"
     assert not any(p["artifact"] == "xfv_screen_wave1.json" for p in led["sources_pending"])
+
+
+# ---------------------------------------------------------------------------
+# 6. the wiring of wave 1 (EFV3_B5): every source resolves, the text column is
+#    stacked out of vintage, the coverage arm pairs its own two frames
+# ---------------------------------------------------------------------------
+
+def test_the_echo_carries_the_frozen_commit_and_every_source_resolves():
+    import importlib
+    import efv_text_features as T
+    echo = LAB.registration_echo()
+    assert echo["frozen_commit"] == LAB.FROZEN_COMMIT == "d9fe7db4"
+    head_of = {"skill": "skill", "timing": "time"}
+    for c in LAB.CANDIDATES:
+        spec = c["column"]
+        assert spec["source"] in ("text", "module", "frame_attr", "frame_key"), c["name"]
+        if spec["source"] == "text":
+            assert spec["head"] in T.COLUMN_HEADS and spec["head"] == head_of[c["head"]]
+            assert importlib.import_module(spec["module"]) is T
+        elif spec["source"] == "module":
+            mod = importlib.import_module(spec["module"])
+            assert callable(getattr(mod, spec["attr"], None)), c["name"]
+        elif spec["source"] == "frame_attr":
+            assert hasattr(F, spec["attr"]) and spec["candidate"] < spec["base"]
+            assert c["kind"] == "coverage"
+
+
+def _text_frames(side, vintages, *, seed=5, n=80, dup="dup"):
+    """Synthetic F-LV frames {V: (rows, labels)} with a report per row, a planted word
+    on the signal rows, and one player (`dup`) in two frames."""
+    rng = np.random.default_rng(seed)
+    words = ["swing", "arm", "glove", "fastball", "command", "projection", "frame",
+             "approach", "power", "speed", "makeup", "bat", "control", "slider"]
+    frames, reports, train = {}, {}, []
+    k = 0
+    for V in vintages:
+        rows = []
+        for i in range(n):
+            pk = dup if (i == 0 and V in (2014, 2016)) else f"{side}t{k}"
+            sig = bool(rng.integers(0, 2))
+            fv = float(rng.choice([42.5, 47.5, 52.5, 57.5]))
+            rows.append({"player_key": pk, "vintage": V, "window": [f"{V}-01-01", f"{V}-05-01"],
+                         "real_sources": ["mlb_pipeline"], "grades": {LAB.CONS: fv}})
+            if i == 0 or rng.random() > 0.1:
+                ws = list(rng.choice(words, int(rng.integers(30, 50))))
+                if sig:
+                    ws += ["zephyr"] * 3
+                rng.shuffle(ws)
+                reports.setdefault(pk, []).append({"source": "mlb_pipeline",
+                                                   "date": f"{V}-02-01", "text": " ".join(ws)})
+            train.append({"player_key": pk, "decision_year": V, "fv": fv,
+                          "target": 0.02 * fv + (1.0 if sig else 0.0) + rng.normal(0, 0.3),
+                          "reached": float((0.5 if sig else 0.1) > rng.random())})
+            k += 1
+        frames[V] = (rows, [])
+    return {side: frames}, reports, train
+
+
+def test_the_text_column_is_stacked_out_of_vintage_and_a_withheld_head_is_unavailable(tmp_path):
+    import efv_text_features as T
+    bal = tmp_path / "balance.json"
+    bal.write_text(json.dumps({"text": {"balance": {
+        "hit": {"report_absent": {"verdict": "BALANCED"}},
+        "pit": {"report_absent": {"verdict": "IMBALANCED"}}}}}), encoding="utf-8")
+    frames, reports, train = _text_frames("hit", range(2011, 2017))
+    vals = LAB.text_column_values("skill", "hit", frames, reports=reports, train=train,
+                                  balance_path=bal)
+    slots = {(V, r["player_key"]) for V, (rows, _l) in frames["hit"].items() for r in rows}
+    assert set(vals) == slots
+    # the dropped vintages and the first text vintage carry no value (nothing earlier
+    # to fit on); from 2014 a row with a report carries one and a row without is None
+    for (V, pk), v in vals.items():
+        has = any(e["date"].startswith(str(V)) for e in reports.get(pk, []))
+        if V <= T.FIRST_TEXT_VINTAGE:
+            assert v is None, (V, pk)
+        elif has:
+            assert v is not None, (V, pk)
+        else:
+            assert v is None, (V, pk)
+    # the planted word is learned on the 2016 rows from the vintages below
+    tgt = {(r["decision_year"], r["player_key"]): r["target"] for r in train}
+    at16 = [(v, tgt[(2016, pk)]) for (V, pk), v in vals.items() if V == 2016 and v is not None]
+    hi = [v for v, t in at16 if t > np.median([t for _v, t in at16])]
+    lo = [v for v, t in at16 if t <= np.median([t for _v, t in at16])]
+    assert np.mean(hi) > np.mean(lo)
+    # the player in two frames was scored at 2016 (fold_columns would raise had his
+    # 2014 row stayed in the fit)
+    assert vals[(2016, "dup")] is not None and vals[(2014, "dup")] is not None
+    # the withheld head is unavailable before any read; the timing head is offered
+    pf, pr, pt = _text_frames("pit", range(2013, 2016), seed=9)
+    with pytest.raises(LAB.ColumnUnavailable, match="withheld"):
+        LAB.text_column_values("skill", "pit", pf, reports=pr, train=pt, balance_path=bal)
+    ok = LAB.text_column_values("time", "pit", pf, reports=pr, train=pt, balance_path=bal)
+    assert any(v is not None for (V, _pk), v in ok.items() if V == 2015)
+    # the source branch of column_values reads the same adapter and refuses an
+    # unknown head; a reserved vintage never enters
+    with pytest.raises(ValueError):
+        LAB.text_column_values("power", "hit", frames, reports=reports, train=train,
+                               balance_path=bal)
+    with pytest.raises(F.ReservedFrameError):
+        rf, rr, rt = _text_frames("hit", (2019, 2020))
+        LAB.text_column_values("time", "hit", rf, reports=rr, train=rt, balance_path=bal)
+
+
+def _built(frame, other):
+    rec = {s: {"milb_floor": [0], "by_vintage": {}} for s in F.SIDES}
+    return {"candidate": {"frame": other, "receipt": rec, "override": {"X": 1}},
+            "base": {"frame": frame, "receipt": rec, "override": {"X": 0}}}
+
+
+def test_the_coverage_arm_pairs_its_own_two_frames(frame, floors):
+    cand = {"name": "cov", "side": LAB.BOTH, "head": None, "kind": "coverage",
+            "retest": False, "what": "synthetic",
+            "column": {"source": "frame_attr", "attr": "X", "candidate": 1, "base": 0}}
+    other = LAB.Frame.from_rows({"hit": _rows("hit", seed=21), "pit": _rows("pit", seed=22)},
+                                weights=WEIGHTS, w_star=1.5,
+                                absent_ok={"hit": False, "pit": False})
+    arm = LAB.measure_coverage_arm(frame, cand, WEIGHTS, floors, B=B_FAST,
+                                   built=_built(frame, other))
+    assert arm["measured"] and arm["kind"] == "coverage" and arm["n"] > 0
+    assert arm["within"]["delta"] is not None and arm["within"]["delta"] != 0.0
+    assert arm["column"]["frames"]["base"]["override"] == {"X": 0}
+    assert arm["column"]["frames"]["candidate"]["override"] == {"X": 1}
+    assert arm["twin"]["inside_floor"] is None
+    assert arm["permutation_null"]["status"].startswith("substituted")
+    assert arm["frame"]["raters"]["efv_v2_base"]["n"] == arm["n"]
+    # the same frame on both sides of the pair is the null by construction: a lab
+    # whose shared frame already carries the lift would read exactly this
+    same = LAB.measure_coverage_arm(frame, cand, WEIGHTS, floors, B=B_FAST,
+                                    built=_built(frame, frame))
+    assert same["within"]["delta"] == 0.0
+    assert all(f["delta"] == 0.0 for f in same["fold_deltas"].values())
+    LAB.apply_verdicts([arm, same], m=7, exploratory=True)
+    assert arm["verdict"] == same["verdict"] == LAB.EXPLORATORY_VERDICT
