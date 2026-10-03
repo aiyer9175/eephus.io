@@ -212,11 +212,28 @@ def build_arm(side: str, arm: str, omitted: tuple[str, ...] = ()):
             _n, mod, attr, _e0, _es = FACTORS[fid]
             saved[(mod, attr)] = getattr(_MODULES[mod], attr)
             setattr(_MODULES[mod], attr, v)
+            if fid == "F2":
+                # THE CLOCK IMPLIES THE DEBUT-YEAR RANGE. efv_dataset.DEBUT_YEARS is
+                # range(2011, RESOLVED_THROUGH) at import, so the 2025 cohort is in the
+                # pool only under RESOLVED_THROUGH 2026. An arm that reverts the clock to
+                # its E0 value reverts the range with it: otherwise E0 would carry the 2025
+                # cohort with one observed season (the served frame at HEAD never did), and
+                # the F2 arm, which keeps A1's window shift, would hand _label_6yr a 2025
+                # debut whose window starts in 2026 and raise. Found on the first real run
+                # (EPOCH_RUN step F, 2026-10-03); restored with the constant.
+                saved[("efv_dataset", "DEBUT_YEARS")] = ed.DEBUT_YEARS
+                ed.DEBUT_YEARS = tuple(range(2011, int(v)))
         rows, acct = ed.build_matrix(side)
     finally:
         for (mod, attr), v in saved.items():
             setattr(_MODULES[mod], attr, v)
     return rows, acct, values
+
+
+def debut_years_for(values: dict[str, object]) -> list[int]:
+    """[first, last] debut year the arm's clock admits (range(2011, RESOLVED_THROUGH))."""
+    rt = int(values["F2"])
+    return [2011, rt - 1]
 
 
 def _sha256_blob(blob: str) -> str:
@@ -292,6 +309,7 @@ def build_side(side: str, arms: list[str], omitted: dict[str, str], write: bool 
             "factor_values": dict(values), "flags": flags_by_attribute(values),
             "label_provider": label_provider(values),
             "label_seasons_key": values["F1"], "resolved_through": values["F2"],
+            "debut_years": debut_years_for(values),
             "rows": len(rows), "sha256": _sha256_blob(blob),
             "census": census(rows, acct, values), "seconds": round(time.time() - t0, 1),
         }
