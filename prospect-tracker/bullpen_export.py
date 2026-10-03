@@ -44,6 +44,7 @@ from typing import Optional
 import feed_cache  # hardened, 429-retrying requests session
 import rem_plus
 from rem_plus import Reliever
+from war_source import safe_ewar_vintage as _war_source_vintage
 
 _log = logging.getLogger(__name__)
 
@@ -70,18 +71,6 @@ WINDOW_L3_PATH = DATA_DIR / "mlbstats_window_l3.json"
 WAR_RATE_MULTIYR_PATH = DATA_DIR / "war_rate_plus_multiyear_eval.json"
 
 STATSAPI = "https://statsapi.mlb.com/api/v1"
-
-
-def _war_source_vintage(as_of: Optional[str] = None) -> dict:
-    """The served eWAR build stamp, or a stated absence. Never raises: a board
-    that cannot report its vintage must still render (audit F10-02). `as_of`
-    is the payload's own as_of, so the block dates the drift it measured."""
-    try:
-        import war_source as _ws
-        return _ws.ewar_vintage(as_of=as_of)
-    except Exception as e:   # noqa: BLE001 - reporting must not take a board down
-        return {"artifact_generated_at": None, "stale": None,
-                "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
 
 
 def _num(v) -> Optional[float]:

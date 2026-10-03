@@ -1202,6 +1202,19 @@ def ewar_vintage(as_of: str | None = None) -> dict:
     return out
 
 
+def safe_ewar_vintage(as_of: str | None = None) -> dict:
+    """ewar_vintage for a served board: the served eWAR build stamp, or a stated
+    absence. Never raises: a board that cannot report its vintage must still
+    render (audit F10-02). `as_of` is the payload's own as_of, so the block
+    dates the drift it measured. The six player and eWAR boards import this
+    as their module-level _war_source_vintage (tests patch it there)."""
+    try:
+        return ewar_vintage(as_of=as_of)
+    except Exception as e:   # noqa: BLE001 - reporting must not take a board down
+        return {"artifact_generated_at": None, "stale": None,
+                "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
+
+
 #: {side: receipt} for the last eWAR read per side in this process: an
 #: _ewar_frame call (door "stint" / "condensed") or side_war_by_season's
 #: overlay (door "side_map"), which yields to a frame receipt on the same build.
