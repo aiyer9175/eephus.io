@@ -16,6 +16,8 @@ registered statistic.
    statistic blind to it; groups below MIN_GROUP_ROWS leave the within statistic; the
    paired interval is deterministic and zero for a rater against itself.
 4. No em-dash in the draft; nothing groups by consensus-FV level.
+5. Amendment A6: the R-VM look sizes in s2.2 are efv_rvm_look_n's counts on data/debuts.json
+   (within 5 rows per side), its floors are the [S] arithmetic, and the count reads no outcome.
 
 Nothing here reads a frame row or an outcome.
 """
@@ -266,3 +268,157 @@ def test_the_statistic_groups_nothing_by_grade():
 def test_the_draft_names_no_fv_cell_stratum():
     t = _text().lower()
     assert not re.search(r"\bfv ?(35|40|45|50|55|60|65)\+? (cell|band|bucket|tier)", t)
+
+
+# ---------------------------------------------------------------------------
+# 5. the R-VM look sizes (amendment A6, s2.2): counts only, no outcome read
+# ---------------------------------------------------------------------------
+
+import efv_rvm_look_n as RVM  # noqa: E402
+
+DEBUTS = ROOT / "data" / "debuts.json"
+_LOOK_ROW = re.compile(
+    r"^\|\s*look (\d)\s*\|[^|]+\|\s*(vm2|consensus_present)\s*\|\s*(\d*)\s*\|\s*(\d*)\s*\|"
+    r"\s*(?:about )?([\d,]+)\s*\|\s*([\d.]+)\s*\|\s*([\d.]+)\s*\|\s*([\d.]+)\s*\|$")
+
+
+def _look_rows() -> dict:
+    t = _text()
+    s22 = t.split("### 2.2 ", 1)[1].split("\n---", 1)[0]
+    rows = {}
+    for ln in s22.splitlines():
+        m = _LOOK_ROW.match(ln.strip())
+        if m:
+            look, rule, hit, pit, n, mde, z, dn = m.groups()
+            rows[(int(look), rule)] = {
+                "hit": int(hit) if hit else None, "pit": int(pit) if pit else None,
+                "n": int(n.replace(",", "")), "mde95": float(mde), "z": float(z),
+                "delta_needed": float(dn)}
+    return rows
+
+
+class _Trap(dict):
+    """A record that refuses any key the count must not read."""
+    BANNED = ("career_war", "surplus", "fv_close", "fv_high", "fv_low", "fv_open",
+              "debuted_value", "sabermetrics", "career_stats")
+
+    def get(self, k, default=None):
+        assert k not in self.BANNED, k
+        return super().get(k, default)
+
+    def __getitem__(self, k):
+        assert k not in self.BANNED, k
+        return super().__getitem__(k)
+
+
+def _pt(date, cons=None, **src):
+    return {"snapshot_date": date, "consensus_fv": cons,
+            "per_source": {s: {"fv_published": v} for s, v in src.items()}}
+
+
+def _fixture() -> list[dict]:
+    return [
+        # both scored sources inside the window: vm2 and consensus_present
+        _Trap(player_key="a", debut_date="2025-06-01", position="SS",
+              points=[_pt("2025-02-01", 45.0, fangraphs=45.0),
+                      _pt("2025-03-01", 45.0, mlb_pipeline=50.0)]),
+        # consensus only, one source: consensus_present only
+        _Trap(player_key="b", debut_date="2025-07-01", position="RHP",
+              points=[_pt("2025-02-10", 40.0, mlb_pipeline=40.0)]),
+        # an April debut closes the window at the debut day: the later read is out
+        _Trap(player_key="c", debut_date="2025-04-05", position="LHP",
+              points=[_pt("2025-02-01", 50.0, fangraphs=50.0),
+                      _pt("2025-04-20", 50.0, mlb_pipeline=50.0)]),
+        # reads only in the prior year's window: counted as a debut, no rule
+        _Trap(player_key="d", debut_date="2025-08-01", position="CF",
+              points=[_pt("2024-03-01", 45.0, fangraphs=45.0, mlb_pipeline=45.0)]),
+        # another cohort
+        _Trap(player_key="e", debut_date="2026-05-01", position="C",
+              points=[_pt("2026-02-01", 45.0, fangraphs=45.0, mlb_pipeline=45.0)]),
+        # a side the routing cannot place
+        _Trap(player_key="f", debut_date="2025-09-01", position="",
+              points=[_pt("2025-02-01", None, fangraphs=40.0, mlb_pipeline=40.0)]),
+    ]
+
+
+def _side(rec):
+    pos = rec.get("position") or ""
+    return None if not pos else pos.endswith("HP")
+
+
+def test_cohort_counts_on_a_fixture():
+    c = RVM.cohort_counts(_fixture(), 2025, is_pitcher=_side)
+    assert c["debuts"] == {"hit": 2, "pit": 2, "unknown": 1, "total": 5}
+    assert c["vm2"] == {"hit": 1, "pit": 0, "unknown": 1, "total": 2}
+    assert c["consensus_present"] == {"hit": 1, "pit": 2, "unknown": 0, "total": 3}
+    nxt = RVM.cohort_counts(_fixture(), 2026, is_pitcher=_side)
+    assert nxt["vm2"]["total"] == 1 and nxt["debuts"]["total"] == 1
+    sizes = RVM.cohort_counts([], 2027, is_pitcher=_side)
+    assert sizes["debuts"]["total"] == 0
+
+
+def test_the_floor_tool_reproduces_the_program_probe():
+    # [S] printed 0.0596 / 0.0421 / 0.0344 and delta needed 0.1161 / 0.0548 / 0.0354
+    assert [RVM.mde95(n) for n in (210, 420, 630)] == [0.0596, 0.0421, 0.0344]
+    assert [RVM.delta_needed(n, z) for n, z in zip((210, 420, 630), RVM.OBF_Z)] == \
+        [0.1161, 0.0548, 0.0354]
+    assert RVM.mde95(812) == 0.0303
+    assert RVM.OBF_Z == (3.205, 2.141, 1.694)
+
+
+def test_the_gate_floors_are_the_tool_at_the_printed_n():
+    rows = _look_rows()
+    assert {(1, "vm2"), (1, "consensus_present"), (2, "vm2"), (2, "consensus_present"),
+            (3, "vm2"), (3, "consensus_present")} == set(rows)
+    for (look, _rule), r in rows.items():
+        assert r["z"] == RVM.OBF_Z[look - 1]
+        assert r["mde95"] == RVM.mde95(r["n"])
+        assert r["delta_needed"] == pytest.approx(RVM.delta_needed(r["n"], r["z"]), abs=1e-9)
+        if r["hit"] is not None:
+            assert r["hit"] + r["pit"] == r["n"]
+    assert RVM.LOOK_RULE == "vm2"
+    t = _text()
+    assert "The rule the look uses: vm2, 149 rows at look 1." in t
+    assert re.search(r"sha256\s+[0-9a-f]{64}", t.split("### 2.2 ", 1)[1].split("\n---", 1)[0])
+
+
+def test_the_gate_look1_n_matches_the_count_on_disk():
+    if not DEBUTS.exists():
+        pytest.skip("data/debuts.json not built; the gate names the sha256 it was counted on")
+    rows = _look_rows()
+    debuts = json.loads(DEBUTS.read_text(encoding="utf-8"))
+    c = RVM.cohort_counts(debuts, F.R_VM_FIRST_DEBUT_YEAR)
+    for rule in RVM.RULES:
+        g = rows[(1, rule)]
+        for side in ("hit", "pit"):
+            assert abs(c[rule][side] - g[side]) <= 5, (rule, side, c[rule][side], g[side])
+        assert c[rule]["unknown"] <= 5
+
+
+def test_the_program_row_carries_the_counted_n():
+    prog = (ROOT / "docs" / "efv-v2" / "PROGRAM.md").read_text(encoding="utf-8")
+    rows = _look_rows()
+    vm2 = [rows[(k, "vm2")]["n"] for k in (1, 2, 3)]
+    assert f"| {vm2[0]} / {vm2[1]} / about {vm2[2]} " in prog
+    assert "| 210 / 420 / 630 |" not in prog
+
+
+def test_the_count_reads_no_outcome_and_the_rvm_pins_hold():
+    tree = ast.parse((ROOT / "efv_rvm_look_n.py").read_text(encoding="utf-8"))
+    imported = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported |= {a.name for a in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.add(node.module)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            assert node.value not in _Trap.BANNED, node.value
+        if isinstance(node, ast.Constant) and type(node.value) in (int, float):
+            assert node.value not in _FV_GRID, (node.value, node.lineno)
+        name = (node.id if isinstance(node, ast.Name) else
+                node.attr if isinstance(node, ast.Attribute) else None)
+        if name:
+            assert "war" not in name.lower() and "outcome" not in name.lower(), name
+            assert not any(t in name.lower() for t in _BANNED), name
+    assert not imported & {"war_source", "efv_labels", "efv_model", "ewar", "efv_v2_stat"}
+    assert F.reserved_vm_pins() == []
