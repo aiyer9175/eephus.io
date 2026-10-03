@@ -157,6 +157,8 @@ import logging
 import math
 import os
 import re
+import time
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -4571,7 +4573,8 @@ def run_dispersion_gate(games=None, *, teams=None, parks=None, starters=None,
 
 
 def dispersion_gate_sensitivity(games=None, *, teams=None, parks=None, starters=None,
-                                quantiles=DISPERSION_SPLIT_QUANTILES) -> dict:
+                                quantiles=DISPERSION_SPLIT_QUANTILES,
+                                gate_runs: dict | None = None) -> dict:
     """The gate verdict as a function of the two things that were never pinned:
     WHICH runline side criterion 2 scores, and WHERE the date split falls.
 
@@ -4588,15 +4591,22 @@ def dispersion_gate_sensitivity(games=None, *, teams=None, parks=None, starters=
     is not a verdict about the distribution, it is a verdict about the split.
 
     Returns the full grid, including the readings the ship rule does not use.
-    Nothing here is filtered by which way it resolves."""
+    Nothing here is filtered by which way it resolves.
+
+    `gate_runs` is {split_q: run_dispersion_gate(...) output} for the runs the
+    caller already holds (the backtest fans them out across processes); a
+    quantile missing from it is run here. The grid is the same either way."""
     games = games if games is not None else completed_games()
     teams = teams if teams is not None else team_inputs()
     parks = parks if parks is not None else park_index()
     starters = starters if starters is not None else starter_inputs()
     runs, grid = [], []
     for q in quantiles:
-        g = run_dispersion_gate(games, teams=teams, parks=parks, starters=starters,
-                                split_q=q, runline_side=RUNLINE_SIDE_AMENDMENT)
+        if gate_runs is not None and q in gate_runs:
+            g = gate_runs[q]
+        else:
+            g = run_dispersion_gate(games, teams=teams, parks=parks, starters=starters,
+                                    split_q=q, runline_side=RUNLINE_SIDE_AMENDMENT)
         if g.get("status") != "ran":
             grid.append({"split_q": round(float(q), 3), "status": g.get("status")})
             continue
@@ -5055,123 +5065,98 @@ def fit_window_probe(games=None, *, teams=None, parks=None, starters=None,
     return out
 
 
-def ridge_fit_gate(games=None, *, teams=None, parks=None, starters=None,
-                   quantiles=None, log_fn=None) -> dict:
-    """The pre-registered gate on the ridge fit (RIDGE_FIT_GATE_CRITERIA).
-
-    Runs on the VINTAGE-gradable sample only, because the contaminated modes
-    cannot adjudicate a fit: their features contain the games being graded, and
-    a shrinkage repair aimed at 610 noisy rows would be scored against a design
-    where the noise is not noise. Both arms see the identical window, the
-    identical features and the identical corrections machinery, so the only
-    thing that differs between them is the solver.
-
-    THE VERDICT IS NOT `passed` ON ONE SPLIT. It is taken across
-    DISPERSION_SPLIT_QUANTILES, the same discipline section 11a arrived at the
-    hard way: a verdict that moves with the split point is a verdict about the
-    split point."""
-    qs = tuple(quantiles if quantiles is not None else DISPERSION_SPLIT_QUANTILES)
-    out = {
-        "criteria": RIDGE_FIT_GATE_CRITERIA,
-        "quantiles": list(qs),
-        "surface": ("gate lab only: no served price reads either arm until "
-                    "SERVE_RIDGE_FIT flips"),
-    }
-    games = games if games is not None else completed_games()
-    teams = teams if teams is not None else team_inputs()
-    parks = parks if parks is not None else park_index()
-    starters = starters if starters is not None else starter_inputs()
-    if not games or not teams:
-        out.update({"status": "no data", "verdict": "indeterminate", "ship": False,
-                    "served": SERVE_RIDGE_FIT})
-        return out
+def _ridge_fit_frame(games, teams):
+    """The vintage-gradable frame the ridge gate and its blocks share:
+    (resolve, gradable, dates, ok). `ok` is False when the gate exits before
+    splitting (too few gradable games or dates). One function, so a split row
+    computed in a worker and the gate that assembles it cannot disagree on the
+    frame."""
     reset_vintage_cache()
     resolve, _rstats = _vintage_resolver()
     gradable = [g for g in games if resolve(g)]
     dates = sorted({g.get("date") for g in gradable if g.get("date")})
-    out["n_gradable"] = len(gradable)
-    if len(gradable) < (VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES) or len(dates) < 4:
-        out.update({"status": "insufficient vintage coverage",
-                    "verdict": "indeterminate", "ship": False,
-                    "served": SERVE_RIDGE_FIT,
-                    "note": (f"{len(gradable)} vintage-gradable games; the gate needs "
-                             f"{VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES} to "
-                             "split at all")})
-        return out
-    elo_map = {}
+    ok = (len(gradable) >= (VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES)
+          and len(dates) >= 4)
+    return resolve, gradable, dates, ok
+
+
+def _ridge_elo_map(games) -> dict:
+    """The section 6 ladder's results-only Elo floor, for the ridge gate's
+    second check. Never fitted here or anywhere else."""
     try:
         from tools import betting_elo
-        elo_map = betting_elo.elo_probabilities(games)
+        return betting_elo.elo_probabilities(games)
     except Exception:                                          # noqa: BLE001
         log.warning("betting_model: ridge gate could not build the Elo tier",
                     exc_info=True)
+        return {}
 
-    grid = []
-    for q in qs:
-        cut = dates[max(1, min(int(len(dates) * q), len(dates) - 1))]
-        fit_g = [g for g in gradable if (g.get("date") or "") < cut]
-        ev_g = [g for g in gradable if (g.get("date") or "") >= cut]
-        row = {"split_q": q, "split_date": cut,
-               "n_fit": len(fit_g), "n_eval": len(ev_g)}
-        if len(fit_g) < VINTAGE_MIN_FIT_GAMES or len(ev_g) < VINTAGE_MIN_EVAL_GAMES:
-            row.update({"status": "below the fit/eval floors", "pass": False})
-            grid.append(row)
-            continue
-        old = _ridge_arm(fit_g, ev_g, teams, parks, starters, resolve, ridge=False)
-        new = _ridge_arm(fit_g, ev_g, teams, parks, starters, resolve, ridge=True)
-        if not old or not new or old["_pks"] != new["_pks"]:
-            row.update({"status": "arms did not price the same games", "pass": False})
-            grid.append(row)
-            continue
-        bd = _paired_delta(old["_brier_rows"], new["_brier_rows"])
-        ld = _paired_delta(old["_ll_rows"], new["_ll_rows"])
-        # The Elo leg, on the games Elo can price. It is the section 6 ladder's
-        # results-only floor and it is never fitted here or anywhere else.
-        e_idx = [i for i, pk in enumerate(new["_pks"]) if pk in elo_map]
-        elo_row = {"n": len(e_idx)}
-        if len(e_idx) >= 2:
-            e_ps = [elo_map[new["_pks"][i]] for i in e_idx]
-            e_ys = [new["_ys"][i] for i in e_idx]
-            e_br, _ = _per_game_losses(e_ps, e_ys)
-            elo_row["brier"] = round(_brier(e_ps, e_ys), 5)
-            elo_row["ridge_vs_elo"] = _paired_delta(
-                e_br, [new["_brier_rows"][i] for i in e_idx])
-            elo_row["ols_vs_elo"] = _paired_delta(
-                e_br, [old["_brier_rows"][i] for i in e_idx])
-        checks = [
-            {"id": "non_inferiority_vs_ols",
-             "value": bd.get("lb95"), "threshold": -0.001,
-             "pass": bool(bd.get("lb95") is not None and bd["lb95"] >= -0.001)},
-            {"id": "superiority_vs_elo",
-             "value": ((elo_row.get("ridge_vs_elo") or {}).get("t")),
-             "threshold": Z_95_ONE_SIDED,
-             "pass": bool((elo_row.get("ridge_vs_elo") or {}).get("t") is not None
-                          and elo_row["ridge_vs_elo"]["t"] >= Z_95_ONE_SIDED)},
-            {"id": "log_loss_not_worse",
-             "value": ld.get("delta"), "threshold": 0.0,
-             "pass": bool(ld.get("delta") is not None and ld["delta"] >= 0.0)},
-        ]
-        row.update({
-            "status": "ran",
-            "ols": _ridge_arm_public(old),
-            "ridge": _ridge_arm_public(new),
-            "brier_delta": bd,
-            "log_loss_delta": ld,
-            "elo": elo_row,
-            "checks": checks,
-            "pass": all(c["pass"] for c in checks),
-        })
-        grid.append(row)
-        if log_fn:
-            log_fn(f"betting_model: ridge gate q={q} cut={cut} "
-                   f"brier delta {bd.get('delta')} lb95 {bd.get('lb95')} "
-                   f"pass={row['pass']}")
-    # REPORTED, NOT A CRITERION. The grid above splits at date quantiles, so
-    # every one of its fit windows is GROWN. The window the site would actually
-    # serve on is the anchored one `_vintage_cut_index` builds, and "what would
-    # flipping the flag do to the published number" is a different question from
-    # "does the ridge clear the gate". Both get answered, and only the grid
-    # decides anything.
+
+def _ridge_fit_split(q, gradable, dates, teams, parks, starters, resolve,
+                     elo_map) -> dict:
+    """One row of the ridge gate's grid: both arms on the split at quantile
+    `q`, the Elo leg on the games Elo can price, and the three checks."""
+    cut = dates[max(1, min(int(len(dates) * q), len(dates) - 1))]
+    fit_g = [g for g in gradable if (g.get("date") or "") < cut]
+    ev_g = [g for g in gradable if (g.get("date") or "") >= cut]
+    row = {"split_q": q, "split_date": cut,
+           "n_fit": len(fit_g), "n_eval": len(ev_g)}
+    if len(fit_g) < VINTAGE_MIN_FIT_GAMES or len(ev_g) < VINTAGE_MIN_EVAL_GAMES:
+        row.update({"status": "below the fit/eval floors", "pass": False})
+        return row
+    old = _ridge_arm(fit_g, ev_g, teams, parks, starters, resolve, ridge=False)
+    new = _ridge_arm(fit_g, ev_g, teams, parks, starters, resolve, ridge=True)
+    if not old or not new or old["_pks"] != new["_pks"]:
+        row.update({"status": "arms did not price the same games", "pass": False})
+        return row
+    bd = _paired_delta(old["_brier_rows"], new["_brier_rows"])
+    ld = _paired_delta(old["_ll_rows"], new["_ll_rows"])
+    # The Elo leg, on the games Elo can price. It is the section 6 ladder's
+    # results-only floor and it is never fitted here or anywhere else.
+    e_idx = [i for i, pk in enumerate(new["_pks"]) if pk in elo_map]
+    elo_row = {"n": len(e_idx)}
+    if len(e_idx) >= 2:
+        e_ps = [elo_map[new["_pks"][i]] for i in e_idx]
+        e_ys = [new["_ys"][i] for i in e_idx]
+        e_br, _ = _per_game_losses(e_ps, e_ys)
+        elo_row["brier"] = round(_brier(e_ps, e_ys), 5)
+        elo_row["ridge_vs_elo"] = _paired_delta(
+            e_br, [new["_brier_rows"][i] for i in e_idx])
+        elo_row["ols_vs_elo"] = _paired_delta(
+            e_br, [old["_brier_rows"][i] for i in e_idx])
+    checks = [
+        {"id": "non_inferiority_vs_ols",
+         "value": bd.get("lb95"), "threshold": -0.001,
+         "pass": bool(bd.get("lb95") is not None and bd["lb95"] >= -0.001)},
+        {"id": "superiority_vs_elo",
+         "value": ((elo_row.get("ridge_vs_elo") or {}).get("t")),
+         "threshold": Z_95_ONE_SIDED,
+         "pass": bool((elo_row.get("ridge_vs_elo") or {}).get("t") is not None
+                      and elo_row["ridge_vs_elo"]["t"] >= Z_95_ONE_SIDED)},
+        {"id": "log_loss_not_worse",
+         "value": ld.get("delta"), "threshold": 0.0,
+         "pass": bool(ld.get("delta") is not None and ld["delta"] >= 0.0)},
+    ]
+    row.update({
+        "status": "ran",
+        "ols": _ridge_arm_public(old),
+        "ridge": _ridge_arm_public(new),
+        "brier_delta": bd,
+        "log_loss_delta": ld,
+        "elo": elo_row,
+        "checks": checks,
+        "pass": all(c["pass"] for c in checks),
+    })
+    return row
+
+
+def _ridge_fit_served_window(gradable, dates, teams, parks, starters, resolve) -> dict:
+    """REPORTED, NOT A CRITERION. The grid splits at date quantiles, so every
+    one of its fit windows is GROWN. The window the site would actually serve
+    on is the anchored one `_vintage_cut_index` builds, and "what would
+    flipping the flag do to the published number" is a different question from
+    "does the ridge clear the gate". Both get answered, and only the grid
+    decides anything."""
     served = {"basis": ("the shipped vintage cut (_vintage_cut_index), which is the "
                         "window a flip of SERVE_RIDGE_FIT would actually change"),
               "is_a_criterion": False}
@@ -5188,7 +5173,73 @@ def ridge_fit_gate(games=None, *, teams=None, parks=None, starters=None,
                 "brier_delta": _paired_delta(so["_brier_rows"], sn["_brier_rows"]),
                 "log_loss_delta": _paired_delta(so["_ll_rows"], sn["_ll_rows"]),
             })
-    out["served_window"] = served
+    return served
+
+
+def ridge_fit_gate(games=None, *, teams=None, parks=None, starters=None,
+                   quantiles=None, log_fn=None, split_rows: dict | None = None,
+                   served_window: dict | None = None) -> dict:
+    """The pre-registered gate on the ridge fit (RIDGE_FIT_GATE_CRITERIA).
+
+    Runs on the VINTAGE-gradable sample only, because the contaminated modes
+    cannot adjudicate a fit: their features contain the games being graded, and
+    a shrinkage repair aimed at 610 noisy rows would be scored against a design
+    where the noise is not noise. Both arms see the identical window, the
+    identical features and the identical corrections machinery, so the only
+    thing that differs between them is the solver.
+
+    THE VERDICT IS NOT `passed` ON ONE SPLIT. It is taken across
+    DISPERSION_SPLIT_QUANTILES, the same discipline section 11a arrived at the
+    hard way: a verdict that moves with the split point is a verdict about the
+    split point.
+
+    `split_rows` ({split_q: _ridge_fit_split(...) row}) and `served_window`
+    (`_ridge_fit_served_window(...)`) are the pieces a caller already holds,
+    the backtest having computed them across processes; whatever is missing is
+    computed here. The artifact is the same either way."""
+    qs = tuple(quantiles if quantiles is not None else DISPERSION_SPLIT_QUANTILES)
+    out = {
+        "criteria": RIDGE_FIT_GATE_CRITERIA,
+        "quantiles": list(qs),
+        "surface": ("gate lab only: no served price reads either arm until "
+                    "SERVE_RIDGE_FIT flips"),
+    }
+    games = games if games is not None else completed_games()
+    teams = teams if teams is not None else team_inputs()
+    parks = parks if parks is not None else park_index()
+    starters = starters if starters is not None else starter_inputs()
+    if not games or not teams:
+        out.update({"status": "no data", "verdict": "indeterminate", "ship": False,
+                    "served": SERVE_RIDGE_FIT})
+        return out
+    resolve, gradable, dates, ok = _ridge_fit_frame(games, teams)
+    out["n_gradable"] = len(gradable)
+    if not ok:
+        out.update({"status": "insufficient vintage coverage",
+                    "verdict": "indeterminate", "ship": False,
+                    "served": SERVE_RIDGE_FIT,
+                    "note": (f"{len(gradable)} vintage-gradable games; the gate needs "
+                             f"{VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES} to "
+                             "split at all")})
+        return out
+    elo_map = None
+    grid = []
+    for q in qs:
+        row = (split_rows or {}).get(q)
+        if row is None:
+            if elo_map is None:
+                elo_map = _ridge_elo_map(games)
+            row = _ridge_fit_split(q, gradable, dates, teams, parks, starters, resolve,
+                                   elo_map)
+        grid.append(row)
+        if log_fn and row.get("status") == "ran":
+            bd = row["brier_delta"]
+            log_fn(f"betting_model: ridge gate q={q} cut={row['split_date']} "
+                   f"brier delta {bd.get('delta')} lb95 {bd.get('lb95')} "
+                   f"pass={row['pass']}")
+    out["served_window"] = (served_window if served_window is not None else
+                            _ridge_fit_served_window(gradable, dates, teams, parks,
+                                                     starters, resolve))
 
     ran = [r for r in grid if r.get("status") == "ran"]
     if not ran:
@@ -6440,93 +6491,54 @@ def _lab_runline_split(fit_games: list[dict]) -> tuple[float, float] | None:
     return _runline_split_pair(_fit_runline_tie_split(fit_games))
 
 
-def backtest(*, season: str | None = None, split_date: str | None = None,
-             write: bool = True, log_fn=None) -> dict:
-    """Grade the model on completed games, in BOTH modes, offline.
+# ---------------------------------------------------------------------------
+# the backtest's gate blocks, fanned out across processes
+# ---------------------------------------------------------------------------
+#: The backtest's gate blocks may use this many worker processes at most. Each
+#: block is a pure function of (games, teams, parks, starters) and the split,
+#: so they run side by side and the artifact is assembled afterwards in the
+#: order it has always had.
+BACKTEST_MAX_WORKERS = 4
+#: Set to 1 in the environment to run every block serially in the calling
+#: process. The kill switch for the pool; the artifact is identical either way.
+BACKTEST_SERIAL_ENV = "BETTING_BACKTEST_SERIAL"
+#: Below this many completed games the blocks run serially. A worker start
+#: costs about as much as a whole block does on a synthetic season of a few
+#: dozen games, and module state a test monkeypatches (floors, the vintage
+#: store path, stubbed loaders) exists only in the parent, where a spawned
+#: worker cannot see it. A real season is six times this floor.
+BACKTEST_PARALLEL_MIN_GAMES = 400
+#: Submission order for the pool, costliest block first, so the long poles
+#: start at once and the short blocks fill in behind them. Collection and the
+#: log replay follow the caller's order, never this one.
+_BACKTEST_SUBMIT_RANK = {"dispersion_q": 0, "run_dispersion": 0, "ridge_q": 1,
+                         "ridge_served": 1, "fit_window_probe": 2, "total_level": 3,
+                         "prob_calibration": 4, "vintage": 5, "in_sample": 6,
+                         "forward": 7}
 
-    MODE 1, CONTAMINATED (`in_sample`, `forward`). The team inputs
-    (offense_plus / rotation_plus / bullpen_plus / SEM+) are SEASON-TO-DATE
-    aggregates as of the last leaderboard build, so every game graded here
-    contributed to the features used to predict it. `forward` refits the
-    coefficients on games before `split_date` and grades only games after it,
-    which removes coefficient leakage but NOT feature leakage. Both are
-    reported, both carry `mode: "contaminated"`, and neither can validate
-    anything.
 
-    MODE 2, VINTAGE (`vintage`). Each game is priced on the newest
-    leaderboard vintage whose knowledge cutoff is strictly before it
-    (leaderboard_vintages.as_of). Games with no such vintage are SKIPPED, not
-    graded on the fallback, and the count of skipped games is reported. Until
-    the nightly snapshot has been running, that is every game and the honest n
-    is zero. When the sample is large enough the coefficients and both
-    one-parameter corrections are refit inside the vintage window too, on
-    vintage features.
+def backtest_workers() -> int:
+    """How many worker processes the backtest's gate blocks may use here."""
+    return max(1, min(BACKTEST_MAX_WORKERS, os.cpu_count() or 1))
 
-    THE PARK INDEX IS PART OF "FEATURES" AND USED NOT TO BE. Until 2026-08-05
-    this function built `parks = park_index()` once and handed the LIVE index
-    (data/fa_meta.json = `fa_fit.park_factors(CLASS_YEAR - 1)`, the in-progress
-    season) to the vintage fit AND the vintage pricing, so eval-window games
-    contributed to the park factor used to grade them while the mode label said
-    "no leakage". Parks now travel in the vintage record; a record written before
-    that column existed prices its games on a NEUTRAL park and the count lands in
-    `vintage.park_basis`. The contaminated modes below are UNCHANGED: they are
-    labelled contaminated and their numbers stay comparable to the old artifact.
 
-    `validated` is False, `gates_picks` is False and `min_edge` is None until
-    the vintage mode carries the sample AND the skill AND a graded price
-    history; `min_edge_gate` reports which of the three is missing.
+def backtest_runs_parallel(n_games: int) -> bool:
+    """Whether the gate blocks fan out to a process pool on this call."""
+    flag = (os.environ.get(BACKTEST_SERIAL_ENV) or "").strip().lower()
+    if flag not in ("", "0", "false", "no"):
+        return False
+    return n_games >= BACKTEST_PARALLEL_MIN_GAMES and backtest_workers() > 1
 
-    Baselines are what make the number readable: 0.500 flat, and the measured
-    home-field rate. A model that cannot beat "always take the home team" has
-    not earned a page."""
-    games = completed_games(season)
-    teams, parks, starters = team_inputs(), park_index(), starter_inputs()
-    lv = _vintage_module()
-    cov = {}
-    if lv:
-        try:
-            # GAME weighted, not calendar weighted. Without `game_dates` the age
-            # distribution weights an off day the same as a 15-game Saturday,
-            # and the number sitting beside `n_graded` is then not the one a
-            # reader of `n_graded` is asking about. Measured on this archive the
-            # two differ: calendar gives median 2 / p90 10 / max 13 over 36
-            # covered days, game weighting gives median 3 / p90 11 / max 13 over
-            # 414 graded game dates. The published vintage is STALER than the
-            # calendar view says, because the archive's holes fall on days that
-            # carry games.
-            cov = lv.coverage(game_dates=[g.get("date") for g in games if g.get("date")])
-        except Exception:                                        # pragma: no cover
-            cov = {}
-    result = {
-        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
-        "model_version": MODEL_VERSION,
-        "season": season,
-        "validated": False,
-        "contaminated": True,
-        "contamination": ("team inputs are season-to-date leaderboards, so every graded "
-                          "game is inside its own features; this measures calibration, "
-                          "not out-of-sample skill"),
-        "gates_picks": False,
-        "min_edge": None,
-        "n_games": len(games),
-        "modes": ["contaminated", "vintage"],
-        "headline_mode": "contaminated",
-        "vintage_coverage": cov,
-    }
-    if not games or not teams:
-        result["status"] = "no data"
-        result["note"] = ("no completed-game cache and/or no leaderboards; run "
-                          "betting_model.build_game_cache() on a box that has "
-                          ".cache/game_feeds")
-        result["vintage"] = _empty_vintage_block(cov, len(games))
-        result["starter_basis"] = _starter_basis(games)
-        result["benchmarks"] = {"status": "no data",
-                                "claim_rule": BENCHMARK_CLAIM_RULE}
-        result["min_edge_gate"] = min_edge_gate(result["vintage"])
-        if write:
-            EVAL_PATH.write_text(json.dumps(result, indent=1), encoding="utf-8")
-        return result
 
+def _block_label(spec: tuple) -> str:
+    kind, arg = spec
+    return kind if arg is None else f"{kind}{arg}"
+
+
+def _backtest_grader(teams: dict, parks: dict, starters: dict):
+    """The grader `backtest` prices both modes with, closed over the LIVE
+    inputs. Built inside whichever process runs a block, because a closure
+    cannot cross a process boundary and the body must stay one body."""
     def _grade(fit_games, eval_games, label, mode, resolve=None):
         coeffs = fit_coefficients(fit_games, teams=teams, parks=parks, starters=starters,
                                   resolve=resolve) or dict(LITERATURE_COEFFS)
@@ -6627,34 +6639,283 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
             "calibration": _calibration(ps, ys),
         }
 
-    # --- mode 1: contaminated -------------------------------------------
-    result["in_sample"] = _grade(games, games,
-                                 "in-sample (coefficients and features both leak)",
-                                 "contaminated")
-    dates = sorted({g["date"] for g in games if g.get("date")})
-    sd = split_date or (dates[int(len(dates) * 0.7)] if len(dates) > 20 else None)
-    if sd:
+    return _grade
+
+
+def _backtest_block(spec: tuple, games: list[dict], teams: dict, parks: dict,
+                    starters: dict, sd: str | None, cov: dict) -> dict:
+    """ONE block of the backtest, named by `spec` = (kind, argument). Top level
+    and argument-only so a process pool can pickle the call on a spawn start
+    (Windows) as well as a fork start (the box); it writes no file and touches
+    no module state the parent reads afterwards.
+
+    The ridge gate travels as pieces (`ridge_q` rows and `ridge_served`) that
+    `ridge_fit_gate` assembles in the parent.
+
+    Returns {"spec", "value", "log", "seconds", "failed"}: `log` holds the
+    lines the block would have sent through the backtest's log_fn, replayed by
+    the parent in order; `failed` carries the total level gate's traceback, the
+    one block whose failure the backtest degrades to a stated status instead of
+    raising."""
+    kind, arg = spec
+    t0 = time.perf_counter()
+    msgs: list[str] = []
+    failed = None
+    grade = _backtest_grader(teams, parks, starters)
+    if kind == "in_sample":
+        value = grade(games, games,
+                      "in-sample (coefficients and features both leak)",
+                      "contaminated")
+    elif kind == "forward":
         fit_g = [g for g in games if (g.get("date") or "") < sd]
         ev_g = [g for g in games if (g.get("date") or "") >= sd]
-        if len(fit_g) > 200 and len(ev_g) > 50:
-            result["split_date"] = sd
-            result["forward"] = _grade(fit_g, ev_g,
-                                       f"forward from {sd} (coefficient leakage removed, "
-                                       "feature leakage remains)",
-                                       "contaminated")
+        value = grade(fit_g, ev_g,
+                      f"forward from {sd} (coefficient leakage removed, "
+                      "feature leakage remains)",
+                      "contaminated")
+    elif kind == "run_dispersion":
+        value = run_dispersion_gate(games, teams=teams, parks=parks,
+                                    starters=starters, split_date=sd)
+    elif kind == "dispersion_q":
+        value = run_dispersion_gate(games, teams=teams, parks=parks, starters=starters,
+                                    split_q=arg, runline_side=RUNLINE_SIDE_AMENDMENT)
+    elif kind == "vintage":
+        value = _grade_vintage(games, cov, grade, log_fn=msgs.append)
+    elif kind == "prob_calibration":
+        value = prob_calibration_gate(games, teams=teams, parks=parks, starters=starters)
+    elif kind in ("ridge_q", "ridge_served"):
+        # One piece of the ridge gate; `ridge_fit_gate` assembles the pieces
+        # in the parent and recomputes any that is None.
+        value = None
+        if games and teams:
+            resolve, gradable, dates, ok = _ridge_fit_frame(games, teams)
+            if ok and kind == "ridge_q":
+                value = _ridge_fit_split(arg, gradable, dates, teams, parks, starters,
+                                         resolve, _ridge_elo_map(games))
+            elif ok:
+                value = _ridge_fit_served_window(gradable, dates, teams, parks,
+                                                 starters, resolve)
+    elif kind == "fit_window_probe":
+        value = fit_window_probe(games, teams=teams, parks=parks, starters=starters)
+    elif kind == "total_level":
+        try:
+            value = total_level_gate(games, teams=teams, parks=parks, starters=starters,
+                                     log_fn=msgs.append)
+        except Exception:                                          # noqa: BLE001
+            value, failed = None, traceback.format_exc()
+    else:
+        raise ValueError(f"unknown backtest block {spec!r}")
+    return {"spec": spec, "value": value, "log": msgs, "failed": failed,
+            "seconds": round(time.perf_counter() - t0, 2)}
+
+
+def _run_backtest_blocks(specs: list[tuple], games: list[dict], teams: dict, parks: dict,
+                         starters: dict, sd: str | None, cov: dict, *,
+                         log_fn=None) -> dict:
+    """Every block in `specs`, as {spec: _backtest_block(...)}.
+
+    On a real season (`backtest_runs_parallel`) the blocks run in a process
+    pool; a pool that fails, a worker that cannot start or a result that cannot
+    come back, falls through to the serial path for whatever did not finish,
+    with a warning. A block that raises inside a worker raises again here, so a
+    genuine fault surfaces exactly as it did before the pool. Each block's own
+    log lines come back with it and are replayed through `log_fn` in `specs`
+    order, the order the serial path emits them in; every block's wall time is
+    logged, and the long pole is named."""
+    args = (games, teams, parks, starters, sd, cov)
+    done: dict = {}
+    t0 = time.perf_counter()
+    mode = "serial"
+    if backtest_runs_parallel(len(games)):
+        workers = backtest_workers()
+        mode = f"pool of {workers}"
+        futs: dict = {}
+        pool = None
+        clean = False
+        try:
+            from concurrent.futures import ProcessPoolExecutor
+            pool = ProcessPoolExecutor(max_workers=workers)
+            order = sorted(specs, key=lambda s: _BACKTEST_SUBMIT_RANK.get(s[0], 9))
+            futs = {spec: pool.submit(_backtest_block, spec, *args) for spec in order}
+            for spec in specs:
+                done[spec] = futs[spec].result()
+            clean = True
+        except Exception:                                          # noqa: BLE001
+            log.warning("betting_model: backtest process pool failed; the unfinished "
+                        "blocks run serially", exc_info=True)
+            mode = f"pool of {workers}, then serial after a pool failure"
+            for spec, fut in futs.items():
+                if spec not in done and fut.done() and not fut.cancelled():
+                    try:
+                        done[spec] = fut.result()
+                    except Exception:                              # noqa: BLE001
+                        pass
+        finally:
+            if pool is not None:
+                if clean:
+                    pool.shutdown(wait=True)
+                else:
+                    try:
+                        pool.shutdown(wait=False, cancel_futures=True)
+                    except TypeError:                              # pragma: no cover
+                        pool.shutdown(wait=False)
+    for spec in specs:
+        if spec not in done:
+            done[spec] = _backtest_block(spec, *args)
+    wall = time.perf_counter() - t0
+    for spec in specs:
+        blk = done[spec]
+        if log_fn:
+            for line in blk["log"]:
+                log_fn(line)
+        log.info("betting_model: backtest block %s %.1f s", _block_label(spec),
+                 blk["seconds"])
+    work = sum(b["seconds"] for b in done.values())
+    pole = max(done, key=lambda s: done[s]["seconds"])
+    log.info("betting_model: backtest blocks %.1f s wall for %.1f s of work (%s); "
+             "long pole %s %.1f s", wall, work, mode, _block_label(pole),
+             done[pole]["seconds"])
+    return done
+
+
+def backtest(*, season: str | None = None, split_date: str | None = None,
+             write: bool = True, log_fn=None) -> dict:
+    """Grade the model on completed games, in BOTH modes, offline.
+
+    MODE 1, CONTAMINATED (`in_sample`, `forward`). The team inputs
+    (offense_plus / rotation_plus / bullpen_plus / SEM+) are SEASON-TO-DATE
+    aggregates as of the last leaderboard build, so every game graded here
+    contributed to the features used to predict it. `forward` refits the
+    coefficients on games before `split_date` and grades only games after it,
+    which removes coefficient leakage but NOT feature leakage. Both are
+    reported, both carry `mode: "contaminated"`, and neither can validate
+    anything.
+
+    MODE 2, VINTAGE (`vintage`). Each game is priced on the newest
+    leaderboard vintage whose knowledge cutoff is strictly before it
+    (leaderboard_vintages.as_of). Games with no such vintage are SKIPPED, not
+    graded on the fallback, and the count of skipped games is reported. Until
+    the nightly snapshot has been running, that is every game and the honest n
+    is zero. When the sample is large enough the coefficients and both
+    one-parameter corrections are refit inside the vintage window too, on
+    vintage features.
+
+    THE PARK INDEX IS PART OF "FEATURES" AND USED NOT TO BE. Until 2026-08-05
+    this function built `parks = park_index()` once and handed the LIVE index
+    (data/fa_meta.json = `fa_fit.park_factors(CLASS_YEAR - 1)`, the in-progress
+    season) to the vintage fit AND the vintage pricing, so eval-window games
+    contributed to the park factor used to grade them while the mode label said
+    "no leakage". Parks now travel in the vintage record; a record written before
+    that column existed prices its games on a NEUTRAL park and the count lands in
+    `vintage.park_basis`. The contaminated modes below are UNCHANGED: they are
+    labelled contaminated and their numbers stay comparable to the old artifact.
+
+    `validated` is False, `gates_picks` is False and `min_edge` is None until
+    the vintage mode carries the sample AND the skill AND a graded price
+    history; `min_edge_gate` reports which of the three is missing.
+
+    Baselines are what make the number readable: 0.500 flat, and the measured
+    home-field rate. A model that cannot beat "always take the home team" has
+    not earned a page."""
+    games = completed_games(season)
+    teams, parks, starters = team_inputs(), park_index(), starter_inputs()
+    lv = _vintage_module()
+    cov = {}
+    if lv:
+        try:
+            # GAME weighted, not calendar weighted. Without `game_dates` the age
+            # distribution weights an off day the same as a 15-game Saturday,
+            # and the number sitting beside `n_graded` is then not the one a
+            # reader of `n_graded` is asking about. Measured on this archive the
+            # two differ: calendar gives median 2 / p90 10 / max 13 over 36
+            # covered days, game weighting gives median 3 / p90 11 / max 13 over
+            # 414 graded game dates. The published vintage is STALER than the
+            # calendar view says, because the archive's holes fall on days that
+            # carry games.
+            cov = lv.coverage(game_dates=[g.get("date") for g in games if g.get("date")])
+        except Exception:                                        # pragma: no cover
+            cov = {}
+    result = {
+        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "model_version": MODEL_VERSION,
+        "season": season,
+        "validated": False,
+        "contaminated": True,
+        "contamination": ("team inputs are season-to-date leaderboards, so every graded "
+                          "game is inside its own features; this measures calibration, "
+                          "not out-of-sample skill"),
+        "gates_picks": False,
+        "min_edge": None,
+        "n_games": len(games),
+        "modes": ["contaminated", "vintage"],
+        "headline_mode": "contaminated",
+        "vintage_coverage": cov,
+    }
+    if not games or not teams:
+        result["status"] = "no data"
+        result["note"] = ("no completed-game cache and/or no leaderboards; run "
+                          "betting_model.build_game_cache() on a box that has "
+                          ".cache/game_feeds")
+        result["vintage"] = _empty_vintage_block(cov, len(games))
+        result["starter_basis"] = _starter_basis(games)
+        result["benchmarks"] = {"status": "no data",
+                                "claim_rule": BENCHMARK_CLAIM_RULE}
+        result["min_edge_gate"] = min_edge_gate(result["vintage"])
+        if write:
+            EVAL_PATH.write_text(json.dumps(result, indent=1), encoding="utf-8")
+        return result
+
+    # --- the gate blocks, side by side -------------------------------------
+    # Every block below is a pure function of (games, teams, parks, starters)
+    # and the split, so on a real season they run in a process pool
+    # (`backtest_runs_parallel`) and the artifact is assembled afterwards in
+    # the order it has always had: the eval JSON gains no key, and every gate
+    # keeps its own split rule. Each block's wall time goes to the log.
+    dates = sorted({g["date"] for g in games if g.get("date")})
+    sd = split_date or (dates[int(len(dates) * 0.7)] if len(dates) > 20 else None)
+    specs: list[tuple] = [("in_sample", None)]
+    forward_ok = False
+    if sd:
+        n_fit = sum(1 for g in games if (g.get("date") or "") < sd)
+        forward_ok = n_fit > 200 and (len(games) - n_fit) > 50
+        if forward_ok:
+            specs.append(("forward", None))
+    # The headline dispersion gate is the pre-registered 0.7 split. With no
+    # caller-pinned `split_date` it is the SAME computation as the sensitivity
+    # grid's 0.7 row (same `dates`, same index expression, same defaults), so
+    # that row is the headline and the refit is not paid twice. A pinned
+    # split_date is a different split and gets its own run.
+    headline = ("run_dispersion", None)
+    if split_date is None and 0.7 in DISPERSION_SPLIT_QUANTILES:
+        headline = ("dispersion_q", 0.7)
+    else:
+        specs.append(headline)
+    specs += [("dispersion_q", q) for q in DISPERSION_SPLIT_QUANTILES]
+    specs += [("ridge_q", q) for q in DISPERSION_SPLIT_QUANTILES]
+    specs += [("ridge_served", None), ("vintage", None), ("prob_calibration", None),
+              ("fit_window_probe", None), ("total_level", None)]
+    blocks = _run_backtest_blocks(specs, games, teams, parks, starters, sd, cov,
+                                  log_fn=log_fn)
+    val = {spec: blk["value"] for spec, blk in blocks.items()}
+
+    # --- mode 1: contaminated -------------------------------------------
+    result["in_sample"] = val[("in_sample", None)]
+    if forward_ok:
+        result["split_date"] = sd
+        result["forward"] = val[("forward", None)]
 
     # --- the dispersion gate ---------------------------------------------
     # Lives inside this artifact rather than in an eval file of its own,
     # because it is a property of the SAME split this function already grades
     # and a second file would be a second clock to keep in sync.
-    result["run_dispersion"] = run_dispersion_gate(games, teams=teams, parks=parks,
-                                                   starters=starters, split_date=sd)
+    result["run_dispersion"] = val[headline]
     # The verdict does NOT come from the line above. It comes from the sweep,
     # because criterion 2's estimand and the split point were both unpinned and
     # both move the answer. The single-split run stays as the pre-registered
     # headline; `sensitivity` is what SERVE_RUN_DISPERSION is set from.
     result["run_dispersion"]["sensitivity"] = dispersion_gate_sensitivity(
-        games, teams=teams, parks=parks, starters=starters)
+        games, teams=teams, parks=parks, starters=starters,
+        gate_runs={q: val[("dispersion_q", q)] for q in DISPERSION_SPLIT_QUANTILES})
     # `passed` above is ONE split and is not the verdict. `verdict` is, and it
     # is lifted to the top of the block so the two can never be confused by a
     # reader who stops at the first boolean. They genuinely disagree right now:
@@ -6671,7 +6932,7 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
     result["run_dispersion"]["served_alpha"] = run_dispersion_alpha()
 
     # --- mode 2: vintage --------------------------------------------------
-    result["vintage"] = _grade_vintage(games, cov, _grade, log_fn=log_fn)
+    result["vintage"] = val[("vintage", None)]
 
     # --- who the backtest's starter was (plan repair 5) -------------------
     # A disclosure, not a gate and not a feature: it changes no price, no
@@ -6682,8 +6943,7 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
     # Lives inside this artifact for the same reason the dispersion gate does:
     # it is a property of the same vintage sample this function already
     # grades, and a second eval file would be a second clock to keep in sync.
-    result["prob_calibration"] = prob_calibration_gate(
-        games, teams=teams, parks=parks, starters=starters)
+    result["prob_calibration"] = val[("prob_calibration", None)]
 
     # --- the benchmark ladder (B6, section 6, dark) -----------------------
     # `_per_game_p` is working state, never artifact content: the ladder needs
@@ -6707,19 +6967,20 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
     # Same argument as the dispersion and calibration gates: it is a property of
     # the sample this function already grades, and a second eval file would be a
     # second clock to keep in sync.
-    result["ridge_fit"] = ridge_fit_gate(games, teams=teams, parks=parks,
-                                         starters=starters, log_fn=log_fn)
-    result["ridge_fit"]["fit_window_probe"] = fit_window_probe(
-        games, teams=teams, parks=parks, starters=starters)
+    result["ridge_fit"] = ridge_fit_gate(
+        games, teams=teams, parks=parks, starters=starters, log_fn=log_fn,
+        split_rows={q: val[("ridge_q", q)] for q in DISPERSION_SPLIT_QUANTILES},
+        served_window=val[("ridge_served", None)])
+    result["ridge_fit"]["fit_window_probe"] = val[("fit_window_probe", None)]
 
     # --- the total level gate (BET1, section 7f) --------------------------
     # Same argument again: a property of this sample. A failure here degrades to
     # a stated status, because the moneyline gates above must not be lost to it.
-    try:
-        result["total_level"] = total_level_gate(games, teams=teams, parks=parks,
-                                                 starters=starters, log_fn=log_fn)
-    except Exception:                                          # noqa: BLE001
-        log.warning("betting_model: total level gate failed", exc_info=True)
+    tl = blocks[("total_level", None)]
+    if tl["failed"] is None:
+        result["total_level"] = tl["value"]
+    else:
+        log.warning("betting_model: total level gate failed\n%s", tl["failed"])
         result["total_level"] = {"status": "failed", "verdict": "indeterminate",
                                  "ship": False, "served": SERVE_TOTAL_LEVEL}
 
