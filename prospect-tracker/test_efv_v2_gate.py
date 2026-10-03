@@ -488,3 +488,47 @@ def test_the_count_reads_no_outcome_and_the_rvm_pins_hold():
             assert not any(t in name.lower() for t in _BANNED), name
     assert not imported & {"war_source", "efv_labels", "efv_model", "ewar", "efv_v2_stat"}
     assert F.reserved_vm_pins() == []
+
+
+# ---------------------------------------------------------------------------
+# 7. s8.1 to s8.4, the stratum matrix (EFV3_D5): registered text, no number from a read
+# ---------------------------------------------------------------------------
+
+def _s8() -> str:
+    t = _text()
+    return t.split("## 8. Hypotheses and decision rules", 1)[1].split("## 9. Results", 1)[0]
+
+
+def test_s8_registers_the_strata_module_s_cells():
+    import efv_strata as ST
+    s8 = _s8()
+    assert "### 8.1 The stratum matrix" in s8 and "efv_strata.py" in s8
+    for dim in ST.DIMENSIONS:
+        if dim in ("list_year", "source_disagreement"):
+            continue
+        for cell in ST.CELLS[dim]:
+            assert cell in s8, (dim, cell)
+    assert "FG minus Pipeline gap at or above 10 FV" in s8
+    assert "at least 40 rows" in s8 and "789 of 2,862" in s8
+    for frag in ("2026-11-20", "14 days after the fWAR epoch's step Z entry",
+                 "PROSPECT_ANCHOR_GATE.md", "never by editing"):
+        assert frag in s8, frag
+
+
+def test_s8_carries_family_s_the_vocabulary_and_the_tier_freeze():
+    s8 = _s8()
+    for s in ("Family S clause", "E3-Q4 = A", "NO ship consequence", "descriptive by the gate",
+              "_holm_family", "pooled (within degenerate: k groups)",
+              "frozen pending the anchor look", "source_backtest._tier_table",
+              "source_cohort_accuracy.py", "tools/efv_scoreboard.py"):
+        assert s in s8, s
+    for r in ("AHEAD", "BEHIND", "EQUIVALENT", "UNRESOLVED", "FLAGGED_UNCORRECTED",
+              "UNPOWERED", "NOT_SCORED", "DEVELOPMENT", "RESERVED_PENDING"):
+        assert f"| {r} |" in s8, r
+    assert "LANE_D_cells.json" in _text().split("## 6. Forking paths", 1)[1].split("## 7.", 1)[0]
+
+
+def test_s8_holds_no_number_from_a_read():
+    s8 = _s8()
+    # rule constants only (0.02, 0.05, 1.645, B 2000): no rho, delta, floor or interval
+    assert not re.search(r"(?<![\w.])[+-]?0\.\d{3,}", s8.replace("1.645", ""))

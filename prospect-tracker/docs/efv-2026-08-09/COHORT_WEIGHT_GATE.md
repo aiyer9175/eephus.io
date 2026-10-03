@@ -263,6 +263,14 @@ not scored at all. Not read as evidence about tier-specific accuracy.
 LEVEL AT GRADING: not available, age at grading substituted, recorded in
 `accuracy.level_at_grading`.
 
+2026-10-02 (EFV3_D5, a dated note to these results, not to the pre-registration): level at
+grading now exists through the outcome-blind MiLB block of the list-vintage frame
+(`efv_vintage_frame.frame_row`, whose `milb` block carries the V-1 `milb_level` from
+`efv_dataset._milb_features` with cutoff V-01-01), so the artifact's
+`level_at_grading.available: false` describes the 2026-08 data this lane read, not today's;
+this lane's partitions are unchanged, and the level cut is registered in
+`docs/efv-v2/EFV_V2_GATE.md` s8.1.
+
 ### 8.2 Multiplicity: no survivor survives the family-level test
 
 Holm inside each partition leaves 2 of the 4: `by_position_group:RP` (p 0.001) and
