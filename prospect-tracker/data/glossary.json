@@ -1,5 +1,5 @@
 {
- "version": "2026-09-25",
+ "version": "2026-10-02",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -3616,17 +3616,19 @@
    "term": "Exit Velocity (EV)",
    "category": "statcast",
    "module": [
-    "foundations"
+    "foundations",
+    "prospx"
    ],
    "aliases": [
     "EV",
     "Exit Velo",
     "Average EV",
-    "Avg EV"
+    "Avg EV",
+    "Avg EVa"
    ],
    "priority": 10,
    "definition": "How hard a hitter strikes the ball, in mph off the bat. Higher = louder contact and more damage on balls in play.",
-   "methodology": "Mean batted-ball speed at contact. The fastest-stabilizing batted-ball signal (~40 batted balls), so it reads raw contact quality before results settle. Pairs with launch angle to define barrels. MLB average ~89 mph; 92+ plus; 95+ elite.",
+   "methodology": "Mean batted-ball speed at contact. The fastest-stabilizing batted-ball signal (~40 batted balls), so it reads raw contact quality before results settle. Pairs with launch angle to define barrels. MLB average ~89 mph; 92+ plus; 95+ elite.\n\nFor a pitcher (Avg EVa on the PROSPX Leaderboards) it is the same mean over the batted balls he allows, and lower is better.",
    "example": "A prospect averaging 92.5 mph sits about one standard deviation above the MLB mean.",
    "seeAlso": [
     "statcast_plus",
@@ -3642,16 +3644,18 @@
    "term": "Barrel%",
    "category": "statcast",
    "module": [
-    "foundations"
+    "foundations",
+    "prospx"
    ],
    "aliases": [
     "Barrel rate",
     "Barrels",
-    "Brl%"
+    "Brl%",
+    "BrlA%"
    ],
    "priority": 11,
    "definition": "Share of batted balls in the exit-velocity and launch-angle window that historically produces ≥ .500 AVG and ≥ 1.500 SLG.",
-   "methodology": "Barrels ÷ batted balls. Isolates loud, well-angled contact that drives extra-base power, excluding weak contact and hard mishits. League average ~8%; 12%+ plus; 16%+ elite.",
+   "methodology": "Barrels ÷ batted balls. Isolates loud, well-angled contact that drives extra-base power, excluding weak contact and hard mishits. League average ~8%; 12%+ plus; 16%+ elite.\n\nOn MiLB tracked data the site approximates the band: 98 mph or more, at a launch angle from 26 to 30 degrees that widens by one degree each way per mph above 98, capped at 50 degrees. For a pitcher (BrlA% on the PROSPX Leaderboards) it is the same rate over the batted balls he allows, and lower is better.",
    "formula": "Barrel% = barrels / batted_balls × 100\nbarrel = (EV, launch angle) in the ≥.500 AVG / ≥1.500 SLG zone",
    "example": "A 14% Barrel% over a full MiLB season profiles as plus game power even with an ordinary home-run total.",
    "seeAlso": [
@@ -3669,16 +3673,19 @@
    "term": "Hard-Hit%",
    "category": "statcast",
    "module": [
-    "foundations"
+    "foundations",
+    "prospx"
    ],
    "aliases": [
     "Hard hit rate",
     "HH%",
-    "Hard-hit rate"
+    "Hard-hit rate",
+    "Hard%",
+    "HardA%"
    ],
    "priority": 12,
    "definition": "Share of batted balls hit ≥ 95 mph. A volume measure of quality contact - broader than Barrel% (no angle requirement).",
-   "methodology": "Batted balls at 95+ mph ÷ all batted balls. How often a hitter makes loud contact at any angle; Barrel% adds the angle requirement. League average ~40%; 45%+ plus. High Hard-Hit% with low Barrel% points to a launch-angle fix.",
+   "methodology": "Batted balls at 95+ mph ÷ all batted balls. How often a hitter makes loud contact at any angle; Barrel% adds the angle requirement. League average ~40%; 45%+ plus. High Hard-Hit% with low Barrel% points to a launch-angle fix.\n\nFor a pitcher (HardA% on the PROSPX Leaderboards) it is the same rate over the batted balls he allows, and lower is better.",
    "formula": "Hard-Hit% = batted_balls ≥ 95 mph / batted_balls × 100",
    "seeAlso": [
     "exit_velocity",
@@ -3694,17 +3701,19 @@
    "category": "statcast",
    "module": [
     "foundations",
-    "mlbstats"
+    "mlbstats",
+    "prospx"
    ],
    "aliases": [
     "Chase rate",
     "O-Swing%",
     "Chase",
-    "Out-of-zone swing%"
+    "Out-of-zone swing%",
+    "Chase%"
    ],
    "priority": 13,
    "definition": "Share of pitches outside the strike zone that a hitter swings at. Lower = better plate discipline.",
-   "methodology": "Swings at out-of-zone pitches ÷ out-of-zone pitches. The core discipline input: low chase predicts walks and protects the hit tool. Stabilizes quickly and travels across levels. League average ~28-31%; under 25% is plus. The site defines the zone geometrically (a fixed rulebook rectangle), not by the called zone, so the metric is consistent across levels even though enforcement differs: MLB runs the ABS challenge system in 2026, AAA has used ABS since 2023, the Florida State League since 2022.",
+   "methodology": "Swings at out-of-zone pitches ÷ out-of-zone pitches. The core discipline input: low chase predicts walks and protects the hit tool. Stabilizes quickly and travels across levels. League average ~28-31%; under 25% is plus. The site defines the zone geometrically (a fixed rulebook rectangle), not by the called zone, so the metric is consistent across levels even though enforcement differs: MLB runs the ABS challenge system in 2026, AAA has used ABS since 2023, the Florida State League since 2022.\n\nFor a pitcher it is the chase rate he induces, and higher is better.",
    "formula": "Chase% = out-of-zone swings / out-of-zone pitches × 100",
    "example": "A 20-year-old at AA with a 22% Chase% has discipline that usually survives MLB sequencing.",
    "seeAlso": [
@@ -3750,16 +3759,18 @@
    "category": "statcast",
    "module": [
     "foundations",
-    "mlbstats"
+    "mlbstats",
+    "prospx"
    ],
    "aliases": [
     "Z-Contact",
     "In-zone contact%",
-    "Zone contact"
+    "Zone contact",
+    "Z-Con%"
    ],
    "priority": 15,
    "definition": "Share of swings at in-zone pitches that make contact: the most direct bat-to-ball signal.",
-   "methodology": "In-zone contact ÷ in-zone swings. Limited to hittable pitches, so it isolates bat control from approach: the tracked complement to the Hit tool. League average ~85%; 90%+ plus.",
+   "methodology": "In-zone contact ÷ in-zone swings. Limited to hittable pitches, so it isolates bat control from approach: the tracked complement to the Hit tool. League average ~85%; 90%+ plus.\n\nFor a pitcher it is the in-zone contact he allows per in-zone swing, and lower is better. The PROSPX Leaderboards count it from the MiLB game feeds on the zone rule Z-Swing% describes, with 200 pitches needed.",
    "formula": "Z-Contact% = in-zone contact / in-zone swings × 100",
    "seeAlso": [
     "hit_tool",
@@ -3893,7 +3904,8 @@
    "term": "OPS+ (vs level)",
    "category": "standard-stat",
    "module": [
-    "foundations"
+    "foundations",
+    "prospx"
    ],
    "aliases": [
     "Level OPS+",
@@ -3901,11 +3913,12 @@
     "OPS+",
     "OPS+ vs level",
     "OPS+ vs lvl",
-    "wRC+ vs level"
+    "wRC+ vs level",
+    "OPS+ lvl"
    ],
    "priority": 6,
    "definition": "Level-anchored offensive index for a MiLB season: 100 is the league average for that level and season. Computed as wRC+ vs level since 2026-07-31 (the key keeps the OPS+ name): a linear-weight wOBA against a plate-appearance-weighted pool of the whole league, not an OPS ratio against the prospects the site tracks.",
-   "methodology": "One set of FanGraphs-shape linear weights, rescaled inside each level-season so the pool's mean wOBA equals its OBP, then indexed against that pool and shrunk toward it by plate appearances (K = 200 PA, the retired chip's shrink strength). The baseline change mattered as much as the metric: the old tracked-prospect baseline ran 7-8 percent low at Double-A and High-A (.703 against a true .752, .708 against .767), which flattered every hitter at those levels. Across 1,972 served hitters the new chip sits about 2 points lower on the median, slightly tighter, and 8.5 percent of pairs swap order. Coverage 100 percent, from the MLB StatsAPI response the site already fetches. No park adjustment.",
+   "methodology": "One set of FanGraphs-shape linear weights, rescaled inside each level-season so the pool's mean wOBA equals its OBP, then indexed against that pool and shrunk toward it by plate appearances (K = 200 PA, the retired chip's shrink strength). The baseline change mattered as much as the metric: the old tracked-prospect baseline ran 7-8 percent low at Double-A and High-A (.703 against a true .752, .708 against .767), which flattered every hitter at those levels. Across 1,972 served hitters the new chip sits about 2 points lower on the median, slightly tighter, and 8.5 percent of pairs swap order. Coverage 100 percent, from the MLB StatsAPI response the site already fetches. No park adjustment.\n\nOn a combined MiLB row of the PROSPX Leaderboards each level keeps its own rescaled weights, and the baseline is the league wOBA of the levels played, weighted by plate appearances.",
    "formula": "wRC+ vs level = 100 × wOBA_adj / lg_wOBA, where wOBA_adj = (PA·wOBA + K·lg_wOBA)/(PA + K), K = 200 PA; weights rescaled per level-season so pool wOBA = pool OBP\nretired chip (still computed, not displayed): OPS+ = 100 × OPS_adj / lgOPS, OPS_adj = (AB·OPS + 170·lgOPS)/(AB + 170)",
    "seeAlso": [
     "ops",
@@ -3977,7 +3990,8 @@
    "aliases": [
     "Org $DvM+",
     "Financial DvM",
-    "fin_dollar_dvm"
+    "fin_dollar_dvm",
+    "$DvM+"
    ],
    "priority": 62,
    "definition": "The org-level roll-up of its active prospects' $DvM+: how fast their grades are moving against peers in the same eFV tier, indexed to 100. Despite the $, it reads no dollars.",
@@ -4607,7 +4621,8 @@
    "term": "ERA-",
    "category": "pitcher-stat",
    "aliases": [
-    "ERA minus"
+    "ERA minus",
+    "ERA- lvl"
    ],
    "priority": 80,
    "definition": "ERA scaled so 100 = average; lower is better. 90 reads 10% better. Two quantities share the label: on MLB seasons it is MLB's published ERA- (park- and league-adjusted, read verbatim); on MiLB seasons it is level-relative, shrunk, and has no park adjustment.",
@@ -4616,11 +4631,12 @@
     "era"
    ],
    "module": [
-    "foundations"
+    "foundations",
+    "prospx"
    ],
    "shelf": "industry",
    "origin": "Industry metric. The ERA- park- and league-adjusted index, implemented by FanGraphs (100 = average, lower is better). The MiLB version here is level-relative and not park-adjusted.",
-   "methodology": "MiLB: ERA- vs level = 100 × ERA_adj / level ERA, where ERA_adj = (IP × ERA + 50 × level ERA) / (IP + 50) pulls a short sample toward the level mean (K = 50 IP) and the level ERA comes from the level norms. No park term. MLB: read verbatim from MLB's published eraMinus.",
+   "methodology": "MiLB: ERA- vs level = 100 × ERA_adj / level ERA, where ERA_adj = (IP × ERA + 50 × level ERA) / (IP + 50) pulls a short sample toward the level mean (K = 50 IP) and the level ERA comes from the level norms. No park term. MLB: read verbatim from MLB's published eraMinus.\n\nOn a combined MiLB row of the PROSPX Leaderboards the level ERA is the mean of the levels played, weighted by innings.",
    "formula": "MiLB: ERA- = 100 × ((IP·ERA + 50·lgERA_level) / (IP + 50)) / lgERA_level\nMLB: published eraMinus (park- and league-adjusted)"
   },
   {
@@ -6231,12 +6247,13 @@
    ],
    "priority": 50,
    "definition": "Expected wOBA: what a hitter's contact and plate results are worth from how the ball was struck, without defense and luck.",
-   "methodology": "Estimates wOBA from contact quality (exit velocity and launch angle) plus strikeouts and walks, at the run value of each outcome. xwOBAcon is the contact-only version. The value on player cards is our reconstruction from the tracking inputs available, not the official Savant figure.",
+   "methodology": "Estimates wOBA from contact quality (exit velocity and launch angle) plus strikeouts and walks, at the run value of each outcome. xwOBAcon is the contact-only version. PROSPX prints a different number for MiLB hitters, the site's own estimate from launch speed and angle: see Est. xwOBA (PROSPX).",
    "origin": "Industry metric. MLB Statcast (Baseball Savant). Displayed here as an estimate.",
    "seeAlso": [
     "woba",
     "barrel_pct",
-    "hard_hit_pct"
+    "hard_hit_pct",
+    "xwoba_est"
    ],
    "shelf": "industry"
   },
@@ -8916,7 +8933,8 @@
    "term": "FB velo",
    "category": "statcast",
    "module": [
-    "mlbstats"
+    "mlbstats",
+    "prospx"
    ],
    "aliases": [
     "Fastball velocity",
@@ -8925,7 +8943,7 @@
    ],
    "priority": 12,
    "definition": "A pitcher's average fastball speed in mph over the season.",
-   "methodology": "From the Baseball Savant custom leaderboard (fastball_avg_speed). Display only on the /mlbstats/ pitcher boards: no Arkmetric reads it.",
+   "methodology": "From the Baseball Savant custom leaderboard (fastball_avg_speed). Display only on the /mlbstats/ pitcher boards: no Arkmetric reads it.\n\nThe PROSPX Leaderboards print a separate MiLB figure: the mean speed of the pitcher's most-thrown fastball type (four-seam, sinker, two-seam or cutter) in the MLB Stats API game feeds, with 20 tracked pitches needed.",
    "seeAlso": [
     "role_velo_delta",
     "stf_plus"
@@ -9073,6 +9091,193 @@
     "s_xline"
    ],
    "shelf": "industry"
+  },
+  {
+   "id": "sb",
+   "term": "SB",
+   "category": "hitter-stat",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "SB",
+    "Stolen bases",
+    "Steals"
+   ],
+   "priority": 9,
+   "shelf": "foundation",
+   "definition": "Stolen bases: the bases a runner gains by advancing on his own during a pitch, as the official scorer credits them. A season count, not a rate.",
+   "methodology": "The PROSPX Leaderboards read it from the MLB Stats API season line at each level, with caught stealing (CS) carried beside it. A combined MiLB row adds the counts of the levels played.",
+   "formula": "SB = stolen bases in the season line\nCombined MiLB row: SB = sum over the levels played\nSuccess rate = SB / (SB + CS)",
+   "seeAlso": [
+    "sprint_speed"
+   ]
+  },
+  {
+   "id": "z_swing_pct",
+   "term": "Z-Swing%",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Z-Swing",
+    "Zone swing%",
+    "In-zone swing%"
+   ],
+   "priority": 15,
+   "shelf": "industry",
+   "origin": "Industry metric. Plate-discipline rate popularized by FanGraphs (swings at in-zone pitches).",
+   "definition": "Share of pitches in the strike zone that the batter swings at. For a hitter it reads how often he offers at hittable pitches; for a pitcher it is the in-zone swing rate he induces.",
+   "methodology": "In-zone swings divided by in-zone pitches, counted pitch by pitch from the MLB Stats API game feeds of the player's MiLB games. A pitch is in the zone when the feed labels it so. Where the feed has no zone label, a classifier trained on MLB pitches places it from its plate coordinates and the batter's zone top and bottom. Complex-league games use a model fit on that league's own called strikes and balls. The PROSPX Leaderboards need 200 pitches.",
+   "formula": "Z-Swing% = in-zone swings / in-zone pitches x 100\nswing = swinging strike, foul, foul tip, bunt attempt or ball in play",
+   "seeAlso": [
+    "z_contact_pct",
+    "chase_pct",
+    "whiff_pct"
+   ]
+  },
+  {
+   "id": "p90_ev",
+   "term": "90th EV",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "90th EV",
+    "EV90",
+    "90th percentile exit velocity"
+   ],
+   "priority": 10,
+   "shelf": "foundation",
+   "definition": "The 90th percentile of a hitter's exit velocities, in mph: the speed his hardest tenth of batted balls reaches. It rests on many balls, so one swing moves it less than it moves Max EV.",
+   "methodology": "Taken over every tracked batted ball in the MLB Stats API game feeds of the season at that level, with linear interpolation between the two nearest balls. The PROSPX Leaderboards need 10 batted balls.",
+   "formula": "90th EV = the value at rank 0.9 x (n - 1) of the sorted exit velocities, interpolated\nn = tracked batted balls",
+   "seeAlso": [
+    "exit_velocity",
+    "max_ev",
+    "hard_hit_pct"
+   ]
+  },
+  {
+   "id": "max_ev",
+   "term": "Max EV",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "MaxEV",
+    "Maximum exit velocity",
+    "Peak exit velocity"
+   ],
+   "priority": 10,
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant) publishes max exit velocity; the MiLB figure here is read from the game feeds.",
+   "definition": "The hardest-hit ball of a hitter's season at the level, in mph off the bat.",
+   "methodology": "The single highest exit velocity among the tracked batted balls in the MLB Stats API game feeds. One swing sets it, so it tends to rise with the number of batted balls. The PROSPX Leaderboards need 5 batted balls.",
+   "formula": "Max EV = max(exit velocity) over tracked batted balls",
+   "seeAlso": [
+    "p90_ev",
+    "exit_velocity",
+    "raw_power"
+   ]
+  },
+  {
+   "id": "pull_air_pct",
+   "term": "Pull-air%",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Pull-air",
+    "Pull air%",
+    "Pulled air ball rate"
+   ],
+   "priority": 11,
+   "shelf": "foundation",
+   "definition": "Share of a hitter's batted balls that are fly balls, line drives or popups hit to his pull side.",
+   "methodology": "The denominator is every tracked batted ball, not air balls alone. The trajectory comes from the game feed's tag; a ball with no tag counts as in the air at a launch angle of 10 degrees or more. The pull side comes from the hit coordinates: 15 degrees or more toward left field for a right-handed batter, toward right field for a left-handed one. The PROSPX Leaderboards need 10 batted balls.",
+   "formula": "Pull-air% = pulled (fly balls + line drives + popups) / batted balls x 100",
+   "seeAlso": [
+    "pull_pct",
+    "barrel_pct",
+    "game_power"
+   ]
+  },
+  {
+   "id": "fb_ivb",
+   "term": "FB IVB",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Fastball IVB",
+    "Induced vertical break",
+    "IVB"
+   ],
+   "priority": 12,
+   "shelf": "industry",
+   "origin": "Industry metric. Pitch-tracking measure published by MLB Statcast; the MiLB value here is the game feed's induced vertical break.",
+   "definition": "Induced vertical break on a pitcher's main fastball, in inches: the vertical movement the pitch's spin creates, with gravity taken out. A higher number means the ball drops less than gravity alone would make it.",
+   "methodology": "The main fastball is the most-thrown of his four-seamers, sinkers, two-seamers and cutters at the level, and the value is that pitch's mean break in the MLB Stats API game feeds. Sinkers and cutters run lower than four-seamers, so the number compares best between pitchers whose main fastball is the same type. The PROSPX Leaderboards need 20 tracked pitches.",
+   "formula": "FB IVB = mean(induced vertical break) of the most-thrown pitch type among four-seam, sinker, two-seam and cutter",
+   "seeAlso": [
+    "fb_velo",
+    "stf_plus",
+    "vaa"
+   ]
+  },
+  {
+   "id": "prospx_lb_qualified",
+   "term": "Leaderboard qualifier",
+   "category": "site-feature",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Rate-title qualifier",
+    "Qualified (PROSPX Leaderboards)"
+   ],
+   "priority": 85,
+   "shelf": "foundation",
+   "definition": "A PROSPX Leaderboards season line is qualified when it reaches the minor-league rate-title bar at its level that season: 2.7 plate appearances per team game for a hitter, 0.8 innings per team game for a pitcher.",
+   "methodology": "Team games is the median number of completed regular-season games per club at the level that season, read from the MLB Stats API schedule. A combined MiLB row sums its levels and is measured against their team games averaged by exposure: plate appearances for a hitter, outs for a pitcher.",
+   "formula": "Hitter: qualified when PA >= 2.7 x team games\nPitcher: qualified when IP >= 0.8 x team games\nCombined MiLB row: team games = sum(exposure x level team games) / sum(exposure), exposure = PA (hitter) or outs (pitcher)",
+   "seeAlso": [
+    "ops_plus",
+    "era_minus"
+   ]
+  },
+  {
+   "id": "xwoba_est",
+   "term": "Est. xwOBA (PROSPX)",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Est. xwOBA",
+    "Est. xwOBAcon",
+    "xwOBA est",
+    "xwOBAcon est",
+    "Estimated xwOBA"
+   ],
+   "priority": 50,
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. The nearest-neighbour shape follows the public TJStats (Thomas Nestico) approach of predicting batted-ball outcomes from launch speed and angle.",
+   "definition": "The site's estimate of expected wOBA for MiLB hitters, built from the launch speed and launch angle of each tracked batted ball. It is a different number from MLB's Statcast xwOBA and comes from a different model.",
+   "methodology": "The estimator is a k-nearest-neighbour average with k = 61. Each batted ball takes its value from the 61 nearest points of a fixed grid of launch speed and angle outcomes, weighted by inverse distance. The grid scores an out at 0 and a single, double, triple and home run at their wOBA weights. It encodes public batted-ball priors, and no Statcast training data ships with it.\n\nThe mean over a hitter's batted balls is Est. xwOBAcon. At 25 or more balls a bounded profile correction lifts barrel-heavy and hard ground-ball profiles and caps soft-contact ones. Est. xwOBA then adds plate results from the level's BB% and K%: walks at 0.69, strikeouts at zero, and Est. xwOBAcon on the remaining plate appearances. Hit-by-pitch is left out because several MiLB lines lack it. The PROSPX Leaderboards need 25 batted balls.",
+   "formula": "per ball: v = sum(w_i x value_i) / sum(w_i) over the 61 nearest grid points\nw_i = 1 / (d_i + 0.75), d_i = ((EV - EV_i) / 4)^2 + ((LA - LA_i) / 8)^2\ngrid values: out 0, 1B 0.88, 2B 1.25, 3B 1.58, HR 2.03\nEst. xwOBAcon = mean(v) over batted balls + profile correction (25+ balls, bounded at -0.45 and +0.08)\nEst. xwOBA = 0.69 x BB rate + (1 - BB rate - K rate) x Est. xwOBAcon",
+   "seeAlso": [
+    "xwoba",
+    "woba",
+    "exit_velocity",
+    "barrel_pct"
+   ]
   }
  ]
 }

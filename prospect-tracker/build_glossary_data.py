@@ -364,6 +364,180 @@ DFS_ENTRIES = [
 ]
 
 
+# ---- PROSPX Leaderboards vocabulary (2026-10-02, PROSPX_3_LB_LIBRARY) --------
+# The condensed Leaderboards table (sitepass plan 5.2) puts data-gl="<id>" on
+# every stat header, and the chip titles that carried their own definitions go
+# away with the chips. These are the terms that had no entry. Each one says
+# what the site computes, on the basis it computes it, so a header tooltip and
+# the number under it agree. Same merge rules as the betting terms: additive,
+# idempotent, never overwriting a served entry.
+#
+# OPS+ lvl and ERA- lvl are not here: ops_plus ("OPS+ (vs level)") and
+# era_minus (its MiLB level-relative line) already define them on the served
+# basis (K = 200 PA and K = 50 IP), so the headers point at those entries and
+# PROSPX_LB_EXTENSIONS gives them the header labels as aliases.
+PROSPX_LB_ENTRIES = [
+    {"id": "sb", "term": "SB", "category": "hitter-stat",
+     "module": ["prospx"], "aliases": ["SB", "Stolen bases", "Steals"],
+     "priority": 9, "shelf": "foundation",
+     "definition": "Stolen bases: the bases a runner gains by advancing on his own during a pitch, as the official scorer credits them. A season count, not a rate.",
+     "methodology": "The PROSPX Leaderboards read it from the MLB Stats API season line at each level, with caught stealing (CS) carried beside it. A combined MiLB row adds the counts of the levels played.",
+     "formula": "SB = stolen bases in the season line\nCombined MiLB row: SB = sum over the levels played\nSuccess rate = SB / (SB + CS)",
+     "seeAlso": ["sprint_speed"]},
+    {"id": "z_swing_pct", "term": "Z-Swing%", "category": "statcast",
+     "module": ["prospx"], "aliases": ["Z-Swing", "Zone swing%", "In-zone swing%"],
+     "priority": 15, "shelf": "industry",
+     "origin": "Industry metric. Plate-discipline rate popularized by FanGraphs (swings at in-zone pitches).",
+     "definition": "Share of pitches in the strike zone that the batter swings at. For a hitter it reads how often he offers at hittable pitches; for a pitcher it is the in-zone swing rate he induces.",
+     "methodology": "In-zone swings divided by in-zone pitches, counted pitch by pitch from the MLB Stats API game feeds of the player's MiLB games. A pitch is in the zone when the feed labels it so. Where the feed has no zone label, a classifier trained on MLB pitches places it from its plate coordinates and the batter's zone top and bottom. Complex-league games use a model fit on that league's own called strikes and balls. The PROSPX Leaderboards need 200 pitches.",
+     "formula": "Z-Swing% = in-zone swings / in-zone pitches x 100\nswing = swinging strike, foul, foul tip, bunt attempt or ball in play",
+     "seeAlso": ["z_contact_pct", "chase_pct", "whiff_pct"]},
+    {"id": "p90_ev", "term": "90th EV", "category": "statcast",
+     "module": ["prospx"], "aliases": ["90th EV", "EV90", "90th percentile exit velocity"],
+     "priority": 10, "shelf": "foundation",
+     "definition": "The 90th percentile of a hitter's exit velocities, in mph: the speed his hardest tenth of batted balls reaches. It rests on many balls, so one swing moves it less than it moves Max EV.",
+     "methodology": "Taken over every tracked batted ball in the MLB Stats API game feeds of the season at that level, with linear interpolation between the two nearest balls. The PROSPX Leaderboards need 10 batted balls.",
+     "formula": "90th EV = the value at rank 0.9 x (n - 1) of the sorted exit velocities, interpolated\nn = tracked batted balls",
+     "seeAlso": ["exit_velocity", "max_ev", "hard_hit_pct"]},
+    {"id": "max_ev", "term": "Max EV", "category": "statcast",
+     "module": ["prospx"], "aliases": ["MaxEV", "Maximum exit velocity", "Peak exit velocity"],
+     "priority": 10, "shelf": "industry",
+     "origin": "Industry metric. MLB Statcast (Baseball Savant) publishes max exit velocity; the MiLB figure here is read from the game feeds.",
+     "definition": "The hardest-hit ball of a hitter's season at the level, in mph off the bat.",
+     "methodology": "The single highest exit velocity among the tracked batted balls in the MLB Stats API game feeds. One swing sets it, so it tends to rise with the number of batted balls. The PROSPX Leaderboards need 5 batted balls.",
+     "formula": "Max EV = max(exit velocity) over tracked batted balls",
+     "seeAlso": ["p90_ev", "exit_velocity", "raw_power"]},
+    {"id": "pull_air_pct", "term": "Pull-air%", "category": "statcast",
+     "module": ["prospx"], "aliases": ["Pull-air", "Pull air%", "Pulled air ball rate"],
+     "priority": 11, "shelf": "foundation",
+     "definition": "Share of a hitter's batted balls that are fly balls, line drives or popups hit to his pull side.",
+     "methodology": "The denominator is every tracked batted ball, not air balls alone. The trajectory comes from the game feed's tag; a ball with no tag counts as in the air at a launch angle of 10 degrees or more. The pull side comes from the hit coordinates: 15 degrees or more toward left field for a right-handed batter, toward right field for a left-handed one. The PROSPX Leaderboards need 10 batted balls.",
+     "formula": "Pull-air% = pulled (fly balls + line drives + popups) / batted balls x 100",
+     "seeAlso": ["pull_pct", "barrel_pct", "game_power"]},
+    {"id": "fb_ivb", "term": "FB IVB", "category": "statcast",
+     "module": ["prospx"], "aliases": ["Fastball IVB", "Induced vertical break", "IVB"],
+     "priority": 12, "shelf": "industry",
+     "origin": "Industry metric. Pitch-tracking measure published by MLB Statcast; the MiLB value here is the game feed's induced vertical break.",
+     "definition": "Induced vertical break on a pitcher's main fastball, in inches: the vertical movement the pitch's spin creates, with gravity taken out. A higher number means the ball drops less than gravity alone would make it.",
+     "methodology": "The main fastball is the most-thrown of his four-seamers, sinkers, two-seamers and cutters at the level, and the value is that pitch's mean break in the MLB Stats API game feeds. Sinkers and cutters run lower than four-seamers, so the number compares best between pitchers whose main fastball is the same type. The PROSPX Leaderboards need 20 tracked pitches.",
+     "formula": "FB IVB = mean(induced vertical break) of the most-thrown pitch type among four-seam, sinker, two-seam and cutter",
+     "seeAlso": ["fb_velo", "stf_plus", "vaa"]},
+    {"id": "prospx_lb_qualified", "term": "Leaderboard qualifier", "category": "site-feature",
+     "module": ["prospx"], "aliases": ["Rate-title qualifier", "Qualified (PROSPX Leaderboards)"],
+     "priority": 85, "shelf": "foundation",
+     "definition": "A PROSPX Leaderboards season line is qualified when it reaches the minor-league rate-title bar at its level that season: 2.7 plate appearances per team game for a hitter, 0.8 innings per team game for a pitcher.",
+     "methodology": "Team games is the median number of completed regular-season games per club at the level that season, read from the MLB Stats API schedule. A combined MiLB row sums its levels and is measured against their team games averaged by exposure: plate appearances for a hitter, outs for a pitcher.",
+     "formula": "Hitter: qualified when PA >= 2.7 x team games\nPitcher: qualified when IP >= 0.8 x team games\nCombined MiLB row: team games = sum(exposure x level team games) / sum(exposure), exposure = PA (hitter) or outs (pitcher)",
+     "seeAlso": ["ops_plus", "era_minus"]},
+    {"id": "xwoba_est", "term": "Est. xwOBA (PROSPX)", "category": "statcast",
+     "module": ["prospx"], "aliases": ["Est. xwOBA", "Est. xwOBAcon", "xwOBA est", "xwOBAcon est", "Estimated xwOBA"],
+     "priority": 50, "shelf": "ark",
+     "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. The nearest-neighbour shape follows the public TJStats (Thomas Nestico) approach of predicting batted-ball outcomes from launch speed and angle.",
+     "definition": "The site's estimate of expected wOBA for MiLB hitters, built from the launch speed and launch angle of each tracked batted ball. It is a different number from MLB's Statcast xwOBA and comes from a different model.",
+     "methodology": "The estimator is a k-nearest-neighbour average with k = 61. Each batted ball takes its value from the 61 nearest points of a fixed grid of launch speed and angle outcomes, weighted by inverse distance. The grid scores an out at 0 and a single, double, triple and home run at their wOBA weights. It encodes public batted-ball priors, and no Statcast training data ships with it.\n\nThe mean over a hitter's batted balls is Est. xwOBAcon. At 25 or more balls a bounded profile correction lifts barrel-heavy and hard ground-ball profiles and caps soft-contact ones. Est. xwOBA then adds plate results from the level's BB% and K%: walks at 0.69, strikeouts at zero, and Est. xwOBAcon on the remaining plate appearances. Hit-by-pitch is left out because several MiLB lines lack it. The PROSPX Leaderboards need 25 batted balls.",
+     "formula": "per ball: v = sum(w_i x value_i) / sum(w_i) over the 61 nearest grid points\nw_i = 1 / (d_i + 0.75), d_i = ((EV - EV_i) / 4)^2 + ((LA - LA_i) / 8)^2\ngrid values: out 0, 1B 0.88, 2B 1.25, 3B 1.58, HR 2.03\nEst. xwOBAcon = mean(v) over batted balls + profile correction (25+ balls, bounded at -0.45 and +0.08)\nEst. xwOBA = 0.69 x BB rate + (1 - BB rate - K rate) x Est. xwOBAcon",
+     "seeAlso": ["xwoba", "woba", "exit_velocity", "barrel_pct"]},
+]
+
+# Served entries the Leaderboards headers point at, given what they lack for
+# that use: the header label as an alias, the PROSPX module badge, and one
+# appended paragraph (a pitcher line, or the combined-row basis). Each append
+# lands once: the merge looks for the paragraph before adding it.
+PROSPX_LB_EXTENSIONS = {
+    "ops_plus": {
+        "aliases": ["OPS+ lvl"], "module": ["prospx"],
+        "methodology": "On a combined MiLB row of the PROSPX Leaderboards each level keeps its own rescaled weights, and the baseline is the league wOBA of the levels played, weighted by plate appearances."},
+    "era_minus": {
+        "aliases": ["ERA- lvl"], "module": ["prospx"],
+        "methodology": "On a combined MiLB row of the PROSPX Leaderboards the level ERA is the mean of the levels played, weighted by innings."},
+    "z_contact_pct": {
+        "aliases": ["Z-Con%"], "module": ["prospx"],
+        "methodology": "For a pitcher it is the in-zone contact he allows per in-zone swing, and lower is better. The PROSPX Leaderboards count it from the MiLB game feeds on the zone rule Z-Swing% describes, with 200 pitches needed."},
+    "chase_pct": {
+        "aliases": ["Chase%"], "module": ["prospx"],
+        "methodology": "For a pitcher it is the chase rate he induces, and higher is better."},
+    "exit_velocity": {
+        "aliases": ["Avg EVa"], "module": ["prospx"],
+        "methodology": "For a pitcher (Avg EVa on the PROSPX Leaderboards) it is the same mean over the batted balls he allows, and lower is better."},
+    "hard_hit_pct": {
+        "aliases": ["Hard%", "HardA%"], "module": ["prospx"],
+        "methodology": "For a pitcher (HardA% on the PROSPX Leaderboards) it is the same rate over the batted balls he allows, and lower is better."},
+    "barrel_pct": {
+        "aliases": ["BrlA%"], "module": ["prospx"],
+        "methodology": "On MiLB tracked data the site approximates the band: 98 mph or more, at a launch angle from 26 to 30 degrees that widens by one degree each way per mph above 98, capped at 50 degrees. For a pitcher (BrlA% on the PROSPX Leaderboards) it is the same rate over the batted balls he allows, and lower is better."},
+    "fb_velo": {
+        "module": ["prospx"],
+        "methodology": "The PROSPX Leaderboards print a separate MiLB figure: the mean speed of the pitcher's most-thrown fastball type (four-seam, sinker, two-seam or cutter) in the MLB Stats API game feeds, with 20 tracked pitches needed."},
+    "fin_dollar_dvm": {
+        "aliases": ["$DvM+"]},
+    "xwoba": {
+        "seeAlso": ["xwoba_est"],
+        "replace": ("methodology",
+                    "The value on player cards is our reconstruction from the tracking inputs available, not the official Savant figure.",
+                    "PROSPX prints a different number for MiLB hitters, the site's own estimate from launch speed and angle: see Est. xwOBA (PROSPX).")},
+}
+
+
+def _write_payload(out: Path, payload: dict) -> None:
+    """Write the glossary keeping the served file's own line endings and
+    trailing newline, so a merge diffs as the changed entries and nothing else."""
+    raw = out.read_bytes()
+    eol = "\r\n" if b"\r\n" in raw else "\n"
+    text = json.dumps(payload, ensure_ascii=False, indent=1)
+    if raw.endswith(b"\n"):
+        text += "\n"
+    out.write_bytes(text.replace("\n", eol).encode("utf-8"))
+
+
+def merge_prospx_lb(path: Path | None = None) -> dict:
+    """Add the PROSPX Leaderboards vocabulary to the EXISTING data/glossary.json.
+
+    Same contract as merge_betting: additive and idempotent. A new entry is
+    added only when its id is absent. An extension adds a missing alias, module
+    badge or seeAlso id, appends its paragraph when that paragraph is not
+    already in the field, and swaps a sentence only while the old sentence is
+    still there, so a second run writes nothing."""
+    out = Path(path or (ROOT / "data" / "glossary.json"))
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    entries = payload.setdefault("entries", [])
+    by_id = {e["id"]: e for e in entries}
+    added, extended = [], []
+    for e in PROSPX_LB_ENTRIES:
+        if e["id"] in by_id:
+            continue
+        e = json.loads(json.dumps(e))
+        entries.append(e)
+        by_id[e["id"]] = e
+        added.append(e["id"])
+    for eid, ext in PROSPX_LB_EXTENSIONS.items():
+        e = by_id.get(eid)
+        if e is None:
+            continue
+        before = json.dumps(e, sort_keys=True)
+        for key in ("aliases", "module", "seeAlso"):
+            for v in ext.get(key) or []:
+                have = e.setdefault(key, [])
+                if v not in have:
+                    have.append(v)
+        para = ext.get("methodology")
+        if para and para not in (e.get("methodology") or ""):
+            e["methodology"] = (e["methodology"] + "\n\n" + para) if e.get("methodology") else para
+        if ext.get("replace"):
+            field, old, new = ext["replace"]
+            if old in (e.get(field) or ""):
+                e[field] = e[field].replace(old, new)
+        if json.dumps(e, sort_keys=True) != before:
+            extended.append(eid)
+    idset = {e["id"] for e in entries}
+    for e in entries:
+        if e.get("seeAlso"):
+            e["seeAlso"] = [s for s in e["seeAlso"] if s in idset]
+    if added or extended:
+        payload["version"] = glossary_version()
+        _write_payload(out, payload)
+    return {"added": added, "extended": extended, "n_entries": len(entries)}
+
+
 def _split_wall(text: str) -> str:
     """Insert paragraph breaks every ~2 sentences for the methodology walls."""
     parts = re.split(r"(?<=[.!?]) (?=[A-Z(])", text)
@@ -523,6 +697,9 @@ if __name__ == "__main__":
     ap.add_argument("--betting", action="store_true",
                     help="merge the betting vocabulary into the existing "
                          "data/glossary.json (safe, idempotent, additive)")
+    ap.add_argument("--prospx-lb", action="store_true",
+                    help="merge the PROSPX Leaderboards vocabulary into the "
+                         "existing data/glossary.json (safe, idempotent, additive)")
     ap.add_argument("--rebuild", action="store_true",
                     help="DESTRUCTIVE one-time rebuild from the legacy inline "
                          "sources; prospx/index.html no longer carries its "
@@ -530,9 +707,11 @@ if __name__ == "__main__":
     args = ap.parse_args()
     if args.betting:
         print(merge_betting())
+    elif args.prospx_lb:
+        print(merge_prospx_lb())
     elif args.rebuild:
         main()
     else:
-        ap.error("pass --betting to register the betting terms; --rebuild is "
+        ap.error("pass --betting or --prospx-lb to register those terms; --rebuild is "
                  "the legacy one-time path and would replace the canonical "
                  "artifact")
