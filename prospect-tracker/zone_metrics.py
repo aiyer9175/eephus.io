@@ -19,6 +19,7 @@ Nestico's MLB zone-classification project:
 from __future__ import annotations
 
 import argparse
+import bisect
 import concurrent.futures
 import csv
 import hashlib
@@ -759,14 +760,34 @@ def fetch_zone_metrics_for_players_with_model(
     return out
 
 
-def _percentile_rank(value: float, values: list[float], higher_is_better: bool) -> float:
-    if not values:
+def _sorted_peers(values: list[float]) -> list[float] | None:
+    """A sorted copy of a cohort's peer values for _percentile_rank, or None when
+    a NaN is among them (its order is undefined, so the linear count stays the
+    source of truth for that cohort)."""
+    if any(v != v for v in values):
+        return None
+    return sorted(values)
+
+
+def _percentile_rank(value: float, values: list[float], higher_is_better: bool,
+                     sorted_values: list[float] | None = None) -> float:
+    """Share of peers at or below the value (higher is better) or at or above it,
+    in percent to one decimal. With `sorted_values` (from _sorted_peers) the count
+    comes from bisect: bisect_right counts the peers <= value and n - bisect_left
+    the peers >= value, the same integers the pass produced."""
+    n = len(values)
+    if not n:
         return 0.0
-    if higher_is_better:
+    if sorted_values is not None and value == value:
+        if higher_is_better:
+            better_or_equal = bisect.bisect_right(sorted_values, value)
+        else:
+            better_or_equal = n - bisect.bisect_left(sorted_values, value)
+    elif higher_is_better:
         better_or_equal = sum(1 for v in values if v <= value)
     else:
         better_or_equal = sum(1 for v in values if v >= value)
-    return round(100.0 * better_or_equal / len(values), 1)
+    return round(100.0 * better_or_equal / n, 1)
 
 
 def _attach_level_percentiles(rows: dict[tuple[str, str], ZoneMetricRow]) -> None:
@@ -777,6 +798,12 @@ def _attach_level_percentiles(rows: dict[tuple[str, str], ZoneMetricRow]) -> Non
     for (_level, is_pitcher), level_rows in by_level_side.items():
         n = len(level_rows)
         metric_directions = PITCHER_PERCENTILE_METRICS if is_pitcher else HITTER_PERCENTILE_METRICS
+        # The peer list depends on (cohort, metric) only, never on the row being
+        # ranked, so it is built once per cohort instead of once per row.
+        peers: dict[str, tuple[list[float], list[float] | None]] = {}
+        for metric in metric_directions:
+            vals = [v for v in (getattr(peer, metric) for peer in level_rows) if v is not None]
+            peers[metric] = (vals, _sorted_peers(vals))
         for row in level_rows:
             row.qualified = True
             row.percentile_sample_size = n
@@ -784,12 +811,8 @@ def _attach_level_percentiles(rows: dict[tuple[str, str], ZoneMetricRow]) -> Non
                 value = getattr(row, metric)
                 if value is None:
                     continue
-                vals = [
-                    getattr(peer, metric)
-                    for peer in level_rows
-                    if getattr(peer, metric) is not None
-                ]
-                row.percentiles[metric] = _percentile_rank(value, vals, higher_is_better)
+                vals, sorted_vals = peers[metric]
+                row.percentiles[metric] = _percentile_rank(value, vals, higher_is_better, sorted_vals)
 
 
 def run(
