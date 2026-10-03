@@ -14,7 +14,10 @@ fragment is token-only, integer, aria-hidden and small; the ball is 4 s wide
 favicon carries exactly the 16, 32 and 48 strikes, the app icons are strike 32
 at whole scales, and FAVICON_LINKS and the footer mark switch with the
 PIXEL_BRAND flag (BR-04); the motion is step-end only and plays once, under
-Reduce Motion as without it (site policy, owner 2026-10-01).
+Reduce Motion as without it (site policy, owner 2026-10-01). PB-09: the export
+bundle (branding/marks, animated, social and the transparent balls in icons)
+is generated too, the portable marks need no font, the animated mark rests on
+the static mark, and the brand guide names the generator and the lilac .io.
 """
 from __future__ import annotations
 
@@ -51,12 +54,18 @@ def test_check_reproduces_every_output(drift):
     assert PB.check.written >= 44
 
 
-def test_outputs_land_only_in_the_two_brand_folders(tmp_path):
+def test_outputs_land_only_in_the_brand_folders(tmp_path):
     written = PB.build(tmp_path)
     assert written
     for rel in written:
-        assert rel.startswith(("assets/brand/", "branding/pixel/")), rel
+        assert rel.startswith(tuple(d + "/" for d in PB.OUT_DIRS)), rel
     assert not (tmp_path / "data").exists()
+    # PB-09: the export bundle comes from the generator, nothing in it by hand
+    for rel in ("branding/marks/eephus-wordmark.svg", "branding/marks/px-ball-monogram.svg",
+                "branding/animated/eephus-arc.svg", "branding/animated/eephus-arc.gif",
+                "branding/social/share-default.png", "branding/social/twitter-banner-eephus.png",
+                "branding/icons/ball-transparent-512.png"):
+        assert rel in written, rel
 
 
 def test_generator_uses_no_system_font_and_no_randomness():
@@ -411,20 +420,99 @@ def test_strikes_have_no_anti_aliasing(name, theme):
             assert (r, g, b) in pal, (name, (r, g, b))
 
 
+ANIMATED = ROOT / "branding" / "animated"
+MARKS = ROOT / "branding" / "marks"
+
+
+def _animated_still():
+    s = SRC.ANIMATED_SCALE
+    return PB.to_png(PB.compose(s), "dark", pad=SRC.ANIMATED_PAD_U * s)
+
+
 def test_the_gif_plays_once_and_ends_on_the_finished_mark():
-    im = Image.open(PIXEL / "eephus-arc.gif")
+    im = Image.open(ANIMATED / "eephus-arc.gif")
     assert "loop" not in im.info
     im.seek(im.n_frames - 1)
     last = im.convert("RGB")
-    comp = PB.compose(4)
-    still = PB.to_png(comp, "dark", pad=3 * 4)
+    still = _animated_still()
     matte = Image.new("RGBA", still.size, SRC.FIELD_BASE + (255,))
     matte.alpha_composite(still)
     assert _same(last, matte.convert("RGB"))
 
 
+def test_the_frame_sequence_ends_on_the_finished_mark():
+    frames = sorted((ANIMATED / "frames").glob("frame_*.png"))
+    assert [p.name for p in frames] == [f"frame_{i:03d}.png" for i in range(len(PB.pitch_frames(SRC.STYLE, SRC.SEAMS)))]
+    assert _same(Image.open(frames[-1]), _animated_still())
+    assert not _same(Image.open(frames[0]), _animated_still())
+
+
+@pytest.mark.parametrize("name", ["eephus-arc.svg", "eephus-arc-dark.svg"])
+def test_the_animated_mark_steps_once_and_rests_on_the_static_mark(name):
+    text = (ANIMATED / name).read_text(encoding="utf-8")
+    root = ET.fromstring(text)
+    assert root.get("role") == "img" and root.get("aria-label") == "eephus.io"
+    css = "".join(el.text or "" for el in root.iter() if el.tag.endswith("style"))
+    anims = re.findall(r"animation:\s*([^;]+);", css)
+    assert len(anims) == 2 and all("step-end" in a and "infinite" not in a for a in anims), anims
+    for banned in ("<script", "requestAnimationFrame", "transition", "font-family", "<text"):
+        assert banned not in text, banned
+    # the drawing is the hero fragment's own pitch: same groups, same paths
+    frag = PB.lockup_svg(PB.compose(SRC.ANIMATED_SCALE), "arc", play=True)
+    assert frag[frag.index(">") + 1:-len("</svg>")] in text
+    # the base style (no animation running) is the finished mark: every fill
+    # is a flat colour and nothing but the animations hides a piece
+    assert "opacity" not in css.split("@keyframes")[0]
+
+
+@pytest.mark.parametrize("name", ["eephus-wordmark.svg", "eephus-wordmark-dark.svg", "compact-mark.svg",
+                                  "compact-mark-dark.svg", "px-ball-monogram.svg"])
+def test_portable_marks_need_no_font(name):
+    text = (MARKS / name).read_text(encoding="utf-8")
+    root = ET.fromstring(text)
+    assert root.get("role") == "img" and root.get("shape-rendering") == "crispEdges"
+    assert "font" not in text and "<text" not in text and "<style" not in text
+    for el in root.iter():
+        if el.tag.endswith("path"):
+            assert HEX.fullmatch(el.get("fill")), el.get("fill")
+
+
+def test_the_portable_io_is_lilac_in_both_themes():
+    for theme, suffix in (("light", ""), ("dark", "-dark")):
+        text = (MARKS / f"eephus-wordmark{suffix}.svg").read_text(encoding="utf-8")
+        assert f'fill="{PB.key_hex("dot", theme)}"' in text, theme
+        assert PB.key_hex("dot", theme) == SRC.TOKENS["accent-lilac"][theme == "dark"], theme
+
+
+@pytest.mark.parametrize("name,size", [("share-default.png", (1200, 630)), ("twitter-avatar-eephus.png", (400, 400)),
+                                       ("twitter-avatar-prospx.png", (400, 400)),
+                                       ("twitter-banner-eephus.png", (1500, 500)),
+                                       ("twitter-banner-prospx.png", (1500, 500))])
+def test_social_art_sizes(name, size):
+    assert Image.open(ROOT / "branding" / "social" / name).size == size
+
+
+@pytest.mark.parametrize("prospx", [False, True])
+def test_avatar_mark_is_a_whole_scale_strike(prospx):
+    im = Image.open(ROOT / "branding" / "social" / f"twitter-avatar-{'prospx' if prospx else 'eephus'}.png")
+    mark = PB.pxmark_png("light", SRC.AVATAR_PX_SCALE) if prospx else PB.ball_png(32, "light", SRC.AVATAR_BALL_SCALE)
+    x0 = (SRC.AVATAR_SIZE - mark.width) // 2
+    crop = im.crop((x0, x0, x0 + mark.width, x0 + mark.height)).convert("RGBA")
+    assert _same(crop, Image.alpha_composite(crop, mark))
+
+
+def test_the_readme_names_the_generator_and_the_lilac_io():
+    text = " ".join((ROOT / "branding" / "README.md").read_text(encoding="utf-8").split())
+    assert "The SVG marks are generated from `tools/pixel_brand_src.py`" in text
+    assert "The SVG marks, the manifest, and this guide are hand-authored" not in text
+    assert "is gold on light" not in text and "the `.io` dot |" not in text
+    assert "## Pixel marks" in text
+    assert text.index("## Pixel icon set") < text.index("## Pixel marks")
+    assert "Do not redraw or re-letter the wordmark, or swap the font." in text
+
+
 def test_px_monogram_never_below_40_px():
-    root = ET.fromstring((PIXEL / "marks" / "px-ball-monogram.svg").read_text(encoding="utf-8"))
+    root = ET.fromstring((MARKS / "px-ball-monogram.svg").read_text(encoding="utf-8"))
     assert int(root.get("width")) >= 40 and int(root.get("height")) >= 40
     with pytest.raises(AssertionError):
         PB.pxmark_png("light", 1)

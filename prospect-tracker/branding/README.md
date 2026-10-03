@@ -37,7 +37,8 @@ in sync by hand). Raw hex below is for exported art only.
 | `--bg-header` | `#0E2B4D` | headline band, deep navy |
 | `--text-primary` | `#0F1B2D` | ink |
 | `--accent-red` | `#B91C1C` | cardinal, down |
-| `--accent-gold` | `#C9A227` | card gold, the `.io` dot |
+| `--accent-gold` | `#C9A227` | card gold |
+| `--accent-lilac` | `#6E56CF` | the brand accent, the `.io` (`--logo-dot`) |
 | `--accent-green` | `#1F7A3A` | forest, up |
 | `--accent-navy` | `#0E2B4D` | links |
 | `--border` | `#C9C1AE` | warm tan hairline |
@@ -63,7 +64,8 @@ dark mode. Do not flatten it.
 
 On dark mode the brand accent is iridescent lilac/blurple (`--accent-lilac`), not
 yellow. Gold is kept only for the FV heat ramp, where it means "elite" and must
-stay gold. The wordmark `.io` is gold on light, lilac on dark (`--logo-dot`).
+stay gold. The wordmark `.io` is lilac in both themes (`--logo-dot`, which is
+`--accent-lilac` in both decks; owner answer PB-Q3, 2026-09-30).
 
 ### The ramp (accent stripe)
 
@@ -111,31 +113,41 @@ everywhere; radius is `0` by rule.
 
 Two marks, one system.
 
+Every mark is pixel art on the letters' own grid, generated from
+`tools/pixel_brand_src.py` (see Pixel marks below).
+
 **Full lockup, the eephus.io merged wordmark.** The lob arc is part of the
 lettering: it spans the word with the ball at its apex, the word set in
-PixelMplus12 Bold, the `.io` in gold. It is live text plus inline SVG in the site
-(`build_site.py:eephus_merged_wordmark`); the portable twin is
-`marks/eephus-wordmark.svg` (and `-dark`). Use it in mastheads, the nav, and
-footers.
+PixelMplus12 Bold, the `.io` in lilac in both themes (`--logo-dot`). In the site
+it is live text plus inline SVG (`build_site.py:eephus_merged_wordmark`) until
+`build_site.py`'s `PIXEL_BRAND` flag serves the pixel lockup in its place
+(`assets/brand/wordmark-s*.svg`, the words kept as hidden text). The portable
+twin is `marks/eephus-wordmark.svg` (and `-dark`): the pixel lockup with the
+letters as paths and raw hex, so it renders as the real mark anywhere, with no
+font. Use it in mastheads, the nav, and footers.
 
 **Compact mark, the eephus.io ball.** A vintage Topps baseball: cream face, navy
-outline, two seam arcs in the ramp (`marks/compact-mark.svg`). This is the
-eephus.io compact mark, and the favicon and the whole app-icon set are derived
-from it - the CLEAN ball, no monogram. Use it where the full wordmark will not
-fit: the favicon, app icons, the mobile header, small chips, loaders. At 16
-and 32 px (the favicon and the footer mark) it is drawn as hand-tuned pixel
-strikes of the same ball (owner answer PX-Q4), since a downsampled drawing
-reads as an "O" at tab size.
+rim, two seams curving in, `) (` (owner answer PB-Q2), in the ramp
+(`marks/compact-mark.svg`, the 32 px strike). This is the eephus.io compact
+mark, and the favicon and the whole app-icon set are derived from it: the CLEAN
+ball, no monogram. Use it where the full wordmark will not fit: the favicon, app
+icons, the mobile header, small chips, loaders. Every size is a hand-tuned pixel
+strike of the same ball (owner answer PX-Q4), since a downsampled drawing reads
+as an "O" at tab size.
 
-**PROSPX mark, the px-ball + monogram.** The same ball with the interlocking P/X
-gothic monogram (`marks/px-ball-monogram.svg`), at 48px and up. This is the
-PROSPX mark, reserved for PROSPX-specific things (the PROSPX app masthead, its
-Twitter avatar/banner). It is NOT the eephus.io site mark - the favicon, the PWA
-icons, and the default share card all use the clean ball above.
+**PROSPX mark, the px-ball + monogram.** The same ball with the P/X monogram and
+stitched seams (`marks/px-ball-monogram.svg`), a 22 x 22 pixel drawing shown at
+2x (44 px) and up, never below 40 px. The P/X is drawn as pixels in the bold
+serif the PROSPX page shows today, so it no longer depends on a blackletter font
+the reader may not have. This is the PROSPX mark, reserved for PROSPX-specific
+things (the PROSPX app masthead, its Twitter avatar/banner). It is NOT the
+eephus.io site mark: the favicon, the PWA icons, and the default share card all
+use the clean ball above.
 
 **Clear space and minimums.** Keep at least the height of the ball as clear
 space around any lockup. Minimum sizes: full wordmark no smaller than 20px cap
 height; px-ball no smaller than 16px (ball-only below 40px).
+Scale a pixel mark by whole numbers only, nearest neighbour, never smoothed.
 
 **Don'ts.**
 
@@ -193,13 +205,64 @@ stamped with its content hash; the hand-kept pages are restamped by
 GFX) paint the JSON bitmaps with `EephusExport.pxIcon`, at a whole-number scale
 only, and fetch the table at export time, never on page load.
 
-**Open: the `.io` colour.** Three places disagree. This guide says gold on
-light (Color, Logo usage), `assets/site.css` serves lilac in both themes
+**Resolved: the `.io` colour.** PX-21 flagged three places that disagreed: this
+guide said gold on light, `assets/site.css` served lilac in both themes
 (`--logo-dot`), and the image-export frame (`_brandCompose` in
-`assets/eephus-export.js`) paints it gold on light. It is flagged here, not
-resolved: the owner's answer to PB-Q3 (2026-09-30, lilac in both themes) lands
-with the pixel brand pass (PB-08 for the export frame, PB-09 for this guide).
-Until then the site is the reference, per the rule at the top of this guide.
+`assets/eephus-export.js`) painted gold on light. The owner's answer to PB-Q3
+(2026-09-30) is lilac in both themes, as the site serves it. This guide (Color,
+Logo usage) and the portable marks now say lilac; the export frame follows with
+its pixel lockup (PB-08).
+
+## Pixel marks
+
+The logo and the brand art are pixel art on the letters' own grid (owner ask 2,
+2026-09-30; direction B Stepped, owner answer PB-Q1). It keeps every anatomy,
+colour, proportion and position of the vector marks; only their rendering
+becomes pixels. One unit u is one pixel of PixelMplus12, 1/12 em; a mark
+renders at a whole scale s, where u is s CSS px.
+
+1. Letters: PixelMplus12 Bold's own bitmap, sampled from
+   `fonts/PixelMplus12-Bold.ttf` at each cell centre. Never redrawn, never
+   re-lettered, tracking 0 (the face's own 1 u gap). `pixel/glyphs.json` keeps
+   every sampled glyph with the font file's sha256.
+2. Arc: stepped runs, one row per run, symmetric about the apex column. 1 u
+   thick at s 2, half a u from s 4 up, so it weighs what the vector arc did.
+   The ramp becomes eight flat bands (`--arc-1` to `--arc-8`, each a
+   `color-mix` of two `--iridescent` stops), so the arc follows the theme.
+3. Ball: hand-tuned strikes (8, 12, 13, 16, 24 and 32 px; larger strikes are
+   drawn from the same anatomy by rule), 4 s wide (plus 1 at odd s), centred on
+   the apex column. Cream face, navy rim (2 px from 28 px up), the seams `) (`.
+4. Sizes: s 2 in the nav and sidebar (110 x 42), s 4 on the phone hero and in
+   the portable marks (220 x 84), s 6 on the desktop hero (330 x 126), s 8 in
+   the animated mark, s 10 on the default share card, s 12 on the banner.
+5. Colour: in the site every fill is a token (`--text-primary`, `--logo-dot`,
+   `--arc-*`, `--seam-*`, `--ball-face`), so one markup serves both themes. Raw
+   hex appears only in exported art: the marks, cards, GIF and frames here.
+6. Motion (owner answer PB-Q4): the pitch plays once on the homepage hero (the
+   arc lights run by run, then the ball drops in four whole-pixel frames);
+   hovering a wordmark replays it on inner groups, so leaving never replays;
+   one glint beside the ball per page view. CSS `step-end` only, no script and
+   no `requestAnimationFrame`; the base style of every piece is its finished
+   frame, so a browser that runs none of it shows the finished mark; nothing
+   loops. Like every animation on the site it runs under Reduce Motion (owner
+   rule 2026-10-01, which replaced the "never under reduced motion" clause of
+   PB-Q4). `animated/eephus-arc.svg` is the same pitch as a standalone image.
+7. The PROSPX mark is a 22 x 22 drawing, shown at 2x (44 px) and up only.
+
+One source, every output. `tools/pixel_brand_src.py` holds every hand decision
+as plain data: the lockup rows, the arc runs, the seam columns of each ball
+strike, the PROSPX drawing, the motion timings, mirrors of the `site.css`
+palette, the module card lines and the banner lines. `tools/pixel_brand.py`
+renders everything from it plus the vendored TTF, with no system font, no RNG
+and no anti-aliasing: the DOM fragments and token block in `assets/brand/`, the
+pixel favicon and app-icon set there, the review sheets and module cards in
+`pixel/`, and this folder's `marks/`, `animated/`, `social/` and the
+transparent balls in `icons/`. `python tools/pixel_brand.py --check`
+regenerates into a temp folder and fails on any output that does not
+reproduce (text byte for byte, images pixel for pixel) and on any stale file.
+The served pages use the pixel lockup, the pixel favicon set and the cards only
+when `build_site.py`'s `PIXEL_BRAND` flag is on; until then they serve the
+vector lockup and PX-23's copies of the same favicon strikes.
 
 ## The dark-mode starfield
 
@@ -227,19 +290,34 @@ denser, brighter field.
 ## Share cards
 
 A link to eephus.io should unfurl with the identity, never a bare URL. Cards are
-1200x630 (Open Graph / Twitter `summary_large_image`), dark refractor aesthetic,
-wordmark plus a clean line, the ball top-right, the ramp rule.
+1200x630 (Open Graph / Twitter `summary_large_image`), the dark refractor field
+with pixel stars, the lowercase lockup (the real mark, never capitals), one ball
+(the lockup's own; one mark per surface), no numbers or grades.
 
-- `social/share-default.png`: the site-wide default.
-- Per-page cards: pass `image`/`og_title`/`og_description` at the `page()` call
+- `social/share-default.png`: the pixel default card, the lockup at s 10
+  centred over "sabermetrics" at s 4 and the URL at s 2. The site serves
+  `assets/share-default.png` (`DEFAULT_SHARE_IMAGE` in `build_site.py`), the
+  vector-era card, until the share-card swap behind `PIXEL_BRAND` (PB-07)
+  serves the pixel card in its place.
+- Per-module cards: `pixel/og/<module>.png`, the lockup at s 4, the module's
+  pixel icon at 8x, the title at s 6 (s 5 when long) over a 1 u banded rule,
+  one line cut from the page's own meta description, and the URL. Per-page
+  cards are passed as `image`/`og_title`/`og_description` at the `page()` call
   site in `build_site.py`; `_social_meta()` handles the tags.
 - Player cards: a parameterized template renders a small baseball card (name,
   org crest, position, headline FV) per prospect at build time. The host is
   static, so cards are pre-rendered PNGs, not generated on the fly.
+- Twitter/X: `social/twitter-avatar-eephus.png` (ball strike 32 at 9x) and
+  `-prospx.png` (the PROSPX mark at 13x), 400x400 on the dark field with the
+  lilac border; `social/twitter-banner-eephus.png` (the lockup at s 12) and
+  `-prospx.png` (the PROSPX mark beside its title), 1500x500, centred over one
+  line so the profile picture, which covers the lower left corner, never sits
+  on the mark.
 
-All cards are produced by `tools/generate_brand_assets.py` (PIL, no extra deps),
-run once when the brand changes and committed. The nightly build never runs it,
-so every box serves byte-identical art.
+The default card, the module cards and the Twitter/X art are generated by
+`tools/pixel_brand.py` (the only face is the vendored PixelMplus12, no RNG, the
+field in integer arithmetic), run when the brand changes and committed. The
+nightly build never runs it, so every box serves byte-identical art.
 
 ## Voice
 
@@ -254,12 +332,13 @@ say it to someone who knows baseball.
 branding/
   README.md                     this brand guide
   site.webmanifest              PWA manifest (name, colors, icon set)
-  marks/
-    eephus-wordmark.svg         full lockup, light
+  fonts/                        PixelMplus12 TTFs (the generator's source), woff2 copies, licenses
+  marks/                        generated: raw hex, letters as paths, no font
+    eephus-wordmark.svg         full lockup at s 4 (220 x 84), light
     eephus-wordmark-dark.svg    full lockup, dark
-    compact-mark.svg            px-ball, ball only (favicon twin), light
-    compact-mark-dark.svg       px-ball, dark-surface variant
-    px-ball-monogram.svg        px-ball + P/X monogram - the PROSPX mark only
+    compact-mark.svg            ball strike 32 (favicon twin), light
+    compact-mark-dark.svg       ball strike 32, dark-surface variant
+    px-ball-monogram.svg        the PROSPX mark at 2x (44 px), PROSPX only
   icons/
     favicon.svg                 SVG favicon, ball strike 16 (crisp edges)
     favicon.ico                 16/32/48, each its own hand-tuned strike
@@ -269,18 +348,29 @@ branding/
     icon-192.png                PWA, clean ball (eephus.io)
     icon-512.png                PWA, clean ball (eephus.io)
     icon-maskable-512.png       PWA maskable (mark inside the safe area)
+    ball-transparent-*.png      generated: ball strike 32 at 6x, 16x, 32x, clear canvas
+    ball-transparent-monogram-*.png
+                                generated: the PROSPX mark, largest whole scale, centred
   animated/
-    eephus-arc.svg              the animated mark (CSS, the in-site source)
+    eephus-arc.svg              generated: the pitch with its own step-end CSS, plays once, light
+    eephus-arc-dark.svg         generated: the same, dark
     EXPORT.md                   how to export PNG frames / GIF / WebM-alpha
-    frames/                     PNG frame sequence (the export source)
-    eephus-arc.gif              matted GIF (one-bit transparency fallback)
+    frames/                     generated: transparent PNG frames 40 ms apart (the export source)
+    eephus-arc.gif              generated: matted GIF, plays once, holds the finished mark
   social/
-    share-default.png           1200x630 default Open Graph card
+    share-default.png           generated: 1200x630 pixel default card
+    twitter-avatar-eephus.png   generated: 400x400, ball strike 32 at 9x
+    twitter-avatar-prospx.png   generated: 400x400, the PROSPX mark at 13x
+    twitter-banner-eephus.png   generated: 1500x500, the lockup at s 12
+    twitter-banner-prospx.png   generated: 1500x500, the PROSPX mark and title
   pixel/
     icons-sheet-light.png       the pixel icon set, light review sheet
     icons-sheet-dark.png        the pixel icon set, dark review sheet
-    (and the pixel brand outputs of tools/pixel_brand.py: sheets, ball
-     strikes, share cards, marks; not served yet)
+    brand-sheet-light.png       the pixel marks review sheet: lockups, ball strikes,
+    brand-sheet-dark.png          favicon strikes, the PROSPX mark
+    wordmark-s{2,4,6}-*.png     the lockup strikes, equal to the DOM fragments
+    glyphs.json                 the sampled PixelMplus12 glyphs and the font's sha256
+    og/<module>.png             the per-module share cards (not served yet)
 
 assets/
   eephus-icons.svg              the pixel icon sprite (served)
@@ -291,13 +381,16 @@ assets/
 
 tools/
   pixel_icons.py                source and generator of the pixel icon set
-  pixel_brand_src.py            the pixel brand's hand decisions (ball strikes)
-  pixel_brand.py                renders the pixel brand outputs
-  generate_brand_assets.py      the committed raster brand art
+  pixel_brand_src.py            every hand decision of the pixel marks, as data
+  pixel_brand.py                renders every pixel mark, card and export from it
+  generate_brand_assets.py      a shim: runs pixel_brand.py, rewrites the served
+                                favicon set, copies served files into branding/
 ```
 
-Regenerate the raster artifacts with `python tools/generate_brand_assets.py`
-(`--favicons` rewrites only the favicon set and the footer mark, from the ball
-strikes of `tools/pixel_brand.py`). Regenerate the icon set with
-`python tools/pixel_icons.py`. The SVG marks, the manifest, and this guide are
+Regenerate every brand image with `python tools/pixel_brand.py`
+(`--check` verifies the committed outputs). `python tools/generate_brand_assets.py`
+runs it too, then rewrites the served favicon set and copies the served files
+into `icons/`, `fonts/` and `site.webmanifest` (`--favicons`: the favicon set
+only). Regenerate the icon set with `python tools/pixel_icons.py`. The SVG marks
+are generated from `tools/pixel_brand_src.py`; the manifest and this guide are
 hand-authored.

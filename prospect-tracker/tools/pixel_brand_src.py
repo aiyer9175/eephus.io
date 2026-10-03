@@ -127,7 +127,8 @@ TOKENS = {  # (light, dark), each equal to the site.css deck value
     "accent-lilac":   ("#6E56CF", "#9B8CFF"),
     "logo-dot":       ("#6E56CF", "#9B8CFF"),   # = var(--accent-lilac) in both decks (PB-Q3)
 }
-# The ball's cream face, from branding/marks/compact-mark.svg (both themes).
+# The ball's cream face, kept from the vector compact mark (both themes);
+# branding/marks/compact-mark.svg is now generated from this file (PB-09).
 BALL_FACE = "#F6F1E4"
 
 # ---------------------------------------------------------------- export art
@@ -178,3 +179,31 @@ MODULES = (
      "The eephus.io paid tier, when it launches. Nothing is gated today."),
 )
 DEFAULT_CARD_TAG = "sabermetrics"
+
+# ---------------------------------------------------------------- the branding bundle
+# PB-09 / BR-09: the export folders branding/marks, branding/animated,
+# branding/social and branding/icons' transparent balls come from this file
+# too, so no brand art depends on a system font or a hand-drawn vector.
+# The animated mark (frames, GIF and the self-contained SVG) is the pitch at
+# s 8: the half-u arc and the hand-tuned 32 px ball, padded 3 u for the drop.
+ANIMATED_SCALE = 8
+ANIMATED_PAD_U = 3
+# Twitter/X art: avatars 400 x 400 (ball strike 32 at 9x, the PROSPX mark at
+# 13x), banners 1500 x 500 with the lockup centred so the profile picture,
+# which covers the banner's lower left corner, never sits on it.
+AVATAR_SIZE = 400
+AVATAR_BALL_SCALE = 9
+AVATAR_PX_SCALE = 13
+BANNER_W, BANNER_H = 1500, 500
+BANNER_LOCKUP_SCALE = 12
+BANNER_PX_SCALE = 8          # the PROSPX mark beside its title, 176 px
+BANNER_TITLE_SCALE = 10      # "PROSPX" in PixelMplus12 Bold, 120 px cells
+BANNER_TAG_SCALE = 3
+BANNER_TAGS = {              # the banners' lines, kept from the vector-era art
+    "eephus": "sabermetric / scouting analytics website",
+    "prospx": "eephus.io prospect tracker",
+}
+# branding/icons/ball-transparent-<size>.png: ball strike 32 at a whole scale
+# (6x, 16x, 32x fill the canvas exactly); the -monogram- twins centre the
+# PROSPX mark at the largest whole scale that fits.
+TRANSPARENT_SIZES = (192, 512, 1024)
