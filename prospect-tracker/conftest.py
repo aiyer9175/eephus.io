@@ -27,6 +27,25 @@ from pathlib import Path
 import pytest
 
 # ---------------------------------------------------------------------------
+# MLB Scores job isolation (SCORES_2_JOB_AND_DEPLOY). Every path
+# tools/scores_job.py writes resolves through EEPHUS_SCORES_STORE and
+# EEPHUS_SCORES_OUT, so both point at one session temp directory here, at
+# conftest import, BEFORE any test imports the job. .cache/scores is
+# gitignored, so the artifact guard below can neither revert nor protect it;
+# test_scores_job.py asserts every resolved path sits inside this directory.
+# ---------------------------------------------------------------------------
+import atexit as _atexit
+import os as _os
+import shutil as _shutil
+import tempfile as _tempfile
+
+_SCORES_TEST_ROOT = Path(_tempfile.mkdtemp(prefix="eephus_scores_tests_"))
+_os.environ["EEPHUS_SCORES_TEST_ROOT"] = str(_SCORES_TEST_ROOT)
+_os.environ["EEPHUS_SCORES_STORE"] = str(_SCORES_TEST_ROOT / "store")
+_os.environ["EEPHUS_SCORES_OUT"] = str(_SCORES_TEST_ROOT / "out")
+_atexit.register(_shutil.rmtree, str(_SCORES_TEST_ROOT), True)
+
+# ---------------------------------------------------------------------------
 # Session-shared parses of the large data/ JSON artifacts.
 #
 # timeseries.json is ~65MB and was being independently json.load-ed by many

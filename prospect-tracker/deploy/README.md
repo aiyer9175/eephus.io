@@ -188,6 +188,42 @@ server {
 
 Reload with `sudo nginx -t && sudo systemctl reload nginx`.
 
+## MLB Scores: the /data/scores/ location (NOT INSTALLED YET)
+
+Add this only after the fWAR label epoch's step Z is recorded and after the
+SCORES_LIVE flip (SCORES_5a_LIVE_FLIP) has reached the box, in the order
+deploy/WEBMASTER.md section 10 gives. Until then the server block above is the
+live state and carries no scores entry. `tools/scores_job.py` is the only writer
+of `/opt/eephus/scores/`; nginx serves it at the URL the page reads:
+
+```nginx
+# /data/scores/ belongs to tools/scores_job.py: one writer, one directory, no twins.
+location ^~ /data/scores/ {
+    alias /opt/eephus/scores/;
+    gzip_static off;      # the job writes no .gz twin; never serve a stale one
+    gzip on;              # on-the-fly; gzip_types already lists application/json
+    add_header Cache-Control "no-cache";
+}
+```
+
+Put it above `location /data/`. It is the longer prefix, so it wins over
+`location /data/` and its week-long max-age, and `^~` also stops the regex
+locations. The nightly rsync never names it, so its `--delete` cannot touch it;
+the precompress step walks the webroot only, so no stale `.gz` twin can shadow
+`latest.json`; the CI break-glass rsync cannot reach it either. Nothing in the
+nightly changes. If the location is missing the page gets a 404 and says live
+scores are not available; nothing else breaks.
+
+Verify after the job's first cycle (Cloudflare challenges bare user agents, so
+send a browser one):
+
+```bash
+curl -sI -A "Mozilla/5.0" https://eephus.io/data/scores/latest.json
+# expect: HTTP 200 and cache-control: no-cache
+curl -s -A "Mozilla/5.0" https://eephus.io/data/scores/latest.json | python -c "import json,sys; j=json.load(sys.stdin)['job']; print(j['state'], j['next_by'])"
+# expect: state ok or idle, and next_by in the future
+```
+
 ## Cloudflare (the site fronts through it)
 
 Observed live 2026-07-14, worth pinning down in the dashboard:

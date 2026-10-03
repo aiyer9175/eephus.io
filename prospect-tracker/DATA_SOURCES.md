@@ -181,6 +181,14 @@ between the sentinels.
   (`mlb_leverage.py` reads winProbability because FanGraphs gmLI is
   unreachable). No auth, but any schema or availability change breaks the
   daily path first.
+- MLB StatsAPI for the MLB Scores job (`tools/scores_job.py`, behind
+  `scores_core.SCORES_LIVE`, default off): every payload carries StatsAPI's
+  terms line, verbatim: "Copyright 2026 MLB Advanced Media, L.P.  Use of any
+  content on this page acknowledges agreement to the terms posted here
+  http://gdx.mlb.com/components/copyright.txt" (that page reads "Only
+  individual, non-commercial, non-bulk use of the Materials is permitted").
+  Owner answer SC-TERMS (a), 2026-09-30: the scores job as planned, republishing
+  from our own files with that line and MLB's credit on every payload.
 - Baseball Savant CSV pulls are disk-cached (`feed_cache.py`); caches can go
   stale silently between forced refreshes, and minors Statcast coverage only
   starts 2023. Use --force to bypass the cache.
