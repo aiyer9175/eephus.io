@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-02T23:08:19Z",
+ "generated_at": "2026-10-03T01:22:15Z",
  "headline_frame": "vm2",
  "frames": {
   "vm": {
@@ -6427,6 +6427,47 @@
    "note": "label pool census, no score",
    "last_verified_at": "2026-10-02T23:08:19Z",
    "content_hash": "72d48b77fb388b25487f65452651d9a43170c49268d16815714160bea622f2fb"
+  },
+  {
+   "run_id": "2026-10-03T01:21:49Z|lv_dev|a87a73fd",
+   "date": "2026-10-03",
+   "trigger": "data_correction",
+   "model_id": "efv_identity_epoch_join",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "9166ab8c",
+    "label": "ewar_v2",
+    "resolved_through": 2025,
+    "provider": null
+   },
+   "frame": "lv_dev",
+   "frame_version": null,
+   "role": "development",
+   "tilted": false,
+   "window": [
+    2011,
+    2024
+   ],
+   "n": 2078,
+   "n_by_side": {
+    "hit": 962,
+    "pit": 1116
+   },
+   "raters": {},
+   "deltas": {},
+   "resolvable": null,
+   "verdict": "coverage only, no score",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/efv_epoch_id_join.json",
+     "generated_at": "2026-10-03T01:21:49Z",
+     "sha256": "ad4e595d30616b856a52308229fc577008ca1dc52668aae3715523d4aac3b919"
+    }
+   ],
+   "note": "identity join for the fWAR epoch (E2), coverage counts only, no score; label rows kept 2027 -> 2078; failing rows 39 -> 1",
+   "last_verified_at": "2026-10-03T01:22:15Z",
+   "content_hash": "a87a73fd9d1fc87e396f71ec5c917f407e6b9c2c70fd7d18c0c7c22f45cce468"
   }
  ],
  "backfill": {
