@@ -128,6 +128,9 @@ def validate(reg: dict | None = None) -> list[str]:
                     bl = h.get("baseline_label")
                     if bl is not None and not (isinstance(bl, str) and bl.strip()):
                         problems.append(f"{mid}: card headline baseline_label must be a non-empty string")
+                problems += _card_edge_problems(mid, card, hl)
+            if "contest" in card and not isinstance(card["contest"], bool):
+                problems.append(f"{mid}: card.contest must be true or false")
             if card.get("derived_from") is not None and art:
                 problems += _derived_card_problems(mid, card, art)
     return problems
@@ -152,22 +155,104 @@ def validate(reg: dict | None = None) -> list[str]:
 # `resolvable` spec may be {"above_zero": "<path to the gap's lo95>"}, and the
 # card reads resolvable = lo95 > 0, so the flag is still read off the artifact
 # and never typed.
+#
+# The edge fields (LIBRARY_10, 2026-10-03). The Model Updates edge column
+# prints an interval or a resolvable margin for every scored leg, and the card
+# is the single source of a leg's numbers, so a leg may also name, as paths:
+#   gap_ci  {"lo": path, "hi": path} to the interval of the IMPROVEMENT gap,
+#           positive meaning the model is better. A lower-is-better leg whose
+#           artifact holds the gap as model minus baseline adds
+#           "orientation": "model_minus_baseline" and the card flips it.
+#   t       a one-sided paired t on the improvement.
+#   mde95   the 95 percent detection floor on the improvement.
+#   n       the leg's own row count, where legs differ.
+# and the stored leg may carry a literal `stat` (the short statistic name the
+# edge column prints, at most CARD_STAT_MAX characters). A card-level
+# `contest: false` marks a descriptive contrast whose baseline is not the
+# registered benchmark: no leg of it is a head-to-head, so none is a win.
+#
+# The star rule follows the evidence, never a typed flag: a leg whose interval
+# reaches zero, whose t is short of T_ONE_SIDED_95, or (with neither and no
+# flag of the artifact's own) whose gap sits inside its floor is marked
+# resolvable False, and so is every leg of a `contest: false` card.
 _CARD_DERIVABLE = {
     "champion": "number",
     "baseline": "number",
     "resolvable": "bool",
     "verdict": "str",
+    "t": "number",
+    "mde95": "number",
+    "n": "number",
 }
+_CARD_STORED_KEYS = frozenset({
+    "label", "champion", "baseline", "better", "baseline_label", "resolvable",
+    "verdict", "stat", "gap_ci", "t", "mde95", "n"})
+# Fields a stored leg may carry only when its derived_from leg names their path.
+_CARD_PATH_ONLY = ("gap_ci", "t", "mde95")
+_GAP_ORIENTATIONS = ("model_minus_baseline",)
+CARD_STAT_MAX = 24
+T_ONE_SIDED_95 = 1.645
 
 
 def _dig_path(doc, dotted: str):
-    """The value at a dotted key path, or KeyError naming the path."""
+    """The value at a dotted key path, or KeyError naming the path. A part
+    that is a whole number indexes a list (`ci_dMAE.0`)."""
     cur = doc
     for part in dotted.split("."):
-        if not isinstance(cur, dict) or part not in cur:
+        if isinstance(cur, dict) and part in cur:
+            cur = cur[part]
+        elif isinstance(cur, list) and part.isdigit() and int(part) < len(cur):
+            cur = cur[int(part)]
+        else:
             raise KeyError(dotted)
-        cur = cur[part]
     return cur
+
+
+def _derive_gap(doc, spec, better: str, digits):
+    """{"lo", "hi"} of the improvement gap a gap_ci spec names, oriented so
+    positive means the model is better."""
+    if not isinstance(spec, dict) or not {"lo", "hi"} <= set(spec) \
+            or not set(spec) <= {"lo", "hi", "orientation"} \
+            or not all(isinstance(spec[k], str) for k in ("lo", "hi")):
+        raise ValueError(f"card gap_ci spec {spec!r} must be "
+                         "{'lo': path, 'hi': path} with an optional orientation")
+    orient = spec.get("orientation")
+    if orient is not None and orient not in _GAP_ORIENTATIONS:
+        raise ValueError(f"card gap_ci orientation {orient!r} is not one of "
+                         f"{_GAP_ORIENTATIONS}")
+    lo, hi = _dig_path(doc, spec["lo"]), _dig_path(doc, spec["hi"])
+    if not (_typed(lo, "number") and _typed(hi, "number")):
+        raise ValueError(f"card gap_ci paths {spec['lo']}, {spec['hi']} are not numbers")
+    if orient == "model_minus_baseline" and better == "lower":
+        lo, hi = -hi, -lo
+    if lo > hi:
+        raise ValueError(f"card gap_ci lo {lo} is above hi {hi}")
+    if digits is not None:
+        lo, hi = round(lo, digits), round(hi, digits)
+    return {"lo": lo, "hi": hi}
+
+
+def _settle_resolvable(nh: dict, hs: dict, contest: bool) -> None:
+    """Mark a leg resolvable False when its own evidence says it is not a
+    resolved result (see the edge fields note above). A leg the evidence
+    clears keeps whatever flag the artifact gave it, or none."""
+    if not contest:
+        nh["resolvable"] = False
+        return
+    if "gap_ci" in hs:
+        cleared = nh["gap_ci"]["lo"] > 0
+    elif "t" in hs:
+        cleared = nh["t"] >= T_ONE_SIDED_95
+    elif "resolvable" in hs:
+        cleared = True          # the artifact's own flag stands as read
+    elif "mde95" in hs:
+        adv = (nh["baseline"] - nh["champion"] if nh.get("better") == "lower"
+               else nh["champion"] - nh["baseline"])
+        cleared = adv > nh["mde95"]
+    else:
+        cleared = True          # nothing on record: the plain comparison
+    if not cleared:
+        nh["resolvable"] = False
 
 
 def _typed(value, kind: str) -> bool:
@@ -201,6 +286,9 @@ def derive_card(m: dict, doc=None) -> dict | None:
         if not _typed(n, "number"):
             raise ValueError(f"card n path {spec['n']} is not a number")
         out["n"] = n
+    contest = card.get("contest", True)
+    if not isinstance(contest, bool):
+        raise ValueError("card.contest must be true or false")
     heads = card.get("headline") or []
     specs = spec.get("headline") or []
     if len(specs) != len(heads):
@@ -210,6 +298,9 @@ def derive_card(m: dict, doc=None) -> dict | None:
     for h, hs in zip(heads, specs):
         nh = dict(h)
         for field, path in hs.items():
+            if field == "gap_ci":
+                nh[field] = _derive_gap(doc, path, h.get("better"), digits)
+                continue
             kind = _CARD_DERIVABLE.get(field)
             if kind is None:
                 raise ValueError(f"card field {field!r} is not derivable")
@@ -223,15 +314,47 @@ def derive_card(m: dict, doc=None) -> dict | None:
                                      "is not a number")
                 nh[field] = bound > 0
                 continue
+            if not isinstance(path, str):
+                raise ValueError(f"card {field} spec {path!r} is not a path")
             val = _dig_path(doc, path)
             if not _typed(val, kind):
                 raise ValueError(f"card {field} path {path} is not a {kind}")
-            if kind == "number" and digits is not None:
+            if kind == "number" and digits is not None and field != "n":
                 val = round(val, digits)
             nh[field] = val
+        _settle_resolvable(nh, hs, contest)
         new_heads.append(nh)
     out["headline"] = new_heads
     return out
+
+
+def _card_edge_problems(mid: str, card: dict, heads: list) -> list[str]:
+    """validate() leg for the edge fields: a stored leg carries only known
+    keys, a `stat` is a short literal, and an interval, t or floor is on the
+    leg only when its derived_from leg names the path it was read from (a
+    typed interval number is the drift audit L18-01 closed for champions)."""
+    problems = []
+    specs = (card.get("derived_from") or {}).get("headline") or []
+    for i, h in enumerate(heads):
+        if not isinstance(h, dict):
+            continue
+        unknown = sorted(set(h) - _CARD_STORED_KEYS)
+        if unknown:
+            problems.append(f"{mid}: card headline has unknown fields {unknown}")
+        stat = h.get("stat")
+        if stat is not None and not (isinstance(stat, str) and stat.strip()
+                                     and len(stat) <= CARD_STAT_MAX):
+            problems.append(f"{mid}: card headline stat must be a non-empty string "
+                            f"of at most {CARD_STAT_MAX} characters")
+        hs = specs[i] if i < len(specs) and isinstance(specs[i], dict) else {}
+        for field in _CARD_PATH_ONLY:
+            if field in h and field not in hs:
+                problems.append(f"{mid}: card headline {field} is typed; name its "
+                                "artifact path in card.derived_from")
+        for field in ("t", "mde95"):
+            if field in hs and not isinstance(hs[field], str):
+                problems.append(f"{mid}: card derived_from {field} must be a path")
+    return problems
 
 
 def _derived_card_problems(mid: str, card: dict, art: str) -> list[str]:
