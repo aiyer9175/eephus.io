@@ -135,6 +135,9 @@ TARGETS: list[str] = [
     # MLB Scores (2026-10-02, SCORES_1_CORE_RULES): the pure core whose play
     # text, why sentences and reasons land in the scores payloads verbatim.
     "scores_core.py",
+    # Scores / Standings (2026-10-03, STANDINGS_1_CORE_RULES): the pure standings
+    # core whose tiebreak, seed and format literals land in the standings files.
+    "standings_core.py",
     # COPY_0 (2026-10-02): producers of served copy outside this list when the
     # served copy lint landed (copy_lint.EXTRA_PRODUCERS), and the CollegeSavant
     # pitcher page. data_catalog.py writes the /sources/ prose, arb_gate_a.py

@@ -776,7 +776,10 @@ def test_rule_1_names_and_enum(gf849845):
     assert any(r == "1" for r, m in sc.validate_payload("date", bad, name="2026-09-29.json")["refused"])
     assert sc.kind_of_name("games/849845.json") == "game" and sc.kind_of_name("2026-09-29.json") == "date"
     assert sc.kind_of_name("index.json") == "index" and sc.kind_of_name("index-2026.json") == "season_index"
-    assert sc.kind_of_name("latest.json") == "latest" and sc.kind_of_name("standings/2026.json") is None
+    assert sc.kind_of_name("latest.json") == "latest"
+    # no scores kind captures a standings path; standings_core registers its
+    # own kinds when it is imported in the same session (STANDINGS_1)
+    assert sc.kind_of_name("standings/2026.json") not in ("latest", "index", "season_index", "date", "game", "clip")
 
 
 def test_rule_4_copyright_exemption_and_urls(gf849845):
