@@ -918,6 +918,21 @@ margin has been read, and no arm effect, residual or blast-radius figure exists:
 `efv_dataset.RESOLVED_THROUGH` is 2025, and step A has not started. From this entry on,
 nothing above part 9 of this document may be edited.
 
+### 2026-10-03: clause (j) point 1 amended by owner decision EPOCH-NOW
+
+This amendment records an owner decision and moves one date. It reports no measurement.
+
+Clause (j) point 1: step M's earliest date moves from 2026-10-05 to the day step M is reached,
+by owner decision EPOCH-NOW of 2026-10-02: the 2026 regular season is final (last game
+2026-09-27) and the D9 freeze's row-count check passed on 2026-10-02. Step M's clause is
+otherwise unchanged: the four pins move together, the corpus is rebuilt on the label, and the
+F-DEF arm rides as built. The decision is recorded in DECISIONS_FOR_OWNER.md under EPOCH-NOW
+(verbatim: "Let's do everything we can now, instead of 'first available' - the MLB Regular
+Season has ended, so we should be able to use the entire 2026 season as a dataset"); the D9
+freeze (EPOCH_D9_FREEZE, 7e34799f) read the 2026 row counts against 2025 inside its guard
+and froze the vintage on 2026-10-02. Written by EPOCH_RUN before step M, appended below the
+arm-set record, with nothing above part 9 edited.
+
 ---
 
 Nothing in this document was measured against an fWAR-labelled fit. Every number above is
