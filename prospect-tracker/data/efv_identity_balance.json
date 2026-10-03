@@ -593,5 +593,366 @@
  "B": {
   "h1": 1000,
   "balance": 500
+ },
+ "text": {
+  "generated_at": "2026-10-03T00:28:50+00:00",
+  "produced_by": "tools/efv_text_balance.py",
+  "builder": "efv_text_features.py",
+  "role": "development",
+  "adjudicates": "nothing; the DS-03 missingness receipt for the text family",
+  "frame": "lv_dev (F-LV, list vintages 2013 to 2019), W3 on the ewar_v2 label",
+  "label": {
+   "provider": "ewar_v2",
+   "resolved_through": 2025
+  },
+  "guards": {
+   "reserved_lv": [
+    2020,
+    2021
+   ],
+   "r_vm_first_debut_year": 2025,
+   "reserved_vm_pins": [],
+   "vintages_read": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "dropped_vintages": [
+    2011,
+    2012
+   ]
+  },
+  "code": {
+   "commit": "b660ec958ee1cf59a2c1a776703ea59ca51e436a",
+   "builder_sha256": "97e2de77989d815d6382dfd1fbaccfefe34fa43fc770cd80906b75a2a552c490",
+   "tool_sha256": "d7102f9a9b1e36de0fcfcd0042cb6bc30280826a34529e5c2a161843a6352f85"
+  },
+  "rows": {
+   "frame_rows": 5476,
+   "no_consensus": 0,
+   "label_none": 0,
+   "dropped_rvm_players": 26,
+   "vintages": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "rows_scored": 5444
+  },
+  "indicator": {
+   "report_absent": "no in-window report text on the row after the vintage rule and the anachronism filter"
+  },
+  "balance": {
+   "hit": {
+    "report_absent": {
+     "n": 2778,
+     "n_with": 115,
+     "n_without": 2663,
+     "w3_pos_share_with": 0.0957,
+     "w3_pos_share_without": 0.2602,
+     "w3_pos_gap": -0.1646,
+     "r3_share_with": 0.2087,
+     "r3_share_without": 0.4164,
+     "partial": -0.0926,
+     "ci95": [
+      -0.1557,
+      -0.0247
+     ],
+     "B_used": 500,
+     "verdict": "IMBALANCED"
+    }
+   },
+   "pit": {
+    "report_absent": {
+     "n": 2666,
+     "n_with": 170,
+     "n_without": 2496,
+     "w3_pos_share_with": 0.1706,
+     "w3_pos_share_without": 0.2716,
+     "w3_pos_gap": -0.101,
+     "r3_share_with": 0.3059,
+     "r3_share_without": 0.4034,
+     "partial": -0.0488,
+     "ci95": [
+      -0.1154,
+      0.0128
+     ],
+     "B_used": 500,
+     "verdict": "BALANCED"
+    }
+   }
+  },
+  "offered_columns": {
+   "hit": [
+    "txt_time_hit"
+   ],
+   "pit": [
+    "txt_skill_pit",
+    "txt_time_pit"
+   ]
+  },
+  "coverage": {
+   "by_side_vintage": {
+    "hit:2013": {
+     "rows": 268,
+     "with_report_in_window": 268,
+     "reports_dropped_later_year": 3,
+     "rows_dropped_later_year": 3,
+     "with_text": 265,
+     "carried_identical": 58,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 265
+     },
+     "median_report_len": 840
+    },
+    "hit:2014": {
+     "rows": 260,
+     "with_report_in_window": 260,
+     "reports_dropped_later_year": 2,
+     "rows_dropped_later_year": 2,
+     "with_text": 258,
+     "carried_identical": 19,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 258
+     },
+     "median_report_len": 815
+    },
+    "hit:2015": {
+     "rows": 397,
+     "with_report_in_window": 397,
+     "reports_dropped_later_year": 7,
+     "rows_dropped_later_year": 7,
+     "with_text": 390,
+     "carried_identical": 24,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 390
+     },
+     "median_report_len": 939
+    },
+    "hit:2016": {
+     "rows": 405,
+     "with_report_in_window": 405,
+     "reports_dropped_later_year": 5,
+     "rows_dropped_later_year": 5,
+     "with_text": 400,
+     "carried_identical": 11,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 400
+     },
+     "median_report_len": 1169
+    },
+    "hit:2017": {
+     "rows": 472,
+     "with_report_in_window": 438,
+     "reports_dropped_later_year": 12,
+     "rows_dropped_later_year": 12,
+     "with_text": 426,
+     "carried_identical": 11,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 426
+     },
+     "median_report_len": 1250
+    },
+    "hit:2018": {
+     "rows": 450,
+     "with_report_in_window": 413,
+     "reports_dropped_later_year": 7,
+     "rows_dropped_later_year": 7,
+     "with_text": 406,
+     "carried_identical": 12,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 406
+     },
+     "median_report_len": 1324
+    },
+    "hit:2019": {
+     "rows": 543,
+     "with_report_in_window": 533,
+     "reports_dropped_later_year": 14,
+     "rows_dropped_later_year": 1,
+     "with_text": 532,
+     "carried_identical": 15,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 417,
+      "fangraphs": 456
+     },
+     "median_report_len": 1955
+    },
+    "pit:2013": {
+     "rows": 246,
+     "with_report_in_window": 246,
+     "reports_dropped_later_year": 4,
+     "rows_dropped_later_year": 4,
+     "with_text": 242,
+     "carried_identical": 43,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 242
+     },
+     "median_report_len": 830
+    },
+    "pit:2014": {
+     "rows": 245,
+     "with_report_in_window": 245,
+     "reports_dropped_later_year": 8,
+     "rows_dropped_later_year": 8,
+     "with_text": 237,
+     "carried_identical": 10,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 237
+     },
+     "median_report_len": 823
+    },
+    "pit:2015": {
+     "rows": 388,
+     "with_report_in_window": 388,
+     "reports_dropped_later_year": 8,
+     "rows_dropped_later_year": 8,
+     "with_text": 380,
+     "carried_identical": 24,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 380
+     },
+     "median_report_len": 943
+    },
+    "pit:2016": {
+     "rows": 405,
+     "with_report_in_window": 405,
+     "reports_dropped_later_year": 14,
+     "rows_dropped_later_year": 14,
+     "with_text": 391,
+     "carried_identical": 8,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 391
+     },
+     "median_report_len": 1170
+    },
+    "pit:2017": {
+     "rows": 469,
+     "with_report_in_window": 434,
+     "reports_dropped_later_year": 11,
+     "rows_dropped_later_year": 11,
+     "with_text": 423,
+     "carried_identical": 17,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 423
+     },
+     "median_report_len": 1230
+    },
+    "pit:2018": {
+     "rows": 439,
+     "with_report_in_window": 380,
+     "reports_dropped_later_year": 17,
+     "rows_dropped_later_year": 17,
+     "with_text": 363,
+     "carried_identical": 10,
+     "vintage_dropped": false,
+     "by_source": {
+      "mlb_pipeline": 363
+     },
+     "median_report_len": 1306
+    },
+    "pit:2019": {
+     "rows": 489,
+     "with_report_in_window": 482,
+     "reports_dropped_later_year": 32,
+     "rows_dropped_later_year": 8,
+     "with_text": 474,
+     "carried_identical": 12,
+     "vintage_dropped": false,
+     "by_source": {
+      "fangraphs": 417,
+      "mlb_pipeline": 360
+     },
+     "median_report_len": 1869
+    }
+   },
+   "sources": {
+    "mlb_pipeline": 4958,
+    "fangraphs": 873
+   },
+   "no_row_sources": {
+    "baseballamerica": "text from 2023",
+    "espn": "text from 2025",
+    "just_baseball": "text from 2026",
+    "tjstats": "tjstats_snapshots.writeup, 2026 only"
+   },
+   "dropped_vintages": [
+    2011,
+    2012
+   ],
+   "min_report_chars": 120
+  },
+  "settings": {
+   "min_df": 5,
+   "ridge_alpha": 1.0,
+   "min_report_chars": 120,
+   "token_pattern": "(?u)\\b[a-z][a-z']+\\b"
+  },
+  "registration": {
+   "later_year_by_snapshot_year": {
+    "2011": [
+     128,
+     152
+    ],
+    "2012": [
+     278,
+     453
+    ],
+    "2013": [
+     8,
+     696
+    ],
+    "2014": [
+     13,
+     676
+    ],
+    "2015": [
+     19,
+     993
+    ],
+    "2016": [
+     25,
+     997
+    ],
+    "2017": [
+     31,
+     996
+    ],
+    "2018": [
+     31,
+     995
+    ],
+    "2019": [
+     27,
+     995
+    ]
+   },
+   "report_rows": 22127,
+   "median_chars": 1431,
+   "source": "SP/efv3/VERIFY_round1.md b19 (verify_text_r1.py)"
+  },
+  "not_in_efv_progress": "the text columns are scored only by the screening lab; this probe writes no progress row and no ledger row",
+  "seed": 20260925,
+  "B": 500
  }
 }
