@@ -268,6 +268,15 @@ or later carries status `reserved_vm` (`efv_labels.labels_for`). Policy, registe
   run (EFV3_B5), both on the eWAR v2 label. Each is a look at lv_dev, and none is evidence on
   its own.
 
+- The scoreboard matrix lane (EFV3 lane D, 2026-10-02):
+  `_finalpass_2026-09-24/efv3/LANE_D_cells.json` (SP/efv3/LANE_D_cells.json, written by
+  `lane_d_cells.py`), row counts by stratum on the vm2 proxy and on lv_dev at list vintages
+  2017 to 2019, and EFV3_D1's reproduction of the same counts through `efv_strata` (commit
+  `678598a6`). Counts only: no rater score was read and no grade was paired with an outcome,
+  so they add no look to the count below. They are listed because they showed which cells
+  clear the 40-row floor on the development frames before s8.1 fixed the cell list, and a
+  cell list chosen after counting is a path.
+
 At nominal 95% intervals, 14 to 17 spurious CI-excluding reads are expected from the 275 to
 347 looks alone. No development CI is evidence on its own; only a reserved read can be.
 
@@ -307,11 +316,213 @@ ONE read of the assembled V2 on the eWAR v2 label, run after this draft is commi
   (non-consensus columns permuted within vintage); 500-draw permutation null; at least 4
   time splits with signs; mde95 stated before the read; the AUC veto.
 - Descriptive strata only: side, age, last level, draft or IFA, bonus band, vintage, source
-  disagreement. Never consensus-FV cell.
+  disagreement. Never consensus-FV cell. Amended 2026-10-02 (EFV3_D5): the strata are the
+  pre-registered cells of s8.1, which replace this list (bonus band is deferred, s8.1); on
+  each reserved frame they form the secondary Family S of s8.2 under owner answer E3-Q4 = A.
 - Kill rules 1 to 8 of PROGRAM.md s4 apply verbatim; a guard trip or any score found on R-LV
   or R-VM before its look turns that frame into development permanently for v2.
 - Served state (owner DS-Q1): V2 leads the board once built, labelled "ties consensus" until
   a reserved read says otherwise. The comparator stays today's served consensus (DS-Q4).
+
+### 8.1 The stratum matrix: pre-registered cells (amendment 2026-10-02, EFV3_D5)
+
+Written 2026-10-02 into this DRAFT, before any matrix cell is scored on any frame, from
+`EFV3_PLAN.md` s6 and s7 and `LANE_D.md` s3.1, s3.2, s3.4, s3.5 and s3.10 (the eFV frontier
+v3 plan, `_finalpass_2026-09-24/efv3/`). It edits nothing in s1 to s7: the statistic, the
+candidate, its weights and the frames stay as drafted. No number from any read appears in
+s8.1 to s8.4; the counts quoted are row counts with no score attached. The matrix is the
+evaluation surface FRAME x CELL x COMPARATOR x STATISTIC (`tools/efv_matrix.py`, EFV3_D2,
+artifact `data/efv_matrix_eval.json`). The one module that defines a dimension is
+`efv_strata.py` (EFV3_D1, commit `678598a6`); its `DIMENSIONS` and `CELLS` are the list
+below, and adding a dimension is a registration, never an edit.
+
+Frames: vm2 (the headline frame, a development frame for V2), lv_dev (development, spent),
+lv_res (R-LV, s2.2), vm_pros (R-VM, s2.2) and bust_inclusive (a secondary panel for the AUC
+tabs). Tilted frames never enter.
+
+The cells, quoted verbatim from `LANE_D.md` s3.1. The "E3-Q" ids inside the quotations of
+s8.1 are lane D's own: lane D E3-Q1 is the unified owner question E3-Q4 (Secondaries), and
+lane D E3-Q2 and E3-Q4 are recorded under their lane ids (s8.4).
+
+> | dim | cells | vm2 | lv_dev | note |
+> |---|---|---|---|---|
+> | overall | all | 1 | 1 | the headline cell; on vm2 it IS `head_to_head_verdict` and the matrix copies it rather than recomputing it (parity test) |
+> | side | hit, pit | 2 | 2 | `efv_dataset._side_match` through the matrix side, as the floors do |
+> | position family | C, IF, OF (hitters only) | 3 | 3 | F5; pitchers are the side cell |
+> | level at list | AAA, AA, A+, A, CPX, DSL, none | 7 | 7 | the V-1 level from the outcome-blind MiLB block (F3); "none" is its own cell and is reported with its identity route beside it |
+> | age band at list | <=18, 19-20, 21-22, 23-24, >=25, unknown | 6 | 6 | base year minus birth year; "unknown" scored as a cell and flagged (F4) |
+> | list year | 2017 to 2023 (vm2); 2017 to 2019 (lv_dev); 2020, 2021 (lv_res) | 7 | 3 | on vm2 this is the debut cohort (F11) |
+> | archetype | hs_bat, hs_arm, college_bat, college_arm, intl_bat, intl_arm, unknown_bat, unknown_arm | 8 | 8 | `source_backtest._archetype` on vm; `is_college`, `is_ifa`, `acq_known_at_v` on lv; unknown is the row whose acquisition is not known at V |
+> | source disagreement | FG minus Pipeline gap at or above 10 FV; under 10 | 2 | 2 | the one grade-derived dimension, a DIFFERENCE of two sources and not a level; registered as "source disagreement" in `EFV_V2_GATE.md` s8; disclosed on the page as grade-derived |
+>
+> That is 36 cells per frame on paper; scored cells are those with n at or above the floor (E3-Q4,
+> recommended 40, `source_backtest.ARCH_MIN_N`). Today: vm2 24 stratum cells at or above 40 (plus
+> overall and two side cells), lv_dev 30. Not a dimension, by rule: anything keyed on consensus FV,
+> eFV grade, any rater's FV, a tier, a top-N rank, a bonus band expressed through FV, or the outcome
+> (debuted, reached, label status). Bonus band and draft slot are deferred: they are known at V on
+> the list frame but are "priced into consensus FV" (glossary copy, C-A4) and the brief's Lane B owns
+> whether they are a stratum or a driver.
+
+Readings fixed here, as `efv_strata` implements them:
+
+- The floor (lane D E3-Q4 = A): a cell is scored when it holds at least 40 rows
+  (`source_backtest.ARCH_MIN_N`), B 2000, E_cond, player-clustered, seed 20260906. A cell
+  under the floor prints its n and UNPOWERED and carries no interval. An AUC cell also needs
+  at least 10 positives and 10 negatives inside the cell. The "Today" counts in the
+  quotation are lane D's development-frame counts, taken before EFV3_D1's defaults (D1-a,
+  D1-b, D1-c); they are not the size of any family, which is fixed when a frame's families
+  block is written (s8.2).
+- Level at list: the V-1 level from the outcome-blind MiLB block, `efv_vintage_frame.frame_row`
+  (`milb` from `efv_dataset._milb_features` with cutoff V-01-01, keyed on the `efv_identity`
+  id, DS-03, bug B4): the block's `milb_level` when its `milb_season` precedes the base year,
+  otherwise "none". On a vm frame the matrix row's block is read only when its season
+  precedes the debut year. "none" is its own cell and is printed with its identity route
+  beside it.
+- Age band: base year minus birth year, with "unknown" a scored cell, flagged on every frame.
+  Disclosure (`LANE_D.md` F4): 789 of 2,862 lv_dev rows carry no birth date (317 hitters, 472
+  pitchers); every vm2 row carries one. On R-LV the unknown cell is a selection on identity
+  resolution, which bug B4 makes an outcome proxy, so it is scored as its own cell, flagged,
+  and never read as a finding about age.
+- Archetype: hs, college and intl crossed with bat and arm, plus `unknown_bat` and
+  `unknown_arm` (a row whose acquisition is not known at V). The two unknown cells are
+  scored cells.
+- Source disagreement: the one grade-derived dimension, the absolute FanGraphs minus MLB
+  Pipeline gap at or above 10 FV, or under 10. It is a DIFFERENCE of two sources and never a
+  level, and it is disclosed as grade-derived wherever it is printed. A row that either
+  source did not grade reads "unknown" (EFV3_D1 default D1-a).
+- Position family is a hitter dimension (`LANE_D.md` F5); a hitter listed at a pitcher or an
+  unlisted position reads "unknown" (EFV3_D1 default D1-b).
+- An "unknown" from a dimension whose declared cells do not include it (position family,
+  level at list, source disagreement) is counted and printed, so the cells of each dimension
+  still partition the frame's rows, and it is never scored and never enters a family
+  (default D5-a).
+- List year: on a vm frame the debut cohort (`LANE_D.md` F11); 2017, 2018 and 2019 on
+  lv_dev; 2020 and 2021 on lv_res; the look's cohort on vm_pros. A cell whose rows are the
+  whole frame (the one list-year cell of R-VM look 1) is the overall cell and is not counted
+  again as a stratum (default D5-c).
+
+The statistic per cell, quoted verbatim from `LANE_D.md` s3.2:
+
+>     rows(C)      the frame's rows whose assigner value is C and on which both eFV and R are scored
+>     groups(C)    the (side, vintage) groups inside rows(C) with at least MIN_GROUP_ROWS (20) rows
+>     primary      within(eFV) minus within(R) over groups(C) if |groups(C)| >= 2
+>                  else pooled-after-map Spearman delta on rows(C), and the cell carries
+>                  statistic = "pooled (within degenerate: k groups)"
+>     interval     efv_v2_stat.paired_delta(..., B 2000, seed 20260906), E_cond, player-clustered;
+>                  ci95, sd, mde95 = 1.645 x sd; p_one_sided = P(Z > |delta| / sd)
+>     map          efv_v2_model.output_map inside each (side, vintage) group of the WHOLE frame,
+>                  computed once per frame and never refit per cell (the cell is a subset, the map is
+>                  the frame's)
+>
+> The map is a frame property so that a cell's pooled statistic is the frame's pooled statistic
+> restricted to the cell, and the cells of one dimension partition the frame's rows exactly.
+
+On every frame the cell's primary is the within statistic of s3.1 when at least 2 (side,
+vintage) groups of at least 20 rows survive inside the cell, otherwise the pooled statistic
+of s3.2 after the identical output map of s3.3, and the cell declares which one it read.
+
+The closed vocabulary, quoted verbatim from `LANE_D.md` s3.4. A scored cell carries exactly
+one reading from this list and no other word:
+
+> | reading | rule | printed as |
+> |---|---|---|
+> | AHEAD | survives Family S (or P) and delta > 0 | "ahead" (colour), only where E3-Q2 allows a word |
+> | BEHIND | survives Family S (or P) and delta < 0 | "behind" (colour) |
+> | EQUIVALENT | CI95 lies inside plus or minus 0.02 (the registered equivalence margin, `EFV_GATE_STANDARD.md` s8) | "tie (within 0.02)" |
+> | UNRESOLVED | none of the above; n at or above the floor | "no resolvable difference" (neutral) |
+> | FLAGGED_UNCORRECTED | |delta| >= 1.645 sd but did not survive the family | "clears its own floor, not the family" (neutral, with k and k x 0.05 beside it) |
+> | UNPOWERED | n under the floor, or AUC positives under 10, or mde95 > 2 x 0.02 (the anchor gate's underpowered rule) | "unpowered (n)" (hatched) |
+> | NOT_SCORED | no rows for the comparator (BA on lv, ESPN) | "no rows" |
+> | DEVELOPMENT | the cell sits on a spent frame (lv_dev, or vm2 for V2 if the owner chooses B on E3-Q2) | the reading above with the chip "development, not a claim" and no colour |
+> | RESERVED_PENDING | a pre-registered cell on lv_res or vm_pros before its look | "pre-registered, not read" |
+>
+> "Ties are ties" means: UNRESOLVED and EQUIVALENT are two different readings and the page never
+> rounds the first into the second or into a lead; the frame-level line prints "A ahead, B behind,
+> C equivalent, D unresolved, E unpowered of K cells; K x 0.05 = X false flags expected by
+> construction"; and a cell that FLAGGED_UNCORRECTED is drawn in the neutral style with its k, never
+> in colour. On vm2 the overall cell's reading today is UNRESOLVED, which the hero already calls "a
+> tie: the gap sits inside the floor"; the matrix keeps that sentence and adds the distinction in its
+> legend.
+
+Under lane D E3-Q2 = A, "where E3-Q2 allows a word" means: a vm2 stratum cell may carry
+AHEAD or BEHIND inside the matrix grid only, after surviving its frame-wide family. lv_dev
+cells read DEVELOPMENT. Cells on lv_res and vm_pros read RESERVED_PENDING until the look
+runner reads them (s8.2).
+
+### 8.2 Families, and Family S on the reserved frames
+
+Every frame's families are written into the artifact BEFORE any cell is read (a `families`
+block, then `cells`, then `summary`), each family with its cell list, each cell's n and the
+floor it is read against:
+
+- Family P, the claim: the overall cell, V2 versus PROSPX consensus, unchanged. On a reserved
+  frame it is the primary of s8, copied from the look record; on vm2 it is copied from
+  `accuracy.head_to_head_verdict`.
+- Family I, the industry: unchanged. On a reserved frame it is the secondary Holm family of
+  s8 (V2 versus MLB Pipeline and versus FanGraphs); on vm2 the FP3-3 family copied from
+  `accuracy.head_to_head_vs_sources`.
+- Family S, the strata: every cell of the s8.1 dimensions that holds at least 40 rows, the
+  two side cells included (default D5-b), versus PROSPX consensus on the cell's declared
+  primary statistic; ONE family per frame; Holm step-down, one-sided on |delta| / sd, alpha
+  0.05 (`source_backtest._holm_family`). k is the number of cells at or above the floor when
+  the families block is written. The per-dimension Holm (each dimension's own m) may be
+  printed inside the artifact as a secondary reading; the word comes from the frame-wide
+  family only, because a reader who can pick the partition can pick the finding.
+- The AUC legs and the industry comparators on stratum cells belong to no family: they print
+  intervals and the uncorrected floor line, labelled "uncorrected, not a claim". AUC never
+  enlarges a family (`docs/EFV_GATE_STANDARD.md` s3.1).
+
+**Family S clause.** Owner answer E3-Q4 = A (Secondaries; the unified question in
+`SP/efv3/OWNER_QUESTIONS.json`, recorded 2026-10-02 under the owner's standing instruction in
+`_audit_2026-09-09/DECISIONS_FOR_OWNER.md`; the recommended default, taken as the design;
+not E3-Q1, the scrap-or-keep question, which decides nothing here):
+
+On each reserved frame the stratum cells of s8.1 form ONE secondary Holm family, Family S, at
+alpha 0.05, V2 versus PROSPX consensus on the primary statistic under the cell rule of s8.1.
+R-LV is one frame over list vintages 2020 and 2021; R-VM carries Family S at look 1, and a
+later R-VM look carries it only by a dated amendment written before that look. The family is
+read once, in the same look as the primary, on the same rows, by the look runner
+(`efv_matrix.cells_for`, EFV3_D6), with E_cond, B 2000, seed 20260906, player-clustered; the
+E_refit claim of s3.6 belongs to Family P alone. Family S has NO ship consequence: it adds no
+condition to the primary, does not enlarge Family P or Family I, moves no served number and
+is not a further attempt at the primary. It has no copy consequence beyond the matrix
+itself: a cell that survives prints "ahead" or "behind" inside the matrix grid only, with k
+and k x 0.05 beside it, and the hero, the share card, the Diamond tiles, the registry
+verdicts and every methodology sentence read no matrix key. Kill rules 1 to 8 apply to it as
+to the primary; a guard trip on a reserved frame turns that frame's cells into development
+with the frame.
+
+If E3-Q4 reads B or C when the status line changes, the paragraph above is void and the
+clause reads instead: "On the reserved frames the stratum cells are descriptive only: they
+print intervals and never a word, carry the chip 'descriptive by the gate', and form no
+family."
+
+### 8.3 No FV-level cell, and the three pre-existing tier reads
+
+- No dimension is keyed on consensus FV, the eFV grade, any rater's FV, a tier, a top-N rank,
+  a bonus band expressed through FV, or the outcome (debuted, reached, label status)
+  (`efv_strata.BANNED_DIMENSIONS`, its AST test, and the ledger's `_FV_CELL` regex).
+- An FV-tier dimension may be added only by a dated amendment to the matrix's registration
+  that cites the anchor look record (`docs/PROSPECT_ANCHOR_GATE.md` s18), after the later of
+  2026-11-20 and 14 days after the fWAR epoch's step Z entry (its s14), never by editing
+  `DIMENSIONS`.
+- Under lane D E3-Q3 = A, the three pre-existing FV-tier reads, `source_backtest._tier_table`
+  (the glossary's "Cohort outcomes by FV tier"), the `by_fv_tier`, `t45` and `wm` blocks of
+  `tools/efv_scoreboard.py`, and the `by_fv_tier` block of `source_cohort_accuracy.py`, serve
+  their last committed values with the chip 'frozen pending the anchor look' until the anchor
+  look record exists; the guards are served code and land with EFV3_D2.
+
+### 8.4 Owner answers read, and the defaults this amendment applied
+
+- Unified E3-Q4 = A (Family S, s8.2), recorded. Unified E3-Q1 = C, E3-Q2 = A and E3-Q3 = A
+  are recorded and change nothing in s8.
+- Lane D E3-Q2 = A (Holm-corrected words on vm2, inside the matrix only), E3-Q3 = A (the
+  tier-read freeze, s8.3) and E3-Q4 = A (40 rows, B 2000, E_cond), each the recommended
+  option, taken by default and recorded by lane id in `DECISIONS_FOR_OWNER.md`.
+- D5-a: an undeclared "unknown" (position family, level at list, source disagreement) is
+  counted, never scored. D5-b: the two side cells are members of Family S. D5-c: a cell
+  equal to the whole frame is the overall cell. Each is reversible by a dated amendment
+  before the status line changes.
 
 ---
 
