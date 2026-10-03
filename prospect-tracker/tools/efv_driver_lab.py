@@ -113,7 +113,7 @@ SENSITIVITY_KEYS = ("auc_star",)
 
 
 # --------------------------------------------------------------------- pools
-def load_pool(side: str, extras=None) -> dict:
+def load_pool(side: str, extras=None, kinds=("debuted",), keep=None) -> dict:
     """The debuted-KM eval pool for one side, plus any candidate columns.
 
     `extras` is a list of {"name", "get", "impute"}. `get(raw_row, feats)` returns
@@ -122,12 +122,19 @@ def load_pool(side: str, extras=None) -> dict:
     observed-row mean, which is what "neutral imputation, no missing indicator"
     means for an indicator column: an imputed row standardizes to exactly 0 and
     therefore cannot carry missingness into the fit as a level shift).
+
+    `kinds` and `keep` exist for the Z1 retest scopes and default to the pool every other
+    mode reads: `kinds=None` keeps every matrix row (the health family's full pool, bust
+    rows included), and `keep` (a set of player keys) restricts the prepared rows to one
+    scope.
     """
     from efv_dataset import matrix_path
     raw = json.loads(matrix_path(side).read_text(encoding="utf-8"))
-    deb = [r for r in raw if r["kind"] == "debuted"]
+    deb = [r for r in raw if kinds is None or r["kind"] in kinds]
     by_key = {r["player_key"]: r for r in deb}
     prep = E._prep(deb, "target_censored", side)
+    if keep is not None:
+        prep = [r for r in prep if r["player_key"] in keep]
     keys, mono = E._feature_spec(side)
     X = np.array([[r["feats"].get(k, 0.0) for k in keys] for r in prep], dtype=float)
     D = {
@@ -180,7 +187,7 @@ def with_permuted(D: dict, name: str, rng) -> dict:
 
 # --------------------------------------------------------------------- chain
 def chain(D, ex=(), sel=None, years=None, lam=None, lam_band=None,
-          fv_min=None, fv_max=None):
+          fv_min=None, fv_max=None, drop=()):
     """One forward-chained pass. `ex` = indices into D['EX'] to append to the
     feature matrix. Returns (year, cons, blend, target, weight) or None.
 
@@ -189,12 +196,15 @@ def chain(D, ex=(), sel=None, years=None, lam=None, lam_band=None,
     a band RAISE, which is what the C4a elite-conviction arm asks for.
     `fv_min`/`fv_max` restrict the SCORED rows only; the training frame is never
     restricted, so an elite-cohort read is an eval restriction, not a new model.
+    `drop` = indices into D['X'] removed before the fit (a removal arm); empty by default.
     """
     years = tuple(E.SCORED_YEARS) if years is None else tuple(years)
     base_lam = D["lam"] if lam is None else float(lam)
     if sel is None:
         sel = np.arange(D["n"])
     Xf = D["X"][sel]
+    if len(drop):
+        Xf = np.delete(Xf, list(drop), axis=1)
     if len(ex):
         Xf = np.hstack([Xf, D["EX"][np.ix_(sel, list(ex))]])
     y, w, fv, dy = D["y"][sel], D["w"][sel], D["fv"][sel], D["dy"][sel]
@@ -331,7 +341,7 @@ def fold_aucs(r, thresh=None):
 # --------------------------------------------------------------------- gate
 def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
          lam=None, lam_band=None, base_lam=None, fv_min=None, seed=SEED,
-         perm_col=None, tag="", years=None):
+         perm_col=None, tag="", years=None, cand_drop=(), ctrl_drop=()):
     """The full EFV_GATE_STANDARD battery for one candidate against one baseline.
 
     Returns point deltas on the four gate statistics (pooled rho, side block-rho,
@@ -352,7 +362,8 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
     """
     t0 = time.time()
     base = chain(D, base_ex, lam=base_lam, fv_min=fv_min, years=years)
-    cand = chain(D, cand_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years)
+    cand = chain(D, cand_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years,
+                 drop=cand_drop)
     if base is None or cand is None:
         return {"tag": tag, "error": "no fold survived"}
     sb, sc = side_stats(base), side_stats(cand)
@@ -373,7 +384,8 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
 
     ctrl = None
     if ctrl_ex is not None:
-        cc = chain(D, ctrl_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years)
+        cc = chain(D, ctrl_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years,
+                   drop=ctrl_drop)
         if cc is not None:
             sx = side_stats(cc)
             ctrl = {k: _num(sx[k] - sb[k]) for k in GATE_KEYS}
@@ -383,7 +395,8 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
     for _ in range(B):
         sel = rng.integers(0, D["n"], D["n"])
         rb = chain(D, base_ex, sel=sel, lam=base_lam, fv_min=fv_min, years=years)
-        rc = chain(D, cand_ex, sel=sel, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years)
+        rc = chain(D, cand_ex, sel=sel, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years,
+                   drop=cand_drop)
         if rb is None or rc is None:
             continue
         a, b = side_stats(rb), side_stats(rc)
@@ -470,7 +483,8 @@ def gate(D, cand_ex, ctrl_ex=None, base_ex=(), B=2000, n_perm=200,
             EX2 = D["EX"].copy()
             EX2[:, i] = col0[prng.permutation(len(col0))]
             D2["EX"] = EX2
-            rc = chain(D2, cand_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years)
+            rc = chain(D2, cand_ex, lam=lam, lam_band=lam_band, fv_min=fv_min, years=years,
+                       drop=cand_drop)
             if rc is None:
                 continue
             s = side_stats(rc)
@@ -663,21 +677,27 @@ def two_metric_verdict(delta, floors, holm_survives=None, tag=""):
     return out
 
 
-def holm_family(rows):
+def holm_family(rows, alpha=0.05):
     """Holm-Bonferroni, one-sided normal approximation, over a family sized by the
     rows PASSED IN. rows = [(key, delta, sd)].
 
     Sizing is the whole point and it is why this exists as a function. When the AUC
     leg is entered as a co-primary the family is BOTH legs of every arm, so m
     doubles and the step-1 alpha halves. Entering a second instrument for free
-    would be running the family twice and reporting whichever half won."""
+    would be running the family twice and reporting whichever half won.
+
+    `alpha` is the family's one-sided level (Z1, plan 2.3: H-MECH 0.025, P-MECH 0.015, the
+    no-mechanism families 0.005, removal 0.05). The default is the 0.05 every existing
+    mode was adjudicated at, and with it the output is byte-identical to the hardcoded
+    form."""
     from math import erfc, sqrt
+    family_alpha = alpha
     live = [[k, d, sd, d / sd, 0.5 * erfc((d / sd) / sqrt(2))]
             for k, d, sd in rows if sd and d is not None]
     live.sort(key=lambda r: r[4])
     m, still, out = len(live), True, {}
     for i, r in enumerate(live):
-        alpha = 0.05 / (m - i)
+        alpha = family_alpha / (m - i)
         surv = bool(still and r[4] <= alpha)
         if not surv:
             still = False
@@ -2148,6 +2168,632 @@ def wrc_mode(B=1000):
     return g
 
 
+# --------------------------------------------------------------------- Z1 retest
+# THE fWAR LABEL EPOCH'S DRIVER RE-TEST (plan docs/master-plan-2026-09-11-war-epoch-
+# drivers-betting.md section 2; registration docs/efv-2026-10-03/LABEL_V3_DRIVER_RETEST_
+# GATE.md). One read per arm in a FROZEN list derived by tools/efv_arm_ledger.py
+# --z1-arm-list, every arm on the frame and scope it was registered on, one instrument
+# (this lab's gate(): E_refit, B = 2000 paired bootstrap with the ridge and consensus OLS
+# refit every draw, a 200-draw permutation null, a row-permuted zero-information twin),
+# floors from three N(0,1) noise arms, Holm within each family at the family's alpha.
+#
+# PORTING. The 4-fold-era arms were measured by tools/efv_lab_runner.py (an expression over
+# efv_model._vec features), by docs/efv-sb-athleticism-2026-08-05/run_lab.py, by
+# tools/efv_ml_lab.py extra joins and by tools/efv_wrc_lab.py. Each column is rebuilt here
+# from the same inputs by the same arithmetic, and test_efv_driver_retest.py proves bit
+# parity against the original code on the same rows. Nothing in that test, or in the
+# `--dry-run` below, fits a model or reads a label: a column is not a read.
+
+Z1_FAMILY_ALPHA = {"H-MECH": 0.025, "P-MECH": 0.015, "H-NOMECH": 0.005,
+                   "P-NOMECH": 0.005, "ABL": 0.05}
+#: plan 2.4 "rho delta at least 2x its own floor (every arm is a registered repeat)".
+Z1_REPEAT_FACTOR = 2.0
+#: plan 2.4 "wins at least 7 of 11 folds (4 of 6 on the six-fold frame)". A scope whose
+#: rows do not support every fold (the IL-observable cohort starts in 2019) keeps the same
+#: share of the folds that do score: ceil(7/11 x scored) and ceil(4/6 x scored).
+Z1_FOLD_SHARE = {"deb11": (7, 11), "deb6": (4, 6)}
+#: plan 2.4 "stays inside the D-1 live-robustness limits". No numeric limit was ever
+#: registered; every arm the 2026-08-07 record called a live blow-up moved a served
+#: player 320 or more rank places (docs/efv-drivers-2026-08-07/GATE_RECORD.md section 6),
+#: so the limit is set below the smallest of them, at this registration, before any read.
+Z1_LIVE_MAX_ABS_RANK_SHIFT = 300
+Z1_OUT = "xfv_driver_retest.json"
+#: Column kinds whose getter reads the raw matrix row, so live_move can score live rows.
+Z1_LIVE_KINDS = {"vec", "expr", "rawtool", "milb", "hand"}
+
+# efv_lab_runner's expression namespace, ported verbatim (importing the runner chdirs).
+def _lab_g(f, k):
+    return float(f.get(k, 0.0) or 0.0)
+
+
+def _lab_thr(v, t):
+    return 1.0 if v >= t else 0.0
+
+
+_LAB_NS = {"g": _lab_g, "thr": _lab_thr, "math": math, "max": max, "min": min, "abs": abs}
+
+
+def lab_expr_value(expr: str, feats: dict) -> float:
+    """efv_lab_runner._add_feats for one spec: eval over the _vec feats, 0.0 on error."""
+    try:
+        return float(eval(expr, {"__builtins__": {}}, {**_LAB_NS, "f": feats}))  # noqa: S307
+    except Exception:                                                       # noqa: BLE001
+        return 0.0
+
+
+#: docs/efv-sb-athleticism-2026-08-05/run_lab.py TOOL_Z, the pre-registered pool constants.
+SBATH_TOOL_Z = {"tool_speed": (47.79, 12.23), "tool_field": (51.00, 6.58),
+                "tool_throw": (53.96, 7.12)}
+
+
+def sbath_table(side: str = "hit") -> dict:
+    """run_lab.augment() ported: {player_key: {sb_rate_rel, spd_sb_50, spd_sb_70, athl3,
+    athl_sf, athl_st}} over the debuted pool, sb recomputed through
+    efv_dataset._milb_features and z-scored by the observed pool's mean and pstdev."""
+    import statistics
+    import efv_dataset as DS
+    from efv_dataset import matrix_path
+    raw = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+    deb = [r for r in raw if r["kind"] == "debuted"]
+    matrix = {r["player_key"]: r for r in deb}
+    prep = E._prep(deb, "target_censored", side)
+    sb, tools = {}, {}
+    for r in prep:
+        m = matrix[r["player_key"]]
+        blk = None
+        if m.get("mlbam_id"):
+            blk = DS._milb_features(m["mlbam_id"], m["debut_year"], m.get("birth_date"),
+                                    "hit", cutoff=m.get("cutoff"))
+        sb[r["player_key"]] = float(blk.get("sb_rate_rel", 0.0)) if blk else None
+        tools[r["player_key"]] = {k: m.get(k) for k in SBATH_TOOL_Z}
+    vals = [sb[r["player_key"]] for r in prep if sb[r["player_key"]] is not None]
+    sb_mu = statistics.mean(vals)
+    sb_sd = statistics.pstdev(vals)
+
+    def z_tool(v, key):
+        mu, sd = SBATH_TOOL_Z[key]
+        return (float(v) - mu) / sd if v is not None else 0.0
+
+    out = {}
+    for r in prep:
+        pk = r["player_key"]
+        zs = z_tool(tools[pk]["tool_speed"], "tool_speed")
+        zf = z_tool(tools[pk]["tool_field"], "tool_field")
+        zt = z_tool(tools[pk]["tool_throw"], "tool_throw")
+        zb = (sb[pk] - sb_mu) / sb_sd if sb[pk] is not None else 0.0
+        out[pk] = {"sb_rate_rel": sb[pk] if sb[pk] is not None else 0.0,
+                   "spd_sb_50": 0.5 * zs + 0.5 * zb, "spd_sb_70": 0.7 * zs + 0.3 * zb,
+                   "athl3": (zs + zf + zt) / 3.0, "athl_sf": (zs + zf) / 2.0,
+                   "athl_st": (zs + zt) / 2.0}
+    return out
+
+
+def xjoin_table(side: str, join: str) -> tuple[dict, list]:
+    """efv_ml_lab's extra join ported: (_load_extra map keyed by str(mlbam), the union of
+    keys with a non-null value), and the matrix player_key -> str(mlbam) map."""
+    from efv_dataset import matrix_path
+    path = DATA / f"xfv_extra_{join}.json"
+    emap = {}
+    for r in json.loads(path.read_text(encoding="utf-8")):
+        key = str(r.get("mlbam_id") or r.get("player_key") or "")
+        if key:
+            emap[key] = {k: v for k, v in r.items()
+                         if k not in ("mlbam_id", "player_key", "name") and v is not None}
+    allk = sorted({k for d in emap.values() for k in d})
+    mid = {r["player_key"]: str(r.get("mlbam_id") or "")
+           for r in json.loads(matrix_path(side).read_text(encoding="utf-8"))}
+    return {"emap": emap, "mid": mid}, allk
+
+
+def wrc_table(key: str) -> dict | None:
+    """tools/efv_wrc_lab.py, reused: build_join + inject 'zero' semantics for wrc_rel and
+    hit_sb_rel; clause_m + _composite_feature for wrc_comp (None when clause M fails,
+    which is the original lab's own condition for building the A4 arm at all)."""
+    cwd = os.getcwd()
+    try:
+        import efv_wrc_lab as W                       # imports efv_lab_runner, which chdirs
+    finally:
+        os.chdir(cwd)
+    if key in ("wrc_rel", "hit_sb_rel"):
+        joined, _meta, _n = W.build_join()
+        return {pk: (float(j[key]) if j.get(key) is not None else 0.0)
+                for pk, j in joined.items()}
+    import wrc_rates
+    rows_c = wrc_rates.load_rows()
+    m, last_beta, lg_rate = W.clause_m(rows_c)
+    if not (m.get("passes") and last_beta is not None):
+        return None
+    return {pk: float(v) for pk, v in W._composite_feature(rows_c, last_beta, lg_rate).items()}
+
+
+class Z1Context:
+    """Per-run caches for the column builders that read a join, a database table or a
+    whole pool. Built lazily, once per (side, kind)."""
+
+    def __init__(self):
+        self.cache = {}
+
+    def get(self, key, fn):
+        if key not in self.cache:
+            self.cache[key] = fn()
+        return self.cache[key]
+
+
+def _prep_keys(side: str, kinds=("debuted",)) -> list:
+    from efv_dataset import matrix_path
+    raw = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+    rows = [r for r in raw if kinds is None or r["kind"] in kinds]
+    return [r["player_key"] for r in E._prep(rows, "target_censored", side)]
+
+
+def _vol_table(side: str) -> dict:
+    """tools/efv_volume_driver_lab.py build_pool's per-row volume dicts, keyed."""
+    import efv_volume_driver_lab as V
+    from efv_dataset import matrix_path
+    raw = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+    deb = [r for r in raw if r["kind"] == "debuted"]
+    prep = E._prep(deb, "target_censored", side)
+    group = "pitching" if side == "pit" else "hitting"
+    by_key = {r["player_key"]: r for r in raw}
+    out = {}
+    for r in prep:
+        src = by_key.get(r.get("player_key")) or {}
+        seasons = V.eligible_seasons(src.get("mlbam_id"), int(r["decision_year"]),
+                                     src.get("cutoff"), group)
+        out[r["player_key"]] = V.volumes(seasons, side)
+    return out
+
+
+def _agex_table(side: str) -> dict:
+    """tools/efv_age_interaction_lab.py arms() over its own pool, keyed by player."""
+    import efv_age_interaction_lab as AG
+    D = AG.load(side)
+    A = AG.arms(D, side)
+    if A.get("joint__all_products") is not None and AG.AGE_KEY in D["col"]:
+        A["replace__age_rel_level_by_products"] = A["joint__all_products"]
+    keys = _prep_keys(side)
+    if len(keys) != D["n"]:
+        raise RuntimeError("age-interaction pool and prep keys disagree")
+    return {"keys": keys, "arms": A}
+
+
+def _health_table(side: str, scope: str, ctx: Z1Context, with_label_columns: bool) -> dict:
+    """tools/efv_health_profile_lab.py gate()'s columns on the observable cohort, keyed.
+
+    `health_index_oof` is fitted on the label (a forward-chained stacked submodel), so it
+    is built only when `with_label_columns` is set, which the run sets and the dry run
+    does not."""
+    import efv_health_profile_lab as HL
+    ev = ctx.get(("health_events",), HL.il_events)
+    full = scope == "full_observable"
+    P = HL.build_pool(side, ev, full_pool=full)
+    mask = HL.observable_mask(P)
+    keys = _prep_keys(side, kinds=None if full else ("debuted",))
+    if len(keys) != P["n"]:
+        raise RuntimeError("health pool and prep keys disagree")
+    obs_keys = [k for k, m in zip(keys, mask) if m]
+    prof = [p for p, m in zip(P["profs"], mask) if m]
+    cols = {}
+    if with_label_columns:
+        cols["health_index_oof"] = HL.oof_health_index(P, mask)
+    for c in HL.candidates(side):
+        cols[c["name"]] = np.array([c["fn"](p) for p in prof], dtype=float)
+    out = {}
+    for name, v in cols.items():
+        if np.allclose(v, v[0]):
+            out[name] = None                     # constant on this cohort: degenerate
+            continue
+        sd = v.std()
+        vz = (v - v.mean()) / sd if sd > 0 else v
+        out[name] = dict(zip(obs_keys, (float(x) for x in vz)))
+    return {"keys": set(obs_keys), "cols": out}
+
+
+def z1_scope_keys(side: str, scope: str, ctx: Z1Context, with_label_columns=False):
+    """(kinds, keep) for load_pool, per registered scope."""
+    if scope == "debuted":
+        return ("debuted",), None
+    if scope == "readable":
+        vols = ctx.get(("vol", side), lambda: _vol_table(side))
+        return ("debuted",), {k for k, v in vols.items() if v["milb_seasons"] > 0}
+    if scope in ("full_observable", "debuted_observable"):
+        h = ctx.get(("health", side, scope, with_label_columns),
+                    lambda: _health_table(side, scope, ctx, with_label_columns))
+        return (None if scope == "full_observable" else ("debuted",)), h["keys"]
+    raise KeyError(scope)
+
+
+def z1_specs(arm: dict, ctx: Z1Context, with_label_columns=False) -> list:
+    """load_pool extras specs for an arm's columns (empty for a pure drop arm). Raises
+    when a column cannot be built; returns a spec whose getter yields None for a row the
+    source does not cover, imputed by the arm's registered posture."""
+    side = arm["side"]
+    specs = []
+    imp = arm.get("impute") or "zero"
+    imp = "zero" if imp == "none" else imp
+    for i, col in enumerate(arm["columns"]):
+        kind = col["kind"]
+        base = col.get("key") or col.get("name") or col.get("join") or f"c{i}"
+        if kind == "vec":
+            # The list says how the producer read the key (efv_arm_ledger._FOURFOLD_READ):
+            # "lab_g" is efv_lab_runner's g(), float(f.get(k, 0.0) or 0.0), which reads a
+            # -0.0 as 0.0; "raw" keeps the value as stored, as D-1's getter and
+            # efv_weight_recal_lab's f.get(k, 0.0) did. Equal in value; the sign of a zero
+            # is the only bit that differs, and the port reproduces the producer's.
+            if col.get("read") == "lab_g":
+                def _g(raw, feats, _k=col["key"]):
+                    return _lab_g(feats, _k)
+            else:
+                def _g(raw, feats, _k=col["key"]):
+                    v = feats.get(_k, 0.0)
+                    return None if v is None else float(v)
+            specs.append({"name": base, "get": _g, "impute": imp})
+        elif kind == "expr":
+            def _g(raw, feats, _e=col["expr"]):
+                return lab_expr_value(_e, feats)
+            specs.append({"name": base, "get": _g, "impute": imp})
+        elif kind == "rawtool":
+            def _g(raw, feats, _k=col["key"], _d=float(col["impute_value"])):
+                v = raw.get(_k)
+                return _d if v is None else float(v)
+            specs.append({"name": base, "get": _g, "impute": imp})
+        elif kind == "milb":
+            specs.append({"name": base, "get": get_milb(col["key"]), "impute": imp})
+        elif kind == "sbath":
+            tab = ctx.get(("sbath", side), lambda: sbath_table(side))
+            def _g(raw, feats, _t=tab, _n=col["name"]):
+                row = _t.get(raw.get("player_key"))
+                return None if row is None else row[_n]
+            specs.append({"name": base, "get": _g, "impute": imp})
+        elif kind == "xjoin":
+            tab, allk = ctx.get(("xjoin", side, col["join"]),
+                                lambda: xjoin_table(side, col["join"]))
+            if list(col.get("keys") or allk) != allk:
+                raise RuntimeError(f"xjoin {col['join']}: the join file now yields {allk}, "
+                                   f"the frozen list says {col.get('keys')}")
+            for k in allk:
+                def _g(raw, feats, _t=tab, _k=k):
+                    d = _t["emap"].get(_t["mid"].get(raw.get("player_key"), ""), {})
+                    return float(d.get(_k, 0.0) or 0.0)
+                specs.append({"name": f"x_{col['join']}_{k}", "get": _g, "impute": imp})
+        elif kind == "wrc":
+            tab = ctx.get(("wrc", col["key"]), lambda: wrc_table(col["key"]))
+            if tab is None:
+                raise RuntimeError("wrc_comp: clause M does not pass on this tree, so the "
+                                   "original lab would not build the A4 arm")
+            def _g(raw, feats, _t=tab):
+                return float(_t.get(raw.get("player_key"), 0.0))
+            specs.append({"name": base, "get": _g, "impute": imp})
+        elif kind == "extras":
+            tab = ctx.get(("extras", side), lambda: _extras_join(side))
+            def _g(raw, feats, _t=tab, _k=col["key"]):
+                v = _t.get(raw.get("player_key"), {}).get(_k)
+                return None if v is None else float(v)
+            specs.append({"name": base, "get": _g, "impute": imp})
+        elif kind == "hand":
+            people = ctx.get(("hand",), lambda: _hand_map()[0])
+            if col["key"] == "is_lhp":
+                def _g(raw, feats, _p=people):
+                    mid = raw.get("mlbam_id")
+                    if mid is None:
+                        return None
+                    p = _p.get(str(int(mid)))
+                    if not p or not p.get("throws"):
+                        return None
+                    return 1.0 if p["throws"] == "L" else 0.0
+            else:
+                code = {"bats_l": "L", "bats_s": "S"}[col["key"]]
+                def _g(raw, feats, _p=people, _c=code):
+                    mid = raw.get("mlbam_id")
+                    if mid is None:
+                        return None
+                    p = _p.get(str(int(mid)))
+                    if not p or not p.get("bats"):
+                        return None
+                    return 1.0 if p["bats"] == _c else 0.0
+            specs.append({"name": base, "get": _g, "impute": imp})
+        elif kind == "vol":
+            import efv_volume_driver_lab as V
+            vols = ctx.get(("vol", side), lambda: _vol_table(side))
+            fn = {c["name"]: c["fn"] for c in V.candidates(side)}[col["name"]]
+            def _g(raw, feats, _v=vols, _f=fn):
+                v = _v.get(raw.get("player_key"))
+                return None if v is None else float(_f(v))
+            specs.append({"name": base, "get": _g, "impute": imp})
+        elif kind == "agex":
+            tab = ctx.get(("agex", side), lambda: _agex_table(side))
+            A = tab["arms"][col["name"]]
+            idx = {k: j for j, k in enumerate(tab["keys"])}
+            for j in range(A.shape[1]):
+                def _g(raw, feats, _A=A, _i=idx, _j=j):
+                    r = _i.get(raw.get("player_key"))
+                    return None if r is None else float(_A[r, _j])
+                specs.append({"name": f"{base}__{j}", "get": _g, "impute": imp})
+        elif kind == "health":
+            if col["name"] == "health_index_oof" and not with_label_columns:
+                raise LookupError("label-dependent column: built only inside the run")
+            h = ctx.get(("health", side, arm["scope"], with_label_columns),
+                        lambda: _health_table(side, arm["scope"], ctx, with_label_columns))
+            tab = h["cols"].get(col["name"])
+            if tab is None:
+                raise RuntimeError(f"{col['name']}: constant on this cohort")
+            def _g(raw, feats, _t=tab):
+                return _t.get(raw.get("player_key"))
+            specs.append({"name": base, "get": _g, "impute": imp})
+        else:
+            raise KeyError(f"no builder for column kind {kind!r}")
+    return specs
+
+
+def z1_pool(arm: dict, ctx: Z1Context, with_label_columns=False):
+    """(D, n_candidate_columns, drop indices) for one arm on its registered scope."""
+    kinds, keep = z1_scope_keys(arm["side"], arm["scope"], ctx, with_label_columns)
+    specs = z1_specs(arm, ctx, with_label_columns)
+    D = load_pool(arm["side"], specs, kinds=kinds, keep=keep)
+    drop = tuple(D["keys"].index(k) for k in arm.get("drop") or [])
+    return D, len(specs), drop
+
+
+def _with_permuted_block(D: dict, idx: list, rng) -> dict:
+    """The zero-information twin of a multi-column arm: ONE row permutation applied to
+    every candidate column, so the columns keep their joint marginal and lose the row."""
+    perm = rng.permutation(D["n"])
+    block = D["EX"][:, idx][perm]
+    out = dict(D)
+    out["EX"] = np.hstack([D["EX"], block])
+    out["ex_names"] = D["ex_names"] + [D["ex_names"][i] + "__perm" for i in idx]
+    return out
+
+
+def _sha256(path: Path) -> str | None:
+    import hashlib
+    try:
+        return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def z1_pins(arm_list_path: Path) -> dict:
+    """P4: sha256 of both matrices, the floors files, efv_model.py, this lab and the list."""
+    from efv_dataset import matrix_path
+    paths = {"hit_matrix": matrix_path("hit"), "pit_matrix": matrix_path("pit"),
+             "floors": DATA / "xfv_driver_floors.json",
+             "auc_floors": DATA / "xfv_driver_auc_floors.json",
+             "efv_model": ROOT / "efv_model.py",
+             "driver_lab": Path(__file__).resolve(), "arm_list": Path(arm_list_path)}
+    return {k: _sha256(p) for k, p in paths.items()}
+
+
+def _noise_floor(side, scope, frame, years, ctx, seeds, label_cols, B):
+    """MDE95 floors on one (side, frame, scope) from three N(0,1) noise arms."""
+    kinds, keep = z1_scope_keys(side, scope, ctx, label_cols)
+    arms = []
+    for s in seeds:
+        D = load_pool(side, kinds=kinds, keep=keep)
+        rng = np.random.default_rng(s)
+        noise = rng.standard_normal(D["n"])
+        D2 = dict(D)
+        D2["EX"] = noise[:, None]
+        D2["ex_names"] = ["noise"]
+        D2["cov"] = {}
+        g = gate(D2, cand_ex=(0,), B=B, n_perm=0, tag=f"Z1:noise:{side}:{frame}:{scope}:{s}",
+                 years=years)
+        arms.append({"seed": s, "point_rho": g["delta"]["rho"],
+                     "point_block": g["delta"]["block_rho"],
+                     "point_auc_contrib": g["delta"]["auc_contrib"],
+                     "sd_rho": g["bootstrap"]["rho"]["sd"],
+                     "sd_block": g["bootstrap"]["block_rho"]["sd"],
+                     "sd_auc": g["bootstrap"]["auc_contrib"]["sd"]})
+
+    def _mx(k):
+        v = [a[k] for a in arms if a[k] is not None]
+        return round(1.645 * max(v), 4) if v else None
+    return {"rho": _mx("sd_rho"), "block_rho": _mx("sd_block"), "auc_contrib": _mx("sd_auc"),
+            "noise_band_rho": max(abs(a["point_rho"]) for a in arms
+                                  if a["point_rho"] is not None),
+            "noise_arms": arms, "convention": "MAX of three noise seeds; a floor is a bound"}
+
+
+def _fold_need(frame: str, scored: int) -> int:
+    k, n = Z1_FOLD_SHARE[frame]
+    return int(math.ceil(k * scored / n))
+
+
+def retest_mode(arm_list_path, B=2000, expect_sha=None, old_label_dir=None, dry_run=False):
+    """Z1. Run the frozen arm list once. See the block comment above."""
+    arm_list_path = Path(arm_list_path)
+    lst = json.loads(arm_list_path.read_text(encoding="utf-8"))
+    sha = _sha256(arm_list_path)
+    if expect_sha and sha != expect_sha:
+        raise SystemExit(f"STOP: the arm list's sha256 is {sha}, the registration froze "
+                         f"{expect_sha} (kill rule 1)")
+    arms = lst["arms"]
+    ctx = Z1Context()
+    if dry_run:
+        rep = {"arm_list": str(arm_list_path), "sha256": sha, "arms": {}}
+        for a in arms:
+            try:
+                D, k, drop = z1_pool(a, ctx, with_label_columns=False)
+                rep["arms"][a["id"]] = {"n": D["n"], "columns": k, "drop": list(drop),
+                                        "coverage": D["cov"]}
+            except LookupError as exc:
+                rep["arms"][a["id"]] = {"built": False, "why": str(exc)}
+            print(f"  {a['id']:60s} {json.dumps(rep['arms'][a['id']])[:110]}", flush=True)
+        return rep
+
+    pins0 = z1_pins(arm_list_path)
+    out = {"registration": "docs/efv-2026-10-03/LABEL_V3_DRIVER_RETEST_GATE.md",
+           "arm_list": str(arm_list_path), "arm_list_sha256": sha, "B": B, "seed": SEED,
+           "pins_start": pins0, "floors": {}, "liveness": {}, "arms": {}, "families": {},
+           "kill_rules": {}}
+
+    # ---- floors: the 11-fold debuted floors are P2's `floor 2000`; every other
+    #      (side, frame, scope) is derived here, before any arm ----
+    fl = json.loads((DATA / "xfv_driver_floors.json").read_text(encoding="utf-8"))
+    combos = sorted({(a["side"], a["frame"], a["scope"]) for a in arms})
+    for i, (side, frame, scope) in enumerate(combos):
+        key = f"{side}:{frame}:{scope}"
+        years = tuple(lst["frames"][frame]["years"])
+        if frame == "deb11" and scope == "debuted":
+            fa = fl["feature_add"][side]
+            band = [v["point_rho"] for v in fa.values()
+                    if isinstance(v, dict) and "point_rho" in v]
+            out["floors"][key] = {"rho": fa["MDE95_pooled_rho"],
+                                  "block_rho": fa["MDE95_block_rho"],
+                                  "auc_contrib": fa.get("MDE95_auc_contributor"),
+                                  "noise_band_rho": max(abs(x) for x in band),
+                                  "source": "data/xfv_driver_floors.json (P2)",
+                                  "generated_at": fl.get("generated_at")}
+        else:
+            seeds = (SEED + 7300 + 10 * i, SEED + 7301 + 10 * i, SEED + 7302 + 10 * i)
+            out["floors"][key] = _noise_floor(side, scope, frame, years, ctx, seeds, True, B)
+        print(f"[floor] {key} {json.dumps({k: out['floors'][key][k] for k in ('rho', 'block_rho', 'auc_contrib', 'noise_band_rho')})}",
+              flush=True)
+
+    # ---- kill rule 5 FIRST: dropping fv must resolve as harmful on each side ----
+    dead = []
+    for a in [x for x in arms if x.get("liveness_control")]:
+        D, _k, drop = z1_pool(a, ctx, True)
+        g = gate(D, cand_ex=(), cand_drop=drop, B=B, n_perm=0, tag=a["id"],
+                 years=tuple(a["years"]))
+        f = out["floors"][f"{a['side']}:{a['frame']}:{a['scope']}"]
+        harmful = bool(g["delta"]["rho"] is not None and g["delta"]["rho"] <= -f["rho"])
+        out["liveness"][a["id"]] = {"delta": g["delta"], "floor_rho": f["rho"],
+                                    "resolves_harmful": harmful,
+                                    "bootstrap_rho": g["bootstrap"]["rho"]}
+        if not harmful:
+            dead.append(a["id"])
+    if dead:
+        out["kill_rules"]["5_dead_instrument"] = {"fired": True, "arms": dead}
+        out["verdict"] = "BLOCKED: the fv liveness control did not resolve as harmful"
+        _write(Z1_OUT, out)
+        return out
+    out["kill_rules"]["5_dead_instrument"] = {"fired": False}
+
+    # ---- every arm, measured; verdicts only after each family's Holm exists ----
+    for i, a in enumerate([x for x in arms if not x.get("liveness_control")]):
+        fkey = f"{a['side']}:{a['frame']}:{a['scope']}"
+        f = out["floors"][fkey]
+        years = tuple(a["years"])
+        try:
+            D, k, drop = z1_pool(a, ctx, True)
+        except (RuntimeError, LookupError) as exc:
+            out["arms"][a["id"]] = {"family": a["family"], "built": False, "why": str(exc),
+                                    "verdict": "NOT_BUILT"}
+            continue
+        rng = np.random.default_rng(SEED + 7700 + i)
+        if k == 0:                                   # a removal arm (ABL)
+            j = drop[0]
+            twin = D["X"][:, j][rng.permutation(D["n"])]
+            D2 = dict(D)
+            D2["EX"] = twin[:, None]
+            D2["ex_names"] = [a["drop"][0] + "__perm"]
+            g = gate(D2, cand_ex=(), cand_drop=drop, ctrl_ex=(0,), ctrl_drop=drop, B=B,
+                     n_perm=0, tag=a["id"], years=years)
+        else:
+            idx = list(range(k))
+            D2 = (with_permuted(D, D["ex_names"][0], rng) if k == 1
+                  else _with_permuted_block(D, idx, rng))
+            g = gate(D2, cand_ex=tuple(idx), ctrl_ex=tuple(range(k, 2 * k)), B=B,
+                     n_perm=200, perm_col=D["ex_names"][0], tag=a["id"], years=years,
+                     cand_drop=drop, ctrl_drop=drop)
+        g["family"] = a["family"]
+        g["floors_used"] = {"rho": f["rho"], "block_rho": f["block_rho"],
+                            "auc_contrib": f["auc_contrib"]}
+        g["noise_band_rho"] = f["noise_band_rho"]
+        g["frame"], g["scope"] = a["frame"], a["scope"]
+        out["arms"][a["id"]] = g
+        print(f"  {a['id']:60s} d_rho {g['delta']['rho']} ctrl "
+              f"{(g.get('control_delta') or {}).get('rho')} folds "
+              f"{g['fold_rho_wins']}/{g['folds_scored']} floor {f['rho']}", flush=True)
+
+    by_id = {a["id"]: a for a in arms}
+    for fam, alpha in Z1_FAMILY_ALPHA.items():
+        members = {k: g for k, g in out["arms"].items()
+                   if g.get("family") == fam and "delta" in g}
+        rows = []
+        for k, g in members.items():
+            for stat in ("rho", "auc_contrib"):
+                b = (g.get("bootstrap") or {}).get(stat) or {}
+                if b.get("sd") and g["delta"].get(stat) is not None:
+                    rows.append((f"{k}.{stat}", g["delta"][stat], b["sd"]))
+        holm, m = holm_family(rows, alpha=alpha)
+        out["families"][fam] = {"alpha": alpha, "holm_family_size": m, "holm": holm}
+        best = max((g["delta"]["rho"] for g in members.values()
+                    if g["delta"]["rho"] is not None), default=None)
+        twin_best = max(((g.get("control_delta") or {}).get("rho") for g in members.values()
+                         if (g.get("control_delta") or {}).get("rho") is not None),
+                        default=None)
+        uninformative = bool(best is not None and twin_best is not None
+                             and twin_best >= best)
+        out["families"][fam]["kill_rule_4_uninformative"] = uninformative
+        for k, g in members.items():
+            f = g["floors_used"]
+            d = g["delta"]
+            ctrl = (g.get("control_delta") or {}).get("rho")
+            row = holm.get(f"{k}.rho") or {}
+            need = _fold_need(g["frame"], g["folds_scored"])
+            cond = {
+                "rho_2x_floor": bool(d["rho"] is not None and f["rho"]
+                                     and d["rho"] >= Z1_REPEAT_FACTOR * f["rho"]),
+                "block_rho_positive": bool(d["block_rho"] is not None and d["block_rho"] > 0),
+                "no_auc_veto": bool(f["auc_contrib"] is not None and d["auc_contrib"] is not None
+                                    and d["auc_contrib"] > -f["auc_contrib"]),
+                "survives_holm": bool(row.get("survives_holm")),
+                "beats_twin_by_noise_band": bool(ctrl is not None and d["rho"] is not None
+                                                 and d["rho"] - ctrl > g["noise_band_rho"]),
+                "fold_wins": bool(g["fold_rho_wins"] >= need),
+                "family_informative": not uninformative,
+            }
+            g["conditions"] = cond
+            g["fold_wins_needed"] = need
+            if not all(cond.values()):
+                g["verdict"] = "NULL"
+                continue
+            a = by_id[k]
+            if fam != "ABL" and all(c["kind"] in Z1_LIVE_KINDS for c in a["columns"]):
+                specs = z1_specs(a, ctx, True)
+                lv = live_move(a["side"], specs, tuple(range(len(specs))))
+                g["live"] = lv
+                cond["live_inside_limit"] = bool(lv["max_abs_rank_shift"]
+                                                 <= Z1_LIVE_MAX_ABS_RANK_SHIFT)
+                g["verdict"] = "PASS" if cond["live_inside_limit"] else "NULL_LIVE"
+            elif fam == "ABL":
+                g["verdict"] = "REMOVAL_SUPPORTED"
+            else:
+                g["verdict"] = "NOT_ADJUDICATED_NO_LIVE"
+            if g["verdict"] in ("PASS", "REMOVAL_SUPPORTED") and old_label_dir:
+                g["attribution"] = _z1_attribution(a, ctx, old_label_dir, B, f)
+    pins1 = z1_pins(arm_list_path)
+    out["pins_end"] = pins1
+    out["kill_rules"]["7_stale_inputs"] = {"fired": pins0 != pins1}
+    if pins0 != pins1:
+        out["verdict"] = "VOID: an input changed during the run (P4, kill rule 7)"
+    else:
+        out["verdict"] = {k: g.get("verdict") for k, g in out["arms"].items()}
+    _write(Z1_OUT, out)
+    return out
+
+
+def _z1_attribution(a, ctx, old_label_dir, B, f):
+    """Plan 2.4: re-run a passer on the SAME rows with the OLD label. Attributed to the
+    label only if the old-label delta stays inside its floor."""
+    D, k, drop = z1_pool(a, ctx, True)
+    name = "xfv_hitter_matrix.json" if a["side"] == "hit" else "xfv_pitcher_matrix.json"
+    old = {r["player_key"]: r.get("target_censored")
+           for r in json.loads((Path(old_label_dir) / name).read_text(encoding="utf-8"))}
+    y = [old.get(pk) for pk in D["pk"]]
+    if any(v is None for v in y):
+        return {"run": False, "why": "the old-label matrix lacks rows of this scope"}
+    D2 = dict(D)
+    D2["y"] = np.array(y, dtype=float)
+    g = gate(D2, cand_ex=tuple(range(k)), B=B, n_perm=0, tag=a["id"] + ":old_label",
+             years=tuple(a["years"]), cand_drop=drop)
+    inside = bool(g["delta"]["rho"] is not None and abs(g["delta"]["rho"]) < f["rho"])
+    return {"run": True, "old_label_delta": g["delta"], "inside_floor": inside,
+            "attributed_to_label": inside}
+
+
 _MODES = {"floor": floor_mode, "sb": sb_mode, "pos": pos_mode,
           "handbuild": hand_build, "hand": hand_mode, "pairs": pairs_mode,
           "elite": elite_mode, "lam": lam_mode, "wrc": wrc_mode,
@@ -2156,6 +2802,22 @@ _MODES = {"floor": floor_mode, "sb": sb_mode, "pos": pos_mode,
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "floor"
+    if mode == "retest":
+        # python tools/efv_driver_lab.py retest <arm_list.json> [B] [--sha HEX]
+        #        [--old-label-dir DIR] [--dry-run]
+        import argparse
+        ap = argparse.ArgumentParser(prog="efv_driver_lab.py retest")
+        ap.add_argument("arm_list")
+        ap.add_argument("B", nargs="?", type=int, default=2000)
+        ap.add_argument("--sha", default=None)
+        ap.add_argument("--old-label-dir", default=None)
+        ap.add_argument("--dry-run", action="store_true")
+        a = ap.parse_args(sys.argv[2:])
+        t0 = time.time()
+        retest_mode(a.arm_list, a.B, expect_sha=a.sha, old_label_dir=a.old_label_dir,
+                    dry_run=a.dry_run)
+        print("elapsed", round(time.time() - t0, 1), "s")
+        sys.exit(0)
     if mode not in _MODES:
         print("modes:", " | ".join(_MODES))
         sys.exit(1)
