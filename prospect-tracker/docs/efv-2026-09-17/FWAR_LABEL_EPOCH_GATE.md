@@ -832,6 +832,92 @@ preconditions of part 3 were met when the step ran. Clause (l) binds this sectio
 reports what was measured, and it does not draw a conclusion the measurement does not
 support.
 
+### 2026-10-02: the arm set is fixed (O7, owner answer EPOCH-Q3)
+
+This entry records an owner answer and the arm set it fixes. It reports no measurement.
+
+**The answer.** The owner answered O7 on 2026-09-30 as EPOCH-Q3 (AskUserQuestion, recorded in
+`DECISIONS_FOR_OWNER.md` under 'ANSWERED 2026-09-30 (AskUserQuestion), Part 8 batch 1 (the
+fWAR label epoch)'): "R, A1 and A2", each to ship only if its own clauses are met, with no L1
+flooring, and with Arm R's flag built in the gap. Under clause (i) the arm set was fixed on
+2026-09-30, at the moment O7 was answered, and before any matrix was built at step F. The
+commit that carries this entry records it. It is written after both amendments above this
+part: the history note in the header (at `b6ebc1f1`) and the E5 amendment in part 3 (at
+`cd62ceb2`).
+
+**The factors admitted**, named against the factor table of clause (i):
+
+- F1, the basis (published fWAR, frozen per season), and F2, `RESOLVED_THROUGH` from 2025 to
+  2026, are admitted by owner decision (O1 and O2, part 1). They ship by decision and are
+  measured.
+- F3 Arm R (the never-MLB resolution fix), F4 A1 (the service-aligned window) and F5 A2 (the
+  neutral MiLB imputation) are admitted as label-definition candidates. Each ships only if
+  its own clauses are met on its own arm, read against E star as built under clause (i)'s
+  order of operations.
+- F6, F-DEF on the feed's fielding and positional runs, rides as the bundle arm inside step M
+  (note 7). No eFV matrix is built for it.
+- The L1 flooring is excluded; part 6 lists it among the factors that may not ride. No factor
+  outside this set enters the epoch.
+
+**The matrix count.** Five matrix factors are admitted, so the matrix set is seven per side:
+E0, E star, and one leave-one-out arm for each of the five matrix factors. It is a
+leave-one-out set and never a factorial. F6's bundle arm is read inside step M and adds no
+matrix. Arm R's flag, `NEVER_RESOLUTION_ARM_R` in `efv_dataset`, landed in the gap at
+`d450596c` and defaults off; the step F arm builder landed at `b660ec95` and has not been run
+on real data.
+
+**The preconditions of part 3 on 2026-10-02**, item by item. Part 3's table stays the read of
+2026-09-17; this is the read of this entry's date.
+
+- E1, the owner decisions. Answered by this date: O1 and O2 on 2026-09-17 (part 1); O3 and O4
+  on the evening of 2026-09-17 (`DECISIONS_FOR_OWNER.md`, 'ANSWERED 2026-09-17 (evening)'); O7
+  as EPOCH-Q3, "R, A1 and A2", on 2026-09-30 ('Part 8 batch 1'); and O5 as EPOCH-Q4, "Keep
+  eWAR v2 shown", on 2026-09-30 ('Part 8 batch 2 and the ETA multipliers'). Its
+  implementation, as the orchestrator ruled it on 2026-09-30 (EPOCH-Q4-IMPL, amended R1a): the
+  training label is published fWAR, and the fingerprint's `label=` term names that training
+  label build as `fwar@<vintage id>` from step D + U, as part 7 row D + U and part 8 say; every
+  display door keeps eWAR v2: the displayed WAR on player pages and WAR tables, the
+  player-card tick, the bullpen export's served WAR basis, every stamp that names the WAR a
+  reader sees, and the nightly that prices eWAR v2; fWAR appears as a reference column beside
+  eWAR v2 only after step Z, in its own task. Of the rest: O6 (the bust taxonomy), O8 (the Z1
+  re-test scope), O9 (serving a Z1 passer), O12 (Futures during the epoch, answered with O22)
+  and O13 (the engine WAG wording) were answered on the evening of 2026-09-17, in the same
+  section as O3 and O4. O10 (the model-class re-adjudication) was not asked as its own
+  question; the section 'OWNER INSTRUCTION 2026-09-24 (chat): eFV must beat consensus and the
+  industry, or be redone' records that the instruction effectively answers it, yes. O11 (step
+  M sequencing) is open: the section 'ANSWERED 2026-09-17 (evening)' lists it as open and
+  partly answered by the 5c correction, and no later answer is recorded; clause (j) point 1
+  already fixes step M's earliest date. So E1 no longer blocks step F, because O7 is answered
+  and recorded here; O4, which blocks step K's `war_basis` stamp, is answered; and the open O11
+  blocks no part 7 step under the blocking map.
+- E2, the identity repair and its tripwire test: met, with one named row outstanding. The
+  identity join landed at `a6e57036` with `test_career_war_identity_tripwire.py`, which is
+  green at HEAD on this date; one unbound label row, `conor_gillaspie`, is carried on its
+  manual review list.
+- E3, in its five parts: met. The frozen vintage `2026-10-02-0341299c20ec` with its
+  `fetched_at` (at `7e34799f`); the pitching loader in `saber_feed` (at `048763cf`); provider
+  `fwar` in `war_source`, servable and not the default (at `900fb8cf`); the rebase tool with a
+  provider parameter and one receipt schema (at `ecb0eb61`), run on a temporary database only;
+  and the pre-2011 seasons, cached inside the frozen vintage under O3 and O4 (at `7e34799f`).
+- E4: in hand since `3113b4f7`.
+- E5: as the dated amendment in part 3 records it. Its 5c-B and 5c-C half is waived by the
+  owner's answer EPOCH-Q1, under the proviso that step A pins the pre-epoch projections inputs
+  that amendment names; if step A cannot pin them, the waiver lapses as the amendment says.
+  Its 5c-A half reads as closed for 2026 without a verdict (`239ef253`), and its GRPO half
+  reads as taken (`e0829913`).
+- E6: met. The 2026 regular season ended on 2026-09-27, read from the StatsAPI schedule by
+  the freeze task, and the D9 freeze fetch was taken on 2026-10-02 (at `7e34799f`).
+- E7: the tool is in hand and the condition is not met. The independent label rebuild check
+  landed at `90d6153b`; it has not been run against the new matrices, so E7 is open on this
+  date and the blocking map's rule for it stands.
+- E8: met, as part 3 read it; nothing since has withdrawn it.
+
+**Nothing has been measured.** On this date no matrix of clause (i) has been built, no
+margin has been read, and no arm effect, residual or blast-radius figure exists:
+`../_pre_epoch_fwar_2026-10/` does not exist, `war_source.DEFAULT_PROVIDER` is `"ewar_v2"`,
+`efv_dataset.RESOLVED_THROUGH` is 2025, and step A has not started. From this entry on,
+nothing above part 9 of this document may be edited.
+
 ---
 
 Nothing in this document was measured against an fWAR-labelled fit. Every number above is
