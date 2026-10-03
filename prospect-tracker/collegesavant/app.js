@@ -643,7 +643,7 @@ function renderLeaderboard() {
     const on = c.key === state.sortKey;
     const caret = on ? (dir < 0 ? " ▾" : " ▴") : "";
     const lbl = c.gl ? `<span class="g-term" data-gl="${c.gl}">${c.label}</span>` : c.label;
-    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-sort="${c.key}" title="Sort by ${c.label}">${lbl}${caret}</th>`;
+    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-sort="${c.key}" tabindex="0" aria-sort="${lbAriaSort(on, dir)}" title="Sort by ${c.label}">${lbl}${caret}</th>`;
   }).join("");
   const body = visible.map((p, i) => {
     const cells = LB_COLUMNS.map((c) => {
@@ -674,7 +674,7 @@ function renderLeaderboard() {
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th>${head}</tr></thead>
       <tbody>${body || `<tr><td colspan="${LB_COLUMNS.length + 2}" class="note-line">No hitters match these filters.</td></tr>`}</tbody>
     </table></div></section>`;
-  app.querySelectorAll(".lb-th").forEach((th) => th.addEventListener("click", () => {
+  app.querySelectorAll(".lb-th").forEach((th) => lbSortKeys(th, "data-sort", () => {
     const k = th.getAttribute("data-sort");
     if (k === state.sortKey) { state.sortDir = -dir; }
     else { state.sortKey = k; const c2 = LB_COLUMNS.find((c) => c.key === k); state.sortDir = (c2 && c2.higherBetter) ? -1 : 1; }
@@ -885,7 +885,7 @@ function renderProspects() {
   const head = cols.map((c) => {
     const on = c.key === sortKey;
     const caret = on ? (dir < 0 ? " ▾" : " ▴") : "";
-    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-psort="${c.key}" title="Sort by ${c.label}">${legHead(c.label, flagOf(c))}${caret}</th>`;
+    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-psort="${c.key}" tabindex="0" aria-sort="${lbAriaSort(on, dir)}" title="Sort by ${c.label}">${legHead(c.label, flagOf(c))}${caret}</th>`;
   }).join("");
   const body = list.map((x, i) => {
     const nameCell = x.cs
@@ -914,7 +914,7 @@ function renderProspects() {
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th>${head}</tr></thead>
       <tbody>${body || `<tr><td colspan="${cols.length + 2}" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
     </table></div></section>`;
-  app.querySelectorAll(".lb-th").forEach((th) => th.addEventListener("click", () => {
+  app.querySelectorAll(".lb-th").forEach((th) => lbSortKeys(th, "data-psort", () => {
     const k = th.getAttribute("data-psort");
     if (k === sortKey) { state.prospectDir = -dir; }
     else { state.prospectSort = k; const c2 = cols.find((c) => c.key === k); state.prospectDir = (c2 && c2.hb) ? -1 : 1; }
@@ -958,6 +958,24 @@ function legHead(label, flag) {
   return flag ? `${label} <span class="trans-flag">${flag}</span>` : label;
 }
 const MUTED_CELL = ' style="opacity:0.55"';
+
+// QREA01: a re-rendering board's sort header (th.lb-th, tabindex 0) answers
+// Enter and Space as it answers a click, says its state through aria-sort,
+// and gets focus back after the re-render paints a fresh header row.
+function lbAriaSort(on, dir) {
+  return on ? (dir < 0 ? "descending" : "ascending") : "none";
+}
+function lbSortKeys(th, attr, go) {
+  th.addEventListener("click", go);
+  th.addEventListener("keydown", (e) => {
+    if (e.target !== th || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    const k = th.getAttribute(attr);
+    go();
+    const again = app.querySelector(`.lb-th[${attr}="${k}"]`);
+    if (again) again.focus();
+  });
+}
 
 function joinWords(xs) {
   return xs.length < 3 ? xs.join(" and ") : xs.slice(0, -1).join(", ") + ", and " + xs[xs.length - 1];
@@ -1054,12 +1072,15 @@ function renderProjections() {
       const notPredictive = r2 != null && r2 < 0.05;
       const flag = notPredictive ? ` <span class="trans-flag">not predictive</span>`
                  : (r2 != null && r2 < lowSignalR2()) ? ` <span class="trans-flag">low signal</span>` : "";
-      const rowStyle = notPredictive ? ` style="opacity:0.5"` : "";
-      return `<tr${rowStyle}><td class="tt-team">${label}${flag}</td>
-        <td class="tt-col">${r2 != null ? r2.toFixed(2) : " - "}</td>
-        <td class="tt-col">${f.band_sd != null ? "±" + f.band_sd : " - "}</td>
-        <td class="tt-col">${f.mae ?? " - "}</td>
-        <td class="tt-col">${cov}</td><td class="tt-col">${f.n ?? " - "}</td></tr>`;
+      // QREA02: the grey sits on the label and the numbers, never on the row,
+      // so the flag that explains the grey keeps its full contrast.
+      const dim = notPredictive ? ` style="opacity:0.5"` : "";
+      const lab = notPredictive ? `<span${dim}>${label}</span>` : label;
+      return `<tr><td class="tt-team">${lab}${flag}</td>
+        <td class="tt-col"${dim}>${r2 != null ? r2.toFixed(2) : " - "}</td>
+        <td class="tt-col"${dim}>${f.band_sd != null ? "±" + f.band_sd : " - "}</td>
+        <td class="tt-col"${dim}>${f.mae ?? " - "}</td>
+        <td class="tt-col"${dim}>${cov}</td><td class="tt-col"${dim}>${f.n ?? " - "}</td></tr>`;
     }).join("");
   const pband = (b, dec) => b == null ? " - " : (dec ? b.exp.toFixed(3).replace(/^0(?=\.)/, "") : b.exp.toFixed(1) + "%");
   // The board lists hitters at or above the pool's median PA by default (owner

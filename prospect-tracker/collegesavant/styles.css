@@ -103,7 +103,10 @@
 }
 .trans-flag {
   font-family: var(--font-retro-mono, ui-monospace, monospace); font-size: 9px;
-  text-transform: uppercase; letter-spacing: .03em; color: var(--gold);
+  text-transform: uppercase; letter-spacing: .03em;
+  /* QREA02: gold as reading text uses the site's text-gold (site.css), the
+     same hue at a readable depth; the border keeps the accent gold. */
+  color: var(--text-gold, #7D5F08);
   border: 1px solid var(--gold); padding: 0 4px;
 }
 .trans-note { font-size: 11px; color: var(--muted); line-height: 1.5; margin: 10px 0 0; }
@@ -140,6 +143,9 @@ td.tt-team { text-align: left; }
 /* Generic click-to-sort (table_sort.js) for the non-leaderboard boards. */
 .tt-table th { cursor: pointer; }
 .tt-table th[data-gen-sorted] { background: var(--chip); }
+/* QREA01: the site's focus ring drawn inside the sticky header cell, where the
+   scroll box would clip a ring drawn outside it. */
+.tt-table th[tabindex]:focus-visible { outline-offset: -2px; }
 .lb-pa { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); font-family: var(--font-retro-mono, ui-monospace, monospace); }
 .lb-pa input { width: 56px; }
 .lb-pa-note { font-size: 11px; color: var(--muted); font-family: var(--font-retro-mono, ui-monospace, monospace); }
