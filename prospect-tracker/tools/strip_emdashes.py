@@ -135,6 +135,19 @@ TARGETS: list[str] = [
     # MLB Scores (2026-10-02, SCORES_1_CORE_RULES): the pure core whose play
     # text, why sentences and reasons land in the scores payloads verbatim.
     "scores_core.py",
+    # COPY_0 (2026-10-02): producers of served copy outside this list when the
+    # served copy lint landed (copy_lint.EXTRA_PRODUCERS), and the CollegeSavant
+    # pitcher page. data_catalog.py writes the /sources/ prose, arb_gate_a.py
+    # the /arbitration/ loss text; the rest write labels and notes the pages
+    # render. build_glossary_data.py is already listed above.
+    "data_catalog.py",
+    "betting_shadow.py",
+    "management.py",
+    "win_expectancy.py",
+    "pal_conversion.py",
+    "eta.py",
+    "tools/arb_gate_a.py",
+    "collegesavant/pitcher_index.html",
 ]
 
 EM = "—"

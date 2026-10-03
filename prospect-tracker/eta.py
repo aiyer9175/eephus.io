@@ -9,14 +9,14 @@ MLB ETA projection.
 Produces a rough "what year will this prospect reach the majors?" estimate
 using four signals we already have in the DB:
 
-  1. Current level  — the baseline travel time to MLB (AAA ≈ 0.5 yr, etc.)
-  2. Performance    — ERA/OPS relative to level-typical values; dominating a
+  1. Current level - the baseline travel time to MLB (AAA ≈ 0.5 yr, etc.)
+  2. Performance - ERA/OPS relative to level-typical values; dominating a
                       level pulls the ETA in, struggling pushes it out
-  3. Age-for-level  — old for level → fast-tracked; young → may slow down
-  4. FV grade       — scouts' overall assessment; high-grade prospects get
+  3. Age-for-level - old for level → fast-tracked; young → may slow down
+  4. FV grade - scouts' overall assessment; high-grade prospects get
                       more organisational urgency behind their development
 
-The "level-typical" age and performance baselines are EMPIRICAL — computed
+The "level-typical" age and performance baselines are EMPIRICAL - computed
 at export time by `level_norms.compute_level_norms` over the most recent
 two seasons of `career_stats`. This sharpens the "young for level" signal
 considerably: empirical AAA median age is ~25.8, not the 24.0 the old
@@ -30,9 +30,9 @@ the base travel time, then rounded to the nearest calendar year. The
 result is a heuristic, not a model trained on historical debut timelines.
 
 Confidence levels:
-  high   — current level + performance stats + age available
-  medium — current level + age OR current level + stats (one signal missing)
-  low    — level only, or fell back to age/FV estimation with no level
+  high - current level + performance stats + age available
+  medium - current level + age OR current level + stats (one signal missing)
+  low - level only, or fell back to age/FV estimation with no level
 """
 
 from __future__ import annotations
@@ -43,17 +43,17 @@ from datetime import date
 
 
 # ── Base years remaining by current level ──────────────────────────────────
-# v39 — FIRST MEASURED RECALIBRATION (model-audit Phase 4b, WS-8;
+# v39 - FIRST MEASURED RECALIBRATION (model-audit Phase 4b, WS-8;
 # eta_backtest.py → data/eta_eval.json). Bases are now the Kaplan-Meier
 # MEDIAN years-to-debut per level over the 2018-2023 vintage cohorts
 # (n=7,205 listings): debuts are events, still-active non-debuted
 # players censor at observed follow-up, washed-out players stay in the
-# risk set forever (known never-debuts) — so these are NOT survivor
+# risk set forever (known never-debuts) - so these are NOT survivor
 # medians; the bust mass drags them honestly slower. Forward-chained
 # verdict vs the old v18/v38 hand-set table on identical debuted rows:
 # MAE 1.448 vs 1.993, within-1y 0.571 vs 0.405 (n=2,778). Disclosed
 # trade: overdue censored-actives 803→904 of 2,345.
-# DSL keeps the hand-set 7.5 — its debut curve never crosses 50%
+# DSL keeps the hand-set 7.5 - its debut curve never crosses 50%
 # (cure fraction dominates; only 2 of 124 vintage-listed DSL prospects
 # debuted in-window), so the KM median is undefined there.
 # v18 spacing rationale (level dominates the ±adjustments) still holds:
@@ -170,8 +170,8 @@ FG_BLEND_ARMS = ("A", "B")
 FG_BLEND_WEIGHT = 0.5
 FG_BLEND_FORTYMAN_SHIFT = 1
 
-# v38 — Item-4 ETA rebalance: shift weight from current level onto age.
-# The level base is modestly de-weighted (×0.90 — a ~10% compression of the
+# v38 - Item-4 ETA rebalance: shift weight from current level onto age.
+# The level base is modestly de-weighted (×0.90 - a ~10% compression of the
 # level term, so two players at different levels sit a touch closer and the
 # age-for-level term carries more of the differentiation), and the age_adj
 # tiers below are widened ~1.5×. Net effect: within ONE level tier, a young
@@ -235,7 +235,7 @@ def age_adj_for_diff(diff: float) -> float:
             return round(y0 + (y1 - y0) * (diff - x0) / (x1 - x0), 4)
     return 0.0
 
-# ── Static fallback expected ages — only used when the caller does not
+# ── Static fallback expected ages - only used when the caller does not
 # supply empirical numbers from level_norms (e.g. unit tests).
 EXPECTED_AGES: dict[str, float] = {
     "A":   21.0,
@@ -253,27 +253,27 @@ LEVEL_ERA_NORM: dict[str, float] = {
     "DSL": 4.40, "CPX": 4.30, "A": 4.00, "A+": 3.80, "AA": 3.70, "AAA": 4.00,
 }
 
-# ── All-Star Break — anchor for the "half-season elapsed" ETA tweak ────────
+# ── All-Star Break - anchor for the "half-season elapsed" ETA tweak ────────
 # MLB's actual ASG date floats year-to-year (~Jul 11-17 across recent
 # seasons). Using a stable Jul 15 cutoff for the H1/H2 split. A snapshot
-# taken on or after this date is treated as "post-break" — the prospect
+# taken on or after this date is treated as "post-break" - the prospect
 # has effectively consumed half of their current level's season already,
 # so their ETA gets a small pull-forward (see `HALF_SEASON_ADJ` below).
 # Nov-Feb fall into "offseason" because the MLB calendar doesn't have an
-# H1/H2 split in that window — the natural level cycle rolls into the
+# H1/H2 split in that window - the natural level cycle rolls into the
 # next regular season regardless.
 ALL_STAR_BREAK_MONTH = 7
 ALL_STAR_BREAK_DAY = 15
 # How much to subtract from base_years when post-break. Calibrated so a
 # AAA prospect (base_years=0.5) gets pulled in roughly half a level-cycle
-# — i.e., a late-July AAA player projects for a Sep call-up window or an
+# - i.e., a late-July AAA player projects for a Sep call-up window or an
 # early-next-year debut, not a full-year-from-now debut.
 HALF_SEASON_ADJ = -0.25
 
 
 def season_phase(snapshot_date) -> str:
     """Return one of 'pre_break' | 'post_break' | 'offseason' for a
-    given date. None / empty → 'pre_break' (conservative default —
+    given date. None / empty → 'pre_break' (conservative default - 
     treats unknown timing as start-of-season, so the H1/H2 adjustment
     doesn't fire spuriously)."""
     if not snapshot_date:
@@ -309,9 +309,9 @@ class ETAResult:
     # recent injuries / post-TJ recovery; 0 = no impact.
     health_adj: float = 0.0
     # H1/H2 adjustment in years. Post-All-Star-break snapshots subtract
-    # ~0.25 years from base — a AA prospect in late July has burned
+    # ~0.25 years from base - a AA prospect in late July has burned
     # roughly half their AA year already. Org-promotion tendency
-    # (when available) scales the magnitude — see
+    # (when available) scales the magnitude - see
     # `_org_promotion_phase_weight`. 0.0 in pre-break / offseason for
     # neutral orgs.
     half_season_adj: float = 0.0
@@ -327,7 +327,7 @@ class ETAResult:
     org_promo_h1_rate: float | None = None
     org_promo_h2_rate: float | None = None
     org_promo_weight:  float = 1.0   # 1.0 = neutral / no adjustment
-    # v31.8 — Half-year debut bucket. "early" = Apr-Jun (H1) debut
+    # v31.8 - Half-year debut bucket. "early" = Apr-Jun (H1) debut
     # projected; "late" = Jul-Sep (H2). Derived from:
     #   * fractional part of `total` years (>0.5 → leans late this year)
     #   * org H1/H2 tendency (H2-heavy → late; H1-heavy → early)
@@ -392,11 +392,11 @@ def _org_promotion_phase_weight(phase: str, org_tendency: dict | None) -> float:
     estimate_eta) for tools/eta_fg_blend_gate.py, which scores the KEEP arm.
 
       h2_rate ≥ 0.60 (clearly H2-heavy):
-        post-break  → 1.4   (pull ETA in harder — org loves H2 calls)
+        post-break → 1.4 (pull ETA in harder - org loves H2 calls)
         pre-break   → 0.5   (org rarely promotes in H1; weak adjustment)
       h1_rate ≥ 0.70 (clearly H1-heavy):
         post-break  → 0.6   (org already did most of its calls; soft adj)
-        pre-break   → 1.0   (neutral — H1-leaning org may still call up)
+        pre-break → 1.0 (neutral - H1-leaning org may still call up)
       otherwise (balanced ~40-60 split):
         always → 1.0 (no tweak from the baseline adjustment)
     """
@@ -522,11 +522,11 @@ def estimate_eta(
     is_pitcher : bool
         True for SP/RP; False for hitters.
     fv : float | None
-        Consensus FV grade (20–80 scale).
+        Consensus FV grade (20-80 scale).
     stats : dict | None
         Statline dict with keys like "ops", "era", "k_pct", "bb_pct".
     base_years : dict | None
-        Override for the per-level base travel-time table — used by
+        Override for the per-level base travel-time table - used by
         eta_backtest.py to score candidate recalibrations through the
         EXACT live code path. None → the module BASE_YEARS.
     fortyman_adj : float | None
@@ -641,7 +641,7 @@ def estimate_eta(
     # take longer if they make it at all (positive adj = later ETA).
     #
     # `diff = age - level_median`; positive = old for level.
-    # v31.11 — Extra-young tier added (≤-4yr from level mean). The
+    # v31.11 - Extra-young tier added (≤-4yr from level mean). The
     # 19-yo-at-AA case (Jesus Made) sits at diff = -4 and was hitting
     # the old -0.75 ceiling alongside the more common 3-yr-young
     # prospects. The new -1.00 tier lets truly precocious prospects
@@ -649,7 +649,7 @@ def estimate_eta(
     if age is not None and current_level in age_norm:
         expected = age_norm[current_level]
         diff = age - expected
-        # v38 — Item-4: age_adj tiers widened ~1.5× so age differentiates ETA
+        # v38 - Item-4: age_adj tiers widened ~1.5× so age differentiates ETA
         # strongly WITHIN a level tier (paired with the de-weighted level base
         # above). A 19yo at A+ (diff ≈ −3 → −1.15) now projects ~1.9y earlier
         # than a 24yo at A+ (diff ≈ +2 → +0.70), vs ~1.25y under the old tiers.
@@ -711,8 +711,8 @@ def estimate_eta(
     # the FV-to-MLB pipeline takes longer. We push the ETA back when:
     #   * is_post_tj=True and surgery is within ~18 months of today
     #     (the bulk of the recovery window). Add 1.0 year for pitchers.
-    #   * the 12-month IL-stint count is 3+ — chronic profile. Add 0.5.
-    #   * total IL days in last 12 months are 200+ — Add 0.5 on top.
+    # * the 12-month IL-stint count is 3+ - chronic profile. Add 0.5.
+    # * total IL days in last 12 months are 200+ - Add 0.5 on top.
     # Capped at +1.5 years total so a healthy-now prospect doesn't get
     # an obscure forecast for a single bad season.
     health_adj = 0.0
@@ -737,14 +737,14 @@ def estimate_eta(
         if health_adj > 0:
             signals += 1  # contributes to confidence-tier counting
 
-    # v12 — CURRENT IL push-out. The Sebastian Walcott case: out for
+    # v12 - CURRENT IL push-out. The Sebastian Walcott case: out for
     # the season but ETA still shows the current year because the
     # health profile only tracks rolling-12mo signals, not the
     # immediate "off the field right now" state. Read il_status and
     # add an explicit ETA pushback for active IL stints.
     #   * 60+ days on IL OR season-ending description → +1.0y
     #     (lost the year; ETA pushes to next season minimum)
-    #   * 30–59 days → +0.5y (significant chunk of season gone)
+    # * 30-59 days → +0.5y (significant chunk of season gone)
     #   * Active IL with unknown duration → +0.5y conservative
     # Stacks on top of `health_adj` but the COMBINED cap stays 2.5y
     # so a chronically-injured-AND-currently-IL prospect doesn't get
@@ -781,7 +781,7 @@ def estimate_eta(
     if phase == "post_break":
         half_season_adj = HALF_SEASON_ADJ * org_weight
     elif phase == "pre_break" and org_weight != 1.0:
-        # H2-heavy org during the pre-break window — the baseline H1
+        # H2-heavy org during the pre-break window - the baseline H1
         # adjustment is 0, but the org's tendency to call up POST-ASB
         # tells us a pre-ASB prospect is even less likely to debut
         # before the break. Apply a small forward push (positive adj)
@@ -792,8 +792,8 @@ def estimate_eta(
         half_season_adj = 0.0
 
     # ── Combine and clamp ──────────────────────────────────────────────────
-    # v31.9 — Per-level FLOOR on the cumulative pull-in. Without this,
-    # an elite young-for-level prospect at AA (e.g. Jesus Made — 19yo,
+    # v31.9 - Per-level FLOOR on the cumulative pull-in. Without this,
+    # an elite young-for-level prospect at AA (e.g. Jesus Made - 19yo,
     # AA, ~60 FV) gets age_adj −0.75 + fv_adj −0.50 + perf_adj −0.75
     # which collapses base 2.0 → 0.0 and the model says "Early 2026"
     # even though no 19yo in AA realistically debuts within months.
@@ -801,25 +801,25 @@ def estimate_eta(
     # years for A/A+/AA (where short ETAs by FV/perf alone are risky)
     # and only 25% for AAA (where short ETAs are believable).
     #
-    # v31.11 — Rebalanced YOUNG-floor table. The 0.75-AA young-floor
-    # introduced in v31.10 was too conservative — Jesus Made (19yo
+    # v31.11 - Rebalanced YOUNG-floor table. The 0.75-AA young-floor
+    # introduced in v31.10 was too conservative - Jesus Made (19yo
     # AA, .920 OPS, 60 FV) was forecast for 2028 Early, but he's a
     # realistic 2027 callup given the quality signals stacking. The
     # new YOUNG floors (AA 0.55, A+ 0.65, A 0.70) let the quality
-    # cluster compress base to ~1.1y for that profile — round →
+    # cluster compress base to ~1.1y for that profile - round →
     # 2027 Late, which matches the user-anchored expectation.
     #
-    # v31.11 — also adds an ORG-AGGRESSIVENESS multiplier. The
+    # v31.11 - also adds an ORG-AGGRESSIVENESS multiplier. The
     # `org_promotion_tendency.aggressiveness_index` field (computed in
     # storage.py against the league-median promotion volume) scales
     # the floor: top-quintile aggressive orgs (LAD/TBR-types) get
-    # floor × 0.90 — they call prospects up sooner given equal
+    # floor × 0.90 - they call prospects up sooner given equal
     # quality. Bottom-quintile conservative orgs get floor × 1.10.
     # League-median orgs get 1.00 (no change). Missing tendency data
     # → 1.00 (neutral fallback).
     #
     # The floor never INCREASES the projection beyond what the model
-    # would otherwise produce — only prevents over-compression.
+    # would otherwise produce - only prevents over-compression.
     _LEVEL_PULL_FLOOR_FRAC = {
         "AAA": 0.25,   # AAA prospects can debut very quickly
         "AA":  0.50,
@@ -866,7 +866,7 @@ def estimate_eta(
     if _pull_frac is not None and base is not None:
         # Floor applies to the level-base + prospect-quality cluster
         # (perf/age/fv/statcast). Health + half-season adjustments
-        # apply on top — they're separate timing signals (current IL,
+        # apply on top - they're separate timing signals (current IL,
         # in-season elapsed) that should still shift ETA regardless
         # of the prospect's quality ceiling.
         floor = base * _pull_frac * _org_floor_mult
@@ -898,7 +898,7 @@ def estimate_eta(
     else:
         confidence = "low"
 
-    # v31.8 — Half-year bucket. Three signals contribute:
+    # v31.8 - Half-year bucket. Three signals contribute:
     #   1. Fractional part of `total`: if the eta_year rounded UP (i.e.
     #      total - round(total) >= 0), the prospect is closer to the
     #      START of the year → "early". If it rounded DOWN (total
@@ -916,9 +916,9 @@ def estimate_eta(
     # April call-ups for plausible 2H impact bats).
     half_score = 0.0
     frac = total - round(total)
-    if frac > 0.15:        # we rounded down — already past the year mark
+    if frac > 0.15: # we rounded down - already past the year mark
         half_score += 0.5
-    elif frac < -0.15:     # rounded up — at the start of the year
+    elif frac < -0.15: # rounded up - at the start of the year
         half_score -= 0.5
     # Org tendency layer (lab only since 2026-09-30, ETA-3: the served call passes None).
     if org_promotion_tendency and (org_promotion_tendency.get("sample_n") or 0) >= 5:

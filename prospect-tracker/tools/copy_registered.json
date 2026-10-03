@@ -1,0 +1,363 @@
+{
+ "_about": "Copy-lint exemptions (docs/COPY_STYLE.md section 1.5). A served sentence that contains an entry's text, sits inside it, or matches its regex is exempt from every served rule; FIELD_NAME text is masked for L6 to L8; LAB_LOG names a field the served lint skips (em-dash rule only). A REGISTERED_CLAIM must name the test that contains its text (pinned_by); test_copy_gates.py checks it.",
+ "classes": [
+  "LEGAL",
+  "CREDIT",
+  "IMPLIED_ODDS",
+  "REGISTERED_CLAIM",
+  "THIRD_PARTY",
+  "LAB_LOG",
+  "FAQ",
+  "FIELD_NAME",
+  "OWNER_QUOTE"
+ ],
+ "entries": [
+  {
+   "class": "LEGAL",
+   "text": "Informational and entertainment only.",
+   "reason": "Betting disclaimer heading (build_site.BETTING_DISCLAIMER): the legal floor the module ships under."
+  },
+  {
+   "class": "LEGAL",
+   "text": "eephus.io is not a sportsbook: no wagers, no cut, no affiliate links.",
+   "reason": "Betting disclaimer."
+  },
+  {
+   "class": "LEGAL",
+   "text": "Nothing here is betting advice.",
+   "reason": "Betting disclaimer."
+  },
+  {
+   "class": "LEGAL",
+   "text": "Sports betting is not legal in every state",
+   "reason": "Betting disclaimer, every betting surface and the /diamond/ fine print."
+  },
+  {
+   "class": "LEGAL",
+   "text": "Odds are captured when a selection posts and move after.",
+   "reason": "Betting disclaimer."
+  },
+  {
+   "class": "LEGAL",
+   "text": "No model wins every bet.",
+   "reason": "Betting disclaimer."
+  },
+  {
+   "class": "LEGAL",
+   "text": "If betting stops being fun, call 1-800-GAMBLER",
+   "reason": "Problem-gambling helpline line."
+  },
+  {
+   "class": "LEGAL",
+   "text": "Sports betting content on this site is informational and for entertainment.",
+   "reason": "/diamond/ fine print."
+  },
+  {
+   "class": "LEGAL",
+   "text": "No affiliate links.",
+   "reason": "/diamond/ fine print."
+  },
+  {
+   "class": "LEGAL",
+   "text": "the logos are the clubs' trademarks",
+   "reason": "Trademark line on /sources/ (ESPN logo images)."
+  },
+  {
+   "class": "CREDIT",
+   "text": "Noah J. Dengler / @ARKNDJL",
+   "reason": "The CREATED BY build banner (build_site.CREATED_BY_BANNER, PROSPX .build-banner)."
+  },
+  {
+   "class": "CREDIT",
+   "regex": "Swing\\+ (\\(Will Cahoon\\)|by Will Cahoon)|Built by Will Cahoon",
+   "reason": "The Swing+ credit to its author."
+  },
+  {
+   "class": "IMPLIED_ODDS",
+   "text": "never graded on a postseason game",
+   "reason": "Postseason label on betting records (QUAL_6, DISPLAY specs)."
+  },
+  {
+   "class": "IMPLIED_ODDS",
+   "text": "Implied probability includes the vig.",
+   "reason": "Odds converter label."
+  },
+  {
+   "class": "IMPLIED_ODDS",
+   "text": "Implied probability = 1 / decimal odds",
+   "reason": "Implied-odds formula label."
+  },
+  {
+   "class": "FAQ",
+   "text": "Is any of this gated right now?",
+   "reason": "FAQ heading: a question by format (/diamond/ Questions, /sources/)."
+  },
+  {
+   "class": "FAQ",
+   "text": "Will the price go up?",
+   "reason": "FAQ heading: a question by format (/diamond/ Questions, /sources/)."
+  },
+  {
+   "class": "FAQ",
+   "text": "Where is the Card Market?",
+   "reason": "FAQ heading: a question by format (/diamond/ Questions, /sources/)."
+  },
+  {
+   "class": "FAQ",
+   "text": "Do you guarantee I will make money betting?",
+   "reason": "FAQ heading: a question by format (/diamond/ Questions, /sources/)."
+  },
+  {
+   "class": "FAQ",
+   "text": "What happens to the free site?",
+   "reason": "FAQ heading: a question by format (/diamond/ Questions, /sources/)."
+  },
+  {
+   "class": "FAQ",
+   "text": "Who is behind this?",
+   "reason": "FAQ heading: a question by format (/diamond/ Questions, /sources/)."
+  },
+  {
+   "class": "FAQ",
+   "text": "Building on the data?",
+   "reason": "FAQ heading: a question by format (/diamond/ Questions, /sources/)."
+  },
+  {
+   "class": "FAQ",
+   "text": "Why a consensus instead of one source?",
+   "reason": "FAQ heading in the Library consensus FAQ: a question by format."
+  },
+  {
+   "class": "FAQ",
+   "text": "How are sources weighted?",
+   "reason": "FAQ heading in the Library consensus FAQ: a question by format."
+  },
+  {
+   "class": "FAQ",
+   "text": "How often does it update?",
+   "reason": "FAQ heading in the Library consensus FAQ: a question by format."
+  },
+  {
+   "class": "FAQ",
+   "text": "What's the track record - and its limits?",
+   "reason": "FAQ heading in the Library consensus FAQ: a question by format."
+  },
+  {
+   "class": "LAB_LOG",
+   "reason": "The registry lab log (per-row `notes`): em-dash rule only until COPY_11 adds `summary` and the notes move behind a collapsed Lab log (SP-Q4, asked; recommended answer built).",
+   "source": "data/model_registry.json",
+   "field": "notes"
+  },
+  {
+   "class": "OWNER_QUOTE",
+   "text": "While you go through the site for all of this, I'd also like you to look to remove any unnecessary flavor text or unnecessary copy.",
+   "reason": "Owner verbatim (DECISIONS_FOR_OWNER.md); quoted in docs/COPY_STYLE.md as the register."
+  },
+  {
+   "class": "OWNER_QUOTE",
+   "text": "The copy that you feel is essential should be written in my/a human voice and not have any hallmarks of AI/LLM text and should be as condensed and use mathematical/economical/sabermetric language",
+   "reason": "Owner verbatim (DECISIONS_FOR_OWNER.md); quoted in docs/COPY_STYLE.md as the register."
+  },
+  {
+   "class": "OWNER_QUOTE",
+   "text": "Use whichever model wins",
+   "reason": "Owner verbatim (DECISIONS_FOR_OWNER.md); quoted in docs/COPY_STYLE.md as the register."
+  },
+  {
+   "class": "OWNER_QUOTE",
+   "text": "Each index's own history, and create+land the prospect arbitration model",
+   "reason": "Owner verbatim (DECISIONS_FOR_OWNER.md); quoted in docs/COPY_STYLE.md as the register."
+  },
+  {
+   "class": "OWNER_QUOTE",
+   "text": "Can't we use our own projected arbitration/pre-arbitration salaries?",
+   "reason": "Owner verbatim (DECISIONS_FOR_OWNER.md); quoted in docs/COPY_STYLE.md as the register."
+  },
+  {
+   "class": "OWNER_QUOTE",
+   "text": "Let's skip the benchmark for Steamer/ZiPS projections, our projections shouldn't be influenced by other projection systems",
+   "reason": "Owner verbatim (DECISIONS_FOR_OWNER.md); quoted in docs/COPY_STYLE.md as the register."
+  },
+  {
+   "class": "OWNER_QUOTE",
+   "text": "embed the video we arent a commercial site, real sports app uses MLB.com embedded highlights and they're commercialized",
+   "reason": "Owner verbatim (DECISIONS_FOR_OWNER.md); quoted in docs/COPY_STYLE.md as the register."
+  },
+  {
+   "class": "OWNER_QUOTE",
+   "text": "give credit to the club that actually develops the player, not just the club that signed/acquired them",
+   "reason": "Owner verbatim (DECISIONS_FOR_OWNER.md); quoted in docs/COPY_STYLE.md as the register."
+  },
+  {
+   "class": "OWNER_QUOTE",
+   "text": "eFV has to beat consensus, rewrite the driver system and/or scrap it entirely if we can't find a way for it to beat consensus",
+   "reason": "Owner verbatim (DECISIONS_FOR_OWNER.md); quoted in docs/COPY_STYLE.md as the register."
+  },
+  {
+   "class": "FIELD_NAME",
+   "text": "`honest`",
+   "reason": "A payload field name printed in backticks."
+  },
+  {
+   "class": "FIELD_NAME",
+   "text": "`vintage`",
+   "reason": "A payload field name printed in backticks."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "watch-only for two independent reasons",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "Clearing one leg does not reopen the market",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "Clearing the evidence leg reopens it",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "rides a published row as disclosure and bars nothing here",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "Clearing the theory leg reopens it",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "Both ride any published row on this market as disclosure",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "is closed on both legs",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "does not say which leg can refuse a slot",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "its theory leg bars it",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "and none of those are inside",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "a badge is not a claim of eligibility",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "What the graded sample was priced on",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "prices the probable listed at the nightly build",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "The dark columns, which priced nothing",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "information and not an outcome leak",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "completed-game cache, which is not the graded sample",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "not the exact pricer on the board",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "always take the home team",
+   "pinned_by": "test_betting_policy_copy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "not a registered slot market policy",
+   "pinned_by": "test_betting_slot_market_policy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "whose ledger leg is open",
+   "pinned_by": "test_betting_slot_market_policy.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "a 10 percent discount rate minus 3 percent annual win-cost growth",
+   "pinned_by": "test_claims_freshness.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "a 10% discount rate minus 3% annual win-cost growth",
+   "pinned_by": "test_claims_freshness.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "the base config's 6 years / 9% are the legacy prospx_current values",
+   "pinned_by": "test_claims_freshness.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "a 97%-deferred sticker is not the same liability as level cash",
+   "pinned_by": "test_claims_freshness.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "rescaled to the sticker total",
+   "pinned_by": "test_claims_freshness.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  },
+  {
+   "class": "REGISTERED_CLAIM",
+   "text": "The board also ranks provisional prospects no scouting source has graded yet",
+   "pinned_by": "test_smoke_prospx_masthead_count.py",
+   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
+  }
+ ]
+}
