@@ -4860,13 +4860,19 @@ def fetch_il_status(mlbam_id: int) -> dict | None:
 
 
 def bulk_fetch_il_status(mlbam_ids: Iterable[int],
-                         max_workers: int = 8) -> dict[int, dict]:
+                         max_workers: int = 24) -> dict[int, dict]:
     """Concurrent IL-status lookup for many players. Returns
     {mlbam_id: il_dict} only for players currently on IL.
 
     Uses the same /transactions endpoint that the IFA + trade pipelines
     already hit, so cached payloads (30 days for IFA) are reused — only
-    players whose cache TTL has elapsed cost a network call here."""
+    players whose cache TTL has elapsed cost a network call here.
+
+    The default of 24 workers matches bulk_fetch_player_transactions, which
+    reads the same endpoint at 24 in the same run (RU08, 2026-10-03): at 8
+    workers a cold pass over 5,877 players took 116.7 s with no HTTP
+    warning; the fetch set, cache keys, TTL and derivation are unchanged by
+    the worker count, and run_monthly passes its own --workers cap through."""
     ids = [int(mid) for mid in mlbam_ids if mid is not None]
     if not ids:
         return {}
