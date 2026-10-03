@@ -501,10 +501,60 @@ def load_grpo_model(model_path: Path | None = None) -> Any | None:
 # Scoring active prospects
 # ---------------------------------------------------------------------------
 
+def _group_peer_index(training_set: list[dict] | None
+                      ) -> dict[str, tuple[list[dict], list[list[float]]]]:
+    """group key -> (training rows in that group, their feature vectors).
+
+    Built ONCE per export (RU13, 2026-10-03): scoring the board used to re-filter
+    the whole training set and re-vectorise every peer for each of ~4,700
+    prospects. Rows keep training-set order, which is the order the per-player
+    filter saw, so distance ties resolve to the same comp.
+    """
+    index: dict[str, tuple[list[dict], list[list[float]]]] = {}
+    for r in training_set or []:
+        peers, vecs = index.setdefault(r["group"], ([], []))
+        peers.append(r)
+        vecs.append(_feature_vector(r["features"]))
+    return index
+
+
+def _comps_for(v0: list[float], peers: list[dict],
+               peer_vecs: list[list[float]]) -> list[dict]:
+    """Top-3 most similar historical peers (Euclidean distance on the feature
+    vector), ties to training-set order. The distance is summed in plain Python
+    in feature order on purpose: a vectorised sum rounds differently in the last
+    ulp and could reorder a near-tie, and the comps list is a served field."""
+    dists = []
+    for i, pv in enumerate(peer_vecs):
+        d = math.sqrt(sum((a-b)**2 for a,b in zip(v0, pv)))
+        dists.append((d, i))
+    dists.sort()
+    comps: list[dict] = []
+    for _, i in dists[:3]:
+        r = peers[i]
+        comps.append({
+            "player_name":  r.get("player_name"),
+            "player_key":   r.get("player_key"),
+            "outcome":      round(r["outcome"], 2),
+            "fv":           r["features"].get("fv"),
+            "war_per_yr":   r["features"].get("war_per_yr"),
+        })
+    return comps
+
+
+def _clip_score(raw_score: float) -> float:
+    """Policy output -> served breakout_score: clipped to [0,1], 3 decimals."""
+    return round(max(0.0, min(1.0, raw_score)), 3)
+
+
 def score_player(player: dict, model: Any,
                   training_set: list[dict] | None = None,
                   level_norms: dict | None = None) -> dict:
     """Score an active prospect using the GRPO policy.
+
+    Single-player entry (the CLI --player path). export_grpo_scores scores the
+    whole board through one batched predict and a shared peer index; both paths
+    assemble the row with _assemble_score, so the served fields cannot drift.
 
     Returns:
       breakout_score   [0,1] within-group probability of outperforming current FV
@@ -521,47 +571,34 @@ def score_player(player: dict, model: Any,
 
     feats = extract_features(player, level_norms)
     group = assign_group(player, feats)
-    xvec  = np.array([_feature_vector(feats)], dtype=float)
+    vec   = _feature_vector(feats)
 
     # Policy score
     if model is not None:
         try:
-            raw_score = float(model.predict(xvec)[0])
-            breakout_score = round(max(0.0, min(1.0, raw_score)), 3)
+            breakout_score = _clip_score(
+                float(model.predict(np.array([vec], dtype=float))[0]))
         except Exception:
             breakout_score = 0.5
     else:
         breakout_score = 0.5
 
+    peers = [r for r in training_set if r["group"] == group] if training_set else []
+    peer_vecs = [_feature_vector(r["features"]) for r in peers]
+    return _assemble_score(player, feats, vec, group, breakout_score, peers, peer_vecs)
+
+
+def _assemble_score(player: dict, feats: dict, vec: list[float], group: str,
+                    breakout_score: float, peers: list[dict],
+                    peer_vecs: list[list[float]]) -> dict:
+    """The served per-player GRPO row, from an already-predicted breakout_score."""
     # FV adjustment: breakout_score above 0.6 → positive, below 0.4 → negative
     # Scale: 0→-8, 0.5→0, 0.7→+5, 0.9→+15
     fv_adj = round((breakout_score - 0.5) * 30, 1)   # linear: [-15, +15]
 
-    # Find historical comps from training set
-    comps: list[dict] = []
-    group_size = 0
-    if training_set:
-        group_peers = [r for r in training_set if r["group"] == group]
-        group_size  = len(group_peers)
-
-        # Rank by feature similarity (Euclidean distance on normalized features)
-        peer_vecs = [_feature_vector(r["features"]) for r in group_peers]
-        if peer_vecs:
-            v0 = _feature_vector(feats)
-            dists = []
-            for i, pv in enumerate(peer_vecs):
-                d = math.sqrt(sum((a-b)**2 for a,b in zip(v0, pv)))
-                dists.append((d, i))
-            dists.sort()
-            for _, i in dists[:3]:
-                r = group_peers[i]
-                comps.append({
-                    "player_name":  r.get("player_name"),
-                    "player_key":   r.get("player_key"),
-                    "outcome":      round(r["outcome"], 2),
-                    "fv":           r["features"].get("fv"),
-                    "war_per_yr":   r["features"].get("war_per_yr"),
-                })
+    # Historical comps from the training set (group peers)
+    group_size = len(peers)
+    comps = _comps_for(vec, peers, peer_vecs) if peer_vecs else []
 
     return {
         "player_key":     player.get("player_key"),
@@ -702,9 +739,17 @@ def export_grpo_scores(
                      "%s and %s NOT refreshed", out_path.name, public_path.name)
         return {"error": "model training failed"}
 
-    # Score all active prospects and build group membership index
-    scores = []
+    # Score all active prospects and build group membership index. One pass
+    # extracts each prospect's features (RU13, 2026-10-03: two passes used to
+    # extract them twice, and the scoring pass predicted a 1-row array per
+    # prospect and re-filtered the training set per prospect). Tree-ensemble
+    # prediction is row-independent, so every row goes through ONE predict
+    # call, and the peer index is built once; scores and comps are byte-identical
+    # to the per-player path (proof table in the commit body).
+    import numpy as np
+
     group_members: dict[str, list[dict]] = {}   # group → list of {player_key, name, fv, age, breakout_score}
+    pending: list[tuple[dict, dict, str, list[float]]] = []   # active_players order
 
     for p in active_players:
         if not p.get("player_key"):
@@ -712,7 +757,7 @@ def export_grpo_scores(
         try:
             feats = extract_features(p, level_norms)
             group = assign_group(p, feats)
-            # Register in group membership (we'll attach scores after)
+            # Register in group membership (scores attached after prediction)
             group_members.setdefault(group, []).append({
                 "player_key":  p.get("player_key"),
                 "player_name": p.get("player_name"),
@@ -722,27 +767,44 @@ def export_grpo_scores(
                 "age":         feats.get("age"),
                 "current_level": p.get("current_level"),
                 "age_vs_level":  feats.get("age_vs_level"),
-                "_feats":      feats,   # temp, removed before export
             })
         except Exception:
-            pass
-
-    for p in active_players:
-        if not p.get("player_key"):
             continue
         try:
-            s = score_player(p, model, training_set, level_norms)
-            scores.append(s)
+            pending.append((p, feats, group, _feature_vector(feats)))
         except Exception:
             _log.debug("grpo: scoring failed for %s", p.get("player_key"))
 
-    # Attach breakout scores to group membership entries and clean temp fields
+    raw_scores: list[float] = []
+    if pending:
+        X = np.array([vec for _, _, _, vec in pending], dtype=float)
+        try:
+            raw_scores = [float(v) for v in model.predict(X)]
+        except Exception:
+            # Same fallback the per-player path had: a row the policy cannot
+            # score is served neutral (0.5), the others still get their score.
+            for _, _, _, vec in pending:
+                try:
+                    raw_scores.append(float(model.predict(np.array([vec], dtype=float))[0]))
+                except Exception:
+                    raw_scores.append(0.5)
+
+    scores = []
+    peer_index = _group_peer_index(training_set)
+    for (p, feats, group, vec), raw in zip(pending, raw_scores):
+        try:
+            peers, peer_vecs = peer_index.get(group, ([], []))
+            scores.append(_assemble_score(p, feats, vec, group, _clip_score(raw),
+                                          peers, peer_vecs))
+        except Exception:
+            _log.debug("grpo: scoring failed for %s", p.get("player_key"))
+
+    # Attach breakout scores to group membership entries
     score_by_key = {s["player_key"]: s.get("breakout_score", 0.5) for s in scores}
     clean_group_members: dict[str, list[dict]] = {}
     for grp, members in group_members.items():
         for m in members:
             m["breakout_score"] = round(score_by_key.get(m["player_key"], 0.5), 3)
-            m.pop("_feats", None)
         clean_group_members[grp] = sorted(members, key=lambda m: m["breakout_score"], reverse=True)
 
     # Attach active group members to each player's score entry
