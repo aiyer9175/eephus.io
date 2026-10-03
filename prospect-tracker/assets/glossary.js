@@ -3585,6 +3585,7 @@ function _progSeriesRows(prog) {
     .filter(f => _PROG_CHART_FRAMES.includes(f));
   return _progRows(prog).filter(r => r.role !== "tilted" && r.tilted !== true
     && r.role !== "secondary" && r.role !== "superseded" && allowed.includes(r.frame)
+    && (!_progIsScreen(r) || _progScreenAdmitted(r))
     && _progConsLeg(r) && _progConsLeg(r).delta != null);
 }
 
@@ -3604,6 +3605,24 @@ function _progCorrectionName(r) {
 
 function _progConsLeg(r) {
   return ((r && r.deltas && r.deltas.vs_prospx_consensus) || {}).spearman || null;
+}
+
+// Screening lab rows (EFV3 lane B s5, tools/efv_screen_lab.py): one development row
+// per measured arm, model_id "efv_v2_screen:wave<n>:<candidate>:<side>". They sit in
+// their own collapsed block under the dated table, never in it, and the chart draws
+// one only when its registered run ADMITTED it (verdict PASS and exploratory false),
+// hollow, at the lv_dev offset. An exploratory row, or a row with no verdict, is
+// listed and never drawn. Admission is to the gate's candidate list, never a claim.
+const _PROG_SCREEN_PREFIX = "efv_v2_screen:";
+
+function _progIsScreen(r) {
+  return !!r && (String(r.model_id || "").indexOf(_PROG_SCREEN_PREFIX) === 0
+    || (!!r.screening && typeof r.screening === "object"));
+}
+
+function _progScreenAdmitted(r) {
+  return _progIsScreen(r) && r.verdict === "PASS"
+    && !!r.screening && r.screening.exploratory === false;
 }
 
 function _progFrameLabel(prog, fid) {
@@ -3689,7 +3708,8 @@ function _progDateLabel(iso) {
 // Horizontal offset of a mark from its date, so rows that share a date do not
 // overprint: a headline candidate sits right of the headline row, correction
 // rows further right, development rows left (lv_dev further than vm_dev), and a
-// rebuilt-V2 development row (one that names its statistic) left of those.
+// rebuilt-V2 development row (one that names its statistic) left of those. An
+// admitted screening candidate sits at the lv_dev offset itself.
 function _progDx(prog, r) {
   const cand = r.role === "headline_candidate";
   if (_progIsCorrection(prog, r)) return cand ? 27 : 18;
@@ -3698,6 +3718,7 @@ function _progDx(prog, r) {
   if (cand) return 9;
   if (r.role !== "development") return 0;
   const base = r.frame === "lv_dev" ? -18 : -9;
+  if (_progIsScreen(r)) return base;
   return r.statistic ? base - 18 : base;
 }
 
@@ -3764,6 +3785,9 @@ function _methProgressChart(prog) {
       mark = `<path d="M ${x.toFixed(1)},${(y - 6).toFixed(1)} L ${(x + 6).toFixed(1)},${y.toFixed(1)} L ${x.toFixed(1)},${(y + 6).toFixed(1)} L ${(x - 6).toFixed(1)},${y.toFixed(1)} Z" fill="${col}" stroke="var(--bg-secondary)" stroke-width="1">${tip}</path>`;
     } else if (cand) {
       mark = `<path d="M ${(x - 4.5).toFixed(1)},${(y - 4.5).toFixed(1)} L ${(x + 4.5).toFixed(1)},${(y - 4.5).toFixed(1)} L ${(x + 4.5).toFixed(1)},${(y + 4.5).toFixed(1)} L ${(x - 4.5).toFixed(1)},${(y + 4.5).toFixed(1)} Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="2">${tip}</path>`;
+    } else if (_progIsScreen(r)) {
+      // An admitted screening candidate: hollow with a dashed ring, never a claim.
+      mark = `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="var(--bg-secondary)" stroke="${col}" stroke-width="2" stroke-dasharray="2,1.5">${tip}</circle>`;
     } else if (dev) {
       mark = `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="var(--bg-secondary)" stroke="${col}" stroke-width="2">${tip}</circle>`;
     } else {
@@ -3780,7 +3804,8 @@ function _methProgressChart(prog) {
   });
   const ticks = kept.reverse().map(t =>
     `<text x="${sx(t).toFixed(1)}" y="${MT + iH + 16}" text-anchor="middle" font-size="10" fill="var(--text-secondary)" font-weight="600">${escapeHtml(_progDateLabel(new Date(t).toISOString()))}</text>`).join("");
-  const hasDev = rows.some(r => r.role === "development");
+  const hasDev = rows.some(r => r.role === "development" && !_progIsScreen(r));
+  const hasScreen = rows.some(r => _progIsScreen(r));
   const candRow = rows.find(r => r.role === "headline_candidate");
   const hasLook = rows.some(r => r.trigger === "look");
   const hasCorr = anyCorr;
@@ -3788,7 +3813,8 @@ function _methProgressChart(prog) {
     `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};border-radius:50%;"></span>${escapeHtml(_progFrameLabel(prog, prog.headline_frame || "vm"))} frame (headline)</span>`,
     candRow ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};"></span>${escapeHtml(_progFrameLabel(prog, candRow.frame))} (headline candidate, not yet the claim)</span>` : "",
     hasDev ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--bg-secondary);border:2px solid ${col};border-radius:50%;"></span>development frame, spent, not a claim</span>` : "",
-    rows.some(r => r.statistic) ? `<span class="meth-legend-key">a development row that names its statistic (the rebuilt V2) reads Spearman within side and vintage, the statistic registered for the reserved reads; its pooled reading sits in the table</span>` : "",
+    hasScreen ? `<span class="meth-legend-key"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="var(--bg-secondary)" stroke="${col}" stroke-width="1.6" stroke-dasharray="2,1.5"/></svg>admitted candidate (development, not a claim)</span>` : "",
+    rows.some(r => r.statistic && !_progIsScreen(r)) ? `<span class="meth-legend-key">a development row that names its statistic (the rebuilt V2) reads Spearman within side and vintage, the statistic registered for the reserved reads; its pooled reading sits in the table</span>` : "",
     hasLook ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${col};transform:rotate(45deg);"></span>reserved-frame look</span>` : "",
     hasCorr ? `<span class="meth-legend-key"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M 6,1 L 11,10.5 L 1,10.5 Z" fill="var(--bg-secondary)" stroke="${col}" stroke-width="1.6"/></svg>correction or frame change: a fix to how eFV is scored, to the rows it is trained and scored on, or a move of the headline to another frame, not model progress</span>` : "",
     floor != null ? `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);opacity:.35;"></span>plus or minus the noise floor (${_progFmt(floor, 3)})</span>` : "",
@@ -3862,7 +3888,7 @@ function _methProgressTable(prog) {
   const rows = _progRows(prog);
   if (!rows.length) return "";
   const head = `<thead><tr><th>Date</th><th>Model</th><th>Frame</th><th>n</th><th>eFV ρ / AUC</th><th>Consensus</th><th>Pipeline</th><th>FanGraphs</th><th>Delta vs consensus (CI95)</th><th>Floor</th><th>Verdict</th><th>Note</th></tr></thead>`;
-  const main = rows.filter(r => r.role !== "tilted" && r.tilted !== true && r.role !== "secondary").slice().reverse();
+  const main = rows.filter(r => r.role !== "tilted" && r.tilted !== true && r.role !== "secondary" && !_progIsScreen(r)).slice().reverse();
   const tilted = rows.filter(r => r.role === "tilted" || r.tilted === true).slice().reverse();
   const secondary = rows.filter(r => r.role === "secondary" && r.tilted !== true).slice().reverse();
   const mainHtml = main.length
@@ -3884,13 +3910,69 @@ function _methProgressTable(prog) {
   </div>`;
 }
 
+// One screening row: the arm's own numbers, copied by efv_progress.py from
+// the screening artifact; nothing here computes or rounds a claim.
+function _progScreenRowHtml(r) {
+  const parts = String(r.model_id || "").split(":");
+  const sc = r.screening || {};
+  const leg = ((r.deltas && r.deltas.vs_efv_v2_base) || {}).spearman || {};
+  const mv = r.model_version || {};
+  const folds = sc.admitted_folds != null
+    ? `<br><span class="meth-sub">admitted in ${escapeHtml(String(sc.admitted_folds))} fold${Number(sc.admitted_folds) === 1 ? "" : "s"}</span>` : "";
+  const delta = leg.delta != null
+    ? `${_progSigned(leg.delta, 4)}<br><span class="meth-sub">CI95 ${escapeHtml(_progCi(leg.ci95, 3))}; lower bound ${_progSigned(leg.lb95, 4)}</span>` : "-";
+  const twin = sc.twin_inside_floor === true ? "inside its floor"
+    : sc.twin_inside_floor === false ? "outside its floor" : "-";
+  const admitted = _progScreenAdmitted(r) ? `<br><span class="meth-sub">admitted to the candidate list</span>` : "";
+  const expl = sc.exploratory === true ? `<br><span class="sacc-chip-warn">exploratory, no verdict formed</span>` : "";
+  return `<tr>
+    <td>${escapeHtml(r.date || "")}</td>
+    <td>${escapeHtml(parts[2] || r.model_id || "-")}${sc.wave != null ? ` <span class="meth-sub">wave ${escapeHtml(String(sc.wave))}</span>` : ""}</td>
+    <td>${escapeHtml(parts[3] || "-")}</td>
+    <td>${escapeHtml(sc.head ? String(sc.head) : "coverage, no head")}${folds}</td>
+    <td>${delta}</td><td>${_progFmt(leg.floor, 4)}</td><td>${_progFmt(leg.holm_p, 3)}</td>
+    <td>${twin}</td>
+    <td><span class="sacc-verdict-null">${escapeHtml(r.verdict || "-")}</span>${admitted}${expl}</td>
+    <td class="meth-sub">${escapeHtml(mv.label || "-")}</td>
+  </tr>`;
+}
+
+// The screening lab's collapsed block (EFV3 lane B s5, owner default E3-Q23): every
+// screening row the ledger holds, newest first, and the families no source can be
+// screened on yet. It reads only rows already on the ledger.
+function _progScreenBlock(prog) {
+  const rows = _progRows(prog).filter(r => _progIsScreen(r)).slice().reverse();
+  const n = rows.length;
+  const head = `<thead><tr><th>Date</th><th>Candidate</th><th>Side</th><th>Head</th><th>Within delta vs V2 base (CI95; lower bound)</th><th>Floor</th><th>Holm p</th><th>Twin</th><th>Verdict</th><th>Label</th></tr></thead>`;
+  const table = n
+    ? `<div class="table-scroll-x"><table class="meth-table">${head}<tbody>${rows.map(r => _progScreenRowHtml(r)).join("")}</tbody></table></div>`
+    : `<p class="meth-note">No screening row is on the ledger yet.</p>`;
+  const noSource = [
+    ["IL stints", "the injury history starts in 2017 and is thin before 2026; first read once the resolved cohort holds a hundred stints recorded before each list date"],
+    ["Signing bonus before the 2017 draft classes", "no table holds it; never, unless a pre-2017 bonus table is ingested"],
+    ["College production", "the college tables start with the 2021 and 2022 classes; a count-only StatsAPI probe of earlier seasons decides, otherwise the 2021 class first resolves about 2029"],
+    ["AAA and Florida State League Statcast, A-ball signals", "tracking starts in 2021 (FSL) and 2023 (AAA); the 2022 list first resolves in 2027 and the 2024 list in 2029; the chain's second link can be screened now"],
+    ["Modern pitch-level data and pitch rates", "2023 onward, pitch rates 2026 only; the same dates as the Statcast line"],
+    ["Tracked physical data (bat speed, bat tracking, sprint and arm)", "2027 and later"],
+    ["eBR", "not built; first read after the eBR plan's integration task"],
+    ["BA, ESPN, Just Baseball and TJStats report text", "archives start between 2023 and 2026; never on the reserved list vintages; the 2023 list first resolves in 2027"],
+  ];
+  return `<div class="meth-chart"><details class="scx-progress-screening"><summary>Screening lab (development; admits candidates to the registered list, proves nothing), ${n} row${n === 1 ? "" : "s"}</summary>
+      <p class="meth-note">A screening row measures one candidate column, offered to one head of the eFV V2 assembly, against the same assembly without it, on development list vintages that have already been read. PASS means the column met every pre-registered admission clause, and admission means only that the column joins the V2 gate's registered candidate list. It does not mean eFV got better and it is not an accuracy claim: a candidate reaches the served grade only through that registered list and the reserved read. Every other verdict is a null or a recorded absence, kept with its numbers; an exploratory row forms no verdict. The chart above draws only admitted candidates, hollow.</p>
+      ${table}
+      <p class="meth-note">Families with no vintage-matched source are recorded and never screened. The first possible read of each:</p>
+      <ul class="meth-refs">${noSource.map(([k, v]) => `<li><strong>${escapeHtml(k)}</strong>: ${escapeHtml(v)}</li>`).join("")}</ul>
+    </details></div>`;
+}
+
 function _methProgressSection(bt) {
   const prog = _S.progress;
   if (!prog || prog.__error || !_progRows(prog).length) return "";
   return `<h2 class="meth-h">Is eFV pulling ahead? The progress ledger</h2>
     ${_methProgressLedger(prog, bt)}
     ${_methProgressChart(prog)}
-    ${_methProgressTable(prog)}`;
+    ${_methProgressTable(prog)}
+    ${_progScreenBlock(prog)}`;
 }
 
 // ---- Provisional track record (PV-08, PROVISIONAL_V2.md section 4) ----------

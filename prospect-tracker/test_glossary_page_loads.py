@@ -252,6 +252,113 @@ def test_progress_ledger_fetch_resolves_and_renders(server, browser):
         assert "carried from vm1" in out["text"]
 
 
+def _screen_row(name, side, verdict, *, exploratory=False, cons_delta=0.0123, date="2026-10-02"):
+    """A synthetic screening row in efv_progress.py's shape (EFV3_B8)."""
+    leg = {"delta": 0.0081, "ci95": [0.0012, 0.0151], "mde95": 0.0049, "lb95": 0.0032,
+           "floor": 0.0063, "p_perm": 0.002, "holm_p": 0.014, "resolvable": None}
+    cons = dict(leg, delta=cons_delta, ci95=None if cons_delta is None else [-0.01, 0.03])
+    return {"run_id": f"t|lv_dev|{name}{side}", "date": date, "trigger": "efv_change",
+            "model_id": f"efv_v2_screen:wave1:{name}:{side}",
+            "model_version": {"label": "fwar@test", "commit": "deadbeef"},
+            "frame": "lv_dev", "frame_version": "lv1_v2", "role": "development",
+            "tilted": False, "window": [2017, 2019], "n": 900, "n_by_side": {side: 900},
+            "statistic": "Spearman within (side, vintage)",
+            "raters": {"efv": {"spearman": 0.2101, "auc": 0.6402, "n": 900}},
+            "deltas": {"vs_efv_v2_base": {"spearman": leg},
+                       "vs_prospx_consensus": {"spearman": cons}},
+            "resolvable": None, "verdict": verdict, "share": None,
+            "screening": {"wave": 1, "head": "skill", "admitted_folds": 3,
+                          "twin_inside_floor": True, "exploratory": exploratory},
+            "sources": [], "note": "screening lab; development frame, spent, not a claim"}
+
+
+#: Seven screening rows; only the first is ADMITTED (PASS, exploratory false) with a
+#: consensus delta, so only it may be drawn.
+_SEVEN = [("txt_skill_hit", "hit", "PASS", {}),
+          ("txt_skill_pit", "pit", "PASS", {"exploratory": True}),
+          ("txt_time_hit", "hit", "NULL", {}),
+          ("txt_time_pit", "pit", "NULL_HOLM", {}),
+          ("pick_overall_time_hit", "hit", "NOT_ADJUDICATED_EXPLORATORY", {"exploratory": True}),
+          ("pick_overall_time_pit", "pit", None, {}),
+          ("milb_floor_2005", "both", "PASS", {"cons_delta": None})]
+
+
+@pytest.mark.parametrize("n_screen", [0, 7])
+def test_progress_screening_block_renders(server, browser, n_screen):
+    """EFV3_B8: the collapsed screening block renders with no screening row and with
+    seven; the chart draws only the admitted one (hollow, dashed), the dated table
+    holds none of them, and the headline line is the same either way."""
+    led = ROOT / "data" / "efv_progress.json"
+    if not led.exists():
+        pytest.skip("data/efv_progress.json not built")
+    doc = json.loads(led.read_text(encoding="utf-8"))
+    doc["rows"] = [r for r in doc["rows"]
+                   if not str(r.get("model_id") or "").startswith("efv_v2_screen:")]
+    base_charted = [r for r in doc["rows"]
+                    if r.get("role") not in ("tilted", "secondary", "superseded")
+                    and r.get("frame") in ("vm2", "vm_dev", "lv_dev", "lv_res", "vm_pros")
+                    and ((r.get("deltas") or {}).get("vs_prospx_consensus") or {})
+                    .get("spearman", {}).get("delta") is not None]
+    screen = [_screen_row(n, s, v, **kw) for n, s, v, kw in _SEVEN][:n_screen]
+    doc["rows"] = doc["rows"] + screen
+    body = json.dumps(doc)
+    page_errors: list[str] = []
+    page = _browser_page(browser, page_errors)
+    try:
+        page.route("**/data/efv_progress.json*",
+                   lambda route: route.fulfill(status=200, content_type="application/json",
+                                               body=body))
+        page.goto(server + "glossary/index.html#view=source-comparison",
+                  wait_until="load", timeout=15_000)
+        page.wait_for_function(
+            "() => { const e = document.getElementById('source-comparison-body');"
+            " return !!e && e.innerHTML.indexOf('Screening lab (development') !== -1; }",
+            timeout=15_000)
+        out = page.evaluate("""() => {
+          const el = document.getElementById('source-comparison-body');
+          const svg = [...el.querySelectorAll('.meth-chart svg')].find(s =>
+            /eFV minus PROSPX consensus/.test(s.getAttribute('aria-label') || ''));
+          const det = el.querySelector('details.scx-progress-screening');
+          const main = [...el.querySelectorAll('.meth-table-title')].find(t =>
+            /Every ledger row/.test(t.textContent));
+          const mainTable = main ? main.parentElement.querySelector(':scope > .table-scroll-x table') : null;
+          return {
+            marks: svg ? svg.querySelectorAll('circle, path[d$="Z"]').length : -1,
+            dashed: svg ? svg.querySelectorAll('circle[stroke-dasharray]').length : -1,
+            rows: det ? det.querySelectorAll('tbody tr').length : -1,
+            open: det ? det.open : null,
+            summary: det ? det.querySelector('summary').textContent : '',
+            block: det ? det.textContent : '',
+            mainText: mainTable ? mainTable.textContent : '',
+            text: el.innerText,
+          };
+        }""")
+    finally:
+        page.close()
+    assert not page_errors, "JS errors: " + " | ".join(page_errors)
+    admitted = 1 if n_screen == 7 else 0
+    assert out["marks"] == len(base_charted) + admitted, (out["marks"], len(base_charted))
+    assert out["dashed"] == admitted
+    assert out["rows"] == n_screen and out["open"] is False
+    assert out["summary"] == ("Screening lab (development; admits candidates to the "
+                              f"registered list, proves nothing), {n_screen} rows")
+    assert "efv_v2_screen:" not in out["mainText"] and "txt_skill_hit" not in out["mainText"]
+    assert "reserved read" in out["block"] and "IL stints" in out["block"]
+    assert ("admitted candidate (development, not a claim)" in out["text"]) is bool(admitted)
+    if n_screen:
+        assert "No screening row is on the ledger yet" not in out["block"]
+        for name, side, verdict, _kw in _SEVEN:
+            assert name in out["block"]
+        assert "+0.0081" in out["block"] and "+0.0032" in out["block"]
+        assert "0.0063" in out["block"] and "0.014" in out["block"] and "fwar@test" in out["block"]
+        assert "NULL_HOLM" in out["block"] and "exploratory, no verdict formed" in out["block"]
+    else:
+        assert "No screening row is on the ledger yet" in out["block"]
+    head = [r for r in doc["rows"] if r["frame"] == doc["headline_frame"]][-1]
+    assert head["verdict"] in out["text"]
+    assert f"{head['raters']['efv']['spearman']:.3f}" in out["text"]
+
+
 def test_source_accuracy_subtabs_render(server, browser):
     """Every one of the six sub-tabs renders real content, the verdict column
     is three-valued (a source name only where the artifact says the cell is
