@@ -695,11 +695,11 @@ def _footer() -> str:
 EEPHUS_VERSION = "β v1.0"
 # PIXEL_BRAND (owner ask 2, Part 8 pixel_branding lane): the pixel brand swap.
 # Off by default, and off builds byte-identical pages. On, FAVICON_LINKS and the
-# footer mark read the pixel set in assets/brand/ (BR-04), and (PB-03, PB-Q1 B
-# Stepped) every eephus.io wordmark (nav, homepage sidebar, homepage hero) and
-# the three hand-kept navs serve the committed pixel lockup from assets/brand/
-# (tools/pixel_brand.py) instead of the live-text-plus-vector mark. It flips in
-# its own commit after the fWAR label epoch's step Z entry.
+# footer mark read the pixel set in assets/brand/ (BR-04). It flips in its own
+# commit (PB-10). The wordmark no longer rides it: every eephus.io wordmark
+# (nav, homepage sidebar, homepage hero, the three hand-kept navs) serves the
+# committed pixel lockup from assets/brand/ whatever the flag says (owner ask
+# 2026-10-02, PX_LOGO_ANIMATION; see eephus_merged_wordmark()).
 PIXEL_BRAND = False
 FAVICON_LINKS = _FAVICON_LINKS_PIXEL if PIXEL_BRAND else _FAVICON_LINKS_LEGACY
 BETA_BADGE = (
@@ -820,24 +820,15 @@ def _discord_link(cls: str = "") -> str:
             f'rel="noopener noreferrer" aria-label="Join the eephus.io Discord">'
             f'{_DISCORD_SVG}<span class="eph-xlink-handle">Discord</span></a>')
 
-# eephus.io merged brand mark - the "signature pitch" arc is now PART of the
-# lettering: the lob launches off the leading "e", crests with the ball at
-# apex, and lands on the "o". Everything is em-scaled inside the nameplate,
-# so the same mark renders at masthead (clamp 2.4-4rem) and sidebar (20px)
-# sizes without separate art. Arc carries the cardinal→gold→green→navy
-# masthead gradient (vector-effect keeps the stroke crisp under the
-# stretch-to-width scaling); the ball is its own fixed-aspect SVG so it can
-# never squash, punches through via .eephus-logo-ball (theme-aware bg fill),
-# and the seam rides currentColor. The four stop-color attributes are the
-# light ramp as a fallback only: assets/site.css sets every stop from the
-# --ramp-* tokens, so the dark deck gets the dark ramp (F1). The path carries
-# no pathLength: under vector-effect Chromium scaled the 100-unit dash
-# against the wrong length, so the draw slid instead of tracing (F2); the
-# dash is now set in em in site.css, measured against the arc's real length.
-#
-# PIXEL_BRAND on: the committed pixel lockup for the placement (s 2 in the nav
-# and the sidebar; s 6 on the hero with the s 4 phone twin, switched by a
-# media query under 540 px), the words kept as visually hidden text.
+# eephus.io wordmark: the pixel lockup (PB-03, PB-Q1 B Stepped), served on
+# every page since the owner's 2026-10-02 ask ("the logo animation on the
+# homepage is still showing the old animation"; PX_LOGO_ANIMATION). The
+# committed fragment for the placement: s 2 in the nav and the sidebar, s 6 on
+# the hero with the s 4 phone twin (switched by a media query under 540 px),
+# the words kept as visually hidden text. The hero fragments carry the pitch
+# (wm-px--play: the arc lights run by run, then the ball drops in whole
+# pixels); every lockup replays it on hover. The old vector mark (gradient arc
+# plus em-scaled ball) and its dash draw-on are retired.
 _PIXEL_WORDMARK_SCALES = {"mast": (6, 4)}
 
 
@@ -849,7 +840,7 @@ def pixel_wordmark_fragment(scale: int) -> str:
 
 
 def pixel_wordmark(uid: str, tag: str = "h1") -> str:
-    """The PIXEL_BRAND lockup: the placement's fragment(s) plus the words as
+    """The pixel lockup: the placement's fragment(s) plus the words as
     visually hidden text, so the homepage h1 stays an h1 that reads eephus.io."""
     svgs = "".join(pixel_wordmark_fragment(s) for s in _PIXEL_WORDMARK_SCALES.get(uid, (2,)))
     return (f'<{tag} class="nameplate eephus-wordmark-px">{svgs}'
@@ -857,26 +848,9 @@ def pixel_wordmark(uid: str, tag: str = "h1") -> str:
 
 
 def eephus_merged_wordmark(uid: str, tag: str = "h1") -> str:
-    if PIXEL_BRAND:
-        return pixel_wordmark(uid, tag)
-    grad = f"eephus-arc-{uid}" # per-instance gradient id - two marks per page
-    arc = (
-        f'<svg class="ew-arc" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">'
-        f'<defs><linearGradient id="{grad}" x1="0" y1="0" x2="1" y2="0">'
-        '<stop offset="0%" stop-color="#B91C1C"/><stop offset="38%" stop-color="#C9A227"/>'
-        '<stop offset="68%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>'
-        '</linearGradient></defs>'
-        f'<path d="M 3 30 Q 50 -24 97 30" fill="none" stroke="url(#{grad})" '
-        'stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>'
-        f'<svg class="ew-ball" viewBox="0 0 24 24" aria-hidden="true">'
-        f'<circle class="eephus-logo-ball" cx="12" cy="12" r="8.5" stroke="url(#{grad})" stroke-width="3"/>'
-        # Two seam arcs bulging outward (the px-ball / favicon read) so the apex
-        # ball is clearly a baseball, not a plain circle.
-        '<path class="eephus-logo-seam" d="M 16 5.6 Q 20.5 12 16 18.4" fill="none" stroke="currentColor" stroke-width="1.3"/>'
-        '<path class="eephus-logo-seam" d="M 8 5.6 Q 3.5 12 8 18.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>'
-    )
-    return (f'<{tag} class="nameplate eephus-wordmark-merged">{arc}'
-            f'eephus<span class="dot">.io</span></{tag}>')
+    """Every eephus.io wordmark on the site: the pixel lockup for the placement
+    (``uid`` "mast" is the hero; any other is the s 2 nav and sidebar mark)."""
+    return pixel_wordmark(uid, tag)
 
 def prospx_ball_logo(uid: str, px: int = 16) -> str:
     """The PROSPX baseball badge - a self-contained copy of the app
@@ -903,7 +877,7 @@ def prospx_ball_logo(uid: str, px: int = 16) -> str:
     )
 
 def eephus_logo_lockup(badge: bool = True) -> str:
-    """Homepage hero lockup: the merged arc-wordmark with the β tag and the
+    """Homepage hero lockup: the pixel wordmark with the β tag and the
     @eephus_io chip stacked beside it (β on top, X under - the X chip carries
     the link accent so it reads clickable)."""
     chips = (
@@ -911,11 +885,10 @@ def eephus_logo_lockup(badge: bool = True) -> str:
         f'{_x_link("eephus_io", cls="eph-xlink--beta eph-xlink--live")}'
         f'{_discord_link(cls="eph-xlink--beta eph-xlink--live")}</div>'
     ) if badge else ""
-    # eephus-logo--animate plays the one-shot arc-draw + ball-settle on the
-    # homepage hero only (the nav/sidebar lockups stay static). It plays under
-    # Reduce Motion as well; see assets/site.css. Under PIXEL_BRAND the hero
-    # fragments carry their own one-shot (wm-px--play), so the class is inert.
-    return f'<div class="eephus-logo eephus-logo--animate">{eephus_merged_wordmark("mast")}{chips}</div>'
+    # The hero fragments carry their own one-shot (wm-px--play: the pitch, then
+    # one glint per page view); it runs under Reduce Motion as well, see
+    # assets/site.css. The nav and sidebar lockups replay it on hover only.
+    return f'<div class="eephus-logo">{eephus_merged_wordmark("mast")}{chips}</div>'
 
 # --------------------------------------------------------------------------- #
 # Markdown + YouTube
@@ -7269,9 +7242,9 @@ def _restamp_html(text: str) -> str:
     return text
 
 
-# The nav lockup inside each hand-kept page's brand link: today's vector mark,
-# or a pixel lockup an earlier PIXEL_BRAND build wrote (so a regenerated
-# fragment re-syncs). One line each, no nested <span class="nameplate">.
+# The nav lockup inside each hand-kept page's brand link: the retired vector
+# mark, or a pixel lockup an earlier build wrote (so a regenerated fragment
+# re-syncs). One line each, no nested <span class="nameplate">.
 _HAND_NAV_LOCKUP_RE = re.compile(
     r'(<a class="eephus-wordmark" href="/" aria-label="eephus\.io home">)'
     r'(<span class="nameplate eephus-wordmark-merged">.*?eephus<span class="dot">\.io</span></span>'
@@ -7288,17 +7261,15 @@ def pixel_brand_hand_nav(text: str) -> str:
 
 def restamp_hand_authored_pages() -> None:
     """Stamp every /assets/ stylesheet, script and <use> ref in the
-    hand-authored pages with the asset's current content hash (_restamp_html).
-    With PIXEL_BRAND on, the nav lockup is synced to the pixel lockup too."""
+    hand-authored pages with the asset's current content hash (_restamp_html),
+    and sync the nav lockup to the pixel lockup _nav() serves."""
     for rel in HAND_AUTHORED_PAGES:
         path = ROOT / rel
         if not path.exists():
             print(f"  skipped {rel} (absent)")
             continue
         original = path.read_text(encoding="utf-8")
-        stamped = _restamp_html(original)
-        if PIXEL_BRAND:
-            stamped = pixel_brand_hand_nav(stamped)
+        stamped = pixel_brand_hand_nav(_restamp_html(original))
         if stamped != original:
             path.write_text(stamped, encoding="utf-8")
             print(f"  restamped {rel}")

@@ -113,8 +113,11 @@ Two marks, one system.
 
 **Full lockup, the eephus.io merged wordmark.** The lob arc is part of the
 lettering: it spans the word with the ball at its apex, the word set in
-PixelMplus12 Bold, the `.io` in gold. It is live text plus inline SVG in the site
-(`build_site.py:eephus_merged_wordmark`); the portable twin is
+PixelMplus12 Bold, the `.io` in gold. In the site it is the pixel lockup (the
+committed fragments `assets/brand/wordmark-s{2,4,6}.svg` from
+`tools/pixel_brand.py`, served by `build_site.py:eephus_merged_wordmark`): the
+font's own bitmap letters under an arc stepped in eight ramp bands, and the hero
+plays the pixel pitch once on load. The portable twin is
 `marks/eephus-wordmark.svg` (and `-dark`). Use it in mastheads, the nav, and
 footers.
 
@@ -270,24 +273,23 @@ branding/
     icon-512.png                PWA, clean ball (eephus.io)
     icon-maskable-512.png       PWA maskable (mark inside the safe area)
   animated/
-    eephus-arc.svg              the animated mark (CSS, the in-site source)
-    EXPORT.md                   how to export PNG frames / GIF / WebM-alpha
-    frames/                     PNG frame sequence (the export source)
-    eephus-arc.gif              matted GIF (one-bit transparency fallback)
+    EXPORT.md                   the animated mark (the pixel pitch) and its export
   social/
     share-default.png           1200x630 default Open Graph card
   pixel/
     icons-sheet-light.png       the pixel icon set, light review sheet
     icons-sheet-dark.png        the pixel icon set, dark review sheet
+    eephus-arc.gif              the animated pixel mark (plays once, holds the still)
     (and the pixel brand outputs of tools/pixel_brand.py: sheets, ball
-     strikes, share cards, marks; not served yet)
+     strikes, share cards, marks)
 
 assets/
   eephus-icons.svg              the pixel icon sprite (served)
   eephus-icons.json             the same bitmaps for the canvas painters (served)
-  brand/                        tools/pixel_brand.py's DOM fragments and the pixel
-                                favicon and app-icon set with its manifest (served
-                                only when build_site.py's PIXEL_BRAND is on)
+  brand/                        tools/pixel_brand.py's DOM fragments (the wordmark,
+                                served on every page) and the pixel favicon and
+                                app-icon set with its manifest (served only when
+                                build_site.py's PIXEL_BRAND is on)
 
 tools/
   pixel_icons.py                source and generator of the pixel icon set

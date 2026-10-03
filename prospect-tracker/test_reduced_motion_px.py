@@ -29,7 +29,6 @@ CSS = (ROOT / "assets" / "site.css").read_text(encoding="utf-8")
 STATE_JS = (ROOT / "assets" / "eephus-state.js").read_text(encoding="utf-8")
 PROSPX = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
 EXPORT_JS = (ROOT / "assets" / "eephus-export.js").read_text(encoding="utf-8")
-ARC_SVG = (ROOT / "branding" / "animated" / "eephus-arc.svg").read_text(encoding="utf-8")
 
 
 def _strip_comments(css: str) -> str:
@@ -113,7 +112,11 @@ def test_nothing_is_switched_off_under_reduced_motion():
             assert not _STILL.search(body), (pre, body)
     # comments may mention the setting; no rule or query may act on it
     assert "prefers-reduced-motion" not in _strip_comments(EXPORT_JS)
-    assert "prefers-reduced-motion" not in _strip_comments(re.sub(r"<!--.*?-->", "", ARC_SVG, flags=re.S))
+    # The vector animated mark (branding/animated/eephus-arc.svg) was retired on
+    # 2026-10-02 (PX_LOGO_ANIMATION); its pixel successor is site.css's
+    # pixel-wordmark block, which test_pixel_brand_motion.py keeps off every
+    # reduced-motion rule.
+    assert not (ROOT / "branding" / "animated" / "eephus-arc.svg").exists()
     gl = (ROOT / "assets" / "eephus-gl.js").read_text(encoding="utf-8")
     assert "prefers-reduced-motion" not in gl, "the glossary tooltip delay reads the preference again"
     bg = (ROOT / "assets" / "eephus-bg.js").read_text(encoding="utf-8")
