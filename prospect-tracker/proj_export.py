@@ -401,6 +401,26 @@ def _valid_pos(pos) -> bool:
     return isinstance(pos, str) and pos.strip().upper() in _VALID_POS
 
 
+# EPOCH-SPOTRAC-1 (2026-10-03): the inline vet join wrote ct["position"] onto
+# the row without the P-POSVAL check that _apply_contract runs, so when
+# Spotrac's team pages began serving numeric codes in the 'Pos' column
+# ("Jhoan Duran | 33 | 29"), 242 vets shipped pos '33', '32', '34' and so on,
+# and the 128 pitchers among them rendered as hitter cards (mlb_player_export
+# reads isPit from pos; _row_sides below splits on it too). The exporter holds
+# no StatsAPI primary position, so the fallback is the engine's own role token
+# (path["role"]: SP, RP or H), the same token _apply_contract leaves in place.
+# A hitter whose Spotrac position is a code shows H until the parser is fixed.
+def _vet_pos(two_way: bool, ct: dict | None, role: str) -> str:
+    """The served `pos` of a veteran row: TWP for a two-way row, else the
+    Spotrac contract position when it is a real position, else the role."""
+    if two_way:
+        return "TWP"
+    pos = (ct or {}).get("position")
+    if _valid_pos(pos):
+        return pos.strip().upper()
+    return role
+
+
 # ============================================================================
 # P-VETTEAM: team + contract identity resolution
 # ============================================================================
@@ -1154,7 +1174,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             "key": (f"{_nkey}__{mlbam}" if _ambiguous else _nkey), "name": name, "age": age,
             "mlbam": mlbam,
             "src": "vet", "twoWay": True if two_way else None,
-            "pos": "TWP" if two_way else ((ct or {}).get("position") or path["role"]),
+            "pos": _vet_pos(two_way, ct, path["role"]),
             # The club that holds him NOW (resolve_current_club): the feed and
             # this season's stats outrank the monthly contract club, which is
             # stale for every player traded since the last Spotrac pass.
@@ -2097,10 +2117,17 @@ def _last_controlled_season(m: dict) -> int:
     return FIRST_SEASON + rem
 
 
+# The pitcher entries of _VALID_POS, the vocabulary mlb_player_export.
+# _is_pitcher_pos reads too, so the Team Outlook split and the player card agree.
+_PIT_POS = {"SP", "RP", "P", "LHP", "RHP", "SIRP", "MIRP", "CL"}
+
+
 def _row_sides(m: dict) -> list[str]:
     if m.get("twoWay"):
         return ["hit", "pit"]              # two-way = both stat lines
-    return ["pit" if (m.get("pos") or "") in ("SP", "RP", "P") else "hit"]
+    # EPOCH-SPOTRAC-1: `pos` is validated where it is written (_vet_pos and
+    # _apply_contract), so a numeric Spotrac code never reaches this split.
+    return ["pit" if str(m.get("pos") or "").strip().upper() in _PIT_POS else "hit"]
 
 
 def _depth_pool(corpus: dict, names: dict[int, str],
