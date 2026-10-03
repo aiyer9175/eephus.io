@@ -34,6 +34,8 @@ guards run first. Nothing is grouped by consensus-FV level.
 
 Run:  python tools/efv_v2_assemble.py            (writes the artifact)
       python tools/efv_v2_assemble.py --dry-run  (prints, writes nothing)
+      python tools/efv_v2_assemble.py --sign-receipt  (reads the stored artifact and
+            prints each fold slope beside its arm's admitted sign; EFV3_C02)
 """
 from __future__ import annotations
 
@@ -231,6 +233,135 @@ def _fold_summary(m: dict) -> dict:
             "consensus_only_reason": m["consensus_only_reason"]}
 
 
+#: The label every vm slope carries in the sign receipt: the assembly stores no admitted
+#: sign for a vm fold (fit_v2 runs admission_check in-process and the fold summary keeps
+#: keys, beta, b_uc, refused, alpha and n_train only).
+VM_SIGN_LABEL = "LV arm sign, not this fold's admission"
+VM_SIGN_STATEMENT = ("the vm folds' own admitted signs cannot be stored until fit_v2 "
+                     "records them; MC-4a on the vm frame constrains to the sign "
+                     "admission_check returns at fit time")
+
+
+def _arm_global_sign(arm: dict | None) -> int | None:
+    """The arm's one sign when every per-vintage sign agrees (and is nonzero); None
+    when the signs are mixed or the arm gave no t."""
+    if not arm:
+        return None
+    signs = {int(s) for s in (arm.get("per_vintage_signs") or {}).values()}
+    if len(signs) == 1 and 0 not in signs:
+        return signs.pop()
+    return None
+
+
+def _fold_own_sign(arm: dict | None, V: str) -> int | None:
+    """The sign the fold's own admission returned (its per-vintage signs agree when it
+    admitted the key); None when the fold stored none or they disagree."""
+    if not arm:
+        return None
+    signs = {int(s) for s in ((arm.get("by_fold") or {}).get(str(V)) or {})
+             .get("per_vintage_signs", {}).values()}
+    if len(signs) == 1 and 0 not in signs:
+        return signs.pop()
+    return None
+
+
+def fold_sign_receipt(doc: dict) -> dict:
+    """A descriptive read of the stored per-fold heads against the arms' admitted
+    signs. No refit, no frame scored, no weight changed.
+
+    lv folds: a slope whose V2-LV arm carries one global sign (every per-vintage sign
+    agrees) is tested for opposition (sign * beta < 0); a slope whose arm's per-vintage
+    signs are mixed was admitted per fold, so the fold's own sign is printed beside the
+    key and no opposition test runs. vm folds: the assembly stores no admitted sign for
+    a vm fold, so each slope is printed with the V2-LV arm's sign of the same (side,
+    head, key) beside it as a comparison (VM_SIGN_LABEL), flagged where the stored beta
+    opposes that LV sign, and the receipt states VM_SIGN_STATEMENT."""
+    arms = doc.get("arms") or {}
+    rows: list[dict] = []
+    for frame in ("lv", "vm"):
+        for side, folds in (doc.get("folds") or {}).get(frame, {}).items():
+            for V, f in folds.items():
+                for head in ("skill", "timing"):
+                    h = f.get(head)
+                    if not h:
+                        continue
+                    for key, beta in zip(h["keys"], h["beta"]):
+                        tag = f"V2-LV:{side}.{head}.{key}"
+                        arm = arms.get(tag)
+                        g = _arm_global_sign(arm)
+                        row = {"frame": frame, "side": side, "fold": str(V), "head": head,
+                               "key": key, "beta": float(beta), "arm": tag if arm else None,
+                               "lv_arm_sign": g,
+                               "lv_arm_per_vintage_signs": (arm or {}).get(
+                                   "per_vintage_signs")}
+                        if frame == "lv":
+                            if g is not None:
+                                row.update(kind="global_sign", sign=g,
+                                           opposes=bool(g * float(beta) < 0))
+                            elif arm is not None:
+                                row.update(kind="per_fold_admission",
+                                           fold_sign=_fold_own_sign(arm, V), opposes=None,
+                                           note="mixed per-vintage signs: per-fold "
+                                                "admission, no opposition test")
+                            else:
+                                row.update(kind="no_arm", opposes=None)
+                        else:
+                            row.update(kind=("single_sign_lv_arm" if g is not None
+                                             else "mixed_sign_lv_arm" if arm is not None
+                                             else "no_arm"),
+                                       stored_admitted_sign=None, label=VM_SIGN_LABEL,
+                                       opposes_lv_sign=(bool(g * float(beta) < 0)
+                                                        if g is not None else None))
+                        rows.append(row)
+    lv = [r for r in rows if r["frame"] == "lv"]
+    vm = [r for r in rows if r["frame"] == "vm"]
+    totals = {
+        "lv": {"n_slopes": len(lv),
+               "n_global_sign": sum(1 for r in lv if r["kind"] == "global_sign"),
+               "n_global_sign_opposing": sum(1 for r in lv if r["kind"] == "global_sign"
+                                             and r["opposes"]),
+               "n_per_fold_admission": sum(1 for r in lv
+                                           if r["kind"] == "per_fold_admission"),
+               "n_no_arm": sum(1 for r in lv if r["kind"] == "no_arm")},
+        "vm": {"n_slopes": len(vm),
+               "n_stored_admitted_sign": 0,
+               "n_single_sign_lv_arm": sum(1 for r in vm
+                                           if r["kind"] == "single_sign_lv_arm"),
+               "n_opposing_lv_sign": sum(1 for r in vm if r["opposes_lv_sign"]),
+               "n_mixed_sign_lv_arm": sum(1 for r in vm
+                                          if r["kind"] == "mixed_sign_lv_arm"),
+               "n_no_arm": sum(1 for r in vm if r["kind"] == "no_arm")}}
+    return {"what": "fold slope-sign receipt (descriptive; no refit, no frame scored)",
+            "artifact_commit": (doc.get("code") or {}).get("commit"),
+            "rows": rows, "totals": totals, "vm_label": VM_SIGN_LABEL,
+            "statement": VM_SIGN_STATEMENT}
+
+
+def print_sign_receipt(rec: dict) -> None:
+    for r in rec["rows"]:
+        if r["frame"] == "lv":
+            if r["kind"] == "global_sign":
+                tail = f"arm sign {r['sign']:+d} opposes {r['opposes']}"
+            elif r["kind"] == "per_fold_admission":
+                fs = r["fold_sign"]
+                tail = (f"mixed arm signs {r['lv_arm_per_vintage_signs']}; fold sign "
+                        f"{fs:+d}; no opposition test" if fs is not None else
+                        f"mixed arm signs {r['lv_arm_per_vintage_signs']}; fold sign none")
+            else:
+                tail = "no arm"
+        else:
+            g = r["lv_arm_sign"]
+            tail = (f"{r['label']}: {g:+d}; opposes LV sign {r['opposes_lv_sign']}"
+                    if g is not None else
+                    f"{r['label']}: mixed {r['lv_arm_per_vintage_signs']}"
+                    if r["kind"] == "mixed_sign_lv_arm" else "no arm")
+            tail += "; stored admitted sign: none"
+        print(f"{r['frame']} {r['side']} {r['fold']} {r['head']:6s} {r['key']:14s} "
+              f"beta {r['beta']:+.6f}  {tail}")
+    print("totals", json.dumps(rec["totals"]))
+    print(rec["statement"])
+
+
 def vm_folds(side: str, mat_rows: list[dict], weights) -> dict:
     out = {}
     for yr in V1.SCORED_YEARS:
@@ -323,7 +454,13 @@ def run() -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--sign-receipt", action="store_true",
+                    help="print the fold slope-sign receipt from the stored artifact "
+                         "(a read: no refit, no frame, nothing written)")
     args = ap.parse_args(argv)
+    if args.sign_receipt:
+        print_sign_receipt(fold_sign_receipt(json.loads(OUT.read_text(encoding="utf-8"))))
+        return 0
     doc = run()
     for s in F.SIDES:
         r = doc["rule"][s]
