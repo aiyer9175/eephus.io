@@ -3243,6 +3243,9 @@ def _tm_seed_key(p: dict) -> str:
     return p["player_key"]
 
 
+_FA_OFF_BOARD = ("signed", "option_exercised")
+
+
 def _cross_module_strip() -> str:
     """Across eephus.io - the homepage's window into the non-PROSPX
     modules (cohesion: every module surfaces on the front page). Reads
@@ -3252,12 +3255,21 @@ def _cross_module_strip() -> str:
     # MLB Free Agency - top of the current class board
     try:
         fa = _cached_data_json("fa_class.json")
-        top = sorted((m for m in fa.get("members") or [] if m.get("projGuar")),
+        # Only players still on the FA board, the same filter as /fa/'s
+        # 'remaining' list (fa.js): a signed player or an exercised option never
+        # reaches this market (QHOC02). A pending option is listed but says so.
+        top = sorted((m for m in fa.get("members") or []
+                      if m.get("projGuar") and m.get("status") not in _FA_OFF_BOARD),
                      key=lambda m: -m["projGuar"])[:3]
         rows = "".join(
-            f'<a class="xmod-row" href="/fa/#player={html.escape(m["key"])}">'
+            f'<a class="xmod-row" href="/fa/#player={html.escape(m["key"])}"'
+            + (' title="Pending option: the projected deal applies only if he reaches the market."'
+               if m.get("status") == "pending_option" else '') + '>'
             f'<span class="xmod-name">{html.escape(m["name"])}</span>'
-            f'<span class="xmod-sub">{html.escape(m.get("pos") or "")}</span>'
+            + (f'<span class="xmod-sub" style="white-space:normal;line-height:1.25;">'
+               f'{html.escape(m.get("pos") or "")} · if he reaches the market</span>'
+               if m.get("status") == "pending_option" else
+               f'<span class="xmod-sub">{html.escape(m.get("pos") or "")}</span>') +
             f'<span class="xmod-val">{m.get("projYears") or "?"}y / ${(m["projGuar"] / 1e6):.0f}M</span></a>'
             for m in top)
         if rows:
@@ -3539,6 +3551,10 @@ _EFV_TIERS = (
     (61,     69, "holo",      "61-69",    "var(--accent-lilac)", "1"),
     (70,   None, "legendary", "70+",      "var(--accent-lilac)", "1"),
 )
+# The production-grade series (source_graded False rows; glossary xfv_ungraded)
+# is a neutral grey, outside the navy-to-lilac ramp, so it can never read as an
+# eFV tier.
+_EFV_PROD_FILL, _EFV_PROD_OP = "var(--text-tertiary)", "0.45"
 
 def _efv_tier(g: int) -> tuple:
     """The rarity-ramp row a DISPLAYED integer grade falls in."""
@@ -3556,26 +3572,44 @@ def _efv_distribution_html(players: list) -> str:
     rows. Plotting that spike would drown every real bar at ~1px and misread as
     "the board is all replacement level", so the histogram covers the graded
     range and the caption states the floor count outright rather than quietly
-    dropping it."""
-    grades = []
+    dropping it.
+
+    TWO BASES, NEVER POOLED (QHOC01, 2026-10-03). A row the export marks
+    source_graded False has no grade from any label source, so eFV abstains on
+    it and the number it carries is the production grade (glossary
+    xfv_ungraded), not an eFV. Those rows are stacked above the eFV bars as
+    their own muted series with their own legend entry, and the caption and
+    tooltips count each basis separately: the eFV count, median and floor read
+    the source-graded rows alone. A row with no flag (a pre-flag payload)
+    stays on the eFV side, as row_in_prov_section keeps it ranked."""
+    grades, prod = [], []
     for p in players:
         v = _primary_fv(p)
         if isinstance(v, (int, float)):
-            grades.append(_round_half_up(v))
+            (prod if p.get("source_graded") is False else grades).append(_round_half_up(v))
     if not grades:
         return ""
     floor_n = sum(1 for g in grades if g <= _EFV_FLOOR)
     plotted = sorted(g for g in grades if g > _EFV_FLOOR)
     if len(plotted) < 10:            # nothing to shape a histogram out of
         return ""
-    lo, hi = plotted[0], plotted[-1]
+    prod_floor_n = sum(1 for g in prod if g <= _EFV_FLOOR)
+    prod_plotted = sorted(g for g in prod if g > _EFV_FLOOR)
+    lo = min(plotted[0], prod_plotted[0]) if prod_plotted else plotted[0]
+    hi = max(plotted[-1], prod_plotted[-1]) if prod_plotted else plotted[-1]
     counts: dict[int, int] = {}
     for g in plotted:
         counts[g] = counts.get(g, 0) + 1
+    prod_counts: dict[int, int] = {}
+    for g in prod_plotted:
+        prod_counts[g] = prod_counts.get(g, 0) + 1
     n_bkt = hi - lo + 1
-    top_c = max(counts.values())
+    top_c = max(counts.get(g, 0) + prod_counts.get(g, 0) for g in range(lo, hi + 1))
     total = len(plotted)
+    prod_total = len(prod_plotted)
     median = plotted[total // 2] if total % 2 else plotted[total // 2 - 1]
+    prod_median = (None if not prod_total else
+                   prod_plotted[prod_total // 2] if prod_total % 2 else prod_plotted[prod_total // 2 - 1])
 
     # ---- geometry (viewBox units; the SVG scales to the module width) ----
     pad, w, base, top = 10, 720, 118, 16
@@ -3593,16 +3627,25 @@ def _efv_distribution_html(players: list) -> str:
     bars = []
     for g in range(lo, hi + 1):
         c = counts.get(g, 0)
-        if not c:
-            continue
-        _, _, tier_key, _, fill, op = _efv_tier(g)
-        h = max(1.0, (c / top_c) * plot_h)
-        pct = 100.0 * c / total
-        bars.append(
-            f'<rect x="{x_of(g):.1f}" y="{base - h:.1f}" width="{bar_w:.1f}" height="{h:.1f}" '
-            f'style="fill:{fill};fill-opacity:{op};">'
-            f'<title>eFV {g} ({tier_key}) - {c} prospect{"s" if c != 1 else ""}, '
-            f'{pct:.1f}% of the graded board</title></rect>')
+        h = 0.0
+        if c:
+            _, _, tier_key, _, fill, op = _efv_tier(g)
+            h = max(1.0, (c / top_c) * plot_h)
+            pct = 100.0 * c / total
+            bars.append(
+                f'<rect x="{x_of(g):.1f}" y="{base - h:.1f}" width="{bar_w:.1f}" height="{h:.1f}" '
+                f'style="fill:{fill};fill-opacity:{op};">'
+                f'<title>eFV {g} ({tier_key}) - {c} source-graded prospect{"s" if c != 1 else ""}, '
+                f'{pct:.1f}% of the source-graded board</title></rect>')
+        pc = prod_counts.get(g, 0)
+        if pc:
+            ph = max(1.0, (pc / top_c) * plot_h)
+            ppct = 100.0 * pc / prod_total
+            bars.append(
+                f'<rect x="{x_of(g):.1f}" y="{base - h - ph:.1f}" width="{bar_w:.1f}" height="{ph:.1f}" '
+                f'style="fill:{_EFV_PROD_FILL};fill-opacity:{_EFV_PROD_OP};">'
+                f'<title>Production grade {g} - {pc} prospect{"s" if pc != 1 else ""} with no source grade '
+                f'(not an eFV), {ppct:.1f}% of the production-grade rows</title></rect>')
 
     # Tier boundary rules + the threshold number, drawn only for thresholds that
     # actually fall inside the plotted range (a rule for a tier nobody reaches
@@ -3632,9 +3675,11 @@ def _efv_distribution_html(players: list) -> str:
 
     svg = (
         f'<svg viewBox="0 0 {w} 136" style="width:100%;height:auto;display:block;" role="img" '
-        f'aria-label="Histogram of eephusFV grades across the board, banded by rarity tier">'
-        f'<title>eFV distribution: {total} graded prospects from {lo} to {hi}, '
-        f'median {median}</title>'
+        f'aria-label="Histogram of eephusFV grades for source-graded prospects, banded by rarity tier'
+        f'{", with production grades for prospects no source has graded stacked above in grey" if prod_total else ""}">'
+        f'<title>eFV distribution: {total} source-graded prospects, median {median}'
+        f'{f"; {prod_total} production grades stacked above" if prod_total else ""}; '
+        f'grades {lo} to {hi}</title>'
         f'<line x1="{pad}" y1="{base}" x2="{w - pad}" y2="{base}" '
         f'style="stroke:var(--border);stroke-width:1;"/>'
         f'{"".join(rules)}{"".join(bars)}{"".join(ticks)}</svg>')
@@ -3652,15 +3697,26 @@ def _efv_distribution_html(players: list) -> str:
             f'<span aria-hidden="true" style="width:10px;height:10px;flex:none;'
             f'background:{fill};opacity:{op};"></span>{html.escape(t_label)}'
             f'<span style="color:var(--text-tertiary)">{n:,}</span></span>')
+    if prod_total:
+        chips.append(
+            f'<span style="display:inline-flex;align-items:center;gap:5px;">'
+            f'<span aria-hidden="true" style="width:10px;height:10px;flex:none;'
+            f'background:{_EFV_PROD_FILL};opacity:{_EFV_PROD_OP};"></span>production grade, no source grade'
+            f'<span style="color:var(--text-tertiary)">{prod_total:,}</span></span>')
     legend = ('<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;'
               'font-family:var(--font-retro-mono);font-size:11px;color:var(--text-secondary);">'
               + "".join(chips) + '</div>')
     caption = (
         f'<div style="margin-top:6px;font-family:var(--font-retro-mono);font-size:11px;'
         f'color:var(--text-tertiary);line-height:1.5;">'
-        f'{total:,} graded prospects · median {_gl("xfv", "eFV")} {median} · '
+        f'{total:,} source-graded prospects · median {_gl("xfv", "eFV")} {median} · '
         f'{floor_n:,} at the eFV {int(_EFV_FLOOR)} floor (no projection), not plotted · '
-        f'bands are {_gl("rarity_tiers", "rarity tiers")}</div>')
+        + (f'{prod_total:,} {_gl("xfv_ungraded", "production grades")} for prospects no source has '
+           f'graded, in grey, not eFV ('
+           + (f'median {prod_median}, ' if prod_median is not None else '')
+           + f'{prod_floor_n:,} at {int(_EFV_FLOOR)}, not plotted) · '
+           if prod else '')
+        + f'bands are {_gl("rarity_tiers", "rarity tiers")}</div>')
     return _home_module("eFV Distribution", "/prospx/", "Full board",
                         svg + legend + caption, full=True)
 
@@ -4398,7 +4454,9 @@ def build_trademachine() -> str:
         f'<div class="section-head section-head--byline"><div class="section-head-titles"><h1>{_masthead_icon("trademachine")}Trade Machine '
         f'{_stage_chip("trademachine")}</h1></div>'
         f'<span class="section-sub">{_gl("surplus_value", "surplus")} in one currency: prospects on eFV, '
-        'MLB players on projections, then the Bayesian trade-value board</span></div>'
+        'MLB players on projections or, where no projection prices a debuted player, on his locked '
+        'prospect eFV backgrade (registry row xfv_backgrade, provisional), '
+        'then the Bayesian trade-value board</span></div>'
         + _TRADE_MACHINE_BODY +
         '</div>'
         f'<link rel="stylesheet" href="/assets/trademachine.css?v={_TM_CSS_VER}">'

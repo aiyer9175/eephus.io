@@ -1302,6 +1302,11 @@ function _renderTBRows() {
         + (_bThru != null && _bThru > _bLastH
           ? `. The seasons past ${_bLastH} take the ${_bLastH} P10 and P90 chained along the champion aging curve; the P10 is not floored at zero, so a ${_bLastH} P10 below zero stays below zero (a season at or below zero WAR is worth $0, so at the low end that season costs his full salary)${_bDecl ? "; a declined club option season carries no range" : ""}`
           : "")
+      // QCLC01 (2026-10-03): a debuted player no projection prices rides
+      // his locked pre-debut eFV backgrade, and the band is that grade's, so
+      // the row names the basis instead of reading like a prospect.
+      : p.surplus_source === "xfv_backgrade"
+        ? "locked prospect eFV backgrade (xfv_backgrade, provisional); no projection prices this row"
       : "eFV credible interval";
     let rangeTip = "";
     if (lo != null && hi != null) {
