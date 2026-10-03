@@ -1727,3 +1727,5 @@ rows is refreshed daily. Fourth, sequence the ML rewrite after the port, because
 shipped bundles are Python pickles with no portable export, so nothing in Odin can score
 anything until that export exists. And the test suite never has to be reimplemented: Odin
 writes artifacts, Python asserts over them, the rsync stays behind the same exit code.
+
+Addendum 2026-10-03 (CLEAN_3_DATA_ORPHANS): data/vaa.txt (VAA prose notes) and data/ba_dynasty500.txt (Baseball America list text, licensed) leave the tracked tree; nothing read either file and neither shipped, so the port no longer copies them; both blobs resolve in git history at parent 3d9426b391e764a1aec65f8eddeff71cb3e71485.
