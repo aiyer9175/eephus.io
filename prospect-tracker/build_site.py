@@ -620,6 +620,24 @@ _FAVICON_LINKS_PIXEL = (
 # (a shared eephus.io link should never render as a bare URL). Pages with a
 # richer card (per-article share-card.png) override it.
 DEFAULT_SHARE_IMAGE = f"{SITE_ORIGIN}/assets/share-default.png"
+# The pixel share cards (PB-07 / BR-07, tools/pixel_brand.py): a lowercase
+# default card in assets/brand/ and one card per module in assets/og/<key>.png.
+# Served only under PIXEL_BRAND; off, every page keeps DEFAULT_SHARE_IMAGE.
+DEFAULT_SHARE_IMAGE_PIXEL = f"{SITE_ORIGIN}/assets/brand/share-default.png"
+OG_CARD_KEYS = ("prospx", "collegesavant", "franchise", "fa", "projections", "mlbstats", "pal",
+                "trademachine", "arbitration", "ledger", "management", "hof", "fantasy",
+                "betting", "diamond")
+
+
+def default_share_image() -> str:
+    """The card a page without its own card unfurls with, read at call time."""
+    return DEFAULT_SHARE_IMAGE_PIXEL if PIXEL_BRAND else DEFAULT_SHARE_IMAGE
+
+
+def module_share_image(key: str) -> str:
+    """A module page's own card under PIXEL_BRAND; "" (the default card) off."""
+    assert key in OG_CARD_KEYS, key
+    return f"{SITE_ORIGIN}/assets/og/{key}.png" if PIXEL_BRAND else ""
 
 # Contact / feedback channel for the Open Beta - one address, linked from the
 # footer of every page. Plain mailto keeps it dependency-free until the
@@ -698,7 +716,8 @@ EEPHUS_VERSION = "β v1.0"
 # footer mark read the pixel set in assets/brand/ (BR-04), and (PB-03, PB-Q1 B
 # Stepped) every eephus.io wordmark (nav, homepage sidebar, homepage hero) and
 # the three hand-kept navs serve the committed pixel lockup from assets/brand/
-# (tools/pixel_brand.py) instead of the live-text-plus-vector mark. It flips in
+# (tools/pixel_brand.py) instead of the live-text-plus-vector mark; (PB-07) every
+# page unfurls with the pixel default card or its module's own card. It flips in
 # its own commit after the fWAR label epoch's step Z entry.
 PIXEL_BRAND = False
 FAVICON_LINKS = _FAVICON_LINKS_PIXEL if PIXEL_BRAND else _FAVICON_LINKS_LEGACY
@@ -1207,7 +1226,7 @@ def _social_meta(title: str, description: str, image: str = "", url: str = "",
     rich preview. Every page gets the default brand card; articles override `image`
     with their per-piece share card and `og_type` with "article"."""
     t, d = html.escape(title), html.escape(description)
-    image = image or DEFAULT_SHARE_IMAGE
+    image = image or default_share_image()
     tags = [f'<meta property="og:type" content="{html.escape(og_type)}">',
             f'<meta property="og:title" content="{t}">',
             f'<meta property="og:description" content="{d}">',
@@ -4027,7 +4046,7 @@ def build_fa() -> str:
                 f"The {_fa_span} MLB free-agent class: projected contracts with floor, mean and "
                 "ceiling bands, rational value vs predicted price, deal verdicts, team fits, and "
                 f"{_fa_winters} archived winters with a realized-surplus ledger.",
-                url=f"{SITE_ORIGIN}/fa/")
+                url=f"{SITE_ORIGIN}/fa/", image=module_share_image("fa"))
 
 
 # Trade Machine markup - now the body of its own top-level /trademachine/ module
@@ -4167,7 +4186,7 @@ def build_projections() -> str:
     return page("MLB Projections - eephus.io", "projections", body,
                 "Five-year eWAR projections for every MLB player: floor, mean and ceiling paths, "
                 "surplus over the club control window (every guaranteed season, unsigned seasons inside the five), and PROSPX prospects joining at their ETA.",
-                url=f"{SITE_ORIGIN}/projections/")
+                url=f"{SITE_ORIGIN}/projections/", image=module_share_image("projections"))
 
 
 
@@ -4389,7 +4408,7 @@ def build_arbitration() -> str:
                 "Projected arbitration salaries for every eligible MLB player, "
                 "and a per-season record of who the arbitration market overpaid "
                 "and underpaid.",
-                url=SITE_ORIGIN + "/arbitration/")
+                url=SITE_ORIGIN + "/arbitration/", image=module_share_image("arbitration"))
 
 
 def build_trademachine() -> str:
@@ -4420,7 +4439,7 @@ def build_trademachine() -> str:
                 "Value MLB trades in one currency: prospects on eFV surplus, MLB players on "
                 "projection surplus, plus a Bayesian trade-value board (contract-aware, "
                 "positional scarcity, opt-out adjusted).",
-                url=f"{SITE_ORIGIN}/trademachine/")
+                url=f"{SITE_ORIGIN}/trademachine/", image=module_share_image("trademachine"))
 
 def build_mlbstats() -> str:
     """The /mlbstats/ MLB Stats module - league-wide MLB stat leaderboards.
@@ -4503,7 +4522,7 @@ def build_mlbstats() -> str:
                 "MLB leaderboards from eephus.io: every player by eWAR over one season or a year "
                 "range, HEM+ hitters, SEM+ starters, REM+ relievers and RIV+ impact, DEM+ "
                 "fielders, WPA leverage, and team Bullpen+, Rotation+, Offense+ and DEM+.",
-                url=f"{SITE_ORIGIN}/mlbstats/")
+                url=f"{SITE_ORIGIN}/mlbstats/", image=module_share_image("mlbstats"))
 
 _PAL_REVERSED_LABEL = {
     "neg_era_pre": "high pre-season ERA",
@@ -4596,7 +4615,7 @@ def build_pal() -> str:
                 "candidates, position fit, pitch-add, reverse-platoon and prospect boards, and the "
                 "conversion backtest. Arsenals and velocity from Statcast; the positional ladder "
                 "fitted from Baseball-Reference.",
-                url=f"{SITE_ORIGIN}/pal/")
+                url=f"{SITE_ORIGIN}/pal/", image=module_share_image("pal"))
 
 def _fantasy_panel(mod: str, blurb: str, bar: str, nav_label: str,
                    tabs: list[tuple[str, str]], csv_name: str,
@@ -4749,7 +4768,7 @@ def build_fantasy() -> str:
                 "Fantasy baseball from eephus.io: redraft ranks in your league format, an eFV-graded "
                 "dynasty and keeper board, and a DFS slate with per-game projections and a lineup "
                 "optimizer.",
-                url=f"{SITE_ORIGIN}/fantasy/")
+                url=f"{SITE_ORIGIN}/fantasy/", image=module_share_image("fantasy"))
 
 
 def _fantasy_redirect(title: str, module: str, label: str) -> str:
@@ -4987,7 +5006,7 @@ def build_betting() -> str:
                 "MLB betting model from eephus.io: game win probabilities against de-vigged book "
                 "prices, every bet on the slate in one sortable board, a flat-stake public record, "
                 "betting calculators, and a personal bet tracker. 21+, informational only.",
-                url=f"{SITE_ORIGIN}/betting/")
+                url=f"{SITE_ORIGIN}/betting/", image=module_share_image("betting"))
 
 
 
@@ -5228,7 +5247,7 @@ def build_diamond() -> str:
         f'<script src="/assets/diamond.js?v={_DIAMOND_VER}" defer></script>'
     )
     return page("Diamond Pass - eephus.io", "diamond", body, desc,
-                url=f"{SITE_ORIGIN}/diamond/")
+                url=f"{SITE_ORIGIN}/diamond/", image=module_share_image("diamond"))
 
 def build_parks() -> str:
     """The /parks/ MiLB Park Factors module - the venue context board.
@@ -5353,7 +5372,7 @@ def build_management() -> str:
                 "mound visits and ejections, with the win probability that moved after each. "
                 "Realized value per family, never a cross-family total, never a plus metric. "
                 "Club pages, a per-decision drill-down and the priced steal and bunt families.",
-                url=f"{SITE_ORIGIN}/management/")
+                url=f"{SITE_ORIGIN}/management/", image=module_share_image("management"))
 
 
 def build_ledger() -> str:
@@ -5410,7 +5429,7 @@ def build_ledger() -> str:
                 "bases, the computed tax beside Spotrac's estimate, contract dollars on file "
                 "and projected arbitration steps as separate keys, controlled surplus, farm "
                 "capital and the free agency ledger. No revenue, no valuations, no TV money.",
-                url=f"{SITE_ORIGIN}/ledger/")
+                url=f"{SITE_ORIGIN}/ledger/", image=module_share_image("ledger"))
 
 
 def build_franchise() -> str:
@@ -5470,7 +5489,7 @@ def build_franchise() -> str:
                 "30 clubs, with nine descriptive sections re-serving the season, finances, free agency, "
                 "front office, dugout, arbitration, park, history and the model's season view, each "
                 "number on its own scale and linked back to the module that owns it.",
-                url=f"{SITE_ORIGIN}/franchise/")
+                url=f"{SITE_ORIGIN}/franchise/", image=module_share_image("franchise"))
 
 
 def build_hof() -> str:
@@ -5526,7 +5545,7 @@ def build_hof() -> str:
                 "Baseball-Reference's daily WAR file, with the ballot record. Eligible, active and "
                 "not-yet-eligible boards, a JAWS quantile ladder and a benchmark bake-off; "
                 "unpublished sections name their blockers. No Hall line, no snub list.",
-                url=f"{SITE_ORIGIN}/hof/")
+                url=f"{SITE_ORIGIN}/hof/", image=module_share_image("hof"))
 
 
 # --------------------------------------------------------------------------- #
@@ -7286,10 +7305,31 @@ def pixel_brand_hand_nav(text: str) -> str:
         lambda m: m.group(1) + pixel_wordmark("nav", tag="span") + m.group(3), text, count=1)
 
 
+# PB-07: each hand-kept page's og:image and twitter:image, today's default card
+# or a card an earlier PIXEL_BRAND build wrote (so the sync is idempotent).
+HAND_OG_CARD = {
+    "prospx/index.html": "prospx",
+    "collegesavant/index.html": "collegesavant",
+    "collegesavant/pitcher_index.html": "collegesavant",
+}
+_HAND_OG_IMAGE_RE = re.compile(
+    r'(<meta (?:property="og:image"|name="twitter:image") content=")'
+    + re.escape(SITE_ORIGIN)
+    + r'/assets/(?:share-default\.png|brand/share-default\.png|og/[a-z]+\.png)(")')
+
+
+def pixel_brand_hand_og(text: str, rel: str) -> str:
+    """PB-07: the hand-kept page's og:image and twitter:image point at its
+    module's card (assets/og/<key>.png). Nothing else on the page moves."""
+    url = f"{SITE_ORIGIN}/assets/og/{HAND_OG_CARD[rel]}.png"
+    return _HAND_OG_IMAGE_RE.sub(lambda m: m.group(1) + url + m.group(2), text)
+
+
 def restamp_hand_authored_pages() -> None:
     """Stamp every /assets/ stylesheet, script and <use> ref in the
     hand-authored pages with the asset's current content hash (_restamp_html).
-    With PIXEL_BRAND on, the nav lockup is synced to the pixel lockup too."""
+    With PIXEL_BRAND on, the nav lockup is synced to the pixel lockup and the
+    og:image and twitter:image to the page's module card too."""
     for rel in HAND_AUTHORED_PAGES:
         path = ROOT / rel
         if not path.exists():
@@ -7298,7 +7338,7 @@ def restamp_hand_authored_pages() -> None:
         original = path.read_text(encoding="utf-8")
         stamped = _restamp_html(original)
         if PIXEL_BRAND:
-            stamped = pixel_brand_hand_nav(stamped)
+            stamped = pixel_brand_hand_og(pixel_brand_hand_nav(stamped), rel)
         if stamped != original:
             path.write_text(stamped, encoding="utf-8")
             print(f"  restamped {rel}")

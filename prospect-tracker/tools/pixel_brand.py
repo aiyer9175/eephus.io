@@ -13,7 +13,7 @@ no RNG, no anti-aliasing (every pixel is one flat colour, alpha 0 or 255),
 integer scales only, and the share-card field is integer arithmetic so it does
 not move with a Pillow or libm upgrade.
 
-Writes ONLY these two folders, never data/ (the pytest-revert trap):
+Writes ONLY these three folders, never data/ (the pytest-revert trap):
     assets/brand/     DOM fragments: wordmark-s2/s4/s6.svg (token-only, aria-hidden),
                       wordmark.css (classes and step-end motion), tokens.css (the
                       token block BR-02 moves into site.css); the favicon and
@@ -21,16 +21,19 @@ Writes ONLY these two folders, never data/ (the pytest-revert trap):
                       exact strike), favicon.svg, favicon-16.png (the footer mark),
                       favicon-32.png, apple-touch-icon.png, icon-192.png,
                       icon-512.png, icon-maskable-512.png, and site.webmanifest
-                      (the served manifest with its icons moved here)
+                      (the served manifest with its icons moved here); the
+                      default share card share-default.png (BR-07 / PB-07)
+    assets/og/        one share card per module, <key>.png (BR-07 / PB-07)
     branding/pixel/   sheets and exported art: brand-sheet-{light,dark}.png,
                       glyphs.json (the sampled letters), wordmark PNG strikes,
-                      share-default.png, og/<module>.png, marks/*.svg, eephus-arc.gif
+                      marks/*.svg, eephus-arc.gif
 The served pages read the icon set from assets/brand/ only when build_site.py's
 PIXEL_BRAND flag is on (FAVICON_LINKS and the footer mark switch with it); the
 served favicon.ico, assets/favicon.svg, favicon-16.png and favicon-32.png are
 PX-23's copies of the same strikes. Behind the same flag build_site.py reads the
 assets/brand wordmark fragments (BR-03), and assets/site.css carries
-wordmark.css's rules; BR-05 to BR-09 swap in the rest.
+wordmark.css's rules; behind it too every page unfurls with the default card
+or its module's card (BR-07); BR-05, BR-06, BR-08 and BR-09 swap in the rest.
 
     python tools/pixel_brand.py                   write into the repo
     python tools/pixel_brand.py --out DIR         same relative paths under DIR
@@ -63,7 +66,8 @@ ROOT = HERE.parent
 TTF_BOLD = ROOT / "branding" / "fonts" / "PixelMplus12-Bold.ttf"
 TTF_REG = ROOT / "branding" / "fonts" / "PixelMplus12-Regular.ttf"
 ICONS_JSON = ROOT / "assets" / "eephus-icons.json"   # PX-01's bitmap table
-OUT_DIRS = ("assets/brand", "branding/pixel")        # the only folders written
+OUT_DIRS = ("assets/brand", "assets/og", "branding/pixel")   # the only folders written
+OG_DIR = "assets/og/"                                # BR-07: one share card per module
 TEXT_SUFFIXES = (".svg", ".css", ".json", ".webmanifest")
 MANIFEST = ROOT / "assets" / "site.webmanifest"      # the served manifest (BR-04 input)
 STYLES = ("stepped", "hinted", "lamps")
@@ -872,11 +876,13 @@ def build(out: Path, style: str = SRC.STYLE, seams: str = SRC.SEAMS):
     for name, (size, scale, border) in APP_ICONS.items():
         put_img(I + name, app_icon(size, scale, seams, border=border))
     put_text(I + "site.webmanifest", brand_manifest())
-    put_img(P + "share-default.png", og_card(style, seams))
+    # The share cards (BR-07): served only through build_site.py's PIXEL_BRAND
+    # flag (DEFAULT_SHARE_IMAGE_PIXEL and module_share_image()).
+    put_img(I + "share-default.png", og_card(style, seams))
     bits = icons()
     if bits:
         for key, title, route, line in SRC.MODULES:
-            put_img(P + f"og/{key}.png", og_card(style, seams, key, title, line, route, bits))
+            put_img(OG_DIR + f"{key}.png", og_card(style, seams, key, title, line, route, bits))
     for theme, suffix in (("light", ""), ("dark", "-dark")):
         put_text(P + f"marks/eephus-wordmark{suffix}.svg",
                  standalone_svg(compose(SRC.STRIKES["og_small"], style, seams), theme, "eephus.io"))
@@ -932,9 +938,10 @@ def check(out: Path = ROOT, style: str = SRC.STYLE, seams: str = SRC.SEAMS) -> l
                     bad.append(f"text drift {rel}")
             elif not same_image(a, b):
                 bad.append(f"pixel drift {rel}")
-        brand = out / "assets" / "brand"
-        if brand.exists():
-            for p in sorted(brand.rglob("*")):
+        for folder in (out / "assets" / "brand", out / "assets" / "og"):
+            if not folder.exists():
+                continue
+            for p in sorted(folder.rglob("*")):
                 rel = p.relative_to(out).as_posix()
                 if p.is_file() and rel not in written:
                     bad.append(f"stale {rel}")

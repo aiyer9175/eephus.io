@@ -51,11 +51,11 @@ def test_check_reproduces_every_output(drift):
     assert PB.check.written >= 44
 
 
-def test_outputs_land_only_in_the_two_brand_folders(tmp_path):
+def test_outputs_land_only_in_the_three_brand_folders(tmp_path):
     written = PB.build(tmp_path)
     assert written
     for rel in written:
-        assert rel.startswith(("assets/brand/", "branding/pixel/")), rel
+        assert rel.startswith(("assets/brand/", "assets/og/", "branding/pixel/")), rel
     assert not (tmp_path / "data").exists()
 
 

@@ -182,6 +182,9 @@ Thumbs.db
 # The pixel favicon and app-icon set (tools/pixel_brand.py, BR-04), served
 # behind build_site.py's PIXEL_BRAND flag.
 !assets/brand/*.png
+# The pixel share cards, one per module (tools/pixel_brand.py, BR-07), served
+# behind the same flag.
+!assets/og/*.png
 # Per-player Open Graph cards (Pass C) live under assets/share/.
 !assets/share/
 !assets/share/*.png
