@@ -119,9 +119,10 @@ Every mark is pixel art on the letters' own grid, generated from
 **Full lockup, the eephus.io merged wordmark.** The lob arc is part of the
 lettering: it spans the word with the ball at its apex, the word set in
 PixelMplus12 Bold, the `.io` in lilac in both themes (`--logo-dot`). In the site
-it is live text plus inline SVG (`build_site.py:eephus_merged_wordmark`) until
-`build_site.py`'s `PIXEL_BRAND` flag serves the pixel lockup in its place
-(`assets/brand/wordmark-s*.svg`, the words kept as hidden text). The portable
+it is the pixel lockup on every page (`build_site.py:eephus_merged_wordmark`
+serves `assets/brand/wordmark-s*.svg`, the words kept as hidden text), and the
+homepage hero plays the pixel pitch once on load; the vector mark and its
+draw-on were retired on 2026-10-02. The portable
 twin is `marks/eephus-wordmark.svg` (and `-dark`): the pixel lockup with the
 letters as paths and raw hex, so it renders as the real mark anywhere, with no
 font. Use it in mastheads, the nav, and footers.
@@ -266,9 +267,10 @@ pixel favicon and app-icon set there, the review sheets and module cards in
 transparent balls in `icons/`. `python tools/pixel_brand.py --check`
 regenerates into a temp folder and fails on any output that does not
 reproduce (text byte for byte, images pixel for pixel) and on any stale file.
-The served pages use the pixel lockup, the pixel favicon set and the cards only
-when `build_site.py`'s `PIXEL_BRAND` flag is on; until then they serve the
-vector lockup and PX-23's copies of the same favicon strikes.
+The served pages use the pixel lockup on every page (since 2026-10-02); the
+pixel favicon set and the cards serve only when `build_site.py`'s `PIXEL_BRAND`
+flag is on, and until then the pages serve PX-23's copies of the same favicon
+strikes.
 
 ## The dark-mode starfield
 
@@ -382,11 +384,11 @@ branding/
 assets/
   eephus-icons.svg              the pixel icon sprite (served)
   eephus-icons.json             the same bitmaps for the canvas painters (served)
-  brand/                        tools/pixel_brand.py's DOM fragments and the pixel
-                                favicon and app-icon set with its manifest, and the
-                                s 2 and s 4 wordmark strikes the canvas exports
-                                paint (served only when build_site.py's
-                                PIXEL_BRAND is on)
+  brand/                        tools/pixel_brand.py's DOM fragments (the wordmark,
+                                served on every page), the s 2 and s 4 wordmark
+                                strikes the canvas exports paint, and the pixel
+                                favicon and app-icon set with its manifest (served
+                                only when build_site.py's PIXEL_BRAND is on)
 
 tools/
   pixel_icons.py                source and generator of the pixel icon set

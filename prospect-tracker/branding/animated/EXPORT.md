@@ -1,8 +1,9 @@
 # Animated mark, export notes
 
-The in-site source of truth is CSS. The homepage hero plays the pitch once on
-load (the vector draw-on today; the pixel pitch of `assets/brand/wordmark.css`
-when `build_site.py`'s `PIXEL_BRAND` flag is on). Nothing animated ships as a
+The in-site source of truth is CSS. The homepage hero plays the pixel pitch of
+`assets/brand/wordmark.css` once on load, and every wordmark replays it on hover
+and on keyboard focus (served on every page since 2026-10-02; the vector draw-on
+is retired). Nothing animated ships as a
 raster into the running site. These exports are for sharing (social, decks,
 README embeds).
 

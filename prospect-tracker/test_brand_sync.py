@@ -5,20 +5,21 @@
 
 """PB-03 / BR-03 (owner ask 2, 2026-09-30): the wordmark swap stays in sync.
 
-build_site.PIXEL_BRAND switches every eephus.io wordmark to the committed pixel
-lockup (assets/brand/wordmark-s{2,4,6}.svg, written by tools/pixel_brand.py).
-Pinned here:
+Every eephus.io wordmark serves the committed pixel lockup
+(assets/brand/wordmark-s{2,4,6}.svg, written by tools/pixel_brand.py) since the
+owner's 2026-10-02 ask (PX_LOGO_ANIMATION), whatever build_site.PIXEL_BRAND says
+(the flag still governs the favicon links and the footer mark). Pinned here:
 
-  - with the flag on, the nav and the sidebar serve the s 2 fragment byte for
-    byte, wrapped as <tag class="nameplate eephus-wordmark-px">{svg}<span
+  - the nav and the sidebar serve the s 2 fragment byte for byte, wrapped as
+    <tag class="nameplate eephus-wordmark-px">{svg}<span
     class="wm-txt">eephus.io</span></tag>; the hero serves s 6 then its s 4
     phone twin, and the homepage h1 stays an h1;
   - the three hand-kept navs (prospx/index.html, collegesavant/index.html,
     collegesavant/pitcher_index.html) carry the same s 2 lockup byte for byte
-    when the flag is on (pixel_brand_hand_nav, run by restamp), and nothing
-    else on those pages moves;
-  - with the flag off, every surface serves today's vector mark: no generated
-    or hand-kept page carries the pixel lockup, and the committed flag is off.
+    (pixel_brand_hand_nav, run by restamp), and nothing else on those pages
+    moves;
+  - no generated or hand-kept page carries the retired vector mark, and the
+    committed flag is off.
 """
 from __future__ import annotations
 
@@ -45,19 +46,19 @@ def _wrapped(svgs: str, tag: str) -> str:
             f'<span class="wm-txt">eephus.io</span></{tag}>')
 
 
-@pytest.fixture
-def flag_on(monkeypatch):
-    monkeypatch.setattr(B, "PIXEL_BRAND", True)
+@pytest.fixture(params=[False, True], ids=["flag_off", "flag_on"])
+def either_flag(request, monkeypatch):
+    monkeypatch.setattr(B, "PIXEL_BRAND", request.param)
     yield
 
 
 def test_the_committed_flag_is_off():
-    # The swap flips in its own commit after the epoch's step Z; a build commit
-    # never carries the flag on.
+    # The rest of the swap (the favicon links, the footer mark) flips in its
+    # own commit (PB-10); a build commit never carries the flag on.
     assert B.PIXEL_BRAND is False
 
 
-def test_nav_and_sidebar_serve_the_s2_fragment_byte_for_byte(flag_on):
+def test_nav_and_sidebar_serve_the_s2_fragment_byte_for_byte(either_flag):
     s2 = _fragment(2)
     assert B.pixel_wordmark_fragment(2) == s2
     assert B.eephus_merged_wordmark("nav", tag="span") == _wrapped(s2, "span")
@@ -67,7 +68,7 @@ def test_nav_and_sidebar_serve_the_s2_fragment_byte_for_byte(flag_on):
     assert m and m.group(1) == _wrapped(s2, "span")
 
 
-def test_hero_serves_s6_then_its_s4_twin_and_stays_an_h1(flag_on):
+def test_hero_serves_s6_then_its_s4_twin_and_stays_an_h1(either_flag):
     hero = B.eephus_merged_wordmark("mast")
     assert hero == _wrapped(_fragment(6) + _fragment(4), "h1")
     lockup = B.eephus_logo_lockup()
@@ -79,7 +80,7 @@ def test_hero_serves_s6_then_its_s4_twin_and_stays_an_h1(flag_on):
 
 
 @pytest.mark.parametrize("page", HAND_PAGES, ids=lambda p: f"{p.parent.name}/{p.name}")
-def test_hand_nav_takes_the_s2_lockup_and_nothing_else_moves(flag_on, page):
+def test_hand_nav_takes_the_s2_lockup_and_nothing_else_moves(page):
     text = page.read_text(encoding="utf-8")
     synced = B.pixel_brand_hand_nav(text)
     m = _BRAND_LINK_RE.search(synced)
@@ -95,23 +96,17 @@ def test_hand_nav_takes_the_s2_lockup_and_nothing_else_moves(flag_on, page):
 
 
 @pytest.mark.parametrize("page", HAND_PAGES, ids=lambda p: f"{p.parent.name}/{p.name}")
-def test_hand_nav_on_disk_matches_the_flag(page):
+def test_hand_nav_on_disk_is_the_s2_lockup(page):
     m = _BRAND_LINK_RE.search(page.read_text(encoding="utf-8"))
     assert m, f"{page.name}: no nav brand link"
-    if B.PIXEL_BRAND:
-        assert m.group(1) == _wrapped(_fragment(2), "span")
-    else:
-        assert m.group(1).startswith('<span class="nameplate eephus-wordmark-merged">')
-        assert "wm-px" not in m.group(1)
+    assert m.group(1) == _wrapped(_fragment(2), "span")
 
 
-def test_flag_off_serves_the_vector_mark():
-    assert not B.PIXEL_BRAND
-    for uid, tag in (("nav", "span"), ("sb", "span"), ("mast", "h1")):
-        mark = B.eephus_merged_wordmark(uid, tag=tag)
-        assert mark.startswith(f'<{tag} class="nameplate eephus-wordmark-merged">')
-        assert "wm-px" not in mark
-        # F2: no pathLength on the arc; site.css sets the dash in em.
-        assert "pathLength" not in mark
+def test_generated_pages_on_disk_serve_the_pixel_lockup():
+    s2 = _wrapped(_fragment(2), "span")
     for rel in ("index.html", "ledger/index.html", "404.html"):
-        assert "eephus-wordmark-px" not in (ROOT / rel).read_text(encoding="utf-8"), rel
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        assert "eephus-wordmark-merged" not in text, rel
+        assert s2 in text, rel
+    home = (ROOT / "index.html").read_text(encoding="utf-8")
+    assert _wrapped(_fragment(6) + _fragment(4), "h1") in home
