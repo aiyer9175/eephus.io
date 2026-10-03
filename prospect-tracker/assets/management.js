@@ -270,6 +270,75 @@
     return "";
   }
 
+  // ---- steal context (W11 stage 1): runner speed and catcher pop time -------
+  // mgmt_steal_context.py writes one file for every season; it is fetched once,
+  // the first time the steal family is drawn. CONTEXT ONLY: the steal's DV is
+  // priced with a league-average runner (management.py) and neither DV nor ER
+  // reads these two cells. stealContext is the twin of
+  // mgmt_steal_context.context_for, and every sentence comes off the payload.
+  var CTX_URL = "/data/management_steal_context.json";
+  var CTX = { data: null, error: false, loading: false };
+  function loadStealContext() {
+    if (CTX.data || CTX.error || CTX.loading) return CTX.data;
+    CTX.loading = true;
+    try {
+      fetch(CTX_URL, { cache: "no-cache" })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (d) {
+          CTX.loading = false;
+          if (d && d.produced_by === "mgmt_steal_context.py" && d.seasons && d.notes) CTX.data = d;
+          else CTX.error = true;
+          render();
+        })
+        .catch(function () { CTX.loading = false; CTX.error = true; render(); });
+    } catch (e) { CTX.loading = false; CTX.error = true; }
+    return CTX.data;
+  }
+  function ctxNote(key, season) {
+    var t = ((CTX.data || {}).notes || {})[key];
+    if (!t) return "";
+    var fl = (((CTX.data || {}).runner) || {}).floor_competitive_runs;
+    return String(t).replace("{season}", season).replace("{floor}", fl == null ? "" : fl);
+  }
+  function stealContext(r, season) {
+    var out = { sp_pct: null, sp_fts: null, sp_note: null, c_id: null, c_name: null, pop: null, pop_note: null };
+    var blk = CTX.data ? (CTX.data.seasons || {})[String(season)] : null;
+    if (!blk) {
+      out.sp_note = ctxNote("no_sprint_board", season);
+      out.pop_note = ctxNote("no_season", season);
+      return out;
+    }
+    var rec = r.in_id == null ? null : (blk.runners || {})[String(r.in_id)];
+    if (!(blk.sprint || {}).n_runners) out.sp_note = ctxNote("no_sprint_board", season);
+    else if (!rec) out.sp_note = ctxNote("runner_not_listed", season);
+    else { out.sp_pct = rec[0]; out.sp_fts = rec[1]; }
+    var cid = (blk.att || {})[r.game_pk + ":" + r.ab];
+    if (cid == null) { out.pop_note = ctxNote("no_catcher", season); return out; }
+    out.c_id = cid;
+    var crec = (blk.catchers || {})[String(cid)];
+    if (crec) out.c_name = crec.length > 2 ? crec[2] : null;
+    if (!crec || crec[0] == null) out.pop_note = ctxNote("no_pop", season);
+    else out.pop = crec[0];
+    return out;
+  }
+  function ctxSprintTitle(c, season) {
+    var d = CTX.data || {}, blk = (d.seasons || {})[String(season)] || {};
+    return "Context, not part of DV. " + (d.runner || {}).source + ", " + season + ": " +
+      num(c.sp_fts, 1) + " ft/s, percentile among the " + ((blk.sprint || {}).n_runners) +
+      " runners it lists: " + (d.runner || {}).definition + ".";
+  }
+  function ctxPopTitle(c, season) {
+    var d = CTX.data || {};
+    return "Context, not part of DV. " + (d.catcher || {}).source + ", " + season + ": " +
+      (c.c_name ? c.c_name + ", " : "") + num(c.pop, 2) + " s: " + (d.catcher || {}).definition + ".";
+  }
+  // A blank context cell says why, like the DVS cell beside it; before the file
+  // arrives (or when it failed to load) the cell stays empty.
+  function ctxCell(v, text, title, note) {
+    if (v == null) return note ? '<td class="mgmt-ctx-none" title="' + esc(note) + '">not on file</td>' : "<td></td>";
+    return '<td title="' + esc(title) + '">' + esc(text) + "</td>";
+  }
+
   // ---- the running game ----------------------------------------------------
   // Which play corpus a hand-built block was priced from (mgmt_export._vintage).
   // The through-date is the decision ledger's, so it is printed only when the
@@ -1082,6 +1151,13 @@
     if (r.family === "intentional_walk") pairs.push(["On deck", esc(r.ondeck_name || "")], ["Walk alone", r.walk_only_mwpa == null ? "" : '<span class="' + signCls(r.walk_only_mwpa) + '">' + signed(r.walk_only_mwpa, 4) + "</span>"]);
     if (r.family === "steal") pairs.push(["Model " + gl("DV", "decision_value") + " / " + gl("ER", "execution_residual") + " / realized (model)", signed(r.dv, 4) + " / " + signed(r.er, 4) + " / " + signed(r.realized_delta, 4)],
       [gl("Break-even", "steal_break_even"), pct(r.breakeven_p)]);
+    if (r.family === "steal" && CTX.data) {
+      var cx = stealContext(r, state.cseason);
+      pairs.push(["Runner sprint speed (context)", cx.sp_pct == null ? esc(cx.sp_note) :
+          "percentile " + esc(cx.sp_pct) + ", " + num(cx.sp_fts, 1) + " ft/s (" + esc((CTX.data.runner || {}).source) + ", " + esc(state.cseason) + ")"],
+        ["Catcher pop time (context)", cx.pop == null ? esc(cx.pop_note) :
+          num(cx.pop, 2) + " s" + (cx.c_name ? ", " + esc(cx.c_name) : "") + " (" + esc((CTX.data.catcher || {}).source) + ", " + esc(state.cseason) + ")"]);
+    }
     if (r.family === "bunt" && r.dv_cell != null) pairs.push(["League " + gl("DV", "decision_value") + " for the state", signed(r.dv_cell, 4)]);
     if (r.pitcher_name && r.family !== "pitching_change") pairs.push(["Pitcher", esc(r.pitcher_name) + (r.pitcher_hand ? " (" + esc(r.pitcher_hand) + ")" : "")]);
     var win = (r.window || []).map(function (p) {
@@ -1103,6 +1179,12 @@
     { key: "mwpa", label: "Realized mWPA", kind: "signed", nd: 4 }, { key: "dvs", label: "DVS", kind: "signed", nd: 4 },
     { key: "win_len", label: "Plays" }, { key: "flags", label: "Flags", kind: "flags" }
   ];
+  // The steal family view's two context columns; `ctx` names the payload block
+  // (runner, catcher) whose source and definition title the header.
+  var SCOLS = [
+    { key: "ctx_sp", label: "Runner sprint pct", kind: "ctx_sp", ctx: "runner" },
+    { key: "ctx_pop", label: "C pop (s)", kind: "ctx_pop", ctx: "catcher" }
+  ];
   function renderDecisions() {
     var d = DATA.decisions;
     if (!d || !d.live || !ensureClubSeason()) return ledgerDark("Decisions");
@@ -1119,6 +1201,18 @@
       });
       if (state.open) { rows.forEach(function (r) { if (decisionId(r) === state.open) opened = r; }); }
     }
+    // The steal family view carries two context columns (W11 stage 1); an open
+    // steal card in any view prints the same two lines.
+    var isSteal = state.family === "steal";
+    if (isSteal || (opened && opened.family === "steal")) loadStealContext();
+    var cols = isSteal ? DCOLS.concat(SCOLS) : DCOLS;
+    var nCtxSp = 0, nCtxPop = 0;
+    if (isSteal) rows.forEach(function (r) {
+      var cx = stealContext(r, state.cseason);
+      r.ctx = cx; r.ctx_sp = cx.sp_pct; r.ctx_pop = cx.pop;
+      if (cx.sp_pct != null) nCtxSp++;
+      if (cx.pop != null) nCtxPop++;
+    });
     var k = state.dsort.key, asc = state.dsort.asc;
     if (k) {
       rows = rows.slice().sort(function (a, b) {
@@ -1130,9 +1224,16 @@
         return asc ? x - y : y - x;
       });
     }
-    var head = DCOLS.map(function (c) {
+    var head = cols.map(function (c) {
       var arrow = k === c.key ? (asc ? " ▲" : " ▼") : "";
       var tag = c.key === "mwpa" ? ' <span class="mgmt-th-tag">realized</span>' : c.key === "dvs" ? ' <span class="mgmt-th-tag">above state</span>' : "";
+      if (c.ctx) {
+        var src = ((CTX.data || {})[c.ctx] || {});
+        tag = ' <span class="mgmt-th-tag">context</span>';
+        return '<th data-dsort="' + c.key + '" tabindex="0" role="button"' +
+          (src.source ? ' title="' + esc(src.source + ", season of the attempt: " + src.definition) + '"' : "") + ">" +
+          esc(c.label) + tag + arrow + "</th>";
+      }
       if (c.kind === "flags") return "<th>" + esc(c.label) + "</th>";
       return '<th data-dsort="' + c.key + '" tabindex="0" role="button">' + esc(c.label) + tag + arrow + "</th>";
     }).join("");
@@ -1140,8 +1241,10 @@
     var body = shown.map(function (r) {
       var id = decisionId(r);
       return '<tr data-mrow="' + esc(id) + '"' + (openIds[id] || (opened && decisionId(opened) === id) ? ' class="mgmt-row--open"' : "") + ">" +
-        DCOLS.map(function (c) {
+        cols.map(function (c) {
           var v = r[c.key];
+          if (c.kind === "ctx_sp") return ctxCell(v, v, ctxSprintTitle(r.ctx, state.cseason), r.ctx.sp_note);
+          if (c.kind === "ctx_pop") return ctxCell(v, num(v, 2), ctxPopTitle(r.ctx, state.cseason), r.ctx.pop_note);
           if (c.kind === "game") return "<td>" + (r.home ? "vs " : "at ") + esc(r.opp || "") + "</td>";
           if (c.kind === "inn") return "<td>" + halfLetter(r.half) + esc(r.inning) + "</td>";
           if (c.kind === "base") return "<td>" + esc(BASE_LABEL[r.base]) + "</td>";
@@ -1168,6 +1271,9 @@
       '<p class="mgmt-count">' + rows.length + " decisions" + (rows.length > 500 ? ", first 500 shown" : "") +
       "; a row opens the plays it governed. " + esc(sh.schema_note ? "" : "") + "</p>" +
       '<p class="mgmt-note">' + esc(((d.families || {})[state.family] || {}).counterfactual_sentence || d.dvs_note) + "</p>" +
+      (isSteal && CTX.data ? '<p class="mgmt-note">Runner sprint pct and C pop are ' + esc(CTX.data.use) + ". " +
+        esc(nCtxSp) + " of " + esc(rows.length) + " steals here carry a runner percentile and " + esc(nCtxPop) +
+        " a pop time; a cell reading not on file says why on hover.</p>" : "") +
       "</section>";
   }
 

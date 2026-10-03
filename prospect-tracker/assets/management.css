@@ -92,6 +92,8 @@
 }
 /* the "realized" header tag: a sort on that column is a rank by what happened */
 .mgmt-th-tag { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; opacity: .6; margin-left: 4px; }
+/* a steal context cell with no source row: the title says why (W11 stage 1) */
+.mgmt-ctx-none { opacity: .6; white-space: nowrap; }
 
 /* style z chips: NEUTRAL. No tier colour, no plus sign as a suffix, a signed
    number in a bordered chip. The border is the same token as .mgmt-flag. */

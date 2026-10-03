@@ -592,6 +592,21 @@ ARTIFACTS = (
                  "be tracked in git; both deploy consumers ship the directory."),
     },
     {
+        "file": "management_steal_context.json", "group": "mlb",
+        "title": "In-Game Management steal context (runner speed, catcher pop time)",
+        "what": ("For every steal row of the decision shards, by season: the runner's "
+                 "sprint speed percentile among that season's runners on the Baseball Savant "
+                 "sprint speed leaderboard (10 or more competitive runs), and the catcher the "
+                 "MLB feed names on the attempt with his pop time to second from the Savant "
+                 "catcher throwing leaderboard. Per-season coverage counts and the reason "
+                 "templates the page prints beside a blank cell."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mgmt_steal_context.py",
+        "note": ("CONTEXT ONLY: the steal's decision value is priced with a league-average "
+                 "runner (management.py) and neither DV nor the execution residual reads "
+                 "this file. Written by mgmt_steal_context.py at nightly step 9e-pre0f."),
+    },
+    {
         "file": "hof_board.json", "group": "mlb",
         "title": "Hall of Fame board",
         "what": ("Career WAR, WAR7, JAWS, WAR ink and the public HoF Monitor and "
