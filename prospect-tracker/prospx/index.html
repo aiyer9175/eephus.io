@@ -2836,18 +2836,9 @@
     .row-tag.acq-rule5,
     .row-tag.acq-waiver     { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.06); }
     .row-tag.savant-inline-pill { color: var(--neon-violet); border-color: var(--neon-violet); background: rgba(107,79,168,0.10); }
-    .row-tag.arsenal-mini    { color: var(--neon-cyan);   border-color: var(--neon-cyan);   background: rgba(74,200,224,0.06);
-      /* v43 - Pitch-mix pill now lives on its OWN full-width line under the
-         name/meta (.pr-arsenal-line), which spans the whole player column - 
-         so the COMPLETE arsenal fits on one line. nowrap keeps it single-
-         line; the old max-width/overflow/ellipsis CLIP was removed (it was
-         hiding pitches) and letter-spacing dropped + padding tightened so
-         long arsenals stay inside the column without clipping. */
-      white-space: nowrap; flex-shrink: 0; padding-left: 5px; padding-right: 5px; }
     /* Dedicated pitch-mix line in the list-row identity block (pitchers). */
     .pr-arsenal-line { width: 100%; min-width: 0; display: flex; align-items: center; line-height: 1; margin-top: 1px; }
     .player-row-idrow { min-width: 0; }
-    .row-tag.recent-acq      { color: var(--text-on-accent); border-color: var(--neon-cyan); background: var(--neon-cyan); text-transform: uppercase; letter-spacing: 0.06em; }
 
     /* Subtle full-row FV-tier background tint. Derived from the
        existing --fv-NN-bg palette but at 3-8% alpha so it's a
@@ -7730,10 +7721,6 @@
       color: var(--neon-cyan);
       font-weight: 600;
     }
-    .pos-depth-card .pdc-eta {
-      font-family: var(--font-mono);
-      font-weight: 600;
-    }
     .pos-depth-card .pdc-icons {
       display: inline-flex; align-items: center; gap: 3px;
       margin-left: 2px;
@@ -8902,15 +8889,6 @@
       div:has(> .stat-tile) {
         grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)) !important;
       }
-
-      /* --- Pitch-mix pill: enforced single-line everywhere it renders
-         (see .row-tag.arsenal-mini). But at ≤640px the list-row name
-         column is only ~90px wide after the headshot + action buttons, so
-         a single-line pill ellipsizes down to ~1 character. Rather than
-         show a useless stub, hide it on phones - the full arsenal is in
-         the bottom FB/SL/CB/CH grade strip and in the pill's tooltip. --- */
-      .player-row .row-tag.arsenal-mini,
-      .spotlight-row .row-tag.arsenal-mini { display: none; }
 
       /* SPR02: the phone section bar is 52px tall (the disclosure row). */
       .detail-tabs { top: var(--px-section-tabs-h, 52px); }
@@ -10611,7 +10589,7 @@
 <script src="/assets/eephus-account.js?v=22deb404" defer></script>
 <script src="/assets/eephus-nav.js?v=44768f08" defer></script>
 <script src="/assets/eephus-state.js?v=bf1de8b3" defer></script>
-<script src="/assets/eephus-ui.js?v=19bd6180" defer></script>
+<script src="/assets/eephus-ui.js?v=bae99e54" defer></script>
   <script src="/assets/eephus-gl.js?v=841b49e3" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
   <script src="/assets/eephus-hub.js?v=f09d4370" defer></script>
@@ -11545,22 +11523,6 @@ function _ageVsLevelBoostTBS(p) {
   const v = map[tier];
   return (v == null) ? null : v;
 }
-function _healthPenaltyTBS(p) {
-  // 1.0 = clean / no IL ever, 0.0 = on IL or post-TJ in recovery
-  // window. Active IL fully zeros it; post-TJ in first 18mo halves
-  // it. Returns null when there's no health profile at all (most
-  // amateur / pre-debut prospects).
-  const hp = (p && p.health_profile) || null;
-  const il = (p && p.il_status) || null;
-  if (!hp && !il) return null;
-  if (il && il.is_on_il) return 0.0;
-  if (hp && hp.is_post_tj) return 0.4;
-  const stints = (hp && hp.il_stints_12mo) || 0;
-  const days = (hp && hp.il_days_12mo) || 0;
-  if (stints >= 3 || days >= 90) return 0.5;
-  if (stints >= 1 || days >= 30) return 0.75;
-  return 1.0;
-}
 function _movementBoostTBS(p) {
   // Riser/rebound = 1.0, flat / no signal = 0.5, faller = 0.0. Maps
   // stock.direction onto the additive 0-1 axis. Returns null when no
@@ -12482,38 +12444,6 @@ function savantInlinePillHTML(p) {
   return `<span class="row-tag savant-inline-pill" title="${escapeHtml(tip)}">${parts.join(" · ")}</span>`;
 }
 
-// Pitcher arsenal mini-chip - top 3 pitches by usage. Hidden for
-// hitters and for any pitcher whose pitch_arsenal isn't on file yet.
-// Renders the compact pitch-type code + usage %; tooltip carries the
-// full mix with velos.
-function arsenalMiniHTML(p) {
-  const pa = p && (p.pitch_arsenal || statcastArsenalPayload(p));
-  const pitches = pa && pa.pitches;
-  if (!pitches || !pitches.length) return "";
-  // Defensive: re-sort desc by usage_pct in case the upstream order
-  // changed. usage_pct can be either 0-1 or 0-100 depending on payload
-  // vintage; we normalize to percentage in the label.
-  const sorted = pitches.slice().sort((a, b) =>
-    (Number(b.usage_pct) || 0) - (Number(a.usage_pct) || 0));
-  // v43 - Show the COMPLETE arsenal (was top-3). The pill now lives on its
-  // own full-width line under the name/meta (.pr-arsenal-line), so it has
-  // room for every pitch on one line without clipping. Cap at 6 (covers
-  // every real MLB arsenal) purely as an overflow guard on narrow columns.
-  const top = sorted.slice(0, 6);
-  const labelBits = top.map(pi => {
-    const pct = _pitchUsagePercent(pi);
-    if (pct == null || Math.round(pct) < 1) return null;  // drop ~0%-usage noise (e.g. "CU 0")
-    return `${pi.pitch_type || pi.pitch_name || "?"} ${Math.round(pct)}`;
-  }).filter(Boolean);
-  if (!labelBits.length) return "";
-  const tipBits = sorted.map(pi => {
-    const pct = _pitchUsagePercent(pi);
-    const velo = pi.avg_speed != null ? ` @ ${Number(pi.avg_speed).toFixed(1)} mph` : "";
-    return `${pi.pitch_name || pi.pitch_type || "?"} ${pct != null ? pct.toFixed(1) + "%" : "?"}${velo}`;
-  });
-  return `<span class="row-tag arsenal-mini" title="${escapeHtml("Pitch mix: " + tipBits.join(" · "))}">${escapeHtml(labelBits.join(" · "))}</span>`;
-}
-
 // v44 - Pitch-mix line REMOVED from the compact list (owner request). On
 // pitchers it added a second full-width strip under the name/meta, which -
 // stacked above the tool-grade tape inside the fixed-height card - pushed the
@@ -12523,46 +12453,6 @@ function arsenalMiniHTML(p) {
 // source while leaving the 3 call sites wired for an easy re-enable.
 function arsenalLineHTML(p) {
   return "";
-}
-
-// "Newly acquired" chip - fires when the most recent trade / waiver
-// claim / Rule 5 pick / contract purchase happened in the last 30
-// days. Quieter version of the perma-Acquisition pill (which says
-// "this player was once acquired via X"); this one says "very
-// recently". Both can show on the same row - complementary signals.
-function recentAcqBadgeHTML(p) {
-  const events = [];
-  for (const t of (p.trades || [])) {
-    if (t && t.trade_date) {
-      events.push({ kind: "trade", date: t.trade_date,
-                    from: t.from_org, to: t.to_org });
-    }
-  }
-  for (const tx of (p.transactions || [])) {
-    if (!tx || !tx.date) continue;
-    if (tx.kind === "waiver_claim" || tx.kind === "rule_5"
-        || tx.kind === "contract_purchase") {
-      events.push({ kind: tx.kind, date: tx.date,
-                    from: tx.from_org, to: tx.to_org });
-    }
-  }
-  if (!events.length) return "";
-  // Latest event wins.
-  events.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-  const e = events[0];
-  const dt = new Date(e.date + "T00:00:00");
-  if (isNaN(dt.getTime())) return "";
-  const days = Math.floor((Date.now() - dt.getTime()) / 86400000);
-  if (days < 0 || days > 30) return "";
-  const kindLabels = {
-    trade: "Acquired via trade",
-    waiver_claim: "Waiver claim",
-    rule_5: "Rule 5 pick",
-    contract_purchase: "Contract purchase",
-  };
-  const arrow = (e.from && e.to) ? ` - ${e.from} → ${e.to}` : "";
-  const tip = `${kindLabels[e.kind] || "Acquired"}${arrow} on ${e.date} (${days} day${days === 1 ? "" : "s"} ago)`;
-  return `<span class="row-tag recent-acq" title="${escapeHtml(tip)}">new · ${days}d</span>`;
 }
 
 // Inline badge cluster for player-row lines - toolPlus, flagCounter,
@@ -17449,9 +17339,6 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
     }
     return vals.length ? vals.reduce((s, x) => s + x, 0) / vals.length : null;
   };
-  // Jump helper - clicks on rows navigate to that draftee.
-  const _jump = (k) =>
-    `event.preventDefault();goToDraftee('${escapeHtml(k)}');`;
 
   // Cross-link card - always present, takes user back to the rankings
   // for this class.
@@ -19534,14 +19421,6 @@ function _tcOf(p, tool) {
   const tc = points[points.length - 1].tools_consensus || {};
   const v = tc[tool];
   return v != null ? Number(v) : null;
-}
-
-function _heightToInches(h) {
-  if (!h) return null;
-  // FG ships as `6' 2"` or `6'2"`; normalize.
-  const m = String(h).match(/(\d+)'\s*(\d+)/);
-  if (!m) return null;
-  return parseInt(m[1], 10) * 12 + parseInt(m[2], 10);
 }
 
 function _linearRegression(pts) {
@@ -22686,13 +22565,6 @@ function renderRecentlyTraded() {
       fv: p.fv_close != null ? p.fv_close : price.fv,
       debuted: price.status ? price.status !== "active" : !!(p.debut_date || p.status === "debuted"),
     });
-  };
-  // Build trade groups: tradeKey = `${date}|${from}|${to}` (and
-  // the mirror `${date}|${to}|${from}` resolves to the same group).
-  const _tradeKey = (acq) => {
-    const from = acq.from_org || "?", to = acq.to_org || "?";
-    const lo = from < to ? from : to, hi = from < to ? to : from;
-    return `${acq.date}|${lo}|${hi}`;
   };
   // Identity index for names that appear only in the trade narrative:
   // tracked debuts and inactive rows keyed by the accent-folded name
@@ -28193,12 +28065,6 @@ function _hsSideOf(p) {
   return /^(RHP|LHP|SP|RP|MIRP|SIRP|P)\b/.test(p.position || "") ? "pitcher" : "hitter";
 }
 
-function _hsStd(arr) {
-  if (!arr || arr.length < 2) return 0;
-  const m = arr.reduce((s, x) => s + x, 0) / arr.length;
-  return Math.sqrt(arr.reduce((s, x) => s + (x - m) * (x - m), 0) / (arr.length - 1));
-}
-
 // OLS of prospect count on youth population (100k units). Returns slope,
 // intercept, residual SE, r-squared, and predict(). Null under 3 points.
 function _hsFitProductionReg(byKey, demoStates) {
@@ -29674,10 +29540,6 @@ function goToLeague(name) {
   const p = new URLSearchParams();
   p.set("league", name);
   _pushHash(p);
-}
-function _leagueLinkHTML(name) {
-  if (!name) return " - ";
-  return '<a href="#" class="college-link" data-league="' + escapeHtml(name) + '" title="' + escapeHtml(name) + ' league page">' + escapeHtml(name) + '</a>';
 }
 function _findLeague(name) {
   if (!name || !DATA.overseas || !DATA.overseas.leagues) return null;
@@ -38700,15 +38562,6 @@ function dollarDvmColor(v) {
 function dollarDvmTooltip(v) {
   return `$DvM+ ${v == null ? " - " : Math.round(v)} - Surplus-Development index. The player's consensus-FV appreciation rate over time (plus age-for-level standing) indexed against same-FV-tier peers. 100 = tier average, +10 ≈ 1σ faster. Above 100 = developing/appreciating faster than same-grade prospects.`;
 }
-// Compact inline $DvM+ pill (outlined, color-coded). Returns "" when the
-// player has no baked value (debutants / pre-resolution prospects).
-function dollarDvmPill(p) {
-  const v = p && p.dollar_dvm_plus;
-  if (v == null || !isFinite(v)) return "";
-  const c = dollarDvmColor(v);
-  return `<span class="dvm-pill" title="${escapeHtml(dollarDvmTooltip(v))}" style="display:inline-flex;align-items:baseline;gap:3px;font-family:var(--font-mono);font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;border:1px solid ${c};color:${c};vertical-align:middle;cursor:help;line-height:1.4;"><span style="opacity:0.8;">$DvM+</span><span style="font-variant-numeric:tabular-nums;">${Math.round(v)}</span></span>`;
-}
-
 function fmtSvMM(m) {
   if (m == null || !isFinite(m)) return " - ";
   const a = Math.abs(Number(m)), sign = m < 0 ? "−" : "";
@@ -39477,39 +39330,6 @@ function optionsDotsHTML(p) {
     `<span class="options-pip${i < used ? " is-filled" : ""}"></span>`
   ).join("");
   return `<span class="options-dots" title="${escapeHtml(tip)}" data-remaining="${remaining}">${pips}</span>`;
-}
-
-// Legacy MLB roster / options chip for the player-meta line. Kept for
-// the farm-roster table which still surfaces the numeric "X/3" pill
-// inline. New list rows use optionsDotsHTML above + .headshot-stack
-// to put the dots under the player picture instead.
-function rosterTagHTML(p) {
-  const rs = p && p.roster_status;
-  if (!rs) return "";
-  const usedYrs = rs.options_used_years || [];
-  if (!rs.on_40_man && usedYrs.length === 0) return "";
-  const total = 3;
-  const used = Math.min(total, rs.options_used || 0);
-  const remaining = (rs.options_remaining != null)
-    ? rs.options_remaining
-    : Math.max(0, total - used);
-  // pip-style mini visual: filled = used, hollow = remaining.
-  const pip = filled => `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;border:1px solid currentColor;background:${filled ? "currentColor" : "transparent"};margin:0 1px;vertical-align:middle;"></span>`;
-  const pips = Array.from({length: total}, (_, i) => pip(i < used)).join("");
-  const tip = [
-    rs.mlb_debut_date ? `MLB debut ${rs.mlb_debut_date}` : null,
-    rs.on_40_man ? "On 40-man" : "Off 40-man",
-    `Options: ${used}/${total} used${usedYrs.length ? ` (${usedYrs.join(", ")})` : ""}`,
-    `Service: ${rs.service_phase}`,
-  ].filter(Boolean).join(" · ");
-  // Color hint: cyan when options remain, amber when out (or 1 left), red on 0.
-  const color = remaining === 0 ? "var(--down)"
-              : remaining === 1 ? "var(--neon-amber)"
-                                : "var(--neon-cyan)";
-  return `<span class="options-tag" title="${escapeHtml(tip)}" style="display:inline-flex;align-items:center;gap:4px;border:1px solid ${color};color:${color};font-family:var(--font-mono);font-size:10px;padding:2px 6px;border-radius:2px;letter-spacing:0.04em;line-height:1;">
-    ${pips}
-    <span>${remaining}/${total}</span>
-  </span>`;
 }
 
 // Pool-wide mean age + heat-gradient color for the age tag. The mean
@@ -45761,15 +45581,6 @@ function _playerOrgEvents(player) {
   return deduped;
 }
 
-function _orgFromEventTimeline(player, season) {
-  if (!player || season == null) return null;
-  if (season >= new Date().getFullYear()) return player.org || null;
-  const events = _playerOrgEvents(player);
-  if (!events.length) return player.org || null;
-  const seasonEnd = `${season}-11-30`;
-  return _orgFromEventsBeforeDate(player, seasonEnd) || player.org || null;
-}
-
 function _orgFromEventsBeforeDate(player, dateStr) {
   if (!player || !dateStr) return null;
   const events = _playerOrgEvents(player);
@@ -49703,14 +49514,6 @@ function renderPlayerDetail(key) {
 
     // Format helpers that always print the delta alongside the raw,
     // colored by whether the player is above or below the level avg.
-    const fmtDeltaColor = (val, avg, lowerBetter) => {
-      if (val == null || isNaN(val) || avg == null) return " - ";
-      const delta = val - avg;
-      if (Math.abs(delta) < 0.005) return `<span style="color:var(--text-tertiary);"> - </span>`;
-      const isBetter = lowerBetter ? delta < 0 : delta > 0;
-      const color = isBetter ? "var(--up)" : "var(--down)";
-      return `<span style="color:${color};">${(delta > 0 ? "+" : "")}${delta.toFixed(2)}</span>`;
-    };
     // Rate-stat formatter that strips the leading zero ("0.180" → ".180")
     // and pairs the raw value with a colored delta vs. the level avg.
     const fmtRate3 = (val, avg, lowerBetter) => {
@@ -52157,30 +51960,6 @@ function renderPlayerDetail(key) {
   // available on deeper tabs (user wanted Overview to be a true
   // summary even at the cost of redundancy). Each tile is clickable
   // and jumps to the relevant deep view.
-  const _ovSlash = (() => {
-    const sl = p.statline || {};
-    if (sl.is_pitcher) {
-      if (sl.era == null) return null;
-      const ip = sl.ip != null ? `${sl.ip} IP` : "";
-      return { label: "ERA", value: sl.era, sub: `${ip}${sl.k_per_9 != null ? ` · ${sl.k_per_9} K/9` : ""}`, level: sl.level };
-    }
-    if (!sl.avg && !sl.ops) return null;
-    return { label: "Slash", value: `${sl.avg ?? " - "}/${sl.obp ?? " - "}/${sl.slg ?? " - "}`, sub: `${sl.ops ? sl.ops + " OPS" : ""}${sl.hr != null ? ` · ${sl.hr} HR` : ""}${sl.sb != null ? ` · ${sl.sb} SB` : ""}`, level: sl.level };
-  })();
-  const _ovTopTools = (() => {
-    const tools = (p.tools && p.tools.grades) || {};
-    // v17 - exclude the legacy game_pwr / raw_pwr split so the top-3
-    // ribbon doesn't double-count power (use the consolidated PWR instead).
-    const entries = Object.entries(tools)
-      .filter(([k, v]) => v != null && k !== "game_pwr" && k !== "raw_pwr")
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 3);
-    if (!entries.length) return null;
-    const labels = { hit: "HIT", pwr: "PWR", speed: "SPD", field: "FLD", throw: "ARM",
-                     fb: "FB", sl: "SL", cb: "CB", ch: "CH", cmd: "CMD", ct: "CT",
-                     pitch_sel: "PS", bat_ctrl: "BC", frame: "FRM", athl: "ATHL", delivery: "DEL" };
-    return entries.map(([k, v]) => `${labels[k] || k.toUpperCase()} ${v}`).join(" · ");
-  })();
   const _ovHealth = (() => {
     const il = p.il_status || {};
     if (il.is_on_il) return { label: "Health", value: `On IL${il.days_on_il != null ? ` · ${il.days_on_il}d` : ""}`, tone: "down" };
@@ -52190,11 +51969,6 @@ function renderPlayerDetail(key) {
     if (stints >= 3) return { label: "Health", value: `${stints} IL stints (12mo)`, tone: "warn" };
     if (stints >= 1) return { label: "Health", value: "Recent injury", tone: "watch" };
     return { label: "Health", value: "Healthy", tone: "up" };
-  })();
-  const _ovEta = (() => {
-    const eta = etaServed(p) || {};
-    if (!eta.year) return null;
-    return { label: "ETA", value: etaDisplayYear(eta), sub: eta.confidence ? `${eta.confidence} conf` : "" };
   })();
   const _ovSurplus = (() => {
     // A debuted player priced on his MLB contract leads with the Trade Machine value, as
@@ -52584,19 +52358,6 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
       ? `${first[0]}. ${last}`
       : last;
   };
-  const yearTag = (year) => {
-    if (year == null || year >= 9999) return "";
-    const yy = String(year).slice(-2);
-    const thisYear = new Date().getFullYear();
-    const diff = year - thisYear;
-    const cls = diff <= 0 ? "eta-now"
-               : diff === 1 ? "eta-near"
-               : diff === 2 ? "eta-close"
-               : diff === 3 ? "eta-mid"
-               : diff === 4 ? "eta-far"
-               : "eta-very-far";
-    return `<span class="pdc-eta ${cls}" title="ETA ${year}">'${yy}</span>`;
-  };
   // Small per-card icons: age-vs-level dot + health glyph + acq pill.
   // Each gates on its data; clean prospects render no icon cluster at all.
   const iconsHTML = (p) => {
@@ -52728,12 +52489,6 @@ function _otZBar(z) {
     <span style="position:absolute;top:0;bottom:0;${side}width:${pct.toFixed(0)}%;background:${col};opacity:0.7;"></span>
     <span style="position:absolute;top:-2px;left:50%;width:1px;bottom:-2px;background:var(--text-tertiary);"></span>
   </span> <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);">${z > 0 ? "+" : ""}${z}</span>`;
-}
-
-function _otChip(label, tip, tone) {
-  if (!label) return "";
-  const col = tone === "up" ? "var(--up)" : tone === "down" ? "var(--down)" : "var(--text-secondary)";
-  return `<span title="${escapeHtml(tip || "")}" style="display:inline-block;border:1px solid ${col};color:${col};font-family:var(--font-retro-mono);font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;margin:2px 4px 2px 0;cursor:help;">${escapeHtml(label)}</span>`;
 }
 
 // Pronounced filled "identity" badges: each kind carries a CUSTOM line icon
@@ -53765,27 +53520,6 @@ function _renderFarmDetailBody(orgCode, org, root) {
       <div class="stat-value" style="font-size:14px;color:${healthColor};font-variant-numeric:tabular-nums;">${healthValue}</div>
     </div>
   </div>`;
-
-  // Compact stat line for a roster row: slash + counting for hitters,
-  // ERA + peripherals for pitchers. One line, monospace, dimmed; the
-  // full season detail still lives on the prospect page.
-  const rosterStatLine = (p) => {
-    const sl = p.statline;
-    if (!sl) return `<span style="color:var(--text-tertiary);">no stats yet</span>`;
-    const isP = sl.is_pitcher;
-    const displayLevel = currentDisplayLevel(p) || sl.level || "?";
-    const levelTip = displayLevel !== sl.level
-      ? ` title="${escapeHtml(`Current level ${displayLevel}; stats shown from ${sl.level || "unknown level"}`)}"`
-      : "";
-    const levelPill = `<span class="level-pill level-neutral"${levelTip} style="margin-right:4px;">${escapeHtml(displayLevel)}</span>`;
-    const slash = isP
-      ? `${sl.era ?? " - "} ERA · ${sl.whip != null ? sl.whip + " WHIP · " : ""}${sl.k_per_9 != null ? sl.k_per_9.toFixed(1) + " K/9 · " : ""}${sl.bb_per_9 != null ? sl.bb_per_9.toFixed(1) + " BB/9 · " : ""}${sl.ip ?? " - "} IP`
-      : `${sl.avg ?? " - "}/${sl.obp ?? " - "}/${sl.slg ?? " - "} · ${sl.hr ?? 0} HR${sl.sb ? ' · ' + sl.sb + ' SB' : ''}${sl.bb_pct != null ? ' · ' + sl.bb_pct.toFixed(0) + '% BB' : ''}${sl.k_pct != null ? ' · ' + sl.k_pct.toFixed(0) + '% K' : ''}`;
-    const prior = sl.is_prior_season && sl.season
-      ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats yet - showing ${sl.season}">${sl.season}</span>`
-      : "";
-    return `${levelPill}${prior}<span style="color:var(--text-primary);font-family:var(--font-mono);font-size:11px;">${slash}</span>`;
-  };
 
   // Full roster with mini FV charts + an inline current-season stat
   // line under each player's name. Column proportions widened slightly

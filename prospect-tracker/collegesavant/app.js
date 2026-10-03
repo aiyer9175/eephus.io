@@ -1424,21 +1424,6 @@ function topDriverChips(player, limit = 6) {
     .join("");
 }
 
-function rankForMetric(player, key) {
-  const metric = getMetric(key);
-  const values = state.players
-    .filter((p) => Number.isFinite(p[key]))
-    .sort((a, b) => {
-      const direction = metric.higherBetter ? -1 : 1;
-      return direction * compareNullable(a[key], b[key]);
-    });
-  return values.findIndex((p) => p.slug === player.slug) + 1;
-}
-
-function rankableCount(key) {
-  return state.players.filter((p) => Number.isFinite(p[key])).length;
-}
-
 function getMetric(key) {
   if (key === "cs_plus") return { key: "cs_plus", label: "CS+", fmt: "number", higherBetter: true };
   return METRICS.find((metric) => metric.key === key) || METRICS[0];

@@ -15,7 +15,6 @@
      missing site.css can never render CollegeSavant off-brand. site.css loads
      before this on both CS pages, so the var() normally wins. */
   --ink: var(--text-primary, #0F1B2D);
-  --navy: var(--bg-secondary, #FBF8F0);
   --navy-2: var(--accent-navy, #0E2B4D);
   --paper: var(--bg-primary, #F4F0E6);
   --paper-2: var(--bg-secondary, #FBF8F0);
@@ -26,7 +25,6 @@
   --red: var(--accent-red, #B91C1C);
   --gold: var(--accent-gold, #C9A227);
   --blue: var(--accent-navy, #0E2B4D);
-  --shadow: var(--shadow-card, none);
   /* Savant percentile semantics: hot = high percentile, cold = low. */
   --cs-hot: var(--accent-red, #B91C1C);
   --cs-cold: var(--accent-navy, #0E2B4D);
