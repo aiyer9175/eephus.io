@@ -174,7 +174,12 @@ def test_clemens_default_applies_and_context_restores():
         # against 17.29M, and prospx_current's trailing-3 mean goes 16.61M -> 16.20M
         # (-2.5 percent). ctrl_war did not move. The tier grid was re-captured inside
         # this set in the same change.
-        assert vf.surplus_value_mm(50.0, False) == pytest.approx(47.2, abs=0.1)
+        # RESTAMPED 2026-10-03 for the fWAR label epoch, 47.2 -> 45.5. A WIN-COST move: the
+        # rebuild passes rewrote the one $/WAR series from the FA corpus, which the epoch
+        # moved to the fWAR training label, so the 2026 winter reads 16.20M against 16.46M
+        # and the 2026-27 level 16.86M against 17.14M (-1.6 percent). The FV50 anchor did not
+        # move after step J. The tier grid was re-captured inside this set in the same change.
+        assert vf.surplus_value_mm(50.0, False) == pytest.approx(45.5, abs=0.1)
     assert vf.active_valuation_set() == "clemens_2026"
     assert vf.surplus_value_mm(50.0, False) == pytest.approx(base_50, abs=0.01)
     assert vf._config()["_valuation_set"] == "clemens_2026"

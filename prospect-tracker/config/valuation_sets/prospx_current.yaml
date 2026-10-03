@@ -54,6 +54,14 @@ meta:
 #   v6 2026-07-31 pitcher: 35+ 2.0 / 40 2.9 / 40+ 7.7 / 45 12.2 / 45+ 25.0 / 50 34.3 / 55 49.9 / 60 81.3 / 65 130.2 / 70 178.2
 # ctrl_war is calibration-independent (fv_to_6yr_avg_war*6) and unchanged.
 tiers:
+  # RE-CAPTURED 2026-10-03 AFTER STEP S of the fWAR LABEL EPOCH (a second capture,
+  # a WIN-COST move): the rebuild passes rewrote the one $/WAR series
+  # (fa_market.write_dpw_series) from the FA corpus, which the epoch moved to the
+  # fWAR training label, so the 2026 winter reads 16.20M against 16.46M and the
+  # 2026-27 level 16.86M against 17.14M; this set's tier grid follows. Captured INSIDE
+  # `with vf.valuation_set("prospx_current")`. ctrl_war UNCHANGED (the anchors did not
+  # move after step J). surplus_musd moves by at most +0.0 (pitcher 40,
+  # 2.9 -> 2.9) and -9.1 (hitter 70, 215.6 -> 206.5).
   # RE-CAPTURED 2026-10-03 for the fWAR LABEL EPOCH (docs/efv-2026-09-17/
   # FWAR_LABEL_EPOCH_GATE.md, runbook step J), taken INSIDE
   # `with vf.valuation_set("prospx_current")` after `value_framework.py --fit` on the
@@ -108,27 +116,27 @@ tiers:
   # the engine in that context. Capturing on the default silently yields a different
   # grid -- pitcher 60 reads 75.2 there against the correct 81.3.
   hitter:
-    "35+":  {surplus_musd: 2.5,   ctrl_war: 0.25}
-    "40":   {surplus_musd: 3.3,   ctrl_war: 0.42}
-    "40+":  {surplus_musd: 11.6,   ctrl_war: 1.14}
-    "45":   {surplus_musd: 23.1,   ctrl_war: 1.86}
-    "45+":  {surplus_musd: 35.9,   ctrl_war: 2.97}
-    "50":   {surplus_musd: 47.2,   ctrl_war: 4.08}
-    "55":   {surplus_musd: 66.6,   ctrl_war: 5.88}
-    "60":   {surplus_musd: 111.2,   ctrl_war: 9.0}
-    "65":   {surplus_musd: 162.0,   ctrl_war: 11.94}
-    "70":   {surplus_musd: 215.6,   ctrl_war: 14.82}
+    "35+":    {surplus_musd: 2.5,   ctrl_war: 0.25}
+    "40":     {surplus_musd: 3.3,   ctrl_war: 0.42}
+    "40+":    {surplus_musd: 11.2,   ctrl_war: 1.14}
+    "45":     {surplus_musd: 22.3,   ctrl_war: 1.86}
+    "45+":    {surplus_musd: 34.5,   ctrl_war: 2.97}
+    "50":     {surplus_musd: 45.5,   ctrl_war: 4.08}
+    "55":     {surplus_musd: 64.1,   ctrl_war: 5.88}
+    "60":     {surplus_musd: 106.7,   ctrl_war: 9.0}
+    "65":     {surplus_musd: 155.3,   ctrl_war: 11.94}
+    "70":     {surplus_musd: 206.5,   ctrl_war: 14.82}
   pitcher:
-    "35+":  {surplus_musd: 2.0,   ctrl_war: 0.25}
-    "40":   {surplus_musd: 2.9,   ctrl_war: 0.42}
-    "40+":  {surplus_musd: 8.6,   ctrl_war: 1.14}
-    "45":   {surplus_musd: 13.3,   ctrl_war: 1.86}
-    "45+":  {surplus_musd: 27.1,   ctrl_war: 2.97}
-    "50":   {surplus_musd: 37.4,   ctrl_war: 4.08}
-    "55":   {surplus_musd: 53.6,   ctrl_war: 5.88}
-    "60":   {surplus_musd: 93.5,   ctrl_war: 9.0}
-    "65":   {surplus_musd: 139.9,   ctrl_war: 11.94}
-    "70":   {surplus_musd: 188.5,   ctrl_war: 14.82}
+    "35+":    {surplus_musd: 2.0,   ctrl_war: 0.25}
+    "40":     {surplus_musd: 2.9,   ctrl_war: 0.42}
+    "40+":    {surplus_musd: 8.1,   ctrl_war: 1.14}
+    "45":     {surplus_musd: 12.7,   ctrl_war: 1.86}
+    "45+":    {surplus_musd: 26.1,   ctrl_war: 2.97}
+    "50":     {surplus_musd: 36.1,   ctrl_war: 4.08}
+    "55":     {surplus_musd: 51.6,   ctrl_war: 5.88}
+    "60":     {surplus_musd: 89.8,   ctrl_war: 9.0}
+    "65":     {surplus_musd: 134.1,   ctrl_war: 11.94}
+    "70":     {surplus_musd: 180.6,   ctrl_war: 14.82}
 
 # --- Global valuation parameters ---
 # MIRROR of value_framework_config.yaml at capture, for documentation and diff
