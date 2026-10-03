@@ -1,0 +1,123 @@
+[
+ {
+  "source": "tx_2025_06",
+  "typeCode": "SC",
+  "date": "2025-06-01",
+  "description": "Texas Rangers placed RHP Nathan Eovaldi on the 15-day injured list retroactive to May 29, 2025. Right posterior elbow inflammation.",
+  "expected": "close"
+ },
+ {
+  "source": "tx_2025_06",
+  "typeCode": "SC",
+  "date": "2025-06-04",
+  "description": "Detroit Tigers placed RHP Jason Foley on the 60-day injured list. Recovery from right shoulder surgery.",
+  "expected": "close"
+ },
+ {
+  "source": "tx_2025_06",
+  "typeCode": "SC",
+  "date": "2025-06-01",
+  "description": "Toronto Blue Jays placed CF Daulton Varsho on the 10-day injured list. Left hamstring strain.",
+  "expected": "close"
+ },
+ {
+  "source": "tx_2024_09",
+  "typeCode": "SC",
+  "date": "2024-09-01",
+  "description": "Minnesota Twins transferred RHP Chris Paddack from the 15-day injured list to the 60-day injured list. Right forearm strain.",
+  "expected": "close"
+ },
+ {
+  "source": "tx_2016_04",
+  "typeCode": "SC",
+  "date": "2016-04-01",
+  "description": "Houston Astros placed C Evan Gattis on the 15-day disabled list retroactive to March 25, 2015. Sports hernia",
+  "expected": "close"
+ },
+ {
+  "source": "tx_2016_04",
+  "typeCode": "SC",
+  "date": "2016-04-02",
+  "description": "Milwaukee Brewers transferred LF Rymer Liriano from the 15-day disabled list to the 60-day disabled list. Facial fractures",
+  "expected": "close"
+ },
+ {
+  "source": "tx_2009_04",
+  "typeCode": "SC",
+  "date": "2009-04-01",
+  "description": "Kansas City Royals placed LHP John Bale on the 15-day disabled list retroactive to March 27, 2009.",
+  "expected": "close"
+ },
+ {
+  "source": "tx_2024_09",
+  "typeCode": "SC",
+  "date": "2024-09-01",
+  "description": "Tampa Bay Rays activated RHP Zack Littell from the 15-day injured list.",
+  "club_is_mlb": true,
+  "expected": "open"
+ },
+ {
+  "source": "tx_2024_09",
+  "typeCode": "CU",
+  "date": "2024-09-01",
+  "description": "Los Angeles Angels recalled LHP Reid Detmers from Salt Lake Bees.",
+  "club_is_mlb": true,
+  "expected": "open"
+ },
+ {
+  "source": "tx_2024_09",
+  "typeCode": "SE",
+  "date": "2024-09-01",
+  "description": "Minnesota Twins selected the contract of 2B Michael Helman from St. Paul Saints.",
+  "club_is_mlb": true,
+  "expected": "open"
+ },
+ {
+  "source": "tx_2024_09",
+  "typeCode": "OPT",
+  "date": "2024-09-01",
+  "description": "New York Yankees optioned RHP Will Warren to Scranton/Wilkes-Barre RailRiders.",
+  "club_is_mlb": false,
+  "expected": "close"
+ },
+ {
+  "source": "tx_2024_09",
+  "typeCode": "OUT",
+  "date": "2024-09-01",
+  "description": "Colorado Rockies sent RHP Noah Davis outright to Albuquerque Isotopes.",
+  "club_is_mlb": false,
+  "expected": "close"
+ },
+ {
+  "source": "tx_2024_09",
+  "typeCode": "CLW",
+  "date": "2024-09-01",
+  "description": "Toronto Blue Jays claimed RHP Dillon Tate off waivers from Baltimore Orioles.",
+  "club_is_mlb": true,
+  "expected": "close"
+ },
+ {
+  "source": "tx_2024_09",
+  "typeCode": "DES",
+  "date": "2024-09-01",
+  "description": "San Diego Padres designated RHP Lake Bachar for assignment.",
+  "club_is_mlb": true,
+  "expected": "close"
+ },
+ {
+  "source": "tx_2024_09",
+  "typeCode": "SC",
+  "date": "2024-09-06",
+  "description": "Washington Nationals reassigned RHP Michael Rucker to the minor leagues.",
+  "club_is_mlb": true,
+  "expected": "close"
+ },
+ {
+  "source": "tx_2024_09",
+  "typeCode": "TR",
+  "date": "2024-09-07",
+  "description": "San Francisco Giants traded 2B Cavan Biggio to Atlanta Braves.",
+  "club_is_mlb": true,
+  "expected": "close"
+ }
+]
