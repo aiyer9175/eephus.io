@@ -17,8 +17,12 @@ that tool writes (it calls that tool's rebase_row), and `--provider fwar` is
 the epoch's step C. Both providers report ONE receipt schema
 (RECEIPT_SCHEMA, `receipt_keys()`).
 
-RESOLVER ORDER (unchanged, imported from the L1 tool): storage's durable
-player_photos binding first (keys bound to two ids excluded), then
+RESOLVER ORDER: the epoch's label-join file FIRST
+(data/sources/mlbam_id_label_join.json, precondition E2, every entry validated
+against the label row's debut year and birth date by tools/efv_epoch_id_join.py;
+it is where a player_photos binding to the wrong human is corrected for the
+label join alone), then the L1 tool's order unchanged: storage's durable
+player_photos binding (keys bound to two ids excluded), then
 data/sources/mlbam_id_overrides.json, then mlbam_id_overrides_busts.json. An
 unresolved key is reported and its row is left exactly as it is.
 
@@ -200,7 +204,8 @@ def receipt_keys() -> tuple[str, ...]:
     """THE ONE RECEIPT SCHEMA, both providers (pinned by test)."""
     return ("schema", "provider", "artifact", "incumbent_key", "rows", "rows_rebased",
             "rows_unresolved", "rows_no_frame", "rows_already_provider", "id_from_photos",
-            "id_from_override", "override_disagrees_with_photos", "seasons",
+            "id_from_override", "id_from_label_join", "label_join_disagrees_with_photos",
+            "override_disagrees_with_photos", "seasons",
             "seasons_provider", "seasons_fallback_pre", "seasons_fallback_post",
             "seasons_mixed", "seasons_changed", "abs_delta_sum", "rows_war_basis",
             "unresolved_keys", "no_frame_keys", "neither_value", "incumbent_breaks")
@@ -230,6 +235,37 @@ def load_source(provider: str, payload: dict | None = None) -> dict:
     return ewar.load()
 
 
+LABEL_JOIN_FILE = ROOT / "data" / "sources" / "mlbam_id_label_join.json"
+
+
+def label_join_ids(path: Path = LABEL_JOIN_FILE) -> dict[str, int]:
+    """{player_key: mlbam} from the epoch's label-join file (E2), every entry; {} when
+    the file is absent or unreadable."""
+    try:
+        blob = json.loads(Path(path).read_text(encoding="utf-8")) or {}
+    except (OSError, ValueError):
+        return {}
+    out: dict[str, int] = {}
+    for k, e in (blob.get("entries") or {}).items():
+        try:
+            out[str(k)] = int(e["mlbam"])
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
+
+
+def resolve_mlbam(key: str, label_join: dict[str, int], durable: dict[str, int],
+                  overrides: dict[str, int]) -> tuple[int | None, str | None]:
+    """(mlbam, source) with source in {label_join, photos, override}; (None, None)
+    when no table knows the key. The label-join file wins because each of its entries
+    was validated against the label row's own debut year (and birth date where the
+    record's is plausible), which is the identity the label join needs."""
+    mid = label_join.get(key)
+    if mid is not None:
+        return mid, "label_join"
+    return L1.resolve_mlbam(key, durable, overrides)
+
+
 def plan(rows: dict[str, dict], provider: str, payload: dict | None = None
          ) -> tuple[dict[str, dict], dict]:
     """Every rebased payload plus the receipt, no writes. Raises RebaseAbort
@@ -240,27 +276,32 @@ def plan(rows: dict[str, dict], provider: str, payload: dict | None = None
     idx = war_source.fwar_index(blob) if provider == "fwar" else None
     durable = L1.durable_ids_by_key()
     overrides = L1.override_ids()
+    label_join = label_join_ids()
     out: dict[str, dict] = {}
     rep = {k: 0 for k in receipt_keys()}
     rep.update({"schema": RECEIPT_SCHEMA, "provider": provider,
                 "artifact": _artifact(provider, blob),
                 "incumbent_key": INCUMBENT_KEY[provider], "rows": len(rows),
                 "abs_delta_sum": 0.0, "rows_war_basis": {},
+                "label_join_disagrees_with_photos": [],
                 "override_disagrees_with_photos": [], "unresolved_keys": [],
                 "no_frame_keys": [], "neither_value": [], "incumbent_breaks": []})
     for key in sorted(rows):
         row = rows[key]
         if row.get("source") == provider:
             rep["rows_already_provider"] += 1
-        mid, how = L1.resolve_mlbam(key, durable, overrides)
+        mid, how = resolve_mlbam(key, label_join, durable, overrides)
         if mid is None:
             rep["rows_unresolved"] += 1
             rep["unresolved_keys"].append(key)
             rep["seasons"] += len(row.get("seasons") or {})
             continue
+        if key in durable and key in label_join and label_join[key] != durable[key]:
+            rep["label_join_disagrees_with_photos"].append((key, durable[key], label_join[key]))
         if key in durable and key in overrides and overrides[key] != durable[key]:
             rep["override_disagrees_with_photos"].append((key, durable[key], overrides[key]))
-        rep["id_from_photos" if how == "photos" else "id_from_override"] += 1
+        rep[{"photos": "id_from_photos", "override": "id_from_override"}.get(
+            how, "id_from_label_join")] += 1
         if provider == "fwar":
             new = rebase_row_fwar(row, mid, idx)
             inc = new["seasons_ewar_v2"] if new else None
@@ -315,7 +356,9 @@ def format_report(rep: dict) -> str:
         f"  rows            {rep['rows']}   rebased {rep['rows_rebased']}   "
         f"unresolved {rep['rows_unresolved']}   no-frame {rep['rows_no_frame']}   "
         f"already {rep['provider']} {rep['rows_already_provider']}",
-        f"  id source       photos {rep['id_from_photos']}   override {rep['id_from_override']}   "
+        f"  id source       label-join {rep['id_from_label_join']}   photos {rep['id_from_photos']}   "
+        f"override {rep['id_from_override']}   "
+        f"label-join!=photos {len(rep['label_join_disagrees_with_photos'])}   "
         f"override!=photos {len(rep['override_disagrees_with_photos'])}",
         f"  seasons         {rep['seasons']}   {rep['provider']} {rep['seasons_provider']} "
         f"({rep['seasons_provider'] / s:.1%})   mixed (outside the provider's seasons) "

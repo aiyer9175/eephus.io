@@ -1,0 +1,325 @@
+{
+ "schema": "efv_epoch_id_join/1",
+ "generated_at": "2026-10-03T01:21:49Z",
+ "commit": "9166ab8c",
+ "vintage_id": "2026-10-02-0341299c20ec",
+ "rule": "coverage only, never accuracy (FWAR_LABEL_EPOCH_GATE.md clause (l)): a label row is kept when every nonzero observed season of its label window has a feed row under its bound id; bound = the label-join file, then player_photos, then the override files, which is step C's order",
+ "label_window": {
+  "target_seasons": 6,
+  "resolved_through": 2025,
+  "debut_years": [
+   2011,
+   2024
+  ]
+ },
+ "kept": {
+  "by_side_and_band": {
+   "hit|2011-2016": {
+    "before": 308,
+    "after": 311
+   },
+   "hit|2017-2021": {
+    "before": 311,
+    "after": 325
+   },
+   "hit|2022-2024": {
+    "before": 324,
+    "after": 326
+   },
+   "pit|2011-2016": {
+    "before": 340,
+    "after": 351
+   },
+   "pit|2017-2021": {
+    "before": 388,
+    "after": 409
+   },
+   "pit|2022-2024": {
+    "before": 356,
+    "after": 356
+   }
+  },
+  "total": {
+   "before": 2027,
+   "after": 2078
+  }
+ },
+ "label_rows": {
+  "before": 2066,
+  "after": 2079
+ },
+ "rows_failing": {
+  "before": 39,
+  "after": 1
+ },
+ "career_war_rows": {
+  "before": 2685,
+  "after": 2698
+ },
+ "binding": {
+  "before": {
+   "photos": 1388,
+   "unbound": 23,
+   "override": 655
+  },
+  "after": {
+   "photos": 1385,
+   "label_join": 693,
+   "unbound": 1
+  }
+ },
+ "by_side_and_band": {
+  "before": {
+   "hit|2011-2016": {
+    "label_rows": 312,
+    "nonzero_window_seasons": 1441,
+    "rows_bound_no_feed": 3,
+    "rows_kept": 308,
+    "rows_unbound": 1,
+    "seasons_bound_no_feed": 14,
+    "seasons_unbound": 6
+   },
+   "hit|2017-2021": {
+    "label_rows": 321,
+    "nonzero_window_seasons": 1379,
+    "rows_bound_no_feed": 1,
+    "rows_kept": 311,
+    "rows_no_career_war": 9,
+    "rows_no_nonzero_season": 2,
+    "rows_unbound": 9,
+    "seasons_bound_no_feed": 2,
+    "seasons_unbound": 21
+   },
+   "hit|2022-2024": {
+    "label_rows": 326,
+    "nonzero_window_seasons": 850,
+    "rows_kept": 324,
+    "rows_no_career_war": 30,
+    "rows_no_nonzero_season": 1,
+    "rows_unbound": 2,
+    "seasons_unbound": 2
+   },
+   "pit|2011-2016": {
+    "label_rows": 351,
+    "nonzero_window_seasons": 1467,
+    "rows_bound_no_feed": 11,
+    "rows_kept": 340,
+    "seasons_bound_no_feed": 48
+   },
+   "pit|2017-2021": {
+    "label_rows": 400,
+    "nonzero_window_seasons": 1533,
+    "rows_bound_no_feed": 1,
+    "rows_kept": 388,
+    "rows_no_career_war": 29,
+    "rows_unbound": 11,
+    "seasons_bound_no_feed": 1,
+    "seasons_unbound": 29
+   },
+   "pit|2022-2024": {
+    "label_rows": 356,
+    "nonzero_window_seasons": 841,
+    "rows_kept": 356,
+    "rows_no_career_war": 31,
+    "rows_no_nonzero_season": 4
+   },
+   "unknown|2011-2016": {
+    "rows_no_side": 40
+   },
+   "unknown|2017-2021": {
+    "rows_no_side": 11
+   }
+  },
+  "after": {
+   "hit|2011-2016": {
+    "label_rows": 312,
+    "nonzero_window_seasons": 1441,
+    "rows_kept": 311,
+    "rows_unbound": 1,
+    "seasons_unbound": 6
+   },
+   "hit|2017-2021": {
+    "label_rows": 325,
+    "nonzero_window_seasons": 1397,
+    "rows_kept": 325,
+    "rows_no_career_war": 5,
+    "rows_no_nonzero_season": 2
+   },
+   "hit|2022-2024": {
+    "label_rows": 326,
+    "nonzero_window_seasons": 850,
+    "rows_kept": 326,
+    "rows_no_career_war": 30,
+    "rows_no_nonzero_season": 1
+   },
+   "pit|2011-2016": {
+    "label_rows": 351,
+    "nonzero_window_seasons": 1467,
+    "rows_kept": 351
+   },
+   "pit|2017-2021": {
+    "label_rows": 409,
+    "nonzero_window_seasons": 1557,
+    "rows_kept": 409,
+    "rows_no_career_war": 20
+   },
+   "pit|2022-2024": {
+    "label_rows": 356,
+    "nonzero_window_seasons": 841,
+    "rows_kept": 356,
+    "rows_no_career_war": 31,
+    "rows_no_nonzero_season": 4
+   },
+   "unknown|2011-2016": {
+    "rows_no_side": 40
+   },
+   "unknown|2017-2021": {
+    "rows_no_side": 11
+   }
+  }
+ },
+ "failing_rows_after": [
+  {
+   "player_key": "conor_gillaspie",
+   "side": "hit",
+   "debut_year": 2011,
+   "band": "2011-2016",
+   "bound": null,
+   "how": null,
+   "seasons": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016
+   ],
+   "why": "unbound"
+  }
+ ],
+ "steps": {
+  "resolve": {
+   "at": "2026-10-03T01:21:47Z",
+   "targets": {
+    "no_id_debut": 69,
+    "bbref_outside_debuts": 66,
+    "photos_no_feed_row": 16,
+    "record_id_not_durable": 1
+   },
+   "by_set": {
+    "no_id_debut": {
+     "accepted": 63,
+     "none": 6
+    },
+    "bbref_outside_debuts": {
+     "accepted": 66,
+     "surname_search": 6
+    },
+    "photos_no_feed_row": {
+     "accepted": 16
+    },
+    "record_id_not_durable": {
+     "accepted": 1
+    }
+   },
+   "override_asset": {
+    "covering_no_id_records": 696,
+    "validated": 696,
+    "rejected": 0
+   },
+   "entries": 842,
+   "manual_review": 6,
+   "statsapi_calls": 0
+  },
+  "land": {
+   "at": "2026-10-03T01:06:56Z",
+   "landed": 759,
+   "bound_in_player_photos": 759,
+   "skipped": 0,
+   "files": {
+    "debuts.json": {
+     "patched": 759,
+     "missing": [],
+     "kept_other_id": []
+    },
+    "debuts_lite.json": {
+     "patched": 759,
+     "missing": [],
+     "kept_other_id": []
+    },
+    "debuts_full": {
+     "patched": 759,
+     "missing": [],
+     "kept_other_id": [],
+     "absent": 0
+    }
+   }
+  },
+  "fetch": {
+   "at": "2026-10-03T01:07:06Z",
+   "requested": 38,
+   "fetched": 13,
+   "written": 13,
+   "provider": "ewar_v2",
+   "missing": [
+    "alberto_tirado",
+    "alvaro_seijas",
+    "arquimedes_gamboa",
+    "dakota_chalmers",
+    "derian_gonzalez",
+    "eliezer_alvarez",
+    "elniery_garcia",
+    "emilio_vargas",
+    "freudis_nova",
+    "hector_yan",
+    "ian_clarkin",
+    "jesus_liranzo",
+    "joe_gatto",
+    "joey_curletta",
+    "jordan_humphreys",
+    "kevin_gadea",
+    "kodi_medeiros",
+    "nick_travieso",
+    "oscar_de_la_cruz",
+    "reggie_lawson",
+    "sam_mcwilliams",
+    "steven_fuentes",
+    "trey_supak",
+    "wuilmer_becerra",
+    "yadier_alvarez"
+   ],
+   "no_id": [
+    {
+     "player_key": "jeremy_beasley",
+     "debut_year": 2021,
+     "side": null,
+     "mlbam": 676886
+    },
+    {
+     "player_key": "david_mckay",
+     "debut_year": 2020,
+     "side": null,
+     "mlbam": 641853
+    },
+    {
+     "player_key": "arnaldo_hernandez",
+     "debut_year": 2019,
+     "side": null,
+     "mlbam": 642511
+    }
+   ],
+   "cohorts": [
+    2017,
+    2021
+   ]
+  }
+ },
+ "manual_review_keys": [
+  "conor_gillaspie",
+  "josh_reddick",
+  "juan_francisco",
+  "mike_dunn",
+  "scott_elbert",
+  "tyler_flowers"
+ ]
+}

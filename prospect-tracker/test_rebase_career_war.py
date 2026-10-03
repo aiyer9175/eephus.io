@@ -79,6 +79,7 @@ def db(monkeypatch, tmp_path):
         pytest.skip("storage cannot init on a temp path in this layout")
     monkeypatch.setattr(L1, "durable_ids_by_key", lambda: {"pitcher": 1001})
     monkeypatch.setattr(L1, "override_ids", lambda: {"hitter": 2002, "late_id": 3003})
+    monkeypatch.setattr(RB, "label_join_ids", lambda: {})
     storage.upsert_career_war(json.loads(json.dumps(TABLE)))
     yield storage
 
