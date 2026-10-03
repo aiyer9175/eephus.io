@@ -378,16 +378,24 @@ def _load_mlb_career_index() -> dict[str, dict]:
     cycle's file - stale-by-one-run is fine for slow-moving career WAR."""
     idx: dict[str, dict] = {}
 
-    # Layer 1 - DB tables (tracked-prospect graduates).
+    # Layer 1 - DB tables (tracked-prospect graduates). The table serves the
+    # LABEL series (fWAR since the epoch's step C, 2026-10-03); the signing's
+    # displayed career_war and war_per_yr are the DISPLAYED series, eWAR v2,
+    # re-expressed per row by name (owner answer EPOCH-Q4), while the WAG keeps
+    # the stored (label) row under `career_war_label`.
     try:
+        import war_source as _ws
         cwar = load_career_war() or {}
         cstats = load_career_stats() or {}
     except Exception:
         cwar, cstats = {}, {}
+        _ws = None
     for pk, cw in cwar.items():
         if not isinstance(cw, dict) or cw.get("career_war") is None:
             continue
-        idx[pk] = {"career_war": cw, "career_stats": cstats.get(pk) or []}
+        shown = _ws.row_on_provider(cw, "ewar_v2") if _ws is not None else cw
+        idx[pk] = {"career_war": shown, "career_war_label": cw,
+                   "career_stats": cstats.get(pk) or []}
 
     # Layer 2 - mlb_player_detail.json (broad MLB coverage; wins on overlap).
     # Resolve relative to THIS module, not the cwd: the export runs from the
@@ -478,7 +486,9 @@ def _signing_performance(entry: dict | None, position, consensus_fv) -> dict:
         "position": entry.get("position") or position,
         "sabermetrics": entry.get("sabermetrics") or {},
         "fv_close": fv, "fv_close_raw": fv,
-        "career_war": cw,
+        # the WAG is anchored on the LABEL series (fWAR since 2026-10-03); the
+        # mlb_player_detail layer carries no label block and keeps its shown row
+        "career_war": entry.get("career_war_label") or cw,
         "career_stats": entry.get("career_stats") or [],
     }
     try:

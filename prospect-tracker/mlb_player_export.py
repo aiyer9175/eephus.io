@@ -306,11 +306,14 @@ def _war_maps() -> tuple[dict, dict]:
                second war_daily read only under a non-bwar default.
 
     Both are {mlbam: {season: {"bat": w, "pit": w}}}; the facade keeps the
-    served key set a superset of the reference's (coverage never shrinks)."""
+    served key set a superset of the reference's (coverage never shrinks).
+
+    DISPLAY DOOR (fWAR label epoch step D + U, 2026-10-03): the served map is
+    eWAR v2 by name (owner answer EPOCH-Q4 "Keep eWAR v2 shown"), never
+    war_source.DEFAULT_PROVIDER, which is now the training label (fWAR). An fWAR
+    reference column beside it is its own later task (EPOCH_FWAR_REFERENCE_COLUMN)."""
     import war_source
-    served = war_source.side_war_by_season()
-    if war_source.DEFAULT_PROVIDER == "bwar":
-        return served, served
+    served = war_source.side_war_by_season(provider="ewar_v2")
     return served, war_source.side_war_by_season(provider="bwar")
 
 

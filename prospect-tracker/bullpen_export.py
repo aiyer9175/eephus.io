@@ -1099,9 +1099,14 @@ def _side_war_by_season() -> dict:
     (proj_export.TWO_WAY_PIT_PTH_FACTOR exists for a display path that shares one
     denominator; this one does not).
 
-    Cached for the process: the three exporters each ask for it once."""
+    Cached for the process: the three exporters each ask for it once.
+
+    DISPLAY DOOR (owner answer EPOCH-Q4 "Keep eWAR v2 shown", 2026-09-30; fWAR
+    label epoch step D + U, 2026-10-03): the boards show eWAR v2, so the
+    provider is named explicitly and never follows war_source.DEFAULT_PROVIDER,
+    which is the training label (fWAR)."""
     import war_source
-    return war_source.side_war_by_season()
+    return war_source.side_war_by_season(provider="ewar_v2")
 
 
 def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
@@ -1539,9 +1544,15 @@ def served_war_basis() -> dict:
                          moves every night, so it cannot name a series.
 
     tools/war_rate_plus_lab.py stamps exactly this dict on both artifacts, so
-    the lab and the join read the basis from one place."""
-    import war_source
-    prov = war_source.DEFAULT_PROVIDER
+    the lab and the join read the basis from one place.
+
+    Since the fWAR label epoch (step D + U, 2026-10-03) `war_provider` is the
+    DISPLAYED series, "ewar_v2", named here explicitly (owner answer EPOCH-Q4
+    "Keep eWAR v2 shown"; orchestrator ruling EPOCH-Q4-IMPL R1a names this
+    function). war_source.DEFAULT_PROVIDER is the training label (fWAR) and is
+    deliberately not read: the WAR-rate columns, the 3-year artifacts and
+    tools/war_rate_plus_lab.py all follow this value."""
+    prov = "ewar_v2"
     gen = None
     if prov != "bwar":
         try:

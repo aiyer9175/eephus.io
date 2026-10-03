@@ -1614,7 +1614,10 @@ def _trial_period_factor(player: dict, skills_auth: float) -> float:
       floor_shield:   C/SS/CF with above-avg defense → 30% of remaining
                       discount absorbed by positional floor guarantee
     """
-    cw          = player.get("career_war") or {}
+    # the LABEL series (fWAR since the 2026-10-03 epoch): the debuted prior is
+    # priced in WAR against anchors refit on the label; `career_war` on the
+    # payload is the displayed eWAR v2 block (owner answer EPOCH-Q4)
+    cw          = player.get("career_war_label") or player.get("career_war") or {}
     war_seasons = int(cw.get("war_seasons_count") or 0)
     position    = player.get("position") or ""
     tools       = player.get("tools") or {}
@@ -2022,7 +2025,7 @@ def _exposure_weighted_career_war(
     drag a two-season player as much as a real current-season run. This returns a
     season-exposure weighted WAR rate plus the fractional season weights used.
     """
-    cwar = player.get("career_war") or {}
+    cwar = player.get("career_war_label") or player.get("career_war") or {}
     seasons = cwar.get("seasons") or {}
     if not seasons:
         return None, 0.0, {}
@@ -2954,7 +2957,7 @@ def bayesian_trade_value(
 
         # Step 2: establish true-talent WAR via Kalman blend of career WAR (prior)
         #         and current-season performance signal (likelihood).
-        cwar        = player.get("career_war") or {}
+        cwar        = player.get("career_war_label") or player.get("career_war") or {}
         _raw_career_war_yr = _safe_float(cwar.get("war_per_yr"), 0.0) or 0.0
         _weighted_career_war_yr, _effective_war_seasons, _war_season_weights = (
             _exposure_weighted_career_war(player, is_pitcher, position)
@@ -3616,7 +3619,7 @@ def bayesian_trade_value(
     # A catcher with career WAR ≤ 0 (Banfield -0.15, Ford -0.02) hasn't shown
     # they belong; the defensive floor would inflate them purely on position label.
     # Gate: career_war_yr > 0.5 required to receive the floor assumption.
-    _career_waryr_for_floor = _safe_float((player.get("career_war") or {}).get("war_per_yr"), 0.0) or 0.0
+    _career_waryr_for_floor = _safe_float(((player.get("career_war_label") or player.get("career_war")) or {}).get("war_per_yr"), 0.0) or 0.0
     if def_grade is None and pos_primary in ("C", "SS") and is_mlb_player and _career_waryr_for_floor > 0.5:
         def_grade = 55.0
     # For debuted players, cap the floor window at remaining control years.

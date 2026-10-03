@@ -312,14 +312,18 @@ def _call(fn, provider):
     return fn(**kwargs)
 
 
-def test_ewar_v2_is_the_default_provider_everywhere():
-    """Owner decision 2026-09-03: the served and label WAR is eWAR v2. 'bwar'
-    stays first in PROVIDERS because it is the input frame."""
-    assert war_source.DEFAULT_PROVIDER == "ewar_v2"
+def test_fwar_is_the_default_provider_everywhere():
+    """Owner decisions O1 and O2 (2026-09-17) and the fWAR label epoch's step D + U
+    (2026-10-03): the LABEL WAR is published fWAR, so the facade default is 'fwar'.
+    The DISPLAYED WAR stays eWAR v2 (owner answer EPOCH-Q4), named explicitly by
+    every display door (test_epoch_display_doors.py). 'bwar' stays first in
+    PROVIDERS because it is the input frame."""
+    assert war_source.DEFAULT_PROVIDER == "fwar"
+    assert war_source.DISPLAY_PROVIDER == "ewar_v2"
     assert war_source.PROVIDERS == ("bwar", "ewar_v2", "ewar_merged", "fwar")
     for fn in _PUBLIC_FNS:
         sig = inspect.signature(fn)
-        assert sig.parameters["provider"].default == "ewar_v2", fn.__name__
+        assert sig.parameters["provider"].default == "fwar", fn.__name__
         assert sig.parameters["provider"].kind is inspect.Parameter.KEYWORD_ONLY, \
             f"{fn.__name__}: provider must be keyword-only"
 

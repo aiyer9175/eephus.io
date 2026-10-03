@@ -259,7 +259,10 @@ def _stint_frame(side: str):
     if side not in _FRAME_CACHE:
         import war_source
         try:
-            _FRAME_CACHE[side] = (war_source.stint_frame(side), None)
+            # DISPLAY DOOR (fWAR label epoch step D + U, 2026-10-03): the Earned board
+            # shows eWAR v2, named explicitly (owner answer EPOCH-Q4), never the
+            # training label war_source.DEFAULT_PROVIDER now serves.
+            _FRAME_CACHE[side] = (war_source.stint_frame(side, provider="ewar_v2"), None)
         except Exception as e:   # noqa: BLE001 - the caller decides what a failure means
             _FRAME_CACHE[side] = (None, e)
     df, err = _FRAME_CACHE[side]

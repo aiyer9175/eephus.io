@@ -24,14 +24,16 @@ def war_daily_index() -> dict[str, dict[int, dict]]:
     across both war_daily tables (batting + pitching WAR summed).
 
     war_source.name_index is the facade route to this index; the raw frames
-    below come through war_source.stint_frame (provider 'bwar')."""
+    below come through war_source.stint_frame on the DISPLAYED series, eWAR v2,
+    named explicitly (an identity helper that uses WAR only as a tiebreak; fWAR
+    label epoch step D + U, 2026-10-03, owner answer EPOCH-Q4)."""
     import pybaseball  # noqa: F401 - availability probe; frames come via war_source
     import war_source
     out: dict[str, dict[int, dict]] = {}
     missing: list[str] = []
     for side, label in (("bat", "bwar_bat"), ("pit", "bwar_pitch")):
         try:
-            df = war_source.stint_frame(side)
+            df = war_source.stint_frame(side, provider="ewar_v2")
         except Exception as e:                                # noqa: BLE001
             # HALF AN INDEX IS WORSE THAN NO INDEX (2026-08-05). This used to
             # `continue` and return whatever it had, which looks safe and is the

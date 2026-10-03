@@ -362,7 +362,9 @@ def _six_year_label_map(universe: list[dict]):
     out = {}
     debut_years = set(getattr(_ed, "DEBUT_YEARS", ()) or ())
     for pl in universe:
-        cw = pl.get("career_war") or {}
+        # the LABEL series (fWAR since the 2026-10-03 epoch); `career_war` on the
+        # timeseries payload is the displayed eWAR v2 block (owner answer EPOCH-Q4)
+        cw = pl.get("career_war_label") or pl.get("career_war") or {}
         seasons = cw.get("seasons") or {}
         dd = str(pl.get("debut_date") or "")
         receipt["considered"] += 1
@@ -443,7 +445,7 @@ def _load_bust_universe(data_dir: Path, universe: list[dict]):
     kept, excluded = [], []
     for r in rows:
         key = r.get("player_key")
-        war = ((r.get("career_war") or {}).get("career_war")) or 0
+        war = (((r.get("career_war_label") or r.get("career_war")) or {}).get("career_war")) or 0
         if r.get("debut_date"):
             excluded.append({"player_key": key, "reason": "carries a debut date"})
             continue
@@ -532,8 +534,10 @@ def _bust_frame(busts: list[dict], years: list[int], raters: list[str],
 
 def _outcome(p: dict) -> dict:
     """Resolved outcome for a player: cumulative WAR (0 if never debuted),
-    debut flag, and the contributor/star flags."""
-    cw = p.get("career_war") or {}
+    debut flag, and the contributor/star flags. The WAR is the LABEL series
+    (fWAR since the 2026-10-03 epoch), read from `career_war_label`; the payload's
+    `career_war` is the displayed eWAR v2 block (owner answer EPOCH-Q4)."""
+    cw = p.get("career_war_label") or p.get("career_war") or {}
     war = cw.get("career_war")
     debuted = bool(p.get("debut_date")) or (war is not None) or (p.get("status") == "debuted")
     war = float(war) if war is not None else 0.0

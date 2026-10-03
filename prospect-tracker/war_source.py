@@ -23,9 +23,22 @@ One module wraps every WAR read the sites make, behind a provider id:
   * the per-season side split - {mlbam: {season: {"bat": w, "pit": w}}}
     (side_war_by_season)
 
-PROVIDER CONTRACT (eWAR epoch, owner decision 2026-09-03, locked).
+PROVIDER CONTRACT (eWAR epoch, owner decision 2026-09-03; fWAR label epoch,
+owner decisions 2026-09-17 and EPOCH-Q4 2026-09-30, flipped 2026-10-03).
 
-  'ewar_v2'  THE DEFAULT and the served/label series site-wide. eWAR v2
+  'fwar'     THE DEFAULT since the fWAR label epoch's step D + U (2026-10-03):
+             the TRAINING LABEL and every anchor, refit, backtest, eval and
+             gate statistic read it through this default. It is NOT the
+             displayed WAR: the owner kept eWAR v2 on every surface a visitor
+             sees (EPOCH-Q4 "Keep eWAR v2 shown"), so every display door
+             (the player pages and WAR tables, the mlbstats boards' side WAR
+             and WAR-rate columns through bullpen_export.served_war_basis, the
+             PAL history, the trade lookup, the Earned board, F-DEF's input
+             file, the identity helpers, the FA Archive, the timeseries
+             `career_war` block) passes provider=DISPLAY_PROVIDER explicitly.
+             Its contract is further down this list.
+  'ewar_v2'  THE DISPLAYED WAR (explicit on every display door) and, until
+             2026-10-03, the default and label series site-wide. eWAR v2
              (ewar.py) is the Baseball-Reference run frame with ONE component
              replaced: pitching re-priced on FIP, centred per season x role so
              role totals match B-Ref. Fielding swap weight is 0.0 (measured,
@@ -51,9 +64,9 @@ PROVIDER CONTRACT (eWAR epoch, owner decision 2026-09-03, locked).
              raises DataUnavailable naming the missing handoff.
   'fwar'     PUBLISHED fWAR, the fWAR label epoch's label (owner O1 and O2,
              2026-09-17; docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md),
-             servable through every door and NOT the default (the epoch's
-             step D flips DEFAULT_PROVIDER, in one commit with the epoch bump
-             and the label= fingerprint term). It reads ONLY the frozen
+             servable through every door and THE DEFAULT since the epoch's
+             step D + U (2026-10-03, one commit with the epoch bump and the
+             label= fingerprint term fwar@<vintage id>). It reads ONLY the frozen
              vintage data/fwar_vintage.json (fwar_vintage.py; written once by
              tools/build_fwar_vintage.py at EPOCH_D9_FREEZE), never the live
              sabermetrics feed, and it is built ON the incumbent: every door
@@ -82,11 +95,12 @@ persistence 0.3617 vs 0.1768 (2.0x). The eFV label swap (R3a, 2026-08-04)
 moved the margin over consensus by -0.0011 hit / -0.0115 pit, a floor-sized
 effect that is UNEXCLUDED. Copy must say the flip is a basis choice.
 
-THE RE-ENTRANCY TRAP AND THE FRAME PIN. Legacy readers (stats.py,
-mlb_player_export.py, fa_ident.py, fa_projection.py, proj_export.py, ...)
-call stint_frame(side) on the DEFAULT provider, which now means eWAR. That is
-the intent for served numbers, but two transforms in this module need the
-raw bWAR frame underneath a legacy reader: career_war_bulk (the aggregate it
+THE RE-ENTRANCY TRAP AND THE FRAME PIN. Label readers (fa_projection.py,
+proj_backtest.py, arb_dataset.py, the labs, ...) call stint_frame(side) on the
+DEFAULT provider, which now means fWAR; display readers (mlb_player_export.py,
+fa_ident.py, proj_export.py, pal_export.py, war_board_export.py, ...) name
+provider="ewar_v2". Two transforms in this module need the
+raw bWAR frame underneath either kind of reader: career_war_bulk (the aggregate it
 transforms must be bWAR so `seasons_bwar` is bWAR) and side_war_by_season
 (the map it fills from must be bWAR). They wrap the call in
 _frames_pinned('bwar'), a process-global pin that every stint_frame /
@@ -157,9 +171,18 @@ class DataUnavailable(RuntimeError):
 #: stays first: it is the INPUT frame the others are built on.
 PROVIDERS: tuple[str, ...] = ("bwar", "ewar_v2", "ewar_merged", "fwar")
 
-#: The served and label WAR site-wide (owner decision 2026-09-03). The fWAR
-#: label epoch's step D moves it to 'fwar'; nothing before step D does.
-DEFAULT_PROVIDER: str = "ewar_v2"
+#: The LABEL WAR site-wide: published fWAR from the frozen vintage (owner
+#: decisions O1 and O2 of 2026-09-17; docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md,
+#: flipped at the epoch's step D + U on 2026-10-03). Every reader that feeds a
+#: training label, a label corpus, a refit, a backtest, an eval artifact or a
+#: gate statistic follows this default. The DISPLAYED WAR stays eWAR v2 (owner
+#: answer EPOCH-Q4, "Keep eWAR v2 shown", 2026-09-30; orchestrator ruling
+#: EPOCH-Q4-IMPL R1a): every display door names provider="ewar_v2" explicitly
+#: and never reads this default (test_epoch_display_doors.py pins each one).
+DEFAULT_PROVIDER: str = "fwar"
+
+#: The WAR a visitor SEES (EPOCH-Q4). Display doors pass this explicitly.
+DISPLAY_PROVIDER: str = "ewar_v2"
 
 #: How to write the frozen vintage 'fwar' serves from (EPOCH_D9_FREEZE runs it
 #: once; equal to fwar_vintage.BUILD_CMD, pinned by test).
@@ -489,6 +512,73 @@ def career_war_table(*, provider: str = DEFAULT_PROVIDER) -> dict[str, dict]:
     return storage.load_career_war()
 
 
+def row_on_provider(row: dict | None, provider: str = DISPLAY_PROVIDER) -> dict:
+    """One stored career_war row RE-EXPRESSED on `provider`'s series, for a
+    reader that wants a series other than the one the row serves.
+
+    The table serves the LABEL series (`seasons`, fwar since the epoch's step C)
+    and keeps the incumbents beside it, so a display door (EPOCH-Q4: the WAR a
+    visitor sees is eWAR v2) asks for its series here instead of reading
+    `seasons` raw:
+
+      'fwar'     the row as stored (an fwar row), or as stored when the vintage
+                 never reached the row (an ewar_v2 or bbref row: nothing to
+                 re-express, the receipt says so per row).
+      'ewar_v2'  an fwar row re-derived from its kept `seasons_ewar_v2`: seasons,
+                 career_war (2dp sum), war_per_yr (2dp), war_seasons_count and
+                 source "ewar_v2", with `seasons_bwar` and `ewar_coverage` carried
+                 and `fwar_coverage` dropped; stamped `incumbent_of: "fwar"`. Any
+                 other row is returned as stored (it IS the eWAR v2 or bWAR row).
+      'bwar'     a row carrying `seasons_bwar` re-derived from it (source "bbref",
+                 `incumbent_of` the row's source); else as stored.
+
+    Exposure maps (`seasons_pa`, `seasons_ip`) and every other key ride along
+    unchanged: they describe the same stints whatever the series. The input is
+    never mutated; {} in, {} out."""
+    if provider not in PROVIDERS:
+        raise ValueError(
+            f"unknown WAR provider {provider!r}; known providers: {PROVIDERS}")
+    row = dict(row or {})
+    if not row:
+        return row
+    src = str(row.get("source") or "")
+    if provider == "fwar" or provider == "ewar_merged":
+        return row
+    if provider == "ewar_v2":
+        if src != "fwar" or not isinstance(row.get("seasons_ewar_v2"), dict):
+            return row
+        series = dict(row["seasons_ewar_v2"])
+    else:  # bwar
+        if not isinstance(row.get("seasons_bwar"), dict):
+            return row
+        series = dict(row["seasons_bwar"])
+    vals = [float(v) for v in series.values()]
+    career = round(sum(vals), 2)
+    n = len(vals)
+    out = {k: v for k, v in row.items() if k != "fwar_coverage"}
+    out.update({
+        "seasons": series,
+        "career_war": career,
+        "war_per_yr": round(career / n, 2) if n else 0.0,
+        "war_seasons_count": n,
+        "source": "ewar_v2" if provider == "ewar_v2" else "bbref",
+        "incumbent_of": src,
+    })
+    if provider == "bwar":
+        out.pop("seasons_ewar_v2", None)
+        out.pop("ewar_coverage", None)
+    return out
+
+
+def career_war_view(*, provider: str = DISPLAY_PROVIDER,
+                    table: dict[str, dict] | None = None) -> dict[str, dict]:
+    """The whole career_war table re-expressed on `provider` through
+    row_on_provider (the table as stored when `provider` is the label series)."""
+    if table is None:
+        table = career_war_table()
+    return {k: row_on_provider(v, provider) for k, v in table.items()}
+
+
 def coverage_report(table: dict[str, dict] | None = None) -> dict:
     """What basis the stored career_war table actually carries.
 
@@ -513,6 +603,8 @@ def coverage_report(table: dict[str, dict] | None = None) -> dict:
     fallback: Counter = Counter()
     total = 0
     covered = 0
+    covered_fwar = 0
+    vintage_ids: Counter = Counter()
     for row in table.values():
         by_source[str(row.get("source") or "unknown")] += 1
         total += len(row.get("seasons") or {})
@@ -520,6 +612,10 @@ def coverage_report(table: dict[str, dict] | None = None) -> dict:
         covered += int(cov.get("covered") or 0)
         for yr in cov.get("fallback_years") or []:
             fallback[int(yr)] += 1
+        fcov = row.get("fwar_coverage") or {}
+        if fcov:
+            covered_fwar += int(fcov.get("n_fwar") or 0)
+            vintage_ids[str(fcov.get("vintage_id"))] += 1
     artifact = None
     if _ewar_available():
         try:
@@ -537,6 +633,11 @@ def coverage_report(table: dict[str, dict] | None = None) -> dict:
         "share_ewar": round(covered / total, 4) if total else None,
         "fallback_years": {k: fallback[k] for k in sorted(fallback)},
         "artifact": artifact,
+        # fWAR label epoch (step D + U): cells served from the frozen vintage, summed
+        # over the fwar rows' fwar_coverage.n_fwar, and the vintage ids they name
+        "season_values_fwar": covered_fwar,
+        "share_fwar": round(covered_fwar / total, 4) if total else None,
+        "fwar_vintage_ids": dict(sorted(vintage_ids.items())),
     }
 
 

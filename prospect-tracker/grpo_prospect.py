@@ -210,8 +210,10 @@ def extract_features(player: dict, level_norms: dict | None = None) -> dict:
     bb_rel = bb_pct - bl[1] if bb_pct else None    # positive = above avg = good
     ev_rel = avg_ev - bl[2] if avg_ev else None    # positive = above avg = good
 
-    # MLB career data (for graduated players used in training)
-    cw    = player.get("career_war") or {}
+    # MLB career data (for graduated players used in training): the LABEL series
+    # (fWAR since the 2026-10-03 epoch; the payload's `career_war` is the displayed
+    # eWAR v2 block under owner answer EPOCH-Q4)
+    cw    = player.get("career_war_label") or player.get("career_war") or {}
     war_seasons = int(cw.get("war_seasons_count") or 0)
     war_per_yr  = _safe(cw.get("war_per_yr"))
 

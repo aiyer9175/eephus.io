@@ -248,8 +248,11 @@ def load_bref_pitcher_war() -> dict:
     global _WAR_PROVIDER
     try:
         import war_source
-        provider = war_source.DEFAULT_PROVIDER
-        df = war_source.stint_frame("pit")
+        # DISPLAY DOOR (fWAR label epoch step D + U, 2026-10-03): the history's WAR
+        # column is the displayed series, eWAR v2, named explicitly (owner answer
+        # EPOCH-Q4); war_source.DEFAULT_PROVIDER is the training label (fWAR).
+        provider = "ewar_v2"
+        df = war_source.stint_frame("pit", provider="ewar_v2")
     except Exception as e:  # noqa: BLE001
         _log.warning("bref pitcher WAR unavailable: %s", e)
         return {}
@@ -492,7 +495,7 @@ def _war_basis(war_by_year: dict, stamped: str) -> dict:
     return {
         "provider": provider,
         "series": _WAR_SERIES.get(provider),
-        "source": "war_source.stint_frame('pit') on war_source.DEFAULT_PROVIDER",
+        "source": "war_source.stint_frame('pit', provider='ewar_v2'), the displayed WAR (owner answer EPOCH-Q4)",
         "stamped": stamped,
         "n_seasons": len(war_by_year),
         "available": bool(war_by_year),

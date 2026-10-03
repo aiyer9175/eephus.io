@@ -5226,7 +5226,13 @@ _NO_BOARD_SORT_KEY = -1e9
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-10-02"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-10-03"   # STRICTLY-AFTER gate: see load_rank_history.
+# Bumped 2026-10-03 for the fWAR LABEL EPOCH (docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md,
+# step D + U; runbook docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md U). career_war was rebased
+# from eWAR v2 to published fWAR at step C (2,686 of 2,698 rows; the 12 unresolved stay on
+# their incumbent), which re-labels the eFV training target for every debuted row, so the
+# board re-ranks once for a reason that is not player movement. The displayed WAR did not
+# move (owner answer EPOCH-Q4, "Keep eWAR v2 shown"): only the label did.
 # Bumped 2026-10-02 for PV-07 (owner answers PG-Q1 / PG-Q2, 2026-09-25): the board rank
 # now counts only rows that carry a label-source opinion. The 2,701 board actives with no
 # such opinion (the performance-anchor and draft-signing rows) leave the shared rank for
@@ -5369,9 +5375,17 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@1f3fa0a9
                            "|floorroute=on@ff60a349|gradanchor=rookie_window"
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017"
-                           "|label=ewar_v2@2026-09-03T12:35:09"
+                           "|label=fwar@2026-10-02-0341299c20ec"
                            "|injsides=pit|served=efv_v2@f903b813"
                            "|section=label_graded")
+# label ewar_v2@2026-09-03T12:35:09 -> fwar@2026-10-02-0341299c20ec on 2026-10-03: THE fWAR
+# LABEL EPOCH, step D + U (gate docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md part 7 row D + U
+# and part 8; orchestrator ruling EPOCH-Q4-IMPL R1a). The term names the TRAINING LABEL
+# BUILD: war_source.DEFAULT_PROVIDER moved to 'fwar' and the build identity is the frozen
+# vintage's vintage_id (data/fwar_vintage.json, EPOCH_D9_FREEZE 7e34799f), so a re-freeze
+# moves it as a rebuild of ewar.json used to. The displayed WAR stays eWAR v2 (owner answer
+# EPOCH-Q4) and is not what this term names. The grademap= term is restamped separately
+# after step I refits the pooled curve on the new label (the 2026-09-04 precedent).
 # section= added 2026-10-02 with PV-07 and the epoch bump. Every earlier term names how a
 # grade is made; none of them can see WHICH rows the rank counts. Moving the rows with no
 # label-source opinion out of the shared rank re-numbers every graded row below the first
@@ -5588,10 +5602,17 @@ def board_basis_fingerprint() -> str:
     # byte-identical to its pin while it happened. The term names the provider and the
     # BUILD identity of the label series, so a rebuild of ewar.json moves it too: a
     # provider name alone would go stale the first time the artifact was refit.
+    # fWAR label epoch (2026-10-03, step D + U): the provider is 'fwar' and the build
+    # identity is the frozen vintage's id (fwar_vintage.vintage_id), so the term reads
+    # fwar@<vintage id>; a re-freeze moves it. Under 'ewar_v2' the build identity stays
+    # the eWAR artifact's generated_at, so the term is comparable across the flip.
     try:
         import war_source as _ws
         label = str(getattr(_ws, "DEFAULT_PROVIDER", "unknown"))
-        if label != "bwar":
+        if label == "fwar":
+            import fwar_vintage as _fv
+            label += f"@{str(_fv.load().get('vintage_id') or 'nobuild')}"
+        elif label != "bwar":
             import ewar as _ew
             _p = _ew.load()
             label += f"@{str(_p.get('generated_at') or 'nobuild')[:19]}"
@@ -8035,13 +8056,36 @@ def _file_ingest_if_pipeline(source: str, *, ok: bool, n_rows: int, message: str
         log.debug("ingest health: could not file %s", source, exc_info=True)
 
 
-def _served_career_war(row: dict | None) -> dict:
-    """The career_war block a payload serves: the stored row without the exposure
-    maps, which only the WAG gate reads (the block carries the summed load)."""
+def _strip_exposure(row: dict | None) -> dict:
     row = row or {}
     if not any(f in row for f in _CAREER_WAR_EXPOSURE_FIELDS):
         return row
     return {k: v for k, v in row.items() if k not in _CAREER_WAR_EXPOSURE_FIELDS}
+
+
+def _served_career_war(row: dict | None) -> dict:
+    """The `career_war` block a payload serves: the DISPLAYED WAR, eWAR v2 (owner
+    answer EPOCH-Q4 "Keep eWAR v2 shown", 2026-09-30; fWAR label epoch step D + U,
+    2026-10-03), without the exposure maps, which only the WAG gate reads.
+
+    The stored row serves the LABEL series (`seasons` is fWAR since the epoch's
+    step C) and keeps `seasons_ewar_v2` beside it, so this block re-expresses the
+    row on provider "ewar_v2" through war_source.row_on_provider: the PROSPX
+    card's career WAR line, the debuted sort, the graduate tooltip, build_site's
+    grad strings, the Club Ledger's graduate career_war column, draft_export's
+    record career WAR and efv_score's realized_war all keep showing eWAR v2. The
+    label consumers of the payload read `career_war_label` (below) instead."""
+    import war_source
+    return _strip_exposure(war_source.row_on_provider(row, "ewar_v2"))
+
+
+def _label_career_war(row: dict | None) -> dict:
+    """The `career_war_label` block: the stored row (the LABEL series, fWAR since
+    the epoch's step C) without the exposure maps. Read by the payload consumers
+    that price or train on WAR (bayes_trade_value's debuted prior, grpo_prospect's
+    reward, source_backtest's outcomes, draft_source_backtest), never by a display.
+    Empty when the player has no career_war row."""
+    return _strip_exposure(row)
 
 
 def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
@@ -11936,8 +11980,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # {seasons: {year: war}, career_war, war_per_yr,
             # war_seasons_count, source}. Empty dict when no MLB time on
             # file (every active prospect who hasn't debuted). The per-season
-            # exposure maps stay server-side (_served_career_war).
+            # exposure maps stay server-side (_served_career_war). Since the fWAR
+            # label epoch (2026-10-03) this block is the DISPLAYED series, eWAR v2
+            # (owner answer EPOCH-Q4); the stored LABEL series rides beside it as
+            # `career_war_label` for the consumers that price or train on WAR.
             "career_war": _served_career_war(career_war.get(p.player_key, {})),
+            "career_war_label": _label_career_war(career_war.get(p.player_key, {})),
             # Present only where the identity screen removed career-WAR seasons the
             # row's own mlbam id never played (another player's history on this slug).
             **({"identity_screen": _cw_foreign[p.player_key]}

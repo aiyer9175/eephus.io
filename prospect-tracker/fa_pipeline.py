@@ -55,7 +55,14 @@ def _resolve_signed_via_war_daily(classes: dict[int, dict],
 
     def _safe(side, label):
         try:
-            return war_source.stint_frame(side)
+            # DISPLAY DOOR (fWAR label epoch step D + U, 2026-10-03): the Archive's
+            # realized WAR is a displayed number, so it names eWAR v2 explicitly
+            # (owner answer EPOCH-Q4; orchestrator ruling EPOCH-Q4-IMPL R1a).
+            # Owner answer M14-3 wants the realized ledger rebuilt on fWAR at the
+            # epoch and yearly: queue 7 M14 owns that rebuild and chooses its
+            # provider explicitly when it runs after step Z; this run never
+            # executes backfill_historical.
+            return war_source.stint_frame(side, provider="ewar_v2")
         except Exception as e:                                # noqa: BLE001
             log.warning("%s fetch failed: %s", label, e)
             return None
@@ -116,12 +123,13 @@ def _resolve_signed_via_war_daily(classes: dict[int, dict],
             mid = plausible[0]
             resolved[key] = mid
             # M04-04: the basis the facade served these frames on, not a
-            # hardcoded "bbref". war_source.stint_frame reads DEFAULT_PROVIDER
-            # (ewar_v2 since 2026-09-03), and build_ledger stamps this onto
+            # hardcoded "bbref". Since the fWAR label epoch (2026-10-03) the
+            # frames above are read on the displayed series by name, so the
+            # stamp names it the same way, and build_ledger carries it onto
             # every ledger row so the Archive can say which WAR it realized.
             war_by_key[key] = {"seasons": {str(y): round(w, 2)
                                            for y, w in sorted(cands[mid]["war"].items())},
-                               "source": war_source.DEFAULT_PROVIDER}
+                               "source": "ewar_v2"}
     stats = {"seen": n_seen, "resolved": len(resolved),
              "no_match": n_nomatch, "ambiguous": n_ambig}
     return resolved, war_by_key, stats

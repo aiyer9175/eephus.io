@@ -366,13 +366,15 @@ def _display_names() -> dict[int, str]:
         for mid in cands:
             out.setdefault(mid, "")
     # second pass for the raw display string: war_daily_index normalizes
-    # names away, so rebuild from the raw stint frames (war_source facade,
-    # provider 'bwar'; the frames are cached by pybaseball underneath).
+    # names away, so rebuild from the raw stint frames (war_source facade on
+    # the displayed series, eWAR v2, named explicitly: display strings for
+    # identity only, fWAR label epoch step D + U, 2026-10-03; the frames are
+    # cached by pybaseball underneath).
     import pybaseball  # noqa: F401 - availability probe; frames come via war_source
     import war_source
     for side in ("bat", "pit"):
         try:
-            df = war_source.stint_frame(side)
+            df = war_source.stint_frame(side, provider="ewar_v2")
         except Exception:                                     # noqa: BLE001
             continue
         sub = df[df["mlb_ID"].notna()]

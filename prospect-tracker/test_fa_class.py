@@ -243,11 +243,20 @@ def test_build_ledger_stamps_the_war_basis_it_was_given(monkeypatch):
     assert rows[0]["ledger"]["built"]
 
 
-def test_the_war_map_source_is_the_facade_default_not_a_literal():
+def test_the_war_map_source_names_the_displayed_basis_explicitly():
+    """Until the fWAR label epoch the stamp followed the facade default. Since step
+    D + U (2026-10-03) the default is the training label (fWAR) while the Archive's
+    realized WAR is a displayed number that stays eWAR v2 (owner answer EPOCH-Q4), so
+    the frames are read on provider "ewar_v2" by name and the stamp names the same
+    series; never a hardcoded "bbref". Queue 7 M14 chooses the provider for its
+    post-epoch rebuild on fWAR (owner answer M14-3) explicitly when it runs."""
     from pathlib import Path
     src = (Path(__file__).parent / "fa_pipeline.py").read_text(encoding="utf-8")
     assert '"source": "bbref"' not in src
-    assert '"source": war_source.DEFAULT_PROVIDER' in src
+    assert '"source": war_source.DEFAULT_PROVIDER' not in src
+    body = src.split("def _resolve_signed_via_war_daily", 1)[1].split("\ndef ", 1)[0]
+    assert 'war_source.stint_frame(side, provider="ewar_v2")' in body
+    assert '"source": "ewar_v2"' in body
 
 
 def test_served_archive_labels_follow_its_war_basis():

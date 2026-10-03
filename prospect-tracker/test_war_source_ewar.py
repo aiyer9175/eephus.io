@@ -210,13 +210,17 @@ def _group_sums(df) -> dict[tuple[int, int], float]:
 # --------------------------------------------------------------------------- #
 # the default
 # --------------------------------------------------------------------------- #
-def test_default_provider_is_ewar_v2():
-    assert war_source.DEFAULT_PROVIDER == "ewar_v2"
+def test_default_provider_is_fwar_and_the_display_provider_is_ewar_v2():
+    """The fWAR label epoch's step D + U (2026-10-03) moved the LABEL default to
+    'fwar'; eWAR v2 stays the DISPLAYED series (owner answer EPOCH-Q4) and every
+    display door names it explicitly (test_epoch_display_doors.py)."""
+    assert war_source.DEFAULT_PROVIDER == "fwar"
+    assert war_source.DISPLAY_PROVIDER == "ewar_v2"
     for fn in (war_source.career_war_bulk, war_source.career_war_table,
                war_source.side_war_by_season, war_source.stint_frame,
                war_source.condensed_frame, war_source.run_value_frame,
                war_source.name_index):
-        assert inspect.signature(fn).parameters["provider"].default == "ewar_v2", \
+        assert inspect.signature(fn).parameters["provider"].default == "fwar", \
             fn.__name__
 
 
@@ -224,8 +228,10 @@ def test_default_provider_is_ewar_v2():
 # career_war_bulk
 # --------------------------------------------------------------------------- #
 def test_career_war_bulk_serves_ewar_where_covered_and_bwar_where_not():
+    # provider named since the fWAR label epoch (2026-10-03): the default is the
+    # fWAR label and the frozen vintage on disk would transform the incumbent
     with _world():
-        out = war_source.career_war_bulk(_TARGETS, 2000, 2026)
+        out = war_source.career_war_bulk(_TARGETS, 2000, 2026, provider="ewar_v2")
     assert "nobody_in_mlb" not in out
 
     oh = out["shohei_ohtani"]
@@ -298,7 +304,7 @@ def test_pitching_stint_frame_sums_to_the_artifact_side_total():
     with _world():
         import pybaseball as pyb
         raw = pyb.bwar_pitch(return_all=True)
-        df = war_source.stint_frame("pit")
+        df = war_source.stint_frame("pit", provider="ewar_v2")
         diag = war_source.ewar_frame_diagnostics()["pit"]
 
     # shape: same rows, same order, one new column at the end
@@ -346,8 +352,8 @@ def test_batting_stint_frame_does_not_move_at_fielding_weight_zero():
     with _world():
         import pybaseball as pyb
         raw = pyb.bwar_bat(return_all=True)
-        df = war_source.stint_frame("bat")
-        rv = war_source.run_value_frame()
+        df = war_source.stint_frame("bat", provider="ewar_v2")
+        rv = war_source.run_value_frame(provider="ewar_v2")
         diag = war_source.ewar_frame_diagnostics()["bat"]   # cleared on exit
     assert np.allclose(df["WAR"].values, raw["WAR"].values, equal_nan=True)
     assert df["WAR_bwar"].equals(raw["WAR"])
@@ -361,7 +367,7 @@ def test_batting_stint_frame_does_not_move_at_fielding_weight_zero():
 
 def test_batting_delta_is_spread_by_pa_if_fielding_ever_moves():
     with _world(_EWAR_FIELDING_MOVES):
-        df = war_source.stint_frame("bat")
+        df = war_source.stint_frame("bat", provider="ewar_v2")
     two = df[(df["mlb_ID"] == 545361) & (df["year_ID"] == 2024)]
     two = two.sort_values("PA", ascending=False)
     # +0.4 over PA 126 : 40
@@ -377,7 +383,7 @@ def test_condensed_frame_replaces_war_with_an_equal_split_without_exposure():
     with _world():
         import pybaseball as pyb
         raw = pyb.bwar_pitch()
-        cond = war_source.condensed_frame("pit")
+        cond = war_source.condensed_frame("pit", provider="ewar_v2")
     assert list(cond.columns) == _CONDENSED_COLS + ["WAR_bwar"]
     assert cond["WAR_bwar"].equals(raw["WAR"])
     two = cond[cond["mlb_ID"] == 123456]["WAR"].tolist()
@@ -425,7 +431,7 @@ def test_side_war_by_season_overlays_the_artifact_and_keeps_bwar_elsewhere():
     with _world():
         with war_source._frames_pinned("bwar"):
             base = mlb_player_export._war_daily()
-        out = war_source.side_war_by_season()
+        out = war_source.side_war_by_season(provider="ewar_v2")
         explicit = war_source.side_war_by_season(provider="bwar")
     assert explicit == base
     # coverage never shrinks: every bWAR (mlbam, season) is still there
@@ -504,7 +510,7 @@ def test_the_side_map_receipt_counts_a_revised_bwar_row_and_trips_stale(monkeypa
     moved = json.loads(json.dumps(_EWAR))
     moved["players"]["660271"]["2023"]["bwp"] = 3.0      # the frame still says 3.8
     with _world(moved):
-        out = war_source.side_war_by_season()
+        out = war_source.side_war_by_season(provider="ewar_v2")
         diag = war_source.ewar_frame_diagnostics()["pit"]
         monkeypatch.setattr(war_source, "EWAR_STALE_REVISED_MAX", 0)
         v = war_source.ewar_vintage(as_of="2026-09-11")
@@ -652,7 +658,11 @@ def test_coverage_report_shape_on_a_synthetic_table():
                                "seasons": [2016, 2026]}
     assert war_source.coverage_report({}) ["share_ewar"] is None
     assert set(rep) == {"rows", "by_source", "season_values", "season_values_ewar",
-                        "share_ewar", "fallback_years", "artifact"}
+                        "share_ewar", "fallback_years", "artifact",
+                        # fWAR label epoch (step D + U): the vintage's share and ids
+                        "season_values_fwar", "share_fwar", "fwar_vintage_ids"}
+    assert rep["season_values_fwar"] == 0 and rep["share_fwar"] == 0.0
+    assert rep["fwar_vintage_ids"] == {}
 
 
 def test_career_war_table_is_served_as_stored(monkeypatch):

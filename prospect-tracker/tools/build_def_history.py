@@ -48,9 +48,13 @@ def _f(v, default=0.0) -> float:
 
 def build() -> dict:
     # The run-value decomposition read (WAR_def / runs_position) rides the
-    # batting stint frame, via the war_source facade (provider 'bwar').
+    # batting stint frame, via the war_source facade. DISPLAY-SIDE INPUT (fWAR
+    # label epoch step D + U, 2026-10-03; orchestrator ruling R3 leaves F-DEF as
+    # built on this file): the provider is named explicitly as the displayed
+    # series, eWAR v2, so the frame is the one this file was always built from;
+    # the decomposition columns do not depend on the WAR provider.
     import war_source
-    df = war_source.run_value_frame("bat")
+    df = war_source.run_value_frame("bat", provider="ewar_v2")
     # position players only: pitcher==N (the 'pitcher' column flags two-way/pitcher bats)
     cols = {"mlb_ID", "year_ID", "PA", "WAR_def", "runs_position", "pitcher"}
     missing = cols - set(df.columns)

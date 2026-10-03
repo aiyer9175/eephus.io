@@ -95,7 +95,9 @@ def _load_outcomes(data_dir: Path) -> dict[str, float]:
         k = p.get("player_key")
         if not k:
             continue
-        cw = (p.get("career_war") or {}).get("career_war")
+        # the LABEL series (fWAR since the 2026-10-03 epoch); the payload's
+        # `career_war` is the displayed eWAR v2 block (owner answer EPOCH-Q4)
+        cw = ((p.get("career_war_label") or p.get("career_war")) or {}).get("career_war")
         idx[k] = float(cw) if cw is not None else 0.0
     return idx
 
