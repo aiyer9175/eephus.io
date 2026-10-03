@@ -1727,3 +1727,5 @@ rows is refreshed daily. Fourth, sequence the ML rewrite after the port, because
 shipped bundles are Python pickles with no portable export, so nothing in Odin can score
 anything until that export exists. And the test suite never has to be reimplemented: Odin
 writes artifacts, Python asserts over them, the rsync stays behind the same exit code.
+
+Addendum 2026-10-03 (CLEAN_4_UNSERVED_SHIPPED_DATA): seven tracked files moved from data/ depth one to data/_labs/, which neither deploy consumer ships: amateur_leagues.json (monthly step 2b.xi, amateur_leagues.DATA_PATH, now lands there), _am_lambda_stability_pit.json, _am_lambda_stability_pit_deb.json, _av_lambda_selector_verify.json, xfv_level_calibration_report.json, xfv_level_calibration_slices.json and position_multipliers_calibration_raw.json. The port copies them as tracked lab data, not served paths; Gate B's 12,235-path manifest loses these seven paths and their .gz twins, and B3 may assert 404 on /data/amateur_leagues.json.

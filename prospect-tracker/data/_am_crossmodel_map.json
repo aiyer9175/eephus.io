@@ -2027,7 +2027,7 @@
       },
       "registry_drift": "data/xfv_eval_pitcher.json (stamped 2026-07-24) records shipped_lambda 0.59 with 'matches_shipped_lambda': true. Live efv_model.blend_lambda('pit') returns 0.54 with no code change. The registered self-consistency assertion is now FALSE.",
       "verdict": "NULL - the entire 0.50-0.70 band is inside its own detection limit (spread 0.0019 vs MDE95 0.005-0.008) and the bootstrap argmax spans the whole band. Pinning costs nothing measurable. RECOMMEND PINNING pit the way hit is already pinned, on the same stability argument the hit pin was taken on. This is not an accuracy claim in either direction.",
-      "artifact": "data/_am_lambda_stability_pit_deb.json",
+      "artifact": "data/_labs/_am_lambda_stability_pit_deb.json",
       "lab": "tools/_am_lambda_stability.py"
     },
     {

@@ -5,7 +5,7 @@ Same paired bootstrap (resample train AND test, refit per draw) + zero-informati
 control (row-permuted grade twin) + permutation null (row-permuted outcome) as the
 main gate, applied to the LEVEL / AGE-BAND / ACQUISITION slices.
 
-Writes data/xfv_level_calibration_slices.json.
+Writes data/_labs/xfv_level_calibration_slices.json (unpublished).
 """
 from __future__ import annotations
 import json, statistics, sys
@@ -25,7 +25,7 @@ _spec.loader.exec_module(G)
 import efv_model as M                # noqa: E402
 
 B = int(sys.argv[1]) if len(sys.argv) > 1 else 2000
-ART = ROOT / "data" / "xfv_level_calibration_slices.json"
+ART = ROOT / "data" / "_labs" / "xfv_level_calibration_slices.json"
 LEVELS = ("A", "A+", "AA", "AAA")
 AGEB = ("<19", "19-20", "21-22", "23-24", "25+")
 ACQ = ("IFA", "college", "HS", "unknown")

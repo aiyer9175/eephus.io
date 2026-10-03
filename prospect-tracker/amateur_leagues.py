@@ -27,9 +27,12 @@ are deliberately excluded from SPORTS; do not re-add them expecting data.
 test_amateur_venues.py pins this so a future dev does not re-add them.
 
 Cache: .cache/amateur_leagues/{group}_{sport}_{season}.json (gitignored).
-Landed table: data/amateur_leagues.json keyed by mlbam -> [season lines].
-Pure read-only consumer; never touches the prospect DB. NOT wired into
-run_monthly / build_site / milb_history (owner integration).
+Landed table: data/_labs/amateur_leagues.json keyed by mlbam -> [season
+lines]. Tracked and unpublished: data/_labs/ ships in neither deploy
+consumer, and no page reads the table (moved off data/ depth one on
+2026-10-03, CLEAN_4). Run monthly by run_monthly.py step 2b.xi
+(EEPHUS_SKIP_AMATEUR_LEAGUES=1 skips it); not read by build_site or
+milb_history. Pure read-only consumer; never touches the prospect DB.
 
 Lines for one player: `amateur_lines(mlbam)`.
 """
@@ -46,7 +49,7 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 CACHE_DIR = Path(__file__).parent / ".cache" / "amateur_leagues"
-DATA_PATH = Path(__file__).parent / "data" / "amateur_leagues.json"
+DATA_PATH = Path(__file__).parent / "data" / "_labs" / "amateur_leagues.json"
 
 BASE = "https://statsapi.mlb.com/api/v1/stats"
 _UA = {"User-Agent": "Mozilla/5.0"}
@@ -181,7 +184,7 @@ def warm_cache(seasons=None, sports=SPORTS) -> None:
 
 
 def build(seasons=None, sports=SPORTS, fetch: bool = True) -> dict[int, list[dict]]:
-    """Fetch the sport/season/group grid and land data/amateur_leagues.json
+    """Fetch the sport/season/group grid and land data/_labs/amateur_leagues.json
     keyed by mlbam -> [season lines], each line carrying its league label."""
     seasons = list(seasons if seasons is not None else _season_range())
     out: dict[int, list[dict]] = {}

@@ -114,7 +114,7 @@ def main():
                     pvs.add(int(row["mlbam_id"]))
     A["pipeline_vintage"] = ("mlbam", pvs)
     A["collegesavant(CS+)"] = ("pk", keyset_pk(_j("collegesavant_milb_equiv.json"), ["by_player_key"]))
-    al = _j("amateur_leagues.json")
+    al = _j("_labs/amateur_leagues.json")
     if al is not None:
         node = al.get("players") if isinstance(al, dict) else al
         s = set()
