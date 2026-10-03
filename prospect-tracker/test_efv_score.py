@@ -84,7 +84,13 @@ def test_display_grade_rounds_to_nearest_not_up():
     # and re-verified rather than assumed: 44.333 is still a clean non-integer, 0.33 from
     # the nearest whole grade, and 44.3 is still a round DOWN, which a ceiling rule could
     # never produce. Only the pinned value moved.
-    raw = oiv(2.0)                              # lands at ~44.333 (a clean non-integer)
+    # RESTAMPED 2026-10-03 for the fWAR label epoch (runbook step I): the pooled curve was
+    # refit on the fWAR training label at RESOLVED_THROUGH 2026 (hash baa9676f90a6), so
+    # oiv(2.0) moved 44.333 -> 44.352, which rounds UP to 44.4 and can no longer show a
+    # round DOWN. The probe moves to 1.98 WAR (oiv 44.320, 0.03 inside the 44.35 boundary),
+    # so every assertion below keeps its meaning: a clean non-integer, rounded to the
+    # nearest tenth, DOWN, never the ceiling. Only the probe point and the pin moved.
+    raw = oiv(1.98)                             # lands at ~44.320 (a clean non-integer)
     assert raw is not None and abs(raw - round(raw)) > 0.05, "need a fractional raw grade"
     efv_display = round(raw, 1)                 # the convention efv_score applies
     # rounds to the nearest tenth -- here DOWN, which the ceiling rule could never do
