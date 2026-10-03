@@ -265,7 +265,8 @@ def frame_row(rec: dict, side: str, vintage: int, *, excl: frozenset[str] | None
 
     Membership reads facts dated before the window (a published debut before it, a
     major league line before V) off the record. The id every INPUT is keyed on is the
-    outcome-blind efv_identity resolution (`index` is the name index through V - 1).
+    outcome-blind efv_identity resolution (`index` is the name index through V - 1;
+    `side` is the routing the tiebreaks read, applied above before any resolution).
     `milb_floor` is the earliest MiLB season the block walks back to; None means
     lv_milb_floor(side) (MILB_FLOOR_LV, or the served default on a withheld side), and
     the screening lab passes efv_dataset.MILB_FLOOR_DEFAULT for the base arm. The row
@@ -317,7 +318,7 @@ def frame_row(rec: dict, side: str, vintage: int, *, excl: frozenset[str] | None
                         if (ps or {}).get("snapshot_date") and _is_real_grader(s, ps, excl)})
     if index is None:
         index = ID.build_index(V - 1)
-    ident = ID.resolve_record(rec, V, index)
+    ident = ID.resolve_record(rec, V, index, side)
     row = {
         "player_key": rec.get("player_key"),
         # the outcome-blind id (DS-03); every input below is keyed on it

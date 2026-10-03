@@ -5,7 +5,8 @@ resolver for list-vintage rows.
    use the record's stored id or birth date (an AST scan of efv_identity.py).
 2. Behaviour: a row's resolution does not move when every outcome field on its record
    changes; candidates are limited to people in affiliated minor league ball before V;
-   an ambiguous name stays unresolved.
+   an ambiguous name stays unresolved unless the SIDE or the RECENCY tiebreak (pre-V
+   minor league lines only) leaves exactly one candidate.
 3. efv_vintage_frame keys every input on the resolver's id, never the record's.
 4. The committed receipt (data/efv_identity_balance.json): the W3 > 0 share is reported
    for every missingness indicator on both sides, only BALANCED indicators are
@@ -182,6 +183,136 @@ def test_frame_keys_inputs_on_the_resolved_id(monkeypatch):
     row = F.frame_row(rec18, "hit", 2018, excl=frozenset(), index=idx)
     assert row["mlbam_id"] is None and row["id_how"] == ID.HOW_AMBIGUOUS
     assert seen == [None]
+
+
+def _index_with_lines():
+    """Names with several candidates whose pre-V minor league lines differ by group
+    and by season, the evidence the two tiebreaks read."""
+    idx = ID.NameIndex()
+    # Jose Perez: 101 a hitter (hitting lines, one blowout inning pitched), 102 a
+    # pitcher (pitching lines plus a 0-PA batting line, as pitchers carry)
+    for s in (2014, 2015, 2016):
+        idx.add("Jose Perez", 101, s, "hitting", 420)
+    idx.add("Jose Perez", 101, 2016, "pitching", 3)
+    for s in (2015, 2016):
+        idx.add("Jose Perez", 102, s, "pitching", 310)
+        idx.add("Jose Perez", 102, s, "hitting", 0)
+    # Juan Cruz: two hitters; 201 played 2012 and 2013, 202 played 2013, 2016 and 2017
+    for s in (2012, 2013):
+        idx.add("Juan Cruz", 201, s, "hitting", 300)
+    for s in (2013, 2016, 2017):
+        idx.add("Juan Cruz", 202, s, "hitting", 300)
+    # Luis Mora: two pitchers with recent lines (no tiebreak can split them)
+    for pid in (301, 302):
+        for s in (2016, 2017):
+            idx.add("Luis Mora", pid, s, "pitching", 200)
+    # Pedro Gil: 401 a hitter with lines, 402 a June 2017 draft selection with no line
+    for s in (2015, 2016, 2017):
+        idx.add("Pedro Gil", 401, s, "hitting", 350)
+    idx.add("Pedro Gil", 402, 2017)
+    # Raul Soto: a pitcher (501) and a draft selection with no line (502); a hitter row
+    for s in (2016, 2017):
+        idx.add("Raul Soto", 501, s, "pitching", 250)
+    idx.add("Raul Soto", 502, 2017)
+    return idx
+
+
+def test_side_tiebreak_keeps_the_candidate_of_the_rows_own_group():
+    idx = _index_with_lines()
+    hit = ID.resolve("Jose Perez", 2018, idx, "hit")
+    assert (hit.person_id, hit.how, hit.n_candidates) == (101, ID.HOW_SIDE, 2)
+    pit = ID.resolve("Jose Perez", 2018, idx, "pit")
+    assert (pit.person_id, pit.how, pit.n_candidates) == (102, ID.HOW_SIDE, 2)
+    # a candidate's group is where his exposure is, not where any line is: the
+    # pitcher's 0-PA batting line and the hitter's blowout inning do not count
+    assert ID._group_of(idx.lines("Jose Perez", 102, 2018)) == "pitching"
+    assert ID._group_of(idx.lines("Jose Perez", 101, 2018)) == "hitting"
+    # the draft selection has no line, so no group: the hitter with lines is kept
+    assert ID.resolve("Pedro Gil", 2018, idx, "hit").person_id == 401
+    assert ID.resolve("Pedro Gil", 2018, idx, "hit").how == ID.HOW_SIDE
+    # a hitter row whose candidates are a pitcher and a lineless draftee: nobody is
+    # in the row's group, so the row stays ambiguous (recency never sees the pitcher)
+    r = ID.resolve("Raul Soto", 2018, idx, "hit")
+    assert r.person_id is None and r.how == ID.HOW_AMBIGUOUS and r.n_candidates == 2
+    assert ID.resolve("Raul Soto", 2018, idx, "pit").person_id == 501
+
+
+def test_recency_tiebreak_keeps_the_candidate_with_a_line_in_v1_or_v2():
+    idx = _index_with_lines()
+    # V 2018: both are hitters; only 202 has a line in 2016 or 2017
+    r = ID.resolve("Juan Cruz", 2018, idx, "hit")
+    assert (r.person_id, r.how, r.n_candidates) == (202, ID.HOW_RECENCY, 2)
+    # V 2015: both have a 2013 line (V - 2), so recency leaves two: ambiguous
+    r = ID.resolve("Juan Cruz", 2015, idx, "hit")
+    assert r.person_id is None and r.how == ID.HOW_AMBIGUOUS and r.n_candidates == 2
+    # V 2013: only 201 was in ball before the read: the plain unique rule
+    assert ID.resolve("Juan Cruz", 2013, idx, "hit").how == ID.HOW_RESOLVED
+    # lines before V only: at V 2017 the 2017 line is not yet readable, 2016 is
+    assert ID.resolve("Juan Cruz", 2017, idx, "hit").person_id == 202
+    assert idx.lines("Juan Cruz", 202, 2017) == {"hitting": {2013: 300.0, 2016: 300.0}}
+
+
+def test_no_change_when_the_tiebreaks_cannot_split_or_no_side_is_given():
+    idx = _index_with_lines()
+    # two pitchers with recent lines: ambiguous on both sides
+    for side in ("hit", "pit"):
+        r = ID.resolve("Luis Mora", 2018, idx, side)
+        assert r.person_id is None and r.how == ID.HOW_AMBIGUOUS and r.n_candidates == 2
+    # without a side the tiebreaks do not run (the pre-tiebreak behaviour)
+    for name in ("Jose Perez", "Juan Cruz", "Pedro Gil"):
+        r = ID.resolve(name, 2018, idx)
+        assert r.person_id is None and r.how == ID.HOW_AMBIGUOUS
+    # an index without lines (the older fixture) resolves exactly as before
+    idx0 = _index()
+    assert ID.resolve("Jose Perez", 2018, idx0, "hit").how == ID.HOW_AMBIGUOUS
+    assert ID.resolve("Jose Perez", 2016, idx0, "hit").person_id == 101
+    assert ID.resolve("Ana Ruiz", 2019, idx0, "pit").person_id == 301
+    assert set(ID.HOW_WITH_ID) == {ID.HOW_RESOLVED, ID.HOW_SIDE, ID.HOW_RECENCY}
+
+
+def test_tiebreak_resolution_is_invariant_to_every_outcome_field():
+    idx = _index_with_lines()
+    variants = [
+        {},
+        {"debut_date": "2019-06-01"}, {"debut_date": None},
+        {"mlbam_id": 102}, {"mlbam_id": 999}, {"mlbam_id": None},
+        {"birth_date": "1998-01-01"}, {"career_war": {"total": 12.0}},
+        {"debuted_value": {"wag": {"regressed_wag": 1.0}}}, {"status": "debuted"},
+        {"career_stats": {"mlb": [1]}},
+    ]
+    for name, side, want in (("Jose Perez", "hit", 101), ("Jose Perez", "pit", 102),
+                             ("Juan Cruz", "hit", 202), ("Luis Mora", "pit", None)):
+        base = {"player_key": ID.norm_name(name), "player_name": name, "points": []}
+        got = {ID.resolve_record(dict(base, **v), 2018, idx, side) for v in variants}
+        assert len(got) == 1 and next(iter(got)).person_id == want, (name, got)
+
+
+def test_frame_passes_its_routing_to_the_tiebreaks(monkeypatch):
+    """The same printed name on the hitter frame and on the pitcher frame resolves to
+    the candidate of each frame's own group, keyed on that id."""
+    idx = _index_with_lines()
+    seen = []
+
+    def fake_milb(mlbam, V, birth, side, cutoff=None, **kw):
+        seen.append((side, mlbam))
+        return None
+    monkeypatch.setattr(D, "_milb_features", fake_milb)
+    monkeypatch.setattr(F, "_mlb_ids", lambda season: frozenset())
+    pts = [{"snapshot_date": "2018-02-01", "consensus_fv_raw": 45.0,
+            "per_source": {"mlb_pipeline": {"fv_published": 45,
+                                            "snapshot_date": "2018-02-01"}}}]
+    hitter = {"player_key": "jose_perez", "player_name": "Jose Perez", "mlbam_id": 999,
+              "position": "SS", "birth_date": "1998-01-01", "points": copy.deepcopy(pts)}
+    pitcher = {"player_key": "jose_perez_2", "player_name": "Jose Perez", "mlbam_id": 998,
+               "position": "RHP", "birth_date": "1997-01-01", "points": copy.deepcopy(pts)}
+    row = F.frame_row(hitter, "hit", 2018, excl=frozenset(), index=idx)
+    assert row["mlbam_id"] == 101 and row["id_how"] == ID.HOW_SIDE
+    assert row["id_candidates"] == 2 and row["record_mlbam_id"] == 999
+    row = F.frame_row(pitcher, "pit", 2018, excl=frozenset(), index=idx)
+    assert row["mlbam_id"] == 102 and row["id_how"] == ID.HOW_SIDE
+    assert seen == [("hit", 101), ("pit", 102)]
+    # the routing is the frame's: a pitcher record is not on the hitter frame at all
+    assert F.frame_row(pitcher, "hit", 2018, excl=frozenset(), index=idx) is None
 
 
 def test_lv_model_row_marks_unresolved_rows_unavailable():

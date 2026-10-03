@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-03T01:22:15Z",
+ "generated_at": "2026-10-03T01:45:06Z",
  "headline_frame": "vm2",
  "frames": {
   "vm": {
@@ -6425,7 +6425,7 @@
     }
    ],
    "note": "label pool census, no score",
-   "last_verified_at": "2026-10-02T23:08:19Z",
+   "last_verified_at": "2026-10-03T01:45:03Z",
    "content_hash": "72d48b77fb388b25487f65452651d9a43170c49268d16815714160bea622f2fb"
   },
   {
@@ -6468,6 +6468,47 @@
    "note": "identity join for the fWAR epoch (E2), coverage counts only, no score; label rows kept 2027 -> 2078; failing rows 39 -> 1",
    "last_verified_at": "2026-10-03T01:22:15Z",
    "content_hash": "a87a73fd9d1fc87e396f71ec5c917f407e6b9c2c70fd7d18c0c7c22f45cce468"
+  },
+  {
+   "run_id": "2026-10-03T01:38:30+00:00|lv_dev|23843a69",
+   "date": "2026-10-03",
+   "trigger": "efv_change",
+   "model_id": "efv_identity_v2",
+   "model_version": {
+    "fingerprint": null,
+    "commit": "6e5d0f77f34fa4d9c05c1d94887b4b802c86b1cb",
+    "label": "ewar_v2",
+    "resolved_through": 2025,
+    "provider": "ewar_v2"
+   },
+   "frame": "lv_dev",
+   "frame_version": null,
+   "role": "development",
+   "tilted": false,
+   "window": [
+    2011,
+    2019
+   ],
+   "n": 5930,
+   "n_by_side": {
+    "hit": 3036,
+    "pit": 2894
+   },
+   "raters": {},
+   "deltas": {},
+   "resolvable": null,
+   "verdict": "balance receipt only, no score",
+   "share": null,
+   "sources": [
+    {
+     "path": "data/efv_identity_balance.json",
+     "generated_at": "2026-10-03T01:38:30+00:00",
+     "sha256": "58cdddf06721bbad83fc0a108ae2dc37b2818447921cd1fbb2e3b73c425e03d1"
+    }
+   ],
+   "note": "outcome-blind resolver with the SIDE and RECENCY tiebreaks, coverage by route: ambiguous 122, name_recency 126, name_side 161, name_unique 5391, no_candidate 130; tiebreak probes name_recency BALANCED, name_side BALANCED; no score",
+   "last_verified_at": "2026-10-03T01:45:06Z",
+   "content_hash": "23843a69dacda078adf83db4ab3050a3c1be85bfb045519813a6a339d792165c"
   }
  ],
  "backfill": {
