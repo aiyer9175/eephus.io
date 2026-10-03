@@ -3248,6 +3248,25 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: headshot resolution failed — continuing")
 
+        # --- d9d. PROSPX Leaderboards data file --------------------------
+        # The lazy file the condensed Leaderboards table reads (PROSPX_1_LB_DATA):
+        # StatsAPI season lines with their counting components per player, season
+        # and level, plus one summed MiLB row per player-season, Season FIP and
+        # K-BB%, per-season level norms and team games, and the current season's
+        # Statcast, zone and model indexes. Runs after d9 because it reads the
+        # board pool and level norms d9 just wrote. Past seasons come from the
+        # .cache/prospx_lb/ files; only the current season refetches. Best-effort.
+        with _step("d9d. PROSPX leaderboard data (prospx_leaderboard.json)", log):
+            try:
+                import prospx_leaderboard_export as _plb
+                _plbs = _plb.export(out=out_dir / "prospx_leaderboard.json",
+                                    data_dir=out_dir)
+                log.info("daily: prospx leaderboard %d rows, %d players, %s bytes gz",
+                         _plbs.get("rows", 0), _plbs.get("players", 0),
+                         _plbs.get("gzip_bytes"))
+            except Exception:
+                log.exception("daily: prospx leaderboard export failed, continuing")
+
         # --- 9d. Fantasy daily refresh (schedule-only; cheap) -------------
         # Re-pull the probable-pitcher schedule and rebuild the schedule-driven
         # fantasy sections (Daily Streamers, Two-Start SP) off the monthly ROS

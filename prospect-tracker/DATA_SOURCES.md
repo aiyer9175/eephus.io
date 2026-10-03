@@ -33,7 +33,8 @@ happen inside the called module, so this file alone cannot split them).
 | d9a. Provisional grade retention + track (provisional_track_eval.json) | provisional_track_eval.json |
 | d9b1. Refresh current-season fielding innings (fielding_innings.json) | fielding_innings.json |
 | d9b2. Re-bake MLB player detail (mlb_player_detail.json) | mlb_player_detail.json, photo_ctx.json |
-| d9c. Headshot resolution (photo_ctx.json) | fantasy.json, photo_ctx.json |
+| d9c. Headshot resolution (photo_ctx.json) | photo_ctx.json |
+| d9d. PROSPX leaderboard data (prospx_leaderboard.json) | fantasy.json, prospx_leaderboard.json |
 | 9d. Fantasy daily refresh (fantasy.json schedule) | dfs.json, fantasy.json |
 | 9d-pre-odds. Betting odds snapshot (before the DFS slate) | fa_meta.json |
 | 9d-park. Refresh the fa_meta park blocks (fa_meta.json) | dfs.json, fa_meta.json |
