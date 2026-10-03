@@ -831,4 +831,135 @@ later lane re-discovers the absence (`LANE_B.md` s7).
 | Modern pitch-level data, pitch rates | AAA pitch files begin 2023; `data/milb_pitch_rates.json` is 2026 only | as AAA Statcast; pitch rates per Q10_11, which owns their admission |
 | Tracked physical data | bat speed 2023 on (AAA), bat tracking 2024 on, sprint and arm MLB only | 2027 and later (program D6) |
 | eBR runner record | not built (`.cache/ebr` is empty) | after the eBR plan's integration task |
-| BA, ESPN, Just Baseball and TJStats report text | first published 2023, 2025, 2026 and 2026 | R-LV never; V 2023 at RT 2027 (W3) |
+| BA, ESPN, Just Baseball and TJStats report text | first published 2023, 2025, 2026 and 2026 | R-LV never; V 2023 at RT 2028 (W3; BA), V 2026 at RT 2031 for the other three (s10.15.7) |
+
+### 10.15 Wave 2, draft: the Statcast chain's second link
+
+Written 2026-10-03 into this DRAFT (EFV3_B10), from `EFV3_PLAN.md` s4 and `LANE_B.md` F-B9,
+s3 (the S chain) and s7, before any wave-2 code exists and before any read of the column it
+names. No number was computed for it and none appears in it. It registers two arms of wave 2
+and nothing else: the rest of wave 2 (roster counts, any FanGraphs-text-only column) is
+registered by its own dated amendment of this section, and wave 2 runs only as s10.12 item 5
+says. Every rule of s10.1 to s10.8 and s10.13 applies to it unchanged, with the readings fixed
+below. It moves no served number, reads no reserved frame (R-LV, R-VM), re-runs none of the 39
+closed arms of `data/xfv_arm_ledger.json`, and groups nothing by consensus-FV cell
+(`docs/PROSPECT_ANCHOR_GATE.md`, whose one look is not before 2026-11-20); its only groupings
+are side, vintage, fold and the level-season pool that defines the column.
+
+#### 10.15.1 The chain
+
+- Link 1, on record, not re-run: S-XLINE-4 (`docs/efv-2026-07-23/GATES.md`, artifact
+  `data/xfv_statcast_line4_eval.json`) read A-ball and complex tracking signals in the seasons
+  2023 to 2025 against production in the following season, incremental on the stat line:
+  `INC_2_whiff` PASS, `INC_3_fb_velo` PASS, `INC_1_p90ev` NULL. The production it predicts (the
+  surrogate) is, for hitters, the wOBA proxy z and, for pitchers, the K%-against z, each inside
+  the (destination level, season) pool of players whose own max-exposure row sits at that
+  level, with the exposure floor of 150 PA or 150 BF and pools of at least 20
+  (`tools/efv_statcast_line2_lab.py`, `_dest_z_maps`).
+- Link 2, registered here: next-level production at V to W3. The column is the link-1
+  surrogate itself, computed for the row's player from `.cache/milb_stats` seasons that ended
+  before V-01-01 (the as-of rule of `_milb_features`), and screened as an ordinary column of
+  the lab on lv_dev at list vintages 2017, 2018 and 2019 (s10.1) against the V2 base (s10.2).
+  It reads no tracking data. No tracked season exists before 2021, so the link-2 column is the
+  stat line that the link-1 legs predict, never a tracked signal.
+
+#### 10.15.2 The column, exactly
+
+- Arms: `chain2_hit` (hitters, skill head, the wOBA proxy z) and `chain2_pit` (pitchers, skill
+  head, the K%-against z). Each is carried on the row's `v2` view under the lab's screening
+  prefix (`efv_v2_model.V2_SCREEN_PREFIX`).
+- A chain row is a (player, V) row whose outcome-blind `efv_identity` id has, in some season S
+  that ended before V-01-01, a max-exposure row at or above the exposure floor, and in season
+  S - 1 a row at level A or CPX at or above the same floor (the origin levels of link 1,
+  `LEVELS` of the line-2 lab). The latest such S is the one used. The value is that season's
+  z, built as `_dest_z_maps` builds it, with each pool drawn from every player in that (level,
+  S) pool, never from the frame.
+- Every other row carries no value and imputes at the fold's observed training mean (s10.2,
+  DS-04). The missingness indicator `chain_absent` never enters a skill head. It is the
+  column's DS-03 balance probe (s10.5), and clause (f) of s10.7 applies to it: a chain row
+  exists only for a player who played a season above an A-ball or complex season, so its
+  presence can stand in for promotion, which can stand in for the label.
+- Level codes are each season's own (`milb_history.SPORT_LEVEL`). The 2021 reorganization
+  moved leagues between the A and A+ codes and ended short-season A (sport 15, coded A), so
+  the origin pool at V 2017 to 2019 is not the 2023 to 2025 pool of link 1. The shift is
+  disclosed and not corrected: no era column, as the M1 rule of `LANE_B.md` s3 says.
+- The builder is a wave-2 task. It imports the line-2 lab's surrogate functions rather than
+  copying them, and its test pins that the link-2 value of a 2023 to 2025 origin row equals
+  the link-1 surrogate for the same player and season.
+
+#### 10.15.3 Overlap with existing columns, and why this is a named re-test
+
+The surrogate is a production rate relative to its level and season. On hitters it overlaps
+`obp_rel` (a V2 skill candidate), `ops_rel` (scrapped by DS-05 as collinear with `obp_rel`)
+and the closed arms `C6:wrc_rel_add:hit`, `D-1:peak_obp_rel:hit`, `D-1:iso_rel:hit` and
+`D-1:prod_trend:hit`. On pitchers it overlaps `k_rel`, the DS-10 pitcher skill candidate that
+the V2 base already offers on lv_dev. It is none of them under a new name: it carries a value
+only on chain rows, it is the destination-pool z that the link-1 legs were scored on rather
+than a shrunk difference from the level norm, and its question is the chain's second link,
+which no arm has asked. It is therefore a named re-test on the terms of s10.10: named before
+any read, flagged as a re-test in the artifact and in the arm ledger, counted in s6 under its
+own name, read on lv_dev only and never on vm_dev. The closed arms it overlaps are not re-run,
+and no other production-rate variant is offered under the chain's name. Before an arm is
+scored, the run writes per fold the rank correlation of the chain column with each overlapping
+key on the training chain rows, as a description that bears no verdict; a chain column equal
+to an overlapping key on every chain row is not measured (the last reading of s10.7). The
+honest prior is no survivor: the base already carries the production rates it overlaps.
+
+#### 10.15.4 Family, rule, label and publication
+
+- The two arms belong to wave 2's one Holm family (s10.6). m is the number of wave-2 arms
+  registered when the wave-2 list closes, by a dated amendment of this section made before the
+  wave-2 run; these two arms are in m whatever else joins, and an arm that cannot be measured
+  still counts.
+- Floors per s10.4, derived in the wave-2 run on the skill head of each side. Controls per
+  s10.5, with `chain_absent` as the balance probe. Admission per s10.7, clauses (a) to (g),
+  verbatim. Verdicts per s10.8 only.
+- Label: the frozen fWAR W3, after EPOCH_RUN and Z1_RUN and after wave 1's registered run is
+  on the ledger (s10.12 item 5), never on a registered look's date (s10.12 item 4). An admitted
+  arm reaches s4.2 only by amendment before the status line changes and before 2026-11-15
+  (E3-Q3); after either, it waits for the 2027 registration.
+- Publication as s10.13 with wave 2 in place of wave 1: `data/xfv_screen_wave2.json`, the arm
+  ledger through `tools/efv_arm_ledger.py`, development rows
+  `efv_v2_screen:wave2:<candidate>:<side>` in `data/efv_progress.json`, and an admitted column
+  only behind `V2_SCREEN_CANDIDATES_ON`, which defaults off.
+
+#### 10.15.5 No number from the two links is multiplied into a claim
+
+The links are read on different players in different years: link 1 on A-ball and complex
+seasons 2023 to 2025 against the following season, link 2 on list vintages 2017 to 2019
+against W3. No number from the two links is multiplied, chained, pooled or composed into a
+claim, and neither link, alone or with the other, supports a statement that a tracked signal
+predicts W3. A tracked signal reaches W3 only through its own vintage-matched read. The first
+W3-resolvable vintage with FSL tracking is V 2022 (RT 2027), and with AAA tracking V 2024 (RT
+2029). Until those dates the tracked family (AAA and FSL Statcast, the A-ball signals, modern
+pitch-level data, tracked physical data) reads "no vintage-matched source", whatever verdict
+the link-2 arms receive.
+
+#### 10.15.6 The retained input
+
+`data/signal_snapshots/<season>/` (seasons 2023 to 2026, written append-only by
+`tools/snapshot_modern_signals.py` under EV-03, one as-of-dated file per signal and season,
+with `manifest.json`) is the retained input for those reads. The `prospects.db` tables
+(`statcast_metrics`, `pitch_arsenals` and the others that tool names) are keyed by player
+alone and hold 2026 only; each season overwrites the last, so they are never the source of a
+vintage read. The snapshots and `.cache/savant_minors` begin with the 2023 season: the FSL
+2021 and 2022 seasons that a V 2022 or V 2023 read needs are not on disk, so that read first
+needs a registered, as-of-dated fetch of those two seasons.
+
+#### 10.15.7 The other families with no vintage-matched source
+
+Recorded here with the first possible date for each, so no later lane re-discovers the
+absence; s10.14 carries the same families. A source whose first season or publication falls
+inside V's window, or ends before V-01-01, first serves list vintage V, and W3 at V resolves
+at RT V + 5 (`efv_labels.py`).
+
+| family | why there is no source at a labelled vintage | first possible read |
+|---|---|---|
+| eBR runner record | `.cache/ebr` holds nothing (the directory is absent); the family exists only in plan text | none before the eBR plan's integration task; a record whose first season is Y first serves V = Y + 1, on W3 at RT Y + 6 |
+| College production for draftees | CollegeSavant covers the 2021 and later classes, `draft_statlines` 2022 on, `.cache/amateur_leagues` 2021 on; EFV3_B9's count-only probe of 2005 to 2020 is recorded in s10.14 | the 2021 class, first listed at V 2022, resolves W3 no earlier than RT 2027 (s10.14 dates the class's read about 2029) |
+| IL stints | `il_history` begins 2017 and holds 5 to 115 stints a year before 2026 (none dated 2020) | when back-population reaches 100 pre-cutoff stints on the resolved cohort (the revival trigger of `data/xfv_injury_history_eval.json`); the 2026 stints first serve V 2027, on W3 at RT 2032 |
+| Signing bonus before the 2017 classes | `acquisitions.bonus_usd` and `data/draft_bonus_slot.json` begin with the 2017 classes; `draft_history` carries picks only | never for the classes before 2017, unless a pre-2017 bonus table is ingested from a file the owner already has; the 2017 and later classes are on disk and `D-1:bonus_log` is closed, so they are not re-shopped |
+| BA report text | first published 2023 (dated 2023-02-15, inside the V 2023 window) | R-LV never; V 2023, on W3 at RT 2028 |
+| ESPN report text | first published 2025 (dated 2025-08-20, outside every window); first inside a window 2026-01-27 | V 2026, on W3 at RT 2031 |
+| Just Baseball report text | first published 2026 (dated 2026-03-04) | V 2026, on W3 at RT 2031 |
+| TJStats report text | first published 2026 (the first `tjstats_snapshots` writeup is dated 2026-04-14) | V 2026, on W3 at RT 2031 |
