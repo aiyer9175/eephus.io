@@ -2857,7 +2857,11 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                                for p in timeseries
                                if ids_by_key.get(p.player_key) is not None
                                and p.status != "debuted"}
-                    il_by_mid = bulk_fetch_il_status(il_mids.values())
+                    # Same concurrency as the d4 transactions fetch on the
+                    # same endpoint (RU08); --workers / EEPHUS_MAX_WORKERS
+                    # still caps it.
+                    il_by_mid = bulk_fetch_il_status(il_mids.values(),
+                                                     max_workers=workers or 24)
                     il_updates = {k: il_by_mid.get(m) for k, m in il_mids.items()}
                     upsert_il_status(il_updates)
                     n_il = sum(1 for v in il_updates.values() if v)
@@ -4973,7 +4977,11 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                               and p.status != "debuted"}
             log.info("checking IL status for %d active prospects",
                      len(il_mids_by_key))
-            il_by_mid = bulk_fetch_il_status(il_mids_by_key.values())
+            # Same concurrency as the 2b.iii transactions fetch on the same
+            # endpoint (RU08: 116.7 s at 8 workers on a cold cache);
+            # --workers / EEPHUS_MAX_WORKERS still caps it.
+            il_by_mid = bulk_fetch_il_status(il_mids_by_key.values(),
+                                             max_workers=workers or 24)
             il_updates: dict[str, dict | None] = {}
             for key, mid in il_mids_by_key.items():
                 il_updates[key] = il_by_mid.get(mid)
