@@ -6055,36 +6055,18 @@ def _load_team() -> dict:
     return json.loads(TEAM_JSON.read_text(encoding="utf-8"))
 
 
-_COPYRIGHT_RE = re.compile(r"Copyright \(C\) \d{4} [^(\n]+\((@[A-Za-z0-9_]+)\)")
-
-
-@functools.lru_cache(maxsize=1)
 def _watermark_counts() -> dict:
     """{watermark: tracked source files whose copyright header carries it}.
 
-    Read off the tree at build time (git ls-files, then the first 300 bytes of
-    each .py / .js / .css), so the count on a card back is derived from the
-    repository rather than typed. Empty when git is unavailable: the card then
-    prints the mark without a count."""
-    import subprocess
-    try:
-        out = subprocess.run(["git", "ls-files", "-z", "--", "*.py", "*.js", "*.css"],
-                             cwd=ROOT, capture_output=True, timeout=30, check=True).stdout
-    except Exception:
-        return {}
-    counts: dict = {}
-    for rel in out.decode("utf-8", "replace").split("\0"):
-        if not rel:
-            continue
-        try:
-            with open(ROOT / rel, "rb") as fh:
-                head = fh.read(300).decode("utf-8", "replace")
-        except OSError:
-            continue
-        m = _COPYRIGHT_RE.search(head)
-        if m:
-            counts[m.group(1)] = counts.get(m.group(1), 0) + 1
-    return counts
+    Read off the tree at build time (team_facts.watermark_files: git ls-files
+    over the WHOLE repository, then the first 300 bytes of each .py / .js /
+    .css), so the count on a card back is derived rather than typed. Whole
+    repository since TEAM_2 (2026-10-02): Will Cahoon's marked files sit in
+    the sibling model trees, and a count of this module alone read 2 of his
+    215. Empty when git is unavailable: the card then prints the mark without
+    a count."""
+    import team_facts
+    return team_facts.watermark_counts()
 
 
 def _initials(name: str) -> str:
@@ -6229,9 +6211,14 @@ def _team_card(m: dict, group: dict, team: dict) -> str:
              f'{e_name}: modules and systems</caption>'
              '<thead><tr><th scope="col">Module or system</th><th scope="col">Credit</th></tr></thead>'
              f'<tbody>{"".join(rows)}</tbody></table>') if rows else ""
-    back_lines = [ln for ln in (m.get("back") or []) if isinstance(ln, str) and ln.strip()]
-    bio = ('<h4 class="tc-back-h">Record</h4><ul class="tc-bio">'
-           + "".join(f"<li>{html.escape(ln)}</li>" for ln in back_lines) + "</ul>") if back_lines else ""
+    # The record (TEAM_2, 2026-10-02): loose lines under 'Record', or the
+    # owner's resume groups; {{tokens}} are filled from the repository by
+    # team_facts, and a line whose source is missing is left off.
+    import team_facts
+    bio = "".join(
+        f'<h4 class="tc-back-h">{html.escape(head)}</h4><ul class="tc-bio">'
+        + "".join(f"<li>{html.escape(ln)}</li>" for ln in lines) + "</ul>"
+        for head, lines in team_facts.back_groups(m))
     vitals = []
     school = ((m.get("front") or {}).get("school") or "").strip()
     if school:

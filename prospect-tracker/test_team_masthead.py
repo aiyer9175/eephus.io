@@ -60,7 +60,10 @@ def test_team_json_structure():
         assert m["group"] in groups
         assert isinstance(m["order"], int) and m["order"] >= 1
         assert isinstance(m["front"], dict) and isinstance(m["back"], list)
-        assert all(isinstance(ln, str) and ln.strip() and "**" not in ln and "`" not in ln for ln in m["back"])
+        # A back item is a line or a resume group {head, lines} (TEAM_2).
+        for item in m["back"]:
+            lines = [item] if isinstance(item, str) else [item["head"], *item["lines"]]
+            assert all(isinstance(ln, str) and ln.strip() and "**" not in ln and "`" not in ln for ln in lines)
         assert m["badges"], m["key"]
         for b in m["badges"]:
             assert b["key"] in TEAM["badges"], (m["key"], b)
