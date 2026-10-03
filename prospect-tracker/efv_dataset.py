@@ -2114,6 +2114,21 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     return report
 
 
+def _label_provider() -> str:
+    """The WAR series the label is summed from, named from war_source rather than
+    typed (audit L13-13: the report said bWAR for a week after the 2026-09-04 label
+    epoch moved it to eWAR v2)."""
+    try:
+        import war_source
+        return str(war_source.DEFAULT_PROVIDER)
+    except Exception:
+        return "provider unavailable"
+
+
+# The command-line entry stays LAST: it calls run(), which reads _label_provider above,
+# and a module executes top to bottom, so an entry placed above a helper raises NameError
+# on `python efv_dataset.py` while the pipeline's import path (efv_export.regen_all) never
+# notices. Found by the fWAR label epoch's step F on 2026-10-03.
 if __name__ == "__main__":
     import sys
     logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -2127,13 +2142,3 @@ if __name__ == "__main__":
     print("BASELINE consensus-FV Spearman:")
     for k, v in rep["baseline_consensus_fv_spearman"].items():
         print(f"  {k:28s} n={v['n']:5d}  spearman={v['spearman']}")
-
-def _label_provider() -> str:
-    """The WAR series the label is summed from, named from war_source rather than
-    typed (audit L13-13: the report said bWAR for a week after the 2026-09-04 label
-    epoch moved it to eWAR v2)."""
-    try:
-        import war_source
-        return str(war_source.DEFAULT_PROVIDER)
-    except Exception:
-        return "provider unavailable"
