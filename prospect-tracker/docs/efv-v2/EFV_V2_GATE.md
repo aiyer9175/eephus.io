@@ -725,8 +725,13 @@ nothing under `data/` carries it.
 
 Seven arms, one Holm family (m = 7), frozen in `tools/efv_screen_lab.py` `CANDIDATES` at
 commit `d9fe7db4` (EFV3_B1, 2026-10-02). Commit `59fe8427` (EFV3_B4) changed only where the
-two pick columns read their values (the pick builder in place of the sidecar stand-in); every
-name, side, head, kind and re-test flag is as `d9fe7db4` froze it. Nothing is added to wave 1
+two pick columns read their values (the pick builder in place of the sidecar stand-in). Commit
+`9c541e92` (EFV3_B5) changed only where the four text columns read their values (the text
+builder's fold fit, stacked out of vintage, in place of a function the builder never had) and
+what the coverage arm pairs (frames built at the lifted floor against frames built at the served
+default floor, in place of the lab's shared frame, which the tree already builds at the lift on
+hitters); every name, side, head, kind and re-test flag is as `d9fe7db4` froze it, and the
+artifact's `registration_echo.frozen_commit` names that commit. Nothing is added to wave 1
 after this section is committed (kill rule 1).
 
 | arm | side | head | kind | builder |
@@ -771,8 +776,12 @@ outside `data/`. It writes no `data/` file, no ledger row and no progress row, a
 committed. Its artifact carries `screening.exploratory` true. It forms no verdict: every arm
 reads `NOT_ADJUDICATED_EXPLORATORY` and nothing is admitted. Its floors are advisory; the
 registered run derives its own. EFV3_B1's floors-only dry run of the lab (scratchpad, eWAR v2
-label) is a development read of the same kind and formed no verdict. At this commit the
-exploratory run has not run. Both count in s6.
+label) is a development read of the same kind and formed no verdict. The exploratory run was
+made on 2026-10-02 (lab commit `9c541e92`, label `ewar_v2@2026-09-03T12:35:09`) to
+`_finalpass_2026-09-24/efv3/xfv_screen_wave1_exploratory.json`, outside the repository and
+untracked; six of the seven arms were measured and `txt_skill_hit` was withheld by the DS-03
+verdict (s10.9); every arm reads `NOT_ADJUDICATED_EXPLORATORY`. No number from it is written
+here. Both count in s6.
 
 ### 10.12 Calendar
 
