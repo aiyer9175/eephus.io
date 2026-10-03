@@ -559,6 +559,8 @@ Honest by construction:
   after the RT 2026 labels. **Recommended:** the earliest first look.
 - B. v2 takes the 2026 debut cohort alone; first look at RT 2027.
 - C. No prospective leg; the vintage-matched frame is reported as development only.
+- Revisited 2026-10-03 (PROGRAM-Q4-REVISIT, `DECISIONS_FOR_OWNER.md`): A stands; its Z1c leg
+  lives in Z1c's own registration, `docs/efv-2026-10-03/Z1C_PITCHER_STUFF_GATE.md`, not in Z1.
 
 ---
 
