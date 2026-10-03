@@ -61,12 +61,14 @@ from __future__ import annotations
 import json
 import logging
 import random
+import re
 from datetime import date, datetime, timezone
 from pathlib import Path
 
 log = logging.getLogger("source_backtest")
 
-DATA_DIR = Path(__file__).parent / "data"
+ROOT = Path(__file__).parent
+DATA_DIR = ROOT / "data"
 
 # Only score base years with at least this much development lag.
 MIN_LAG_YEARS = 3
@@ -821,6 +823,105 @@ def _tier_table(rows: list[dict]) -> list[dict]:
             "allstar_pace_rate": round(sum(1 for r in members if r["outcome"]["allstar_pace"]) / n, 3),
         })
     return out
+
+
+# ---------------------------------------------------------------------------
+# The FV-tier freeze (lane D E3-Q3 = A, 2026-10-02; docs/efv-v2/EFV_V2_GATE.md
+# s8.3; EFV3_PLAN.md s9 unifier note; landed with EFV3_D2).
+#
+# Three pre-existing surfaces compute a realized-WAR statistic by consensus-FV
+# tier on every nightly run: the `tiers` table of each cohort above (the
+# glossary's "Cohort outcomes by FV tier"), the by_fv_tier / t45 / wm blocks of
+# tools/efv_scoreboard.py and the by_fv_tier block of source_cohort_accuracy.py.
+# They predate docs/PROSPECT_ANCHOR_GATE.md (2026-09-23), whose one look reads
+# the FV-cell residual once, on a fixed date, and is disqualified by an early
+# read. Until that look record exists the three blocks serve the values they
+# carried when the freeze was taken (data/efv_fv_tier_frozen.json, written once
+# by tools/efv_fv_tier_freeze.py from the artifacts as committed on
+# 2026-10-02) with the chip below beside them, and the rest of each artifact
+# regenerates as before. The freeze applies to the SERVED data directory only:
+# a fixture run (tests, labs on another data_dir) computes as it always did.
+#
+# REVERSIBLE BY ONE OWNER LINE: FV_TIER_FREEZE = False resumes the nightly
+# recompute. The freeze also lifts itself once the anchor gate's section 18
+# carries a dated look record (anchor_look_record_exists).
+# ---------------------------------------------------------------------------
+FV_TIER_FREEZE = True
+FV_TIER_FROZEN_PATH = DATA_DIR / "efv_fv_tier_frozen.json"
+FV_TIER_FREEZE_CHIP = "frozen pending the anchor look"
+ANCHOR_GATE_DOC = "docs/PROSPECT_ANCHOR_GATE.md"
+_ANCHOR_RESULTS_HEADING = re.compile(r"^##\s+18\.\s")
+_ANCHOR_EMPTY_MARKER = "EMPTY AT REGISTRATION"
+_ANCHOR_DATED_LINE = re.compile(r"^[\s>*|\-]*\**\s*\d{4}-\d{2}-\d{2}")
+_FV_TIER_FROZEN_CACHE: dict = {}
+
+
+def anchor_look_record_exists(text: str | None = None) -> bool:
+    """True once docs/PROSPECT_ANCHOR_GATE.md section 18 ('Results') carries a
+    dated entry, or no longer carries its 'EMPTY AT REGISTRATION' marker. A
+    missing or unreadable document reads False (the freeze stays on)."""
+    if text is None:
+        try:
+            text = (ROOT / ANCHOR_GATE_DOC).read_text(encoding="utf-8")
+        except OSError:
+            return False
+    lines = text.splitlines()
+    start = next((i for i, ln in enumerate(lines) if _ANCHOR_RESULTS_HEADING.match(ln)), None)
+    if start is None:
+        return False
+    body = []
+    for ln in lines[start + 1:]:
+        if ln.startswith("## "):
+            break
+        body.append(ln)
+    if not any(_ANCHOR_EMPTY_MARKER in ln for ln in body):
+        return True
+    return any(_ANCHOR_DATED_LINE.match(ln) for ln in body)
+
+
+def fv_tier_frozen(data_dir: Path | None = None) -> bool:
+    """Whether the FV-tier blocks are served frozen on this run: the owner line
+    is on, the run targets the served data directory and the anchor look record
+    does not exist yet."""
+    if not FV_TIER_FREEZE:
+        return False
+    if data_dir is not None and Path(data_dir).resolve() != DATA_DIR.resolve():
+        return False
+    return not anchor_look_record_exists()
+
+
+def _load_fv_tier_frozen() -> dict:
+    key = str(FV_TIER_FROZEN_PATH)
+    if key not in _FV_TIER_FROZEN_CACHE:
+        try:
+            _FV_TIER_FROZEN_CACHE[key] = json.loads(
+                FV_TIER_FROZEN_PATH.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            _FV_TIER_FROZEN_CACHE[key] = {}
+    return _FV_TIER_FROZEN_CACHE[key]
+
+
+def frozen_fv_tier_block(producer: str):
+    """A deep copy of the frozen block for `producer` ('source_backtest',
+    'efv_scoreboard' or 'source_cohort_accuracy'), or None when the frozen file
+    does not carry it. A producer that gets None serves an EMPTY tier block with
+    the chip, never a freshly computed one."""
+    blk = _load_fv_tier_frozen().get(producer)
+    return json.loads(json.dumps(blk)) if blk is not None else None
+
+
+def fv_tier_freeze_chip(producer: str) -> dict:
+    """The chip the three producers print beside their frozen tier blocks."""
+    fz = _load_fv_tier_frozen()
+    src = (fz.get("sources") or {}).get(producer) or {}
+    return {"chip": FV_TIER_FREEZE_CHIP,
+            "frozen_on": fz.get("frozen_on"),
+            "frozen_from": src,
+            "decision": "lane D E3-Q3 = A (2026-10-02), docs/efv-v2/EFV_V2_GATE.md s8.3",
+            "until": ("the look record in docs/PROSPECT_ANCHOR_GATE.md section 18 exists "
+                      "(not before 2026-11-20 and 14 days after the fWAR epoch's step Z)"),
+            "owner_line": "source_backtest.FV_TIER_FREEZE = False resumes the nightly recompute",
+            "file": "data/efv_fv_tier_frozen.json"}
 
 
 def _archetype_accuracy(common_rows: list[dict], raters: list[str]) -> list[dict]:
@@ -2079,23 +2180,30 @@ def _floor_shell(label, n, n_clusters, why):
 
 
 def _econd_floor(label, cluster_ids, a, b, target, *, is_auc=False,
-                 B=_CLAIM_BOOT_B, seed=_CLAIM_SEED):
+                 B=_CLAIM_BOOT_B, seed=_CLAIM_SEED,
+                 min_rows=_CLAIM_MIN_ROWS, min_clusters=_CLAIM_MIN_CLUSTERS):
     """Player-clustered E_cond bootstrap of stat(a) - stat(b) on the rows given.
 
     E_cond BY CONSTRUCTION: both grade columns are fixed (produced upstream,
     forward-chained for eFV and published for the sources), so the only thing
     resampled is which players the frame drew. It therefore does NOT carry the
     refit variance an E_refit floor carries, and it is not a substitute for one.
+
+    `min_rows` / `min_clusters` are the floor gate. The defaults are the claim
+    instruments' (_CLAIM_MIN_ROWS / _CLAIM_MIN_CLUSTERS) and every caller in
+    this module uses them; the scoreboard matrix (tools/efv_matrix.py, lane D
+    E3-Q4 = A) passes its own 40-row cell floor so that a cell between 40 and
+    59 rows carries an interval from the SAME resampler, B and seed.
     """
     np = _numpy()
     n = len(cluster_ids)
     n_clusters = len(set(cluster_ids))
     if np is None:
         return _floor_shell(label, n, n_clusters, "not derived: numpy unavailable")
-    if n < _CLAIM_MIN_ROWS or n_clusters < _CLAIM_MIN_CLUSTERS:
+    if n < min_rows or n_clusters < min_clusters:
         return _floor_shell(label, n, n_clusters,
                             f"not derived: frame below the floor gate "
-                            f"({_CLAIM_MIN_ROWS} rows / {_CLAIM_MIN_CLUSTERS} clusters)")
+                            f"({min_rows} rows / {min_clusters} clusters)")
     av = np.asarray(a, dtype=np.float64)
     bv = np.asarray(b, dtype=np.float64)
     tv = np.asarray(target, dtype=(bool if is_auc else np.float64))
@@ -2144,7 +2252,8 @@ def _econd_floor(label, cluster_ids, a, b, target, *, is_auc=False,
 
 
 def _paired_delta_ci(rows, a, b, metric, *, label=None,
-                     B=_CLAIM_BOOT_B, seed=_CLAIM_SEED):
+                     B=_CLAIM_BOOT_B, seed=_CLAIM_SEED,
+                     min_rows=_CLAIM_MIN_ROWS, min_clusters=_CLAIM_MIN_CLUSTERS):
     """Paired, player-clustered CI95 of stat(a) - stat(b) on the rows given
     (EV-00, docs/efv-v2/PROGRAM.md s5.1 item 2).
 
@@ -2171,7 +2280,8 @@ def _paired_delta_ci(rows, a, b, metric, *, label=None,
     else:
         tgt = [(c.get("outcome") or {}).get("war") or 0.0 for c in use]
     return _econd_floor(label or f"{a}_vs_{b}.{metric}", keys, av, bv, tgt,
-                        is_auc=(metric == "auc"), B=B, seed=seed)
+                        is_auc=(metric == "auc"), B=B, seed=seed,
+                        min_rows=min_rows, min_clusters=min_clusters)
 
 
 #: Display names for the per-source head-to-head block. Keys are rater keys.
@@ -3641,9 +3751,15 @@ def _now() -> float:
 
 
 def run_source_backtest(data_dir: Path = DATA_DIR,
-                        write: bool = True) -> dict:
+                        write: bool = True, return_rows: bool = False):
     """Compute the full source-vs-source backtest and (optionally) write
-    data/source_backtest.json. Returns the result dict."""
+    data/source_backtest.json. Returns the result dict.
+
+    `return_rows=True` (EFV3_D2) returns `(result, frames)` instead, where
+    `frames` holds the row objects the scoreboard matrix scores so the nightly
+    block does not rebuild them: the vm2 rows exactly as scored here, the side
+    map, the universe, the served scores, the bust rows and the six-season
+    label map. No served key changes; `result` is the same dict either way."""
     universe = _load_universe(data_dir)
     as_of = date.today()
     years = _resolved_years(universe, as_of.year)
@@ -3693,14 +3809,26 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                         common_cover[src] = common_cover.get(src, 0) + 1
 
     # Per-rater cohort/calibration tables (full cohort, pooled across years).
+    # The FV-tier table is served FROZEN (lane D E3-Q3 = A; see the block above
+    # anchor_look_record_exists) until the anchor look record exists.
+    _tiers_frozen = frozen_fv_tier_block("source_backtest") if fv_tier_frozen(data_dir) else None
+    _tier_chip = fv_tier_freeze_chip("source_backtest") if _tiers_frozen is not None else None
+
+    def _tiers_for(rater: str, rows: list[dict]) -> list[dict]:
+        if _tiers_frozen is None:
+            return _tier_table(rows)
+        return list(_tiers_frozen.get(rater) or [])
+
     cohorts = {}
     for rater in raters:
         rows = rows_by_rater[rater]
         cohorts[rater] = {
             "n": len(rows),
             "n_debuted": sum(1 for r in rows if r["outcome"]["debuted"]),
-            "tiers": _tier_table(rows),
+            "tiers": _tiers_for(rater, rows),
         }
+        if _tier_chip is not None:
+            cohorts[rater]["tiers_frozen"] = _tier_chip
 
     # Head-to-head accuracy on the COMMON resolved set (same players).
     # eFV (our outcome-grounded model) as a head-to-head rater. Its grade is the
@@ -3824,7 +3952,9 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
             xfv_rows.append({"fv": round(fv, 1), "outcome": fullp[i][3]})
         cohorts["xfv"] = {"n": len(xfv_rows),
                           "n_debuted": sum(1 for r in xfv_rows if r["outcome"]["debuted"]),
-                          "tiers": _tier_table(xfv_rows)}
+                          "tiers": _tiers_for("xfv", xfv_rows)}
+        if _tier_chip is not None:
+            cohorts["xfv"]["tiers_frozen"] = _tier_chip
         # WAR-capture (lift) curve: the share of the pool's total realized WAR that sits in the
         # top N% of each board. Better ordering concentrates WAR earlier -> a higher curve. eFV
         # vs the consensus it upgrades, over the FULL graded population (incl. the busts eFV
@@ -4305,11 +4435,28 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         # ADDITIVE (D3). Nothing above this line is computed from it.
         "pairwise_head_to_head": pairwise_head_to_head(universe, years),
     }
+    if _tier_chip is not None:
+        result["fv_tier_freeze"] = _tier_chip
 
     if write:
         out_path = data_dir / "source_backtest.json"
         out_path.write_text(json.dumps(result, indent=1), encoding="utf-8")
         log.info("wrote %s (%d years, common_n=%d)", out_path, len(years), len(pooled_common))
+    if return_rows:
+        return result, {
+            "years": years,
+            "vm2_rows": efv_common_vintage_vm2,
+            "vm2_timing": vm2_timing,
+            "side_of": m_side,
+            "universe": universe,
+            "xfv_oos": xfv_oos,
+            "xfv_oos_vm2": xfv_oos_vm2,
+            "bust_rows": _bust_rows,
+            "bust_records": _busts,
+            "bust_receipt": _bust_receipt,
+            "six_year": _six,
+            "six_year_receipt": _six_receipt,
+        }
     return result
 
 

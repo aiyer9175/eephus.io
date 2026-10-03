@@ -1,0 +1,575 @@
+{
+ "frozen_on": "2026-10-02",
+ "decision": "lane D E3-Q3 = A, recorded 2026-10-02 under the owner's standing instruction (docs/efv-v2/EFV_V2_GATE.md s8.3; EFV3_PLAN.md s9)",
+ "chip": "frozen pending the anchor look",
+ "rule": "the three producers serve these blocks verbatim, with the chip, until the look record in docs/PROSPECT_ANCHOR_GATE.md section 18 exists; the rest of each artifact regenerates as before",
+ "owner_line": "source_backtest.FV_TIER_FREEZE = False resumes the nightly recompute",
+ "written_by": "tools/efv_fv_tier_freeze.py (once; --refresh is an owner action)",
+ "sources": {
+  "source_backtest": {
+   "path": "data/source_backtest.json",
+   "generated_at": "2026-10-02T15:51:28Z",
+   "sha256": "0f76e33bd3eceeaecc93b543a16020d969f36b37a4b56f6951894117a2f5e614",
+   "tracked": false,
+   "equals_git_head": false
+  },
+  "efv_scoreboard": {
+   "path": "data/xfv_scoreboard_eval.json",
+   "generated_at": "2026-10-02",
+   "sha256": "432c78cf25458a58bf0fc35e93bc27c783456f2c41dd8248661a9c45d263bbeb",
+   "tracked": true,
+   "equals_git_head": true
+  },
+  "source_cohort_accuracy": {
+   "path": "data/source_cohort_accuracy.json",
+   "generated_at": "2026-10-02T15:52:15Z",
+   "sha256": "d7109e78226ca6c1341f6a63ec748d785dc1f0f6283b2975758cc5a11d383fbd",
+   "tracked": true,
+   "equals_git_head": true
+  }
+ },
+ "source_backtest": {
+  "fangraphs": [
+   {
+    "tier": "60+",
+    "n": 160,
+    "debut_rate": 0.988,
+    "mean_war": 8.86,
+    "median_war": 5.32,
+    "contributor_rate": 0.619,
+    "star_rate": 0.35,
+    "n_debuted": 158,
+    "mean_war_per_yr_debut": 1.48,
+    "regular_pace_rate": 0.375,
+    "allstar_pace_rate": 0.2
+   },
+   {
+    "tier": "55",
+    "n": 217,
+    "debut_rate": 0.968,
+    "mean_war": 5.17,
+    "median_war": 2.08,
+    "contributor_rate": 0.438,
+    "star_rate": 0.198,
+    "n_debuted": 210,
+    "mean_war_per_yr_debut": 0.83,
+    "regular_pace_rate": 0.221,
+    "allstar_pace_rate": 0.055
+   },
+   {
+    "tier": "50",
+    "n": 588,
+    "debut_rate": 0.963,
+    "mean_war": 4.26,
+    "median_war": 1.73,
+    "contributor_rate": 0.393,
+    "star_rate": 0.156,
+    "n_debuted": 566,
+    "mean_war_per_yr_debut": 0.79,
+    "regular_pace_rate": 0.201,
+    "allstar_pace_rate": 0.053
+   },
+   {
+    "tier": "45",
+    "n": 1121,
+    "debut_rate": 0.922,
+    "mean_war": 2.05,
+    "median_war": 0.22,
+    "contributor_rate": 0.244,
+    "star_rate": 0.064,
+    "n_debuted": 1034,
+    "mean_war_per_yr_debut": 0.43,
+    "regular_pace_rate": 0.093,
+    "allstar_pace_rate": 0.021
+   },
+   {
+    "tier": "<45",
+    "n": 2963,
+    "debut_rate": 0.826,
+    "mean_war": 0.99,
+    "median_war": 0.0,
+    "contributor_rate": 0.11,
+    "star_rate": 0.025,
+    "n_debuted": 2446,
+    "mean_war_per_yr_debut": 0.24,
+    "regular_pace_rate": 0.038,
+    "allstar_pace_rate": 0.007
+   }
+  ],
+  "mlb_pipeline": [
+   {
+    "tier": "60+",
+    "n": 152,
+    "debut_rate": 0.993,
+    "mean_war": 10.03,
+    "median_war": 6.03,
+    "contributor_rate": 0.678,
+    "star_rate": 0.382,
+    "n_debuted": 151,
+    "mean_war_per_yr_debut": 1.74,
+    "regular_pace_rate": 0.441,
+    "allstar_pace_rate": 0.276
+   },
+   {
+    "tier": "55",
+    "n": 701,
+    "debut_rate": 0.927,
+    "mean_war": 4.65,
+    "median_war": 2.04,
+    "contributor_rate": 0.437,
+    "star_rate": 0.174,
+    "n_debuted": 650,
+    "mean_war_per_yr_debut": 0.86,
+    "regular_pace_rate": 0.213,
+    "allstar_pace_rate": 0.05
+   },
+   {
+    "tier": "50",
+    "n": 1058,
+    "debut_rate": 0.913,
+    "mean_war": 2.55,
+    "median_war": 0.29,
+    "contributor_rate": 0.258,
+    "star_rate": 0.088,
+    "n_debuted": 966,
+    "mean_war_per_yr_debut": 0.47,
+    "regular_pace_rate": 0.108,
+    "allstar_pace_rate": 0.025
+   },
+   {
+    "tier": "45",
+    "n": 1942,
+    "debut_rate": 0.895,
+    "mean_war": 1.09,
+    "median_war": 0.0,
+    "contributor_rate": 0.128,
+    "star_rate": 0.03,
+    "n_debuted": 1738,
+    "mean_war_per_yr_debut": 0.23,
+    "regular_pace_rate": 0.042,
+    "allstar_pace_rate": 0.005
+   },
+   {
+    "tier": "<45",
+    "n": 886,
+    "debut_rate": 0.814,
+    "mean_war": 0.56,
+    "median_war": 0.0,
+    "contributor_rate": 0.071,
+    "star_rate": 0.007,
+    "n_debuted": 721,
+    "mean_war_per_yr_debut": 0.15,
+    "regular_pace_rate": 0.024,
+    "allstar_pace_rate": 0.003
+   }
+  ],
+  "prospx_consensus": [
+   {
+    "tier": "60+",
+    "n": 46,
+    "debut_rate": 1.0,
+    "mean_war": 14.88,
+    "median_war": 13.27,
+    "contributor_rate": 0.848,
+    "star_rate": 0.609,
+    "n_debuted": 46,
+    "mean_war_per_yr_debut": 2.48,
+    "regular_pace_rate": 0.587,
+    "allstar_pace_rate": 0.457
+   },
+   {
+    "tier": "55",
+    "n": 118,
+    "debut_rate": 0.983,
+    "mean_war": 7.61,
+    "median_war": 3.79,
+    "contributor_rate": 0.551,
+    "star_rate": 0.271,
+    "n_debuted": 116,
+    "mean_war_per_yr_debut": 1.22,
+    "regular_pace_rate": 0.314,
+    "allstar_pace_rate": 0.153
+   },
+   {
+    "tier": "50",
+    "n": 406,
+    "debut_rate": 0.975,
+    "mean_war": 5.46,
+    "median_war": 2.71,
+    "contributor_rate": 0.495,
+    "star_rate": 0.207,
+    "n_debuted": 396,
+    "mean_war_per_yr_debut": 0.93,
+    "regular_pace_rate": 0.246,
+    "allstar_pace_rate": 0.057
+   },
+   {
+    "tier": "45",
+    "n": 854,
+    "debut_rate": 0.951,
+    "mean_war": 3.34,
+    "median_war": 0.67,
+    "contributor_rate": 0.342,
+    "star_rate": 0.126,
+    "n_debuted": 812,
+    "mean_war_per_yr_debut": 0.64,
+    "regular_pace_rate": 0.162,
+    "allstar_pace_rate": 0.041
+   },
+   {
+    "tier": "<45",
+    "n": 4065,
+    "debut_rate": 0.836,
+    "mean_war": 1.0,
+    "median_war": 0.0,
+    "contributor_rate": 0.114,
+    "star_rate": 0.024,
+    "n_debuted": 3397,
+    "mean_war_per_yr_debut": 0.24,
+    "regular_pace_rate": 0.038,
+    "allstar_pace_rate": 0.006
+   }
+  ],
+  "xfv": [
+   {
+    "tier": "60+",
+    "n": 27,
+    "debut_rate": 1.0,
+    "mean_war": 13.57,
+    "median_war": 10.64,
+    "contributor_rate": 0.815,
+    "star_rate": 0.556,
+    "n_debuted": 27,
+    "mean_war_per_yr_debut": 2.27,
+    "regular_pace_rate": 0.519,
+    "allstar_pace_rate": 0.444
+   },
+   {
+    "tier": "55",
+    "n": 42,
+    "debut_rate": 0.976,
+    "mean_war": 9.0,
+    "median_war": 4.79,
+    "contributor_rate": 0.548,
+    "star_rate": 0.31,
+    "n_debuted": 41,
+    "mean_war_per_yr_debut": 1.32,
+    "regular_pace_rate": 0.381,
+    "allstar_pace_rate": 0.143
+   },
+   {
+    "tier": "50",
+    "n": 139,
+    "debut_rate": 0.885,
+    "mean_war": 6.24,
+    "median_war": 3.54,
+    "contributor_rate": 0.532,
+    "star_rate": 0.252,
+    "n_debuted": 123,
+    "mean_war_per_yr_debut": 1.1,
+    "regular_pace_rate": 0.273,
+    "allstar_pace_rate": 0.072
+   },
+   {
+    "tier": "45",
+    "n": 233,
+    "debut_rate": 0.82,
+    "mean_war": 3.8,
+    "median_war": 0.77,
+    "contributor_rate": 0.378,
+    "star_rate": 0.155,
+    "n_debuted": 191,
+    "mean_war_per_yr_debut": 0.84,
+    "regular_pace_rate": 0.202,
+    "allstar_pace_rate": 0.039
+   },
+   {
+    "tier": "<45",
+    "n": 2661,
+    "debut_rate": 0.365,
+    "mean_war": 0.43,
+    "median_war": 0.0,
+    "contributor_rate": 0.05,
+    "star_rate": 0.011,
+    "n_debuted": 972,
+    "mean_war_per_yr_debut": 0.2,
+    "regular_pace_rate": 0.012,
+    "allstar_pace_rate": 0.002
+   }
+  ]
+ },
+ "efv_scoreboard": {
+  "hit": {
+   "by_fv_tier": {
+    "40": {
+     "n": 332,
+     "efv": 0.0661,
+     "consensus": 0.0003,
+     "win": true,
+     "margin": 0.0658
+    },
+    "45": {
+     "n": 165,
+     "efv": 0.2234,
+     "consensus": 0.1433,
+     "win": true,
+     "margin": 0.0801
+    },
+    "50": {
+     "n": 128,
+     "efv": 0.1313,
+     "consensus": 0.022,
+     "win": true,
+     "margin": 0.1093
+    },
+    "55": {
+     "n": 44,
+     "efv": -0.0721,
+     "consensus": 0.1154,
+     "win": false,
+     "margin": -0.1875
+    },
+    "60": {
+     "n": 32,
+     "efv": -0.0808,
+     "consensus": 0.1356,
+     "win": false,
+     "margin": -0.2164
+    },
+    "65": {
+     "n": 15,
+     "efv": -0.1802,
+     "consensus": -0.4163,
+     "win": true,
+     "margin": 0.2361
+    }
+   },
+   "t45": {
+    "n": 165,
+    "efv": 0.2234,
+    "consensus": 0.1433,
+    "win": true,
+    "margin": 0.0801
+   },
+   "wm": {
+    "n": 716,
+    "efv": 0.0938,
+    "consensus": 0.0415,
+    "win": true,
+    "margin": 0.0523
+   }
+  },
+  "pit": {
+   "by_fv_tier": {
+    "35": {
+     "n": 125,
+     "efv": 0.0831,
+     "consensus": 0.0182,
+     "win": true,
+     "margin": 0.0649
+    },
+    "40": {
+     "n": 497,
+     "efv": 0.0729,
+     "consensus": 0.06,
+     "win": true,
+     "margin": 0.0129
+    },
+    "45": {
+     "n": 144,
+     "efv": 0.1004,
+     "consensus": 0.0972,
+     "win": true,
+     "margin": 0.0032
+    },
+    "50": {
+     "n": 91,
+     "efv": -0.0813,
+     "consensus": -0.0104,
+     "win": false,
+     "margin": -0.0709
+    },
+    "55": {
+     "n": 37,
+     "efv": -0.0544,
+     "consensus": -0.0964,
+     "win": true,
+     "margin": 0.042
+    }
+   },
+   "t45": {
+    "n": 144,
+    "efv": 0.1004,
+    "consensus": 0.0972,
+    "win": true,
+    "margin": 0.0032
+   },
+   "wm": {
+    "n": 894,
+    "efv": 0.0578,
+    "consensus": 0.0465,
+    "win": true,
+    "margin": 0.0113
+   }
+  }
+ },
+ "source_cohort_accuracy": {
+  "by_fv_tier": {
+   "60+": {
+    "n": 22,
+    "raters": {},
+    "scored": false,
+    "note": "n below the 40-row floor ARCH_MIN_N sets; not scored"
+   },
+   "55": {
+    "n": 43,
+    "raters": {
+     "fangraphs": {
+      "n": 43,
+      "spearman": -0.0827,
+      "auc": 0.5373,
+      "basis": "in_sample_common_set"
+     },
+     "mlb_pipeline": {
+      "n": 43,
+      "spearman": 0.2164,
+      "auc": 0.5987,
+      "basis": "in_sample_common_set"
+     },
+     "prospx_consensus": {
+      "n": 43,
+      "spearman": -0.0824,
+      "auc": 0.534,
+      "basis": "in_sample_common_set"
+     }
+    },
+    "scored": true,
+    "d_rho": -0.29905,
+    "d_rho_ci": [
+     -0.81346,
+     0.29498
+    ],
+    "d_rho_boot_sd": 0.27951,
+    "mde95": 0.54783,
+    "answerable": false,
+    "boot_p_two_sided": 0.2999,
+    "winner": "not_resolvable",
+    "boot_b": 2000,
+    "seed": 20260809,
+    "survives_holm": false
+   },
+   "50": {
+    "n": 125,
+    "raters": {
+     "fangraphs": {
+      "n": 125,
+      "spearman": -0.0516,
+      "auc": 0.4598,
+      "basis": "in_sample_common_set"
+     },
+     "mlb_pipeline": {
+      "n": 125,
+      "spearman": 0.1034,
+      "auc": 0.532,
+      "basis": "in_sample_common_set"
+     },
+     "prospx_consensus": {
+      "n": 125,
+      "spearman": -0.0686,
+      "auc": 0.436,
+      "basis": "in_sample_common_set"
+     }
+    },
+    "scored": true,
+    "d_rho": -0.15495,
+    "d_rho_ci": [
+     -0.44944,
+     0.1359
+    ],
+    "d_rho_boot_sd": 0.15121,
+    "mde95": 0.29637,
+    "answerable": false,
+    "boot_p_two_sided": 0.2929,
+    "winner": "not_resolvable",
+    "boot_b": 2000,
+    "seed": 20260809,
+    "survives_holm": false
+   },
+   "45": {
+    "n": 233,
+    "raters": {
+     "fangraphs": {
+      "n": 233,
+      "spearman": -0.0168,
+      "auc": 0.4545,
+      "basis": "in_sample_common_set"
+     },
+     "mlb_pipeline": {
+      "n": 233,
+      "spearman": -0.0405,
+      "auc": 0.4987,
+      "basis": "in_sample_common_set"
+     },
+     "prospx_consensus": {
+      "n": 233,
+      "spearman": -0.0767,
+      "auc": 0.4387,
+      "basis": "in_sample_common_set"
+     }
+    },
+    "scored": true,
+    "d_rho": 0.02374,
+    "d_rho_ci": [
+     -0.17071,
+     0.22099
+    ],
+    "d_rho_boot_sd": 0.09988,
+    "mde95": 0.19577,
+    "answerable": false,
+    "boot_p_two_sided": 0.8116,
+    "winner": "not_resolvable",
+    "boot_b": 2000,
+    "seed": 20260809,
+    "survives_holm": false
+   },
+   "<45": {
+    "n": 1104,
+    "raters": {
+     "fangraphs": {
+      "n": 1104,
+      "spearman": 0.0384,
+      "auc": 0.5844,
+      "basis": "in_sample_common_set"
+     },
+     "mlb_pipeline": {
+      "n": 1104,
+      "spearman": 0.0799,
+      "auc": 0.5997,
+      "basis": "in_sample_common_set"
+     },
+     "prospx_consensus": {
+      "n": 1104,
+      "spearman": 0.0767,
+      "auc": 0.6087,
+      "basis": "in_sample_common_set"
+     }
+    },
+    "scored": true,
+    "d_rho": -0.04147,
+    "d_rho_ci": [
+     -0.11324,
+     0.03036
+    ],
+    "d_rho_boot_sd": 0.03551,
+    "mde95": 0.06961,
+    "answerable": false,
+    "boot_p_two_sided": 0.2329,
+    "winner": "not_resolvable",
+    "boot_b": 2000,
+    "seed": 20260809,
+    "survives_holm": false
+   }
+  },
+  "by_fv_tier_range_restriction_warning": "SCIENTIFICALLY WEAK, emitted with the warning attached rather than omitted. The tier is a bin on the CONSENSUS, which is a function of BOTH graders, so within a tier the two grades are nearly equal by construction. That is range restriction, and it drives every within-tier rho toward zero: observed range -0.0827 to 0.2164 against a pooled 0.2914 / 0.3151. Do not read these cells as evidence about tier-specific accuracy."
+ }
+}

@@ -70,6 +70,9 @@ from source_backtest import (
     _rater_grades_for_year,
     _resolved_years,
     _spearman,
+    frozen_fv_tier_block,
+    fv_tier_freeze_chip,
+    fv_tier_frozen,
 )
 
 log = logging.getLogger("source_cohort_accuracy")
@@ -380,9 +383,10 @@ def _partition(rows: list[dict], key: str, order: tuple, start_index: int,
     return out, idx
 
 
-def _accuracy_block(ded: list[dict]) -> dict:
+def _accuracy_block(ded: list[dict], frozen_tiers: dict | None = None) -> dict:
     """Six partitions plus the pooled cell. Cell indices are assigned from a FIXED order so
-    the seeds do not move when a cell empties out."""
+    the seeds do not move when a cell empties out. `frozen_tiers` (the served run under
+    the FV-tier freeze) replaces the by_fv_tier partition with the frozen block."""
     idx = 0
     acc: dict = {}
     acc["pooled"] = _cell(ded, idx)
@@ -410,19 +414,30 @@ def _accuracy_block(ded: list[dict]) -> dict:
     tier_order = tuple(label for _lo, _hi, label in FV_TIERS)
     for c in ded:
         c["fv_tier"] = _tier_label(c["cons"])
-    acc["by_fv_tier"], idx = _partition(ded, "fv_tier", tier_order, idx)
-    tier_rhos = [v for t in acc["by_fv_tier"].values() if t.get("scored")
-                 for v in (t["raters"][FANGRAPHS]["spearman"],
-                           t["raters"][PIPELINE]["spearman"]) if v is not None]
-    acc["by_fv_tier_range_restriction_warning"] = (
-        "SCIENTIFICALLY WEAK, emitted with the warning attached rather than omitted. The "
-        "tier is a bin on the CONSENSUS, which is a function of BOTH graders, so within a "
-        "tier the two grades are nearly equal by construction. That is range restriction, "
-        "and it drives every within-tier rho toward zero: observed range "
-        f"{min(tier_rhos):.4f} to {max(tier_rhos):.4f} against a pooled "
-        f"{acc['pooled']['raters'][FANGRAPHS]['spearman']:.4f} / "
-        f"{acc['pooled']['raters'][PIPELINE]['spearman']:.4f}. Do not read these cells as "
-        "evidence about tier-specific accuracy.")
+    if frozen_tiers is not None:
+        # SERVED FROZEN (lane D E3-Q3 = A, 2026-10-02; source_backtest.fv_tier_frozen)
+        # until the anchor look record exists: the block and its warning are copied
+        # from data/efv_fv_tier_frozen.json. The cell index still advances by the
+        # frozen cell count so the partitions after it keep their seeds.
+        acc["by_fv_tier"] = frozen_tiers.get("by_fv_tier") or {}
+        acc["by_fv_tier_range_restriction_warning"] = frozen_tiers.get(
+            "by_fv_tier_range_restriction_warning")
+        acc["by_fv_tier_freeze"] = fv_tier_freeze_chip("source_cohort_accuracy")
+        idx += len(acc["by_fv_tier"])
+    else:
+        acc["by_fv_tier"], idx = _partition(ded, "fv_tier", tier_order, idx)
+        tier_rhos = [v for t in acc["by_fv_tier"].values() if t.get("scored")
+                     for v in (t["raters"][FANGRAPHS]["spearman"],
+                               t["raters"][PIPELINE]["spearman"]) if v is not None]
+        acc["by_fv_tier_range_restriction_warning"] = (
+            "SCIENTIFICALLY WEAK, emitted with the warning attached rather than omitted. The "
+            "tier is a bin on the CONSENSUS, which is a function of BOTH graders, so within a "
+            "tier the two grades are nearly equal by construction. That is range restriction, "
+            "and it drives every within-tier rho toward zero: observed range "
+            f"{min(tier_rhos):.4f} to {max(tier_rhos):.4f} against a pooled "
+            f"{acc['pooled']['raters'][FANGRAPHS]['spearman']:.4f} / "
+            f"{acc['pooled']['raters'][PIPELINE]['spearman']:.4f}. Do not read these cells as "
+            "evidence about tier-specific accuracy.")
 
     for c in ded:
         c["age_bucket"] = _age_bucket(c.get("age_at_grading"))
@@ -1639,7 +1654,8 @@ def run_source_cohort_accuracy(data_dir: Path = DATA_DIR, write: bool = True) ->
     chk_b = _rho1(np.array([c["fg"] for c in ded]), np.array([c["war"] for c in ded]))
     rho_impl_max_abs_diff = abs(chk_a - chk_b)
 
-    accuracy = _accuracy_block(ded)
+    accuracy = _accuracy_block(
+        ded, frozen_fv_tier_block("source_cohort_accuracy") if fv_tier_frozen(data_dir) else None)
     arch_d = {a: accuracy["by_archetype"][a]["d_rho"]
               for a in _ARCH_ORDER
               if a in accuracy["by_archetype"] and accuracy["by_archetype"][a].get("scored")}
