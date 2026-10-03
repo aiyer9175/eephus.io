@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-02T23:07:53Z",
+ "generated_at": "2026-10-03T01:44:47Z",
  "produced_by": "tools/efv_label_pool_census.py",
  "model_id": "efv_label_pool",
  "role": "development",
@@ -51,10 +51,10 @@
   "label_view"
  ],
  "code": {
-  "commit": "8318051d902eedd4659376cccdddea03886de99f",
-  "tool_sha256": "ee5155f847d5018bade1a1c970ee55dc64f9048008d5e89351be85ebfb606e7f",
-  "frame_module_sha256": "e7ce2bf6c2595d50ff2636d488881333a1c9a5295a351ff64d3636b75e7c4a5d",
-  "resolver_sha256": "863cadcc03ddbcd145eaf827dd8ce9ef7354fd3ba96f7a88e9a1fddd6b30e7de"
+  "commit": "6e5d0f77f34fa4d9c05c1d94887b4b802c86b1cb",
+  "tool_sha256": "7e3f767e43b94518483d16b723b1fb177eb829a801ac007ae0fbcf37437077ee",
+  "frame_module_sha256": "60dd297e1507b4fa8b10c9f3a0c2727decf75983e7833542db649aa1c1c4b070",
+  "resolver_sha256": "54a5f8072ff065404d86c654e8a4766353b31f6905b0235b5544ff87a3c8616f"
  },
  "snapshots": {
   "source_table": "prospects.db snapshots",
@@ -995,12 +995,14 @@
     "rows": 69,
     "id_how": {
      "name_unique": 65,
-     "ambiguous": 3,
+     "name_side": 1,
+     "name_recency": 1,
+     "ambiguous": 1,
      "no_candidate": 1,
      "other": 0
     },
-    "blind_id_present": 65,
-    "record_id_present": 3,
+    "blind_id_present": 67,
+    "record_id_present": 57,
     "with_consensus": 69,
     "built": true
    },
@@ -1010,12 +1012,14 @@
     "rows": 58,
     "id_how": {
      "name_unique": 55,
+     "name_side": 0,
+     "name_recency": 0,
      "ambiguous": 1,
      "no_candidate": 2,
      "other": 0
     },
     "blind_id_present": 55,
-    "record_id_present": 1,
+    "record_id_present": 48,
     "with_consensus": 58,
     "built": true
    },
@@ -1025,12 +1029,14 @@
     "rows": 189,
     "id_how": {
      "name_unique": 180,
-     "ambiguous": 8,
+     "name_side": 4,
+     "name_recency": 2,
+     "ambiguous": 2,
      "no_candidate": 1,
      "other": 0
     },
-    "blind_id_present": 180,
-    "record_id_present": 6,
+    "blind_id_present": 186,
+    "record_id_present": 133,
     "with_consensus": 189,
     "built": true
    },
@@ -1040,12 +1046,14 @@
     "rows": 170,
     "id_how": {
      "name_unique": 163,
-     "ambiguous": 7,
+     "name_side": 2,
+     "name_recency": 2,
+     "ambiguous": 3,
      "no_candidate": 0,
      "other": 0
     },
-    "blind_id_present": 163,
-    "record_id_present": 8,
+    "blind_id_present": 167,
+    "record_id_present": 121,
     "with_consensus": 170,
     "built": true
    },
@@ -1055,12 +1063,14 @@
     "rows": 268,
     "id_how": {
      "name_unique": 251,
-     "ambiguous": 14,
+     "name_side": 4,
+     "name_recency": 5,
+     "ambiguous": 5,
      "no_candidate": 3,
      "other": 0
     },
-    "blind_id_present": 251,
-    "record_id_present": 36,
+    "blind_id_present": 260,
+    "record_id_present": 176,
     "with_consensus": 268,
     "built": true
    },
@@ -1070,12 +1080,14 @@
     "rows": 246,
     "id_how": {
      "name_unique": 229,
-     "ambiguous": 15,
+     "name_side": 6,
+     "name_recency": 2,
+     "ambiguous": 7,
      "no_candidate": 2,
      "other": 0
     },
-    "blind_id_present": 229,
-    "record_id_present": 26,
+    "blind_id_present": 237,
+    "record_id_present": 162,
     "with_consensus": 246,
     "built": true
    },
@@ -1085,12 +1097,14 @@
     "rows": 260,
     "id_how": {
      "name_unique": 242,
-     "ambiguous": 13,
+     "name_side": 5,
+     "name_recency": 4,
+     "ambiguous": 4,
      "no_candidate": 5,
      "other": 0
     },
-    "blind_id_present": 242,
-    "record_id_present": 78,
+    "blind_id_present": 251,
+    "record_id_present": 180,
     "with_consensus": 260,
     "built": true
    },
@@ -1100,12 +1114,14 @@
     "rows": 245,
     "id_how": {
      "name_unique": 227,
-     "ambiguous": 17,
+     "name_side": 7,
+     "name_recency": 6,
+     "ambiguous": 4,
      "no_candidate": 1,
      "other": 0
     },
-    "blind_id_present": 227,
-    "record_id_present": 43,
+    "blind_id_present": 240,
+    "record_id_present": 144,
     "with_consensus": 245,
     "built": true
    },
@@ -1115,12 +1131,14 @@
     "rows": 397,
     "id_how": {
      "name_unique": 368,
-     "ambiguous": 22,
+     "name_side": 7,
+     "name_recency": 9,
+     "ambiguous": 6,
      "no_candidate": 7,
      "other": 0
     },
-    "blind_id_present": 368,
-    "record_id_present": 155,
+    "blind_id_present": 384,
+    "record_id_present": 251,
     "with_consensus": 397,
     "built": true
    },
@@ -1130,12 +1148,14 @@
     "rows": 388,
     "id_how": {
      "name_unique": 358,
-     "ambiguous": 25,
+     "name_side": 10,
+     "name_recency": 7,
+     "ambiguous": 8,
      "no_candidate": 5,
      "other": 0
     },
-    "blind_id_present": 358,
-    "record_id_present": 90,
+    "blind_id_present": 375,
+    "record_id_present": 187,
     "with_consensus": 388,
     "built": true
    },
@@ -1145,12 +1165,14 @@
     "rows": 405,
     "id_how": {
      "name_unique": 368,
-     "ambiguous": 22,
+     "name_side": 11,
+     "name_recency": 5,
+     "ambiguous": 6,
      "no_candidate": 15,
      "other": 0
     },
-    "blind_id_present": 368,
-    "record_id_present": 226,
+    "blind_id_present": 384,
+    "record_id_present": 263,
     "with_consensus": 405,
     "built": true
    },
@@ -1160,12 +1182,14 @@
     "rows": 405,
     "id_how": {
      "name_unique": 371,
-     "ambiguous": 32,
+     "name_side": 11,
+     "name_recency": 11,
+     "ambiguous": 10,
      "no_candidate": 2,
      "other": 0
     },
-    "blind_id_present": 371,
-    "record_id_present": 160,
+    "blind_id_present": 393,
+    "record_id_present": 198,
     "with_consensus": 405,
     "built": true
    },
@@ -1175,11 +1199,13 @@
     "rows": 472,
     "id_how": {
      "name_unique": 418,
-     "ambiguous": 35,
+     "name_side": 15,
+     "name_recency": 10,
+     "ambiguous": 10,
      "no_candidate": 19,
      "other": 0
     },
-    "blind_id_present": 418,
+    "blind_id_present": 443,
     "record_id_present": 319,
     "with_consensus": 472,
     "built": true
@@ -1190,11 +1216,13 @@
     "rows": 469,
     "id_how": {
      "name_unique": 424,
-     "ambiguous": 35,
+     "name_side": 15,
+     "name_recency": 13,
+     "ambiguous": 7,
      "no_candidate": 10,
      "other": 0
     },
-    "blind_id_present": 424,
+    "blind_id_present": 452,
     "record_id_present": 244,
     "with_consensus": 469,
     "built": true
@@ -1205,11 +1233,13 @@
     "rows": 450,
     "id_how": {
      "name_unique": 394,
-     "ambiguous": 37,
+     "name_side": 17,
+     "name_recency": 10,
+     "ambiguous": 10,
      "no_candidate": 19,
      "other": 0
     },
-    "blind_id_present": 394,
+    "blind_id_present": 421,
     "record_id_present": 355,
     "with_consensus": 450,
     "built": true
@@ -1220,11 +1250,13 @@
     "rows": 439,
     "id_how": {
      "name_unique": 398,
-     "ambiguous": 37,
+     "name_side": 13,
+     "name_recency": 13,
+     "ambiguous": 11,
      "no_candidate": 4,
      "other": 0
     },
-    "blind_id_present": 398,
+    "blind_id_present": 424,
     "record_id_present": 301,
     "with_consensus": 439,
     "built": true
@@ -1235,11 +1267,13 @@
     "rows": 543,
     "id_how": {
      "name_unique": 469,
-     "ambiguous": 51,
+     "name_side": 20,
+     "name_recency": 16,
+     "ambiguous": 15,
      "no_candidate": 23,
      "other": 0
     },
-    "blind_id_present": 469,
+    "blind_id_present": 505,
     "record_id_present": 476,
     "with_consensus": 543,
     "built": true
@@ -1250,11 +1284,13 @@
     "rows": 489,
     "id_how": {
      "name_unique": 439,
-     "ambiguous": 38,
+     "name_side": 16,
+     "name_recency": 10,
+     "ambiguous": 12,
      "no_candidate": 12,
      "other": 0
     },
-    "blind_id_present": 439,
+    "blind_id_present": 465,
     "record_id_present": 380,
     "with_consensus": 489,
     "built": true
@@ -1321,11 +1357,13 @@
     "rows": 655,
     "id_how": {
      "name_unique": 550,
-     "ambiguous": 57,
+     "name_side": 18,
+     "name_recency": 27,
+     "ambiguous": 12,
      "no_candidate": 48,
      "other": 0
     },
-    "blind_id_present": 550,
+    "blind_id_present": 595,
     "record_id_present": 617,
     "with_consensus": 655,
     "built": true
@@ -1335,12 +1373,14 @@
     "vintage": 2022,
     "rows": 613,
     "id_how": {
-     "name_unique": 527,
-     "ambiguous": 50,
-     "no_candidate": 36,
+     "name_unique": 553,
+     "name_side": 18,
+     "name_recency": 24,
+     "ambiguous": 8,
+     "no_candidate": 10,
      "other": 0
     },
-    "blind_id_present": 527,
+    "blind_id_present": 595,
     "record_id_present": 562,
     "with_consensus": 613,
     "built": true
@@ -1350,12 +1390,14 @@
     "vintage": 2023,
     "rows": 632,
     "id_how": {
-     "name_unique": 520,
-     "ambiguous": 62,
-     "no_candidate": 50,
+     "name_unique": 527,
+     "name_side": 15,
+     "name_recency": 27,
+     "ambiguous": 20,
+     "no_candidate": 43,
      "other": 0
     },
-    "blind_id_present": 520,
+    "blind_id_present": 569,
     "record_id_present": 616,
     "with_consensus": 632,
     "built": true
@@ -1365,12 +1407,14 @@
     "vintage": 2023,
     "rows": 642,
     "id_how": {
-     "name_unique": 523,
-     "ambiguous": 49,
-     "no_candidate": 70,
+     "name_unique": 577,
+     "name_side": 20,
+     "name_recency": 18,
+     "ambiguous": 12,
+     "no_candidate": 15,
      "other": 0
     },
-    "blind_id_present": 523,
+    "blind_id_present": 615,
     "record_id_present": 615,
     "with_consensus": 642,
     "built": true
@@ -1380,12 +1424,14 @@
     "vintage": 2024,
     "rows": 646,
     "id_how": {
-     "name_unique": 517,
-     "ambiguous": 70,
-     "no_candidate": 59,
+     "name_unique": 526,
+     "name_side": 14,
+     "name_recency": 36,
+     "ambiguous": 20,
+     "no_candidate": 50,
      "other": 0
     },
-    "blind_id_present": 517,
+    "blind_id_present": 576,
     "record_id_present": 641,
     "with_consensus": 646,
     "built": true
@@ -1395,12 +1441,14 @@
     "vintage": 2024,
     "rows": 612,
     "id_how": {
-     "name_unique": 501,
-     "ambiguous": 49,
-     "no_candidate": 62,
+     "name_unique": 544,
+     "name_side": 16,
+     "name_recency": 23,
+     "ambiguous": 17,
+     "no_candidate": 12,
      "other": 0
     },
-    "blind_id_present": 501,
+    "blind_id_present": 583,
     "record_id_present": 603,
     "with_consensus": 612,
     "built": true
@@ -1410,12 +1458,14 @@
     "vintage": 2025,
     "rows": 655,
     "id_how": {
-     "name_unique": 502,
-     "ambiguous": 62,
-     "no_candidate": 91,
+     "name_unique": 530,
+     "name_side": 18,
+     "name_recency": 28,
+     "ambiguous": 18,
+     "no_candidate": 61,
      "other": 0
     },
-    "blind_id_present": 502,
+    "blind_id_present": 576,
     "record_id_present": 651,
     "with_consensus": 655,
     "built": true
@@ -1425,12 +1475,14 @@
     "vintage": 2025,
     "rows": 654,
     "id_how": {
-     "name_unique": 512,
-     "ambiguous": 53,
-     "no_candidate": 89,
+     "name_unique": 585,
+     "name_side": 18,
+     "name_recency": 25,
+     "ambiguous": 14,
+     "no_candidate": 12,
      "other": 0
     },
-    "blind_id_present": 512,
+    "blind_id_present": 628,
     "record_id_present": 651,
     "with_consensus": 654,
     "built": true
@@ -1440,12 +1492,14 @@
     "vintage": 2026,
     "rows": 590,
     "id_how": {
-     "name_unique": 453,
-     "ambiguous": 52,
-     "no_candidate": 85,
+     "name_unique": 480,
+     "name_side": 16,
+     "name_recency": 26,
+     "ambiguous": 13,
+     "no_candidate": 55,
      "other": 0
     },
-    "blind_id_present": 453,
+    "blind_id_present": 522,
     "record_id_present": 578,
     "with_consensus": 590,
     "built": true
@@ -1455,12 +1509,14 @@
     "vintage": 2026,
     "rows": 618,
     "id_how": {
-     "name_unique": 455,
-     "ambiguous": 49,
-     "no_candidate": 114,
+     "name_unique": 529,
+     "name_side": 18,
+     "name_recency": 23,
+     "ambiguous": 11,
+     "no_candidate": 37,
      "other": 0
     },
-    "blind_id_present": 455,
+    "blind_id_present": 570,
     "record_id_present": 578,
     "with_consensus": 618,
     "built": true
@@ -1485,11 +1541,13 @@
    },
    "id_how": {
     "name_unique": 5419,
-    "ambiguous": 412,
+    "name_side": 164,
+    "name_recency": 126,
+    "ambiguous": 122,
     "no_candidate": 131,
     "other": 0
    },
-   "record_id_present": 2907
+   "record_id_present": 3995
   },
   "later_totals": {
    "vintages": [
@@ -1527,7 +1585,7 @@
     "in_window_consensus_read": 26,
     "fangraphs_and_pipeline_both": 0,
     "with_career_war_row": 97,
-    "with_record_id": 1,
+    "with_record_id": 96,
     "reserved_vm": false
    },
    {
@@ -1536,7 +1594,7 @@
     "in_window_consensus_read": 53,
     "fangraphs_and_pipeline_both": 0,
     "with_career_war_row": 98,
-    "with_record_id": 3,
+    "with_record_id": 98,
     "reserved_vm": false
    },
    {
@@ -1545,7 +1603,7 @@
     "in_window_consensus_read": 102,
     "fangraphs_and_pipeline_both": 0,
     "with_career_war_row": 134,
-    "with_record_id": 3,
+    "with_record_id": 134,
     "reserved_vm": false
    },
    {
@@ -1554,7 +1612,7 @@
     "in_window_consensus_read": 88,
     "fangraphs_and_pipeline_both": 0,
     "with_career_war_row": 132,
-    "with_record_id": 5,
+    "with_record_id": 132,
     "reserved_vm": false
    },
    {
@@ -1563,7 +1621,7 @@
     "in_window_consensus_read": 123,
     "fangraphs_and_pipeline_both": 0,
     "with_career_war_row": 146,
-    "with_record_id": 10,
+    "with_record_id": 146,
     "reserved_vm": false
    },
    {
@@ -1572,7 +1630,7 @@
     "in_window_consensus_read": 77,
     "fangraphs_and_pipeline_both": 0,
     "with_career_war_row": 96,
-    "with_record_id": 28,
+    "with_record_id": 96,
     "reserved_vm": false
    },
    {
@@ -1581,7 +1639,7 @@
     "in_window_consensus_read": 61,
     "fangraphs_and_pipeline_both": 50,
     "with_career_war_row": 88,
-    "with_record_id": 69,
+    "with_record_id": 93,
     "reserved_vm": false
    },
    {
@@ -1589,8 +1647,8 @@
     "debuts": 114,
     "in_window_consensus_read": 83,
     "fangraphs_and_pipeline_both": 75,
-    "with_career_war_row": 111,
-    "with_record_id": 94,
+    "with_career_war_row": 112,
+    "with_record_id": 114,
     "reserved_vm": false
    },
    {
@@ -1598,8 +1656,8 @@
     "debuts": 171,
     "in_window_consensus_read": 137,
     "fangraphs_and_pipeline_both": 124,
-    "with_career_war_row": 162,
-    "with_record_id": 159,
+    "with_career_war_row": 166,
+    "with_record_id": 171,
     "reserved_vm": false
    },
    {
@@ -1607,8 +1665,8 @@
     "debuts": 184,
     "in_window_consensus_read": 155,
     "fangraphs_and_pipeline_both": 136,
-    "with_career_war_row": 174,
-    "with_record_id": 179,
+    "with_career_war_row": 178,
+    "with_record_id": 184,
     "reserved_vm": false
    },
    {
@@ -1616,8 +1674,8 @@
     "debuts": 208,
     "in_window_consensus_read": 150,
     "fangraphs_and_pipeline_both": 128,
-    "with_career_war_row": 194,
-    "with_record_id": 205,
+    "with_career_war_row": 198,
+    "with_record_id": 208,
     "reserved_vm": false
    },
    {
@@ -1626,7 +1684,7 @@
     "in_window_consensus_read": 205,
     "fangraphs_and_pipeline_both": 173,
     "with_career_war_row": 237,
-    "with_record_id": 258,
+    "with_record_id": 260,
     "reserved_vm": false
    },
    {
@@ -1783,13 +1841,13 @@
   "source_table": "prospects.db career_war",
   "default_provider": "ewar_v2",
   "rule": "provider is the stored row's source field; the id route is the first of: the debuts.json record carries an mlbam_id, the key is in data/sources/mlbam_id_overrides.json, the key is in debuts.json without an id, the key is not in debuts.json",
-  "rows": 2685,
+  "rows": 2698,
   "by_provider": {
    "ewar_v2": {
-    "rows": 2550,
+    "rows": 2563,
     "id_route": {
-     "debuts_json_id": 1847,
-     "override_asset_id": 697,
+     "debuts_json_id": 2556,
+     "override_asset_id": 1,
      "no_id": 0,
      "key_not_in_debuts": 6
     }
@@ -1797,15 +1855,15 @@
    "bbref": {
     "rows": 135,
     "id_route": {
-     "debuts_json_id": 0,
+     "debuts_json_id": 63,
      "override_asset_id": 0,
-     "no_id": 69,
+     "no_id": 6,
      "key_not_in_debuts": 66
     }
    }
   },
-  "debuts_records_without_id": 765,
-  "debuts_without_id_covered_by_override_asset": 696,
+  "debuts_records_without_id": 6,
+  "debuts_without_id_covered_by_override_asset": 0,
   "override_asset": {
    "path": "data/sources/mlbam_id_overrides.json",
    "entries": 735,
@@ -1838,7 +1896,7 @@
       2020
      ],
      "debuts": 1265,
-     "with_career_war_row": 1238,
+     "with_career_war_row": 1247,
      "reserved_vm_inside": []
     },
     "resolved_at_rt_plus_1": {
@@ -1856,7 +1914,7 @@
       2021
      ],
      "debuts": 1473,
-     "with_career_war_row": 1432,
+     "with_career_war_row": 1445,
      "reserved_vm_inside": []
     },
     "added_at_rt_plus_1": {
@@ -2076,7 +2134,7 @@
       2024
      ],
      "debuts": 2216,
-     "with_career_war_row": 2114,
+     "with_career_war_row": 2127,
      "reserved_vm_inside": []
     },
     "resolved_at_rt_plus_1": {
@@ -2098,7 +2156,7 @@
       2025
      ],
      "debuts": 2459,
-     "with_career_war_row": 2333,
+     "with_career_war_row": 2346,
      "reserved_vm_inside": [
       2025
      ]

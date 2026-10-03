@@ -25,9 +25,19 @@ docs/efv-v2/DRIVER_SYSTEM_V2.md s2 and s5). One development read, two parts:
    The fake gain must appear under the counterfactual and vanish under efv_identity;
    test_efv_identity.py holds the artifact to that.
 
-WHAT THIS IS NOT. It scores no eFV and no candidate, so it writes no row to
-data/efv_progress.json (whose chart is eFV minus consensus). Its reads are counted in
-the program's probe ledger through data/xfv_arm_ledger.json (tools/efv_arm_ledger.py).
+3. THE TIEBREAK ROUTES (EFV3 lane A, G5). The rows the SIDE and the RECENCY tiebreaks
+   resolved (id_how name_side and name_recency) are read exactly like an indicator:
+   the W3 > 0 share of those rows against the rest, by side, with the same partial
+   coefficient and CI95. Two validity probes (DS-03:tiebreak.name_side and
+   DS-03:tiebreak.name_recency), never timing-head inputs.
+
+WHAT THIS IS NOT. It scores no eFV and no candidate, so no scored row reaches
+data/efv_progress.json (whose chart is eFV minus consensus); `python
+tools/efv_identity_balance.py ledger` appends one development row there (model_id
+efv_identity_v2, resolvable none, no score) that records the resolver's coverage by
+route beside the reads. Its reads are counted in the program's probe ledger through
+data/xfv_arm_ledger.json (tools/efv_arm_ledger.py). The "text" block another tool
+writes into the receipt (tools/efv_text_balance.py) is carried over unchanged.
 Role: development. It adjudicates nothing.
 
 NEVER READ: list vintages 2020 and 2021 (R-LV) and every player whose effective debut
@@ -35,7 +45,8 @@ year is 2025 or later (R-VM cohorts; dropped before any statistic, count reporte
 Nothing is grouped or summarised by consensus-FV level (docs/PROSPECT_ANCHOR_GATE.md):
 consensus enters only as a continuous within-(side, vintage) percentile.
 
-Run:  python tools/efv_identity_balance.py
+Run:  python tools/efv_identity_balance.py [--dry-run]     (the receipt)
+      python tools/efv_identity_balance.py ledger          (the development row)
 """
 from __future__ import annotations
 
@@ -78,6 +89,17 @@ INDICATORS = (
     ("record_birth_missing", "the record's stored birth date is absent"),
     ("leaky_level_missing", "no V - 1 level under the leaky counterfactual resolver"),
 )
+#: The tiebreak routes (efv_identity SIDE and RECENCY), read like an indicator and
+#: reported as validity probes; they never enter timing_head_admissible.
+TIEBREAK_ROUTES = (
+    ("route_name_side", ID.HOW_SIDE, "resolved by the SIDE tiebreak (name_side)"),
+    ("route_name_recency", ID.HOW_RECENCY,
+     "resolved by the RECENCY tiebreak (name_recency)"),
+)
+#: Keys of the receipt written by other tools and carried over unchanged.
+SIDECAR_KEYS = ("text",)
+MODEL_ID = "efv_identity_v2"
+LEDGER_FRAME = "lv_dev"
 
 
 def _guards() -> dict:
@@ -164,7 +186,8 @@ def build_rows() -> tuple[list[dict], dict]:
     war = L.war_seasons_table()
     leaky = _leaky_index()
     rows, receipt = [], {"frame_rows": 0, "no_consensus": 0, "label_none": 0,
-                         "dropped_rvm_players": 0, "by_how": {}}
+                         "dropped_rvm_players": 0, "by_how": {},
+                         "by_how_and_side": {s: {} for s in F.SIDES}}
     rvm_keys = set()
     for V in F.DEV_VINTAGES:
         F.guard_score_request(V, purpose="identity balance")
@@ -186,13 +209,15 @@ def build_rows() -> tuple[list[dict], dict]:
                     continue
                 rec = universe[r["player_key"]]
                 receipt["by_how"][r["id_how"]] = receipt["by_how"].get(r["id_how"], 0) + 1
+                bhs = receipt["by_how_and_side"][side]
+                bhs[r["id_how"]] = bhs.get(r["id_how"], 0) + 1
                 lk = _leaky_resolve(rec, V, leaky)
                 lv_b, ag_b = _prev(r["mlbam_id"], V)
                 lv_l, ag_l = _prev(lk, V)
                 a_rec = _age_at(rec.get("birth_date"), V)
                 rows.append({
                     "pk": r["player_key"], "V": V, "side": side, "fv": float(c),
-                    "w3": float(lab["w3"]), "r3": lab.get("r3"),
+                    "w3": float(lab["w3"]), "r3": lab.get("r3"), "route": r["id_how"],
                     "lvl_blind": lv_b, "lvl_leaky": lv_l,
                     "age_blind": a_rec if a_rec == a_rec else ag_b + 1.0,
                     "age_leaky": a_rec if a_rec == a_rec else ag_l + 1.0,
@@ -207,6 +232,8 @@ def build_rows() -> tuple[list[dict], dict]:
                 })
     receipt["dropped_rvm_players"] = len(rvm_keys)
     receipt["rows_scored"] = len(rows)
+    receipt["rows_scored_by_side"] = {s: sum(1 for r in rows if r["side"] == s)
+                                      for s in F.SIDES}
     return rows, receipt
 
 
@@ -230,7 +257,7 @@ def _clusters(pks: list[str]) -> list[np.ndarray]:
     return [np.array(v) for _, v in sorted(by.items())]
 
 
-def balance(rows: list[dict], rng: np.random.Generator) -> dict:
+def balance(rows: list[dict], rng: np.random.Generator, indicators=INDICATORS) -> dict:
     out: dict = {}
     for side in F.SIDES:
         d = [r for r in rows if r["side"] == side]
@@ -242,7 +269,7 @@ def balance(rows: list[dict], rng: np.random.Generator) -> dict:
             if len(vs) > 1 else np.zeros((len(d), 0))
         cl = _clusters([r["pk"] for r in d])
         side_out = {}
-        for name, _desc in INDICATORS:
+        for name, _desc in indicators:
             x = np.array([r[name] for r in d])
             n1 = int(x.sum())
             blk = {"n": len(d), "n_with": n1, "n_without": len(d) - n1}
@@ -278,6 +305,29 @@ def balance(rows: list[dict], rng: np.random.Generator) -> dict:
             side_out[name] = blk
         out[side] = side_out
     return out
+
+
+def tiebreak_balance(rows: list[dict], rng: np.random.Generator) -> dict:
+    """Part 3: each tiebreak route read as an indicator (the rows it resolved against
+    the rest), by side, plus the probe verdict: BALANCED when every side with rows on
+    the route has a CI95 covering zero, CONSTANT when no side has such rows."""
+    flagged = [dict(r, **{name: float(r["route"] == how) for name, how, _ in TIEBREAK_ROUTES})
+               for r in rows]
+    by_side = balance(flagged, rng, [(n, d) for n, _h, d in TIEBREAK_ROUTES])
+    probes = {}
+    for name, how, desc in TIEBREAK_ROUTES:
+        sides = {s: by_side[s][name] for s in F.SIDES}
+        read = {s: v for s, v in sides.items() if v["verdict"] != "CONSTANT"}
+        verdict = ("CONSTANT" if not read else
+                   "BALANCED" if all(v["verdict"] == "BALANCED" for v in read.values())
+                   else "IMBALANCED")
+        probes[f"DS-03:tiebreak.{how}"] = {
+            "tag": f"DS-03:tiebreak.{how}", "verdict": verdict, "indicator": desc,
+            "rows_resolved": {s: sides[s]["n_with"] for s in F.SIDES},
+            "partial": {s: sides[s].get("partial") for s in F.SIDES},
+            "ci95": {s: sides[s].get("ci95") for s in F.SIDES}}
+    return {"indicators": {n: d for n, _h, d in TIEBREAK_ROUTES}, "by_side": by_side,
+            "probes": probes}
 
 
 def _design(d: list[dict], feats: list[str], q: np.ndarray) -> np.ndarray:
@@ -377,15 +427,66 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
+def ledger_row(doc: dict, path: Path, *, now_iso: str) -> dict:
+    """The one development row for data/efv_progress.json: the resolver's coverage by
+    route on lv_dev beside the reads, no score, resolvable none."""
+    import efv_progress as P
+    rows = doc["rows"]
+    by = rows.get("by_how") or {}
+    routes = ", ".join(f"{k} {by[k]}" for k in sorted(by))
+    row = {"run_id": None, "date": doc["generated_at"][:10], "trigger": "efv_change",
+           "model_id": MODEL_ID,
+           "model_version": {"fingerprint": None, "commit": (doc.get("code") or {}).get("commit"),
+                             "label": doc["label"].get("provider"),
+                             "resolved_through": doc["label"].get("resolved_through"),
+                             "provider": doc["label"].get("provider")},
+           "frame": LEDGER_FRAME, "frame_version": None,
+           "role": P.FRAMES[LEDGER_FRAME]["role"],
+           "tilted": bool(P.FRAMES[LEDGER_FRAME]["tilted"]),
+           "window": [min(F.DEV_VINTAGES), max(F.DEV_VINTAGES)],
+           "n": rows["rows_scored"], "n_by_side": dict(rows["rows_scored_by_side"]),
+           "raters": {}, "deltas": {}, "resolvable": None,
+           "verdict": "balance receipt only, no score", "share": None,
+           "sources": [{"path": P._rel(Path(path)), "generated_at": doc["generated_at"],
+                        "sha256": P._sha256(path)}],
+           "note": (f"outcome-blind resolver with the SIDE and RECENCY tiebreaks, coverage "
+                    f"by route: {routes}; tiebreak probes "
+                    + ", ".join(f"{k.split('.')[-1]} {v['verdict']}"
+                                for k, v in sorted(doc["probes"].items())
+                                if k.startswith("DS-03:tiebreak."))
+                    + "; no score"),
+           "last_verified_at": now_iso}
+    row["content_hash"] = P.content_hash(row)
+    row["run_id"] = f"{doc['generated_at']}|{LEDGER_FRAME}|{row['content_hash'][:8]}"
+    return row
+
+
+def append_ledger(path: Path = OUT, *, ledger_path=None) -> dict:
+    import efv_progress as P
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    now_iso = P._now_iso()
+    sb_path = P.DATA_DIR / P.SB_NAME
+    sb = P._load_json(sb_path) if sb_path.exists() else None
+    row = ledger_row(doc, path, now_iso=now_iso)
+    return P.commit_rows([row], ledger_path=ledger_path, sb=sb, now_iso=now_iso)
+
+
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["ledger"]:
+        res = append_ledger()
+        print(json.dumps({"ledger": res}, indent=1))
+        return 0
     guards = _guards()
     rng = np.random.default_rng(SEED)
     rows, receipt = build_rows()
     bal = balance(rows, rng)
     h1 = h1_regression(rows, rng)
+    tb = tiebreak_balance(rows, rng)
     admitted = {side: sorted(k for k, v in bal[side].items()
                              if v.get("verdict") == "BALANCED") for side in F.SIDES}
+    prev = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
+    sidecars = {k: prev[k] for k in SIDECAR_KEYS if k in prev}
     try:
         commit = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
                                 capture_output=True, text=True).stdout.strip() or None
@@ -404,6 +505,7 @@ def main(argv=None) -> int:
             "tag": f"DS-03:h1.{arm}", "verdict": h1[arm]["reading"].upper()
             .replace(" ", "_"), "delta_vs_consensus": h1[arm]["delta_vs_consensus"],
             "ci95": h1[arm]["ci95"]}
+    probes.update(tb["probes"])
     doc = {
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "produced_by": "tools/efv_identity_balance.py",
@@ -416,7 +518,15 @@ def main(argv=None) -> int:
                      "rule": ("printed name matched against people in affiliated minor "
                               "league ball before V (StatsAPI sports 11 to 16 through "
                               "V - 1, draft classes through V - 1); one candidate "
-                              "resolves")},
+                              "resolves; several pass the SIDE tiebreak (candidates "
+                              "whose pre-V exposure sits in the row's own group) and "
+                              "then the RECENCY tiebreak (a stat line in V - 1 or "
+                              "V - 2), each resolving when it leaves exactly one"),
+                     "tiebreak_prior": ("lane A s1.8, counted on lv_dev before the rules "
+                                        "were written: 412 ambiguous, 127 by side, 140 "
+                                        "by recency, 141 remaining, 4 with no recent "
+                                        "candidate"),
+                     "by_how_and_side": receipt["by_how_and_side"]},
         "code": {"commit": commit, "tool_sha256": _sha(Path(__file__))},
         "rows": receipt,
         "indicators": dict(INDICATORS),
@@ -425,16 +535,19 @@ def main(argv=None) -> int:
         "h1_regression": h1,
         "h1_regression_holds": bool(leaky["ci95"][0] > 0
                                     and blind["ci95"][0] <= 0 <= blind["ci95"][1]),
+        "tiebreaks": {"indicators": tb["indicators"], "by_side": tb["by_side"],
+                      "never_timing_head_inputs": True},
         "probes": probes,
         "n_probes": len(probes),
         "not_in_efv_progress": ("these reads score no eFV and no candidate, so the "
                                 "progress chart (eFV minus consensus) carries none of "
                                 "them; they are counted in data/xfv_arm_ledger.json"),
         "seed": SEED, "B": {"h1": B_H1, "balance": B_BAL},
+        **sidecars,
     }
     print(json.dumps({"rows": receipt, "h1": {k: h1[k] for k in
                       ("leaky_reference", "outcome_blind")},
-                      "admissible": admitted}, indent=1))
+                      "admissible": admitted, "tiebreak_probes": tb["probes"]}, indent=1))
     if "--dry-run" not in argv:
         OUT.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
         print(f"wrote {OUT}")

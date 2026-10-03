@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-25T21:30:42+00:00",
+ "generated_at": "2026-10-03T01:45:05+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
  "n_arms": 80,
  "by_lane": {
@@ -1319,203 +1319,203 @@
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.acq_unknown_at_v:hit",
    "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.1741,
-    -0.084
+    -0.1716,
+    -0.0798
    ],
-   "partial": -0.1261
+   "partial": -0.126
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.acq_unknown_at_v:pit",
    "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.2748,
-    -0.1773
+    -0.2743,
+    -0.1825
    ],
-   "partial": -0.2248
+   "partial": -0.2265
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.age_prev_missing:hit",
-   "verdict": "BALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.1015,
-    0.0237
+    -0.1459,
+    -0.0252
    ],
-   "partial": -0.0397
+   "partial": -0.0877
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.age_prev_missing:pit",
-   "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "verdict": "BALANCED",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.1438,
-    -0.026
+    -0.1172,
+    0.0201
    ],
-   "partial": -0.0849
+   "partial": -0.0494
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.id_unresolved:hit",
-   "verdict": "BALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.1038,
-    0.0324
+    -0.1661,
+    -0.0228
    ],
-   "partial": -0.0381
+   "partial": -0.0982
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.id_unresolved:pit",
-   "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "verdict": "BALANCED",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.1824,
-    -0.0443
+    -0.1791,
+    0.0152
    ],
-   "partial": -0.1145
+   "partial": -0.0886
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.leaky_level_missing:hit",
    "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.2782,
-    -0.2035
+    -0.2771,
+    -0.2074
    ],
-   "partial": -0.2445
+   "partial": -0.2443
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.leaky_level_missing:pit",
    "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.3002,
-    -0.2241
+    -0.3018,
+    -0.2275
    ],
-   "partial": -0.2643
+   "partial": -0.2653
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.level_prev_missing:hit",
-   "verdict": "BALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "verdict": "IMBALANCED",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.1053,
-    0.0271
+    -0.1509,
+    -0.0173
    ],
-   "partial": -0.0397
+   "partial": -0.0877
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.level_prev_missing:pit",
-   "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "verdict": "BALANCED",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.1439,
-    -0.0252
+    -0.1164,
+    0.0101
    ],
-   "partial": -0.0849
+   "partial": -0.0494
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.milb_absent:hit",
    "verdict": "BALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.0753,
-    0.0575
+    -0.1339,
+    0.0017
    ],
-   "partial": -0.0101
+   "partial": -0.0695
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.milb_absent:pit",
    "verdict": "BALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.1244,
-    0.0081
+    -0.1012,
+    0.0576
    ],
-   "partial": -0.0621
+   "partial": -0.0255
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.record_birth_missing:hit",
    "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.162,
-    -0.0754
+    -0.1663,
+    -0.0795
    ],
-   "partial": -0.1206
+   "partial": -0.1205
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.record_birth_missing:pit",
    "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.2382,
-    -0.1483
+    -0.237,
+    -0.1466
    ],
-   "partial": -0.1912
+   "partial": -0.1934
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.record_id_missing:hit",
    "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.1715,
-    -0.0764
+    -0.3597,
+    -0.2865
    ],
-   "partial": -0.125
+   "partial": -0.3248
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:balance.record_id_missing:pit",
    "verdict": "IMBALANCED",
-   "generated_at": "2026-09-25T19:46:42+00:00",
+   "generated_at": "2026-10-03T01:38:30+00:00",
    "ci95": [
-    -0.2414,
-    -0.1514
+    -0.4558,
+    -0.3852
    ],
-   "partial": -0.1951
+   "partial": -0.4201
   },
   {
    "lane": "identity balance probes (DS-03)",
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:h1.leaky_reference",
    "verdict": "CI95_ABOVE_ZERO",
-   "generated_at": "2026-09-25T19:46:42+00:00",
-   "delta_vs_consensus": 0.0257,
+   "generated_at": "2026-10-03T01:38:30+00:00",
+   "delta_vs_consensus": 0.0217,
    "ci95": [
-    0.0073,
-    0.0445
+    0.0033,
+    0.039
    ]
   },
   {
@@ -1523,12 +1523,54 @@
    "artifact": "efv_identity_balance.json",
    "probe": "DS-03:h1.outcome_blind",
    "verdict": "CI95_SPANS_ZERO",
-   "generated_at": "2026-09-25T19:46:42+00:00",
-   "delta_vs_consensus": -0.0079,
+   "generated_at": "2026-10-03T01:38:30+00:00",
+   "delta_vs_consensus": -0.0145,
    "ci95": [
-    -0.0244,
-    0.0083
+    -0.0291,
+    0.0017
    ]
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:tiebreak.name_recency",
+   "verdict": "BALANCED",
+   "generated_at": "2026-10-03T01:38:30+00:00",
+   "ci95": {
+    "hit": [
+     -0.0131,
+     0.3019
+    ],
+    "pit": [
+     -0.2482,
+     0.0203
+    ]
+   },
+   "partial": {
+    "hit": 0.1521,
+    "pit": -0.1365
+   }
+  },
+  {
+   "lane": "identity balance probes (DS-03)",
+   "artifact": "efv_identity_balance.json",
+   "probe": "DS-03:tiebreak.name_side",
+   "verdict": "BALANCED",
+   "generated_at": "2026-10-03T01:38:30+00:00",
+   "ci95": {
+    "hit": [
+     -0.176,
+     0.0477
+    ],
+    "pit": [
+     -0.211,
+     0.0147
+    ]
+   },
+   "partial": {
+    "hit": -0.0665,
+    "pit": -0.1076
+   }
   },
   {
    "lane": "combiner rule reads (DS-08)",
@@ -1809,9 +1851,16 @@
    ]
   }
  ],
- "n_probes": 42,
+ "n_probes": 44,
  "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
+ "sources_pending": [
+  {
+   "artifact": "xfv_screen_wave1.json",
+   "why": "registered; producer has not run",
+   "lane": "screening lab wave 1"
+  }
+ ],
  "expected_spurious_passes_at_nominal_5pct": 4.0,
  "n_scoreable_against_a_floor": 39,
  "n_cleared_own_floor": 0,

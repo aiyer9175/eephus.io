@@ -242,10 +242,13 @@ def frame_census(universe: dict | None = None, *, vintages=VINTAGES_BUILT,
             rows.append({
                 "side": side, "vintage": int(v), "rows": len(fr),
                 "id_how": {"name_unique": how.get("name_unique", 0),
+                           "name_side": how.get("name_side", 0),
+                           "name_recency": how.get("name_recency", 0),
                            "ambiguous": how.get("ambiguous", 0),
                            "no_candidate": how.get("no_candidate", 0),
                            "other": sum(c for k, c in how.items() if k not in
-                                        ("name_unique", "ambiguous", "no_candidate"))},
+                                        ("name_unique", "name_side", "name_recency",
+                                         "ambiguous", "no_candidate"))},
                 "blind_id_present": sum(1 for r in fr if r.get("mlbam_id")),
                 "record_id_present": sum(1 for r in fr if r.get("record_mlbam_id")),
                 "with_consensus": sum(1 for r in fr
@@ -269,7 +272,8 @@ def frame_census(universe: dict | None = None, *, vintages=VINTAGES_BUILT,
         "rows": sum(r["rows"] for r in dev),
         "by_side": {s: sum(r["rows"] for r in dev if r["side"] == s) for s in F.SIDES},
         "id_how": {k: sum(r["id_how"][k] for r in dev)
-                   for k in ("name_unique", "ambiguous", "no_candidate", "other")},
+                   for k in ("name_unique", "name_side", "name_recency", "ambiguous",
+                             "no_candidate", "other")},
         "record_id_present": sum(r["record_id_present"] for r in dev)}
     later = [r for r in rows if r["vintage"] in LATER_VINTAGES]
     return {"by": ["side", "vintage"],
