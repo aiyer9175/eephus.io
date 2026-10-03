@@ -551,6 +551,11 @@ def options_calendar(members: list, events: list, proj_keys, decision_by: str | 
     projection and rows with no strike carry the terms and no price."""
     ev = {}
     for e in events or []:
+        # A held stamp (fa_pipeline.quarantine_premature_winter_events) is not
+        # a decision; served_fa_events already drops it, this guards any
+        # caller that hands the raw ledger in.
+        if e.get("invalidated"):
+            continue
         if e.get("type") in ("option_exercised", "option_declined") and e.get("key"):
             ev.setdefault(e["key"], e)
     by_club: dict = defaultdict(list)
@@ -2711,7 +2716,8 @@ def build_all() -> tuple:
                            "note": (copy["qo_none"] if not qo_live else f"{len(qo_live)} live QO stamps"),
                            "blocked_on": (None if qo_live else
                                           "every qo_offered event on file is invalidated until a stamp "
-                                          "inside the Oct-Jan window exists; the block never promises rows")},
+                                          "inside the QO window (the day after the last World Series "
+                                          "game to January 31) exists; the block never promises rows")},
             "single_payroll_line": {"live": False, "decided": "not served",
                                     "blocked_on": ("needs registry row club_payroll_path and the 2016-2025 "
                                                    "payroll history as labels for a backtest")},

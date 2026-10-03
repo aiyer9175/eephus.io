@@ -2124,6 +2124,41 @@ def test_the_options_calendar_rule_on_a_small_class():
     assert S["unpriced_by_reason"] == {"mutual": 2, "conditional": 1, "no_projection": 1, "no_band": 1}
 
 
+def test_a_held_option_stamp_is_not_a_decision_on_the_calendar():
+    """HOME_1 (2026-10-02): an option event fa_pipeline holds (stamped before
+    the window opened, the day after the World Series) never resolves a row.
+    Kills: dropping the invalidated guard in options_calendar."""
+    import ledger_export as LE
+    members = [{"key": "a", "name": "A", "from": "WSN", "status": "pending_option", "type": "club_option",
+                "optPrice": 4_000_000, "enterProb": 0.01},
+               {"key": "b", "name": "B", "from": "BOS", "status": "locked", "type": "ufa"}]
+    events = [{"type": "option_exercised", "key": "a", "date": "2026-10-02", "invalidated": True},
+              {"type": "option_declined", "key": "b", "date": "2026-10-02", "invalidated": True}]
+    by, S = LE.options_calendar(members, events, set(), "2026-11-05", {"WSN", "BOS"})
+    rows = {r[0]: r for rs in by.values() for r in rs}
+    i = {n: k for k, n in enumerate(LE.COLUMNS["options.calendar"])}
+    assert set(rows) == {"a"}, "a held decline on a locked row adds no row"
+    assert rows["a"][i["state"]] == "pending" and rows["a"][i["decided_on"]] is None
+    assert S["by_state"] == {"pending": 1}
+
+
+def test_the_served_calendar_resolves_rows_only_on_live_option_events(d):
+    """Every declined or exercised row on the served calendar rests on an option
+    event the ledger serves (not held); a held stamp leaves its row pending or
+    absent. Read off the shipped board and the event ledger."""
+    import storage
+    live = {(e["player_key"], e["event_type"]) for e in storage.load_fa_events()
+            if e.get("event_type") in ("option_declined", "option_exercised") and not e.get("invalidated")}
+    held = {(e["player_key"], e["event_type"]) for e in storage.load_fa_events()
+            if e.get("event_type") in ("option_declined", "option_exercised") and e.get("invalidated")}
+    for club in d["clubs"].values():
+        for r in (club.get("options_calendar") or {}).get("rows") or []:
+            if r[8] == "pending":
+                continue
+            et = "option_exercised" if r[8] == "exercised" else "option_declined"
+            assert (r[0], et) in live and (r[0], et) not in held, (r[0], r[8])
+
+
 def test_the_decision_day_reads_the_season_calendar_on_disk(tmp_path):
     import ledger_export as LE
     assert LE.option_decision_by("2026-10-31") == "2026-11-05" and LE.option_decision_by(None) is None

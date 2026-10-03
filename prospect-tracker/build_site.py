@@ -1843,6 +1843,18 @@ def _cached_data_json(name: str) -> dict:
     except (OSError, ValueError):
         return {}
 
+# FA option rows are inferred from a Spotrac status diff, never confirmed by a
+# transaction feed (HOME_1, 2026-10-02), so their wire rows name that basis.
+_WIRE_VAL_OPT_DECLINED = "opt-out → FA"
+_WIRE_VAL_OPT_EXERCISED = "option exercised"
+
+def _wire_row_title(dt: str, key, val: str) -> str:
+    """The title attribute a wire row carries, or "" for none: the two FA
+    option rows say what they rest on and the day the pipeline first saw it."""
+    if str(key or "").startswith("fa:") and val in (_WIRE_VAL_OPT_DECLINED, _WIRE_VAL_OPT_EXERCISED):
+        return f"Spotrac status change, first seen {dt}"
+    return ""
+
 def _load_fa_events_for_wire() -> list:
     """Recent winter events from the FA module's own export (the events
     block in data/fa_class.json). Additive: an absent or pre-events export
@@ -1952,10 +1964,10 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
                 key, e.get("to"), name=nm, val=terms, weight=95)
         elif t == "option_declined":
             add(e.get("date"), "signing", "✎", f'{nm} declines option - enters FA class',
-                key, e.get("from"), name=nm, val="opt-out → FA", weight=85)
+                key, e.get("from"), name=nm, val=_WIRE_VAL_OPT_DECLINED, weight=85)
         elif t == "option_exercised":
             add(e.get("date"), "signing", "✎", f'{nm} option exercised - off the FA board',
-                key, e.get("from"), name=nm, val="option exercised", weight=85)
+                key, e.get("from"), name=nm, val=_WIRE_VAL_OPT_EXERCISED, weight=85)
         elif t == "qo_offered":
             add(e.get("date"), "signing", "✎", f'{nm} receives qualifying offer',
                 key, e.get("from"), name=nm, val="QO offered", weight=84)
@@ -2005,13 +2017,16 @@ def _feed_day_header(dt: str, gfx: bool = False) -> str:
             f'<a class="feed-day-tm" href="/prospx/#tab=timemachine&tm={dt}" '
             f'title="Time Machine - the full board as of {dt}">Time Machine →</a></div>')
 
-def _feed_item_html(typ, glyph, text, key, org, name, val, cat: str = "") -> str:
+def _feed_item_html(typ, glyph, text, key, org, name, val, cat: str = "",
+                    title: str = "") -> str:
     """One wire row: logo | name (ellipsized) | colored value chip. The type
     glyph lives only in the value chip. `cat` (optional) tags the row for the
-    /news/ filter chips. Shared by the homepage feed + the /news/ page."""
+    /news/ filter chips; `title` (optional) is the row's basis tooltip.
+    Shared by the homepage feed + the /news/ page."""
     logo = _team_logo(org, "feed-logo") if org else ""
     data_cat = f' data-cat="{html.escape(cat)}"' if cat else ""
-    return (f'<a class="feed-item" href="{_player_href(key)}"{data_cat}>'
+    tip = f' title="{html.escape(title)}"' if title else ""
+    return (f'<a class="feed-item" href="{_player_href(key)}"{data_cat}{tip}>'
             f'{logo}<span class="feed-name">{html.escape(name or text)}</span>'
             f'<span class="feed-val {typ}">{_wire_glyph(typ, glyph)}{html.escape(val)}</span></a>')
 
@@ -2039,7 +2054,7 @@ def _news_detail(p: dict, typ: str) -> str:
             parts.append(f"ETA {yr}")
     return _meta(*parts)
 
-def _news_item_html(typ, glyph, text, key, org, name, val, cat, pmap) -> str:
+def _news_item_html(typ, glyph, text, key, org, name, val, cat, pmap, title: str = "") -> str:
     """Richer /news/ row: logo | name + scouting line | current-FV chip | event
     chip. Reuses _feed_item_html's classes so it inherits the wire palette; the
     detail line + FV pill are scoped to .news-feed in CSS, so the homepage
@@ -2051,7 +2066,8 @@ def _news_item_html(typ, glyph, text, key, org, name, val, cat, pmap) -> str:
     detail = _news_detail(p, typ)
     meta = f'<span class="news-meta">{detail}</span>' if detail else ""
     fv = _fv_pill(p) if (p and p.get("fv_close") is not None) else ""
-    return (f'<a class="feed-item news-item" href="{_player_href(key)}"{data_cat}>'
+    tip = f' title="{html.escape(title)}"' if title else ""
+    return (f'<a class="feed-item news-item" href="{_player_href(key)}"{data_cat}{tip}>'
             f'{logo}'
             f'<span class="news-main"><span class="feed-name">{html.escape(name or text)}</span>{meta}</span>'
             f'{fv}'
@@ -2066,7 +2082,8 @@ def _feed_html(events: list, n: int = 12) -> str:
         if dt != last_day:
             last_day = dt
             out.append(_feed_day_header(dt))
-        out.append(_feed_item_html(typ, glyph, text, key, org, name, val))
+        out.append(_feed_item_html(typ, glyph, text, key, org, name, val,
+                                   title=_wire_row_title(dt, key, val)))
     return "".join(out)
 
 def _ticker_html(events: list, n: int = 14) -> str:
@@ -2080,7 +2097,9 @@ def _ticker_html(events: list, n: int = 14) -> str:
         cls = typ if typ in known else "glyph"
         href = _player_href(key) if key else "/prospx/#tab=spotlights"
         logo = _team_logo(org, "tk-logo") if org else ""
-        items.append(f'<a href="{html.escape(href)}" tabindex="-1">{logo}'
+        title = _wire_row_title(dt, key, val)
+        tip = f' title="{html.escape(title)}"' if title else ""
+        items.append(f'<a href="{html.escape(href)}" tabindex="-1"{tip}>{logo}'
                      f'<span class="{cls}">{_wire_glyph(typ, glyph)}</span> {html.escape(text)}</a>')
     if not items:
         items = [f'<span><span class="glyph">◆</span> {NEWS_LABEL} · live</span>']
@@ -2117,7 +2136,8 @@ def _news_feed_html(events: list, pmap: dict | None = None) -> str:
             out.append(_feed_day_header(dt, gfx=True))
             open_day = True
         out.append(_news_item_html(typ, glyph, text, key, org, name, val,
-                                   _EVENT_CAT.get(typ, ""), pmap))
+                                   _EVENT_CAT.get(typ, ""), pmap,
+                                   title=_wire_row_title(dt, key, val)))
     if open_day:
         out.append("</div>")
     return "".join(out)
