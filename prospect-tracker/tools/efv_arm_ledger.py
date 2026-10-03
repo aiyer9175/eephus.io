@@ -85,6 +85,9 @@ PROBES: tuple[tuple[str, str, str], ...] = (
     # frame (each carries five comparisons by the within, pooled and AUC statistics).
     # A dotted key names a block inside the artifact.
     ("efv_v2_dev_eval.json", "ds16.probes", "V2 development read (DS-16)"),
+    # EFV3 lane A G7: the one validity read of the bust pool ids (W3 > 0 share by the
+    # bust_id_resolved indicator on the lv_dev pool rows); counts, never a score.
+    ("efv_bust_pool_receipt.json", "probes", "bust pool id balance (EFV3 G7)"),
 )
 
 #: Fields an arm may carry that the ledger copies through unchanged, so a driver's

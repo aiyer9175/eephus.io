@@ -1,0 +1,532 @@
+{
+ "schema": "efv_bust_pool_receipt/1",
+ "generated_at": "2026-10-03T02:16:08+00:00",
+ "produced_by": "tools/efv_bust_pool_resolve.py",
+ "role": "development",
+ "adjudicates": "nothing; counts, class flips and one balance probe, no score",
+ "ids_file": {
+  "path": "data/efv_bust_pool_ids.json",
+  "resolved": 1063
+ },
+ "label_epoch": {
+  "provider": "ewar_v2",
+  "resolved_through": 2025,
+  "fwar_epoch_gate": "docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md",
+  "part_9_empty": true,
+  "reading": "pre-epoch: the label is the retiring provider; the balance read is re-run on the frozen label at the flag's flip"
+ },
+ "code": {
+  "commit": "a9b21ddd",
+  "tool_sha256": "20b1f21f73dccf594015a496586555bb0d7979b3f0ebbfbb3dea7a2854d8cf66",
+  "resolver_sha256": "b03feb7c3c417ee2a5e563b0fbc6a7ce1d04728383d9e519094c5cdc0b9afa1a"
+ },
+ "pool": {
+  "records": 2337,
+  "no_stored_id": 1303,
+  "resolved": 1063,
+  "by_how": {
+   "no_candidate": 108,
+   "name_unique": 1016,
+   "name_side": 25,
+   "name_recency": 22,
+   "ambiguous": 18,
+   "no_list_year": 114
+  }
+ },
+ "bust2": {
+  "classifier": "efv_labels.reached_class (BUST2)",
+  "resolved_through": 2025,
+  "latest_milb_seasons": [
+   2026,
+   2025
+  ],
+  "rows": 1303,
+  "by_before_after": {
+   "censored_never->censored_never": 195,
+   "censored_never->never": 184,
+   "censored_never->reached": 5,
+   "never->censored_never": 3,
+   "never->never": 570,
+   "never->reached": 345,
+   "reached->reached": 1
+  },
+  "by_before_after_and_last_list_year": {
+   "censored_never->censored_never": {
+    "2021": 17,
+    "2022": 12,
+    "2023": 10,
+    "2024": 2,
+    "2025": 2,
+    "2026": 38,
+    "none": 114
+   },
+   "censored_never->never": {
+    "2013": 1,
+    "2016": 1,
+    "2021": 82,
+    "2022": 60,
+    "2023": 32,
+    "2024": 6,
+    "2025": 1,
+    "2026": 1
+   },
+   "censored_never->reached": {
+    "2021": 3,
+    "2023": 1,
+    "2026": 1
+   },
+   "never->censored_never": {
+    "2015": 1,
+    "2016": 2
+   },
+   "never->never": {
+    "2012": 4,
+    "2013": 77,
+    "2014": 36,
+    "2015": 106,
+    "2016": 86,
+    "2017": 84,
+    "2018": 71,
+    "2019": 82,
+    "2020": 24
+   },
+   "never->reached": {
+    "2013": 1,
+    "2017": 141,
+    "2018": 117,
+    "2019": 60,
+    "2020": 26
+   },
+   "reached->reached": {
+    "2023": 1
+   }
+  },
+  "before": {
+   "censored_never": 384,
+   "reached": 1,
+   "never": 918
+  },
+  "after": {
+   "censored_never": 198,
+   "never": 754,
+   "reached": 351
+  }
+ },
+ "coverage": {
+  "bust_rows": {
+   "hit": {
+    "rows": 1122,
+    "resolved": 987,
+    "share": 87.97,
+    "no_stored_id_rows": 527,
+    "no_stored_id_resolved": 417,
+    "no_stored_id_share": 79.13,
+    "by_how": {
+     "name_unique": 921,
+     "name_side": 34,
+     "no_candidate": 54,
+     "name_recency": 32,
+     "ambiguous": 20,
+     "no_list_year": 61
+    }
+   },
+   "pit": {
+    "rows": 1121,
+    "resolved": 993,
+    "share": 88.58,
+    "no_stored_id_rows": 715,
+    "no_stored_id_resolved": 607,
+    "no_stored_id_share": 84.9,
+    "by_how": {
+     "name_unique": 930,
+     "name_recency": 32,
+     "no_candidate": 60,
+     "name_side": 31,
+     "ambiguous": 21,
+     "no_list_year": 47
+    }
+   },
+   "none": {
+    "rows": 94,
+    "resolved": 68,
+    "share": 72.34,
+    "no_stored_id_rows": 61,
+    "no_stored_id_resolved": 39,
+    "no_stored_id_share": 63.93,
+    "by_how": {
+     "name_unique": 68,
+     "ambiguous": 6,
+     "no_list_year": 20
+    }
+   }
+  },
+  "debuted_rows": {
+   "hit": {
+    "rows": 1221,
+    "resolved": 1147,
+    "share": 93.94,
+    "no_stored_id_rows": 1,
+    "no_stored_id_resolved": 1,
+    "no_stored_id_share": 100.0,
+    "by_how": {
+     "name_unique": 1083,
+     "name_recency": 41,
+     "ambiguous": 23,
+     "no_candidate": 4,
+     "name_side": 23,
+     "no_list_year": 47
+    }
+   },
+   "pit": {
+    "rows": 1460,
+    "resolved": 1386,
+    "share": 94.93,
+    "no_stored_id_rows": 1,
+    "no_stored_id_resolved": 0,
+    "no_stored_id_share": 0.0,
+    "by_how": {
+     "name_unique": 1296,
+     "name_recency": 52,
+     "ambiguous": 20,
+     "name_side": 38,
+     "no_candidate": 3,
+     "no_list_year": 51
+    }
+   },
+   "none": {
+    "rows": 86,
+    "resolved": 30,
+    "share": 34.88,
+    "no_stored_id_rows": 4,
+    "no_stored_id_resolved": 0,
+    "no_stored_id_share": 0.0,
+    "by_how": {
+     "name_unique": 30,
+     "no_list_year": 54,
+     "ambiguous": 2
+    }
+   }
+  },
+  "note": "the same resolver on every record of each file, the stored id ignored; no_stored_id_* restricts to records without one"
+ },
+ "symmetry": {
+  "rule": "id coverage of debuted rows (debuts.json) and bust rows (inactive.json) under the same resolver, all rows, per side; a gap above max_gap_points on either side blocks any use of the ids in a training matrix",
+  "max_gap_points": 10.0,
+  "by_side": {
+   "hit": {
+    "debuted_share": 93.94,
+    "bust_share": 87.97,
+    "gap_points": 5.97,
+    "over_limit": false
+   },
+   "pit": {
+    "debuted_share": 94.93,
+    "bust_share": 88.58,
+    "gap_points": 6.35,
+    "over_limit": false
+   }
+  },
+  "blocked": false,
+  "verdict": "SYMMETRY_OK"
+ },
+ "agreement_with_stored_id": {
+  "bust_rows": {
+   "rows_with_stored_id": 1034,
+   "agree": 958,
+   "disagree": 27,
+   "unresolved": 49,
+   "agree_share_of_resolved": 97.26,
+   "by_how": {
+    "name_recency": {
+     "agree": 34,
+     "disagree": 8
+    },
+    "name_side": {
+     "agree": 33,
+     "disagree": 7
+    },
+    "name_unique": {
+     "agree": 891,
+     "disagree": 12
+    }
+   }
+  },
+  "debuted_rows": {
+   "rows_with_stored_id": 2761,
+   "agree": 2541,
+   "disagree": 21,
+   "unresolved": 199,
+   "agree_share_of_resolved": 99.18,
+   "by_how": {
+    "name_recency": {
+     "agree": 82,
+     "disagree": 11
+    },
+    "name_side": {
+     "agree": 56,
+     "disagree": 5
+    },
+    "name_unique": {
+     "agree": 2403,
+     "disagree": 5
+    }
+   }
+  }
+ },
+ "reached_flips": {
+  "rows": 350,
+  "first_mlb_season_minus_last_list_year": {
+   "-4": 6,
+   "-3": 13,
+   "-2": 40,
+   "-1": 159,
+   "0": 103,
+   "1": 19,
+   "2": 5,
+   "3": 2,
+   "4": 2,
+   "5": 1
+  },
+  "by_how": {
+   "name_unique": 338,
+   "name_side": 7,
+   "name_recency": 5
+  },
+  "matrix_effect": "with the flag on these rows leave the bust pool through the F1 guard (bust_mlb_exposure_dropped, or rerouted when career_war holds their seasons); never a 0.0 label"
+ },
+ "retired_asset": {
+  "path": "data/sources/mlbam_id_overrides_busts.json",
+  "present": true,
+  "keys": 283,
+  "joins_null_id_pool": 0,
+  "keys_on_a_record": 283,
+  "records_read": "inactive.json, debuts.json, timeseries.json players",
+  "keys_whose_id_is_already_on_the_record": 283,
+  "disposition": "retired as a bust-pool input: every key is a current key whose id already sits on the record, so there is nothing to re-key; the file stays as war_source.mlbam_index's third fallback binding (an identity map, never deleted) and this tool does not read it"
+ },
+ "balance": {
+  "frame": "lv_dev (F-LV, development vintages), W3 on the label provider stamped below; the population is the frame rows whose record is an inactive.json row with no stored id",
+  "guards": {
+   "reserved_lv": [
+    2020,
+    2021
+   ],
+   "r_vm_first_debut_year": 2025,
+   "vintages_read": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019
+   ],
+   "reserved_vm_pins": []
+  },
+  "rows": {
+   "frame_rows": 5962,
+   "pool_rows_on_frame": 1967,
+   "no_consensus": 0,
+   "label_none": 0,
+   "dropped_rvm_players": 26,
+   "rows_read": 1967,
+   "rows_read_by_side": {
+    "hit": 843,
+    "pit": 1124
+   },
+   "frame_rows_read": 5930
+  },
+  "by_side": {
+   "hit": {
+    "n": 843,
+    "n_with": 814,
+    "n_without": 29,
+    "w3_pos_share_with": 0.0,
+    "w3_pos_share_without": 0.0,
+    "w3_pos_gap": 0.0,
+    "r3_share_with": 0.0,
+    "r3_share_without": 0.0,
+    "partial": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "B_used": 500,
+    "verdict": "CONSTANT",
+    "constant_outcome": true,
+    "w3_pos_share": 0.0
+   },
+   "pit": {
+    "n": 1124,
+    "n_with": 1097,
+    "n_without": 27,
+    "w3_pos_share_with": 0.0,
+    "w3_pos_share_without": 0.0,
+    "w3_pos_gap": 0.0,
+    "r3_share_with": 0.0,
+    "r3_share_without": 0.0,
+    "partial": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "B_used": 500,
+    "verdict": "CONSTANT",
+    "constant_outcome": true,
+    "w3_pos_share": 0.0
+   }
+  },
+  "verdict": "CONSTANT",
+  "reason": "W3 > 0 does not vary over the pool rows on lv_dev: an F-LV label reads the record's own id and career_war row, never a pool id, so every pool row keeps W3 0 whether or not the resolver found it; the read carries no information about the ids and says so",
+  "seed": 20261002,
+  "B": 500,
+  "whole_frame_context": {
+   "not_a_probe": "over the whole frame the indicator marks never-reached rows against debuted rows and reads the label by construction; shown so the gap is visible, never counted",
+   "by_side": {
+    "hit": {
+     "n": 3036,
+     "n_with": 814,
+     "n_without": 2222,
+     "w3_pos_share_with": 0.0,
+     "w3_pos_share_without": 0.3573,
+     "w3_pos_gap": -0.3573
+    },
+    "pit": {
+     "n": 2894,
+     "n_with": 1097,
+     "n_without": 1797,
+     "w3_pos_share_with": 0.0,
+     "w3_pos_share_without": 0.4552,
+     "w3_pos_gap": -0.4552
+    }
+   }
+  },
+  "probes": {
+   "G7:balance.bust_id_resolved": {
+    "tag": "G7:balance.bust_id_resolved",
+    "verdict": "CONSTANT",
+    "indicator": "bust_id_resolved on the lv_dev pool rows (no stored id)",
+    "reason": "W3 > 0 does not vary over the pool rows on lv_dev: an F-LV label reads the record's own id and career_war row, never a pool id, so every pool row keeps W3 0 whether or not the resolver found it; the read carries no information about the ids and says so",
+    "rows_with": {
+     "hit": 814,
+     "pit": 1097
+    },
+    "rows_without": {
+     "hit": 29,
+     "pit": 27
+    },
+    "w3_pos_share_with": {
+     "hit": 0.0,
+     "pit": 0.0
+    },
+    "w3_pos_share_without": {
+     "hit": 0.0,
+     "pit": 0.0
+    },
+    "partial": {
+     "hit": 0.0,
+     "pit": 0.0
+    },
+    "ci95": {
+     "hit": [
+      0.0,
+      0.0
+     ],
+     "pit": [
+      0.0,
+      0.0
+     ]
+    }
+   }
+  }
+ },
+ "matrix_preview": {
+  "flag_off": {
+   "hit": {
+    "rows": 1916,
+    "bust_rows": 1044,
+    "bust_rows_with_id": 571,
+    "bust_rows_with_milb_block": 531,
+    "bust_pool_id_applied": 0,
+    "bust_mlb_exposure_rerouted": 0,
+    "bust_mlb_exposure_dropped": 16,
+    "bust_recent_flagged": 27
+   },
+   "pit": {
+    "rows": 2040,
+    "bust_rows": 1042,
+    "bust_rows_with_id": 370,
+    "bust_rows_with_milb_block": 319,
+    "bust_pool_id_applied": 0,
+    "bust_mlb_exposure_rerouted": 0,
+    "bust_mlb_exposure_dropped": 32,
+    "bust_recent_flagged": 58
+   }
+  },
+  "flag_on": {
+   "hit": {
+    "rows": 1790,
+    "bust_rows": 918,
+    "bust_rows_with_id": 860,
+    "bust_rows_with_milb_block": 745,
+    "bust_pool_id_applied": 415,
+    "bust_mlb_exposure_rerouted": 0,
+    "bust_mlb_exposure_dropped": 142,
+    "bust_recent_flagged": 27
+   },
+   "pit": {
+    "rows": 1832,
+    "bust_rows": 834,
+    "bust_rows_with_id": 769,
+    "bust_rows_with_milb_block": 634,
+    "bust_pool_id_applied": 607,
+    "bust_mlb_exposure_rerouted": 0,
+    "bust_mlb_exposure_dropped": 240,
+    "bust_recent_flagged": 57
+   }
+  }
+ },
+ "probes": {
+  "G7:balance.bust_id_resolved": {
+   "tag": "G7:balance.bust_id_resolved",
+   "verdict": "CONSTANT",
+   "indicator": "bust_id_resolved on the lv_dev pool rows (no stored id)",
+   "reason": "W3 > 0 does not vary over the pool rows on lv_dev: an F-LV label reads the record's own id and career_war row, never a pool id, so every pool row keeps W3 0 whether or not the resolver found it; the read carries no information about the ids and says so",
+   "rows_with": {
+    "hit": 814,
+    "pit": 1097
+   },
+   "rows_without": {
+    "hit": 29,
+    "pit": 27
+   },
+   "w3_pos_share_with": {
+    "hit": 0.0,
+    "pit": 0.0
+   },
+   "w3_pos_share_without": {
+    "hit": 0.0,
+    "pit": 0.0
+   },
+   "partial": {
+    "hit": 0.0,
+    "pit": 0.0
+   },
+   "ci95": {
+    "hit": [
+     0.0,
+     0.0
+    ],
+    "pit": [
+     0.0,
+     0.0
+    ]
+   }
+  }
+ },
+ "n_probes": 1,
+ "bans": "no read of R-LV or R-VM; no statistic by consensus-FV cell; no closed arm re-run; the full_pool cut stays inadmissible for any claim",
+ "not_in_efv_progress_chart": "no eFV and no candidate is scored here; the development row records counts only"
+}
