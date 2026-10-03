@@ -3,17 +3,17 @@
  "_counts": {
   "L1": 60,
   "L2": 26,
-  "L3": 13,
-  "L5": 115,
-  "L6": 64,
+  "L3": 14,
+  "L5": 113,
+  "L6": 62,
   "L7": 73,
-  "L8": 131,
+  "L8": 130,
   "L9": 44,
   "L10": 35,
-  "L12": 15,
-  "L4": 3,
-  "L5_density": 9,
-  "coverage": 74
+  "L12": 14,
+  "L4": 2,
+  "L5_density": 8,
+  "coverage": 75
  },
  "L1": [
   "04a2ffdfde9a8d63efac0552a829b3e349bc80f2",
@@ -118,6 +118,7 @@
   "b56adc659dd9f1032aae33670682c4a61acd52a6",
   "ba16514761a28664d51fca04d2b441b746d75f79",
   "bdaeffdbeecc7f8b159faa8f682edafafce5158b",
+  "dd6c26e71b110d7ef811ef2603da311f623833cc",
   "e40807accb3457bcfb0c2f6adf7346f905be68f8"
  ],
  "L5": [
@@ -147,7 +148,6 @@
   "2b2d5b665d02be09fae46ad214e4c1f102b9e917",
   "2f683319b40e28c4e51cf2fbd3441cc6ab0de3ed",
   "328794fca31a3c825c9b680265b64cbd679b0985",
-  "3bd05a125dd0950b2ff75d40e9e164bc06b10fda",
   "3d4089894157253c2a78a6edd6fc31b7c6fee2a9",
   "3d9ef402d365a843c958a5540eec259aba7348c8",
   "3ee60e059be0fc9a702c473e4013256769cf4d1e",
@@ -190,7 +190,6 @@
   "97c030bb632facff5dec4c38689c9e67e6d9432d",
   "9861d28d9b9fc941c22cf06dbdcd0b7f3e3d3b7c",
   "99454613ecbce55ded1d06c5998ef752aeb0c09a",
-  "9b340fda4e248c0d555dff1ce7c1554e75d816e3",
   "9b6217707753ab7e4bff4644d79a202b5dc27ffd",
   "a25822608b6684066c68e466773af956f7cd7ac2",
   "a2de28c815bb7934ff3c1f6c6a319720d904e715",
@@ -276,7 +275,6 @@
   "84d35f0378096e83d39b99cd130071ef51897dee",
   "9211fedcec0207a309a0a16bb41f280d89e06a6e",
   "925e96bc1e0a4955bd9b8151b8eeaf3fcd23da8f",
-  "9b340fda4e248c0d555dff1ce7c1554e75d816e3",
   "a9aed269542215f2f6a504788f3de99874863cbc",
   "ac73122fd5f580990f08d2cd798203d049ec701f",
   "b3aca88f2cf907f7eed38501e1e9a0dafb8d850c",
@@ -287,7 +285,6 @@
   "bf70475b86b799866c74a43171735755a18d7f1f",
   "c065e59fad9fd2458be64e0fb74bfcd933bf91ae",
   "c2961655c9fceaa00b7a6d74bccefe086d0c0df4",
-  "c2e6bf4d3620b435ac36f3dd97507c9f1b6946e2",
   "c9d0de89a1e4b437a2b66b4fe43314bc0390aa1a",
   "ceedc2a190975f39d347af92f72a6a656f41b0b1",
   "cf335cdf70d57115aea54192b1822d3340c86547",
@@ -411,7 +408,6 @@
   "31173fd6619b2659bc5aa95e72b65f0edeeba10d",
   "372df18b33d6cd42c284c7ec9cfc68a7c6efc6b2",
   "3b74e96c3c4933ac583da5542898e5f3b85f361a",
-  "3ce5ba4774605f0bbb6592be0b609e06ba0d2e05",
   "3e929a2ad550baf2164e213dcd6c8ffa10c5b656",
   "3ee60e059be0fc9a702c473e4013256769cf4d1e",
   "4013055810da8416328953dbd1754bd6967298d2",
@@ -605,7 +601,6 @@
   "a9aed269542215f2f6a504788f3de99874863cbc",
   "af151313770169d4087303be0232ae16a4c35945",
   "b7f0ebb654cb12308c9803f591946f01d8d40834",
-  "c2e6bf4d3620b435ac36f3dd97507c9f1b6946e2",
   "d2550a89f44d4b99029a32f2cc83492288c84af4",
   "e8eb5857b87089fbd051a65f96a8de238ca81e79",
   "e8ec8bcfc01b8e59b9e4a4a5d89955693275e7e8",
@@ -613,8 +608,7 @@
  ],
  "L4": [
   "models",
-  "registry",
-  "team"
+  "registry"
  ],
  "L5_density": [
   "collegesavant",
@@ -624,8 +618,7 @@
   "pal",
   "prospx",
   "registry",
-  "sources",
-  "team"
+  "sources"
  ],
  "coverage": [
   "advancement_pace.json",
@@ -674,6 +667,7 @@
   "rem_plus_eval.json",
   "sem_plus_eval.json",
   "source_cohort_accuracy.json",
+  "source_updates.json",
   "star_odds_eval.json",
   "starter_history.json",
   "starter_leaderboards.json",
