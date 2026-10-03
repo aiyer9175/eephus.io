@@ -100,13 +100,28 @@ V2_DELTAS = (("vs_prospx_consensus", "v2_vs_prospx_consensus"),
              ("vs_mlb_pipeline", "v2_vs_mlb_pipeline"),
              ("vs_fangraphs", "v2_vs_fangraphs"),
              ("efv_v1_vs_prospx_consensus", "efv_v1_vs_prospx_consensus"))
+#: The screening lab (tools/efv_screen_lab.py, EFV3 lane B s5): one development row per
+#: measured arm, model_id "efv_v2_screen:wave<n>:<candidate>:<side>", resolvable null.
+#: The artifact carries `arms[]`, each with a `frame` block in the DS-16 shape and a
+#: `screening` block the row copies; screen_arm_docs splits it into one document per
+#: arm. An arm whose screening.exploratory is true never lands a row (the exploratory
+#: run writes outside data/, and a copy that strays in is still refused here).
+SCREEN_NAME = "xfv_screen_wave1.json"
+SCREEN_MODEL_PREFIX = "efv_v2_screen:"
+SCREEN_RATERS = (("efv", "efv_v2_candidate"), ("efv_v2_base", "efv_v2_base"),
+                 ("prospx_consensus", "prospx_consensus"),
+                 ("mlb_pipeline", "mlb_pipeline"), ("fangraphs", "fangraphs"))
+SCREEN_DELTAS = (("vs_efv_v2_base", "candidate_vs_efv_v2_base"),
+                 ("vs_prospx_consensus", "candidate_vs_prospx_consensus"),
+                 ("efv_v2_base_vs_prospx_consensus", "efv_v2_base_vs_prospx_consensus"))
 #: Every development artifact the ledger copies from: (file, its frames, rater map,
 #: delta map, sub-document key or None). Each frame must be registered in FRAMES with
 #: role "development".
 DEV_ARTIFACTS = ((DEV_NAME, DEV_FRAMES, DEV_RATERS, DEV_DELTAS, None),
                  (OVERLAY_NAME, ("vm_oos_dev",), _SAME_RATERS, _SAME_DELTAS, None),
                  (PBUST_NAME, ("vm_oos_dev", "lv_dev"), _SAME_RATERS, _SAME_DELTAS, None),
-                 (DEV_NAME, DEV_FRAMES, V2_RATERS, V2_DELTAS, DS16_SUBKEY))
+                 (DEV_NAME, DEV_FRAMES, V2_RATERS, V2_DELTAS, DS16_SUBKEY),
+                 (SCREEN_NAME, ("lv_dev",), SCREEN_RATERS, SCREEN_DELTAS, None))
 
 SCHEMA = 1
 MODEL_ID = "efv_v1"
@@ -234,8 +249,9 @@ SOURCES_VS = ("prospx_consensus", "mlb_pipeline", "fangraphs")
 #: measures the same thing is the same state, not progress.
 _HASH_FIELDS = ("frame", "frame_version", "window", "n", "n_by_side", "raters",
                 "deltas", "resolvable", "verdict", "share")
-#: Hashed only when a row carries them (DS-16 development rows).
-_OPTIONAL_HASH_FIELDS = ("statistic", "secondary")
+#: Hashed only when a row carries them (DS-16 development rows; `screening` on the
+#: screening lab's rows).
+_OPTIONAL_HASH_FIELDS = ("statistic", "secondary", "screening")
 
 
 # ---------------------------------------------------------------------------
@@ -538,6 +554,8 @@ def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger:
                "sources": [dict(s) for s in sources],
                "note": f.get("note") or meta.get("note") or "",
                "last_verified_at": now_iso}
+        if isinstance(dev.get("screening"), dict):
+            row["screening"] = dict(dev["screening"])
         if statistic_fields and f.get("statistic"):
             row["statistic"] = f["statistic"]
         if statistic_fields and isinstance(f.get("secondary"), dict):
@@ -553,6 +571,31 @@ def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger:
         row["run_id"] = f"{gen}|{fid}|{row['content_hash'][:8]}"
         rows.append(row)
     return rows
+
+
+def screen_arm_docs(doc: dict | None) -> list[dict]:
+    """One development document per MEASURED, non-exploratory arm of a screening lab
+    artifact (its `arms[]`), in the shape build_dev_rows reads: role development, the
+    arm's model_id, the artifact's label and code, the arm's `frame` block under
+    lv_dev and its `screening` block. Copies only."""
+    if not doc or not isinstance(doc.get("arms"), list):
+        return []
+    out = []
+    for arm in doc["arms"]:
+        if not isinstance(arm, dict) or not arm.get("measured"):
+            continue
+        scr = arm.get("screening") or {}
+        if scr.get("exploratory") or doc.get("exploratory"):
+            continue
+        frame = arm.get("frame")
+        if not isinstance(frame, dict) or not str(arm.get("model_id") or "").startswith(
+                SCREEN_MODEL_PREFIX):
+            continue
+        out.append({"role": "development", "model_id": arm["model_id"],
+                    "generated_at": doc.get("generated_at"),
+                    "label": doc.get("label") or {}, "code": doc.get("code") or {},
+                    "screening": dict(scr), "frames": {"lv_dev": frame}})
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -751,13 +794,17 @@ def update(data_dir=None, trigger: str = "nightly", *, out_path=None,
         dev = _load_json(dev_path)
         if dev and sub:
             dev = dev.get(sub) if isinstance(dev.get(sub), dict) else None
-        if dev:
+        if not dev:
+            continue
+        screening = name == SCREEN_NAME
+        for d in (screen_arm_docs(dev) if screening else [dev]):
             cands += build_dev_rows(
-                dev, sources=[{"path": _rel(dev_path),
-                               "generated_at": dev.get("generated_at"),
-                               "sha256": _sha256(dev_path)}],
+                d, sources=[{"path": _rel(dev_path),
+                             "generated_at": dev.get("generated_at"),
+                             "sha256": _sha256(dev_path)}],
                 date=now_dt.date().isoformat(), trigger=trigger, now_iso=now_iso,
-                frames=fids, raters=rmap, deltas=dmap, statistic_fields=bool(sub))
+                frames=fids, raters=rmap, deltas=dmap,
+                statistic_fields=bool(sub) or screening)
     if note:
         for c in cands:
             c["note"] = f"{note} {c.get('note') or ''}".strip()

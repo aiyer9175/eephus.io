@@ -676,6 +676,12 @@ V2_OTHER_KEYS: tuple[str, ...] = ("tool_hit", "tool_speed")
 #: Pipeline-revision slot, and protection status from the league transaction feed on
 #: outcome-blind ids (DS-09).
 V2_OBSERVED_KEYS: tuple[str, ...] = ("bmi", "pl_rev", "on_40man", "nov_add")
+#: Prefix of a SCREENING column (tools/efv_screen_lab.py): one column offered to one
+#: head for one development read, carried on the row's `v2` view like a sidecar
+#: driver and imputed per fit at the mean of the TRAIN rows that observe it
+#: (has_block_means). No served candidate list names one; fit_v2(extra=...) is the
+#: only way in, and a key without the prefix is refused there.
+V2_SCREEN_PREFIX = "scr_"
 
 #: DS-05 SCRAP list (DRIVER_SYSTEM_V2.md s4.2), per side: key -> measured reason. None of
 #: these may appear in a V2 SKILL design matrix. Pitcher age_rel_level is scrapped as a
@@ -766,10 +772,19 @@ def has_block_means(train: list[dict]) -> dict[str, float]:
             vals = [r["v2"][k] for r in train
                     if r["v2"][flag] and r["v2"].get(k) is not None]
             out[k] = float(sum(vals) / len(vals)) if vals else 0.0
-    for k in V2_OBSERVED_KEYS:
+    for k in V2_OBSERVED_KEYS + screen_keys(train):
         vals = [r["v2"][k] for r in train if r["v2"].get(k) is not None]
         out[k] = float(sum(vals) / len(vals)) if vals else 0.0
     return out
+
+
+def screen_keys(rows) -> tuple[str, ...]:
+    """The screening columns the rows carry: the V2_SCREEN_PREFIX keys of the first
+    row's v2 view (a screening column is attached to every row or to none). () on
+    every served path."""
+    if not rows:
+        return ()
+    return tuple(sorted(k for k in rows[0]["v2"] if str(k).startswith(V2_SCREEN_PREFIX)))
 
 
 def v2_vector(v2: dict, keys, means: dict[str, float]) -> list[float]:
@@ -1055,16 +1070,35 @@ def _select_alpha(train: list[dict], keys, head: str,
     return best
 
 
+def _force_keys(cands, keys, checks, force) -> tuple[tuple[str, ...], dict]:
+    """Screening columns admitted WITHOUT the rule (the screening lab's floor
+    derivation only): each must carry V2_SCREEN_PREFIX and sit in the candidate list;
+    its check reads forced. Order follows the candidate list."""
+    force = tuple(force or ())
+    if not force:
+        return tuple(keys), checks
+    for k in force:
+        if not str(k).startswith(V2_SCREEN_PREFIX) or k not in cands:
+            raise ValueError(f"only a screening candidate may be forced, got {k!r}")
+    checks = dict(checks)
+    for k in force:
+        checks[k] = {"admitted": True, "forced": True,
+                     "reason": "forced: admission bypassed (screening floor derivation)",
+                     "per_vintage_signs": {}, "mean_abs_t": None, "n_valid_vintages": 0}
+    return tuple(k for k in cands if k in keys or k in force), checks
+
+
 def fit_skill_head(train: list[dict], side: str, *, admit: bool = True,
                    alpha: float | None = None, candidates=None,
-                   no_inner_alpha: float = math.inf) -> dict | None:
+                   no_inner_alpha: float = math.inf, force=()) -> dict | None:
     """The skill head on one fold's training rows (each carrying `v2`): a ridge of the
     target percentile u_y on the consensus percentile u_c (free) and the admitted skill
     drivers (penalized), fit on has-block rows only. None when the
     side has no skill driver (pitchers by default), when no driver is admitted, or when
     the rows cannot support a fit; the caller then orders by consensus alone.
     `candidates` overrides the side's base list (skill_candidates() in the assembly);
-    the absence flag is refused in any list."""
+    the absence flag is refused in any list. `force` names screening columns admitted
+    without the rule (_force_keys; the screening lab's floor derivation only)."""
     _check_years({int(r["decision_year"]) for r in train})
     cands = skill_keys(side) if candidates is None else tuple(candidates)
     if V2_ABSENCE_KEY in cands:
@@ -1072,6 +1106,7 @@ def fit_skill_head(train: list[dict], side: str, *, admit: bool = True,
     if not cands:
         return None
     keys, checks = admitted_keys(train, cands) if admit else (cands, {})
+    keys, checks = _force_keys(cands, keys, checks, force)
     if not keys:
         return None
     a = (_select_alpha(train, keys, "skill", no_inner=no_inner_alpha)
@@ -1088,7 +1123,7 @@ def fit_skill_head(train: list[dict], side: str, *, admit: bool = True,
 def fit_timing_head(train: list[dict], side: str, *, ids_outcome_blind: bool = False,
                     absence_admitted: bool = False, admit: bool = True,
                     alpha: float | None = None, candidates=None,
-                    no_inner_alpha: float = math.inf) -> dict | None:
+                    no_inner_alpha: float = math.inf, force=()) -> dict | None:
     """The REACHED/timing head on one fold's training rows: a penalized logistic of
     REACHED on u_c (free) and the admitted timing drivers (penalized).
     No-block rows take the has-block means; the absence flag joins only per
@@ -1102,6 +1137,7 @@ def fit_timing_head(train: list[dict], side: str, *, ids_outcome_blind: bool = F
         raise ValueError("the absence flag needs outcome-blind admitted ids (DS-04)")
     keys, checks = (admitted_keys(train, cands, target="reached", has_block_only=False)
                     if admit else (cands, {}))
+    keys, checks = _force_keys(cands, keys, checks, force)
     a = (_select_alpha(train, keys, "timing", no_inner=no_inner_alpha)
          if alpha is None else alpha)
     head = _timing_fit(train, keys, a)
@@ -1531,16 +1567,29 @@ def load_weights(path: Path | None = None) -> dict[str, dict]:
 # ---------------------------------------------------------------------------
 
 def fit_v2(train: list[dict], side: str, *, frame: str, weights: dict[str, dict],
-           absent_ok: bool | None = None) -> dict:
+           absent_ok: bool | None = None, extra: dict | None = None) -> dict:
     """V2 on one fold's training rows. frame "lv" (outcome-blind ids: protection and the
     absence flag may enter the timing head) or "vm" (the v1 matrices: they may not).
-    Admission runs inside both head fits on the fold's own training vintages."""
+    Admission runs inside both head fits on the fold's own training vintages.
+    `extra` ({"skill": keys, "timing": keys}, the screening lab only) offers screening
+    columns (V2_SCREEN_PREFIX) to a head beside the side's own candidates, under the
+    same admission rule; with "force": True they are admitted without it (the lab's
+    floor derivation only). None leaves every served path as it is."""
     if frame not in ("lv", "vm"):
         raise ValueError(f"frame must be lv or vm, got {frame!r}")
     _check_years({int(r["decision_year"]) for r in train})
+    ex = {h: tuple((extra or {}).get(h) or ()) for h in ("skill", "timing")}
+    for ks in ex.values():
+        for k in ks:
+            if not str(k).startswith(V2_SCREEN_PREFIX):
+                raise ValueError(f"a screening column must carry the prefix "
+                                 f"{V2_SCREEN_PREFIX!r}, got {k!r}")
     ob = frame == "lv"
     ab = ob and (absence_admitted(side) if absent_ok is None else bool(absent_ok))
-    skill = fit_skill_head(train, side, candidates=skill_candidates(side))
+    forced = bool((extra or {}).get("force"))
+    skill = fit_skill_head(train, side,
+                           candidates=skill_candidates(side) + ex["skill"],
+                           force=ex["skill"] if forced else ())
     timing = None
     why = None
     if side == "pit" and not head_usable(skill):
@@ -1549,17 +1598,22 @@ def fit_v2(train: list[dict], side: str, *, frame: str, weights: dict[str, dict]
     else:
         timing = fit_timing_head(train, side, ids_outcome_blind=ob, absence_admitted=ab,
                                  candidates=timing_candidates(
-                                     side, ids_outcome_blind=ob, absence_admitted=ab))
+                                     side, ids_outcome_blind=ob, absence_admitted=ab)
+                                 + ex["timing"],
+                                 force=ex["timing"] if forced else ())
     w = weights[side]
     w_s = float(w["w_skill"]) if head_usable(skill) else 0.0
     w_t = float(w["w_time"]) if head_usable(timing) else 0.0
     if why is None and w_s <= 0 and w_t <= 0:
         why = "no usable head carries a positive registered weight"
-    return {"model_id": V2_ASSEMBLED_ID, "side": side, "frame": frame,
-            "skill": skill, "timing": timing, "w_skill": w_s, "w_time": w_t,
-            "consensus_only": w_s <= 0 and w_t <= 0, "consensus_only_reason": why,
-            "war_map": fit_war_map(train), "n_train": len(train),
-            "train_years": sorted({int(r["decision_year"]) for r in train})}
+    out = {"model_id": V2_ASSEMBLED_ID, "side": side, "frame": frame,
+           "skill": skill, "timing": timing, "w_skill": w_s, "w_time": w_t,
+           "consensus_only": w_s <= 0 and w_t <= 0, "consensus_only_reason": why,
+           "war_map": fit_war_map(train), "n_train": len(train),
+           "train_years": sorted({int(r["decision_year"]) for r in train})}
+    if extra:
+        out["extra"] = dict(ex, force=forced)
+    return out
 
 
 def predict_v2(model: dict, rows: list[dict]) -> list[dict]:

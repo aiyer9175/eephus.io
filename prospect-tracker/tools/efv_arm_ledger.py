@@ -58,7 +58,17 @@ SOURCES: tuple[tuple[str, str, str], ...] = (
     # The assembled V2 (DS-09, DS-10, the BMI re-test, PV-12): the admission rule on the
     # list-vintage frame, per development fold, for every V2 candidate.
     ("efv_v2_assembly.json", "arms", "V2 assembly admission (list vintages)"),
+    # The screening lab (tools/efv_screen_lab.py, EFV3 lane B s4): every (candidate,
+    # side) arm of a wave with the floor it was read against (`floor_rho` on the arm),
+    # written by the registered run only (EFV3_B7).
+    ("xfv_screen_wave1.json", "arms", "screening lab wave 1"),
 )
+
+#: Sources registered before their producer's registered run. Absent, they are listed
+#: under `sources_pending` (a lane that has not run yet), not `sources_missing` (a lane
+#: the count cannot see); present, they are read like any other. The producer's
+#: registered run removes the name here in its own commit.
+PENDING: frozenset[str] = frozenset({"xfv_screen_wave1.json"})
 
 #: Development probes that are NOT feature arms: validity reads (a label-balance
 #: screen, a leak regression). Counted and listed apart, like sweeps, and never summed
@@ -129,11 +139,15 @@ def _verdict_of(arm: dict) -> str:
 
 
 def collect() -> dict:
-    rows, missing = [], []
+    rows, missing, pending = [], [], []
     for name, key, label in SOURCES:
         doc, why = _load(name)
         if doc is None:
-            missing.append({"artifact": name, "why": why, "lane": label})
+            if name in PENDING and why == "absent":
+                pending.append({"artifact": name, "why": "registered; producer has "
+                                                          "not run", "lane": label})
+            else:
+                missing.append({"artifact": name, "why": why, "lane": label})
             continue
         stamp = doc.get("generated_at") or doc.get("produced_at")
         if key is None:
@@ -148,6 +162,11 @@ def collect() -> dict:
             })
             continue
         arms = doc.get(key) or {}
+        if isinstance(arms, list):
+            # A screening artifact lists its arms; the MEASURED ones are arms, an arm
+            # whose column could not be built on the run's tree was never a look.
+            arms = {str(a.get("tag") or i): a for i, a in enumerate(arms)
+                    if isinstance(a, dict) and a.get("measured", True)}
         if not isinstance(arms, dict):
             missing.append({"artifact": name, "why": f"{key} is not a mapping",
                             "lane": label})
@@ -169,6 +188,10 @@ def collect() -> dict:
             floor = fblk.get("rho")
             if floor is None:
                 floor = fblk.get("MDE95_pooled_rho")
+            if floor is None:
+                # The screening lab records the floor on the arm itself (per head
+                # and side, derived in the same run, before the arm).
+                floor = arm.get("floor_rho")
             rows.append({
                 "lane": label, "artifact": name,
                 "arm": arm.get("tag") or arm_key,
@@ -254,6 +277,7 @@ def collect() -> dict:
             "a validity probe tests the frame or the resolver, not a driver; probes "
             "are listed and counted apart and never summed into the arm count"),
         "sources_missing": missing,
+        "sources_pending": pending,
         "expected_spurious_passes_at_nominal_5pct": expected_false,
         "n_scoreable_against_a_floor": len(scored),
         "n_cleared_own_floor": len(cleared),
@@ -319,6 +343,10 @@ def main(argv=None) -> int:
         print("MISSING SOURCES (the count is a lower bound):")
         for m in led["sources_missing"]:
             print(f"  {m['artifact']}: {m['why']}")
+    if led.get("sources_pending"):
+        print("PENDING SOURCES (registered; the producer has not run):")
+        for m in led["sources_pending"]:
+            print(f"  {m['artifact']}: {m['lane']}")
     print()
     print(led["reading"])
     if write:
