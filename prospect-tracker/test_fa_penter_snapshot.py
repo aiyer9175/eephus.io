@@ -36,6 +36,9 @@ def fa_db(tmp_path, monkeypatch):
         storage.init_db()
     except sqlite3.OperationalError:
         pytest.skip("storage cannot init on a temp path in this layout")
+    # No postseason schedule on disk: the option window opens November 1.
+    import fa_pipeline
+    monkeypatch.setattr(fa_pipeline, "POSTSEASON_CACHE_DIR", tmp_path)
     yield storage
 
 
@@ -132,12 +135,14 @@ def _member(key, status):
 
 def test_every_pending_row_vanishing_at_once_stamps_no_exercise(fa_db):
     """The 2026-06-12 signature (every pending row gone, nothing re-listed),
-    now inside the window the daily scrape covers."""
+    now inside the window the daily scrape covers. The day is November 4:
+    since HOME_1 (2026-10-02) the window opens after the World Series, so an
+    October 6 run would stamp nothing for the window's reason, not the hold's."""
     import fa_pipeline
     prior = {f"opt_{i}": _member(f"opt_{i}", "pending_option") for i in range(12)}
     out = fa_pipeline.track_winter_events(
         2027, prior, [_member("bystander", "locked")], signed_rows=[],
-        as_of=datetime.date(2026, 10, 6))
+        as_of=datetime.date(2026, 11, 4))
     assert out["inserted"] == 0
     assert fa_db.load_fa_events(2027) == []
 

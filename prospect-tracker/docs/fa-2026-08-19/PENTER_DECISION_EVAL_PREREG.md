@@ -125,3 +125,15 @@ the window closes).
   the export read through fa_pipeline.served_fa_events (one line). Until that
   lands, the served-block exclusion claim above holds at the ledger view only,
   not yet on the nightly artifact.
+- Window start addendum (2026-10-02, HOME_1, post-freeze; touches no frozen
+  parameter): the option window opened October 1 by calendar month, and on
+  2026-10-02, with the postseason in its first round, the status-diff
+  heuristic stamped 25 option_declined and 7 option_exercised events on the
+  2027 class (and 10 option_declined on the 2028 class) from a Spotrac
+  re-listing, not from decisions. The window for class Y now opens the day
+  after the last final World Series game of season Y - 1 (the postseason
+  schedule cache; November 1 when it cannot answer) and closes January 31 of
+  Y, for options and QOs alike. The 42 rows are held in place by
+  fa_pipeline.quarantine_premature_winter_events (invalidated, never deleted)
+  and re-stamp on the first in-window observation, so no decision this eval
+  scores carries a pre-World-Series date.

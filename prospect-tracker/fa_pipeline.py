@@ -190,6 +190,14 @@ def refresh_current_class(class_year: int, force: bool = False) -> dict:
             log.info("fa events %d: %s", class_year, ev)
     except Exception:                                    # noqa: BLE001 — tracker is additive
         log.exception("fa winter event tracking failed — continuing")
+    # HOME_1 (2026-10-02): hold every option or QO stamp first seen before
+    # this class's window opened. Idempotent; a no-op on a clean ledger.
+    try:
+        q = quarantine_premature_winter_events(class_year)
+        if q["marked"]:
+            log.info("fa events %d: premature winter stamps held %s", class_year, q)
+    except Exception:                                    # noqa: BLE001
+        log.exception("fa premature-event quarantine failed - continuing")
     # The class page was re-fetched this run, so signings were re-confirmed even
     # when the quiet in-season market produced no NEW signing rows. Record that
     # check so the freshness stamp tracks "last checked", not "last NEW signing"
@@ -220,7 +228,7 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
           pending_option re-listed as a locked UFA                      → option_declined
           pending_option gone from the page without a signing           → option_exercised
           QO flag newly published on an available row (early November,
-          Oct-Jan gated like the option branches)                       → qo_offered
+          window gated like the option branches)                        → qo_offered
     ``signed_rows`` is injectable for tests; production scrapes the page.
     The option_exercised branch is a documented v1 heuristic (same status
     as the exercise-probability heuristic): page variance can momentarily
@@ -232,25 +240,46 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
     disappearance heuristic mass-fired 77 false option_exercised events,
     flooding the wire and dimming live FA-board members. Option decisions
     are a winter-window phenomenon (due days after the World Series), so
-    option_declined / option_exercised inference only runs Oct 1 - Jan 31
-    (``as_of`` injectable for tests). An empty available page additionally
-    skips option inference outright - no page, no observation.
+    option_declined / option_exercised inference only runs inside the
+    class's window (``as_of`` injectable for tests). An empty available page
+    additionally skips option inference outright - no page, no observation.
+
+    WINDOW START (HOME_1, 2026-10-02): the window used to open on October 1
+    by calendar month, while decisions come after the World Series. On
+    2026-10-02, with the postseason still in its first round, Spotrac
+    re-listed 25 mutual and conditional options as plain UFAs and dropped 7
+    pending rows, and the heuristic stamped 25 option_declined and 7
+    option_exercised events that no club had made (plus 10 declines on the
+    2028 class, a winter a year away). The window for class Y now opens the
+    day after the last final World Series game of season Y - 1, read from
+    the postseason schedule cache (winter_window_opens; November 1 when the
+    cache cannot answer), and closes January 31 of Y. Stamps first seen
+    before it are held by quarantine_premature_winter_events; a row whose
+    option event is held re-enters the decision set, so a genuine in-window
+    observation re-stamps it to that date.
 
     QO-WINDOW GATE (post-mortem 2026-08-12): qo_offered stamping had NO
     such guard, so 16 prior-QO-recipient flags surfacing on the August
     available page fired as fresh offers (Verlander, Scherzer, Springer -
     players who by rule cannot receive another QO). QOs are offerable ~5
     days after the World Series and expire mid-November, inside the same
-    Oct-Jan window, so qo_offered stamping now rides the identical gate.
+    window, so qo_offered stamping rides the identical gate (and the same
+    day-after-the-World-Series start).
     A genuine in-window observation for a key whose stored qo_offered row
     was quarantined (see quarantine_out_of_window_qo_events) re-stamps
     that row to the valid first-seen date and clears the invalidation.
     """
     as_of = as_of or date.today()
-    option_window = as_of.month in (10, 11, 12, 1)
+    option_window, window_opens, window_basis = winter_window_open(class_year, as_of)
     avail_by_key = {p["player_key"]: p for p in available if p.get("player_key")}
-    seen = {(e["player_key"], e["event_type"])
-            for e in storage.load_fa_events(class_year)}
+    stored = storage.load_fa_events(class_year)
+    seen = {(e["player_key"], e["event_type"]) for e in stored}
+    # Option stamps held by quarantine_premature_winter_events. Their rows
+    # re-enter the decision set in window: the 2026-10-02 declines were
+    # re-listed as UFAs the same night, so the stored class row no longer
+    # reads pending_option and the diff alone would never see them again.
+    held_options = {e["player_key"]: e for e in stored
+                    if e.get("invalidated") and e["event_type"] in OPTION_EVENT_TYPES}
     events: list[dict] = []
 
     if signed_rows is None:
@@ -280,8 +309,10 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
                         if p.get("status") == "pending_option")
         if n_pending:
             log.info("fa events %d: option inference skipped - %s is outside "
-                     "the Oct-Jan option window (%d pending options held)",
-                     class_year, as_of.isoformat(), n_pending)
+                     "the option window (opens %s, %s; %d pending options held)",
+                     class_year, as_of.isoformat(),
+                     window_opens.isoformat() if window_opens else "after the World Series",
+                     window_basis, n_pending)
     elif not avail_by_key:
         log.warning("fa events %d: available page came back empty - option "
                     "inference skipped (page failure, not 77 exercises)",
@@ -297,7 +328,13 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
         # rows stamp nothing and the night logs a warning; the next scrape
         # decides them. Declines (re-listed rows) are never held.
         pend = {k: p for k, p in prior.items() if p.get("status") == "pending_option"}
-        vanished = [k for k in pend if k not in avail_by_key and k not in signing_keys]
+        for k, e in held_options.items():
+            if k not in pend and k not in signing_keys:
+                pend[k] = {"player_name": e.get("player_name"),
+                           "position": e.get("position"),
+                           "option_price_usd": e.get("option_price_usd"),
+                           "status": "pending_option"}
+        vanished =[k for k in pend if k not in avail_by_key and k not in signing_keys]
         relisted = [k for k in pend
                     if (avail_by_key.get(k) or {}).get("status") == "locked"]
         mass_drop = (len(pend) >= MASS_DROP_MIN_PENDING and not relisted
@@ -331,19 +368,21 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
                                        "position": now.get("position")}})
     elif qo_flips:
         log.info("fa events %d: %d qo flag flip(s) ignored - %s is outside "
-                 "the Oct-Jan QO window (offers open ~5 days post-World "
-                 "Series; the 2026-08-12 defect stamped 16 prior-winter "
-                 "flags as fresh offers)",
-                 class_year, len(qo_flips), as_of.isoformat())
+                 "the QO window (offers open ~5 days post-World Series; "
+                 "the window opens %s, %s; the 2026-08-12 defect stamped 16 "
+                 "prior-winter flags as fresh offers)",
+                 class_year, len(qo_flips), as_of.isoformat(),
+                 window_opens.isoformat() if window_opens else "after the World Series",
+                 window_basis)
 
     inserted = storage.insert_fa_events_first_seen(class_year, events)
     revalidated = 0
     if option_window:
-        qo_keys = [e["player_key"] for e in events
-                   if e["event_type"] == "qo_offered"]
-        if qo_keys:
-            revalidated = _revalidate_quarantined_qo_events(
-                class_year, qo_keys, as_of)
+        held_pairs = [(e["player_key"], e["event_type"]) for e in events
+                      if e["event_type"] in WINTER_EVENT_TYPES]
+        if held_pairs:
+            revalidated = _revalidate_quarantined_events(
+                class_year, held_pairs, as_of)
     # Reconcile the queryable status column: payload keeps the raw scrape;
     # status is the pipeline's view (board dims signed/exercised members).
     for e in events:
@@ -430,40 +469,200 @@ def served_fa_events(class_year: int | None = None) -> list[dict]:
             if not e.get("invalidated")]
 
 
-def _revalidate_quarantined_qo_events(class_year: int, keys: list[str],
-                                      as_of: date) -> int:
-    """A genuine IN-WINDOW qo observation supersedes a quarantined
-    out-of-window stamp. The fabricated first-seen date never became a
-    valid observation, so the row re-dates to the first VALID one and the
+def _revalidate_quarantined_events(class_year: int, pairs: list[tuple[str, str]],
+                                   as_of: date) -> int:
+    """A genuine IN-WINDOW observation supersedes a quarantined stamp of the
+    same (player, event type): qo_offered, option_declined or
+    option_exercised. The held first-seen date never became a valid
+    observation, so the row re-dates to the first VALID one and the
     invalidation clears; the superseded date is kept in the payload for
     audit. Without this, INSERT OR IGNORE would silently pin the winter's
-    real QO event to the quarantined August date forever."""
+    real event to the quarantined date forever."""
     import json as _json
     n = 0
     with storage.connect() as con:
-        for key in keys:
+        for key, etype in pairs:
             row = con.execute(
                 "SELECT event_date, payload_json FROM fa_events "
-                "WHERE class_year=? AND player_key=? AND event_type='qo_offered'",
-                (class_year, key)).fetchone()
+                "WHERE class_year=? AND player_key=? AND event_type=?",
+                (class_year, key, etype)).fetchone()
             if not row:
                 continue
             payload = _json.loads(row[1] or "{}")
             if not payload.get("invalidated"):
                 continue
-            payload.pop("invalidated", None)
-            payload.pop("invalid_reason", None)
-            payload.pop("invalidated_at", None)
+            for k in ("invalidated", "invalid_reason", "invalidated_at", "window_basis"):
+                payload.pop(k, None)
             payload["superseded_invalid_first_seen"] = row[0]
             con.execute(
                 "UPDATE fa_events SET event_date=?, payload_json=? "
-                "WHERE class_year=? AND player_key=? AND event_type='qo_offered'",
-                (as_of.isoformat(), _json.dumps(payload), class_year, key))
+                "WHERE class_year=? AND player_key=? AND event_type=?",
+                (as_of.isoformat(), _json.dumps(payload), class_year, key, etype))
             n += 1
     if n:
-        log.info("fa events %d: %d quarantined qo_offered row(s) re-stamped "
+        log.info("fa events %d: %d quarantined winter row(s) re-stamped "
                  "on genuine in-window observation", class_year, n)
     return n
+
+
+# --------------------------------------------------------------------------- #
+# The option and QO window (HOME_1, 2026-10-02)
+# --------------------------------------------------------------------------- #
+
+OPTION_EVENT_TYPES = ("option_declined", "option_exercised")
+WINTER_EVENT_TYPES = OPTION_EVENT_TYPES + ("qo_offered",)
+#: (month, day) the window opens when the postseason schedule cannot answer.
+WINDOW_FALLBACK_OPEN = (11, 1)
+#: An unfinished World Series read from a cache older than this many days
+#: is a failed read (the nightly refetch stopped), so the fallback applies.
+POSTSEASON_STALE_DAYS = 3
+#: Where the postseason schedule cache lives (None: postseason.CACHE, the
+#: file run_daily d8p refreshes). Tests point it at an empty directory.
+POSTSEASON_CACHE_DIR = None
+PREMATURE_REASON = ("{etype} first seen {seen}, before the class {year} option "
+                    "and QO window opened ({opens}; {basis}). A Spotrac status "
+                    "change seen before the day after the last World Series "
+                    "game is not a decision; held until an in-window observation.")
+
+
+def winter_window_opens(class_year: int, as_of: date | None = None,
+                        cache_dir=None) -> tuple[date | None, str]:
+    """(the day class ``class_year``'s option and QO window opens, basis).
+
+    The window opens the day after the last final World Series game of
+    season class_year - 1 (gameType W, codedGameState F or O, the latest
+    officialDate), read from the StatsAPI postseason schedule cache that
+    postseason.py writes nightly. A decided World Series gives that day.
+    An unfinished one on a fresh cache gives None (not open yet). No file,
+    no body, no game dates, or an unfinished series on a cache older than
+    POSTSEASON_STALE_DAYS is a failed read: November 1 of season
+    class_year - 1."""
+    import json as _json
+    from collections import Counter as _Counter
+    from datetime import timedelta as _td
+    import postseason
+    season = int(class_year) - 1
+    as_of = as_of or date.today()
+    fallback = date(season, *WINDOW_FALLBACK_OPEN)
+    path = postseason.cache_path(season, cache_dir or POSTSEASON_CACHE_DIR)
+    try:
+        doc = _json.loads(path.read_text(encoding="utf-8"))
+        series = doc["body"]["series"]
+        if not isinstance(series, list):
+            raise TypeError("series is not a list")
+    except (OSError, ValueError, KeyError, TypeError):
+        return fallback, "fallback, no postseason schedule on disk"
+    finals: dict = {}
+    best_of = 0
+    for s in series:
+        meta = (s or {}).get("series") or {}
+        for g in (s or {}).get("games") or []:
+            if (g.get("gameType") or meta.get("gameType")) != "W":
+                continue
+            best_of = max(best_of, int(g.get("gamesInSeries") or 0))
+            if ((g.get("status") or {}).get("codedGameState") or "") not in postseason.FINAL_CODES:
+                continue
+            winner = None
+            for side in ("home", "away"):
+                t = (g.get("teams") or {}).get(side) or {}
+                if t.get("isWinner") is True:
+                    winner = (t.get("team") or {}).get("id")
+            finals[g.get("gamePk")] = (str(g.get("officialDate") or "")[:10], winner)
+    wins = _Counter(w for _, w in finals.values() if w is not None)
+    if best_of and wins and max(wins.values()) >= best_of // 2 + 1:
+        days = [d for d, _ in finals.values() if d]
+        if not days:
+            return fallback, "fallback, the World Series games carry no dates"
+        last = max(days)
+        return (date.fromisoformat(last) + _td(days=1),
+                f"StatsAPI schedule, last World Series game {last}")
+    fetched = str(doc.get("fetched_at") or "")[:10]
+    try:
+        stale = (as_of - date.fromisoformat(fetched)).days > POSTSEASON_STALE_DAYS
+    except ValueError:
+        stale = True
+    if stale:
+        return fallback, f"fallback, postseason schedule last read {fetched or 'never'}"
+    return None, f"StatsAPI schedule read {fetched}, {season} World Series not finished"
+
+
+def winter_window_open(class_year: int, as_of: date | None = None,
+                       cache_dir=None) -> tuple[bool, date | None, str]:
+    """(is the window open on as_of, the day it opens, basis). It closes
+    January 31 of class_year, so a future class (whose winter follows a
+    later World Series) is never in window."""
+    as_of = as_of or date.today()
+    opens, basis = winter_window_opens(class_year, as_of, cache_dir)
+    is_open = opens is not None and opens <= as_of <= date(int(class_year), 1, 31)
+    return is_open, opens, basis
+
+
+def quarantine_premature_winter_events(class_year: int | None = None,
+                                       as_of: date | None = None,
+                                       cache_dir=None) -> dict:
+    """Hold every option_declined, option_exercised and qo_offered row first
+    seen before its class's window opened (winter_window_opens), the way
+    quarantine_out_of_window_qo_events holds the August QOs: the row is
+    UPDATED in place (payload gains invalidated, invalid_reason,
+    invalidated_at, window_basis), never deleted, so served_fa_events drops
+    it and fa_class.json, the wire, the Club Ledger and /fa/ statuses stop
+    carrying it. A held option_exercised row also returns its class row's
+    status column to the as-scraped payload status. Idempotent. Returns
+    {marked, already_marked, by_type, status_restored}."""
+    import json as _json
+    as_of = as_of or date.today()
+    marks = ",".join("?" * len(WINTER_EVENT_TYPES))
+    where, args = f"WHERE event_type IN ({marks})", tuple(WINTER_EVENT_TYPES)
+    if class_year:
+        where += " AND class_year=?"
+        args += (int(class_year),)
+    opens_by_year: dict = {}
+    marked = already = 0
+    by_type: dict = {}
+    restored: list = []
+    with storage.connect() as con:
+        rows = con.execute(
+            "SELECT class_year, player_key, event_type, event_date, payload_json "
+            f"FROM fa_events {where} ORDER BY class_year, event_type, player_key",
+            args).fetchall()
+        for yr, key, etype, seen, pj in rows:
+            payload = _json.loads(pj or "{}")
+            if payload.get("invalidated"):
+                already += 1
+                continue
+            if yr not in opens_by_year:
+                opens_by_year[yr] = winter_window_opens(yr, as_of, cache_dir)
+            opens, basis = opens_by_year[yr]
+            if opens is not None and str(seen) >= opens.isoformat():
+                continue
+            payload["invalidated"] = True
+            payload["invalid_reason"] = PREMATURE_REASON.format(
+                etype=etype, seen=seen, year=yr, basis=basis,
+                opens=opens.isoformat() if opens else "not yet open")
+            payload["invalidated_at"] = as_of.isoformat()
+            payload["window_basis"] = basis
+            con.execute(
+                "UPDATE fa_events SET payload_json=? "
+                "WHERE class_year=? AND player_key=? AND event_type=?",
+                (_json.dumps(payload), yr, key, etype))
+            marked += 1
+            by_type[f"{yr}:{etype}"] = by_type.get(f"{yr}:{etype}", 0) + 1
+            if etype == "option_exercised":
+                row = con.execute(
+                    "SELECT status, payload_json FROM fa_class_players "
+                    "WHERE class_year=? AND player_key=?", (yr, key)).fetchone()
+                if row and row[0] == "option_exercised":
+                    was = _json.loads(row[1] or "{}").get("status") or "pending_option"
+                    con.execute(
+                        "UPDATE fa_class_players SET status=? "
+                        "WHERE class_year=? AND player_key=?", (was, yr, key))
+                    restored.append(f"{yr}:{key}")
+    if marked:
+        log.info("fa events: held %d premature winter row(s) %s (%d already "
+                 "held); status restored on %d", marked, by_type, already,
+                 len(restored))
+    return {"marked": marked, "already_marked": already, "by_type": by_type,
+            "status_restored": restored}
 
 
 def refresh_payroll(seasons: list[int] | None = None, force: bool = False) -> int:
@@ -487,7 +686,11 @@ def main() -> None:
     ap.add_argument("--current", type=int, metavar="CLASS_YEAR")
     ap.add_argument("--payroll", action="store_true")
     ap.add_argument("--force", action="store_true", help="bypass page caches")
+    ap.add_argument("--quarantine", action="store_true",
+                    help="hold option and QO stamps first seen before their window opened")
     args = ap.parse_args()
+    if args.quarantine:
+        print(quarantine_premature_winter_events())
     if args.backfill:
         print(backfill_historical(force=args.force))
     if args.current:
@@ -496,7 +699,7 @@ def main() -> None:
               "players:", len(cls["players"]))
     if args.payroll:
         print("payroll rows:", refresh_payroll(force=args.force))
-    if not (args.backfill or args.current or args.payroll):
+    if not (args.backfill or args.current or args.payroll or args.quarantine):
         ap.print_help()
 
 

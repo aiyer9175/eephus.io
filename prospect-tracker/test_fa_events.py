@@ -29,6 +29,11 @@ def fa_db(tmp_path, monkeypatch):
         storage.init_db()
     except sqlite3.OperationalError:
         pytest.skip("storage cannot init on a temp path in this layout")
+    # The option window reads the postseason schedule cache; an empty
+    # directory makes every test run on the November 1 fallback.
+    import fa_pipeline
+    (tmp_path / "ps").mkdir()
+    monkeypatch.setattr(fa_pipeline, "POSTSEASON_CACHE_DIR", tmp_path / "ps")
     yield storage
 
 
@@ -168,3 +173,151 @@ def test_export_events_block_shape():
     assert "n_signed" in d
     for e in d["events"]:
         assert e.get("date") and e.get("type") and e.get("key")
+
+
+# ---- HOME_1 (2026-10-02): the window opens the day after the World Series --
+
+def _ws_cache(dirpath, season, *, last_day, finished, fetched_at):
+    """A postseason schedule cache in postseason.py's on-disk shape: one World
+    Series (gameType W, best of 7). finished=True writes four final wins for
+    club 1, the fourth on last_day; finished=False writes two final games."""
+    import datetime as _dt
+    import json as _json
+    end = _dt.date.fromisoformat(last_day)
+    n = 4 if finished else 2
+    games = []
+    for i in range(n):
+        day = (end - _dt.timedelta(days=n - 1 - i)).isoformat()
+        games.append({"gamePk": 900 + i, "gameType": "W", "gamesInSeries": 7,
+                      "officialDate": day, "status": {"codedGameState": "F"},
+                      "teams": {"home": {"team": {"id": 1}, "isWinner": True},
+                                "away": {"team": {"id": 2}, "isWinner": False}}})
+    doc = {"season": season, "fetched_at": fetched_at, "complete": finished,
+           "body": {"series": [{"series": {"id": "W_1", "gameType": "W"}, "games": games}]}}
+    (dirpath / f"statsapi_postseason_{season}.json").write_text(_json.dumps(doc), encoding="utf-8")
+
+
+def test_window_opens_the_day_after_the_last_world_series_game(fa_db, tmp_path):
+    import datetime as _dt
+    import fa_pipeline
+    ps = tmp_path / "ps"
+    _ws_cache(ps, YEAR - 1, last_day=f"{YEAR - 1}-10-30", finished=True,
+              fetched_at=f"{YEAR - 1}-10-31T08:00:00+00:00")
+    opens, basis = fa_pipeline.winter_window_opens(YEAR, _dt.date(YEAR - 1, 10, 31))
+    assert opens == _dt.date(YEAR - 1, 10, 31) and "2026-10-30" in basis
+    assert fa_pipeline.winter_window_open(YEAR, _dt.date(YEAR - 1, 10, 30))[0] is False
+    assert fa_pipeline.winter_window_open(YEAR, _dt.date(YEAR - 1, 10, 31))[0] is True
+    assert fa_pipeline.winter_window_open(YEAR, _dt.date(YEAR, 1, 31))[0] is True
+    assert fa_pipeline.winter_window_open(YEAR, _dt.date(YEAR, 2, 1))[0] is False
+    # A future class's winter follows a later World Series: never in window now.
+    assert fa_pipeline.winter_window_open(YEAR + 1, _dt.date(YEAR - 1, 11, 15))[0] is False
+
+
+def test_window_falls_back_to_november_1_when_the_schedule_cannot_answer(fa_db, tmp_path):
+    import datetime as _dt
+    import fa_pipeline
+    ps = tmp_path / "ps"
+    # No file on disk: November 1.
+    assert fa_pipeline.winter_window_opens(YEAR, _dt.date(YEAR - 1, 10, 2))[0] == _dt.date(YEAR - 1, 11, 1)
+    # An unfinished series on a fresh read: not open yet, no date.
+    _ws_cache(ps, YEAR - 1, last_day=f"{YEAR - 1}-10-25", finished=False,
+              fetched_at=f"{YEAR - 1}-10-26T08:00:00+00:00")
+    assert fa_pipeline.winter_window_opens(YEAR, _dt.date(YEAR - 1, 10, 27))[0] is None
+    # The same unfinished series read a week ago is a failed read: November 1.
+    assert fa_pipeline.winter_window_opens(YEAR, _dt.date(YEAR - 1, 11, 3))[0] == _dt.date(YEAR - 1, 11, 1)
+
+
+def test_no_option_event_is_stamped_before_the_world_series_ends(fa_db, tmp_path):
+    """The 2026-10-02 defect: the window opened on October 1 by month, the
+    postseason was in its first round, and a Spotrac re-listing stamped 25
+    declines and 7 exercises. Before the World Series ends nothing stamps,
+    neither a re-listed row nor a vanished one, nor a QO flag."""
+    import datetime as _dt
+    import fa_pipeline
+    _ws_cache(tmp_path / "ps", YEAR - 1, last_day=f"{YEAR - 1}-10-01", finished=False,
+              fetched_at=f"{YEAR - 1}-10-02T08:00:00+00:00")
+    prior = {
+        "mutual_guy": _member("mutual_guy", "Mutual Guy", "pending_option", option_price_usd=30_000_000),
+        "club_guy": _member("club_guy", "Club Guy", "pending_option", option_price_usd=4_000_000),
+        "qo_guy": _member("qo_guy", "Qo Guy", "locked"),
+    }
+    avail = [_member("mutual_guy", "Mutual Guy", "locked"),
+             _member("qo_guy", "Qo Guy", "locked", qo_offered=True)]
+    out = fa_pipeline.track_winter_events(YEAR, prior, avail, signed_rows=[],
+                                          as_of=_dt.date(YEAR - 1, 10, 2))
+    assert out["inserted"] == 0
+    assert fa_db.load_fa_events(YEAR) == []
+
+
+def _plant_event(fa_db, key, etype, ev_date, payload):
+    import json as _json
+    con = sqlite3.connect(fa_db.DB_PATH)
+    con.execute("INSERT INTO fa_events (class_year, player_key, event_type, event_date, payload_json)"
+                " VALUES (?, ?, ?, ?, ?)", (YEAR, key, etype, ev_date, _json.dumps(payload)))
+    con.commit()
+    con.close()
+
+
+def test_a_premature_option_stamp_is_held_then_restamped_in_window(fa_db):
+    """Kills: a quarantine that deletes, one that leaves the exercised status
+    on the class row, a served view that keeps held rows, and a tracker that
+    cannot see a held decline again (the row was re-listed as locked the same
+    night, so the stored class row no longer reads pending_option)."""
+    import datetime as _dt
+    import fa_pipeline
+    pay = {"player_name": "Mutual Guy", "position": "SP", "option_price_usd": 30_000_000}
+    _plant_event(fa_db, "mutual_guy", "option_declined", f"{YEAR - 1}-10-02", pay)
+    _plant_event(fa_db, "club_guy", "option_exercised", f"{YEAR - 1}-10-02",
+                 {"player_name": "Club Guy", "position": "SP", "option_price_usd": 4_000_000})
+    fa_db.upsert_fa_class_players(YEAR, [_member("mutual_guy", "Mutual Guy", "locked"),
+                                         _member("club_guy", "Club Guy", "pending_option")])
+    fa_db.set_fa_class_player_status(YEAR, "club_guy", "option_exercised")
+
+    out = fa_pipeline.quarantine_premature_winter_events(YEAR, as_of=_dt.date(YEAR - 1, 10, 2))
+    assert out["marked"] == 2 and out["status_restored"] == [f"{YEAR}:club_guy"]
+    raw = fa_db.load_fa_events(YEAR)
+    assert len(raw) == 2 and all(e["invalidated"] for e in raw)
+    assert all(e["event_date"] == f"{YEAR - 1}-10-02" for e in raw)
+    assert "World Series" in raw[0]["invalid_reason"]
+    assert fa_pipeline.served_fa_events(YEAR) == []
+    con = sqlite3.connect(fa_db.DB_PATH)
+    st = con.execute("SELECT status FROM fa_class_players WHERE player_key='club_guy'").fetchone()[0]
+    con.close()
+    assert st == "pending_option"
+    again = fa_pipeline.quarantine_premature_winter_events(YEAR, as_of=_dt.date(YEAR - 1, 10, 3))
+    assert again["marked"] == 0 and again["already_marked"] == 2
+
+    # In window (the November 1 fallback): the decline is still re-listed and
+    # the exercise is still gone, so both re-stamp to the in-window day.
+    in_window = _dt.date(YEAR - 1, 11, 4)
+    prior = {k: p for (k, _y), p in fa_db.load_fa_class_players(YEAR).items()}
+    avail = [_member("mutual_guy", "Mutual Guy", "locked"), _member("bystander", "By Stander", "locked")]
+    out = fa_pipeline.track_winter_events(YEAR, prior, avail, signed_rows=[], as_of=in_window)
+    assert out["revalidated"] == 2
+    ev = {e["player_key"]: e for e in fa_db.load_fa_events(YEAR)}
+    for key, etype in (("mutual_guy", "option_declined"), ("club_guy", "option_exercised")):
+        assert ev[key]["event_type"] == etype and ev[key]["event_date"] == in_window.isoformat()
+        assert not ev[key].get("invalidated")
+        assert ev[key]["superseded_invalid_first_seen"] == f"{YEAR - 1}-10-02"
+    assert len(fa_pipeline.served_fa_events(YEAR)) == 2
+    # And a re-run of the quarantine leaves the in-window stamps alone.
+    assert fa_pipeline.quarantine_premature_winter_events(YEAR, as_of=in_window)["marked"] == 0
+
+
+def test_the_wire_names_the_basis_of_an_option_row(tmp_path, monkeypatch):
+    import build_site
+    # _collect_events prunes and saves the FV first-seen ledger; keep it off data/.
+    monkeypatch.setattr(build_site, "_WIRE_FV_LEDGER", tmp_path / "wire_fv_first_seen.json")
+    events = build_site._collect_events([], [], [
+        {"date": "2026-11-04", "type": "option_declined", "key": "mutual_guy", "name": "Mutual Guy"},
+        {"date": "2026-11-04", "type": "option_exercised", "key": "club_guy", "name": "Club Guy"},
+        {"date": "2026-11-20", "type": "signing", "key": "ace", "name": "Ace", "to": "NYY",
+         "years": 6, "guar": 210_000_000},
+    ])
+    feed = build_site._feed_html(events, 12)
+    assert feed.count('title="Spotrac status change, first seen 2026-11-04"') == 2
+    assert feed.count("Spotrac status change") == 2, "a signing row carries no option basis"
+    ticker = build_site._ticker_html(events)
+    assert ticker.count('title="Spotrac status change, first seen 2026-11-04"') == 4  # the track is doubled
+    news = build_site._news_feed_html(events, {})
+    assert news.count('title="Spotrac status change, first seen 2026-11-04"') == 2

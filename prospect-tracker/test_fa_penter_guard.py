@@ -32,6 +32,9 @@ def fa_db(tmp_path, monkeypatch):
         storage.init_db()
     except sqlite3.OperationalError:
         pytest.skip("storage cannot init on a temp path in this layout")
+    # No postseason schedule on disk: the QO window opens November 1.
+    import fa_pipeline
+    monkeypatch.setattr(fa_pipeline, "POSTSEASON_CACHE_DIR", tmp_path)
     yield storage
 
 
