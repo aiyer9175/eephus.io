@@ -533,3 +533,160 @@ def test_lv2026_registration_changes_no_existing_row():
             continue
         for key in ("role", "tilted", "label", "basis_key", "tilt_toward"):
             assert P.FRAMES[fid].get(key) == meta.get(key), (fid, key)
+
+
+# ---------------------------------------------------------------------------
+# EFV3_B8: the screening lab's rows (tools/efv_screen_lab.py; EFV3 LANE_B.md s5).
+# Synthetic artifacts in the lab's shapes; nothing here runs the lab.
+
+def _screen_leg(d):
+    return {"delta": d, "ci95": [round(d - 0.004, 5), round(d + 0.004, 5)], "mde95": 0.0033,
+            "lb95": round(d - 0.0033, 5), "sd": 0.002, "estimator": "E_cond",
+            "ci95_estimator": "E_cond, paired, player-clustered", "floor": 0.0061,
+            "p_perm": 0.004, "holm_p": 0.028, "reading": "test"}
+
+
+def _screen_arm(name, side, head, verdict, d, *, exploratory=False, measured=True):
+    leg = _screen_leg(d)
+    rater = {"spearman": 0.2101 + d, "auc": 0.6402, "n": 900, "within": 0.2101 + d,
+             "pooled": 0.2303}
+    frame = {"frame_version": "lv1_v2", "window": [2017, 2019], "n": 900,
+             "n_by_side": {side: 900}, "statistic": "Spearman within (side, vintage)",
+             "raters": {"efv_v2_candidate": rater,
+                        "efv_v2_base": dict(rater, spearman=0.2101, within=0.2101),
+                        "prospx_consensus": dict(rater, spearman=0.2002, within=0.2002)},
+             "deltas": {"candidate_vs_efv_v2_base": {"spearman": leg, "pooled": _screen_leg(d),
+                                                     "auc": _screen_leg(d)},
+                        "candidate_vs_prospx_consensus": {"spearman": _screen_leg(d + 0.01)}},
+             "secondary": {"statistic": "Spearman pooled", "raters": {}, "deltas": {}},
+             "verdict": verdict, "note": "screening lab; development frame, spent, not a claim"}
+    return {"model_id": f"efv_v2_screen:wave1:{name}:{side}", "measured": measured,
+            "verdict": verdict, "within": leg, "frame": frame,
+            "screening": {"wave": 1, "head": head, "admitted_folds": 3,
+                          "twin_inside_floor": True, "exploratory": exploratory}}
+
+
+def _screen_doc(exploratory=False):
+    return {"generated_at": "2026-10-20T00:00:00Z", "role": "development",
+            "exploratory": exploratory, "wave": 1,
+            "label": {"provider": "fwar", "resolved_through": 2025, "id": "fwar@test"},
+            "code": {"commit": "deadbeef"},
+            "arms": [_screen_arm("txt_skill_hit", "hit", "skill", "PASS", 0.0121),
+                     _screen_arm("pick_overall_time_pit", "pit", "timing", "NULL", -0.0012),
+                     _screen_arm("txt_time_pit", "pit", "timing",
+                                 "NOT_ADJUDICATED_EXPLORATORY", 0.0301, exploratory=True),
+                     _screen_arm("txt_time_hit", "hit", "timing", None, 0.0, measured=False)]}
+
+
+def _with_screen(arts, doc=None):
+    doc = doc or _screen_doc()
+    (arts / P.SCREEN_NAME).write_text(json.dumps(doc), encoding="utf-8")
+    return doc
+
+
+def _screen_rows(doc):
+    return [r for r in doc["rows"] if str(r.get("model_id") or "").startswith(P.SCREEN_MODEL_PREFIX)]
+
+
+def test_screening_rows_copy_the_artifact_keys(arts):
+    art = _with_screen(arts)
+    _run(arts)
+    rows = _screen_rows(_doc(arts))
+    by_id = {a["model_id"]: a for a in art["arms"]}
+    assert sorted(r["model_id"] for r in rows) == [
+        "efv_v2_screen:wave1:pick_overall_time_pit:pit", "efv_v2_screen:wave1:txt_skill_hit:hit"]
+    assert any(n == P.SCREEN_NAME and f == ("lv_dev",) and rm is P.SCREEN_RATERS
+               and dm is P.SCREEN_DELTAS and sub is None for n, f, rm, dm, sub in P.DEV_ARTIFACTS)
+    for r in rows:
+        arm = by_id[r["model_id"]]
+        f = arm["frame"]
+        assert r["frame"] == "lv_dev" and r["role"] == "development" and r["tilted"] is False
+        assert r["resolvable"] is None and r["verdict"] == arm["verdict"] == f["verdict"]
+        assert r["screening"] == arm["screening"]
+        assert set(r["screening"]) == {"wave", "head", "admitted_folds", "twin_inside_floor",
+                                       "exploratory"}
+        assert r["model_version"]["label"] == art["label"]["id"]
+        assert r["n"] == f["n"] and r["window"] == f["window"] and r["statistic"] == f["statistic"]
+        assert r["n_by_side"] == f["n_by_side"]
+        for name, key in P.SCREEN_RATERS:
+            if key not in f["raters"]:
+                assert name not in r["raters"]
+                continue
+            assert r["raters"][name]["spearman"] == f["raters"][key]["spearman"]
+            assert r["raters"][name]["auc"] == f["raters"][key]["auc"]
+        for name, comp in P.SCREEN_DELTAS:
+            for metric, src in (f["deltas"].get(comp) or {}).items():
+                if metric not in ("spearman", "auc"):
+                    continue
+                leg = r["deltas"][name][metric]
+                for k in ("delta", "ci95", "mde95") + P.SCREEN_LEG_FIELDS:
+                    assert leg[k] == src[k], (r["model_id"], name, metric, k)
+                assert leg["resolvable"] is None
+        within = r["deltas"]["vs_efv_v2_base"]["spearman"]
+        for k in ("delta", "ci95", "lb95", "floor", "holm_p"):
+            assert within[k] == arm["within"][k]
+        assert r["sources"][0]["path"].endswith(P.SCREEN_NAME)
+        assert r["content_hash"] == P.content_hash(r)
+    assert set(P._HASH_FIELDS) == {"frame", "frame_version", "window", "n", "n_by_side",
+                                   "raters", "deltas", "resolvable", "verdict", "share"}
+    assert "screening" in P._OPTIONAL_HASH_FIELDS
+    # a rerun on the same artifact appends nothing
+    assert _run(arts, now=T0 + timedelta(days=1))["appended"] == []
+
+
+def test_screen_leg_fields_are_copied_on_screening_rows_only():
+    leg = _screen_leg(0.01)
+    doc = {"role": "development", "model_id": "efv_v2_h0", "generated_at": "g",
+           "frames": {"lv_dev": {"n": 5, "raters": {"efv_v2_h0": {"spearman": 0.3}},
+                                 "deltas": {"h0_vs_prospx_consensus": {"spearman": leg}}}}}
+    row = P.build_dev_rows(doc, sources=[], date="2026-10-02", trigger="efv_change",
+                           now_iso="t")[0]
+    assert not set(P.SCREEN_LEG_FIELDS) & set(row["deltas"]["vs_prospx_consensus"]["spearman"])
+    scr = dict(doc, screening={"wave": 1, "head": "skill", "admitted_folds": 3,
+                               "twin_inside_floor": True, "exploratory": False})
+    row = P.build_dev_rows(scr, sources=[], date="2026-10-02", trigger="efv_change",
+                           now_iso="t")[0]
+    got = row["deltas"]["vs_prospx_consensus"]["spearman"]
+    assert {k: got[k] for k in P.SCREEN_LEG_FIELDS} == {k: leg[k] for k in P.SCREEN_LEG_FIELDS}
+
+
+def test_exploratory_screening_rows_are_never_in_the_chart_series(arts):
+    _with_screen(arts)
+    _run(arts)
+    rows = _screen_rows(_doc(arts))
+    assert rows and not [r for r in rows if r["screening"]["exploratory"] is not False]
+    assert "efv_v2_screen:wave1:txt_time_pit:pit" not in {r["model_id"] for r in rows}
+    # an exploratory artifact lands nothing at all
+    assert P.screen_arm_docs(_screen_doc(exploratory=True)) == []
+    # the page's series filter draws a screening row only when it is admitted: verdict
+    # PASS and exploratory exactly false (assets/glossary.js)
+    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8").replace("\r\n", "\n")
+    series = re.search(r"function _progSeriesRows\(prog\) \{(.*?)\n\}\n", js, re.S).group(1)
+    assert "(!_progIsScreen(r) || _progScreenAdmitted(r))" in series
+    adm = re.search(r"function _progScreenAdmitted\(r\) \{(.*?)\n\}\n", js, re.S).group(1)
+    assert 'r.verdict === "PASS"' in adm and "r.screening.exploratory === false" in adm
+    assert "_progIsScreen(r)" in adm
+
+
+def test_no_screening_row_carries_a_basis_key_or_becomes_the_headline(arts):
+    _with_screen(arts)
+    _run(arts)
+    doc = _doc(arts)
+    rows = _screen_rows(doc)
+    assert rows
+    assert doc["headline_frame"] == "vm2"
+    for r in rows:
+        assert "basis_key" not in r and r["role"] != "headline"
+        assert "basis_key" not in P.FRAMES[r["frame"]]
+        assert r["frame"] not in P.BASIS_TO_FRAME.values()
+    sb = json.loads((arts / P.SB_NAME).read_text(encoding="utf-8"))
+    for basis in ("lv_dev", rows[0]["model_id"], P.SCREEN_NAME):
+        fake = json.loads(json.dumps(sb))
+        fake["accuracy"]["head_to_head_verdict"]["basis"] = basis
+        built = P.build_rows(fake, None, MV, sources=[], date="2026-10-02",
+                             trigger="nightly", now_iso="2026-10-02T00:00:00Z")
+        assert not [r for r in built if r["role"] == "headline"]
+        assert P._doc(rows, fake, "2026-10-02T00:00:00Z",
+                      {"headline_frame": "vm2"})["headline_frame"] == "vm2"
+    _no_fv_cell(doc)
+    _no_emdash(doc)

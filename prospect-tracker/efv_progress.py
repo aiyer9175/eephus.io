@@ -114,6 +114,11 @@ SCREEN_RATERS = (("efv", "efv_v2_candidate"), ("efv_v2_base", "efv_v2_base"),
 SCREEN_DELTAS = (("vs_efv_v2_base", "candidate_vs_efv_v2_base"),
                  ("vs_prospx_consensus", "candidate_vs_prospx_consensus"),
                  ("efv_v2_base_vs_prospx_consensus", "efv_v2_base_vs_prospx_consensus"))
+#: The admission numbers a screening arm's delta leg carries beside delta, ci95 and mde95
+#: (tools/efv_screen_lab.py: lb95 = delta - mde95, the head's floor on that side, the
+#: one-sided permutation p and its Holm-adjusted p). Copied on a screening row only, when
+#: the leg carries them, so no other development row's content or hash moves (EFV3_B8).
+SCREEN_LEG_FIELDS = ("lb95", "floor", "p_perm", "holm_p")
 #: Every development artifact the ledger copies from: (file, its frames, rater map,
 #: delta map, sub-document key or None). Each frame must be registered in FRAMES with
 #: role "development".
@@ -513,6 +518,7 @@ def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger:
     gen = dev.get("generated_at") or ""
     rows = []
     rater_map, delta_map = raters, deltas
+    screen = isinstance(dev.get("screening"), dict)
     for fid in frames:
         f = dev_frames.get(fid) or {}
         if not f.get("n") or not f.get("raters"):
@@ -540,6 +546,8 @@ def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger:
                                 "ci95_estimator": leg.get("ci95_estimator"),
                                 "resolvable": None, "reading": leg.get("reading"),
                                 "key": f"frames.{fid}.deltas.{comp}.{metric}"}
+                if screen:
+                    legs[metric].update({k: leg[k] for k in SCREEN_LEG_FIELDS if k in leg})
             if legs:
                 deltas[name] = legs
         nbs = {s: (f.get("n_by_side") or {})[s] for s in STRATA

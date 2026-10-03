@@ -181,6 +181,39 @@ def test_progress_section_reads_the_ledger_row_not_the_backtest():
     assert "bt.generated_at" in code
 
 
+# EFV3_B8: the screening lab's collapsed block prints the rows' own numbers and types
+# none: no decimal literal at all (a rho, a delta or a floor would be one), and no
+# number assigned to a floor, a delta or a bound.
+_SCREEN_FNS = ["_progScreenBlock", "_progScreenRowHtml", "_progIsScreen",
+               "_progScreenAdmitted"]
+
+
+@pytest.mark.parametrize("name", _SCREEN_FNS)
+def test_screening_block_carries_no_statistic_literal(name):
+    code = _fn_code(_js(), name)
+    code = re.sub(r'[\w-]+="[^"$]*"', "", code)
+    assert not _STAT_LITERAL_ANY.findall(code), (
+        f"{name} carries a decimal literal: {_STAT_LITERAL_ANY.findall(code)}")
+    assert not re.search(r"(floor|delta|lb95|rho|holm_p)\s*[:=]\s*[-+]?\d", code), name
+    assert not re.search(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", code), f"{name} types a date"
+
+
+def test_screening_rows_sit_in_their_own_block_and_chart_only_when_admitted():
+    js = _js()
+    block = _fn_code(js, "_progScreenBlock")
+    assert "_progRows(prog).filter(r => _progIsScreen(r))" in block
+    assert "Screening lab (development; admits candidates to the registered list, proves nothing)" in block
+    assert "<details" in block and " open" not in block, "the block must start collapsed"
+    assert "_progScreenBlock(prog)" in _fn_code(js, "_methProgressSection")
+    assert "!_progIsScreen(r)" in _fn_code(js, "_methProgressTable"), (
+        "screening rows leak into the dated table")
+    assert "_progScreenAdmitted(r)" in _fn_code(js, "_progSeriesRows")
+    chart = _fn_code(js, "_methProgressChart")
+    assert "admitted candidate (development, not a claim)" in chart
+    # the headline line never reads a screening row
+    assert "_progIsScreen" not in _fn_code(js, "_methProgressLedger")
+
+
 
 # ---------------------------------------------------------------------------
 # PV-08 Provisional track record (PROVISIONAL_V2.md section 4): SERVED and BACKCAST
