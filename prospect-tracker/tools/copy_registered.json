@@ -352,12 +352,6 @@
    "text": "rescaled to the sticker total",
    "pinned_by": "test_claims_freshness.py",
    "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
-  },
-  {
-   "class": "REGISTERED_CLAIM",
-   "text": "The board also ranks provisional prospects no scouting source has graded yet",
-   "pinned_by": "test_smoke_prospx_masthead_count.py",
-   "reason": "Claim sentence pinned by its test; changed only by the task that changes the claim."
   }
  ]
 }
