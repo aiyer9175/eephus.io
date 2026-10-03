@@ -64,6 +64,60 @@ lv_dev, vm1 and vm2 share most of their players; they are not independent replic
   `reserved_vm_pins()`: `source_backtest.CANDIDATE_YEARS` and `efv_model.SCORED_YEARS` may not
   include 2025 or later until its look record exists.
 
+#### R-VM look sizes, counted (amendment A6, dated 2026-10-02, made while this file reads DRAFT)
+
+This draft carried no n for an R-VM look. `PROGRAM.md` s2.5 sized each cohort at "about 210"
+(210 / 420 / 630; mde95 0.0596 and delta needed 0.116 at look 1) before anyone counted it. The
+counted sizes, by `efv_rvm_look_n.cohort_counts` on `data/debuts.json` (sha256
+1368e28c699a27d64ac2db46086de697343931e95343fa6b73d427f086a69367, 2,767 records, written 2026-10-02):
+
+| look | debut cohorts | rule | hit | pit | n | mde95 | z | delta needed |
+|---|---|---|---|---|---|---|---|---|
+| look 1 | 2025 | vm2 | 74 | 75 | 149 | 0.0707 | 3.205 | 0.1378 |
+| look 1 | 2025 | consensus_present | 80 | 96 | 176 | 0.0651 | 3.205 | 0.1268 |
+| look 2 | 2025, 2026 (2026 counted to date) | vm2 | 141 | 144 | 285 | 0.0511 | 2.141 | 0.0666 |
+| look 2 | 2025, 2026 (2026 counted to date) | consensus_present | 159 | 191 | 350 | 0.0462 | 2.141 | 0.0601 |
+| look 3 | 2025 to 2027 (2027 projected at the 2025-2026 mean cohort) | vm2 | | | about 428 | 0.0417 | 1.694 | 0.0430 |
+| look 3 | 2025 to 2027 (2027 projected at the 2025-2026 mean cohort) | consensus_present | | | about 525 | 0.0377 | 1.694 | 0.0388 |
+
+- **The rules.** vm2: FanGraphs and MLB Pipeline (`source_backtest.SCORED_SOURCES`) both
+  published a grade at a point inside the debut year's preseason window
+  (`efv_vintage_frame.window_bounds`, closed at the debut day), the common-set rule of the
+  headline frame. consensus_present: a point inside that window carries a consensus grade (the
+  vm3 rule of LANE_A.md G2). The 2025 cohort holds 243 debuts (110 hit / 133 pit).
+- **The rule the look uses: vm2, 149 rows at look 1.** Lane A's E3-Q1 is taken at its
+  recommended option by default (2026-10-02): vm2 stays the headline frame; consensus_present
+  is reported beside it and is never the claim. This is not the unified E3-Q1 of the EFV3 owner
+  questions (scrap or keep V2, default C). 149 is the ceiling of the vm2 look: vm2 also drops a
+  row eFV cannot score or whose pinned read falls outside the window (on 2017 to 2023 it kept
+  829 of a both-source ceiling of 858, LANE_A.md s1.3).
+- **The floors** are the gate's tool, `efv_rvm_look_n.mde95` and `delta_needed`: the [S]
+  arithmetic of `PROGRAM.md` s2.5 ported unchanged (mde95 0.0303 at n 812, scaled by
+  sqrt(812 / n); delta needed = z x 0.0303 / 1.645 x sqrt(812 / n)). At n 210 it returns [S]'s
+  0.0596 and 0.1161 (`test_efv_v2_gate.py`). It scales the pooled E_refit floor of the
+  vintage-matched frame; the within statistic's E_refit floor on R-VM is unmeasured. LANE_A.md
+  s1.3 and the EFV3 plan (F1) printed 0.0705 / 0.0648 from another reference sd (E_refit 0.01844
+  at n 802 to 806); the gate uses its own tool's figures. The z's are [S]'s for three equally
+  spaced looks and are unchanged; the counted spacing is 149 / 285 / about 428 (information
+  fractions 0.348 / 0.666 / 1 under vm2), and the gate's tool recomputes the boundaries at the
+  realized fractions before the status line changes. The look-1 floor of 0.0596 printed in
+  `DRIVER_SYSTEM_V2.md` (s3 and s4.4) is superseded by this table.
+- **What was read.** Counts only, from each record's debut date, its points' snapshot dates,
+  grade PRESENCE (never a grade value) and the side routing fields
+  (`efv_dataset._rec_is_pitcher`). Whether a player was graded in his debut year's preseason
+  window is fixed before that season's games. No R-VM outcome, WAR, label or score was read;
+  `reserved_vm_pins()` returns [] at this amendment; no R-LV row was built; nothing is grouped
+  by consensus-FV level; no arm was run.
+- **The label epoch.** R-VM's outcome is career WAR to date on the label frozen at the look;
+  the fWAR label epoch (`docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md`) moves that label from
+  eWAR v2 to fWAR before any look. These counts read no WAR and do not move with the label. A
+  look row also needs an outcome row: 219 of the 243 2025 debuts carry a career_war row on the
+  retiring eWAR v2 provider (presence only, `data/efv_label_pool_census.json`), and that join is
+  the epoch's (E2), re-counted at its freeze, not this table's.
+- **The file version.** `data/debuts.json` is a gitignored build artifact rebuilt nightly; the
+  sha256 above names the version counted. `test_efv_v2_gate.py` re-counts the look-1 rows on
+  the file on disk and holds each side within 5 rows of this table.
+
 ---
 
 ## 3. The statistic (owner answer DS-Q3)

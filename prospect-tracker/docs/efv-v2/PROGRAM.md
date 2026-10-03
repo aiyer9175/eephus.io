@@ -160,19 +160,25 @@ mde95 scaled as sqrt(812/n) from [SB] 0.0303, order of magnitude only ([S]
 | F-VM today | 812 | 0.0303 |
 | F-VM at the 2027 run (vintage 2024 enters by `min_lag_years` 3) | about 975 | 0.0277 |
 | F-VM with 2025 and 2026 after the reserved looks release them | about 1,266 | 0.0243 |
-| R-VM look 1 / 2 / 3 (2025, +2026, +2027 cohorts) | 210 / 420 / 630 | 0.0596 / 0.0421 / 0.0344 |
-| R-VM with O'Brien-Fleming spending, one-sided alpha 0.05: z 3.205 / 2.141 / 1.694 ([S]) | same | delta needed 0.116 / 0.055 / 0.035 |
+| R-VM look 1 / 2 / 3 (2025, +2026, +2027 cohorts), counted 2026-10-02 under the vm2 rule (consensus-present rule in brackets), look 3 projected (`EFV_V2_GATE.md` s2.2, amendment A6) | 149 / 285 / about 428 (176 / 350 / about 525) | 0.0707 / 0.0511 / 0.0417 (0.0651 / 0.0462 / 0.0377) |
+| R-VM with O'Brien-Fleming spending, one-sided alpha 0.05: z 3.205 / 2.141 / 1.694 ([S]) | same | delta needed 0.1378 / 0.0666 / 0.0430 (0.1268 / 0.0601 / 0.0388) |
 | R-LV, about 1,700 distinct players (assumed) to 2,667 rows | | about 0.021 to 0.017 |
 | F-LV all W3 players V 2011-2020 | 3,511 | about 0.015 |
 
 The F-LV figures ignore the frame's own tie structure and clustering; EV-05 measures them
 before the gate commits, and the gate uses the measured values.
 
+Corrected 2026-10-02 (amendment A6, `EFV_V2_GATE.md` s2.2): the two R-VM rows first read
+210 / 420 / 630, mde95 0.0596 / 0.0421 / 0.0344 and delta needed 0.116 / 0.055 / 0.035, an
+assumed 210 per cohort that nobody had counted. The counted rows come from
+`efv_rvm_look_n.py` on `data/debuts.json` points (counts only, no outcome read), and the
+floors from the same [S] arithmetic at the counted n.
+
 ### 2.6 What "beat by as much as possible" can honestly mean
 
 | frame | consensus rho | lead v2 can plausibly reach | ceiling on that lead | floor at the claim | resolvable? |
 |---|---|---|---|---|---|
-| F-VM | 0.4134 | +0.003 to +0.03 ([E1] s6) | +0.0085 from v1-level information ([E3] `best_combo`); +0.03 needs a new component of validity 0.436 at r 0.85 with consensus, or 0.404 at r 0.70 ([E3] `required_new_component_validity_by_r_with_consensus`) | 0.0303 now; 0.035 at R-VM look 3 (2028 run) | no, before about 2029, unless new information arrives |
+| F-VM | 0.4134 | +0.003 to +0.03 ([E1] s6) | +0.0085 from v1-level information ([E3] `best_combo`); +0.03 needs a new component of validity 0.436 at r 0.85 with consensus, or 0.404 at r 0.70 ([E3] `required_new_component_validity_by_r_with_consensus`) | 0.0303 now; 0.043 at R-VM look 3 (2028 run; vm2 rule, corrected 2026-10-02) | no, before about 2029, unless new information arrives |
 | F-LV | about 0.25 vs W3 | +0.01 to +0.02 hitters, less pitchers, from D1 ([E2] s4 L2) | one year of consensus updating: +0.066 hit / +0.070 pit ([E2] `probe_timing`) | about 0.017 to 0.021 (to be measured) | only near the top of the plausible range |
 
 So the honest reading: "as much as possible" means maximize the expected reserved-frame

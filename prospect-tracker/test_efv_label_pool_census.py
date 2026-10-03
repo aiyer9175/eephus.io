@@ -23,6 +23,7 @@ import importlib.util
 import json
 import math
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -167,10 +168,19 @@ def test_reserved_counts_are_copied_from_program_md(C, doc):
             assert rows[(int(v), side)] == rlv[v][side]
     cp = doc["frame"]["reserved_copied"]
     assert cp["quote"] == rlv["quote"]
-    # the stamp depends on the checkout's line endings (a CRLF worktree vs an LF tree)
-    lf = PROGRAM_DOC.read_bytes().replace(b"\r\n", b"\n")
-    assert cp["sha256"] in {hashlib.sha256(lf).hexdigest(),
-                            hashlib.sha256(lf.replace(b"\n", b"\r\n")).hexdigest()}
+    # the stamp depends on the checkout's line endings (a CRLF worktree vs an LF tree).
+    # It names the version the census copied: the file now, or the file at the census's
+    # recorded commit when a later amendment (EFV3_A6, s2.5) edited PROGRAM.md outside
+    # s2.4; the quote check above proves s2.4 still reads the same.
+    versions = [PROGRAM_DOC.read_bytes().replace(b"\r\n", b"\n")]
+    commit = (doc.get("code") or {}).get("commit")
+    if commit:
+        r = subprocess.run(["git", "-C", str(ROOT), "show",
+                            f"{commit}:./docs/efv-v2/PROGRAM.md"], capture_output=True)
+        if r.returncode == 0:
+            versions.append(r.stdout.replace(b"\r\n", b"\n"))
+    assert cp["sha256"] in {hashlib.sha256(v).hexdigest() for lf in versions
+                            for v in (lf, lf.replace(b"\n", b"\r\n"))}
 
 
 # ---------------------------------------------------------------------------
