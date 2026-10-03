@@ -1727,3 +1727,5 @@ rows is refreshed daily. Fourth, sequence the ML rewrite after the port, because
 shipped bundles are Python pickles with no portable export, so nothing in Odin can score
 anything until that export exists. And the test suite never has to be reimplemented: Odin
 writes artifacts, Python asserts over them, the rsync stays behind the same exit code.
+
+Addendum 2026-10-03 (CLEAN_6_BIO_PANEL_RELOCATE): tools/_arch_bio_panel.json, a 3.6 MB frozen eFV input with no producer read by efv_drivers.BIO_PANEL, moved byte-identical (sha256 7134739f...4319) to data/_frozen/arch_bio_panel.json; the port copies it from there as tracked data, and it ships in neither deploy consumer.
