@@ -23,9 +23,11 @@ Writes ONLY these folders, never data/ (the pytest-revert trap):
                       icon-512.png, icon-maskable-512.png, and site.webmanifest
                       (the served manifest with its icons moved here); the
                       wordmark PNG strikes s 2 and s 4 (SRC.EXPORT_SCALES), which
-                      the canvas exports paint under PIXEL_BRAND (BR-08)
+                      the canvas exports paint under PIXEL_BRAND (BR-08), and the
+                      default share card share-default.png (BR-07 / PB-07)
+    assets/og/        one share card per module, <key>.png (BR-07 / PB-07)
     branding/pixel/   review sheets: brand-sheet-{light,dark}.png, glyphs.json
-                      (the sampled letters), the s 6 wordmark strikes, og/<module>.png
+                      (the sampled letters), the s 6 wordmark strikes
     branding/marks/, branding/animated/, branding/social/, branding/icons/
                       the export bundle (PB-09 / BR-09): the portable marks (raw
                       hex, letters as paths, no font), the animated mark (frames,
@@ -36,7 +38,8 @@ PIXEL_BRAND flag is on (FAVICON_LINKS and the footer mark switch with it); the
 served favicon.ico, assets/favicon.svg, favicon-16.png and favicon-32.png are
 PX-23's copies of the same strikes. Behind the same flag build_site.py reads the
 assets/brand wordmark fragments (BR-03), and assets/site.css carries
-wordmark.css's rules; BR-05 to BR-09 swap in the rest.
+wordmark.css's rules; behind it too every page unfurls with the default card
+or its module's card (BR-07); BR-05, BR-06, BR-08 and BR-09 swap in the rest.
 
     python tools/pixel_brand.py                   write into the repo
     python tools/pixel_brand.py --out DIR         same relative paths under DIR
@@ -70,10 +73,12 @@ ROOT = HERE.parent
 TTF_BOLD = ROOT / "branding" / "fonts" / "PixelMplus12-Bold.ttf"
 TTF_REG = ROOT / "branding" / "fonts" / "PixelMplus12-Regular.ttf"
 ICONS_JSON = ROOT / "assets" / "eephus-icons.json"   # PX-01's bitmap table
-OUT_DIRS = ("assets/brand", "branding/pixel",         # the only folders written
+OUT_DIRS = ("assets/brand", "assets/og", "branding/pixel",   # the only folders written
             "branding/marks", "branding/animated", "branding/social", "branding/icons")
 # Folders --check scans for stale files (every file in them is generated).
-OWNED_DIRS = ("assets/brand", "branding/marks", "branding/social", "branding/animated/frames")
+OWNED_DIRS = ("assets/brand", "assets/og", "branding/marks", "branding/social",
+              "branding/animated/frames")
+OG_DIR = "assets/og/"                                # BR-07: one share card per module
 TEXT_SUFFIXES = (".svg", ".css", ".json", ".webmanifest")
 MANIFEST = ROOT / "assets" / "site.webmanifest"      # the served manifest (BR-04 input)
 STYLES = ("stepped", "hinted", "lamps")
@@ -996,10 +1001,13 @@ def build(out: Path, style: str = SRC.STYLE, seams: str = SRC.SEAMS):
     for name, (size, scale, border) in APP_ICONS.items():
         put_img(I + name, app_icon(size, scale, seams, border=border))
     put_text(I + "site.webmanifest", brand_manifest())
+    # The share cards (BR-07): served only through build_site.py's PIXEL_BRAND
+    # flag (DEFAULT_SHARE_IMAGE_PIXEL and module_share_image()).
+    put_img(I + "share-default.png", og_card(style, seams))
     bits = icons()
     if bits:
         for key, title, route, line in SRC.MODULES:
-            put_img(P + f"og/{key}.png", og_card(style, seams, key, title, line, route, bits))
+            put_img(OG_DIR + f"{key}.png", og_card(style, seams, key, title, line, route, bits))
 
     # The export bundle (PB-09 / BR-09): branding/marks, animated, social, icons.
     M, A, S = "branding/marks/", "branding/animated/", "branding/social/"

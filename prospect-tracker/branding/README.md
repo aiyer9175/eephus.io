@@ -305,9 +305,9 @@ with pixel stars, the lowercase lockup (the real mark, never capitals), one ball
 - `social/share-default.png`: the pixel default card, the lockup at s 10
   centred over "sabermetrics" at s 4 and the URL at s 2. The site serves
   `assets/share-default.png` (`DEFAULT_SHARE_IMAGE` in `build_site.py`), the
-  vector-era card, until the share-card swap behind `PIXEL_BRAND` (PB-07)
-  serves the pixel card in its place.
-- Per-module cards: `pixel/og/<module>.png`, the lockup at s 4, the module's
+  vector-era card; with `PIXEL_BRAND` on (PB-07) it serves the same pixel card
+  from `assets/brand/share-default.png` (`DEFAULT_SHARE_IMAGE_PIXEL`).
+- Per-module cards: `assets/og/<module>.png` (served with `PIXEL_BRAND` on), the lockup at s 4, the module's
   pixel icon at 8x, the title at s 6 (s 5 when long) over a 1 u banded rule,
   one line cut from the page's own meta description, and the URL. Per-page
   cards are passed as `image`/`og_title`/`og_description` at the `page()` call
