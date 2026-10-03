@@ -507,7 +507,7 @@
     var note =
       '<div class="card arb-note"><p><b><span data-gl="arb_market_residual">vs Market</span></b>: ' +
       "actual minus this model; sums to about zero by construction. <b>vs Value</b>: actual minus " +
-      "eWAR at that winter&rsquo;s $/WAR; arbitration pays below the open market, so it does not " +
+      "WAR (fWAR basis, the arbitration model&rsquo;s spine) at that winter&rsquo;s $/WAR; arbitration pays below the open market, so it does not " +
       "sum to zero. The two are never combined.</p>" +
       "<p>Negative vs Market means the model expected a higher salary. It does not mean the player " +
       "is underpaid.</p></div>";
@@ -515,7 +515,7 @@
     var head = '<tr><th class="mlbstats-col-rank">#</th><th>Season</th><th>Player</th>' +
       "<th>Club</th><th>Arb</th><th>Actual</th><th>Ours</th><th>MLBTR</th>" +
       '<th class="arb-gs">vs Market<small>actual minus model</small></th>' +
-      '<th>vs Value<small>actual minus eWAR &times; $/WAR</small></th></tr>';
+      '<th>vs Value<small>actual minus WAR (fWAR basis) &times; $/WAR</small></th></tr>';
 
     // EVERY ROW RENDERS. This table used to print rows.slice(0, 400) of a
     // season-descending list with no count, so 372 of 772 rows were hidden,

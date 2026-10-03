@@ -686,7 +686,7 @@
         var t = e.t;
         if (!isNum(t[1])) return '<td class="lc-col-hide"><span class="ledger-rung is-null" title="no salary on file; outside every sum">' + esc(t[4]) + "</span></td>";
         return '<td class="lc-col-hide"><span class="ledger-rung" title="' + esc(money(t[2]) + " to " + money(t[3]) + "; " + copy("band_note")) + '">' + esc(money(t[1])) + "</span>" +
-          '<span class="ledger-rung-tok">' + esc(t[4]) + (isNum(e.w) ? " " + esc(num(e.w, 1)) + " eWAR" : "") + "</span></td>";
+          '<span class="ledger-rung-tok">' + esc(t[4]) + (isNum(e.w) ? " " + esc(num(e.w, 1)) + " WAR" : "") + "</span></td>";
       }).join("");
       var k = "A:" + m, open = !!state.open[k];
       var svTxt = sv ? String(sv) + (svy ? " as of " + svy : "") : " - ";
@@ -738,7 +738,7 @@
         (isNum(A.n_in_vets) ? "; " + esc(A.n_in_vets) + " in the projections vets, " + esc(A.n_with_salpath) + " with a salary path" : "")) +
       tile(gl("Ladder sum " + esc(classYear()) + " (arb and pre-arb rungs)", "arb_exposure"), money(A.s2027_usd), splitSub + esc(copy("arb_tender_note"))) +
       tile("Remaining, all seasons", money(A.remaining_usd), esc(copy("arb_provisional"))) +
-      tile("Projected eWAR over the ladder", num(A.war, 1), "sum of the per-season projections") + "</div>";
+      tile("Projected WAR over the ladder", num(A.war, 1), "sum of the per-season projections, fWAR basis") + "</div>";
     out += '<p class="ledger-count">Flag census: ' + Object.keys(A.flags).map(function (b) { return "bit " + b + ": " + A.flags[b]; }).join(", ") + ". " + esc(copy("arb_flag_key")) + "</p>";
     if (A.by_season) {
       out += '<table class="ledger-mini">' + A.by_season.map(function (b) {

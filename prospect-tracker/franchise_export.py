@@ -1138,7 +1138,7 @@ def build() -> dict:
              "leaves": [
                  leaf("n_arb", "Arbitration class 1-4", arbitration["n_arb"], "count", None, "arbitration.json rows whose first remaining ladder season is class 1-4 (not all of them are arbitration-eligible in " + str(CLASS_YEAR) + "); pre-arb (class 0) rows are counted apart as n_pre_arb, all rows as n_rows", None, links["arbitration_teams"]),
                  leaf("proj_2027_usd", f"Projected {CLASS_YEAR} cost", arbitration["proj_2027_usd"], "usd", None, f"sum of the {CLASS_YEAR} ladder steps incl. pre-arb minimums; provisional; not a payroll forecast: assumes every player is tendered; a non-tender lowers the figure", "arb_exposure", links["arbitration_teams"]),
-                 leaf("proj_war_2027", "Projected eWAR of the class", arbitration["proj_war_2027"], "war", None, "arbitration.json w", "ewar", links["arbitration_teams"]),
+                 leaf("proj_war_2027", "Projected WAR of the class (fWAR basis)", arbitration["proj_war_2027"], "war", None, "arbitration.json w", "war", links["arbitration_teams"]),
                  leaf("ou_mkt_total_usd", "ou_mkt, all seasons", arbitration["ou_mkt_total_usd"], "usd_signed", None, "arb_history ou_mkt; never combined with ou_war", None, links["arbitration_history"]),
                  leaf("ou_war_total_usd", "ou_war, all seasons", arbitration["ou_war_total_usd"], "usd_signed", None, "arb_history ou_war; never combined with ou_mkt", None, links["arbitration_history"]),
              ]},

@@ -311,7 +311,7 @@ def test_player_detail_upside_is_per_year_p90():
 def test_player_detail_renders_hero_and_fan():
     html = _render("#player=vet_guy")
     assert "Vet Guy" in html
-    assert "Projected eWAR" in html               # fan chart section (eWAR epoch 2026-09-03)
+    assert "Projected WAR" in html                # fan chart section (fWAR label epoch 2026-10-03: a model basis)
     assert "bWAR (Baseball-Reference)" not in html  # the pre-epoch basis label
     assert "Statcast Percentiles" in html
 

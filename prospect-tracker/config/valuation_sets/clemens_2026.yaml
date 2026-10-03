@@ -17,6 +17,10 @@ label: "FanGraphs / Ben Clemens (2026)"
 
 meta:
   retrieval_date: "2026-07-03"
+  # The fWAR label epoch (2026-10-03, docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md step X):
+  # these tables are FanGraphs' own, on FanGraphs WAR, the same frame as the training
+  # label (published fWAR), so the label and this kernel share one currency by construction.
+  war_basis: fwar
   sources:
     intro: "https://blogs.fangraphs.com/introducing-an-updated-method-for-prospect-valuation/"
     methodology: "https://blogs.fangraphs.com/the-details-of-our-new-prospect-valuation-methodology/"

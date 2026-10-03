@@ -2574,6 +2574,8 @@
       '<p class="bt-note">' + esc(FUT.why_the_price_column_is_not_called_fair) + "</p>" +
       '<p class="bt-note">' + esc(FUT.what_the_intervals_are) + "</p>" +
       '<p class="bt-note">' + esc(FUT.win_total_basis) + "</p>" +
+      // O12 (owner answer "Both, disclosed"): the one-line changelog for the fWAR label epoch.
+      '<p class="bt-note">Changelog, 2026-10-03: the projected win totals now come from projections retrained on published fWAR (the fWAR label epoch). That is a change of definition, not a claim of better accuracy.</p>' +
       // THE FORWARD RECORD, STATED AT ITS TRUE LENGTH. The paragraph above says
       // this simulator has no validated forward record, which will stay true
       // until one accrues, and one cannot accrue while every night overwrites

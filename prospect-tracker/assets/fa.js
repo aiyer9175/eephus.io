@@ -1010,14 +1010,14 @@
       + th("surplus", "Surplus", "fc-sur", "Rational value minus predicted price. Tap a cell for the P10-P90 range.", "Surplus")
       + th("dealPlus", "Deal+", "fc-dp", "Rational value as a percentage of the predicted price; 100 means the model and the market agree", "Deal+")
       + th("rational", "Rational", "fc-rat", "Convex-priced NPV of the projected production", "Rational value")
-      + th("warY1", `WAR<span class="fa-th-unit">y1</span>`, "fc-w1", "Projected year-1 eWAR", "WAR y1")
-      + th("warTotal", `WAR<span class="fa-th-unit">deal</span>`, "fc-wt", "Projected eWAR over the predicted term", "Deal WAR")
+      + th("warY1", `WAR<span class="fa-th-unit">y1</span>`, "fc-w1", "Projected year-1 WAR (fWAR basis, the training label)", "WAR y1")
+      + th("warTotal", `WAR<span class="fa-th-unit">deal</span>`, "fc-wt", "Projected WAR over the predicted term (fWAR basis)", "Deal WAR")
       + th("age", "Age", "fc-age", "Age in the free-agent season", "Age")
       + th("status", "Status", "fc-st", "Market status: UFA, a pending option with its price, or the signed deal", "Status")
       + `</tr></thead>`;
     const body = members.map((m, i) => faRowHtml(m, i) + (FA_OPEN.has(m.key) ? faDetailRow(m, cls) : "")).join("");
 
-    const gl = `<span data-gl="ewar">eWAR</span> &middot; <span data-gl="rational_value">rational</span>`
+    const gl = `<span data-gl="war">WAR</span> (fWAR basis) &middot; <span data-gl="rational_value">rational</span>`
       + ` &middot; <span data-gl="contract_surplus">surplus</span> &middot; <span data-gl="deal_plus">Deal+</span>`;
     const headEyebrow = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">${cls.class_year - 1}-${String(cls.class_year).slice(2)} Class Board</span>
@@ -1562,17 +1562,17 @@
       </tr>`;
     }).join("");
     const wp = (m.warPath || []).map((w, i) =>
-      `<div class="fa-warbar" title="${cls.class_year + i}: ${formatMetric(w, "war")} eWAR${(m.warPathP10 || [])[i] != null ? ` (season P10, floored at 0 WAR, ${formatMetric(m.warPathP10[i], "war")} / P90 ${formatMetric(m.warPathP90[i], "war")})` : ""}"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>${String(cls.class_year + i).slice(2)}</span></div>`).join("");
+      `<div class="fa-warbar" title="${cls.class_year + i}: ${formatMetric(w, "war")} WAR${(m.warPathP10 || [])[i] != null ? ` (season P10, floored at 0 WAR, ${formatMetric(m.warPathP10[i], "war")} / P90 ${formatMetric(m.warPathP90[i], "war")})` : ""}"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>${String(cls.class_year + i).slice(2)}</span></div>`).join("");
     // The same endpoint-labelled trend the $/WAR rail uses, over the projected
     // WAR path. The bars beside it are a shape; this is the shape WITH numbers
     // on both ends, which is what a decline curve actually needs to be read.
     const wpPath = m.warPath || [];
     const warTrend = miniTrendSVG(
-      wpPath.map((w, i) => ({ v: w, t: `${cls.class_year + i}: ${formatMetric(w, "war")} eWAR` })),
+      wpPath.map((w, i) => ({ v: w, t: `${cls.class_year + i}: ${formatMetric(w, "war")} WAR` })),
       { w: 300, h: 66, color: "var(--accent-cyan)", fmt: v => formatMetric(v, "war"),
         style: "display:block;width:100%;max-width:340px;height:auto;margin:2px 0 0;",
         xFirst: String(cls.class_year), xLast: String(cls.class_year + wpPath.length - 1),
-        aria: `Projected eWAR by season, ${cls.class_year} through ${cls.class_year + wpPath.length - 1}` });
+        aria: `Projected WAR (fWAR basis) by season, ${cls.class_year} through ${cls.class_year + wpPath.length - 1}` });
     const comps = (m.comps || []).map(c => `<tr><td>${esc(c.name)}</td><td>${c.yr}</td><td>${teamLogo(c.to)}${esc(c.to || "")}</td><td>${c.years ?? "?"}y / ${c.guar ? money(c.guar) : "?"}</td></tr>`).join("");
     const fits = (m.fits || []).map(f =>
       `<span class="chip" title="need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " - blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""} &middot; ${f.fit}</span>`).join(" ");
@@ -1617,8 +1617,8 @@
       <table class="detail-table fa-year-table">
       <thead><tr><th>Season</th><th>Age</th><th><span data-gl="proj_buckets" title="This season's own 10th percentile, floored at 0 WAR. The column is not a path: no career sits at its P10 every season">Season P10</span></th><th>Mean</th><th><span data-gl="proj_buckets" title="This season's own 90th percentile, read the same way">Season P90</span></th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
       <tbody>${yearRows}</tbody></table>` : ""}
-      ${warTrend ? `<div class="fa-war-trend" title="Projected eWAR by season">${warTrend}</div>` : ""}
-      ${wp ? `<div class="fa-warpath" title="Projected eWAR by season; hover a bar for P10/P90">${wp}</div>` : ""}
+      ${warTrend ? `<div class="fa-war-trend" title="Projected WAR by season (fWAR basis)">${warTrend}</div>` : ""}
+      ${wp ? `<div class="fa-warpath" title="Projected WAR by season (fWAR basis); hover a bar for P10/P90">${wp}</div>` : ""}
       <div id="fa-current-line"></div>`;
     const compsPanel = `${arcBlock}
       ${comps ? `<h3>Nearest real comps</h3><table class="detail-table">

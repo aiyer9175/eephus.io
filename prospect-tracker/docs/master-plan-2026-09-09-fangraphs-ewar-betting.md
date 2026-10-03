@@ -80,7 +80,7 @@ replica matches published Batting Runs to 0.013 runs MAE when FanGraphs' own par
 used. The two hard gaps are fielding (no UZR, no Statcast component splits, no framing on
 disk) and pre-2018 baserunning detail.
 
-**5. Sports Betting has zero WAR readers.** Measured in lane F10. The eWAR epoch therefore
+**5. [RETRACTED 2026-10-03, fWAR label epoch clause (j): the census sentence is false; `star_out`, `lineup_strength` and the Futures win totals read artifacts the epoch rebuilds.]** Measured in lane F10. The eWAR epoch therefore
 has no betting blast radius, and the two halves of this plan can proceed in parallel.
 
 ### 0.2 The shape of the defect list, and what it says about the platform
@@ -580,7 +580,7 @@ today and nothing keeps it that way, which is one line of the Part 2 invariant b
 
 ## Part 4. Sports Betting and the module lanes
 
-Sports Betting has **zero WAR readers**, so this part runs in parallel with Part 1.
+[RETRACTED 2026-10-03, clause (j): betting has WAR readers (`star_out`, `lineup_strength`, the Futures win totals).] This part ran in parallel with Part 1.
 
 ### 4.1 Engineering repairs
 

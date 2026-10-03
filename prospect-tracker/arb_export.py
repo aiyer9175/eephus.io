@@ -343,7 +343,7 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             "l": "ladder, one tuple per remaining season: [season, proj_usd, lo_usd, hi_usd, token]",
             "tot": ("sum of the ladder, usd: projected arbitration rungs plus "
                     "PRE-ARB rungs at the league minimum"),
-            "w": "projected WAR (eWAR basis) per remaining season, aligned to l",
+            "w": "projected WAR (fWAR basis, the training label since the 2026-10 epoch) per remaining season, aligned to l",
         },
         "rules": {
             "regime": "cba_2022",
@@ -406,7 +406,7 @@ def build_history(recs, panel_rows, ledger, dpw) -> dict:
             "ou_mkt": ("actual minus OUR model: what the arbitration system paid "
                        "relative to comparable players. Sums to roughly zero by "
                        "construction."),
-            "ou_war": ("actual minus WAR (eWAR basis) priced at that season's dollars per "
+            "ou_war": ("actual minus WAR (fWAR basis) priced at that season's dollars per "
                        "win. Does NOT sum to zero, because arbitration "
                        "systematically pays below the open market."),
             "never_combine": ("The two residuals answer different questions and "

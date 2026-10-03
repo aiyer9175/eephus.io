@@ -366,7 +366,7 @@
       if (d.projAav != null) tiles.push({ label: "proj AAV", value: d.projAav });
       const sections = [];
       if ((d.warRows || []).length) {
-        sections.push({ title: `Projected eWAR ${d.firstSeason}-${d.lastSeason}`,
+        sections.push({ title: `Projected WAR ${d.firstSeason}-${d.lastSeason} (fWAR basis)`,
           rows: d.warRows.map(r => [r.season, `${r.war}${r.band ? `  (${r.band})` : ""}`]) });
       }
       if ((d.arsenal || []).length) {

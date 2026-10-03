@@ -606,7 +606,7 @@
     // the two agree with /arbitration/#teams one click away.
     var t = leafTile(leafBy(b, "n_arb"), "of " + esc(nInt(s.n_rows)) + " rows on the club board; " + esc(nInt(s.n_pre_arb)) + " pre-arb (class 0)") +
       tile(gl("Projected " + esc(DATA.class_year) + " cost", "arb_exposure"), esc(money(s.proj_2027_usd)), esc(copy("arb_cost_sum")) + " &middot; " + esc(copy("arb_tender_note")) + " &middot; " + esc(copy("arb_flag_note")) + ": " + esc(flag1), "", d.links.arbitration_teams) +
-      tile(gl("Projected eWAR of the class", "ewar"), esc(n1(s.proj_war_2027)), "eWAR basis, " + esc(DATA.class_year)) +
+      tile(gl("Projected WAR of the class", "war"), esc(n1(s.proj_war_2027)), "fWAR basis, " + esc(DATA.class_year)) +
       tile("Realized " + esc(DATA.season_now) + " spend", esc(money((s.realized_2026 || {}).actual_usd)), esc(nInt((s.realized_2026 || {}).n)) + " settled rows", "", d.links.arbitration_history);
     var rows = table(["Player", "token", "proj", "lo", "hi", "WAR", "class"], s.rows.map(function (r) {
       return [esc(r[0]), esc(r[2] || ""), money(r[3]), money(r[4]), money(r[5]), n1(r[6]), nInt(r[7])];
