@@ -11,6 +11,7 @@ happen inside the called module, so this file alone cannot split them).
 
 | phase | data/*.json referenced in the phase block |
 |---|---|
+| d00. Registered identity repairs | - |
 | d0. TJStats Live capture | - |
 | d0b. MLB Pipeline Live capture | - |
 | d0b-i. Just Baseball rolling capture | - |

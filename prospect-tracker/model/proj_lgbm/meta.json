@@ -101,9 +101,9 @@
    "champ_h5"
   ]
  },
- "war_provider": "ewar_v2",
+ "war_provider": "fwar",
  "label_shape": "side_keyed_v1",
- "train_hash": "cb42b96eb5ea533c",
+ "train_hash": "248baa38d8b7144a",
  "mean_blend": {
   "1": 1.0,
   "2": 1.0,
@@ -111,6 +111,7 @@
   "4": 0.5,
   "5": 0.5
  },
+ "mean_blend_note": "post-hoc GLOBAL lift-only mean recenter (data/proj_mean_blend.json, tools/apply_mean_blend.py); heads untouched, train hash unchanged",
  "star_blend": {
   "1": 0.0,
   "2": 0.0,
@@ -118,6 +119,5 @@
   "4": 0.0,
   "5": 1.0
  },
- "mean_blend_note": "post-hoc GLOBAL lift-only mean recenter (data/proj_mean_blend.json, tools/apply_mean_blend.py); heads untouched, train hash unchanged",
  "star_blend_note": "post-hoc star mean blend (tools/fit_star_blend.py); heads untouched, train hash unchanged"
 }
