@@ -180,6 +180,36 @@ BANNED_CLAIM_FRAGMENTS = (
     "100+15z vs the draft class",
     "average qualified hitter",
     "average qualified starter",
+    # LIBRARY_13_REGISTRY_STALE_FIGURES (2026-10-03, lane finding F6). The
+    # Library prints registry metric and notes verbatim. consensus_fv's metric
+    # typed AUC 0.7254 vs 0.7130 and Spearman 0.2897 vs 0.2883 while
+    # data/source_backtest.json accuracy.consensus_vs_inputs read AUC 0.734 vs
+    # 0.7183 and Spearman 0.2836 vs 0.2855 on n 4,319; ewar's metric typed
+    # 1,825 pairs while data/ewar_eval.json gate_2_pitcher_persistence.n_pairs
+    # reads 1677; betting_game_prob's notes opened by saying the model grades
+    # and loses while their newest dated reading (2026-10-01, n 777) has it
+    # beating the home-field constant at t 3.371. The metrics now name the
+    # artifact keys and the betting readings sit dated, newest first.
+    "0.7254 vs 0.7130",
+    "0.2897 vs 0.2883",
+    "1,825 pairs",
+    "it now grades for the first time and loses",
+)
+
+# The registry surfaces: data/model_registry.json and the two pages generated
+# from it. They are scanned only for the fragments retired from registry prose
+# (REGISTRY_RATCHET_FRAGMENTS), because older fragments in the main tuple
+# still sit in other rows' dated history or in rows other lanes own.
+REGISTRY_RATCHET_SURFACES = (
+    "data/model_registry.json",
+    "MODEL_REGISTRY.md",
+    "models/index.html",
+)
+REGISTRY_RATCHET_FRAGMENTS = (
+    "0.7254 vs 0.7130",
+    "0.2897 vs 0.2883",
+    "1,825 pairs",
+    "it now grades for the first time and loses",
 )
 
 # Copy surfaces the ratchet scans. content/*.json is globbed at test time.
@@ -514,6 +544,23 @@ def test_ratchet_surfaces_exist():
     """A ratchet over a missing file is a silent no-op; refuse that."""
     for rel in _ratchet_surfaces():
         assert (ROOT / rel).is_file(), f"ratchet surface missing: {rel}"
+    for rel in REGISTRY_RATCHET_SURFACES:
+        assert (ROOT / rel).is_file(), f"registry ratchet surface missing: {rel}"
+
+
+def test_registry_prose_carries_no_retired_figure():
+    """The registry ratchet: figures retired from registry prose never return
+    to the registry or to the pages generated from it, and every one of them
+    is also in BANNED_CLAIM_FRAGMENTS with its history."""
+    missing = [f for f in REGISTRY_RATCHET_FRAGMENTS if f not in BANNED_CLAIM_FRAGMENTS]
+    assert not missing, f"registry fragments without a history line: {missing}"
+    violations = []
+    for rel in REGISTRY_RATCHET_SURFACES:
+        text = _read_text(rel).lower()
+        for frag in REGISTRY_RATCHET_FRAGMENTS:
+            if frag.lower() in text:
+                violations.append(f"{rel}: {frag!r}")
+    assert not violations, "retired registry figure(s) present: " + "; ".join(violations)
 
 
 # ---------------------------------------------------------------------------
@@ -1252,16 +1299,43 @@ def test_prospect_path_registry_row_quotes_only_artifact_figures():
     Accountability card, so a figure the artifact does not carry is a served
     claim nothing backs."""
     row = _registry_row("mlb_projections_prospects")
+    orphans = _orphan_figures(row, ("predicts", "champion", "baseline", "metric", "notes"))
+    assert not orphans, f"figures with no source in {row['eval_artifact']}: {orphans}"
+
+
+def _orphan_figures(row, fields, counts=False):
+    """Figures in the row's prose that its eval artifact does not carry: every
+    decimal at its quoted precision and, with counts=True, every comma-grouped
+    count (1,825) as an integer."""
     have = _numbers(_read_json(row["eval_artifact"]), [])
-    text = " ".join(str(row.get(k) or "") for k in
-                    ("predicts", "champion", "baseline", "metric", "notes"))
+    text = " ".join(str(row.get(k) or "") for k in fields)
     orphans = []
     for tok in re.findall(r"(?<![\w.])[-+]?\d*\.\d+", text):
         v = float(tok)
         half = 0.5 * 10 ** -len(tok.split(".")[1])
         if not any(abs(abs(v) - abs(h)) <= half + 1e-9 for h in have):
             orphans.append(tok)
-    assert not orphans, f"figures with no source in {row['eval_artifact']}: {orphans}"
+    if counts:
+        for tok in re.findall(r"(?<![\w.,])\d{1,3}(?:,\d{3})+(?![\d.])", text):
+            v = float(tok.replace(",", ""))
+            if not any(abs(v - h) <= 0.5 for h in have):
+                orphans.append(tok)
+    return orphans
+
+
+# LIBRARY_13_REGISTRY_STALE_FIGURES (2026-10-03): the same rule on the two
+# flagship rows whose metric the Library printed with figures the artifact no
+# longer carried (consensus_fv AUC 0.7254 vs 0.7130 and Spearman 0.2897 vs
+# 0.2883; ewar 1,825 pairs). Their metric now names the artifact key. The
+# notes are not scanned: they hold dated readings of superseded artifacts
+# (the 2026-06-11 weighted-vs-equal A/B, the 2026-08-04 gate record), which
+# the policy keeps as history.
+@pytest.mark.parametrize("model_id", ["consensus_fv", "ewar"])
+def test_flagship_registry_metric_quotes_only_artifact_figures(model_id):
+    row = _registry_row(model_id)
+    orphans = _orphan_figures(row, ("predicts", "champion", "baseline", "metric"),
+                              counts=True)
+    assert not orphans, f"{model_id}: figures with no source in {row['eval_artifact']}: {orphans}"
 
 
 # ---------------------------------------------------------------------------
