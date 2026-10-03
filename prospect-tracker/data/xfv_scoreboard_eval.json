@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-02",
+ "generated_at": "2026-10-03",
  "registration": "docs/efv-2026-07-24/GATES.md section G-SCORE (Phase 0a, no gate)",
  "regen_cmd": "python tools/efv_scoreboard.py",
  "basis": {
@@ -163,6 +163,21 @@
     "consensus": 0.0415,
     "win": true,
     "margin": 0.0523
+   },
+   "fv_tier_freeze": {
+    "chip": "frozen pending the anchor look",
+    "frozen_on": "2026-10-02",
+    "frozen_from": {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-10-02",
+     "sha256": "432c78cf25458a58bf0fc35e93bc27c783456f2c41dd8248661a9c45d263bbeb",
+     "tracked": true,
+     "equals_git_head": true
+    },
+    "decision": "lane D E3-Q3 = A (2026-10-02), docs/efv-v2/EFV_V2_GATE.md s8.3",
+    "until": "the look record in docs/PROSPECT_ANCHOR_GATE.md section 18 exists (not before 2026-11-20 and 14 days after the fWAR epoch's step Z)",
+    "owner_line": "source_backtest.FV_TIER_FREEZE = False resumes the nightly recompute",
+    "file": "data/efv_fv_tier_frozen.json"
    },
    "by_cohort": {
     "ifa": {
@@ -332,6 +347,21 @@
     "consensus": 0.0465,
     "win": true,
     "margin": 0.0113
+   },
+   "fv_tier_freeze": {
+    "chip": "frozen pending the anchor look",
+    "frozen_on": "2026-10-02",
+    "frozen_from": {
+     "path": "data/xfv_scoreboard_eval.json",
+     "generated_at": "2026-10-02",
+     "sha256": "432c78cf25458a58bf0fc35e93bc27c783456f2c41dd8248661a9c45d263bbeb",
+     "tracked": true,
+     "equals_git_head": true
+    },
+    "decision": "lane D E3-Q3 = A (2026-10-02), docs/efv-v2/EFV_V2_GATE.md s8.3",
+    "until": "the look record in docs/PROSPECT_ANCHOR_GATE.md section 18 exists (not before 2026-11-20 and 14 days after the fWAR epoch's step Z)",
+    "owner_line": "source_backtest.FV_TIER_FREEZE = False resumes the nightly recompute",
+    "file": "data/efv_fv_tier_frozen.json"
    },
    "by_cohort": {
     "ifa": {

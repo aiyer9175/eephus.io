@@ -151,10 +151,18 @@ def rater_stats(score, y, contributor, groups, consensus,
 
 def paired_delta(keys, groups, y, contributor, a, b, consensus, *, statistic: str,
                  B: int = B_DEFAULT, seed: int = SEED_DEFAULT,
-                 min_rows: int = MIN_GROUP_ROWS) -> dict:
+                 min_rows: int = MIN_GROUP_ROWS, premapped: bool = False,
+                 floor_rows: int | None = None, floor_clusters: int | None = None) -> dict:
     """stat(a) - stat(b) on the rows given (both raters present on every row), with a
     paired player-clustered CI95. `consensus` is the consensus FV on the same rows (the
-    map's value set). Scores are fixed; only players are resampled (E_cond)."""
+    map's value set). Scores are fixed; only players are resampled (E_cond).
+
+    `premapped=True` (the scoreboard matrix, EFV3_D2): `a` and `b` already carry the
+    identical output map computed once on the WHOLE frame, so the map is not refit on
+    the rows given (a cell is a subset; the map is the frame's). `floor_rows` /
+    `floor_clusters` replace the claim-instrument floor gate (source_backtest
+    _CLAIM_MIN_ROWS / _CLAIM_MIN_CLUSTERS) for the matrix's 40-row cells (lane D
+    E3-Q4 = A). Both default to the behaviour every other caller has."""
     if statistic not in STATISTICS:
         raise ValueError(f"statistic must be one of {STATISTICS}, not {statistic!r}")
     av = np.asarray(a, dtype=np.float64)
@@ -166,7 +174,9 @@ def paired_delta(keys, groups, y, contributor, a, b, consensus, *, statistic: st
     ids = {k: i for i, k in enumerate(dict.fromkeys(keys))}
     n_clusters = len(ids)
     keep = kept_groups(codes, min_rows)
-    if statistic != "within":
+    floor_r = SB._CLAIM_MIN_ROWS if floor_rows is None else int(floor_rows)
+    floor_c = SB._CLAIM_MIN_CLUSTERS if floor_clusters is None else int(floor_clusters)
+    if statistic != "within" and not premapped:
         av = map_scores(av, list(codes), consensus)
         bv = map_scores(bv, list(codes), consensus)
 
@@ -193,8 +203,9 @@ def paired_delta(keys, groups, y, contributor, a, b, consensus, *, statistic: st
            "ci95": None, "sd": None, "mde95": None, "p_gt_0": None,
            "B": int(B), "B_used": 0, "seed": int(seed), "estimator": "E_cond",
            "ci95_estimator": "E_cond, paired, player-clustered"}
-    if out["delta"] is None or n < SB._CLAIM_MIN_ROWS \
-            or n_clusters < SB._CLAIM_MIN_CLUSTERS:
+    if premapped and statistic != "within":
+        out["map"] = "identical output map computed once on the whole frame (premapped)"
+    if out["delta"] is None or n < floor_r or n_clusters < floor_c:
         out["status"] = "not derived: below the floor gate or undefined"
         return out
     order, starts, lens = SB._cluster_layout(np, [ids[k] for k in keys])

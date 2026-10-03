@@ -46,6 +46,7 @@ import efv_lab_runner as LAB                      # noqa: E402
 from efv_model import _feature_spec, _fit_ols_fv, _pred_ols, blend_lambda  # noqa: E402
 from prospect_path import (_fit_ridge, _predict, _spearman,               # noqa: E402
                            _weighted_spearman)
+import source_backtest as SBT                                # noqa: E402
 from source_backtest import _auc, XFV_VS_CONSENSUS_MDE95   # noqa: E402
 
 DATA = ROOT / "data"
@@ -209,22 +210,32 @@ def _side_block(side):
         "auc_star": _auc_cell(pooled, STAR_WAR, 30),
     }}
 
-    # per-FV-tier (nearest-5 consensus tier, the lab convention) + t45 + wm
-    tiers = {}
-    for r in pooled:
-        tiers.setdefault(LAB._tier(r["fv"]), []).append(r)
-    tier_cells, wm_b, wm_c, wm_n = {}, 0.0, 0.0, 0
-    for tk in sorted(tiers):
-        cell = _sp_cell(tiers[tk], TIER_MIN_N)
-        if cell is None:
-            continue
-        tier_cells[str(tk)] = cell
-        wm_b += cell["efv"] * cell["n"]
-        wm_c += cell["consensus"] * cell["n"]
-        wm_n += cell["n"]
-    block["by_fv_tier"] = tier_cells
-    block["t45"] = tier_cells.get("45")
-    block["wm"] = (_cell(wm_b / wm_n, wm_c / wm_n, wm_n) if wm_n else None)
+    # per-FV-tier (nearest-5 consensus tier, the lab convention) + t45 + wm.
+    # SERVED FROZEN (lane D E3-Q3 = A, 2026-10-02; source_backtest.fv_tier_frozen)
+    # until the anchor look record exists: the three blocks are copied from
+    # data/efv_fv_tier_frozen.json with the chip beside them, never recomputed.
+    if SBT.fv_tier_frozen():
+        fz = (SBT.frozen_fv_tier_block("efv_scoreboard") or {}).get(side) or {}
+        block["by_fv_tier"] = fz.get("by_fv_tier") or {}
+        block["t45"] = fz.get("t45")
+        block["wm"] = fz.get("wm")
+        block["fv_tier_freeze"] = SBT.fv_tier_freeze_chip("efv_scoreboard")
+    else:
+        tiers = {}
+        for r in pooled:
+            tiers.setdefault(LAB._tier(r["fv"]), []).append(r)
+        tier_cells, wm_b, wm_c, wm_n = {}, 0.0, 0.0, 0
+        for tk in sorted(tiers):
+            cell = _sp_cell(tiers[tk], TIER_MIN_N)
+            if cell is None:
+                continue
+            tier_cells[str(tk)] = cell
+            wm_b += cell["efv"] * cell["n"]
+            wm_c += cell["consensus"] * cell["n"]
+            wm_n += cell["n"]
+        block["by_fv_tier"] = tier_cells
+        block["t45"] = tier_cells.get("45")
+        block["wm"] = (_cell(wm_b / wm_n, wm_c / wm_n, wm_n) if wm_n else None)
 
     # per-cohort (ifa / college / hs / draft / other)
     cohorts = {}

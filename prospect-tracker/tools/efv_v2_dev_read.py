@@ -665,9 +665,15 @@ def v2_vm_dev(data_dir: Path, weights: dict) -> tuple[list[dict], dict]:
     return frame, meta
 
 
-def v2_lv_dev(weights: dict) -> tuple[list[dict], dict]:
+def v2_lv_dev(weights: dict, *, keep_frame_rows: bool = False) -> tuple[list[dict], dict]:
     """lv_dev at V 2017 to 2019: V2 fitted on earlier list vintages (every V-frame player
-    left out), v1 fitted on matrix rows before V (as the H0 read above)."""
+    left out), v1 fitted on matrix rows before V (as the H0 read above).
+
+    `keep_frame_rows=True` (the scoreboard matrix, EFV3_D2) attaches each scored row's
+    efv_vintage_frame row as `frame_row` and its efv_labels row as `label`, so the
+    strata (position, birth date, the outcome-blind MiLB block, the acquisition
+    sidecars, the identity route) and the R3 label can be read without a second frame
+    build. Off by default; the rows are byte-identical to the DS-16 read's then."""
     sys.path.insert(0, str(ROOT / "tools"))
     import efv_v2_assemble as ASM
     frames = ASM.build_frames()          # guards every development vintage it builds
@@ -715,10 +721,14 @@ def v2_lv_dev(weights: dict) -> tuple[list[dict], dict]:
                     if g.get(src) is not None:
                         grades[src] = g[src]
                 w3 = lab["w3"]
-                out.append({"key": k, "vintage": V, "side": side, "group": f"{side}|{V}",
-                            "grades": grades,
-                            "outcome": {"war": w3, "contributor": (
-                                ws["w_star"] is not None and w3 >= ws["w_star"])}})
+                row = {"key": k, "vintage": V, "side": side, "group": f"{side}|{V}",
+                       "grades": grades,
+                       "outcome": {"war": w3, "contributor": (
+                           ws["w_star"] is not None and w3 >= ws["w_star"])}}
+                if keep_frame_rows:
+                    row["frame_row"] = r
+                    row["label"] = lab
+                out.append(row)
                 rec["n_scored"] += 1
             per.append(rec)
     return out, {"per_vintage": per, "w_star_dev": ws, "folds": folds,

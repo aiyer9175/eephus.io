@@ -5170,6 +5170,20 @@
    "last_checked": "2026-10-01",
    "stale": false,
    "provisional_kind": "measurement_only"
+  },
+  {
+   "model_id": "efv_matrix",
+   "surface": "eFV scoreboard matrix, FRAME x CELL x COMPARATOR x STATISTIC (tools/efv_matrix.py; the glossary Source Comparison matrix section, EFV3_D4)",
+   "predicts": "nothing: an evaluation surface reading the served eFV against PROSPX consensus, MLB Pipeline, FanGraphs and Baseball America on every pre-registered stratum cell (efv_strata.DIMENSIONS) of the vintage-matched frame vm2, the list-vintage development frame lv_dev and the bust-inclusive AUC panel",
+   "champion": "descriptive (no gate of its own; the cells, floors, families and vocabulary are registered in docs/efv-v2/EFV_V2_GATE.md s8.1 to s8.4)",
+   "baseline": "PROSPX consensus on identical rows (the claim comparator); MLB Pipeline, FanGraphs and Baseball America on the rows each graded",
+   "metric": "per cell: within (side, vintage) Spearman delta where 2 or more groups of 20 rows survive, else pooled Spearman after the frame's identical output map; AUC at four thresholds (the registered veto leg marked); the six-season label; MAE (diagnostic); every interval paired, player-clustered, E_cond, B 2000, seed 20260906, mde95 = 1.645 x sd; Family S Holm at alpha 0.05, one family per frame; one word per cell from a closed vocabulary",
+   "eval_artifact": "data/efv_matrix_eval.json",
+   "verdict": "validated",
+   "notes": "2026-10-03 (EFV3_D2): first run, on the ewar_v2 label resolved through 2025 (a run after the fWAR label epoch's step Z is a new artifact). Registration docs/efv-v2/EFV_V2_GATE.md s8.1 to s8.4 (EFV3_D5); design SP/efv3/LANE_D.md s3. vm2 n 829 (hit 406, pit 423), Family S k 26: On the vintage-matched, timing-pinned frame (n 829): 0 cells ahead, 0 behind, 5 equivalent, 11 not resolvable, 1 clearing their own floor but not the family, 9 unpowered of 26 in the family; at alpha 0.05 the family would flag 1.3 cells by chance; 6 cells under the floor. lv_dev n 2862, k 31: On the list-vintage development frame (n 2862): 25 cells read as development, not a claim, 6 unpowered of 31 in the family; the family would read 0 ahead, 0 behind, 1 equivalent, 23 not resolvable, 1 clearing their own floor; at alpha 0.05 the family would flag 1.55 cells by chance; 0 cells under the floor. bust_inclusive n 1613 (AUC tabs only). Parity: the overall vm2 cell is COPIED from accuracy.head_to_head_verdict (delta -0.0049, n 829); the receipt recomputing its interval reads reproduces=True. Runtime 333.1 s at B 2000. Nothing here moves a served number; the matrix selects no arm, re-runs none of the 39 closed arms, and no sentence outside its grid reads a key of it. AUC may veto and never credit; MAE is diagnostic; no dimension is keyed on an FV level (docs/PROSPECT_ANCHOR_GATE.md); the reserved frames (R-LV 2020 and 2021, R-VM 2025 and later) are pre-registered and never scored here. Words on vm2 strata only inside the matrix (lane D E3-Q2 = A); cell floor 40 rows, B 2000, E_cond, seed 20260906 (lane D E3-Q4 = A).",
+   "last_checked": "2026-10-03",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []

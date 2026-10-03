@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-10-02**. `validate()` at generation time: **clean**.
 
-**329 models.** Verdicts: validated: 53, provisional: 144, unvalidated: 44, deprecated: 88.
+**330 models.** Verdicts: validated: 54, provisional: 144, unvalidated: 44, deprecated: 88.
 
 ## Instrument boundary
 
@@ -348,6 +348,7 @@ can be measured.
 | `efv_v2_h0` | model-dev (rendered as development rows on the glossary S... | score_v2 = P(REACHED) * E[WAR \| REACHED]: consensus-offset hurdle, logistic and weighted-OLS maps on consensus FV fixed as wit... | eFV v1 stays served; H0 is adjudicated only on the reserved frames (R-LV, R-V... | PROSPX consensus (primary) and eFV v1 (non-inferiority, TOST 0.02) on identic... | Spearman vs realized WAR (gate), contributor AUC (veto); E_cond player-cluste... | **provisional** | `data/efv_v2_dev_eval.json` | 7 | no |
 | `efv_v2` | /prospx board and player cards (SERVED since 2026-09-25,... | an ORDER inside each (side, list year) group: order_idx = u_c + w_skill * e_skill + w_time * e_time, u_c the within-group conse... | served: the production fit is fit_v2 on the v1 matrices, decision years befor... | PROSPX consensus FV (the order it reorders) and eFV v1 on identical rows | development: within-(side, vintage) Spearman vs the outcome label (DS-15 stat... | **provisional** | `data/efv_v2_dev_eval.json` | 7 | no |
 | `statcast_tracked_parks_card` | PROSPX hitter card, Signals tab: the 'Statcast (tracked p... | nothing forward. Descriptive: each hitter's latest >=100 PA Baseball Savant minors Statcast line (xwOBA, exit velocity, hard-hi... | Savant minors batter aggregates as published (no model of ours); levels = the... | n/a - a DESCRIPTIVE display of published tracking data, not a predictive model | descriptive; no forward gate by design. The level label is checked, not score... | **provisional** | - | - | no |
+| `efv_matrix` | eFV scoreboard matrix, FRAME x CELL x COMPARATOR x STATIS... | nothing: an evaluation surface reading the served eFV against PROSPX consensus, MLB Pipeline, FanGraphs and Baseball America on... | descriptive (no gate of its own; the cells, floors, families and vocabulary a... | PROSPX consensus on identical rows (the claim comparator); MLB Pipeline, FanG... | per cell: within (side, vintage) Spearman delta where 2 or more groups of 20... | **validated** | `data/efv_matrix_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

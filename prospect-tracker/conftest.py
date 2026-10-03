@@ -548,6 +548,10 @@ _SIDECAR_GLOBS = (
     # development records the progress ledger copies from.
     "data/efv_overlay_oos_eval.json",
     "data/efv_v2_pbust_eval.json",
+    # EFV3_D2: the scoreboard matrix artifact and its durable append-only
+    # history copy, both written by tools/efv_matrix.py.
+    "data/efv_matrix_eval.json",
+    ".cache/efv_matrix/**/*",
     # M21-4: the Fantasy Rank, its monthly model cache and its backtest.
     "data/fantasy_rank.json",
     "data/fantasy_rank_eval.json",
@@ -917,6 +921,9 @@ _SIDECAR_WRITE_TARGETS = (
     # DS-17: efv_v2_model.pbust_serving_arm reads the committed P(bust) read
     # through PBUST_EVAL_PATH, resolved at call time; mirrored like DEV_EVAL_PATH.
     ("efv_v2_model", "PBUST_EVAL_PATH", "data/efv_v2_pbust_eval.json"),
+    # EFV3_D2: tools/efv_matrix.run and write_artifact resolve both at call time.
+    ("tools.efv_matrix", "OUT_PATH", "data/efv_matrix_eval.json"),
+    ("tools.efv_matrix", "HISTORY_PATH", ".cache/efv_matrix/history.jsonl"),
     # VAL_3 surplus-odds gate: surplus_odds_gate.run writes its one read as a block
     # of its parent artifact through OUT_PATH, resolved at call time.
     ("surplus_odds_gate", "OUT_PATH", "data/surplus_backtest_real.json"),

@@ -1835,8 +1835,10 @@ function _methTierTable(bt, rater) {
       <td>${Math.round((t.regular_pace_rate || 0) * 100)}%</td>
       <td>${Math.round(t.star_rate * 100)}%</td>
     </tr>`).join("");
+  const frozenChip = c.tiers_frozen && c.tiers_frozen.chip
+    ? ` <span class="sacc-chip-warn" title="${escapeHtml(c.tiers_frozen.until || "")}">${escapeHtml(c.tiers_frozen.chip)}</span>` : "";
   return `<div class="meth-table-wrap">
-    <div class="meth-table-title"><span class="meth-legend-swatch" style="background:${_raterMeta(rater).color};"></span>${escapeHtml(_raterMeta(rater).label)} <span class="meth-sub">n=${c.n} · ${c.n_debuted} debuted</span></div>
+    <div class="meth-table-title"><span class="meth-legend-swatch" style="background:${_raterMeta(rater).color};"></span>${escapeHtml(_raterMeta(rater).label)} <span class="meth-sub">n=${c.n} · ${c.n_debuted} debuted</span>${frozenChip}</div>
     <div class="table-scroll-x"><table class="meth-table">
       <thead><tr><th>FV</th><th>n</th><th title="Reached MLB">Debut</th><th title="Mean cumulative career WAR (undebuted = 0)">WAR</th>${hasMed ? `<th title="Median cumulative career WAR (undebuted = 0)">Med WAR</th>` : ""}<th title="Mean WAR per season, among players who debuted">WAR/yr</th><th title="Career WAR ≥ 3">Contrib</th><th title="≥ 1.5 WAR per season">Reg pace</th><th title="Career WAR ≥ 10">Star</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -3337,8 +3339,10 @@ function _sbSideTable(sideLabel, blk, floor) {
     if (c && c.efv != null) rows += _sbRow(cohLabels[ck], c, floor);
   });
   if (!rows) return "";
+  const tierFrozen = blk.fv_tier_freeze && blk.fv_tier_freeze.chip
+    ? ` <span class="sacc-chip-warn" title="${escapeHtml(blk.fv_tier_freeze.until || "")}">FV-tier rows ${escapeHtml(blk.fv_tier_freeze.chip)}</span>` : "";
   return `<div class="meth-table-wrap">
-    <div class="meth-table-title">${escapeHtml(sideLabel)} <span class="meth-sub">eFV vs consensus, identical rows</span></div>
+    <div class="meth-table-title">${escapeHtml(sideLabel)} <span class="meth-sub">eFV vs consensus, identical rows</span>${tierFrozen}</div>
     <div class="table-scroll-x"><table class="meth-table">
       <thead><tr><th>Cell</th><th>n</th><th>eFV</th><th>Consensus</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
@@ -4756,6 +4760,7 @@ function _saccCuts(d) {
     <p class="meth-note sacc-warn">${escapeHtml(a.by_position_group_selection_caveat || "")}</p>
     ${_saccRhoTable(a.by_fv_tier, "By consensus FV tier", "Spearman rho against realized WAR",
       ["60+", "55", "50", "45", "<45"])}
+    ${a.by_fv_tier_freeze && a.by_fv_tier_freeze.chip ? `<p class="meth-note"><span class="sacc-chip-warn" title="${escapeHtml(a.by_fv_tier_freeze.until || "")}">${escapeHtml(a.by_fv_tier_freeze.chip)}</span></p>` : ""}
     <p class="meth-note sacc-warn">${escapeHtml(a.by_fv_tier_range_restriction_warning || "")}</p>
     ${_saccRhoTable(a.by_age_at_grading, "By age at grading", "Spearman rho against realized WAR",
       ["<=18", "19-20", "21-22", "23-24", ">=25"])}
