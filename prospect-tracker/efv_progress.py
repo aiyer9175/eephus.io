@@ -41,6 +41,16 @@ union; nothing is ever dropped from either copy.
 
 Strata: rows carry n by side (hit, pit) and nothing finer. No key or stratum
 is named after a consensus-FV cell (docs/PROSPECT_ANCHOR_GATE.md).
+
+The scoreboard matrix (EFV3_D3, SP/efv3/LANE_D.md s3.7). The headline row and the
+DS-16 development row carry an optional `matrix` pointer into
+data/efv_matrix_eval.json (tools/efv_matrix.py): the artifact's path, file sha256
+and generated_at, the frame block's id, Family S's k and the producer's reading
+counts, every one copied. A look row copies the same shape from
+data/efv_v2_gate.json `strata` once the look runner has written it (EFV3_D6).
+The pointer joins the content hash only when present, so a row is appended when
+the matrix state changes and every earlier row keeps its hash. No stratum cell
+enters a row: the counts are the producer's and the ledger adds nothing to them.
 """
 from __future__ import annotations
 
@@ -127,6 +137,18 @@ DEV_ARTIFACTS = ((DEV_NAME, DEV_FRAMES, DEV_RATERS, DEV_DELTAS, None),
                  (PBUST_NAME, ("vm_oos_dev", "lv_dev"), _SAME_RATERS, _SAME_DELTAS, None),
                  (DEV_NAME, DEV_FRAMES, V2_RATERS, V2_DELTAS, DS16_SUBKEY),
                  (SCREEN_NAME, ("lv_dev",), SCREEN_RATERS, SCREEN_DELTAS, None))
+#: EFV3_D3: the scoreboard matrix (tools/efv_matrix.py), FRAME x CELL x COMPARATOR x
+#: STATISTIC. The headline row points at its vm2 block; the DS-16 development row
+#: (the one read the matrix's lv_dev block repeats, tools/efv_v2_dev_read.v2_lv_dev)
+#: points at its lv_dev block; no other development row carries a pointer, because
+#: the block is a read of a different scored object than that row's. A reserved
+#: block (lv_res, vm_pros) is pointed at by a look row only, copied from the look
+#: record in data/efv_v2_gate.json.
+MATRIX_NAME = "efv_matrix_eval.json"
+GATE_NAME = "efv_v2_gate.json"
+#: The keys of a `matrix` pointer, in this order; nothing else enters one.
+MATRIX_FIELDS = ("artifact", "sha256", "generated_at", "frame_block", "k_family_s",
+                 "summary")
 
 SCHEMA = 1
 MODEL_ID = "efv_v1"
@@ -255,8 +277,9 @@ SOURCES_VS = ("prospx_consensus", "mlb_pipeline", "fangraphs")
 _HASH_FIELDS = ("frame", "frame_version", "window", "n", "n_by_side", "raters",
                 "deltas", "resolvable", "verdict", "share")
 #: Hashed only when a row carries them (DS-16 development rows; `screening` on the
-#: screening lab's rows).
-_OPTIONAL_HASH_FIELDS = ("statistic", "secondary", "screening")
+#: screening lab's rows; `matrix` on the rows that point at the scoreboard matrix,
+#: so a changed matrix state appends a row and every earlier row keeps its hash).
+_OPTIONAL_HASH_FIELDS = ("statistic", "secondary", "screening", "matrix")
 
 
 # ---------------------------------------------------------------------------
@@ -364,13 +387,53 @@ def _finish(row: dict) -> dict:
     return row
 
 
+def _matrix_pointer(block: dict | None, frame_id: str, *, artifact: str,
+                    generated_at: str | None, sha256: str | None) -> dict | None:
+    """One `matrix` pointer from a scored frame block (the shape tools/efv_matrix
+    .score_frame writes, under `frames` of the matrix artifact or under `strata` of
+    the look record). None when the block is absent, reserved and unread, or carries
+    no reading counts. Copies only: the counts are the producer's."""
+    if not isinstance(block, dict) or block.get("reserved"):
+        return None
+    summ = block.get("summary") or {}
+    counts = summ.get("counts")
+    if not isinstance(counts, dict):
+        return None
+    return {"artifact": artifact, "sha256": sha256, "generated_at": generated_at,
+            "frame_block": frame_id, "k_family_s": summ.get("k_family_s"),
+            "summary": dict(counts)}
+
+
+def matrix_pointer(mx: dict | None, frame_id: str, *, path: Path | None = None,
+                   sha256: str | None = None) -> dict | None:
+    """The `matrix` field of a row on `frame_id`, copied from the matrix artifact's
+    frame block of the same id (data/efv_matrix_eval.json). `sha256` is the
+    artifact file's, as the row's `sources` carry it."""
+    blk = ((mx or {}).get("frames") or {}).get(frame_id)
+    return _matrix_pointer(blk, frame_id, artifact=_rel(path) if path else f"data/{MATRIX_NAME}",
+                           generated_at=(mx or {}).get("generated_at"), sha256=sha256)
+
+
+def look_matrix_pointer(gate: dict | None, frame_id: str, *, path: Path | None = None,
+                        sha256: str | None = None) -> dict | None:
+    """The `matrix` field of a look row on a reserved frame, copied from the look
+    record's `strata` block (data/efv_v2_gate.json, written once by the look runner,
+    EFV3_D6). None until the look has written it."""
+    blk = ((gate or {}).get("strata") or {}).get(frame_id)
+    return _matrix_pointer(blk, frame_id, artifact=_rel(path) if path else f"data/{GATE_NAME}",
+                           generated_at=(gate or {}).get("generated_at"), sha256=sha256)
+
+
 # ---------------------------------------------------------------------------
 # row builders
 
 def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
                sources: list[dict], date: str, trigger: str,
-               now_iso: str) -> list[dict]:
-    """Candidate rows for every frame the artifacts carry. Copies only."""
+               now_iso: str, matrix: dict | None = None,
+               matrix_sha256: str | None = None) -> list[dict]:
+    """Candidate rows for every frame the artifacts carry. Copies only. `matrix` is
+    the scoreboard matrix artifact when it exists; the headline row then carries a
+    pointer at its frame block (EFV3_D3), and no tilted or secondary row does."""
     if trigger not in TRIGGERS:
         raise ValueError(f"trigger must be one of {TRIGGERS}, not {trigger!r}")
     acc = (sb or {}).get("accuracy") or {}
@@ -452,9 +515,13 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
         nbs = ({s: hv["n_by_side"][s] for s in STRATA
                 if (hv.get("n_by_side") or {}).get(s)}
                or _by_side(floors.get(BY_FRAME_KEY.get(head, ""))))
-        rows.append(_verdict_row(
+        row = _verdict_row(
             head, hv, vs, nbs, "accuracy.head_to_head_verdict",
-            "accuracy.head_to_head_vs_sources", note=FRAMES[head].get("note", "")))
+            "accuracy.head_to_head_vs_sources", note=FRAMES[head].get("note", ""))
+        ptr = matrix_pointer(matrix, head, sha256=matrix_sha256)
+        if ptr is not None:
+            row["matrix"] = ptr
+        rows.append(row)
 
     # Tilted frames: the by-frame cells, with the claim-instrument interval.
     for frame in ("predebut", "all_vintages"):
@@ -498,14 +565,18 @@ def build_rows(sb: dict, sc: dict | None, model_version: dict, *,
 
 def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger: str,
                    now_iso: str, frames=DEV_FRAMES, raters=DEV_RATERS,
-                   deltas=DEV_DELTAS, statistic_fields: bool = False) -> list[dict]:
+                   deltas=DEV_DELTAS, statistic_fields: bool = False,
+                   matrix: dict | None = None,
+                   matrix_sha256: str | None = None) -> list[dict]:
     """Development rows (EV-09) copied from data/efv_v2_dev_eval.json, one per frame
     it carries. role "development", resolvable None: a development read adjudicates
     nothing. Copies only. `frames`, `raters` and `deltas` name another development
     artifact's frames and keys (DEV_ARTIFACTS); a frame's own note, when it carries
     one, replaces the registry note. `statistic_fields` (the DS-16 block only) also
     copies the frame's `statistic` and pooled `secondary`; it is off for every other
-    artifact so their existing rows keep their content hash."""
+    artifact so their existing rows keep their content hash. `matrix` (passed for
+    the DS-16 block only, EFV3_D3) adds the pointer at the scoreboard matrix's block
+    of the same frame when the artifact scores that frame."""
     if trigger not in TRIGGERS:
         raise ValueError(f"trigger must be one of {TRIGGERS}, not {trigger!r}")
     if not dev or dev.get("role") != "development":
@@ -575,6 +646,9 @@ def build_dev_rows(dev: dict | None, *, sources: list[dict], date: str, trigger:
                            for name, key in rater_map
                            if (sec.get("raters") or {}).get(key) is not None},
                 "deltas": {name: leg[comp] for name, comp in delta_map if comp in leg}}
+        ptr = matrix_pointer(matrix, fid, sha256=matrix_sha256)
+        if ptr is not None:
+            row["matrix"] = ptr
         _finish(row)
         row["run_id"] = f"{gen}|{fid}|{row['content_hash'][:8]}"
         rows.append(row)
@@ -795,8 +869,14 @@ def update(data_dir=None, trigger: str = "nightly", *, out_path=None,
         sources.append({"path": _rel(sc_path), "generated_at": sc.get("generated_at"),
                         "sha256": _sha256(sc_path)})
     mv = model_version if model_version is not None else current_model_version()
+    # EFV3_D3: the scoreboard matrix, when the producer has written it. Its file
+    # sha and generated_at ride on the pointer, so the pointer (and the row's hash)
+    # moves only when the producer rewrote the artifact (compare-before-write).
+    mx_path = data_dir / MATRIX_NAME
+    mx = _load_json(mx_path)
+    mx_sha = _sha256(mx_path) if mx else None
     cands = build_rows(sb, sc, mv, sources=sources, date=now_dt.date().isoformat(),
-                       trigger=trigger, now_iso=now_iso)
+                       trigger=trigger, now_iso=now_iso, matrix=mx, matrix_sha256=mx_sha)
     for name, fids, rmap, dmap, sub in DEV_ARTIFACTS:
         dev_path = data_dir / name
         dev = _load_json(dev_path)
@@ -812,7 +892,8 @@ def update(data_dir=None, trigger: str = "nightly", *, out_path=None,
                              "sha256": _sha256(dev_path)}],
                 date=now_dt.date().isoformat(), trigger=trigger, now_iso=now_iso,
                 frames=fids, raters=rmap, deltas=dmap,
-                statistic_fields=bool(sub) or screening)
+                statistic_fields=bool(sub) or screening,
+                matrix=mx if sub == DS16_SUBKEY else None, matrix_sha256=mx_sha)
     if note:
         for c in cands:
             c["note"] = f"{note} {c.get('note') or ''}".strip()
