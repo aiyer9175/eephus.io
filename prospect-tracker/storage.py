@@ -1921,8 +1921,9 @@ def init_db():
             pass  # column already exists
         # v26 — Migration: add fv_plus column to snapshots / draft_snapshots
         # / overseas_snapshots. Older rows default to 0 (no '+' on file).
-        # The one-shot tools/migrate_fv_plus_from_decimal.py back-fills
-        # rows whose .5 fv values came from a "+" parse.
+        # Rows whose .5 fv values came from a "+" parse were back-filled by
+        # the one-shot tools/migrate_fv_plus_from_decimal.py, since removed;
+        # it stays in git history at commit 3d9426b3.
         for tbl in ("snapshots", "draft_snapshots", "overseas_snapshots"):
             try:
                 con.execute(f"ALTER TABLE {tbl} ADD COLUMN fv_plus INTEGER NOT NULL DEFAULT 0")

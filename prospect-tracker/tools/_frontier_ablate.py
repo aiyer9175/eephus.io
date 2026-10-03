@@ -26,9 +26,6 @@ sys.path.insert(0, str(ROOT))
 import efv_model as E                                        # noqa: E402 read-only
 from prospect_path import _ALPHAS, _RIDGE_HOLDOUT_SEED       # noqa: E402
 
-OUT = ROOT / "tools" / "_frontier_out"
-OUT.mkdir(exist_ok=True)
-
 ORIGINS = (2020, 2021, 2022, 2023, 2024)
 GATE_ORIGINS = (2020, 2021, 2022, 2023)
 LAM = {"hit": 0.85, "pit": 0.54}          # live served values (efv_model.blend_lambda)
