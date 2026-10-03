@@ -35,7 +35,7 @@ if str(_ROOT) not in sys.path:
 _STAR_MIN_SEASONS = 2
 _STAR_WAR = 4.0
 _CONTROL_YEARS = 7
-_RESOLVED_THROUGH = 2025   # last complete MLB season (efv_dataset convention)
+_RESOLVED_THROUGH = 2026   # last complete MLB season (efv_dataset convention; moved with efv_dataset.RESOLVED_THROUGH at the fWAR label epoch, owner decision O2)
 
 
 def _today() -> str:

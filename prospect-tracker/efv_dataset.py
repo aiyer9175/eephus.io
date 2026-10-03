@@ -271,7 +271,7 @@ DATA_DIR = Path(__file__).parent / "data"
 MATRIX_PATH = DATA_DIR / "xfv_hitter_matrix.json"
 REPORT_PATH = DATA_DIR / "xfv_dataset_report.json"
 
-RESOLVED_THROUGH = 2025                      # last fully-played season
+RESOLVED_THROUGH = 2026                      # last fully-played season (2026 ended 2026-09-27; moved with tools/build_star_odds_artifacts._RESOLVED_THROUGH at the fWAR label epoch, owner decision O2)
 TARGET_SEASONS = 6
 
 # ARM A1, the service-aligned label window (audit F03, frozen in Appendix A of
