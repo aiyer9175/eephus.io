@@ -1727,3 +1727,5 @@ rows is refreshed daily. Fourth, sequence the ML rewrite after the port, because
 shipped bundles are Python pickles with no portable export, so nothing in Odin can score
 anything until that export exists. And the test suite never has to be reimplemented: Odin
 writes artifacts, Python asserts over them, the rsync stays behind the same exit code.
+
+Addendum 2026-10-03 (CLEAN_8_SHIPPED_ASSET_WEIGHT, AS14): the serving contract gains a second publish-time strip, tools/strip_asset_comments.py, run on the WEBROOT copies of assets/*.css, assets/*.js, collegesavant/app.js and collegesavant/pitcher_app.js after the rsync and before precompression, per-file fail-open with a JS compile check and a CSS brace and rule-count check; the port's publish step runs it in the same place as tools/strip_prospx_comments.py.

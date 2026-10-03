@@ -261,6 +261,18 @@ echo "--- strip prospx comments -> $WEBROOT/prospx/index.html"
 python "$APP/tools/strip_prospx_comments.py" "$WEBROOT/prospx/index.html" --in-place \
   || echo "!!! prospx comment strip failed - shipping the commented copy"
 
+# Publish-time comment strip for the shared CSS and JS (2026-10-03, bloat
+# finding AS14: about 830KB raw of comments across assets/*.css, assets/*.js
+# and the two CollegeSavant app scripts, site.css alone 40 percent). Same
+# contract as the prospx step above: webroot copies only, after the rsync and
+# before the precompress, sources and their ?v= content stamps untouched.
+# Each file is stripped, then validated (JS compiled by node --check or V8,
+# CSS brace balance and rule count), and any file that fails keeps its
+# commented copy; the step as a whole is fail-open too.
+echo "--- strip asset comments -> $WEBROOT/assets, $WEBROOT/collegesavant"
+python "$APP/tools/strip_asset_comments.py" "$WEBROOT" --in-place \
+  || echo "!!! asset comment strip failed - shipping the commented copies"
+
 # Precompress text assets so nginx (gzip_static on; see deploy/README.md)
 # serves .gz next to the original with zero per-request CPU. The boot JSON
 # compresses ~8-10x, which is most of the page-weight win on slow links.
