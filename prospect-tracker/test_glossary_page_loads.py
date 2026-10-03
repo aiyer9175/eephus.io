@@ -252,6 +252,55 @@ def test_progress_ledger_fetch_resolves_and_renders(server, browser):
         assert "carried from vm1" in out["text"]
 
 
+def test_label_pool_fetch_resolves_and_renders(server, browser):
+    """EFV3_A8: the label pool census resolves on the served path and the
+    Source Comparison view renders the panel from it: the census stamp, the
+    frame rows, one measured point per floor reference, and no score."""
+    p = ROOT / "data" / "efv_label_pool_census.json"
+    if not p.exists():
+        pytest.skip("data/efv_label_pool_census.json not built")
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    page_errors: list[str] = []
+    page = _browser_page(browser, page_errors)
+    try:
+        page.goto(server + "glossary/index.html#view=source-comparison",
+                  wait_until="load", timeout=15_000)
+        status = page.evaluate(
+            "() => fetch('/data/efv_label_pool_census.json', {cache: 'no-cache'})"
+            ".then(r => r.status)")
+        page.wait_for_function(
+            "() => !!document.querySelector('#source-comparison-body .scx-label-pool')",
+            timeout=15_000)
+        out = page.evaluate("""() => {
+          const el = document.querySelector('#source-comparison-body .scx-label-pool');
+          el.querySelectorAll('details').forEach(d => { d.open = true; });
+          const svg = [...el.querySelectorAll('svg')].find(s =>
+            /Smallest resolvable difference/.test(s.getAttribute('aria-label') || ''));
+          return {
+            measured: svg ? svg.querySelectorAll('circle[r="5"]').length : -1,
+            curves: svg ? svg.querySelectorAll('polyline').length : -1,
+            text: el.innerText,
+          };
+        }""")
+    finally:
+        page.close()
+    assert status == 200
+    assert not page_errors, "JS errors: " + " | ".join(page_errors)
+    refs = doc["floor_curve"]["references"]
+    assert out["measured"] == len(refs) and out["curves"] == len(refs)
+    txt = out["text"]
+    assert f"resolved through {doc['label']['resolved_through']}" in txt
+    assert doc["label"]["provider"] in txt
+    assert doc["generated_at"][:10] in txt
+    assert f"{doc['frame']['dev_totals']['rows']:,}" in txt
+    assert f"{doc['frame']['reserved_copied']['rows']:,}" in txt
+    for r in doc["label_views"]["rows"]:
+        assert r["label_view"].replace("_", "-") in txt
+    # Counts and floors only: no rho, no AUC, no Spearman on the panel.
+    for word in ("AUC", "Spearman", "ρ", "rho "):
+        assert word not in txt, f"the label pool panel prints {word!r}"
+
+
 def test_source_accuracy_subtabs_render(server, browser):
     """Every one of the six sub-tabs renders real content, the verdict column
     is three-valued (a source name only where the artifact says the cell is
