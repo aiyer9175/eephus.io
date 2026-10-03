@@ -2290,7 +2290,7 @@ def upsert_unranked_active_player(
         # but this constant, and 2,214 of them sit pinned at the served eFV
         # floor. The single-instance shrinkage does not help: it pulls toward
         # SINGLE_SOURCE_PRIOR = 35, which is a no-op on 35.
-        # See .cache/anchor_probe/PATCH_consensus_synthetic_anchor.md for the
+        # See docs/identity-2026-08-04/PATCH_consensus_synthetic_anchor.md for the
         # consensus-side patch (that file is owned by another lane).
         con.execute(
             """INSERT INTO snapshots

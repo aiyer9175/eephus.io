@@ -29,7 +29,7 @@ Flow:
          and never quantile-maps it. NOTE it is NOT excluded from consensus:
          data/source_weights.json is {} so it votes at 1.0 like any outlet,
          and for a player no publication has ever graded it IS the whole
-         consensus. See .cache/anchor_probe/PATCH_consensus_synthetic_anchor.md)
+         consensus. See docs/identity-2026-08-04/PATCH_consensus_synthetic_anchor.md)
   4. Return a count of new entries so the pipeline can log what was added.
   5. refresh_performance_anchors() re-dates the anchors of players discovered
      on an earlier run who still qualify, so the stamp cannot freeze.
