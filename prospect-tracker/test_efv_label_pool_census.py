@@ -167,7 +167,10 @@ def test_reserved_counts_are_copied_from_program_md(C, doc):
             assert rows[(int(v), side)] == rlv[v][side]
     cp = doc["frame"]["reserved_copied"]
     assert cp["quote"] == rlv["quote"]
-    assert cp["sha256"] == hashlib.sha256(PROGRAM_DOC.read_bytes()).hexdigest()
+    # the stamp depends on the checkout's line endings (a CRLF worktree vs an LF tree)
+    lf = PROGRAM_DOC.read_bytes().replace(b"\r\n", b"\n")
+    assert cp["sha256"] in {hashlib.sha256(lf).hexdigest(),
+                            hashlib.sha256(lf.replace(b"\n", b"\r\n")).hexdigest()}
 
 
 # ---------------------------------------------------------------------------
