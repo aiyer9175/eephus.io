@@ -1,0 +1,185 @@
+{
+ "season": 2026,
+ "clubs": [
+  {
+   "club": "BAL",
+   "league": "AL",
+   "w": 73,
+   "l": 89
+  },
+  {
+   "club": "BOS",
+   "league": "AL",
+   "w": 90,
+   "l": 72
+  },
+  {
+   "club": "NYY",
+   "league": "AL",
+   "w": 104,
+   "l": 58
+  },
+  {
+   "club": "TB",
+   "league": "AL",
+   "w": 105,
+   "l": 57
+  },
+  {
+   "club": "TOR",
+   "league": "AL",
+   "w": 82,
+   "l": 80
+  },
+  {
+   "club": "CWS",
+   "league": "AL",
+   "w": 70,
+   "l": 92
+  },
+  {
+   "club": "CLE",
+   "league": "AL",
+   "w": 84,
+   "l": 78
+  },
+  {
+   "club": "DET",
+   "league": "AL",
+   "w": 97,
+   "l": 65
+  },
+  {
+   "club": "KC",
+   "league": "AL",
+   "w": 73,
+   "l": 89
+  },
+  {
+   "club": "MIN",
+   "league": "AL",
+   "w": 79,
+   "l": 83
+  },
+  {
+   "club": "HOU",
+   "league": "AL",
+   "w": 89,
+   "l": 73
+  },
+  {
+   "club": "LAA",
+   "league": "AL",
+   "w": 67,
+   "l": 95
+  },
+  {
+   "club": "ATH",
+   "league": "AL",
+   "w": 68,
+   "l": 94
+  },
+  {
+   "club": "SEA",
+   "league": "AL",
+   "w": 85,
+   "l": 77
+  },
+  {
+   "club": "TEX",
+   "league": "AL",
+   "w": 84,
+   "l": 78
+  },
+  {
+   "club": "ATL",
+   "league": "NL",
+   "w": 77,
+   "l": 85
+  },
+  {
+   "club": "MIA",
+   "league": "NL",
+   "w": 74,
+   "l": 88
+  },
+  {
+   "club": "NYM",
+   "league": "NL",
+   "w": 78,
+   "l": 84
+  },
+  {
+   "club": "PHI",
+   "league": "NL",
+   "w": 99,
+   "l": 63
+  },
+  {
+   "club": "WSH",
+   "league": "NL",
+   "w": 64,
+   "l": 98
+  },
+  {
+   "club": "CHC",
+   "league": "NL",
+   "w": 93,
+   "l": 69
+  },
+  {
+   "club": "CIN",
+   "league": "NL",
+   "w": 75,
+   "l": 87
+  },
+  {
+   "club": "MIL",
+   "league": "NL",
+   "w": 92,
+   "l": 70
+  },
+  {
+   "club": "PIT",
+   "league": "NL",
+   "w": 68,
+   "l": 94
+  },
+  {
+   "club": "STL",
+   "league": "NL",
+   "w": 80,
+   "l": 82
+  },
+  {
+   "club": "AZ",
+   "league": "NL",
+   "w": 67,
+   "l": 95
+  },
+  {
+   "club": "COL",
+   "league": "NL",
+   "w": 58,
+   "l": 104
+  },
+  {
+   "club": "LAD",
+   "league": "NL",
+   "w": 111,
+   "l": 51
+  },
+  {
+   "club": "SD",
+   "league": "NL",
+   "w": 91,
+   "l": 71
+  },
+  {
+   "club": "SF",
+   "league": "NL",
+   "w": 53,
+   "l": 109
+  }
+ ]
+}
