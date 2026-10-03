@@ -171,6 +171,61 @@ precondition. A waiver is an owner decision, recorded here as a dated amendment 
 step it waives, naming what is unmet and what is lost by proceeding. An unmet precondition
 discovered after a step has run does not become a waiver; it becomes a disclosure in part 9.
 
+**Amendment 2026-10-02, before step D: E5's 5c-B and 5c-C half is waived by owner
+decision (EPOCH-Q1).**
+
+The owner answered EPOCH-Q1 on 2026-09-30 (AskUserQuestion, recorded in
+`DECISIONS_FOR_OWNER.md` under 'ANSWERED 2026-09-30 (AskUserQuestion), Part 8 batch 1 (the
+fWAR label epoch)'), verbatim: "**Waive, pin inputs**: a dated amendment waives E5 before
+step D provided step A pins the pre-epoch projections bundle the 5c-C look needs; step A
+about 10-07, step Z about 10-12; the betting lane takes both looks after step Z by 10-31".
+This block is that amendment. It is filed on 2026-10-02, before step A and before step D:
+at `b6ebc1f1` `war_source.DEFAULT_PROVIDER` is `"ewar_v2"`, `../_pre_epoch_fwar_2026-10/`
+does not exist, and part 9 holds no entry.
+
+What is unmet. E5 asks for 5c's looks to be recorded. The 5c-B look (`lineup_strength`) and
+the 5c-C look (`star_out`) are not recorded, and their look code does not exist at
+`b6ebc1f1`: neither section's seam, row builder, twins, leg 1 column or look record is in
+the tree, and no number relating either column to a game outcome or a price exists. Both
+sections name 2026-10-05 as the first look day and 2026-10-31 as the last. Unwaived, this
+half of E5 holds steps D + U, E and M until the looks are recorded, at the latest
+2026-10-31.
+
+What is lost by proceeding, as Q1 (a) states it: nothing graded. Both windows are
+regular-season games priced on vintages written by 2026-10-04 (5c-B: vintages dated
+2026-09-07 to 2026-10-04; 5c-C: vintages dated 2026-09-05 to 2026-10-04), and a vintage is
+written once, on its own night or the next, never late (2026-09-11b point 5: first write
+wins), so a step taken after 2026-10-04 cannot change which vintage prices a window game.
+A vintage written after the retrain is already ungraded under each section's own bucket
+rules (bucket 2, post-retrain, in both sections), so steps D, E and M after the window add
+no graded game, and, under the proviso below, remove none. The looks move to after step Z,
+inside each section's own look span: the first day after step Z on which the pinned look
+code runs, by 2026-10-31, or each look records INDETERMINATE on 2026-10-31 as its section
+already says. What the waiver costs is the calendar: neither look is taken on 2026-10-05.
+
+The proviso, exactly. Step A pins, in its snapshot and in its sha256 manifest, the
+pre-epoch projections inputs that 5c-C's leg 1 needs: `data/mlb_projections.json`,
+`model/proj_lgbm/meta.json`, the `model/proj_lgbm/models.joblib` content hash, the corpus
+`war_provider` and the champion fit key. 5c-C's leg 1 ranks on a PINNED `ewar_v2` bundle
+written before step D, "recorded by mtime and content hash, with its corpus `war_provider`
+and champion fit key", and once step D lands the corpus is rebuilt on `fwar` at the next
+nightly, so the bundle on disk on the look day cannot stand in for it. If step A cannot pin
+all five, this waiver lapses and step D does not run; E5's 5c-B and 5c-C half then reads
+as unwaived and blocks D + U, E and M as the blocking map says.
+
+What this waiver does not touch. Clause (j) points 1 to 4 stand whole: step M does not run
+before 2026-10-05; steps D and E run only after the last vintage that prices a 5c-C window
+game has been written, which E6's date already satisfies; no 5c criterion, threshold,
+window, split or bucket rule moves, and this amendment moves none; the commit that carries
+step D or step E writes the corpus `war_provider` into the projections bundle. The rest of
+E5 is not waived. Its 5c-A half reads as closed: the xwOBA pair closed for 2026 without a
+verdict by the dated closure at `239ef253` (2026-10-02), because its look code does not
+exist. Its GRPO half reads as taken: GRPO's 30-day forward read ran once and was recorded
+at `e0829913` (2026-10-02). If either record is withdrawn, that half blocks D + U, E and M
+until it is recorded again. Part 3's table rows, the E5 row among them, stay the read of
+2026-09-17 and are not edited; this block is the dated record the paragraph above asks
+for, and the first entry in part 9 states which preconditions were met when its step ran.
+
 ## 4. The eight carried clauses
 
 ### 4.1 How to read them on this epoch (the substitution rule, stated once)
