@@ -545,7 +545,12 @@ def test_disabling_timing_reproduces_flat_behavior() -> None:
             # Width kept at the original +-10% so this stays a real pin rather than a
             # rubber band, with headroom for the annual $/WAR re-averaging the comment above
             # describes.
-            assert 58.0 * scale <= v_noargs <= 72.0 * scale   # v5 calibration (~65 pre-anchor)
+            # Re-centred 2026-10-03 for the fWAR label epoch (runbook step J): the refit on the
+            # fWAR training label moved the FV60 empirical anchor 1.44 -> 1.50 WAR/yr and the
+            # ordered-logit buckets with it, so the flat FV60 SS value moved 96.6 -> 102.4
+            # (70.0 -> 74.2 pre-anchor), past the old 72.0 edge. The band keeps its 14-point
+            # width around the measured value; the flat-timing invariant above is unchanged.
+            assert 67.0 * scale <= v_noargs <= 81.0 * scale   # fWAR epoch (~74 pre-anchor)
         finally:
             (cfg["dollars_per_war_inflation"], cfg["discount_from"], cfg["aging"]["enabled"]) = saved
             vf._bucket_sv_usd.cache_clear()

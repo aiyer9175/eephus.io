@@ -1,425 +1,425 @@
 {
- "bayes": {
-  "cov": [
-   [
-    0.00023642569028175687,
-    0.000178682696841859,
-    0.011289246293479006,
-    0.00016101456732069082,
-    0.0002084988830374182,
-    0.00015156295439527578,
-    0.008468998413443812,
-    0.00010976322392942738,
-    0.00012744156091435105,
-    0.0001834225100000016
-   ],
-   [
-    0.000178682696841859,
-    0.00030026643130201834,
-    0.00858355987921956,
-    0.00013178306174697337,
-    0.00017675449671033958,
-    0.00017388203453559296,
-    0.014125737809978852,
-    0.00015368899740349966,
-    0.000144860240914538,
-    -0.00018243282787509801
-   ],
-   [
-    0.011289246293479006,
-    0.00858355987921956,
-    0.5457552776621295,
-    0.004998980737973484,
-    0.008888785485935306,
-    0.006916607667009821,
-    0.40684736965290036,
-    0.005266167984812538,
-    0.00611088499988203,
-    0.00873953249848563
-   ],
-   [
-    0.00016101456732069082,
-    0.00013178306174697337,
-    0.004998980737973484,
-    0.005487621902180481,
-    -0.0005827979759995539,
-    -0.00012257860805410393,
-    0.006239579734693607,
-    9.255111223290823e-05,
-    0.00010085785432542614,
-    0.0001614794783079217
-   ],
-   [
-    0.0002084988830374182,
-    0.00017675449671033958,
-    0.008888785485935306,
-    -0.0005827979759995539,
-    0.0056757531851347204,
-    -0.0005281269763935002,
-    0.008370005993375743,
-    0.00011406811289700944,
-    0.00015676730722413967,
-    0.0002900685708993521
-   ],
-   [
-    0.00015156295439527578,
-    0.00017388203453559296,
-    0.006916607667009821,
-    -0.00012257860805410393,
-    -0.0005281269763935002,
-    0.010714293551345554,
-    0.008226281335232205,
-    0.00011536240879617214,
-    0.0001666299776542088,
-    0.0010396269176625437
-   ],
-   [
-    0.008468998413443812,
-    0.014125737809978852,
-    0.40684736965290036,
-    0.006239579734693607,
-    0.008370005993375743,
-    0.008226281335232205,
-    0.6744207028609739,
-    0.0036588113800087646,
-    0.005579323138098944,
-    -0.008808530817811373
-   ],
-   [
-    0.00010976322392942738,
-    0.00015368899740349966,
-    0.005266167984812538,
-    9.255111223290823e-05,
-    0.00011406811289700944,
-    0.00011536240879617214,
-    0.0036588113800087646,
-    0.007214003653545628,
-    -0.0009025300376972957,
-    -0.0003404007394065969
-   ],
-   [
-    0.00012744156091435105,
-    0.000144860240914538,
-    0.00611088499988203,
-    0.00010085785432542614,
-    0.00015676730722413967,
-    0.0001666299776542088,
-    0.005579323138098944,
-    -0.0009025300376972957,
-    0.009620560371835389,
-    -0.000947550301374998
-   ],
-   [
-    0.0001834225100000016,
-    -0.00018243282787509801,
-    0.00873953249848563,
-    0.0001614794783079217,
-    0.0002900685708993521,
-    0.0010396269176625437,
-    -0.008808530817811373,
-    -0.0003404007394065969,
-    -0.000947550301374998,
-    0.032895913245474515
-   ]
-  ],
-  "data_fv_range": [
-   45.0,
-   60.0
-  ],
-  "indep_mle": {
-   "hitter": {
-    "cutpoints": [
-     8.311145658701392,
-     9.31919447551668,
-     10.596675445461251,
-     12.84209569292201
+  "bayes": {
+    "cov": [
+      [
+        0.00023642569028175687,
+        0.000178682696841859,
+        0.011289246293479006,
+        0.00016101456732069082,
+        0.0002084988830374182,
+        0.00015156295439527578,
+        0.008468998413443812,
+        0.00010976322392942738,
+        0.00012744156091435105,
+        0.0001834225100000016
+      ],
+      [
+        0.000178682696841859,
+        0.00030026643130201834,
+        0.00858355987921956,
+        0.00013178306174697337,
+        0.00017675449671033958,
+        0.00017388203453559296,
+        0.014125737809978852,
+        0.00015368899740349966,
+        0.000144860240914538,
+        -0.00018243282787509801
+      ],
+      [
+        0.011289246293479006,
+        0.00858355987921956,
+        0.5457552776621295,
+        0.004998980737973484,
+        0.008888785485935306,
+        0.006916607667009821,
+        0.40684736965290036,
+        0.005266167984812538,
+        0.00611088499988203,
+        0.00873953249848563
+      ],
+      [
+        0.00016101456732069082,
+        0.00013178306174697337,
+        0.004998980737973484,
+        0.005487621902180481,
+        -0.0005827979759995539,
+        -0.00012257860805410393,
+        0.006239579734693607,
+        9.255111223290823e-05,
+        0.00010085785432542614,
+        0.0001614794783079217
+      ],
+      [
+        0.0002084988830374182,
+        0.00017675449671033958,
+        0.008888785485935306,
+        -0.0005827979759995539,
+        0.0056757531851347204,
+        -0.0005281269763935002,
+        0.008370005993375743,
+        0.00011406811289700944,
+        0.00015676730722413967,
+        0.0002900685708993521
+      ],
+      [
+        0.00015156295439527578,
+        0.00017388203453559296,
+        0.006916607667009821,
+        -0.00012257860805410393,
+        -0.0005281269763935002,
+        0.010714293551345554,
+        0.008226281335232205,
+        0.00011536240879617214,
+        0.0001666299776542088,
+        0.0010396269176625437
+      ],
+      [
+        0.008468998413443812,
+        0.014125737809978852,
+        0.40684736965290036,
+        0.006239579734693607,
+        0.008370005993375743,
+        0.008226281335232205,
+        0.6744207028609739,
+        0.0036588113800087646,
+        0.005579323138098944,
+        -0.008808530817811373
+      ],
+      [
+        0.00010976322392942738,
+        0.00015368899740349966,
+        0.005266167984812538,
+        9.255111223290823e-05,
+        0.00011406811289700944,
+        0.00011536240879617214,
+        0.0036588113800087646,
+        0.007214003653545628,
+        -0.0009025300376972957,
+        -0.0003404007394065969
+      ],
+      [
+        0.00012744156091435105,
+        0.000144860240914538,
+        0.00611088499988203,
+        0.00010085785432542614,
+        0.00015676730722413967,
+        0.0001666299776542088,
+        0.005579323138098944,
+        -0.0009025300376972957,
+        0.009620560371835389,
+        -0.000947550301374998
+      ],
+      [
+        0.0001834225100000016,
+        -0.00018243282787509801,
+        0.00873953249848563,
+        0.0001614794783079217,
+        0.0002900685708993521,
+        0.0010396269176625437,
+        -0.008808530817811373,
+        -0.0003404007394065969,
+        -0.000947550301374998,
+        0.032895913245474515
+      ]
     ],
-    "slope": 0.1836256586845685
-   },
-   "pitcher": {
-    "cutpoints": [
-     6.953021595562377,
-     8.08516325149143,
-     9.43757160801129,
-     12.902037017861343
+    "data_fv_range": [
+      45.0,
+      60.0
     ],
-    "slope": 0.1542524582695351
-   }
+    "indep_mle": {
+      "hitter": {
+        "cutpoints": [
+          8.311145658701392,
+          9.31919447551668,
+          10.596675445461251,
+          12.84209569292201
+        ],
+        "slope": 0.1836256586845685
+      },
+      "pitcher": {
+        "cutpoints": [
+          6.953021595562377,
+          8.08516325149143,
+          9.43757160801129,
+          12.902037017861343
+        ],
+        "slope": 0.1542524582695351
+      }
+    },
+    "map_params": {
+      "hitter": {
+        "cutpoints": [
+          7.896939381645044,
+          8.898882615829814,
+          10.168309209219554,
+          12.416555560869362
+        ],
+        "slope": 0.17502297799589095
+      },
+      "pitcher": {
+        "cutpoints": [
+          7.34374550099759,
+          8.480670380806886,
+          9.836375926028913,
+          13.149321678505451
+        ],
+        "slope": 0.16247947639606863
+      }
+    },
+    "pooling": {
+      "role_pool_sd_cut": 1.5,
+      "role_pool_sd_slope": 0.04
+    },
+    "theta_map": [
+      0.17502297799589095,
+      0.16247947639606863,
+      7.896939381645044,
+      0.0019413485476500471,
+      0.23856529724519157,
+      0.8101505130600573,
+      7.34374550099759,
+      0.12832714381645366,
+      0.30432201639654927,
+      1.1978377490444132
+    ]
   },
-  "map_params": {
-   "hitter": {
-    "cutpoints": [
-     7.896939381645044,
-     8.898882615829814,
-     10.168309209219554,
-     12.416555560869362
+  "bucket_midpoints": {
+    "hitter": [
+      0.0,
+      0.6000000000000004,
+      1.1999999999999995,
+      1.7999999999999994,
+      2.799578458890877
     ],
-    "slope": 0.17502297799589095
-   },
-   "pitcher": {
-    "cutpoints": [
-     7.34374550099759,
-     8.480670380806886,
-     9.836375926028913,
-     13.149321678505451
+    "pitcher": [
+      0.0,
+      0.6,
+      1.2,
+      1.8,
+      4.911451061912555
+    ]
+  },
+  "empirical_anchors": {
+    "anchors": {
+      "20": 0.0091,
+      "25": 0.0106,
+      "30": 0.012,
+      "35": 0.0143,
+      "40": 0.0703,
+      "45": 0.31,
+      "50": 0.68,
+      "55": 0.98,
+      "60": 1.5,
+      "65": 1.99,
+      "70": 2.47,
+      "80": 3.5
+    },
+    "cohort_window": [
+      2014,
+      2020
     ],
-    "slope": 0.16247947639606863
-   }
+    "diagnostics": {
+      "40": {
+        "blend_w_public": 0.5,
+        "bust_pct": 86.2,
+        "empirical_war_yr": 0.075,
+        "n": 1123,
+        "reference_war_yr": 0.3
+      },
+      "45": {
+        "blend_w_public": 0.5,
+        "bust_pct": 81.6,
+        "empirical_war_yr": 0.128,
+        "n": 1418,
+        "reference_war_yr": 0.5
+      },
+      "50": {
+        "blend_w_public": 0.5,
+        "bust_pct": 49.9,
+        "empirical_war_yr": 0.511,
+        "n": 337,
+        "reference_war_yr": 0.85
+      },
+      "55": {
+        "blend_w_public": 0.5,
+        "bust_pct": 36.9,
+        "empirical_war_yr": 0.806,
+        "n": 122,
+        "reference_war_yr": 1.15
+      },
+      "60": {
+        "blend_w_public": 0.5,
+        "bust_pct": 12.0,
+        "empirical_war_yr": 1.508,
+        "n": 50,
+        "reference_war_yr": 1.5
+      },
+      "65": {
+        "blend_w_public": 0.71,
+        "bust_pct": 0.0,
+        "empirical_war_yr": 2.45,
+        "n": 19,
+        "reference_war_yr": 1.8
+      },
+      "70": {
+        "blend_w_public": 0.82,
+        "bust_pct": 12.5,
+        "empirical_war_yr": 2.781,
+        "n": 8,
+        "reference_war_yr": 2.4
+      },
+      "80": {
+        "blend_w_public": 1.0,
+        "bust_pct": null,
+        "empirical_war_yr": null,
+        "n": 0,
+        "reference_war_yr": 3.5
+      }
+    },
+    "generated_at": "2026-10-03T16:35:15",
+    "n_cohort": 3463,
+    "policy_digest": {
+      "blend_thin_extra": 0.4,
+      "blend_weight_public": 0.5,
+      "min_n_robust": 40
+    },
+    "reference_year": 2026,
+    "anchors_provenance": "SUB-45 KNOTS RE-AMENDED 2026-10-03 for the fWAR LABEL EPOCH (docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md, runbook step J), by the same construction as the 2026-07-29 and 2026-09-04 amendments and for the same reason. `value_framework --fit` cannot emit these knots (its tier list starts at 40, its public-reference fallback hands 20/25/30 the FV35 reference, its flat 0.50 public blend keeps FV40 half-prior, and its round(v, 2) collapses every sub-45 value), so the epoch's routine refit reverted the table to a single constant across FV20..40 again, one declared production value for most served rows. test_empirical_anchors.test_low_end_anchors_are_present_and_measured is the tripwire.\nRE-MEASURED ON THE fWAR LABEL (published FanGraphs WAR, frozen vintage, RESOLVED_THROUGH 2026), resolved matrix pool, both sides, target_censored over 6, knot cell |FV - knot| <= 1.25, seed 20260807, B 2000: FV35 0.0143 WAR/yr CI95 [0.0061, 0.0237] n=721; FV40 0.0703 CI95 [0.0535, 0.0891] n=1263. The eWAR v2 measurements they replace: FV35 0.0069 n=704, FV40 0.071 n=1201. A different label is a different definition, not a gain in accuracy (gate clause (l)).\nThe 20/25/30 knots remain EXTRAPOLATION, not measurement: the resolved pool has no rows below FV32.5, so they are the minimal monotone ramp under the measured FV35, holding the 2026-07-29 ramp SHAPE and rescaling it to the new knot. Treat them as a floor, not a finding. 45 through 80 are the epoch refit's own output and are not touched here.\nSTANDING TRAP: any future `value_framework --fit` reverts this again. Re-apply after every fit; docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md step J says so."
   },
-  "pooling": {
-   "role_pool_sd_cut": 1.5,
-   "role_pool_sd_slope": 0.04
+  "framework_version": "v2.0",
+  "generated_by": "value_framework.py --fit",
+  "method": {
+    "hitter": "proportional_odds",
+    "pitcher": "proportional_odds"
   },
-  "theta_map": [
-   0.17502297799589095,
-   0.16247947639606863,
-   7.896939381645044,
-   0.0019413485476500471,
-   0.23856529724519157,
-   0.8101505130600573,
-   7.34374550099759,
-   0.12832714381645366,
-   0.30432201639654927,
-   1.1978377490444132
-  ]
- },
- "bucket_midpoints": {
-  "hitter": [
-   0.0,
-   0.6000000000000001,
-   1.1999999999999997,
-   1.7999999999999994,
-   2.791160518251502
-  ],
-  "pitcher": [
-   0.0,
-   0.5999999999999999,
-   1.2000000000000002,
-   1.8,
-   4.906328547767275
-  ]
- },
- "empirical_anchors": {
-  "anchors": {
-   "20": 0.0044,
-   "25": 0.0051,
-   "30": 0.0058,
-   "35": 0.0069,
-   "40": 0.071,
-   "45": 0.32,
-   "50": 0.68,
-   "55": 0.98,
-   "60": 1.44,
-   "65": 2.01,
-   "70": 2.49,
-   "80": 3.5
+  "parallel_lines_diagnostic": {
+    "hitter": {
+      "passed": true,
+      "spread": 0.0390588468808476,
+      "threshold_slopes": [
+        0.16919992383043503,
+        0.1753645146840895,
+        0.18515401959147698,
+        0.20825877071128263
+      ]
+    },
+    "pitcher": {
+      "passed": true,
+      "spread": 0.0439288065577455,
+      "threshold_slopes": [
+        0.17477733707756637,
+        0.15202170718409616,
+        0.15112899272298713,
+        0.13084853051982087
+      ]
+    }
   },
-  "cohort_window": [
-   2014,
-   2020
-  ],
-  "diagnostics": {
-   "40": {
-    "blend_w_public": 0.5,
-    "bust_pct": 85.9,
-    "empirical_war_yr": 0.08,
-    "n": 1123,
-    "reference_war_yr": 0.3
-   },
-   "45": {
-    "blend_w_public": 0.5,
-    "bust_pct": 80.8,
-    "empirical_war_yr": 0.132,
-    "n": 1417,
-    "reference_war_yr": 0.5
-   },
-   "50": {
-    "blend_w_public": 0.5,
-    "bust_pct": 51.9,
-    "empirical_war_yr": 0.51,
-    "n": 337,
-    "reference_war_yr": 0.85
-   },
-   "55": {
-    "blend_w_public": 0.5,
-    "bust_pct": 38.5,
-    "empirical_war_yr": 0.817,
-    "n": 122,
-    "reference_war_yr": 1.15
-   },
-   "60": {
-    "blend_w_public": 0.5,
-    "bust_pct": 14.0,
-    "empirical_war_yr": 1.384,
-    "n": 50,
-    "reference_war_yr": 1.5
-   },
-   "65": {
-    "blend_w_public": 0.71,
-    "bust_pct": 0.0,
-    "empirical_war_yr": 2.512,
-    "n": 19,
-    "reference_war_yr": 1.8
-   },
-   "70": {
-    "blend_w_public": 0.82,
-    "bust_pct": 12.5,
-    "empirical_war_yr": 2.913,
-    "n": 8,
-    "reference_war_yr": 2.4
-   },
-   "80": {
-    "blend_w_public": 1.0,
-    "bust_pct": null,
-    "empirical_war_yr": null,
-    "n": 0,
-    "reference_war_yr": 3.5
-   }
+  "per_threshold": {
+    "hitter": [
+      {
+        "intercept": -7.635472609457846,
+        "slope": 0.16919992383043503
+      },
+      {
+        "intercept": -8.934227457914043,
+        "slope": 0.1753645146840895
+      },
+      {
+        "intercept": -10.69929942257496,
+        "slope": 0.18515401959147698
+      },
+      {
+        "intercept": -14.176555767737263,
+        "slope": 0.20825877071128263
+      }
+    ],
+    "pitcher": [
+      {
+        "intercept": -7.9184246235525615,
+        "slope": 0.17477733707756637
+      },
+      {
+        "intercept": -7.975923448298119,
+        "slope": 0.15202170718409616
+      },
+      {
+        "intercept": -9.289797131311406,
+        "slope": 0.15112899272298713
+      },
+      {
+        "intercept": -11.748296064942274,
+        "slope": 0.13084853051982087
+      }
+    ]
   },
-  "generated_at": "2026-09-04T15:43:29",
-  "n_cohort": 3462,
-  "policy_digest": {
-   "blend_thin_extra": 0.4,
-   "blend_weight_public": 0.5,
-   "min_n_robust": 40
+  "proportional_odds": {
+    "hitter": {
+      "cutpoints": [
+        7.896939381645044,
+        8.898882615829814,
+        10.168309209219554,
+        12.416555560869362
+      ],
+      "slope": 0.17502297799589095
+    },
+    "pitcher": {
+      "cutpoints": [
+        7.34374550099759,
+        8.480670380806886,
+        9.836375926028913,
+        13.149321678505451
+      ],
+      "slope": 0.16247947639606863
+    }
   },
-  "reference_year": 2026,
-  "anchors_provenance": "SUB-45 KNOTS RE-AMENDED 2026-09-04 for the eWAR LABEL EPOCH, by the same construction as the 2026-07-29 amendment and for the same reason. `value_framework --fit` cannot emit these knots (its tier list starts at 40, its public-reference fallback hands 20/25/30 the FV35 reference, its flat 0.50 public blend keeps FV40 half-prior, and its round(v, 2) collapses every sub-45 value), so the epoch's routine refit silently reverted the table to a single 0.19 constant across FV20..40 again, which is one declared production value for 72 percent of served rows. test_empirical_anchors.test_low_end_anchors_are_present_and_measured caught it, which is exactly what that tripwire is for.\nRE-MEASURED ON THE eWAR LABEL, resolved matrix pool, both sides, target_censored over 6: FV35 0.0069 WAR/yr CI95 [0.0012, 0.0149] n=704; FV40 0.0710 CI95 [0.0530, 0.0906] n=1201. Both are LOWER than the bWAR-label measurement they replace (0.0188 n=909 and 0.0862 n=2083); the FV40 intervals overlap, the FV35 intervals barely do. The reverted 0.19 seed over-states FV40 by 2.7x on this label.\nThe 20/25/30 knots remain EXTRAPOLATION, not measurement: the resolved pool still has no rows below FV32.5, so they are the minimal monotone ramp under the measured FV35, holding the 2026-07-29 ramp SHAPE and rescaling it to the new knot. Treat them as a floor, not a finding. 45 through 80 are the epoch refit's own output and are not touched here.\nSTANDING TRAP: any future `value_framework --fit` reverts this again. Re-apply after every fit; docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md step J now says so."
- },
- "framework_version": "v2.0",
- "generated_by": "value_framework.py --fit",
- "method": {
-  "hitter": "proportional_odds",
-  "pitcher": "proportional_odds"
- },
- "parallel_lines_diagnostic": {
-  "hitter": {
-   "passed": true,
-   "spread": 0.0390588468808476,
-   "threshold_slopes": [
-    0.16919992383043503,
-    0.1753645146840895,
-    0.18515401959147698,
-    0.20825877071128263
-   ]
+  "reconciliation": {
+    "hitter": {
+      "45.0": {
+        "resid": 0.2012,
+        "target": 0.32,
+        "weighted_avg_war": 0.5212
+      },
+      "50.0": {
+        "resid": 0.1608,
+        "target": 0.68,
+        "weighted_avg_war": 0.8408
+      },
+      "55.0": {
+        "resid": 0.2126,
+        "target": 0.98,
+        "weighted_avg_war": 1.1926
+      },
+      "60.0": {
+        "resid": 0.096,
+        "target": 1.44,
+        "weighted_avg_war": 1.536
+      }
+    },
+    "pitcher": {
+      "45.0": {
+        "resid": 0.1709,
+        "target": 0.32,
+        "weighted_avg_war": 0.4909
+      },
+      "50.0": {
+        "resid": 0.0905,
+        "target": 0.68,
+        "weighted_avg_war": 0.7705
+      },
+      "55.0": {
+        "resid": 0.1046,
+        "target": 0.98,
+        "weighted_avg_war": 1.0846
+      },
+      "60.0": {
+        "resid": -0.0341,
+        "target": 1.44,
+        "weighted_avg_war": 1.4059
+      }
+    }
   },
-  "pitcher": {
-   "passed": true,
-   "spread": 0.0439288065577455,
-   "threshold_slopes": [
-    0.17477733707756637,
-    0.15202170718409616,
-    0.15112899272298713,
-    0.13084853051982087
-   ]
+  "training_n": {
+    "hitter": 678,
+    "pitcher": 437
   }
- },
- "per_threshold": {
-  "hitter": [
-   {
-    "intercept": -7.635472609457846,
-    "slope": 0.16919992383043503
-   },
-   {
-    "intercept": -8.934227457914043,
-    "slope": 0.1753645146840895
-   },
-   {
-    "intercept": -10.69929942257496,
-    "slope": 0.18515401959147698
-   },
-   {
-    "intercept": -14.176555767737263,
-    "slope": 0.20825877071128263
-   }
-  ],
-  "pitcher": [
-   {
-    "intercept": -7.9184246235525615,
-    "slope": 0.17477733707756637
-   },
-   {
-    "intercept": -7.975923448298119,
-    "slope": 0.15202170718409616
-   },
-   {
-    "intercept": -9.289797131311406,
-    "slope": 0.15112899272298713
-   },
-   {
-    "intercept": -11.748296064942274,
-    "slope": 0.13084853051982087
-   }
-  ]
- },
- "proportional_odds": {
-  "hitter": {
-   "cutpoints": [
-    7.896939381645044,
-    8.898882615829814,
-    10.168309209219554,
-    12.416555560869362
-   ],
-   "slope": 0.17502297799589095
-  },
-  "pitcher": {
-   "cutpoints": [
-    7.34374550099759,
-    8.480670380806886,
-    9.836375926028913,
-    13.149321678505451
-   ],
-   "slope": 0.16247947639606863
-  }
- },
- "reconciliation": {
-  "hitter": {
-   "45.0": {
-    "resid": 0.2111,
-    "target": 0.31,
-    "weighted_avg_war": 0.5211
-   },
-   "50.0": {
-    "resid": 0.1705,
-    "target": 0.67,
-    "weighted_avg_war": 0.8405
-   },
-   "55.0": {
-    "resid": 0.2121,
-    "target": 0.98,
-    "weighted_avg_war": 1.1921
-   },
-   "60.0": {
-    "resid": 0.0949,
-    "target": 1.44,
-    "weighted_avg_war": 1.5349
-   }
-  },
-  "pitcher": {
-   "45.0": {
-    "resid": 0.1809,
-    "target": 0.31,
-    "weighted_avg_war": 0.4909
-   },
-   "50.0": {
-    "resid": 0.1005,
-    "target": 0.67,
-    "weighted_avg_war": 0.7705
-   },
-   "55.0": {
-    "resid": 0.1045,
-    "target": 0.98,
-    "weighted_avg_war": 1.0845
-   },
-   "60.0": {
-    "resid": -0.0343,
-    "target": 1.44,
-    "weighted_avg_war": 1.4057
-   }
-  }
- },
- "training_n": {
-  "hitter": 678,
-  "pitcher": 437
- }
 }

@@ -137,8 +137,13 @@ def test_the_client_refuses_the_fv0_sentinel():
     for fv in ("0", "0.0", "19.99", "-1", "NaN", "null", "undefined"):
         assert ctx.eval(f"fvExpectedWarPerYr({fv}, false)") is None, fv
         assert ctx.eval(f"fvExpectedWarPerYr({fv}, true)") is None, fv
-    assert ctx.eval("fvExpectedWarPerYr(20, false)") == pytest.approx(0.09)
-    assert ctx.eval("fvExpectedWarPerYr(45, false)") == pytest.approx(0.65)
+    # RESTAMPED 2026-10-03 for the fWAR label epoch (runbook step J): the FV_WAR_ANCHORS
+    # mirror was synced to value_framework.survivor_expected_war after the refit on the fWAR
+    # training label and the sub-45 knot re-measurement (FV35 0.0069 -> 0.0143), so the
+    # hitter floor moved 0.09 -> 0.18 and FV45 0.65 -> 0.63. The sentinel refusals above,
+    # which are what this test exists for, are unchanged.
+    assert ctx.eval("fvExpectedWarPerYr(20, false)") == pytest.approx(0.18)
+    assert ctx.eval("fvExpectedWarPerYr(45, false)") == pytest.approx(0.63)
 
 
 # ---------------------------------------------------------------- L13-07
