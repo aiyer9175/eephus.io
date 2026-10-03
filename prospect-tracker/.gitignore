@@ -35,6 +35,7 @@ data/rosters_by_org.json
 # rewritten by the DAILY chain before the nightly rsync, so the box pull that
 # deletes the newly-untracked copy self-heals the same night.
 #   leaderboard_gamelogs.json  d5e (every daily + chained monthly night)
+#   prospx_leaderboard.json    d9d (every daily + chained monthly night)
 #   mlb_projections.json       d9b proj_export re-bake
 #   player_links.json          d9b2 mlb_player_export.export -> _export_links
 #   mlb_position_games.json    d9b2 mlb_player_export.export -> _export_position_games
@@ -45,6 +46,7 @@ data/rosters_by_org.json
 # pal.json (6b5), swing_plus.json (6b2), stuff_plus_aaa.json (6b2b),
 # star_label_view.json (test_star_odds.py hard-reads it in the publish gate).
 data/leaderboard_gamelogs.json
+data/prospx_leaderboard.json
 data/mlb_projections.json
 data/player_links.json
 data/mlb_position_games.json
