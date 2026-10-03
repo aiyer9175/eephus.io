@@ -1,0 +1,108 @@
+{
+ "copyright": "Copyright 2026 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+ "stats": [
+  {
+   "type": {
+    "displayName": "season"
+   },
+   "group": {
+    "displayName": "pitching"
+   },
+   "totalSplits": 4,
+   "splits": [
+    {
+     "season": "2024",
+     "stat": {
+      "gamesPlayed": 16,
+      "atBats": 224,
+      "inningsPitched": "63.1",
+      "outs": 190
+     },
+     "team": {
+      "id": 133,
+      "name": "Oakland Athletics"
+     },
+     "player": {
+      "id": 674370,
+      "fullName": "Osvaldo Bido"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "numTeams": 1
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "gamesPlayed": 22,
+      "atBats": 407,
+      "inningsPitched": "113.0",
+      "outs": 339
+     },
+     "team": {
+      "id": 108,
+      "name": "Los Angeles Angels"
+     },
+     "player": {
+      "id": 667755,
+      "fullName": "Jos\u00e9 Soriano"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "numTeams": 1
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "gamesPlayed": 11,
+      "atBats": 202,
+      "inningsPitched": "49.2",
+      "outs": 149
+     },
+     "team": {
+      "id": 111,
+      "name": "Boston Red Sox"
+     },
+     "player": {
+      "id": 682990,
+      "fullName": "Quinn Priester"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "numTeams": 2
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "gamesPlayed": 8,
+      "atBats": 35,
+      "inningsPitched": "6.2",
+      "outs": 20
+     },
+     "team": {
+      "id": 111,
+      "name": "Boston Red Sox"
+     },
+     "player": {
+      "id": 663462,
+      "fullName": "Isaiah Campbell"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "numTeams": 1
+    }
+   ]
+  }
+ ]
+}

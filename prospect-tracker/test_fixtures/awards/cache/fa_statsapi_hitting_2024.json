@@ -1,0 +1,104 @@
+{
+ "copyright": "Copyright 2026 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+ "stats": [
+  {
+   "type": {
+    "displayName": "season"
+   },
+   "group": {
+    "displayName": "hitting"
+   },
+   "totalSplits": 4,
+   "splits": [
+    {
+     "season": "2024",
+     "stat": {
+      "gamesPlayed": 117,
+      "atBats": 328,
+      "plateAppearances": 363
+     },
+     "team": {
+      "id": 112,
+      "name": "Chicago Cubs"
+     },
+     "player": {
+      "id": 665804,
+      "fullName": "Miguel Amaya"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "numTeams": 1
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "gamesPlayed": 115,
+      "atBats": 354,
+      "plateAppearances": 414
+     },
+     "team": {
+      "id": 147,
+      "name": "New York Yankees"
+     },
+     "player": {
+      "id": 669224,
+      "fullName": "Austin Wells"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "numTeams": 1
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "gamesPlayed": 45,
+      "atBats": 71,
+      "plateAppearances": 79
+     },
+     "team": {
+      "id": 138,
+      "name": "St. Louis Cardinals"
+     },
+     "player": {
+      "id": 665877,
+      "fullName": "Jos\u00e9 Ferm\u00edn"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "numTeams": 1
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "gamesPlayed": 8,
+      "atBats": 0,
+      "plateAppearances": 0
+     },
+     "team": {
+      "id": 111,
+      "name": "Boston Red Sox"
+     },
+     "player": {
+      "id": 663462,
+      "fullName": "Isaiah Campbell"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "numTeams": 1
+    }
+   ]
+  }
+ ]
+}

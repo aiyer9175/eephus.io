@@ -1,0 +1,82 @@
+{
+ "copyright": "Copyright 2026 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+ "stats": [
+  {
+   "type": {
+    "displayName": "season"
+   },
+   "group": {
+    "displayName": "hitting"
+   },
+   "totalSplits": 3,
+   "splits": [
+    {
+     "season": "2023",
+     "stat": {
+      "gamesPlayed": 21,
+      "atBats": 51,
+      "plateAppearances": 61
+     },
+     "team": {
+      "id": 138,
+      "name": "St. Louis Cardinals"
+     },
+     "player": {
+      "id": 665877,
+      "fullName": "Jos\u00e9 Ferm\u00edn"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "numTeams": 1
+    },
+    {
+     "season": "2023",
+     "stat": {
+      "gamesPlayed": 19,
+      "atBats": 70,
+      "plateAppearances": 75
+     },
+     "team": {
+      "id": 147,
+      "name": "New York Yankees"
+     },
+     "player": {
+      "id": 669224,
+      "fullName": "Austin Wells"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "numTeams": 1
+    },
+    {
+     "season": "2023",
+     "stat": {
+      "gamesPlayed": 53,
+      "atBats": 131,
+      "plateAppearances": 156
+     },
+     "team": {
+      "id": 112,
+      "name": "Chicago Cubs"
+     },
+     "player": {
+      "id": 665804,
+      "fullName": "Miguel Amaya"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "numTeams": 1
+    }
+   ]
+  }
+ ]
+}

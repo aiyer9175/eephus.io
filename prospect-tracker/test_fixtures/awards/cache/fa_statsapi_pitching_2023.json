@@ -1,0 +1,108 @@
+{
+ "copyright": "Copyright 2026 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+ "stats": [
+  {
+   "type": {
+    "displayName": "season"
+   },
+   "group": {
+    "displayName": "pitching"
+   },
+   "totalSplits": 4,
+   "splits": [
+    {
+     "season": "2023",
+     "stat": {
+      "gamesPlayed": 27,
+      "atBats": 105,
+      "inningsPitched": "28.2",
+      "outs": 86
+     },
+     "team": {
+      "id": 136,
+      "name": "Seattle Mariners"
+     },
+     "player": {
+      "id": 663462,
+      "fullName": "Isaiah Campbell"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "numTeams": 1
+    },
+    {
+     "season": "2023",
+     "stat": {
+      "gamesPlayed": 38,
+      "atBats": 154,
+      "inningsPitched": "42.0",
+      "outs": 126
+     },
+     "team": {
+      "id": 108,
+      "name": "Los Angeles Angels"
+     },
+     "player": {
+      "id": 667755,
+      "fullName": "Jos\u00e9 Soriano"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "numTeams": 1
+    },
+    {
+     "season": "2023",
+     "stat": {
+      "gamesPlayed": 16,
+      "atBats": 204,
+      "inningsPitched": "50.2",
+      "outs": 152
+     },
+     "team": {
+      "id": 134,
+      "name": "Pittsburgh Pirates"
+     },
+     "player": {
+      "id": 674370,
+      "fullName": "Osvaldo Bido"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "numTeams": 1
+    },
+    {
+     "season": "2023",
+     "stat": {
+      "gamesPlayed": 10,
+      "atBats": 200,
+      "inningsPitched": "50.0",
+      "outs": 150
+     },
+     "team": {
+      "id": 134,
+      "name": "Pittsburgh Pirates"
+     },
+     "player": {
+      "id": 682990,
+      "fullName": "Quinn Priester"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "numTeams": 1
+    }
+   ]
+  }
+ ]
+}
