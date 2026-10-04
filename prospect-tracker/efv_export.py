@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import json
 import logging
+import time
+from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
 
@@ -800,77 +802,113 @@ def _tool_provenance() -> dict:
     return out
 
 
-def regen_all(persist: bool = True, include_eval: bool = False) -> dict:
+@contextmanager
+def _regen_stage(name: str, step=None):
+    """PERF_9 (2026-10-03): time one regen_all stage. With `step` (run_monthly's
+    rebuild_only hands its _step recorder down) the stage becomes a named row in the
+    pipeline step table; without it the stage still logs its elapsed time. Timing
+    only: every stage makes the same calls in the same order as before."""
+    t0 = time.monotonic()
+    ok = False
+    try:
+        if step is None:
+            yield
+        else:
+            with step(name):
+                yield
+        ok = True
+    finally:
+        log.info("regen_all stage %s %s in %.1fs", name, "done" if ok else "raised",
+                 time.monotonic() - t0)
+
+
+def regen_all(persist: bool = True, include_eval: bool = False, step=None) -> dict:
     """Run the whole eFV pipeline in dependency order and consolidate data/xfv.json:
     training matrix -> live matrix -> resolved scores -> live scores -> tool eFVs ->
     export. The forward-chained backtest eval (efv_model, the governance artifact) is
     heavy and stable, so it is OPT-IN (include_eval). Requires data/timeseries.json
-    (run after the site export). One call for what was five manual module runs."""
+    (run after the site export). One call for what was five manual module runs.
+
+    `step`, when given, is a callable stage_name -> context manager (run_monthly's
+    step recorder); each stage below runs inside it so the nightly step table ranks
+    the stages. Without it each stage only logs its own elapsed time."""
     import efv_dataset
     import efv_score
     import efv_tools
-    for side in ("hit", "pit"):
-        efv_dataset.run(persist, side)          # labeled training matrix + baseline
-        efv_dataset.build_live(persist, side)   # current active-board feature matrix
+    with _regen_stage("dataset", step):
+        for side in ("hit", "pit"):
+            efv_dataset.run(persist, side)          # labeled training matrix + baseline
+            efv_dataset.build_live(persist, side)   # current active-board feature matrix
     if include_eval:
         import efv_model
+        with _regen_stage("eval", step):
+            for side in ("hit", "pit"):
+                efv_model.run(persist, side)         # forward-chained eval (registry artifact)
+    with _regen_stage("score", step):
         for side in ("hit", "pit"):
-            efv_model.run(persist, side)         # forward-chained eval (registry artifact)
-    for side in ("hit", "pit"):
-        efv_score.run(persist, side)             # resolved cohort scores
-        efv_score.run_live(persist, side)        # live board scores (gated on track record)
-    efv_score.run_backgrade(persist)              # backgrade the rest of the site (graduates etc.)
-    efv_score.score_history(persist)              # eFV-over-time per snapshot (FV history chart)
-    efv_tools.run(persist)                        # resolved tool eFVs
-    efv_tools.run_live(persist)                   # live tool eFVs
+            efv_score.run(persist, side)             # resolved cohort scores
+            efv_score.run_live(persist, side)        # live board scores (gated on track record)
+    with _regen_stage("backgrade", step):
+        efv_score.run_backgrade(persist)              # backgrade the rest of the site (graduates etc.)
+    with _regen_stage("history", step):
+        efv_score.score_history(persist)              # eFV-over-time per snapshot (FV history chart)
+    with _regen_stage("tools", step):
+        efv_tools.run(persist)                        # resolved tool eFVs
+        efv_tools.run_live(persist)                   # live tool eFVs
     # UNGRADED prospects -- production-only leading indicator for the source-ungraded roster
     # players (DSL/CPX breakouts etc.). Separate model + artifact (data/xfv_ungraded.json);
     # NOT folded into the flagship xfv.json or the farm-rank composite. Needs rosters_by_org.json
     # (written by the site export) + the labeled matrix (built above). Best-effort.
-    try:
-        import efv_ungraded
-        efv_ungraded.build(persist)
-    except Exception:
-        log.exception("efv_ungraded.build failed -- continuing without ungraded grades")
+    with _regen_stage("ungraded", step):
+        try:
+            import efv_ungraded
+            efv_ungraded.build(persist)
+        except Exception:
+            log.exception("efv_ungraded.build failed -- continuing without ungraded grades")
     # PROVISIONAL v2 (PV-06): for the same source-ungraded universe, the chance of a first
     # grade within the next list cycle (ANY / FanGraphs / Pipeline x 6 / 12 months) and the
     # expected first FV on each source's own scale, plus its forward-chained BACKCAST eval
     # (data/provisional_v2.json, data/provisional_v2_eval.json). Reads grades and the MiLB /
     # draft caches only, never WAR; feeds nothing above. Skipped when not persisting.
     if persist:
-        try:
-            import provisional_v2
-            provisional_v2.build(persist)
-        except Exception:
-            log.exception("provisional_v2.build failed -- continuing without provisional v2")
+        with _regen_stage("provisional_v2", step):
+            try:
+                import provisional_v2
+                provisional_v2.build(persist)
+            except Exception:
+                log.exception("provisional_v2.build failed -- continuing without provisional v2")
     # C1: refresh the shipped-distribution reliability curves + drift tripwire.
     # Diagnostic only (no served number depends on them); regen_all previously
     # omitted it, leaving data/xfv_reliability.json stale. Best-effort.
-    try:
-        import efv_reliability
-        efv_reliability.build(persist)
-    except Exception:
-        log.exception("efv_reliability.build failed -- continuing without reliability regen")
-    out = run(persist)
+    with _regen_stage("reliability", step):
+        try:
+            import efv_reliability
+            efv_reliability.build(persist)
+        except Exception:
+            log.exception("efv_reliability.build failed -- continuing without reliability regen")
+    with _regen_stage("consolidate", step):
+        out = run(persist)
     # Valuation curve (glossary Methodology surface): what a grade is worth per
     # tier -- published anchor vs engine model vs live-board medians. Best-effort
     # like the reliability block above, fed the freshly consolidated by_player
     # so its live medians can never lag the export they describe. Skipped when
     # not persisting (a dry run must not touch committed data/ artifacts).
     if persist:
-        try:
-            _valuation_curve(out.get("by_player"))
-        except Exception:
-            log.exception("_valuation_curve failed -- continuing without valuation-curve regen")
+        with _regen_stage("valuation_curve", step):
+            try:
+                _valuation_curve(out.get("by_player"))
+            except Exception:
+                log.exception("_valuation_curve failed -- continuing without valuation-curve regen")
         # S-XLINE-4 overlay signal bake (data/statcast_alevel_signals.json):
         # refresh the A/CPX whiff/velo z legs from the stored zone/statcast
         # payloads for the NEXT scoring pass (frozen coefficients re-emitted
         # verbatim, never refit). Best-effort like the blocks above; offline.
-        try:
-            import statcast_alevel_export
-            statcast_alevel_export.run()
-        except Exception:
-            log.exception("statcast_alevel_export failed -- continuing with the prior signal bake")
+        with _regen_stage("statcast_alevel", step):
+            try:
+                import statcast_alevel_export
+                statcast_alevel_export.run()
+            except Exception:
+                log.exception("statcast_alevel_export failed -- continuing with the prior signal bake")
     return out
 
 

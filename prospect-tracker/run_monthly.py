@@ -125,6 +125,41 @@ def _efv_progress_update(out_dir: Path, where: str) -> None:
 
 STEP_TIMINGS_PATH = Path(__file__).resolve().parent / "logs" / "pipeline_steps_latest.json"
 
+# PERF_9 (2026-10-03): steps recorded INSIDE another recorded step. A step id
+# "<root>.<name>" (or "<root>.<name>.<name>") whose <root> is listed here is a
+# sub-step: the step table ranks it like any row and gives it a "parent" field
+# (the id with its last ".<name>" dropped), and its seconds are never added to
+# the run total a second time while an enclosing row is recorded. Listed by name,
+# not matched by pattern: main()'s "2b.ii" style ids are siblings of "2b", run
+# after it, not inside it.
+_NESTED_STEP_PARENTS = frozenset({"d9"})
+
+
+def _step_token(name: str) -> str:
+    return name.split(" ", 1)[0].rstrip(".")
+
+
+def _step_parent(name: str) -> str | None:
+    """The enclosing step id of a sub-step row, None for a top-level row."""
+    tok = _step_token(name)
+    head, dot, tail = tok.partition(".")
+    if dot and tail[:1].isalpha() and head in _NESTED_STEP_PARENTS:
+        return tok.rsplit(".", 1)[0]
+    return None
+
+
+def _top_level_seconds(rows: list[tuple[str, float]]) -> float:
+    """Sum of the rows that no other recorded row encloses."""
+    tokens = {_step_token(n) for n, _ in rows}
+
+    def _enclosed(name: str) -> bool:
+        if _step_parent(name) is None:
+            return False
+        parts = _step_token(name).split(".")
+        return any(".".join(parts[:i]) in tokens for i in range(1, len(parts)))
+
+    return sum(d for n, d in rows if not _enclosed(n))
+
 
 def _provisional_nightly(log: logging.Logger, where: str) -> None:
     """PV-02: retain tonight's served provisional grade
@@ -181,14 +216,17 @@ def write_step_timings(mode: str, total_runtime: float,
 
         {"generated_at": iso, "mode": "monthly"|"daily"|..., "run_id": str,
          "total_s": float, "n_steps": int,
-         "steps": [{"step", "seconds", "pct"}, ...]}   # slowest first
+         "steps": [{"step", "seconds", "pct"[, "parent"]}, ...]}   # slowest first
+
+    A sub-step row (see _NESTED_STEP_PARENTS) carries "parent"; total_s counts
+    it once, through its parent row.
 
     Written LAST-WINS to a single stable filename so before/after is a two-file
     diff. Best-effort: instrumentation must never be able to fail a run."""
     out_path = Path(path or STEP_TIMINGS_PATH)
     try:
         ranked = sorted(_STEP_TIMES, key=lambda x: x[1], reverse=True)
-        total = max(total_runtime, sum(d for _, d in ranked))
+        total = max(total_runtime, _top_level_seconds(ranked))
         payload = {
             "generated_at": datetime.now().isoformat(timespec="seconds"),
             "mode": mode,
@@ -196,7 +234,8 @@ def write_step_timings(mode: str, total_runtime: float,
             "total_s": round(total, 2),
             "n_steps": len(ranked),
             "steps": [{"step": name, "seconds": round(dur, 2),
-                       "pct": round((dur / total * 100) if total > 0 else 0.0, 2)}
+                       "pct": round((dur / total * 100) if total > 0 else 0.0, 2),
+                       **({"parent": _step_parent(name)} if _step_parent(name) else {})}
                       for name, dur in ranked],
         }
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -221,7 +260,7 @@ def _log_step_summary(log: logging.Logger, total_runtime: float,
         log.info("step summary: no timed steps recorded")
         return
     ranked = sorted(_STEP_TIMES, key=lambda x: x[1], reverse=True)
-    total = max(total_runtime, sum(d for _, d in ranked))
+    total = max(total_runtime, _top_level_seconds(ranked))
     log.info("=" * 64)
     log.info("RUN STEP SUMMARY — sorted by duration")
     log.info("%-44s %10s %8s", "step", "duration", "% total")
@@ -1596,54 +1635,59 @@ def rebuild_only(out_dir: Path = Path("data"), *,
         stream=sys.stdout,
     )
     log = logging.getLogger("rebuild_only")
-    init_db()
-    _write_dpw_series_step(log)
-    ingest_source_article_drops(out_dir, log)
+    with _step("d9.dpw. DB init + the one $/WAR series", log):
+        init_db()
+        _write_dpw_series_step(log)
+    with _step("d9.ingest. Source article drops + FanGraphs drop folder", log):
+        ingest_source_article_drops(out_dir, log)
 
-    # First: drain the FanGraphs drop folder so any waiting CSVs land
-    # in the DB before we rebuild. (The FG ingest internally routes
-    # <year>draft slugs to draft_csv, so dropping a draft CSV set works
-    # without a separate call.)
-    _stage_fangraphs_articles(log)   # committed FG-article boards -> drop folder
-    try:
-        from fangraphs_csv import ingest_drops as _fg_ingest_drops
-        fg_inserted, fg_files = _fg_ingest_drops(called_from_run_monthly=True)
-        if fg_files:
-            log.info("fangraphs_csv: ingested %d snapshots from %d report-set(s)",
-                     fg_inserted, fg_files)
-    except Exception:
-        log.exception("fangraphs_csv: drop-folder ingest failed — continuing")
+        # First: drain the FanGraphs drop folder so any waiting CSVs land
+        # in the DB before we rebuild. (The FG ingest internally routes
+        # <year>draft slugs to draft_csv, so dropping a draft CSV set works
+        # without a separate call.)
+        _stage_fangraphs_articles(log)   # committed FG-article boards -> drop folder
+        try:
+            from fangraphs_csv import ingest_drops as _fg_ingest_drops
+            fg_inserted, fg_files = _fg_ingest_drops(called_from_run_monthly=True)
+            if fg_files:
+                log.info("fangraphs_csv: ingested %d snapshots from %d report-set(s)",
+                         fg_inserted, fg_files)
+        except Exception:
+            log.exception("fangraphs_csv: drop-folder ingest failed - continuing")
 
     # Draft pipeline — promote any newly-drafted players + write the
     # draft_timeseries.json sidecar. Promotion is idempotent.
-    try:
-        from draft_promotion import promote_drafted_players, seed_signed_draftees
-        from draft_export import export_draft_json
-        promote_drafted_players()
-        seed_signed_draftees()
-        n_draft = export_draft_json(out_dir / "draft_timeseries.json")
-        log.info("draft pipeline (rebuild): exported %d draft prospects", n_draft)
-    except Exception:
-        log.exception("draft pipeline crashed in rebuild_only — continuing")
+    with _step("d9.draft. Draft promotion + draft sidecar", log):
+        try:
+            from draft_promotion import promote_drafted_players, seed_signed_draftees
+            from draft_export import export_draft_json
+            promote_drafted_players()
+            seed_signed_draftees()
+            n_draft = export_draft_json(out_dir / "draft_timeseries.json")
+            log.info("draft pipeline (rebuild): exported %d draft prospects", n_draft)
+        except Exception:
+            log.exception("draft pipeline crashed in rebuild_only - continuing")
 
     # Overseas pipeline — promote any newly-signed KBO/NPB players +
     # ingest any manual postings + write the overseas_timeseries.json
     # sidecar. Skips stats refresh on rebuild_only (that's a slow HTTP
     # path; only fires in the full main()).
-    try:
-        from overseas_promotion import promote_signed_players, ingest_postings
-        from overseas_export import export_overseas_json
-        ingest_postings()
-        promote_signed_players()
-        n_ov = export_overseas_json(out_dir / "overseas_timeseries.json")
-        log.info("overseas pipeline (rebuild): exported %d overseas prospects", n_ov)
-    except Exception:
-        log.exception("overseas pipeline crashed in rebuild_only — continuing")
+    with _step("d9.overseas. Overseas promotion + overseas sidecar", log):
+        try:
+            from overseas_promotion import promote_signed_players, ingest_postings
+            from overseas_export import export_overseas_json
+            ingest_postings()
+            promote_signed_players()
+            n_ov = export_overseas_json(out_dir / "overseas_timeseries.json")
+            log.info("overseas pipeline (rebuild): exported %d overseas prospects", n_ov)
+        except Exception:
+            log.exception("overseas pipeline crashed in rebuild_only - continuing")
 
-    log.info("rebuild_only: loading snapshots + ancillary tables from DB")
-    all_snaps = load_all_snapshots()
-    timeseries = build_timeseries(all_snaps, normalize=ADOPT_NORMALIZED_CONSENSUS)
-    log.info("rebuild_only: built timeseries for %d players", len(timeseries))
+    with _step("d9.build. Load snapshots + build the consensus timeseries", log):
+        log.info("rebuild_only: loading snapshots + ancillary tables from DB")
+        all_snaps = load_all_snapshots()
+        timeseries = build_timeseries(all_snaps, normalize=ADOPT_NORMALIZED_CONSENSUS)
+        log.info("rebuild_only: built timeseries for %d players", len(timeseries))
 
     # Preserve the existing rosters_by_org sidecar — it's built at
     # scrape time during the full pipeline, so a rebuild-only pass would
@@ -1651,69 +1695,71 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     # Same pass-through applies to roster_status (used by per-prospect
     # 40-man / options state on the detail page) so we don't lose those
     # signals on every fast rebuild.
-    existing_rosters: dict = {}
-    rosters_path = out_dir / "rosters_by_org.json"
-    if rosters_path.exists():
-        try:
-            with rosters_path.open(encoding="utf-8") as fp:
-                existing_rosters = json.load(fp)
-        except Exception:
-            log.exception("rebuild_only: could not load existing rosters_by_org.json — "
-                          "falling back to empty (farm-detail pages will be blank)")
-    else:
-        log.warning("rebuild_only: no existing rosters_by_org.json — farm-detail "
-                    "pages will be blank until a full `python run_monthly.py` runs")
+    with _step("d9.inputs. Rosters, acquisitions, Spotrac IFA + contracts", log):
+        existing_rosters: dict = {}
+        rosters_path = out_dir / "rosters_by_org.json"
+        if rosters_path.exists():
+            try:
+                with rosters_path.open(encoding="utf-8") as fp:
+                    existing_rosters = json.load(fp)
+            except Exception:
+                log.exception("rebuild_only: could not load existing rosters_by_org.json - "
+                              "falling back to empty (farm-detail pages will be blank)")
+        else:
+            log.warning("rebuild_only: no existing rosters_by_org.json - farm-detail "
+                        "pages will be blank until a full `python run_monthly.py` runs")
 
-    # IFA scrape feeds both ifa_spending_by_org (per-org cycle totals) and
-    # ifa_bonus_by_key (per-player bonus merge). Spotrac HTML cache keeps
-    # this offline on warm runs.
-    acquisitions = load_acquisitions()
-    ifa_bonus_by_key, ifa_spending_by_org = _load_spotrac_ifa(
-        force=False, log=log, label="rebuild_only IFA",
-    )
-    _merge_ifa_bonuses_into_acquisitions(
-        acquisitions, ifa_bonus_by_key, log, label="rebuild_only",
-    )
+        # IFA scrape feeds both ifa_spending_by_org (per-org cycle totals) and
+        # ifa_bonus_by_key (per-player bonus merge). Spotrac HTML cache keeps
+        # this offline on warm runs.
+        acquisitions = load_acquisitions()
+        ifa_bonus_by_key, ifa_spending_by_org = _load_spotrac_ifa(
+            force=False, log=log, label="rebuild_only IFA",
+        )
+        _merge_ifa_bonuses_into_acquisitions(
+            acquisitions, ifa_bonus_by_key, log, label="rebuild_only",
+        )
 
-    # Spotrac per-team contracts. Loaded offline from the per-team HTML
-    # cache; manual overrides in data/contract_overrides.json layer on
-    # top of this inside storage.py.
-    contracts_by_key = _load_spotrac_contracts(
-        force=False, log=log, label="rebuild_only contracts",
-    )
+        # Spotrac per-team contracts. Loaded offline from the per-team HTML
+        # cache; manual overrides in data/contract_overrides.json layer on
+        # top of this inside storage.py.
+        contracts_by_key = _load_spotrac_contracts(
+            force=False, log=log, label="rebuild_only contracts",
+        )
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "timeseries.json"
-    export_timeseries_json(
-        timeseries, out_path,
-        statlines=load_statlines(),
-        pitch_arsenals=load_pitch_arsenals(),
-        zone_metrics=load_zone_metrics(),
-        statcast_metrics=load_statcast_metrics(),
-        sabermetrics=load_sabermetrics(),
-        trades_by_player=load_trades(),
-        transactions_by_player=_derive_all_transactions(),
-        career_stats=load_career_stats(),
-        career_war=load_career_war(),
-        acquisitions=acquisitions,
-        il_status=load_il_status(),
-        rosters_by_org=existing_rosters,
-        level_changes=_derive_all_level_changes(),
-        roster_status=load_roster_status(),
-        ifa_spending_by_org=ifa_spending_by_org,
-        contracts_by_key=contracts_by_key,
-        # v30.7 — Rebuild-only was passing draft_pools={} (empty),
-        # which made fin_draft_pool_efficiency return None for every
-        # org → all 30 collapsed to a default 'C' grade. build_draft_pools
-        # hits a 7-day on-disk cache for any year already scraped, so
-        # the warm path is fast (no HTTP); cold years would scrape, but
-        # the 2021-current run normally lives on disk. Failure here is
-        # logged + swallowed to preserve the rebuild-doesn't-network
-        # contract — fin_draft_pool_efficiency falls back to None
-        # exactly as before.
-        draft_pools=_load_draft_pools_for_rebuild(),
-        player_ids={},
-    )
+    with _step("d9.export. Serialise the timeseries export", log):
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_path = out_dir / "timeseries.json"
+        export_timeseries_json(
+            timeseries, out_path,
+            statlines=load_statlines(),
+            pitch_arsenals=load_pitch_arsenals(),
+            zone_metrics=load_zone_metrics(),
+            statcast_metrics=load_statcast_metrics(),
+            sabermetrics=load_sabermetrics(),
+            trades_by_player=load_trades(),
+            transactions_by_player=_derive_all_transactions(),
+            career_stats=load_career_stats(),
+            career_war=load_career_war(),
+            acquisitions=acquisitions,
+            il_status=load_il_status(),
+            rosters_by_org=existing_rosters,
+            level_changes=_derive_all_level_changes(),
+            roster_status=load_roster_status(),
+            ifa_spending_by_org=ifa_spending_by_org,
+            contracts_by_key=contracts_by_key,
+            # v30.7 - Rebuild-only was passing draft_pools={} (empty),
+            # which made fin_draft_pool_efficiency return None for every
+            # org → all 30 collapsed to a default 'C' grade. build_draft_pools
+            # hits a 7-day on-disk cache for any year already scraped, so
+            # the warm path is fast (no HTTP); cold years would scrape, but
+            # the 2021-current run normally lives on disk. Failure here is
+            # logged + swallowed to preserve the rebuild-doesn't-network
+            # contract - fin_draft_pool_efficiency falls back to None
+            # exactly as before.
+            draft_pools=_load_draft_pools_for_rebuild(),
+            player_ids={},
+        )
 
     # eFV — our outcome-grounded grade. Regenerates the labeled training matrix +
     # the CURRENT active-board feature matrix from the just-written timeseries.json,
@@ -1721,13 +1767,15 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     # and consolidates data/xfv.json (the site sidecar shown next to consensus FV).
     # The forward-chained backtest eval (registry artifact) is stable -> not re-run
     # here. Best-effort; a failure must not abort the run. Provisional grade.
-    try:
-        from efv_export import regen_all as _regen_xfv
-        _xfv = _regen_xfv()
-        log.info("eFV (rebuild): %d players (%d live board) -> data/xfv.json",
-                 _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
-    except Exception:
-        log.exception("eFV regen crashed in rebuild_only — continuing")
+    with _step("d9.efv. eFV regen (efv_export.regen_all)", log):
+        try:
+            from efv_export import regen_all as _regen_xfv
+            _xfv = _regen_xfv(step=lambda _stage: _step(
+                f"d9.efv.{_stage}. eFV regen stage ({_stage})", log))
+            log.info("eFV (rebuild): %d players (%d live board) -> data/xfv.json",
+                     _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
+        except Exception:
+            log.exception("eFV regen crashed in rebuild_only - continuing")
 
     # eFV REGEN TRIPWIRES (lane T, 2026-08-07). Records, per regen, the training
     # pool's MiLB coverage, the SERVED ridge weights, and how much of the live
@@ -1751,15 +1799,16 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     # failure class it exists to catch. A tripwire FIRING leaves ok True and
     # rides log.warning plus the ledger: the measured base rate is about one
     # regen in three, and a RED at that rate is a RED nobody reads.
-    try:
-        from tools.efv_regen_tripwire import run as _regen_tripwire
-        _tw = _regen_tripwire(log)
-        _record_ingest("efv_regen_tripwire", bool(_tw.get("observed")),
-                       int(_tw.get("n_alerts") or 0),
-                       _tw.get("message") or "", scope="", log=log)
-    except Exception as e:                                # noqa: BLE001
-        log.exception("eFV regen tripwire crashed in rebuild_only - continuing")
-        _record_ingest("efv_regen_tripwire", False, 0, f"crashed: {e}", log=log)
+    with _step("d9.efv_tripwire. eFV regen tripwires", log):
+        try:
+            from tools.efv_regen_tripwire import run as _regen_tripwire
+            _tw = _regen_tripwire(log)
+            _record_ingest("efv_regen_tripwire", bool(_tw.get("observed")),
+                           int(_tw.get("n_alerts") or 0),
+                           _tw.get("message") or "", scope="", log=log)
+        except Exception as e:                                # noqa: BLE001
+            log.exception("eFV regen tripwire crashed in rebuild_only - continuing")
+            _record_ingest("efv_regen_tripwire", False, 0, f"crashed: {e}", log=log)
 
     # BOARD RANK RE-BAKE (2026-09-05). export_timeseries_json above baked overall_rank /
     # org_rank off the eFV file ON DISK, which regen_all has just REPLACED, so until this
@@ -1772,28 +1821,30 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     # directly after the regen and BEFORE every sidecar that reads overall_rank (ifa_export,
     # identity_audit, org_tendencies), which is why the eFV block moved up to here on the
     # same date. Reports through ingest health; never aborts the run.
-    try:
-        from storage import rebake_board_ranks as _rebake_ranks
-        _rb = _rebake_ranks(out_path, log=log)
-        log.info("board ranks re-baked on the fresh eFV file: %d active rows, %d moved "
-                 "(top 5: %s)", _rb.get("n_active") or 0, _rb.get("n_moved") or 0,
-                 ", ".join(f"#{i} {pk}" for i, pk, _g in (_rb.get("top") or [])[:5]))
-        _record_ingest("board_rank_rebake", bool(_rb.get("written")),
-                       int(_rb.get("n_moved") or 0), _rb.get("message") or "",
-                       scope="", log=log)
-    except Exception as e:                                # noqa: BLE001
-        log.exception("board rank re-bake crashed in rebuild_only - continuing")
-        _record_ingest("board_rank_rebake", False, 0, f"crashed: {e}", log=log)
+    with _step("d9.rebake. Board rank re-bake on the fresh eFV file", log):
+        try:
+            from storage import rebake_board_ranks as _rebake_ranks
+            _rb = _rebake_ranks(out_path, log=log)
+            log.info("board ranks re-baked on the fresh eFV file: %d active rows, %d moved "
+                     "(top 5: %s)", _rb.get("n_active") or 0, _rb.get("n_moved") or 0,
+                     ", ".join(f"#{i} {pk}" for i, pk, _g in (_rb.get("top") or [])[:5]))
+            _record_ingest("board_rank_rebake", bool(_rb.get("written")),
+                           int(_rb.get("n_moved") or 0), _rb.get("message") or "",
+                           scope="", log=log)
+        except Exception as e:                                # noqa: BLE001
+            log.exception("board rank re-bake crashed in rebuild_only - continuing")
+            _record_ingest("board_rank_rebake", False, 0, f"crashed: {e}", log=log)
 
     # International Amateurs sidecar — IFA signing classes (2021–current)
     # from the cached Spotrac tracker, enriched against the freshly-written
     # timeseries.json. Best-effort; a failure here must not abort the run.
-    try:
-        from ifa_export import export_ifa_json
-        n_ifa = export_ifa_json(out_dir / "ifa_timeseries.json")
-        log.info("ifa pipeline (rebuild): exported %d signings", n_ifa)
-    except Exception:
-        log.exception("ifa export crashed in rebuild_only — continuing")
+    with _step("d9.ifa. International amateurs sidecar", log):
+        try:
+            from ifa_export import export_ifa_json
+            n_ifa = export_ifa_json(out_dir / "ifa_timeseries.json")
+            log.info("ifa pipeline (rebuild): exported %d signings", n_ifa)
+        except Exception:
+            log.exception("ifa export crashed in rebuild_only - continuing")
 
     # Merged-identity report (the "Jesus Flores" class): two humans whose
     # names normalize to the same slug fused onto one player_key. Pure
@@ -1802,74 +1853,80 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     # anything. Writes data/identity_collisions.json so the defect is
     # visible on every build instead of being found by a reader.
     # Best-effort; a failure must not abort the run.
-    try:
-        from identity_audit import build as _build_identity_audit
-        _ident = _build_identity_audit(path=out_dir / "identity_collisions.json")
-        log.info("identity audit (rebuild): %d critical keys (%d active), "
-                 "%d frankenstein records",
-                 _ident["summary"]["critical_player_keys"],
-                 _ident["summary"]["critical_active_player_keys"],
-                 _ident["summary"]["frankenstein_records"])
-    except Exception:
-        log.exception("identity audit crashed in rebuild_only — continuing")
+    with _step("d9.identity. Merged-identity audit", log):
+        try:
+            from identity_audit import build as _build_identity_audit
+            _ident = _build_identity_audit(path=out_dir / "identity_collisions.json")
+            log.info("identity audit (rebuild): %d critical keys (%d active), "
+                     "%d frankenstein records",
+                     _ident["summary"]["critical_player_keys"],
+                     _ident["summary"]["critical_active_player_keys"],
+                     _ident["summary"]["frankenstein_records"])
+        except Exception:
+            log.exception("identity audit crashed in rebuild_only - continuing")
 
     # CollegeSavant -> Single-A translation. Re-fits the matched-pair factors
     # against the just-refreshed Single-A statlines and rebuilds the per-player
     # sidecar (CS player pages) + the PROSPX draft bridge. Reads CollegeSavant's
     # vendored TrackMan data + the DB; the factor bands tighten as more
     # college->Single-A pairs accrue. Best-effort; a failure must not abort.
-    try:
-        from college_translation import build as _build_college_translation
-        _ct = _build_college_translation(out_dir=out_dir)
-        log.info("CollegeSavant translation (rebuild): %d factor blocks, %d draft-bridge entries",
-                 len(_ct.get("factors", {})), _ct.get("bridge_count", 0))
-    except Exception:
-        log.exception("CollegeSavant translation crashed in rebuild_only — continuing")
+    with _step("d9.college. CollegeSavant to Single-A translation", log):
+        try:
+            from college_translation import build as _build_college_translation
+            _ct = _build_college_translation(out_dir=out_dir)
+            log.info("CollegeSavant translation (rebuild): %d factor blocks, %d draft-bridge entries",
+                     len(_ct.get("factors", {})), _ct.get("bridge_count", 0))
+        except Exception:
+            log.exception("CollegeSavant translation crashed in rebuild_only - continuing")
 
     # Organization Tendencies — pure aggregation over the DB + the
     # just-rebuilt sidecars (timeseries, ifa, debuts). Best-effort.
-    try:
-        from org_tendencies import export as _export_ot
-        _export_ot()
-    except Exception:
-        log.exception("org tendencies export crashed in rebuild_only — continuing")
+    with _step("d9.org_tendencies. Organization Tendencies", log):
+        try:
+            from org_tendencies import export as _export_ot
+            _export_ot()
+        except Exception:
+            log.exception("org tendencies export crashed in rebuild_only - continuing")
 
     # MiLB -> first-MLB rate translation (K% / BB%; matched-pair, LOO-validated).
     # Needs the eFV matrices (built above) + debuts.json. Best-effort.
-    try:
-        import milb_translation
-        _mt = milb_translation.build()
-        log.info("MiLB->MLB rate translation: %d fits -> data/milb_translation.json",
-                 len(_mt["fits"]))
-    except Exception:
-        log.exception("milb_translation crashed in rebuild_only - continuing")
+    with _step("d9.milb_translation. MiLB to first-MLB rate translation", log):
+        try:
+            import milb_translation
+            _mt = milb_translation.build()
+            log.info("MiLB->MLB rate translation: %d fits -> data/milb_translation.json",
+                     len(_mt["fits"]))
+        except Exception:
+            log.exception("milb_translation crashed in rebuild_only - continuing")
 
     # Advancement Pace+ (W5, descriptive display ONLY - contract forbids any model
     # consumer) + defensive-home sidecar (W7). Both read caches/DB already refreshed
     # above and are compare-before-write. Best-effort.
-    try:
-        import advancement_pace_export
-        advancement_pace_export.run()
-        log.info("advancement_pace_export: refreshed data/advancement_pace.json")
-    except Exception:
-        log.exception("advancement_pace_export crashed in rebuild_only - continuing")
-    try:
-        import def_home_export
-        def_home_export.run()
-        log.info("def_home_export: refreshed data/def_home.json")
-    except Exception:
-        log.exception("def_home_export crashed in rebuild_only - continuing")
+    with _step("d9.pace_defhome. Advancement Pace+ and defensive home", log):
+        try:
+            import advancement_pace_export
+            advancement_pace_export.run()
+            log.info("advancement_pace_export: refreshed data/advancement_pace.json")
+        except Exception:
+            log.exception("advancement_pace_export crashed in rebuild_only - continuing")
+        try:
+            import def_home_export
+            def_home_export.run()
+            log.info("def_home_export: refreshed data/def_home.json")
+        except Exception:
+            log.exception("def_home_export crashed in rebuild_only - continuing")
 
     # eFV PROXY — faster-resolving leading indicator (pre-debut profile -> first-MLB Statcast
     # quality), forward-validated on recent debut cohorts. Separate artifact, NOT eFV; pulls
     # Savant expected-stats (cached). Best-effort; a Savant outage must not abort the run.
-    try:
-        import efv_proxy as _xfv_proxy
-        _xp = _xfv_proxy.run()
-        log.info("eFV proxy: hit r=%s / pit r=%s -> data/xfv_proxy_eval.json",
-                 _xp["sides"].get("hit", {}).get("r"), _xp["sides"].get("pit", {}).get("r"))
-    except Exception:
-        log.exception("eFV proxy crashed in rebuild_only — continuing")
+    with _step("d9.efv_proxy. eFV proxy leading indicator", log):
+        try:
+            import efv_proxy as _xfv_proxy
+            _xp = _xfv_proxy.run()
+            log.info("eFV proxy: hit r=%s / pit r=%s -> data/xfv_proxy_eval.json",
+                     _xp["sides"].get("hit", {}).get("r"), _xp["sides"].get("pit", {}).get("r"))
+        except Exception:
+            log.exception("eFV proxy crashed in rebuild_only - continuing")
 
     # MLB Projections re-bake. THIS BLOCK IS ORDER-CRITICAL IN BOTH DIRECTIONS,
     # and it is here (not in the daily tail) because it sits between its two
@@ -1904,21 +1961,22 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     # written file (_ts_payload below). Dropping it more than covers proj_export's
     # own copy. Mirrors the same del run_daily does before it calls us. all_snaps
     # stays: _post_export_summary at the tail still reads it.
-    import gc as _gc
-    del timeseries
-    _gc.collect()
+    with _step("d9.proj. MLB projections re-bake (proj_export)", log):
+        import gc as _gc
+        del timeseries
+        _gc.collect()
 
-    # Best-effort in the same shape as every other step here: it reads cached
-    # FA/contract inputs, and a cache miss must not abort the rebuild. If it does
-    # fail, the trade board below prices off the LAST GOOD projections file, which
-    # is exactly the (bad) behaviour this move replaces, not a new failure mode.
-    try:
-        from proj_export import export as _export_proj
-        _n_proj = _export_proj()   # returns the payload size in bytes, not a row count
-        log.info("mlb projections (rebuild): %dKB -> data/mlb_projections.json "
-                 "(post eFV regen, pre trade-value export)", int(_n_proj) // 1024)
-    except Exception:
-        log.exception("proj_export crashed in rebuild_only - continuing")
+        # Best-effort in the same shape as every other step here: it reads cached
+        # FA/contract inputs, and a cache miss must not abort the rebuild. If it does
+        # fail, the trade board below prices off the LAST GOOD projections file, which
+        # is exactly the (bad) behaviour this move replaces, not a new failure mode.
+        try:
+            from proj_export import export as _export_proj
+            _n_proj = _export_proj()   # returns the payload size in bytes, not a row count
+            log.info("mlb projections (rebuild): %dKB -> data/mlb_projections.json "
+                     "(post eFV regen, pre trade-value export)", int(_n_proj) // 1024)
+        except Exception:
+            log.exception("proj_export crashed in rebuild_only - continuing")
 
     # The nightly standings read's health row (STANDINGS_9). proj_export above
     # made the season's one standings_now read through its current-season
@@ -1938,38 +1996,39 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     # GRPO breakout scores — runs before trade values so scores can adjust FV priors.
     # Parse the 66MB timeseries.json ONCE; reused by the GRPO + trade-value blocks below
     # (was parsed 3x in immediate succession -- ~0.68s each).
-    try:
-        _ts_payload = json.loads(out_path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        _ts_payload = {}
-    try:
-        from grpo_prospect import export_grpo_scores
-        # storage writes the graduate sidecar as debuts.json (renamed from
-        # graduates.json); fall back like the grpo CLI so retrain never
-        # silently trains on an empty set and freezes grpo_scores.json.
-        _grads_path = next((p for p in (out_dir / "graduates.json",
-                                        out_dir / "debuts.json") if p.exists()), None)
-        _grads_for_grpo = json.loads(_grads_path.read_text(encoding="utf-8")) \
-            if _grads_path else []
-        _grpo_result    = export_grpo_scores(
-            _ts_payload.get("players") or [], _grads_for_grpo,
-            out_path=out_dir / "grpo_scores.json",
-            model_path=out_dir / "grpo_model.pkl",
-            level_norms=_ts_payload.get("level_norms"),
-            retrain=True,
-        )
-        log.info("grpo: scored %d prospects", _grpo_result.get("scored", 0))
-        # Free the first debuts.json parse (~60MB) before the trade-value block
-        # below re-parses the SAME file - otherwise two full debuts copies (this
-        # _grads_for_grpo + tv_players) coexist at the trade-value peak. Both
-        # names are guaranteed defined here (the log line above reads
-        # _grpo_result) and are unused past this point. The tv path re-reads
-        # rather than reusing this list on purpose: the grpo fallback prefers
-        # graduates.json first while the tv loop appends both sidecars, so the
-        # two lists can differ - the del is the correct zero-risk fix.
-        del _grads_for_grpo, _grpo_result
-    except Exception:
-        log.exception("grpo scoring failed in rebuild_only — continuing")
+    with _step("d9.grpo. GRPO breakout scores", log):
+        try:
+            _ts_payload = json.loads(out_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            _ts_payload = {}
+        try:
+            from grpo_prospect import export_grpo_scores
+            # storage writes the graduate sidecar as debuts.json (renamed from
+            # graduates.json); fall back like the grpo CLI so retrain never
+            # silently trains on an empty set and freezes grpo_scores.json.
+            _grads_path = next((p for p in (out_dir / "graduates.json",
+                                            out_dir / "debuts.json") if p.exists()), None)
+            _grads_for_grpo = json.loads(_grads_path.read_text(encoding="utf-8")) \
+                if _grads_path else []
+            _grpo_result    = export_grpo_scores(
+                _ts_payload.get("players") or [], _grads_for_grpo,
+                out_path=out_dir / "grpo_scores.json",
+                model_path=out_dir / "grpo_model.pkl",
+                level_norms=_ts_payload.get("level_norms"),
+                retrain=True,
+            )
+            log.info("grpo: scored %d prospects", _grpo_result.get("scored", 0))
+            # Free the first debuts.json parse (~60MB) before the trade-value block
+            # below re-parses the SAME file - otherwise two full debuts copies (this
+            # _grads_for_grpo + tv_players) coexist at the trade-value peak. Both
+            # names are guaranteed defined here (the log line above reads
+            # _grpo_result) and are unused past this point. The tv path re-reads
+            # rather than reusing this list on purpose: the grpo fallback prefers
+            # graduates.json first while the tv loop appends both sidecars, so the
+            # two lists can differ - the del is the correct zero-risk fix.
+            del _grads_for_grpo, _grpo_result
+        except Exception:
+            log.exception("grpo scoring failed in rebuild_only - continuing")
 
     # GRPO score archive (2026-08-19): grpo_scores.json is overwritten in place
     # by every retrain, so before this step no forward eval of the breakout
@@ -1980,62 +2039,65 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     # like every neighbour in this block: an archive failure must not abort
     # the rebuild or the trade-value export below. Gate registration:
     # docs/grpo-2026-08-19/GRPO_FORWARD_GATE.md.
-    try:
-        from grpo_prospect import snapshot_grpo_scores
-        _n_grpo_hist = snapshot_grpo_scores(scores_path=out_dir / "grpo_scores.json")
-        log.info("grpo_score_history: archived %d new rows", _n_grpo_hist)
-    except Exception:
-        log.exception("grpo_score_history snapshot failed in rebuild_only - continuing")
+    with _step("d9.grpo_history. GRPO score archive", log):
+        try:
+            from grpo_prospect import snapshot_grpo_scores
+            _n_grpo_hist = snapshot_grpo_scores(scores_path=out_dir / "grpo_scores.json")
+            log.info("grpo_score_history: archived %d new rows", _n_grpo_hist)
+        except Exception:
+            log.exception("grpo_score_history snapshot failed in rebuild_only - continuing")
 
     # Bayesian trade values — runs after GRPO scores so priors are GRPO-informed.
     # Includes active prospects (timeseries.json), debuted players (debuts.json),
     # and full graduates (graduates.json) so the Trade Board is comprehensive.
-    try:
-        from bayes_trade_value import export_trade_values_json, _reset_cache
-        _reset_cache()   # clear GRPO cache so new scores are loaded
-        tv_players = list(_ts_payload.get("players") or [])   # reuse the single parse above
-        lnorms     = _ts_payload.get("level_norms")
-        # Sidecars are OPTIONAL but their absence must be VISIBLE. graduates.json
-        # is read here, by efv_score and by grpo_prospect, and NOTHING IN THIS
-        # REPO WRITES IT - a declared input that has silently never arrived,
-        # because `if exists()` makes a missing file indistinguishable from an
-        # empty one. Same failure shape as the FA parser that returned [] for a
-        # day without anyone noticing (2026-07-31).
-        for _sidecar in ("debuts.json", "graduates.json"):
-            _sp = out_dir / _sidecar
-            if _sp.exists():
-                _rows = json.loads(_sp.read_text(encoding="utf-8"))
-                tv_players += _rows
-                log.info("trade values: %s contributed %d rows", _sidecar, len(_rows))
-            else:
-                log.warning("trade values: %s ABSENT - no producer exists in this "
-                            "repo; the board is built without it", _sidecar)
-        n_tv = export_trade_values_json(tv_players, out_dir / "trade_values.json",
-                                        level_norms=lnorms)
-        log.info("trade values (rebuild): exported %d players", n_tv)
-        # The slim Transactions sidecar (owner answer M10-1): the same writer
-        # tools/export_trade_values.py runs, from the file just written.
+    with _step("d9.trade_values. Bayesian trade values + slim sidecar", log):
         try:
-            from tools.export_trade_values import write_slim_sidecar
-            write_slim_sidecar(out_dir / "trade_values.json")
+            from bayes_trade_value import export_trade_values_json, _reset_cache
+            _reset_cache()   # clear GRPO cache so new scores are loaded
+            tv_players = list(_ts_payload.get("players") or [])   # reuse the single parse above
+            lnorms     = _ts_payload.get("level_norms")
+            # Sidecars are OPTIONAL but their absence must be VISIBLE. graduates.json
+            # is read here, by efv_score and by grpo_prospect, and NOTHING IN THIS
+            # REPO WRITES IT - a declared input that has silently never arrived,
+            # because `if exists()` makes a missing file indistinguishable from an
+            # empty one. Same failure shape as the FA parser that returned [] for a
+            # day without anyone noticing (2026-07-31).
+            for _sidecar in ("debuts.json", "graduates.json"):
+                _sp = out_dir / _sidecar
+                if _sp.exists():
+                    _rows = json.loads(_sp.read_text(encoding="utf-8"))
+                    tv_players += _rows
+                    log.info("trade values: %s contributed %d rows", _sidecar, len(_rows))
+                else:
+                    log.warning("trade values: %s ABSENT - no producer exists in this "
+                                "repo; the board is built without it", _sidecar)
+            n_tv = export_trade_values_json(tv_players, out_dir / "trade_values.json",
+                                            level_norms=lnorms)
+            log.info("trade values (rebuild): exported %d players", n_tv)
+            # The slim Transactions sidecar (owner answer M10-1): the same writer
+            # tools/export_trade_values.py runs, from the file just written.
+            try:
+                from tools.export_trade_values import write_slim_sidecar
+                write_slim_sidecar(out_dir / "trade_values.json")
+            except Exception:
+                log.exception("trade values slim sidecar failed in rebuild_only - continuing")
         except Exception:
-            log.exception("trade values slim sidecar failed in rebuild_only - continuing")
-    except Exception:
-        log.exception("trade value export crashed in rebuild_only — continuing")
+            log.exception("trade value export crashed in rebuild_only - continuing")
 
     # Post-export sanity: surface what landed in the JSON so the user
     # doesn't have to grep the file.
-    _post_export_summary(out_path, all_snaps, log)
+    with _step("d9.summary. Post-export summary + run stamp", log):
+        _post_export_summary(out_path, all_snaps, log)
 
-    # Stamp run + data_freshness so a manual --rebuild-only produces the same
-    # "as of" freshness block as daily/monthly runs (mirrors run_daily / main).
-    # Skipped when the caller owns the stamp: run_daily reaches here at d9,
-    # before its own finish_run, so this stamp would carry a run row that is
-    # not finished yet and be superseded minutes later at the daily tail.
-    if stamp_summary:
-        _patch_export_run_summary(out_path, log)
-    else:
-        log.info("rebuild: run-summary stamp deferred to the caller")
+        # Stamp run + data_freshness so a manual --rebuild-only produces the same
+        # "as of" freshness block as daily/monthly runs (mirrors run_daily / main).
+        # Skipped when the caller owns the stamp: run_daily reaches here at d9,
+        # before its own finish_run, so this stamp would carry a run row that is
+        # not finished yet and be superseded minutes later at the daily tail.
+        if stamp_summary:
+            _patch_export_run_summary(out_path, log)
+        else:
+            log.info("rebuild: run-summary stamp deferred to the caller")
 
 
 # --------------------------------------------------------------------------- #
@@ -2567,11 +2629,20 @@ def rebuild_only_cli(out_dir: Path = Path("data")) -> None:
     not inside rebuild_only, because the nightly calls rebuild_only at d9 and
     writes both boards later at d10e and 6b7d, after the FA re-export and the
     bracket simulator they also read. A standalone rebuild runs no site build:
-    the caller's build_site comes after this returns."""
+    the caller's build_site comes after this returns.
+
+    PERF_9 (2026-10-03): the pass writes its own step table,
+    logs/pipeline_steps_rebuild.json, with the d9.* sub-steps rebuild_only
+    records. Its own file, never the daily one: a standalone pass is not a
+    nightly and must not overwrite the nightly's record."""
+    _STEP_TIMES.clear()
+    _t0 = time.monotonic()
     rebuild_only(out_dir=out_dir)
     log = logging.getLogger("rebuild_only")
     _rebake_mlb_player_detail(log, label="rebuild_only")
     _rebuild_ledger_and_franchise(out_dir, log)
+    write_step_timings("rebuild-only", time.monotonic() - _t0, log=log,
+                       path=STEP_TIMINGS_PATH.with_name("pipeline_steps_rebuild.json"))
 
 
 def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
