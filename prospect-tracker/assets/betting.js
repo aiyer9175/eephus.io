@@ -3739,16 +3739,36 @@
       out.push(empty("No legs available", "No slate is priced. The Parlay calculator " +
         "under Calculators takes typed prices."));
     } else {
+      // QREC01 (owner INT-A1): a leg on a postseason game carries the label,
+      // joined from its game's team_bets row by game_pk; one line above the
+      // builder says so whenever any leg is postseason.
+      var postLbl = "";
+      (pc.legs || []).forEach(function (l) {
+        postLbl = postLbl || postseasonLabel(legGame(l));
+      });
+      if (postLbl) out.push(note("<strong>Postseason legs: " + esc(postLbl) + ".</strong>"));
       out.push('<div class="bt-legpick"><select id="bt-legsel" class="bt-input">' +
         '<option value="">Add a leg...</option>' +
         (pc.legs || []).map(function (l, i) {
+          var lbl = postseasonLabel(legGame(l));
           return '<option value="' + i + '">' + esc(l.label) +
             (l.odds != null ? " (" + fmtOdds(l.odds) + ")" : "") +
-            " &middot; model " + pct(l.model_prob) + "</option>";
+            " &middot; model " + pct(l.model_prob) +
+            (lbl ? " &middot; " + esc(lbl) : "") + "</option>";
         }).join("") + "</select></div>");
       out.push('<div id="bt-parlay-out"></div>');
     }
     return out.join("");
+  }
+
+  // A parlay leg's game: its team_bets row, matched on game_pk. A leg with no
+  // match falls back to itself, which carries no game_type and so no label.
+  function legGame(l) {
+    var bets = (S.data || {}).team_bets || [];
+    for (var i = 0; i < bets.length; i++) {
+      if (bets[i] && l && bets[i].game_pk === l.game_pk) return bets[i];
+    }
+    return l;
   }
 
   function wireParlay() {
@@ -3822,7 +3842,11 @@
 
   function legTable() {
     var rows = S.legs.map(function (l, i) {
-      return '<tr><td class="bt-l">' + esc(l.label) + "</td><td>" + pct(l.model_prob) +
+      // The postseason tag sits under the leg's name so the row keeps its
+      // phone width.
+      var tag = postseasonTag(legGame(l));
+      return '<tr><td class="bt-l">' + esc(l.label) + (tag ? "<br>" + tag : "") +
+        "</td><td>" + pct(l.model_prob) +
         "</td><td>" + fmtOdds(l.odds) + '</td><td><button type="button" class="bt-btn bt-btn-x" ' +
         'data-legdrop="' + i + '">remove</button></td></tr>';
     }).join("");
