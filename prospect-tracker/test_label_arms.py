@@ -70,6 +70,22 @@ def arm_a2():
 # A1: the service-aligned window
 # ---------------------------------------------------------------------------
 
+@pytest.fixture
+def rt_2025(monkeypatch):
+    """The clock these cases were written for. They are pinned to RESOLVED_THROUGH 2025
+    by design: docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md part 9, the step Z entry's
+    owed line ('six lab tests pinned to RESOLVED_THROUGH 2025 by design'), EPOCH_PROGRESS
+    step Y ('Owed: a post-epoch re-pin of these lab tests to the new clock') and the
+    docstrings' own 'resolves through 2025'. 86226bb2 moved the module clock to 2026."""
+    monkeypatch.setattr(ed, "RESOLVED_THROUGH", 2025)
+
+
+@pytest.fixture
+def rt_2026(monkeypatch):
+    """The post-epoch clock (86226bb2), pinned so the siblings do not follow a later move."""
+    monkeypatch.setattr(ed, "RESOLVED_THROUGH", 2026)
+
+
 def _incumbent_label_6yr(seasons, debut_year):
     """The shipped label as of b59e7386, copied verbatim so the flag-off path is
     pinned against the code it replaced rather than against itself."""
@@ -145,7 +161,7 @@ def test_the_cut_is_the_documented_convention():
     assert ed._service_window_shifts("2019") is False
 
 
-def test_shifted_window_recomputes_the_censoring_weight(arm_a1):
+def test_shifted_window_recomputes_the_censoring_weight(arm_a1, rt_2025):
     """The censoring interaction. A shifted window ends a year later, so
     RESOLVED_THROUGH admits one fewer observed season and n_obs, the weight and the
     tail projection all move onto the SHIFTED window.
@@ -157,7 +173,21 @@ def test_shifted_window_recomputes_the_censoring_weight(arm_a1):
     assert ed._label_6yr(seasons, dy, dd) == (10.0, 19.0, True, 0.5, 3)
 
 
-def test_shift_can_turn_a_resolved_row_into_a_censored_one(arm_a1):
+def test_shifted_window_recomputes_the_censoring_weight_at_2026(arm_a1, rt_2026):
+    """The same interaction one year on, at RESOLVED_THROUGH 2026: a 2023 September
+    debut with 2023: 1.0, 2024: 2.0, 2025: 3.0, 2026: 4.0.
+
+    Calendar window 2023..2028: observed 2023..2026, n_obs 4, sum 10.0, rate 2.5, two
+    missing seasons, so 10.0 + 2 * 2.5 = 15.0 at weight round(4/6, 3) = 0.667.
+    Shifted window 2024..2029: observed 2024..2026, n_obs 3, in-window 9.0 plus the 1.0
+    stub = 10.0; tail rate 9.0/3 = 3.0 over three missing seasons, 10.0 + 9.0 = 19.0 at
+    weight round(3/6, 3) = 0.5."""
+    seasons = {2023: 1.0, 2024: 2.0, 2025: 3.0, 2026: 4.0}
+    assert _incumbent_label_6yr(seasons, 2023) == (10.0, 15.0, True, 0.667, 4)
+    assert ed._label_6yr(seasons, 2023, "2023-09-10") == (10.0, 19.0, True, 0.5, 3)
+
+
+def test_shift_can_turn_a_resolved_row_into_a_censored_one(arm_a1, rt_2025):
     """A 2020 September debut resolves through 2025 on the calendar window and does
     NOT on the shifted one, which is exactly the case the weight recompute exists for."""
     seasons = {2020: 0.5, 2021: 1.0, 2022: 1.5, 2023: 2.0, 2024: 2.5, 2025: 3.0}
@@ -166,6 +196,22 @@ def test_shift_can_turn_a_resolved_row_into_a_censored_one(arm_a1):
     assert off[2] is False and off[3] == 1.0 and off[4] == 6
     assert on[2] is True and on[3] == round(5 / 6, 3) and on[4] == 5
     assert on[0] == 10.5   # 2021..2025 = 10.0, plus the 0.5 stub
+
+
+def test_shift_can_turn_a_resolved_row_into_a_censored_one_at_2026(arm_a1, rt_2026):
+    """A 2021 September debut resolves through 2026 on the calendar window and does
+    NOT on the shifted one. Seasons 2021: 0.5 up to 2026: 3.0 in steps of 0.5.
+
+    Calendar window 2021..2026: all six observed, resolved, 0.5 + 1.0 + 1.5 + 2.0 + 2.5
+    + 3.0 = 10.5 at weight 1.0. Shifted window 2022..2027: observed 2022..2026, n_obs 5,
+    censored at weight round(5/6, 3) = 0.833; observed sum 2022..2026 = 10.0 plus the 0.5
+    stub = 10.5."""
+    seasons = {2021: 0.5, 2022: 1.0, 2023: 1.5, 2024: 2.0, 2025: 2.5, 2026: 3.0}
+    off = _incumbent_label_6yr(seasons, 2021)
+    on = ed._label_6yr(seasons, 2021, "2021-09-01")
+    assert off == (10.5, 10.5, False, 1.0, 6)
+    assert on[2] is True and on[3] == round(5 / 6, 3) == 0.833 and on[4] == 5
+    assert on[0] == 10.5
 
 
 def test_a_redated_row_is_not_shifted_twice(arm_a1):
