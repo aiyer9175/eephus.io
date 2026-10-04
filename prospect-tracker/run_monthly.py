@@ -476,6 +476,11 @@ SCHEDULED_EXPORTS = (
     # the cache at its last month, which reads like a quiet week; the row
     # files ok=False so the deploy shell prints it.
     "mlb_events",
+    # The steal context beside the /management/ steal rows (step 9e-pre0f,
+    # W11 stage 1): runner sprint speed percentile and catcher pop time. A
+    # raise, or a build with no steal rows, files a red and the committed file
+    # stands.
+    "mgmt_steal_context",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -3638,6 +3643,35 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     pass
                 _record_ingest("mgmt_nightly", False, 0,
                                f"management nightly raised: {_e}"[:200], "mlb", log)
+
+        # --- 9e-pre0f. Steal context: runner speed and catcher pop time -----
+        with _step("9e-pre0f. Steal context (management_steal_context.json)", log):
+            # W11 stage 1 (owner answer W-OQ3, 2026-10-01): the runner's sprint
+            # speed percentile and the catcher's pop time beside every steal
+            # row of the decision shards, CONTEXT ONLY (DV stays priced at a
+            # league-average runner). Placed AFTER 9e-pre0e, whose shard writer
+            # names the steal rows it joins. Refetches the open season's Savant
+            # sprint speed leaderboard once a day and reads the throwing board
+            # through savant_catcher's own one-day TTL; a failed fetch keeps
+            # the cache, then the previous build's block. Never aborts.
+            try:
+                import job_heartbeat as _hb
+                import mgmt_steal_context as _msc
+                _sc = _msc.run(log_fn=log.info)
+                _sc_why = f"{_sc['status']}: {_sc.get('why') or ''}"
+                _hb.record("mgmt_steal_context", ok=True, result=_sc_why[:200])
+                _record_ingest("mgmt_steal_context", _sc["status"] == "built",
+                               int(_sc.get("attempts") or 0), _sc_why[:200], "mlb", log)
+            except Exception as _e:
+                log.exception("daily: steal context failed - the committed "
+                              "management_steal_context.json stands - continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("mgmt_steal_context", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
+                _record_ingest("mgmt_steal_context", False, 0,
+                               f"steal context raised: {_e}"[:200], "mlb", log)
 
         # --- 9e-pre0g. MLB transaction events (dark until MLB_EVENTS_LIVE) ---
         # Wiring W01, part 1 (Q9_22a). Refreshes the league-wide StatsAPI
