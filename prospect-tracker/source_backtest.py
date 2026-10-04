@@ -4536,6 +4536,35 @@ def _cohort_ab_sidecar(data_dir: Path = DATA_DIR) -> dict | None:
             "ships_a_weight": d.get("ships_a_weight")}
 
 
+def _consensus_ab_label(data_dir: Path = DATA_DIR) -> dict:
+    """The label the consensus weight A/B was scored on, stamped into its
+    artifact so a reader can tell a pre-epoch reading from a post-epoch one
+    (POSTEPOCH_6, 2026-10-04). provider is the site-wide LABEL default
+    (war_source.DEFAULT_PROVIDER), resolved_through is the last fully played
+    season the label pool counts (efv_dataset.RESOLVED_THROUGH), and vintage is
+    the frozen fWAR vintage id when the provider is fwar, else None. Imported
+    lazily: both modules are heavier than this one and a failure must not stop
+    the A/B, so a missing piece stamps None rather than raising."""
+    provider = resolved = vintage = None
+    try:
+        import war_source as _ws
+        provider = _ws.DEFAULT_PROVIDER
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        import efv_dataset as _ed
+        resolved = _ed.RESOLVED_THROUGH
+    except Exception:  # noqa: BLE001
+        pass
+    if provider == "fwar":
+        try:
+            vin = json.loads((Path(data_dir) / "fwar_vintage.json").read_text(encoding="utf-8"))
+            vintage = vin.get("vintage_id")
+        except (OSError, ValueError, AttributeError):
+            vintage = None
+    return {"provider": provider, "resolved_through": resolved, "vintage": vintage}
+
+
 def run_consensus_weight_ab(data_dir: Path = DATA_DIR, write: bool = True) -> dict:
     """The A/B that decides whether accuracy weighting ships: for each
     evaluable board-year Y, weights are derived ONLY from base years
@@ -4611,6 +4640,7 @@ def run_consensus_weight_ab(data_dir: Path = DATA_DIR, write: bool = True) -> di
     out = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "vintage_rule": f"weights for board-year Y use base years <= Y - {MIN_LAG_YEARS} only",
+        "label": _consensus_ab_label(data_dir),
         "per_year": per_year,
         "pooled": summary,
         "ship": ship,
