@@ -508,3 +508,121 @@ def test_the_pennant_tile_reads_the_bracket_simulator_while_it_serves():
     html, _ = _render(team="LAD", payload=p)
     sec = html.split('data-frsec="odds"')[1]
     assert "Pennant (implied" not in sec and "postseason_bracket_sim" not in sec
+
+
+
+# --------------------------------------------------------------------------
+# Display pass 2026-10-03 (DISPLAY_franchise): the surface-quality audit's
+# findings QCLA12, QCLA13, QCLC16, QCLC17, QCLC20 and QCLP10, and the copy trim
+# --------------------------------------------------------------------------
+
+def test_board_sort_heads_are_buttons_in_scoped_th_with_aria_sort():
+    """QCLA12: every sortable head is <th scope=col aria-sort> holding one
+    <button>; the glossary term inside is a span out of the tab order (an <a>
+    inside a <button> is not valid); one head says descending, on the index."""
+    board, _ = _render("board")
+    heads = re.findall(r"<th [^>]*>.*?</th>", board.split("<thead>")[1].split("</thead>")[0])
+    assert len(heads) == 11
+    for h in heads:
+        assert 'scope="col"' in h and re.search(r'aria-sort="(none|ascending|descending)"', h), h
+        assert h.count('<button type="button" class="fr-sort" data-frsort=') == 1, h
+        assert "<a " not in h and 'tabindex="0"' not in h, h
+        for term in re.findall(r'<span class="g-term"[^>]*>', h):
+            assert 'tabindex="-1"' in term, term
+    assert [h for h in heads if 'aria-sort="descending"' in h] == [h for h in heads if 'data-frsort="index_score"' in h]
+    assert sum('aria-sort="none"' in h for h in heads) == 10
+    i = JS.index('btn.addEventListener("click"')
+    assert "nb.focus()" in JS[i:i + 700], "focus returns to the sorted head after the re-render"
+    assert "th[data-frsort]" not in JS and 'tabindex="0"' not in JS
+    ring = CSS[CSS.index(".fr-app .fr-sort:focus-visible"):]
+    assert ring.split("}")[0].count("var(--accent-cyan)") == 1
+    assert "th:focus { outline: 2px solid var(--accent-gold)" not in CSS
+    m = CSS[CSS.index("@media (max-width: 640px)"):]
+    assert ".fr-board td:first-child a" in m.split("}\n}")[0] and "min-height: 44px" in m
+
+
+def test_club_charts_toggles_headings_and_tables_carry_names_and_scope():
+    """QCLA13: every role=img svg is named; the tree chips carry aria-pressed;
+    the status chip sits outside the h2; the mini tables have row headers and
+    the section tables scoped column headers."""
+    html, _ = _render("club", team="MIL")
+    imgs = re.findall(r'<svg [^>]*role="img"[^>]*>', html)
+    assert imgs and all('aria-label="' in s for s in imgs), [s for s in imgs if "aria-label" not in s]
+    sparks = re.findall(r'<div class="fr-spark"><svg [^>]*>', html)
+    assert len(sparks) == 3 and all('aria-label="' in s for s in sparks)
+    chips = re.findall(r'<button class="chip[^"]*" data-frtree="[a-z]+"[^>]*>', html)
+    assert len(chips) == 3 and sum('aria-pressed="true"' in c for c in chips) == 1
+    assert all("aria-pressed=" in c for c in chips)
+    for h2 in re.findall(r"<h2 [^>]*>.*?</h2>", html):
+        assert "fr-verdict" not in h2 and "eephus-beta" not in h2, h2
+    assert html.count('<div class="fr-sec-head">') == 12
+    assert '<table class="fr-mini"><tr><td>' not in html and '<th scope="row">' in html
+    assert re.search(r'<table class="fr-table"><thead><tr><th scope="col"', html)
+    assert '<table class="fr-table"><thead><tr><th class=' not in html
+    m = CSS[CSS.index("@media (max-width: 640px)"):]
+    assert ".fr-tile-open" in m and ".fr-links a" in m
+
+
+def test_the_roster_note_is_one_sentence_and_names_no_field():
+    """QCLC16: one sentence from one copy key, never two fragments joined, and
+    no payload field name in reader copy."""
+    d = _served()
+    note = d["copy"]["roster_note"]
+    assert "roster_basis_note" not in d["copy"]
+    assert note[0].isupper() and note.endswith(".") and "team_basis" not in note
+    html, _ = _render("club", team="MIL")
+    sec = html.split('data-frsec="roster"')[1].split("</section>")[0]
+    assert '<p class="fr-count">' + note.replace("&", "&amp;") + "</p>" in sec
+    assert "team_basis" not in html
+
+
+def test_the_link_rail_prints_labels_not_route_keys():
+    """QCLC17: the rail labels each link from the Open-in map, grouped by the
+    module that owns it; no key prints with its underscores replaced."""
+    d = _served()
+    html, _ = _render("club", team="MIL")
+    rail = html.split('<nav class="fr-links"')[1].split("</nav>")[0]
+    mil = next(c for c in d["clubs"] if c["code"] == "MIL")
+    texts = re.findall(r'<a href="[^"]*">([^<]*)</a>', rail)
+    assert len(texts) == sum(1 for v in mil["links"].values() if v)
+    for k in mil["links"]:
+        if "_" in k:
+            assert k.replace("_", " ") not in texts, k
+    for lbl in ("Hitters", "Club Ledger", "Hall of Fame", "Dynasty"):
+        assert lbl in rail, lbl
+    assert rail.count('class="fr-links-mod"') == len({re.match(r"/([a-z]+)/", v).group(1) for v in mil["links"].values() if v})
+
+
+def test_the_playoff_head_names_its_model_and_verdict():
+    """QCLC20: the 0%/100% Playoff column says it is the season simulator,
+    with its registry row and verdict, and what it reads once the season ends."""
+    d = _served()
+    title = d["copy"]["board_playoff_title"]
+    verdict = {r["model_id"]: r["verdict"] for r in d["accountability"]["registry_verdicts"]}["playoff_odds_sim"]
+    assert "playoff_odds_sim " + verdict in title and "settled outcome" in title
+    board, _ = _render("board")
+    head = re.search(r'<th [^>]*data-export-text="Playoff"[^>]*>', board).group(0)
+    assert 'title="' + title + '"' in head
+
+
+def test_method_copy_sits_in_one_collapsed_block_and_the_banner_rides_its_dollar_blocks():
+    """The copy trim: the weights note and the score formula print once, inside
+    a collapsed How this works block (club and board); the CBA banner rides the
+    three sections that hold 2027 dollars and no longer repeats above the tree."""
+    d = _served()
+    html, _ = _render("club", team="MIL")
+    how = html.split('<details class="fr-how">')[1].split("</details>")[0]
+    assert d["copy"]["how_title"] in how and d["copy"]["weights_note"] in how
+    assert d["copy"]["score_basis"][1:] in how and "Sources: " in how
+    assert html.count(d["copy"]["weights_note"]) == 1
+    assert html.count('class="fr-banner"') == 3
+    assert html.index('class="fr-banner"') > html.index('data-frsec="fin"')
+    board, _ = _render("board")
+    bhow = board.split('<details class="fr-how">')[1].split("</details>")[0]
+    assert d["copy"]["board_foot"] in bhow and d["copy"]["score_basis"][1:] in bhow
+    # the trimmed lines stay short: masthead and board lede under 25 words,
+    # root sentence under 30, and the root keeps its thirty-percent disclosure
+    for k, cap in (("masthead", 25), ("board_lede", 25), ("root_sentence", 30), ("weights_note", 25)):
+        assert len(d["copy"][k].split()) < cap, (k, len(d["copy"][k].split()))
+    assert "Thirty percent of the index rests on a provisional projection" in d["copy"]["root_sentence"]
+

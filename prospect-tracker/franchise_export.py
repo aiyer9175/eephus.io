@@ -1212,16 +1212,14 @@ def build() -> dict:
     # ---- copy: every sentence the page prints, once ------------------------------------------------
     cba_expiry = "2026-12-01"
     copy = {
-        "masthead": ("One page per club, re-serving what every module already publishes on the scale it was "
-                     "computed on, each number labelled and linked back to the module that owns it."),
-        "root_sentence": ("Re-standardised across 30 clubs: a weighted rank of realized standing and one provisional "
-                          "projection, not a forecast of anything else. Thirty percent of the index rests on a "
-                          "provisional projection (team_win_projections)."),
+        "masthead": "Every club on one page, each number on its own scale and linked to the module that owns it.",
+        "root_sentence": ("A weighted rank re-standardised across 30 clubs, not a forecast. Thirty percent of the "
+                          "index rests on a provisional projection (team_win_projections)."),
         "root_eyebrow": "Franchise Report Card",
         "root_foot_descriptive": "descriptive branches carry no weight",
-        "weights_note": ("ROSTER and OUTLOOK are correlated: 2027 wins are the current roster rolled forward, so "
-                         "one roster is counted twice by design; the weights are declared in the payload and never "
-                         "redistributed at runtime."),
+        "weights_note": (f"ROSTER and OUTLOOK overlap by design: {CLASS_YEAR} wins roll the current roster forward, "
+                         "so one roster counts twice."),
+        "how_title": "How this works",
         "score_basis": ("branch score = 100 + 10z of the served value across the 30 clubs (population sd); the "
                         "Franchise Index is the weighted mean of the three branch scores re-standardised to "
                         "100 + 10z before any rank or letter is taken from it"),
@@ -1233,8 +1231,11 @@ def build() -> dict:
                          "lives under ODDS"),
         "outlook_accounting": (f"league sum pinned to {target_wins} wins; replacement {replacement_wins} wins per club, "
                                f"derived from the {league_war_benchmark} WAR league benchmark in team_outlook_eval"),
-        "roster_note": "current roster; the leaderboard team_basis names the day",
-        "roster_basis_note": (team_basis.get("note") or ""),
+        # One sentence (QCLC16): the day and the unresolved count come from the
+        # eWAR board's own team_basis block, never typed here.
+        "roster_note": (f"Current roster as MLB's transaction feed lists it on {as_of_war}: a traded player's "
+                        f"whole season counts for his new club, and rows with no club "
+                        f"({team_basis.get('n_team_unresolved', 0)}) are left out of team totals."),
         "leverage_deploy_note": "deployment index, not skill (leverage_consistency)",
         "season_note": "descriptive: the 2026 record is realized standing and carries no grade of its own",
         "pythag_label": "current overlay, blended",
@@ -1294,8 +1295,12 @@ def build() -> dict:
         # Quoted, never rebuilt: the futures payload derives it from its own build
         # date and the season's last regular-season date, and it is empty before then.
         "odds_as_of": futures.get("as_of_note") or "",
-        "board_lede": "Thirty clubs on the Franchise Index, one column per graded branch and the headline descriptive figures; every row opens its club.",
-        "board_foot": "index and branch scores are 100 + 10z across the 30 clubs and take the z ladder; every other column prints on its own scale, plain.",
+        "board_lede": "Every club on the Franchise Index; a club code opens its page.",
+        "board_foot": "Index and branch scores are 100 + 10z across the 30 clubs and take the z ladder; every other column prints on its own scale, plain.",
+        # QCLC20: the Playoff column names its model and its registry verdict.
+        "board_playoff_title": (f"Playoff: the season simulator ({ODDS_REGISTRY_ID} "
+                                f"{verdict_of.get(ODDS_REGISTRY_ID) or 'unregistered'}); after the regular "
+                                "season it reads the settled outcome."),
         "load_error": "Franchises could not be loaded.",
         "tree_hidden": "Hide the tree; show only the root card",
         "tree_canopy": "Root and the twelve branches",
