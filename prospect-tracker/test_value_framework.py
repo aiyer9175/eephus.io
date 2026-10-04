@@ -22,6 +22,7 @@ Covers the four overhaul validation requirements plus the supporting machinery:
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -225,6 +226,30 @@ def test_expected_sv_continuous_no_grade_jumps(is_pit: bool) -> None:
     assert min(diffs) >= -1e-6
 
 
+# PE-Q1 recorded exception (owner, 2026-10-02, recommended option "record and expire
+# on the next fit"). Step J of the fWAR label epoch (70ae6f9d; prospx_current
+# recaptured at 9198aee1) refit the empirical anchors and moved FV 60 from 1.44 to
+# 1.50 WAR, so the piecewise-linear fv_to_6yr_avg_war now bends at FV 55 (0.060 WAR
+# per grade below, 0.104 above) instead of at FV 60. The $M slope change across FV
+# 54, 55, 56 measured 3.74 (hitter) and 3.28 (pitcher) on 2026-10-04 against the 3.0
+# bound. Step J was the last --fit before the PROSPECT_ANCHOR look
+# (docs/PROSPECT_ANCHOR_GATE.md), so no refit and no anchor edit may happen before
+# it. While the fitted file is the step J fit, the FV 55 cells pin the kink in
+# WAR-anchor units, never in $M: the $M value also moves with the $/WAR series that
+# every rebuild rewrites. Any other fit (a different sha) restores the < 3.0 bound,
+# so the first refit after the look clears it or PE-Q1 is asked again.
+# The sha is over the file's bytes with CRLF folded to LF, so it does not depend on
+# the checkout's line endings (it equals the git blob sha256 at 70ae6f9d).
+_STEP_J_FIT_SHA256 = "c70f60c26451c87bb9264af2b1c951913de794c7347f563bfd7cc7bb060292c9"
+# fv_to_6yr_avg_war takes no side, so one value serves the hitter and pitcher cells.
+_STEP_J_FV55_WAR_KINK = 0.044      # (1.50 - 0.98) / 5 - (0.98 - 0.68) / 5
+_STEP_J_FV55_WAR_KINK_TOL = 0.005  # WAR per grade
+
+
+def _fitted_file_sha256() -> str:
+    return hashlib.sha256(vf._FITTED_PATH.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
 @pytest.mark.parametrize("is_pit", [False, True])
 @pytest.mark.parametrize("c", [55, 60])
 def test_no_jump_across_specific_grade_boundary(is_pit: bool, c: int) -> None:
@@ -233,6 +258,14 @@ def test_no_jump_across_specific_grade_boundary(is_pit: bool, c: int) -> None:
     inc_lo = s[0] - s[-1]
     inc_hi = s[1] - s[0]
     assert inc_lo >= -1e-6 and inc_hi >= -1e-6
+    if c == 55 and _fitted_file_sha256() == _STEP_J_FIT_SHA256:
+        # PE-Q1: the step J fit's recorded FV 55 kink, in WAR-anchor units.
+        w = {d: vf.fv_to_6yr_avg_war(c + d) for d in (-1, 0, 1)}
+        w_lo = w[0] - w[-1]
+        w_hi = w[1] - w[0]
+        assert w_lo >= 0.0 and w_hi >= 0.0
+        assert (w_hi - w_lo) == pytest.approx(_STEP_J_FV55_WAR_KINK, abs=_STEP_J_FV55_WAR_KINK_TOL)
+        return
     # The slope on either side of the boundary is comparable (no kink/jump).
     assert abs(inc_hi - inc_lo) < 3.0
 
