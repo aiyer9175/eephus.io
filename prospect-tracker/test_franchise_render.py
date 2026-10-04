@@ -693,3 +693,39 @@ def test_the_club_page_fetches_one_club_file_and_renders_it():
     assert html == whole
     failed, _ = _render_split("MIL", shard_ok=False)
     assert "px-state is-failed" in failed and "fr-mast-name" in failed and '<section class="fr-block"' not in failed
+
+
+
+def test_promotion_timing_panel_tags_come_from_the_tested_labels():
+    """/franchise/ FRONT OFFICE: the Promotion timing panel rides
+    TENDENCY_PANELS, its tags are only labelTiming / labelAggr, it prints the
+    rule note and a collapsed rule with its sources."""
+    import franchise_export as fe
+    spec = next(p for p in fe.TENDENCY_PANELS if p[0] == "promotionTiming")
+    assert spec[4] == ("labelTiming", "labelAggr")
+    assert [r[0] for r in spec[3]] == ["lateShare", "svcShare", "medianDebutAge", "aggrYears", "nDebuts"]
+    d = _served()
+    tend = json.loads((ROOT / "data" / "org_tendencies.json").read_text(encoding="utf-8"))
+    torgs = (tend.get("promotionTiming") or {}).get("orgs") or {}
+    if not torgs:
+        pytest.skip("promotionTiming not exported on this machine")
+    for c in d["clubs"]:
+        p = next(x for x in c["sections"]["front_office"]["panels"] if x["key"] == "promotionTiming")
+        r = torgs[c["code"]]
+        assert p["tags"] == [t for t in (r["labelTiming"], r["labelAggr"]) if t], c["code"]
+        assert p["rule"]["sources"] and p["rule"]["text"], c["code"]
+    html, _ = _render("club", team="SEA")
+    sec = html.split('data-frsec="front_office"')[1].split("</section>")[0]
+    assert "Promotion timing" in sec and d["copy"]["promotion_timing_note"] in sec
+    assert "<details" in sec and "mlb.com/glossary/rules/rookie-eligibility" in sec
+
+
+def test_open_in_chips_are_44px_at_phone_width_and_notes_dim_by_colour():
+    """QREA22: the section Open in chips reach 44 px at <= 640 px, and the
+    panel notes and tags are dimmed by colour, never opacity."""
+    i = CSS.index("@media (max-width: 640px)")
+    block = CSS[i:CSS.index("}\n}", i) if "}\n}" in CSS[i:] else len(CSS)]
+    assert ".fr-app .fr-open a" in block and "min-height: 44px" in block
+    for sel in (".fr-app .fr-count {", ".fr-app .fr-tag {"):
+        rule = CSS[CSS.index(sel):CSS.index("}", CSS.index(sel))]
+        assert "opacity" not in rule and "color: var(--text-secondary)" in rule, sel

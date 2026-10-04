@@ -12,7 +12,12 @@ the data that earned them):
 
   promotion    aggressive vs conservative: how young-for-level the org
                runs its prospects (age_vs_level) + promotions per active
-               prospect over the trailing year (level_changes).
+               prospect over the trailing year (level_changes). Its label
+               reads promotionTiming.labelAggr, so the two never disagree.
+  promotionTiming  debut timing against the rookie-status cutoff and the
+               service-year line, median debut age and age for level, each
+               with n and CI95; labels only on a tested difference (BH q <
+               0.10 across the 30 orgs). Display only: the ETA does not use it.
   draftPos     what the org drafts: pitcher share, prep share,
                up-the-middle share of signed picks (2021-present).
   draftTraits  WHO the org drafts: mean FG tool profile of its signed
@@ -299,6 +304,372 @@ def promotion_panel(by_org: dict[str, list[dict]], debuts: list[dict], today: da
         r["label"] = _label(score, "aggressive", "conservative")
     return {"orgs": raw, "league": {"avlDiff": lg_avl, "promoRate": lg_pr,
                                     "debutAgePit": lg_dap, "debutAgeHit": lg_dah}}
+
+
+# ============================================================================
+# Panel 1b - promotion timing (rookie cutoff, service-year window, age for level)
+# ============================================================================
+#
+# Display only. The 2026-09-25 roster-aware ETA lane (etaroster RESULT.md) found
+# that none of these figures moves the served ETA once level, age and 40-man
+# status are known, so no surface may say the ETA uses them. One rule era: MLB
+# debuts since 2022 under the current rookie rule (September days count since
+# 2020; 2020 and 2021 sit out). A label fires only when the org is n-sufficient,
+# its Benjamini-Hochberg q across the 30 orgs is under PT_Q_MAX and its CI95
+# excludes the league value; today that is age for level alone.
+
+PT_FIRST_SEASON = 2022
+PT_AGGR_FIRST_SEASON = 2023
+PT_MIN_DEBUTS = 20            # fewer debuts than this is thin: no timing label
+PT_MIN_AGGR_PLAYERS = 40      # fewer players than this: no age-for-level label
+PT_Q_MAX = 0.10
+PT_ROOKIE_DAYS = 45           # MLB glossary, Rookie Eligibility
+PT_SERVICE_YEAR_DAYS = 172    # MLB glossary, Service Time
+PT_SVC_WINDOW = (15, 45)      # days after Opening Day: just past the full-year line
+PT_PRE2020_CUTOFF = "07-18"   # 45 counted days before September 1 under the old rule
+PT_FULL_SLATE = 7             # games on a date that opens or closes a season
+PT_TX_WINDOW_DAYS = 5         # a debut's org is the club he joined in the 5 days before
+PT_CACHE = Path(__file__).parent / ".cache" / "promotion_timing"
+PT_TX_DIR = Path(__file__).parent / ".cache" / "mlb_transactions"
+PT_GAME_DATES = Path(__file__).parent / ".cache" / "mgmt_game_dates.json"
+PT_STATSAPI = "https://statsapi.mlb.com/api/v1"
+PT_RULE_TEXT = ("Rookie status ends past 130 AB, 50 IP or 45 active-roster days (IL excluded). "
+                "Since 2020 September counts, so a first call-up on or after the cutoff keeps "
+                "rookie status for next season. The cutoff is 45 days before the final scheduled "
+                "game (July 18 before 2020). One service year is 172 days, so a call-up more than "
+                "15 days after Opening Day cannot bank a full year that season.")
+PT_SOURCES = [
+    {"label": "MLB glossary: Rookie Eligibility", "url": "https://www.mlb.com/glossary/rules/rookie-eligibility"},
+    {"label": "MLB glossary: Service Time", "url": "https://www.mlb.com/glossary/transactions/service-time"},
+    {"label": "Baseball America, 2024-08-28",
+     "url": "https://www.baseballamerica.com/stories/explaining-mlb-rookie-eligibility-ppi-callup-target-date-and-september-roster-rules/"},
+]
+
+
+def _pt_fetch_json(url: str, path: Path, max_age_days: float | None):
+    """Read a cached StatsAPI document, refetching when it is older than
+    max_age_days (None = never refetch). A failed fetch keeps the stale copy;
+    no copy and no network returns None."""
+    import time
+    import urllib.request
+    fresh = path.exists() and (max_age_days is None
+                               or time.time() - path.stat().st_mtime < max_age_days * 86400)
+    if not fresh:
+        try:
+            with urllib.request.urlopen(url, timeout=30) as resp:
+                doc = json.load(resp)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
+            return doc
+        except (OSError, ValueError) as exc:
+            log.warning("promotion timing: fetch failed for %s (%s)", url, exc)
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _pt_season_dates(seasons, today: date) -> dict[int, dict]:
+    """{season: {"open": date, "final": date}}. A finished season reads the
+    StatsAPI play corpus: the first and last dates with a full slate, so a lone
+    overseas opener or a makeup game after the scheduled finale moves neither
+    (2024: the final scheduled game is Sep 29, the makeup on Sep 30 is not).
+    A season the corpus has not finished reads the StatsAPI season calendar."""
+    by: dict[int, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    try:
+        for iso in json.loads(PT_GAME_DATES.read_text(encoding="utf-8")).values():
+            s = str(iso or "")[:10]
+            if len(s) == 10 and s[:4].isdigit():
+                by[int(s[:4])][s] += 1
+    except (OSError, ValueError):
+        log.warning("promotion timing: %s unavailable", PT_GAME_DATES.name)
+    cal_doc = _pt_fetch_json(f"{PT_STATSAPI}/seasons/all?sportId=1", PT_CACHE / "seasons.json", 7)
+    cal = {}
+    for s in (cal_doc or {}).get("seasons") or []:
+        try:
+            cal[int(s["seasonId"])] = (date.fromisoformat(s["regularSeasonStartDate"]),
+                                       date.fromisoformat(s["regularSeasonEndDate"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    out = {}
+    for y in seasons:
+        full = sorted(d for d, n in by.get(y, {}).items() if n >= PT_FULL_SLATE)
+        c_open = date.fromisoformat(full[0]) if full else None
+        c_final = date.fromisoformat(full[-1]) if full else None
+        if y in cal:
+            done = c_final is not None and c_final >= cal[y][1] - timedelta(days=3)
+            out[y] = {"open": c_open or cal[y][0], "final": c_final if done else cal[y][1]}
+        elif c_final is not None and (y < today.year or c_final >= date(y, 9, 24)):
+            out[y] = {"open": c_open, "final": c_final}
+    return out
+
+
+def pt_rookie_cutoff(season: int, final: date | None) -> date | None:
+    """The first call-up date that keeps rookie status for next season: 45 days
+    before the final scheduled game, counting both days, since 2020; July 18
+    (45 counted days before September 1) before 2020."""
+    if season < 2020:
+        return date(season, 7, 18)
+    return final - timedelta(days=PT_ROOKIE_DAYS - 1) if final else None
+
+
+def _pt_people(seasons, today: date) -> dict[int, tuple[str, str | None]]:
+    """{mlbam: (debut_iso, birth_iso)} for players whose MLB debut falls in
+    `seasons`, from the StatsAPI season player lists (cached per season; a
+    finished season is fetched once, the current one again after 7 days)."""
+    out: dict[int, tuple[str, str | None]] = {}
+    for y in seasons:
+        doc = _pt_fetch_json(
+            f"{PT_STATSAPI}/sports/1/players?season={y}&fields=people,id,mlbDebutDate,birthDate",
+            PT_CACHE / f"players_{y}.json", 7 if y >= today.year else None)
+        for p in (doc or {}).get("people") or []:
+            d = str(p.get("mlbDebutDate") or "")
+            if d[:4].isdigit() and int(d[:4]) in seasons and p.get("id"):
+                out[int(p["id"])] = (d[:10], p.get("birthDate"))
+    return out
+
+
+def _pt_debut_org_lookup(seasons) -> tuple[dict, dict]:
+    """(transactions by mlbam -> [(date, org)], war_seasons team by (mlbam, year)).
+    The debut org is the MLB club he joined in the PT_TX_WINDOW_DAYS before his
+    debut (the transaction log), else his war_seasons club that year."""
+    import gzip
+    from trades import canonical_org_from_id
+    tx: dict[int, list] = defaultdict(list)
+    for y in sorted(seasons):
+        for m in range(1, 13):
+            path = PT_TX_DIR / f"tx_{y}_{m:02d}.json.gz"
+            if not path.exists():
+                continue
+            try:
+                with gzip.open(path, "rt", encoding="utf-8") as fh:
+                    rows = json.load(fh).get("transactions") or []
+            except (OSError, ValueError):
+                continue
+            for t in rows:
+                pid = (t.get("person") or {}).get("id")
+                tid = (t.get("toTeam") or {}).get("id")
+                org = canonical_org_from_id(tid) if tid else None
+                if pid and org:
+                    tx[int(pid)].append(((t.get("date") or "")[:10], org))
+    wtm: dict[tuple[int, int], str] = {}
+    try:
+        W = json.loads((DATA_DIR / "war_seasons.json").read_text(encoding="utf-8"))
+        tms = W.get("tm") or []
+        for pid, rec in (W.get("players") or {}).items():
+            for s in rec[1]:
+                if s[0] in seasons and s[9] is not None and (int(pid), s[0]) not in wtm:
+                    wtm[(int(pid), s[0])] = canonical_org(tms[s[9]].split("/")[0])
+    except (OSError, ValueError, KeyError, IndexError, TypeError):
+        log.warning("promotion timing: war_seasons.json unavailable for the org fallback")
+    return tx, wtm
+
+
+def promotion_timing_debuts(today: date) -> tuple[list[dict], dict[str, str]]:
+    """Every MLB debut since PT_FIRST_SEASON with its debut org, age and the two
+    timing flags, plus the rookie cutoff per season. Debuts whose org cannot be
+    resolved are dropped (counted in the log)."""
+    seasons = set(range(PT_FIRST_SEASON, today.year + 1))
+    dates = _pt_season_dates(seasons, today)
+    people = _pt_people(seasons, today)
+    tx, wtm = _pt_debut_org_lookup(seasons)
+    debuts, dropped = [], 0
+    for pid, (d_iso, b_iso) in people.items():
+        dd = date.fromisoformat(d_iso)
+        sd = dates.get(dd.year)
+        if dd > today or not sd or not sd.get("open") or not sd.get("final"):
+            continue
+        lo = (dd - timedelta(days=PT_TX_WINDOW_DAYS)).isoformat()
+        hits = sorted(x for x in tx.get(pid, ()) if lo <= x[0] <= d_iso)
+        org = hits[-1][1] if hits else wtm.get((pid, dd.year))
+        if not org:
+            dropped += 1
+            continue
+        try:
+            age = (dd - date.fromisoformat(str(b_iso)[:10])).days / 365.25 if b_iso else None
+        except ValueError:
+            age = None
+        gap = (dd - sd["open"]).days
+        debuts.append({"year": dd.year, "org": org, "age": age,
+                       "late": dd >= pt_rookie_cutoff(dd.year, sd["final"]),
+                       "svc": PT_SVC_WINDOW[0] <= gap <= PT_SVC_WINDOW[1]})
+    if dropped:
+        log.info("promotion timing: %d debuts with no resolvable org dropped", dropped)
+    cutoffs = {str(y): pt_rookie_cutoff(y, v["final"]).isoformat()
+               for y, v in sorted(dates.items()) if v.get("final")}
+    return debuts, cutoffs
+
+
+def promotion_timing_aggr_rows(con, orgs: set) -> list[tuple]:
+    """(player_key, org, season, level, is_pitcher, age_jul1, games) for every
+    A to AAA season line of a player with a known birth date (career_stats)."""
+    births = {k: b for k, b in con.execute("SELECT player_key, birth_date FROM players") if b}
+    rows = []
+    for key, payload in con.execute("SELECT player_key, payload_json FROM career_stats"):
+        b = births.get(key)
+        try:
+            bd = date.fromisoformat(str(b)[:10]) if b else None
+            lines = json.loads(payload) or []
+        except ValueError:
+            continue
+        if bd is None:
+            continue
+        for s in lines:
+            org = canonical_org(s.get("org")) if s.get("org") else None
+            if (s.get("level") in ("A", "A+", "AA", "AAA") and org in orgs and s.get("season")
+                    and float(s.get("games") or 0) > 0):
+                y = int(s["season"])
+                rows.append((key, org, y, s["level"], bool(s.get("is_pitcher")),
+                             (date(y, 7, 1) - bd).days / 365.25, float(s["games"])))
+    return rows
+
+
+def _pt_wilson(s: int, n: int, z: float = 1.96) -> list:
+    if n == 0:
+        return [None, None]
+    p = s / n
+    den = 1 + z * z / n
+    c = (p + z * z / (2 * n)) / den
+    h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / den
+    return [round(c - h, 3), round(c + h, 3)]
+
+
+def _pt_prop_p(s1: int, n1: int, s2: int, n2: int) -> float:
+    """Two-sided two-proportion z test, the org against every other org."""
+    p = (s1 + s2) / (n1 + n2)
+    se = math.sqrt(p * (1 - p) * (1 / n1 + 1 / n2)) or 1e-9
+    return math.erfc(abs((s1 / n1 - s2 / n2) / se) / math.sqrt(2))
+
+
+def _pt_bh(ps: list[float]) -> list[float]:
+    idx = sorted(range(len(ps)), key=lambda i: ps[i])
+    q = [1.0] * len(ps)
+    prev = 1.0
+    for rank, i in reversed(list(enumerate(idx, 1))):
+        prev = min(prev, ps[i] * len(ps) / rank)
+        q[i] = prev
+    return q
+
+
+def _pt_median_ci(vals: list[float], z: float = 1.96) -> list:
+    """Distribution-free CI95 for a median from order statistics."""
+    v = sorted(vals)
+    n = len(v)
+    if n < 3:
+        return [None, None]
+    lo = max(0, int(math.floor(n / 2 - z * math.sqrt(n) / 2)) - 1)
+    hi = min(n - 1, int(math.ceil(n / 2 + 1 + z * math.sqrt(n) / 2)) - 1)
+    return [round(v[lo], 2), round(v[hi], 2)]
+
+
+def promotion_timing_panel(debuts: list[dict], aggr_rows: list[tuple], cutoffs: dict,
+                           mlb30: set, aggr_seasons=None) -> dict:
+    """Per-org debut timing and age for level against the league, each figure
+    with its n, CI95 and a BH q across the orgs; labels only where the org is
+    distinguishable from the league (see the section header)."""
+    from scipy.stats import ttest_ind
+    deb = [d for d in debuts if d["org"] in mlb30]
+    orgs = sorted({d["org"] for d in deb})
+    if not orgs:
+        return {"orgs": {}, "league": {}}
+    aggr_seasons = set(aggr_seasons or range(PT_AGGR_FIRST_SEASON, max(d["year"] for d in deb) + 1))
+    # age for level: each player's mean (age minus the games-weighted league age
+    # at his level, season and side), centred on the league player mean; an org's
+    # figure is minus its players' mean, so positive reads younger than the level
+    lm: dict[tuple, list[float]] = defaultdict(lambda: [0.0, 0.0])
+    for _k, _o, y, lvl, ip, a, gm in aggr_rows:
+        lm[(y, lvl, ip)][0] += a * gm
+        lm[(y, lvl, ip)][1] += gm
+    pp: dict[tuple, list[float]] = defaultdict(list)
+    for k, o, y, lvl, ip, a, _gm in aggr_rows:
+        if y in aggr_seasons and o in orgs:
+            m = lm[(y, lvl, ip)]
+            pp[(o, k)].append(a - m[0] / m[1])
+    ares: dict[str, list[float]] = defaultdict(list)
+    for (o, _k), v in pp.items():
+        ares[o].append(statistics.fmean(v))
+    allv = [x for v in ares.values() for x in v]
+    lpm = statistics.fmean(allv) if allv else 0.0
+    ares = {o: [x - lpm for x in v] for o, v in ares.items()}
+
+    n_all = len(deb)
+    late_all = sum(d["late"] for d in deb)
+    svc_all = sum(d["svc"] for d in deb)
+    lg_late, lg_svc = late_all / n_all, svc_all / n_all
+    ages_all = [d["age"] for d in deb if d["age"]]
+    lg_age = statistics.median(ages_all) if ages_all else None
+    rows, p_late, p_svc, p_aggr = {}, [], [], []
+    for o in orgs:
+        mine = [d for d in deb if d["org"] == o]
+        n = len(mine)
+        sl, sv = sum(d["late"] for d in mine), sum(d["svc"] for d in mine)
+        ages = [d["age"] for d in mine if d["age"]]
+        ar = ares.get(o, [])
+        rest = [x for oo, v in ares.items() if oo != o for x in v]
+        if len(ar) > 1 and rest:
+            mu = -statistics.fmean(ar)
+            half = 1.96 * statistics.pstdev(ar) / math.sqrt(len(ar))
+            a_ci = [round(mu - half, 2), round(mu + half, 2)]
+            pa = float(ttest_ind(ar, rest, equal_var=False).pvalue)
+        else:
+            mu, a_ci, pa = (-ar[0] if ar else None), [None, None], 1.0
+        p_late.append(_pt_prop_p(sl, n, late_all - sl, n_all - n) if n < n_all else 1.0)
+        p_svc.append(_pt_prop_p(sv, n, svc_all - sv, n_all - n) if n < n_all else 1.0)
+        p_aggr.append(pa if pa == pa else 1.0)
+        rows[o] = {"nDebuts": n,
+                   "medianDebutAge": round(statistics.median(ages), 2) if ages else None,
+                   "medianAgeCi": _pt_median_ci(ages),
+                   "lateShare": round(sl / n, 3), "lateCi": _pt_wilson(sl, n),
+                   "svcShare": round(sv / n, 3), "svcCi": _pt_wilson(sv, n),
+                   "aggrYears": round(mu, 2) if mu is not None else None, "aggrCi": a_ci,
+                   "nAggrPlayers": len(ar)}
+    for key, ps in (("qLate", p_late), ("qSvc", p_svc), ("qAggr", p_aggr)):
+        for o, q in zip(orgs, _pt_bh(ps)):
+            rows[o][key] = round(q, 4)
+    for r in rows.values():
+        r["thin"] = r["nDebuts"] < PT_MIN_DEBUTS
+        lo, hi = r["lateCi"]
+        r["labelTiming"] = None
+        if not r["thin"] and r["qLate"] < PT_Q_MAX and lo is not None and (lo > lg_late or hi < lg_late):
+            r["labelTiming"] = ("waits past the rookie cutoff" if r["lateShare"] > lg_late
+                                else "calls up before the rookie cutoff")
+        lo, hi = r["aggrCi"]
+        r["labelAggr"] = None
+        if (r["nAggrPlayers"] >= PT_MIN_AGGR_PLAYERS and r["qAggr"] < PT_Q_MAX
+                and lo is not None and (lo > 0 or hi < 0)):
+            r["labelAggr"] = "young for level" if r["aggrYears"] > 0 else "old for level"
+
+    def spread(k, centre):
+        vals = [r[k] for r in rows.values() if r[k] is not None]
+        sd = round(statistics.pstdev(vals), 4) if len(vals) >= 8 else None
+        return {"mean": round(centre, 4) if centre is not None else None, "sd": sd or None}
+
+    league = {
+        "nDebuts": n_all, "years": sorted({d["year"] for d in deb}),
+        "aggrSeasons": sorted(aggr_seasons), "nAggrPlayers": len(allv),
+        "lateShare": spread("lateShare", lg_late), "svcShare": spread("svcShare", lg_svc),
+        "medianDebutAge": spread("medianDebutAge", lg_age), "aggrYears": spread("aggrYears", 0.0),
+        "rookieCutoff": cutoffs, "cutoffRulePre2020": PT_PRE2020_CUTOFF,
+        "serviceYearDays": PT_SERVICE_YEAR_DAYS, "svcWindowDays": list(PT_SVC_WINDOW),
+        "labelRule": {"minDebuts": PT_MIN_DEBUTS, "minAggrPlayers": PT_MIN_AGGR_PLAYERS,
+                      "qMax": PT_Q_MAX, "ciExcludesLeague": True},
+        "rule": {"text": PT_RULE_TEXT, "sources": PT_SOURCES},
+    }
+    return {"orgs": rows, "league": league}
+
+
+def align_promotion_label(promotion: dict, timing: dict) -> None:
+    """The promotion badge reads the tested age-for-level label, so the badge
+    and the Promotion timing card cannot disagree on one page. The blended
+    score stays in `score`, which only orders the badges."""
+    torgs = (timing or {}).get("orgs") or {}
+    if not torgs:
+        return
+    for org, r in (promotion.get("orgs") or {}).items():
+        if org in torgs:
+            r["label"] = {"young for level": "aggressive",
+                          "old for level": "conservative"}.get(torgs[org].get("labelAggr"), "typical")
+            r["labelBasis"] = "promotionTiming.labelAggr"
 
 
 # ============================================================================
@@ -1219,15 +1590,26 @@ def build_payload() -> dict:
     mlb30 = set(by_org)
     with storage.connect() as con:
         draft_pos, draft_traits, slot = draft_panels(con)
+        promotion = promotion_panel(by_org, debuts, date.today())
+        try:
+            pt_debuts, pt_cutoffs = promotion_timing_debuts(date.today())
+            timing = promotion_timing_panel(pt_debuts, promotion_timing_aggr_rows(con, mlb30),
+                                            pt_cutoffs, mlb30)
+        except Exception as exc:                            # noqa: BLE001
+            log.warning("promotion timing panel skipped: %s", exc)
+            timing = {"orgs": {}, "league": {}}
+        align_promotion_label(promotion, timing)
         payload = {
             "generated_at": date.today().isoformat(),
             "windows": {"draft": f"{DRAFT_FIRST_YEAR}-present",
                         "trades": f"{TRADE_FIRST_DATE[:4]}-present",
                         "gradeHistory": "2017-present (same-source snapshot pairs)",
                         "promotion": "active roster, trailing 365d",
+                        "promotionTiming": f"MLB debuts {PT_FIRST_SEASON}-present (current rookie rule); age for level {PT_AGGR_FIRST_SEASON}-present",
                         "graduation": f"debuts; draft hit rate {DRAFT_FIRST_YEAR}-present",
                         "approach": "current active hitters (zone metrics; no history)"},
-            "promotion": promotion_panel(by_org, debuts, date.today()),
+            "promotion": promotion,
+            "promotionTiming": timing,
             "draftPos": _filter_mlb30(draft_pos, mlb30),
             "draftTraits": _filter_mlb30(draft_traits, mlb30),
             "slot": _filter_mlb30(slot, mlb30),
@@ -1240,7 +1622,7 @@ def build_payload() -> dict:
             "graduation": _filter_mlb30(graduation_panel(con, debuts), mlb30),
             "hitterApproach": _filter_mlb30(hitter_approach_panel(players), mlb30),
             "notes": [
-                "every value is league-relative: z = (org minus league mean) / league sd across the 30 orgs; labels only fire at |z| >= 0.5",
+                "every value is league-relative: z = (org minus league mean) / league sd across the 30 orgs; labels fire at |z| >= 0.5, except the promotion badge, which needs a tested difference (BH q < 0.10, CI95 clear of the league)",
                 "arsenal BLENDS the MLB arsenals of an org's graduates with the Savant-minors arsenals of its current AAA arms (each arm counted once); the table is the average arm's pitch mix vs league. about half of AAA arms can't be org-attributed, so the AAA arm count is partial, disclosed per org",
                 "pitchStuff: per-pitch velo + arm-side movement (AAA Gameday pfx) vs league; velo blends AAA + MLB",
                 "toolDev measures grade drift per prospect-year inside the org from SAME-SOURCE snapshot pairs (>=60d apart); cross-source noise never counts as development",

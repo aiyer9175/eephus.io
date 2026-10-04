@@ -52797,10 +52797,19 @@ function _otIcon(kind, size = 12, color = "currentColor") {
   if (!inner) return "";
   return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;color:${color};">${inner}</svg>`;
 }
+// QREA11: the receipt behind a badge is a keyboard stop with its text as the
+// accessible description (a visually-hidden sibling), not a title-only tooltip.
+let _otTipSeq = 0;
 function _otBadge(kind, label, tip) {
   if (!label) return "";
   const b = _OT_BADGE[kind] || { c: "#475569" };
-  return `<span title="${escapeHtml(tip || "")}" style="display:inline-flex;align-items:center;gap:5px;background:${b.c};color:#fff;border-radius:999px;padding:3px 11px 3px 8px;font-family:var(--font-retro-mono);font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:3px 6px 3px 0;cursor:help;box-shadow:0 1px 2px rgba(0,0,0,0.28);white-space:nowrap;">${_otIcon(kind, 13, "#fff")}${escapeHtml(label)}</span>`;
+  const id = tip ? "ot-tip-" + (++_otTipSeq) : "";
+  return `<span${tip ? ` tabindex="0" aria-describedby="${id}"` : ""} title="${escapeHtml(tip || "")}" style="display:inline-flex;align-items:center;gap:5px;background:${b.c};color:#fff;border-radius:999px;padding:3px 11px 3px 8px;font-family:var(--font-retro-mono);font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:3px 6px 3px 0;cursor:help;box-shadow:0 1px 2px rgba(0,0,0,0.28);white-space:nowrap;">${_otIcon(kind, 13, "#fff")}${escapeHtml(label)}</span>${tip ? `<span id="${id}" class="visually-hidden">${escapeHtml(tip)}</span>` : ""}`;
+}
+// Row header for the z tables (QREA11): a th scoped to its row, styled as the
+// old first cell; the definition rides as visually-hidden text and the title.
+function _otTh(label, tip) {
+  return `<th scope="row" data-no-sort style="font-weight:400;position:relative;cursor:${tip ? "help" : "auto"};"${tip ? ` title="${escapeHtml(tip)}"` : ""}>${label}${tip ? `<span class="visually-hidden">: ${escapeHtml(tip)}</span>` : ""}</th>`;
 }
 
 // Standard-normal CDF (Abramowitz-Stegun 26.2.17) -> league percentile for a
@@ -52826,11 +52835,11 @@ function _otTip(raw, z) {
   return q ? `${raw} · ${q}` : raw;
 }
 
-function _otCard(title, sub, bodyHtml) {
-  return `<div style="border:1px solid var(--border);background:var(--bg-secondary);padding:12px 14px;min-width:0;">
-    <div style="font-size:11px;letter-spacing:0.07em;text-transform:uppercase;font-weight:700;color:var(--text-tertiary);margin-bottom:2px;">${title}</div>
+function _otCard(title, sub, bodyHtml, key) {
+  return `<section${key ? ` data-ot-card="${key}"` : ""} style="border:1px solid var(--border);background:var(--bg-secondary);padding:12px 14px;min-width:0;position:relative;">
+    <h4 style="font-family:inherit;line-height:inherit;font-size:11px;letter-spacing:0.07em;text-transform:uppercase;font-weight:700;color:var(--text-tertiary);margin:0 0 2px;">${title}</h4>
     ${sub ? `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;">${sub}</div>` : ""}
-    ${bodyHtml}</div>`;
+    ${bodyHtml}</section>`;
 }
 
 function _renderOrgTendencies(orgCode) {
@@ -52872,7 +52881,9 @@ function _renderOrgTendencies(orgCode) {
   const badges = [
     _otBadge(promo.label === "aggressive" ? "aggressive" : "conservative",
       promo.label && promo.label !== "typical" ? promo.label + " promoter" : null,
-      _otTip(`Runs prospects ${promo.avlDiff != null ? Math.abs(promo.avlDiff).toFixed(1) + " yrs " + (promo.avlDiff < 0 ? "YOUNGER" : "older") : "?"} than level-average; ${promo.promoRate ?? "?"} promotions per prospect.`, promo.zPromo)),
+      promo.labelBasis && g("promotionTiming").aggrYears != null
+        ? (p0 => `Runs prospects ${Math.abs(p0.aggrYears).toFixed(2)} yrs ${p0.aggrYears > 0 ? "younger" : "older"} than level-average (CI95 ${p0.aggrCi[0]} to ${p0.aggrCi[1]}, n ${p0.nAggrPlayers} players); tested against the league, BH q < 0.10.`)(g("promotionTiming"))
+        : _otTip(`Runs prospects ${promo.avlDiff != null ? Math.abs(promo.avlDiff).toFixed(1) + " yrs " + (promo.avlDiff < 0 ? "YOUNGER" : "older") : "?"} than level-average; ${promo.promoRate ?? "?"} promotions per prospect.`, promo.zPromo)),
     _otBadge("ifa", ifa.label && ifa.label !== "balanced" ? "IFA: " + ifa.label : null,
       _otTip(`Top signing ${ifa.top1Share != null ? (ifa.top1Share * 100).toFixed(0) + "%" : "?"} of the pool; ${ifa.signingsPerClass ?? "?"} signings/class.`, ifa.zConc)),
     _otBadge(tr.volLabel === "trade-happy" ? "trade-happy" : "trade-reluctant",
@@ -52919,20 +52930,72 @@ function _renderOrgTendencies(orgCode) {
   ].filter(Boolean).join("");
 
   // ---- shared row helpers ---------------------------------------------------
-  const valRow = (label, val, z, tip) => `<tr><td title="${escapeHtml(tip || "")}">${label}</td>
+  const valRow = (label, val, z, tip) => `<tr>${_otTh(label, tip)}
     <td style="text-align:right;">${val}</td><td>${_otZBar(z)}</td></tr>`;
   const pctRow = (label, v, z, tip) => valRow(label, v != null ? (v * 100).toFixed(0) + "%" : " - ", z, tip);
 
   // ---- promotion (now with debut age) --------------------------------------
-  const promoCard = _otCard("Promotion style",
-    "How young the org runs its levels, promotes, and how old its graduates debut",
+  const promoCard = _otCard("Promotion style", "",
     `<table class="detail-table" style="width:100%;">
       ${valRow("Age vs level", promo.avlDiff != null ? (promo.avlDiff > 0 ? "+" : "") + promo.avlDiff + " yrs" : " - ", promo.zYoung != null ? -promo.zYoung : null, "Mean (age − level-average); negative = young-for-level.")}
       ${valRow("Promotions / prospect", promo.promoRate ?? " - ", promo.zPromo, "Promotions per active prospect, trailing 365d.")}
       ${valRow("Pitcher debut age", promo.debutAgePit != null ? promo.debutAgePit + " yrs" : " - ", promo.zDebutAgePit != null ? -promo.zDebutAgePit : null, "Mean age at MLB debut for graduated pitchers (n=" + (promo.nDebutPit || 0) + ").")}
       ${valRow("Hitter debut age", promo.debutAgeHit != null ? promo.debutAgeHit + " yrs" : " - ", promo.zDebutAgeHit != null ? -promo.zDebutAgeHit : null, "Mean age at MLB debut for graduated hitters (n=" + (promo.nDebutHit || 0) + ").")}
     </table>
-    <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">bars read vs league: right/green = more aggressive (younger / faster)</div>`);
+    <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">right / green = younger or faster than the league</div>`);
+
+  // ---- promotion timing: rookie cutoff, service-year window, age for level --
+  // Display only (the roster-aware ETA lane found none of these moves the ETA,
+  // so the card never says it does). Every figure prints its n and CI95; a
+  // badge reads only the tested labels (n-sufficient, BH q < 0.10 across the
+  // 30 orgs, CI95 clear of the league), never a z cut.
+  const ptL = (T.promotionTiming && T.promotionTiming.league) || {}, pt = g("promotionTiming");
+  const ptCard = pt.nDebuts == null ? "" : (() => {
+    const cuts = ptL.rookieCutoff || {}, cutYr = Object.keys(cuts).sort().pop();
+    const cutTxt = cutYr ? new Date(cuts[cutYr] + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : " - ";
+    const yrs = ptL.years || [], ays = ptL.aggrSeasons || [];
+    const span = a => a.length ? (a[0] === a[a.length - 1] ? String(a[0]) : a[0] + "-" + a[a.length - 1]) : "";
+    const pc = v => v == null ? " - " : Math.round(v * 100) + "%";
+    const a1 = v => v == null ? " - " : Number(v).toFixed(1);
+    const sg = v => v == null ? " - " : (v > 0 ? "+" : "") + Number(v).toFixed(2);
+    const ci = (c, f) => c && c[0] != null ? ` (${f(c[0])} to ${f(c[1])})` : "";
+    const lgOf = k => (ptL[k] || {}).mean;
+    // CI strip: whisker over the CI95, a bar at the org value, a dashed tick at the league
+    const strip = (v, c, lg, lo, hi) => {
+      if (v == null) return "";
+      const x = t => Math.max(0, Math.min(100, (t - lo) / (hi - lo) * 100)).toFixed(1);
+      return `<dd aria-hidden="true" style="flex-basis:100%;margin:2px 0 0;"><svg viewBox="0 0 100 8" preserveAspectRatio="none" width="100%" height="8" focusable="false" style="display:block;">
+        ${lg != null ? `<line x1="${x(lg)}" x2="${x(lg)}" y1="0" y2="8" vector-effect="non-scaling-stroke" style="stroke:var(--text-tertiary);stroke-width:1;stroke-dasharray:2 1.5;"/>` : ""}
+        ${c && c[0] != null ? `<line x1="${x(c[0])}" x2="${x(c[1])}" y1="4" y2="4" vector-effect="non-scaling-stroke" style="stroke:var(--text-secondary);stroke-width:2;"/>` : ""}
+        <rect x="${(x(v) - 0.6).toFixed(1)}" y="0.5" width="1.2" height="7" style="fill:var(--text-primary);"/></svg></dd>`;
+    };
+    const row = (label, val, lgTxt, nTxt, stripHtml) => `<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 12px;padding:6px 0;border-bottom:1px solid var(--border-light);">
+        <dt style="flex:1 1 170px;font-size:12px;">${label}</dt>
+        <dd style="margin:0;font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums;text-align:right;">${val} <span style="color:var(--text-secondary);">· league ${lgTxt} · n ${nTxt}</span></dd>${stripHtml}</div>`;
+    const qTxt = q => q == null ? "" : `; BH q ${q < 0.0001 ? "< 0.0001" : Number(q).toFixed(4)} across 30 orgs`;
+    const badges = _otBadge(pt.labelAggr === "young for level" ? "aggressive" : "conservative", pt.labelAggr,
+        `${sg(pt.aggrYears)} yrs younger than level${ci(pt.aggrCi, sg)}, n ${pt.nAggrPlayers} players, ${span(ays)}${qTxt(pt.qAggr)}.`)
+      + _otBadge(pt.labelTiming === "calls up before the rookie cutoff" ? "aggressive" : "conservative", pt.labelTiming,
+        `${pc(pt.lateShare)} of debuts on or after the rookie cutoff${ci(pt.lateCi, pc)}, n ${pt.nDebuts}, ${span(yrs)}${qTxt(pt.qLate)}.`);
+    const plain = [!pt.labelTiming ? `debut timing (n = ${pt.nDebuts} debuts${pt.thin ? ", too few to test" : ""})` : "",
+                   !pt.labelAggr ? `age for level (n = ${pt.nAggrPlayers ?? 0} players)` : ""].filter(Boolean);
+    const rule = ptL.rule || {};
+    return _otCard("Promotion timing",
+      `MLB debuts ${span(yrs)}, current rookie rule; age for level ${span(ays)}`,
+      `<div style="font-size:12px;margin:2px 0 6px;">Rookie-status cutoff, ${escapeHtml(cutYr || "")}: <strong>${escapeHtml(cutTxt)}</strong></div>
+      ${badges ? `<div style="position:relative;margin:2px 0 4px;">${badges}</div>` : ""}
+      ${plain.length ? `<div style="font-size:11px;color:var(--text-secondary);margin:2px 0 4px;">Not distinguishable from the league: ${plain.join("; ")}.</div>` : ""}
+      <dl style="margin:4px 0 0;">
+        ${row("Debuts on or after the rookie cutoff", pc(pt.lateShare) + ci(pt.lateCi, pc), pc(lgOf("lateShare")), pt.nDebuts, strip(pt.lateShare, pt.lateCi, lgOf("lateShare"), 0, 0.6))}
+        ${row(`Debuts ${(ptL.svcWindowDays || [15, 45]).join(" to ")} days after Opening Day`, pc(pt.svcShare) + ci(pt.svcCi, pc), pc(lgOf("svcShare")), pt.nDebuts, strip(pt.svcShare, pt.svcCi, lgOf("svcShare"), 0, 0.6))}
+        ${row("Median debut age", a1(pt.medianDebutAge) + ci(pt.medianAgeCi, a1), a1(lgOf("medianDebutAge")), pt.nDebuts, strip(pt.medianDebutAge, pt.medianAgeCi, lgOf("medianDebutAge"), 23, 28))}
+        ${row("Years younger than level, A to AAA", sg(pt.aggrYears) + ci(pt.aggrCi, sg), sg(lgOf("aggrYears")), (pt.nAggrPlayers ?? 0) + " players", strip(pt.aggrYears, pt.aggrCi, lgOf("aggrYears"), -1.2, 1.2))}
+      </dl>
+      ${rule.text ? `<details style="margin-top:8px;"><summary style="font-size:11px;color:var(--text-secondary);cursor:pointer;padding:4px 0;">Rule and sources</summary>
+        <p style="font-size:11px;color:var(--text-secondary);margin:4px 0;">${escapeHtml(rule.text)}</p>
+        <p style="font-size:11px;margin:0;">${(rule.sources || []).map(s => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.label)}</a>`).join(" · ")}</p></details>` : ""}`,
+      "promotion-timing");
+  })();
 
   // ---- draft: what they take (now with college + position buckets) ---------
   const POSB = { P: "Pitchers", C: "Catchers", MI: "Middle IF", CI: "Corner IF", OF: "Outfield" };
@@ -52962,7 +53025,7 @@ function _renderOrgTendencies(orgCode) {
   // ---- draft traits ---------------------------------------------------------
   const traitRows = Object.entries((traits.tilts || {}))
     .filter(([, z]) => z != null).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 6)
-    .map(([k, z]) => `<tr><td>${_OT_TOOL_LABELS[k] || k}</td><td>${_otZBar(z)}</td></tr>`).join("");
+    .map(([k, z]) => `<tr>${_otTh(_OT_TOOL_LABELS[k] || k)}<td>${_otZBar(z)}</td></tr>`).join("");
   const traitCard = _otCard("Draft - traits they pay for",
     "Mean FG tool grades of their signed draftees vs the league draftee mean",
     traitRows ? `<table class="detail-table" style="width:100%;">${traitRows}</table>`
@@ -52971,13 +53034,13 @@ function _renderOrgTendencies(orgCode) {
   // ---- what they develop ----------------------------------------------------
   const devRows = Object.entries((dev.tools || {}))
     .sort((a, b) => (b[1].z ?? -9) - (a[1].z ?? -9))
-    .map(([k, v]) => `<tr><td>${_OT_TOOL_LABELS[k] || k}</td>
+    .map(([k, v]) => `<tr>${_otTh(_OT_TOOL_LABELS[k] || k)}
       <td style="text-align:right;" title="Future-grade drift per prospect-year in this org (same-source snapshot pairs).">${v.rate > 0 ? "+" : ""}${v.rate} pts/yr</td>
       <td>${_otZBar(v.z)}</td></tr>`).join("");
   const scLine = dev.scPlusDrift != null
     ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;" title="Mean SC+ (Statcast composite) change per prospect over the platform's metric history - an early-window read (2026-05 onward).">SC+ drift: <strong style="color:${dev.scPlusDrift >= 0 ? "var(--up)" : "var(--down)"};">${dev.scPlusDrift > 0 ? "+" : ""}${dev.scPlusDrift}</strong> ${_otZBar(dev.scPlusZ)}</div>` : "";
   const devCard = _otCard("What they develop",
-    "Grade drift per prospect-year IN this org, vs league - scouting-grade movement, not stat noise",
+    "Grade drift per prospect-year in this org, vs league",
     (devRows ? `<table class="detail-table" style="width:100%;">${devRows}</table>` :
       '<div style="color:var(--text-tertiary);font-size:12px;">Not enough same-source grade pairs.</div>') + scLine);
 
@@ -52986,13 +53049,13 @@ function _renderOrgTendencies(orgCode) {
   const uRows = Object.keys(usage).map(pt => {
     const c = usage[pt];
     const rc = c.ratio == null ? "var(--text-secondary)" : c.ratio >= 1.1 ? "var(--up)" : c.ratio <= 0.9 ? "var(--down)" : "var(--text-secondary)";
-    return `<tr><td>${_OT_PITCH_NAMES[pt] || pt}</td>
+    return `<tr>${_otTh(_OT_PITCH_NAMES[pt] || pt)}
       <td style="text-align:right;">${(c.share * 100).toFixed(0)}%</td>
       <td style="text-align:right;color:${rc};" title="Usage as a multiple of the league rate.">${c.ratio != null ? c.ratio.toFixed(2) + "×" : " - "}</td></tr>`;
   }).join("");
   const arsCard = _otCard("Pitch identity of their products",
     `Blended arsenal of ${ars.nArms ?? 0} arms (${ars.nArmsMlb ?? 0} MLB + ${ars.nArmsAaa ?? 0} AAA) - usage vs league`,
-    (uRows ? `<table class="detail-table" style="width:100%;"><tr style="color:var(--text-tertiary);"><td style="font-size:10px;">Pitch</td><td style="text-align:right;font-size:10px;">Usage</td><td style="text-align:right;font-size:10px;">vs lg</td></tr>${uRows}</table>`
+    (uRows ? `<table class="detail-table" style="width:100%;"><tr style="color:var(--text-tertiary);"><th scope="col" data-no-sort style="font-size:10px;font-weight:400;cursor:auto;">Pitch</th><th scope="col" data-no-sort style="text-align:right;font-size:10px;font-weight:400;cursor:auto;">Usage</th><th scope="col" data-no-sort style="text-align:right;font-size:10px;font-weight:400;cursor:auto;">vs lg</th></tr>${uRows}</table>`
            : '<div style="color:var(--text-tertiary);font-size:12px;">No arms tracked yet.</div>')
     + (ars.fbVelo != null ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Avg FB velo: <strong>${ars.fbVelo}</strong> mph ${_otZBar(ars.zVelo)}</div>` : ""));
 
@@ -53001,7 +53064,7 @@ function _renderOrgTendencies(orgCode) {
   const spRows = Object.keys(sp).map(pt => {
     const c = sp[pt];
     const brk = `${c.hBreak != null ? (c.hBreak > 0 ? "+" : "") + c.hBreak + '"H' : ""}${c.vBreak != null ? " / " + (c.vBreak > 0 ? "+" : "") + c.vBreak + '"V' : ""}`;
-    return `<tr><td>${_OT_PITCH_NAMES[pt] || pt}</td>
+    return `<tr>${_otTh(_OT_PITCH_NAMES[pt] || pt)}
       <td style="text-align:right;">${c.velo != null ? c.velo : " - "}</td>
       <td>${_otZBar(c.zVelo)}</td>
       <td style="text-align:right;font-size:11px;color:var(--text-secondary);" title="Arm-side horizontal / vertical break vs league (AAA Gameday).">${brk}</td></tr>`;
@@ -53040,19 +53103,19 @@ function _renderOrgTendencies(orgCode) {
   const ifaCard = _otCard("International strategy",
     `${ifa.classes ?? 0} signing classes, 2021-present`,
     `<table class="detail-table" style="width:100%;">
-      <tr><td title="Average share of the org's class bonus outlay taken by its TOP signing.">Top signing's pool share</td><td style="text-align:right;">${ifa.top1Share != null ? (ifa.top1Share * 100).toFixed(0) + "%" : " - "}</td><td>${_otZBar(ifa.zConc)}</td></tr>
-      <tr><td title="Herfindahl concentration of bonus dollars across each class (1 = whole pool on one player).">Pool concentration (HHI)</td><td style="text-align:right;">${ifa.hhi ?? " - "}</td><td></td></tr>
-      <tr><td>Signings / class</td><td style="text-align:right;">${ifa.signingsPerClass ?? " - "}</td><td>${_otZBar(ifa.zVolume)}</td></tr>
-      <tr><td title="Bonuses of $1M+ across the window.">Seven-figure bonuses</td><td style="text-align:right;">${ifa.sevenFigure ?? " - "}</td><td></td></tr>
+      <tr>${_otTh("Top signing's pool share", "Average share of the org's class bonus outlay taken by its TOP signing.")}<td style="text-align:right;">${ifa.top1Share != null ? (ifa.top1Share * 100).toFixed(0) + "%" : " - "}</td><td>${_otZBar(ifa.zConc)}</td></tr>
+      <tr>${_otTh("Pool concentration (HHI)", "Herfindahl concentration of bonus dollars across each class (1 = whole pool on one player).")}<td style="text-align:right;">${ifa.hhi ?? " - "}</td><td></td></tr>
+      <tr>${_otTh("Signings / class")}<td style="text-align:right;">${ifa.signingsPerClass ?? " - "}</td><td>${_otZBar(ifa.zVolume)}</td></tr>
+      <tr>${_otTh("Seven-figure bonuses", "Bonuses of $1M+ across the window.")}<td style="text-align:right;">${ifa.sevenFigure ?? " - "}</td><td></td></tr>
     </table>`);
   const tradeCard = _otCard("Trade profile",
     `Tracked-prospect moves, ${(T.trades && T.trades.window) || "2022-present"}`,
     `<table class="detail-table" style="width:100%;">
-      <tr><td title="${escapeHtml((T.trades && T.trades.note) || "")}">Volume (in + out)</td><td style="text-align:right;">${tr.volume ?? " - "}</td><td>${_otZBar(tr.zVolume)}</td></tr>
-      <tr><td title="Tracked prospects acquired minus traded away - positive accumulates prospect capital; negative converts it into MLB help.">Net prospect capital</td><td style="text-align:right;">${tr.netProspects > 0 ? "+" : ""}${tr.netProspects ?? " - "}</td><td>${_otZBar(tr.zNet)}</td></tr>
-      <tr><td title="Share of graded acquired prospects at FV 50+ - quality vs depth.">FV 50+ share of acquisitions</td><td style="text-align:right;">${tr.acqTopShare != null ? (tr.acqTopShare * 100).toFixed(0) + "%" : " - "}</td><td>${_otZBar(tr.zQuality)}</td></tr>
-      <tr><td title="Trades where the description shows this club RECEIVING cash considerations.">Cash received (deals)</td><td style="text-align:right;">${tr.cashReceived ?? " - "}</td><td>${_otZBar(tr.zCash)}</td></tr>
-      <tr><td title="All trades involving this club where cash considerations appear in the transaction text.">Cash-involved (deals)</td><td style="text-align:right;">${tr.cashInvolved ?? " - "}</td><td></td></tr>
+      <tr>${_otTh("Volume (in + out)", (T.trades && T.trades.note) || "")}<td style="text-align:right;">${tr.volume ?? " - "}</td><td>${_otZBar(tr.zVolume)}</td></tr>
+      <tr>${_otTh("Net prospect capital", "Tracked prospects acquired minus traded away - positive accumulates prospect capital; negative converts it into MLB help.")}<td style="text-align:right;">${tr.netProspects > 0 ? "+" : ""}${tr.netProspects ?? " - "}</td><td>${_otZBar(tr.zNet)}</td></tr>
+      <tr>${_otTh("FV 50+ share of acquisitions", "Share of graded acquired prospects at FV 50+ - quality vs depth.")}<td style="text-align:right;">${tr.acqTopShare != null ? (tr.acqTopShare * 100).toFixed(0) + "%" : " - "}</td><td>${_otZBar(tr.zQuality)}</td></tr>
+      <tr>${_otTh("Cash received (deals)", "Trades where the description shows this club RECEIVING cash considerations.")}<td style="text-align:right;">${tr.cashReceived ?? " - "}</td><td>${_otZBar(tr.zCash)}</td></tr>
+      <tr>${_otTh("Cash-involved (deals)", "All trades involving this club where cash considerations appear in the transaction text.")}<td style="text-align:right;">${tr.cashInvolved ?? " - "}</td><td></td></tr>
     </table>`);
 
   // ---- similar farms (NEW) --------------------------------------------------
@@ -53074,10 +53137,10 @@ function _renderOrgTendencies(orgCode) {
 
   mount.innerHTML = `
     <div class="detail-title"><span class="g-term" data-term="org_tendencies">Organization Tendencies</span>
-      <span class="detail-title-sub">behavioral profile vs the league - every bar is a z-score across the 30 orgs; labels only fire at |z| ≥ 0.5</span></div>
-    <div style="margin:6px 0 14px;">${badges || '<span style="color:var(--text-tertiary);font-size:12px;">No strong tendencies - this org profiles league-typical on every axis.</span>'}</div>
+      <span class="detail-title-sub">every bar is a z-score across the 30 orgs</span></div>
+    <div style="margin:6px 0 14px;position:relative;">${badges || '<span style="color:var(--text-tertiary);font-size:12px;">No strong tendencies - this org profiles league-typical on every axis.</span>'}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px;">
-      ${promoCard}${devCard}${arsCard}${stuffCard}${draftCard}${spendCard}${traitCard}${gradCard}${approachCard}${ifaCard}${tradeCard}
+      ${ptCard}${promoCard}${devCard}${arsCard}${stuffCard}${draftCard}${spendCard}${traitCard}${gradCard}${approachCard}${ifaCard}${tradeCard}
     </div>
     ${simHtml}
     <div style="font-size:10px;color:var(--text-tertiary);margin-top:12px;">

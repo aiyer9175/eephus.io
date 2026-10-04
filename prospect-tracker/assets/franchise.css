@@ -169,7 +169,7 @@
 .fr-app .fr-mini th, .fr-app .fr-mini td { padding: 3px 0; border-bottom: 1px solid var(--border-subtle); }
 .fr-app .fr-mini th { text-align: left; font-weight: 400; }
 .fr-app .fr-mini td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
-.fr-app .fr-tag { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; opacity: .65; margin-left: 4px; }
+.fr-app .fr-tag { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); margin-left: 4px; }
 .fr-app .fr-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
 .fr-app .fr-grid2 > div { min-width: 0; overflow-x: auto; }
 @container frblock (max-width: 640px) { .fr-app .fr-grid2 { grid-template-columns: 1fr; } }
@@ -203,7 +203,8 @@
 .fr-app .fr-zbar .fr-zneg { background: color-mix(in srgb, var(--down) 60%, transparent); }
 .fr-app .fr-zbar .fr-zmid { position: absolute; top: -2px; bottom: -2px; left: 50%; width: 1px; background: var(--text-tertiary); }
 .fr-app .fr-zval { font-family: var(--font-mono); text-align: right; }
-@container frblock (max-width: 480px) { .fr-app .fr-zrow { grid-template-columns: minmax(0, 1fr) 3.5em; } .fr-app .fr-zrow .fr-zhide { display: none; } }
+.fr-app .fr-zshow { display: none; }
+@container frblock (max-width: 480px) { .fr-app .fr-zrow { grid-template-columns: minmax(0, 1fr) 3.5em; } .fr-app .fr-zrow .fr-zhide { display: none; } .fr-app .fr-zrow .fr-zshow { display: inline; } }
 
 /* the 2027-2031 wins strip and the locked bar: height only, ladder-free */
 .fr-app .fr-lock { position: relative; height: 10px; background: var(--bg-hover); max-width: 320px; margin: 4px 0; }
@@ -232,10 +233,10 @@
   .fr-app .fr-block { padding: 10px 12px; }
   .fr-app .fr-table { font-size: 12px; }
 }
-/* 44px touch targets at phone width (QCLA12, QCLA13): the board's club codes,
-   the tile "open" chips and the link rail */
+/* 44px touch targets at phone width (QCLA12, QCLA13, QREA22): the board's club
+   codes, the tile "open" chips, the section "Open in" chips and the link rail */
 @media (max-width: 640px) {
   .fr-app .fr-board td:first-child a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; margin: -4px 0; }
-  .fr-app .fr-tile-open, .fr-app .fr-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; }
+  .fr-app .fr-tile-open, .fr-app .fr-links a, .fr-app .fr-open a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; }
   .fr-app .fr-sort { min-height: 44px; margin: -4px 0; }
 }
