@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-10-03T16:05:41Z",
+ "generated_at": "2026-10-04T01:59:10Z",
  "rule": "append-only; an event is added when a model's registry state, its card legs, an eFV progress ledger row or a dated note changes; every number is copied from the artifact key named in the event; the edge is printed by edge() v1; events sit in append order, each run's batch ordered by date",
  "edge_rule_version": 1,
  "result_form": "Result ({stat}): {body}",
@@ -8,7 +8,7 @@
  "sources": [
   {
    "path": "data/model_registry.json",
-   "sha256": "d13f19ca1d585ebe207d959f27f8f880f6202ea30b0af9cba9f3100764d9fa18"
+   "sha256": "8fe82856ac2be7cd25849236d8daa30631598d8a890fb9c5eb3bbeebcf03923b"
   },
   {
    "path": "data/efv_progress.json",
@@ -31,13 +31,13 @@
   },
   {
    "path": "data/source_backtest.json",
-   "sha256": "0f76e33bd3eceeaecc93b543a16020d969f36b37a4b56f6951894117a2f5e614",
-   "generated_at": "2026-10-02T15:51:28Z"
+   "sha256": "45e841d21d31d71362dea351b7f3374805105e2474b7dadc3b2dc33f1c4a3661",
+   "generated_at": "2026-10-03T22:45:08Z"
   },
   {
    "path": "data/draft_slot_curve.json",
-   "sha256": "a0ef4c55fd0bb43cc743ecc96cbe418fe89c539af2198c4ba73d92b488a2bac4",
-   "generated_at": "2026-09-04"
+   "sha256": "4195d0604ea27a8f4743d399d6cfcea5e2771e5baf181c787b5faeb4f1a0c7b5",
+   "generated_at": "2026-10-03"
   },
   {
    "path": "data/eta_eval.json",
@@ -66,7 +66,7 @@
   },
   {
    "path": "data/xhem_served_regate_eval.json",
-   "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9",
+   "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959",
    "generated_at": "2026-09-18"
   },
   {
@@ -106,8 +106,8 @@
   },
   {
    "path": "data/team_outlook_eval.json",
-   "sha256": "e6d82916545c1fd559e3937de3695170e48f83d70090943c1c50de946f3bff36",
-   "generated_at": "2026-10-02"
+   "sha256": "7c9c705bc5a52cdce2b70cf984dac0b19033b7f7b168a6339c04445ddd8c319b",
+   "generated_at": "2026-10-03"
   }
  ],
  "families": [
@@ -232,8 +232,8 @@
  },
  "note_problems": [],
  "counts": {
-  "events": 472,
-  "default_view": 84,
+  "events": 477,
+  "default_view": 87,
   "by_kind": {
    "artifact_change": 26,
    "backfill": 4,
@@ -241,21 +241,21 @@
    "first_scored": 21,
    "frame_change": 1,
    "model_change": 11,
-   "registered": 331,
+   "registered": 333,
    "removed": 1,
-   "rescored": 38,
+   "rescored": 41,
    "scoring_correction": 2,
    "verdict": 33
   },
   "by_layer": {
    "development": 7,
-   "headline": 86,
-   "registration": 358,
+   "headline": 89,
+   "registration": 360,
    "typed": 21
   },
   "verdict_changes": 33,
-  "registry_models": 330,
-  "served_models": 233,
+  "registry_models": 332,
+  "served_models": 235,
   "scored_models": 22,
   "scored_legs": 42,
   "model_states": {
@@ -265,11 +265,11 @@
    "no_eval": 21,
    "tie": 4,
    "unresolved": 5,
-   "unwired": 221
+   "unwired": 223
   },
   "registry_verdicts": {
    "deprecated": 88,
-   "provisional": 144,
+   "provisional": 146,
    "unvalidated": 44,
    "validated": 54
   },
@@ -288,10 +288,10 @@
    "MLB Stats": 20,
    "Management": 9,
    "Other": 6,
-   "PROSPX and eFV": 106,
+   "PROSPX and eFV": 107,
    "Sources and Consensus": 13,
    "Trade Machine": 5,
-   "eWAR": 5
+   "eWAR": 6
   }
  },
  "models": [
@@ -342,7 +342,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -394,7 +394,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 70,
     "age_is_evidence": false,
     "stale": false
    }
@@ -420,7 +420,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 57,
+    "artifact_age_days": 58,
     "age_is_evidence": true,
     "stale": false
    }
@@ -659,7 +659,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 70,
     "age_is_evidence": false,
     "stale": false
    }
@@ -843,7 +843,7 @@
    "last_update": "2026-10-03",
    "events": 4,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -869,7 +869,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -895,7 +895,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1077,7 +1077,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1155,7 +1155,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1181,7 +1181,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1200,25 +1200,25 @@
    "state": "lead",
    "edge": {
     "state": "lead",
-    "text": "Result (AUC): +0.016 lead"
+    "text": "Result (AUC): +0.012 lead"
    },
    "today": [
     {
      "stat": "AUC",
      "better": "higher",
      "role": "headline",
-     "model": 0.734,
+     "model": 0.7395,
      "benchmark_label": "best single input",
-     "benchmark": 0.7183,
+     "benchmark": 0.7278,
      "n": 4319,
-     "delta": 0.0157,
+     "delta": 0.0117,
      "ci95": null,
      "mde95": 0.0078,
      "t": null,
      "resolvable": true,
      "digits": null,
      "edge_state": "lead",
-     "edge_text": "Result (AUC): +0.016 lead",
+     "edge_text": "Result (AUC): +0.012 lead",
      "keys": {
       "model": "accuracy.consensus_vs_inputs.auc.consensus",
       "benchmark": "accuracy.consensus_vs_inputs.auc.best_input",
@@ -1228,15 +1228,15 @@
      },
      "source": {
       "path": "data/source_backtest.json",
-      "sha256": "0f76e33bd3eceeaecc93b543a16020d969f36b37a4b56f6951894117a2f5e614"
+      "sha256": "45e841d21d31d71362dea351b7f3374805105e2474b7dadc3b2dc33f1c4a3661"
      }
     }
    ],
    "registered": "2026-06-10",
    "last_update": "2026-10-03",
-   "events": 12,
+   "events": 13,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1314,7 +1314,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1437,25 +1437,25 @@
    "state": "no_contest",
    "edge": {
     "state": "no_contest",
-    "text": "Result (mean career eWAR): no head-to-head on record"
+    "text": "Result (mean career WAR): no head-to-head on record"
    },
    "today": [
     {
-     "stat": "mean career eWAR",
+     "stat": "mean career WAR",
      "better": "higher",
      "role": "headline",
-     "model": 29.51,
+     "model": 29.98,
      "benchmark_label": "picks 301-500",
      "benchmark": 0.29,
      "n": 6596,
-     "delta": 29.22,
+     "delta": 29.69,
      "ci95": null,
      "mde95": null,
      "t": null,
      "resolvable": null,
      "digits": 2,
      "edge_state": "no_contest",
-     "edge_text": "Result (mean career eWAR): no head-to-head on record",
+     "edge_text": "Result (mean career WAR): no head-to-head on record",
      "keys": {
       "model": "realized_career_by_bucket_2005_14.1.mean_war",
       "benchmark": "realized_career_by_bucket_2005_14.500.mean_war",
@@ -1463,15 +1463,15 @@
      },
      "source": {
       "path": "data/draft_slot_curve.json",
-      "sha256": "a0ef4c55fd0bb43cc743ecc96cbe418fe89c539af2198c4ba73d92b488a2bac4"
+      "sha256": "4195d0604ea27a8f4743d399d6cfcea5e2771e5baf181c787b5faeb4f1a0c7b5"
      }
     }
    ],
    "registered": "2026-06-10",
-   "last_update": "2026-09-25",
-   "events": 5,
+   "last_update": "2026-10-03",
+   "events": 6,
    "freshness": {
-    "artifact_age_days": 29,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1705,7 +1705,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -1731,7 +1731,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 66,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2086,7 +2086,33 @@
    "last_update": "2026-10-03",
    "events": 4,
    "freshness": {
-    "artifact_age_days": 29,
+    "artifact_age_days": 30,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "fwar",
+   "label": "Fwar",
+   "family": "eWAR",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/xfv_fwar_label_epoch_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-03",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2218,7 +2244,7 @@
    "last_update": "2026-08-19",
    "events": 4,
    "freshness": {
-    "artifact_age_days": 44,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2322,7 +2348,7 @@
    "last_update": "2026-06-10",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 44,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2376,7 +2402,7 @@
    "last_update": "2026-09-24",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 10,
     "age_is_evidence": false,
     "stale": false
    }
@@ -2428,7 +2454,7 @@
    "last_update": "2026-06-11",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 29,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2454,7 +2480,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 44,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2506,7 +2532,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 44,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2532,7 +2558,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 71,
+    "artifact_age_days": 72,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2610,7 +2636,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2688,7 +2714,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 29,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -2819,7 +2845,7 @@
      },
      "source": {
       "path": "data/xhem_served_regate_eval.json",
-      "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9"
+      "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959"
      }
     }
    ],
@@ -3226,7 +3252,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 21,
+    "artifact_age_days": 22,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3565,7 +3591,7 @@
    "last_update": "2026-06-10",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 44,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3591,7 +3617,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -3955,7 +3981,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 96,
     "age_is_evidence": false,
     "stale": false
    }
@@ -3981,7 +4007,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 96,
     "age_is_evidence": false,
     "stale": false
    }
@@ -4085,7 +4111,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4718,25 +4744,25 @@
    "state": "tie",
    "edge": {
     "state": "tie",
-    "text": "Result (Spearman): tie (-0.002)"
+    "text": "Result (Spearman): tie (+0.003)"
    },
    "today": [
     {
      "stat": "Spearman",
      "better": "higher",
      "role": "headline",
-     "model": 0.2836,
+     "model": 0.2898,
      "benchmark_label": "best single source",
-     "benchmark": 0.2855,
+     "benchmark": 0.2869,
      "n": 4319,
-     "delta": -0.0019,
+     "delta": 0.0029,
      "ci95": null,
      "mde95": 0.0121,
      "t": null,
      "resolvable": false,
      "digits": null,
      "edge_state": "tie",
-     "edge_text": "Result (Spearman): tie (-0.002)",
+     "edge_text": "Result (Spearman): tie (+0.003)",
      "keys": {
       "model": "accuracy.consensus_vs_inputs.spearman.consensus",
       "benchmark": "accuracy.consensus_vs_inputs.spearman.best_input",
@@ -4746,25 +4772,25 @@
      },
      "source": {
       "path": "data/source_backtest.json",
-      "sha256": "0f76e33bd3eceeaecc93b543a16020d969f36b37a4b56f6951894117a2f5e614"
+      "sha256": "45e841d21d31d71362dea351b7f3374805105e2474b7dadc3b2dc33f1c4a3661"
      }
     },
     {
      "stat": "AUC",
      "better": "higher",
      "role": "secondary",
-     "model": 0.734,
+     "model": 0.7395,
      "benchmark_label": "best single source",
-     "benchmark": 0.7183,
+     "benchmark": 0.7278,
      "n": 4319,
-     "delta": 0.0157,
+     "delta": 0.0117,
      "ci95": null,
      "mde95": 0.0078,
      "t": null,
      "resolvable": true,
      "digits": null,
      "edge_state": "lead",
-     "edge_text": "Result (AUC): +0.016 lead",
+     "edge_text": "Result (AUC): +0.012 lead",
      "keys": {
       "model": "accuracy.consensus_vs_inputs.auc.consensus",
       "benchmark": "accuracy.consensus_vs_inputs.auc.best_input",
@@ -4774,15 +4800,15 @@
      },
      "source": {
       "path": "data/source_backtest.json",
-      "sha256": "0f76e33bd3eceeaecc93b543a16020d969f36b37a4b56f6951894117a2f5e614"
+      "sha256": "45e841d21d31d71362dea351b7f3374805105e2474b7dadc3b2dc33f1c4a3661"
      }
     }
    ],
    "registered": "2026-06-10",
    "last_update": "2026-10-03",
-   "events": 11,
+   "events": 12,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -4943,7 +4969,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5099,7 +5125,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5273,7 +5299,7 @@
      },
      "source": {
       "path": "data/team_outlook_eval.json",
-      "sha256": "e6d82916545c1fd559e3937de3695170e48f83d70090943c1c50de946f3bff36"
+      "sha256": "7c9c705bc5a52cdce2b70cf984dac0b19033b7f7b168a6339c04445ddd8c319b"
      }
     }
    ],
@@ -5281,7 +5307,7 @@
    "last_update": "2026-10-03",
    "events": 4,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5697,7 +5723,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 59,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5801,7 +5827,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 71,
     "age_is_evidence": false,
     "stale": false
    }
@@ -5827,7 +5853,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -5983,7 +6009,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6009,7 +6035,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6087,7 +6113,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6113,7 +6139,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 70,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6243,7 +6269,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6269,7 +6295,7 @@
    "last_update": "2026-09-25",
    "events": 13,
    "freshness": {
-    "artifact_age_days": 29,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6399,7 +6425,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6425,7 +6451,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6555,7 +6581,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 71,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6737,7 +6763,7 @@
    "last_update": "2026-07-31",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 64,
     "age_is_evidence": false,
     "stale": false
    }
@@ -6815,7 +6841,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 65,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6841,7 +6867,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 65,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6867,7 +6893,7 @@
    "last_update": "2026-07-30",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 65,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6893,7 +6919,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 29,
     "age_is_evidence": true,
     "stale": false
    }
@@ -6997,7 +7023,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 71,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7049,7 +7075,7 @@
    "last_update": "2026-09-25",
    "events": 13,
    "freshness": {
-    "artifact_age_days": 29,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7127,7 +7153,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 56,
+    "artifact_age_days": 57,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7205,7 +7231,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 64,
+    "artifact_age_days": 65,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7283,7 +7309,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 55,
+    "artifact_age_days": 56,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7309,7 +7335,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7439,7 +7465,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 59,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7491,7 +7517,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7517,7 +7543,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 49,
+    "artifact_age_days": 50,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7543,7 +7569,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 29,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -7751,7 +7777,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 71,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7777,7 +7803,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 71,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7803,7 +7829,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 71,
     "age_is_evidence": false,
     "stale": false
    }
@@ -7985,7 +8011,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 71,
     "age_is_evidence": false,
     "stale": false
    }
@@ -8090,7 +8116,7 @@
      },
      "source": {
       "path": "data/xhem_served_regate_eval.json",
-      "sha256": "384ddd73dcb8ea21bb75a508a378e5a19080f8d2b2307345734ffa7d5f95cda9"
+      "sha256": "0ffd93b21e78fe1c742a39d7f6c1a26593711d759753d93f1fc6f2100b347959"
      }
     }
    ],
@@ -8176,7 +8202,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 53,
+    "artifact_age_days": 54,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8202,7 +8228,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 52,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8228,7 +8254,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 52,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8254,7 +8280,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 51,
+    "artifact_age_days": 52,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8280,7 +8306,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 50,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8306,7 +8332,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 50,
+    "artifact_age_days": 51,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8618,7 +8644,7 @@
    "last_update": "2026-08-19",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 44,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8800,7 +8826,7 @@
    "last_update": "2026-10-02",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8878,7 +8904,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 44,
+    "artifact_age_days": 45,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8930,7 +8956,33 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 29,
+    "age_is_evidence": true,
+    "stale": false
+   }
+  },
+  {
+   "model_id": "xfv_fwar_label_epoch",
+   "label": "eFV Fwar Label Epoch",
+   "family": "PROSPX and eFV",
+   "served": true,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "benchmark": true,
+   "benchmark_label": null,
+   "eval_artifact": "data/xfv_fwar_label_epoch_eval.json",
+   "headline_source": null,
+   "state": "unwired",
+   "edge": {
+    "state": "unwired",
+    "text": "benchmark named; headline not wired yet"
+   },
+   "today": [],
+   "registered": "2026-10-03",
+   "last_update": null,
+   "events": 1,
+   "freshness": {
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8956,7 +9008,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 29,
     "age_is_evidence": true,
     "stale": false
    }
@@ -8982,7 +9034,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 29,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9008,7 +9060,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 29,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9034,7 +9086,7 @@
    "last_update": "2026-09-04",
    "events": 2,
    "freshness": {
-    "artifact_age_days": 28,
+    "artifact_age_days": 29,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9060,7 +9112,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9086,7 +9138,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9190,7 +9242,7 @@
    "last_update": "2026-09-06",
    "events": 3,
    "freshness": {
-    "artifact_age_days": 26,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9216,7 +9268,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 0,
+    "artifact_age_days": 1,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9268,7 +9320,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9320,7 +9372,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 22,
+    "artifact_age_days": 23,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9424,7 +9476,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 21,
+    "artifact_age_days": 22,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9450,7 +9502,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 26,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9476,7 +9528,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 26,
+    "artifact_age_days": 27,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9502,7 +9554,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9528,7 +9580,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9554,7 +9606,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 1,
+    "artifact_age_days": 0,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9580,7 +9632,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 9,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9606,7 +9658,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 8,
+    "artifact_age_days": 9,
     "age_is_evidence": true,
     "stale": false
    }
@@ -9684,7 +9736,7 @@
    "last_update": null,
    "events": 1,
    "freshness": {
-    "artifact_age_days": 21,
+    "artifact_age_days": 22,
     "age_is_evidence": true,
     "stale": false
    }
@@ -35627,6 +35679,391 @@
    "label": "Team Win Projections",
    "served": true,
    "default_view": true
+  },
+  {
+   "date": "2026-10-03",
+   "sort_date": "2026-10-03",
+   "model_id": "consensus_fv",
+   "kind": "rescored",
+   "layer": "headline",
+   "change": "rescored",
+   "verdict": null,
+   "statistic": {
+    "stat": "AUC",
+    "better": "higher",
+    "before": 0.734,
+    "after": 0.7395,
+    "improvement": 0.0055,
+    "n_before": 4319,
+    "n": 4319,
+    "same_rows": true,
+    "frame": null
+   },
+   "benchmark": {
+    "label": "best single input",
+    "value": 0.7278
+   },
+   "edge": {
+    "state": "lead",
+    "text": "Result (AUC): +0.012 lead",
+    "delta": 0.0117,
+    "ci95": null,
+    "mde95": 0.0078,
+    "t": null,
+    "resolvable": true
+   },
+   "legs": [
+    {
+     "stat": "AUC",
+     "better": "higher",
+     "role": "headline",
+     "model": 0.7395,
+     "benchmark_label": "best single input",
+     "benchmark": 0.7278,
+     "n": 4319,
+     "delta": 0.0117,
+     "ci95": null,
+     "mde95": 0.0078,
+     "t": null,
+     "resolvable": true,
+     "digits": null,
+     "edge_state": "lead",
+     "edge_text": "Result (AUC): +0.012 lead",
+     "keys": {
+      "model": "accuracy.consensus_vs_inputs.auc.consensus",
+      "benchmark": "accuracy.consensus_vs_inputs.auc.best_input",
+      "n": "accuracy.common_n",
+      "mde95": "accuracy.consensus_vs_inputs.auc.mde95",
+      "resolvable": "accuracy.consensus_vs_inputs.auc.resolvable"
+     },
+     "before": 0.734,
+     "n_before": 4319,
+     "same_rows": true,
+     "improvement": 0.0055
+    }
+   ],
+   "source": {
+    "path": "data/source_backtest.json",
+    "commit": "5571b988",
+    "sha256": "45e841d21d31d71362dea351b7f3374805105e2474b7dadc3b2dc33f1c4a3661",
+    "rederivable": true,
+    "read_from": "working tree"
+   },
+   "state": {
+    "verdict": "validated",
+    "eval_artifact": "data/source_backtest.json",
+    "card": [
+     {
+      "stat": "AUC",
+      "benchmark_label": "best single input",
+      "model": 0.7395,
+      "benchmark": 0.7278,
+      "n": 4319,
+      "ci95": null,
+      "t": null,
+      "mde95": 0.0078
+     }
+    ],
+    "removed": false
+   },
+   "content_hash": "731c4c66e77d9401685fb191d8c0919d1dd419e29cf8184764f00046ee19e9f6",
+   "event_id": "2026-10-03|consensus_fv|rescored|731c4c66",
+   "family": "PROSPX and eFV",
+   "label": "Consensus FV",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-03",
+   "sort_date": "2026-10-03",
+   "model_id": "draft_slot_curve",
+   "kind": "rescored",
+   "layer": "headline",
+   "change": "rescored",
+   "verdict": null,
+   "statistic": {
+    "stat": "mean career WAR",
+    "better": "higher",
+    "before": 29.51,
+    "after": 29.98,
+    "improvement": 0.47,
+    "n_before": 6596,
+    "n": 6596,
+    "same_rows": true,
+    "frame": null
+   },
+   "benchmark": {
+    "label": "picks 301-500",
+    "value": 0.29
+   },
+   "edge": {
+    "state": "no_contest",
+    "text": "Result (mean career WAR): no head-to-head on record",
+    "delta": 29.69,
+    "ci95": null,
+    "mde95": null,
+    "t": null,
+    "resolvable": null
+   },
+   "legs": [
+    {
+     "stat": "mean career WAR",
+     "better": "higher",
+     "role": "headline",
+     "model": 29.98,
+     "benchmark_label": "picks 301-500",
+     "benchmark": 0.29,
+     "n": 6596,
+     "delta": 29.69,
+     "ci95": null,
+     "mde95": null,
+     "t": null,
+     "resolvable": null,
+     "digits": 2,
+     "edge_state": "no_contest",
+     "edge_text": "Result (mean career WAR): no head-to-head on record",
+     "keys": {
+      "model": "realized_career_by_bucket_2005_14.1.mean_war",
+      "benchmark": "realized_career_by_bucket_2005_14.500.mean_war",
+      "n": "accounting.scored"
+     },
+     "before": 29.51,
+     "n_before": 6596,
+     "same_rows": true,
+     "improvement": 0.47
+    }
+   ],
+   "source": {
+    "path": "data/draft_slot_curve.json",
+    "commit": "5571b988",
+    "sha256": "4195d0604ea27a8f4743d399d6cfcea5e2771e5baf181c787b5faeb4f1a0c7b5",
+    "rederivable": true,
+    "read_from": "working tree"
+   },
+   "state": {
+    "verdict": "validated",
+    "eval_artifact": "data/draft_slot_curve.json",
+    "card": [
+     {
+      "stat": "mean career WAR",
+      "benchmark_label": "picks 301-500",
+      "model": 29.98,
+      "benchmark": 0.29,
+      "n": 6596,
+      "ci95": null,
+      "t": null,
+      "mde95": null
+     }
+    ],
+    "removed": false
+   },
+   "content_hash": "6d6e733f25a7b07e3fb035a247eaa96feb36c2a5fb6669d52a5f63a9919f6fd0",
+   "event_id": "2026-10-03|draft_slot_curve|rescored|6d6e733f",
+   "family": "Draft",
+   "label": "Draft Slot Curve",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-03",
+   "sort_date": "2026-10-03",
+   "model_id": "fwar",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "5571b988"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/xfv_fwar_label_epoch_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "d66fb41cb98cea5d79e20e11499d5c3dbb897fedfeb398e21c9e9369de8249ad",
+   "event_id": "2026-10-03|fwar|registered|d66fb41c",
+   "family": "eWAR",
+   "label": "Fwar",
+   "served": true,
+   "default_view": false
+  },
+  {
+   "date": "2026-10-03",
+   "sort_date": "2026-10-03",
+   "model_id": "source_track_record",
+   "kind": "rescored",
+   "layer": "headline",
+   "change": "rescored",
+   "verdict": null,
+   "statistic": {
+    "stat": "Spearman",
+    "better": "higher",
+    "before": 0.2836,
+    "after": 0.2898,
+    "improvement": 0.0062,
+    "n_before": 4319,
+    "n": 4319,
+    "same_rows": true,
+    "frame": null
+   },
+   "benchmark": {
+    "label": "best single source",
+    "value": 0.2869
+   },
+   "edge": {
+    "state": "tie",
+    "text": "Result (Spearman): tie (+0.003)",
+    "delta": 0.0029,
+    "ci95": null,
+    "mde95": 0.0121,
+    "t": null,
+    "resolvable": false
+   },
+   "legs": [
+    {
+     "stat": "Spearman",
+     "better": "higher",
+     "role": "headline",
+     "model": 0.2898,
+     "benchmark_label": "best single source",
+     "benchmark": 0.2869,
+     "n": 4319,
+     "delta": 0.0029,
+     "ci95": null,
+     "mde95": 0.0121,
+     "t": null,
+     "resolvable": false,
+     "digits": null,
+     "edge_state": "tie",
+     "edge_text": "Result (Spearman): tie (+0.003)",
+     "keys": {
+      "model": "accuracy.consensus_vs_inputs.spearman.consensus",
+      "benchmark": "accuracy.consensus_vs_inputs.spearman.best_input",
+      "n": "accuracy.common_n",
+      "mde95": "accuracy.consensus_vs_inputs.spearman.mde95",
+      "resolvable": "accuracy.consensus_vs_inputs.spearman.resolvable"
+     },
+     "before": 0.2836,
+     "n_before": 4319,
+     "same_rows": true,
+     "improvement": 0.0062
+    },
+    {
+     "stat": "AUC",
+     "better": "higher",
+     "role": "secondary",
+     "model": 0.7395,
+     "benchmark_label": "best single source",
+     "benchmark": 0.7278,
+     "n": 4319,
+     "delta": 0.0117,
+     "ci95": null,
+     "mde95": 0.0078,
+     "t": null,
+     "resolvable": true,
+     "digits": null,
+     "edge_state": "lead",
+     "edge_text": "Result (AUC): +0.012 lead",
+     "keys": {
+      "model": "accuracy.consensus_vs_inputs.auc.consensus",
+      "benchmark": "accuracy.consensus_vs_inputs.auc.best_input",
+      "n": "accuracy.common_n",
+      "mde95": "accuracy.consensus_vs_inputs.auc.mde95",
+      "resolvable": "accuracy.consensus_vs_inputs.auc.resolvable"
+     },
+     "before": 0.734,
+     "n_before": 4319,
+     "same_rows": true,
+     "improvement": 0.0055
+    }
+   ],
+   "source": {
+    "path": "data/source_backtest.json",
+    "commit": "5571b988",
+    "sha256": "45e841d21d31d71362dea351b7f3374805105e2474b7dadc3b2dc33f1c4a3661",
+    "rederivable": true,
+    "read_from": "working tree"
+   },
+   "state": {
+    "verdict": "validated",
+    "eval_artifact": "data/source_backtest.json",
+    "card": [
+     {
+      "stat": "Spearman",
+      "benchmark_label": "best single source",
+      "model": 0.2898,
+      "benchmark": 0.2869,
+      "n": 4319,
+      "ci95": null,
+      "t": null,
+      "mde95": 0.0121
+     },
+     {
+      "stat": "AUC",
+      "benchmark_label": "best single source",
+      "model": 0.7395,
+      "benchmark": 0.7278,
+      "n": 4319,
+      "ci95": null,
+      "t": null,
+      "mde95": 0.0078
+     }
+    ],
+    "removed": false
+   },
+   "content_hash": "4da59c316a14bb3be69b32b7bb8ed9d662e5d29a330023cb68e935054c653b43",
+   "event_id": "2026-10-03|source_track_record|rescored|4da59c31",
+   "family": "Sources and Consensus",
+   "label": "Source Track Record",
+   "served": true,
+   "default_view": true
+  },
+  {
+   "date": "2026-10-03",
+   "sort_date": "2026-10-03",
+   "model_id": "xfv_fwar_label_epoch",
+   "kind": "registered",
+   "layer": "registration",
+   "change": "registered as provisional",
+   "verdict": {
+    "before": null,
+    "after": "provisional"
+   },
+   "statistic": null,
+   "benchmark": null,
+   "edge": {
+    "state": "none",
+    "text": "no score on record for this change"
+   },
+   "legs": [],
+   "source": {
+    "path": "data/model_registry.json",
+    "commit": "5571b988"
+   },
+   "state": {
+    "verdict": "provisional",
+    "eval_artifact": "data/xfv_fwar_label_epoch_eval.json",
+    "card": null,
+    "removed": false
+   },
+   "content_hash": "a7c8cf82265960b84515ab77c6d3c9c1fc0dc63cfb8bb46b55da462c6ea94b47",
+   "event_id": "2026-10-03|xfv_fwar_label_epoch|registered|a7c8cf82",
+   "family": "PROSPX and eFV",
+   "label": "eFV Fwar Label Epoch",
+   "served": true,
+   "default_view": false
   }
  ],
  "backfill": {
