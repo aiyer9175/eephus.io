@@ -5,6 +5,11 @@
 
 /* /management/ - In-Game Management. Shares site.css for type and chrome. */
 
+/* While the board or a shard loads, the mount holds a screen of height, so the
+   table landing does not push the footer up the viewport and back (QCLP11);
+   the empty mount before the script runs holds the same height. */
+#mgmt-app-root:empty, #mgmt-app-root:has(.px-state.is-loading) { min-height: 100vh; }
+
 .mgmt-block { margin: 20px 0; }
 .mgmt-block h2 { font-size: 17px; margin: 18px 0 6px; }
 .mgmt-block h3 { font-size: 14px; margin: 16px 0 4px; }
@@ -15,7 +20,7 @@
 
 .mgmt-cards { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
 .mgmt-card {
-  border: 1px solid var(--border-light); border-radius: 10px;
+  border: 1px solid var(--border-light);
   padding: 12px 16px; min-width: 220px; flex: 1 1 220px;
   background: var(--bg-secondary);
 }
@@ -49,10 +54,18 @@
 .mgmt-table th, .mgmt-table td { padding: 5px 10px; white-space: nowrap; text-align: right; }
 .mgmt-table th:first-child, .mgmt-table td:first-child { text-align: left; }
 .mgmt-table thead th {
-  cursor: pointer; background: var(--bg-secondary);
+  background: var(--bg-secondary);
   border-bottom: 2px solid var(--border-light); font-weight: 600;
 }
-.mgmt-table thead th:focus { outline: 2px solid var(--accent-gold); outline-offset: -2px; }
+/* A head that sorts holds a button (QCLA04): only those draw the pointer, and
+   the ring is the site's cyan token on the button (3:1 or better in both themes),
+   not the gold that read 2.13:1 on the light header. */
+.mgmt-table thead th[data-msort], .mgmt-table thead th[data-bsort], .mgmt-table thead th[data-dsort] { cursor: pointer; }
+.mgmt-sort {
+  font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0;
+  cursor: pointer; text-align: inherit; letter-spacing: inherit; white-space: nowrap;
+}
+.mgmt-sort:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 .mgmt-table td { border-bottom: 1px solid var(--border-subtle); font-variant-numeric: tabular-nums; }
 .mgmt-table tbody tr:nth-child(even) { background: var(--bg-hover); }
 .mgmt-table--re td:first-child { font-weight: 600; }
@@ -60,7 +73,7 @@
 .mgmt-dark { border-left: 3px solid var(--border-light); padding-left: 12px; }
 .mgmt-darktag {
   font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
-  border: 1px solid var(--border-light); border-radius: 999px;
+  border: 1px solid var(--border-light);
   padding: 1px 8px; opacity: .7; vertical-align: middle;
 }
 .mgmt-dark-why { font-size: 13px; font-weight: 600; margin: 4px 0; }
@@ -75,7 +88,7 @@
 
 /* the club header card */
 .mgmt-club-head {
-  border: 1px solid var(--border-light); border-radius: 10px; padding: 14px 18px;
+  border: 1px solid var(--border-light); padding: 14px 18px;
   background: var(--bg-secondary); margin: 12px 0;
 }
 .mgmt-club-head h2 { margin: 0 0 4px; font-size: 20px; }
@@ -87,7 +100,7 @@
 /* the small uppercase chip (borrowed from .mgmt-darktag): flags, header tags */
 .mgmt-flag {
   font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
-  border: 1px solid var(--border-light); border-radius: 999px;
+  border: 1px solid var(--border-light);
   padding: 0 6px; opacity: .75; margin-left: 4px; white-space: nowrap;
 }
 /* the "realized" header tag: a sort on that column is a rank by what happened */
@@ -99,7 +112,7 @@
    number in a bordered chip. The border is the same token as .mgmt-flag. */
 .mgmt-zstrip { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
 .mgmt-zchip {
-  border: 1px solid var(--border-light); border-radius: 8px; padding: 6px 10px;
+  border: 1px solid var(--border-light); padding: 6px 10px;
   background: var(--bg-secondary); font-size: 12px; min-width: 84px;
 }
 .mgmt-zchip b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; font-weight: 600; }
@@ -110,13 +123,13 @@
    at the same alpha for the league; no new colours. */
 .mgmt-hist { display: grid; align-items: end; gap: 3px; height: 90px; margin: 8px 0 2px; }
 .mgmt-hist .mgmt-bin { height: 100%; display: flex; align-items: flex-end; gap: 2px; }
-.mgmt-hist .mgmt-bin span { display: block; flex: 1 1 0; border-radius: 2px 2px 0 0; min-height: 1px; }
+.mgmt-hist .mgmt-bin span { display: block; flex: 1 1 0; min-height: 1px; }
 .mgmt-hist .mgmt-bin .mgmt-b-club { background: color-mix(in srgb, var(--accent-cyan) 35%, transparent); }
 .mgmt-hist .mgmt-bin .mgmt-b-league { background: color-mix(in srgb, var(--text-tertiary) 35%, transparent); }
 .mgmt-hist-axis { display: grid; font-size: 10px; opacity: .6; gap: 3px; }
 .mgmt-hist-axis span { text-align: center; }
 .mgmt-hist-legend { font-size: 11px; opacity: .7; margin: 2px 0 8px; }
-.mgmt-hist-legend i { display: inline-block; width: 10px; height: 10px; vertical-align: middle; margin-right: 4px; border-radius: 2px; }
+.mgmt-hist-legend i { display: inline-block; width: 10px; height: 10px; vertical-align: middle; margin-right: 4px; }
 .mgmt-hist-legend i.mgmt-i-club { background: color-mix(in srgb, var(--accent-cyan) 35%, transparent); }
 .mgmt-hist-legend i.mgmt-i-league { background: color-mix(in srgb, var(--text-tertiary) 35%, transparent); }
 
@@ -133,18 +146,36 @@
 .mgmt-rowbtn { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: inherit; }
 .mgmt-detail {
   border: 1px solid var(--border-light); border-left: 3px solid var(--accent-cyan);
-  border-radius: 10px; padding: 12px 16px; background: var(--bg-secondary); margin: 10px 0;
+ padding: 12px 16px; background: var(--bg-secondary); margin: 10px 0;
 }
 .mgmt-detail h3 { margin: 0 0 4px; font-size: 15px; }
 .mgmt-detail .mgmt-detail-sub { font-size: 12px; opacity: .7; margin-bottom: 8px; }
 .mgmt-detail .mgmt-mini { max-width: 560px; }
-.mgmt-detail-close { float: right; font: inherit; font-size: 12px; background: none; border: 1px solid var(--border-light); border-radius: 6px; color: inherit; padding: 2px 8px; cursor: pointer; }
+.mgmt-detail-close { float: right; font: inherit; font-size: 12px; background: none; border: 1px solid var(--border-light); color: inherit; padding: 2px 8px; cursor: pointer; }
 
 /* the link rail on a club page */
 .mgmt-links { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; margin: 8px 0; }
 
 /* the census table on the League tab wraps its family label */
 .mgmt-table--census td:first-child { white-space: normal; min-width: 120px; }
+/* ...and its windows sentence, which pushed three columns off the table at 1280 (X06-13) */
+.mgmt-table--census td.mgmt-wrap { white-space: normal; min-width: 24ch; max-width: 36ch; text-align: left; }
+
+/* "How this works": the method notes of a section, collapsed under its lede.
+   Every payload sentence that left the lede is here, one click down. */
+.mgmt-how { margin: 6px 0 12px; max-width: 78ch; }
+.mgmt-how > summary {
+  cursor: pointer; font-size: 12px; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: .06em; padding: 4px 0;
+}
+.mgmt-how h3 { font-size: 13px; margin: 12px 0 4px; }
+
+/* related modules, linked once under every section */
+.mgmt-related {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px;
+  margin: 28px 0 8px; padding-top: 10px; border-top: 1px solid var(--border-subtle);
+}
+.mgmt-related > span { color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .06em; }
 
 @media (max-width: 720px) {
   .mgmt-table { font-size: 12px; }

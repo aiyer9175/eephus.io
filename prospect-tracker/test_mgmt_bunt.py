@@ -197,3 +197,34 @@ def test_the_dark_section_narrowed_to_what_is_still_dark():
     assert b["live"] is False, "the bunt family does not make the bullpen call measured"
     assert "two decision families" in b["why"], (
         "the copy still says only the running game has been measured")
+
+
+def test_the_control_sentence_names_the_population_it_counts():
+    """QCLC12. The headline counts the sacrifice SITUATION (8,386 bunts) and the
+    control line named the sacrifice RESULT (4,861 bunts) with the same bare word,
+    so a reader saw two counts for one thing. The sentence now says it is the
+    result and how it sits inside the situation."""
+    import sys
+    sys.path.insert(0, str(HERE))
+    import mgmt_bunt
+    by_sit = {"sacrifice": {"n_bunts_priced": 8386}, "for_a_hit": {"n_bunts_priced": 2651}}
+    one = ("sacrifice", {"n": 4861, "model": -54.819, "control": -10.657, "sit": {"sacrifice": 4861}})
+    s = mgmt_bunt.largest_gap_sentence(one, by_sit)
+    assert s == ("The two models part most on the sacrifice result (4,861 bunts, a subset of "
+                 "the 8,386 sacrifice-situation bunts): -54.8 wins on the house model against "
+                 "-10.7 on the feed's.")
+    both = ("bunt_hit", {"n": 2547, "model": 139.7, "control": 131.4,
+                         "sit": {"sacrifice": 1297, "for_a_hit": 1250}})
+    assert "bunt hit result (2,547 bunts across both situations)" in mgmt_bunt.largest_gap_sentence(both, by_sit)
+    assert mgmt_bunt.largest_gap_sentence(None, by_sit) is None
+    d = _art()
+    c = d.get("independent_control")
+    if not c:
+        pytest.skip("control not computed on this build")
+    s = c["largest_gap_sentence"]
+    assert " result (" in s, s
+    for k, v in c["reconciliation"]["by_result"].items():
+        if "n_by_situation" in v:
+            assert sum(v["n_by_situation"].values()) == v["n"], k
+            for sit, n in v["n_by_situation"].items():
+                assert n <= d["by_situation"][sit]["n_bunts_priced"], (k, sit)

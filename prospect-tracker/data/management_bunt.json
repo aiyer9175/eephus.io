@@ -1,6 +1,6 @@
 {
  "status": "built",
- "generated_at": "2026-10-02T13:00:12Z",
+ "generated_at": "2026-10-04T03:14:21Z",
  "produced_by": "mgmt_bunt.price",
  "corpus_built_at": "2026-10-02T12:59:41+00:00",
  "seasons": [
@@ -215,31 +215,50 @@
      "n": 4861,
      "model_wins": -54.819,
      "control_wins": -10.657,
-     "gap_wins": -44.162
+     "gap_wins": -44.162,
+     "n_by_situation": {
+      "sacrifice": 4861
+     }
     },
     "bunt_hit": {
      "n": 2547,
      "model_wins": 139.703,
      "control_wins": 131.44,
-     "gap_wins": 8.263
+     "gap_wins": 8.263,
+     "n_by_situation": {
+      "for_a_hit": 1250,
+      "sacrifice": 1297
+     }
     },
     "bunt_out": {
      "n": 2091,
      "model_wins": -70.63,
      "control_wins": -70.347,
-     "gap_wins": -0.283
+     "gap_wins": -0.283,
+     "n_by_situation": {
+      "for_a_hit": 1302,
+      "sacrifice": 789
+     }
     },
     "reached_or_double_play": {
      "n": 992,
      "model_wins": -42.832,
      "control_wins": -40.588,
-     "gap_wins": -2.244
+     "gap_wins": -2.244,
+     "n_by_situation": {
+      "for_a_hit": 47,
+      "sacrifice": 945
+     }
     },
     "strike_three_on_a_bunt": {
      "n": 546,
      "model_wins": -22.82,
      "control_wins": -21.478,
-     "gap_wins": -1.342
+     "gap_wins": -1.342,
+     "n_by_situation": {
+      "for_a_hit": 52,
+      "sacrifice": 494
+     }
     }
    },
    "alternative_offset": {
@@ -248,7 +267,7 @@
     "gap_wins": 13.033
    }
   },
-  "largest_gap_sentence": "The two models part most on sacrifice (4,861 bunts): -54.8 wins on the house model against -10.7 on the feed's.",
+  "largest_gap_sentence": "The two models part most on the sacrifice result (4,861 bunts, a subset of the 8,386 sacrifice-situation bunts): -54.8 wins on the house model against -10.7 on the feed's.",
   "is_realized_wpa": true,
   "why_it_is_not_the_metric": "it is the REALIZED win-probability change of the plays that happened, so it carries outcome variance the decision did not choose. It is here to check the sign and the size of the modelled number against a win-expectancy model this repo did not build."
  },

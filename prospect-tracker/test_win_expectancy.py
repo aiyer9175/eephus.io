@@ -365,3 +365,18 @@ def test_the_state_says_what_it_leaves_out(art):
     for word in ("batter", "pitcher", "park"):
         assert word in ex
     assert "leak" in ex or "confound" in ex
+
+
+def test_the_ninth_inning_reference_names_its_source():
+    """QCLC13. The tail note compared the fit to "published values near 0.63 /
+    0.57 / 0.52" and neither the copy nor the constant named who published them.
+    The constant now carries its source, the note prints it, and the figures are
+    the table's own (Tango 2002, rows 9 Bottom 0 0 at 0, 1 and 2 out)."""
+    import win_expectancy as wx
+    assert wx.PUBLISHED_NINTH_TAIL == (0.634, 0.577, 0.532)
+    assert "Tango" in wx.PUBLISHED_NINTH_TAIL_SOURCE and "tangotiger.net" in wx.PUBLISHED_NINTH_TAIL_SOURCE
+    note = wx.ninth_tail_note([0.63957, 0.57567, 0.52849])
+    assert wx.PUBLISHED_NINTH_TAIL_SOURCE + " at 0.634 / 0.577 / 0.532" in note
+    assert "published values near" not in note
+    assert "the leadoff cell is about 0.6 points high, the one-out cell matches and the two-out cell matches" in note
+    assert "ninth" in note.lower() and "smooth" in note.lower()

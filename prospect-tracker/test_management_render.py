@@ -153,14 +153,17 @@ def test_a_bunt_payload_split_by_situation_draws_the_situation_and_bunt_hits():
                   {"bases": "1B", "outs": 0, "situation": "sacrifice", "n_bunt": 2793,
                    "n_bunt_hit": 400, "dv_per_bunt": -0.01168, "dv_total": -32.633}]
     b["independent_control"]["model_over_control"] = 17.311
-    b["independent_control"]["largest_gap_sentence"] = "The two models part most on sacrifice."
+    b["independent_control"]["largest_gap_sentence"] = (
+        "The two models part most on the sacrifice result (2,000 bunts, a subset of the "
+        "2,793 sacrifice-situation bunts).")
     b["what_counts_as_a_bunt"] = "every plate appearance that ended on a bunt."
     html = _render("running", d)
     assert "<h2>The bunt</h2>" in html and "The sacrifice bunt" not in html
     assert "<th>Situation</th>" in html and "<th>Bunt hits</th>" in html
     assert "<td>For a hit</td>" in html and "<td>820</td>" in html
     assert "the modelled total is 17.31 times it" in html
-    assert "What counts as a bunt" in html and "The two models part most on sacrifice." in html
+    assert "What counts as a bunt" in html
+    assert "the sacrifice result (2,000 bunts, a subset of the 2,793 sacrifice-situation bunts)" in html
 
 
 def test_the_bunt_moves_to_its_own_tab_once_the_shell_has_one():
@@ -567,3 +570,54 @@ def test_the_census_thin_column_states_it_pools_every_season():
     assert tds[6].endswith(" of %d in %d of %d cells" % (fam["n"], fam["thin_cells"]["cells_thin"],
                                                          fam["thin_cells"]["cells_total"]))
     assert fam["n"] == sum(fam["n_by_season"].values()), "the pooled n is the sum over seasons"
+
+
+# --------------------------------------------------------------------------
+# Surface-quality audit 2026-10-02 (QCLA04, QCLC22, QCLP11)
+# --------------------------------------------------------------------------
+
+def test_sort_heads_stay_column_heads_with_a_button_inside():
+    """QCLA04. The sortable th carried role=button, which strips the header role:
+    the accessibility tree kept 1 columnheader of 15 on the Decisions table, and no
+    head said which way it sorted. Every sortable head is now a th with scope=col
+    and aria-sort around a button, on the club style board, the club-season board
+    and the decision listing; no th carries role=button."""
+    css = (ROOT / "assets" / "management.css").read_text(encoding="utf-8")
+    for h in ("#section=managers", "#section=decisions&team=MIA&season=2026"):
+        html, _ = _render2(h)
+        assert 'role="button"' not in html, h
+        heads = re.findall(r"<th (data-[bdm]sort)=\"([^\"]+)\"([^>]*)>(.*?)</th>", html)
+        assert heads, h
+        for attr, key, rest, inner in heads:
+            assert 'scope="col"' in rest and re.search(r'aria-sort="(none|ascending|descending)"', rest), (h, key)
+            assert inner.startswith('<button type="button" class="mgmt-sort">'), (h, key)
+    html = _render("running")
+    assert 'role="button"' not in html and '<th data-msort="attempts" scope="col" aria-sort="descending"' in html
+    assert "accent-gold" not in css.split(".mgmt-table thead th")[1].split("}")[0]
+    assert ".mgmt-sort:focus-visible { outline: 2px solid var(--accent-cyan)" in css
+    # only heads that sort draw the pointer
+    assert re.search(r"\.mgmt-table thead th \{[^}]*cursor", css) is None
+    assert ".mgmt-table thead th[data-dsort] { cursor: pointer; }" in css
+    assert 'refocus = "th[" + attr' in JS, "the sorted column's control takes focus back"
+
+
+def test_a_style_z_that_rounds_to_zero_prints_without_a_sign():
+    """QCLC22. Fourteen style z cells on the served board printed -0.0."""
+    d = json.loads(json.dumps(SAMPLE2))
+    d["clubs"]["rows"][0].update(z_bench=-0.04, z_visit=-0.049999, z_ibb=-0.05)
+    html, _ = _render2("#section=managers", payload=d)
+    assert "-0.0<" not in html and "<td>0.0</td>" in html and "<td>-0.1</td>" in html
+    club, _ = _render2("#section=clubs&team=MIA&season=2026", payload=d)
+    assert "<b>-0.0</b>" not in club and "<b>0.0</b>" in club
+    p = ROOT / "data" / "management_board.json"
+    if p.exists():
+        board = json.loads(p.read_text(encoding="utf-8"))
+        html, _ = _render2("#section=managers", payload=board)
+        assert ">-0.0<" not in html
+
+
+def test_the_mount_holds_its_height_while_it_loads():
+    """QCLP11. The board scored CLS 0.647, 0.589 of it when #mgmt-section grew
+    from 66 to 550 px under a loading box and pushed the footer off the screen."""
+    css = (ROOT / "assets" / "management.css").read_text(encoding="utf-8")
+    assert "#mgmt-app-root:empty, #mgmt-app-root:has(.px-state.is-loading) { min-height: 100vh; }" in css

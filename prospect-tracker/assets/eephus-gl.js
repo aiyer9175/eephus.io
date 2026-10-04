@@ -394,6 +394,11 @@
     if (span) tipShow(span);
   });
   document.addEventListener("focusout", () => tipScheduleHide());
+  // Escape closes an open term tooltip, whether hover or focus opened it
+  // (WCAG 1.4.13, audit QCLA18).
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && _tipFor) tipHide();
+  });
   window.addEventListener("scroll", () => { if (_tipFor) tipHide(); }, { passive: true });
   // Touch devices can't hover, so the mouseover/focus tooltips above never
   // fire and term definitions were unreachable. On no-hover (touch) devices
@@ -433,6 +438,12 @@
     if (READY) scan();
     else window.addEventListener("eephus-glossary-ready", scan, { once: true });
   }
+
+  // Every page's server-rendered masthead (.section-head) is wired here once,
+  // so its glossary terms carry aria-describedby without each module calling
+  // wire on it (audit QCLA18: /management/, /trademachine/, /hof/ and
+  // /arbitration/ never did). wire() waits for the glossary when it is not in.
+  try { document.querySelectorAll(".section-head").forEach(h => wire(h)); } catch (e) { /* optional */ }
 
   window.EEPHUS_GL = { open: qkOpen, wire, resolve, reload: load };
 })();

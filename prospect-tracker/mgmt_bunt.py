@@ -161,6 +161,33 @@ def _we_after_play(W, row):
                        out_added=int(row["outs_after"]) - int(row["outs_before"]))
 
 
+#: What a situation key is called inside the control sentence.
+_SITUATION_NOUN = {"sacrifice": "sacrifice-situation", "for_a_hit": "bases-empty"}
+
+
+def largest_gap_sentence(worst, by_sit) -> str | None:
+    """Where the house model and the feed part most, naming the RESULT's own
+    population (audit QCLC12). The result key "sacrifice" (a bunt scored as a
+    sacrifice) shares a word with the situation key "sacrifice" (a runner on,
+    fewer than two out), and the headline counts the situation, so the sentence
+    says which one it counts and how the two relate: a result whose bunts all sit
+    in one situation is named as a subset of that situation's priced bunts."""
+    if not worst:
+        return None
+    res, v = worst
+    sit = {k: n for k, n in (v.get("sit") or {}).items() if n}
+    if len(sit) == 1:
+        s_, = sit
+        pop = (f"{v['n']:,} bunts, a subset of the "
+               f"{by_sit.get(s_, {}).get('n_bunts_priced', 0):,} "
+               f"{_SITUATION_NOUN.get(s_, s_.replace('_', ' '))} bunts")
+    else:
+        pop = f"{v['n']:,} bunts across both situations"
+    return (f"The two models part most on the {res.replace('_', ' ')} result ({pop}): "
+            f"{v['model']:+.1f} wins on the house model against "
+            f"{v['control']:+.1f} on the feed's.")
+
+
 def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
     """The bunt family, priced per base-out state and summed over the league."""
     import numpy as np
@@ -286,8 +313,10 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
             alt_model += float(aa["dwe"].mean()) * len(bb)
             alt_feed += float(aa["_wpa_bat"].mean()) * len(bb)
             for res, gg in bb.groupby(bb["event"].astype(str).map(_result_group)):
-                r = rec.setdefault(res, {"n": 0, "model": 0.0, "control": 0.0})
+                r = rec.setdefault(res, {"n": 0, "model": 0.0, "control": 0.0, "sit": {}})
                 r["n"] += int(len(gg))
+                s_ = _situation(int(bs))
+                r["sit"][s_] = r["sit"].get(s_, 0) + int(len(gg))
                 r["model"] += float(gg["dwe"].sum())
                 r["control"] += float(gg["_wpa_bat"].sum())
         reconciliation = {
@@ -296,7 +325,8 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
                          "the model and the control"),
             "by_result": {k: {"n": v["n"], "model_wins": round(v["model"], 3),
                               "control_wins": round(v["control"], 3),
-                              "gap_wins": round(v["model"] - v["control"], 3)}
+                              "gap_wins": round(v["model"] - v["control"], 3),
+                              "n_by_situation": dict(sorted(v["sit"].items()))}
                           for k, v in sorted(rec.items(), key=lambda kv: -kv[1]["n"])},
             "alternative_offset": {"model_wins": round(alt_model, 3),
                                    "control_wins": round(alt_feed, 3),
@@ -314,11 +344,7 @@ def price(*, corpus: Path | None = None, seasons=None, we=None) -> dict:
             # here calibrates one against the other.
             "model_over_control": (round(total_dv / tot_c, 3) if tot_c else None),
             "reconciliation": reconciliation,
-            "largest_gap_sentence": (
-                (f"The two models part most on {worst[0].replace('_', ' ')} "
-                 f"({worst[1]['n']:,} bunts): {worst[1]['model']:+.1f} wins on the house "
-                 f"model against {worst[1]['control']:+.1f} on the feed's.")
-                if worst else None),
+            "largest_gap_sentence": largest_gap_sentence(worst, by_sit),
             "is_realized_wpa": True,
             "why_it_is_not_the_metric": (
                 "it is the REALIZED win-probability change of the plays that "

@@ -99,8 +99,42 @@ DIFF_CAP = 10
 
 #: The published bottom-of-the-ninth tail, tied and bases empty, by outs. An
 #: EXTERNAL reference, kept as a constant so the artifact's disclosure paragraph
-#: can be derived against it rather than typed beside it (audit F07-05).
-PUBLISHED_NINTH_TAIL = (0.63, 0.57, 0.52)
+#: can be derived against it rather than typed beside it (audit F07-05). The
+#: source is named beside it and printed in the note (audit QCLC13): the rows
+#: "9 Bottom 0 0" at 0, 1 and 2 out of Tom Tango's Win Expectancy table
+#: (tangotiger.net/welist.html, 2002), home team's view, read 2026-10-03. The
+#: earlier constant (0.63, 0.57, 0.52) named no source and matched no table found.
+PUBLISHED_NINTH_TAIL = (0.634, 0.577, 0.532)
+PUBLISHED_NINTH_TAIL_SOURCE = "Tom Tango's 2002 Win Expectancy table (tangotiger.net)"
+
+
+def ninth_tail_note(tail) -> str:
+    """The smoothing_costs_the_tails paragraph, derived from the fit's three
+    bottom-of-the-ninth figures against the named published table. mgmt_export
+    calls it on the artifact's ninth_inning_tail.model_by_outs, so the served
+    sentence follows this constant without a refit."""
+    def _gap_phrase(got, pub):
+        d = (got - pub) * 100.0
+        if abs(d) < 0.5:
+            return "matches"
+        return f"is about {abs(d):.1f} points {'high' if d > 0 else 'low'}"
+
+    pub = PUBLISHED_NINTH_TAIL
+    return (
+        "the model is less sharp than the raw cell means at the extremes. "
+        "Bottom of the ninth tied, bases empty reads "
+        + " / ".join(f"{v:.4f}" for v in tail)
+        + " by outs against " + PUBLISHED_NINTH_TAIL_SOURCE + " at "
+        + " / ".join(f"{v:.3f}" for v in pub)
+        + ": the leadoff cell " + _gap_phrase(tail[0], pub[0])
+        + ", the one-out cell " + _gap_phrase(tail[1], pub[1])
+        + " and the two-out cell " + _gap_phrase(tail[2], pub[2])
+        + ". That is the price of a functional form smooth enough to difference, "
+        "and it is a price worth paying, because a table that is right on "
+        "average and non-monotone in the base state cannot value a decision at "
+        "all. Any family reading the ninth-inning tail should say so. These "
+        "three figures are interpolated from the fit this artifact ships and "
+        "cannot drift from it.")
 
 #: A run-expectancy cell below this is not trusted on its own. RE is estimated on
 #: 24 cells over 1.45 million plays, so the thinnest is still enormous; the floor
@@ -459,27 +493,7 @@ def build(*, corpus: Path | None = None, seasons=None) -> dict:
 
     tail = [_we_home(9, "bottom", 0, o, 0) for o in (0, 1, 2)]
 
-    def _gap_phrase(got, pub):
-        d = (got - pub) * 100.0
-        if abs(d) < 0.5:
-            return "matches"
-        return f"is about {abs(d):.1f} points {'high' if d > 0 else 'low'}"
-
-    tail_note = (
-        "the model is less sharp than the raw cell means at the extremes. "
-        "Bottom of the ninth tied, bases empty reads "
-        + " / ".join(f"{v:.4f}" for v in tail)
-        + " by outs against published values near "
-        + " / ".join(f"{v:.2f}" for v in PUBLISHED_NINTH_TAIL)
-        + ": the leadoff cell " + _gap_phrase(tail[0], PUBLISHED_NINTH_TAIL[0])
-        + ", the one-out cell " + _gap_phrase(tail[1], PUBLISHED_NINTH_TAIL[1])
-        + " and the two-out cell " + _gap_phrase(tail[2], PUBLISHED_NINTH_TAIL[2])
-        + ". That is the price of a functional form smooth enough to difference, "
-        "and it is a price worth paying, because a table that is right on "
-        "average and non-monotone in the base state cannot value a decision at "
-        "all. Any family reading the ninth-inning tail should say so. These "
-        "three figures are interpolated from the fit this artifact ships and "
-        "cannot drift from it.")
+    tail_note = ninth_tail_note(tail)
 
     start_ns = sorted(c["n"] for c in start_tbl.values())
     start_median_n = start_ns[len(start_ns) // 2] if start_ns else 0
@@ -560,6 +574,7 @@ def build(*, corpus: Path | None = None, seasons=None) -> dict:
             "state": "bottom of the ninth, tied, bases empty",
             "model_by_outs": [round(v, 5) for v in tail],
             "published_by_outs": list(PUBLISHED_NINTH_TAIL),
+            "published_source": PUBLISHED_NINTH_TAIL_SOURCE,
             "note": ("the three figures quoted in smoothing_costs_the_tails, "
                      "shipped as numbers so a test can compare the prose "
                      "against the model instead of against a memory of it."),
