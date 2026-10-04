@@ -8080,7 +8080,15 @@ def _served_career_war(row: dict | None) -> dict:
     card's career WAR line, the debuted sort, the graduate tooltip, build_site's
     grad strings, the Club Ledger's graduate career_war column, draft_export's
     record career WAR and efv_score's realized_war all keep showing eWAR v2. The
-    label consumers of the payload read `career_war_label` (below) instead."""
+    label consumers of the payload read `career_war_label` (below) instead.
+
+    A row with nothing to re-express (not an fwar row carrying `seasons_ewar_v2`)
+    goes straight to _strip_exposure, so a bare row is served as the same object,
+    the no-copy contract test_wag_career_exposure pins (row_on_provider always
+    copies)."""
+    r = row or {}
+    if str(r.get("source") or "") != "fwar" or not isinstance(r.get("seasons_ewar_v2"), dict):
+        return _strip_exposure(row)
     import war_source
     return _strip_exposure(war_source.row_on_provider(row, "ewar_v2"))
 
