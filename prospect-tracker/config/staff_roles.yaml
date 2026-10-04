@@ -1,0 +1,302 @@
+# Staff Gems role map (stage 1). Read by staff_ingest.py --parse.
+#
+# Design: docs/staff-gems/DESIGN.md section 4.2. Gate: docs/staff-gems/STAFF_GEMS_GATE.md section 1
+# (where the two differ, the gate wins). Every row of a StatsAPI staff list carries a structured
+# jobId (MLB's own job code) and a free-text title (the club's wording). The map is applied in
+# this order, and the first rule that matches decides:
+#
+#   1. pairs:  an exact (jobId, title) pair whose title contradicts its job code
+#   2. jobs:   a job code that decides the role by itself
+#   3. titles: for a job code marked by_title (a generic code such as COAC "Coach"), the exact
+#              title, matched after collapsing whitespace and ignoring case
+#   4. anything else goes to the REVIEW QUEUE (role "review"): an unmapped job code or an
+#      unmapped title is never given a guessed role, by similarity or otherwise.
+#
+# Roles. Credited (the four gate roles): manager, hitting, pitching, defense. Context only (a name
+# beside the running game, never a value, owner answer SG-Q4): first_base, third_base. Not
+# credited: excluded (bench coaches, bullpen catchers, generic and performance titles, and the
+# coordinators, rovers, directors, analysts and advisors that no dated source covers, owner answer
+# SG-Q2 (a)). review: the queue, never used for attribution until a person maps it here by hand.
+#
+# Hand-mapping rules for titles (applied when the map was written, 2026-10-03, from the census of
+# every jobId and title in the 2008 to 2026 cache; recorded so a later edit follows them):
+#   - a title naming exactly one credited family takes that family, even beside a duty that is not
+#     credited (quality control, strategy, game planning, baserunning, a bench or base-coach duty):
+#     "Catching and Quality Control Coach" is defense, "Outfield & Baserunning Coach" is defense;
+#   - a title naming two credited families goes to review ("Outfield/Assistant Hitting Coach");
+#   - a title naming a family only as coordinator, rover, director, advisor, analyst, strategist
+#     or consultant is excluded;
+#   - a generic title that could be a family coach goes to review ("Position Coach", "Field
+#     Coach", "Fundamentals Coach", an empty title); a generic title that is not a development
+#     job is excluded ("Staff Assistant", "Replay Coordinator", "Mental Performance Coach");
+#   - catching and outfield titles are defense (field and arm), as the gate maps infield and
+#     catching titles by hand; speed and baserunning stay with the organization.
+
+version: 1
+
+roles:
+  manager: credited
+  hitting: credited
+  pitching: credited
+  defense: credited
+  first_base: context
+  third_base: context
+
+jobs:
+  # the thirteen codes the design names
+  MNGR: manager
+  COAT: hitting
+  COAH: hitting
+  COAA: hitting
+  COAP: pitching
+  COPA: pitching
+  COAU: pitching
+  DEFC: defense
+  COAC: by_title
+  COA1: first_base
+  COA3: third_base
+  COAB: excluded
+  BCAT: excluded
+  # interim and complex holders of a credited job (the gate names interim managers; the same
+  # reading for the other credited jobs)
+  NTRM: manager
+  COHI: hitting
+  COPI: pitching
+  INBU: pitching
+  COPC: pitching
+  # not credited
+  INBC: excluded
+  ASSM: excluded
+  BPPI: excluded
+  PERF: excluded
+  CBAS: excluded
+  CDEF: excluded
+  QUAC: excluded
+  MLFC: excluded
+  REPC: excluded
+  MLRC: excluded
+  ROIN: excluded
+  SBAD: excluded
+  GAME: excluded
+  BUCO: excluded
+  AHCO: excluded
+  HANI: excluded
+  CASC: excluded
+  MLSC: excluded
+  ROHI: excluded
+  MLPS: excluded
+  BASS: excluded
+  CARP: excluded
+  PINC: excluded
+  COIN: excluded
+  SADV: excluded
+  CRPR: excluded
+  MLHS: excluded
+  MLHC: excluded
+  PSTG: excluded
+  MADC: excluded
+  DIPD: excluded
+  CORP: excluded
+  DCAC: excluded
+  FOBC: excluded
+  DMLP: excluded
+  OFFC: excluded
+  RVCI: excluded
+  CBCA: excluded
+  AFCO: excluded
+  COOC: excluded
+  MOBC: excluded
+  INPS: excluded
+  # generic codes: the title decides
+  ASSC: by_title
+  MAJC: by_title
+  DEVE: by_title
+  CATC: by_title
+  INFC: by_title
+  FUND: by_title
+  RPRO: by_title
+  SDDD: by_title
+  QCCC: by_title
+  CCDP: by_title
+  OUTF: by_title
+  RPRE: by_title
+  SPHI: by_title
+  BCCH: by_title
+  BCGP: by_title
+  COHF: by_title
+  MLAH: by_title
+  HINS: by_title
+  ASBC: by_title
+  BOFF: by_title
+  COSA: by_title
+
+pairs:
+  - {job: COAP, title: "complex hitting lead", role: review}
+  - {job: MNGR, title: "honorary manager", role: excluded}
+  - {job: MNGR, title: "manager, complex operations", role: review}
+  - {job: COAU, title: "bullpen catcher/coach", role: review}
+  - {job: COAB, title: "infield coach", role: review}
+  - {job: COAB, title: "outfield coach", role: review}
+
+titles:
+  "": review
+  "administrative coach": excluded
+  "administrative coach and video replay coordinator": excluded
+  "analyst/coach": excluded
+  "assistant bench coach": excluded
+  "assistant bench coach/infield coach": defense
+  "assistant bullpen coach": pitching
+  "assistant coach": excluded
+  "assistant complex coordinator": excluded
+  "assistant director, run production": excluded
+  "assistant hitting coach": hitting
+  "assistant major league coach/bullpen coach": pitching
+  "assistant pitching coach": pitching
+  "assitant hitting coach": hitting
+  "associate coach": excluded
+  "associate pitching, catching and strategy coach": review
+  "baserunning and outfield coach": defense
+  "baserunning/defensive coach": defense
+  "baserunning/outfield and first base coach": defense
+  "baserunning/outfield coach": defense
+  "baserunning/outfield instructor": defense
+  "batting practice pitcher": excluded
+  "bench coach": excluded
+  "bench/catching coach": defense
+  "bp pitcher & video replay analyst": excluded
+  "bullpen catcher/catching coach": review
+  "bullpen catcher/coach": review
+  "bullpen, catching/game planning coach": review
+  "bunt/baserunning coach": excluded
+  "catching & game planning coach": defense
+  "catching & information coach": defense
+  "catching & strategy coach": defense
+  "catching analyst": excluded
+  "catching and quality control coach": defense
+  "catching coach": defense
+  "catching coach & game strategy assistant": defense
+  "catching coach / run game coordinator": defense
+  "catching coach/assistant catching director/bullpen catcher": review
+  "catching coordinator": excluded
+  "catching coordinator/complex coach": review
+  "catching instructor": defense
+  "catching instructor/bullpen catcher": review
+  "catching/defensive positioning": defense
+  "catching/developmental coach": defense
+  "catching/game-planning coach": defense
+  "catching/infield specialist": defense
+  "catching/quality-control coach": defense
+  "coach": excluded
+  "coach / interpreter": excluded
+  "coach assistant": excluded
+  "coach/bullpen catcher": excluded
+  "coach/mentor": excluded
+  "coach/outfield specialist": defense
+  "coaching assistant": excluded
+  "coaching assistant/instant replay coordinator": excluded
+  "complex manager/acl coach": review
+  "coordinator of infield instruction": excluded
+  "coordinator, major league player development & instruction": excluded
+  "cultural development": excluded
+  "defensive coach": defense
+  "development & assistant hitting coach": hitting
+  "development associate": excluded
+  "development coach": excluded
+  "development coach / bullpen catcher": excluded
+  "development coordinator": excluded
+  "development infield coach": defense
+  "development supervisor": excluded
+  "director, video coaching": excluded
+  "dsl video assistant/coach": excluded
+  "field coach": review
+  "field coordinator": excluded
+  "field coordinator & catching coach": defense
+  "field coordinator / infield coach": defense
+  "field coordinator/catching coach": defense
+  "fielding coach": defense
+  "first base/infield coach": defense
+  "fundamentals coach": review
+  "game planning coach": excluded
+  "game planning/communications coach": excluded
+  "game planning/infield coach": defense
+  "hitting and development coach": hitting
+  "hitting advisor": excluded
+  "hitting coach": hitting
+  "hitting coordinator": excluded
+  "hitting development coach": hitting
+  "hitting instructor": hitting
+  "hitting/development coach": hitting
+  "hitting/first base coach": hitting
+  "infield and catching coordinator": excluded
+  "infield coach": defense
+  "infield coach & complex supervisor": defense
+  "infield coordinator": excluded
+  "infield instructor": defense
+  "infield/baserunning coach": defense
+  "infield/first base coach": defense
+  "integrated baseball performance coach": excluded
+  "major league advance coach and staff assistant": excluded
+  "major league advance scout/development coach": excluded
+  "major league assistant": excluded
+  "major league assistant coach": excluded
+  "major league assistant hitting coach": hitting
+  "major league assistant hitting coach/offensive coordinator": hitting
+  "major league batting practice/hitting instructor": hitting
+  "major league coach": excluded
+  "major league coach & senior director of baseball development": excluded
+  "major league coach and director of pitching strategy": excluded
+  "major league coach and interpreter": excluded
+  "major league coach/coordinator of advance scouting": excluded
+  "major league coaching assistant": excluded
+  "major league development coach": excluded
+  "major league development integration coach": excluded
+  "major league field coordinator": excluded
+  "major league field coordinator and director of catching": excluded
+  "major league field coordinator/outfield coach": defense
+  "major league game planning coach": excluded
+  "major league mental performance coach": excluded
+  "major league process and development coach": excluded
+  "major league quality control coach/infield instructor": defense
+  "major league staff assistant": excluded
+  "major league staff/replay analyst": excluded
+  "major league strategy coach": excluded
+  "mentor": excluded
+  "minor league fundamentals coordinator": excluded
+  "ml infield coach": defense
+  "ml, coach": excluded
+  "offensive strategist": excluded
+  "offensive strategy coach": excluded
+  "outfield & baserunning coach": defense
+  "outfield and baserunning coach": defense
+  "outfield coach": defense
+  "outfield, baserunning, & quality control coach": defense
+  "outfield/assistant hitting coach": review
+  "outfield/baserunning coach": defense
+  "pitching development coach": pitching
+  "pitching strategy coach": excluded
+  "player coach": excluded
+  "position coach": review
+  "process & analytics coach": excluded
+  "quality assurance coach": excluded
+  "quality control coach": excluded
+  "quality control/catching coach": defense
+  "replay coordinator": excluded
+  "return to play coach": excluded
+  "roving coach": excluded
+  "run prevention coach": review
+  "run prevention coordinator": excluded
+  "run production coach": review
+  "run production coordinator": excluded
+  "seasonal development coach": excluded
+  "senior advisor to player development & major leagues": excluded
+  "senior advisor, major league coaching staff": excluded
+  "senior director of hitting performance, major league hitting coach": hitting
+  "senior director, major league data and development": excluded
+  "special assignment coach": review
+  "special assignment hitting coach": review
+  "special projects coach": excluded
+  "sport performance coach": excluded
+  "staff assistant": excluded
+  "strategy coach": excluded
+  "supervisor of development": excluded
+  "technology/development coach": excluded
