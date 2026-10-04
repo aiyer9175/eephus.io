@@ -471,6 +471,11 @@ SCHEDULED_EXPORTS = (
     # position, age or money cell has the wrong type, a table loses its year
     # columns, or the coded positions stop matching StatsAPI's side.
     "spotrac_contracts_format",
+    # The MLB transaction events nightly (step 9e-pre0g, mlb_events.py): the
+    # cache refresh and the events builder. A failed StatsAPI refresh leaves
+    # the cache at its last month, which reads like a quiet week; the row
+    # files ok=False so the deploy shell prints it.
+    "mlb_events",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -3633,6 +3638,38 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     pass
                 _record_ingest("mgmt_nightly", False, 0,
                                f"management nightly raised: {_e}"[:200], "mlb", log)
+
+        # --- 9e-pre0g. MLB transaction events (dark until MLB_EVENTS_LIVE) ---
+        # Wiring W01, part 1 (Q9_22a). Refreshes the league-wide StatsAPI
+        # transaction cache (.cache/mlb_transactions/tx_YYYY_MM.json.gz) for the
+        # previous and the current month (2 keyless calls a night; a missing
+        # month, or one fetched while it was open, is refetched once inside a
+        # 12-month look-back), then runs the mlb_events builder: one row per
+        # (person, date, type code) from that cache, its IL placements and
+        # activations, the arbitration salaries and the FA event ledger. While
+        # mlb_events.MLB_EVENTS_LIVE is False it writes only under
+        # .cache/mlb_events/preview/ and nothing under data/. Placed after
+        # 9e-pre0e with the other display-only nightlies: no model and no priced
+        # cell reads it. A failed refresh still builds from the cache on disk
+        # and files ok=False. Additive; never aborts.
+        with _step("9e-pre0g. MLB transaction events (mlb_events preview)", log):
+            try:
+                import job_heartbeat as _hb
+                import mlb_events as _mev
+                _me = _mev.nightly(log_fn=log.info)
+                _hb.record("mlb_events", ok=bool(_me["ok"]), result=_me["message"][:200])
+                _record_ingest("mlb_events", bool(_me["ok"]), int(_me["n_rows"]),
+                               _me["message"][:200], "mlb", log)
+            except Exception as _e:
+                log.exception("daily: mlb events step failed - the previous "
+                              "events files stand - continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("mlb_events", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
+                _record_ingest("mlb_events", False, 0,
+                               f"mlb events step raised: {_e}"[:200], "mlb", log)
 
         # --- 9e-pre-wx. Forecast weather capture (DARK; ARMED 2026-09-11) ---
         # docs/diamond-betting.md section 5h. Captures the pregame forecast for

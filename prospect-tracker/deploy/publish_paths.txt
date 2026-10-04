@@ -29,9 +29,12 @@
 # only when BOTH consumers name it, and test_the_shard_index_matches_the_
 # files_on_disk asserts the two rules carry it; and, since 2026-09-24, the
 # ledger_clubs/ per-club row files the /ledger/ club page fetches on demand,
-# pinned by test_ledger_clubs_shards_ship_in_both_deploy_consumers; and, since
+# pinned by test_ledger_clubs_shards_ship_in_both_deploy_consumers; since
 # 2026-10-03, the franchise_clubs/ per-club files the /franchise/ club page
-# fetches on demand, pinned by test_franchise_clubs_ship_in_both_deploy_consumers).
+# fetches on demand, pinned by test_franchise_clubs_ship_in_both_deploy_consumers;
+# and the mlb_events/ per-player MLB transaction files, empty until mlb_events.py's
+# MLB_EVENTS_LIVE flips, pinned by
+# test_mlb_events_dir_ships_in_both_deploy_consumers).
 index.html
 404.html
 robots.txt

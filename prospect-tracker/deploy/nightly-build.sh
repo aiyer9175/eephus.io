@@ -246,6 +246,7 @@ rsync -a --delete \
   --include='/data/mgmt_decisions/***' \
   --include='/data/ledger_clubs/***' \
   --include='/data/franchise_clubs/***' \
+  --include='/data/mlb_events/***' \
   --exclude='*' \
   "$APP/" "$WEBROOT/"
 

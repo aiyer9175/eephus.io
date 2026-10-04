@@ -315,3 +315,21 @@ def test_franchise_clubs_ship_in_both_deploy_consumers():
     assert "franchise_clubs" in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8")
     js = (ROOT / "assets" / "franchise.js").read_text(encoding="utf-8")
     assert 'var SHARD_URL = "/data/franchise_clubs/";' in js, "the page fetches the directory both consumers ship"
+
+
+def test_mlb_events_dir_ships_in_both_deploy_consumers():
+    """Q9_22a (2026-10-03): the per-player MLB transaction files (data/mlb_events/
+    <mlbam>.json, index.json and recent.json, written by mlb_events.py once
+    MLB_EVENTS_LIVE flips) are not a storage._slices_dir shard either, so they get
+    the ledger_clubs guard: both consumers name the directory before the flip, so
+    the flip only writes files. The directory is gitignored."""
+    d = "mlb_events"
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert _ships_in_nightly(nightly, d), "deploy/nightly-build.sh never ships /data/mlb_events/"
+    wf_path = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf_path.exists():
+        assert _ships_in_workflow(wf_path.read_text(encoding="utf-8"), d), "the CI workflow never copies data/mlb_events/"
+    assert "mlb_events/" in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8")
+    assert "data/mlb_events/" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    src = (ROOT / "mlb_events.py").read_text(encoding="utf-8")
+    assert 'SERVED_DIR = DATA / "mlb_events"' in src, "the writer fills the directory both consumers ship"
