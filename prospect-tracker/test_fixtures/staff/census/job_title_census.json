@@ -1,0 +1,2630 @@
+{
+ "_note": "Every (jobId, title) pair on the 2008 to 2026 StatsAPI season staff lists in .cache/staff/ as fetched 2026-10-03, with its row count; job codes and titles only, no person. Written by staff_ingest.job_title_census; the role-map totality test reads it.",
+ "pairs": [
+  [
+   "AFCO",
+   "Assistant Field Coordinator",
+   1
+  ],
+  [
+   "AHCO",
+   "Assistant Coordinator",
+   1
+  ],
+  [
+   "AHCO",
+   "Assistant Hitting Coordinator",
+   9
+  ],
+  [
+   "ASBC",
+   "Assistant Bench Coach",
+   4
+  ],
+  [
+   "ASBC",
+   "Assistant Bench Coach/Infield Coach",
+   3
+  ],
+  [
+   "ASSC",
+   "Assistant Bullpen Coach",
+   7
+  ],
+  [
+   "ASSC",
+   "Assistant Coach",
+   142
+  ],
+  [
+   "ASSC",
+   "Assistant Complex Coordinator",
+   1
+  ],
+  [
+   "ASSC",
+   "Assistant Major League Coach/Bullpen Coach",
+   4
+  ],
+  [
+   "ASSC",
+   "Associate Coach",
+   2
+  ],
+  [
+   "ASSC",
+   "Associate Pitching, Catching and Strategy Coach",
+   3
+  ],
+  [
+   "ASSC",
+   "Batting Practice Pitcher",
+   1
+  ],
+  [
+   "ASSC",
+   "Bench Coach",
+   3
+  ],
+  [
+   "ASSC",
+   "Coach Assistant",
+   1
+  ],
+  [
+   "ASSC",
+   "Coaching Assistant",
+   4
+  ],
+  [
+   "ASSC",
+   "Coaching Assistant/Instant Replay Coordinator",
+   4
+  ],
+  [
+   "ASSC",
+   "Coaching assistant",
+   1
+  ],
+  [
+   "ASSC",
+   "Field Coordinator",
+   2
+  ],
+  [
+   "ASSC",
+   "Major League Coaching Assistant",
+   3
+  ],
+  [
+   "ASSC",
+   "Major League Staff Assistant",
+   2
+  ],
+  [
+   "ASSC",
+   "Senior Advisor, Major League Coaching Staff",
+   1
+  ],
+  [
+   "ASSC",
+   "Staff Assistant",
+   3
+  ],
+  [
+   "ASSC",
+   "Strategy Coach",
+   4
+  ],
+  [
+   "ASSM",
+   "Associate Coach",
+   1
+  ],
+  [
+   "ASSM",
+   "Associate Manager",
+   11
+  ],
+  [
+   "BASS",
+   "Assistant Coach",
+   1
+  ],
+  [
+   "BASS",
+   "Bullpen Assistant",
+   5
+  ],
+  [
+   "BCAT",
+   "Bullpen Catcher",
+   653
+  ],
+  [
+   "BCAT",
+   "Bullpen Catcher & Assistant to Baseball Operations",
+   8
+  ],
+  [
+   "BCAT",
+   "Bullpen Catcher & Coaching Assistant",
+   5
+  ],
+  [
+   "BCAT",
+   "Bullpen Catcher and Major League Operations Assistant",
+   8
+  ],
+  [
+   "BCAT",
+   "Bullpen Catcher/Assistant Catching Coach",
+   10
+  ],
+  [
+   "BCAT",
+   "Bullpen Catcher/Catching Coach",
+   5
+  ],
+  [
+   "BCAT",
+   "Bullpen Catcher/Coach",
+   1
+  ],
+  [
+   "BCAT",
+   "Bullpen Catcher/Coaching Assistant",
+   7
+  ],
+  [
+   "BCAT",
+   "Bullpen Catcher/Instructor",
+   10
+  ],
+  [
+   "BCAT",
+   "Bullpen Catcher/Receiving Coach",
+   2
+  ],
+  [
+   "BCAT",
+   "Catching Coach and Bullpen Catcher",
+   2
+  ],
+  [
+   "BCAT",
+   "Lead Strategist/Bullpen Catcher",
+   3
+  ],
+  [
+   "BCAT",
+   "Major League Interpreter",
+   3
+  ],
+  [
+   "BCAT",
+   "Rehab Bullpen Catcher",
+   2
+  ],
+  [
+   "BCAT",
+   "Rehab Bullpen Catcher/Assistant",
+   1
+  ],
+  [
+   "BCAT",
+   "Strategist/Bullpen Catcher",
+   8
+  ],
+  [
+   "BCCH",
+   "Bench/Catching Coach",
+   3
+  ],
+  [
+   "BCGP",
+   "Bullpen, Catching/Game Planning Coach",
+   1
+  ],
+  [
+   "BOFF",
+   "Baserunning/Defensive Coach",
+   1
+  ],
+  [
+   "BOFF",
+   "Baserunning/Outfield Coach",
+   1
+  ],
+  [
+   "BOFF",
+   "Baserunning/Outfield Instructor",
+   1
+  ],
+  [
+   "BOFF",
+   "Baserunning/Outfield and First Base Coach",
+   1
+  ],
+  [
+   "BOFF",
+   "Bunt/Baserunning Coach",
+   4
+  ],
+  [
+   "BOFF",
+   "Outfield & Baserunning Coach",
+   3
+  ],
+  [
+   "BOFF",
+   "Outfield and Baserunning Coach",
+   2
+  ],
+  [
+   "BOFF",
+   "Outfield/Baserunning Coach",
+   3
+  ],
+  [
+   "BPPI",
+   "Batting Practice Pitcher",
+   40
+  ],
+  [
+   "BPPI",
+   "Batting Practice Pitcher/Bullpen Catcher",
+   5
+  ],
+  [
+   "BUCO",
+   "Bullpen Coordinator",
+   12
+  ],
+  [
+   "CARP",
+   "Coaching Assistant",
+   2
+  ],
+  [
+   "CARP",
+   "Coaching Assistant, Pitching",
+   2
+  ],
+  [
+   "CARP",
+   "Coaching Assistant/Replay Coordinator",
+   2
+  ],
+  [
+   "CARP",
+   "Game Planning and Coaching Assistant",
+   1
+  ],
+  [
+   "CARP",
+   "Staff Assistant",
+   2
+  ],
+  [
+   "CASC",
+   "Catching Coordinator",
+   5
+  ],
+  [
+   "CASC",
+   "Catching and Advance Scouting Coordinator",
+   1
+  ],
+  [
+   "CATC",
+   "Associate Pitching, Catching And Strategy Coach",
+   8
+  ],
+  [
+   "CATC",
+   "Bullpen Catcher/Catching Coach",
+   2
+  ],
+  [
+   "CATC",
+   "Catching & Game Planning Coach",
+   1
+  ],
+  [
+   "CATC",
+   "Catching & Information Coach",
+   3
+  ],
+  [
+   "CATC",
+   "Catching & Strategy Coach",
+   3
+  ],
+  [
+   "CATC",
+   "Catching Analyst",
+   1
+  ],
+  [
+   "CATC",
+   "Catching Coach",
+   146
+  ],
+  [
+   "CATC",
+   "Catching Coach & Game Strategy Assistant",
+   2
+  ],
+  [
+   "CATC",
+   "Catching Coach / Run Game Coordinator",
+   1
+  ],
+  [
+   "CATC",
+   "Catching Coach/Assistant Catching Director/Bullpen Catcher",
+   1
+  ],
+  [
+   "CATC",
+   "Catching Coordinator",
+   3
+  ],
+  [
+   "CATC",
+   "Catching Coordinator/Complex Coach",
+   2
+  ],
+  [
+   "CATC",
+   "Catching Instructor",
+   7
+  ],
+  [
+   "CATC",
+   "Catching and Quality Control Coach",
+   2
+  ],
+  [
+   "CATC",
+   "Catching/Developmental Coach",
+   1
+  ],
+  [
+   "CATC",
+   "Catching/Game-Planning Coach",
+   2
+  ],
+  [
+   "CATC",
+   "Catching/Infield Specialist",
+   1
+  ],
+  [
+   "CATC",
+   "Catching/Quality-Control Coach",
+   6
+  ],
+  [
+   "CATC",
+   "Field Coordinator & Catching Coach",
+   1
+  ],
+  [
+   "CATC",
+   "Field Coordinator/Catching Coach",
+   1
+  ],
+  [
+   "CBAS",
+   "Coordinator of Baserunning/Defense",
+   2
+  ],
+  [
+   "CBAS",
+   "Coordinator, Baserunning",
+   78
+  ],
+  [
+   "CBAS",
+   "Outfield and Baserunning Coordinator",
+   1
+  ],
+  [
+   "CBAS",
+   "Outfield/Baserunning Coordinator",
+   13
+  ],
+  [
+   "CBCA",
+   "Coach/Bullpen Catcher",
+   3
+  ],
+  [
+   "CCDP",
+   "Catching Instructor/Bullpen Catcher",
+   2
+  ],
+  [
+   "CCDP",
+   "Catching/Defensive Positioning",
+   3
+  ],
+  [
+   "CDEF",
+   "Coordinator, Defensive",
+   75
+  ],
+  [
+   "CDEF",
+   "Infield Coordinator",
+   4
+  ],
+  [
+   "CDEF",
+   "Run Prevention Coordinator",
+   2
+  ],
+  [
+   "COA1",
+   "Baserunning/Outfield and First Base Coach",
+   2
+  ],
+  [
+   "COA1",
+   "Bench/First Base Coach",
+   1
+  ],
+  [
+   "COA1",
+   "First Base & Outfield Coach",
+   1
+  ],
+  [
+   "COA1",
+   "First Base Coach",
+   580
+  ],
+  [
+   "COA1",
+   "First Base Coach, Outfield & Base Running Instructor",
+   5
+  ],
+  [
+   "COA1",
+   "First Base Coach/Infield Coach",
+   3
+  ],
+  [
+   "COA1",
+   "First Base Coach/Infield Instructor",
+   2
+  ],
+  [
+   "COA1",
+   "First Base Coach/Outfield Coach",
+   2
+  ],
+  [
+   "COA1",
+   "First Base Coach/Outfield Instructor",
+   5
+  ],
+  [
+   "COA1",
+   "First Base and Catching Coach",
+   13
+  ],
+  [
+   "COA1",
+   "First Base/Catching Coach",
+   5
+  ],
+  [
+   "COA1",
+   "First Base/Infield Coach",
+   9
+  ],
+  [
+   "COA1",
+   "First Base/Infield Defense/Baserunning Coach",
+   1
+  ],
+  [
+   "COA1",
+   "First Base/Infield/Baserunning Coach",
+   5
+  ],
+  [
+   "COA1",
+   "First Base/Outfield Coach",
+   6
+  ],
+  [
+   "COA1",
+   "Interim First Base Coach/Outfield Instructor",
+   1
+  ],
+  [
+   "COA1",
+   "Outfield & First Base Coach",
+   2
+  ],
+  [
+   "COA1",
+   "Outfield/First Base Coach",
+   4
+  ],
+  [
+   "COA1",
+   "Primary First Base Coach",
+   1
+  ],
+  [
+   "COA3",
+   "Acting Third Base Coach",
+   2
+  ],
+  [
+   "COA3",
+   "Coach",
+   1
+  ],
+  [
+   "COA3",
+   "Field Coordinator/Third Base Coach",
+   1
+  ],
+  [
+   "COA3",
+   "Infield & Third Base Coach",
+   2
+  ],
+  [
+   "COA3",
+   "Infield/Third Base Coach",
+   3
+  ],
+  [
+   "COA3",
+   "Interim Third Base Coach",
+   3
+  ],
+  [
+   "COA3",
+   "Major League Field Coordinator, Third Base Coach",
+   7
+  ],
+  [
+   "COA3",
+   "Major League Third Base Coach",
+   1
+  ],
+  [
+   "COA3",
+   "Third Base & Catching Coach",
+   1
+  ],
+  [
+   "COA3",
+   "Third Base & Infield Coach",
+   1
+  ],
+  [
+   "COA3",
+   "Third Base Coach",
+   586
+  ],
+  [
+   "COA3",
+   "Third Base Coach & Infield Instructor",
+   2
+  ],
+  [
+   "COA3",
+   "Third Base Coach, Infield & Base Running Instructor",
+   2
+  ],
+  [
+   "COA3",
+   "Third Base Coach/Infield Coach",
+   6
+  ],
+  [
+   "COA3",
+   "Third Base Coach/Outfield Coach",
+   12
+  ],
+  [
+   "COA3",
+   "Third Base Coach/Outfield Instructor",
+   3
+  ],
+  [
+   "COA3",
+   "Third Base Coach/Run Prevention Coach",
+   1
+  ],
+  [
+   "COA3",
+   "Third Base and Infield Coach",
+   3
+  ],
+  [
+   "COA3",
+   "Third Base/Infield Coach",
+   4
+  ],
+  [
+   "COA3",
+   "Third Base/Outfield Coach",
+   6
+  ],
+  [
+   "COAA",
+   "",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting & Development Coach",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach",
+   471
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach / Assistant Director of Hitting",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach and Catching Instructor",
+   2
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach and Infield Coach",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach and Outfield/Baserunning Inst.",
+   2
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach, Game Planning",
+   2
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach/Assistant Minor League Hitting Coordinator",
+   3
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach/Bench Coach",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach/Catching Coach",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach/Director of Hitting",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach/Director of Minor League Hitting",
+   3
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach/Infielders coach",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach/Integrated Performance Coach",
+   2
+  ],
+  [
+   "COAA",
+   "Assistant Hitting Coach/Upper Level Hitting Coordinator",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting/Catching Coach",
+   5
+  ],
+  [
+   "COAA",
+   "Assistant Hitting/First Base Coach",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting/Infield Coach",
+   1
+  ],
+  [
+   "COAA",
+   "Assistant Hitting/Outfield Coach",
+   2
+  ],
+  [
+   "COAA",
+   "Bench/Assistant Hitting Coach",
+   1
+  ],
+  [
+   "COAA",
+   "Director of Hitting/Assistant Hitting Coach",
+   4
+  ],
+  [
+   "COAA",
+   "Hitting Assistant",
+   1
+  ],
+  [
+   "COAA",
+   "Hitting Coordinator",
+   1
+  ],
+  [
+   "COAA",
+   "Hitting Instructor",
+   4
+  ],
+  [
+   "COAA",
+   "Hitting Strategist",
+   2
+  ],
+  [
+   "COAA",
+   "Interim Hitting Assistant",
+   1
+  ],
+  [
+   "COAA",
+   "Major League Assistant Hitting Coach",
+   1
+  ],
+  [
+   "COAA",
+   "Major League Batting Practice/Hitting Instructor",
+   1
+  ],
+  [
+   "COAA",
+   "Position Coach/Assistant Hitting Coach",
+   2
+  ],
+  [
+   "COAA",
+   "Second Hitting Coach",
+   1
+  ],
+  [
+   "COAB",
+   "Acting Bench Coach",
+   1
+  ],
+  [
+   "COAB",
+   "Bench Coach",
+   1097
+  ],
+  [
+   "COAB",
+   "Bench Coach & Offensive Coordinator",
+   1
+  ],
+  [
+   "COAB",
+   "Bench Coach and Director of Hitting",
+   4
+  ],
+  [
+   "COAB",
+   "Bench Coach/Assistant Hitting Coach",
+   3
+  ],
+  [
+   "COAB",
+   "Bench Coach/Asst. Baserunning Coordinator",
+   3
+  ],
+  [
+   "COAB",
+   "Bench Coach/Catcher Instructor",
+   1
+  ],
+  [
+   "COAB",
+   "Bench Coach/Field Coordinator",
+   2
+  ],
+  [
+   "COAB",
+   "Bench Coach/Hitting Coach",
+   1
+  ],
+  [
+   "COAB",
+   "Bench Coach/Infield Coach",
+   8
+  ],
+  [
+   "COAB",
+   "Bench Coach/Offensive Coordinator",
+   4
+  ],
+  [
+   "COAB",
+   "Bench Coach/Outfield Instructor",
+   2
+  ],
+  [
+   "COAB",
+   "Bench Coach/Third Base Coach",
+   2
+  ],
+  [
+   "COAB",
+   "Bench CoachInfield Coach",
+   1
+  ],
+  [
+   "COAB",
+   "Bench/Assistant Hitting Coach",
+   3
+  ],
+  [
+   "COAB",
+   "Bench/Assistant Hitting/Outfield Coach",
+   1
+  ],
+  [
+   "COAB",
+   "Bench/INF Coach",
+   3
+  ],
+  [
+   "COAB",
+   "Bench/Infield Coach",
+   6
+  ],
+  [
+   "COAB",
+   "Bench/Third Base Coach",
+   2
+  ],
+  [
+   "COAB",
+   "Field Coordinator",
+   3
+  ],
+  [
+   "COAB",
+   "Infield Coach",
+   4
+  ],
+  [
+   "COAB",
+   "Infield/Bench Coach",
+   3
+  ],
+  [
+   "COAB",
+   "Interim Bench Coach",
+   1
+  ],
+  [
+   "COAB",
+   "Outfield Coach",
+   1
+  ],
+  [
+   "COAC",
+   "",
+   1
+  ],
+  [
+   "COAC",
+   "Administrative Coach",
+   1
+  ],
+  [
+   "COAC",
+   "Administrative Coach and Video Replay Coordinator",
+   1
+  ],
+  [
+   "COAC",
+   "Analyst/Coach",
+   1
+  ],
+  [
+   "COAC",
+   "Assistant Coach",
+   9
+  ],
+  [
+   "COAC",
+   "Assistant Hitting Coach",
+   2
+  ],
+  [
+   "COAC",
+   "Assistant Pitching Coach",
+   1
+  ],
+  [
+   "COAC",
+   "Assitant Hitting Coach",
+   3
+  ],
+  [
+   "COAC",
+   "Associate Coach",
+   3
+  ],
+  [
+   "COAC",
+   "Baserunning and Outfield Coach",
+   1
+  ],
+  [
+   "COAC",
+   "Bench Coach",
+   22
+  ],
+  [
+   "COAC",
+   "Bullpen Catcher/Coach",
+   2
+  ],
+  [
+   "COAC",
+   "Catching Coach",
+   12
+  ],
+  [
+   "COAC",
+   "Coach",
+   1606
+  ],
+  [
+   "COAC",
+   "Coach/Bullpen Catcher",
+   1
+  ],
+  [
+   "COAC",
+   "Coach/Mentor",
+   1
+  ],
+  [
+   "COAC",
+   "Coach/Outfield Specialist",
+   2
+  ],
+  [
+   "COAC",
+   "Coaching Assistant",
+   1
+  ],
+  [
+   "COAC",
+   "Coaching Assistant/Instant Replay Coordinator",
+   1
+  ],
+  [
+   "COAC",
+   "Complex Manager/ACL Coach",
+   1
+  ],
+  [
+   "COAC",
+   "DSL Video Assistant/Coach",
+   3
+  ],
+  [
+   "COAC",
+   "Defensive Coach",
+   13
+  ],
+  [
+   "COAC",
+   "Development Coach",
+   2
+  ],
+  [
+   "COAC",
+   "Director, Video Coaching",
+   4
+  ],
+  [
+   "COAC",
+   "Field Coach",
+   1
+  ],
+  [
+   "COAC",
+   "Field Coordinator",
+   9
+  ],
+  [
+   "COAC",
+   "Fielding Coach",
+   26
+  ],
+  [
+   "COAC",
+   "Fundamentals Coach",
+   9
+  ],
+  [
+   "COAC",
+   "Game Planning Coach",
+   2
+  ],
+  [
+   "COAC",
+   "Game Planning/Communications Coach",
+   1
+  ],
+  [
+   "COAC",
+   "Game Planning/Infield Coach",
+   6
+  ],
+  [
+   "COAC",
+   "Hitting Coach",
+   5
+  ],
+  [
+   "COAC",
+   "Hitting Coordinator",
+   2
+  ],
+  [
+   "COAC",
+   "Infield Coach",
+   4
+  ],
+  [
+   "COAC",
+   "Major League Advance Coach and Staff Assistant",
+   2
+  ],
+  [
+   "COAC",
+   "Major League Coach",
+   2
+  ],
+  [
+   "COAC",
+   "Major League Development Coach",
+   2
+  ],
+  [
+   "COAC",
+   "Major League Field Coordinator",
+   5
+  ],
+  [
+   "COAC",
+   "Major League Field Coordinator and Director of Catching",
+   7
+  ],
+  [
+   "COAC",
+   "Major League Mental Performance Coach",
+   3
+  ],
+  [
+   "COAC",
+   "Major League Process and Development Coach",
+   3
+  ],
+  [
+   "COAC",
+   "Mentor",
+   2
+  ],
+  [
+   "COAC",
+   "Offensive Strategist",
+   4
+  ],
+  [
+   "COAC",
+   "Offensive Strategy Coach",
+   2
+  ],
+  [
+   "COAC",
+   "Outfield & Baserunning Coach",
+   1
+  ],
+  [
+   "COAC",
+   "Outfield Coach",
+   5
+  ],
+  [
+   "COAC",
+   "Outfield, Baserunning, & Quality Control Coach",
+   2
+  ],
+  [
+   "COAC",
+   "Outfield/Baserunning Coach",
+   1
+  ],
+  [
+   "COAC",
+   "Pitching Strategy Coach",
+   4
+  ],
+  [
+   "COAC",
+   "Player Coach",
+   1
+  ],
+  [
+   "COAC",
+   "Position Coach",
+   84
+  ],
+  [
+   "COAC",
+   "Process & Analytics Coach",
+   5
+  ],
+  [
+   "COAC",
+   "Quality Assurance Coach",
+   3
+  ],
+  [
+   "COAC",
+   "Quality Control Coach",
+   3
+  ],
+  [
+   "COAC",
+   "Replay Coordinator",
+   1
+  ],
+  [
+   "COAC",
+   "Return To Play Coach",
+   2
+  ],
+  [
+   "COAC",
+   "Roving Coach",
+   1
+  ],
+  [
+   "COAC",
+   "Senior Advisor to Player Development & Major Leagues",
+   2
+  ],
+  [
+   "COAC",
+   "Sport Performance Coach",
+   2
+  ],
+  [
+   "COAC",
+   "Staff Assistant",
+   9
+  ],
+  [
+   "COAC",
+   "Supervisor of Development",
+   2
+  ],
+  [
+   "COAC",
+   "infield Coach",
+   3
+  ],
+  [
+   "COAH",
+   "Batting Coach",
+   1472
+  ],
+  [
+   "COAP",
+   "",
+   9
+  ],
+  [
+   "COAP",
+   "Assistant Pitching Coach",
+   11
+  ],
+  [
+   "COAP",
+   "Complex Hitting Lead",
+   1
+  ],
+  [
+   "COAP",
+   "DSL Pitching Lead",
+   1
+  ],
+  [
+   "COAP",
+   "Director of Pitching",
+   4
+  ],
+  [
+   "COAP",
+   "Integration Pitching Coach",
+   1
+  ],
+  [
+   "COAP",
+   "Major League Pitching Coach/Associate Manager",
+   5
+  ],
+  [
+   "COAP",
+   "Major League Pitching Coordinator",
+   1
+  ],
+  [
+   "COAP",
+   "Pitching & Rehab Coach",
+   1
+  ],
+  [
+   "COAP",
+   "Pitching Coach",
+   5196
+  ],
+  [
+   "COAP",
+   "Pitching Coach & Special Projects",
+   1
+  ],
+  [
+   "COAP",
+   "Pitching Coach Associate",
+   1
+  ],
+  [
+   "COAP",
+   "Pitching Coach/Assistant Pitching Coordinator",
+   1
+  ],
+  [
+   "COAP",
+   "Pitching Coach/Asst. Pitching Coordinator",
+   6
+  ],
+  [
+   "COAP",
+   "Pitching Coach/Director of Pitching",
+   11
+  ],
+  [
+   "COAP",
+   "Pitching Coach/Upper Level Coord.",
+   1
+  ],
+  [
+   "COAP",
+   "Pitching Consultant",
+   1
+  ],
+  [
+   "COAP",
+   "Pitching Coordinator",
+   7
+  ],
+  [
+   "COAP",
+   "Pitching Development Coach",
+   3
+  ],
+  [
+   "COAP",
+   "Pitching Devlopment Coach, Biomechanic",
+   1
+  ],
+  [
+   "COAP",
+   "Pitching Strategist",
+   2
+  ],
+  [
+   "COAP",
+   "Rehab Pitching Coach",
+   2
+  ],
+  [
+   "COAP",
+   "Skill Acquisition Specialist & Pitching Coach",
+   3
+  ],
+  [
+   "COAT",
+   "",
+   4
+  ],
+  [
+   "COAT",
+   "Assistant Hitting Coach",
+   15
+  ],
+  [
+   "COAT",
+   "Co-Hitting Coach",
+   6
+  ],
+  [
+   "COAT",
+   "Complex Hitting Coordinator/Rehab",
+   1
+  ],
+  [
+   "COAT",
+   "Complex Hitting Lead",
+   2
+  ],
+  [
+   "COAT",
+   "Director of Hitting/Major League Hitting Coach",
+   2
+  ],
+  [
+   "COAT",
+   "Director of Major League Hitting",
+   1
+  ],
+  [
+   "COAT",
+   "Hitting Coach",
+   3517
+  ],
+  [
+   "COAT",
+   "Hitting Coach & Director of Hitting Strategy",
+   3
+  ],
+  [
+   "COAT",
+   "Hitting Coach/Assistant Hitting Coordinator",
+   2
+  ],
+  [
+   "COAT",
+   "Hitting Coach/Bench Coach",
+   2
+  ],
+  [
+   "COAT",
+   "Hitting Development Coach",
+   3
+  ],
+  [
+   "COAT",
+   "Hitting Fellow",
+   1
+  ],
+  [
+   "COAT",
+   "Hitting Performance Coach",
+   1
+  ],
+  [
+   "COAT",
+   "Hitting Supervisor",
+   1
+  ],
+  [
+   "COAT",
+   "Hitting and Development Coach",
+   4
+  ],
+  [
+   "COAT",
+   "Hitting/Catching Coach",
+   2
+  ],
+  [
+   "COAT",
+   "Hitting/Catching Instructor",
+   3
+  ],
+  [
+   "COAT",
+   "Hitting/Infield Coach",
+   8
+  ],
+  [
+   "COAT",
+   "Hitting/OUtfield/Baserunng Coach",
+   8
+  ],
+  [
+   "COAT",
+   "Hitting/Outfield Coach",
+   1
+  ],
+  [
+   "COAT",
+   "Lead Hitting Coach",
+   3
+  ],
+  [
+   "COAT",
+   "Major League Hitting Coach",
+   1
+  ],
+  [
+   "COAT",
+   "Outfield/Hitting Coach",
+   2
+  ],
+  [
+   "COAT",
+   "Roving Hitting Coach",
+   1
+  ],
+  [
+   "COAT",
+   "Senior Director, Hitting Strategy",
+   2
+  ],
+  [
+   "COAT",
+   "Sr. Director of Hitting Performance and Hitting Coach",
+   2
+  ],
+  [
+   "COAU",
+   "Assistant Pitching Coach / Bullpen Coach",
+   1
+  ],
+  [
+   "COAU",
+   "Assistant Pitching/Bullpen Coach",
+   4
+  ],
+  [
+   "COAU",
+   "Bullpen Catcher/Coach",
+   1
+  ],
+  [
+   "COAU",
+   "Bullpen Coach",
+   638
+  ],
+  [
+   "COAU",
+   "Bullpen Coach & Catching Instructor",
+   2
+  ],
+  [
+   "COAU",
+   "Bullpen Coach and Director of Pitching Development",
+   2
+  ],
+  [
+   "COAU",
+   "Bullpen Coach and Director of Pitching Strategy",
+   2
+  ],
+  [
+   "COAU",
+   "Bullpen Coach and Quality Control Coach",
+   1
+  ],
+  [
+   "COAU",
+   "Bullpen/Catching Coach",
+   4
+  ],
+  [
+   "COAU",
+   "Development Coach/Bullpen Coach",
+   1
+  ],
+  [
+   "COAU",
+   "Pitching Coach",
+   1
+  ],
+  [
+   "COHF",
+   "Hitting/First Base Coach",
+   1
+  ],
+  [
+   "COHI",
+   "Interim Hitting Coach",
+   5
+  ],
+  [
+   "COIN",
+   "Coach/Interpreter",
+   8
+  ],
+  [
+   "COOC",
+   "Complex Coordinator",
+   1
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach",
+   217
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach & Assistant Pitching Director",
+   1
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach - Bullpen",
+   2
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach - Strategy",
+   2
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach and Director of Pitching",
+   2
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach and Pitching Strategist",
+   3
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach/Bullpen",
+   4
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach/Director of Pitching Development",
+   3
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach/Interpreter",
+   5
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach/Minor League Pitching Coordinator",
+   5
+  ],
+  [
+   "COPA",
+   "Assistant Pitching Coach/Minor league Pitching Coordinator",
+   1
+  ],
+  [
+   "COPA",
+   "Assistant Pitching and Rehab Coach",
+   5
+  ],
+  [
+   "COPA",
+   "Assistant Pitching and Strategy Coach",
+   2
+  ],
+  [
+   "COPA",
+   "Assistant/Florida Roving Pitching Coach",
+   1
+  ],
+  [
+   "COPA",
+   "Development/Assistant Pitching Coach",
+   1
+  ],
+  [
+   "COPA",
+   "Director of Major League Pitching Strategy, Assistant Pitching Coach",
+   3
+  ],
+  [
+   "COPA",
+   "Pitching Coach",
+   2
+  ],
+  [
+   "COPA",
+   "Pitching Development Coach",
+   1
+  ],
+  [
+   "COPA",
+   "Pitching Performances/Strategy",
+   2
+  ],
+  [
+   "COPA",
+   "Pitching Strategist",
+   3
+  ],
+  [
+   "COPA",
+   "Vice President, Pitching Development/Assistant Pitching Coach",
+   3
+  ],
+  [
+   "COPC",
+   "Academy Pitching Coach",
+   1
+  ],
+  [
+   "COPC",
+   "Complex Pitching Coach",
+   4
+  ],
+  [
+   "COPI",
+   "Interim Pitching Coach",
+   13
+  ],
+  [
+   "CORP",
+   "Offensive Coordinator",
+   2
+  ],
+  [
+   "COSA",
+   "Special Assignment Coach",
+   8
+  ],
+  [
+   "COSA",
+   "Special Projects Coach",
+   1
+  ],
+  [
+   "CRPR",
+   "Coordinator, Run Prevention",
+   9
+  ],
+  [
+   "DCAC",
+   "Defensive Coordinator",
+   5
+  ],
+  [
+   "DCAC",
+   "Defensive Coordinator and Advance Coach",
+   2
+  ],
+  [
+   "DEFC",
+   "Assistant Coach",
+   2
+  ],
+  [
+   "DEFC",
+   "Baserunning and Defensive Coach",
+   1
+  ],
+  [
+   "DEFC",
+   "Catching Coach",
+   1
+  ],
+  [
+   "DEFC",
+   "Catching and Defensive Coach",
+   1
+  ],
+  [
+   "DEFC",
+   "Complex Defensive Coach",
+   2
+  ],
+  [
+   "DEFC",
+   "Defensive Coach",
+   214
+  ],
+  [
+   "DEFC",
+   "Fielding Coach",
+   1
+  ],
+  [
+   "DEFC",
+   "Outfield Coach",
+   1
+  ],
+  [
+   "DEVE",
+   "",
+   2
+  ],
+  [
+   "DEVE",
+   "Associate Coach",
+   3
+  ],
+  [
+   "DEVE",
+   "Cultural Development",
+   2
+  ],
+  [
+   "DEVE",
+   "Development & Assistant Hitting Coach",
+   1
+  ],
+  [
+   "DEVE",
+   "Development Associate",
+   1
+  ],
+  [
+   "DEVE",
+   "Development Coach",
+   306
+  ],
+  [
+   "DEVE",
+   "Development Coach / Bullpen Catcher",
+   1
+  ],
+  [
+   "DEVE",
+   "Development Coordinator",
+   6
+  ],
+  [
+   "DEVE",
+   "Development Infield Coach",
+   1
+  ],
+  [
+   "DEVE",
+   "Development Supervisor",
+   4
+  ],
+  [
+   "DEVE",
+   "Fundamentals Coach",
+   2
+  ],
+  [
+   "DEVE",
+   "Hitting Development Coach",
+   3
+  ],
+  [
+   "DEVE",
+   "Hitting and Development Coach",
+   1
+  ],
+  [
+   "DEVE",
+   "Hitting/Development Coach",
+   1
+  ],
+  [
+   "DEVE",
+   "Integrated Baseball Performance Coach",
+   2
+  ],
+  [
+   "DEVE",
+   "Major League Advance Scout/Development Coach",
+   2
+  ],
+  [
+   "DEVE",
+   "Major League Development Integration Coach",
+   1
+  ],
+  [
+   "DEVE",
+   "Pitching Development Coach",
+   1
+  ],
+  [
+   "DEVE",
+   "Seasonal Development Coach",
+   1
+  ],
+  [
+   "DEVE",
+   "Technology/Development Coach",
+   3
+  ],
+  [
+   "DIPD",
+   "Director of Player Development",
+   1
+  ],
+  [
+   "DIPD",
+   "Director, Player Development",
+   3
+  ],
+  [
+   "DIPD",
+   "Senior Director, Player Development",
+   2
+  ],
+  [
+   "DMLP",
+   "Director of ML Pitching",
+   1
+  ],
+  [
+   "FOBC",
+   "Field, Outfield and Baserunning Coordinator",
+   4
+  ],
+  [
+   "FUND",
+   "Fundamentals Coach",
+   115
+  ],
+  [
+   "FUND",
+   "Minor League Fundamentals Coordinator",
+   2
+  ],
+  [
+   "GAME",
+   "Game Planning & Pitching Strategist",
+   4
+  ],
+  [
+   "GAME",
+   "Game Planning Coach",
+   10
+  ],
+  [
+   "GAME",
+   "Game Preparation Specialist",
+   3
+  ],
+  [
+   "GAME",
+   "Game Strategy/Catching Coach",
+   2
+  ],
+  [
+   "HANI",
+   "Analytics Coordinator",
+   2
+  ],
+  [
+   "HANI",
+   "Hitting Analyst",
+   6
+  ],
+  [
+   "HANI",
+   "Hitting Analytics Instructor",
+   1
+  ],
+  [
+   "HANI",
+   "Hitting Technology Coach",
+   1
+  ],
+  [
+   "HINS",
+   "Hitting Advisor",
+   2
+  ],
+  [
+   "HINS",
+   "Hitting Development Coach",
+   1
+  ],
+  [
+   "HINS",
+   "Hitting Instructor",
+   2
+  ],
+  [
+   "HINS",
+   "Major League Batting Practice/Hitting Instructor",
+   1
+  ],
+  [
+   "INBC",
+   "Interim Bench Coach",
+   5
+  ],
+  [
+   "INBU",
+   "Interim Bullpen Coach",
+   6
+  ],
+  [
+   "INFC",
+   "Coordinator of Infield Instruction",
+   1
+  ],
+  [
+   "INFC",
+   "Field Coordinator / Infield Coach",
+   1
+  ],
+  [
+   "INFC",
+   "First Base/Infield Coach",
+   2
+  ],
+  [
+   "INFC",
+   "Infield Coach",
+   111
+  ],
+  [
+   "INFC",
+   "Infield Coach & Complex Supervisor",
+   1
+  ],
+  [
+   "INFC",
+   "Infield Coordinator",
+   9
+  ],
+  [
+   "INFC",
+   "Infield Instructor",
+   1
+  ],
+  [
+   "INFC",
+   "Infield and Catching Coordinator",
+   1
+  ],
+  [
+   "INFC",
+   "Infield/Baserunning Coach",
+   2
+  ],
+  [
+   "INFC",
+   "Infield/First Base Coach",
+   4
+  ],
+  [
+   "INFC",
+   "ML Infield Coach",
+   1
+  ],
+  [
+   "INPS",
+   "Major League Internal Player Stategist",
+   1
+  ],
+  [
+   "MADC",
+   "Major League administrative coach",
+   3
+  ],
+  [
+   "MAJC",
+   "BP Pitcher & Video Replay Analyst",
+   2
+  ],
+  [
+   "MAJC",
+   "Coach / Interpreter",
+   2
+  ],
+  [
+   "MAJC",
+   "Coordinator, Major League Player Development & Instruction",
+   1
+  ],
+  [
+   "MAJC",
+   "ML, Coach",
+   1
+  ],
+  [
+   "MAJC",
+   "Major League Assistant",
+   5
+  ],
+  [
+   "MAJC",
+   "Major League Assistant Coach",
+   7
+  ],
+  [
+   "MAJC",
+   "Major League Coach",
+   47
+  ],
+  [
+   "MAJC",
+   "Major League Coach & Senior Director of Baseball Development",
+   1
+  ],
+  [
+   "MAJC",
+   "Major League Coach and Director of Pitching Strategy",
+   4
+  ],
+  [
+   "MAJC",
+   "Major League Coach and Interpreter",
+   3
+  ],
+  [
+   "MAJC",
+   "Major League Coach/Coordinator of Advance Scouting",
+   4
+  ],
+  [
+   "MAJC",
+   "Major League Coaching Assistant",
+   1
+  ],
+  [
+   "MAJC",
+   "Major League Game Planning Coach",
+   4
+  ],
+  [
+   "MAJC",
+   "Major League Quality Control Coach/Infield Instructor",
+   2
+  ],
+  [
+   "MAJC",
+   "Major League Staff Assistant",
+   1
+  ],
+  [
+   "MAJC",
+   "Major League Staff/Replay Analyst",
+   2
+  ],
+  [
+   "MAJC",
+   "Major League Strategy Coach",
+   3
+  ],
+  [
+   "MLAH",
+   "Assistant Hitting Coach",
+   1
+  ],
+  [
+   "MLAH",
+   "Major League Assistant Coach",
+   3
+  ],
+  [
+   "MLAH",
+   "Major League Assistant Hitting Coach",
+   5
+  ],
+  [
+   "MLAH",
+   "Major League Assistant Hitting Coach/offensive coordinator",
+   1
+  ],
+  [
+   "MLFC",
+   "Field Coordinator",
+   1
+  ],
+  [
+   "MLFC",
+   "Field Coordinator/Outfield and Baserunning Instructor",
+   1
+  ],
+  [
+   "MLFC",
+   "Major League Field Coordinator",
+   37
+  ],
+  [
+   "MLFC",
+   "Major League Field Coordinator/Catching Coach",
+   1
+  ],
+  [
+   "MLFC",
+   "Major League Field Coordinator/Dir. of Defense/Strategy/Baserunning",
+   2
+  ],
+  [
+   "MLHC",
+   "Hitting Consultant",
+   4
+  ],
+  [
+   "MLHS",
+   "Major League Hitting Strategist",
+   4
+  ],
+  [
+   "MLPS",
+   "Major League Pitching Strategist",
+   7
+  ],
+  [
+   "MLRC",
+   "Major League Game Plan Coach",
+   1
+  ],
+  [
+   "MLRC",
+   "Major League Replay Coordinator",
+   5
+  ],
+  [
+   "MLRC",
+   "Minor League Medical Coordinator",
+   9
+  ],
+  [
+   "MLRC",
+   "Minor League Rehab Coordinator",
+   11
+  ],
+  [
+   "MLRC",
+   "Replay Coordinator",
+   8
+  ],
+  [
+   "MLSC",
+   "Major League Field Coordinator",
+   2
+  ],
+  [
+   "MLSC",
+   "Major League Field Coordinator/Catching Instructor",
+   7
+  ],
+  [
+   "MLSC",
+   "Major League Staff Assistant",
+   3
+  ],
+  [
+   "MLSC",
+   "Major League Staff Coordinator",
+   1
+  ],
+  [
+   "MNGR",
+   "",
+   7
+  ],
+  [
+   "MNGR",
+   "Field Coordinator/Manager",
+   3
+  ],
+  [
+   "MNGR",
+   "Honorary Manager",
+   1
+  ],
+  [
+   "MNGR",
+   "Manager",
+   4928
+  ],
+  [
+   "MNGR",
+   "Manager, Complex Operations",
+   2
+  ],
+  [
+   "MNGR",
+   "Manager/3B Coach",
+   1
+  ],
+  [
+   "MNGR",
+   "Manager/Assistant Field Coordinator",
+   1
+  ],
+  [
+   "MNGR",
+   "Manager/Catching Coordinator",
+   1
+  ],
+  [
+   "MOBC",
+   "Major League Operations Assistant/Bullpen Catcher",
+   1
+  ],
+  [
+   "NTRM",
+   "Acting Manager",
+   2
+  ],
+  [
+   "NTRM",
+   "Interim Manager",
+   62
+  ],
+  [
+   "NTRM",
+   "Interim Manager/Pitching Coach",
+   2
+  ],
+  [
+   "OFFC",
+   "Offense and Strategy Coordinator",
+   1
+  ],
+  [
+   "OFFC",
+   "Offensive Coordinator",
+   2
+  ],
+  [
+   "OUTF",
+   "Major League Field Coordinator/Outfield Coach",
+   2
+  ],
+  [
+   "OUTF",
+   "Outfield/Assistant Hitting Coach",
+   1
+  ],
+  [
+   "OUTF",
+   "Outfield/Baserunning Coach",
+   1
+  ],
+  [
+   "PERF",
+   "Advisor to Performance",
+   1
+  ],
+  [
+   "PERF",
+   "Assistant Performance Coach",
+   3
+  ],
+  [
+   "PERF",
+   "Assistant Strength and Conditioning Coach",
+   2
+  ],
+  [
+   "PERF",
+   "Athletic Trainer",
+   1
+  ],
+  [
+   "PERF",
+   "Director of Performance for the Minor Leagues",
+   2
+  ],
+  [
+   "PERF",
+   "Head Sport Performance Coach",
+   3
+  ],
+  [
+   "PERF",
+   "Hitting Performance Coach",
+   2
+  ],
+  [
+   "PERF",
+   "Integrated Baseball Performance Coach",
+   11
+  ],
+  [
+   "PERF",
+   "Latin American Performance Coach",
+   2
+  ],
+  [
+   "PERF",
+   "Peak Performance Coordinator",
+   3
+  ],
+  [
+   "PERF",
+   "Performance Coach",
+   138
+  ],
+  [
+   "PERF",
+   "Performance Coordinator",
+   6
+  ],
+  [
+   "PERF",
+   "Performance Enhancement Instructor",
+   4
+  ],
+  [
+   "PERF",
+   "Performance Specialist",
+   4
+  ],
+  [
+   "PERF",
+   "Performance and Mental Skills Coach",
+   2
+  ],
+  [
+   "PERF",
+   "Player Development Performance Specialist",
+   3
+  ],
+  [
+   "PERF",
+   "Specialist, Integrated Skill Development & Performance",
+   1
+  ],
+  [
+   "PERF",
+   "Sport Performance Coach",
+   1
+  ],
+  [
+   "PERF",
+   "Strategist, Performance & Data Integration",
+   1
+  ],
+  [
+   "PERF",
+   "Team Performance Dietician",
+   2
+  ],
+  [
+   "PERF",
+   "Throwing Performance Coach",
+   1
+  ],
+  [
+   "PINC",
+   "Game Planning and Run Prevention Coach",
+   6
+  ],
+  [
+   "PINC",
+   "Player Information Coach",
+   3
+  ],
+  [
+   "PSTG",
+   "Pitching Strategist",
+   4
+  ],
+  [
+   "PSTG",
+   "Pitching Strategy Coach",
+   1
+  ],
+  [
+   "QCCC",
+   "Quality Control/Catching Coach",
+   5
+  ],
+  [
+   "QUAC",
+   "Major League Quality Control Coach",
+   2
+  ],
+  [
+   "QUAC",
+   "Quality Assurance Coach",
+   19
+  ],
+  [
+   "QUAC",
+   "Quality Control Coach",
+   38
+  ],
+  [
+   "QUAC",
+   "Quality Control Coach/Interpreter",
+   1
+  ],
+  [
+   "QUAC",
+   "Quality Control Coordinator",
+   1
+  ],
+  [
+   "QUAC",
+   "Staff Assistant",
+   2
+  ],
+  [
+   "REPC",
+   "Rehab Pitching Coach",
+   29
+  ],
+  [
+   "REPC",
+   "Rehab Pitching Coordinator",
+   2
+  ],
+  [
+   "REPC",
+   "Replay Coordinator",
+   11
+  ],
+  [
+   "ROHI",
+   "Roving Hitting Instructor",
+   9
+  ],
+  [
+   "ROIN",
+   "Core Coach",
+   1
+  ],
+  [
+   "ROIN",
+   "Major League Instructor",
+   2
+  ],
+  [
+   "ROIN",
+   "Minor League Roving Instructor",
+   2
+  ],
+  [
+   "ROIN",
+   "Roving Catching Instructor",
+   1
+  ],
+  [
+   "ROIN",
+   "Roving Coach",
+   3
+  ],
+  [
+   "ROIN",
+   "Roving Infield Coach",
+   1
+  ],
+  [
+   "ROIN",
+   "Roving Instructor",
+   9
+  ],
+  [
+   "ROIN",
+   "Roving Minor League Infield Instructor and club Ambassador",
+   3
+  ],
+  [
+   "RPRE",
+   "Run Prevention Coach",
+   1
+  ],
+  [
+   "RPRE",
+   "Run Prevention Coordinator",
+   1
+  ],
+  [
+   "RPRO",
+   "Assistant Director, Run Production",
+   1
+  ],
+  [
+   "RPRO",
+   "Run Production Coach",
+   3
+  ],
+  [
+   "RPRO",
+   "Run Production Coordinator",
+   2
+  ],
+  [
+   "RVCI",
+   "Roving Catching Instructor",
+   2
+  ],
+  [
+   "SADV",
+   "Special Advisor",
+   3
+  ],
+  [
+   "SADV",
+   "Special Advisor to COO and GM",
+   1
+  ],
+  [
+   "SADV",
+   "Special Advisor to General Manager",
+   3
+  ],
+  [
+   "SADV",
+   "Special Advisor, Pitching Development",
+   2
+  ],
+  [
+   "SBAD",
+   "Senior Advisor",
+   1
+  ],
+  [
+   "SBAD",
+   "Senior Advisor of Baseball Operations",
+   1
+  ],
+  [
+   "SBAD",
+   "Senior Advisor the President & CEO",
+   1
+  ],
+  [
+   "SBAD",
+   "Senior Advisor to the Major League Coaching Staff",
+   2
+  ],
+  [
+   "SBAD",
+   "Senior Baseball Advisor",
+   12
+  ],
+  [
+   "SBAD",
+   "Senior Manager, Player Development",
+   2
+  ],
+  [
+   "SDDD",
+   "Senior Director of Hitting Performance, Major League Hitting Coach",
+   3
+  ],
+  [
+   "SDDD",
+   "Senior Director, Major League Data and Development",
+   2
+  ],
+  [
+   "SPHI",
+   "Special Assignment Hitting Coach",
+   1
+  ]
+ ]
+}

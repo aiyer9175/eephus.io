@@ -18340,3 +18340,211 @@ def upsert_fa_model_eval(model_version: str, gate: str, payload: dict) -> None:
 
 def load_fa_model_eval() -> dict:
     return _fa_load("fa_model_eval", ("model_version", "gate"))
+
+
+# ---------------------------------------------------------------------------
+# Staff Gems stage 1: staff persons, spells, units and player location spells
+# ---------------------------------------------------------------------------
+#
+# Parsed from the gitignored .cache/staff/ by `staff_ingest.py --parse`, which
+# is hand-run (not wired into run_monthly until stage 3). These tables carry
+# WHO held WHICH job WHERE and WHEN, and WHERE each player was on which days.
+# They carry no grade, no development number and no outcome, and nothing here
+# joins a development or outcome number to a staff person (design
+# docs/staff-gems/DESIGN.md section 4.1; gate docs/staff-gems/STAFF_GEMS_GATE.md).
+#
+#   staff_persons          one row per MLBAM person id; a name never creates a row
+#   staff_spells           person x team x season x jobId, day or season resolution
+#   staff_units            affiliate-seasons, MLB club-seasons, pseudo-teams, one
+#                          org-offseason unit per org per winter, one 2020 org unit
+#   staff_role_review      the role map's review queue (no role is ever guessed)
+#   staff_identity_review  name-only rows that matched no person or more than one
+#   player_location_spells where a player was: day resolution from the
+#                          transactions cache, season resolution from career rows
+#   staff_parse_runs       one row per parse, with its counts
+#
+# Every table is replaced whole by one parse inside one transaction, so a
+# parse is idempotent: running it twice on the same cache leaves the same rows.
+STAFF_SCHEMA = """
+CREATE TABLE IF NOT EXISTS staff_persons (
+    person_id     INTEGER PRIMARY KEY,      -- MLBAM id; the person IS the id
+    full_name     TEXT NOT NULL,            -- the name on the latest season list
+    names_json    TEXT NOT NULL,            -- every distinct name seen for this id
+    first_season  INTEGER NOT NULL,
+    last_season   INTEGER NOT NULL,
+    n_spells      INTEGER NOT NULL,
+    source        TEXT NOT NULL DEFAULT 'statsapi_coaches'
+);
+
+CREATE TABLE IF NOT EXISTS staff_units (
+    unit_id     TEXT PRIMARY KEY,           -- T<team>_<season> | OFF_<org>_<season> | ORG2020_<org>
+    kind        TEXT NOT NULL,              -- mlb | affiliate | pseudo | offseason | org_2020
+    season      INTEGER NOT NULL,
+    team_id     INTEGER,
+    team_name   TEXT,
+    org_id      INTEGER NOT NULL,           -- the parent MLB club's id
+    org_code    TEXT,
+    sport_id    INTEGER,
+    level       TEXT,                       -- MLB AAA AA A+ A CPX DSL, NULL for pseudo and org units
+    league      TEXT,
+    start_date  TEXT,                       -- first played game, or the window's first day
+    end_date    TEXT                        -- last played game, or the window's last day
+);
+CREATE INDEX IF NOT EXISTS idx_staff_units_team ON staff_units(team_id, season);
+
+CREATE TABLE IF NOT EXISTS staff_spells (
+    spell_id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id        INTEGER NOT NULL REFERENCES staff_persons(person_id),
+    team_id          INTEGER NOT NULL,
+    season           INTEGER NOT NULL,
+    unit_id          TEXT NOT NULL,
+    org_id           INTEGER NOT NULL,
+    org_code         TEXT,
+    level            TEXT,
+    job_id           TEXT NOT NULL,
+    job              TEXT,
+    title            TEXT,
+    role             TEXT NOT NULL,         -- manager hitting pitching defense first_base third_base excluded review
+    role_rule        TEXT NOT NULL,         -- pair | job | title | unmapped_job | unmapped_title
+    start_date       TEXT,                  -- NULL only when the team played no game that season
+    end_date         TEXT,
+    resolution       TEXT NOT NULL,         -- day | season
+    resolution_note  TEXT,                  -- not_bisected | no_games | bisect_error | unexplained
+    source           TEXT NOT NULL DEFAULT 'statsapi_coaches',
+    fetched_at       TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_staff_spells_person ON staff_spells(person_id);
+CREATE INDEX IF NOT EXISTS idx_staff_spells_unit ON staff_spells(unit_id);
+
+CREATE TABLE IF NOT EXISTS staff_role_review (
+    job_id        TEXT NOT NULL,
+    title         TEXT NOT NULL,
+    reason        TEXT NOT NULL,            -- explicit_review | unmapped_job | unmapped_title
+    n_rows        INTEGER NOT NULL,
+    n_persons     INTEGER NOT NULL,
+    first_season  INTEGER NOT NULL,
+    last_season   INTEGER NOT NULL,
+    PRIMARY KEY (job_id, title)
+);
+
+CREATE TABLE IF NOT EXISTS staff_identity_review (
+    review_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    source           TEXT NOT NULL,
+    name             TEXT NOT NULL,
+    org_id           INTEGER,
+    season           INTEGER,
+    reason           TEXT NOT NULL,         -- no_match | ambiguous | no_org_season
+    candidates_json  TEXT NOT NULL DEFAULT '[]',
+    payload_json     TEXT NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS player_location_spells (
+    loc_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_key    TEXT NOT NULL,
+    season        INTEGER NOT NULL,
+    team_id       INTEGER,                  -- NULL when a season row names an org level with several teams
+    unit_id       TEXT,
+    org_id        INTEGER,
+    org_code      TEXT,
+    level         TEXT,
+    start_date    TEXT,
+    end_date      TEXT,
+    status        TEXT NOT NULL,            -- active | il | rehab
+    resolution    TEXT NOT NULL,            -- day | season
+    weight        REAL NOT NULL,            -- 1.0 for day rows; the games share for season rows
+    n_candidates  INTEGER NOT NULL DEFAULT 1,
+    source        TEXT NOT NULL             -- transactions | career
+);
+CREATE INDEX IF NOT EXISTS idx_player_loc_player ON player_location_spells(player_key, season);
+CREATE INDEX IF NOT EXISTS idx_player_loc_unit ON player_location_spells(unit_id);
+
+CREATE TABLE IF NOT EXISTS staff_parse_runs (
+    run_id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    parsed_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    cache_dir    TEXT NOT NULL,
+    role_map     TEXT NOT NULL,
+    counts_json  TEXT NOT NULL
+);
+"""
+
+STAFF_TABLES = ("staff_persons", "staff_units", "staff_spells", "staff_role_review",
+                "staff_identity_review", "player_location_spells")
+
+
+def init_staff_schema() -> None:
+    """Create the Staff Gems stage 1 tables if missing (idempotent; never run by init_db)."""
+    with connect() as con:
+        con.executescript(STAFF_SCHEMA)
+
+
+def replace_staff_tables(*, persons: list[dict], units: list[dict], spells: list[dict],
+                         role_review: list[dict], identity_review: list[dict],
+                         locations: list[dict], cache_dir: str, role_map: str,
+                         counts: dict) -> int:
+    """Replace every Staff Gems stage 1 table in ONE transaction and log the run.
+
+    Refuses a spell whose person id is missing or unknown, so no row can exist
+    without an MLBAM id and no name can create a person. Returns the run id."""
+    known = {int(p["person_id"]) for p in persons}
+    for s in spells:
+        if s.get("person_id") is None or int(s["person_id"]) not in known:
+            raise ValueError(f"staff spell without a known MLBAM person id: {s!r}")
+    with connect() as con:
+        con.executescript(STAFF_SCHEMA)
+        for t in STAFF_TABLES:
+            con.execute(f"DELETE FROM {t}")
+        con.executemany(
+            "INSERT INTO staff_persons (person_id, full_name, names_json, first_season,"
+            " last_season, n_spells, source) VALUES (?,?,?,?,?,?,?)",
+            [(int(p["person_id"]), p["full_name"], json.dumps(p["names"]), p["first_season"],
+              p["last_season"], p["n_spells"], p.get("source", "statsapi_coaches"))
+             for p in persons])
+        con.executemany(
+            "INSERT INTO staff_units (unit_id, kind, season, team_id, team_name, org_id, org_code,"
+            " sport_id, level, league, start_date, end_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            [(u["unit_id"], u["kind"], u["season"], u.get("team_id"), u.get("team_name"),
+              u["org_id"], u.get("org_code"), u.get("sport_id"), u.get("level"), u.get("league"),
+              u.get("start_date"), u.get("end_date")) for u in units])
+        con.executemany(
+            "INSERT INTO staff_spells (person_id, team_id, season, unit_id, org_id, org_code, level,"
+            " job_id, job, title, role, role_rule, start_date, end_date, resolution,"
+            " resolution_note, source, fetched_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [(int(s["person_id"]), s["team_id"], s["season"], s["unit_id"], s["org_id"],
+              s.get("org_code"), s.get("level"), s["job_id"], s.get("job"), s.get("title"),
+              s["role"], s["role_rule"], s.get("start_date"), s.get("end_date"), s["resolution"],
+              s.get("resolution_note"), s.get("source", "statsapi_coaches"), s.get("fetched_at"))
+             for s in spells])
+        con.executemany(
+            "INSERT INTO staff_role_review (job_id, title, reason, n_rows, n_persons, first_season,"
+            " last_season) VALUES (?,?,?,?,?,?,?)",
+            [(r["job_id"], r["title"], r["reason"], r["n_rows"], r["n_persons"],
+              r["first_season"], r["last_season"]) for r in role_review])
+        con.executemany(
+            "INSERT INTO staff_identity_review (source, name, org_id, season, reason,"
+            " candidates_json, payload_json) VALUES (?,?,?,?,?,?,?)",
+            [(r["source"], r["name"], r.get("org_id"), r.get("season"), r["reason"],
+              json.dumps(r.get("candidates") or []), json.dumps(r.get("payload") or {}))
+             for r in identity_review])
+        con.executemany(
+            "INSERT INTO player_location_spells (player_key, season, team_id, unit_id, org_id,"
+            " org_code, level, start_date, end_date, status, resolution, weight, n_candidates,"
+            " source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [(r["player_key"], r["season"], r.get("team_id"), r.get("unit_id"), r.get("org_id"),
+              r.get("org_code"), r.get("level"), r.get("start_date"), r.get("end_date"),
+              r["status"], r["resolution"], r["weight"], r.get("n_candidates", 1), r["source"])
+             for r in locations])
+        cur = con.execute(
+            "INSERT INTO staff_parse_runs (cache_dir, role_map, counts_json) VALUES (?,?,?)",
+            (cache_dir, role_map, json.dumps(counts, sort_keys=True)))
+        return int(cur.lastrowid)
+
+
+def load_staff_table(table: str) -> list[dict]:
+    """Every row of one Staff Gems stage 1 table, as dicts ([] when the table is absent)."""
+    if table not in STAFF_TABLES + ("staff_parse_runs",):
+        raise ValueError(f"not a staff table: {table}")
+    try:
+        with connect() as con:
+            return [dict(r) for r in con.execute(f"SELECT * FROM {table}").fetchall()]
+    except sqlite3.OperationalError:
+        return []
