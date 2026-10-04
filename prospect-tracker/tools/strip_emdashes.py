@@ -138,6 +138,9 @@ TARGETS: list[str] = [
     # MLB Scores (SCORES_2_JOB_AND_DEPLOY): the job, whose rules, copyright
     # line and job block land in the scores payloads verbatim.
     "tools/scores_job.py",
+    # Scores / Standings (2026-10-03, STANDINGS_1_CORE_RULES): the pure standings
+    # core whose tiebreak, seed and format literals land in the standings files.
+    "standings_core.py",
     # COPY_0 (2026-10-02): producers of served copy outside this list when the
     # served copy lint landed (copy_lint.EXTRA_PRODUCERS), and the CollegeSavant
     # pitcher page. data_catalog.py writes the /sources/ prose, arb_gate_a.py
