@@ -97,6 +97,19 @@ def _run_expectancy(we: dict) -> list:
     return out
 
 
+def _tail_note(we: dict):
+    """The ninth-inning tail paragraph, rebuilt from the fit's own three figures
+    (ninth_inning_tail.model_by_outs) against the named published table in
+    win_expectancy.ninth_tail_note (audit QCLC13), so the source the sentence
+    cites follows the constant without a refit. An artifact without the figures
+    keeps its own sentence."""
+    tail = ((we.get("ninth_inning_tail") or {}).get("model_by_outs")) or []
+    if len(tail) != 3 or any(v is None for v in tail):
+        return we.get("smoothing_costs_the_tails")
+    import win_expectancy as wx
+    return wx.ninth_tail_note(tail)
+
+
 def _half_inning_start(we: dict) -> dict:
     """The measured table, reduced to the tied game, which is the readable slice.
 
@@ -640,7 +653,7 @@ def build(*, corpus=None, teams=True) -> dict:
             },
             "why_a_model_not_a_table": we.get("why_a_model_not_a_table"),
             "monotone_by_construction": we.get("monotone_by_construction"),
-            "smoothing_costs_the_tails": we.get("smoothing_costs_the_tails"),
+            "smoothing_costs_the_tails": _tail_note(we),
             "state_excludes": we.get("state_excludes"),
         },
 

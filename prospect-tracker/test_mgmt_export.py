@@ -715,3 +715,17 @@ def test_the_board_carries_the_keys_the_betting_dugout_block_reads(d):
     for k in row_keys:
         assert "dv" not in k and "decision" not in k
 
+
+
+def test_the_served_tail_note_names_the_published_table(d):
+    """QCLC13. The served Run Expectancy note is rebuilt from the fit's three
+    ninth-inning figures against the named table, so it cites its source without
+    a refit of the win model."""
+    import win_expectancy as wx
+    note = d["reference"]["smoothing_costs_the_tails"]
+    assert wx.PUBLISHED_NINTH_TAIL_SOURCE in note and "published values near" not in note
+    wep = ROOT / "data" / "win_expectancy.json"
+    we = json.loads(wep.read_text(encoding="utf-8")) if wep.exists() else {}
+    tail = (we.get("ninth_inning_tail") or {}).get("model_by_outs")
+    if tail:
+        assert note == wx.ninth_tail_note(tail)
