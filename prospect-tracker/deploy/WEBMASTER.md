@@ -321,3 +321,79 @@ Data-sanity spot checks (confirms the site matches the intended local build):
 - After any new dev work lands on `main`, a `Sync beta to main@<sha>` commit is
   the prerequisite for this box (on `beta`) to pick it up; confirm the box built
   it via `build_info.json`'s `git_sha`.
+
+---
+
+## 10. MLB Scores job (install only after step Z and the SCORES_LIVE flip)
+
+**When.** Do this only after the fWAR label epoch's step Z is recorded AND after
+the SCORES_LIVE flip (SCORES_5a_LIVE_FLIP) has reached this box through the owner's
+push, the beta sync and a nightly pull (SCORES_PLAN.md section 17). Before the
+flip the job writes only `.cache/scores/preview/` whatever its environment says,
+so an early install serves nothing. Until then this section is a plan, not the
+live state.
+
+**In order, as the deploy user** (below, `PY=/opt/eephus/venv/bin/python`):
+
+1. Confirm the checkout holds the job and the flip:
+   `git -C /opt/eephus/repo log -1 --oneline`, then
+   `grep -n "^SCORES_LIVE" /opt/eephus/repo/prospect-tracker/scores_core.py`
+   must print `SCORES_LIVE = True`.
+2. The directory: `mkdir -p /opt/eephus/scores`, then `namei -l /opt/eephus/scores`
+   (nginx must be able to traverse and read it; the job writes every file 0644 and
+   every directory 0755).
+3. The location: add the `location ^~ /data/scores/` block from deploy/README.md
+   ("MLB Scores: the /data/scores/ location") ABOVE `location /data/`, then
+   `sudo nginx -t && sudo systemctl reload nginx`.
+4. The health row: add `EEPHUS_SCORES_HOST=1` to `/etc/eephus.env`, so the
+   nightly files the `scores_job` ingest-health row on this machine (a machine
+   without the job files nothing).
+5. The cron line: install `deploy/scores-crontab.example` with `crontab -e`. Its
+   `EEPHUS=/opt/eephus/repo/prospect-tracker` is the checkout the nightly uses
+   and its line sets `EEPHUS_SCORES_OUT=/opt/eephus/scores`. Pasted into one
+   crontab with the betting example, the scores block goes AFTER the betting
+   lines (the betting file's `EEPHUS` names the wrong checkout).
+6. After one cycle: `cd /opt/eephus/repo/prospect-tracker && $PY tools/scores_job.py --selfcheck`
+   (exit 0 and a recent last run), then the curl:
+
+   ```bash
+   curl -sI -A "Mozilla/5.0" https://eephus.io/data/scores/latest.json
+   # expect HTTP 200 and cache-control: no-cache; latest.json's job.state reads ok or idle
+   ```
+
+   Keep Cloudflare on "Respect Existing Headers" with no cache rule on `/data/`.
+7. A weekly logrotate stanza, `/etc/logrotate.d/eephus-scores`:
+
+   ```
+   /opt/eephus/repo/prospect-tracker/logs/scores-job.log {
+       weekly
+       rotate 4
+       compress
+       missingok
+       notifempty
+       copytruncate
+   }
+   ```
+
+8. The 2026 history (owner answer SC-HISTORY (a)): between 11:00 UTC and first
+   pitch, or on an off day, one month at a time:
+
+   ```bash
+   cd /opt/eephus/repo/prospect-tracker && \
+     EEPHUS_SCORES_OUT=/opt/eephus/scores EEPHUS_WEBROOT=/var/www/eephus.io \
+     $PY tools/scores_job.py --backfill 2026-03-25:2026-04-30
+   ```
+
+   It refuses 06:00 to 11:00 UTC, any date before 2026-03-25, and any run while a
+   game is live; it releases the job lock every 50 requests so live cycles
+   interleave, and a rerun skips the games it already froze.
+
+**What it owns.** `/opt/eephus/scores` belongs to the scores job; the nightly
+never ships or compresses /opt/eephus/scores; it is rebuildable, no backup needed.
+The job also keeps `.cache/scores/` (its slate, state, heartbeat, run logs and
+work files) and `logs/scores-job.log`; it writes no tracked file, nothing under
+`data/`, nothing in the webroot, and never touches the nightly's lock.
+
+**The kill switch for embedded video** (once SCORES_4a lands):
+`touch /opt/eephus/scores/EMBED_OFF` takes effect at the next cron tick; remove
+the file to restore.

@@ -8,10 +8,11 @@
 The fixture-built half (SCORES_1_CORE_RULES): every kind is assembled from
 test_fixtures/scores/ through scores_core's builders (the job's own latest.json
 and index.json shapes are assembled here with the plan's keys), then every
-file-independent rule of plan 8.5 runs over it. The live half (SCORES_2) reads
-the job's artifacts from EEPHUS_SCORES_OUT when the job has written them and
-skips loudly when it has not. No test touches the network, the repo's data/
-or a real .cache/scores/.
+file-independent rule of plan 8.5 runs over it. The job half (SCORES_2) runs
+tools/scores_job.py once with a fake StatsAPI into a temp store and checks every
+kind it writes; the live half reads whatever the job has written under its
+resolved OUT and skips loudly when it has not. No test touches the network, the
+repo's data/ or a real .cache/scores/.
 """
 from __future__ import annotations
 
@@ -22,6 +23,7 @@ from pathlib import Path
 import pytest
 
 import scores_core as sc
+from test_scores_job import env  # noqa: F401  (the isolated job environment fixture)
 
 ROOT = Path(__file__).resolve().parent
 FIX = ROOT / "test_fixtures" / "scores"
@@ -206,19 +208,60 @@ def test_revs_in_latest_and_index_match_their_files(built):
 
 
 # --------------------------------------------------------------------------- #
-# The live half (SCORES_2): the job's own artifacts, when it has written them
+# The job half (SCORES_2): the job's own artifacts. One run of tools/scores_job.py
+# with test_scores_job's fake StatsAPI into a temp store builds every kind; the
+# live half reads whatever the job has written under its resolved OUT (inside
+# the session temp directory under pytest) and skips loudly when it is empty.
 # --------------------------------------------------------------------------- #
-def test_live_artifacts_when_present():
-    out = os.environ.get("EEPHUS_SCORES_OUT")
-    if not out or not Path(out).exists():
-        pytest.skip("live scores artifacts absent: EEPHUS_SCORES_OUT is not set to a written preview directory "
-                    "(the job lands in SCORES_2_JOB_AND_DEPLOY); the fixture-built half ran")
-    root = Path(out)
+def _job_files(root: Path) -> dict:
     files = {}
     for p in root.rglob("*.json"):
         name = p.relative_to(root).as_posix()
         if sc.kind_of_name(name):
             files[name] = json.loads(p.read_text(encoding="utf-8"))
-    assert files, f"no scores files under {root}"
+    return files
+
+
+def test_the_job_writes_every_kind_and_each_passes_every_rule(env):
+    from test_scores_job import FakeAPI, FakeClock, base_games, base_payloads, run_once, schedule_of, seed_state
+    import scores_job as job
+    clock = FakeClock()
+    api = FakeAPI(clock, schedule_of(*base_games()), **base_payloads())
+    seed_state(env, week_date="2026-09-30")
+    assert run_once(env, api, clock)["exit"] == 0
+    files = _job_files(env["out"])
+    assert {sc.kind_of_name(n) for n in files} == set(KINDS)
+    for name, res in sc.validate_files(files).items():
+        assert res["ok"], (name, res["refused"])
+        kind = sc.kind_of_name(name)
+        assert res["bytes"] <= sc.FILE_KINDS[kind]["budget"], (name, res["bytes"])
+    latest, index, season = files["latest.json"], files["index.json"], files["index-2026.json"]
+    assert set(latest) == {"schema", "generated_at", "job", "index_rev", "today", "next_game_date", "window", "live"}
+    assert set(latest["job"]) == {"action", "state", "next_by", "last_ok_at", "down_after_s", "poll_live_s",
+                                  "poll_idle_s", "errors_24h", "refusals_24h"}
+    assert set(latest["window"]) == {f"2026-{d}" for d in ("09-29", "09-30", "10-01", "10-02", "10-03", "10-04",
+                                                           "10-05", "10-06", "10-07")}
+    assert set(next(iter(latest["window"].values()))) == {"rev", "n", "live", "final", "pre", "off", "clips_matched",
+                                                          "clips_of", "stale_since"}
+    assert set(index) == {"schema", "generated_at", "seasons", "registry", "accuracy", "rules", "copyright"}
+    assert set(index["accuracy"]["mlb_wp"]) == {"feed_brier", "base_rate_brier", "n_plays", "seasons",
+                                                "pregame_values", "artifact_generated_at"}
+    assert set(season) == {"schema", "season", "dates", "bracket"}
+    assert set(season["dates"][0]) == {"d", "n", "types", "rev", "flags"}
+    assert job.verify_revs(job.Writer(env["out"])) == []
+
+
+def test_live_artifacts_when_present():
+    import scores_job as job
+    roots = [job.out_dir()]
+    if os.environ.get("EEPHUS_SCORES_OUT"):
+        roots.append(Path(os.environ["EEPHUS_SCORES_OUT"]))
+    files = {}
+    for root in roots:
+        if root.exists():
+            files.update(_job_files(root))
+    if not files:
+        pytest.skip("live scores artifacts absent: the job has written nothing under its resolved OUT here "
+                    "(the session temp directory under pytest); the fixture-built half and the job half ran")
     for name, res in sc.validate_files(files).items():
         assert res["ok"], (name, res["refused"])

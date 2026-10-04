@@ -1,0 +1,45 @@
+# eephus.io MLB Scores job (tools/scores_job.py). Install on the production box
+# with `crontab -e` as the deploy user.
+#
+# NOT YET. Install this only AFTER the fWAR label epoch's step Z is recorded and
+# AFTER the SCORES_LIVE flip (SCORES_5a_LIVE_FLIP) has reached the box
+# (SCORES_PLAN.md section 17; deploy/WEBMASTER.md section 10 lists the steps in
+# order). While scores_core.SCORES_LIVE is False the job writes only
+# .cache/scores/preview/ whatever EEPHUS_SCORES_OUT says, so a line installed
+# early serves nothing.
+#
+# BEFORE THIS LINE: the webmaster has created /opt/eephus/scores and added the
+# nginx location in deploy/README.md ("MLB Scores: the /data/scores/ location").
+#
+# Not a betting job: public StatsAPI only, no key, no pricer, no Odds API credit,
+# so it does not source /etc/eephus.env. Every 2 minutes, ALL DAY, and the job
+# decides: live games every 2 to 3 minutes, otherwise every 30 minutes, the
+# 7-day schedule once per UTC day at or after 10:00, every 6 hours in the
+# offseason. `decide()` does all of its clock reasoning on UTC instants, so the
+# line is correct under any box timezone; TZ=UTC keeps the log stamps in the same
+# clock.
+#
+# flock -n drops an invocation that would overlap the previous one (the job also
+# takes its own OS lock on .cache/scores/job.lock, released when it exits). The
+# job never touches the nightly's lock, and it holds itself (exit 0, action
+# epoch_hold) while ../_pre_epoch_fwar_2026-10/ exists without a step Z entry.
+#
+# ORDERING, READ THIS IF YOU PASTE BOTH EXAMPLES INTO ONE CRONTAB: crontab
+# variable lines apply to every line AFTER them. deploy/betting-crontab.example
+# sets EEPHUS=/opt/eephus/prospect-tracker, which is NOT the checkout the nightly
+# uses (/opt/eephus/repo/prospect-tracker, deploy/nightly-build.sh). Paste this
+# block AFTER the betting lines so its own EEPHUS line wins for the scores line,
+# or fix the betting file's value too.
+#
+# AFTER INSTALLING, once one cycle has run:
+#   cd /opt/eephus/repo/prospect-tracker && $PY tools/scores_job.py --selfcheck
+#   curl -sI -A "Mozilla/5.0" https://eephus.io/data/scores/latest.json
+#     (expect 200 and cache-control: no-cache)
+
+SHELL=/bin/bash
+TZ=UTC                                          # <- every line below is UTC
+PATH=/usr/local/bin:/usr/bin:/bin
+EEPHUS=/opt/eephus/repo/prospect-tracker        # <- the checkout the nightly uses
+PY=/opt/eephus/venv/bin/python                  # <- the interpreter with the deps
+
+*/2 * * * *  cd $EEPHUS && EEPHUS_SCORES_OUT=/opt/eephus/scores EEPHUS_WEBROOT=/var/www/eephus.io flock -n /tmp/eephus-scores.lock $PY tools/scores_job.py >> logs/scores-job.log 2>&1
