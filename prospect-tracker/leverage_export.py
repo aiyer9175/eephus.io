@@ -41,6 +41,9 @@ from bullpen_export import (load_season_pitching, guard_nonempty_block,
                             team_basis_meta, basis_rows_for, _ingest_red,
                             WAR_RATE_MIN_COVERAGE)
 from hitter_export import load_season_hitting
+# This board carries the eWAR stamp because it carries an eWAR column: the
+# stamp and the number it dates always ship together.
+from war_source import safe_ewar_vintage as _war_source_vintage
 
 _log = logging.getLogger(__name__)
 ROOT = Path(__file__).parent
@@ -57,20 +60,6 @@ QUAL_STARTS = 5     # starter qualification
 # fold reads from disk; the only network is one schedule + two statline calls
 # per season.
 HISTORY_SEASONS = [2021, 2022, 2023, 2024, 2025]
-
-
-def _war_source_vintage(as_of: Optional[str] = None) -> dict:
-    """The served eWAR build stamp, or a stated absence. Never raises: a board
-    that cannot report its vintage must still render (audit F10-02). `as_of` is
-    the payload's own as_of, so the block dates the drift it measured. This
-    board carries the block because it carries an eWAR column: the stamp and
-    the number it dates always ship together."""
-    try:
-        import war_source as _ws
-        return _ws.ewar_vintage(as_of=as_of)
-    except Exception as e:   # noqa: BLE001 - reporting must not take a board down
-        return {"artifact_generated_at": None, "stale": None,
-                "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
 
 
 def _stamp_war(batters: list[dict], starters: list[dict], season: int) -> dict:

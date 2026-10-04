@@ -73,6 +73,8 @@ from bullpen_export import (WAR_RATE_DISPLAY_MIN_PA, WAR_RATE_DISPLAY_MIN_RP_IP,
                             load_season_pitching, team_basis_meta)
 from bullpen_export import served_war_basis as be_served_war_basis
 from hitter_export import load_season_hitting
+# This board is nothing BUT eWAR, so the stamp always ships with it.
+from war_source import safe_ewar_vintage as _war_source_vintage
 
 _log = logging.getLogger(__name__)
 ROOT = Path(__file__).parent
@@ -147,19 +149,6 @@ BOARD_FILES = (
     ("defense", "defense_leaderboards.json", ("fielders",)),
     ("leverage", "leverage_leaderboards.json", ("batters", "starters")),
 )
-
-
-def _war_source_vintage(as_of: Optional[str] = None) -> dict:
-    """The served eWAR build stamp, or a stated absence. Never raises: a board
-    that cannot report its vintage must still render (audit F10-02). `as_of` is
-    the payload's own as_of, so the block dates the drift it measured. This
-    board is nothing BUT eWAR, so the stamp always ships with it."""
-    try:
-        import war_source as _ws
-        return _ws.ewar_vintage(as_of=as_of)
-    except Exception as e:   # noqa: BLE001 - reporting must not take a board down
-        return {"artifact_generated_at": None, "stale": None,
-                "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
 
 
 def _pitching_role(ip: float, g: float, gs: float) -> str:

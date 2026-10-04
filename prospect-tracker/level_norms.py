@@ -34,7 +34,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import date
-from dataclasses import dataclass
 
 
 # Minimum playing time at a level for a player's row to count toward the
@@ -52,36 +51,6 @@ DEFAULT_SEASONS_WINDOW = 2
 # fall back to the static baseline. The DSL is sometimes under-sampled
 # because most DSL players aren't tracked as prospects.
 MIN_SAMPLE_N = 30
-
-
-@dataclass
-class LevelAgeNorm:
-    avg_age: float
-    median_age: float
-    p25_age: float
-    p75_age: float
-    sample_n: int
-
-
-@dataclass
-class LevelPerfNorm:
-    # Hitter rate stats — averages across qualified hitters at the level.
-    avg_ops:    float | None
-    avg_avg:    float | None       # batting average — hit-tool baseline (HIT+)
-    avg_iso:    float | None       # SLG - AVG
-    avg_bb_pct: float | None
-    avg_k_pct:  float | None
-    # Pitcher rate stats — averages across qualified pitchers at the level.
-    avg_era:      float | None
-    avg_whip:     float | None
-    avg_k_per_9:  float | None
-    avg_bb_per_9: float | None
-    avg_hr_per_9: float | None
-    # Per-stat sample sizes. Kept separate because hr_per_9 only populates
-    # for pitcher rows from pipeline runs that include the HR-allowed field,
-    # so older rows in the cache can leave it sparse.
-    sample_n_ops:    int
-    sample_n_era:    int
 
 
 # Static fallback baselines — same numbers the codebase used before, kept

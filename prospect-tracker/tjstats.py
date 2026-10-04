@@ -586,16 +586,6 @@ def compute_snapshot_diff(older_label: str, newer_label: str) -> list[dict]:
     return out
 
 
-def latest_snapshot_pair() -> tuple[str | None, str | None]:
-    """(older_label, newer_label) for the two most recently dated stored
-    snapshots — the default diff window for movers."""
-    from storage import tjstats_snapshot_labels
-    labs = tjstats_snapshot_labels()   # effective_date DESC
-    if len(labs) >= 2:
-        return labs[1]["snapshot_label"], labs[0]["snapshot_label"]
-    return (None, None)
-
-
 # How big a board move must be before it becomes wire/source-event news.
 # Day-to-day live diffs are mostly ±1-2 rank noise; the TJStats site's own
 # movers framing is month-over-month, so the diff runs latest-live vs the

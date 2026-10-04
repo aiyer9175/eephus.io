@@ -177,11 +177,6 @@ RATE_LIMIT_SECONDS = 0.1
 ROOKIE_AB_THRESHOLD = 130    # career MLB at-bats
 ROOKIE_IP_THRESHOLD = 50.0   # career MLB innings pitched
 
-# Session-level cache for the full MLB+MiLB player name index.
-# Built lazily on first call to resolve_mlbam_id that needs it.
-# {normalized_key: (mlbam_id, birth_date_iso_or_empty)}
-_FULL_PLAYER_INDEX: dict[str, tuple[int, str]] | None = None
-
 # Alternate names to try in Path 3 when the prospect's full birth name
 # differs from the name the MLB API uses (nickname, shortened first name, etc.)
 # key = player_key used in our DB, value = alternate name to look up in the
@@ -503,20 +498,6 @@ def _score_candidate(r: dict, position: str | None) -> int | None:
     if r.get("sport_id") == 1:
         score += 1   # MLB record beats MiLB on otherwise-tied scores
     return score
-
-
-# Legacy alias for code that still expects a {name_key: (id, birth)} dict.
-def _build_full_player_index(season: int) -> dict[str, tuple[int, str]]:
-    """Compatibility shim around the new `PlayerIndex` class."""
-    global _FULL_PLAYER_INDEX
-    if _FULL_PLAYER_INDEX is not None:
-        return _FULL_PLAYER_INDEX
-    idx = PlayerIndex.load_or_build(season)
-    flat: dict[str, tuple[int, str]] = {}
-    for r in idx.players:
-        flat[_norm_key(r["fullName"])] = (r["id"], r["birthDate"])
-    _FULL_PLAYER_INDEX = flat
-    return flat
 
 
 def compute_age_decimal(birth_date: str | None,
@@ -4045,50 +4026,6 @@ def _norm_key(name: str) -> str:
     return s
 
 
-def fetch_mlb_player_index(season: int) -> dict[str, dict]:
-    """
-    Bulk fetch: all active MLB-roster players for the season in one request.
-
-    Returns {normalized_player_key: info_dict} where info_dict contains:
-        id, fullName, birthDate, mlbDebutDate, isPitcher
-
-    This is the backbone of bulk graduation detection. One call covers the
-    entire 40-man-roster universe (~1 100 players) so we don't need to make
-    one HTTP request per prospect to check if they've reached the majors.
-
-    Also doubles as a free bulk birth-date source for any player currently on
-    an MLB roster.
-    """
-    url = f"{MLB_STATS_API}/sports/1/players?season={season}"
-    try:
-        resp = requests.get(url, timeout=30)
-        resp.raise_for_status()
-        people = resp.json().get("people", [])
-    except Exception as e:
-        log.warning("MLB player index fetch failed: %s", e)
-        return {}
-
-    index: dict[str, dict] = {}
-    for p in people:
-        name = p.get("fullName", "")
-        if not name:
-            continue
-        key = _norm_key(name)
-        info = {
-            "id":           int(p["id"]),
-            "fullName":     name,
-            "birthDate":    p.get("birthDate"),
-            "mlbDebutDate": p.get("mlbDebutDate"),
-            "isPitcher":    p.get("primaryPosition", {}).get("type") == "Pitcher",
-        }
-        index[key] = info
-        # Secondary index by ID so we can look up by cached MLBAM ID too
-        index[f"__id_{p['id']}"] = info
-
-    log.info("MLB player index loaded: %d players for %d", len(index) // 2, season)
-    return index
-
-
 def check_rookie_threshold(mlbam_id: int, is_pitcher: bool) -> tuple[bool, str | None]:
     """
     Check career MLB stats against the rookie eligibility thresholds.
@@ -4202,185 +4139,6 @@ def detect_debuts_from_index(
 # Back-compat alias — callers that still import the old name keep
 # working. New code should use `detect_debuts_from_index`.
 detect_graduations_from_career = detect_debuts_from_index
-
-
-def collect_mlb_debut_dates(
-    tracked_players: list[tuple[str, str]] | list[str],
-    player_index: "PlayerIndex | None" = None,
-    id_cache: dict[str, int | None] | None = None,
-    career_stats: dict[str, list[dict]] | None = None,
-) -> dict[str, str]:
-    """
-    Return `{player_key: mlb_debut_date}` for every tracked player who has
-    appeared in an MLB game.
-
-    Resolution priority for the debut date:
-      1. `player_index.mlbDebutDate` (precise, from MLB Stats API)
-      2. Earliest career_stats MLB-row season → `{season}-07-01` (approx)
-
-    The function is intentionally agnostic about graduation status — a
-    player who's debuted but hasn't crossed the rookie threshold still
-    has a debut date, and the UI needs to render it as a transaction
-    marker for both active prospects and graduates.
-    """
-    if id_cache is None:
-        id_cache = _load_id_cache()
-    # Accept either a list of keys or (key, name) tuples.
-    keys: list[str] = []
-    for item in tracked_players:
-        keys.append(item if isinstance(item, str) else item[0])
-
-    out: dict[str, str] = {}
-    career_stats = career_stats or {}
-
-    for key in keys:
-        # Path 1: PlayerIndex (authoritative)
-        if player_index is not None:
-            mid = id_cache.get(key)
-            if mid is not None:
-                debut = player_index.get_debut_date(mid)
-                if debut:
-                    out[key] = debut
-                    continue
-        # Path 2: career_stats fallback — pick the earliest MLB season.
-        rows = career_stats.get(key) or []
-        mlb_rows = [r for r in rows if r.get("level") == "MLB"]
-        if mlb_rows:
-            earliest = min(r["season"] for r in mlb_rows if r.get("season"))
-            out[key] = f"{earliest}-07-01"
-    return out
-
-
-def bulk_detect_graduations(
-    active_players: list[tuple[str, str, bool]],
-    season: int,
-) -> dict[str, str | None]:
-    """
-    Efficiently detect which active prospects have graduated to MLB.
-
-    Steps:
-      1. One bulk call to get all current MLB players (~1 100 entries).
-      2. Match each active prospect to the MLB index by normalised name key
-         OR by a cached MLBAM ID.
-      3. For each match, fetch career MLB stats to confirm the rookie
-         threshold (130 AB / 50 IP) has been exceeded.
-      4. Also cache any birth dates found in the bulk payload.
-
-    Returns:
-        {player_key: debut_date_or_None}
-        where debut_date is the mlbDebutDate from the API (ISO string) or
-        None if we couldn't determine the exact debut (uses today as
-        fallback in run_monthly).
-
-    Network cost: 1 bulk call + N targeted career-stats calls, where N is
-    the number of matched prospects (typically 5-30 per run vs ~3 700
-    individual stat calls for the naive approach).
-    """
-    id_cache = _load_id_cache()
-    mlb_index = fetch_mlb_player_index(season)
-    id_to_info = {info["id"]: info for key, info in mlb_index.items()
-                  if not key.startswith("__id_")}
-
-    graduates: dict[str, str | None] = {}
-    birth_date_updates: dict[str, str] = {}
-
-    for player_key, player_name, is_pitcher in active_players:
-        # --- Try to find this prospect in the MLB player index ---
-        info = None
-        mlbam_id = id_cache.get(player_key)
-
-        if mlbam_id is not None:
-            # ID-based match — look up by MLBAM ID
-            info = mlb_index.get(f"__id_{mlbam_id}")
-            # Two sanity checks to guard against name-collision IDs that pybaseball
-            # fuzzy matching may have put in the cache:
-            # 1. Birth year must be >= 1994 (all prospects are born ~1994+).
-            # 2. The MLB player's normalized name must match the prospect's player_key.
-            #    Both checks use the full name so "Bryce Rainer" ≠ "Bryce Miller"
-            #    and "Kade Anderson" ≠ "Drew Anderson" are correctly rejected.
-            if info is not None:
-                bd0 = info.get("birthDate") or ""
-                try:
-                    by0 = int(bd0[:4]) if len(bd0) >= 4 else None
-                except ValueError:
-                    by0 = None
-                mlb_norm_key = _norm_key(info.get("fullName", ""))
-
-                birth_ok = (by0 is None) or (by0 >= 1994)
-                name_ok = (mlb_norm_key == player_key or
-                           # Allow minor suffix differences (e.g. "Jr." variants)
-                           mlb_norm_key.replace("_jr", "").replace("_ii", "")
-                               == player_key.replace("_jr", "").replace("_ii", ""))
-
-                if not birth_ok or not name_ok:
-                    log.debug(
-                        "Evicting cached ID for %s (mlbam=%s): "
-                        "MLB player is '%s' born %s — name/age mismatch",
-                        player_name, mlbam_id,
-                        info.get("fullName", "?"), bd0,
-                    )
-                    del id_cache[player_key]
-                    mlbam_id = None
-                    info = None
-
-        if info is None:
-            # Name-based match: find candidate in MLB index
-            candidate = mlb_index.get(_norm_key(player_name))
-            if candidate is None:
-                # Fallback: strip common suffixes (Jr., Sr., II, III)
-                stripped = _re.sub(r"\s+(jr\.?|sr\.?|ii|iii|iv)$", "",
-                                   player_name, flags=_re.IGNORECASE).strip()
-                if stripped != player_name:
-                    candidate = mlb_index.get(_norm_key(stripped))
-
-            if candidate is not None:
-                # Verify birth year and that the normalized names actually match
-                # (not just a partial/fuzzy collision).
-                bd = candidate.get("birthDate") or ""
-                try:
-                    birth_year = int(bd[:4]) if len(bd) >= 4 else None
-                except ValueError:
-                    birth_year = None
-                cand_key = _norm_key(candidate.get("fullName", ""))
-                birth_ok = (birth_year is None) or (birth_year >= 1994)
-                name_ok = (cand_key == player_key or
-                           cand_key.replace("_jr", "").replace("_ii", "")
-                               == player_key.replace("_jr", "").replace("_ii", ""))
-                if not birth_ok or not name_ok:
-                    log.debug(
-                        "Skipping name match for %s: MLB player is '%s' born %s "
-                        "(name or birth-year mismatch)",
-                        player_name, candidate.get("fullName", "?"), bd,
-                    )
-                    candidate = None
-
-            if candidate is not None:
-                info = candidate
-                # Cache the resolved ID so future runs use the faster ID path
-                id_cache[player_key] = info["id"]
-
-        if info is None:
-            continue  # not matched to any current MLB player
-
-        # Cache the MLBAM ID if we didn't already have it
-        mid = info["id"]
-        if player_key not in id_cache:
-            id_cache[player_key] = mid
-
-        # Grab birth date while we have it for free
-        if info.get("birthDate"):
-            birth_date_updates[player_key] = info["birthDate"]
-
-        # --- Check career MLB stats against rookie thresholds ---
-        pit = is_pitcher or info.get("isPitcher", False)
-        exceeded, debut_date = check_rookie_threshold(mid, pit)
-        if exceeded:
-            grad_date = info.get("mlbDebutDate") or debut_date
-            graduates[player_key] = grad_date
-            log.info("GRADUATED (auto-detect): %s  debut=%s", player_name, grad_date)
-
-    _save_id_cache(id_cache)
-    return graduates, birth_date_updates
 
 
 # ---------------------------------------------------------------------------

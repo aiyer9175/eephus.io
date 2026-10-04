@@ -223,21 +223,6 @@ def _payload() -> dict:
         return {"by_mlbam": {}, "names": {}}
 
 
-def oaa_for(mlbam: int | str, season: int, pos: str | None = None):
-    """Offline lookup.
-
-    pos given  -> {'oaa':..,'frp':..,directional splits} or None.
-    pos None   -> {POS: {...}} for every position the player fielded that season
-                  (the '_primary' bookkeeping key is stripped).
-    """
-    rec = _payload().get("by_mlbam", {}).get(str(mlbam), {}).get(str(season))
-    if not rec:
-        return None if pos else {}
-    if pos:
-        return rec.get(pos)
-    return {k: v for k, v in rec.items() if not k.startswith("_")}
-
-
 def player_name(mlbam: int | str) -> str:
     return _payload().get("names", {}).get(str(mlbam), "")
 

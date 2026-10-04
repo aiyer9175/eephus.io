@@ -48,6 +48,7 @@ from bullpen_export import (_team_abbrev_map, _num, score_war_rate,
                             _warn_unresolved_teams, _ingest_red,
                             WAR_RATE_POOL_MIN_PA, WAR_RATE_DISPLAY_MIN_PA)
 import fa_sources
+from war_source import safe_ewar_vintage as _war_source_vintage
 
 _log = logging.getLogger(__name__)
 
@@ -57,18 +58,6 @@ HISTORY_PATH = DATA_DIR / "hitter_history.json"
 EVAL_PATH = DATA_DIR / "hem_plus_eval.json"
 MULTIYR_PATH = DATA_DIR / "hem_plus_multiyear_eval.json"
 HISTORY_SEASONS = [2021, 2022, 2023, 2024, 2025]
-
-
-def _war_source_vintage(as_of: Optional[str] = None) -> dict:
-    """The served eWAR build stamp, or a stated absence. Never raises: a board
-    that cannot report its vintage must still render (audit F10-02). `as_of`
-    is the payload's own as_of, so the block dates the drift it measured."""
-    try:
-        import war_source as _ws
-        return _ws.ewar_vintage(as_of=as_of)
-    except Exception as e:   # noqa: BLE001 - reporting must not take a board down
-        return {"artifact_generated_at": None, "stale": None,
-                "reason": f"war_source.ewar_vintage unavailable ({type(e).__name__})"}
 
 
 def _join_hem_plus_3yr(hitters: list[dict], season: Optional[int] = None) -> dict:

@@ -76,7 +76,6 @@ import json
 import logging
 import math
 import os
-import sys
 from datetime import date
 from pathlib import Path
 
@@ -127,12 +126,6 @@ def enabled() -> bool:
     if env in ("0", "1"):
         return env == "1"
     return bool(SERVE_EFV_V2)
-
-
-def _tools_path() -> None:
-    p = str(ROOT / "tools")
-    if p not in sys.path:
-        sys.path.insert(0, p)
 
 
 def live_year() -> int:

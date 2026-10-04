@@ -349,16 +349,3 @@ def prune(out_dir: Path | None, keep: set) -> list:
             except OSError:
                 continue
     return removed
-
-
-def index_on_disk(out_dir: Path | None = None) -> list:
-    """What is actually on disk, for the test that matches the index to the files."""
-    out_dir = Path(out_dir or SHARD_DIR)
-    out = []
-    if not out_dir.exists():
-        return out
-    for p in sorted(out_dir.iterdir()):
-        m = _NAME_RE.match(p.name)
-        if m:
-            out.append({"season": int(m.group(1)), "club": m.group(2), "bytes": p.stat().st_size})
-    return out

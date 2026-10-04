@@ -530,20 +530,6 @@ def war_actual_map(corpus: dict) -> dict:
 # Aging curves — delta method, era-adjusted, survivorship-corrected
 # ============================================================================
 
-def _era_adjust(rows: list[dict], league: dict, comp: str, side: str) -> dict:
-    """{(mlbam, season): rate − league_year_mean} for one component."""
-    lg_key = {"hit": comp, "pit": {"k_pct": "p_k_pct", "bb_pct": "p_bb_pct",
-                                   "hr_bf": "p_hr_bf"}[comp]}[side]
-    out = {}
-    for r in rows:
-        v = r.get(comp)
-        lg = (league.get(r["season"]) or {}).get(lg_key)
-        if v is None or lg is None or r.get("mlbam") is None:
-            continue
-        out[(r["mlbam"], r["season"])] = v - lg
-    return out
-
-
 def _woba_scale(season) -> float:
     """The wOBA scale for `season`: SOLVED from the published identity where we
     have it, the config constant otherwise (audit F01-03).

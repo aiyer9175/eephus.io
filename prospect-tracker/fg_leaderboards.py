@@ -443,12 +443,6 @@ def fip_park_factors(season: int, cache_dir: Optional[Path] = None) -> dict[int,
             for r in load("park_factors", season, cache_dir)["rows"]}
 
 
-def basic_park_factors(season: int, cache_dir: Optional[Path] = None) -> dict[int, float]:
-    """{StatsAPI team id: the Basic (5yr) runs park factor as a decimal}."""
-    return {int(r["team_id"]): float(r["Basic (5yr)"]) / 100.0
-            for r in load("park_factors", season, cache_dir)["rows"]}
-
-
 def coverage(seasons, cache_dir: Optional[Path] = None) -> dict:
     """{kind: {season: {fetched_at, complete, n_rows} | None}} for a report."""
     out: dict = {}

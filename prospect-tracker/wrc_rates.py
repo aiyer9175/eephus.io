@@ -223,16 +223,6 @@ def build_index():
     return index, leagues
 
 
-def per_player_season(index):
-    """index -> {(mlbam, season): most-PA row value} (for peak reads)."""
-    best = {}
-    for (mlbam, season, _lv), v in index.items():
-        k = (mlbam, season)
-        if k not in best or v["pa"] > best[k]["pa"]:
-            best[k] = v
-    return best
-
-
 def peak_wrc_rel(index, mlbam, upto_season):
     """Max wrc_rel over the player's PA>=50 seasons at or before upto_season.
     Descriptive only (not a registered gate); leakage-safe when upto_season is the

@@ -187,13 +187,6 @@ def _primary_from_usage(usage: dict[str, dict]) -> str | None:
     return str(pos).upper()
 
 
-def clear_caches() -> None:
-    _load_parquet_positions.cache_clear()
-    _load_overrides.cache_clear()
-    _load_mlb_detail_positions.cache_clear()
-    _load_mlb_fielding_usage.cache_clear()
-
-
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------

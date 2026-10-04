@@ -360,18 +360,6 @@ def scrape_spotrac_fa_class(year: int, force: bool = False) -> dict:
     return {"signed": signed, "unsigned": unsigned}
 
 
-def scrape_fa_class_range(start_year: int, end_year: int, force: bool = False,
-                          max_workers: int = 4) -> dict[int, dict]:
-    """Parallel multi-winter backfill (per-year disk caches make re-runs
-    free). Returns {class_year: {"signed": [...], "unsigned": [...]}}."""
-    years = list(range(start_year, end_year + 1))
-    out: dict[int, dict] = {}
-    with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        for year, res in zip(years, ex.map(lambda y: scrape_spotrac_fa_class(y, force=force), years)):
-            out[year] = res
-    return out
-
-
 # --------------------------------------------------------------------------- #
 # CBT tax + payroll ledgers
 # --------------------------------------------------------------------------- #

@@ -1431,18 +1431,15 @@ def _team_logo(org: str | None, cls: str = "row-logo") -> str:
     return (f'<img class="{cls}" src="https://a.espncdn.com/i/teamlogos/mlb/500/{slug}.png" alt="{o}" loading="lazy" '
             f"onerror=\"this.outerHTML='<span class=&quot;{cls}&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
 
-def _round_half_up(x: float) -> int:
-    """Round HALF-UP (ties toward +infinity) - the JS `Math.round` convention.
-
-    THE ONE ROUNDER for every eFV number this file prints or steps. Python's
-    built-in round() is banker's (half-to-EVEN): round(64.5)==64 while
-    Math.round(64.5)==65, so any x.5 eFV grade made the homepage disagree with
-    the PROSPX board / player card / projections, which all round in JS. It is
-    correct for signed values too (grade DELTAS): floor(-1.5+0.5) == -1, exactly
-    what Math.round(-1.5) returns, where round(-1.5) would give -2.
-
-    Consensus FV is NOT this: it rounds CEIL (see _fv_label's fallback branch)."""
-    return int(math.floor(x + 0.5))
+# Round HALF-UP (ties toward +infinity) - the JS `Math.round` convention.
+# THE ONE ROUNDER for every eFV number this file prints or steps. Python's
+# built-in round() is banker's (half-to-EVEN): round(64.5)==64 while
+# Math.round(64.5)==65, so any x.5 eFV grade made the homepage disagree with
+# the PROSPX board / player card / projections, which all round in JS. It is
+# correct for signed values too (grade DELTAS): floor(-1.5+0.5) == -1, exactly
+# what Math.round(-1.5) returns, where round(-1.5) would give -2.
+# Consensus FV is NOT this: it rounds CEIL (see _fv_label's fallback branch).
+from scores_core import round_half_up as _round_half_up  # noqa: E402
 
 def _fv_label(p: dict) -> str:
     # Lead with the eFV grade when eFV has graded this player (round-to-NEAREST: eFV is the
