@@ -409,7 +409,8 @@ def _valid_pos(pos) -> bool:
 # reads isPit from pos; _row_sides below splits on it too). The exporter holds
 # no StatsAPI primary position, so the fallback is the engine's own role token
 # (path["role"]: SP, RP or H), the same token _apply_contract leaves in place.
-# A hitter whose Spotrac position is a code shows H until the parser is fixed.
+# SPOTRAC_POS_CODES_2026_10 fixed the parser (spotrac.SPOTRAC_POS_CODES maps the
+# numeric ids, and an unknown value reads as None); this check stays as the guard.
 def _vet_pos(two_way: bool, ct: dict | None, role: str) -> str:
     """The served `pos` of a veteran row: TWP for a two-way row, else the
     Spotrac contract position when it is a real position, else the role."""

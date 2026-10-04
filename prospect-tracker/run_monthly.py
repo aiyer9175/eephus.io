@@ -464,6 +464,13 @@ SCHEDULED_EXPORTS = (
     # after the registry refresh. A raise, or a note row the validator
     # rejects, files a red here.
     "model_updates",
+    # The Spotrac team contract pages' FORMAT SENTINEL (SPOTRAC_POS_CODES_2026_10,
+    # spotrac.contract_format_report). On 2026-10-03 Spotrac's 'Pos' column
+    # began serving numeric ids and the parser passed them through: 128 pitcher
+    # cards turned into hitter cards and nothing said so. Filed red when a
+    # position, age or money cell has the wrong type, a table loses its year
+    # columns, or the coded positions stop matching StatsAPI's side.
+    "spotrac_contracts_format",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -4544,10 +4551,42 @@ def _load_spotrac_contracts(force: bool, log, label: str) -> dict:
         # the export binds each to its own mlbam id (storage.resolve_contracts_to_ids).
         out = build_contracts_by_key(rows, keep_alts=True)
         log.info("%s: %d player-rows fetched, %d unique players", label, len(rows), len(out))
+        _spotrac_format_sentinel(log, label)
         return out
     except Exception:
         log.exception("%s: spotrac contracts scrape failed — falling back to manual overrides only", label)
         return {}
+
+
+# Set when the Spotrac format sentinel files red in this process, so a
+# standalone --rebuild-only exits non-zero after finishing its writes.
+_SPOTRAC_FORMAT_RED = False
+
+
+def _spotrac_format_sentinel(log, label: str) -> dict:
+    """File the `spotrac_contracts_format` ingest row for the contracts scrape
+    that just ran (spotrac.contract_format_report). A wrong-type cell never
+    reaches a served position (the parser reads it as None), but the run says
+    so: a red ingest row, an error line, and a non-zero exit for a standalone
+    --rebuild-only."""
+    global _SPOTRAC_FORMAT_RED
+    try:
+        from spotrac import contract_format_report
+        rep = contract_format_report()
+    except Exception as e:                                  # noqa: BLE001
+        rep = {"ok": False, "n_pages": 0, "n_rows": 0, "n_coded": 0,
+               "by_kind": {"report": 1}, "examples": [str(e)[:80]], "side_check": None}
+    side = rep.get("side_check") or {}
+    msg = (f"{rep['n_pages']} pages, {rep['n_rows']} rows, {rep['n_coded']} coded "
+           f"positions mapped; side check {side.get('agree', '-')}/{side.get('matched', '-')}; "
+           f"wrong-type cells {rep['by_kind'] or 'none'}")
+    _record_ingest("spotrac_contracts_format", bool(rep["ok"]), rep["n_rows"], msg, log=log)
+    if not rep["ok"]:
+        _SPOTRAC_FORMAT_RED = True
+        if log:
+            log.error("!!! SPOTRAC FORMAT RED (%s): %s; examples %s", label, msg,
+                      rep.get("examples"))
+    return rep
 
 
 def _derive_all_transactions() -> dict:
@@ -7239,7 +7278,9 @@ if __name__ == "__main__":
         sys.exit(0)
     if args.rebuild_only:
         rebuild_only_cli(out_dir=args.out_dir)
-        sys.exit(0)
+        # Non-zero when the Spotrac format sentinel filed red (the writes above
+        # still finished, with every wrong-type position read as None).
+        sys.exit(1 if _SPOTRAC_FORMAT_RED else 0)
     main(force_refetch=args.force, skip_stats=args.skip_stats, out_dir=args.out_dir,
          workers=args.workers, cache_ttl=args.cache_ttl, no_cache=args.no_cache,
          fast=args.fast)
