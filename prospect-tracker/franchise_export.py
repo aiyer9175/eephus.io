@@ -52,8 +52,10 @@ document and never writes, so a test can call it under tmp_path.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+import re
 import statistics
 import sys
 from collections import Counter, defaultdict
@@ -76,6 +78,19 @@ STANDINGS_FIRST = 2000
 SPINE_FIRST = 1969
 N_CLUBS = 30
 SIZE_BUDGET_BYTES = 1_500_000
+
+# QCLP10 (surface-quality audit 2026-10-02): one board plus thirty per-club
+# files, the data/ledger_clubs/ pattern. The page read 1,118,562 bytes at boot
+# and 1,039,561 of them were clubs[].tree and clubs[].sections for all 30
+# clubs while it shows one. Those two keys now live in
+# data/franchise_clubs/CODE.json; the board keeps every other key (the board
+# rows, the copy, the accountability block, each club's name, index and links)
+# and indexes the files under "shards". build() still returns the whole
+# document and every assertion runs on it; write() splits it and load()
+# joins it back for any Python reader.
+SHARD_DIRNAME = "franchise_clubs"
+SHARD_DIR = DATA / SHARD_DIRNAME
+SHARD_KEYS = ("tree", "sections")
 
 #: Owner decision (2026-09-23, spec D3 + D6 alternative): the three graded
 #: branches and their weights. Declared here, printed from the payload, never
@@ -1481,15 +1496,85 @@ def _assert_document(doc: dict) -> None:
     assert chr(0x2014) not in txt and chr(0x2013) not in txt, "a banned dash reached the payload"
 
 
+def _dumps(obj) -> bytes:
+    return json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
+def _sha16(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()[:16]
+
+
+def split(doc: dict) -> tuple[dict, dict]:
+    """(board, {CODE: shard}) from a whole document: each club's SHARD_KEYS
+    move to its shard, the board keeps every other key in its order and gains
+    "shards", the index the page and load() check the files against."""
+    shard_docs, files, clubs = {}, {}, []
+    for c in doc["clubs"]:
+        sd = {"code": c["code"], "generated_at": doc.get("generated_at")}
+        for k in SHARD_KEYS:
+            sd[k] = c[k]
+        b = _dumps(sd)
+        files[c["code"]] = {"bytes": len(b), "sha256_16": _sha16(b)}
+        shard_docs[c["code"]] = sd
+        clubs.append({k: v for k, v in c.items() if k not in SHARD_KEYS})
+    board = {k: (clubs if k == "clubs" else v) for k, v in doc.items()}
+    board["shards"] = {"dir": SHARD_DIRNAME, "keys": list(SHARD_KEYS), "files": files}
+    return board, shard_docs
+
+
+def write(doc: dict, out: Path | None = None, shard_dir: Path | None = None) -> int:
+    """Write the thirty club files, then the board, then remove any CODE.json
+    whose club is not on the board. The files go first so a reader holding the
+    previous board (which carried its sections inline) is never sent to a
+    file that is not there yet. Returns the board's size in bytes. Called from
+    main() and from run_monthly's _export_franchise_board."""
+    out = Path(out or OUT)
+    shard_dir = Path(shard_dir or SHARD_DIR)
+    board, shard_docs = split(doc)
+    shard_dir.mkdir(parents=True, exist_ok=True)
+    for code, sd in shard_docs.items():
+        (shard_dir / f"{code}.json").write_bytes(_dumps(sd))
+    b = _dumps(board)
+    out.write_bytes(b)
+    for p in shard_dir.glob("*.json"):
+        if re.fullmatch(r"[A-Z]{2,3}\.json", p.name) and p.stem not in shard_docs:
+            try:
+                p.unlink()
+            except OSError as exc:
+                log.warning("franchise_export: stale club file %s not removed: %s", p.name, exc)
+    return len(b)
+
+
+def load(path: Path | None = None, shard_dir: Path | None = None) -> dict:
+    """The whole document from the board and its club files: each club gets
+    its SHARD_KEYS back after its file's size and hash are checked against
+    the board's index. A board that still carries its sections inline (the
+    pre-split file) comes back as it is."""
+    path = Path(path or OUT)
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    sh = doc.get("shards")
+    if not sh:
+        return doc
+    shard_dir = Path(shard_dir or (path.parent / sh["dir"]))
+    for c in doc["clubs"]:
+        b = (shard_dir / f"{c['code']}.json").read_bytes()
+        stamp = sh["files"][c["code"]]
+        assert len(b) == stamp["bytes"] and _sha16(b) == stamp["sha256_16"], (
+            f"{c['code']}: club file drifted from the board index")
+        sd = json.loads(b.decode("utf-8"))
+        for k in sh["keys"]:
+            c[k] = sd[k]
+    return doc
+
+
 def main(argv=None) -> int:
     try:
         doc = build()
     except FranchiseRefusal as exc:
         print(f"REFUSED: {exc}; the previous {OUT.name} stands")
         return 2
-    OUT.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    n = OUT.stat().st_size
-    print(f"wrote {OUT.name} ({n / 1e3:.0f} KB)")
+    n = write(doc)
+    print(f"wrote {OUT.name} ({n / 1e3:.0f} KB) and {N_CLUBS} files under {SHARD_DIRNAME}/")
     top = sorted(doc["clubs"], key=lambda d: d["index"]["rank"])[:3]
     for d in top:
         b = d["tree"]["branches"]

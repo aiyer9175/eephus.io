@@ -300,3 +300,18 @@ def test_ledger_clubs_shards_ship_in_both_deploy_consumers():
     assert "ledger_clubs" in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8")
     js = (ROOT / "assets" / "ledger.js").read_text(encoding="utf-8")
     assert 'var SHARD_URL = "/data/ledger_clubs/";' in js, "the page fetches the directory both consumers ship"
+
+
+def test_franchise_clubs_ship_in_both_deploy_consumers():
+    """QCLP10 (2026-10-03): the /franchise/ club page fetches its club's tree
+    and sections from data/franchise_clubs/CODE.json, so both consumers must
+    ship the directory, as with ledger_clubs/ above."""
+    d = "franchise_clubs"
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert _ships_in_nightly(nightly, d), "deploy/nightly-build.sh never ships /data/franchise_clubs/"
+    wf_path = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf_path.exists():
+        assert _ships_in_workflow(wf_path.read_text(encoding="utf-8"), d), "the CI workflow never copies data/franchise_clubs/"
+    assert "franchise_clubs" in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8")
+    js = (ROOT / "assets" / "franchise.js").read_text(encoding="utf-8")
+    assert 'var SHARD_URL = "/data/franchise_clubs/";' in js, "the page fetches the directory both consumers ship"

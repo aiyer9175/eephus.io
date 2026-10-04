@@ -54,7 +54,8 @@ var EephusTiers = {
 def _served():
     if not ART.exists():
         pytest.skip("run python franchise_export.py")
-    return json.loads(ART.read_text(encoding="utf-8"))
+    import franchise_export as fe
+    return fe.load(ART)      # the board joined with its 30 club files (QCLP10)
 
 
 def _render(view="club", team="", hash_="", payload=None, tiers=True, tree="canopy"):
@@ -626,3 +627,53 @@ def test_method_copy_sits_in_one_collapsed_block_and_the_banner_rides_its_dollar
         assert len(d["copy"][k].split()) < cap, (k, len(d["copy"][k].split()))
     assert "Thirty percent of the index rests on a provisional projection" in d["copy"]["root_sentence"]
 
+
+def _render_split(team, shard_ok=True):
+    """Render the club page off the served BOARD alone, with a fetch that
+    serves data/franchise_clubs/CODE.json from disk (or fails)."""
+    import franchise_export as fe
+    if not ART.exists():
+        pytest.skip("run python franchise_export.py")
+    board = json.loads(ART.read_text(encoding="utf-8"))
+    if not board.get("shards"):
+        pytest.skip("the served board is not split")
+    shards = {c: json.loads((ROOT / "data" / fe.SHARD_DIRNAME / f"{c}.json").read_text(encoding="utf-8"))
+              for c in board["shards"]["files"]}
+    js = JS.replace('state = { view: "club", team: "", tree: "canopy", sec: "", treeSet: false',
+                    'state = { view: "club", team: "%s", tree: "canopy", sec: "", treeSet: false' % team, 1)
+    prelude = """
+    var __html={}, __urls=[];
+    function __el(id){return new Proxy(function(){return __el(id);},{
+      get:function(t,k){ if(k==='innerHTML')return __html[id]||'';
+        if(k==='querySelectorAll')return function(){return [];};
+        if(k==='addEventListener'||k==='setAttribute'||k==='getAttribute')return function(){return null;};
+        return __el(id);},
+      set:function(t,k,v){if(k==='innerHTML')__html[id]=v; if(k==='textContent')__html[id+':text']=v; return true;}});}
+    function OK(v){return {then:function(cb){try{var r=cb(v);}catch(e){return NO(e);}return (r&&r.then)?r:OK(r);},catch:function(){return OK(v);}};}
+    function NO(e){return {then:function(){return NO(e);},catch:function(cb){cb(e);return OK();}};}
+    var B=%s, S=%s, SHARD_OK=%s;
+    var fetch=function(u){__urls.push(u);
+      if(u.indexOf('/data/franchise_clubs/')===0){ if(!SHARD_OK) return OK({ok:false});
+        var c=u.split('/').pop().split('.')[0]; return OK({ok:true,json:function(){return OK(S[c]);}}); }
+      return OK({ok:true,json:function(){return OK(B);}});};
+    var document={readyState:'complete',getElementById:function(id){return __el(id);},
+      querySelector:function(){return null;},querySelectorAll:function(){return [];},addEventListener:function(){}};
+    var window={document:document,EEPHUS_GL:{wire:function(){}}};
+    var location={hash:''};
+    %s
+    """ % (json.dumps(board), json.dumps(shards), "true" if shard_ok else "false", TIERS_STUB)
+    ctx = MiniRacer()
+    ctx.eval(prelude + js)
+    return ctx.eval("__html['franchise-app-root'] || ''"), json.loads(ctx.eval("JSON.stringify(__urls)"))
+
+
+def test_the_club_page_fetches_one_club_file_and_renders_it():
+    """QCLP10: the page boots on the board and fetches exactly the shown club's
+    file; the rendered club matches the one rendered off the whole document."""
+    html, urls = _render_split("MIL")
+    assert urls[0] == "/data/franchise_board.json"
+    assert [u.split("?")[0] for u in urls[1:]] == ["/data/franchise_clubs/MIL.json"]
+    whole, _ = _render("club", team="MIL")
+    assert html == whole
+    failed, _ = _render_split("MIL", shard_ok=False)
+    assert "px-state is-failed" in failed and "fr-mast-name" in failed and '<section class="fr-block"' not in failed

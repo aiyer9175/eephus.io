@@ -41,6 +41,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 ART = ROOT / "data" / "franchise_board.json"
+SHARDS = ROOT / "data" / "franchise_clubs"
 JS = ROOT / "assets" / "franchise.js"
 SITE_CODES = {"KCR": "KC", "CHW": "CWS", "WSN": "WSH", "ATH": "ATH", "SFG": "SF",
               "SDP": "SD", "TBR": "TB", "ARI": "AZ"}
@@ -54,7 +55,8 @@ EM, EN = chr(0x2014), chr(0x2013)
 def d():
     if not ART.exists():
         pytest.skip("run python franchise_export.py")
-    return json.loads(ART.read_text(encoding="utf-8"))
+    import franchise_export as fe
+    return fe.load(ART)      # the board joined with its 30 club files (QCLP10)
 
 
 @pytest.fixture(scope="module")
@@ -209,8 +211,9 @@ def test_letter_matches_rank_by_storage_letter_grade(clubs):
 
 
 def test_no_em_dash_sentinel_survives(d):
-    txt = ART.read_text(encoding="utf-8")
-    assert EM not in txt and EN not in txt
+    for p in [ART] + sorted(SHARDS.glob("*.json")):
+        txt = p.read_text(encoding="utf-8")
+        assert EM not in txt and EN not in txt, p.name
     from franchise_export import letter_for_rank
     assert letter_for_rank(None) is None
     for _p, _k, v in _walk(d):
@@ -506,6 +509,7 @@ def test_export_refuses_a_settled_season_whose_odds_contradict_the_standings(tmp
         return doc
     monkeypatch.setattr(fe, "_j", phantom)
     monkeypatch.setattr(fe, "OUT", tmp_path / "franchise_board.json")
+    monkeypatch.setattr(fe, "SHARD_DIR", tmp_path / "franchise_clubs")
     with pytest.raises(fe.FranchiseRefusal) as exc:
         fe.build()
     assert "odds:" in str(exc.value) and "'NYY', 'proj_wins'" in str(exc.value)
@@ -760,6 +764,54 @@ def test_payload_under_size_budget(d):
 
 
 # --------------------------------------------------------------------------
+# QCLP10 (surface-quality audit 2026-10-02): the board plus thirty club files.
+# The page read 1,118,562 bytes at boot, 93% of them the tree and sections of
+# the 29 clubs it was not showing.
+# --------------------------------------------------------------------------
+
+def test_the_board_carries_no_club_tree_or_sections_and_indexes_thirty_files():
+    import hashlib
+    import franchise_export as fe
+    raw = json.loads(ART.read_text(encoding="utf-8"))
+    sh = raw.get("shards")
+    assert sh and sh["dir"] == fe.SHARD_DIRNAME == "franchise_clubs" and sh["keys"] == ["tree", "sections"]
+    assert len(raw["clubs"]) == 30 and set(sh["files"]) == {c["code"] for c in raw["clubs"]}
+    for c in raw["clubs"]:
+        assert "tree" not in c and "sections" not in c, c["code"]
+        b = (SHARDS / f"{c['code']}.json").read_bytes()
+        assert len(b) == sh["files"][c["code"]]["bytes"], c["code"]
+        assert hashlib.sha256(b).hexdigest()[:16] == sh["files"][c["code"]]["sha256_16"], c["code"]
+        assert json.loads(b)["code"] == c["code"]
+    # the board is what the page reads at boot: it stays a small fraction of
+    # the 1,118,562 bytes it was, and no club file outgrows one club's share
+    assert ART.stat().st_size < 150_000, ART.stat().st_size
+    assert max(p.stat().st_size for p in SHARDS.glob("*.json")) < 80_000
+    assert sorted(p.name for p in SHARDS.glob("*.json")) == sorted(f"{c}.json" for c in sh["files"])
+    # the data catalog documents the club files beside the board
+    assert '"franchise_clubs/*.json"' in _src("data_catalog.py")
+
+
+def test_write_splits_and_load_joins_the_document(tmp_path):
+    import franchise_export as fe
+    whole = fe.load(ART)
+    (tmp_path / "franchise_clubs").mkdir()
+    (tmp_path / "franchise_clubs" / "ZZZ.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "franchise_clubs" / "keep.txt").write_text("x", encoding="utf-8")
+    n = fe.write(whole, out=tmp_path / "franchise_board.json", shard_dir=tmp_path / "franchise_clubs")
+    assert n == (tmp_path / "franchise_board.json").stat().st_size
+    assert not (tmp_path / "franchise_clubs" / "ZZZ.json").exists(), "a stale club file is removed"
+    assert (tmp_path / "franchise_clubs" / "keep.txt").exists(), "only CODE.json files are touched"
+    back = fe.load(tmp_path / "franchise_board.json")
+    strip = lambda doc: {k: v for k, v in doc.items() if k != "shards"}       # noqa: E731
+    assert json.dumps(strip(back), sort_keys=True) == json.dumps(strip(whole), sort_keys=True)
+    # a club file that drifted from the board's index is refused, not joined
+    p = tmp_path / "franchise_clubs" / "LAD.json"
+    p.write_bytes(p.read_bytes().replace(b'"LAD"', b'"LAD" ', 1))
+    with pytest.raises(AssertionError, match="LAD"):
+        fe.load(tmp_path / "franchise_board.json")
+
+
+# --------------------------------------------------------------------------
 # The refusal path (never writes a repo file)
 # --------------------------------------------------------------------------
 
@@ -774,11 +826,13 @@ def test_export_refuses_below_thirty_clubs_and_files_ingest_health(tmp_path, mon
         return rows
     monkeypatch.setattr(fe, "_team_rows", drop_one)
     monkeypatch.setattr(fe, "OUT", tmp_path / "franchise_board.json")
+    monkeypatch.setattr(fe, "SHARD_DIR", tmp_path / "franchise_clubs")
     with pytest.raises(fe.FranchiseRefusal) as exc:
         fe.build()
     assert "roster" in str(exc.value) and "LAD" in str(exc.value)
     assert fe.main() == 2
     assert not (tmp_path / "franchise_board.json").exists(), "a refusal never writes"
+    assert not (tmp_path / "franchise_clubs").exists(), "a refusal writes no club file either"
     src = _src("run_monthly.py")
     assert '_record_ingest("franchise_export"' in src and "franchise export refused" in src
 

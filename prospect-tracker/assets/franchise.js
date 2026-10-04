@@ -34,6 +34,11 @@
   "use strict";
 
   var DATA_URL = "/data/franchise_board.json";
+  // QCLP10: each club's tree and sections live in its own file, fetched when
+  // the club is shown (the board is a tenth of the size it was). A board that
+  // still carries them inline renders with no second fetch.
+  var SHARD_URL = "/data/franchise_clubs/";
+  var SHARD_STATE = {};     // code -> "loading" | "failed"
   var DATA = null;
   var LOAD_ERROR = "";
   var CLUBS = {};
@@ -116,6 +121,27 @@
     return '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? " selected" : "") + ">" + esc(label) + "</option>";
   }
   function clubOf(code) { return Object.prototype.hasOwnProperty.call(CLUBS, code) ? CLUBS[code] : null; }
+  function hasBody(d) { return !!(d && d.tree && d.sections); }
+  function loadShard(code) {
+    var d = clubOf(code);
+    // a failed file is not asked for again on the render that shows the
+    // failure; picking the club again asks once more
+    if (!d || hasBody(d) || SHARD_STATE[code]) return;
+    SHARD_STATE[code] = "loading";
+    var sh = DATA.shards || {}, stamp = (sh.files || {})[code];
+    fetch(SHARD_URL + code + ".json" + (stamp ? "?v=" + stamp.sha256_16 : ""), { cache: "no-cache" })
+      .then(function (r) { if (!r || !r.ok) throw new Error("shard"); return r.json(); })
+      .then(function (s) {
+        if (!s || s.code !== code) throw new Error("shard");
+        (sh.keys || ["tree", "sections"]).forEach(function (k) { d[k] = s[k]; });
+        delete SHARD_STATE[code];
+        if (state.view === "club" && state.team === code) render();
+      })
+      .catch(function () {
+        SHARD_STATE[code] = "failed";
+        if (state.view === "club" && state.team === code) render();
+      });
+  }
   function codes() { return DATA ? DATA.codes.slice() : []; }
   function ensureTeam() {
     if (!state.team || !clubOf(state.team)) state.team = codes()[0] || "";
@@ -195,8 +221,16 @@
   }
 
   // ---- masthead -------------------------------------------------------------
+  function boardRow(code) {
+    var rows = (DATA && DATA.board) || [];
+    for (var i = 0; i < rows.length; i++) if (rows[i].code === code) return rows[i];
+    return {};
+  }
   function renderMast(d) {
-    var s = d.sections.season;
+    // Before the club's file is in, the record comes off its board row, so the
+    // masthead does not move when the sections land.
+    var br = boardRow(d.code);
+    var s = d.sections ? d.sections.season : { wins: br.wins_2026, losses: br.losses_2026 };
     var rec = isNum(s.wins) && isNum(s.losses) ? s.wins + "-" + s.losses : "";
     var rd = isNum(s.run_diff) ? ' <span class="' + signCls(s.run_diff) + '">' + signed(s.run_diff, 0) + "</span>" : "";
     var gfx = "";
@@ -755,6 +789,11 @@
   function renderClub() {
     var d = clubOf(state.team);
     if (!d) return '<p class="fr-note">' + esc(copy("load_error")) + "</p>";
+    if (!hasBody(d)) {
+      return renderMast(d) + (SHARD_STATE[d.code] === "failed"
+        ? pxState("failed", esc(copy("load_error")))
+        : pxState("loading", esc("Loading " + (d.name || d.code))));
+    }
     var blocks = DATA.branch_order.map(function (key) {
       var fn = SECTION_RENDER[key];
       return '<section class="fr-block" data-frsec="' + esc(key) + '">' + head(d, key) + (fn ? fn(d) : "") + "</section>";
@@ -901,10 +940,13 @@
     if (state.sec) {
       try { var target = el("fr-sec-" + state.sec); if (target && target.scrollIntoView) target.scrollIntoView(); } catch (e) { /* optional */ }
     }
+    // The club file is asked for last, once this render is wired, so its own
+    // render (on arrival) never runs inside this one.
+    if (state.view === "club" && clubOf(state.team) && !hasBody(clubOf(state.team))) loadShard(state.team);
   }
   function wire() {
     var sel = el("fr-club");
-    if (sel && sel.addEventListener) sel.addEventListener("change", function () { state.team = this.value; state.sec = ""; writeHash(); render(); });
+    if (sel && sel.addEventListener) sel.addEventListener("change", function () { state.team = this.value; state.sec = ""; if (SHARD_STATE[state.team] === "failed") delete SHARD_STATE[state.team]; writeHash(); render(); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-frtree]"), function (b) {
       b.addEventListener("click", function () {
         var v = b.getAttribute("data-frtree");

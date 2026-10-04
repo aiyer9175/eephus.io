@@ -41,7 +41,7 @@ DATA = ROOT / "data"
 PRICED = ["mlb_projections.json", "fa_class.json", "fa_class_2028.json", "fa_class_2029.json",
           "xfv.json", "trade_values.json", "timeseries.json", "ledger_board.json",
           "franchise_board.json"]
-PRICED_GLOBS = ["ledger_clubs/*.json"]
+PRICED_GLOBS = ["ledger_clubs/*.json", "franchise_clubs/*.json"]
 WHOLE = ["fa_meta.json", "fa_dpw_series.json"]
 
 MONEY = re.compile(
