@@ -46,7 +46,8 @@ happen inside the called module, so this file alone cannot split them).
 | 9e-pre0c. Refresh eWAR Leaderboard (war_leaderboards.json) | war_leaderboards.json |
 | 9e-pre0d. Live-season window panel (mlbstats_window_*.json) | bullpen_leaderboards.json, defense_leaderboards.json, hitter_leaderboards.json, mlbstats_window_l3.json, mlbstats_window_l5.json, mlbstats_windows.json, starter_leaderboards.json |
 | 9e-pre0e. In-Game Management nightly (management_board.json) | management_baseline.json, management_board.json, management_bunt.json, management_decisions.json, management_running.json |
-| 9e-pre0f. Steal context (management_steal_context.json) | management_steal_context.json |
+| 9e-pre0f. Steal context (management_steal_context.json) | management_steal_context.json, tx_YYYY_MM.json |
+| 9e-pre0g. MLB transaction events (mlb_events preview) | - |
 | 9e-pre-wx. Forecast weather capture (dark, armed) | betting_model_eval.json |
 | 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
 | 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, job_heartbeat.json, slate.json, source_backtest.json, xfv_scoreboard_eval.json |
