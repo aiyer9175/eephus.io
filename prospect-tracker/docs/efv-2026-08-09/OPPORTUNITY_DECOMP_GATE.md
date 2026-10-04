@@ -549,3 +549,96 @@ assigns no bucket, reports no ECE, and re-runs no relabel of the shipped pool;
 `test_methodology_freshness.py`; the exact rows are reported in the lane handoff and a later
 wave applies them. Until then `test_model_registry.test_every_eval_artifact_is_registered`
 names this artifact, by design.
+
+### 10.7 2026-10-04: the re-run on the fWAR label at RESOLVED_THROUGH 2026
+
+Task POSTEPOCH_4_OPPORTUNITY_LAB_RERUN. Sections 0 through 10.6 above are unedited; this is a new
+reading, not a correction of the numbers recorded there.
+
+Why it was owed. The fWAR label epoch (`docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md` part 9,
+'2026-10-03: step Z', `73850ecc`) moved the eFV label to fWAR (label build
+`fwar@2026-10-02-0341299c20ec`) and `efv_dataset.RESOLVED_THROUGH` from 2025 to 2026, and its
+step G re-derived the B-L1 floors in `data/xfv_power_eval.json` (generated_at
+`2026-10-03T21:12:54Z`, committed in `94ec6875`). The ledger was last written on 2026-09-04 at
+RESOLVED_THROUGH 2025 and still carried the pre-epoch floors, so
+`test_opportunity_lab.test_floors_match_the_published_bl1_artifact` was red. The precedent is
+the eWAR label epoch, where both artifacts were regenerated together (`69fe0fca`).
+
+Run: `python tools/efv_opportunity_lab.py all`, 2026-10-04, seed 20260809, 94 seconds, from
+HEAD `66d755e8`; the lab's WAR join reads `war_source.DEFAULT_PROVIDER` ('fwar', the frozen
+vintage). Ledger: `data/xfv_opportunity_eval.json`, generated_at as committed with this
+section. A second run after the two prose fixes below reproduced every number exactly; only
+`generated_at` and the two derived sentences differed. None of the 39 closed arms in
+`data/xfv_arm_ledger.json` was re-run (that ledger has no opportunity entry), no frame is
+reserved by this lab, and nothing here is a statistic by consensus-FV cell.
+
+The verdict block, quoted from the new artifact:
+
+- headline: "CLOSED. No arm clears its floor on the primary cell; the cosine bound explains
+  why any reweighting of the existing feature set had to fail."
+- arms_promoted: none; ships: "nothing".
+- harness_liveness: "the battery RESOLVES: multiplicative_blend, multiplicative_blend_cal,
+  multiplicative_pure resolve as losses under both estimators, so the NULL verdicts on the
+  other arms are informative rather than inert."
+- cosine_bound: hit 0.946, pit 0.966; orthogonal linear extent hit 0.3241, pit 0.2586.
+- dispersion_verdict: "ONE DEFECT. hit: worst signed slope movement -0.2258 at
+  observed_seasons=2 | pit: worst signed slope movement -0.3006 at observed_seasons=2"
+
+The floors, read from `data/xfv_power_eval.json partb_floors` (MDE95 E_refit / MDE95_COND
+E_cond), the 2026-09-04 ledger's values beside them:
+
+| cell | 2026-09-04 | 2026-10-04 | rows |
+|---|---|---|---|
+| hit.full_pool_km | 0.0298 / 0.0214 | 0.0265 / 0.0205 | 1,798 |
+| pit.full_pool_km | 0.0280 / 0.0197 | 0.0224 / 0.0185 | 1,887 |
+| hit.debuted_km | 0.0458 / 0.0206 | 0.0327 / 0.0208 | 782 |
+| pit.debuted_km | 0.0436 / 0.0251 | 0.0278 / 0.0233 | 907 |
+| block_rho | 0.0307 / 0.0182 | 0.0229 / 0.0170 | 1,689 |
+
+The scored pools now equal the rows each floor was derived on (shortfall 0.0 on all four
+pooled cells): every debuted row joins, 968 of 968 hitters and 1,116 of 1,116 pitchers (845
+and 983 on 2026-09-04), and no bust row has MLB exposure in the frame on either side.
+
+The arms on the primary cell, hit.full_pool_km (delta, E_refit margin, E_cond margin):
+
+| arm | delta | E_refit | E_cond | verdict |
+|---|---|---|---|---|
+| multiplicative_blend | -0.0666 | 2.51x | 3.25x | RESOLVABLE LOSS |
+| multiplicative_blend_cal | -0.0227 | 0.86x | 1.11x | RESOLVABLE LOSS |
+| multiplicative_pure | -0.1136 | 4.29x | 5.54x | RESOLVABLE LOSS |
+| hurdle_blend | +0.0142 | 0.54x | 0.69x | NULL |
+| hurdle_blend_cal | +0.0169 | 0.64x | 0.82x | NULL |
+| auxiliary_gamma_1.0 | -0.0047 | 0.18x | 0.23x | NULL |
+| auxiliary_gamma_1.0_cal | -0.0054 | 0.20x | 0.26x | NULL |
+
+The hurdle arm's point on the primary cell turned positive (it was -0.0042 on 2026-09-04) and
+stays under both floors, so it does not meet the section 8 promotion bar. The multiplicative
+arm's failure mechanism holds as measured: its rate leg predicts a negative rate on 31.5
+percent of hit.full_pool_km rows and 31.2 percent of pit.full_pool_km rows. The gamma = 0
+parity check is exact on all four pooled cells for both the blend and the pure leg.
+
+THE DECOMPOSITION READ IS REFUTED ON THE PITCHER SIDE ON THIS LABEL. On the pre-registered
+debuted pool, unweighted: hitters R_opp 0.5051, R_war 0.3875, R_quality 0.3217 (n 968),
+SURVIVES; pitchers R_opp 0.3919, R_war 0.3529, R_quality 0.3001 (n 1,116), and
+`R_opp - R_quality` is 0.0918, under the 0.10 bar of section 2, so the registered clause
+fires and the artifact records REFUTED. The gap is 0.0794 at 90 IPouts and 0.1183 at 300
+IPouts. On 2026-09-04 the pitcher read survived (0.3756 / 0.3114 / 0.2045). On the full
+modelled pool R_opp minus R_war is 0.2704 (hit, n 1,985) and 0.1331 (pit, n 2,100). This
+narrows what section 10.2 says about the pitcher side on the current label; it does not
+touch the closure, which rests on the arms and the cosine bound, and it says nothing about
+which label is closer to true value.
+
+Dispersion. The cohort-matched control stays INFEASIBLE: one minority-kind row per side
+(782 hitter and 907 pitcher scored rows), cohorts 2014-2021 resolved and 2022-2024 censored.
+The synthetic-censoring leg is identified on both sides (join agreement 468 of 470 hitter
+rows and 555 of 561 pitcher rows within 0.05 of `target_resolved`); its slope movement is
+monotone in k on both sides and passes the 0.05 bar at k = 2 (hit -0.2258, pit -0.3006).
+
+Two typed sentences in the lab were replaced by derived ones in the same task, because the
+re-run made them untrue: the `basis_sensitivity` note claimed rho_fv_opportunity "far
+exceeds" rho_fv_war on both pools and both sides (the pitcher debuted gap is 0.039), and
+the collinearity statement named cohorts 2011-2020 and 2021-2024. Both now print the
+measured gaps and cohort ranges.
+
+The `xfv_opportunity` row of `data/model_registry.json` carries a dated sentence pointing
+here; its verdict ('deprecated') and the 2026-08-09 numbers in it are unchanged.
