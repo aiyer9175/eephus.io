@@ -339,7 +339,7 @@ def test_the_manager_section_is_decided_and_not_merely_deferred(d):
     family is not worth doing. That is a decision, not a queue position."""
     s = d["sections"]["manager_attribution"]
     assert s["live"] is False
-    assert "UPPER BOUND" in s["why"]
+    assert "upper bound" in s["why"]
     assert "not there" in s["why"] or "is not there" in s["why"]
 
 

@@ -2106,9 +2106,8 @@ def build_all() -> tuple:
 
     # ---- copy: every sentence the page prints, once --------------------------------
     copy = {
-        "masthead": ("Every dollar a club has on the books, from Spotrac and the platform's own "
-                     "models, with what each dollar is projected to buy. No revenue, no valuations, "
-                     "no TV money: nothing here says what a club earns."),
+        "masthead": ("Every dollar a club has on the books, from Spotrac and our own models, and "
+                     "what each dollar is projected to buy. No revenue, valuations or TV money."),
         "league_lede": ("Thirty clubs on two Spotrac bases and the platform's own prices. Only Cost+ "
                         "and OrgSur+ take a colour; every dollar cell prints plain, and the league "
                         "average row is a reference, never a club."),
@@ -2121,7 +2120,7 @@ def build_all() -> tuple:
         "cbt_under": "under the threshold",
         "cbt_clock_rule": ("the rate resets to first-time after one full season under the threshold; "
                            "rule text, not a forecast"),
-        "cbt_verify_note": "every cba_rules record is curated-unverified; the 2027 threshold is explicitly unknown",
+        "cbt_verify_note": "Every CBA rule on file is hand-entered and unverified; the 2027 threshold is unknown",
         "qo_recipient_note": ("which clubs receive revenue sharing is not sourceable here; that QO pick "
                               "tax tier is a league value only"),
         "payor_basis": {PAYOR_BASIS_SPOTRAC: f"Spotrac {CLASS_YEAR} page", PAYOR_BASIS_SPOTRAC_2026: f"Spotrac {SEASON_NOW} page",
@@ -2141,8 +2140,8 @@ def build_all() -> tuple:
                             "buried split; the strip is drawn for 2027 only"),
         "split_2027_label": "2027 allocations, Spotrac",
         "allocations_note": "CBT payroll is Spotrac's AAV basis; total payroll allocations are Spotrac's cash basis",
-        "history_blocked_on": ("Payroll history is cached but not yet ingested (fa_team_payroll holds "
-                               "2026-2027); the cache-only backfill of the 2016-2025 Spotrac pages has not run"),
+        "history_blocked_on": ("Payroll history is cached but not yet ingested: 2026-2027 is on file; "
+                               "the 2016-2025 Spotrac pages are not backfilled"),
         "commitments_bases": {"contract": "Contract dollars on file (Spotrac, never re-priced)",
                               "arb": "Arbitration steps, projected (arb_award provisional)",
                               "prearb": f"Pre-arb minimums by rule ({prearb_min:,} per PRE-ARB season, "
@@ -2164,8 +2163,8 @@ def build_all() -> tuple:
         "cell_basis": {"contract": "on file (Spotrac)", "arb_ladder": "Arbitration Predictor, provisional",
                        "class_closure": "class closure (inferred)"},
         "band_note": "band, not a calibrated interval",
-        "options_note": ("Options on file (curated: salPath option stamps, contract_options.json and the "
-                         "trade board's Spotrac years); Spotrac years_remaining omits them."),
+        "options_note": ("Options on file: hand-entered from contract stamps and Spotrac contract years "
+                         "(Spotrac's years remaining excludes options)."),
         "deferral_rate_label": f"NPV at the platform {_pct_str(rate)} rate",
         "deferral_coverage": ("covered deals only: every guarantee of 200M or more has an entry (audited "
                               "into fa_gate2_eval.deferral_coverage); this is not a complete club deferral ledger"),
@@ -2275,7 +2274,7 @@ def build_all() -> tuple:
         "qo_none": "no live QO stamps",
         "no_payroll_line": ("A single projected payroll is not served: it would need registry row "
                             "club_payroll_path and the 2016-2025 payroll history as labels."),
-        "load_error": "The Club Ledger could not be loaded.",
+        "load_error": "Club Ledger did not load. Retry.",
         "arb_dpw_basis": (f"arbitration dollars per WAR {SEASON_NOW} (arbitration.json dpw) over the "
                           f"open-market rate for winter {SEASON_NOW} (fa_dpw_series)"),
         "projections_dpw_basis": f"mlb_projections dpw_usd, {CLASS_YEAR} ex-ante, the surplus pricing rate",
@@ -2324,8 +2323,8 @@ def build_all() -> tuple:
             "board's posterior. Each prints under its own name; they are never averaged or summed."),
         "grad_contract_dark": (
             "Grad-Contract Surplus is served as the org mean only (current AAV minus the bonus "
-            "amortized over six years, storage.py); no per-graduate row is exported, and recomputing "
-            "one here would be a new number with no registry row."),
+            "amortized over six years). No per-graduate row is exported; one recomputed here "
+            "would be a new number with no registry row."),
         "grad_contract_formula": (
             "per graduate with both a current AAV and a bonus on file: AAV minus bonus over six; the "
             "org mean and its n are the leaf, which is why n is smaller than the graduate count"),
@@ -2369,7 +2368,7 @@ def build_all() -> tuple:
         "swartz_a6": a6.get("statement"),
         "swartz_a6_prefix": "a6 arm",
         "arb_quantiles_dark": ("P10 / P50 / P90 are not published: the band is the champion's MdAPE "
-                               "spread by rung (arb_export.py) and no per-rung residual quantiles exist"),
+                               "spread by rung and no per-rung residual quantiles exist"),
         "arb_comps_dark": ("no comps are served; the champion is a ridge level model on log deflated "
                            "salary (arb-1) and an empirical raise multiplier (arb-2+); a comps consumer "
                            "must not read the contract set's aav_usd as a player's income "
@@ -2405,8 +2404,8 @@ def build_all() -> tuple:
         "shown_rows": "shown rows: a sum of expected values",
         "not_summed": "not summed",
         "sources_stamps": "each block names the artifact and the build stamp it was read from",
-        "registry_sentence": ("provisional rows are labelled with the registry verdict quoted on the "
-                              "Method tab; nothing on this page is scored by this page"),
+        "registry_sentence": ("Provisional rows carry the registry verdict (Method tab); this page "
+                              "scores nothing itself."),
     })
     # ---- the option and opt-out calendar (M13_OPTIONS_CALENDAR) ----------------
     penter = verdict_of.get("fa_penter") or "no registry row"
@@ -2788,7 +2787,7 @@ def build_all() -> tuple:
             "a prospect or contract number recomputed through value_framework: every figure on the row layers is a copy of a served artifact (PROSPECT_ANCHOR_GATE 13.2)",
             "a summed quantile or a combined residual: bands print per row, footers under a band column read not summed, ou_mkt and ou_war stay apart and the Swartz figure is a third quantity",
             "a dollar cost basis for the trade channel: FV given up is the Trade Machine's currency",
-            "a per-graduate Grad-Contract Surplus: the org mean only is served (storage.py)",
+            "a per-graduate Grad-Contract Surplus: the org mean only is served",
             "arbitration comps, filing figures, hearing outcomes or per-rung residual quantiles: none is on any served row",
             "a served opt-out value on a contract row: player option seasons are priced as guaranteed by the salary path and folded as a probability by the trade board, and neither is an opt-out value; the options calendar quotes the /fa/ export's modelled value for this winter's pending opt-outs only, under that module's name",
             "a sum of the salaries at stake in the options calendar: each prints on its own row",

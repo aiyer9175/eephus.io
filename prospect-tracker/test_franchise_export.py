@@ -641,8 +641,8 @@ def test_dugout_carries_no_plus_metric_and_no_letter(clubs):
 def test_dugout_copy_contains_realized_value_not_skill_and_the_counterfactual_sentence(d):
     s = d["copy"]["dugout_sentence"]
     assert s.startswith("Realized value, not skill.")
-    assert "the runner held, the starter left in, was never observed" in s
-    assert "nothing on this page ranks a manager or a club by decision quality" in s
+    assert "Counterfactuals (the runner held, the starter left in) are unobserved" in s
+    assert "no manager or club is ranked on decision quality" in s
     assert "bounded null" in s
     assert d["copy"]["dugout_realized_tag"] == "realized"
 

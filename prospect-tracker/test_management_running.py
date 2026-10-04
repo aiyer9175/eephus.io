@@ -377,7 +377,7 @@ def test_the_published_census_closes(art):
 
 def test_the_decision_is_priced_at_the_league_rate_not_the_runners(art):
     note = art["league_average_is_deliberate"].lower()
-    assert "roster" in note and "confound" in note
+    assert "roster fact" in note and "not a manager's decision" in note
 
 
 def test_the_breakeven_rate_is_published(art):

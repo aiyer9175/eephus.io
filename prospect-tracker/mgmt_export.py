@@ -444,9 +444,8 @@ def _decision_blocks() -> dict:
     dark = {"status": "the decision ledger is not on this build", "live": False}
     if not d or d.get("status") != "built":
         why = ((d or {}).get("status")
-               or "data/management_decisions.json is not on this build; the ledger step "
-                  "writes it from the play corpus and it ships committed with the site")
-        blocked = {"live": False, "blocked_on": "the decision ledger (mgmt_decisions.py, step 6b7e)",
+               or "Decision ledger not on this build.")
+        blocked = {"live": False, "blocked_on": "the decision ledger",
                    "why": str(why)}
         return {"decisions": {**dark, "why": str(why)},
                 "clubs": {"status": str(why), "rows": [], "plus_metric": False},
@@ -698,7 +697,7 @@ def build(*, corpus=None, teams=True) -> dict:
             "manager_attribution": {
                 "live": False, "blocked_on": "M-MWAR-2, the manager entity",
                 "why": ("the module stops at the attempt. A team-season is an "
-                        "UPPER BOUND on a manager (managers change, teams do not) "
+                        "upper bound on a manager (managers change, teams do not) "
                         "and carries no repeatable signal in this family, so a "
                         "manager entity would attribute a signal that is not "
                         "there.")},

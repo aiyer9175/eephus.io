@@ -471,10 +471,9 @@ def _franchises_or_dark(b, cf) -> dict:
     except (RuntimeError, OSError, ValueError, KeyError) as exc:
         return {"live": False,
                 "blocked_on": "the franchise map (data/franchise_spine.json)",
-                "why": ("The Hall of Fame franchise credit could not be built this "
-                        f"run: {exc}. Rerun python tools/franchise_spine_history.py "
-                        "and check the war_daily team codes; nothing is credited "
-                        "until every stint maps.")}
+                "why": ("The Hall of Fame franchise credit did not build this "
+                        f"run: {exc}. Nothing is credited until every war_daily "
+                        "team code maps to a franchise.")}
 
 
 def build() -> dict:
@@ -612,7 +611,7 @@ def build() -> dict:
                 "reached a Hall of Fame election page, so Baseball-Reference "
                 "published no value. It is not a zero."),
             "war_ink_is_ours": (
-                "WAR ink is ours, NOT Bill James's Black Ink or Gray Ink: "
+                "WAR ink is ours, not Bill James's Black Ink or Gray Ink: "
                 f"{hd.INK_LEAD_POINTS} points for a league-leading WAR season, "
                 f"{hd.INK_TOPTEN_POINTS} for a top-{hd.INK_TOPTEN_DEPTH} season, "
                 "hitters and pitchers ranked in one pool per league-season. Not "
@@ -639,10 +638,9 @@ def build() -> dict:
             "watch": {"live": True, "projection": False,
                       "why_no_projection": (
                           "Active players ranked by what they have already done, "
-                          "on the retired board's shelf. A pace curve needs a "
-                          "per-age remaining-career WAR model, a forward backtest "
-                          "on retired players and a year-filtered feature frame; "
-                          "none exists yet, so this page does not guess.")},
+                          "on the retired board's shelf. No pace curve: it needs a "
+                          "per-age remaining-WAR model and a forward backtest on "
+                          "retired players; neither is built.")},
             # The band edges are read off the constants that cut the bands.
             "not_yet_eligible": {"live": True,
                                  "why": (

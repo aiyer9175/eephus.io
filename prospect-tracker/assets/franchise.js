@@ -801,7 +801,7 @@
     if (!hasBody(d)) {
       return renderMast(d) + (SHARD_STATE[d.code] === "failed"
         ? pxState("failed", esc(copy("load_error")))
-        : pxState("loading", esc("Loading " + (d.name || d.code))));
+        : pxState("loading", esc("Loading " + (d.name || d.code) + ".")));
     }
     var blocks = DATA.branch_order.map(function (key) {
       var fn = SECTION_RENDER[key];
@@ -937,7 +937,7 @@
     var root = el("franchise-app-root");
     if (!root) return;
     if (!DATA) {
-      root.innerHTML = LOAD_ERROR ? pxState("failed", esc(LOAD_ERROR)) : pxState("loading", esc("Loading"));
+      root.innerHTML = LOAD_ERROR ? pxState("failed", esc(LOAD_ERROR)) : pxState("loading", esc("Loading Franchises."));
       return;
     }
     var m = el("franchise-masthead");
@@ -1021,7 +1021,7 @@
         ensureTeam();
         render();
       })
-      .catch(function () { LOAD_ERROR = "Franchises could not be loaded."; render(); });
+      .catch(function () { LOAD_ERROR = "Franchises did not load. Retry."; render(); });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

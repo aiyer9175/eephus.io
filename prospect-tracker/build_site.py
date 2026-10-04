@@ -5402,10 +5402,10 @@ def build_management() -> str:
         '<div class="fa-app mlbstats-app mgmt-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("management")}In-Game Management {_stage_chip("management")}</h1></div>'
-        '<span class="section-sub">Every in-game decision the play corpus names, with the '
+        '<span class="section-sub">Every in-game decision in the play corpus, with the '
         f'{_gl("realized_mwpa", "realized win probability")} it governed and, where priced, its '
-        f'{_gl("decision_value", "decision value")}. A record of what happened, not a measure of skill; '
-        'no club is ranked by decision quality.</span></div>'
+        f'{_gl("decision_value", "decision value")}. Realized value records outcomes, not skill. '
+        'No club is ranked.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Management sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-mgmtsection="league" role="tab" id="mgmt-tab-league" aria-controls="mgmt-section" aria-selected="true">League</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mgmtsection="running" role="tab" id="mgmt-tab-running" aria-controls="mgmt-section" aria-selected="false">Running Game</button>'
@@ -5428,11 +5428,8 @@ def build_management() -> str:
         f'<script src="/assets/management.js?v={_MGMT_VER}" defer></script>'
     )
     return page("In-Game Management - eephus.io", "management", body,
-                "Every in-game decision the play corpus can name: pitching changes, pinch "
-                "hitters and runners, defensive subs, intentional walks, bunts, steals, "
-                "mound visits and ejections, with the win probability that moved after each. "
-                "Realized value per family, never a cross-family total, never a plus metric. "
-                "Club pages, a per-decision drill-down and the priced steal and bunt families.",
+                "Every in-game decision in the play corpus, with the win probability that "
+                "moved after it. Realized value per family; no cross-family total, no plus metric.",
                 url=f"{SITE_ORIGIN}/management/", image=module_share_image("management"))
 
 
@@ -5485,11 +5482,8 @@ def build_ledger() -> str:
         f'<script src="/assets/ledger.js?v={_LEDGER_VER}" defer></script>'
     )
     return page("Club Ledger - eephus.io", "ledger", body,
-                "Every dollar a club has on the books, from Spotrac and the platform's own "
-                "models, with what each dollar is projected to buy: CBT payroll on both "
-                "bases, the computed tax beside Spotrac's estimate, contract dollars on file "
-                "and projected arbitration steps as separate keys, controlled surplus, farm "
-                "capital and the free agency ledger. No revenue, no valuations, no TV money.",
+                "Every club's CBT payroll, commitments and controlled surplus, from Spotrac and "
+                "our own models, each on its own scale. No revenue, valuations or TV money.",
                 url=f"{SITE_ORIGIN}/ledger/", image=module_share_image("ledger"))
 
 
@@ -5545,11 +5539,8 @@ def build_franchise() -> str:
         f'<script src="/assets/franchise.js?v={_FRANCHISE_VER}" defer></script>'
     )
     return page("Franchises - eephus.io", "franchise", body,
-                "One page per club: the Franchise Index and its three graded branches (roster eWAR, "
-                "the provisional 2027 projection, the PROSPX farm composite), re-standardised across "
-                "30 clubs, with nine descriptive sections re-serving the season, finances, free agency, "
-                "front office, dugout, arbitration, park, history and the model's season view, each "
-                "number on its own scale and linked back to the module that owns it.",
+                "One page per club: the Franchise Index and its three branches (roster eWAR, "
+                "provisional 2027 projection, PROSPX farm), re-standardised across 30 clubs.",
                 url=f"{SITE_ORIGIN}/franchise/", image=module_share_image("franchise"))
 
 
@@ -5584,8 +5575,8 @@ def build_hof() -> str:
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("hof")}Hall of Fame {_stage_chip("hof")}</h1></div>'
         f'<span class="section-sub">Career WAR, {_gl("war7", "WAR7")} and {_gl("jaws", "JAWS")} for '
-        'every ten-season player, reproduced from Baseball-Reference\'s daily WAR file, with the '
-        'writers\' ballot record. No Hall line and no snub list; the Bake-off tab says why.</span></div>'
+        'every ten-season player (Baseball-Reference daily WAR), with the ballot record. '
+        'Bands: eligible, active, five-year wait. No Hall line or snub list (Bake-off says why).</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Hall of Fame sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-hofsection="board" role="tab" aria-selected="true">Leaderboards</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-hofsection="franchises" role="tab" aria-selected="false">Franchises</button>'
@@ -5601,10 +5592,8 @@ def build_hof() -> str:
         f'<script src="/assets/hof.js?v={_HOF_VER}" defer></script>'
     )
     return page("Hall of Fame - eephus.io", "hof", body,
-                "Career WAR, WAR7 and JAWS for every ten-season player, reproduced from "
-                "Baseball-Reference's daily WAR file, with the ballot record. Eligible, active and "
-                "not-yet-eligible boards, a JAWS quantile ladder and a benchmark bake-off; "
-                "unpublished sections name their blockers. No Hall line, no snub list.",
+                "Career WAR, WAR7 and JAWS for every ten-season player (Baseball-Reference "
+                "daily WAR), with the ballot record. No Hall line or snub list.",
                 url=f"{SITE_ORIGIN}/hof/", image=module_share_image("hof"))
 
 

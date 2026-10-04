@@ -242,9 +242,9 @@ def _dugout_sentence(live: list) -> str:
     else:
         lead = ("What is shown here is what happened after the club's decisions: "
                 + ", ".join(said[:-1]) + ", and " + said[-1] + ".")
-    return ("Realized value, not skill. " + lead + " What the alternative would have produced, "
-            "the runner held, the starter left in, was never observed, so nothing on this page "
-            "ranks a manager or a club by decision quality. The running game's gate returned a "
+    return ("Realized value, not skill. " + lead + " Counterfactuals (the runner held, the "
+            "starter left in) are unobserved, so no manager or club is ranked on decision "
+            "quality. The running game's gate returned a "
             "bounded null: a club's decision value did not repeat between halves of its own season.")
 
 TENDENCY_PANELS = (
@@ -1314,7 +1314,7 @@ def build() -> dict:
         "board_playoff_title": (f"Playoff: the season simulator ({ODDS_REGISTRY_ID} "
                                 f"{verdict_of.get(ODDS_REGISTRY_ID) or 'unregistered'}); after the regular "
                                 "season it reads the settled outcome."),
-        "load_error": "Franchises could not be loaded.",
+        "load_error": "Franchises did not load. Retry.",
         "tree_hidden": "Hide the tree; show only the root card",
         "tree_canopy": "Root and the twelve branches",
         "tree_full": "The full three-column tree with every leaf",

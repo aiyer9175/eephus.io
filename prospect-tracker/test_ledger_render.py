@@ -84,7 +84,7 @@ SAMPLE = {
         "realized_coverage": "covered signings only",
         "realized_sentence": "This is what the contracts returned, not how well the club chose them.",
         "realized_not_skill": "Realized value, not skill.", "qo_none": "no live QO stamps",
-        "no_payroll_line": "A single projected payroll is not served.", "load_error": "The Club Ledger could not be loaded.",
+        "no_payroll_line": "A single projected payroll is not served.", "load_error": "Club Ledger did not load. Retry.",
         "arb_dpw_basis": "arb over open", "projections_dpw_basis": "2027 ex-ante", "league_minimum_note": "carried forward by rule",
     },
     "field_key": {},

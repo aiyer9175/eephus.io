@@ -449,7 +449,7 @@
       how([
         '<p class="mgmt-note"><b>' + gl("DV", "decision_value") + "</b>: " + esc(r.decomposition.dv) + " <b>ER</b>: " +
         esc(r.decomposition.er) + " " + esc(r.decomposition.identity) + ".</p>",
-        note("League-average runner", r.why_the_league_average_runner),
+        note("Scored with a league-average runner", r.why_the_league_average_runner),
         "<h3>Excluded</h3>" +
         '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><tbody>' + exrows +
         "</tbody></table></div>",
@@ -541,8 +541,7 @@
       "<tr><td>Variance explained by season</td><td>" + pct(g.variance_explained_by_season) + "</td></tr>" +
       "<tr><td>Variance explained by the club</td><td>" + pct(g.variance_explained_by_team) + "</td></tr>" +
       "</table>" +
-      '<p class="mgmt-count">Clauses frozen in ' + esc(DATA.gate_doc) + ", " +
-      esc(DATA.gate_frozen_at) + "</p>" +
+      '<p class="mgmt-count">Gate clauses frozen ' + esc(DATA.gate_frozen_at) + ".</p>" +
       how(["<h3>Raw split-half</h3>" + rawSplitHalf(g),
            "<h3>Null</h3>" + note("", g.null_construction),
            "<h3>Detection floor and scope</h3>" + note("", g.detection_floor_reading) + note("", g.what_a_null_decides)]) +
@@ -786,7 +785,7 @@
       pct(cbs.share_of_plays_not_chained, 2) + " of plays do not chain at a tolerance of " +
       esc(cb.tolerance) + "; the largest gap is " + num(cbs.max_gap_points, 1) +
       " points; a row sum misses a median " + num(cbs.row_sum_misses_median_points, 1) +
-      " points of a game's journey (p90 " + num(cbs.row_sum_misses_p90_points, 1) +
+      " points of a game's WP path (p90 " + num(cbs.row_sum_misses_p90_points, 1) +
       ", p99 " + num(cbs.row_sum_misses_p99_points, 1) + ").</p>",
       "<h3>Derivations</h3>" +
       '<p class="mgmt-note"><b>Removed pitcher</b>: ' + esc(rp.derivation) + " Agreement with the description: " +
@@ -1366,7 +1365,7 @@
         '<p class="mgmt-dark-why">Blocked on: ' + esc(s.blocked_on) + ".</p>" +
         '<p class="mgmt-note">' + esc(s.why) + "</p></section>";
     });
-    out += '<section class="mgmt-block"><h2>What this page does not claim</h2>' +
+    out += '<section class="mgmt-block"><h2>Not claimed</h2>' +
       '<p class="mgmt-note">' + esc(DATA.what_this_page_does_not_claim) + "</p></section>";
     return out;
   }
@@ -1387,7 +1386,7 @@
     var root = el("mgmt-app-root");
     if (!root) return;
     if (LOAD_ERROR) { root.innerHTML = pxState("failed", esc(LOAD_ERROR)); return; }
-    if (!DATA) { root.innerHTML = pxState("loading", "Loading."); return; }
+    if (!DATA) { root.innerHTML = pxState("loading", "Loading In-Game Management."); return; }
     var s = state.section, html;
     if (s === "gate") html = renderGate() + renderBlocked();
     else if (s === "reference") html = renderReference();
@@ -1514,7 +1513,7 @@
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (d) { DATA = d; readHash(); render(); })
       .catch(function () {
-        LOAD_ERROR = "The In-Game Management board could not be loaded.";
+        LOAD_ERROR = "In-Game Management did not load. Retry.";
         render();
       });
   }
