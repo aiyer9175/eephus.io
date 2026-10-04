@@ -19,7 +19,7 @@ What it does, and all it does:
    .cache/amateur_leagues/<group>_<sport>_<season>.json exactly as the 2021+ files
    (an empty season is cached as []). A failed call is logged and counted as zero
    rows; nothing raises. amateur_leagues.build is NOT called: it lands
-   data/amateur_leagues.json, and no file under data/ may move here but the receipt.
+   data/_labs/amateur_leagues.json, and no file under data/ may move here but the receipt.
 
 2. The receipt, data/college_source_probe.json. Per season, sport and group: the row
    count, the distinct player count and the league breakdown. Then, on the F-LV

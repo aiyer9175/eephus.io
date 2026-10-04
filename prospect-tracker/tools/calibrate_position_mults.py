@@ -16,9 +16,10 @@ at each position" signal. We normalize against the OVERALL median
 rather than SP because position scarcity should be measured against
 the league baseline, not a single position.
 
-Output: data/position_multipliers.json, consumed by value_framework.py
-at runtime. To recompute, re-run this script after refreshing the
-spotrac cache.
+Output: data/_labs/position_multipliers_calibration_raw.json, a research
+artifact that nothing reads (data/_labs/ ships in neither deploy
+consumer); value_framework.py keeps its reasoned defaults. To recompute,
+re-run this script after refreshing the spotrac cache.
 
 Usage:
     python tools/calibrate_position_mults.py [--force]
@@ -145,9 +146,9 @@ def main() -> None:
     ap.add_argument("--force", action="store_true",
                     help="Force re-scrape (bypass cache).")
     ap.add_argument("--out", type=Path, default=None,
-                    help="Output path (default: data/position_multipliers.json)")
+                    help="Output path (default: data/_labs/position_multipliers_calibration_raw.json)")
     args = ap.parse_args()
-    out = args.out or (_ROOT / "data" / "position_multipliers_calibration_raw.json")
+    out = args.out or (_ROOT / "data" / "_labs" / "position_multipliers_calibration_raw.json")
     out.parent.mkdir(parents=True, exist_ok=True)
 
     result = calibrate(force=args.force)

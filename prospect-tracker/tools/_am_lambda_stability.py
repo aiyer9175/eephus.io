@@ -122,9 +122,9 @@ def main():
            "argmax_ci95": [srt[int(0.025 * B2)], srt[min(B2 - 1, int(0.975 * B2))]],
            "pin_cost": pin_cost, "B": B2,
            "registered_artifact_lambda": 0.59, "live_lambda": em.blend_lambda(side)}
-    (ROOT / "data" / ("_am_lambda_stability_%s%s.json" % (side, "_deb" if deb else ""))).write_text(
+    (ROOT / "data" / "_labs" / ("_am_lambda_stability_%s%s.json" % (side, "_deb" if deb else ""))).write_text(
         json.dumps(res, indent=1), encoding="utf-8")
-    print("\nwrote data/_am_lambda_stability_%s%s.json" % (side, "_deb" if deb else ""))
+    print("\nwrote data/_labs/_am_lambda_stability_%s%s.json" % (side, "_deb" if deb else ""))
 
 
 if __name__ == "__main__":

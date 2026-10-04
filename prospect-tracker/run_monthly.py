@@ -5194,8 +5194,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     log.exception("venue_meta ingest failed - continuing")
 
         # 2b.xi Amateur / winter / independent league season stats ->
-        # data/amateur_leagues.json. Entry: amateur_leagues.build() (warm_cache
-        # only primes caches; build lands the keyed JSON).
+        # data/_labs/amateur_leagues.json (tracked, unpublished, read by no
+        # page). Entry: amateur_leagues.build() (warm_cache only primes
+        # caches; build lands the keyed JSON).
         if os.environ.get("EEPHUS_SKIP_AMATEUR_LEAGUES") == "1":
             log.info("2b.xi SKIP: EEPHUS_SKIP_AMATEUR_LEAGUES=1 (amateur/winter/indy stats ingest)")
         else:
