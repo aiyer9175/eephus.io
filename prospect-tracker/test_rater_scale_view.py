@@ -18,7 +18,10 @@ THE THREE MISTAKES THESE TESTS EXIST FOR, and the third was made:
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import os
+import re
 import sys
 from pathlib import Path
 
@@ -30,6 +33,135 @@ sys.path.insert(0, str(ROOT))
 ART = ROOT / "data" / "source_backtest.json"
 DOC = ROOT / "docs" / "efv-2026-09-06" / "RATER_SCALE_VIEW.md"
 RATERS = ("fangraphs", "mlb_pipeline", "prospx_consensus", "xfv")
+PUBLISHED = ("fangraphs", "mlb_pipeline", "prospx_consensus")
+
+# --------------------------------------------------------------------------
+# The step A record (2026-10-03, POSTEPOCH_3_RATER_SCALE_VIEW_REREAD)
+# --------------------------------------------------------------------------
+# On the fWAR label (epoch step Q) the three A-CLAIM-13 findings below no longer
+# hold. The doc records that as a dated section rather than editing the
+# 2026-09-06 text. Two things are pinned from then on:
+#   * the PRE-EPOCH state, per rater, against the step A copy of the artifact
+#     (eWAR v2 label), exactly as it was: the sign flip and the placebo findings
+#     held, and the base-year finding held for mlb_pipeline and
+#     prospx_consensus but NOT for fangraphs (-0.01808 against 0.0182);
+#   * the SERVED state, which must equal the STATE lines of the doc's latest
+#     dated section, so any further move fails and asks for a new section.
+SNAPSHOT_DIRNAME = "_pre_epoch_fwar_2026-10"
+SNAPSHOT_SHA256 = "0f76e33bd3eceeaecc93b543a16020d969f36b37a4b56f6951894117a2f5e614"
+STEP_A_STATE = {
+    "sign_agree": False,
+    "fangraphs": {"inside_band": False, "year_effect_resolves": False},
+    "mlb_pipeline": {"inside_band": False, "year_effect_resolves": True},
+    "prospx_consensus": {"inside_band": False, "year_effect_resolves": True},
+}
+
+
+def _main_checkout(start: Path):
+    """The main checkout's root. In a git worktree `.git` is a FILE whose
+    'gitdir: <main>/.git/worktrees/<name>' line names it; in the main checkout
+    `.git` is a directory and its parent is the root."""
+    for d in (start, *start.parents):
+        g = d / ".git"
+        if g.is_dir():
+            return d
+        if g.is_file():
+            try:
+                line = g.read_text(encoding="utf-8").strip()
+            except OSError:
+                return None
+            m = re.match(r"gitdir:\s*(.+?)[\\/]\.git[\\/]worktrees[\\/][^\\/]+[\\/]?$", line)
+            return Path(m.group(1)) if m else None
+    return None
+
+
+def _snapshot_file():
+    """The step A copy of source_backtest.json, or None when none is found.
+    PRE_EPOCH_FWAR_SNAPSHOT may name the snapshot directory or the file."""
+    env = os.environ.get("PRE_EPOCH_FWAR_SNAPSHOT")
+    if env:
+        p = Path(env)
+        f = p / "source_backtest.json" if p.is_dir() else p
+        return f if f.is_file() else None
+    main = _main_checkout(ROOT)
+    if main is None:
+        return None
+    f = main / SNAPSHOT_DIRNAME / "source_backtest.json"
+    return f if f.is_file() else None
+
+
+def _scale_state(art: dict) -> dict:
+    """The three A-CLAIM-13 findings read off one build, per rater where the
+    finding is per rater."""
+    a = art["accuracy"]
+    v = a["per_year_scale_view"]
+    pooled = a["head_to_head_by_frame"]["vintage_matched"]["delta"]
+    block = (v["gaps_on_this_view"]["xfv_vs_prospx_consensus"]
+             ["floor_E_cond_in_run"]["point_delta"])
+    out = {"sign_agree": pooled * block > 0, "_pooled": pooled, "_block": block}
+    year = v["attribution"]["year_only"]["per_rater"]
+    for r in PUBLISHED:
+        f = year[r]["floor_E_cond_in_run"] or {}
+        out[r] = {
+            "inside_band": bool(v["per_rater"][r]["observed_inside_placebo_band"]),
+            "year_effect_resolves": abs(year[r]["delta_block_minus_pooled"]) > f["mde95"],
+            "_year_delta": year[r]["delta_block_minus_pooled"],
+            "_year_floor": f["mde95"],
+        }
+    return out
+
+
+def _doc_state(step_a: bool = False) -> dict:
+    """STATE lines of the doc's LATEST dated section ('## YYYY-MM-DD: ...').
+    Lines labelled step_a carry the pre-epoch state; the rest the served one."""
+    txt = DOC.read_text(encoding="utf-8")
+    heads = list(re.finditer(r"(?m)^## \d{4}-\d{2}-\d{2}\b.*$", txt))
+    assert heads, f"{DOC.name} has no dated section carrying STATE lines"
+    body = txt[heads[-1].start():]
+    state: dict = {}
+    for line in body.splitlines():
+        toks = line.strip().split()
+        if not toks or toks[0] != "STATE":
+            continue
+        toks = toks[1:]
+        is_a = bool(toks) and toks[0] == "step_a"
+        if is_a:
+            toks = toks[1:]
+        if is_a != step_a:
+            continue
+        kv = dict(t.split("=", 1) for t in toks)
+        rater = kv.pop("rater", None)
+        vals = {k: {"true": True, "false": False}[v] for k, v in kv.items()}
+        if rater:
+            state.setdefault(rater, {}).update(vals)
+        else:
+            state.update(vals)
+    assert state, (f"the latest dated section of {DOC.name} carries no "
+                   f"{'step_a ' if step_a else ''}STATE lines")
+    return state
+
+
+NO_SNAPSHOT = ("no step A snapshot found: set PRE_EPOCH_FWAR_SNAPSHOT or keep "
+               f"<main checkout>/{SNAPSHOT_DIRNAME}/source_backtest.json")
+
+
+def _step_a_state():
+    """The step A state per rater, or None when no snapshot is found. A file that
+    is found but is not the step A copy FAILS; it is never skipped."""
+    f = _snapshot_file()
+    if f is None:
+        return None
+    raw = f.read_bytes()
+    sha = hashlib.sha256(raw).hexdigest()
+    assert sha == SNAPSHOT_SHA256, (
+        f"{f} is not the step A copy (sha256 {sha}, pinned {SNAPSHOT_SHA256})")
+    man = f.parent / "MANIFEST.json"
+    if man.is_file():
+        want = (json.loads(man.read_text(encoding="utf-8"))
+                .get("files", {}).get("data/source_backtest.json", {}).get("sha256"))
+        assert want == sha, (
+            f"{f} does not match its MANIFEST.json entry ({want} against {sha})")
+    return _scale_state(json.loads(raw.decode("utf-8")))
 
 
 @pytest.fixture(scope="module")
@@ -139,18 +271,27 @@ def test_the_efv_versus_consensus_gap_does_not_resolve_on_this_view(view):
 
 
 def test_the_sign_flip_between_the_two_instruments_is_still_there(view):
-    """The most useful thing this lane found: the eFV-vs-consensus gap changes
-    SIGN depending on whether block scale is removed, and neither reading
-    resolves. If both instruments ever agree in sign, the published copy should
-    be revisited."""
-    a = json.loads(ART.read_text(encoding="utf-8"))["accuracy"]
-    pooled = a["head_to_head_by_frame"]["vintage_matched"]["delta"]
-    block = (view["gaps_on_this_view"]["xfv_vs_prospx_consensus"]
-             ["floor_E_cond_in_run"]["point_delta"])
-    assert pooled * block < 0, (
-        f"the pooled cell ({pooled}) and the block view ({block}) now agree in "
-        "sign. That is a change in the evidence and the accuracy copy should be "
-        "re-read before this test is updated.")
+    """The most useful thing this lane found on 2026-09-06: the eFV-vs-consensus
+    gap changed SIGN depending on whether block scale is removed, and neither
+    reading resolved. On the fWAR label (2026-10-03) the two instruments agree
+    in sign (-0.0062 pooled, -0.00002 block); the doc records that as a dated
+    section. The served state must equal that section's STATE line, and the
+    step A state (the flip held: +0.005 and -0.00163) stays pinned."""
+    served = _scale_state(json.loads(ART.read_text(encoding="utf-8")))
+    want = _doc_state()["sign_agree"]
+    assert served["sign_agree"] is want, (
+        f"the pooled cell ({served['_pooled']}) and the block view "
+        f"({served['_block']}) give sign_agree={served['sign_agree']}, but the "
+        f"doc's latest dated section says sign_agree={want}. That is a change in "
+        "the evidence: re-read the accuracy copy and record a new dated section "
+        "before this test is updated.")
+    step_a = _step_a_state()
+    if step_a is None:
+        pytest.skip(NO_SNAPSHOT)
+    assert _doc_state(step_a=True)["sign_agree"] is STEP_A_STATE["sign_agree"]
+    assert step_a["sign_agree"] is STEP_A_STATE["sign_agree"], (
+        f"step A: pooled {step_a['_pooled']} and block {step_a['_block']} no "
+        "longer show the sign flip the record says they showed")
 
 
 # --------------------------------------------------------------------------
@@ -186,11 +327,26 @@ def test_every_rater_is_reported_net_of_its_own_placebo(view):
 
 
 def test_the_three_raters_clear_the_placebo_and_efv_does_not(view):
-    """The finding. If this ever inverts, the lane's whole claim inverts with it."""
-    for r in ("fangraphs", "mlb_pipeline", "prospx_consensus"):
-        assert view["per_rater"][r]["observed_inside_placebo_band"] is False, (
-            f"{r} now sits INSIDE its permutation band, so its block-scale loss "
-            "is no longer separable from what the transform costs by itself")
+    """The 2026-09-06 finding: the three raters sat OUTSIDE their permutation
+    bands. On the fWAR label (2026-10-03) all three sit inside; the doc records
+    that as a dated section. Each rater's served state must equal that section's
+    STATE line, and the step A state (all three outside) stays pinned per rater."""
+    served = _scale_state(json.loads(ART.read_text(encoding="utf-8")))
+    doc = _doc_state()
+    for r in PUBLISHED:
+        assert served[r]["inside_band"] is doc[r]["inside_band"], (
+            f"{r}: inside its permutation band = {served[r]['inside_band']}, but "
+            f"the doc's latest dated section says {doc[r]['inside_band']}. Re-read "
+            "the accuracy copy and record a new dated section before this test "
+            "is updated.")
+    step_a = _step_a_state()
+    if step_a is not None:
+        doc_a = _doc_state(step_a=True)
+        for r in PUBLISHED:
+            assert doc_a[r]["inside_band"] is STEP_A_STATE[r]["inside_band"]
+            assert step_a[r]["inside_band"] is STEP_A_STATE[r]["inside_band"], (
+                f"step A: {r} inside its band = {step_a[r]['inside_band']}, "
+                f"against the recorded {STEP_A_STATE[r]['inside_band']}")
     # DS-02 (2026-09-25): the served eFV V2 grade is the consensus value at the order
     # rank inside (side, year), so it carries the block scale by construction (bug B5's
     # repair). The registration below was made on eFV v1.
@@ -203,6 +359,8 @@ def test_the_three_raters_clear_the_placebo_and_efv_does_not(view):
     assert view["per_rater"]["xfv"]["observed_inside_placebo_band"] is True, (
         "eFV now sits OUTSIDE its permutation band, which would mean eFV carries "
         "block scale too. Confirm before anything is said about the difference.")
+    if step_a is None:
+        pytest.skip(NO_SNAPSHOT)
 
 
 # --------------------------------------------------------------------------
@@ -219,7 +377,12 @@ def test_both_attribution_passes_ran(view):
 def test_the_effect_is_the_base_year_and_not_the_side(view):
     """The half of this lane anybody would have guessed was doing the work is the
     side scale, and it buys nothing measurable. Recorded as a test so a future
-    frame that reverses it has to be noticed."""
+    frame that reverses it has to be noticed.
+
+    The base-year half is read per rater against the doc's latest dated section.
+    On 2026-09-06 every rater's year-only delta cleared its floor. At step A it
+    cleared for mlb_pipeline and prospx_consensus only (fangraphs -0.01808
+    against 0.0182), and on the fWAR label (2026-10-03) it clears for none."""
     side = view["attribution"]["side_only"]["per_rater"]
     year = view["attribution"]["year_only"]["per_rater"]
     for r in RATERS:
@@ -229,11 +392,29 @@ def test_the_effect_is_the_base_year_and_not_the_side(view):
             f"({side[r]['delta_block_minus_pooled']} against {f['mde95']}). That "
             "is a new finding and the doc says the opposite; confirm it before "
             "the copy is changed.")
-    for r in ("fangraphs", "mlb_pipeline", "prospx_consensus"):
-        f = (year[r]["floor_E_cond_in_run"] or {})
-        assert abs(year[r]["delta_block_minus_pooled"]) > f["mde95"], (
-            f"{r}: the base-year scale no longer resolves, which is the lane's "
-            "central measurement")
+    assert set(year) == set(RATERS)
+    served = _scale_state(json.loads(ART.read_text(encoding="utf-8")))
+    doc = _doc_state()
+    for r in PUBLISHED:
+        got = served[r]["year_effect_resolves"]
+        want = doc[r]["year_effect_resolves"]
+        assert got is want, (
+            f"{r}: the base-year scale resolves = {got} "
+            f"({served[r]['_year_delta']} against {served[r]['_year_floor']}), but "
+            f"the doc's latest dated section says {want}. This is the lane's "
+            "central measurement: re-read the accuracy copy and record a new "
+            "dated section before this test is updated.")
+    step_a = _step_a_state()
+    if step_a is None:
+        pytest.skip(NO_SNAPSHOT)
+    doc_a = _doc_state(step_a=True)
+    for r in PUBLISHED:
+        want = STEP_A_STATE[r]["year_effect_resolves"]
+        assert doc_a[r]["year_effect_resolves"] is want
+        assert step_a[r]["year_effect_resolves"] is want, (
+            f"step A: {r} base-year resolves = {step_a[r]['year_effect_resolves']} "
+            f"({step_a[r]['_year_delta']} against {step_a[r]['_year_floor']}), "
+            f"against the recorded {want}")
 
 
 def test_the_side_only_pass_has_exactly_two_blocks(view):
