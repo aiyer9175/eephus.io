@@ -123,6 +123,35 @@ def _efv_progress_update(out_dir: Path, where: str) -> None:
             pass
 
 
+def _model_updates_update(out_dir: Path, where: str) -> None:
+    """LIBRARY_11: append the Model Updates record (data/model_updates.json,
+    model_updates.py) from the registry, its derived cards and the eFV
+    progress ledger, under the `model_updates` heartbeat and ingest-health
+    row. Runs after _efv_progress_update on the daily path and after the
+    registry refresh on the monthly path. Append-only and idempotent; the
+    backfill never runs here. Best-effort: a failure is logged and recorded,
+    never raised."""
+    _log = logging.getLogger("model_updates")
+    try:
+        import model_updates
+        import job_heartbeat as _hb
+        _res = model_updates.update(data_dir=out_dir)
+        _ok = _res.get("status") == "ok" and not _res.get("note_problems")
+        _line = model_updates.summary_line(_res)
+        _hb.record("model_updates", ok=_ok, result=f"{where}: {_line}"[:120])
+        _record_ingest("model_updates", _ok, n_rows=_res.get("n_events") or 0,
+                       message=_line, log=_log)
+        _log.info("model_updates (%s): %s", where, _line)
+    except Exception as _e:
+        _log.exception("model_updates update failed (%s) - continuing", where)
+        try:
+            import job_heartbeat as _hb
+            _hb.record("model_updates", ok=False, result=f"{where}: {_e}"[:120])
+            _record_ingest("model_updates", False, message=str(_e)[:200], log=_log)
+        except Exception:
+            pass
+
+
 STEP_TIMINGS_PATH = Path(__file__).resolve().parent / "logs" / "pipeline_steps_latest.json"
 
 
@@ -430,6 +459,11 @@ SCHEDULED_EXPORTS = (
     # owner ask 2026-10-02). Read-only over the snapshot tables; a raise or a
     # payload over its size line leaves the previous file and files a red here.
     "source_updates_export",
+    # The Model Updates record (LIBRARY_11, model_updates.py, data/
+    # model_updates.json), daily after the eFV progress ledger and monthly
+    # after the registry refresh. A raise, or a note row the validator
+    # rejects, files a red here.
+    "model_updates",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -4120,6 +4154,9 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             # idempotent: a night with no change adds no row and only moves
             # the latest row's last_verified_at. Best-effort.
             _efv_progress_update(out_dir, "daily")
+            # LIBRARY_11 Model Updates record (data/model_updates.json): the
+            # vm2 row just appended lands the same night. Best-effort.
+            _model_updates_update(out_dir, "daily")
 
         # --- 10. FA signing-window tracker (Oct-Mar). ----------------------
         # In-winter the class moves daily (signings, option decisions, QO
@@ -7039,6 +7076,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                          check=True, timeout=300)
         except Exception:
             log.exception("model registry refresh failed — continuing")
+        # LIBRARY_11 Model Updates record: after the registry refresh so the
+        # derived cards it diffs are fresh. Best-effort.
+        _model_updates_update(out_dir, "monthly")
         # Headshot resolution (data/photo_ctx.json for the photo fallback chain).
         # Incremental: TTL-skips already-resolved ids and only re-probes new or
         # still-missing players, so steady-state runs are cheap. Best-effort —

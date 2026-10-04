@@ -49,7 +49,7 @@ happen inside the called module, so this file alone cannot split them).
 | 9e-pre-wx. Forecast weather capture (dark, armed) | betting_model_eval.json |
 | 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
 | 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, job_heartbeat.json, slate.json, source_backtest.json, xfv_scoreboard_eval.json |
-| 9g. eFV scoreboard refresh (xfv_scoreboard_eval.json) | efv_progress.json, xfv_scoreboard_eval.json |
+| 9g. eFV scoreboard refresh (xfv_scoreboard_eval.json) | efv_progress.json, model_updates.json, xfv_scoreboard_eval.json |
 | d10. FA signing-window refresh | mlb_projections.json |
 | d10b. FA re-export off fresh projections | - |
 | d10p. FA P(enter) served snapshot | - |
