@@ -623,11 +623,33 @@
       return [esc(r[0]), nInt(r[1]), nInt(r[2]), n1(r[3]), money(r[4]), signedMoney(r[5]), nInt(r[6])];
     }), 2);
     return banner() + '<div class="fr-grid2"><div>' + fits + '<p class="fr-count">' + esc(copy("market_fits_note")) + "</p></div><div>" + out + "</div></div>" +
-      "<h3>Guaranteed dollars signed, by winter</h3>" + strip +
+      "<h3>Guaranteed dollars signed, by winter</h3>" + strip + marketProfile(s) +
       "<h3>" + gl(copy("market_realized_title"), "realized_contract_value") + "</h3>" +
       '<p class="fr-note">' + esc(copy("market_realized_sentence")) + "</p>" + real +
       '<p class="fr-count">' + esc(nInt(tot.n_covered)) + " of " + esc(nInt(tot.n)) + " signings covered &middot; WAR to date " + esc(n1(tot.war_td)) + " &middot; paid " + esc(money(tot.paid_td)) + " &middot; surplus " + signedMoney(tot.surplus_td) +
       " &middot; method " + esc(rz.method) + ". " + esc(copy("market_realized_coverage")) + "</p>";
+  }
+  // The club free-agent spend profile (owner ask 3, Leg A; the Club Ledger's
+  // own figures, behind its LEDGER_FA_SPEND_PROFILE flag): the share of league
+  // free-agent dollars over two windows and the band mix. Shares and counts
+  // print plain; no cell takes a colour. The glossary id rides the payload.
+  function marketProfile(s) {
+    var P = s.spend_profile;
+    if (!P) return "";
+    var W = copy("market_profile_windows") || {}, BL = copy("market_profile_band_labels") || {}, wins = ["recent", "all"];
+    var share = table(["Window", gl("FA $ share", P.gl), "rank", "signed for", "league"], wins.map(function (w) {
+      var sh = P.share[w] || [];
+      return [esc(W[w] || w), esc(pct(sh[1], 1)), esc(nInt(sh[2])) + " of 30", esc(money(sh[0])), esc(money(P.league_usd[w]))];
+    }), 3);
+    // deals and dollars share a cell ("10 for $35.3M") so the band mix keeps
+    // three columns and fits a phone without hiding a window
+    function dealCell(c) { return c && isNum(c[0]) ? esc(nInt(c[0])) + " for " + esc(money(c[1])) : ""; }
+    var WS = copy("market_profile_windows_short") || {};
+    var bands = table(["Band", "deals, " + esc(WS.recent || "recent"), "deals, " + esc(WS.all || "all")], P.band_keys.map(function (k, i) {
+      return [esc(BL[k] || k), dealCell((P.bands.recent || [])[i]), dealCell((P.bands.all || [])[i])];
+    }));
+    return "<h3>" + esc(copy("market_profile_title")) + "</h3>" + '<p class="fr-note">' + esc(copy("market_profile_lede")) + "</p>" + share + bands +
+      '<p class="fr-count">' + esc(copy("market_profile_note")) + "</p>";
   }
   var PANEL_NOTE = { promotionTiming: "promotion_timing_note" };
   function secFrontOffice(d) {

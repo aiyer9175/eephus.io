@@ -169,6 +169,36 @@ TRAJECTORY_KEYS = ("surplus.trajectory", "farm.trajectory_active", "farm.prospec
 TRAJECTORY_RECEIPT = ("surplus.trajectory, farm.trajectory_active and farm.prospect_trajectory live in "
                       "each club's row file (ledger_clubs/CODE.json), not on this board")
 
+# --------------------------------------------------------------------------
+# The club free-agent spend profile and the payroll history (owner ask 3,
+# 2026-09-30, "which teams actually spend money in free agency"; Part 8 lane
+# finance_to_fa_arb, Leg A). DESCRIPTIVE: what each club spent on free agents
+# by the winter each deal was signed, and its tax payroll and payor tier
+# season by season, as facts. No forward claim, no gate, no colour on a
+# dollar, no single projected payroll. The rows live in the club's shard; the
+# board carries one league column (FA $ share, 3 winters). Behind this flag:
+# with it off the board and the shards are byte-identical to the build
+# without it (test_club_fa_profile). Flipped on 2026-10-03, after the fWAR
+# label epoch's step Z entry, with its glossary entries and registry row
+# club_fa_spend_profile in the same commit.
+# --------------------------------------------------------------------------
+LEDGER_FA_SPEND_PROFILE = True
+#: The recent window: the last this-many winters on fa_archive.json.
+FA_PROFILE_RECENT_WINTERS = 3
+#: Guarantee bands on the nominal guarantee, [lo, hi) in usd; the last is open.
+FA_PROFILE_BANDS = (("under_10m", 0, 10_000_000), ("10m_50m", 10_000_000, 50_000_000),
+                    ("50m_100m", 50_000_000, 100_000_000), ("100m_up", 100_000_000, None))
+#: Seasons of the payroll history, read off the cached Spotrac pages only.
+PAYROLL_HISTORY_SEASONS = tuple(range(2016, SEASON_NOW + 1))
+#: Column legends for the two new row arrays (board and shard both carry them).
+FA_PROFILE_COLUMNS = {
+    "payroll.history": ["season", "tax_payroll_usd", "payor_tier", "threshold_usd", "over_threshold_usd",
+                        "est_tax_bill_usd", "total_payroll_usd"],
+    "fa.profile.bands": ["n_deals", "guar_usd"],
+}
+FA_PROFILE_COPY = ("Share of league free-agent dollars, by the winter each deal was signed. "
+                   "Realized spending, not a forecast.")
+
 #: Farm reconciliation (owner decision D3): the leaf is a net figure written by
 #: storage.export_timeseries_json at one point of the nightly and the rows come
 #: from trade_values written later the same night, so the identity holds to a
@@ -952,6 +982,143 @@ def _sha16(b: bytes) -> str:
 
 def _doc_bytes(doc: dict) -> int:
     return len(json.dumps(doc, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+
+
+# --------------------------------------------------------------------------
+# Leg A: the club free-agent spend profile and the payroll history
+# --------------------------------------------------------------------------
+
+def _fa_band(guar) -> int:
+    g = float(guar or 0)
+    for i, (_k, lo, hi) in enumerate(FA_PROFILE_BANDS):
+        if g >= lo and (hi is None or g < hi):
+            return i
+    return 0
+
+
+def club_fa_spend_profile(winters: list, clubs, recent: int = FA_PROFILE_RECENT_WINTERS) -> dict:
+    """Which clubs spent in free agency, as a fact, from fa_archive.json winters.
+
+    A club's dollars in a winter are _isum(ins, "guar") over the signings whose
+    destination canonicalizes to the club: the exact cell the Spend by winter
+    table prints (fa.winters column spend_in_usd), so the windows reconcile to
+    that table. The league total is the sum of the thirty club totals, so the
+    thirty shares of a window sum to one. Rank 1 is the largest outlay (ties
+    share the better rank). The band mix, the departures and the re-sign share
+    count major-league deals only (a minor-league deal carries no guarantee).
+    QO in is the Spend by winter QO column (signings by this club whose row
+    carries the QO tag, a re-signing included); QO out counts QO-tagged
+    players who signed with another club.
+
+    Returns {"windows": {"recent": [first, last, n], "all": [...]},
+    "league_usd": {"recent": int, "all": int}, "clubs": {club: {"share":
+    {w: [usd, share, rank]}, "bands": {w: [[n_deals, guar_usd] per band]},
+    "resign": {w: [n_departed, n_resigned, share]}, "qo": {w: [qo_in, qo_out]},
+    "n_milb_in": {w: n}}}}. Nothing here reads a WAR, a price or a forecast."""
+    clubs = list(clubs)
+    years = sorted({int(w["year"]) for w in winters if w.get("year") is not None})
+    if not years:
+        return {"windows": {}, "league_usd": {}, "clubs": {}}
+    win_years = {"recent": set(years[-recent:]), "all": set(years)}
+    acc = {c: {wk: {"usd": 0, "bands": [[0, 0] for _ in FA_PROFILE_BANDS], "dep": 0, "res": 0,
+                    "qo_in": 0, "qo_out": 0, "milb": 0} for wk in win_years} for c in clubs}
+    cset = set(clubs)
+    for w in winters:
+        if w.get("year") is None:
+            continue
+        y = int(w["year"])
+        keys = [wk for wk, ys in win_years.items() if y in ys]
+        sg = w.get("signings") or []
+        to_c = [_canon(s.get("to")) for s in sg]
+        from_c = [_canon(s.get("from")) for s in sg]
+        for c in clubs:
+            ins = [s for s, t in zip(sg, to_c) if t == c]
+            usd = _isum(ins, "guar")              # == the Spend by winter cell
+            mlb_in = [s for s in ins if not s.get("milb")]
+            outs = [(s, t) for s, t, f in zip(sg, to_c, from_c) if f == c]
+            dep = [(s, t) for s, t in outs if not s.get("milb")]
+            for wk in keys:
+                a = acc[c][wk]
+                a["usd"] += usd
+                for s in mlb_in:
+                    b = a["bands"][_fa_band(s.get("guar"))]
+                    b[0] += 1
+                    b[1] += int(float(s.get("guar") or 0))
+                a["milb"] += len(ins) - len(mlb_in)
+                a["dep"] += len(dep)
+                a["res"] += sum(1 for _s, t in dep if t == c)
+                a["qo_in"] += sum(1 for s in ins if s.get("qo"))
+                a["qo_out"] += sum(1 for s, t in outs if s.get("qo") and t != c)
+    assert cset == set(acc)
+    league = {wk: sum(acc[c][wk]["usd"] for c in clubs) for wk in win_years}
+    ranks = {}
+    for wk in win_years:
+        vals = sorted((acc[c][wk]["usd"] for c in clubs), reverse=True)
+        ranks[wk] = {c: 1 + vals.index(acc[c][wk]["usd"]) for c in clubs}
+    out_clubs = {}
+    for c in clubs:
+        rec = {"share": {}, "bands": {}, "resign": {}, "qo": {}, "n_milb_in": {}}
+        for wk in win_years:
+            a = acc[c][wk]
+            rec["share"][wk] = [a["usd"], (a["usd"] / league[wk]) if league[wk] else None, ranks[wk][c]]
+            rec["bands"][wk] = [list(b) for b in a["bands"]]
+            rec["resign"][wk] = [a["dep"], a["res"], (a["res"] / a["dep"]) if a["dep"] else None]
+            rec["qo"][wk] = [a["qo_in"], a["qo_out"]]
+            rec["n_milb_in"][wk] = a["milb"]
+        out_clubs[c] = rec
+    windows = {wk: [min(ys), max(ys), len(ys)] for wk, ys in win_years.items()}
+    return {"windows": windows, "league_usd": league, "clubs": out_clubs}
+
+
+def club_payroll_history(hist: dict, clubs, cba_threshold=None) -> tuple:
+    """({club: [[season, tax_payroll_usd, payor_tier, threshold_usd,
+    over_threshold_usd, est_tax_bill_usd, total_payroll_usd], ...]}, census)
+    from fa_sources.read_cached_payroll_history.
+
+    threshold_usd is the season's threshold as that season's tax page prints
+    it (each row carries its own season's line); over_threshold_usd is the tax
+    payroll less it (negative = under). est_tax_bill_usd is blank, never zero,
+    for a club Spotrac shows no bill for. total_payroll_usd is the season's
+    payroll page (Spotrac total payroll allocations; none for 2016).
+    cba_threshold(season) -> usd or None, when given, is compared with the
+    page's figure season by season and the census records the agreement."""
+    clubs = list(clubs)
+    by = {c: [] for c in clubs}
+    unjoined: Counter = Counter()
+    thresholds, agree, fetched = {}, {}, {}
+    for y in sorted(hist.get("seasons") or {}):
+        rec = hist["seasons"][y]
+        T = rec.get("threshold_usd")
+        thresholds[str(y)] = T
+        fetched[str(y)] = [rec.get("tax_fetched"), rec.get("payroll_fetched")]
+        if cba_threshold is not None:
+            rule = cba_threshold(y)
+            agree[str(y)] = None if (rule is None or T is None) else (int(rule) == int(T))
+        tax, pay = {}, {}
+        for r in rec.get("tax") or []:
+            c = _canon(r.get("team"))
+            if c in by:
+                tax.setdefault(c, r)
+            else:
+                unjoined[str(r.get("team"))] += 1
+        for r in rec.get("payroll") or []:
+            c = _canon(r.get("team"))
+            if c in by:
+                pay.setdefault(c, r)
+        for c in clubs:
+            r = tax.get(c)
+            if not r:
+                continue
+            t = r.get("tax_payroll_usd")
+            by[c].append([int(y), t, r.get("payor_status_raw") or None, T,
+                          (int(t) - int(T)) if (t is not None and T is not None) else None,
+                          r.get("est_tax_bill_usd") or None, (pay.get(c) or {}).get("total_payroll_usd")])
+    census = {"seasons": sorted(int(s) for s in thresholds), "threshold_by_season": thresholds,
+              "threshold_agrees_cba_rules": agree, "fetched": fetched,
+              "missing_tax": list(hist.get("missing_tax") or []),
+              "missing_payroll": list(hist.get("missing_payroll") or []),
+              "n_rows": sum(len(v) for v in by.values()), "unjoined": dict(unjoined)}
+    return by, census
 
 
 # --------------------------------------------------------------------------
@@ -1960,6 +2127,33 @@ def build_all() -> tuple:
             "field_key": {}, "columns": {},
         }
 
+    # ---- Leg A (behind LEDGER_FA_SPEND_PROFILE): the club FA spend profile and
+    # the payroll history, written to the shards; the board keeps a receipt ----
+    fa_profile = hist_census = None
+    if LEDGER_FA_SPEND_PROFILE:
+        import fa_sources
+        fa_profile = club_fa_spend_profile(winters, clubs)
+
+        def _rule_threshold(season):
+            try:
+                t = fa_cba.cbt_threshold(int(season))
+            except LookupError:
+                return None
+            return None if t.get("carry_forward") else t.get("threshold_usd")
+
+        hist_rows, hist_census = club_payroll_history(
+            fa_sources.read_cached_payroll_history(PAYROLL_HISTORY_SEASONS), clubs, _rule_threshold)
+        hist_census["s2026_matches_payroll_block"] = sum(
+            1 for c in clubs for r in hist_rows[c]
+            if r[0] == SEASON_NOW and r[1] == club_docs[c]["payroll"]["s2026"]["tax_payroll_usd"])
+        for c in clubs:
+            rows_h = hist_rows[c]
+            shard_docs[c]["payroll"] = {"history": rows_h}
+            shard_docs[c]["fa"] = {"profile": fa_profile["clubs"][c]}
+            if rows_h:
+                club_docs[c]["payroll"]["history"] = {"status": "shard", "n": len(rows_h),
+                                                      "first": rows_h[0][0], "last": rows_h[-1][0]}
+
     # ---- Cost+ across the 30 clubs (AVERAGES never in the pool) ----------------
     vals = [ratio_by_club[c] for c in clubs if ratio_by_club.get(c) is not None]
     mu = statistics.mean(vals)
@@ -2074,6 +2268,23 @@ def build_all() -> tuple:
             later=later_options_summary(later_by_club, n_later_early)),
         "cba_banner": True,
     }
+    if fa_profile is not None:
+        # One league column (Leg A): the club's share of league free-agent
+        # dollars over the recent window. A share, not a dollar: it takes no
+        # colour, enters no footer mean (thirty shares average 1/30 by
+        # construction) and the club page carries the rest.
+        fw = fa_profile["windows"]["recent"]
+        for r in league_rows:
+            r["fa_share_3"] = fa_profile["clubs"][r["club"]]["share"]["recent"][1]
+        at = next(i for i, col in enumerate(league["columns"]) if col[0] == "arb_exposure_2027") + 1
+        league["columns"].insert(at, ["fa_share_3", f"FA $ share, {fw[2]} winters", "fa_dollar_share",
+                                      f"{FA_PROFILE_COPY} Winters {fw[0]} to {fw[1]}; the nominal guarantees "
+                                      "the club Spend by winter table prints, over the thirty clubs' total"])
+        league["fa_spend_profile"] = {
+            "windows": fa_profile["windows"], "league_usd": fa_profile["league_usd"],
+            "bands": [[k, lo, hi] for k, lo, hi in FA_PROFILE_BANDS],
+            "source": "fa_archive.json signings (S11), the Spend by winter rows", "descriptive": True,
+        }
 
     # ---- rules tab -------------------------------------------------------------
     qo_comp = fa_cba.qo_compensation(date.today())
@@ -2613,6 +2824,55 @@ def build_all() -> tuple:
             "price_usd is the curated option-year salary where the file holds one, else null, never summed "
             "and never priced"),
     }
+    if fa_profile is not None:
+        fw, fa_all = fa_profile["windows"]["recent"], fa_profile["windows"]["all"]
+        shard_field_key.update({
+            "payroll.history": (
+                "[season, tax_payroll_usd, payor_tier, threshold_usd, over_threshold_usd, est_tax_bill_usd, "
+                "total_payroll_usd]; one row per season the cached Spotrac tax page carries the club, read "
+                "without a fetch (fa_sources.read_cached_payroll_history); threshold_usd is that season's "
+                "threshold as its own page prints it; over_threshold_usd = tax_payroll_usd - threshold_usd "
+                "(negative = under); est_tax_bill_usd is Spotrac's estimate, blank, never zero, where the page "
+                "shows none; total_payroll_usd is Spotrac total payroll allocations off the season's payroll "
+                "page (null where none is cached); realized figures, not a forecast"),
+            "fa.profile": (
+                "{share {recent|all: [usd, share, rank]}, bands {recent|all: [[n_deals, guar_usd] per band in "
+                "league.fa_spend_profile.bands order]}, resign {recent|all: [n_departed, n_resigned, share]}, "
+                "qo {recent|all: [qo_in, qo_out]}, n_milb_in {recent|all: n}}; usd is the sum of the club's "
+                "Spend by winter cells (fa.winters spend_in_usd) over the window, share is usd over the thirty "
+                "clubs' total for the window, rank 1 the largest; bands, departures and re-signings count "
+                "major-league deals only; realized spending, not a forecast"),
+        })
+        board_field_key["league.fa_spend_profile"] = (
+            "{windows {recent|all: [first_winter, last_winter, n_winters]}, league_usd {recent|all}, bands "
+            "[[key, lo_usd, hi_usd]], source, descriptive}; league_usd is the thirty clubs' total, so the "
+            "thirty shares of a window sum to one")
+        copy.update({
+            "fa_profile_title": "Who spends in free agency",
+            "fa_profile_gl": {"share": "fa_dollar_share", "bands": "fa_spend_bands", "resign": "fa_resign_share"},
+            "fa_profile_lede": FA_PROFILE_COPY,
+            "fa_profile_windows": {"recent": f"last {fw[2]} winters, {fw[0]} to {fw[1]}",
+                                   "all": f"since {fa_all[0]}, {fa_all[2]} winters"},
+            "fa_profile_windows_short": {"recent": f"{fw[0]} to {fw[1]}", "all": f"since {fa_all[0]}"},
+            "fa_profile_band_labels": {"under_10m": "under $10M", "10m_50m": "$10M to $50M",
+                                       "50m_100m": "$50M to $100M", "100m_up": "$100M and up"},
+            "fa_profile_bands_note": ("Major-league deals only, each in the band of its nominal guarantee; "
+                                      "minor-league deals carry no guarantee and are counted apart."),
+            "fa_profile_resign_note": ("Of this club's free agents who signed a major-league deal, the share "
+                                       "who signed back with this club."),
+            "fa_profile_qo_note": "Signings and departures whose row carries the qualifying-offer tag.",
+            "fa_profile_share_basis": ("Nominal guarantees, the same dollars as the Spend by winter table, "
+                                       "over the thirty clubs' total for the window; rank 1 is the largest."),
+            "payroll_history_title": "Payroll history",
+            "payroll_history_note": (f"Spotrac's tax page for each season from {hist_census['seasons'][0]} "
+                                     f"to {hist_census['seasons'][-1]} as cached, read without a fetch: tax "
+                                     "payroll, payor tier, the season's threshold as that page prints it and "
+                                     "Spotrac's estimated bill, with total payroll allocations from the "
+                                     "season's payroll page where one is cached (2020 prints as Spotrac carries "
+                                     "it, the shortened season's prorated cash). Realized figures, not a "
+                                     "forecast; no line is drawn past the last season.")
+            if hist_census and hist_census["seasons"] else copy["history_blocked_on"],
+        })
     field_key.update(shard_field_key)
     field_key.update(board_field_key)
 
@@ -2798,16 +3058,33 @@ def build_all() -> tuple:
         ],
     }
 
+    shard_column_keys = ["farm.prospects", "farm.graduates", "farm.picks", "arbitration.ladders",
+                         "arbitration.realized.rows", "contracts.paths", "surplus.rows_debuted",
+                         "farm.prospect_trajectory", "farm.trajectory_active"]
+    if fa_profile is not None:
+        for k, cols in FA_PROFILE_COLUMNS.items():
+            doc["columns"][k] = list(cols)
+        # the history is a row array in the shard; the band legend indexes the
+        # [n_deals, guar_usd] cells inside fa.profile and rides the board only
+        shard_column_keys.append("payroll.history")
+        live_h = bool(hist_census and hist_census["n_rows"])
+        doc["sections"]["payroll_history"] = (
+            dict({"live": True, "note": "per-club rows in the club's row file, read off the cached Spotrac pages"},
+                 census=hist_census) if live_h
+            else {"live": False, "blocked_on": copy["history_blocked_on"], "census": hist_census})
+        doc["sections"]["fa_spend_profile"] = {"live": True, "note": "descriptive; realized spending by the "
+                                               "winter each deal was signed, never a forecast"}
+        doc["what_this_page_does_not_claim"].append(
+            "a free-agent spending forecast: the spend profile is realized spending by the winter each deal "
+            "was signed, and the payroll history stops at the last season Spotrac's pages carry")
+
     # ---- D5 finalize: previews, per-player trajectories, shard bytes and the
     # board index; the preview guard re-runs the step at the small size if the
     # written board would pass PREVIEW_GUARD_BYTES --------------------------------
     for c, sd in shard_docs.items():
         sd["calibration"] = calibration
         sd["field_key"] = dict(shard_field_key)
-        sd["columns"] = {k: list(COLUMNS[k]) for k in
-                         ("farm.prospects", "farm.graduates", "farm.picks", "arbitration.ladders",
-                          "arbitration.realized.rows", "contracts.paths", "surplus.rows_debuted",
-                          "farm.prospect_trajectory", "farm.trajectory_active")}
+        sd["columns"] = {k: list(doc["columns"][k]) for k in shard_column_keys}
 
     def _finalize(n: int) -> None:
         keys = []
@@ -2960,6 +3237,10 @@ def _assert_document(doc: dict) -> None:
         for y, ps in d["farm"]["picks_summary"].items():
             assert len(ps) == len(COLUMNS["farm.picks_summary"]), (c, y)
             assert ps[2] + ps[3] + ps[4] == ps[1] and ps[4] >= 0, (c, y, "signed picks split")
+    if "fa_spend_profile" in doc["league"]:
+        sh = [r["fa_share_3"] for r in doc["league"]["rows"]]
+        assert all(s is not None for s in sh) and abs(sum(sh) - 1.0) <= 1e-9, "the league FA share column"
+        assert "fa_share_3" not in doc["league"]["means"]["values"] and "fa_share_3" not in doc["league"]["coloured"]
     for path, k in _walk_keys(doc):
         ks = str(k).lower()
         assert ks not in FORBIDDEN_KEYS, path
@@ -3000,6 +3281,23 @@ def _assert_shards(doc: dict, shard_docs: dict) -> None:
                 assert frag not in ks, (c, path)
             assert not (("ou_mkt" in ks and "ou_war" in ks) or ks in ("ou_total", "ou_combined", "ou_sum")), (c, path)
         assert_aggregate_keys(sd)
+    # Leg A: the thirty shares of each window sum to one, the payroll history
+    # rows match their legend and each row carries its own season's threshold
+    prof = {c: sd["fa"]["profile"] for c, sd in shard_docs.items() if "fa" in sd}
+    if prof:
+        assert set(prof) == set(shard_docs), "a spend profile on some clubs only"
+        for wk in next(iter(prof.values()))["share"]:
+            shares = [p["share"][wk][1] for p in prof.values()]
+            if all(s is not None for s in shares):
+                assert abs(sum(shares) - 1.0) <= 1e-9, (wk, sum(shares))
+        lg = (doc["league"].get("fa_spend_profile") or {}).get("league_usd") or {}
+        for wk, tot in lg.items():
+            assert sum(p["share"][wk][0] for p in prof.values()) == tot, (wk, "league total")
+        thr = (doc["sections"]["payroll_history"].get("census") or {}).get("threshold_by_season") or {}
+        for c, sd in shard_docs.items():
+            for row in sd["payroll"]["history"]:
+                assert len(row) == len(FA_PROFILE_COLUMNS["payroll.history"]), (c, "payroll.history")
+                assert row[3] == thr.get(str(row[0])), (c, row[0], "a row prints its own season's threshold")
 
 
 def main(argv=None) -> int:

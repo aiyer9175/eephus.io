@@ -266,7 +266,7 @@
   var SHORT = { cbt_payroll_2026: "2026 CBT", space_2027_spotrac: "Space 27", cost_plus: "Cost+", club: "Club",
                 est_tax_2026: "Est. tax 26", committed_2027: "Committed 27", proj_wins_2027: "Proj wins 27",
                 usd_per_win: "$ per win", usd_per_war: "$ per WAR", controlled_surplus_mm: "Ctrl surplus",
-                arb_exposure_2027: "Arb exp 27" };
+                arb_exposure_2027: "Arb exp 27", fa_share_3: "FA $ share" };
   var KEEP_NARROW = { club: 1, cbt_payroll_2026: 1, space_2027_spotrac: 1, cost_plus: 1 };
   var TEXT_COLS = { club: 1, payor_2026: 1 };
 
@@ -317,6 +317,8 @@
     if (key === "locked_pct") return pct(v, 0);
     if (key === "controlled_surplus_mm") return moneyMM(v);
     if (key === "farm_rank") return isNum(v) ? String(v) : "";
+    // a share of league free-agent dollars: plain, no ladder (Leg A)
+    if (key === "fa_share_3") return pct(v, 1);
     if (key === "usd_per_win" || key === "usd_per_war") return money(v);
     return money(v);
   }
@@ -504,9 +506,30 @@
           return '<span><i class="ledger-split-' + names[i] + '"></i>' + esc(names[i]) + " " + esc(isNum(v) ? money(v) : "n/a") + "</span>";
         }).join("") + "<span>" + esc(copy("split_2027_label")) + (isNum(p27.avg_age) ? "; avg age " + esc(num(p27.avg_age, 1)) : "") + "</span></div>";
     }
-    out += dark("Payroll history", (DATA.sections.payroll_history || {}).blocked_on || "");
+    out += renderPayrollHistory(d);
     out += how('<p class="ledger-count">' + esc(copy("allocations_note")) + "</p>" + '<p class="ledger-count">' + esc(copy("split_2026_note")) + "</p>");
     return out;
+  }
+  // The payroll history (Leg A, behind the export's LEDGER_FA_SPEND_PROFILE):
+  // one row per season off the cached Spotrac tax and payroll pages, in the
+  // club's row file. Every dollar prints plain; the distance to the season's
+  // own threshold prints as words, over or under, with no colour.
+  var PH = "payroll.history";
+  function renderPayrollHistory(d) {
+    var H = d.payroll.history || {};
+    if (H.status !== "shard") return dark("Payroll history", (DATA.sections.payroll_history || {}).blocked_on || "");
+    var s = shardOf(d.club), rows = s && s.payroll ? s.payroll.history : null;
+    var out = "<h3>" + gl(copy("payroll_history_title") || "Payroll history", "cbt_payroll") + "</h3>";
+    if (!rows) return out + shardLine(d.club, copy("payroll_history_note"));
+    var body = rows.slice().reverse().map(function (r) {
+      var ov = cv(PH, r, "over_threshold_usd");
+      return "<tr><td>" + esc(cv(PH, r, "season")) + "</td><td>" + esc(money(cv(PH, r, "tax_payroll_usd"))) + "</td><td>" + esc(cv(PH, r, "payor_tier") || "") +
+        "</td><td>" + esc(money(cv(PH, r, "threshold_usd"))) + "</td><td>" + (isNum(ov) ? esc((Number(ov) < 0 ? "under by " : "over by ") + money(Math.abs(Number(ov)))) : "") +
+        "</td><td>" + esc(money(cv(PH, r, "est_tax_bill_usd"))) + "</td><td>" + esc(money(cv(PH, r, "total_payroll_usd"))) + "</td></tr>";
+    }).join("");
+    return out + shardLine(d.club) + '<div class="ledger-scroll"><table class="ledger-table" aria-label="' + esc("Payroll history, " + d.club) + '"><thead><tr><th>Season</th><th>' + gl("CBT payroll", "cbt_payroll") + "</th><th>" + gl("Payor", "payor_tier") +
+      "</th><th>Threshold</th><th>vs threshold</th><th>Est. tax</th><th>" + gl("Total allocations", "payroll_allocations") + "</th></tr></thead><tbody>" + body + "</tbody></table></div>" +
+      '<p class="ledger-count">' + esc(copy("payroll_history_note")) + "</p>";
   }
   function renderCbt(d) {
     var y = state.season, C = d.cbt[y] || {}, tiers = DATA.cba.surcharge_tiers_usd, T = C.threshold_usd;
@@ -984,6 +1007,7 @@
     var pr = A.priors || [];
     out += '<div class="ledger-tiles ledger-tiles--2">' + tile("Largest guarantee", money(pr[0]), esc(copy("priors_basis"))) + tile("Deals of $100M+", esc(pr[1]), esc(copy("priors_basis"))) +
       tile("Three-winter outlay", money(pr[2]), esc(copy("priors_basis"))) + tile("Winters on file", esc(A.winters.length), "fa_archive") + "</div>";
+    out += renderFaProfile(d);
     out += "<h3>Spend by winter</h3>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Winter</th><th>Signed</th><th>Spend</th><th>Mean AAV</th><th>QO</th><th>Departed</th><th>Guar elsewhere</th><th>League ' + gl("$/WAR", "winter_dpw") + "</th></tr></thead><tbody>" +
       A.winters.slice().reverse().map(function (w) {
         return "<tr><td>" + esc(w[0]) + "</td><td>" + esc(w[1]) + "</td><td>" + esc(money(w[2])) + "</td><td>" + esc(money(w[3])) + "</td><td>" + esc(w[4]) + "</td><td>" + esc(w[5]) + "</td><td>" + esc(money(w[6])) + "</td><td>" + esc(money(w[7])) + "</td></tr>";
@@ -996,6 +1020,44 @@
       '<p class="ledger-count">Method ' + esc(copy("realized_method")) + ". " + esc(copy("realized_coverage")) + "</p>" +
       '<p class="ledger-note">' + esc(copy("realized_sentence")) + "</p>";
     return out;
+  }
+  // Who spends in free agency (Leg A, behind the export's LEDGER_FA_SPEND_PROFILE):
+  // the club's share of league free-agent dollars by the winter each deal was
+  // signed, its band mix, the re-sign share and the QO counts, read from the
+  // club's row file. A share and a count print plain; no cell takes a colour.
+  // The glossary ids ride the payload (copy.fa_profile_gl).
+  function renderFaProfile(d) {
+    var LP = DATA.league.fa_spend_profile;
+    if (!LP) return "";
+    var G = copy("fa_profile_gl") || {}, W = copy("fa_profile_windows") || {}, BL = copy("fa_profile_band_labels") || {};
+    var out = "<h3>" + (G.share ? gl(copy("fa_profile_title"), G.share) : esc(copy("fa_profile_title"))) + "</h3>" +
+      '<p class="ledger-note">' + esc(copy("fa_profile_lede")) + "</p>";
+    var s = shardOf(d.club), P = s && s.fa ? s.fa.profile : null;
+    if (!P) return out + shardLine(d.club, copy("fa_profile_lede"));
+    var wins = ["recent", "all"];
+    var head = "<tr><th>Window</th><th>" + (G.share ? gl("FA $ share", G.share) : "FA $ share") + "</th><th>Rank of 30</th><th>Signed for</th><th>League</th><th>" +
+      (G.resign ? gl("Re-signed", G.resign) : "Re-signed") + "</th><th>QO in</th><th>QO out</th></tr>";
+    var body = wins.map(function (w) {
+      var sh = P.share[w] || [], rs = P.resign[w] || [], qo = P.qo[w] || [];
+      return "<tr><td>" + esc(W[w] || w) + "</td><td>" + esc(pct(sh[1], 1)) + "</td><td>" + esc(sh[2]) + "</td><td>" + esc(money(sh[0])) + "</td><td>" + esc(money(LP.league_usd[w])) +
+        "</td><td>" + (isNum(rs[2]) ? esc(pct(rs[2], 0)) + " (" + esc(rs[1]) + " of " + esc(rs[0]) + ")" : esc("none departed")) + "</td><td>" + esc(qo[0]) + "</td><td>" + esc(qo[1]) + "</td></tr>";
+    }).join("");
+    out += '<div class="ledger-scroll"><table class="ledger-table" aria-label="' + esc("Free-agent spend profile, " + d.club) + '"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
+    // deals and dollars share a cell ("11 for $52.5M"), one column per window
+    var WS = copy("fa_profile_windows_short") || {};
+    var bhead = "<tr><th>" + (G.bands ? gl("Guarantee band", G.bands) : "Guarantee band") + "</th>" + wins.map(function (w) {
+      return "<th>Deals, " + esc(WS[w] || W[w] || w) + "</th>";
+    }).join("") + "</tr>";
+    var bbody = LP.bands.map(function (b, i) {
+      return "<tr><td>" + esc(BL[b[0]] || b[0]) + "</td>" + wins.map(function (w) {
+        var cell = (P.bands[w] || [])[i] || [], n = cell[colIdx("fa.profile.bands", "n_deals")];
+        return "<td>" + (isNum(n) ? esc(n) + " for " + esc(money(cell[colIdx("fa.profile.bands", "guar_usd")])) : "") + "</td>";
+      }).join("") + "</tr>";
+    }).join("");
+    out += '<div class="ledger-scroll"><table class="ledger-table" aria-label="' + esc("Guarantee band mix, " + d.club) + '"><thead>' + bhead + "</thead><tbody>" + bbody + "</tbody></table></div>";
+    return out + '<p class="ledger-count">' + esc(copy("fa_profile_share_basis")) + " " + esc(copy("fa_profile_bands_note")) + " " +
+      esc(copy("fa_profile_resign_note")) + " " + esc(copy("fa_profile_qo_note")) + " Minor-league signings: " + esc(P.n_milb_in.recent) + " (" + esc(W.recent || "") + "), " +
+      esc(P.n_milb_in.all) + " (" + esc(W.all || "") + ").</p>";
   }
   // ---- the option and opt-out calendar (owner answer 2026-09-25) ------------
   // One row per pending option or opt-out on this winter's free-agent class.
