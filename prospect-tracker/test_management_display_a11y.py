@@ -18,6 +18,7 @@ scratchpad); these tests pin the code paths that produce it.
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -82,3 +83,88 @@ def test_every_management_section_opens_with_an_h2(section):
     assert heads and heads[0] == "h2", (section, heads[:3])
     levels = [int(x[1]) for x in heads]
     assert all(b - a <= 1 for a, b in zip(levels, levels[1:])), (section, levels)
+
+
+# --------------------------------------------------------------------------
+# The display pass: the claim stays, the method folds, nothing is dropped
+# --------------------------------------------------------------------------
+
+def _r2(h, payload=None):
+    pytest.importorskip("py_mini_racer")
+    import test_management_render as R
+    return R._render2(h, payload=payload)[0]
+
+
+@pytest.mark.parametrize("h", ["#section=league", "#section=decisions&team=MIA&season=2026",
+                               "#section=managers", "#section=clubs&team=MIA&season=2026"])
+def test_the_realized_disclosure_is_the_lede_and_the_rest_is_one_click_down(h):
+    """M10-21. The 94-word realized sentence printed in full under four tabs and
+    pushed every table below the fold. Each tab now leads with its first sentence
+    and keeps the whole of it, once, inside How this works."""
+    import test_management_render as R
+    full = ("Realized value, not skill. Each figure is the win probability that actually moved. "
+            "A reliever who pitched well after a poor choice is in these numbers.")
+    d = json.loads(json.dumps(R.SAMPLE2))
+    d["decisions"]["realized_sentence"] = full
+    d["clubs"]["columns_are_realized_not_skill"] = full
+    html = _r2(h, d)
+    assert html.count("Realized value, not skill.") == 1, h
+    head, _, rest = html.partition("Realized value, not skill.")
+    assert '<details class="mgmt-how"><summary>How this works</summary>' in rest, h
+    tail = rest.split('<details class="mgmt-how">', 1)[1]
+    assert "Each figure is the win probability that actually moved." in tail
+    assert "A reliever who pitched well after a poor choice is in these numbers." in tail
+    assert "The agent is the club-season." in html
+
+
+def test_no_verdict_word_on_a_realized_extreme():
+    """M10-04. The board headed a club-season's largest realized swing Best decision
+    and Worst decision, a skill claim on a page that forbids one."""
+    js = (ROOT / "assets" / "management.js").read_text(encoding="utf-8")
+    assert "Best decision" not in js and "Worst decision" not in js
+    html = _r2("#section=managers")
+    assert "Largest gain" in html and "Largest loss" in html
+    assert re.search(r"<th>Largest gain <span class=\"mgmt-th-tag\">realized</span></th>", html)
+
+
+def test_the_board_comes_before_the_dark_manager_block():
+    html = _r2("#section=managers")
+    assert html.index("Club-season leaderboard") < html.index("Managers <span class=\"mgmt-darktag\">not published</span>")
+    assert "Blocked on: mgmt_managers ingest (M-MWAR-2)." in html, "the blocker is kept, below the board"
+
+
+def test_the_census_windows_sentence_wraps_inside_the_table():
+    """X06-13. The nowrap windows sentence widened the census table to 1,800 px."""
+    html = _r2("#section=league")
+    assert '<td class="mgmt-wrap">partition</td>' in html
+    css = (ROOT / "assets" / "management.css").read_text(encoding="utf-8")
+    assert ".mgmt-table--census td.mgmt-wrap { white-space: normal; min-width: 24ch; max-width: 36ch;" in css
+
+
+def test_related_modules_are_linked_once_under_every_section():
+    import test_management_render as R
+    built = dict(R.SAMPLE2, routes={"franchise": True, "ledger": True})
+    for h in ("#section=league", "#section=gate", "#section=clubs&team=MIA&season=2026"):
+        html = _r2(h, built)
+        assert html.count('class="mgmt-related"') == 1, h
+        strip = html.split('class="mgmt-related"')[1]
+        assert '<a href="/franchise/">Franchises</a>' in strip and '<a href="/ledger/">Club Ledger</a>' in strip
+    html = _r2("#section=league")
+    assert 'href="/franchise/"' not in html, "an unbuilt route is not linked"
+
+
+def test_a_style_row_links_to_its_club_page_only_when_the_ledger_has_it():
+    import test_management_render as R
+    d = json.loads(json.dumps(R.SAMPLE2))
+    d["teams"]["rows"] = [dict(d["teams"]["rows"][0], team="MIA", season=2026),
+                          dict(d["teams"]["rows"][0], team="OAK", season=2024)]
+    html = R._render("running", d, bunt_tab=True)
+    assert '<a href="#section=clubs&team=MIA&season=2026" data-mlink="1">MIA</a>' in html
+    assert "<tr><td>OAK</td>" in html, "a code the ledger does not carry is not linked to another club"
+
+
+def test_management_css_has_no_dead_border_radius():
+    """X06-25. site.css squares every corner with !important; the module's own
+    radius declarations were dead and said the opposite of the brand."""
+    css = (ROOT / "assets" / "management.css").read_text(encoding="utf-8")
+    assert "border-radius" not in css

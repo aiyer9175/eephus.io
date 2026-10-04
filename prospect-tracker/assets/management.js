@@ -105,6 +105,24 @@
       '"><button type="button" class="mgmt-sort">' + inner + '<span class="mgmt-sort-ind" aria-hidden="true">' +
       (on ? (asc ? " ▲" : " ▼") : "") + "</span></button></th>";
   }
+  // THE DISPLAY PASS (2026-10-03): a payload sentence that opens with a short
+  // claim ("Realized value, not skill.") shows that claim as the lede and folds
+  // the rest into the section's "How this works" block. Nothing is dropped: the
+  // whole sentence is still on the page, one click down.
+  function splitLede(s) {
+    s = String(s == null ? "" : s);
+    var i = s.indexOf(". ");
+    return i < 0 ? [s, ""] : [s.slice(0, i + 1), s.slice(i + 2)];
+  }
+  // The collapsed method block: paragraphs (already escaped HTML) under one summary.
+  function how(parts) {
+    var body = (parts || []).filter(function (p) { return p; }).join("");
+    return body ? '<details class="mgmt-how"><summary>How this works</summary>' + body + "</details>" : "";
+  }
+  function note(label, text) {
+    if (text === null || text === undefined || text === "") return "";
+    return '<p class="mgmt-note">' + (label ? "<b>" + esc(label) + "</b>: " : "") + esc(text) + "</p>";
+  }
   function hasTab(name) {
     try { return !!document.querySelector('[data-mgmtsection="' + name + '"]'); }
     catch (e) { return false; }
@@ -359,20 +377,20 @@
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' +
       "<th>Season</th><th>Attempts</th><th>Success</th><th>Decision value</th>" +
       "</tr></thead><tbody>" + srows + "</tbody></table></div>" +
-      "<h3>" + gl("Decision value", "decision_value") + "</h3>" +
-      '<p class="mgmt-note"><b>DV</b>: ' + esc(r.decomposition.dv) + " <b>ER</b>: " +
-      esc(r.decomposition.er) + " " + esc(r.decomposition.identity) + ".</p>" +
-      '<p class="mgmt-note"><b>League-average runner</b>: ' + esc(r.why_the_league_average_runner) + "</p>" +
-      "<h3>Excluded</h3>" +
-      '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><tbody>' + exrows +
-      "</tbody></table></div>" +
-      // The census sentence says the table closes against the corpus (audit
-      // F02-01). It is derived in mgmt_export._census_sentence; absent on a
-      // payload that predates the census, and then nothing is drawn.
-      (r.attempt_census_sentence
-        ? '<p class="mgmt-note">' + esc(r.attempt_census_sentence) + "</p>" : "") +
-      '<p class="mgmt-note"><b>Two-out attempts</b>: ' + esc(r.why_two_out_attempts_are_excluded) +
-      "</p></section>" + (hasTab("bunt") ? "" : renderBunt()) + renderTeams();
+      how([
+        '<p class="mgmt-note"><b>' + gl("DV", "decision_value") + "</b>: " + esc(r.decomposition.dv) + " <b>ER</b>: " +
+        esc(r.decomposition.er) + " " + esc(r.decomposition.identity) + ".</p>",
+        note("League-average runner", r.why_the_league_average_runner),
+        "<h3>Excluded</h3>" +
+        '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><tbody>' + exrows +
+        "</tbody></table></div>",
+        // The census sentence says the table closes against the corpus (audit
+        // F02-01). It is derived in mgmt_export._census_sentence; absent on a
+        // payload that predates the census, and then nothing is drawn.
+        note("", r.attempt_census_sentence),
+        note("Two-out attempts", r.why_two_out_attempts_are_excluded)
+      ]) +
+      "</section>" + (hasTab("bunt") ? "" : renderBunt()) + renderTeams();
   }
 
   // ---- the sacrifice bunt --------------------------------------------------
@@ -401,23 +419,23 @@
       "<th>Bases</th><th>Outs</th>" + (bySit ? "<th>Situation</th>" : "") + "<th>Bunts</th>" +
       (bySit ? "<th>Bunt hits</th>" : "") + "<th>" + gl("DV", "decision_value") +
       " per bunt</th><th>DV total</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +
-      (ic.total_wins != null
-        ? '<p class="mgmt-note"><b>Control</b> (StatsAPI realized WPA, same bunts): ' +
-          signed(ic.total_wins, 1) + " wins" +
-          (ic.model_over_control != null ? "; the modelled total is " + num(ic.model_over_control, 2) +
-            " times it, from a different win expectancy model that nothing here calibrates against it" : "") +
-          "; " + esc(ic.why_it_is_not_the_metric) +
-          (ic.largest_gap_sentence ? " " + esc(ic.largest_gap_sentence) : "") + "</p>" : "") +
-      (b.what_counts_as_a_bunt ? '<p class="mgmt-note"><b>What counts as a bunt</b>: ' +
-        esc(b.what_counts_as_a_bunt) + "</p>" : "") +
-      (b.the_selection_problem
-        ? '<p class="mgmt-note"><b>Selection</b>: ' + esc(b.the_selection_problem) + "</p>" : "") +
-      (b.two_outs_excluded ? '<p class="mgmt-note">' + esc(b.two_outs_excluded) + "</p>" : "") +
-      // The bunt ATTEMPT ledger (pitch codes) rides beside the priced result.
-      (fam && fam.kinds ? '<p class="mgmt-note"><b>Attempts in the ledger</b>: ' +
-        Object.keys(fam.kinds).map(function (k) { return esc(k.replace(/_/g, " ")) + " " + esc(fam.kinds[k]); }).join(", ") +
-        ". " + esc(fam.kinds_note ? fam.kinds_note + ". " : "") + esc(fam.sign_note || "") + " " +
-        esc(fam.counterfactual_sentence || "") + "</p>" : "") +
+      note("Selection", b.the_selection_problem) +
+      how([
+        (ic.total_wins != null
+          ? '<p class="mgmt-note"><b>Control</b> (StatsAPI realized WPA, same bunts): ' +
+            signed(ic.total_wins, 1) + " wins" +
+            (ic.model_over_control != null ? "; the modelled total is " + num(ic.model_over_control, 2) +
+              " times it, from a different win expectancy model that nothing here calibrates against it" : "") +
+            "; " + esc(ic.why_it_is_not_the_metric) +
+            (ic.largest_gap_sentence ? " " + esc(ic.largest_gap_sentence) : "") + "</p>" : ""),
+        note("What counts as a bunt", b.what_counts_as_a_bunt),
+        note("", b.two_outs_excluded),
+        // The bunt ATTEMPT ledger (pitch codes) rides beside the priced result.
+        (fam && fam.kinds ? '<p class="mgmt-note"><b>Attempts in the ledger</b>: ' +
+          Object.keys(fam.kinds).map(function (k) { return esc(k.replace(/_/g, " ")) + " " + esc(fam.kinds[k]); }).join(", ") +
+          ". " + esc(fam.kinds_note ? fam.kinds_note + ". " : "") + esc(fam.sign_note || "") + " " +
+          esc(fam.counterfactual_sentence || "") + "</p>" : "")
+      ]) +
       "</section>";
   }
 
@@ -454,14 +472,12 @@
       "<tr><td>Variance explained by season</td><td>" + pct(g.variance_explained_by_season) + "</td></tr>" +
       "<tr><td>Variance explained by the club</td><td>" + pct(g.variance_explained_by_team) + "</td></tr>" +
       "</table>" +
-      "<h3>Raw split-half</h3>" + rawSplitHalf(g) +
-      "<h3>Null</h3>" +
-      '<p class="mgmt-note">' + esc(g.null_construction) + "</p>" +
-      "<h3>Detection floor and scope</h3>" +
-      '<p class="mgmt-note">' + esc(g.detection_floor_reading) + "</p>" +
-      '<p class="mgmt-note">' + esc(g.what_a_null_decides) + "</p>" +
       '<p class="mgmt-count">Clauses frozen in ' + esc(DATA.gate_doc) + ", " +
-      esc(DATA.gate_frozen_at) + "</p></section>";
+      esc(DATA.gate_frozen_at) + "</p>" +
+      how(["<h3>Raw split-half</h3>" + rawSplitHalf(g),
+           "<h3>Null</h3>" + note("", g.null_construction),
+           "<h3>Detection floor and scope</h3>" + note("", g.detection_floor_reading) + note("", g.what_a_null_decides)]) +
+      "</section>";
   }
 
   // ---- PX-14 the tied-game line score (V1, the ballpark lamp idiom) --------
@@ -549,18 +565,18 @@
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table mgmt-table--re"><thead>' +
       head + "</thead><tbody>" + body + "</tbody></table></div>" +
       "<h2>Coming to bat in a tied game</h2>" +
-      '<p class="mgmt-note">' + esc(ref.half_inning_start.note) + "</p>" +
+      '<p class="mgmt-note">' + esc(splitLede(ref.half_inning_start.note)[0]) + "</p>" +
+      how([note("", splitLede(ref.half_inning_start.note)[1])]) +
       tiedLamps(ref.half_inning_start.tied_game) +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' +
       "<th>Inning</th><th>Half</th><th>Win probability</th><th>Games</th>" +
       "</tr></thead><tbody>" +
       his + "</tbody></table></div>" +
       "<h2>" + gl("Win model", "win_expectancy") + "</h2>" +
-      '<p class="mgmt-note"><b>Tails</b>: ' + esc(ref.smoothing_costs_the_tails) + "</p>" +
-      '<p class="mgmt-note"><b>Not in the state</b>: ' + esc(ref.state_excludes) + "</p>" +
       (cal.brier ? '<p class="mgmt-count">Brier ' + num(cal.brier, 4) +
         "; base rate alone " + num(cal.brier_base_rate_only, 4) +
         (cal.feed_brier ? "; MLB feed " + num(cal.feed_brier, 4) : "") + ".</p>" : "") +
+      how([note("Tails", ref.smoothing_costs_the_tails), note("Not in the state", ref.state_excludes)]) +
       "</section>";
   }
 
@@ -597,7 +613,7 @@
       return sortTh("data-msort", c.key, c.label, esc(c.label), k === c.key, asc);
     }).join("");
     var body = rows.slice(0, 200).map(function (r) {
-      return "<tr><td>" + esc(r.team) + "</td><td>" + esc(r.season) + "</td><td>" +
+      return "<tr><td>" + clubCell(r.team, r.season) + "</td><td>" + esc(r.season) + "</td><td>" +
         esc(r.attempts) + "</td><td>" + pct(r.success_rate) + "</td><td>" +
         pct(r.share_2B) + "</td><td>" + pct(r.share_3B) + "</td><td>" +
         pct(r.mean_breakeven_faced) + "</td></tr>";
@@ -612,6 +628,20 @@
       "</tr></thead><tbody>" + body + "</tbody></table></div>" +
       '<p class="mgmt-count">' + rows.length + " club-seasons" +
       (rows.length > 200 ? ", first 200 shown" : "") + ".</p></section>";
+  }
+
+  // A club code linked to its club page when the decision ledger has that
+  // club-season (the style rows still name the Athletics OAK before 2025, the
+  // ledger ATH, audit M10-03; an unmatched code stays plain text rather than
+  // opening some other club).
+  function clubCell(club, season) {
+    var rows = ((DATA.clubs || {}).rows) || [];
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].club === club && String(rows[i].season) === String(season)) {
+        return '<a href="#section=clubs&team=' + esc(club) + "&season=" + esc(season) + '" data-mlink="1">' + esc(club) + "</a>";
+      }
+    }
+    return esc(club);
   }
 
   // ---- the League tab: the family census -----------------------------------
@@ -654,7 +684,7 @@
       var realized = !b.has_window ? "<td>counted</td>" : (b.summed ? signedCell(s, 1) : "<td>stored, not summed</td>");
       return "<tr><td>" + esc(b.label || f) + "</td><td>" + nCell + "</td><td>" +
         num(b.mean_li, 2) + "</td>" + realized +
-        "<td>" + esc(b.within_family_windows) + "</td>" +
+        '<td class="mgmt-wrap">' + esc(b.within_family_windows) + "</td>" +
         "<td>" + (b.dvs_identity_max_abs == null ? "" : esc(b.dvs_identity_max_abs)) + "</td>" +
         "<td>" + (thin.decisions_in_thin_cells == null ? "" :
           esc(thin.decisions_in_thin_cells) + " of " + esc(b.n) + " in " + esc(thin.cells_thin) + " of " + esc(thin.cells_total) + " cells") + "</td>" +
@@ -665,9 +695,9 @@
     var rp = d.removed_pitcher || {};
     var sw = d.switch_classification || {};
     var base = d.baseline || {};
+    var lede = splitLede(d.realized_sentence);
     return '<section class="mgmt-block"><h2>League census</h2>' +
-      '<p class="mgmt-lede">' + esc(d.realized_sentence) + "</p>" +
-      '<p class="mgmt-agent">' + esc(d.agent_sentence) + "</p>" +
+      '<p class="mgmt-lede">' + esc(lede[0]) + "</p>" +
       '<div class="mgmt-controls">' + sel("mgmt-cseason", opts, "Season") +
       '<span class="mgmt-count">through ' + esc((d.through_by_season || {})[season] || "") +
       "; corpus built " + esc(String(d.corpus_built_at || "").slice(0, 10)) + "</span></div>" +
@@ -675,18 +705,20 @@
       "<th>Family</th><th>Decisions</th><th>Mean LI</th><th>" + gl("Realized", "realized_mwpa") +
       ' <span class="mgmt-th-tag">wins, realized</span></th><th>Windows within the family</th>' +
       "<th>" + gl("DVS", "dvs") + " identity</th><th>Thin cells, all seasons</th><th>Gate</th></tr></thead><tbody>" +
-      rows + "</tbody></table></div>" +
-      '<p class="mgmt-note"><b>Sums</b>: ' + esc(d.overlap_note) + "</p>" +
-      '<p class="mgmt-note"><b>Value above state</b>: ' + esc(d.dvs_note) + "</p>" +
-      '<p class="mgmt-note"><b>Single plate appearance</b>: ' + esc(d.single_pa_caveat) + "</p>" +
-      '<p class="mgmt-note"><b>Leverage</b>: ' + esc(d.li_note) + "</p>" +
+      rows + "</tbody></table></div>" + how([
+      note("", lede[1]),
+      '<p class="mgmt-agent">' + esc(d.agent_sentence) + "</p>",
+      note("Sums", d.overlap_note),
+      note("Value above state", d.dvs_note),
+      note("Single plate appearance", d.single_pa_caveat),
+      note("Leverage", d.li_note),
       "<h3>The window is an endpoint difference</h3>" +
       '<p class="mgmt-note">' + esc(cb.note) + " On " + esc(season) + ": " +
       pct(cbs.share_of_plays_not_chained, 2) + " of plays do not chain at a tolerance of " +
       esc(cb.tolerance) + "; the largest gap is " + num(cbs.max_gap_points, 1) +
       " points; a row sum misses a median " + num(cbs.row_sum_misses_median_points, 1) +
       " points of a game's journey (p90 " + num(cbs.row_sum_misses_p90_points, 1) +
-      ", p99 " + num(cbs.row_sum_misses_p99_points, 1) + ").</p>" +
+      ", p99 " + num(cbs.row_sum_misses_p99_points, 1) + ").</p>",
       "<h3>Derivations</h3>" +
       '<p class="mgmt-note"><b>Removed pitcher</b>: ' + esc(rp.derivation) + " Agreement with the description: " +
       esc(rp.description_agree) + " of " + esc(rp.description_checked) + "; with the field where it names a pitcher: " +
@@ -696,7 +728,7 @@
       " designated hitter retained, " + esc(sw.position_move) + " position moves, " + esc(sw.stayed_in_field) +
       " stayed in the field, " + esc(sw.unclassified) + " unclassified.</p>" +
       (base.min_cell != null ? '<p class="mgmt-note"><b>Baseline</b>: cells need ' + esc(base.min_cell) +
-        " league windows; " + esc(base.identity) + " " + esc(base.where_dvs_lives) + "</p>" : "") +
+        " league windows; " + esc(base.identity) + " " + esc(base.where_dvs_lives) + "</p>" : "")]) +
       "</section>";
   }
 
@@ -717,8 +749,10 @@
      ["z_ibb", "IBB z"], ["z_visit", "Visit z"]].forEach(function (p) {
       cols.push({ key: p[0], label: p[1], kind: "z" });
     });
-    cols.push({ key: "best", label: "Best decision", kind: "link", sortless: true });
-    cols.push({ key: "worst", label: "Worst decision", kind: "link", sortless: true });
+    // The largest realized gain and loss of the club-season, one decision each:
+    // what happened after it, never a verdict on the choice (audit M10-04).
+    cols.push({ key: "best", label: "Largest gain", kind: "link", sortless: true });
+    cols.push({ key: "worst", label: "Largest loss", kind: "link", sortless: true });
     return cols;
   }
   function decisionLink(row, d) {
@@ -754,7 +788,7 @@
     var head = cols.map(function (col) {
       var tag = col.kind === "realized" ? ' <span class="mgmt-th-tag">' + esc(c.realized_header_tag || "realized") + "</span>"
         : col.kind === "z" ? ' <span class="mgmt-th-tag">style</span>' : "";
-      if (col.sortless) return "<th>" + esc(col.label) + "</th>";
+      if (col.sortless) return "<th>" + esc(col.label) + ' <span class="mgmt-th-tag">' + esc(c.realized_header_tag || "realized") + "</span></th>";
       return sortTh("data-bsort", col.key, col.label, esc(col.label) + tag, k === col.key, asc);
     }).join("");
     var body = rows.slice(0, 300).map(function (r) {
@@ -775,11 +809,13 @@
         return "<td>" + (v == null ? "" : esc(v)) + "</td>";
       }).join("") + "</tr>";
     }).join("");
+    var lede = splitLede(c.columns_are_realized_not_skill);
     return '<section class="mgmt-block"><h2>Club-season leaderboard</h2>' +
-      '<p class="mgmt-lede">' + esc(c.columns_are_realized_not_skill) + "</p>" +
+      '<p class="mgmt-lede">' + esc(lede[0]) + "</p>" +
       '<p class="mgmt-agent">' + esc(c.agent_sentence) + "</p>" +
-      '<p class="mgmt-note"><b>Sorting a realized column</b>: ' + esc(c.sort_by_realized_is_a_rank_by_what_happened) + "</p>" +
-      '<p class="mgmt-note"><b>Style columns</b>: ' + esc(c.style_sentence) + "</p>" +
+      how([note("", lede[1]),
+           note("Sorting a realized column", c.sort_by_realized_is_a_rank_by_what_happened),
+           note("Style columns", c.style_sentence)]) +
       '<div class="mgmt-controls">' + sel("mgmt-bseason", opts, "Season") + "</div>" +
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr>' + head +
       "</tr></thead><tbody>" + body + "</tbody></table></div>" +
@@ -791,7 +827,7 @@
   }
   function renderManagers() {
     var m = DATA.managers || {};
-    var out = "";
+    var out = renderBoard();
     if (!m.live) {
       out += '<section class="mgmt-block mgmt-dark"><h2>Managers <span class="mgmt-darktag">not published</span></h2>' +
         '<p class="mgmt-dark-why">Blocked on: ' + esc(m.blocked_on) + ".</p>" +
@@ -801,7 +837,7 @@
             esc(m.fixture.ejections) + " ejection rows name a manager with an id; " + esc(m.fixture.note) + "</p>" : "") +
         "</section>";
     }
-    return out + renderBoard();
+    return out;
   }
 
   // ---- club pages ----------------------------------------------------------
@@ -912,8 +948,9 @@
       " ledger rows; mean " + gl("LI at decision", "li_at_decision") + " " + num(row.mean_li, 2) +
       "; share at LI 1.5 or more " + pct(row.share_li_high) + "</div>" +
       '<div class="mgmt-club-fams">' + famLine + "</div>" +
-      '<p class="mgmt-note">' + esc(c.columns_are_realized_not_skill) + "</p>" +
-      '<p class="mgmt-agent">' + esc(c.agent_sentence) + "</p></div>";
+      '<p class="mgmt-note">' + esc(splitLede(c.columns_are_realized_not_skill)[0]) + "</p>" +
+      how([note("", splitLede(c.columns_are_realized_not_skill)[1]),
+           '<p class="mgmt-agent">' + esc(c.agent_sentence) + "</p>"]) + "</div>";
     // family cards
     out += '<div class="mgmt-cards">' + families().map(function (f) {
       var n = row["n_" + f] || 0, b = fams[f] || {};
@@ -1129,9 +1166,10 @@
   function renderDecisions() {
     var d = DATA.decisions;
     if (!d || !d.live || !ensureClubSeason()) return ledgerDark("Decisions");
+    var lede = splitLede(d.realized_sentence);
     var out = '<section class="mgmt-block"><h2>Decisions: ' + esc(state.team) + " " + esc(state.cseason) + "</h2>" +
-      '<p class="mgmt-lede">' + esc(d.realized_sentence) + "</p>" +
-      '<p class="mgmt-agent">' + esc(d.agent_sentence) + "</p>" + controls(true);
+      '<p class="mgmt-lede">' + esc(lede[0]) + "</p>" +
+      how([note("", lede[1]), '<p class="mgmt-agent">' + esc(d.agent_sentence) + "</p>"]) + controls(true);
     var sh = loadShard();
     if (!sh) return out + shardNote() + "</section>";
     var rows = (sh.rows || []).filter(function (r) { return !state.family || r.family === state.family; });
@@ -1188,7 +1226,7 @@
       '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table" data-csv-primary><thead><tr>' + head + "</tr></thead><tbody>" +
       body + "</tbody></table></div>" +
       '<p class="mgmt-count">' + rows.length + " decisions" + (rows.length > 500 ? ", first 500 shown" : "") +
-      "; a row opens the plays it governed. " + esc(sh.schema_note ? "" : "") + "</p>" +
+      "; a row opens the plays it governed.</p>" +
       '<p class="mgmt-note">' + esc(((d.families || {})[state.family] || {}).counterfactual_sentence || d.dvs_note) + "</p>" +
       "</section>";
   }
@@ -1218,24 +1256,36 @@
     return out;
   }
 
+  // Related modules, linked once under every section. /franchise/ and /ledger/
+  // only when the export found the route built (DATA.routes), as on club pages.
+  function related() {
+    var routes = DATA.routes || {};
+    var links = [routes.franchise ? '<a href="/franchise/">Franchises</a>' : "",
+                 routes.ledger ? '<a href="/ledger/">Club Ledger</a>' : "",
+                 '<a href="/mlbstats/#section=leverage">Leverage Index board</a>',
+                 '<a href="/glossary/">Glossary</a>'].filter(function (x) { return x; });
+    return '<section class="mgmt-related" aria-label="Related modules"><span>Related</span>' + links.join("") + "</section>";
+  }
+
   var CSV_SECTIONS = ["gate", "reference", "teams", "bunt", "league", "decisions", "clubs", "managers", "challenges", "lineups"];
   function render() {
     var root = el("mgmt-app-root");
     if (!root) return;
     if (LOAD_ERROR) { root.innerHTML = pxState("failed", esc(LOAD_ERROR)); return; }
     if (!DATA) { root.innerHTML = pxState("loading", "Loading."); return; }
-    var s = state.section;
-    if (s === "gate") root.innerHTML = renderGate() + renderBlocked();
-    else if (s === "reference") root.innerHTML = renderReference();
-    else if (s === "teams") root.innerHTML = renderTeams();
-    else if (s === "bunt") root.innerHTML = renderBunt();
-    else if (s === "league") root.innerHTML = renderLeague();
-    else if (s === "decisions") root.innerHTML = renderDecisions();
-    else if (s === "clubs") root.innerHTML = renderClubs();
-    else if (s === "managers") root.innerHTML = renderManagers();
-    else if (s === "challenges") root.innerHTML = renderDarkTab("Challenges", DATA.challenges, ["regime_note", "value_not_observable"]);
-    else if (s === "lineups") root.innerHTML = renderDarkTab("Lineups", DATA.lineups, ["value_not_measured"]);
-    else root.innerHTML = renderRunning();
+    var s = state.section, html;
+    if (s === "gate") html = renderGate() + renderBlocked();
+    else if (s === "reference") html = renderReference();
+    else if (s === "teams") html = renderTeams();
+    else if (s === "bunt") html = renderBunt();
+    else if (s === "league") html = renderLeague();
+    else if (s === "decisions") html = renderDecisions();
+    else if (s === "clubs") html = renderClubs();
+    else if (s === "managers") html = renderManagers();
+    else if (s === "challenges") html = renderDarkTab("Challenges", DATA.challenges, ["regime_note", "value_not_observable"]);
+    else if (s === "lineups") html = renderDarkTab("Lineups", DATA.lineups, ["value_not_measured"]);
+    else html = renderRunning();
+    root.innerHTML = html + related();
     // The CSV control on the mount (build_site's data-csv-export opt-in)
     // exports the table marked data-csv-primary where a section paints more
     // than one (the decision listing, the club page's bullpen deployment),
