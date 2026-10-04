@@ -11,6 +11,11 @@ class only. A keyboard sort (Enter on a header) dropped focus on <body>. The
 header focus ring was gold, 2.2:1 on the cream header. The count line changed
 on every search with no live region.
 
+QCLA15. Text on the leaderboard was dimmed with opacity or set in accent ink
+on its own tint, under 4.5:1 in light: rank 3.8, the writers chip 3.9, the
+route-unverified chip 4.2, the JAWS ladder labels 4.45, the count line 4.4,
+and the blank-value dot 1.9 (2.4 in dark).
+
 Each test below drives the served page in headless Chromium over loopback.
 """
 from __future__ import annotations
@@ -20,7 +25,9 @@ import pytest
 from conftest import serve_site
 
 _LUM = """
-function parse(c){const m=c.match(/rgba?\\(([^)]+)\\)/); if(!m) return [0,0,0,0];
+function parse(c){const q=c.match(/color\\(srgb ([^)]+)\\)/);
+  if(q){const v=q[1].split(/[ \\/]+/).filter(Boolean).map(Number); return [v[0]*255,v[1]*255,v[2]*255,v.length>3?v[3]:1];}
+  const m=c.match(/rgba?\\(([^)]+)\\)/); if(!m) return [0,0,0,0];
   const p=m[1].split(/[ ,\\/]+/).filter(Boolean).map(Number); return [p[0],p[1],p[2],p.length>3?p[3]:1];}
 function over(a,b){const al=a[3]; return [a[0]*al+b[0]*(1-al),a[1]*al+b[1]*(1-al),a[2]*al+b[2]*(1-al),1];}
 function lum(c){const f=v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)};
@@ -127,3 +134,40 @@ def test_the_count_line_is_one_status_node_that_survives_a_search(server):
             assert got["focus"] == "hof-q", got
         finally:
             browser.close()
+
+
+# Selector -> the least contrast each must clear. The blank dot is a marker
+# with an accessible name, so it is held to the 3:1 of a non-text mark.
+_CONTRAST = {
+    "td.hof-c-rank": 4.5,
+    "th.hof-c-rank": 4.5,
+    ".hof-ind--player_bbwaa": 4.5,
+    ".hof-ind--route_unverified": 4.5,
+    ".hof-ladder-q": 4.5,
+    ".hof-count": 4.5,
+    ".hof-blank": 3.0,
+}
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+def test_leaderboard_text_clears_its_contrast_floor(server, theme):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        browser, page = _open(p, server, theme)
+        try:
+            got = page.evaluate("(sels) => {" + _LUM + """
+              const out = {};
+              for (const s of sels) {
+                const els = [...document.querySelectorAll('#hof-app-root ' + s)]
+                  .filter(e => e.getBoundingClientRect().width > 0);
+                out[s] = els.length ? Math.min(...els.map(textRatio)) : null;
+              }
+              return out;
+            }""", list(_CONTRAST))
+        finally:
+            browser.close()
+    missing = [s for s, v in got.items() if v is None]
+    assert not missing, ("nothing painted for", missing)
+    low = {s: round(v, 2) for s, v in got.items() if v < _CONTRAST[s]}
+    assert not low, (theme, low)

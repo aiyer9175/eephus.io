@@ -96,7 +96,7 @@
   // "Baseball-Reference published nothing", and rendering a 0 there would invent
   // a number for two thirds of the board.
   function pub(v) {
-    return (v === null || v === undefined) ? '<span class="hof-blank" title="no published value">.</span>' : num(v, 0);
+    return (v === null || v === undefined) ? '<span class="hof-blank" role="img" aria-label="no published value" title="no published value">.</span>' : num(v, 0);
   }
 
   var INDUCTION_LABEL = {
