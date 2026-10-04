@@ -253,8 +253,17 @@ def test_label_views_resolve_by_the_lag_rule(doc):
             assert r["added_at_rt_plus_1"]["debut_cohorts"] == \
                 [x for x in coh if x + lag == rt + 1]
     first2 = next(r for r in doc["label_views"]["rows"] if r["label_view"] == "first_2")
-    # the look-1 cohort enters at RT + 1 as a count only
-    assert first2["added_at_rt_plus_1"]["debut_cohorts"] == [F.R_VM_FIRST_DEBUT_YEAR]
+    # the look-1 cohort (R-VM's first debut year) resolves on first_2 one season after
+    # its debut, as a count only: it enters at RT + 1 while RT is the debut year, and
+    # once RT has passed it the cohort sits in resolved_at_rt, flagged reserved_vm_inside
+    look1 = F.R_VM_FIRST_DEBUT_YEAR
+    if look1 == rt:
+        assert first2["added_at_rt_plus_1"]["debut_cohorts"] == [look1]
+    elif look1 + 1 <= rt:
+        assert look1 in first2["resolved_at_rt"]["debut_cohorts"]
+    for blk in ("resolved_at_rt", "resolved_at_rt_plus_1"):
+        b = first2[blk]
+        assert b["reserved_vm_inside"] == [c for c in b["debut_cohorts"] if c >= look1]
 
 
 def test_floor_curve_is_the_stated_formula(C, doc):

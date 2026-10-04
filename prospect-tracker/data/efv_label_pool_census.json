@@ -1,14 +1,14 @@
 {
- "generated_at": "2026-10-03T01:44:47Z",
+ "generated_at": "2026-10-04T04:05:48Z",
  "produced_by": "tools/efv_label_pool_census.py",
  "model_id": "efv_label_pool",
  "role": "development",
  "adjudicates": "nothing; a census of the label pool, counts only, no score",
  "label": {
-  "provider": "ewar_v2",
-  "resolved_through": 2025,
-  "resolved_through_plus_1": 2026,
-  "id": "ewar_v2@2026-09-03T12:35:09"
+  "provider": "fwar",
+  "resolved_through": 2026,
+  "resolved_through_plus_1": 2027,
+  "id": "fwar@2026-10-02-0341299c20ec"
  },
  "guards": {
   "reserved_lv": [
@@ -51,9 +51,9 @@
   "label_view"
  ],
  "code": {
-  "commit": "6e5d0f77f34fa4d9c05c1d94887b4b802c86b1cb",
+  "commit": "e5710c768160b06f7ecd5722a86b2fe59f1d7b89",
   "tool_sha256": "7e3f767e43b94518483d16b723b1fb177eb829a801ac007ae0fbcf37437077ee",
-  "frame_module_sha256": "60dd297e1507b4fa8b10c9f3a0c2727decf75983e7833542db649aa1c1c4b070",
+  "frame_module_sha256": "8aada0480ebb1d63442659a135300b14d79c8d94d91a85e88144b2e942282c00",
   "resolver_sha256": "54a5f8072ff065404d86c654e8a4766353b31f6905b0235b5544ff87a3c8616f"
  },
  "snapshots": {
@@ -365,7 +365,7 @@
     "fv_players_in_window": 0,
     "in_window_share": 0.0,
     "first_snapshot": "2026-07-23",
-    "last_snapshot": "2026-10-02",
+    "last_snapshot": "2026-10-03",
     "real_grader": false
    },
    {
@@ -881,7 +881,7 @@
     "rows": 138,
     "fv_rows": 138,
     "first": "2026-07-23",
-    "last": "2026-10-02",
+    "last": "2026-10-03",
     "list_years": [
      2026
     ]
@@ -1566,7 +1566,7 @@
    ],
    "path": "docs/efv-v2/PROGRAM.md",
    "section": "s2.4",
-   "sha256": "3886eddec5dee5150c22fa6e99a2c82a4503ea8b657d88b80c2b3e3df6b8d238",
+   "sha256": "e483494727a9a4015414b0c47362fc085027cd0a60bab02dce5bec0048a14c03",
    "quote": "V 2020 (W3 resolvable now: 821 hit / 478 pit rows) and V 2021 (W3 resolves at the 2026 freeze: 906 / 462)",
    "rows": 2667
   }
@@ -1747,10 +1747,10 @@
   "rows": [
    {
     "bust_class": "never",
-    "rows": 1579,
+    "rows": 1727,
     "by_id_birth": {
-     "id_0_birth_0": 918,
-     "id_1_birth_1": 661
+     "id_0_birth_0": 1020,
+     "id_1_birth_1": 707
     },
     "by_last_list_year": {
      "2012": 4,
@@ -1760,12 +1760,12 @@
      "2016": 123,
      "2017": 282,
      "2018": 273,
-     "2019": 232,
-     "2020": 93,
-     "2021": 101,
-     "2022": 108,
-     "2023": 83,
-     "2024": 12,
+     "2019": 235,
+     "2020": 95,
+     "2021": 204,
+     "2022": 129,
+     "2023": 101,
+     "2024": 13,
      "2025": 2,
      "2026": 16,
      "none": 7
@@ -1779,16 +1779,17 @@
      "2017": 225,
      "2018": 188,
      "2019": 142,
-     "2020": 50
+     "2020": 50,
+     "2021": 102
     }
    },
    {
     "bust_class": "censored_never",
-    "rows": 711,
+    "rows": 563,
     "by_id_birth": {
-     "id_0_birth_0": 381,
+     "id_0_birth_0": 279,
      "id_0_birth_1": 3,
-     "id_1_birth_1": 327
+     "id_1_birth_1": 281
     },
     "by_last_list_year": {
      "2013": 4,
@@ -1796,18 +1797,17 @@
      "2016": 2,
      "2017": 4,
      "2018": 8,
-     "2019": 7,
-     "2020": 6,
-     "2021": 140,
-     "2022": 163,
-     "2023": 199,
-     "2024": 12,
+     "2019": 4,
+     "2020": 4,
+     "2021": 37,
+     "2022": 142,
+     "2023": 181,
+     "2024": 11,
      "2025": 3,
      "2026": 41,
      "none": 121
     },
     "no_id_no_birth_by_last_list_year": {
-     "2021": 102,
      "2022": 71,
      "2023": 43,
      "2024": 8,
@@ -1839,26 +1839,35 @@
  },
  "identity_join": {
   "source_table": "prospects.db career_war",
-  "default_provider": "ewar_v2",
+  "default_provider": "fwar",
   "rule": "provider is the stored row's source field; the id route is the first of: the debuts.json record carries an mlbam_id, the key is in data/sources/mlbam_id_overrides.json, the key is in debuts.json without an id, the key is not in debuts.json",
   "rows": 2698,
   "by_provider": {
-   "ewar_v2": {
-    "rows": 2563,
+   "fwar": {
+    "rows": 2686,
     "id_route": {
-     "debuts_json_id": 2556,
+     "debuts_json_id": 2619,
      "override_asset_id": 1,
+     "no_id": 0,
+     "key_not_in_debuts": 66
+    }
+   },
+   "ewar_v2": {
+    "rows": 6,
+    "id_route": {
+     "debuts_json_id": 0,
+     "override_asset_id": 0,
      "no_id": 0,
      "key_not_in_debuts": 6
     }
    },
    "bbref": {
-    "rows": 135,
+    "rows": 6,
     "id_route": {
-     "debuts_json_id": 63,
+     "debuts_json_id": 0,
      "override_asset_id": 0,
      "no_id": 6,
-     "key_not_in_debuts": 66
+     "key_not_in_debuts": 0
     }
    }
   },
@@ -1874,7 +1883,7 @@
   "by": [
    "label_view"
   ],
-  "resolved_through": 2025,
+  "resolved_through": 2026,
   "rule": "counts only: a vintage's rows are the frame rows of (b) (R-LV copied, never built); a cohort's debuts are the rows of (c); faithfulness numbers are parsed from the committed PROGRAM.md text and are label-to-label, no rater enters",
   "rows": [
    {
@@ -1893,10 +1902,11 @@
       2017,
       2018,
       2019,
-      2020
+      2020,
+      2021
      ],
-     "debuts": 1265,
-     "with_career_war_row": 1247,
+     "debuts": 1473,
+     "with_career_war_row": 1445,
      "reserved_vm_inside": []
     },
     "resolved_at_rt_plus_1": {
@@ -1911,17 +1921,18 @@
       2018,
       2019,
       2020,
-      2021
+      2021,
+      2022
      ],
-     "debuts": 1473,
-     "with_career_war_row": 1445,
+     "debuts": 1733,
+     "with_career_war_row": 1682,
      "reserved_vm_inside": []
     },
     "added_at_rt_plus_1": {
      "debut_cohorts": [
-      2021
+      2022
      ],
-     "debuts": 208
+     "debuts": 260
     },
     "standing": "the training label and F-VM scoring label",
     "faithfulness_to_six_season": {
@@ -1935,65 +1946,6 @@
     "definition": "WAR over the first three MLB seasons, 0 if no debut in V..V+3",
     "unit": "vintage",
     "resolves_when": "V + 5 <= RESOLVED_THROUGH",
-    "resolved_at_rt": {
-     "vintages": [
-      2011,
-      2012,
-      2013,
-      2014,
-      2015,
-      2016,
-      2017,
-      2018,
-      2019,
-      2020
-     ],
-     "rows": 7261,
-     "reserved_lv_inside": [
-      2020
-     ]
-    },
-    "resolved_at_rt_plus_1": {
-     "vintages": [
-      2011,
-      2012,
-      2013,
-      2014,
-      2015,
-      2016,
-      2017,
-      2018,
-      2019,
-      2020,
-      2021
-     ],
-     "rows": 8629,
-     "reserved_lv_inside": [
-      2020,
-      2021
-     ]
-    },
-    "added_at_rt_plus_1": {
-     "vintages": [
-      2021
-     ],
-     "rows": 1368
-    },
-    "standing": "the F-LV scoring label",
-    "faithfulness_to_six_season": {
-     "hit": 0.787,
-     "pit": 0.821,
-     "section": "s2.2",
-     "quote": "rho(W3, six-season) 0.787 hit / 0.821\npit",
-     "path": "docs/efv-v2/PROGRAM.md",
-     "sha256": "3886eddec5dee5150c22fa6e99a2c82a4503ea8b657d88b80c2b3e3df6b8d238"
-    }
-   },
-   {
-    "label_view": "W2",
-    "definition": "WAR over the first two MLB seasons, 0 if no debut in V..V+3",
-    "unit": "vintage",
-    "resolves_when": "V + 4 <= RESOLVED_THROUGH",
     "resolved_at_rt": {
      "vintages": [
       2011,
@@ -2041,19 +1993,21 @@
      ],
      "rows": 1268
     },
-    "standing": "hazard component, not a scoring label",
+    "standing": "the F-LV scoring label",
     "faithfulness_to_six_season": {
-     "hit": null,
-     "pit": null,
+     "hit": 0.787,
+     "pit": 0.821,
      "section": "s2.2",
-     "note": "PROGRAM.md s2.2: W2, R3 and AA2 lose the grader ordering or are hazard components; not scoring labels"
+     "quote": "rho(W3, six-season) 0.787 hit / 0.821\npit",
+     "path": "docs/efv-v2/PROGRAM.md",
+     "sha256": "e483494727a9a4015414b0c47362fc085027cd0a60bab02dce5bec0048a14c03"
     }
    },
    {
-    "label_view": "R3",
-    "definition": "reached within V..V+3",
+    "label_view": "W2",
+    "definition": "WAR over the first two MLB seasons, 0 if no debut in V..V+3",
     "unit": "vintage",
-    "resolves_when": "V + 3 <= RESOLVED_THROUGH",
+    "resolves_when": "V + 4 <= RESOLVED_THROUGH",
     "resolved_at_rt": {
      "vintages": [
       2011,
@@ -2103,6 +2057,70 @@
      ],
      "rows": 1274
     },
+    "standing": "hazard component, not a scoring label",
+    "faithfulness_to_six_season": {
+     "hit": null,
+     "pit": null,
+     "section": "s2.2",
+     "note": "PROGRAM.md s2.2: W2, R3 and AA2 lose the grader ordering or are hazard components; not scoring labels"
+    }
+   },
+   {
+    "label_view": "R3",
+    "definition": "reached within V..V+3",
+    "unit": "vintage",
+    "resolves_when": "V + 3 <= RESOLVED_THROUGH",
+    "resolved_at_rt": {
+     "vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "rows": 11171,
+     "reserved_lv_inside": [
+      2020,
+      2021
+     ]
+    },
+    "resolved_at_rt_plus_1": {
+     "vintages": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+     ],
+     "rows": 12429,
+     "reserved_lv_inside": [
+      2020,
+      2021
+     ]
+    },
+    "added_at_rt_plus_1": {
+     "vintages": [
+      2024
+     ],
+     "rows": 1258
+    },
     "standing": "timing-head target only, not a scoring label",
     "faithfulness_to_six_season": {
      "hit": null,
@@ -2131,11 +2149,14 @@
       2021,
       2022,
       2023,
-      2024
+      2024,
+      2025
      ],
-     "debuts": 2216,
-     "with_career_war_row": 2127,
-     "reserved_vm_inside": []
+     "debuts": 2459,
+     "with_career_war_row": 2346,
+     "reserved_vm_inside": [
+      2025
+     ]
     },
     "resolved_at_rt_plus_1": {
      "debut_cohorts": [
@@ -2153,19 +2174,21 @@
       2022,
       2023,
       2024,
-      2025
+      2025,
+      2026
      ],
-     "debuts": 2459,
-     "with_career_war_row": 2346,
+     "debuts": 2721,
+     "with_career_war_row": 2579,
      "reserved_vm_inside": [
-      2025
+      2025,
+      2026
      ]
     },
     "added_at_rt_plus_1": {
      "debut_cohorts": [
-      2025
+      2026
      ],
-     "debuts": 243
+     "debuts": 262
     },
     "standing": "the R-VM look-1 label by design",
     "faithfulness_to_six_season": {
@@ -2174,7 +2197,7 @@
      "section": "s3.3",
      "quote": "first-2 vs six-season 0.739 hit / 0.705 pit",
      "path": "docs/efv-v2/PROGRAM.md",
-     "sha256": "3886eddec5dee5150c22fa6e99a2c82a4503ea8b657d88b80c2b3e3df6b8d238"
+     "sha256": "e483494727a9a4015414b0c47362fc085027cd0a60bab02dce5bec0048a14c03"
     }
    }
   ]
