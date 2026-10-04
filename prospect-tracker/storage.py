@@ -5263,7 +5263,12 @@ _NO_BOARD_SORT_KEY = -1e9
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-10-03"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-10-04"   # STRICTLY-AFTER gate: see load_rank_history.
+# Bumped 2026-10-04 for the fWAR epoch's owed P5 re-derivation (owner answer B7-P5, option A;
+# commit c40c0dd0): eFV v2's DS-08 weights were re-fit once on the frozen fWAR label, so the
+# served= term's hash moved (efv_v2@f903b813 -> efv_v2@bcc9b0dd) and every V2-served grade
+# and rank may re-order once for a reason that is not player movement. metric_snapshots held
+# no rank row dated after 2026-10-03 at the bump, so no served movement chip changes.
 # Bumped 2026-10-03 for the fWAR LABEL EPOCH (docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md,
 # step D + U; runbook docs/efv-2026-09-03/WAR_BASIS_RUNBOOK.md U). career_war was rebased
 # from eWAR v2 to published fWAR at step C (2,686 of 2,698 rows; the 12 unresolved stay on
@@ -5413,8 +5418,12 @@ BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@baa9676f
                            "|disp=hit:0.000000/1.000000|pit:0.000000/1.000000"
                            "|gradenorm=asof@ref2017"
                            "|label=fwar@2026-10-02-0341299c20ec"
-                           "|injsides=pit|served=efv_v2@f903b813"
+                           "|injsides=pit|served=efv_v2@bcc9b0dd"
                            "|section=label_graded")
+# served efv_v2@f903b813 -> efv_v2@bcc9b0dd on 2026-10-04: the P5 re-derivation of
+# data/efv_v2_assembly.json on the frozen fWAR label (c40c0dd0; FWAR_LABEL_EPOCH_GATE.md part 9,
+# the 2026-10-04 entry). The term hashes the registered weights, which moved; restamped with
+# the BOARD_RANK_BASIS_EPOCH bump to 2026-10-04.
 # grademap 1f3fa0a970bd -> baa9676f90a6 on 2026-10-03: THE fWAR LABEL EPOCH, step I. The
 # pooled FV outcome curve (tools/fv_outcome_curve_pooled.py, 3,213 resolved rows) was refit
 # on the fWAR training label at RESOLVED_THROUGH 2026, so its content hash moved; this is the

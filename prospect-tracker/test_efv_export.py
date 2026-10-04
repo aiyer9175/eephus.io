@@ -597,7 +597,17 @@ def test_committed_artifact_headline_alias_contract():
 #   docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md part 9. The swap is an OWNER BASIS
 #   decision and NOT an accuracy claim (gate clause (l)); the measured dispositions are
 #   recorded in part 9's step Z entry. Rowcount 9509 -> 9515.
-_GOLDEN_XFV_SHA256 = "d9998b3f6a04496623c0985f93d43dae96fe21f97c25c315ec4ab7d1570576dc"
+# 2026-10-04 RESTAMP: THE P5 RE-DERIVATION (owner answer B7-P5, option A; c40c0dd0). eFV
+#   v2's DS-08 weights were re-fit once on the frozen fWAR label (hit w_skill 0.599508 ->
+#   0.908861, w_time 0.012287 -> 0.202573; pit w_time 0.107279 -> 0.020473), so V2's order
+#   index moved and with it the served grade: 947 of 9,515 rows (500 up, 447 down, mean
+#   |delta| 1.42, 29 by 5 or more, largest angeibel_gomez -8.1), board_sort_key on 1,055,
+#   surplus_mm on 798. Stamped from the POST_EPOCH_REBUILD run (run_monthly --rebuild-only
+#   rc 0, then export_trade_values and the ledger/franchise rebuild) on the merged code,
+#   read before pytest touched the tree. BOARD_RANK_BASIS_EPOCH 2026-10-04 and the
+#   fingerprint's served=efv_v2@bcc9b0dd moved with it. A refit on a new label, not an
+#   accuracy claim (gate clause (l)). Rowcount 9515 unchanged.
+_GOLDEN_XFV_SHA256 = "9b21c8977a6ce4fb7dcde25afdc0212b18d9d03b30b2caeeb0d3f8b240e278e2"
 # OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
 # whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
 # factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which
