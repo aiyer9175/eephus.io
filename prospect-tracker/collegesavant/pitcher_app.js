@@ -604,6 +604,24 @@ const LB_COLUMNS = [
   { key: "hard_hit_pct", label: "HardHit%", fmt: "pct", higherBetter: false, gl: "hard_hit_pct" },
 ];
 
+// QREA01: a re-rendering board's sort header (th.lb-th, tabindex 0) answers
+// Enter and Space as it answers a click, says its state through aria-sort,
+// and gets focus back after the re-render paints a fresh header row.
+function lbAriaSort(on, dir) {
+  return on ? (dir < 0 ? "descending" : "ascending") : "none";
+}
+function lbSortKeys(th, attr, go) {
+  th.addEventListener("click", go);
+  th.addEventListener("keydown", (e) => {
+    if (e.target !== th || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    const k = th.getAttribute(attr);
+    go();
+    const again = app.querySelector(`.lb-th[${attr}="${k}"]`);
+    if (again) again.focus();
+  });
+}
+
 function lbFmt(fmt, v) {
   if (v == null || Number.isNaN(v)) return " - ";
   if (fmt === "plus") return String(Math.round(v));
@@ -639,7 +657,7 @@ function renderLeaderboard() {
     const on = c.key === state.sortKey;
     const caret = on ? (dir < 0 ? " ▾" : " ▴") : "";
     const lbl = c.gl ? `<span class="g-term" data-gl="${c.gl}">${c.label}</span>` : c.label;
-    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-sort="${c.key}" title="Sort by ${c.label}">${lbl}${caret}</th>`;
+    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-sort="${c.key}" tabindex="0" aria-sort="${lbAriaSort(on, dir)}" title="Sort by ${c.label}">${lbl}${caret}</th>`;
   }).join("");
   const body = visible.map((p, i) => {
     const cells = LB_COLUMNS.map((c) => {
@@ -670,7 +688,7 @@ function renderLeaderboard() {
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Pitcher</th>${head}</tr></thead>
       <tbody>${body || `<tr><td colspan="${LB_COLUMNS.length + 2}" class="note-line">No pitchers match these filters.</td></tr>`}</tbody>
     </table></div></section>`;
-  app.querySelectorAll(".lb-th").forEach((th) => th.addEventListener("click", () => {
+  app.querySelectorAll(".lb-th").forEach((th) => lbSortKeys(th, "data-sort", () => {
     const k = th.getAttribute("data-sort");
     if (k === state.sortKey) { state.sortDir = -dir; }
     else { state.sortKey = k; const c2 = LB_COLUMNS.find((c) => c.key === k); state.sortDir = (c2 && c2.higherBetter) ? -1 : 1; }
@@ -861,7 +879,7 @@ function renderProspects() {
   const head = cols.map((c) => {
     const on = c.key === sortKey;
     const caret = on ? (dir < 0 ? " ▾" : " ▴") : "";
-    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-psort="${c.key}" title="Sort by ${c.label}">${c.label}${caret}</th>`;
+    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-psort="${c.key}" tabindex="0" aria-sort="${lbAriaSort(on, dir)}" title="Sort by ${c.label}">${c.label}${caret}</th>`;
   }).join("");
   const body = list.map((x, i) => {
     const b = x.box || {};
@@ -892,7 +910,7 @@ function renderProspects() {
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th>${head}<th class="tt-col">W-L</th></tr></thead>
       <tbody>${body || `<tr><td colspan="${cols.length + 3}" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
     </table></div></section>`;
-  app.querySelectorAll(".lb-th").forEach((th) => th.addEventListener("click", () => {
+  app.querySelectorAll(".lb-th").forEach((th) => lbSortKeys(th, "data-psort", () => {
     const k = th.getAttribute("data-psort");
     if (k === sortKey) { state.prospectDir = -dir; }
     else { state.prospectSort = k; const c2 = cols.find((c) => c.key === k); state.prospectDir = (c2 && c2.hb) ? -1 : 1; }

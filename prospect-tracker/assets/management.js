@@ -1087,8 +1087,11 @@
     var win = (r.window || []).map(function (p) {
       return "<tr><td>" + esc(p[0]) + "</td><td>" + esc(p[1]) + "</td><td>" + num(p[2], 1) + "</td><td>" + num(p[3], 1) + "</td></tr>";
     }).join("");
-    return '<div class="mgmt-detail" id="mgmt-detail"><button type="button" class="mgmt-detail-close" id="mgmt-close">close</button>' +
-      "<h3>" + esc(famLabel(r.family)) + (r.kind && r.kind !== r.family ? ", " + esc(String(r.kind).replace(/_/g, " ")) : "") + (who ? ": " + who : "") + "</h3>" +
+    // QCLA01: the card takes focus when a row opens it (tabindex -1, named by
+    // its heading) and carries the row's id so close can hand focus back.
+    return '<div class="mgmt-detail" id="mgmt-detail" tabindex="-1" role="region" aria-labelledby="mgmt-detail-title" data-mopen="' + esc(decisionId(r)) + '">' +
+      '<button type="button" class="mgmt-detail-close" id="mgmt-close">close</button>' +
+      '<h3 id="mgmt-detail-title">' + esc(famLabel(r.family)) + (r.kind && r.kind !== r.family ? ", " + esc(String(r.kind).replace(/_/g, " ")) : "") + (who ? ": " + who : "") + "</h3>" +
       '<div class="mgmt-detail-sub">' + esc(decisionId(r)) + "</div>" + miniTable(pairs) +
       (win ? "<h4>The plays governed</h4>" +
         '<div class="mgmt-tablewrap mlbstats-scroll"><table class="mgmt-table"><thead><tr><th>PA</th><th>Event</th>' +
@@ -1139,8 +1142,8 @@
     var shown = rows.slice(0, 500);
     var body = shown.map(function (r) {
       var id = decisionId(r);
-      return '<tr data-mrow="' + esc(id) + '"' + (openIds[id] || (opened && decisionId(opened) === id) ? ' class="mgmt-row--open"' : "") + ">" +
-        DCOLS.map(function (c) {
+      var isOpen = !!(opened && decisionId(opened) === id);
+      var cells = DCOLS.map(function (c) {
           var v = r[c.key];
           if (c.kind === "game") return "<td>" + (r.home ? "vs " : "at ") + esc(r.opp || "") + "</td>";
           if (c.kind === "inn") return "<td>" + halfLetter(r.half) + esc(r.inning) + "</td>";
@@ -1158,7 +1161,14 @@
           if (c.kind === "flags") return "<td>" + (r.flags || []).map(function (f) { return '<span class="mgmt-flag">' + esc(f.replace(/_/g, " ")) + "</span>"; }).join("") + "</td>";
           if (c.nd != null) return "<td>" + num(v, c.nd) + "</td>";
           return "<td>" + (v == null ? "" : esc(v)) + "</td>";
-        }).join("") + "</tr>";
+        });
+      // QCLA01: the first cell holds the row's keyboard control; Enter or Space
+      // clicks it, and the click bubbles to the row handler the mouse uses.
+      var what = (r.date || "") + ", " + famLabel(r.family) + ", " + (r.home ? "vs " : "at ") + (r.opp || "");
+      cells[0] = '<td><button type="button" class="mgmt-rowbtn" data-mopen="' + esc(id) + '" aria-expanded="' + (isOpen ? "true" : "false") + '"' +
+        (isOpen ? ' aria-controls="mgmt-detail"' : "") + ' aria-label="' + esc(what + ": open the plays it governed") + '">' +
+        cells[0].replace(/^<td>/, "").replace(/<\/td>$/, "") + "</button></td>";
+      return '<tr data-mrow="' + esc(id) + '"' + (openIds[id] || isOpen ? ' class="mgmt-row--open"' : "") + ">" + cells.join("") + "</tr>";
     }).join("");
     // data-csv-primary: the CSV control on the mount exports this listing, never
     // an open card's situation or plays table, which are painted above it.
@@ -1262,11 +1272,23 @@
         var id = tr.getAttribute("data-mrow").split(":");
         state.game = parseInt(id[0], 10); state.ab = parseInt(id[1], 10); state.open = tr.getAttribute("data-mrow");
         writeHash(); render();
-        try { var dcard = el("mgmt-detail"); if (dcard && dcard.scrollIntoView) dcard.scrollIntoView({ block: "nearest" }); } catch (e) { /* optional */ }
+        try {
+          var dcard = el("mgmt-detail");
+          if (dcard && dcard.focus) dcard.focus({ preventScroll: true });
+          if (dcard && dcard.scrollIntoView) dcard.scrollIntoView({ block: "nearest" });
+        } catch (e) { /* optional */ }
       });
     });
     var close = el("mgmt-close");
-    if (close && close.addEventListener) close.addEventListener("click", function () { state.game = 0; state.ab = -1; state.open = ""; writeHash(); render(); });
+    if (close && close.addEventListener) close.addEventListener("click", function () {
+      var card = el("mgmt-detail"), back = card && card.getAttribute ? card.getAttribute("data-mopen") : "";
+      state.game = 0; state.ab = -1; state.open = ""; writeHash(); render();
+      // focus returns to the row control that opened the card
+      try {
+        var btn = back && document.querySelector('button[data-mopen="' + back + '"]');
+        if (btn && btn.focus) btn.focus();
+      } catch (e) { /* optional */ }
+    });
     // In-page deep links: read the hash and re-render without a reload.
     Array.prototype.forEach.call(document.querySelectorAll("a[data-mlink]"), function (a) {
       a.addEventListener("click", function (e) {

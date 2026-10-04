@@ -46,14 +46,44 @@
       table.tHead.querySelectorAll("th[data-gen-sorted]").forEach((h) => h.removeAttribute("data-gen-sorted"));
     }
     th.setAttribute("data-gen-sorted", dir);
+    if (table.tHead) {
+      table.tHead.querySelectorAll("th[aria-sort]").forEach((h) => h.setAttribute("aria-sort", "none"));
+    }
+    th.setAttribute("aria-sort", dir === "asc" ? "ascending" : "descending");
+  }
+  function sortableTh(th) {
+    const table = th && th.closest("table");
+    if (!table) return false;
+    if (table.hasAttribute("data-no-sort") || th.hasAttribute("data-no-sort")) return false;
+    return !table.querySelector("th.lb-th"); // leaderboard owns its sort
+  }
+  // QREA01: every header this script sorts takes keyboard focus and says its
+  // sort state. The apps render their tables after this script loads and on
+  // every re-render, so a DOM observer arms each new header row as it lands.
+  function arm() {
+    document.querySelectorAll("table thead th:not([aria-sort])").forEach((th) => {
+      if (!sortableTh(th)) return;
+      th.tabIndex = 0;
+      const d = th.getAttribute("data-gen-sorted");
+      th.setAttribute("aria-sort", d === "asc" ? "ascending" : d === "desc" ? "descending" : "none");
+    });
   }
   document.addEventListener("click", (e) => {
     const th = e.target && e.target.closest && e.target.closest("th");
-    if (!th) return;
-    const table = th.closest("table");
-    if (!table) return;
-    if (table.hasAttribute("data-no-sort") || th.hasAttribute("data-no-sort")) return;
-    if (table.querySelector("th.lb-th")) return; // leaderboard owns its sort
+    if (!th || !sortableTh(th)) return;
     sortTable(th);
   });
+  // Enter or Space on the header itself sorts; the rows move under it, so
+  // focus stays on the same header. A control inside a header keeps its keys.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const th = e.target;
+    if (!th || th.tagName !== "TH" || !th.closest("thead") || !sortableTh(th)) return;
+    e.preventDefault();
+    sortTable(th);
+  });
+  arm();
+  if (typeof MutationObserver === "function") {
+    new MutationObserver(arm).observe(document.documentElement, { childList: true, subtree: true });
+  }
 })();
