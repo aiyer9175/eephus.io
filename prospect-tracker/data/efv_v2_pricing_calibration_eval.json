@@ -1,0 +1,1179 @@
+{
+ "item": "EFV3_C05",
+ "generated_at": "2026-10-04T02:37:47Z",
+ "model_id": "efv_v2_pricing_pos_age",
+ "arm": "MC-5 (docs/efv-v2/MODEL_CLASS_SCREEN.md), outside the Holm family",
+ "role": "development",
+ "metric": "mae",
+ "adjudicates": false,
+ "selects": false,
+ "exploratory": false,
+ "note": "pricing calibration, MAE diagnostic, no rank claim; order_idx unchanged",
+ "label": {
+  "provider": "fwar",
+  "resolved_through": 2026,
+  "id": "fwar@2026-10-02-0341299c20ec"
+ },
+ "code": {
+  "commit": "0fcf9270",
+  "tool": "tools/efv_v2_pricing_calibration.py",
+  "efv_v2_candidates_sha256": "e0e3349c4e9b4b149da8c23593fbe2b1c15738a14dac1fdce74237b78ec1d8d7",
+  "efv_v2_model_sha256": "aaa002e836baff042e661a830ccdf1557132a9ad6c04c28cea577e09e0afdaea"
+ },
+ "assembly_sha256": "422fc5439253ad13d867320b00b634a178e62a8b291025326056377d6d4436ec",
+ "statistic": {
+  "primary": "MAE of efv_war against the frame's outcome, a labelled diagnostic (docs/EFV_GATE_STANDARD.md s4), not a claim",
+  "delta": "MAE(position_age) minus MAE(base) on identical rows; negative is a smaller error",
+  "calibration": "mean residual (outcome minus efv_war), overall, per position family and per age band",
+  "rank": "none: order_idx and the eFV grade are bit-identical with and without the term, so every Spearman and AUC delta is 0"
+ },
+ "definitions": {
+  "base": "efv_v2_model.fit_war_map: WLS of the training target on [1, consensus FV]",
+  "position_age": "efv_v2_candidates.fit_mc5_pricing: WLS on [1, consensus FV, family dummies, age at read], fitted per fold on the fold's training rows, priced at the same eFV grade",
+  "families": {
+   "hit": [
+    "corner",
+    "middle",
+    "other"
+   ],
+   "pit": [
+    "sp",
+    "rp"
+   ]
+  },
+  "hitter_positions": {
+   "C": "middle",
+   "SS": "middle",
+   "CF": "middle",
+   "1B": "corner",
+   "LF": "corner",
+   "RF": "corner",
+   "DH": "corner"
+  },
+  "listing_sources": [
+   "mlb_pipeline",
+   "fangraphs",
+   "baseballamerica",
+   "espn",
+   "just_baseball",
+   "mlb_pipeline_international"
+  ],
+  "listing_window": {
+   "lv": "[frame window start, frame window end)",
+   "vm": "the 365 days ending on the read"
+  },
+  "pitcher_role": "MiLB games started over games in the last season ended by the read (up to 3 back), rp below 0.5; else a relief token in the listing",
+  "age": "read date minus birth date, years; imputed at the training mean",
+  "strata": "position family and age band (efv_strata.age_band) only"
+ },
+ "bootstrap": {
+  "B": 2000,
+  "seed": 20260906,
+  "estimator": "E_cond",
+  "unit": "player cluster"
+ },
+ "reserved_guard": {
+  "reserved_lv": [
+   2020,
+   2021
+  ],
+  "r_vm_first_debut_year": 2025,
+  "reserved_vm_pins": [],
+  "lv_folds": [
+   2017,
+   2018,
+   2019
+  ],
+  "rule_last_year": 2016,
+  "v2_first_scored_year": 2017,
+  "lv_vintages_read": [
+   2017,
+   2018,
+   2019
+  ],
+  "vm_years_read": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023
+  ]
+ },
+ "frames": {
+  "lv_dev": {
+   "frame_version": "lv1_v2",
+   "window": [
+    2017,
+    2019
+   ],
+   "outcome": "W3 (WAR over the first three MLB seasons, 0 if no debut within three seasons of V)",
+   "n": 2862,
+   "n_by_side": {
+    "hit": 1465,
+    "pit": 1397
+   },
+   "n_players": 1753,
+   "mae_base": 0.9323,
+   "mae_position_age": 0.9423,
+   "delta": 0.01,
+   "ci95": [
+    0.004,
+    0.016
+   ],
+   "sd": 0.00303,
+   "n_clusters": 1753,
+   "mean_resid_base": -0.1283,
+   "mean_resid_new": -0.1384,
+   "verdict": "MAE diagnostic, development only, not a claim",
+   "per_side": {
+    "hit": {
+     "n": 1465,
+     "mean_resid_base": -0.0811,
+     "mean_resid_new": -0.0567,
+     "mae_base": 1.1008,
+     "mae_new": 1.1054
+    },
+    "pit": {
+     "n": 1397,
+     "mean_resid_base": -0.1778,
+     "mean_resid_new": -0.2242,
+     "mae_base": 0.7557,
+     "mae_new": 0.7714
+    }
+   },
+   "per_family": {
+    "hit:corner": {
+     "n": 223,
+     "mean_resid_base": -0.2718,
+     "mean_resid_new": 0.0023,
+     "mae_base": 1.1683,
+     "mae_new": 1.1041
+    },
+    "hit:middle": {
+     "n": 600,
+     "mean_resid_base": -0.0174,
+     "mean_resid_new": -0.1353,
+     "mae_base": 1.0997,
+     "mae_new": 1.1559
+    },
+    "hit:other": {
+     "n": 609,
+     "mean_resid_base": -0.1083,
+     "mean_resid_new": -0.0433,
+     "mae_base": 1.101,
+     "mae_new": 1.0744
+    },
+    "hit:unknown": {
+     "n": 33,
+     "mean_resid_base": 0.5493,
+     "mean_resid_new": 0.7256,
+     "mae_base": 0.6589,
+     "mae_new": 0.7663
+    },
+    "pit:rp": {
+     "n": 329,
+     "mean_resid_base": -0.2115,
+     "mean_resid_new": -0.0863,
+     "mae_base": 0.5902,
+     "mae_new": 0.5077
+    },
+    "pit:sp": {
+     "n": 1057,
+     "mean_resid_base": -0.1799,
+     "mean_resid_new": -0.2795,
+     "mae_base": 0.8019,
+     "mae_new": 0.8484
+    },
+    "pit:unknown": {
+     "n": 11,
+     "mean_resid_base": 1.0234,
+     "mean_resid_new": 0.9734,
+     "mae_base": 1.2709,
+     "mae_new": 1.2537
+    }
+   },
+   "per_age_band": {
+    "hit:19-20": {
+     "n": 310,
+     "mean_resid_base": 0.0919,
+     "mean_resid_new": 0.0513,
+     "mae_base": 1.2019,
+     "mae_new": 1.2307
+    },
+    "hit:21-22": {
+     "n": 361,
+     "mean_resid_base": -0.1041,
+     "mean_resid_new": -0.0722,
+     "mae_base": 1.3152,
+     "mae_new": 1.3051
+    },
+    "hit:23-24": {
+     "n": 338,
+     "mean_resid_base": -0.1007,
+     "mean_resid_new": 0.0154,
+     "mae_base": 1.3324,
+     "mae_new": 1.308
+    },
+    "hit:<=18": {
+     "n": 99,
+     "mean_resid_base": 0.3233,
+     "mean_resid_new": 0.1958,
+     "mae_base": 0.876,
+     "mae_new": 0.9159
+    },
+    "hit:>=25": {
+     "n": 40,
+     "mean_resid_base": 0.1753,
+     "mean_resid_new": 0.3761,
+     "mae_base": 1.11,
+     "mae_new": 1.1285
+    },
+    "hit:unknown": {
+     "n": 317,
+     "mean_resid_base": -0.362,
+     "mean_resid_new": -0.355,
+     "mae_base": 0.5798,
+     "mae_new": 0.5955
+    },
+    "pit:19-20": {
+     "n": 163,
+     "mean_resid_base": -0.2246,
+     "mean_resid_new": -0.2758,
+     "mae_base": 0.7317,
+     "mae_new": 0.7665
+    },
+    "pit:21-22": {
+     "n": 305,
+     "mean_resid_base": 0.03,
+     "mean_resid_new": -0.0494,
+     "mae_base": 1.0289,
+     "mae_new": 1.0645
+    },
+    "pit:23-24": {
+     "n": 367,
+     "mean_resid_base": -0.0111,
+     "mean_resid_new": -0.1241,
+     "mae_base": 0.9065,
+     "mae_new": 0.9456
+    },
+    "pit:<=18": {
+     "n": 39,
+     "mean_resid_base": -0.2376,
+     "mean_resid_new": -0.1886,
+     "mae_base": 0.3972,
+     "mae_new": 0.3712
+    },
+    "pit:>=25": {
+     "n": 51,
+     "mean_resid_base": 0.028,
+     "mean_resid_new": -0.0695,
+     "mae_base": 0.6581,
+     "mae_new": 0.6756
+    },
+    "pit:unknown": {
+     "n": 472,
+     "mean_resid_base": -0.443,
+     "mean_resid_new": -0.4167,
+     "mae_base": 0.5103,
+     "mae_new": 0.4916
+    }
+   },
+   "coverage": {
+    "family_source": {
+     "hit:listing": 1432,
+     "hit:none": 33,
+     "pit:listing": 77,
+     "pit:milb_gs_share": 1309,
+     "pit:none": 11
+    },
+    "age_observed": 2073,
+    "hitters_with_listing": 1432,
+    "hitters_record_position_differs_from_listing": 403
+   },
+   "per_fold": [
+    {
+     "side": "hit",
+     "vintage": 2017,
+     "n_train": 1038,
+     "n_scored": 472,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -8.769726241261132,
+      "b": 0.22528733648325514,
+      "n": 1038
+     },
+     "position_age": {
+      "a": -9.011942756331159,
+      "b": 0.22331539765434544,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 0.6661019952925815,
+       "other": 0.3664255169688095
+      },
+      "age_slope": -0.00511693275119594,
+      "age_used": true,
+      "age_mean": 18.87857924577335,
+      "age_observed": 187,
+      "n": 1038,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "hit",
+     "vintage": 2018,
+     "n_train": 1474,
+     "n_scored": 450,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -7.822148389814771,
+      "b": 0.19966728400153402,
+      "n": 1474
+     },
+     "position_age": {
+      "a": -7.1185778838872285,
+      "b": 0.20024452776272697,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 0.1964559242426927,
+       "other": 0.06964161781475674
+      },
+      "age_slope": -0.04227750952706403,
+      "age_used": true,
+      "age_mean": 19.590073297315975,
+      "age_observed": 412,
+      "n": 1474,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "hit",
+     "vintage": 2019,
+     "n_train": 1922,
+     "n_scored": 543,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -7.762490266126303,
+      "b": 0.19721539155491702,
+      "n": 1922
+     },
+     "position_age": {
+      "a": -7.2315532805790586,
+      "b": 0.19744154328169772,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 0.33428309784357696,
+       "other": 0.22165023747549917
+      },
+      "age_slope": -0.038588383357209176,
+      "age_used": true,
+      "age_mean": 20.04590000536215,
+      "age_observed": 651,
+      "n": 1922,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "vintage": 2017,
+     "n_train": 965,
+     "n_scored": 469,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -6.010241999161757,
+      "b": 0.15978934324828192,
+      "n": 965
+     },
+     "position_age": {
+      "a": -6.0441641892255165,
+      "b": 0.15427503495759537,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": -0.30766964186308005
+      },
+      "age_slope": 0.0195445974660448,
+      "age_used": true,
+      "age_mean": 17.298397452214886,
+      "age_observed": 121,
+      "n": 965,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "vintage": 2018,
+     "n_train": 1468,
+     "n_scored": 439,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -5.468573632251689,
+      "b": 0.14313464983938934,
+      "n": 1468
+     },
+     "position_age": {
+      "a": -5.968824644693707,
+      "b": 0.13942028015787375,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": -0.1983086264459372
+      },
+      "age_slope": 0.03717644861306233,
+      "age_used": true,
+      "age_mean": 18.95487109285877,
+      "age_observed": 270,
+      "n": 1468,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "vintage": 2019,
+     "n_train": 1882,
+     "n_scored": 489,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -5.14071013310173,
+      "b": 0.1339670968634043,
+      "n": 1882
+     },
+     "position_age": {
+      "a": -5.371859717741521,
+      "b": 0.13081377242844722,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": -0.15082621977548746
+      },
+      "age_slope": 0.02025369486864031,
+      "age_used": true,
+      "age_mean": 19.77564673042444,
+      "age_observed": 473,
+      "n": 1882,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    }
+   ]
+  },
+  "vm_dev": {
+   "frame_version": "vm2",
+   "window": [
+    2017,
+    2023
+   ],
+   "outcome": "career WAR to date",
+   "dropped": {
+    "no_v2_score": 0,
+    "v2_fold_year_differs": 0
+   },
+   "n": 830,
+   "n_by_side": {
+    "pit": 424,
+    "hit": 406
+   },
+   "n_players": 830,
+   "mae_base": 3.6728,
+   "mae_position_age": 3.6829,
+   "delta": 0.0101,
+   "ci95": [
+    -0.0101,
+    0.0311
+   ],
+   "sd": 0.01063,
+   "n_clusters": 830,
+   "mean_resid_base": 1.0817,
+   "mean_resid_new": 0.9596,
+   "verdict": "MAE diagnostic, development only, not a claim",
+   "per_side": {
+    "hit": {
+     "n": 406,
+     "mean_resid_base": 1.0096,
+     "mean_resid_new": 0.9624,
+     "mae_base": 4.6249,
+     "mae_new": 4.6239
+    },
+    "pit": {
+     "n": 424,
+     "mean_resid_base": 1.1508,
+     "mean_resid_new": 0.957,
+     "mae_base": 2.7611,
+     "mae_new": 2.7819
+    }
+   },
+   "per_family": {
+    "hit:corner": {
+     "n": 93,
+     "mean_resid_base": 0.1859,
+     "mean_resid_new": 0.4659,
+     "mae_base": 3.9759,
+     "mae_new": 3.9589
+    },
+    "hit:middle": {
+     "n": 179,
+     "mean_resid_base": 1.6763,
+     "mean_resid_new": 1.313,
+     "mae_base": 4.8822,
+     "mae_new": 4.9034
+    },
+    "hit:other": {
+     "n": 131,
+     "mean_resid_base": 0.7176,
+     "mean_resid_new": 0.8684,
+     "mae_base": 4.8289,
+     "mae_new": 4.8094
+    },
+    "hit:unknown": {
+     "n": 3,
+     "mean_resid_base": -0.4863,
+     "mean_resid_new": -0.4595,
+     "mae_base": 0.4863,
+     "mae_new": 0.4595
+    },
+    "pit:rp": {
+     "n": 74,
+     "mean_resid_base": 0.9497,
+     "mean_resid_new": 0.7711,
+     "mae_base": 1.4824,
+     "mae_new": 1.483
+    },
+    "pit:sp": {
+     "n": 350,
+     "mean_resid_base": 1.1934,
+     "mean_resid_new": 0.9963,
+     "mae_base": 3.0315,
+     "mae_new": 3.0565
+    }
+   },
+   "per_age_band": {
+    "hit:19-20": {
+     "n": 9,
+     "mean_resid_base": 7.205,
+     "mean_resid_new": 7.1641,
+     "mae_base": 10.6367,
+     "mae_new": 10.7491
+    },
+    "hit:21-22": {
+     "n": 94,
+     "mean_resid_base": 1.5958,
+     "mean_resid_new": 1.5185,
+     "mae_base": 6.7511,
+     "mae_new": 6.7775
+    },
+    "hit:23-24": {
+     "n": 192,
+     "mean_resid_base": 0.271,
+     "mean_resid_new": 0.3151,
+     "mae_base": 4.2721,
+     "mae_new": 4.2429
+    },
+    "hit:<=18": {
+     "n": 1,
+     "mean_resid_base": -0.0589,
+     "mean_resid_new": 0.6022,
+     "mae_base": 0.0589,
+     "mae_new": 0.6022
+    },
+    "hit:>=25": {
+     "n": 110,
+     "mean_resid_base": 1.3005,
+     "mean_resid_new": 1.113,
+     "mae_base": 2.9736,
+     "mae_new": 2.984
+    },
+    "pit:19-20": {
+     "n": 4,
+     "mean_resid_base": 0.3565,
+     "mean_resid_new": 0.4777,
+     "mae_base": 1.1705,
+     "mae_new": 1.1375
+    },
+    "pit:21-22": {
+     "n": 56,
+     "mean_resid_base": 0.4414,
+     "mean_resid_new": 0.3089,
+     "mae_base": 3.4306,
+     "mae_new": 3.4507
+    },
+    "pit:23-24": {
+     "n": 192,
+     "mean_resid_base": 1.7555,
+     "mean_resid_new": 1.5595,
+     "mae_base": 3.5036,
+     "mae_new": 3.5383
+    },
+    "pit:<=18": {
+     "n": 1,
+     "mean_resid_base": 0.4968,
+     "mean_resid_new": 0.9799,
+     "mae_base": 0.4968,
+     "mae_new": 0.9799
+    },
+    "pit:>=25": {
+     "n": 171,
+     "mean_resid_base": 0.7266,
+     "mean_resid_new": 0.5038,
+     "mae_base": 1.7587,
+     "mae_new": 1.7627
+    }
+   },
+   "coverage": {
+    "family_source": {
+     "hit:listing": 403,
+     "hit:none": 3,
+     "pit:listing": 5,
+     "pit:milb_gs_share": 419
+    },
+    "age_observed": 830,
+    "hitters_with_listing": 403,
+    "hitters_record_position_differs_from_listing": 187
+   },
+   "per_fold": [
+    {
+     "side": "hit",
+     "year": 2017,
+     "n_train": 367,
+     "n_scored": 51,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -23.11966115739445,
+      "b": 0.5909938692215164,
+      "n": 367
+     },
+     "position_age": {
+      "a": -23.36776254600409,
+      "b": 0.5851433748004125,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 1.2635891963183308,
+       "other": 0.4271920935602029
+      },
+      "age_slope": -0.006266976659563584,
+      "age_used": true,
+      "age_mean": 19.45790554414784,
+      "age_observed": 39,
+      "n": 367,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "hit",
+     "year": 2018,
+     "n_train": 485,
+     "n_scored": 48,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -21.87581249400046,
+      "b": 0.5581523457463954,
+      "n": 485
+     },
+     "position_age": {
+      "a": -19.10331850884357,
+      "b": 0.5608849380767724,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 0.2930471172330932,
+       "other": 0.03550368313104815
+      },
+      "age_slope": -0.14755388334776184,
+      "age_used": true,
+      "age_mean": 20.340369609856268,
+      "age_observed": 100,
+      "n": 485,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "hit",
+     "year": 2019,
+     "n_train": 665,
+     "n_scored": 68,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -22.24388916833885,
+      "b": 0.5639956820935421,
+      "n": 665
+     },
+     "position_age": {
+      "a": -22.18596083449478,
+      "b": 0.5632765515182773,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 0.8454527410680333,
+       "other": 0.5368158546852784
+      },
+      "age_slope": -0.029288604293872717,
+      "age_used": true,
+      "age_mean": 20.939911574819174,
+      "age_observed": 185,
+      "n": 665,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "hit",
+     "year": 2020,
+     "n_train": 864,
+     "n_scored": 57,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -20.960015645111664,
+      "b": 0.535810138173182,
+      "n": 864
+     },
+     "position_age": {
+      "a": -22.351468409414164,
+      "b": 0.5340733850202869,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 0.5738445665383572,
+       "other": 0.1734601906702617
+      },
+      "age_slope": 0.05491081643685567,
+      "age_used": true,
+      "age_mean": 21.56589167825837,
+      "age_observed": 310,
+      "n": 864,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "hit",
+     "year": 2021,
+     "n_train": 1032,
+     "n_scored": 63,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -19.076193265370957,
+      "b": 0.4941134064674057,
+      "n": 1032
+     },
+     "position_age": {
+      "a": -20.49569305147431,
+      "b": 0.4918490820029131,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 0.5781674204762484,
+       "other": 0.19341215540417728
+      },
+      "age_slope": 0.05595680431140984,
+      "age_used": true,
+      "age_mean": 21.791104543680873,
+      "age_observed": 428,
+      "n": 1032,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "hit",
+     "year": 2022,
+     "n_train": 1159,
+     "n_scored": 111,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -17.960736207168505,
+      "b": 0.4692531025167151,
+      "n": 1159
+     },
+     "position_age": {
+      "a": -20.055702367186928,
+      "b": 0.4672311903593818,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 0.6501607344809446,
+       "other": 0.1444313053758003
+      },
+      "age_slope": 0.08525291909836501,
+      "age_used": true,
+      "age_mean": 22.069317870116155,
+      "age_observed": 534,
+      "n": 1159,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "hit",
+     "year": 2023,
+     "n_train": 1410,
+     "n_scored": 84,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -18.687246626958736,
+      "b": 0.4890533253419383,
+      "n": 1410
+     },
+     "position_age": {
+      "a": -20.287334067495625,
+      "b": 0.48817170638964175,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 0.6315773142228311,
+       "other": 0.018693652386732266
+      },
+      "age_slope": 0.06271908213375611,
+      "age_used": true,
+      "age_mean": 22.307442144403133,
+      "age_observed": 740,
+      "n": 1410,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "hit",
+     "year": 2024,
+     "n_train": 1655,
+     "n_scored": 79,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -18.000577534049324,
+      "b": 0.47509226991705455,
+      "n": 1655
+     },
+     "position_age": {
+      "a": -20.347750965793995,
+      "b": 0.47471275757199327,
+      "reference_family": "corner",
+      "family_shift": {
+       "middle": 0.6613613947728754,
+       "other": 0.027779349443229278
+      },
+      "age_slope": 0.09404577222652745,
+      "age_used": true,
+      "age_mean": 22.388891163249024,
+      "age_observed": 953,
+      "n": 1655,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:middle",
+       "family:other",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "year": 2017,
+     "n_train": 398,
+     "n_scored": 29,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -13.123930611232916,
+      "b": 0.34866443203666353,
+      "n": 398
+     },
+     "position_age": {
+      "a": -15.035593326947762,
+      "b": 0.337076298876255,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": -0.8184944306498563
+      },
+      "age_slope": 0.1518255753741698,
+      "age_used": true,
+      "age_mean": 16.81825233858088,
+      "age_observed": 30,
+      "n": 398,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "year": 2018,
+     "n_train": 487,
+     "n_scored": 53,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -14.118373671306307,
+      "b": 0.37102241681873843,
+      "n": 487
+     },
+     "position_age": {
+      "a": -16.105120529007287,
+      "b": 0.36645111888734605,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": -0.48853706855526324
+      },
+      "age_slope": 0.11659250986585826,
+      "age_used": true,
+      "age_mean": 19.392687486591683,
+      "age_observed": 67,
+      "n": 487,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "year": 2019,
+     "n_train": 701,
+     "n_scored": 73,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -14.564057201162347,
+      "b": 0.37583904675482105,
+      "n": 701
+     },
+     "position_age": {
+      "a": -16.374047173558683,
+      "b": 0.3741922884834428,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": -0.1790172312642271
+      },
+      "age_slope": 0.09200350873314664,
+      "age_used": true,
+      "age_mean": 20.68560346794433,
+      "age_observed": 132,
+      "n": 701,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "year": 2020,
+     "n_train": 897,
+     "n_scored": 97,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -13.761604264338619,
+      "b": 0.35793632732104597,
+      "n": 897
+     },
+     "position_age": {
+      "a": -15.792409460433667,
+      "b": 0.3575522811696592,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": -0.07130242129062199
+      },
+      "age_slope": 0.09559374644855166,
+      "age_used": true,
+      "age_mean": 21.50702020652918,
+      "age_observed": 230,
+      "n": 897,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "year": 2021,
+     "n_train": 1104,
+     "n_scored": 91,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -12.679038430571548,
+      "b": 0.3338162329955171,
+      "n": 1104
+     },
+     "position_age": {
+      "a": -14.199859362313347,
+      "b": 0.3348531691203405,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": -0.04850083280058778
+      },
+      "age_slope": 0.06651074492057851,
+      "age_used": true,
+      "age_mean": 22.306033876083333,
+      "age_observed": 355,
+      "n": 1104,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "year": 2022,
+     "n_train": 1258,
+     "n_scored": 86,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -11.863755100334885,
+      "b": 0.3169049944975566,
+      "n": 1258
+     },
+     "position_age": {
+      "a": -13.869337691550388,
+      "b": 0.32080589089648476,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": 0.07046583797197561
+      },
+      "age_slope": 0.08033812502947794,
+      "age_used": true,
+      "age_mean": 22.823926983008715,
+      "age_observed": 478,
+      "n": 1258,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "year": 2023,
+     "n_train": 1477,
+     "n_scored": 114,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -11.688486335413781,
+      "b": 0.31458933349440094,
+      "n": 1477
+     },
+     "position_age": {
+      "a": -13.55840112145949,
+      "b": 0.32053341414359393,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": 0.18276930036242883
+      },
+      "age_slope": 0.06903004440243105,
+      "age_used": true,
+      "age_mean": 23.097884592519755,
+      "age_observed": 639,
+      "n": 1477,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    },
+    {
+     "side": "pit",
+     "year": 2024,
+     "n_train": 1724,
+     "n_scored": 107,
+     "order_idx_bit_identical": true,
+     "base": {
+      "a": -11.416504614936574,
+      "b": 0.3094638815599158,
+      "n": 1724
+     },
+     "position_age": {
+      "a": -13.080763638644617,
+      "b": 0.3168520766065919,
+      "reference_family": "sp",
+      "family_shift": {
+       "rp": 0.2079211399608955
+      },
+      "age_slope": 0.05659472688373154,
+      "age_used": true,
+      "age_mean": 23.34675914590046,
+      "age_observed": 847,
+      "n": 1724,
+      "columns": [
+       "intercept",
+       "fv",
+       "family:rp",
+       "age_at_read"
+      ]
+     }
+    }
+   ]
+  }
+ },
+ "elapsed_s": 52.4
+}
