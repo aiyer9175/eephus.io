@@ -253,6 +253,9 @@ def test_reporting_path_survives_nulls():
 # ---------------------------------------------------------------------------
 
 def test_relabel_reproduces_the_label_rule_and_the_terminal_override():
+    rt0 = ed.RESOLVED_THROUGH
+    # 86226bb2 (the fWAR label epoch) moved the module clock from 2025 to 2026.
+    assert rt0 == 2026
     lab = _lab()
     seasons = {2019: 0.5, 2020: 1.0, 2021: 1.5, 2022: 2.0, 2023: 2.5, 2024: 3.0, 2025: 3.5}
     plain = {"player_key": "p", "kind": "debuted", "debut_year": 2019, "cutoff": "2019-09-20",
@@ -277,7 +280,7 @@ def test_relabel_reproduces_the_label_rule_and_the_terminal_override():
     s21 = {y: 1.0 for y in range(2021, 2027)}
     assert lab.relabel([row21], {"p": s21}, {"efv_dataset.RESOLVED_THROUGH": 2026})[0]["censored"] is False
     assert lab.relabel([row21], {"p": s21}, {"efv_dataset.RESOLVED_THROUGH": 2025})[0]["censored"] is True
-    assert ed.RESOLVED_THROUGH == 2025
+    assert ed.RESOLVED_THROUGH == rt0     # relabel's flag overrides restore the module clock
     # the terminal override: a censored row with a terminal transaction resolves at its sum
     term = dict(row21, terminal_resolved="2024-03-01")
     t = lab.relabel([term], {"p": s21}, {"efv_dataset.RESOLVED_THROUGH": 2025})[0]

@@ -3,10 +3,17 @@ the label builder and the read touched nothing reserved.
 
 1. The per-cohort terms in data/efv_label_horizon_2026.json equal efv_dataset._label_6yr
    called under RESOLVED_THROUGH 2025 and 2026 (an empty seasons dict: calendar only),
-   and the shipped matrices' stored weight, observed_seasons and censored flag equal the
-   2025 terms on every censored row (zero mismatches).
+   and the read's own matrices' stored weight, observed_seasons and censored flag equal
+   the 2025 terms on every censored row (zero mismatches).
 2. The per-(cohort, side) rows, censored rows and the 2021 move count reconcile to the
    matrices; the weight mass is rows times the builder's term plus the terminal rows.
+
+The matrices the read was taken on are the pre-epoch ones: the fWAR label epoch's step F
+rebuilt data/xfv_<side>_matrix.json under RESOLVED_THROUGH 2026 (86226bb2). Under
+LABEL_HORIZON_2026.md section 10 ("A run after step D+U is a new read on the fWAR label
+and a new section here, never an edit of the numbers above") the artifact and the doc
+stay as they are, so the tests read the step A snapshot copies and verify each against
+the artifact's own inputs.matrices[<side>].sha256.
 3. The reserved guard raises for debut cohorts 2020, 2021, 2025 and 2026; the artifact's
    outcome cohorts are 2014 to 2019 and its newest season read is 2024; the window sum
    refuses a season past 2024.
@@ -17,8 +24,10 @@ the label builder and the read touched nothing reserved.
 """
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -60,12 +69,55 @@ def doc():
     return json.loads(ART.read_text(encoding="utf-8"))
 
 
+def _git_root(start: Path) -> Path | None:
+    for d in (start, *start.parents):
+        if (d / ".git").exists():
+            return d
+    return None
+
+
+def _pre_epoch_snapshot() -> Path | None:
+    """The fWAR label epoch's step A snapshot folder (files flat, read only).
+
+    PRE_EPOCH_FWAR_SNAPSHOT wins. Otherwise the main checkout: in a linked worktree the
+    .git FILE reads 'gitdir: <main>/.git/worktrees/<name>', which gives <main>; in the
+    main checkout .git is the directory itself. The snapshot is <main>/_pre_epoch_fwar_2026-10."""
+    env = os.environ.get("PRE_EPOCH_FWAR_SNAPSHOT")
+    if env:
+        return Path(env)
+    root = _git_root(ROOT)
+    if root is None:
+        return None
+    dotgit = root / ".git"
+    main = root
+    if dotgit.is_file():
+        line = dotgit.read_text(encoding="utf-8").strip()
+        if not line.startswith("gitdir:"):
+            return None
+        gitdir = Path(line[len("gitdir:"):].strip())
+        if gitdir.parent.name != "worktrees" or gitdir.parent.parent.name != ".git":
+            return None
+        main = gitdir.parent.parent.parent
+    return main / "_pre_epoch_fwar_2026-10"
+
+
 @pytest.fixture(scope="module")
-def mats(T):
-    for p in T.MATRICES.values():
-        if not p.exists():
-            pytest.skip(f"{p.name} not on disk")
-    return T.load_matrices()
+def mats(T, doc):
+    """The matrices the read was taken on, pinned by the artifact's own input hashes.
+    Skips (named reason) only when no snapshot file is found; a hash mismatch fails."""
+    snap = _pre_epoch_snapshot()
+    paths = {}
+    for s in T.SIDES:
+        want = doc["inputs"]["matrices"][s]
+        p = snap / Path(want["path"]).name if snap is not None else None
+        if p is None or not p.is_file():
+            pytest.skip(f"no pre-epoch snapshot copy of {Path(want['path']).name} "
+                        f"(set PRE_EPOCH_FWAR_SNAPSHOT; looked in {snap})")
+        got = hashlib.sha256(p.read_bytes()).hexdigest()
+        if got != want["sha256"]:
+            pytest.fail(f"{p} sha256 {got} is not the read's input {want['sha256']}")
+        paths[s] = p
+    return T.load_matrices(paths)
 
 
 def _direct_terms(cohort: int, rt: int) -> tuple[int, float, bool]:
@@ -93,7 +145,9 @@ def _walk_keys(o, out: list) -> list:
 # 1. the terms are the builder's
 
 def test_terms_are_the_label_builders_own(T, doc):
-    assert D.RESOLVED_THROUGH == T.RT_BEFORE == 2025
+    # 86226bb2 (the fWAR label epoch) moved the module clock to the read's RT_AFTER.
+    assert T.RT_BEFORE == 2025 and T.RT_AFTER == 2026
+    assert D.RESOLVED_THROUGH == T.RT_AFTER
     assert D.SERVICE_ALIGNED_WINDOW is False
     for rt in (T.RT_BEFORE, T.RT_AFTER):
         for c in T.TERM_COHORTS:
