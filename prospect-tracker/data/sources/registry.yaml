@@ -270,6 +270,44 @@ verified:
       High ratio but WEAK for eFV - accolades are downstream of WAR (the eFV label itself).
       MiLB awards could be a thin pedigree feature. Not shortlisted.
 
+  - id: statsapi_coaches
+    name: StatsAPI team coaching staffs (dated staff history, Staff Gems)
+    url: https://statsapi.mlb.com/api/v1/teams/{teamId}/coaches?season={season} | ?date={YYYY-MM-DD}
+    tier: none          # a Staff Gems source, outside the eFV tiers A to I
+    access: public
+    method: json_xhr
+    endpoints:
+      - {url: "/api/v1/teams/147/coaches?season=2026", http_status: 200, content_type: application/json, byte_size: 2196, sample_path: data/sources/samples/staff_01_coaches_season_147_2026.json}
+      - {url: "/api/v1/teams/120/coaches?date=2025-07-07", http_status: 200, content_type: application/json, byte_size: 1783, sample_path: data/sources/samples/staff_02_coaches_date_120_2025-07-07.json}
+      - {url: "/api/v1/teams/affiliates?teamIds=147&season=2026", http_status: 200, content_type: application/json, byte_size: 7639, sample_path: data/sources/samples/staff_03_affiliates_147_2026.json}
+      - {url: "https://gdx.mlb.com/components/copyright.txt", http_status: 200, content_type: text/plain, byte_size: 473, sample_path: data/sources/samples/staff_04_mlbam_copyright.txt}
+    sample_redaction: "person (id, fullName, link) and jerseyNumber replaced in the two coaches samples (11 and 9 rows); live sha256 273f90e672b5082e and 79990e4b14d8f4e6; no staff name or id is kept under data/"
+    grain: staff_spell        # person x team x job, per season; per day with ?date=
+    coverage: {levels: "MLB (managers and coaches to 1960; first- and third-base coach titles by 1995); MiLB affiliates from 2008 (0-4 per team), 4-9 since 2021; complex and DSL thin before about 2012", seasons: "1960-2026 MLB, 2008-2026 MiLB", n_est: "about 336 teams a season incl. pseudo-teams; 0-12 rows each"}
+    join_key: "person.id (MLBAM) -> spine; 331 of 331 probed rows carry it"
+    match_rate_est: 1.0
+    vintage_available: native   # ?season= unions every holder; ?date= gives the staff on that day
+    training_eligible: false    # Staff Gems attribution only; never an eFV feature
+    robots_txt: "statsapi.mlb.com robots.txt 404"
+    tos_url: "http://gdx.mlb.com/components/copyright.txt"
+    legal_risk: ambiguous       # bulk use outside the notice's non-bulk term; as mlb_pipeline_graphql
+    eng_days_est: 1.0
+    verified: 2026-09-30        # cross-org probe, about 250 requests; samples re-fetched 2026-10-03
+    notes: >
+      MLBAM's notice, carried in every payload and at the tos_url: "Only individual,
+      non-commercial, non-bulk use of the Materials is permitted and any other use of the
+      Materials is prohibited without prior written authorization from MLBAM." The Staff
+      Gems stage 0 fetch (staff_ingest.py --fetch, about 15,000 requests once, then about
+      800 a season) is BULK use, outside the notice's non-bulk term. A paid tier would also
+      breach its non-commercial term (the owner moved weather to NWS over commercial terms,
+      FP5-2). Rated ambiguous, as this registry rates mlb_pipeline_graphql, until the owner
+      rules; the owner chose this source (SG-Q2, StatsAPI only, 2026-09-30) with that
+      rating. The only dated, identified staff history: coordinators, rovers, development
+      directors, analysts, strength and medical staff are not in it. The personnel endpoint
+      ignores its season parameter (current staff only) and transactions carry no staff
+      moves. Raw responses live in the gitignored .cache/staff/ only. Not scored on the eFV
+      rubric (scripts/score_sources.py): it is not an eFV feature source.
+
 # Re-confirmed already-ingested (live checks passed):
 already_ingested_confirmed:
   - {id: baseball_savant_minors, http_status: 200, note: "CSV /statcast-search-minors/csv works as repo already calls it; AAA 2023+"}
