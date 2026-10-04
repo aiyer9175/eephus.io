@@ -73,6 +73,13 @@
       (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
   }
   function isNum(v) { return v !== null && v !== undefined && v === v && v !== ""; }
+  // The a6 statement (frozen in the gate artifact) explains the Swartz gap by
+  // counting stats, which no ablation measured (QCLC21). The page quotes it
+  // with that sentence compressed to what is known; /arbitration/ does the same.
+  function swartzCopy(s) {
+    return String(s == null ? "" : s).replace(/The mechanism is not mysterious:[^.]*\./,
+      "Swartz uses counting stats (HR, RBI, saves, wins) this model excludes; how much of the gap that explains is not measured.");
+  }
   // A value that rounds to zero prints 0.0, never -0.0 (QCLC10: a career WAR
   // of -0.03 printed "-0.0").
   function num(v, nd) {
@@ -810,7 +817,7 @@
     if (sh && sh.arbitration && sh.arbitration.realized_rows) out += renderRealizedRows(sh.arbitration.realized_rows);
     out += '<p class="ledger-count">ou_mkt: ' + esc(copy("ou_mkt")) + " ou_war: " + esc(copy("ou_war")) + " " + esc(copy("never_combine")) + "</p>";
     if (DATA.arbitration_eval && copy("swartz_a6")) {
-      out += '<p class="ledger-count">' + esc(copy("swartz_label")) + ". " + esc(copy("swartz_a6_prefix")) + ", n " + esc(DATA.arbitration_eval.n) + ": " + esc(copy("swartz_a6")) + "</p>";
+      out += '<p class="ledger-count">' + esc(copy("swartz_label")) + ". " + esc(copy("swartz_a6_prefix")) + ", n " + esc(DATA.arbitration_eval.n) + ": " + esc(swartzCopy(copy("swartz_a6"))) + "</p>";
     }
     out += '<p class="ledger-note">' + esc(copy("arb_realized_copy")) + "</p>";
     out += how('<p class="ledger-count">Flag census: ' + Object.keys(A.flags).map(function (b) { return "bit " + b + ": " + A.flags[b]; }).join(", ") + ". " + esc(copy("arb_flag_key")) + "</p>");
@@ -1386,7 +1393,7 @@
     if (DATA.arbitration_eval && DATA.arbitration_eval.statement) {
       var E = DATA.arbitration_eval;
       out += "<h2>Arbitration a6 arm (MLBTR / Swartz)</h2>" + '<p class="ledger-count">n ' + esc(E.n) + ", ours MdAPE " + esc(num(E.ours_mdape, 4)) + ", Swartz MdAPE " + esc(num(E.swartz_mdape, 4)) + ", ratio " + esc(num(E.ratio_ours_over_swartz, 3)) + ", verdict " + esc(E.verdict) + ". " + esc(E.claim) + "</p>" +
-        '<p class="ledger-note">' + esc(E.statement) + "</p>";
+        '<p class="ledger-note">' + esc(swartzCopy(E.statement)) + "</p>";
     }
     if (M.grad_contract_formula) out += '<p class="ledger-count">Grad-Contract Surplus, ' + esc(M.grad_contract_formula) + "</p>";
     return out;

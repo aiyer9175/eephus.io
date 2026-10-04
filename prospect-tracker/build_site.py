@@ -4327,11 +4327,21 @@ def _arb_model_panel() -> str:
                ctl.get("permuted_p95") or 0, ctl.get("p_perm_ge_real") or 0,
                r.get("n_paired") or 0))
 
+    # QCLC21 (2026-10-02): the frozen a6 statement explains the Swartz gap by
+    # counting stats, and no ablation in the artifact measures that. The page
+    # quotes it with that sentence compressed to what is known (assets/ledger.js
+    # does the same); the artifact is the gate's record and is not edited.
+    def _loss_text(s):
+        return re.sub(r"The mechanism is not mysterious:[^.]*\.",
+                      "Swartz uses counting stats (HR, RBI, saves, wins) this model "
+                      "excludes; how much of the gap that explains is not measured.",
+                      str(s or ""))
+
     losses = []
     for entry in ev.get("loss_ledger") or []:
         losses.append('<li><strong>%s</strong>: %s</li>'
                       % (html.escape(str(entry.get("claim", ""))),
-                         html.escape(str(entry.get("statement", "")))))
+                         html.escape(_loss_text(entry.get("statement", "")))))
 
     # The substitute-source agreement figures live in the artifact
     # (conventions.pool); this list names the limit and does not retype them.
