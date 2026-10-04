@@ -96,7 +96,7 @@
   // "Baseball-Reference published nothing", and rendering a 0 there would invent
   // a number for two thirds of the board.
   function pub(v) {
-    return (v === null || v === undefined) ? '<span class="hof-blank" title="no published value">.</span>' : num(v, 0);
+    return (v === null || v === undefined) ? '<span class="hof-blank" role="img" aria-label="no published value" title="no published value">.</span>' : num(v, 0);
   }
 
   var INDUCTION_LABEL = {
@@ -169,18 +169,29 @@
   }
 
   // ---- render --------------------------------------------------------------
+  // THE BAND SWITCHER IS A REAL TABLIST (audit QCLA14). It carried
+  // role=tablist over three plain buttons, so a screen reader met a tablist
+  // with no tabs and the active band was a class only. Each button is a tab
+  // with aria-selected and aria-controls on the one panel below, and the
+  // arrow keys move between them.
   function renderBands() {
     var out = [], k;
     for (k in BANDS) {
       if (!Object.prototype.hasOwnProperty.call(BANDS, k)) continue;
       var n = (DATA[k] || []).length;
-      out.push('<button type="button" class="hof-bandbtn' +
-        (state.band === k ? " active" : "") + '" data-band="' + k + '">' +
+      var on = state.band === k;
+      out.push('<button type="button" role="tab" id="hof-band-' + k + '" aria-controls="hof-band-panel"' +
+        ' aria-selected="' + (on ? "true" : "false") + '" class="hof-bandbtn' +
+        (on ? " active" : "") + '" data-band="' + k + '">' +
         esc(BANDS[k].label) + ' <span class="hof-bandn">' + n + "</span></button>");
     }
-    return '<div class="hof-bands" role="tablist">' + out.join("") + "</div>";
+    return '<div class="hof-bands" role="tablist" aria-label="Bands">' + out.join("") + "</div>";
   }
 
+  // The Watch and Not Yet Eligible notes say what the band is, so they sit
+  // above the table. The Eligible note is the reproduction disclosure; it
+  // moved under the table (the board leads with the board) and still renders
+  // on this view, word for word, as well as on the Method tab.
   function renderBandNote() {
     if (state.band === "watch") {
       return '<p class="hof-note">' + esc(DATA.sections.watch.why_no_projection) + "</p>";
@@ -188,11 +199,15 @@
     if (state.band === "not_yet_eligible") {
       return '<p class="hof-note">' + esc(DATA.sections.not_yet_eligible.why) + "</p>";
     }
+    return "";
+  }
+
+  function renderBandFoot() {
+    if (state.band !== "leaderboard") return "";
     return '<p class="hof-note">' + esc(DATA.reproduction.what_it_means) + "</p>";
   }
 
-  function renderTable() {
-    var rows = sorted(filtered());
+  function renderTable(rows) {
     var head = COLS.map(function (c) {
       var arrow = state.sort.key === c.key ? (state.sort.asc ? " ▲" : " ▼") : "";
       // scope=col and aria-sort, not role=button: the header had no sort
@@ -229,9 +244,17 @@
     return '<div class="hof-tablewrap mlbstats-scroll"><table class="hof-table"><thead><tr>' +
       '<th class="hof-c-rank mlbstats-col-rank">#</th>' + head + "</tr></thead><tbody>" +
       (body || '<tr><td colspan="14">' + pxState("empty", "No players match.") + "</td></tr>") +
-      "</tbody></table></div>" + more +
-      '<p class="hof-count">' + rows.length + " players shown of " +
-      (DATA[state.band] || []).length + " in this band.</p>";
+      "</tbody></table></div>" + more;
+  }
+
+  // The count says how many rows are ON SCREEN, then how many match, then the
+  // band. It read "3620 players shown of 3620" under a 100-row page (census
+  // X06-15).
+  function countText(rows) {
+    var total = (DATA[state.band] || []).length;
+    var shown = Math.min(rows.length, state.shown);
+    return "Showing " + shown + " of " +
+      (rows.length === total ? "" : rows.length + " matching, ") + total + " in this band.";
   }
 
   function renderControls() {
@@ -430,35 +453,79 @@
         (fr && fr.live ? "" : renderDark("franchises", "Franchises"));
       return;
     }
-    root.innerHTML = renderBands() + renderBandNote() + renderControls() +
-      renderTable() + renderLadder();
+    // THE BOARD PAINTS IN TWO LAYERS. The bands, the controls and the count
+    // line are drawn once per band; a search, a filter, a sort or Show more
+    // repaints only the table slot. So the search box keeps its focus without
+    // a re-focus trick, and the count line is one persistent role=status node
+    // whose text changes, which is what a screen reader announces (a live
+    // region rebuilt on every keystroke is never read).
+    root.innerHTML = renderBands() +
+      '<div id="hof-band-panel" role="tabpanel" aria-labelledby="hof-band-' + state.band + '">' +
+      renderBandNote() + renderControls() + '<div id="hof-table-slot"></div>' +
+      '<p class="hof-count" id="hof-count" role="status"></p>' +
+      renderBandFoot() + renderLadder() + "</div>";
     wire();
+    renderRows();
+  }
+
+  // Repaint the table slot and the count. `refocus` is a selector inside the
+  // slot that takes focus afterwards: the header just sorted, or Show more.
+  // Without it a keyboard sort dropped focus on <body> (audit QCLA14).
+  function renderRows(refocus) {
+    var slot = el("hof-table-slot");
+    if (!slot) return;
+    var rows = sorted(filtered());
+    slot.innerHTML = renderTable(rows);
+    var c = el("hof-count");
+    if (c) c.textContent = countText(rows);
+    wireTable();
+    if (refocus) {
+      var t = slot.querySelector(refocus) ||
+        slot.querySelector('th[data-sort="' + state.sort.key + '"]');
+      if (t) t.focus();
+    }
+  }
+
+  function setBand(k) {
+    state.band = k; state.shown = PAGE; state.pos = "ALL"; render();
+    var b = el("hof-band-" + k);
+    if (b) b.focus();
   }
 
   function wire() {
     var q = el("hof-q");
     if (q) q.addEventListener("input", function () {
-      state.query = this.value; state.shown = PAGE; render();
-      var f = el("hof-q"); if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); }
+      state.query = this.value; state.shown = PAGE; renderRows();
     });
     var p = el("hof-pos");
-    if (p) p.addEventListener("change", function () { state.pos = this.value; state.shown = PAGE; render(); });
+    if (p) p.addEventListener("change", function () { state.pos = this.value; state.shown = PAGE; renderRows(); });
     var i = el("hof-ind");
-    if (i) i.addEventListener("change", function () { state.induction = this.value; state.shown = PAGE; render(); });
-    var m = el("hof-more");
-    if (m) m.addEventListener("click", function () { state.shown += PAGE; render(); });
+    if (i) i.addEventListener("change", function () { state.induction = this.value; state.shown = PAGE; renderRows(); });
+    var keys = Object.keys(BANDS);
     Array.prototype.forEach.call(document.querySelectorAll(".hof-bandbtn"), function (b) {
-      b.addEventListener("click", function () {
-        state.band = this.getAttribute("data-band");
-        state.shown = PAGE; state.pos = "ALL"; render();
+      b.addEventListener("click", function () { setBand(this.getAttribute("data-band")); });
+      b.addEventListener("keydown", function (e) {
+        var at = keys.indexOf(this.getAttribute("data-band")), to = -1;
+        if (e.key === "ArrowRight") to = (at + 1) % keys.length;
+        else if (e.key === "ArrowLeft") to = (at + keys.length - 1) % keys.length;
+        else if (e.key === "Home") to = 0;
+        else if (e.key === "End") to = keys.length - 1;
+        if (to < 0) return;
+        e.preventDefault();
+        setBand(keys[to]);
       });
     });
-    Array.prototype.forEach.call(document.querySelectorAll("th[data-sort]"), function (th) {
+  }
+
+  function wireTable() {
+    var m = el("hof-more");
+    if (m) m.addEventListener("click", function () { state.shown += PAGE; renderRows("#hof-more"); });
+    Array.prototype.forEach.call(document.querySelectorAll("#hof-table-slot th[data-sort]"), function (th) {
       function go() {
         var k = th.getAttribute("data-sort");
         if (state.sort.key === k) state.sort.asc = !state.sort.asc;
         else state.sort = { key: k, asc: k === "name" || k === "pos" };
-        render();
+        renderRows('th[data-sort="' + k + '"]');
       }
       th.addEventListener("click", go);
       th.addEventListener("keydown", function (e) {

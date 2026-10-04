@@ -37,26 +37,37 @@
   background: var(--bg-secondary); border-bottom: 2px solid var(--border-light);
   font-weight: 600;
 }
-.hof-table thead th:focus { outline: 2px solid var(--accent-gold); outline-offset: -2px; }
+/* The site's cyan ring, not gold: gold on the cream header measured 2.2:1,
+   under the 3:1 a focus indicator needs (audit QCLA14). */
+.hof-table thead th:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: -2px; }
 .hof-table tbody tr:nth-child(even) { background: var(--bg-hover); }
 .hof-table td { border-bottom: 1px solid var(--border-subtle); text-align: right; }
 .hof-c-name, .hof-c-pos, .hof-c-ind { text-align: left !important; }
 .hof-c-name { font-weight: 600; }
-.hof-c-rank { text-align: right; opacity: .55; font-variant-numeric: tabular-nums; }
+/* Rank, blank marker, ladder label and count line take a text token, not an
+   opacity: .55 on the rank measured 3.8:1 and .3 on the blank dot 1.9:1 in
+   light (audit QCLA15). */
+.hof-c-rank { text-align: right; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .hof-c-n, .hof-c-yr { font-variant-numeric: tabular-nums; }
 .hof-c-jaws { font-weight: 700; }
 
 /* A blank public cell is NOT a zero. It is drawn as a dimmed marker with a
    title, so the difference between "no published value" and "scored zero" is
    visible on the row rather than only in the method note. */
-.hof-blank { opacity: .3; }
+.hof-blank { color: var(--text-tertiary); }
 
 .hof-ind { font-size: 12px; padding: 1px 6px; border-radius: 999px; }
-.hof-ind--player_bbwaa { background: color-mix(in srgb, var(--accent-green) 14%, transparent); color: var(--accent-green); }
-.hof-ind--route_unverified { background: color-mix(in srgb, var(--accent-gold) 18%, transparent); color: var(--text-gold, var(--accent-gold)); }
+/* The induction chips keep their hue and take a deeper ink: green on the 14%
+   green tint measured 3.9:1 and gold 4.2:1 on the striped rows (audit QCLA15).
+   The ink is the text token mixed toward --text-primary, so it follows the
+   theme with no new colour. */
+.hof-ind--player_bbwaa { background: color-mix(in srgb, var(--accent-green) 10%, transparent);
+  color: color-mix(in srgb, var(--text-green) 75%, var(--text-primary)); }
+.hof-ind--route_unverified { background: color-mix(in srgb, var(--accent-gold) 12%, transparent);
+  color: color-mix(in srgb, var(--text-gold) 75%, var(--text-primary)); }
 
 .hof-note { font-size: 13px; line-height: 1.5; opacity: .85; margin: 8px 0; max-width: 74ch; }
-.hof-count { font-size: 12px; opacity: .6; margin: 8px 0; }
+.hof-count { font-size: 12px; color: var(--text-secondary); margin: 8px 0; }
 .hof-more { margin: 10px 0; }
 .hof-more button {
   font: inherit; font-size: 13px; padding: 6px 14px; cursor: pointer;
@@ -74,7 +85,7 @@
   padding: 8px 14px; min-width: 78px; text-align: center;
   background: var(--bg-secondary);
 }
-.hof-ladder-q { font-size: 12px; opacity: .6; }
+.hof-ladder-q { font-size: 12px; color: var(--text-secondary); }
 .hof-ladder-v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* A dark section is deliberately plain. It carries a blocker and a reason and
