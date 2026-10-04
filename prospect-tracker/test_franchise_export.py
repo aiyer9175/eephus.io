@@ -896,7 +896,8 @@ def test_registry_rows_exist_and_are_descriptive():
     for mid in ("franchise_index", "franchise_branch_score"):
         m = rows[mid]
         assert m["verdict"] == "unvalidated" and m["eval_artifact"] is None
-        assert m["predicts"].startswith("nothing.") and "DESCRIPTIVE" in m["predicts"]
+        # Plain case since COPY_11 (2026-10-04): no caps emphasis in reader fields.
+        assert m["predicts"].lower().startswith("nothing") and "descriptive" in m["predicts"].lower()
         assert "100 + 10z" in m["predicts"]
     assert "team_win_projections" in rows["franchise_index"]["predicts"]
     import model_registry

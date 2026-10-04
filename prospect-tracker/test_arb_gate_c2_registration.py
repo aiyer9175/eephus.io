@@ -101,7 +101,10 @@ def test_the_registry_row_points_at_the_registration():
     row = _row()
     assert row["verdict"] == "provisional"
     assert row["eval_artifact"] == "data/arbitration_eval.json"
-    assert "docs/ARBITRATION_GATE.md section 11" in row["metric"]
+    # The reader field names the gate; the docs/ path left the registry's
+    # reader fields in COPY_11 (2026-10-04) and the gate doc itself is
+    # asserted by the tests above.
+    assert "Gate C2" in row["metric"]
     assert "gate_c2" in row["notes"] or "GATE C2" in row["notes"]
     assert "BEFORE ANY CLAUSE HAS BEEN SCORED" in row["notes"]
     assert "SALARY_PATH_MODE" in row["notes"]

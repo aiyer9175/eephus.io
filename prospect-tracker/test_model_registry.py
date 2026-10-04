@@ -646,3 +646,19 @@ def test_the_lambda_pin_the_flagship_rows_quote_is_the_one_in_the_code():
         "prose is now wrong")
     for mid in ("xfv_hitter", "xfv_pitcher"):
         assert "'hit': 0.70, 'pit': 0.57" in _by_id()[mid]["notes"]
+
+
+def test_every_row_carries_a_reader_summary():
+    """COPY_11 (2026-10-04): every row leads with a `summary` of at most
+    SUMMARY_MAX_WORDS words that passes the served copy rules, and `notes`
+    stays the lab log behind it. validate() enforces the rule; this pins it
+    and shows it has teeth."""
+    for m in mr.load()["models"]:
+        s = m.get("summary")
+        assert isinstance(s, str) and s.strip(), m["model_id"]
+        assert len(s.split()) <= mr.SUMMARY_MAX_WORDS, m["model_id"]
+    assert mr._summary_problems("x", "")
+    assert mr._summary_problems("x", " ".join(["word"] * (mr.SUMMARY_MAX_WORDS + 1)))
+    assert mr._summary_problems("x", "This is a very good read.")
+    assert not mr._summary_problems(
+        "x", "No ship: +0.0092 Spearman (0.5274 vs 0.5182, n 711), lo95 -0.0014.")

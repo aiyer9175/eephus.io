@@ -3188,9 +3188,9 @@ def _accountability_block() -> dict:
     # is the only place that sees both the built rows and the board, and read
     # here because this block is where the payload publishes what it did and
     # did not reach. Empty on a payload built without veterans.
-    keep = ("model_id", "surface", "predicts", "champion", "baseline",
-            "metric", "verdict", "notes", "eval_artifact", "last_checked",
-            "artifact_age_days", "stale")
+    keep = ("model_id", "summary", "surface", "predicts", "champion",
+            "baseline", "metric", "verdict", "notes", "eval_artifact",
+            "last_checked", "artifact_age_days", "stale")
     models = []
     for mid, label in _ACCOUNTABILITY_MODELS:
         m = by_id.get(mid)
