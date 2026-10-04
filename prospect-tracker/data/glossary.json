@@ -9278,6 +9278,79 @@
     "exit_velocity",
     "barrel_pct"
    ]
+  },
+  {
+   "id": "fa_dollar_share",
+   "term": "FA $ share",
+   "category": "fa",
+   "module": [
+    "ledger",
+    "franchise"
+   ],
+   "aliases": [
+    "free-agent dollar share",
+    "share of league free-agent dollars",
+    "FA spend share"
+   ],
+   "priority": 40,
+   "definition": "A club's share of all the guaranteed money free agents signed for across the league, by the winter each deal was signed: realized spending, not a forecast.",
+   "methodology": "ledger_export.club_fa_spend_profile sums the nominal guarantees of every signing whose destination is the club in fa_archive.json, the same dollars the Club Ledger's Spend by winter table prints, and divides by the thirty clubs' total for the window (the last three winters, and every winter since 2015), so the thirty shares of a window sum to one; rank 1 is the largest outlay. Franchise MARKET prints the same figures.",
+   "example": "",
+   "formula": "club guarantees in the window / sum of the thirty clubs' guarantees in the window",
+   "seeAlso": [
+    "fa_spend_bands",
+    "fa_resign_share",
+    "realized_contract_value"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "fa_spend_bands",
+   "term": "Guarantee band mix",
+   "category": "fa",
+   "module": [
+    "ledger",
+    "franchise"
+   ],
+   "aliases": [
+    "band mix",
+    "free-agent guarantee bands"
+   ],
+   "priority": 40,
+   "definition": "How a club's free-agent signings split by the size of the guarantee: under $10M, $10M to $50M, $50M to $100M, and $100M and up, with the deals and the dollars in each.",
+   "methodology": "Major-league deals only, each counted in the band of its nominal guarantee in fa_archive.json (a band includes its lower edge); minor-league deals carry no guarantee and are counted apart. Served beside the FA $ share for the same two windows.",
+   "example": "",
+   "formula": "",
+   "seeAlso": [
+    "fa_dollar_share",
+    "fa_resign_share"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
+  },
+  {
+   "id": "fa_resign_share",
+   "term": "Re-sign share",
+   "category": "fa",
+   "module": [
+    "ledger"
+   ],
+   "aliases": [
+    "re-signed share",
+    "free agents re-signed"
+   ],
+   "priority": 40,
+   "definition": "Of a club's own free agents who signed a major-league deal, the share who signed back with that club, over the same windows as the FA $ share.",
+   "methodology": "Counted from fa_archive.json: a departure is a major-league signing whose previous club is this club, and a re-signing is one whose new club is the same club. A minor-league deal is not counted either way. Descriptive, no forward claim.",
+   "example": "",
+   "formula": "re-signed / departed (major-league deals)",
+   "seeAlso": [
+    "fa_dollar_share",
+    "fa_spend_bands"
+   ],
+   "shelf": "ark",
+   "origin": "original to eephus.io (Club Ledger, ledger_export.py)"
   }
  ]
 }

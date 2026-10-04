@@ -178,9 +178,11 @@ TRAJECTORY_RECEIPT = ("surplus.trajectory, farm.trajectory_active and farm.prosp
 # dollar, no single projected payroll. The rows live in the club's shard; the
 # board carries one league column (FA $ share, 3 winters). Behind this flag:
 # with it off the board and the shards are byte-identical to the build
-# without it (test_club_fa_profile).
+# without it (test_club_fa_profile). Flipped on 2026-10-03, after the fWAR
+# label epoch's step Z entry, with its glossary entries and registry row
+# club_fa_spend_profile in the same commit.
 # --------------------------------------------------------------------------
-LEDGER_FA_SPEND_PROFILE = False
+LEDGER_FA_SPEND_PROFILE = True
 #: The recent window: the last this-many winters on fa_archive.json.
 FA_PROFILE_RECENT_WINTERS = 3
 #: Guarantee bands on the nominal guarantee, [lo, hi) in usd; the last is open.
@@ -3062,7 +3064,9 @@ def build_all() -> tuple:
     if fa_profile is not None:
         for k, cols in FA_PROFILE_COLUMNS.items():
             doc["columns"][k] = list(cols)
-        shard_column_keys += list(FA_PROFILE_COLUMNS)
+        # the history is a row array in the shard; the band legend indexes the
+        # [n_deals, guar_usd] cells inside fa.profile and rides the board only
+        shard_column_keys.append("payroll.history")
         live_h = bool(hist_census and hist_census["n_rows"])
         doc["sections"]["payroll_history"] = (
             dict({"live": True, "note": "per-club rows in the club's row file, read off the cached Spotrac pages"},

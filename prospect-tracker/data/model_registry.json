@@ -5566,6 +5566,21 @@
    "last_checked": "2026-10-03",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "club_fa_spend_profile",
+   "surface": "/ledger/ League column FA $ share, 3 winters, and each club's Free agency block (Who spends in free agency) and Payroll history in the club's row file data/ledger_clubs/CODE.json; /franchise/ MARKET section and its two FA $ share leaves",
+   "predicts": "nothing: a descriptive profile of which clubs actually spend in free agency (owner ask 3, 2026-09-30), the club's share of league free-agent guarantee dollars by the winter each deal was signed, its band mix, re-sign share and QO counts, plus its tax payroll and payor tier by season off the cached Spotrac pages",
+   "champion": "ledger_export.club_fa_spend_profile and club_payroll_history (fa_sources.read_cached_payroll_history, cache-only)",
+   "baseline": "n/a: descriptive, no forward claim",
+   "metric": "descriptive, no forward claim: the thirty shares of a window sum to one and each club's dollars equal its Spend by winter cells (test_club_fa_profile); a served payload is not an evaluation",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "owner": "Club Ledger module",
+   "notes": "Registered 2026-10-03 with the flip of LEDGER_FA_SPEND_PROFILE (Part 8 lane finance_to_fa_arb, Leg A). Realized spending, not a forecast: it is not used as a predictor anywhere. The registered test of whether club spending makes destinations more predictable is the separate fa_destination lane (Leg B), not this row. Nominal guarantees from fa_archive.json (the Spend by winter dollars); the payroll history reads Spotrac's cached tax pages 2016-2026 and payroll pages 2017-2026 without a fetch, each row printing its own page's threshold (equal to cba_rules for 2017-2026).",
+   "last_checked": "2026-10-03",
+   "stale": false
   }
  ],
  "problems": []

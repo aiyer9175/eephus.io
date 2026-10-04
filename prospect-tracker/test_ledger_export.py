@@ -612,10 +612,18 @@ def test_dark_sections_name_their_blocker(d):
     for k, s in d["sections"].items():
         if not s.get("live"):
             assert s.get("blocked_on"), k
-    assert d["sections"]["payroll_history"]["blocked_on"].startswith("Payroll history is cached but not yet ingested")
+    # The payroll history lights from the cached Spotrac pages when the spend
+    # profile flag is on (Leg A, test_club_fa_profile); dark, it names its blocker.
+    import ledger_export as L
+    ph = d["sections"]["payroll_history"]
     for club in d["clubs"].values():
-        assert club["payroll"]["history"]["status"] == "dark" and club["payroll"]["history"]["seasons"] == []
+        if L.LEDGER_FA_SPEND_PROFILE and ph["live"]:
+            assert club["payroll"]["history"]["status"] == "shard" and club["payroll"]["history"]["n"] >= 1
+        else:
+            assert club["payroll"]["history"]["status"] == "dark" and club["payroll"]["history"]["seasons"] == []
         assert club["farm"]["pools"]["2021"][1] in ("not parsed", "live")
+    if not ph["live"]:
+        assert ph["blocked_on"].startswith("Payroll history is cached but not yet ingested")
 
 
 def test_pending_qos_render_no_live_stamps_when_every_event_is_invalidated(d):
