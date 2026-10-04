@@ -37,7 +37,9 @@
   background: var(--bg-secondary); border-bottom: 2px solid var(--border-light);
   font-weight: 600;
 }
-.hof-table thead th:focus { outline: 2px solid var(--accent-gold); outline-offset: -2px; }
+/* The site's cyan ring, not gold: gold on the cream header measured 2.2:1,
+   under the 3:1 a focus indicator needs (audit QCLA14). */
+.hof-table thead th:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: -2px; }
 .hof-table tbody tr:nth-child(even) { background: var(--bg-hover); }
 .hof-table td { border-bottom: 1px solid var(--border-subtle); text-align: right; }
 .hof-c-name, .hof-c-pos, .hof-c-ind { text-align: left !important; }
