@@ -25,473 +25,473 @@
  "feature_add": {
   "hit": {
    "noise_seed_0": {
-    "point_rho": 0.00578,
-    "point_block": 0.00552,
-    "point_auc_contrib": 0.0042,
-    "point_auc_star": 0.00265,
+    "point_rho": 0.00367,
+    "point_block": 0.00661,
+    "point_auc_contrib": 0.00101,
+    "point_auc_star": 0.0047,
     "rho": {
      "B_used": 2000,
-     "point": 0.00578,
-     "boot_mean": -0.00029,
-     "sd": 0.00748,
-     "mde95_onesided": 0.0123,
-     "mde95_twosided": 0.0147,
-     "x_floor": 0.47,
+     "point": 0.00367,
+     "boot_mean": 0.00325,
+     "sd": 0.0085,
+     "mde95_onesided": 0.014,
+     "mde95_twosided": 0.0167,
+     "x_floor": 0.263,
      "ci95": [
-      -0.01419,
-      0.01626
+      -0.01347,
+      0.021
      ],
-     "p_gt_0": 0.4365,
+     "p_gt_0": 0.666,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": 0.00552,
-     "boot_mean": -0.00033,
-     "sd": 0.00868,
-     "mde95_onesided": 0.0143,
-     "mde95_twosided": 0.017,
-     "x_floor": 0.387,
+     "point": 0.00661,
+     "boot_mean": 0.0031,
+     "sd": 0.0096,
+     "mde95_onesided": 0.0158,
+     "mde95_twosided": 0.0188,
+     "x_floor": 0.419,
      "ci95": [
-      -0.01688,
-      0.01742
+      -0.01501,
+      0.02337
      ],
-     "p_gt_0": 0.4665,
+     "p_gt_0": 0.627,
      "resolvable": false
     },
     "auc_contrib": {
      "B_used": 2000,
-     "point": 0.0042,
-     "boot_mean": -0.00027,
-     "sd": 0.00384,
-     "mde95_onesided": 0.0063,
-     "mde95_twosided": 0.0075,
-     "x_floor": 0.665,
+     "point": 0.00101,
+     "boot_mean": 0.00075,
+     "sd": 0.00513,
+     "mde95_onesided": 0.0084,
+     "mde95_twosided": 0.0101,
+     "x_floor": 0.12,
      "ci95": [
-      -0.00748,
-      0.0077
+      -0.00955,
+      0.01121
      ],
-     "p_gt_0": 0.4105,
+     "p_gt_0": 0.571,
      "resolvable": false
     },
     "auc_star": {
      "B_used": 2000,
-     "point": 0.00265,
-     "boot_mean": -0.0003,
-     "sd": 0.00445,
-     "mde95_onesided": 0.0073,
-     "mde95_twosided": 0.0087,
-     "x_floor": 0.362,
+     "point": 0.0047,
+     "boot_mean": 0.00264,
+     "sd": 0.00539,
+     "mde95_onesided": 0.0089,
+     "mde95_twosided": 0.0106,
+     "x_floor": 0.531,
      "ci95": [
-      -0.00812,
-      0.00958
+      -0.00801,
+      0.01292
      ],
-     "p_gt_0": 0.4055,
+     "p_gt_0": 0.7465,
      "resolvable": false
     },
-    "fold_rho_wins": 8,
+    "fold_rho_wins": 7,
     "folds": 11,
     "fold_auc_wins": 5,
     "auc_folds": 11,
     "auc_prevalence": {
-     "contributor": 0.3685,
-     "star": 0.1549,
-     "n_pos_contributor": 276,
-     "n_pos_star": 116
+     "contributor": 0.3581,
+     "star": 0.1355,
+     "n_pos_contributor": 280,
+     "n_pos_star": 106
     }
    },
    "noise_seed_1": {
-    "point_rho": -0.00071,
-    "point_block": -0.00269,
-    "point_auc_contrib": 0.0015,
-    "point_auc_star": -0.00122,
+    "point_rho": -0.00258,
+    "point_block": -0.00568,
+    "point_auc_contrib": -0.00085,
+    "point_auc_star": 0.00095,
     "rho": {
      "B_used": 2000,
-     "point": -0.00071,
-     "boot_mean": -0.00081,
-     "sd": 0.00917,
-     "mde95_onesided": 0.0151,
-     "mde95_twosided": 0.018,
-     "x_floor": 0.047,
+     "point": -0.00258,
+     "boot_mean": -0.00593,
+     "sd": 0.0071,
+     "mde95_onesided": 0.0117,
+     "mde95_twosided": 0.0139,
+     "x_floor": 0.221,
      "ci95": [
-      -0.01998,
-      0.0172
+      -0.02294,
+      0.0063
      ],
-     "p_gt_0": 0.4595,
+     "p_gt_0": 0.162,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": -0.00269,
-     "boot_mean": -0.00239,
-     "sd": 0.01093,
-     "mde95_onesided": 0.018,
-     "mde95_twosided": 0.0214,
-     "x_floor": 0.15,
+     "point": -0.00568,
+     "boot_mean": -0.00795,
+     "sd": 0.00855,
+     "mde95_onesided": 0.0141,
+     "mde95_twosided": 0.0168,
+     "x_floor": 0.404,
      "ci95": [
-      -0.0257,
-      0.0167
+      -0.02781,
+      0.00656
      ],
-     "p_gt_0": 0.4215,
+     "p_gt_0": 0.158,
      "resolvable": false
     },
     "auc_contrib": {
      "B_used": 2000,
-     "point": 0.0015,
-     "boot_mean": 0.00084,
-     "sd": 0.00481,
-     "mde95_onesided": 0.0079,
-     "mde95_twosided": 0.0094,
-     "x_floor": 0.19,
+     "point": -0.00085,
+     "boot_mean": -0.00299,
+     "sd": 0.00417,
+     "mde95_onesided": 0.0069,
+     "mde95_twosided": 0.0082,
+     "x_floor": 0.124,
      "ci95": [
-      -0.00958,
-      0.01097
+      -0.012,
+      0.00467
      ],
-     "p_gt_0": 0.5935,
+     "p_gt_0": 0.202,
      "resolvable": false
     },
     "auc_star": {
      "B_used": 2000,
-     "point": -0.00122,
-     "boot_mean": -0.00235,
-     "sd": 0.00594,
-     "mde95_onesided": 0.0098,
-     "mde95_twosided": 0.0116,
-     "x_floor": 0.125,
+     "point": 0.00095,
+     "boot_mean": -0.00048,
+     "sd": 0.00378,
+     "mde95_onesided": 0.0062,
+     "mde95_twosided": 0.0074,
+     "x_floor": 0.153,
      "ci95": [
-      -0.01628,
-      0.00741
+      -0.00842,
+      0.00692
      ],
-     "p_gt_0": 0.297,
+     "p_gt_0": 0.4235,
      "resolvable": false
     },
     "fold_rho_wins": 3,
     "folds": 11,
-    "fold_auc_wins": 6,
+    "fold_auc_wins": 5,
     "auc_folds": 11,
     "auc_prevalence": {
-     "contributor": 0.3685,
-     "star": 0.1549,
-     "n_pos_contributor": 276,
-     "n_pos_star": 116
+     "contributor": 0.3581,
+     "star": 0.1355,
+     "n_pos_contributor": 280,
+     "n_pos_star": 106
     }
    },
    "noise_seed_2": {
-    "point_rho": 0.00296,
-    "point_block": 0.00685,
-    "point_auc_contrib": 0.00208,
-    "point_auc_star": 0.00521,
+    "point_rho": -0.00306,
+    "point_block": -0.00032,
+    "point_auc_contrib": -0.00184,
+    "point_auc_star": -0.00106,
     "rho": {
      "B_used": 2000,
-     "point": 0.00296,
-     "boot_mean": 0.00131,
-     "sd": 0.01031,
-     "mde95_onesided": 0.017,
-     "mde95_twosided": 0.0202,
-     "x_floor": 0.175,
+     "point": -0.00306,
+     "boot_mean": -0.00255,
+     "sd": 0.00593,
+     "mde95_onesided": 0.0098,
+     "mde95_twosided": 0.0116,
+     "x_floor": 0.314,
      "ci95": [
-      -0.01659,
-      0.0254
+      -0.01565,
+      0.00901
      ],
-     "p_gt_0": 0.509,
+     "p_gt_0": 0.3115,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": 0.00685,
-     "boot_mean": 0.00418,
-     "sd": 0.01218,
-     "mde95_onesided": 0.02,
-     "mde95_twosided": 0.0239,
-     "x_floor": 0.342,
+     "point": -0.00032,
+     "boot_mean": -0.00126,
+     "sd": 0.00673,
+     "mde95_onesided": 0.0111,
+     "mde95_twosided": 0.0132,
+     "x_floor": 0.029,
      "ci95": [
-      -0.01602,
-      0.03123
+      -0.01536,
+      0.012
      ],
-     "p_gt_0": 0.6065,
+     "p_gt_0": 0.4185,
      "resolvable": false
     },
     "auc_contrib": {
      "B_used": 2000,
-     "point": 0.00208,
-     "boot_mean": 0.00096,
-     "sd": 0.00552,
-     "mde95_onesided": 0.0091,
-     "mde95_twosided": 0.0108,
-     "x_floor": 0.229,
+     "point": -0.00184,
+     "boot_mean": -0.00118,
+     "sd": 0.00344,
+     "mde95_onesided": 0.0057,
+     "mde95_twosided": 0.0067,
+     "x_floor": 0.325,
      "ci95": [
-      -0.00867,
-      0.01387
+      -0.0086,
+      0.00543
      ],
-     "p_gt_0": 0.5395,
+     "p_gt_0": 0.348,
      "resolvable": false
     },
     "auc_star": {
      "B_used": 2000,
-     "point": 0.00521,
-     "boot_mean": 0.00363,
-     "sd": 0.00662,
-     "mde95_onesided": 0.0109,
-     "mde95_twosided": 0.013,
-     "x_floor": 0.478,
+     "point": -0.00106,
+     "boot_mean": -0.00136,
+     "sd": 0.00341,
+     "mde95_onesided": 0.0056,
+     "mde95_twosided": 0.0067,
+     "x_floor": 0.189,
      "ci95": [
-      -0.00651,
-      0.01887
+      -0.00885,
+      0.00517
      ],
-     "p_gt_0": 0.708,
+     "p_gt_0": 0.321,
      "resolvable": false
     },
-    "fold_rho_wins": 6,
+    "fold_rho_wins": 4,
     "folds": 11,
-    "fold_auc_wins": 8,
+    "fold_auc_wins": 4,
     "auc_folds": 11,
     "auc_prevalence": {
-     "contributor": 0.3685,
-     "star": 0.1549,
-     "n_pos_contributor": 276,
-     "n_pos_star": 116
+     "contributor": 0.3581,
+     "star": 0.1355,
+     "n_pos_contributor": 280,
+     "n_pos_star": 106
     }
    },
-   "MDE95_pooled_rho": 0.017,
-   "MDE95_block_rho": 0.02,
-   "MDE95_auc_contributor": 0.0091,
-   "MDE95_auc_star": 0.0109,
+   "MDE95_pooled_rho": 0.014,
+   "MDE95_block_rho": 0.0158,
+   "MDE95_auc_contributor": 0.0084,
+   "MDE95_auc_star": 0.0089,
    "note": "MDE95 quoted at the MAX of three noise seeds: the floor is a bound, so the conservative seed is the one that binds.",
    "auc_note": "MDE95_auc_contributor is the CO-PRIMARY floor and it may veto, never credit. MDE95_auc_star is derived so the sensitivity row can be READ against something, and it is not a pass bar: no arm passes or fails on star AUC."
   },
   "pit": {
    "noise_seed_0": {
-    "point_rho": -0.00188,
-    "point_block": -0.00061,
-    "point_auc_contrib": 0.00157,
-    "point_auc_star": 0.0004,
+    "point_rho": -0.00772,
+    "point_block": -0.00188,
+    "point_auc_contrib": -0.00275,
+    "point_auc_star": -0.0028,
     "rho": {
      "B_used": 2000,
-     "point": -0.00188,
-     "boot_mean": -0.00231,
-     "sd": 0.00734,
-     "mde95_onesided": 0.0121,
-     "mde95_twosided": 0.0144,
-     "x_floor": 0.156,
+     "point": -0.00772,
+     "boot_mean": -0.00449,
+     "sd": 0.00616,
+     "mde95_onesided": 0.0101,
+     "mde95_twosided": 0.0121,
+     "x_floor": 0.762,
      "ci95": [
-      -0.01681,
-      0.01312
+      -0.01762,
+      0.00753
      ],
-     "p_gt_0": 0.3595,
+     "p_gt_0": 0.2005,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": -0.00061,
-     "boot_mean": -0.0034,
-     "sd": 0.01045,
-     "mde95_onesided": 0.0172,
-     "mde95_twosided": 0.0205,
-     "x_floor": 0.035,
+     "point": -0.00188,
+     "boot_mean": -0.00523,
+     "sd": 0.00782,
+     "mde95_onesided": 0.0129,
+     "mde95_twosided": 0.0153,
+     "x_floor": 0.146,
      "ci95": [
-      -0.02517,
-      0.01758
+      -0.02149,
+      0.00938
      ],
-     "p_gt_0": 0.354,
+     "p_gt_0": 0.229,
      "resolvable": false
     },
     "auc_contrib": {
      "B_used": 2000,
-     "point": 0.00157,
-     "boot_mean": 0.0007,
-     "sd": 0.00413,
-     "mde95_onesided": 0.0068,
-     "mde95_twosided": 0.0081,
-     "x_floor": 0.231,
+     "point": -0.00275,
+     "boot_mean": -0.00153,
+     "sd": 0.00359,
+     "mde95_onesided": 0.0059,
+     "mde95_twosided": 0.007,
+     "x_floor": 0.465,
      "ci95": [
-      -0.00683,
-      0.00997
+      -0.00881,
+      0.00601
      ],
-     "p_gt_0": 0.549,
+     "p_gt_0": 0.3025,
      "resolvable": false
     },
     "auc_star": {
      "B_used": 2000,
-     "point": 0.0004,
-     "boot_mean": 0.00029,
-     "sd": 0.00784,
-     "mde95_onesided": 0.0129,
-     "mde95_twosided": 0.0154,
-     "x_floor": 0.031,
+     "point": -0.0028,
+     "boot_mean": -0.0015,
+     "sd": 0.00316,
+     "mde95_onesided": 0.0052,
+     "mde95_twosided": 0.0062,
+     "x_floor": 0.538,
      "ci95": [
-      -0.01346,
-      0.0168
+      -0.00839,
+      0.00414
      ],
-     "p_gt_0": 0.4635,
+     "p_gt_0": 0.3055,
      "resolvable": false
     },
-    "fold_rho_wins": 4,
+    "fold_rho_wins": 6,
     "folds": 11,
     "fold_auc_wins": 6,
     "auc_folds": 11,
     "auc_prevalence": {
-     "contributor": 0.2461,
-     "star": 0.0573,
-     "n_pos_contributor": 219,
-     "n_pos_star": 51
+     "contributor": 0.2503,
+     "star": 0.0662,
+     "n_pos_contributor": 227,
+     "n_pos_star": 60
     }
    },
    "noise_seed_1": {
-    "point_rho": 0.00155,
-    "point_block": 0.00381,
-    "point_auc_contrib": -0.00011,
-    "point_auc_star": 0.00063,
+    "point_rho": 0.00363,
+    "point_block": 0.00443,
+    "point_auc_contrib": 0.00135,
+    "point_auc_star": 0.004,
     "rho": {
      "B_used": 2000,
-     "point": 0.00155,
-     "boot_mean": 0.00047,
-     "sd": 0.00594,
-     "mde95_onesided": 0.0098,
-     "mde95_twosided": 0.0116,
-     "x_floor": 0.159,
+     "point": 0.00363,
+     "boot_mean": 0.00195,
+     "sd": 0.00702,
+     "mde95_onesided": 0.0116,
+     "mde95_twosided": 0.0138,
+     "x_floor": 0.314,
      "ci95": [
-      -0.01049,
-      0.01401
+      -0.01116,
+      0.01757
      ],
-     "p_gt_0": 0.511,
+     "p_gt_0": 0.5855,
      "resolvable": false
     },
     "block_rho": {
      "B_used": 2000,
-     "point": 0.00381,
-     "boot_mean": -0.00021,
-     "sd": 0.00908,
-     "mde95_onesided": 0.0149,
-     "mde95_twosided": 0.0178,
-     "x_floor": 0.255,
+     "point": 0.00443,
+     "boot_mean": 0.00039,
+     "sd": 0.00798,
+     "mde95_onesided": 0.0131,
+     "mde95_twosided": 0.0156,
+     "x_floor": 0.337,
      "ci95": [
-      -0.01807,
-      0.01855
+      -0.01413,
+      0.0174
      ],
-     "p_gt_0": 0.4885,
+     "p_gt_0": 0.498,
      "resolvable": false
     },
     "auc_contrib": {
      "B_used": 2000,
-     "point": -0.00011,
-     "boot_mean": -0.00065,
-     "sd": 0.00294,
-     "mde95_onesided": 0.0048,
-     "mde95_twosided": 0.0058,
-     "x_floor": 0.023,
+     "point": 0.00135,
+     "boot_mean": 0.0002,
+     "sd": 0.00357,
+     "mde95_onesided": 0.0059,
+     "mde95_twosided": 0.007,
+     "x_floor": 0.23,
      "ci95": [
-      -0.00637,
-      0.00531
+      -0.00661,
+      0.00777
      ],
-     "p_gt_0": 0.3825,
+     "p_gt_0": 0.487,
      "resolvable": false
     },
     "auc_star": {
      "B_used": 2000,
-     "point": 0.00063,
-     "boot_mean": -0.00105,
-     "sd": 0.00628,
-     "mde95_onesided": 0.0103,
-     "mde95_twosided": 0.0123,
-     "x_floor": 0.061,
+     "point": 0.004,
+     "boot_mean": 0.00323,
+     "sd": 0.00515,
+     "mde95_onesided": 0.0085,
+     "mde95_twosided": 0.0101,
+     "x_floor": 0.472,
      "ci95": [
-      -0.01387,
-      0.01169
+      -0.00482,
+      0.01496
      ],
-     "p_gt_0": 0.3865,
+     "p_gt_0": 0.7245,
      "resolvable": false
     },
-    "fold_rho_wins": 5,
-    "folds": 11,
-    "fold_auc_wins": 3,
-    "auc_folds": 11,
-    "auc_prevalence": {
-     "contributor": 0.2461,
-     "star": 0.0573,
-     "n_pos_contributor": 219,
-     "n_pos_star": 51
-    }
-   },
-   "noise_seed_2": {
-    "point_rho": 0.0003,
-    "point_block": 0.00221,
-    "point_auc_contrib": -0.00068,
-    "point_auc_star": -0.0021,
-    "rho": {
-     "B_used": 2000,
-     "point": 0.0003,
-     "boot_mean": -0.00127,
-     "sd": 0.00654,
-     "mde95_onesided": 0.0108,
-     "mde95_twosided": 0.0128,
-     "x_floor": 0.028,
-     "ci95": [
-      -0.01453,
-      0.0129
-     ],
-     "p_gt_0": 0.4035,
-     "resolvable": false
-    },
-    "block_rho": {
-     "B_used": 2000,
-     "point": 0.00221,
-     "boot_mean": -0.00135,
-     "sd": 0.00945,
-     "mde95_onesided": 0.0155,
-     "mde95_twosided": 0.0185,
-     "x_floor": 0.142,
-     "ci95": [
-      -0.02128,
-      0.01597
-     ],
-     "p_gt_0": 0.4485,
-     "resolvable": false
-    },
-    "auc_contrib": {
-     "B_used": 2000,
-     "point": -0.00068,
-     "boot_mean": -0.00079,
-     "sd": 0.0033,
-     "mde95_onesided": 0.0054,
-     "mde95_twosided": 0.0065,
-     "x_floor": 0.125,
-     "ci95": [
-      -0.00749,
-      0.00611
-     ],
-     "p_gt_0": 0.3665,
-     "resolvable": false
-    },
-    "auc_star": {
-     "B_used": 2000,
-     "point": -0.0021,
-     "boot_mean": -0.00208,
-     "sd": 0.00641,
-     "mde95_onesided": 0.0106,
-     "mde95_twosided": 0.0126,
-     "x_floor": 0.199,
-     "ci95": [
-      -0.01433,
-      0.01076
-     ],
-     "p_gt_0": 0.3145,
-     "resolvable": false
-    },
-    "fold_rho_wins": 7,
+    "fold_rho_wins": 9,
     "folds": 11,
     "fold_auc_wins": 7,
     "auc_folds": 11,
     "auc_prevalence": {
-     "contributor": 0.2461,
-     "star": 0.0573,
-     "n_pos_contributor": 219,
-     "n_pos_star": 51
+     "contributor": 0.2503,
+     "star": 0.0662,
+     "n_pos_contributor": 227,
+     "n_pos_star": 60
     }
    },
-   "MDE95_pooled_rho": 0.0121,
-   "MDE95_block_rho": 0.0172,
-   "MDE95_auc_contributor": 0.0068,
-   "MDE95_auc_star": 0.0129,
+   "noise_seed_2": {
+    "point_rho": -0.00225,
+    "point_block": -0.0017,
+    "point_auc_contrib": -3e-05,
+    "point_auc_star": -0.0031,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00225,
+     "boot_mean": -0.00173,
+     "sd": 0.00644,
+     "mde95_onesided": 0.0106,
+     "mde95_twosided": 0.0126,
+     "x_floor": 0.212,
+     "ci95": [
+      -0.01431,
+      0.01178
+     ],
+     "p_gt_0": 0.3635,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": -0.0017,
+     "boot_mean": -0.00305,
+     "sd": 0.00835,
+     "mde95_onesided": 0.0137,
+     "mde95_twosided": 0.0164,
+     "x_floor": 0.124,
+     "ci95": [
+      -0.01893,
+      0.014
+     ],
+     "p_gt_0": 0.3485,
+     "resolvable": false
+    },
+    "auc_contrib": {
+     "B_used": 2000,
+     "point": -3e-05,
+     "boot_mean": 0.00075,
+     "sd": 0.00405,
+     "mde95_onesided": 0.0067,
+     "mde95_twosided": 0.0079,
+     "x_floor": 0.004,
+     "ci95": [
+      -0.0066,
+      0.01012
+     ],
+     "p_gt_0": 0.5495,
+     "resolvable": false
+    },
+    "auc_star": {
+     "B_used": 2000,
+     "point": -0.0031,
+     "boot_mean": -0.00237,
+     "sd": 0.00407,
+     "mde95_onesided": 0.0067,
+     "mde95_twosided": 0.008,
+     "x_floor": 0.464,
+     "ci95": [
+      -0.01158,
+      0.00566
+     ],
+     "p_gt_0": 0.2395,
+     "resolvable": false
+    },
+    "fold_rho_wins": 5,
+    "folds": 11,
+    "fold_auc_wins": 7,
+    "auc_folds": 11,
+    "auc_prevalence": {
+     "contributor": 0.2503,
+     "star": 0.0662,
+     "n_pos_contributor": 227,
+     "n_pos_star": 60
+    }
+   },
+   "MDE95_pooled_rho": 0.0115,
+   "MDE95_block_rho": 0.0137,
+   "MDE95_auc_contributor": 0.0067,
+   "MDE95_auc_star": 0.0085,
    "note": "MDE95 quoted at the MAX of three noise seeds: the floor is a bound, so the conservative seed is the one that binds.",
    "auc_note": "MDE95_auc_contributor is the CO-PRIMARY floor and it may veto, never credit. MDE95_auc_star is derived so the sensitivity row can be READ against something, and it is not a pass bar: no arm passes or fails on star AUC."
   }
@@ -500,38 +500,38 @@
   "hit": {
    "base_lambda": 0.7,
    "plus_0.05": {
-    "point_rho": -0.00095,
+    "point_rho": 0.00011,
     "rho": {
      "B_used": 2000,
-     "point": -0.00095,
-     "boot_mean": -0.00255,
-     "sd": 0.0016,
-     "mde95_onesided": 0.0026,
-     "mde95_twosided": 0.0031,
-     "x_floor": 0.361,
+     "point": 0.00011,
+     "boot_mean": -0.00066,
+     "sd": 0.00123,
+     "mde95_onesided": 0.002,
+     "mde95_twosided": 0.0024,
+     "x_floor": 0.054,
      "ci95": [
-      -0.00591,
-      0.00028
+      -0.00325,
+      0.00156
      ],
-     "p_gt_0": 0.0425,
+     "p_gt_0": 0.3115,
      "resolvable": false
     }
    },
    "plus_0.1": {
-    "point_rho": -0.0015,
+    "point_rho": 0.00049,
     "rho": {
      "B_used": 2000,
-     "point": -0.0015,
-     "boot_mean": -0.0052,
-     "sd": 0.00296,
-     "mde95_onesided": 0.0049,
-     "mde95_twosided": 0.0058,
-     "x_floor": 0.308,
+     "point": 0.00049,
+     "boot_mean": -0.00151,
+     "sd": 0.00228,
+     "mde95_onesided": 0.0037,
+     "mde95_twosided": 0.0045,
+     "x_floor": 0.131,
      "ci95": [
-      -0.01169,
-      0.0
+      -0.00629,
+      0.00252
      ],
-     "p_gt_0": 0.0255,
+     "p_gt_0": 0.253,
      "resolvable": false
     }
    }
@@ -539,43 +539,43 @@
   "pit": {
    "base_lambda": 0.57,
    "plus_0.05": {
-    "point_rho": -0.00383,
+    "point_rho": 9e-05,
     "rho": {
      "B_used": 2000,
-     "point": -0.00383,
-     "boot_mean": -0.0033,
-     "sd": 0.00185,
-     "mde95_onesided": 0.003,
-     "mde95_twosided": 0.0036,
-     "x_floor": 1.257,
+     "point": 9e-05,
+     "boot_mean": -0.00128,
+     "sd": 0.00131,
+     "mde95_onesided": 0.0022,
+     "mde95_twosided": 0.0026,
+     "x_floor": 0.042,
      "ci95": [
-      -0.00738,
-      -1e-05
+      -0.00396,
+      0.00111
      ],
-     "p_gt_0": 0.025,
-     "resolvable": true
+     "p_gt_0": 0.1575,
+     "resolvable": false
     }
    },
    "plus_0.1": {
-    "point_rho": -0.00669,
+    "point_rho": -0.00065,
     "rho": {
      "B_used": 2000,
-     "point": -0.00669,
-     "boot_mean": -0.00662,
-     "sd": 0.00341,
-     "mde95_onesided": 0.0056,
-     "mde95_twosided": 0.0067,
-     "x_floor": 1.192,
+     "point": -0.00065,
+     "boot_mean": -0.0028,
+     "sd": 0.00235,
+     "mde95_onesided": 0.0039,
+     "mde95_twosided": 0.0046,
+     "x_floor": 0.168,
      "ci95": [
-      -0.0145,
-      -0.00076
+      -0.00776,
+      0.00157
      ],
-     "p_gt_0": 0.0135,
-     "resolvable": true
+     "p_gt_0": 0.1065,
+     "resolvable": false
     }
    }
   }
  },
- "generated_at": "2026-09-06T07:45:17Z",
+ "generated_at": "2026-10-04T05:55:08Z",
  "produced_by": "tools/efv_driver_lab.py"
 }

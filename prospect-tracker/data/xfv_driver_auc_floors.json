@@ -29,51 +29,51 @@
  "A0_parity": {
   "hit": {
    "contributor": {
-    "n": 749,
-    "n_pos": 276,
-    "prevalence": 0.3685,
-    "auc_numpy": 0.73899255,
-    "auc_source_backtest": 0.73899255,
+    "n": 782,
+    "n_pos": 280,
+    "prevalence": 0.3581,
+    "auc_numpy": 0.74405236,
+    "auc_source_backtest": 0.74405236,
     "abs_diff": 0.0,
     "pass": true
    },
    "star": {
-    "n": 749,
-    "n_pos": 116,
-    "prevalence": 0.1549,
-    "auc_numpy": 0.81867271,
-    "auc_source_backtest": 0.81867271,
+    "n": 782,
+    "n_pos": 106,
+    "prevalence": 0.1355,
+    "auc_numpy": 0.83016077,
+    "auc_source_backtest": 0.83016077,
     "abs_diff": 0.0,
     "pass": true
    },
    "frame": {
-    "pool_rows": 839,
-    "unique_player_keys": 839,
+    "pool_rows": 968,
+    "unique_player_keys": 968,
     "one_row_per_player": true
    }
   },
   "pit": {
    "contributor": {
-    "n": 890,
-    "n_pos": 219,
-    "prevalence": 0.2461,
-    "auc_numpy": 0.6956325,
-    "auc_source_backtest": 0.6956325,
+    "n": 907,
+    "n_pos": 227,
+    "prevalence": 0.2503,
+    "auc_numpy": 0.72236331,
+    "auc_source_backtest": 0.72236331,
     "abs_diff": 0.0,
     "pass": true
    },
    "star": {
-    "n": 890,
-    "n_pos": 51,
-    "prevalence": 0.0573,
-    "auc_numpy": 0.772535,
-    "auc_source_backtest": 0.772535,
+    "n": 907,
+    "n_pos": 60,
+    "prevalence": 0.0662,
+    "auc_numpy": 0.83100157,
+    "auc_source_backtest": 0.83100157,
     "abs_diff": 0.0,
     "pass": true
    },
    "frame": {
-    "pool_rows": 981,
-    "unique_player_keys": 981,
+    "pool_rows": 1116,
+    "unique_player_keys": 1116,
     "one_row_per_player": true
    }
   }
@@ -81,73 +81,73 @@
  "A1_floors": {
   "hit": {
    "MDE95": {
-    "rho": 0.017,
-    "block_rho": 0.02,
-    "auc_contrib": 0.0091,
-    "auc_star": 0.0109
+    "rho": 0.014,
+    "block_rho": 0.0158,
+    "auc_contrib": 0.0084,
+    "auc_star": 0.0089
    },
    "noise_arms": [
     {
      "seed": 0,
      "point": {
-      "rho": 0.00578,
-      "block_rho": 0.00552,
-      "auc_contrib": 0.0042,
-      "auc_star": 0.00265
+      "rho": 0.00367,
+      "block_rho": 0.00661,
+      "auc_contrib": 0.00101,
+      "auc_star": 0.0047
      },
      "sd": {
-      "rho": 0.00748,
-      "block_rho": 0.00868,
-      "auc_contrib": 0.00384,
-      "auc_star": 0.00445
+      "rho": 0.0085,
+      "block_rho": 0.0096,
+      "auc_contrib": 0.00513,
+      "auc_star": 0.00539
      },
      "mde95": {
-      "rho": 0.0123,
-      "block_rho": 0.0143,
-      "auc_contrib": 0.0063,
-      "auc_star": 0.0073
+      "rho": 0.014,
+      "block_rho": 0.0158,
+      "auc_contrib": 0.0084,
+      "auc_star": 0.0089
      }
     },
     {
      "seed": 1,
      "point": {
-      "rho": -0.00071,
-      "block_rho": -0.00269,
-      "auc_contrib": 0.0015,
-      "auc_star": -0.00122
+      "rho": -0.00258,
+      "block_rho": -0.00568,
+      "auc_contrib": -0.00085,
+      "auc_star": 0.00095
      },
      "sd": {
-      "rho": 0.00917,
-      "block_rho": 0.01093,
-      "auc_contrib": 0.00481,
-      "auc_star": 0.00594
+      "rho": 0.0071,
+      "block_rho": 0.00855,
+      "auc_contrib": 0.00417,
+      "auc_star": 0.00378
      },
      "mde95": {
-      "rho": 0.0151,
-      "block_rho": 0.018,
-      "auc_contrib": 0.0079,
-      "auc_star": 0.0098
+      "rho": 0.0117,
+      "block_rho": 0.0141,
+      "auc_contrib": 0.0069,
+      "auc_star": 0.0062
      }
     },
     {
      "seed": 2,
      "point": {
-      "rho": 0.00296,
-      "block_rho": 0.00685,
-      "auc_contrib": 0.00208,
-      "auc_star": 0.00521
+      "rho": -0.00306,
+      "block_rho": -0.00032,
+      "auc_contrib": -0.00184,
+      "auc_star": -0.00106
      },
      "sd": {
-      "rho": 0.01031,
-      "block_rho": 0.01218,
-      "auc_contrib": 0.00552,
-      "auc_star": 0.00662
+      "rho": 0.00593,
+      "block_rho": 0.00673,
+      "auc_contrib": 0.00344,
+      "auc_star": 0.00341
      },
      "mde95": {
-      "rho": 0.017,
-      "block_rho": 0.02,
-      "auc_contrib": 0.0091,
-      "auc_star": 0.0109
+      "rho": 0.0098,
+      "block_rho": 0.0111,
+      "auc_contrib": 0.0057,
+      "auc_star": 0.0056
      }
     }
    ],
@@ -162,73 +162,73 @@
   },
   "pit": {
    "MDE95": {
-    "rho": 0.0121,
-    "block_rho": 0.0172,
-    "auc_contrib": 0.0068,
-    "auc_star": 0.0129
+    "rho": 0.0116,
+    "block_rho": 0.0137,
+    "auc_contrib": 0.0067,
+    "auc_star": 0.0085
    },
    "noise_arms": [
     {
      "seed": 0,
      "point": {
-      "rho": -0.00188,
-      "block_rho": -0.00061,
-      "auc_contrib": 0.00157,
-      "auc_star": 0.0004
+      "rho": -0.00772,
+      "block_rho": -0.00188,
+      "auc_contrib": -0.00275,
+      "auc_star": -0.0028
      },
      "sd": {
-      "rho": 0.00734,
-      "block_rho": 0.01045,
-      "auc_contrib": 0.00413,
-      "auc_star": 0.00784
+      "rho": 0.00616,
+      "block_rho": 0.00782,
+      "auc_contrib": 0.00359,
+      "auc_star": 0.00316
      },
      "mde95": {
-      "rho": 0.0121,
-      "block_rho": 0.0172,
-      "auc_contrib": 0.0068,
-      "auc_star": 0.0129
+      "rho": 0.0101,
+      "block_rho": 0.0129,
+      "auc_contrib": 0.0059,
+      "auc_star": 0.0052
      }
     },
     {
      "seed": 1,
      "point": {
-      "rho": 0.00155,
-      "block_rho": 0.00381,
-      "auc_contrib": -0.00011,
-      "auc_star": 0.00063
+      "rho": 0.00363,
+      "block_rho": 0.00443,
+      "auc_contrib": 0.00135,
+      "auc_star": 0.004
      },
      "sd": {
-      "rho": 0.00594,
-      "block_rho": 0.00908,
-      "auc_contrib": 0.00294,
-      "auc_star": 0.00628
+      "rho": 0.00702,
+      "block_rho": 0.00798,
+      "auc_contrib": 0.00357,
+      "auc_star": 0.00515
      },
      "mde95": {
-      "rho": 0.0098,
-      "block_rho": 0.0149,
-      "auc_contrib": 0.0048,
-      "auc_star": 0.0103
+      "rho": 0.0116,
+      "block_rho": 0.0131,
+      "auc_contrib": 0.0059,
+      "auc_star": 0.0085
      }
     },
     {
      "seed": 2,
      "point": {
-      "rho": 0.0003,
-      "block_rho": 0.00221,
-      "auc_contrib": -0.00068,
-      "auc_star": -0.0021
+      "rho": -0.00225,
+      "block_rho": -0.0017,
+      "auc_contrib": -3e-05,
+      "auc_star": -0.0031
      },
      "sd": {
-      "rho": 0.00654,
-      "block_rho": 0.00945,
-      "auc_contrib": 0.0033,
-      "auc_star": 0.00641
+      "rho": 0.00644,
+      "block_rho": 0.00835,
+      "auc_contrib": 0.00405,
+      "auc_star": 0.00407
      },
      "mde95": {
-      "rho": 0.0108,
-      "block_rho": 0.0155,
-      "auc_contrib": 0.0054,
-      "auc_star": 0.0106
+      "rho": 0.0106,
+      "block_rho": 0.0137,
+      "auc_contrib": 0.0067,
+      "auc_star": 0.0067
      }
     }
    ],
@@ -246,46 +246,46 @@
   "hit": {
    "column": "fv_trend",
    "coverage": {
-    "observed": 839,
-    "n": 839,
+    "observed": 968,
+    "n": 968,
     "frac": 1.0,
     "impute": "zero",
     "impute_value": 0.0,
-    "observed_mean": 3.74909,
-    "observed_sd": 5.45714
+    "observed_mean": 3.76038,
+    "observed_sd": 5.46548
    },
    "twin_delta": {
-    "rho": 0.0041,
-    "block_rho": 0.00595,
-    "auc_contrib": 0.00352,
-    "auc_star": 0.00243
+    "rho": -0.00134,
+    "block_rho": -0.00069,
+    "auc_contrib": -0.00044,
+    "auc_star": 0.00047
    },
    "twin_bootstrap_auc": {
     "B_used": 2000,
-    "point": 0.00352,
-    "boot_mean": -0.00126,
-    "sd": 0.00456,
-    "mde95_onesided": 0.0075,
-    "mde95_twosided": 0.0089,
-    "x_floor": 0.469,
+    "point": -0.00044,
+    "boot_mean": -0.00034,
+    "sd": 0.00372,
+    "mde95_onesided": 0.0061,
+    "mde95_twosided": 0.0073,
+    "x_floor": 0.072,
     "ci95": [
-     -0.01193,
-     0.00772
+     -0.00722,
+     0.00838
     ],
-    "p_gt_0": 0.3475,
+    "p_gt_0": 0.404,
     "resolvable": false
    },
    "real_column_delta": {
-    "rho": -0.00092,
-    "block_rho": -0.00341,
-    "auc_contrib": 0.004,
-    "auc_star": -0.00063
+    "rho": -0.00117,
+    "block_rho": -0.00357,
+    "auc_contrib": 0.00203,
+    "auc_star": -0.00438
    },
    "floors_used": {
-    "rho": 0.017,
-    "block_rho": 0.02,
-    "auc_contrib": 0.0091,
-    "auc_star": 0.0109
+    "rho": 0.014,
+    "block_rho": 0.0158,
+    "auc_contrib": 0.0084,
+    "auc_star": 0.0089
    },
    "twin_auc_inside_floor": true,
    "twin_rho_inside_floor": true,
@@ -293,31 +293,31 @@
     "tag": "A2:hit:twin",
     "verdict": "NULL",
     "rho": {
-     "delta": 0.0041,
-     "floor": 0.017,
-     "x_floor": 0.241,
+     "delta": -0.00134,
+     "floor": 0.014,
+     "x_floor": 0.096,
      "clears": false,
      "adverse_beyond_floor": false,
      "state": "inside floor"
     },
     "block_rho": {
-     "delta": 0.00595,
-     "floor": 0.02,
-     "x_floor": 0.298,
+     "delta": -0.00069,
+     "floor": 0.0158,
+     "x_floor": 0.044,
      "clears": false,
      "adverse_beyond_floor": false,
      "state": "inside floor"
     },
     "auc_contributor": {
-     "delta": 0.00352,
-     "floor": 0.0091,
-     "x_floor": 0.387,
+     "delta": -0.00044,
+     "floor": 0.0084,
+     "x_floor": 0.052,
      "clears": false,
      "adverse_beyond_floor": false,
      "state": "inside floor"
     },
     "auc_star": {
-     "delta": 0.00243,
+     "delta": 0.00047,
      "role": "LABELLED SENSITIVITY",
      "verdict_weight": 0,
      "why": "the pitcher star cell carries 46 positives against an E_cond floor of 0.0397 in data/xfv_auc_floor_eval.json; a leg that cannot resolve its own null cannot adjudicate anyone else's arm"
@@ -335,46 +335,46 @@
   "pit": {
    "column": "fv_trend",
    "coverage": {
-    "observed": 981,
-    "n": 981,
+    "observed": 1116,
+    "n": 1116,
     "frac": 1.0,
     "impute": "zero",
     "impute_value": 0.0,
-    "observed_mean": 2.41529,
-    "observed_sd": 4.24098
+    "observed_mean": 2.46403,
+    "observed_sd": 4.29379
    },
    "twin_delta": {
-    "rho": 0.00148,
-    "block_rho": -0.00412,
-    "auc_contrib": -0.00096,
-    "auc_star": 0.00023
+    "rho": 0.00153,
+    "block_rho": 0.00266,
+    "auc_contrib": 0.0016,
+    "auc_star": -0.00109
    },
    "twin_bootstrap_auc": {
     "B_used": 2000,
-    "point": -0.00096,
-    "boot_mean": -0.00175,
-    "sd": 0.00338,
-    "mde95_onesided": 0.0056,
-    "mde95_twosided": 0.0066,
-    "x_floor": 0.173,
+    "point": 0.0016,
+    "boot_mean": 0.00155,
+    "sd": 0.0036,
+    "mde95_onesided": 0.0059,
+    "mde95_twosided": 0.0071,
+    "x_floor": 0.27,
     "ci95": [
-     -0.0087,
-     0.00466
+     -0.00458,
+     0.00934
     ],
-    "p_gt_0": 0.275,
+    "p_gt_0": 0.648,
     "resolvable": false
    },
    "real_column_delta": {
-    "rho": 0.0016,
-    "block_rho": 0.00173,
-    "auc_contrib": 0.00741,
-    "auc_star": 0.00866
+    "rho": -0.00827,
+    "block_rho": -0.00632,
+    "auc_contrib": 0.00184,
+    "auc_star": -0.00081
    },
    "floors_used": {
-    "rho": 0.0121,
-    "block_rho": 0.0172,
-    "auc_contrib": 0.0068,
-    "auc_star": 0.0129
+    "rho": 0.0116,
+    "block_rho": 0.0137,
+    "auc_contrib": 0.0067,
+    "auc_star": 0.0085
    },
    "twin_auc_inside_floor": true,
    "twin_rho_inside_floor": true,
@@ -382,31 +382,31 @@
     "tag": "A2:pit:twin",
     "verdict": "NULL",
     "rho": {
-     "delta": 0.00148,
-     "floor": 0.0121,
-     "x_floor": 0.122,
+     "delta": 0.00153,
+     "floor": 0.0116,
+     "x_floor": 0.132,
      "clears": false,
      "adverse_beyond_floor": false,
      "state": "inside floor"
     },
     "block_rho": {
-     "delta": -0.00412,
-     "floor": 0.0172,
-     "x_floor": 0.24,
+     "delta": 0.00266,
+     "floor": 0.0137,
+     "x_floor": 0.194,
      "clears": false,
      "adverse_beyond_floor": false,
      "state": "inside floor"
     },
     "auc_contributor": {
-     "delta": -0.00096,
-     "floor": 0.0068,
-     "x_floor": 0.141,
+     "delta": 0.0016,
+     "floor": 0.0067,
+     "x_floor": 0.239,
      "clears": false,
      "adverse_beyond_floor": false,
      "state": "inside floor"
     },
     "auc_star": {
-     "delta": 0.00023,
+     "delta": -0.00109,
      "role": "LABELLED SENSITIVITY",
      "verdict_weight": 0,
      "why": "the pitcher star cell carries 46 positives against an E_cond floor of 0.0397 in data/xfv_auc_floor_eval.json; a leg that cannot resolve its own null cannot adjudicate anyone else's arm"
@@ -416,7 +416,7 @@
     "not_adjudicated": [
      "Holm family survival: not supplied"
     ],
-    "block_sign_agrees_with_rho": false,
+    "block_sign_agrees_with_rho": true,
     "rule": "rho is the gate; contributor AUC may veto and may never credit; star AUC carries no verdict weight"
    },
    "reading": "the twin must land INSIDE the floor on both legs. A twin that cleared it would mean the floor is too small and every verdict built on it is unsafe."
@@ -425,26 +425,26 @@
  "A3_label_permutation": {
   "hit": {
    "draws": 2000,
-   "mean_auc": 0.500243,
-   "sd_auc": 0.02195,
-   "analytic_null_se_hanley_mcneil": 0.02188,
-   "sd_over_analytic": 1.0032,
-   "z_of_mean": 0.496,
-   "p05": 0.46372,
-   "p95": 0.53597,
+   "mean_auc": 0.499991,
+   "sd_auc": 0.02101,
+   "analytic_null_se_hanley_mcneil": 0.02155,
+   "sd_over_analytic": 0.9754,
+   "z_of_mean": -0.02,
+   "p05": 0.46311,
+   "p95": 0.53216,
    "centred_on_half": true,
    "width_matches_theory": true,
    "bar": "two-sided: |z of the mean| <= 3 over K = 2000 draws, AND empirical sd within [0.90, 1.10] of the Hanley-McNeil analytic null SE"
   },
   "pit": {
    "draws": 2000,
-   "mean_auc": 0.499691,
-   "sd_auc": 0.02227,
-   "analytic_null_se_hanley_mcneil": 0.02248,
-   "sd_over_analytic": 0.9907,
-   "z_of_mean": -0.621,
-   "p05": 0.46251,
-   "p95": 0.53635,
+   "mean_auc": 0.500389,
+   "sd_auc": 0.02249,
+   "analytic_null_se_hanley_mcneil": 0.02214,
+   "sd_over_analytic": 1.0156,
+   "z_of_mean": 0.774,
+   "p05": 0.46201,
+   "p95": 0.53629,
    "centred_on_half": true,
    "width_matches_theory": true,
    "bar": "two-sided: |z of the mean| <= 3 over K = 2000 draws, AND empirical sd within [0.90, 1.10] of the Hanley-McNeil analytic null SE"
@@ -478,6 +478,6 @@
  "A4_corners": 10,
  "A4_absence_never_reads_as_pass": true,
  "all_controls_pass": true,
- "generated_at": "2026-09-06T07:25:25Z",
+ "generated_at": "2026-10-04T06:02:22Z",
  "produced_by": "tools/efv_driver_lab.py"
 }

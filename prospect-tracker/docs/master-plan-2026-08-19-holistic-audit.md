@@ -45,8 +45,19 @@ The reopen standard is omnibus-2 section 2 (docs/master-plan-2026-08-05-omnibus2
 "the burden to reopen is a NEW data source or a NEW owner instruction, not a hunch."
 
 eFV / consensus:
-1. Feature frontier CLOSED: 39 gated arms (D-1 free keys + D-2 _extras), zero survivors. No new
-   functional forms over existing columns. Reopen = new LABELS (RESOLVED_THROUGH 2026).
+1. (Rewritten 2026-10-04; the original text read "Feature frontier CLOSED: 39 gated arms (D-1 free
+   keys + D-2 _extras), zero survivors. No new functional forms over existing columns. Reopen = new
+   LABELS (RESOLVED_THROUGH 2026).") Feature frontier RE-CLOSED on label build
+   `fwar@2026-10-02-0341299c20ec`, 2026-10-04. The new-label reopen was spent once, by the Z1 driver
+   re-test (docs/efv-2026-10-03/LABEL_V3_DRIVER_RETEST_GATE.md, Results): 312 arms in five
+   families read once on the fWAR label at RESOLVED_THROUGH 2026, zero survivors, the `fv`
+   liveness control live on both sides. No new functional forms over existing columns. Kill rule 6
+   of that registration, verbatim: "**Program close.** If nothing passes, record the frontier as
+   RE-CLOSED on label build X, rewrite do-not-reopen items 1, 8 and 17 with the date, and allow no
+   driver re-test until either the 2027 RT advance or an owner-registered label DEFINITION change
+   that moves the debuted label more than this one did (Spearman under 0.99 against the frozen
+   label on either side)." Reopen = the 2027 RT advance or such an owner-registered label
+   definition change, nothing else.
 2. Serve-basis question collapsed to ridge-vs-blend; hitter gap RULED OUT by TOST; pitcher cell
    UNDECIDED and reading the A4 arm is floor-shopping, banned by name. The rank_war-grade remedy
    is recorded but NOT authorized (full grade-basis epoch if ever proposed).
@@ -62,8 +73,13 @@ eFV / consensus:
 7. Consensus weighting FLAT since 2026-07-25 (both A/Bs ship=false as of 2026-08-18); reopen only
    via the vintage A/B with gain > 0.0068 MDE on BOTH legs. Recency decay NULL. Single-source
    shrink constant vindicated. BA stays OUT of SCORED_SOURCES.
-8. Pitcher stuff waits for the RESOLVED_THROUGH clock; pre-Statcast proxies (sits/tops/rpm) all
-   negative and closed. K-prior closed PERMANENTLY.
+8. (Rewritten 2026-10-04; the original text read "Pitcher stuff waits for the RESOLVED_THROUGH
+   clock; pre-Statcast proxies (sits/tops/rpm) all negative and closed. K-prior closed
+   PERMANENTLY.") 8a: pitcher stuff opens by its own clock in its own registration (Z1c,
+   docs/efv-2026-10-03/Z1C_PITCHER_STUFF_GATE.md), not in Z1. 8b: the pre-Statcast proxies
+   (`sits_mid`, `tops`, `rpm_fb`) were re-read once in Z1's P-MECH family on the fWAR label (13 arms,
+   alpha 0.015), zero survivors: RE-CLOSED on label build `fwar@2026-10-02-0341299c20ec`,
+   2026-10-04, under kill rule 6 as quoted in item 1. 8c: K-prior closed PERMANENTLY.
 9. Hardcoded accuracy claims are a banned defect class; every accuracy claim derives from an
    artifact (test_dispersion_epoch ratchet, Diamond scaffold test).
 
@@ -91,8 +107,13 @@ Other:
     2026-09-11-war-epoch-drivers-betting.md. The OAA/rfield grid still reopens ONLY through SDR
     gate G-B; SDR gates G-A/G-B/G-C are frozen and data-blocked, run only after a drop passes
     sdr_intake --validate.
-17. Defense-into-eFV closed (four refutations); reopen = the eWAR label change (D5/W4), one
-    registered attempt.
+17. (Rewritten 2026-10-04; the original text read "Defense-into-eFV closed (four refutations);
+    reopen = the eWAR label change (D5/W4), one registered attempt.") Defense-into-eFV CLOSED
+    PERMANENTLY on existing columns, 2026-10-04: the one registered attempt was Z1's H-MECH family
+    on label build `fwar@2026-10-02-0341299c20ec` (11 arms, alpha 0.025), zero survivors, and its
+    twins scored at least as well as its best candidate (kill rule 4). Plan 2.6: "A null is a
+    result: it closes item 17 permanently on existing columns." MiLB SDR data is a new data source
+    under its own registration, not a fourth look. Kill rule 6 as quoted in item 1 also binds.
 18. STALE_DAYS may not be lowered (test-pinned); attack the undated-artifact ratchet only.
     Star-blend h2 never blends. Never sum ML quantile points. Statcast-into-projections rejected;
     only the dated pwoba re-gate after 2026-11-15 lives. Draft-anchor backfill retired.

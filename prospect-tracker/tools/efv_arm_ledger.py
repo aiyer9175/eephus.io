@@ -62,6 +62,11 @@ SOURCES: tuple[tuple[str, str, str], ...] = (
     # side) arm of a wave with the floor it was read against (`floor_rho` on the arm),
     # written by the registered run only (EFV3_B7).
     ("xfv_screen_wave1.json", "arms", "screening lab wave 1"),
+    # Z1, the driver re-test on the frozen fWAR label (kill rule 8 of
+    # docs/efv-2026-10-03/LABEL_V3_DRIVER_RETEST_GATE.md: the denominator is published with
+    # this registration as a new lane). The two `fv` liveness controls sit in the
+    # artifact's `liveness` block, outside `arms`, so they are not counted as arms.
+    ("xfv_driver_retest.json", "arms", "Z1 driver re-test (fWAR label)"),
 )
 
 #: Sources registered before their producer's registered run. Absent, they are listed
@@ -195,6 +200,10 @@ def collect() -> dict:
                 # The screening lab records the floor on the arm itself (per head
                 # and side, derived in the same run, before the arm).
                 floor = arm.get("floor_rho")
+            if floor is None:
+                # The Z1 re-test keys its floors by (side, frame, scope) and records the
+                # one each arm was read against on the arm (`floors_used`).
+                floor = (arm.get("floors_used") or {}).get("rho")
             rows.append({
                 "lane": label, "artifact": name,
                 "arm": arm.get("tag") or arm_key,
