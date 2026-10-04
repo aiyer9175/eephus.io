@@ -4158,7 +4158,7 @@ def build_projections() -> str:
     )
     return page("MLB Projections - eephus.io", "projections", body,
                 "Five-year WAR projections for every MLB player, trained on published fWAR: floor, mean and ceiling paths, "
-                "surplus over the club control window (every guaranteed season, unsigned seasons inside the five), and PROSPX prospects joining at their ETA.",
+                "club-control surplus, and PROSPX prospects at their ETA.",
                 url=f"{SITE_ORIGIN}/projections/", image=module_share_image("projections"))
 
 
