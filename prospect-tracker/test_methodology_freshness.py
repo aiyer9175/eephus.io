@@ -177,6 +177,12 @@ MODEL_GLOSSARY = {
     # default provider ewar_v2); the glossary entry carries the frame disclosure
     # and the gate record, so it is reader-facing and no longer internal.
     "ewar": ["ewar"],
+    # The 2026-10-03 fWAR label epoch: published fWAR is the TRAINING label (the WAR
+    # glossary entry carries the frame disclosure and names both series), while eWAR v2
+    # stays the displayed WAR (owner answer EPOCH-Q4). The epoch lab measures the swap
+    # and moves no page copy itself, like its 2026-09-04 predecessor.
+    "fwar": ["war"],
+    "xfv_fwar_label_epoch": "internal",
     # 2026-08-04 gated experiments, all three measured NO-SHIP (loss ledgers).
     "xfv_pace_from_entry": "internal",   # pre-registered kill criterion fired on the hitter weight sign
     "xfv_level_blend_arms": "internal",  # 17 of 18 cells negative; the anchor arm is a measured loss
