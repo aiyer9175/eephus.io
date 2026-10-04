@@ -5,6 +5,11 @@
 
 /* /management/ - In-Game Management. Shares site.css for type and chrome. */
 
+/* While the board or a shard loads, the mount holds a screen of height, so the
+   table landing does not push the footer up the viewport and back (QCLP11);
+   the empty mount before the script runs holds the same height. */
+#mgmt-app-root:empty, #mgmt-app-root:has(.px-state.is-loading) { min-height: 100vh; }
+
 .mgmt-block { margin: 20px 0; }
 .mgmt-block h2 { font-size: 17px; margin: 18px 0 6px; }
 .mgmt-block h3 { font-size: 14px; margin: 16px 0 4px; }
@@ -49,10 +54,18 @@
 .mgmt-table th, .mgmt-table td { padding: 5px 10px; white-space: nowrap; text-align: right; }
 .mgmt-table th:first-child, .mgmt-table td:first-child { text-align: left; }
 .mgmt-table thead th {
-  cursor: pointer; background: var(--bg-secondary);
+  background: var(--bg-secondary);
   border-bottom: 2px solid var(--border-light); font-weight: 600;
 }
-.mgmt-table thead th:focus { outline: 2px solid var(--accent-gold); outline-offset: -2px; }
+/* A head that sorts holds a button (QCLA04): only those draw the pointer, and
+   the ring is the site's cyan token on the button (3:1 or better in both themes),
+   not the gold that read 2.13:1 on the light header. */
+.mgmt-table thead th[data-msort], .mgmt-table thead th[data-bsort], .mgmt-table thead th[data-dsort] { cursor: pointer; }
+.mgmt-sort {
+  font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0;
+  cursor: pointer; text-align: inherit; letter-spacing: inherit; white-space: nowrap;
+}
+.mgmt-sort:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 .mgmt-table td { border-bottom: 1px solid var(--border-subtle); font-variant-numeric: tabular-nums; }
 .mgmt-table tbody tr:nth-child(even) { background: var(--bg-hover); }
 .mgmt-table--re td:first-child { font-weight: 600; }

@@ -42,6 +42,8 @@
                 dsort: { key: "", asc: true }, spark: "pitching_change", open: "" };
   // One-entry shard cache: the drill-down and the club page share the club-season.
   var SHARD = { key: "", data: null, error: "", loading: "" };
+  // The selector of the control to focus after the next render (a sort head).
+  var refocus = "";
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -83,6 +85,25 @@
   function signedCell(v, nd) {
     if (v === null || v === undefined || v !== v) return "<td></td>";
     return '<td class="' + signCls(v) + '">' + signed(v, nd === undefined ? 3 : nd) + "</td>";
+  }
+  // A style z, signed to one decimal; a value that rounds to zero prints 0.0,
+  // never -0.0 (QCLC22).
+  function zfmt(v) {
+    if (v === null || v === undefined || v !== v) return "";
+    var x = Number(v);
+    if (x > -0.05 && x < 0) x = 0;
+    return signed(x, 1);
+  }
+  // A sortable column head (QCLA04, the arbitration.js pattern): the th keeps
+  // its columnheader role, with scope and aria-sort, and the control is a
+  // button inside it. The sort attribute stays first, so selectors and the CSV
+  // marker read it as before; the arrow is decoration and the CSV reads the
+  // label from data-export-text.
+  function sortTh(attr, key, label, inner, on, asc) {
+    return "<th " + attr + '="' + esc(key) + '" scope="col" aria-sort="' +
+      (on ? (asc ? "ascending" : "descending") : "none") + '" data-export-text="' + esc(label) +
+      '"><button type="button" class="mgmt-sort">' + inner + '<span class="mgmt-sort-ind" aria-hidden="true">' +
+      (on ? (asc ? " ▲" : " ▼") : "") + "</span></button></th>";
   }
   function hasTab(name) {
     try { return !!document.querySelector('[data-mgmtsection="' + name + '"]'); }
@@ -568,9 +589,7 @@
       { key: "mean_breakeven_faced", label: "Mean break-even faced" }
     ];
     var head = COLS.map(function (c) {
-      var arrow = k === c.key ? (asc ? " ▲" : " ▼") : "";
-      return '<th data-msort="' + c.key + '" tabindex="0" role="button">' +
-        esc(c.label) + arrow + "</th>";
+      return sortTh("data-msort", c.key, c.label, esc(c.label), k === c.key, asc);
     }).join("");
     var body = rows.slice(0, 200).map(function (r) {
       return "<tr><td>" + esc(r.team) + "</td><td>" + esc(r.season) + "</td><td>" +
@@ -728,11 +747,10 @@
     });
     var cols = boardCols();
     var head = cols.map(function (col) {
-      var arrow = k === col.key ? (asc ? " ▲" : " ▼") : "";
       var tag = col.kind === "realized" ? ' <span class="mgmt-th-tag">' + esc(c.realized_header_tag || "realized") + "</span>"
         : col.kind === "z" ? ' <span class="mgmt-th-tag">style</span>' : "";
       if (col.sortless) return "<th>" + esc(col.label) + "</th>";
-      return '<th data-bsort="' + col.key + '" tabindex="0" role="button">' + esc(col.label) + tag + arrow + "</th>";
+      return sortTh("data-bsort", col.key, col.label, esc(col.label) + tag, k === col.key, asc);
     }).join("");
     var body = rows.slice(0, 300).map(function (r) {
       return "<tr>" + cols.map(function (col) {
@@ -746,7 +764,7 @@
           if (v == null) return '<td title="' + esc(n) + " below the floor of " + esc(floors[col.fam]) + '"> - </td>';
           return '<td class="' + signCls(v) + '">' + signed(v, 2) + "</td>";
         }
-        if (col.kind === "z") return "<td>" + (v == null ? "" : esc(signed(v, 1))) + "</td>";
+        if (col.kind === "z") return "<td>" + esc(zfmt(v)) + "</td>";
         if (col.kind === "link") return decisionLink(r, v);
         if (col.nd != null) return "<td>" + num(v, col.nd) + "</td>";
         return "<td>" + (v == null ? "" : esc(v)) + "</td>";
@@ -920,7 +938,7 @@
     out += "<h3>Style</h3><p class=\"mgmt-note\">" + esc(c.style_sentence) + "</p>" +
       '<div class="mgmt-zstrip">' + [["z_hook", "Hook z", "hook_z"], ["z_pen", "Pen z", "pen_z"], ["z_bench", "Bench z", "bench_z"],
         ["z_ibb", "IBB z", "ibb_z"], ["z_visit", "Visit z", "visit_z"]].map(function (p) {
-        return '<div class="mgmt-zchip"><b>' + (row[p[0]] == null ? "" : esc(signed(row[p[0]], 1))) + "</b>" +
+        return '<div class="mgmt-zchip"><b>' + esc(zfmt(row[p[0]])) + "</b>" +
           '<span class="mgmt-zlbl">' + gl(p[1], p[2]) + (p[0] === "z_hook" ? " (negative = earlier)" : "") + "</span></div>";
       }).join("") +
       '<div class="mgmt-zchip"><b>' + num(row.mean_li, 2) + '</b><span class="mgmt-zlbl">' + gl("LI at decision", "li_at_decision") + "</span></div></div>";
@@ -1131,10 +1149,9 @@
       });
     }
     var head = DCOLS.map(function (c) {
-      var arrow = k === c.key ? (asc ? " ▲" : " ▼") : "";
       var tag = c.key === "mwpa" ? ' <span class="mgmt-th-tag">realized</span>' : c.key === "dvs" ? ' <span class="mgmt-th-tag">above state</span>' : "";
       if (c.kind === "flags") return "<th>" + esc(c.label) + "</th>";
-      return '<th data-dsort="' + c.key + '" tabindex="0" role="button">' + esc(c.label) + tag + arrow + "</th>";
+      return sortTh("data-dsort", c.key, c.label, esc(c.label) + tag, k === c.key, asc);
     }).join("");
     var shown = rows.slice(0, 500);
     var body = shown.map(function (r) {
@@ -1227,6 +1244,10 @@
     syncTabs();
     wire();
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(root); } catch (e) { /* glossary optional */ }
+    if (refocus) {
+      try { var f = document.querySelector(refocus); if (f && f.focus) f.focus(); } catch (e) { /* optional */ }
+      refocus = "";
+    }
   }
 
   function onSel(id, fn) {
@@ -1242,16 +1263,25 @@
     onSel("mgmt-spark", function (v) { state.spark = v; });
     function sortable(attr, sortState, defaultAscKeys) {
       Array.prototype.forEach.call(document.querySelectorAll("th[" + attr + "]"), function (th) {
+        var k0 = th.getAttribute(attr);
+        // A head written the older way (role=button on the th itself) is brought
+        // to the sortTh shape here, so every sortable head keeps its column role.
+        if (th.getAttribute("role") === "button" && !th.querySelector("button")) {
+          th.removeAttribute("role"); th.removeAttribute("tabindex");
+          th.setAttribute("scope", "col");
+          th.setAttribute("aria-sort", sortState.key === k0 ? (sortState.asc ? "ascending" : "descending") : "none");
+          th.innerHTML = '<button type="button" class="mgmt-sort">' + th.innerHTML + "</button>";
+        }
         function go() {
           var k = th.getAttribute(attr);
           if (sortState.key === k) sortState.asc = !sortState.asc;
           else { sortState.key = k; sortState.asc = defaultAscKeys.indexOf(k) >= 0; }
+          // the same column's control takes focus back after the re-render
+          refocus = "th[" + attr + '="' + k + '"] button';
           render();
         }
+        // Enter and Space on the inner button arrive here as its click.
         th.addEventListener("click", go);
-        th.addEventListener("keydown", function (e) {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
-        });
       });
     }
     sortable("data-msort", state.sort, ["team"]);
