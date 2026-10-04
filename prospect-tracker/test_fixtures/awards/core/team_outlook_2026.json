@@ -1,0 +1,245 @@
+{
+ "season": 2026,
+ "team_outlook": [
+  {
+   "team": "BAL",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "73-89",
+    "pythagPct": 0.434
+   }
+  },
+  {
+   "team": "BOS",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "90-72",
+    "pythagPct": 0.563
+   }
+  },
+  {
+   "team": "NYY",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "104-58",
+    "pythagPct": 0.63
+   }
+  },
+  {
+   "team": "TBR",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "105-57",
+    "pythagPct": 0.624
+   }
+  },
+  {
+   "team": "TOR",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "82-80",
+    "pythagPct": 0.517
+   }
+  },
+  {
+   "team": "CHW",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "70-92",
+    "pythagPct": 0.428
+   }
+  },
+  {
+   "team": "CLE",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "84-78",
+    "pythagPct": 0.537
+   }
+  },
+  {
+   "team": "DET",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "97-65",
+    "pythagPct": 0.591
+   }
+  },
+  {
+   "team": "KCR",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "73-89",
+    "pythagPct": 0.457
+   }
+  },
+  {
+   "team": "MIN",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "79-83",
+    "pythagPct": 0.485
+   }
+  },
+  {
+   "team": "HOU",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "89-73",
+    "pythagPct": 0.535
+   }
+  },
+  {
+   "team": "LAA",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "67-95",
+    "pythagPct": 0.434
+   }
+  },
+  {
+   "team": "ATH",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "68-94",
+    "pythagPct": 0.415
+   }
+  },
+  {
+   "team": "SEA",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "85-77",
+    "pythagPct": 0.534
+   }
+  },
+  {
+   "team": "TEX",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "84-78",
+    "pythagPct": 0.515
+   }
+  },
+  {
+   "team": "ATL",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "77-85",
+    "pythagPct": 0.49
+   }
+  },
+  {
+   "team": "MIA",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "74-88",
+    "pythagPct": 0.446
+   }
+  },
+  {
+   "team": "NYM",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "78-84",
+    "pythagPct": 0.486
+   }
+  },
+  {
+   "team": "PHI",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "99-63",
+    "pythagPct": 0.583
+   }
+  },
+  {
+   "team": "WSN",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "64-98",
+    "pythagPct": 0.405
+   }
+  },
+  {
+   "team": "CHC",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "93-69",
+    "pythagPct": 0.568
+   }
+  },
+  {
+   "team": "CIN",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "75-87",
+    "pythagPct": 0.406
+   }
+  },
+  {
+   "team": "MIL",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "92-70",
+    "pythagPct": 0.57
+   }
+  },
+  {
+   "team": "PIT",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "68-94",
+    "pythagPct": 0.433
+   }
+  },
+  {
+   "team": "STL",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "80-82",
+    "pythagPct": 0.486
+   }
+  },
+  {
+   "team": "ARI",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "67-95",
+    "pythagPct": 0.438
+   }
+  },
+  {
+   "team": "COL",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "58-104",
+    "pythagPct": 0.375
+   }
+  },
+  {
+   "team": "LAD",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "111-51",
+    "pythagPct": 0.644
+   }
+  },
+  {
+   "team": "SDP",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "91-71",
+    "pythagPct": 0.565
+   }
+  },
+  {
+   "team": "SFG",
+   "current": {
+    "gamesPlayed": 162,
+    "record": "53-109",
+    "pythagPct": 0.402
+   }
+  }
+ ]
+}

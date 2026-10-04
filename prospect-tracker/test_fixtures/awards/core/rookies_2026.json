@@ -1,0 +1,77 @@
+{
+ "season": 2026,
+ "columns": [
+  "mlbam",
+  "prior_ab",
+  "prior_ip",
+  "proxy_days",
+  "eligible",
+  "reason"
+ ],
+ "rows": [
+  [
+   900001,
+   0,
+   0.0,
+   0,
+   true,
+   "eligible"
+  ],
+  [
+   900007,
+   12,
+   0.0,
+   7,
+   true,
+   "eligible"
+  ],
+  [
+   900013,
+   2,
+   39.7,
+   53,
+   false,
+   "roster days 53 over 45 (estimate); near_45_day_line"
+  ],
+  [
+   900016,
+   0,
+   20.0,
+   40,
+   true,
+   "eligible; near_45_day_line"
+  ],
+  [
+   900024,
+   0,
+   0.0,
+   0,
+   true,
+   "eligible"
+  ],
+  [
+   900025,
+   30,
+   0.0,
+   15,
+   true,
+   "eligible"
+  ],
+  [
+   900026,
+   104,
+   0.0,
+   4,
+   true,
+   "eligible"
+  ],
+  [
+   900027,
+   0,
+   43.3,
+   53,
+   false,
+   "roster days 53 over 45 (estimate); near_45_day_line"
+  ]
+ ]
+}

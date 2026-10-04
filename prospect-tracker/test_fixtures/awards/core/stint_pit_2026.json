@@ -1,0 +1,145 @@
+[
+ {
+  "name_common": "Ozzie Tanaka",
+  "age": 31.0,
+  "mlb_ID": 900004.0,
+  "year_ID": 2026,
+  "team_ID": "LAA",
+  "stint_ID": 1,
+  "lg_ID": "AL",
+  "WAR": 2.8,
+  "IPouts": 420
+ },
+ {
+  "name_common": "Tomas Kessler",
+  "age": 29.0,
+  "mlb_ID": 900010.0,
+  "year_ID": 2026,
+  "team_ID": "DET",
+  "stint_ID": 1,
+  "lg_ID": "AL",
+  "WAR": 3.1,
+  "IPouts": 290
+ },
+ {
+  "name_common": "Tomas Kessler",
+  "age": 29.0,
+  "mlb_ID": 900010.0,
+  "year_ID": 2026,
+  "team_ID": "LAD",
+  "stint_ID": 2,
+  "lg_ID": "NL",
+  "WAR": 2.19,
+  "IPouts": 186
+ },
+ {
+  "name_common": "Will Schott",
+  "age": 24.0,
+  "mlb_ID": 900011.0,
+  "year_ID": 2026,
+  "team_ID": "NYY",
+  "stint_ID": 1,
+  "lg_ID": "AL",
+  "WAR": 6.55,
+  "IPouts": 581
+ },
+ {
+  "name_common": "Dylan Cross",
+  "age": 30.0,
+  "mlb_ID": 900012.0,
+  "year_ID": 2026,
+  "team_ID": "TEX",
+  "stint_ID": 1,
+  "lg_ID": "AL",
+  "WAR": 6.12,
+  "IPouts": 540
+ },
+ {
+  "name_common": "Rafa Ortega",
+  "age": 24.0,
+  "mlb_ID": 900013.0,
+  "year_ID": 2026,
+  "team_ID": "TBR",
+  "stint_ID": 1,
+  "lg_ID": "AL",
+  "WAR": 2.5,
+  "IPouts": 210
+ },
+ {
+  "name_common": "Hal Munro",
+  "age": 27.0,
+  "mlb_ID": 900014.0,
+  "year_ID": 2026,
+  "team_ID": "CLE",
+  "stint_ID": 1,
+  "lg_ID": "AL",
+  "WAR": 3.0,
+  "IPouts": 300
+ },
+ {
+  "name_common": "Ike Varga",
+  "age": 26.0,
+  "mlb_ID": 900015.0,
+  "year_ID": 2026,
+  "team_ID": "MIN",
+  "stint_ID": 1,
+  "lg_ID": "AL",
+  "WAR": 3.0,
+  "IPouts": 330
+ },
+ {
+  "name_common": "Jon Pell",
+  "age": 22.0,
+  "mlb_ID": 900016.0,
+  "year_ID": 2026,
+  "team_ID": "CHW",
+  "stint_ID": 1,
+  "lg_ID": "AL",
+  "WAR": 1.0,
+  "IPouts": 90
+ },
+ {
+  "name_common": "Cris Sandoval",
+  "age": 28.0,
+  "mlb_ID": 900022.0,
+  "year_ID": 2026,
+  "team_ID": "PHI",
+  "stint_ID": 1,
+  "lg_ID": "NL",
+  "WAR": 7.07,
+  "IPouts": 621
+ },
+ {
+  "name_common": "Jake Misner",
+  "age": 24.0,
+  "mlb_ID": 900023.0,
+  "year_ID": 2026,
+  "team_ID": "MIL",
+  "stint_ID": 1,
+  "lg_ID": "NL",
+  "WAR": 6.58,
+  "IPouts": 524
+ },
+ {
+  "name_common": "Chase Byrne",
+  "age": 23.0,
+  "mlb_ID": 900027.0,
+  "year_ID": 2026,
+  "team_ID": "CIN",
+  "stint_ID": 1,
+  "lg_ID": "NL",
+  "WAR": 3.56,
+  "IPouts": 390
+ },
+ {
+  "name_common": "Uri Mott",
+  "age": 29.0,
+  "mlb_ID": 900036.0,
+  "year_ID": 2026,
+  "team_ID": "SFG",
+  "stint_ID": 1,
+  "lg_ID": "NL",
+  "WAR": 1.4,
+  "IPouts": 150
+ }
+]
