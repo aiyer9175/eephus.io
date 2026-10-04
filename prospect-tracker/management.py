@@ -517,12 +517,11 @@ def summarize(df) -> dict:
         "attempt_census": _census(df.attrs.get("attempt_census") or {},
                                   int(len(ok)), excluded),
         "decomposition": {
-            "dv": ("the DECISION, priced with the league-average success rate "
-                   "for that season and target base. Was sending anybody here a "
-                   "good idea?"),
-            "er": ("the EXECUTION RESIDUAL, realized minus expected. Did this "
-                   "runner beat the throw? Attributed to the runner, never to "
-                   "the manager."),
+            "dv": ("the decision, priced with the league-average success rate "
+                   "for that season and target base."),
+            "er": ("the execution residual, realized minus expected: whether "
+                   "this runner beat the throw. Attributed to the runner, never "
+                   "to the manager."),
             "identity": "DV + ER = the realized win-probability change, exactly",
             "identity_max_abs_error": ident_max,
         },
@@ -544,10 +543,7 @@ def summarize(df) -> dict:
             "execution term now nearly sums to zero, which is what it should do "
             "when it is priced against its own group's mean."),
         "league_average_is_deliberate": (
-            "the decision is scored as though the manager had a league-average "
-            "runner, because the runner's speed is a roster fact and crediting "
-            "a manager for having a fast team is the confound this module "
-            "exists to avoid."),
+            "runner speed is a roster fact, not a manager's decision."),
         "which_breakeven_predicts_the_sign": (
             "the swing-weighted one. DV for an attempt is (WE_success minus "
             "WE_fail) times (league_p minus p*), so the summed decision value "

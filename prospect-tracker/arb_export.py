@@ -448,9 +448,8 @@ def build_history(recs, panel_rows, ledger, dpw) -> dict:
             "ou_war": ("actual minus WAR (fWAR basis) priced at that season's dollars per "
                        "win. Does NOT sum to zero, because arbitration "
                        "systematically pays below the open market."),
-            "never_combine": ("The two residuals answer different questions and "
-                              "are never averaged or summed. No combined column "
-                              "exists and none may be added."),
+            "never_combine": ("The two residuals measure different things and are "
+                              "never averaged or summed."),
         },
         "dpw": dpw,
         "seasons": sorted({r[0] for r in out}),

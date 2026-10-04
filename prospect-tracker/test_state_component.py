@@ -110,12 +110,12 @@ def test_the_component_loads_in_the_head_before_any_module_script():
 # site had is part of the message string, so its id survives with it.
 SITES = [
     # loading
-    ("franchise.js", "loading", 'esc("Loading")'),
-    ("ledger.js", "loading", 'esc("Loading")'),
-    ("hof.js", "loading", '"Loading."'),
+    ("franchise.js", "loading", 'esc("Loading Franchises.")'),
+    ("ledger.js", "loading", 'esc("Loading Club Ledger.")'),
+    ("hof.js", "loading", '"Loading Hall of Fame board."'),
     ("parks.js", "loading", '"Loading venues..."'),
     ("management.js", "loading", '"Loading the decisions of "'),
-    ("management.js", "loading", '"Loading."'),
+    ("management.js", "loading", '"Loading In-Game Management."'),
     ("fa.js", "loading", '"Loading free-agency data&hellip;"'),
     ("fa_dpw.js", "loading", '"Loading the $/WAR series&hellip;"'),
     ("projections.js", "loading", '"Loading player&hellip;"'),
@@ -127,7 +127,7 @@ SITES = [
     ("mlbstats.js", "loading", '"Loading&hellip;"'),
     # filtered to zero
     ("fa.js", "empty", '"No free agents match these filters."'),
-    ("hof.js", "empty", '"No players match."'),
+    ("hof.js", "empty", '"No players match these filters."'),
     ("parks.js", "empty", '"No venue matches that filter."'),
     ("projections.js", "empty", '"No players match."'),
     ("dynasty.js", "empty", 'opts.emptyKind || "empty"'),

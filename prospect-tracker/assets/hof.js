@@ -243,7 +243,7 @@
       : "";
     return '<div class="hof-tablewrap mlbstats-scroll"><table class="hof-table"><thead><tr>' +
       '<th class="hof-c-rank mlbstats-col-rank">#</th>' + head + "</tr></thead><tbody>" +
-      (body || '<tr><td colspan="14">' + pxState("empty", "No players match.") + "</td></tr>") +
+      (body || '<tr><td colspan="14">' + pxState("empty", "No players match these filters.") + "</td></tr>") +
       "</tbody></table></div>" + more;
   }
 
@@ -323,8 +323,7 @@
       // what_it_does_not_show is a clause ("that our shelf is wrong. ..."), so
       // the page supplies the verb it completes; it rendered as a fragment.
       '<p class="hof-note">It does not show ' + esc(b.what_it_does_not_show) + "</p>" +
-      '<p class="hof-count">Clauses frozen in ' + esc(b.gate_doc) + ", " +
-      esc(b.gate_frozen || "") + "</p></section>";
+      '<p class="hof-count">' + esc(b.gate_frozen || "") + "</p></section>";
   }
 
   function renderDark(key, title) {
@@ -431,7 +430,7 @@
       "and Negro Leagues pioneers. " +
       esc(DATA.ledger.plaque_role_unverified.n_in_eligible_universe) +
       " eligible inductees carry a route we cannot verify.</p>" +
-      '<h3>What this page does not claim</h3><p class="hof-note">' +
+      '<h3>Not claimed</h3><p class="hof-note">' +
       esc(DATA.what_this_page_does_not_claim) + "</p></section>";
   }
 
@@ -442,7 +441,7 @@
       root.innerHTML = pxState("failed", esc(LOAD_ERROR));
       return;
     }
-    if (!DATA) { root.innerHTML = pxState("loading", "Loading."); return; }
+    if (!DATA) { root.innerHTML = pxState("loading", "Loading Hall of Fame board."); return; }
     if (state.section === "method") { root.innerHTML = renderMethod(); return; }
     if (state.section === "franchises") { root.innerHTML = renderFranchises(); return; }
     if (state.section === "blocked") {
@@ -561,12 +560,12 @@
         // than drawing a board that quietly loses people.
         if (d.counts && d.counts.bands_partition_the_ten_plus_population === false) {
           LOAD_ERROR = "The three bands do not partition the population (a player " +
-            "would show twice or not at all). Rebuild with hof_export.py.";
+            "would show twice or not at all).";
         }
         render();
       })
       .catch(function () {
-        LOAD_ERROR = "The Hall of Fame board could not be loaded.";
+        LOAD_ERROR = "Hall of Fame board did not load. Retry.";
         render();
       });
   }

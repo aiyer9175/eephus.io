@@ -132,7 +132,7 @@ def test_every_dark_section_names_a_blocker_and_a_reason(d):
 def test_the_watch_board_carries_no_projection(d):
     w = d["sections"]["watch"]
     assert w["live"] is True and w["projection"] is False
-    assert "does not guess" in w["why_no_projection"]
+    assert "No pace curve" in w["why_no_projection"] and "neither is built" in w["why_no_projection"]
     for r in d["watch"]:
         assert "projection" not in r and "odds" not in r
 
@@ -230,7 +230,7 @@ def test_a_missing_value_sorts_last_in_both_directions():
 
 def test_war_ink_is_disclosed_as_ours_and_not_black_ink(d):
     txt = d["coverage"]["war_ink_is_ours"]
-    assert "NOT Bill James" in txt and "Black Ink" in txt
+    assert "not Bill James" in txt and "Black Ink" in txt
 
 
 # --------------------------------------------------------------------------

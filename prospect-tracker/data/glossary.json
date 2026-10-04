@@ -8005,7 +8005,7 @@
     "org grade tree"
    ],
    "priority": 40,
-   "definition": "A descriptive rank of a club's realized standing plus one provisional projection: the weighted mean of the ROSTER, OUTLOOK and FARM branch scores, re-standardised to 100 + 10z across the 30 clubs. Not a forecast of anything else.",
+   "definition": "A descriptive rank of a club's realized standing plus one provisional projection: the weighted mean of the ROSTER, OUTLOOK and FARM branch scores, re-standardised to 100 + 10z across the 30 clubs.",
    "methodology": "franchise_export.py: branch scores (100 + 10z of team eWAR, projected 2027 wins and the PROSPX farm composite) are combined at ROSTER 0.40 / OUTLOOK 0.30 / FARM 0.30, and the weighted mean is re-standardised by the same formula before any rank or letter is taken, because a weighted mean of z-scores has sd below 10 unless the branches are perfectly correlated. Letters follow rank (storage._letter_grade) and print in neutral ink; only the score takes the z ladder. Thirty percent rests on the provisional team_win_projections row.",
    "example": "",
    "formula": "index = 100 + 10 * (w - mean(w)) / sd(w), w = 0.40 * roster + 0.30 * outlook + 0.30 * farm",

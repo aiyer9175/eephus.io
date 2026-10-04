@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-02T12:59:42+00:00",
+ "generated_at": "2026-10-04T04:56:13+00:00",
  "produced_by": "management.py",
  "family": "running game: the stolen base decision",
  "n_attempts_priced": 14207,
@@ -30,8 +30,8 @@
   "note": "a steal attempt reaches the corpus in one of two places. A steal in the middle of a plate appearance is a row in the events table; a steal that ENDS the plate appearance, such as a caught stealing for the third out, is only the play's own result. Both are read, and a play result that is also an event row of the same type in the same plate appearance is counted once. Every attempt is either priced or counted in the exclusion table, and priced_plus_excluded equal to total is the check that says so."
  },
  "decomposition": {
-  "dv": "the DECISION, priced with the league-average success rate for that season and target base. Was sending anybody here a good idea?",
-  "er": "the EXECUTION RESIDUAL, realized minus expected. Did this runner beat the throw? Attributed to the runner, never to the manager.",
+  "dv": "the decision, priced with the league-average success rate for that season and target base.",
+  "er": "the execution residual, realized minus expected: whether this runner beat the throw. Attributed to the runner, never to the manager.",
   "identity": "DV + ER = the realized win-probability change, exactly",
   "identity_max_abs_error": 0.0
  },
@@ -133,7 +133,7 @@
   }
  },
  "why_execution_residual_does_not_sum_to_zero": "ER is priced against the group's OWN mean success rate, so successes and failures balance in count but need not balance in value: sum ER equals the sum over attempts of (success minus league_p) times the win-probability swing, an identity this artifact checks. RESOLVED 2026-09-06. On the full population the swing on failed attempts ran about 1.5 times the swing on successful ones, which invited a behavioural reading (defences hold runners better when it matters). It was MECHANICAL. Once the two-out attempts are excluded, and with them every caught stealing that ends an inning, the ratio falls to 1.00 on steals of second and 1.05 on steals of third. The asymmetry was the third out, not the defence. Whatever residual remains is small enough that the execution term now nearly sums to zero, which is what it should do when it is priced against its own group's mean.",
- "league_average_is_deliberate": "the decision is scored as though the manager had a league-average runner, because the runner's speed is a roster fact and crediting a manager for having a fast team is the confound this module exists to avoid.",
+ "league_average_is_deliberate": "runner speed is a roster fact, not a manager's decision.",
  "which_breakeven_predicts_the_sign": "the swing-weighted one. DV for an attempt is (WE_success minus WE_fail) times (league_p minus p*), so the summed decision value for a group is positive exactly when the league success rate beats the swing-weighted mean of p*. The median and the plain mean are published because they are the readable summaries, and neither determines the verdict.",
  "breakeven_is_published": "p* = (WE_hold - WE_fail) / (WE_success - WE_fail) rides every attempt, because it is the number a reader can argue with: if the league succeeds more often than p*, the attempt was justified.",
  "third_out_handling": "a caught stealing with two down ends the half-inning, and the resulting state is valued as the NEXT half-inning from the other team's point of view. Pricing it as two-outs-bases-empty would understate the cost of the worst possible time to be thrown out.",

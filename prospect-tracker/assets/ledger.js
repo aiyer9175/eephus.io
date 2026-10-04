@@ -1436,7 +1436,7 @@
       '<p class="ledger-count">' + esc(A.contract_disagreement_rule) + ". " + esc(A.contract_set_note) + "</p>";
     var oj = A.org_join || {};
     out += "<h2>Club join</h2><table class=\"ledger-mini\">" + Object.keys(oj).map(function (k) { return '<tr><th scope="row">' + esc(k) + "</th><td>" + esc(Array.isArray(oj[k]) ? oj[k].join(" to ") : oj[k]) + "</td></tr>"; }).join("") + "</table>";
-    out += "<h2>What this page does not claim</h2><ul>" + DATA.what_this_page_does_not_claim.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul>";
+    out += "<h2>Not claimed</h2><ul>" + DATA.what_this_page_does_not_claim.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul>";
     out += "<h2>Sections</h2><table class=\"ledger-mini ledger-sections\">" + Object.keys(DATA.sections).map(function (k) {
       var s = DATA.sections[k];
       return '<tr><th scope="row">' + esc(k) + "</th><td>" + esc(s.live ? "live" : "dark: " + (s.blocked_on || s.note || "")) + "</td></tr>";
@@ -1473,7 +1473,7 @@
     var root = el("ledger-app-root");
     if (!root) return;
     if (!DATA) {
-      root.innerHTML = LOAD_ERROR ? pxState("failed", esc(LOAD_ERROR)) : pxState("loading", esc("Loading"));
+      root.innerHTML = LOAD_ERROR ? pxState("failed", esc(LOAD_ERROR)) : pxState("loading", esc("Loading Club Ledger."));
       return;
     }
     var m = el("ledger-masthead");
@@ -1597,7 +1597,7 @@
     fetch(DATA_URL, { cache: "no-cache" })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (d) { DATA = d; readHash(); ensureTeam(); render(); })
-      .catch(function () { LOAD_ERROR = "The Club Ledger could not be loaded."; render(); });
+      .catch(function () { LOAD_ERROR = "Club Ledger did not load. Retry."; render(); });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
