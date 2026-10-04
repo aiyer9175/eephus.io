@@ -297,6 +297,81 @@ def test_label_pool_census_strata_stay_on_the_whitelist():
     assert set(doc.get("strata") or []) <= _LP_WHITELIST
 
 # ---------------------------------------------------------------------------
+# EFV3_D4 scoreboard matrix (EFV3_PLAN.md section 6, LANE_D.md 3.4 and 3.8): every
+# number and reading word is read from the matrix artifact at render time.
+
+_MX_FUNCS = ["_loadMatrix", "_mxN", "_mxUi", "_mxGridFrames", "_mxFrameLabel", "_mxChipLabel",
+             "_mxDimLabel", "_mxCellLabel", "_mxStatTabs", "_mxL6Keys", "_mxStatKey",
+             "_mxStatTabLabel", "_mxReadingClass", "_mxFrameLine", "_mxReadingHtml",
+             "_mxWhisker", "_mxAxis", "_mxGrid", "_mxLegend", "_mxInner", "_mxBind",
+             "_methMatrixSection"]
+
+
+@pytest.mark.parametrize("name", _MX_FUNCS)
+def test_matrix_section_carries_no_statistic_literal(name):
+    code = re.sub(r'[\w-]+="[^"$]*"', "", _fn_code(_js(), name))
+    hits = _STAT_LITERAL.findall(code)
+    assert not hits, f"{name} carries a numeric literal that reads as a statistic: {hits}"
+    assert not re.search(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", code), f"{name} types a date"
+    # no count, floor, margin or k typed in: each is the artifact's
+    assert not re.search(r"(floor|margin|delta|alpha|mde95|k_family_s)\s*[:=]\s*[-+]?\d", code), name
+
+
+def test_matrix_colour_attaches_only_to_ahead_and_behind():
+    js = _js()
+    code = {n: _fn_code(js, n) for n in _MX_FUNCS}
+    for n, c in code.items():
+        if n == "_mxReadingClass":
+            continue
+        assert "sacc-verdict-win" not in c and "sacc-verdict-loss" not in c, (
+            f"{n} attaches a colour class outside _mxReadingClass")
+    rc = [ln.strip() for ln in code["_mxReadingClass"].split("\n") if ln.strip()]
+    win = [ln for ln in rc if "sacc-verdict-win" in ln]
+    loss = [ln for ln in rc if "sacc-verdict-loss" in ln]
+    assert len(win) == 1 and 'reading === "AHEAD"' in win[0] and "!dev" in win[0], win
+    assert len(loss) == 1 and 'reading === "BEHIND"' in loss[0] and "!dev" in loss[0], loss
+    for word in ("EQUIVALENT", "UNRESOLVED", "FLAGGED_UNCORRECTED", "UNPOWERED", "DEVELOPMENT"):
+        assert word not in code["_mxReadingClass"], f"_mxReadingClass names {word}"
+    assert rc[-1] == 'return "sacc-verdict-null";', rc[-1]
+
+
+def test_hero_renderers_read_no_matrix_key():
+    """Copy contract: no stratum word reaches the hero banner, the share card or the
+    eFV verdict sentence."""
+    js = _js()
+    for name in ("_methHeroBanner", "_scxGfxSpec", "_methEfvVerdict"):
+        code = _fn_code(js, name)
+        for key in ("_S.matrix", "efv_matrix", "_mx", "matrix", "k_family_s", "in_family_s",
+                    "FLAGGED_UNCORRECTED", "stratum", "would_read_on_a_claim_frame"):
+            assert key not in code, f"{name} reads the matrix ({key})"
+    # The Diamond tiles and every other surface read no matrix key either.
+    for p in (ROOT / "assets").glob("*.js"):
+        if p.name == "glossary.js":
+            continue
+        assert "efv_matrix" not in p.read_text(encoding="utf-8", errors="ignore"), p.name
+
+
+def test_matrix_section_reads_one_artifact_and_sits_under_the_ledger():
+    js = _js()
+    load = _fn_code(js, "_loadMatrix")
+    assert 'fetch("/data/efv_matrix_eval.json"' in load
+    code = "\n".join(_fn_code(js, n) for n in _MX_FUNCS)
+    assert code.count("fetch(") == 1, "the matrix section fetches a second artifact"
+    # No FV-keyed cell (docs/PROSPECT_ANCHOR_GATE.md): the section names no FV key.
+    assert not re.search(r"consensus_fv|(?<!e)fv_|\.tier\b|\.rank\b", code), "the matrix names an FV key"
+    rsc = _fn_code(js, "renderSourceComparison")
+    assert "_loadMatrix()" in rsc and "_mxBind()" in rsc
+    i_led = rsc.index("${_methProgressSection(bt)}")
+    i_mx = rsc.index("${_methMatrixSection(_S.progress, _S.matrix)}")
+    assert i_led < i_mx < rsc.index("${_methLabelPoolSection()}")
+    # the frame line prints the artifact's own counts and expected false flags
+    line = _fn_code(js, "_mxFrameLine")
+    for key in ("sm.k_family_s", "sm.expected_false_flags_by_construction", "sm.alpha",
+                "sm.would_read_on_a_claim_frame", "sm.counts"):
+        assert key in line, key
+
+
+# ---------------------------------------------------------------------------
 # Rendered layer
 
 def _artifact():

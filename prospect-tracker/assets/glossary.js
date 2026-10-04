@@ -3980,6 +3980,366 @@ function _methProgressSection(bt) {
     ${_progScreenBlock(prog)}`;
 }
 
+// ---- eFV scoreboard matrix (EFV3_D4; EFV3_PLAN.md section 6, LANE_D.md 3.4 and 3.8)
+// The owner asked to see eFV against consensus and the industry in as many
+// specific categories as possible. The matrix artifact (tools/efv_matrix.py)
+// scores every category cell on every frame it may read; this section prints
+// it and computes nothing: every count, interval, floor and reading word is the
+// artifact's own. Colour attaches only to AHEAD and BEHIND, which a cell earns
+// only by surviving its frame's family; every other reading is neutral, an
+// unpowered cell is hatched, a development frame carries its chip. No word from
+// a stratum cell reaches the hero, the share card, the eFV verdict or any
+// methodology sentence. Same lazy idiom as _loadProgress; an absent artifact
+// drops the section and never the view.
+function _loadMatrix() {
+  if (_S.matrix || _S.matrixLoading) return;
+  _S.matrixLoading = true;
+  const rerender = () => { if (_S.view === "source-comparison") renderSourceComparison(); };
+  fetch("/data/efv_matrix_eval.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _S.matrix = j || { __error: true }; rerender(); })
+    .catch(() => { _S.matrix = { __error: true }; rerender(); });
+}
+
+const _MX_DIM_LABELS = { overall: "Overall", side: "Side", position_family: "Position family",
+  level_at_list: "Level at list", age_band: "Age at list", list_year: "List year",
+  archetype: "Acquisition and side", source_disagreement: "Source disagreement" };
+
+function _mxN(v) { return (v == null || isNaN(Number(v))) ? "-" : Number(v).toLocaleString("en-US"); }
+
+function _mxUi() {
+  if (!_S.mxUi) _S.mxUi = { frame: null, stat: null, comp: null, dim: null, l6: null };
+  return _S.mxUi;
+}
+
+// Frames the grid can show: the ones the artifact scored (reserved frames
+// print their line and their pre-registered cells, never a grid).
+function _mxGridFrames(mx) {
+  const fr = (mx && mx.frames) || {};
+  return Object.keys(fr).filter(k => !fr[k].reserved && fr[k].cells && Object.keys(fr[k].cells).length);
+}
+
+// "vintage-matched, timing-pinned frame", in the producer's own words where its
+// line carries them, else the ledger's frame label.
+function _mxFrameLabel(prog, mx, fid) {
+  const fr = ((mx && mx.frames) || {})[fid] || {};
+  const m = /^On the (.+?) \(n /.exec(String((fr.summary || {}).line || ""));
+  if (m) return m[1];
+  const pl = prog && !prog.__error && prog.frames && prog.frames[fid] && prog.frames[fid].label;
+  return pl ? `${String(pl).toLowerCase()} frame` : String(fid);
+}
+
+function _mxChipLabel(prog, mx, fid) {
+  const pl = prog && !prog.__error && prog.frames && prog.frames[fid] && prog.frames[fid].label;
+  if (pl) return String(pl);
+  const s = _mxFrameLabel(prog, mx, fid);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function _mxDimLabel(mx, dim) {
+  const base = _MX_DIM_LABELS[dim] || String(dim).replace(/_/g, " ");
+  const side = ((mx.design || {}).dimension_side || {})[dim];
+  const disclosed = ((mx.design || {}).disclosed_dimensions || []).includes(dim);
+  return base + (side === "hit" ? " (hitters only)" : side === "pit" ? " (pitchers only)" : "")
+    + (disclosed ? " (grade-derived)" : "");
+}
+
+function _mxCellLabel(dim, key) {
+  const k = String(key);
+  if (dim === "overall") return "Every row";
+  if (dim === "side") return k === "hit" ? "Hitters" : k === "pit" ? "Pitchers" : k;
+  if (k === "unknown") return "Unknown";
+  if (dim === "archetype") {
+    const m = /^unknown_(bat|arm)$/.exec(k);
+    if (m) return m[1] === "bat" ? "Acquisition unknown, bats" : "Acquisition unknown, arms";
+    return _saccLabel(k);
+  }
+  if (dim === "age_band" || dim === "position_family") return _saccLabel(k);
+  if (dim === "level_at_list") return k === "none" ? "No level at list" : k;
+  if (dim === "source_disagreement") return `FanGraphs minus Pipeline, ${k.replace(/_/g, " ")}`;
+  return k;
+}
+
+// The statistic tabs, in the artifact's order; the two six-season cuts share one tab.
+function _mxStatTabs(fr) {
+  const out = [];
+  (Array.isArray(fr.statistics) ? fr.statistics : []).forEach(k => {
+    const tab = String(k).indexOf("spearman_l6_") === 0 ? "spearman_l6" : k;
+    if (!out.includes(tab)) out.push(tab);
+  });
+  return out;
+}
+
+function _mxL6Keys(fr) {
+  return (Array.isArray(fr.statistics) ? fr.statistics : []).filter(k => String(k).indexOf("spearman_l6_") === 0);
+}
+
+function _mxStatKey(fr, tab) {
+  if (tab !== "spearman_l6") return tab;
+  const keys = _mxL6Keys(fr);
+  const ui = _mxUi();
+  return keys.includes(ui.l6) ? ui.l6 : keys[0];
+}
+
+function _mxStatTabLabel(mx, fr, tab) {
+  if (tab === "spearman_within") return "Within Spearman";
+  if (tab === "spearman_pooled") return "Pooled Spearman";
+  if (tab === "spearman_l6") return "Six-season label";
+  if (tab === "mae") return "MAE";
+  const desc = String(((mx.design || {}).statistics || {})[tab] || "");
+  let m = /at (?:career WAR|W3) >= ([\w.]+)/.exec(desc);
+  if (m) {
+    const thr = m[1] === "w_star_dev" ? `w* ${_progFmt((fr.w_star_dev || {}).w_star, 2)}` : m[1];
+    return `AUC at ${thr}${fr.veto_leg === tab ? " (veto leg)" : ""}`;
+  }
+  m = /on (\w+) \(/.exec(desc);
+  if (m) return `AUC on ${m[1]}${fr.veto_leg === tab ? " (veto leg)" : ""}`;
+  return String(tab);
+}
+
+// Colour attaches to AHEAD and BEHIND only, and never on a development frame.
+function _mxReadingClass(reading, dev) {
+  if (!dev && reading === "AHEAD") return "sacc-verdict-win";
+  if (!dev && reading === "BEHIND") return "sacc-verdict-loss";
+  return "sacc-verdict-null";
+}
+
+// One frame's line, from its summary block: the claim frame prints its family
+// counts, a development frame prints what the family would read with its chip,
+// a frame with no family prints the producer's own line, and a reserved frame
+// prints its pre-registered cell count and nothing else.
+function _mxFrameLine(prog, mx, fid) {
+  const fr = mx.frames[fid] || {}, sm = fr.summary || {}, pr = (mx.design || {}).printed || {};
+  const label = _mxFrameLabel(prog, mx, fid);
+  if (fr.reserved) {
+    const pc = fr.pre_registered_cells || {};
+    const nCells = Object.values(pc).reduce((t, v) => t + (Array.isArray(v) ? v.length : 0), 0);
+    const cap = label.charAt(0).toUpperCase() + label.slice(1);
+    return `<li><strong>${escapeHtml(cap)}</strong>: <span class="sacc-chip-warn">${escapeHtml(pr.RESERVED_PENDING || "")}</span> ${_mxN(nCells)} cells on ${_mxN(Object.keys(pc).length)} dimensions are registered and read once, by the look runner.</li>`;
+  }
+  const k = sm.k_family_s;
+  if (!k) return `<li>${escapeHtml(sm.line || "")}</li>`;
+  const dev = fr.development === true;
+  const c = (dev ? sm.would_read_on_a_claim_frame : sm.counts) || {};
+  const parts = [`${_mxN(c.ahead)} cells ahead`, `${_mxN(c.behind)} behind`,
+    `${_mxN(c.equivalent)} equivalent`, `${_mxN(c.unresolved)} not resolvable`];
+  if (Number(c.flagged_uncorrected)) parts.push(`${_mxN(c.flagged_uncorrected)} clearing their own floor but not the family`);
+  parts.push(`${_mxN(c.unpowered)} unpowered of ${_mxN(k)}`);
+  const tail = `at alpha ${escapeHtml(String(sm.alpha))} the family would flag ${escapeHtml(String(sm.expected_false_flags_by_construction))} cells by chance`;
+  const head = `On the ${escapeHtml(label)} (n ${_mxN(fr.n)})`;
+  const under = Number(sm.under_floor)
+    ? ` <span class="meth-sub">${_mxN(sm.under_floor)} more cells sit under the floor, outside the family.</span>` : "";
+  if (dev) {
+    return `<li>${head}: <span class="sacc-chip-warn">${escapeHtml(pr.DEVELOPMENT || "")}</span>; read as a claim frame, ${parts.join(", ")}; ${tail}.${under}</li>`;
+  }
+  return `<li>${head}: ${parts.join(", ")}; ${tail}.${under}</li>`;
+}
+
+// The reading of one cell on the chosen statistic and comparator. The cell's
+// primary statistic against a family comparator carries the family's word; every
+// other leg carries its own uncorrected word.
+function _mxReadingHtml(mx, fr, cell, cmp, statKey, st) {
+  const pr = (mx.design || {}).printed || {};
+  const dev = fr.development === true;
+  const devChip = dev ? ` <span class="sacc-chip-warn">${escapeHtml(pr.DEVELOPMENT || "")}</span>` : "";
+  if (!cmp || cmp.reading === "NOT_SCORED" || !Number(cmp.n)) {
+    return `<span class="sacc-verdict-null">${escapeHtml(pr.NOT_SCORED || "")}</span>`;
+  }
+  if (cell.scored === false || !st) {
+    const r = cmp.reading || "NOT_SCORED";
+    return `<span class="${_mxReadingClass(r, dev)}">${escapeHtml(cmp.printed || pr[r] || r)}</span>${cell.note ? `<span class="meth-sub mx-note">${escapeHtml(cell.note)}</span>` : ""}`;
+  }
+  if (st.reading == null) {
+    return `<span class="sacc-verdict-null">${escapeHtml(st.role || st.status || "")}</span>`;
+  }
+  const inFamily = !!(cmp.family && cmp.primary && cmp.primary.leg === statKey);
+  let r = st.reading;
+  if (inFamily) r = dev ? (cmp.reading_if_claim_frame || st.reading) : (cmp.reading || st.reading);
+  let word = pr[r] || r;
+  // Why a scored leg is unpowered, from its own numbers and the design floors.
+  if (r === "UNPOWERED") {
+    const d = mx.design || {};
+    word += Number(st.n) < Number(d.floor_rows) ? ` (n ${_mxN(st.n)})`
+      : (st.n_pos != null && Math.min(Number(st.n_pos), Number(st.n_neg)) < Number(d.auc_min_positives)) ? ` (${_mxN(Math.min(Number(st.n_pos), Number(st.n_neg)))} in the smaller class)`
+      : ` (floor wider than ${escapeHtml(String(d.unpowered_mde95))})`;
+  }
+  let side = "";
+  if (r === "FLAGGED_UNCORRECTED") {
+    side = inFamily && cmp.k != null
+      ? ` <span class="meth-sub">k ${_mxN(cmp.k)}, ${escapeHtml(String(cmp.expected_false_flags_by_construction))} expected by chance</span>`
+      : ` <span class="meth-sub">uncorrected, in no family</span>`;
+  }
+  const note = inFamily
+    ? `<span class="meth-sub mx-note">family ${escapeHtml(String(cmp.family))}${cmp.k != null ? `, k ${_mxN(cmp.k)}` : ""}</span>`
+    : `<span class="meth-sub mx-note">${escapeHtml(st.note || "")}</span>`;
+  return `<span class="${_mxReadingClass(r, dev)}">${escapeHtml(word)}</span>${side}${devChip}${note}`;
+}
+
+// Delta, its 95% interval and the equivalence band, on the column's one scale.
+function _mxWhisker(st, ext, margin) {
+  const pos = v => 50 + 50 * Math.max(-1, Math.min(1, Number(v) / ext));
+  const band = margin != null
+    ? `<span class="mx-band" style="left:${pos(-margin).toFixed(2)}%;width:${(pos(margin) - pos(-margin)).toFixed(2)}%;"></span>` : "";
+  const zero = `<span class="mx-zero" style="left:${pos(0).toFixed(2)}%;"></span>`;
+  if (!st || st.delta == null || isNaN(Number(st.delta))) return `<div class="mx-whisk">${band}${zero}</div>`;
+  const ci = Array.isArray(st.ci95) && st.ci95[0] != null && st.ci95[1] != null
+    ? `<span class="mx-ci" style="left:${pos(st.ci95[0]).toFixed(2)}%;width:${(pos(st.ci95[1]) - pos(st.ci95[0])).toFixed(2)}%;"></span>` : "";
+  const tip = `eFV minus the comparator ${_progSigned(st.delta, 4)}, 95% CI ${_progCi(st.ci95, 4)}, bootstrap SD ${_progFmt(st.sd, 4)}, floor ${_progFmt(st.mde95, 4)}`;
+  return `<div class="mx-whisk" title="${escapeHtml(tip)}">${band}${zero}${ci}<span class="mx-dot" style="left:${pos(st.delta).toFixed(2)}%;"></span></div>`;
+}
+
+// Round tick steps (1, 2 or 5 times a power of ten) across the symmetric scale.
+function _mxAxis(ext, digits) {
+  const raw = ext / 2, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 5, 10].map(k => k * mag).find(s => s >= raw) || raw;
+  const dec = Math.max(digits, -Math.floor(Math.log10(step)));
+  const out = [];
+  for (let v = -Math.floor(ext / step) * step; v <= ext + step / 1000; v += step) {
+    const at = 50 + 50 * (v / ext);
+    out.push(`<span style="left:${at.toFixed(2)}%;">${_progSigned(Math.abs(v) < step / 1000 ? 0 : v, dec)}</span>`);
+  }
+  return `<div class="mx-axis" aria-hidden="true">${out.join("")}</div>`;
+}
+
+function _mxGrid(mx, fr, tab, comp) {
+  const d = mx.design || {};
+  const statKey = _mxStatKey(fr, tab);
+  const isAuc = String(statKey).indexOf("auc_") === 0;
+  const isMae = statKey === "mae";
+  const margin = isMae ? null : d.equivalence_margin;
+  const dims = ["overall"].concat((d.dimensions || []).filter(x => x !== "overall"));
+  const ui = _mxUi();
+  const pick = dims.filter(x => x !== "overall" && fr.cells[x]);
+  const cur = pick.includes(ui.dim) ? ui.dim : pick[0];
+  const rows = [];
+  dims.forEach(dim => Object.entries(fr.cells[dim] || {}).forEach(([key, cell]) => {
+    const cmp = (cell.comparators || {})[comp];
+    const st = cmp && cmp.statistics ? cmp.statistics[statKey] : null;
+    rows.push({ dim, key, cell, cmp, st });
+  }));
+  const vals = [];
+  rows.forEach(r => {
+    if (!r.st || r.st.delta == null) return;
+    vals.push(Math.abs(Number(r.st.delta)));
+    if (Array.isArray(r.st.ci95)) r.st.ci95.forEach(v => { if (v != null) vals.push(Math.abs(Number(v))); });
+  });
+  if (margin != null) vals.push(Number(margin));
+  const ext = (Math.max(...vals.filter(v => !isNaN(v)), 0) || Number(d.equivalence_margin) || 1) * 11 / 10;
+  const digits = isMae ? 1 : 2;
+  const head = `<div class="mx-row mx-head" role="row"><div class="mx-c-cell" role="columnheader">Cell</div><div class="mx-c-n" role="columnheader">n (hit / pit)</div>${isAuc ? `<div class="mx-c-pos" role="columnheader">Positives</div>` : ""}<div class="mx-c-delta" role="columnheader">eFV minus ${escapeHtml(((d.comparators || {})[comp]) || comp)}, 95% CI${_mxAxis(ext, digits)}</div><div class="mx-c-mde" role="columnheader">Floor (mde95)</div><div class="mx-c-read" role="columnheader">Reading</div></div>`;
+  const body = dims.filter(dim => fr.cells[dim]).map(dim => {
+    const off = dim !== "overall" && dim !== cur ? " mx-dim-off" : "";
+    const lines = rows.filter(r => r.dim === dim).map(r => {
+      const c = r.cell, st = r.st, cmp = r.cmp || {};
+      const unp = (st && (st.reading === "UNPOWERED" || (st.reading == null && cmp.reading === "UNPOWERED")))
+        || (!st && cmp.reading === "UNPOWERED");
+      const nTxt = st && st.n != null ? st.n : (cmp.n != null ? cmp.n : c.n);
+      const sub = Number(nTxt) === Number(c.n)
+        ? `${_mxN(c.n_hit)} hit / ${_mxN(c.n_pit)} pit` : `of ${_mxN(c.n)} in the cell`;
+      const dText = st && st.delta != null
+        ? `<div class="mx-dtext">${_progSigned(st.delta, isMae ? 3 : 4)} <span class="meth-sub">${escapeHtml(_progCi(st.ci95, 3))}</span></div>`
+        : `<div class="mx-dtext meth-sub">${escapeHtml(st && st.status ? st.status : "no interval")}</div>`;
+      return `<div class="mx-row${unp ? " mx-row-unpowered" : ""}" role="row">
+        <div class="mx-c-cell" role="cell">${escapeHtml(_mxCellLabel(r.dim, r.key))}</div>
+        <div class="mx-c-n" role="cell">${_mxN(nTxt)}<span class="meth-sub mx-note">${sub}</span></div>
+        ${isAuc ? `<div class="mx-c-pos" role="cell">${st && st.n_pos != null ? _mxN(st.n_pos) : "-"}</div>` : ""}
+        <div class="mx-c-delta" role="cell">${_mxWhisker(st, ext, margin)}${dText}</div>
+        <div class="mx-c-mde" role="cell">${st ? _progFmt(st.mde95, 4) : "-"}</div>
+        <div class="mx-c-read" role="cell">${_mxReadingHtml(mx, fr, c, r.cmp, statKey, st)}</div>
+      </div>`;
+    }).join("");
+    return `<div class="mx-dim${off}" role="rowgroup" data-mx-dim="${escapeHtml(dim)}"><div class="mx-dimhead">${escapeHtml(_mxDimLabel(mx, dim))}</div>${lines}</div>`;
+  }).join("");
+  const select = pick.length
+    ? `<label class="mx-dim-pick"><span class="gl-microlabel">Category</span><select class="eephus-select" data-mx-select="dim" aria-label="Category shown">${pick.map(x => `<option value="${escapeHtml(x)}"${x === cur ? " selected" : ""}>${escapeHtml(_mxDimLabel(mx, x))}</option>`).join("")}</select></label>` : "";
+  const desc = String((d.statistics || {})[statKey] || "");
+  return `${select}<div class="mx-grid${isAuc ? " mx-auc" : ""}" role="table" aria-label="eFV minus the comparator by category cell">${head}${body}</div>
+    <p class="meth-note">${escapeHtml(desc.charAt(0).toUpperCase() + desc.slice(1))}.${isMae ? " MAE is in WAR: a negative difference is eFV missing by less, and the equivalence band is not drawn because the margin is a rank-statistic margin." : ""}</p>`;
+}
+
+function _mxLegend(mx, fr) {
+  const d = mx.design || {}, pr = d.printed || {};
+  const S = (fr.families || {}).S || {};
+  const hs = (fr.holm || {}).S || {};
+  const comps = d.comparators || {};
+  const fam = S.k
+    ? `The family: ${_mxN(S.k)} stratum cells at or above the floor of ${_mxN(S.floor_rows)} rows, eFV against ${escapeHtml(comps[S.comparator] || S.comparator || "")} on each cell's primary statistic, ${escapeHtml(hs.procedure || "Holm step-down, one-sided")}, at alpha ${escapeHtml(String(S.alpha))}; ${escapeHtml(String(S.expected_false_flags_by_construction))} cells would clear by chance alone.`
+    : `${escapeHtml(S.note || "")}.`;
+  const disclosed = (d.disclosed_dimensions || []).map(x => _MX_DIM_LABELS[x] || x).join(", ");
+  const banned = (d.banned_dimensions || []).join(", ");
+  const items = [
+    `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);opacity:.3;"></span>the registered equivalence margin (plus or minus ${escapeHtml(String(d.equivalence_margin))})</span>`,
+    `<span class="meth-legend-key"><svg width="26" height="10" viewBox="0 0 26 10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--text-secondary)" stroke-width="2"/><circle cx="13" cy="5" r="4" fill="var(--text-primary)"/></svg>eFV minus the comparator, with its 95% interval</span>`,
+    `<span class="meth-legend-key"><span class="meth-legend-swatch mx-hatch-swatch"></span>${escapeHtml(pr.UNPOWERED || "")}</span>`,
+  ].join("");
+  return `<div class="meth-legend">${items}</div>
+    <ul class="mx-lines mx-legend-notes">
+      <li>${fam} Only a cell that survives the family can read "${escapeHtml(pr.AHEAD || "")}" or "${escapeHtml(pr.BEHIND || "")}", and only those two carry colour.</li>
+      <li>The AUC legs, the six-season label, MAE and every industry comparator on a stratum cell sit in no family: each prints an uncorrected interval, not a claim. "${escapeHtml(pr.FLAGGED_UNCORRECTED || "")}" is drawn neutral with the family's k beside it.</li>
+      <li>Ties are ties: "${escapeHtml(pr.EQUIVALENT || "")}" means the whole interval sits inside the registered equivalence margin; "${escapeHtml(pr.UNRESOLVED || "")}" means it does not, and the cell resolves nothing. They are different readings and neither is a lead.</li>
+      <li>"${escapeHtml(pr.UNPOWERED || "")}" is hatched: under ${_mxN(d.floor_rows)} rows, under ${_mxN(d.auc_min_positives)} positives on an AUC tab, or a floor wider than ${escapeHtml(String(d.unpowered_mde95))}. A development frame carries the chip "${escapeHtml(pr.DEVELOPMENT || "")}"; a reserved frame reads "${escapeHtml(pr.RESERVED_PENDING || "")}".</li>
+      ${disclosed ? `<li>${escapeHtml(disclosed)} is the one grade-derived dimension: the gap between two sources' grades, never a grade level.</li>` : ""}
+      <li>No dimension is keyed on an FV level: a realized-WAR read by FV cell waits for the one registered look in docs/PROSPECT_ANCHOR_GATE.md.${banned ? ` Never a dimension: ${escapeHtml(banned)}.` : ""}</li>
+    </ul>`;
+}
+
+function _mxInner(prog, mx) {
+  const ui = _mxUi();
+  const frames = _mxGridFrames(mx);
+  const fid = frames.includes(ui.frame) ? ui.frame : frames[0];
+  const lines = Object.keys(mx.frames || {}).map(k => _mxFrameLine(prog, mx, k)).join("");
+  const lb = mx.label || {}, code = mx.code || {};
+  const stamp = `<p class="meth-window"><strong>Run of ${escapeHtml(String(mx.generated_at || "").slice(0, 10))}:</strong> label ${escapeHtml(String(lb.id || lb.provider || ""))}, resolved through ${escapeHtml(String(lb.resolved_through))}${code.commit ? ` <span class="meth-sub">code ${escapeHtml(String(code.commit).slice(0, 8))}</span>` : ""}. ${escapeHtml(lb.epoch ? lb.epoch.charAt(0).toUpperCase() + lb.epoch.slice(1) + "." : "")} ${escapeHtml(mx.role ? mx.role.charAt(0).toUpperCase() + mx.role.slice(1) + "." : "")}</p>`;
+  if (!fid) return `${stamp}<ul class="mx-lines">${lines}</ul>`;
+  const fr = mx.frames[fid];
+  const tabs = _mxStatTabs(fr);
+  const tab = tabs.includes(ui.stat) ? ui.stat : tabs[0];
+  const comps = (Array.isArray(fr.comparators) ? fr.comparators : []);
+  const comp = comps.includes(ui.comp) ? ui.comp : (mx.design || {}).claim_comparator || comps[0];
+  const chip = (k, v, lbl, on) => `<button class="chip${on ? " active" : ""}" type="button" data-mx-k="${k}" data-mx-v="${escapeHtml(v)}">${escapeHtml(lbl)}</button>`;
+  const frameBar = `<div class="filter-bar mx-bar"><span class="gl-microlabel">Frame</span>${frames.map(f => chip("frame", f, _mxChipLabel(prog, mx, f), f === fid)).join("")}</div>`;
+  const statBar = `<div class="filter-bar mx-bar"><span class="gl-microlabel">Statistic</span>${tabs.map(t => chip("stat", t, _mxStatTabLabel(mx, fr, t), t === tab)).join("")}</div>`;
+  const l6 = tab === "spearman_l6" ? `<div class="filter-bar mx-bar"><span class="gl-microlabel">Rows</span>${_mxL6Keys(fr).map(k => {
+    const m = /six-season label, (.+)$/.exec(String(((mx.design || {}).statistics || {})[k] || ""));
+    return chip("l6", k, m ? m[1] : k, k === _mxStatKey(fr, tab));
+  }).join("")}</div>` : "";
+  const compBar = `<div class="filter-bar mx-bar"><span class="gl-microlabel">Against</span>${comps.map(c => chip("comp", c, ((mx.design || {}).comparators || {})[c] || c, c === comp)).join("")}</div>`;
+  const overall = ((fr.cells.overall || {}).all || {});
+  const oc = (overall.comparators || {})[comp];
+  const grid = (!oc || oc.reading === "NOT_SCORED" || !Number(oc.n))
+    ? `<p class="meth-note"><strong>${escapeHtml(((mx.design || {}).comparators || {})[comp] || comp)}:</strong> ${escapeHtml(((mx.design || {}).printed || {}).NOT_SCORED || "")} on this frame.</p>`
+    : _mxGrid(mx, fr, tab, comp);
+  return `${stamp}<ul class="mx-lines">${lines}</ul>
+    <div class="meth-chart">${frameBar}${statBar}${l6}${compBar}${grid}${_mxLegend(mx, fr)}</div>`;
+}
+
+function _mxBind() {
+  const root = document.getElementById("scx-matrix");
+  if (!root) return;
+  const redraw = () => { const b = root.querySelector(".scx-matrix-body"); if (b) b.innerHTML = _mxInner(_S.progress, _S.matrix); };
+  root.onclick = e => {
+    const b = e.target.closest("[data-mx-k]");
+    if (!b) return;
+    _mxUi()[b.dataset.mxK] = b.dataset.mxV;
+    redraw();
+  };
+  root.onchange = e => {
+    const s = e.target.closest("[data-mx-select]");
+    if (!s) return;
+    _mxUi()[s.dataset.mxSelect] = s.value;
+    redraw();
+  };
+}
+
+function _methMatrixSection(prog, mx) {
+  if (!mx || mx.__error || !mx.frames || !mx.design) return "";
+  return `<div class="scx-matrix" id="scx-matrix">
+    <h2 class="meth-h" id="efv-matrix">Category by category: the eFV scoreboard matrix</h2>
+    <p class="meth-note">Each row is one category of prospect, scored on the same rows for eFV and the comparator: the difference in the chosen statistic with its 95% interval, the smallest difference that category's rows could resolve, and the reading the artifact gives it. The headline above is the claim; a category reading never changes it.</p>
+    <div class="scx-matrix-body">${_mxInner(prog, mx)}</div>
+  </div>`;
+}
+
 // ---- Label pool panel (EFV3_A8; EFV3_PLAN.md sections 3 and 6) --------------
 // The rows the eFV program can be trained and read on, from the label pool
 // census: rows per frame with the outcome-blind identity route, the floor each
@@ -4336,6 +4696,8 @@ function renderSourceComparison() {
   if (!el) return;
   // eFV progress ledger (same lazy idiom).
   _loadProgress();
+  // eFV scoreboard matrix, under the ledger (same lazy idiom).
+  _loadMatrix();
   // The calibration cross-link tile shows the live tripwire status when the
   // shared reliability artifact is available (same guard as Methodology).
   _loadReliability();
@@ -4370,6 +4732,7 @@ function renderSourceComparison() {
     backtestHTML = `
       ${_methHeroBanner(bt)}
       ${_methProgressSection(bt)}
+      ${_methMatrixSection(_S.progress, _S.matrix)}
       ${_methLabelPoolSection()}
       ${_scxGfxBarHTML()}
       <h2 class="meth-h">The full head-to-head</h2>
@@ -4417,6 +4780,7 @@ function renderSourceComparison() {
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Empirical backtest · resolved cohorts only</div>
     ${backtestHTML}
   </div>` + _methProvTrackSection() + _methScoreboardHTML() + _methModelUpgrades();
+  _mxBind();
   // Generate GFX: spec built at click time from the loaded artifacts; a click
   // before the data resolves (or with the engine absent) is a clean no-op.
   const gfxBtn = document.getElementById("gl-scx-gfx");

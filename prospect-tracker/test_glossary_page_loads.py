@@ -408,6 +408,156 @@ def test_label_pool_fetch_resolves_and_renders(server, browser):
         assert word not in txt, f"the label pool panel prints {word!r}"
 
 
+def _matrix_page(browser, *, width=1280, body=None, missing=False):
+    """Open the Source Comparison view with the matrix artifact served as is, replaced
+    by `body`, or answered 404 (`missing`)."""
+    page_errors: list[str] = []
+    page = browser.new_page(viewport={"width": width, "height": 900})
+    page.on("pageerror", lambda err: page_errors.append(err.message))
+    if missing:
+        page.route("**/data/efv_matrix_eval.json*",
+                   lambda route: route.fulfill(status=404, body="not found"))
+    elif body is not None:
+        page.route("**/data/efv_matrix_eval.json*",
+                   lambda route: route.fulfill(status=200, content_type="application/json",
+                                               body=body))
+    return page, page_errors
+
+
+_MX_READ = """() => {
+  const el = document.getElementById('source-comparison-body');
+  const mx = document.getElementById('scx-matrix');
+  const vis = n => !!n && n.getClientRects().length > 0;
+  return {
+    present: !!mx,
+    text: mx ? mx.innerText : '',
+    ledger: el.innerText.indexOf('Is eFV pulling ahead? The progress ledger') !== -1,
+    pool: !!el.querySelector('.scx-label-pool'),
+    order: [...el.querySelectorAll('h2')].map(h => h.textContent.trim()),
+    win: mx ? [...mx.querySelectorAll('.sacc-verdict-win')].map(n => n.textContent) : [],
+    loss: mx ? [...mx.querySelectorAll('.sacc-verdict-loss')].map(n => n.textContent) : [],
+    dims: mx ? [...mx.querySelectorAll('.mx-dim')].filter(vis).map(n => n.dataset.mxDim) : [],
+    select: mx ? vis(mx.querySelector('.mx-dim-pick')) : false,
+    docW: document.documentElement.scrollWidth, winW: window.innerWidth,
+  };
+}"""
+
+
+def test_matrix_fetch_resolves_and_renders(server, browser):
+    """EFV3_D4: /data/efv_matrix_eval.json resolves on the served path and the
+    Source Comparison view renders the matrix under the progress ledger: one
+    line per frame from the artifact's summary counts, the grid on the claim
+    frame, ESPN as no rows, and at 390 px one category at a time with no
+    sideways scroll."""
+    p = ROOT / "data" / "efv_matrix_eval.json"
+    if not p.exists():
+        pytest.skip("data/efv_matrix_eval.json not built")
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    out = {}
+    for width in (1280, 390):
+        page, errs = _matrix_page(browser, width=width)
+        try:
+            page.goto(server + "glossary/index.html#view=source-comparison",
+                      wait_until="load", timeout=15_000)
+            status = page.evaluate(
+                "() => fetch('/data/efv_matrix_eval.json', {cache: 'no-cache'}).then(r => r.status)")
+            page.wait_for_selector("#scx-matrix .mx-grid", timeout=20_000)
+            out[width] = page.evaluate(_MX_READ)
+            if width == 1280:
+                page.click('#scx-matrix [data-mx-k="comp"][data-mx-v="espn"]')
+                out["espn"] = page.evaluate(
+                    "() => document.getElementById('scx-matrix').innerText")
+        finally:
+            page.close()
+        assert status == 200
+        assert not errs, "JS errors: " + " | ".join(errs)
+    wide, narrow = out[1280], out[390]
+    vm2 = doc["frames"]["vm2"]
+    sm, c = vm2["summary"], vm2["summary"]["counts"]
+    txt = wide["text"]
+    assert f"(n {vm2['n']:,})" in txt
+    assert (f"{c['ahead']} cells ahead, {c['behind']} behind, {c['equivalent']} equivalent, "
+            f"{c['unresolved']} not resolvable") in txt
+    assert f"{c['unpowered']} unpowered of {sm['k_family_s']}" in txt
+    assert (f"at alpha {sm['alpha']} the family would flag "
+            f"{sm['expected_false_flags_by_construction']} cells by chance") in txt
+    pr = doc["design"]["printed"]
+    assert pr["RESERVED_PENDING"] in txt and pr["DEVELOPMENT"] in txt
+    assert "the registered equivalence margin" in txt
+    assert "docs/PROSPECT_ANCHOR_GATE.md" in txt
+    # Ties are ties: both words are printed and they are different words.
+    assert pr["EQUIVALENT"] in txt and pr["UNRESOLVED"] in txt
+    # The section sits under the ledger and above the label pool.
+    order = wide["order"]
+    i_led = order.index("Is eFV pulling ahead? The progress ledger")
+    i_mx = [i for i, h in enumerate(order) if "scoreboard matrix" in h][0]
+    assert i_led < i_mx < order.index("The label pool: rows, identity and floors")
+    # Colour only where the artifact gives AHEAD or BEHIND on the claim frame.
+    assert not wide["win"] and not wide["loss"] or c["ahead"] or c["behind"]
+    assert pr["NOT_SCORED"] in out["espn"]
+    # Desktop shows every category; 390 px shows the overall cell and one category.
+    assert not wide["select"] and len(wide["dims"]) > 2
+    assert narrow["select"] and len(narrow["dims"]) == 2 and narrow["dims"][0] == "overall"
+    assert narrow["docW"] <= narrow["winW"], (narrow["docW"], narrow["winW"])
+
+
+def test_matrix_colours_only_ahead_and_behind(server, browser):
+    """A synthetic artifact where one family cell reads AHEAD and one BEHIND: only
+    those two carry a colour class, and a FLAGGED_UNCORRECTED cell stays neutral."""
+    p = ROOT / "data" / "efv_matrix_eval.json"
+    if not p.exists():
+        pytest.skip("data/efv_matrix_eval.json not built")
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    cells = doc["frames"]["vm2"]["cells"]
+    fam = [(dim, k) for dim, cs in cells.items() for k, cell in cs.items()
+           if cell.get("in_family_s") and (cell.get("comparators") or {})
+           .get("prospx_consensus", {}).get("family") == "S"]
+    assert len(fam) >= 3
+    pr = doc["design"]["printed"]
+    for (dim, k), word in zip(fam[:3], ("AHEAD", "BEHIND", "FLAGGED_UNCORRECTED")):
+        cmp = cells[dim][k]["comparators"]["prospx_consensus"]
+        cmp["reading"] = word
+        cmp["statistics"][cmp["primary"]["leg"]]["reading"] = word
+    page, errs = _matrix_page(browser, body=json.dumps(doc))
+    try:
+        page.goto(server + "glossary/index.html#view=source-comparison",
+                  wait_until="load", timeout=15_000)
+        page.wait_for_selector("#scx-matrix .mx-grid", timeout=20_000)
+        # the primary statistic of the first family cell is the tab to read
+        leg = cells[fam[0][0]][fam[0][1]]["comparators"]["prospx_consensus"]["primary"]["leg"]
+        page.click(f'#scx-matrix [data-mx-k="stat"][data-mx-v="{leg}"]')
+        out = page.evaluate(_MX_READ)
+    finally:
+        page.close()
+    assert not errs, "JS errors: " + " | ".join(errs)
+    legs = {cells[d][k]["comparators"]["prospx_consensus"]["primary"]["leg"] for d, k in fam[:3]}
+    if legs == {leg}:
+        assert out["win"] == [pr["AHEAD"]] and out["loss"] == [pr["BEHIND"]], out
+    else:
+        assert set(out["win"]) <= {pr["AHEAD"]} and set(out["loss"]) <= {pr["BEHIND"]}, out
+    assert pr["FLAGGED_UNCORRECTED"] not in " ".join(out["win"] + out["loss"])
+
+
+def test_matrix_absent_drops_the_section_not_the_view(server, browser):
+    """Without the artifact the section is absent and the ledger, the label pool
+    and the hero render as before."""
+    page, errs = _matrix_page(browser, missing=True)
+    try:
+        page.goto(server + "glossary/index.html#view=source-comparison",
+                  wait_until="load", timeout=15_000)
+        page.wait_for_function(
+            "() => { const e = document.getElementById('source-comparison-body');"
+            " return !!e && e.innerHTML.indexOf('progress ledger') !== -1"
+            " && !!e.querySelector('.scx-label-pool'); }", timeout=20_000)
+        page.wait_for_timeout(500)
+        out = page.evaluate(_MX_READ)
+    finally:
+        page.close()
+    assert not errs, "JS errors: " + " | ".join(errs)
+    assert not out["present"] and out["ledger"] and out["pool"]
+    assert not any("scoreboard matrix" in h for h in out["order"])
+
+
 def test_source_accuracy_subtabs_render(server, browser):
     """Every one of the six sub-tabs renders real content, the verdict column
     is three-valued (a source name only where the artifact says the cell is
