@@ -264,6 +264,12 @@ TENDENCY_PANELS = (
      (("avlDiff", "age vs level, difference", "zYoung"), ("promoRate", "promotion rate", "zPromo"),
       ("debutAgePit", "pitcher debut age", "zDebutAgePit"), ("debutAgeHit", "hitter debut age", "zDebutAgeHit")),
      ("label",)),
+    # tags come only from the tested labels (BH q < 0.10, CI95 clear of the league)
+    ("promotionTiming", "Promotion timing", "promotionTiming",
+     (("lateShare", "debuts after the rookie cutoff", None), ("svcShare", "debuts in the service-year window", None),
+      ("medianDebutAge", "median debut age", None), ("aggrYears", "years younger than level", None),
+      ("nDebuts", "MLB debuts", None)),
+     ("labelTiming", "labelAggr")),
     ("health", "Health", None,
      (("stintsPer100", "IL stints per 100 prospects", "z"),),
      ("label",)),
@@ -932,6 +938,8 @@ def build() -> dict:
                 prow.append([vk, vlabel, v, z, mu, sd])
             panels.append({"key": key, "label": plabel, "window": (org_tend.get("windows") or {}).get(wkey) if wkey else None,
                            "tags": [orow.get(k) for k in label_keys if orow.get(k)], "rows": prow})
+            if isinstance(lg.get("rule"), dict):
+                panels[-1]["rule"] = {"text": lg["rule"].get("text"), "sources": lg["rule"].get("sources") or []}
         front_office = {
             "panels": panels,
             "similar": [[s.get("org"), s.get("score")] for s in ((tend_similar.get(c) or {}).get("similar") or [])[:5]],
@@ -1283,6 +1291,9 @@ def build() -> dict:
                                      "because no season has elapsed"),
         "front_office_note": "descriptive league-relative behavioural profiles; no forward claims (org_tendencies)",
         "zbar_note": "z against the panel's league mean and sd; style, never a ladder",
+        "promotion_timing_note": ("The rookie cutoff is 45 days before the final scheduled game (MLB glossary). "
+                                  "A tag prints only where an org differs from the league after a 30-org test."),
+        "promotion_timing_rule": "Rule and sources",
         "dugout_sentence": _dugout_sentence(live_fams),
         "dugout_realized_tag": "realized",
         "dugout_agent": ((mgmt.get("clubs") or {}).get("agent_sentence") or "team-season"),

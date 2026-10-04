@@ -109,7 +109,7 @@ def _payload():
     return json.loads(SIDECAR.read_text(encoding="utf-8"))
 
 
-PANELS = ("promotion", "draftPos", "draftTraits", "slot", "arsenal",
+PANELS = ("promotion", "promotionTiming", "draftPos", "draftTraits", "slot", "arsenal",
           "toolDev", "ifa", "trades", "health",
           "graduation", "hitterApproach", "similarFarms")
 
@@ -203,3 +203,186 @@ def test_prospx_and_glossary_wiring():
     # overwritten by the chained rebuild ~15 min later every monthly night).
     assert rm.count("org_tendencies import export") >= 1
     assert "6c/6d SKIP" in rm
+
+
+# ---------------------------------------------------------------------------
+# Promotion timing (rookie cutoff, service-year window, age for level)
+# ---------------------------------------------------------------------------
+
+PT_ORG_KEYS = {"nDebuts", "medianDebutAge", "medianAgeCi", "lateShare", "lateCi", "qLate",
+               "svcShare", "svcCi", "qSvc", "aggrYears", "aggrCi", "nAggrPlayers", "qAggr",
+               "labelTiming", "labelAggr", "thin"}
+PT_LEAGUE_KEYS = {"nDebuts", "years", "aggrSeasons", "nAggrPlayers", "lateShare", "svcShare",
+                  "medianDebutAge", "aggrYears", "rookieCutoff", "cutoffRulePre2020",
+                  "serviceYearDays", "svcWindowDays", "labelRule", "rule"}
+
+
+def _pt_league(n_orgs=30, n_each=40, late_every=4, extra=None):
+    """Synthetic league: each org has n_each debuts, one in late_every after the
+    rookie cutoff; `extra` maps org -> list of debut dicts appended."""
+    debuts = []
+    for i in range(n_orgs):
+        org = f"O{i:02d}"
+        for j in range(n_each):
+            debuts.append({"year": 2022 + j % 5, "org": org, "age": 24.0 + (j % 7) * 0.3,
+                           "late": j % late_every == 0, "svc": j % 6 == 0})
+    for org, rows in (extra or {}).items():
+        debuts.extend(rows)
+    return debuts
+
+
+def _pt_aggr_rows(orgs, n_players=60, shift=None):
+    rows = []
+    for o in orgs:
+        for k in range(n_players):
+            age = 21.0 + (k % 9) * 0.25 - (shift or {}).get(o, 0.0)
+            rows.append((f"{o}_{k}", o, 2024, "AA", k % 2 == 0, age, 50.0))
+    return rows
+
+
+def test_promotion_timing_panel_schema():
+    """The panel carries n, CI95 and a BH q for every figure, the league
+    block names the rule, the cutoffs and the label rule (owner ask 2026-09-25)."""
+    debuts = _pt_league()
+    orgs = {d["org"] for d in debuts}
+    panel = ot.promotion_timing_panel(debuts, _pt_aggr_rows(orgs), {"2026": "2026-08-14"}, orgs)
+    assert set(panel["league"]) == PT_LEAGUE_KEYS
+    assert len(panel["orgs"]) == 30
+    for org, r in panel["orgs"].items():
+        assert set(r) == PT_ORG_KEYS, org
+        assert r["nDebuts"] == 40 and r["nAggrPlayers"] == 60, org
+        for k in ("lateCi", "svcCi", "aggrCi", "medianAgeCi"):
+            lo, hi = r[k]
+            assert lo is not None and lo <= hi, (org, k)
+        assert 0 <= r["qLate"] <= 1 and 0 <= r["qAggr"] <= 1, org
+    lg = panel["league"]
+    assert lg["rookieCutoff"] == {"2026": "2026-08-14"}
+    assert lg["serviceYearDays"] == 172 and lg["cutoffRulePre2020"] == "07-18"
+    assert lg["aggrYears"]["mean"] == 0.0
+    assert abs(lg["lateShare"]["mean"] - 0.25) < 1e-9          # the pooled league share
+    urls = [s["url"] for s in lg["rule"]["sources"]]
+    assert any("mlb.com/glossary/rules/rookie-eligibility" in u for u in urls)
+    assert any("mlb.com/glossary/transactions/service-time" in u for u in urls)
+    assert any("baseballamerica.com" in u for u in urls)
+    assert "45" in lg["rule"]["text"] and "172" in lg["rule"]["text"]
+
+
+def test_promotion_timing_no_label_on_thin_data():
+    """An org with every debut after the cutoff but fewer than 20 debuts is
+    thin and carries no label; the same rate on 40 debuts earns one. An age-
+    for-level gap on fewer than 40 players carries no label either."""
+    thin = [{"year": 2024, "org": "THIN", "age": 25.0, "late": True, "svc": False} for _ in range(12)]
+    wide = [{"year": 2024, "org": "WIDE", "age": 25.0, "late": True, "svc": False} for _ in range(40)]
+    debuts = _pt_league(extra={"THIN": thin, "WIDE": wide})
+    orgs = {d["org"] for d in debuts}
+    rows = _pt_aggr_rows(orgs - {"THIN"}, shift={"WIDE": 1.5})
+    rows += _pt_aggr_rows({"THIN"}, n_players=25, shift={"THIN": 3.0})
+    panel = ot.promotion_timing_panel(debuts, rows, {}, orgs)
+    t, w = panel["orgs"]["THIN"], panel["orgs"]["WIDE"]
+    assert t["thin"] is True and t["labelTiming"] is None
+    assert t["nAggrPlayers"] == 25 and t["labelAggr"] is None and t["aggrYears"] > 2
+    assert w["thin"] is False and w["labelTiming"] == "waits past the rookie cutoff"
+    assert w["labelAggr"] == "young for level"
+    # league-typical orgs: no label at all
+    assert all(r["labelTiming"] is None and r["labelAggr"] is None
+               for o, r in panel["orgs"].items() if o.startswith("O"))
+
+
+def test_promotion_timing_label_needs_q_and_ci():
+    """A difference the 30-org test cannot separate from the league gets no
+    label, however it reads on a z cut."""
+    mild = [{"year": 2024, "org": "MILD", "age": 25.0, "late": j % 3 == 0, "svc": False} for j in range(40)]
+    debuts = _pt_league(extra={"MILD": mild})
+    orgs = {d["org"] for d in debuts}
+    panel = ot.promotion_timing_panel(debuts, _pt_aggr_rows(orgs), {}, orgs)
+    m = panel["orgs"]["MILD"]
+    assert m["lateShare"] > panel["league"]["lateShare"]["mean"]
+    assert m["qLate"] >= 0.10 and m["labelTiming"] is None
+
+
+def test_rookie_cutoff_rule():
+    """45 days before the final scheduled game, both days counted, since
+    2020; July 18 before (Baseball America 2024-08-28 names Aug 16 for 2024)."""
+    assert ot.pt_rookie_cutoff(2026, date(2026, 9, 27)) == date(2026, 8, 14)
+    assert ot.pt_rookie_cutoff(2024, date(2024, 9, 29)) == date(2024, 8, 16)
+    assert ot.pt_rookie_cutoff(2025, date(2025, 9, 28)) == date(2025, 8, 15)
+    assert ot.pt_rookie_cutoff(2019, None) == date(2019, 7, 18)
+    assert ot.pt_rookie_cutoff(2026, None) is None
+
+
+def test_season_dates_ignore_a_makeup_after_the_finale(tmp_path, monkeypatch):
+    """The 2024 finale is Sep 29 although two makeup games ran Sep 30, and a
+    lone overseas opener does not open the season."""
+    games, n = {}, 0
+    for day, count in (("2024-03-20", 1), ("2024-03-28", 13), ("2024-06-01", 15),
+                       ("2024-09-29", 15), ("2024-09-30", 2)):
+        for _ in range(count):
+            n += 1
+            games[str(n)] = day
+    corpus = tmp_path / "games.json"
+    corpus.write_text(json.dumps(games), encoding="utf-8")
+    monkeypatch.setattr(ot, "PT_GAME_DATES", corpus)
+    cal = {"seasons": [{"seasonId": "2024", "regularSeasonStartDate": "2024-03-20",
+                        "regularSeasonEndDate": "2024-09-30"}]}
+    monkeypatch.setattr(ot, "_pt_fetch_json", lambda *a, **k: cal)
+    got = ot._pt_season_dates({2024}, date(2026, 10, 3))
+    assert got[2024] == {"open": date(2024, 3, 28), "final": date(2024, 9, 29)}
+
+
+def test_align_promotion_label_reads_the_tested_label():
+    promo = {"orgs": {"A": {"label": "aggressive"}, "B": {"label": "typical"}, "C": {"label": "conservative"}}}
+    timing = {"orgs": {"A": {"labelAggr": "old for level"}, "B": {"labelAggr": "young for level"},
+                       "C": {"labelAggr": None}}}
+    ot.align_promotion_label(promo, timing)
+    assert [promo["orgs"][o]["label"] for o in "ABC"] == ["conservative", "aggressive", "typical"]
+    ot.align_promotion_label(promo, {"orgs": {}})              # no timing panel: untouched
+    assert promo["orgs"]["A"]["label"] == "conservative"
+
+
+def test_sidecar_promotion_timing_shape_and_agreement():
+    """Served artifact: 30 orgs, every figure with n and CI95, labels only on
+    n-sufficient rows under q 0.10, and the promotion badge never disagrees
+    with the tested age-for-level label."""
+    d = _payload()
+    pt = d.get("promotionTiming") or {}
+    if not pt.get("orgs"):
+        pytest.skip("promotionTiming not exported on this machine")
+    assert set(pt["league"]) == PT_LEAGUE_KEYS
+    assert d["windows"]["promotionTiming"].startswith("MLB debuts 2022-present")
+    for org, r in pt["orgs"].items():
+        assert set(r) == PT_ORG_KEYS, org
+        assert r["lateCi"][0] <= r["lateShare"] <= r["lateCi"][1], org
+        if r["labelTiming"]:
+            assert not r["thin"] and r["qLate"] < 0.10, org
+        if r["labelAggr"]:
+            assert r["nAggrPlayers"] >= 40 and r["qAggr"] < 0.10, org
+            assert r["aggrCi"][0] > 0 or r["aggrCi"][1] < 0, org
+        want = {"young for level": "aggressive", "old for level": "conservative"}.get(r["labelAggr"], "typical")
+        assert d["promotion"]["orgs"][org]["label"] == want, org
+    for y, iso in pt["league"]["rookieCutoff"].items():
+        assert int(y) >= 2020 and iso.startswith(y + "-08-"), (y, iso)
+
+
+def _tendencies_js():
+    src = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    i = src.index("function _otBadge(")
+    return src[i:src.index("// Warm the org_tendencies sidecar", i)]
+
+
+def test_prospx_promotion_timing_card_and_a11y():
+    """PROSPX farm Tendencies tab: the Promotion timing card reads the tested
+    labels and prints n and CI in text; card titles are h4 headings, the z
+    tables carry row headers and a badge's receipt is a keyboard stop with an
+    accessible description (QREA11)."""
+    js = _tendencies_js()
+    assert 'data-ot-card="${key}"' in js and '"promotion-timing"' in js
+    assert "<h4 " in js and "${title}</h4>" in js
+    assert '<th scope="row" data-no-sort' in js
+    assert 'tabindex="0" aria-describedby=' in js and 'class="visually-hidden"' in js
+    card = js[js.index("const ptCard"):js.index("const POSB")]
+    assert "pt.labelAggr" in card and "pt.labelTiming" in card
+    assert "Not distinguishable from the league" in card
+    assert "nAggrPlayers" in card and "nDebuts" in card and "Ci" in card
+    assert "Rule and sources" in card and "<details" in card
+    assert "ETA" not in card, "the card must not say the ETA uses these numbers"
+    assert "zYoung" not in card and "_label(" not in card, "no z cut feeds a promotion-timing badge"

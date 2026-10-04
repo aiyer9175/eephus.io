@@ -628,17 +628,25 @@
       '<p class="fr-count">' + esc(nInt(tot.n_covered)) + " of " + esc(nInt(tot.n)) + " signings covered &middot; WAR to date " + esc(n1(tot.war_td)) + " &middot; paid " + esc(money(tot.paid_td)) + " &middot; surplus " + signedMoney(tot.surplus_td) +
       " &middot; method " + esc(rz.method) + ". " + esc(copy("market_realized_coverage")) + "</p>";
   }
+  var PANEL_NOTE = { promotionTiming: "promotion_timing_note" };
   function secFrontOffice(d) {
     var s = d.sections.front_office;
     var panels = s.panels.map(function (p) {
       var rows = p.rows.map(function (r) {
         var z = r[3], w = isNum(z) ? Math.min(50, Math.abs(Number(z)) / 3 * 50) : 0;
         var bar = '<div class="fr-zbar fr-zhide"><span class="' + (isNum(z) && Number(z) < 0 ? "fr-zneg" : "fr-zpos") + '" style="left:' + (isNum(z) && Number(z) < 0 ? (50 - w) : 50) + "%;width:" + w + '%"></span><i class="fr-zmid"></i></div>';
-        var val = r[0].indexOf("Share") >= 0 || r[0].indexOf("share") >= 0 || r[0] === "promoRate" || r[0] === "draftHitRate" || r[0] === "hhi" || r[0] === "bonusHHI" ? pct(r[2], 1) : n2(r[2]);
-        return '<div class="fr-zrow"><span>' + esc(r[1]) + '</span><span class="fr-zhide">' + esc(val) + "</span>" + bar + '<span class="fr-zval ' + signCls(z) + '">' + esc(signed(z, 2)) + "</span></div>";
+        var val = r[0].indexOf("Share") >= 0 || r[0].indexOf("share") >= 0 || r[0] === "promoRate" || r[0] === "draftHitRate" || r[0] === "hhi" || r[0] === "bonusHHI" ? pct(r[2], 1)
+          : /^n[A-Z]/.test(r[0]) ? nInt(r[2]) : r[0] === "aggrYears" ? signed(r[2], 2) : n2(r[2]);
+        // a row with no z prints its value in the z slot where the value column hides (narrow)
+        var last = isNum(z) ? '<span class="fr-zval ' + signCls(z) + '">' + esc(signed(z, 2)) + "</span>"
+          : '<span class="fr-zval"><span class="fr-zshow">' + esc(val) + "</span></span>";
+        return '<div class="fr-zrow"><span>' + esc(r[1]) + '</span><span class="fr-zhide">' + esc(val) + "</span>" + bar + last + "</div>";
       }).join("");
       var tags = p.tags.map(function (t) { return '<span class="fr-tag">' + esc(t) + "</span>"; }).join("");
-      return "<h3>" + esc(p.label) + tags + (p.window ? ' <span class="fr-basis">' + esc(p.window) + "</span>" : "") + "</h3>" + rows;
+      var note = PANEL_NOTE[p.key] ? '<p class="fr-count">' + prose(copy(PANEL_NOTE[p.key])) + "</p>" : "";
+      var rule = p.rule && p.rule.text ? '<details class="fr-how"><summary>' + esc(copy("promotion_timing_rule")) + '</summary><p class="fr-count">' + esc(p.rule.text) + "</p>" +
+        '<p class="fr-count">' + (p.rule.sources || []).map(function (x) { return '<a href="' + esc(x.url) + '" rel="noopener">' + esc(x.label) + "</a>"; }).join(" &middot; ") + "</p></details>" : "";
+      return "<h3>" + esc(p.label) + tags + (p.window ? ' <span class="fr-basis">' + esc(p.window) + "</span>" : "") + "</h3>" + rows + note + rule;
     }).join("");
     var sim = s.similar.length ? '<h3>Similar farms</h3><div class="fr-chips">' + s.similar.map(function (x) {
       return '<a class="fr-lchip" href="#view=club&team=' + esc(x[0]) + '" data-frlink="1"><b>' + esc(x[0]) + '</b><span class="fr-lchip-meta">' + esc(n2(x[1])) + "</span></a>";
