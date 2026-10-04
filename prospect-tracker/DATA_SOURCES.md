@@ -11,6 +11,7 @@ happen inside the called module, so this file alone cannot split them).
 
 | phase | data/*.json referenced in the phase block |
 |---|---|
+| d00. Registered identity repairs | - |
 | d0. TJStats Live capture | - |
 | d0b. MLB Pipeline Live capture | - |
 | d0b-i. Just Baseball rolling capture | - |
@@ -165,6 +166,7 @@ happen inside the called module, so this file alone cannot split them).
 | `feed_cache.py` | Shared, game_pk-keyed cache for MLB Stats API `/feed/live` payloads. |
 | `swing_plus_ingest.py` | Swing+ ingestion - scores MLB bat-tracking swings through Will Cahoon's Swing+ model and writes the platform sidecar. |
 | `milb_history.py` | League-wide season stats from the MLB StatsAPI, cached to disk - the historical level/rate source the local DB never had. |
+| `staff_ingest.py` | Staff history ingest from the MLB StatsAPI coaches endpoint (Staff Gems stage 0, the fetch half). |
 
 <!-- CURATED:BEGIN -->
 ## Source freshness risks (curated)

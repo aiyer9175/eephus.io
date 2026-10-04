@@ -1,0 +1,595 @@
+{
+ "_note": "Pseudonymized from StatsAPI responses fetched 2026-10-03 (staff_ingest.Fetcher): person ids, names and links replaced by Staff Person NN / 9000NN, jersey numbers dropped; jobs, titles, game dates and the day-resolved states are the live ones. Each segment is the staff list the date query returned on every probed day inside it.",
+ "copyright": "Copyright 2026 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+ "teams": [
+  {
+   "team_id": 120,
+   "season": 2025,
+   "sport_id": 1,
+   "org_id": 120,
+   "name": "Washington Nationals",
+   "game_dates": [
+    "2025-03-27",
+    "2025-03-29",
+    "2025-03-30",
+    "2025-03-31",
+    "2025-04-01",
+    "2025-04-02",
+    "2025-04-04",
+    "2025-04-05",
+    "2025-04-06",
+    "2025-04-07",
+    "2025-04-08",
+    "2025-04-09",
+    "2025-04-11",
+    "2025-04-12",
+    "2025-04-13",
+    "2025-04-14",
+    "2025-04-15",
+    "2025-04-16",
+    "2025-04-17",
+    "2025-04-19",
+    "2025-04-20",
+    "2025-04-22",
+    "2025-04-23",
+    "2025-04-24",
+    "2025-04-25",
+    "2025-04-26",
+    "2025-04-27",
+    "2025-04-28",
+    "2025-04-29",
+    "2025-04-30",
+    "2025-05-01",
+    "2025-05-02",
+    "2025-05-03",
+    "2025-05-04",
+    "2025-05-06",
+    "2025-05-07",
+    "2025-05-09",
+    "2025-05-10",
+    "2025-05-11",
+    "2025-05-12",
+    "2025-05-13",
+    "2025-05-14",
+    "2025-05-15",
+    "2025-05-16",
+    "2025-05-17",
+    "2025-05-18",
+    "2025-05-20",
+    "2025-05-22",
+    "2025-05-23",
+    "2025-05-24",
+    "2025-05-25",
+    "2025-05-27",
+    "2025-05-28",
+    "2025-05-29",
+    "2025-05-30",
+    "2025-05-31",
+    "2025-06-01",
+    "2025-06-03",
+    "2025-06-04",
+    "2025-06-05",
+    "2025-06-06",
+    "2025-06-07",
+    "2025-06-08",
+    "2025-06-10",
+    "2025-06-11",
+    "2025-06-12",
+    "2025-06-13",
+    "2025-06-14",
+    "2025-06-15",
+    "2025-06-16",
+    "2025-06-17",
+    "2025-06-18",
+    "2025-06-19",
+    "2025-06-20",
+    "2025-06-21",
+    "2025-06-22",
+    "2025-06-23",
+    "2025-06-24",
+    "2025-06-25",
+    "2025-06-27",
+    "2025-06-28",
+    "2025-06-29",
+    "2025-07-02",
+    "2025-07-03",
+    "2025-07-04",
+    "2025-07-05",
+    "2025-07-06",
+    "2025-07-08",
+    "2025-07-09",
+    "2025-07-10",
+    "2025-07-11",
+    "2025-07-12",
+    "2025-07-13",
+    "2025-07-18",
+    "2025-07-19",
+    "2025-07-20",
+    "2025-07-21",
+    "2025-07-22",
+    "2025-07-23",
+    "2025-07-25",
+    "2025-07-26",
+    "2025-07-27",
+    "2025-07-28",
+    "2025-07-29",
+    "2025-07-30",
+    "2025-08-01",
+    "2025-08-02",
+    "2025-08-03",
+    "2025-08-05",
+    "2025-08-06",
+    "2025-08-07",
+    "2025-08-08",
+    "2025-08-09",
+    "2025-08-10",
+    "2025-08-11",
+    "2025-08-12",
+    "2025-08-13",
+    "2025-08-14",
+    "2025-08-15",
+    "2025-08-16",
+    "2025-08-17",
+    "2025-08-19",
+    "2025-08-20",
+    "2025-08-21",
+    "2025-08-22",
+    "2025-08-23",
+    "2025-08-24",
+    "2025-08-25",
+    "2025-08-26",
+    "2025-08-27",
+    "2025-08-29",
+    "2025-08-30",
+    "2025-08-31",
+    "2025-09-01",
+    "2025-09-02",
+    "2025-09-03",
+    "2025-09-05",
+    "2025-09-06",
+    "2025-09-07",
+    "2025-09-08",
+    "2025-09-09",
+    "2025-09-10",
+    "2025-09-11",
+    "2025-09-12",
+    "2025-09-13",
+    "2025-09-14",
+    "2025-09-15",
+    "2025-09-16",
+    "2025-09-17",
+    "2025-09-19",
+    "2025-09-20",
+    "2025-09-21",
+    "2025-09-22",
+    "2025-09-23",
+    "2025-09-24",
+    "2025-09-26",
+    "2025-09-27",
+    "2025-09-28"
+   ],
+   "season_roster": [
+    {
+     "person": {
+      "id": 900001,
+      "fullName": "Staff Person 01",
+      "link": "/api/v1/people/900001"
+     },
+     "job": "Manager",
+     "jobId": "MNGR",
+     "title": "Manager"
+    },
+    {
+     "person": {
+      "id": 900002,
+      "fullName": "Staff Person 02",
+      "link": "/api/v1/people/900002"
+     },
+     "job": "Bench Coach",
+     "jobId": "COAB",
+     "title": "Bench Coach"
+    },
+    {
+     "person": {
+      "id": 900003,
+      "fullName": "Staff Person 03",
+      "link": "/api/v1/people/900003"
+     },
+     "job": "Interim Manager",
+     "jobId": "NTRM",
+     "title": "Interim Manager"
+    },
+    {
+     "person": {
+      "id": 900003,
+      "fullName": "Staff Person 03",
+      "link": "/api/v1/people/900003"
+     },
+     "job": "Bench Coach",
+     "jobId": "COAB",
+     "title": "Bench Coach"
+    },
+    {
+     "person": {
+      "id": 900004,
+      "fullName": "Staff Person 04",
+      "link": "/api/v1/people/900004"
+     },
+     "job": "Hitting Coach",
+     "jobId": "COAT",
+     "title": "Hitting Coach"
+    },
+    {
+     "person": {
+      "id": 900005,
+      "fullName": "Staff Person 05",
+      "link": "/api/v1/people/900005"
+     },
+     "job": "Pitching Coach",
+     "jobId": "COAP",
+     "title": "Pitching Coach"
+    },
+    {
+     "person": {
+      "id": 900006,
+      "fullName": "Staff Person 06",
+      "link": "/api/v1/people/900006"
+     },
+     "job": "First Base Coach",
+     "jobId": "COA1",
+     "title": "First Base Coach"
+    },
+    {
+     "person": {
+      "id": 900007,
+      "fullName": "Staff Person 07",
+      "link": "/api/v1/people/900007"
+     },
+     "job": "Third Base Coach",
+     "jobId": "COA3",
+     "title": "Third Base Coach"
+    },
+    {
+     "person": {
+      "id": 900002,
+      "fullName": "Staff Person 02",
+      "link": "/api/v1/people/900002"
+     },
+     "job": "Catching Coach",
+     "jobId": "CATC",
+     "title": "Catching Coach"
+    },
+    {
+     "person": {
+      "id": 900008,
+      "fullName": "Staff Person 08",
+      "link": "/api/v1/people/900008"
+     },
+     "job": "Bullpen Coach",
+     "jobId": "COAU",
+     "title": "Bullpen Coach"
+    },
+    {
+     "person": {
+      "id": 900009,
+      "fullName": "Staff Person 09",
+      "link": "/api/v1/people/900009"
+     },
+     "job": "Assistant Hitting Coach",
+     "jobId": "COAA",
+     "title": "Assistant Hitting Coach"
+    },
+    {
+     "person": {
+      "id": 900010,
+      "fullName": "Staff Person 10",
+      "link": "/api/v1/people/900010"
+     },
+     "job": "Pitching Strategist",
+     "jobId": "PSTG",
+     "title": "Pitching Strategist"
+    }
+   ],
+   "segments": [
+    {
+     "from": "2025-03-27",
+     "to": "2025-07-06",
+     "roster": [
+      {
+       "person": {
+        "id": 900001,
+        "fullName": "Staff Person 01",
+        "link": "/api/v1/people/900001"
+       },
+       "job": "Manager",
+       "jobId": "MNGR",
+       "title": "Manager"
+      },
+      {
+       "person": {
+        "id": 900003,
+        "fullName": "Staff Person 03",
+        "link": "/api/v1/people/900003"
+       },
+       "job": "Bench Coach",
+       "jobId": "COAB",
+       "title": "Bench Coach"
+      },
+      {
+       "person": {
+        "id": 900004,
+        "fullName": "Staff Person 04",
+        "link": "/api/v1/people/900004"
+       },
+       "job": "Hitting Coach",
+       "jobId": "COAT",
+       "title": "Hitting Coach"
+      },
+      {
+       "person": {
+        "id": 900005,
+        "fullName": "Staff Person 05",
+        "link": "/api/v1/people/900005"
+       },
+       "job": "Pitching Coach",
+       "jobId": "COAP",
+       "title": "Pitching Coach"
+      },
+      {
+       "person": {
+        "id": 900006,
+        "fullName": "Staff Person 06",
+        "link": "/api/v1/people/900006"
+       },
+       "job": "First Base Coach",
+       "jobId": "COA1",
+       "title": "First Base Coach"
+      },
+      {
+       "person": {
+        "id": 900007,
+        "fullName": "Staff Person 07",
+        "link": "/api/v1/people/900007"
+       },
+       "job": "Third Base Coach",
+       "jobId": "COA3",
+       "title": "Third Base Coach"
+      },
+      {
+       "person": {
+        "id": 900002,
+        "fullName": "Staff Person 02",
+        "link": "/api/v1/people/900002"
+       },
+       "job": "Catching Coach",
+       "jobId": "CATC",
+       "title": "Catching Coach"
+      },
+      {
+       "person": {
+        "id": 900008,
+        "fullName": "Staff Person 08",
+        "link": "/api/v1/people/900008"
+       },
+       "job": "Bullpen Coach",
+       "jobId": "COAU",
+       "title": "Bullpen Coach"
+      },
+      {
+       "person": {
+        "id": 900009,
+        "fullName": "Staff Person 09",
+        "link": "/api/v1/people/900009"
+       },
+       "job": "Assistant Hitting Coach",
+       "jobId": "COAA",
+       "title": "Assistant Hitting Coach"
+      },
+      {
+       "person": {
+        "id": 900010,
+        "fullName": "Staff Person 10",
+        "link": "/api/v1/people/900010"
+       },
+       "job": "Pitching Strategist",
+       "jobId": "PSTG",
+       "title": "Pitching Strategist"
+      }
+     ]
+    },
+    {
+     "from": "2025-07-07",
+     "to": "2025-07-07",
+     "roster": [
+      {
+       "person": {
+        "id": 900003,
+        "fullName": "Staff Person 03",
+        "link": "/api/v1/people/900003"
+       },
+       "job": "Interim Manager",
+       "jobId": "NTRM",
+       "title": "Interim Manager"
+      },
+      {
+       "person": {
+        "id": 900004,
+        "fullName": "Staff Person 04",
+        "link": "/api/v1/people/900004"
+       },
+       "job": "Hitting Coach",
+       "jobId": "COAT",
+       "title": "Hitting Coach"
+      },
+      {
+       "person": {
+        "id": 900005,
+        "fullName": "Staff Person 05",
+        "link": "/api/v1/people/900005"
+       },
+       "job": "Pitching Coach",
+       "jobId": "COAP",
+       "title": "Pitching Coach"
+      },
+      {
+       "person": {
+        "id": 900006,
+        "fullName": "Staff Person 06",
+        "link": "/api/v1/people/900006"
+       },
+       "job": "First Base Coach",
+       "jobId": "COA1",
+       "title": "First Base Coach"
+      },
+      {
+       "person": {
+        "id": 900007,
+        "fullName": "Staff Person 07",
+        "link": "/api/v1/people/900007"
+       },
+       "job": "Third Base Coach",
+       "jobId": "COA3",
+       "title": "Third Base Coach"
+      },
+      {
+       "person": {
+        "id": 900002,
+        "fullName": "Staff Person 02",
+        "link": "/api/v1/people/900002"
+       },
+       "job": "Catching Coach",
+       "jobId": "CATC",
+       "title": "Catching Coach"
+      },
+      {
+       "person": {
+        "id": 900008,
+        "fullName": "Staff Person 08",
+        "link": "/api/v1/people/900008"
+       },
+       "job": "Bullpen Coach",
+       "jobId": "COAU",
+       "title": "Bullpen Coach"
+      },
+      {
+       "person": {
+        "id": 900009,
+        "fullName": "Staff Person 09",
+        "link": "/api/v1/people/900009"
+       },
+       "job": "Assistant Hitting Coach",
+       "jobId": "COAA",
+       "title": "Assistant Hitting Coach"
+      },
+      {
+       "person": {
+        "id": 900010,
+        "fullName": "Staff Person 10",
+        "link": "/api/v1/people/900010"
+       },
+       "job": "Pitching Strategist",
+       "jobId": "PSTG",
+       "title": "Pitching Strategist"
+      }
+     ]
+    },
+    {
+     "from": "2025-07-08",
+     "to": "2025-09-28",
+     "roster": [
+      {
+       "person": {
+        "id": 900002,
+        "fullName": "Staff Person 02",
+        "link": "/api/v1/people/900002"
+       },
+       "job": "Bench Coach",
+       "jobId": "COAB",
+       "title": "Bench Coach"
+      },
+      {
+       "person": {
+        "id": 900003,
+        "fullName": "Staff Person 03",
+        "link": "/api/v1/people/900003"
+       },
+       "job": "Interim Manager",
+       "jobId": "NTRM",
+       "title": "Interim Manager"
+      },
+      {
+       "person": {
+        "id": 900004,
+        "fullName": "Staff Person 04",
+        "link": "/api/v1/people/900004"
+       },
+       "job": "Hitting Coach",
+       "jobId": "COAT",
+       "title": "Hitting Coach"
+      },
+      {
+       "person": {
+        "id": 900005,
+        "fullName": "Staff Person 05",
+        "link": "/api/v1/people/900005"
+       },
+       "job": "Pitching Coach",
+       "jobId": "COAP",
+       "title": "Pitching Coach"
+      },
+      {
+       "person": {
+        "id": 900006,
+        "fullName": "Staff Person 06",
+        "link": "/api/v1/people/900006"
+       },
+       "job": "First Base Coach",
+       "jobId": "COA1",
+       "title": "First Base Coach"
+      },
+      {
+       "person": {
+        "id": 900007,
+        "fullName": "Staff Person 07",
+        "link": "/api/v1/people/900007"
+       },
+       "job": "Third Base Coach",
+       "jobId": "COA3",
+       "title": "Third Base Coach"
+      },
+      {
+       "person": {
+        "id": 900008,
+        "fullName": "Staff Person 08",
+        "link": "/api/v1/people/900008"
+       },
+       "job": "Bullpen Coach",
+       "jobId": "COAU",
+       "title": "Bullpen Coach"
+      },
+      {
+       "person": {
+        "id": 900009,
+        "fullName": "Staff Person 09",
+        "link": "/api/v1/people/900009"
+       },
+       "job": "Assistant Hitting Coach",
+       "jobId": "COAA",
+       "title": "Assistant Hitting Coach"
+      },
+      {
+       "person": {
+        "id": 900010,
+        "fullName": "Staff Person 10",
+        "link": "/api/v1/people/900010"
+       },
+       "job": "Pitching Strategist",
+       "jobId": "PSTG",
+       "title": "Pitching Strategist"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

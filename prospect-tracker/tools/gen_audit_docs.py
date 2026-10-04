@@ -441,6 +441,7 @@ _SOURCE_MODULES = [
     "statcast_metrics.py", "mlb_leverage.py", "fielding_positions.py",
     "headshots.py", "player_images.py", "player_news.py", "source_articles.py",
     "feed_cache.py", "swing_plus_ingest.py", "milb_history.py",
+    "staff_ingest.py",
 ]
 
 _STEP_LINE = re.compile(r'with _step\(\s*"([^"]+)"')

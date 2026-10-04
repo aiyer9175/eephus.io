@@ -1,0 +1,460 @@
+{
+ "_note": "Pseudonymized from StatsAPI responses fetched 2026-10-03 (staff_ingest.Fetcher): person ids, names and links replaced by Staff Person NN / 9000NN, jersey numbers dropped; jobs, titles, game dates and the day-resolved states are the live ones. Each segment is the staff list the date query returned on every probed day inside it.",
+ "copyright": "Copyright 2026 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+ "teams": [
+  {
+   "team_id": 567,
+   "season": 2019,
+   "sport_id": 12,
+   "org_id": 147,
+   "name": "Trenton Thunder",
+   "game_dates": [
+    "2019-04-05",
+    "2019-04-06",
+    "2019-04-07",
+    "2019-04-08",
+    "2019-04-09",
+    "2019-04-10",
+    "2019-04-12",
+    "2019-04-13",
+    "2019-04-14",
+    "2019-04-15",
+    "2019-04-16",
+    "2019-04-17",
+    "2019-04-18",
+    "2019-04-19",
+    "2019-04-23",
+    "2019-04-24",
+    "2019-04-27",
+    "2019-04-28",
+    "2019-04-29",
+    "2019-04-30",
+    "2019-05-01",
+    "2019-05-02",
+    "2019-05-03",
+    "2019-05-04",
+    "2019-05-06",
+    "2019-05-07",
+    "2019-05-08",
+    "2019-05-10",
+    "2019-05-11",
+    "2019-05-13",
+    "2019-05-14",
+    "2019-05-15",
+    "2019-05-16",
+    "2019-05-17",
+    "2019-05-18",
+    "2019-05-19",
+    "2019-05-20",
+    "2019-05-21",
+    "2019-05-22",
+    "2019-05-23",
+    "2019-05-24",
+    "2019-05-25",
+    "2019-05-26",
+    "2019-05-27",
+    "2019-05-28",
+    "2019-05-30",
+    "2019-05-31",
+    "2019-06-01",
+    "2019-06-02",
+    "2019-06-04",
+    "2019-06-05",
+    "2019-06-06",
+    "2019-06-07",
+    "2019-06-08",
+    "2019-06-09",
+    "2019-06-11",
+    "2019-06-12",
+    "2019-06-13",
+    "2019-06-14",
+    "2019-06-15",
+    "2019-06-16",
+    "2019-06-18",
+    "2019-06-19",
+    "2019-06-20",
+    "2019-06-21",
+    "2019-06-22",
+    "2019-06-23",
+    "2019-06-24",
+    "2019-06-25",
+    "2019-06-26",
+    "2019-06-27",
+    "2019-06-28",
+    "2019-06-29",
+    "2019-06-30",
+    "2019-07-01",
+    "2019-07-02",
+    "2019-07-03",
+    "2019-07-04",
+    "2019-07-05",
+    "2019-07-06",
+    "2019-07-07",
+    "2019-07-11",
+    "2019-07-12",
+    "2019-07-13",
+    "2019-07-14",
+    "2019-07-15",
+    "2019-07-16",
+    "2019-07-17",
+    "2019-07-18",
+    "2019-07-19",
+    "2019-07-20",
+    "2019-07-21",
+    "2019-07-23",
+    "2019-07-24",
+    "2019-07-25",
+    "2019-07-26",
+    "2019-07-27",
+    "2019-07-29",
+    "2019-07-30",
+    "2019-07-31",
+    "2019-08-01",
+    "2019-08-02",
+    "2019-08-03",
+    "2019-08-04",
+    "2019-08-06",
+    "2019-08-07",
+    "2019-08-08",
+    "2019-08-09",
+    "2019-08-10",
+    "2019-08-11",
+    "2019-08-13",
+    "2019-08-14",
+    "2019-08-15",
+    "2019-08-16",
+    "2019-08-17",
+    "2019-08-18",
+    "2019-08-19",
+    "2019-08-20",
+    "2019-08-21",
+    "2019-08-22",
+    "2019-08-23",
+    "2019-08-24",
+    "2019-08-25",
+    "2019-08-26",
+    "2019-08-27",
+    "2019-08-29",
+    "2019-08-30",
+    "2019-08-31",
+    "2019-09-01",
+    "2019-09-02"
+   ],
+   "season_roster": [
+    {
+     "person": {
+      "id": 900001,
+      "fullName": "Staff Person 01",
+      "link": "/api/v1/people/900001"
+     },
+     "job": "Manager",
+     "jobId": "MNGR",
+     "title": "Manager"
+    },
+    {
+     "person": {
+      "id": 900002,
+      "fullName": "Staff Person 02",
+      "link": "/api/v1/people/900002"
+     },
+     "job": "Hitting Coach",
+     "jobId": "COAT",
+     "title": "Hitting Coach"
+    },
+    {
+     "person": {
+      "id": 900003,
+      "fullName": "Staff Person 03",
+      "link": "/api/v1/people/900003"
+     },
+     "job": "Pitching Coach",
+     "jobId": "COAP",
+     "title": "Pitching Coach"
+    },
+    {
+     "person": {
+      "id": 900004,
+      "fullName": "Staff Person 04",
+      "link": "/api/v1/people/900004"
+     },
+     "job": "Defensive Coach",
+     "jobId": "DEFC",
+     "title": "Defensive Coach"
+    },
+    {
+     "person": {
+      "id": 900005,
+      "fullName": "Staff Person 05",
+      "link": "/api/v1/people/900005"
+     },
+     "job": "Bullpen Coach",
+     "jobId": "COAU",
+     "title": "Bullpen Coach"
+    }
+   ],
+   "segments": [
+    {
+     "from": "2019-04-05",
+     "to": "2019-06-23",
+     "roster": [
+      {
+       "person": {
+        "id": 900001,
+        "fullName": "Staff Person 01",
+        "link": "/api/v1/people/900001"
+       },
+       "job": "Manager",
+       "jobId": "MNGR",
+       "title": "Manager"
+      },
+      {
+       "person": {
+        "id": 900002,
+        "fullName": "Staff Person 02",
+        "link": "/api/v1/people/900002"
+       },
+       "job": "Hitting Coach",
+       "jobId": "COAT",
+       "title": "Hitting Coach"
+      },
+      {
+       "person": {
+        "id": 900003,
+        "fullName": "Staff Person 03",
+        "link": "/api/v1/people/900003"
+       },
+       "job": "Pitching Coach",
+       "jobId": "COAP",
+       "title": "Pitching Coach"
+      },
+      {
+       "person": {
+        "id": 900004,
+        "fullName": "Staff Person 04",
+        "link": "/api/v1/people/900004"
+       },
+       "job": "Defensive Coach",
+       "jobId": "DEFC",
+       "title": "Defensive Coach"
+      },
+      {
+       "person": {
+        "id": 900005,
+        "fullName": "Staff Person 05",
+        "link": "/api/v1/people/900005"
+       },
+       "job": "Bullpen Coach",
+       "jobId": "COAU",
+       "title": "Bullpen Coach"
+      }
+     ]
+    },
+    {
+     "from": "2019-06-24",
+     "to": "2019-09-02",
+     "roster": [
+      {
+       "person": {
+        "id": 900001,
+        "fullName": "Staff Person 01",
+        "link": "/api/v1/people/900001"
+       },
+       "job": "Manager",
+       "jobId": "MNGR",
+       "title": "Manager"
+      },
+      {
+       "person": {
+        "id": 900003,
+        "fullName": "Staff Person 03",
+        "link": "/api/v1/people/900003"
+       },
+       "job": "Pitching Coach",
+       "jobId": "COAP",
+       "title": "Pitching Coach"
+      },
+      {
+       "person": {
+        "id": 900004,
+        "fullName": "Staff Person 04",
+        "link": "/api/v1/people/900004"
+       },
+       "job": "Defensive Coach",
+       "jobId": "DEFC",
+       "title": "Defensive Coach"
+      },
+      {
+       "person": {
+        "id": 900005,
+        "fullName": "Staff Person 05",
+        "link": "/api/v1/people/900005"
+       },
+       "job": "Bullpen Coach",
+       "jobId": "COAU",
+       "title": "Bullpen Coach"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "team_id": 475,
+   "season": 2019,
+   "sport_id": 16,
+   "org_id": 147,
+   "name": "GCL Yankees East",
+   "game_dates": [
+    "2019-06-24",
+    "2019-06-26",
+    "2019-06-27",
+    "2019-06-28",
+    "2019-06-29",
+    "2019-07-01",
+    "2019-07-02",
+    "2019-07-04",
+    "2019-07-05",
+    "2019-07-06",
+    "2019-07-09",
+    "2019-07-10",
+    "2019-07-12",
+    "2019-07-13",
+    "2019-07-15",
+    "2019-07-16",
+    "2019-07-17",
+    "2019-07-18",
+    "2019-07-20",
+    "2019-07-22",
+    "2019-07-26",
+    "2019-07-29",
+    "2019-07-30",
+    "2019-07-31",
+    "2019-08-01",
+    "2019-08-02",
+    "2019-08-03",
+    "2019-08-06",
+    "2019-08-07",
+    "2019-08-08",
+    "2019-08-09",
+    "2019-08-10",
+    "2019-08-12",
+    "2019-08-19",
+    "2019-08-20",
+    "2019-08-22",
+    "2019-08-23",
+    "2019-08-24",
+    "2019-08-26",
+    "2019-08-27"
+   ],
+   "season_roster": [
+    {
+     "person": {
+      "id": 900006,
+      "fullName": "Staff Person 06",
+      "link": "/api/v1/people/900006"
+     },
+     "job": "Manager",
+     "jobId": "MNGR",
+     "title": "Manager"
+    },
+    {
+     "person": {
+      "id": 900002,
+      "fullName": "Staff Person 02",
+      "link": "/api/v1/people/900002"
+     },
+     "job": "Hitting Coach",
+     "jobId": "COAT",
+     "title": "Hitting Coach"
+    },
+    {
+     "person": {
+      "id": 900007,
+      "fullName": "Staff Person 07",
+      "link": "/api/v1/people/900007"
+     },
+     "job": "Pitching Coach",
+     "jobId": "COAP",
+     "title": "Pitching Coach"
+    },
+    {
+     "person": {
+      "id": 900008,
+      "fullName": "Staff Person 08",
+      "link": "/api/v1/people/900008"
+     },
+     "job": "Defensive Coach",
+     "jobId": "DEFC",
+     "title": "Defensive Coach"
+    },
+    {
+     "person": {
+      "id": 900009,
+      "fullName": "Staff Person 09",
+      "link": "/api/v1/people/900009"
+     },
+     "job": "Catching Coach",
+     "jobId": "CATC",
+     "title": "Catching Coach"
+    }
+   ],
+   "segments": [
+    {
+     "from": "2019-06-24",
+     "to": "2019-08-27",
+     "roster": [
+      {
+       "person": {
+        "id": 900006,
+        "fullName": "Staff Person 06",
+        "link": "/api/v1/people/900006"
+       },
+       "job": "Manager",
+       "jobId": "MNGR",
+       "title": "Manager"
+      },
+      {
+       "person": {
+        "id": 900002,
+        "fullName": "Staff Person 02",
+        "link": "/api/v1/people/900002"
+       },
+       "job": "Hitting Coach",
+       "jobId": "COAT",
+       "title": "Hitting Coach"
+      },
+      {
+       "person": {
+        "id": 900007,
+        "fullName": "Staff Person 07",
+        "link": "/api/v1/people/900007"
+       },
+       "job": "Pitching Coach",
+       "jobId": "COAP",
+       "title": "Pitching Coach"
+      },
+      {
+       "person": {
+        "id": 900008,
+        "fullName": "Staff Person 08",
+        "link": "/api/v1/people/900008"
+       },
+       "job": "Defensive Coach",
+       "jobId": "DEFC",
+       "title": "Defensive Coach"
+      },
+      {
+       "person": {
+        "id": 900009,
+        "fullName": "Staff Person 09",
+        "link": "/api/v1/people/900009"
+       },
+       "job": "Catching Coach",
+       "jobId": "CATC",
+       "title": "Catching Coach"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
