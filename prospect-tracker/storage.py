@@ -16,6 +16,7 @@ import logging
 import os
 import re
 import sqlite3
+import bisect
 import copy
 from contextlib import contextmanager
 from dataclasses import asdict
@@ -9474,6 +9475,192 @@ def _atomic_replace(tmp: Path, path: Path, *, timeout: float = 30.0,
             wait = min(wait * 1.6, max_delay)
 
 
+# ---------------------------------------------------------------------------
+# Export-time Statcast contact-quality percentiles. Module-level (not closures
+# of export_timeseries_json) so test_export_percentile_peers.py can pin the
+# normalizer against its recorded cohort; the zone twin keeps its constants
+# inside the export and shares the two rank helpers.
+# ---------------------------------------------------------------------------
+
+_STATCAST_CONTACT_MIN_BBE = 10
+_STATCAST_HITTER_CONTACT_PERCENTILE_METRICS = {
+    "xwoba_est": True,
+    "xwobacon_est": True,
+    "avg_ev": True,
+    "p90_ev": True,
+    "max_ev": True,
+    "hard_hit_pct": True,
+    "barrel_pct": True,
+    "pull_air_pct": True,
+}
+_STATCAST_PITCHER_CONTACT_PERCENTILE_METRICS = {
+    "xwoba_est": False,
+    "xwobacon_est": False,
+    "avg_ev": False,
+    "p90_ev": False,
+    "max_ev": False,
+    "hard_hit_pct": False,
+    "barrel_pct": False,
+}
+
+
+def _export_num(v):
+    if v is None or v == "":
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _sorted_peers(values: list[float]) -> list[float] | None:
+    """A sorted copy of a cohort's peer values for _percentile_rank_100, or None
+    when a NaN is among them (its order is undefined, so the linear count stays
+    the source of truth for that cohort)."""
+    if any(v != v for v in values):
+        return None
+    return sorted(values)
+
+
+def _percentile_rank_100(value: float, values: list[float], higher_is_better: bool,
+                         sorted_values: list[float] | None = None) -> float:
+    """Share of peers at or below the value (higher is better) or at or above it,
+    in percent to one decimal. With `sorted_values` (from _sorted_peers) the count
+    comes from bisect instead of a pass over the list: bisect_right counts the
+    peers <= value and n - bisect_left the peers >= value, the same integers the
+    pass produced, so the same rounded number."""
+    n = len(values)
+    if not n:
+        return 0.0
+    if sorted_values is not None and value == value:
+        if higher_is_better:
+            count = bisect.bisect_right(sorted_values, value)
+        else:
+            count = n - bisect.bisect_left(sorted_values, value)
+    elif higher_is_better:
+        count = sum(1 for v in values if v <= value)
+    else:
+        count = sum(1 for v in values if v >= value)
+    return round(100.0 * count / n, 1)
+
+
+def _statcast_contact_metric(cq: dict, metric: str) -> float | None:
+    if metric == "pull_air_pct":
+        return _export_num((cq.get("spray") or {}).get("pull_air_pct"))
+    return _export_num(cq.get(metric))
+
+
+def _shallow_statcast_payload(payload):
+    """A statcast payload whose containers the export writes into are fresh: the
+    payload dict, its contact_quality dict, the level_splits list, each split dict
+    and its contact_quality dict. Everything else (pitch_plot, pitch_movement,
+    hit_locations, recent_games, spray ...) is shared with the input by reference.
+    The export only ever reassigns keys on those containers (percentiles, the
+    xwOBA PA adjustment, the pitch_plot and hit_locations strip), so the input is
+    never written. This replaces copy.deepcopy, which walked 1.46 GB of pitch
+    coordinates on every export to protect a few dicts."""
+    if not isinstance(payload, dict):
+        return copy.deepcopy(payload)
+    out = dict(payload)
+    cq = out.get("contact_quality")
+    if isinstance(cq, dict):
+        out["contact_quality"] = dict(cq)
+    splits = out.get("level_splits")
+    if isinstance(splits, list):
+        fresh = []
+        for row in splits:
+            if isinstance(row, dict):
+                row = dict(row)
+                rcq = row.get("contact_quality")
+                if isinstance(rcq, dict):
+                    row["contact_quality"] = dict(rcq)
+            fresh.append(row)
+        out["level_splits"] = fresh
+    return out
+
+
+def _normalize_statcast_contact_percentiles_for_export(scm_by_key: dict[str, dict]) -> dict[str, dict]:
+    """Attach level/side contact-quality percentiles from stored rows.
+
+    This is export-only and uses already-fetched Statcast contact_quality
+    payloads, so it does not require another MLB API pass. Returns new payloads
+    built by _shallow_statcast_payload (the input is never written). The peer
+    list of each (level, side, metric) cohort is built once rather than once per
+    row, and ranked by bisect; test_export_percentile_peers.py pins this equal
+    to the deepcopy and row-loop version on a recorded cohort.
+    """
+    out = {key: _shallow_statcast_payload(payload) for key, payload in (scm_by_key or {}).items()}
+    rows_by_level_side: dict[tuple[str, bool], list[dict]] = {}
+    seen: set[tuple[str, str, bool]] = set()
+    for key, payload in out.items():
+        if not isinstance(payload, dict):
+            continue
+        rows = payload.get("level_splits") or [payload]
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            level = row.get("level")
+            if not level:
+                continue
+            is_pitcher = bool(row.get("is_pitcher"))
+            dedupe_key = (key, level, is_pitcher)
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            cq = row.get("contact_quality") or {}
+            bbe = int(cq.get("batted_balls") or 0)
+            cq["qualified"] = bool(bbe >= _STATCAST_CONTACT_MIN_BBE)
+            cq["qualifier_min_bbe"] = _STATCAST_CONTACT_MIN_BBE
+            cq["percentile_sample_size"] = None
+            cq["percentiles"] = {}
+            if cq["qualified"]:
+                rows_by_level_side.setdefault((level, is_pitcher), []).append(row)
+
+    for (_level, is_pitcher), level_rows in rows_by_level_side.items():
+        metric_directions = (
+            _STATCAST_PITCHER_CONTACT_PERCENTILE_METRICS
+            if is_pitcher else _STATCAST_HITTER_CONTACT_PERCENTILE_METRICS
+        )
+        n = len(level_rows)
+        # The peer list depends on (cohort, metric) only, never on the row being
+        # ranked, so it is built once per cohort instead of once per row.
+        peers: dict[str, tuple[list[float], list[float] | None]] = {}
+        for metric in metric_directions:
+            vals = [v for v in (_statcast_contact_metric(peer.get("contact_quality") or {}, metric)
+                                for peer in level_rows) if v is not None]
+            peers[metric] = (vals, _sorted_peers(vals))
+        for row in level_rows:
+            cq = row.get("contact_quality") or {}
+            cq["percentile_sample_size"] = n
+            for metric, higher_is_better in metric_directions.items():
+                value = _statcast_contact_metric(cq, metric)
+                if value is None:
+                    continue
+                vals, sorted_vals = peers[metric]
+                if len(vals) < 5:
+                    continue
+                cq["percentiles"][metric] = _percentile_rank_100(value, vals, higher_is_better, sorted_vals)
+
+    for payload in out.values():
+        if not isinstance(payload, dict):
+            continue
+        split_map = {
+            (row.get("level"), bool(row.get("is_pitcher"))): row
+            for row in payload.get("level_splits") or []
+            if isinstance(row, dict)
+        }
+        own_key = (payload.get("level"), bool(payload.get("is_pitcher")))
+        normalized_primary = split_map.get(own_key)
+        if normalized_primary:
+            # The top-level block mirrors its primary split; its own dict and its
+            # own percentiles dict, the rest by reference.
+            primary_cq = dict(normalized_primary.get("contact_quality") or {})
+            if isinstance(primary_cq.get("percentiles"), dict):
+                primary_cq["percentiles"] = dict(primary_cq["percentiles"])
+            payload["contact_quality"] = primary_cq
+    return out
+
+
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           statlines: dict[str, dict] | None = None,
                           pitch_arsenals: dict[str, dict] | None = None,
@@ -9960,27 +10147,6 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "overall_contact_pct": False,
         "whiff_pct": True,
     }
-    _STATCAST_CONTACT_MIN_BBE = 10
-    _STATCAST_HITTER_CONTACT_PERCENTILE_METRICS = {
-        "xwoba_est": True,
-        "xwobacon_est": True,
-        "avg_ev": True,
-        "p90_ev": True,
-        "max_ev": True,
-        "hard_hit_pct": True,
-        "barrel_pct": True,
-        "pull_air_pct": True,
-    }
-    _STATCAST_PITCHER_CONTACT_PERCENTILE_METRICS = {
-        "xwoba_est": False,
-        "xwobacon_est": False,
-        "avg_ev": False,
-        "p90_ev": False,
-        "max_ev": False,
-        "hard_hit_pct": False,
-        "barrel_pct": False,
-    }
-
     def _zone_num(v):
         if v is None or v == "":
             return None
@@ -9988,15 +10154,6 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return float(v)
         except (TypeError, ValueError):
             return None
-
-    def _percentile_rank_100(value: float, values: list[float], higher_is_better: bool) -> float:
-        if not values:
-            return 0.0
-        if higher_is_better:
-            count = sum(1 for v in values if v <= value)
-        else:
-            count = sum(1 for v in values if v >= value)
-        return round(100.0 * count / len(values), 1)
 
     def _normalize_zone_percentiles_for_export(zm_by_key: dict[str, dict]) -> dict[str, dict]:
         """Recompute zone percentiles from the full stored level cohort.
@@ -10047,6 +10204,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 metric: [v for v in (_zone_num(r.get(metric)) for r in level_rows) if v is not None]
                 for metric in metric_directions
             }
+            sorted_by_metric = {metric: _sorted_peers(vals) for metric, vals in vals_by_metric.items()}
             for row in level_rows:
                 row["qualified"] = True
                 row["percentile_sample_size"] = n
@@ -10055,7 +10213,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     if value is None:
                         continue
                     row["percentiles"][metric] = _percentile_rank_100(
-                        value, vals_by_metric[metric], higher_is_better)
+                        value, vals_by_metric[metric], higher_is_better, sorted_by_metric[metric])
 
         for payload in out.values():
             if not isinstance(payload, dict):
@@ -10106,7 +10264,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     def _adjust_statcast_xwoba_for_export(scm: dict | None, sl: dict | None, season_rows: list[dict]) -> dict | None:
         if not scm:
             return scm
-        out = copy.deepcopy(scm)
+        out = _shallow_statcast_payload(scm)
         rows_by_level = {
             r.get("level"): r for r in (season_rows or [])
             if isinstance(r, dict) and r.get("level")
@@ -10134,80 +10292,6 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             _apply(split, stat_row)
         return out
 
-    def _statcast_contact_metric(cq: dict, metric: str) -> float | None:
-        if metric == "pull_air_pct":
-            return _num((cq.get("spray") or {}).get("pull_air_pct"))
-        return _num(cq.get(metric))
-
-    def _normalize_statcast_contact_percentiles_for_export(scm_by_key: dict[str, dict]) -> dict[str, dict]:
-        """Attach level/side contact-quality percentiles from stored rows.
-
-        This is export-only and uses already-fetched Statcast contact_quality
-        payloads, so it does not require another MLB API pass.
-        """
-        out = copy.deepcopy(scm_by_key or {})
-        rows_by_level_side: dict[tuple[str, bool], list[dict]] = {}
-        seen: set[tuple[str, str, bool]] = set()
-        for key, payload in out.items():
-            if not isinstance(payload, dict):
-                continue
-            rows = payload.get("level_splits") or [payload]
-            for row in rows:
-                if not isinstance(row, dict):
-                    continue
-                level = row.get("level")
-                if not level:
-                    continue
-                is_pitcher = bool(row.get("is_pitcher"))
-                dedupe_key = (key, level, is_pitcher)
-                if dedupe_key in seen:
-                    continue
-                seen.add(dedupe_key)
-                cq = row.get("contact_quality") or {}
-                bbe = int(cq.get("batted_balls") or 0)
-                cq["qualified"] = bool(bbe >= _STATCAST_CONTACT_MIN_BBE)
-                cq["qualifier_min_bbe"] = _STATCAST_CONTACT_MIN_BBE
-                cq["percentile_sample_size"] = None
-                cq["percentiles"] = {}
-                if cq["qualified"]:
-                    rows_by_level_side.setdefault((level, is_pitcher), []).append(row)
-
-        for (_level, is_pitcher), level_rows in rows_by_level_side.items():
-            metric_directions = (
-                _STATCAST_PITCHER_CONTACT_PERCENTILE_METRICS
-                if is_pitcher else _STATCAST_HITTER_CONTACT_PERCENTILE_METRICS
-            )
-            n = len(level_rows)
-            for row in level_rows:
-                cq = row.get("contact_quality") or {}
-                cq["percentile_sample_size"] = n
-                for metric, higher_is_better in metric_directions.items():
-                    value = _statcast_contact_metric(cq, metric)
-                    if value is None:
-                        continue
-                    vals = [
-                        _statcast_contact_metric(peer.get("contact_quality") or {}, metric)
-                        for peer in level_rows
-                    ]
-                    vals = [v for v in vals if v is not None]
-                    if len(vals) < 5:
-                        continue
-                    cq["percentiles"][metric] = _percentile_rank_100(value, vals, higher_is_better)
-
-        for payload in out.values():
-            if not isinstance(payload, dict):
-                continue
-            split_map = {
-                (row.get("level"), bool(row.get("is_pitcher"))): row
-                for row in payload.get("level_splits") or []
-                if isinstance(row, dict)
-            }
-            own_key = (payload.get("level"), bool(payload.get("is_pitcher")))
-            normalized_primary = split_map.get(own_key)
-            if normalized_primary:
-                payload["contact_quality"] = copy.deepcopy(normalized_primary.get("contact_quality") or {})
-        return out
-
     statcast_metrics = _normalize_statcast_contact_percentiles_for_export(statcast_metrics)
 
     def _prefer_metric_current_level(metric: dict | None, current_level: str | None) -> dict | None:
@@ -10221,9 +10305,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         )
         if not match:
             return metric
-        out = copy.deepcopy(metric)
+        # Shallow on purpose: the promoted fields point at the split's own values, and
+        # the statcast block is copied again by _adjust_statcast_xwoba_for_export
+        # before anything writes into it; nothing downstream writes into a zone block.
+        # The deep copy here walked every pitch_plot once per player.
+        out = dict(metric)
         keep_splits = out.get("level_splits") or []
-        out.update(copy.deepcopy(match))
+        out.update(match)
         out["level_splits"] = keep_splits
         return out
 
