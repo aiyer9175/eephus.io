@@ -159,7 +159,6 @@
   }
   function selNoun() { return watchMode() ? "selection" : "pick"; }
   function selNounPl() { return watchMode() ? "selections" : "picks"; }
-  function selNounCap() { return watchMode() ? "Selection" : "Pick"; }
 
   // ---- the Diamond gate, wired and OFF -------------------------------------
   // Routed through window.EephusDiamond (assets/eephus-diamond.js) since

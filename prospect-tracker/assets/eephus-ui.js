@@ -45,7 +45,6 @@
   }
   function escAttr(s) { return esc(s); }
   function frag(html) { var t = document.createElement("template"); t.innerHTML = html; return t.content; }
-  function elFromHTML(html) { var t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; }
   function qs(sel, root) { return (root || document).querySelector(sel); }
   function on(node, ev, sel, fn) {
     node.addEventListener(ev, function (e) {
