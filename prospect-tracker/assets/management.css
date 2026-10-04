@@ -26,7 +26,7 @@
    which is --accent-red in LIGHT mode only; in dark it stays dark red on a
    near-black page while its positive twin, already a token, flipped correctly.
    --up / --down are the site's tokens for exactly this pair. */
-.mgmt-pos { color: var(--up); }
+.mgmt-pos { color: var(--text-green); }  /* the reading green of --up: --up read 4.24:1 on a zebra stripe (QCLA11); dark aliases --accent-green, so the pair is unchanged there */
 .mgmt-neg { color: var(--down); }
 
 .mgmt-mini { width: 100%; border-collapse: collapse; font-size: 12px; }
