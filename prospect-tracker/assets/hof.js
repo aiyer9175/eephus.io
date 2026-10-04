@@ -188,6 +188,10 @@
     return '<div class="hof-bands" role="tablist" aria-label="Bands">' + out.join("") + "</div>";
   }
 
+  // The Watch and Not Yet Eligible notes say what the band is, so they sit
+  // above the table. The Eligible note is the reproduction disclosure; it
+  // moved under the table (the board leads with the board) and still renders
+  // on this view, word for word, as well as on the Method tab.
   function renderBandNote() {
     if (state.band === "watch") {
       return '<p class="hof-note">' + esc(DATA.sections.watch.why_no_projection) + "</p>";
@@ -195,6 +199,11 @@
     if (state.band === "not_yet_eligible") {
       return '<p class="hof-note">' + esc(DATA.sections.not_yet_eligible.why) + "</p>";
     }
+    return "";
+  }
+
+  function renderBandFoot() {
+    if (state.band !== "leaderboard") return "";
     return '<p class="hof-note">' + esc(DATA.reproduction.what_it_means) + "</p>";
   }
 
@@ -238,9 +247,14 @@
       "</tbody></table></div>" + more;
   }
 
+  // The count says how many rows are ON SCREEN, then how many match, then the
+  // band. It read "3620 players shown of 3620" under a 100-row page (census
+  // X06-15).
   function countText(rows) {
-    return rows.length + " players shown of " +
-      (DATA[state.band] || []).length + " in this band.";
+    var total = (DATA[state.band] || []).length;
+    var shown = Math.min(rows.length, state.shown);
+    return "Showing " + shown + " of " +
+      (rows.length === total ? "" : rows.length + " matching, ") + total + " in this band.";
   }
 
   function renderControls() {
@@ -449,7 +463,7 @@
       '<div id="hof-band-panel" role="tabpanel" aria-labelledby="hof-band-' + state.band + '">' +
       renderBandNote() + renderControls() + '<div id="hof-table-slot"></div>' +
       '<p class="hof-count" id="hof-count" role="status"></p>' +
-      renderLadder() + "</div>";
+      renderBandFoot() + renderLadder() + "</div>";
     wire();
     renderRows();
   }

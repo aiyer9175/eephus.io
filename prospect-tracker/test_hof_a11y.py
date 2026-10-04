@@ -171,3 +171,34 @@ def test_leaderboard_text_clears_its_contrast_floor(server, theme):
     assert not missing, ("nothing painted for", missing)
     low = {s: round(v, 2) for s, v in got.items() if v < _CONTRAST[s]}
     assert not low, (theme, low)
+
+
+def test_the_count_line_counts_the_rows_on_screen(server):
+    """Census X06-15: it read "3620 players shown of 3620 in this band." under
+    a 100-row page. It now counts what is painted, then what matches."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    import json
+    from pathlib import Path
+    d = json.loads((Path(__file__).parent / "data" / "hof_board.json").read_text(encoding="utf-8"))
+    total = len(d["leaderboard"])
+    with sync_playwright() as p:
+        browser, page = _open(p, server)
+        try:
+            txt = lambda: page.evaluate("() => document.querySelector('.hof-count').textContent")
+            rows = lambda: page.evaluate("() => document.querySelectorAll('.hof-table tbody tr').length")
+            first = (txt(), rows())
+            page.click("#hof-more")
+            more = (txt(), rows())
+            page.fill("#hof-q", "ruth")
+            hits = sum(1 for r in d["leaderboard"] if "ruth" in r["name"].lower())
+            searched = (txt(), rows())
+            # The reproduction disclosure still renders on the board view.
+            foot = page.evaluate("() => [...document.querySelectorAll('#hof-band-panel .hof-note')]"
+                                 ".map(n => n.textContent).join(' ')")
+        finally:
+            browser.close()
+    assert first == (f"Showing 100 of {total} in this band.", 100), first
+    assert more == (f"Showing 200 of {total} in this band.", 200), more
+    assert searched == (f"Showing {hits} of {hits} matching, {total} in this band.", hits), searched
+    assert d["reproduction"]["what_it_means"] in foot
