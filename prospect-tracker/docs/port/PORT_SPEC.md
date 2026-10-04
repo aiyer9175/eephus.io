@@ -1727,3 +1727,5 @@ rows is refreshed daily. Fourth, sequence the ML rewrite after the port, because
 shipped bundles are Python pickles with no portable export, so nothing in Odin can score
 anything until that export exists. And the test suite never has to be reimplemented: Odin
 writes artifacts, Python asserts over them, the rsync stays behind the same exit code.
+
+- 2026-10-03 addendum (PERF_7_PAL_CLOSED_SEASON_CACHE): `.cache/pal/` is a new cache family, written by `bullpen_export.closed_season_cache_write` for the Alchemy Lab's closed-season inputs (StatsAPI season pitching and platoon splits, Savant arsenal and velocity records; seasons before the calendar year only, one schema stamp per file, the live season never cached). It is refetchable and is listed in `prune_cache.SAFE_CACHES`, so the 1.4.1 rule leaves it OUT of the port copy; the first monthly night on the new host refetches it once (about 15 s and 17 MB: step 6b5 measured 39.8 s on a cold cache against 24.9 s warm on 2026-10-03, pal.json byte-identical).

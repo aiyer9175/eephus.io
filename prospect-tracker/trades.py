@@ -39,6 +39,7 @@ so the front-end can render them as markers on the FV timeline.
 
 from __future__ import annotations
 
+import functools
 import logging
 import re as _re
 import time
@@ -372,8 +373,18 @@ def canonical_org_from_id(team_id, fallback_name: str | None = None) -> str | No
     return canonical_org(fallback_name) if fallback_name else None
 
 
+@functools.lru_cache(maxsize=8192)
 def canonical_org(raw: str | None) -> str | None:
     """Normalize any org string to a 3-letter code. Pass-through if already short.
+
+    MEMOISED (2026-10-03, PERF_7). The function reads nothing but its argument
+    and the two module constants above, so the memo is transparent; it exists
+    because the token-search miss path below re-sorts the alias table and runs
+    a regex per alias, and storage.authoritative_org_map resolves every
+    transaction event's destination through it: 210,492 events over 851
+    distinct names cost 19.1 s per call, eight calls per Alchemy Lab build,
+    and 0.13 s memoised. Anything that ever mutates ORG_ALIASES or _CODE_REMAP
+    at runtime must call canonical_org.cache_clear().
 
     Handles:
       - codes already in 3-4 char uppercase form ("BOS", "CHW")
