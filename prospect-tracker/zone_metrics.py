@@ -98,6 +98,13 @@ WHIFF_CODES = {"S", "W", "M"}
 TAKEN_IN_ZONE_CODES = {"C"}
 TAKEN_OUT_ZONE_CODES = {"B", "I", "H"}
 CPX_PSEUDO_ZONE_MIN_TAKES = 80
+# Rows per predict call when the bulk fetcher labels every split in one
+# pass per model. Each forest thread holds a (rows x classes) float64
+# block for its tree, so a 6M-row batch on 32 threads would need tens of
+# GB; 200k rows keeps that under 1 GB while cutting thousands of calls
+# to a few dozen. Prediction is row-independent, so the chunk size never
+# changes a label.
+PREDICT_CHUNK_ROWS = 200_000
 
 
 SESSION = requests.Session()
@@ -483,6 +490,66 @@ def _predict_zone_ids(
     return [int(z) for z in clf.predict([r.features for r in rows])]
 
 
+def _zone_labels(model: object, features: list[list[float]], is_taken_pitch: bool) -> list[int]:
+    """Map one model's predictions to zone ids exactly as `_predict_zone_ids` does."""
+    labels = model.predict(features)
+    if is_taken_pitch:
+        return [5 if int(label) == 1 else 14 for label in labels]
+    return [int(z) for z in labels]
+
+
+def _predict_zone_ids_by_split(
+    pitches_by_split: dict[tuple[str, str, bool], list[PitchRow]],
+    clf: "RandomForestClassifier",
+    taken_pitch_models: dict[str, "RandomForestClassifier | None"],
+    *,
+    chunk_rows: int = PREDICT_CHUNK_ROWS,
+) -> dict[tuple[str, str, bool], list[int]]:
+    """Label every split's pitches with one predict pass per model.
+
+    Equivalent to calling `_predict_zone_ids` once per split: a split at a
+    level with a taken-pitch model is labelled by that model (1 -> zone 5,
+    else 14), every other split by `clf`. Random forest prediction is
+    row-independent, so the rows of every split that shares a model are
+    stacked in split order with the same feature columns, predicted in
+    chunks of `chunk_rows`, and the labels are sliced back by offset. The
+    per-split variant pays a thread-pool spin-up per call; thousands of
+    (player, level) splits made that the long pole of the monthly step.
+    """
+    groups: list[tuple[object, bool, list[tuple[tuple[str, str, bool], list[PitchRow]]]]] = []
+    group_by_model: dict[int, int] = {}
+    for split_key, rows in pitches_by_split.items():
+        if not rows:
+            continue
+        taken_pitch_model = taken_pitch_models.get(split_key[1])
+        model = taken_pitch_model if taken_pitch_model is not None else clf
+        idx = group_by_model.get(id(model))
+        if idx is None:
+            idx = group_by_model[id(model)] = len(groups)
+            groups.append((model, taken_pitch_model is not None, []))
+        groups[idx][2].append((split_key, rows))
+
+    out: dict[tuple[str, str, bool], list[int]] = {}
+    chunk_rows = max(1, int(chunk_rows))
+    for model, is_taken_pitch, members in groups:
+        flat: list[int] = []
+        pending: list[list[float]] = []
+        for _split_key, rows in members:
+            for row in rows:
+                pending.append(row.features)
+                if len(pending) >= chunk_rows:
+                    flat.extend(_zone_labels(model, pending, is_taken_pitch))
+                    pending = []
+        if pending:
+            flat.extend(_zone_labels(model, pending, is_taken_pitch))
+
+        offset = 0
+        for split_key, rows in members:
+            out[split_key] = flat[offset:offset + len(rows)]
+            offset += len(rows)
+    return out
+
+
 def _build_metric_row(
     *,
     player_key: str | None,
@@ -713,17 +780,17 @@ def fetch_zone_metrics_for_players_with_model(
                 level_rows.extend(rows)
         taken_pitch_models[level] = _train_taken_pitch_zone_model(level_rows)
 
+    # One predict pass per model (the MLB classifier, the CPX taken-pitch
+    # model) instead of one call per split; labels are identical.
+    predicted_by_split = _predict_zone_ids_by_split(pitches_by_split, clf, taken_pitch_models)
+
     split_rows: dict[tuple[str, str, bool], ZoneMetricRow] = {}
     for (key, level, is_pitcher), rows in pitches_by_split.items():
         if not rows:
             continue
         name, mlbam_id, _current_level, _is_pitcher = meta_by_key[key]
         taken_pitch_model = taken_pitch_models.get(level)
-        predicted = _predict_zone_ids(
-            rows,
-            clf,
-            taken_pitch_model=taken_pitch_model,
-        )
+        predicted = predicted_by_split[(key, level, is_pitcher)]
         split_rows[(key, level, is_pitcher)] = _build_metric_row(
             player_key=key,
             player_name=name,
