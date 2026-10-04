@@ -381,7 +381,13 @@ def scrape_spotrac_tax(year: int, force: bool = False) -> list[dict]:
     if fr.status != 200 or not fr.body:
         log.warning("spotrac tax %d: fetch failed (status=%d)", year, fr.status)
         return []
-    soup = BeautifulSoup(fr.body, "html.parser")
+    return parse_spotrac_tax_body(fr.body, year)
+
+
+def parse_spotrac_tax_body(body: str, year: int) -> list[dict]:
+    """The tax page's team table as scrape_spotrac_tax returns it, from the
+    page text alone (the fetch and the cache-only reader share it)."""
+    soup = BeautifulSoup(body, "html.parser")
     table = soup.find("table")
     if not table:
         log.warning("spotrac tax %d: no table", year)
@@ -423,7 +429,13 @@ def scrape_spotrac_payroll(year: int, force: bool = False) -> list[dict]:
     if fr.status != 200 or not fr.body:
         log.warning("spotrac payroll %d: fetch failed (status=%d)", year, fr.status)
         return []
-    soup = BeautifulSoup(fr.body, "html.parser")
+    return parse_spotrac_payroll_body(fr.body, year)
+
+
+def parse_spotrac_payroll_body(body: str, year: int) -> list[dict]:
+    """The payroll page's team table as scrape_spotrac_payroll returns it,
+    from the page text alone (the fetch and the cache-only reader share it)."""
+    soup = BeautifulSoup(body, "html.parser")
     table = soup.find("table")
     if not table:
         log.warning("spotrac payroll %d: no table", year)
@@ -458,6 +470,86 @@ def scrape_spotrac_payroll(year: int, force: bool = False) -> list[dict]:
             "avg_age": _parse_float(tds[i_age].get_text(strip=True)) if i_age is not None and i_age < len(tds) else None,
         })
     log.info("spotrac payroll %d: %d teams", year, len(out))
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# Cache-only payroll history (plan item M09-09's seam; Club Ledger Leg A)
+# --------------------------------------------------------------------------- #
+# The Spotrac tax pages for 2016 onward and the payroll pages for 2017 onward
+# are on disk under .cache/ (the 2016-2025 copies were fetched 2026-07-24/25).
+# This reader parses them where they lie and NEVER fetches: it does not call
+# _fetch, a missing page is reported missing, and the parse runs with
+# socket.socket and socket.create_connection replaced by a raiser, so any
+# network call made under it fails loudly instead of reaching Spotrac.
+
+_TAX_THRESHOLD_RE = re.compile(r'id="tax_threshold"[^>]*>\s*([^<]+?)\s*<')
+
+
+class NetworkDisabled(RuntimeError):
+    """A socket was opened inside the cache-only reader."""
+
+
+class _no_network:
+    """Context manager: every new socket raises NetworkDisabled."""
+
+    def __enter__(self):
+        import socket
+        self._socket = socket
+        self._saved = (socket.socket, socket.create_connection)
+
+        def _refuse(*_a, **_k):
+            raise NetworkDisabled("fa_sources.read_cached_payroll_history is cache-only")
+
+        socket.socket = _refuse            # type: ignore[assignment]
+        socket.create_connection = _refuse  # type: ignore[assignment]
+        return self
+
+    def __exit__(self, *exc):
+        self._socket.socket, self._socket.create_connection = self._saved
+        return False
+
+
+def parse_spotrac_tax_threshold(body: str) -> int | None:
+    """The season's CBT threshold as the tax page prints it in its header
+    tile (div#tax_threshold, "$189,000,000"); None when the tile is absent."""
+    m = _TAX_THRESHOLD_RE.search(body or "")
+    return _parse_money(m.group(1)) if m else None
+
+
+def read_cached_payroll_history(seasons, cache_dir=None) -> dict:
+    """The cached Spotrac tax and payroll pages for `seasons`, parsed, never
+    fetched.
+
+    Returns {"seasons": {season: {"tax": [rows], "threshold_usd", "tax_fetched",
+    "payroll": [rows], "payroll_fetched"}}, "missing_tax": [...],
+    "missing_payroll": [...]}. Rows are parse_spotrac_tax_body /
+    parse_spotrac_payroll_body rows; *_fetched is the cache file's modified
+    date (local, YYYY-MM-DD), the only fetch stamp a cached page carries."""
+    from datetime import date as _date
+    from pathlib import Path as _Path
+    cdir = _Path(cache_dir) if cache_dir is not None else _Path(__file__).resolve().parent / ".cache"
+    out: dict = {"seasons": {}, "missing_tax": [], "missing_payroll": []}
+    with _no_network():
+        for y in seasons:
+            y = int(y)
+            rec = {"tax": [], "threshold_usd": None, "tax_fetched": None,
+                   "payroll": [], "payroll_fetched": None}
+            tp = cdir / f"spotrac_tax_{y}.html"
+            if tp.exists():
+                body = tp.read_text(encoding="utf-8")
+                rec["tax"] = parse_spotrac_tax_body(body, y)
+                rec["threshold_usd"] = parse_spotrac_tax_threshold(body)
+                rec["tax_fetched"] = _date.fromtimestamp(tp.stat().st_mtime).isoformat()
+            if not rec["tax"]:
+                out["missing_tax"].append(y)
+            pp = cdir / f"spotrac_payroll_{y}.html"
+            if pp.exists():
+                rec["payroll"] = parse_spotrac_payroll_body(pp.read_text(encoding="utf-8"), y)
+                rec["payroll_fetched"] = _date.fromtimestamp(pp.stat().st_mtime).isoformat()
+            if not rec["payroll"]:
+                out["missing_payroll"].append(y)
+            out["seasons"][y] = rec
     return out
 
 

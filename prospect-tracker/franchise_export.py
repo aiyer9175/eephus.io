@@ -676,6 +676,12 @@ def build() -> dict:
     members = fa_class.get("members") or []
     fits_all = fa_class.get("teamFits") or {}
     winters = fa_archive.get("winters") or []
+    # The club free-agent spend profile (owner ask 3, Leg A), behind the Club
+    # Ledger's LEDGER_FA_SPEND_PROFILE flag and computed by the Ledger's own
+    # function on the same fa_archive winters, so MARKET and /ledger/ print one
+    # set of numbers: the share of league free-agent dollars and the band mix.
+    import ledger_export as _lx
+    fa_profile = _lx.club_fa_spend_profile(winters, codes) if _lx.LEDGER_FA_SPEND_PROFILE else None
     tend_similar = ((org_tend.get("similarFarms") or {}).get("orgs") or {})
     mgmt_teams = (mgmt.get("teams") or {}).get("rows") or []
     mgmt_clubs = (mgmt.get("clubs") or {}).get("rows") or []
@@ -907,6 +913,12 @@ def build() -> dict:
             "verdict": verdict_of.get("fa_team_fit"), "cba_banner": True,
             "basis": f"fa_class {fa_class.get('class_year')} fits (fa_team_fit provisional) and fa_archive signings by club",
         }
+        if fa_profile is not None:
+            fp = fa_profile["clubs"][c]
+            market["spend_profile"] = {"share": fp["share"], "bands": fp["bands"],
+                                       "windows": fa_profile["windows"], "league_usd": fa_profile["league_usd"],
+                                       "band_keys": [k for k, _lo, _hi in _lx.FA_PROFILE_BANDS],
+                                       "gl": "fa_dollar_share", "descriptive": True}
 
         # -- FRONT OFFICE (descriptive) ---------------------------------------------------------
         panels = []
@@ -1124,7 +1136,12 @@ def build() -> dict:
                  leaf("n_outgoing", "Outgoing free agents", len(outgoing), "count", None, "fa_class.members from this club", None, links["fa_fits"]),
                  leaf("recent_spend", "Recent spend, 3 winters", meta.get("recentSpend"), "usd", None, "fa_meta.teams.recentSpend", None, links["fa_archive"]),
                  leaf("realized_surplus_td", "Realized surplus to date", tot["surplus_td"], "usd_signed", None, "fa_archive surplusTd summed by signing club; realized value, not skill", "realized_contract_value", links["fa_archive"]),
-             ]},
+             ] + ([leaf(f"fa_share_{wk}", (f"FA $ share, {w[2]} winters" if wk == "recent" else f"FA $ share since {w[0]}"),
+                        fa_profile["clubs"][c]["share"][wk][1], "pct", None,
+                        f"Club Ledger spend profile: share of league free-agent dollars, winters {w[0]} to {w[1]}, "
+                        f"rank {fa_profile['clubs'][c]['share'][wk][2]} of {N_CLUBS}; realized spending, not a forecast",
+                        "fa_dollar_share", links["ledger"])
+                   for wk, w in fa_profile["windows"].items()] if fa_profile is not None else [])},
             {"key": "front_office", "kind": "descriptive", "label": "FRONT OFFICE", "title": BRANCH_TITLE["front_office"],
              "weight": None, "score": None, "rank": None, "letter": None,
              "headline": next((t for p in panels for t in p["tags"]), None),
@@ -1354,6 +1371,25 @@ def build() -> dict:
         "history.hof.inductees": "[name, war_with_club, seasons_with_club, career_war, induction, induction_year]",
         "tree.branches[].leaves[].kind": "war | idx | idx_plain | pct | pct3 | count | usd | usd_signed | usdm | num1 | signed | signed2 | plain | text | dark",
     }
+    if fa_profile is not None:
+        fw = fa_profile["windows"]
+        copy.update({
+            "market_profile_title": "Who spends in free agency",
+            "market_profile_lede": _lx.FA_PROFILE_COPY,
+            "market_profile_windows": {"recent": f"last {fw['recent'][2]} winters, {fw['recent'][0]} to {fw['recent'][1]}",
+                                       "all": f"since {fw['all'][0]}, {fw['all'][2]} winters"},
+            "market_profile_windows_short": {"recent": f"{fw['recent'][0]} to {fw['recent'][1]}", "all": f"since {fw['all'][0]}"},
+            "market_profile_band_labels": {"under_10m": "under $10M", "10m_50m": "$10M to $50M",
+                                           "50m_100m": "$50M to $100M", "100m_up": "$100M and up"},
+            "market_profile_note": ("Nominal guarantees over the thirty clubs' total for the window, as the Club "
+                                    "Ledger prints them; the band mix counts major-league deals only, each in the "
+                                    "band of its nominal guarantee."),
+        })
+        field_key["market.spend_profile"] = (
+            "{share {recent|all: [usd, share, rank]}, bands {recent|all: [[n_deals, guar_usd] per band_keys]}, "
+            "windows {recent|all: [first_winter, last_winter, n_winters]}, league_usd {recent|all}, band_keys, gl, "
+            "descriptive}; ledger_export.club_fa_spend_profile on fa_archive winters, the Club Ledger's own figures; "
+            "realized spending, not a forecast")
 
     sections_status = {
         "fin": {"live": True, "descriptive": True, "headline": copy["fin_headline_label"], "ledger_live": ledger_live},
