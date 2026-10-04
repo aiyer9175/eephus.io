@@ -520,14 +520,18 @@ def protection_coverage(rows: list[dict]) -> dict:
 # BMI as of the read, from the dated FanGraphs board archives (one pre-declared
 # pitcher skill-head re-test, owner question 2026-09-25)
 # ---------------------------------------------------------------------------
-# tools/_arch_bio_panel.json holds, per player key, every dated FanGraphs board listing
+# data/_frozen/arch_bio_panel.json holds, per player key, every dated FanGraphs board listing
 # (report, updated and draft boards from 2017) with height (inches) and weight (lb).
+# It is a FROZEN INPUT with no producer in the repo: its builder, the archetype lab
+# script tools/_arch_bio_panel.py, was deleted in 8fecb2f5 (last copy at 8fecb2f5^).
+# Moved byte-identical from tools/_arch_bio_panel.json on 2026-10-03; data/_frozen/
+# ships in neither deploy consumer.
 # bmi_asof reads the LATEST listing dated on or before the read and never a later one.
 # Height, weight, BMI and frame were tested twice before (the D-2 driver arms and the
 # archetype bio lab, tools/_arch_bio_result.json, all null); this is one re-test in the
 # V2 pitcher skill head, counted in the forking-path total.
 
-BIO_PANEL = Path(__file__).resolve().parent / "tools" / "_arch_bio_panel.json"
+BIO_PANEL = Path(__file__).resolve().parent / "data" / "_frozen" / "arch_bio_panel.json"
 _BMI_FACTOR = 703.0          # lb per square inch to kg per square metre
 _BIO_MEMO: dict[str, dict[str, list[dict]]] = {}
 

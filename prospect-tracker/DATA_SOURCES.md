@@ -213,4 +213,9 @@ between the sentinels.
   `data/_labs/arb_ledger.json`, which ships in neither deploy consumer, so
   the projection and tracker entries are not republished (owner answer
   M23-3, 2026-09-25). MLBTR keeps its /sources/ credit as a comparator.
+- The pitcher BMI driver's bio panel (`data/_frozen/arch_bio_panel.json`,
+  read by `efv_drivers.load_bio_panel`) is a frozen input with no producer:
+  its builder, the archetype lab script `tools/_arch_bio_panel.py`, was
+  deleted in 8fecb2f5, so board listings newer than the committed file
+  (017d3bc2, 2026-07-29) never reach it. It ships in neither deploy consumer.
 <!-- CURATED:END -->
