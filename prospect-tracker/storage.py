@@ -9745,6 +9745,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         per season. Drives the prospect detail page.
       - birth_date + age + age_vs_level
     """
+    # PERF_9 (2026-10-03): phase timers. Log lines only, so the daily step table's
+    # one d9 row can be broken down to the stretch of this export that costs the
+    # time; nothing here reaches the payload or any file this function writes.
+    import time as _time_phase
+    _phase_t0 = _phase_last = _time_phase.monotonic()
+
+    def _phase_done(label: str) -> None:
+        nonlocal _phase_last
+        _now = _time_phase.monotonic()
+        log.info("export phase %s: %.1fs (%.1fs into the export)",
+                 label, _now - _phase_last, _now - _phase_t0)
+        _phase_last = _now
+
     statlines = statlines or {}
     pitch_arsenals = pitch_arsenals or {}
     zone_metrics = zone_metrics or {}
@@ -9787,6 +9800,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         log.debug("export: observed-position sidecar unavailable", exc_info=True)
         _observed_pos = {}
 
+    _phase_done("inputs")
     # ── eFV join (one-run lag): the site's PRIMARY grade replaces consensus FV across the
     # farm / DvM+ / movement metrics. Loaded once here so every consumer below (the per-player
     # movement `stock`, the $DvM+ pre-pass, the org dev-FV history) reads one consistent value.
@@ -12413,6 +12427,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # this floor fall into `inactives` and stay out of farm rollups.
     MIN_PROSPECT_FV = 30
 
+    _phase_done("joins")
     # ── HISTORICAL-LEAK FIX (active-prospect recency ceiling) ─────────────
     # A player not ranked by ANY prospect source in HARD_FV_STALE_YEARS years
     # has aged out of prospect status → INACTIVE regardless of whether they're
@@ -12684,6 +12699,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     grads = _dedup_by_mlbam(grads, "graduates")
     inactives = _dedup_by_mlbam(inactives, "inactives")
 
+    _phase_done("classify")
     # ── DATA-INTEGRITY GUARD (historical-leak tripwire) ───────────────────
     # The active pool must contain only current prospects: none graduated, none
     # FV-stale beyond the aged-out ceiling. This catches regressions if a future
@@ -12912,6 +12928,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # Sort debuts by debut_date desc (most recent first)
     grads.sort(key=lambda p: p.debut_date or "", reverse=True)
 
+    _phase_done("rank")
     # ── Org farm summary ────────────────────────────────────────────────────
     # Build per-org aggregate stats from the active list only (not graduates).
     # Position groups: C, INF (1B/2B/SS/3B/UTIL), OF, P (SP/RP).
@@ -13457,6 +13474,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 and fv_raw is not None and float(fv_raw) <= 50.0):
             m["_upside_count"] += 1
 
+    _phase_done("org_rollup")
     # ── Per-org graduate aggregates (Farm Overhaul Steps 2 & 3) ──
     # Walk graduates ONCE to compute:
     #   - WAG sum + count (per-grad WAG via _grad_wag)
@@ -14539,6 +14557,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # still recover it by re-sorting on total_fv directly.
     org_summary.sort(key=lambda x: -x["total_fv"])
 
+    _phase_done("grad_aggregates")
     # ── Per-tool DvM+ league pass (HitDvM+, PowerDvM+, …, ToolsDvM+) ──
     # For each TOOL_GROUP, gather every org's mean_delta on the tools in
     # that group (averaged for multi-tool groups like Power = mean of
@@ -15245,6 +15264,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "claims_with_mlb": claims_mlb_hit,
         }
 
+    _phase_done("dvm_trees")
     # ── Farm report card ────────────────────────────────────────────────────
     # Four raw component scores per org, each then rescaled to a 0-100 band
     # across the 30 orgs and blended into a single farm_score. The blend
@@ -15964,6 +15984,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "overall":            _letter_grade(ov_r, n_orgs),
         }
 
+    _phase_done("report_card")
     # ────────────────────────────────────────────────────────────────────────
     # ── Farm Grade Tree v2 — main grade composites + new farm_score ──
     # ────────────────────────────────────────────────────────────────────────
@@ -17053,6 +17074,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # movement chip (derived off the canonical rank above), the snapshot, grades.overall, and
     # component_ranks all agree. Better dev/production/acquisition subgrades now rank up.
 
+    _phase_done("farm_grade")
     # ── Per-org draft spending (computed from our acquisitions table) ──
     # The acquisitions table records `bonus_usd` for every drafted player
     # we know about — sum by org × year to produce a comparison set for
@@ -17098,9 +17120,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry["ifa_spending"]   = ifa_spending_by_org.get(org_code, {})
         entry["draft_spending"] = draft_spending_by_org.get(org_code, {})
 
+    _phase_done("draft_spend")
     active_payload = [_serialize(p) for p in actives]
     inactive_payload = [_serialize(p) for p in inactives]
     graduate_payload = [_serialize(p) for p in grads]
+    _phase_done("serialise")
     # v38 — Item-6: stamp the per-prospect $DvM+ (computed in the league pre-pass
     # above) onto each active payload so the farm financial detail can surface it
     # alongside the prospect's surplus value.
@@ -17291,6 +17315,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # `rosters_by_org` — those slices live in sidecar files and the frontend
     # fetches them on demand. Tests that want a single dict can call
     # `load_export_unified(out_path)` to reassemble them.
+    _phase_done("live_form")
     # ── Scout-reports extraction (Tier 2 perf — slice splitting) ──
     # The FanGraphs scout report prose lives inside per_source.fangraphs.
     # tools._extras.report on most snapshots. Across all players it's
@@ -17898,9 +17923,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 tmp.unlink()
             except OSError:
                 pass                    # already renamed: the success path
+    _phase_done("assemble")
     _dump(boot, out_path, force=True)
     _dump(graduate_payload, out_dir / "debuts.json")
     _dump(rosters_by_org, out_dir / "rosters_by_org.json")
+    _phase_done("write_boot")
     if intermediate:
         # v47 - mid-monthly intermediate export (run_monthly.main step 5
         # ONLY). Everything below this return is a frontend-only sidecar
@@ -17979,6 +18006,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             legacy_pp.unlink()
         except OSError:
             pass
+    _phase_done("write_sidecars")
     return out_path
 
 
