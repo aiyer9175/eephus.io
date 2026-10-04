@@ -159,7 +159,7 @@ MODULES = (
     ("fa", "MLB Free Agency", "/fa/",
      "The free-agent class: projected contracts with floor, mean and ceiling bands."),
     ("projections", "MLB Projections", "/projections/",
-     "Five-year eWAR projections for every MLB player: floor, mean and ceiling paths."),
+     "Five-year WAR projections for every MLB player: floor, mean and ceiling paths."),
     ("mlbstats", "MLB Stats", "/mlbstats/",
      "MLB leaderboards: every player by eWAR, HEM+, SEM+, REM+, RIV+ and DEM+."),
     ("pal", "Alchemy Lab", "/pal/",
