@@ -54,7 +54,8 @@ var EephusTiers = {
 def _served():
     if not ART.exists():
         pytest.skip("run python franchise_export.py")
-    return json.loads(ART.read_text(encoding="utf-8"))
+    import franchise_export as fe
+    return fe.load(ART)      # the board joined with its 30 club files (QCLP10)
 
 
 def _render(view="club", team="", hash_="", payload=None, tiers=True, tree="canopy"):
@@ -508,3 +509,187 @@ def test_the_pennant_tile_reads_the_bracket_simulator_while_it_serves():
     html, _ = _render(team="LAD", payload=p)
     sec = html.split('data-frsec="odds"')[1]
     assert "Pennant (implied" not in sec and "postseason_bracket_sim" not in sec
+
+
+
+# --------------------------------------------------------------------------
+# Display pass 2026-10-03 (DISPLAY_franchise): the surface-quality audit's
+# findings QCLA12, QCLA13, QCLC16, QCLC17, QCLC20 and QCLP10, and the copy trim
+# --------------------------------------------------------------------------
+
+def test_board_sort_heads_are_buttons_in_scoped_th_with_aria_sort():
+    """QCLA12: every sortable head is <th scope=col aria-sort> holding one
+    <button>; the glossary term inside is a span out of the tab order (an <a>
+    inside a <button> is not valid); one head says descending, on the index."""
+    board, _ = _render("board")
+    heads = re.findall(r"<th [^>]*>.*?</th>", board.split("<thead>")[1].split("</thead>")[0])
+    assert len(heads) == 11
+    for h in heads:
+        assert 'scope="col"' in h and re.search(r'aria-sort="(none|ascending|descending)"', h), h
+        assert h.count('<button type="button" class="fr-sort" data-frsort=') == 1, h
+        assert "<a " not in h and 'tabindex="0"' not in h, h
+        for term in re.findall(r'<span class="g-term"[^>]*>', h):
+            assert 'tabindex="-1"' in term, term
+    assert [h for h in heads if 'aria-sort="descending"' in h] == [h for h in heads if 'data-frsort="index_score"' in h]
+    assert sum('aria-sort="none"' in h for h in heads) == 10
+    i = JS.index('btn.addEventListener("click"')
+    assert "nb.focus()" in JS[i:i + 700], "focus returns to the sorted head after the re-render"
+    assert "th[data-frsort]" not in JS and 'tabindex="0"' not in JS
+    ring = CSS[CSS.index(".fr-app .fr-sort:focus-visible"):]
+    assert ring.split("}")[0].count("var(--accent-cyan)") == 1
+    assert "th:focus { outline: 2px solid var(--accent-gold)" not in CSS
+    m = CSS[CSS.index("@media (max-width: 640px)"):]
+    assert ".fr-board td:first-child a" in m.split("}\n}")[0] and "min-height: 44px" in m
+
+
+def test_club_charts_toggles_headings_and_tables_carry_names_and_scope():
+    """QCLA13: every role=img svg is named; the tree chips carry aria-pressed;
+    the status chip sits outside the h2; the mini tables have row headers and
+    the section tables scoped column headers."""
+    html, _ = _render("club", team="MIL")
+    imgs = re.findall(r'<svg [^>]*role="img"[^>]*>', html)
+    assert imgs and all('aria-label="' in s for s in imgs), [s for s in imgs if "aria-label" not in s]
+    sparks = re.findall(r'<div class="fr-spark"><svg [^>]*>', html)
+    assert len(sparks) == 3 and all('aria-label="' in s for s in sparks)
+    chips = re.findall(r'<button class="chip[^"]*" data-frtree="[a-z]+"[^>]*>', html)
+    assert len(chips) == 3 and sum('aria-pressed="true"' in c for c in chips) == 1
+    assert all("aria-pressed=" in c for c in chips)
+    for h2 in re.findall(r"<h2 [^>]*>.*?</h2>", html):
+        assert "fr-verdict" not in h2 and "eephus-beta" not in h2, h2
+    assert html.count('<div class="fr-sec-head">') == 12
+    assert '<table class="fr-mini"><tr><td>' not in html and '<th scope="row">' in html
+    assert re.search(r'<table class="fr-table"><thead><tr><th scope="col"', html)
+    assert '<table class="fr-table"><thead><tr><th class=' not in html
+    m = CSS[CSS.index("@media (max-width: 640px)"):]
+    assert ".fr-tile-open" in m and ".fr-links a" in m
+
+
+def test_the_roster_note_is_one_sentence_and_names_no_field():
+    """QCLC16: one sentence from one copy key, never two fragments joined, and
+    no payload field name in reader copy."""
+    d = _served()
+    note = d["copy"]["roster_note"]
+    assert "roster_basis_note" not in d["copy"]
+    assert note[0].isupper() and note.endswith(".") and "team_basis" not in note
+    html, _ = _render("club", team="MIL")
+    sec = html.split('data-frsec="roster"')[1].split("</section>")[0]
+    assert '<p class="fr-count">' + note.replace("&", "&amp;") + "</p>" in sec
+    assert "team_basis" not in html
+
+
+def test_the_link_rail_prints_labels_not_route_keys():
+    """QCLC17: the rail labels each link from the Open-in map, grouped by the
+    module that owns it; no key prints with its underscores replaced."""
+    d = _served()
+    html, _ = _render("club", team="MIL")
+    rail = html.split('<nav class="fr-links"')[1].split("</nav>")[0]
+    mil = next(c for c in d["clubs"] if c["code"] == "MIL")
+    texts = re.findall(r'<a href="[^"]*">([^<]*)</a>', rail)
+    assert len(texts) == sum(1 for v in mil["links"].values() if v)
+    for k in mil["links"]:
+        if "_" in k:
+            assert k.replace("_", " ") not in texts, k
+    for lbl in ("Hitters", "Club Ledger", "Hall of Fame", "Dynasty"):
+        assert lbl in rail, lbl
+    assert rail.count('class="fr-links-mod"') == len({re.match(r"/([a-z]+)/", v).group(1) for v in mil["links"].values() if v})
+
+
+def test_the_playoff_head_names_its_model_and_verdict():
+    """QCLC20: the 0%/100% Playoff column says it is the season simulator,
+    with its registry row and verdict, and what it reads once the season ends."""
+    d = _served()
+    title = d["copy"]["board_playoff_title"]
+    verdict = {r["model_id"]: r["verdict"] for r in d["accountability"]["registry_verdicts"]}["playoff_odds_sim"]
+    assert "playoff_odds_sim " + verdict in title and "settled outcome" in title
+    board, _ = _render("board")
+    head = re.search(r'<th [^>]*data-export-text="Playoff"[^>]*>', board).group(0)
+    assert 'title="' + title + '"' in head
+
+
+def test_method_copy_sits_in_one_collapsed_block_and_the_banner_rides_its_dollar_blocks():
+    """The copy trim: the weights note and the score formula print once, inside
+    a collapsed How this works block (club and board); the CBA banner rides the
+    three sections that hold 2027 dollars and no longer repeats above the tree."""
+    d = _served()
+    html, _ = _render("club", team="MIL")
+    how = html.split('<details class="fr-how">')[1].split("</details>")[0]
+    assert d["copy"]["how_title"] in how and d["copy"]["weights_note"] in how
+    assert d["copy"]["score_basis"][1:] in how and "Sources: " in how
+    assert html.count(d["copy"]["weights_note"]) == 1
+    assert html.count('class="fr-banner"') == 3
+    assert html.index('class="fr-banner"') > html.index('data-frsec="fin"')
+    board, _ = _render("board")
+    bhow = board.split('<details class="fr-how">')[1].split("</details>")[0]
+    assert d["copy"]["board_foot"] in bhow and d["copy"]["score_basis"][1:] in bhow
+    # the trimmed lines stay short: masthead and board lede under 25 words,
+    # root sentence under 30, and the root keeps its thirty-percent disclosure
+    for k, cap in (("masthead", 25), ("board_lede", 25), ("root_sentence", 30), ("weights_note", 25)):
+        assert len(d["copy"][k].split()) < cap, (k, len(d["copy"][k].split()))
+    assert "Thirty percent of the index rests on a provisional projection" in d["copy"]["root_sentence"]
+
+
+def test_joined_copy_fragments_read_as_sentences():
+    """Two copy fragments printed in one note read as two sentences (the
+    QCLC16 defect class): each starts with a capital and ends with a stop, so
+    "...(org_tendencies) z against..." no longer runs on."""
+    d = _served()
+    c = d["copy"]
+    html, _ = _render("club", team="MIL")
+    def sent(t):
+        t = t.strip()
+        t = t[0].upper() + t[1:]
+        return t if t[-1] in ".!?:" else t + "."
+    for a, b, sec in (("front_office_note", "zbar_note", "front_office"), ("history_note", "history_pennants", "history")):
+        body = html.split('data-frsec="%s"' % sec)[1].split("</section>")[0]
+        assert sent(c[a]) + " " + sent(c[b]) in body, sec
+        assert c[a] + " " + c[b] not in body, sec
+
+def _render_split(team, shard_ok=True):
+    """Render the club page off the served BOARD alone, with a fetch that
+    serves data/franchise_clubs/CODE.json from disk (or fails)."""
+    import franchise_export as fe
+    if not ART.exists():
+        pytest.skip("run python franchise_export.py")
+    board = json.loads(ART.read_text(encoding="utf-8"))
+    if not board.get("shards"):
+        pytest.skip("the served board is not split")
+    shards = {c: json.loads((ROOT / "data" / fe.SHARD_DIRNAME / f"{c}.json").read_text(encoding="utf-8"))
+              for c in board["shards"]["files"]}
+    js = JS.replace('state = { view: "club", team: "", tree: "canopy", sec: "", treeSet: false',
+                    'state = { view: "club", team: "%s", tree: "canopy", sec: "", treeSet: false' % team, 1)
+    prelude = """
+    var __html={}, __urls=[];
+    function __el(id){return new Proxy(function(){return __el(id);},{
+      get:function(t,k){ if(k==='innerHTML')return __html[id]||'';
+        if(k==='querySelectorAll')return function(){return [];};
+        if(k==='addEventListener'||k==='setAttribute'||k==='getAttribute')return function(){return null;};
+        return __el(id);},
+      set:function(t,k,v){if(k==='innerHTML')__html[id]=v; if(k==='textContent')__html[id+':text']=v; return true;}});}
+    function OK(v){return {then:function(cb){try{var r=cb(v);}catch(e){return NO(e);}return (r&&r.then)?r:OK(r);},catch:function(){return OK(v);}};}
+    function NO(e){return {then:function(){return NO(e);},catch:function(cb){cb(e);return OK();}};}
+    var B=%s, S=%s, SHARD_OK=%s;
+    var fetch=function(u){__urls.push(u);
+      if(u.indexOf('/data/franchise_clubs/')===0){ if(!SHARD_OK) return OK({ok:false});
+        var c=u.split('/').pop().split('.')[0]; return OK({ok:true,json:function(){return OK(S[c]);}}); }
+      return OK({ok:true,json:function(){return OK(B);}});};
+    var document={readyState:'complete',getElementById:function(id){return __el(id);},
+      querySelector:function(){return null;},querySelectorAll:function(){return [];},addEventListener:function(){}};
+    var window={document:document,EEPHUS_GL:{wire:function(){}}};
+    var location={hash:''};
+    %s
+    """ % (json.dumps(board), json.dumps(shards), "true" if shard_ok else "false", TIERS_STUB)
+    ctx = MiniRacer()
+    ctx.eval(prelude + js)
+    return ctx.eval("__html['franchise-app-root'] || ''"), json.loads(ctx.eval("JSON.stringify(__urls)"))
+
+
+def test_the_club_page_fetches_one_club_file_and_renders_it():
+    """QCLP10: the page boots on the board and fetches exactly the shown club's
+    file; the rendered club matches the one rendered off the whole document."""
+    html, urls = _render_split("MIL")
+    assert urls[0] == "/data/franchise_board.json"
+    assert [u.split("?")[0] for u in urls[1:]] == ["/data/franchise_clubs/MIL.json"]
+    whole, _ = _render("club", team="MIL")
+    assert html == whole
+    failed, _ = _render_split("MIL", shard_ok=False)
+    assert "px-state is-failed" in failed and "fr-mast-name" in failed and '<section class="fr-block"' not in failed

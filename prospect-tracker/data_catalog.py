@@ -544,6 +544,21 @@ ARTIFACTS = (
                  "30 clubs and leaves the previous file on disk."),
     },
     {
+        "file": "franchise_clubs/*.json", "group": "mlb",
+        "title": "Franchise per-club files (one per club)",
+        "what": ("data/franchise_clubs/{CODE}.json: the club's grade tree (every branch "
+                 "and leaf with its basis) and its twelve sections, moved off the board "
+                 "on 2026-10-03 so the page reads one club's file instead of all thirty. "
+                 "The index (bytes, sha256_16) lives in franchise_board.json under "
+                 "shards."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_franchise_export.py",
+        "note": ("Written by franchise_export.write in the same pass as the board, files "
+                 "first; franchise_export.load joins them back for a Python reader. "
+                 "Tracked in git like ledger_clubs/; both deploy consumers ship the "
+                 "directory."),
+    },
+    {
         "file": "management_decisions.json", "group": "mlb",
         "title": "In-Game Management decision ledger (summary)",
         "what": ("Nine decision families the play corpus can name (pitching change, pinch "

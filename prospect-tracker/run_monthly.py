@@ -2513,16 +2513,16 @@ def _export_ledger_board(log) -> bool:
 
 
 def _export_franchise_board(log) -> bool:
-    """Write the Franchise board (the body of nightly step 6b7d). True on a
-    write. A refusal (fewer than 30 clubs on a graded branch, or a settled
+    """Write the Franchise board and its thirty club files (the body of
+    nightly step 6b7d). True on a write. A refusal (fewer than 30 clubs on a graded branch, or a settled
     season's ODDS contradicting the final standings) or a raise leaves the
     previous file on disk and files a red under "franchise_export"."""
     try:
         import franchise_export as _fr
         _frd = _fr.build()
-        _fr.OUT.write_text(
-            json.dumps(_frd, ensure_ascii=False, separators=(",", ":")),
-            encoding="utf-8")
+        # QCLP10 (2026-10-03): the board plus its thirty club files
+        # (data/franchise_clubs/CODE.json), split by the exporter's own writer.
+        _fr.write(_frd)
         _fr_top = min(_frd["clubs"], key=lambda d: d["index"]["rank"])
         log.info("franchise: %d clubs; #1 %s index %s",
                  len(_frd["clubs"]), _fr_top["code"], _fr_top["index"]["score"])

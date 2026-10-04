@@ -52,8 +52,10 @@ document and never writes, so a test can call it under tmp_path.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+import re
 import statistics
 import sys
 from collections import Counter, defaultdict
@@ -76,6 +78,19 @@ STANDINGS_FIRST = 2000
 SPINE_FIRST = 1969
 N_CLUBS = 30
 SIZE_BUDGET_BYTES = 1_500_000
+
+# QCLP10 (surface-quality audit 2026-10-02): one board plus thirty per-club
+# files, the data/ledger_clubs/ pattern. The page read 1,118,562 bytes at boot
+# and 1,039,561 of them were clubs[].tree and clubs[].sections for all 30
+# clubs while it shows one. Those two keys now live in
+# data/franchise_clubs/CODE.json; the board keeps every other key (the board
+# rows, the copy, the accountability block, each club's name, index and links)
+# and indexes the files under "shards". build() still returns the whole
+# document and every assertion runs on it; write() splits it and load()
+# joins it back for any Python reader.
+SHARD_DIRNAME = "franchise_clubs"
+SHARD_DIR = DATA / SHARD_DIRNAME
+SHARD_KEYS = ("tree", "sections")
 
 #: Owner decision (2026-09-23, spec D3 + D6 alternative): the three graded
 #: branches and their weights. Declared here, printed from the payload, never
@@ -1212,16 +1227,14 @@ def build() -> dict:
     # ---- copy: every sentence the page prints, once ------------------------------------------------
     cba_expiry = "2026-12-01"
     copy = {
-        "masthead": ("One page per club, re-serving what every module already publishes on the scale it was "
-                     "computed on, each number labelled and linked back to the module that owns it."),
-        "root_sentence": ("Re-standardised across 30 clubs: a weighted rank of realized standing and one provisional "
-                          "projection, not a forecast of anything else. Thirty percent of the index rests on a "
-                          "provisional projection (team_win_projections)."),
+        "masthead": "Every club on one page, each number on its own scale and linked to the module that owns it.",
+        "root_sentence": ("A weighted rank re-standardised across 30 clubs, not a forecast. Thirty percent of the "
+                          "index rests on a provisional projection (team_win_projections)."),
         "root_eyebrow": "Franchise Report Card",
         "root_foot_descriptive": "descriptive branches carry no weight",
-        "weights_note": ("ROSTER and OUTLOOK are correlated: 2027 wins are the current roster rolled forward, so "
-                         "one roster is counted twice by design; the weights are declared in the payload and never "
-                         "redistributed at runtime."),
+        "weights_note": (f"ROSTER and OUTLOOK overlap by design: {CLASS_YEAR} wins roll the current roster forward, "
+                         "so one roster counts twice."),
+        "how_title": "How this works",
         "score_basis": ("branch score = 100 + 10z of the served value across the 30 clubs (population sd); the "
                         "Franchise Index is the weighted mean of the three branch scores re-standardised to "
                         "100 + 10z before any rank or letter is taken from it"),
@@ -1233,8 +1246,11 @@ def build() -> dict:
                          "lives under ODDS"),
         "outlook_accounting": (f"league sum pinned to {target_wins} wins; replacement {replacement_wins} wins per club, "
                                f"derived from the {league_war_benchmark} WAR league benchmark in team_outlook_eval"),
-        "roster_note": "current roster; the leaderboard team_basis names the day",
-        "roster_basis_note": (team_basis.get("note") or ""),
+        # One sentence (QCLC16): the day and the unresolved count come from the
+        # eWAR board's own team_basis block, never typed here.
+        "roster_note": (f"Current roster as MLB's transaction feed lists it on {as_of_war}: a traded player's "
+                        f"whole season counts for his new club, and rows with no club "
+                        f"({team_basis.get('n_team_unresolved', 0)}) are left out of team totals."),
         "leverage_deploy_note": "deployment index, not skill (leverage_consistency)",
         "season_note": "descriptive: the 2026 record is realized standing and carries no grade of its own",
         "pythag_label": "current overlay, blended",
@@ -1294,8 +1310,12 @@ def build() -> dict:
         # Quoted, never rebuilt: the futures payload derives it from its own build
         # date and the season's last regular-season date, and it is empty before then.
         "odds_as_of": futures.get("as_of_note") or "",
-        "board_lede": "Thirty clubs on the Franchise Index, one column per graded branch and the headline descriptive figures; every row opens its club.",
-        "board_foot": "index and branch scores are 100 + 10z across the 30 clubs and take the z ladder; every other column prints on its own scale, plain.",
+        "board_lede": "Every club on the Franchise Index; a club code opens its page.",
+        "board_foot": "Index and branch scores are 100 + 10z across the 30 clubs and take the z ladder; every other column prints on its own scale, plain.",
+        # QCLC20: the Playoff column names its model and its registry verdict.
+        "board_playoff_title": (f"Playoff: the season simulator ({ODDS_REGISTRY_ID} "
+                                f"{verdict_of.get(ODDS_REGISTRY_ID) or 'unregistered'}); after the regular "
+                                "season it reads the settled outcome."),
         "load_error": "Franchises could not be loaded.",
         "tree_hidden": "Hide the tree; show only the root card",
         "tree_canopy": "Root and the twelve branches",
@@ -1476,15 +1496,85 @@ def _assert_document(doc: dict) -> None:
     assert chr(0x2014) not in txt and chr(0x2013) not in txt, "a banned dash reached the payload"
 
 
+def _dumps(obj) -> bytes:
+    return json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
+def _sha16(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()[:16]
+
+
+def split(doc: dict) -> tuple[dict, dict]:
+    """(board, {CODE: shard}) from a whole document: each club's SHARD_KEYS
+    move to its shard, the board keeps every other key in its order and gains
+    "shards", the index the page and load() check the files against."""
+    shard_docs, files, clubs = {}, {}, []
+    for c in doc["clubs"]:
+        sd = {"code": c["code"], "generated_at": doc.get("generated_at")}
+        for k in SHARD_KEYS:
+            sd[k] = c[k]
+        b = _dumps(sd)
+        files[c["code"]] = {"bytes": len(b), "sha256_16": _sha16(b)}
+        shard_docs[c["code"]] = sd
+        clubs.append({k: v for k, v in c.items() if k not in SHARD_KEYS})
+    board = {k: (clubs if k == "clubs" else v) for k, v in doc.items()}
+    board["shards"] = {"dir": SHARD_DIRNAME, "keys": list(SHARD_KEYS), "files": files}
+    return board, shard_docs
+
+
+def write(doc: dict, out: Path | None = None, shard_dir: Path | None = None) -> int:
+    """Write the thirty club files, then the board, then remove any CODE.json
+    whose club is not on the board. The files go first so a reader holding the
+    previous board (which carried its sections inline) is never sent to a
+    file that is not there yet. Returns the board's size in bytes. Called from
+    main() and from run_monthly's _export_franchise_board."""
+    out = Path(out or OUT)
+    shard_dir = Path(shard_dir or SHARD_DIR)
+    board, shard_docs = split(doc)
+    shard_dir.mkdir(parents=True, exist_ok=True)
+    for code, sd in shard_docs.items():
+        (shard_dir / f"{code}.json").write_bytes(_dumps(sd))
+    b = _dumps(board)
+    out.write_bytes(b)
+    for p in shard_dir.glob("*.json"):
+        if re.fullmatch(r"[A-Z]{2,3}\.json", p.name) and p.stem not in shard_docs:
+            try:
+                p.unlink()
+            except OSError as exc:
+                log.warning("franchise_export: stale club file %s not removed: %s", p.name, exc)
+    return len(b)
+
+
+def load(path: Path | None = None, shard_dir: Path | None = None) -> dict:
+    """The whole document from the board and its club files: each club gets
+    its SHARD_KEYS back after its file's size and hash are checked against
+    the board's index. A board that still carries its sections inline (the
+    pre-split file) comes back as it is."""
+    path = Path(path or OUT)
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    sh = doc.get("shards")
+    if not sh:
+        return doc
+    shard_dir = Path(shard_dir or (path.parent / sh["dir"]))
+    for c in doc["clubs"]:
+        b = (shard_dir / f"{c['code']}.json").read_bytes()
+        stamp = sh["files"][c["code"]]
+        assert len(b) == stamp["bytes"] and _sha16(b) == stamp["sha256_16"], (
+            f"{c['code']}: club file drifted from the board index")
+        sd = json.loads(b.decode("utf-8"))
+        for k in sh["keys"]:
+            c[k] = sd[k]
+    return doc
+
+
 def main(argv=None) -> int:
     try:
         doc = build()
     except FranchiseRefusal as exc:
         print(f"REFUSED: {exc}; the previous {OUT.name} stands")
         return 2
-    OUT.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    n = OUT.stat().st_size
-    print(f"wrote {OUT.name} ({n / 1e3:.0f} KB)")
+    n = write(doc)
+    print(f"wrote {OUT.name} ({n / 1e3:.0f} KB) and {N_CLUBS} files under {SHARD_DIRNAME}/")
     top = sorted(doc["clubs"], key=lambda d: d["index"]["rank"])[:3]
     for d in top:
         b = d["tree"]["branches"]

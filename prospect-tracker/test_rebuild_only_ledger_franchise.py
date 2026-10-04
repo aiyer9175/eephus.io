@@ -92,7 +92,7 @@ def test_the_nightly_steps_and_the_rebuild_share_one_writer_each():
     assert led.index("_lg.OUT.write_text(") < led.index("_lg.write_shards(") < led.index("_lg.write_trade_cbt(")
     assert '_record_ingest("ledger_export", True' in led and '_record_ingest("ledger_export", False' in led
     fr = _fn_body("_export_franchise_board")
-    assert "_fr.OUT.write_text(" in fr and "FranchiseRefusal" in fr
+    assert "_fr.write(_frd)" in fr and "_fr.OUT.write_text(" not in fr and "FranchiseRefusal" in fr
     assert '_record_ingest("franchise_export", True' in fr and '_record_ingest("franchise_export", False' in fr
 
 

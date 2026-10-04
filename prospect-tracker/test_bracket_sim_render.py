@@ -202,7 +202,10 @@ def test_the_flag_off_restores_the_panel_byte_for_byte(payloads):
 
 
 def _franchise_overlay(route, bracket):
-    doc = json.loads((ROOT / "data" / "franchise_board.json").read_text(encoding="utf-8"))
+    # The whole document (board joined with its club files, QCLP10): the page
+    # renders a club that carries its sections inline with no second fetch.
+    import franchise_export as fe
+    doc = fe.load(ROOT / "data" / "franchise_board.json")
     by = {c["team"]: c for c in bracket["clubs"]}
     for club in doc["clubs"]:
         r = by.get(club["code"]) or {}

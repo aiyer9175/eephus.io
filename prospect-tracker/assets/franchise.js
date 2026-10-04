@@ -34,6 +34,11 @@
   "use strict";
 
   var DATA_URL = "/data/franchise_board.json";
+  // QCLP10: each club's tree and sections live in its own file, fetched when
+  // the club is shown (the board is a tenth of the size it was). A board that
+  // still carries them inline renders with no second fetch.
+  var SHARD_URL = "/data/franchise_clubs/";
+  var SHARD_STATE = {};     // code -> "loading" | "failed"
   var DATA = null;
   var LOAD_ERROR = "";
   var CLUBS = {};
@@ -73,6 +78,19 @@
     return '<a class="g-term" href="/glossary/#g=' + esc(id) + '" data-gl="' + esc(id) + '">' + esc(label) + "</a>";
   }
   function copy(k) { return (DATA && DATA.copy && DATA.copy[k]) || ""; }
+  // One reader sentence from a copy fragment: a leading lower-case letter is
+  // capitalised and a closing stop is added when the fragment has none, so
+  // fragments joined into one note never read as a run-on (QCLC16, M09-12).
+  function sentence(s) {
+    var t = String(s == null ? "" : s).replace(/\s+$/, "").replace(/^\s+/, "");
+    if (!t) return "";
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    return /[.!?:]$/.test(t) ? t : t + ".";
+  }
+  function prose() {
+    return Array.prototype.map.call(arguments, function (s) { return esc(sentence(s)); })
+      .filter(function (s) { return s; }).join(" ");
+  }
   function signCls(v) {
     if (!isNum(v) || Number(v) === 0) return "";
     return Number(v) > 0 ? "fr-pos" : "fr-neg";
@@ -103,6 +121,27 @@
     return '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? " selected" : "") + ">" + esc(label) + "</option>";
   }
   function clubOf(code) { return Object.prototype.hasOwnProperty.call(CLUBS, code) ? CLUBS[code] : null; }
+  function hasBody(d) { return !!(d && d.tree && d.sections); }
+  function loadShard(code) {
+    var d = clubOf(code);
+    // a failed file is not asked for again on the render that shows the
+    // failure; picking the club again asks once more
+    if (!d || hasBody(d) || SHARD_STATE[code]) return;
+    SHARD_STATE[code] = "loading";
+    var sh = DATA.shards || {}, stamp = (sh.files || {})[code];
+    fetch(SHARD_URL + code + ".json" + (stamp ? "?v=" + stamp.sha256_16 : ""), { cache: "no-cache" })
+      .then(function (r) { if (!r || !r.ok) throw new Error("shard"); return r.json(); })
+      .then(function (s) {
+        if (!s || s.code !== code) throw new Error("shard");
+        (sh.keys || ["tree", "sections"]).forEach(function (k) { d[k] = s[k]; });
+        delete SHARD_STATE[code];
+        if (state.view === "club" && state.team === code) render();
+      })
+      .catch(function () {
+        SHARD_STATE[code] = "failed";
+        if (state.view === "club" && state.team === code) render();
+      });
+  }
   function codes() { return DATA ? DATA.codes.slice() : []; }
   function ensureTeam() {
     if (!state.team || !clubOf(state.team)) state.team = codes()[0] || "";
@@ -182,8 +221,16 @@
   }
 
   // ---- masthead -------------------------------------------------------------
+  function boardRow(code) {
+    var rows = (DATA && DATA.board) || [];
+    for (var i = 0; i < rows.length; i++) if (rows[i].code === code) return rows[i];
+    return {};
+  }
   function renderMast(d) {
-    var s = d.sections.season;
+    // Before the club's file is in, the record comes off its board row, so the
+    // masthead does not move when the sections land.
+    var br = boardRow(d.code);
+    var s = d.sections ? d.sections.season : { wins: br.wins_2026, losses: br.losses_2026 };
     var rec = isNum(s.wins) && isNum(s.losses) ? s.wins + "-" + s.losses : "";
     var rd = isNum(s.run_diff) ? ' <span class="' + signCls(s.run_diff) + '">' + signed(s.run_diff, 0) + "</span>" : "";
     var gfx = "";
@@ -194,7 +241,7 @@
       '<img class="fr-mast-logo" src="' + esc(d.logo) + '" alt="" loading="lazy">' +
       '<div><div class="fr-mast-name">' + esc(d.name) + '</div><div class="fr-mast-meta">' + esc(d.division || "") +
       (rec ? " &middot; " + esc(rec) + rd : "") + (isNum(s.division_rank) ? " &middot; " + gl("division rank", "season_record") + " " + esc(s.division_rank) : "") + "</div></div>" +
-      '<div class="fr-mast-controls">' + sel + gfx + "</div></div>" + banner();
+      '<div class="fr-mast-controls">' + sel + gfx + "</div></div>";
   }
 
   // ---- root card -------------------------------------------------------------
@@ -352,10 +399,11 @@
   function renderTree(d) {
     var mode = state.tree;
     function chip(val, lbl, tipKey) {
-      return '<button class="chip' + (mode === val ? " active" : "") + '" data-frtree="' + val + '" type="button" title="' + esc(copy(tipKey)) + '">' + lbl + "</button>";
+      // aria-pressed names the state the "active" class only paints (QCLA13).
+      return '<button class="chip' + (mode === val ? " active" : "") + '" data-frtree="' + val + '" type="button" aria-pressed="' + (mode === val ? "true" : "false") + '" title="' + esc(copy(tipKey)) + '">' + lbl + "</button>";
     }
     var body = mode === "full" ? '<div class="fr-tree-svg">' + renderFullTree(d) + "</div>" : "";
-    return '<div class="fr-tree-wrap"><div class="fr-tree-toggle"><span>Tree view</span>' +
+    return '<div class="fr-tree-wrap"><div class="fr-tree-toggle" role="group" aria-label="Tree view"><span aria-hidden="true">Tree view</span>' +
       chip("hidden", "Hidden", "tree_hidden") + chip("canopy", "Canopy", "tree_canopy") + chip("full", "Full", "tree_full") +
       "</div>" + body + "</div>" + renderAccordion(d);
   }
@@ -384,7 +432,10 @@
       var href = d.links[p[1]];
       return href ? '<a href="' + esc(href) + '">' + esc(p[0]) + "</a>" : "";
     }).join("");
-    return '<h2 id="fr-sec-' + esc(key) + '">' + esc(b.label) + ' <span class="fr-sec-title">' + esc(b.title) + "</span>" + chip + "</h2>" +
+    // The status chip sits beside the heading, not inside it, so the heading's
+    // name reads "ROSTER The major-league club today" and the chip is its own
+    // text (QCLA13: the two ran together as "...todayewar provisional").
+    return '<div class="fr-sec-head"><h2 id="fr-sec-' + esc(key) + '">' + esc(b.label) + ' <span class="fr-sec-title">' + esc(b.title) + "</span></h2>" + chip + "</div>" +
       '<div class="fr-basis">basis: ' + esc(b.basis) + "</div>" +
       '<div class="fr-open">' + esc(copy("open_in")) + " " + links + "</div>";
   }
@@ -397,14 +448,23 @@
     return '<div class="fr-tile' + (href ? " fr-tile-linked" : "") + '"><div class="fr-tile-title">' + title + '</div><div class="fr-tile-big ' + (cls || "") + '">' + big +
       '</div><div class="fr-tile-sub">' + (sub || "") + "</div>" + open + "</div>";
   }
+  // A tile names the board it quotes in words; the payload path rides the
+  // title (X06-14: "hitter_leaderboards.teams.offense_plus" was reader copy).
+  var BASIS_BOARD = { war: "eWAR", hitter: "Hitters", starter: "Starters", bullpen: "Bullpen", defense: "Defense", leverage: "Leverage" };
+  function basisText(basis) {
+    var s = String(basis == null ? "" : basis);
+    var m = /^([a-z]+)_leaderboards\.teams\.[a-z_0-9]+(.*)$/.exec(s);
+    return m && BASIS_BOARD[m[1]] ? "MLB Stats " + BASIS_BOARD[m[1]] + " team board" + m[2] : s;
+  }
   function leafTile(lf, sub) {
-    return tile(lf.gl ? gl(lf.label, lf.gl) : esc(lf.label), esc(fmtLeaf(lf)), sub === undefined ? esc(lf.basis) : sub, leafCls(lf), lf.link);
+    var basis = '<span title="' + esc(lf.basis) + '">' + esc(basisText(lf.basis)) + "</span>";
+    return tile(lf.gl ? gl(lf.label, lf.gl) : esc(lf.label), esc(fmtLeaf(lf)), sub === undefined ? basis : sub, leafCls(lf), lf.link);
   }
   function leafBy(b, key) {
     for (var i = 0; i < b.leaves.length; i++) if (b.leaves[i].key === key) return b.leaves[i];
     return null;
   }
-  function spark(points, zeroAt) {
+  function spark(points, zeroAt, label) {
     var xs = points.filter(function (p) { return isNum(p[1]); });
     if (xs.length < 2) return "";
     var W = 520, H = 36, lo = Infinity, hi = -Infinity;
@@ -416,13 +476,18 @@
     var pts = xs.map(function (p, i) { return X(i) + "," + Y(p[1]); }).join(" ");
     var dots = xs.map(function (p, i) { return '<circle cx="' + X(i) + '" cy="' + Y(p[1]) + '" r="2.5" fill="transparent"><title>' + esc(p[0] + ": " + p[1]) + "</title></circle>"; }).join("");
     var zero = isNum(zeroAt) ? '<line class="fr-spark-zero" x1="0" x2="' + W + '" y1="' + Y(zeroAt) + '" y2="' + Y(zeroAt) + '"/>' : "";
-    return '<div class="fr-spark"><svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" role="img">' + zero + '<polyline class="fr-spark-line" points="' + pts + '"/>' + dots + "</svg></div>";
+    // Named like the other strips (QCLA13): the first and last points ride the
+    // name, and every point keeps its own <title>.
+    function pt(p) { return p[0] + " " + (Number(p[1]) % 1 ? n1(p[1]) : String(p[1])); }
+    var name = (label || "series") + ", " + pt(xs[0]) + " to " + pt(xs[xs.length - 1]);
+    return '<div class="fr-spark"><svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" role="img" aria-label="' + esc(name) + '">' + zero + '<polyline class="fr-spark-line" points="' + pts + '"/>' + dots + "</svg></div>";
   }
+  // A label/value table: the label cell is a row header (QCLA13).
   function mini(rows) {
-    return '<table class="fr-mini">' + rows.map(function (r) { return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td></tr>"; }).join("") + "</table>";
+    return '<table class="fr-mini">' + rows.map(function (r) { return '<tr><th scope="row">' + r[0] + "</th><td>" + r[1] + "</td></tr>"; }).join("") + "</table>";
   }
   function table(headers, rows, hideFrom) {
-    var th = headers.map(function (h, i) { return '<th class="' + (hideFrom !== undefined && i >= hideFrom ? "fr-col-hide" : "") + '">' + h + "</th>"; }).join("");
+    var th = headers.map(function (h, i) { return '<th scope="col" class="' + (hideFrom !== undefined && i >= hideFrom ? "fr-col-hide" : "") + '">' + h + "</th>"; }).join("");
     var body = rows.map(function (r) {
       return "<tr>" + r.map(function (c, i) { return '<td class="' + (hideFrom !== undefined && i >= hideFrom ? "fr-col-hide" : "") + '">' + c + "</td>"; }).join("") + "</tr>";
     }).join("");
@@ -436,7 +501,7 @@
   function secRoster(d) {
     var b = branchOf(d, "roster"), s = d.sections.roster;
     var tiles = b.leaves.map(function (lf) {
-      return leafTile(lf, lf.key === "leverage_deploy_plus" ? esc(copy("leverage_deploy_note")) : esc(lf.basis));
+      return leafTile(lf, lf.key === "leverage_deploy_plus" ? esc(copy("leverage_deploy_note")) : undefined);
     }).join("");
     var split = mini([[gl("Hitters", "ewar"), n1(s.split.bat)], ["Starters", n1(s.split.sp)], ["Relievers", n1(s.split.rp)], ["Two-way", n1(s.split.sw)], ["Players on the board", nInt(s.n_players)]]);
     var lineup = table(["Lineup", gl("HEM+", "hem_plus"), "PA", "Bats", "Tier"], s.lineup.map(function (r) {
@@ -452,7 +517,7 @@
     var align = table(["Alignment", gl("DEM+", "dem_plus"), "Inn", "Frm", "Pos"], s.alignment.map(function (r) {
       return [esc(r[1]), '<span class="' + tierInk(r[2], "z") + '">' + nInt(r[2]) + "</span>", n1(r[3]), signed(r[4], 1), esc(r[0] || "")];
     }), 2);
-    return '<div class="fr-tiles">' + tiles + "</div>" + '<p class="fr-count">' + esc(copy("roster_note")) + " " + esc(copy("roster_basis_note")) + "</p>" +
+    return '<div class="fr-tiles">' + tiles + "</div>" + '<p class="fr-count">' + prose(copy("roster_note")) + "</p>" +
       '<div class="fr-grid2"><div>' + split + "</div><div>" + lineup + "</div><div>" + rotation + "</div><div>" + pen + "</div><div>" + align + "</div></div>";
   }
   function secSeason(d) {
@@ -495,7 +560,7 @@
       var br = s.branches[k[0]] || {};
       return '<a class="fr-lchip" href="' + esc(d.links.farm_tree) + '"><span class="fr-lchip-meta">' + esc(k[1]) + "</span><b>" + esc(br.letter || "-") + '</b><span class="fr-lchip-meta">#' + esc(br.rank) + " &middot; " + esc(n1(br.score)) + "</span></a>";
     }).join("") + "</div>";
-    var hist = spark(s.history.map(function (r) { return [r[0], r[1]]; }));
+    var hist = spark(s.history.map(function (r) { return [r[0], r[1]]; }), undefined, "farm score by snapshot");
     var mv = s.rank_movement || {};
     var extra = mini([
       ["Top prospect", s.top_prospect ? '<a href="/prospx/#player=' + esc(s.top_prospect.key) + '">' + esc(s.top_prospect.name) + "</a> FV " + esc(s.top_prospect.fv) : ""],
@@ -524,16 +589,18 @@
       [esc(L.guaranteed || ""), esc(money(P.guaranteed_usd)) + (P.guaranteed_source === "guaranteed_aav" ? ' <span class="fr-tag">' + esc(copy("cbt_basis_aav_label")) + "</span>" : "")],
       [esc(L.arb || "") + " (" + esc(nInt(P.n_arb)) + ")", esc(money(P.arb_usd))],
       [esc(L.prearb || "") + " (" + esc(nInt(P.n_prearb)) + ")", esc(money(P.prearb_usd))]]) +
-      '<p class="fr-count">' + esc(copy("cost_plus_parts_note")) + ".</p>" : "";
+      '<p class="fr-count">' + prose(copy("cost_plus_parts_note")) + "</p>" : "";
     // The surplus figure is the MLB leg only (owner answer M13-2): no prospect
     // row is in it, so it never overlaps the FARM branch.
     var by = ml.by_salsrc_mm || {};
     var sur = mini([[gl(copy("mlb_leg_label"), "controlled_surplus"), '<span class="' + signCls(ml.mlb_mm) + '">' + esc(moneyMM(ml.mlb_mm)) + "</span>"]]
-      .concat(Object.keys(by).map(function (k) { return ["&nbsp;&nbsp;" + esc(k), esc(moneyMM(by[k]))]; }))
+      .concat(Object.keys(by).map(function (k) { return ["&nbsp;&nbsp;" + esc(SALSRC_LABEL[k] || k.replace(/_/g, " ")), esc(moneyMM(by[k]))]; }))
       .concat([["Ladder sum " + esc(DATA.class_year) + " (arb and pre-arb rungs, as on /ledger/)", esc(money(d.sections.arbitration.proj_2027_usd))]]));
     return banner() + '<div class="fr-tiles">' + t + "</div>" + parts + sur +
-      '<p class="fr-count">' + esc(copy("mlb_leg_note")) + ". " + esc(copy("surplus_ev")) + " " + esc(copy("fin_no_ladder")) + " " + esc(copy("fin_cost_plus_registry")) + "</p>";
+      '<p class="fr-count">' + prose(copy("mlb_leg_note"), copy("surplus_ev"), copy("fin_no_ladder"), copy("fin_cost_plus_registry")) + "</p>";
   }
+  // The MLB leg's salary-source split prints in words, not as payload keys.
+  var SALSRC_LABEL = { arb_projection: "arbitration path", contract: "contracts" };
   function secMarket(d) {
     var s = d.sections.market;
     var fits = table(["Top fits", gl("fit", "team_fit"), "need", "afford", "window"], s.fits.map(function (r) {
@@ -576,14 +643,14 @@
     var sim = s.similar.length ? '<h3>Similar farms</h3><div class="fr-chips">' + s.similar.map(function (x) {
       return '<a class="fr-lchip" href="#view=club&team=' + esc(x[0]) + '" data-frlink="1"><b>' + esc(x[0]) + '</b><span class="fr-lchip-meta">' + esc(n2(x[1])) + "</span></a>";
     }).join("") + "</div>" : "";
-    return '<p class="fr-count">' + esc(copy("front_office_note")) + " " + esc(copy("zbar_note")) + "</p>" + panels + sim;
+    return '<p class="fr-count">' + prose(copy("front_office_note"), copy("zbar_note")) + "</p>" + panels + sim;
   }
   function secDugout(d) {
     var s = d.sections.dugout, st = s.style || {}, rz = s.realized || {};
     var t = tile(gl("Steal attempts " + esc(DATA.season_now), "steal_break_even"), esc(nInt(st.attempts)), "success " + esc(pct(st.success_rate, 1)), "", d.links.management_club) +
       tile("Target mix", esc(pct(st.share_2B, 0)) + " 2B", esc(pct(st.share_3B, 0)) + " 3B") +
       tile("Break-even faced", esc(pct(st.mean_breakeven_faced, 1)), "mean over the attempts");
-    var sp = spark(s.attempts_by_season);
+    var sp = spark(s.attempts_by_season, undefined, "steal attempts by season");
     var fam = rz.live ? table(["Family", "n", gl("realized mWPA", "realized_mwpa")], rz.families.map(function (r) {
       return [esc(r[1]) + '<span class="fr-tag">' + esc(copy("dugout_realized_tag")) + "</span>", nInt(r[2]), '<span class="' + signCls(r[3]) + '">' + esc(signed(r[3], 2)) + "</span>"];
     }).concat([["Defensive subs" + '<span class="fr-tag">count only</span>', nInt(rz.defensive_sub_n), ""]])) : dark("Realized rows", (DATA.sections_status.dugout_families || {}).blocked_on || "");
@@ -643,12 +710,12 @@
         (i % 2 === 0 ? '<text x="' + (x + bw / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + esc(String(r[0]).slice(2)) + "</text>" : "");
     }).join("");
     var strip = '<div class="fr-strip"><svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="wins and losses by season"><line class="fr-axis" x1="5" x2="' + (W - 5) + '" y1="' + (H - 14 - 0.5 * (H - 22)) + '" y2="' + (H - 14 - 0.5 * (H - 22)) + '"/>' + bars + "</svg></div>";
-    var line = spark(s.bwar, 0);
+    var line = spark(s.bwar, 0, "club bWAR by season");
     var t = (s.best ? tile("Best season since " + esc(String(s.standings[0] ? s.standings[0][0] : "")), esc(s.best[0]), esc(s.best[1] + "-" + s.best[2]) + " &middot; run differential " + esc(signed(s.best[3], 0))) : "") +
       (s.worst ? tile("Worst season", esc(s.worst[0]), esc(s.worst[1] + "-" + s.worst[2]) + " &middot; run differential " + esc(signed(s.worst[3], 0))) : "");
     var spine = (s.spine || []).map(function (iv) { return esc(iv.team_id) + " " + esc(iv.first) + "-" + esc(iv.last); }).join(" &middot; ");
     return "<h3>Wins and losses, " + esc(s.standings.length ? s.standings[0][0] : "") + " to " + esc(s.standings.length ? s.standings[s.standings.length - 1][0] : "") + "</h3>" + strip +
-      '<p class="fr-count">' + esc(copy("history_note")) + " " + esc(copy("history_pennants")) + "</p>" +
+      '<p class="fr-count">' + prose(copy("history_note"), copy("history_pennants")) + "</p>" +
       "<h3>Club bWAR by season</h3>" + line + '<p class="fr-count">' + esc(copy("bwar_basis")) + " &middot; spine: " + spine + " &middot; " + esc(s.bwar.length) + " seasons</p>" +
       '<div class="fr-tiles">' + t + "</div>" + hofTile(d, s.hof || {});
   }
@@ -722,15 +789,50 @@
   function renderClub() {
     var d = clubOf(state.team);
     if (!d) return '<p class="fr-note">' + esc(copy("load_error")) + "</p>";
+    if (!hasBody(d)) {
+      return renderMast(d) + (SHARD_STATE[d.code] === "failed"
+        ? pxState("failed", esc(copy("load_error")))
+        : pxState("loading", esc("Loading " + (d.name || d.code))));
+    }
     var blocks = DATA.branch_order.map(function (key) {
       var fn = SECTION_RENDER[key];
       return '<section class="fr-block" data-frsec="' + esc(key) + '">' + head(d, key) + (fn ? fn(d) : "") + "</section>";
     }).join("");
-    var rail = '<div class="fr-links">' + Object.keys(d.links).filter(function (k) { return d.links[k]; }).map(function (k) {
-      return '<a href="' + esc(d.links[k]) + '">' + esc(k.replace(/_/g, " ")) + "</a>";
-    }).join("") + "</div>";
     return renderMast(d) + '<div class="fr-top">' + renderRoot(d) + '<div class="fr-canopy">' + (state.tree !== "hidden" ? renderCanopy(d) : "") + "</div></div>" +
-      renderTree(d) + '<p class="fr-count">' + esc(copy("weights_note")) + "</p>" + blocks + rail;
+      renderTree(d) + how([copy("weights_note"), copy("score_basis")]) + blocks + rail(d);
+  }
+  // THE LINK RAIL (QCLC17): one strip at the foot, grouped by the module that
+  // owns each link and labelled from the same map the Open-in strips use; a
+  // key the map does not name prints as itself with spaces for its joins.
+  var LINK_LABEL = (function () {
+    var m = { fantasy_dynasty: "Dynasty" };
+    Object.keys(OPEN_LINKS).forEach(function (sec) {
+      OPEN_LINKS[sec].forEach(function (p) { if (!m[p[1]]) m[p[1]] = p[0]; });
+    });
+    return m;
+  })();
+  var MODULE_NAME = { mlbstats: "MLB Stats", projections: "Projections", prospx: "PROSPX", ledger: "Club Ledger",
+                      fa: "Free Agency", management: "Management", arbitration: "Arbitration", parks: "Parks",
+                      hof: "Hall of Fame", betting: "Betting", trademachine: "Trade Machine", fantasy: "Fantasy" };
+  function rail(d) {
+    var groups = [], by = {};
+    Object.keys(d.links).filter(function (k) { return d.links[k]; }).forEach(function (k) {
+      var mod = (/^\/([a-z]+)\//.exec(d.links[k]) || [])[1] || "";
+      if (!by[mod]) { by[mod] = []; groups.push(mod); }
+      by[mod].push('<a href="' + esc(d.links[k]) + '">' + esc(LINK_LABEL[k] || k.replace(/_/g, " ")) + "</a>");
+    });
+    return '<nav class="fr-links" aria-label="Related modules">' + groups.map(function (mod) {
+      return '<span class="fr-links-group"><span class="fr-links-mod">' + esc(MODULE_NAME[mod] || mod) + "</span>" + by[mod].join("") + "</span>";
+    }).join("") + "</nav>";
+  }
+  // HOW THIS WORKS: the method sentences sit in one collapsed block under the
+  // tree (club) or the table (board), each printed whole from the payload.
+  function how(parts) {
+    var body = parts.filter(function (s) { return s; }).map(function (s) { return '<p class="fr-count">' + prose(s) + "</p>"; }).join("");
+    var B = DATA.basis || {};
+    var src = Object.keys(B).filter(function (k) { return B[k]; }).map(function (k) { var v = String(B[k]); return esc(k.replace(/_/g, " ")) + " " + esc(/^\d{4}-\d\d-\d\dT/.test(v) ? v.slice(0, 10) : v); }).join(" &middot; ");
+    return '<details class="fr-how"><summary>' + esc(copy("how_title") || "How this works") + "</summary>" + body +
+      (src ? '<p class="fr-count">Sources: ' + src + "</p>" : "") + "</details>";
   }
 
   // ---- the board ----------------------------------------------------------------
@@ -765,19 +867,31 @@
     });
     return rows;
   }
+  // A glossary term inside a sort button is a span the tooltip engine wires
+  // (eephus-gl.js reads any [data-gl]), held out of the tab order so the
+  // button is the head's one stop; an <a> inside a <button> is not valid.
+  function glInert(label, id) {
+    return '<span class="g-term" data-gl="' + esc(id) + '" tabindex="-1">' + esc(label) + "</span>";
+  }
   function renderBoard() {
+    // THE SORTABLE HEADS (QCLA12): a native <button> inside <th scope=col
+    // aria-sort>, the /arbitration/ pattern, so the sort state is announced and
+    // Enter and Space need no key shim. The Playoff head names its model (QCLC20).
     var head = BOARD_COLS.map(function (c) {
-      var label = c[1] + (c[0] === "wins_2027" || c[0] === "tax_payroll_2027" ? esc(DATA.class_year) : "");
-      var lab = c[3] ? gl(label, c[3]) : label;
-      var arrow = state.sort.key === c[0] ? (state.sort.asc ? " &#9650;" : " &#9660;") : "";
-      return '<th class="' + (c[2] ? "" : "fr-bcol-hide") + '" data-frsort="' + esc(c[0]) + '" tabindex="0">' + lab + arrow + "</th>";
+      var label = c[1] + (c[0] === "wins_2027" || c[0] === "tax_payroll_2027" ? DATA.class_year : "");
+      var lab = c[3] ? glInert(label, c[3]) : esc(label);
+      var on = state.sort.key === c[0];
+      var arrow = '<span class="fr-sort-ind" aria-hidden="true">' + (on ? (state.sort.asc ? "&#9650;" : "&#9660;") : "") + "</span>";
+      var tip = c[0] === "playoff_pct" ? copy("board_playoff_title") : "";
+      return '<th scope="col" class="' + (c[2] ? "" : "fr-bcol-hide") + '" aria-sort="' + (on ? (state.sort.asc ? "ascending" : "descending") : "none") + '"' +
+        (tip ? ' title="' + esc(tip) + '"' : "") + ' data-export-text="' + esc(label) + '"><button type="button" class="fr-sort" data-frsort="' + esc(c[0]) + '">' + lab + arrow + "</button></th>";
     }).join("");
     var body = sortedBoard().map(function (r) {
       return "<tr>" + BOARD_COLS.map(function (c) { return '<td class="' + (c[2] ? "" : "fr-bcol-hide") + '">' + boardCell(r, c[0]) + "</td>"; }).join("") + "</tr>";
     }).join("");
     return '<p class="fr-lede">' + esc(copy("board_lede")) + "</p>" +
       '<div class="fr-board"><table class="fr-table"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div>" +
-      '<p class="fr-count">' + esc(copy("board_foot")) + " " + esc(copy("score_basis")) + "</p>";
+      how([copy("board_foot"), copy("score_basis"), copy("board_playoff_title")]);
   }
 
   // ---- GFX: the shared eephus-gfx.js board renderer draws the header ---------------
@@ -826,22 +940,30 @@
     if (state.sec) {
       try { var target = el("fr-sec-" + state.sec); if (target && target.scrollIntoView) target.scrollIntoView(); } catch (e) { /* optional */ }
     }
+    // The club file is asked for last, once this render is wired, so its own
+    // render (on arrival) never runs inside this one.
+    if (state.view === "club" && clubOf(state.team) && !hasBody(clubOf(state.team))) loadShard(state.team);
   }
   function wire() {
     var sel = el("fr-club");
-    if (sel && sel.addEventListener) sel.addEventListener("change", function () { state.team = this.value; state.sec = ""; writeHash(); render(); });
+    if (sel && sel.addEventListener) sel.addEventListener("change", function () { state.team = this.value; state.sec = ""; if (SHARD_STATE[state.team] === "failed") delete SHARD_STATE[state.team]; writeHash(); render(); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-frtree]"), function (b) {
-      b.addEventListener("click", function () { state.tree = b.getAttribute("data-frtree"); state.treeSet = true; writeHash(); render(); });
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-frtree");
+        state.tree = v; state.treeSet = true; writeHash(); render();
+        try { var nb = document.querySelector('button[data-frtree="' + v + '"]'); if (nb && nb.focus) nb.focus(); } catch (e) { /* optional */ }
+      });
     });
-    Array.prototype.forEach.call(document.querySelectorAll("th[data-frsort]"), function (th) {
-      function go() {
-        var k = th.getAttribute("data-frsort");
+    Array.prototype.forEach.call(document.querySelectorAll("button[data-frsort]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var k = btn.getAttribute("data-frsort");
         if (state.sort.key === k) state.sort.asc = !state.sort.asc;
         else { state.sort.key = k; state.sort.asc = !!TEXT_COLS[k]; }
         render();
-      }
-      th.addEventListener("click", go);
-      th.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+        // The re-render replaced the button: focus returns to the sorted head,
+        // so the next Tab moves along the heads, not to the CSV button.
+        try { var nb = document.querySelector('button[data-frsort="' + k + '"]'); if (nb && nb.focus) nb.focus(); } catch (e) { /* optional */ }
+      });
     });
     Array.prototype.forEach.call(document.querySelectorAll("a[data-frlink]"), function (a) {
       a.addEventListener("click", function (e) {
