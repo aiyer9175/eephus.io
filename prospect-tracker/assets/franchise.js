@@ -643,7 +643,7 @@
     var sim = s.similar.length ? '<h3>Similar farms</h3><div class="fr-chips">' + s.similar.map(function (x) {
       return '<a class="fr-lchip" href="#view=club&team=' + esc(x[0]) + '" data-frlink="1"><b>' + esc(x[0]) + '</b><span class="fr-lchip-meta">' + esc(n2(x[1])) + "</span></a>";
     }).join("") + "</div>" : "";
-    return '<p class="fr-count">' + esc(copy("front_office_note")) + " " + esc(copy("zbar_note")) + "</p>" + panels + sim;
+    return '<p class="fr-count">' + prose(copy("front_office_note"), copy("zbar_note")) + "</p>" + panels + sim;
   }
   function secDugout(d) {
     var s = d.sections.dugout, st = s.style || {}, rz = s.realized || {};
@@ -715,7 +715,7 @@
       (s.worst ? tile("Worst season", esc(s.worst[0]), esc(s.worst[1] + "-" + s.worst[2]) + " &middot; run differential " + esc(signed(s.worst[3], 0))) : "");
     var spine = (s.spine || []).map(function (iv) { return esc(iv.team_id) + " " + esc(iv.first) + "-" + esc(iv.last); }).join(" &middot; ");
     return "<h3>Wins and losses, " + esc(s.standings.length ? s.standings[0][0] : "") + " to " + esc(s.standings.length ? s.standings[s.standings.length - 1][0] : "") + "</h3>" + strip +
-      '<p class="fr-count">' + esc(copy("history_note")) + " " + esc(copy("history_pennants")) + "</p>" +
+      '<p class="fr-count">' + prose(copy("history_note"), copy("history_pennants")) + "</p>" +
       "<h3>Club bWAR by season</h3>" + line + '<p class="fr-count">' + esc(copy("bwar_basis")) + " &middot; spine: " + spine + " &middot; " + esc(s.bwar.length) + " seasons</p>" +
       '<div class="fr-tiles">' + t + "</div>" + hofTile(d, s.hof || {});
   }

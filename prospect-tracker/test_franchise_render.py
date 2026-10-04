@@ -628,6 +628,22 @@ def test_method_copy_sits_in_one_collapsed_block_and_the_banner_rides_its_dollar
     assert "Thirty percent of the index rests on a provisional projection" in d["copy"]["root_sentence"]
 
 
+def test_joined_copy_fragments_read_as_sentences():
+    """Two copy fragments printed in one note read as two sentences (the
+    QCLC16 defect class): each starts with a capital and ends with a stop, so
+    "...(org_tendencies) z against..." no longer runs on."""
+    d = _served()
+    c = d["copy"]
+    html, _ = _render("club", team="MIL")
+    def sent(t):
+        t = t.strip()
+        t = t[0].upper() + t[1:]
+        return t if t[-1] in ".!?:" else t + "."
+    for a, b, sec in (("front_office_note", "zbar_note", "front_office"), ("history_note", "history_pennants", "history")):
+        body = html.split('data-frsec="%s"' % sec)[1].split("</section>")[0]
+        assert sent(c[a]) + " " + sent(c[b]) in body, sec
+        assert c[a] + " " + c[b] not in body, sec
+
 def _render_split(team, shard_ok=True):
     """Render the club page off the served BOARD alone, with a fetch that
     serves data/franchise_clubs/CODE.json from disk (or fails)."""
