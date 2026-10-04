@@ -52,6 +52,28 @@ def _player(out: dict, player_key: str) -> dict | None:
     return None
 
 
+def _extras_vintages(today: date | None = None) -> tuple[str, str]:
+    """The two snapshot dates of test_extras_present_flag_reflects_data, derived
+    from today so the fixture cannot rot.
+
+    They used to be the literals 2025-01-01 and 2025-06-01. `export_timeseries_json`
+    drops a player from the active pool when `fv_stale and play_stale`; with no
+    career_stats `play_stale` is always True, so the player rode on the newest
+    date staying inside `_inactive_cutoff()` = today minus INACTIVE_MONTHS (18).
+    2025-06-01 would have left that window on 2026-12-02 (docs/TIME_ROT_BACKLOG.md).
+
+    The newer date sits 60 days back and the older one 151 days before it, the
+    literals' original spacing, so their order is kept and both stay well inside
+    the 18-month window. Returns (older, newer) as ISO strings.
+    """
+    newer = (today or date.today()) - timedelta(days=60)
+    older = newer - timedelta(days=151)
+    return older.isoformat(), newer.isoformat()
+
+
+_EXTRAS_OLDER, _EXTRAS_NEWER = _extras_vintages()
+
+
 # ---------------------------------------------------------------------------
 # tools.source_history shape — every per-source publication should land
 # as a list entry with the right keys.
@@ -103,15 +125,15 @@ class TestToolsSourceHistoryEmitted:
 
     def test_extras_present_flag_reflects_data(self, tmp_path, monkeypatch):
         snaps = [
-            # Has _extras
-            Snapshot(source="fangraphs", snapshot_date="2025-01-01",
+            # Has _extras (the older snapshot)
+            Snapshot(source="fangraphs", snapshot_date=_EXTRAS_OLDER,
                      interval_label="with_extras",
                      player_key="beta", player_name="Beta Two",
                      position="CF", org="LAD", rank=20, fv=50.0,
                      status="active",
                      tools={"hit": 50.0, "_extras": {"height": "6' 1"}}),
-            # No _extras
-            Snapshot(source="fangraphs", snapshot_date="2025-06-01",
+            # No _extras (the newer snapshot)
+            Snapshot(source="fangraphs", snapshot_date=_EXTRAS_NEWER,
                      interval_label="without_extras",
                      player_key="beta", player_name="Beta Two",
                      position="CF", org="LAD", rank=18, fv=55.0,
@@ -120,11 +142,12 @@ class TestToolsSourceHistoryEmitted:
         ]
         out = _build_export(tmp_path, monkeypatch, snaps)
         p = _player(out, "beta")
+        assert p is not None, "exported JSON missing the test prospect"
         fg_entries = (p.get("tools") or {}).get("source_history", {}).get("fangraphs", [])
-        # Newest-first so [0] is 2025-06-01 (no extras), [1] is 2025-01-01 (with extras).
+        # Newest-first so [0] is the newer date (no extras), [1] the older (with extras).
         by_date = {e["snapshot_date"]: e for e in fg_entries}
-        assert by_date["2025-01-01"]["extras_present"] is True
-        assert by_date["2025-06-01"]["extras_present"] is False
+        assert by_date[_EXTRAS_OLDER]["extras_present"] is True
+        assert by_date[_EXTRAS_NEWER]["extras_present"] is False
 
 
 # ---------------------------------------------------------------------------

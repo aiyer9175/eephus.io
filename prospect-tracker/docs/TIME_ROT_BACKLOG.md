@@ -37,17 +37,25 @@ A fixture dated `N` goes stale on the first day `cutoff > N`, i.e.
 
 | rots on | file:line | fixture | failure mode |
 | --- | --- | --- | --- |
-| **2026-12-02** | `test_storage_export.py:114` | 2025-06-01 | `beta` goes inactive, `_player()` returns None, AttributeError at `:123` |
-| **2027-02-01** | `test_storage_export.py:77` | 2025-07-31 | `alpha` gone, `:87` asserts `p is not None` |
-| **2027-02-01** | `test_storage_export.py:182` | 2025-07-31 | `delta` gone, fails at `:195` |
-| **2027-02-01** | `test_storage_export.py:213` | 2025-07-31 | `eps` gone, fails at `:221` |
-| **2027-07-23** | `test_storage_export.py:238` | 2026-01-22 | `ped_yes` gone, `.get()` on None at `:246` |
-| **2027-08-15** | `test_storage_export.py:250` | 2026-02-14 | `ped_no` gone, TypeError at `:258` |
+| ~~2026-12-02~~ REPAIRED 2026-10-04 (TIMEROT_1202) | `test_storage_export.py` `test_extras_present_flag_reflects_data` (was `:114`) | was 2025-06-01, now `_extras_vintages()`: today minus 60 days and 151 days before that | was: `beta` goes inactive, `_player()` returns None, AttributeError at `:123` |
+| **2027-02-01** | `test_storage_export.py:99` | 2025-07-31 | `alpha` gone, `:109` asserts `p is not None` |
+| **2027-02-01** | `test_storage_export.py:205` | 2025-07-31 | `delta` gone, fails at `:218` |
+| **2027-02-01** | `test_storage_export.py:236` | 2025-07-31 | `eps` gone, fails at `:244` |
+| **2027-07-23** | `test_storage_export.py:261` | 2026-01-22 | `ped_yes` gone, `.get()` on None at `:269` |
+| **2027-08-15** | `test_storage_export.py:273` | 2026-02-14 | `ped_no` gone, TypeError at `:281` |
 | **2027-08-17** | `test_consensus.py:417` | 2026-02-16 | `:433` `active_count == 3` becomes 0 |
 | **2027-08-17** | `test_age.py:114` | 2026-02-16 | `payload["players"][0]` IndexError |
 | **2027-08-17** | `test_age_level.py:102` | 2026-02-16 | same |
 | **2027-08-17** | `test_age_level.py:143` | 2026-02-16 | same |
 | **2027-08-17** | `test_arsenal_statcast.py:284` | 2026-02-16 | same |
+
+Line numbers in `test_storage_export.py` rows are as of the TIMEROT_1202 repair
+(2026-10-04), which inserted the `_extras_vintages()` helper and moved every later
+line down by 22 or 23. The repair fixed only the 2026-12-02 row; the 2027-02-01 trio
+was left by default (it fires 2027-02-01). The repair was proven by running the test
+under a FakeDate clock set to 2026-12-02, 2027-02-01, 2027-08-17, 2027-12-31 and
+2028-03-01 (all pass), with a control showing the old literals lose `beta` on
+2026-12-02 and still pass on 2026-12-01.
 
 This CONFIRMS and refines a prediction a prior session made from the same file
 ("newest dates 2025-06-01 and 2025-07-31 ... around 2026-12 and 2027-01"). The
@@ -56,8 +64,9 @@ exact days are 2026-12-02 and 2027-02-01.
 ## Why these were NOT fixed in the same pass
 
 The dates are load bearing in ASSERTIONS as well as fixtures
-(`assert dates[0] == "2025-07-31"` at `:201`, `assert by_date["2025-06-01"]` at
-`:127`, `assert entry.get("date") == "2025-07-31"` at `:322`), and several tests
+(`assert dates[0] == "2025-07-31"` at `:224`, `assert by_date["2025-06-01"]` at
+the old `:127` (repaired by TIMEROT_1202), `assert entry.get("date") == "2025-07-31"`
+at `:345`), and several tests
 depend on the RELATIVE ordering of two or three dates. A blanket substitution
 would break green tests. The nearest firing is 110 days out, so the honest trade
 was to enumerate precisely rather than refactor ten tests at speed. Each wants a
@@ -68,10 +77,10 @@ assertions pointed at the same anchor.
 
 Checked rather than assumed, because a backlog that cries wolf gets ignored:
 
-- `test_storage_export.py:425` (2025-02-12, `grad_one`): `status="debuted"` peels
+- `test_storage_export.py:448` (2025-02-12, `grad_one`): `status="debuted"` peels
   to `grads` at `storage.py:10817-10819`, BEFORE any date gate. Immune.
-- `test_storage_export.py:430` (2026-02-14, `active_one`): no assertion depends on it.
-- `test_storage_export.py:279` (2025-07-31, `multi_src_player`): asserts only on the
+- `test_storage_export.py:453` (2026-02-14, `active_one`): no assertion depends on it.
+- `test_storage_export.py:302` (2025-07-31, `multi_src_player`): asserts only on the
   scout_reports sidecar, which harvests active + graduate + inactive
   (`storage.py:15642-15647`).
 - `test_graduation_rules.py:417` (2024-08-01): asserts membership in a UNION of
