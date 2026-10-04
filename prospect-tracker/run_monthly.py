@@ -4084,6 +4084,37 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     _hb.record("efv_scoreboard", ok=False, result=str(_e)[:120])
                 except Exception:
                     pass
+            # EFV3_D3: the eFV scoreboard matrix (efv_matrix_eval.json,
+            # tools/efv_matrix.py), FRAME x CELL x COMPARATOR x STATISTIC on
+            # the served backtest the refresh above reused or reran. It runs
+            # AFTER the scoreboard and BEFORE the ledger update below, which
+            # copies its summary counts into the headline and DS-16 rows.
+            # Subprocess so a failure inside the scoring cannot take the daily
+            # job down; own heartbeat key; never fatal. Idempotent
+            # (compare-before-write): a night with no change rewrites nothing
+            # and the ledger then appends nothing. Measured 337 s at B 2000
+            # on 2026-10-03; the timeout leaves room for a slow box.
+            try:
+                import subprocess as _sp
+                import sys as _sys
+                import job_heartbeat as _hb
+                _r = _sp.run([_sys.executable, "tools/efv_matrix.py", "--quiet"],
+                             capture_output=True, text=True, timeout=3600,
+                             cwd=str(Path(__file__).resolve().parent))
+                _ok = _r.returncode == 0
+                _hb.record("efv_matrix", ok=_ok,
+                           result=(_r.stdout or _r.stderr or "").strip().splitlines()[-1][:120]
+                           if (_r.stdout or _r.stderr) else f"rc={_r.returncode}")
+                if not _ok:
+                    log.error("daily: efv_matrix exited %s: %s",
+                              _r.returncode, (_r.stderr or "")[-400:])
+            except Exception as _e:
+                log.exception("daily: efv_matrix refresh failed - continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("efv_matrix", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
             # EV-00 progress ledger (data/efv_progress.json, the dated record
             # the glossary Source Comparison view charts). Append-only and
             # idempotent: a night with no change adds no row and only moves

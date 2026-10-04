@@ -690,3 +690,150 @@ def test_no_screening_row_carries_a_basis_key_or_becomes_the_headline(arts):
                       {"headline_frame": "vm2"})["headline_frame"] == "vm2"
     _no_fv_cell(doc)
     _no_emdash(doc)
+
+
+# ---------------------------------------------------------------------------
+# EFV3_D3: the scoreboard matrix pointer (SP/efv3/LANE_D.md s3.7)
+
+MX = ROOT / "data" / "efv_matrix_eval.json"
+
+
+def _with_matrix(arts, doc=None):
+    if doc is None:
+        if not MX.exists():
+            pytest.skip("data/efv_matrix_eval.json not built")
+        shutil.copy2(MX, arts / P.MATRIX_NAME)
+        return json.loads(MX.read_text(encoding="utf-8"))
+    (arts / P.MATRIX_NAME).write_text(json.dumps(doc), encoding="utf-8")
+    return doc
+
+
+def _file_sha(path):
+    import hashlib
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def test_matrix_field_equals_the_artifact_summary_and_sha(arts):
+    mx = _with_matrix(arts)
+    _run(arts)
+    doc = _doc(arts)
+    vm2 = [r for r in doc["rows"] if r["frame"] == "vm2"]
+    assert len(vm2) == 1
+    m = vm2[0]["matrix"]
+    blk = mx["frames"]["vm2"]
+    assert tuple(m) == P.MATRIX_FIELDS
+    assert Path(m["artifact"]).name == P.MATRIX_NAME
+    assert m["sha256"] == _file_sha(arts / P.MATRIX_NAME)
+    assert m["generated_at"] == mx["generated_at"]
+    assert m["frame_block"] == "vm2"
+    assert m["k_family_s"] == blk["summary"]["k_family_s"]
+    assert m["summary"] == blk["summary"]["counts"]
+    # the pointer is the producer's counts and nothing finer: no cell, no stratum
+    assert set(m["summary"]) == set(blk["summary"]["counts"])
+    assert "cells" not in m and "families" not in m
+    # no tilted or secondary row carries one; every row keeps the two strata only
+    for r in doc["rows"]:
+        if r["frame"] != "vm2":
+            assert "matrix" not in r, r["frame"]
+    _no_fv_cell(doc)
+    _no_emdash(doc)
+    assert "matrix" in P._OPTIONAL_HASH_FIELDS
+    assert vm2[0]["content_hash"] == P.content_hash(vm2[0])
+
+
+def test_a_changed_matrix_appends_one_row_and_an_unchanged_one_none(arts):
+    mx = _with_matrix(arts)
+    _run(arts)
+    rows1 = _doc(arts)["rows"]
+    # the same artifact again: nothing appended, only last_verified_at moves
+    assert _run(arts, now=T0 + timedelta(days=1))["appended"] == []
+    # the producer rewrote the artifact with one cell read differently
+    counts = mx["frames"]["vm2"]["summary"]["counts"]
+    counts["unresolved"] -= 1
+    counts["equivalent"] += 1
+    mx["generated_at"] = "2027-04-01T00:00:00Z"
+    _with_matrix(arts, mx)
+    res = _run(arts, now=T0 + timedelta(days=2))
+    assert len(res["appended"]) == 1
+    assert res["appended"][0].split("|")[1] == "vm2"
+    rows2 = _doc(arts)["rows"]
+    assert _strip(rows2[:len(rows1)]) == _strip(rows1), "an old row was edited or dropped"
+    new = rows2[-1]
+    assert new["frame"] == "vm2" and new["matrix"]["summary"] == counts
+    assert new["matrix"]["generated_at"] == "2027-04-01T00:00:00Z"
+    assert new["matrix"]["sha256"] == _file_sha(arts / P.MATRIX_NAME)
+    # the measured content did not move: only the pointer did
+    old = [r for r in rows1 if r["frame"] == "vm2"][-1]
+    assert all(old.get(k) == new.get(k) for k in P._HASH_FIELDS)
+    assert old["content_hash"] != new["content_hash"]
+    # and the new state is now the state: a rerun appends nothing
+    assert _run(arts, now=T0 + timedelta(days=3))["appended"] == []
+
+
+def test_rows_without_matrix_keep_their_hash():
+    row = {"frame": "vm2", "n": 1, "model_id": "m", "model_version": {}}
+    h = P.content_hash(row)
+    assert P.content_hash(dict(row, matrix=None)) == h
+    assert P.content_hash(dict(row, matrix={"sha256": "x", "summary": {"ahead": 0}})) != h
+    # every committed row predates the pointer and keeps its hash (the served
+    # contract test asserts the same over the served file)
+    if SERVED.exists():
+        for r in json.loads(SERVED.read_text(encoding="utf-8"))["rows"]:
+            assert r.get("content_hash") == P.content_hash(r)
+
+
+def test_absent_matrix_artifact_adds_no_field_and_moves_no_hash(arts):
+    _run(arts)
+    doc = _doc(arts)
+    assert all("matrix" not in r for r in doc["rows"])
+    assert all(r["content_hash"] == P.content_hash(r) for r in doc["rows"])
+
+
+def test_only_the_ds16_development_row_points_at_the_lv_dev_block(arts):
+    dev = _with_dev(arts)
+    ds = dev.get(P.DS16_SUBKEY)
+    if not ds:
+        pytest.skip("no DS-16 block in data/efv_v2_dev_eval.json")
+    mx = _with_matrix(arts)
+    if not ((mx.get("frames") or {}).get("lv_dev") or {}).get("summary", {}).get("counts"):
+        pytest.skip("the matrix artifact carries no scored lv_dev block")
+    _run(arts)
+    doc = _doc(arts)
+    for r in doc["rows"]:
+        if r["frame"] == "vm2":
+            assert r["matrix"]["frame_block"] == "vm2"
+        elif r["frame"] == "lv_dev" and r["model_id"] == ds["model_id"]:
+            assert r["matrix"]["frame_block"] == "lv_dev"
+            assert r["matrix"]["summary"] == mx["frames"]["lv_dev"]["summary"]["counts"]
+            assert r["matrix"]["k_family_s"] == mx["frames"]["lv_dev"]["summary"]["k_family_s"]
+        else:
+            # H0, overlay and P(bust) rows read a different scored object than the
+            # matrix's block and carry no pointer, so their hashes stay
+            assert "matrix" not in r, (r["frame"], r["model_id"])
+        assert r["content_hash"] == P.content_hash(r)
+    # vm_dev has no block in the artifact: no pointer, even on the DS-16 row
+    assert all("matrix" not in r for r in doc["rows"] if r["frame"] == "vm_dev")
+
+
+def test_look_row_pointer_copies_the_look_record_strata_block():
+    """EFV3_D6 writes the reserved cells under `strata` of data/efv_v2_gate.json;
+    a look row copies the same six fields from there and nothing before."""
+    assert P.look_matrix_pointer(None, "lv_res") is None
+    assert P.look_matrix_pointer({"strata": {}}, "lv_res") is None
+    blk = {"frame_id": "lv_res", "cells": {"side": {"hit": {"n": 1}}},
+           "summary": {"k_family_s": 12, "counts": {"ahead": 0, "behind": 0, "equivalent": 1,
+                                                    "unresolved": 9, "flagged_uncorrected": 0,
+                                                    "unpowered": 2, "not_scored": 0,
+                                                    "development": 0, "reserved_pending": 0}}}
+    gate = {"generated_at": "2026-12-02T00:00:00Z", "strata": {"lv_res": blk}}
+    m = P.look_matrix_pointer(gate, "lv_res", sha256="abc")
+    assert tuple(m) == P.MATRIX_FIELDS
+    assert m["artifact"].endswith(P.GATE_NAME) and m["sha256"] == "abc"
+    assert m["generated_at"] == "2026-12-02T00:00:00Z"
+    assert m["frame_block"] == "lv_res" and m["k_family_s"] == 12
+    assert m["summary"] == blk["summary"]["counts"] and "cells" not in m
+    # the matrix artifact's own reserved block (unread, RESERVED_PENDING) is never a pointer
+    mx = {"generated_at": "x", "frames": {"lv_res": {"reserved": True, "cells": {},
+                                                     "summary": {"reading": "RESERVED_PENDING"}}}}
+    assert P.matrix_pointer(mx, "lv_res") is None
+    _no_fv_cell({"rows": [{"matrix": m}], "strata": list(P.STRATA)})
