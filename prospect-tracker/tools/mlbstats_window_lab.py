@@ -178,6 +178,15 @@ ROOT = Path(os.environ.get("EEPHUS_ROOT") or Path(__file__).resolve().parent.par
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
+# THE POOLED-RATE RECIPE lives in mlbstats_rates.py (repo root), so the
+# window boards here and any other consumer of summed counts share one
+# recipe and no second formula exists. Imported under the names this lab
+# has always used.
+from mlbstats_rates import _num, _r  # noqa: E402
+from mlbstats_rates import hitter_rates as _hitter_rates  # noqa: E402
+from mlbstats_rates import pitcher_rates as _pitcher_rates  # noqa: E402
+from mlbstats_rates import pooled as _pooled  # noqa: E402
+
 _log = logging.getLogger(__name__)
 
 DATA = ROOT / "data"
@@ -225,22 +234,9 @@ MIN_POOL_N = 100
 MIN_SEASON_SHARE = 0.5
 
 
-def _num(v):
-    try:
-        f = float(v)
-    except (TypeError, ValueError):
-        return None
-    return None if f != f else f
-
-
 def _i(v):
     n = _num(v)
     return None if n is None else int(n)
-
-
-def _r(v, nd=3):
-    n = _num(v)
-    return None if n is None else round(n, nd)
 
 
 def _nolog(*_a, **_k):
@@ -759,100 +755,6 @@ def _sum_counts(panels: dict, seasons: list, block: str, keys: tuple,
                     continue
                 acc[k] = (acc.get(k) or 0.0) + v
     return out
-
-
-def _hitter_rates(acc: dict) -> dict:
-    """The pooled hitting rates, computed by handing the SUMMED counts back
-    through the shipped derivation (hem_plus.derive_rates on a Hitter built by
-    hitter_export.build_hitters).
-
-    That is what makes every rate here pooled by its own named denominator
-    without a second formula existing anywhere: AVG is H / AB over the window,
-    BABIP is (H - HR) / (AB - SO - HR + SF) over the window, OBP is over
-    AB + BB + HBP + SF, and OPS is the pooled OBP plus the pooled SLG rather
-    than a pooled ratio of its own. Re-typing those denominators here is how a
-    wrong number ends up under a right name."""
-    import hem_plus
-    import hitter_export as he
-    row = {"mlbam": 0, "name": "", "team": "",
-           "PA": acc.get("pa"), "AB": acc.get("ab"), "H": acc.get("h"),
-           "2B": acc.get("2b"), "3B": acc.get("3b"), "HR": acc.get("hr"),
-           "BB": acc.get("bb"), "IBB": acc.get("ibb"), "HBP": acc.get("hbp"),
-           "SF": acc.get("sf"), "SO": acc.get("so"), "SB": acc.get("sb"),
-           "CS": acc.get("cs")}
-    hitters = he.build_hitters([row])
-    if not hitters:
-        return {}
-    h = hitters[0]
-    hem_plus.derive_rates(h)
-    woba = hem_plus._raw_woba(h)
-    return {"avg": _r(h.rates.get("avg")), "obp": _r(h.rates.get("obp")),
-            "slg": _r(h.rates.get("slg")), "ops": _r(h.rates.get("ops")),
-            "iso": _r(h.rates.get("iso")), "babip": _r(h.rates.get("babip")),
-            "bb_pct": _r(h.rates.get("bb_pct"), 4),
-            "k_pct": _r(h.rates.get("k_pct"), 4),
-            "woba_raw": _r(woba), "_woba_den": _r(h.rates.get("woba_denom"), 1)}
-
-
-def _pitcher_rates(acc: dict, *, starter: bool) -> dict:
-    """The pooled pitching rates, computed the same way: the summed counts are
-    handed back through the shipped scorer (starter_export.build_starters plus
-    sem_plus.derive_rates, or bullpen_export.build_relievers plus
-    rem_plus.derive_rates), so ERA is ER / IP x 9 over the window and K% is
-    SO / TBF over it.
-
-    SKILL FIP IS NOT AMONG THEM and never can be: sem_plus.fip_skill shrinks the
-    component rates toward `pool.mean_k_pct` / `mean_bb_pct` / `mean_hbp_pct` /
-    `mean_hr_rate` and offsets the result by `pool.cfip`. Those are five
-    parameters of one season's pool, so a window FIP would be a different
-    statistic wearing the same header."""
-    import bullpen_export as be
-    import rem_plus
-    import sem_plus
-    import starter_export as se
-    outs = int(acc.get("outs") or 0)
-    row = {"mlbam": 0, "name": "", "team": "",
-           "G": acc.get("g"), "GS": acc.get("gs"),
-           "IP": f"{outs // 3}.{outs % 3}",
-           "BF": acc.get("tbf"), "ER": acc.get("er"), "R": acc.get("r"),
-           "BB": acc.get("bb"), "SO": acc.get("so"), "HR": acc.get("hr"),
-           "HBP": acc.get("hbp"), "Pit": acc.get("pit"), "Strk": acc.get("strk"),
-           "CG": acc.get("cg"), "GO": acc.get("go"), "AO": acc.get("ao"),
-           "SV": acc.get("sv"), "HLD": acc.get("hld")}
-    if starter:
-        built = se.build_starters([row])
-        if not built:
-            return {}
-        s = built[0]
-        sem_plus.derive_rates(s)
-        # HR/9 is built in the ROW, not in derive_rates (sem_plus.py:327 and
-        # rem_plus.py:476 carry the same expression), and the row builder needs a
-        # season pool this window does not have. Same expression, over the
-        # window's own summed HR and innings.
-        return {"era": _r(s.rates.get("era"), 2),
-                "hr9": _r(_pooled((acc.get("hr") or 0) * 9.0, outs / 3.0, 2), 2),
-                "k_pct": _r(s.rates.get("k_pct"), 4),
-                "bb_pct": _r(s.rates.get("bb_pct"), 4),
-                "k_bb_pct": _r(s.rates.get("k_bb_pct"), 4),
-                "gb_pct": _r(s.rates.get("gb_pct"), 4),
-                "ip_per_gs": _r(s.rates.get("ip_per_gs"), 2),
-                "strike_pct": _r(s.rates.get("strike_pct"), 4)}
-    built = be.build_relievers([row], {})
-    if not built:
-        return {}
-    r = built[0]
-    rem_plus.derive_rates(r)
-    return {"era": _r(r.rates.get("era"), 2),
-            "hr9": _r(_pooled((acc.get("hr") or 0) * 9.0, outs / 3.0, 2), 2),
-            "k_pct": _r(r.rates.get("k_pct"), 4),
-            "bb_pct": _r(r.rates.get("bb_pct"), 4),
-            "k_bb_pct": _r(r.rates.get("k_bb_pct"), 4)}
-
-
-def _pooled(num: float | None, den: float | None, nd: int = 3):
-    if num is None or not den:
-        return None
-    return round(float(num) / float(den), nd)
 
 
 # --------------------------------------------------------------------------- #
