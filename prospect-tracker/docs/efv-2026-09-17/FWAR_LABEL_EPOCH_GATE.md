@@ -933,6 +933,347 @@ freeze (EPOCH_D9_FREEZE, 7e34799f) read the 2026 row counts against 2025 inside 
 and froze the vintage on 2026-10-02. Written by EPOCH_RUN before step M, appended below the
 arm-set record, with nothing above part 9 edited.
 
+### 2026-10-03: step Z, the fWAR label epoch's results
+
+This entry records the measurements of the epoch's rebuild, run by EPOCH_RUN from step A
+(2026-10-03 11:47 local) to step Z (the same day, 21:11). It is the first entry in this part
+measured on the published fWAR label; the closing note below this part was written at
+registration and describes the document before this entry. Clause (l) binds every line: it
+reports what was measured and draws no accuracy conclusion from the basis. UNDECIDED is
+written as undecided.
+
+**The commit that produced it.** The numbers were produced from HEAD `2c23ff91` by
+`python tools/efv_fwar_label_epoch_lab.py` (rc 0, B_cond 2000, B_refit 400, permutation B 2000,
+seed 20260807) and `python tools/efv_fwar_label_epoch_lab.py --blast` (rc 0), after the final
+served artifacts of steps O to T. The commit that carries this entry also carries
+`data/xfv_fwar_label_epoch_eval.json` (sha256 `fc404841bd6b44f484318c6c3c15c5d8ac067508458304f2992d89948bbd43e7`),
+`data/xfv_fwar_label_epoch_blast.json` (sha256 `21639748573ef9c8e605d1e174b43c8edefcd6979dea9336b37c9d0b47fb5fdb`),
+the E7 receipt and the two arm manifests, and `test_fwar_label_epoch_results.py`, which pins
+this entry against the artifact.
+
+#### Steps and commits, in execution order
+
+| step | what ran | commit |
+| --- | --- | --- |
+| A | snapshot to `../_pre_epoch_fwar_2026-10/` with its sha256 MANIFEST at HEAD `8a1c5b7f`; the receipt-guarded identity repair step wired into the daily chain (B4ID-2, PVA-2) | `3ae607a2` |
+| C | `tools/rebase_career_war.py --provider fwar`, dry run then apply: 2,686 of 2,698 rows rebased, 12 unresolved, neither-value 0, incumbent breaks 0; backup `prospects.db.bak-fwar-2026-10-03` | none (the table is not tracked) |
+| D + U | `DEFAULT_PROVIDER` to `fwar`, `BOARD_RANK_BASIS_EPOCH` to `2026-10-03`, `label=fwar@2026-10-02-0341299c20ec`, every display door pinned to `ewar_v2` by name | `8232729f` |
+| E | the `fa_corpus`, `fa_fits_*` and `proj_ml_frame_*` caches deleted (again after the 17:43 stop) | none |
+| RT | `efv_dataset.RESOLVED_THROUGH` and `tools/build_star_odds_artifacts._RESOLVED_THROUGH` 2025 to 2026 together, alone | `86226bb2` |
+| F | BUST2 union invariant live (0 breaks both sides), matrices and evals both sides, the clause (i) arm set, E7 | `c91f5f72`, `e5b34389` (two defects found and fixed alone) |
+| G | `efv_mde_lab.py mde 2000`, `efv_power_lab.py all 2000`, then `partb` | artifacts in `94ec6875` |
+| H | the epoch lab, first run (re-run here at Z) | none |
+| I | the pooled outcome curve on the fWAR label, `grademap=outcome_pooled@baa9676f90a6` | `79340a41` |
+| J | `value_framework.py --fit`, the sub-45 knots re-measured and re-applied, `prospx_current` captured, `FV_WAR_ANCHORS` synced, k(FV) published | `70ae6f9d`; a second capture after step S, `9198aee1` |
+| K, N | the slot curve on `fwar`; the star label view and star odds artifacts; producer stamps | `2327217d` |
+| L | the WAR-rate lab on the displayed eWAR v2 basis | artifacts in `94ec6875` |
+| M | the projections retrain on the fWAR corpus, `train_hash` `cb42b96eb5ea533c` to `248baa38d8b7144a`, `war_provider` `fwar`; the registry hash first | `a4bd70e8` (the EPOCH-NOW amendment above, `3d9426b3`, came first) |
+| O to S | rebuild passes 1 to 3, `efv_export.py --all --eval`, `source_backtest.py`, `export_trade_values.py`, the step S exporters | artifacts in `94ec6875`; the Spotrac input repair `b4b52ff9` before pass 3 |
+| X | the copy sweep and its gates | `93741726`, `552f79c1`, `b2eca8e0` |
+| T | `build_site.py` | `94ec6875`, `ffb72b19` |
+| V | the eFV golden from step P's production output, `d9998b3f6a04...`, rows 9,515 | `d95e1234` |
+| W | the registry and the generated docs | `ada19ae2` |
+| Y | `tools/run_suite.py`, triaged below; one display-path defect fixed alone | `2c23ff91` |
+| Z | this entry, the eval and blast artifacts, the result pin | this commit |
+
+Two stops and their resumptions, recorded so a reader does not have to find them elsewhere.
+At 17:43 a lane's `run_monthly.py --rebuild-only` was found writing this run's shared
+`.cache` (a worktree symlink); the orchestrator stopped every lane, and the resume verified
+the `war_daily` frames and the FA corpus byte for byte against independent copies before
+re-running steps K, L, M and N, which reproduced their earlier outputs byte for byte. At 19:10
+step S's display check found 71 moved displayed WAR cells: Spotrac's team pages, refetched
+into the shared `.cache` at 12:15 by another process, began serving numeric codes in their
+'Pos' column, and 128 pitcher cards became hitter cards. Under orchestrator ruling
+EPOCH-SPOTRAC-1 the inline vet join now validates the position and falls back to the
+engine's role token (`b4b52ff9`, committed alone); a hitter whose Spotrac position is a code
+shows the role H until the parser fix lands (SPOTRAC_POS_CODES_2026_10, a lane after this
+entry). Two runbook-order defects were repaired in place: the pooled curve's pool is
+`efv_score`'s output, so `efv_score.py` ran on the step F matrices before step I; and the
+rebuild passes rewrite the one $/WAR series from the FA corpus, so `prospx_current` was
+captured again after step S (`9198aee1`) and `data/value_framework.{json,js}` re-emitted.
+
+#### Which preconditions of part 3 were met when each step ran
+
+- E1: answered for every step: O1 and O2 (part 1), O3 and O4, O7 as EPOCH-Q3, O5 as EPOCH-Q4;
+  O11 is open and blocks no step.
+- E2: met. The live tripwire `test_career_war_identity_tripwire.py` passed at step A (8 passed)
+  and after step C's apply (8 passed).
+- E3: met in its five parts before step C.
+- E4: in hand.
+- E5: by the waiver of 2026-10-02 (EPOCH-Q1), with all five pins taken at step A:
+  `data/mlb_projections.json` (sha256 `1e9383f3cbcd61e16737d5f8269053f038056f4ce0ce79527bd27cfd6fb33c86`),
+  `model/proj_lgbm/meta.json` (`train_hash` `cb42b96eb5ea533c`, `war_provider` `ewar_v2`), the
+  `models.joblib` content hash `97bc4155ef7fbdc9ca4383d7fc7fcd5e4b5727ce0e4e37fb06210ea6762e0b92`,
+  the corpus `war_provider` `ewar_v2` and the champion fit key `9f2638f2`.
+- E6: met before steps A and C.
+- E7: MET at step F, before any margin, arm or clause (d) cell was read (receipt below).
+- E8: met.
+- Clause (j) point 1: step M ran on 2026-10-03 under the EPOCH-NOW amendment recorded above;
+  point 4: the bundle meta carries `war_provider` `fwar` since step M.
+
+#### The LABEL FREEZE RECEIPT
+
+1. The frozen vintage. `data/fwar_vintage.json`, `vintage_id` `2026-10-02-0341299c20ec`,
+   sha256 `d070f049bad6a1e287b609812c35e3e664c09dc43451ab4323412be7c934a3e9`, seasons
+   2000 to 2026. The fingerprint's `label=` term as committed at step D + U (`8232729f`)
+   reads `label=fwar@2026-10-02-0341299c20ec`.
+2. The per-side coverage receipt (clause (c), from `data/xfv_fwar_label_epoch_eval.json`):
+   hitters 968 debuted players, 3,776 label seasons, all 3,776 joined to the fWAR vintage, no
+   player without an id; pitchers 1,116 players, 3,918 label seasons, all joined, none
+   without an id. Share 100.0 percent in every cohort band and every fold on both sides.
+3. The E7 receipt, recorded at step F. `tools/fwar_label_rebuild_check.py`, tolerance
+   0.0005 WAR, bar 0.99 per side: hitters 968 of 968 debuted rows matched (share 1.0000),
+   pitchers 1,116 of 1,116 (share 1.0000), every compared row on `war_basis` `fwar`.
+   Receipt `data/_labs/fwar_epoch_arms/e7_receipt.json`, sha256
+   `65e7c8c9c5a897050f46ce1504c4b9ae4da3a671ec9165cfa6d7088ab5146499`.
+
+#### Clause (a): floors first, re-derived at step G on the final frame
+
+Same-label margin of the eFV blend over consensus on the fWAR label, with its estimator:
+
+| cell | rows | point margin | E_refit MDE95 | E_cond MDE95 | E_refit | E_cond |
+| --- | --- | --- | --- | --- | --- | --- |
+| hit full_pool_km | 1,798 | 0.0056 | 0.0265 | 0.0205 | NULL | NULL |
+| pit full_pool_km | 1,887 | 0.0147 | 0.0224 | 0.0185 | NULL | NULL |
+| hit debuted_km | 782 | 0.03242 | 0.0327 | 0.0208 | NULL | RESOLVABLE WIN |
+| pit debuted_km | 907 | 0.0257 | 0.0278 | 0.0233 | NULL | RESOLVABLE WIN |
+| head-to-head common (player-clustered, 1,088 clusters) | 3,327 | 0.05524 | 0.0334 | 0.031 | RESOLVABLE WIN | RESOLVABLE WIN |
+
+These are same-label margins on the new label, the frame the program's later reads use. They
+are not the basis's effect, which is clause (d)'s delta of margins below.
+
+#### Clause (b): the cross-label matrix
+
+Rows are the Estar arm's debuted rows scored forward-chained; every cell is a margin with
+consensus scored on the same label beside the blend.
+
+| side | fit on | scored on eWAR v2 | scored on fWAR |
+| --- | --- | --- | --- |
+| hit (n 782) | eWAR v2 | consensus 0.38949, blend 0.42352, margin 0.03403 | consensus 0.39866, blend 0.42885, margin 0.03019 |
+| hit | fWAR | consensus 0.38671, blend 0.42255, margin 0.03584 | consensus 0.39566, blend 0.42748, margin 0.03182 |
+| hit | twin | consensus 0.38811, blend 0.42406, margin 0.03595 | consensus 0.39873, blend 0.43089, margin 0.03216 |
+| pit (n 907) | eWAR v2 | consensus 0.29795, blend 0.3096, margin 0.01165 | consensus 0.33274, blend 0.34737, margin 0.01463 |
+| pit | fWAR | consensus 0.30062, blend 0.32007, margin 0.01945 | consensus 0.33508, blend 0.35917, margin 0.0241 |
+| pit | twin | consensus 0.30038, blend 0.31163, margin 0.01125 | consensus 0.33541, blend 0.34924, margin 0.01383 |
+
+The honest cell is the diagonal difference (fWAR on fWAR minus eWAR v2 on eWAR v2): hitters
+-0.00221, pitchers +0.01245. Off the diagonal, both raters' rhos rise when the pitcher label
+is scored on fWAR (consensus 0.29795 to 0.33274 with the model fitted on eWAR v2), so part of
+the pitcher move is the label being easier for every rater, and part is the model fitted on
+the new label (0.01165 to 0.01945 scored on eWAR v2).
+
+#### Clause (d): TOST at 0.02 on the swap's effect, E_cond primary
+
+- Hitters: point -0.00221, E_cond CI95 [-0.01421, 0.0092], E_refit CI95 [-0.02296, 0.01899].
+  RULED OUT (equivalent within the registered margin).
+- Pitchers: point +0.01245, E_cond CI95 [0.00105, 0.02393], E_refit CI95 [-0.01051, 0.02323].
+  UNDECIDED: the interval is neither inside nor entirely beyond the 0.02 margin.
+
+Holm across the two registered cells, family alpha 0.05, read from the artifact's E_cond sd
+under a normal approximation: the hitter cell first, at a two-sided 97.5 percent interval
+[-0.0157, 0.0113], stays RULED OUT; the pitcher cell then at 95 percent stays UNDECIDED.
+Holm changes neither disposition. Under part 4.3's carried interpretations the copy discloses
+the frame and says nothing about accuracy moving; the pitcher cell is logged with its
+interval and no directional language.
+
+#### Clause (e): controls
+
+- Zero-information twin, per side: hitters twin minus eWAR v2 -0.00349 against the observed
+  -0.00221; pitchers +0.0027 against +0.01245.
+- Permutation null, B 2000 within (season, side): hitters band [-0.01253, 0.01496], two-sided
+  p 0.7695; pitchers band [-0.00738, 0.01753], p 0.106. Both observed differences sit inside
+  their bands.
+- Folds: 11 forward-chained folds per side (2014 to 2024), the 4-fold rule met; hitters 4
+  positive and 7 negative, pitchers 9 positive and 2 negative.
+- Paired bootstrap: E_cond on scored rows (B 2000), E_refit resampling train and test with a
+  refit per draw (B 400), as clause (d) reports.
+
+#### Clause (f): blast radius against the step A snapshot
+
+The served configuration (see clause (i): F1, F2 and F6) against `../_pre_epoch_fwar_2026-10/`:
+
+- The served board (the 1,990 graded rows of the PROSPX board by its served rank): 1,311 rows
+  moved, median 1 and max 204 places; membership change top 10 / 25 / 100 / 250 = 0 / 0 / 0 / 1.
+  The carried abort ("abort if top-10 board membership changes") is NOT tripped, and
+  `test_board_basis_coherence.PINNED_MIX` (2 / 8 / 17 / 31) holds without a re-record. The
+  lab's own board proxy ranks all 9,515 eFV rows by `xfv_war_6yr`, graduated and bust rows
+  included: 9,468 moved, median 150, p90 627, max 4,001; membership change 1 / 1 / 5 / 17, the
+  one top-10 change being two graduated players' debut-time predictions crossing at places 10
+  and 11 (kris_bryant in, bobby_witt_jr out). Grades moved on 6,087 of those rows, mean
+  absolute 0.73 FV. PINNED_MIX cannot be read against Estar as built, which has no served
+  board (note 5): UNAVAILABLE, not estimated.
+- Surplus, both channels named: `surplus_mm` moved on 5,820 of 9,515 rows (median absolute
+  $0.2M, p90 $2.2M, max $19.1M, mean signed -$0.44M); the `_odds_grade` channel's input
+  `xfv_grade_odds` moved on 4,914 rows (median 0.58, p90 2.34, max 20.3 FV); the `rank_war`
+  channel's input moved on 4,475 rows (median 0.107, p90 0.336, max 1.614 WAR). Beside both,
+  the one $/WAR series is written from the FA corpus, now on the label: the 2025-26 winter
+  16.46M to 16.20M per WAR and the 2026-27 level 17.14M to 16.86M.
+- WAG: 2,459 graduates compared, 139 boom-label flips (boom to settled 45, bust to settled 31,
+  settled to boom 30, settled to bust 20, newly labelled 13); the most in one org 11; the
+  regressed WAG moved on 2,241 of 2,767 rows (median absolute 0.025).
+- Star labels (`data/star_label_view.json`): 45 star flags flip among 2,611 compared, 14 rows
+  added (the 2025 cohort under RESOLVED_THROUGH 2026).
+- Arbitration: 866 rows compared; the WAR spine `w` changed on 695 and the award ladder `l` on
+  418 (17 rows only at step A, 16 only now).
+- Projections: `train_hash` `cb42b96eb5ea533c` to `248baa38d8b7144a` and `war_provider`
+  `ewar_v2` to `fwar`; the feature schema, the ml_config gate and the `star_blend` pin (h2 = 0)
+  stay as pinned, since no feature arm but F-DEF as built rode (`test_proj_ml` 13 passed).
+- Per arm (note 5), from the matrices: rows and bust shares per arm are in the blast
+  artifact's `per_arm` block (hit E0 1,916 rows and bust share 0.5384, Estar 2,012 and 0.4583;
+  pit E0 2,040 and 0.4965, Estar 2,158 and 0.4262). Every served item per arm is UNAVAILABLE:
+  only the served configuration was rebuilt, and nothing is estimated from a matrix.
+- Display: the step S check, keyed by player, moved 0 displayed WAR cells outside the exempt
+  rows (31,786 compared), and every displayed career WAR on every card equals eWAR v2 (8,703
+  of 8,703).
+
+#### Clause (i): the attribution arms
+
+The arm set fixed on 2026-09-30 (the entry above): F1 to F5 as matrix arms, F6 as the bundle
+arm. Effects are `Q(E*) - Q(E* minus f)` against E* as built; the residual is
+"interaction, unattributed" and is published, not shrunk.
+
+| side, quantity | E0 | E* | F1 | F2 | F3 | F4 | F5 | interaction, unattributed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| hit, margin debuted | 0.0363 | 0.03182 | -0.00221 | -0.00014 | 0.0 | +0.00502 | -0.00318 | -0.00397 |
+| hit, margin full pool | 0.00143 | 0.01672 | +0.00895 | -0.00735 | -0.00085 | +0.00408 | +0.00649 | +0.00397 |
+| pit, margin debuted | 0.0096 | 0.0241 | +0.01245 | -0.00404 | 0.0 | +0.00011 | -0.00019 | +0.00617 |
+| pit, margin full pool | 0.01189 | 0.00974 | +0.01857 | -0.00338 | +0.00083 | -0.00465 | -0.00283 | -0.01069 |
+
+Every effect is a main effect under an additivity assumption this design does not test. The
+artifact carries the same table for the blend and consensus rhos, the row census, the bust
+share, the censored share and the non-positive label share.
+
+FAILED ARMS: F6, F-DEF on the feed's fielding and positional runs, under orchestrator ruling
+R3: no task built it, so its attribution is UNAVAILABLE and is not inferred. The bundle
+carries the F-DEF code path at HEAD, which reads `data/mlb_def_history.json` (built by
+`tools/build_def_history.py` on the displayed eWAR v2 run-value frame). F6 is an owner
+decision factor and ships as built. F3 is not failed: the BUST2 union invariant held live at
+step F on both sides (0 breaks).
+
+Each candidate's own clauses, read against E* as built:
+
+- F3, Arm R (`docs/efv-2026-10-02/BUST2_GATE.md`). Resolved-to-censored count, reported first:
+  hitters 208 (10 the other way), pitchers 175 (20 the other way; the step F builder counted
+  176 on its own row match). Full-pool bust share: hitters 0.5123 to 0.4583 (-5.4 points),
+  pitchers 0.4686 to 0.4262 (-4.24 points), inside the 10-point STOP. Rank clause, E_cond
+  pooled Spearman non-inferior at 0.02 per side on both labels: hitters CI95 [-0.00772,
+  0.00191] on the Arm R label and [-0.00734, 0.002] on the E0 evaluation label; pitchers
+  [-0.00112, 0.00027] and [-0.001, 0.00035]: NON-INFERIOR in all four, and still so at a
+  Holm-adjusted 97.5 percent interval for the two-arm family. Arm R's clauses PASS.
+- F4, A1, the service-aligned window. Censoring cost: hitters 57 resolved rows to censored,
+  extrapolated label share 0.4215 to 0.4804 (+5.89 points); pitchers 86, 0.4158 to 0.4928
+  (+7.7 points), inside the 10-point STOP. Level clause on resolved rows: hitters +0.3064 WAR
+  (n 503), pitchers +0.1843 (n 566).
+- F5, A2, the neutral MiLB imputation. Hitters: level-rank slope 0.2997 WAR per rung with A2
+  on against -0.0648 off. Pitchers: UNAVAILABLE (no level-rank key over 40 rows).
+- The A1 and A2 sign-agreement rule of the predecessor's Appendix A: their effects on the
+  margin disagree in sign on both sides (hitters +0.00502 and -0.00318, pitchers +0.00011 and
+  -0.00019), so NEITHER ships, and both are recorded as a loss with the interaction cell
+  published above. This is the loss ledger clause (h) asks for; no second specification
+  follows.
+
+The SHIPPED configuration under point 4: F1 and F2 (owner decisions O1 and O2), F6 (note 7,
+as built) and F3, whose own clauses passed. E* as built is not E* as shipped: F4 (A1) and F5
+(A2) are dropped. The served artifacts at this entry carry F1, F2 and F6 only:
+`efv_dataset.NEVER_RESOLUTION_ARM_R` is off in the served build, and serving F3 is a rebuild
+of the shipped configuration, which point 5 makes a NEW MEASUREMENT under point 7 and which
+this run did not take. The owner question on when to take it is filed beside this run
+(`OWNER_QUESTION.md` in EPOCH_RUN's folder); until it is answered, the served label is E0's
+never-MLB rule on the fWAR basis at RESOLVED_THROUGH 2026.
+
+#### Step Q, the consensus reads
+
+`python source_backtest.py` (step Q): "verdict changes under V6: 0" across the claim
+instruments. The consensus weight A/B against its 0.0068 bar is not run by
+that command; it was read once, without writing, after step Z's lab (`run_consensus_weight_ab
+(write=False)`): pooled n 2,934, equal-weight Spearman 0.2783 and AUC 0.7419 against weighted
+0.2809 and 0.7478, a Spearman gain of 0.0026 under the 0.0068 bar, so ship False and equal
+weights are retained. `data/consensus_weight_eval.json` still carries the 2026-10-02 reading
+until the first monthly after this entry refreshes it. A disclosure for the orchestrator: step
+Q's command also prints `source_backtest`'s standing cohort tier tables, a realized career WAR
+mean by each rater's FV tier over preseason cohorts 2017 to 2023, now on the fWAR label. They
+are the runbook's command and the nightly's standing output; this entry quotes none of their
+numbers, and whether they count against `docs/PROSPECT_ANCHOR_GATE.md`'s look rule is the
+orchestrator's to rule.
+
+#### The display state under EPOCH-Q4 and ruling R1a
+
+The displayed WAR is eWAR v2. The reader inventory taken at start condition 0 (HEAD
+`8a1c5b7f`), with each class and the rule that classified it:
+
+- D1 DISPLAY (a served WAR, page, chart, export or stamp a visitor sees; reads `ewar_v2` by
+  name since step D + U): `bullpen_export._side_war_by_season` and `served_war_basis` (so the
+  WAR-rate columns and step L), `mlb_player_export._war_maps` (the `war_bwar` reference stays on
+  `bwar`), `pal_export`, `war_board_export`, `mlb_trade_lookup`, `tools/build_def_history.py`,
+  `fa_pipeline` (the FA Archive), the `ewar_vintage` and `served_stale` stamps of the mlbstats
+  exporters and `fa_export`, `hof_data` and `tools/hof_ledger_check.py` (pinned to `bwar` by
+  design), `tools/build_ewar.py` with the eWAR nightly, `tools/war_rate_plus_lab.py`,
+  `tools/mlbstats_window_lab.py`, `tools/franchise_spine_history.py`, and the display readers of
+  the timeseries `career_war` block (the PROSPX card, the Club Ledger, `build_site`,
+  `draft_export`, `org_tendencies`, `efv_score`'s `realized_war`).
+- D2 DISPLAY (identity or lookup, WAR only a tiebreak): `fa_ident`, `proj_export`'s name pass.
+- L LABEL (the training label, the corpus, a refit, a backtest, an eval or a gate statistic;
+  follows the default, now `fwar`): `efv_dataset`, `efv_labels`, `efv_model`, `arb_dataset`
+  (the arbitration spine), `fa_projection` (the corpus `war_provider`),
+  `tools/fit_draft_slot_curve.py`, `proj_backtest`, `fa_backtest`, the eFV labs,
+  `tools/efv_epoch_id_join`, the storage farm and org rollups and the debuted payload,
+  `bayes_trade_value`, `grpo_prospect`, `source_backtest`, `draft_source_backtest`, and
+  `storage.board_basis_fingerprint`'s `label=` term.
+- B DUAL, split in the D + U commit: the timeseries payload (`career_war` serves the eWAR v2
+  view to the displays, the new `career_war_label` block carries the stored fWAR row to the
+  label consumers), `overseas_export` (displayed fields from the view, the WAG payload from the
+  stored row), and `run_monthly`'s step 3d refetch (it writes the table whose fWAR rows keep
+  `seasons_ewar_v2`, so each reader takes its own series). `stats.fetch_career_war_bulk` is an
+  input delegate pinned to `bwar` frames by the facade.
+
+The exempt rows (EPOCH_E2's and B4_IDENTITY_SPLIT's keys, 10 rows in the step A copies): every
+displayed WAR equal before and after at step R, and step S's part (2) found all 78 exempt
+cells equal to `war_source` provider `ewar_v2` on the card's side (one WAR-rate index,
+hitter 686681's `war_pa_plus_3yr` 104 to 103, moved with step L's lab, not a WAR cell).
+
+NOT TAKEN, with the owner's answer EPOCH-Q4 ("Keep eWAR v2 shown") as the reason: runbook
+step D's move of the display WAR on every MLB surface, part 7 row B's retirement of eWAR v2 to
+a frozen comparison provider, and part 8's demotion of the `ewar` registry row (its consumers
+stay the display doors; the label readers are listed on the new `fwar` row). The fWAR
+reference column is not shipped by this run; it is its own task,
+EPOCH_FWAR_REFERENCE_COLUMN.
+
+#### The RT placement, held pipeline nights, and the suite
+
+- The RT commit (`86226bb2`) moved both clocks after step E and before step F, alone, by
+  orchestrator ruling: the gate's placement, over `epoch_calendar.md` section 3 row N.
+- Pipeline hold: from step A (11:47) to the end of step R pass 3 (19:37) on 2026-10-03. No
+  local nightly is scheduled on this machine (`data/job_heartbeat.json` last local run
+  2026-10-02T16:24Z), so no local nightly fell inside the hold, and the FA P(enter) window
+  (nightly `d10p`) has no local gap from it. The deploy box keeps its own nightly on
+  pre-epoch code until the owner's push.
+- Step Y (`tools/run_suite.py`, 83 chunks, 0 crashed): 36 unexpected reds, each classified
+  in EPOCH_RUN's progress log. Fourteen fail on the HEAD tree too; two are an order flake.
+  Owed, and not restamped: six lab tests pinned to RESOLVED_THROUGH 2025 by design
+  (`test_efv_label_horizon_2026` x3, `test_fwar_label_epoch_lab`'s relabel test,
+  `test_label_arms` x2), the label pool census still on `ewar_v2`, `test_rater_scale_view` x3
+  (the consensus evidence moved; its own message asks for the accuracy copy to be re-read
+  first), the opportunity lab's floors (a lab re-run), and the FV 55 slope kink of
+  `test_value_framework` (the FV 60 anchor moved 1.44 to 1.50 at step J; an owner item).
+  Input changes from the Spotrac refetch: `test_arb_gatec_verify` (arenado's AAV) and
+  `test_control_window` (caminero's aav-0 row). Defects for their lanes:
+  `test_arb_export`'s ladder (Blas Castano ARB 1 in 2027 then PRE-ARB in 2028),
+  `test_contract_tail_band` (kristian_campbell's new contract tail, P90 under the point) and
+  `test_contract_tail_seam` (shohei_ohtani's 2031 point 3.66 against a first tail season
+  1.81). Fixed in this run: the projections share card line (`b2eca8e0`) and
+  `storage._served_career_war`'s no-copy contract (`2c23ff91`, 0 of 2,698 rows changed).
+
+#### Owed items named by this entry
+
+The copy item from step X (the /fa/ Archive realized-ledger copy follows its ledger's basis,
+which queue 7's M14 rebuild decides, owner answer M14-3); the Arm R serving rebuild above; the
+consensus weight eval refresh; SG_4B's freeze from the step A snapshot path; the Spotrac lane
+(position codes, aav-0 contract rows, and the `jose_fermin` card key, which moved to the LAA
+reliever with such a row); the reds above. The Z1 registration (`2aa9ce8d`) reads its P1 from
+the LABEL FREEZE RECEIPT here.
+
+**After this entry, served changes may land again (2026-10-03).**
+
 ---
 
 Nothing in this document was measured against an fWAR-labelled fit. Every number above is

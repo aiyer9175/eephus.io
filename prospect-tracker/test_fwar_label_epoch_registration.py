@@ -27,16 +27,16 @@ It pins five things:
   4. The decision and its date, the bundle and its reason, the E1 to E8 status
      checklist with the per-step blocking map, the frozen ride list and the
      A to Z runbook.
-  5. That NO RESULT is recorded, checked case-insensitively below part 9 and
-     by result-shaped patterns above it, because the document's own rule is
-     "None may be written anywhere above this line".
+  5. That NO RESULT is recorded above part 9, by result-shaped patterns,
+     because the document's own rule is "None may be written anywhere above
+     this line". Below part 9 it asserted emptiness until 2026-10-03.
 
-It does NOT pin a result, and it cannot: there is none. When part 9 is filled
-in, the result pin goes in its own file, for the reason
+It does NOT pin a result. Part 9 was filled in on 2026-10-03 by the epoch's
+step Z entry, and the result pin went in its own file,
+test_fwar_label_epoch_results.py, for the reason
 test_arb_gate_c2_registration.py gives - a result pin that lives beside a
 criterion pin invites editing the criterion to match the result. The emptiness
-assertion below is replaced at that point by a pointer to that file, and the
-replacement is itself a commit somebody has to justify.
+assertion below part 9 was replaced in that commit by a pointer to that file.
 
 Prose assertions run against a whitespace-flattened copy of the document, so
 that re-wrapping a paragraph is not a test failure. The verbatim check does
@@ -467,25 +467,25 @@ def test_the_pitcher_prior_names_the_floors_as_its_reason():
     assert "does not mechanically imply a smaller margin delta" in flat
 
 
-def test_no_result_is_recorded_below_part_9():
-    """The registration's whole value. Part 9 is empty, and the emptiness is
-    checked structurally and case-insensitively rather than by trusting the
-    heading: "ruled out" lowercase is as much a result as "RULED OUT"."""
+def test_part_9_results_are_pinned_in_their_own_file():
+    """Until 2026-10-03 this test asserted that part 9 recorded no result,
+    structurally and case-insensitively. Part 9 now carries the fWAR label
+    epoch's step Z entry, so, as the module docstring prescribes, the emptiness
+    assertion is replaced by a pointer: the recorded result is pinned by
+    test_fwar_label_epoch_results.py, apart from the criterion pins in this
+    file. What stays here is that the registration-day text of part 9 and its
+    edit rule survive, and that the results sit under a dated step Z heading."""
     doc = _doc()
     assert RESULTS_HEADING in doc
     body = doc.split(RESULTS_HEADING, 1)[1]
     flat = _flat(body)
     assert "**EMPTY AT REGISTRATION.**" in flat
-    assert "|" not in body, "part 9 carries a table, so it carries a result"
-    for token in ("ruled out", "undecided", "gain", "loss", "pass", "fail",
-                  "spearman", "rho", "e_cond", "holm", "bootstrap"):
-        assert not re.search(rf"\b{re.escape(token)}\b", body, re.I), \
-            f"part 9 records a result: {token!r}"
-    for pattern in (r"\d+\.\d+", r"\d+\s*%", r"\bp\s*=", r"\bn\s*="):
-        assert not re.search(pattern, body, re.I), \
-            f"part 9 carries a result-shaped number: {pattern}"
     assert ("nothing above this line may be edited once anything is written "
             "below it") in flat
+    assert re.search(r"^### \d{4}-\d{2}-\d{2}: step Z", body, re.M), \
+        "part 9 results must sit under a dated step Z heading"
+    assert (ROOT / "test_fwar_label_epoch_results.py").exists(), \
+        "the result pin lives in its own file"
 
 
 def test_no_result_is_recorded_above_part_9_either():

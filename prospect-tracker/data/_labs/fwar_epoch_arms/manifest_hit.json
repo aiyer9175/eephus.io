@@ -1,0 +1,416 @@
+{
+ "schema": "fwar_epoch_arms/1",
+ "producer": "tools/efv_fwar_epoch_arms.py",
+ "gate": "docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md",
+ "side": "hit",
+ "generated_at": "2026-10-03T16:13:02Z",
+ "seed": 20260807,
+ "scored_years": [
+  2014,
+  2015,
+  2016,
+  2017,
+  2018,
+  2019,
+  2020,
+  2021,
+  2022,
+  2023,
+  2024
+ ],
+ "resolved_through_at_build": 2026,
+ "estar_resolved_through": 2026,
+ "e0_resolved_through": 2025,
+ "factors": {
+  "F1": {
+   "name": "basis_published_fwar",
+   "flag": "efv_dataset.LABEL_SEASONS_KEY",
+   "e0_value": "seasons_ewar_v2",
+   "kind": "owner decision (ships regardless, no ship clause)"
+  },
+  "F2": {
+   "name": "resolved_through_2026",
+   "flag": "efv_dataset.RESOLVED_THROUGH",
+   "e0_value": 2025,
+   "kind": "owner decision (ships regardless, no ship clause)"
+  },
+  "F3": {
+   "name": "arm_r_never_resolution",
+   "flag": "efv_dataset.NEVER_RESOLUTION_ARM_R",
+   "e0_value": false,
+   "kind": "candidate (ships only if its own clauses pass)"
+  },
+  "F4": {
+   "name": "a1_service_aligned_window",
+   "flag": "efv_dataset.SERVICE_ALIGNED_WINDOW",
+   "e0_value": false,
+   "kind": "candidate (ships only if its own clauses pass)"
+  },
+  "F5": {
+   "name": "a2_neutral_milb_impute",
+   "flag": "efv_model.NEUTRAL_MILB_IMPUTE",
+   "e0_value": false,
+   "kind": "candidate (ships only if its own clauses pass)"
+  }
+ },
+ "omitted": {},
+ "arms": {
+  "E0": {
+   "arm": "E0",
+   "factor_reverted": null,
+   "factor_values": {
+    "F1": "seasons_ewar_v2",
+    "F2": 2025,
+    "F3": false,
+    "F4": false,
+    "F5": false
+   },
+   "flags": {
+    "efv_dataset.LABEL_SEASONS_KEY": "seasons_ewar_v2",
+    "efv_dataset.RESOLVED_THROUGH": 2025,
+    "efv_dataset.NEVER_RESOLUTION_ARM_R": false,
+    "efv_dataset.SERVICE_ALIGNED_WINDOW": false,
+    "efv_model.NEUTRAL_MILB_IMPUTE": false
+   },
+   "label_provider": "ewar_v2 (career_war.seasons_ewar_v2, kept by the step C rebase)",
+   "label_seasons_key": "seasons_ewar_v2",
+   "resolved_through": 2025,
+   "debut_years": [
+    2011,
+    2024
+   ],
+   "rows": 1916,
+   "sha256": "06f9917140f6706d82abd3af56b4274ccfcd087561c4e30975e8a301963d5b4a",
+   "census": {
+    "rows": 1916,
+    "debuted": 872,
+    "busts": 1044,
+    "busts_excluded_from_pool": 27,
+    "busts_resolved": 1017,
+    "debuted_resolved": 487,
+    "debuted_censored": 385,
+    "resolved_debuted_labels_below_zero": 174,
+    "window_shifted": 0,
+    "label_seasons_key_fallback_rows": 12
+   },
+   "seconds": 26.7,
+   "file": "xfv_hitter_matrix__E0.json"
+  },
+  "Estar": {
+   "arm": "Estar",
+   "factor_reverted": null,
+   "factor_values": {
+    "F1": "seasons",
+    "F2": 2026,
+    "F3": true,
+    "F4": true,
+    "F5": true
+   },
+   "flags": {
+    "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+    "efv_dataset.RESOLVED_THROUGH": 2026,
+    "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+    "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+    "efv_model.NEUTRAL_MILB_IMPUTE": true
+   },
+   "label_provider": "fwar (career_war.seasons, as the table serves it)",
+   "label_seasons_key": "seasons",
+   "resolved_through": 2026,
+   "debut_years": [
+    2011,
+    2025
+   ],
+   "rows": 2012,
+   "sha256": "fd15ca0877243d6c425d2cad53d23faf3d0cced0713b0e1fb303a7743bcb3c63",
+   "census": {
+    "rows": 2012,
+    "debuted": 968,
+    "busts": 1044,
+    "busts_excluded_from_pool": 225,
+    "busts_resolved": 819,
+    "debuted_resolved": 503,
+    "debuted_censored": 465,
+    "resolved_debuted_labels_below_zero": 177,
+    "window_shifted": 598,
+    "label_seasons_key_fallback_rows": null,
+    "arm_r": {
+     "milb_seasons_on_disk_window": [
+      2026,
+      2025
+     ],
+     "resolved_through": 2026,
+     "bust_rows": 1044,
+     "censored_never": 225,
+     "resolved_to_censored": 208,
+     "censored_to_resolved": 10,
+     "resolved_no_affiliated_line": 366,
+     "resolved_age_27": 45,
+     "resolved_stale_list": 408
+    }
+   },
+   "seconds": 28.6,
+   "file": "xfv_hitter_matrix__Estar.json"
+  },
+  "F1": {
+   "arm": "F1",
+   "factor_reverted": "F1",
+   "factor_values": {
+    "F1": "seasons_ewar_v2",
+    "F2": 2026,
+    "F3": true,
+    "F4": true,
+    "F5": true
+   },
+   "flags": {
+    "efv_dataset.LABEL_SEASONS_KEY": "seasons_ewar_v2",
+    "efv_dataset.RESOLVED_THROUGH": 2026,
+    "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+    "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+    "efv_model.NEUTRAL_MILB_IMPUTE": true
+   },
+   "label_provider": "ewar_v2 (career_war.seasons_ewar_v2, kept by the step C rebase)",
+   "label_seasons_key": "seasons_ewar_v2",
+   "resolved_through": 2026,
+   "debut_years": [
+    2011,
+    2025
+   ],
+   "rows": 2012,
+   "sha256": "6365b59211d78de9f294607c6647a921804df3dc79babc9f3725ea3c8569dd9f",
+   "census": {
+    "rows": 2012,
+    "debuted": 968,
+    "busts": 1044,
+    "busts_excluded_from_pool": 225,
+    "busts_resolved": 819,
+    "debuted_resolved": 503,
+    "debuted_censored": 465,
+    "resolved_debuted_labels_below_zero": 181,
+    "window_shifted": 598,
+    "label_seasons_key_fallback_rows": 12,
+    "arm_r": {
+     "milb_seasons_on_disk_window": [
+      2026,
+      2025
+     ],
+     "resolved_through": 2026,
+     "bust_rows": 1044,
+     "censored_never": 225,
+     "resolved_to_censored": 208,
+     "censored_to_resolved": 10,
+     "resolved_no_affiliated_line": 366,
+     "resolved_age_27": 45,
+     "resolved_stale_list": 408
+    }
+   },
+   "seconds": 28.0,
+   "file": "xfv_hitter_matrix__F1.json"
+  },
+  "F2": {
+   "arm": "F2",
+   "factor_reverted": "F2",
+   "factor_values": {
+    "F1": "seasons",
+    "F2": 2025,
+    "F3": true,
+    "F4": true,
+    "F5": true
+   },
+   "flags": {
+    "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+    "efv_dataset.RESOLVED_THROUGH": 2025,
+    "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+    "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+    "efv_model.NEUTRAL_MILB_IMPUTE": true
+   },
+   "label_provider": "fwar (career_war.seasons, as the table serves it)",
+   "label_seasons_key": "seasons",
+   "resolved_through": 2025,
+   "debut_years": [
+    2011,
+    2024
+   ],
+   "rows": 1916,
+   "sha256": "38552087ded6be32def2708250f671207364893c09d9296b293a62efd3edc8f2",
+   "census": {
+    "rows": 1916,
+    "debuted": 872,
+    "busts": 1044,
+    "busts_excluded_from_pool": 285,
+    "busts_resolved": 759,
+    "debuted_resolved": 429,
+    "debuted_censored": 443,
+    "resolved_debuted_labels_below_zero": 153,
+    "window_shifted": 520,
+    "label_seasons_key_fallback_rows": null,
+    "arm_r": {
+     "milb_seasons_on_disk_window": [
+      2026,
+      2025
+     ],
+     "resolved_through": 2025,
+     "bust_rows": 1044,
+     "censored_never": 286,
+     "resolved_to_censored": 269,
+     "censored_to_resolved": 10,
+     "resolved_no_affiliated_line": 366,
+     "resolved_age_27": 28,
+     "resolved_stale_list": 364
+    }
+   },
+   "seconds": 25.8,
+   "file": "xfv_hitter_matrix__F2.json"
+  },
+  "F3": {
+   "arm": "F3",
+   "factor_reverted": "F3",
+   "factor_values": {
+    "F1": "seasons",
+    "F2": 2026,
+    "F3": false,
+    "F4": true,
+    "F5": true
+   },
+   "flags": {
+    "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+    "efv_dataset.RESOLVED_THROUGH": 2026,
+    "efv_dataset.NEVER_RESOLUTION_ARM_R": false,
+    "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+    "efv_model.NEUTRAL_MILB_IMPUTE": true
+   },
+   "label_provider": "fwar (career_war.seasons, as the table serves it)",
+   "label_seasons_key": "seasons",
+   "resolved_through": 2026,
+   "debut_years": [
+    2011,
+    2025
+   ],
+   "rows": 2012,
+   "sha256": "b29d688268ab75edbc175bbe7efa77e4e5082bd57cb8d69fc997d3069478bc1c",
+   "census": {
+    "rows": 2012,
+    "debuted": 968,
+    "busts": 1044,
+    "busts_excluded_from_pool": 27,
+    "busts_resolved": 1017,
+    "debuted_resolved": 503,
+    "debuted_censored": 465,
+    "resolved_debuted_labels_below_zero": 177,
+    "window_shifted": 598,
+    "label_seasons_key_fallback_rows": null
+   },
+   "seconds": 27.5,
+   "file": "xfv_hitter_matrix__F3.json"
+  },
+  "F4": {
+   "arm": "F4",
+   "factor_reverted": "F4",
+   "factor_values": {
+    "F1": "seasons",
+    "F2": 2026,
+    "F3": true,
+    "F4": false,
+    "F5": true
+   },
+   "flags": {
+    "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+    "efv_dataset.RESOLVED_THROUGH": 2026,
+    "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+    "efv_dataset.SERVICE_ALIGNED_WINDOW": false,
+    "efv_model.NEUTRAL_MILB_IMPUTE": true
+   },
+   "label_provider": "fwar (career_war.seasons, as the table serves it)",
+   "label_seasons_key": "seasons",
+   "resolved_through": 2026,
+   "debut_years": [
+    2011,
+    2025
+   ],
+   "rows": 2012,
+   "sha256": "a7350ce8bde2ae98caa04e75543e7812c056eccd3011ed51819e2ba9466b9fba",
+   "census": {
+    "rows": 2012,
+    "debuted": 968,
+    "busts": 1044,
+    "busts_excluded_from_pool": 225,
+    "busts_resolved": 819,
+    "debuted_resolved": 560,
+    "debuted_censored": 408,
+    "resolved_debuted_labels_below_zero": 200,
+    "window_shifted": 0,
+    "label_seasons_key_fallback_rows": null,
+    "arm_r": {
+     "milb_seasons_on_disk_window": [
+      2026,
+      2025
+     ],
+     "resolved_through": 2026,
+     "bust_rows": 1044,
+     "censored_never": 225,
+     "resolved_to_censored": 208,
+     "censored_to_resolved": 10,
+     "resolved_no_affiliated_line": 366,
+     "resolved_age_27": 45,
+     "resolved_stale_list": 408
+    }
+   },
+   "seconds": 27.7,
+   "file": "xfv_hitter_matrix__F4.json"
+  },
+  "F5": {
+   "arm": "F5",
+   "factor_reverted": "F5",
+   "factor_values": {
+    "F1": "seasons",
+    "F2": 2026,
+    "F3": true,
+    "F4": true,
+    "F5": false
+   },
+   "flags": {
+    "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+    "efv_dataset.RESOLVED_THROUGH": 2026,
+    "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+    "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+    "efv_model.NEUTRAL_MILB_IMPUTE": false
+   },
+   "label_provider": "fwar (career_war.seasons, as the table serves it)",
+   "label_seasons_key": "seasons",
+   "resolved_through": 2026,
+   "debut_years": [
+    2011,
+    2025
+   ],
+   "rows": 2012,
+   "sha256": "fd15ca0877243d6c425d2cad53d23faf3d0cced0713b0e1fb303a7743bcb3c63",
+   "census": {
+    "rows": 2012,
+    "debuted": 968,
+    "busts": 1044,
+    "busts_excluded_from_pool": 225,
+    "busts_resolved": 819,
+    "debuted_resolved": 503,
+    "debuted_censored": 465,
+    "resolved_debuted_labels_below_zero": 177,
+    "window_shifted": 598,
+    "label_seasons_key_fallback_rows": null,
+    "arm_r": {
+     "milb_seasons_on_disk_window": [
+      2026,
+      2025
+     ],
+     "resolved_through": 2026,
+     "bust_rows": 1044,
+     "censored_never": 225,
+     "resolved_to_censored": 208,
+     "censored_to_resolved": 10,
+     "resolved_no_affiliated_line": 366,
+     "resolved_age_27": 45,
+     "resolved_stale_list": 408
+    }
+   },
+   "seconds": 27.4,
+   "file": "xfv_hitter_matrix__F5.json"
+  }
+ }
+}

@@ -1,0 +1,306 @@
+{
+ "snapshot": "_pre_epoch_fwar_2026-10",
+ "snapshot_note": "a sibling directory of the repo root, not published",
+ "gate": "docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md",
+ "generated_at": "2026-10-04T01:11:27Z",
+ "board": {
+  "rows_compared": 9515,
+  "rows_moved": 9468,
+  "rank_delta_median": 150.0,
+  "rank_delta_p90": 627.0,
+  "rank_delta_max": 4001.0,
+  "grade_moved_rows": 6087,
+  "grade_delta_mean": 0.7308,
+  "membership_change_top10": 1,
+  "membership_change_top25": 1,
+  "membership_change_top100": 5,
+  "membership_change_top250": 17,
+  "pinned_mix_note": "test_board_basis_coherence.PINNED_MIX is read against Estar only (note 5), by that test"
+ },
+ "star_label": {
+  "compared": 2611,
+  "star_flag_flips": 45,
+  "rows_changed_any_field": 2579,
+  "added": 14,
+  "dropped": 0
+ },
+ "shipped_configuration_note": "the served diff above is the SHIPPED configuration; clause (i) point 5 names it in part 9 if it differs from Estar as built",
+ "per_arm": {
+  "hit": {
+   "per_arm": {
+    "E0": {
+     "census": {
+      "rows": 1916,
+      "debuted_rows": 872,
+      "busts_in_pool": 1017,
+      "bust_share_full_pool": 0.5384,
+      "debuted_censored_share": 0.4415,
+      "resolved_labels_le_0_share": 0.3593
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons_ewar_v2",
+      "efv_dataset.RESOLVED_THROUGH": 2025,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": false,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": false,
+      "efv_model.NEUTRAL_MILB_IMPUTE": false
+     },
+     "sha256": "06f9917140f6706d82abd3af56b4274ccfcd087561c4e30975e8a301963d5b4a",
+     "factor_reverted": null
+    },
+    "Estar": {
+     "census": {
+      "rows": 2012,
+      "debuted_rows": 968,
+      "busts_in_pool": 819,
+      "bust_share_full_pool": 0.4583,
+      "debuted_censored_share": 0.4804,
+      "resolved_labels_le_0_share": 0.3519
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+      "efv_dataset.RESOLVED_THROUGH": 2026,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+      "efv_model.NEUTRAL_MILB_IMPUTE": true
+     },
+     "sha256": "fd15ca0877243d6c425d2cad53d23faf3d0cced0713b0e1fb303a7743bcb3c63",
+     "factor_reverted": null
+    },
+    "F1": {
+     "census": {
+      "rows": 2012,
+      "debuted_rows": 968,
+      "busts_in_pool": 819,
+      "bust_share_full_pool": 0.4583,
+      "debuted_censored_share": 0.4804,
+      "resolved_labels_le_0_share": 0.3618
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons_ewar_v2",
+      "efv_dataset.RESOLVED_THROUGH": 2026,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+      "efv_model.NEUTRAL_MILB_IMPUTE": true
+     },
+     "sha256": "6365b59211d78de9f294607c6647a921804df3dc79babc9f3725ea3c8569dd9f",
+     "factor_reverted": "F1"
+    },
+    "F2": {
+     "census": {
+      "rows": 1916,
+      "debuted_rows": 872,
+      "busts_in_pool": 759,
+      "bust_share_full_pool": 0.4654,
+      "debuted_censored_share": 0.508,
+      "resolved_labels_le_0_share": 0.3566
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+      "efv_dataset.RESOLVED_THROUGH": 2025,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+      "efv_model.NEUTRAL_MILB_IMPUTE": true
+     },
+     "sha256": "38552087ded6be32def2708250f671207364893c09d9296b293a62efd3edc8f2",
+     "factor_reverted": "F2"
+    },
+    "F3": {
+     "census": {
+      "rows": 2012,
+      "debuted_rows": 968,
+      "busts_in_pool": 1017,
+      "bust_share_full_pool": 0.5123,
+      "debuted_censored_share": 0.4804,
+      "resolved_labels_le_0_share": 0.3519
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+      "efv_dataset.RESOLVED_THROUGH": 2026,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": false,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+      "efv_model.NEUTRAL_MILB_IMPUTE": true
+     },
+     "sha256": "b29d688268ab75edbc175bbe7efa77e4e5082bd57cb8d69fc997d3069478bc1c",
+     "factor_reverted": "F3"
+    },
+    "F4": {
+     "census": {
+      "rows": 2012,
+      "debuted_rows": 968,
+      "busts_in_pool": 819,
+      "bust_share_full_pool": 0.4583,
+      "debuted_censored_share": 0.4215,
+      "resolved_labels_le_0_share": 0.3607
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+      "efv_dataset.RESOLVED_THROUGH": 2026,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": false,
+      "efv_model.NEUTRAL_MILB_IMPUTE": true
+     },
+     "sha256": "a7350ce8bde2ae98caa04e75543e7812c056eccd3011ed51819e2ba9466b9fba",
+     "factor_reverted": "F4"
+    },
+    "F5": {
+     "census": {
+      "rows": 2012,
+      "debuted_rows": 968,
+      "busts_in_pool": 819,
+      "bust_share_full_pool": 0.4583,
+      "debuted_censored_share": 0.4804,
+      "resolved_labels_le_0_share": 0.3519
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+      "efv_dataset.RESOLVED_THROUGH": 2026,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+      "efv_model.NEUTRAL_MILB_IMPUTE": false
+     },
+     "sha256": "fd15ca0877243d6c425d2cad53d23faf3d0cced0713b0e1fb303a7743bcb3c63",
+     "factor_reverted": "F5"
+    }
+   },
+   "served_items_per_arm": "UNAVAILABLE from a matrix alone (board re-rank, surplus channels, WAG flips, star labels, arbitration, projections pins): measured by EPOCH_RUN from served rebuilds, never estimated here"
+  },
+  "pit": {
+   "per_arm": {
+    "E0": {
+     "census": {
+      "rows": 2040,
+      "debuted_rows": 998,
+      "busts_in_pool": 984,
+      "bust_share_full_pool": 0.4965,
+      "debuted_censored_share": 0.4539,
+      "resolved_labels_le_0_share": 0.3138
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons_ewar_v2",
+      "efv_dataset.RESOLVED_THROUGH": 2025,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": false,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": false,
+      "efv_model.NEUTRAL_MILB_IMPUTE": false
+     },
+     "sha256": "4c8fa4e804825b47668afdc913ecc87b032d6f0a395df043b95fa97add15d499",
+     "factor_reverted": null
+    },
+    "Estar": {
+     "census": {
+      "rows": 2158,
+      "debuted_rows": 1116,
+      "busts_in_pool": 829,
+      "bust_share_full_pool": 0.4262,
+      "debuted_censored_share": 0.4928,
+      "resolved_labels_le_0_share": 0.3445
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+      "efv_dataset.RESOLVED_THROUGH": 2026,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+      "efv_model.NEUTRAL_MILB_IMPUTE": true
+     },
+     "sha256": "27f3e8a6c89e358a1f2e9d6c83603ffd45f8d5df4f0129f8d9b0fccbf4fb75d7",
+     "factor_reverted": null
+    },
+    "F1": {
+     "census": {
+      "rows": 2158,
+      "debuted_rows": 1116,
+      "busts_in_pool": 829,
+      "bust_share_full_pool": 0.4262,
+      "debuted_censored_share": 0.4928,
+      "resolved_labels_le_0_share": 0.2986
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons_ewar_v2",
+      "efv_dataset.RESOLVED_THROUGH": 2026,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+      "efv_model.NEUTRAL_MILB_IMPUTE": true
+     },
+     "sha256": "2d436285b5ce97a12fce5a16c30a1e2c6c226853dc20f5a0ddc755c0cb5b003e",
+     "factor_reverted": "F1"
+    },
+    "F2": {
+     "census": {
+      "rows": 2040,
+      "debuted_rows": 998,
+      "busts_in_pool": 742,
+      "bust_share_full_pool": 0.4264,
+      "debuted_censored_share": 0.5591,
+      "resolved_labels_le_0_share": 0.3114
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+      "efv_dataset.RESOLVED_THROUGH": 2025,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+      "efv_model.NEUTRAL_MILB_IMPUTE": true
+     },
+     "sha256": "90d0e9c15b172103489ec82c2ca401398953a4f8581a35daf6b1bd4f48b33655",
+     "factor_reverted": "F2"
+    },
+    "F3": {
+     "census": {
+      "rows": 2158,
+      "debuted_rows": 1116,
+      "busts_in_pool": 984,
+      "bust_share_full_pool": 0.4686,
+      "debuted_censored_share": 0.4928,
+      "resolved_labels_le_0_share": 0.3445
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+      "efv_dataset.RESOLVED_THROUGH": 2026,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": false,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+      "efv_model.NEUTRAL_MILB_IMPUTE": true
+     },
+     "sha256": "94338dfc8f7219e1fc043ba177ec92f28b3906314a84faa835eeb95292b9d815",
+     "factor_reverted": "F3"
+    },
+    "F4": {
+     "census": {
+      "rows": 2158,
+      "debuted_rows": 1116,
+      "busts_in_pool": 829,
+      "bust_share_full_pool": 0.4262,
+      "debuted_censored_share": 0.4158,
+      "resolved_labels_le_0_share": 0.3436
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+      "efv_dataset.RESOLVED_THROUGH": 2026,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": false,
+      "efv_model.NEUTRAL_MILB_IMPUTE": true
+     },
+     "sha256": "f2805f7d75af43d9a1906c6f7a2577db6d00be3a8dcc6f6d5f02bc1ea3498aa3",
+     "factor_reverted": "F4"
+    },
+    "F5": {
+     "census": {
+      "rows": 2158,
+      "debuted_rows": 1116,
+      "busts_in_pool": 829,
+      "bust_share_full_pool": 0.4262,
+      "debuted_censored_share": 0.4928,
+      "resolved_labels_le_0_share": 0.3445
+     },
+     "flags": {
+      "efv_dataset.LABEL_SEASONS_KEY": "seasons",
+      "efv_dataset.RESOLVED_THROUGH": 2026,
+      "efv_dataset.NEVER_RESOLUTION_ARM_R": true,
+      "efv_dataset.SERVICE_ALIGNED_WINDOW": true,
+      "efv_model.NEUTRAL_MILB_IMPUTE": false
+     },
+     "sha256": "27f3e8a6c89e358a1f2e9d6c83603ffd45f8d5df4f0129f8d9b0fccbf4fb75d7",
+     "factor_reverted": "F5"
+    }
+   },
+   "served_items_per_arm": "UNAVAILABLE from a matrix alone (board re-rank, surplus channels, WAG flips, star labels, arbitration, projections pins): measured by EPOCH_RUN from served rebuilds, never estimated here"
+  }
+ }
+}

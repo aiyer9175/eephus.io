@@ -1,0 +1,2077 @@
+{
+ "generated_at": "2026-10-04T01:11:01Z",
+ "produced_by": "tools/efv_fwar_label_epoch_lab.py",
+ "gate": "docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md",
+ "bust2": "docs/efv-2026-10-02/BUST2_GATE.md",
+ "substitution": "bWAR reads eWAR v2 (incumbent); eWAR reads published fWAR (candidate)",
+ "seed": 20260807,
+ "elapsed_s": 268.6,
+ "strata": "side, season, fold, debut cohort band; never a consensus-FV cell",
+ "bootstrap": {
+  "hit": {
+   "B_cond_used": 2000,
+   "B_refit_used": 400
+  },
+  "pit": {
+   "B_cond_used": 2000,
+   "B_refit_used": 400
+  }
+ },
+ "label_bases": {
+  "definitions": {
+   "ewar_v2": "career_war.seasons_ewar_v2 (the incumbent the step C rebase keeps)",
+   "fwar": "career_war.seasons (published fWAR, as the table serves it)",
+   "twin": "eWAR v2 plus the fWAR-minus-eWAR v2 deltas permuted across players within (season, side)"
+  },
+  "rows": "the Estar arm of step F, relabelled per basis under Estar's own window rule",
+  "receipts": {
+   "hit": {
+    "players": 968,
+    "incumbent_fallback_rows": 0,
+    "seasons": 4679,
+    "seasons_moved_by_the_basis": 4590
+   },
+   "pit": {
+    "players": 1116,
+    "incumbent_fallback_rows": 0,
+    "seasons": 4713,
+    "seasons_moved_by_the_basis": 4555
+   }
+  },
+  "parity": {
+   "hit": {
+    "rows_checked": 968,
+    "mismatches": 0,
+    "first": []
+   },
+   "pit": {
+    "rows_checked": 1116,
+    "mismatches": 0,
+    "first": []
+   }
+  }
+ },
+ "clause_b_cross_label_matrix": {
+  "hit": {
+   "fit_ewar_v2__score_ewar_v2": {
+    "n": 782,
+    "consensus": 0.38949,
+    "blend": 0.42352,
+    "margin": 0.03403
+   },
+   "fit_ewar_v2__score_fwar": {
+    "n": 782,
+    "consensus": 0.39866,
+    "blend": 0.42885,
+    "margin": 0.03019
+   },
+   "fit_fwar__score_ewar_v2": {
+    "n": 782,
+    "consensus": 0.38671,
+    "blend": 0.42255,
+    "margin": 0.03584
+   },
+   "fit_fwar__score_fwar": {
+    "n": 782,
+    "consensus": 0.39566,
+    "blend": 0.42748,
+    "margin": 0.03182
+   },
+   "fit_twin__score_ewar_v2": {
+    "n": 782,
+    "consensus": 0.38811,
+    "blend": 0.42406,
+    "margin": 0.03595
+   },
+   "fit_twin__score_fwar": {
+    "n": 782,
+    "consensus": 0.39873,
+    "blend": 0.43089,
+    "margin": 0.03216
+   },
+   "_diagonal_difference": -0.00221,
+   "_reading": "diagonal difference = the basis's effect on the margin. The off-diagonal cells separate 'the model learned the new label' (fit_fwar__score_ewar_v2) from 'the label got easier for everyone' (fit_ewar_v2__score_fwar). Rows are the Estar arm; every other factor is held at its Estar value, so this cell isolates the basis."
+  },
+  "pit": {
+   "fit_ewar_v2__score_ewar_v2": {
+    "n": 907,
+    "consensus": 0.29795,
+    "blend": 0.3096,
+    "margin": 0.01165
+   },
+   "fit_ewar_v2__score_fwar": {
+    "n": 907,
+    "consensus": 0.33274,
+    "blend": 0.34737,
+    "margin": 0.01463
+   },
+   "fit_fwar__score_ewar_v2": {
+    "n": 907,
+    "consensus": 0.30062,
+    "blend": 0.32007,
+    "margin": 0.01945
+   },
+   "fit_fwar__score_fwar": {
+    "n": 907,
+    "consensus": 0.33508,
+    "blend": 0.35917,
+    "margin": 0.0241
+   },
+   "fit_twin__score_ewar_v2": {
+    "n": 907,
+    "consensus": 0.30038,
+    "blend": 0.31163,
+    "margin": 0.01125
+   },
+   "fit_twin__score_fwar": {
+    "n": 907,
+    "consensus": 0.33541,
+    "blend": 0.34924,
+    "margin": 0.01383
+   },
+   "_diagonal_difference": 0.01245,
+   "_reading": "diagonal difference = the basis's effect on the margin. The off-diagonal cells separate 'the model learned the new label' (fit_fwar__score_ewar_v2) from 'the label got easier for everyone' (fit_ewar_v2__score_fwar). Rows are the Estar arm; every other factor is held at its Estar value, so this cell isolates the basis."
+  }
+ },
+ "clause_c_coverage": {
+  "hit": {
+   "by_cohort_band": {
+    "2011-2015": {
+     "players": 203,
+     "label_seasons": 972,
+     "join_fwar": 972,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2016-2019": {
+     "players": 221,
+     "label_seasons": 1016,
+     "join_fwar": 1016,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2020-2025": {
+     "players": 544,
+     "label_seasons": 1788,
+     "join_fwar": 1788,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    }
+   },
+   "by_fold": {
+    "2011": {
+     "players": 10,
+     "label_seasons": 45,
+     "join_fwar": 45,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2012": {
+     "players": 25,
+     "label_seasons": 116,
+     "join_fwar": 116,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2013": {
+     "players": 55,
+     "label_seasons": 272,
+     "join_fwar": 272,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2014": {
+     "players": 50,
+     "label_seasons": 241,
+     "join_fwar": 241,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2015": {
+     "players": 63,
+     "label_seasons": 298,
+     "join_fwar": 298,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2016": {
+     "players": 43,
+     "label_seasons": 201,
+     "join_fwar": 201,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2017": {
+     "players": 52,
+     "label_seasons": 230,
+     "join_fwar": 230,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2018": {
+     "players": 51,
+     "label_seasons": 224,
+     "join_fwar": 224,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2019": {
+     "players": 75,
+     "label_seasons": 361,
+     "join_fwar": 361,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2020": {
+     "players": 60,
+     "label_seasons": 281,
+     "join_fwar": 281,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2021": {
+     "players": 75,
+     "label_seasons": 297,
+     "join_fwar": 297,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2022": {
+     "players": 128,
+     "label_seasons": 475,
+     "join_fwar": 475,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2023": {
+     "players": 94,
+     "label_seasons": 323,
+     "join_fwar": 323,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2024": {
+     "players": 91,
+     "label_seasons": 236,
+     "join_fwar": 236,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2025": {
+     "players": 96,
+     "label_seasons": 176,
+     "join_fwar": 176,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    }
+   },
+   "reported_not_pooled": []
+  },
+  "pit": {
+   "by_cohort_band": {
+    "2011-2015": {
+     "players": 216,
+     "label_seasons": 918,
+     "join_fwar": 918,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2016-2019": {
+     "players": 218,
+     "label_seasons": 925,
+     "join_fwar": 925,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2020-2025": {
+     "players": 682,
+     "label_seasons": 2075,
+     "join_fwar": 2075,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    }
+   },
+   "by_fold": {
+    "2011": {
+     "players": 8,
+     "label_seasons": 39,
+     "join_fwar": 39,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2012": {
+     "players": 30,
+     "label_seasons": 138,
+     "join_fwar": 138,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2013": {
+     "players": 53,
+     "label_seasons": 212,
+     "join_fwar": 212,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2014": {
+     "players": 53,
+     "label_seasons": 233,
+     "join_fwar": 233,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2015": {
+     "players": 72,
+     "label_seasons": 296,
+     "join_fwar": 296,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2016": {
+     "players": 51,
+     "label_seasons": 216,
+     "join_fwar": 216,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2017": {
+     "players": 32,
+     "label_seasons": 120,
+     "join_fwar": 120,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2018": {
+     "players": 57,
+     "label_seasons": 245,
+     "join_fwar": 245,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2019": {
+     "players": 78,
+     "label_seasons": 344,
+     "join_fwar": 344,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2020": {
+     "players": 109,
+     "label_seasons": 394,
+     "join_fwar": 394,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2021": {
+     "players": 108,
+     "label_seasons": 430,
+     "join_fwar": 430,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2022": {
+     "players": 100,
+     "label_seasons": 357,
+     "join_fwar": 357,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2023": {
+     "players": 128,
+     "label_seasons": 390,
+     "join_fwar": 390,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2024": {
+     "players": 119,
+     "label_seasons": 294,
+     "join_fwar": 294,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    },
+    "2025": {
+     "players": 118,
+     "label_seasons": 210,
+     "join_fwar": 210,
+     "players_no_id": 0,
+     "share": 1.0,
+     "under_90_pct": false
+    }
+   },
+   "reported_not_pooled": []
+  }
+ },
+ "clause_d_tost": {
+  "hit": {
+   "point_difference": -0.00221,
+   "E_cond_ci95": [
+    -0.01421,
+    0.0092
+   ],
+   "E_cond_sd": 0.00604,
+   "E_refit_ci95": [
+    -0.02296,
+    0.01899
+   ],
+   "E_refit_sd": 0.01015,
+   "tost_margin": 0.02,
+   "disposition": "RULED OUT (equivalent within the registered margin)",
+   "estimator_note": "E_cond is primary; E_refit is reported beside it.",
+   "floors_note": "nine of the thirteen standard cells carry E_cond floors of 0.0203 to 0.0322 (note 4); UNDECIDED is the expected pitcher reading"
+  },
+  "pit": {
+   "point_difference": 0.01245,
+   "E_cond_ci95": [
+    0.00105,
+    0.02393
+   ],
+   "E_cond_sd": 0.00574,
+   "E_refit_ci95": [
+    -0.01051,
+    0.02323
+   ],
+   "E_refit_sd": 0.00862,
+   "tost_margin": 0.02,
+   "disposition": "UNDECIDED",
+   "estimator_note": "E_cond is primary; E_refit is reported beside it.",
+   "floors_note": "nine of the thirteen standard cells carry E_cond floors of 0.0203 to 0.0322 (note 4); UNDECIDED is the expected pitcher reading"
+  }
+ },
+ "clause_e_controls": {
+  "hit": {
+   "zero_information_twin_margin": {
+    "n": 782,
+    "consensus": 0.36073,
+    "blend": 0.39127,
+    "margin": 0.03054
+   },
+   "twin_minus_ewar_v2": -0.00349,
+   "observed_difference": -0.00221,
+   "permutation_B": 2000,
+   "permutation_B_meets_registered_minimum": true,
+   "permutation_band_ci95": [
+    -0.01253,
+    0.01496
+   ],
+   "p_two_sided": 0.7695,
+   "permuted_within": "(season, side)",
+   "reading": "if the twin's difference matches the observed one, there is no result to attribute to the basis"
+  },
+  "pit": {
+   "zero_information_twin_margin": {
+    "n": 907,
+    "consensus": 0.29975,
+    "blend": 0.3141,
+    "margin": 0.01435
+   },
+   "twin_minus_ewar_v2": 0.0027,
+   "observed_difference": 0.01245,
+   "permutation_B": 2000,
+   "permutation_B_meets_registered_minimum": true,
+   "permutation_band_ci95": [
+    -0.00738,
+    0.01753
+   ],
+   "p_two_sided": 0.106,
+   "permuted_within": "(season, side)",
+   "reading": "if the twin's difference matches the observed one, there is no result to attribute to the basis"
+  }
+ },
+ "clause_e_folds": {
+  "hit": {
+   "n_folds": 11,
+   "per_fold_difference": {
+    "2014": -0.0356,
+    "2015": -0.0222,
+    "2016": -0.02958,
+    "2017": 0.02658,
+    "2018": 0.00249,
+    "2019": -0.01166,
+    "2020": 0.00265,
+    "2021": -0.04066,
+    "2022": -0.00591,
+    "2023": -0.00352,
+    "2024": 0.00669
+   },
+   "folds_positive": 4,
+   "folds_negative": 7,
+   "meets_4_fold_rule": true,
+   "headline_admissible": true
+  },
+  "pit": {
+   "n_folds": 11,
+   "per_fold_difference": {
+    "2014": 0.01889,
+    "2015": 0.01979,
+    "2016": 0.01714,
+    "2017": -0.04305,
+    "2018": 0.02646,
+    "2019": 0.01761,
+    "2020": 0.01188,
+    "2021": -0.00216,
+    "2022": 0.0052,
+    "2023": 0.00257,
+    "2024": 0.00912
+   },
+   "folds_positive": 9,
+   "folds_negative": 2,
+   "meets_4_fold_rule": true,
+   "headline_admissible": true
+  }
+ },
+ "clause_i_arms": {
+  "hit": {
+   "quantities_by_arm": {
+    "E0": {
+     "rows": 1916,
+     "debuted_rows": 872,
+     "busts_in_pool": 1017,
+     "bust_share_full_pool": 0.5384,
+     "debuted_censored_share": 0.4415,
+     "resolved_labels_le_0_share": 0.3593,
+     "margin_debuted": 0.0363,
+     "blend_rho_debuted": 0.40237,
+     "consensus_rho_debuted": 0.36606,
+     "n_debuted_scored": 782,
+     "margin_full_pool": 0.00143,
+     "blend_rho_full_pool": 0.29334,
+     "consensus_rho_full_pool": 0.29191,
+     "n_full_pool_scored": 1798
+    },
+    "Estar": {
+     "rows": 2012,
+     "debuted_rows": 968,
+     "busts_in_pool": 819,
+     "bust_share_full_pool": 0.4583,
+     "debuted_censored_share": 0.4804,
+     "resolved_labels_le_0_share": 0.3519,
+     "margin_debuted": 0.03182,
+     "blend_rho_debuted": 0.42748,
+     "consensus_rho_debuted": 0.39566,
+     "n_debuted_scored": 782,
+     "margin_full_pool": 0.01672,
+     "blend_rho_full_pool": 0.33586,
+     "consensus_rho_full_pool": 0.31913,
+     "n_full_pool_scored": 1590
+    },
+    "F1": {
+     "rows": 2012,
+     "debuted_rows": 968,
+     "busts_in_pool": 819,
+     "bust_share_full_pool": 0.4583,
+     "debuted_censored_share": 0.4804,
+     "resolved_labels_le_0_share": 0.3618,
+     "margin_debuted": 0.03403,
+     "blend_rho_debuted": 0.42352,
+     "consensus_rho_debuted": 0.38949,
+     "n_debuted_scored": 782,
+     "margin_full_pool": 0.00777,
+     "blend_rho_full_pool": 0.33139,
+     "consensus_rho_full_pool": 0.32362,
+     "n_full_pool_scored": 1590
+    },
+    "F2": {
+     "rows": 1916,
+     "debuted_rows": 872,
+     "busts_in_pool": 759,
+     "bust_share_full_pool": 0.4654,
+     "debuted_censored_share": 0.508,
+     "resolved_labels_le_0_share": 0.3566,
+     "margin_debuted": 0.03196,
+     "blend_rho_debuted": 0.41276,
+     "consensus_rho_debuted": 0.3808,
+     "n_debuted_scored": 782,
+     "margin_full_pool": 0.02407,
+     "blend_rho_full_pool": 0.33007,
+     "consensus_rho_full_pool": 0.306,
+     "n_full_pool_scored": 1530
+    },
+    "F3": {
+     "rows": 2012,
+     "debuted_rows": 968,
+     "busts_in_pool": 1017,
+     "bust_share_full_pool": 0.5123,
+     "debuted_censored_share": 0.4804,
+     "resolved_labels_le_0_share": 0.3519,
+     "margin_debuted": 0.03182,
+     "blend_rho_debuted": 0.42748,
+     "consensus_rho_debuted": 0.39566,
+     "n_debuted_scored": 782,
+     "margin_full_pool": 0.01757,
+     "blend_rho_full_pool": 0.31954,
+     "consensus_rho_full_pool": 0.30198,
+     "n_full_pool_scored": 1798
+    },
+    "F4": {
+     "rows": 2012,
+     "debuted_rows": 968,
+     "busts_in_pool": 819,
+     "bust_share_full_pool": 0.4583,
+     "debuted_censored_share": 0.4215,
+     "resolved_labels_le_0_share": 0.3607,
+     "margin_debuted": 0.0268,
+     "blend_rho_debuted": 0.41515,
+     "consensus_rho_debuted": 0.38835,
+     "n_debuted_scored": 782,
+     "margin_full_pool": 0.01264,
+     "blend_rho_full_pool": 0.32091,
+     "consensus_rho_full_pool": 0.30827,
+     "n_full_pool_scored": 1590
+    },
+    "F5": {
+     "rows": 2012,
+     "debuted_rows": 968,
+     "busts_in_pool": 819,
+     "bust_share_full_pool": 0.4583,
+     "debuted_censored_share": 0.4804,
+     "resolved_labels_le_0_share": 0.3519,
+     "margin_debuted": 0.035,
+     "blend_rho_debuted": 0.43066,
+     "consensus_rho_debuted": 0.39566,
+     "n_debuted_scored": 782,
+     "margin_full_pool": 0.01023,
+     "blend_rho_full_pool": 0.32936,
+     "consensus_rho_full_pool": 0.31913,
+     "n_full_pool_scored": 1590
+    }
+   },
+   "table": {
+    "margin_debuted": {
+     "Q_Estar": 0.03182,
+     "Q_E0": 0.0363,
+     "effects": {
+      "F1": {
+       "effect": -0.00221,
+       "Q_arm": 0.03403
+      },
+      "F2": {
+       "effect": -0.00014,
+       "Q_arm": 0.03196
+      },
+      "F3": {
+       "effect": 0.0,
+       "Q_arm": 0.03182
+      },
+      "F4": {
+       "effect": 0.00502,
+       "Q_arm": 0.0268
+      },
+      "F5": {
+       "effect": -0.00318,
+       "Q_arm": 0.035
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": -0.00448,
+     "interaction_unattributed": -0.00397,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "blend_rho_debuted": {
+     "Q_Estar": 0.42748,
+     "Q_E0": 0.40237,
+     "effects": {
+      "F1": {
+       "effect": 0.00396,
+       "Q_arm": 0.42352
+      },
+      "F2": {
+       "effect": 0.01472,
+       "Q_arm": 0.41276
+      },
+      "F3": {
+       "effect": 0.0,
+       "Q_arm": 0.42748
+      },
+      "F4": {
+       "effect": 0.01233,
+       "Q_arm": 0.41515
+      },
+      "F5": {
+       "effect": -0.00318,
+       "Q_arm": 0.43066
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.02511,
+     "interaction_unattributed": -0.00272,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "consensus_rho_debuted": {
+     "Q_Estar": 0.39566,
+     "Q_E0": 0.36606,
+     "effects": {
+      "F1": {
+       "effect": 0.00617,
+       "Q_arm": 0.38949
+      },
+      "F2": {
+       "effect": 0.01486,
+       "Q_arm": 0.3808
+      },
+      "F3": {
+       "effect": 0.0,
+       "Q_arm": 0.39566
+      },
+      "F4": {
+       "effect": 0.00731,
+       "Q_arm": 0.38835
+      },
+      "F5": {
+       "effect": 0.0,
+       "Q_arm": 0.39566
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.0296,
+     "interaction_unattributed": 0.00126,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "margin_full_pool": {
+     "Q_Estar": 0.01672,
+     "Q_E0": 0.00143,
+     "effects": {
+      "F1": {
+       "effect": 0.00895,
+       "Q_arm": 0.00777
+      },
+      "F2": {
+       "effect": -0.00735,
+       "Q_arm": 0.02407
+      },
+      "F3": {
+       "effect": -0.00085,
+       "Q_arm": 0.01757
+      },
+      "F4": {
+       "effect": 0.00408,
+       "Q_arm": 0.01264
+      },
+      "F5": {
+       "effect": 0.00649,
+       "Q_arm": 0.01023
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.01529,
+     "interaction_unattributed": 0.00397,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "blend_rho_full_pool": {
+     "Q_Estar": 0.33586,
+     "Q_E0": 0.29334,
+     "effects": {
+      "F1": {
+       "effect": 0.00447,
+       "Q_arm": 0.33139
+      },
+      "F2": {
+       "effect": 0.00579,
+       "Q_arm": 0.33007
+      },
+      "F3": {
+       "effect": 0.01632,
+       "Q_arm": 0.31954
+      },
+      "F4": {
+       "effect": 0.01495,
+       "Q_arm": 0.32091
+      },
+      "F5": {
+       "effect": 0.0065,
+       "Q_arm": 0.32936
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.04252,
+     "interaction_unattributed": -0.00551,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "consensus_rho_full_pool": {
+     "Q_Estar": 0.31913,
+     "Q_E0": 0.29191,
+     "effects": {
+      "F1": {
+       "effect": -0.00449,
+       "Q_arm": 0.32362
+      },
+      "F2": {
+       "effect": 0.01313,
+       "Q_arm": 0.306
+      },
+      "F3": {
+       "effect": 0.01715,
+       "Q_arm": 0.30198
+      },
+      "F4": {
+       "effect": 0.01086,
+       "Q_arm": 0.30827
+      },
+      "F5": {
+       "effect": 0.0,
+       "Q_arm": 0.31913
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.02722,
+     "interaction_unattributed": -0.00943,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "n_debuted_scored": {
+     "Q_Estar": 782,
+     "Q_E0": 782,
+     "effects": {
+      "F1": {
+       "effect": 0,
+       "Q_arm": 782
+      },
+      "F2": {
+       "effect": 0,
+       "Q_arm": 782
+      },
+      "F3": {
+       "effect": 0,
+       "Q_arm": 782
+      },
+      "F4": {
+       "effect": 0,
+       "Q_arm": 782
+      },
+      "F5": {
+       "effect": 0,
+       "Q_arm": 782
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0,
+     "interaction_unattributed": 0.0,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "n_full_pool_scored": {
+     "Q_Estar": 1590,
+     "Q_E0": 1798,
+     "effects": {
+      "F1": {
+       "effect": 0,
+       "Q_arm": 1590
+      },
+      "F2": {
+       "effect": 60,
+       "Q_arm": 1530
+      },
+      "F3": {
+       "effect": -208,
+       "Q_arm": 1798
+      },
+      "F4": {
+       "effect": 0,
+       "Q_arm": 1590
+      },
+      "F5": {
+       "effect": 0,
+       "Q_arm": 1590
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": -208,
+     "interaction_unattributed": -60.0,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "rows": {
+     "Q_Estar": 2012,
+     "Q_E0": 1916,
+     "effects": {
+      "F1": {
+       "effect": 0,
+       "Q_arm": 2012
+      },
+      "F2": {
+       "effect": 96,
+       "Q_arm": 1916
+      },
+      "F3": {
+       "effect": 0,
+       "Q_arm": 2012
+      },
+      "F4": {
+       "effect": 0,
+       "Q_arm": 2012
+      },
+      "F5": {
+       "effect": 0,
+       "Q_arm": 2012
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 96,
+     "interaction_unattributed": 0.0,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "debuted_rows": {
+     "Q_Estar": 968,
+     "Q_E0": 872,
+     "effects": {
+      "F1": {
+       "effect": 0,
+       "Q_arm": 968
+      },
+      "F2": {
+       "effect": 96,
+       "Q_arm": 872
+      },
+      "F3": {
+       "effect": 0,
+       "Q_arm": 968
+      },
+      "F4": {
+       "effect": 0,
+       "Q_arm": 968
+      },
+      "F5": {
+       "effect": 0,
+       "Q_arm": 968
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 96,
+     "interaction_unattributed": 0.0,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "busts_in_pool": {
+     "Q_Estar": 819,
+     "Q_E0": 1017,
+     "effects": {
+      "F1": {
+       "effect": 0,
+       "Q_arm": 819
+      },
+      "F2": {
+       "effect": 60,
+       "Q_arm": 759
+      },
+      "F3": {
+       "effect": -198,
+       "Q_arm": 1017
+      },
+      "F4": {
+       "effect": 0,
+       "Q_arm": 819
+      },
+      "F5": {
+       "effect": 0,
+       "Q_arm": 819
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": -198,
+     "interaction_unattributed": -60.0,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "bust_share_full_pool": {
+     "Q_Estar": 0.4583,
+     "Q_E0": 0.5384,
+     "effects": {
+      "F1": {
+       "effect": 0.0,
+       "Q_arm": 0.4583
+      },
+      "F2": {
+       "effect": -0.0071,
+       "Q_arm": 0.4654
+      },
+      "F3": {
+       "effect": -0.054,
+       "Q_arm": 0.5123
+      },
+      "F4": {
+       "effect": 0.0,
+       "Q_arm": 0.4583
+      },
+      "F5": {
+       "effect": 0.0,
+       "Q_arm": 0.4583
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": -0.0801,
+     "interaction_unattributed": -0.019,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "debuted_censored_share": {
+     "Q_Estar": 0.4804,
+     "Q_E0": 0.4415,
+     "effects": {
+      "F1": {
+       "effect": 0.0,
+       "Q_arm": 0.4804
+      },
+      "F2": {
+       "effect": -0.0276,
+       "Q_arm": 0.508
+      },
+      "F3": {
+       "effect": 0.0,
+       "Q_arm": 0.4804
+      },
+      "F4": {
+       "effect": 0.0589,
+       "Q_arm": 0.4215
+      },
+      "F5": {
+       "effect": 0.0,
+       "Q_arm": 0.4804
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.0389,
+     "interaction_unattributed": 0.0076,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "resolved_labels_le_0_share": {
+     "Q_Estar": 0.3519,
+     "Q_E0": 0.3593,
+     "effects": {
+      "F1": {
+       "effect": -0.0099,
+       "Q_arm": 0.3618
+      },
+      "F2": {
+       "effect": -0.0047,
+       "Q_arm": 0.3566
+      },
+      "F3": {
+       "effect": 0.0,
+       "Q_arm": 0.3519
+      },
+      "F4": {
+       "effect": -0.0088,
+       "Q_arm": 0.3607
+      },
+      "F5": {
+       "effect": 0.0,
+       "Q_arm": 0.3519
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": -0.0074,
+     "interaction_unattributed": 0.016,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    }
+   },
+   "omitted": {},
+   "manifest_generated_at": "2026-10-03T16:13:02Z",
+   "arm_sha256": {
+    "E0": "06f9917140f6706d82abd3af56b4274ccfcd087561c4e30975e8a301963d5b4a",
+    "Estar": "fd15ca0877243d6c425d2cad53d23faf3d0cced0713b0e1fb303a7743bcb3c63",
+    "F1": "6365b59211d78de9f294607c6647a921804df3dc79babc9f3725ea3c8569dd9f",
+    "F2": "38552087ded6be32def2708250f671207364893c09d9296b293a62efd3edc8f2",
+    "F3": "b29d688268ab75edbc175bbe7efa77e4e5082bd57cb8d69fc997d3069478bc1c",
+    "F4": "a7350ce8bde2ae98caa04e75543e7812c056eccd3011ed51819e2ba9466b9fba",
+    "F5": "fd15ca0877243d6c425d2cad53d23faf3d0cced0713b0e1fb303a7743bcb3c63"
+   }
+  },
+  "pit": {
+   "quantities_by_arm": {
+    "E0": {
+     "rows": 2040,
+     "debuted_rows": 998,
+     "busts_in_pool": 984,
+     "bust_share_full_pool": 0.4965,
+     "debuted_censored_share": 0.4539,
+     "resolved_labels_le_0_share": 0.3138,
+     "margin_debuted": 0.0096,
+     "blend_rho_debuted": 0.30686,
+     "consensus_rho_debuted": 0.29726,
+     "n_debuted_scored": 907,
+     "margin_full_pool": 0.01189,
+     "blend_rho_full_pool": 0.28059,
+     "consensus_rho_full_pool": 0.26869,
+     "n_full_pool_scored": 1887
+    },
+    "Estar": {
+     "rows": 2158,
+     "debuted_rows": 1116,
+     "busts_in_pool": 829,
+     "bust_share_full_pool": 0.4262,
+     "debuted_censored_share": 0.4928,
+     "resolved_labels_le_0_share": 0.3445,
+     "margin_debuted": 0.0241,
+     "blend_rho_debuted": 0.35917,
+     "consensus_rho_debuted": 0.33508,
+     "n_debuted_scored": 907,
+     "margin_full_pool": 0.00974,
+     "blend_rho_full_pool": 0.28607,
+     "consensus_rho_full_pool": 0.27633,
+     "n_full_pool_scored": 1712
+    },
+    "F1": {
+     "rows": 2158,
+     "debuted_rows": 1116,
+     "busts_in_pool": 829,
+     "bust_share_full_pool": 0.4262,
+     "debuted_censored_share": 0.4928,
+     "resolved_labels_le_0_share": 0.2986,
+     "margin_debuted": 0.01165,
+     "blend_rho_debuted": 0.3096,
+     "consensus_rho_debuted": 0.29795,
+     "n_debuted_scored": 907,
+     "margin_full_pool": -0.00883,
+     "blend_rho_full_pool": 0.26328,
+     "consensus_rho_full_pool": 0.27211,
+     "n_full_pool_scored": 1712
+    },
+    "F2": {
+     "rows": 2040,
+     "debuted_rows": 998,
+     "busts_in_pool": 742,
+     "bust_share_full_pool": 0.4264,
+     "debuted_censored_share": 0.5591,
+     "resolved_labels_le_0_share": 0.3114,
+     "margin_debuted": 0.02814,
+     "blend_rho_debuted": 0.36181,
+     "consensus_rho_debuted": 0.33367,
+     "n_debuted_scored": 907,
+     "margin_full_pool": 0.01312,
+     "blend_rho_full_pool": 0.2963,
+     "consensus_rho_full_pool": 0.28318,
+     "n_full_pool_scored": 1626
+    },
+    "F3": {
+     "rows": 2158,
+     "debuted_rows": 1116,
+     "busts_in_pool": 984,
+     "bust_share_full_pool": 0.4686,
+     "debuted_censored_share": 0.4928,
+     "resolved_labels_le_0_share": 0.3445,
+     "margin_debuted": 0.0241,
+     "blend_rho_debuted": 0.35917,
+     "consensus_rho_debuted": 0.33508,
+     "n_debuted_scored": 907,
+     "margin_full_pool": 0.00891,
+     "blend_rho_full_pool": 0.27707,
+     "consensus_rho_full_pool": 0.26816,
+     "n_full_pool_scored": 1887
+    },
+    "F4": {
+     "rows": 2158,
+     "debuted_rows": 1116,
+     "busts_in_pool": 829,
+     "bust_share_full_pool": 0.4262,
+     "debuted_censored_share": 0.4158,
+     "resolved_labels_le_0_share": 0.3436,
+     "margin_debuted": 0.02399,
+     "blend_rho_debuted": 0.36191,
+     "consensus_rho_debuted": 0.33793,
+     "n_debuted_scored": 907,
+     "margin_full_pool": 0.01439,
+     "blend_rho_full_pool": 0.29265,
+     "consensus_rho_full_pool": 0.27827,
+     "n_full_pool_scored": 1712
+    },
+    "F5": {
+     "rows": 2158,
+     "debuted_rows": 1116,
+     "busts_in_pool": 829,
+     "bust_share_full_pool": 0.4262,
+     "debuted_censored_share": 0.4928,
+     "resolved_labels_le_0_share": 0.3445,
+     "margin_debuted": 0.02429,
+     "blend_rho_debuted": 0.35937,
+     "consensus_rho_debuted": 0.33508,
+     "n_debuted_scored": 907,
+     "margin_full_pool": 0.01257,
+     "blend_rho_full_pool": 0.2889,
+     "consensus_rho_full_pool": 0.27633,
+     "n_full_pool_scored": 1712
+    }
+   },
+   "table": {
+    "margin_debuted": {
+     "Q_Estar": 0.0241,
+     "Q_E0": 0.0096,
+     "effects": {
+      "F1": {
+       "effect": 0.01245,
+       "Q_arm": 0.01165
+      },
+      "F2": {
+       "effect": -0.00404,
+       "Q_arm": 0.02814
+      },
+      "F3": {
+       "effect": 0.0,
+       "Q_arm": 0.0241
+      },
+      "F4": {
+       "effect": 0.00011,
+       "Q_arm": 0.02399
+      },
+      "F5": {
+       "effect": -0.00019,
+       "Q_arm": 0.02429
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.0145,
+     "interaction_unattributed": 0.00617,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "blend_rho_debuted": {
+     "Q_Estar": 0.35917,
+     "Q_E0": 0.30686,
+     "effects": {
+      "F1": {
+       "effect": 0.04957,
+       "Q_arm": 0.3096
+      },
+      "F2": {
+       "effect": -0.00264,
+       "Q_arm": 0.36181
+      },
+      "F3": {
+       "effect": 0.0,
+       "Q_arm": 0.35917
+      },
+      "F4": {
+       "effect": -0.00274,
+       "Q_arm": 0.36191
+      },
+      "F5": {
+       "effect": -0.0002,
+       "Q_arm": 0.35937
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.05231,
+     "interaction_unattributed": 0.00832,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "consensus_rho_debuted": {
+     "Q_Estar": 0.33508,
+     "Q_E0": 0.29726,
+     "effects": {
+      "F1": {
+       "effect": 0.03713,
+       "Q_arm": 0.29795
+      },
+      "F2": {
+       "effect": 0.00141,
+       "Q_arm": 0.33367
+      },
+      "F3": {
+       "effect": 0.0,
+       "Q_arm": 0.33508
+      },
+      "F4": {
+       "effect": -0.00285,
+       "Q_arm": 0.33793
+      },
+      "F5": {
+       "effect": 0.0,
+       "Q_arm": 0.33508
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.03782,
+     "interaction_unattributed": 0.00213,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "margin_full_pool": {
+     "Q_Estar": 0.00974,
+     "Q_E0": 0.01189,
+     "effects": {
+      "F1": {
+       "effect": 0.01857,
+       "Q_arm": -0.00883
+      },
+      "F2": {
+       "effect": -0.00338,
+       "Q_arm": 0.01312
+      },
+      "F3": {
+       "effect": 0.00083,
+       "Q_arm": 0.00891
+      },
+      "F4": {
+       "effect": -0.00465,
+       "Q_arm": 0.01439
+      },
+      "F5": {
+       "effect": -0.00283,
+       "Q_arm": 0.01257
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": -0.00215,
+     "interaction_unattributed": -0.01069,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "blend_rho_full_pool": {
+     "Q_Estar": 0.28607,
+     "Q_E0": 0.28059,
+     "effects": {
+      "F1": {
+       "effect": 0.02279,
+       "Q_arm": 0.26328
+      },
+      "F2": {
+       "effect": -0.01023,
+       "Q_arm": 0.2963
+      },
+      "F3": {
+       "effect": 0.009,
+       "Q_arm": 0.27707
+      },
+      "F4": {
+       "effect": -0.00658,
+       "Q_arm": 0.29265
+      },
+      "F5": {
+       "effect": -0.00283,
+       "Q_arm": 0.2889
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.00548,
+     "interaction_unattributed": -0.00667,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "consensus_rho_full_pool": {
+     "Q_Estar": 0.27633,
+     "Q_E0": 0.26869,
+     "effects": {
+      "F1": {
+       "effect": 0.00422,
+       "Q_arm": 0.27211
+      },
+      "F2": {
+       "effect": -0.00685,
+       "Q_arm": 0.28318
+      },
+      "F3": {
+       "effect": 0.00817,
+       "Q_arm": 0.26816
+      },
+      "F4": {
+       "effect": -0.00194,
+       "Q_arm": 0.27827
+      },
+      "F5": {
+       "effect": 0.0,
+       "Q_arm": 0.27633
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.00764,
+     "interaction_unattributed": 0.00404,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "n_debuted_scored": {
+     "Q_Estar": 907,
+     "Q_E0": 907,
+     "effects": {
+      "F1": {
+       "effect": 0,
+       "Q_arm": 907
+      },
+      "F2": {
+       "effect": 0,
+       "Q_arm": 907
+      },
+      "F3": {
+       "effect": 0,
+       "Q_arm": 907
+      },
+      "F4": {
+       "effect": 0,
+       "Q_arm": 907
+      },
+      "F5": {
+       "effect": 0,
+       "Q_arm": 907
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0,
+     "interaction_unattributed": 0.0,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "n_full_pool_scored": {
+     "Q_Estar": 1712,
+     "Q_E0": 1887,
+     "effects": {
+      "F1": {
+       "effect": 0,
+       "Q_arm": 1712
+      },
+      "F2": {
+       "effect": 86,
+       "Q_arm": 1626
+      },
+      "F3": {
+       "effect": -175,
+       "Q_arm": 1887
+      },
+      "F4": {
+       "effect": 0,
+       "Q_arm": 1712
+      },
+      "F5": {
+       "effect": 0,
+       "Q_arm": 1712
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": -175,
+     "interaction_unattributed": -86.0,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "rows": {
+     "Q_Estar": 2158,
+     "Q_E0": 2040,
+     "effects": {
+      "F1": {
+       "effect": 0,
+       "Q_arm": 2158
+      },
+      "F2": {
+       "effect": 118,
+       "Q_arm": 2040
+      },
+      "F3": {
+       "effect": 0,
+       "Q_arm": 2158
+      },
+      "F4": {
+       "effect": 0,
+       "Q_arm": 2158
+      },
+      "F5": {
+       "effect": 0,
+       "Q_arm": 2158
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 118,
+     "interaction_unattributed": 0.0,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "debuted_rows": {
+     "Q_Estar": 1116,
+     "Q_E0": 998,
+     "effects": {
+      "F1": {
+       "effect": 0,
+       "Q_arm": 1116
+      },
+      "F2": {
+       "effect": 118,
+       "Q_arm": 998
+      },
+      "F3": {
+       "effect": 0,
+       "Q_arm": 1116
+      },
+      "F4": {
+       "effect": 0,
+       "Q_arm": 1116
+      },
+      "F5": {
+       "effect": 0,
+       "Q_arm": 1116
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 118,
+     "interaction_unattributed": 0.0,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "busts_in_pool": {
+     "Q_Estar": 829,
+     "Q_E0": 984,
+     "effects": {
+      "F1": {
+       "effect": 0,
+       "Q_arm": 829
+      },
+      "F2": {
+       "effect": 87,
+       "Q_arm": 742
+      },
+      "F3": {
+       "effect": -155,
+       "Q_arm": 984
+      },
+      "F4": {
+       "effect": 0,
+       "Q_arm": 829
+      },
+      "F5": {
+       "effect": 0,
+       "Q_arm": 829
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": -155,
+     "interaction_unattributed": -87.0,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "bust_share_full_pool": {
+     "Q_Estar": 0.4262,
+     "Q_E0": 0.4965,
+     "effects": {
+      "F1": {
+       "effect": 0.0,
+       "Q_arm": 0.4262
+      },
+      "F2": {
+       "effect": -0.0002,
+       "Q_arm": 0.4264
+      },
+      "F3": {
+       "effect": -0.0424,
+       "Q_arm": 0.4686
+      },
+      "F4": {
+       "effect": 0.0,
+       "Q_arm": 0.4262
+      },
+      "F5": {
+       "effect": 0.0,
+       "Q_arm": 0.4262
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": -0.0703,
+     "interaction_unattributed": -0.0277,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "debuted_censored_share": {
+     "Q_Estar": 0.4928,
+     "Q_E0": 0.4539,
+     "effects": {
+      "F1": {
+       "effect": 0.0,
+       "Q_arm": 0.4928
+      },
+      "F2": {
+       "effect": -0.0663,
+       "Q_arm": 0.5591
+      },
+      "F3": {
+       "effect": 0.0,
+       "Q_arm": 0.4928
+      },
+      "F4": {
+       "effect": 0.077,
+       "Q_arm": 0.4158
+      },
+      "F5": {
+       "effect": 0.0,
+       "Q_arm": 0.4928
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.0389,
+     "interaction_unattributed": 0.0282,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    },
+    "resolved_labels_le_0_share": {
+     "Q_Estar": 0.3445,
+     "Q_E0": 0.3138,
+     "effects": {
+      "F1": {
+       "effect": 0.0459,
+       "Q_arm": 0.2986
+      },
+      "F2": {
+       "effect": 0.0331,
+       "Q_arm": 0.3114
+      },
+      "F3": {
+       "effect": 0.0,
+       "Q_arm": 0.3445
+      },
+      "F4": {
+       "effect": 0.0009,
+       "Q_arm": 0.3436
+      },
+      "F5": {
+       "effect": 0.0,
+       "Q_arm": 0.3445
+      }
+     },
+     "summed_over": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+     ],
+     "total_move_Estar_minus_E0": 0.0307,
+     "interaction_unattributed": -0.0492,
+     "interaction_note": "Q(Estar) - Q(E0) - sum of the leave-one-out effects over ['F1', 'F2', 'F3', 'F4', 'F5']; a main-effect reading under an additivity assumption this design does not test (clause (i) points 2 and 3)"
+    }
+   },
+   "omitted": {},
+   "manifest_generated_at": "2026-10-03T16:16:14Z",
+   "arm_sha256": {
+    "E0": "4c8fa4e804825b47668afdc913ecc87b032d6f0a395df043b95fa97add15d499",
+    "Estar": "27f3e8a6c89e358a1f2e9d6c83603ffd45f8d5df4f0129f8d9b0fccbf4fb75d7",
+    "F1": "2d436285b5ce97a12fce5a16c30a1e2c6c226853dc20f5a0ddc755c0cb5b003e",
+    "F2": "90d0e9c15b172103489ec82c2ca401398953a4f8581a35daf6b1bd4f48b33655",
+    "F3": "94338dfc8f7219e1fc043ba177ec92f28b3906314a84faa835eeb95292b9d815",
+    "F4": "f2805f7d75af43d9a1906c6f7a2577db6d00be3a8dcc6f6d5f02bc1ea3498aa3",
+    "F5": "27f3e8a6c89e358a1f2e9d6c83603ffd45f8d5df4f0129f8d9b0fccbf4fb75d7"
+   }
+  }
+ },
+ "candidate_clauses": {
+  "hit": {
+   "F3_arm_r": {
+    "source": "docs/efv-2026-10-02/BUST2_GATE.md",
+    "factor": "F3",
+    "1_resolved_to_censored_count": 208,
+    "1b_censored_to_resolved_count": 10,
+    "2_full_pool_bust_share": {
+     "Estar": 0.4583,
+     "E0_rule_F3": 0.5123,
+     "move_points": -5.4
+    },
+    "2_disposition": "within 10 points",
+    "3_rank_clause": {
+     "arm_r_label_estar_pool": {
+      "n_scored": 1590,
+      "blend_rho_fit_estar": 0.33586,
+      "blend_rho_fit_f3": 0.33853,
+      "margin_fit_estar": 0.01672,
+      "margin_fit_f3": 0.01955,
+      "point_difference_blend_rho": -0.00268,
+      "E_cond_ci95": [
+       -0.00772,
+       0.00191
+      ],
+      "tost_margin": 0.02,
+      "disposition": "NON-INFERIOR"
+     },
+     "e0_evaluation_label_f3_pool": {
+      "n_scored": 1798,
+      "blend_rho_fit_estar": 0.31711,
+      "blend_rho_fit_f3": 0.31954,
+      "margin_fit_estar": 0.01491,
+      "margin_fit_f3": 0.01757,
+      "point_difference_blend_rho": -0.00244,
+      "E_cond_ci95": [
+       -0.00734,
+       0.002
+      ],
+      "tost_margin": 0.02,
+      "disposition": "NON-INFERIOR"
+     }
+    },
+    "ships_on_its_own_clauses": true,
+    "note": "E_cond pooled Spearman of the blend on the full-pool cut, forward-chained; floors re-derived at step G are read beside this at step Z"
+   },
+   "F4_a1": {
+    "source": "docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md Appendix A (A1 expectation)",
+    "factor": "F4",
+    "pre_registered_expectation": {
+     "resolved_to_censored": 57,
+     "resolved_n": 129,
+     "mean_dlabel": 1.047
+    },
+    "1_censoring_cost": {
+     "resolved_to_censored": 57,
+     "extrapolated_label_share_before_F4": 0.4215,
+     "extrapolated_label_share_after_Estar": 0.4804,
+     "share_move_points": 5.89,
+     "weight_distribution_before": {
+      "mean": 0.8328,
+      "by_weight": {
+       "0.333": 96,
+       "0.5": 91,
+       "0.667": 93,
+       "0.833": 128,
+       "1.0": 560
+      }
+     },
+     "weight_distribution_after": {
+      "mean": 0.7653,
+      "by_weight": {
+       "0.167": 78,
+       "0.333": 87,
+       "0.5": 101,
+       "0.667": 123,
+       "0.833": 76,
+       "1.0": 503
+      }
+     },
+     "window_shifted_rows": 598
+    },
+    "2_disposition": "within 10 points",
+    "3_level_clause": {
+     "resolved_rows_n": 503,
+     "resolved_mean_label_change_WAR": 0.3064,
+     "full_pool_rows_n": 968,
+     "full_pool_mean_label_change_WAR": 0.4981,
+     "reading": "the level clause reads the RESOLVED rows; the full-pool number is beside it and is expected to be smaller"
+    },
+    "4_percentage_of_label": "NOT a clause; not computed (unstable denominator)",
+    "ships_on_its_own_clauses": true
+   },
+   "F5_a2": {
+    "source": "docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md Appendix A (A2 row)",
+    "factor": "F5",
+    "pre_registered_expectation": {
+     "level_rank_slope_off": 0.154,
+     "level_rank_slope_on": [
+      0.209,
+      0.253
+     ]
+    },
+    "level_clause": {
+     "A2_on_Estar": {
+      "level_rank_slope_raw_WAR_per_rung": 0.2997,
+      "rows": 968,
+      "milb_unavailable_rows": 141
+     },
+     "A2_off_F5": {
+      "level_rank_slope_raw_WAR_per_rung": -0.0648,
+      "rows": 968,
+      "milb_unavailable_rows": 141
+     },
+     "slope_delta": 0.3645
+    },
+    "ships_on_its_own_clauses": true
+   },
+   "a1_a2_sign_agreement": {
+    "effect_A1_on_margin": 0.00502,
+    "effect_A2_on_margin": -0.00318,
+    "disagree_in_sign": true,
+    "disposition": "neither ships; both recorded as a loss with the interaction cell published"
+   },
+   "F1_F2": "owner decisions (O1, O2): ship regardless, no ship clause (part 0)"
+  },
+  "pit": {
+   "F3_arm_r": {
+    "source": "docs/efv-2026-10-02/BUST2_GATE.md",
+    "factor": "F3",
+    "1_resolved_to_censored_count": 175,
+    "1b_censored_to_resolved_count": 20,
+    "2_full_pool_bust_share": {
+     "Estar": 0.4262,
+     "E0_rule_F3": 0.4686,
+     "move_points": -4.24
+    },
+    "2_disposition": "within 10 points",
+    "3_rank_clause": {
+     "arm_r_label_estar_pool": {
+      "n_scored": 1712,
+      "blend_rho_fit_estar": 0.28607,
+      "blend_rho_fit_f3": 0.28645,
+      "margin_fit_estar": 0.00974,
+      "margin_fit_f3": 0.00992,
+      "point_difference_blend_rho": -0.00038,
+      "E_cond_ci95": [
+       -0.00112,
+       0.00027
+      ],
+      "tost_margin": 0.02,
+      "disposition": "NON-INFERIOR"
+     },
+     "e0_evaluation_label_f3_pool": {
+      "n_scored": 1887,
+      "blend_rho_fit_estar": 0.27674,
+      "blend_rho_fit_f3": 0.27707,
+      "margin_fit_estar": 0.00865,
+      "margin_fit_f3": 0.00891,
+      "point_difference_blend_rho": -0.00033,
+      "E_cond_ci95": [
+       -0.001,
+       0.00035
+      ],
+      "tost_margin": 0.02,
+      "disposition": "NON-INFERIOR"
+     }
+    },
+    "ships_on_its_own_clauses": true,
+    "note": "E_cond pooled Spearman of the blend on the full-pool cut, forward-chained; floors re-derived at step G are read beside this at step Z"
+   },
+   "F4_a1": {
+    "source": "docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md Appendix A (A1 expectation)",
+    "factor": "F4",
+    "pre_registered_expectation": {
+     "resolved_to_censored": 101,
+     "resolved_n": 136,
+     "mean_dlabel": 0.496
+    },
+    "1_censoring_cost": {
+     "resolved_to_censored": 86,
+     "extrapolated_label_share_before_F4": 0.4158,
+     "extrapolated_label_share_after_Estar": 0.4928,
+     "share_move_points": 7.7,
+     "weight_distribution_before": {
+      "mean": 0.8233,
+      "by_weight": {
+       "0.333": 118,
+       "0.5": 119,
+       "0.667": 127,
+       "0.833": 100,
+       "1.0": 652
+      }
+     },
+     "weight_distribution_after": {
+      "mean": 0.7533,
+      "by_weight": {
+       "0.167": 100,
+       "0.333": 113,
+       "0.5": 135,
+       "0.667": 93,
+       "0.833": 109,
+       "1.0": 566
+      }
+     },
+     "window_shifted_rows": 724
+    },
+    "2_disposition": "within 10 points",
+    "3_level_clause": {
+     "resolved_rows_n": 566,
+     "resolved_mean_label_change_WAR": 0.1843,
+     "full_pool_rows_n": 1116,
+     "full_pool_mean_label_change_WAR": 0.3432,
+     "reading": "the level clause reads the RESOLVED rows; the full-pool number is beside it and is expected to be smaller"
+    },
+    "4_percentage_of_label": "NOT a clause; not computed (unstable denominator)",
+    "ships_on_its_own_clauses": true
+   },
+   "F5_a2": {
+    "source": "docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md Appendix A (A2 row)",
+    "factor": "F5",
+    "pre_registered_expectation": {
+     "level_rank_slope_off": 0.154,
+     "level_rank_slope_on": [
+      0.209,
+      0.253
+     ]
+    },
+    "level_clause": {
+     "A2_on_Estar": {
+      "status": "UNAVAILABLE",
+      "reason": "no level_rank key or under 40 rows"
+     },
+     "A2_off_F5": {
+      "status": "UNAVAILABLE",
+      "reason": "no level_rank key or under 40 rows"
+     }
+    },
+    "ships_on_its_own_clauses": null
+   },
+   "a1_a2_sign_agreement": {
+    "effect_A1_on_margin": 0.00011,
+    "effect_A2_on_margin": -0.00019,
+    "disagree_in_sign": true,
+    "disposition": "neither ships; both recorded as a loss with the interaction cell published"
+   },
+   "F1_F2": "owner decisions (O1, O2): ship regardless, no ship clause (part 0)"
+  }
+ },
+ "clause_f_blast_radius": "run tools/efv_fwar_label_epoch_lab.py --blast (per arm, step A snapshot)",
+ "clause_l": "movement is not accuracy; nothing here is an accuracy claim"
+}
