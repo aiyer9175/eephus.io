@@ -63,7 +63,9 @@ def test_registry_row_is_registered_not_scored():
     assert row["provisional_kind"] == "data_blocked_stub"
     assert row["registration_status"] == "registered, not scored"
     assert not row["eval_artifact"]
-    assert "docs/COLLEGE_PIT_K_CHALLENGER_GATE.md" in row["baseline"]
+    # The docs/ path left the registry's reader fields in COPY_11 (2026-10-04);
+    # the row still says it is gated, and the gate doc is the file GATE names.
+    assert "gated by registration" in row["baseline"] and GATE.is_file()
     assert "2026-11-02" in row["champion"]
 
 

@@ -144,7 +144,7 @@
   },
   {
    "class": "LAB_LOG",
-   "reason": "The registry lab log (per-row `notes`): em-dash rule only until COPY_11 adds `summary` and the notes move behind a collapsed Lab log (SP-Q4, asked; recommended answer built).",
+   "reason": "The registry lab log (per-row `notes`): em-dash rule only. Reader pages lead with the row's `summary` and show the notes collapsed as the Lab log (SP-Q4, COPY_11).",
    "source": "data/model_registry.json",
    "field": "notes"
   },

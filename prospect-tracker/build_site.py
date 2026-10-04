@@ -5800,8 +5800,9 @@ _ACCT_FLAG_LABELS = (
 
 
 def _acct_row(m: dict, f: dict) -> str:
-    """One registry row, server-rendered. `notes` is left to the glossary card
-    on purpose (see the section header comment)."""
+    """One registry row, server-rendered. The row's `summary` leads the open
+    row; `notes` (the lab log) is left to the glossary card on purpose (see
+    the section header comment)."""
     if f.get("url"):
         proof = (f'<a href="{html.escape(f["url"])}"><code>{html.escape(f["path"])}</code></a>'
                  + (f' · produced {html.escape(_fmt_iso_date(f["date"]))}' if f.get("date") else ""))
@@ -5817,7 +5818,8 @@ def _acct_row(m: dict, f: dict) -> str:
     # be auditable: the claim, the bar it had to clear, how it was measured, the
     # receipt, and whatever the receipt says about itself.
     body = (
-        _acct_kv("Predicts", m.get("predicts") or "")
+        _acct_kv("Summary", m.get("summary") or "")
+        + _acct_kv("Predicts", m.get("predicts") or "")
         + _acct_kv("Baseline it must beat", m.get("baseline") or "")
         + _acct_kv("How it is measured", m.get("metric") or "")
         + _acct_kv("Proof", proof, raw=True)

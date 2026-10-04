@@ -1366,6 +1366,7 @@
         <div class="proj-acct-head">
           <span class="mlbp-section-title">${esc(m.label)}</span>${verdictBadge(m.verdict)}
         </div>
+        ${m.summary ? `<div class="fa-note proj-acct-summary">${esc(m.summary)}</div>` : ""}
         <div class="fa-sub proj-acct-predicts">${esc(m.predicts || "")}</div>
         <div class="proj-acct-meta">
           <strong>Champion</strong> ${esc(m.champion || "?")}<br>
@@ -1373,7 +1374,7 @@
           <strong>Metric</strong> <span class="fa-sub">${esc(m.metric || "?")}</span>
         </div>
         ${tableFor(m.eval_artifact)}
-        ${m.notes ? `<details class="proj-acct-notes"><summary class="fa-sub">Methodology and disclosures</summary><div class="fa-note">${esc(m.notes)}</div></details>` : ""}
+        ${m.notes ? `<details class="proj-acct-notes"><summary class="fa-sub">Lab log</summary><div class="fa-note">${esc(m.notes)}</div></details>` : ""}
         ${fresh ? `<div class="fa-sub proj-acct-fresh">${fresh} &middot; <a href="${glHref}">methodology in the Library</a></div>` : ""}
       </div>`;
     }).join("");

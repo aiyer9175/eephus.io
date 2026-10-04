@@ -127,8 +127,8 @@ def render_model_registry() -> str:
         "standing rule crisp: every model gets a row, and a row asserts a claim that",
         "can be measured.",
         "",
-        "| model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| model_id | summary | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for m in models:
         art = m.get("eval_artifact") or "-"
@@ -137,6 +137,7 @@ def render_model_registry() -> str:
         lines.append(
             "| " + " | ".join([
                 f"`{_clean(m.get('model_id', '?'))}`",
+                _clean(m.get("summary", "")),
                 _clean(m.get("surface", ""), 60),
                 _clean(m.get("predicts", ""), 130),
                 _clean(m.get("champion", ""), 80),
@@ -160,7 +161,7 @@ def render_model_registry() -> str:
         "",
         "Verdict semantics (from `model_registry.py`): validated = committed forward",
         "backtest beats the stated baseline; provisional = partially measured;",
-        "unvalidated = predictive claim with no measurement (listed so it cannot hide);",
+        "unvalidated = a predictive claim with no measurement yet;",
         "deprecated = failed validation and was retired or demoted.",
         "",
     ]
