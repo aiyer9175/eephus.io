@@ -25,6 +25,10 @@ is filled in afterwards and nothing above part 9 may be edited once results exis
   a sibling of the git root, beside a sha256 `MANIFEST.json`; `tools/efv_ewar_label_epoch_lab.py
   --blast` reads it there unless `EWAR_PRE_EPOCH_SNAPSHOT` names another directory. Step A's
   own destination and its refusal rule are unchanged.
+- History, 2026-10-03 (a pointer, no clause changes): Z1c, the pitcher-stuff first fold that
+  clause (k) names as its own registration, is drafted at
+  `docs/efv-2026-10-03/Z1C_PITCHER_STUFF_GATE.md` (DRAFT until EV-12 commits and names it),
+  under the owner decision PROGRAM-Q4-REVISIT. No result of Z1c is recorded in this document.
 
 ## 0. What kind of decision this is
 

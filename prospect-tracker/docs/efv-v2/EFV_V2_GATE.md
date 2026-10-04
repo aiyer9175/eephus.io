@@ -63,6 +63,11 @@ lv_dev, vm1 and vm2 share most of their players; they are not independent replic
   recomputed by the gate's tool before the status line changes). Pinned by
   `reserved_vm_pins()`: `source_backtest.CANDIDATE_YEARS` and `efv_model.SCORED_YEARS` may not
   include 2025 or later until its look record exists.
+- **Amendment, dated 2026-10-03 (made while this file reads DRAFT): the Z1c half of PROGRAM.md
+  s4 clause (c).** The counterpart of the "Z1c" half of the joint text (Q4) is Z1c's own
+  registration, `docs/efv-2026-10-03/Z1C_PITCHER_STUFF_GATE.md` (owner decision
+  PROGRAM-Q4-REVISIT): one leg on the 2025 debut cohort inside this registration's one Holm
+  family.
 
 #### R-VM look sizes, counted (amendment A6, dated 2026-10-02, made while this file reads DRAFT)
 
