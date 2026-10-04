@@ -413,7 +413,80 @@ def _resolve_bare_arb(status_by_year: dict[int, str]) -> None:
         status_by_year[y] = f"ARB {step}" + (" (S2)" if s2 else "")
 
 
-def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
+# SPOTRAC POSITION CODES (SPOTRAC_POS_CODES_2026_10). From the refetch of
+# 2026-10-03 the 'Pos' column of the team contract pages serves a NUMBER on some
+# rows ("Jhoan Duran | 33 | 29") and the usual abbreviation on others (Zack
+# Wheeler's row on the same page still reads "SP"). Read raw, 242 veterans
+# served pos '33', '32' and so on, and 128 pitcher cards turned into hitter
+# cards. The numbers are Spotrac's own position ids: the scorer's number plus 32
+# for the fielders (C 2 -> 34 through RF 9 -> 41), the pitcher split into SP 32
+# and RP 33, and two later ids, OF 62 and P 63. Measured on the 30 cached pages
+# (1,213 'Pos' rows, 327 of them coded) against the same players' Spotrac
+# abbreviation before the change (the epoch's step A copy of
+# mlb_projections.json, path-role rows aside) and their StatsAPI primary
+# position (the cached player index):
+#   32 SP: step A 43 of 43 SP; StatsAPI 59 of 59 P
+#   33 RP: step A 84 of 85 RP (one SP); StatsAPI 122 of 122 matched P
+#   34 C 20/20, 35 1B 10/10, 36 2B 12/12, 37 3B 14/14, 38 SS 11/11,
+#   39 LF 6/6, 40 CF 15/15, 41 RF 9/9, 62 OF 7/7 (step A)
+#   63 P: no step A row; StatsAPI 2 of 2 P. The thinnest entry, so it maps to
+#      the generic P rather than guessing SP or RP.
+# A code outside this table is never guessed: the row's position is None (each
+# consumer falls back to its non-Spotrac source) and the format sentinel below
+# files it.
+SPOTRAC_POS_CODES: dict[str, str] = {
+    "32": "SP", "33": "RP", "34": "C", "35": "1B", "36": "2B", "37": "3B",
+    "38": "SS", "39": "LF", "40": "CF", "41": "RF", "62": "OF", "63": "P",
+}
+
+# Every abbreviation a 'Pos' cell may carry. A composite ("SP/DH") passes when
+# each part does.
+SPOTRAC_POS_VOCAB = frozenset({
+    "C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "OF", "DH", "IF", "INF",
+    "UT", "UTIL", "SP", "RP", "P", "LHP", "RHP", "SIRP", "MIRP", "CL", "TWP",
+})
+
+
+def _resolve_position(raw: str | None) -> tuple[str | None, str]:
+    """(position, kind) for one 'Pos' cell's data-export.
+
+    kind is "blank" (no value), "abbr" (an abbreviation in SPOTRAC_POS_VOCAB),
+    "code" (a numeric id mapped through SPOTRAC_POS_CODES) or "bad" (anything
+    else, including an unmapped number). A bad cell resolves to None, so a
+    value of the wrong type can never reach a served position."""
+    s = (raw or "").strip()
+    if not s:
+        return None, "blank"
+    if s in SPOTRAC_POS_CODES:
+        return SPOTRAC_POS_CODES[s], "code"
+    if all(part.strip().upper() in SPOTRAC_POS_VOCAB for part in s.split("/")):
+        return s, "abbr"
+    return None, "bad"
+
+
+# THE FORMAT SENTINEL. One audit per team page, written by
+# scrape_spotrac_team_contracts and read back by contract_format_report, which
+# run_monthly files as the `spotrac_contracts_format` ingest row (a red row
+# when any cell has the wrong type). What counts as wrong:
+#   header   - column 1 is not headed 'Pos', column 2 is neither 'Age' nor a
+#              year, or the table has no year columns at all (every row would
+#              silently drop)
+#   position - a 'Pos' cell that is neither an abbreviation nor a known code
+#   age      - an 'Age' cell that is not a whole number from 16 to 55
+#   money    - a year cell whose data-export is neither blank, digits nor a
+#              contract-status token, or whose digits sit under text that shows
+#              no dollar figure (a placeholder the parser would price as money)
+#   code_drift - see _code_side_check
+_FORMAT_AUDIT: dict[str, dict] = {}
+_MONEY_TEXT_RE = re.compile(r"\$-?[\d,]+")
+
+
+def _new_audit() -> dict:
+    return {"rows": 0, "issues": [], "coded": []}
+
+
+def _parse_team_contract_table(table, team_slug: str,
+                               audit: dict | None = None) -> list[dict]:
     """Parse one Spotrac yearly contract table (dataTable-active /
     dataTable-injured / dataTable-dead share the same structure).
     Returns one dict per row with the per-year salary map, the per-year
@@ -447,19 +520,40 @@ def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
     when it has any real salary OR any status year. Previously a row whose
     only year cells were placeholders was kept with a phantom all-zero
     salary map, so dropping it here would have removed players; instead it
-    is kept with an empty salary map and a populated status map."""
+    is kept with an empty salary map and a populated status map.
+
+    `audit` (see _FORMAT_AUDIT) collects the cells of the wrong type; the
+    position cell resolves through _resolve_position, so a numeric Spotrac
+    position id reads as its abbreviation and an unknown value reads as None."""
     rows: list[dict] = []
+    issues = audit["issues"] if audit is not None else []
+    table_id = table.get("id") or ""
+
+    def _issue(kind: str, player: str, value) -> None:
+        issues.append({"kind": kind, "team": team_slug, "table": table_id,
+                       "player": player, "value": str(value)[:40]})
+
     thead = table.find("thead")
     if not thead:
         return rows
     # Build column-index → year map by walking the header row.
     header_years: dict[int, int] = {}
     th_cells = thead.find_all("th")
+    heads = [th.get_text(strip=True) for th in th_cells]
     for idx, th in enumerate(th_cells):
-        year = _parse_year_header(th.get_text(strip=True))
+        year = _parse_year_header(heads[idx])
         if year is not None:
             header_years[idx] = year
+    if len(heads) > 1 and heads[1] != "Pos":
+        _issue("header", "", f"column 1 headed {heads[1]!r}")
+    age_idx = None
+    if len(heads) > 2:
+        if heads[2] == "Age":
+            age_idx = 2
+        elif 2 not in header_years:
+            _issue("header", "", f"column 2 headed {heads[2]!r}")
     if not header_years:
+        _issue("header", "", "no year columns")
         return rows
 
     tbody = table.find("tbody")
@@ -487,10 +581,22 @@ def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
             m = re.search(r"/id/(\d+)/", link["href"])
             spotrac_id = m.group(1) if m else None
         # Position from cell 1's data-export attribute (cleaner than the
-        # text, which mixes SP/DH etc.).
+        # text, which mixes SP/DH etc.), read through the code table.
         position = None
+        if audit is not None:
+            audit["rows"] += 1
         if len(tds) > 1:
-            position = (tds[1].get("data-export") or "").strip() or None
+            pos_raw = (tds[1].get("data-export") or "").strip()
+            position, pos_kind = _resolve_position(pos_raw)
+            if pos_kind == "bad":
+                _issue("position", name, pos_raw)
+            elif pos_kind == "code" and audit is not None:
+                audit["coded"].append((name, pos_raw, position))
+        if age_idx is not None and age_idx < len(tds):
+            age_raw = ((tds[age_idx].get("data-export") or "").strip()
+                       or tds[age_idx].get_text(strip=True))
+            if age_raw and not (age_raw.isdigit() and 16 <= int(age_raw) <= 55):
+                _issue("age", name, age_raw)
         # Per-year cells — walk header_years. A cell is either MONEY
         # (data-export = integer dollars) or a contract-STATUS placeholder
         # (data-export "0" with the token in the text). The text decides;
@@ -508,7 +614,11 @@ def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
                 continue
             raw = (cell.get("data-export") or "").strip()
             if not raw or not raw.isdigit():
+                if raw:
+                    _issue("money", name, raw)
                 continue
+            if not _MONEY_TEXT_RE.search(cell.get_text(strip=True)):
+                _issue("money", name, f"{raw} under {cell.get_text(strip=True)!r}")
             try:
                 salary_by_year[year] = int(raw)
             except ValueError:
@@ -631,12 +741,14 @@ def scrape_spotrac_team_contracts(team_slug: str,
         return []
     soup = BeautifulSoup(fr.body, "html.parser")
     out: list[dict] = []
+    audit = _new_audit()
     # Three sub-tables share the per-row structure; walk each.
     for table_id in ("dataTable-active", "dataTable-injured", "dataTable-dead"):
         t = soup.find("table", id=table_id)
         if t is None:
             continue
-        out.extend(_parse_team_contract_table(t, team_slug))
+        out.extend(_parse_team_contract_table(t, team_slug, audit))
+    _FORMAT_AUDIT[team_slug] = audit
     return out
 
 
@@ -651,6 +763,7 @@ def scrape_all_spotrac_contracts(force: bool = False,
 
     slugs = list(_SPOTRAC_TEAM_SLUGS.items())
     rows: list[dict] = []
+    _FORMAT_AUDIT.clear()
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         future_to_team = {
             ex.submit(scrape_spotrac_team_contracts, slug, force): team_code
@@ -665,6 +778,80 @@ def scrape_all_spotrac_contracts(force: bool = False,
     log.info("spotrac contracts: %d player-rows across %d teams",
              len(rows), len(_SPOTRAC_TEAM_SLUGS))
     return rows
+
+
+# The side check needs this many coded rows matched to a StatsAPI person
+# before it may judge, and this share of them on the right side to pass.
+CODE_SIDE_MIN_MATCHED = 20
+CODE_SIDE_MIN_AGREE = 0.95
+
+
+def _code_side_check(coded: list, people: list | None) -> dict | None:
+    """Whether the code table still sends pitchers to the pitcher side.
+
+    A renumbered code (Spotrac reusing 33 for a shortstop, say) would map to a
+    valid abbreviation and pass every type check, so the coded rows are held to
+    the players' StatsAPI primary position: a pitcher code (SP, RP, P) must meet
+    a "P" and a fielder code anything else. `people` is the cached player
+    index's list ({fullName, position}); a name that two people share is left
+    out. None when no index is at hand."""
+    if not people:
+        return None
+    by_key: dict[str, list] = {}
+    for p in people:
+        nm = p.get("fullName")
+        if nm:
+            by_key.setdefault(canonical_player_key(normalize_key(nm)), []).append(p)
+    matched = agree = 0
+    misses: list = []
+    for name, code, pos in coded:
+        hit = by_key.get(canonical_player_key(normalize_key(name))) or []
+        if len(hit) != 1 or (hit[0].get("position") or "") in ("", "TWP"):
+            continue
+        matched += 1
+        if (pos in ("SP", "RP", "P")) == (hit[0]["position"] == "P"):
+            agree += 1
+        elif len(misses) < 5:
+            misses.append(f"{name} {code}->{pos} vs StatsAPI {hit[0]['position']}")
+    share = agree / matched if matched else None
+    bad = matched >= CODE_SIDE_MIN_MATCHED and share < CODE_SIDE_MIN_AGREE
+    return {"matched": matched, "agree": agree,
+            "share": round(share, 4) if share is not None else None,
+            "bad": bad, "misses": misses}
+
+
+def contract_format_report(people: list | None = None,
+                           audits: dict | None = None) -> dict:
+    """Roll the per-page audits of the last contracts scrape into one verdict.
+
+    ok is False when any cell had the wrong type, when the coded positions fail
+    the side check, or when no page was parsed at all. `people` defaults to the
+    cached StatsAPI player index (read from disk, never fetched)."""
+    audits = dict(_FORMAT_AUDIT if audits is None else audits)
+    if people is None:
+        try:
+            import json
+            idx = CACHE_DIR / "player_index.json"
+            if idx.exists():
+                people = json.loads(idx.read_text(encoding="utf-8")).get("players")
+        except Exception:                                   # noqa: BLE001
+            people = None
+    issues = [i for s in sorted(audits) for i in audits[s]["issues"]]
+    coded = [c for s in sorted(audits) for c in audits[s]["coded"]]
+    side = _code_side_check(coded, people)
+    if side and side["bad"]:
+        issues.append({"kind": "code_drift", "team": "", "table": "",
+                       "player": "", "value": f"{side['agree']}/{side['matched']}"})
+    by_kind: dict[str, int] = {}
+    for i in issues:
+        by_kind[i["kind"]] = by_kind.get(i["kind"], 0) + 1
+    return {"ok": bool(audits) and not issues,
+            "n_pages": len(audits),
+            "n_rows": sum(a["rows"] for a in audits.values()),
+            "n_coded": len(coded),
+            "by_kind": by_kind,
+            "examples": issues[:5],
+            "side_check": side}
 
 
 def build_contracts_by_key(rows: list[dict], keep_alts: bool = False) -> dict[str, dict]:
