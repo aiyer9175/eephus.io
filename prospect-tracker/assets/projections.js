@@ -2366,14 +2366,18 @@
   }
   // WAR by season on the served frame. `a` is the card's primary side (hitting,
   // or pitching for a pitcher), `b` the pitching side of a two-way card; `refA`
-  // and `refB` are the bWAR inputs where they differ at 1dp (absent = equal).
+  // and `refB` are the bWAR inputs where they differ at 1dp (absent = equal);
+  // `fgA` and `fgB` are FanGraphs' published WAR, a reference only (absent = no
+  // published value), shown in the bar's tooltip and never drawn or summed into
+  // the eWAR bar.
   function warSeasons(p) {
     const by = {};
     const add = (rows, side) => (rows || []).forEach(r => {
       if (!r || r.war == null) return;
-      const c = by[r.y] || (by[r.y] = { y: r.y, a: null, b: null, refA: null, refB: null });
+      const c = by[r.y] || (by[r.y] = { y: r.y, a: null, b: null, refA: null, refB: null, fgA: null, fgB: null });
       c[side] = r.war;
       if (r.war_bwar != null) c[side === "a" ? "refA" : "refB"] = r.war_bwar;
+      if (r.war_fwar != null) c[side === "a" ? "fgA" : "fgB"] = r.war_fwar;
     });
     add(p.career, "a");
     if (p.twoWay) add(p.careerPit, "b");
@@ -2382,6 +2386,11 @@
   const warTot = s => (s.a || 0) + (s.b || 0);
   const warRef = s => ((s.refA == null && s.refB == null) ? null
     : (s.refA != null ? s.refA : (s.a || 0)) + (s.refB != null ? s.refB : (s.b || 0)));
+  // FanGraphs' published WAR for the season, only when every side the bar
+  // carries has a published value (a partial sum would mix in eWAR).
+  const warFg = s => (((s.a != null && s.fgA == null) || (s.b != null && s.fgB == null)
+    || (s.fgA == null && s.fgB == null)) ? null : (s.fgA || 0) + (s.fgB || 0));
+  const FG_WAR_TIP = "FanGraphs' published WAR, as MLB's StatsAPI publishes it. A reference only: the site's WAR is eWAR v2.";
   function warBarsSVG(ss, sides) {
     const use = (ss || []).filter(s => s.a != null || s.b != null);
     if (!use.length) return "";
@@ -2397,7 +2406,8 @@
       const r = warRef(s);
       const title = `${s.y}: ${fmtWar(warTot(s))} eWAR`
         + (sides && s.b != null ? ` (${sides[0]} ${fmtWar(s.a)}, ${sides[1]} ${fmtWar(s.b)})` : "")
-        + (r != null ? `, bWAR ${fmtWar(r)}` : "");
+        + (r != null ? `, bWAR ${fmtWar(r)}` : "")
+        + (warFg(s) != null ? `, FanGraphs WAR ${fmtWar(warFg(s))} (reference)` : "");
       let pb = 0, nb = 0, out = "";
       [["a", s.a], ["b", s.b]].forEach(([k, v]) => {
         if (v == null) return;
@@ -2548,11 +2558,18 @@
   // restored and the Value tab keeps its WAR-by-season bars with the bWAR tick).
   // `war` is the served eWAR for that side of the card: a two-way card's
   // hitting table shows hitting eWAR and its pitching table pitching eWAR.
+  // FanGraphs WAR (owner answer EPOCH-Q4): FanGraphs' published WAR as a
+  // reference column after eWAR, shown only when a row on this table has a
+  // published value; a row without one prints the null marker. eWAR stays the
+  // site's WAR: the reference column never sorts, sums or bands anything.
   function seasonLines(rows, isPit, sid, sub) {
     const c = rows || [];
     if (!c.length) return "";
-    const warTh = `<th>${term("ewar", "eWAR")}</th>`;
-    const warTd = r => `<td>${r.war != null ? fmtWar(r.war) : EM_DASH}</td>`;
+    const hasFg = c.some(r => r && r.war_fwar != null);
+    const warTh = `<th>${term("ewar", "eWAR")}</th>`
+      + (hasFg ? `<th class="mlbp-fgwar" title="${esc(FG_WAR_TIP)}">FanGraphs WAR</th>` : "");
+    const warTd = r => `<td>${r.war != null ? fmtWar(r.war) : EM_DASH}</td>`
+      + (hasFg ? `<td class="mlbp-fgwar">${r.war_fwar != null ? fmtWar(r.war_fwar) : EM_DASH}</td>` : "");
     const head = isPit
       ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th>" + warTh
       : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th>" + warTh;

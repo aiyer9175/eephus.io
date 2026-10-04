@@ -106,7 +106,7 @@ DETAIL = json.dumps({"players": {
         "proj": {"war": [4.0, 3.8, 3.5, 3.1, 2.8], "warP10": [2.0, 1.8, 1.5, 1.2, 1.0],
                  "warP90": [6.0, 5.8, 5.5, 5.1, 4.8], "warTotal": 17.2, "surNpv": 90000000},
         "career": [{"y": 2025, "ip": "195.1", "era": 2.21, "kPct": 32.2, "bbPct": 4.6,
-                    "war": 6.1, "war_bwar": 6.6}],
+                    "war": 6.1, "war_bwar": 6.6, "war_fwar": 6.4}],
         "sc": {"season": 2025, "metrics": [{"label": "xwOBA Against", "value": ".260", "pct": 97}]},
         # Savant pitch-arsenal-stats for a pitcher: positive rv100 = runs saved.
         "arsenal": [{"pitch": "4-Seam Fastball", "usage": 35.1, "rv100": 1.2, "whiff": 24.0,
@@ -549,6 +549,46 @@ def test_season_lines_carry_the_ewar_column_again():
         DETAIL = json.dumps(d)
         lines = _section(_render("#player=vet_guy"), "hitting-lines")
         assert lines.count("<td> - </td>") == 1 and "<td>0.0</td>" not in lines
+    finally:
+        DETAIL = base
+
+
+FG_WAR_TIP = ("FanGraphs' published WAR, as MLB's StatsAPI publishes it. "
+              "A reference only: the site's WAR is eWAR v2.")
+
+
+def test_fangraphs_war_rides_as_a_reference_column_beside_ewar():
+    """Owner answer EPOCH-Q4 (task EPOCH_FWAR_REFERENCE_COLUMN): war_fwar is a
+    REFERENCE column after eWAR, labelled FanGraphs WAR with its tooltip; the
+    eWAR cell is unchanged, and a table whose rows carry no war_fwar gets no
+    column at all."""
+    ace = _render("#player=ace_arm")
+    lines = _section(ace, "pitching-lines")
+    th = f'<th class="mlbp-fgwar" title="{FG_WAR_TIP}">FanGraphs WAR</th>'
+    assert th in lines
+    # eWAR first, then the reference; the eWAR cell is the served 6.1
+    assert lines.index('<span data-gl="ewar">eWAR</span>') < lines.index("FanGraphs WAR")
+    assert '<td>6.1</td><td class="mlbp-fgwar">6.4</td>' in lines
+    # the Value tab's bar keeps eWAR as its value and names the reference in its tooltip
+    war = _section(ace, "value-war")
+    assert "2025: 6.1 eWAR, bWAR 6.6, FanGraphs WAR 6.4 (reference)" in war
+    assert ">6.1</text>" in war
+    # no war_fwar on the card: no column, no tooltip mention
+    vet = _render("#player=vet_guy")
+    assert "FanGraphs WAR" not in _section(vet, "hitting-lines")
+    assert "FanGraphs WAR" not in _section(vet, "value-war")
+    # a row without a published value prints the null marker in the column
+    global DETAIL
+    base = DETAIL
+    try:
+        d = json.loads(base)
+        d["players"]["ace_arm"]["career"].insert(0, {
+            "y": 2024, "ip": "120.0", "era": 3.50, "kPct": 25.0, "bbPct": 7.0, "war": 2.0})
+        DETAIL = json.dumps(d)
+        lines = _section(_render("#player=ace_arm"), "pitching-lines")
+        assert '<td>2.0</td><td class="mlbp-fgwar"> - </td>' in lines
+        war = _section(_render("#player=ace_arm"), "value-war")
+        assert "2024: 2.0 eWAR</title>" in war       # no published value: no reference in the tip
     finally:
         DETAIL = base
 
