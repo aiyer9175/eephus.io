@@ -333,7 +333,15 @@ def _parse_year_header(th_text: str) -> int | None:
 # "-1ARB 1"), so the prefix is stripped before matching.
 _YEAR_CELL_SORT_PREFIX_RE = re.compile(r"^-?\d+(?=[A-Za-z])")
 _YEAR_CELL_STATUS_RE = re.compile(
-    r"^(PRE-ARB|ARB\s*[1-4](?:\s*\(S2\))?|ARB|UFA|RFA|TBD)$", re.I)
+    r"^(PRE-ARB|ARB\s*[1-4](?:\s*\(S2\))?|ARB|UFA|RFA|TBD(?:\s*CO)?)$", re.I)
+# A CLUB OPTION WHOSE PRICE THE PAGE DOES NOT SHOW (SPOTRAC_POS_CODES_2026_10).
+# From the refetch of 2026-10-03 an option year renders as a pill-club cell
+# reading "TBD" over "CO" with data-export="0" (34 cells on the 30 pages). The
+# old guard priced each as a $0 contract year: Ozzie Albies, Kenley Jansen,
+# Sandy Alcantara and 13 more served aav $0 with salSrc "contract", and Cooper
+# Pratt's term ran to 2035 at a $4.93M AAV against the $6.34M through 2033 of
+# the epoch's step A read. It is a status, like the bare "TBD" above.
+_TBD_OPTION_RE = re.compile(r"^TBD\s*CO$", re.I)
 
 
 def _year_cell_status(cell_text: str) -> str | None:
@@ -344,6 +352,8 @@ def _year_cell_status(cell_text: str) -> str | None:
     s = re.sub(r"\s+", " ", s).strip()
     if not s or not _YEAR_CELL_STATUS_RE.match(s):
         return None
+    if _TBD_OPTION_RE.match(s):
+        return "TBD CO"
     return s.upper()
 
 

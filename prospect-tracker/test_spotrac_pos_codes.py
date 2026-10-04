@@ -271,6 +271,30 @@ def test_run_monthly_files_a_green_row_on_clean_pages(tmp_path, monkeypatch):
     assert "spotrac_contracts_format" not in payload["red"]
 
 
+# ---------------------------------------------------- the club-option cell
+def test_tbd_club_option_year_is_a_status_not_a_zero_dollar_year():
+    """2026-10-03 layout: an option year reads "TBD" over "CO" with
+    data-export="0". Priced as money it was a $0 contract year (Ozzie Albies
+    served aav $0); it is a status, and the sentinel stays quiet on it."""
+    html = _with_cell(
+        NEW_LAYOUT,
+        '<td data-export="15000000"><a>$15,000,000</a></td>\n      <td data-export=" ">UFA</td>',
+        '<td data-export="15000000"><a>$15,000,000</a></td>\n'
+        '      <td data-export="0"><div class="pill pill-normal pill-mlb text-center pill-club">'
+        '<div class="pill-start float-start text-center text-white">TBD</div>'
+        '<div class="pill-end">CO</div></div></td>')
+    audit = spotrac._new_audit()
+    row = _parse(html, audit)["New Starter"]
+    assert row["salary_by_year"] == {2027: 15000000, 2028: 15000000}
+    assert row["status_by_year"] == {2029: "TBD CO"}
+    assert row["signed_through"] == 2028
+    assert row["aav_usd"] == 15000000
+    assert audit["issues"] == []
+    assert spotrac._year_cell_status("TBDCO") == "TBD CO"
+    assert spotrac._year_cell_status("TBD") == "TBD"
+    assert spotrac._year_cell_status("$0") is None
+
+
 # ---------------------------------------------------------- the served pages
 def _load(path: Path):
     if not path.exists():
