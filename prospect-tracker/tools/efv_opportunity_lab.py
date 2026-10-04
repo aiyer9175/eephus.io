@@ -57,7 +57,7 @@ from prospect_path import (_fit_ridge, _fit_linear_calibration, _predict,  # noq
                            _weighted_spearman)
 
 TARGET_SEASONS = ed.TARGET_SEASONS          # 6
-RESOLVED_THROUGH = ed.RESOLVED_THROUGH      # 2025
+RESOLVED_THROUGH = ed.RESOLVED_THROUGH      # 2026 since the fWAR label epoch; follows efv_dataset
 
 # Floors are READ from the B-L1 artifact and cited. This lane derives no floor of its own:
 # a lane whose product is losses has no business also producing the bar it is judged by.

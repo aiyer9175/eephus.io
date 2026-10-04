@@ -244,7 +244,15 @@ def test_deploy_hazard_is_recorded(art):
 def test_censoring_parity_between_numerator_and_target(art):
     cp = art["identity_join"]["censoring_parity"]
     assert "_label_6yr" in cp
-    assert str(art["identity_join"]["sides"]["hit"]["n_debuted"]) == "845"
+    # The artifact must be cut on the label clock it decomposes: a stale artifact at an
+    # older RESOLVED_THROUGH carries the wrong censoring rule for the current matrix.
+    import efv_dataset as ed
+    assert f"RESOLVED_THROUGH={ed.RESOLVED_THROUGH}," in cp, (
+        f"the artifact was cut at a different RESOLVED_THROUGH than efv_dataset's "
+        f"{ed.RESOLVED_THROUGH}; rerun `python tools/efv_opportunity_lab.py all`")
+    # 845 at RESOLVED_THROUGH 2025 (B-L3 and the eWAR label epoch); 968 at 2026 since
+    # the fWAR label epoch re-run (POSTEPOCH_4).
+    assert str(art["identity_join"]["sides"]["hit"]["n_debuted"]) == "968"
 
 
 # ---------------------------------------------------------------------------
