@@ -87,6 +87,91 @@ def test_plays_of_handles_list_and_dict():
     assert ml._plays_of(None) == []
 
 
+# ---- one season walk per process (perf(leverage)) ---------------------------- #
+_FEEDS = {
+    1: [_play(100, "top", 8, 2.0, 3.0, "One"), _play(300, "top", 9, 1.0, -8.0, "Three"),
+        _play(500, "bottom", 1, 0.9, 8.0, "Ace")],
+    2: [_play(100, "top", 9, 2.5, 7.0, "One"), _play(500, "top", 1, 1.0, 5.0, "Ace")],
+    3: [_play(200, "bottom", 9, 1.8, -5.0, "Two")],
+}
+
+
+def _stub_walk(monkeypatch, pks, calls):
+    """Point the walk at synthetic feeds; `calls` records every game read."""
+    sched = {"pks": list(pks)}
+    monkeypatch.setattr(ml, "season_game_pks",
+                        lambda season, game_type="R": list(sched["pks"]))
+
+    def fake_wp(pk, game_date=None):
+        calls.append(int(pk))
+        return _FEEDS[int(pk)]
+
+    monkeypatch.setattr(ml, "get_win_probability", fake_wp)
+    ml.clear_walk_memo()
+    return sched
+
+
+def test_second_walk_in_one_process_reads_the_memo(monkeypatch):
+    """6b4 (fetch_season_leverage) then 6b4h / 9e-pre0d (fetch_season_all_leverage)
+    read every game ONCE, and the reliever map is the same fold either way."""
+    calls = []
+    _stub_walk(monkeypatch, [(1, "2026-04-01"), (2, "2026-04-02")], calls)
+    rel, cov = ml.fetch_season_leverage(2026)
+    rel2, bat, strt, cov2 = ml.fetch_season_all_leverage(2026)
+    rel3, _cov3 = ml.fetch_season_leverage(2026)
+    assert calls == [1, 2]                                  # one walk, three readers
+    assert rel == rel2 == rel3 == ml.accumulate([(1, _FEEDS[1]), (2, _FEEDS[2])])
+    assert strt == ml.accumulate_starters([(1, _FEEDS[1]), (2, _FEEDS[2])])
+    assert bat == {}                                        # _play carries no batter
+    assert cov == cov2 == {"games": 2, "games_total": 2}
+    ml.clear_walk_memo()
+
+
+def test_memo_hands_out_copies(monkeypatch):
+    """A caller that edits its result must not edit what the next caller reads."""
+    calls = []
+    _stub_walk(monkeypatch, [(1, "2026-04-01")], calls)
+    rel, cov = ml.fetch_season_leverage(2026)
+    rel[100]["gmli"] = -1.0
+    rel.pop(300)
+    cov["games"] = 99
+    rel2, _bat, _strt, cov2 = ml.fetch_season_all_leverage(2026)
+    assert calls == [1]
+    assert rel2[100]["gmli"] == 2.0 and 300 in rel2 and cov2["games"] == 1
+    ml.clear_walk_memo()
+
+
+def test_a_new_final_game_forces_a_rewalk(monkeypatch):
+    """The key is the schedule's final-game tuple: a game that finishes between
+    two steps re-walks the season and the new result replaces the entry."""
+    calls = []
+    sched = _stub_walk(monkeypatch, [(1, "2026-04-01")], calls)
+    rel, _cov = ml.fetch_season_leverage(2026)
+    assert 200 not in rel
+    sched["pks"].append((3, "2026-04-03"))
+    rel2, _bat, _strt, cov2 = ml.fetch_season_all_leverage(2026)
+    assert calls == [1, 1, 3]
+    assert 200 in rel2 and cov2 == {"games": 2, "games_total": 2}
+    rel3, _c = ml.fetch_season_leverage(2026)
+    assert calls == [1, 1, 3] and rel3 == rel2              # the new entry serves
+    ml.clear_walk_memo()
+
+
+def test_limit_and_game_type_are_part_of_the_key(monkeypatch):
+    calls = []
+    _stub_walk(monkeypatch, [(1, "2026-04-01"), (2, "2026-04-02")], calls)
+    rel_lim, cov_lim = ml.fetch_season_leverage(2026, limit=1)
+    rel_all, cov_all = ml.fetch_season_leverage(2026)
+    rel_lim2, _c = ml.fetch_season_leverage(2026, limit=1)
+    assert calls == [1, 1, 2]
+    assert cov_lim == {"games": 1, "games_total": 1} and cov_all["games"] == 2
+    assert rel_lim == rel_lim2 and rel_lim[100]["appearances"] == 1
+    assert rel_all[100]["appearances"] == 2
+    ml.fetch_season_leverage(2026, game_type="P")
+    assert calls == [1, 1, 2, 1, 2]
+    ml.clear_walk_memo()
+
+
 # ---- batter + starter folds (S-1 Leverage Leaderboards) --------------------- #
 def _bplay(bid, half, inning, li, added, name="B"):
     # one PA: a pitcher (id 99) plus the batter under test. halfInning fixes who

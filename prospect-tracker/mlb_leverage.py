@@ -33,6 +33,7 @@ never touch the wire.
 """
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import statistics
@@ -137,24 +138,16 @@ def fetch_season_leverage(season: int, *, limit: Optional[int] = None,
     ({mlbam: metrics}, coverage). Best-effort + resumable: a game whose feed
     fails is logged and skipped (never aborts), and cached games are free, so
     re-runs only fetch the trailing new games. `limit` caps the game count (for
-    a fast partial refresh)."""
-    pks = season_game_pks(season, game_type=game_type)
-    if limit is not None:
-        pks = pks[:limit]
-    acc: dict = {}
-    used = 0
-    total = len(pks)
-    for i, (pk, gd) in enumerate(pks):
-        try:
-            plays = get_win_probability(pk, game_date=gd)
-        except Exception as e:  # network / parse - skip this game
-            _log.warning("winProbability fetch failed for game %s: %s", pk, e)
-            continue
-        _fold_game(acc, plays)
-        used += 1
-        if progress and (i % 100 == 0 or i == total - 1):
-            progress(i + 1, total)
-    return _finalize(acc), {"games": used, "games_total": total}
+    a fast partial refresh).
+
+    The walk itself is _season_walk, shared with fetch_season_all_leverage and
+    done once per process per final-game set: the reliever map here is the same
+    object fetch_season_all_leverage folds (both merge _game_pitcher_dict
+    through _merge_reliever), so whichever of the two runs first pays for the
+    walk and the other reads the memo. The caller gets its own copy."""
+    rel, _bat, _strt, cov = _season_walk(season, limit=limit, game_type=game_type,
+                                         progress=progress)
+    return copy.deepcopy(rel), dict(cov)
 
 
 # --------------------------------------------------------------------------- #
@@ -379,10 +372,51 @@ def fetch_season_all_leverage(season: int, *, limit: Optional[int] = None,
     from the same cached winProbability feed (the cache makes the re-walk free, so
     one pass beats three). Returns (relievers, batters, starters, coverage). The
     per-game pitcher dict is built once and shared by the reliever + starter merges
-    so the reliever output stays identical to fetch_season_leverage."""
+    so the reliever output stays identical to fetch_season_leverage. The walk is
+    _season_walk, done once per process per final-game set; the caller gets its
+    own copies."""
+    rel, bat, strt, cov = _season_walk(season, limit=limit, game_type=game_type,
+                                       progress=progress)
+    return copy.deepcopy(rel), copy.deepcopy(bat), copy.deepcopy(strt), dict(cov)
+
+
+# --------------------------------------------------------------------------- #
+# One season walk per process
+# --------------------------------------------------------------------------- #
+# A season walk parses about 2,430 cached winProbability files (2.6 GB, about
+# 10 ms each), and a monthly night paid for the 2026 walk three times (6b4
+# bullpen board, 6b4h leverage board, 9e-pre0d live-season window panel), a
+# standalone daily twice (9e-pre0, 9e-pre0d). The folded result is a pure
+# function of the final games' play lists, so one process keeps the finished
+# fold keyed on (season, limit, game_type) and trusts it only while the
+# schedule's FINAL game pks are the same tuple: a game that finishes between
+# two steps changes the tuple and forces a re-walk. Nothing is written to disk;
+# a new process starts empty. The memo holds its own objects and the public
+# fetchers hand out copies, so no caller can edit what the next one reads.
+_WALK_MEMO: dict[tuple, tuple[tuple, tuple]] = {}
+
+
+def clear_walk_memo() -> None:
+    """Forget every memoised walk (tests, and a caller that must re-read disk)."""
+    _WALK_MEMO.clear()
+
+
+def _season_walk(season: int, *, limit: Optional[int], game_type: str,
+                 progress: Optional[Callable[[int, int], None]]) -> tuple:
+    """(relievers, batters, starters, coverage) for one season: the memo's entry
+    when this process already walked the same final-game set under the same
+    limit and game_type, else a fresh walk that becomes the entry. Returns the
+    memo's own objects; the two public fetchers copy them."""
     pks = season_game_pks(season, game_type=game_type)
     if limit is not None:
         pks = pks[:limit]
+    key = (int(season), limit, game_type)
+    sig = tuple(int(pk) for pk, _gd in pks)
+    hit = _WALK_MEMO.get(key)
+    if hit is not None and hit[0] == sig:
+        _log.info("leverage walk memo: %s reused from this process's earlier walk "
+                  "(%d final games, same schedule)", season, len(sig))
+        return hit[1]
     rel_acc: dict = {}
     bat_acc: dict = {}
     strt_acc: dict = {}
@@ -401,5 +435,7 @@ def fetch_season_all_leverage(season: int, *, limit: Optional[int] = None,
         used += 1
         if progress and (i % 100 == 0 or i == total - 1):
             progress(i + 1, total)
-    return (_finalize(rel_acc), _finalize_batters(bat_acc), _finalize_starters(strt_acc),
-            {"games": used, "games_total": total})
+    result = (_finalize(rel_acc), _finalize_batters(bat_acc), _finalize_starters(strt_acc),
+              {"games": used, "games_total": total})
+    _WALK_MEMO[key] = (sig, result)
+    return result
