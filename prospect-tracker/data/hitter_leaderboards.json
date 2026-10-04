@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-10-02",
+ "generated_at": "2026-10-03",
  "season": 2026,
- "as_of": "2026-10-02",
+ "as_of": "2026-10-03",
  "verdict": "validated",
  "backtest": {
   "status": "validated",
@@ -87,7 +87,7 @@
  "ewar_vintage": {
   "artifact_generated_at": "2026-10-02T11:06:57",
   "label_build_at": "2026-09-03T12:35:09",
-  "as_of": "2026-10-02",
+  "as_of": "2026-10-03",
   "bwar_revised": {
    "bat": 0,
    "pit": 0
@@ -112,12 +112,12 @@
  },
  "multiyear_war_rate": {
   "source": "war_rate_plus_multiyear_eval.json",
-  "n_stamped": 528,
+  "n_stamped": 541,
   "available": true,
   "block": "hit",
   "war_provider": "ewar_v2",
   "ewar_generated_at": "2026-09-03T12:35:09",
-  "generated_at": "2026-09-11",
+  "generated_at": "2026-10-03",
   "season": 2026,
   "window": [
    2024,
@@ -125,7 +125,7 @@
    2026
   ],
   "anchor_pool": "hitters with 50+ PA",
-  "n_in_artifact": 641,
+  "n_in_artifact": 654,
   "note": "The 3-year column is FROZEN lab output read verbatim from war_rate_plus_multiyear_eval.json, as of generated_at, not this board's as_of. Hitters who joined the pool since have no value."
  },
  "savant_custom": {
@@ -134,7 +134,7 @@
   "source_url": "https://baseballsavant.mlb.com/leaderboard/custom?year=2026&type=batter&filter=&min=1&selections=pa,whiff_percent,swing_percent,oz_swing_percent,iz_contact_percent,f_strike_percent,sweet_spot_percent,pull_percent,fastball_avg_speed&chart=false&x=pa&y=pa&r=no&chartType=beeswarm&sort=pa&sortDir=desc&csv=true",
   "season": 2026,
   "side": "batter",
-  "fetched_at": "2026-10-01T17:14:06",
+  "fetched_at": "2026-10-03T19:02:10",
   "n_source_rows": 662,
   "n_board": 661,
   "n_joined": 661,
@@ -168,7 +168,7 @@
   "available": true,
   "n_stamped": 751,
   "n_hitters": 751,
-  "n_feed_codes": 1513,
+  "n_feed_codes": 1508,
   "n_teams_with_orders": 30,
   "n_teams_identical_orders": 0,
   "keys": {
@@ -206,19 +206,19 @@
    "available": true,
    "source": "statsapi season fielding (bulk), via defense_export.load_season_innings",
    "min_innings": 30.0,
-   "fetched_at": "2026-10-02T00:49:20+00:00",
+   "fetched_at": "2026-10-03T20:59:34+00:00",
    "n_fielders": 654,
    "n_nine": 270,
    "n_nine_resolved": 270,
-   "n_bench": 178,
-   "n_bench_resolved": 178
+   "n_bench": 171,
+   "n_bench_resolved": 171
   },
   "roster_status": {
    "available": true,
    "source": "cached StatsAPI 40-man rosters (statsapi_roster_40man_*), no fetch",
    "max_age_hours": 48.0,
-   "n_labelled": 14,
-   "n_unlabelled": 0
+   "n_labelled": 13,
+   "n_unlabelled": 1
   },
   "constants": {
    "min_split_pa": 100,
@@ -238,7 +238,7 @@
    "vl": 12,
    "vr": 20
   },
-  "n_withheld_by_floor": 82,
+  "n_withheld_by_floor": 74,
   "n_regulars_out": 14,
   "display_only": "bench per-hand fields, slot_meta, platoon_options and regulars_out are display siblings of teams[].orders; no betting or vintage reader may use them"
  },
@@ -253,8 +253,8 @@
  },
  "roster_filter": {
   "applied": true,
-  "n_active_roster_ids": 1105,
-  "n_dropped_from_constructions": 147,
+  "n_active_roster_ids": 1067,
+  "n_dropped_from_constructions": 162,
   "basis": "StatsAPI rosterType=active (26-man), so an optioned or injured player drops",
   "scope": "the constructed orders, lineup and bench ONLY. Offense+ and every other aggregate stay on the full season pool: HEM+ over PA already taken stands whether or not the player is hurt now, and Offense+ feeds betting_model and the leaderboard vintages behind the 600-game clock.",
   "on_failure": "a failed roster fetch filters NOTHING rather than blanking the charts; a player whose mlbam cannot be read is kept"
@@ -330,7 +330,7 @@
    "war_pa_plus_adj_raw": 126.2,
    "war_pa_plus_pct": 98,
    "war_pa_plus_3yr": 114,
-   "war_pa_plus_3yr_pct": 96,
+   "war_pa_plus_3yr_pct": 97,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -380,7 +380,7 @@
    "war_pa_plus_adj": 141,
    "war_pa_plus_adj_raw": 141.3,
    "war_pa_plus_pct": 100,
-   "war_pa_plus_3yr": 117,
+   "war_pa_plus_3yr": 118,
    "war_pa_plus_3yr_pct": 99,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -431,7 +431,7 @@
    "war_pa_plus_adj": 111,
    "war_pa_plus_adj_raw": 111.3,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 116,
+   "war_pa_plus_3yr": 115,
    "war_pa_plus_3yr_pct": 98,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -482,8 +482,8 @@
    "war_pa_plus_adj": 116,
    "war_pa_plus_adj_raw": 115.7,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 77,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 81,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -533,8 +533,8 @@
    "war_pa_plus_adj": 110,
    "war_pa_plus_adj_raw": 109.8,
    "war_pa_plus_pct": 76,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 61,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 69,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -635,7 +635,7 @@
    "war_pa_plus_adj": 118,
    "war_pa_plus_adj_raw": 118.2,
    "war_pa_plus_pct": 96,
-   "war_pa_plus_3yr": 117,
+   "war_pa_plus_3yr": 116,
    "war_pa_plus_3yr_pct": 99,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -687,7 +687,7 @@
    "war_pa_plus_adj_raw": 102.6,
    "war_pa_plus_pct": 60,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 80,
+   "war_pa_plus_3yr_pct": 78,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -738,7 +738,7 @@
    "war_pa_plus_adj_raw": 109.7,
    "war_pa_plus_pct": 76,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 56,
+   "war_pa_plus_3yr_pct": 60,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -789,7 +789,7 @@
    "war_pa_plus_adj_raw": 110.8,
    "war_pa_plus_pct": 80,
    "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 82,
+   "war_pa_plus_3yr_pct": 80,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -839,8 +839,8 @@
    "war_pa_plus_adj": 120,
    "war_pa_plus_adj_raw": 120.1,
    "war_pa_plus_pct": 94,
-   "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 92,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 93,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -941,8 +941,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 105.6,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 89,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 84,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -992,8 +992,8 @@
    "war_pa_plus_adj": 104,
    "war_pa_plus_adj_raw": 104.4,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 77,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 71,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -1043,8 +1043,8 @@
    "war_pa_plus_adj": 111,
    "war_pa_plus_adj_raw": 110.8,
    "war_pa_plus_pct": 86,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 89,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 91,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -1094,8 +1094,8 @@
    "war_pa_plus_adj": 108,
    "war_pa_plus_adj_raw": 108.4,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 116,
-   "war_pa_plus_3yr_pct": 99,
+   "war_pa_plus_3yr": 115,
+   "war_pa_plus_3yr_pct": 98,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1145,8 +1145,8 @@
    "war_pa_plus_adj": 122,
    "war_pa_plus_adj_raw": 122.1,
    "war_pa_plus_pct": 97,
-   "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 91,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 94,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1196,8 +1196,8 @@
    "war_pa_plus_adj": 121,
    "war_pa_plus_adj_raw": 121.1,
    "war_pa_plus_pct": 96,
-   "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 81,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 84,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1247,8 +1247,8 @@
    "war_pa_plus_adj": 112,
    "war_pa_plus_adj_raw": 112.4,
    "war_pa_plus_pct": 86,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 61,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 65,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1298,8 +1298,8 @@
    "war_pa_plus_adj": 118,
    "war_pa_plus_adj_raw": 117.9,
    "war_pa_plus_pct": 92,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 67,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 72,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1349,8 +1349,8 @@
    "war_pa_plus_adj": 101,
    "war_pa_plus_adj_raw": 101.1,
    "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 71,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 60,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -1451,8 +1451,8 @@
    "war_pa_plus_adj": 110,
    "war_pa_plus_adj_raw": 109.9,
    "war_pa_plus_pct": 76,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 85,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 86,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1502,8 +1502,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 105.5,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 48,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 58,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -1553,8 +1553,8 @@
    "war_pa_plus_adj": 133,
    "war_pa_plus_adj_raw": 133.0,
    "war_pa_plus_pct": 99,
-   "war_pa_plus_3yr": 113,
-   "war_pa_plus_3yr_pct": 96,
+   "war_pa_plus_3yr": 116,
+   "war_pa_plus_3yr_pct": 99,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1605,7 +1605,7 @@
    "war_pa_plus_adj_raw": 105.5,
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 70,
+   "war_pa_plus_3yr_pct": 67,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1655,8 +1655,8 @@
    "war_pa_plus_adj": 109,
    "war_pa_plus_adj_raw": 109.4,
    "war_pa_plus_pct": 76,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 86,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 84,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -1707,7 +1707,7 @@
    "war_pa_plus_adj_raw": 103.2,
    "war_pa_plus_pct": 60,
    "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 63,
+   "war_pa_plus_3yr_pct": 64,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1757,8 +1757,8 @@
    "war_pa_plus_adj": 113,
    "war_pa_plus_adj_raw": 112.8,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 80,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 81,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1808,8 +1808,8 @@
    "war_pa_plus_adj": 115,
    "war_pa_plus_adj_raw": 115.3,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 115,
-   "war_pa_plus_3yr_pct": 98,
+   "war_pa_plus_3yr": 114,
+   "war_pa_plus_3yr_pct": 97,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1860,7 +1860,7 @@
    "war_pa_plus_adj_raw": 109.0,
    "war_pa_plus_pct": 80,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 43,
+   "war_pa_plus_3yr_pct": 44,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -1910,7 +1910,7 @@
    "war_pa_plus_adj": 112,
    "war_pa_plus_adj_raw": 112.4,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 110,
+   "war_pa_plus_3yr": 111,
    "war_pa_plus_3yr_pct": 91,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -1961,8 +1961,8 @@
    "war_pa_plus_adj": 121,
    "war_pa_plus_adj_raw": 120.8,
    "war_pa_plus_pct": 97,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 58,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 61,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2013,7 +2013,7 @@
    "war_pa_plus_adj_raw": 104.0,
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 78,
+   "war_pa_plus_3yr_pct": 77,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -2063,8 +2063,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 105.0,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 82,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 83,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2114,8 +2114,8 @@
    "war_pa_plus_adj": 120,
    "war_pa_plus_adj_raw": 119.6,
    "war_pa_plus_pct": 94,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 84,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 86,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2165,8 +2165,8 @@
    "war_pa_plus_adj": 112,
    "war_pa_plus_adj_raw": 111.9,
    "war_pa_plus_pct": 80,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 79,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 81,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2216,8 +2216,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 105.9,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 57,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 77,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -2264,8 +2264,8 @@
    "war_pa_plus_adj": 108,
    "war_pa_plus_adj_raw": 107.7,
    "war_pa_plus_pct": 86,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 73,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 91,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -2315,8 +2315,8 @@
    "war_pa_plus_adj": 120,
    "war_pa_plus_adj_raw": 120.2,
    "war_pa_plus_pct": 96,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 85,
+   "war_pa_plus_3yr": 110,
+   "war_pa_plus_3yr_pct": 89,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2366,8 +2366,8 @@
    "war_pa_plus_adj": 120,
    "war_pa_plus_adj_raw": 120.4,
    "war_pa_plus_pct": 94,
-   "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 93,
+   "war_pa_plus_3yr": 112,
+   "war_pa_plus_3yr_pct": 94,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2469,7 +2469,7 @@
    "war_pa_plus_adj_raw": 112.5,
    "war_pa_plus_pct": 83,
    "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 92,
+   "war_pa_plus_3yr_pct": 91,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2519,7 +2519,7 @@
    "war_pa_plus_adj": 127,
    "war_pa_plus_adj_raw": 127.1,
    "war_pa_plus_pct": 98,
-   "war_pa_plus_3yr": 117,
+   "war_pa_plus_3yr": 118,
    "war_pa_plus_3yr_pct": 99,
    "war_pa_plus_3yr_tag": "provisional"
   },
@@ -2621,8 +2621,8 @@
    "war_pa_plus_adj": 97,
    "war_pa_plus_adj_raw": 97.2,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 25,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 27,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2673,7 +2673,7 @@
    "war_pa_plus_adj_raw": 105.8,
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 58,
+   "war_pa_plus_3yr_pct": 54,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -2774,8 +2774,8 @@
    "war_pa_plus_adj": 112,
    "war_pa_plus_adj_raw": 111.8,
    "war_pa_plus_pct": 80,
-   "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 91,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 93,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2825,8 +2825,8 @@
    "war_pa_plus_adj": 110,
    "war_pa_plus_adj_raw": 109.8,
    "war_pa_plus_pct": 76,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 65,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 73,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2908,8 +2908,8 @@
    "war_pa_plus_adj": 130,
    "war_pa_plus_adj_raw": 130.0,
    "war_pa_plus_pct": 99,
-   "war_pa_plus_3yr": 114,
-   "war_pa_plus_3yr_pct": 97,
+   "war_pa_plus_3yr": 115,
+   "war_pa_plus_3yr_pct": 98,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -2959,8 +2959,8 @@
    "war_pa_plus_adj": 104,
    "war_pa_plus_adj_raw": 103.6,
    "war_pa_plus_pct": 60,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 69,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 72,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3010,8 +3010,8 @@
    "war_pa_plus_adj": 101,
    "war_pa_plus_adj_raw": 101.1,
    "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 76,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 79,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3061,8 +3061,8 @@
    "war_pa_plus_adj": 109,
    "war_pa_plus_adj_raw": 108.5,
    "war_pa_plus_pct": 80,
-   "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 93,
+   "war_pa_plus_3yr": 112,
+   "war_pa_plus_3yr_pct": 94,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3108,7 +3108,10 @@
    "war_pa_plus_raw": 124.9,
    "war_pa_plus_adj": 118,
    "war_pa_plus_adj_raw": 117.8,
-   "war_pa_plus_pct": 100
+   "war_pa_plus_pct": 100,
+   "war_pa_plus_3yr": 125,
+   "war_pa_plus_3yr_pct": 100,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "650490",
@@ -3157,8 +3160,8 @@
    "war_pa_plus_adj": 102,
    "war_pa_plus_adj_raw": 101.7,
    "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 71,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 65,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3208,8 +3211,8 @@
    "war_pa_plus_adj": 121,
    "war_pa_plus_adj_raw": 121.1,
    "war_pa_plus_pct": 99,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 89,
+   "war_pa_plus_3yr": 121,
+   "war_pa_plus_3yr_pct": 99,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -3260,7 +3263,7 @@
    "war_pa_plus_adj_raw": 127.1,
    "war_pa_plus_pct": 98,
    "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 91,
+   "war_pa_plus_3yr_pct": 90,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3310,8 +3313,8 @@
    "war_pa_plus_adj": 99,
    "war_pa_plus_adj_raw": 98.5,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 63,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 52,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -3361,8 +3364,8 @@
    "war_pa_plus_adj": 115,
    "war_pa_plus_adj_raw": 114.9,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 92,
+   "war_pa_plus_3yr": 110,
+   "war_pa_plus_3yr_pct": 90,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3412,7 +3415,7 @@
    "war_pa_plus_adj": 112,
    "war_pa_plus_adj_raw": 111.6,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr": 110,
    "war_pa_plus_3yr_pct": 89,
    "war_pa_plus_3yr_tag": "provisional"
   },
@@ -3463,8 +3466,8 @@
    "war_pa_plus_adj": 114,
    "war_pa_plus_adj_raw": 114.1,
    "war_pa_plus_pct": 92,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 83,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 77,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3514,8 +3517,8 @@
    "war_pa_plus_adj": 117,
    "war_pa_plus_adj_raw": 116.7,
    "war_pa_plus_pct": 94,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 64,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 73,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3565,8 +3568,8 @@
    "war_pa_plus_adj": 110,
    "war_pa_plus_adj_raw": 109.8,
    "war_pa_plus_pct": 76,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 62,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 68,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3616,8 +3619,8 @@
    "war_pa_plus_adj": 110,
    "war_pa_plus_adj_raw": 110.4,
    "war_pa_plus_pct": 86,
-   "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 35,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 46,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -3667,8 +3670,8 @@
    "war_pa_plus_adj": 110,
    "war_pa_plus_adj_raw": 110.4,
    "war_pa_plus_pct": 80,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 54,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 55,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3751,7 +3754,7 @@
    "war_pa_plus_adj_raw": 107.6,
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 64,
+   "war_pa_plus_3yr_pct": 62,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3802,7 +3805,7 @@
    "war_pa_plus_adj_raw": 107.4,
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 74,
+   "war_pa_plus_3yr_pct": 73,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3853,7 +3856,7 @@
    "war_pa_plus_adj_raw": 104.7,
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 31,
+   "war_pa_plus_3yr_pct": 32,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3903,8 +3906,8 @@
    "war_pa_plus_adj": 107,
    "war_pa_plus_adj_raw": 107.3,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 42,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 31,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -3955,7 +3958,7 @@
    "war_pa_plus_adj_raw": 116.2,
    "war_pa_plus_pct": 92,
    "war_pa_plus_3yr": 113,
-   "war_pa_plus_3yr_pct": 96,
+   "war_pa_plus_3yr_pct": 95,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4005,8 +4008,8 @@
    "war_pa_plus_adj": 107,
    "war_pa_plus_adj_raw": 106.9,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 64,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 67,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4056,8 +4059,8 @@
    "war_pa_plus_adj": 97,
    "war_pa_plus_adj_raw": 96.5,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 40,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 49,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4107,8 +4110,8 @@
    "war_pa_plus_adj": 104,
    "war_pa_plus_adj_raw": 104.5,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 90,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 83,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4158,8 +4161,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 104.9,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 83,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 76,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -4210,7 +4213,7 @@
    "war_pa_plus_adj_raw": 98.1,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 33,
+   "war_pa_plus_3yr_pct": 34,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4260,8 +4263,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 106.1,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 72,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 68,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -4311,8 +4314,8 @@
    "war_pa_plus_adj": 103,
    "war_pa_plus_adj_raw": 103.4,
    "war_pa_plus_pct": 60,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 57,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 68,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -4363,7 +4366,7 @@
    "war_pa_plus_adj_raw": 109.2,
    "war_pa_plus_pct": 76,
    "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 72,
+   "war_pa_plus_3yr_pct": 71,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4414,7 +4417,7 @@
    "war_pa_plus_adj_raw": 97.2,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 46,
+   "war_pa_plus_3yr_pct": 43,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4464,8 +4467,8 @@
    "war_pa_plus_adj": 113,
    "war_pa_plus_adj_raw": 113.3,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 81,
+   "war_pa_plus_3yr": 110,
+   "war_pa_plus_3yr_pct": 90,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -4512,8 +4515,8 @@
    "war_pa_plus_adj": 107,
    "war_pa_plus_adj_raw": 107.1,
    "war_pa_plus_pct": 86,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 75,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 92,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -4546,9 +4549,9 @@
    "hem_plus_3yr_tag": "established",
    "wrc_plus": 106,
    "xhem_plus": 122,
-   "xwoba": 0.347,
+   "xwoba": 0.348,
    "luck_gap_woba": 0.329,
-   "luck_gap": 0.018,
+   "luck_gap": 0.019,
    "fwdhem_plus": 114,
    "pwoba": 0.326,
    "pwoba_pctile": 83,
@@ -4563,8 +4566,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 105.5,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 81,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 69,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4655,7 +4658,7 @@
    "war_pa_plus_adj_raw": 91.7,
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 57,
+   "war_pa_plus_3yr_pct": 56,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4807,8 +4810,8 @@
    "war_pa_plus_adj": 116,
    "war_pa_plus_adj_raw": 115.9,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 112,
-   "war_pa_plus_3yr_pct": 94,
+   "war_pa_plus_3yr": 113,
+   "war_pa_plus_3yr_pct": 95,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4858,8 +4861,8 @@
    "war_pa_plus_adj": 94,
    "war_pa_plus_adj_raw": 93.6,
    "war_pa_plus_pct": 34,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 63,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 67,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4910,7 +4913,7 @@
    "war_pa_plus_adj_raw": 96.8,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 77,
+   "war_pa_plus_3yr_pct": 75,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -4961,7 +4964,7 @@
    "war_pa_plus_adj_raw": 100.9,
    "war_pa_plus_pct": 56,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 44,
+   "war_pa_plus_3yr_pct": 47,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -5008,8 +5011,8 @@
    "war_pa_plus_adj": 120,
    "war_pa_plus_adj_raw": 119.6,
    "war_pa_plus_pct": 99,
-   "war_pa_plus_3yr": 113,
-   "war_pa_plus_3yr_pct": 95,
+   "war_pa_plus_3yr": 123,
+   "war_pa_plus_3yr_pct": 100,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -5059,8 +5062,8 @@
    "war_pa_plus_adj": 109,
    "war_pa_plus_adj_raw": 109.1,
    "war_pa_plus_pct": 76,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 70,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 83,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -5111,7 +5114,7 @@
    "war_pa_plus_adj_raw": 128.7,
    "war_pa_plus_pct": 99,
    "war_pa_plus_3yr": 121,
-   "war_pa_plus_3yr_pct": 100,
+   "war_pa_plus_3yr_pct": 99,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -5244,8 +5247,8 @@
    "war_pa_plus_adj": 114,
    "war_pa_plus_adj_raw": 113.6,
    "war_pa_plus_pct": 86,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 88,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 94,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -5296,7 +5299,7 @@
    "war_pa_plus_adj_raw": 104.4,
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 89,
+   "war_pa_plus_3yr_pct": 86,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -5386,8 +5389,8 @@
    "war_pa_plus_adj": 107,
    "war_pa_plus_adj_raw": 107.2,
    "war_pa_plus_pct": 76,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 74,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 85,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -5433,7 +5436,10 @@
    "war_pa_plus_raw": 114.5,
    "war_pa_plus_adj": 108,
    "war_pa_plus_adj_raw": 108.3,
-   "war_pa_plus_pct": 96
+   "war_pa_plus_pct": 96,
+   "war_pa_plus_3yr": 115,
+   "war_pa_plus_3yr_pct": 97,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "650402",
@@ -5482,8 +5488,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 106.1,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 72,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 68,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -5616,8 +5622,8 @@
    "war_pa_plus_adj": 115,
    "war_pa_plus_adj_raw": 114.9,
    "war_pa_plus_pct": 86,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 71,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 81,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -5699,8 +5705,8 @@
    "war_pa_plus_adj": 109,
    "war_pa_plus_adj_raw": 109.1,
    "war_pa_plus_pct": 86,
-   "war_pa_plus_3yr": 91,
-   "war_pa_plus_3yr_pct": 11,
+   "war_pa_plus_3yr": 95,
+   "war_pa_plus_3yr_pct": 21,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -5750,7 +5756,7 @@
    "war_pa_plus_adj": 115,
    "war_pa_plus_adj_raw": 115.3,
    "war_pa_plus_pct": 92,
-   "war_pa_plus_3yr": 113,
+   "war_pa_plus_3yr": 114,
    "war_pa_plus_3yr_pct": 96,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -5802,7 +5808,7 @@
    "war_pa_plus_adj_raw": 101.1,
    "war_pa_plus_pct": 56,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 51,
+   "war_pa_plus_3yr_pct": 50,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -5852,8 +5858,8 @@
    "war_pa_plus_adj": 117,
    "war_pa_plus_adj_raw": 117.3,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 113,
-   "war_pa_plus_3yr_pct": 95,
+   "war_pa_plus_3yr": 114,
+   "war_pa_plus_3yr_pct": 97,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -5900,8 +5906,8 @@
    "war_pa_plus_adj": 104,
    "war_pa_plus_adj_raw": 103.6,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 87,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 73,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -5952,7 +5958,7 @@
    "war_pa_plus_adj_raw": 103.8,
    "war_pa_plus_pct": 60,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 79,
+   "war_pa_plus_3yr_pct": 76,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -6002,7 +6008,7 @@
    "war_pa_plus_adj": 117,
    "war_pa_plus_adj_raw": 117.0,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 114,
+   "war_pa_plus_3yr": 115,
    "war_pa_plus_3yr_pct": 97,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -6054,7 +6060,7 @@
    "war_pa_plus_adj_raw": 103.3,
    "war_pa_plus_pct": 63,
    "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 60,
+   "war_pa_plus_3yr_pct": 61,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -6206,8 +6212,8 @@
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 97.7,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 70,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 64,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -6257,8 +6263,8 @@
    "war_pa_plus_adj": 120,
    "war_pa_plus_adj_raw": 120.3,
    "war_pa_plus_pct": 96,
-   "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 91,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 93,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -6298,7 +6304,7 @@
    "pull_pct": 0.4,
    "war": 0.1,
    "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 72,
+   "war_pa_plus_3yr_pct": 71,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -6349,7 +6355,7 @@
    "war_pa_plus_adj_raw": 110.3,
    "war_pa_plus_pct": 86,
    "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 82,
+   "war_pa_plus_3yr_pct": 80,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -6399,8 +6405,8 @@
    "war_pa_plus_adj": 108,
    "war_pa_plus_adj_raw": 107.6,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 57,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 64,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -6491,7 +6497,7 @@
    "pull_pct": 0.214,
    "war": 0.0,
    "war_pa_plus_3yr": 88,
-   "war_pa_plus_3yr_pct": 6,
+   "war_pa_plus_3yr_pct": 7,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -6573,8 +6579,8 @@
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 98.1,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 35,
+   "war_pa_plus_3yr": 99,
+   "war_pa_plus_3yr_pct": 42,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -6624,8 +6630,8 @@
    "war_pa_plus_adj": 97,
    "war_pa_plus_adj_raw": 96.5,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 61,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 67,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -6675,9 +6681,9 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 99.7,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 51,
-   "war_pa_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 47,
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "608369",
@@ -6726,7 +6732,7 @@
    "war_pa_plus_adj": 114,
    "war_pa_plus_adj_raw": 114.2,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 117,
+   "war_pa_plus_3yr": 118,
    "war_pa_plus_3yr_pct": 99,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -6777,8 +6783,8 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 99.9,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 66,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 54,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -6828,8 +6834,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 105.2,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 65,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 73,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -6879,8 +6885,8 @@
    "war_pa_plus_adj": 116,
    "war_pa_plus_adj_raw": 116.2,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 114,
-   "war_pa_plus_3yr_pct": 97,
+   "war_pa_plus_3yr": 112,
+   "war_pa_plus_3yr_pct": 95,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -6931,7 +6937,7 @@
    "war_pa_plus_adj_raw": 99.8,
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 44,
+   "war_pa_plus_3yr_pct": 45,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -6971,7 +6977,7 @@
    "pull_pct": 0.605,
    "war": 0.5,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 40,
+   "war_pa_plus_3yr_pct": 41,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -7022,7 +7028,7 @@
    "war_pa_plus_adj_raw": 96.3,
    "war_pa_plus_pct": 38,
    "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 74,
+   "war_pa_plus_3yr_pct": 72,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -7105,7 +7111,7 @@
    "war_pa_plus_adj_raw": 102.3,
    "war_pa_plus_pct": 60,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 53,
+   "war_pa_plus_3yr_pct": 52,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -7206,8 +7212,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 105.7,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 84,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 82,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -7258,7 +7264,7 @@
    "war_pa_plus_adj_raw": 105.7,
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 85,
+   "war_pa_plus_3yr_pct": 84,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -7309,7 +7315,7 @@
    "war_pa_plus_adj_raw": 97.3,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 41,
+   "war_pa_plus_3yr_pct": 40,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -7360,7 +7366,7 @@
    "war_pa_plus_adj_raw": 89.0,
    "war_pa_plus_pct": 20,
    "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 20,
+   "war_pa_plus_3yr_pct": 21,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -7409,7 +7415,10 @@
    "war_pa_plus_raw": 108.5,
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 104.7,
-   "war_pa_plus_pct": 76
+   "war_pa_plus_pct": 76,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 85,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "681807",
@@ -7459,7 +7468,7 @@
    "war_pa_plus_adj_raw": 94.6,
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 29,
+   "war_pa_plus_3yr_pct": 31,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -7510,7 +7519,7 @@
    "war_pa_plus_adj_raw": 107.5,
    "war_pa_plus_pct": 80,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 77,
+   "war_pa_plus_3yr_pct": 75,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -7561,7 +7570,7 @@
    "war_pa_plus_adj_raw": 93.1,
    "war_pa_plus_pct": 18,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 32,
+   "war_pa_plus_3yr_pct": 35,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -7612,7 +7621,7 @@
    "war_pa_plus_adj_raw": 100.7,
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 75,
+   "war_pa_plus_3yr_pct": 73,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -7815,8 +7824,8 @@
    "war_pa_plus_adj": 94,
    "war_pa_plus_adj_raw": 94.1,
    "war_pa_plus_pct": 34,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 50,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 48,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -7918,7 +7927,7 @@
    "war_pa_plus_adj_raw": 100.6,
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 48,
+   "war_pa_plus_3yr_pct": 49,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8020,7 +8029,7 @@
    "war_pa_plus_adj_raw": 112.2,
    "war_pa_plus_pct": 90,
    "war_pa_plus_3yr": 112,
-   "war_pa_plus_3yr_pct": 95,
+   "war_pa_plus_3yr_pct": 94,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -8070,8 +8079,8 @@
    "war_pa_plus_adj": 111,
    "war_pa_plus_adj_raw": 110.7,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 75,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 78,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8121,8 +8130,8 @@
    "war_pa_plus_adj": 108,
    "war_pa_plus_adj_raw": 107.7,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 61,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 81,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -8162,7 +8171,7 @@
    "pull_pct": 0.4,
    "war": 0.2,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 41,
+   "war_pa_plus_3yr_pct": 42,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8264,7 +8273,7 @@
    "war_pa_plus_adj_raw": 101.6,
    "war_pa_plus_pct": 56,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 76,
+   "war_pa_plus_3yr_pct": 74,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8314,8 +8323,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 106.2,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 52,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 63,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8365,8 +8374,8 @@
    "war_pa_plus_adj": 112,
    "war_pa_plus_adj_raw": 112.3,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 92,
+   "war_pa_plus_3yr": 112,
+   "war_pa_plus_3yr_pct": 94,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8417,7 +8426,7 @@
    "war_pa_plus_adj_raw": 96.8,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 73,
+   "war_pa_plus_3yr_pct": 71,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8539,8 +8548,8 @@
    "war_pa_plus_adj": 94,
    "war_pa_plus_adj_raw": 94.5,
    "war_pa_plus_pct": 34,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 53,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 56,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8580,7 +8589,7 @@
    "pull_pct": 0.343,
    "war": 0.2,
    "war_pa_plus_3yr": 89,
-   "war_pa_plus_3yr_pct": 7,
+   "war_pa_plus_3yr_pct": 8,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -8631,7 +8640,7 @@
    "war_pa_plus_adj_raw": 97.0,
    "war_pa_plus_pct": 38,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 51,
+   "war_pa_plus_3yr_pct": 52,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8714,7 +8723,7 @@
    "war_pa_plus_adj_raw": 105.1,
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 82,
+   "war_pa_plus_3yr_pct": 80,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8765,7 +8774,7 @@
    "war_pa_plus_adj_raw": 114.3,
    "war_pa_plus_pct": 86,
    "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 93,
+   "war_pa_plus_3yr_pct": 92,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8874,7 +8883,10 @@
    "war_pa_plus_raw": 110.7,
    "war_pa_plus_adj": 107,
    "war_pa_plus_adj_raw": 107.1,
-   "war_pa_plus_pct": 86
+   "war_pa_plus_pct": 86,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 92,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "605137",
@@ -8923,8 +8935,8 @@
    "war_pa_plus_adj": 93,
    "war_pa_plus_adj_raw": 92.9,
    "war_pa_plus_pct": 34,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 26,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 27,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -8974,8 +8986,8 @@
    "war_pa_plus_adj": 108,
    "war_pa_plus_adj_raw": 107.6,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 54,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 66,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -9058,7 +9070,7 @@
    "war_pa_plus_adj_raw": 89.6,
    "war_pa_plus_pct": 14,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 76,
+   "war_pa_plus_3yr_pct": 74,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -9109,7 +9121,7 @@
    "war_pa_plus_adj_raw": 98.8,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 68,
+   "war_pa_plus_3yr_pct": 65,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -9159,8 +9171,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 105.5,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 73,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 78,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -9210,8 +9222,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 106.1,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 64,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 66,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -9262,7 +9274,7 @@
    "war_pa_plus_adj_raw": 107.7,
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 80,
+   "war_pa_plus_3yr_pct": 75,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -9312,8 +9324,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 106.1,
    "war_pa_plus_pct": 80,
-   "war_pa_plus_3yr": 118,
-   "war_pa_plus_3yr_pct": 99,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 87,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -9364,7 +9376,7 @@
    "war_pa_plus_adj_raw": 99.5,
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 65,
+   "war_pa_plus_3yr_pct": 63,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -9442,7 +9454,10 @@
    "war_pa_plus_raw": 97.8,
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 98.2,
-   "war_pa_plus_pct": 34
+   "war_pa_plus_pct": 34,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 34,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "677592",
@@ -9489,7 +9504,7 @@
    "war_pa_plus_adj_raw": 96.6,
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 21,
+   "war_pa_plus_3yr_pct": 22,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -9539,8 +9554,8 @@
    "war_pa_plus_adj": 101,
    "war_pa_plus_adj_raw": 100.7,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 68,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 58,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -9621,8 +9636,8 @@
    "war_pa_plus_adj": 93,
    "war_pa_plus_adj_raw": 93.1,
    "war_pa_plus_pct": 34,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 85,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 87,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -9673,7 +9688,7 @@
    "war_pa_plus_adj_raw": 100.8,
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 52,
+   "war_pa_plus_3yr_pct": 53,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -9775,7 +9790,7 @@
    "war_pa_plus_adj_raw": 92.3,
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 57,
+   "war_pa_plus_3yr_pct": 56,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -9826,7 +9841,7 @@
    "war_pa_plus_adj_raw": 97.4,
    "war_pa_plus_pct": 38,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 55,
+   "war_pa_plus_3yr_pct": 56,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -9917,7 +9932,7 @@
    "war_pa_plus_adj_raw": 105.5,
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 56,
+   "war_pa_plus_3yr_pct": 57,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -9968,7 +9983,7 @@
    "war_pa_plus_adj_raw": 94.2,
    "war_pa_plus_pct": 34,
    "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 63,
+   "war_pa_plus_3yr_pct": 62,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -10056,7 +10071,7 @@
    "war_pa_plus_adj_raw": 107.4,
    "war_pa_plus_pct": 72,
    "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 84,
+   "war_pa_plus_3yr_pct": 83,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -10138,8 +10153,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 105.0,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 70,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 80,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -10190,7 +10205,7 @@
    "war_pa_plus_adj_raw": 96.4,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 91,
+   "war_pa_plus_3yr_pct": 90,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -10342,8 +10357,8 @@
    "war_pa_plus_adj": 101,
    "war_pa_plus_adj_raw": 100.8,
    "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 59,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 73,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -10560,8 +10575,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 104.7,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 40,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 58,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -10611,7 +10626,7 @@
    "war_pa_plus_adj": 101,
    "war_pa_plus_adj_raw": 100.7,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr": 107,
    "war_pa_plus_3yr_pct": 80,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -10663,7 +10678,7 @@
    "war_pa_plus_adj_raw": 116.5,
    "war_pa_plus_pct": 90,
    "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 94,
+   "war_pa_plus_3yr_pct": 92,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -10769,8 +10784,8 @@
    "wrc_plus": 96,
    "xhem_plus": 97,
    "xwoba": 0.313,
-   "luck_gap_woba": 0.307,
-   "luck_gap": 0.006,
+   "luck_gap_woba": 0.303,
+   "luck_gap": 0.01,
    "fwdhem_plus": 99,
    "pwoba": 0.311,
    "pwoba_pctile": 63,
@@ -10785,8 +10800,8 @@
    "war_pa_plus_adj": 108,
    "war_pa_plus_adj_raw": 108.3,
    "war_pa_plus_pct": 80,
-   "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 83,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 88,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -10837,7 +10852,7 @@
    "war_pa_plus_adj_raw": 100.7,
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 23,
+   "war_pa_plus_3yr_pct": 24,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -10920,7 +10935,7 @@
    "war_pa_plus_adj_raw": 86.9,
    "war_pa_plus_pct": 12,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 58,
+   "war_pa_plus_3yr_pct": 59,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -10960,7 +10975,7 @@
    "pull_pct": 0.392,
    "war": -0.2,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 36,
+   "war_pa_plus_3yr_pct": 37,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -11010,8 +11025,8 @@
    "war_pa_plus_adj": 103,
    "war_pa_plus_adj_raw": 103.1,
    "war_pa_plus_pct": 60,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 62,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 54,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -11147,7 +11162,7 @@
    "pull_pct": 0.0,
    "war": 0.0,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 28,
+   "war_pa_plus_3yr_pct": 29,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -11197,8 +11212,8 @@
    "war_pa_plus_adj": 94,
    "war_pa_plus_adj_raw": 93.5,
    "war_pa_plus_pct": 34,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 66,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 63,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -11249,7 +11264,7 @@
    "war_pa_plus_adj_raw": 100.7,
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 44,
+   "war_pa_plus_3yr_pct": 48,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -11332,7 +11347,7 @@
    "war_pa_plus_adj_raw": 102.2,
    "war_pa_plus_pct": 60,
    "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 21,
+   "war_pa_plus_3yr_pct": 22,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -11382,8 +11397,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 105.9,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 69,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 71,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -11497,8 +11512,8 @@
    "war_pa_plus_adj": 115,
    "war_pa_plus_adj_raw": 115.3,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 117,
-   "war_pa_plus_3yr_pct": 99,
+   "war_pa_plus_3yr": 112,
+   "war_pa_plus_3yr_pct": 95,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -11600,7 +11615,7 @@
    "war_pa_plus_adj_raw": 92.9,
    "war_pa_plus_pct": 14,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 35,
+   "war_pa_plus_3yr_pct": 37,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -11650,8 +11665,8 @@
    "war_pa_plus_adj": 110,
    "war_pa_plus_adj_raw": 110.1,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 73,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 78,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -11752,8 +11767,8 @@
    "war_pa_plus_adj": 109,
    "war_pa_plus_adj_raw": 108.8,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 94,
+   "war_pa_plus_3yr": 110,
+   "war_pa_plus_3yr_pct": 89,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -11803,8 +11818,8 @@
    "war_pa_plus_adj": 93,
    "war_pa_plus_adj_raw": 93.3,
    "war_pa_plus_pct": 16,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 27,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 25,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -11854,8 +11869,8 @@
    "war_pa_plus_adj": 94,
    "war_pa_plus_adj_raw": 94.1,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 23,
+   "war_pa_plus_3yr": 95,
+   "war_pa_plus_3yr_pct": 22,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -11943,7 +11958,7 @@
    "pull_pct": 0.214,
    "war": 0.0,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 36,
+   "war_pa_plus_3yr_pct": 37,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -11994,7 +12009,7 @@
    "war_pa_plus_adj_raw": 105.8,
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 80,
+   "war_pa_plus_3yr_pct": 79,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -12040,7 +12055,10 @@
    "war_pa_plus_raw": 101.7,
    "war_pa_plus_adj": 101,
    "war_pa_plus_adj_raw": 100.6,
-   "war_pa_plus_pct": 51
+   "war_pa_plus_pct": 51,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 55,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "701538",
@@ -12089,8 +12107,8 @@
    "war_pa_plus_adj": 108,
    "war_pa_plus_adj_raw": 107.8,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 86,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 87,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -12172,8 +12190,8 @@
    "war_pa_plus_adj": 115,
    "war_pa_plus_adj_raw": 115.1,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 78,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 71,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -12223,8 +12241,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 96.1,
    "war_pa_plus_pct": 34,
-   "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 43,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 35,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -12274,8 +12292,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 106.4,
    "war_pa_plus_pct": 76,
-   "war_pa_plus_3yr": 115,
-   "war_pa_plus_3yr_pct": 98,
+   "war_pa_plus_3yr": 113,
+   "war_pa_plus_3yr_pct": 96,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -12365,8 +12383,8 @@
    "war_pa_plus_adj": 102,
    "war_pa_plus_adj_raw": 102.2,
    "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 55,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 61,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -12416,8 +12434,8 @@
    "war_pa_plus_adj": 91,
    "war_pa_plus_adj_raw": 91.3,
    "war_pa_plus_pct": 20,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 27,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 26,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -12516,7 +12534,7 @@
    "pull_pct": 1.0,
    "war": 0.0,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 49,
+   "war_pa_plus_3yr_pct": 50,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -12597,8 +12615,8 @@
    "war_pa_plus_adj": 90,
    "war_pa_plus_adj_raw": 90.5,
    "war_pa_plus_pct": 6,
-   "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 10,
+   "war_pa_plus_3yr": 89,
+   "war_pa_plus_3yr_pct": 8,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -12648,8 +12666,8 @@
    "war_pa_plus_adj": 91,
    "war_pa_plus_adj_raw": 90.7,
    "war_pa_plus_pct": 23,
-   "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 22,
+   "war_pa_plus_3yr": 94,
+   "war_pa_plus_3yr_pct": 20,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -12699,8 +12717,8 @@
    "war_pa_plus_adj": 107,
    "war_pa_plus_adj_raw": 106.9,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 70,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 76,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -12782,8 +12800,8 @@
    "war_pa_plus_adj": 116,
    "war_pa_plus_adj_raw": 116.5,
    "war_pa_plus_pct": 92,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 88,
+   "war_pa_plus_3yr": 110,
+   "war_pa_plus_3yr_pct": 90,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -12834,7 +12852,7 @@
    "war_pa_plus_adj_raw": 98.3,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 54,
+   "war_pa_plus_3yr_pct": 53,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -12917,7 +12935,7 @@
    "war_pa_plus_adj_raw": 112.3,
    "war_pa_plus_pct": 83,
    "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 91,
+   "war_pa_plus_3yr_pct": 90,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -12996,8 +13014,8 @@
    "war_pa_plus_adj": 108,
    "war_pa_plus_adj_raw": 108.3,
    "war_pa_plus_pct": 86,
-   "war_pa_plus_3yr": 114,
-   "war_pa_plus_3yr_pct": 97,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 93,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -13079,8 +13097,8 @@
    "war_pa_plus_adj": 111,
    "war_pa_plus_adj_raw": 110.6,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 63,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 69,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -13163,7 +13181,7 @@
    "war_pa_plus_adj_raw": 103.8,
    "war_pa_plus_pct": 60,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 34,
+   "war_pa_plus_3yr_pct": 37,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -13213,8 +13231,8 @@
    "war_pa_plus_adj": 97,
    "war_pa_plus_adj_raw": 97.3,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 36,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 46,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -13264,8 +13282,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 105.6,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 78,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 70,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -13347,8 +13365,8 @@
    "war_pa_plus_adj": 101,
    "war_pa_plus_adj_raw": 101.4,
    "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 90,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 84,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -13420,7 +13438,7 @@
    "pull_pct": 0.417,
    "war": 0.1,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 39,
+   "war_pa_plus_3yr_pct": 40,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -13502,8 +13520,8 @@
    "war_pa_plus_adj": 90,
    "war_pa_plus_adj_raw": 90.0,
    "war_pa_plus_pct": 20,
-   "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 20,
+   "war_pa_plus_3yr": 94,
+   "war_pa_plus_3yr_pct": 17,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -13553,8 +13571,8 @@
    "war_pa_plus_adj": 99,
    "war_pa_plus_adj_raw": 99.4,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 45,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 52,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -13620,8 +13638,8 @@
    "wrc_plus": 109,
    "xhem_plus": 77,
    "xwoba": 0.285,
-   "luck_gap_woba": 0.33,
-   "luck_gap": -0.045,
+   "luck_gap_woba": 0.332,
+   "luck_gap": -0.047,
    "fwdhem_plus": 89,
    "pwoba": 0.305,
    "pwoba_pctile": 54,
@@ -13637,7 +13655,7 @@
    "war_pa_plus_adj_raw": 125.2,
    "war_pa_plus_pct": 98,
    "war_pa_plus_3yr": 113,
-   "war_pa_plus_3yr_pct": 95,
+   "war_pa_plus_3yr_pct": 96,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -13687,8 +13705,8 @@
    "war_pa_plus_adj": 111,
    "war_pa_plus_adj_raw": 110.6,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 79,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 82,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -13728,7 +13746,7 @@
    "pull_pct": 0.52,
    "war": -0.1,
    "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 9,
+   "war_pa_plus_3yr_pct": 10,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -13768,7 +13786,7 @@
    "pull_pct": 0.632,
    "war": -0.4,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 29,
+   "war_pa_plus_3yr_pct": 30,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -13818,8 +13836,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 105.4,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 87,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 78,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -13869,8 +13887,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 104.7,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 92,
+   "war_pa_plus_3yr": 110,
+   "war_pa_plus_3yr_pct": 91,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -13952,8 +13970,8 @@
    "war_pa_plus_adj": 90,
    "war_pa_plus_adj_raw": 89.8,
    "war_pa_plus_pct": 12,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 49,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 37,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -14164,7 +14182,7 @@
    "war_pa_plus_adj_raw": 100.2,
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 60,
+   "war_pa_plus_3yr_pct": 65,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -14268,8 +14286,8 @@
    "wrc_plus": 102,
    "xhem_plus": 104,
    "xwoba": 0.322,
-   "luck_gap_woba": 0.314,
-   "luck_gap": 0.008,
+   "luck_gap_woba": 0.313,
+   "luck_gap": 0.009,
    "fwdhem_plus": 101,
    "pwoba": 0.33,
    "pwoba_pctile": 86,
@@ -14284,7 +14302,7 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 106.1,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 113,
+   "war_pa_plus_3yr": 114,
    "war_pa_plus_3yr_pct": 96,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -14325,7 +14343,7 @@
    "pull_pct": 0.25,
    "war": -0.1,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 55,
+   "war_pa_plus_3yr_pct": 56,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -14375,8 +14393,8 @@
    "war_pa_plus_adj": 111,
    "war_pa_plus_adj_raw": 111.2,
    "war_pa_plus_pct": 83,
-   "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 82,
+   "war_pa_plus_3yr": 110,
+   "war_pa_plus_3yr_pct": 89,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -14426,8 +14444,8 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 99.6,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 53,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 57,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -14477,8 +14495,8 @@
    "war_pa_plus_adj": 113,
    "war_pa_plus_adj_raw": 112.8,
    "war_pa_plus_pct": 86,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 78,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 86,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -14528,8 +14546,8 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 99.6,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 86,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 82,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -14576,8 +14594,8 @@
    "war_pa_plus_adj": 102,
    "war_pa_plus_adj_raw": 102.0,
    "war_pa_plus_pct": 60,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 72,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 66,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -14627,8 +14645,8 @@
    "war_pa_plus_adj": 82,
    "war_pa_plus_adj_raw": 82.4,
    "war_pa_plus_pct": 9,
-   "war_pa_plus_3yr": 92,
-   "war_pa_plus_3yr_pct": 14,
+   "war_pa_plus_3yr": 88,
+   "war_pa_plus_3yr_pct": 7,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -14814,8 +14832,8 @@
    "war_pa_plus_adj": 101,
    "war_pa_plus_adj_raw": 101.5,
    "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 69,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 70,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -14938,7 +14956,7 @@
    "war_pa_plus_adj_raw": 101.5,
    "war_pa_plus_pct": 56,
    "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 75,
+   "war_pa_plus_3yr_pct": 74,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -15100,8 +15118,8 @@
    "war_pa_plus_adj": 103,
    "war_pa_plus_adj_raw": 102.8,
    "war_pa_plus_pct": 60,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 52,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 68,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -15151,8 +15169,8 @@
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 98.4,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 26,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 27,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -15202,9 +15220,9 @@
    "war_pa_plus_adj": 97,
    "war_pa_plus_adj_raw": 97.2,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 21,
-   "war_pa_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 25,
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "663494",
@@ -15250,8 +15268,8 @@
    "war_pa_plus_adj": 93,
    "war_pa_plus_adj_raw": 93.2,
    "war_pa_plus_pct": 20,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 56,
+   "war_pa_plus_3yr": 94,
+   "war_pa_plus_3yr_pct": 18,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -15366,7 +15384,7 @@
    "war_pa_plus_adj_raw": 96.3,
    "war_pa_plus_pct": 38,
    "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 68,
+   "war_pa_plus_3yr_pct": 66,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -15412,7 +15430,10 @@
    "war_pa_plus_raw": 102.0,
    "war_pa_plus_adj": 101,
    "war_pa_plus_adj_raw": 100.8,
-   "war_pa_plus_pct": 51
+   "war_pa_plus_pct": 51,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 57,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "642708",
@@ -15462,7 +15483,7 @@
    "war_pa_plus_adj_raw": 91.2,
    "war_pa_plus_pct": 18,
    "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 22,
+   "war_pa_plus_3yr_pct": 23,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -15502,7 +15523,7 @@
    "pull_pct": 0.274,
    "war": -0.1,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 47,
+   "war_pa_plus_3yr_pct": 49,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -15584,8 +15605,8 @@
    "war_pa_plus_adj": 107,
    "war_pa_plus_adj_raw": 107.4,
    "war_pa_plus_pct": 80,
-   "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 82,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 88,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -15731,8 +15752,8 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 100.3,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 80,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 75,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -15815,7 +15836,7 @@
    "war_pa_plus_adj_raw": 97.0,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 48,
+   "war_pa_plus_3yr_pct": 50,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -15865,8 +15886,8 @@
    "war_pa_plus_adj": 92,
    "war_pa_plus_adj_raw": 92.2,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 48,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 47,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -15917,7 +15938,7 @@
    "war_pa_plus_adj_raw": 114.8,
    "war_pa_plus_pct": 86,
    "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 84,
+   "war_pa_plus_3yr_pct": 83,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -15999,8 +16020,8 @@
    "war_pa_plus_adj": 111,
    "war_pa_plus_adj_raw": 110.5,
    "war_pa_plus_pct": 94,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 53,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 62,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -16040,7 +16061,7 @@
    "pull_pct": 0.393,
    "war": 0.1,
    "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 62,
+   "war_pa_plus_3yr_pct": 63,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -16090,8 +16111,8 @@
    "war_pa_plus_adj": 103,
    "war_pa_plus_adj_raw": 103.4,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 74,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 77,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -16141,8 +16162,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 96.2,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 84,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 77,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -16221,8 +16242,8 @@
    "war_pa_plus_adj": 97,
    "war_pa_plus_adj_raw": 96.7,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 46,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 28,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -16340,7 +16361,7 @@
    "war_pa_plus_adj_raw": 94.7,
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 29,
+   "war_pa_plus_3yr_pct": 28,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -16463,7 +16484,7 @@
    "war_pa_plus_adj_raw": 94.0,
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 79,
+   "war_pa_plus_3yr_pct": 78,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -16551,7 +16572,7 @@
    "pull_pct": 0.364,
    "war": -0.1,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 46,
+   "war_pa_plus_3yr_pct": 47,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -16588,7 +16609,7 @@
    "pull_pct": 0.25,
    "war": -0.2,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 45,
+   "war_pa_plus_3yr_pct": 46,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -16670,8 +16691,8 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 99.8,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 66,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 64,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -16841,8 +16862,8 @@
    "war_pa_plus_adj": 92,
    "war_pa_plus_adj_raw": 92.0,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 67,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 61,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -16973,7 +16994,7 @@
    "pull_pct": 0.429,
    "war": -0.5,
    "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 83,
+   "war_pa_plus_3yr_pct": 82,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -17023,8 +17044,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 105.8,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 54,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 60,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -17189,8 +17210,8 @@
    "war_pa_plus_adj": 92,
    "war_pa_plus_adj_raw": 92.4,
    "war_pa_plus_pct": 9,
-   "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 32,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 26,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -17323,8 +17344,8 @@
    "war_pa_plus_adj": 81,
    "war_pa_plus_adj_raw": 81.4,
    "war_pa_plus_pct": 4,
-   "war_pa_plus_3yr": 89,
-   "war_pa_plus_3yr_pct": 7,
+   "war_pa_plus_3yr": 90,
+   "war_pa_plus_3yr_pct": 8,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -17425,8 +17446,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 95.8,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 65,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 58,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -17477,7 +17498,7 @@
    "war_pa_plus_adj_raw": 90.6,
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 24,
+   "war_pa_plus_3yr_pct": 23,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -17527,7 +17548,7 @@
    "war_pa_plus_adj": 114,
    "war_pa_plus_adj_raw": 114.4,
    "war_pa_plus_pct": 92,
-   "war_pa_plus_3yr": 116,
+   "war_pa_plus_3yr": 115,
    "war_pa_plus_3yr_pct": 98,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -17578,8 +17599,8 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 100.1,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 42,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 44,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -17619,7 +17640,7 @@
    "pull_pct": 0.444,
    "war": 0.4,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 33,
+   "war_pa_plus_3yr_pct": 34,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -17669,8 +17690,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 104.9,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 64,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 65,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -17721,7 +17742,7 @@
    "war_pa_plus_adj_raw": 100.2,
    "war_pa_plus_pct": 47,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 49,
+   "war_pa_plus_3yr_pct": 53,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -17767,7 +17788,10 @@
    "war_pa_plus_raw": 85.6,
    "war_pa_plus_adj": 90,
    "war_pa_plus_adj_raw": 90.0,
-   "war_pa_plus_pct": 6
+   "war_pa_plus_pct": 6,
+   "war_pa_plus_3yr": 86,
+   "war_pa_plus_3yr_pct": 3,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "682663",
@@ -17817,7 +17841,7 @@
    "war_pa_plus_adj_raw": 89.7,
    "war_pa_plus_pct": 16,
    "war_pa_plus_3yr": 94,
-   "war_pa_plus_3yr_pct": 18,
+   "war_pa_plus_3yr_pct": 19,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -17868,7 +17892,7 @@
    "war_pa_plus_adj_raw": 97.4,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 29,
+   "war_pa_plus_3yr_pct": 27,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -17908,7 +17932,7 @@
    "pull_pct": 0.313,
    "war": -0.2,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 45,
+   "war_pa_plus_3yr_pct": 47,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -17959,7 +17983,7 @@
    "war_pa_plus_adj_raw": 99.7,
    "war_pa_plus_pct": 47,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 37,
+   "war_pa_plus_3yr_pct": 38,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -18010,7 +18034,7 @@
    "war_pa_plus_adj_raw": 107.8,
    "war_pa_plus_pct": 86,
    "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 93,
+   "war_pa_plus_3yr_pct": 92,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -18061,7 +18085,7 @@
    "war_pa_plus_adj_raw": 89.3,
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 46,
+   "war_pa_plus_3yr_pct": 45,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -18095,8 +18119,8 @@
    "wrc_plus": 99,
    "xhem_plus": 93,
    "xwoba": 0.307,
-   "luck_gap_woba": 0.316,
-   "luck_gap": -0.009,
+   "luck_gap_woba": 0.318,
+   "luck_gap": -0.011,
    "fwdhem_plus": 95,
    "pwoba": 0.306,
    "pwoba_pctile": 56,
@@ -18111,8 +18135,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 105.1,
    "war_pa_plus_pct": 67,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 69,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 62,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -18162,8 +18186,8 @@
    "war_pa_plus_adj": 84,
    "war_pa_plus_adj_raw": 84.0,
    "war_pa_plus_pct": 14,
-   "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 21,
+   "war_pa_plus_3yr": 93,
+   "war_pa_plus_3yr_pct": 15,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -18214,7 +18238,7 @@
    "war_pa_plus_adj_raw": 87.6,
    "war_pa_plus_pct": 20,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 45,
+   "war_pa_plus_3yr_pct": 48,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -18296,8 +18320,8 @@
    "war_pa_plus_adj": 108,
    "war_pa_plus_adj_raw": 108.5,
    "war_pa_plus_pct": 80,
-   "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 81,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 89,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -18347,8 +18371,8 @@
    "war_pa_plus_adj": 91,
    "war_pa_plus_adj_raw": 91.1,
    "war_pa_plus_pct": 27,
-   "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 24,
+   "war_pa_plus_3yr": 95,
+   "war_pa_plus_3yr_pct": 22,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -18388,7 +18412,7 @@
    "pull_pct": 0.385,
    "war": -0.1,
    "war_pa_plus_3yr": 93,
-   "war_pa_plus_3yr_pct": 15,
+   "war_pa_plus_3yr_pct": 16,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -18470,7 +18494,7 @@
    "war_pa_plus_adj": 112,
    "war_pa_plus_adj_raw": 111.9,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr": 109,
    "war_pa_plus_3yr_pct": 86,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -18511,7 +18535,7 @@
    "pull_pct": 0.278,
    "war": -0.2,
    "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 8,
+   "war_pa_plus_3yr_pct": 9,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -18562,7 +18586,7 @@
    "war_pa_plus_adj_raw": 95.7,
    "war_pa_plus_pct": 38,
    "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 86,
+   "war_pa_plus_3yr_pct": 84,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -18641,8 +18665,8 @@
    "war_pa_plus_adj": 90,
    "war_pa_plus_adj_raw": 89.6,
    "war_pa_plus_pct": 8,
-   "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 9,
+   "war_pa_plus_3yr": 87,
+   "war_pa_plus_3yr_pct": 6,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -18725,7 +18749,7 @@
    "war_pa_plus_adj_raw": 102.1,
    "war_pa_plus_pct": 60,
    "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 94,
+   "war_pa_plus_3yr_pct": 93,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -18877,7 +18901,7 @@
    "war_pa_plus_adj_raw": 83.2,
    "war_pa_plus_pct": 8,
    "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 10,
+   "war_pa_plus_3yr_pct": 9,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -18911,8 +18935,8 @@
    "wrc_plus": 91,
    "xhem_plus": 103,
    "xwoba": 0.321,
-   "luck_gap_woba": 0.302,
-   "luck_gap": 0.019,
+   "luck_gap_woba": 0.304,
+   "luck_gap": 0.017,
    "fwdhem_plus": 99,
    "pwoba": 0.304,
    "pwoba_pctile": 53,
@@ -18927,8 +18951,8 @@
    "war_pa_plus_adj": 101,
    "war_pa_plus_adj_raw": 100.7,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 62,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 72,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -18975,8 +18999,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 106.1,
    "war_pa_plus_pct": 76,
-   "war_pa_plus_3yr": 119,
-   "war_pa_plus_3yr_pct": 100,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 85,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -19026,8 +19050,8 @@
    "war_pa_plus_adj": 103,
    "war_pa_plus_adj_raw": 103.2,
    "war_pa_plus_pct": 60,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 76,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 71,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -19118,7 +19142,7 @@
    "pull_pct": 0.286,
    "war": -0.5,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 40,
+   "war_pa_plus_3yr_pct": 41,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -19169,7 +19193,7 @@
    "war_pa_plus_adj_raw": 88.9,
    "war_pa_plus_pct": 18,
    "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 25,
+   "war_pa_plus_3yr_pct": 26,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -19215,7 +19239,10 @@
    "war_pa_plus_raw": 94.1,
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 95.6,
-   "war_pa_plus_pct": 20
+   "war_pa_plus_pct": 20,
+   "war_pa_plus_3yr": 94,
+   "war_pa_plus_3yr_pct": 18,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "699302",
@@ -19261,8 +19288,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 96.1,
    "war_pa_plus_pct": 27,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 52,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 25,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -19478,7 +19505,7 @@
    "pull_pct": 0.25,
    "war": -0.1,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 38,
+   "war_pa_plus_3yr_pct": 39,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -19529,7 +19556,7 @@
    "war_pa_plus_adj_raw": 109.3,
    "war_pa_plus_pct": 80,
    "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 87,
+   "war_pa_plus_3yr_pct": 88,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -19579,8 +19606,8 @@
    "war_pa_plus_adj": 90,
    "war_pa_plus_adj_raw": 90.2,
    "war_pa_plus_pct": 23,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 67,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 63,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -19652,7 +19679,7 @@
    "pull_pct": 0.333,
    "war": -0.1,
    "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 22,
+   "war_pa_plus_3yr_pct": 23,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -19753,8 +19780,8 @@
    "war_pa_plus_adj": 99,
    "war_pa_plus_adj_raw": 99.0,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 57,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 51,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -19839,8 +19866,8 @@
    "war_pa_plus_adj": 81,
    "war_pa_plus_adj_raw": 80.9,
    "war_pa_plus_pct": 6,
-   "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 35,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 30,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -19954,7 +19981,7 @@
    "war_pa_plus_adj": 102,
    "war_pa_plus_adj_raw": 102.1,
    "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr": 99,
    "war_pa_plus_3yr_pct": 43,
    "war_pa_plus_3yr_tag": "established"
   },
@@ -20006,7 +20033,7 @@
    "war_pa_plus_adj_raw": 106.1,
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 81,
+   "war_pa_plus_3yr_pct": 79,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -20056,8 +20083,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 95.5,
    "war_pa_plus_pct": 27,
-   "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 44,
+   "war_pa_plus_3yr": 99,
+   "war_pa_plus_3yr_pct": 43,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -20097,7 +20124,7 @@
    "pull_pct": 0.308,
    "war": 0.1,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 78,
+   "war_pa_plus_3yr_pct": 76,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -20147,8 +20174,8 @@
    "war_pa_plus_adj": 87,
    "war_pa_plus_adj_raw": 87.1,
    "war_pa_plus_pct": 16,
-   "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 47,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 29,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -20198,8 +20225,8 @@
    "war_pa_plus_adj": 88,
    "war_pa_plus_adj_raw": 88.0,
    "war_pa_plus_pct": 12,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 74,
+   "war_pa_plus_3yr": 104,
+   "war_pa_plus_3yr_pct": 69,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -20290,7 +20317,7 @@
    "war_pa_plus_adj_raw": 105.4,
    "war_pa_plus_pct": 67,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 56,
+   "war_pa_plus_3yr_pct": 59,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -20392,7 +20419,7 @@
    "war_pa_plus_adj_raw": 82.5,
    "war_pa_plus_pct": 6,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 58,
+   "war_pa_plus_3yr_pct": 59,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -20432,7 +20459,7 @@
    "pull_pct": 0.327,
    "war": -0.4,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 31,
+   "war_pa_plus_3yr_pct": 32,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -20481,7 +20508,10 @@
    "war_pa_plus_raw": 108.4,
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 105.8,
-   "war_pa_plus_pct": 76
+   "war_pa_plus_pct": 76,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 85,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "645277",
@@ -20530,8 +20560,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 96.2,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 62,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 56,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -20581,8 +20611,8 @@
    "war_pa_plus_adj": 88,
    "war_pa_plus_adj_raw": 87.5,
    "war_pa_plus_pct": 14,
-   "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 23,
+   "war_pa_plus_3yr": 95,
+   "war_pa_plus_3yr_pct": 21,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -20632,8 +20662,8 @@
    "war_pa_plus_adj": 89,
    "war_pa_plus_adj_raw": 89.4,
    "war_pa_plus_pct": 11,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 30,
+   "war_pa_plus_3yr": 95,
+   "war_pa_plus_3yr_pct": 22,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -20683,8 +20713,8 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 99.8,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 51,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 55,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -20734,8 +20764,8 @@
    "war_pa_plus_adj": 97,
    "war_pa_plus_adj_raw": 96.5,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 26,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 28,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -20782,8 +20812,8 @@
    "war_pa_plus_adj": 99,
    "war_pa_plus_adj_raw": 98.8,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 37,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 45,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -20833,8 +20863,8 @@
    "war_pa_plus_adj": 110,
    "war_pa_plus_adj_raw": 109.8,
    "war_pa_plus_pct": 90,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 74,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 76,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -20885,7 +20915,7 @@
    "war_pa_plus_adj_raw": 90.4,
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 47,
+   "war_pa_plus_3yr_pct": 45,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -20925,7 +20955,7 @@
    "pull_pct": 0.475,
    "war": -0.1,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 34,
+   "war_pa_plus_3yr_pct": 35,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -21007,8 +21037,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 96.4,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 65,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 52,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -21088,7 +21118,7 @@
    "pull_pct": 0.3,
    "war": -0.2,
    "war_pa_plus_3yr": 87,
-   "war_pa_plus_3yr_pct": 5,
+   "war_pa_plus_3yr_pct": 6,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -21138,7 +21168,7 @@
    "war_pa_plus_adj": 89,
    "war_pa_plus_adj_raw": 88.7,
    "war_pa_plus_pct": 11,
-   "war_pa_plus_3yr": 89,
+   "war_pa_plus_3yr": 88,
    "war_pa_plus_3yr_pct": 7,
    "war_pa_plus_3yr_tag": "provisional"
   },
@@ -21179,7 +21209,7 @@
    "pull_pct": 0.433,
    "war": -0.3,
    "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 9,
+   "war_pa_plus_3yr_pct": 10,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -21229,8 +21259,8 @@
    "war_pa_plus_adj": 103,
    "war_pa_plus_adj_raw": 103.1,
    "war_pa_plus_pct": 60,
-   "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 90,
+   "war_pa_plus_3yr": 111,
+   "war_pa_plus_3yr_pct": 92,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -21312,8 +21342,8 @@
    "war_pa_plus_adj": 88,
    "war_pa_plus_adj_raw": 87.7,
    "war_pa_plus_pct": 3,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 50,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 29,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -21395,8 +21425,8 @@
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 98.3,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 34,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 46,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -21446,8 +21476,8 @@
    "war_pa_plus_adj": 97,
    "war_pa_plus_adj_raw": 96.7,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 49,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 48,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -21685,7 +21715,7 @@
    "war_pa_plus_adj_raw": 86.2,
    "war_pa_plus_pct": 4,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 27,
+   "war_pa_plus_3yr_pct": 28,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -21735,8 +21765,8 @@
    "war_pa_plus_adj": 81,
    "war_pa_plus_adj_raw": 80.6,
    "war_pa_plus_pct": 4,
-   "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 37,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 36,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -21786,8 +21816,8 @@
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 97.9,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 28,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 24,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -21909,8 +21939,8 @@
    "war_pa_plus_adj": 88,
    "war_pa_plus_adj_raw": 87.8,
    "war_pa_plus_pct": 23,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 70,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 69,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22043,8 +22073,8 @@
    "war_pa_plus_adj": 88,
    "war_pa_plus_adj_raw": 87.5,
    "war_pa_plus_pct": 20,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 51,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 47,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22095,7 +22125,7 @@
    "war_pa_plus_adj_raw": 95.2,
    "war_pa_plus_pct": 34,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 53,
+   "war_pa_plus_3yr_pct": 51,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22145,8 +22175,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 95.8,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 50,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 54,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22271,8 +22301,8 @@
    "war_pa_plus_adj": 92,
    "war_pa_plus_adj_raw": 92.1,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 55,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 51,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22386,7 +22416,7 @@
    "war_pa_plus_adj": 85,
    "war_pa_plus_adj_raw": 85.4,
    "war_pa_plus_pct": 6,
-   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr": 95,
    "war_pa_plus_3yr_pct": 23,
    "war_pa_plus_3yr_tag": "provisional"
   },
@@ -22427,7 +22457,7 @@
    "pull_pct": 0.432,
    "war": 0.2,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 30,
+   "war_pa_plus_3yr_pct": 31,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -22478,7 +22508,7 @@
    "war_pa_plus_adj_raw": 92.5,
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 27,
+   "war_pa_plus_3yr_pct": 30,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22529,7 +22559,7 @@
    "war_pa_plus_adj_raw": 93.5,
    "war_pa_plus_pct": 30,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 27,
+   "war_pa_plus_3yr_pct": 28,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -22580,7 +22610,7 @@
    "war_pa_plus_adj_raw": 96.5,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 50,
+   "war_pa_plus_3yr_pct": 51,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22631,7 +22661,7 @@
    "war_pa_plus_adj_raw": 95.2,
    "war_pa_plus_pct": 38,
    "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 61,
+   "war_pa_plus_3yr_pct": 62,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22677,7 +22707,10 @@
    "war_pa_plus_raw": 100.6,
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 99.8,
-   "war_pa_plus_pct": 47
+   "war_pa_plus_pct": 47,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 49,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "669289",
@@ -22716,7 +22749,7 @@
    "pull_pct": 0.333,
    "war": 0.0,
    "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 10,
+   "war_pa_plus_3yr_pct": 11,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22767,7 +22800,7 @@
    "war_pa_plus_adj_raw": 91.1,
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 48,
+   "war_pa_plus_3yr_pct": 53,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22817,8 +22850,8 @@
    "war_pa_plus_adj": 105,
    "war_pa_plus_adj_raw": 105.4,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 71,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 70,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22868,8 +22901,8 @@
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 98.5,
    "war_pa_plus_pct": 42,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 49,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 45,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -22920,7 +22953,7 @@
    "war_pa_plus_adj_raw": 86.7,
    "war_pa_plus_pct": 12,
    "war_pa_plus_3yr": 91,
-   "war_pa_plus_3yr_pct": 11,
+   "war_pa_plus_3yr_pct": 12,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -22970,8 +23003,8 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 100.0,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 66,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 55,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -23021,8 +23054,8 @@
    "war_pa_plus_adj": 97,
    "war_pa_plus_adj_raw": 96.8,
    "war_pa_plus_pct": 27,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 50,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 47,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -23072,8 +23105,8 @@
    "war_pa_plus_adj": 97,
    "war_pa_plus_adj_raw": 96.6,
    "war_pa_plus_pct": 27,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 87,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 79,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -23123,8 +23156,8 @@
    "war_pa_plus_adj": 95,
    "war_pa_plus_adj_raw": 95.5,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 31,
+   "war_pa_plus_3yr": 99,
+   "war_pa_plus_3yr_pct": 42,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -23174,8 +23207,8 @@
    "war_pa_plus_adj": 95,
    "war_pa_plus_adj_raw": 94.9,
    "war_pa_plus_pct": 34,
-   "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 20,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 35,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -23279,7 +23312,7 @@
    "pull_pct": 0.4,
    "war": -0.6,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 56,
+   "war_pa_plus_3yr_pct": 57,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -23329,8 +23362,8 @@
    "war_pa_plus_adj": 91,
    "war_pa_plus_adj_raw": 91.2,
    "war_pa_plus_pct": 18,
-   "war_pa_plus_3yr": 91,
-   "war_pa_plus_3yr_pct": 11,
+   "war_pa_plus_3yr": 93,
+   "war_pa_plus_3yr_pct": 15,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -23380,8 +23413,8 @@
    "war_pa_plus_adj": 91,
    "war_pa_plus_adj_raw": 91.4,
    "war_pa_plus_pct": 23,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 59,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 55,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -23421,7 +23454,7 @@
    "pull_pct": 0.327,
    "war": 0.1,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 37,
+   "war_pa_plus_3yr_pct": 38,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -23472,7 +23505,7 @@
    "war_pa_plus_adj_raw": 92.7,
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 36,
+   "war_pa_plus_3yr_pct": 33,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -23614,7 +23647,7 @@
    "war_pa_plus_adj_raw": 101.0,
    "war_pa_plus_pct": 56,
    "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 92,
+   "war_pa_plus_3yr_pct": 91,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -23664,8 +23697,8 @@
    "war_pa_plus_adj": 73,
    "war_pa_plus_adj_raw": 73.4,
    "war_pa_plus_pct": 2,
-   "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 10,
+   "war_pa_plus_3yr": 91,
+   "war_pa_plus_3yr_pct": 11,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -23712,8 +23745,8 @@
    "war_pa_plus_adj": 90,
    "war_pa_plus_adj_raw": 89.6,
    "war_pa_plus_pct": 9,
-   "war_pa_plus_3yr": 86,
-   "war_pa_plus_3yr_pct": 4,
+   "war_pa_plus_3yr": 88,
+   "war_pa_plus_3yr_pct": 6,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -23753,7 +23786,7 @@
    "pull_pct": 0.211,
    "war": -0.1,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 33,
+   "war_pa_plus_3yr_pct": 34,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -23803,8 +23836,8 @@
    "war_pa_plus_adj": 85,
    "war_pa_plus_adj_raw": 84.9,
    "war_pa_plus_pct": 12,
-   "war_pa_plus_3yr": 88,
-   "war_pa_plus_3yr_pct": 6,
+   "war_pa_plus_3yr": 90,
+   "war_pa_plus_3yr_pct": 9,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -23886,8 +23919,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 96.0,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 46,
+   "war_pa_plus_3yr": 99,
+   "war_pa_plus_3yr_pct": 42,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -23959,7 +23992,7 @@
    "pull_pct": 0.357,
    "war": -0.5,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 29,
+   "war_pa_plus_3yr_pct": 30,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -24070,8 +24103,8 @@
    "war_pa_plus_adj": 102,
    "war_pa_plus_adj_raw": 101.5,
    "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 114,
-   "war_pa_plus_3yr_pct": 96,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 62,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -24121,8 +24154,8 @@
    "war_pa_plus_adj": 92,
    "war_pa_plus_adj_raw": 92.0,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 59,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 49,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -24172,8 +24205,8 @@
    "war_pa_plus_adj": 94,
    "war_pa_plus_adj_raw": 94.0,
    "war_pa_plus_pct": 27,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 52,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 57,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -24213,7 +24246,7 @@
    "pull_pct": 0.2,
    "war": -0.4,
    "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 83,
+   "war_pa_plus_3yr_pct": 82,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -24290,7 +24323,7 @@
    "pull_pct": 0.133,
    "war": -0.7,
    "war_pa_plus_3yr": 94,
-   "war_pa_plus_3yr_pct": 19,
+   "war_pa_plus_3yr_pct": 20,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -24341,7 +24374,7 @@
    "war_pa_plus_adj_raw": 99.0,
    "war_pa_plus_pct": 47,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 58,
+   "war_pa_plus_3yr_pct": 57,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -24424,7 +24457,7 @@
    "war_pa_plus_adj_raw": 100.4,
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 89,
+   "war_pa_plus_3yr_pct": 86,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -24474,8 +24507,8 @@
    "war_pa_plus_adj": 104,
    "war_pa_plus_adj_raw": 103.8,
    "war_pa_plus_pct": 60,
-   "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 47,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 54,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -24522,8 +24555,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 95.5,
    "war_pa_plus_pct": 27,
-   "war_pa_plus_3yr": 91,
-   "war_pa_plus_3yr_pct": 12,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 23,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -24624,8 +24657,8 @@
    "war_pa_plus_adj": 85,
    "war_pa_plus_adj_raw": 84.6,
    "war_pa_plus_pct": 6,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 26,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 27,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -24676,7 +24709,7 @@
    "war_pa_plus_adj_raw": 87.1,
    "war_pa_plus_pct": 6,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 32,
+   "war_pa_plus_3yr_pct": 33,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -24726,8 +24759,8 @@
    "war_pa_plus_adj": 99,
    "war_pa_plus_adj_raw": 99.0,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 39,
+   "war_pa_plus_3yr": 100,
+   "war_pa_plus_3yr_pct": 44,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -24767,7 +24800,7 @@
    "pull_pct": 0.286,
    "war": -0.3,
    "war_pa_plus_3yr": 92,
-   "war_pa_plus_3yr_pct": 13,
+   "war_pa_plus_3yr_pct": 14,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -24869,7 +24902,7 @@
    "war_pa_plus_adj_raw": 97.0,
    "war_pa_plus_pct": 38,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 56,
+   "war_pa_plus_3yr_pct": 58,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -24919,8 +24952,8 @@
    "war_pa_plus_adj": 91,
    "war_pa_plus_adj_raw": 90.8,
    "war_pa_plus_pct": 8,
-   "war_pa_plus_3yr": 83,
-   "war_pa_plus_3yr_pct": 2,
+   "war_pa_plus_3yr": 87,
+   "war_pa_plus_3yr_pct": 5,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -24971,7 +25004,7 @@
    "war_pa_plus_adj_raw": 87.3,
    "war_pa_plus_pct": 2,
    "war_pa_plus_3yr": 88,
-   "war_pa_plus_3yr_pct": 6,
+   "war_pa_plus_3yr_pct": 7,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -25011,7 +25044,7 @@
    "pull_pct": 0.545,
    "war": -0.6,
    "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 75,
+   "war_pa_plus_3yr_pct": 74,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -25101,8 +25134,8 @@
    "war_pa_plus_adj": 95,
    "war_pa_plus_adj_raw": 94.8,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 19,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 26,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -25142,7 +25175,7 @@
    "pull_pct": 0.385,
    "war": -0.4,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 28,
+   "war_pa_plus_3yr_pct": 29,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -25193,7 +25226,7 @@
    "war_pa_plus_adj_raw": 84.5,
    "war_pa_plus_pct": 8,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 38,
+   "war_pa_plus_3yr_pct": 40,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -25243,8 +25276,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 95.6,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 37,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 30,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -25373,7 +25406,10 @@
    "war_pa_plus_raw": 98.2,
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 98.2,
-   "war_pa_plus_pct": 34
+   "war_pa_plus_pct": 34,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 36,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "682177",
@@ -25422,8 +25458,8 @@
    "war_pa_plus_adj": 104,
    "war_pa_plus_adj_raw": 103.8,
    "war_pa_plus_pct": 63,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 69,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 70,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -25473,8 +25509,8 @@
    "war_pa_plus_adj": 92,
    "war_pa_plus_adj_raw": 92.5,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 77,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 72,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -25524,8 +25560,8 @@
    "war_pa_plus_adj": 95,
    "war_pa_plus_adj_raw": 95.2,
    "war_pa_plus_pct": 23,
-   "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 79,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 80,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -25575,8 +25611,8 @@
    "war_pa_plus_adj": 95,
    "war_pa_plus_adj_raw": 95.3,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 22,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 29,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -25627,7 +25663,7 @@
    "war_pa_plus_adj_raw": 89.0,
    "war_pa_plus_pct": 12,
    "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 8,
+   "war_pa_plus_3yr_pct": 9,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -25774,7 +25810,7 @@
    "pull_pct": 0.35,
    "war": -0.5,
    "war_pa_plus_3yr": 94,
-   "war_pa_plus_3yr_pct": 19,
+   "war_pa_plus_3yr_pct": 20,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -25888,8 +25924,8 @@
    "war_pa_plus_adj": 104,
    "war_pa_plus_adj_raw": 104.1,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 46,
+   "war_pa_plus_3yr": 99,
+   "war_pa_plus_3yr_pct": 42,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -25939,8 +25975,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 105.8,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 48,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 54,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -26062,8 +26098,8 @@
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 97.8,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 50,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 59,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -26113,8 +26149,8 @@
    "war_pa_plus_adj": 106,
    "war_pa_plus_adj_raw": 106.1,
    "war_pa_plus_pct": 76,
-   "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 94,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 83,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -26200,7 +26236,7 @@
    "war_pa_plus_adj_raw": 102.2,
    "war_pa_plus_pct": 56,
    "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 60,
+   "war_pa_plus_3yr_pct": 64,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -26250,8 +26286,8 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 99.8,
    "war_pa_plus_pct": 51,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 68,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 61,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -26302,7 +26338,7 @@
    "war_pa_plus_adj_raw": 85.8,
    "war_pa_plus_pct": 6,
    "war_pa_plus_3yr": 86,
-   "war_pa_plus_3yr_pct": 3,
+   "war_pa_plus_3yr_pct": 4,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -26352,8 +26388,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 95.8,
    "war_pa_plus_pct": 34,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 54,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 32,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -26404,7 +26440,7 @@
    "war_pa_plus_adj_raw": 99.5,
    "war_pa_plus_pct": 47,
    "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 68,
+   "war_pa_plus_3yr_pct": 67,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -26454,8 +26490,8 @@
    "war_pa_plus_adj": 86,
    "war_pa_plus_adj_raw": 85.8,
    "war_pa_plus_pct": 18,
-   "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 36,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 37,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -26506,7 +26542,7 @@
    "war_pa_plus_adj_raw": 95.8,
    "war_pa_plus_pct": 27,
    "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 67,
+   "war_pa_plus_3yr_pct": 66,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -26557,7 +26593,7 @@
    "war_pa_plus_adj_raw": 94.0,
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 22,
+   "war_pa_plus_3yr_pct": 21,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -26597,7 +26633,7 @@
    "pull_pct": 0.393,
    "war": -0.3,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 75,
+   "war_pa_plus_3yr_pct": 74,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -26647,8 +26683,8 @@
    "war_pa_plus_adj": 112,
    "war_pa_plus_adj_raw": 112.2,
    "war_pa_plus_pct": 92,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 89,
+   "war_pa_plus_3yr": 113,
+   "war_pa_plus_3yr_pct": 96,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -26698,8 +26734,8 @@
    "war_pa_plus_adj": 86,
    "war_pa_plus_adj_raw": 85.8,
    "war_pa_plus_pct": 16,
-   "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 22,
+   "war_pa_plus_3yr": 94,
+   "war_pa_plus_3yr_pct": 19,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -26746,8 +26782,8 @@
    "war_pa_plus_adj": 89,
    "war_pa_plus_adj_raw": 88.9,
    "war_pa_plus_pct": 6,
-   "war_pa_plus_3yr": 94,
-   "war_pa_plus_3yr_pct": 16,
+   "war_pa_plus_3yr": 86,
+   "war_pa_plus_3yr_pct": 4,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -26798,7 +26834,7 @@
    "war_pa_plus_adj_raw": 100.4,
    "war_pa_plus_pct": 51,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 52,
+   "war_pa_plus_3yr_pct": 50,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -26848,8 +26884,8 @@
    "war_pa_plus_adj": 99,
    "war_pa_plus_adj_raw": 98.8,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 28,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 34,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -26900,7 +26936,7 @@
    "war_pa_plus_adj_raw": 98.5,
    "war_pa_plus_pct": 34,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 76,
+   "war_pa_plus_3yr_pct": 75,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -26950,8 +26986,8 @@
    "war_pa_plus_adj": 85,
    "war_pa_plus_adj_raw": 85.4,
    "war_pa_plus_pct": 11,
-   "war_pa_plus_3yr": 92,
-   "war_pa_plus_3yr_pct": 12,
+   "war_pa_plus_3yr": 89,
+   "war_pa_plus_3yr_pct": 8,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -27052,8 +27088,8 @@
    "war_pa_plus_adj": 92,
    "war_pa_plus_adj_raw": 92.2,
    "war_pa_plus_pct": 20,
-   "war_pa_plus_3yr": 93,
-   "war_pa_plus_3yr_pct": 16,
+   "war_pa_plus_3yr": 94,
+   "war_pa_plus_3yr_pct": 18,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -27093,7 +27129,7 @@
    "pull_pct": 0.25,
    "war": 0.1,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 39,
+   "war_pa_plus_3yr_pct": 40,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -27144,7 +27180,7 @@
    "war_pa_plus_adj_raw": 96.2,
    "war_pa_plus_pct": 34,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 33,
+   "war_pa_plus_3yr_pct": 32,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -27194,8 +27230,8 @@
    "war_pa_plus_adj": 91,
    "war_pa_plus_adj_raw": 91.0,
    "war_pa_plus_pct": 18,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 29,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 27,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -27245,8 +27281,8 @@
    "war_pa_plus_adj": 90,
    "war_pa_plus_adj_raw": 89.8,
    "war_pa_plus_pct": 23,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 72,
+   "war_pa_plus_3yr": 103,
+   "war_pa_plus_3yr_pct": 64,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -27296,8 +27332,8 @@
    "war_pa_plus_adj": 82,
    "war_pa_plus_adj_raw": 82.1,
    "war_pa_plus_pct": 9,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 30,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 26,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -27337,7 +27373,7 @@
    "pull_pct": 0.46,
    "war": -0.3,
    "war_pa_plus_3yr": 107,
-   "war_pa_plus_3yr_pct": 83,
+   "war_pa_plus_3yr_pct": 82,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -27387,8 +27423,8 @@
    "war_pa_plus_adj": 107,
    "war_pa_plus_adj_raw": 107.4,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 109,
-   "war_pa_plus_3yr_pct": 87,
+   "war_pa_plus_3yr": 108,
+   "war_pa_plus_3yr_pct": 85,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -27439,7 +27475,7 @@
    "war_pa_plus_adj_raw": 90.1,
    "war_pa_plus_pct": 16,
    "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 28,
+   "war_pa_plus_3yr_pct": 30,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -27489,8 +27525,8 @@
    "war_pa_plus_adj": 92,
    "war_pa_plus_adj_raw": 92.3,
    "war_pa_plus_pct": 16,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 30,
+   "war_pa_plus_3yr": 99,
+   "war_pa_plus_3yr_pct": 38,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -27541,7 +27577,7 @@
    "war_pa_plus_adj_raw": 96.5,
    "war_pa_plus_pct": 23,
    "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 57,
+   "war_pa_plus_3yr_pct": 58,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -27591,8 +27627,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 96.3,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 49,
+   "war_pa_plus_3yr": 99,
+   "war_pa_plus_3yr_pct": 42,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -27632,7 +27668,7 @@
    "pull_pct": 0.346,
    "war": -0.7,
    "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 9,
+   "war_pa_plus_3yr_pct": 10,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -27682,8 +27718,8 @@
    "war_pa_plus_adj": 100,
    "war_pa_plus_adj_raw": 99.9,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 65,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 52,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -27734,7 +27770,7 @@
    "war_pa_plus_adj_raw": 89.2,
    "war_pa_plus_pct": 12,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 39,
+   "war_pa_plus_3yr_pct": 38,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -27899,7 +27935,7 @@
    "war_pa_plus_adj": 84,
    "war_pa_plus_adj_raw": 84.1,
    "war_pa_plus_pct": 3,
-   "war_pa_plus_3yr": 89,
+   "war_pa_plus_3yr": 88,
    "war_pa_plus_3yr_pct": 7,
    "war_pa_plus_3yr_tag": "provisional"
   },
@@ -27982,9 +28018,9 @@
    "war_pa_plus_adj": 94,
    "war_pa_plus_adj_raw": 94.1,
    "war_pa_plus_pct": 30,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 85,
-   "war_pa_plus_3yr_tag": "provisional"
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 75,
+   "war_pa_plus_3yr_tag": "established"
   },
   {
    "key": "680776",
@@ -28034,7 +28070,7 @@
    "war_pa_plus_adj_raw": 91.4,
    "war_pa_plus_pct": 30,
    "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 93,
+   "war_pa_plus_3yr_pct": 92,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -28081,8 +28117,8 @@
    "war_pa_plus_adj": 90,
    "war_pa_plus_adj_raw": 90.2,
    "war_pa_plus_pct": 14,
-   "war_pa_plus_3yr": 94,
-   "war_pa_plus_3yr_pct": 17,
+   "war_pa_plus_3yr": 91,
+   "war_pa_plus_3yr_pct": 12,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -28122,7 +28158,7 @@
    "pull_pct": 0.289,
    "war": -0.5,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 38,
+   "war_pa_plus_3yr_pct": 39,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -28205,7 +28241,7 @@
    "war_pa_plus_adj_raw": 90.8,
    "war_pa_plus_pct": 14,
    "war_pa_plus_3yr": 87,
-   "war_pa_plus_3yr_pct": 5,
+   "war_pa_plus_3yr_pct": 6,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -28303,8 +28339,8 @@
    "war_pa_plus_adj": 104,
    "war_pa_plus_adj_raw": 104.3,
    "war_pa_plus_pct": 72,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 74,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 81,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -28354,8 +28390,8 @@
    "war_pa_plus_adj": 89,
    "war_pa_plus_adj_raw": 88.9,
    "war_pa_plus_pct": 20,
-   "war_pa_plus_3yr": 95,
-   "war_pa_plus_3yr_pct": 21,
+   "war_pa_plus_3yr": 94,
+   "war_pa_plus_3yr_pct": 19,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -28406,7 +28442,7 @@
    "war_pa_plus_adj_raw": 101.4,
    "war_pa_plus_pct": 56,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 34,
+   "war_pa_plus_3yr_pct": 35,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -28456,8 +28492,8 @@
    "war_pa_plus_adj": 117,
    "war_pa_plus_adj_raw": 117.0,
    "war_pa_plus_pct": 94,
-   "war_pa_plus_3yr": 111,
-   "war_pa_plus_3yr_pct": 94,
+   "war_pa_plus_3yr": 112,
+   "war_pa_plus_3yr_pct": 95,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -28507,8 +28543,8 @@
    "war_pa_plus_adj": 95,
    "war_pa_plus_adj_raw": 95.2,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 90,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 89,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -28558,8 +28594,8 @@
    "war_pa_plus_adj": 93,
    "war_pa_plus_adj_raw": 92.6,
    "war_pa_plus_pct": 23,
-   "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 34,
+   "war_pa_plus_3yr": 97,
+   "war_pa_plus_3yr_pct": 31,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -28609,8 +28645,8 @@
    "war_pa_plus_adj": 87,
    "war_pa_plus_adj_raw": 87.3,
    "war_pa_plus_pct": 4,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 26,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 27,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -28660,8 +28696,8 @@
    "war_pa_plus_adj": 79,
    "war_pa_plus_adj_raw": 79.5,
    "war_pa_plus_pct": 1,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 31,
+   "war_pa_plus_3yr": 87,
+   "war_pa_plus_3yr_pct": 5,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -28711,8 +28747,8 @@
    "war_pa_plus_adj": 90,
    "war_pa_plus_adj_raw": 89.9,
    "war_pa_plus_pct": 23,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 26,
+   "war_pa_plus_3yr": 96,
+   "war_pa_plus_3yr_pct": 24,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -28813,8 +28849,8 @@
    "war_pa_plus_adj": 87,
    "war_pa_plus_adj_raw": 86.6,
    "war_pa_plus_pct": 16,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 60,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 56,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -28865,7 +28901,7 @@
    "war_pa_plus_adj_raw": 82.7,
    "war_pa_plus_pct": 6,
    "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 35,
+   "war_pa_plus_3yr_pct": 36,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -28916,7 +28952,7 @@
    "war_pa_plus_adj_raw": 97.3,
    "war_pa_plus_pct": 42,
    "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 70,
+   "war_pa_plus_3yr_pct": 69,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -28967,7 +29003,7 @@
    "war_pa_plus_adj_raw": 92.3,
    "war_pa_plus_pct": 14,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 39,
+   "war_pa_plus_3yr_pct": 41,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -29057,8 +29093,8 @@
    "war_pa_plus_adj": 96,
    "war_pa_plus_adj_raw": 96.0,
    "war_pa_plus_pct": 34,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 67,
+   "war_pa_plus_3yr": 106,
+   "war_pa_plus_3yr_pct": 75,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -29108,8 +29144,8 @@
    "war_pa_plus_adj": 91,
    "war_pa_plus_adj_raw": 90.6,
    "war_pa_plus_pct": 18,
-   "war_pa_plus_3yr": 97,
-   "war_pa_plus_3yr_pct": 26,
+   "war_pa_plus_3yr": 95,
+   "war_pa_plus_3yr_pct": 22,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -29159,8 +29195,8 @@
    "war_pa_plus_adj": 102,
    "war_pa_plus_adj_raw": 101.9,
    "war_pa_plus_pct": 56,
-   "war_pa_plus_3yr": 110,
-   "war_pa_plus_3yr_pct": 90,
+   "war_pa_plus_3yr": 109,
+   "war_pa_plus_3yr_pct": 88,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -29210,8 +29246,8 @@
    "war_pa_plus_adj": 88,
    "war_pa_plus_adj_raw": 88.4,
    "war_pa_plus_pct": 16,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 62,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 53,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -29291,7 +29327,7 @@
    "war_pa_plus_adj_raw": 97.6,
    "war_pa_plus_pct": 38,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 41,
+   "war_pa_plus_3yr_pct": 39,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -29342,7 +29378,7 @@
    "war_pa_plus_adj_raw": 77.7,
    "war_pa_plus_pct": 1,
    "war_pa_plus_3yr": 90,
-   "war_pa_plus_3yr_pct": 8,
+   "war_pa_plus_3yr_pct": 10,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -29488,8 +29524,8 @@
    "war_pa_plus_adj": 88,
    "war_pa_plus_adj_raw": 87.5,
    "war_pa_plus_pct": 20,
-   "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 44,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 49,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -29540,7 +29576,7 @@
    "war_pa_plus_adj_raw": 94.8,
    "war_pa_plus_pct": 30,
    "war_pa_plus_3yr": 106,
-   "war_pa_plus_3yr_pct": 78,
+   "war_pa_plus_3yr_pct": 77,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -29590,8 +29626,8 @@
    "war_pa_plus_adj": 87,
    "war_pa_plus_adj_raw": 87.3,
    "war_pa_plus_pct": 2,
-   "war_pa_plus_3yr": 94,
-   "war_pa_plus_3yr_pct": 16,
+   "war_pa_plus_3yr": 92,
+   "war_pa_plus_3yr_pct": 14,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -29641,8 +29677,8 @@
    "war_pa_plus_adj": 91,
    "war_pa_plus_adj_raw": 91.1,
    "war_pa_plus_pct": 18,
-   "war_pa_plus_3yr": 103,
-   "war_pa_plus_3yr_pct": 59,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 36,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -29724,8 +29760,8 @@
    "war_pa_plus_adj": 95,
    "war_pa_plus_adj_raw": 95.1,
    "war_pa_plus_pct": 38,
-   "war_pa_plus_3yr": 108,
-   "war_pa_plus_3yr_pct": 84,
+   "war_pa_plus_3yr": 107,
+   "war_pa_plus_3yr_pct": 79,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -29808,7 +29844,7 @@
    "war_pa_plus_adj_raw": 87.9,
    "war_pa_plus_pct": 9,
    "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 23,
+   "war_pa_plus_3yr_pct": 24,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -29890,8 +29926,8 @@
    "war_pa_plus_adj": 103,
    "war_pa_plus_adj_raw": 103.3,
    "war_pa_plus_pct": 60,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 71,
+   "war_pa_plus_3yr": 105,
+   "war_pa_plus_3yr_pct": 70,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -29941,8 +29977,8 @@
    "war_pa_plus_adj": 93,
    "war_pa_plus_adj_raw": 92.5,
    "war_pa_plus_pct": 20,
-   "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 24,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 33,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -29992,8 +30028,8 @@
    "war_pa_plus_adj": 83,
    "war_pa_plus_adj_raw": 83.3,
    "war_pa_plus_pct": 8,
-   "war_pa_plus_3yr": 98,
-   "war_pa_plus_3yr_pct": 36,
+   "war_pa_plus_3yr": 99,
+   "war_pa_plus_3yr_pct": 38,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -30043,8 +30079,8 @@
    "war_pa_plus_adj": 98,
    "war_pa_plus_adj_raw": 98.5,
    "war_pa_plus_pct": 47,
-   "war_pa_plus_3yr": 104,
-   "war_pa_plus_3yr_pct": 67,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 51,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -30122,7 +30158,10 @@
    "war_pa_plus_raw": 79.7,
    "war_pa_plus_adj": 87,
    "war_pa_plus_adj_raw": 87.4,
-   "war_pa_plus_pct": 2
+   "war_pa_plus_pct": 2,
+   "war_pa_plus_3yr": 80,
+   "war_pa_plus_3yr_pct": 1,
+   "war_pa_plus_3yr_tag": "provisional"
   },
   {
    "key": "695490",
@@ -30168,8 +30207,8 @@
    "war_pa_plus_adj": 86,
    "war_pa_plus_adj_raw": 86.1,
    "war_pa_plus_pct": 3,
-   "war_pa_plus_3yr": 88,
-   "war_pa_plus_3yr_pct": 5,
+   "war_pa_plus_3yr": 84,
+   "war_pa_plus_3yr_pct": 3,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -30219,8 +30258,8 @@
    "war_pa_plus_adj": 84,
    "war_pa_plus_adj_raw": 83.8,
    "war_pa_plus_pct": 3,
-   "war_pa_plus_3yr": 94,
-   "war_pa_plus_3yr_pct": 17,
+   "war_pa_plus_3yr": 93,
+   "war_pa_plus_3yr_pct": 16,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -30271,7 +30310,7 @@
    "war_pa_plus_adj_raw": 95.5,
    "war_pa_plus_pct": 20,
    "war_pa_plus_3yr": 96,
-   "war_pa_plus_3yr_pct": 24,
+   "war_pa_plus_3yr_pct": 25,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -30322,7 +30361,7 @@
    "war_pa_plus_adj_raw": 86.5,
    "war_pa_plus_pct": 8,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 37,
+   "war_pa_plus_3yr_pct": 38,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -30373,7 +30412,7 @@
    "war_pa_plus_adj_raw": 83.6,
    "war_pa_plus_pct": 9,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 38,
+   "war_pa_plus_3yr_pct": 40,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -30423,8 +30462,8 @@
    "war_pa_plus_adj": 86,
    "war_pa_plus_adj_raw": 85.8,
    "war_pa_plus_pct": 3,
-   "war_pa_plus_3yr": 102,
-   "war_pa_plus_3yr_pct": 55,
+   "war_pa_plus_3yr": 101,
+   "war_pa_plus_3yr_pct": 51,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -30464,7 +30503,7 @@
    "pull_pct": 0.434,
    "war": -0.7,
    "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 42,
+   "war_pa_plus_3yr_pct": 43,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -30515,7 +30554,7 @@
    "war_pa_plus_adj_raw": 78.2,
    "war_pa_plus_pct": 0,
    "war_pa_plus_3yr": 100,
-   "war_pa_plus_3yr_pct": 43,
+   "war_pa_plus_3yr_pct": 44,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -30566,7 +30605,7 @@
    "war_pa_plus_adj_raw": 84.1,
    "war_pa_plus_pct": 9,
    "war_pa_plus_3yr": 101,
-   "war_pa_plus_3yr_pct": 52,
+   "war_pa_plus_3yr_pct": 50,
    "war_pa_plus_3yr_tag": "established"
   },
   {
@@ -30667,8 +30706,8 @@
    "war_pa_plus_adj": 88,
    "war_pa_plus_adj_raw": 88.0,
    "war_pa_plus_pct": 11,
-   "war_pa_plus_3yr": 105,
-   "war_pa_plus_3yr_pct": 73,
+   "war_pa_plus_3yr": 102,
+   "war_pa_plus_3yr_pct": 58,
    "war_pa_plus_3yr_tag": "provisional"
   },
   {
@@ -30718,8 +30757,8 @@
    "war_pa_plus_adj": 85,
    "war_pa_plus_adj_raw": 85.5,
    "war_pa_plus_pct": 9,
-   "war_pa_plus_3yr": 99,
-   "war_pa_plus_3yr_pct": 40,
+   "war_pa_plus_3yr": 98,
+   "war_pa_plus_3yr_pct": 36,
    "war_pa_plus_3yr_tag": "established"
   }
  ],
@@ -31298,7 +31337,7 @@
    "team_pa": 6439,
    "n_above_avg": 10,
    "heart_hem": 123,
-   "n_off_roster_dropped": 6,
+   "n_off_roster_dropped": 8,
    "lineup": [
     {
      "tier": "Above-avg",
@@ -31315,6 +31354,14 @@
      "bats": "L",
      "hem_plus": 123,
      "pa": 561
+    },
+    {
+     "tier": "Above-avg",
+     "key": "800543",
+     "name": "Josue De Paula",
+     "bats": "L",
+     "hem_plus": 118,
+     "pa": 42
     },
     {
      "tier": "Above-avg",
@@ -31339,14 +31386,6 @@
      "bats": "L",
      "hem_plus": 112,
      "pa": 657
-    },
-    {
-     "tier": "Average",
-     "key": "687221",
-     "name": "Dalton Rushing",
-     "bats": "L",
-     "hem_plus": 111,
-     "pa": 253
     },
     {
      "tier": "Average",
@@ -31390,14 +31429,6 @@
     },
     {
      "tier": "Average",
-     "key": "669743",
-     "name": "Alex Call",
-     "bats": "R",
-     "hem_plus": 93,
-     "pa": 195
-    },
-    {
-     "tier": "Average",
      "key": "808975",
      "name": "Hyeseong Kim",
      "bats": "L",
@@ -31419,14 +31450,6 @@
      "bats": "R",
      "hem_plus": 85,
      "pa": 252
-    },
-    {
-     "tier": "Below-avg",
-     "key": "672613",
-     "name": "Eliezer Alfonzo",
-     "bats": "S",
-     "hem_plus": 82,
-     "pa": 28
     }
    ],
    "orders": {
@@ -31635,26 +31658,6 @@
    },
    "bench": [
     {
-     "key": "687221",
-     "name": "Dalton Rushing",
-     "bats": "L",
-     "hem_plus": 111,
-     "pa": 253,
-     "mlbam": 687221,
-     "pos": [
-      "C",
-      "1B"
-     ],
-     "hem_plus_split": {
-      "L": 94,
-      "R": 117
-     },
-     "split_pa": {
-      "L": 66,
-      "R": 187
-     }
-    },
-    {
      "key": "500743",
      "name": "Miguel Rojas",
      "bats": "R",
@@ -31692,27 +31695,6 @@
      "split_pa": {
       "L": 42,
       "R": 209
-     }
-    },
-    {
-     "key": "669743",
-     "name": "Alex Call",
-     "bats": "R",
-     "hem_plus": 93,
-     "pa": 195,
-     "mlbam": 669743,
-     "pos": [
-      "LF",
-      "RF",
-      "CF"
-     ],
-     "hem_plus_split": {
-      "L": 102,
-      "R": 88
-     },
-     "split_pa": {
-      "L": 76,
-      "R": 119
      }
     },
     {
@@ -31755,6 +31737,25 @@
      "split_pa": {
       "L": 55,
       "R": 41
+     }
+    },
+    {
+     "key": "800543",
+     "name": "Josue De Paula",
+     "bats": "L",
+     "hem_plus": 118,
+     "pa": 42,
+     "mlbam": 800543,
+     "pos": [
+      "DH"
+     ],
+     "hem_plus_split": {
+      "L": 101,
+      "R": 125
+     },
+     "split_pa": {
+      "L": 13,
+      "R": 29
      }
     }
    ],
@@ -31822,7 +31823,7 @@
     "vl": [],
     "vr": [],
     "n_withheld": {
-     "vl": 1,
+     "vl": 0,
      "vr": 0
     }
    },
@@ -31839,7 +31840,7 @@
    "team_pa": 6060,
    "n_above_avg": 9,
    "heart_hem": 125,
-   "n_off_roster_dropped": 4,
+   "n_off_roster_dropped": 7,
    "lineup": [
     {
      "tier": "Elite",
@@ -31874,6 +31875,14 @@
      "pa": 680
     },
     {
+     "tier": "Above-avg",
+     "key": "683734",
+     "name": "Andrew Vaughn",
+     "bats": "R",
+     "hem_plus": 112,
+     "pa": 331
+    },
+    {
      "tier": "Average",
      "key": "661388",
      "name": "William Contreras",
@@ -31888,14 +31897,6 @@
      "bats": "L",
      "hem_plus": 103,
      "pa": 531
-    },
-    {
-     "tier": "Average",
-     "key": "691620",
-     "name": "Jeferson Quero",
-     "bats": "R",
-     "hem_plus": 101,
-     "pa": 2
     },
     {
      "tier": "Average",
@@ -31915,22 +31916,6 @@
     },
     {
      "tier": "Average",
-     "key": "663604",
-     "name": "Brandon Lockridge",
-     "bats": "R",
-     "hem_plus": 92,
-     "pa": 113
-    },
-    {
-     "tier": "Average",
-     "key": "672012",
-     "name": "Tyler Black",
-     "bats": "L",
-     "hem_plus": 91,
-     "pa": 28
-    },
-    {
-     "tier": "Average",
      "key": "592885",
      "name": "Christian Yelich",
      "bats": "L",
@@ -31944,14 +31929,6 @@
      "bats": "L",
      "hem_plus": 84,
      "pa": 387
-    },
-    {
-     "tier": "Below-avg",
-     "key": "666310",
-     "name": "Bo Naylor",
-     "bats": "L",
-     "hem_plus": 83,
-     "pa": 98
     },
     {
      "tier": "Below-avg",
@@ -32176,6 +32153,26 @@
    },
    "bench": [
     {
+     "key": "683734",
+     "name": "Andrew Vaughn",
+     "bats": "R",
+     "hem_plus": 112,
+     "pa": 331,
+     "mlbam": 683734,
+     "pos": [
+      "1B",
+      "3B"
+     ],
+     "hem_plus_split": {
+      "L": 121,
+      "R": 107
+     },
+     "split_pa": {
+      "L": 133,
+      "R": 198
+     }
+    },
+    {
      "key": "596142",
      "name": "Gary S\u00e1nchez",
      "bats": "R",
@@ -32232,64 +32229,6 @@
      "split_pa": {
       "L": 72,
       "R": 140
-     }
-    },
-    {
-     "key": "663604",
-     "name": "Brandon Lockridge",
-     "bats": "R",
-     "hem_plus": 92,
-     "pa": 113,
-     "mlbam": 663604,
-     "pos": [
-      "LF",
-      "CF"
-     ],
-     "hem_plus_split": {
-      "L": 98,
-      "R": 87
-     },
-     "split_pa": {
-      "L": 48,
-      "R": 65
-     }
-    },
-    {
-     "key": "666310",
-     "name": "Bo Naylor",
-     "bats": "L",
-     "hem_plus": 83,
-     "pa": 98,
-     "mlbam": 666310,
-     "pos": [
-      "C"
-     ],
-     "hem_plus_split": {
-      "L": 67,
-      "R": 86
-     },
-     "split_pa": {
-      "L": 14,
-      "R": 84
-     }
-    },
-    {
-     "key": "672012",
-     "name": "Tyler Black",
-     "bats": "L",
-     "hem_plus": 91,
-     "pa": 28,
-     "mlbam": 672012,
-     "pos": [
-      "DH"
-     ],
-     "hem_plus_split": {
-      "L": 71,
-      "R": 92
-     },
-     "split_pa": {
-      "L": 1,
-      "R": 27
      }
     }
    ],
@@ -32370,6 +32309,18 @@
       "delta": 52
      },
      {
+      "starter_key": "592885",
+      "bench_key": "683734",
+      "pos": "DH",
+      "starter_split": 74,
+      "starter_split_pa": 130,
+      "starter_bats": "L",
+      "bench_split": 121,
+      "bench_split_pa": 133,
+      "bench_bats": "R",
+      "delta": 47
+     },
+     {
       "starter_key": "641343",
       "bench_key": "596142",
       "pos": "1B",
@@ -32384,7 +32335,7 @@
     ],
     "vr": [],
     "n_withheld": {
-     "vl": 4,
+     "vl": 3,
      "vr": 0
     }
    },
@@ -32980,7 +32931,7 @@
    "team_pa": 6716,
    "n_above_avg": 8,
    "heart_hem": 128,
-   "n_off_roster_dropped": 5,
+   "n_off_roster_dropped": 6,
    "lineup": [
     {
      "tier": "Elite",
@@ -33053,14 +33004,6 @@
      "bats": "L",
      "hem_plus": 95,
      "pa": 388
-    },
-    {
-     "tier": "Average",
-     "key": "642708",
-     "name": "Amed Rosario",
-     "bats": "R",
-     "hem_plus": 94,
-     "pa": 244
     },
     {
      "tier": "Average",
@@ -33377,26 +33320,6 @@
      }
     },
     {
-     "key": "642708",
-     "name": "Amed Rosario",
-     "bats": "R",
-     "hem_plus": 94,
-     "pa": 244,
-     "mlbam": 642708,
-     "pos": [
-      "3B",
-      "2B"
-     ],
-     "hem_plus_split": {
-      "L": 98,
-      "R": 88
-     },
-     "split_pa": {
-      "L": 160,
-      "R": 84
-     }
-    },
-    {
      "key": "806146",
      "name": "George Lombard Jr.",
      "bats": "R",
@@ -33432,6 +33355,25 @@
      "split_pa": {
       "L": 30,
       "R": 66
+     }
+    },
+    {
+     "key": "645305",
+     "name": "Ali S\u00e1nchez",
+     "bats": "R",
+     "hem_plus": 82,
+     "pa": 92,
+     "mlbam": 645305,
+     "pos": [
+      "C"
+     ],
+     "hem_plus_split": {
+      "L": 88,
+      "R": 76
+     },
+     "split_pa": {
+      "L": 43,
+      "R": 49
      }
     }
    ],
@@ -33502,18 +33444,6 @@
     "vl": [
      {
       "starter_key": "665862",
-      "bench_key": "642708",
-      "pos": "2B",
-      "starter_split": 84,
-      "starter_split_pa": 160,
-      "starter_bats": "L",
-      "bench_split": 98,
-      "bench_split_pa": 160,
-      "bench_bats": "R",
-      "delta": 14
-     },
-     {
-      "starter_key": "665862",
       "bench_key": "683011",
       "pos": "2B",
       "starter_split": 84,
@@ -33540,7 +33470,7 @@
      }
     ],
     "n_withheld": {
-     "vl": 0,
+     "vl": 1,
      "vr": 0
     }
    },
@@ -34151,7 +34081,7 @@
    "team_pa": 6600,
    "n_above_avg": 8,
    "heart_hem": 124,
-   "n_off_roster_dropped": 4,
+   "n_off_roster_dropped": 7,
    "lineup": [
     {
      "tier": "Elite",
@@ -34195,14 +34125,6 @@
     },
     {
      "tier": "Average",
-     "key": "700652",
-     "name": "Kenny Piper",
-     "bats": "R",
-     "hem_plus": 106,
-     "pa": 11
-    },
-    {
-     "tier": "Average",
      "key": "668723",
      "name": "Ryan Vilade",
      "bats": "R",
@@ -34216,14 +34138,6 @@
      "bats": "L",
      "hem_plus": 100,
      "pa": 399
-    },
-    {
-     "tier": "Average",
-     "key": "663611",
-     "name": "Nick Madrigal",
-     "bats": "R",
-     "hem_plus": 97,
-     "pa": 63
     },
     {
      "tier": "Below-avg",
@@ -34256,14 +34170,6 @@
      "bats": "R",
      "hem_plus": 84,
      "pa": 323
-    },
-    {
-     "tier": "Below-avg",
-     "key": "700246",
-     "name": "Carson Williams",
-     "bats": "R",
-     "hem_plus": 84,
-     "pa": 40
     },
     {
      "tier": "Below-avg",
@@ -34595,26 +34501,6 @@
       "L": 89,
       "R": 132
      }
-    },
-    {
-     "key": "663611",
-     "name": "Nick Madrigal",
-     "bats": "R",
-     "hem_plus": 97,
-     "pa": 63,
-     "mlbam": 663611,
-     "pos": [
-      "2B",
-      "3B"
-     ],
-     "hem_plus_split": {
-      "L": 104,
-      "R": 93
-     },
-     "split_pa": {
-      "L": 22,
-      "R": 41
-     }
     }
    ],
    "slot_meta": {
@@ -34729,7 +34615,7 @@
      }
     ],
     "n_withheld": {
-     "vl": 3,
+     "vl": 2,
      "vr": 0
     }
    },
@@ -35249,7 +35135,7 @@
    "team_pa": 5984,
    "n_above_avg": 7,
    "heart_hem": 120,
-   "n_off_roster_dropped": 8,
+   "n_off_roster_dropped": 10,
    "lineup": [
     {
      "tier": "Above-avg",
@@ -35293,14 +35179,6 @@
     },
     {
      "tier": "Average",
-     "key": "663897",
-     "name": "Luke Williams",
-     "bats": "R",
-     "hem_plus": 102,
-     "pa": 1
-    },
-    {
-     "tier": "Average",
      "key": "682989",
      "name": "Victor Mederos",
      "bats": "R",
@@ -35309,11 +35187,11 @@
     },
     {
      "tier": "Average",
-     "key": "642086",
-     "name": "Dominic Smith",
-     "bats": "L",
+     "key": "657041",
+     "name": "Lane Thomas",
+     "bats": "R",
      "hem_plus": 98,
-     "pa": 300
+     "pa": 374
     },
     {
      "tier": "Average",
@@ -35322,14 +35200,6 @@
      "bats": "R",
      "hem_plus": 98,
      "pa": 47
-    },
-    {
-     "tier": "Average",
-     "key": "680577",
-     "name": "DaShawn Keirsey Jr.",
-     "bats": "L",
-     "hem_plus": 96,
-     "pa": 5
     },
     {
      "tier": "Average",
@@ -35428,28 +35298,17 @@
      },
      {
       "slot": 5,
-      "key": "642086",
-      "name": "Dominic Smith",
-      "bats": "L",
+      "key": "657041",
+      "name": "Lane Thomas",
+      "bats": "R",
       "hem_plus": 98,
-      "pa": 300,
-      "platoon_adv": true,
-      "hem_plus_split": 100,
-      "split_pa": 261
+      "pa": 374,
+      "platoon_adv": false,
+      "hem_plus_split": 92,
+      "split_pa": 209
      },
      {
       "slot": 6,
-      "key": "645277",
-      "name": "Ozzie Albies",
-      "bats": "S",
-      "hem_plus": 89,
-      "pa": 683,
-      "platoon_adv": true,
-      "hem_plus_split": 91,
-      "split_pa": 422
-     },
-     {
-      "slot": 7,
       "key": "573262",
       "name": "Mike Yastrzemski",
       "bats": "L",
@@ -35458,6 +35317,17 @@
       "platoon_adv": true,
       "hem_plus_split": 96,
       "split_pa": 368
+     },
+     {
+      "slot": 7,
+      "key": "645277",
+      "name": "Ozzie Albies",
+      "bats": "S",
+      "hem_plus": 89,
+      "pa": 683,
+      "platoon_adv": true,
+      "hem_plus_split": 91,
+      "split_pa": 422
      },
      {
       "slot": 8,
@@ -35529,28 +35399,17 @@
      },
      {
       "slot": 5,
-      "key": "643289",
-      "name": "Mauricio Dub\u00f3n",
+      "key": "657041",
+      "name": "Lane Thomas",
       "bats": "R",
-      "hem_plus": 92,
-      "pa": 619,
+      "hem_plus": 98,
+      "pa": 374,
       "platoon_adv": true,
-      "hem_plus_split": 98,
-      "split_pa": 210
+      "hem_plus_split": 106,
+      "split_pa": 165
      },
      {
       "slot": 6,
-      "key": "642086",
-      "name": "Dominic Smith",
-      "bats": "L",
-      "hem_plus": 98,
-      "pa": 300,
-      "platoon_adv": false,
-      "hem_plus_split": 78,
-      "split_pa": 39
-     },
-     {
-      "slot": 7,
       "key": "645277",
       "name": "Ozzie Albies",
       "bats": "S",
@@ -35561,18 +35420,18 @@
       "split_pa": 261
      },
      {
-      "slot": 8,
-      "key": "663586",
-      "name": "Austin Riley",
+      "slot": 7,
+      "key": "643289",
+      "name": "Mauricio Dub\u00f3n",
       "bats": "R",
-      "hem_plus": 86,
-      "pa": 630,
+      "hem_plus": 92,
+      "pa": 619,
       "platoon_adv": true,
-      "hem_plus_split": 94,
-      "split_pa": 184
+      "hem_plus_split": 98,
+      "split_pa": 210
      },
      {
-      "slot": 9,
+      "slot": 8,
       "key": "573262",
       "name": "Mike Yastrzemski",
       "bats": "L",
@@ -35581,6 +35440,17 @@
       "platoon_adv": false,
       "hem_plus_split": 75,
       "split_pa": 40
+     },
+     {
+      "slot": 9,
+      "key": "663586",
+      "name": "Austin Riley",
+      "bats": "R",
+      "hem_plus": 86,
+      "pa": 630,
+      "platoon_adv": true,
+      "hem_plus_split": 94,
+      "split_pa": 184
      }
     ]
    },
@@ -35660,44 +35530,6 @@
       "L": 2,
       "R": 9
      }
-    },
-    {
-     "key": "680577",
-     "name": "DaShawn Keirsey Jr.",
-     "bats": "L",
-     "hem_plus": 96,
-     "pa": 5,
-     "mlbam": 680577,
-     "pos": [
-      "DH"
-     ],
-     "hem_plus_split": {
-      "L": null,
-      "R": 96
-     },
-     "split_pa": {
-      "L": null,
-      "R": 5
-     }
-    },
-    {
-     "key": "663897",
-     "name": "Luke Williams",
-     "bats": "R",
-     "hem_plus": 102,
-     "pa": 1,
-     "mlbam": 663897,
-     "pos": [
-      "DH"
-     ],
-     "hem_plus_split": {
-      "L": 102,
-      "R": null
-     },
-     "split_pa": {
-      "L": 1,
-      "R": null
-     }
     }
    ],
    "slot_meta": {
@@ -35714,12 +35546,6 @@
       "1B"
      ]
     },
-    "642086": {
-     "mlbam": 642086,
-     "pos": [
-      "DH"
-     ]
-    },
     "643289": {
      "mlbam": 643289,
      "pos": [
@@ -35734,6 +35560,14 @@
      "mlbam": 645277,
      "pos": [
       "2B"
+     ]
+    },
+    "657041": {
+     "mlbam": 657041,
+     "pos": [
+      "CF",
+      "LF",
+      "RF"
      ]
     },
     "660670": {
@@ -35765,22 +35599,11 @@
     "vl": [],
     "vr": [],
     "n_withheld": {
-     "vl": 3,
+     "vl": 0,
      "vr": 0
     }
    },
-   "regulars_out": [
-    {
-     "key": "657041",
-     "mlbam": 657041,
-     "name": "Lane Thomas",
-     "bats": "R",
-     "hem_plus": 98,
-     "pa": 374,
-     "status_code": "40M",
-     "status_label": "Forty Man"
-    }
-   ],
+   "regulars_out": [],
    "team_war": 20.6,
    "team_war_n": 24,
    "platoon_applied": true
@@ -38038,7 +37861,7 @@
    "team_pa": 5900,
    "n_above_avg": 7,
    "heart_hem": 119,
-   "n_off_roster_dropped": 9,
+   "n_off_roster_dropped": 8,
    "lineup": [
     {
      "tier": "Above-avg",
@@ -38119,6 +37942,14 @@
      "bats": "S",
      "hem_plus": 87,
      "pa": 25
+    },
+    {
+     "tier": "Below-avg",
+     "key": "669911",
+     "name": "Michael Toglia",
+     "bats": "S",
+     "hem_plus": 85,
+     "pa": 28
     },
     {
      "tier": "Below-avg",
@@ -38471,22 +38302,22 @@
      }
     },
     {
-     "key": "665828",
-     "name": "Oswaldo Cabrera",
+     "key": "669911",
+     "name": "Michael Toglia",
      "bats": "S",
-     "hem_plus": 87,
-     "pa": 25,
-     "mlbam": 665828,
+     "hem_plus": 85,
+     "pa": 28,
+     "mlbam": 669911,
      "pos": [
-      "DH"
+      "1B"
      ],
      "hem_plus_split": {
-      "L": 82,
-      "R": 90
+      "L": 79,
+      "R": 86
      },
      "split_pa": {
-      "L": 7,
-      "R": 18
+      "L": 6,
+      "R": 22
      }
     }
    ],
@@ -39189,7 +39020,7 @@
    "team_pa": 6413,
    "n_above_avg": 7,
    "heart_hem": 118,
-   "n_off_roster_dropped": 11,
+   "n_off_roster_dropped": 10,
    "lineup": [
     {
      "tier": "Above-avg",
@@ -39262,6 +39093,14 @@
      "bats": "L",
      "hem_plus": 97,
      "pa": 40
+    },
+    {
+     "tier": "Average",
+     "key": "681190",
+     "name": "Randy V\u00e1squez",
+     "bats": "R",
+     "hem_plus": 97,
+     "pa": 1
     },
     {
      "tier": "Average",
@@ -44827,7 +44666,7 @@
    "team_pa": 6732,
    "n_above_avg": 7,
    "heart_hem": 108,
-   "n_off_roster_dropped": 1,
+   "n_off_roster_dropped": 7,
    "lineup": [
     {
      "tier": "Above-avg",
@@ -44871,35 +44710,11 @@
     },
     {
      "tier": "Average",
-     "key": "656555",
-     "name": "Rhys Hoskins",
-     "bats": "R",
-     "hem_plus": 103,
-     "pa": 317
-    },
-    {
-     "tier": "Average",
-     "key": "700932",
-     "name": "Kyle Manzardo",
-     "bats": "L",
-     "hem_plus": 100,
-     "pa": 356
-    },
-    {
-     "tier": "Average",
      "key": "595978",
      "name": "Austin Hedges",
      "bats": "R",
      "hem_plus": 98,
      "pa": 247
-    },
-    {
-     "tier": "Average",
-     "key": "692216",
-     "name": "CJ Kayfus",
-     "bats": "L",
-     "hem_plus": 98,
-     "pa": 25
     },
     {
      "tier": "Average",
@@ -44924,14 +44739,6 @@
      "bats": "S",
      "hem_plus": 93,
      "pa": 592
-    },
-    {
-     "tier": "Average",
-     "key": "694876",
-     "name": "Cooper Ingle",
-     "bats": "L",
-     "hem_plus": 92,
-     "pa": 24
     },
     {
      "tier": "Below-avg",
@@ -44972,22 +44779,6 @@
      "bats": "L",
      "hem_plus": 81,
      "pa": 195
-    },
-    {
-     "tier": "Below-avg",
-     "key": "663368",
-     "name": "Blake Perkins",
-     "bats": "S",
-     "hem_plus": 79,
-     "pa": 101
-    },
-    {
-     "tier": "Below-avg",
-     "key": "696135",
-     "name": "Kahlil Watson",
-     "bats": "L",
-     "hem_plus": 78,
-     "pa": 91
     }
    ],
    "orders": {
@@ -45049,17 +44840,6 @@
      },
      {
       "slot": 6,
-      "key": "700932",
-      "name": "Kyle Manzardo",
-      "bats": "L",
-      "hem_plus": 100,
-      "pa": 356,
-      "platoon_adv": true,
-      "hem_plus_split": 104,
-      "split_pa": 283
-     },
-     {
-      "slot": 7,
       "key": "677587",
       "name": "Brayan Rocchio",
       "bats": "S",
@@ -45070,7 +44850,7 @@
       "split_pa": 393
      },
      {
-      "slot": 8,
+      "slot": 7,
       "key": "608070",
       "name": "Jos\u00e9 Ram\u00edrez",
       "bats": "S",
@@ -45081,7 +44861,7 @@
       "split_pa": 380
      },
      {
-      "slot": 9,
+      "slot": 8,
       "key": "666176",
       "name": "Jo Adell",
       "bats": "R",
@@ -45090,6 +44870,17 @@
       "platoon_adv": false,
       "hem_plus_split": 87,
       "split_pa": 469
+     },
+     {
+      "slot": 9,
+      "key": "672275",
+      "name": "Patrick Bailey",
+      "bats": "S",
+      "hem_plus": 84,
+      "pa": 345,
+      "platoon_adv": true,
+      "hem_plus_split": 86,
+      "split_pa": 287
      }
     ],
     "vl": [
@@ -45172,17 +44963,6 @@
      },
      {
       "slot": 8,
-      "key": "700932",
-      "name": "Kyle Manzardo",
-      "bats": "L",
-      "hem_plus": 100,
-      "pa": 356,
-      "platoon_adv": false,
-      "hem_plus_split": 83,
-      "split_pa": 73
-     },
-     {
-      "slot": 9,
       "key": "608070",
       "name": "Jos\u00e9 Ram\u00edrez",
       "bats": "S",
@@ -45191,48 +44971,21 @@
       "platoon_adv": true,
       "hem_plus_split": 87,
       "split_pa": 164
+     },
+     {
+      "slot": 9,
+      "key": "672275",
+      "name": "Patrick Bailey",
+      "bats": "S",
+      "hem_plus": 84,
+      "pa": 345,
+      "platoon_adv": true,
+      "hem_plus_split": 78,
+      "split_pa": 58
      }
     ]
    },
    "bench": [
-    {
-     "key": "672275",
-     "name": "Patrick Bailey",
-     "bats": "S",
-     "hem_plus": 84,
-     "pa": 345,
-     "mlbam": 672275,
-     "pos": [
-      "C"
-     ],
-     "hem_plus_split": {
-      "L": 78,
-      "R": 86
-     },
-     "split_pa": {
-      "L": 58,
-      "R": 287
-     }
-    },
-    {
-     "key": "656555",
-     "name": "Rhys Hoskins",
-     "bats": "R",
-     "hem_plus": 103,
-     "pa": 317,
-     "mlbam": 656555,
-     "pos": [
-      "1B"
-     ],
-     "hem_plus_split": {
-      "L": 110,
-      "R": 99
-     },
-     "split_pa": {
-      "L": 125,
-      "R": 192
-     }
-    },
     {
      "key": "682177",
      "name": "Daniel Schneemann",
@@ -45314,6 +45067,27 @@
       "L": 48,
       "R": 147
      }
+    },
+    {
+     "key": "694197",
+     "name": "Angel Genao",
+     "bats": "S",
+     "hem_plus": 84,
+     "pa": 139,
+     "mlbam": 694197,
+     "pos": [
+      "2B",
+      "3B",
+      "SS"
+     ],
+     "hem_plus_split": {
+      "L": 80,
+      "R": 87
+     },
+     "split_pa": {
+      "L": 44,
+      "R": 95
+     }
     }
    ],
    "slot_meta": {
@@ -45334,6 +45108,12 @@
      "pos": [
       "RF",
       "LF"
+     ]
+    },
+    "672275": {
+     "mlbam": 672275,
+     "pos": [
+      "C"
      ]
     },
     "677587": {
@@ -45363,12 +45143,6 @@
       "2B"
      ]
     },
-    "700932": {
-     "mlbam": 700932,
-     "pos": [
-      "1B"
-     ]
-    },
     "800050": {
      "mlbam": 800050,
      "pos": [
@@ -45393,11 +45167,22 @@
     ],
     "vr": [],
     "n_withheld": {
-     "vl": 4,
+     "vl": 1,
      "vr": 0
     }
    },
-   "regulars_out": [],
+   "regulars_out": [
+    {
+     "key": "700932",
+     "mlbam": 700932,
+     "name": "Kyle Manzardo",
+     "bats": "L",
+     "hem_plus": 100,
+     "pa": 356,
+     "status_code": "A",
+     "status_label": "Not active"
+    }
+   ],
    "team_war": 21.5,
    "team_war_n": 21,
    "platoon_applied": true

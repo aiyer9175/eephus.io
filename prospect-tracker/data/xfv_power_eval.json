@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-04T20:33:08Z",
+ "generated_at": "2026-10-03T21:12:54Z",
  "produced_by": "tools/efv_power_lab.py all",
  "registration": "docs/efv-2026-08-07b/POWER_GATE.md parts 0-4, written in full BEFORE this lab existed; part 5 is a placeholder filled after the run",
  "lane": "A1 (which bootstrap is the published claim about)",
@@ -7,10 +7,10 @@
  "seed": 20260807,
  "repro": {
   "artifact_hit_full_pool_km": {
-   "n": 1777,
-   "consensus": 0.2926,
-   "blend": 0.2762,
-   "delta": -0.0164,
+   "n": 1798,
+   "consensus": 0.2918,
+   "blend": 0.2974,
+   "delta": 0.0056,
    "source": "data/xfv_eval.json evals.full_pool_km.pooled_oos (baseline.spearman vs blend.spearman)"
   },
   "wave1_refit_floor": {
@@ -53,26 +53,26 @@
  },
  "dgp_design_match": {
   "real": {
-   "n": 1869,
-   "target_zero_share": 0.723,
-   "target_sd": 5.125,
-   "consensus_rho_oos": 0.2926,
+   "n": 1985,
+   "target_zero_share": 0.7,
+   "target_sd": 4.927,
+   "consensus_rho_oos": 0.2918,
    "folds": 11,
    "k_features": 14,
-   "boot_sd_shipped": 0.01989,
-   "boot_sd_test_only": 0.01234,
-   "shipped_over_test_sd_ratio": 1.612
+   "boot_sd_shipped": 0.01758,
+   "boot_sd_test_only": 0.0118,
+   "shipped_over_test_sd_ratio": 1.49
   },
   "synthetic": {
-   "n": 1869,
-   "target_zero_share": 0.714,
-   "target_sd": 5.399,
-   "consensus_rho_oos": 0.3229,
+   "n": 1985,
+   "target_zero_share": 0.715,
+   "target_sd": 5.313,
+   "consensus_rho_oos": 0.3063,
    "folds": 11,
    "k_features": 14,
-   "boot_sd_shipped": 0.0136,
-   "boot_sd_test_only": 0.00907,
-   "shipped_over_test_sd_ratio": 1.499
+   "boot_sd_shipped": 0.0122,
+   "boot_sd_test_only": 0.00718,
+   "shipped_over_test_sd_ratio": 1.7
   },
   "params": {
    "a": 0.7,
@@ -85,12 +85,12 @@
  },
  "variance_decomposition": {
   "B": 1200,
-  "sd_shipped_both_resampled": 0.01811,
-  "sd_test_rows_only": 0.01242,
-  "sd_train_refit_only": 0.01144,
-  "additive_reconstruction": 0.01688,
+  "sd_shipped_both_resampled": 0.01621,
+  "sd_test_rows_only": 0.01229,
+  "sd_train_refit_only": 0.00879,
+  "additive_reconstruction": 0.01511,
   "reconstruction_over_shipped": 0.932,
-  "refit_variance_share_of_shipped": 0.53,
+  "refit_variance_share_of_shipped": 0.425,
   "additivity_holds": true,
   "reading": "if the reconstruction ratio is far from 1 the '53% refit noise' framing is not a variance decomposition and must not be used"
  },
@@ -99,57 +99,57 @@
    "full.blend": {
     "pool": "full",
     "leg": "blend",
-    "n_scored": 1777,
-    "rho_full_spec": 0.27625,
-    "rho_spec_minus_fv": 0.28204,
-    "point": -0.00579,
+    "n_scored": 1798,
+    "rho_full_spec": 0.29744,
+    "rho_spec_minus_fv": 0.28361,
+    "point": 0.01383,
     "refit": {
      "B_used": 2000,
-     "point_delta": -0.00579,
-     "boot_mean_delta": 0.00583,
-     "sd": 0.01568,
-     "MDE95": 0.0258,
-     "mde95_twosided": 0.0307,
+     "point_delta": 0.01383,
+     "boot_mean_delta": 0.01772,
+     "sd": 0.01543,
+     "MDE95": 0.0254,
+     "mde95_twosided": 0.0302,
      "ci95": [
-      -0.02709,
-      0.03492
+      -0.01426,
+      0.04651
      ],
-     "p_gt_0": 0.6635,
-     "margin_over_floor": 0.225,
+     "p_gt_0": 0.883,
+     "margin_over_floor": 0.545,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
     },
     "cond_iid": {
      "B_used": 2000,
-     "point_delta": -0.00579,
-     "boot_mean_delta": -0.00554,
-     "sd": 0.01258,
-     "MDE95": 0.0207,
-     "mde95_twosided": 0.0247,
+     "point_delta": 0.01383,
+     "boot_mean_delta": 0.0141,
+     "sd": 0.01252,
+     "MDE95": 0.0206,
+     "mde95_twosided": 0.0245,
      "ci95": [
-      -0.03036,
-      0.01839
+      -0.01105,
+      0.03849
      ],
-     "p_gt_0": 0.331,
-     "margin_over_floor": 0.28,
+     "p_gt_0": 0.869,
+     "margin_over_floor": 0.671,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
     },
     "cond_strat": {
      "B_used": 2000,
-     "point_delta": -0.00579,
-     "boot_mean_delta": -0.00556,
-     "sd": 0.0127,
-     "MDE95": 0.0209,
-     "mde95_twosided": 0.0249,
+     "point_delta": 0.01383,
+     "boot_mean_delta": 0.01361,
+     "sd": 0.01253,
+     "MDE95": 0.0206,
+     "mde95_twosided": 0.0246,
      "ci95": [
-      -0.02953,
-      0.01962
+      -0.01209,
+      0.03699
      ],
-     "p_gt_0": 0.3235,
-     "margin_over_floor": 0.277,
+     "p_gt_0": 0.857,
+     "margin_over_floor": 0.671,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
@@ -158,116 +158,116 @@
    "full.ridge": {
     "pool": "full",
     "leg": "ridge",
-    "n_scored": 1777,
-    "rho_full_spec": 0.27346,
-    "rho_spec_minus_fv": 0.25286,
-    "point": 0.0206,
+    "n_scored": 1798,
+    "rho_full_spec": 0.29993,
+    "rho_spec_minus_fv": 0.25032,
+    "point": 0.04962,
     "refit": {
      "B_used": 2000,
-     "point_delta": 0.0206,
-     "boot_mean_delta": 0.03352,
-     "sd": 0.01925,
-     "MDE95": 0.0317,
-     "mde95_twosided": 0.0377,
+     "point_delta": 0.04962,
+     "boot_mean_delta": 0.05149,
+     "sd": 0.01931,
+     "MDE95": 0.0318,
+     "mde95_twosided": 0.0378,
      "ci95": [
-      -0.00669,
-      0.07105
+      0.01349,
+      0.08925
      ],
-     "p_gt_0": 0.9545,
-     "margin_over_floor": 0.651,
-     "resolvable": false,
-     "verdict": "NULL",
-     "detects": false
+     "p_gt_0": 0.9935,
+     "margin_over_floor": 1.562,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN",
+     "detects": true
     },
     "cond_iid": {
      "B_used": 2000,
-     "point_delta": 0.0206,
-     "boot_mean_delta": 0.02078,
-     "sd": 0.01589,
-     "MDE95": 0.0261,
-     "mde95_twosided": 0.0311,
+     "point_delta": 0.04962,
+     "boot_mean_delta": 0.04981,
+     "sd": 0.01635,
+     "MDE95": 0.0269,
+     "mde95_twosided": 0.0321,
      "ci95": [
-      -0.01124,
-      0.05101
+      0.01593,
+      0.08081
      ],
-     "p_gt_0": 0.9055,
-     "margin_over_floor": 0.788,
-     "resolvable": false,
-     "verdict": "NULL",
-     "detects": false
+     "p_gt_0": 0.998,
+     "margin_over_floor": 1.844,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN",
+     "detects": true
     },
     "cond_strat": {
      "B_used": 2000,
-     "point_delta": 0.0206,
-     "boot_mean_delta": 0.02097,
-     "sd": 0.01595,
-     "MDE95": 0.0262,
-     "mde95_twosided": 0.0313,
+     "point_delta": 0.04962,
+     "boot_mean_delta": 0.04944,
+     "sd": 0.0161,
+     "MDE95": 0.0265,
+     "mde95_twosided": 0.0316,
      "ci95": [
-      -0.00972,
-      0.05247
+      0.01762,
+      0.08006
      ],
-     "p_gt_0": 0.906,
-     "margin_over_floor": 0.785,
-     "resolvable": false,
-     "verdict": "NULL",
-     "detects": false
+     "p_gt_0": 0.9985,
+     "margin_over_floor": 1.873,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN",
+     "detects": true
     }
    },
    "debuted.blend": {
     "pool": "debuted",
     "leg": "blend",
-    "n_scored": 755,
-    "rho_full_spec": 0.39255,
-    "rho_spec_minus_fv": 0.37469,
-    "point": 0.01786,
+    "n_scored": 782,
+    "rho_full_spec": 0.42076,
+    "rho_spec_minus_fv": 0.40653,
+    "point": 0.01424,
     "refit": {
      "B_used": 2000,
-     "point_delta": 0.01786,
-     "boot_mean_delta": 0.02462,
-     "sd": 0.02174,
-     "MDE95": 0.0358,
-     "mde95_twosided": 0.0426,
+     "point_delta": 0.01424,
+     "boot_mean_delta": 0.01702,
+     "sd": 0.01641,
+     "MDE95": 0.027,
+     "mde95_twosided": 0.0322,
      "ci95": [
-      -0.01677,
-      0.07048
+      -0.01498,
+      0.05146
      ],
-     "p_gt_0": 0.88,
-     "margin_over_floor": 0.5,
+     "p_gt_0": 0.864,
+     "margin_over_floor": 0.527,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
     },
     "cond_iid": {
      "B_used": 2000,
-     "point_delta": 0.01786,
-     "boot_mean_delta": 0.01757,
-     "sd": 0.01395,
-     "MDE95": 0.0229,
-     "mde95_twosided": 0.0273,
+     "point_delta": 0.01424,
+     "boot_mean_delta": 0.0144,
+     "sd": 0.01038,
+     "MDE95": 0.0171,
+     "mde95_twosided": 0.0203,
      "ci95": [
-      -0.00963,
-      0.045
+      -0.00571,
+      0.03545
      ],
-     "p_gt_0": 0.8885,
-     "margin_over_floor": 0.778,
+     "p_gt_0": 0.926,
+     "margin_over_floor": 0.834,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
     },
     "cond_strat": {
      "B_used": 2000,
-     "point_delta": 0.01786,
-     "boot_mean_delta": 0.01795,
-     "sd": 0.0138,
-     "MDE95": 0.0227,
-     "mde95_twosided": 0.0271,
+     "point_delta": 0.01424,
+     "boot_mean_delta": 0.01433,
+     "sd": 0.00966,
+     "MDE95": 0.0159,
+     "mde95_twosided": 0.0189,
      "ci95": [
-      -0.0087,
-      0.04496
+      -0.00464,
+      0.03284
      ],
-     "p_gt_0": 0.9075,
-     "margin_over_floor": 0.787,
+     "p_gt_0": 0.9245,
+     "margin_over_floor": 0.895,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
@@ -276,57 +276,57 @@
    "debuted.ridge": {
     "pool": "debuted",
     "leg": "ridge",
-    "n_scored": 755,
-    "rho_full_spec": 0.38885,
-    "rho_spec_minus_fv": 0.3336,
-    "point": 0.05525,
+    "n_scored": 782,
+    "rho_full_spec": 0.42118,
+    "rho_spec_minus_fv": 0.37287,
+    "point": 0.0483,
     "refit": {
      "B_used": 2000,
-     "point_delta": 0.05525,
-     "boot_mean_delta": 0.05751,
-     "sd": 0.02719,
-     "MDE95": 0.0447,
-     "mde95_twosided": 0.0533,
+     "point_delta": 0.0483,
+     "boot_mean_delta": 0.05156,
+     "sd": 0.02231,
+     "MDE95": 0.0367,
+     "mde95_twosided": 0.0437,
      "ci95": [
-      0.00745,
-      0.11511
+      0.01098,
+      0.09855
      ],
-     "p_gt_0": 0.987,
-     "margin_over_floor": 1.235,
+     "p_gt_0": 0.9945,
+     "margin_over_floor": 1.316,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN",
      "detects": true
     },
     "cond_iid": {
      "B_used": 2000,
-     "point_delta": 0.05525,
-     "boot_mean_delta": 0.05474,
-     "sd": 0.01953,
-     "MDE95": 0.0321,
-     "mde95_twosided": 0.0383,
+     "point_delta": 0.0483,
+     "boot_mean_delta": 0.04828,
+     "sd": 0.01507,
+     "MDE95": 0.0248,
+     "mde95_twosided": 0.0295,
      "ci95": [
-      0.01652,
-      0.09387
+      0.01923,
+      0.07839
      ],
-     "p_gt_0": 0.9975,
-     "margin_over_floor": 1.719,
+     "p_gt_0": 0.999,
+     "margin_over_floor": 1.949,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN",
      "detects": true
     },
     "cond_strat": {
      "B_used": 2000,
-     "point_delta": 0.05525,
-     "boot_mean_delta": 0.05518,
-     "sd": 0.01927,
-     "MDE95": 0.0317,
-     "mde95_twosided": 0.0378,
+     "point_delta": 0.0483,
+     "boot_mean_delta": 0.04849,
+     "sd": 0.01438,
+     "MDE95": 0.0237,
+     "mde95_twosided": 0.0282,
      "ci95": [
-      0.01806,
-      0.09221
+      0.01971,
+      0.07552
      ],
-     "p_gt_0": 0.9985,
-     "margin_over_floor": 1.743,
+     "p_gt_0": 1.0,
+     "margin_over_floor": 2.042,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN",
      "detects": true
@@ -344,16 +344,16 @@
   "amended_primary_cell": "full.ridge",
   "amendment_is_post_hoc_and_disclosed": true,
   "amended_result": {
-   "refit": false,
-   "cond_iid": false,
-   "cond_strat": false
+   "refit": true,
+   "cond_iid": true,
+   "cond_strat": true
   },
   "amendment_selection_disclosure": "the point estimates of all four cells were seen before the amended primary was designated; the FLOORS were not. full.ridge was chosen because it matches the lane's primary pool, and it is the SMALLER of the two ridge-leg effects, so the choice is the conservative one, not the flattering one.",
   "discriminative_reading": "the purpose of 3.1 is to rule out a never-rejecting instrument. All three estimators fire on debuted.ridge, the cell where EFV_GATE_STANDARD.md section 6 locates the known-real `fv` effect, and none fires where another does not. The check therefore does not discriminate between the estimators; it confirms none of them is inert. Registration rests on the part-2 coverage gate and the 3.2 simulated power table."
  },
  "coverage": {
   "design": {
-   "n_rows": 1869,
+   "n_rows": 1985,
    "k_features": 14,
    "folds": 11,
    "lam": 0.7,
@@ -366,19 +366,19 @@
   },
   "estimands": {
    "unconditional": {
-    "truth_mean_delta": -0.01194,
-    "true_sd": 0.00923,
+    "truth_mean_delta": -0.01189,
+    "true_sd": 0.00816,
     "question": "what would we conclude from a different dataset with the SAME cohort sizes"
    },
    "unconditional_varfolds": {
-    "truth_mean_delta": -0.01209,
-    "true_sd": 0.00932,
+    "truth_mean_delta": -0.01215,
+    "true_sd": 0.00811,
     "question": "what would we conclude from a different dataset whose cohort SIZES also redraw",
     "role": "CONTROL for the refit leg, see the code comment in EXP-1"
    },
    "conditional": {
-    "truth_mean_delta": -0.0125,
-    "true_sd": 0.00882,
+    "truth_mean_delta": -0.01205,
+    "true_sd": 0.00845,
     "question": "given this training corpus, is this margin real"
    }
   },
@@ -386,14 +386,14 @@
   "legs": {
    "refit": {
     "own_estimand": "unconditional",
-    "mean_bootstrap_sd": 0.01317,
-    "true_sd_of_own_estimand": 0.00923,
-    "sd_ratio_boot_over_true": 1.427,
+    "mean_bootstrap_sd": 0.01292,
+    "true_sd_of_own_estimand": 0.00816,
+    "sd_ratio_boot_over_true": 1.584,
     "sd_ratio_in_band": false,
     "gate_two_sided": {
-     "k": 196,
+     "k": 194,
      "n": 200,
-     "coverage": 0.98,
+     "coverage": 0.97,
      "accept_lo": 184,
      "accept_hi": 196,
      "accept_coverage_band": [
@@ -404,19 +404,19 @@
     },
     "one_sided_gate_as_currently_coded": "PASS",
     "cross_check_other_estimand": {
-     "coverage": 0.985,
+     "coverage": 0.99,
      "note": "DIAGNOSTIC ONLY, never a gate: it is the wrong question for this estimator"
     },
     "coverage_all_three_estimands": {
-     "uncond": 0.98,
-     "uncond_varfolds": 0.98,
-     "cond": 0.985
+     "uncond": 0.97,
+     "uncond_varfolds": 0.975,
+     "cond": 0.99
     },
     "varfolds_control": {
      "gate_two_sided": {
-      "k": 196,
+      "k": 195,
       "n": 200,
-      "coverage": 0.98,
+      "coverage": 0.975,
       "accept_lo": 184,
       "accept_hi": 196,
       "accept_coverage_band": [
@@ -425,20 +425,20 @@
       ],
       "verdict": "PASS"
      },
-     "sd_ratio_boot_over_true": 1.413,
+     "sd_ratio_boot_over_true": 1.593,
      "reading": "if the refit leg fails against the fixed-fold truth but passes here, its extra width is cohort-size resampling, not refit noise, and the 'over-wide floor' claim is wrong"
     }
    },
    "cond_iid": {
     "own_estimand": "conditional",
-    "mean_bootstrap_sd": 0.00884,
-    "true_sd_of_own_estimand": 0.00882,
-    "sd_ratio_boot_over_true": 1.002,
+    "mean_bootstrap_sd": 0.0084,
+    "true_sd_of_own_estimand": 0.00845,
+    "sd_ratio_boot_over_true": 0.994,
     "sd_ratio_in_band": true,
     "gate_two_sided": {
-     "k": 186,
+     "k": 191,
      "n": 200,
-     "coverage": 0.93,
+     "coverage": 0.955,
      "accept_lo": 184,
      "accept_hi": 196,
      "accept_coverage_band": [
@@ -449,25 +449,25 @@
     },
     "one_sided_gate_as_currently_coded": "PASS",
     "cross_check_other_estimand": {
-     "coverage": 0.92,
+     "coverage": 0.97,
      "note": "DIAGNOSTIC ONLY, never a gate: it is the wrong question for this estimator"
     },
     "coverage_all_three_estimands": {
-     "uncond": 0.92,
-     "uncond_varfolds": 0.92,
-     "cond": 0.93
+     "uncond": 0.97,
+     "uncond_varfolds": 0.97,
+     "cond": 0.955
     }
    },
    "cond_strat": {
     "own_estimand": "conditional",
-    "mean_bootstrap_sd": 0.00879,
-    "true_sd_of_own_estimand": 0.00882,
-    "sd_ratio_boot_over_true": 0.997,
+    "mean_bootstrap_sd": 0.00831,
+    "true_sd_of_own_estimand": 0.00845,
+    "sd_ratio_boot_over_true": 0.984,
     "sd_ratio_in_band": true,
     "gate_two_sided": {
-     "k": 187,
+     "k": 192,
      "n": 200,
-     "coverage": 0.935,
+     "coverage": 0.96,
      "accept_lo": 184,
      "accept_hi": 196,
      "accept_coverage_band": [
@@ -478,13 +478,13 @@
     },
     "one_sided_gate_as_currently_coded": "PASS",
     "cross_check_other_estimand": {
-     "coverage": 0.92,
+     "coverage": 0.965,
      "note": "DIAGNOSTIC ONLY, never a gate: it is the wrong question for this estimator"
     },
     "coverage_all_three_estimands": {
-     "uncond": 0.92,
-     "uncond_varfolds": 0.915,
-     "cond": 0.935
+     "uncond": 0.965,
+     "uncond_varfolds": 0.965,
+     "cond": 0.96
     }
    }
   },
@@ -493,52 +493,52 @@
    1.1
   ],
   "registration": "E_cond_iid REGISTERED (primary, as pre-registered)",
-  "elapsed_s": 1697.0
+  "elapsed_s": 1372.7
  },
  "power": {
   "null": {
    "n_sim": 120,
    "B": 200,
-   "mean_point_delta": -0.01172,
-   "sd_point_delta": 0.012,
+   "mean_point_delta": -0.01121,
+   "sd_point_delta": 0.0085,
    "fire_rate_vs_zero": {
-    "refit": 0.1333,
-    "cond_iid": 0.3917,
-    "cond_strat": 0.3667
+    "refit": 0.0917,
+    "cond_iid": 0.3417,
+    "cond_strat": 0.325
    },
    "fire_rate_centered": {
-    "refit": 0.0,
-    "cond_iid": 0.125,
-    "cond_strat": 0.1167
+    "refit": 0.025,
+    "cond_iid": 0.1083,
+    "cond_strat": 0.1083
    },
    "mean_floor": {
-    "refit": 0.0224,
-    "cond_iid": 0.0144,
-    "cond_strat": 0.0144
+    "refit": 0.021,
+    "cond_iid": 0.0142,
+    "cond_strat": 0.0141
    },
-   "elapsed_s": 566.2
+   "elapsed_s": 356.8
   },
   "alternative": {
    "n_sim": 120,
    "B": 200,
-   "mean_point_delta": 0.03207,
-   "sd_point_delta": 0.01707,
+   "mean_point_delta": 0.03103,
+   "sd_point_delta": 0.01395,
    "fire_rate_vs_zero": {
     "refit": 0.675,
-    "cond_iid": 0.85,
-    "cond_strat": 0.8583
+    "cond_iid": 0.825,
+    "cond_strat": 0.85
    },
    "fire_rate_centered": {
-    "refit": 0.075,
-    "cond_iid": 0.1583,
-    "cond_strat": 0.1417
+    "refit": 0.0833,
+    "cond_iid": 0.15,
+    "cond_strat": 0.15
    },
    "mean_floor": {
-    "refit": 0.0263,
-    "cond_iid": 0.0197,
-    "cond_strat": 0.0196
+    "refit": 0.0254,
+    "cond_iid": 0.0194,
+    "cond_strat": 0.0194
    },
-   "elapsed_s": 534.5
+   "elapsed_s": 362.1
   },
   "reading": "fire_rate_centered under 'null' is the instrument's false-positive rate and the calibrated target is about 0.10, since MDE95 is one-sided 1.645*sd applied to an absolute margin. fire_rate_vs_zero under 'null' is NOT a type-I rate: the null's true delta is not zero. fire_rate_vs_zero under 'alternative' is power.",
   "zero_information_blend_cost": "the null's mean point delta is the rho a blend loses by mixing in a predictor that carries NO information the consensus lacks. It is the dumbest available explanation for a negative full-pool margin and it is quantified here rather than assumed away. It is a property of this synthetic design and its magnitude does not transfer to the real pool as a point estimate."
@@ -547,305 +547,305 @@
   "hit.full_pool_km": {
    "rank": "PRIMARY",
    "legs": {
-    "n": 1777,
-    "consensus": 0.29264,
-    "blend": 0.27625,
-    "delta": -0.01639
+    "n": 1798,
+    "consensus": 0.29183,
+    "blend": 0.29744,
+    "delta": 0.0056
    },
-   "n_scored": 1777,
+   "n_scored": 1798,
    "refit": {
     "B_used": 2000,
-    "point_delta": -0.01639,
-    "boot_mean_delta": -0.01301,
-    "sd": 0.01806,
-    "MDE95": 0.0297,
-    "mde95_twosided": 0.0354,
+    "point_delta": 0.0056,
+    "boot_mean_delta": 0.00823,
+    "sd": 0.01641,
+    "MDE95": 0.027,
+    "mde95_twosided": 0.0322,
     "ci95": [
-     -0.04835,
-     0.02165
+     -0.02214,
+     0.04138
     ],
-    "p_gt_0": 0.2335,
-    "margin_over_floor": 0.552,
+    "p_gt_0": 0.691,
+    "margin_over_floor": 0.208,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0405,
+    "mde95_bonferroni_k4": 0.0368,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.427,
-    "mde95_coverage_corrected": 0.0208,
-    "margin_over_corrected_floor": 0.787,
+    "sd_ratio_applied": 1.584,
+    "mde95_coverage_corrected": 0.017,
+    "margin_over_corrected_floor": 0.329,
     "resolvable_corrected": false
    },
    "cond_iid": {
     "B_used": 2000,
-    "point_delta": -0.01639,
-    "boot_mean_delta": -0.01608,
-    "sd": 0.01215,
-    "MDE95": 0.02,
-    "mde95_twosided": 0.0238,
+    "point_delta": 0.0056,
+    "boot_mean_delta": 0.00559,
+    "sd": 0.01202,
+    "MDE95": 0.0198,
+    "mde95_twosided": 0.0236,
     "ci95": [
-     -0.03999,
-     0.00766
+     -0.01733,
+     0.02959
     ],
-    "p_gt_0": 0.094,
-    "margin_over_floor": 0.82,
+    "p_gt_0": 0.674,
+    "margin_over_floor": 0.283,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0272,
+    "mde95_bonferroni_k4": 0.0269,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.002,
-    "mde95_coverage_corrected": 0.02,
-    "margin_over_corrected_floor": 0.821,
+    "sd_ratio_applied": 0.994,
+    "mde95_coverage_corrected": 0.0199,
+    "margin_over_corrected_floor": 0.281,
     "resolvable_corrected": false
    },
    "cond_strat": {
     "B_used": 2000,
-    "point_delta": -0.01639,
-    "boot_mean_delta": -0.01627,
-    "sd": 0.01236,
-    "MDE95": 0.0203,
-    "mde95_twosided": 0.0242,
+    "point_delta": 0.0056,
+    "boot_mean_delta": 0.00474,
+    "sd": 0.01171,
+    "MDE95": 0.0193,
+    "mde95_twosided": 0.0229,
     "ci95": [
-     -0.04036,
-     0.00686
+     -0.01777,
+     0.02935
     ],
-    "p_gt_0": 0.092,
-    "margin_over_floor": 0.806,
+    "p_gt_0": 0.648,
+    "margin_over_floor": 0.291,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0277,
+    "mde95_bonferroni_k4": 0.0262,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 0.997,
-    "mde95_coverage_corrected": 0.0204,
-    "margin_over_corrected_floor": 0.805,
+    "sd_ratio_applied": 0.984,
+    "mde95_coverage_corrected": 0.0196,
+    "margin_over_corrected_floor": 0.286,
     "resolvable_corrected": false
    }
   },
   "pit.full_pool_km": {
    "rank": "secondary",
    "legs": {
-    "n": 1878,
-    "consensus": 0.26961,
-    "blend": 0.28077,
-    "delta": 0.01116
+    "n": 1887,
+    "consensus": 0.27268,
+    "blend": 0.28738,
+    "delta": 0.0147
    },
-   "n_scored": 1878,
+   "n_scored": 1887,
    "refit": {
     "B_used": 2000,
-    "point_delta": 0.01116,
-    "boot_mean_delta": -0.00048,
-    "sd": 0.01655,
-    "MDE95": 0.0272,
-    "mde95_twosided": 0.0324,
+    "point_delta": 0.0147,
+    "boot_mean_delta": 0.00724,
+    "sd": 0.014,
+    "MDE95": 0.023,
+    "mde95_twosided": 0.0274,
     "ci95": [
-     -0.03498,
-     0.03217
+     -0.01956,
+     0.03576
     ],
-    "p_gt_0": 0.493,
-    "margin_over_floor": 0.41,
+    "p_gt_0": 0.6935,
+    "margin_over_floor": 0.638,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0371,
+    "mde95_bonferroni_k4": 0.0314,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.427,
-    "mde95_coverage_corrected": 0.0191,
-    "margin_over_corrected_floor": 0.585,
-    "resolvable_corrected": false
+    "sd_ratio_applied": 1.584,
+    "mde95_coverage_corrected": 0.0145,
+    "margin_over_corrected_floor": 1.012,
+    "resolvable_corrected": true
    },
    "cond_iid": {
     "B_used": 2000,
-    "point_delta": 0.01116,
-    "boot_mean_delta": 0.01128,
-    "sd": 0.01164,
-    "MDE95": 0.0191,
-    "mde95_twosided": 0.0228,
+    "point_delta": 0.0147,
+    "boot_mean_delta": 0.01431,
+    "sd": 0.01101,
+    "MDE95": 0.0181,
+    "mde95_twosided": 0.0216,
     "ci95": [
-     -0.01181,
-     0.03405
+     -0.00678,
+     0.03604
     ],
-    "p_gt_0": 0.834,
-    "margin_over_floor": 0.583,
+    "p_gt_0": 0.897,
+    "margin_over_floor": 0.812,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0261,
+    "mde95_bonferroni_k4": 0.0247,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.002,
-    "mde95_coverage_corrected": 0.0191,
-    "margin_over_corrected_floor": 0.585,
+    "sd_ratio_applied": 0.994,
+    "mde95_coverage_corrected": 0.0182,
+    "margin_over_corrected_floor": 0.807,
     "resolvable_corrected": false
    },
    "cond_strat": {
     "B_used": 2000,
-    "point_delta": 0.01116,
-    "boot_mean_delta": 0.01155,
-    "sd": 0.0113,
-    "MDE95": 0.0186,
-    "mde95_twosided": 0.0222,
+    "point_delta": 0.0147,
+    "boot_mean_delta": 0.01494,
+    "sd": 0.01127,
+    "MDE95": 0.0185,
+    "mde95_twosided": 0.0221,
     "ci95": [
-     -0.01112,
-     0.0339
+     -0.00737,
+     0.03683
     ],
-    "p_gt_0": 0.8445,
-    "margin_over_floor": 0.6,
+    "p_gt_0": 0.911,
+    "margin_over_floor": 0.793,
     "resolvable": false,
     "verdict": "NULL",
     "mde95_bonferroni_k4": 0.0253,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 0.997,
-    "mde95_coverage_corrected": 0.0187,
-    "margin_over_corrected_floor": 0.598,
+    "sd_ratio_applied": 0.984,
+    "mde95_coverage_corrected": 0.0188,
+    "margin_over_corrected_floor": 0.782,
     "resolvable_corrected": false
    }
   },
   "hit.debuted_km": {
    "rank": "secondary",
    "legs": {
-    "n": 755,
-    "consensus": 0.3821,
-    "blend": 0.39255,
-    "delta": 0.01045
+    "n": 782,
+    "consensus": 0.38835,
+    "blend": 0.42076,
+    "delta": 0.03242
    },
-   "n_scored": 755,
+   "n_scored": 782,
    "refit": {
     "B_used": 2000,
-    "point_delta": 0.01045,
-    "boot_mean_delta": -0.01648,
-    "sd": 0.02654,
-    "MDE95": 0.0437,
-    "mde95_twosided": 0.052,
+    "point_delta": 0.03242,
+    "boot_mean_delta": 0.02315,
+    "sd": 0.01909,
+    "MDE95": 0.0314,
+    "mde95_twosided": 0.0374,
     "ci95": [
-     -0.07153,
-     0.03415
+     -0.01571,
+     0.05955
     ],
-    "p_gt_0": 0.2655,
-    "margin_over_floor": 0.239,
-    "resolvable": false,
-    "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0595,
+    "p_gt_0": 0.886,
+    "margin_over_floor": 1.032,
+    "resolvable": true,
+    "verdict": "RESOLVABLE WIN",
+    "mde95_bonferroni_k4": 0.0428,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.427,
-    "mde95_coverage_corrected": 0.0306,
-    "margin_over_corrected_floor": 0.341,
-    "resolvable_corrected": false
+    "sd_ratio_applied": 1.584,
+    "mde95_coverage_corrected": 0.0198,
+    "margin_over_corrected_floor": 1.635,
+    "resolvable_corrected": true
    },
    "cond_iid": {
     "B_used": 2000,
-    "point_delta": 0.01045,
-    "boot_mean_delta": 0.01086,
-    "sd": 0.01282,
-    "MDE95": 0.0211,
-    "mde95_twosided": 0.0251,
+    "point_delta": 0.03242,
+    "boot_mean_delta": 0.03255,
+    "sd": 0.01287,
+    "MDE95": 0.0212,
+    "mde95_twosided": 0.0252,
     "ci95": [
-     -0.01479,
-     0.03534
+     0.00754,
+     0.05909
     ],
-    "p_gt_0": 0.8085,
-    "margin_over_floor": 0.496,
-    "resolvable": false,
-    "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0287,
-    "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.002,
-    "mde95_coverage_corrected": 0.0211,
-    "margin_over_corrected_floor": 0.496,
-    "resolvable_corrected": false
+    "p_gt_0": 0.995,
+    "margin_over_floor": 1.531,
+    "resolvable": true,
+    "verdict": "RESOLVABLE WIN",
+    "mde95_bonferroni_k4": 0.0288,
+    "resolvable_bonferroni_k4": true,
+    "sd_ratio_applied": 0.994,
+    "mde95_coverage_corrected": 0.0213,
+    "margin_over_corrected_floor": 1.52,
+    "resolvable_corrected": true
    },
    "cond_strat": {
     "B_used": 2000,
-    "point_delta": 0.01045,
-    "boot_mean_delta": 0.01046,
-    "sd": 0.0127,
-    "MDE95": 0.0209,
-    "mde95_twosided": 0.0249,
+    "point_delta": 0.03242,
+    "boot_mean_delta": 0.0325,
+    "sd": 0.01264,
+    "MDE95": 0.0208,
+    "mde95_twosided": 0.0248,
     "ci95": [
-     -0.01412,
-     0.03583
+     0.00817,
+     0.05643
     ],
-    "p_gt_0": 0.798,
-    "margin_over_floor": 0.5,
-    "resolvable": false,
-    "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0285,
-    "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 0.997,
-    "mde95_coverage_corrected": 0.021,
-    "margin_over_corrected_floor": 0.498,
-    "resolvable_corrected": false
+    "p_gt_0": 0.996,
+    "margin_over_floor": 1.559,
+    "resolvable": true,
+    "verdict": "RESOLVABLE WIN",
+    "mde95_bonferroni_k4": 0.0283,
+    "resolvable_bonferroni_k4": true,
+    "sd_ratio_applied": 0.984,
+    "mde95_coverage_corrected": 0.0211,
+    "margin_over_corrected_floor": 1.534,
+    "resolvable_corrected": true
    }
   },
   "pit.debuted_km": {
    "rank": "secondary",
    "legs": {
-    "n": 892,
-    "consensus": 0.2957,
-    "blend": 0.28279,
-    "delta": -0.0129
+    "n": 907,
+    "consensus": 0.33793,
+    "blend": 0.36363,
+    "delta": 0.0257
    },
-   "n_scored": 892,
+   "n_scored": 907,
    "refit": {
     "B_used": 2000,
-    "point_delta": -0.0129,
-    "boot_mean_delta": -0.02241,
-    "sd": 0.02547,
-    "MDE95": 0.0419,
-    "mde95_twosided": 0.0499,
-    "ci95": [
-     -0.07557,
-     0.02441
-    ],
-    "p_gt_0": 0.178,
-    "margin_over_floor": 0.308,
-    "resolvable": false,
-    "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0571,
-    "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.427,
-    "mde95_coverage_corrected": 0.0294,
-    "margin_over_corrected_floor": 0.44,
-    "resolvable_corrected": false
-   },
-   "cond_iid": {
-    "B_used": 2000,
-    "point_delta": -0.0129,
-    "boot_mean_delta": -0.01293,
-    "sd": 0.01641,
+    "point_delta": 0.0257,
+    "boot_mean_delta": 0.01446,
+    "sd": 0.01643,
     "MDE95": 0.027,
     "mde95_twosided": 0.0322,
     "ci95": [
-     -0.04528,
-     0.01931
+     -0.01744,
+     0.0472
     ],
-    "p_gt_0": 0.2225,
-    "margin_over_floor": 0.478,
+    "p_gt_0": 0.813,
+    "margin_over_floor": 0.951,
     "resolvable": false,
     "verdict": "NULL",
     "mde95_bonferroni_k4": 0.0368,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.002,
-    "mde95_coverage_corrected": 0.0269,
-    "margin_over_corrected_floor": 0.479,
-    "resolvable_corrected": false
+    "sd_ratio_applied": 1.584,
+    "mde95_coverage_corrected": 0.017,
+    "margin_over_corrected_floor": 1.508,
+    "resolvable_corrected": true
+   },
+   "cond_iid": {
+    "B_used": 2000,
+    "point_delta": 0.0257,
+    "boot_mean_delta": 0.02608,
+    "sd": 0.01375,
+    "MDE95": 0.0226,
+    "mde95_twosided": 0.027,
+    "ci95": [
+     -0.00143,
+     0.05357
+    ],
+    "p_gt_0": 0.9705,
+    "margin_over_floor": 1.136,
+    "resolvable": true,
+    "verdict": "RESOLVABLE WIN",
+    "mde95_bonferroni_k4": 0.0308,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 0.994,
+    "mde95_coverage_corrected": 0.0227,
+    "margin_over_corrected_floor": 1.13,
+    "resolvable_corrected": true
    },
    "cond_strat": {
     "B_used": 2000,
-    "point_delta": -0.0129,
-    "boot_mean_delta": -0.0128,
-    "sd": 0.01543,
-    "MDE95": 0.0254,
-    "mde95_twosided": 0.0303,
+    "point_delta": 0.0257,
+    "boot_mean_delta": 0.02553,
+    "sd": 0.01409,
+    "MDE95": 0.0232,
+    "mde95_twosided": 0.0276,
     "ci95": [
-     -0.04272,
-     0.01745
+     -0.00204,
+     0.05324
     ],
-    "p_gt_0": 0.2,
-    "margin_over_floor": 0.508,
-    "resolvable": false,
-    "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0346,
+    "p_gt_0": 0.97,
+    "margin_over_floor": 1.109,
+    "resolvable": true,
+    "verdict": "RESOLVABLE WIN",
+    "mde95_bonferroni_k4": 0.0316,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 0.997,
-    "mde95_coverage_corrected": 0.0255,
-    "margin_over_corrected_floor": 0.507,
-    "resolvable_corrected": false
+    "sd_ratio_applied": 0.984,
+    "mde95_coverage_corrected": 0.0236,
+    "margin_over_corrected_floor": 1.09,
+    "resolvable_corrected": true
    }
   },
   "multiplicity": {
@@ -855,10 +855,10 @@
    "note": "no secondary cut is called resolvable on its unadjusted floor alone"
   }
  },
- "elapsed_s": 3300.8,
+ "elapsed_s": 2590.3,
  "partb_floors": {
   "produced_by": "tools/efv_power_lab.py floors",
-  "generated_at": "2026-09-04T21:01:59Z",
+  "generated_at": "2026-10-03T21:17:46Z",
   "registration": "docs/efv-2026-08-08/POWER_EXTENSION_GATE.md sections 2 and 5; X1 parity discharged 2026-08-09, X2 in the block x2_coverage_h2h",
   "convention": "MDE95 is ONE-SIDED 1.645*sd on |delta|, the convention in docs/EFV_GATE_STANDARD.md section 1. MDE95 is E_refit, MDE95_COND is E_cond. Neither is quoted without its estimator.",
   "B_pool": 1000,
@@ -886,58 +886,58 @@
    "pooled_rho.hit.full_pool_km": {
     "label": "pooled_rho.hit.full_pool_km",
     "target_column": "target_censored",
-    "n_rows": 1777,
+    "n_rows": 1798,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 1777,
-     "consensus": 0.29264,
-     "blend": 0.27625,
-     "delta": -0.01639
+     "n": 1798,
+     "consensus": 0.29183,
+     "blend": 0.29744,
+     "delta": 0.0056
     },
-    "point_delta": -0.01639,
-    "MDE95": 0.0298,
-    "MDE95_COND": 0.0214,
-    "margin_over_MDE95": 0.55,
-    "margin_over_MDE95_COND": 0.765,
+    "point_delta": 0.0056,
+    "MDE95": 0.0265,
+    "MDE95_COND": 0.0205,
+    "margin_over_MDE95": 0.212,
+    "margin_over_MDE95_COND": 0.274,
     "verdict_E_refit": "NULL",
     "verdict_E_cond": "NULL",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": -0.01639,
-     "boot_mean_delta": -0.01309,
-     "sd": 0.01812,
-     "MDE95": 0.0298,
-     "mde95_twosided": 0.0355,
+     "point_delta": 0.0056,
+     "boot_mean_delta": 0.00876,
+     "sd": 0.01609,
+     "MDE95": 0.0265,
+     "mde95_twosided": 0.0315,
      "ci95": [
-      -0.04742,
-      0.02422
+      -0.02082,
+      0.04159
      ],
-     "p_gt_0": 0.234,
-     "margin_over_floor": 0.55,
+     "p_gt_0": 0.703,
+     "margin_over_floor": 0.212,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": -0.01639,
-     "boot_mean_delta": -0.01631,
-     "sd": 0.01302,
-     "MDE95": 0.0214,
-     "mde95_twosided": 0.0255,
+     "point_delta": 0.0056,
+     "boot_mean_delta": 0.00555,
+     "sd": 0.01245,
+     "MDE95": 0.0205,
+     "mde95_twosided": 0.0244,
      "ci95": [
-      -0.0412,
-      0.00902
+      -0.01924,
+      0.0287
      ],
-     "p_gt_0": 0.103,
-     "margin_over_floor": 0.765,
+     "p_gt_0": 0.665,
+     "margin_over_floor": 0.274,
      "resolvable": false,
      "verdict": "NULL"
     },
-    "refit_share_of_variance": 0.484,
-    "fit_fixed_share_of_variance": 0.516,
-    "floor_share_removable_by_infinite_test_n": 0.305,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0207,
+    "refit_share_of_variance": 0.401,
+    "fit_fixed_share_of_variance": 0.599,
+    "floor_share_removable_by_infinite_test_n": 0.367,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0168,
     "permanently_undecidable_under_E_refit": true,
     "B": 1000,
     "rank": "PRIMARY",
@@ -946,59 +946,59 @@
    "pooled_rho.pit.full_pool_km": {
     "label": "pooled_rho.pit.full_pool_km",
     "target_column": "target_censored",
-    "n_rows": 1878,
+    "n_rows": 1887,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 1878,
-     "consensus": 0.26961,
-     "blend": 0.28077,
-     "delta": 0.01116
+     "n": 1887,
+     "consensus": 0.27268,
+     "blend": 0.28738,
+     "delta": 0.0147
     },
-    "point_delta": 0.01116,
-    "MDE95": 0.028,
-    "MDE95_COND": 0.0197,
-    "margin_over_MDE95": 0.398,
-    "margin_over_MDE95_COND": 0.567,
+    "point_delta": 0.0147,
+    "MDE95": 0.0224,
+    "MDE95_COND": 0.0185,
+    "margin_over_MDE95": 0.655,
+    "margin_over_MDE95_COND": 0.795,
     "verdict_E_refit": "NULL",
     "verdict_E_cond": "NULL",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": 0.01116,
-     "boot_mean_delta": -0.00024,
-     "sd": 0.01703,
-     "MDE95": 0.028,
-     "mde95_twosided": 0.0334,
+     "point_delta": 0.0147,
+     "boot_mean_delta": 0.00837,
+     "sd": 0.01365,
+     "MDE95": 0.0224,
+     "mde95_twosided": 0.0267,
      "ci95": [
-      -0.03434,
-      0.03455
+      -0.017,
+      0.03551
      ],
-     "p_gt_0": 0.501,
-     "margin_over_floor": 0.398,
+     "p_gt_0": 0.72,
+     "margin_over_floor": 0.655,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": 0.01116,
-     "boot_mean_delta": 0.01132,
-     "sd": 0.01196,
-     "MDE95": 0.0197,
-     "mde95_twosided": 0.0234,
+     "point_delta": 0.0147,
+     "boot_mean_delta": 0.015,
+     "sd": 0.01123,
+     "MDE95": 0.0185,
+     "mde95_twosided": 0.022,
      "ci95": [
-      -0.01214,
-      0.03399
+      -0.00642,
+      0.03684
      ],
-     "p_gt_0": 0.82,
-     "margin_over_floor": 0.567,
+     "p_gt_0": 0.909,
+     "margin_over_floor": 0.795,
      "resolvable": false,
      "verdict": "NULL"
     },
-    "refit_share_of_variance": 0.507,
-    "fit_fixed_share_of_variance": 0.493,
-    "floor_share_removable_by_infinite_test_n": 0.288,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0199,
-    "permanently_undecidable_under_E_refit": true,
+    "refit_share_of_variance": 0.323,
+    "fit_fixed_share_of_variance": 0.677,
+    "floor_share_removable_by_infinite_test_n": 0.432,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0128,
+    "permanently_undecidable_under_E_refit": false,
     "B": 1000,
     "rank": "secondary",
     "basis": "re-derived 2026-08-09, NOT the registered part-A numbers"
@@ -1006,59 +1006,59 @@
    "pooled_rho.hit.debuted_km": {
     "label": "pooled_rho.hit.debuted_km",
     "target_column": "target_censored",
-    "n_rows": 755,
+    "n_rows": 782,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 755,
-     "consensus": 0.3821,
-     "blend": 0.39255,
-     "delta": 0.01045
+     "n": 782,
+     "consensus": 0.38835,
+     "blend": 0.42076,
+     "delta": 0.03242
     },
-    "point_delta": 0.01045,
-    "MDE95": 0.0458,
-    "MDE95_COND": 0.0206,
-    "margin_over_MDE95": 0.228,
-    "margin_over_MDE95_COND": 0.506,
+    "point_delta": 0.03242,
+    "MDE95": 0.0327,
+    "MDE95_COND": 0.0208,
+    "margin_over_MDE95": 0.99,
+    "margin_over_MDE95_COND": 1.558,
     "verdict_E_refit": "NULL",
-    "verdict_E_cond": "NULL",
+    "verdict_E_cond": "RESOLVABLE WIN",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": 0.01045,
-     "boot_mean_delta": -0.01775,
-     "sd": 0.02784,
-     "MDE95": 0.0458,
-     "mde95_twosided": 0.0546,
+     "point_delta": 0.03242,
+     "boot_mean_delta": 0.0227,
+     "sd": 0.01991,
+     "MDE95": 0.0327,
+     "mde95_twosided": 0.039,
      "ci95": [
-      -0.07634,
-      0.03099
+      -0.0169,
+      0.05926
      ],
-     "p_gt_0": 0.279,
-     "margin_over_floor": 0.228,
+     "p_gt_0": 0.868,
+     "margin_over_floor": 0.99,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": 0.01045,
-     "boot_mean_delta": 0.01004,
-     "sd": 0.01254,
-     "MDE95": 0.0206,
-     "mde95_twosided": 0.0246,
+     "point_delta": 0.03242,
+     "boot_mean_delta": 0.03235,
+     "sd": 0.01265,
+     "MDE95": 0.0208,
+     "mde95_twosided": 0.0248,
      "ci95": [
-      -0.01421,
-      0.03417
+      0.00939,
+      0.05803
      ],
-     "p_gt_0": 0.786,
-     "margin_over_floor": 0.506,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.998,
+     "margin_over_floor": 1.558,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
-    "refit_share_of_variance": 0.797,
-    "fit_fixed_share_of_variance": 0.203,
-    "floor_share_removable_by_infinite_test_n": 0.107,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0409,
-    "permanently_undecidable_under_E_refit": true,
+    "refit_share_of_variance": 0.596,
+    "fit_fixed_share_of_variance": 0.404,
+    "floor_share_removable_by_infinite_test_n": 0.228,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0253,
+    "permanently_undecidable_under_E_refit": false,
     "B": 1000,
     "rank": "secondary",
     "basis": "re-derived 2026-08-09, NOT the registered part-A numbers"
@@ -1066,59 +1066,59 @@
    "pooled_rho.pit.debuted_km": {
     "label": "pooled_rho.pit.debuted_km",
     "target_column": "target_censored",
-    "n_rows": 892,
+    "n_rows": 907,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 892,
-     "consensus": 0.2957,
-     "blend": 0.28279,
-     "delta": -0.0129
+     "n": 907,
+     "consensus": 0.33793,
+     "blend": 0.36363,
+     "delta": 0.0257
     },
-    "point_delta": -0.0129,
-    "MDE95": 0.0436,
-    "MDE95_COND": 0.0251,
-    "margin_over_MDE95": 0.296,
-    "margin_over_MDE95_COND": 0.513,
+    "point_delta": 0.0257,
+    "MDE95": 0.0278,
+    "MDE95_COND": 0.0233,
+    "margin_over_MDE95": 0.924,
+    "margin_over_MDE95_COND": 1.102,
     "verdict_E_refit": "NULL",
-    "verdict_E_cond": "NULL",
+    "verdict_E_cond": "RESOLVABLE WIN",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": -0.0129,
-     "boot_mean_delta": -0.02282,
-     "sd": 0.02652,
-     "MDE95": 0.0436,
-     "mde95_twosided": 0.052,
+     "point_delta": 0.0257,
+     "boot_mean_delta": 0.01506,
+     "sd": 0.0169,
+     "MDE95": 0.0278,
+     "mde95_twosided": 0.0331,
      "ci95": [
-      -0.07507,
-      0.02494
+      -0.01836,
+      0.04792
      ],
-     "p_gt_0": 0.183,
-     "margin_over_floor": 0.296,
+     "p_gt_0": 0.815,
+     "margin_over_floor": 0.924,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": -0.0129,
-     "boot_mean_delta": -0.01248,
-     "sd": 0.01528,
-     "MDE95": 0.0251,
-     "mde95_twosided": 0.03,
+     "point_delta": 0.0257,
+     "boot_mean_delta": 0.02532,
+     "sd": 0.01417,
+     "MDE95": 0.0233,
+     "mde95_twosided": 0.0278,
      "ci95": [
-      -0.04326,
-      0.01813
+      -0.00146,
+      0.05389
      ],
-     "p_gt_0": 0.208,
-     "margin_over_floor": 0.513,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.962,
+     "margin_over_floor": 1.102,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
-    "refit_share_of_variance": 0.668,
-    "fit_fixed_share_of_variance": 0.332,
-    "floor_share_removable_by_infinite_test_n": 0.183,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0357,
-    "permanently_undecidable_under_E_refit": true,
+    "refit_share_of_variance": 0.297,
+    "fit_fixed_share_of_variance": 0.703,
+    "floor_share_removable_by_infinite_test_n": 0.455,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0152,
+    "permanently_undecidable_under_E_refit": false,
     "B": 1000,
     "rank": "secondary",
     "basis": "re-derived 2026-08-09, NOT the registered part-A numbers"
@@ -1126,34 +1126,34 @@
    "headtohead_common": {
     "label": "headtohead_common",
     "target_column": "war",
-    "n_rows": 3241,
-    "n_clusters": 1052,
+    "n_rows": 3327,
+    "n_clusters": 1088,
     "cond_resampling_unit": "player cluster",
     "legs": {
-     "n": 3241,
-     "consensus": 0.31618,
-     "efv": 0.35228,
-     "delta": 0.03609
+     "n": 3327,
+     "consensus": 0.30816,
+     "efv": 0.3634,
+     "delta": 0.05524
     },
-    "point_delta": 0.03609,
-    "MDE95": 0.0357,
-    "MDE95_COND": 0.0308,
-    "margin_over_MDE95": 1.01,
-    "margin_over_MDE95_COND": 1.17,
+    "point_delta": 0.05524,
+    "MDE95": 0.0334,
+    "MDE95_COND": 0.031,
+    "margin_over_MDE95": 1.656,
+    "margin_over_MDE95_COND": 1.783,
     "verdict_E_refit": "RESOLVABLE WIN",
     "verdict_E_cond": "RESOLVABLE WIN",
     "E_refit": {
      "B_used": 2000,
-     "point_delta": 0.03609,
-     "sd": 0.02173,
-     "MDE95": 0.0357,
-     "mde95_twosided": 0.0426,
+     "point_delta": 0.05524,
+     "sd": 0.02028,
+     "MDE95": 0.0334,
+     "mde95_twosided": 0.0397,
      "ci95": [
-      -0.01246,
-      0.07274
+      0.01206,
+      0.09116
      ],
-     "p_gt_0": 0.92,
-     "margin_over_floor": 1.01,
+     "p_gt_0": 0.9945,
+     "margin_over_floor": 1.656,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN",
      "producer": "efv_mde_lab.headtohead(B, write=False), seed SEED+1",
@@ -1161,148 +1161,148 @@
     },
     "E_cond": {
      "B_used": 2000,
-     "point_delta": 0.03609,
-     "boot_mean_delta": 0.03598,
-     "sd": 0.01875,
-     "MDE95": 0.0308,
-     "mde95_twosided": 0.0367,
+     "point_delta": 0.05524,
+     "boot_mean_delta": 0.05492,
+     "sd": 0.01883,
+     "MDE95": 0.031,
+     "mde95_twosided": 0.0369,
      "ci95": [
-      -0.00104,
-      0.07281
+      0.01663,
+      0.08997
      ],
-     "p_gt_0": 0.97,
-     "margin_over_floor": 1.17,
+     "p_gt_0": 0.9985,
+     "margin_over_floor": 1.783,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN"
     },
-    "refit_share_of_variance": 0.255,
-    "fit_fixed_share_of_variance": 0.745,
-    "floor_share_removable_by_infinite_test_n": 0.495,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0181,
+    "refit_share_of_variance": 0.138,
+    "fit_fixed_share_of_variance": 0.862,
+    "floor_share_removable_by_infinite_test_n": 0.629,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0124,
     "permanently_undecidable_under_E_refit": false,
     "sensitivity_cluster_side_stratified": {
      "B_used": 2000,
-     "point_delta": 0.03609,
-     "boot_mean_delta": 0.03629,
-     "sd": 0.01912,
-     "MDE95": 0.0315,
-     "mde95_twosided": 0.0375,
+     "point_delta": 0.05524,
+     "boot_mean_delta": 0.05461,
+     "sd": 0.01846,
+     "MDE95": 0.0304,
+     "mde95_twosided": 0.0362,
      "ci95": [
-      -0.00112,
-      0.07427
+      0.01616,
+      0.09102
      ],
-     "p_gt_0": 0.9705,
-     "margin_over_floor": 1.147,
+     "p_gt_0": 1.0,
+     "margin_over_floor": 1.819,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN"
     },
     "DIAGNOSTIC_row_iid_NOT_A_GATE": {
      "B_used": 2000,
-     "point_delta": 0.03609,
-     "boot_mean_delta": 0.03613,
-     "sd": 0.01248,
-     "MDE95": 0.0205,
-     "mde95_twosided": 0.0245,
+     "point_delta": 0.05524,
+     "boot_mean_delta": 0.05516,
+     "sd": 0.01202,
+     "MDE95": 0.0198,
+     "mde95_twosided": 0.0236,
      "ci95": [
-      0.01141,
-      0.06005
+      0.03274,
+      0.07932
      ],
-     "p_gt_0": 0.9995,
-     "margin_over_floor": 1.758,
+     "p_gt_0": 1.0,
+     "margin_over_floor": 2.794,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN"
     },
-    "iid_row_narrowing_ratio": 1.502,
+    "iid_row_narrowing_ratio": 1.567,
     "clustering_note": "3.07 rows per player. The row-iid variant is published as the SIZE OF THE VIOLATION, never as a gate: scoring 3.07 correlated rows as 3.07 independent ones narrows the sd by the ratio above, entirely in the anti-conservative direction.",
     "B": 2000
    },
    "block_rho": {
     "label": "block_rho.debuted",
     "target_column": "target_censored",
-    "n_rows": 1647,
+    "n_rows": 1689,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 1647,
-     "consensus": 0.32974,
-     "blend": 0.33268,
-     "delta": 0.00294
+     "n": 1689,
+     "consensus": 0.3563,
+     "blend": 0.38167,
+     "delta": 0.02537
     },
-    "point_delta": 0.00294,
-    "MDE95": 0.0307,
-    "MDE95_COND": 0.0182,
-    "margin_over_MDE95": 0.096,
-    "margin_over_MDE95_COND": 0.161,
-    "verdict_E_refit": "NULL",
-    "verdict_E_cond": "NULL",
+    "point_delta": 0.02537,
+    "MDE95": 0.0229,
+    "MDE95_COND": 0.017,
+    "margin_over_MDE95": 1.11,
+    "margin_over_MDE95_COND": 1.491,
+    "verdict_E_refit": "RESOLVABLE WIN",
+    "verdict_E_cond": "RESOLVABLE WIN",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": 0.00294,
-     "boot_mean_delta": -0.01866,
-     "sd": 0.01866,
-     "MDE95": 0.0307,
-     "mde95_twosided": 0.0366,
+     "point_delta": 0.02537,
+     "boot_mean_delta": 0.01346,
+     "sd": 0.0139,
+     "MDE95": 0.0229,
+     "mde95_twosided": 0.0272,
      "ci95": [
-      -0.05955,
-      0.01411
+      -0.0142,
+      0.03844
      ],
-     "p_gt_0": 0.151,
-     "margin_over_floor": 0.096,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.844,
+     "margin_over_floor": 1.11,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": 0.00294,
-     "boot_mean_delta": 0.00199,
-     "sd": 0.01109,
-     "MDE95": 0.0182,
-     "mde95_twosided": 0.0217,
+     "point_delta": 0.02537,
+     "boot_mean_delta": 0.02364,
+     "sd": 0.01035,
+     "MDE95": 0.017,
+     "mde95_twosided": 0.0203,
      "ci95": [
-      -0.01926,
-      0.02428
+      0.00241,
+      0.04328
      ],
-     "p_gt_0": 0.569,
-     "margin_over_floor": 0.161,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.99,
+     "margin_over_floor": 1.491,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
-    "refit_share_of_variance": 0.647,
-    "fit_fixed_share_of_variance": 0.353,
-    "floor_share_removable_by_infinite_test_n": 0.196,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0247,
-    "permanently_undecidable_under_E_refit": true,
+    "refit_share_of_variance": 0.446,
+    "fit_fixed_share_of_variance": 0.554,
+    "floor_share_removable_by_infinite_test_n": 0.332,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0153,
+    "permanently_undecidable_under_E_refit": false,
     "sensitivity_block_stratified": {
      "B_used": 1000,
-     "point_delta": 0.00294,
-     "boot_mean_delta": 0.00263,
-     "sd": 0.01113,
-     "MDE95": 0.0183,
-     "mde95_twosided": 0.0218,
+     "point_delta": 0.02537,
+     "boot_mean_delta": 0.02351,
+     "sd": 0.01002,
+     "MDE95": 0.0165,
+     "mde95_twosided": 0.0196,
      "ci95": [
-      -0.01888,
-      0.02484
+      0.00342,
+      0.04368
      ],
-     "p_gt_0": 0.584,
-     "margin_over_floor": 0.161,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.991,
+     "margin_over_floor": 1.54,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
     "DIAGNOSTIC_frozen_normalization": {
      "B_used": 1000,
-     "point_delta": 0.00294,
-     "boot_mean_delta": 0.00279,
-     "sd": 0.01049,
-     "MDE95": 0.0173,
-     "mde95_twosided": 0.0206,
+     "point_delta": 0.02537,
+     "boot_mean_delta": 0.02507,
+     "sd": 0.01004,
+     "MDE95": 0.0165,
+     "mde95_twosided": 0.0197,
      "ci95": [
-      -0.01836,
-      0.02289
+      0.00514,
+      0.04565
      ],
-     "p_gt_0": 0.61,
-     "margin_over_floor": 0.17,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.995,
+     "margin_over_floor": 1.536,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
     "normalization_note": "the percentile-inside-block transform is RECOMPUTED on every resample, because a fresh scored sample would recompute it. Freezing it at the observed sample drops that component; the diagnostic above is how much.",
     "B": 1000
@@ -1310,58 +1310,58 @@
    "feature_add.fv.pooled.ridge": {
     "label": "feature_add.fv.pooled.ridge",
     "target_column": "target_censored",
-    "n_rows": 1777,
+    "n_rows": 1798,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 1777,
-     "minus_fv": 0.25286,
-     "full_spec": 0.27346,
-     "delta": 0.0206
+     "n": 1798,
+     "minus_fv": 0.25032,
+     "full_spec": 0.29993,
+     "delta": 0.04962
     },
-    "point_delta": 0.0206,
-    "MDE95": 0.0313,
-    "MDE95_COND": 0.0261,
-    "margin_over_MDE95": 0.657,
-    "margin_over_MDE95_COND": 0.789,
-    "verdict_E_refit": "NULL",
-    "verdict_E_cond": "NULL",
+    "point_delta": 0.04962,
+    "MDE95": 0.0307,
+    "MDE95_COND": 0.0268,
+    "margin_over_MDE95": 1.615,
+    "margin_over_MDE95_COND": 1.854,
+    "verdict_E_refit": "RESOLVABLE WIN",
+    "verdict_E_cond": "RESOLVABLE WIN",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": 0.0206,
-     "boot_mean_delta": 0.03401,
-     "sd": 0.01905,
-     "MDE95": 0.0313,
-     "mde95_twosided": 0.0373,
+     "point_delta": 0.04962,
+     "boot_mean_delta": 0.05031,
+     "sd": 0.01868,
+     "MDE95": 0.0307,
+     "mde95_twosided": 0.0366,
      "ci95": [
-      -0.00173,
-      0.07184
+      0.01446,
+      0.08623
      ],
-     "p_gt_0": 0.97,
-     "margin_over_floor": 0.657,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.998,
+     "margin_over_floor": 1.615,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": 0.0206,
-     "boot_mean_delta": 0.02077,
-     "sd": 0.01586,
-     "MDE95": 0.0261,
-     "mde95_twosided": 0.0311,
+     "point_delta": 0.04962,
+     "boot_mean_delta": 0.04902,
+     "sd": 0.01627,
+     "MDE95": 0.0268,
+     "mde95_twosided": 0.0319,
      "ci95": [
-      -0.00962,
-      0.05189
+      0.0179,
+      0.07947
      ],
-     "p_gt_0": 0.907,
-     "margin_over_floor": 0.789,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.999,
+     "margin_over_floor": 1.854,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
-    "refit_share_of_variance": 0.307,
-    "fit_fixed_share_of_variance": 0.693,
-    "floor_share_removable_by_infinite_test_n": 0.446,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0174,
+    "refit_share_of_variance": 0.241,
+    "fit_fixed_share_of_variance": 0.759,
+    "floor_share_removable_by_infinite_test_n": 0.509,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0151,
     "permanently_undecidable_under_E_refit": false,
     "B": 1000,
     "primary": true,
@@ -1370,59 +1370,59 @@
    "feature_add.fv.pooled.blend": {
     "label": "feature_add.fv.pooled.blend",
     "target_column": "target_censored",
-    "n_rows": 1777,
+    "n_rows": 1798,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 1777,
-     "minus_fv": 0.28204,
-     "full_spec": 0.27625,
-     "delta": -0.00579
+     "n": 1798,
+     "minus_fv": 0.28361,
+     "full_spec": 0.29744,
+     "delta": 0.01383
     },
-    "point_delta": -0.00579,
-    "MDE95": 0.0251,
-    "MDE95_COND": 0.0214,
-    "margin_over_MDE95": 0.231,
-    "margin_over_MDE95_COND": 0.271,
+    "point_delta": 0.01383,
+    "MDE95": 0.0245,
+    "MDE95_COND": 0.0204,
+    "margin_over_MDE95": 0.565,
+    "margin_over_MDE95_COND": 0.677,
     "verdict_E_refit": "NULL",
     "verdict_E_cond": "NULL",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": -0.00579,
-     "boot_mean_delta": 0.0064,
-     "sd": 0.01528,
-     "MDE95": 0.0251,
-     "mde95_twosided": 0.0299,
+     "point_delta": 0.01383,
+     "boot_mean_delta": 0.01687,
+     "sd": 0.01487,
+     "MDE95": 0.0245,
+     "mde95_twosided": 0.0291,
      "ci95": [
-      -0.02438,
-      0.03606
+      -0.01165,
+      0.0448
      ],
-     "p_gt_0": 0.665,
-     "margin_over_floor": 0.231,
+     "p_gt_0": 0.867,
+     "margin_over_floor": 0.565,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": -0.00579,
-     "boot_mean_delta": -0.00595,
-     "sd": 0.01301,
-     "MDE95": 0.0214,
-     "mde95_twosided": 0.0255,
+     "point_delta": 0.01383,
+     "boot_mean_delta": 0.01402,
+     "sd": 0.01242,
+     "MDE95": 0.0204,
+     "mde95_twosided": 0.0243,
      "ci95": [
-      -0.03185,
-      0.01859
+      -0.00991,
+      0.03777
      ],
-     "p_gt_0": 0.323,
-     "margin_over_floor": 0.271,
+     "p_gt_0": 0.865,
+     "margin_over_floor": 0.677,
      "resolvable": false,
      "verdict": "NULL"
     },
-    "refit_share_of_variance": 0.275,
-    "fit_fixed_share_of_variance": 0.725,
-    "floor_share_removable_by_infinite_test_n": 0.476,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0132,
-    "permanently_undecidable_under_E_refit": true,
+    "refit_share_of_variance": 0.302,
+    "fit_fixed_share_of_variance": 0.698,
+    "floor_share_removable_by_infinite_test_n": 0.45,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0135,
+    "permanently_undecidable_under_E_refit": false,
     "B": 1000,
     "primary": false,
     "leg_note": "blend leg is the SHIPPED output. For `fv` it is mis-specified (see the ridge cell); for a general driver feature it is the right contrast."
@@ -1430,59 +1430,59 @@
    "feature_add.fv.block.ridge": {
     "label": "feature_add.fv.block.ridge",
     "target_column": "target_censored",
-    "n_rows": 3655,
+    "n_rows": 3685,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 3655,
-     "minus_fv": 0.23698,
-     "full_spec": 0.24599,
-     "delta": 0.00901
+     "n": 3685,
+     "minus_fv": 0.24243,
+     "full_spec": 0.26344,
+     "delta": 0.02101
     },
-    "point_delta": 0.00901,
-    "MDE95": 0.018,
-    "MDE95_COND": 0.0156,
-    "margin_over_MDE95": 0.5,
-    "margin_over_MDE95_COND": 0.578,
-    "verdict_E_refit": "NULL",
-    "verdict_E_cond": "NULL",
+    "point_delta": 0.02101,
+    "MDE95": 0.019,
+    "MDE95_COND": 0.0157,
+    "margin_over_MDE95": 1.105,
+    "margin_over_MDE95_COND": 1.337,
+    "verdict_E_refit": "RESOLVABLE WIN",
+    "verdict_E_cond": "RESOLVABLE WIN",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": 0.00901,
-     "boot_mean_delta": 0.01077,
-     "sd": 0.01095,
-     "MDE95": 0.018,
-     "mde95_twosided": 0.0215,
+     "point_delta": 0.02101,
+     "boot_mean_delta": 0.02048,
+     "sd": 0.01155,
+     "MDE95": 0.019,
+     "mde95_twosided": 0.0226,
      "ci95": [
-      -0.00967,
-      0.03254
+      -0.00187,
+      0.04257
      ],
-     "p_gt_0": 0.843,
-     "margin_over_floor": 0.5,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.965,
+     "margin_over_floor": 1.105,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": 0.00901,
-     "boot_mean_delta": 0.00891,
-     "sd": 0.00947,
-     "MDE95": 0.0156,
-     "mde95_twosided": 0.0186,
+     "point_delta": 0.02101,
+     "boot_mean_delta": 0.02342,
+     "sd": 0.00955,
+     "MDE95": 0.0157,
+     "mde95_twosided": 0.0187,
      "ci95": [
-      -0.00982,
-      0.02638
+      0.00483,
+      0.04252
      ],
-     "p_gt_0": 0.831,
-     "margin_over_floor": 0.578,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.992,
+     "margin_over_floor": 1.337,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
-    "refit_share_of_variance": 0.252,
-    "fit_fixed_share_of_variance": 0.748,
-    "floor_share_removable_by_infinite_test_n": 0.498,
-    "E_refit_floor_asymptote_infinite_test_n": 0.009,
-    "permanently_undecidable_under_E_refit": true,
+    "refit_share_of_variance": 0.316,
+    "fit_fixed_share_of_variance": 0.684,
+    "floor_share_removable_by_infinite_test_n": 0.438,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0107,
+    "permanently_undecidable_under_E_refit": false,
     "B": 1000,
     "primary": true,
     "leg_note": "ridge leg is the AMENDED PRIMARY for `fv`: blend = (1-lam)*consensus + lam*ridge and the consensus leg is an OLS on `fv`, so the blend contrast leaves `fv` in at weight 0.30 and its truth is near zero by construction."
@@ -1490,58 +1490,58 @@
    "feature_add.fv.block.blend": {
     "label": "feature_add.fv.block.blend",
     "target_column": "target_censored",
-    "n_rows": 3655,
+    "n_rows": 3685,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 3655,
-     "minus_fv": 0.24941,
-     "full_spec": 0.24781,
-     "delta": -0.0016
+     "n": 3685,
+     "minus_fv": 0.25677,
+     "full_spec": 0.26123,
+     "delta": 0.00446
     },
-    "point_delta": -0.0016,
-    "MDE95": 0.0136,
-    "MDE95_COND": 0.0126,
-    "margin_over_MDE95": 0.118,
-    "margin_over_MDE95_COND": 0.127,
+    "point_delta": 0.00446,
+    "MDE95": 0.0141,
+    "MDE95_COND": 0.0122,
+    "margin_over_MDE95": 0.317,
+    "margin_over_MDE95_COND": 0.367,
     "verdict_E_refit": "NULL",
     "verdict_E_cond": "NULL",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": -0.0016,
-     "boot_mean_delta": -0.0002,
-     "sd": 0.00825,
-     "MDE95": 0.0136,
-     "mde95_twosided": 0.0162,
+     "point_delta": 0.00446,
+     "boot_mean_delta": 0.00583,
+     "sd": 0.00855,
+     "MDE95": 0.0141,
+     "mde95_twosided": 0.0168,
      "ci95": [
-      -0.017,
-      0.01529
+      -0.0113,
+      0.02224
      ],
-     "p_gt_0": 0.508,
-     "margin_over_floor": 0.118,
+     "p_gt_0": 0.764,
+     "margin_over_floor": 0.317,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": -0.0016,
-     "boot_mean_delta": -0.0021,
-     "sd": 0.00763,
-     "MDE95": 0.0126,
-     "mde95_twosided": 0.015,
+     "point_delta": 0.00446,
+     "boot_mean_delta": 0.00607,
+     "sd": 0.00739,
+     "MDE95": 0.0122,
+     "mde95_twosided": 0.0145,
      "ci95": [
-      -0.01631,
-      0.01265
+      -0.00816,
+      0.01989
      ],
-     "p_gt_0": 0.389,
-     "margin_over_floor": 0.127,
+     "p_gt_0": 0.794,
+     "margin_over_floor": 0.367,
      "resolvable": false,
      "verdict": "NULL"
     },
-    "refit_share_of_variance": 0.145,
-    "fit_fixed_share_of_variance": 0.855,
-    "floor_share_removable_by_infinite_test_n": 0.62,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0052,
+    "refit_share_of_variance": 0.253,
+    "fit_fixed_share_of_variance": 0.747,
+    "floor_share_removable_by_infinite_test_n": 0.497,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0071,
     "permanently_undecidable_under_E_refit": true,
     "B": 1000,
     "primary": false,
@@ -1550,58 +1550,58 @@
    "feature_add.tool_speed.pooled.ridge": {
     "label": "feature_add.tool_speed.pooled.ridge",
     "target_column": "target_censored",
-    "n_rows": 1777,
+    "n_rows": 1798,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 1777,
-     "minus_tool_speed": 0.26859,
-     "full_spec": 0.27346,
-     "delta": 0.00487
+     "n": 1798,
+     "minus_tool_speed": 0.29803,
+     "full_spec": 0.29993,
+     "delta": 0.0019
     },
-    "point_delta": 0.00487,
-    "MDE95": 0.0107,
-    "MDE95_COND": 0.0043,
-    "margin_over_MDE95": 0.454,
-    "margin_over_MDE95_COND": 1.122,
+    "point_delta": 0.0019,
+    "MDE95": 0.0088,
+    "MDE95_COND": 0.0056,
+    "margin_over_MDE95": 0.216,
+    "margin_over_MDE95_COND": 0.338,
     "verdict_E_refit": "NULL",
-    "verdict_E_cond": "RESOLVABLE WIN",
+    "verdict_E_cond": "NULL",
     "E_refit": {
      "B_used": 500,
-     "point_delta": 0.00487,
-     "boot_mean_delta": 0.00526,
-     "sd": 0.00653,
-     "MDE95": 0.0107,
-     "mde95_twosided": 0.0128,
+     "point_delta": 0.0019,
+     "boot_mean_delta": 0.00213,
+     "sd": 0.00536,
+     "MDE95": 0.0088,
+     "mde95_twosided": 0.0105,
      "ci95": [
-      -0.00663,
-      0.0198
+      -0.00734,
+      0.01207
      ],
-     "p_gt_0": 0.826,
-     "margin_over_floor": 0.454,
+     "p_gt_0": 0.68,
+     "margin_over_floor": 0.216,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 500,
-     "point_delta": 0.00487,
-     "boot_mean_delta": 0.00474,
-     "sd": 0.00264,
-     "MDE95": 0.0043,
-     "mde95_twosided": 0.0052,
+     "point_delta": 0.0019,
+     "boot_mean_delta": 0.00201,
+     "sd": 0.00343,
+     "MDE95": 0.0056,
+     "mde95_twosided": 0.0067,
      "ci95": [
-      -0.0007,
-      0.00961
+      -0.00476,
+      0.00793
      ],
-     "p_gt_0": 0.952,
-     "margin_over_floor": 1.122,
-     "resolvable": true,
-     "verdict": "RESOLVABLE WIN"
+     "p_gt_0": 0.75,
+     "margin_over_floor": 0.338,
+     "resolvable": false,
+     "verdict": "NULL"
     },
-    "refit_share_of_variance": 0.837,
-    "fit_fixed_share_of_variance": 0.163,
-    "floor_share_removable_by_infinite_test_n": 0.085,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0098,
+    "refit_share_of_variance": 0.59,
+    "fit_fixed_share_of_variance": 0.41,
+    "floor_share_removable_by_infinite_test_n": 0.232,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0068,
     "permanently_undecidable_under_E_refit": true,
     "B": 500,
     "role": "feature-dependence control. A feature-add floor is a property of the FEATURE as well as the frame; quoting the `fv` floor for a weak candidate would understate it."
@@ -1609,58 +1609,58 @@
    "lambda_shift.0.05": {
     "label": "lambda_shift.0.05",
     "target_column": "target_censored",
-    "n_rows": 1777,
+    "n_rows": 1798,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 1777,
-     "blend_lam0.65": 0.27667,
-     "blend_lam0.7": 0.27625,
-     "delta": -0.00043
+     "n": 1798,
+     "blend_lam0.65": 0.29672,
+     "blend_lam0.7": 0.29744,
+     "delta": 0.00072
     },
-    "point_delta": -0.00043,
-    "MDE95": 0.0014,
-    "MDE95_COND": 0.0009,
-    "margin_over_MDE95": 0.3,
-    "margin_over_MDE95_COND": 0.451,
+    "point_delta": 0.00072,
+    "MDE95": 0.0012,
+    "MDE95_COND": 0.0008,
+    "margin_over_MDE95": 0.592,
+    "margin_over_MDE95_COND": 0.844,
     "verdict_E_refit": "NULL",
     "verdict_E_cond": "NULL",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": -0.00043,
-     "boot_mean_delta": -0.00072,
-     "sd": 0.00086,
-     "MDE95": 0.0014,
-     "mde95_twosided": 0.0017,
+     "point_delta": 0.00072,
+     "boot_mean_delta": 0.00013,
+     "sd": 0.00074,
+     "MDE95": 0.0012,
+     "mde95_twosided": 0.0014,
      "ci95": [
-      -0.0027,
-      0.00082
+      -0.00136,
+      0.00152
      ],
-     "p_gt_0": 0.195,
-     "margin_over_floor": 0.3,
+     "p_gt_0": 0.576,
+     "margin_over_floor": 0.592,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": -0.00043,
-     "boot_mean_delta": -0.00042,
-     "sd": 0.00057,
-     "MDE95": 0.0009,
-     "mde95_twosided": 0.0011,
+     "point_delta": 0.00072,
+     "boot_mean_delta": 0.00071,
+     "sd": 0.00052,
+     "MDE95": 0.0008,
+     "mde95_twosided": 0.001,
      "ci95": [
-      -0.00162,
-      0.00064
+      -0.00028,
+      0.00177
      ],
-     "p_gt_0": 0.231,
-     "margin_over_floor": 0.451,
+     "p_gt_0": 0.92,
+     "margin_over_floor": 0.844,
      "resolvable": false,
      "verdict": "NULL"
     },
-    "refit_share_of_variance": 0.561,
-    "fit_fixed_share_of_variance": 0.439,
-    "floor_share_removable_by_infinite_test_n": 0.251,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0011,
+    "refit_share_of_variance": 0.506,
+    "fit_fixed_share_of_variance": 0.494,
+    "floor_share_removable_by_infinite_test_n": 0.289,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0009,
     "permanently_undecidable_under_E_refit": true,
     "B": 1000,
     "lambda_pin": 0.7,
@@ -1669,58 +1669,58 @@
    "lambda_shift.0.1": {
     "label": "lambda_shift.0.1",
     "target_column": "target_censored",
-    "n_rows": 1777,
+    "n_rows": 1798,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 1777,
-     "blend_lam0.6": 0.27744,
-     "blend_lam0.7": 0.27625,
-     "delta": -0.00119
+     "n": 1798,
+     "blend_lam0.6": 0.29599,
+     "blend_lam0.7": 0.29744,
+     "delta": 0.00145
     },
-    "point_delta": -0.00119,
-    "MDE95": 0.0028,
-    "MDE95_COND": 0.0017,
-    "margin_over_MDE95": 0.423,
-    "margin_over_MDE95_COND": 0.682,
+    "point_delta": 0.00145,
+    "MDE95": 0.0023,
+    "MDE95_COND": 0.0016,
+    "margin_over_MDE95": 0.622,
+    "margin_over_MDE95_COND": 0.893,
     "verdict_E_refit": "NULL",
     "verdict_E_cond": "NULL",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": -0.00119,
-     "boot_mean_delta": -0.00143,
-     "sd": 0.00171,
-     "MDE95": 0.0028,
-     "mde95_twosided": 0.0034,
+     "point_delta": 0.00145,
+     "boot_mean_delta": 0.00037,
+     "sd": 0.00141,
+     "MDE95": 0.0023,
+     "mde95_twosided": 0.0028,
      "ci95": [
-      -0.00511,
-      0.00158
+      -0.00244,
+      0.003
      ],
-     "p_gt_0": 0.179,
-     "margin_over_floor": 0.423,
+     "p_gt_0": 0.625,
+     "margin_over_floor": 0.622,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": -0.00119,
-     "boot_mean_delta": -0.00114,
-     "sd": 0.00106,
-     "MDE95": 0.0017,
-     "mde95_twosided": 0.0021,
+     "point_delta": 0.00145,
+     "boot_mean_delta": 0.00146,
+     "sd": 0.00098,
+     "MDE95": 0.0016,
+     "mde95_twosided": 0.0019,
      "ci95": [
-      -0.00321,
-      0.001
+      -0.00049,
+      0.00341
      ],
-     "p_gt_0": 0.138,
-     "margin_over_floor": 0.682,
+     "p_gt_0": 0.929,
+     "margin_over_floor": 0.893,
      "resolvable": false,
      "verdict": "NULL"
     },
-    "refit_share_of_variance": 0.616,
-    "fit_fixed_share_of_variance": 0.384,
-    "floor_share_removable_by_infinite_test_n": 0.215,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0022,
+    "refit_share_of_variance": 0.517,
+    "fit_fixed_share_of_variance": 0.483,
+    "floor_share_removable_by_infinite_test_n": 0.281,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0017,
     "permanently_undecidable_under_E_refit": true,
     "B": 1000,
     "lambda_pin": 0.7,
@@ -1729,58 +1729,58 @@
    "lambda_shift.0.19": {
     "label": "lambda_shift.0.19",
     "target_column": "target_censored",
-    "n_rows": 1777,
+    "n_rows": 1798,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 1777,
-     "blend_lam0.51": 0.2781,
-     "blend_lam0.7": 0.27625,
-     "delta": -0.00186
+     "n": 1798,
+     "blend_lam0.51": 0.29469,
+     "blend_lam0.7": 0.29744,
+     "delta": 0.00275
     },
-    "point_delta": -0.00186,
-    "MDE95": 0.0055,
-    "MDE95_COND": 0.0033,
-    "margin_over_MDE95": 0.337,
-    "margin_over_MDE95_COND": 0.557,
+    "point_delta": 0.00275,
+    "MDE95": 0.0044,
+    "MDE95_COND": 0.0031,
+    "margin_over_MDE95": 0.621,
+    "margin_over_MDE95_COND": 0.873,
     "verdict_E_refit": "NULL",
     "verdict_E_cond": "NULL",
     "E_refit": {
      "B_used": 1000,
-     "point_delta": -0.00186,
-     "boot_mean_delta": -0.00257,
-     "sd": 0.00335,
-     "MDE95": 0.0055,
-     "mde95_twosided": 0.0066,
+     "point_delta": 0.00275,
+     "boot_mean_delta": 0.0011,
+     "sd": 0.00269,
+     "MDE95": 0.0044,
+     "mde95_twosided": 0.0053,
      "ci95": [
-      -0.00988,
-      0.0034
+      -0.00421,
+      0.00598
      ],
-     "p_gt_0": 0.214,
-     "margin_over_floor": 0.337,
+     "p_gt_0": 0.675,
+     "margin_over_floor": 0.621,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 1000,
-     "point_delta": -0.00186,
-     "boot_mean_delta": -0.00187,
-     "sd": 0.00203,
-     "MDE95": 0.0033,
-     "mde95_twosided": 0.004,
+     "point_delta": 0.00275,
+     "boot_mean_delta": 0.00269,
+     "sd": 0.00191,
+     "MDE95": 0.0031,
+     "mde95_twosided": 0.0037,
      "ci95": [
-      -0.00574,
-      0.00187
+      -0.00076,
+      0.00654
      ],
-     "p_gt_0": 0.192,
-     "margin_over_floor": 0.557,
+     "p_gt_0": 0.921,
+     "margin_over_floor": 0.873,
      "resolvable": false,
      "verdict": "NULL"
     },
-    "refit_share_of_variance": 0.633,
-    "fit_fixed_share_of_variance": 0.367,
-    "floor_share_removable_by_infinite_test_n": 0.205,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0044,
+    "refit_share_of_variance": 0.496,
+    "fit_fixed_share_of_variance": 0.504,
+    "floor_share_removable_by_infinite_test_n": 0.296,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0031,
     "permanently_undecidable_under_E_refit": true,
     "B": 1000,
     "lambda_pin": 0.7,
@@ -1789,15 +1789,15 @@
   },
   "notes": {
    "block_rho_class_parity": {
-    "class_delta": 0.00294,
-    "efv_mde_lab_stats_from_delta": 0.00294,
+    "class_delta": 0.02537,
+    "efv_mde_lab_stats_from_delta": 0.02537,
     "identical": true,
-    "n_class": 1647,
-    "n_stats_from": 1647
+    "n_class": 1689,
+    "n_stats_from": 1689
    },
    "lambda_shift_note": "one refit stream serves all three shifts: the legs are algebraic reads of the SAME chain, so three streams would charge three independent refits to one refit. A POSITIVE delta means the pinned 0.70 outranks the shifted value."
   },
-  "elapsed_s": 314.5
+  "elapsed_s": 291.8
  },
  "x3_detection_classes": {
   "gate": "X3 detection of the known-real hitter `fv` effect",
@@ -1807,71 +1807,72 @@
    "headtohead": {
     "label": "x3.headtohead.fv_drop",
     "target_column": "war",
-    "n_rows": 3241,
-    "n_clusters": 1052,
+    "n_rows": 3327,
+    "n_clusters": 1088,
     "cond_resampling_unit": "player cluster",
     "legs": {
-     "n": 3241,
-     "efv_minus_fv": 0.33054,
-     "efv_full_spec": 0.35228,
-     "delta": 0.02174
+     "n": 3327,
+     "efv_minus_fv": 0.34298,
+     "efv_full_spec": 0.3634,
+     "delta": 0.02042
     },
-    "point_delta": 0.02174,
-    "MDE95": 0.0217,
-    "MDE95_COND": 0.0218,
-    "margin_over_MDE95": 1.002,
-    "margin_over_MDE95_COND": 0.998,
+    "point_delta": 0.02042,
+    "MDE95": 0.0194,
+    "MDE95_COND": 0.0182,
+    "margin_over_MDE95": 1.051,
+    "margin_over_MDE95_COND": 1.123,
     "verdict_E_refit": "RESOLVABLE WIN",
-    "verdict_E_cond": "NULL",
+    "verdict_E_cond": "RESOLVABLE WIN",
     "E_refit": {
      "B_used": 600,
-     "point_delta": 0.02174,
-     "boot_mean_delta": 0.02504,
-     "sd": 0.01319,
-     "MDE95": 0.0217,
-     "mde95_twosided": 0.0259,
+     "point_delta": 0.02042,
+     "boot_mean_delta": 0.02059,
+     "sd": 0.01181,
+     "MDE95": 0.0194,
+     "mde95_twosided": 0.0232,
      "ci95": [
-      0.00059,
-      0.0527
+      -0.00251,
+      0.04389
      ],
-     "p_gt_0": 0.975,
-     "margin_over_floor": 1.002,
+     "p_gt_0": 0.965,
+     "margin_over_floor": 1.051,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN"
     },
     "E_cond": {
      "B_used": 600,
-     "point_delta": 0.02174,
-     "boot_mean_delta": 0.02194,
-     "sd": 0.01324,
-     "MDE95": 0.0218,
-     "mde95_twosided": 0.026,
+     "point_delta": 0.02042,
+     "boot_mean_delta": 0.02088,
+     "sd": 0.01106,
+     "MDE95": 0.0182,
+     "mde95_twosided": 0.0217,
      "ci95": [
-      -0.00458,
-      0.04554
+      -0.00168,
+      0.04114
      ],
-     "p_gt_0": 0.9567,
-     "margin_over_floor": 0.998,
-     "resolvable": false,
-     "verdict": "NULL"
+     "p_gt_0": 0.9717,
+     "margin_over_floor": 1.123,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
     },
-    "refit_share_of_variance": -0.008,
-    "fit_fixed_share_of_variance": 1.008,
-    "floor_share_removable_by_infinite_test_n": 1.0,
-    "decomposition_note": "NOT ADDITIVE: the conditional sd is not smaller than the refit sd on this cell, so no fit share can be read off the pair",
+    "refit_share_of_variance": 0.123,
+    "fit_fixed_share_of_variance": 0.877,
+    "floor_share_removable_by_infinite_test_n": 0.649,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0068,
+    "permanently_undecidable_under_E_refit": false,
     "DIAGNOSTIC_row_iid_NOT_A_GATE": {
      "B_used": 600,
-     "point_delta": 0.02174,
-     "boot_mean_delta": 0.02196,
-     "sd": 0.00666,
-     "MDE95": 0.0109,
-     "mde95_twosided": 0.013,
+     "point_delta": 0.02042,
+     "boot_mean_delta": 0.02046,
+     "sd": 0.00586,
+     "MDE95": 0.0096,
+     "mde95_twosided": 0.0115,
      "ci95": [
-      0.00954,
-      0.0344
+      0.00921,
+      0.03157
      ],
      "p_gt_0": 1.0,
-     "margin_over_floor": 1.985,
+     "margin_over_floor": 2.118,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN"
     }
@@ -1879,123 +1880,123 @@
    "block_rho": {
     "label": "x3.block_rho.fv_drop",
     "target_column": "target_censored",
-    "n_rows": 1647,
+    "n_rows": 1689,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 1647,
-     "minus_fv": 0.29932,
-     "full_spec": 0.31968,
-     "delta": 0.02037
+     "n": 1689,
+     "minus_fv": 0.35974,
+     "full_spec": 0.37575,
+     "delta": 0.01601
     },
-    "point_delta": 0.02037,
-    "MDE95": 0.0236,
-    "MDE95_COND": 0.0156,
-    "margin_over_MDE95": 0.864,
-    "margin_over_MDE95_COND": 1.306,
+    "point_delta": 0.01601,
+    "MDE95": 0.019,
+    "MDE95_COND": 0.0131,
+    "margin_over_MDE95": 0.843,
+    "margin_over_MDE95_COND": 1.221,
     "verdict_E_refit": "NULL",
     "verdict_E_cond": "RESOLVABLE WIN",
     "E_refit": {
      "B_used": 600,
-     "point_delta": 0.02037,
-     "boot_mean_delta": 0.02127,
-     "sd": 0.01434,
-     "MDE95": 0.0236,
-     "mde95_twosided": 0.0281,
+     "point_delta": 0.01601,
+     "boot_mean_delta": 0.01669,
+     "sd": 0.01155,
+     "MDE95": 0.019,
+     "mde95_twosided": 0.0226,
      "ci95": [
-      -0.00471,
-      0.05607
+      -0.00577,
+      0.04395
      ],
-     "p_gt_0": 0.9417,
-     "margin_over_floor": 0.864,
+     "p_gt_0": 0.94,
+     "margin_over_floor": 0.843,
      "resolvable": false,
      "verdict": "NULL"
     },
     "E_cond": {
      "B_used": 600,
-     "point_delta": 0.02037,
-     "boot_mean_delta": 0.01958,
-     "sd": 0.00948,
-     "MDE95": 0.0156,
-     "mde95_twosided": 0.0186,
+     "point_delta": 0.01601,
+     "boot_mean_delta": 0.01602,
+     "sd": 0.00797,
+     "MDE95": 0.0131,
+     "mde95_twosided": 0.0156,
      "ci95": [
-      0.00166,
-      0.03902
+      0.00086,
+      0.03285
      ],
-     "p_gt_0": 0.9783,
-     "margin_over_floor": 1.306,
+     "p_gt_0": 0.98,
+     "margin_over_floor": 1.221,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN"
     },
-    "refit_share_of_variance": 0.563,
-    "fit_fixed_share_of_variance": 0.437,
-    "floor_share_removable_by_infinite_test_n": 0.25,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0177,
+    "refit_share_of_variance": 0.524,
+    "fit_fixed_share_of_variance": 0.476,
+    "floor_share_removable_by_infinite_test_n": 0.276,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0138,
     "permanently_undecidable_under_E_refit": false
    },
    "lambda_shift_geometry": {
     "label": "x3.lambda_shifted.fv_drop",
     "target_column": "target_censored",
-    "n_rows": 755,
+    "n_rows": 782,
     "n_clusters": null,
     "cond_resampling_unit": "scored row",
     "legs": {
-     "n": 755,
-     "minus_fv": 0.33359,
-     "full_spec": 0.38885,
-     "delta": 0.05526
+     "n": 782,
+     "minus_fv": 0.37286,
+     "full_spec": 0.42118,
+     "delta": 0.04832
     },
-    "point_delta": 0.05526,
-    "MDE95": 0.0466,
-    "MDE95_COND": 0.032,
-    "margin_over_MDE95": 1.186,
-    "margin_over_MDE95_COND": 1.726,
+    "point_delta": 0.04832,
+    "MDE95": 0.0371,
+    "MDE95_COND": 0.0259,
+    "margin_over_MDE95": 1.303,
+    "margin_over_MDE95_COND": 1.863,
     "verdict_E_refit": "RESOLVABLE WIN",
     "verdict_E_cond": "RESOLVABLE WIN",
     "E_refit": {
      "B_used": 600,
-     "point_delta": 0.05526,
-     "boot_mean_delta": 0.0577,
-     "sd": 0.02833,
-     "MDE95": 0.0466,
-     "mde95_twosided": 0.0555,
+     "point_delta": 0.04832,
+     "boot_mean_delta": 0.05155,
+     "sd": 0.02254,
+     "MDE95": 0.0371,
+     "mde95_twosided": 0.0442,
      "ci95": [
-      0.00528,
-      0.11333
+      0.01275,
+      0.09848
      ],
-     "p_gt_0": 0.985,
-     "margin_over_floor": 1.186,
+     "p_gt_0": 0.9967,
+     "margin_over_floor": 1.303,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN"
     },
     "E_cond": {
      "B_used": 600,
-     "point_delta": 0.05526,
-     "boot_mean_delta": 0.05542,
-     "sd": 0.01946,
-     "MDE95": 0.032,
-     "mde95_twosided": 0.0381,
+     "point_delta": 0.04832,
+     "boot_mean_delta": 0.0474,
+     "sd": 0.01577,
+     "MDE95": 0.0259,
+     "mde95_twosided": 0.0309,
      "ci95": [
-      0.01879,
-      0.09557
+      0.01872,
+      0.07637
      ],
-     "p_gt_0": 0.9967,
-     "margin_over_floor": 1.726,
+     "p_gt_0": 1.0,
+     "margin_over_floor": 1.863,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN"
     },
-    "refit_share_of_variance": 0.528,
-    "fit_fixed_share_of_variance": 0.472,
-    "floor_share_removable_by_infinite_test_n": 0.273,
-    "E_refit_floor_asymptote_infinite_test_n": 0.0339,
+    "refit_share_of_variance": 0.51,
+    "fit_fixed_share_of_variance": 0.49,
+    "floor_share_removable_by_infinite_test_n": 0.286,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0265,
     "permanently_undecidable_under_E_refit": false,
     "lambda_used": 0.51,
     "note": "shares pooled_rho's frame geometry; not an independent resampler"
    }
   },
-  "verdict": "FAIL: a class misses where E_refit detects",
+  "verdict": "PASS",
   "criterion": "each class must DETECT wherever E_refit detects. A class that detects where E_refit does not is not a failure of this gate, but it is reported.",
-  "elapsed_s": 70.6
+  "elapsed_s": 68.1
  },
  "x2_coverage_h2h": {
   "gate": "X2 coverage, headtohead_common",
@@ -2005,79 +2006,79 @@
    "n_check": 200,
    "M_fresh_samples": 300,
    "B": 300,
-   "n_rows": 3215,
-   "n_clusters": 1052,
-   "rows_per_cluster": 3.056,
+   "n_rows": 3324,
+   "n_clusters": 1088,
+   "rows_per_cluster": 3.055,
    "seed": 20260856,
    "dataset_stream_base": 25260807
   },
   "dgp_match": {
    "real": {
-    "rho_a_t": 0.3523,
-    "rho_c_t": 0.3162,
-    "rho_a_c": 0.7037,
-    "icc_c": 0.6595,
-    "spearman_k_vs_target": -0.1137
+    "rho_a_t": 0.3634,
+    "rho_c_t": 0.3082,
+    "rho_a_c": 0.7101,
+    "icc_c": 0.6555,
+    "spearman_k_vs_target": -0.1072
    },
    "synthetic": {
-    "rho_a_t": 0.3481,
-    "rho_c_t": 0.3159,
-    "rho_a_c": 0.7017,
-    "icc_c": 0.6574,
-    "delta": 0.03212
+    "rho_a_t": 0.3581,
+    "rho_c_t": 0.3062,
+    "rho_a_c": 0.7103,
+    "icc_c": 0.655,
+    "delta": 0.05188
    },
    "params": {
-    "pe": 0.3719,
-    "pc": 0.3356,
-    "g": 0.5658,
-    "qa": 0.7921,
-    "qc": 0.7531,
+    "pe": 0.3741,
+    "pc": 0.3233,
+    "g": 0.5719,
+    "qa": 0.8043,
+    "qc": 0.7539,
     "qa_at_bound": false
    },
-   "n_rows": 3215,
-   "n_clusters": 1052,
-   "rows_per_cluster": 3.056,
+   "n_rows": 3324,
+   "n_clusters": 1088,
+   "rows_per_cluster": 3.055,
    "cluster_sizes_frozen": {
-    "1": 191,
-    "2": 211,
-    "3": 265,
-    "4": 186,
-    "5": 146,
-    "6": 38,
-    "7": 15
+    "1": 176,
+    "2": 235,
+    "3": 283,
+    "4": 198,
+    "5": 149,
+    "6": 37,
+    "7": 10
    },
    "real_cluster_sizes": {
-    "1": 177,
-    "2": 224,
-    "3": 261,
-    "4": 187,
-    "5": 145,
-    "6": 46,
+    "1": 186,
+    "2": 236,
+    "3": 269,
+    "4": 192,
+    "5": 148,
+    "6": 45,
     "7": 12
    },
    "limitation": "matched on rows per player, the cluster-size distribution, the target marginal conditional on k, both legs' rho against the target, the two legs' rho against each other, and the consensus within-player ICC. NOT matched: the eFV leg carries no vintage structure at all, because in the real frame it has none."
   },
   "conditional_estimand": {
-   "truth_mean_delta": 0.03574,
-   "true_sd": 0.01882,
-   "mean_point_delta": 0.03682,
+   "truth_mean_delta": 0.04952,
+   "true_sd": 0.01795,
+   "mean_point_delta": 0.0474,
    "question": "given this training corpus, is this margin real",
-   "fit_component_sd_targeted": 0.01098,
-   "sigma_pe_calibrated": 0.00876,
+   "fit_component_sd_targeted": 0.00753,
+   "sigma_pe_calibrated": 0.00602,
    "fit_component_note": "the eFV leg is the only leg that is fitted (the consensus leg is the raw published grade), so the training corpus is represented by that leg's loading alone. That is also why POWER_EXTENSION_GATE.md section 1 pre-registers a SMALLER conditional shrink here than on the pooled cuts."
   },
   "legs": {
    "cluster": {
     "resampling_unit": "player cluster",
     "role": "PRIMARY, the registered estimator for this class",
-    "mean_bootstrap_sd": 0.0189,
-    "true_sd_of_conditional_estimand": 0.01882,
-    "sd_ratio_boot_over_true": 1.004,
+    "mean_bootstrap_sd": 0.01806,
+    "true_sd_of_conditional_estimand": 0.01795,
+    "sd_ratio_boot_over_true": 1.006,
     "sd_ratio_in_band": true,
     "gate_two_sided": {
-     "k": 186,
+     "k": 187,
      "n": 200,
-     "coverage": 0.93,
+     "coverage": 0.935,
      "accept_lo": 184,
      "accept_hi": 196,
      "accept_coverage_band": [
@@ -2091,14 +2092,14 @@
    "row": {
     "resampling_unit": "scored row",
     "role": "DIAGNOSTIC ONLY, never a gate: it is the clustering violation",
-    "mean_bootstrap_sd": 0.01292,
-    "true_sd_of_conditional_estimand": 0.01882,
-    "sd_ratio_boot_over_true": 0.687,
+    "mean_bootstrap_sd": 0.0126,
+    "true_sd_of_conditional_estimand": 0.01795,
+    "sd_ratio_boot_over_true": 0.702,
     "sd_ratio_in_band": false,
     "gate_two_sided": {
-     "k": 151,
+     "k": 159,
      "n": 200,
-     "coverage": 0.755,
+     "coverage": 0.795,
      "accept_lo": 184,
      "accept_hi": 196,
      "accept_coverage_band": [
@@ -2111,303 +2112,303 @@
    }
   },
   "clustering_violation_in_coverage_terms": {
-   "cluster_coverage": 0.93,
-   "row_iid_coverage": 0.755,
-   "row_iid_sd_ratio": 0.687,
+   "cluster_coverage": 0.935,
+   "row_iid_coverage": 0.795,
+   "row_iid_sd_ratio": 0.702,
    "reading": "the row variant's coverage is what a one-row-per-player simulator would have called a pass. Publishing it is the check that clustering was preserved."
   },
-  "elapsed_s": 601.7
+  "elapsed_s": 587.2
  },
  "x4_sign_symmetry": {
   "gate": "X4 the extension resolves losses as readily as wins",
   "arms": {
    "win": {
-    "pe": 0.3712,
+    "pe": 0.3831,
     "n_sim": 200,
     "B": 300,
-    "true_delta": 0.03328,
-    "mean_floor_cluster": 0.0314,
-    "fire_rate_cluster": 0.55,
-    "fire_rate_row_DIAGNOSTIC": 0.755,
-    "sign_correct_rate": 0.55
+    "true_delta": 0.05913,
+    "mean_floor_cluster": 0.0293,
+    "fire_rate_cluster": 0.925,
+    "fire_rate_row_DIAGNOSTIC": 0.97,
+    "sign_correct_rate": 0.925
    },
    "loss": {
-    "pe": 0.2955,
+    "pe": 0.2687,
     "n_sim": 200,
     "B": 300,
-    "true_delta": -0.03675,
-    "mean_floor_cluster": 0.034,
-    "fire_rate_cluster": 0.545,
-    "fire_rate_row_DIAGNOSTIC": 0.75,
-    "sign_correct_rate": 0.545
+    "true_delta": -0.05202,
+    "mean_floor_cluster": 0.0336,
+    "fire_rate_cluster": 0.815,
+    "fire_rate_row_DIAGNOSTIC": 0.935,
+    "sign_correct_rate": 0.815
    }
   },
   "standardized_effect_DIAGNOSTIC": {
    "win": {
-    "mean_sd": 0.01909,
-    "z_true": 1.743,
-    "normal_theory_fire_rate": 0.5392,
-    "observed_fire_rate": 0.55
+    "mean_sd": 0.01781,
+    "z_true": 3.32,
+    "normal_theory_fire_rate": 0.953,
+    "observed_fire_rate": 0.925
    },
    "loss": {
-    "mean_sd": 0.02067,
-    "z_true": 1.778,
-    "normal_theory_fire_rate": 0.5529,
-    "observed_fire_rate": 0.545
+    "mean_sd": 0.02043,
+    "z_true": 2.547,
+    "normal_theory_fire_rate": 0.8164,
+    "observed_fire_rate": 0.815
    }
   },
   "magnitude_matched": {
-   "target_abs_delta": 0.03609,
+   "target_abs_delta": 0.05524,
    "target_source": "the real head-to-head margin on today's frame",
-   "win_true_delta": 0.03328,
-   "loss_true_delta": -0.03675,
-   "abs_gap": 0.00347,
+   "win_true_delta": 0.05913,
+   "loss_true_delta": -0.05202,
+   "abs_gap": 0.00711,
    "method": "both arms are solved by bisection to put the TRUE delta at +/- the real margin, so they are compared at equal |effect| rather than at mirrored parameters"
   },
-  "fire_rate_ratio_loss_over_win": 0.991,
+  "fire_rate_ratio_loss_over_win": 0.881,
   "verdict": "PASS",
   "criterion": "PASS when the loss arm's fire rate is within 0.80x-1.25x of the win arm's at matched |effect|. The band is stated here before the numbers are read and is wide because n_sim = 200 gives a binomial se of about 0.035 at a rate of 0.5.",
   "verdict_registered_clause": "PASS",
   "registered_clause": "POWER_EXTENSION_GATE.md section 4.4 as written: the extension is REFUSED if it resolves only wins. The 0.80-1.25 band above is this lab's own tighter operationalization of that clause, and it is NOT relaxed after the fact.",
   "real_data_leg": "see partb_floors: which cells resolve, and in which direction",
-  "elapsed_s": 796.1
+  "elapsed_s": 813.4
  },
  "adjudication_bl2": {
   "produced_by": "tools/efv_power_lab.py adjudicate",
-  "generated_at": "2026-09-04T21:26:35Z",
+  "generated_at": "2026-10-03T21:42:22Z",
   "equivalence_margin": 0.02,
   "margin_source": "owner registration 2026-08-08, 0.02 Spearman",
   "interval_convention": "delta +/- 1.645*sd, the same one-sided alpha 0.05 the floors use, which is the TOST interval at that alpha",
   "cells": {
    "pooled_rho.hit.full_pool_km": {
     "family": "partb_2026_08_09",
-    "delta": -0.01639,
-    "MDE95_COND": 0.0214,
-    "MDE95": 0.0298,
+    "delta": 0.0056,
+    "MDE95_COND": 0.0205,
+    "MDE95": 0.0265,
     "tost_E_cond": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": -0.01639,
-     "sd": 0.01302,
+     "delta": 0.0056,
+     "sd": 0.01245,
      "ci90": [
-      -0.03781,
-      0.00503
+      -0.01488,
+      0.02608
      ],
-     "p_tost": 0.39079,
+     "p_tost": 0.12371,
      "equivalence_established": false
     },
     "tost_E_refit": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": -0.01639,
-     "sd": 0.01812,
+     "delta": 0.0056,
+     "sd": 0.01609,
      "ci90": [
-      -0.0462,
-      0.01342
+      -0.02087,
+      0.03207
      ],
-     "p_tost": 0.42104,
+     "p_tost": 0.1854,
      "equivalence_established": false
     },
     "decidability": {
-     "n_rows": 1777,
+     "n_rows": 1798,
      "accrual_rows_per_year": 168.0,
      "E_cond": {
-      "n_multiplier_required": 1.71,
-      "extra_rows_required": 1257,
-      "years_at_current_accrual": 7.5,
-      "decidable_by_year": 2033,
+      "n_multiplier_required": 13.38,
+      "extra_rows_required": 22250,
+      "years_at_current_accrual": 132.4,
+      "decidable_by_year": 2158,
       "already_resolved": false
      },
      "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0207,
+      "floor_asymptote_infinite_test_n": 0.0168,
       "permanently_undecidable": true,
       "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
      },
-     "triage": "RETIRE under E_refit; E_cond only, by 2033"
+     "triage": "RETIRE under E_refit; E_cond only, by 2158"
     }
    },
    "pooled_rho.pit.full_pool_km": {
     "family": "partb_2026_08_09",
-    "delta": 0.01116,
-    "MDE95_COND": 0.0197,
-    "MDE95": 0.028,
+    "delta": 0.0147,
+    "MDE95_COND": 0.0185,
+    "MDE95": 0.0225,
     "tost_E_cond": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": 0.01116,
-     "sd": 0.01196,
+     "delta": 0.0147,
+     "sd": 0.01123,
      "ci90": [
-      -0.00851,
-      0.03083
+      -0.00377,
+      0.03317
      ],
-     "p_tost": 0.22991,
+     "p_tost": 0.31848,
      "equivalence_established": false
     },
     "tost_E_refit": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": 0.01116,
-     "sd": 0.01703,
+     "delta": 0.0147,
+     "sd": 0.01365,
      "ci90": [
-      -0.01685,
-      0.03917
+      -0.00775,
+      0.03715
      ],
-     "p_tost": 0.30185,
+     "p_tost": 0.34891,
      "equivalence_established": false
     },
     "decidability": {
-     "n_rows": 1878,
-     "accrual_rows_per_year": 194.0,
+     "n_rows": 1887,
+     "accrual_rows_per_year": 196.0,
      "E_cond": {
-      "n_multiplier_required": 3.11,
-      "extra_rows_required": 3959,
-      "years_at_current_accrual": 20.4,
-      "decidable_by_year": 2046,
+      "n_multiplier_required": 1.58,
+      "extra_rows_required": 1093,
+      "years_at_current_accrual": 5.6,
+      "decidable_by_year": 2032,
       "already_resolved": false
      },
      "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0199,
-      "permanently_undecidable": true,
+      "floor_asymptote_infinite_test_n": 0.0128,
+      "permanently_undecidable": false,
       "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
      },
-     "triage": "RETIRE under E_refit; E_cond only, by 2046"
+     "triage": "RE-TEST at 2032"
     }
    },
    "pooled_rho.hit.debuted_km": {
     "family": "partb_2026_08_09",
-    "delta": 0.01045,
-    "MDE95_COND": 0.0206,
-    "MDE95": 0.0458,
+    "delta": 0.03242,
+    "MDE95_COND": 0.0208,
+    "MDE95": 0.0328,
     "tost_E_cond": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": 0.01045,
-     "sd": 0.01254,
+     "delta": 0.03242,
+     "sd": 0.01265,
      "ci90": [
-      -0.01018,
-      0.03108
+      0.01161,
+      0.05323
      ],
-     "p_tost": 0.22316,
+     "p_tost": 0.83691,
      "equivalence_established": false
     },
     "tost_E_refit": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": 0.01045,
-     "sd": 0.02784,
+     "delta": 0.03242,
+     "sd": 0.01991,
      "ci90": [
-      -0.03535,
-      0.05625
+      -0.00033,
+      0.06517
      ],
-     "p_tost": 0.36579,
+     "p_tost": 0.73362,
      "equivalence_established": false
     },
     "decidability": {
-     "n_rows": 755,
-     "accrual_rows_per_year": 62.0,
+     "n_rows": 782,
+     "accrual_rows_per_year": 63.0,
      "E_cond": {
-      "n_multiplier_required": 3.9,
-      "extra_rows_required": 2187,
-      "years_at_current_accrual": 35.3,
-      "decidable_by_year": 2061,
-      "already_resolved": false
+      "n_multiplier_required": 0.41,
+      "extra_rows_required": 0,
+      "years_at_current_accrual": -7.3,
+      "decidable_by_year": 2019,
+      "already_resolved": true
      },
      "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0409,
-      "permanently_undecidable": true,
+      "floor_asymptote_infinite_test_n": 0.0253,
+      "permanently_undecidable": false,
       "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
      },
-     "triage": "RETIRE under E_refit; E_cond only, by 2061"
+     "triage": "DECIDED at current n"
     }
    },
    "pooled_rho.pit.debuted_km": {
     "family": "partb_2026_08_09",
-    "delta": -0.0129,
-    "MDE95_COND": 0.0251,
-    "MDE95": 0.0436,
+    "delta": 0.0257,
+    "MDE95_COND": 0.0233,
+    "MDE95": 0.0278,
     "tost_E_cond": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": -0.0129,
-     "sd": 0.01528,
+     "delta": 0.0257,
+     "sd": 0.01417,
      "ci90": [
-      -0.03804,
-      0.01224
+      0.00239,
+      0.04901
      ],
-     "p_tost": 0.32109,
+     "p_tost": 0.65625,
      "equivalence_established": false
     },
     "tost_E_refit": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": -0.0129,
-     "sd": 0.02652,
+     "delta": 0.0257,
+     "sd": 0.0169,
      "ci90": [
-      -0.05653,
-      0.03073
+      -0.0021,
+      0.0535
      ],
-     "p_tost": 0.39446,
+     "p_tost": 0.63205,
      "equivalence_established": false
     },
     "decidability": {
-     "n_rows": 892,
-     "accrual_rows_per_year": 76.0,
+     "n_rows": 907,
+     "accrual_rows_per_year": 78.0,
      "E_cond": {
-      "n_multiplier_required": 3.8,
-      "extra_rows_required": 2495,
-      "years_at_current_accrual": 32.8,
-      "decidable_by_year": 2059,
-      "already_resolved": false
-     },
-     "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0357,
-      "permanently_undecidable": true,
-      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
-     },
-     "triage": "RETIRE under E_refit; E_cond only, by 2059"
-    }
-   },
-   "headtohead_common": {
-    "family": "partb_2026_08_09",
-    "delta": 0.03609,
-    "MDE95_COND": 0.0308,
-    "MDE95": 0.0357,
-    "tost_E_cond": {
-     "verdict": "UNDECIDED",
-     "margin": 0.02,
-     "delta": 0.03609,
-     "sd": 0.01875,
-     "ci90": [
-      0.00525,
-      0.06693
-     ],
-     "p_tost": 0.80459,
-     "equivalence_established": false
-    },
-    "tost_E_refit": {
-     "verdict": "UNDECIDED",
-     "margin": 0.02,
-     "delta": 0.03609,
-     "sd": 0.02173,
-     "ci90": [
-      0.00034,
-      0.07184
-     ],
-     "p_tost": 0.77049,
-     "equivalence_established": false
-    },
-    "decidability": {
-     "n_rows": 3241,
-     "accrual_rows_per_year": 372.0,
-     "E_cond": {
-      "n_multiplier_required": 0.73,
+      "n_multiplier_required": 0.82,
       "extra_rows_required": 0,
-      "years_at_current_accrual": -2.3,
+      "years_at_current_accrual": -2.1,
       "decidable_by_year": 2024,
       "already_resolved": true
      },
      "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0181,
+      "floor_asymptote_infinite_test_n": 0.0152,
+      "permanently_undecidable": false,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "DECIDED at current n"
+    }
+   },
+   "headtohead_common": {
+    "family": "partb_2026_08_09",
+    "delta": 0.05524,
+    "MDE95_COND": 0.031,
+    "MDE95": 0.0334,
+    "tost_E_cond": {
+     "verdict": "SHIP",
+     "margin": 0.02,
+     "delta": 0.05524,
+     "sd": 0.01883,
+     "ci90": [
+      0.02426,
+      0.08622
+     ],
+     "p_tost": 0.96936,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "SHIP",
+     "margin": 0.02,
+     "delta": 0.05524,
+     "sd": 0.02028,
+     "ci90": [
+      0.02188,
+      0.0886
+     ],
+     "p_tost": 0.95887,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 3327,
+     "accrual_rows_per_year": 376.5,
+     "E_cond": {
+      "n_multiplier_required": 0.31,
+      "extra_rows_required": 0,
+      "years_at_current_accrual": -6.1,
+      "decidable_by_year": 2020,
+      "already_resolved": true
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0124,
       "permanently_undecidable": false,
       "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
      },
@@ -2416,299 +2417,252 @@
    },
    "block_rho": {
     "family": "partb_2026_08_09",
-    "delta": 0.00294,
-    "MDE95_COND": 0.0182,
-    "MDE95": 0.0307,
+    "delta": 0.02537,
+    "MDE95_COND": 0.017,
+    "MDE95": 0.0229,
     "tost_E_cond": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": 0.00294,
-     "sd": 0.01109,
+     "delta": 0.02537,
+     "sd": 0.01035,
      "ci90": [
-      -0.0153,
-      0.02118
+      0.00834,
+      0.0424
      ],
-     "p_tost": 0.06198,
+     "p_tost": 0.69806,
      "equivalence_established": false
     },
     "tost_E_refit": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": 0.00294,
-     "sd": 0.01866,
+     "delta": 0.02537,
+     "sd": 0.0139,
      "ci90": [
-      -0.02776,
-      0.03364
+      0.0025,
+      0.04824
      ],
-     "p_tost": 0.18029,
+     "p_tost": 0.65037,
      "equivalence_established": false
     },
     "decidability": {
-     "n_rows": 1647,
+     "n_rows": 1689,
      "accrual_rows_per_year": 168.0,
      "E_cond": {
-      "n_multiplier_required": 38.5,
-      "extra_rows_required": 61768,
-      "years_at_current_accrual": 367.7,
-      "decidable_by_year": 2394,
-      "already_resolved": false
-     },
-     "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0247,
-      "permanently_undecidable": true,
-      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
-     },
-     "triage": "RETIRE under E_refit; E_cond only, by 2394"
-    }
-   },
-   "feature_add.fv.pooled.ridge": {
-    "family": "partb_2026_08_09",
-    "delta": 0.0206,
-    "MDE95_COND": 0.0261,
-    "MDE95": 0.0313,
-    "tost_E_cond": {
-     "verdict": "UNDECIDED",
-     "margin": 0.02,
-     "delta": 0.0206,
-     "sd": 0.01586,
-     "ci90": [
-      -0.00549,
-      0.04669
-     ],
-     "p_tost": 0.51509,
-     "equivalence_established": false
-    },
-    "tost_E_refit": {
-     "verdict": "UNDECIDED",
-     "margin": 0.02,
-     "delta": 0.0206,
-     "sd": 0.01905,
-     "ci90": [
-      -0.01074,
-      0.05194
-     ],
-     "p_tost": 0.51256,
-     "equivalence_established": false
-    },
-    "decidability": {
-     "n_rows": 1777,
-     "accrual_rows_per_year": 168.0,
-     "E_cond": {
-      "n_multiplier_required": 1.6,
-      "extra_rows_required": 1073,
-      "years_at_current_accrual": 6.4,
-      "decidable_by_year": 2032,
-      "already_resolved": false
-     },
-     "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0174,
-      "permanently_undecidable": false,
-      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
-     },
-     "triage": "RE-TEST at 2032"
-    }
-   },
-   "feature_add.fv.pooled.blend": {
-    "family": "partb_2026_08_09",
-    "delta": -0.00579,
-    "MDE95_COND": 0.0214,
-    "MDE95": 0.0251,
-    "tost_E_cond": {
-     "verdict": "UNDECIDED",
-     "margin": 0.02,
-     "delta": -0.00579,
-     "sd": 0.01301,
-     "ci90": [
-      -0.02719,
-      0.01561
-     ],
-     "p_tost": 0.13736,
-     "equivalence_established": false
-    },
-    "tost_E_refit": {
-     "verdict": "UNDECIDED",
-     "margin": 0.02,
-     "delta": -0.00579,
-     "sd": 0.01528,
-     "ci90": [
-      -0.03093,
-      0.01935
-     ],
-     "p_tost": 0.17619,
-     "equivalence_established": false
-    },
-    "decidability": {
-     "n_rows": 1777,
-     "accrual_rows_per_year": 168.0,
-     "E_cond": {
-      "n_multiplier_required": 13.66,
-      "extra_rows_required": 22501,
-      "years_at_current_accrual": 133.9,
-      "decidable_by_year": 2160,
-      "already_resolved": false
-     },
-     "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0132,
-      "permanently_undecidable": true,
-      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
-     },
-     "triage": "RETIRE under E_refit; E_cond only, by 2160"
-    }
-   },
-   "feature_add.fv.block.ridge": {
-    "family": "partb_2026_08_09",
-    "delta": 0.00901,
-    "MDE95_COND": 0.0156,
-    "MDE95": 0.018,
-    "tost_E_cond": {
-     "verdict": "UNDECIDED",
-     "margin": 0.02,
-     "delta": 0.00901,
-     "sd": 0.00947,
-     "ci90": [
-      -0.00657,
-      0.02459
-     ],
-     "p_tost": 0.12292,
-     "equivalence_established": false
-    },
-    "tost_E_refit": {
-     "verdict": "UNDECIDED",
-     "margin": 0.02,
-     "delta": 0.00901,
-     "sd": 0.01095,
-     "ci90": [
-      -0.009,
-      0.02702
-     ],
-     "p_tost": 0.15777,
-     "equivalence_established": false
-    },
-    "decidability": {
-     "n_rows": 3655,
-     "accrual_rows_per_year": 168.0,
-     "E_cond": {
-      "n_multiplier_required": 2.99,
-      "extra_rows_required": 7271,
-      "years_at_current_accrual": 43.3,
-      "decidable_by_year": 2069,
-      "already_resolved": false
-     },
-     "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.009,
-      "permanently_undecidable": true,
-      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
-     },
-     "triage": "RETIRE under E_refit; E_cond only, by 2069"
-    }
-   },
-   "feature_add.fv.block.blend": {
-    "family": "partb_2026_08_09",
-    "delta": -0.0016,
-    "MDE95_COND": 0.0126,
-    "MDE95": 0.0136,
-    "tost_E_cond": {
-     "verdict": "RULED_OUT",
-     "margin": 0.02,
-     "delta": -0.0016,
-     "sd": 0.00763,
-     "ci90": [
-      -0.01415,
-      0.01095
-     ],
-     "p_tost": 0.00794,
-     "equivalence_established": true
-    },
-    "tost_E_refit": {
-     "verdict": "RULED_OUT",
-     "margin": 0.02,
-     "delta": -0.0016,
-     "sd": 0.00825,
-     "ci90": [
-      -0.01517,
-      0.01197
-     ],
-     "p_tost": 0.01286,
-     "equivalence_established": true
-    },
-    "decidability": {
-     "n_rows": 3655,
-     "accrual_rows_per_year": 168.0,
-     "E_cond": {
-      "n_multiplier_required": 61.54,
-      "extra_rows_required": 221265,
-      "years_at_current_accrual": 1317.1,
-      "decidable_by_year": 3343,
-      "already_resolved": false
-     },
-     "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0052,
-      "permanently_undecidable": true,
-      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
-     },
-     "triage": "RETIRE under E_refit; E_cond only, by 3343"
-    }
-   },
-   "feature_add.tool_speed.pooled.ridge": {
-    "family": "control",
-    "delta": 0.00487,
-    "MDE95_COND": 0.0043,
-    "MDE95": 0.0107,
-    "tost_E_cond": {
-     "verdict": "RULED_OUT",
-     "margin": 0.02,
-     "delta": 0.00487,
-     "sd": 0.00264,
-     "ci90": [
-      0.00053,
-      0.00921
-     ],
-     "p_tost": 0.0,
-     "equivalence_established": true
-    },
-    "tost_E_refit": {
-     "verdict": "RULED_OUT",
-     "margin": 0.02,
-     "delta": 0.00487,
-     "sd": 0.00653,
-     "ci90": [
-      -0.00587,
-      0.01561
-     ],
-     "p_tost": 0.01025,
-     "equivalence_established": true
-    },
-    "decidability": {
-     "n_rows": 1777,
-     "accrual_rows_per_year": 168.0,
-     "E_cond": {
-      "n_multiplier_required": 0.8,
+      "n_multiplier_required": 0.45,
       "extra_rows_required": 0,
-      "years_at_current_accrual": -2.2,
-      "decidable_by_year": 2024,
+      "years_at_current_accrual": -5.5,
+      "decidable_by_year": 2020,
       "already_resolved": true
      },
      "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0098,
-      "permanently_undecidable": true,
+      "floor_asymptote_infinite_test_n": 0.0153,
+      "permanently_undecidable": false,
       "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
      },
      "triage": "DECIDED at current n"
     }
    },
-   "lambda_shift.0.05": {
+   "feature_add.fv.pooled.ridge": {
     "family": "partb_2026_08_09",
-    "delta": -0.00043,
-    "MDE95_COND": 0.0009,
-    "MDE95": 0.0014,
+    "delta": 0.04962,
+    "MDE95_COND": 0.0268,
+    "MDE95": 0.0307,
+    "tost_E_cond": {
+     "verdict": "SHIP",
+     "margin": 0.02,
+     "delta": 0.04962,
+     "sd": 0.01627,
+     "ci90": [
+      0.02286,
+      0.07638
+     ],
+     "p_tost": 0.96566,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.04962,
+     "sd": 0.01868,
+     "ci90": [
+      0.01889,
+      0.08035
+     ],
+     "p_tost": 0.94359,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 1798,
+     "accrual_rows_per_year": 168.0,
+     "E_cond": {
+      "n_multiplier_required": 0.29,
+      "extra_rows_required": 0,
+      "years_at_current_accrual": -7.6,
+      "decidable_by_year": 2018,
+      "already_resolved": true
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0151,
+      "permanently_undecidable": false,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "DECIDED at current n"
+    }
+   },
+   "feature_add.fv.pooled.blend": {
+    "family": "partb_2026_08_09",
+    "delta": 0.01383,
+    "MDE95_COND": 0.0204,
+    "MDE95": 0.0245,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.01383,
+     "sd": 0.01242,
+     "ci90": [
+      -0.0066,
+      0.03426
+     ],
+     "p_tost": 0.30967,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.01383,
+     "sd": 0.01487,
+     "ci90": [
+      -0.01063,
+      0.03829
+     ],
+     "p_tost": 0.3391,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 1798,
+     "accrual_rows_per_year": 168.0,
+     "E_cond": {
+      "n_multiplier_required": 2.18,
+      "extra_rows_required": 2126,
+      "years_at_current_accrual": 12.7,
+      "decidable_by_year": 2039,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0135,
+      "permanently_undecidable": false,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RE-TEST at 2039"
+    }
+   },
+   "feature_add.fv.block.ridge": {
+    "family": "partb_2026_08_09",
+    "delta": 0.02101,
+    "MDE95_COND": 0.0157,
+    "MDE95": 0.019,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.02101,
+     "sd": 0.00955,
+     "ci90": [
+      0.0053,
+      0.03672
+     ],
+     "p_tost": 0.54211,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.02101,
+     "sd": 0.01155,
+     "ci90": [
+      0.00201,
+      0.04001
+     ],
+     "p_tost": 0.53484,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 3685,
+     "accrual_rows_per_year": 168.0,
+     "E_cond": {
+      "n_multiplier_required": 0.56,
+      "extra_rows_required": 0,
+      "years_at_current_accrual": -9.7,
+      "decidable_by_year": 2016,
+      "already_resolved": true
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0107,
+      "permanently_undecidable": false,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "DECIDED at current n"
+    }
+   },
+   "feature_add.fv.block.blend": {
+    "family": "partb_2026_08_09",
+    "delta": 0.00446,
+    "MDE95_COND": 0.0122,
+    "MDE95": 0.0141,
     "tost_E_cond": {
      "verdict": "RULED_OUT",
      "margin": 0.02,
-     "delta": -0.00043,
-     "sd": 0.00057,
+     "delta": 0.00446,
+     "sd": 0.00739,
      "ci90": [
-      -0.00137,
-      0.00051
+      -0.0077,
+      0.01662
+     ],
+     "p_tost": 0.01774,
+     "equivalence_established": true
+    },
+    "tost_E_refit": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": 0.00446,
+     "sd": 0.00855,
+     "ci90": [
+      -0.0096,
+      0.01852
+     ],
+     "p_tost": 0.03457,
+     "equivalence_established": true
+    },
+    "decidability": {
+     "n_rows": 3685,
+     "accrual_rows_per_year": 168.0,
+     "E_cond": {
+      "n_multiplier_required": 7.43,
+      "extra_rows_required": 23692,
+      "years_at_current_accrual": 141.0,
+      "decidable_by_year": 2167,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0071,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2167"
+    }
+   },
+   "feature_add.tool_speed.pooled.ridge": {
+    "family": "control",
+    "delta": 0.0019,
+    "MDE95_COND": 0.0056,
+    "MDE95": 0.0088,
+    "tost_E_cond": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": 0.0019,
+     "sd": 0.00343,
+     "ci90": [
+      -0.00374,
+      0.00754
      ],
      "p_tost": 0.0,
      "equivalence_established": true
@@ -2716,46 +2670,93 @@
     "tost_E_refit": {
      "verdict": "RULED_OUT",
      "margin": 0.02,
-     "delta": -0.00043,
-     "sd": 0.00086,
+     "delta": 0.0019,
+     "sd": 0.00536,
      "ci90": [
-      -0.00184,
-      0.00098
+      -0.00692,
+      0.01072
+     ],
+     "p_tost": 0.00037,
+     "equivalence_established": true
+    },
+    "decidability": {
+     "n_rows": 1798,
+     "accrual_rows_per_year": 168.0,
+     "E_cond": {
+      "n_multiplier_required": 8.82,
+      "extra_rows_required": 14058,
+      "years_at_current_accrual": 83.7,
+      "decidable_by_year": 2110,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0068,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2110"
+    }
+   },
+   "lambda_shift.0.05": {
+    "family": "partb_2026_08_09",
+    "delta": 0.00072,
+    "MDE95_COND": 0.0009,
+    "MDE95": 0.0012,
+    "tost_E_cond": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": 0.00072,
+     "sd": 0.00052,
+     "ci90": [
+      -0.00014,
+      0.00158
+     ],
+     "p_tost": 0.0,
+     "equivalence_established": true
+    },
+    "tost_E_refit": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": 0.00072,
+     "sd": 0.00074,
+     "ci90": [
+      -0.0005,
+      0.00194
      ],
      "p_tost": 0.0,
      "equivalence_established": true
     },
     "decidability": {
-     "n_rows": 1777,
+     "n_rows": 1798,
      "accrual_rows_per_year": 168.0,
      "E_cond": {
-      "n_multiplier_required": 4.75,
-      "extra_rows_required": 6673,
-      "years_at_current_accrual": 39.7,
-      "decidable_by_year": 2066,
+      "n_multiplier_required": 1.41,
+      "extra_rows_required": 740,
+      "years_at_current_accrual": 4.4,
+      "decidable_by_year": 2030,
       "already_resolved": false
      },
      "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0011,
+      "floor_asymptote_infinite_test_n": 0.0009,
       "permanently_undecidable": true,
       "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
      },
-     "triage": "RETIRE under E_refit; E_cond only, by 2066"
+     "triage": "RETIRE under E_refit; E_cond only, by 2030"
     }
    },
    "lambda_shift.0.1": {
     "family": "partb_2026_08_09",
-    "delta": -0.00119,
-    "MDE95_COND": 0.0017,
-    "MDE95": 0.0028,
+    "delta": 0.00145,
+    "MDE95_COND": 0.0016,
+    "MDE95": 0.0023,
     "tost_E_cond": {
      "verdict": "RULED_OUT",
      "margin": 0.02,
-     "delta": -0.00119,
-     "sd": 0.00106,
+     "delta": 0.00145,
+     "sd": 0.00098,
      "ci90": [
-      -0.00293,
-      0.00055
+      -0.00016,
+      0.00306
      ],
      "p_tost": 0.0,
      "equivalence_established": true
@@ -2763,46 +2764,46 @@
     "tost_E_refit": {
      "verdict": "RULED_OUT",
      "margin": 0.02,
-     "delta": -0.00119,
-     "sd": 0.00171,
+     "delta": 0.00145,
+     "sd": 0.00141,
      "ci90": [
-      -0.004,
-      0.00162
+      -0.00087,
+      0.00377
      ],
      "p_tost": 0.0,
      "equivalence_established": true
     },
     "decidability": {
-     "n_rows": 1777,
+     "n_rows": 1798,
      "accrual_rows_per_year": 168.0,
      "E_cond": {
-      "n_multiplier_required": 2.15,
-      "extra_rows_required": 2038,
-      "years_at_current_accrual": 12.1,
-      "decidable_by_year": 2038,
+      "n_multiplier_required": 1.24,
+      "extra_rows_required": 424,
+      "years_at_current_accrual": 2.5,
+      "decidable_by_year": 2029,
       "already_resolved": false
      },
      "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0022,
+      "floor_asymptote_infinite_test_n": 0.0017,
       "permanently_undecidable": true,
       "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
      },
-     "triage": "RETIRE under E_refit; E_cond only, by 2038"
+     "triage": "RETIRE under E_refit; E_cond only, by 2029"
     }
    },
    "lambda_shift.0.19": {
     "family": "partb_2026_08_09",
-    "delta": -0.00186,
-    "MDE95_COND": 0.0033,
-    "MDE95": 0.0055,
+    "delta": 0.00275,
+    "MDE95_COND": 0.0031,
+    "MDE95": 0.0044,
     "tost_E_cond": {
      "verdict": "RULED_OUT",
      "margin": 0.02,
-     "delta": -0.00186,
-     "sd": 0.00203,
+     "delta": 0.00275,
+     "sd": 0.00191,
      "ci90": [
-      -0.0052,
-      0.00148
+      -0.00039,
+      0.00589
      ],
      "p_tost": 0.0,
      "equivalence_established": true
@@ -2810,110 +2811,111 @@
     "tost_E_refit": {
      "verdict": "RULED_OUT",
      "margin": 0.02,
-     "delta": -0.00186,
-     "sd": 0.00335,
+     "delta": 0.00275,
+     "sd": 0.00269,
      "ci90": [
-      -0.00737,
-      0.00365
+      -0.00168,
+      0.00718
      ],
      "p_tost": 0.0,
      "equivalence_established": true
     },
     "decidability": {
-     "n_rows": 1777,
+     "n_rows": 1798,
      "accrual_rows_per_year": 168.0,
      "E_cond": {
-      "n_multiplier_required": 3.22,
-      "extra_rows_required": 3951,
-      "years_at_current_accrual": 23.5,
-      "decidable_by_year": 2050,
+      "n_multiplier_required": 1.31,
+      "extra_rows_required": 549,
+      "years_at_current_accrual": 3.3,
+      "decidable_by_year": 2029,
       "already_resolved": false
      },
      "E_refit": {
-      "floor_asymptote_infinite_test_n": 0.0044,
+      "floor_asymptote_infinite_test_n": 0.0031,
       "permanently_undecidable": true,
       "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
      },
-     "triage": "RETIRE under E_refit; E_cond only, by 2050"
+     "triage": "RETIRE under E_refit; E_cond only, by 2029"
     }
    }
   },
   "registered_cells_2026_08_08_for_reference": {
    "hit.full_pool_km": {
     "basis": "part A registration, 2026-08-08 pools",
-    "delta": -0.01639,
-    "MDE95_COND": 0.02,
-    "MDE95": 0.0297,
+    "delta": 0.0056,
+    "MDE95_COND": 0.0198,
+    "MDE95": 0.027,
     "tost_E_cond": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": -0.01639,
-     "sd": 0.01215,
+     "delta": 0.0056,
+     "sd": 0.01202,
      "ci90": [
-      -0.03638,
-      0.0036
+      -0.01417,
+      0.02537
      ],
-     "p_tost": 0.38319,
+     "p_tost": 0.11546,
      "equivalence_established": false
     }
    },
    "pit.full_pool_km": {
     "basis": "part A registration, 2026-08-08 pools",
-    "delta": 0.01116,
-    "MDE95_COND": 0.0191,
-    "MDE95": 0.0272,
+    "delta": 0.0147,
+    "MDE95_COND": 0.0181,
+    "MDE95": 0.023,
     "tost_E_cond": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": 0.01116,
-     "sd": 0.01164,
+     "delta": 0.0147,
+     "sd": 0.01101,
      "ci90": [
-      -0.00799,
-      0.03031
+      -0.00341,
+      0.03281
      ],
-     "p_tost": 0.22379,
+     "p_tost": 0.31512,
      "equivalence_established": false
     }
    },
    "hit.debuted_km": {
     "basis": "part A registration, 2026-08-08 pools",
-    "delta": 0.01045,
-    "MDE95_COND": 0.0211,
-    "MDE95": 0.0437,
+    "delta": 0.03242,
+    "MDE95_COND": 0.0212,
+    "MDE95": 0.0314,
     "tost_E_cond": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": 0.01045,
-     "sd": 0.01282,
+     "delta": 0.03242,
+     "sd": 0.01287,
      "ci90": [
-      -0.01064,
-      0.03154
+      0.01125,
+      0.05359
      ],
-     "p_tost": 0.22816,
+     "p_tost": 0.83274,
      "equivalence_established": false
     }
    },
    "pit.debuted_km": {
     "basis": "part A registration, 2026-08-08 pools",
-    "delta": -0.0129,
-    "MDE95_COND": 0.027,
-    "MDE95": 0.0419,
+    "delta": 0.0257,
+    "MDE95_COND": 0.0226,
+    "MDE95": 0.027,
     "tost_E_cond": {
      "verdict": "UNDECIDED",
      "margin": 0.02,
-     "delta": -0.0129,
-     "sd": 0.01641,
+     "delta": 0.0257,
+     "sd": 0.01375,
      "ci90": [
-      -0.03989,
-      0.01409
+      0.00308,
+      0.04832
      ],
-     "p_tost": 0.33263,
+     "p_tost": 0.66076,
      "equivalence_established": false
     }
    }
   },
   "tally_E_cond": {
-   "UNDECIDED": 9,
+   "UNDECIDED": 7,
+   "SHIP": 2,
    "RULED_OUT": 4
   },
   "family_note": "the Holm family is the cells a decision could be made on. The feature-dependence control is adjudicated but excluded, because padding a family with instrument checks makes every real cell harder to reject for no reason.",
@@ -2932,170 +2934,170 @@
    "cells": [
     {
      "key": "pooled_rho.hit.full_pool_km",
-     "delta": -0.01639,
-     "sd": 0.01302,
-     "abs_t": 1.259,
-     "p_one_sided": 0.10405,
-     "holm_step": 3,
-     "holm_alpha": 0.004545,
-     "holm_z_one_sided": 2.6086,
-     "mde95_holm_k13": 0.034,
+     "delta": 0.0056,
+     "sd": 0.01245,
+     "abs_t": 0.45,
+     "p_one_sided": 0.32643,
+     "holm_step": 13,
+     "holm_alpha": 0.05,
+     "holm_z_one_sided": 1.6449,
+     "mde95_holm_k13": 0.0205,
      "clears_own_holm_step": false,
      "reject_holm": false
     },
     {
      "key": "pooled_rho.pit.full_pool_km",
-     "delta": 0.01116,
-     "sd": 0.01196,
-     "abs_t": 0.933,
-     "p_one_sided": 0.17538,
-     "holm_step": 6,
-     "holm_alpha": 0.00625,
-     "holm_z_one_sided": 2.4977,
-     "mde95_holm_k13": 0.0299,
+     "delta": 0.0147,
+     "sd": 0.01123,
+     "abs_t": 1.309,
+     "p_one_sided": 0.09527,
+     "holm_step": 10,
+     "holm_alpha": 0.0125,
+     "holm_z_one_sided": 2.2414,
+     "mde95_holm_k13": 0.0252,
      "clears_own_holm_step": false,
      "reject_holm": false
     },
     {
      "key": "pooled_rho.hit.debuted_km",
-     "delta": 0.01045,
-     "sd": 0.01254,
-     "abs_t": 0.833,
-     "p_one_sided": 0.20233,
-     "holm_step": 9,
-     "holm_alpha": 0.01,
-     "holm_z_one_sided": 2.3263,
-     "mde95_holm_k13": 0.0292,
+     "delta": 0.03242,
+     "sd": 0.01265,
+     "abs_t": 2.563,
+     "p_one_sided": 0.00519,
+     "holm_step": 3,
+     "holm_alpha": 0.004545,
+     "holm_z_one_sided": 2.6086,
+     "mde95_holm_k13": 0.033,
      "clears_own_holm_step": false,
      "reject_holm": false
     },
     {
      "key": "pooled_rho.pit.debuted_km",
-     "delta": -0.0129,
-     "sd": 0.01528,
-     "abs_t": 0.844,
-     "p_one_sided": 0.19927,
-     "holm_step": 8,
-     "holm_alpha": 0.008333,
-     "holm_z_one_sided": 2.394,
-     "mde95_holm_k13": 0.0366,
+     "delta": 0.0257,
+     "sd": 0.01417,
+     "abs_t": 1.814,
+     "p_one_sided": 0.03486,
+     "holm_step": 6,
+     "holm_alpha": 0.00625,
+     "holm_z_one_sided": 2.4977,
+     "mde95_holm_k13": 0.0354,
      "clears_own_holm_step": false,
      "reject_holm": false
     },
     {
      "key": "headtohead_common",
-     "delta": 0.03609,
-     "sd": 0.01875,
-     "abs_t": 1.925,
-     "p_one_sided": 0.02713,
-     "holm_step": 1,
-     "holm_alpha": 0.003846,
-     "holm_z_one_sided": 2.6653,
-     "mde95_holm_k13": 0.05,
-     "clears_own_holm_step": false,
-     "reject_holm": false
+     "delta": 0.05524,
+     "sd": 0.01883,
+     "abs_t": 2.934,
+     "p_one_sided": 0.00168,
+     "holm_step": 2,
+     "holm_alpha": 0.004167,
+     "holm_z_one_sided": 2.6383,
+     "mde95_holm_k13": 0.0497,
+     "clears_own_holm_step": true,
+     "reject_holm": true
     },
     {
      "key": "block_rho",
-     "delta": 0.00294,
-     "sd": 0.01109,
-     "abs_t": 0.265,
-     "p_one_sided": 0.39546,
-     "holm_step": 12,
-     "holm_alpha": 0.025,
-     "holm_z_one_sided": 1.96,
-     "mde95_holm_k13": 0.0217,
+     "delta": 0.02537,
+     "sd": 0.01035,
+     "abs_t": 2.451,
+     "p_one_sided": 0.00712,
+     "holm_step": 4,
+     "holm_alpha": 0.005,
+     "holm_z_one_sided": 2.5758,
+     "mde95_holm_k13": 0.0267,
      "clears_own_holm_step": false,
      "reject_holm": false
     },
     {
      "key": "feature_add.fv.pooled.ridge",
-     "delta": 0.0206,
-     "sd": 0.01586,
-     "abs_t": 1.299,
-     "p_one_sided": 0.097,
-     "holm_step": 2,
-     "holm_alpha": 0.004167,
-     "holm_z_one_sided": 2.6383,
-     "mde95_holm_k13": 0.0418,
-     "clears_own_holm_step": false,
-     "reject_holm": false
+     "delta": 0.04962,
+     "sd": 0.01627,
+     "abs_t": 3.05,
+     "p_one_sided": 0.00115,
+     "holm_step": 1,
+     "holm_alpha": 0.003846,
+     "holm_z_one_sided": 2.6653,
+     "mde95_holm_k13": 0.0434,
+     "clears_own_holm_step": true,
+     "reject_holm": true
     },
     {
      "key": "feature_add.fv.pooled.blend",
-     "delta": -0.00579,
-     "sd": 0.01301,
-     "abs_t": 0.445,
-     "p_one_sided": 0.32814,
+     "delta": 0.01383,
+     "sd": 0.01242,
+     "abs_t": 1.114,
+     "p_one_sided": 0.13274,
      "holm_step": 11,
      "holm_alpha": 0.016667,
      "holm_z_one_sided": 2.128,
-     "mde95_holm_k13": 0.0277,
+     "mde95_holm_k13": 0.0264,
      "clears_own_holm_step": false,
      "reject_holm": false
     },
     {
      "key": "feature_add.fv.block.ridge",
-     "delta": 0.00901,
-     "sd": 0.00947,
-     "abs_t": 0.951,
-     "p_one_sided": 0.17069,
+     "delta": 0.02101,
+     "sd": 0.00955,
+     "abs_t": 2.2,
+     "p_one_sided": 0.0139,
      "holm_step": 5,
      "holm_alpha": 0.005556,
      "holm_z_one_sided": 2.5392,
-     "mde95_holm_k13": 0.024,
+     "mde95_holm_k13": 0.0242,
      "clears_own_holm_step": false,
      "reject_holm": false
     },
     {
      "key": "feature_add.fv.block.blend",
-     "delta": -0.0016,
-     "sd": 0.00763,
-     "abs_t": 0.21,
-     "p_one_sided": 0.41695,
-     "holm_step": 13,
-     "holm_alpha": 0.05,
-     "holm_z_one_sided": 1.6449,
-     "mde95_holm_k13": 0.0126,
+     "delta": 0.00446,
+     "sd": 0.00739,
+     "abs_t": 0.604,
+     "p_one_sided": 0.27308,
+     "holm_step": 12,
+     "holm_alpha": 0.025,
+     "holm_z_one_sided": 1.96,
+     "mde95_holm_k13": 0.0145,
      "clears_own_holm_step": false,
      "reject_holm": false
     },
     {
      "key": "lambda_shift.0.05",
-     "delta": -0.00043,
-     "sd": 0.00057,
-     "abs_t": 0.754,
-     "p_one_sided": 0.22531,
-     "holm_step": 10,
-     "holm_alpha": 0.0125,
-     "holm_z_one_sided": 2.2414,
-     "mde95_holm_k13": 0.0013,
+     "delta": 0.00072,
+     "sd": 0.00052,
+     "abs_t": 1.385,
+     "p_one_sided": 0.08309,
+     "holm_step": 9,
+     "holm_alpha": 0.01,
+     "holm_z_one_sided": 2.3263,
+     "mde95_holm_k13": 0.0012,
      "clears_own_holm_step": false,
      "reject_holm": false
     },
     {
      "key": "lambda_shift.0.1",
-     "delta": -0.00119,
-     "sd": 0.00106,
-     "abs_t": 1.123,
-     "p_one_sided": 0.13079,
-     "holm_step": 4,
-     "holm_alpha": 0.005,
-     "holm_z_one_sided": 2.5758,
-     "mde95_holm_k13": 0.0027,
+     "delta": 0.00145,
+     "sd": 0.00098,
+     "abs_t": 1.48,
+     "p_one_sided": 0.06949,
+     "holm_step": 7,
+     "holm_alpha": 0.007143,
+     "holm_z_one_sided": 2.45,
+     "mde95_holm_k13": 0.0024,
      "clears_own_holm_step": false,
      "reject_holm": false
     },
     {
      "key": "lambda_shift.0.19",
-     "delta": -0.00186,
-     "sd": 0.00203,
-     "abs_t": 0.916,
-     "p_one_sided": 0.17977,
-     "holm_step": 7,
-     "holm_alpha": 0.007143,
-     "holm_z_one_sided": 2.45,
-     "mde95_holm_k13": 0.005,
+     "delta": 0.00275,
+     "sd": 0.00191,
+     "abs_t": 1.44,
+     "p_one_sided": 0.07496,
+     "holm_step": 8,
+     "holm_alpha": 0.008333,
+     "holm_z_one_sided": 2.394,
+     "mde95_holm_k13": 0.0046,
      "clears_own_holm_step": false,
      "reject_holm": false
     }
@@ -3106,80 +3108,80 @@
     "series": [
      {
       "fold": 2014,
-      "n_test": 96,
+      "n_test": 98,
       "n_train": 91,
-      "delta": 0.10708,
-      "sd": 0.05974
+      "delta": 0.09208,
+      "sd": 0.04351
      },
      {
       "fold": 2015,
-      "n_test": 78,
-      "n_train": 187,
-      "delta": -0.05151,
-      "sd": 0.02291
+      "n_test": 79,
+      "n_train": 189,
+      "delta": -0.06042,
+      "sd": 0.02354
      },
      {
       "fold": 2016,
-      "n_test": 95,
-      "n_train": 265,
-      "delta": 0.00721,
-      "sd": 0.03728
+      "n_test": 99,
+      "n_train": 268,
+      "delta": 0.05335,
+      "sd": 0.08468
      },
      {
       "fold": 2017,
-      "n_test": 112,
-      "n_train": 360,
-      "delta": -0.01952,
-      "sd": 0.05098
+      "n_test": 118,
+      "n_train": 367,
+      "delta": 0.0515,
+      "sd": 0.04708
      },
      {
       "fold": 2018,
-      "n_test": 174,
-      "n_train": 472,
-      "delta": -0.03076,
-      "sd": 0.05631
+      "n_test": 180,
+      "n_train": 485,
+      "delta": 0.11944,
+      "sd": 0.05439
      },
      {
       "fold": 2019,
-      "n_test": 198,
-      "n_train": 646,
-      "delta": 0.05339,
-      "sd": 0.03957
+      "n_test": 199,
+      "n_train": 665,
+      "delta": 0.05956,
+      "sd": 0.04511
      },
      {
       "fold": 2020,
       "n_test": 168,
-      "n_train": 844,
-      "delta": -0.04613,
-      "sd": 0.0303
+      "n_train": 864,
+      "delta": -0.02802,
+      "sd": 0.0272
      },
      {
       "fold": 2021,
       "n_test": 127,
-      "n_train": 1012,
-      "delta": 0.06187,
-      "sd": 0.0435
+      "n_train": 1032,
+      "delta": 0.04577,
+      "sd": 0.04834
      },
      {
       "fold": 2022,
-      "n_test": 249,
-      "n_train": 1139,
-      "delta": -0.0701,
-      "sd": 0.01957
+      "n_test": 251,
+      "n_train": 1159,
+      "delta": -0.05875,
+      "sd": 0.02171
      },
      {
       "fold": 2023,
       "n_test": 245,
-      "n_train": 1388,
-      "delta": 0.00655,
-      "sd": 0.02707
+      "n_train": 1410,
+      "delta": -0.01027,
+      "sd": 0.02816
      },
      {
       "fold": 2024,
-      "n_test": 235,
-      "n_train": 1633,
-      "delta": -0.00204,
-      "sd": 0.01988
+      "n_test": 234,
+      "n_train": 1655,
+      "delta": -0.01076,
+      "sd": 0.02203
      }
     ],
     "folds_used": 11,
@@ -3187,47 +3189,47 @@
     "reml_hksj": {
      "label": "hit.full_pool_km",
      "k_folds": 11,
-     "tau2_reml": 0.00123075,
-     "tau2_dersimonian_laird_DO_NOT_SHIP": 0.00122637,
-     "Q": 23.042,
-     "pooled_delta": -0.00888,
-     "se_random_effects": 0.01485,
-     "se_hksj": 0.01498,
-     "hksj_widening_ratio": 1.147,
+     "tau2_reml": 0.00221014,
+     "tau2_dersimonian_laird_DO_NOT_SHIP": 0.00180877,
+     "Q": 27.14,
+     "pooled_delta": 0.00876,
+     "se_random_effects": 0.01825,
+     "se_hksj": 0.01802,
+     "hksj_widening_ratio": 1.122,
      "t_quantile_975": 2.2281,
      "z_quantile_975": 1.96,
      "ci95_hksj": [
-      -0.04227,
-      0.0245
+      -0.03139,
+      0.0489
      ],
      "ci95_random_effects_normal_NOT_SHIPPED": [
-      -0.03799,
-      0.02022
+      -0.02701,
+      0.04452
      ],
      "i_squared": "SUPPRESSED: near 0.99 mechanically at this per-fold n",
-     "hksj_q": 1.0181
+     "hksj_q": 0.9747
     },
     "meta_regression_log_n_train": {
      "label": "hit.full_pool_km",
      "k_folds": 11,
-     "tau2_mandel_paule": 0.00149449,
-     "intercept": 0.04841,
-     "slope_per_log_n_train": -0.00875,
-     "slope_se": 0.01866,
+     "tau2_mandel_paule": 0.0020821,
+     "intercept": 0.14399,
+     "slope_per_log_n_train": -0.02114,
+     "slope_se": 0.0201,
      "slope_ci95_knapp_hartung": [
-      -0.05096,
-      0.03345
+      -0.06661,
+      0.02432
      ],
      "slope_resolves": false,
      "n_train_range": [
       91,
-      1633
+      1655
      ],
-     "n_train_deployed": 1869,
-     "predicted_delta_at_deployed_n": -0.01754,
+     "n_train_deployed": 1985,
+     "predicted_delta_at_deployed_n": -0.01655,
      "predicted_ci95": [
-      -0.07593,
-      0.04085
+      -0.08353,
+      0.05043
      ],
      "extrapolation_warning": "the deployed n_train is OUTSIDE the fold range, so this is an extrapolation and its interval is the honest width of that extrapolation, not a measurement"
     },
@@ -3235,10 +3237,10 @@
      "k_folds": 11,
      "n_sign_vectors": 2048,
      "exhaustive": true,
-     "observed_inverse_variance_weighted_mean": -0.01964,
-     "p_two_sided_inverse_variance": 0.35059,
-     "observed_unweighted_mean": 0.00146,
-     "p_two_sided_unweighted": 0.92969,
+     "observed_inverse_variance_weighted_mean": -0.01259,
+     "p_two_sided_inverse_variance": 0.48828,
+     "observed_unweighted_mean": 0.02304,
+     "p_two_sided_unweighted": 0.22852,
      "note": "exact by enumeration, not simulated. The two weightings are reported because the inverse-variance weights are themselves estimated."
     }
    },
@@ -3248,78 +3250,78 @@
       "fold": 2014,
       "n_test": 89,
       "n_train": 94,
-      "delta": 0.01201,
-      "sd": 0.03535
+      "delta": 0.03001,
+      "sd": 0.03392
      },
      {
       "fold": 2015,
       "n_test": 95,
       "n_train": 183,
-      "delta": -0.02099,
-      "sd": 0.02964
+      "delta": 0.00303,
+      "sd": 0.02893
      },
      {
       "fold": 2016,
-      "n_test": 118,
+      "n_test": 120,
       "n_train": 278,
-      "delta": 0.0183,
-      "sd": 0.04757
+      "delta": -0.13249,
+      "sd": 0.07675
      },
      {
       "fold": 2017,
-      "n_test": 87,
-      "n_train": 396,
-      "delta": -0.24292,
-      "sd": 0.13148
+      "n_test": 89,
+      "n_train": 398,
+      "delta": 0.04614,
+      "sd": 0.08222
      },
      {
       "fold": 2018,
       "n_test": 214,
-      "n_train": 483,
-      "delta": -0.01162,
-      "sd": 0.05403
+      "n_train": 487,
+      "delta": 0.01798,
+      "sd": 0.05288
      },
      {
       "fold": 2019,
-      "n_test": 194,
-      "n_train": 697,
-      "delta": -0.03828,
-      "sd": 0.04868
+      "n_test": 196,
+      "n_train": 701,
+      "delta": 0.08237,
+      "sd": 0.04767
      },
      {
       "fold": 2020,
-      "n_test": 203,
-      "n_train": 891,
-      "delta": 0.01015,
-      "sd": 0.03073
+      "n_test": 207,
+      "n_train": 897,
+      "delta": 0.01725,
+      "sd": 0.03959
      },
      {
       "fold": 2021,
-      "n_test": 153,
-      "n_train": 1094,
-      "delta": 0.0277,
-      "sd": 0.03598
+      "n_test": 154,
+      "n_train": 1104,
+      "delta": -0.01342,
+      "sd": 0.04734
      },
      {
       "fold": 2022,
-      "n_test": 220,
-      "n_train": 1247,
-      "delta": 0.05318,
-      "sd": 0.03111
+      "n_test": 219,
+      "n_train": 1258,
+      "delta": -0.01808,
+      "sd": 0.0345
      },
      {
       "fold": 2023,
-      "n_test": 248,
-      "n_train": 1467,
-      "delta": -0.01082,
-      "sd": 0.02262
+      "n_test": 247,
+      "n_train": 1477,
+      "delta": -0.01013,
+      "sd": 0.02566
      },
      {
       "fold": 2024,
       "n_test": 257,
-      "n_train": 1715,
-      "delta": 0.01831,
-      "sd": 0.0182
+      "n_train": 1724,
+      "delta": -0.01723,
+      "sd": 0.01996
      }
     ],
     "folds_used": 11,
@@ -3329,45 +3331,45 @@
      "k_folds": 11,
      "tau2_reml": 0.0,
      "tau2_dersimonian_laird_DO_NOT_SHIP": 0.0,
-     "Q": 9.116,
-     "pooled_delta": 0.00732,
-     "se_random_effects": 0.00952,
-     "se_hksj": 0.00909,
-     "hksj_widening_ratio": 1.085,
+     "Q": 8.62,
+     "pooled_delta": -0.00132,
+     "se_random_effects": 0.01046,
+     "se_hksj": 0.00972,
+     "hksj_widening_ratio": 1.055,
      "t_quantile_975": 2.2281,
      "z_quantile_975": 1.96,
      "ci95_hksj": [
-      -0.01292,
-      0.02757
+      -0.02297,
+      0.02032
      ],
      "ci95_random_effects_normal_NOT_SHIPPED": [
-      -0.01133,
-      0.02598
+      -0.02183,
+      0.01919
      ],
      "i_squared": "SUPPRESSED: near 0.99 mechanically at this per-fold n",
-     "hksj_q": 0.9116
+     "hksj_q": 0.862
     },
     "meta_regression_log_n_train": {
      "label": "pit.full_pool_km",
      "k_folds": 11,
      "tau2_mandel_paule": 0.0,
-     "intercept": -0.04934,
-     "slope_per_log_n_train": 0.00846,
-     "slope_se": 0.00992,
+     "intercept": 0.07167,
+     "slope_per_log_n_train": -0.01104,
+     "slope_se": 0.00953,
      "slope_ci95_knapp_hartung": [
-      -0.01398,
-      0.03089
+      -0.03261,
+      0.01052
      ],
      "slope_resolves": false,
      "n_train_range": [
       94,
-      1715
+      1724
      ],
-     "n_train_deployed": 1973,
-     "predicted_delta_at_deployed_n": 0.01483,
+     "n_train_deployed": 2100,
+     "predicted_delta_at_deployed_n": -0.01281,
      "predicted_ci95": [
-      -0.014,
-      0.04365
+      -0.04396,
+      0.01834
      ],
      "extrapolation_warning": "the deployed n_train is OUTSIDE the fold range, so this is an extrapolation and its interval is the honest width of that extrapolation, not a measurement"
     },
@@ -3375,10 +3377,10 @@
      "k_folds": 11,
      "n_sign_vectors": 2048,
      "exhaustive": true,
-     "observed_inverse_variance_weighted_mean": 0.00732,
-     "p_two_sided_inverse_variance": 0.40527,
-     "observed_unweighted_mean": -0.01682,
-     "p_two_sided_unweighted": 0.74121,
+     "observed_inverse_variance_weighted_mean": -0.00132,
+     "p_two_sided_inverse_variance": 0.86719,
+     "observed_unweighted_mean": 0.00049,
+     "p_two_sided_unweighted": 0.97168,
      "note": "exact by enumeration, not simulated. The two weightings are reported because the inverse-variance weights are themselves estimated."
     }
    },
@@ -3386,80 +3388,80 @@
     "series": [
      {
       "fold": 2014,
-      "n_test": 48,
+      "n_test": 50,
       "n_train": 90,
-      "delta": 0.04453,
-      "sd": 0.05752
+      "delta": 0.00715,
+      "sd": 0.05051
      },
      {
       "fold": 2015,
-      "n_test": 62,
-      "n_train": 138,
-      "delta": -0.02508,
-      "sd": 0.02579
+      "n_test": 63,
+      "n_train": 140,
+      "delta": 0.03044,
+      "sd": 0.02136
      },
      {
       "fold": 2016,
-      "n_test": 39,
-      "n_train": 200,
-      "delta": 0.08886,
-      "sd": 0.04829
+      "n_test": 43,
+      "n_train": 203,
+      "delta": 0.08222,
+      "sd": 0.076
      },
      {
       "fold": 2017,
-      "n_test": 46,
-      "n_train": 239,
-      "delta": 0.00394,
-      "sd": 0.08508
+      "n_test": 52,
+      "n_train": 246,
+      "delta": 0.03454,
+      "sd": 0.05947
      },
      {
       "fold": 2018,
-      "n_test": 44,
-      "n_train": 285,
-      "delta": -0.01475,
-      "sd": 0.0771
+      "n_test": 51,
+      "n_train": 298,
+      "delta": 0.11392,
+      "sd": 0.08129
      },
      {
       "fold": 2019,
-      "n_test": 72,
-      "n_train": 329,
-      "delta": 0.04503,
-      "sd": 0.04125
+      "n_test": 75,
+      "n_train": 349,
+      "delta": 0.04163,
+      "sd": 0.04826
      },
      {
       "fold": 2020,
-      "n_test": 59,
-      "n_train": 401,
-      "delta": -0.01013,
-      "sd": 0.03532
+      "n_test": 60,
+      "n_train": 424,
+      "delta": 0.02588,
+      "sd": 0.04085
      },
      {
       "fold": 2021,
-      "n_test": 74,
-      "n_train": 460,
-      "delta": 0.08037,
-      "sd": 0.04637
+      "n_test": 75,
+      "n_train": 484,
+      "delta": 0.07927,
+      "sd": 0.05545
      },
      {
       "fold": 2022,
-      "n_test": 127,
-      "n_train": 534,
-      "delta": -0.01433,
-      "sd": 0.02203
+      "n_test": 128,
+      "n_train": 559,
+      "delta": -0.02134,
+      "sd": 0.02299
      },
      {
       "fold": 2023,
-      "n_test": 93,
-      "n_train": 661,
-      "delta": 0.0399,
-      "sd": 0.03196
+      "n_test": 94,
+      "n_train": 687,
+      "delta": 0.06904,
+      "sd": 0.02983
      },
      {
       "fold": 2024,
       "n_test": 91,
-      "n_train": 754,
-      "delta": -0.02091,
-      "sd": 0.03738
+      "n_train": 781,
+      "delta": -0.02899,
+      "sd": 0.03638
      }
     ],
     "folds_used": 11,
@@ -3467,47 +3469,47 @@
     "reml_hksj": {
      "label": "hit.debuted_km",
      "k_folds": 11,
-     "tau2_reml": 0.00033099,
-     "tau2_dersimonian_laird_DO_NOT_SHIP": 0.00015286,
-     "Q": 11.068,
-     "pooled_delta": 0.01106,
-     "se_random_effects": 0.01289,
-     "se_hksj": 0.01209,
-     "hksj_widening_ratio": 1.066,
+     "tau2_reml": 0.00047777,
+     "tau2_dersimonian_laird_DO_NOT_SHIP": 0.00020632,
+     "Q": 11.439,
+     "pooled_delta": 0.02534,
+     "se_random_effects": 0.01369,
+     "se_hksj": 0.01217,
+     "hksj_widening_ratio": 1.01,
      "t_quantile_975": 2.2281,
      "z_quantile_975": 1.96,
      "ci95_hksj": [
-      -0.01587,
-      0.03799
+      -0.00177,
+      0.05245
      ],
      "ci95_random_effects_normal_NOT_SHIPPED": [
-      -0.0142,
-      0.03633
+      -0.0015,
+      0.05217
      ],
      "i_squared": "SUPPRESSED: near 0.99 mechanically at this per-fold n",
-     "hksj_q": 0.8789
+     "hksj_q": 0.7897
     },
     "meta_regression_log_n_train": {
      "label": "hit.debuted_km",
      "k_folds": 11,
-     "tau2_mandel_paule": 0.00029171,
-     "intercept": 0.01638,
-     "slope_per_log_n_train": -0.00096,
-     "slope_se": 0.02002,
+     "tau2_mandel_paule": 0.00023012,
+     "intercept": 0.08256,
+     "slope_per_log_n_train": -0.01002,
+     "slope_se": 0.01787,
      "slope_ci95_knapp_hartung": [
-      -0.04626,
-      0.04434
+      -0.05045,
+      0.0304
      ],
      "slope_resolves": false,
      "n_train_range": [
       90,
-      754
+      781
      ],
-     "n_train_deployed": 845,
-     "predicted_delta_at_deployed_n": 0.00991,
+     "n_train_deployed": 968,
+     "predicted_delta_at_deployed_n": 0.01364,
      "predicted_ci95": [
-      -0.03925,
-      0.05907
+      -0.03668,
+      0.06396
      ],
      "extrapolation_warning": "the deployed n_train is OUTSIDE the fold range, so this is an extrapolation and its interval is the honest width of that extrapolation, not a measurement"
     },
@@ -3515,10 +3517,10 @@
      "k_folds": 11,
      "n_sign_vectors": 2048,
      "exhaustive": true,
-     "observed_inverse_variance_weighted_mean": 0.00763,
-     "p_two_sided_inverse_variance": 0.50879,
-     "observed_unweighted_mean": 0.01977,
-     "p_two_sided_unweighted": 0.15332,
+     "observed_inverse_variance_weighted_mean": 0.02227,
+     "p_two_sided_inverse_variance": 0.1377,
+     "observed_unweighted_mean": 0.03943,
+     "p_two_sided_unweighted": 0.01562,
      "note": "exact by enumeration, not simulated. The two weightings are reported because the inverse-variance weights are themselves estimated."
     }
    },
@@ -3528,78 +3530,78 @@
       "fold": 2014,
       "n_test": 53,
       "n_train": 91,
-      "delta": -0.04482,
-      "sd": 0.04512
+      "delta": -0.02593,
+      "sd": 0.03684
      },
      {
       "fold": 2015,
       "n_test": 72,
       "n_train": 144,
-      "delta": -0.0218,
-      "sd": 0.02879
+      "delta": -0.00201,
+      "sd": 0.02922
      },
      {
       "fold": 2016,
-      "n_test": 49,
+      "n_test": 51,
       "n_train": 216,
-      "delta": 0.04725,
-      "sd": 0.05754
+      "delta": -0.07186,
+      "sd": 0.07158
      },
      {
       "fold": 2017,
-      "n_test": 30,
-      "n_train": 265,
-      "delta": -0.42061,
-      "sd": 0.19313
+      "n_test": 32,
+      "n_train": 267,
+      "delta": 0.01179,
+      "sd": 0.1153
      },
      {
       "fold": 2018,
-      "n_test": 53,
-      "n_train": 295,
-      "delta": -0.04245,
-      "sd": 0.06201
+      "n_test": 57,
+      "n_train": 299,
+      "delta": 0.04165,
+      "sd": 0.04987
      },
      {
       "fold": 2019,
-      "n_test": 76,
-      "n_train": 348,
-      "delta": 0.00642,
-      "sd": 0.07034
+      "n_test": 78,
+      "n_train": 356,
+      "delta": 0.08702,
+      "sd": 0.05746
      },
      {
       "fold": 2020,
-      "n_test": 104,
-      "n_train": 424,
-      "delta": 0.03666,
-      "sd": 0.04437
+      "n_test": 109,
+      "n_train": 434,
+      "delta": 0.05996,
+      "sd": 0.04194
      },
      {
       "fold": 2021,
-      "n_test": 107,
-      "n_train": 528,
-      "delta": 0.0393,
-      "sd": 0.04365
+      "n_test": 108,
+      "n_train": 543,
+      "delta": 0.00778,
+      "sd": 0.04768
      },
      {
       "fold": 2022,
-      "n_test": 101,
-      "n_train": 635,
-      "delta": -0.01533,
-      "sd": 0.04322
+      "n_test": 100,
+      "n_train": 651,
+      "delta": -0.01613,
+      "sd": 0.0412
      },
      {
       "fold": 2023,
       "n_test": 128,
-      "n_train": 736,
-      "delta": 0.01665,
-      "sd": 0.03104
+      "n_train": 751,
+      "delta": 0.01728,
+      "sd": 0.02732
      },
      {
       "fold": 2024,
       "n_test": 119,
-      "n_train": 864,
-      "delta": -0.02621,
-      "sd": 0.03375
+      "n_train": 879,
+      "delta": -0.04037,
+      "sd": 0.03313
      }
     ],
     "folds_used": 11,
@@ -3609,45 +3611,45 @@
      "k_folds": 11,
      "tau2_reml": 0.0,
      "tau2_dersimonian_laird_DO_NOT_SHIP": 0.0,
-     "Q": 9.816,
-     "pooled_delta": -0.00498,
-     "se_random_effects": 0.01294,
-     "se_hksj": 0.01282,
-     "hksj_widening_ratio": 1.126,
+     "Q": 8.54,
+     "pooled_delta": 0.0034,
+     "se_random_effects": 0.01219,
+     "se_hksj": 0.01126,
+     "hksj_widening_ratio": 1.051,
      "t_quantile_975": 2.2281,
      "z_quantile_975": 1.96,
      "ci95_hksj": [
-      -0.03355,
-      0.02358
+      -0.0217,
+      0.0285
      ],
      "ci95_random_effects_normal_NOT_SHIPPED": [
-      -0.03034,
-      0.02038
+      -0.02049,
+      0.02729
      ],
      "i_squared": "SUPPRESSED: near 0.99 mechanically at this per-fold n",
-     "hksj_q": 0.9816
+     "hksj_q": 0.854
     },
     "meta_regression_log_n_train": {
      "label": "pit.debuted_km",
      "k_folds": 11,
-     "tau2_mandel_paule": 2.075e-05,
-     "intercept": -0.09226,
-     "slope_per_log_n_train": 0.01479,
-     "slope_se": 0.01705,
+     "tau2_mandel_paule": 0.0,
+     "intercept": -0.02161,
+     "slope_per_log_n_train": 0.00423,
+     "slope_se": 0.01497,
      "slope_ci95_knapp_hartung": [
-      -0.02379,
-      0.05337
+      -0.02963,
+      0.0381
      ],
      "slope_resolves": false,
      "n_train_range": [
       91,
-      864
+      879
      ],
-     "n_train_deployed": 983,
-     "predicted_delta_at_deployed_n": 0.00965,
+     "n_train_deployed": 1116,
+     "predicted_delta_at_deployed_n": 0.0081,
      "predicted_ci95": [
-      -0.03856,
-      0.05785
+      -0.03802,
+      0.05421
      ],
      "extrapolation_warning": "the deployed n_train is OUTSIDE the fold range, so this is an extrapolation and its interval is the honest width of that extrapolation, not a measurement"
     },
@@ -3655,10 +3657,10 @@
      "k_folds": 11,
      "n_sign_vectors": 2048,
      "exhaustive": true,
-     "observed_inverse_variance_weighted_mean": -0.00498,
-     "p_two_sided_inverse_variance": 0.61523,
-     "observed_unweighted_mean": -0.03863,
-     "p_two_sided_unweighted": 0.48242,
+     "observed_inverse_variance_weighted_mean": 0.0034,
+     "p_two_sided_inverse_variance": 0.75,
+     "observed_unweighted_mean": 0.00629,
+     "p_two_sided_unweighted": 0.65625,
      "note": "exact by enumeration, not simulated. The two weightings are reported because the inverse-variance weights are themselves estimated."
     }
    },
@@ -3668,81 +3670,81 @@
       "fold": 2015,
       "n_test": 1,
       "n_clusters": 1,
-      "n_train": 370,
+      "n_train": 372,
       "delta": null,
       "sd": null
      },
      {
       "fold": 2016,
-      "n_test": 19,
-      "n_clusters": 13,
-      "n_train": 543,
-      "delta": -0.11423,
-      "sd": 0.40763
+      "n_test": 25,
+      "n_clusters": 17,
+      "n_train": 546,
+      "delta": -0.05029,
+      "sd": 0.19887
      },
      {
       "fold": 2017,
-      "n_test": 76,
-      "n_clusters": 42,
-      "n_train": 756,
-      "delta": -0.28814,
-      "sd": 0.14946
+      "n_test": 92,
+      "n_clusters": 50,
+      "n_train": 765,
+      "delta": -0.12336,
+      "sd": 0.07427
      },
      {
       "fold": 2018,
-      "n_test": 171,
-      "n_clusters": 70,
-      "n_train": 955,
-      "delta": -0.03758,
-      "sd": 0.072
+      "n_test": 193,
+      "n_clusters": 80,
+      "n_train": 972,
+      "delta": -0.01955,
+      "sd": 0.06484
      },
      {
       "fold": 2019,
-      "n_test": 385,
-      "n_clusters": 128,
-      "n_train": 1343,
-      "delta": 0.04872,
-      "sd": 0.03875
+      "n_test": 399,
+      "n_clusters": 133,
+      "n_train": 1366,
+      "delta": 0.063,
+      "sd": 0.04511
      },
      {
       "fold": 2020,
-      "n_test": 499,
-      "n_clusters": 138,
-      "n_train": 1735,
-      "delta": 0.03322,
-      "sd": 0.04626
+      "n_test": 522,
+      "n_clusters": 144,
+      "n_train": 1761,
+      "delta": 0.05474,
+      "sd": 0.0449
      },
      {
       "fold": 2021,
-      "n_test": 542,
-      "n_clusters": 149,
-      "n_train": 2106,
-      "delta": 0.06166,
-      "sd": 0.04189
+      "n_test": 549,
+      "n_clusters": 151,
+      "n_train": 2136,
+      "delta": 0.06904,
+      "sd": 0.04233
      },
      {
       "fold": 2022,
       "n_test": 655,
       "n_clusters": 194,
-      "n_train": 2386,
-      "delta": 0.07457,
-      "sd": 0.04979
+      "n_train": 2417,
+      "delta": 0.09078,
+      "sd": 0.04749
      },
      {
       "fold": 2023,
-      "n_test": 534,
-      "n_clusters": 178,
-      "n_train": 2855,
-      "delta": 0.08941,
-      "sd": 0.04474
+      "n_test": 537,
+      "n_clusters": 179,
+      "n_train": 2887,
+      "delta": 0.08672,
+      "sd": 0.04703
      },
      {
       "fold": 2024,
-      "n_test": 359,
+      "n_test": 354,
       "n_clusters": 139,
-      "n_train": 3348,
-      "delta": 0.00294,
-      "sd": 0.09166
+      "n_train": 3379,
+      "delta": 0.00806,
+      "sd": 0.09037
      }
     ],
     "folds_used": 9,
@@ -3751,46 +3753,46 @@
      "label": "headtohead_common",
      "k_folds": 9,
      "tau2_reml": 0.0,
-     "tau2_dersimonian_laird_DO_NOT_SHIP": 8.563e-05,
-     "Q": 8.212,
-     "pooled_delta": 0.04627,
-     "se_random_effects": 0.01835,
-     "se_hksj": 0.0186,
-     "hksj_widening_ratio": 1.192,
+     "tau2_dersimonian_laird_DO_NOT_SHIP": 0.00027635,
+     "Q": 8.711,
+     "pooled_delta": 0.04947,
+     "se_random_effects": 0.01823,
+     "se_hksj": 0.01903,
+     "hksj_widening_ratio": 1.228,
      "t_quantile_975": 2.306,
      "z_quantile_975": 1.96,
      "ci95_hksj": [
-      0.00339,
-      0.08915
+      0.00559,
+      0.09335
      ],
      "ci95_random_effects_normal_NOT_SHIPPED": [
-      0.0103,
-      0.08224
+      0.01373,
+      0.08521
      ],
      "i_squared": "SUPPRESSED: near 0.99 mechanically at this per-fold n",
-     "hksj_q": 1.0265
+     "hksj_q": 1.0889
     },
     "meta_regression_log_n_train": {
      "label": "headtohead_common",
      "k_folds": 9,
      "tau2_mandel_paule": 0.0,
-     "intercept": -0.67579,
-     "slope_per_log_n_train": 0.09579,
-     "slope_se": 0.04309,
+     "intercept": -0.7017,
+     "slope_per_log_n_train": 0.10004,
+     "slope_se": 0.0325,
      "slope_ci95_knapp_hartung": [
-      -0.00611,
-      0.19768
+      0.02318,
+      0.17691
      ],
-     "slope_resolves": false,
+     "slope_resolves": true,
      "n_train_range": [
-      543,
-      3348
+      546,
+      3379
      ],
-     "n_train_deployed": 3842,
-     "predicted_delta_at_deployed_n": 0.1148,
+     "n_train_deployed": 4085,
+     "predicted_delta_at_deployed_n": 0.13018,
      "predicted_ci95": [
-      0.0335,
-      0.1961
+      0.0607,
+      0.19966
      ],
      "extrapolation_warning": "the deployed n_train is OUTSIDE the fold range, so this is an extrapolation and its interval is the honest width of that extrapolation, not a measurement"
     },
@@ -3798,22 +3800,22 @@
      "k_folds": 9,
      "n_sign_vectors": 512,
      "exhaustive": true,
-     "observed_inverse_variance_weighted_mean": 0.04627,
-     "p_two_sided_inverse_variance": 0.07422,
-     "observed_unweighted_mean": -0.01438,
-     "p_two_sided_unweighted": 0.79297,
+     "observed_inverse_variance_weighted_mean": 0.04947,
+     "p_two_sided_inverse_variance": 0.06641,
+     "observed_unweighted_mean": 0.0199,
+     "p_two_sided_unweighted": 0.41406,
      "note": "exact by enumeration, not simulated. The two weightings are reported because the inverse-variance weights are themselves estimated."
     }
    }
   },
   "accrual_rows_per_year": {
    "hit.full_pool_km": 168.0,
-   "pit.full_pool_km": 194.0,
-   "hit.debuted_km": 62.0,
-   "pit.debuted_km": 76.0,
-   "headtohead_common": 372.0
+   "pit.full_pool_km": 196.0,
+   "hit.debuted_km": 63.0,
+   "pit.debuted_km": 78.0,
+   "headtohead_common": 376.5
   },
   "accrual_note": "median per-fold test n, i.e. one new decision-year cohort. The date columns assume that rate continues and assume nothing about label maturation, which is a second and slower clock.",
-  "elapsed_s": 7.8
+  "elapsed_s": 7.2
  }
 }

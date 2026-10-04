@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-10-02",
+ "generated_at": "2026-10-03",
  "season": 2026,
- "as_of": "2026-10-02",
+ "as_of": "2026-10-03",
  "verdict": "validated",
  "backtest": {
   "status": "validated",
@@ -60,7 +60,7 @@
  "ewar_vintage": {
   "artifact_generated_at": "2026-10-02T11:06:57",
   "label_build_at": "2026-09-03T12:35:09",
-  "as_of": "2026-10-02",
+  "as_of": "2026-10-03",
   "bwar_revised": {
    "bat": 0,
    "pit": 0
@@ -85,12 +85,12 @@
  },
  "multiyear_war_rate": {
   "source": "war_rate_plus_multiyear_eval.json",
-  "n_stamped": 202,
+  "n_stamped": 206,
   "available": true,
   "block": "sp",
   "war_provider": "ewar_v2",
   "ewar_generated_at": "2026-09-03T12:35:09",
-  "generated_at": "2026-09-11",
+  "generated_at": "2026-10-03",
   "season": 2026,
   "window": [
    2024,
@@ -98,7 +98,7 @@
    2026
   ],
   "anchor_pool": "starters with 20+ IP",
-  "n_in_artifact": 290,
+  "n_in_artifact": 294,
   "note": "The 3-year column is FROZEN lab output read verbatim from war_rate_plus_multiyear_eval.json, as of generated_at, not this board's as_of. Starters who joined the pool since have no value."
  },
  "savant_custom": {
@@ -107,7 +107,7 @@
   "source_url": "https://baseballsavant.mlb.com/leaderboard/custom?year=2026&type=pitcher&filter=&min=1&selections=pa,whiff_percent,swing_percent,oz_swing_percent,iz_contact_percent,f_strike_percent,sweet_spot_percent,pull_percent,fastball_avg_speed&chart=false&x=pa&y=pa&r=no&chartType=beeswarm&sort=pa&sortDir=desc&csv=true",
   "season": 2026,
   "side": "pitcher",
-  "fetched_at": "2026-10-01T20:11:40",
+  "fetched_at": "2026-10-03T10:45:01",
   "n_source_rows": 814,
   "n_board": 237,
   "n_joined": 237,
@@ -152,8 +152,8 @@
  },
  "roster_filter": {
   "applied": true,
-  "n_active_roster_ids": 1105,
-  "n_dropped_from_constructions": 52,
+  "n_active_roster_ids": 1067,
+  "n_dropped_from_constructions": 55,
   "basis": "StatsAPI rosterType=active (26-man)",
   "scope": "the constructed rotation ladder ONLY; Rotation+ and the other aggregates stay on the full season pool",
   "on_failure": "a failed fetch filters nothing rather than blanking the charts"
@@ -222,7 +222,7 @@
    "war_ip_plus_adj": 132,
    "war_ip_plus_adj_raw": 131.7,
    "war_ip_plus_pct": 99,
-   "war_ip_plus_3yr": 117,
+   "war_ip_plus_3yr": 119,
    "war_ip_plus_3yr_pct": 98,
    "war_ip_plus_3yr_tag": "established"
   },
@@ -312,8 +312,8 @@
    "war_ip_plus_adj": 128,
    "war_ip_plus_adj_raw": 128.2,
    "war_ip_plus_pct": 97,
-   "war_ip_plus_3yr": 116,
-   "war_ip_plus_3yr_pct": 96,
+   "war_ip_plus_3yr": 117,
+   "war_ip_plus_3yr_pct": 97,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -357,7 +357,7 @@
    "war_ip_plus_adj": 126,
    "war_ip_plus_adj_raw": 125.5,
    "war_ip_plus_pct": 96,
-   "war_ip_plus_3yr": 121,
+   "war_ip_plus_3yr": 122,
    "war_ip_plus_3yr_pct": 99,
    "war_ip_plus_3yr_tag": "established"
   },
@@ -402,7 +402,7 @@
    "war_ip_plus_adj": 130,
    "war_ip_plus_adj_raw": 129.6,
    "war_ip_plus_pct": 98,
-   "war_ip_plus_3yr": 115,
+   "war_ip_plus_3yr": 114,
    "war_ip_plus_3yr_pct": 95,
    "war_ip_plus_3yr_tag": "established"
   },
@@ -447,7 +447,7 @@
    "war_ip_plus_adj": 128,
    "war_ip_plus_adj_raw": 127.7,
    "war_ip_plus_pct": 97,
-   "war_ip_plus_3yr": 115,
+   "war_ip_plus_3yr": 116,
    "war_ip_plus_3yr_pct": 96,
    "war_ip_plus_3yr_tag": "established"
   },
@@ -492,7 +492,7 @@
    "war_ip_plus_adj": 129,
    "war_ip_plus_adj_raw": 129.3,
    "war_ip_plus_pct": 97,
-   "war_ip_plus_3yr": 120,
+   "war_ip_plus_3yr": 119,
    "war_ip_plus_3yr_pct": 98,
    "war_ip_plus_3yr_tag": "established"
   },
@@ -537,8 +537,8 @@
    "war_ip_plus_adj": 118,
    "war_ip_plus_adj_raw": 117.9,
    "war_ip_plus_pct": 100,
-   "war_ip_plus_3yr": 117,
-   "war_ip_plus_3yr_pct": 98,
+   "war_ip_plus_3yr": 119,
+   "war_ip_plus_3yr_pct": 99,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -582,8 +582,8 @@
    "war_ip_plus_adj": 122,
    "war_ip_plus_adj_raw": 122.4,
    "war_ip_plus_pct": 94,
-   "war_ip_plus_3yr": 111,
-   "war_ip_plus_3yr_pct": 92,
+   "war_ip_plus_3yr": 112,
+   "war_ip_plus_3yr_pct": 93,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -628,7 +628,7 @@
    "war_ip_plus_adj_raw": 114.4,
    "war_ip_plus_pct": 94,
    "war_ip_plus_3yr": 111,
-   "war_ip_plus_3yr_pct": 91,
+   "war_ip_plus_3yr_pct": 92,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -672,8 +672,8 @@
    "war_ip_plus_adj": 116,
    "war_ip_plus_adj_raw": 116.0,
    "war_ip_plus_pct": 91,
-   "war_ip_plus_3yr": 107,
-   "war_ip_plus_3yr_pct": 82,
+   "war_ip_plus_3yr": 108,
+   "war_ip_plus_3yr_pct": 85,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -759,8 +759,8 @@
    "war_ip_plus_adj": 121,
    "war_ip_plus_adj_raw": 120.8,
    "war_ip_plus_pct": 95,
-   "war_ip_plus_3yr": 113,
-   "war_ip_plus_3yr_pct": 94,
+   "war_ip_plus_3yr": 114,
+   "war_ip_plus_3yr_pct": 95,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -805,7 +805,7 @@
    "war_ip_plus_adj_raw": 110.4,
    "war_ip_plus_pct": 84,
    "war_ip_plus_3yr": 105,
-   "war_ip_plus_3yr_pct": 75,
+   "war_ip_plus_3yr_pct": 76,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -886,8 +886,8 @@
    "war_ip_plus_adj": 115,
    "war_ip_plus_adj_raw": 114.8,
    "war_ip_plus_pct": 91,
-   "war_ip_plus_3yr": 110,
-   "war_ip_plus_3yr_pct": 88,
+   "war_ip_plus_3yr": 113,
+   "war_ip_plus_3yr_pct": 93,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -932,7 +932,7 @@
    "war_ip_plus_adj_raw": 118.0,
    "war_ip_plus_pct": 93,
    "war_ip_plus_3yr": 114,
-   "war_ip_plus_3yr_pct": 94,
+   "war_ip_plus_3yr_pct": 95,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -976,8 +976,8 @@
    "war_ip_plus_adj": 110,
    "war_ip_plus_adj_raw": 110.5,
    "war_ip_plus_pct": 87,
-   "war_ip_plus_3yr": 109,
-   "war_ip_plus_3yr_pct": 86,
+   "war_ip_plus_3yr": 111,
+   "war_ip_plus_3yr_pct": 91,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -1021,8 +1021,8 @@
    "war_ip_plus_adj": 114,
    "war_ip_plus_adj_raw": 113.6,
    "war_ip_plus_pct": 90,
-   "war_ip_plus_3yr": 115,
-   "war_ip_plus_3yr_pct": 96,
+   "war_ip_plus_3yr": 114,
+   "war_ip_plus_3yr_pct": 94,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1066,8 +1066,8 @@
    "war_ip_plus_adj": 113,
    "war_ip_plus_adj_raw": 113.5,
    "war_ip_plus_pct": 93,
-   "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 59,
+   "war_ip_plus_3yr": 107,
+   "war_ip_plus_3yr_pct": 84,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1111,8 +1111,8 @@
    "war_ip_plus_adj": 118,
    "war_ip_plus_adj_raw": 117.8,
    "war_ip_plus_pct": 93,
-   "war_ip_plus_3yr": 114,
-   "war_ip_plus_3yr_pct": 95,
+   "war_ip_plus_3yr": 115,
+   "war_ip_plus_3yr_pct": 96,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1156,8 +1156,8 @@
    "war_ip_plus_adj": 115,
    "war_ip_plus_adj_raw": 114.9,
    "war_ip_plus_pct": 90,
-   "war_ip_plus_3yr": 107,
-   "war_ip_plus_3yr_pct": 83,
+   "war_ip_plus_3yr": 109,
+   "war_ip_plus_3yr_pct": 86,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1201,8 +1201,8 @@
    "war_ip_plus_adj": 109,
    "war_ip_plus_adj_raw": 109.4,
    "war_ip_plus_pct": 81,
-   "war_ip_plus_3yr": 106,
-   "war_ip_plus_3yr_pct": 77,
+   "war_ip_plus_3yr": 107,
+   "war_ip_plus_3yr_pct": 82,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1247,7 +1247,7 @@
    "war_ip_plus_adj_raw": 109.9,
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 69,
+   "war_ip_plus_3yr_pct": 72,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1291,8 +1291,8 @@
    "war_ip_plus_adj": 115,
    "war_ip_plus_adj_raw": 115.0,
    "war_ip_plus_pct": 90,
-   "war_ip_plus_3yr": 121,
-   "war_ip_plus_3yr_pct": 99,
+   "war_ip_plus_3yr": 119,
+   "war_ip_plus_3yr_pct": 98,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1382,7 +1382,7 @@
    "war_ip_plus_adj_raw": 112.9,
    "war_ip_plus_pct": 87,
    "war_ip_plus_3yr": 112,
-   "war_ip_plus_3yr_pct": 93,
+   "war_ip_plus_3yr_pct": 92,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1426,8 +1426,8 @@
    "war_ip_plus_adj": 111,
    "war_ip_plus_adj_raw": 111.0,
    "war_ip_plus_pct": 87,
-   "war_ip_plus_3yr": 107,
-   "war_ip_plus_3yr_pct": 82,
+   "war_ip_plus_3yr": 106,
+   "war_ip_plus_3yr_pct": 77,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1472,7 +1472,7 @@
    "war_ip_plus_adj_raw": 107.0,
    "war_ip_plus_pct": 87,
    "war_ip_plus_3yr": 111,
-   "war_ip_plus_3yr_pct": 92,
+   "war_ip_plus_3yr_pct": 91,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -1516,8 +1516,8 @@
    "war_ip_plus_adj": 112,
    "war_ip_plus_adj_raw": 112.4,
    "war_ip_plus_pct": 85,
-   "war_ip_plus_3yr": 111,
-   "war_ip_plus_3yr_pct": 91,
+   "war_ip_plus_3yr": 110,
+   "war_ip_plus_3yr_pct": 90,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -1562,7 +1562,7 @@
    "war_ip_plus_adj_raw": 109.0,
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 107,
-   "war_ip_plus_3yr_pct": 83,
+   "war_ip_plus_3yr_pct": 84,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1607,7 +1607,7 @@
    "war_ip_plus_adj_raw": 109.6,
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 109,
-   "war_ip_plus_3yr_pct": 85,
+   "war_ip_plus_3yr_pct": 87,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1651,8 +1651,8 @@
    "war_ip_plus_adj": 112,
    "war_ip_plus_adj_raw": 111.9,
    "war_ip_plus_pct": 90,
-   "war_ip_plus_3yr": 111,
-   "war_ip_plus_3yr_pct": 91,
+   "war_ip_plus_3yr": 112,
+   "war_ip_plus_3yr_pct": 92,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -1728,7 +1728,7 @@
    "war_ip_plus_adj_raw": 108.0,
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 106,
-   "war_ip_plus_3yr_pct": 80,
+   "war_ip_plus_3yr_pct": 79,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1817,8 +1817,8 @@
    "war_ip_plus_adj": 108,
    "war_ip_plus_adj_raw": 108.5,
    "war_ip_plus_pct": 85,
-   "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 63,
+   "war_ip_plus_3yr": 104,
+   "war_ip_plus_3yr_pct": 70,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1863,7 +1863,7 @@
    "war_ip_plus_adj_raw": 106.3,
    "war_ip_plus_pct": 74,
    "war_ip_plus_3yr": 111,
-   "war_ip_plus_3yr_pct": 92,
+   "war_ip_plus_3yr_pct": 91,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1908,7 +1908,7 @@
    "war_ip_plus_adj_raw": 109.2,
    "war_ip_plus_pct": 81,
    "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 61,
+   "war_ip_plus_3yr_pct": 60,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1952,8 +1952,8 @@
    "war_ip_plus_adj": 107,
    "war_ip_plus_adj_raw": 107.4,
    "war_ip_plus_pct": 77,
-   "war_ip_plus_3yr": 110,
-   "war_ip_plus_3yr_pct": 88,
+   "war_ip_plus_3yr": 109,
+   "war_ip_plus_3yr_pct": 87,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -1997,7 +1997,7 @@
    "war_ip_plus_adj": 106,
    "war_ip_plus_adj_raw": 105.8,
    "war_ip_plus_pct": 70,
-   "war_ip_plus_3yr": 108,
+   "war_ip_plus_3yr": 107,
    "war_ip_plus_3yr_pct": 84,
    "war_ip_plus_3yr_tag": "established"
   },
@@ -2042,8 +2042,8 @@
    "war_ip_plus_adj": 107,
    "war_ip_plus_adj_raw": 106.9,
    "war_ip_plus_pct": 77,
-   "war_ip_plus_3yr": 110,
-   "war_ip_plus_3yr_pct": 89,
+   "war_ip_plus_3yr": 107,
+   "war_ip_plus_3yr_pct": 83,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -2087,8 +2087,8 @@
    "war_ip_plus_adj": 104,
    "war_ip_plus_adj_raw": 104.5,
    "war_ip_plus_pct": 70,
-   "war_ip_plus_3yr": 101,
-   "war_ip_plus_3yr_pct": 51,
+   "war_ip_plus_3yr": 102,
+   "war_ip_plus_3yr_pct": 58,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2132,8 +2132,8 @@
    "war_ip_plus_adj": 109,
    "war_ip_plus_adj_raw": 108.8,
    "war_ip_plus_pct": 81,
-   "war_ip_plus_3yr": 109,
-   "war_ip_plus_3yr_pct": 87,
+   "war_ip_plus_3yr": 108,
+   "war_ip_plus_3yr_pct": 86,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2177,8 +2177,8 @@
    "war_ip_plus_adj": 101,
    "war_ip_plus_adj_raw": 101.2,
    "war_ip_plus_pct": 55,
-   "war_ip_plus_3yr": 106,
-   "war_ip_plus_3yr_pct": 79,
+   "war_ip_plus_3yr": 105,
+   "war_ip_plus_3yr_pct": 77,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2222,8 +2222,8 @@
    "war_ip_plus_adj": 109,
    "war_ip_plus_adj_raw": 109.5,
    "war_ip_plus_pct": 84,
-   "war_ip_plus_3yr": 110,
-   "war_ip_plus_3yr_pct": 90,
+   "war_ip_plus_3yr": 109,
+   "war_ip_plus_3yr_pct": 88,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -2267,8 +2267,8 @@
    "war_ip_plus_adj": 103,
    "war_ip_plus_adj_raw": 103.4,
    "war_ip_plus_pct": 65,
-   "war_ip_plus_3yr": 105,
-   "war_ip_plus_3yr_pct": 74,
+   "war_ip_plus_3yr": 104,
+   "war_ip_plus_3yr_pct": 71,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -2312,8 +2312,8 @@
    "war_ip_plus_adj": 106,
    "war_ip_plus_adj_raw": 105.9,
    "war_ip_plus_pct": 74,
-   "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 72,
+   "war_ip_plus_3yr": 106,
+   "war_ip_plus_3yr_pct": 81,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -2350,7 +2350,7 @@
    "swstr_pct": 0.145,
    "war": 0.6,
    "war_ip_plus_3yr": 114,
-   "war_ip_plus_3yr_pct": 95,
+   "war_ip_plus_3yr_pct": 96,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2395,7 +2395,7 @@
    "war_ip_plus_adj_raw": 103.9,
    "war_ip_plus_pct": 65,
    "war_ip_plus_3yr": 99,
-   "war_ip_plus_3yr_pct": 44,
+   "war_ip_plus_3yr_pct": 45,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2439,8 +2439,8 @@
    "war_ip_plus_adj": 104,
    "war_ip_plus_adj_raw": 103.6,
    "war_ip_plus_pct": 65,
-   "war_ip_plus_3yr": 109,
-   "war_ip_plus_3yr_pct": 86,
+   "war_ip_plus_3yr": 105,
+   "war_ip_plus_3yr_pct": 77,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2484,8 +2484,8 @@
    "war_ip_plus_adj": 107,
    "war_ip_plus_adj_raw": 107.2,
    "war_ip_plus_pct": 74,
-   "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 60,
+   "war_ip_plus_3yr": 103,
+   "war_ip_plus_3yr_pct": 65,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2529,8 +2529,8 @@
    "war_ip_plus_adj": 106,
    "war_ip_plus_adj_raw": 106.4,
    "war_ip_plus_pct": 74,
-   "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 69,
+   "war_ip_plus_3yr": 103,
+   "war_ip_plus_3yr_pct": 64,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2574,8 +2574,8 @@
    "war_ip_plus_adj": 107,
    "war_ip_plus_adj_raw": 106.5,
    "war_ip_plus_pct": 77,
-   "war_ip_plus_3yr": 105,
-   "war_ip_plus_3yr_pct": 73,
+   "war_ip_plus_3yr": 107,
+   "war_ip_plus_3yr_pct": 82,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -2612,7 +2612,7 @@
    "swstr_pct": 0.1094,
    "war": 0.6,
    "war_ip_plus_3yr": 99,
-   "war_ip_plus_3yr_pct": 40,
+   "war_ip_plus_3yr_pct": 41,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -2656,8 +2656,8 @@
    "war_ip_plus_adj": 105,
    "war_ip_plus_adj_raw": 104.7,
    "war_ip_plus_pct": 70,
-   "war_ip_plus_3yr": 108,
-   "war_ip_plus_3yr_pct": 84,
+   "war_ip_plus_3yr": 105,
+   "war_ip_plus_3yr_pct": 76,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -2701,8 +2701,8 @@
    "war_ip_plus_adj": 107,
    "war_ip_plus_adj_raw": 106.5,
    "war_ip_plus_pct": 74,
-   "war_ip_plus_3yr": 105,
-   "war_ip_plus_3yr_pct": 76,
+   "war_ip_plus_3yr": 106,
+   "war_ip_plus_3yr_pct": 80,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -2777,8 +2777,8 @@
    "war_ip_plus_adj": 105,
    "war_ip_plus_adj_raw": 104.7,
    "war_ip_plus_pct": 70,
-   "war_ip_plus_3yr": 108,
-   "war_ip_plus_3yr_pct": 85,
+   "war_ip_plus_3yr": 109,
+   "war_ip_plus_3yr_pct": 88,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2822,8 +2822,8 @@
    "war_ip_plus_adj": 105,
    "war_ip_plus_adj_raw": 105.1,
    "war_ip_plus_pct": 81,
-   "war_ip_plus_3yr": 112,
-   "war_ip_plus_3yr_pct": 93,
+   "war_ip_plus_3yr": 113,
+   "war_ip_plus_3yr_pct": 94,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2899,7 +2899,7 @@
    "war_ip_plus_adj_raw": 101.2,
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 99,
-   "war_ip_plus_3yr_pct": 44,
+   "war_ip_plus_3yr_pct": 43,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -2943,8 +2943,8 @@
    "war_ip_plus_adj": 103,
    "war_ip_plus_adj_raw": 102.6,
    "war_ip_plus_pct": 60,
-   "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 63,
+   "war_ip_plus_3yr": 102,
+   "war_ip_plus_3yr_pct": 62,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3022,8 +3022,8 @@
    "war_ip_plus_adj": 99,
    "war_ip_plus_adj_raw": 99.5,
    "war_ip_plus_pct": 51,
-   "war_ip_plus_3yr": 105,
-   "war_ip_plus_3yr_pct": 75,
+   "war_ip_plus_3yr": 104,
+   "war_ip_plus_3yr_pct": 72,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3067,8 +3067,8 @@
    "war_ip_plus_adj": 105,
    "war_ip_plus_adj_raw": 105.3,
    "war_ip_plus_pct": 81,
-   "war_ip_plus_3yr": 109,
-   "war_ip_plus_3yr_pct": 86,
+   "war_ip_plus_3yr": 108,
+   "war_ip_plus_3yr_pct": 85,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -3112,8 +3112,8 @@
    "war_ip_plus_adj": 104,
    "war_ip_plus_adj_raw": 103.8,
    "war_ip_plus_pct": 65,
-   "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 57,
+   "war_ip_plus_3yr": 103,
+   "war_ip_plus_3yr_pct": 67,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3158,7 +3158,7 @@
    "war_ip_plus_adj_raw": 99.6,
    "war_ip_plus_pct": 51,
    "war_ip_plus_3yr": 105,
-   "war_ip_plus_3yr_pct": 76,
+   "war_ip_plus_3yr_pct": 74,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3203,7 +3203,7 @@
    "war_ip_plus_adj_raw": 98.8,
    "war_ip_plus_pct": 46,
    "war_ip_plus_3yr": 93,
-   "war_ip_plus_3yr_pct": 12,
+   "war_ip_plus_3yr_pct": 11,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3240,7 +3240,7 @@
    "swstr_pct": 0.162,
    "war": 0.0,
    "war_ip_plus_3yr": 99,
-   "war_ip_plus_3yr_pct": 41,
+   "war_ip_plus_3yr_pct": 43,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3284,8 +3284,8 @@
    "war_ip_plus_adj": 105,
    "war_ip_plus_adj_raw": 104.7,
    "war_ip_plus_pct": 70,
-   "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 64,
+   "war_ip_plus_3yr": 105,
+   "war_ip_plus_3yr_pct": 74,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -3329,8 +3329,8 @@
    "war_ip_plus_adj": 106,
    "war_ip_plus_adj_raw": 105.7,
    "war_ip_plus_pct": 74,
-   "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 73,
+   "war_ip_plus_3yr": 103,
+   "war_ip_plus_3yr_pct": 64,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3374,8 +3374,8 @@
    "war_ip_plus_adj": 104,
    "war_ip_plus_adj_raw": 103.7,
    "war_ip_plus_pct": 65,
-   "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 70,
+   "war_ip_plus_3yr": 103,
+   "war_ip_plus_3yr_pct": 65,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3420,7 +3420,7 @@
    "war_ip_plus_adj_raw": 101.4,
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 100,
-   "war_ip_plus_3yr_pct": 48,
+   "war_ip_plus_3yr_pct": 51,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3464,8 +3464,8 @@
    "war_ip_plus_adj": 105,
    "war_ip_plus_adj_raw": 105.2,
    "war_ip_plus_pct": 70,
-   "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 58,
+   "war_ip_plus_3yr": 101,
+   "war_ip_plus_3yr_pct": 55,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3510,7 +3510,7 @@
    "war_ip_plus_adj_raw": 103.2,
    "war_ip_plus_pct": 65,
    "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 71,
+   "war_ip_plus_3yr_pct": 70,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -3600,7 +3600,7 @@
    "war_ip_plus_adj_raw": 100.8,
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 65,
+   "war_ip_plus_3yr_pct": 66,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3644,8 +3644,8 @@
    "war_ip_plus_adj": 101,
    "war_ip_plus_adj_raw": 100.5,
    "war_ip_plus_pct": 55,
-   "war_ip_plus_3yr": 90,
-   "war_ip_plus_3yr_pct": 7,
+   "war_ip_plus_3yr": 96,
+   "war_ip_plus_3yr_pct": 28,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -3720,8 +3720,8 @@
    "war_ip_plus_adj": 104,
    "war_ip_plus_adj_raw": 103.7,
    "war_ip_plus_pct": 65,
-   "war_ip_plus_3yr": 101,
-   "war_ip_plus_3yr_pct": 54,
+   "war_ip_plus_3yr": 100,
+   "war_ip_plus_3yr_pct": 50,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3765,8 +3765,8 @@
    "war_ip_plus_adj": 98,
    "war_ip_plus_adj_raw": 98.4,
    "war_ip_plus_pct": 46,
-   "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 59,
+   "war_ip_plus_3yr": 105,
+   "war_ip_plus_3yr_pct": 75,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3810,8 +3810,8 @@
    "war_ip_plus_adj": 104,
    "war_ip_plus_adj_raw": 103.8,
    "war_ip_plus_pct": 70,
-   "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 68,
+   "war_ip_plus_3yr": 106,
+   "war_ip_plus_3yr_pct": 78,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3855,8 +3855,8 @@
    "war_ip_plus_adj": 104,
    "war_ip_plus_adj_raw": 104.4,
    "war_ip_plus_pct": 65,
-   "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 70,
+   "war_ip_plus_3yr": 103,
+   "war_ip_plus_3yr_pct": 68,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3887,7 +3887,7 @@
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 102,
    "xwoba_against": 0.308,
-   "luck": 0.015,
+   "luck": 0.016,
    "whiff_pct": 0.291,
    "chase_pct": 0.275,
    "z_contact_pct": 0.793,
@@ -3945,8 +3945,8 @@
    "war_ip_plus_adj": 98,
    "war_ip_plus_adj_raw": 97.8,
    "war_ip_plus_pct": 46,
-   "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 62,
+   "war_ip_plus_3yr": 102,
+   "war_ip_plus_3yr_pct": 61,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -3991,7 +3991,7 @@
    "war_ip_plus_adj_raw": 101.8,
    "war_ip_plus_pct": 60,
    "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 64,
+   "war_ip_plus_3yr_pct": 69,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -4031,7 +4031,10 @@
    "war_ip_plus_raw": 101.6,
    "war_ip_plus_adj": 101,
    "war_ip_plus_adj_raw": 100.6,
-   "war_ip_plus_pct": 55
+   "war_ip_plus_pct": 55,
+   "war_ip_plus_3yr": 102,
+   "war_ip_plus_3yr_pct": 57,
+   "war_ip_plus_3yr_tag": "provisional"
   },
   {
    "key": "695611",
@@ -4075,7 +4078,7 @@
    "war_ip_plus_adj_raw": 104.9,
    "war_ip_plus_pct": 74,
    "war_ip_plus_3yr": 106,
-   "war_ip_plus_3yr_pct": 81,
+   "war_ip_plus_3yr_pct": 78,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -4164,8 +4167,8 @@
    "war_ip_plus_adj": 103,
    "war_ip_plus_adj_raw": 103.3,
    "war_ip_plus_pct": 65,
-   "war_ip_plus_3yr": 98,
-   "war_ip_plus_3yr_pct": 36,
+   "war_ip_plus_3yr": 97,
+   "war_ip_plus_3yr_pct": 35,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -4210,7 +4213,7 @@
    "war_ip_plus_adj_raw": 94.9,
    "war_ip_plus_pct": 33,
    "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 67,
+   "war_ip_plus_3yr_pct": 68,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -4247,7 +4250,7 @@
    "swstr_pct": 0.1088,
    "war": 0.1,
    "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 66,
+   "war_ip_plus_3yr_pct": 68,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -4291,8 +4294,8 @@
    "war_ip_plus_adj": 100,
    "war_ip_plus_adj_raw": 99.9,
    "war_ip_plus_pct": 51,
-   "war_ip_plus_3yr": 99,
-   "war_ip_plus_3yr_pct": 42,
+   "war_ip_plus_3yr": 101,
+   "war_ip_plus_3yr_pct": 55,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -4373,8 +4376,8 @@
    "war_ip_plus_adj": 103,
    "war_ip_plus_adj_raw": 102.9,
    "war_ip_plus_pct": 60,
-   "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 73,
+   "war_ip_plus_3yr": 105,
+   "war_ip_plus_3yr_pct": 75,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -4414,7 +4417,10 @@
    "war_ip_plus_raw": 99.7,
    "war_ip_plus_adj": 99,
    "war_ip_plus_adj_raw": 99.5,
-   "war_ip_plus_pct": 46
+   "war_ip_plus_pct": 46,
+   "war_ip_plus_3yr": 100,
+   "war_ip_plus_3yr_pct": 47,
+   "war_ip_plus_3yr_tag": "provisional"
   },
   {
    "key": "579328",
@@ -4457,8 +4463,8 @@
    "war_ip_plus_adj": 101,
    "war_ip_plus_adj_raw": 101.1,
    "war_ip_plus_pct": 55,
-   "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 72,
+   "war_ip_plus_3yr": 105,
+   "war_ip_plus_3yr_pct": 75,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -4502,8 +4508,8 @@
    "war_ip_plus_adj": 103,
    "war_ip_plus_adj_raw": 103.0,
    "war_ip_plus_pct": 65,
-   "war_ip_plus_3yr": 106,
-   "war_ip_plus_3yr_pct": 79,
+   "war_ip_plus_3yr": 104,
+   "war_ip_plus_3yr_pct": 73,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -4547,8 +4553,8 @@
    "war_ip_plus_adj": 102,
    "war_ip_plus_adj_raw": 102.1,
    "war_ip_plus_pct": 60,
-   "war_ip_plus_3yr": 105,
-   "war_ip_plus_3yr_pct": 76,
+   "war_ip_plus_3yr": 103,
+   "war_ip_plus_3yr_pct": 65,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -4592,8 +4598,8 @@
    "war_ip_plus_adj": 97,
    "war_ip_plus_adj_raw": 97.4,
    "war_ip_plus_pct": 46,
-   "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 56,
+   "war_ip_plus_3yr": 100,
+   "war_ip_plus_3yr_pct": 49,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -4637,8 +4643,8 @@
    "war_ip_plus_adj": 103,
    "war_ip_plus_adj_raw": 102.5,
    "war_ip_plus_pct": 60,
-   "war_ip_plus_3yr": 106,
-   "war_ip_plus_3yr_pct": 77,
+   "war_ip_plus_3yr": 103,
+   "war_ip_plus_3yr_pct": 69,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -4683,7 +4689,7 @@
    "war_ip_plus_adj_raw": 93.3,
    "war_ip_plus_pct": 22,
    "war_ip_plus_3yr": 98,
-   "war_ip_plus_3yr_pct": 39,
+   "war_ip_plus_3yr_pct": 37,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -4772,8 +4778,8 @@
    "war_ip_plus_adj": 99,
    "war_ip_plus_adj_raw": 98.7,
    "war_ip_plus_pct": 46,
-   "war_ip_plus_3yr": 98,
-   "war_ip_plus_3yr_pct": 39,
+   "war_ip_plus_3yr": 100,
+   "war_ip_plus_3yr_pct": 46,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -4817,8 +4823,8 @@
    "war_ip_plus_adj": 98,
    "war_ip_plus_adj_raw": 98.3,
    "war_ip_plus_pct": 46,
-   "war_ip_plus_3yr": 98,
-   "war_ip_plus_3yr_pct": 37,
+   "war_ip_plus_3yr": 100,
+   "war_ip_plus_3yr_pct": 46,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -4893,8 +4899,8 @@
    "war_ip_plus_adj": 108,
    "war_ip_plus_adj_raw": 108.1,
    "war_ip_plus_pct": 87,
-   "war_ip_plus_3yr": 109,
-   "war_ip_plus_3yr_pct": 87,
+   "war_ip_plus_3yr": 111,
+   "war_ip_plus_3yr_pct": 90,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -4938,8 +4944,8 @@
    "war_ip_plus_adj": 95,
    "war_ip_plus_adj_raw": 95.1,
    "war_ip_plus_pct": 36,
-   "war_ip_plus_3yr": 97,
-   "war_ip_plus_3yr_pct": 31,
+   "war_ip_plus_3yr": 98,
+   "war_ip_plus_3yr_pct": 36,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -4984,7 +4990,7 @@
    "war_ip_plus_adj_raw": 97.3,
    "war_ip_plus_pct": 40,
    "war_ip_plus_3yr": 105,
-   "war_ip_plus_3yr_pct": 75,
+   "war_ip_plus_3yr_pct": 76,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5060,7 +5066,7 @@
    "war_ip_plus_adj_raw": 96.5,
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 100,
-   "war_ip_plus_3yr_pct": 46,
+   "war_ip_plus_3yr_pct": 47,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -5104,8 +5110,8 @@
    "war_ip_plus_adj": 99,
    "war_ip_plus_adj_raw": 98.9,
    "war_ip_plus_pct": 46,
-   "war_ip_plus_3yr": 100,
-   "war_ip_plus_3yr_pct": 48,
+   "war_ip_plus_3yr": 101,
+   "war_ip_plus_3yr_pct": 57,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5150,7 +5156,7 @@
    "war_ip_plus_adj_raw": 97.5,
    "war_ip_plus_pct": 40,
    "war_ip_plus_3yr": 99,
-   "war_ip_plus_3yr_pct": 43,
+   "war_ip_plus_3yr_pct": 40,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5195,7 +5201,7 @@
    "war_ip_plus_adj_raw": 97.1,
    "war_ip_plus_pct": 40,
    "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 57,
+   "war_ip_plus_3yr_pct": 61,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5240,7 +5246,7 @@
    "war_ip_plus_adj_raw": 94.3,
    "war_ip_plus_pct": 33,
    "war_ip_plus_3yr": 97,
-   "war_ip_plus_3yr_pct": 32,
+   "war_ip_plus_3yr_pct": 36,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5347,7 +5353,7 @@
    "war_ip_plus_adj_raw": 100.6,
    "war_ip_plus_pct": 55,
    "war_ip_plus_3yr": 108,
-   "war_ip_plus_3yr_pct": 84,
+   "war_ip_plus_3yr_pct": 85,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5437,7 +5443,7 @@
    "war_ip_plus_adj_raw": 100.2,
    "war_ip_plus_pct": 51,
    "war_ip_plus_3yr": 101,
-   "war_ip_plus_3yr_pct": 54,
+   "war_ip_plus_3yr_pct": 56,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5481,8 +5487,8 @@
    "war_ip_plus_adj": 95,
    "war_ip_plus_adj_raw": 95.0,
    "war_ip_plus_pct": 28,
-   "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 67,
+   "war_ip_plus_3yr": 96,
+   "war_ip_plus_3yr_pct": 29,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -5526,8 +5532,8 @@
    "war_ip_plus_adj": 98,
    "war_ip_plus_adj_raw": 97.8,
    "war_ip_plus_pct": 46,
-   "war_ip_plus_3yr": 106,
-   "war_ip_plus_3yr_pct": 77,
+   "war_ip_plus_3yr": 104,
+   "war_ip_plus_3yr_pct": 73,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5571,9 +5577,9 @@
    "war_ip_plus_adj": 98,
    "war_ip_plus_adj_raw": 98.1,
    "war_ip_plus_pct": 40,
-   "war_ip_plus_3yr": 117,
-   "war_ip_plus_3yr_pct": 97,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr": 110,
+   "war_ip_plus_3yr_pct": 89,
+   "war_ip_plus_3yr_tag": "established"
   },
   {
    "key": "681190",
@@ -5616,8 +5622,8 @@
    "war_ip_plus_adj": 97,
    "war_ip_plus_adj_raw": 96.7,
    "war_ip_plus_pct": 40,
-   "war_ip_plus_3yr": 95,
-   "war_ip_plus_3yr_pct": 22,
+   "war_ip_plus_3yr": 96,
+   "war_ip_plus_3yr_pct": 26,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5661,8 +5667,8 @@
    "war_ip_plus_adj": 101,
    "war_ip_plus_adj_raw": 100.9,
    "war_ip_plus_pct": 55,
-   "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 67,
+   "war_ip_plus_3yr": 102,
+   "war_ip_plus_3yr_pct": 60,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -5707,7 +5713,7 @@
    "war_ip_plus_adj_raw": 95.1,
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 96,
-   "war_ip_plus_3yr_pct": 28,
+   "war_ip_plus_3yr_pct": 31,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -5788,8 +5794,8 @@
    "war_ip_plus_adj": 96,
    "war_ip_plus_adj_raw": 95.7,
    "war_ip_plus_pct": 36,
-   "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 55,
+   "war_ip_plus_3yr": 98,
+   "war_ip_plus_3yr_pct": 38,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -5833,8 +5839,8 @@
    "war_ip_plus_adj": 95,
    "war_ip_plus_adj_raw": 94.9,
    "war_ip_plus_pct": 28,
-   "war_ip_plus_3yr": 98,
-   "war_ip_plus_3yr_pct": 37,
+   "war_ip_plus_3yr": 99,
+   "war_ip_plus_3yr_pct": 42,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5879,7 +5885,7 @@
    "war_ip_plus_adj_raw": 102.1,
    "war_ip_plus_pct": 60,
    "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 55,
+   "war_ip_plus_3yr_pct": 58,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -5950,7 +5956,7 @@
    "swstr_pct": 0.1431,
    "war": -0.1,
    "war_ip_plus_3yr": 95,
-   "war_ip_plus_3yr_pct": 24,
+   "war_ip_plus_3yr_pct": 26,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -5994,8 +6000,8 @@
    "war_ip_plus_adj": 97,
    "war_ip_plus_adj_raw": 97.4,
    "war_ip_plus_pct": 40,
-   "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 65,
+   "war_ip_plus_3yr": 102,
+   "war_ip_plus_3yr_pct": 62,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6070,8 +6076,8 @@
    "war_ip_plus_adj": 97,
    "war_ip_plus_adj_raw": 97.3,
    "war_ip_plus_pct": 36,
-   "war_ip_plus_3yr": 99,
-   "war_ip_plus_3yr_pct": 39,
+   "war_ip_plus_3yr": 98,
+   "war_ip_plus_3yr_pct": 38,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -6161,7 +6167,7 @@
    "war_ip_plus_adj_raw": 97.6,
    "war_ip_plus_pct": 40,
    "war_ip_plus_3yr": 97,
-   "war_ip_plus_3yr_pct": 35,
+   "war_ip_plus_3yr_pct": 33,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6205,8 +6211,8 @@
    "war_ip_plus_adj": 100,
    "war_ip_plus_adj_raw": 100.3,
    "war_ip_plus_pct": 51,
-   "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 66,
+   "war_ip_plus_3yr": 101,
+   "war_ip_plus_3yr_pct": 56,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -6250,8 +6256,8 @@
    "war_ip_plus_adj": 94,
    "war_ip_plus_adj_raw": 94.1,
    "war_ip_plus_pct": 33,
-   "war_ip_plus_3yr": 96,
-   "war_ip_plus_3yr_pct": 27,
+   "war_ip_plus_3yr": 95,
+   "war_ip_plus_3yr_pct": 20,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6296,7 +6302,7 @@
    "war_ip_plus_adj_raw": 97.5,
    "war_ip_plus_pct": 33,
    "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 58,
+   "war_ip_plus_3yr_pct": 60,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6341,7 +6347,7 @@
    "war_ip_plus_adj_raw": 93.1,
    "war_ip_plus_pct": 33,
    "war_ip_plus_3yr": 101,
-   "war_ip_plus_3yr_pct": 53,
+   "war_ip_plus_3yr_pct": 55,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6385,8 +6391,8 @@
    "war_ip_plus_adj": 93,
    "war_ip_plus_adj_raw": 93.0,
    "war_ip_plus_pct": 28,
-   "war_ip_plus_3yr": 91,
-   "war_ip_plus_3yr_pct": 7,
+   "war_ip_plus_3yr": 90,
+   "war_ip_plus_3yr_pct": 8,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6430,8 +6436,8 @@
    "war_ip_plus_adj": 89,
    "war_ip_plus_adj_raw": 89.5,
    "war_ip_plus_pct": 15,
-   "war_ip_plus_3yr": 98,
-   "war_ip_plus_3yr_pct": 35,
+   "war_ip_plus_3yr": 97,
+   "war_ip_plus_3yr_pct": 33,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6510,7 +6516,7 @@
    "war_ip_plus_adj_raw": 95.0,
    "war_ip_plus_pct": 33,
    "war_ip_plus_3yr": 96,
-   "war_ip_plus_3yr_pct": 25,
+   "war_ip_plus_3yr_pct": 28,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6554,8 +6560,8 @@
    "war_ip_plus_adj": 94,
    "war_ip_plus_adj_raw": 93.7,
    "war_ip_plus_pct": 28,
-   "war_ip_plus_3yr": 101,
-   "war_ip_plus_3yr_pct": 53,
+   "war_ip_plus_3yr": 100,
+   "war_ip_plus_3yr_pct": 49,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6599,8 +6605,8 @@
    "war_ip_plus_adj": 92,
    "war_ip_plus_adj_raw": 92.4,
    "war_ip_plus_pct": 22,
-   "war_ip_plus_3yr": 93,
-   "war_ip_plus_3yr_pct": 14,
+   "war_ip_plus_3yr": 95,
+   "war_ip_plus_3yr_pct": 22,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -6689,8 +6695,8 @@
    "war_ip_plus_adj": 95,
    "war_ip_plus_adj_raw": 95.0,
    "war_ip_plus_pct": 22,
-   "war_ip_plus_3yr": 94,
-   "war_ip_plus_3yr_pct": 17,
+   "war_ip_plus_3yr": 95,
+   "war_ip_plus_3yr_pct": 21,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -6734,8 +6740,8 @@
    "war_ip_plus_adj": 97,
    "war_ip_plus_adj_raw": 97.2,
    "war_ip_plus_pct": 40,
-   "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 61,
+   "war_ip_plus_3yr": 103,
+   "war_ip_plus_3yr_pct": 64,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6772,7 +6778,7 @@
    "swstr_pct": 0.0936,
    "war": -0.2,
    "war_ip_plus_3yr": 99,
-   "war_ip_plus_3yr_pct": 43,
+   "war_ip_plus_3yr_pct": 44,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6817,7 +6823,7 @@
    "war_ip_plus_adj_raw": 93.2,
    "war_ip_plus_pct": 28,
    "war_ip_plus_3yr": 96,
-   "war_ip_plus_3yr_pct": 29,
+   "war_ip_plus_3yr_pct": 30,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6897,7 +6903,10 @@
    "war_ip_plus_raw": 92.6,
    "war_ip_plus_adj": 94,
    "war_ip_plus_adj_raw": 93.8,
-   "war_ip_plus_pct": 15
+   "war_ip_plus_pct": 15,
+   "war_ip_plus_3yr": 93,
+   "war_ip_plus_3yr_pct": 12,
+   "war_ip_plus_3yr_tag": "provisional"
   },
   {
    "key": "641927",
@@ -6941,7 +6950,7 @@
    "war_ip_plus_adj_raw": 95.0,
    "war_ip_plus_pct": 33,
    "war_ip_plus_3yr": 100,
-   "war_ip_plus_3yr_pct": 48,
+   "war_ip_plus_3yr_pct": 51,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -6985,8 +6994,8 @@
    "war_ip_plus_adj": 97,
    "war_ip_plus_adj_raw": 96.9,
    "war_ip_plus_pct": 40,
-   "war_ip_plus_3yr": 100,
-   "war_ip_plus_3yr_pct": 45,
+   "war_ip_plus_3yr": 99,
+   "war_ip_plus_3yr_pct": 40,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -7106,8 +7115,8 @@
    "war_ip_plus_adj": 92,
    "war_ip_plus_adj_raw": 92.4,
    "war_ip_plus_pct": 18,
-   "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 55,
+   "war_ip_plus_3yr": 101,
+   "war_ip_plus_3yr_pct": 56,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -7152,7 +7161,7 @@
    "war_ip_plus_adj_raw": 97.4,
    "war_ip_plus_pct": 40,
    "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 58,
+   "war_ip_plus_3yr_pct": 59,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -7272,8 +7281,8 @@
    "war_ip_plus_adj": 93,
    "war_ip_plus_adj_raw": 92.8,
    "war_ip_plus_pct": 28,
-   "war_ip_plus_3yr": 101,
-   "war_ip_plus_3yr_pct": 51,
+   "war_ip_plus_3yr": 100,
+   "war_ip_plus_3yr_pct": 49,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -7317,8 +7326,8 @@
    "war_ip_plus_adj": 97,
    "war_ip_plus_adj_raw": 97.2,
    "war_ip_plus_pct": 36,
-   "war_ip_plus_3yr": 97,
-   "war_ip_plus_3yr_pct": 35,
+   "war_ip_plus_3yr": 98,
+   "war_ip_plus_3yr_pct": 37,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -7362,8 +7371,8 @@
    "war_ip_plus_adj": 91,
    "war_ip_plus_adj_raw": 91.1,
    "war_ip_plus_pct": 18,
-   "war_ip_plus_3yr": 95,
-   "war_ip_plus_3yr_pct": 24,
+   "war_ip_plus_3yr": 94,
+   "war_ip_plus_3yr_pct": 16,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -7481,9 +7490,9 @@
    "war_ip_plus_adj": 102,
    "war_ip_plus_adj_raw": 101.8,
    "war_ip_plus_pct": 60,
-   "war_ip_plus_3yr": 98,
-   "war_ip_plus_3yr_pct": 38,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr": 101,
+   "war_ip_plus_3yr_pct": 54,
+   "war_ip_plus_3yr_tag": "established"
   },
   {
    "key": "814490",
@@ -7634,8 +7643,8 @@
    "war_ip_plus_adj": 94,
    "war_ip_plus_adj_raw": 94.2,
    "war_ip_plus_pct": 22,
-   "war_ip_plus_3yr": 96,
-   "war_ip_plus_3yr_pct": 29,
+   "war_ip_plus_3yr": 95,
+   "war_ip_plus_3yr_pct": 20,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -7710,9 +7719,9 @@
    "war_ip_plus_adj": 95,
    "war_ip_plus_adj_raw": 95.0,
    "war_ip_plus_pct": 15,
-   "war_ip_plus_3yr": 104,
-   "war_ip_plus_3yr_pct": 72,
-   "war_ip_plus_3yr_tag": "provisional"
+   "war_ip_plus_3yr": 100,
+   "war_ip_plus_3yr_pct": 50,
+   "war_ip_plus_3yr_tag": "established"
   },
   {
    "key": "592662",
@@ -7756,7 +7765,7 @@
    "war_ip_plus_adj_raw": 89.6,
    "war_ip_plus_pct": 18,
    "war_ip_plus_3yr": 98,
-   "war_ip_plus_3yr_pct": 38,
+   "war_ip_plus_3yr_pct": 36,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -7877,7 +7886,7 @@
    "war_ip_plus_adj_raw": 91.2,
    "war_ip_plus_pct": 18,
    "war_ip_plus_3yr": 95,
-   "war_ip_plus_3yr_pct": 23,
+   "war_ip_plus_3yr_pct": 24,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -7921,8 +7930,8 @@
    "war_ip_plus_adj": 92,
    "war_ip_plus_adj_raw": 92.5,
    "war_ip_plus_pct": 22,
-   "war_ip_plus_3yr": 96,
-   "war_ip_plus_3yr_pct": 28,
+   "war_ip_plus_3yr": 95,
+   "war_ip_plus_3yr_pct": 23,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -8029,7 +8038,7 @@
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 90,
    "xwoba_against": 0.351,
-   "luck": -0.013,
+   "luck": -0.011,
    "whiff_pct": 0.24,
    "chase_pct": 0.25,
    "z_contact_pct": 0.82,
@@ -8042,7 +8051,7 @@
    "war_ip_plus_adj": 90,
    "war_ip_plus_adj_raw": 90.4,
    "war_ip_plus_pct": 15,
-   "war_ip_plus_3yr": 92,
+   "war_ip_plus_3yr": 91,
    "war_ip_plus_3yr_pct": 9,
    "war_ip_plus_3yr_tag": "established"
   },
@@ -8087,8 +8096,8 @@
    "war_ip_plus_adj": 92,
    "war_ip_plus_adj_raw": 91.8,
    "war_ip_plus_pct": 22,
-   "war_ip_plus_3yr": 96,
-   "war_ip_plus_3yr_pct": 27,
+   "war_ip_plus_3yr": 95,
+   "war_ip_plus_3yr_pct": 23,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -8133,7 +8142,7 @@
    "war_ip_plus_adj_raw": 95.3,
    "war_ip_plus_pct": 22,
    "war_ip_plus_3yr": 97,
-   "war_ip_plus_3yr_pct": 33,
+   "war_ip_plus_3yr_pct": 32,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8170,7 +8179,7 @@
    "swstr_pct": 0.0903,
    "war": 0.1,
    "war_ip_plus_3yr": 95,
-   "war_ip_plus_3yr_pct": 21,
+   "war_ip_plus_3yr_pct": 22,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -8245,8 +8254,8 @@
    "war_ip_plus_adj": 93,
    "war_ip_plus_adj_raw": 93.3,
    "war_ip_plus_pct": 18,
-   "war_ip_plus_3yr": 94,
-   "war_ip_plus_3yr_pct": 15,
+   "war_ip_plus_3yr": 95,
+   "war_ip_plus_3yr_pct": 22,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8327,8 +8336,8 @@
    "war_ip_plus_adj": 90,
    "war_ip_plus_adj_raw": 90.2,
    "war_ip_plus_pct": 13,
-   "war_ip_plus_3yr": 101,
-   "war_ip_plus_3yr_pct": 52,
+   "war_ip_plus_3yr": 99,
+   "war_ip_plus_3yr_pct": 41,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8373,7 +8382,7 @@
    "war_ip_plus_adj_raw": 87.7,
    "war_ip_plus_pct": 11,
    "war_ip_plus_3yr": 98,
-   "war_ip_plus_3yr_pct": 36,
+   "war_ip_plus_3yr_pct": 38,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8417,8 +8426,8 @@
    "war_ip_plus_adj": 98,
    "war_ip_plus_adj_raw": 98.2,
    "war_ip_plus_pct": 46,
-   "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 68,
+   "war_ip_plus_3yr": 102,
+   "war_ip_plus_3yr_pct": 62,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8463,7 +8472,7 @@
    "war_ip_plus_adj_raw": 88.0,
    "war_ip_plus_pct": 8,
    "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 57,
+   "war_ip_plus_3yr_pct": 58,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8500,7 +8509,7 @@
    "swstr_pct": 0.1279,
    "war": -0.2,
    "war_ip_plus_3yr": 91,
-   "war_ip_plus_3yr_pct": 8,
+   "war_ip_plus_3yr_pct": 9,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -8544,8 +8553,8 @@
    "war_ip_plus_adj": 88,
    "war_ip_plus_adj_raw": 87.7,
    "war_ip_plus_pct": 13,
-   "war_ip_plus_3yr": 100,
-   "war_ip_plus_3yr_pct": 47,
+   "war_ip_plus_3yr": 99,
+   "war_ip_plus_3yr_pct": 44,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8620,8 +8629,8 @@
    "war_ip_plus_adj": 89,
    "war_ip_plus_adj_raw": 88.6,
    "war_ip_plus_pct": 10,
-   "war_ip_plus_3yr": 91,
-   "war_ip_plus_3yr_pct": 9,
+   "war_ip_plus_3yr": 90,
+   "war_ip_plus_3yr_pct": 8,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -8727,8 +8736,8 @@
    "war_ip_plus_adj": 90,
    "war_ip_plus_adj_raw": 90.0,
    "war_ip_plus_pct": 10,
-   "war_ip_plus_3yr": 100,
-   "war_ip_plus_3yr_pct": 45,
+   "war_ip_plus_3yr": 99,
+   "war_ip_plus_3yr_pct": 43,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8765,7 +8774,7 @@
    "swstr_pct": 0.1363,
    "war": -0.5,
    "war_ip_plus_3yr": 106,
-   "war_ip_plus_3yr_pct": 78,
+   "war_ip_plus_3yr_pct": 79,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8839,7 +8848,7 @@
    "swstr_pct": 0.1282,
    "war": -0.5,
    "war_ip_plus_3yr": 101,
-   "war_ip_plus_3yr_pct": 54,
+   "war_ip_plus_3yr_pct": 57,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8883,8 +8892,8 @@
    "war_ip_plus_adj": 98,
    "war_ip_plus_adj_raw": 98.0,
    "war_ip_plus_pct": 46,
-   "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 62,
+   "war_ip_plus_3yr": 104,
+   "war_ip_plus_3yr_pct": 71,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -8928,8 +8937,8 @@
    "war_ip_plus_adj": 93,
    "war_ip_plus_adj_raw": 93.2,
    "war_ip_plus_pct": 10,
-   "war_ip_plus_3yr": 91,
-   "war_ip_plus_3yr_pct": 8,
+   "war_ip_plus_3yr": 90,
+   "war_ip_plus_3yr_pct": 7,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -8966,7 +8975,7 @@
    "swstr_pct": 0.111,
    "war": 0.1,
    "war_ip_plus_3yr": 103,
-   "war_ip_plus_3yr_pct": 66,
+   "war_ip_plus_3yr_pct": 67,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -9010,8 +9019,8 @@
    "war_ip_plus_adj": 90,
    "war_ip_plus_adj_raw": 90.2,
    "war_ip_plus_pct": 15,
-   "war_ip_plus_3yr": 100,
-   "war_ip_plus_3yr_pct": 47,
+   "war_ip_plus_3yr": 98,
+   "war_ip_plus_3yr_pct": 37,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -9093,7 +9102,7 @@
    "swstr_pct": 0.1167,
    "war": -0.3,
    "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 56,
+   "war_ip_plus_3yr_pct": 59,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -9270,8 +9279,8 @@
    "war_ip_plus_adj": 85,
    "war_ip_plus_adj_raw": 85.3,
    "war_ip_plus_pct": 6,
-   "war_ip_plus_3yr": 82,
-   "war_ip_plus_3yr_pct": 2,
+   "war_ip_plus_3yr": 87,
+   "war_ip_plus_3yr_pct": 5,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -9349,8 +9358,8 @@
    "war_ip_plus_adj": 87,
    "war_ip_plus_adj_raw": 86.8,
    "war_ip_plus_pct": 5,
-   "war_ip_plus_3yr": 88,
-   "war_ip_plus_3yr_pct": 5,
+   "war_ip_plus_3yr": 86,
+   "war_ip_plus_3yr_pct": 4,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -9425,7 +9434,7 @@
    "war_ip_plus_adj": 93,
    "war_ip_plus_adj_raw": 93.3,
    "war_ip_plus_pct": 28,
-   "war_ip_plus_3yr": 92,
+   "war_ip_plus_3yr": 91,
    "war_ip_plus_3yr_pct": 9,
    "war_ip_plus_3yr_tag": "established"
   },
@@ -9471,7 +9480,7 @@
    "war_ip_plus_adj_raw": 87.6,
    "war_ip_plus_pct": 10,
    "war_ip_plus_3yr": 100,
-   "war_ip_plus_3yr_pct": 49,
+   "war_ip_plus_3yr_pct": 48,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -9560,8 +9569,8 @@
    "war_ip_plus_adj": 85,
    "war_ip_plus_adj_raw": 84.9,
    "war_ip_plus_pct": 7,
-   "war_ip_plus_3yr": 96,
-   "war_ip_plus_3yr_pct": 30,
+   "war_ip_plus_3yr": 95,
+   "war_ip_plus_3yr_pct": 24,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -9606,7 +9615,7 @@
    "war_ip_plus_adj_raw": 81.9,
    "war_ip_plus_pct": 7,
    "war_ip_plus_3yr": 97,
-   "war_ip_plus_3yr_pct": 33,
+   "war_ip_plus_3yr_pct": 34,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -9649,7 +9658,10 @@
    "war_ip_plus_raw": 82.6,
    "war_ip_plus_adj": 87,
    "war_ip_plus_adj_raw": 86.9,
-   "war_ip_plus_pct": 2
+   "war_ip_plus_pct": 2,
+   "war_ip_plus_3yr": 83,
+   "war_ip_plus_3yr_pct": 2,
+   "war_ip_plus_3yr_tag": "provisional"
   },
   {
    "key": "547179",
@@ -9692,8 +9704,8 @@
    "war_ip_plus_adj": 96,
    "war_ip_plus_adj_raw": 95.8,
    "war_ip_plus_pct": 36,
-   "war_ip_plus_3yr": 96,
-   "war_ip_plus_3yr_pct": 26,
+   "war_ip_plus_3yr": 95,
+   "war_ip_plus_3yr_pct": 24,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -9737,8 +9749,8 @@
    "war_ip_plus_adj": 92,
    "war_ip_plus_adj_raw": 92.0,
    "war_ip_plus_pct": 8,
-   "war_ip_plus_3yr": 94,
-   "war_ip_plus_3yr_pct": 17,
+   "war_ip_plus_3yr": 93,
+   "war_ip_plus_3yr_pct": 14,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -9813,8 +9825,8 @@
    "war_ip_plus_adj": 81,
    "war_ip_plus_adj_raw": 80.8,
    "war_ip_plus_pct": 3,
-   "war_ip_plus_3yr": 102,
-   "war_ip_plus_3yr_pct": 59,
+   "war_ip_plus_3yr": 101,
+   "war_ip_plus_3yr_pct": 53,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -9851,7 +9863,7 @@
    "swstr_pct": 0.0979,
    "war": -0.4,
    "war_ip_plus_3yr": 100,
-   "war_ip_plus_3yr_pct": 46,
+   "war_ip_plus_3yr_pct": 48,
    "war_ip_plus_3yr_tag": "provisional"
   },
   {
@@ -9895,8 +9907,8 @@
    "war_ip_plus_adj": 79,
    "war_ip_plus_adj_raw": 79.0,
    "war_ip_plus_pct": 5,
-   "war_ip_plus_3yr": 101,
-   "war_ip_plus_3yr_pct": 53,
+   "war_ip_plus_3yr": 99,
+   "war_ip_plus_3yr_pct": 45,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -9941,7 +9953,7 @@
    "war_ip_plus_adj_raw": 79.2,
    "war_ip_plus_pct": 2,
    "war_ip_plus_3yr": 94,
-   "war_ip_plus_3yr_pct": 19,
+   "war_ip_plus_3yr_pct": 18,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -10023,7 +10035,7 @@
    "war_ip_plus_adj_raw": 87.6,
    "war_ip_plus_pct": 5,
    "war_ip_plus_3yr": 98,
-   "war_ip_plus_3yr_pct": 38,
+   "war_ip_plus_3yr_pct": 39,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -10068,7 +10080,7 @@
    "war_ip_plus_adj_raw": 81.1,
    "war_ip_plus_pct": 0,
    "war_ip_plus_3yr": 89,
-   "war_ip_plus_3yr_pct": 5,
+   "war_ip_plus_3yr_pct": 6,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -10113,7 +10125,7 @@
    "war_ip_plus_adj_raw": 76.2,
    "war_ip_plus_pct": 1,
    "war_ip_plus_3yr": 93,
-   "war_ip_plus_3yr_pct": 13,
+   "war_ip_plus_3yr_pct": 12,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -10158,7 +10170,7 @@
    "war_ip_plus_adj_raw": 79.1,
    "war_ip_plus_pct": 4,
    "war_ip_plus_3yr": 93,
-   "war_ip_plus_3yr_pct": 13,
+   "war_ip_plus_3yr_pct": 14,
    "war_ip_plus_3yr_tag": "established"
   },
   {
@@ -10254,7 +10266,7 @@
    "n_above_avg": 6,
    "total_gs": 153,
    "front_sem": 128,
-   "n_off_roster_dropped": 3,
+   "n_off_roster_dropped": 2,
    "rotation": [
     {
      "role": "Ace",
@@ -10271,6 +10283,14 @@
      "sem_plus": 127,
      "ip": 112.7,
      "gs": 20
+    },
+    {
+     "role": "Mid-rotation",
+     "key": "677960",
+     "name": "Ryan Weathers",
+     "sem_plus": 111,
+     "ip": 137.3,
+     "gs": 25
     },
     {
      "role": "Mid-rotation",
@@ -10309,7 +10329,7 @@
    "n_above_avg": 6,
    "total_gs": 183,
    "front_sem": 134,
-   "n_off_roster_dropped": 3,
+   "n_off_roster_dropped": 5,
    "rotation": [
     {
      "role": "Ace",
@@ -10358,22 +10378,6 @@
      "sem_plus": 98,
      "ip": 109.3,
      "gs": 20
-    },
-    {
-     "role": "Back-end",
-     "key": "689441",
-     "name": "Coleman Crow",
-     "sem_plus": 89,
-     "ip": 18.7,
-     "gs": 4
-    },
-    {
-     "role": "Spot",
-     "key": "687075",
-     "name": "Brandon Sproat",
-     "sem_plus": 86,
-     "ip": 97.0,
-     "gs": 19
     }
    ],
    "team_war": 16.4,
@@ -10514,7 +10518,7 @@
    "n_above_avg": 8,
    "total_gs": 184,
    "front_sem": 136,
-   "n_off_roster_dropped": 2,
+   "n_off_roster_dropped": 3,
    "rotation": [
     {
      "role": "Ace",
@@ -10565,14 +10569,6 @@
      "gs": 9
     },
     {
-     "role": "Mid-rotation",
-     "key": "680736",
-     "name": "Justin Wrobleski",
-     "sem_plus": 100,
-     "ip": 140.0,
-     "gs": 22
-    },
-    {
      "role": "Back-end",
      "key": "808963",
      "name": "Roki Sasaki",
@@ -10593,7 +10589,7 @@
    "n_above_avg": 5,
    "total_gs": 143,
    "front_sem": 116,
-   "n_off_roster_dropped": 0,
+   "n_off_roster_dropped": 2,
    "rotation": [
     {
      "role": "Ace",
@@ -10605,27 +10601,11 @@
     },
     {
      "role": "Mid-rotation",
-     "key": "663556",
-     "name": "Shane McClanahan",
-     "sem_plus": 109,
-     "ip": 118.0,
-     "gs": 24
-    },
-    {
-     "role": "Mid-rotation",
      "key": "643377",
      "name": "Griffin Jax",
      "sem_plus": 108,
      "ip": 112.3,
      "gs": 23
-    },
-    {
-     "role": "Mid-rotation",
-     "key": "671212",
-     "name": "Joe Boyle",
-     "sem_plus": 107,
-     "ip": 19.0,
-     "gs": 3
     },
     {
      "role": "Mid-rotation",
@@ -10703,7 +10683,7 @@
    "n_above_avg": 4,
    "total_gs": 179,
    "front_sem": 116,
-   "n_off_roster_dropped": 0,
+   "n_off_roster_dropped": 1,
    "rotation": [
     {
      "role": "Ace",
@@ -10744,14 +10724,6 @@
      "sem_plus": 93,
      "ip": 188.0,
      "gs": 33
-    },
-    {
-     "role": "Back-end",
-     "key": "677944",
-     "name": "Slade Cecconi",
-     "sem_plus": 93,
-     "ip": 121.0,
-     "gs": 21
     }
    ],
    "team_war": 14.7,
@@ -11018,7 +10990,7 @@
    "n_above_avg": 2,
    "total_gs": 174,
    "front_sem": 116,
-   "n_off_roster_dropped": 7,
+   "n_off_roster_dropped": 5,
    "rotation": [
     {
      "role": "Ace",
@@ -11043,6 +11015,22 @@
      "sem_plus": 89,
      "ip": 151.7,
      "gs": 29
+    },
+    {
+     "role": "Spot",
+     "key": "700363",
+     "name": "AJ Smith-Shawver",
+     "sem_plus": 84,
+     "ip": 31.3,
+     "gs": 5
+    },
+    {
+     "role": "Spot",
+     "key": "702275",
+     "name": "JR Ritchie",
+     "sem_plus": 82,
+     "ip": 73.3,
+     "gs": 11
     }
    ],
    "team_war": 9.4,
@@ -11873,11 +11861,11 @@
     },
     {
      "role": "Back-end",
-     "key": "621111",
-     "name": "Walker Buehler",
-     "sem_plus": 93,
-     "ip": 153.7,
-     "gs": 32
+     "key": "681190",
+     "name": "Randy V\u00e1squez",
+     "sem_plus": 95,
+     "ip": 140.7,
+     "gs": 23
     },
     {
      "role": "Back-end",

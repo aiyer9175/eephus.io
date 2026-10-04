@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-02",
+ "generated_at": "2026-10-03",
  "experiment": "star-odds-calibration",
  "model": "star_odds (P>=2 control seasons of >=4 WAR; mixture Poisson-binomial)",
  "seed": null,
@@ -39,15 +39,15 @@
       "tier": "45",
       "fv": 45.0,
       "published": 0.035,
-      "model": 0.0007,
-      "abs_dev": 0.0343
+      "model": 0.0006,
+      "abs_dev": 0.0344
      },
      {
       "tier": "45+",
       "fv": 47.5,
       "published": 0.06,
-      "model": 0.0032,
-      "abs_dev": 0.0568
+      "model": 0.0031,
+      "abs_dev": 0.0569
      },
      {
       "tier": "50",
@@ -67,26 +67,26 @@
       "tier": "60",
       "fv": 60.0,
       "published": 0.33,
-      "model": 0.0567,
-      "abs_dev": 0.2733
+      "model": 0.0648,
+      "abs_dev": 0.2652
      },
      {
       "tier": "65",
       "fv": 65.0,
       "published": 0.4,
-      "model": 0.1666,
-      "abs_dev": 0.2334
+      "model": 0.1621,
+      "abs_dev": 0.2379
      },
      {
       "tier": "70",
       "fv": 70.0,
       "published": 0.875,
-      "model": 0.3194,
-      "abs_dev": 0.5556
+      "model": 0.3138,
+      "abs_dev": 0.5612
      }
     ],
-    "max_abs_dev": 0.5556,
-    "mean_abs_dev": 0.147
+    "max_abs_dev": 0.5612,
+    "mean_abs_dev": 0.1472
    },
    "pitcher": {
     "tiers": [
@@ -122,8 +122,8 @@
       "tier": "45+",
       "fv": 47.5,
       "published": 0.03,
-      "model": 0.0013,
-      "abs_dev": 0.0287
+      "model": 0.0012,
+      "abs_dev": 0.0288
      },
      {
       "tier": "50",
@@ -143,26 +143,26 @@
       "tier": "60",
       "fv": 60.0,
       "published": 0.21,
-      "model": 0.0286,
-      "abs_dev": 0.1814
+      "model": 0.035,
+      "abs_dev": 0.175
      },
      {
       "tier": "65",
       "fv": 65.0,
       "published": 0.4,
-      "model": 0.105,
-      "abs_dev": 0.295
+      "model": 0.1004,
+      "abs_dev": 0.2996
      },
      {
       "tier": "70",
       "fv": 70.0,
       "published": 0.875,
-      "model": 0.2217,
-      "abs_dev": 0.6533
+      "model": 0.2156,
+      "abs_dev": 0.6594
      }
     ],
-    "max_abs_dev": 0.6533,
-    "mean_abs_dev": 0.1321
+    "max_abs_dev": 0.6594,
+    "mean_abs_dev": 0.1325
    }
   }
  },
@@ -191,25 +191,25 @@
       "tier": "40+",
       "fv": 42.5,
       "published": 8.0,
-      "model": 15.6,
-      "abs_dev": 7.6,
-      "pct_dev": 0.95
+      "model": 15.1,
+      "abs_dev": 7.1,
+      "pct_dev": 0.8875
      },
      {
       "tier": "45",
       "fv": 45.0,
       "published": 14.5,
-      "model": 31.1,
-      "abs_dev": 16.6,
-      "pct_dev": 1.1448
+      "model": 29.9,
+      "abs_dev": 15.4,
+      "pct_dev": 1.0621
      },
      {
       "tier": "45+",
       "fv": 47.5,
       "published": 18.5,
-      "model": 46.4,
-      "abs_dev": 27.9,
-      "pct_dev": 1.5081
+      "model": 45.9,
+      "abs_dev": 27.4,
+      "pct_dev": 1.4811
      },
      {
       "tier": "50",
@@ -231,29 +231,29 @@
       "tier": "60",
       "fv": 60.0,
       "published": 82.0,
-      "model": 132.5,
-      "abs_dev": 50.5,
-      "pct_dev": 0.6159
+      "model": 140.4,
+      "abs_dev": 58.4,
+      "pct_dev": 0.7122
      },
      {
       "tier": "65",
       "fv": 65.0,
       "published": 95.0,
-      "model": 205.6,
-      "abs_dev": 110.6,
-      "pct_dev": 1.1642
+      "model": 202.7,
+      "abs_dev": 107.7,
+      "pct_dev": 1.1337
      },
      {
       "tier": "70",
       "fv": 70.0,
       "published": 195.0,
-      "model": 270.7,
-      "abs_dev": 75.7,
-      "pct_dev": 0.3882
+      "model": 267.9,
+      "abs_dev": 72.9,
+      "pct_dev": 0.3738
      }
     ],
-    "max_abs_pct_dev": 1.5081,
-    "mean_abs_pct_dev": 0.7599
+    "max_abs_pct_dev": 1.4811,
+    "mean_abs_pct_dev": 0.7479
    },
    "pitcher": {
     "tiers": [
@@ -277,25 +277,25 @@
       "tier": "40+",
       "fv": 42.5,
       "published": 7.0,
-      "model": 11.0,
-      "abs_dev": 4.0,
-      "pct_dev": 0.5714
+      "model": 10.5,
+      "abs_dev": 3.5,
+      "pct_dev": 0.5
      },
      {
       "tier": "45",
       "fv": 45.0,
       "published": 9.5,
-      "model": 17.5,
-      "abs_dev": 8.0,
-      "pct_dev": 0.8421
+      "model": 16.8,
+      "abs_dev": 7.3,
+      "pct_dev": 0.7684
      },
      {
       "tier": "45+",
       "fv": 47.5,
       "published": 15.0,
-      "model": 35.5,
-      "abs_dev": 20.5,
-      "pct_dev": 1.3667
+      "model": 35.1,
+      "abs_dev": 20.1,
+      "pct_dev": 1.34
      },
      {
       "tier": "50",
@@ -317,29 +317,29 @@
       "tier": "60",
       "fv": 60.0,
       "published": 70.0,
-      "model": 111.1,
-      "abs_dev": 41.1,
-      "pct_dev": 0.5871
+      "model": 118.0,
+      "abs_dev": 48.0,
+      "pct_dev": 0.6857
      },
      {
       "tier": "65",
       "fv": 65.0,
       "published": 95.0,
-      "model": 176.4,
-      "abs_dev": 81.4,
-      "pct_dev": 0.8568
+      "model": 174.0,
+      "abs_dev": 79.0,
+      "pct_dev": 0.8316
      },
      {
       "tier": "70",
       "fv": 70.0,
       "published": 195.0,
-      "model": 236.1,
-      "abs_dev": 41.1,
-      "pct_dev": 0.2108
+      "model": 233.7,
+      "abs_dev": 38.7,
+      "pct_dev": 0.1985
      }
     ],
-    "max_abs_pct_dev": 1.3667,
-    "mean_abs_pct_dev": 0.6421
+    "max_abs_pct_dev": 1.34,
+    "mean_abs_pct_dev": 0.631
    }
   }
  },
@@ -354,31 +354,31 @@
    "hitter": {
     "k": 0.6,
     "pre": {
-     "surplus_max_pct_dev": 1.5081,
-     "surplus_mean_pct_dev": 0.7599,
-     "star_max_abs_dev": 0.5556,
-     "star_mean_abs_dev": 0.147
+     "surplus_max_pct_dev": 1.4811,
+     "surplus_mean_pct_dev": 0.7479,
+     "star_max_abs_dev": 0.5612,
+     "star_mean_abs_dev": 0.1472
     },
     "post": {
      "surplus_max_pct_dev": 0.8,
-     "surplus_mean_pct_dev": 0.2156,
-     "star_max_abs_dev": 0.824,
-     "star_mean_abs_dev": 0.1963
+     "surplus_mean_pct_dev": 0.2069,
+     "star_max_abs_dev": 0.8263,
+     "star_mean_abs_dev": 0.1965
     }
    },
    "pitcher": {
-    "k": 0.65,
+    "k": 0.7,
     "pre": {
-     "surplus_max_pct_dev": 1.3667,
-     "surplus_mean_pct_dev": 0.6421,
-     "star_max_abs_dev": 0.6533,
-     "star_mean_abs_dev": 0.1321
+     "surplus_max_pct_dev": 1.34,
+     "surplus_mean_pct_dev": 0.631,
+     "star_max_abs_dev": 0.6594,
+     "star_mean_abs_dev": 0.1325
     },
     "post": {
      "surplus_max_pct_dev": 0.9333,
-     "surplus_mean_pct_dev": 0.1777,
-     "star_max_abs_dev": 0.8234,
-     "star_mean_abs_dev": 0.1613
+     "surplus_mean_pct_dev": 0.1792,
+     "star_max_abs_dev": 0.8103,
+     "star_mean_abs_dev": 0.159
     }
    }
   }
@@ -388,34 +388,34 @@
   "definition": "2+ seasons of >=4 WAR in debut..debut+6",
   "roles": {
    "hitter": {
-    "n": 424,
+    "n": 485,
     "tiers": [
      {
       "tier": "<50",
-      "n": 293,
-      "stars": 9,
-      "realized": 0.031,
+      "n": 335,
+      "stars": 6,
+      "realized": 0.018,
       "published": 0.06
      },
      {
       "tier": "50-55",
-      "n": 54,
-      "stars": 11,
-      "realized": 0.204,
+      "n": 64,
+      "stars": 9,
+      "realized": 0.141,
       "published": 0.155
      },
      {
       "tier": "55-60",
-      "n": 46,
-      "stars": 13,
-      "realized": 0.283,
+      "n": 52,
+      "stars": 15,
+      "realized": 0.288,
       "published": 0.253
      },
      {
       "tier": "60-65",
-      "n": 21,
-      "stars": 8,
-      "realized": 0.381,
+      "n": 24,
+      "stars": 7,
+      "realized": 0.292,
       "published": 0.365
      },
      {
@@ -428,41 +428,41 @@
     ]
    },
    "pitcher": {
-    "n": 433,
+    "n": 545,
     "tiers": [
      {
       "tier": "<50",
-      "n": 330,
-      "stars": 5,
-      "realized": 0.015,
+      "n": 431,
+      "stars": 7,
+      "realized": 0.016,
       "published": 0.03
      },
      {
       "tier": "50-55",
-      "n": 51,
-      "stars": 7,
-      "realized": 0.137,
+      "n": 55,
+      "stars": 6,
+      "realized": 0.109,
       "published": 0.07
      },
      {
       "tier": "55-60",
-      "n": 43,
-      "stars": 4,
-      "realized": 0.093,
+      "n": 48,
+      "stars": 3,
+      "realized": 0.062,
       "published": 0.14
      },
      {
       "tier": "60-65",
-      "n": 5,
-      "stars": 0,
-      "realized": 0.0,
+      "n": 7,
+      "stars": 2,
+      "realized": 0.286,
       "published": 0.305
      },
      {
       "tier": "65+",
       "n": 4,
-      "stars": 2,
-      "realized": 0.5,
+      "stars": 3,
+      "realized": 0.75,
       "published": 0.495
      }
     ]
@@ -471,7 +471,7 @@
  },
  "gate": {
   "tolerance_abs": 0.1,
-  "max_abs_dev": 0.6533,
+  "max_abs_dev": 0.6594,
   "pass": false,
   "verdict": "provisional",
   "diagnostic_only": true,

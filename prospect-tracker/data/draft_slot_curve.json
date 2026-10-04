@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-04",
+ "generated_at": "2026-10-03",
  "draft_years": [
   2005,
   2018
@@ -14,7 +14,26 @@
   "scored": 6596
  },
  "conventions": {
-  "war_basis": "war_source provider ewar_v2 (war_daily stint frames, bat+pitch summed), the platform basis; eWAR v2 = FIP-repriced pitching within role, position players equal bWAR until the SDR drop",
+  "war_basis": "war_source provider fwar (war_daily stint frames, bat+pitch summed): FanGraphs' published WAR from the frozen per-season vintage on every (mlbam, season) the vintage carries, split across stints by PA / IPouts, and the eWAR v2 value on the rows it does not reach (war_basis_receipt)",
+  "war_basis_stamp": "fwar",
+  "war_basis_receipt": {
+   "bat": {
+    "rows": 126547,
+    "covered_rows": 32496,
+    "covered_player_seasons": 29462,
+    "vintage_player_seasons": 29462,
+    "vintage_unplaced": 0,
+    "vintage_id": "2026-10-02-0341299c20ec"
+   },
+   "pit": {
+    "rows": 57884,
+    "covered_rows": 21513,
+    "covered_player_seasons": 19438,
+    "vintage_player_seasons": 19438,
+    "vintage_unplaced": 0,
+    "vintage_id": "2026-10-02-0341299c20ec"
+   }
+  },
   "unsigned": "excluded when the person reappears in a later draft",
   "never_mlb": "scores 0 (the expectation includes busts)",
   "fit": "weighted decreasing isotonic (PAVA) on per-pick means, picks 1-500",
@@ -43,47 +62,47 @@
  "realized_career_by_bucket_2005_14": {
   "1": {
    "n": 9,
-   "mean_war": 29.511
+   "mean_war": 29.978
   },
   "5": {
    "n": 40,
-   "mean_war": 14.451
+   "mean_war": 14.836
   },
   "10": {
    "n": 46,
-   "mean_war": 12.781
+   "mean_war": 13.703
   },
   "20": {
    "n": 98,
-   "mean_war": 7.312
+   "mean_war": 7.564
   },
   "35": {
    "n": 145,
-   "mean_war": 4.326
+   "mean_war": 4.406
   },
   "50": {
    "n": 147,
-   "mean_war": 3.256
+   "mean_war": 3.37
   },
   "75": {
    "n": 243,
-   "mean_war": 2.055
+   "mean_war": 2.098
   },
   "100": {
    "n": 240,
-   "mean_war": 1.899
+   "mean_war": 1.869
   },
   "150": {
    "n": 476,
-   "mean_war": 1.25
+   "mean_war": 1.254
   },
   "200": {
    "n": 473,
-   "mean_war": 0.953
+   "mean_war": 0.878
   },
   "300": {
    "n": 941,
-   "mean_war": 0.904
+   "mean_war": 0.891
   },
   "500": {
    "n": 1770,
@@ -106,223 +125,223 @@
   "10000": 0.03
  },
  "fitted_career_by_bucket": {
-  "1": 29.511,
-  "5": 15.415,
-  "10": 13.143,
-  "20": 7.476,
-  "35": 4.146,
-  "50": 3.2,
-  "75": 2.363,
-  "100": 1.631,
-  "150": 1.236,
-  "200": 1.181,
-  "300": 0.75,
-  "500": 0.278
+  "1": 29.978,
+  "5": 15.706,
+  "10": 14.027,
+  "20": 7.739,
+  "35": 4.219,
+  "50": 3.305,
+  "75": 2.372,
+  "100": 1.671,
+  "150": 1.219,
+  "200": 1.091,
+  "300": 0.759,
+  "500": 0.276
  },
  "fitted_first6_by_bucket": {
-  "1": 14.447,
-  "5": 8.54,
-  "10": 7.465,
-  "20": 4.505,
-  "35": 2.579,
-  "50": 1.989,
-  "75": 1.494,
-  "100": 1.108,
-  "150": 0.822,
-  "200": 0.694,
-  "300": 0.537,
-  "500": 0.207
+  "1": 14.847,
+  "5": 8.679,
+  "10": 7.907,
+  "20": 4.604,
+  "35": 2.634,
+  "50": 2.037,
+  "75": 1.497,
+  "100": 1.114,
+  "150": 0.803,
+  "200": 0.652,
+  "300": 0.526,
+  "500": 0.204
  },
  "fitted_first8_by_bucket": {
-  "1": 20.796,
-  "5": 11.518,
-  "10": 9.599,
-  "20": 5.826,
-  "35": 3.317,
-  "50": 2.605,
-  "75": 1.933,
-  "100": 1.401,
-  "150": 1.03,
-  "200": 0.898,
-  "300": 0.665,
-  "500": 0.244
+  "1": 21.224,
+  "5": 11.75,
+  "10": 10.262,
+  "20": 6.016,
+  "35": 3.368,
+  "50": 2.686,
+  "75": 1.925,
+  "100": 1.397,
+  "150": 1.017,
+  "200": 0.825,
+  "300": 0.669,
+  "500": 0.242
  },
  "holdout_2015_18_first8": {
   "1": {
-   "realized_first8": 7.158,
+   "realized_first8": 8.163,
    "n": 4,
-   "fitted_first8_2005_14": 20.796,
+   "fitted_first8_2005_14": 21.224,
    "incumbent_career_step": 9.0
   },
   "5": {
-   "realized_first8": 6.739,
+   "realized_first8": 6.916,
    "n": 16,
-   "fitted_first8_2005_14": 11.518,
+   "fitted_first8_2005_14": 11.75,
    "incumbent_career_step": 6.0
   },
   "10": {
-   "realized_first8": 2.713,
+   "realized_first8": 2.499,
    "n": 20,
-   "fitted_first8_2005_14": 9.599,
+   "fitted_first8_2005_14": 10.262,
    "incumbent_career_step": 4.0
   },
   "20": {
-   "realized_first8": 2.973,
+   "realized_first8": 3.039,
    "n": 40,
-   "fitted_first8_2005_14": 5.826,
+   "fitted_first8_2005_14": 6.016,
    "incumbent_career_step": 2.5
   },
   "35": {
-   "realized_first8": 2.701,
+   "realized_first8": 2.643,
    "n": 58,
-   "fitted_first8_2005_14": 3.317,
+   "fitted_first8_2005_14": 3.368,
    "incumbent_career_step": 1.8
   },
   "50": {
-   "realized_first8": 1.118,
+   "realized_first8": 1.116,
    "n": 60,
-   "fitted_first8_2005_14": 2.605,
+   "fitted_first8_2005_14": 2.686,
    "incumbent_career_step": 1.2
   },
   "75": {
-   "realized_first8": 1.273,
+   "realized_first8": 1.197,
    "n": 98,
-   "fitted_first8_2005_14": 1.933,
+   "fitted_first8_2005_14": 1.925,
    "incumbent_career_step": 0.8
   },
   "100": {
-   "realized_first8": 1.418,
+   "realized_first8": 1.284,
    "n": 100,
-   "fitted_first8_2005_14": 1.401,
+   "fitted_first8_2005_14": 1.397,
    "incumbent_career_step": 0.55
   },
   "150": {
    "realized_first8": 0.72,
    "n": 200,
-   "fitted_first8_2005_14": 1.03,
+   "fitted_first8_2005_14": 1.017,
    "incumbent_career_step": 0.35
   },
   "200": {
-   "realized_first8": 0.537,
+   "realized_first8": 0.512,
    "n": 200,
-   "fitted_first8_2005_14": 0.898,
+   "fitted_first8_2005_14": 0.825,
    "incumbent_career_step": 0.22
   },
   "300": {
-   "realized_first8": 0.357,
+   "realized_first8": 0.342,
    "n": 398,
-   "fitted_first8_2005_14": 0.665,
+   "fitted_first8_2005_14": 0.669,
    "incumbent_career_step": 0.13
   },
   "500": {
-   "realized_first8": 0.196,
+   "realized_first8": 0.193,
    "n": 774,
-   "fitted_first8_2005_14": 0.244,
+   "fitted_first8_2005_14": 0.242,
    "incumbent_career_step": 0.07
   }
  },
  "holdout_mae": {
-  "fitted_first8": 2.664,
-  "incumbent_career_steps_as_first8_proxy": 0.642
+  "fitted_first8": 2.73,
+  "incumbent_career_steps_as_first8_proxy": 0.571
  },
  "career_step_curve": [
   [
    1,
-   29.511
+   29.978
   ],
   [
    5,
-   15.415
+   15.706
   ],
   [
    10,
-   13.143
+   14.027
   ],
   [
    20,
-   7.476
+   7.739
   ],
   [
    35,
-   4.146
+   4.219
   ],
   [
    50,
-   3.2
+   3.305
   ],
   [
    75,
-   2.363
+   2.372
   ],
   [
    100,
-   1.631
+   1.671
   ],
   [
    150,
-   1.236
+   1.219
   ],
   [
    200,
-   1.181
+   1.091
   ],
   [
    300,
-   0.75
+   0.759
   ],
   [
    500,
-   0.278
+   0.276
   ]
  ],
  "first6_step_curve": [
   [
    1,
-   14.447
+   14.847
   ],
   [
    5,
-   8.54
+   8.679
   ],
   [
    10,
-   7.465
+   7.907
   ],
   [
    20,
-   4.505
+   4.604
   ],
   [
    35,
-   2.579
+   2.634
   ],
   [
    50,
-   1.989
+   2.037
   ],
   [
    75,
-   1.494
+   1.497
   ],
   [
    100,
-   1.108
+   1.114
   ],
   [
    150,
-   0.822
+   0.803
   ],
   [
    200,
-   0.694
+   0.652
   ],
   [
    300,
-   0.537
+   0.526
   ],
   [
    500,
-   0.207
+   0.204
   ]
  ]
 }

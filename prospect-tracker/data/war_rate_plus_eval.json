@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-11",
+ "generated_at": "2026-10-03",
  "experiment": "WAR-RATE-1",
  "model": "war_pa_plus / war_ip_plus",
  "seed": 20260729,
@@ -291,12 +291,12 @@
    "live_season_scale_check": {
     "season": 2026,
     "advertised_points_per_sigma": 10.0,
-    "anchor_pool_n": 519,
+    "anchor_pool_n": 534,
     "anchor_pool_plus_mean": 100.0,
     "measured_points_per_anchor_pool_sigma": 10.0,
-    "displayed_n": 445,
-    "displayed_plus_mean": 101.24,
-    "measured_points_per_displayed_sigma": 8.69,
+    "displayed_n": 465,
+    "displayed_plus_mean": 101.16,
+    "measured_points_per_displayed_sigma": 9.16,
     "note": "measured_points_per_anchor_pool_sigma must equal 10: the index is a single leg z-scored against this pool's own mu/sd, so there is nothing to re-standardize. The displayed subset is narrower because the display gate removes the noisy low-volume tail, which is selection, not a denominator defect."
    },
    "shrink_ruling": {
@@ -568,12 +568,12 @@
    "live_season_scale_check": {
     "season": 2026,
     "advertised_points_per_sigma": 10.0,
-    "anchor_pool_n": 206,
+    "anchor_pool_n": 214,
     "anchor_pool_plus_mean": 100.0,
     "measured_points_per_anchor_pool_sigma": 10.0,
-    "displayed_n": 175,
-    "displayed_plus_mean": 101.4,
-    "measured_points_per_displayed_sigma": 8.64,
+    "displayed_n": 183,
+    "displayed_plus_mean": 101.17,
+    "measured_points_per_displayed_sigma": 9.11,
     "note": "measured_points_per_anchor_pool_sigma must equal 10: the index is a single leg z-scored against this pool's own mu/sd, so there is nothing to re-standardize. The displayed subset is narrower because the display gate removes the noisy low-volume tail, which is selection, not a denominator defect."
    },
    "shrink_ruling": {
@@ -843,12 +843,12 @@
    "live_season_scale_check": {
     "season": 2026,
     "advertised_points_per_sigma": 10.0,
-    "anchor_pool_n": 309,
+    "anchor_pool_n": 325,
     "anchor_pool_plus_mean": 100.0,
     "measured_points_per_anchor_pool_sigma": 10.0,
-    "displayed_n": 245,
-    "displayed_plus_mean": 101.13,
-    "measured_points_per_displayed_sigma": 10.02,
+    "displayed_n": 263,
+    "displayed_plus_mean": 100.85,
+    "measured_points_per_displayed_sigma": 9.7,
     "note": "measured_points_per_anchor_pool_sigma must equal 10: the index is a single leg z-scored against this pool's own mu/sd, so there is nothing to re-standardize. The displayed subset is narrower because the display gate removes the noisy low-volume tail, which is selection, not a denominator defect."
    },
    "shrink_ruling": {
@@ -897,5 +897,5 @@
   "shrink_decision": "UNSHRUNK on every pool. The pre-registered arm-S rule FIRED on ['hit'] and is being overridden, not ignored: see pools[*].shrink_ruling for the argument and the open owner call.",
   "summary": "NO PASS on the ship gate. The indexes carry real signal (they beat a zero-information control) on hitters, starters, relievers. Hitters (WAR/PA+): index 0.3711 vs plain season WAR on the same series 0.4058 (gap lo95 -0.0479), G2 FAIL. Starters (WAR/IP+): index 0.4726 vs the same rate left unstandardized 0.4705 (gap lo95 -0.0027), G2 FAIL; against season WAR (0.4496) it clears (lo95 +0.0054). Relievers (WAR/IP+): index 0.2323 vs the same rate left unstandardized 0.2319 (gap lo95 -0.0033), G2 FAIL; against season WAR (0.2267) it does not clear (lo95 -0.0081). They ship as UNVALIDATED DISPLAY INDEXES with eval_artifact null, which is the sanctioned path for a descriptive index. This artifact is the measurement ledger, cited on the registry rows. Where season WAR itself is the binding baseline (hitters), the mechanism is worth stating plainly: a season of playing time is itself a talent signal, and a per-trip rate throws it away."
  },
- "runtime_seconds": 259.7
+ "runtime_seconds": 252.4
 }

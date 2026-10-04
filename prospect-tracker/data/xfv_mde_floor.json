@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-04T19:38:07Z",
+ "generated_at": "2026-10-03T16:19:47Z",
  "produced_by": "tools/efv_mde_lab.py mde",
  "purpose": "Minimum detectable effect for the model-vs-consensus pooled-rho gate, re-derived under the 11-fold pair-weighted protocol that ships today. Feeds source_backtest.XFV_VS_CONSENSUS_MDE95 and docs/EFV_GATE_STANDARD.md section 1.",
  "basis": {
@@ -24,141 +24,141 @@
    "pit": 0.57
   },
   "matrix_rows": {
-   "hit": 845,
-   "pit": 983
+   "hit": 968,
+   "pit": 1116
   }
  },
  "protocol": "paired bootstrap over the WHOLE pool (train AND test resampled together, one draw per side per replicate), refitting consensus OLS and the weighted ridge on every draw; blend and baseline scored on identical rows. MDE95 = 1.96 * sd(delta).",
  "B_requested": 2000,
  "seed": 20260807,
- "elapsed_s": 137.5,
+ "elapsed_s": 129.1,
  "weighted": {
   "hit": {
    "B_used": 2000,
-   "point_delta": 0.01045,
-   "boot_mean_delta": -0.01641,
-   "sd": 0.02712,
-   "mde95": 0.0532,
-   "mde95_onesided": 0.0446,
+   "point_delta": 0.03242,
+   "boot_mean_delta": 0.02255,
+   "sd": 0.01953,
+   "mde95": 0.0383,
+   "mde95_onesided": 0.0321,
    "ci95": [
-    -0.07352,
-    0.03441
+    -0.01568,
+    0.06242
    ],
-   "p_gt_0": 0.2775,
+   "p_gt_0": 0.882,
    "resolvable": false
   },
   "pit": {
    "B_used": 2000,
-   "point_delta": -0.0129,
-   "boot_mean_delta": -0.02097,
-   "sd": 0.02585,
-   "mde95": 0.0507,
-   "mde95_onesided": 0.0425,
+   "point_delta": 0.0257,
+   "boot_mean_delta": 0.014,
+   "sd": 0.0171,
+   "mde95": 0.0335,
+   "mde95_onesided": 0.0281,
    "ci95": [
-    -0.07273,
-    0.02837
+    -0.01911,
+    0.04833
    ],
-   "p_gt_0": 0.2095,
+   "p_gt_0": 0.8015,
    "resolvable": false
   },
   "block": {
    "B_used": 2000,
-   "point_delta": 0.00294,
-   "boot_mean_delta": -0.01676,
-   "sd": 0.01903,
-   "mde95": 0.0373,
-   "mde95_onesided": 0.0313,
+   "point_delta": 0.02537,
+   "boot_mean_delta": 0.01377,
+   "sd": 0.01382,
+   "mde95": 0.0271,
+   "mde95_onesided": 0.0227,
    "ci95": [
-    -0.05802,
-    0.01827
+    -0.01359,
+    0.04041
    ],
-   "p_gt_0": 0.188,
+   "p_gt_0": 0.8435,
    "resolvable": false
   }
  },
  "unweighted": {
   "hit": {
    "B_used": 2000,
-   "point_delta": 0.01582,
-   "boot_mean_delta": -0.00848,
-   "sd": 0.02283,
-   "mde95": 0.0447,
-   "mde95_onesided": 0.0376,
+   "point_delta": 0.03152,
+   "boot_mean_delta": 0.0216,
+   "sd": 0.01806,
+   "mde95": 0.0354,
+   "mde95_onesided": 0.0297,
    "ci95": [
-    -0.05532,
-    0.03393
+    -0.01328,
+    0.05839
    ],
-   "p_gt_0": 0.362,
+   "p_gt_0": 0.8885,
    "resolvable": false
   },
   "pit": {
    "B_used": 2000,
-   "point_delta": -0.00861,
-   "boot_mean_delta": -0.01603,
-   "sd": 0.02193,
-   "mde95": 0.043,
-   "mde95_onesided": 0.0361,
+   "point_delta": 0.02185,
+   "boot_mean_delta": 0.01078,
+   "sd": 0.01588,
+   "mde95": 0.0311,
+   "mde95_onesided": 0.0261,
    "ci95": [
-    -0.05932,
-    0.02702
+    -0.01995,
+    0.04214
    ],
-   "p_gt_0": 0.2255,
+   "p_gt_0": 0.7585,
    "resolvable": false
   },
   "block": {
    "B_used": 2000,
-   "point_delta": 0.00348,
-   "boot_mean_delta": -0.01338,
-   "sd": 0.01626,
-   "mde95": 0.0319,
-   "mde95_onesided": 0.0267,
+   "point_delta": 0.0217,
+   "boot_mean_delta": 0.0108,
+   "sd": 0.0128,
+   "mde95": 0.0251,
+   "mde95_onesided": 0.021,
    "ci95": [
-    -0.04761,
-    0.01747
+    -0.01444,
+    0.03553
    ],
-   "p_gt_0": 0.207,
+   "p_gt_0": 0.8025,
    "resolvable": false
   }
  },
  "point_estimates": {
   "weighted": {
    "hit": {
-    "n": 755,
-    "consensus": 0.3821,
-    "blend": 0.39255,
-    "delta": 0.01045
+    "n": 782,
+    "consensus": 0.38835,
+    "blend": 0.42076,
+    "delta": 0.03242
    },
    "pit": {
-    "n": 892,
-    "consensus": 0.2957,
-    "blend": 0.28279,
-    "delta": -0.0129
+    "n": 907,
+    "consensus": 0.33793,
+    "blend": 0.36363,
+    "delta": 0.0257
    },
    "block": {
-    "n": 1647,
-    "consensus": 0.32974,
-    "blend": 0.33268,
-    "delta": 0.00294
+    "n": 1689,
+    "consensus": 0.3563,
+    "blend": 0.38167,
+    "delta": 0.02537
    }
   },
   "unweighted": {
    "hit": {
-    "n": 755,
-    "consensus": 0.36827,
-    "blend": 0.38409,
-    "delta": 0.01582
+    "n": 782,
+    "consensus": 0.3876,
+    "blend": 0.41912,
+    "delta": 0.03152
    },
    "pit": {
-    "n": 892,
-    "consensus": 0.28228,
-    "blend": 0.27368,
-    "delta": -0.00861
+    "n": 907,
+    "consensus": 0.33538,
+    "blend": 0.35723,
+    "delta": 0.02185
    },
    "block": {
-    "n": 1647,
-    "consensus": 0.31095,
-    "blend": 0.31443,
-    "delta": 0.00348
+    "n": 1689,
+    "consensus": 0.35312,
+    "blend": 0.37482,
+    "delta": 0.0217
    }
   }
  }

@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "generated_at": "2026-10-02T16:09:41+00:00",
- "as_of": "2026-10-02",
+ "generated_at": "2026-10-03T23:33:28+00:00",
+ "as_of": "2026-10-03",
  "model_id": "provisional_v2",
  "producer": "provisional_v2.py (efv_export.regen_all)",
  "port_version": "pg2-port-1",
@@ -14,7 +14,7 @@
   "W6_end": "2027-04-15",
   "W12_end": "2027-10-15"
  },
- "universe": "roster players with a MiLB line in the feature season, age 25 or under, no MLB line, and no label-source opinion dated on or before 2026-10-02",
+ "universe": "roster players with a MiLB line in the feature season, age 25 or under, no MLB line, and no label-source opinion dated on or before 2026-10-03",
  "label_sources": [
   "fangraphs",
   "mlb_pipeline",
@@ -317,13 +317,13 @@
  },
  "identity_coverage": {
   "graded_keys": 7445,
-  "mapped:debuts": 140,
+  "mapped:debuts": 899,
   "mapped:draft_players": 3,
-  "mapped:name_unique": 2203,
+  "mapped:name_unique": 1484,
   "mapped:rosters": 12,
   "mapped:statlines": 4699,
   "mapped:timeseries": 99,
-  "unmapped:ambiguous_name": 164,
+  "unmapped:ambiguous_name": 124,
   "unmapped:no_name": 125
  },
  "eval_artifact": "data/provisional_v2_eval.json",

@@ -1,9 +1,9 @@
 {
- "generated_at": "2026-09-04",
+ "generated_at": "2026-10-03",
  "model": "eFV hitter v1 (lean + guarded blend)",
  "scope": "HITTERS",
  "conventions": {
-  "target": "first-6-season summed bWAR; KM-censored (rate-projected tail) + resolved sensitivity",
+  "target": "first-6-season summed label WAR; rate-projected tail + resolved sensitivity",
   "vintage": "features strictly pre-outcome (Pass-1 matrix; leakage verified 0)",
   "protocol": "forward-chained by decision-year cohort; pooled OOS",
   "baseline": "within-fold OLS WAR ~ consensus_fv_raw (THE bar)",
@@ -41,70 +41,70 @@
    ],
    "composite_at_shipped": {
     "lambda": 0.7,
-    "pooled_rho": 0.3841,
-    "within_tier_wm": 0.1033,
-    "t45": 0.2108,
-    "composite_sum": 0.6982
+    "pooled_rho": 0.4191,
+    "within_tier_wm": 0.1281,
+    "t45": 0.2643,
+    "composite_sum": 0.8115
    },
    "composite_at_selected": {
-    "selected_lambda": 0.51,
-    "pooled_rho": 0.385,
-    "within_tier_wm": 0.1042,
-    "t45": 0.2323,
-    "composite_sum": 0.7215
+    "selected_lambda": 0.7,
+    "pooled_rho": 0.4191,
+    "within_tier_wm": 0.1281,
+    "t45": 0.2643,
+    "composite_sum": 0.8115
    },
-   "shipped_equals_selected": false,
+   "shipped_equals_selected": true,
    "note": "rank_calibration selects lambda in rank_gate_band by argmax of pooled + within-tier + FV45-fringe Spearman. composite_at_shipped = those decisive components recomputed AT shipped_lambda (the value actually served); composite_at_selected = the same components at the selector's own argmax. They differ whenever a _BLEND_LAMBDA_RESELECT pin overrides the selector, which is the live case on both sides."
   },
   "wag": {
-   "lambda": 0.434,
-   "slope_wobs": 0.434,
-   "slope_unweighted": 0.266,
-   "spearman": 0.0324,
-   "n": 755
+   "lambda": 0.35,
+   "slope_wobs": 0.277,
+   "slope_unweighted": 0.132,
+   "spearman": 0.0675,
+   "n": 780
   },
   "rank_gate": {
-   "lambda": 0.51,
-   "rho": 0.385,
-   "within_tier_wm": 0.1042,
-   "t45": 0.2323,
-   "n": 755,
+   "lambda": 0.7,
+   "rho": 0.4191,
+   "within_tier_wm": 0.1281,
+   "t45": 0.2643,
+   "n": 782,
    "band": [
     0.5,
     0.7
    ],
    "curve": {
-    "0.5": 0.721,
-    "0.51": 0.7215,
-    "0.52": 0.7209,
-    "0.53": 0.719,
-    "0.54": 0.719,
-    "0.55": 0.7158,
-    "0.56": 0.7153,
-    "0.57": 0.7141,
-    "0.58": 0.7136,
-    "0.59": 0.7131,
-    "0.6": 0.7113,
-    "0.61": 0.7088,
-    "0.62": 0.7067,
-    "0.63": 0.7059,
-    "0.64": 0.7059,
-    "0.65": 0.7051,
-    "0.66": 0.7026,
-    "0.67": 0.7029,
-    "0.68": 0.6988,
-    "0.69": 0.6992,
-    "0.7": 0.6982
+    "0.5": 0.8022,
+    "0.51": 0.8017,
+    "0.52": 0.8005,
+    "0.53": 0.8018,
+    "0.54": 0.8031,
+    "0.55": 0.8025,
+    "0.56": 0.8023,
+    "0.57": 0.8043,
+    "0.58": 0.8068,
+    "0.59": 0.8072,
+    "0.6": 0.8055,
+    "0.61": 0.8053,
+    "0.62": 0.8041,
+    "0.63": 0.8059,
+    "0.64": 0.8065,
+    "0.65": 0.8068,
+    "0.66": 0.8056,
+    "0.67": 0.8087,
+    "0.68": 0.8095,
+    "0.69": 0.809,
+    "0.7": 0.8115
    },
-   "curve_spread": 0.0233,
+   "curve_spread": 0.011,
    "near_boundary": true,
    "composite_at": {
     "0.700": {
      "lambda": 0.7,
-     "pooled_rho": 0.3841,
-     "within_tier_wm": 0.1033,
-     "t45": 0.2108,
-     "composite_sum": 0.6982
+     "pooled_rho": 0.4191,
+     "within_tier_wm": 0.1281,
+     "t45": 0.2643,
+     "composite_sum": 0.8115
     }
    }
   },
@@ -112,19 +112,19 @@
  },
  "era_split_debuted": {
   "<=2018": {
-   "n": 129,
-   "consensus_spearman": 0.4868,
-   "xfv_blend_spearman": 0.4764
+   "n": 146,
+   "consensus_spearman": 0.4054,
+   "xfv_blend_spearman": 0.4487
   },
   "2019-2021": {
-   "n": 205,
-   "consensus_spearman": 0.3081,
-   "xfv_blend_spearman": 0.3539
+   "n": 210,
+   "consensus_spearman": 0.2977,
+   "xfv_blend_spearman": 0.3511
   },
   "2022-2023": {
-   "n": 220,
-   "consensus_spearman": 0.3779,
-   "xfv_blend_spearman": 0.4201
+   "n": 222,
+   "consensus_spearman": 0.4461,
+   "xfv_blend_spearman": 0.4891
   }
  },
  "evals": {
@@ -132,752 +132,740 @@
    "label": "debuted, KM-censored target",
    "pooled_oos": {
     "baseline": {
-     "n": 755,
-     "n_effective": 594.0,
+     "n": 782,
+     "n_effective": 684.2,
      "weighted": true,
-     "mae": 4.142,
-     "spearman": 0.3821,
+     "mae": 3.821,
+     "spearman": 0.3883,
      "calibration": {
-      "slope": 0.925,
-      "bias": 0.201
+      "slope": 0.937,
+      "bias": 0.083
      }
     },
     "ridge": {
-     "n": 755,
-     "n_effective": 594.0,
+     "n": 782,
+     "n_effective": 684.2,
      "weighted": true,
-     "mae": 4.434,
-     "spearman": 0.3889,
+     "mae": 3.98,
+     "spearman": 0.4212,
      "calibration": {
-      "slope": 0.749,
-      "bias": 0.416
+      "slope": 0.801,
+      "bias": -0.163
      }
     },
     "blend": {
-     "n": 755,
-     "n_effective": 594.0,
+     "n": 782,
+     "n_effective": 684.2,
      "weighted": true,
-     "mae": 4.279,
-     "spearman": 0.3925,
+     "mae": 3.847,
+     "spearman": 0.4208,
      "calibration": {
-      "slope": 0.824,
-      "bias": 0.351
+      "slope": 0.878,
+      "bias": -0.089
      }
     },
     "lgbm": {
-     "n": 755,
-     "n_effective": 594.0,
+     "n": 782,
+     "n_effective": 684.2,
      "weighted": true,
-     "mae": 4.421,
-     "spearman": 0.3538,
+     "mae": 4.03,
+     "spearman": 0.3715,
      "calibration": {
-      "slope": 0.749,
-      "bias": 0.403
+      "slope": 0.761,
+      "bias": 0.119
      }
     },
     "comps": {
-     "n": 755,
-     "n_effective": 594.0,
+     "n": 782,
+     "n_effective": 684.2,
      "weighted": true,
-     "mae": 4.461,
-     "spearman": 0.3325,
+     "mae": 3.964,
+     "spearman": 0.3657,
      "calibration": {
-      "slope": 0.982,
-      "bias": 0.264
+      "slope": 1.221,
+      "bias": -0.177
      }
     },
     "ensemble": {
-     "n": 755,
-     "n_effective": 594.0,
+     "n": 782,
+     "n_effective": 684.2,
      "weighted": true,
-     "mae": 4.324,
-     "spearman": 0.3848,
+     "mae": 3.903,
+     "spearman": 0.4087,
      "calibration": {
-      "slope": 0.808,
-      "bias": 0.41
+      "slope": 0.843,
+      "bias": -0.022
      }
     },
     "ridge_cal": {
-     "n": 755,
-     "mae": 4.184,
-     "spearman": 0.3734,
+     "n": 782,
+     "mae": 3.909,
+     "spearman": 0.4145,
      "calibration": {
-      "slope": 1.004,
-      "bias": 0.088
+      "slope": 0.985,
+      "bias": 0.1
      }
     },
     "ensemble_cal": {
-     "n": 755,
-     "mae": 4.141,
-     "spearman": 0.3679,
+     "n": 782,
+     "mae": 3.874,
+     "spearman": 0.4027,
      "calibration": {
-      "slope": 0.992,
-      "bias": 0.04
+      "slope": 0.987,
+      "bias": 0.036
      }
     }
    },
    "per_year": {
     "2014": {
      "baseline": {
-      "n": 48,
-      "mae": 5.324,
-      "spearman": 0.1564,
+      "n": 50,
+      "mae": 4.782,
+      "spearman": 0.2507,
       "calibration": {
-       "slope": 0.602,
-       "bias": -0.431
+       "slope": 0.627,
+       "bias": -0.569
       }
      },
      "ridge": {
-      "n": 48,
-      "mae": 6.771,
-      "spearman": 0.2094,
+      "n": 50,
+      "mae": 6.278,
+      "spearman": 0.2568,
       "calibration": {
-       "slope": 0.29,
-       "bias": 0.455
+       "slope": 0.285,
+       "bias": 0.422
       }
      },
      "blend": {
-      "n": 48,
-      "mae": 6.187,
-      "spearman": 0.201,
+      "n": 50,
+      "mae": 5.673,
+      "spearman": 0.2579,
       "calibration": {
        "slope": 0.354,
-       "bias": 0.189
+       "bias": 0.125
       }
      },
      "lgbm": {
-      "n": 48,
-      "mae": 5.504,
-      "spearman": 0.1329,
+      "n": 50,
+      "mae": 5.114,
+      "spearman": 0.2202,
       "calibration": {
-       "slope": 0.568,
-       "bias": -0.104
+       "slope": 0.504,
+       "bias": -0.202
       }
      },
      "comps": {
-      "n": 48,
-      "mae": 5.126,
-      "spearman": 0.1117,
+      "n": 50,
+      "mae": 4.867,
+      "spearman": 0.1121,
       "calibration": {
-       "slope": 0.846,
-       "bias": -1.185
+       "slope": 0.776,
+       "bias": -1.356
       }
      },
      "ensemble": {
-      "n": 48,
-      "mae": 5.792,
-      "spearman": 0.2012,
+      "n": 50,
+      "mae": 5.329,
+      "spearman": 0.2515,
       "calibration": {
-       "slope": 0.429,
-       "bias": 0.175
+       "slope": 0.41,
+       "bias": 0.11
       }
      }
     },
     "2015": {
      "baseline": {
-      "n": 62,
-      "mae": 4.074,
-      "spearman": 0.5036,
+      "n": 63,
+      "mae": 3.808,
+      "spearman": 0.5893,
       "calibration": {
-       "slope": 1.227,
-       "bias": 0.195
+       "slope": 1.234,
+       "bias": 0.225
       }
      },
      "ridge": {
-      "n": 62,
-      "mae": 4.184,
-      "spearman": 0.4802,
+      "n": 63,
+      "mae": 4.353,
+      "spearman": 0.6342,
       "calibration": {
-       "slope": 1.31,
-       "bias": 0.226
+       "slope": 2.0,
+       "bias": 0.61
       }
      },
      "blend": {
-      "n": 62,
-      "mae": 4.15,
-      "spearman": 0.4785,
+      "n": 63,
+      "mae": 4.137,
+      "spearman": 0.6198,
       "calibration": {
-       "slope": 1.285,
-       "bias": 0.217
+       "slope": 1.69,
+       "bias": 0.494
       }
      },
      "lgbm": {
-      "n": 62,
-      "mae": 4.394,
-      "spearman": 0.5422,
+      "n": 63,
+      "mae": 4.07,
+      "spearman": 0.6391,
       "calibration": {
-       "slope": 1.341,
-       "bias": 0.288
+       "slope": 1.436,
+       "bias": 0.296
       }
      },
      "comps": {
-      "n": 62,
-      "mae": 4.307,
-      "spearman": 0.4914,
+      "n": 63,
+      "mae": 4.041,
+      "spearman": 0.6239,
       "calibration": {
-       "slope": 1.239,
-       "bias": -0.135
+       "slope": 1.713,
+       "bias": 0.361
       }
      },
      "ensemble": {
-      "n": 62,
-      "mae": 4.247,
-      "spearman": 0.4957,
+      "n": 63,
+      "mae": 4.173,
+      "spearman": 0.6468,
       "calibration": {
-       "slope": 1.37,
-       "bias": 0.257
+       "slope": 1.715,
+       "bias": 0.453
       }
      }
     },
     "2016": {
      "baseline": {
-      "n": 39,
-      "mae": 4.439,
-      "spearman": 0.4886,
+      "n": 43,
+      "mae": 3.978,
+      "spearman": 0.4979,
       "calibration": {
-       "slope": 1.129,
-       "bias": -0.749
+       "slope": 0.848,
+       "bias": 0.33
       }
      },
      "ridge": {
-      "n": 39,
-      "mae": 4.727,
-      "spearman": 0.5643,
+      "n": 43,
+      "mae": 3.592,
+      "spearman": 0.5681,
       "calibration": {
-       "slope": 0.909,
-       "bias": 0.899
+       "slope": 0.891,
+       "bias": -0.566
       }
      },
      "blend": {
-      "n": 39,
-      "mae": 4.466,
-      "spearman": 0.5774,
+      "n": 43,
+      "mae": 3.535,
+      "spearman": 0.5802,
       "calibration": {
-       "slope": 1.012,
-       "bias": 0.405
+       "slope": 0.936,
+       "bias": -0.297
       }
      },
      "lgbm": {
-      "n": 39,
-      "mae": 4.706,
-      "spearman": 0.4041,
+      "n": 43,
+      "mae": 4.33,
+      "spearman": 0.4711,
       "calibration": {
-       "slope": 0.665,
-       "bias": 0.182
+       "slope": 0.55,
+       "bias": 1.018
       }
      },
      "comps": {
-      "n": 39,
-      "mae": 4.798,
-      "spearman": 0.427,
+      "n": 43,
+      "mae": 3.87,
+      "spearman": 0.4924,
       "calibration": {
-       "slope": 0.442,
-       "bias": -0.645
+       "slope": 1.274,
+       "bias": -0.566
       }
      },
      "ensemble": {
-      "n": 39,
-      "mae": 4.639,
-      "spearman": 0.522,
+      "n": 43,
+      "mae": 3.859,
+      "spearman": 0.54,
       "calibration": {
-       "slope": 0.816,
-       "bias": 0.54
+       "slope": 0.716,
+       "bias": 0.226
       }
      }
     },
     "2017": {
      "baseline": {
-      "n": 46,
-      "mae": 3.527,
-      "spearman": 0.5244,
+      "n": 52,
+      "mae": 3.919,
+      "spearman": 0.3155,
       "calibration": {
-       "slope": 0.882,
-       "bias": 1.883
+       "slope": 0.669,
+       "bias": 2.423
       }
      },
      "ridge": {
-      "n": 46,
-      "mae": 4.356,
-      "spearman": 0.4574,
+      "n": 52,
+      "mae": 3.547,
+      "spearman": 0.3324,
       "calibration": {
-       "slope": 0.696,
-       "bias": 2.814
+       "slope": 0.609,
+       "bias": 1.337
       }
      },
      "blend": {
-      "n": 46,
-      "mae": 4.048,
-      "spearman": 0.5284,
+      "n": 52,
+      "mae": 3.569,
+      "spearman": 0.3501,
       "calibration": {
-       "slope": 0.805,
-       "bias": 2.535
+       "slope": 0.649,
+       "bias": 1.662
       }
      },
      "lgbm": {
-      "n": 46,
-      "mae": 4.055,
-      "spearman": 0.4181,
+      "n": 52,
+      "mae": 3.829,
+      "spearman": 0.348,
       "calibration": {
-       "slope": 0.547,
-       "bias": 2.347
+       "slope": 0.462,
+       "bias": 2.122
       }
      },
      "comps": {
-      "n": 46,
-      "mae": 4.063,
-      "spearman": 0.3749,
+      "n": 52,
+      "mae": 3.679,
+      "spearman": 0.1898,
       "calibration": {
-       "slope": 0.732,
-       "bias": 2.429
+       "slope": 0.679,
+       "bias": 1.028
       }
      },
      "ensemble": {
-      "n": 46,
-      "mae": 4.021,
-      "spearman": 0.4869,
+      "n": 52,
+      "mae": 3.602,
+      "spearman": 0.3507,
       "calibration": {
-       "slope": 0.682,
-       "bias": 2.581
+       "slope": 0.55,
+       "bias": 1.729
       }
      }
     },
     "2018": {
      "baseline": {
-      "n": 44,
-      "mae": 3.742,
-      "spearman": 0.4941,
+      "n": 51,
+      "mae": 3.333,
+      "spearman": 0.4111,
       "calibration": {
-       "slope": 1.454,
-       "bias": -0.86
+       "slope": 1.536,
+       "bias": -0.557
       }
      },
      "ridge": {
-      "n": 44,
-      "mae": 4.292,
-      "spearman": 0.4657,
+      "n": 51,
+      "mae": 3.643,
+      "spearman": 0.529,
       "calibration": {
-       "slope": 1.141,
-       "bias": -1.765
+       "slope": 1.399,
+       "bias": -2.395
       }
      },
      "blend": {
-      "n": 44,
-      "mae": 3.967,
-      "spearman": 0.4793,
+      "n": 51,
+      "mae": 3.372,
+      "spearman": 0.525,
       "calibration": {
-       "slope": 1.268,
-       "bias": -1.494
+       "slope": 1.48,
+       "bias": -1.843
       }
      },
      "lgbm": {
-      "n": 44,
-      "mae": 4.0,
-      "spearman": 0.4254,
+      "n": 51,
+      "mae": 3.249,
+      "spearman": 0.5299,
       "calibration": {
-       "slope": 1.125,
-       "bias": -1.844
+       "slope": 1.456,
+       "bias": -1.985
       }
      },
      "comps": {
-      "n": 44,
-      "mae": 4.677,
-      "spearman": 0.4599,
+      "n": 51,
+      "mae": 3.734,
+      "spearman": 0.5921,
       "calibration": {
-       "slope": 1.769,
-       "bias": -0.928
+       "slope": 3.018,
+       "bias": -1.528
       }
      },
      "ensemble": {
-      "n": 44,
-      "mae": 4.09,
-      "spearman": 0.4732,
+      "n": 51,
+      "mae": 3.39,
+      "spearman": 0.554,
       "calibration": {
-       "slope": 1.206,
-       "bias": -1.805
+       "slope": 1.499,
+       "bias": -2.19
       }
      }
     },
     "2019": {
      "baseline": {
-      "n": 72,
-      "mae": 4.947,
-      "spearman": 0.3479,
+      "n": 75,
+      "mae": 4.644,
+      "spearman": 0.3031,
       "calibration": {
-       "slope": 0.719,
-       "bias": -0.554
+       "slope": 0.689,
+       "bias": -0.415
       }
      },
      "ridge": {
-      "n": 72,
-      "mae": 4.949,
-      "spearman": 0.4017,
+      "n": 75,
+      "mae": 4.586,
+      "spearman": 0.3651,
       "calibration": {
-       "slope": 0.754,
-       "bias": -0.532
+       "slope": 0.734,
+       "bias": -1.085
       }
      },
      "blend": {
-      "n": 72,
-      "mae": 4.905,
-      "spearman": 0.3929,
+      "n": 75,
+      "mae": 4.497,
+      "spearman": 0.3447,
       "calibration": {
-       "slope": 0.763,
-       "bias": -0.538
+       "slope": 0.743,
+       "bias": -0.884
       }
      },
      "lgbm": {
-      "n": 72,
-      "mae": 5.198,
-      "spearman": 0.2732,
+      "n": 75,
+      "mae": 4.875,
+      "spearman": 0.2566,
       "calibration": {
-       "slope": 0.657,
-       "bias": -0.519
+       "slope": 0.594,
+       "bias": -0.917
       }
      },
      "comps": {
-      "n": 72,
-      "mae": 5.088,
-      "spearman": 0.3924,
+      "n": 75,
+      "mae": 4.518,
+      "spearman": 0.3743,
       "calibration": {
-       "slope": 1.403,
-       "bias": -0.767
+       "slope": 1.212,
+       "bias": -1.211
       }
      },
      "ensemble": {
-      "n": 72,
-      "mae": 5.037,
-      "spearman": 0.3311,
+      "n": 75,
+      "mae": 4.602,
+      "spearman": 0.3152,
       "calibration": {
-       "slope": 0.736,
-       "bias": -0.525
+       "slope": 0.702,
+       "bias": -1.001
       }
      }
     },
     "2020": {
      "baseline": {
-      "n": 59,
-      "mae": 4.213,
-      "spearman": 0.3391,
+      "n": 60,
+      "mae": 3.97,
+      "spearman": 0.2958,
       "calibration": {
-       "slope": 0.56,
-       "bias": 1.255
+       "slope": 0.522,
+       "bias": 1.007
       }
      },
      "ridge": {
-      "n": 59,
-      "mae": 4.397,
-      "spearman": 0.3187,
+      "n": 60,
+      "mae": 3.928,
+      "spearman": 0.3268,
       "calibration": {
-       "slope": 0.417,
-       "bias": 1.141
+       "slope": 0.556,
+       "bias": 0.632
       }
      },
      "blend": {
-      "n": 59,
-      "mae": 4.314,
-      "spearman": 0.329,
+      "n": 60,
+      "mae": 3.912,
+      "spearman": 0.3217,
       "calibration": {
-       "slope": 0.466,
-       "bias": 1.175
+       "slope": 0.568,
+       "bias": 0.745
       }
      },
      "lgbm": {
-      "n": 59,
-      "mae": 4.824,
-      "spearman": 0.2234,
+      "n": 60,
+      "mae": 4.435,
+      "spearman": 0.1923,
       "calibration": {
-       "slope": 0.303,
-       "bias": 1.619
+       "slope": 0.271,
+       "bias": 1.247
       }
      },
      "comps": {
-      "n": 59,
-      "mae": 4.679,
-      "spearman": 0.2005,
+      "n": 60,
+      "mae": 4.038,
+      "spearman": 0.2639,
       "calibration": {
-       "slope": 0.406,
-       "bias": 1.193
+       "slope": 0.582,
+       "bias": 0.426
       }
      },
      "ensemble": {
-      "n": 59,
-      "mae": 4.508,
-      "spearman": 0.2885,
+      "n": 60,
+      "mae": 4.096,
+      "spearman": 0.2934,
       "calibration": {
-       "slope": 0.381,
-       "bias": 1.38
+       "slope": 0.424,
+       "bias": 0.939
       }
      }
     },
     "2021": {
      "baseline": {
-      "n": 74,
-      "n_effective": 62.0,
-      "weighted": true,
-      "mae": 3.749,
-      "spearman": 0.1837,
+      "n": 75,
+      "mae": 3.283,
+      "spearman": 0.2366,
       "calibration": {
-       "slope": 0.558,
-       "bias": -0.039
+       "slope": 0.486,
+       "bias": 0.016
       }
      },
      "ridge": {
-      "n": 74,
-      "n_effective": 62.0,
-      "weighted": true,
-      "mae": 3.756,
-      "spearman": 0.2854,
+      "n": 75,
+      "mae": 3.401,
+      "spearman": 0.3199,
       "calibration": {
-       "slope": 0.582,
-       "bias": 0.0
+       "slope": 0.551,
+       "bias": 0.333
       }
      },
      "blend": {
-      "n": 74,
-      "n_effective": 62.0,
-      "weighted": true,
-      "mae": 3.723,
-      "spearman": 0.264,
+      "n": 75,
+      "mae": 3.326,
+      "spearman": 0.3159,
       "calibration": {
-       "slope": 0.59,
-       "bias": -0.011
+       "slope": 0.549,
+       "bias": 0.238
       }
      },
      "lgbm": {
-      "n": 74,
-      "n_effective": 62.0,
-      "weighted": true,
-      "mae": 3.669,
-      "spearman": 0.3393,
+      "n": 75,
+      "mae": 3.594,
+      "spearman": 0.3126,
       "calibration": {
-       "slope": 0.597,
-       "bias": 0.183
+       "slope": 0.469,
+       "bias": 0.508
       }
      },
      "comps": {
-      "n": 74,
-      "n_effective": 62.0,
-      "weighted": true,
-      "mae": 3.933,
-      "spearman": 0.2681,
+      "n": 75,
+      "mae": 3.544,
+      "spearman": 0.3105,
       "calibration": {
-       "slope": 0.886,
-       "bias": 1.232
+       "slope": 0.779,
+       "bias": 1.013
       }
      },
      "ensemble": {
-      "n": 74,
-      "n_effective": 62.0,
-      "weighted": true,
-      "mae": 3.646,
-      "spearman": 0.3328,
+      "n": 75,
+      "mae": 3.437,
+      "spearman": 0.3378,
       "calibration": {
-       "slope": 0.631,
-       "bias": 0.092
+       "slope": 0.543,
+       "bias": 0.421
       }
      }
     },
     "2022": {
      "baseline": {
-      "n": 127,
-      "n_effective": 84.7,
+      "n": 128,
+      "n_effective": 106.6,
       "weighted": true,
-      "mae": 3.574,
-      "spearman": 0.5825,
+      "mae": 3.251,
+      "spearman": 0.5939,
       "calibration": {
-       "slope": 1.44,
-       "bias": 0.3
+       "slope": 1.541,
+       "bias": -0.064
       }
      },
      "ridge": {
-      "n": 127,
-      "n_effective": 84.7,
+      "n": 128,
+      "n_effective": 106.6,
       "weighted": true,
-      "mae": 3.558,
-      "spearman": 0.5564,
+      "mae": 3.288,
+      "spearman": 0.5651,
       "calibration": {
-       "slope": 1.254,
-       "bias": 0.252
+       "slope": 1.446,
+       "bias": -0.503
       }
      },
      "blend": {
-      "n": 127,
-      "n_effective": 84.7,
+      "n": 128,
+      "n_effective": 106.6,
       "weighted": true,
-      "mae": 3.494,
-      "spearman": 0.5682,
+      "mae": 3.193,
+      "spearman": 0.5725,
       "calibration": {
-       "slope": 1.332,
-       "bias": 0.266
+       "slope": 1.509,
+       "bias": -0.371
       }
      },
      "lgbm": {
-      "n": 127,
-      "n_effective": 84.7,
+      "n": 128,
+      "n_effective": 106.6,
       "weighted": true,
-      "mae": 3.855,
-      "spearman": 0.4802,
+      "mae": 3.547,
+      "spearman": 0.4758,
       "calibration": {
-       "slope": 1.2,
-       "bias": 0.225
+       "slope": 1.255,
+       "bias": -0.125
       }
      },
      "comps": {
-      "n": 127,
-      "n_effective": 84.7,
+      "n": 128,
+      "n_effective": 106.6,
       "weighted": true,
-      "mae": 4.044,
-      "spearman": 0.4246,
+      "mae": 3.589,
+      "spearman": 0.4593,
       "calibration": {
-       "slope": 1.96,
-       "bias": -0.006
+       "slope": 2.059,
+       "bias": -0.33
       }
      },
      "ensemble": {
-      "n": 127,
-      "n_effective": 84.7,
+      "n": 128,
+      "n_effective": 106.6,
       "weighted": true,
-      "mae": 3.6,
-      "spearman": 0.528,
+      "mae": 3.309,
+      "spearman": 0.5308,
       "calibration": {
-       "slope": 1.299,
-       "bias": 0.238
+       "slope": 1.418,
+       "bias": -0.314
       }
      }
     },
     "2023": {
      "baseline": {
-      "n": 93,
-      "n_effective": 47.0,
+      "n": 94,
+      "n_effective": 63.0,
       "weighted": true,
-      "mae": 4.551,
-      "spearman": 0.1746,
+      "mae": 4.312,
+      "spearman": 0.2924,
       "calibration": {
-       "slope": 0.484,
-       "bias": -0.321
+       "slope": 0.79,
+       "bias": -0.897
       }
      },
      "ridge": {
-      "n": 93,
-      "n_effective": 47.0,
+      "n": 94,
+      "n_effective": 63.0,
       "weighted": true,
-      "mae": 4.589,
-      "spearman": 0.2236,
+      "mae": 4.197,
+      "spearman": 0.3754,
       "calibration": {
-       "slope": 0.515,
-       "bias": 0.225
+       "slope": 0.817,
+       "bias": -0.574
       }
      },
      "blend": {
-      "n": 93,
-      "n_effective": 47.0,
+      "n": 94,
+      "n_effective": 63.0,
       "weighted": true,
-      "mae": 4.525,
-      "spearman": 0.2145,
+      "mae": 4.192,
+      "spearman": 0.3615,
       "calibration": {
-       "slope": 0.525,
-       "bias": 0.061
+       "slope": 0.835,
+       "bias": -0.671
       }
      },
      "lgbm": {
-      "n": 93,
-      "n_effective": 47.0,
+      "n": 94,
+      "n_effective": 63.0,
       "weighted": true,
-      "mae": 4.587,
-      "spearman": 0.218,
+      "mae": 4.2,
+      "spearman": 0.3655,
       "calibration": {
-       "slope": 0.517,
-       "bias": 0.002
+       "slope": 0.773,
+       "bias": -0.681
       }
      },
      "comps": {
-      "n": 93,
-      "n_effective": 47.0,
+      "n": 94,
+      "n_effective": 63.0,
       "weighted": true,
-      "mae": 4.55,
-      "spearman": 0.159,
+      "mae": 4.309,
+      "spearman": 0.3045,
       "calibration": {
-       "slope": 0.512,
-       "bias": -0.252
+       "slope": 0.857,
+       "bias": -0.832
       }
      },
      "ensemble": {
-      "n": 93,
-      "n_effective": 47.0,
+      "n": 94,
+      "n_effective": 63.0,
       "weighted": true,
-      "mae": 4.488,
-      "spearman": 0.2342,
+      "mae": 4.139,
+      "spearman": 0.3934,
       "calibration": {
-       "slope": 0.559,
-       "bias": 0.114
+       "slope": 0.846,
+       "bias": -0.628
       }
      }
     },
     "2024": {
      "baseline": {
       "n": 91,
-      "n_effective": 30.3,
+      "n_effective": 45.5,
       "weighted": true,
-      "mae": 3.247,
-      "spearman": 0.1724,
+      "mae": 3.058,
+      "spearman": 0.2833,
       "calibration": {
-       "slope": 0.821,
-       "bias": 1.11
+       "slope": 0.959,
+       "bias": 0.327
       }
      },
      "ridge": {
       "n": 91,
-      "n_effective": 30.3,
+      "n_effective": 45.5,
       "weighted": true,
-      "mae": 3.634,
-      "spearman": 0.1472,
+      "mae": 3.527,
+      "spearman": 0.2373,
       "calibration": {
-       "slope": 0.681,
-       "bias": 1.2
+       "slope": 0.765,
+       "bias": 0.296
       }
      },
      "blend": {
       "n": 91,
-      "n_effective": 30.3,
+      "n_effective": 45.5,
       "weighted": true,
-      "mae": 3.474,
-      "spearman": 0.1515,
+      "mae": 3.345,
+      "spearman": 0.2543,
       "calibration": {
-       "slope": 0.734,
-       "bias": 1.173
+       "slope": 0.839,
+       "bias": 0.305
       }
      },
      "lgbm": {
       "n": 91,
-      "n_effective": 30.3,
+      "n_effective": 45.5,
       "weighted": true,
-      "mae": 3.803,
-      "spearman": 0.1701,
+      "mae": 3.295,
+      "spearman": 0.2993,
       "calibration": {
-       "slope": 0.647,
-       "bias": 1.73
+       "slope": 0.783,
+       "bias": 0.746
       }
      },
      "comps": {
       "n": 91,
-      "n_effective": 30.3,
+      "n_effective": 45.5,
       "weighted": true,
-      "mae": 3.77,
-      "spearman": 0.1351,
+      "mae": 3.62,
+      "spearman": 0.209,
       "calibration": {
-       "slope": 0.883,
-       "bias": 1.503
+       "slope": 0.835,
+       "bias": 0.716
       }
      },
      "ensemble": {
       "n": 91,
-      "n_effective": 30.3,
+      "n_effective": 45.5,
       "weighted": true,
-      "mae": 3.647,
-      "spearman": 0.1682,
+      "mae": 3.342,
+      "spearman": 0.2649,
       "calibration": {
-       "slope": 0.695,
-       "bias": 1.465
+       "slope": 0.809,
+       "bias": 0.521
       }
      }
     }
@@ -885,11 +873,11 @@
    "verdict_vs_consensus": {
     "ridge": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.292,
+     "mae_delta_vs_baseline": 0.159,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": 0.0068,
+     "spearman_delta_vs_baseline": 0.0329,
      "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
@@ -897,40 +885,40 @@
     },
     "blend": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.137,
+     "mae_delta_vs_baseline": 0.026,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": 0.0104,
+     "spearman_delta_vs_baseline": 0.0325,
      "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_call_E_refit": {
-      "delta": 0.0104,
-      "mde95": 0.0458,
+      "delta": 0.0325,
+      "mde95": 0.0327,
       "mde95_estimator": "E_refit",
       "mde95_source": "data/xfv_power_eval.json partb_floors.cells.pooled_rho.hit.debuted_km",
-      "margin_over_floor": 0.227,
+      "margin_over_floor": 0.994,
       "resolvable": false,
-      "verdict": "not resolvable at this power (E_refit, MDE95 0.0458)"
+      "verdict": "not resolvable at this power (E_refit, MDE95 0.0327)"
      },
      "spearman_call_E_cond": {
-      "delta": 0.0104,
-      "mde95": 0.0206,
+      "delta": 0.0325,
+      "mde95": 0.0208,
       "mde95_estimator": "E_cond",
       "mde95_source": "data/xfv_power_eval.json partb_floors.cells.pooled_rho.hit.debuted_km",
-      "margin_over_floor": 0.505,
-      "resolvable": false,
-      "verdict": "not resolvable at this power (E_cond, MDE95 0.0206)"
+      "margin_over_floor": 1.563,
+      "resolvable": true,
+      "verdict": "beats consensus (E_cond, MDE95 0.0208)"
      },
-     "both_estimators_agree": true
+     "both_estimators_agree": false
     },
     "lgbm": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.279,
+     "mae_delta_vs_baseline": 0.209,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0283,
+     "spearman_delta_vs_baseline": -0.0168,
      "spearman_higher_than_baseline_UNFLOORED": false,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
@@ -938,11 +926,11 @@
     },
     "comps": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.319,
+     "mae_delta_vs_baseline": 0.143,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0496,
+     "spearman_delta_vs_baseline": -0.0226,
      "spearman_higher_than_baseline_UNFLOORED": false,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
@@ -950,11 +938,11 @@
     },
     "ensemble": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.182,
+     "mae_delta_vs_baseline": 0.082,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": 0.0027,
+     "spearman_delta_vs_baseline": 0.0204,
      "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
@@ -962,166 +950,166 @@
     },
     "ridge_cal": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.042,
+     "mae_delta_vs_baseline": 0.088,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0087,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.0262,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
      "spearman_floor_status": "UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on debuted_km and full_pool_km only; 'ridge_cal' on cut 'debuted_km' (side 'hit') is a different statistic on a different leg and does not inherit that floor. Read the delta, not a win."
     },
     "ensemble_cal": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": -0.001,
-     "mae_lower_than_baseline_UNFLOORED": true,
+     "mae_delta_vs_baseline": 0.053,
+     "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0142,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.0144,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
      "spearman_floor_status": "UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on debuted_km and full_pool_km only; 'ensemble_cal' on cut 'debuted_km' (side 'hit') is a different statistic on a different leg and does not inherit that floor. Read the delta, not a win."
     }
    },
    "auc_breakdown": {
-    "n": 645,
-    "n_with_seed_folds": 645,
+    "n": 669,
+    "n_with_seed_folds": 669,
     "labels": {
      "contributor_war": 3.0,
      "star_war": 10.0,
-     "war_metric": "first-6yr summed bWAR (target_censored); model=blend, consensus=OLS(FV) anchor, shared labels"
+     "war_metric": "first-6yr summed label WAR (target_censored); model=blend, consensus=OLS(FV) anchor, shared labels"
     },
     "pooled": {
      "contributor": {
-      "n": 645,
-      "n_pos": 232,
-      "model_auc": 0.7486,
-      "consensus_auc": 0.7408,
-      "margin": 0.0077
+      "n": 669,
+      "n_pos": 229,
+      "model_auc": 0.7475,
+      "consensus_auc": 0.7193,
+      "margin": 0.0282
      },
      "star": {
-      "n": 645,
-      "n_pos": 96,
-      "model_auc": 0.8174,
-      "consensus_auc": 0.8103,
-      "margin": 0.0071
+      "n": 669,
+      "n_pos": 86,
+      "model_auc": 0.8298,
+      "consensus_auc": 0.8188,
+      "margin": 0.011
      }
     },
     "by_cohort": {
      "hs": {
       "contributor": {
-       "n": 198,
-       "n_pos": 71,
-       "model_auc": 0.7903,
-       "consensus_auc": 0.803,
-       "margin": -0.0128
+       "n": 208,
+       "n_pos": 63,
+       "model_auc": 0.7746,
+       "consensus_auc": 0.7733,
+       "margin": 0.0013
       },
       "star": {
-       "n": 198,
-       "n_pos": 28,
-       "model_auc": 0.8693,
-       "consensus_auc": 0.8556,
-       "margin": 0.0138
+       "n": 208,
+       "n_pos": 22,
+       "model_auc": 0.8942,
+       "consensus_auc": 0.8888,
+       "margin": 0.0054
       }
      },
      "college": {
       "contributor": {
-       "n": 215,
-       "n_pos": 83,
-       "model_auc": 0.719,
-       "consensus_auc": 0.7072,
-       "margin": 0.0117
+       "n": 216,
+       "n_pos": 88,
+       "model_auc": 0.7029,
+       "consensus_auc": 0.6924,
+       "margin": 0.0106
       },
       "star": {
-       "n": 215,
-       "n_pos": 30,
-       "model_auc": 0.7816,
-       "consensus_auc": 0.7986,
-       "margin": -0.0169
+       "n": 216,
+       "n_pos": 29,
+       "model_auc": 0.7861,
+       "consensus_auc": 0.8031,
+       "margin": -0.017
       }
      },
      "ifa": {
       "contributor": {
-       "n": 167,
-       "n_pos": 66,
-       "model_auc": 0.7318,
-       "consensus_auc": 0.727,
-       "margin": 0.0047
+       "n": 179,
+       "n_pos": 65,
+       "model_auc": 0.7493,
+       "consensus_auc": 0.7402,
+       "margin": 0.009
       },
       "star": {
-       "n": 167,
-       "n_pos": 32,
-       "model_auc": 0.8095,
-       "consensus_auc": 0.7968,
-       "margin": 0.0127
+       "n": 179,
+       "n_pos": 30,
+       "model_auc": 0.8244,
+       "consensus_auc": 0.7985,
+       "margin": 0.0258
       }
      },
      "other": {
       "contributor": {
        "n": 64,
-       "n_pos": 12,
-       "model_auc": 0.7139,
-       "consensus_auc": 0.6603,
-       "margin": 0.0537
+       "n_pos": 13,
+       "model_auc": 0.8039,
+       "consensus_auc": 0.6719,
+       "margin": 0.132
       },
       "star": {
        "n": 64,
-       "n_pos": 6,
-       "model_auc": 0.7759,
-       "consensus_auc": 0.7112,
-       "margin": 0.0647
+       "n_pos": 5,
+       "model_auc": 0.8305,
+       "consensus_auc": 0.8271,
+       "margin": 0.0034
       }
      }
     },
     "by_era": {
      "<=2018": {
       "contributor": {
-       "n": 129,
-       "n_pos": 46,
-       "model_auc": 0.7576,
-       "consensus_auc": 0.773,
-       "margin": -0.0155
+       "n": 146,
+       "n_pos": 51,
+       "model_auc": 0.7674,
+       "consensus_auc": 0.7166,
+       "margin": 0.0508
       },
       "star": {
-       "n": 129,
-       "n_pos": 26,
-       "model_auc": 0.7898,
-       "consensus_auc": 0.8002,
-       "margin": -0.0105
+       "n": 146,
+       "n_pos": 19,
+       "model_auc": 0.8624,
+       "consensus_auc": 0.8626,
+       "margin": -0.0002
       }
      },
      "2019-2021": {
       "contributor": {
-       "n": 205,
-       "n_pos": 79,
-       "model_auc": 0.7286,
-       "consensus_auc": 0.7059,
-       "margin": 0.0226
+       "n": 210,
+       "n_pos": 74,
+       "model_auc": 0.7034,
+       "consensus_auc": 0.6751,
+       "margin": 0.0283
       },
       "star": {
-       "n": 205,
-       "n_pos": 33,
-       "model_auc": 0.7641,
-       "consensus_auc": 0.7402,
-       "margin": 0.0239
+       "n": 210,
+       "n_pos": 29,
+       "model_auc": 0.7899,
+       "consensus_auc": 0.7874,
+       "margin": 0.0025
       }
      },
      "2022-2023": {
       "contributor": {
-       "n": 311,
-       "n_pos": 107,
-       "model_auc": 0.7598,
-       "consensus_auc": 0.7509,
-       "margin": 0.0088
+       "n": 313,
+       "n_pos": 104,
+       "model_auc": 0.7678,
+       "consensus_auc": 0.7491,
+       "margin": 0.0187
       },
       "star": {
-       "n": 311,
-       "n_pos": 37,
-       "model_auc": 0.8708,
-       "consensus_auc": 0.8546,
-       "margin": 0.0162
+       "n": 313,
+       "n_pos": 38,
+       "model_auc": 0.8394,
+       "consensus_auc": 0.824,
+       "margin": 0.0154
       }
      }
     },
@@ -1129,97 +1117,91 @@
      "35": {
       "contributor": {
        "n": 60,
-       "n_pos": 7,
-       "model_auc": 0.5957,
+       "n_pos": 8,
+       "model_auc": 0.6418,
        "consensus_auc": 0.5,
-       "margin": 0.0957
+       "margin": 0.1418
       },
-      "star": {
-       "n": 60,
-       "n_pos": 1,
-       "model_auc": 0.7119,
-       "consensus_auc": 0.5,
-       "margin": 0.2119
-      }
+      "star": null
      },
      "40": {
       "contributor": {
-       "n": 272,
-       "n_pos": 54,
-       "model_auc": 0.5075,
-       "consensus_auc": 0.433,
-       "margin": 0.0745
+       "n": 281,
+       "n_pos": 55,
+       "model_auc": 0.6095,
+       "consensus_auc": 0.4725,
+       "margin": 0.137
       },
       "star": {
-       "n": 272,
-       "n_pos": 10,
-       "model_auc": 0.3866,
-       "consensus_auc": 0.3508,
-       "margin": 0.0359
+       "n": 281,
+       "n_pos": 9,
+       "model_auc": 0.5825,
+       "consensus_auc": 0.4598,
+       "margin": 0.1228
       }
      },
      "45": {
       "contributor": {
-       "n": 132,
-       "n_pos": 54,
-       "model_auc": 0.6377,
-       "consensus_auc": 0.6271,
-       "margin": 0.0106
+       "n": 139,
+       "n_pos": 55,
+       "model_auc": 0.6805,
+       "consensus_auc": 0.6235,
+       "margin": 0.057
       },
       "star": {
-       "n": 132,
-       "n_pos": 19,
-       "model_auc": 0.6954,
-       "consensus_auc": 0.6281,
-       "margin": 0.0673
+       "n": 139,
+       "n_pos": 16,
+       "model_auc": 0.7063,
+       "consensus_auc": 0.6184,
+       "margin": 0.0879
       }
      },
      "50": {
       "contributor": {
-       "n": 104,
-       "n_pos": 60,
-       "model_auc": 0.5754,
-       "consensus_auc": 0.5837,
-       "margin": -0.0083
+       "n": 109,
+       "n_pos": 58,
+       "model_auc": 0.5794,
+       "consensus_auc": 0.5211,
+       "margin": 0.0583
       },
       "star": {
-       "n": 104,
-       "n_pos": 28,
-       "model_auc": 0.6701,
-       "consensus_auc": 0.5827,
-       "margin": 0.0874
+       "n": 109,
+       "n_pos": 25,
+       "model_auc": 0.6005,
+       "consensus_auc": 0.5195,
+       "margin": 0.081
       }
      },
      "55": {
       "contributor": {
-       "n": 38,
-       "n_pos": 27,
-       "model_auc": 0.4714,
-       "consensus_auc": 0.4663,
-       "margin": 0.0051
+       "n": 41,
+       "n_pos": 23,
+       "model_auc": 0.43,
+       "consensus_auc": 0.4674,
+       "margin": -0.0374
       },
       "star": {
-       "n": 38,
-       "n_pos": 16,
-       "model_auc": 0.4318,
-       "consensus_auc": 0.625,
-       "margin": -0.1932
+       "n": 41,
+       "n_pos": 15,
+       "model_auc": 0.4,
+       "consensus_auc": 0.5808,
+       "margin": -0.1808
       }
      },
      "60": {
       "contributor": {
        "n": 26,
        "n_pos": 17,
-       "model_auc": 0.5882,
-       "consensus_auc": 0.5556,
-       "margin": 0.0327
+       "model_auc": 0.4641,
+       "consensus_auc": 0.5425,
+       "margin": -0.0784
       },
       "star": {
        "n": 26,
        "n_pos": 12,
-       "model_auc": 0.5417,
-       "consensus_auc": 0.4911,
-       "margin": 0.0506
+       "model_auc": 0.4583,
+       "consensus_auc": 0.4851,
+       "margin": -0.0268
       }
      }
     }
@@ -1229,468 +1211,524 @@
    "label": "debuted, resolved-only (sensitivity)",
    "pooled_oos": {
     "baseline": {
-     "n": 370,
-     "mae": 4.359,
-     "spearman": 0.398,
+     "n": 469,
+     "mae": 3.959,
+     "spearman": 0.3637,
      "calibration": {
-      "slope": 0.908,
-      "bias": 0.122
+      "slope": 0.818,
+      "bias": 0.273
      }
     },
     "ridge": {
-     "n": 370,
-     "mae": 4.794,
-     "spearman": 0.396,
+     "n": 469,
+     "mae": 4.152,
+     "spearman": 0.4063,
      "calibration": {
-      "slope": 0.66,
-      "bias": 0.41
+      "slope": 0.67,
+      "bias": -0.077
      }
     },
     "blend": {
-     "n": 370,
-     "mae": 4.586,
-     "spearman": 0.4031,
+     "n": 469,
+     "mae": 3.998,
+     "spearman": 0.4055,
      "calibration": {
-      "slope": 0.756,
-      "bias": 0.324
+      "slope": 0.751,
+      "bias": 0.028
      }
     },
     "lgbm": {
-     "n": 370,
-     "mae": 4.707,
-     "spearman": 0.3406,
+     "n": 469,
+     "mae": 4.188,
+     "spearman": 0.3601,
      "calibration": {
-      "slope": 0.683,
-      "bias": 0.284
+      "slope": 0.645,
+      "bias": 0.225
      }
     },
     "comps": {
-     "n": 370,
-     "mae": 4.69,
-     "spearman": 0.3498,
+     "n": 469,
+     "mae": 4.036,
+     "spearman": 0.3633,
      "calibration": {
-      "slope": 0.849,
-      "bias": -0.012
+      "slope": 1.133,
+      "bias": -0.177
      }
     },
     "ensemble": {
-     "n": 370,
-     "mae": 4.637,
-     "spearman": 0.3809,
+     "n": 469,
+     "mae": 4.06,
+     "spearman": 0.3961,
      "calibration": {
-      "slope": 0.734,
-      "bias": 0.347
+      "slope": 0.719,
+      "bias": 0.074
      }
     },
     "ridge_cal": {
-     "n": 370,
-     "mae": 4.692,
-     "spearman": 0.3824,
+     "n": 469,
+     "mae": 4.104,
+     "spearman": 0.3967,
      "calibration": {
-      "slope": 0.911,
-      "bias": 0.081
+      "slope": 0.903,
+      "bias": 0.092
      }
     },
     "ensemble_cal": {
-     "n": 370,
-     "mae": 4.613,
-     "spearman": 0.3679,
+     "n": 469,
+     "mae": 4.037,
+     "spearman": 0.387,
      "calibration": {
-      "slope": 0.936,
-      "bias": 0.012
+      "slope": 0.944,
+      "bias": 0.014
      }
     }
    },
    "per_year": {
     "2014": {
      "baseline": {
-      "n": 48,
-      "mae": 5.324,
-      "spearman": 0.1564,
+      "n": 50,
+      "mae": 4.782,
+      "spearman": 0.2507,
       "calibration": {
-       "slope": 0.602,
-       "bias": -0.431
+       "slope": 0.627,
+       "bias": -0.569
       }
      },
      "ridge": {
-      "n": 48,
-      "mae": 6.771,
-      "spearman": 0.2094,
+      "n": 50,
+      "mae": 6.278,
+      "spearman": 0.2568,
       "calibration": {
-       "slope": 0.29,
-       "bias": 0.455
+       "slope": 0.285,
+       "bias": 0.422
       }
      },
      "blend": {
-      "n": 48,
-      "mae": 6.187,
-      "spearman": 0.201,
+      "n": 50,
+      "mae": 5.673,
+      "spearman": 0.2579,
       "calibration": {
        "slope": 0.354,
-       "bias": 0.189
+       "bias": 0.125
       }
      },
      "lgbm": {
-      "n": 48,
-      "mae": 5.504,
-      "spearman": 0.1329,
+      "n": 50,
+      "mae": 5.114,
+      "spearman": 0.2202,
       "calibration": {
-       "slope": 0.568,
-       "bias": -0.104
+       "slope": 0.504,
+       "bias": -0.202
       }
      },
      "comps": {
-      "n": 48,
-      "mae": 5.126,
-      "spearman": 0.1117,
+      "n": 50,
+      "mae": 4.867,
+      "spearman": 0.1121,
       "calibration": {
-       "slope": 0.846,
-       "bias": -1.185
+       "slope": 0.776,
+       "bias": -1.356
       }
      },
      "ensemble": {
-      "n": 48,
-      "mae": 5.792,
-      "spearman": 0.2012,
+      "n": 50,
+      "mae": 5.329,
+      "spearman": 0.2515,
       "calibration": {
-       "slope": 0.429,
-       "bias": 0.175
+       "slope": 0.41,
+       "bias": 0.11
       }
      }
     },
     "2015": {
      "baseline": {
-      "n": 62,
-      "mae": 4.074,
-      "spearman": 0.5036,
+      "n": 63,
+      "mae": 3.808,
+      "spearman": 0.5893,
       "calibration": {
-       "slope": 1.227,
-       "bias": 0.195
+       "slope": 1.234,
+       "bias": 0.225
       }
      },
      "ridge": {
-      "n": 62,
-      "mae": 4.184,
-      "spearman": 0.4802,
+      "n": 63,
+      "mae": 4.353,
+      "spearman": 0.6342,
       "calibration": {
-       "slope": 1.31,
-       "bias": 0.226
+       "slope": 2.0,
+       "bias": 0.61
       }
      },
      "blend": {
-      "n": 62,
-      "mae": 4.15,
-      "spearman": 0.4785,
+      "n": 63,
+      "mae": 4.137,
+      "spearman": 0.6198,
       "calibration": {
-       "slope": 1.285,
-       "bias": 0.217
+       "slope": 1.69,
+       "bias": 0.494
       }
      },
      "lgbm": {
-      "n": 62,
-      "mae": 4.394,
-      "spearman": 0.5422,
+      "n": 63,
+      "mae": 4.07,
+      "spearman": 0.6391,
       "calibration": {
-       "slope": 1.341,
-       "bias": 0.288
+       "slope": 1.436,
+       "bias": 0.296
       }
      },
      "comps": {
-      "n": 62,
-      "mae": 4.307,
-      "spearman": 0.4914,
+      "n": 63,
+      "mae": 4.041,
+      "spearman": 0.6239,
       "calibration": {
-       "slope": 1.239,
-       "bias": -0.135
+       "slope": 1.713,
+       "bias": 0.361
       }
      },
      "ensemble": {
-      "n": 62,
-      "mae": 4.247,
-      "spearman": 0.4957,
+      "n": 63,
+      "mae": 4.173,
+      "spearman": 0.6468,
       "calibration": {
-       "slope": 1.37,
-       "bias": 0.257
+       "slope": 1.715,
+       "bias": 0.453
       }
      }
     },
     "2016": {
      "baseline": {
-      "n": 39,
-      "mae": 4.439,
-      "spearman": 0.4886,
+      "n": 43,
+      "mae": 3.978,
+      "spearman": 0.4979,
       "calibration": {
-       "slope": 1.129,
-       "bias": -0.749
+       "slope": 0.848,
+       "bias": 0.33
       }
      },
      "ridge": {
-      "n": 39,
-      "mae": 4.727,
-      "spearman": 0.5643,
+      "n": 43,
+      "mae": 3.592,
+      "spearman": 0.5681,
       "calibration": {
-       "slope": 0.909,
-       "bias": 0.899
+       "slope": 0.891,
+       "bias": -0.566
       }
      },
      "blend": {
-      "n": 39,
-      "mae": 4.466,
-      "spearman": 0.5774,
+      "n": 43,
+      "mae": 3.535,
+      "spearman": 0.5802,
       "calibration": {
-       "slope": 1.012,
-       "bias": 0.405
+       "slope": 0.936,
+       "bias": -0.297
       }
      },
      "lgbm": {
-      "n": 39,
-      "mae": 4.706,
-      "spearman": 0.4041,
+      "n": 43,
+      "mae": 4.33,
+      "spearman": 0.4711,
       "calibration": {
-       "slope": 0.665,
-       "bias": 0.182
+       "slope": 0.55,
+       "bias": 1.018
       }
      },
      "comps": {
-      "n": 39,
-      "mae": 4.798,
-      "spearman": 0.427,
+      "n": 43,
+      "mae": 3.87,
+      "spearman": 0.4924,
       "calibration": {
-       "slope": 0.442,
-       "bias": -0.645
+       "slope": 1.274,
+       "bias": -0.566
       }
      },
      "ensemble": {
-      "n": 39,
-      "mae": 4.639,
-      "spearman": 0.522,
+      "n": 43,
+      "mae": 3.859,
+      "spearman": 0.54,
       "calibration": {
-       "slope": 0.816,
-       "bias": 0.54
+       "slope": 0.716,
+       "bias": 0.226
       }
      }
     },
     "2017": {
      "baseline": {
-      "n": 46,
-      "mae": 3.527,
-      "spearman": 0.5244,
+      "n": 52,
+      "mae": 3.919,
+      "spearman": 0.3155,
       "calibration": {
-       "slope": 0.882,
-       "bias": 1.883
+       "slope": 0.669,
+       "bias": 2.423
       }
      },
      "ridge": {
-      "n": 46,
-      "mae": 4.356,
-      "spearman": 0.4574,
+      "n": 52,
+      "mae": 3.547,
+      "spearman": 0.3324,
       "calibration": {
-       "slope": 0.696,
-       "bias": 2.814
+       "slope": 0.609,
+       "bias": 1.337
       }
      },
      "blend": {
-      "n": 46,
-      "mae": 4.048,
-      "spearman": 0.5284,
+      "n": 52,
+      "mae": 3.569,
+      "spearman": 0.3501,
       "calibration": {
-       "slope": 0.805,
-       "bias": 2.535
+       "slope": 0.649,
+       "bias": 1.662
       }
      },
      "lgbm": {
-      "n": 46,
-      "mae": 4.055,
-      "spearman": 0.4181,
+      "n": 52,
+      "mae": 3.829,
+      "spearman": 0.348,
       "calibration": {
-       "slope": 0.547,
-       "bias": 2.347
+       "slope": 0.462,
+       "bias": 2.122
       }
      },
      "comps": {
-      "n": 46,
-      "mae": 4.063,
-      "spearman": 0.3749,
+      "n": 52,
+      "mae": 3.679,
+      "spearman": 0.1898,
       "calibration": {
-       "slope": 0.732,
-       "bias": 2.429
+       "slope": 0.679,
+       "bias": 1.028
       }
      },
      "ensemble": {
-      "n": 46,
-      "mae": 4.021,
-      "spearman": 0.4869,
+      "n": 52,
+      "mae": 3.602,
+      "spearman": 0.3507,
       "calibration": {
-       "slope": 0.682,
-       "bias": 2.581
+       "slope": 0.55,
+       "bias": 1.729
       }
      }
     },
     "2018": {
      "baseline": {
-      "n": 44,
-      "mae": 3.742,
-      "spearman": 0.4941,
+      "n": 51,
+      "mae": 3.333,
+      "spearman": 0.4111,
       "calibration": {
-       "slope": 1.454,
-       "bias": -0.86
+       "slope": 1.536,
+       "bias": -0.557
       }
      },
      "ridge": {
-      "n": 44,
-      "mae": 4.292,
-      "spearman": 0.4657,
+      "n": 51,
+      "mae": 3.643,
+      "spearman": 0.529,
       "calibration": {
-       "slope": 1.141,
-       "bias": -1.765
+       "slope": 1.399,
+       "bias": -2.395
       }
      },
      "blend": {
-      "n": 44,
-      "mae": 3.967,
-      "spearman": 0.4793,
+      "n": 51,
+      "mae": 3.372,
+      "spearman": 0.525,
       "calibration": {
-       "slope": 1.268,
-       "bias": -1.494
+       "slope": 1.48,
+       "bias": -1.843
       }
      },
      "lgbm": {
-      "n": 44,
-      "mae": 4.0,
-      "spearman": 0.4254,
+      "n": 51,
+      "mae": 3.249,
+      "spearman": 0.5299,
       "calibration": {
-       "slope": 1.125,
-       "bias": -1.844
+       "slope": 1.456,
+       "bias": -1.985
       }
      },
      "comps": {
-      "n": 44,
-      "mae": 4.677,
-      "spearman": 0.4599,
+      "n": 51,
+      "mae": 3.734,
+      "spearman": 0.5921,
       "calibration": {
-       "slope": 1.769,
-       "bias": -0.928
+       "slope": 3.018,
+       "bias": -1.528
       }
      },
      "ensemble": {
-      "n": 44,
-      "mae": 4.09,
-      "spearman": 0.4732,
+      "n": 51,
+      "mae": 3.39,
+      "spearman": 0.554,
       "calibration": {
-       "slope": 1.206,
-       "bias": -1.805
+       "slope": 1.499,
+       "bias": -2.19
       }
      }
     },
     "2019": {
      "baseline": {
-      "n": 72,
-      "mae": 4.947,
-      "spearman": 0.3479,
+      "n": 75,
+      "mae": 4.644,
+      "spearman": 0.3031,
       "calibration": {
-       "slope": 0.719,
-       "bias": -0.554
+       "slope": 0.689,
+       "bias": -0.415
       }
      },
      "ridge": {
-      "n": 72,
-      "mae": 4.949,
-      "spearman": 0.4017,
+      "n": 75,
+      "mae": 4.586,
+      "spearman": 0.3651,
       "calibration": {
-       "slope": 0.754,
-       "bias": -0.532
+       "slope": 0.734,
+       "bias": -1.085
       }
      },
      "blend": {
-      "n": 72,
-      "mae": 4.905,
-      "spearman": 0.3929,
+      "n": 75,
+      "mae": 4.497,
+      "spearman": 0.3447,
       "calibration": {
-       "slope": 0.763,
-       "bias": -0.538
+       "slope": 0.743,
+       "bias": -0.884
       }
      },
      "lgbm": {
-      "n": 72,
-      "mae": 5.198,
-      "spearman": 0.2732,
+      "n": 75,
+      "mae": 4.875,
+      "spearman": 0.2566,
       "calibration": {
-       "slope": 0.657,
-       "bias": -0.519
+       "slope": 0.594,
+       "bias": -0.917
       }
      },
      "comps": {
-      "n": 72,
-      "mae": 5.088,
-      "spearman": 0.3924,
+      "n": 75,
+      "mae": 4.518,
+      "spearman": 0.3743,
       "calibration": {
-       "slope": 1.403,
-       "bias": -0.767
+       "slope": 1.212,
+       "bias": -1.211
       }
      },
      "ensemble": {
-      "n": 72,
-      "mae": 5.037,
-      "spearman": 0.3311,
+      "n": 75,
+      "mae": 4.602,
+      "spearman": 0.3152,
       "calibration": {
-       "slope": 0.736,
-       "bias": -0.525
+       "slope": 0.702,
+       "bias": -1.001
       }
      }
     },
     "2020": {
      "baseline": {
-      "n": 59,
-      "mae": 4.213,
-      "spearman": 0.3391,
+      "n": 60,
+      "mae": 3.97,
+      "spearman": 0.2958,
       "calibration": {
-       "slope": 0.56,
-       "bias": 1.255
+       "slope": 0.522,
+       "bias": 1.007
       }
      },
      "ridge": {
-      "n": 59,
-      "mae": 4.397,
-      "spearman": 0.3187,
+      "n": 60,
+      "mae": 3.928,
+      "spearman": 0.3268,
       "calibration": {
-       "slope": 0.417,
-       "bias": 1.141
+       "slope": 0.556,
+       "bias": 0.632
       }
      },
      "blend": {
-      "n": 59,
-      "mae": 4.314,
-      "spearman": 0.329,
+      "n": 60,
+      "mae": 3.912,
+      "spearman": 0.3217,
       "calibration": {
-       "slope": 0.466,
-       "bias": 1.175
+       "slope": 0.568,
+       "bias": 0.745
       }
      },
      "lgbm": {
-      "n": 59,
-      "mae": 4.824,
-      "spearman": 0.2234,
+      "n": 60,
+      "mae": 4.435,
+      "spearman": 0.1923,
       "calibration": {
-       "slope": 0.303,
-       "bias": 1.619
+       "slope": 0.271,
+       "bias": 1.247
       }
      },
      "comps": {
-      "n": 59,
-      "mae": 4.679,
-      "spearman": 0.2005,
+      "n": 60,
+      "mae": 4.038,
+      "spearman": 0.2639,
       "calibration": {
-       "slope": 0.406,
-       "bias": 1.193
+       "slope": 0.582,
+       "bias": 0.426
       }
      },
      "ensemble": {
-      "n": 59,
-      "mae": 4.508,
-      "spearman": 0.2885,
+      "n": 60,
+      "mae": 4.096,
+      "spearman": 0.2934,
       "calibration": {
-       "slope": 0.381,
-       "bias": 1.38
+       "slope": 0.424,
+       "bias": 0.939
+      }
+     }
+    },
+    "2021": {
+     "baseline": {
+      "n": 75,
+      "mae": 3.283,
+      "spearman": 0.2366,
+      "calibration": {
+       "slope": 0.486,
+       "bias": 0.016
+      }
+     },
+     "ridge": {
+      "n": 75,
+      "mae": 3.401,
+      "spearman": 0.3199,
+      "calibration": {
+       "slope": 0.551,
+       "bias": 0.333
+      }
+     },
+     "blend": {
+      "n": 75,
+      "mae": 3.326,
+      "spearman": 0.3159,
+      "calibration": {
+       "slope": 0.549,
+       "bias": 0.238
+      }
+     },
+     "lgbm": {
+      "n": 75,
+      "mae": 3.594,
+      "spearman": 0.3126,
+      "calibration": {
+       "slope": 0.469,
+       "bias": 0.508
+      }
+     },
+     "comps": {
+      "n": 75,
+      "mae": 3.544,
+      "spearman": 0.3105,
+      "calibration": {
+       "slope": 0.779,
+       "bias": 1.013
+      }
+     },
+     "ensemble": {
+      "n": 75,
+      "mae": 3.437,
+      "spearman": 0.3378,
+      "calibration": {
+       "slope": 0.543,
+       "bias": 0.421
       }
      }
     }
@@ -1698,23 +1736,23 @@
    "verdict_vs_consensus": {
     "ridge": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.435,
+     "mae_delta_vs_baseline": 0.193,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.002,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.0426,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
      "spearman_floor_status": "UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on debuted_km and full_pool_km only; 'ridge' on cut 'debuted_resolved' (side 'hit') is a different statistic on a different leg and does not inherit that floor. Read the delta, not a win."
     },
     "blend": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.227,
+     "mae_delta_vs_baseline": 0.039,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": 0.0051,
+     "spearman_delta_vs_baseline": 0.0418,
      "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
@@ -1722,11 +1760,11 @@
     },
     "lgbm": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.348,
+     "mae_delta_vs_baseline": 0.229,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0574,
+     "spearman_delta_vs_baseline": -0.0036,
      "spearman_higher_than_baseline_UNFLOORED": false,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
@@ -1734,11 +1772,11 @@
     },
     "comps": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.331,
+     "mae_delta_vs_baseline": 0.077,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0482,
+     "spearman_delta_vs_baseline": -0.0004,
      "spearman_higher_than_baseline_UNFLOORED": false,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
@@ -1746,36 +1784,36 @@
     },
     "ensemble": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.278,
+     "mae_delta_vs_baseline": 0.101,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0171,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.0324,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
      "spearman_floor_status": "UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on debuted_km and full_pool_km only; 'ensemble' on cut 'debuted_resolved' (side 'hit') is a different statistic on a different leg and does not inherit that floor. Read the delta, not a win."
     },
     "ridge_cal": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.333,
+     "mae_delta_vs_baseline": 0.145,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0156,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.033,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
      "spearman_floor_status": "UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on debuted_km and full_pool_km only; 'ridge_cal' on cut 'debuted_resolved' (side 'hit') is a different statistic on a different leg and does not inherit that floor. Read the delta, not a win."
     },
     "ensemble_cal": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.254,
+     "mae_delta_vs_baseline": 0.078,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0301,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.0233,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
      "spearman_floor_status": "UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on debuted_km and full_pool_km only; 'ensemble_cal' on cut 'debuted_resolved' (side 'hit') is a different statistic on a different leg and does not inherit that floor. Read the delta, not a win."
@@ -1786,752 +1824,740 @@
    "label": "full pool (debuted+busts), KM target [decision-year proxy]",
    "pooled_oos": {
     "baseline": {
-     "n": 1777,
-     "n_effective": 1616.0,
+     "n": 1798,
+     "n_effective": 1700.2,
      "weighted": true,
-     "mae": 1.884,
-     "spearman": 0.2926,
+     "mae": 1.847,
+     "spearman": 0.2918,
      "calibration": {
-      "slope": 0.959,
-      "bias": 0.196
+      "slope": 0.975,
+      "bias": 0.145
      }
     },
     "ridge": {
-     "n": 1777,
-     "n_effective": 1616.0,
+     "n": 1798,
+     "n_effective": 1700.2,
      "weighted": true,
-     "mae": 2.452,
-     "spearman": 0.2735,
+     "mae": 2.318,
+     "spearman": 0.2999,
      "calibration": {
-      "slope": 0.731,
-      "bias": 0.196
+      "slope": 0.779,
+      "bias": 0.063
      }
     },
     "blend": {
-     "n": 1777,
-     "n_effective": 1616.0,
+     "n": 1798,
+     "n_effective": 1700.2,
      "weighted": true,
-     "mae": 2.257,
-     "spearman": 0.2762,
+     "mae": 2.151,
+     "spearman": 0.2974,
      "calibration": {
-      "slope": 0.815,
-      "bias": 0.196
+      "slope": 0.856,
+      "bias": 0.088
      }
     },
     "lgbm": {
-     "n": 1777,
-     "n_effective": 1616.0,
+     "n": 1798,
+     "n_effective": 1700.2,
      "weighted": true,
-     "mae": 2.225,
-     "spearman": 0.2683,
+     "mae": 2.139,
+     "spearman": 0.2884,
      "calibration": {
-      "slope": 0.765,
-      "bias": 0.443
+      "slope": 0.774,
+      "bias": 0.268
      }
     },
     "comps": {
-     "n": 1777,
-     "n_effective": 1616.0,
+     "n": 1798,
+     "n_effective": 1700.2,
      "weighted": true,
-     "mae": 2.255,
-     "spearman": 0.2447,
+     "mae": 2.132,
+     "spearman": 0.2699,
      "calibration": {
-      "slope": 0.954,
-      "bias": 0.414
+      "slope": 1.068,
+      "bias": 0.268
      }
     },
     "ensemble": {
-     "n": 1777,
-     "n_effective": 1616.0,
+     "n": 1798,
+     "n_effective": 1700.2,
      "weighted": true,
-     "mae": 2.237,
-     "spearman": 0.2774,
+     "mae": 2.135,
+     "spearman": 0.3001,
      "calibration": {
-      "slope": 0.799,
-      "bias": 0.32
+      "slope": 0.827,
+      "bias": 0.166
      }
     },
     "ridge_cal": {
-     "n": 1777,
-     "mae": 2.178,
-     "spearman": 0.2686,
+     "n": 1798,
+     "mae": 2.092,
+     "spearman": 0.2965,
      "calibration": {
-      "slope": 1.068,
-      "bias": 0.182
+      "slope": 1.046,
+      "bias": 0.179
      }
     },
     "ensemble_cal": {
-     "n": 1777,
-     "mae": 2.074,
-     "spearman": 0.2699,
+     "n": 1798,
+     "mae": 1.99,
+     "spearman": 0.2994,
      "calibration": {
-      "slope": 1.05,
-      "bias": 0.136
+      "slope": 1.037,
+      "bias": 0.122
      }
     }
    },
    "per_year": {
     "2014": {
      "baseline": {
-      "n": 96,
-      "mae": 4.468,
-      "spearman": 0.0334,
+      "n": 98,
+      "mae": 4.128,
+      "spearman": 0.1242,
       "calibration": {
-       "slope": 0.682,
-       "bias": 1.578
+       "slope": 0.715,
+       "bias": 1.388
       }
      },
      "ridge": {
-      "n": 96,
-      "mae": 5.46,
-      "spearman": 0.1364,
+      "n": 98,
+      "mae": 5.137,
+      "spearman": 0.2403,
       "calibration": {
-       "slope": 0.341,
-       "bias": 2.252
+       "slope": 0.349,
+       "bias": 2.106
       }
      },
      "blend": {
-      "n": 96,
-      "mae": 5.088,
-      "spearman": 0.1405,
+      "n": 98,
+      "mae": 4.755,
+      "spearman": 0.2163,
       "calibration": {
-       "slope": 0.415,
-       "bias": 2.05
+       "slope": 0.429,
+       "bias": 1.891
       }
      },
      "lgbm": {
-      "n": 96,
-      "mae": 4.123,
-      "spearman": 0.058,
+      "n": 98,
+      "mae": 3.849,
+      "spearman": 0.1358,
       "calibration": {
-       "slope": 0.773,
-       "bias": 1.307
+       "slope": 0.707,
+       "bias": 1.11
       }
      },
      "comps": {
-      "n": 96,
-      "mae": 4.398,
-      "spearman": 0.0575,
+      "n": 98,
+      "mae": 4.114,
+      "spearman": 0.1155,
       "calibration": {
-       "slope": 0.849,
-       "bias": 1.329
+       "slope": 0.776,
+       "bias": 1.077
       }
      },
      "ensemble": {
-      "n": 96,
-      "mae": 4.604,
-      "spearman": 0.1489,
+      "n": 98,
+      "mae": 4.294,
+      "spearman": 0.2528,
       "calibration": {
-       "slope": 0.547,
-       "bias": 1.78
+       "slope": 0.542,
+       "bias": 1.608
       }
      }
     },
     "2015": {
      "baseline": {
-      "n": 78,
-      "mae": 3.152,
-      "spearman": 0.4666,
+      "n": 79,
+      "mae": 2.915,
+      "spearman": 0.5596,
       "calibration": {
-       "slope": 1.177,
-       "bias": -0.467
+       "slope": 1.184,
+       "bias": -0.416
       }
      },
      "ridge": {
-      "n": 78,
-      "mae": 3.361,
-      "spearman": 0.4158,
+      "n": 79,
+      "mae": 3.199,
+      "spearman": 0.5002,
       "calibration": {
-       "slope": 1.207,
-       "bias": -0.565
+       "slope": 1.221,
+       "bias": -0.507
       }
      },
      "blend": {
-      "n": 78,
-      "mae": 3.297,
-      "spearman": 0.4151,
+      "n": 79,
+      "mae": 3.105,
+      "spearman": 0.4992,
       "calibration": {
-       "slope": 1.201,
-       "bias": -0.535
+       "slope": 1.216,
+       "bias": -0.48
       }
      },
      "lgbm": {
-      "n": 78,
-      "mae": 3.626,
-      "spearman": 0.5077,
+      "n": 79,
+      "mae": 3.312,
+      "spearman": 0.5871,
       "calibration": {
-       "slope": 1.27,
-       "bias": 0.163
+       "slope": 1.325,
+       "bias": 0.081
       }
      },
      "comps": {
-      "n": 78,
-      "mae": 3.862,
-      "spearman": 0.4025,
+      "n": 79,
+      "mae": 3.685,
+      "spearman": 0.5048,
       "calibration": {
-       "slope": 1.142,
-       "bias": 0.136
+       "slope": 1.435,
+       "bias": 0.245
       }
      },
      "ensemble": {
-      "n": 78,
-      "mae": 3.417,
-      "spearman": 0.4526,
+      "n": 79,
+      "mae": 3.151,
+      "spearman": 0.5353,
       "calibration": {
-       "slope": 1.287,
-       "bias": -0.201
+       "slope": 1.32,
+       "bias": -0.213
       }
      }
     },
     "2016": {
      "baseline": {
-      "n": 95,
-      "mae": 1.911,
-      "spearman": 0.3269,
+      "n": 99,
+      "mae": 1.774,
+      "spearman": 0.3757,
       "calibration": {
-       "slope": 1.251,
-       "bias": -0.441
+       "slope": 0.953,
+       "bias": -0.005
       }
      },
      "ridge": {
-      "n": 95,
-      "mae": 2.955,
-      "spearman": 0.3373,
+      "n": 99,
+      "mae": 2.441,
+      "spearman": 0.4565,
       "calibration": {
-       "slope": 0.718,
-       "bias": 0.675
+       "slope": 0.829,
+       "bias": 0.748
       }
      },
      "blend": {
-      "n": 95,
-      "mae": 2.567,
-      "spearman": 0.3342,
+      "n": 99,
+      "mae": 2.204,
+      "spearman": 0.4291,
       "calibration": {
-       "slope": 0.891,
-       "bias": 0.34
+       "slope": 0.926,
+       "bias": 0.522
       }
      },
      "lgbm": {
-      "n": 95,
-      "mae": 2.505,
-      "spearman": 0.2587,
+      "n": 99,
+      "mae": 2.595,
+      "spearman": 0.3349,
       "calibration": {
-       "slope": 0.76,
-       "bias": 0.537
+       "slope": 0.628,
+       "bias": 1.148
       }
      },
      "comps": {
-      "n": 95,
-      "mae": 3.053,
-      "spearman": 0.3934,
+      "n": 99,
+      "mae": 2.898,
+      "spearman": 0.3591,
       "calibration": {
-       "slope": 0.547,
-       "bias": 0.565
+       "slope": 0.947,
+       "bias": 0.885
       }
      },
      "ensemble": {
-      "n": 95,
-      "mae": 2.642,
-      "spearman": 0.3442,
+      "n": 99,
+      "mae": 2.471,
+      "spearman": 0.4241,
       "calibration": {
-       "slope": 0.814,
-       "bias": 0.606
+       "slope": 0.752,
+       "bias": 0.948
       }
      }
     },
     "2017": {
      "baseline": {
-      "n": 112,
-      "mae": 1.592,
-      "spearman": 0.2873,
+      "n": 118,
+      "mae": 1.814,
+      "spearman": 0.1741,
       "calibration": {
-       "slope": 0.827,
-       "bias": 0.752
+       "slope": 0.638,
+       "bias": 1.024
       }
      },
      "ridge": {
-      "n": 112,
-      "mae": 2.286,
-      "spearman": 0.2444,
+      "n": 118,
+      "mae": 2.213,
+      "spearman": 0.2229,
       "calibration": {
-       "slope": 0.675,
-       "bias": 1.399
+       "slope": 0.576,
+       "bias": 1.008
       }
      },
      "blend": {
-      "n": 112,
-      "mae": 2.057,
-      "spearman": 0.2677,
+      "n": 118,
+      "mae": 2.071,
+      "spearman": 0.2256,
       "calibration": {
-       "slope": 0.738,
-       "bias": 1.205
+       "slope": 0.613,
+       "bias": 1.012
       }
      },
      "lgbm": {
-      "n": 112,
-      "mae": 1.828,
-      "spearman": 0.2277,
+      "n": 118,
+      "mae": 1.97,
+      "spearman": 0.2361,
       "calibration": {
-       "slope": 0.588,
-       "bias": 1.068
+       "slope": 0.467,
+       "bias": 1.08
       }
      },
      "comps": {
-      "n": 112,
-      "mae": 2.469,
-      "spearman": 0.1035,
+      "n": 118,
+      "mae": 2.081,
+      "spearman": 0.1167,
       "calibration": {
-       "slope": 0.549,
-       "bias": 1.109
+       "slope": 0.672,
+       "bias": 0.768
       }
      },
      "ensemble": {
-      "n": 112,
-      "mae": 1.981,
-      "spearman": 0.2564,
+      "n": 118,
+      "mae": 2.028,
+      "spearman": 0.2139,
       "calibration": {
-       "slope": 0.666,
-       "bias": 1.234
+       "slope": 0.539,
+       "bias": 1.044
       }
      }
     },
     "2018": {
      "baseline": {
-      "n": 174,
-      "mae": 1.908,
-      "spearman": 0.1999,
+      "n": 180,
+      "mae": 1.769,
+      "spearman": 0.1453,
       "calibration": {
-       "slope": 1.039,
-       "bias": 0.626
+       "slope": 1.086,
+       "bias": 0.563
       }
      },
      "ridge": {
-      "n": 174,
-      "mae": 2.525,
-      "spearman": 0.1583,
+      "n": 180,
+      "mae": 2.125,
+      "spearman": 0.2828,
       "calibration": {
-       "slope": 0.697,
-       "bias": 0.07
+       "slope": 0.906,
+       "bias": 0.112
       }
      },
      "blend": {
-      "n": 174,
-      "mae": 2.274,
-      "spearman": 0.1692,
+      "n": 180,
+      "mae": 1.952,
+      "spearman": 0.2647,
       "calibration": {
-       "slope": 0.826,
-       "bias": 0.237
+       "slope": 1.002,
+       "bias": 0.247
       }
      },
      "lgbm": {
-      "n": 174,
-      "mae": 2.341,
-      "spearman": 0.2028,
+      "n": 180,
+      "mae": 2.059,
+      "spearman": 0.2869,
       "calibration": {
-       "slope": 0.702,
-       "bias": 0.54
+       "slope": 0.757,
+       "bias": 0.101
       }
      },
      "comps": {
-      "n": 174,
-      "mae": 2.429,
-      "spearman": 0.1711,
+      "n": 180,
+      "mae": 2.186,
+      "spearman": 0.2287,
       "calibration": {
-       "slope": 0.845,
-       "bias": 0.742
+       "slope": 0.71,
+       "bias": 0.623
       }
      },
      "ensemble": {
-      "n": 174,
-      "mae": 2.366,
-      "spearman": 0.1755,
+      "n": 180,
+      "mae": 2.065,
+      "spearman": 0.2876,
       "calibration": {
-       "slope": 0.744,
-       "bias": 0.305
+       "slope": 0.865,
+       "bias": 0.107
       }
      }
     },
     "2019": {
      "baseline": {
-      "n": 198,
-      "mae": 2.257,
-      "spearman": 0.3371,
+      "n": 199,
+      "mae": 2.145,
+      "spearman": 0.2386,
       "calibration": {
-       "slope": 0.897,
-       "bias": 0.004
+       "slope": 0.858,
+       "bias": 0.027
       }
      },
      "ridge": {
-      "n": 198,
-      "mae": 2.504,
-      "spearman": 0.3952,
+      "n": 199,
+      "mae": 2.378,
+      "spearman": 0.3054,
       "calibration": {
-       "slope": 0.85,
-       "bias": 0.139
+       "slope": 0.806,
+       "bias": -0.051
       }
      },
      "blend": {
-      "n": 198,
-      "mae": 2.415,
-      "spearman": 0.3905,
+      "n": 199,
+      "mae": 2.28,
+      "spearman": 0.2981,
       "calibration": {
-       "slope": 0.88,
-       "bias": 0.098
+       "slope": 0.837,
+       "bias": -0.028
       }
      },
      "lgbm": {
-      "n": 198,
-      "mae": 2.592,
-      "spearman": 0.3196,
+      "n": 199,
+      "mae": 2.391,
+      "spearman": 0.2343,
       "calibration": {
-       "slope": 0.729,
-       "bias": 0.24
+       "slope": 0.698,
+       "bias": -0.056
       }
      },
      "comps": {
-      "n": 198,
-      "mae": 2.557,
-      "spearman": 0.3228,
+      "n": 199,
+      "mae": 2.272,
+      "spearman": 0.2637,
       "calibration": {
-       "slope": 1.384,
-       "bias": 0.255
+       "slope": 1.287,
+       "bias": -0.023
       }
      },
      "ensemble": {
-      "n": 198,
-      "mae": 2.456,
-      "spearman": 0.3667,
+      "n": 199,
+      "mae": 2.282,
+      "spearman": 0.2798,
       "calibration": {
-       "slope": 0.822,
-       "bias": 0.189
+       "slope": 0.785,
+       "bias": -0.054
       }
      }
     },
     "2020": {
      "baseline": {
       "n": 168,
-      "mae": 1.509,
-      "spearman": 0.3794,
+      "mae": 1.463,
+      "spearman": 0.3348,
       "calibration": {
-       "slope": 0.726,
-       "bias": 0.258
+       "slope": 0.713,
+       "bias": 0.22
       }
      },
      "ridge": {
       "n": 168,
-      "mae": 2.213,
-      "spearman": 0.3315,
+      "mae": 2.117,
+      "spearman": 0.3096,
       "calibration": {
-       "slope": 0.588,
-       "bias": -0.036
+       "slope": 0.595,
+       "bias": -0.178
       }
      },
      "blend": {
       "n": 168,
-      "mae": 1.997,
-      "spearman": 0.3333,
+      "mae": 1.916,
+      "spearman": 0.3068,
       "calibration": {
-       "slope": 0.64,
-       "bias": 0.052
+       "slope": 0.643,
+       "bias": -0.058
       }
      },
      "lgbm": {
       "n": 168,
-      "mae": 2.188,
-      "spearman": 0.2623,
+      "mae": 2.074,
+      "spearman": 0.2368,
       "calibration": {
-       "slope": 0.516,
-       "bias": 0.588
+       "slope": 0.48,
+       "bias": 0.507
       }
      },
      "comps": {
       "n": 168,
-      "mae": 1.956,
-      "spearman": 0.2727,
+      "mae": 1.75,
+      "spearman": 0.3271,
       "calibration": {
-       "slope": 0.728,
-       "bias": 0.511
+       "slope": 0.767,
+       "bias": 0.348
       }
      },
      "ensemble": {
       "n": 168,
-      "mae": 2.04,
-      "spearman": 0.3101,
+      "mae": 1.945,
+      "spearman": 0.2843,
       "calibration": {
-       "slope": 0.581,
-       "bias": 0.276
+       "slope": 0.568,
+       "bias": 0.165
       }
      }
     },
     "2021": {
      "baseline": {
       "n": 127,
-      "n_effective": 115.0,
-      "weighted": true,
-      "mae": 2.161,
-      "spearman": 0.1108,
+      "mae": 2.023,
+      "spearman": 0.1753,
       "calibration": {
-       "slope": 0.699,
-       "bias": -0.167
+       "slope": 0.626,
+       "bias": -0.096
       }
      },
      "ridge": {
       "n": 127,
-      "n_effective": 115.0,
-      "weighted": true,
-      "mae": 2.524,
-      "spearman": 0.179,
+      "mae": 2.395,
+      "spearman": 0.233,
       "calibration": {
-       "slope": 0.629,
-       "bias": -0.141
+       "slope": 0.565,
+       "bias": -0.153
       }
      },
      "blend": {
       "n": 127,
-      "n_effective": 115.0,
-      "weighted": true,
-      "mae": 2.41,
-      "spearman": 0.1726,
+      "mae": 2.271,
+      "spearman": 0.2211,
       "calibration": {
-       "slope": 0.661,
-       "bias": -0.149
+       "slope": 0.594,
+       "bias": -0.136
       }
      },
      "lgbm": {
       "n": 127,
-      "n_effective": 115.0,
-      "weighted": true,
-      "mae": 2.396,
-      "spearman": 0.2127,
+      "mae": 2.325,
+      "spearman": 0.2285,
       "calibration": {
-       "slope": 0.581,
-       "bias": -0.047
+       "slope": 0.507,
+       "bias": 0.045
       }
      },
      "comps": {
       "n": 127,
-      "n_effective": 115.0,
-      "weighted": true,
-      "mae": 2.239,
-      "spearman": 0.1392,
+      "mae": 2.18,
+      "spearman": 0.2091,
       "calibration": {
-       "slope": 0.893,
-       "bias": 0.216
+       "slope": 0.788,
+       "bias": 0.233
       }
      },
      "ensemble": {
       "n": 127,
-      "n_effective": 115.0,
-      "weighted": true,
-      "mae": 2.401,
-      "spearman": 0.2095,
+      "mae": 2.299,
+      "spearman": 0.2396,
       "calibration": {
-       "slope": 0.638,
-       "bias": -0.094
+       "slope": 0.56,
+       "bias": -0.054
       }
      }
     },
     "2022": {
      "baseline": {
-      "n": 249,
-      "n_effective": 206.7,
+      "n": 251,
+      "n_effective": 229.6,
       "weighted": true,
-      "mae": 1.517,
-      "spearman": 0.3978,
+      "mae": 1.587,
+      "spearman": 0.4157,
       "calibration": {
-       "slope": 1.428,
-       "bias": -0.102
+       "slope": 1.538,
+       "bias": -0.235
       }
      },
      "ridge": {
-      "n": 249,
-      "n_effective": 206.7,
+      "n": 251,
+      "n_effective": 229.6,
       "weighted": true,
-      "mae": 2.065,
-      "spearman": 0.3209,
+      "mae": 2.026,
+      "spearman": 0.3494,
       "calibration": {
-       "slope": 1.168,
-       "bias": -0.183
+       "slope": 1.269,
+       "bias": -0.351
       }
      },
      "blend": {
-      "n": 249,
-      "n_effective": 206.7,
+      "n": 251,
+      "n_effective": 229.6,
       "weighted": true,
-      "mae": 1.882,
-      "spearman": 0.3277,
+      "mae": 1.873,
+      "spearman": 0.3569,
       "calibration": {
-       "slope": 1.258,
-       "bias": -0.159
+       "slope": 1.365,
+       "bias": -0.316
       }
      },
      "lgbm": {
-      "n": 249,
-      "n_effective": 206.7,
+      "n": 251,
+      "n_effective": 229.6,
       "weighted": true,
-      "mae": 1.951,
-      "spearman": 0.2623,
+      "mae": 1.948,
+      "spearman": 0.2941,
       "calibration": {
-       "slope": 1.126,
-       "bias": 0.246
+       "slope": 1.201,
+       "bias": 0.036
       }
      },
      "comps": {
-      "n": 249,
-      "n_effective": 206.7,
+      "n": 251,
+      "n_effective": 229.6,
       "weighted": true,
-      "mae": 1.864,
-      "spearman": 0.1992,
+      "mae": 1.858,
+      "spearman": 0.2302,
       "calibration": {
-       "slope": 1.648,
-       "bias": -0.079
+       "slope": 1.78,
+       "bias": -0.206
       }
      },
      "ensemble": {
-      "n": 249,
-      "n_effective": 206.7,
+      "n": 251,
+      "n_effective": 229.6,
       "weighted": true,
-      "mae": 1.904,
-      "spearman": 0.2944,
+      "mae": 1.893,
+      "spearman": 0.3316,
       "calibration": {
-       "slope": 1.19,
-       "bias": 0.031
+       "slope": 1.28,
+       "bias": -0.158
       }
      }
     },
     "2023": {
      "baseline": {
       "n": 245,
-      "n_effective": 199.0,
+      "n_effective": 214.0,
       "weighted": true,
-      "mae": 1.331,
-      "spearman": 0.2495,
+      "mae": 1.493,
+      "spearman": 0.3366,
       "calibration": {
-       "slope": 0.771,
-       "bias": -0.115
+       "slope": 1.046,
+       "bias": -0.32
       }
      },
      "ridge": {
       "n": 245,
-      "n_effective": 199.0,
+      "n_effective": 214.0,
       "weighted": true,
-      "mae": 1.873,
-      "spearman": 0.2605,
+      "mae": 1.956,
+      "spearman": 0.3303,
       "calibration": {
-       "slope": 0.707,
-       "bias": -0.36
+       "slope": 0.912,
+       "bias": -0.539
       }
      },
      "blend": {
       "n": 245,
-      "n_effective": 199.0,
+      "n_effective": 214.0,
       "weighted": true,
-      "mae": 1.704,
-      "spearman": 0.2561,
+      "mae": 1.809,
+      "spearman": 0.3264,
       "calibration": {
-       "slope": 0.742,
-       "bias": -0.286
+       "slope": 0.97,
+       "bias": -0.473
       }
      },
      "lgbm": {
       "n": 245,
-      "n_effective": 199.0,
+      "n_effective": 214.0,
       "weighted": true,
-      "mae": 1.56,
-      "spearman": 0.2245,
+      "mae": 1.666,
+      "spearman": 0.3448,
       "calibration": {
-       "slope": 0.657,
-       "bias": 0.036
+       "slope": 0.88,
+       "bias": -0.251
       }
      },
      "comps": {
       "n": 245,
-      "n_effective": 199.0,
+      "n_effective": 214.0,
       "weighted": true,
-      "mae": 1.38,
-      "spearman": 0.2222,
+      "mae": 1.553,
+      "spearman": 0.3424,
       "calibration": {
-       "slope": 0.826,
-       "bias": -0.095
+       "slope": 1.138,
+       "bias": -0.253
       }
      },
      "ensemble": {
       "n": 245,
-      "n_effective": 199.0,
+      "n_effective": 214.0,
       "weighted": true,
-      "mae": 1.618,
-      "spearman": 0.2561,
+      "mae": 1.706,
+      "spearman": 0.3418,
       "calibration": {
-       "slope": 0.718,
-       "bias": -0.162
+       "slope": 0.945,
+       "bias": -0.395
       }
      }
     },
     "2024": {
      "baseline": {
-      "n": 235,
-      "n_effective": 174.3,
+      "n": 234,
+      "n_effective": 188.5,
       "weighted": true,
-      "mae": 0.864,
-      "spearman": 0.0566,
+      "mae": 0.976,
+      "spearman": 0.1053,
       "calibration": {
-       "slope": 0.862,
-       "bias": 0.48
+       "slope": 1.042,
+       "bias": 0.187
       }
      },
      "ridge": {
-      "n": 235,
-      "n_effective": 174.3,
+      "n": 234,
+      "n_effective": 188.5,
       "weighted": true,
-      "mae": 1.387,
-      "spearman": 0.0508,
+      "mae": 1.498,
+      "spearman": 0.0865,
       "calibration": {
-       "slope": 0.655,
-       "bias": 0.315
+       "slope": 0.81,
+       "bias": 0.061
       }
      },
      "blend": {
-      "n": 235,
-      "n_effective": 174.3,
+      "n": 234,
+      "n_effective": 188.5,
       "weighted": true,
-      "mae": 1.218,
-      "spearman": 0.0545,
+      "mae": 1.332,
+      "spearman": 0.0945,
       "calibration": {
-       "slope": 0.725,
-       "bias": 0.365
+       "slope": 0.893,
+       "bias": 0.099
       }
      },
      "lgbm": {
-      "n": 235,
-      "n_effective": 174.3,
+      "n": 234,
+      "n_effective": 188.5,
       "weighted": true,
-      "mae": 1.126,
-      "spearman": 0.0759,
+      "mae": 1.137,
+      "spearman": 0.1296,
       "calibration": {
-       "slope": 0.658,
-       "bias": 0.74
+       "slope": 0.818,
+       "bias": 0.34
       }
      },
      "comps": {
-      "n": 235,
-      "n_effective": 174.3,
+      "n": 234,
+      "n_effective": 188.5,
       "weighted": true,
-      "mae": 1.029,
-      "spearman": 0.101,
+      "mae": 1.177,
+      "spearman": 0.1206,
       "calibration": {
-       "slope": 0.864,
-       "bias": 0.721
+       "slope": 0.913,
+       "bias": 0.417
       }
      },
      "ensemble": {
-      "n": 235,
-      "n_effective": 174.3,
+      "n": 234,
+      "n_effective": 188.5,
       "weighted": true,
-      "mae": 1.158,
-      "spearman": 0.062,
+      "mae": 1.23,
+      "spearman": 0.1036,
       "calibration": {
-       "slope": 0.692,
-       "bias": 0.528
+       "slope": 0.856,
+       "bias": 0.2
       }
      }
     }
@@ -2539,52 +2565,52 @@
    "verdict_vs_consensus": {
     "ridge": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.568,
+     "mae_delta_vs_baseline": 0.471,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0191,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.0081,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
      "spearman_floor_status": "UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on debuted_km and full_pool_km only; 'ridge' on cut 'full_pool_km' (side 'hit') is a different statistic on a different leg and does not inherit that floor. Read the delta, not a win."
     },
     "blend": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.373,
+     "mae_delta_vs_baseline": 0.304,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0164,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.0056,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_call_E_refit": {
-      "delta": -0.0164,
-      "mde95": 0.0298,
+      "delta": 0.0056,
+      "mde95": 0.0265,
       "mde95_estimator": "E_refit",
       "mde95_source": "data/xfv_power_eval.json partb_floors.cells.pooled_rho.hit.full_pool_km",
-      "margin_over_floor": 0.55,
+      "margin_over_floor": 0.211,
       "resolvable": false,
-      "verdict": "not resolvable at this power (E_refit, MDE95 0.0298)"
+      "verdict": "not resolvable at this power (E_refit, MDE95 0.0265)"
      },
      "spearman_call_E_cond": {
-      "delta": -0.0164,
-      "mde95": 0.0214,
+      "delta": 0.0056,
+      "mde95": 0.0205,
       "mde95_estimator": "E_cond",
       "mde95_source": "data/xfv_power_eval.json partb_floors.cells.pooled_rho.hit.full_pool_km",
-      "margin_over_floor": 0.766,
+      "margin_over_floor": 0.273,
       "resolvable": false,
-      "verdict": "not resolvable at this power (E_cond, MDE95 0.0214)"
+      "verdict": "not resolvable at this power (E_cond, MDE95 0.0205)"
      },
      "both_estimators_agree": true
     },
     "lgbm": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.341,
+     "mae_delta_vs_baseline": 0.292,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0243,
+     "spearman_delta_vs_baseline": -0.0034,
      "spearman_higher_than_baseline_UNFLOORED": false,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
@@ -2592,11 +2618,11 @@
     },
     "comps": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.371,
+     "mae_delta_vs_baseline": 0.285,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0479,
+     "spearman_delta_vs_baseline": -0.0219,
      "spearman_higher_than_baseline_UNFLOORED": false,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
@@ -2604,276 +2630,270 @@
     },
     "ensemble": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.353,
+     "mae_delta_vs_baseline": 0.288,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0152,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.0083,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
      "spearman_floor_status": "UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on debuted_km and full_pool_km only; 'ensemble' on cut 'full_pool_km' (side 'hit') is a different statistic on a different leg and does not inherit that floor. Read the delta, not a win."
     },
     "ridge_cal": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.294,
+     "mae_delta_vs_baseline": 0.245,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.024,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.0047,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
      "spearman_floor_status": "UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on debuted_km and full_pool_km only; 'ridge_cal' on cut 'full_pool_km' (side 'hit') is a different statistic on a different leg and does not inherit that floor. Read the delta, not a win."
     },
     "ensemble_cal": {
      "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
-     "mae_delta_vs_baseline": 0.19,
+     "mae_delta_vs_baseline": 0.143,
      "mae_lower_than_baseline_UNFLOORED": false,
      "mae_floor": null,
      "mae_floor_status": "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json partb_floors floors rank statistics only), and per docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label anyway: the conditional median is zero for most rows, MAE is minimized by the median, and a board with Spearman 0.023 against truth beats the production board on MAE. The bar is also an MSE-fit OLS scored under an MAE criterion.",
-     "spearman_delta_vs_baseline": -0.0227,
-     "spearman_higher_than_baseline_UNFLOORED": false,
+     "spearman_delta_vs_baseline": 0.0076,
+     "spearman_higher_than_baseline_UNFLOORED": true,
      "retired_key_rank_win": "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a gate with no floor on either leg. Read spearman_call_E_refit / spearman_call_E_cond for the floored rank call where one exists; the MAE leg has no verdict form.",
      "spearman_floor": null,
      "spearman_floor_status": "UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on debuted_km and full_pool_km only; 'ensemble_cal' on cut 'full_pool_km' (side 'hit') is a different statistic on a different leg and does not inherit that floor. Read the delta, not a win."
     }
    },
    "auc_breakdown": {
-    "n": 1603,
-    "n_with_seed_folds": 1603,
+    "n": 1621,
+    "n_with_seed_folds": 1621,
     "labels": {
      "contributor_war": 3.0,
      "star_war": 10.0,
-     "war_metric": "first-6yr summed bWAR (target_censored); model=blend, consensus=OLS(FV) anchor, shared labels"
+     "war_metric": "first-6yr summed label WAR (target_censored); model=blend, consensus=OLS(FV) anchor, shared labels"
     },
     "pooled": {
      "contributor": {
-      "n": 1603,
-      "n_pos": 232,
-      "model_auc": 0.852,
-      "consensus_auc": 0.8421,
-      "margin": 0.0099
+      "n": 1621,
+      "n_pos": 229,
+      "model_auc": 0.846,
+      "consensus_auc": 0.8314,
+      "margin": 0.0146
      },
      "star": {
-      "n": 1603,
-      "n_pos": 96,
-      "model_auc": 0.8945,
-      "consensus_auc": 0.8918,
-      "margin": 0.0026
+      "n": 1621,
+      "n_pos": 86,
+      "model_auc": 0.9125,
+      "consensus_auc": 0.9066,
+      "margin": 0.0059
      }
     },
     "by_cohort": {
      "hs": {
       "contributor": {
-       "n": 342,
-       "n_pos": 71,
-       "model_auc": 0.8564,
-       "consensus_auc": 0.8848,
-       "margin": -0.0284
+       "n": 352,
+       "n_pos": 63,
+       "model_auc": 0.8585,
+       "consensus_auc": 0.8609,
+       "margin": -0.0024
       },
       "star": {
-       "n": 342,
-       "n_pos": 28,
-       "model_auc": 0.8952,
-       "consensus_auc": 0.9198,
-       "margin": -0.0245
+       "n": 352,
+       "n_pos": 22,
+       "model_auc": 0.9391,
+       "consensus_auc": 0.9388,
+       "margin": 0.0003
       }
      },
      "college": {
       "contributor": {
-       "n": 354,
-       "n_pos": 83,
-       "model_auc": 0.8088,
-       "consensus_auc": 0.784,
-       "margin": 0.0248
+       "n": 355,
+       "n_pos": 88,
+       "model_auc": 0.7944,
+       "consensus_auc": 0.7813,
+       "margin": 0.0131
       },
       "star": {
-       "n": 354,
-       "n_pos": 30,
-       "model_auc": 0.8597,
-       "consensus_auc": 0.8672,
-       "margin": -0.0076
+       "n": 355,
+       "n_pos": 29,
+       "model_auc": 0.8724,
+       "consensus_auc": 0.8772,
+       "margin": -0.0048
       }
      },
      "ifa": {
       "contributor": {
-       "n": 447,
-       "n_pos": 66,
-       "model_auc": 0.8663,
-       "consensus_auc": 0.8696,
-       "margin": -0.0034
+       "n": 456,
+       "n_pos": 65,
+       "model_auc": 0.8619,
+       "consensus_auc": 0.8727,
+       "margin": -0.0108
       },
       "star": {
-       "n": 447,
-       "n_pos": 32,
-       "model_auc": 0.9093,
-       "consensus_auc": 0.889,
-       "margin": 0.0204
+       "n": 456,
+       "n_pos": 30,
+       "model_auc": 0.915,
+       "consensus_auc": 0.8994,
+       "margin": 0.0156
       }
      },
      "other": {
       "contributor": {
-       "n": 417,
-       "n_pos": 12,
-       "model_auc": 0.8007,
-       "consensus_auc": 0.7567,
-       "margin": 0.044
+       "n": 415,
+       "n_pos": 13,
+       "model_auc": 0.7962,
+       "consensus_auc": 0.7607,
+       "margin": 0.0355
       },
       "star": {
-       "n": 417,
-       "n_pos": 6,
-       "model_auc": 0.8441,
-       "consensus_auc": 0.7903,
-       "margin": 0.0537
+       "n": 415,
+       "n_pos": 5,
+       "model_auc": 0.8507,
+       "consensus_auc": 0.9044,
+       "margin": -0.0537
       }
      }
     },
     "by_era": {
      "<=2018": {
       "contributor": {
-       "n": 381,
-       "n_pos": 46,
-       "model_auc": 0.8129,
-       "consensus_auc": 0.8539,
-       "margin": -0.0409
+       "n": 397,
+       "n_pos": 51,
+       "model_auc": 0.8196,
+       "consensus_auc": 0.8219,
+       "margin": -0.0024
       },
       "star": {
-       "n": 381,
-       "n_pos": 26,
-       "model_auc": 0.8577,
-       "consensus_auc": 0.8815,
-       "margin": -0.0238
+       "n": 397,
+       "n_pos": 19,
+       "model_auc": 0.9403,
+       "consensus_auc": 0.9426,
+       "margin": -0.0023
       }
      },
      "2019-2021": {
       "contributor": {
-       "n": 493,
-       "n_pos": 79,
-       "model_auc": 0.866,
-       "consensus_auc": 0.8251,
-       "margin": 0.0409
+       "n": 494,
+       "n_pos": 74,
+       "model_auc": 0.8311,
+       "consensus_auc": 0.8085,
+       "margin": 0.0226
       },
       "star": {
-       "n": 493,
-       "n_pos": 33,
-       "model_auc": 0.8734,
-       "consensus_auc": 0.8578,
-       "margin": 0.0156
+       "n": 494,
+       "n_pos": 29,
+       "model_auc": 0.891,
+       "consensus_auc": 0.8971,
+       "margin": -0.0061
       }
      },
      "2022-2023": {
       "contributor": {
-       "n": 729,
-       "n_pos": 107,
-       "model_auc": 0.8686,
-       "consensus_auc": 0.859,
-       "margin": 0.0096
+       "n": 730,
+       "n_pos": 104,
+       "model_auc": 0.8732,
+       "consensus_auc": 0.8583,
+       "margin": 0.0149
       },
       "star": {
-       "n": 729,
-       "n_pos": 37,
-       "model_auc": 0.936,
-       "consensus_auc": 0.9255,
-       "margin": 0.0105
+       "n": 730,
+       "n_pos": 38,
+       "model_auc": 0.9217,
+       "consensus_auc": 0.9066,
+       "margin": 0.0151
       }
      }
     },
     "by_fv_tier": {
      "35": {
       "contributor": {
-       "n": 368,
-       "n_pos": 7,
-       "model_auc": 0.7396,
+       "n": 367,
+       "n_pos": 8,
+       "model_auc": 0.6518,
        "consensus_auc": 0.5,
-       "margin": 0.2396
+       "margin": 0.1518
       },
-      "star": {
-       "n": 368,
-       "n_pos": 1,
-       "model_auc": 0.9591,
-       "consensus_auc": 0.5,
-       "margin": 0.4591
-      }
+      "star": null
      },
      "40": {
       "contributor": {
-       "n": 858,
-       "n_pos": 54,
-       "model_auc": 0.6014,
-       "consensus_auc": 0.5444,
-       "margin": 0.057
+       "n": 865,
+       "n_pos": 55,
+       "model_auc": 0.6164,
+       "consensus_auc": 0.5655,
+       "margin": 0.0509
       },
       "star": {
-       "n": 858,
-       "n_pos": 10,
-       "model_auc": 0.4308,
-       "consensus_auc": 0.4206,
-       "margin": 0.0102
+       "n": 865,
+       "n_pos": 9,
+       "model_auc": 0.606,
+       "consensus_auc": 0.5732,
+       "margin": 0.0328
       }
      },
      "45": {
       "contributor": {
-       "n": 184,
-       "n_pos": 54,
-       "model_auc": 0.698,
-       "consensus_auc": 0.6784,
-       "margin": 0.0196
+       "n": 188,
+       "n_pos": 55,
+       "model_auc": 0.7107,
+       "consensus_auc": 0.6561,
+       "margin": 0.0546
       },
       "star": {
-       "n": 184,
-       "n_pos": 19,
-       "model_auc": 0.7136,
-       "consensus_auc": 0.7003,
-       "margin": 0.0132
+       "n": 188,
+       "n_pos": 16,
+       "model_auc": 0.762,
+       "consensus_auc": 0.6817,
+       "margin": 0.0803
       }
      },
      "50": {
       "contributor": {
-       "n": 113,
-       "n_pos": 60,
-       "model_auc": 0.6075,
-       "consensus_auc": 0.5544,
-       "margin": 0.0531
+       "n": 118,
+       "n_pos": 58,
+       "model_auc": 0.5888,
+       "consensus_auc": 0.5033,
+       "margin": 0.0855
       },
       "star": {
-       "n": 113,
-       "n_pos": 28,
-       "model_auc": 0.6504,
-       "consensus_auc": 0.5697,
-       "margin": 0.0807
+       "n": 118,
+       "n_pos": 25,
+       "model_auc": 0.5725,
+       "consensus_auc": 0.5041,
+       "margin": 0.0684
       }
      },
      "55": {
       "contributor": {
-       "n": 41,
-       "n_pos": 27,
-       "model_auc": 0.5344,
-       "consensus_auc": 0.4987,
-       "margin": 0.0357
+       "n": 44,
+       "n_pos": 23,
+       "model_auc": 0.4783,
+       "consensus_auc": 0.471,
+       "margin": 0.0072
       },
       "star": {
-       "n": 41,
-       "n_pos": 16,
-       "model_auc": 0.5025,
-       "consensus_auc": 0.64,
-       "margin": -0.1375
+       "n": 44,
+       "n_pos": 15,
+       "model_auc": 0.469,
+       "consensus_auc": 0.5828,
+       "margin": -0.1138
       }
      },
      "60": {
       "contributor": {
        "n": 26,
        "n_pos": 17,
-       "model_auc": 0.6275,
-       "consensus_auc": 0.6275,
-       "margin": 0.0
+       "model_auc": 0.5752,
+       "consensus_auc": 0.5817,
+       "margin": -0.0065
       },
       "star": {
        "n": 26,
        "n_pos": 12,
-       "model_auc": 0.5714,
-       "consensus_auc": 0.5506,
-       "margin": 0.0208
+       "model_auc": 0.506,
+       "consensus_auc": 0.5149,
+       "margin": -0.0089
       }
      }
     }
@@ -2882,101 +2902,101 @@
  },
  "feature_diagnostics_full_window": {
   "ridge_std_weights": {
-   "fv": 3.359,
-   "obp_rel": 0.295,
-   "k_rel": 0.64,
-   "peak_k_rel": -0.49,
-   "age_rel_level": 0.015,
-   "n_milb_seasons": -0.623,
-   "tool_hit": 0.463,
-   "tool_speed": 0.49,
-   "milb_missing": 0.335,
-   "is_ifa": 0.174,
-   "is_college": 0.418,
-   "ops_rel": 0.175,
-   "age": 0.207,
-   "level_rank": -0.014
+   "fv": 3.046,
+   "obp_rel": 0.265,
+   "k_rel": 0.39,
+   "peak_k_rel": -0.267,
+   "age_rel_level": -0.135,
+   "n_milb_seasons": -0.428,
+   "tool_hit": 0.267,
+   "tool_speed": 0.338,
+   "milb_missing": 0.128,
+   "is_ifa": 0.143,
+   "is_college": 0.708,
+   "ops_rel": 0.236,
+   "age": 0.073,
+   "level_rank": -0.309
   },
   "lgbm_gain_share": {
-   "k_rel": 0.239,
-   "age": 0.164,
-   "fv": 0.148,
-   "tool_speed": 0.074,
-   "n_milb_seasons": 0.073,
-   "peak_k_rel": 0.072,
-   "ops_rel": 0.052,
-   "age_rel_level": 0.045,
-   "tool_hit": 0.041,
-   "obp_rel": 0.038,
-   "is_college": 0.033,
-   "is_ifa": 0.017,
-   "level_rank": 0.003,
+   "k_rel": 0.277,
+   "age": 0.181,
+   "fv": 0.145,
+   "n_milb_seasons": 0.063,
+   "peak_k_rel": 0.061,
+   "obp_rel": 0.047,
+   "age_rel_level": 0.047,
+   "tool_speed": 0.045,
+   "ops_rel": 0.043,
+   "is_college": 0.039,
+   "tool_hit": 0.039,
+   "is_ifa": 0.009,
+   "level_rank": 0.004,
    "milb_missing": 0.0
   }
  },
  "block_rho": {
   "instrument": "block-rho: (side x cohort-year) percentile-normalized, both sides pooled",
   "registration": "docs/EFV_GATE_STANDARD.md section 3 (two-metric gate)",
-  "n": 1647,
+  "n": 1689,
   "n_by_side": {
-   "hit": 755,
-   "pit": 892
+   "hit": 782,
+   "pit": 907
   },
   "weighting": "pair-weighted, same basis as the headline pooled rho",
-  "consensus_block_rho": 0.3297,
-  "blend_block_rho": 0.3327,
-  "delta": 0.003,
+  "consensus_block_rho": 0.3563,
+  "blend_block_rho": 0.3817,
+  "delta": 0.0254,
   "mde95": 0.0325,
   "mde95_estimator": "E_refit",
   "mde95_source": "tools/efv_mde_lab.py mde (data/xfv_mde_floor.json)",
   "resolvable": false,
   "verdict": "not resolvable at this power (E_refit, MDE95 0.0325)",
   "call_E_refit": {
-   "delta": 0.003,
+   "delta": 0.0254,
    "mde95": 0.0325,
    "mde95_estimator": "E_refit",
    "mde95_source": "tools/efv_mde_lab.py mde (data/xfv_mde_floor.json)",
-   "margin_over_floor": 0.092,
+   "margin_over_floor": 0.782,
    "resolvable": false,
    "verdict": "not resolvable at this power (E_refit, MDE95 0.0325)"
   },
   "note": "identical block on both side artifacts; the instrument is joint by construction. Reported BESIDE the pooled rho, not instead of it.",
   "call_E_cond": {
-   "delta": 0.003,
-   "mde95": 0.0182,
+   "delta": 0.0254,
+   "mde95": 0.017,
    "mde95_estimator": "E_cond",
    "mde95_source": "data/xfv_power_eval.json partb_floors.cells.block_rho",
-   "margin_over_floor": 0.165,
-   "resolvable": false,
-   "verdict": "not resolvable at this power (E_cond, MDE95 0.0182)"
+   "margin_over_floor": 1.494,
+   "resolvable": true,
+   "verdict": "beats consensus (E_cond, MDE95 0.017)"
   },
-  "both_estimators_agree": true,
-  "estimator_note": "MDE95_BLOCK_RHO 0.0325 is E_refit (train and test resampled, refit per draw). B-L1 re-measured the same class at 0.0307 E_refit / 0.0182 E_cond; the shipped constant is the more conservative of the two E_refit reads and is kept, so this lane changes labels and not floors."
+  "both_estimators_agree": false,
+  "estimator_note": "MDE95_BLOCK_RHO 0.0325 is E_refit (train and test resampled, refit per draw). B-L1 re-measured the same class at 0.0229 E_refit / 0.017 E_cond; the shipped constant is the more conservative of the two E_refit reads and is kept, so this lane changes labels and not floors."
  },
- "honest_note": "eFV does not beat consensus FV on out-of-sample rank on every cut (debuted_km +0.0104, full_pool_km -0.0164), and no gap reaches the 0.044 this eval can resolve either way under E_refit. E_cond, which holds the fit and resamples the scored rows only, is tighter and does not change that (debuted_km 0.50x of 0.0206, full_pool_km 0.77x of 0.0214), so every cut is a NULL under both estimators. The higher-SNR block-rho leg reads +0.0030: not resolvable at this power (E_refit, MDE95 0.0325), and not resolvable at this power (E_cond, MDE95 0.0182). By era the edge concentrates in recent cohorts (+0.0422 on 2022-2023 vs -0.0104 on <=2018), so what edge exists is not an artifact of older, less accurate scouting. eFV also sits above consensus on MAE by +0.1370 WAR (it predicts more spread; consensus regresses to the mean). That leg is UNFLOORED and stays a diagnostic: no MDE95 exists for any MAE statistic here, and on a label whose conditional median is zero MAE is minimized by predicting the median, so it cannot arbitrate a board in either direction. The flagship case is the package: rank + calibrated distribution + uncertainty + surplus + power-correction, not a resolved rank win.",
+ "honest_note": "eFV ranks ahead of consensus FV on every out-of-sample cut (debuted_km +0.0325, full_pool_km +0.0056), but no gap reaches the 0.044 this eval can resolve under E_refit, so treat it as a tie, not a win. E_cond, which holds the fit and resamples the scored rows only, is tighter (debuted_km 1.56x of 0.0208, full_pool_km 0.27x of 0.0205) and resolves debuted_km, so the call depends on which estimator is asked. The higher-SNR block-rho leg reads +0.0254: not resolvable at this power (E_refit, MDE95 0.0325), and beats consensus (E_cond, MDE95 0.017). By era the edge concentrates in recent cohorts (+0.0430 on 2022-2023 vs +0.0433 on <=2018), so what edge exists is not an artifact of older, less accurate scouting. eFV also sits above consensus on MAE by +0.0260 WAR (it predicts more spread; consensus regresses to the mean). That leg is UNFLOORED and stays a diagnostic: no MDE95 exists for any MAE statistic here, and on a label whose conditional median is zero MAE is minimized by predicting the median, so it cannot arbitrate a board in either direction. The flagship case is the package: rank + calibrated distribution + uncertainty + surplus + power-correction, not a resolved rank win.",
  "side_fairness": {
   "eval_line": "eFV 3.4 F-SIDE joint side-fairness (measurement-only; standing)",
   "artifact": "data/xfv_side_fairness_eval.json",
   "primary_frame": "full_pool_km, joint display-grade board, folds 2014-2024",
   "top25_hit_minus_pit": {
-   "mean_diff": 4.0,
+   "mean_diff": 2.84,
    "mean_ci90": [
-    2.33,
-    5.57
+    1.28,
+    4.32
    ],
-   "mean_se": 0.984,
-   "median_diff": 4.09,
+   "mean_se": 0.912,
+   "median_diff": 2.29,
    "median_ci90": [
-    1.97,
-    5.83
+    0.28,
+    4.92
    ],
-   "median_se": 1.215,
-   "p_hit_gt_pit": 1.0
+   "median_se": 1.42,
+   "p_hit_gt_pit": 0.999
   },
   "top25_pit_share": {
-   "display_frame": 0.411,
-   "rank_war_frame": 0.196,
-   "share_inflation": 2.1
+   "display_frame": 0.396,
+   "rank_war_frame": 0.229,
+   "share_inflation": 1.73
   },
   "binding_rules_pass": {
    "B1_fold_sign_agreement": true,

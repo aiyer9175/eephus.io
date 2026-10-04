@@ -1,10 +1,10 @@
 {
-"generated_at": "2026-10-02",
+"generated_at": "2026-10-03",
 "artifact": "data/advancement_pace.json",
 "kind": "descriptive QC only - no predictive claim is made or permitted anywhere for this statistic",
 "methodology_version": "1.0.0-eephus",
-"n_scored_latest_asof": 9747,
-"n_asof_rows_fit": 27679,
+"n_scored_latest_asof": 9744,
+"n_asof_rows_fit": 27672,
 "distribution_ap_plus_display_latest": {
 "mean": 99.32,
 "sd": 7.68,
@@ -20,7 +20,7 @@
 "mean": 99.34,
 "sd": 7.78,
 "min": 63.0,
-"max": 160.4,
+"max": 160.5,
 "p5": 88.5,
 "p50": 99.0,
 "p95": 113.9
@@ -30,11 +30,11 @@
 "era": {
 "2015-16": {
 "mean_ap_plus": 99.79,
-"n": 5893
+"n": 5887
 },
 "2017-19": {
 "mean_ap_plus": 99.45,
-"n": 8303
+"n": 8302
 },
 "2021+": {
 "mean_ap_plus": 100.43,
@@ -60,7 +60,7 @@
 },
 "UNK": {
 "mean_ap_plus": 99.91,
-"n": 18974
+"n": 18967
 },
 "UT": {
 "mean_ap_plus": 100.32,
@@ -82,7 +82,7 @@
 },
 "undrafted_other": {
 "mean_ap_plus": 98.99,
-"n": 9671
+"n": 9664
 }
 },
 "entry_age_bucket": {
@@ -96,11 +96,11 @@
 },
 "21-22": {
 "mean_ap_plus": 98.92,
-"n": 7192
+"n": 7190
 },
 "23+": {
 "mean_ap_plus": 99.37,
-"n": 2326
+"n": 2321
 },
 "<=17": {
 "mean_ap_plus": 100.96,
@@ -110,12 +110,12 @@
 },
 "threshold_stability": {
 "raw_pace_spearman_T20_vs_T30": 0.9946,
-"n_common_players": 9747
+"n_common_players": 9744
 },
 "named_riser_sanity": [
 {
 "name": "Dayson Croes",
-"ap_plus": 160.4,
+"ap_plus": 160.5,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AAA in 2 active seasons"
@@ -129,7 +129,7 @@
 },
 {
 "name": "Dub Gleed",
-"ap_plus": 141.6,
+"ap_plus": 141.7,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AA in 2 active seasons"
@@ -143,7 +143,7 @@
 },
 {
 "name": "Boston Smith",
-"ap_plus": 138.8,
+"ap_plus": 138.7,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "A -> AA in 1 active seasons"
