@@ -369,19 +369,32 @@ def test_the_club_picker_is_a_native_eephus_select():
         assert "eephus-select" not in PAGE.read_text(encoding="utf-8") or True
 
 
+def _banner_in(text, html):
+    """The CBA banner (display pass 2026-10-03): the clause before the colon is
+    the summary, always in view; the rest of the sentence opens beneath it.
+    Both halves print, and the claim is never the hidden half."""
+    head, rest = text.split(": ", 1)
+    return ('<div class="ledger-banner" role="note"><details><summary>' + head + "</summary>" +
+            rest[0].upper() + rest[1:] + "</details></div>") in html
+
+
 def test_the_cba_banner_renders_whenever_a_2027_figure_is_on_screen():
     text = SAMPLE["copy"]["cba_banner"]
     club, _ = _render("club", team="LAD")
     assert club.count('class="ledger-banner"') >= 4, "the club page, contracts, arbitration and the FA ledger each carry it"
-    assert text in club
+    assert _banner_in(text, club)
     league, _ = _render("league")
-    assert text in league, "the League board shows Space 2027 and Committed 2027"
+    assert _banner_in(text, league), "the League board shows Space 2027 and Committed 2027"
     rules, _ = _render("rules")
-    assert text in rules
+    assert _banner_in(text, rules)
     club27, _ = _render("club", team="LAD", season="2027")
     cbt = club27[club27.index('id="ledger-block-cbt"'):club27.index('id="ledger-block-contracts"')]
-    assert text in cbt, "the 2027 ladder carries the banner"
+    assert _banner_in(text, cbt), "the 2027 ladder carries the banner"
     assert "Spotrac $247.0M basis" in cbt and "$244.0M" in cbt, "both bases named on the 2027 ladder"
+    assert text not in club, "the paragraph no longer prints whole in every block"
+    nocolon = _copy.deepcopy(SAMPLE)
+    nocolon["copy"]["cba_banner"] = "Every 2027 figure is a carry-forward."
+    assert '<div class="ledger-banner" role="note">Every 2027 figure is a carry-forward.</div>' in _render("league", payload=nocolon)[0]
 
 
 def test_the_league_board_hides_columns_by_container_not_viewport():
@@ -457,7 +470,7 @@ def test_the_served_board_renders_every_section_without_throwing():
         assert d["clubs"][code]["links"]["mlbstats_war"].replace("&", "&amp;") in html
         assert "team=" + d["clubs"][code]["statsapi_code"] in html, "the /mlbstats/ link uses the StatsAPI code"
         html27, _ = _render("club", payload=d, team=code, tiers=True, season="2027")
-        assert d["copy"]["cba_banner"] in html27
+        assert _banner_in(d["copy"]["cba_banner"], html27)
     league, _ = _render("league", payload=d, tiers=True)
     assert league.count("<tr>") >= 32 and '<figure class="ledger-quadrant">' in league
     assert d["league"]["averages_row"]["label"] in league and d["league"]["means"]["label"] in league
@@ -503,9 +516,10 @@ def test_the_2026_payor_tier_names_the_2026_page_and_2027_names_its_derivation()
 def test_every_header_and_leaf_links_the_entry_that_defines_its_own_quantity():
     html, _ = _render("club", team="LAD")
     farm = html[html.index('id="ledger-block-farm"'):html.index('id="ledger-block-fa"')]
-    assert 'data-gl="fin_ifa_roi">fin_ifa_roi</a>' in farm
-    assert 'data-gl="farm_grade_financial">fin_active_surplus</a>' in farm
-    assert 'data-gl="sur_plus">fin_' not in farm
+    # QCLC09: the leaf prints its glossary term, the hook still names the entry
+    assert 'data-gl="fin_ifa_roi">IFA ROI</a>' in farm
+    assert 'data-gl="farm_grade_financial">Active surplus</a>' in farm
+    assert 'data-gl="sur_plus">fin_' not in farm and ">fin_" not in farm, "no raw leaf key prints as a label"
     assert 'data-gl="sur_plus">OrgSur+</a>' in farm, "the OrgSur+ tile keeps its own entry"
     pay = html[html.index('id="ledger-block-payroll"'):html.index('id="ledger-block-commitments"')]
     assert 'data-gl="payroll_allocations">Committed 2027</a>' in pay
@@ -544,7 +558,7 @@ def test_the_csv_control_exports_the_table_the_reader_sees():
     assert '<table class="ledger-table ledger-contracts" data-csv-primary>' in club
     league, _ = _render("league")
     assert league.count("data-csv-primary") == 1
-    assert '<table class="ledger-table" data-csv-primary>' in league
+    assert '<table class="ledger-table" data-csv-primary aria-label="Club Ledger league board, 2 clubs">' in league
     assert '"club-ledger-" + (s === "club" ? String(state.team).toLowerCase() + "-contracts" : s)' in JS
     if PAGE.exists():
         assert 'id="ledger-app-root" data-csv-export="club-ledger"' in PAGE.read_text(encoding="utf-8"), "build_site's opt-in stays on the mount"
@@ -961,8 +975,8 @@ def test_the_debuted_trade_rows_take_no_ladder_and_print_their_source():
     assert "<dt>Floor</dt><dd>" + COPY2["prearb_min_floor"] in tr, "a prearb_min row quotes the artifact's floor sentence"
     assert "2 debuted rows on the trade board" in tr
     sp = _block(html, "surplus")
-    assert "Trade currency: served / farm rows gross + debuted rows</td><td>$990.8M / $514.0M + $476.8M" in sp
-    assert "MLB leg, contract: served / contract rows (n 1)</td><td>$300.1M / $300.1M" in sp and COPY2["trade_currency_split"] in sp
+    assert "Trade currency: served / farm rows gross + debuted rows</th><td>$990.8M / $514.0M + $476.8M" in sp
+    assert "MLB leg, contract: served / contract rows (n 1)</th><td>$300.1M / $300.1M" in sp and COPY2["trade_currency_split"] in sp
 
 
 def test_the_new_block_keys_are_anchored_in_the_router():
@@ -1091,10 +1105,11 @@ def test_cost_plus_prints_its_three_parts_apart_and_its_numerator():
                                   "contract_dropped_usd": 780000, "n_contract_dropped": 1},
               "locked_fa_2027": {"n": 8, "war": 7.7}, "proj_war_2027": 51.4, "proj_war_2027_ex_fa": 43.7})
     html, _ = _render("club", payload=s, team="LAD")
-    assert "<tr><td>Projected 2027 WAR less locked free agents</td><td>51.4 less 7.7 (8 locked free agents) = 43.7</td></tr>" in html
-    assert "<tr><td>Guaranteed 2027 salaries (CBT payroll)</td><td>$372.9M</td></tr>" in html
-    assert "<tr><td>Projected 2027 arbitration awards (1)</td><td>$7.5M</td></tr>" in html
-    assert "<tr><td>Pre-arbitration minimum rungs (15)</td><td>$11.7M</td></tr>" in html
+    th = '<tr><th scope="row">'
+    assert th + "Projected 2027 WAR less locked free agents</th><td>51.4 less 7.7 (8 locked free agents) = 43.7</td></tr>" in html
+    assert th + "Guaranteed 2027 salaries (CBT payroll)</th><td>$372.9M</td></tr>" in html
+    assert th + "Projected 2027 arbitration awards (1)</th><td>$7.5M</td></tr>" in html
+    assert th + "Pre-arbitration minimum rungs (15)</th><td>$11.7M</td></tr>" in html
     assert "$392.1M" not in html, "the three parts are never added on the page"
     assert "here 1 rung ($0.8M)" in html
 
@@ -1104,7 +1119,7 @@ def test_the_2027_spotrac_estimate_says_it_is_surcharges_only_and_the_difference
     s["copy"]["cbt_spotrac_surcharges_only"] = "Spotrac's 2027 estimate equals the surcharges alone on its 247M basis"
     s["clubs"]["LAD"]["cbt"]["2027"]["spotrac_est_is_surcharges_only"] = True
     html, _ = _render("club", payload=s, team="LAD", season="2027")
-    assert "<tr><td>Difference</td><td>$66.3M</td></tr>" in html, "a bill gap is not a gain: no green"
+    assert '<tr><th scope="row">Difference</th><td>$66.3M</td></tr>' in html, "a bill gap is not a gain: no green"
     assert "equals the surcharges alone on its 247M basis" in html
     assert "Spotrac estimate, surcharges only (no base rate)" in html
     s["clubs"]["LAD"]["cbt"]["2027"]["spotrac_est_is_surcharges_only"] = False
@@ -1324,3 +1339,146 @@ def test_the_league_calendar_gains_the_later_seasons_collapsed():
     assert '<a href="#section=club&team=LAD&block=options" data-llink="1">LAD</a>' in later
     assert "by 2026" not in later
     assert cal.index("</details>") < cal.index("<h3>Later seasons</h3>"), "the winter list closes first"
+
+
+# --------------------------------------------------------------------------
+# Display and copy pass (2026-10-03): surface-quality findings QCLA08-QCLA11,
+# QCLP07, QCLC08-QCLC10. One test per finding.
+# --------------------------------------------------------------------------
+
+def _site_tokens():
+    import test_value_ruler as VR
+    light, dark = VR._blocks()
+    return VR, light, dark
+
+
+def test_qcla08_every_row_expander_is_named_points_at_its_row_and_keeps_focus():
+    league, _ = _render("league")
+    btns = re.findall(r"<button[^>]*data-lxp=[^>]*>", league)
+    assert len(btns) == 2
+    for b in btns:
+        assert 'aria-label="Show detail for ' in b and 'aria-controls="ledger-xp-L-' in b, b
+    assert 'aria-label="Show detail for Los Angeles Dodgers"' in league
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD}, open_keys=("P:p_one", "C:shohei_ohtani"))
+    for k, who in (("P-p_one", "P One"), ("C-shohei_ohtani", "Shohei Ohtani")):
+        assert 'aria-controls="ledger-xp-%s" aria-label="Show detail for %s"' % (k, who) in html, k
+        assert '<tr class="ledger-xp-row" id="ledger-xp-%s">' % k in html, "the controlled row carries the id"
+    every = re.findall(r"<button[^>]*data-lxp=[^>]*>", html)
+    assert every and all("aria-label=" in b and "aria-controls=" in b for b in every)
+    h = JS[JS.index('querySelectorAll("[data-lxp]")'):JS.index('querySelectorAll("[data-lfilter]")')]
+    assert h.index("render();") < h.index('refocus("data-lxp", k);'), "focus returns to the new copy of the button"
+    i = CSS.index(".ledger-app .ledger-xp-btn {")
+    j = CSS.index("@media (max-width: 640px)")
+    assert i < j and ".ledger-app .ledger-xp-btn { min-width: 44px; min-height: 44px; }" in CSS[j:], "the 44 px rule comes after the base rule"
+
+
+def test_qcla09_sort_keeps_focus_the_ring_clears_3_to_1_and_the_board_is_named():
+    h = JS[JS.index('querySelectorAll("th[data-lsort]")'):JS.index('querySelectorAll("[data-lxp]")')]
+    assert h.index("render();") < h.index('refocus("data-lsort", k);')
+    assert ".ledger-app .ledger-table thead th:focus { outline: 2px solid var(--text-gold);" in CSS
+    VR, light, dark = _site_tokens()
+    for theme in ({}, dark):
+        ring = VR._resolve("--text-gold", theme, light)
+        for surf in ("--bg-secondary", "--bg-primary"):
+            assert VR._contrast(ring, VR._resolve(surf, theme, light)) >= 3.0, surf
+    league, _ = _render("league")
+    assert 'aria-label="Club Ledger league board, 2 clubs"' in league
+
+
+def test_qcla10_block_index_table_semantics_and_heading_order():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
+    nav = html[html.index('<nav class="ledger-index"'):html.index("</nav>")]
+    targets = re.findall(r'href="#section=club&amp;team=LAD&amp;block=([a-z]+)" data-llink="1"', nav)
+    assert len(targets) == 12
+    for t in targets:
+        assert 'id="ledger-block-%s" tabindex="-1"' % t in html, t
+        assert re.search(r"block=\(([a-z|]+)\)", JS).group(1).split("|").count(t) == 1, ("the router knows", t)
+    assert html.index("</nav>") < html.index('id="ledger-block-payroll"'), "the index sits above the blocks"
+    ct = _block(html, "contracts")
+    head = ct[ct.index("<thead>"):ct.index("</thead>")]
+    ths = re.findall(r"<th\b[^>]*>", head)
+    assert ths and all('scope="col"' in t for t in ths)
+    for tbl in re.findall(r'<table class="ledger-mini[^"]*">(.*?)</table>', html, re.S):
+        for row in re.findall(r"<tr>(.*?)</tr>", tbl, re.S):
+            assert row.startswith('<th scope="row">') or row.startswith('<td colspan="2"'), row[:80]
+    for section in ("rules", "method"):
+        page, _ = _render(section)
+        assert "<h3>" not in page and "<h2>" in page, section
+    assert "label.ledger-chip { min-height: 44px;" in CSS
+    club, _ = _render("club", team="LAD")
+    assert 'role="radiogroup" aria-labelledby="ledger-season-lab"' in club
+    h = JS[JS.index('querySelectorAll("a[data-llink]")'):JS.index("function boot()")]
+    assert 'el("ledger-block-" + state.block)' in h and "preventScroll: true" in h, "the named block takes focus"
+
+
+def test_qcla11_secondary_text_takes_an_ink_not_an_opacity_and_the_greens_clear_the_stripe():
+    rules = re.sub(r"/\*.*?\*/", "", CSS, flags=re.S)
+    assert "opacity" not in rules, "no ledger text is dimmed by opacity"
+    assert ".ledger-app .ledger-pos { color: var(--text-green); }" in CSS
+    assert ".ledger-app .ledger-table tbody tr:nth-child(even) { background: var(--bg-primary); }" in CSS
+    assert "nth-child(even) { background: var(--bg-hover)" not in rules and ".ledger-xp-row td { white-space: normal; background: var(--bg-primary); }" in CSS, "the stripe is a paper tone"
+    VR, light, dark = _site_tokens()
+    for theme in ({}, dark):
+        surfaces = [VR._resolve(s, theme, light) for s in ("--bg-primary", "--bg-secondary")]
+        for ink in ("--text-green", "--vt-above", "--text-tertiary", "--text-secondary", "--down"):
+            fg = VR._resolve(ink, theme, light)
+            for bg in surfaces:
+                assert VR._contrast(fg, bg) >= 4.5, (ink, bg, round(VR._contrast(fg, bg), 2))
+    for name, rule in (("franchise.css", ".fr-app .fr-pos { color: var(--text-green); }"),
+                       ("management.css", ".mgmt-pos { color: var(--text-green); }")):
+        assert rule in (ROOT / "assets" / name).read_text(encoding="utf-8"), name
+
+
+def test_qclp07_the_loader_holds_the_board_room():
+    assert ".ledger-app #ledger-app-root:empty, .ledger-app #ledger-app-root:has(> .px-state.is-loading) { min-height: 100vh; }" in CSS
+    if PAGE.exists():
+        assert '<div id="ledger-app-root" data-csv-export="club-ledger"></div>' in PAGE.read_text(encoding="utf-8"), "the mount is empty, so :empty holds before the script runs"
+
+
+def test_qclc08_efv_prints_the_nearest_whole_grade():
+    html = _render2(shards={SHARD_URL_LAD: SHARD_LAD})
+    pr = _block(html, "prospects")
+    i = COLUMNS2["farm.prospects"].index("efv")
+    for row in (P_ONE, P_TWO, P_THREE):
+        want = str(int(row[i] + 0.5))
+        assert '<td class="lc-col-hide">%s</td>' % want in pr, (row[1], want)
+    assert "61.8" not in pr, "the one-decimal eFV is gone from the table"
+    opened = _block(_render2(shards={SHARD_URL_LAD: SHARD_LAD}, open_keys=("P:p_one",)), "prospects")
+    assert "<dt>efv</dt><dd>62</dd>" in opened, "the expander prints the same grade"
+
+
+def test_qclc09_farm_leaves_print_terms_and_units():
+    s = _copy.deepcopy(SAMPLE)
+    s["clubs"]["LAD"]["farm"]["leaves"]["fin_contract_surplus"] = {"letter": "B", "score_100": 104.0, "value": 2234174.0, "n": 22, "sparse": False}
+    s["clubs"]["LAD"]["farm"]["leaves"]["fin_war_per_m"] = {"letter": "A-", "score_100": 111.4, "value": 2.14, "n": 30, "sparse": False}
+    html, _ = _render("club", payload=s, team="LAD")
+    farm = _block(html, "farm")
+    assert 'data-gl="fin_contract_surplus">Grad-Contract Surplus</a>' in farm and "$2.2M per year (n 22)" in farm
+    assert 'data-gl="fin_war_per_m">WAR per $M</a>' in farm and "2.14 (n 30)" in farm
+    assert 'data-gl="farm_grade_financial">Active surplus</a>' in farm and "$455.4M (n 156)" in farm
+    assert "tree WAR per $M score 114.6" in farm
+    assert not re.search(r">fin_[a-z_]+<", farm) and "2234174" not in farm
+    g = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    terms = {e["id"]: e["term"] for e in g["entries"]}
+    labels = dict(re.findall(r'(fin_[a-z_]+): "([^"]+)"', JS[JS.index("var LEAF_LABEL"):JS.index("function leafValue")]))
+    for k, lab in labels.items():
+        if k != "fin_active_surplus":
+            assert terms.get(k) == lab, (k, lab, terms.get(k))
+
+
+def test_qclc10_a_value_that_rounds_to_zero_prints_without_a_minus():
+    sh = _copy.deepcopy(SHARD_LAD)
+    ci = COLUMNS2["farm.graduates"].index("career_war")
+    sh["farm"]["graduates"][1][ci] = -0.03
+    oi = COLUMNS2["farm.picks"].index("over_slot_usd")
+    sh["farm"]["picks"]["2026"][1][oi] = -30000
+    html = _render2(shards={SHARD_URL_LAD: sh})
+    gr = _block(html, "graduates")
+    assert '<td class="lc-col-hide">0.0</td>' in gr and "-0.0" not in gr
+    farm = _block(html, "farm")
+    assert "-$0.0M" not in farm and '<span class="ledger-neg">$0.0M</span>' in farm, "the sign colour stays, the minus goes"
+    fr = (ROOT / "assets" / "franchise.js").read_text(encoding="utf-8")
+    body = fr[fr.index("  function n1(v)"):fr.index("\n", fr.index("  function n1(v)"))]
+    ctx = MiniRacer()
+    ctx.eval("function isNum(v){return v!==null&&v!==undefined&&v===v&&v!==''};" + body)
+    assert ctx.eval("n1(-0.02)") == "0.0" and ctx.eval("n1(-0.06)") == "-0.1" and ctx.eval("n1(2.26)") == "2.3"

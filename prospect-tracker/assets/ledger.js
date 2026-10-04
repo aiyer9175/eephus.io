@@ -73,15 +73,22 @@
       (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
   }
   function isNum(v) { return v !== null && v !== undefined && v === v && v !== ""; }
-  function num(v, nd) { return isNum(v) ? Number(v).toFixed(nd === undefined ? 1 : nd) : ""; }
-  function pct(v, nd) { return isNum(v) ? (Number(v) * 100).toFixed(nd === undefined ? 1 : nd) + "%" : ""; }
-  // usd -> "$12.3M" / "-$4.1M". One decimal, never re-based.
-  function money(usd) {
-    if (!isNum(usd)) return "";
-    var v = Number(usd) / 1e6;
-    return (v < 0 ? "-" : "") + "$" + Math.abs(v).toFixed(1) + "M";
+  // A value that rounds to zero prints 0.0, never -0.0 (QCLC10: a career WAR
+  // of -0.03 printed "-0.0").
+  function num(v, nd) {
+    if (!isNum(v)) return "";
+    var s = Number(v).toFixed(nd === undefined ? 1 : nd);
+    return /^-0(\.0+)?$/.test(s) ? s.slice(1) : s;
   }
-  function moneyMM(mm) { return isNum(mm) ? (mm < 0 ? "-" : "") + "$" + Math.abs(Number(mm)).toFixed(1) + "M" : ""; }
+  function pct(v, nd) { return isNum(v) ? (Number(v) * 100).toFixed(nd === undefined ? 1 : nd) + "%" : ""; }
+  // usd -> "$12.3M" / "-$4.1M". One decimal, never re-based. A figure that
+  // rounds to $0.0M carries no minus (QCLC10, the same rule as num()).
+  function moneyMM(mm) {
+    if (!isNum(mm)) return "";
+    var t = Math.abs(Number(mm)).toFixed(1);
+    return (Number(mm) < 0 && t !== "0.0" ? "-" : "") + "$" + t + "M";
+  }
+  function money(usd) { return isNum(usd) ? moneyMM(Number(usd) / 1e6) : ""; }
   function usdFull(usd) { return isNum(usd) ? "$" + Math.round(Number(usd)).toLocaleString("en-US") : ""; }
   function el(id) { return document.getElementById(id); }
   function gl(label, id) {
@@ -117,7 +124,16 @@
     return '<div class="ledger-dark"><div><strong>' + esc(title) + '</strong><span class="ledger-darktag">dark</span></div>' +
       '<div class="ledger-dark-why">' + esc(why) + "</div></div>";
   }
-  function banner() { return '<div class="ledger-banner" role="note">' + esc(copy("cba_banner")) + "</div>"; }
+  // The CBA carry-forward note rides every block with a 2027 dollar. Its claim
+  // (the clause before the colon) stays in view; the rest of the sentence is
+  // one click away, so the page no longer prints the full paragraph eight times.
+  function banner() {
+    var t = String(copy("cba_banner") || ""), i = t.indexOf(": ");
+    if (i < 0) return '<div class="ledger-banner" role="note">' + esc(t) + "</div>";
+    var rest = t.slice(i + 2);
+    return '<div class="ledger-banner" role="note"><details><summary>' + esc(t.slice(0, i)) + "</summary>" +
+      esc(rest.charAt(0).toUpperCase() + rest.slice(1)) + "</details></div>";
+  }
   // ---- the depth pass's row plumbing ------------------------------------------
   // Every row array is read through the board's `columns` legend: a legend edit
   // and a renderer edit cannot drift apart, and a nested form ("[[season, ...]]",
@@ -164,9 +180,25 @@
     return '<span class="ledger-band" title="' + esc(title || "") + '">' + esc(moneyMM(lo)) + " to " + esc(moneyMM(hi)) + "</span>";
   }
   function notSummed() { return '<span class="ledger-notsum">' + esc(copy("not_summed")) + "</span>"; }
-  function xpBtn(k) {
+  // The row expander (QCLA08): named for its row, pointing at the detail row
+  // it opens (xpRowId), and refocused after the re-render that toggles it.
+  function xpRowId(k) { return "ledger-xp-" + String(k).replace(/[^A-Za-z0-9_-]/g, "-"); }
+  function xpButton(k, who) {
     var open = !!state.open[k];
-    return '<td class="lc-xp"><button type="button" class="ledger-xp-btn" data-lxp="' + esc(k) + '" aria-expanded="' + (open ? "true" : "false") + '">' + (open ? "&minus;" : "+") + "</button></td>";
+    return '<button type="button" class="ledger-xp-btn" data-lxp="' + esc(k) + '" aria-expanded="' + (open ? "true" : "false") +
+      '" aria-controls="' + esc(xpRowId(k)) + '" aria-label="' + esc("Show detail for " + (who || "this row")) + '">' + (open ? "&minus;" : "+") + "</button>";
+  }
+  function xpBtn(k, who) { return '<td class="lc-xp">' + xpButton(k, who) + "</td>"; }
+  function xpRow(k, colspan, inner) {
+    return '<tr class="ledger-xp-row" id="' + esc(xpRowId(k)) + '"><td colspan="' + colspan + '">' + inner + "</td></tr>";
+  }
+  // One label and one value in a mini table: the label is a row header.
+  function miniRow(label, valueHtml) { return '<tr><th scope="row">' + label + "</th><td>" + valueHtml + "</td></tr>"; }
+  // Basis and method sentences that a block keeps but a reader rarely needs
+  // first sit in one collapsed block at the end of the block (display pass
+  // 2026-10-03). Claims, NEVER-list wording and dark blockers stay in view.
+  function how(inner) {
+    return inner ? '<details class="ledger-how"><summary>How this works</summary>' + inner + "</details>" : "";
   }
   function dd(label, html) { return "<dt>" + esc(label) + "</dt><dd>" + (html || "") + "</dd>"; }
   function pctStr(rate) { return isNum(rate) ? (Number(rate) * 100).toFixed(0) + " pct" : ""; }
@@ -255,11 +287,11 @@
     var P = I.cost_plus_parts || {}, L = copy("cost_plus_part_labels") || {}, F = I.locked_fa_2027 || {};
     if (!isNum(P.guaranteed_usd)) return "";
     return '<table class="ledger-mini ledger-cost-parts">' +
-      "<tr><td>" + esc(copy("cost_plus_numerator_label")) + "</td><td>" + esc(num(I.proj_war_2027, 1)) + " less " + esc(num(F.war, 1)) +
-        " (" + esc(F.n) + " locked free agents) = " + esc(num(I.proj_war_2027_ex_fa, 1)) + "</td></tr>" +
-      "<tr><td>" + esc(L.guaranteed || "") + "</td><td>" + esc(money(P.guaranteed_usd)) + (P.guaranteed_source === "guaranteed_aav" ? " " + flag(copy("cbt_basis_aav_label")) : "") + "</td></tr>" +
-      "<tr><td>" + esc(L.arb || "") + " (" + esc(P.n_arb) + ")</td><td>" + esc(money(P.arb_usd)) + "</td></tr>" +
-      "<tr><td>" + esc(L.prearb || "") + " (" + esc(P.n_prearb) + ")</td><td>" + esc(money(P.prearb_usd)) + "</td></tr></table>" +
+      miniRow(esc(copy("cost_plus_numerator_label")), esc(num(I.proj_war_2027, 1)) + " less " + esc(num(F.war, 1)) +
+        " (" + esc(F.n) + " locked free agents) = " + esc(num(I.proj_war_2027_ex_fa, 1))) +
+      miniRow(esc(L.guaranteed || ""), esc(money(P.guaranteed_usd)) + (P.guaranteed_source === "guaranteed_aav" ? " " + flag(copy("cbt_basis_aav_label")) : "")) +
+      miniRow(esc(L.arb || "") + " (" + esc(P.n_arb) + ")", esc(money(P.arb_usd))) +
+      miniRow(esc(L.prearb || "") + " (" + esc(P.n_prearb) + ")", esc(money(P.prearb_usd))) + "</table>" +
       '<p class="ledger-count">' + esc(copy("cost_plus_parts_note")) +
       (P.n_contract_dropped ? "; here " + esc(P.n_contract_dropped) + " rung (" + esc(money(P.contract_dropped_usd)) + ")" : "") + ".</p>";
   }
@@ -321,12 +353,12 @@
         return '<td class="' + cls + '">' + leagueCell(r, c[0]) + "</td>";
       }).join("");
       var open = !!state.open["L:" + r.club];
-      var xp = '<td class="lb-xp"><button type="button" class="ledger-xp-btn" data-lxp="L:' + esc(r.club) + '" aria-expanded="' + (open ? "true" : "false") + '">' + (open ? "&minus;" : "+") + "</button></td>";
+      var xp = '<td class="lb-xp">' + xpButton("L:" + r.club, r.name || r.club) + "</td>";
       var row = "<tr>" + tds + xp + "</tr>";
       if (open) {
-        row += '<tr class="ledger-xp-row"><td colspan="' + (cols.length + 1) + '"><dl class="ledger-dl">' +
+        row += xpRow("L:" + r.club, cols.length + 1, '<dl class="ledger-dl">' +
           cols.map(function (c) { return "<dt>" + esc(c[1]) + "</dt><dd>" + leagueCell(r, c[0]) + "</dd>"; }).join("") +
-          "</dl></td></tr>";
+          "</dl>");
       }
       return row;
     }).join("");
@@ -351,13 +383,17 @@
       return '<td class="' + cls + '">' + txt + "</td>";
     }).join("") + '<td class="lb-xp"></td></tr>';
     var pool = L.pools.cost_plus;
-    return '<p class="ledger-lede">' + esc(copy("league_lede")) + "</p>" + banner() +
-      '<div class="ledger-board"><table class="ledger-table" data-csv-primary><thead><tr>' + head + "</tr></thead><tbody>" + body +
+    // The lede's first sentence says what the table is; the rest of it (the
+    // colour rule) joins the basis notes in How this works under the board.
+    var lede = String(copy("league_lede") || ""), cut = lede.indexOf(". ");
+    var ledeHead = cut > 0 ? lede.slice(0, cut + 1) : lede;
+    return '<p class="ledger-lede">' + esc(ledeHead) + "</p>" + banner() +
+      '<div class="ledger-board"><table class="ledger-table" data-csv-primary aria-label="' + esc("Club Ledger league board, " + DATA.league.rows.length + " clubs") + '"><thead><tr>' + head + "</tr></thead><tbody>" + body +
       "</tbody><tfoot>" + foot + "</tfoot></table>" +
       // Why the two footer means disagree: one sentence from the export,
       // pinned to the measured cause (the fetch stamps), never typed here.
       (copy("footer_means_note") ? '<p class="ledger-count ledger-foot-note">' + esc(copy("footer_means_note")) + "</p>" : "") +
-      renderQuadrant() + "</div>" + renderOptionsLeague() +
+      renderQuadrant() + "</div>" + (cut > 0 ? how('<p class="ledger-note">' + esc(lede) + "</p>") : "") + renderOptionsLeague() +
       '<p class="ledger-count">' + gl("Cost+", "cost_plus") + " pool: n " + esc(pool.n) + ", mean " + esc(num(pool.mean_index, 1)) +
       ", sd " + esc(num(pool.sd_index, 1)) + "; " + esc(copy("cost_plus_basis")) + ". " + esc(copy("cost_plus_registry")) + "</p>" +
       '<p class="ledger-note">' + esc(copy("surplus_ev")) + " " + esc(copy("surplus_no_tier")) + "</p>";
@@ -421,7 +457,18 @@
     var seasons = [seasonNow(), classYear()].map(function (y) {
       return '<label class="ledger-chip"><input type="radio" name="ledger-season" value="' + esc(y) + '"' + (state.season === y ? " checked" : "") + "> " + esc(y) + "</label>";
     }).join("");
-    return '<div class="ledger-controls">' + sel + '<span>Season</span>' + seasons + "</div>";
+    return '<div class="ledger-controls">' + sel + '<span class="ledger-seasons" role="radiogroup" aria-labelledby="ledger-season-lab"><span id="ledger-season-lab">Season</span>' + seasons + "</span></div>";
+  }
+  // The block index under the club picker (QCLA10, census M09-08): one link per
+  // block, through the data-llink handler, so a keyboard reader reaches a block
+  // without tabbing past every row above it.
+  var BLOCK_INDEX = [["payroll", "Payroll"], ["commitments", "Commitments"], ["cbt", "CBT"], ["contracts", "Contracts"],
+                     ["arbitration", "Arbitration"], ["surplus", "Cost per WAR"], ["farm", "Farm capital"], ["trade", "Trade board"],
+                     ["prospects", "Farm ledger"], ["graduates", "Graduates"], ["fa", "Free agency"], ["options", "Options"]];
+  function renderBlockIndex() {
+    return '<nav class="ledger-index" aria-label="Club ledger blocks">' + BLOCK_INDEX.map(function (b) {
+      return '<a href="' + esc("#section=club&team=" + state.team + "&block=" + b[0]) + '" data-llink="1">' + esc(b[1]) + "</a>";
+    }).join("") + "</nav>";
   }
   function tile(title, big, sub, cls) {
     return '<div class="ledger-tile"><div class="ledger-tile-title">' + title + '</div><div class="ledger-tile-big ' + (cls || "") + '">' + big + '</div><div class="ledger-tile-sub">' + (sub || "") + "</div></div>";
@@ -446,8 +493,7 @@
     var t4 = tile("Space " + esc(classYear()), signedMoney(sp.spotrac_usd),
       esc(copy("space_2027_spotrac_label")) + "<br>" + esc(copy("space_2027_platform_label")) + ": " + signedMoney(sp.platform_usd) +
       ((P.tax_floor_2027 || {}).below ? "<br>" + flag(copy("cbt_basis_aav_label")) : ""));
-    var out = '<div class="ledger-tiles">' + t1 + t2 + t3 + t4 + "</div>" +
-      '<p class="ledger-count">' + esc(copy("allocations_note")) + "</p>";
+    var out = '<div class="ledger-tiles">' + t1 + t2 + t3 + t4 + "</div>";
     if (p27.split_available && p27.split) {
       var names = ["active", "injured", "retained", "buried"];
       var tot = p27.split.reduce(function (a, v) { return a + (isNum(v) ? Number(v) : 0); }, 0);
@@ -458,8 +504,8 @@
           return '<span><i class="ledger-split-' + names[i] + '"></i>' + esc(names[i]) + " " + esc(isNum(v) ? money(v) : "n/a") + "</span>";
         }).join("") + "<span>" + esc(copy("split_2027_label")) + (isNum(p27.avg_age) ? "; avg age " + esc(num(p27.avg_age, 1)) : "") + "</span></div>";
     }
-    out += '<p class="ledger-count">' + esc(copy("split_2026_note")) + "</p>";
     out += dark("Payroll history", (DATA.sections.payroll_history || {}).blocked_on || "");
+    out += how('<p class="ledger-count">' + esc(copy("allocations_note")) + "</p>" + '<p class="ledger-count">' + esc(copy("split_2026_note")) + "</p>");
     return out;
   }
   function renderCbt(d) {
@@ -480,20 +526,20 @@
       " (platform " + esc(money(T)) + ", " + esc(C.threshold_verify) + ")" +
       (y === classYear() && isNum(C.over_spotrac_basis_usd) ? "; Spotrac " + esc(money(C.spotrac_basis_usd)) + " basis: " + overUnder(C.over_spotrac_basis_usd).toLowerCase() + costMoney(C.over_spotrac_basis_usd) : "") + "</p>";
     var comp = isNum(C.spotrac_est_bill_usd)
-      ? "<tr><td>" + gl("Computed bill", "computed_cbt_bill") + "</td><td>" + esc(money(C.computed_bill_usd)) + "</td></tr>" +
-        "<tr><td>Spotrac estimate</td><td>" + esc(money(C.spotrac_est_bill_usd)) + "</td></tr>" +
-        "<tr><td>Difference</td><td>" + esc(money(C.diff_usd)) + "</td></tr>" +
+      ? miniRow(gl("Computed bill", "computed_cbt_bill"), esc(money(C.computed_bill_usd))) +
+        miniRow("Spotrac estimate", esc(money(C.spotrac_est_bill_usd))) +
+        miniRow("Difference", esc(money(C.diff_usd))) +
         (C.spotrac_est_is_surcharges_only ? '<tr><td colspan="2" class="ledger-count">' + esc(copy("cbt_spotrac_surcharges_only")) + "</td></tr>" : "")
-      : "<tr><td>" + gl("Computed bill", "computed_cbt_bill") + "</td><td>" + esc(money(C.computed_bill_usd)) + (C.bracket === "under" ? " (" + esc(copy("cbt_under")) + ")" : "") + "</td></tr>" +
-        "<tr><td>Spotrac estimate</td><td></td></tr>";
-    comp += "<tr><td>" + gl("Payor tier", "payor_tier") + "</td><td>" + esc(C.tier || "") + " (" + esc(copy("payor_basis")[C.tier_basis] || C.tier_basis) + ")</td></tr>";
+      : miniRow(gl("Computed bill", "computed_cbt_bill"), esc(money(C.computed_bill_usd)) + (C.bracket === "under" ? " (" + esc(copy("cbt_under")) + ")" : "")) +
+        miniRow("Spotrac estimate", "");
+    comp += miniRow(gl("Payor tier", "payor_tier"), esc(C.tier || "") + " (" + esc(copy("payor_basis")[C.tier_basis] || C.tier_basis) + ")");
     var clock = d.cbt.clock || {};
     var q = d.cbt.qo_pick_tax || {};
     return (y === classYear() ? banner() : "") + ladder + list + over +
       '<table class="ledger-mini">' + comp + "</table>" +
-      '<p class="ledger-count">' + esc(copy("cbt_computed_label")) + ". " + esc(copy("cbt_verify_note")) + "</p>" +
       '<p class="ledger-note">Tax clock: ' + esc(clock.tier_2026 || "") + " for " + esc(seasonNow()) + " implies " + esc(clock.consecutive_payor_seasons_implied) + " consecutive payor season(s); " + esc(copy("cbt_clock_rule")) + "</p>" +
-      '<p class="ledger-note">' + gl("QO pick tax", "qo_tax") + " at the club's tier (" + esc(q.club_tier) + "): " + esc(money(q.club_usd)) + ". " + esc(copy("qo_recipient_note")) + ". " + esc((DATA.sections.qo_pending || {}).note || "") + "</p>";
+      '<p class="ledger-note">' + gl("QO pick tax", "qo_tax") + " at the club's tier (" + esc(q.club_tier) + "): " + esc(money(q.club_usd)) + ". " + esc(copy("qo_recipient_note")) + ". " + esc((DATA.sections.qo_pending || {}).note || "") + "</p>" +
+      how('<p class="ledger-count">' + esc(copy("cbt_computed_label")) + ". " + esc(copy("cbt_verify_note")) + "</p>");
   }
   // NO RULER CALL IN THIS FUNCTION. Three labelled segments per season and the
   // unpriced count; the sum is never printed.
@@ -525,13 +571,13 @@
     var ex = K.expiring;
     out += '<p class="ledger-note">' + gl("Payroll horizon", "payroll_horizon") + ": " + esc(copy("horizon_label")) + " " + esc(K.horizon_season || copy("horizon_beyond")) + ". " +
       esc(K.n_priced) + " priced of " + esc(K.n_vets) + " vets; " + esc(K.n_unpriced) + " carry no price.</p>";
-    out += '<table class="ledger-mini"><tr><td>Expiring after ' + esc(seasonNow()) + "</td><td>" + esc(ex["2027"][0]) + " players, prev AAV " + esc(money(ex["2027"][1])) + ", projected guarantees " + esc(money(ex["2027"][2])) + "</td></tr>" +
-      "<tr><td>Expiring after " + esc(classYear()) + "</td><td>" + esc(ex["2028"][0]) + " players, prev AAV " + esc(money(ex["2028"][1])) + "</td></tr>" +
-      "<tr><td>Expiring the winter after</td><td>" + esc(ex["2029"][0]) + " players</td></tr></table>" +
-      '<p class="ledger-count">' + esc(copy("expiring_basis")) + "</p>";
+    out += '<table class="ledger-mini">' + miniRow("Expiring after " + esc(seasonNow()), esc(ex["2027"][0]) + " players, prev AAV " + esc(money(ex["2027"][1])) + ", projected guarantees " + esc(money(ex["2027"][2]))) +
+      miniRow("Expiring after " + esc(classYear()), esc(ex["2028"][0]) + " players, prev AAV " + esc(money(ex["2028"][1]))) +
+      miniRow("Expiring the winter after", esc(ex["2029"][0]) + " players") + "</table>";
     out += '<p class="ledger-note">' + esc(copy("commitments_not_summed")) + "</p>";
     out += "<details><summary>" + gl("Salary path", "salary_path") + ": the four disclosed holes</summary><ul>" +
       (copy("holes") || []).map(function (h) { return "<li>" + esc(h) + "</li>"; }).join("") + "</ul></details>";
+    out += how('<p class="ledger-count">' + esc(copy("expiring_basis")) + "</p>");
     return out;
   }
   // The second exposure population, drawn APART from the stack (4.4): a thin
@@ -612,9 +658,9 @@
     // the depth rows: the club's contract paths, keyed, once the shard is in
     var sh = shardOf(d.club), pathBy = {};
     if (sh && sh.contracts && sh.contracts.paths) sh.contracts.paths.forEach(function (p) { pathBy[cv("contracts.paths", p, "key")] = p; });
-    var head = "<tr><th>Player</th><th class=\"lc-col-hide\">Src</th>" + seasons.map(function (s, i) {
-      return '<th class="' + (i === 0 ? "" : "lc-col-hide") + '">' + esc(s) + "</th>";
-    }).join("") + "<th>Thru</th><th class=\"lc-col-hide\">Ctrl</th><th class=\"lc-col-hide\">NPV surplus</th><th class=\"lc-xp\"></th></tr>";
+    var head = '<tr><th scope="col">Player</th><th scope="col" class="lc-col-hide">Src</th>' + seasons.map(function (s, i) {
+      return '<th scope="col" class="' + (i === 0 ? "" : "lc-col-hide") + '">' + esc(s) + "</th>";
+    }).join("") + '<th scope="col">Thru</th><th scope="col" class="lc-col-hide">Ctrl</th><th scope="col" class="lc-col-hide">NPV surplus</th><th scope="col" class="lc-xp" aria-label="Row detail"></th></tr>';
     var body = K.rows.map(function (r) {
       var key = r[0], name = r[1], pos = r[2], src = r[4], thru = r[6], ctrl = r[7], why = r[8], npv = r[9], path = r[10] || [], opts = r[11] || [];
       var byS = {};
@@ -631,25 +677,23 @@
         '<td class="lc-col-hide"><span class="ledger-src">' + esc(src) + "</span></td>" + cells +
         "<td>" + esc(thru || "") + "</td><td class=\"lc-col-hide\" title=\"" + esc(why || "") + '">' + esc(ctrl || "") + "</td>" +
         '<td class="lc-col-hide">' + signedMoney(npv) + "</td>" +
-        '<td class="lc-xp"><button type="button" class="ledger-xp-btn" data-lxp="' + esc(ok) + '" aria-expanded="' + (open ? "true" : "false") + '">' + (open ? "&minus;" : "+") + "</button></td></tr>";
+        xpBtn(ok, name) + "</tr>";
       if (open) {
-        row += '<tr class="ledger-xp-row"><td colspan="' + (seasons.length + 6) + '"><dl class="ledger-dl">' +
+        row += xpRow(ok, seasons.length + 6, '<dl class="ledger-dl">' +
           "<dt>Source</dt><dd>" + esc(src) + "</dd><dt>Control</dt><dd>" + esc(ctrl || "") + " " + esc(why || "") + "</dd><dt>NPV surplus</dt><dd>" + signedMoney(npv) + "</dd>" +
           path.map(function (c) {
             return "<dt>" + esc(c[0]) + " " + esc(c[4]) + "</dt><dd>" + esc(money(c[1])) + (isNum(c[2]) && isNum(c[3]) && (c[2] !== c[1] || c[3] !== c[1]) ? " (" + esc(money(c[2])) + " to " + esc(money(c[3])) + ", " + esc(copy("band_note")) + ")" : "") + "; " + esc(bases[c[5]] || c[5]) + (c[6] ? "; non-tender cliff" : "") + "</dd>";
-          }).join("") + contractDepth(pr, opts) + "</dl></td></tr>";
+          }).join("") + contractDepth(pr, opts) + "</dl>");
       }
       return row;
     }).join("");
     var D = K.deferrals, PS = K.paths_summary;
-    var out = banner() + '<p class="ledger-count">' + esc(K.n_priced) + " priced, " + esc(K.n_unpriced) + " unpriced. Season cells: " +
-      Object.keys(bases).map(function (k) { return esc(k) + " = " + esc(bases[k]); }).join("; ") +
+    var out = banner() + '<p class="ledger-count">' + esc(K.n_priced) + " priced, " + esc(K.n_unpriced) + " unpriced" +
       (PS ? "; " + esc(PS.n_reanchored) + " of " + esc(PS.n_paths) + " re-anchored on the trade board, " + esc(PS.n_opt_out_rows) + " with a player option (" + esc(PS.n_opt_out_seasons) + " seasons)" : "") + "</p>" +
       (PS ? shardLine(d.club, copy("paths_preview_note")) : "") +
       '<div class="ledger-scroll"><table class="ledger-table ledger-contracts" data-csv-primary><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
     out += "<details><summary>" + esc(K.n_unpriced) + " vets with no salary path</summary><div class=\"ledger-chips\">" +
       K.unpriced.map(function (u) { return '<span class="ledger-flag">' + esc(u[1]) + " " + esc(u[2]) + " " + esc(u[3]) + "</span>"; }).join("") + "</div></details>";
-    out += '<p class="ledger-count">' + esc(copy("options_note")) + " " + esc(K.options.length) + " players carry options here.</p>";
     out += '<p class="ledger-note">' + gl("Deferred dollars", "deferral_npv") + " outstanding (covered deals only): sticker " + esc(money(D.sticker_usd)) + ", " + esc(copy("deferral_rate_label")) + " " + esc(money(D.npv_usd)) +
       (D.players.length ? " (" + D.players.map(function (p) { return esc(p[0]) + " " + esc(money(p[1])) + " / " + esc(money(p[2])); }).join("; ") + ")" : "") + ". " + esc(copy("deferral_coverage")) + ". " + esc(copy("deferral_rate_note")) + "</p>";
     // dark() escapes its title, so the glossary hook rides the paragraph beneath.
@@ -657,6 +701,8 @@
       '<p class="ledger-count">Beside ' + gl("dead money", "dead_money") + ", never summed: Spotrac " + esc(classYear()) + " buried allocation " + esc(isNum(K.dead_money.buried_usd_2027) ? money(K.dead_money.buried_usd_2027) : "n/a") + ". " + esc(copy("dead_money_beside")) + "</p>";
     out += dark("Retained salary", (DATA.sections.retained || {}).blocked_on || "") +
       '<p class="ledger-count">Cross-check for ' + gl("retained salary", "retained_salary") + ": Spotrac " + esc(classYear()) + " retained allocation " + esc(isNum(K.retained.retained_usd_2027) ? money(K.retained.retained_usd_2027) : "n/a") + " (" + esc(copy("retained_cross_check")) + ").</p>";
+    out += how('<p class="ledger-count">Season cells: ' + Object.keys(bases).map(function (k) { return esc(k) + " = " + esc(bases[k]); }).join("; ") + ".</p>" +
+      '<p class="ledger-count">' + esc(copy("options_note")) + " " + esc(K.options.length) + " players carry options here.</p>");
     return out;
   }
   function flagChips(e) {
@@ -691,16 +737,16 @@
       var k = "A:" + m, open = !!state.open[k];
       var svTxt = sv ? String(sv) + (svy ? " as of " + svy : "") : " - ";
       var row = '<tr><td><span title="mlbam ' + esc(m) + '">' + esc(name) + "</span>" + (cv("arbitration.ladders", r, "in_vets") ? flag("vets") : "") + (cv("arbitration.ladders", r, "has_salpath") ? flag("salary path") : "") + "</td><td>" + esc(clsLab) + "</td>" +
-        '<td class="lc-col-hide">' + esc(svTxt) + "</td>" + '<td class="lc-col-hide">' + esc(yl) + "</td>" + cells + "<td>" + esc(money(tot)) + "</td>" + '<td class="lc-col-hide">' + flagChips(fl) + "</td>" + xpBtn(k) + "</tr>";
+        '<td class="lc-col-hide">' + esc(svTxt) + "</td>" + '<td class="lc-col-hide">' + esc(yl) + "</td>" + cells + "<td>" + esc(money(tot)) + "</td>" + '<td class="lc-col-hide">' + flagChips(fl) + "</td>" + xpBtn(k, name) + "</tr>";
       if (open) {
-        row += '<tr class="ledger-xp-row"><td colspan="' + (years.length + 7) + '"><dl class="ledger-dl">' +
+        row += xpRow(k, years.length + 7, '<dl class="ledger-dl">' +
           lad.map(function (t, i) {
             return dd(t[0] + " " + t[4], (isNum(t[1]) ? esc(money(t[1])) + " (" + esc(money(t[2])) + " to " + esc(money(t[3])) + ", " + esc(copy("band_note")) + ")" : "no salary on file, outside every sum") + (isNum(war[i]) ? "; eWAR " + esc(num(war[i], 2)) : ""));
           }).join("") +
           dd("Service", esc(svTxt)) + dd("Class", esc(clsLab) + " (" + esc(cls) + ")") + dd("Remaining", esc(money(tot))) +
           dd("Projections", (cv("arbitration.ladders", r, "in_vets") ? "in the projections vets" : "not in the projections vets") + (cv("arbitration.ladders", r, "has_salpath") ? ", salary path priced" : "")) +
           dd("Flags", flagChips(fl) + ((fl & 8) ? '<div class="ledger-count">' + esc(copy("cba_banner")) + "</div>" : "")) +
-          "</dl></td></tr>";
+          "</dl>");
       }
       return row;
     }).join("");
@@ -739,11 +785,10 @@
       tile(gl("Ladder sum " + esc(classYear()) + " (arb and pre-arb rungs)", "arb_exposure"), money(A.s2027_usd), splitSub + esc(copy("arb_tender_note"))) +
       tile("Remaining, all seasons", money(A.remaining_usd), esc(copy("arb_provisional"))) +
       tile("Projected WAR over the ladder", num(A.war, 1), "sum of the per-season projections, fWAR basis") + "</div>";
-    out += '<p class="ledger-count">Flag census: ' + Object.keys(A.flags).map(function (b) { return "bit " + b + ": " + A.flags[b]; }).join(", ") + ". " + esc(copy("arb_flag_key")) + "</p>";
     if (A.by_season) {
       out += '<table class="ledger-mini">' + A.by_season.map(function (b) {
         var nn = cv("arbitration.by_season", b, "n_null_rungs");
-        return "<tr><td>" + esc(cv("arbitration.by_season", b, "season")) + " ladder sum</td><td>" + esc(money((cv("arbitration.by_season", b, "arb_rung_usd") || 0) + (cv("arbitration.by_season", b, "prearb_rung_usd") || 0))) + " = arb " + esc(money(cv("arbitration.by_season", b, "arb_rung_usd"))) + " (" + esc(cv("arbitration.by_season", b, "n_arb_rungs")) + ") + pre-arb " + esc(money(cv("arbitration.by_season", b, "prearb_rung_usd"))) + " (" + esc(cv("arbitration.by_season", b, "n_prearb_rungs")) + ")" + (nn ? "; " + esc(nn) + " null rung(s) outside every sum" : "") + "</td></tr>";
+        return '<tr><th scope="row">' + esc(cv("arbitration.by_season", b, "season")) + " ladder sum</th><td>" + esc(money((cv("arbitration.by_season", b, "arb_rung_usd") || 0) + (cv("arbitration.by_season", b, "prearb_rung_usd") || 0))) + " = arb " + esc(money(cv("arbitration.by_season", b, "arb_rung_usd"))) + " (" + esc(cv("arbitration.by_season", b, "n_arb_rungs")) + ") + pre-arb " + esc(money(cv("arbitration.by_season", b, "prearb_rung_usd"))) + " (" + esc(cv("arbitration.by_season", b, "n_prearb_rungs")) + ")" + (nn ? "; " + esc(nn) + " null rung(s) outside every sum" : "") + "</td></tr>";
       }).join("") + "</table>";
     }
     out += shardLine(d.club, copy("arb_preview_note"));
@@ -768,6 +813,7 @@
       out += '<p class="ledger-count">' + esc(copy("swartz_label")) + ". " + esc(copy("swartz_a6_prefix")) + ", n " + esc(DATA.arbitration_eval.n) + ": " + esc(copy("swartz_a6")) + "</p>";
     }
     out += '<p class="ledger-note">' + esc(copy("arb_realized_copy")) + "</p>";
+    out += how('<p class="ledger-count">Flag census: ' + Object.keys(A.flags).map(function (b) { return "bit " + b + ": " + A.flags[b]; }).join(", ") + ". " + esc(copy("arb_flag_key")) + "</p>");
     return out;
   }
   function spark(series, valueIdx) {
@@ -792,20 +838,20 @@
       tile("Locked", pct(I.locked_pct, 0), "share of " + esc(classYear()) + "-" + esc(DATA.horizon[DATA.horizon.length - 1]) + " core WAR under control") + "</div>" +
       costParts(I);
     out += "<h3>" + gl("Controlled surplus", "controlled_surplus") + " (" + esc(S.unit) + ", plain)</h3><table class=\"ledger-mini\">" +
-      "<tr><td>MLB leg (surNpv)</td><td>" + esc(moneyMM(S.mlb_mm)) + "</td></tr>" +
-      Object.keys(S.mlb_by_salsrc_mm).map(function (k) { return "<tr><td>&nbsp;&nbsp;" + esc(k) + "</td><td>" + esc(moneyMM(S.mlb_by_salsrc_mm[k])) + "</td></tr>"; }).join("") +
-      "<tr><td>Farm leg (active surplus)</td><td>" + esc(moneyMM(S.farm_mm)) + "</td></tr>" +
-      "<tr><td><strong>Total</strong></td><td>" + esc(moneyMM(S.total_mm)) + "</td></tr>" +
-      "<tr><td>Trade Machine currency (not added)</td><td>" + esc(moneyMM(S.trade_currency_mm)) + "</td></tr></table>" +
+      miniRow("MLB leg (surNpv)", esc(moneyMM(S.mlb_mm))) +
+      Object.keys(S.mlb_by_salsrc_mm).map(function (k) { return miniRow("&nbsp;&nbsp;" + esc(k), esc(moneyMM(S.mlb_by_salsrc_mm[k]))); }).join("") +
+      miniRow("Farm leg (active surplus)", esc(moneyMM(S.farm_mm))) +
+      miniRow("<strong>Total</strong>", esc(moneyMM(S.total_mm))) +
+      miniRow("Trade Machine currency (not added)", esc(moneyMM(S.trade_currency_mm))) + "</table>" +
       '<p class="ledger-count">' + esc(copy("surplus_basis")) + " " + esc(copy("surplus_ev")) + " " + esc(copy("surplus_no_tier")) + " " + esc(copy("trade_currency_basis")) + "</p>";
     if (S.reconciliation) {
       var Rc = S.reconciliation, bys = Rc.by_salsrc || {};
       out += "<h3>The legs against their rows</h3><table class=\"ledger-mini\">" +
-        Object.keys(bys).map(function (k) { return "<tr><td>MLB leg, " + esc(k) + ": served / contract rows (n " + esc(bys[k][2]) + ")</td><td>" + esc(moneyMM(bys[k][0])) + " / " + esc(moneyMM(bys[k][1])) + "</td></tr>"; }).join("") +
-        "<tr><td>MLB leg: served / rows</td><td>" + esc(moneyMM(Rc.mlb_served_mm)) + " / " + esc(moneyMM(Rc.mlb_rows_mm)) + "</td></tr>" +
-        "<tr><td>Farm leg: served / PROSPX leaf</td><td>" + esc(moneyMM(Rc.farm_served_mm)) + " / " + esc(moneyMM(Rc.farm_leaf_mm)) + "</td></tr>" +
-        "<tr><td>Trade currency: served / farm rows gross + debuted rows</td><td>" + esc(moneyMM(Rc.trade_currency_served_mm)) + " / " + esc(moneyMM(Rc.trade_rows_active_mm)) + " + " + esc(moneyMM(Rc.trade_rows_debuted_mm)) + "</td></tr>" +
-        "<tr><td>Status</td><td>" + esc(Rc.status) + "</td></tr></table>" +
+        Object.keys(bys).map(function (k) { return miniRow("MLB leg, " + esc(k) + ": served / contract rows (n " + esc(bys[k][2]) + ")", esc(moneyMM(bys[k][0])) + " / " + esc(moneyMM(bys[k][1]))); }).join("") +
+        miniRow("MLB leg: served / rows", esc(moneyMM(Rc.mlb_served_mm)) + " / " + esc(moneyMM(Rc.mlb_rows_mm))) +
+        miniRow("Farm leg: served / PROSPX leaf", esc(moneyMM(Rc.farm_served_mm)) + " / " + esc(moneyMM(Rc.farm_leaf_mm))) +
+        miniRow("Trade currency: served / farm rows gross + debuted rows", esc(moneyMM(Rc.trade_currency_served_mm)) + " / " + esc(moneyMM(Rc.trade_rows_active_mm)) + " + " + esc(moneyMM(Rc.trade_rows_debuted_mm))) +
+        miniRow("Status", esc(Rc.status)) + "</table>" +
         '<p class="ledger-count">' + esc(copy("trade_currency_split")) + "</p>";
     }
     var c = S.crunch;
@@ -820,16 +866,30 @@
   function seriesPending(code) {
     return shardFailed(code) ? shardLine(code) : '<p class="ledger-count">' + esc(copy("trajectory_loading")) + "</p>";
   }
+  // The fin_* leaves print under their glossary term, not their key (QCLC09);
+  // the data-gl hook still names the entry, and each value prints in its unit.
+  // fin_active_surplus has no entry of its own: its hook is the financial
+  // branch and its label says what the leaf holds.
+  var LEAF_LABEL = { fin_active_surplus: "Active surplus", fin_dollar_dvm: "Org $DvM+", fin_contract_surplus: "Grad-Contract Surplus",
+                     fin_war_per_m: "WAR per $M", fin_draft_pool_efficiency: "Draft Pool Efficiency", fin_ifa_roi: "IFA ROI" };
+  function leafValue(k, v) {
+    if (!isNum(v)) return "";
+    if (k === "fin_active_surplus") return moneyMM(v);
+    if (k === "fin_contract_surplus") return money(v) + " per year";
+    if (k === "fin_dollar_dvm") return String(Math.round(Number(v)));
+    return num(v, 2);
+  }
   function renderFarm(d) {
-    var F = d.farm, L = F.leaves, meta = copy("farm_leaves") || {};
+    var F = d.farm, L = F.leaves, meta = copy("farm_leaves") || {}, basis = "";
     var out = '<div class="ledger-tiles ledger-tiles--2">' +
-      tile(gl("OrgSur+", "sur_plus"), zCell(F.orgsur_plus.financial_score), esc(copy("orgsur_chip")) + "; tree fin_war_per_m score " + esc(num(F.orgsur_plus.tree_fin_war_per_m_score_100, 1))) +
+      tile(gl("OrgSur+", "sur_plus"), zCell(F.orgsur_plus.financial_score), esc(copy("orgsur_chip")) + "; tree " + esc(LEAF_LABEL.fin_war_per_m) + " score " + esc(num(F.orgsur_plus.tree_fin_war_per_m_score_100, 1))) +
       tile("Farm rank", esc(F.farm_rank), "farm score " + esc(num(F.farm_score, 1)) + ", financial letter " + esc(F.financial_letter || "")) + "</div>";
     out += '<ul class="ledger-leaves">' + Object.keys(L).map(function (k) {
       var l = L[k], m = meta[k] || {};
-      return "<li><span>" + gl(k, k === "fin_active_surplus" ? "farm_grade_financial" : k) + " <span class=\"ledger-src\" title=\"" + esc(m.basis || "") + '">' + esc(isNum(m.weight) ? "w " + m.weight : "") + "</span></span>" +
-        "<span>" + esc(isNum(l.value) ? num(l.value, 2) : "") + (isNum(l.n) ? " (n " + esc(l.n) + ")" : "") + " " + zCell(l.score_100) + ' <span class="ledger-letter">' + esc(l.letter) + "</span></span></li>";
-    }).join("") + "</ul>" + '<p class="ledger-count">' + esc(copy("farm_letters_note")) + "</p>";
+      return "<li><span>" + gl(LEAF_LABEL[k] || k, k === "fin_active_surplus" ? "farm_grade_financial" : k) + " <span class=\"ledger-src\" title=\"" + esc(m.basis || "") + '">' + esc(isNum(m.weight) ? "w " + m.weight : "") + "</span></span>" +
+        "<span>" + esc(leafValue(k, l.value)) + (isNum(l.n) ? " (n " + esc(l.n) + ")" : "") + " " + zCell(l.score_100) + ' <span class="ledger-letter">' + esc(l.letter) + "</span></span></li>";
+    }).join("") + "</ul>";
+    basis += '<p class="ledger-count">' + esc(copy("farm_letters_note")) + "</p>";
     var roi = F.financial_roi || {}, ms = F.method_surplus || {};
     out += '<p class="ledger-note">Financial ROI: ' + esc(num(roi.war_per_million, 2)) + " WAR per $M over " + esc(roi.grad_count_with_bonus) + " graduates with a bonus (" + esc(money(roi.total_bonus_usd)) + "). Surplus by method: " +
       Object.keys(ms).map(function (k) { return esc(k) + " " + esc(moneyMM(ms[k].net_mm)) + " on " + esc(ms[k].count); }).join("; ") + ".</p>";
@@ -847,13 +907,14 @@
           if (m === "trade") return "<tr><td>trade</td><td>" + esc(n) + '</td><td colspan="6" class="ledger-dark-cell">' + esc(copy("trade_cost_dark")) + "</td></tr>";
           return "<tr><td>" + esc(m) + "</td><td>" + esc(n) + " (" + esc(cv("farm.method", r, "n_with_bonus")) + ")</td><td>" + esc(moneyMM(cv("farm.method", r, "gross_mm"))) + "</td><td>" + esc(moneyMM(cv("farm.method", r, "cost_mm"))) + "</td><td>" + signedMM(cv("farm.method", r, "net_mm")) + "</td><td>" + esc(isNum(ratio) ? num(ratio, 1) + "x" : "") + "</td><td>" +
             esc(moneyMM(cv("farm.method", r, "served_net_mm"))) + " / " + esc(moneyMM(cv("farm.method", r, "served_cost_mm"))) + " (n " + esc(cv("farm.method", r, "served_count")) + ")</td><td>" + esc(num(cv("farm.method", r, "served_per_fv_pt_mm"), 3)) + "</td></tr>";
-        }).join("") + "</tbody></table></div>" +
-        '<p class="ledger-count">Net per dollar of cost basis is a ratio of two served numbers, plain, no ladder; the bonus coverage beside n says how much of the cost basis the pipeline captured.</p>';
+        }).join("") + "</tbody></table></div>";
+      basis += '<p class="ledger-count">Net per dollar of cost basis is a ratio of two served numbers, plain, no ladder; the bonus coverage beside n says how much of the cost basis the pipeline captured.</p>';
     }
     out += "<h3>" + gl("Draft pools", "bonus_pool") + "</h3><div class=\"ledger-strip\">" + Object.keys(F.pools).map(function (y) {
       var p = F.pools[y];
       return "<div>" + esc(y) + "<b>" + esc(p[0] !== null ? money(p[0]) : p[1]) + "</b></div>";
-    }).join("") + "</div>" + '<p class="ledger-count">' + esc(copy("pools_note")) + "</p>";
+    }).join("") + "</div>";
+    basis += '<p class="ledger-count">' + esc(copy("pools_note")) + "</p>";
     out += '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Draft</th><th>Picks</th><th>Signed</th><th>Paid, all rounds</th><th>Paid (slotted)</th><th>Slot (slotted)</th><th>Over slot</th><th>Slot coverage</th><th>Pool used</th><th title="' + esc(copy("r11_threshold_schedule")) + '">Round 11+ over the CBA threshold</th></tr></thead><tbody>' +
       Object.keys(F.draft_paid).sort().reverse().map(function (y) {
         var r = F.draft_paid[y];
@@ -863,7 +924,8 @@
         var r11 = isNum(r[11]) ? money(r[11]) + " (" + r[12] + ")" : (r.length > 11 ? "n/a" : "");
         var r11Tip = isNum(r[13]) ? ' title="' + esc("CBA threshold for the " + y + " draft: $" + String(Math.round(Number(r[13]))).replace(/\B(?=(\d{3})+(?!\d))/g, ",")) + '"' : "";
         return "<tr><td>" + esc(y) + "</td><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(money(r[3])) + "</td><td>" + esc(money(r[6])) + "</td><td>" + esc(money(r[5])) + " (" + esc(r[4]) + ")</td><td>" + signedMoney(r[7]) + "</td><td>" + esc(isNum(r[8]) ? num(r[8], 0) + "%" : "") + "</td><td>" + esc(isNum(r[10]) ? pct(r[10], 0) : "") + "</td><td" + r11Tip + ">" + esc(r11) + "</td></tr>";
-      }).join("") + "</tbody></table></div>" + '<p class="ledger-count">Slot coverage: ' + esc(copy("slot_coverage_basis")) + ". Pool used: " + esc(copy("pool_used_basis")) + ". Round 11+ over the CBA threshold: " + esc(copy("r11_over_basis")) + ".</p>";
+      }).join("") + "</tbody></table></div>";
+    basis += '<p class="ledger-count">Slot coverage: ' + esc(copy("slot_coverage_basis")) + ". Pool used: " + esc(copy("pool_used_basis")) + ". Round 11+ over the CBA threshold: " + esc(copy("r11_over_basis")) + ".</p>";
     var shp = shardOf(d.club);
     if (shp && shp.farm && shp.farm.picks) out += renderPicks(shp.farm.picks, F.picks_summary || {});
     var sc = F.slot_chips || {}, lg = copy("slot_league") || {};
@@ -879,8 +941,9 @@
       Object.keys(F.ifa).sort().reverse().map(function (y) {
         var r = F.ifa[y];
         return "<tr><td>" + esc(y) + "</td><td>" + esc(money(r[0])) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(money(r[2])) + " " + esc(r[3] || "") + "</td><td>" + esc(isNum(r[4]) ? num(r[4], 1) + "%" : "") + "</td><td>" + esc(money(r[5])) + (isNum(r[6]) ? " (n " + esc(r[6]) + ")" : "") + "</td></tr>";
-      }).join("") + "</tbody></table></div>" + '<p class="ledger-count">' + esc(copy("ifa_implied_basis")) + "</p>" +
+      }).join("") + "</tbody></table></div>" +
       dark("IFA history", (DATA.sections.ifa_history || {}).blocked_on || "");
+    basis += '<p class="ledger-count">' + esc(copy("ifa_implied_basis")) + "</p>";
     out += "<h3>Farm score trajectory</h3>" + spark(F.score_history, 1);
     var ta = shp && shp.farm && shp.farm.trajectory_active;
     if (!shp) {
@@ -888,7 +951,7 @@
     } else if (ta && ta.length) {
       out += "<h3>Active eFV surplus trajectory (gross)</h3>" + spark(ta, 1) + '<p class="ledger-count">' + esc(copy("trajectory_active_basis")) + "</p>";
     }
-    return out;
+    return out + how(basis);
   }
   // Draft picks by year (shard): slot against bonus, the over-slot figure
   // sign-coloured, a pick that is still an active prospect of the club linked
@@ -912,7 +975,7 @@
     var out = banner() + "<h3>Outgoing free agents</h3>" +
       '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Player</th><th>Status</th><th>Prev AAV</th><th>Yrs</th><th>Proj guar</th><th>P10 to P90</th><th>Deal+</th><th>Verdict</th></tr></thead><tbody>' +
       A.outgoing.map(function (m) {
-        return "<tr><td><a href=\"/fa/#view=board\">" + esc(m[1]) + "</a> <span class=\"ledger-src\">" + esc(m[2]) + "</span></td><td>" + esc(m[4]) + " " + esc(m[5]) + "</td><td>" + esc(money(m[6])) + "</td><td>" + esc(m[7]) + "</td><td>" + esc(money(m[8])) + "</td><td>" + esc(money(m[9])) + " to " + esc(money(m[10])) + "</td><td>" + esc(isNum(m[13]) ? Math.round(m[13]) : "") + "</td><td>" + esc(m[14] || "") + "</td></tr>";
+        return "<tr><td><a href=\"/fa/#player=" + encodeURIComponent(m[0]) + "\">" + esc(m[1]) + "</a> <span class=\"ledger-src\">" + esc(m[2]) + "</span></td><td>" + esc(m[4]) + " " + esc(m[5]) + "</td><td>" + esc(money(m[6])) + "</td><td>" + esc(m[7]) + "</td><td>" + esc(money(m[8])) + "</td><td>" + esc(money(m[9])) + " to " + esc(money(m[10])) + "</td><td>" + esc(isNum(m[13]) ? Math.round(m[13]) : "") + "</td><td>" + esc(m[14] || "") + "</td></tr>";
       }).join("") + "</tbody></table></div>" +
       '<p class="ledger-count">fa_market ' + esc(A.outgoing_verdicts ? "" : "") + esc((DATA.accountability.registry_verdicts.filter(function (r) { return r.model_id === "fa_market"; })[0] || {}).verdict) + ", fa_projection_marcel " + esc((DATA.accountability.registry_verdicts.filter(function (r) { return r.model_id === "fa_projection_marcel"; })[0] || {}).verdict) + ". Expiring after " + esc(classYear()) + ": " + esc(A.expiring_2028[0]) + " (prev AAV " + esc(money(A.expiring_2028[1])) + "); the winter after: " + esc(A.expiring_2029[0]) + ".</p>";
     out += "<h3>Top fits</h3><div class=\"ledger-chips\">" + A.fits.map(function (f) {
@@ -1070,6 +1133,7 @@
       else if (/_mm$/.test(n)) txt = moneyMM(v);
       else if (/_usd$/.test(n)) txt = money(v);
       else if (Array.isArray(v)) txt = v.length ? v.join(", ") : "";
+      else if (n === "efv" && isNum(v)) txt = String(Math.round(Number(v)));
       else txt = isNum(v) || v ? String(v) : "";
       return dd(n, esc(txt));
     }).join("");
@@ -1103,7 +1167,8 @@
       var crunch = yn(cv("farm.prospects", r, "on_40_man"), "40-man") + (isNum(cv("farm.prospects", r, "options_left")) ? '<span class="ledger-flag">' + esc(cv("farm.prospects", r, "options_left")) + " opt</span>" : "") + yn(cv("farm.prospects", r, "rule5_exposed"), "Rule 5");
       var row = '<tr id="ledger-prospect-' + esc(key) + '"><td><a href="/prospx/#player=' + esc(key) + '">' + esc(cv("farm.prospects", r, "name")) + '</a> <span class="ledger-src">' + esc(cv("farm.prospects", r, "pos")) + "</span> " + letter(cv("farm.prospects", r, "tv_grade")) + "</td>" +
         "<td>" + signedMM(s) + "</td><td>" + bandMM(cv("farm.prospects", r, "band_lo_mm"), cv("farm.prospects", r, "band_hi_mm"), copy("band_row_only")) + "</td>" +
-        '<td class="lc-col-hide">' + esc(num(cv("farm.prospects", r, "efv"), 1)) + "</td>" +
+        // eFV prints to the nearest whole grade, as PROSPX prints it (QCLC08)
+        '<td class="lc-col-hide">' + esc(isNum(cv("farm.prospects", r, "efv")) ? Math.round(Number(cv("farm.prospects", r, "efv"))) : "") + "</td>" +
         '<td class="lc-col-hide">' + esc(isNum(bonus) ? money(bonus) : "no bonus on file") + "</td>" +
         (isNum(slot) ? '<td class="lc-col-hide">' + esc(money(slot)) + "</td>"
           : (method === "international_fa" ? '<td class="lc-col-hide" title="' + esc(copy("ifa_slot_dark")) + '">' + esc(String(copy("ifa_slot_dark")).split(":")[0]) + "</td>" : '<td class="lc-col-hide"></td>')) +
@@ -1111,16 +1176,16 @@
         '<td class="lc-col-hide">' + esc((method || "") + " " + (cv("farm.prospects", r, "acq_year") || "") + (isNum(pick) ? ", pick " + pick : "")) + "</td>" +
         '<td class="lc-col-hide">' + esc((cv("farm.prospects", r, "eta_year") || "") + " / " + (cv("farm.prospects", r, "service_phase") || "")) + "</td>" +
         '<td class="lc-col-hide">' + crunch + "</td>" +
-        '<td class="lc-col-hide" title="' + esc(copy("dvm_within_tier")) + '">' + esc(isNum(dvm) ? Math.round(dvm) : "") + "</td>" + xpBtn(k) + "</tr>";
+        '<td class="lc-col-hide" title="' + esc(copy("dvm_within_tier")) + '">' + esc(isNum(dvm) ? Math.round(dvm) : "") + "</td>" + xpBtn(k, cv("farm.prospects", r, "name")) + "</tr>";
       if (open) {
         var cur = cv("farm.prospects", r, "cur_method"), cy = cv("farm.prospects", r, "cur_year");
-        row += '<tr class="ledger-xp-row"><td colspan="12"><dl class="ledger-dl">' + rowDl(L, r) +
+        row += xpRow(k, 12, '<dl class="ledger-dl">' + rowDl(L, r) +
           dd("PROSPX consensus basis, not added", esc(moneyMM(cv("farm.prospects", r, "cons_surplus_mm"))) + " (" + bandMM(cv("farm.prospects", r, "cons_lo_mm"), cv("farm.prospects", r, "cons_hi_mm"), copy("band_row_only")) + ")") +
           dd("P(bust)", esc(num(cv("farm.prospects", r, "p_bust"), 2)) + '<div class="ledger-count">' + esc(copy("p_bust_basis")) + "</div>") +
           dd("Current acquisition", esc((cur || "") + (cy ? " " + cy : "")) + (cur === "trade" || cur === "free_agent" ? " (" + esc(cur) + " event; the original signing channel is the method column)" : "")) +
           dd("Years to free agency", esc(copy("years_to_fa_dark"))) +
           (traj[key] && traj[key].length > 1 ? dd("eFV surplus trajectory", spark(traj[key], 1)) : "") +
-          "</dl></td></tr>";
+          "</dl>");
       }
       return row;
     }).join("");
@@ -1153,8 +1218,8 @@
         '<td class="lc-col-hide">' + esc(moneyMM(cv("farm.graduates", r, "dv_realized_mm"))) + "</td>" +
         '<td class="lc-col-hide">' + esc(isNum(cv("farm.graduates", r, "control_thru")) ? "thru " + cv("farm.graduates", r, "control_thru") : "") + (cv("farm.graduates", r, "control_why") ? ' <span class="ledger-src">' + esc(cv("farm.graduates", r, "control_why")) + "</span>" : "") + " " + esc(cv("farm.graduates", r, "service_phase") || "") + "</td>" +
         '<td class="lc-col-hide">' + esc(num(cv("farm.graduates", r, "career_war"), 1)) + "</td>" +
-        '<td class="lc-col-hide">' + esc(cv("farm.graduates", r, "wag_label") || "") + "</td>" + xpBtn(k) + "</tr>";
-      if (open) row += '<tr class="ledger-xp-row"><td colspan="11"><dl class="ledger-dl">' + rowDl(L, r) + dd("Engines", esc(copy("grad_two_engines"))) + "</dl></td></tr>";
+        '<td class="lc-col-hide">' + esc(cv("farm.graduates", r, "wag_label") || "") + "</td>" + xpBtn(k, cv("farm.graduates", r, "name")) + "</tr>";
+      if (open) row += xpRow(k, 11, '<dl class="ledger-dl">' + rowDl(L, r) + dd("Engines", esc(copy("grad_two_engines"))) + "</dl>");
       return row;
     }).join("");
     out += '<div class="ledger-scroll"><table class="ledger-table ledger-graduates"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>" +
@@ -1178,8 +1243,8 @@
       var href = cv("surplus.rows_debuted", r, "in_contract_rows") ? "/projections/#player=" + esc(key) : "/prospx/#player=" + esc(key);
       var row = '<tr><td><a href="' + href + '">' + esc(cv("surplus.rows_debuted", r, "name")) + '</a> <span class="ledger-src">' + esc(cv("surplus.rows_debuted", r, "pos")) + "</span></td><td>" + signedMM(v) + "</td><td>" + bandMM(cv("surplus.rows_debuted", r, "tv_lo_mm"), cv("surplus.rows_debuted", r, "tv_hi_mm"), bandCopy(src === "projection" || src === "prearb_min")) + "</td>" +
         '<td class="lc-col-hide">' + letter(cv("surplus.rows_debuted", r, "tv_tier")) + '</td><td class="lc-col-hide">' + letter(cv("surplus.rows_debuted", r, "tv_grade")) + '</td><td class="lc-col-hide"><span class="ledger-src">' + esc(src || "") + "</span></td>" +
-        '<td class="lc-col-hide">' + esc(cv("surplus.rows_debuted", r, "salary_basis") || "") + '</td><td class="lc-col-hide">' + esc((cv("surplus.rows_debuted", r, "control_thru") || "") + " " + (cv("surplus.rows_debuted", r, "control_why") || "")) + "</td>" + xpBtn(k) + "</tr>";
-      if (open) row += '<tr class="ledger-xp-row"><td colspan="9"><dl class="ledger-dl">' + rowDl(L, r) + (src === "prearb_min" ? dd("Floor", esc(copy("prearb_min_floor"))) : "") + "</dl></td></tr>";
+        '<td class="lc-col-hide">' + esc(cv("surplus.rows_debuted", r, "salary_basis") || "") + '</td><td class="lc-col-hide">' + esc((cv("surplus.rows_debuted", r, "control_thru") || "") + " " + (cv("surplus.rows_debuted", r, "control_why") || "")) + "</td>" + xpBtn(k, cv("surplus.rows_debuted", r, "name")) + "</tr>";
+      if (open) row += xpRow(k, 9, '<dl class="ledger-dl">' + rowDl(L, r) + (src === "prearb_min" ? dd("Floor", esc(copy("prearb_min_floor"))) : "") + "</dl>");
       return row;
     }).join("");
     var foot = "<tr><td>" + esc(copy("shown_rows")) + " (" + esc(rows.length) + ")</td><td>" + esc(moneyMM(sum)) + "</td><td>" + notSummed() + '</td><td class="lc-col-hide" colspan="5"></td><td class="lc-xp"></td></tr>';
@@ -1197,13 +1262,13 @@
     }).join("") + "</div>";
   }
   function block(id, eyebrow, title, span, inner) {
-    return '<section class="ledger-block ledger-span-' + span + '" id="ledger-block-' + id + '"><div class="ledger-eyebrow">' + esc(eyebrow) + "</div><h2>" + title + "</h2>" + inner + "</section>";
+    return '<section class="ledger-block ledger-span-' + span + '" id="ledger-block-' + id + '" tabindex="-1"><div class="ledger-eyebrow">' + esc(eyebrow) + "</div><h2>" + title + "</h2>" + inner + "</section>";
   }
   function renderClub() {
     ensureTeam();
     var d = clubOf(state.team);
     if (!d) return '<p class="ledger-note">' + esc(copy("load_error")) + "</p>";
-    var out = renderControls(d) + "<h2>" + esc(d.club) + (d.name ? " " + esc(d.name) : "") + "</h2>" + banner() + '<div class="ledger-grid">';
+    var out = renderControls(d) + renderBlockIndex() + "<h2>" + esc(d.club) + (d.name ? " " + esc(d.name) : "") + "</h2>" + banner() + '<div class="ledger-grid">';
     out += block("payroll", "C1", "Payroll now", 12, renderPayroll(d));
     out += block("commitments", "C4", gl("Commitments timeline", "contract_dollars_on_file"), 7, renderCommitments(d));
     out += block("cbt", "C3", gl("CBT position and tax", "cbt_payroll"), 5, renderCbt(d));
@@ -1225,27 +1290,27 @@
   function renderRules() {
     var R = DATA.rules, rates = R.rates || {}, br = rates.base_rate_by_payor_year || {}, sr = rates.surcharge_rates || {};
     var out = banner();
-    out += "<h3>" + gl("CBT thresholds", "cbt_payroll") + "</h3>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Season</th><th>Threshold</th><th>Regime</th><th>Status</th></tr></thead><tbody>' +
-      R.thresholds.map(function (t) { return "<tr><td>" + esc(t.season) + "</td><td>" + esc(money(t.threshold_usd)) + "</td><td>" + esc(t.regime) + "</td><td>" + esc(t.verify_status) + (t.carry_forward ? " (carry-forward)" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
-    out += "<h3>Tax rates (" + esc(rates.regime) + ")</h3>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Payor year</th><th>Base</th><th>+' + esc(money(R.surcharge_tiers_usd[0])) + "</th><th>+" + esc(money(R.surcharge_tiers_usd[1])) + "</th><th>+" + esc(money(R.surcharge_tiers_usd[2])) + "</th></tr></thead><tbody>" +
+    out += "<h2>" + gl("CBT thresholds", "cbt_payroll") + "</h2>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Season</th><th>Threshold</th><th>Regime</th><th>Status</th></tr></thead><tbody>' +
+      R.thresholds.map(function (t) { return '<tr><th scope="row">' + esc(t.season) + "</th><td>" + esc(money(t.threshold_usd)) + "</td><td>" + esc(t.regime) + "</td><td>" + esc(t.verify_status) + (t.carry_forward ? " (carry-forward)" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    out += "<h2>Tax rates (" + esc(rates.regime) + ")</h2>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Payor year</th><th>Base</th><th>+' + esc(money(R.surcharge_tiers_usd[0])) + "</th><th>+" + esc(money(R.surcharge_tiers_usd[1])) + "</th><th>+" + esc(money(R.surcharge_tiers_usd[2])) + "</th></tr></thead><tbody>" +
       Object.keys(br).map(function (k) {
         var b = Number(br[k]);
-        return "<tr><td>" + esc(k) + "</td><td>" + esc(pct(b, 0)) + "</td><td>" + esc(pct(b + Number(sr.tier1), 0)) + "</td><td>" + esc(pct(b + Number(k === "1" ? sr.tier2_first : sr.tier2_repeat), 1)) + "</td><td>" + esc(pct(b + Number(sr.tier3), 0)) + "</td></tr>";
+        return '<tr><th scope="row">' + esc(k) + "</th><td>" + esc(pct(b, 0)) + "</td><td>" + esc(pct(b + Number(sr.tier1), 0)) + "</td><td>" + esc(pct(b + Number(k === "1" ? sr.tier2_first : sr.tier2_repeat), 1)) + "</td><td>" + esc(pct(b + Number(sr.tier3), 0)) + "</td></tr>";
       }).join("") + "</tbody></table></div>" + '<p class="ledger-count">' + esc(rates.verify_status) + ". Brackets: " + Object.keys(R.brackets).map(function (k) { return esc(R.brackets[k]); }).join("; ") + "</p>";
-    out += "<h3>" + gl("Qualifying offer", "qo_tax") + " values</h3>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Winter</th><th>Class</th><th>Value</th><th>Status</th></tr></thead><tbody>' +
-      R.qo_values.map(function (q) { return "<tr><td>" + esc(q.winter) + "</td><td>" + esc(q.class_year) + "</td><td>" + esc(money(q.value_usd)) + "</td><td>" + esc(q.verify_status) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    out += "<h2>" + gl("Qualifying offer", "qo_tax") + " values</h2>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Winter</th><th>Class</th><th>Value</th><th>Status</th></tr></thead><tbody>' +
+      R.qo_values.map(function (q) { return '<tr><th scope="row">' + esc(q.winter) + "</th><td>" + esc(q.class_year) + "</td><td>" + esc(money(q.value_usd)) + "</td><td>" + esc(q.verify_status) + "</td></tr>"; }).join("") + "</tbody></table></div>";
     var qc = R.qo_compensation || {}, mat = qc.signing_team_forfeits || {};
-    out += "<h3>QO compensation matrix" + (qc.carry_forward ? " (carry-forward)" : "") + "</h3><table class=\"ledger-mini\">" + Object.keys(mat).map(function (t) {
+    out += "<h2>QO compensation matrix" + (qc.carry_forward ? " (carry-forward)" : "") + "</h2><table class=\"ledger-mini\">" + Object.keys(mat).map(function (t) {
       var m = mat[t] || {};
-      return "<tr><td>" + esc(t) + "</td><td>" + esc((m.picks || []).join(", ")) + (isNum(m.intl_pool_usd) ? "; IFA pool " + esc(money(m.intl_pool_usd)) : "") + "</td></tr>";
+      return '<tr><th scope="row">' + esc(t) + "</th><td>" + esc((m.picks || []).join(", ")) + (isNum(m.intl_pool_usd) ? "; IFA pool " + esc(money(m.intl_pool_usd)) : "") + "</td></tr>";
     }).join("") + "</table>";
     var qt = R.qo_tax_by_payor_tier || {};
-    out += "<h3>QO pick tax by payor tier (platform)</h3><table class=\"ledger-mini\">" + Object.keys(qt).map(function (t) {
-      return "<tr><td>" + esc(t) + "</td><td>" + esc(money((qt[t] || {}).total_usd)) + "</td></tr>";
+    out += "<h2>QO pick tax by payor tier (platform)</h2><table class=\"ledger-mini\">" + Object.keys(qt).map(function (t) {
+      return '<tr><th scope="row">' + esc(t) + "</th><td>" + esc(money((qt[t] || {}).total_usd)) + "</td></tr>";
     }).join("") + "</table>" + '<p class="ledger-count">' + esc(copy("qo_recipient_note")) + "</p>";
-    out += "<h3>" + gl("League minimum", "pre_arbitration") + "</h3><table class=\"ledger-mini\">" + R.league_minimum.map(function (m) { return "<tr><td>" + esc(m.season) + "</td><td>" + esc(usdFull(m.usd)) + "</td></tr>"; }).join("") + "</table>" +
+    out += "<h2>" + gl("League minimum", "pre_arbitration") + "</h2><table class=\"ledger-mini\">" + R.league_minimum.map(function (m) { return '<tr><th scope="row">' + esc(m.season) + "</th><td>" + esc(usdFull(m.usd)) + "</td></tr>"; }).join("") + "</table>" +
       '<p class="ledger-count">' + esc(copy("league_minimum_note")) + "</p>";
-    out += "<h3>Dollars per WAR</h3>" + renderDpw(R.dpw) +
+    out += "<h2>Dollars per WAR</h2>" + renderDpw(R.dpw) +
       '<p class="ledger-note">Arbitration discount ' + esc(seasonNow()) + ": " + esc(num(R.dpw.arbitration_discount_2026, 2)) + " (" + esc(copy("arb_dpw_basis")) + "). Projections rate " + esc(money(R.dpw.projections_dpw_usd)) + " (" + esc(copy("projections_dpw_basis")) + ").</p>";
     var wd = R.war_input_divergence || {};
     out += '<p class="ledger-note">Why two WARs for one player: ' + esc(wd.why || "") + " " + esc(wd.consequence || "") + "</p>";
@@ -1281,7 +1346,7 @@
     g += '<text x="' + (X(all.indexOf(lastO)) - 4) + '" y="' + (Y(D.open_market_by_winter[lastO]) - 6) + '" text-anchor="end">open market</text>';
     g += '<text x="' + (X(all.indexOf(lastA)) - 4) + '" y="' + (Y(D.arbitration_by_season[lastA]) + 12) + '" text-anchor="end">arbitration</text>';
     var table = '<table class="ledger-mini">' + all.map(function (y) {
-      return "<tr><td>" + esc(y) + "</td><td>open " + esc(money(D.open_market_by_winter[y])) + (isNum(D.arbitration_by_season[y]) ? ", arb " + esc(money(D.arbitration_by_season[y])) : "") + "</td></tr>";
+      return '<tr><th scope="row">' + esc(y) + "</th><td>open " + esc(money(D.open_market_by_winter[y])) + (isNum(D.arbitration_by_season[y]) ? ", arb " + esc(money(D.arbitration_by_season[y])) : "") + "</td></tr>";
     }).join("") + "</table>";
     return '<div class="ledger-dpw"><svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="dollars per WAR, open market and arbitration, in $M">' + g + "</svg>" +
       '<div class="ledger-legend"><span><i class="ledger-seg-contract"></i>open market (' + esc(D.open_market_method) + ")</span><span><i class=\"ledger-seg-arb\"></i>arbitration (arbitration.json dpw)</span></div>" + table + "</div>";
@@ -1290,37 +1355,37 @@
   // ---- Method -----------------------------------------------------------------
   function renderMethod() {
     var M = DATA.method, A = DATA.accountability;
-    var out = "<h3>Sources and cadence</h3>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr>' + M.source_key.map(function (k) { return "<th>" + esc(k) + "</th>"; }).join("") + "</tr></thead><tbody>" +
+    var out = "<h2>Sources and cadence</h2>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr>' + M.source_key.map(function (k) { return "<th>" + esc(k) + "</th>"; }).join("") + "</tr></thead><tbody>" +
       M.sources.map(function (s) { return "<tr>" + s.map(function (v) { return "<td>" + esc(v) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div>";
-    out += "<h3>Registry verdicts quoted on this page</h3>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Model</th><th>Verdict</th><th>Eval artifact</th><th>Last checked</th><th>Stale</th></tr></thead><tbody>' +
-      A.registry_verdicts.map(function (r) { return "<tr><td>" + esc(r.model_id) + "</td><td>" + esc(r.verdict || "no row") + "</td><td>" + esc(r.eval_artifact || "none") + "</td><td>" + esc(r.last_checked || "") + "</td><td>" + esc(r.stale === null || r.stale === undefined ? "" : String(r.stale)) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    out += "<h2>Registry verdicts quoted on this page</h2>" + '<div class="ledger-scroll"><table class="ledger-table"><thead><tr><th>Model</th><th>Verdict</th><th>Eval artifact</th><th>Last checked</th><th>Stale</th></tr></thead><tbody>' +
+      A.registry_verdicts.map(function (r) { return '<tr><th scope="row">' + esc(r.model_id) + "</th><td>" + esc(r.verdict || "no row") + "</td><td>" + esc(r.eval_artifact || "none") + "</td><td>" + esc(r.last_checked || "") + "</td><td>" + esc(r.stale === null || r.stale === undefined ? "" : String(r.stale)) + "</td></tr>"; }).join("") + "</tbody></table></div>";
     out += banner();
     var sp = A.salary_path_census || {};
-    out += "<h3>" + gl("Salary path", "salary_path") + " census</h3><table class=\"ledger-mini\">" + ["mode", "vintage", "priced_rows", "board_rows", "cliff_rows", "band_rows", "cba_floored_steps"].map(function (k) {
-      return "<tr><td>" + esc(k) + "</td><td>" + esc(sp[k]) + "</td></tr>";
-    }).join("") + "<tr><td>contract disagreements (S5 vs trade board)</td><td>" + esc(A.contract_disagreements) + "</td></tr></table>" +
+    out += "<h2>" + gl("Salary path", "salary_path") + " census</h2><table class=\"ledger-mini\">" + ["mode", "vintage", "priced_rows", "board_rows", "cliff_rows", "band_rows", "cba_floored_steps"].map(function (k) {
+      return '<tr><th scope="row">' + esc(k) + "</th><td>" + esc(sp[k]) + "</td></tr>";
+    }).join("") + "<tr><th scope=\"row\">contract disagreements (S5 vs trade board)</th><td>" + esc(A.contract_disagreements) + "</td></tr></table>" +
       '<p class="ledger-count">' + esc(A.contract_disagreement_rule) + ". " + esc(A.contract_set_note) + "</p>";
     var oj = A.org_join || {};
-    out += "<h3>Club join</h3><table class=\"ledger-mini\">" + Object.keys(oj).map(function (k) { return "<tr><td>" + esc(k) + "</td><td>" + esc(Array.isArray(oj[k]) ? oj[k].join(" to ") : oj[k]) + "</td></tr>"; }).join("") + "</table>";
-    out += "<h3>What this page does not claim</h3><ul>" + DATA.what_this_page_does_not_claim.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul>";
-    out += "<h3>Sections</h3><table class=\"ledger-mini ledger-sections\">" + Object.keys(DATA.sections).map(function (k) {
+    out += "<h2>Club join</h2><table class=\"ledger-mini\">" + Object.keys(oj).map(function (k) { return '<tr><th scope="row">' + esc(k) + "</th><td>" + esc(Array.isArray(oj[k]) ? oj[k].join(" to ") : oj[k]) + "</td></tr>"; }).join("") + "</table>";
+    out += "<h2>What this page does not claim</h2><ul>" + DATA.what_this_page_does_not_claim.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul>";
+    out += "<h2>Sections</h2><table class=\"ledger-mini ledger-sections\">" + Object.keys(DATA.sections).map(function (k) {
       var s = DATA.sections[k];
-      return "<tr><td>" + esc(k) + "</td><td>" + esc(s.live ? "live" : "dark: " + (s.blocked_on || s.note || "")) + "</td></tr>";
+      return '<tr><th scope="row">' + esc(k) + "</th><td>" + esc(s.live ? "live" : "dark: " + (s.blocked_on || s.note || "")) + "</td></tr>";
     }).join("") + "</table>";
-    out += "<h3>Inputs</h3><table class=\"ledger-mini\">" + Object.keys(M.inputs_generated_at).map(function (k) { return "<tr><td>" + esc(k) + "</td><td>" + esc(M.inputs_generated_at[k] || "") + "</td></tr>"; }).join("") + "</table>" +
+    out += "<h2>Inputs</h2><table class=\"ledger-mini\">" + Object.keys(M.inputs_generated_at).map(function (k) { return '<tr><th scope="row">' + esc(k) + "</th><td>" + esc(M.inputs_generated_at[k] || "") + "</td></tr>"; }).join("") + "</table>" +
       '<p class="ledger-count">Board generated ' + esc(DATA.generated_at) + "</p>";
     var C = DATA.calibration;
     if (C && C.sources) {
-      out += "<h3>Calibration stamps</h3><table class=\"ledger-mini\">" + Object.keys(C.sources).map(function (k) { return "<tr><td>" + esc(k) + " (" + esc(C.sources[k].generated_at || "") + ")</td><td>" + esc(C.sources[k].version || "unstamped") + "</td></tr>"; }).join("") +
-        "<tr><td>agree</td><td>" + esc(C.agree ? "yes" : "no") + "</td></tr></table>" + '<p class="ledger-count">' + esc(M.sources_stamps || "") + "</p>";
+      out += "<h2>Calibration stamps</h2><table class=\"ledger-mini\">" + Object.keys(C.sources).map(function (k) { return '<tr><th scope="row">' + esc(k) + " (" + esc(C.sources[k].generated_at || "") + ")</th><td>" + esc(C.sources[k].version || "unstamped") + "</td></tr>"; }).join("") +
+        "<tr><th scope=\"row\">agree</th><td>" + esc(C.agree ? "yes" : "no") + "</td></tr></table>" + '<p class="ledger-count">' + esc(M.sources_stamps || "") + "</p>";
     }
     var Sh = DATA.shards;
     if (Sh) {
-      out += "<h3>Per-club row files</h3>" + '<p class="ledger-count">' + esc(Sh.n) + " files in data/" + esc(Sh.dir) + "/, preview " + esc(Sh.preview_n) + " rows per block on the board, cap " + esc(Sh.cap_bytes) + " bytes per file; the club page fetches one on demand and flags a file from another board build.</p>";
+      out += "<h2>Per-club row files</h2>" + '<p class="ledger-count">' + esc(Sh.n) + " files in data/" + esc(Sh.dir) + "/, preview " + esc(Sh.preview_n) + " rows per block on the board, cap " + esc(Sh.cap_bytes) + " bytes per file; the club page fetches one on demand and flags a file from another board build.</p>";
     }
     if (DATA.arbitration_eval && DATA.arbitration_eval.statement) {
       var E = DATA.arbitration_eval;
-      out += "<h3>Arbitration a6 arm (MLBTR / Swartz)</h3>" + '<p class="ledger-count">n ' + esc(E.n) + ", ours MdAPE " + esc(num(E.ours_mdape, 4)) + ", Swartz MdAPE " + esc(num(E.swartz_mdape, 4)) + ", ratio " + esc(num(E.ratio_ours_over_swartz, 3)) + ", verdict " + esc(E.verdict) + ". " + esc(E.claim) + "</p>" +
+      out += "<h2>Arbitration a6 arm (MLBTR / Swartz)</h2>" + '<p class="ledger-count">n ' + esc(E.n) + ", ours MdAPE " + esc(num(E.ours_mdape, 4)) + ", Swartz MdAPE " + esc(num(E.swartz_mdape, 4)) + ", ratio " + esc(num(E.ratio_ours_over_swartz, 3)) + ", verdict " + esc(E.verdict) + ". " + esc(E.claim) + "</p>" +
         '<p class="ledger-note">' + esc(E.statement) + "</p>";
     }
     if (M.grad_contract_formula) out += '<p class="ledger-count">Grad-Contract Surplus, ' + esc(M.grad_contract_formula) + "</p>";
@@ -1347,8 +1412,8 @@
     var s = state.section;
     if (SECTIONS.indexOf(s) < 0) s = "league";
     if (s === "club") root.innerHTML = renderClub();
-    else if (s === "rules") root.innerHTML = renderRules();
-    else if (s === "method") root.innerHTML = renderMethod();
+    else if (s === "rules") root.innerHTML = '<div class="ledger-tab">' + renderRules() + "</div>";
+    else if (s === "method") root.innerHTML = '<div class="ledger-tab">' + renderMethod() + "</div>";
     else root.innerHTML = renderLeague();
     if (s === "club" && state.team) {
       // the hash's block key: scroll to the named block once per team, and
@@ -1372,6 +1437,17 @@
     wire();
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(root); } catch (e) { /* glossary optional */ }
   }
+  // A control that render() replaced gets focus back on its new copy, so the
+  // next Tab continues from it instead of from the wordmark (QCLA08, QCLA09).
+  function refocus(attr, val) {
+    try {
+      var els = document.querySelectorAll("[" + attr + "]");
+      for (var i = 0; i < els.length; i++) {
+        var e = els[i];
+        if (e.getAttribute(attr) === val && e.getClientRects && e.getClientRects().length) { e.focus(); return; }
+      }
+    } catch (err) { /* focus is a courtesy */ }
+  }
   function wire() {
     var sel = el("ledger-club");
     if (sel && sel.addEventListener) sel.addEventListener("change", function () { state.team = this.value; state.open = {}; writeHash(); render(); });
@@ -1384,6 +1460,7 @@
         if (state.sort.key === k) state.sort.asc = !state.sort.asc;
         else { state.sort.key = k; state.sort.asc = !!TEXT_COLS[k]; }
         render();
+        refocus("data-lsort", k);
       }
       th.addEventListener("click", go);
       th.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
@@ -1393,6 +1470,7 @@
         var k = b.getAttribute("data-lxp");
         state.open[k] = !state.open[k];
         render();
+        refocus("data-lxp", k);
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll("[data-lfilter]"), function (b) {
@@ -1422,6 +1500,12 @@
         // for a link that names a block is not undone (SCL02)
         try { if (typeof window !== "undefined" && window.scrollTo) window.scrollTo(0, 0); } catch (err) { /* optional */ }
         render();
+        // the block it named takes focus (a section with tabindex -1), so a
+        // keyboard reader lands where the page scrolled
+        try {
+          var dest = state.block ? el("ledger-block-" + state.block) : el("ledger-club");
+          if (dest && dest.focus) dest.focus({ preventScroll: true });
+        } catch (err) { /* optional */ }
       });
     });
   }

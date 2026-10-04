@@ -61,7 +61,8 @@
       (kind === "failed" ? ' role="alert"' : "") + '><div class="px-state-msg">' + msg + "</div></div>";
   }
   function isNum(v) { return v !== null && v !== undefined && v === v && v !== "" && isFinite(Number(v)); }
-  function n1(v) { return isNum(v) ? Number(v).toFixed(1) : ""; }
+  // a value that rounds to zero prints 0.0, never -0.0 (QCLC10: an ARB 3 WAR of -0.02 printed "-0.0")
+  function n1(v) { if (!isNum(v)) return ""; var s = Number(v).toFixed(1); return s === "-0.0" ? "0.0" : s; }
   function n2(v) { return isNum(v) ? Number(v).toFixed(2) : ""; }
   function nInt(v) { return isNum(v) ? String(Math.round(Number(v))) : ""; }
   function pct(v, nd) { return isNum(v) ? (Number(v) * 100).toFixed(nd === undefined ? 1 : nd) + "%" : ""; }
