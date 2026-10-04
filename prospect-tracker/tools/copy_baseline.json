@@ -13,7 +13,7 @@
   "L12": 14,
   "L4": 2,
   "L5_density": 8,
-  "coverage": 75
+  "coverage": 74
  },
  "L1": [
   "04a2ffdfde9a8d63efac0552a829b3e349bc80f2",
@@ -626,7 +626,6 @@
   "bullpen_history.json",
   "collegesavant_milb_equiv.json",
   "country_demographics.json",
-  "debuts.json",
   "def_home.json",
   "defense_history.json",
   "defense_leaderboards.json",
