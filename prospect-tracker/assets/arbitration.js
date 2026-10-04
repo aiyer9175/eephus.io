@@ -40,11 +40,17 @@
   var SORT_DEFAULT = { key: "tot", dir: -1 };
   var SORT_RE = /(?:^#|[#&])sort=(n|t|c|yl|next|tot)\.(a|d)\b/;
   var query = "";
-  // player_links, so a name opens the player's page (census X06-04): the
-  // projections page when he has one, else his PROSPX card, else plain text.
-  var LINKS = null;
-  // History season filter. "all" shows every row the artifact carries.
+  // THE BOARD SHOWS 100 ROWS AT A TIME (QCLP04, 2026-10-02). All 882 rows and
+  // their logos were 16,181 elements and 1.5 to 1.8 s of row paint; /hof/ and
+  // the trade board window the same way. Show more adds 100, Show all paints
+  // the rest (the CSV takes what is on screen, so Show all is its full path).
+  // A filter, search or club change starts the window over; a sort keeps it.
+  var PAGE = 100;
+  var shown = PAGE;
+  // History season filter. "all" shows every row the artifact carries; the
+  // table windows at PAGE rows like the board, and Show all reaches every row.
   var histSeason = "all";
+  var histShown = PAGE;
 
   /* ---------------------------------------------------------------- css */
 
@@ -59,7 +65,7 @@
        .card::before navy spine recoloured to --accent-orange: the token this
        site already spends on "early", never on "defective". */
     ".arb-app .arb-caveatbar{border:1px solid var(--border);border-left:5px solid var(--accent-orange);background:var(--bg-secondary);padding:9px 12px;margin:10px 0 14px}",
-    ".arb-app .arb-caveatbar h3{font:700 10px/1.4 var(--font-retro-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent-orange);margin:0 0 6px}",
+    ".arb-app .arb-caveatbar h2{font:700 10px/1.4 var(--font-retro-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent-orange);margin:0 0 6px}",
     ".arb-app .arb-caveatbar ul{margin:0;padding-left:16px}",
     ".arb-app .arb-caveatbar li{font-size:12px;line-height:1.6;color:var(--text-secondary);margin:0 0 3px}",
     ".arb-app .arb-caveatn{font-family:var(--font-retro-mono);font-size:10px;color:var(--text-tertiary);margin-left:4px}",
@@ -168,11 +174,29 @@
        is 17px and the cell is nowrap, so the row height does not move. */
     ".arb-app .arb-club{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}",
 
+    /* Text columns (player, club, class) read left like a newspaper agate
+       line; money and counts stay right-aligned and tabular. A head that does
+       not sort draws the default cursor: site.css gives every .mlbstats-table
+       head a pointer, and on History and Team View nothing sorts (QCLA16). */
+    ".arb-app .mlbstats-table th.arb-l,.arb-app .mlbstats-table td.arb-l{text-align:left}",
+    ".arb-app .mlbstats-table th{cursor:default}",
+    /* How this works: the method, folded under the table it explains. */
+    ".arb-app .arb-how{margin:10px 0 0;border-top:1px solid var(--border-light);padding-top:4px}",
+    ".arb-app .arb-how>summary{cursor:pointer;font-size:12px;color:var(--text-secondary)}",
+    ".arb-app .arb-how p,.arb-app .arb-how li{font-size:12px;line-height:1.6;color:var(--text-secondary);max-width:90ch}",
+    ".arb-app .arb-how ul{margin:6px 0;padding-left:16px}",
+    ".arb-app .arb-lede{font-size:12px;line-height:1.6;color:var(--text-secondary);margin:6px 0 8px;max-width:90ch}",
+    ".arb-app .arb-more{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}",
+    ".arb-app .arb-related{margin:22px 0 0;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--text-secondary)}",
+
     /* On a phone the question is "how many years, how much total". The
        per-year dollar is deferred into title=, not deleted. Logos come out of
        the Club column there: at 44px steps the ladder is already the widest
        thing on screen and a 17px mark per row costs more than it tells. */
-    "@media (max-width:640px){.arb-app .arb-step{width:44px}.arb-app .arb-step b{display:none}.arb-app .arb-ladder{gap:1px}.arb-app th small{display:none}.arb-app .arb-club .eephus-teamlogo{display:none}}"
+    "@media (max-width:640px){.arb-app .arb-step{width:44px}.arb-app .arb-step b{display:none}.arb-app .arb-ladder{gap:1px}.arb-app th small{display:none}.arb-app .arb-club .eephus-teamlogo{display:none}" +
+    /* 44px touch targets at phone width (QCLA16): the row's name and club
+       links and the sort heads were 14 and 16px tall. */
+    ".arb-app .mlbstats-table td a{display:inline-flex;align-items:center;min-height:44px}.arb-app .arb-sort{min-height:44px}}"
   ].join("");
   document.head.appendChild(css);
 
@@ -219,13 +243,33 @@
      eephus-hub.js on this page; it was simply never called, so the board
      rendered bare three-letter codes while every sibling module showed a mark.
      Degrades to the plain code when the hub is absent or the club is unknown,
-     and the <img> carries its own onerror removal. */
-  function club(code) {
+     and the <img> carries its own onerror removal. The mark is decorative
+     (alt="") because the code follows it as text (QCLA16), and a club the
+     hub knows links to its /franchise/ page. */
+  function club(code, noLogo) {
     var t = String(code == null ? "" : code).trim();
     if (!t) return DASH;
     var hub = window.EEPHUS_HUB;
-    var logo = (hub && typeof hub.teamLogo === "function") ? hub.teamLogo(t) : "";
+    var logo = (!noLogo && hub && typeof hub.teamLogo === "function") ? hub.teamLogo(t, null, { decorative: true }) : "";
+    var c = (hub && typeof hub.club === "function") ? hub.club(t) : null;
+    if (c && c.code) {
+      return '<a class="arb-club" href="/franchise/#team=' + encodeURIComponent(c.code) + '">' + logo + esc(t) + "</a>";
+    }
     return '<span class="arb-club">' + logo + esc(t) + "</span>";
+  }
+
+  /* A name's link: the exporter resolves it ("p:" a /projections/ key, "x:"
+     a PROSPX slug), so the page no longer fetches the 1.9 MB identity map to
+     link 882 names (QCLP04). */
+  function hrefOf(tok) {
+    var s = String(tok == null ? "" : tok);
+    if (s.indexOf("p:") === 0 && s.length > 2) return "/projections/#player=" + encodeURIComponent(s.slice(2));
+    if (s.indexOf("x:") === 0 && s.length > 2) return "/prospx/#player=" + encodeURIComponent(s.slice(2));
+    return null;
+  }
+  function nameLink(name, tok) {
+    var h = hrefOf(tok);
+    return h ? '<a href="' + esc(h) + '">' + esc(name) + "</a>" : esc(name);
   }
 
   /* --------------------------------------------------------- caveat bar */
@@ -254,21 +298,39 @@
       var _l = rows[pi].l || [];
       if (_l.length && (_l[_l.length - 1][4] || "") === "PRE-ARB") preEnd++;
     }
-    if (preEnd) items.push("The ladder runs as far as the published grid, which ends on a " +
-      "pre-arbitration season for <b>" + preEnd + "</b> players. It is not a statement about " +
-      "when club control ends; the club control window is on the " +
-      "<a href=\"/projections/\">projections board</a>.");
+    // COPY PASS 2026-10-03: every caveat kept, each in one line. The Arb 2+
+    // multiplier line left this bar because the masthead states the same
+    // verdict; the method is in How this works under the table.
+    if (preEnd) items.push("Ladders end where the published grid ends (pre-arb for <b>" +
+      preEnd + "</b> players), not where club control ends (see " +
+      "<a href=\"/projections/\">projections</a>).");
     var est = n(F_SERVICE_EST);
-    if (est) items.push("Arb year estimated, not from published service time: <b>" + est + "</b> players, marked ~.");
     var cls = n(F_CLASS_EST);
-    if (cls) items.push("<b>" + cls + "</b> of those use the debut-year heuristic, the weakest source (agreement on the Model tab).");
+    if (est) items.push("~ marks an arb year without published service time: <b>" + est + "</b> players" +
+      (cls ? ", <b>" + cls + "</b> from the debut-year heuristic (the weakest source)." : "."));
     var carry = n(F_CARRY_FWD);
     var rules = board.rules || {};
-    if (carry) items.push("Seasons from " + esc(String(rules.carry_forward_from || 2027)) + " assume the current <span data-gl=\"cba_carry_forward\">CBA</span> survives its <b>" + esc(rules.expires || "2026-12-01") + "</b> expiry. Not estimated; no interval covers it.");
-    items.push("Arb 2+ is a <b>population step multiplier</b>: the <span data-gl=\"arb_award_model\">model</span> did not beat it. Only Arb 1 is model-driven.");
-    items.push("Non-tendered players are absent, so club totals <b>overstate</b> what is owed.");
-    return '<div class="arb-caveatbar"><h3>Caveats</h3><ul><li>' +
+    if (carry) items.push(esc(String(rules.carry_forward_from || 2027)) + "+ seasons assume the <span data-gl=\"cba_carry_forward\">CBA</span> survives its <b>" + esc(rules.expires || "2026-12-01") + "</b> expiry; no interval covers that.");
+    items.push("Non-tenders are absent, so club totals <b>overstate</b> what is owed.");
+    return '<div class="arb-caveatbar"><h2>Caveats</h2><ul><li>' +
            items.join("</li><li>") + "</li></ul></div>";
+  }
+
+  /* How this works, folded under the board: the pricing rule per rung and the
+     sources, read off arb_export.py and arb_model.py. Nothing here is a claim
+     about accuracy; the Model tab carries every measured verdict. */
+  function boardHow() {
+    return '<details class="arb-how"><summary>How this works</summary><ul>' +
+      "<li>Ladder: each remaining season and its token (ARB 1 to 4, PRE-ARB) from the Spotrac club grids.</li>" +
+      "<li>Arb 1: the <span data-gl=\"arb_award_model\">award model</span>, from the prior salary, WAR " +
+      "(fWAR basis; projected for unplayed seasons), age, role, playing time and the latest season's " +
+      "skill metrics, floored at the league minimum.</li>" +
+      "<li>Arb 2 to 4: the rung before times the median observed raise for its step and prior-salary band, " +
+      "never below a 20% cut or the league minimum. The model did not beat this multiplier.</li>" +
+      "<li>Pre-arb: the league minimum by rule.</li>" +
+      "<li>Each rung raises off the one before, so a later rung carries the earlier rung's error.</li>" +
+      "<li>Total remaining = the sum of the ladder, pre-arb minimums included.</li>" +
+      "</ul></details>";
   }
 
   /* ------------------------------------------------------------- ladder */
@@ -338,20 +400,6 @@
     return r[key];
   }
 
-  function hrefFor(r) {
-    var e = LINKS && LINKS.byMlbam && r.m != null ? LINKS.byMlbam[String(r.m)] : null;
-    if (!e) return null;
-    var proj = e.proj === undefined ? !!e.key : e.proj;
-    if (proj && e.key) return "/projections/#player=" + encodeURIComponent(e.key);
-    if (e.prospx) return "/prospx/#player=" + encodeURIComponent(e.prospx);
-    return null;
-  }
-
-  function nameCell(r) {
-    var h = hrefFor(r);
-    return h ? '<a href="' + esc(h) + '">' + esc(r.n) + "</a>" : esc(r.n);
-  }
-
   function sortHash() {
     if (sort.key === SORT_DEFAULT.key && sort.dir === SORT_DEFAULT.dir) return "";
     return "&sort=" + sort.key + "." + (sort.dir < 0 ? "d" : "a");
@@ -377,13 +425,15 @@
     }
     var teams = {};
     (board.rows || []).forEach(function (r) { if (r.t) teams[r.t] = 1; });
+    // aria-pressed carries the chip state a sighted reader gets from .active.
+    function pressed(on) { return '" aria-pressed="' + (on ? "true" : "false"); }
     var chips = [["all", "All"], ["1", "Arb 1"], ["2", "Arb 2"], ["3", "Arb 3"], ["0", "Pre-Arb"]]
       .map(function (c) {
         return '<button type="button" class="chip' + (filters.cls === c[0] ? " active" : "") +
-               '" data-cls="' + c[0] + '">' + c[1] + "</button>";
+               pressed(filters.cls === c[0]) + '" data-cls="' + c[0] + '">' + c[1] + "</button>";
       }).join("");
     var estN = (board.rows || []).filter(function (r) { return (r.e || 0) & F_SERVICE_EST; }).length;
-    chips += '<button type="button" class="chip' + (filters.flag ? " active" : "") +
+    chips += '<button type="button" class="chip' + (filters.flag ? " active" : "") + pressed(!!filters.flag) +
              '" data-flag="1">Arb year estimated <span class="arb-caveatn">(' + estN + ")</span></button>";
     var opts = ['<option value="all">All clubs</option>'].concat(
       Object.keys(teams).sort().map(function (t) {
@@ -396,21 +446,34 @@
       '<select id="arb-team" data-team-picker aria-label="Club">' + opts + "</select></div>" +
       '<div class="filter-bar">' + chips + "</div>" +
       '<p class="arb-histcount" id="arb-count" role="status"></p>' +
-      '<div id="arb-board-table"></div>';
+      '<div id="arb-board-table"></div>' + boardHow();
 
     root.querySelectorAll("[data-cls]").forEach(function (b) {
-      b.onclick = function () { filters.cls = b.getAttribute("data-cls"); renderBoard(); };
+      b.onclick = function () { filters.cls = b.getAttribute("data-cls"); shown = PAGE; renderBoard(); };
     });
     root.querySelectorAll("[data-flag]").forEach(function (b) {
-      b.onclick = function () { filters.flag = filters.flag ? null : F_SERVICE_EST; renderBoard(); };
+      b.onclick = function () { filters.flag = filters.flag ? null : F_SERVICE_EST; shown = PAGE; renderBoard(); };
     });
     var sel = el("arb-team");
-    if (sel) sel.onchange = function () { filters.team = sel.value; renderBoard(); };
+    if (sel) sel.onchange = function () { filters.team = sel.value; shown = PAGE; renderBoard(); };
     // Typing re-paints the table only, so the field keeps its focus and caret.
     var qi = el("arb-q");
-    if (qi) qi.oninput = function () { query = qi.value; renderTable(); };
+    if (qi) qi.oninput = function () { query = qi.value; shown = PAGE; renderTable(); };
     var tbl = el("arb-board-table");
     if (tbl) tbl.onclick = function (e) {
+      var mb = e.target && e.target.closest ? e.target.closest("[data-amore]") : null;
+      if (mb) {
+        var all = mb.getAttribute("data-amore") === "all";
+        var first = shown;
+        shown = all ? Infinity : shown + PAGE;
+        renderTable();
+        // Focus lands on the first new row's name, so a keyboard reader
+        // continues where the list grew instead of at the top of the page.
+        var nr = tbl.querySelectorAll("tbody tr")[first];
+        var na = nr && nr.querySelector("a");
+        if (na) na.focus();
+        return;
+      }
       var b = e.target && e.target.closest ? e.target.closest("[data-asort]") : null;
       if (b) {
         var k = b.getAttribute("data-asort");
@@ -424,6 +487,7 @@
       if (e.target && e.target.id === "arb-clear") {
         filters = { cls: "all", team: "all", flag: null };
         query = "";
+        shown = PAGE;
         renderBoard();
       }
     };
@@ -446,35 +510,48 @@
       return (x > y ? 1 : x < y ? -1 : 0) * sort.dir || ((b.tot || 0) - (a.tot || 0));
     });
     var arrow = sort.dir < 0 ? "&#9662;" : "&#9652;";
-    function th(key, label, title, small) {
+    function th(key, label, title, small, left) {
       var on = sort.key === key;
       // The title rides the th, so the head keeps its definition (Ladder yrs
       // and Total remaining say what they are not) for any reader of the head.
-      return '<th scope="col" aria-sort="' + (on ? (sort.dir < 0 ? "descending" : "ascending") : "none") +
+      return '<th scope="col"' + (left ? ' class="arb-l"' : "") + ' aria-sort="' + (on ? (sort.dir < 0 ? "descending" : "ascending") : "none") +
         '" title="' + esc(title) + '" data-export-text="' + esc(label) + '"><button type="button" class="arb-sort" data-asort="' + key +
         '">' + label + '<span class="arb-sort-ind" aria-hidden="true">' +
         (on ? arrow : "") + "</span>" + (small ? "<small>" + small + "</small>" : "") + "</button></th>";
     }
     var head =
       '<tr><th scope="col" class="mlbstats-col-rank">#</th>' +
-      th("n", "Player", "Sort by name") + th("t", "Club", "Sort by club") +
-      th("c", "Class", "Sort by arbitration class") +
+      th("n", "Player", "Sort by name", null, true) + th("t", "Club", "Sort by club", null, true) +
+      th("c", "Class", "Sort by arbitration class", null, true) +
       th("yl", "Ladder yrs", "Seasons on the published grid. Not the number of club-control seasons remaining.") +
-      th("next", "Remaining arbitration ladder", "Sort by the first remaining season's dollars", "sorts on the next rung") +
+      th("next", "Remaining arbitration ladder", "Sort by the first remaining season's dollars", "sorts on the next rung", true) +
       th("tot", "Total remaining", "Sum of the seasons on the published grid, not of the club control window.") +
       "</tr>";
-    var body = rows.map(function (r, i) {
+    var matched = rows.length;
+    var win = rows.slice(0, shown);
+    var body = win.map(function (r, i) {
       return '<tr><td class="mlbstats-col-rank">' + (i + 1) + "</td>" +
-        "<td>" + nameCell(r) + "</td><td>" + club(r.t) + "</td>" +
-        "<td>" + esc(classLabel(r)) + "</td><td>" + (r.yl == null ? DASH : r.yl) + "</td>" +
-        '<td class="arb-laddercell">' + ladder(r) + "</td>" +
+        '<td class="mlbstats-name arb-l">' + nameLink(r.n, r.h) + '</td><td class="arb-l">' + club(r.t) + "</td>" +
+        '<td class="arb-l">' + esc(classLabel(r)) + "</td><td>" + (r.yl == null ? DASH : r.yl) + "</td>" +
+        '<td class="arb-laddercell arb-l">' + ladder(r) + "</td>" +
         "<td>" + money(r.tot) + "</td></tr>";
     }).join("");
     var cnt = el("arb-count");
-    if (cnt) cnt.textContent = "Showing " + rows.length + " of " + all + " players.";
+    if (cnt) {
+      cnt.textContent = win.length === matched || matched === all
+        ? "Showing " + win.length + " of " + all + " players."
+        : "Showing " + win.length + " of " + matched + " matching players (" + all + " on the board).";
+    }
+    var left = matched - win.length;
+    var more = left > 0
+      ? '<div class="arb-more"><button type="button" class="chip" data-amore="page">Show ' +
+        Math.min(PAGE, left) + " more</button>" +
+        (left > PAGE ? '<button type="button" class="chip" data-amore="all">Show all ' + matched + "</button>" : "") +
+        "</div>"
+      : "";
     box.innerHTML = rows.length
       ? '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead>' +
-        head + "</thead><tbody>" + body + "</tbody></table></div>"
+        head + "</thead><tbody>" + body + "</tbody></table></div>" + more
       : '<div class="mlbstats-empty">No player matches these filters. ' +
         '<button type="button" class="chip" id="arb-clear">Clear filters</button></div>';
   }
@@ -504,18 +581,27 @@
       root.innerHTML = '<div class="mlbstats-empty">The history is being computed.</div>';
       return;
     }
+    // COPY PASS 2026-10-03: the two-paragraph note became one lede line that
+    // keeps both definitions, the never-combined rule and the misreading
+    // guard; the basis and the marks moved into How this works.
     var note =
-      '<div class="card arb-note"><p><b><span data-gl="arb_market_residual">vs Market</span></b>: ' +
-      "actual minus this model; sums to about zero by construction. <b>vs Value</b>: actual minus " +
-      "WAR (fWAR basis, the arbitration model&rsquo;s spine) at that winter&rsquo;s $/WAR; arbitration pays below the open market, so it does not " +
-      "sum to zero. The two are never combined.</p>" +
-      "<p>Negative vs Market means the model expected a higher salary. It does not mean the player " +
-      "is underpaid.</p></div>";
+      '<p class="arb-lede"><b><span data-gl="arb_market_residual">vs Market</span></b>: actual minus ' +
+      "this model. <b>vs Value</b>: actual minus WAR in dollars. Never combined. Negative vs Market: " +
+      "the model expected more, not an underpaid player.</p>";
+    var how =
+      '<details class="arb-how"><summary>How this works</summary><ul>' +
+      "<li>vs Market = actual &minus; ours. It sums to about zero by construction.</li>" +
+      "<li>vs Value = actual &minus; WAR &times; $/WAR for that season, WAR on the fWAR basis (the " +
+      "arbitration model&rsquo;s spine). Arbitration pays below the open market, so it does not sum to zero.</li>" +
+      "<li>MLBTR is the MLB Trade Rumors (Matt Swartz) projection published before settlement, where one exists.</li>" +
+      "<li>&dagger; 2020, paid at 60/162. ~ the arb year is not from published service time.</li>" +
+      "</ul></details>";
 
-    var head = '<tr><th class="mlbstats-col-rank">#</th><th>Season</th><th>Player</th>' +
-      "<th>Club</th><th>Arb</th><th>Actual</th><th>Ours</th><th>MLBTR</th>" +
-      '<th class="arb-gs">vs Market<small>actual minus model</small></th>' +
-      '<th>vs Value<small>actual minus WAR (fWAR basis) &times; $/WAR</small></th></tr>';
+    var head = '<tr><th scope="col" class="mlbstats-col-rank">#</th><th scope="col">Season</th>' +
+      '<th scope="col" class="arb-l">Player</th><th scope="col" class="arb-l">Club</th><th scope="col">Arb</th>' +
+      '<th scope="col">Actual</th><th scope="col">Ours</th><th scope="col">MLBTR</th>' +
+      '<th scope="col" class="arb-gs">vs Market<small>actual minus model</small></th>' +
+      '<th scope="col">vs Value<small>actual minus WAR (fWAR basis) &times; $/WAR</small></th></tr>';
 
     // EVERY ROW RENDERS. This table used to print rows.slice(0, 400) of a
     // season-descending list with no count, so 372 of 772 rows were hidden,
@@ -530,24 +616,34 @@
     });
     var seasons = Object.keys(bySeason).sort().reverse();
     if (histSeason !== "all" && !bySeason[histSeason]) histSeason = "all";
-    var shown = histSeason === "all" ? rows
+    var vis = histSeason === "all" ? rows
       : rows.filter(function (r) { return String(r[0]) === histSeason; });
     var nSw = 0;
-    shown.forEach(function (r) { if (r[7] != null) nSw++; });
+    vis.forEach(function (r) { if (r[7] != null) nSw++; });
     var chips = '<button type="button" class="chip' + (histSeason === "all" ? " active" : "") +
-      '" data-hseason="all">All seasons <span class="arb-caveatn">(' + rows.length + ")</span></button>" +
+      '" aria-pressed="' + (histSeason === "all") + '" data-hseason="all">All seasons <span class="arb-caveatn">(' + rows.length + ")</span></button>" +
       seasons.map(function (y) {
         return '<button type="button" class="chip' + (histSeason === y ? " active" : "") +
-          '" data-hseason="' + esc(y) + '">' + esc(y) +
+          '" aria-pressed="' + (histSeason === y) + '" data-hseason="' + esc(y) + '">' + esc(y) +
           ' <span class="arb-caveatn">(' + bySeason[y].n + ")</span></button>";
       }).join("");
-    var countLine = '<p class="arb-histcount">Showing ' + shown.length + " of " + rows.length +
-      " settled seasons. " + nSw + " of them carry an MLBTR projection.</p>";
+    var win = vis.slice(0, histShown);
+    var countLine = '<p class="arb-histcount" role="status">' + (win.length === vis.length
+      ? "Showing " + vis.length + " of " + rows.length + " settled seasons. " + nSw + " of them carry an MLBTR projection."
+      : "Showing " + win.length + " of " + vis.length + (vis.length === rows.length ? "" : " matching (" + rows.length + " in all)") +
+        " settled seasons (" + nSw + " with an MLBTR projection).") + "</p>";
+    var left = vis.length - win.length;
+    var more = left > 0
+      ? '<div class="arb-more"><button type="button" class="chip" data-hmore="page">Show ' + Math.min(PAGE, left) +
+        " more</button>" + (left > PAGE ? '<button type="button" class="chip" data-hmore="all">Show all ' +
+        vis.length + "</button>" : "") + "</div>"
+      : "";
 
+    // The bar scale is the season filter's, so it does not move as the window grows.
     var maxOu = 1;
-    shown.forEach(function (r) { if (r[9] != null) maxOu = Math.max(maxOu, Math.abs(r[9])); });
+    vis.forEach(function (r) { if (r[9] != null) maxOu = Math.max(maxOu, Math.abs(r[9])); });
 
-    var body = shown.map(function (r, i) {
+    var body = win.map(function (r, i) {
       var ouM = r[8], ouW = r[9];
       var bar = ouW == null ? "" :
         '<span class="arb-oubar" style="width:' +
@@ -555,7 +651,7 @@
       return "<tr>" +
         '<td class="mlbstats-col-rank">' + (i + 1) + "</td>" +
         "<td>" + r[0] + ((r[11] || 0) & F_PRORATED ? " &dagger;" : "") + "</td>" +
-        "<td>" + esc(r[2]) + "</td><td>" + esc(r[3] || DASH) + "</td>" +
+        '<td class="mlbstats-name arb-l">' + nameLink(r[2], r[12]) + '</td><td class="arb-l">' + (r[3] ? club(r[3], true) : DASH) + "</td>" +
         "<td>" + ((r[11] || 0) & F_SERVICE_EST ? "~" : "") + "A" + r[4] + "</td>" +
         "<td>" + money(r[5]) + "</td><td>" + money(r[6]) + "</td><td>" + money(r[7]) + "</td>" +
         '<td class="arb-gs arb-ou ' + (ouM > 0 ? "arb-pos" : "arb-neg") + '">' + signed(ouM) + "</td>" +
@@ -566,9 +662,19 @@
     root.innerHTML = note +
       '<div class="filter-bar">' + chips + "</div>" + countLine +
       '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead>' +
-      head + "</thead><tbody>" + body + "</tbody></table></div>";
+      head + "</thead><tbody>" + body + "</tbody></table></div>" + more + how;
     root.querySelectorAll("[data-hseason]").forEach(function (b) {
-      b.onclick = function () { histSeason = b.getAttribute("data-hseason"); renderHistory(); };
+      b.onclick = function () { histSeason = b.getAttribute("data-hseason"); histShown = PAGE; renderHistory(); };
+    });
+    root.querySelectorAll("[data-hmore]").forEach(function (b) {
+      b.onclick = function () {
+        var first = histShown;
+        histShown = b.getAttribute("data-hmore") === "all" ? Infinity : histShown + PAGE;
+        renderHistory();
+        var nr = root.querySelectorAll("tbody tr")[first];
+        var na = nr && nr.querySelector("a");
+        if (na) na.focus();
+      };
     });
     wireGl(root);
   }
@@ -620,24 +726,25 @@
     function usd(v) { return v ? money(v) : "$0"; }
     var body = rows.map(function (t, i) {
       if (narrowed && t.t !== narrowed) return "";
-      return '<tr class="' + (narrowed ? "arb-row-narrow" : "") + '"><td class="mlbstats-col-rank">' + (i + 1) + "</td><td>" + club(t.t) +
+      return '<tr class="' + (narrowed ? "arb-row-narrow" : "") + '"><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="arb-l">' + club(t.t) +
         "</td><td>" + t.n + "</td><td>" + t.cls + "</td><td>" + usd(t.nextArb) + "</td><td>" + usd(t.nextPre) +
         "</td><td>" + usd(t.remArb) + "</td><td>" + usd(t.remPre) + "</td></tr>";
     }).join("");
     var narrowNote = narrowed
       ? '<p class="arb-narrow-note">Narrowed to ' + esc(narrowed) + ' (league rank kept). <a href="#teams" id="arb-narrow-clear">All clubs</a></p>'
       : "";
+    // COPY PASS 2026-10-03: the sentence that narrated the sort left (the
+    // head says "sorted"); the basis, the tender assumption and "not a payroll
+    // forecast" stay, one line.
     root.innerHTML = narrowNote +
-      '<div class="card arb-note"><p>Projected cost of each club&rsquo;s arbitration ladder, sorted by ' +
-      "remaining arbitration dollars. Arbitration seasons are model projections; pre-arb seasons are " +
-      "the league minimum by rule and sit in their own columns. Every listed player is assumed " +
-      "tendered through his last ladder season, so a non-tender lowers these figures. Not a payroll forecast.</p></div>" +
+      '<p class="arb-lede arb-note">Arbitration seasons are model projections, pre-arb seasons the league ' +
+      "minimum (own columns). Assumes every player is tendered through his ladder. Not a payroll forecast.</p>" +
       '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead><tr>' +
-      '<th class="mlbstats-col-rank">#</th><th>Club</th>' +
-      '<th title="Players on the club\'s arbitration ladder, pre-arb included.">Players</th>' +
-      '<th title="Players whose first remaining ladder season is arbitration year 1 to 4.">Arb class 1-4</th>' +
-      "<th>" + season + " arbitration</th><th>" + season + " pre-arb min.</th>" +
-      "<th>Remaining arbitration<small>sorted</small></th><th>Remaining pre-arb min.</th></tr></thead><tbody>" + body +
+      '<th scope="col" class="mlbstats-col-rank">#</th><th scope="col" class="arb-l">Club</th>' +
+      '<th scope="col" title="Players on the club\'s arbitration ladder, pre-arb included.">Players</th>' +
+      '<th scope="col" title="Players whose first remaining ladder season is arbitration year 1 to 4.">Arb class 1-4</th>' +
+      '<th scope="col">' + season + ' arbitration</th><th scope="col">' + season + " pre-arb min.</th>" +
+      '<th scope="col">Remaining arbitration<small>sorted</small></th><th scope="col">Remaining pre-arb min.</th></tr></thead><tbody>' + body +
       "</tbody></table></div>";
     var clear = el("arb-narrow-clear");
     if (clear) clear.onclick = function (e) {
@@ -683,15 +790,17 @@
 
   function load() {
     renderBoard();
-    if (!LINKS && window.EEPHUS_HUB && typeof window.EEPHUS_HUB.links === "function") {
-      window.EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderTable(); })
-        .catch(function () { /* names stay plain text */ });
-    }
     fetch(BOARD_URL, { cache: "no-cache" }).then(function (r) {
       if (!r.ok) throw new Error("http " + r.status);
       return r.json();
     }).then(function (d) {
       board = d;
+      // The masthead's glossary term gets its aria-describedby wiring here
+      // (QCLA16): the glossary runtime loads after this file, and the board
+      // fetch settles after it has run (else the page's load event wires it).
+      var head = document.querySelector(".arb-app .section-head");
+      if (window.EEPHUS_GL) wireGl(head);
+      else window.addEventListener("load", function () { wireGl(head); }, { once: true });
       // The narrowing is honoured only for a club the board carries; the
       // projections filter takes the same club so both views read narrowed.
       if (teamNarrow && !(d.rows || []).some(function (r) { return r.t === teamNarrow; })) teamNarrow = "";

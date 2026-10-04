@@ -105,6 +105,35 @@ def _projected_war() -> dict[int, list[float]]:
     return out
 
 
+def _link_targets() -> dict[int, str]:
+    """{mlbam: link token} from data/player_links.json, so the page links each
+    name without fetching that 1.9 MB map itself (QCLP04, 2026-10-02).
+
+    The token is "p:<key>" for a player with a /projections/ page and
+    "x:<slug>" for one with only a PROSPX card, the rule assets/arbitration.js
+    applied to the map before: a row's `proj` flag when it carries one, else
+    the presence of a key. A player with neither gets no token."""
+    p = ROOT / "data" / "player_links.json"
+    try:
+        by = (json.loads(p.read_text("utf-8")).get("byMlbam") or {})
+    except (OSError, ValueError) as exc:
+        _log.warning("arb_export: player_links unreadable: %s", exc)
+        return {}
+    out: dict[int, str] = {}
+    for m, e in by.items():
+        e = e or {}
+        proj = bool(e.get("key")) if e.get("proj") is None else bool(e.get("proj"))
+        try:
+            mid = int(m)
+        except (TypeError, ValueError):
+            continue
+        if proj and e.get("key"):
+            out[mid] = "p:" + str(e["key"])
+        elif e.get("prospx"):
+            out[mid] = "x:" + str(e["prospx"])
+    return out
+
+
 _STEP_RE = None
 
 
@@ -173,6 +202,7 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
 
     status = A.spotrac_status_by_mlbam()
     proj = _projected_war()
+    links = _link_targets()
     # Latest observed row per player, for the salary anchor and the features.
     by_player: dict[int, dict] = {}
     # Realized WAR per player-season over the WHOLE panel, not only the scored
@@ -323,6 +353,7 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             "l": steps,
             "tot": total or None,
             "w": wars,
+            "h": links.get(mlbam),
         })
     rows.sort(key=lambda r: -(r.get("tot") or 0))
     carry_from = 2027
@@ -344,6 +375,8 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             "tot": ("sum of the ladder, usd: projected arbitration rungs plus "
                     "PRE-ARB rungs at the league minimum"),
             "w": "projected WAR (fWAR basis, the training label since the 2026-10 epoch) per remaining season, aligned to l",
+            "h": ("link token for the name: p:<key> opens /projections/#player=<key>, "
+                  "x:<slug> opens /prospx/#player=<slug>, null links nothing"),
         },
         "rules": {
             "regime": "cba_2022",
@@ -379,6 +412,7 @@ def build_history(recs, panel_rows, ledger, dpw) -> dict:
             if m:
                 swartz[(int(m), int(cy))] = ent["projected_usd"]
 
+    links = _link_targets()
     out = []
     for r in panel_rows:
         rec = by.get((r["mlbam"], r["season"]))
@@ -395,6 +429,7 @@ def build_history(recs, panel_rows, ledger, dpw) -> dict:
             int(r["season"]), int(r["mlbam"]), r.get("name"), r.get("team"),
             int(r["arb_year"]), act, pred, swz, ou_mkt, ou_war,
             round(float(war), 2), _flags(r, int(r["season"])),
+            links.get(int(r["mlbam"])),
         ])
     out.sort(key=lambda x: (-x[0], -(x[5] or 0)))
     return {
@@ -402,7 +437,11 @@ def build_history(recs, panel_rows, ledger, dpw) -> dict:
         "generated_at": date.today().isoformat(),
         "field_key": {
             "rows": "[season, mlbam, name, team, arb_year, actual_usd, "
-                    "ours_usd, swartz_usd, ou_mkt_usd, ou_war_usd, war, flags]",
+                    "ours_usd, swartz_usd, ou_mkt_usd, ou_war_usd, war, flags, "
+                    "link]",
+            "link": ("the name's link token, as the board's h: p:<key> opens "
+                     "/projections/#player=<key>, x:<slug> opens "
+                     "/prospx/#player=<slug>, null links nothing"),
             "ou_mkt": ("actual minus OUR model: what the arbitration system paid "
                        "relative to comparable players. Sums to roughly zero by "
                        "construction."),

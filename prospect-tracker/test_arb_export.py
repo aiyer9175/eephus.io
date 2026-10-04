@@ -126,8 +126,13 @@ def test_both_payloads_document_every_key_they_emit():
     assert b.get("field_key")
     for k in ("m", "n", "t", "e", "yl", "l", "tot"):
         assert k in b["field_key"], k
+    # every key a row carries is in the legend, the link token included
+    emitted = set().union(*(r.keys() for r in b["rows"])) if b["rows"] else set()
+    assert emitted <= set(b["field_key"]), emitted - set(b["field_key"])
     h = _doc("arb_history.json")
     assert h.get("field_key", {}).get("rows")
+    width = len(h["field_key"]["rows"].strip("[]").split(","))
+    assert all(len(r) == width for r in h["rows"]), width
 
 
 def test_no_combined_residual_column_exists():

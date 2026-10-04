@@ -87,10 +87,20 @@
     "oakland athletics": "ATH", "florida marlins": "MIA", "cleveland indians": "CLE",
     "tampa bay devil rays": "TBR", "anaheim angels": "LAA", "los angeles angels of anaheim": "LAA",
   };
+  // LOGO SIZE (QCLP05, 2026-10-02). The 500 x 500 master PNG is 19 to 80 KB
+  // and these marks are drawn at 16 to 17 px: /arbitration/ pulled 27 of them,
+  // 1.06 MB, half its wire. ESPN's combiner serves the same image resized, so
+  // a logo is asked for at twice the drawn size (34 px for the 17 px row mark,
+  // about 1.7 KB). A caller drawing a bigger mark passes its own size.
+  var LOGO_PX = 34;
+  function _logoSrc(slug, px) {
+    var n = Math.max(16, Math.round(+px || LOGO_PX));
+    return "https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/" + slug + ".png&h=" + n + "&w=" + n;
+  }
   var _CLUB_BY = {}, _CLUB_BY_ID = {}, _CLUB_BY_NAME = {};
   _CLUB_ROWS.forEach(function (r) {
     var c = { code: r[0], slug: r[1], name: r[2], id: r[3], aliases: r.slice(4),
-              logo: "https://a.espncdn.com/i/teamlogos/mlb/500/" + r[1] + ".png" };
+              logo: _logoSrc(r[1]) };
     _CLUB_BY[r[0]] = c;
     c.aliases.forEach(function (a) { _CLUB_BY[a] = c; });
     _CLUB_BY_ID[r[3]] = c;
@@ -108,16 +118,22 @@
     return _CLUB_BY[s.toUpperCase()] || _CLUB_BY_NAME[s.toLowerCase()] || null;
   }
   function clubs() { return _CLUB_ROWS.map(function (r) { return _CLUB_BY[r[0]]; }); }
-  function teamLogoURL(team) {
+  // teamLogoURL(team, px): the logo at px pixels square (default 34).
+  function teamLogoURL(team, px) {
     var c = club(team);
-    return c ? c.logo : "";
+    return c ? _logoSrc(c.slug, px) : "";
   }
-  function teamLogo(team, cls) {
+  // teamLogo(team, cls, opts): opts.size is the requested pixel size (twice
+  // the drawn size; default 34). opts.decorative gives alt="" for a caller
+  // that prints the club code right after the mark, so a screen reader does
+  // not hear the code twice (QCLA16); every other caller keeps alt = code.
+  function teamLogo(team, cls, opts) {
     if (!team) return "";
+    opts = opts || {};
     var c = club(team);
     var slug = c ? c.slug : String(team).toLowerCase();
-    return '<img class="' + (cls || "eephus-teamlogo") + '" src="https://a.espncdn.com/i/teamlogos/mlb/500/'
-      + slug + '.png" alt="' + esc(team) + '" loading="lazy" onerror="this.remove()">';
+    return '<img class="' + (cls || "eephus-teamlogo") + '" src="' + esc(_logoSrc(slug, opts.size))
+      + '" alt="' + (opts.decorative ? "" : esc(team)) + '" loading="lazy" onerror="this.remove()">';
   }
 
   // ---- lightweight inline charts (SVG, theme-tokened) -----------------------
