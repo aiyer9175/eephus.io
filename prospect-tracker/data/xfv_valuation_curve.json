@@ -1,5 +1,5 @@
 {
-"generated_at": "2026-10-03",
+"generated_at": "2026-10-04",
 "valuation_set": "clemens_2026",
 "war_window": "7-season valuation window (published ctrl_war basis)",
 "star_def": {
@@ -23,7 +23,7 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 1775,
+"n": 1777,
 "surplus_mm_median": 0.6,
 "war6_median": -0.37,
 "p_star_median": 0.001
@@ -43,8 +43,8 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 182,
-"surplus_mm_median": 4.1,
+"n": 179,
+"surplus_mm_median": 4.2,
 "war6_median": 1.04,
 "p_star_median": 0.004
 }
@@ -63,8 +63,8 @@
 "star_odds": 0.0001
 },
 "live": {
-"n": 110,
-"surplus_mm_median": 11.5,
+"n": 111,
+"surplus_mm_median": 12.1,
 "war6_median": 1.93,
 "p_star_median": 0.006
 }
@@ -83,8 +83,8 @@
 "star_odds": 0.0006
 },
 "live": {
-"n": 31,
-"surplus_mm_median": 22.0,
+"n": 32,
+"surplus_mm_median": 26.5,
 "war6_median": 3.49,
 "p_star_median": 0.011
 }
@@ -104,9 +104,9 @@
 },
 "live": {
 "n": 37,
-"surplus_mm_median": 39.4,
-"war6_median": 4.43,
-"p_star_median": 0.016
+"surplus_mm_median": 42.2,
+"war6_median": 4.65,
+"p_star_median": 0.017
 }
 },
 "50": {
@@ -123,9 +123,9 @@
 "star_odds": 0.007
 },
 "live": {
-"n": 37,
-"surplus_mm_median": 52.3,
-"war6_median": 5.41,
+"n": 36,
+"surplus_mm_median": 53.6,
+"war6_median": 5.42,
 "p_star_median": 0.022
 }
 },
@@ -144,7 +144,7 @@
 },
 "live": {
 "n": 10,
-"surplus_mm_median": 77.2,
+"surplus_mm_median": 80.4,
 "war6_median": 8.16,
 "p_star_median": 0.06
 }

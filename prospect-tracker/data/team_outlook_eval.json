@@ -1,14 +1,14 @@
 {
- "generated_at": "2026-10-03",
+ "generated_at": "2026-10-04",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 940.7,
-  "remainder_recenter_wins_per_team": 0.06,
-  "roster_war_sum_y1": 940.7,
+  "roster_war_sum": 954.1,
+  "remainder_recenter_wins_per_team": -0.38,
+  "roster_war_sum_y1": 954.1,
   "league_war_benchmark": 1000,
   "benchmark_basis": "a league WAR pool of 1000 per season: bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily), and the projections' training label since the 2026-10 epoch, published fWAR, fixes its own league pool at 1000 per season by construction (57/43 split)",
-  "raw_wins_sum": 2371.8,
-  "raw_wins_sum_y1": 2371.8,
+  "raw_wins_sum": 2385.0,
+  "raw_wins_sum_y1": 2385.0,
   "target_wins_sum": 2430,
   "depth_pool": {
    "n_depth_players": 437,
@@ -21,33 +21,33 @@
   "by_season": [
    {
     "season": 2027,
-    "roster_war_sum": 940.7,
-    "wins_sum": 2429.9,
-    "remainder_recenter_wins_per_team": 0.06
+    "roster_war_sum": 954.1,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": -0.38
    },
    {
     "season": 2028,
-    "roster_war_sum": 646.5,
-    "wins_sum": 2430.1,
-    "remainder_recenter_wins_per_team": 10.3
+    "roster_war_sum": 660.4,
+    "wins_sum": 2430.0,
+    "remainder_recenter_wins_per_team": 9.83
    },
    {
     "season": 2029,
-    "roster_war_sum": 509.3,
-    "wins_sum": 2430.1,
-    "remainder_recenter_wins_per_team": 15.01
+    "roster_war_sum": 515.4,
+    "wins_sum": 2429.9,
+    "remainder_recenter_wins_per_team": 14.8
    },
    {
     "season": 2030,
-    "roster_war_sum": 404.4,
-    "wins_sum": 2429.9,
-    "remainder_recenter_wins_per_team": 18.68
+    "roster_war_sum": 409.5,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 18.51
    },
    {
     "season": 2031,
-    "roster_war_sum": 307.0,
-    "wins_sum": 2429.9,
-    "remainder_recenter_wins_per_team": 22.15
+    "roster_war_sum": 310.3,
+    "wins_sum": 2430.0,
+    "remainder_recenter_wins_per_team": 22.05
    }
   ],
   "coverage_decomposition_2025": {
@@ -316,9 +316,9 @@
    2027.86,
    2029.37
   ],
-  "align_median": 0.04,
+  "align_median": 0.02,
   "align_range": [
-   -0.68,
+   -0.67,
    1.12
   ],
   "aligned_org_count": 13,
