@@ -185,6 +185,11 @@
       if (on) b.classList.add("active"); else b.classList.remove("active");
       b.setAttribute("aria-selected", on ? "true" : "false");
     });
+    // the panel is named by the tab that shows it (QCLA19; the shell sets the ids)
+    try {
+      var panel = el("mgmt-section"), tab = el("mgmt-tab-" + state.section);
+      if (panel && tab && panel.setAttribute) panel.setAttribute("aria-labelledby", "mgmt-tab-" + state.section);
+    } catch (e) { /* optional */ }
   }
 
   // ---- shard schema 2 (mgmt_shards.py): the one reader ---------------------
@@ -344,7 +349,7 @@
     // 2026-09-11). The swing-weighted break-even explainer and the third-out
     // note are not drawn: the first belongs to the steal_break_even glossary
     // entry, and the second describes two-out attempts, which are excluded.
-    return '<section class="mgmt-block">' +
+    return '<section class="mgmt-block"><h2>The running game</h2>' +
       '<p class="mgmt-lede">' + esc(h.sentence) + "</p>" + vintageLine(r.vintage) +
       '<div class="mgmt-cards">' + cards + "</div>" +
       '<p class="mgmt-note">' + esc(h.games) + " games: net " +
@@ -660,7 +665,7 @@
     var rp = d.removed_pitcher || {};
     var sw = d.switch_classification || {};
     var base = d.baseline || {};
-    return '<section class="mgmt-block">' +
+    return '<section class="mgmt-block"><h2>League census</h2>' +
       '<p class="mgmt-lede">' + esc(d.realized_sentence) + "</p>" +
       '<p class="mgmt-agent">' + esc(d.agent_sentence) + "</p>" +
       '<div class="mgmt-controls">' + sel("mgmt-cseason", opts, "Season") +
@@ -1124,7 +1129,7 @@
   function renderDecisions() {
     var d = DATA.decisions;
     if (!d || !d.live || !ensureClubSeason()) return ledgerDark("Decisions");
-    var out = '<section class="mgmt-block">' +
+    var out = '<section class="mgmt-block"><h2>Decisions: ' + esc(state.team) + " " + esc(state.cseason) + "</h2>" +
       '<p class="mgmt-lede">' + esc(d.realized_sentence) + "</p>" +
       '<p class="mgmt-agent">' + esc(d.agent_sentence) + "</p>" + controls(true);
     var sh = loadShard();

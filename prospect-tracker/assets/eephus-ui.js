@@ -1476,8 +1476,74 @@
     else boot();
   });
 
+  // ===========================================================================
+  // Tab strips (audit QCLA19). One key handler for every [role=tablist] on the
+  // site: ArrowLeft and ArrowRight move focus to the previous or next tab
+  // (wrapping), Home and End to the first and last. Activation stays manual:
+  // Enter or Space clicks the focused tab, which the module's own handler
+  // already serves, so a key press alone never fetches or re-renders.
+  //
+  // wireTablist(list) also ties a strip to its panel when the template did not:
+  // if no tab in the strip names aria-controls and the element right after the
+  // strip has an id (the .mlbstats-section mount on every module shell), that
+  // element becomes role=tabpanel, each tab gets an id and aria-controls, and
+  // the panel's aria-labelledby follows whichever tab is aria-selected. A strip
+  // whose template already wires its panels is left alone.
+  //
+  // PUBLIC ENTRY POINT, kept stable for modules that build a strip at run time
+  // (assets/awards.js): window.EephusUI.wireTablist(listElement). The key
+  // handler is delegated on document and needs no call; the boot below wires
+  // every strip present in the page markup.
+  // ===========================================================================
+  function tabsOf(list) {
+    return qsa('[role="tab"]', list).filter(function (t) {
+      return !t.disabled && !t.hidden && t.getAttribute("aria-disabled") !== "true";
+    });
+  }
+  function wireTablist(list) {
+    if (!list || list.getAttribute("data-tabs-wired") === "1") return;
+    list.setAttribute("data-tabs-wired", "1");
+    var tabs = qsa('[role="tab"]', list);
+    var panel = list.nextElementSibling;
+    if (!tabs.length || !panel || !panel.id) return;
+    if (tabs.some(function (t) { return t.hasAttribute("aria-controls"); })) return;
+    tabs.forEach(function (t, i) {
+      if (!t.id) t.id = panel.id + "-tab-" + i;
+      t.setAttribute("aria-controls", panel.id);
+    });
+    if (!panel.getAttribute("role")) panel.setAttribute("role", "tabpanel");
+    function label() {
+      var on = tabs.filter(function (t) { return t.getAttribute("aria-selected") === "true"; })[0] || tabs[0];
+      panel.setAttribute("aria-labelledby", on.id);
+    }
+    label();
+    try {
+      var mo = new MutationObserver(label);
+      tabs.forEach(function (t) { mo.observe(t, { attributes: true, attributeFilter: ["aria-selected"] }); });
+    } catch (e) { /* the label set at load stands */ }
+  }
+  document.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k !== "ArrowLeft" && k !== "ArrowRight" && k !== "Home" && k !== "End") return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    var tab = e.target && e.target.closest ? e.target.closest('[role="tab"]') : null;
+    var list = tab && tab.closest('[role="tablist"]');
+    if (!list) return;
+    var tabs = tabsOf(list), i = tabs.indexOf(tab);
+    if (!tabs.length) return;
+    var j = k === "Home" ? 0 : k === "End" ? tabs.length - 1
+      : (i + (k === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    e.preventDefault();
+    tabs[j].focus();
+    if (tabs[j].scrollIntoView) { try { tabs[j].scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (err) { /* optional */ } }
+  });
+  function wireAllTablists() { qsa('[role="tablist"]').forEach(wireTablist); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wireAllTablists, { once: true });
+  else wireAllTablists();
+
   // Public surface used by PROSPX hooks + onboarding refresh.
   window.EephusUI = {
+    wireTablist: wireTablist,
     mountForum: mountForum,
     openAuthModal: openAuthModal,
     openOnboarding: openOnboarding,
