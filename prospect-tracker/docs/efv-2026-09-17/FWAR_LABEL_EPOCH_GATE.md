@@ -1280,6 +1280,49 @@ the LABEL FREEZE RECEIPT here.
 
 ---
 
+### 2026-10-04: the owed P5 re-derivation of eFV v2's DS-08 assembly
+
+This entry records a refit owed by the epoch's served restamp. It reports no accuracy
+measurement. Clause (l) binds every line: it describes a refit on a new label and draws no
+accuracy conclusion from the basis.
+
+**Why it was owed.** The step Z entry restamped the served artifacts on the frozen label, but
+eFV v2's DS-08 assembly (`data/efv_v2_assembly.json`, the 2026-09-25 build at `db21d3d0`, sha256
+`422fc5439253ad13d867320b00b634a178e62a8b291025326056377d6d4436ec`) stayed on the eWAR v2 label
+while `SERVE_EFV_V2` is on and `efv_v2_serve.production_models()` loads it. Owner question
+B7-P5, answered 2026-10-04 with the recommended option A under the owner's standing
+instruction: re-fit it once.
+
+**The run.** `python tools/efv_v2_assemble.py`, once, from HEAD `487fb38e` on 2026-10-04
+(rc 0, 45 s, generated_at 2026-10-04T11:45:03Z), by POST_EPOCH_REBUILD before its merges. Label:
+`fwar@2026-10-02-0341299c20ec` (provider fwar, RESOLVED_THROUGH 2026). Frame: the lifted F-LV
+frame of EFV3_B3 (`bfb73531`): hitters read the MiLB block from 2005, pitchers stay at the served
+2014 floor (withheld). The guards ran first; no list vintage 2020 or 2021 and no 2025+ debut
+cohort was read.
+
+**The weights, before and after.**
+
+| side | w_skill | w_time | rule rows |
+|---|---|---|---|
+| hit | 0.599508 to 0.908861 | 0.012287 to 0.202573 | 1,330 to 1,429 |
+| pit | 1.0 to 1.0 | 0.107279 to 0.020473 | 1,038 to 1,158 |
+
+The rule read list and matrix years 2011 to 2016 only, as before. Admitted over all development
+vintages: before, hitters contact, tool_hit, milb_absent and nov_add, pitchers k_rel and nov_add;
+after, hitters contact, is_college, milb_absent and nov_add, pitchers k_rel. Twenty arms and two
+probes, the same count as before; `data/xfv_arm_ledger.json` was re-counted in the same commit.
+
+**The artifact.** `data/efv_v2_assembly.json` sha256
+`35fe32c7a5448e8186259a8e4551be6f148d2f8346aa2016a40fb72f6afd2823`.
+
+**Owed.** The assembler's documented procedure does not re-run DS-16, so DS-16's one re-run on
+the frozen label (`tools/efv_v2_dev_read.py --ds16`, `data/efv_v2_dev_eval.json`) is owed, and
+`docs/efv-v2/EFV_V2_GATE.md` s4.3 and s4.6 are re-taken at its registration (P4). The served move
+is eFV v2's grade at the post-epoch landing rebuild. The registered screen EFV3_B7 and the
+model-class screen EFV3_C03 read this assembly.
+
+---
+
 Nothing in this document was measured against an fWAR-labelled fit. Every number above is
 either a label-only descriptive taken from the planning lanes of 2026-09-11, tagged with its
 lane, or a read of the repository on 2026-09-17, tagged with the file it was read from, with

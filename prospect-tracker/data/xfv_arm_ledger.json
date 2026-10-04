@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-04T09:30:07+00:00",
+ "generated_at": "2026-10-04T11:45:44+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
  "n_arms": 392,
  "by_lane": {
@@ -16,8 +16,8 @@
  "by_verdict": {
   "NULL": 312,
   "NO_STORED_VERDICT": 48,
-  "REFUSED": 23,
-  "ADMITTED": 9
+  "REFUSED": 24,
+  "ADMITTED": 8
  },
  "n_without_stored_verdict": 48,
  "sweeps": [
@@ -863,16 +863,20 @@
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
+    "2011": 1,
+    "2012": 1,
+    "2013": 1,
+    "2014": 1,
     "2015": 1,
     "2016": 1,
     "2017": 1,
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 1.2002,
-   "n_valid_vintages": 5,
+   "mean_abs_t": 1.6839,
+   "n_valid_vintages": 9,
    "admitted": true,
    "head": "skill",
    "reason": "sign held in every training vintage and mean |t| cleared"
@@ -881,24 +885,25 @@
    "lane": "V2 assembly admission (list vintages)",
    "artifact": "efv_v2_assembly.json",
    "arm": "V2-LV:hit.skill.is_college",
-   "verdict": "REFUSED",
+   "verdict": "ADMITTED",
    "delta_rho": null,
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
-    "2015": -1,
+    "2014": 1,
+    "2015": 1,
     "2016": 1,
     "2017": 1,
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 1.2228,
-   "n_valid_vintages": 5,
-   "admitted": false,
+   "mean_abs_t": 1.6099,
+   "n_valid_vintages": 6,
+   "admitted": true,
    "head": "skill",
-   "reason": "sign flipped between training vintages"
+   "reason": "sign held in every training vintage and mean |t| cleared"
   },
   {
    "lane": "V2 assembly admission (list vintages)",
@@ -909,16 +914,20 @@
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
+    "2011": -1,
+    "2012": -1,
+    "2013": -1,
+    "2014": 1,
     "2015": 1,
     "2016": -1,
     "2017": -1,
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 0.4301,
-   "n_valid_vintages": 5,
+   "mean_abs_t": 1.157,
+   "n_valid_vintages": 9,
    "admitted": false,
    "head": "skill",
    "reason": "sign flipped between training vintages"
@@ -932,16 +941,20 @@
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
+    "2011": 1,
+    "2012": 1,
+    "2013": 1,
+    "2014": 1,
     "2015": 1,
     "2016": 1,
     "2017": 1,
     "2018": -1,
     "2019": 1
    },
-   "mean_abs_t": 1.4541,
-   "n_valid_vintages": 5,
+   "mean_abs_t": 1.3943,
+   "n_valid_vintages": 9,
    "admitted": false,
    "head": "skill",
    "reason": "sign flipped between training vintages"
@@ -955,7 +968,7 @@
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {},
    "mean_abs_t": null,
    "n_valid_vintages": 0,
@@ -967,24 +980,28 @@
    "lane": "V2 assembly admission (list vintages)",
    "artifact": "efv_v2_assembly.json",
    "arm": "V2-LV:hit.skill.tool_hit",
-   "verdict": "ADMITTED",
+   "verdict": "REFUSED",
    "delta_rho": null,
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
+    "2011": -1,
+    "2012": 1,
+    "2013": 1,
+    "2014": 1,
     "2015": 1,
     "2016": 1,
     "2017": 1,
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 2.6775,
-   "n_valid_vintages": 5,
-   "admitted": true,
+   "mean_abs_t": 1.9272,
+   "n_valid_vintages": 9,
+   "admitted": false,
    "head": "skill",
-   "reason": "sign held in every training vintage and mean |t| cleared"
+   "reason": "sign flipped between training vintages"
   },
   {
    "lane": "V2 assembly admission (list vintages)",
@@ -995,16 +1012,20 @@
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
+    "2011": 1,
+    "2012": 1,
+    "2013": -1,
+    "2014": 1,
     "2015": 1,
     "2016": 1,
     "2017": 1,
     "2018": 1,
     "2019": -1
    },
-   "mean_abs_t": 0.8245,
-   "n_valid_vintages": 5,
+   "mean_abs_t": 0.8914,
+   "n_valid_vintages": 9,
    "admitted": false,
    "head": "skill",
    "reason": "sign flipped between training vintages"
@@ -1018,16 +1039,20 @@
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
+    "2011": 1,
+    "2012": 1,
+    "2013": 1,
+    "2014": -1,
     "2015": -1,
     "2016": -1,
     "2017": -1,
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 0.9901,
-   "n_valid_vintages": 5,
+   "mean_abs_t": 0.9278,
+   "n_valid_vintages": 9,
    "admitted": false,
    "head": "timing",
    "reason": "sign flipped between training vintages"
@@ -1041,16 +1066,20 @@
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
+    "2011": 1,
+    "2012": 1,
+    "2013": 1,
+    "2014": 1,
     "2015": 1,
     "2016": 1,
     "2017": -1,
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 3.7718,
-   "n_valid_vintages": 5,
+   "mean_abs_t": 4.3792,
+   "n_valid_vintages": 9,
    "admitted": false,
    "head": "timing",
    "reason": "sign flipped between training vintages"
@@ -1064,16 +1093,20 @@
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
+    "2011": -1,
+    "2012": -1,
+    "2013": -1,
+    "2014": -1,
     "2015": -1,
     "2016": -1,
     "2017": -1,
     "2018": -1,
     "2019": -1
    },
-   "mean_abs_t": 1.7217,
-   "n_valid_vintages": 5,
+   "mean_abs_t": 1.9205,
+   "n_valid_vintages": 9,
    "admitted": true,
    "head": "timing",
    "reason": "sign held in every training vintage and mean |t| cleared"
@@ -1087,7 +1120,7 @@
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
     "2011": 1,
     "2012": 1,
@@ -1099,7 +1132,7 @@
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 2.3871,
+   "mean_abs_t": 2.4807,
    "n_valid_vintages": 9,
    "admitted": true,
    "head": "timing",
@@ -1114,7 +1147,7 @@
    "side": "hit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
     "2011": 1,
     "2012": 1,
@@ -1126,7 +1159,7 @@
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 2.3164,
+   "mean_abs_t": 2.3237,
    "n_valid_vintages": 9,
    "admitted": false,
    "head": "timing",
@@ -1141,17 +1174,17 @@
    "side": "pit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
     "2017": -1,
     "2018": -1,
     "2019": -1
    },
-   "mean_abs_t": 0.1812,
+   "mean_abs_t": 0.2412,
    "n_valid_vintages": 3,
    "admitted": false,
    "head": "skill",
-   "reason": "mean |t| 0.181 below 1.0"
+   "reason": "mean |t| 0.241 below 1.0"
   },
   {
    "lane": "V2 assembly admission (list vintages)",
@@ -1162,7 +1195,7 @@
    "side": "pit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
     "2015": 1,
     "2016": 1,
@@ -1170,7 +1203,7 @@
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 1.4152,
+   "mean_abs_t": 1.3917,
    "n_valid_vintages": 5,
    "admitted": true,
    "head": "skill",
@@ -1185,7 +1218,7 @@
    "side": "pit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {},
    "mean_abs_t": null,
    "n_valid_vintages": 0,
@@ -1202,15 +1235,15 @@
    "side": "pit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
     "2015": -1,
     "2016": -1,
-    "2017": -1,
+    "2017": 1,
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 1.0638,
+   "mean_abs_t": 0.9899,
    "n_valid_vintages": 5,
    "admitted": false,
    "head": "timing",
@@ -1225,7 +1258,7 @@
    "side": "pit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
     "2015": 1,
     "2016": -1,
@@ -1233,7 +1266,7 @@
     "2018": -1,
     "2019": 1
    },
-   "mean_abs_t": 3.2138,
+   "mean_abs_t": 3.4016,
    "n_valid_vintages": 5,
    "admitted": false,
    "head": "timing",
@@ -1248,15 +1281,15 @@
    "side": "pit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
     "2015": -1,
     "2016": 1,
-    "2017": 1,
+    "2017": -1,
     "2018": -1,
     "2019": -1
    },
-   "mean_abs_t": 1.371,
+   "mean_abs_t": 1.1391,
    "n_valid_vintages": 5,
    "admitted": false,
    "head": "timing",
@@ -1266,27 +1299,27 @@
    "lane": "V2 assembly admission (list vintages)",
    "artifact": "efv_v2_assembly.json",
    "arm": "V2-LV:pit.timing.nov_add",
-   "verdict": "ADMITTED",
+   "verdict": "REFUSED",
    "delta_rho": null,
    "side": "pit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
     "2012": 1,
     "2013": 1,
     "2014": 1,
     "2015": 1,
     "2016": 1,
-    "2017": 1,
+    "2017": -1,
     "2018": 1,
     "2019": 1
    },
-   "mean_abs_t": 2.1478,
+   "mean_abs_t": 2.2742,
    "n_valid_vintages": 8,
-   "admitted": true,
+   "admitted": false,
    "head": "timing",
-   "reason": "sign held in every training vintage and mean |t| cleared"
+   "reason": "sign flipped between training vintages"
   },
   {
    "lane": "V2 assembly admission (list vintages)",
@@ -1297,7 +1330,7 @@
    "side": "pit",
    "floor_rho": null,
    "cleared_own_floor": null,
-   "generated_at": "2026-09-25T20:29:12+00:00",
+   "generated_at": "2026-10-04T11:45:03+00:00",
    "per_vintage_signs": {
     "2012": 1,
     "2013": 1,
@@ -1308,7 +1341,7 @@
     "2018": -1,
     "2019": -1
    },
-   "mean_abs_t": 2.8474,
+   "mean_abs_t": 2.8932,
    "n_valid_vintages": 8,
    "admitted": false,
    "head": "timing",
@@ -5011,14 +5044,14 @@
    "artifact": "efv_v2_assembly.json",
    "probe": "DS-08:hit.combiner_rule",
    "verdict": "OK",
-   "generated_at": "2026-09-25T20:29:12+00:00"
+   "generated_at": "2026-10-04T11:45:03+00:00"
   },
   {
    "lane": "combiner rule reads (DS-08)",
    "artifact": "efv_v2_assembly.json",
    "probe": "DS-08:pit.combiner_rule",
    "verdict": "OK",
-   "generated_at": "2026-09-25T20:29:12+00:00"
+   "generated_at": "2026-10-04T11:45:03+00:00"
   },
   {
    "lane": "served overlay grades (DS-11)",
