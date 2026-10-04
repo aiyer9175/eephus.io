@@ -8,9 +8,10 @@
 The History table printed rows.slice(0, 400) of a season-descending list with
 no count and no season control. On the 2026-09-23 artifact that hid 372 of 772
 rows: all 236 from 2023, the 136 lowest-paid of 2024, and 254 of the 282 MLBTR
-figures the Model tab's Swartz tile rests on. Now every row renders under a
-season filter, and a count line says how many rows show and how many carry an
-MLBTR projection.
+figures the Model tab's Swartz tile rests on. Now every row is reachable under
+a season filter, and a count line says how many rows show and how many carry an
+MLBTR projection. Since 2026-10-03 the table paints 100 rows at a time like the
+board; Show all reaches the rest.
 """
 from __future__ import annotations
 
@@ -47,13 +48,23 @@ def test_history_renders_every_row_and_filters_by_season():
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto(base + "arbitration/#history", wait_until="networkidle", timeout=60_000)
             page.wait_for_selector("#arb-panel-history tbody tr", timeout=30_000)
+            first = page.evaluate(_READ)
+            page.eval_on_selector('[data-hmore="all"]', "b => b.click()")
+            page.wait_for_timeout(200)
             full = page.evaluate(_READ)
             page.eval_on_selector(f'[data-hseason="{oldest}"]', "b => b.click()")
             page.wait_for_timeout(200)
+            one_first = page.evaluate(_READ)
+            if n_old > 100:
+                page.eval_on_selector('[data-hmore="all"]', "b => b.click()")
+                page.wait_for_timeout(200)
             one = page.evaluate(_READ)
         finally:
             browser.close()
     assert not errors, errors
+    assert len(first["rows"]) == min(100, len(rows))
+    assert f"Showing {min(100, len(rows))} of {len(rows)}" in first["count"], first["count"]
+    assert len(one_first["rows"]) == min(100, n_old)
     assert len(full["rows"]) == len(rows), (len(full["rows"]), len(rows))
     assert full["chips"] == ["all"] + seasons
     assert f"Showing {len(rows)} of {len(rows)}" in full["count"], full["count"]

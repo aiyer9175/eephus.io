@@ -12,6 +12,10 @@ heads are <th scope=col aria-sort> around native buttons, a name search narrows
 the table without dropping focus, the sort rides the hash, and each name opens
 the player's projections page (or his PROSPX card when he has no projections
 page).
+
+Since 2026-10-03 (QCLP04) the exporter writes each row's link token, so the
+page no longer fetches the 1.9 MB player_links map, and the board paints 100
+rows at a time with Show more and Show all.
 """
 from __future__ import annotations
 
@@ -28,6 +32,9 @@ def server():
         yield base
 
 
+PAGE = 100
+
+
 def _board():
     board = load_data_doc("arbitration.json")
     links = load_data_doc("player_links.json")
@@ -42,6 +49,8 @@ def _fold(s):
 
 
 def _expected_hrefs(board, links):
+    """The identity map's answer for each name, the rule the page applied to
+    player_links before the exporter took it over; the row's token must agree."""
     by = links.get("byMlbam") or {}
     out = {}
     for r in board["rows"]:
@@ -54,6 +63,15 @@ def _expected_hrefs(board, links):
         elif e.get("prospx"):
             out[r["n"]] = "/prospx/#player=" + e["prospx"]
     return out
+
+
+def _token_href(tok):
+    tok = tok or ""
+    if tok.startswith("p:"):
+        return "/projections/#player=" + tok[2:]
+    if tok.startswith("x:"):
+        return "/prospx/#player=" + tok[2:]
+    return None
 
 
 _READ = """() => {
@@ -72,12 +90,13 @@ _READ = """() => {
 }"""
 
 
-def _open(p, url):
+def _open(p, url, fetched=None):
     browser = p.chromium.launch()
     page = browser.new_page(viewport={"width": 1280, "height": 900})
+    if fetched is not None:
+        page.on("request", lambda r: fetched.append(r.url))
     page.goto(url, wait_until="networkidle", timeout=60_000)
     page.wait_for_selector("#arb-panel-projections tbody tr", timeout=30_000)
-    # player_links lands after the first paint; the names upgrade to links then
     page.wait_for_function("() => document.querySelector('#arb-panel-projections tbody td a') !== null",
                            timeout=30_000)
     return browser, page
@@ -88,14 +107,23 @@ def test_names_link_and_heads_carry_aria_sort(server):
     from playwright.sync_api import sync_playwright
     board, links = _board()
     want = _expected_hrefs(board, links)
+    n = len(board["rows"])
+    # the exporter's token agrees with the identity map on every row
+    assert {r["n"]: _token_href(r.get("h")) for r in board["rows"] if r.get("h")} == want
+    fetched = []
     with sync_playwright() as p:
-        browser, page = _open(p, server + "arbitration/")
+        browser, page = _open(p, server + "arbitration/", fetched)
         try:
+            first = page.evaluate(_READ)
+            page.click('[data-amore="all"]')
             got = page.evaluate(_READ)
         finally:
             browser.close()
+    assert not [u for u in fetched if "player_links" in u], "the board fetched the identity map"
+    assert len(first["rows"]) == min(PAGE, n)
+    assert first["count"] == "Showing %d of %d players." % (min(PAGE, n), n)
     rows = got["rows"]
-    assert len(rows) == len(board["rows"])
+    assert len(rows) == n
     linked = {r["name"]: r["href"] for r in rows if r["href"]}
     assert len(linked) == len(want) and len(want) >= 800, (len(linked), len(want))
     for name, href in want.items():
@@ -108,7 +136,7 @@ def test_names_link_and_heads_carry_aria_sort(server):
         assert h["sort"] in ("ascending", "descending", "none")
     assert [h["sort"] for h in sortable if h["sort"] != "none"] == ["descending"]
     assert sortable[-1]["sort"] == "descending"  # total remaining, the default
-    assert got["count"] == "Showing %d of %d players." % (len(rows), len(rows))
+    assert got["count"] == "Showing %d of %d players." % (n, n)
 
 
 def test_keyboard_sort_flips_aria_sort_and_reorders(server):
@@ -167,4 +195,4 @@ def test_sort_hash_restores_and_search_narrows(server):
     assert found["active"] == "arb-q"
     assert found["count"] == "Showing 1 of %d players." % len(board["rows"])
     assert empty
-    assert len(cleared["rows"]) == len(board["rows"])
+    assert len(cleared["rows"]) == min(PAGE, len(board["rows"]))

@@ -4285,18 +4285,17 @@ def _arb_model_panel() -> str:
     if a1:
         tiles.append(tile(
             "%.2fx" % (a1.get("gain_over_floor") or 0), "arb-1 vs its floor",
-            "gain over an intercept-plus-WAR baseline, in multiples of the "
-            "minimum detectable effect",
+            "over an intercept-plus-WAR baseline, in minimum detectable effects",
             "green" if a1.get("resolvable") else "orange"))
     if a2:
         tiles.append(tile(
             "%.2fx" % (a2.get("gain_over_floor") or 0), "arb-2+ vs its floor",
-            "under 1.00 is a NULL against a step multiplier", "orange"))
+            "under 1.00: a NULL against a step multiplier", "orange"))
     if a6.get("n"):
         tiles.append(tile(
             "%.1fx" % (a6.get("ratio_ours_over_swartz") or 0),
             "Swartz is more accurate",
-            "on %d settled seasons with an MLB Trade Rumors projection"
+            "on %d settled seasons with an MLBTR projection"
             % a6["n"], "red"))
     tiles.append(tile(
         pool.get("rows", "-"), "scored player-seasons",
@@ -4427,7 +4426,7 @@ def _arb_model_panel() -> str:
         '<span class="section-sub">pre-registered</span></div>'
         '%s'
         '<div class="section-head"><h2>Downstream gates</h2>'
-        '<span class="section-sub">the salary path built on this model</span></div>'
+        '<span class="section-sub">built on this model</span></div>'
         '%s'
         '<div class="section-head"><h2>Losses</h2></div>'
         '<ul class="arb-losses">%s</ul>'
@@ -4450,11 +4449,10 @@ def build_arbitration() -> str:
         '<div class="fa-app mlbstats-app arb-app">'
         '<div class="section-head section-head--byline"><div class="section-head-titles">'
         + '<h1>' + _masthead_icon("arbitration") + 'Arbitration Predictor ' + _stage_chip("arbitration") + '</h1></div>'
-        '<span class="section-sub">Projected '
+        '<span class="section-sub">Projected and settled '
         + _gl("arb_award_model", "arbitration awards")
-        + ' and the market record against comparables. Arb-1 beats its baseline; '
-        'arb-2+ is a population multiplier because the model did not.</span></div>'
-        '<div id="arb-caveatbar"></div>'
+        + '. Arb 1 is model-priced (it beat its baseline); '
+        'Arb 2+ a step multiplier (the model did not).</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Arbitration sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-arbsection="projections" role="tab" aria-selected="true" aria-controls="arb-panel-projections">Projections</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-arbsection="history" role="tab" aria-selected="false" aria-controls="arb-panel-history">Arbitration History</button>'
@@ -4468,6 +4466,10 @@ def build_arbitration() -> str:
         '<div id="arb-panel-teams" class="mlbstats-section" role="tabpanel" aria-label="Team View" hidden></div>'
         '<div id="arb-panel-model" class="mlbstats-section" role="tabpanel" aria-label="Model" hidden>'
         + _arb_model_panel() + '</div>'
+        # Related modules, linked once (display pass 2026-10-03).
+        '<nav class="arb-related" aria-label="Related modules">Related: '
+        '<a href="/ledger/">Club Ledger</a> &middot; <a href="/franchise/">Franchises</a> &middot; '
+        '<a href="/projections/">Projections</a> &middot; <a href="/trademachine/">Trade Machine</a></nav>'
         '</div>'
         '<script src="/assets/eephus-hub.js?v=' + _HUB_VER + '" defer></script>'
         '<script src="/assets/eephus-teampick.js?v=' + _TEAMPICK_VER + '" defer></script>'
