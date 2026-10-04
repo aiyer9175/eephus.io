@@ -2356,6 +2356,41 @@ def upsert_birth_date(player_key: str, birth_date: str,
             )
 
 
+_BIRTH_DATE_UPDATE_OVERWRITE = (
+    "UPDATE players SET birth_date = ?, updated_at = datetime('now') "
+    "WHERE player_key = ?")
+_BIRTH_DATE_UPDATE_FILL = (
+    "UPDATE players SET birth_date = ?, updated_at = datetime('now') "
+    "WHERE player_key = ? AND (birth_date IS NULL OR birth_date = '')")
+
+
+def upsert_birth_dates(pairs, overwrite: bool = False) -> int:
+    """
+    Batched upsert_birth_date: the same UPDATE (same WHERE, same overwrite
+    semantics, same updated_at stamp) for every (player_key, birth_date)
+    pair, run through executemany on ONE connection and ONE commit.
+
+    `pairs` is a {player_key: birth_date} mapping or an iterable of
+    (player_key, birth_date) tuples. Pairs with an empty birth_date are
+    skipped, exactly as upsert_birth_date returns early on them. Returns the
+    number of player rows the UPDATE touched.
+
+    Why: the monthly resolve step (run_monthly 2a) upserted ~6,600 dates by
+    calling upsert_birth_date per row, and each call opened a connection, ran
+    the five connect() pragmas and committed, which cost about 55 s of the
+    step's 101 s. One connection carries the same rows in under a second.
+    upsert_birth_date stays for single-row callers.
+    """
+    items = pairs.items() if isinstance(pairs, dict) else pairs
+    params = [(bd, key) for key, bd in items if bd]
+    if not params:
+        return 0
+    sql = _BIRTH_DATE_UPDATE_OVERWRITE if overwrite else _BIRTH_DATE_UPDATE_FILL
+    with connect() as con:
+        cur = con.executemany(sql, params)
+        return int(cur.rowcount or 0)
+
+
 def load_birth_dates() -> dict[str, str]:
     """Return {player_key: 'YYYY-MM-DD'} for every player whose DOB we know."""
     try:

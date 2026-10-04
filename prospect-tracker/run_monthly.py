@@ -1101,7 +1101,7 @@ from storage import (
     init_db, insert_snapshots, start_run, finish_run,
     load_all_snapshots, load_statlines, upsert_statlines,
     insert_trades, load_trades,
-    upsert_birth_date, load_birth_dates,
+    upsert_birth_dates, load_birth_dates,
     auto_debut_player,
     upsert_pitch_arsenals, load_pitch_arsenals,
     upsert_zone_metrics, load_zone_metrics, load_zone_metrics_meta,
@@ -4835,8 +4835,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _new = insert_snapshots(snapshots)
                 log.info("inserted %d new snapshot rows", _new)
                 ingest_source_article_drops(out_dir, log)
-                for key, bd in csv_birth_dates.items():
-                    upsert_birth_date(key, bd)
+                upsert_birth_dates(csv_birth_dates)
                 if csv_birth_dates:
                     log.info("upserted %d birth dates from CSV", len(csv_birth_dates))
                 return _new, csv_birth_dates
@@ -4960,9 +4959,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             )
             # overwrite=True because these dates are tied to a freshly-resolved
             # MLBAM ID; any pre-existing date in the DB may correspond to a
-            # previously-cached wrong ID and is now stale.
-            for key, bd in bds_from_index.items():
-                upsert_birth_date(key, bd, overwrite=True)
+            # previously-cached wrong ID and is now stale. One connection and
+            # one commit for the whole batch (perf: the per-row loop cost
+            # about 55 s of this step on a monthly night).
+            upsert_birth_dates(bds_from_index, overwrite=True)
             if bds_from_index:
                 log.info("upserted %d birth dates from PlayerIndex", len(bds_from_index))
             # Persist the RESOLUTION itself, not just what it implied. The ids
