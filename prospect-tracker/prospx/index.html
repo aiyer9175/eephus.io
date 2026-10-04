@@ -61,19 +61,13 @@
        site-wide sharp-corner rule. -->
   <link rel="stylesheet" href="/assets/eephus-account.css?v=b08f8afa">
 
-  <!-- Webfonts: Roboto Mono ONLY. The retro/mono token stacks lead with the
-       Windows MS Gothic faces and fall through to ui-monospace / SF Mono /
-       Menlo / DejaVu; Roboto Mono is the last named rung before generic
-       monospace, so it is the one CDN face that can actually be selected.
-       Inter, JetBrains Mono, Source Serif 4, VT323 and Press Start 2P were
-       still being downloaded here while appearing in NO font-family stack
-       anywhere in the tree (verified by grep: comments only). Six families
-       were racing document.fonts.ready before every GFX capture for nothing.
-       System fallbacks keep the page readable if the CDN is blocked. -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap">
+  <!-- Webfonts: none from a CDN (2026-10-03, bloat finding AS18). The
+       retro/mono token stacks lead with the self-hosted PixelMplus12
+       (@font-face in assets/site.css), then the Windows MS Gothic faces and
+       the system monospace ladder; Roboto Mono is the last named rung, so the
+       render-blocking Google Fonts stylesheet and its two preconnects bought
+       a face that was almost never selected. It still renders where a reader
+       has it installed. -->
 
   <style>
     /* === Baseball card / sportsbook theme ============================
@@ -222,9 +216,10 @@
               common elsewhere) and used directly on the explicitly-
               chrome elements via `--font-retro-mono`.
            3. Osaka - macOS analog of MS UI Gothic.
-           4. Roboto Mono - Google Font fallback for non-Windows /
-              non-Mac platforms; readable monospace with a slight
-              retro feel. Loaded above.
+           4. Roboto Mono - fallback for non-Windows / non-Mac
+              platforms; readable monospace with a slight retro feel.
+              No longer loaded from Google Fonts (2026-10-03), so it
+              renders only where it is installed.
            5. VT323 / Press Start 2P - pixel-art fallbacks for the
               "vintage card" vibe when nothing else is available.
            6. Generic monospace ladder for the bottom of the stack.
@@ -10598,7 +10593,7 @@
 
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
-<script src="/assets/eephus-export.js?v=a6e53989" defer></script>
+<script src="/assets/eephus-export.js?v=552e2152" defer></script>
 <script src="/assets/eephus-csv.js?v=4a00e52b" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
@@ -35349,7 +35344,7 @@ async function _gfxAwaitAssets(el, timeoutMs = 8000) {
     // weights the GFX markup uses so they are guaranteed resolved first.
     if (document.fonts.load) {
       ["700 26px PixelMplus12", "400 12px PixelMplus12",
-       "700 14px 'Roboto Mono'", "400 11px 'Roboto Mono'"].forEach(spec => {
+       "700 14px PixelMplus12", "400 11px PixelMplus12"].forEach(spec => {
         try { jobs.push(Promise.race([document.fonts.load(spec), _to(timeoutMs)]).catch(() => {})); }
         catch (e) { /* an unparseable font shorthand must never block an export */ }
       });
@@ -35402,7 +35397,10 @@ async function _gfxAwaitAssets(el, timeoutMs = 8000) {
 // (window.EephusExport keeps its OWN private html2canvas loader inside its
 // IIFE - it is not exposed - so we replicate the tiny injector here rather
 // than reach into that module.) A failed load is dropped from the cache so
-// the next click can retry after a transient network blip.
+// the next click can retry after a transient network blip. The html2canvas
+// URL is the SAME string eephus-export.js loads (content stamp, 2026-10-03,
+// bloat finding AS19): two spellings were two cache entries, so a reader who
+// exported here and on another module downloaded the 194 KB file twice.
 const _vendorInFlight = {};
 function _ensureVendor(src, ready) {
   if (ready()) return Promise.resolve(true);
@@ -35420,7 +35418,7 @@ function _ensureVendor(src, ready) {
   return _vendorInFlight[src];
 }
 function _ensureHtml2Canvas() {
-  return _ensureVendor("/vendor/html2canvas.min.js?v=20260709",
+  return _ensureVendor("/vendor/html2canvas.min.js?v=d7530aa0",
     () => !!window.html2canvas);
 }
 function _ensureQrcodeLib() {

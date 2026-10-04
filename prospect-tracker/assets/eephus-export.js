@@ -384,11 +384,16 @@
 
   // ---- image export (branded frame, self-contained) ------------------------
   function _dark() { return document.documentElement.getAttribute("data-theme") === "dark"; }
+  // ONE URL for the vendored html2canvas, the same string PROSPX's own loader
+  // uses, so a reader who exports on two surfaces downloads it once. The stamp
+  // is the file's content hash (md5 of its LF bytes, first 8 hex);
+  // test_html2canvas_one_url.py pins both loaders to it.
+  var H2C_URL = "/vendor/html2canvas.min.js?v=d7530aa0";
   function _ensureH2C() {
     if (window.html2canvas) return Promise.resolve(window.html2canvas);
     return new Promise(function (resolve, reject) {
       var s = document.createElement("script");
-      s.src = "/vendor/html2canvas.min.js";
+      s.src = H2C_URL;
       s.onload = function () { resolve(window.html2canvas); };
       s.onerror = reject;
       document.head.appendChild(s);

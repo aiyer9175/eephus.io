@@ -140,6 +140,17 @@ failure ships the commented copy instead of blocking the nightly. The CI
 break-glass path (`EEPHUS_CI_PUBLISH`) does NOT strip - acceptable for an
 emergency publish, the page is just its commented size.
 
+`tools/strip_asset_comments.py` (2026-10-03) runs right after it, on the
+webroot copies of `assets/*.css`, `assets/*.js`, `collegesavant/app.js` and
+`collegesavant/pitcher_app.js` (about 830KB raw of comments at introduction,
+`site.css` alone 40 percent). It reuses the prospx JS tokenizer, adds a CSS
+tokenizer that walks strings and unquoted `url(...)` bodies, and validates
+each file before writing it: JS must compile under `node --check` (node on
+PATH, the `EEPHUS_NODE` override, or V8 through `py_mini_racer`), CSS must
+keep balanced braces and the same rule count. A file that fails keeps its
+commented copy, and with no JavaScript engine every JS file ships whole.
+The `?v=` stamps hash the repo sources, so they do not move.
+
 ## nginx server block (required pieces)
 
 The build script precompresses every text asset (`*.gz` twins, gzip -9).
