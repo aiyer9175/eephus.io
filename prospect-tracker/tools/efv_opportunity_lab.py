@@ -445,16 +445,27 @@ def _basis_sensitivity(side: str, omap: dict) -> dict:
             "rho_fv_war_pair_weighted": _r4(_weighted_spearman(fv, war, w)),
         }
 
+    deb = cell([r for r in rows if r["kind"] == "debuted"])
+    full = cell([r for r in rows if not (r["kind"] == "bust" and r.get("bust_recent"))])
+
+    def gap(c):
+        o, w = c["rho_fv_opportunity_unweighted"], c["rho_fv_war_unweighted"]
+        return None if o is None or w is None else round(o - w, 4)
+
+    # The comparison sentence is DERIVED from the two gaps (2026-10-04). It used to be
+    # typed prose ("far exceeds ... on both pools and both sides"), which stopped being
+    # true of the pitcher debuted pool on the fWAR label re-run.
+    g_deb, g_full = gap(deb), gap(full)
     return {
-        "debuted_PRE_REGISTERED_PRIMARY": cell([r for r in rows if r["kind"] == "debuted"]),
-        "full_modelled_pool": cell([r for r in rows
-                                    if not (r["kind"] == "bust" and r.get("bust_recent"))]),
+        "debuted_PRE_REGISTERED_PRIMARY": deb,
+        "full_modelled_pool": full,
+        "gap_rho_opp_minus_rho_war": {"debuted": g_deb, "full_modelled_pool": g_full},
         "note": "on the full pool the bust rows carry a structural zero on BOTH the "
                 "opportunity and the target, which mechanically raises rho_fv_opportunity: "
                 "the board's ability to tell a never-MLB player from a major leaguer is "
-                "counted as opportunity skill. The qualitative reading is identical on both "
-                "pools and both sides - rho_fv_opportunity far exceeds rho_fv_war - so the "
-                "decomposition does not depend on the choice.",
+                "counted as opportunity skill. On this side rho_fv_opportunity minus "
+                f"rho_fv_war is {g_deb} on the debuted pool and {g_full} on the full pool "
+                "(unweighted).",
     }
 
 
@@ -1125,8 +1136,9 @@ def cmd_dispersion(verbose=True):
         v_mix, _mv_mix = _v(mix_full, mix_comp)
 
         # THE PRE-REGISTERED CONTROL IS INFEASIBLE ON THIS DESIGN, and that is a finding.
-        # `censored` is very nearly a deterministic function of debut cohort: 2011-2020 is
-        # fully resolved, 2021-2024 is censored, with a handful of exceptions. So dropping
+        # `censored` is very nearly a deterministic function of cohort: the older cohorts
+        # are fully resolved, the recent ones censored, with a handful of exceptions (the
+        # ranges are derived below, not typed: they move with RESOLVED_THROUGH). So dropping
         # the censored rows IS dropping the recent cohorts, and the confound the control
         # was written to remove cannot be removed by restriction at all.
         n_mixed_complete = sum(1 for r in rows if r["cohort"] in mixed and not r["censored"])
@@ -1136,6 +1148,9 @@ def cmd_dispersion(verbose=True):
             d[1 if r["censored"] else 0] += 1
         exceptions = sum(min(v) for v in by_cohort.values())
         collinear = exceptions / len(rows) if rows else 0.0
+        res_c = sorted(c for c, v in by_cohort.items() if v[0] > v[1])
+        cen_c = sorted(c for c, v in by_cohort.items() if v[1] >= v[0])
+        span = (lambda cs: f"{cs[0]}-{cs[-1]}" if cs else "none")
 
         synth = _synthetic_censoring(side, rows)
         if synth.get("identified"):
@@ -1174,8 +1189,9 @@ def cmd_dispersion(verbose=True):
                 "censoring_cohort_collinearity": {
                     "minority_kind_rows": exceptions, "n_rows": len(rows),
                     "share": round(collinear, 4),
-                    "statement": "`censored` is a near-deterministic function of debut "
-                                 "cohort: 2011-2020 resolved, 2021-2024 censored. Dropping "
+                    "statement": "`censored` is a near-deterministic function of "
+                                 f"cohort: {span(res_c)} resolved, {span(cen_c)} censored. "
+                                 "Dropping "
                                  "the censored rows IS dropping the recent cohorts, so the "
                                  "confound cannot be removed by restriction and the "
                                  "unrestricted comparison above CANNOT adjudicate the "
