@@ -16,7 +16,8 @@ HONEST BY CONSTRUCTION (PROGRAM.md s5.1):
    named key of a named artifact (data/source_backtest.json,
    data/xfv_scoreboard_eval.json, and for development reads the artifacts in
    DEV_ARTIFACTS: data/efv_v2_dev_eval.json and its `ds16` block,
-   data/efv_overlay_oos_eval.json and data/efv_v2_pbust_eval.json), and the row
+   data/efv_overlay_oos_eval.json and data/efv_v2_pbust_eval.json, and the MC-5
+   pricing read data/efv_v2_pricing_calibration_eval.json), and the row
    stores each artifact's path,
    generated_at and sha256. The only things computed here are a content hash
    and a timestamp.
@@ -149,6 +150,15 @@ GATE_NAME = "efv_v2_gate.json"
 #: The keys of a `matrix` pointer, in this order; nothing else enters one.
 MATRIX_FIELDS = ("artifact", "sha256", "generated_at", "frame_block", "k_family_s",
                  "summary")
+#: EFV3_C05: the MC-5 pricing read (tools/efv_v2_pricing_calibration.py), one development
+#: row per frame, model_id efv_v2_pricing_pos_age, metric "mae". A pricing item, not a rank
+#: item: the row carries no rater and no delta (its order is V2's own, bit for bit), and
+#: its MAE numbers ride in `pricing`, copied from the artifact's frame block.
+PRICING_NAME = "efv_v2_pricing_calibration_eval.json"
+PRICING_FRAMES = ("lv_dev", "vm_dev")
+#: The keys of a `pricing` field, copied in this order from the frame block.
+PRICING_FIELDS = ("mae_base", "mae_position_age", "delta", "ci95", "sd",
+                  "mean_resid_base", "mean_resid_new")
 
 SCHEMA = 1
 MODEL_ID = "efv_v1"
@@ -278,8 +288,10 @@ _HASH_FIELDS = ("frame", "frame_version", "window", "n", "n_by_side", "raters",
                 "deltas", "resolvable", "verdict", "share")
 #: Hashed only when a row carries them (DS-16 development rows; `screening` on the
 #: screening lab's rows; `matrix` on the rows that point at the scoreboard matrix,
-#: so a changed matrix state appends a row and every earlier row keeps its hash).
-_OPTIONAL_HASH_FIELDS = ("statistic", "secondary", "screening", "matrix")
+#: so a changed matrix state appends a row and every earlier row keeps its hash;
+#: `metric` and `pricing` on the MC-5 pricing rows, EFV3_C05).
+_OPTIONAL_HASH_FIELDS = ("statistic", "secondary", "screening", "matrix", "metric",
+                         "pricing")
 
 
 # ---------------------------------------------------------------------------
@@ -680,6 +692,62 @@ def screen_arm_docs(doc: dict | None) -> list[dict]:
     return out
 
 
+def build_pricing_rows(doc: dict | None, *, sources: list[dict], date: str, trigger: str,
+                       now_iso: str) -> list[dict]:
+    """EFV3_C05: one development row per frame of the MC-5 pricing artifact, model_id
+    and note from the artifact, metric "mae", raters and deltas empty (no rank claim:
+    the order is V2's own), the MAE numbers copied into `pricing` with the artifact key
+    each came from. An exploratory artifact, or one that is not a development read,
+    lands no row. Copies only."""
+    if trigger not in TRIGGERS:
+        raise ValueError(f"trigger must be one of {TRIGGERS}, not {trigger!r}")
+    if not doc or doc.get("role") != "development" or doc.get("exploratory"):
+        return []
+    lab = doc.get("label") or {}
+    mv = {"fingerprint": None, "commit": (doc.get("code") or {}).get("commit"),
+          "label": lab.get("id"), "resolved_through": lab.get("resolved_through"),
+          "provider": lab.get("provider")}
+    gen = doc.get("generated_at") or ""
+    rows = []
+    for fid in PRICING_FRAMES:
+        f = (doc.get("frames") or {}).get(fid) or {}
+        if not f.get("n"):
+            continue
+        meta = FRAMES[fid]
+        if meta["role"] != "development":
+            raise ValueError(f"{fid} is not a development frame")
+        pricing = {k: f.get(k) for k in PRICING_FIELDS}
+        pricing["key"] = f"frames.{fid}"
+        nbs = {s: (f.get("n_by_side") or {})[s] for s in STRATA
+               if (f.get("n_by_side") or {}).get(s)} or None
+        row = {"run_id": None, "date": date, "trigger": trigger,
+               "model_id": doc.get("model_id"), "model_version": dict(mv),
+               "frame": fid, "frame_version": f.get("frame_version"),
+               "role": meta["role"], "tilted": bool(meta["tilted"]),
+               "window": f.get("window"), "n": f.get("n"), "n_by_side": nbs,
+               "raters": {}, "deltas": {}, "resolvable": None,
+               "verdict": f.get("verdict"), "share": None,
+               "sources": [dict(s) for s in sources],
+               "note": doc.get("note") or "", "last_verified_at": now_iso,
+               "metric": doc.get("metric"), "pricing": pricing}
+        _finish(row)
+        row["run_id"] = f"{gen}|{fid}|{row['content_hash'][:8]}"
+        rows.append(row)
+    return rows
+
+
+def _pricing_candidates(data_dir: Path, *, date: str, trigger: str,
+                        now_iso: str) -> list[dict]:
+    path = data_dir / PRICING_NAME
+    doc = _load_json(path)
+    if not doc:
+        return []
+    return build_pricing_rows(doc, sources=[{"path": _rel(path),
+                                             "generated_at": doc.get("generated_at"),
+                                             "sha256": _sha256(path)}],
+                              date=date, trigger=trigger, now_iso=now_iso)
+
+
 # ---------------------------------------------------------------------------
 # the ledger
 
@@ -894,11 +962,31 @@ def update(data_dir=None, trigger: str = "nightly", *, out_path=None,
                 frames=fids, raters=rmap, deltas=dmap,
                 statistic_fields=bool(sub) or screening,
                 matrix=mx if sub == DS16_SUBKEY else None, matrix_sha256=mx_sha)
+    cands += _pricing_candidates(data_dir, date=now_dt.date().isoformat(),
+                                 trigger=trigger, now_iso=now_iso)
     if note:
         for c in cands:
             c["note"] = f"{note} {c.get('note') or ''}".strip()
     res = commit_rows(cands, data_dir=data_dir, out_path=out, ledger_path=led,
                       sb=sb, now_iso=now_iso)
+    res["status"] = "ok"
+    return res
+
+
+def update_pricing(data_dir=None, trigger: str = "efv_change", *, out_path=None,
+                   ledger_path=None, now: datetime | None = None) -> dict:
+    """The MC-5 pricing rows alone (EFV3_C05, tools/efv_v2_pricing_calibration.py): build
+    them from the pricing artifact and append what changed, leaving every other frame's
+    candidates to update(). The nightly update() builds the same rows."""
+    data_dir, out, led = _paths(data_dir, out_path, ledger_path)
+    now_dt = now or datetime.now(timezone.utc)
+    now_iso = _now_iso(now_dt)
+    cands = _pricing_candidates(data_dir, date=now_dt.date().isoformat(),
+                                trigger=trigger, now_iso=now_iso)
+    if not cands:
+        return {"appended": [], "status": f"no development rows in {PRICING_NAME}"}
+    res = commit_rows(cands, data_dir=data_dir, out_path=out, ledger_path=led,
+                      sb=_load_json(data_dir / SB_NAME), now_iso=now_iso)
     res["status"] = "ok"
     return res
 

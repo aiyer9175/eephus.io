@@ -556,6 +556,9 @@ _SIDECAR_GLOBS = (
     # history copy, both written by tools/efv_matrix.py.
     "data/efv_matrix_eval.json",
     ".cache/efv_matrix/**/*",
+    # EFV3_C05: the MC-5 pricing read, a development record the progress ledger
+    # copies from (tools/efv_v2_pricing_calibration.py).
+    "data/efv_v2_pricing_calibration_eval.json",
     # M21-4: the Fantasy Rank, its monthly model cache and its backtest.
     "data/fantasy_rank.json",
     "data/fantasy_rank_eval.json",
@@ -933,6 +936,9 @@ _SIDECAR_WRITE_TARGETS = (
     # EFV3_D2: tools/efv_matrix.run and write_artifact resolve both at call time.
     ("tools.efv_matrix", "OUT_PATH", "data/efv_matrix_eval.json"),
     ("tools.efv_matrix", "HISTORY_PATH", ".cache/efv_matrix/history.jsonl"),
+    # EFV3_C05: tools/efv_v2_pricing_calibration.write resolves OUT_PATH at call time.
+    ("tools.efv_v2_pricing_calibration", "OUT_PATH",
+     "data/efv_v2_pricing_calibration_eval.json"),
     # VAL_3 surplus-odds gate: surplus_odds_gate.run writes its one read as a block
     # of its parent artifact through OUT_PATH, resolved at call time.
     ("surplus_odds_gate", "OUT_PATH", "data/surplus_backtest_real.json"),
