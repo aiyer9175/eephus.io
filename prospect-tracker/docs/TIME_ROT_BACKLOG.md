@@ -37,7 +37,7 @@ A fixture dated `N` goes stale on the first day `cutoff > N`, i.e.
 
 | rots on | file:line | fixture | failure mode |
 | --- | --- | --- | --- |
-| ~~2026-12-02~~ REPAIRED 2026-10-04 (TIMEROT_1202) | `test_storage_export.py` `test_extras_present_flag_reflects_data` (was `:114`) | was 2025-06-01, now `_extras_vintages()`: today minus 60 days and 151 days before that | was: `beta` goes inactive, `_player()` returns None, AttributeError at `:123` |
+| ~~2026-12-02~~ REPAIRED 2026-10-04 (TIMEROT_1202, commit cfc77c8f) | `test_storage_export.py` `test_extras_present_flag_reflects_data` (was `:114`) | was 2025-06-01, now `_extras_vintages()`: today minus 60 days and 151 days before that | was: `beta` goes inactive, `_player()` returns None, AttributeError at `:123` |
 | **2027-02-01** | `test_storage_export.py:99` | 2025-07-31 | `alpha` gone, `:109` asserts `p is not None` |
 | **2027-02-01** | `test_storage_export.py:205` | 2025-07-31 | `delta` gone, fails at `:218` |
 | **2027-02-01** | `test_storage_export.py:236` | 2025-07-31 | `eps` gone, fails at `:244` |
