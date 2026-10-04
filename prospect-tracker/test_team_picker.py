@@ -161,7 +161,8 @@ def test_the_club_table_holds_thirty_clubs_and_every_alias():
     alias_to = {a: c for c, r in rows.items() for a in r["aliases"]}
     for a, c in ALIASES.items():
         assert alias_to.get(a) == c, (a, alias_to.get(a), c)
-    assert "https://a.espncdn.com/i/teamlogos/mlb/500/" in _src("assets/eephus-hub.js")
+    # logos come through ESPN's resizing combiner since QCLP05 (2026-10-02)
+    assert "https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/" in _src("assets/eephus-hub.js")
 
 
 def test_the_club_table_agrees_with_the_python_canonicaliser():
@@ -208,7 +209,7 @@ _PANEL = r"""
   const rows = p.querySelectorAll('[role=option]');
   return { listbox: !!p.querySelector('[role=listbox]'), rows: rows.length,
            logos: Array.prototype.filter.call(rows, x => { const i = x.querySelector('img.teampick-logo');
-             return i && i.src.indexOf('https://a.espncdn.com/i/teamlogos/mlb/500/') === 0; }).length,
+             return i && i.src.indexOf('https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/') === 0; }).length,
            glyphs: p.querySelectorAll('.teampick-glyph').length,
            left: r.left, right: r.right, top: r.top, bottom: r.bottom,
            vw: document.documentElement.clientWidth, vh: innerHeight }; }
