@@ -762,7 +762,7 @@ def test_footer_carries_the_diamond_link():
 
 
 def test_homepage_strip_carries_the_static_diamond_card():
-    strip = build_site._cross_module_strip()
+    strip = build_site._xmod_cards_html()
     # PX-06: the card title leads with the i-diamond pixel icon, not the old glyph.
     assert '#i-diamond"' in strip and "</svg>Diamond</span>" in strip
     assert 'href="/diamond/"' in strip

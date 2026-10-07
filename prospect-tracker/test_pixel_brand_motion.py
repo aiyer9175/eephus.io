@@ -142,7 +142,7 @@ def browser_runs():
             if width == 1280:
                 out["hover"], out["leave"] = hover_cycle(page, ".masthead .nameplate")
                 out["sidebar_dot"] = page.evaluate("""() => [
-                    getComputedStyle(document.querySelector('.sb-brand .wm-dot')).fill,
+                    getComputedStyle(document.querySelector('.eephus-nav .wm-dot')).fill,
                     getComputedStyle(document.querySelector('.masthead .wm-dot')).fill]""")
                 page.goto(base + "ledger/index.html", wait_until="load", timeout=30_000)
                 out["nav_load"] = page.evaluate(_RUNNING_JS)
@@ -161,7 +161,8 @@ def browser_runs():
 
 
 def test_hero_shows_one_fragment_per_width(browser_runs):
-    assert browser_runs["shown_1280"] == ["330"]
+    # The homepage masthead is slim (HOME_4): its s 4 lockup at every width.
+    assert browser_runs["shown_1280"] == ["220"]
     assert browser_runs["shown_390"] == ["220"]
 
 
@@ -180,7 +181,8 @@ def test_hover_replays_and_leaving_starts_nothing(browser_runs):
     assert browser_runs["nav_leave"] == []
 
 
-def test_f16_the_sidebar_io_takes_the_logo_accent(browser_runs):
+def test_f16_the_header_io_takes_the_logo_accent(browser_runs):
+    # The homepage carries the shared header since HOME_4 (the sidebar is gone).
     sidebar, hero = browser_runs["sidebar_dot"]
     assert sidebar == hero
 

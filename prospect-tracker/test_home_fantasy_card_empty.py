@@ -7,7 +7,7 @@
 empty.
 
 Census M13-03: the 2026-09-23 build wrote data/fantasy.json with 0 players and
-_cross_module_strip dropped the Fantasy card with no trace, so the home page
+the homepage strip dropped the Fantasy card with no trace, so the home page
 ran without it from 5492801d on and nothing said why. An empty board now
 renders the card with an empty-state row and the artifact date; a missing or
 unreadable file still drops it (there is no date to print)."""
@@ -26,7 +26,8 @@ def _strip_with(monkeypatch, fantasy_payload):
         return real(name)
 
     monkeypatch.setattr(build_site, "_cached_data_json", fake)
-    return build_site._cross_module_strip()
+    # The Fantasy card's rows ride the MLB band's Diamond strip (HOME_4).
+    return build_site._home_diamond_strip(build_site._xmod_cards())
 
 
 def test_empty_board_keeps_the_card_with_its_build_date(monkeypatch):

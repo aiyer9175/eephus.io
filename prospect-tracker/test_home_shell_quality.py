@@ -137,16 +137,17 @@ def test_the_homepage_opens_on_a_skip_link_to_its_main_column():
 def test_the_homepage_has_one_h1_and_named_rail_landmarks():
     h = _home_html()
     assert h.count("<h1") == 1, "the wordmark is the page's one h1; the lead story is an h2"
-    assert '<nav class="sb-nav" aria-label="Modules">' in h
-    assert '<nav class="sb-subnav" aria-label="PROSPX sections">' in h
+    # HOME_4: the module list is the shared header's; the rail is the news.
+    assert '<aside class="home-rail" id="home-rail" aria-label="MLB News">' in h
+    assert '<nav class="band-links" aria-label="PROSPX sections">' in h
     assert ".lead-story h1, .lead-story h2 {" in (ROOT / "assets" / "site.css").read_text(encoding="utf-8")
 
 
-def test_scatter_gold_dots_use_the_gold_ink_token():
+def test_the_scatter_teaser_is_gone_with_its_contrast_finding():
+    # QHOA12 was fixed in the teaser; HOME_4 (LANE_HOME 3.2 row 24) removed it.
     import build_site as B
-    pts = [{"player_key": f"p{i}", "age": 18 + i, "fv_close": 40 + 2 * i} for i in range(10)]
-    svg = B._scatter_teaser(pts)
-    assert "fill:var(--text-gold)" in svg and "fill:var(--accent-gold)" not in svg
+    assert not hasattr(B, "_scatter_teaser")
+    assert 'class="scatter-teaser"' not in _home_html()
 
 
 def test_module_rows_name_their_numbers_for_screen_readers():
@@ -199,7 +200,7 @@ def test_theme_toggles_carry_aria_pressed():
 
 def test_the_model_card_lists_every_verdict_and_counts_registry_rows():
     import build_site as B
-    strip = B._cross_module_strip()
+    strip = B._xmod_cards_html()
     i = strip.index("registry rows by verdict")
     card = strip[strip.rindex('<div class="xmod-card">', 0, i):]
     card = card[:card.index('<div class="xmod-card">', 10)] if card.count('<div class="xmod-card">') > 1 else card
@@ -261,7 +262,7 @@ def test_footer_rail_and_cards_use_one_name_per_destination():
         assert f'<a href="{href}">{B.PAGE_LABELS[href]}</a>' in foot, href
     assert B.PAGE_LABELS["/team/"] == dict((h, lab) for _k, lab, h in B.nav_leaves())["/team/"]
     assert ">About<" not in foot and ">This Day<" not in foot
-    assert "Model Ledger" not in B._cross_module_strip()
+    assert "Model Ledger" not in B._xmod_cards_html()
 
 
 # ---- display pass: ledes stay one line, disclosures fold, nothing is lost ---

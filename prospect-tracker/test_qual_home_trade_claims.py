@@ -112,7 +112,7 @@ def _fa_strip(monkeypatch, members):
         return real(name)
 
     monkeypatch.setattr(build_site, "_cached_data_json", fake)
-    return build_site._cross_module_strip()
+    return build_site._xmod_cards_html(("fa",))
 
 
 def _fa_keys(strip: str) -> list[str]:
@@ -144,7 +144,7 @@ def test_fa_card_drops_signed_and_exercised_members(monkeypatch):
 def test_served_fa_card_lists_no_off_board_member():
     fa = json.loads((ROOT / "data" / "fa_class.json").read_text(encoding="utf-8"))
     status = {m["key"]: m.get("status") for m in fa.get("members") or []}
-    strip = build_site._cross_module_strip()
+    strip = build_site._xmod_cards_html(("fa",))
     keys = _fa_keys(strip)
     assert keys, "the Free Agency card is missing"
     assert not [k for k in keys if status.get(k) in ("signed", "option_exercised")]

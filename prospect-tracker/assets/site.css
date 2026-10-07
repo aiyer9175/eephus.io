@@ -381,7 +381,8 @@
 [data-theme="dark"] .row-logo,
 [data-theme="dark"] .otd-logo,
 [data-theme="dark"] .teampick-logo,
-[data-theme="dark"] .club-link-logo {
+[data-theme="dark"] .club-link-logo,
+[data-theme="dark"] img.club-logo {
   filter: drop-shadow(0 0 0.5px rgba(255,255,255,.55)) drop-shadow(0 0 1.6px rgba(255,255,255,.32));
 }
 
@@ -766,8 +767,7 @@
 .eephus-nav .eephus-nav-menu a:hover .ico,
 .eephus-nav .eephus-nav-menu a:focus-visible .ico,
 .eephus-nav .eephus-nav-menu a.is-active .ico,
-.sb-nav a:hover .ico, .sb-nav a:focus-visible .ico, .sb-nav a.is-active .ico,
-.sb-subnav a:hover .ico, .sb-subnav a:focus-visible .ico, .sb-subnav a.is-active .ico {
+.band-links a:hover .ico, .band-links a:focus-visible .ico {
   --ico-accent: var(--accent-lilac);
 }
 /* A top-level leaf carries its icon only in the phone drawer (PX-04): the
@@ -777,13 +777,11 @@
 .eephus-nav .eephus-links > a:hover .ico, .eephus-nav .eephus-links > a.is-active .ico { --ico-accent: var(--accent-lilac); }
 /* PX-22: the top-bar control glyphs are 12 px pixel icons. */
 .eephus-nav .eephus-nav-ctrl .ico { display: block; }
-.home-theme-toggle .ico { vertical-align: -2px; margin-right: 6px; }
 /* Site-wide controls (Watchlist, Dark Mode), right-aligned in the primary nav. */
 .eephus-nav .eephus-nav-controls { display: inline-flex; align-items: center; gap: 8px; }
 /* Terminal/Bloomberg treatment: see-through chip + hairline border + MS-Gothic
    label, with an iridescent hairline that lights on hover/focus (and marks the
-   dark-mode toggle's "on" state). Header-only - scoped under .eephus-nav, so the
-   homepage sidebar controls (.home-theme-toggle / .sb-* / .eph-*) are untouched. */
+   dark-mode toggle's "on" state). Header-only - scoped under .eephus-nav. */
 .eephus-nav .eephus-nav-ctrl {
   position: relative;
   display: inline-flex; align-items: center; gap: 6px;
@@ -1045,15 +1043,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 
 /* ===========================================================================
-   HOMEPAGE - sidebar + main editorial portal (newspaper × baseball-card × retro)
+   HOMEPAGE - the shared header, the MLB News rail and two bands (HOME_4)
    =========================================================================== */
-.home-theme-toggle {
-  font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
-  letter-spacing: .05em; text-transform: uppercase; cursor: pointer;
-  background: transparent; color: inherit; border: 1px solid currentColor;
-  padding: 3px 9px; opacity: .85;
-}
-.home-theme-toggle:hover { opacity: 1; }
 /* theme-toggle label: show the action the click will perform (CSS-driven, no JS) */
 [data-theme-toggle] .lbl-light { display: none; }
 [data-theme="dark"] [data-theme-toggle] .lbl-dark { display: none; }
@@ -1126,38 +1117,29 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .home-ticker .ticker-track .tk-name { color: var(--wire-panel-ink); }
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-/* ---- shell grid ---- */
-.home-shell { display: grid; grid-template-columns: 292px minmax(0, 1fr); max-width: 1320px; margin: 0 auto; align-items: start; }
-.home-sidebar {
-  position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto;
-  border-right: 1px solid var(--border); padding: 20px 20px 40px;
-  background: linear-gradient(180deg, var(--bg-secondary), transparent 120px);
+/* ---- shell grid (HOME_4, LANE_HOME 3.1) ----
+   The homepage takes the shared site header; the left column is the MLB News
+   rail, its own sticky scroller above 900 px. The rail's grid area spans both
+   rows, so position: sticky holds it for the whole page. At 900 px and below
+   one column: masthead, the sticky jump bar, the MLB News block, the bands.
+   The jump bar's area spans every row after its own (it sticks for the whole
+   page) while its own 48 px track keeps the rail from sliding under it. */
+.home-shell {
+  display: grid; grid-template-columns: 292px minmax(0, 1fr);
+  grid-template-areas: "rail head" "rail main";
+  max-width: 1320px; margin: 0 auto; align-items: start;
 }
-.home-main { min-width: 0; padding: 0 30px 56px; }
-
-/* sidebar brand + search + nav */
-.sb-brand { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-/* Homepage drawer hamburger (markup lives in index.html's .sb-brand). Hidden
-   on desktop; the <=900px block below shows it and collapses the sidebar. */
-.home-nav-toggle { display: none; }
-/* Sidebar brand = the pixel wordmark (the s 2 lockup, as in the nav). */
-.sb-brand .wm { font-family: var(--font-retro-mono); font-weight: 700; font-size: 20px; letter-spacing: .03em; color: var(--text-primary); text-decoration: none; }
-.sb-search { width: 100%; font-family: var(--font-retro); font-size: 13px; padding: 8px 10px; margin-bottom: 18px;
-  background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); }
-.sb-search::placeholder { color: var(--text-tertiary); }
+.home-head { grid-area: head; min-width: 0; padding: 0 30px; }
+.home-jump { display: none; }
+.home-rail {
+  grid-area: rail; position: sticky; top: 0; align-self: start;
+  max-height: 100vh; overflow-y: auto; box-sizing: border-box;
+  border-right: 1px solid var(--border); padding: 16px 16px 24px;
+}
+.home-main { grid-area: main; min-width: 0; padding: 0 30px 56px; }
 .sb-group { margin-bottom: 20px; }
 /* The PROSPX ball badge (prospx_ball_logo, 40 px and up only since PX-05). */
 .px-ball { flex: none; }
-.sb-group-label--lockup { display: flex; align-items: center; gap: 6px; }
-/* Module icons in the sidebar nav: a 16 px pixel icon (PX-05) in a fixed
-   16 px slot, tertiary ink at rest and primary on hover or the current page. */
-.sb-ico {
-  width: 16px; flex: none; text-align: center;
-  font-family: var(--font-retro-mono); font-size: 13px;
-  color: var(--text-tertiary);
-}
-.sb-nav a:hover .sb-ico, .sb-nav a.is-active .sb-ico { color: var(--text-primary); }
-.sb-ico .ico { display: block; }
 /* DELETED 2026-08-05: .mod-stage, the superscript alpha/beta marker meant to sit
    beside module names in the navs. It was never emitted; the lifecycle state
    ships as the bordered .eephus-beta chip on the masthead and .h1-stage inside
@@ -1166,29 +1148,93 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* PROSPX masthead stage chip (prospx h1 is a flex lockup). */
 .h1-stage { align-self: center; margin-left: 4px; }
 .sb-group-label { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 8px; padding-bottom: 5px; border-bottom: 1px solid var(--border-light); }
-.sb-nav a, .sb-subnav a {
-  display: flex; align-items: center; gap: 8px; text-decoration: none;
-  font-family: var(--font-retro); color: var(--text-secondary);
-  transition: background .12s, color .12s;
+/* The rail's foot: the full-feed link and the as-of line. */
+.sb-feed .feed-all {
+  display: flex; align-items: center; min-height: 32px; margin-top: 6px;
+  font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  color: var(--wire-mlb-panel); text-decoration: none; border-top: 1px dotted var(--wire-panel-dim);
 }
-.sb-nav a { font-size: 14px; font-weight: 600; padding: 7px 9px; }
-.sb-nav a.is-active { color: var(--text-primary); font-weight: 700; background: var(--bg-tertiary); }
-.sb-nav a:hover, .sb-subnav a:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-/* "MLB Modules" sub-block in the rail: a small subhead with the member modules
-   indented under it (the rail stays expanded; the dropdown is a top-bar form). */
-.sb-subhead {
-  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary);
-  margin: 8px 0 2px; padding: 0 9px;
+.sb-feed .feed-all:hover, .sb-feed .feed-all:focus-visible { text-decoration: underline; }
+.sb-feed .feed-asof { margin: 2px 0 0; font-family: var(--font-retro-mono); font-size: 10px; color: var(--wire-panel-dim); }
+
+/* ---- bands (HOME_4): a masthead with its 32 px mark, h2 and count line over
+   a 2 px rule in the band's family colour, so the news key reads as the band
+   key. HOME_BAND_ORDER in build_site.py sets the order. */
+.home-band { margin-top: 26px; scroll-margin-top: 8px; }
+.home-band--mlb { --band-c: var(--wire-mlb); }
+.home-band--pro { --band-c: var(--wire-pro); }
+.band-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 0 8px; border-bottom: 2px solid var(--band-c);
 }
-.sb-nav a.sb-grouped { margin-left: 10px; }
-.sb-subnav { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
-.sb-subnav a { font-size: 12px; padding: 6px 8px; color: var(--text-secondary); }
-/* Touch devices get larger sidebar tap targets (~40px) without loosening the
-   dense desktop/mouse sidebar. Mouse users keep the compact 7px padding. */
-@media (hover: none) and (pointer: coarse) {
-  .sb-nav a { padding: 11px 9px; }
-  .sb-subnav a { padding: 10px 8px; }
+.band-mark { flex: none; color: var(--band-c); line-height: 0; }
+.band-mark .ico { display: block; }
+.band-titles { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; min-width: 0; }
+.band-head h2 {
+  margin: 0; font-family: var(--font-retro-mono); font-size: 1.5rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-primary);
+}
+.band-count { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-tertiary); }
+/* The Prospects band's PROSPX link row (six sections, then the rest). */
+.band-links {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px;
+  padding: 8px 0; border-bottom: 1px solid var(--border-light);
+  font-family: var(--font-retro); font-size: 12px;
+}
+.band-links > .ico { margin-right: 2px; }
+.band-links-lab { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; color: var(--text-tertiary); margin-right: 6px; }
+.band-links a {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px;
+  color: var(--text-secondary); text-decoration: none;
+}
+.band-links a:hover, .band-links a:focus-visible { background: var(--bg-tertiary); color: var(--text-primary); }
+.band-links-more { position: relative; }
+.band-links-more > summary {
+  cursor: pointer; padding: 4px 7px; color: var(--accent-navy); font-weight: 700; list-style: none;
+}
+.band-links-more > summary::-webkit-details-marker { display: none; }
+.band-links-more > summary::after { content: " +"; }
+.band-links-more[open] > summary::after { content: " -"; }
+.band-links-more[open] .band-links-menu {
+  display: flex; flex-wrap: wrap; gap: 2px 4px; padding: 4px 0 2px;
+}
+.band-links-menu { display: none; }
+/* The 30 club logos, each to its Franchises club view. */
+.club-logos {
+  display: grid; grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 4px;
+  margin: 14px 0 4px; padding: 8px 0; border-bottom: 1px solid var(--border-light);
+}
+.club-logo-link { display: flex; align-items: center; justify-content: center; min-height: 36px; }
+.club-logo-link:hover, .club-logo-link:focus-visible { background: var(--bg-tertiary); }
+.club-logo { width: 28px; height: 28px; object-fit: contain; }
+span.club-logo { display: inline-flex; align-items: center; justify-content: center; font: 700 9px var(--font-retro-mono); color: var(--text-secondary); }
+/* Module cards inside a band: two columns (three in the site strip); an odd
+   last card takes the full row. */
+.band-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.band-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+.band-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.band-grid--3 > :last-child:nth-child(odd) { grid-column: auto; }
+.home-band .module-cols > .home-module:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* The Diamond strip: Fantasy's leaders beside the three Diamond links. */
+.xmod-strip-card { margin-top: 12px; }
+.xmod-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
+.xmod-part-head {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 2px;
+  font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  color: var(--text-primary); text-decoration: none;
+}
+.xmod-part-head:hover { text-decoration: underline; }
+/* A row whose name is a sentence (the latest article): name over its date. */
+.xmod-row--stack { flex-direction: column; align-items: flex-start; gap: 2px; }
+.xmod-row--stack .xmod-name { flex: none; white-space: normal; }
+/* The site strip under the bands: Articles, Model Accountability, Library. */
+.home-site-strip { margin-top: 30px; padding-top: 4px; border-top: 3px double var(--border); }
+/* The Spotlight card in the Prospects band: its caption reads as a module kicker. */
+.spot-module .sb-group { margin: 0; }
+.spot-module .sb-group-label {
+  display: flex; align-items: baseline; border-bottom: 2px solid var(--text-primary);
+  padding: 14px 2px 6px; margin: 26px 0 14px; font-size: 1.15rem; letter-spacing: .06em;
+  color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* sidebar terminal feed */
@@ -1301,6 +1347,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* ---- masthead ---- */
 .masthead { text-align: center; border-bottom: 3px double var(--text-primary); padding: 22px 0 12px; margin-bottom: 4px; }
+/* The homepage masthead is slim (HOME_4: at most 120 px at 1280): the hero's
+   s 4 lockup at every width, chips beside it, the dateline under it. */
+.eephus-home .masthead { padding: 4px 0 0; margin-bottom: 0; }
+.eephus-home .masthead .dateline { margin-top: 4px; padding: 2px 2px; }
+.eephus-home .masthead .eephus-logo { display: flex; justify-content: center; align-items: flex-end; }
 .masthead .nameplate { font-family: var(--font-logo); font-weight: 700; font-size: clamp(2.4rem, 6vw, 4rem); letter-spacing: .04em; line-height: 1; margin: 0; }
 .masthead .eephus-logo { display: inline-flex; align-items: flex-end; gap: 14px; }
 /* β + @eephus_io chips stack beside the wordmark (β on top, X under),
@@ -1378,6 +1429,8 @@ a:focus-visible > .eephus-wordmark-px .wm-bh { animation: wm-drop-h 240ms step-e
   .masthead .eephus-wordmark-px > svg.wm-px:nth-of-type(1) { display: none; }
   .masthead .eephus-wordmark-px > svg.wm-px:nth-of-type(2) { display: block; }
 }
+.eephus-home .masthead .eephus-wordmark-px > svg.wm-px:nth-of-type(1) { display: none; }
+.eephus-home .masthead .eephus-wordmark-px > svg.wm-px:nth-of-type(2) { display: block; }
 /* Dark: the hero keeps its neon glow with the same two colours, moved from
    text-shadow (the pixel lockup has no text to shadow) to drop-shadow. */
 [data-theme="dark"] .masthead .eephus-wordmark-px .wm-px {
@@ -1473,8 +1526,6 @@ a:focus-visible > .eephus-wordmark-px .wm-bh { animation: wm-drop-h 240ms step-e
 .secondary-stories h3 { font-family: var(--font-retro-mono); font-size: 1rem; line-height: 1.2; margin: 6px 0 0; color: var(--text-primary); }
 .secondary-stories a:hover h3 { color: var(--accent-navy); }
 /* single-piece front (one story so far): keep the broadsheet rule, no bare gap */
-.more-soon-strip { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0 14px; border-bottom: 3px double var(--border); font-family: var(--font-retro-mono); font-size: 12px; letter-spacing: .04em; color: var(--text-tertiary); text-transform: uppercase; }
-.more-soon-strip a { color: var(--accent-navy); text-decoration: none; font-weight: 700; }
 
 /* ---- front-page modules grid ---- */
 .module-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px; }
@@ -1533,23 +1584,6 @@ a:focus-visible > .eephus-wordmark-px .wm-bh { animation: wm-drop-h 240ms step-e
 .spotlight .sp-name { font-family: var(--font-retro-mono); font-size: 1.1rem; font-weight: 700; }
 .spotlight .sp-meta { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
 
-/* ---- glossary teaser ---- */
-.glossary-teaser { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px dashed var(--border); background: var(--bg-tertiary); font-family: var(--font-retro-mono); font-size: 13px; }
-.glossary-teaser a { color: var(--accent-navy); font-weight: 700; text-decoration: none; }
-
-/* Glossary + scatterplot teasers share a row. minmax(0,1fr) so the
-   scatter teaser's nowrap sub-line (550px min-content) can't force the
-   track - and the page - past a phone viewport; the ellipsis engages. */
-.teaser-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 18px; }
-.teaser-row .glossary-teaser { margin: 0; }
-.scatter-teaser { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px dashed var(--border); background: var(--bg-tertiary); text-decoration: none; color: inherit; }
-.scatter-teaser .st-svg { flex: none; width: 92px; height: 40px; }
-.scatter-teaser .st-svg svg { width: 92px; height: 40px; display: block; }
-.scatter-teaser .st-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; font-family: var(--font-retro-mono); }
-.scatter-teaser .st-txt strong { font-size: 13px; color: var(--text-primary); }
-.scatter-teaser .st-txt span { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.scatter-teaser .st-go { flex: none; font-family: var(--font-retro); font-size: 12px; font-weight: 700; color: var(--accent-navy); }
-
 /* "This Day in Prospect History" module. */
 .otd-module .otd-row { display: flex; align-items: center; gap: 9px; text-decoration: none; padding: 5px 4px; }
 .otd-module .otd-row:hover { background: var(--bg-tertiary); }
@@ -1592,35 +1626,48 @@ a:focus-visible > .eephus-wordmark-px .wm-bh { animation: wm-drop-h 240ms step-e
 
 /* ---- responsive ---- */
 @media (max-width: 900px) {
-  .home-shell { grid-template-columns: 1fr; }
-  /* Sidebar collapses to a compact brand bar (wordmark + theme + hamburger);
-     search, the module list, and the wire feed all live in the drawer that
-     [data-nav-open] reveals (wired by the small inline script in index.html).
-     Keeps the pre-content chrome to ~100px instead of ~1800px of stacked rail. */
-  .home-sidebar {
-    position: static; max-height: none; border-right: 0;
+  .home-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 48px auto auto;
+    grid-template-areas: "head" "jump" "rail" "main";
+  }
+  .home-head { padding: 0 16px; }
+  /* The jump bar sticks under the page top for the whole page (its grid area
+     runs to the last row); each link is a 44 px target. */
+  .home-jump {
+    display: flex; grid-row: 2 / -1; grid-column: 1; align-self: start;
+    position: sticky; top: 0; z-index: 20; height: 48px; box-sizing: border-box;
+    padding: 2px 16px; gap: 8px; background: var(--bg-primary);
     border-bottom: 1px solid var(--border);
-    padding: 8px 16px;
   }
-  .home-sidebar:not([data-nav-open]) > :not(.sb-brand) { display: none; }
-  .home-sidebar[data-nav-open] { padding-bottom: 28px; }
-  .home-sidebar .sb-brand { margin-bottom: 0; justify-content: flex-start; }
-  .home-sidebar[data-nav-open] .sb-brand { margin-bottom: 14px; }
-  .home-sidebar .sb-brand .home-theme-toggle { margin-left: auto; min-height: 44px; min-width: 44px; }
-  .home-nav-toggle {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 44px; height: 44px; flex: none;
-    font-size: 18px; line-height: 1; cursor: pointer;
-    color: var(--text-primary); background: transparent;
-    border: 1px solid var(--border);
+  .home-jump a {
+    flex: 1; display: flex; align-items: center; justify-content: center; min-height: 44px;
+    font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; text-decoration: none; color: var(--text-primary);
   }
-  .home-sidebar[data-nav-open] .home-nav-toggle { background: var(--bg-tertiary); }
+  .home-jump a[href="#band-mlb"] { box-shadow: inset 0 -2px 0 var(--wire-mlb); }
+  .home-jump a[href="#band-pro"] { box-shadow: inset 0 -2px 0 var(--wire-pro); }
+  .home-rail {
+    grid-area: rail; position: static; max-height: none; overflow: visible;
+    border-right: 0; padding: 12px 16px 4px;
+  }
+  /* The key scrolls sideways in one line; the block shows 6 rows. */
+  .sb-feed .wire-key { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .sb-feed .wire-key::-webkit-scrollbar { display: none; }
+  .sb-feed .wire-key .wire-chip { flex: none; }
+  .sb-feed .wire-more { display: none; }
+  .sb-feed .feed-all { min-height: 44px; }
+  .home-band { scroll-margin-top: 56px; }
   .home-main { padding: 0 16px 40px; }
   .module-cols, .lead-story, .secondary-stories { grid-template-columns: 1fr; }
-  .teaser-row { grid-template-columns: minmax(0, 1fr); }
   .secondary-stories a { border-left: 0; border-top: 1px solid var(--border); }
-  .sb-subnav { grid-template-columns: 1fr 1fr 1fr; }
+  .band-grid, .band-grid--3, .xmod-split { grid-template-columns: minmax(0, 1fr); }
+  .club-logos { grid-template-columns: repeat(10, minmax(0, 1fr)); }
   .row-spark { display: none; }   /* keep the tight mobile row legible */
+}
+@media (max-width: 480px) {
+  .club-logos { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .band-head h2 { font-size: 1.25rem; }
 }
 
 /* ── Accessibility ────────────────────────────────────────────────────────── */
@@ -4025,14 +4072,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .hub-chip.is-active .hub-glyph,
 .hub-chip.is-active .hub-note { color: var(--bg-primary); opacity: .75; }
 
-/* ---- homepage cross-module strip (Across eephus.io) ---- */
-.xmod-strip { margin: 18px 0; }
-.xmod-eyebrow {
-  font-family: var(--font-sans); font-size: 11px; font-weight: 700;
-  letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary);
-  border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;
-}
-.xmod-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+/* ---- homepage module cards (the bands and the site strip place them) ---- */
 .xmod-card { background: var(--bg-secondary); border: 1px solid var(--border); padding: 10px 12px; }
 .xmod-head { display: flex; justify-content: space-between; align-items: center; }
 /* The card title leads with its module's 16 px pixel icon (PX-06). */
@@ -4048,7 +4088,6 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .xmod-name { font-family: var(--font-retro); font-size: 12.5px; font-weight: 600; flex: none; }
 .xmod-sub { font-size: 10.5px; color: var(--text-tertiary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
 .xmod-val { font-family: var(--font-mono); font-size: 12px; font-weight: 700; margin-left: auto; white-space: nowrap; }
-@media (max-width: 900px) { .xmod-grid { grid-template-columns: 1fr; } }
 
 /* FA board row headshots (filled async from the player-links map) */
 .fa-row-photo { display: inline-block; width: 24px; height: 24px; vertical-align: middle; margin-right: 7px; }

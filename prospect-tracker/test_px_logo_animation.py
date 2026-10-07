@@ -272,7 +272,8 @@ def runs():
 
 
 @pytest.mark.parametrize("rm", ["no-preference", "reduce"])
-@pytest.mark.parametrize("width,shown", [(1280, "330"), (390, "220")])
+# The homepage masthead is slim (HOME_4): the s 4 lockup shows at every width.
+@pytest.mark.parametrize("width,shown", [(1280, "220"), (390, "220")])
 def test_hero_animation_name_resolves_to_the_pixel_keyframes(runs, width, shown, rm):
     h = runs[f"hero_{width}_{rm}"]
     assert h["width"] == shown

@@ -228,7 +228,9 @@ def test_the_old_state_markup_is_gone():
 def test_the_homepage_empty_states_are_px_states():
     src = (ROOT / "build_site.py").read_text(encoding="utf-8")
     assert '_px_state("empty", "No recent activity.")' in src
-    assert '_px_state("empty", "<strong>No articles yet</strong>")' in src
+    # HOME_4: the lead runs only on a fresh article, so its "No articles yet"
+    # box went with it; the site strip's Articles card links /articles/.
+    assert '_px_state("empty", "<strong>No articles yet</strong>")' not in src
     box = build_site._px_state("empty", "No recent activity.")
     assert box == ('<div class="px-state is-empty">' + build_site._PX_STATE_ART["empty"]
                    + '<div class="px-state-msg">No recent activity.</div></div>')
