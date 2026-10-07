@@ -420,11 +420,25 @@ def division_champions(records, live: bool) -> dict:
     return out
 
 
+def _split_wl(split) -> list | None:
+    """[wins, losses] of one StatsAPI splitRecords entry, None when absent."""
+    if not split or split.get("wins") is None or split.get("losses") is None:
+        return None
+    return [split.get("wins"), split.get("losses")]
+
+
 def _standings() -> tuple[dict, dict, list]:
     """{code: {season: row}} joined by StatsAPI team id (stable across the
     relocations: 120, 133, 139, 146), plus the census of ids seen, plus the
     [season, code, feed_flag, derived] rows where the feed's divisionChamp
-    differs from division_champions()."""
+    differs from division_champions().
+
+    Each row also carries the league id, MLB's expected record (the
+    `xWinLoss` entry only; `xWinLossSeason` projects the full schedule and
+    never sums to games played) and the one-run and extra-inning records
+    from `splitRecords`, as [wins, losses] or None. This board reads none
+    of them; team_stats_export reads them here so the site keeps one
+    standings parser (plan Part 8, 8.E)."""
     from trades import canonical_org_from_id
     out: dict = defaultdict(dict)
     ids_seen: dict = {}
@@ -447,6 +461,10 @@ def _standings() -> tuple[dict, dict, list]:
                 feed = bool(tr.get("divisionChamp"))
                 if feed != derived:
                     disagreements.append([season, code, feed, derived])
+                recs = tr.get("records") or {}
+                xwl = next((e for e in recs.get("expectedRecords") or []
+                            if e.get("type") == "xWinLoss"), None)
+                splits = {s.get("type"): s for s in recs.get("splitRecords") or []}
                 out[code][season] = {
                     "w": tr.get("wins"), "l": tr.get("losses"), "rs": tr.get("runsScored"),
                     "ra": tr.get("runsAllowed"), "rd": tr.get("runDifferential"),
@@ -454,6 +472,10 @@ def _standings() -> tuple[dict, dict, list]:
                     "gp": tr.get("gamesPlayed"), "pct": tr.get("winningPercentage"),
                     "clinched": bool(tr.get("clinched")), "div_champ": derived,
                     "division_id": div,
+                    "league_id": (rec.get("league") or {}).get("id"),
+                    "xw": (xwl or {}).get("wins"), "xl": (xwl or {}).get("losses"),
+                    "one_run": _split_wl(splits.get("oneRun")),
+                    "extra_inning": _split_wl(splits.get("extraInning")),
                 }
     disagreements.sort(key=lambda r: (r[0], r[1]))
     return dict(out), ids_seen, disagreements

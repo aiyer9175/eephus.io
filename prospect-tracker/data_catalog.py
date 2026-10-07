@@ -403,6 +403,18 @@ ARTIFACTS = (
                  "it by series_ref and never re-pools it."),
     },
     {
+        "file": "mlb_team_stats.json", "group": "mlb",
+        "title": "Team Stats, one season",
+        "what": ("The thirty clubs with the EM+ team rollups on two club bases (club "
+                 "today, copied from the boards; earned, by stint), the record, MLB's "
+                 "expected record, pitch counts with team PAR, lineup depth and the "
+                 "management club tendencies, plus the completed seasons since 2000."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_team_stats_export.py",
+        "note": ("Served once the League and Teams flag is on; until then it is "
+                 "written to a preview directory off the webroot."),
+    },
+    {
         "file": "pal.json", "group": "mlb",
         "title": "Alchemy Lab conversions",
         "what": "Reliever to starter and starter to reliever fits, with pitch-mix change history.",
