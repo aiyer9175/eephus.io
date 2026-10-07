@@ -136,6 +136,11 @@ _FRANCHISE_CSS_VER = _asset_ver("assets/franchise.css")
 # /team/ - the Masthead (TEAM-5, 2026-10-02): the baseball-card staff page.
 _TEAM_VER = _asset_ver("assets/team.js")
 _TEAM_CSS_VER = _asset_ver("assets/team.css")
+# /scores/ - Scores / Standings (SCORES_3, behind scores_core.SCORES_LIVE): the
+# page shell and its two eager assets. The lazy video and bracket chunks
+# (SCORES_4a, SCORES_4b) get their own stamps when they land.
+_SCORES_VER = _asset_ver("assets/scores.js")
+_SCORES_CSS_VER = _asset_ver("assets/scores.css")
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /models/ - the model accountability hub. Client is filter-only: every row,
 # count and date on that page is server-rendered here at build time, so the
@@ -203,7 +208,11 @@ def _data_vers_script(names: tuple[str, ...]) -> str:
 
     A missing file is simply omitted (no stamp, never a crash): the client
     sees no entry for it and falls back to the exact no-cache read it always
-    had. An empty map emits no script tag at all."""
+    had. An empty map emits no script tag at all.
+
+    The scores files (/data/scores/, written by tools/scores_job.py between
+    builds) are refused for the same reason: a build-time stamp would pin a
+    stale scoreboard."""
     stamps: dict[str, str] = {}
     for name in names:
         if name.startswith("betting"):
@@ -211,6 +220,11 @@ def _data_vers_script(names: tuple[str, ...]) -> str:
                 f"{name} is a close-job payload and must never be content-stamped: "
                 "it mutates intra-day without a rebuild, and a build-time stamp "
                 "would serve a week-stale copy under the /data/ max-age.")
+        if name.startswith("scores"):
+            raise ValueError(
+                f"{name} is a scores job payload and must never be content-stamped: "
+                "the job rewrites it between builds, and a build-time stamp would "
+                "pin a stale scoreboard under the /data/ max-age.")
         try:
             stamps[name] = hashlib.md5((ROOT / "data" / name).read_bytes()).hexdigest()[:8]
         except OSError:
@@ -486,7 +500,7 @@ _NAV_ICON = {"glossary": "library"}
 
 ICON_FOR = _merge_icon_maps(
     {k: _NAV_ICON.get(k, k) for k, _label, _href in nav_leaves()},
-    {k: k for k in ("models", "parks", "news", "history", "watchlist")},
+    {k: k for k in ("models", "parks", "news", "history", "watchlist", "scores")},
     _PX_SECTION_ICON,
     _WIRE_ICON,
 )
@@ -748,6 +762,8 @@ MODULE_STAGE = {
     "parks": ("β", "Beta. Display only: no model reads these factors"),
     "management": ("β", "Beta. Realized value only; the gate returned a bounded null for the steal and no family is ranked by skill"),
     "hof": ("β", "Beta. Every unpublished section names its blocker"),
+    # Scores / Standings (SCORES_3, behind scores_core.SCORES_LIVE).
+    "scores": ("β", "Beta. Scores, win probability and video come from MLB; Stars of the Game is a published rule"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
     # slot [0]; the rows above carry the sigil, which STAGE_CHIP_TEXT turns
     # into the chip text. Every row renders through _stage_chip(). Nothing is
@@ -5499,6 +5515,88 @@ def build_ledger() -> str:
                 url=f"{SITE_ORIGIN}/ledger/", image=module_share_image("ledger"))
 
 
+def _scores_module_head(active: str) -> str:
+    """The Scores / Standings masthead (STANDINGS_PLAN 3, the rename): the 32 px
+    icon, the h1 with the stage chip, the sub line and, only once
+    standings_core.STANDINGS_LIVE is True, a two-link strip with aria-current
+    on the page shown. /scores/ calls it with active="scores"; STANDINGS_4
+    reuses it with "standings"."""
+    try:
+        import standings_core
+        strip = bool(getattr(standings_core, "STANDINGS_LIVE", False))
+    except ImportError:
+        strip = False
+    nav = ""
+    if strip:
+        links = []
+        for key, label, href in (("scores", "Scores", "/scores/"), ("standings", "Standings", "/standings/")):
+            cur = ' aria-current="page"' if key == active else ""
+            links.append(f'<a class="mlbstats-sectionbtn{" active" if cur else ""}" href="{href}"{cur}>{label}</a>')
+        nav = f'<nav class="mlbstats-sectionnav" aria-label="Scores / Standings">{"".join(links)}</nav>'
+    return (
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">'
+        f'<h1>{_masthead_icon("scores")}Scores / Standings {_stage_chip("scores")}</h1></div>'
+        '<span class="section-sub">MLB games by date: the score, MLB\'s win probability, the plays that '
+        'moved it with MLB\'s video, box scores, and three stars chosen by a published rule.</span></div>'
+        + nav
+    )
+
+
+def build_scores() -> str:
+    """The /scores/ shell (SCORES_3), a pure reader of /data/scores/.
+
+    BEHIND THE FLAG. main() writes scores/index.html only once
+    scores_core.SCORES_LIVE is True (SCORES_5a, the flip); while it is False
+    write_scores_page() renders this shell into .cache/scores/preview/site/
+    for the render tests and nothing public changes.
+
+    Shell on the build_ledger pattern: the byline section head (through
+    _scores_module_head), one mount root, then the module css, eephus-hub.js,
+    eephus-teampick.js and assets/scores.js, deferred. The shell types no
+    number; every number on the page is read by assets/scores.js from the
+    job's files. No EEPHUS_DATA_VERS: the job rewrites its files between
+    builds (_data_vers_script refuses scores names)."""
+    body = (
+        '<div class="fa-app scores-app">'
+        + _scores_module_head("scores")
+        + '<div id="scores-app-root"></div>'
+        '</div>'
+        f'<link rel="stylesheet" href="/assets/scores.css?v={_SCORES_CSS_VER}">'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
+        f'<script src="/assets/scores.js?v={_SCORES_VER}" defer></script>'
+    )
+    return page("MLB Scores - eephus.io", "scores", body,
+                "MLB scores by date with live win probability from MLB, the biggest plays with MLB's "
+                "video, box scores, lineups and Stars of the Game, chosen by a published rule.",
+                url=f"{SITE_ORIGIN}/scores/")
+
+
+#: Where the shell renders while scores_core.SCORES_LIVE is False (plan 5.1).
+SCORES_PREVIEW_SITE = ROOT / ".cache" / "scores" / "preview" / "site"
+
+
+def write_scores_page(preview_root=None) -> str:
+    """Write the /scores/ shell where the flag allows, and return the path.
+
+    SCORES_LIVE True: the published scores/index.html. False: only the preview
+    copy under preview_root (default SCORES_PREVIEW_SITE), never the published
+    tree. The route is held in a variable so tools/gen_audit_docs.py, which
+    reads the literal _write calls in main(), lists /scores/ only once the flip
+    adds it there (SCORES_5a)."""
+    import scores_core
+    rel = "scores/index.html"
+    if scores_core.SCORES_LIVE:
+        _write(rel, build_scores())
+        return str(ROOT / rel)
+    root = Path(preview_root) if preview_root is not None else SCORES_PREVIEW_SITE
+    path = root / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(build_scores(), encoding="utf-8")
+    print(f"  wrote {path.as_posix()} (preview: scores_core.SCORES_LIVE is False)")
+    return str(path)
+
+
 def build_franchise() -> str:
     """The /franchise/ Franchises module (2026-09-23, D3; named Franchise
     Overview until the owner's TEAM-1 rename on 2026-10-02).
@@ -7444,6 +7542,9 @@ def main() -> None:
     _write("franchise/index.html", build_franchise())
     _write("franchises/index.html", build_franchises_redirect())
     _write("ledger/index.html", build_ledger())
+    # /scores/ ships behind scores_core.SCORES_LIVE: the preview copy only
+    # while it is False (SCORES_3), the published page from the flip (SCORES_5a).
+    write_scores_page()
     _write("models/index.html", build_models())
     _write("glossary/index.html", build_glossary())
     _write("library/index.html", build_library_redirect())
