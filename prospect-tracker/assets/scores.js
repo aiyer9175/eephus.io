@@ -282,15 +282,10 @@
 
   // ---- links
   var LINKS = null;
+  // The one club resolver (EEPHUS_HUB.clubHref / clubLinkHTML, by MLBAM id).
   function clubLink(side) {
-    var hub = window.EEPHUS_HUB, c = null;
-    if (hub && typeof hub.clubHref === "function" && typeof hub.clubLinkHTML === "function") {
-      try { var h = hub.clubLinkHTML(side.team_id, { cls: "sc-club" }); if (h) return h; } catch (e) { /* stopgap below */ }
-    }
-    if (hub && typeof hub.club === "function") c = hub.club(side.team_id);
-    var code = c ? c.code : null;
-    if (!code) return '<span class="sc-club" data-club-nolink="unresolved">' + esc(side.code || side.short || "") + "</span>";
-    return '<a class="sc-club" href="/franchise/#team=' + encodeURIComponent(code) + '">' + esc(code) + "</a>";
+    var hub = window.EEPHUS_HUB, c = hub && hub.club ? hub.club(side.team_id) : null;
+    return c ? hub.clubLinkHTML(c.code) : '<span class="sc-club" data-club-nolink="unresolved">' + esc(side.code || side.short || "") + "</span>";
   }
   function player(id, name) {
     if (LINKS && LINKS.byMlbam && LINKS.byMlbam[String(id)]) {
@@ -391,6 +386,7 @@
         extra.push([c.weather.condition, c.weather.temp ? c.weather.temp + " F" : ""].filter(Boolean).join(", "));
       }
       if (extra.length) out.push('<p class="sc-row sc-dim">' + esc(extra.join(". ")) + "</p>");
+      if (PG && HX) out.push(PG.card(c, ix, HX));
       return out.join("");
     }
     if (c.state === "live" || c.state === "delayed") {
@@ -458,10 +454,10 @@
       '<p class="sc-series">' + series + "</p>" + teamsTable(c) +
       '<div class="sc-body">' + cardBody(c, ix, st) + "</div>";
   }
-  function slotOf(state) {
+  function slotOf(state, type) {
     if (state === "live" || state === "final") return "lf";
     if (state === "delayed") return "lf";
-    if (state === "scheduled" || state === "pregame") return "pre";
+    if (state === "scheduled" || state === "pregame") return type === "R" ? "prer" : "pre";
     return "off";
   }
 
@@ -779,8 +775,12 @@
     return Array.isArray(v) ? v : [];
   }
 
+  // SCORES_6: the pregame chunk and the Diamond check.
+  var PG = window.EephusScoresPregame || null, HX = null;
+  function dmd() { var D = window.EephusDiamond; try { return !!(D && D.gated()); } catch (e) { return false; } }
   function boot(root) {
     var L = makeLoader(function (u, o) { return fetch(u, o); });
+    HX = { esc: esc, labelled: labelled, player: player, now: L.serverNow, gated: dmd };
     var app = { route: parseRoute(location.hash), stale: null, date: null, dateDoc: null, shown: {}, pending: [],
       timer: null, errors: 0, lastFetch: 0, paused: store("eephus.scores.paused") === "1", announceAt: 0, queue: null,
       prev: {}, focusPk: null, game: null };
@@ -854,6 +854,9 @@
       if (Date.now() - app.lastFetch > (POLL_LIVE_S * 1000) && !app.paused) poll();
       else schedule();
     });
+
+    var D = window.EephusDiamond;
+    if (D && D.onEntitlement) D.onEntitlement(function () { if (L.state.latest) refresh(false); });
 
     function bk(el, y, o) {
       app.bk = app.bk || new Promise(function (ok, no) {
@@ -940,7 +943,7 @@
       return true;
     }
     function article(c, gone) {
-      return '<article class="sc-card is-' + c.state + " slot-" + slotOf(c.state) + '" data-pk="' + c.pk + '" data-state="' + c.state + '"' +
+      return '<article class="sc-card is-' + c.state + " slot-" + slotOf(c.state, c.type) + '" data-pk="' + c.pk + '" data-state="' + c.state + '"' +
         (visible(c) ? "" : " hidden") + ">" + cardHTML(c, L.state.index, app.stale, gone) + "</article>";
     }
     function railHTML(doc) {
@@ -987,7 +990,7 @@
           if (!el) return;
           var html = cardHTML(c, L.state.index, app.stale, false);
           if (el._html !== html) {
-            el.className = "sc-card is-" + c.state + " slot-" + slotOf(c.state);
+            el.className = "sc-card is-" + c.state + " slot-" + slotOf(c.state, c.type);
             el.setAttribute("data-state", c.state);
             el.innerHTML = html; el._html = html;
           }
@@ -1003,6 +1006,7 @@
       Array.prototype.forEach.call(grid.querySelectorAll("article"), function (el) {
         if (!el._html) el._html = el.innerHTML;
       });
+      if (PG) PG.note(root);
       app.pending = fresh;
       late.innerHTML = fresh.length ? '<button type="button" class="sc-btn sc-showlate">' + (fresh.length === 1 ? "1 more game on this date. Show it" : fresh.length + " more games on this date. Show them") + "</button>" : "";
       var anyVisible = games.some(visible);
@@ -1084,7 +1088,7 @@
           return '<button type="button" role="tab" class="sc-tab" id="sc-tab-' + t[0] + '" aria-controls="sc-panel" data-tab="' + t[0] + '" aria-selected="' + (t[0] === tab) + '" tabindex="' + (t[0] === tab ? "0" : "-1") + '">' + t[1] + "</button>";
         }).join("") + '</div><div class="sc-panel" id="sc-panel" role="tabpanel" aria-labelledby="sc-tab-' + tab + '">';
       var body = "";
-      if (tab === "preview") body = previewTab(c) + lineupsTab(g || { card: c, lineups: {} });
+      if (tab === "preview") body = previewTab(c) + (PG ? PG.panel(c, ix, HX) : lineupsTab(g || { card: c, lineups: {} }));
       else if (!g) body = '<p class="sc-dim">The game file posts after first pitch.</p>';
       else if (tab === "summary") body = summaryTab(g, ix);
       else if (tab === "box") body = boxTab(g, ix);

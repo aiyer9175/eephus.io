@@ -146,6 +146,7 @@ _SCORES_CSS_VER = _asset_ver("assets/scores.css")
 # open from the mount root's data-vv stamp, never as a tag in the shell.
 _SCORES_VIDEO_VER = _asset_ver("assets/scores-video.js")
 _SCORES_BRACKET_VER = _asset_ver("assets/scores-bracket.js")   # the lazy bracket chunk (SCORES_4b)
+_SCORES_PREGAME_VER = _asset_ver("assets/scores-pregame.js")   # the pregame context (SCORES_6), eager
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /awards/ - the Awards section of Awards / HoF (AWARDS_7), behind awards_core.AWARDS_LIVE.
 _AWARDS_VER = _asset_ver("assets/awards.js")
@@ -5682,16 +5683,25 @@ def build_scores() -> str:
     job's files. No EEPHUS_DATA_VERS: the job rewrites its files between
     builds (_data_vers_script refuses scores names). The mount root carries
     the stamped path of the lazy bracket chunk (SCORES_4b), which scores.js
-    loads only on #bracket=<season> or for the October rail at 1400 px."""
+    loads only on #bracket=<season> or for the October rail at 1400 px.
+    SCORES_6 adds the Diamond config and helper (scores.js asks
+    window.EephusDiamond before it prints a model number), the eager
+    assets/scores-pregame.js, and BETTING_DISCLAIMER in an inert template the
+    chunk prints once wherever the pregame model number renders."""
     body = (
         '<div class="fa-app scores-app">'
         + _scores_module_head("scores")
         + f'<div id="scores-app-root" data-vv="{_SCORES_VIDEO_VER}"'
         f' data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"></div>'
+        # SCORES_6: the site's betting note, printed once wherever the pregame
+        # model number renders (plan 9); inert until scores-pregame.js copies it
+        f'<template id="scores-betnote">{BETTING_DISCLAIMER}</template>'
         '</div>'
         f'<link rel="stylesheet" href="/assets/scores.css?v={_SCORES_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
+        f'{DIAMOND_CONFIG_SCRIPT}'
+        f'<script src="/assets/scores-pregame.js?v={_SCORES_PREGAME_VER}" defer></script>'
         f'<script src="/assets/scores.js?v={_SCORES_VER}" defer></script>'
     )
     return page("MLB Scores - eephus.io", "scores", body,

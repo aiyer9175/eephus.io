@@ -1,0 +1,166 @@
+{
+  "generated_at": "2026-09-30T16:24:21+00:00",
+  "slate_date": "2026-09-30",
+  "n_games": 3,
+  "status": {
+    "odds_feed": "ok",
+    "odds_captured_at": "2026-09-30T16:24:20+00:00",
+    "odds_kind": "open",
+    "model": "unvalidated",
+    "model_registry_verdict": "provisional",
+    "model_verdict_sentence": "the eval artifact's gates are closed and no minimum edge is measured, so the served state is unvalidated; the model registry's verdict is \"provisional\" (measured, short of its sample gate).",
+    "model_mode": "contaminated",
+    "stale_board": false,
+    "odds_slate": {
+      "matched": true
+    },
+    "feed_health": {
+      "ok": true
+    }
+  },
+  "model": {
+    "version": "betting_runs_v2",
+    "validated": false,
+    "stage": "Diamond preview",
+    "coefficients": {
+      "b0": 4.447526788641083,
+      "b1": 0.2342551126470185
+    }
+  },
+  "disclaimer": "decoy: never read",
+  "pick_of_the_day": {
+    "game_pk": 900010,
+    "side": "home",
+    "edge": 0.051,
+    "kelly": 0.02,
+    "decimal": 1.91
+  },
+  "longshot_of_the_day": null,
+  "slot_lock": {
+    "locked": false
+  },
+  "record": {
+    "n": 12,
+    "units": 1.5
+  },
+  "dugout_context": {
+    "decision_rate": 0.3
+  },
+  "team_bets": [
+    {
+      "game_pk": 900010,
+      "date": "2026-09-30",
+      "start": "2026-09-30T23:08:00Z",
+      "status": "Preview",
+      "game_type": "R",
+      "series": null,
+      "venue": "Truist Park",
+      "home": {
+        "org": "ATL",
+        "team": "Atlanta Braves",
+        "probable": {
+          "mlbam": 641816,
+          "name": "Home Probable"
+        },
+        "offense_plus": 104.0,
+        "bullpen_plus": 101.0
+      },
+      "away": {
+        "org": "PHI",
+        "team": "Philadelphia Phillies",
+        "probable": {
+          "mlbam": 650911,
+          "name": "Away Probable"
+        },
+        "offense_plus": 103.0,
+        "bullpen_plus": 99.0
+      },
+      "model": {
+        "p_home": 0.53012,
+        "p_away": 0.46988,
+        "lam_home": 4.41,
+        "lam_away": 4.12,
+        "fair_total": 8.53,
+        "park_index": 1.01
+      },
+      "moneyline": [
+        {
+          "side": "home",
+          "market_fair_prob": 0.551,
+          "decimal": 1.83,
+          "edge": -0.021,
+          "book": "lowvig"
+        },
+        {
+          "side": "away",
+          "market_fair_prob": 0.449,
+          "decimal": 2.12,
+          "edge": 0.021,
+          "book": "lowvig"
+        }
+      ],
+      "runline": [],
+      "total": [],
+      "market": {
+        "moneyline_fair_book": "lowvig",
+        "moneyline_hold_pct": 2.5
+      }
+    },
+    {
+      "game_pk": 900011,
+      "date": "2026-09-30",
+      "start": "2026-09-30T23:10:00Z",
+      "status": "Preview",
+      "game_type": "R",
+      "series": null,
+      "venue": "Daikin Park",
+      "home": {
+        "org": "HOU",
+        "team": "Houston Astros",
+        "probable": {
+          "mlbam": 111111,
+          "name": "Not The Listed Starter"
+        }
+      },
+      "away": {
+        "org": "CHW",
+        "team": "Chicago White Sox",
+        "probable": {
+          "mlbam": 680732,
+          "name": "Sean Burke"
+        }
+      },
+      "model": {
+        "p_home": 0.61204,
+        "p_away": 0.38796
+      },
+      "moneyline": []
+    },
+    {
+      "game_pk": 849848,
+      "date": "2026-09-30",
+      "start": "2026-09-30T23:30:00Z",
+      "status": "Preview",
+      "game_type": "F",
+      "postseason_label": "never graded on a postseason game",
+      "series": "AL Wild Card Series",
+      "home": {
+        "org": "NYY",
+        "probable": {
+          "mlbam": 608331
+        }
+      },
+      "away": {
+        "org": "BOS",
+        "probable": {
+          "mlbam": 543243
+        }
+      },
+      "model": {
+        "p_home": 0.57001,
+        "p_away": 0.42999
+      },
+      "moneyline": []
+    }
+  ]
+}

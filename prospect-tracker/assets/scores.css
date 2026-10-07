@@ -82,6 +82,8 @@
   background: var(--bg-secondary); padding: 10px 12px; font-size: 13px; line-height: 1.4;
 }
 .scores-app .sc-card.slot-pre { min-height: 236px; }
+/* a regular-season pregame card has room for the model line (SCORES_6) before it posts */
+.scores-app .sc-card.slot-prer { min-height: 276px; }
 .scores-app .sc-card.slot-lf { min-height: 316px; }
 .scores-app .sc-card.slot-off { min-height: 168px; }
 .scores-app .sc-card.is-live { border-left: 3px solid var(--viz-1); }
@@ -264,3 +266,9 @@ span.scb-club { font-weight: 400; color: var(--text-secondary); line-height: 1.3
 .scb-compact .scb-s { border: 0; background: none; padding: 0; }
 .scb-compact .scb-text { font-weight: 400; }
 .scb .sr-only { position: absolute !important; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* SCORES_6: the pregame context (assets/scores-pregame.js) and the betting note it prints once */
+.scores-app .sc-pre { margin: 10px 0; }
+.scores-app .sc-pre p, .scores-app .sc-pregame p { margin: 4px 0; overflow-wrap: anywhere; }
+.scores-app .sc-efv { font-weight: 700; white-space: nowrap; }
+.scores-app .sc-betnote { margin-top: 12px; }
+.scores-app .sc-betnote .card, .scores-app .sc-pregame .card { font-size: 13px; margin: 10px 0; }

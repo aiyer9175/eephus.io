@@ -28,7 +28,14 @@ budgets of plan 8.1, pinned by the constants below. The October bracket
 (SCORES_4b): #bracket=<season> draws the season index's block through the
 lazy chunk, placeholders unlinked, no percent sign and no data-model-id
 inside it; the chunk loads only on that route or for the October rail at
-1400 px and wider; its mount function needs no page around it.
+1400 px and wider; its mount function needs no page around it. The
+pregame context (SCORES_6) on a fixture board: the shell loads the Diamond
+config, its helper and the eager scores-pregame.js before scores.js and
+carries BETTING_DISCLAIMER once in an inert template; the card line and the
+game view's panel print the board's numbers verbatim with their labels, the
+absent-state sentences, SEM+, the hook median, the park index, the DFS links
+and eFV on the posted lineup; a regular-season pregame card keeps the model
+line inside its own floor (slot-prer) at 390 px.
 """
 from __future__ import annotations
 
@@ -55,12 +62,14 @@ KB = 1024
 SCORES_JS_RAW = 70 * KB
 SCORES_JS_GZIP = 20 * KB
 SCORES_BRACKET_JS_RAW = 12 * KB
+SCORES_PREGAME_JS_RAW = 12 * KB          # SCORES_6, eager: counted in the cold first paint
 SCORES_CSS_RAW = 20 * KB
 SHELL_RAW = 16 * KB
 COLD_FIRST_PAINT_GZIP = 70 * KB
 #: The card floors of assets/scores.css at 390 px (plan 1.3), measured from
 #: the fixtures below with their longest strings.
-SLOT_MIN = {"pre": 236, "lf": 316, "off": 168}
+#: "prer" (SCORES_6) is a regular-season pregame card, with room for the model line.
+SLOT_MIN = {"pre": 236, "prer": 276, "lf": 316, "off": 168}
 WIDTHS = (390, 1280, 1440)
 
 
@@ -188,6 +197,115 @@ def build_payloads(now: datetime | None = None, bracket: dict | None = None) -> 
     return out
 
 
+# --------------------------------------------------------------------------- #
+# SCORES_6: the pregame fixtures. A fixture Sports Betting board
+# (test_fixtures/scores/betting_board.json, shaped like the served board with
+# decoy keys the job must never read) and the five served files the pregame
+# block copies from, run through the job's own pure path (scores_core
+# board_extract, pre_block and the *_map readers). Shared with
+# test_scores_fence.py and test_scores_labelling.py.
+# --------------------------------------------------------------------------- #
+#: The posted-lineup player graded on eFV v2 in the fixture (51.5 prints "eFV 52").
+EFV_ID = 686948
+#: The index registry rows the job writes for the pregame block (scores_job.REGISTRY_IDS).
+PRE_REGISTRY = [{"model_id": "betting_game_prob", "verdict": "provisional",
+                 "sentence": "Eephus model, unvalidated, provisional"},
+                {"model_id": "sem_plus", "verdict": "validated", "sentence": "MLB Stats SEM+, validated"},
+                {"model_id": "efv_v2", "verdict": "provisional", "sentence": "PROSPX eFV, provisional"},
+                {"model_id": "mgmt_board_export", "verdict": "provisional",
+                 "sentence": "In-Game Management, provisional"}]
+
+
+def pregame_served() -> dict:
+    """{served file name: doc}: the fixture board and the files the pregame
+    block copies from, each carrying keys the job must never copy."""
+    return {
+        "betting.json": load("betting_board.json"),
+        "starter_leaderboards.json": {"season": 2026, "verdict": "validated", "starters": [
+            {"mlbam": 641816, "name": "Home Probable", "team": "ATL", "sem_plus": 118, "sem_plus_raw": 117.6, "fip": 3.1},
+            {"mlbam": 650911, "name": "Away Probable", "team": "PHI", "sem_plus": 104, "sem_plus_raw": 104.2}]},
+        "management_board.json": {
+            "decisions": {"families": {"pitching_change": {"hook_pitch_count": {"median": 89.0}}}},
+            "clubs": {"games_floor": 40, "rows": [
+                {"club": "ATL", "season": 2026, "games": 160, "hook_median_pitches": 87.5, "mwpa_pitching_change": 2.1,
+                 "z_hook": -0.4, "best": {"family": "pitching_change", "mwpa": 0.5}},
+                {"club": "PHI", "season": 2026, "games": 160, "hook_median_pitches": 91.0, "z_hook": 0.6},
+                {"club": "PHI", "season": 2025, "games": 162, "hook_median_pitches": 80.0}]}},
+        "fantasy.json": {
+            "sections": {"two_start": [{"mlbam": 650911, "name": "Away Probable", "team": "PHI", "n_starts": 2,
+                                        "total_fgp": 40.1,
+                                        "legs": [{"date": TODAY, "opp_org": "ATL", "exp_fgp": 20.0},
+                                                 {"date": "2026-10-05", "opp_org": "NYM", "exp_fgp": 20.1,
+                                                  "projected": True}]}]},
+            "schedule": {"games": [{"game_pk": 900010, "date": TODAY}]}},
+        "fa_meta.json": {"park_factors": {"ATL": {"woba": 101, "hr": 104, "runs": 102}},
+                         "park_factors_by_hand": {"L": {"ATL": {"runs": 140}}}},
+        "xfv.json": {"meta": {}, "by_player": {
+            "drake_baldwin": {"kind": "active", "grade_basis": "efv_v2", "xfv_grade": 51.5, "consensus_fv": 45.0},
+            "ozzie_albies": {"kind": "debuted", "xfv_grade": 55.0, "consensus_fv": 55.0},
+            "ronald_acuna": {"kind": "active", "grade_basis": "provisional_capped", "xfv_grade": 44.0,
+                             "consensus_fv": 40.0}}},
+        "player_links.json": {"byMlbam": {"686948": {"prospx": "drake_baldwin"}, "645277": {"prospx": "ozzie_albies"},
+                                          "660670": {"prospx": "ronald_acuna"}}},
+    }
+
+
+def pregame_ctx(served: dict | None = None, *, board_kind: str = "full") -> dict:
+    """The job's pregame context, built from fixture docs instead of the served files."""
+    s = served or pregame_served()
+    two, pks = sc.fantasy_maps(s["fantasy.json"])
+    return {"board": sc.board_extract(s["betting.json"]), "board_kind": board_kind,
+            "sem": sc.sem_map(s["starter_leaderboards.json"]), "hook": sc.hook_map(s["management_board.json"]),
+            "two_start": two, "dfs_pks": pks, "park": sc.park_map(s["fa_meta.json"]),
+            "efv": sc.efv_map(s["xfv.json"], s["player_links.json"])}
+
+
+def regular_season_game(pk: int = 900010, start: str | None = None, base: tuple = (849841, "P")) -> dict:
+    """A fixture schedule game turned into a regular-season Preview game
+    (849841 is PHI at ATL with both lineups posted)."""
+    g = _sched_game(*base)
+    g.update({"gamePk": pk, "gameType": "R", "description": None, "seriesDescription": "Regular Season",
+              "status": {"abstractGameState": "Preview", "codedGameState": "P", "detailedState": "Pre-Game",
+                         "statusCode": "P", "startTimeTBD": False}})
+    g.pop("seriesStatus", None)
+    if start:
+        g["gameDate"] = start
+    return g
+
+
+def pregame_payloads(now: datetime | None = None, *, inject_live: bool = False) -> dict:
+    """build_payloads() plus, on today's date: a regular-season Preview game
+    carrying the full pregame block (900010), one whose board starter differs
+    (900011), and the postseason Preview game 849848 with its season
+    sentence, all starting three hours from `now` so the page reads them
+    before first pitch. `inject_live` copies 900010's block onto the live card,
+    the stale payload the page must refuse to print."""
+    now = now or datetime.now(timezone.utc)
+    p = build_payloads(now)
+    gen = p["latest.json"]["generated_at"]
+    start = _iso(now + timedelta(hours=3))
+    ctx = pregame_ctx()
+    doc = p[f"{TODAY}.json"]
+    g1 = regular_season_game(900010, start)
+    g2 = regular_season_game(900011, start, base=(849846, "P"))
+    g3 = _sched_game(849848, "S")
+    g3["gameDate"] = start
+    for g in (g1, g2, g3):
+        card = sc.build_card(g, generated_at=gen)
+        card["pre"] = sc.pre_block(g, card, ctx)
+        doc["games"] = [c for c in doc["games"] if c["pk"] != card["pk"]] + [card]
+    doc["games"].sort(key=lambda c: (c.get("start") or "", c["pk"]))
+    if inject_live:
+        live = next(c for c in doc["games"] if c["pk"] == 849846)
+        live["pre"] = copy.deepcopy(next(c for c in doc["games"] if c["pk"] == 900010)["pre"])
+    w = p["latest.json"]["window"][TODAY]
+    st = [c["state"] for c in doc["games"]]
+    w.update({"rev": sc.rev_of(doc), "n": len(st), "pre": sum(s in ("scheduled", "pregame", "delayed") for s in st)})
+    p["index.json"]["registry"] = p["index.json"]["registry"] + copy.deepcopy(PRE_REGISTRY)
+    p["latest.json"]["index_rev"] = sc.rev_of(p["index.json"])
+    return p
+
+
 def write_payloads(site: Path, payloads: dict) -> None:
     for rel, doc in payloads.items():
         p = site / "data" / "scores" / rel
@@ -304,8 +422,14 @@ def test_shell_is_a_pure_reader_on_the_ledger_pattern():
     for asset, ver in (("scores.css", build_site._SCORES_CSS_VER), ("scores.js", build_site._SCORES_VER),
                        ("eephus-hub.js", build_site._HUB_VER), ("eephus-teampick.js", build_site._TEAMPICK_VER)):
         assert f"/assets/{asset}?v={ver}" in html, asset
-    for absent in ("eephus-diamond.js", "diamond-config.js", "scores-video.js"):
-        assert absent not in html
+    assert "scores-video.js" not in html
+    # SCORES_6: the Diamond config, then its helper, then the pregame chunk, then scores.js
+    order = [html.index(f"/assets/{a}?v=") for a in ("diamond-config.js", "eephus-diamond.js", "scores-pregame.js",
+                                                    "scores.js")]
+    assert order == sorted(order), order
+    assert f"/assets/scores-pregame.js?v={build_site._SCORES_PREGAME_VER}" in html
+    assert html.count(build_site.BETTING_DISCLAIMER) == 1
+    assert f'<template id="scores-betnote">{build_site.BETTING_DISCLAIMER}</template>' in html
     # the bracket chunk is never a script tag: the mount root names its stamped path for the lazy loader
     assert f'data-bracket-src="/assets/scores-bracket.js?v={build_site._SCORES_BRACKET_VER}"' in html
     assert html.count("scores-bracket.js") == 1 and '<script src="/assets/scores-bracket.js' not in html
@@ -333,14 +457,16 @@ def _lf(path: Path) -> bytes:
 
 def test_budgets_and_the_cold_first_paint():
     js, css = _lf(ROOT / "assets" / "scores.js"), _lf(ROOT / "assets" / "scores.css")
+    pre_js = _lf(ROOT / "assets" / "scores-pregame.js")
     shell = build_site.build_scores().encode("utf-8")
     assert len(js) <= SCORES_JS_RAW, len(js)
     assert len(gzip.compress(js, 9)) <= SCORES_JS_GZIP, len(gzip.compress(js, 9))
+    assert len(pre_js) <= SCORES_PREGAME_JS_RAW, len(pre_js)
     assert len(css) <= SCORES_CSS_RAW, len(css)
     assert len(shell) <= SHELL_RAW, len(shell)
-    p = build_payloads()
+    p = pregame_payloads()
     first = shell + js + css + sc.dumps(p["latest.json"]).encode() + sc.dumps(p[f"{TODAY}.json"]).encode()
-    owned = sum(len(gzip.compress(b, 9)) for b in (shell, js, css, sc.dumps(p["latest.json"]).encode(),
+    owned = sum(len(gzip.compress(b, 9)) for b in (shell, js, pre_js, css, sc.dumps(p["latest.json"]).encode(),
                                                     sc.dumps(p[f"{TODAY}.json"]).encode()))
     assert owned <= COLD_FIRST_PAINT_GZIP, owned
     assert len(first) > 0
@@ -353,7 +479,7 @@ def test_budgets_and_the_cold_first_paint():
 
 
 def test_fixture_payloads_pass_the_validator():
-    for rel, doc in build_payloads().items():
+    for rel, doc in list(build_payloads().items()) + list(pregame_payloads().items()):
         kind = sc.kind_of_name(rel)
         assert kind, rel
         res = sc.validate_payload(kind, doc, name=rel)
@@ -763,3 +889,98 @@ def test_the_mount_needs_no_page_route_or_fetch(pw):
     finally:
         browser.close()
 
+
+# --------------------------------------------------------------------------- #
+# SCORES_6: the pregame context on the fixture board
+# --------------------------------------------------------------------------- #
+@pytest.fixture(scope="module")
+def pregame_site(tmp_path_factory):
+    return make_site(tmp_path_factory.mktemp("scores_pregame_site"), pregame_payloads())
+
+
+def test_the_pregame_block_is_built_from_the_fixture_board():
+    p = pregame_payloads()
+    cards = {c["pk"]: c for c in p[f"{TODAY}.json"]["games"]}
+    board = load("betting_board.json")
+    row = next(r for r in board["team_bets"] if r["game_pk"] == 900010)
+    m = cards[900010]["pre"]["model"]
+    assert (m["p_home"], m["p_away"]) == (row["model"]["p_home"], row["model"]["p_away"])
+    assert m["sentence"] == board["status"]["model_verdict_sentence"] and m["state"] == "unvalidated"
+    assert cards[900011]["pre"]["model"] == {"absent": "starter"}
+    assert cards[849848]["pre"]["model"] == {"absent": "season"}
+    assert cards[900010]["pre"]["efv"] == {str(EFV_ID): 51.5}
+    assert cards[900010]["pre"]["home"] == {"sem_plus": 118, "sem_season": 2026, "hook_median_pitches": 87.5,
+                                            "hook_season": 2026}
+    assert cards[900010]["pre"]["away"]["two_start"] == {"n": 2, "projected": True}
+    assert cards[900010]["pre"]["park_runs"] == 102 and cards[900010]["pre"]["dfs"] is True
+    for pk, c in cards.items():
+        if c["state"] not in ("scheduled", "pregame", "delayed"):
+            assert "pre" not in c, pk
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+@pytest.mark.parametrize("width", WIDTHS)
+def test_the_pregame_views_have_no_page_scroll_and_no_console_errors(pregame_site, pw, width, theme):
+    with serve_site(pregame_site) as base, scores_page(base, pw, width=width, theme=theme,
+                                                       hash_=f"#date={TODAY}") as page:
+        _wait_cards(page, 7)
+        page.wait_for_selector('article[data-pk="900010"] [data-model-id="betting_game_prob"]')
+        assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), "horizontal page scroll"
+        for h in ("#game=900010", "#game=900011", "#game=849848"):
+            page.evaluate(f"location.hash = '{h}'")
+            page.wait_for_selector(".sc-pregame")
+            assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), (h, "page scroll")
+        _no_errors(page)
+
+
+def test_the_pregame_panel_prints_the_board_verbatim_with_its_labels(pregame_site, pw):
+    board = load("betting_board.json")
+    with serve_site(pregame_site) as base, scores_page(base, pw, hash_=f"#date={TODAY}") as page:
+        _wait_cards(page, 7)
+        card = page.locator('article[data-pk="900010"]')
+        card.locator('[data-model-id="betting_game_prob"]').wait_for()
+        assert "Eephus model: PHI 47.0%, ATL 53.0%" in card.inner_text()
+        assert "Eephus model, unvalidated, provisional" in card.inner_text()
+        assert page.locator(".sc-betnote .betting-disclaimer").count() == 1
+        assert page.locator(".betting-disclaimer").count() == 1
+        # the club links go through the one resolver
+        assert card.locator('a.club-link[href="/franchise/#team=ATL"]').count() == 1
+        for pk in (900011, 849848):
+            assert page.locator(f'article[data-pk="{pk}"] [data-model-id]').count() == 0, pk
+        page.evaluate("location.hash = '#game=900010'")
+        page.wait_for_selector(".sc-pregame .sc-verdict")
+        panel = page.locator(".sc-panel").inner_text()
+        for want in ("Eephus model", "PHI 47.0%", "ATL 53.0%", "Eephus model, unvalidated, provisional",
+                     "Shown as the Sports Betting board serves it; this page prices nothing.",
+                     "PHI probable Sánchez: SEM+ 104 (2026 season)", "ATL probable Mahle: SEM+ 118 (2026 season)",
+                     "MLB Stats SEM+, validated", "Sánchez: two starts in the next seven days, one projected (Fantasy)",
+                     "ATL starters leave at a median 88 pitches this season", "In-Game Management, provisional",
+                     "PHI starters leave at a median 91 pitches this season",
+                     "Park runs index 102 (ATL home park; Baseball Savant, 3 seasons; 100 is neutral)",
+                     "PHI players", "ATL players", "eFV 52", "PROSPX eFV, provisional"):
+            assert want in panel, want
+        assert page.locator(".sc-verdict").evaluate("e => e.textContent") == board["status"]["model_verdict_sentence"]
+        assert page.locator('.sc-pregame a[href="/betting/#section=teams"]').count() == 1
+        assert page.locator(".sc-panel .betting-disclaimer").count() == 1
+        assert page.locator('.sc-panel a[href="/fantasy/#m=dfs&team=ATL"]').count() == 1
+        # eFV only for the eFV v2 prospect: never the debuted grade, the capped one or consensus FV
+        assert page.locator(".sc-efv").count() == 1 and panel.count("eFV ") == 1
+        assert "45" not in page.locator(".sc-efv").inner_text()
+        page.evaluate("location.hash = '#game=900011'")
+        page.wait_for_function("/different listed starter/.test(document.querySelector('.sc-panel').textContent)")
+        assert page.locator('.sc-panel [data-model-id="betting_game_prob"]').count() == 0
+        assert page.locator(".betting-disclaimer").count() == 0
+        page.evaluate("location.hash = '#game=849848'")
+        page.wait_for_function("/regular-season games only/.test(document.querySelector('.sc-panel').textContent)")
+        assert page.locator('.sc-panel [data-model-id="betting_game_prob"]').count() == 0
+        _no_errors(page)
+
+
+def test_the_pregame_card_stays_inside_its_floor_at_390(pregame_site, pw):
+    with serve_site(pregame_site) as base, scores_page(base, pw, hash_=f"#date={TODAY}") as page:
+        _wait_cards(page, 7)
+        page.wait_for_selector('article[data-pk="900010"] [data-model-id="betting_game_prob"]')
+        rows = {c["pk"]: c for c in page.evaluate(_MEASURE)}
+        c = rows[900010]
+        assert c["slot"] == "prer" and c["floor"] == SLOT_MIN["prer"] and c["natural"] <= c["floor"] + 0.5, c
+        assert not c["clipped"], c

@@ -57,7 +57,7 @@ linked from those pages or redirect. Full inventory with payloads: `SITE_MAP.md`
 | `/parks/` | Park factors | `build_site.build_parks()` + `assets/parks.js` |
 | `/redraft/` | Redirect to /fantasy/#m=redraft | `build_site.build_redraft()` |
 | `/report/` | Report a bug | `build_site.build_bug_report()` |
-| `/scores/` | Scores / Standings (off the nav until SCORES_5b) | `build_site.build_scores()` + `assets/eephus-teampick.js`, `assets/scores-bracket.js`, `assets/scores.js` |
+| `/scores/` | Scores / Standings (off the nav until SCORES_5b) | `build_site.build_scores()` + `assets/eephus-teampick.js`, `assets/scores-bracket.js`, `assets/scores-pregame.js`, `assets/scores.js` |
 | `/sources/` | Sources and data | `build_site.build_sources()` |
 | `/teams/` | Redirect to /projections/#view=teams | `build_site.build_teams_redirect()` |
 
