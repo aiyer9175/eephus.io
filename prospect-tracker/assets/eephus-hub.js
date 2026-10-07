@@ -97,7 +97,11 @@
     var n = Math.max(16, Math.round(+px || LOGO_PX));
     return "https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/" + slug + ".png&h=" + n + "&w=" + n;
   }
-  var _CLUB_BY = {}, _CLUB_BY_ID = {}, _CLUB_BY_NAME = {};
+  // Null-prototype maps read through _own(): a plain object answered
+  // club("constructor") with Object off the prototype, and a hash-fed input
+  // can reach this function.
+  var _CLUB_BY = Object.create(null), _CLUB_BY_ID = Object.create(null), _CLUB_BY_NAME = Object.create(null);
+  function _own(m, k) { return Object.prototype.hasOwnProperty.call(m, k) ? m[k] : null; }
   _CLUB_ROWS.forEach(function (r) {
     var c = { code: r[0], slug: r[1], name: r[2], id: r[3], aliases: r.slice(4),
               logo: _logoSrc(r[1]) };
@@ -110,14 +114,60 @@
   // club(x): a club code in either family, an MLBAM team id (number or digit
   // string) or a full club name -> {code, slug, name, id, aliases, logo}, or
   // null when x is not one of the thirty (a college, an overseas club, "all").
+  // Exact keys only: no nickname, substring or suffix matching, so "Texas",
+  // "Worcester Red Sox" and "ACL D-backs" resolve to nothing, never a guess.
   function club(x) {
     if (x == null || x === "") return null;
-    if (typeof x === "number") return _CLUB_BY_ID[x] || null;
+    if (typeof x === "number") return _own(_CLUB_BY_ID, x);
     var s = String(x).trim();
-    if (/^\d+$/.test(s)) return _CLUB_BY_ID[+s] || null;
-    return _CLUB_BY[s.toUpperCase()] || _CLUB_BY_NAME[s.toLowerCase()] || null;
+    if (!s) return null;
+    if (/^\d+$/.test(s)) return _own(_CLUB_BY_ID, +s);
+    return _own(_CLUB_BY, s.toUpperCase()) || _own(_CLUB_BY_NAME, s.toLowerCase());
   }
   function clubs() { return _CLUB_ROWS.map(function (r) { return _CLUB_BY[r[0]]; }); }
+  // ---- club links (owner ask 9): the one href builder for a club mention -----
+  // clubHref(x, ctx): "" when club(x) is null; ctx "farm" -> the PROSPX farm
+  // system page, anything else -> the Franchises club page. The href always
+  // carries the canonical code, so an alias (CWS, OAK) lands on its club.
+  // build_site._club_href is the server mirror and reads this same table.
+  function clubHref(x, ctx) {
+    var c = club(x);
+    if (!c) return "";
+    return (ctx === "farm" ? "/prospx/#farm-org=" : "/franchise/#team=") + c.code;
+  }
+  // clubLinkHTML(x, opts): an <a class="club-link"> for a club mention.
+  //   opts.ctx   "franchise" (default) | "farm"
+  //   opts.text  "code" (default) | "name" | the string the surface prints today;
+  //              "" with opts.logo makes a logo-only link (the logo's alt is the
+  //              full club name; beside text the logo's alt is empty)
+  //   opts.logo  true only where the surface already shows a logo
+  //   opts.stop  true inside a clickable row (the click stays on the link)
+  // Unresolved input keeps its escaped text in a span marked
+  // data-club-nolink="unresolved"; it is never linked to a guessed club.
+  function clubLinkHTML(x, opts) {
+    var o = opts || {};
+    var c = club(x);
+    var t = o.text == null ? "code" : String(o.text);
+    if (!c) {
+      var raw = t === "code" || t === "name" ? (x == null ? "" : String(x)) : t;
+      return raw ? '<span data-club-nolink="unresolved">' + esc(raw) + "</span>" : "";
+    }
+    var label = t === "code" ? c.code : t === "name" ? c.name : t;
+    if (!label && !o.logo) label = c.code;
+    var farm = o.ctx === "farm";
+    var title = c.name + (farm ? ": farm system" : ": franchise overview");
+    var logoOnly = !!o.logo && !label;
+    // A logo-only link that loses its image falls back to the code, so it
+    // never becomes an empty link.
+    var img = o.logo
+      ? '<img class="club-link-logo" src="' + esc(c.logo) + '" alt="' + (logoOnly ? esc(c.name) : "")
+        + '" loading="lazy" onerror="' + (logoOnly ? "this.outerHTML='<span>" + c.code + "</span>'" : "this.remove()") + '">'
+      : "";
+    return '<a class="club-link' + (logoOnly ? " club-link--logo-only" : "") + '" href="'
+      + clubHref(c.code, farm ? "farm" : "franchise") + '" data-club="' + c.code + '" title="' + esc(title) + '"'
+      + (o.stop ? ' onclick="event.stopPropagation()"' : "") + ">"
+      + img + (label ? "<span>" + esc(label) + "</span>" : "") + "</a>";
+  }
   // teamLogoURL(team, px): the logo at px pixels square (default 34).
   function teamLogoURL(team, px) {
     var c = club(team);
@@ -671,5 +721,5 @@
     return (mm < 0 ? "-" : "") + "$" + Math.abs(mm).toFixed(d) + "M";
   }
 
-  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, teamLogoURL, club, clubs, histogram, scatter, fvCeil, money, dash, DASH };
+  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, teamLogoURL, club, clubs, clubHref, clubLinkHTML, histogram, scatter, fvCeil, money, dash, DASH };
 })();

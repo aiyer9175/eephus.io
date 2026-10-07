@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=ac0bff77">
+  <link rel="stylesheet" href="/assets/site.css?v=b982d4db">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -10587,7 +10587,7 @@
 <script src="/assets/eephus-ui.js?v=d2cecdd8" defer></script>
   <script src="/assets/eephus-gl.js?v=3492da3e" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
-  <script src="/assets/eephus-hub.js?v=1785f603" defer></script>
+  <script src="/assets/eephus-hub.js?v=718646b3" defer></script>
   <!-- Team picker: logo listbox on every select[data-team-picker] (reads the hub's club table) -->
   <script src="/assets/eephus-teampick.js?v=1cd0b6d5" defer></script>
 <!-- Dark-theme phosphor-starfield background - shared with the editorial
@@ -13896,7 +13896,7 @@ function _syncFromURLBody() {
   if (!hash) return;
   const p = new URLSearchParams(hash);
   if (p.has("player"))   state.view = { type: "player", key: p.get("player") };
-  else if (p.has("farm-org")) state.view = { type: "farm", org: p.get("farm-org") };
+  else if (p.has("farm-org")) state.view = { type: "farm", org: clubCanon(p.get("farm-org")) };
   else if (p.has("draft"))    state.view = { type: "draftee", key: p.get("draft") };
   else if (p.has("overseas")) state.view = { type: "overseas_player", key: p.get("overseas") };
   else if (p.has("college")) state.view = { type: "college", key: p.get("college") };
@@ -45151,8 +45151,27 @@ function findPlayer(key) {
   return null;
 }
 
+// The one club resolver (EEPHUS_HUB.club in assets/eephus-hub.js): an alias a
+// link or a payload spells differently (CWS, OAK, KC) maps to the canonical code
+// org_summary carries. Exact keys only, never a guess. The hub loads defer, so
+// before it runs a code passes through unchanged.
+function clubCanon(x) {
+  try {
+    const c = window.EEPHUS_HUB && window.EEPHUS_HUB.club ? window.EEPHUS_HUB.club(x) : null;
+    if (c && c.code) return c.code;
+  } catch (e) { /* resolver optional */ }
+  return x;
+}
+// The club's Franchises href through the same resolver ("" when the code is not
+// one of the 30 clubs); the literal shape is the fallback before the hub loads.
+function clubFranchiseHref(x) {
+  const H = window.EEPHUS_HUB;
+  if (H && H.clubHref) return H.clubHref(x);
+  return x ? `/franchise/#team=${encodeURIComponent(x)}` : "";
+}
 function findOrg(org) {
-  return (DATA.org_summary || []).find(o => o.org === org) || null;
+  const code = clubCanon(org);
+  return (DATA.org_summary || []).find(o => o.org === code) || null;
 }
 
 // Bigger version of the line chart used on prospect detail pages - same
@@ -53193,6 +53212,12 @@ function makeFarmGraduates(orgCode) {
 function renderFarmDetail(orgCode) {
   _ensureOrgTendencies();   // warm the sidecar for the GFX identity strip
   const org = findOrg(orgCode);
+  // An alias in the hash (CWS, OAK) renders as its canonical club, so every
+  // filter below reads the code org_summary carries.
+  if (org && org.org !== orgCode) {
+    orgCode = org.org;
+    if (state.view && state.view.type === "farm") state.view.org = orgCode;
+  }
   const root = document.getElementById("farm-detail-body");
   if (!org) {
     // Diagnostic: surface the actual data state in-page so failures
@@ -53418,7 +53443,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
         </div>
       </div>
       <div style="display:flex;align-items:center;flex:none;gap:8px;">
-        <a class="chip" href="/franchise/#team=${escapeHtml(org.org)}" title="Open this club on Franchises: the org-level grade tree and every module's numbers for the club">Franchises</a>
+        ${clubFranchiseHref(org.org) ? `<a class="chip" href="${escapeHtml(clubFranchiseHref(org.org))}" title="Open this club on Franchises: the org-level grade tree and every module's numbers for the club">Franchises</a>` : ""}
         <button class="gfx-card-btn" type="button" title="Generate a shareable PROSPX graphic of this farm system"><span class="gfx-card-btn-icon" aria-hidden="true">📊</span>Generate GFX</button>
       </div>
     </div>

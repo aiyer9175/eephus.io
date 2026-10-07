@@ -49,6 +49,14 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The club's Franchises href through the hub's one club resolver
+  // (EEPHUS_HUB.clubHref): "" for a code that is not one of the 30 clubs. The
+  // literal shape is the fallback only where the hub is absent.
+  function franchiseHref(code) {
+    var H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+    if (H && H.clubHref) return H.clubHref(code);
+    return code ? "/franchise/#team=" + encodeURIComponent(code) : "";
+  }
   // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
   // loading, empty, unmeasured or failed, around a message this file escapes.
   // The bare box is the fallback for a test harness that loads this file alone.
@@ -1036,12 +1044,13 @@
     // /franchise/ (D3) and /ledger/ (D1) are drawn only when the export found
     // the route built; until then an anchor to either is a 404.
     var routes = DATA.routes || {};
+    var frHref = routes.franchise ? franchiseHref(row.club) : "";
     out += '<div class="mgmt-links">' +
       (sapi ? '<a href="/mlbstats/#section=bullpen&view=teams&team=' + esc(sapi) + '">bullpen board (' + esc(sapi) + ")</a>" +
         '<a href="/mlbstats/#section=leverage&team=' + esc(sapi) + '">leverage board</a>' : "") +
       '<a href="/projections/#team=' + esc(row.club) + '">projections</a>' +
       '<a href="/prospx/#farm-org=' + esc(row.club) + '">farm</a>' +
-      (routes.franchise ? '<a href="/franchise/#team=' + esc(row.club) + '">franchise</a>' : "") +
+      (frHref ? '<a href="' + esc(frHref) + '">franchise</a>' : "") +
       (routes.ledger ? '<a href="/ledger/#team=' + esc(row.club) + '">ledger</a>' : "") +
       '<a href="' + drill("") + '" data-mlink="1">every decision</a></div>';
     // style z strip: NEUTRAL chips

@@ -390,12 +390,24 @@ def test_realized_cells_colour_only_on_sign():
 def test_club_page_links_only_to_routes_the_payload_says_are_built():
     """/franchise/ (D3) and /ledger/ (D1) have not shipped: no anchor to either
     unless the export found the route on disk and said so in DATA.routes."""
+    global JS
     html, _ = _render2("#section=clubs&team=MIA&season=2026")
     assert 'href="/franchise/' not in html and 'href="/ledger/' not in html
     assert 'href="/projections/#team=MIA"' in html
     built = dict(SAMPLE2, routes={"franchise": True, "ledger": False})
     html2, _ = _render2("#section=clubs&team=MIA&season=2026", payload=built)
     assert 'href="/franchise/#team=MIA"' in html2 and 'href="/ledger/' not in html2
+    # Q9_05: the franchise href comes from the hub's one club resolver
+    # (EEPHUS_HUB.clubHref); with the hub loaded the same anchor renders, and a
+    # code that is not one of the 30 clubs draws no franchise anchor at all.
+    assert "var frHref = routes.franchise ? franchiseHref(row.club) : \"\";" in JS
+    plain, hub = JS, (ROOT / "assets" / "eephus-hub.js").read_text(encoding="utf-8")
+    try:
+        JS = hub + plain
+        html3, _ = _render2("#section=clubs&team=MIA&season=2026", payload=built)
+        assert 'href="/franchise/#team=MIA">franchise</a>' in html3
+    finally:
+        JS = plain
 
 
 def test_the_census_never_prints_a_sum_for_an_unsummed_family():

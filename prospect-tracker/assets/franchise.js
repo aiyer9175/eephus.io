@@ -197,16 +197,31 @@
     var v = VIEW_RE.exec(h);
     if (v) state.view = v[1];
     var t = TEAM_RE.exec(h);
+    // An alias (CWS, KC, OAK, the StatsAPI spellings) goes through the hub's
+    // club resolver first, so an old link lands on its own club instead of the
+    // first club on the board; the hash is then rewritten to the canonical code.
+    var code = t ? canonCode(t[1]) : "";
+    var aliased = false;
     // Trusted only when it is a code the payload carries, so a hash can never
     // resolve a club off Object.prototype.
-    if (t && DATA && clubOf(t[1])) {
-      state.team = t[1];
+    if (code && DATA && clubOf(code)) {
+      state.team = code;
+      aliased = code !== t[1];
       if (!v) state.view = "club";
     }
     var tr = TREE_RE.exec(h);
     if (tr) { state.tree = tr[1]; state.treeSet = true; }
     var s = SEC_RE.exec(h);
     state.sec = s && DATA && DATA.branch_order.indexOf(s[1]) >= 0 ? s[1] : "";
+    if (aliased) writeHash();
+  }
+  function canonCode(x) {
+    try {
+      var H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+      var c = H && H.club ? H.club(x) : null;
+      if (c && c.code) return c.code;
+    } catch (e) { /* resolver optional */ }
+    return x;
   }
   function writeHash() {
     var parts = ["view=" + state.view];

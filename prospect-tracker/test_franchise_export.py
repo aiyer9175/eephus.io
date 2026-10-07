@@ -905,8 +905,16 @@ def test_registry_rows_exist_and_are_descriptive():
 
 
 def test_back_links_land_on_the_projections_open_cell_and_the_prospx_farm_header():
-    assert '/franchise/#team=${encodeURIComponent(r.team)}' in _src("assets/projections.js")
-    assert '/franchise/#team=${escapeHtml(org.org)}' in _src("prospx/index.html")
+    # The two back-links take their href from the hub's one club resolver
+    # (EEPHUS_HUB.clubHref, Q9_05), whose output is /franchise/#team=CODE for a
+    # canonical code; the literal shape survives only as the no-hub fallback.
+    proj, px = _src("assets/projections.js"), _src("prospx/index.html")
+    assert "const frHref = franchiseHref(r.team);" in proj and 'title="Open the club on Franchises">franchise</a>' in proj
+    assert "return code ? `/franchise/#team=${encodeURIComponent(code)}` : \"\";" in proj
+    assert "${clubFranchiseHref(org.org) ? `<a class=\"chip\" href=\"${escapeHtml(clubFranchiseHref(org.org))}\"" in px
+    assert "return x ? `/franchise/#team=${encodeURIComponent(x)}` : \"\";" in px
+    hub = _src("assets/eephus-hub.js")
+    assert '(ctx === "farm" ? "/prospx/#farm-org=" : "/franchise/#team=") + c.code' in hub
 
 
 def test_the_glossary_hooks_in_the_payload_resolve(d, clubs):
