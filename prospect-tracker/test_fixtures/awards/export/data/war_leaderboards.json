@@ -1,0 +1,536 @@
+{
+ "season": 2026,
+ "team_basis": "current_roster",
+ "players": [
+  {
+   "mlbam": 900001,
+   "name": "Kade Morrow",
+   "team": "DET",
+   "role": "H",
+   "pos": "SS",
+   "qualified": true,
+   "war": 7.0,
+   "war_bat": 7.0,
+   "pa": 650
+  },
+  {
+   "mlbam": 900002,
+   "name": "Yoan Alvarado",
+   "team": "HOU",
+   "role": "H",
+   "pos": "DH",
+   "qualified": true,
+   "war": 6.8,
+   "war_bat": 6.8,
+   "pa": 692
+  },
+  {
+   "mlbam": 900003,
+   "name": "Bo Whitt",
+   "team": "KC",
+   "role": "H",
+   "pos": "SS",
+   "qualified": true,
+   "war": 6.7,
+   "war_bat": 6.7,
+   "pa": 700
+  },
+  {
+   "mlbam": 900004,
+   "name": "Ozzie Tanaka",
+   "team": "LAA",
+   "role": "TWP",
+   "pos": "TWP",
+   "qualified": true,
+   "war": 6.0,
+   "war_bat": 3.2,
+   "pa": 600,
+   "war_pit": 2.8,
+   "ip": 140.0
+  },
+  {
+   "mlbam": 900005,
+   "name": "Arlo Finch",
+   "team": "BOS",
+   "role": "H",
+   "pos": "LF",
+   "qualified": true,
+   "war": 4.5,
+   "war_bat": 4.5,
+   "pa": 500
+  },
+  {
+   "mlbam": 900006,
+   "name": "Benji Ortiz",
+   "team": "NYY",
+   "role": "H",
+   "pos": "RF",
+   "qualified": true,
+   "war": 4.5,
+   "war_bat": 4.5,
+   "pa": 480
+  },
+  {
+   "mlbam": 900007,
+   "name": "Cal Reyes",
+   "team": "CLE",
+   "role": "H",
+   "pos": "2B",
+   "qualified": true,
+   "war": 5.0,
+   "war_bat": 5.0,
+   "pa": 200
+  },
+  {
+   "mlbam": 900008,
+   "name": "Dario Lane",
+   "team": "SEA",
+   "role": "H",
+   "pos": "CF",
+   "qualified": true,
+   "war": 3.5,
+   "war_bat": 3.5,
+   "pa": 600
+  },
+  {
+   "mlbam": 900009,
+   "name": "Enzo Pike",
+   "team": "TB",
+   "role": "H",
+   "pos": "1B",
+   "qualified": true,
+   "war": 0.0,
+   "war_bat": 0.0,
+   "pa": 300
+  },
+  {
+   "mlbam": 900010,
+   "name": "Tomas Kessler",
+   "team": "LAD",
+   "role": "SP",
+   "pos": "SP",
+   "qualified": true,
+   "war": 5.3,
+   "war_pit": 5.3,
+   "ip": 158.7
+  },
+  {
+   "mlbam": 900011,
+   "name": "Will Schott",
+   "team": "NYY",
+   "role": "SP",
+   "pos": "SP",
+   "qualified": true,
+   "war": 6.5,
+   "war_pit": 6.5,
+   "ip": 193.7
+  },
+  {
+   "mlbam": 900012,
+   "name": "Dylan Cross",
+   "team": "TEX",
+   "role": "SP",
+   "pos": "SP",
+   "qualified": true,
+   "war": 6.1,
+   "war_pit": 6.1,
+   "ip": 180.0
+  },
+  {
+   "mlbam": 900013,
+   "name": "Rafa Ortega",
+   "team": "TB",
+   "role": "RP",
+   "pos": "RP",
+   "qualified": true,
+   "war": 2.5,
+   "war_pit": 2.5,
+   "ip": 70.0
+  },
+  {
+   "mlbam": 900014,
+   "name": "Hal Munro",
+   "team": "CLE",
+   "role": "SP",
+   "pos": "SP",
+   "qualified": true,
+   "war": 3.0,
+   "war_pit": 3.0,
+   "ip": 100.0
+  },
+  {
+   "mlbam": 900015,
+   "name": "Ike Varga",
+   "team": "MIN",
+   "role": "SP",
+   "pos": "SP",
+   "qualified": true,
+   "war": 3.0,
+   "war_pit": 3.0,
+   "ip": 110.0
+  },
+  {
+   "mlbam": 900016,
+   "name": "Jon Pell",
+   "team": "CWS",
+   "role": "RP",
+   "pos": "RP",
+   "qualified": true,
+   "war": 1.0,
+   "war_pit": 1.0,
+   "ip": 30.0
+  },
+  {
+   "mlbam": 900020,
+   "name": "Pete Crowe",
+   "team": "CHC",
+   "role": "H",
+   "pos": "CF",
+   "qualified": true,
+   "war": 9.8,
+   "war_bat": 9.8,
+   "pa": 726
+  },
+  {
+   "mlbam": 900021,
+   "name": "Brice Tolan",
+   "team": "MIL",
+   "role": "H",
+   "pos": "2B",
+   "qualified": true,
+   "war": 7.3,
+   "war_bat": 7.3,
+   "pa": 650
+  },
+  {
+   "mlbam": 900022,
+   "name": "Cris Sandoval",
+   "team": "PHI",
+   "role": "SP",
+   "pos": "SP",
+   "qualified": true,
+   "war": 7.1,
+   "war_pit": 7.1,
+   "ip": 207.0
+  },
+  {
+   "mlbam": 900023,
+   "name": "Jake Misner",
+   "team": "MIL",
+   "role": "SP",
+   "pos": "SP",
+   "qualified": true,
+   "war": 6.6,
+   "war_pit": 6.6,
+   "ip": 174.7
+  },
+  {
+   "mlbam": 900024,
+   "name": "JJ Weth",
+   "team": "STL",
+   "role": "H",
+   "pos": "SS",
+   "qualified": true,
+   "war": 4.5,
+   "war_bat": 4.5,
+   "pa": 450
+  },
+  {
+   "mlbam": 900025,
+   "name": "Benge Harlow",
+   "team": "SF",
+   "role": "H",
+   "pos": "LF",
+   "qualified": true,
+   "war": 4.2,
+   "war_bat": 4.2,
+   "pa": 420
+  },
+  {
+   "mlbam": 900026,
+   "name": "Rum Field",
+   "team": "WSH",
+   "role": "H",
+   "pos": "1B",
+   "qualified": true,
+   "war": 3.5,
+   "war_bat": 3.5,
+   "pa": 380
+  },
+  {
+   "mlbam": 900027,
+   "name": "Chase Byrne",
+   "team": "CIN",
+   "role": "SP",
+   "pos": "SP",
+   "qualified": true,
+   "war": 3.6,
+   "war_pit": 3.6,
+   "ip": 130.0
+  },
+  {
+   "mlbam": 900028,
+   "name": "Mo Alder",
+   "team": "SD",
+   "role": "H",
+   "pos": "3B",
+   "qualified": true,
+   "war": 5.2,
+   "war_bat": 5.2,
+   "pa": 560
+  },
+  {
+   "mlbam": 900029,
+   "name": "Nico Bell",
+   "team": "AZ",
+   "role": "H",
+   "pos": "C",
+   "qualified": true,
+   "war": 4.9,
+   "war_bat": 4.9,
+   "pa": 540
+  },
+  {
+   "mlbam": 900030,
+   "name": "Oto Grau",
+   "team": "ATL",
+   "role": "H",
+   "pos": "RF",
+   "qualified": true,
+   "war": 3.9,
+   "war_bat": 3.9,
+   "pa": 520
+  },
+  {
+   "mlbam": 900031,
+   "name": "Pax Hume",
+   "team": "PIT",
+   "role": "H",
+   "pos": "2B",
+   "qualified": true,
+   "war": 3.1,
+   "war_bat": 3.1,
+   "pa": 510
+  },
+  {
+   "mlbam": 900032,
+   "name": "Quin Ibarra",
+   "team": "COL",
+   "role": "H",
+   "pos": "LF",
+   "qualified": true,
+   "war": 2.4,
+   "war_bat": 2.4,
+   "pa": 500
+  },
+  {
+   "mlbam": 900033,
+   "name": "Rey Jost",
+   "team": "MIA",
+   "role": "H",
+   "pos": "C",
+   "qualified": true,
+   "war": 1.8,
+   "war_bat": 1.8,
+   "pa": 490
+  },
+  {
+   "mlbam": 900034,
+   "name": "Sal Kuhn",
+   "team": "LAD",
+   "role": "H",
+   "pos": "3B",
+   "qualified": true,
+   "war": 1.1,
+   "war_bat": 1.1,
+   "pa": 480
+  },
+  {
+   "mlbam": 900035,
+   "name": "Teo Lund",
+   "team": "NYM",
+   "role": "H",
+   "pos": "CF",
+   "qualified": true,
+   "war": 0.6,
+   "war_bat": 0.6,
+   "pa": 470
+  },
+  {
+   "mlbam": 900036,
+   "name": "Uri Mott",
+   "team": "SF",
+   "role": "RP",
+   "pos": "RP",
+   "qualified": true,
+   "war": 1.4,
+   "war_pit": 1.4,
+   "ip": 50.0
+  }
+ ],
+ "teams": [
+  {
+   "team": "BAL",
+   "war": 25.6,
+   "war_earned": 24.3
+  },
+  {
+   "team": "BOS",
+   "war": 45.4,
+   "war_earned": 44.1
+  },
+  {
+   "team": "NYY",
+   "war": 53.9,
+   "war_earned": 52.6
+  },
+  {
+   "team": "TB",
+   "war": 51.6,
+   "war_earned": 50.3
+  },
+  {
+   "team": "TOR",
+   "war": 39.3,
+   "war_earned": 38.0
+  },
+  {
+   "team": "CWS",
+   "war": 22.0,
+   "war_earned": 20.7
+  },
+  {
+   "team": "CLE",
+   "war": 42.8,
+   "war_earned": 41.5
+  },
+  {
+   "team": "DET",
+   "war": 48.2,
+   "war_earned": 46.9
+  },
+  {
+   "team": "KC",
+   "war": 28.7,
+   "war_earned": 27.4
+  },
+  {
+   "team": "MIN",
+   "war": 31.5,
+   "war_earned": 30.2
+  },
+  {
+   "team": "HOU",
+   "war": 38.1,
+   "war_earned": 36.8
+  },
+  {
+   "team": "LAA",
+   "war": 26.4,
+   "war_earned": 25.1
+  },
+  {
+   "team": "ATH",
+   "war": 20.2,
+   "war_earned": 18.9
+  },
+  {
+   "team": "SEA",
+   "war": 40.9,
+   "war_earned": 39.6
+  },
+  {
+   "team": "TEX",
+   "war": 37.0,
+   "war_earned": 35.7
+  },
+  {
+   "team": "ATL",
+   "war": 34.7,
+   "war_earned": 33.4
+  },
+  {
+   "team": "MIA",
+   "war": 24.1,
+   "war_earned": 22.8
+  },
+  {
+   "team": "NYM",
+   "war": 33.2,
+   "war_earned": 31.9
+  },
+  {
+   "team": "PHI",
+   "war": 44.0,
+   "war_earned": 42.7
+  },
+  {
+   "team": "WSH",
+   "war": 20.8,
+   "war_earned": 19.5
+  },
+  {
+   "team": "CHC",
+   "war": 44.6,
+   "war_earned": 43.3
+  },
+  {
+   "team": "CIN",
+   "war": 11.7,
+   "war_earned": 10.4
+  },
+  {
+   "team": "MIL",
+   "war": 46.5,
+   "war_earned": 45.2
+  },
+  {
+   "team": "PIT",
+   "war": 24.9,
+   "war_earned": 23.6
+  },
+  {
+   "team": "STL",
+   "war": 31.1,
+   "war_earned": 29.8
+  },
+  {
+   "team": "AZ",
+   "war": 27.8,
+   "war_earned": 26.5
+  },
+  {
+   "team": "COL",
+   "war": 16.5,
+   "war_earned": 15.2
+  },
+  {
+   "team": "LAD",
+   "war": 52.6,
+   "war_earned": 51.3
+  },
+  {
+   "team": "SD",
+   "war": 45.3,
+   "war_earned": 44.0
+  },
+  {
+   "team": "SF",
+   "war": 28.6,
+   "war_earned": 27.3
+  }
+ ],
+ "generated_at": "2026-10-05T06:00:00+00:00",
+ "as_of": "2026-10-04",
+ "ewar_vintage": {
+  "artifact_generated_at": "2026-10-04T11:06:57",
+  "label_build_at": "2026-09-03T12:35:09",
+  "as_of": "2026-10-04",
+  "stale": false,
+  "cadence": {
+   "mode": "nightly",
+   "live_season": 2026
+  }
+ },
+ "qualified_rule": "PA >= 100 or IP >= 30"
+}

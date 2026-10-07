@@ -1,0 +1,261 @@
+{
+ "generated_at": "2026-10-05T06:00:00+00:00",
+ "season": 2026,
+ "ewar_vintage": {
+  "artifact_generated_at": "2026-10-04T11:06:57",
+  "label_build_at": "2026-09-03T12:35:09",
+  "as_of": "2026-10-04",
+  "stale": false,
+  "cadence": {
+   "mode": "nightly",
+   "live_season": 2026
+  }
+ },
+ "scale": {
+  "qualify_min_inn": 400
+ },
+ "fielders": [
+  {
+   "mlbam": 900001,
+   "name": "Kade Morrow",
+   "team": "DET",
+   "pos": "SS",
+   "inn": 391.5,
+   "dem_plus": 111,
+   "dem_plus_raw": 111.31,
+   "def_runs": 2.8,
+   "qualified": true
+  },
+  {
+   "mlbam": 900002,
+   "name": "Yoan Alvarado",
+   "team": "HOU",
+   "pos": "DH",
+   "inn": 1006.2,
+   "dem_plus": 105,
+   "dem_plus_raw": 104.8,
+   "def_runs": 1.2,
+   "qualified": true
+  },
+  {
+   "mlbam": 900003,
+   "name": "Bo Whitt",
+   "team": "KC",
+   "pos": "SS",
+   "inn": 593.5,
+   "dem_plus": 104,
+   "dem_plus_raw": 104.35,
+   "def_runs": 1.1,
+   "qualified": true
+  },
+  {
+   "mlbam": 900004,
+   "name": "Ozzie Tanaka",
+   "team": "LAA",
+   "pos": "TWP",
+   "inn": 610.8,
+   "dem_plus": 138,
+   "dem_plus_raw": 138.15,
+   "def_runs": 9.5,
+   "qualified": true
+  },
+  {
+   "mlbam": 900005,
+   "name": "Arlo Finch",
+   "team": "BOS",
+   "pos": "LF",
+   "inn": 723.5,
+   "dem_plus": 117,
+   "dem_plus_raw": 117.48,
+   "def_runs": 4.4,
+   "qualified": true
+  },
+  {
+   "mlbam": 900006,
+   "name": "Benji Ortiz",
+   "team": "NYY",
+   "pos": "RF",
+   "inn": 352.8,
+   "dem_plus": 81,
+   "dem_plus_raw": 81.28,
+   "def_runs": -4.7,
+   "qualified": true
+  },
+  {
+   "mlbam": 900007,
+   "name": "Cal Reyes",
+   "team": "CLE",
+   "pos": "2B",
+   "inn": 797.4,
+   "dem_plus": 115,
+   "dem_plus_raw": 115.31,
+   "def_runs": 3.8,
+   "qualified": true
+  },
+  {
+   "mlbam": 900008,
+   "name": "Dario Lane",
+   "team": "SEA",
+   "pos": "CF",
+   "inn": 880.3,
+   "dem_plus": 98,
+   "dem_plus_raw": 98.27,
+   "def_runs": -0.4,
+   "qualified": true
+  },
+  {
+   "mlbam": 900009,
+   "name": "Enzo Pike",
+   "team": "TB",
+   "pos": "1B",
+   "inn": 836.8,
+   "dem_plus": 126,
+   "dem_plus_raw": 125.56,
+   "def_runs": 6.4,
+   "qualified": true
+  },
+  {
+   "mlbam": 900020,
+   "name": "Pete Crowe",
+   "team": "CHC",
+   "pos": "CF",
+   "inn": 1252.4,
+   "dem_plus": 132,
+   "dem_plus_raw": 131.57,
+   "def_runs": 7.9,
+   "qualified": true
+  },
+  {
+   "mlbam": 900021,
+   "name": "Brice Tolan",
+   "team": "MIL",
+   "pos": "2B",
+   "inn": 687.3,
+   "dem_plus": 95,
+   "dem_plus_raw": 94.71,
+   "def_runs": -1.3,
+   "qualified": true
+  },
+  {
+   "mlbam": 900024,
+   "name": "JJ Weth",
+   "team": "STL",
+   "pos": "SS",
+   "inn": 736.9,
+   "dem_plus": 104,
+   "dem_plus_raw": 103.9,
+   "def_runs": 1.0,
+   "qualified": true
+  },
+  {
+   "mlbam": 900025,
+   "name": "Benge Harlow",
+   "team": "SF",
+   "pos": "LF",
+   "inn": 717.1,
+   "dem_plus": 82,
+   "dem_plus_raw": 82.38,
+   "def_runs": -4.4,
+   "qualified": true
+  },
+  {
+   "mlbam": 900026,
+   "name": "Rum Field",
+   "team": "WSH",
+   "pos": "1B",
+   "inn": 1109.5,
+   "dem_plus": 108,
+   "dem_plus_raw": 108.18,
+   "def_runs": 2.0,
+   "qualified": true
+  },
+  {
+   "mlbam": 900028,
+   "name": "Mo Alder",
+   "team": "SD",
+   "pos": "3B",
+   "inn": 755.8,
+   "dem_plus": 103,
+   "dem_plus_raw": 102.98,
+   "def_runs": 0.7,
+   "qualified": true
+  },
+  {
+   "mlbam": 900029,
+   "name": "Nico Bell",
+   "team": "AZ",
+   "pos": "C",
+   "inn": 889.7,
+   "dem_plus": 105,
+   "dem_plus_raw": 105.19,
+   "def_runs": 1.3,
+   "qualified": true
+  },
+  {
+   "mlbam": 900030,
+   "name": "Oto Grau",
+   "team": "ATL",
+   "pos": "RF",
+   "inn": 536.2,
+   "dem_plus": 124,
+   "dem_plus_raw": 124.46,
+   "def_runs": 6.1,
+   "qualified": true
+  },
+  {
+   "mlbam": 900031,
+   "name": "Pax Hume",
+   "team": "PIT",
+   "pos": "2B",
+   "inn": 572.9,
+   "dem_plus": 137,
+   "dem_plus_raw": 136.56,
+   "def_runs": 9.1,
+   "qualified": true
+  },
+  {
+   "mlbam": 900032,
+   "name": "Quin Ibarra",
+   "team": "COL",
+   "pos": "LF",
+   "inn": 781.8,
+   "dem_plus": 87,
+   "dem_plus_raw": 87.49,
+   "def_runs": -3.1,
+   "qualified": true
+  },
+  {
+   "mlbam": 900033,
+   "name": "Rey Jost",
+   "team": "MIA",
+   "pos": "C",
+   "inn": 539.9,
+   "dem_plus": 114,
+   "dem_plus_raw": 113.52,
+   "def_runs": 3.4,
+   "qualified": true
+  },
+  {
+   "mlbam": 900034,
+   "name": "Sal Kuhn",
+   "team": "LAD",
+   "pos": "3B",
+   "inn": 607.0,
+   "dem_plus": 110,
+   "dem_plus_raw": 110.13,
+   "def_runs": 2.5,
+   "qualified": true
+  },
+  {
+   "mlbam": 900035,
+   "name": "Teo Lund",
+   "team": "NYM",
+   "pos": "CF",
+   "inn": 1161.0,
+   "dem_plus": 81,
+   "dem_plus_raw": 81.35,
+   "def_runs": -4.7,
+   "qualified": true
+  }
+ ]
+}

@@ -633,6 +633,61 @@ ARTIFACTS = (
                  "states its blocker in the payload rather than in the HTML."),
     },
     {
+        "file": "awards.json", "group": "mlb",
+        "title": "Awards board",
+        "what": ("The eephus selection for MVP, Cy Young, Rookie and Manager of the Year "
+                 "in each league under a published rule over the site's own numbers, the "
+                 "superlatives, the season index and the rule-and-vote table."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_awards_export.py",
+        "note": ("Rendering payload for /awards/, served once awards_core.AWARDS_LIVE is "
+                 "True; until then awards_export.py writes it under .cache/awards/preview/. "
+                 "Every WAR-bearing block names its war_provider."),
+    },
+    {
+        "file": "awards_*.json", "group": "mlb",
+        "title": "Awards board, closed seasons",
+        "what": ("One closed season of the Awards board (2021 on): its cards, rules, "
+                 "superlatives and race, written once and byte-stable after."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_awards_export.py",
+        "note": ("At data/ depth one because both deploy consumers ship depth-one data "
+                 "files only; a season subfolder would 404 on the public site."),
+    },
+    {
+        "file": "awards_candidates_*.json", "group": "mlb",
+        "title": "Awards ballot candidates",
+        "what": ("My Ballot's candidate pools per award and league for one season: every "
+                 "eligible player or club with the rule's metric, the compare metrics and "
+                 "the rule's place, with each column's producer and registry row."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_awards_export.py",
+        "note": "Loaded only by the ballot chunk; Manager ids are club codes.",
+    },
+    {
+        "file": "awards_eval.json", "group": "mlb",
+        "title": "Awards selection eval",
+        "what": ("The awards_selection registry row's artifact: reconciliation counts per "
+                 "invariant, the rookie test on past Rookie of the Year winners once the "
+                 "winners file exists, and the freeze hashes."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_awards_export.py",
+        "note": ("First committed by the flip (AWARDS_11); copies its hashes from "
+                 "data/_labs/awards/freeze_log.json."),
+    },
+    {
+        "file": "_labs/awards/*.json", "group": "mlb",
+        "title": "Awards inputs and records (tracked, unpublished)",
+        "what": ("rookies.json (the rookie test per season), award_winners.json (the "
+                 "writers' results from MLB's StatsAPI), race_<S>.json (the weekly race), "
+                 "frozen_<S>.json (a season's frozen selection, write-once) and "
+                 "freeze_log.json (their hashes)."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_awards_export.py",
+        "note": ("data/_labs/ ships in neither deploy consumer; the exporter publishes "
+                 "only derived blocks."),
+    },
+    {
         "file": "milb_park_factors.json", "group": "mlb",
         "title": "MiLB park factors",
         "what": "Per-venue offensive park factors for the minor league parks, with sample sizes.",

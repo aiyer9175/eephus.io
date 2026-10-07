@@ -60,7 +60,8 @@ happen inside the called module, so this file alone cannot split them).
 | d10e. Club Ledger board (ledger_board.json) | ledger_board.json |
 | d10f. Postseason bracket simulator (bracket_sim.json) | bracket_sim.json, bracket_sim_record.json, record.json |
 | d10g. Source update dates (source_updates.json) | source_updates.json |
-| 6b7d. Franchise board (franchise_board.json) | franchise_board.json, franchise_spine.json, timeseries.json |
+| 6b7d. Franchise board (franchise_board.json) | franchise_board.json, franchise_spine.json |
+| d10h. Awards board (awards.json) | awards.json, timeseries.json |
 | d11. Rebuild site (build_site) | pipeline_steps_daily.json, timeseries.json |
 
 ## Monthly pipeline (`run_monthly.main`)
@@ -130,6 +131,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b7e. In-Game Management decision ledger | management_baseline.json, management_board.json |
 | 6b7c. In-Game Management board (management_board.json) | hof_board.json, management_board.json |
 | 6b7b. Hall of Fame board (hof_board.json) | hof_board.json |
+| 6b7f. Awards board (awards.json) | awards.json |
 | 6b6. Fantasy Tools (fantasy.json) | fantasy.json |
 | 6f. Betting model context refit | - |
 | 6c. Organization Tendencies (farm-detail Tendencies tab) (no _step wrapper) | - |

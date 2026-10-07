@@ -1,0 +1,58 @@
+{
+ "generated_at": "2026-10-05T06:00:00+00:00",
+ "season": 2026,
+ "ewar_vintage": {
+  "artifact_generated_at": "2026-10-04T11:06:57",
+  "label_build_at": "2026-09-03T12:35:09",
+  "as_of": "2026-10-04",
+  "stale": false,
+  "cadence": {
+   "mode": "nightly",
+   "live_season": 2026
+  }
+ },
+ "relievers": [
+  {
+   "mlbam": 900013,
+   "name": "Rafa Ortega",
+   "team": "TB",
+   "ip": 70.0,
+   "rem_plus": 117,
+   "rem_plus_raw": 117.0,
+   "gmli": 1.79,
+   "wpa": 2.43,
+   "saves": 39,
+   "qualified": true,
+   "era": 5.02,
+   "fip": 4.13
+  },
+  {
+   "mlbam": 900016,
+   "name": "Jon Pell",
+   "team": "CWS",
+   "ip": 30.0,
+   "rem_plus": 184,
+   "rem_plus_raw": 184.3,
+   "gmli": 0.82,
+   "wpa": 2.46,
+   "saves": 39,
+   "qualified": true,
+   "era": 3.02,
+   "fip": 3.29
+  },
+  {
+   "mlbam": 900036,
+   "name": "Uri Mott",
+   "team": "SF",
+   "ip": 50.0,
+   "rem_plus": 103,
+   "rem_plus_raw": 103.4,
+   "gmli": 0.99,
+   "wpa": 1.99,
+   "saves": 27,
+   "qualified": true,
+   "era": 5.19,
+   "fip": 3.6
+  }
+ ]
+}

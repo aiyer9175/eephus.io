@@ -1,0 +1,214 @@
+{
+ "teams": [
+  {
+   "id": 100,
+   "abbreviation": "ATH",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 101,
+   "abbreviation": "ATL",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 102,
+   "abbreviation": "AZ",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 103,
+   "abbreviation": "BAL",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 104,
+   "abbreviation": "BOS",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 105,
+   "abbreviation": "CHC",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 106,
+   "abbreviation": "CIN",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 107,
+   "abbreviation": "CLE",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 108,
+   "abbreviation": "COL",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 109,
+   "abbreviation": "CWS",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 110,
+   "abbreviation": "DET",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 111,
+   "abbreviation": "HOU",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 112,
+   "abbreviation": "KC",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 113,
+   "abbreviation": "LAA",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 114,
+   "abbreviation": "LAD",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 115,
+   "abbreviation": "MIA",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 116,
+   "abbreviation": "MIL",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 117,
+   "abbreviation": "MIN",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 118,
+   "abbreviation": "NYM",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 119,
+   "abbreviation": "NYY",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 120,
+   "abbreviation": "PHI",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 121,
+   "abbreviation": "PIT",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 122,
+   "abbreviation": "SD",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 123,
+   "abbreviation": "SEA",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 124,
+   "abbreviation": "SF",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 125,
+   "abbreviation": "STL",
+   "league": {
+    "id": 104
+   }
+  },
+  {
+   "id": 126,
+   "abbreviation": "TB",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 127,
+   "abbreviation": "TEX",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 128,
+   "abbreviation": "TOR",
+   "league": {
+    "id": 103
+   }
+  },
+  {
+   "id": 129,
+   "abbreviation": "WSH",
+   "league": {
+    "id": 104
+   }
+  }
+ ]
+}

@@ -1,0 +1,76 @@
+{
+ "generated_at": "2026-10-05T06:00:00+00:00",
+ "seasons": [
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "history": {
+  "2021": {
+   "season": 2021,
+   "relievers": []
+  },
+  "2022": {
+   "season": 2022,
+   "relievers": []
+  },
+  "2023": {
+   "season": 2023,
+   "relievers": []
+  },
+  "2024": {
+   "season": 2024,
+   "relievers": []
+  },
+  "2025": {
+   "season": 2025,
+   "n_qualified": 3,
+   "relievers": [
+    {
+     "mlbam": 900013,
+     "name": "Rafa Ortega",
+     "team": "TB",
+     "ip": 70.0,
+     "rem_plus": 117,
+     "rem_plus_raw": null,
+     "gmli": 1.79,
+     "wpa": 2.43,
+     "saves": 39,
+     "qualified": true,
+     "era": 5.02,
+     "fip": 4.13
+    },
+    {
+     "mlbam": 900016,
+     "name": "Jon Pell",
+     "team": "CWS",
+     "ip": 30.0,
+     "rem_plus": 184,
+     "rem_plus_raw": null,
+     "gmli": 0.82,
+     "wpa": 2.46,
+     "saves": 39,
+     "qualified": true,
+     "era": 3.02,
+     "fip": 3.29
+    },
+    {
+     "mlbam": 900036,
+     "name": "Uri Mott",
+     "team": "SF",
+     "ip": 50.0,
+     "rem_plus": 103,
+     "rem_plus_raw": null,
+     "gmli": 0.99,
+     "wpa": 1.99,
+     "saves": 27,
+     "qualified": true,
+     "era": 5.19,
+     "fip": 3.6
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,413 @@
+{
+ "bat": [
+  {
+   "name_common": "Kade Morrow",
+   "age": 22.0,
+   "mlb_ID": 900001.0,
+   "year_ID": 2026,
+   "team_ID": "DET",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 7.05,
+   "PA": 650
+  },
+  {
+   "name_common": "Yoan Alvarado",
+   "age": 29.0,
+   "mlb_ID": 900002.0,
+   "year_ID": 2026,
+   "team_ID": "HOU",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 6.77,
+   "PA": 692
+  },
+  {
+   "name_common": "Bo Whitt",
+   "age": 26.0,
+   "mlb_ID": 900003.0,
+   "year_ID": 2026,
+   "team_ID": "KCR",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 6.72,
+   "PA": 700
+  },
+  {
+   "name_common": "Ozzie Tanaka",
+   "age": 31.0,
+   "mlb_ID": 900004.0,
+   "year_ID": 2026,
+   "team_ID": "LAA",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 3.24,
+   "PA": 600
+  },
+  {
+   "name_common": "Arlo Finch",
+   "age": 30.0,
+   "mlb_ID": 900005.0,
+   "year_ID": 2026,
+   "team_ID": "BOS",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 4.5,
+   "PA": 500
+  },
+  {
+   "name_common": "Benji Ortiz",
+   "age": 27.0,
+   "mlb_ID": 900006.0,
+   "year_ID": 2026,
+   "team_ID": "NYY",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 4.5,
+   "PA": 480
+  },
+  {
+   "name_common": "Cal Reyes",
+   "age": 23.0,
+   "mlb_ID": 900007.0,
+   "year_ID": 2026,
+   "team_ID": "CLE",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 5.0,
+   "PA": 200
+  },
+  {
+   "name_common": "Dario Lane",
+   "age": 28.0,
+   "mlb_ID": 900008.0,
+   "year_ID": 2026,
+   "team_ID": "NYM",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 2.0,
+   "PA": 300
+  },
+  {
+   "name_common": "Dario Lane",
+   "age": 28.0,
+   "mlb_ID": 900008.0,
+   "year_ID": 2026,
+   "team_ID": "SEA",
+   "stint_ID": 2,
+   "lg_ID": "AL",
+   "WAR": 1.5,
+   "PA": 300
+  },
+  {
+   "name_common": "Enzo Pike",
+   "age": 33.0,
+   "mlb_ID": 900009.0,
+   "year_ID": 2026,
+   "team_ID": "TBR",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": -0.04,
+   "PA": 300
+  },
+  {
+   "name_common": "Pete Crowe",
+   "age": 24.0,
+   "mlb_ID": 900020.0,
+   "year_ID": 2026,
+   "team_ID": "CHC",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 9.83,
+   "PA": 726
+  },
+  {
+   "name_common": "Brice Tolan",
+   "age": 26.0,
+   "mlb_ID": 900021.0,
+   "year_ID": 2026,
+   "team_ID": "MIL",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 7.34,
+   "PA": 650
+  },
+  {
+   "name_common": "JJ Weth",
+   "age": 23.0,
+   "mlb_ID": 900024.0,
+   "year_ID": 2026,
+   "team_ID": "STL",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 4.54,
+   "PA": 450
+  },
+  {
+   "name_common": "Benge Harlow",
+   "age": 22.0,
+   "mlb_ID": 900025.0,
+   "year_ID": 2026,
+   "team_ID": "SFG",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 4.25,
+   "PA": 420
+  },
+  {
+   "name_common": "Rum Field",
+   "age": 24.0,
+   "mlb_ID": 900026.0,
+   "year_ID": 2026,
+   "team_ID": "WSN",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 3.46,
+   "PA": 380
+  },
+  {
+   "name_common": "Mo Alder",
+   "age": 29.0,
+   "mlb_ID": 900028.0,
+   "year_ID": 2026,
+   "team_ID": "SDP",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 5.2,
+   "PA": 560
+  },
+  {
+   "name_common": "Nico Bell",
+   "age": 31.0,
+   "mlb_ID": 900029.0,
+   "year_ID": 2026,
+   "team_ID": "ARI",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 4.9,
+   "PA": 540
+  },
+  {
+   "name_common": "Oto Grau",
+   "age": 27.0,
+   "mlb_ID": 900030.0,
+   "year_ID": 2026,
+   "team_ID": "ATL",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 3.9,
+   "PA": 520
+  },
+  {
+   "name_common": "Pax Hume",
+   "age": 25.0,
+   "mlb_ID": 900031.0,
+   "year_ID": 2026,
+   "team_ID": "PIT",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 3.1,
+   "PA": 510
+  },
+  {
+   "name_common": "Quin Ibarra",
+   "age": 32.0,
+   "mlb_ID": 900032.0,
+   "year_ID": 2026,
+   "team_ID": "COL",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 2.4,
+   "PA": 500
+  },
+  {
+   "name_common": "Rey Jost",
+   "age": 30.0,
+   "mlb_ID": 900033.0,
+   "year_ID": 2026,
+   "team_ID": "MIA",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 1.8,
+   "PA": 490
+  },
+  {
+   "name_common": "Sal Kuhn",
+   "age": 28.0,
+   "mlb_ID": 900034.0,
+   "year_ID": 2026,
+   "team_ID": "LAD",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 1.1,
+   "PA": 480
+  },
+  {
+   "name_common": "Teo Lund",
+   "age": 26.0,
+   "mlb_ID": 900035.0,
+   "year_ID": 2026,
+   "team_ID": "NYM",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 0.6,
+   "PA": 470
+  },
+  {
+   "name_common": "Kade Morrow",
+   "age": 21.0,
+   "mlb_ID": 900001.0,
+   "year_ID": 2025,
+   "team_ID": "DET",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "PA": 120,
+   "WAR": 0.8
+  }
+ ],
+ "pit": [
+  {
+   "name_common": "Ozzie Tanaka",
+   "age": 31.0,
+   "mlb_ID": 900004.0,
+   "year_ID": 2026,
+   "team_ID": "LAA",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 2.8,
+   "IPouts": 420
+  },
+  {
+   "name_common": "Tomas Kessler",
+   "age": 29.0,
+   "mlb_ID": 900010.0,
+   "year_ID": 2026,
+   "team_ID": "DET",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 3.1,
+   "IPouts": 290
+  },
+  {
+   "name_common": "Tomas Kessler",
+   "age": 29.0,
+   "mlb_ID": 900010.0,
+   "year_ID": 2026,
+   "team_ID": "LAD",
+   "stint_ID": 2,
+   "lg_ID": "NL",
+   "WAR": 2.19,
+   "IPouts": 186
+  },
+  {
+   "name_common": "Will Schott",
+   "age": 24.0,
+   "mlb_ID": 900011.0,
+   "year_ID": 2026,
+   "team_ID": "NYY",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 6.55,
+   "IPouts": 581
+  },
+  {
+   "name_common": "Dylan Cross",
+   "age": 30.0,
+   "mlb_ID": 900012.0,
+   "year_ID": 2026,
+   "team_ID": "TEX",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 6.12,
+   "IPouts": 540
+  },
+  {
+   "name_common": "Rafa Ortega",
+   "age": 24.0,
+   "mlb_ID": 900013.0,
+   "year_ID": 2026,
+   "team_ID": "TBR",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 2.5,
+   "IPouts": 210
+  },
+  {
+   "name_common": "Hal Munro",
+   "age": 27.0,
+   "mlb_ID": 900014.0,
+   "year_ID": 2026,
+   "team_ID": "CLE",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 3.0,
+   "IPouts": 300
+  },
+  {
+   "name_common": "Ike Varga",
+   "age": 26.0,
+   "mlb_ID": 900015.0,
+   "year_ID": 2026,
+   "team_ID": "MIN",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 3.0,
+   "IPouts": 330
+  },
+  {
+   "name_common": "Jon Pell",
+   "age": 22.0,
+   "mlb_ID": 900016.0,
+   "year_ID": 2026,
+   "team_ID": "CHW",
+   "stint_ID": 1,
+   "lg_ID": "AL",
+   "WAR": 1.0,
+   "IPouts": 90
+  },
+  {
+   "name_common": "Cris Sandoval",
+   "age": 28.0,
+   "mlb_ID": 900022.0,
+   "year_ID": 2026,
+   "team_ID": "PHI",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 7.07,
+   "IPouts": 621
+  },
+  {
+   "name_common": "Jake Misner",
+   "age": 24.0,
+   "mlb_ID": 900023.0,
+   "year_ID": 2026,
+   "team_ID": "MIL",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 6.58,
+   "IPouts": 524
+  },
+  {
+   "name_common": "Chase Byrne",
+   "age": 23.0,
+   "mlb_ID": 900027.0,
+   "year_ID": 2026,
+   "team_ID": "CIN",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 3.56,
+   "IPouts": 390
+  },
+  {
+   "name_common": "Uri Mott",
+   "age": 29.0,
+   "mlb_ID": 900036.0,
+   "year_ID": 2026,
+   "team_ID": "SFG",
+   "stint_ID": 1,
+   "lg_ID": "NL",
+   "WAR": 1.4,
+   "IPouts": 150
+  }
+ ]
+}
