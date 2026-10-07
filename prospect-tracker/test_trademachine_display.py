@@ -131,3 +131,72 @@ def test_grpo_chip_word_is_the_registry_verdict():
     assert word == row["verdict"], (word, row["verdict"])
     chip = src.split("GRPO within-cohort breakout score", 1)[1][:120]
     assert "${_TB_GRPO_VERDICT}" in chip
+
+
+# ------------------------------------------------------------- QCLP01 ------ #
+
+def test_boot_reads_neither_the_detail_file_nor_the_group_sidecar(server):
+    reqs: list = []
+    with _page(server, requests=reqs) as (pg, errors):
+        pg.wait_for_timeout(1500)
+        boot = [u for u in reqs if "/data/" in u]
+        assert not [u for u in boot if "mlb_player_detail" in u or "grpo_public" in u], boot
+        # the first focus in an Add player box asks for the detail file
+        pg.locator('input[data-tm-search="a"]').focus()
+        pg.wait_for_timeout(300)
+        assert any("mlb_player_detail" in u for u in reqs)
+        # the first breakout-chip click asks for the sidecar and fills the panel
+        chip = pg.locator(".tm-signals button.chip").first
+        if chip.count():
+            chip.click()
+            pg.wait_for_function(
+                "(document.getElementById('tb-group-title').textContent || '').startsWith('GRPO group for')",
+                timeout=30_000)
+            assert any("grpo_public" in u for u in reqs)
+        assert not errors, errors
+
+
+def test_an_mlb_seed_still_loads_the_detail_file(server):
+    reqs: list = []
+    with _page(server, hash_="#tm=mlb:paul_skenes", requests=reqs) as (pg, errors):
+        pg.wait_for_function("document.querySelectorAll('#trade-machine [data-tm-remove]').length > 0",
+                             timeout=30_000)
+        assert any("mlb_player_detail" in u for u in reqs)
+        assert not errors, errors
+
+
+# ------------------------------------------------------------- QCLP02 ------ #
+
+def test_logos_come_from_the_hub_builder_at_twice_their_size(server):
+    src = JS.read_text(encoding="utf-8")
+    assert "teamlogos/mlb/500/${" not in src
+    with _page(server) as (pg, errors):
+        logos = pg.eval_on_selector_all(
+            ".tm-board-table img.tm-logo", "els => els.map(e => [e.getAttribute('src'), e.alt])")
+        assert logos
+        assert all("/combiner/i?" in s and "&h=32&w=32" in s for s, _a in logos), logos[:3]
+        assert all(a == "" for _s, a in logos), "the board prints the club code beside the mark"
+
+
+# ------------------------------------------------------------- QCLP03 ------ #
+
+def test_the_loader_holds_a_viewport_and_the_builder_its_height(server):
+    css = _src("assets/trademachine.css")
+    assert "#tradeboard-content:has(> .px-state.is-loading)" in css
+    assert "#trade-machine:empty" in css
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        b = p.chromium.launch()
+        try:
+            pg = b.new_page(viewport={"width": 1280, "height": 900})
+            pg.add_init_script(
+                "window.__cls=0;try{new PerformanceObserver(l=>{for(const e of l.getEntries())"
+                "{if(!e.hadRecentInput)window.__cls+=e.value}}).observe({type:'layout-shift',buffered:true})}catch(e){}")
+            pg.goto(server + "trademachine/")
+            pg.wait_for_selector(".tm-board-table tbody tr", timeout=90_000)
+            pg.wait_for_timeout(1000)
+            cls = pg.evaluate("window.__cls")
+        finally:
+            b.close()
+    assert cls < 0.1, cls   # 0.569 before the fix (qualaudit median of 3)

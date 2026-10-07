@@ -107,20 +107,19 @@ function escapeHtml(s) {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
 }
-// ORG abbreviation -> ESPN logo slug (same map as projections.js / build_site / prospx).
-const _TM_ESPN_SLUGS = {
-  ARI: "ari", ATH: "ath", ATL: "atl", BAL: "bal", BOS: "bos",
-  CHC: "chc", CHW: "chw", CIN: "cin", CLE: "cle", COL: "col",
-  DET: "det", HOU: "hou", KCR: "kc", LAA: "laa", LAD: "lad",
-  MIA: "mia", MIL: "mil", MIN: "min", NYM: "nym", NYY: "nyy",
-  PHI: "phi", PIT: "pit", SDP: "sd", SEA: "sea", SFG: "sf",
-  STL: "stl", TBR: "tb", TEX: "tex", TOR: "tor", WSN: "wsh",
-};
-function _tmTeamLogo(org) {
+// Club logo through the hub's one builder (QCLP02, 2026-10-07). This module
+// built its own URL to the 500 x 500 ESPN master and drew it at 15 to 16 px:
+// the board pulled 29 of them, about 1.1 MB, a third of the page's wire. The
+// hub asks ESPN's combiner for the mark at twice the drawn size (32 px here),
+// and owns the code-to-slug map this file used to copy. `decorative` gives
+// alt="" where the club code is printed beside the mark, so a screen reader
+// does not hear it twice (QCLA07); a mark standing alone keeps alt = code.
+const _TM_LOGO_PX = 32;
+function _tmTeamLogo(org, decorative) {
   if (!org) return "";
-  const slug = _TM_ESPN_SLUGS[org] || String(org).toLowerCase();
-  return `<img class="tm-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" `
-       + `alt="${escapeHtml(org)}" loading="lazy" onerror="this.style.display='none'">`;
+  const hub = window.EEPHUS_HUB;
+  if (hub && hub.teamLogo) return hub.teamLogo(org, "tm-logo", { size: _TM_LOGO_PX, decorative: !!decorative });
+  return "";
 }
 // Surplus $M -> board tier. The SAME cuts the board's tier filter and the
 // server's bayes_trade_value._platform_tier use (Elite $40M+ / High $20-40M /
@@ -176,14 +175,29 @@ function _tmFvText(xfvGrade, consensusFv) {
 
 const _TM = { a: [], b: [], detail: null, detailLoading: false };
 
+// The MLB player detail file (about 4.8 MB) is read ONLY when the evaluator
+// needs an MLB price (QCLP01, 2026-10-07): the first focus or keystroke in an
+// Add player box, or a #tm=mlb: seed. It was fetched at boot with both sides
+// empty, the largest download on the page, for four fields per player. Until
+// it lands, MLB search answers from the board's own prices.
 function _tmEnsureDetail() {
   if (_TM.detail || _TM.detailLoading) return;
   _TM.detailLoading = true;
   fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
-    .then(j => { _TM.detail = (j && j.players) || {};
-      if (state.section === "trademachine" || state.section === "tradeboard") renderTradeMachine(); })
-    .catch(() => { _TM.detail = {}; });
+    .then(j => { _TM.detail = (j && j.players) || {}; _tmDetailArrived(); })
+    .catch(() => { _TM.detail = {}; _tmDetailArrived(); });
+}
+// A waiting #tm=mlb: seed, or an MLB asset whose CBT line needs its contract,
+// takes a full re-render (it keeps the reader's place in the search box). With
+// neither, the open searches refresh in place so typing is not interrupted.
+function _tmDetailArrived() {
+  if (state.section !== "trademachine" && state.section !== "tradeboard") return;
+  const hasMlb = _TM.a.concat(_TM.b).some(x => x && x.kind === "mlb");
+  if (!_TM.seeded || hasMlb) { renderTradeMachine(); return; }
+  document.querySelectorAll("#trade-machine [data-tm-search]").forEach(inp => {
+    if (inp.value && typeof inp.oninput === "function") inp.oninput();
+  });
 }
 
 // What acquiring this player is worth, in raw dollars. `surTotal` (2026-08-03)
@@ -234,7 +248,7 @@ function _tmSeedFromURL() {
       sub: [p.position || "", p.org || "", _tmFvText(p.xfv_grade, p.fv_close)].filter(Boolean).join(" · "),
       mm: sv }); _TM.seeded = true; }
   } else if (kind === "mlb") {
-    if (!_TM.detail) return;                 // detail still loading; seed on the re-render
+    if (!_TM.detail) { _tmEnsureDetail(); return; }   // seed on the re-render when it lands
     const d = _TM.detail[key];
     const pv = d ? _tmProjValue(d.proj) : null;
     if (pv != null) {
@@ -532,7 +546,7 @@ function _tmCbtHtml() {
     if (!side) return "";
     const lines = _tmCbtLines(side, cbt).map(l =>
       `<div class="tm-cbt-line">${escapeHtml(l.text)}</div>`).join("");
-    return `<div class="tm-cbt-side"><div class="tm-cbt-club">${_tmTeamLogo(who.club)} Side ${label}: ${escapeHtml(who.club)}</div>${lines}</div>`;
+    return `<div class="tm-cbt-side"><div class="tm-cbt-club">${_tmTeamLogo(who.club, true)} Side ${label}: ${escapeHtml(who.club)}</div>${lines}</div>`;
   };
   const src = cbt.source || {};
   const srcBits = [src.payroll, src.thresholds, src.calendar].filter(Boolean).map(escapeHtml).join("; ");
@@ -556,7 +570,6 @@ const BALANCED_THRESHOLD_MM = 5;
 function renderTradeMachine() {
   const el = document.getElementById("trade-machine");
   if (!el) return;
-  _tmEnsureDetail();
   _tmSeedFromURL();
   const sideHtml = (side, label) => {
     const list = _TM[side].map((x, i) => {
@@ -644,7 +657,9 @@ function renderTradeMachine() {
   </div>`;
   _tmWireGl(el);
   el.querySelectorAll("[data-tm-search]").forEach(inp => {
+    inp.addEventListener("focus", _tmEnsureDetail);
     inp.oninput = () => {
+      _tmEnsureDetail();
       const side = inp.dataset.tmSearch;
       const res = el.querySelector(`[data-tm-results="${side}"]`);
       const hits = _tmSearch(inp.value);
@@ -732,7 +747,7 @@ let _tbData   = null;   // also exposed as window._tbData for renderPlayerDetail
 // panel renders. Until a deployment's pipeline has emitted it, the fetch can
 // 404 - track it so a chip click can say so honestly instead of silently
 // doing nothing. Never add a fallback fetch to the excluded full file.
-let _tbGrpoState = "pending";   // "pending" | "ready" | "unavailable"
+let _tbGrpoState = "idle";   // "idle" | "pending" | "ready" | "unavailable"
 // The registry's word for the GRPO breakout model (row grpo_prospect), printed
 // on the breakout chip. The audit of 2026-10-02 (QCLC05) caught the chip
 // saying "provisional" while the row said "unvalidated"; the 30-day forward
@@ -1376,7 +1391,7 @@ function _renderTBRows() {
       <td class="tm-player">${href ? `<a class="fa-player-link" href="${href}">${name}</a>` : name}</td>
       <td class="tm-num tm-dim">${p.age != null ? Number(p.age).toFixed(1) : "-"}</td>
       <td class="tm-dim">${pos}</td>
-      <td><span class="tm-org-cell">${org ? _tmTeamLogo(org) : ""}<span class="tm-org-abbr">${org}</span></span></td>
+      <td><span class="tm-org-cell">${org ? _tmTeamLogo(org, true) : ""}<span class="tm-org-abbr">${org}</span></span></td>
       <td class="tm-num tm-dim">${fv}</td>
       <td class="tm-num tm-col-div tm-grade">${grade ? `<span class="tm-grade-chip" style="color:${tvCol};border-color:${tvCol};" title="Trade Value Grade ${grade} (${_tbFmt(tv)} contract-adjusted surplus)">${grade}</span>` : ""}</td>
       <td class="tm-num tm-surplus" style="color:${tvCol};">${_tbFmt(tv)}</td>
@@ -1537,6 +1552,23 @@ function _tbWireFilters() {
 // the same position × level × age_tier × power_tier cluster.
 // The GRPO model ranks them by within-group breakout probability, so this is
 // effectively a "next Jesús Made" finder for any player.
+// The group sidecar (about 3.6 MB) is read on the FIRST chip click, not at
+// boot (QCLP01, 2026-10-07): only this panel reads it. Before a deployment's
+// pipeline has emitted it the fetch can 404, an expected outcome, so it is
+// marked unavailable and the panel says so.
+let _tbGrpoWant = null;   // the chip clicked while the sidecar was loading
+function _tbEnsureGrpo() {
+  if (_tbGrpoState !== "idle") return;
+  _tbGrpoState = "pending";
+  fetch(DATA_BASE + "grpo_public.json", { cache: "no-cache" })
+    .then(r => r.ok ? r.json() : null)
+    .then(g => {
+      if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
+      else { _tbGrpoState = "unavailable"; }
+    })
+    .catch(() => { _tbGrpoState = "unavailable"; })
+    .then(() => { const k = _tbGrpoWant; _tbGrpoWant = null; if (k) _tbShowGroup(k); });
+}
 function _tbShowGroup(playerKey) {
   if (!_tbData) return;
   const panel = document.getElementById("tb-group-panel");
@@ -1544,14 +1576,18 @@ function _tbShowGroup(playerKey) {
   const body  = document.getElementById("tb-group-body");
   if (!panel || !title || !body) return;
 
+  if (_tbGrpoState === "idle" || _tbGrpoState === "pending") {
+    _tbGrpoWant = playerKey;
+    _tbEnsureGrpo();
+  }
   const pScore = (_tbData.all_scores || {})[playerKey];
   if (!pScore) {
-    // Honest degrade: the group sidecar may still be loading, or this
-    // deployment does not publish it at all - say so instead of a dead click.
+    // Honest degrade: the group sidecar is loading (the panel fills itself
+    // when it lands), or this deployment does not publish it at all.
     title.textContent = "GRPO profile group";
     body.innerHTML = `<div style="color:var(--text-secondary);font-size:12px;">${
       _tbGrpoState === "pending"
-        ? "Group data is still loading. Try the chip again in a moment."
+        ? "Group data is still loading."
         : "Profile-group data is unavailable; the breakout score on the chip stands."
     }</div>`;
     panel.style.display = "block";
@@ -1686,6 +1722,10 @@ function _tbShowGroup(playerKey) {
     // first board render replaces it.
     const lw = document.getElementById("tradeboard-content");
     if (lw && window.EephusState) lw.innerHTML = window.EephusState.html("loading", "Loading the trade-value board...");
+    // The deal builder needs no data to draw its two empty sides, so it draws
+    // now rather than after the board file: drawing it late moved everything
+    // under it (QCLP03). A #tm= seed retries on the render after the data.
+    renderTradeMachine();
     fetch(DATA_BASE + "trade_values.json", { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(d => {
@@ -1699,19 +1739,9 @@ function _tbShowGroup(playerKey) {
         _renderTBRows();
         _tbWireFilters();
         _tbInjectGfxChip();     // "Generate GFX" chip beside the board filters
-        renderTradeMachine();   // also fetches MLB detail + seeds from #tm=
-        // GRPO group-panel data lives in the slim public sidecar; merge it so the
-        // ▲## breakout chip's _tbShowGroup() can resolve. Non-blocking: the board is
-        // already rendered. Before a deployment's first pipeline run emits the
-        // sidecar, this 404s - an expected outcome, not an error - so mark it
-        // unavailable and degrade in the panel.
-        fetch(DATA_BASE + "grpo_public.json", { cache: "no-cache" })
-          .then(r => r.ok ? r.json() : null)
-          .then(g => {
-            if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
-            else { _tbGrpoState = "unavailable"; }
-          })
-          .catch(() => { _tbGrpoState = "unavailable"; });
+        renderTradeMachine();   // seeds from #tm= (an MLB seed fetches the detail file)
+        // GRPO group-panel data is fetched on the first breakout-chip click
+        // (_tbEnsureGrpo), not here.
         // The Club Ledger's CBT slice for the evaluator's CBT block (M27-4).
         // Non-blocking and optional: without it the block simply does not show.
         fetch(DATA_BASE + "trade_cbt.json", { cache: "no-cache" })

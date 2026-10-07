@@ -209,7 +209,10 @@
 @media (max-width: 720px) {
   #tradeboard-content { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   #tradeboard-content table { min-width: 620px; }
-  .tm-org-abbr { display: none; }   /* the logo carries the team on small screens */
+  /* The logo carries the team on small screens. The code stays in the
+     accessibility tree (clipped, not display:none): the logo beside it is
+     decorative (alt="") since QCLA07, so the code is what a reader hears. */
+  .tm-org-abbr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   /* The group panel is a SIBLING of #tradeboard-content, so the overflow rule
      above never reached the 9- and 4-column tables that trademachine.js
      renders into it. They got their own scroller rather than panning the
@@ -304,3 +307,15 @@
 .proj-viewbtn{appearance:none;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);font:inherit;font-size:14px;font-weight:600;padding:8px 14px;cursor:pointer;margin-bottom:-1px;}
 .proj-viewbtn:hover{color:var(--text-primary);}
 .proj-viewbtn.active{color:var(--text-primary);border-bottom-color:var(--neon-cyan);}
+
+/* QCLP03 (2026-10-07): the board's loader held a 66 px box with the footer
+   right under it, so the first board render pushed the footer off screen
+   (CLS 0.57). The box keeps a viewport of room while it loads, so the board
+   arrives below the fold. */
+#tradeboard-content:has(> .px-state.is-loading),
+#tradeboard-content:has(> .spinner-wrap) { min-height: 100vh; }
+/* The deal builder draws before the board file arrives; until its script runs
+   the mount is empty, so it reserves the height its two empty sides take
+   (measured in Chromium: 182 px side by side, 319 px stacked). */
+#trade-machine:empty { min-height: 182px; }
+@media (max-width: 720px) { #trade-machine:empty { min-height: 319px; } }
