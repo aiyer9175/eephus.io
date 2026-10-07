@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-04T11:45:44+00:00",
+ "generated_at": "2026-10-07T16:43:18+00:00",
  "produced_by": "tools/efv_arm_ledger.py",
  "n_arms": 392,
  "by_lane": {
@@ -5338,9 +5338,37 @@
     "hit": 0.0,
     "pit": 0.0
    }
+  },
+  {
+   "lane": "pitch-rate sidecar probes (PM19)",
+   "artifact": "_labs/efv_pitch_rate_features.json",
+   "probe": "PM19:corr.pbf_rel:pit",
+   "verdict": "DESCRIPTIVE",
+   "generated_at": "2026-10-07T16:43:10+00:00"
+  },
+  {
+   "lane": "pitch-rate sidecar probes (PM19)",
+   "artifact": "_labs/efv_pitch_rate_features.json",
+   "probe": "PM19:corr.ppa_rel:hit",
+   "verdict": "DESCRIPTIVE",
+   "generated_at": "2026-10-07T16:43:10+00:00"
+  },
+  {
+   "lane": "pitch-rate sidecar probes (PM19)",
+   "artifact": "_labs/efv_pitch_rate_features.json",
+   "probe": "PM19:coverage.pbf_rel:pit",
+   "verdict": "COUNTED",
+   "generated_at": "2026-10-07T16:43:10+00:00"
+  },
+  {
+   "lane": "pitch-rate sidecar probes (PM19)",
+   "artifact": "_labs/efv_pitch_rate_features.json",
+   "probe": "PM19:coverage.ppa_rel:hit",
+   "verdict": "COUNTED",
+   "generated_at": "2026-10-07T16:43:10+00:00"
   }
  ],
- "n_probes": 45,
+ "n_probes": 49,
  "probes_are_not_arms": "a validity probe tests the frame or the resolver, not a driver; probes are listed and counted apart and never summed into the arm count",
  "sources_missing": [],
  "sources_pending": [

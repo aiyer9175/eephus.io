@@ -93,6 +93,9 @@ PROBES: tuple[tuple[str, str, str], ...] = (
     # EFV3 lane A G7: the one validity read of the bust pool ids (W3 > 0 share by the
     # bust_id_resolved indicator on the lv_dev pool rows); counts, never a score.
     ("efv_bust_pool_receipt.json", "probes", "bust pool id balance (EFV3 G7)"),
+    # Q10_10 (owner ask 19): the pitch-rate sidecar's no-outcome steps, coverage by
+    # (V, side) and descriptive correlations with obp_rel, k_rel and bb_rel.
+    ("_labs/efv_pitch_rate_features.json", "probes", "pitch-rate sidecar probes (PM19)"),
 )
 
 #: Fields an arm may carry that the ledger copies through unchanged, so a driver's
