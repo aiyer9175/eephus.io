@@ -2931,8 +2931,31 @@
     const minis = mini("value", `eWAR by season${ss.length ? ` <span class="fa-sub">${ss[0].y}-${last.y}</span>` : ""}`, warTrend)
       + mini("projection", `Projected WAR${pw.length && first != null ? ` <span class="fa-sub">${first}-${first + pw.length - 1}</span>` : ""}`, projTrend);
     const minisHTML = minis ? `<div class="mlbp-section" data-mlbp-section="overview-trends"><div class="mlbp-minis">${minis}</div></div>` : "";
+    const hof = hofLine(p);
     const usage = positionGamesSummary(key);
-    return { content: lensHTML + minisHTML + usage, html: lensHTML + minisHTML + slotHTML("usage", usage) };
+    return { content: lensHTML + minisHTML + hof + usage, html: lensHTML + minisHTML + hof + slotHTML("usage", usage) };
+  }
+
+  // ---- Hall of Fame line (wiring W05) -----------------------------------------
+  // The /hof/ shelf's own row for a player on its Cooperstown Watch or Not Yet
+  // Eligible band, baked by mlb_player_export._hof_index. The numbers are the
+  // shelf's, printed at the shelf's precision, so this line and /hof/ agree.
+  // The player's own numbers only: no position comparison (the shelf's position
+  // groups have no 3B group). The band names a shelf band, not a forecast.
+  function hofLine(p) {
+    const HOF_BAND_LABEL = { watch: "Cooperstown Watch", not_yet_eligible: "Not Yet Eligible" };
+    const h = p && p.hof;
+    if (!h || !HOF_BAND_LABEL[h.band] || h.jaws == null) return "";
+    const n1 = v => (v == null || !Number.isFinite(Number(v)) ? "" : Number(v).toFixed(1));
+    const chip = (label, v) => (v === "" ? "" : `<span class="position-usage-chip">${label}&nbsp;${esc(v)}</span>`);
+    const span = (h.first != null && h.last != null)
+      ? `${esc(String(h.first))}-${esc(String(h.last))}${h.seasons != null ? `, ${esc(String(h.seasons))} seasons` : ""}` : "";
+    return `<div class="position-usage-strip" data-mlbp-section="overview-hof">
+      <span class="position-usage-label">Hall of Fame shelf</span>
+      ${chip("<span>WAR</span>", n1(h.war))}${chip(`<span>${term("war7", "WAR7")}</span>`, n1(h.war7))}${chip(`<span>${term("jaws", "JAWS")}</span>`, n1(h.jaws))}${chip("<span>WAA+</span>", n1(h.waa_pos))}${chip(`<span>${term("war_ink", "WAR ink")}</span>`, h.ink == null ? "" : Number(h.ink).toFixed(0))}
+      <span class="fa-sub">${esc(h.basis || "B-Ref bWAR")}${span ? `, ${span}` : ""}</span>
+      <a class="fa-sub" href="/hof/">${esc(HOF_BAND_LABEL[h.band])} band on the Hall of Fame page &rarr;</a>
+    </div>`;
   }
 
   // ---- hero ------------------------------------------------------------------
