@@ -262,8 +262,8 @@ def _tile_classes(html: str, gl: str) -> list[str]:
 
 def test_fetch_failure_renders_error_state():
     html = _render("", fail_fetch=True)
-    assert "Data failed to load" in html
-    assert "nightly build is mid-run" in html
+    assert "Projections did not load" in html
+    assert "nightly build may be writing it" in html
     assert "proj-retry" in html
     assert 'role="alert"' in html
 

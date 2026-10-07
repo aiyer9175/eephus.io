@@ -1435,10 +1435,10 @@
   }); } catch (e) { /* no document events */ }
 
   // ---- the window board ------------------------------------------------------
-  function winLoading(txt) { return pxState("loading", esc(txt) + "&hellip;"); }
+  function winLoading(txt) { return pxState("loading", esc(txt) + "."); }
   function winFailed(sec, txt) {
     return pxState("failed", esc(txt)
-      + " Refresh to retry; if it persists the nightly build is mid-run. "
+      + " The nightly build may be writing it. "
       + '<button type="button" class="chip" data-mlbrange="' + esc(sec)
       + ':current">Back to Current</button>', "mlbstats-load-error");
   }
@@ -1451,11 +1451,11 @@
     var win = WIN[sec];
     if (!win) return "";
     if (sec === "war") return ctl + renderOverallWindow(win);
-    if (WINDOWS_ERROR) return ctl + winFailed(sec, "The year windows failed to load.");
+    if (WINDOWS_ERROR) return ctl + winFailed(sec, "Year windows did not load.");
     if (!WINDOWS) return ctl + winLoading("Loading the year windows");
     var w = labWindowFor(LAB_BOARD[sec], win.lo, win.hi);
     if (!w) return ctl + winRefusal(sec, win);
-    if (WINDOW_ERROR[w.key]) return ctl + winFailed(sec, "The " + winSpan(win) + " board failed to load.");
+    if (WINDOW_ERROR[w.key]) return ctl + winFailed(sec, "The " + winSpan(win) + " board did not load.");
     if (!WINDOW_DOC[w.key]) {
       loadWindowDoc(w, sec);
       return ctl + winLoading("Loading the " + winSpan(win) + " board");
@@ -1814,7 +1814,7 @@
     var sort = windowSort(sec, cols);
     rows = sortRows(rows, cols, sort);
     var note = windowNote(sec, w, doc, spec, all, rows, idxKey);
-    if (!rows.length) return note + noRowsNote(sectionTeam(sec), "No rows match the current filters.");
+    if (!rows.length) return note + noRowsNote(sectionTeam(sec), "No rows match these filters.");
     return note + '<div class="mlbstats-scroll">'
       + renderTable(rows, cols, sort, doc, winColBoard(sec)) + "</div>";
   }
@@ -1932,7 +1932,7 @@
     } catch (e) { return ""; }
   }
   function renderOverallWindow(win) {
-    if (SEASONS_ERROR) return winFailed("war", "The per-season eWAR substrate failed to load.");
+    if (SEASONS_ERROR) return winFailed("war", "Per-season eWAR did not load.");
     if (!SEASONS) { loadSeasons("war"); return winLoading("Loading every season"); }
     var fold = foldSeasons(win.lo, win.hi);
     var cols = warCols();
@@ -1940,7 +1940,7 @@
     var sort = windowSort("war", cols);
     rows = sortRows(rows, cols, sort);
     var note = overallWindowNote(win, fold, rows);
-    if (!rows.length) return note + noRowsNote(warTeam, "No players match the current filters.");
+    if (!rows.length) return note + noRowsNote(warTeam, "No players match these filters.");
     return note + '<div class="mlbstats-scroll">'
       + renderTable(rows, cols, sort, warData, "war", warTableOpts()) + "</div>";
   }
@@ -1948,7 +1948,7 @@
   // boards served TODAY; Yrs and Clubs are facts about a span, so one season has
   // nothing for them to say.
   var WAR_WIN_DROP = {
-    boards: "The five role boards this player is on TODAY. A window has no per-season answer on disk,"
+    boards: "The five role boards this player is on today. A window has no per-season answer on disk,"
       + " so the column is off rather than answered for the wrong date.",
     yrs: "One season is not a span, so there is nothing to count.",
     clubs: "One season is not a span; the club cell already names it."
@@ -1982,8 +1982,8 @@
       var f = [];
       if (rule.min_pa != null) f.push(rule.min_pa + " plate appearances");
       if (rule.min_ip != null) f.push(rule.min_ip + " innings");
-      bits.push("Qualified: " + f.join(" or ") + " over the whole window. On a long window this filter"
-        + " removes very little, because a small sample makes a small total anyway.");
+      bits.push("Qualified: " + f.join(" or ") + " over the whole window. On a long window it removes"
+        + " few players: a small sample makes a small total anyway.");
     }
     shortSeasons({ season_share: SEASONS.season_share, live_season: sectionLiveSeason("war") },
                  fold.seasons).forEach(function (s) { bits.push(esc(s)); });
@@ -2112,13 +2112,13 @@
     if (!b) return "";
     var w = vintageWindow(b);
     if (b.kind === "window") {
-      return "LAST 3 WINDOW: read from " + (b.source || "the window lab") + ", built " + b.generated_at
+      return "Last 3 window: read from " + (b.source || "the window lab") + ", built " + b.generated_at
         + (w ? ", " + w : "") + (b.panel_built_at && b.season != null
           ? ", " + b.season + " through " + b.panel_built_at : "")
         + "; the value the Last 3 view prints. Uncoloured: no value ruler travels onto a"
         + " window pool. p = percentile inside that pool. Blank for anyone the window does not publish.";
     }
-    return "FROZEN: read from " + (b.source || "a lab artifact") + ", generated " + b.generated_at
+    return "Frozen: read from " + (b.source || "a lab artifact") + ", generated " + b.generated_at
       + (w ? ", " + w : "") + "; as of that date, not this board's. Blank for anyone who joined"
       + " the pool since.";
   }
@@ -2633,7 +2633,7 @@
             + relieverViz()
             + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort, DATA, "rel") + "</div>";
         })()
-      : noRowsNote(relTeam, "No relievers match the current filters.");
+      : noRowsNote(relTeam, "No relievers match these filters.");
     return yearsRow("bullpen") + body;
   }
 
@@ -2644,15 +2644,15 @@
     var pills = yearsRow("bullpen");
     if (HISTORY_ERROR) {
       return pills + pxState("failed",
-        "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        "Season history did not load. The nightly build may be writing it. "
         + '<button type="button" class="chip" id="mlbstats-history-retry">Retry</button>', "mlbstats-load-error");
     }
     if (!HISTORY) {
       loadHistory();
-      return pills + pxState("loading", "Loading the " + esc(relSeason) + " season leaderboard&hellip;");
+      return pills + pxState("loading", "Loading the " + esc(relSeason) + " season leaderboard.");
     }
     if (HISTORY_LOADING) {
-      return pills + pxState("loading", "Loading the " + esc(relSeason) + " season leaderboard&hellip;");
+      return pills + pxState("loading", "Loading the " + esc(relSeason) + " season leaderboard.");
     }
     var yr = historyYear();
     if (!yr || !yr.relievers || !yr.relievers.length) {
@@ -2668,7 +2668,7 @@
     var relHistCols = coveredCols(REL_HISTORY_COLS, rows);
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, relHistCols, sort, null, "rel") + "</div>"
-      : noRowsNote(relTeam, "No relievers match the current filters.");
+      : noRowsNote(relTeam, "No relievers match these filters.");
     return pills + cap + table;
   }
 
@@ -2933,14 +2933,12 @@
     if (!root) return;
     if (!DATA) {
       root.innerHTML = LOAD_ERROR
-        ? pxState("failed", "Data failed to load. Refresh to retry; "
-          + "if it persists the nightly build is mid-run. "
+        ? pxState("failed", "Bullpen board did not load. The nightly build may be writing it. "
           + '<button type="button" class="chip" id="mlbstats-retry">Retry</button>', "mlbstats-load-error")
-        : pxState("unmeasured", 'Bullpen Leaderboards are being computed from MLB play-by-play. '
-          + "Check back shortly.");
+        : pxState("unmeasured", "Bullpen board is built nightly from play-by-play; not built yet on this deploy.");
       var retry = document.getElementById("mlbstats-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = pxState("loading", "Loading&hellip;");
+        root.innerHTML = pxState("loading", "Loading the bullpen board.");
         load();
       });
       return;
@@ -3506,7 +3504,7 @@
               + vintageNote(starterData, [["multiyear", "SEM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]]))
             + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_COLS, starterSort, starterData, "sp") + "</div>";
         })()
-      : noRowsNote(starterTeam, "No starters match the current filters.");
+      : noRowsNote(starterTeam, "No starters match these filters.");
     return yearsRow("starters") + body;
   }
 
@@ -3517,15 +3515,15 @@
     var pills = yearsRow("starters");
     if (STARTER_HISTORY_ERROR) {
       return pills + pxState("failed",
-        "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        "Season history did not load. The nightly build may be writing it. "
         + '<button type="button" class="chip" id="mlbstats-starter-history-retry">Retry</button>', "mlbstats-load-error");
     }
     if (!STARTER_HISTORY) {
       loadStarterHistory();
-      return pills + pxState("loading", "Loading the " + esc(starterSeason) + " season leaderboard&hellip;");
+      return pills + pxState("loading", "Loading the " + esc(starterSeason) + " season leaderboard.");
     }
     if (STARTER_HISTORY_LOADING) {
-      return pills + pxState("loading", "Loading the " + esc(starterSeason) + " season leaderboard&hellip;");
+      return pills + pxState("loading", "Loading the " + esc(starterSeason) + " season leaderboard.");
     }
     var yr = starterHistoryYear();
     if (!yr || !yr.starters || !yr.starters.length) {
@@ -3540,7 +3538,7 @@
     var spHistCols = coveredCols(STARTER_HISTORY_COLS, rows);
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, spHistCols, sort, null, "sp") + "</div>"
-      : noRowsNote(starterTeam, "No starters match the current filters.");
+      : noRowsNote(starterTeam, "No starters match these filters.");
     return pills + cap + table;
   }
 
@@ -3639,14 +3637,12 @@
     if (!root) return;
     if (!starterData) {
       root.innerHTML = starterErr
-        ? pxState("failed", "Data failed to load. Refresh to retry; "
-          + "if it persists the nightly build is mid-run. "
+        ? pxState("failed", "Starter board did not load. The nightly build may be writing it. "
           + '<button type="button" class="chip" id="mlbstats-starter-retry">Retry</button>', "mlbstats-load-error")
-        : pxState("unmeasured", 'Starter Leaderboards are being computed from MLB play-by-play. '
-          + "Check back shortly.");
+        : pxState("unmeasured", "Starter board is built nightly from play-by-play; not built yet on this deploy.");
       var retry = document.getElementById("mlbstats-starter-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = pxState("loading", "Loading&hellip;");
+        root.innerHTML = pxState("loading", "Loading the starter board.");
         loadStarters();
       });
       return;
@@ -3791,7 +3787,7 @@
     // can be read against the number the industry publishes. No isRem flag:
     // that marks the site's own index family and this is not one of them.
     { key: "wrc_plus", label: "wRC+", term: "wrc_plus", num: true, desc: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. MLB's season-total wRC+, read verbatim by player id; a traded hitter reads one line. 100 = league average, park and league adjusted. Unshrunk, so it runs wider than HEM+ and bands on its own thresholds.",
+      title: "Published, not computed here. MLB's season-total wRC+, read verbatim by player id; a traded hitter reads one line. 100 = league average, park and league adjusted. Unshrunk, so it runs wider than HEM+ and bands on its own thresholds.",
       get: function (r) { return r.wrc_plus; },
       cell: function (r) { return r.wrc_plus == null ? "" : wrcCell(r.wrc_plus); } },
     { key: "hem_plus_3yr", label: "HEM+ 3yr", term: "hem_plus_3yr", num: true, desc: true, isRem: true,
@@ -4042,7 +4038,7 @@
               + vintageNote(hitterData, [["multiyear", "HEM+ 3yr"], ["multiyear_war_rate", "WAR/PA+ 3yr"]]))
             + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_COLS, hitterSort, hitterData, "hit") + "</div>";
         })()
-      : noRowsNote(hitterTeam, "No hitters match the current filters.");
+      : noRowsNote(hitterTeam, "No hitters match these filters.");
     return yearsRow("hitters") + body;
   }
 
@@ -4050,15 +4046,15 @@
     var pills = yearsRow("hitters");
     if (HITTER_HISTORY_ERROR) {
       return pills + pxState("failed",
-        "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        "Season history did not load. The nightly build may be writing it. "
         + '<button type="button" class="chip" id="mlbstats-hitter-history-retry">Retry</button>', "mlbstats-load-error");
     }
     if (!HITTER_HISTORY) {
       loadHitterHistory();
-      return pills + pxState("loading", "Loading the " + esc(hitterSeason) + " season leaderboard&hellip;");
+      return pills + pxState("loading", "Loading the " + esc(hitterSeason) + " season leaderboard.");
     }
     if (HITTER_HISTORY_LOADING) {
-      return pills + pxState("loading", "Loading the " + esc(hitterSeason) + " season leaderboard&hellip;");
+      return pills + pxState("loading", "Loading the " + esc(hitterSeason) + " season leaderboard.");
     }
     var yr = hitterHistoryYear();
     if (!yr || !yr.hitters || !yr.hitters.length) {
@@ -4073,7 +4069,7 @@
     var hitHistCols = coveredCols(HITTER_HISTORY_COLS, rows);
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, hitHistCols, sort, null, "hit") + "</div>"
-      : noRowsNote(hitterTeam, "No hitters match the current filters.");
+      : noRowsNote(hitterTeam, "No hitters match these filters.");
     return pills + cap + table;
   }
 
@@ -4363,14 +4359,12 @@
     if (!root) return;
     if (!hitterData) {
       root.innerHTML = hitterErr
-        ? pxState("failed", "Data failed to load. Refresh to retry; "
-          + "if it persists the nightly build is mid-run. "
+        ? pxState("failed", "Hitter board did not load. The nightly build may be writing it. "
           + '<button type="button" class="chip" id="mlbstats-hitter-retry">Retry</button>', "mlbstats-load-error")
-        : pxState("unmeasured", 'Hitter Leaderboards are being computed from the MLB season. '
-          + "Check back shortly.");
+        : pxState("unmeasured", "Hitter board is built nightly from MLB season stats; not built yet on this deploy.");
       var retry = document.getElementById("mlbstats-hitter-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = pxState("loading", "Loading&hellip;");
+        root.innerHTML = pxState("loading", "Loading the hitter board.");
         loadHitters();
       });
       return;
@@ -4712,13 +4706,13 @@
     if (leverageSeason !== "current") {
       if (leverageHistoryErr) {
         return yearsRow("leverage") + pxState("failed",
-          "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+          "Season history did not load. The nightly build may be writing it. "
           + '<button type="button" class="chip" id="mlbstats-leverage-history-retry">Retry</button>', "mlbstats-load-error");
       }
       if (!leverageHistory || leverageHistoryLoading) {
         if (!leverageHistory) loadLeverageHistory();
         return yearsRow("leverage") + pxState("loading", "Loading the "
-          + esc(leverageSeason) + " season leaderboard&hellip;");
+          + esc(leverageSeason) + " season leaderboard.");
       }
       if (!leverageHistory.history || !leverageHistory.history[leverageSeason]) {
         return yearsRow("leverage") + '<div class="mlbstats-empty">No leaderboard for the '
@@ -4728,7 +4722,7 @@
     var cols = levCols(), sort = levSort();
     var rows = sortRows(filteredLeverage(), cols, sort);
     if (!rows.length) {
-      return yearsRow("leverage") + noRowsNote(leverageTeam, "No players match the current filters.");
+      return yearsRow("leverage") + noRowsNote(leverageTeam, "No players match these filters.");
     }
     var isStart = (leverageView === "starters");
     var seasonLbl = (leverageSeason === "current") ? "" : (esc(leverageSeason) + " season, ");
@@ -4747,14 +4741,12 @@
     if (!root) return;
     if (!leverageData) {
       root.innerHTML = leverageErr
-        ? pxState("failed", "Data failed to load. Refresh to retry; "
-          + "if it persists the nightly build is mid-run. "
+        ? pxState("failed", "Leverage board did not load. The nightly build may be writing it. "
           + '<button type="button" class="chip" id="mlbstats-leverage-retry">Retry</button>', "mlbstats-load-error")
-        : pxState("unmeasured", 'Leverage Leaderboards are being computed from the MLB win-probability '
-          + "feed. Check back shortly.");
+        : pxState("unmeasured", "Leverage board is built nightly from the MLB win-probability feed; not built yet on this deploy.");
       var retry = document.getElementById("mlbstats-leverage-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = pxState("loading", "Loading&hellip;");
+        root.innerHTML = pxState("loading", "Loading the leverage board.");
         loadLeverage();
       });
       return;
@@ -4918,15 +4910,15 @@
     { key: "dem_plus_pos_pct", label: "Pos %ile", fmt: fInt, num: true, desc: true,
       title: "DEM+ percentile among fielders at the same primary position." },
     { key: "fld_total", label: "Fld", term: "fielding_runs", fmt: fSigned, num: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. FanGraphs fielding runs; framing included for catchers." },
+      title: "Published, not computed here. FanGraphs fielding runs; framing included for catchers." },
     { key: "fld_runs", label: "Fld ex-Frm", term: "fielding_runs", fmt: fSigned, num: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. Fielding runs without framing; equals Fld for non-catchers." },
+      title: "Published, not computed here. Fielding runs without framing; equals Fld for non-catchers." },
     { key: "frm_runs", label: "Frm", term: "framing_runs", fmt: fSigned, num: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. Catcher framing runs; catchers only." },
+      title: "Published, not computed here. Catcher framing runs; catchers only." },
     { key: "pos_runs", label: "Pos (ours)", term: "positional_adjustment", fmt: fSigned, num: true,
-      title: "OUR LADDER. Position Fit's positional ladder (Baseball-Reference scale), pro-rated by innings at each fielding position; DH time excluded. The term in Def. Context; does not move DEM+." },
+      title: "Our ladder. Position Fit's positional ladder (Baseball-Reference scale), pro-rated by innings at each fielding position; DH time excluded. The term in Def. Context; does not move DEM+." },
     { key: "pos_runs_fg", label: "Pos (FG)", term: "positional_adjustment", fmt: fSigned, num: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. FanGraphs' positional adjustment, DH time included. For comparison; not in Def." },
+      title: "Published, not computed here. FanGraphs' positional adjustment, DH time included. For comparison; not in Def." },
     { key: "def_runs", label: "Def", term: "def_runs", fmt: fSigned, num: true,
       title: "Fld + Pos (ours): FanGraphs fielding and framing plus our positional ladder. Not FanGraphs Def." },
     { key: "rate_1000", label: "Fld/1000", fmt: fSigned, num: true,
@@ -4991,13 +4983,13 @@
       get: function (t) { return num(t.n_above_avg); },
       cell: function (t) { return fInt(t.n_above_avg) + (t.n_fielders != null ? '<span class="proj-dim"> / ' + fInt(t.n_fielders) + "</span>" : ""); } },
     { key: "team_fld_total", label: "Fld", term: "fielding_runs", fmt: fSigned, num: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. Sum of FanGraphs fielding runs, catcher framing included when the rollup includes catchers." },
+      title: "Published, not computed here. Sum of FanGraphs fielding runs, catcher framing included when the rollup includes catchers." },
     { key: "team_frm_runs", label: "Frm", term: "framing_runs", fmt: fSigned, num: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. Sum of the club's catcher framing runs; already inside Fld." },
+      title: "Published, not computed here. Sum of the club's catcher framing runs; already inside Fld." },
     { key: "team_pos_runs", label: "Pos (ours)", term: "positional_adjustment", fmt: fSigned, num: true,
-      title: "OUR LADDER. Sum of the fielders' Pos (ours): Position Fit's ladder pro-rated by innings, DH time excluded." },
+      title: "Our ladder. Sum of the fielders' Pos (ours): Position Fit's ladder pro-rated by innings, DH time excluded." },
     { key: "team_pos_runs_fg", label: "Pos (FG)", term: "positional_adjustment", fmt: fSigned, num: true,
-      title: "PUBLISHED, NOT COMPUTED HERE. Sum of FanGraphs' positional adjustments, for comparison." },
+      title: "Published, not computed here. Sum of FanGraphs' positional adjustments, for comparison." },
     { key: "team_inn", label: "Inn", fmt: fInt, num: true, title: "Defensive innings in the rollup." },
   ];
 
@@ -5133,7 +5125,7 @@
           defenseExplainer() + defenseScorecard()
           + vintageNote(defenseData, [["multiyear", "DEM+ 3yr"]]))
         + '<div class="mlbstats-scroll">' + renderTable(rows, DEFENSE_COLS, defenseSort, defenseData, "def") + "</div>"
-      : noRowsNote(defenseTeam, "No fielders match the current filters.");
+      : noRowsNote(defenseTeam, "No fielders match these filters.");
     return yearsRow("defense") + body;
   }
 
@@ -5145,11 +5137,11 @@
     var pills = yearsRow("defense");
     if (DEFENSE_HISTORY_ERROR) {
       return pills + pxState("failed",
-        "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        "Season history did not load. The nightly build may be writing it. "
         + '<button type="button" class="chip" id="mlbstats-defense-history-retry">Retry</button>', "mlbstats-load-error");
     }
     if (!DEFENSE_HISTORY || DEFENSE_HISTORY_LOADING) {
-      return pills + pxState("loading", "Loading the " + esc(defenseSeason) + " season leaderboard&hellip;");
+      return pills + pxState("loading", "Loading the " + esc(defenseSeason) + " season leaderboard.");
     }
     var yr = defenseHistoryYear();
     if (!yr || !yr.fielders || !yr.fielders.length) {
@@ -5164,7 +5156,7 @@
     var defHistMeta = { frame: (defenseData && defenseData.frame) || null };
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, defHistCols, sort, defHistMeta, "def") + "</div>"
-      : noRowsNote(defenseTeam, "No fielders match the current filters.");
+      : noRowsNote(defenseTeam, "No fielders match these filters.");
     return pills + cap + table;
   }
 
@@ -5268,13 +5260,12 @@
     if (!root) return;
     if (!defenseData) {
       root.innerHTML = defenseErr
-        ? pxState("failed", "Data failed to load. Refresh to retry; "
-          + "if it persists the nightly build is mid-run. "
+        ? pxState("failed", "Defense board did not load. The nightly build may be writing it. "
           + '<button type="button" class="chip" id="mlbstats-defense-retry">Retry</button>', "mlbstats-load-error")
-        : pxState("unmeasured", "Defense Leaderboards are being computed. Check back shortly.");
+        : pxState("unmeasured", "Defense board not built yet on this deploy; the nightly build writes it.");
       var retry = document.getElementById("mlbstats-defense-retry");
       if (retry) retry.addEventListener("click", function () {
-        root.innerHTML = pxState("loading", "Loading&hellip;");
+        root.innerHTML = pxState("loading", "Loading the defense board.");
         loadDefense();
       });
       return;
@@ -5876,7 +5867,7 @@
     if (q.min_ip != null) bits.push(q.min_ip + " innings");
     return ' title="' + esc("Qualified: " + bits.join(" or ")
       + (win ? " over the whole window, the rule published beside the substrate. On a long window it"
-             + " removes very little, because a small sample makes a small total anyway."
+             + " removes few players: a small sample makes a small total anyway."
              : ", the rule this board is served with.")) + '"';
   }
   function warRoleChips() {
@@ -5943,7 +5934,7 @@
     var rows = sortRows(warRows().filter(warMatch), cols, warSort);
     if (!rows.length) {
       return bar + warExplainer() + yearsRow("war")
-        + noRowsNote(warTeam, "No players match the current filters.");
+        + noRowsNote(warTeam, "No players match these filters.");
     }
     return bar + warExplainer() + yearsRow("war")
       + '<div class="mlbstats-scroll">'
@@ -5956,12 +5947,11 @@
       // In flight: the lamp loader. The computing note is for a load that
       // settled with no rows, and the failed kind for one that errored.
       root.innerHTML = warLoading
-        ? pxState("loading", "Loading&hellip;")
+        ? pxState("loading", "Loading the eWAR board.")
         : warErr
-        ? pxState("failed", "Data failed to load. Refresh to retry; "
-          + "if it persists the nightly build is mid-run. "
+        ? pxState("failed", "eWAR board did not load. The nightly build may be writing it. "
           + '<button type="button" class="chip" id="mlbstats-war-retry">Retry</button>', "mlbstats-load-error")
-        : pxState("unmeasured", "The eWAR board is being computed. Check back shortly.");
+        : pxState("unmeasured", "eWAR board not built yet on this deploy; the nightly build writes it.");
       var retry = document.getElementById("mlbstats-war-retry");
       if (retry) retry.addEventListener("click", function () { loadWar(); });
       return;

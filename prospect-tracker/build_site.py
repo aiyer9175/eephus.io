@@ -4759,9 +4759,9 @@ def build_mlbstats() -> str:
         f'<script src="/assets/mlbstats.js?v={_MLBSTATS_VER}" defer></script>'
     )
     return page("MLB Stats - eephus.io", "mlbstats", body,
-                "MLB leaderboards from eephus.io: every player by eWAR over one season or a year "
-                "range, HEM+ hitters, SEM+ starters, REM+ relievers and RIV+ impact, DEM+ "
-                "fielders, WPA leverage, and team Bullpen+, Rotation+, Offense+ and DEM+.",
+                "MLB leaderboards: every player by eWAR, season or year range; HEM+, SEM+, "
+                "REM+, RIV+ and DEM+ boards; WPA leverage; team Bullpen+, Rotation+, Offense+, "
+                "DEM+.",
                 url=f"{SITE_ORIGIN}/mlbstats/", image=module_share_image("mlbstats"))
 
 _PAL_REVERSED_LABEL = {

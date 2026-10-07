@@ -2,9 +2,9 @@
  "_about": "Copy-lint ratchet (SP-D6). Each rule lists sha1 of the normalised sentence (NFKC, lower case, digit runs to 0) for every finding accepted on 2026-10-02; L4 and L5_density list surfaces; coverage lists shipped data files a page fetches whose 8+ word strings come from a writer outside COPY_PRODUCERS. `copy_lint.py --served --check` fails on a finding not listed here and on an entry that is no longer a finding, so the file only shrinks. Rewrite it with --write-baseline only in the commit that fixes copy.",
  "_counts": {
   "L1": 43,
-  "L2": 26,
-  "L3": 9,
-  "L5": 87,
+  "L2": 25,
+  "L3": 8,
+  "L5": 86,
   "L6": 41,
   "L7": 39,
   "L8": 56,
@@ -69,7 +69,6 @@
   "4caaa770e281044fc680aca89bcf2074fc6b2201",
   "5239bdad743f60a2fdd9664062f012f331244f1c",
   "5d06fc03b8f57e1866ad8b45af1fcf4635f82cef",
-  "6117abe33dd86ee2c23efab3fccf866268d271e2",
   "65cf07bb4db76c16338898f184264d27beabf09e",
   "6c6841ff5b90e272574a78e6e2890df2e7bc280b",
   "6cd70498f01d68f3531536cd443e5c80c3115b80",
@@ -96,13 +95,11 @@
   "41b7956232c8249a964ea7e7ff9c4799b59831fe",
   "b56adc659dd9f1032aae33670682c4a61acd52a6",
   "ba16514761a28664d51fca04d2b441b746d75f79",
-  "dd6c26e71b110d7ef811ef2603da311f623833cc",
-  "e40807accb3457bcfb0c2f6adf7346f905be68f8"
+  "dd6c26e71b110d7ef811ef2603da311f623833cc"
  ],
  "L5": [
   "0049c2c60f566976e314a1726cc8fbd588f3adb9",
   "02b1cbce41ce92cac95ce7a4bfe64db85c8f7787",
-  "03b21db9f02c7195bf9ea5f8fa58e542a042f996",
   "048b50510d46e68086c749400a132e47308f5f67",
   "057c8066a04c375f55d009da9e6e6917765c2ddf",
   "092106e6266301e5dedb74fdfb2826925ae07c61",

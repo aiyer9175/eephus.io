@@ -194,7 +194,7 @@ def test_missing_file_renders_nothing_and_a_failed_fetch_says_so():
     html, _ = _run(live=True, payload=404)
     assert html.get("mlbp-slot-timeline", "") == ""
     html, _ = _run(live=True, payload="fail")
-    assert "The transaction timeline failed to load." in html.get("mlbp-slot-timeline", "")
+    assert "Timeline did not load." in html.get("mlbp-slot-timeline", "")
 
 
 def test_an_open_stint_reads_open_not_a_count_of_days_not_yet_played():

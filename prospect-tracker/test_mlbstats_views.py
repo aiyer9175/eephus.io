@@ -1605,7 +1605,7 @@ def test_a_payload_without_players_reads_as_being_computed_not_as_an_error():
     ctx = MiniRacer()
     ctx.eval(smoke._prelude("#section=war") + JS)
     html = ctx.eval("__html['mlbstats-war-root'] || ''")
-    assert "being computed" in html and "mlbstats-load-error" not in html
+    assert "not built yet on this deploy" in html and "mlbstats-load-error" not in html
     assert "mlbstats-table" not in html
 
 
@@ -1615,7 +1615,7 @@ def test_a_payload_that_was_never_written_reads_as_being_computed_not_as_an_erro
     floor: nothing was ever written, so the brand new nav button opens on the
     computing note, not on a red alert about a build that is not mid-run."""
     html = _render_war("#section=war", status=404)
-    assert "The eWAR board is being computed. Check back shortly." in html
+    assert "eWAR board not built yet on this deploy; the nightly build writes it." in html
     assert "mlbstats-load-error" not in html and "mlbstats-table" not in html
 
 
@@ -1719,9 +1719,9 @@ def test_a_club_with_no_rows_says_so_and_offers_the_one_control_that_undoes_it()
     html = _render_bullpen("#section=bullpen&team=BOS")
     assert ('<div class="mlbstats-empty">No BOS rows on this board. '
             '<button type="button" class="chip mlbx-teamclear">Clear</button></div>') in html
-    assert "match the current filters" not in html
+    assert "match these filters" not in html
     # and without a club filter the board keeps the sentence it always had
-    assert 'noRowsNote(relTeam, "No relievers match the current filters.")' in JS
+    assert 'noRowsNote(relTeam, "No relievers match these filters.")' in JS
 
 
 def test_an_unknown_team_key_is_ignored_rather_than_trusted():
