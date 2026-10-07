@@ -5308,8 +5308,7 @@ def build_diamond() -> str:
         money = (
             '<div class="card diamond-price">'
             f'<h3>${price} a month, when it goes live</h3>'
-            f'<p>Nothing is for sale today. At launch Diamond is ${price} a month; the rest of '
-            'eephus.io stays free.</p>'
+            f'<p>At launch Diamond is ${price} a month.</p>'
             f'<p>Founding rate: ${founding} a month, held for a year, for everyone using the preview.</p>'
             '<p class="diamond-fine">Diamond funds the free site: the board, projections, free agency '
             f'model, {GLOSSARY_DISPLAY_NAME} and articles stay open to everyone.</p>'
@@ -5439,7 +5438,7 @@ def build_diamond() -> str:
             'will be honored for preview users.</p>'
             '</div>'
         )
-        sub = 'Paid tier for fantasy and betting. Not selling anything yet.'
+        sub = 'Paid tier for fantasy and betting.'
         desc = (f"Diamond is the eephus.io paid tier: fantasy and sports betting tools for ${price} "
                 "a month when it launches. The rest of the site stays free, including the public "
                 "data artifacts. Nothing is gated today.")
@@ -5458,10 +5457,6 @@ def build_diamond() -> str:
         f'<h1>{_masthead_icon("diamond")}Diamond Pass {_stage_chip("diamond")}</h1></div>'
         f'<span class="section-sub">{sub}</span></div>'
         f'{banner}'
-        '<div class="gl-intro">'
-        '<p>eephus.io publishes its own report card: the prospect model\'s out-of-sample record '
-        'against the public consensus, failed experiments included.</p>'
-        '</div>'
         f'{money}'
         '<div class="section-head"><h2>What members get</h2>'
         f'<span class="section-sub">{counts_sub}</span></div>'
@@ -5475,6 +5470,13 @@ def build_diamond() -> str:
         '<div class="section-head"><h2>The receipts</h2>'
         '<span class="section-sub">scoreboard read live from its artifact; ledger counted at build'
         '</span></div>'
+        # DISPLAY PASS (2026-10-07): the report-card sentence introduces the
+        # receipts, so it sits on them instead of between the banner and the
+        # price, where it was read before anything it describes.
+        '<div class="gl-intro">'
+        '<p>eephus.io publishes its own report card: the prospect model\'s out-of-sample record '
+        'against the public consensus, failed experiments included.</p>'
+        '</div>'
         f'{_diamond_ledger_card()}'
         '<div id="diamond-receipts" class="diamond-receipts">'
         '<div class="card"><p>The prospect model scoreboard loads here from its eval artifact. If '

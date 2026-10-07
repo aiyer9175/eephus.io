@@ -569,6 +569,9 @@
     ".dm-table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}",
     ".dm-table th{text-align:right;font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border,#c9c1ae)}",
     ".dm-table th:first-child{text-align:left}",
+    // QREA19 (2026-10-07): this table does not sort, so its headers do not
+    // take the pointer cursor the shared .mlbstats-table th rule gives them.
+    ".dm-table th{cursor:default}",
     ".dm-table td{padding:6px 8px;border-bottom:1px solid var(--border-light,var(--border,#e2dcc9));color:var(--text-primary)}",
     ".dm-table td.dm-num{text-align:right;font-variant-numeric:tabular-nums}",
     ".dm-table td.dm-win{color:var(--accent-green,#3a9);font-weight:700}",
