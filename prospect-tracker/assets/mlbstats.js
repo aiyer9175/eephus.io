@@ -245,7 +245,12 @@
   }
   function wireGlossary(el) {
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(el); } catch (e) { /* glossary optional */ }
-    markFit(el);
+    mountPagers(el);
+    // One measure per frame, after the write (QMLP05): markFit reads
+    // offsetWidth, and reading it straight after an innerHTML swap forced a
+    // synchronous style and layout of the whole board on every render.
+    scheduleFit(el);
+    linksSoon();
     // Every board render replaces its section root's innerHTML, and the
     // Download CSV bar is that root's FIRST CHILD, so a sort, a search, a
     // filter or a view click deleted it. eephus-csv.js puts it back off a
@@ -257,6 +262,7 @@
     // the row count the bar prints, which used to trail the filter by the
     // same debounce.
     try { if (window.EephusCSV && EephusCSV.scan) EephusCSV.scan(document); } catch (e) { /* export control optional */ }
+    csvTitles(el);
   }
   // A board whose table fits its scroller gets .is-fit, and site.css then clips
   // instead of scrolling: no scroll container, so the header sticks to the
@@ -271,6 +277,19 @@
         sc.classList.toggle("is-fit", t.offsetWidth > 0 && t.offsetWidth <= sc.clientWidth);
       });
     } catch (e) { /* layout optional */ }
+  }
+  var fitQueue = [], fitFrame = 0;
+  function scheduleFit(el) {
+    var raf = (typeof window !== "undefined") && window.requestAnimationFrame;
+    if (!raf) { markFit(el); return; }
+    if (fitQueue.indexOf(el) < 0) fitQueue.push(el);
+    if (fitFrame) return;
+    fitFrame = raf.call(window, function () {
+      fitFrame = 0;
+      var q = fitQueue;
+      fitQueue = [];
+      q.forEach(function (x) { markFit(x); });
+    });
   }
   var fitTimer = null;
   try { window.addEventListener("resize", function () {
@@ -1271,9 +1290,20 @@
       .then(function (j) {
         WINDOWS = (j && j.windows) ? j : { windows: [] };
         WINDOWS_LOADING = false;
-        renderSection(sec);
+        if (!patchRange(sec)) renderSection(sec);
       })
       .catch(function () { WINDOWS_LOADING = false; WINDOWS_ERROR = true; renderSection(sec); });
+  }
+  // On Current the window list feeds the Years control and nothing else, so
+  // its arrival rewrites that control in place (QMLP05: it used to re-render
+  // the 928-row board). A window board, or a section not yet painted, renders.
+  function patchRange(sec) {
+    if (WIN[sec]) return false;
+    var host = document.getElementById("mlbstats-section-" + sec);
+    var el = host && host.querySelector(".mlbstats-range");
+    if (!el) return false;
+    el.outerHTML = rangeControl(sec);
+    return true;
   }
   function loadWindowDoc(w, sec) {
     var key = w.key;
@@ -1364,7 +1394,7 @@
         + '</label><label class="mlbstats-ctl">to ' + sel("hi", hi) + "</label></span>"
       : "";
     return '<div class="mlbstats-seasons mlbstats-roles mlbstats-range" role="group" aria-label="Years">'
-      + '<span class="mlbstats-roles-lbl">Years</span>' + out.join("") + picker + "</div>";
+      + '<span class="mlbstats-roles-lbl">' + gloss("Years", "range") + "</span>" + out.join("") + picker + "</div>";
   }
   function applyRange(spec) {
     var p = String(spec || "").split(":"), sec = p[0], id = p[1];
@@ -1993,13 +2023,19 @@
     try { renderWar(); } finally { warCaretFrom = null; }
     var root = document.getElementById("mlbstats-war-root");
     var carets = root ? root.querySelectorAll(".mlbx-caret[data-mlbexpand]") : [];
+    var back = null;
     for (var i = 0; i < carets.length; i++) {
       var c = carets[i];
       if (c.getAttribute("data-mlbexpand") !== id) continue;
       void c.offsetWidth;
       c.classList.toggle("is-open", !was);
       c.setAttribute("aria-expanded", String(!was));
+      if (!back) back = c;
     }
+    // The render replaced the button the reader pressed, so focus fell to
+    // <body> and the next Tab went to Download CSV above the board (QMLA05).
+    // Put it back on the same row's caret, as bindSortKeys does for a header.
+    if (back) { try { back.focus({ preventScroll: true }); } catch (e) { back.focus(); } }
   }
   function warTableOpts() {
     return {
@@ -2141,6 +2177,145 @@
     return '<div class="mlbstats-note mlbstats-vintage">' + parts.join(" ") + "</div>";
   }
 
+  // ---- board paging (site pass, 2026-10-02) ----------------------------------
+  // Overall printed all 928 rows on one page: 30,765 px tall at 1280 and 51,967
+  // px at 390. A board of more than 50 rows now pages, 100 rows by default, with
+  // a 50 / 100 / 250 / All select and a status line. Every row the filters match
+  // is still IN the table and the off-page rows carry `hidden`, so the browser
+  // lays out one page (the render cost that grew with the board, QMLP05, now
+  // grows with the page), a page turn is an attribute flip rather than a
+  // render, and Download CSV still writes every matching row: its count says
+  // so, and its click shows the hidden rows for the one synchronous scrape.
+  // A new row set (a sort, a filter, a view) opens on the first page; a render
+  // of the same rows (a season line opened, a payload landing) keeps the page.
+  var PAGE_SIZES = [50, 100, 250, 0];
+  var PAGE_MIN = 50;
+  var pageSize = 100;
+  try {
+    var savedSize = window.localStorage.getItem("mlbstats.pagesize");
+    if (savedSize != null && PAGE_SIZES.indexOf(Number(savedSize)) >= 0) pageSize = Number(savedSize);
+  } catch (e) { /* per-viewer convenience only */ }
+  var PAGE_AT = {};
+  function rowId(r) { return r ? (r.mlbam != null ? r.mlbam : (r.team || r.name || "")) : ""; }
+  function pageState(key) { return PAGE_AT[key] || (PAGE_AT[key] = { sig: "", start: 0 }); }
+  function pageSpan(key, total) {
+    var start = pageSize ? Math.min(pageState(key).start, Math.max(0, total - 1)) : 0;
+    return { start: start, end: pageSize ? Math.min(total, start + pageSize) : total, total: total };
+  }
+  function pagerText(s) { return "Rows " + (s.total ? s.start + 1 : 0) + " to " + s.end + " of " + s.total; }
+  function pagerHTML(key, total) {
+    var s = pageSpan(key, total);
+    return '<div class="mlbx-pager" data-mlbpager="' + esc(key) + '">'
+      + '<span class="mlbx-pager-n" role="status">' + pagerText(s) + "</span>"
+      + '<button type="button" class="chip" data-mlbpage-step="-1" aria-label="Previous rows"'
+      + (s.start <= 0 ? " disabled" : "") + ">Prev</button>"
+      + '<button type="button" class="chip" data-mlbpage-step="1" aria-label="Next rows"'
+      + (s.end >= total ? " disabled" : "") + ">Next</button>"
+      + '<label class="mlbstats-ctl">Rows <select class="eephus-select" data-mlbpage-size'
+      + ' aria-label="Rows per page">' + PAGE_SIZES.map(function (n) {
+          return '<option value="' + n + '"' + (n === pageSize ? " selected" : "") + ">" + (n || "All") + "</option>";
+        }).join("") + "</select></label></div>";
+  }
+  // The pager sits under the table's scroll box, outside it, so it never
+  // scrolls sideways with a wide board. Every render path ends in
+  // wireGlossary, which calls this.
+  function mountPagers(el) {
+    try {
+      (el || document).querySelectorAll("table[data-mlbpage]").forEach(function (t) {
+        var box = t.closest(".mlbstats-scroll") || t;
+        var nx = box.nextElementSibling;
+        if (nx && nx.classList.contains("mlbx-pager")) nx.parentNode.removeChild(nx);
+        box.insertAdjacentHTML("afterend", pagerHTML(t.getAttribute("data-mlbpage"),
+          Number(t.getAttribute("data-mlbpage-total"))));
+      });
+    } catch (e) { /* paging optional */ }
+  }
+  // The CSV button's own title says it downloads the rows on screen. On a paged
+  // board it writes every row the filters match, so it says that instead.
+  function csvTitles(el) {
+    try {
+      (el || document).querySelectorAll("table[data-mlbpage]").forEach(function (t) {
+        var host = t.closest("[data-csv-export]");
+        var csv = host && host.querySelector(":scope > .eph-csv-bar .eph-csv-btn");
+        if (csv) csv.title = "Downloads every row the filters match, in the order shown, not only this page.";
+      });
+    } catch (e) { /* export control optional */ }
+  }
+  function pagerTable(pg) {
+    var box = pg && pg.previousElementSibling;
+    if (!box) return null;
+    return box.matches("table[data-mlbpage]") ? box : box.querySelector("table[data-mlbpage]");
+  }
+  function applyPage(t, pg) {
+    var key = t.getAttribute("data-mlbpage"), s = pageSpan(key, Number(t.getAttribute("data-mlbpage-total")));
+    var trs = t.tBodies.length ? t.tBodies[0].rows : [];
+    if (t.tBodies.length) t.tBodies[0].style.counterReset = s.start ? "mlbx-rank " + s.start : "";
+    for (var i = 0; i < trs.length; i++) {
+      var k = Number(trs[i].getAttribute("data-mlbi"));
+      trs[i].hidden = !(k >= s.start && k < s.end);
+    }
+    if (pg) {
+      var n = pg.querySelector(".mlbx-pager-n");
+      if (n) n.textContent = pagerText(s);
+      var prev = pg.querySelector('[data-mlbpage-step="-1"]'), next = pg.querySelector('[data-mlbpage-step="1"]');
+      var had = document.activeElement;
+      if (prev) prev.disabled = s.start <= 0;
+      if (next) next.disabled = s.end >= s.total;
+      // A button that just went disabled drops focus to <body>; hand it to
+      // the other one so a keyboard reader stays in the pager.
+      if (had === next && next.disabled && prev && !prev.disabled) prev.focus();
+      else if (had === prev && prev.disabled && next && !next.disabled) next.focus();
+    }
+    scheduleFit(t.closest(".mlbstats-section") || t);
+  }
+  try { document.addEventListener("click", function (e) {
+    var b = e.target && e.target.closest ? e.target.closest("[data-mlbpage-step]") : null;
+    if (!b || !pageSize) return;
+    var pg = b.closest(".mlbx-pager"), t = pagerTable(pg);
+    if (!t) return;
+    var key = t.getAttribute("data-mlbpage"), total = Number(t.getAttribute("data-mlbpage-total"));
+    var st = pageState(key);
+    st.start = Math.max(0, Math.min(st.start + Number(b.getAttribute("data-mlbpage-step")) * pageSize,
+      Math.floor((total - 1) / pageSize) * pageSize));
+    applyPage(t, pg);
+    var top = (t.closest(".mlbstats-scroll") || t).getBoundingClientRect().top;
+    if (top < 0) (t.closest(".mlbstats-scroll") || t).scrollIntoView({ block: "start" });
+  }); } catch (e) { /* no document events */ }
+  try { document.addEventListener("change", function (e) {
+    var sel = e.target && e.target.closest ? e.target.closest("[data-mlbpage-size]") : null;
+    if (!sel) return;
+    var v = Number(sel.value);
+    if (PAGE_SIZES.indexOf(v) < 0) return;
+    pageSize = v;
+    try { window.localStorage.setItem("mlbstats.pagesize", String(v)); } catch (err) { /* optional */ }
+    var pg = sel.closest(".mlbx-pager"), t = pagerTable(pg);
+    if (!t) return;
+    var st = pageState(t.getAttribute("data-mlbpage"));
+    st.start = v ? Math.floor(st.start / v) * v : 0;
+    applyPage(t, pg);
+  }); } catch (e) { /* no document events */ }
+  // Download CSV scrapes the DOM, so for the length of its click the off-page
+  // rows are shown (capture phase, before the button's own handler) and hidden
+  // again (bubble phase, after it). No frame paints in between.
+  try {
+    document.addEventListener("click", function (e) {
+      var b = e.target && e.target.closest ? e.target.closest(".eph-csv-btn") : null;
+      var host = b && b.closest("[data-csv-export]");
+      if (!host) return;
+      host.querySelectorAll("table[data-mlbpage] tbody tr[hidden]").forEach(function (tr) {
+        tr.hidden = false; tr.setAttribute("data-mlbcsv", "");
+      });
+    }, true);
+    document.addEventListener("click", function (e) {
+      var b = e.target && e.target.closest ? e.target.closest(".eph-csv-btn") : null;
+      var host = b && b.closest("[data-csv-export]");
+      if (!host) return;
+      host.querySelectorAll("tr[data-mlbcsv]").forEach(function (tr) {
+        tr.removeAttribute("data-mlbcsv"); tr.hidden = true;
+      });
+    });
+  } catch (e) { /* no document events */ }
+
   // ---- render: shared table -------------------------------------------------
   // `meta` is the section payload, passed only so a column flagged
   // `vintage: "<payload key>"` can date itself in its own tooltip.
@@ -2171,26 +2346,37 @@
       // activated by Enter/Space via bindSortKeys. No role=button: aria-sort is
       // honoured only on a columnheader, and the button role replaced the th's
       // own, so no screen reader heard the sort (census X06-06).
+      // Every header is a column header (QMLA17: Pos and Also on had none).
       var a11y = sortable
         ? ' scope="col" tabindex="0" aria-sort="' + ((c.key === sort.key) ? (sort.asc ? "ascending" : "descending") : "none") + '"'
-        : "";
+        : ' scope="col"';
       var nw = (allv && String(c.label).indexOf(" ") < 0) ? " mlbstats-nw" : "";
       head += '<th class="mlbstats-col-' + c.key + sorted + p.cls + nw + '"' + title + a11y + ' data-col="' + c.key
         + '" data-export-text="' + esc(c.exportLabel || c.label) + '"' + (p.off ? " data-export-skip" : "") + '>' + lbl + "</th>";
     });
     head += "</tr></thead>";
 
-    var body = "<tbody>";
-    rows.forEach(function (r) {
+    var key = board || "board", total = rows.length, paged = total > PAGE_MIN, span = null;
+    if (paged) {
+      var sig = total + "|" + sort.key + "|" + sort.asc + "|" + rowId(rows[0]) + "|" + rowId(rows[total - 1]);
+      var st = pageState(key);
+      if (st.sig !== sig) { st.sig = sig; st.start = 0; }
+      span = pageSpan(key, total);
+    }
+    // The rank is a CSS counter over the shown rows (site.css mlbx-rank), so a
+    // later page starts it at its first row: page 2 reads 101, not 1.
+    var body = "<tbody" + (span && span.start ? ' style="counter-reset: mlbx-rank ' + span.start + '"' : "") + ">";
+    rows.forEach(function (r, i) {
       var prov = (r.qualified === false) ? " is-provisional" : "";
-      body += "<tr" + prov + ">";
+      var pg = span ? ' data-mlbi="' + i + '"' + ((i < span.start || i >= span.end) ? " hidden" : "") : "";
+      body += "<tr" + prov + pg + ">";
       plan.forEach(function (p) {
         var c = p.c, td = p.cls ? '<td class="' + p.cls.slice(1) + '"' + (p.off ? " data-export-skip" : "") + ">" : "<td>";
         if (c.kind === "name") {
           body += nameCell(r, opts && opts.nameExtra ? opts.nameExtra(r) : "");
           return;
         }
-        if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + esc(r.team || EM_DASH) + "</td>"; return; }
+        if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + teamLink(r.team) + "</td>"; return; }
         if (c.cell) { body += td + c.cell(r) + "</td>"; return; }
         var v = getVal(c, r);
         // An absent value reads as the site-wide null marker rather than a
@@ -2204,11 +2390,38 @@
         body += td + rendered + "</td>";
       });
       body += "</tr>";
-      if (opts && opts.child) body += opts.child(r, plan.length);
+      if (opts && opts.child) {
+        var kid = opts.child(r, plan.length);
+        body += (kid && pg) ? kid.replace(/^<tr/, "<tr" + pg) : kid;
+      }
     });
     body += "</tbody>";
-    return '<table class="mlbstats-table' + (allv ? " mlbstats-cv-all" : "") + '">' + head + body + "</table>";
+    return '<table class="mlbstats-table' + (allv ? " mlbstats-cv-all" : "") + '"'
+      + (span ? ' data-mlbpage="' + esc(key) + '" data-mlbpage-total="' + total + '"' : "") + ">"
+      + '<caption class="visually-hidden">' + esc(TABLE_LABEL[board] || "MLB Stats leaderboard") + "</caption>"
+      + head + body + "</table>";
   }
+  // A team board's club cell opens that club's Franchises page (display pass:
+  // every club name links where a page exists). A code that is not one of the
+  // thirty prints as text, never a guessed link.
+  function teamLink(team) {
+    var H = (typeof window !== "undefined") && window.EEPHUS_HUB;
+    var c = null, href = "";
+    try { c = H && H.club ? H.club(team) : null; href = c && H.clubHref ? H.clubHref(c.code) : ""; } catch (e) { href = ""; }
+    return href ? '<a class="mlbstats-name-link" href="' + esc(href) + '" title="' + esc(c.name + ": franchise overview")
+      + '">' + esc(team) + "</a>" : esc(team || EM_DASH);
+  }
+  // The accessible name of each board's table, a hidden caption (QMLA17): a
+  // screen reader's table list read "table, table" with nothing to tell the
+  // boards apart.
+  var TABLE_LABEL = {
+    war: "Overall eWAR leaderboard", warteam: "Team eWAR",
+    hit: "Hitters leaderboard", hitteam: "Team offense",
+    sp: "Starters leaderboard", spteam: "Team rotations",
+    rel: "Relievers leaderboard", relteam: "Team bullpens",
+    def: "Fielders leaderboard", defteam: "Team defense",
+    levbat: "Leverage leaderboard, hitters", levsp: "Leverage leaderboard, pitchers",
+  };
 
   // player_links map (mlbam -> merged-card key), preloaded once at init so
   // nameCell can link synchronously. Names resolve to the merged MLB player card
@@ -2219,6 +2432,29 @@
     if (!LINKS || !LINKS.byMlbam || r.mlbam == null) return null;
     var hit = LINKS.byMlbam[String(r.mlbam)];
     return (hit && hit.key) ? ("/projections/#player=" + encodeURIComponent(hit.key)) : null;
+  }
+  // Before the map lands, a plain name carries its MLBAM so the map's arrival
+  // can turn it into the link in place. That arrival used to re-render the
+  // whole active board (QMLP05: 1.7 s of main thread on a slow phone).
+  function pendingName(id, nm) {
+    return '<span class="mlbstats-name-txt"' + ((!LINKS && id != null) ? ' data-mlbam="' + esc(String(id)) + '"' : "")
+      + ">" + nm + "</span>";
+  }
+  function upgradeLinks(el) {
+    try {
+      (el || document).querySelectorAll("span.mlbstats-name-txt[data-mlbam]").forEach(function (s) {
+        var href = playerHref({ mlbam: s.getAttribute("data-mlbam") });
+        s.removeAttribute("data-mlbam");
+        if (!href) return;
+        var a = document.createElement("a");
+        a.className = "mlbstats-name-link";
+        a.setAttribute("href", href);
+        var td = s.closest("td.mlbstats-name"), full = td && td.getAttribute("title");
+        if (td) a.setAttribute("title", (full ? full + " - " : "") + "open the MLB player card");
+        while (s.firstChild) a.appendChild(s.firstChild);
+        s.parentNode.replaceChild(a, s);
+      });
+    } catch (e) { /* links optional */ }
   }
 
   // The identity cell is capped at 260px and ellipsized (site.css), so a long
@@ -2260,7 +2496,7 @@
     var name = href
       ? '<a class="mlbstats-name-link" href="' + href + '" title="'
         + (full ? esc(full) + " - " : "") + 'open the MLB player card">' + nm + "</a>"
-      : '<span class="mlbstats-name-txt">' + nm + "</span>";
+      : pendingName(named ? r.mlbam : null, nm);
     return '<td class="mlbstats-name"' + (full ? ' title="' + esc(full) + '"' : "") + ">"
       + (extra || "") + logo(r.team) + name + team + role + prov + "</td>";
   }
@@ -3925,7 +4161,8 @@
     var nm = esc(h.name || EM_DASH);
     var id = h.mlbam != null ? h.mlbam : (/^\d+$/.test(String(h.key || "")) ? h.key : null);
     var href = id != null ? playerHref({ mlbam: id }) : null;
-    return href ? '<a class="mlbstats-name-link" href="' + href + '">' + nm + "</a>" : nm;
+    return href ? '<a class="mlbstats-name-link" href="' + href + '">' + nm + "</a>"
+      : (!LINKS && id != null ? pendingName(id, nm) : nm);
   }
   function batsTxt(bats) { return bats ? '<span class="proj-dim"> ' + esc(bats) + "HB</span>" : ""; }
   function paTxt(pa) { return pa != null ? '<span class="proj-dim"> ' + fInt(pa) + " PA</span>" : ""; }
@@ -5831,6 +6068,7 @@
       if (el) { if (k === name) el.removeAttribute("hidden"); else el.setAttribute("hidden", "hidden"); }
     });
     markFit(document.getElementById(sects[name]));
+    fitNav();
     if (name === "starters") initStarters();
     else if (name === "hitters") initHitters();
     else if (name === "leverage") initLeverage();
@@ -5874,6 +6112,92 @@
     });
   }
 
+  // ---- the phone section menu (site pass, 2026-10-02) ------------------------
+  // At 390 px the six tabs need 485 px of a 358 px strip, so Defense and
+  // Leverage sat behind a sideways swipe, and the sections still to come will
+  // lengthen the strip. At 640 px and below, the tabs that do not fit move
+  // into a More menu; the active tab always stays on the strip. The menu sits
+  // beside the tablist, not in it, so the tablist owns tabs only.
+  function navParts() {
+    var nav = document.querySelector(".mlbx .mlbstats-sectionnav");
+    if (!nav) return null;
+    var row = nav.parentNode;
+    if (!row.classList.contains("mlbx-navrow")) {
+      row = document.createElement("div");
+      row.className = "mlbx-navrow";
+      nav.parentNode.insertBefore(row, nav);
+      row.appendChild(nav);
+      var more = document.createElement("div");
+      more.className = "mlbx-navmore";
+      more.innerHTML = '<button type="button" class="mlbstats-sectionbtn mlbx-navmore-btn" aria-expanded="false"'
+        + ' aria-controls="mlbx-navmenu">More</button><div class="mlbx-navmenu" id="mlbx-navmenu"'
+        + ' role="group" aria-label="More sections" hidden></div>';
+      row.appendChild(more);
+    }
+    return { row: row, nav: nav, btn: row.querySelector(".mlbx-navmore-btn"),
+             menu: row.querySelector(".mlbx-navmenu") };
+  }
+  function navMenu(open, focusBtn) {
+    var p = navParts();
+    if (!p) return;
+    p.menu.hidden = !open;
+    p.btn.setAttribute("aria-expanded", String(!!open));
+    if (open) { var first = p.menu.querySelector("button"); if (first) first.focus(); }
+    else if (focusBtn) p.btn.focus();
+  }
+  function fitNav() {
+    try {
+      if (!window.matchMedia) return;
+      var phone = window.matchMedia("(max-width: 640px)").matches;
+      var p = (phone || document.querySelector(".mlbx-navrow")) ? navParts() : null;
+      if (!p) return;
+      var tabs = Array.prototype.slice.call(p.nav.querySelectorAll("[data-mlbsection]"));
+      tabs.forEach(function (b) { b.classList.remove("is-over"); });
+      p.row.classList.remove("has-more");
+      if (!p.menu.hidden) navMenu(false);
+      if (!phone || p.nav.scrollWidth <= p.nav.clientWidth + 1) return;
+      p.row.classList.add("has-more");
+      for (var i = tabs.length - 1; i >= 0 && p.nav.scrollWidth > p.nav.clientWidth + 1; i--) {
+        if (!tabs[i].classList.contains("active")) tabs[i].classList.add("is-over");
+      }
+      p.menu.innerHTML = tabs.filter(function (b) { return b.classList.contains("is-over"); }).map(function (b) {
+        return '<button type="button" class="mlbx-navitem" data-mlbnavto="' + esc(b.getAttribute("data-mlbsection"))
+          + '">' + esc(b.textContent) + "</button>";
+      }).join("");
+    } catch (e) { /* the strip still scrolls */ }
+  }
+  try {
+    document.addEventListener("click", function (e) {
+      var t = e.target && e.target.closest ? e.target : null;
+      if (!t) return;
+      var item = t.closest("[data-mlbnavto]");
+      if (item) {
+        var to = item.getAttribute("data-mlbnavto");
+        navMenu(false);
+        showSection(to);
+        writeHash();
+        var tab = document.querySelector('.mlbstats-sectionbtn[data-mlbsection="' + to + '"]');
+        if (tab) tab.focus();
+        return;
+      }
+      if (t.closest(".mlbx-navmore-btn")) {
+        var p = navParts();
+        if (p) navMenu(p.menu.hidden);
+        return;
+      }
+      if (document.querySelector(".mlbx-navmenu:not([hidden])") && !t.closest(".mlbx-navmore")) navMenu(false);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && document.querySelector(".mlbx-navmenu:not([hidden])")) navMenu(false, true);
+    });
+    var navTimer = null;
+    window.addEventListener("resize", function () {
+      if (navTimer) clearTimeout(navTimer);
+      navTimer = setTimeout(fitNav, 120);
+    });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNav);
+  } catch (e) { /* no document events */ }
+
   function init() {
     readHash();
     syncSeasonVars();
@@ -5886,19 +6210,42 @@
     // active tab and this call are the only two places the landing board is
     // named.
     showSection(section);
-    // Preload the player-links map, then re-render the active section so the
-    // leaderboard names upgrade from plain text to merged-card links.
-    if (window.EEPHUS_HUB && EEPHUS_HUB.links) {
-      EEPHUS_HUB.links().then(function (L) {
-        LINKS = L || null;
-        if (section === "starters") { if (starterInit) renderStarters(); }
-        else if (section === "hitters") { if (typeof hitterInit !== "undefined" && hitterInit) renderHitters(); }
-        else if (section === "leverage") { if (typeof leverageInit !== "undefined" && leverageInit) renderLeverage(); }
-        else if (section === "defense") { if (defenseInit) renderDefense(); }
-        else if (section === "war") { if (warInit) renderWar(); }
-        else if (relInit) render();
-      });
+    // The player-links map loads after the first board paints (linksSoon), or
+    // after four seconds if no board ever does.
+    try { setTimeout(loadLinks, 4000); } catch (e) { /* no timers */ }
+  }
+  // The map is 1.88 MB. Fetched at boot, it raced the board's own payload for
+  // the wire, and its arrival re-rendered the whole active board (QMLP05). It
+  // now waits for the first painted board and an idle moment, and its arrival
+  // turns the plain names into links in place. A board that prints names out
+  // of the map itself (a window's unnamed rows) still re-renders.
+  var linksAsked = false, linksQueued = false;
+  function linksSoon() {
+    if (linksAsked || linksQueued) return;
+    linksQueued = true;
+    var idle = (typeof window !== "undefined") && window.requestIdleCallback;
+    if (idle) idle.call(window, loadLinks, { timeout: 1500 });
+    else {
+      try { setTimeout(loadLinks, 0); }
+      catch (e) { try { Promise.resolve().then(loadLinks); } catch (e2) { loadLinks(); } }
     }
+  }
+  function loadLinks() {
+    if (linksAsked) return;
+    linksAsked = true;
+    if (!(window.EEPHUS_HUB && EEPHUS_HUB.links)) return;
+    EEPHUS_HUB.links().then(function (L) {
+      LINKS = L || null;
+      upgradeLinks(document.querySelector(".mlbx"));
+      var host = document.getElementById("mlbstats-section-" + section);
+      if (!WIN[section] && !(host && host.querySelector(".mlbx-noname"))) return;
+      if (section === "starters") { if (starterInit) renderStarters(); }
+      else if (section === "hitters") { if (typeof hitterInit !== "undefined" && hitterInit) renderHitters(); }
+      else if (section === "leverage") { if (typeof leverageInit !== "undefined" && leverageInit) renderLeverage(); }
+      else if (section === "defense") { if (defenseInit) renderDefense(); }
+      else if (section === "war") { if (warInit) renderWar(); }
+      else if (relInit) render();
+    });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
