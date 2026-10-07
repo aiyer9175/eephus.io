@@ -16,6 +16,7 @@ One pin per finding the pass fixed:
           colour, not opacity, and read at 4.5:1 or better in both themes.
   QREC03  the Dynasty "Star" column printed the star BUCKET share under the
           Star Odds name and link; it is labelled and linked as the bucket.
+  QREC12  a season-over DFS payload prints no old-slate banner or chip.
 
 The source guards always run; the rendered half needs playwright.
 """
@@ -101,6 +102,35 @@ def test_star_column_names_the_bucket_it_prints():
     assert 'gl("Star bucket", "bust_prob")' in card
     assert "star (Elite) bucket share" in dyn
     assert "Sorted by star odds" not in dyn
+
+
+# ---- QREC12 -----------------------------------------------------------------
+# A season-over payload keeps its last slate date, so the client's own
+# "past slate date" check used to print the old-slate banner and chip, blaming
+# a stopped daily run, directly above "The season is over".
+def _season_over(kind: str) -> str:
+    import json
+    return json.dumps({"slate_date": "2020-10-01", "season": 2020, "n_games": 0, "n_players": 0,
+                       "games": [], "players": [], "scoring_catalog": [],
+                       "empty_reason": "The regular season is over. Daily slates come back on opening day.",
+                       "empty_reason_kind": kind})
+
+
+def test_season_over_slate_prints_no_stale_banner():
+    from test_fantasy_split import _dfs_boot
+    c = _dfs_boot(_season_over("season_over"))
+    html = c.eval('__go("#section=slate")')
+    assert "The season is over" in html, html[:400]
+    assert "not today's" not in html and "daily run stopped" not in html, html[:600]
+    assert "old slate" not in c.eval("__html['dfs-banner'] || ''")
+
+
+def test_a_past_slate_that_is_not_season_over_still_flags():
+    from test_fantasy_split import _dfs_boot
+    c = _dfs_boot(_season_over("no_games_scheduled"))
+    html = c.eval('__go("#section=slate")')
+    assert "This is the 2020-10-01 slate, not today's." in html, html[:400]
+    assert "old slate" in c.eval("__html['dfs-banner'] || ''")
 
 
 # ---- rendered ---------------------------------------------------------------

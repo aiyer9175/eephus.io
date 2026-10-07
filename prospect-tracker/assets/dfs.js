@@ -499,6 +499,9 @@
   }
   function staleInfo() {
     var d = S.data || {};
+    // The season is over: no later slate is due, so a past slate date is not
+    // a missed run and the season-over panel is the whole story (audit QREC12).
+    if (d.empty_reason_kind === "season_over") return null;
     if (d.stale_slate) {
       return { date: d.slate_date,
                reason: d.stale_reason ||
