@@ -1054,7 +1054,21 @@
      "note": "the only comparison a subsample may appear in: every tier recomputed on exactly these games"
     },
     "subsample_note": "461 of the window's 777 games have a cached open capture; a doubleheader's two games read the same capture",
-    "source": "proportional de-vig of the earliest open snapshot per slate, home fair probability averaged across books posting a two-sided h2h market"
+    "source": "proportional de-vig of the earliest open snapshot per slate, home fair probability averaged across books posting a two-sided h2h market",
+    "gap_ci_model_vs_market": {
+     "brier": {
+      "point": -0.02109,
+      "lo95": -0.03561,
+      "hi95": -0.00976
+     },
+     "B": 2000,
+     "seed": 20261007,
+     "cluster": "slate (game date): a slate's games read one capture and are drawn together",
+     "clusters": 39,
+     "n": 461,
+     "orientation": "improvement: benchmark minus model for a lower-is-better statistic, model minus benchmark otherwise; positive means the model is better",
+     "method": "paired percentile bootstrap: whole clusters drawn with replacement, both arms scored on every draw, predictions held fixed (no refit)"
+    }
    },
    "market_close_devig": {
     "n": 0,

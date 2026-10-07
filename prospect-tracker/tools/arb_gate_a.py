@@ -67,7 +67,7 @@ def _permute_production(rows, rng):
     return out
 
 
-def _swartz_head_to_head(rows, metrics, seasons) -> dict:
+def _swartz_head_to_head(rows, metrics, seasons, B: int | None = None) -> dict:
     """A6. The champion against the published MLBTR / Matt Swartz projection on
     identical rows.
 
@@ -103,12 +103,12 @@ def _swartz_head_to_head(rows, metrics, seasons) -> dict:
         # actual are deflated; the Swartz figure is nominal, so it is scaled by
         # the same ratio actual/nominal-actual carries.
         pairs.append((r["actual"], r["served"], s, int(r["arb_year"]),
-                      int(r["season"]), r["name"]))
+                      int(r["season"]), r["name"], int(r["mlbam"])))
     if len(pairs) < 30:
         return {"n": len(pairs), "insufficient": True}
     # Put Swartz on the deflated scale using each row's own actual pair.
     out_rows = []
-    for act, ours, swz, step, season, name in pairs:
+    for act, ours, swz, step, season, name, _mlbam in pairs:
         out_rows.append((act, ours, swz, step, name, season))
     ours_e = [abs(o - a) / a for a, o, s, *_ in out_rows]
     swz_e = [abs(s - a) / a for a, o, s, *_ in out_rows]
@@ -123,6 +123,16 @@ def _swartz_head_to_head(rows, metrics, seasons) -> dict:
             }
     ours_m = float(_np.median(ours_e))
     swz_m = float(_np.median(swz_e))
+    # LIBRARY_14: the paired interval on the MdAPE gap (Swartz minus ours, so
+    # positive means ours is better), player-clustered, both projections held
+    # fixed; its own generator on the gate's SEED so the A1-A5 draws above are
+    # untouched.
+    import gap_intervals as gi
+    oe, se = _np.array(ours_e), _np.array(swz_e)
+    gap_ci = gi.paired_cluster_interval(
+        [p[6] for p in pairs],
+        lambda idx: {"mdape": float(_np.median(se[idx]) - _np.median(oe[idx]))},
+        seed=SEED, b=B or gi.B, cluster="player (mlbam): a player's seasons are drawn together")
     return {
         "n": len(out_rows),
         "ours_mdape": ours_m,
@@ -145,6 +155,7 @@ def _swartz_head_to_head(rows, metrics, seasons) -> dict:
             "one." if ours_m >= swz_m else
             "The champion beats the published Swartz projection on identical "
             "rows. Recalibrated-Swartz is the next and stronger test."),
+        "gap_ci_vs_swartz": gap_ci,
     }
 
 
@@ -232,7 +243,7 @@ def run(B: int) -> dict:
         }
 
     # A6: the MLB Trade Rumors / Matt Swartz comparison.
-    a6 = _swartz_head_to_head(rows, metrics, seasons)
+    a6 = _swartz_head_to_head(rows, metrics, seasons, B)
 
     ship = verdicts.get("arb1") == "PASS" or verdicts.get("arb2plus") == "PASS"
     doc = {

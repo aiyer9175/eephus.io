@@ -72,6 +72,7 @@ import statistics
 from datetime import date
 from pathlib import Path
 
+import gap_intervals as gi
 import milb_history as mh
 import storage
 from eta import BASE_YEARS, estimate_eta
@@ -313,6 +314,26 @@ def _score(pairs: list[tuple[int, int]]) -> dict:
             "exact": round(sum(1 for e in errs if e == 0) / len(errs), 3)}
 
 
+def _gap_ci_vs_naive(rows: list[dict]) -> dict:
+    """The interval on the champion's improvement over the naive table, on the
+    rows both arms score (LIBRARY_14): MAE as naive minus champion, within one
+    year as champion minus naive, so positive means the champion is better.
+    Paired and player-clustered: a player's vintage rows are drawn together."""
+    import numpy as np
+    act = np.array([r["actual"] for r in rows], float)
+    e_c = np.abs(np.array([r["pred"] for r in rows], float) - act)
+    e_b = np.abs(np.array([r["naive"] for r in rows], float) - act)
+    w_c, w_b = (e_c <= 1).astype(float), (e_b <= 1).astype(float)
+
+    def gaps(idx):
+        return {"mae": float(e_b[idx].mean() - e_c[idx].mean()),
+                "within_1y": float(w_c[idx].mean() - w_b[idx].mean())}
+
+    return gi.paired_cluster_interval(
+        [r["player_key"] for r in rows], gaps, seed=gi.SEED,
+        cluster="player (player_key): a player's vintage rows are drawn together")
+
+
 def _empirical_table(train: list[dict]) -> dict[str, float]:
     """Median realized years-to-debut by vintage level (debuted only) —
     the SURVIVOR-BIASED table, scored for reference, never shipped."""
@@ -429,6 +450,9 @@ def run(persist: bool = True) -> dict:
     naive_rows = [r for r in deb if r["naive"] is not None]
     baseline = _score([(r["naive"], r["actual"]) for r in naive_rows])
     champion_on_naive_rows = _score([(r["pred"], r["actual"]) for r in naive_rows])
+    if naive_rows:
+        # LIBRARY_14: the interval sits beside the points it was measured on.
+        champion_on_naive_rows["gap_ci_vs_naive"] = _gap_ci_vs_naive(naive_rows)
 
     # forward-chained challengers. C1 = survivor-median table (reference
     # only — fitted on debuted players, biased fast, never shippable).

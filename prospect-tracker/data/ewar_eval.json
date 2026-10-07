@@ -118,7 +118,21 @@
     "mae0_bwar": 4.101
    }
   },
-  "verdict": "bWAR better"
+  "verdict": "bWAR better",
+  "gap_ci_vs_bwar": {
+   "r": {
+    "point": -0.0208,
+    "lo95": -0.0361,
+    "hi95": -0.0075
+   },
+   "B": 2000,
+   "seed": 20261007,
+   "cluster": "team (franchise): a club's seasons are drawn together",
+   "clusters": 30,
+   "n": 300,
+   "orientation": "improvement: benchmark minus model for a lower-is-better statistic, model minus benchmark otherwise; positive means the model is better",
+   "method": "paired percentile bootstrap: whole clusters drawn with replacement, both arms scored on every draw, predictions held fixed (no refit)"
+  }
  },
  "gate_1b_team_runs": {
   "n_team_seasons": 300,
@@ -191,7 +205,21 @@
    "ewar": 0.4722,
    "bwar": 0.3176
   },
-  "verdict": "FIP persists better"
+  "verdict": "FIP persists better",
+  "gap_ci_vs_bwar_ra": {
+   "r": {
+    "point": 0.185,
+    "lo95": 0.1367,
+    "hi95": 0.232
+   },
+   "B": 2000,
+   "seed": 20261007,
+   "cluster": "player (mlbam): a pitcher's season pairs are drawn together",
+   "clusters": 659,
+   "n": 1677,
+   "orientation": "improvement: benchmark minus model for a lower-is-better statistic, model minus benchmark otherwise; positive means the model is better",
+   "method": "paired percentile bootstrap: whole clusters drawn with replacement, both arms scored on every draw, predictions held fixed (no refit)"
+  }
  },
  "gate_3_coverage_identity": {
   "fielding": {
