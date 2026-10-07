@@ -4368,6 +4368,18 @@ _TRADE_MACHINE_INIT = """<script>
 </script>"""
 
 
+def _mlb_events_attr() -> str:
+    """The player pages' timeline switch (Q9_22b): ' data-mlb-events="live"' on
+    #proj-rows while mlb_events.MLB_EVENTS_LIVE is True, and nothing otherwise, so
+    with the flag off the shell is byte-identical and assets/projections.js makes
+    no request under /data/mlb_events/. mlb_events holds the one definition."""
+    try:
+        import mlb_events
+    except Exception:  # noqa: BLE001
+        return ""
+    return ' data-mlb-events="live"' if getattr(mlb_events, "MLB_EVENTS_LIVE", False) else ""
+
+
 def build_projections() -> str:
     """The /projections/ MLB Projections app - the FA module's projection
     engine applied to the whole league plus post-ETA PROSPX prospects.
@@ -4385,7 +4397,7 @@ def build_projections() -> str:
         '<div id="proj-view-projections">'
         '<div id="proj-banner"></div>'
         '<div class="filter-bar" id="proj-filters"></div>'
-        f'<div id="proj-rows"{_csv_optin("mlb-projections")}></div>'
+        f'<div id="proj-rows"{_csv_optin("mlb-projections")}{_mlb_events_attr()}></div>'
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'

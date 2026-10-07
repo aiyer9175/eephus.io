@@ -2932,7 +2932,10 @@
       + mini("projection", `Projected WAR${pw.length && first != null ? ` <span class="fa-sub">${first}-${first + pw.length - 1}</span>` : ""}`, projTrend);
     const minisHTML = minis ? `<div class="mlbp-section" data-mlbp-section="overview-trends"><div class="mlbp-minis">${minis}</div></div>` : "";
     const usage = positionGamesSummary(key);
-    return { content: lensHTML + minisHTML + usage, html: lensHTML + minisHTML + slotHTML("usage", usage) };
+    // The timeline slot exists only while the events feed is served (Q9_22b).
+    const tl = timelineBlock(key);
+    return { content: lensHTML + minisHTML + usage + tl,
+             html: lensHTML + minisHTML + slotHTML("usage", usage) + (eventsLive() ? slotHTML("timeline", tl) : "") };
   }
 
   // ---- hero ------------------------------------------------------------------
@@ -3167,6 +3170,321 @@
     </div>`;
   }
 
+  // ---- timeline strip (wiring W01 part 2, Q9_22b) ----------------------------
+  // The player's dated MLB transactions: IL placements and activations with the
+  // list and the in-season days, trades, signings with terms, options, DFA,
+  // releases and arbitration salaries. One small file per player under
+  // /data/mlb_events/, keyed by MLBAM id (mlb_events.py), fetched only when the
+  // page shell says that directory is served: build_site writes
+  // data-mlb-events="live" on #proj-rows while mlb_events.MLB_EVENTS_LIVE is True
+  // and nothing otherwise, so with the flag off no request is made and the page
+  // is what it was. The 5 MB card set never grows for this.
+  // StatsAPI description text prints verbatim. Nothing here forecasts
+  // availability: the IL playing-time adjustment failed on both sides, so the IL
+  // rows are history only.
+  // Rows key by the type codes of the site-pass type registry (plan 3.2):
+  // data-type is the code, data-fam the family (pro, mlb, fa, trd, inj), and the
+  // stylesheet colours a family from its wire token (--wire-*). The pictograms
+  // are the interim set of plan 3.3; once EEPHUS_HUB.wireType (HOME_2) exists,
+  // its entry for a code wins field by field (fam, ico).
+  const TL_TYPES = {
+    draft_sign:    { fam: "pro", ico: "px-draft",   val: "signed" },
+    intl_sign:     { fam: "pro", ico: "px-intl",    val: "IFA signing" },
+    callup:        { fam: "mlb", ico: "ev-promo",   val: "contract selected" },
+    recall:        { fam: "mlb", ico: "ev-promo",   val: "recalled" },
+    optioned:      { fam: "mlb", ico: "ev-demo",    val: "optioned" },
+    dfa:           { fam: "mlb", ico: "franchise",  val: "DFA" },
+    outright:      { fam: "mlb", ico: "franchise",  val: "outrighted" },
+    claim:         { fam: "mlb", ico: "franchise",  val: "claimed" },
+    release:       { fam: "mlb", ico: "franchise",  val: "released" },
+    retire:        { fam: "mlb", ico: "franchise",  val: "retired" },
+    suspend:       { fam: "mlb", ico: "franchise",  val: "suspended" },
+    rule5:         { fam: "mlb", ico: "franchise",  val: "Rule 5 pick" },
+    award:         { fam: "mlb", ico: "hof",        val: "award" },
+    fa_sign:       { fam: "fa",  ico: "ev-signing", val: "MLB deal" },
+    minor_deal:    { fam: "fa",  ico: "ev-signing", val: "MiLB deal" },
+    opt_declined:  { fam: "fa",  ico: "ev-signing", val: "option declined" },
+    opt_exercised: { fam: "fa",  ico: "ev-signing", val: "option exercised" },
+    qo:            { fam: "fa",  ico: "ev-signing", val: "QO offered" },
+    arb_salary:    { fam: "fa",  ico: "ev-signing", val: "arbitration" },
+    trade:         { fam: "trd", ico: "ev-trade",   val: "trade" },
+    il_place:      { fam: "inj", ico: "ev-il",      val: "IL" },
+    il_return:     { fam: "inj", ico: "ev-il",      val: "activated" },
+  };
+  // Hidden prefix (plan 3.1) and the key's label, per family.
+  const TL_FAM = {
+    pro: ["Prospect", "Prospects"], mlb: ["MLB", "MLB"], fa: ["Free agency", "Free agency"],
+    trd: ["Trade", "Trades"], inj: ["Injury", "Injuries"],
+  };
+  // The bigger marks on the Moves lane: a change of club, contract or status.
+  const TL_MAJOR = new Set(["trade", "fa_sign", "minor_deal", "draft_sign", "intl_sign", "dfa",
+    "claim", "release", "retire", "rule5", "suspend", "qo", "opt_declined", "opt_exercised", "award"]);
+  // Seasons shown open, newest first, until at least this many rows; the rest
+  // sit behind one disclosure.
+  const TL_OPEN_ROWS = 8;
+  const TL_MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const EVENTS = Object.create(null);         // mlbam -> payload | {missing} | {failed}
+  const EVENTS_LOADING = Object.create(null);
+  let EVENTS_ON = null;
+  let TL_SPRITE = null;
+
+  function eventsLive() {
+    if (EVENTS_ON !== null) return EVENTS_ON;
+    let on = false;
+    try {
+      const el = document.getElementById("proj-rows");
+      on = !!(el && el.getAttribute("data-mlb-events") === "live");
+    } catch (e) { on = false; }
+    EVENTS_ON = on;
+    return on;
+  }
+  function tlType(code) {
+    const base = TL_TYPES[code] || { fam: "mlb", ico: "franchise", val: "" };
+    const H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+    const w = H && H.wireType && H.wireType[code];
+    if (!w || typeof w !== "object") return base;
+    const fam = String(w.fam || "").toLowerCase();
+    return { fam: TL_FAM[fam] ? fam : base.fam, ico: w.ico ? String(w.ico) : base.ico, val: base.val };
+  }
+  function tlSprite() {
+    if (TL_SPRITE) return TL_SPRITE;
+    let h = null;
+    try {
+      const u = document.querySelector('use[href*="/assets/eephus-icons.svg"]');
+      h = u && u.getAttribute ? u.getAttribute("href") : null;
+    } catch (e) { h = null; }
+    TL_SPRITE = h ? String(h).split("#")[0] : "/assets/eephus-icons.svg";
+    return TL_SPRITE;
+  }
+  // The 12 px pictogram over the shared sprite (build_site._ico's 12 px form).
+  function tlIco(ico) {
+    return `<svg class="ico" width="12" height="12" viewBox="2 2 12 12" aria-hidden="true" focusable="false">`
+      + `<use href="${esc(tlSprite())}#i-${esc(ico)}" width="16" height="16"/></svg>`;
+  }
+  // A club mention: the hub's one club link for one of the 30 clubs, nothing
+  // for a minor-league affiliate or an unknown id (never a guessed club).
+  function tlClub(x) {
+    const H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+    if (x == null || x === "" || !H || !H.club) return "";
+    const c = H.club(x);
+    if (!c) return "";
+    return H.clubLinkHTML ? H.clubLinkHTML(c.code) : esc(c.code);
+  }
+  const tlIso = s => /^\d{4}-\d{2}-\d{2}/.test(String(s || ""));
+  function tlDay(s, withYear) {
+    if (!tlIso(s)) return "";
+    const y = s.slice(0, 4), m = Number(s.slice(5, 7)), d = Number(s.slice(8, 10));
+    return `${TL_MON[m - 1] || ""} ${d}${withYear ? `, ${y}` : ""}`;
+  }
+  const tlMs = s => Date.UTC(Number(s.slice(0, 4)), Number(s.slice(5, 7)) - 1, Number(s.slice(8, 10)));
+  const tlSortKey = r => (tlIso(r.date) ? String(r.date).slice(0, 10) : `${r.season || 0}-00-00`);
+  const tlSeason = r => (tlIso(r.date) ? Number(String(r.date).slice(0, 4)) : Number(r.season) || null);
+  const tlPlural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  // A placement with no activation on file whose season window (to Oct 1) runs
+  // past the feed's last day: the builder's day count closes it at the window's
+  // end, a date the feed has not reached, so the page prints the stint as open
+  // through that day instead of a count of days not yet played.
+  const tlOpen = (r, through) => r.type === "il_place" && !tlIso(r.il_end) && tlIso(r.date)
+    && tlIso(through) && `${String(r.date).slice(0, 4)}-10-01` > String(through).slice(0, 10);
+
+  function ensureEvents(key) {
+    if (!eventsLive()) return;
+    const card = DETAIL && (DETAIL.players || {})[key];
+    const mid = card && card.mlbam;
+    if (mid == null || EVENTS[mid] || EVENTS_LOADING[mid]) return;
+    EVENTS_LOADING[mid] = true;
+    const landed = d => {
+      EVENTS[mid] = d || { missing: true };
+      EVENTS_LOADING[mid] = false;
+      patchSlot("timeline", key, timelineBlock(key));
+    };
+    fetch("/data/mlb_events/" + encodeURIComponent(String(mid)) + ".json", { cache: "no-cache" })
+      .then(r => {
+        if (r.status === 404) return { missing: true };
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(landed)
+      .catch(() => landed({ failed: true }));
+  }
+
+  function tlValue(r, t, through) {
+    const v = [];
+    switch (r.type) {
+      case "trade": {
+        const a = tlClub(r.from), b = tlClub(r.to);
+        v.push(a && b ? `${a} &rarr; ${b}` : (a || b || t.val));
+        break;
+      }
+      case "claim": {
+        const a = tlClub(r.from);
+        v.push(a ? `claimed from ${a}` : t.val);
+        break;
+      }
+      case "il_place":
+        v.push(esc(r.il || t.val));
+        if (tlOpen(r, through)) v.push(`open through ${tlDay(String(through).slice(0, 10))}`);
+        else if (r.il_days != null && Number.isFinite(Number(r.il_days)))
+          v.push(tlPlural(Number(r.il_days), "in-season day"));
+        break;
+      case "fa_sign": {
+        const yrs = Number(r.years), g = r.guarantee_usd;
+        if (r.mlb_deal === false) v.push("MiLB deal");
+        else if (Number.isFinite(yrs) && yrs > 0 && g != null) v.push(`${yrs}y/${money(g)}`);
+        else v.push(t.val);
+        const to = tlClub(r.to_team);
+        if (to) v.push(to);
+        break;
+      }
+      case "opt_declined":
+      case "opt_exercised":
+        v.push(t.val + (r.option_price_usd != null ? ` ${money(r.option_price_usd)}` : ""));
+        break;
+      case "arb_salary": {
+        v.push(money(r.salary_usd) + (r.arb_year ? ` · arb-${esc(String(r.arb_year))}` : ""));
+        const c = tlClub(r.club);
+        if (c) v.push(c);
+        break;
+      }
+      default:
+        if (t.val) v.push(esc(t.val));
+    }
+    return v.filter(Boolean).join(" · ");
+  }
+  // Rows from a source with no StatsAPI text (the FA ledger, arbitration
+  // salaries) say what the record is; StatsAPI rows print their own text.
+  function tlText(r) {
+    if (r.desc) return esc(r.desc);
+    switch (r.type) {
+      case "arb_salary": return `Arbitration-eligible salary, ${esc(String(r.season || ""))}`;
+      case "fa_sign": return "Free-agent signing";
+      case "opt_declined": return "Option declined";
+      case "opt_exercised": return "Option exercised";
+      case "qo": return "Qualifying offer";
+      default: return esc((TL_TYPES[r.type] || {}).val || r.type || "");
+    }
+  }
+  function tlRow(r, through) {
+    const t = tlType(r.type);
+    const when = tlIso(r.date)
+      ? `<time class="mlbp-tl-date" datetime="${esc(String(r.date).slice(0, 10))}">${tlDay(String(r.date))}</time>`
+      : `<span class="mlbp-tl-date">season</span>`;
+    const val = tlValue(r, t, through);
+    return `<li class="mlbp-tl-row" data-fam="${t.fam}" data-type="${esc(r.type)}">${when}`
+      + `<span class="mlbp-tl-mark">${tlIco(t.ico)}<span class="visually-hidden">${TL_FAM[t.fam][0]}:</span></span>`
+      + `<span class="mlbp-tl-text">${tlText(r)}</span>`
+      + (val ? `<span class="mlbp-tl-val">${val}</span>` : "") + `</li>`;
+  }
+  function tlSeasonHTML(y, rows, ilSeasons, through) {
+    const il = ilSeasons && ilSeasons[String(y)];
+    const open = rows.filter(r => tlOpen(r, through)).length;
+    const ilNote = il && il[1] > 0
+      ? ` <span class="fa-sub">${tlPlural(Number(il[1]), "IL stint")}, `
+        + (open ? `${open} open` : tlPlural(Number(il[0]), "in-season day")) + `</span>` : "";
+    return `<div class="mlbp-tl-season"><div class="mlbp-tl-year">${y == null ? "" : esc(String(y))}${ilNote}</div>`
+      + `<ol class="mlbp-tl-rows">${rows.map(r => tlRow(r, through)).join("")}</ol></div>`;
+  }
+  function tlList(ev, rows) {
+    const sorted = rows.slice().sort((a, b) => {
+      const ka = tlSortKey(a), kb = tlSortKey(b);
+      return ka < kb ? 1 : ka > kb ? -1 : 0;
+    });
+    const seasons = [];
+    for (const r of sorted) {
+      const y = tlSeason(r);
+      const last = seasons[seasons.length - 1];
+      if (last && last.y === y) last.rows.push(r);
+      else seasons.push({ y, rows: [r] });
+    }
+    let shown = 0, cut = seasons.length;
+    for (let i = 0; i < seasons.length; i++) {
+      if (shown >= TL_OPEN_ROWS) { cut = i; break; }
+      shown += seasons[i].rows.length;
+    }
+    const block = list => list.map(s => tlSeasonHTML(s.y, s.rows, ev.il_seasons, ev.through)).join("");
+    const rest = seasons.slice(cut);
+    const nRest = rest.reduce((a, s) => a + s.rows.length, 0);
+    const restYears = rest.length ? `${rest[rest.length - 1].y}-${rest[0].y}` : "";
+    return block(seasons.slice(0, cut))
+      + (rest.length
+        ? `<details class="mlbp-tl-more"><summary>${tlPlural(nRest, "earlier move")} <span class="fa-sub">${esc(restYears)}</span></summary>${block(rest)}</details>`
+        : "");
+  }
+  // The strip: one track of moves and one of IL stints on a shared year axis.
+  // A visual summary only (aria-hidden); the list below carries every row.
+  function tlStrip(ev, rows) {
+    const dated = rows.filter(r => tlIso(r.date)).map(r => Object.assign({}, r, { date: String(r.date).slice(0, 10) }));
+    if (!dated.length) return "";
+    let first = dated[0].date, last = dated[0].date;
+    dated.forEach(r => { if (r.date < first) first = r.date; if (r.date > last) last = r.date; });
+    if (tlIso(ev.through) && String(ev.through).slice(0, 10) > last) last = String(ev.through).slice(0, 10);
+    const y0 = Number(first.slice(0, 4)), y1 = Number(last.slice(0, 4));
+    const lo = Date.UTC(y0, 0, 1), hi = Date.UTC(y1 + 1, 0, 1);
+    const pct = ms => Math.max(0, Math.min(100, (ms - lo) / (hi - lo) * 100));
+    const at = ms => pct(ms).toFixed(2) + "%";
+    const span = y1 - y0 + 1;
+    const step = span <= 7 ? 1 : span <= 14 ? 2 : 5;
+    let grid = "", axis = "";
+    for (let y = y0; y <= y1; y++) {
+      const x = at(Date.UTC(y, 0, 1));
+      if (y > y0) grid += `<span class="mlbp-tl-yr" style="left:${x}"></span>`;
+      if ((y - y0) % step === 0) axis += `<span style="left:${x}">${y}</span>`;
+    }
+    const pins = dated.filter(r => r.type !== "il_place" && r.type !== "il_return").map(r => {
+      const t = tlType(r.type);
+      return `<span class="mlbp-tl-pin${TL_MAJOR.has(r.type) ? " is-major" : ""}" data-fam="${t.fam}" data-type="${esc(r.type)}"`
+        + ` style="left:${at(tlMs(r.date))}" title="${esc(tlDay(r.date, true))}: ${esc(r.desc || t.val || r.type)}"></span>`;
+    }).join("");
+    const thru = tlIso(ev.through) ? String(ev.through).slice(0, 10) : last;
+    // A bar runs from the placement to its activation, cut at the season
+    // window's end (Oct 1) as the in-season day count is, and never past the
+    // feed's last day: a stint closed only by a placement seasons later is not
+    // drawn as years on the list.
+    const bars = dated.filter(r => r.type === "il_place").map(r => {
+      const y = r.date.slice(0, 4);
+      const seasonEnd = `${y}-10-01`;
+      const back = tlIso(r.il_end) && String(r.il_end).slice(0, 4) === y ? String(r.il_end).slice(0, 10) : null;
+      let end = [back || seasonEnd, seasonEnd, thru].sort()[0];
+      if (end < r.date) end = r.date;
+      const x0 = pct(tlMs(r.date)), x1 = pct(tlMs(end));
+      const t = tlType(r.type);
+      const title = `${r.il || "IL"}, ${tlDay(r.date, true)}${back ? ` to ${tlDay(back, true)}` : ""}`;
+      return `<span class="mlbp-tl-bar" data-fam="${t.fam}" data-type="il_place" style="left:${x0.toFixed(2)}%;width:${Math.max(0.4, x1 - x0).toFixed(2)}%" title="${esc(title)}"></span>`;
+    }).join("");
+    const fams = [];
+    rows.forEach(r => { const f = tlType(r.type).fam; if (!fams.includes(f)) fams.push(f); });
+    const order = ["trd", "fa", "mlb", "inj", "pro"];
+    const key = order.filter(f => fams.includes(f)).map(f => {
+      const ico = { trd: "ev-trade", fa: "ev-signing", mlb: "franchise", inj: "ev-il", pro: "px-draft" }[f];
+      return `<span class="mlbp-tl-key-item" data-fam="${f}">${tlIco(ico)}${TL_FAM[f][1]}</span>`;
+    }).join("");
+    return `<div class="mlbp-tl-strip" aria-hidden="true">`
+      + `<span class="mlbp-tl-lane-label">Moves</span><div class="mlbp-tl-track">${grid}${pins}</div>`
+      + `<span class="mlbp-tl-lane-label">IL</span><div class="mlbp-tl-track">${grid}${bars}</div>`
+      + `<span></span><div class="mlbp-tl-axis">${axis}</div></div>`
+      + (key ? `<div class="mlbp-tl-key">${key}</div>` : "");
+  }
+  function timelineBlock(key) {
+    if (!eventsLive()) return "";
+    const card = DETAIL && (DETAIL.players || {})[key];
+    const ev = card && card.mlbam != null ? EVENTS[card.mlbam] : null;
+    if (!ev || ev.missing) return "";
+    if (ev.failed)
+      return section("timeline", "Timeline", "", `<div class="fa-note">The transaction timeline failed to load.</div>`);
+    const rows = (ev.rows || []).filter(r => r && r.type);
+    const sub = tlIso(ev.through) ? `MLB moves through ${tlDay(String(ev.through).slice(0, 10), true)}` : "";
+    if (!rows.length)
+      return section("timeline", "Timeline", sub, `<div class="fa-note">No MLB transactions on file.</div>`);
+    const hasIl = rows.some(r => r.type === "il_place");
+    const foot = [
+      "Descriptions are quoted from MLB StatsAPI",
+      hasIl ? "in-season days count each IL stint inside Apr 1 to Oct 1, ended by the next IL move" : "",
+      rows.some(r => r.type === "arb_salary") ? "arbitration salaries are dated by season" : "",
+    ].filter(Boolean).join("; ") + ".";
+    return section("timeline", "Timeline", sub,
+      `<div class="mlbp-tl">${tlStrip(ev, rows)}${tlList(ev, rows)}<div class="fa-note mlbp-tl-foot">${foot}</div></div>`);
+  }
+
   // Tabs are questions, not sources. Hitter: Overview, Hitting, Defense, Value,
   // Projection & Contract, Scouting, Discussion. Pitcher: no Defense, Pitching
   // in place of Hitting. Two-way: both, Defense only with fielded innings. A tab
@@ -3330,6 +3648,7 @@
     // Async fills run AFTER the first paint and patch their own slot, so none
     // of them re-renders the page under the reader.
     ensureFielding();
+    ensureEvents(key);
     if (hitSide) ensureSwingDelta();
     // Only client-fetch the pitching leaderboards when the skills block was not
     // baked into the payload (older builds); the baked block renders directly.
