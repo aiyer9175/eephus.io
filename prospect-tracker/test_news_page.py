@@ -71,11 +71,11 @@ def test_news_page_renders_and_filters(server, browser):
         total = page.evaluate("document.querySelectorAll('#news-feed .feed-item').length")
         n_chips = page.evaluate("document.querySelectorAll('[data-news-filter]').length")
 
-        # Click the Trades filter; only trade rows should remain visible, and
+        # Click the Trades family; only trade rows should remain visible, and
         # day blocks with no visible rows must hide. (The 150ms settle stays
         # a fixed wait: hiding rows has no positive DOM signal to
         # condition-wait on without assuming non-trade rows exist.)
-        page.click('[data-news-filter="trade"]')
+        page.click('[data-news-filter="trd"]')
         page.wait_for_timeout(150)
         vis = page.evaluate("""() => {
             const items = [...document.querySelectorAll('#news-feed .feed-item')];
@@ -83,7 +83,7 @@ def test_news_page_renders_and_filters(server, browser):
             const days = [...document.querySelectorAll('#news-feed .news-day')];
             return {
                 visibleCount: visible.length,
-                allTrade: visible.every(it => it.getAttribute('data-cat') === 'trade'),
+                allTrade: visible.every(it => it.getAttribute('data-fam') === 'trd'),
                 visibleDayWithNoRows: days.some(d => d.style.display !== 'none'
                     && [...d.querySelectorAll('.feed-item')].every(it => it.style.display === 'none')),
             };

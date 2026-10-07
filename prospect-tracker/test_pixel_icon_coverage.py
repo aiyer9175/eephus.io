@@ -70,7 +70,10 @@ def test_every_vocabulary_key_has_a_drawing():
 
 def test_the_vocabularies_are_the_ones_the_site_uses():
     assert len(_prospx_sections()) == 12
-    assert _wire_types() == {"up", "down", "promo", "demo", "il", "debut", "trade", "signing"}
+    # The type codes of the MLB News registry (HOME_2) that the wire emits today.
+    assert _wire_types() == {"grade_up", "grade_down", "promo", "demo", "il_place", "debut", "trade",
+                             "fa_sign", "minor_deal", "opt_declined", "opt_exercised", "qo"}
+    assert _wire_types() <= set(B._WIRE_TYPES)
 
 
 def test_the_unicode_sidebar_glyph_map_is_gone():
@@ -255,36 +258,38 @@ def test_prospx_theme_toggle_swaps_glyphs_not_text():
 
 # ------------------------------------------------ the wire pictograms (PX-17)
 
-_KNOWN_WIRE = ("up", "down", "promo", "demo", "il", "debut", "trade", "signing")
+_KNOWN_WIRE = tuple(B._WIRE_TYPES)
 
 
 @pytest.mark.parametrize("typ", _KNOWN_WIRE)
 def test_wire_rows_draw_the_event_pictogram(typ):
     """The sidebar feed, the /news/ row and the WIRE ticker draw the type's 12 px
-    icon inside the type's own coloured span instead of a text glyph."""
+    icon at the row lead (HOME_2: the family colour reads it from data-fam)
+    instead of a text glyph."""
     feed = B._feed_item_html(typ, "GLYPH", "t", "k", None, "Name", "val")
     news = B._news_item_html(typ, "GLYPH", "t", "k", None, "Name", "val", "", {})
     tick = B._ticker_html([("2026-10-01", typ, "GLYPH", "text", "k", None, "Name", "val")])
-    want = (12, _sym(typ))
+    want = (12, _sym(B._WIRE_ICON[typ]))
+    fam = B._WIRE_TYPES[typ]["fam"]
     for html in (feed, news):
-        assert f'<span class="feed-val {typ}"><svg class="ico"' in html
+        assert f'data-fam="{fam}" data-type="{typ}"><span class="wire-ico"><svg class="ico"' in html
         assert _icons(html) == [want]
         assert "GLYPH" not in html
-    assert f'<span class="{typ}"><svg class="ico"' in tick
+    assert f'data-fam="{fam}" data-type="{typ}"><span class="wire-ico"><svg class="ico"' in tick
     assert _icons(tick) == [want, want] and "GLYPH" not in tick  # the track loops twice
 
 
 def test_an_unknown_wire_type_keeps_its_text_glyph():
     html = B._feed_item_html("other", "◆", "t", "k", None, "Name", "val")
-    assert _icons(html) == [] and "◆val" in html
+    assert _icons(html) == [] and "◆val" in html and "data-fam" not in html
 
 
-def test_trade_on_the_wire_panel_is_panel_ink_not_gold():
-    """Owner answer PX-Q3: the trade pictogram (and the untyped ticker glyph)
-    take the panel's own ink; gold on the dark panel means elite FV only."""
+def test_the_untyped_ticker_glyph_keeps_the_panel_ink_and_no_family_is_gold():
+    """An item outside the registry keeps the panel's own ink; the trade family
+    takes its own colour (the 2026-10-02 ask, SP-Q1, superseding PX-Q3), and
+    gold on the dark panel still means elite FV only."""
     css = _src("assets/site.css")
-    for sel in (".home-ticker .ticker-track .trade", ".home-ticker .ticker-track .glyph",
-                ".feed-item .g.trade, .feed-item .feed-val.trade"):
-        m = re.search(re.escape(sel) + r"\s*\{([^}]*)\}", css)
-        assert m, sel
-        assert "color: inherit" in m.group(1) and "gold" not in m.group(1), sel
+    m = re.search(re.escape(".home-ticker .ticker-track .glyph") + r"\s*\{([^}]*)\}", css)
+    assert m and "color: inherit" in m.group(1)
+    fam_rules = re.findall(r"\[data-fam=\"\w+\"\][^{]*\{([^}]*)\}", css)
+    assert fam_rules and not any("gold" in r for r in fam_rules)

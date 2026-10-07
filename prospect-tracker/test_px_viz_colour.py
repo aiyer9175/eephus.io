@@ -168,37 +168,24 @@ def test_spark_contrast_both_themes():
 WIRE_PANELS = {"feed": "#0B0E07", "feed dark": "#0A0C06", "ticker": "#0B0E07"}
 
 
-def _wire_colour(rule_src):
-    m = re.search(r"color\s*:\s*(#[0-9A-Fa-f]{6}|inherit)\b", rule_src)
-    assert m, rule_src
-    return m.group(1).upper() if m.group(1) != "inherit" else "inherit"
+def _root_token(name):
+    m = re.search(r":root\s*\{[^}]*?%s:\s*(#[0-9A-Fa-f]{6})\s*;" % re.escape(name), _CSS)
+    assert m, name
+    return m.group(1).upper()
 
 
-def _feed_rule(typ):
-    m = re.search(r"\.feed-item \.g\.%s,\s*\.feed-item \.feed-val\.%s\s*(?:\{([^}]*)\})?" % (typ, typ), _CSS)
-    assert m, typ
-    # grouped selectors (.up with .promo) share the next declaration block
-    return m.group(1) if m.group(1) is not None else _CSS[m.end():].split("{", 1)[1].split("}", 1)[0]
-
-
-def _ticker_rule(typ):
-    m = re.search(r"\.home-ticker \.ticker-track \.%s\s*\{([^}]*)\}" % typ, _CSS)
-    assert m, typ
-    return m.group(1)
-
-
-def test_wire_types_are_coloured_and_trade_keeps_the_panel_ink():
-    assert set(B._WIRE_ICON) == {"up", "down", "promo", "demo", "il", "debut", "trade", "signing"}
-    for typ in B._WIRE_ICON:
-        feed, tick = _wire_colour(_feed_rule(typ)), _wire_colour(_ticker_rule(typ))
-        if typ == "trade":   # owner answer PX-Q3: the panel's own ink, never gold
-            assert feed == tick == "inherit"
-            continue
-        assert feed.startswith("#") and tick.startswith("#"), typ
-        assert feed == tick, (typ, feed, tick)
+def test_wire_families_are_coloured_on_the_panel():
+    """HOME_2: colour names the family, not the event type. Each family's panel
+    token clears the floor on the ticker and feed panels, and the pictogram,
+    an <svg> with no fill of its own, takes the row's family colour."""
+    fams = {r["fam"] for r in B._WIRE_TYPES.values()}
+    assert fams == set(B._WIRE_FAMILIES) == {"pro", "mlb", "fa", "trd", "inj"}
+    for fam in fams:
+        ink = _root_token(f"--wire-{fam}-panel")
         for name, bg in WIRE_PANELS.items():
-            assert _ratio(feed, bg) >= FLOOR, (typ, name, round(_ratio(feed, bg), 2))
-    # the pictogram sits inside the type's span, so it takes that colour
+            assert _ratio(ink, bg) >= FLOOR, (fam, name, round(_ratio(ink, bg), 2))
+    assert re.search(r"\[data-fam\] > \.wire-ico, \[data-fam\] \.feed-val, \[data-fam\] \.wire-val\s*"
+                     r"\{\s*color:\s*var\(--wire-c\);\s*\}", _CSS)
     item = B._wire_glyph("promo", "")
     assert item.startswith('<svg class="ico"') and "fill" not in item
 

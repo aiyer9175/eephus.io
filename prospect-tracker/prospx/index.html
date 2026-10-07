@@ -56,7 +56,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=cd53e31a">
+  <link rel="stylesheet" href="/assets/site.css?v=0d8458de">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -107,6 +107,19 @@
       --neon-cyan: #0E2B4D; /* navy - link / accent */
       --neon-amber: #C9A227; /* card gold - highlight */
       --neon-violet: #6B4FA8; /* royal purple - graduates */
+      /* MLB News families (HOME_2), mirrored from assets/site.css, whose
+         :root this app's own :root overrides: page ground (this arm and the
+         dark arm) and the theme-fixed panel values. */
+      --wire-pro: #1A6B35;
+      --wire-mlb: #0B5F8A;
+      --wire-fa:  #6B3FC0;
+      --wire-trd: #9A4307;
+      --wire-inj: #A0146E;
+      --wire-pro-panel: #6EE7A8;
+      --wire-mlb-panel: #4EE0FF;
+      --wire-fa-panel:  #C39BFF;
+      --wire-trd-panel: #FFA94D;
+      --wire-inj-panel: #FF7AC0;
       --upside-pink: #F4A6C8; /* v29 - soft pink (lightened from #FF1493): '+' upside chip + chart dot. Hot pink read too aggressive/"warning" at a glance. */
       /* Polish v1.0 (B2) - promoted from inlined literals. Column-header cream
          reads on the navy/near-black header band in both themes (theme-agnostic,
@@ -352,6 +365,11 @@
       --neon-cyan:        #00D9FF;   /* refractor cyan */
       --neon-amber:       #FFD700;   /* refractor gold */
       --neon-violet:      #B47CFF;   /* refractor purple */
+      --wire-pro: #4FFF9E;  /* MLB News families, dark page ground (HOME_2) */
+      --wire-mlb: #4FD9FF;
+      --wire-fa:  #B47CFF;
+      --wire-trd: #FF9D42;
+      --wire-inj: #FF6EB4;
       --upside-pink: #F8B4D2; /* v29 - soft pink for dark theme '+' upside (lightened from #FF3DA0 to read as supportive, not warning) */
       --spend-ifa: #F5A623; /* amber - IFA */
       --spend-draft: #E040A0; /* magenta - Draft (v7 - was cyan, conflicted with neon-cyan accent) */
@@ -10575,7 +10593,7 @@
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
 <script src="/assets/eephus-export.js?v=552e2152" defer></script>
-<script src="/assets/eephus-csv.js?v=4a00e52b" defer></script>
+<script src="/assets/eephus-csv.js?v=796b4f3f" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
      git-ignored and absent on the public/dev tree, so its <script> 404s harmlessly
@@ -10583,21 +10601,21 @@
      inert - no Supabase SDK fetch, no behavior change - and the site works exactly
      as today (logged-out, localStorage watchlist). When config IS present, the
      module self-injects the Supabase SDK and lights up the account UI. -->
-<script src="/assets/eephus-config.js?v=5e092777" defer></script>
+<script src="/assets/eephus-config.js?v=78833a4e" defer></script>
 <script src="/assets/eephus-account.js?v=22deb404" defer></script>
 <script src="/assets/eephus-nav.js?v=f4200190" defer></script>
 <script src="/assets/eephus-state.js?v=bf1de8b3" defer></script>
 <script src="/assets/eephus-ui.js?v=d2cecdd8" defer></script>
   <script src="/assets/eephus-gl.js?v=e045a263" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
-  <script src="/assets/eephus-hub.js?v=fbab0a23" defer></script>
+  <script src="/assets/eephus-hub.js?v=b31cc98a" defer></script>
   <!-- Team picker: logo listbox on every select[data-team-picker] (reads the hub's club table) -->
   <script src="/assets/eephus-teampick.js?v=1cd0b6d5" defer></script>
 <!-- Dark-theme phosphor-starfield background - shared with the editorial
      pages (single component + token set in assets/site.css [data-theme=dark]).
      Mounts only while the dark theme is active; render() feeds it the
      prospect FV on detail views so the field escalates with the rarity tier. -->
-<script src="/assets/eephus-bg.js?v=9dd26b43" defer></script>
+<script src="/assets/eephus-bg.js?v=426ba8b6" defer></script>
 
 <!-- v32.0 - FV/WAR/$ conversion framework, loaded synchronously so all
      downstream code can call dollarsPerWar() / surplusValueMM() / etc

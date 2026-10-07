@@ -54,7 +54,8 @@ def test_catcher_cp_prints_as_c():
     # Every CP row in debuts.json renders as a catcher on a This Day debut row.
     for r in _cp_rows():
         row = B._otd_debut_row(r, date(2022, 10, 1))
-        if "debuted · C<" not in row or "debuted · CP" in row:
+        # HOME_2: the verb is the row's value, in its family colour (.wire-val)
+        if "debuted</span> · C<" not in row or "· CP" in row:
             problems.append(f"{r.get('player_key')} renders {row!r}")
     # Every other label keeps its own spelling.
     for pos in ("C", "RHP", "SIRP", "SS/2B", "OF / C", "CL", ""):

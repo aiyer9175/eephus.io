@@ -891,6 +891,51 @@
     }
   }
 
+  // ---- MLB News type registry (HOME_2) ---------------------------------------
+  // The browser copy of build_site._WIRE_FAMILIES and _WIRE_TYPES (site-pass
+  // plan 3.1 to 3.3, LANE_HOME 2.2); test_wire_type_system.py pins the copies
+  // equal. A family's colour is a CSS token, --wire-<fam> on page ground and
+  // --wire-<fam>-panel on the near-black panel. ico is the sprite key the type
+  // draws (build_site resolves the ev-draft and ev-intl aliases to px-draft and
+  // px-intl), so a caller can paint it as it stands. rail: true, false or
+  // "board" (board players only). The /projections/ timeline strip reads both.
+  var wireFamily = {
+    pro: { tag: "PRO", sr: "Prospect:", label: "Prospects", mark: "prospx" },
+    mlb: { tag: "MLB", sr: "MLB:", label: "MLB", mark: "franchise" },
+    fa: { tag: "FA", sr: "Free agency:", label: "Free agency", mark: "ev-signing" },
+    trd: { tag: "TRD", sr: "Trade:", label: "Trades", mark: "ev-trade" },
+    inj: { tag: "IL", sr: "Injury:", label: "Injuries", mark: "ev-il" },
+  };
+  var wireType = {
+    grade_up:      { fam: "pro", ico: "ev-up", val: "grade up", weight: 0, rail: true },
+    grade_down:    { fam: "pro", ico: "ev-down", val: "grade down", weight: 0, rail: true },
+    promo:         { fam: "pro", ico: "ev-promo", val: "promotion", weight: 50, rail: true },
+    demo:          { fam: "pro", ico: "ev-demo", val: "demotion", weight: 50, rail: true },
+    debut:         { fam: "pro", ico: "ev-debut", val: "MLB debut", weight: 95, rail: true },
+    draft_sign:    { fam: "pro", ico: "px-draft", val: "signed", weight: 50, rail: "board" },
+    intl_sign:     { fam: "pro", ico: "px-intl", val: "IFA signing", weight: 50, rail: "board" },
+    callup:        { fam: "mlb", ico: "ev-promo", val: "contract selected", weight: 70, rail: true },
+    recall:        { fam: "mlb", ico: "ev-promo", val: "recalled", weight: 40, rail: false },
+    optioned:      { fam: "mlb", ico: "ev-demo", val: "optioned", weight: 40, rail: false },
+    dfa:           { fam: "mlb", ico: "franchise", val: "DFA", weight: 80, rail: true },
+    outright:      { fam: "mlb", ico: "franchise", val: "outrighted", weight: 40, rail: false },
+    claim:         { fam: "mlb", ico: "franchise", val: "claimed", weight: 75, rail: true },
+    release:       { fam: "mlb", ico: "franchise", val: "released", weight: 60, rail: true },
+    retire:        { fam: "mlb", ico: "franchise", val: "retired", weight: 60, rail: true },
+    suspend:       { fam: "mlb", ico: "franchise", val: "suspended", weight: 60, rail: true },
+    rule5:         { fam: "mlb", ico: "franchise", val: "Rule 5 pick", weight: 58, rail: true },
+    award:         { fam: "mlb", ico: "hof", val: "award", weight: 60, rail: true },
+    fa_sign:       { fam: "fa", ico: "ev-signing", val: "MLB deal", weight: 90, rail: true },
+    minor_deal:    { fam: "fa", ico: "ev-signing", val: "MiLB deal", weight: 40, rail: false },
+    opt_declined:  { fam: "fa", ico: "ev-signing", val: "option declined", weight: 45, rail: true },
+    opt_exercised: { fam: "fa", ico: "ev-signing", val: "option exercised", weight: 45, rail: true },
+    qo:            { fam: "fa", ico: "ev-signing", val: "QO offered", weight: 44, rail: true },
+    fa_elect:      { fam: "fa", ico: "ev-signing", val: "elected free agency", weight: 40, rail: false },
+    trade:         { fam: "trd", ico: "ev-trade", val: "trade", weight: 100, rail: true },
+    il_place:      { fam: "inj", ico: "ev-il", val: "IL", weight: 65, rail: true },
+    il_return:     { fam: "inj", ico: "ev-il", val: "activated", weight: 40, rail: false },
+  };
+
   // Shared display helpers so every surface formats the site's headline values
   // the same way (FV rounding, money, and the missing-data glyph had each drifted
   // into per-module copies that disagreed).
@@ -909,5 +954,5 @@
     return (mm < 0 ? "-" : "") + "$" + Math.abs(mm).toFixed(d) + "M";
   }
 
-  window.EEPHUS_HUB = { links, linksStarted, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, teamLogoURL, club, clubs, clubHref, clubLinkHTML, histogram, scatter, lineChart, spark, niceTicks, fvCeil, money, dash, DASH };
+  window.EEPHUS_HUB = { links, linksStarted, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, teamLogoURL, club, clubs, clubHref, clubLinkHTML, histogram, scatter, lineChart, spark, niceTicks, fvCeil, money, dash, DASH, wireType, wireFamily };
 })();

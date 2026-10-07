@@ -38,7 +38,9 @@
 //               rows:[{ cells:[{ t, sub?, c? }] }], counts?:[10,25,50] },
 //     card?:  <EEPHUS_HUB.drawCard opts>,
 //     items?: [{name, sub?, type?, val?, c?, shot?, logo?, ico?, glyph?}] (newsday;
-//              ico is the wire pictogram key "ev-<type>", glyph its text fallback),
+//              ico is the wire pictogram's sprite key, glyph its text fallback;
+//              a cell's or item's c is a colour key or a {light, dark} pair of
+//              token names),
 //     dateLabel?: "Jul 23, 2026" (newsday),
 //     comp?:  { tiles:[{stat, label, sub?}],
 //               panels:[{title, lo, hi, star?, rows:[{label, v, isEfv?, c?}]}],
@@ -81,6 +83,14 @@
   function tok(name, fb) {
     var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return v || fb;
+  }
+  // A row colour given as a pair of token names, {light, dark}: the MLB News
+  // families (HOME_2) pass their page token for a light frame and their panel
+  // token for a dark one. Resolved at draw time, so the frame's theme picks;
+  // null when the value is not a pair or the token is unset.
+  function tokPair(k, P) {
+    if (!k || typeof k !== "object") return null;
+    return tok(P.dark ? k.dark : k.light, "") || null;
   }
   function accentToken() {
     if (_opts.accent && ACCENTS[_opts.accent]) return ACCENTS[_opts.accent];
@@ -177,6 +187,8 @@
     var bg = P.bg, fg = P.fg, sub = P.sub, line = P.line,
         accent = P.accent, pos = P.pos, neg = P.neg, MONO = P.MONO;
     var colorOf = function (k) {
+      var tp = tokPair(k, P);
+      if (tp) return tp;
       var key = COLOR_KEYS[k] || k;
       return key === "green" ? pos : key === "red" ? neg : key === "accent" ? accent
         : key === "sub" ? sub : fg;
@@ -410,6 +422,8 @@
     var bg = P.bg, bg2 = P.bg2, fg = P.fg, sub = P.sub, line = P.line,
         accent = P.accent, MONO = P.MONO;
     var colorOf = function (k) {
+      var tp = tokPair(k, P);
+      if (tp) return tp;
       var key = COLOR_KEYS[k] || k;
       return key === "green" ? P.pos : key === "red" ? P.neg : key === "accent" ? accent
         : key === "sub" ? sub : fg;
@@ -486,9 +500,8 @@
       }
       // colored event value, right-aligned; team logo chip just left of it.
       // The event's wire pictogram (PX-18, the 12 px icon the /news/ rows draw)
-      // leads the value in the value's own colour; trade has no colour key, so
-      // it takes the frame's ink (owner answer PX-Q3). With no icon table the
-      // row keeps its text glyph.
+      // leads the value in the value's own colour, its family's (HOME_2). With
+      // no icon table the row keeps its text glyph.
       g.font = "700 " + valF + "px " + MONO;
       var vt = String(it.val || "");
       var Xp = pxPainter();
