@@ -79,8 +79,8 @@ def test_dollars_round_to_whole_thousands():
 
 def test_flag_bits_are_distinct_powers_of_two():
     bits = [X.F_SERVICE_EST, X.F_CLASS_EST, X.F_NO_SALARY,
-            X.F_CARRY_FWD, X.F_PRORATED]
-    assert bits == [1, 2, 4, 8, 16]
+            X.F_CARRY_FWD, X.F_PRORATED, X.F_ORDER_FIX]
+    assert bits == [1, 2, 4, 8, 16, 32]
     assert len(set(bits)) == len(bits)
 
 

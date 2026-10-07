@@ -145,6 +145,58 @@ def test_a_played_season_never_becomes_a_rung(monkeypatch):
     assert by[6]["tot"] == 780000 and by[6]["yl"] == 1 and by[6]["c"] == 0
 
 
+# ------------------------------------- POSTEPOCH_8: the class never falls
+def test_a_bare_arb_before_a_later_pre_arb_becomes_pre_arb_with_no_arb_service():
+    """Blas Castano's 2026-10 Spotrac row: a bare 2027 ARB estimate pill, then
+    2028 PRE-ARB. Service only accrues, so with no arbitration step on the
+    panel the later PRE-ARB is believed and the earlier bare rung follows it."""
+    pre = {"season": 2026, "arb_year": None, "super_two": None}
+    raw = [(2027, "ARB"), (2028, "PRE-ARB")]
+    numbered = X._number_bare_arb(raw, pre)
+    assert numbered == [(2027, "ARB 1"), (2028, "PRE-ARB")]
+    assert X._repair_status_order(raw, numbered, pre) == (
+        [(2027, "PRE-ARB"), (2028, "PRE-ARB")], True)
+
+
+def test_the_order_guard_leaves_a_rising_ladder_and_every_unsupported_case_alone():
+    pre = {"season": 2026, "arb_year": None, "super_two": None}
+    rising = [(2027, "PRE-ARB"), (2028, "ARB 1"), (2029, "ARB 2")]
+    assert X._repair_status_order(rising, rising, pre) == (rising, False)
+    # panel shows arbitration service: no rule settles it, nothing is rewritten
+    arb = {"season": 2026, "arb_year": 2, "super_two": False}
+    lad = [(2027, "ARB 3"), (2028, "PRE-ARB")]
+    assert X._repair_status_order([(2027, "ARB"), (2028, "PRE-ARB")], lad, arb) == (lad, False)
+    # a step Spotrac numbered itself is never rewritten
+    num = [(2027, "ARB 1"), (2028, "PRE-ARB")]
+    assert X._repair_status_order(num, num, pre) == (num, False)
+    assert X._class_falls([(2027, "ARB 3"), (2028, "ARB 2")])
+    assert not X._class_falls([(2027, "ARB 4"), (2028, "ARB 4")])
+
+
+def test_a_repaired_ladder_prices_league_minimum_and_sets_the_order_bit(monkeypatch):
+    import arb_dataset as A
+    panel = [{"mlbam": 7, "season": 2026, "war": 0.13, "name": "C", "team": "COL",
+              "age": 27.0, "pa": 0, "ipouts": 30, "gs": 0, "salary": None}]
+    monkeypatch.setattr(A, "spotrac_status_by_mlbam", lambda: {
+        7: {2027: "ARB", 2028: "PRE-ARB"}})
+    monkeypatch.setattr(A, "league_min_by_year", lambda: {2027: 780000.0, 2028: 780000.0})
+    monkeypatch.setattr(X, "_projected_war", lambda: {})
+    out = X.build_board(panel, {}, {}, {}, season=2027, s1={"keys": []},
+                        defl={2027: 1.0, 2028: 1.0}, banded={})
+    r = out["rows"][0]
+    assert [t[4] for t in r["l"]] == ["PRE-ARB", "PRE-ARB"]
+    assert r["c"] == 0 and r["tot"] == 1560000
+    assert r["e"] & X.F_ORDER_FIX
+    assert "32 status order repaired" in out["field_key"]["e"]
+
+
+def test_no_served_ladder_has_a_falling_arbitration_class():
+    board = _doc("arbitration.json")
+    bad = [(r.get("n"), [t[4] for t in r.get("l") or []]) for r in board.get("rows") or []
+           if X._class_falls([(t[0], t[4]) for t in r.get("l") or []])]
+    assert not bad, bad[:5]
+
+
 # ------------------------------------------------- the served artifacts
 def test_the_served_board_prices_only_remaining_seasons_and_tot_is_its_ladder():
     board = _doc("arbitration.json")
