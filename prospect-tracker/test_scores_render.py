@@ -271,15 +271,30 @@ def test_scores_live_false_builds_only_the_preview(tmp_path, monkeypatch):
     path = Path(build_site.write_scores_page(preview_root=tmp_path))
     assert calls == [], "the published tree was written while SCORES_LIVE is False"
     assert path == tmp_path / "scores" / "index.html" and path.exists()
+
+
+def test_the_flip_serves_the_page_and_a_preview_root_never_writes_the_tree(tmp_path, monkeypatch):
+    # SCORES_5a_LIVE_FLIP: the flag is on in the source, main() writes the route by
+    # literal (tools/gen_audit_docs.py reads those), and publish_paths ships it.
     src_core = (ROOT / "scores_core.py").read_text(encoding="utf-8").splitlines()
-    assert "SCORES_LIVE = False" in src_core, "the module flag default moved off False"
-    # main() never writes the route by literal: tools/gen_audit_docs.py reads those
-    src = (ROOT / "build_site.py").read_text(encoding="utf-8")
-    assert '_write("scores/index.html"' not in src
-    assert "write_scores_page()" in src
-    # no publish line, no served page
+    assert "SCORES_LIVE = True" in src_core
+    import inspect
+    main_src = inspect.getsource(build_site.main)
+    assert '_write("scores/index.html", build_scores())' in main_src
     lines = [ln.strip() for ln in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8").splitlines()]
-    assert not any(ln.split("/")[0] == "scores" or ln.startswith("scores") for ln in lines if ln and not ln.startswith("#"))
+    assert "scores" in [ln for ln in lines if ln and not ln.startswith("#")]
+    # a render test's temporary site never writes the published tree, flag on or off
+    monkeypatch.setattr(sc, "SCORES_LIVE", True)
+    calls = []
+    monkeypatch.setattr(build_site, "_write", lambda rel, html: calls.append(rel))
+    path = Path(build_site.write_scores_page(preview_root=tmp_path))
+    assert calls == [] and path == tmp_path / "scores" / "index.html" and path.exists()
+    assert build_site.write_scores_page() == str(build_site.ROOT / "scores" / "index.html")
+    assert calls == ["scores/index.html"]
+    # the page stays off the nav and off the sitemap until SCORES_5b
+    hrefs = [c[2] for it in build_site.NAV_ITEMS for c in (it["children"] if isinstance(it, dict) else [it])]
+    assert "/scores/" not in hrefs
+    assert "/scores/" not in build_site.build_sitemap([])
 
 
 def test_shell_is_a_pure_reader_on_the_ledger_pattern():

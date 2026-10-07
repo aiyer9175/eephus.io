@@ -352,3 +352,20 @@ def test_mlbstats_player_dir_ships_in_both_deploy_consumers():
     assert "data/mlbstats_player/" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
     src = (ROOT / "mlbstats_rolling_export.py").read_text(encoding="utf-8")
     assert 'SERVED_DIR = DATA_DIR / "mlbstats_player"' in src, "the writer fills the directory both consumers ship"
+
+
+def test_the_scores_page_ships_and_its_data_does_not():
+    """SCORES_5a_LIVE_FLIP (2026-10-07): scores/ is in the manifest, and
+    neither deploy consumer names a /data/scores rule. The job writes its own
+    directory on the box, served by its own nginx location (deploy/README.md),
+    so the rsync --delete and the CI copy never touch it and no stale twin
+    shadows latest.json."""
+    assert "scores" in _manifest_paths()
+    assert not any(p.startswith("data/scores") for p in _manifest_paths())
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert "data/scores" not in nightly
+    wf_path = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf_path.exists():
+        assert "data/scores" not in wf_path.read_text(encoding="utf-8")
+    excl = (ROOT / "deploy" / "data_exclude.txt").read_text(encoding="utf-8")
+    assert not any(ln.strip().startswith(("scores", "data/scores")) for ln in excl.splitlines())

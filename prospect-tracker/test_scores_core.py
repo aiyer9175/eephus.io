@@ -74,8 +74,9 @@ def synth_workhorse(lg):
 # --------------------------------------------------------------------------- #
 # Flags, literals, imports
 # --------------------------------------------------------------------------- #
-def test_module_flag_defaults_off():
-    assert sc.SCORES_LIVE is False
+def test_module_flag_is_on_from_the_flip():
+    # SCORES_5a_LIVE_FLIP (2026-10-07) is the one commit that turns it on.
+    assert sc.SCORES_LIVE is True
 
 
 def test_stars_v1_literals_pinned_to_the_plan():

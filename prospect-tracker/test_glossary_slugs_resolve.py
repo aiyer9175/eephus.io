@@ -92,3 +92,26 @@ def test_retired_and_unserved_terms_say_so():
     assert "not served" in disp
     rel = by_id["reliability_curve"].get("methodology", "")
     assert "no calibration correction is applied" in rel
+
+
+def test_the_scores_entries_land_with_the_page():
+    """SCORES_5a_LIVE_FLIP (2026-10-07; SCORES_PLAN 11): the four entries carry
+    the plan's definitions under the scores module, and each seeAlso resolves."""
+    g = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    by_id = {e["id"]: e for e in g["entries"]}
+    want = {
+        "mlb_win_probability": "MLB's own live estimate of each team's chance to win after every plate appearance",
+        "stars_of_the_game": "Three players chosen by a published rule, not by a vote",
+        "biggest_plays": "The five plate appearances that moved win probability most in a game",
+        "abs_challenge": "A challenge of a ball or strike call, reviewed by the automated ball-strike system.",
+    }
+    for slug, opening in want.items():
+        e = by_id[slug]
+        assert e["definition"].startswith(opening), slug
+        assert e["module"] == ["scores"], slug
+        for other in e.get("seeAlso") or []:
+            assert other in by_id, (slug, other)
+    assert "not a pregame forecast" in by_id["mlb_win_probability"]["definition"]
+    assert "first star from the winning team" in by_id["stars_of_the_game"]["definition"]
+    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
+    assert 'scores: "SCORES / STANDINGS"' in js, "the module badge reads the renamed module"

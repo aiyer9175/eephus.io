@@ -6694,6 +6694,90 @@
    "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
+   "id": "mlb_win_probability",
+   "term": "MLB win probability",
+   "category": "general-stat",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "MLB win probability",
+    "MLB's win probability"
+   ],
+   "priority": 99,
+   "definition": "MLB's own live estimate of each team's chance to win after every plate appearance, from its public feed. It starts every game at 50 percent, so it is not a pregame forecast; inside a game it moves with the situation and, by this site's own check, also carries some team strength. The site measures it and does not fit it.",
+   "methodology": "The Scores / Standings page reads MLB's number for the home team after each plate appearance from the StatsAPI winProbability feed and prints it as MLB serves it. A plate appearance MLB gives no number for is a gap in the chart; no house number fills it. The site's check scores the feed on regular-season plays against a constant base rate (Model Accountability, scores_mlb_wp); no postseason game is in that check.",
+   "seeAlso": [
+    "win_expectancy",
+    "wpa",
+    "leverage_index",
+    "pli"
+   ],
+   "shelf": "industry",
+   "origin": "MLB's own live model (MLB Advanced Media), read from its public StatsAPI feed; not an eephus.io model."
+  },
+  {
+   "id": "stars_of_the_game",
+   "term": "Stars of the Game",
+   "category": "site-feature",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "Stars of the Game",
+    "stars_v1"
+   ],
+   "priority": 99,
+   "definition": "Three players chosen by a published rule, not by a vote: win probability added from MLB's live model, with a workhorse pitcher credited for runs prevented when that is larger, and the first star from the winning team.",
+   "methodology": "The rule is stars_v1. Each play's win probability added from MLB's feed goes to the batter and, with the opposite sign, to the pitcher at the end of the plate appearance. A pitcher with 15 or more outs and no net loss of win probability is credited with his runs prevented against the league rate when that is larger. The first star is the top player on the winning team, so he can rank below the second; ties go to the player whose plate appearances had the higher average Leverage Index. Final games only, and none when MLB's feed covers under 95 percent of the plays. Descriptive: what happened in one game, not skill; never ranked across games or seasons.",
+   "seeAlso": [
+    "wpa",
+    "mlb_win_probability",
+    "realized_mwpa",
+    "biggest_plays"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric rule, original to eephus.io, over MLB's live win probability."
+  },
+  {
+   "id": "biggest_plays",
+   "term": "Biggest plays",
+   "category": "site-feature",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "Biggest plays",
+    "bp_v1"
+   ],
+   "priority": 99,
+   "definition": "The five plate appearances that moved win probability most in a game, each with MLB's video of that play when MLB has posted one.",
+   "methodology": "The rule is bp_v1: completed plate appearances with an MLB number that moved the home team's win probability by at least 3 points, largest first, then the higher Leverage Index, then the earlier plate appearance. Five in the game view (so far, while the game is live), the top one on a final game's card. Each row reads from the batting team's side: its win probability before and after, and the signed swing. Withheld when MLB's feed covers under 95 percent of the plays.",
+   "seeAlso": [
+    "mlb_win_probability",
+    "wpa",
+    "leverage_index"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric rule, original to eephus.io, over MLB's live win probability."
+  },
+  {
+   "id": "abs_challenge",
+   "term": "ABS challenge",
+   "category": "mlb-rules",
+   "module": [
+    "scores"
+   ],
+   "aliases": [
+    "ABS challenge",
+    "ABS challenges"
+   ],
+   "priority": 99,
+   "definition": "A challenge of a ball or strike call, reviewed by the automated ball-strike system. Each club has a limited number; a successful challenge is kept.",
+   "shelf": "foundation",
+   "origin": "MLB rule; the Scores / Standings game view lists each club's challenges won and lost from MLB's game feed."
+  },
+  {
    "id": "clutch",
    "term": "Clutch (timing above a context-neutral base)",
    "category": "industry-stat",

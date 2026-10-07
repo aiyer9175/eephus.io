@@ -125,7 +125,8 @@ def test_neither_deploy_consumer_names_data_scores():
     for name in ("publish_paths.txt", "data_exclude.txt", "nightly-build.sh"):
         text = (ROOT / "deploy" / name).read_text(encoding="utf-8")
         assert "/data/scores" not in text and "data/scores" not in text, name
-    assert not re.search(r"^\s*scores\s*$", (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8"), re.M)
+    # the page ships from the flip (SCORES_5a); its data never ships from the app tree
+    assert re.search(r"^\s*scores\s*$", (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8"), re.M)
 
 
 def test_a_recorded_run_fetches_statsapi_only_and_writes_only_its_own_store(env, monkeypatch):

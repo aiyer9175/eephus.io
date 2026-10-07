@@ -662,3 +662,27 @@ def test_every_row_carries_a_reader_summary():
     assert mr._summary_problems("x", "This is a very good read.")
     assert not mr._summary_problems(
         "x", "No ship: +0.0092 Spearman (0.5274 vs 0.5182, n 711), lo95 -0.0014.")
+
+
+def test_the_scores_rows_land_with_the_page():
+    """SCORES_5a_LIVE_FLIP (2026-10-07; SCORES_PLAN 11): the three rows land in
+    the commit that serves /scores/, each naming only that page, provisional,
+    the two rules descriptive with no artifact and MLB's win probability scored
+    on data/win_expectancy.json, with the summary's Brier figures read off it."""
+    import scores_core
+    assert scores_core.SCORES_LIVE is True, "a scores row names a surface that is not served"
+    by = _by_id()
+    wp, stars, bp = by["scores_mlb_wp"], by["scores_stars_rule"], by["scores_biggest_plays_rule"]
+    for m in (wp, stars, bp):
+        assert m["verdict"] == "provisional"
+        assert m["surface"].startswith("/scores/")
+    assert wp["eval_artifact"] == "data/win_expectancy.json"
+    cal = json.loads((ROOT / wp["eval_artifact"]).read_text(encoding="utf-8"))["calibration"]
+    assert f"{cal['feed_brier']}" in wp["summary"]
+    assert f"{cal['brier_base_rate_only']}" in wp["summary"]
+    assert "no fallback" in wp["champion"]
+    for m in (stars, bp):
+        assert m["eval_artifact"] is None
+        assert m["provisional_kind"] == "measurement_only"
+        assert "descriptive" in m["baseline"] or "descriptive" in m["metric"]
+    assert "stars_v1" in stars["predicts"] and "bp_v1" in bp["predicts"]

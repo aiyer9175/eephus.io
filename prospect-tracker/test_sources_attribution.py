@@ -30,15 +30,45 @@ _NOT_CALLED = {
                     "(guarded below)"),
 }
 
+# Our own domain is not an upstream (staff_ingest.py's links, the scores job's
+# User-Agent page).
+_OWN = {"eephus.io"}
+
+# registered domain -> the registered domain of the /sources/ row that credits it
+# (SCORES_5a_LIVE_FLIP): MLB's poster images load from MLB's static media host,
+# and under owner answer SC-VIDEO (a) a clip plays in MLB's own embed player,
+# framed from streamable.com/m/<slug>; the MLB Stats API row credits both.
+_ALIASES = {"mlbstatic.com": "mlb.com", "streamable.com": "mlb.com"}
+
+# A host written as a bare string literal ("img.mlbstatic.com") in the scores
+# files, where the allowlists name hosts without a scheme.
+_BARE_HOST_RE = re.compile(r'"((?:[a-z0-9-]+[.])+(?:com|net|org|io|tv))"')
+
 
 def _registered(host: str) -> str:
-    return ".".join(host.lower().split(".")[-2:])
+    reg = ".".join(host.lower().split(".")[-2:])
+    return _ALIASES.get(reg, reg)
+
+
+def _scores_files() -> list[Path]:
+    files = list(ROOT.glob("scores_*.py")) + [ROOT / "tools" / "scores_job.py"]
+    return sorted(p for p in files if p.exists() and not p.name.startswith("test_"))
 
 
 def _ingest_files() -> list[Path]:
     files = list(ROOT.glob("*_ingest.py")) + list(ROOT.glob("betting_*.py"))
     files += list((ROOT / "tools").glob("ingest_*.py"))
+    files += _scores_files()
     return sorted(p for p in files if not p.name.startswith("test_"))
+
+
+def _hosts(p: Path) -> list[str]:
+    # a regex literal escapes each dot with a backslash; read it as a host
+    text = p.read_text(encoding="utf-8").replace(chr(92) + ".", ".")
+    hosts = _HOST_RE.findall(text)
+    if p in _scores_files():
+        hosts += _BARE_HOST_RE.findall(text)
+    return hosts
 
 
 def _sources_domains() -> set[str]:
@@ -50,9 +80,9 @@ def test_every_ingest_host_has_a_sources_row():
     rows = _sources_domains()
     missing = {}
     for p in _ingest_files():
-        for host in _HOST_RE.findall(p.read_text(encoding="utf-8")):
+        for host in _hosts(p):
             reg = _registered(host)
-            if reg in rows or reg in _NOT_CALLED:
+            if reg in rows or reg in _NOT_CALLED or reg in _OWN:
                 continue
             missing.setdefault(reg, p.name)
     assert not missing, (
@@ -72,3 +102,20 @@ def test_the_three_missing_upstreams_are_named():
     rows = _sources_domains()
     for reg in ("mlbtraderumors.com", "the-odds-api.com", "open-meteo.com"):
         assert reg in rows, f"/sources/ has no row for {reg}"
+
+
+def test_the_scores_files_hosts_are_credited():
+    """SCORES_5a_LIVE_FLIP (2026-10-07; SCORES_PLAN 6.9): every host the scores
+    core and job name, with or without a scheme, maps to the MLB Stats API row,
+    and that row names what the Scores / Standings page serves."""
+    files = _scores_files()
+    assert {p.name for p in files} >= {"scores_core.py", "scores_job.py"}
+    seen = set()
+    for p in files:
+        for host in _hosts(p):
+            if _registered(host) not in _OWN:
+                seen.add(host)
+    assert {"img.mlbstatic.com", "streamable.com", "statsapi.mlb.com"} <= seen, seen
+    assert {_registered(h) for h in seen} == {"mlb.com"}, seen
+    html = build_site.build_sources()
+    assert "Scores / Standings page, live scores, win probability, box scores and highlight video" in html

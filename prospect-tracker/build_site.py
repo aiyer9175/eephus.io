@@ -5670,10 +5670,10 @@ def _scores_module_head(active: str) -> str:
 def build_scores() -> str:
     """The /scores/ shell (SCORES_3), a pure reader of /data/scores/.
 
-    BEHIND THE FLAG. main() writes scores/index.html only once
-    scores_core.SCORES_LIVE is True (SCORES_5a, the flip); while it is False
-    write_scores_page() renders this shell into .cache/scores/preview/site/
-    for the render tests and nothing public changes.
+    BEHIND THE FLAG. main() writes scores/index.html while
+    scores_core.SCORES_LIVE is True (from SCORES_5a, the flip, 2026-10-07);
+    with the flag False only write_scores_page() renders this shell, into
+    .cache/scores/preview/site/, and nothing public changes.
 
     Shell on the build_ledger pattern: the byline section head (through
     _scores_module_head), one mount root, then the module css, eephus-hub.js,
@@ -5695,8 +5695,8 @@ def build_scores() -> str:
         f'<script src="/assets/scores.js?v={_SCORES_VER}" defer></script>'
     )
     return page("MLB Scores - eephus.io", "scores", body,
-                "MLB scores by date with live win probability from MLB, the biggest plays with MLB's "
-                "video, box scores, lineups and Stars of the Game, chosen by a published rule.",
+                "MLB scores by date: MLB's live win probability, the biggest plays with MLB's video, "
+                "box scores, and Stars of the Game by a published rule.",
                 url=f"{SITE_ORIGIN}/scores/")
 
 
@@ -5707,21 +5707,23 @@ SCORES_PREVIEW_SITE = ROOT / ".cache" / "scores" / "preview" / "site"
 def write_scores_page(preview_root=None) -> str:
     """Write the /scores/ shell where the flag allows, and return the path.
 
-    SCORES_LIVE True: the published scores/index.html. False: only the preview
-    copy under preview_root (default SCORES_PREVIEW_SITE), never the published
-    tree. The route is held in a variable so tools/gen_audit_docs.py, which
-    reads the literal _write calls in main(), lists /scores/ only once the flip
-    adds it there (SCORES_5a)."""
+    A preview_root always gets the preview copy, whatever the flag says (the
+    render tests build their temporary site this way, so a test never writes
+    the published tree). With no preview_root: SCORES_LIVE True writes the
+    published scores/index.html, False only the preview copy under
+    SCORES_PREVIEW_SITE. main() names the published route by literal, because
+    tools/gen_audit_docs.py reads the literal _write calls there (SCORES_5a),
+    and calls this only while the flag is off."""
     import scores_core
     rel = "scores/index.html"
-    if scores_core.SCORES_LIVE:
+    if preview_root is None and scores_core.SCORES_LIVE:
         _write(rel, build_scores())
         return str(ROOT / rel)
     root = Path(preview_root) if preview_root is not None else SCORES_PREVIEW_SITE
     path = root / rel
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(build_scores(), encoding="utf-8")
-    print(f"  wrote {path.as_posix()} (preview: scores_core.SCORES_LIVE is False)")
+    print(f"  wrote {path.as_posix()} (the preview copy, not the published tree)")
     return str(path)
 
 
@@ -6915,7 +6917,9 @@ def build_sources() -> str:
         ("MLB Stats API / Baseball Savant", "https://baseballsavant.mlb.com/",
          "Game logs, transactions, rosters, the sabermetrics feed (league wOBA constants; the "
          "fielding and framing runs behind DEM+), Statcast tracking data (pitch, batted-ball "
-         "and zone metrics), and player headshots via MLB static media."),
+         "and zone metrics), and player headshots via MLB static media; on the Scores / "
+         "Standings page, live scores, win probability, box scores and highlight video "
+         "played in MLB's own embedded player."),
         ("Baseball-Reference", "https://www.baseball-reference.com/",
          "war_daily (bWAR): the run frame the served eWAR is built on and the source the Hall "
          "of Fame board reproduces, plus historical player pages."),
@@ -7787,9 +7791,13 @@ def main() -> None:
     _write("franchise/index.html", build_franchise())
     _write("franchises/index.html", build_franchises_redirect())
     _write("ledger/index.html", build_ledger())
-    # /scores/ ships behind scores_core.SCORES_LIVE: the preview copy only
-    # while it is False (SCORES_3), the published page from the flip (SCORES_5a).
-    write_scores_page()
+    # /scores/ ships behind scores_core.SCORES_LIVE: the published page from
+    # the flip (SCORES_5a), the preview copy only while it is False (SCORES_3).
+    import scores_core
+    if scores_core.SCORES_LIVE:
+        _write("scores/index.html", build_scores())
+    else:
+        write_scores_page()
     _write("models/index.html", build_models())
     _write("glossary/index.html", build_glossary())
     _write("library/index.html", build_library_redirect())

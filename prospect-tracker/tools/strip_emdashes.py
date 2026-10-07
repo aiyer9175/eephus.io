@@ -102,6 +102,11 @@ TARGETS: list[str] = [
     "franchise/index.html",
     "franchise_export.py",
     "player/index.html",
+    # Scores / Standings (SCORES_5a_LIVE_FLIP, 2026-10-07): the page and the job,
+    # whose built text lands in the files the page reads verbatim.
+    "scores/index.html",
+    "scores_core.py",
+    "tools/scores_job.py",
     # /models/ renders registry `notes` prose verbatim, so its copy is only ever
     # as clean as the registry's, and it inherits any dash a future row carries.
     "models/index.html",

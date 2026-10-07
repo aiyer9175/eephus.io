@@ -93,8 +93,8 @@
 .scores-app .sc-state { font-weight: 700; font-size: 12px; }
 .scores-app .sc-asof, .scores-app .sc-series { font-size: 12px; color: var(--text-secondary); }
 .scores-app .sc-series { margin: 2px 0 4px; min-height: 17px; }
-.scores-app .sc-club, .scores-app .sc-up, .scores-app .sc-card .sc-model a { position: relative; z-index: 1; }
-.scores-app .sc-club { display: inline-block; min-height: 24px; line-height: 24px; font-weight: 700; }
+.scores-app .sc-club, .scores-app .club-link, .scores-app .sc-up, .scores-app .sc-card .sc-model a { position: relative; z-index: 1; }
+.scores-app .sc-club, .scores-app .club-link { display: inline-block; min-height: 24px; line-height: 24px; font-weight: 700; }
 .scores-app .sc-short, .scores-app .sc-rec { color: var(--text-secondary); font-size: 12px; }
 .scores-app .sc-row { margin: 3px 0; }
 .scores-app .sc-last { color: var(--text-secondary); }
