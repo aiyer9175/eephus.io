@@ -280,7 +280,10 @@
     ".fantasy-modbtn:hover{color:var(--text-primary)}",
     ".fantasy-modbtn.active{background:var(--accent-cyan);color:var(--text-on-accent);border-color:transparent}",
     ".fantasy-modbtn .fh-modsub{display:block;font:500 10px/1.2 var(--font-retro,monospace);",
-    "text-transform:none;letter-spacing:0;opacity:.8;margin-top:3px}",
+    "text-transform:none;letter-spacing:0;color:var(--text-secondary);margin-top:3px}",
+    // A token colour, not opacity (audit QREA10): the idle subtitle reads on
+    // the panel fill and the active one in the tab's own on-accent ink.
+    ".fantasy-modbtn.active .fh-modsub{color:inherit}",
     ".fantasy-mod[hidden]{display:none}",
     ".fantasy-modsub{display:block;font-size:12.5px;color:var(--text-secondary);margin:10px 0 2px}",
     ".fh-error{border:1px solid var(--accent-red);padding:12px;color:var(--text-primary);background:var(--bg-secondary)}",

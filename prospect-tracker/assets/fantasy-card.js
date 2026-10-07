@@ -582,6 +582,7 @@
     n.removeAttribute("hidden");
     try { S.lastFocus = document.activeElement; } catch (e) { S.lastFocus = null; }
     paint();
+    holdPage(true);
     focusCard();
     // The lazy legs. Each is fetched on the first card of the session that
     // needs it, then cached, so the second card costs nothing and a reader who
@@ -599,10 +600,39 @@
     var x = (n && n.querySelector) ? n.querySelector(".fc-x") : null;
     if (x && x.focus) x.focus();
   }
+  // THE PAGE BEHIND AN OPEN CARD IS INERT (audit QREA08). aria-modal alone
+  // let Tab walk out of the panel into the header and the board under the
+  // backdrop. The page's own header, main and footer take inert while the card
+  // is open and lose it before focus goes back to the opener; the glossary
+  // tooltip and the quick search are body children outside these three, so a
+  // term inside the card still opens over it.
+  function holdPage(on) {
+    var els = [];
+    try { els = document.querySelectorAll("body > header, body > main, body > footer"); } catch (e) { els = []; }
+    for (var i = 0; i < (els ? els.length : 0); i++) {
+      if (on) els[i].setAttribute("inert", "");
+      else els[i].removeAttribute("inert");
+    }
+  }
+  // Tab and Shift+Tab wrap inside the panel, so focus never lands on the
+  // document body between the last control and the first.
+  function trapTab(e) {
+    var n = S.node;
+    var p = (n && n.querySelector) ? n.querySelector(".fc-panel") : null;
+    if (!p || !p.querySelectorAll) return;
+    var f = [].filter.call(p.querySelectorAll(
+      'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'),
+      function (el) { return !el.disabled && el.getClientRects().length > 0; });
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1], a = document.activeElement;
+    if (e.shiftKey && (a === first || !p.contains(a))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (a === last || !p.contains(a))) { e.preventDefault(); first.focus(); }
+  }
   function close() {
     if (S.id == null) return;
     S.id = null;
     if (S.node) S.node.setAttribute("hidden", "hidden");
+    holdPage(false);
     if (HOST && typeof HOST.onClose === "function") HOST.onClose();
     if (S.lastFocus && S.lastFocus.focus) { try { S.lastFocus.focus(); } catch (e) { /* gone */ } }
     S.lastFocus = null;
@@ -618,6 +648,7 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && S.id != null) close();
+    else if (e.key === "Tab" && S.id != null) trapTab(e);
   });
 
   // ---- styles (theme tokens only) -------------------------------------------

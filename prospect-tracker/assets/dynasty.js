@@ -377,11 +377,17 @@
   // A div-bar toggle button, not a table head: no aria-sort (read only on a
   // columnheader or rowheader). The active chip carries .is-sorted (its paint in
   // assets/site.css), aria-pressed and visually hidden sort text (census M24-4).
+  // The glossary hook rides the chip itself (audit QREA09): a .g-term span with
+  // its own data-gl inside the chip was a second Tab stop nested in a button.
+  // eephus-gl wire() gives the chip its aria-describedby and opens the
+  // definition on hover and focus; the inner span keeps only the underline.
   function sortBtn(c, st) {
     var on = st.key === c.key;
     return '<span role="button" tabindex="0" data-dynsort="' + esc(c.key) + '"' +
       (on ? ' class="is-sorted"' : "") + ' aria-pressed="' + (on ? "true" : "false") + '"' +
-      (c.title ? ' title="' + esc(c.title) + '"' : "") + ">" + glossLbl(c) +
+      (c.term ? ' data-gl="' + esc(c.term) + '"' : "") +
+      (c.title ? ' title="' + esc(c.title) + '"' : "") + ">" +
+      (c.term ? '<span class="g-term">' + esc(labelOf(c)) + "</span>" : esc(labelOf(c))) +
       (on ? (st.asc ? " ▴" : " ▾") +
         '<span class="visually-hidden">, sorted ' + (st.asc ? "ascending" : "descending") + "</span>" : "") +
       "</span>";
