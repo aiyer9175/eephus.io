@@ -1,0 +1,142 @@
+{
+ "generated_at": "2026-10-05T06:00:00+00:00",
+ "season": 2026,
+ "ewar_vintage": {
+  "artifact_generated_at": "2026-10-04T11:06:57",
+  "label_build_at": "2026-09-03T12:35:09",
+  "as_of": "2026-10-04",
+  "stale": false,
+  "cadence": {
+   "mode": "nightly",
+   "live_season": 2026
+  }
+ },
+ "starters": [
+  {
+   "mlbam": 900004,
+   "name": "Ozzie Tanaka",
+   "team": "LAA",
+   "ip": 140.0,
+   "sem_plus": 142,
+   "sem_plus_raw": 141.9,
+   "xsem_plus": 142,
+   "era": 4.16,
+   "fip": 4.42,
+   "wpa": null,
+   "qualified": true,
+   "role": "SP"
+  },
+  {
+   "mlbam": 900010,
+   "name": "Tomas Kessler",
+   "team": "LAD",
+   "ip": 158.7,
+   "sem_plus": 114,
+   "sem_plus_raw": 113.5,
+   "xsem_plus": 106,
+   "era": 2.05,
+   "fip": 2.94,
+   "wpa": null,
+   "qualified": true,
+   "role": "SP"
+  },
+  {
+   "mlbam": 900011,
+   "name": "Will Schott",
+   "team": "NYY",
+   "ip": 193.7,
+   "sem_plus": 145,
+   "sem_plus_raw": 145.0,
+   "xsem_plus": 158,
+   "era": 4.54,
+   "fip": 3.1,
+   "wpa": null,
+   "qualified": true,
+   "role": "SP"
+  },
+  {
+   "mlbam": 900012,
+   "name": "Dylan Cross",
+   "team": "TEX",
+   "ip": 180.0,
+   "sem_plus": 138,
+   "sem_plus_raw": 137.7,
+   "xsem_plus": 153,
+   "era": 2.73,
+   "fip": 3.37,
+   "wpa": null,
+   "qualified": true,
+   "role": "SP"
+  },
+  {
+   "mlbam": 900014,
+   "name": "Hal Munro",
+   "team": "CLE",
+   "ip": 100.0,
+   "sem_plus": 110,
+   "sem_plus_raw": 110.0,
+   "xsem_plus": 123,
+   "era": 2.15,
+   "fip": 2.78,
+   "wpa": null,
+   "qualified": true,
+   "role": "SP"
+  },
+  {
+   "mlbam": 900015,
+   "name": "Ike Varga",
+   "team": "MIN",
+   "ip": 110.0,
+   "sem_plus": 104,
+   "sem_plus_raw": 104.0,
+   "xsem_plus": 116,
+   "era": 4.36,
+   "fip": 3.56,
+   "wpa": null,
+   "qualified": true,
+   "role": "SP"
+  },
+  {
+   "mlbam": 900022,
+   "name": "Cris Sandoval",
+   "team": "PHI",
+   "ip": 207.0,
+   "sem_plus": 104,
+   "sem_plus_raw": 104.1,
+   "xsem_plus": 97,
+   "era": 3.7,
+   "fip": 3.31,
+   "wpa": null,
+   "qualified": true,
+   "role": "SP"
+  },
+  {
+   "mlbam": 900023,
+   "name": "Jake Misner",
+   "team": "MIL",
+   "ip": 174.7,
+   "sem_plus": 109,
+   "sem_plus_raw": 109.2,
+   "xsem_plus": 100,
+   "era": 4.59,
+   "fip": 4.68,
+   "wpa": null,
+   "qualified": true,
+   "role": "SP"
+  },
+  {
+   "mlbam": 900027,
+   "name": "Chase Byrne",
+   "team": "CIN",
+   "ip": 130.0,
+   "sem_plus": 107,
+   "sem_plus_raw": 107.4,
+   "xsem_plus": 116,
+   "era": 5.34,
+   "fip": 3.69,
+   "wpa": null,
+   "qualified": true,
+   "role": "SP"
+  }
+ ]
+}

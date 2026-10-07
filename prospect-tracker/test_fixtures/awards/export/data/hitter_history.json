@@ -1,0 +1,124 @@
+{
+ "generated_at": "2026-10-05T06:00:00+00:00",
+ "seasons": [
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "history": {
+  "2021": {
+   "season": 2021,
+   "hitters": []
+  },
+  "2022": {
+   "season": 2022,
+   "hitters": []
+  },
+  "2023": {
+   "season": 2023,
+   "hitters": []
+  },
+  "2024": {
+   "season": 2024,
+   "hitters": []
+  },
+  "2025": {
+   "season": 2025,
+   "n_qualified": 6,
+   "hitters": [
+    {
+     "mlbam": 900001,
+     "name": "Kade Morrow",
+     "team": "DET",
+     "pa": 650,
+     "hem_plus": 105,
+     "hem_plus_raw": null,
+     "xhem_plus": null,
+     "luck_gap": null,
+     "xwoba": 0.33,
+     "woba": 0.33,
+     "wrc_plus": 112,
+     "qualified": true,
+     "war": 7.0
+    },
+    {
+     "mlbam": 900002,
+     "name": "Yoan Alvarado",
+     "team": "HOU",
+     "pa": 692,
+     "hem_plus": 161,
+     "hem_plus_raw": null,
+     "xhem_plus": null,
+     "luck_gap": null,
+     "xwoba": 0.302,
+     "woba": 0.33,
+     "wrc_plus": 171,
+     "qualified": true,
+     "war": 6.8
+    },
+    {
+     "mlbam": 900003,
+     "name": "Bo Whitt",
+     "team": "KC",
+     "pa": 700,
+     "hem_plus": 118,
+     "hem_plus_raw": null,
+     "xhem_plus": null,
+     "luck_gap": null,
+     "xwoba": 0.295,
+     "woba": 0.33,
+     "wrc_plus": 119,
+     "qualified": true,
+     "war": 6.7
+    },
+    {
+     "mlbam": 900004,
+     "name": "Ozzie Tanaka",
+     "team": "LAA",
+     "pa": 600,
+     "hem_plus": 105,
+     "hem_plus_raw": null,
+     "xhem_plus": null,
+     "luck_gap": null,
+     "xwoba": 0.303,
+     "woba": 0.33,
+     "wrc_plus": 100,
+     "qualified": true,
+     "war": 6.0
+    },
+    {
+     "mlbam": 900005,
+     "name": "Arlo Finch",
+     "team": "BOS",
+     "pa": 500,
+     "hem_plus": 99,
+     "hem_plus_raw": null,
+     "xhem_plus": null,
+     "luck_gap": null,
+     "xwoba": 0.272,
+     "woba": 0.33,
+     "wrc_plus": 104,
+     "qualified": true,
+     "war": 4.5
+    },
+    {
+     "mlbam": 900006,
+     "name": "Benji Ortiz",
+     "team": "NYY",
+     "pa": 480,
+     "hem_plus": 142,
+     "hem_plus_raw": null,
+     "xhem_plus": null,
+     "luck_gap": null,
+     "xwoba": 0.305,
+     "woba": 0.33,
+     "wrc_plus": 151,
+     "qualified": true,
+     "war": 4.5
+    }
+   ]
+  }
+ }
+}

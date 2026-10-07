@@ -1,0 +1,83 @@
+{
+ "version": 1,
+ "checked_at": "2026-10-05T06:00:00+00:00",
+ "models": [
+  {
+   "model_id": "ewar",
+   "verdict": "provisional",
+   "eval_artifact": "data/ewar_eval.json",
+   "artifact_age_days": 10,
+   "stale": false
+  },
+  {
+   "model_id": "hem_plus",
+   "verdict": "validated",
+   "eval_artifact": "data/hem_plus_eval.json",
+   "artifact_age_days": 11,
+   "stale": false
+  },
+  {
+   "model_id": "sem_plus",
+   "verdict": "validated",
+   "eval_artifact": "data/sem_plus_eval.json",
+   "artifact_age_days": 12,
+   "stale": false
+  },
+  {
+   "model_id": "rem_plus",
+   "verdict": "validated",
+   "eval_artifact": "data/rem_plus_eval.json",
+   "artifact_age_days": 13,
+   "stale": true
+  },
+  {
+   "model_id": "dem_plus",
+   "verdict": "validated",
+   "eval_artifact": "data/dem_plus_eval.json",
+   "artifact_age_days": 14,
+   "stale": false
+  },
+  {
+   "model_id": "xhem_plus",
+   "verdict": "validated",
+   "eval_artifact": "data/xhem_plus_eval.json",
+   "artifact_age_days": 15,
+   "stale": false
+  },
+  {
+   "model_id": "xsem_plus",
+   "verdict": "provisional",
+   "eval_artifact": "data/xsem_plus_eval.json",
+   "artifact_age_days": 16,
+   "stale": false
+  },
+  {
+   "model_id": "leverage_board",
+   "verdict": "provisional",
+   "eval_artifact": "data/leverage_board_eval.json",
+   "artifact_age_days": 17,
+   "stale": false
+  },
+  {
+   "model_id": "mlb_projections_vets",
+   "verdict": "validated",
+   "eval_artifact": "data/mlb_projections_vets_eval.json",
+   "artifact_age_days": 18,
+   "stale": false
+  },
+  {
+   "model_id": "xfv_backgrade",
+   "verdict": "provisional",
+   "eval_artifact": "data/xfv_backgrade_eval.json",
+   "artifact_age_days": 19,
+   "stale": false
+  },
+  {
+   "model_id": "mgmt_decision_ledger",
+   "verdict": "provisional",
+   "eval_artifact": "data/mgmt_decision_ledger_eval.json",
+   "artifact_age_days": 20,
+   "stale": false
+  }
+ ]
+}

@@ -1,0 +1,90 @@
+{
+ "generated_at": "2026-10-05T06:00:00+00:00",
+ "seasons": [
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "history": {
+  "2021": {
+   "season": 2021,
+   "starters": []
+  },
+  "2022": {
+   "season": 2022,
+   "starters": []
+  },
+  "2023": {
+   "season": 2023,
+   "starters": []
+  },
+  "2024": {
+   "season": 2024,
+   "starters": []
+  },
+  "2025": {
+   "season": 2025,
+   "n_qualified": 4,
+   "starters": [
+    {
+     "mlbam": 900004,
+     "name": "Ozzie Tanaka",
+     "team": "LAA",
+     "ip": 140.0,
+     "sem_plus": 142,
+     "sem_plus_raw": null,
+     "xsem_plus": null,
+     "era": 4.16,
+     "fip": 4.42,
+     "wpa": null,
+     "qualified": true,
+     "role": "SP"
+    },
+    {
+     "mlbam": 900010,
+     "name": "Tomas Kessler",
+     "team": "LAD",
+     "ip": 158.7,
+     "sem_plus": 114,
+     "sem_plus_raw": null,
+     "xsem_plus": null,
+     "era": 2.05,
+     "fip": 2.94,
+     "wpa": null,
+     "qualified": true,
+     "role": "SP"
+    },
+    {
+     "mlbam": 900011,
+     "name": "Will Schott",
+     "team": "NYY",
+     "ip": 193.7,
+     "sem_plus": 145,
+     "sem_plus_raw": null,
+     "xsem_plus": null,
+     "era": 4.54,
+     "fip": 3.1,
+     "wpa": null,
+     "qualified": true,
+     "role": "SP"
+    },
+    {
+     "mlbam": 900012,
+     "name": "Dylan Cross",
+     "team": "TEX",
+     "ip": 180.0,
+     "sem_plus": 138,
+     "sem_plus_raw": null,
+     "xsem_plus": null,
+     "era": 2.73,
+     "fip": 3.37,
+     "wpa": null,
+     "qualified": true,
+     "role": "SP"
+    }
+   ]
+  }
+ }
+}

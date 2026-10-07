@@ -522,6 +522,19 @@ SCHEDULED_EXPORTS = (
     "mgmt_steal_context",
 )
 
+# The Awards board's health row (steps d10h and 6b7f, _export_awards_board,
+# AWARDS_PLAN 4.9). Appended BELOW statsapi_standings and every row above it,
+# and only inside the module flag: while awards_core.AWARDS_LIVE is False the
+# exporter writes its preview alone and the row stays unwatched; the flip
+# (AWARDS_11) turns the flag and the row joins the tuple on the same commit.
+# Nothing above mgmt_export moves (test_mgmt_export scans a fixed window).
+try:
+    from awards_core import AWARDS_LIVE as _AWARDS_LIVE
+except Exception:   # noqa: BLE001 - without the module the tuple stands as written
+    _AWARDS_LIVE = False
+if _AWARDS_LIVE:
+    SCHEDULED_EXPORTS = SCHEDULED_EXPORTS + ("awards_export",)
+
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
 _INGEST_HEALTH: list[dict] = []
 
@@ -2623,6 +2636,38 @@ def _export_franchise_board(log) -> bool:
         return False
 
 
+def _export_awards_board(log) -> bool:
+    """Write the Awards board payloads (the body of nightly step d10h and monthly
+    step 6b7f): awards_export.export(), which reads the served boards, the .cache
+    payloads and the war_daily stint frames (the one network read, the same frame
+    the war board step reads) and REFUSES rather than publishes: a stale eWAR
+    board, a stint frame served off its last-good parquet, a Top-25 row that
+    breaks the league-share law, a projection provider mismatch, a thin standings
+    cache, a frozen record whose hash the freeze log does not carry. While
+    awards_core.AWARDS_LIVE is False every file lands under .cache/awards/preview/
+    and nothing served moves. True on a write; a refusal or a raise leaves the
+    previous files on disk and files a red under "awards_export", a row the
+    watched tuple holds only once the flag is True."""
+    try:
+        import awards_export as _aw
+        _res = _aw.export(log=log.info)
+        _where = "served" if _aw.A.AWARDS_LIVE else "preview"
+        if _res.get("ok"):
+            log.info("awards (%s): %s", _where, _res.get("message"))
+            _record_ingest("awards_export", True, int(_res.get("n_rows") or 0),
+                           f"awards board ({_where})", "mlb", log)
+            return True
+        log.warning("awards board REFUSED: %s; the previous files stand", _res.get("reason"))
+        _record_ingest("awards_export", False, 0,
+                       f"awards export refused: {_res.get('reason')}", "mlb", log)
+        return False
+    except Exception as e:                # noqa: BLE001
+        log.exception("awards export failed - continuing")
+        _record_ingest("awards_export", False, 0,
+                       f"awards export raised: {e}", "mlb", log)
+        return False
+
+
 def _rebuild_ledger_and_franchise(out_dir: Path, log) -> dict:
     """The rebuild-only tail: the ledger board, then the franchise board. Each
     is skipped with a logged reason when its inputs are not there, and the file
@@ -4483,6 +4528,23 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             # above the line would credit these files to d10e. The writer is
             # shared with the standalone rebuild-only tail (LEDTRIM-1).
             _export_franchise_board(log)
+
+        # --- d10h. Awards board ------------------------------------------
+        with _step("d10h. Awards board (awards.json)", log):
+            # The Awards board (AWARDS_3_EXPORTER; AWARDS_PLAN 4.8): the eephus
+            # selection for MVP, Cy Young, Rookie and Manager of the Year in
+            # each league, the superlatives and My Ballot's candidate pools.
+            # Sits AFTER 6b7d so the eWAR live rebuild, rebuild_only's
+            # projections, the boards, management and the standings read have
+            # all run and nothing is a run stale. Its one network read is the
+            # war_daily stint frame the war board step reads too. While
+            # awards_core.AWARDS_LIVE is False it writes only
+            # .cache/awards/preview/ and nothing served moves. The id is d10h
+            # because d10g is the Source Updates step above. A refusal or a
+            # raise leaves the previous files and files a red under
+            # "awards_export". The comment sits inside the _step body for
+            # tools/gen_audit_docs.py, as the Franchise step's does.
+            _export_awards_board(log)
 
         finish_run(run_id, new_snapshots=0, stat_lines=0,
                    notes=f"DAILY: {n_il} on IL, {n_debuts} debuts, {n_trades} new trades")
@@ -7049,6 +7111,15 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.exception("hall of fame export failed - continuing")
                 _record_ingest("hof_export", False, 0,
                                "hall of fame export raised", "mlb", log)
+
+        # --- 6b7f. Awards board -------------------------------------------
+        with _step("6b7f. Awards board (awards.json)", log):
+            # The monthly Awards board (AWARDS_PLAN 4.8), after the Hall of
+            # Fame board and the month's boards and management, through the
+            # same writer as the daily step d10h. Additive; never aborts: a
+            # refusal or a raise leaves the previous files on disk and files a
+            # red under "awards_export".
+            _export_awards_board(log)
 
         # --- 6b6. Fantasy Tools (the /fantasy/ surface) -----------------
         # ROS fantasy projections (reuse the FA/Projections engine) scored in the

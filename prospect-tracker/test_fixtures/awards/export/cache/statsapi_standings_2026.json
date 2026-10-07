@@ -1,0 +1,801 @@
+{
+ "copyright": "Copyright 2026 MLB Advanced Media, L.P. (fixture)",
+ "records": [
+  {
+   "standingsType": "regularSeason",
+   "league": {
+    "id": 103
+   },
+   "teamRecords": [
+    {
+     "team": {
+      "id": 103,
+      "name": "BAL club",
+      "link": "/api/v1/teams/103"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 73,
+     "losses": 89,
+     "runDifferential": -80,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 73,
+      "losses": 89
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 70,
+        "losses": 92,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 104,
+      "name": "BOS club",
+      "link": "/api/v1/teams/104"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 90,
+     "losses": 72,
+     "runDifferential": 90,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 90,
+      "losses": 72
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 91,
+        "losses": 71,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 119,
+      "name": "NYY club",
+      "link": "/api/v1/teams/119"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 104,
+     "losses": 58,
+     "runDifferential": 230,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 104,
+      "losses": 58
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 102,
+        "losses": 60,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 126,
+      "name": "TB club",
+      "link": "/api/v1/teams/126"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 105,
+     "losses": 57,
+     "runDifferential": 240,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 105,
+      "losses": 57
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 81,
+        "losses": 81,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 128,
+      "name": "TOR club",
+      "link": "/api/v1/teams/128"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 82,
+     "losses": 80,
+     "runDifferential": 10,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 82,
+      "losses": 80
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 84,
+        "losses": 78,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 109,
+      "name": "CWS club",
+      "link": "/api/v1/teams/109"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 70,
+     "losses": 92,
+     "runDifferential": -110,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 70,
+      "losses": 92
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 81,
+        "losses": 81,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 107,
+      "name": "CLE club",
+      "link": "/api/v1/teams/107"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 84,
+     "losses": 78,
+     "runDifferential": 30,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 84,
+      "losses": 78
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 87,
+        "losses": 75,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 110,
+      "name": "DET club",
+      "link": "/api/v1/teams/110"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 97,
+     "losses": 65,
+     "runDifferential": 160,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 97,
+      "losses": 65
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 96,
+        "losses": 66,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 112,
+      "name": "KC club",
+      "link": "/api/v1/teams/112"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 73,
+     "losses": 89,
+     "runDifferential": -80,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 73,
+      "losses": 89
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 81,
+        "losses": 81,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 117,
+      "name": "MIN club",
+      "link": "/api/v1/teams/117"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 79,
+     "losses": 83,
+     "runDifferential": -20,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 79,
+      "losses": 83
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 79,
+        "losses": 83,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 111,
+      "name": "HOU club",
+      "link": "/api/v1/teams/111"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 89,
+     "losses": 73,
+     "runDifferential": 80,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 89,
+      "losses": 73
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 87,
+        "losses": 75,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 113,
+      "name": "LAA club",
+      "link": "/api/v1/teams/113"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 67,
+     "losses": 95,
+     "runDifferential": -140,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 67,
+      "losses": 95
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 70,
+        "losses": 92,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 100,
+      "name": "ATH club",
+      "link": "/api/v1/teams/100"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 68,
+     "losses": 94,
+     "runDifferential": -130,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 68,
+      "losses": 94
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 67,
+        "losses": 95,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 123,
+      "name": "SEA club",
+      "link": "/api/v1/teams/123"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 85,
+     "losses": 77,
+     "runDifferential": 40,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 85,
+      "losses": 77
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 87,
+        "losses": 75,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 127,
+      "name": "TEX club",
+      "link": "/api/v1/teams/127"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 84,
+     "losses": 78,
+     "runDifferential": 30,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 84,
+      "losses": 78
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 83,
+        "losses": 79,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "standingsType": "regularSeason",
+   "league": {
+    "id": 104
+   },
+   "teamRecords": [
+    {
+     "team": {
+      "id": 101,
+      "name": "ATL club",
+      "link": "/api/v1/teams/101"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 77,
+     "losses": 85,
+     "runDifferential": -40,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 77,
+      "losses": 85
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 79,
+        "losses": 83,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 115,
+      "name": "MIA club",
+      "link": "/api/v1/teams/115"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 74,
+     "losses": 88,
+     "runDifferential": -70,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 74,
+      "losses": 88
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 72,
+        "losses": 90,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 118,
+      "name": "NYM club",
+      "link": "/api/v1/teams/118"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 78,
+     "losses": 84,
+     "runDifferential": -30,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 78,
+      "losses": 84
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 79,
+        "losses": 83,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 120,
+      "name": "PHI club",
+      "link": "/api/v1/teams/120"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 99,
+     "losses": 63,
+     "runDifferential": 180,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 99,
+      "losses": 63
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 94,
+        "losses": 68,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 129,
+      "name": "WSH club",
+      "link": "/api/v1/teams/129"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 64,
+     "losses": 98,
+     "runDifferential": -170,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 64,
+      "losses": 98
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 81,
+        "losses": 81,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 105,
+      "name": "CHC club",
+      "link": "/api/v1/teams/105"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 93,
+     "losses": 69,
+     "runDifferential": 120,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 93,
+      "losses": 69
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 92,
+        "losses": 70,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 106,
+      "name": "CIN club",
+      "link": "/api/v1/teams/106"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 75,
+     "losses": 87,
+     "runDifferential": -60,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 75,
+      "losses": 87
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 66,
+        "losses": 96,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 116,
+      "name": "MIL club",
+      "link": "/api/v1/teams/116"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 92,
+     "losses": 70,
+     "runDifferential": 110,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 92,
+      "losses": 70
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 92,
+        "losses": 70,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 121,
+      "name": "PIT club",
+      "link": "/api/v1/teams/121"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 68,
+     "losses": 94,
+     "runDifferential": -130,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 68,
+      "losses": 94
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 70,
+        "losses": 92,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 125,
+      "name": "STL club",
+      "link": "/api/v1/teams/125"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 80,
+     "losses": 82,
+     "runDifferential": -10,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 80,
+      "losses": 82
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 79,
+        "losses": 83,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 102,
+      "name": "AZ club",
+      "link": "/api/v1/teams/102"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 67,
+     "losses": 95,
+     "runDifferential": -140,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 67,
+      "losses": 95
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 81,
+        "losses": 81,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 108,
+      "name": "COL club",
+      "link": "/api/v1/teams/108"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 58,
+     "losses": 104,
+     "runDifferential": -230,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 58,
+      "losses": 104
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 61,
+        "losses": 101,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 114,
+      "name": "LAD club",
+      "link": "/api/v1/teams/114"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 111,
+     "losses": 51,
+     "runDifferential": 300,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 111,
+      "losses": 51
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 104,
+        "losses": 58,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 122,
+      "name": "SD club",
+      "link": "/api/v1/teams/122"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 91,
+     "losses": 71,
+     "runDifferential": 100,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 91,
+      "losses": 71
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 81,
+        "losses": 81,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    },
+    {
+     "team": {
+      "id": 124,
+      "name": "SF club",
+      "link": "/api/v1/teams/124"
+     },
+     "season": "2026",
+     "gamesPlayed": 162,
+     "wins": 53,
+     "losses": 109,
+     "runDifferential": -280,
+     "lastUpdated": "2026-09-27T21:21:55Z",
+     "leagueRecord": {
+      "wins": 53,
+      "losses": 109
+     },
+     "records": {
+      "expectedRecords": [
+       {
+        "wins": 81,
+        "losses": 81,
+        "type": "xWinLoss"
+       }
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}

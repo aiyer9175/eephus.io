@@ -1,0 +1,63 @@
+{
+ "generated_at": "2026-10-05T06:00:00+00:00",
+ "history": {
+  "2025": {
+   "season": 2025,
+   "batters": [
+    {
+     "mlbam": 900001,
+     "name": "Kade Morrow",
+     "wpa": 4.1,
+     "pa": 650
+    },
+    {
+     "mlbam": 900002,
+     "name": "Yoan Alvarado",
+     "wpa": 6.353,
+     "pa": 692
+    },
+    {
+     "mlbam": 900003,
+     "name": "Bo Whitt",
+     "wpa": 0.0,
+     "pa": 700
+    },
+    {
+     "mlbam": 900004,
+     "name": "Ozzie Tanaka",
+     "wpa": 0.0,
+     "pa": 600
+    },
+    {
+     "mlbam": 900005,
+     "name": "Arlo Finch",
+     "wpa": 2.0,
+     "pa": 500
+    },
+    {
+     "mlbam": 900006,
+     "name": "Benji Ortiz",
+     "wpa": 3.0,
+     "pa": 480
+    }
+   ],
+   "starters": [
+    {
+     "mlbam": 900004,
+     "name": "Ozzie Tanaka",
+     "wpa": 0.0
+    },
+    {
+     "mlbam": 900010,
+     "name": "Tomas Kessler",
+     "wpa": 0.0
+    },
+    {
+     "mlbam": 900011,
+     "name": "Will Schott",
+     "wpa": 0.0
+    }
+   ]
+  }
+ }
+}

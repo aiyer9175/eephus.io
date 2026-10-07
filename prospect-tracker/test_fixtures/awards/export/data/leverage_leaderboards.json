@@ -1,0 +1,185 @@
+{
+ "generated_at": "2026-10-05T06:00:00+00:00",
+ "season": 2026,
+ "batters": [
+  {
+   "mlbam": 900001,
+   "name": "Kade Morrow",
+   "wpa": 4.1,
+   "pa": 650
+  },
+  {
+   "mlbam": 900002,
+   "name": "Yoan Alvarado",
+   "wpa": 6.353,
+   "pa": 692
+  },
+  {
+   "mlbam": 900003,
+   "name": "Bo Whitt",
+   "wpa": 0.0,
+   "pa": 700
+  },
+  {
+   "mlbam": 900004,
+   "name": "Ozzie Tanaka",
+   "wpa": 0.0,
+   "pa": 600
+  },
+  {
+   "mlbam": 900005,
+   "name": "Arlo Finch",
+   "wpa": 2.0,
+   "pa": 500
+  },
+  {
+   "mlbam": 900006,
+   "name": "Benji Ortiz",
+   "wpa": 3.0,
+   "pa": 480
+  },
+  {
+   "mlbam": 900007,
+   "name": "Cal Reyes",
+   "wpa": 0.0,
+   "pa": 200
+  },
+  {
+   "mlbam": 900008,
+   "name": "Dario Lane",
+   "wpa": 0.0,
+   "pa": 600
+  },
+  {
+   "mlbam": 900009,
+   "name": "Enzo Pike",
+   "wpa": 0.0,
+   "pa": 300
+  },
+  {
+   "mlbam": 900020,
+   "name": "Pete Crowe",
+   "wpa": 3.887,
+   "pa": 726
+  },
+  {
+   "mlbam": 900021,
+   "name": "Brice Tolan",
+   "wpa": 0.0,
+   "pa": 650
+  },
+  {
+   "mlbam": 900024,
+   "name": "JJ Weth",
+   "wpa": 0.0,
+   "pa": 450
+  },
+  {
+   "mlbam": 900025,
+   "name": "Benge Harlow",
+   "wpa": 0.0,
+   "pa": 420
+  },
+  {
+   "mlbam": 900026,
+   "name": "Rum Field",
+   "wpa": 0.0,
+   "pa": 380
+  },
+  {
+   "mlbam": 900028,
+   "name": "Mo Alder",
+   "wpa": 0.0,
+   "pa": 560
+  },
+  {
+   "mlbam": 900029,
+   "name": "Nico Bell",
+   "wpa": 0.0,
+   "pa": 540
+  },
+  {
+   "mlbam": 900030,
+   "name": "Oto Grau",
+   "wpa": 0.0,
+   "pa": 520
+  },
+  {
+   "mlbam": 900031,
+   "name": "Pax Hume",
+   "wpa": 0.0,
+   "pa": 510
+  },
+  {
+   "mlbam": 900032,
+   "name": "Quin Ibarra",
+   "wpa": 0.0,
+   "pa": 500
+  },
+  {
+   "mlbam": 900033,
+   "name": "Rey Jost",
+   "wpa": 0.0,
+   "pa": 490
+  },
+  {
+   "mlbam": 900034,
+   "name": "Sal Kuhn",
+   "wpa": 0.0,
+   "pa": 480
+  },
+  {
+   "mlbam": 900035,
+   "name": "Teo Lund",
+   "wpa": 0.0,
+   "pa": 470
+  }
+ ],
+ "starters": [
+  {
+   "mlbam": 900004,
+   "name": "Ozzie Tanaka",
+   "wpa": 0.0
+  },
+  {
+   "mlbam": 900010,
+   "name": "Tomas Kessler",
+   "wpa": 0.0
+  },
+  {
+   "mlbam": 900011,
+   "name": "Will Schott",
+   "wpa": 0.0
+  },
+  {
+   "mlbam": 900012,
+   "name": "Dylan Cross",
+   "wpa": 0.0
+  },
+  {
+   "mlbam": 900014,
+   "name": "Hal Munro",
+   "wpa": 0.0
+  },
+  {
+   "mlbam": 900015,
+   "name": "Ike Varga",
+   "wpa": 0.0
+  },
+  {
+   "mlbam": 900022,
+   "name": "Cris Sandoval",
+   "wpa": 0.0
+  },
+  {
+   "mlbam": 900023,
+   "name": "Jake Misner",
+   "wpa": 0.0
+  },
+  {
+   "mlbam": 900027,
+   "name": "Chase Byrne",
+   "wpa": 0.0
+  }
+ ]
+}

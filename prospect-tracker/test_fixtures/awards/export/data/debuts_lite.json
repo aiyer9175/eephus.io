@@ -1,0 +1,86 @@
+[
+ {
+  "player_key": "kade_morrow",
+  "player_name": "Kade Morrow",
+  "mlbam_id": 900001,
+  "debut_date": "2015-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "yoan_alvarado",
+  "player_name": "Yoan Alvarado",
+  "mlbam_id": 900002,
+  "debut_date": "2016-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "bo_whitt",
+  "player_name": "Bo Whitt",
+  "mlbam_id": 900003,
+  "debut_date": "2017-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "ozzie_tanaka",
+  "player_name": "Ozzie Tanaka",
+  "mlbam_id": 900004,
+  "debut_date": "2018-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "arlo_finch",
+  "player_name": "Arlo Finch",
+  "mlbam_id": 900005,
+  "debut_date": "2019-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "benji_ortiz",
+  "player_name": "Benji Ortiz",
+  "mlbam_id": 900006,
+  "debut_date": "2016-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "dario_lane",
+  "player_name": "Dario Lane",
+  "mlbam_id": 900008,
+  "debut_date": "2017-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "enzo_pike",
+  "player_name": "Enzo Pike",
+  "mlbam_id": 900009,
+  "debut_date": "2018-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "tomas_kessler",
+  "player_name": "Tomas Kessler",
+  "mlbam_id": 900010,
+  "debut_date": "2019-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "will_schott",
+  "player_name": "Will Schott",
+  "mlbam_id": 900011,
+  "debut_date": "2015-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "dylan_cross",
+  "player_name": "Dylan Cross",
+  "mlbam_id": 900012,
+  "debut_date": "2021-06-15",
+  "status": "debuted"
+ },
+ {
+  "player_key": "hal_munro",
+  "player_name": "Hal Munro",
+  "mlbam_id": 900014,
+  "debut_date": "2025-06-15",
+  "status": "debuted"
+ }
+]

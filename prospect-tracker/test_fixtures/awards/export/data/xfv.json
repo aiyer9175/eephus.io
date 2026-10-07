@@ -1,0 +1,79 @@
+{
+ "meta": {
+  "generated_at": "2026-10-05T06:00:00+00:00"
+ },
+ "by_player": {
+  "kade_morrow": {
+   "kind": "debuted",
+   "xfv_grade": 60.0,
+   "xfv_grade_at_debut": 60.0,
+   "consensus_fv": 62.0
+  },
+  "yoan_alvarado": {
+   "kind": "debuted",
+   "xfv_grade": 40.0,
+   "xfv_grade_at_debut": 40.0,
+   "consensus_fv": 42.0
+  },
+  "bo_whitt": {
+   "kind": "debuted",
+   "xfv_grade": 50.0,
+   "xfv_grade_at_debut": 50.0,
+   "consensus_fv": 52.0
+  },
+  "ozzie_tanaka": {
+   "kind": "debuted",
+   "xfv_grade": 20.0,
+   "xfv_grade_at_debut": 20.0,
+   "consensus_fv": 22.0
+  },
+  "arlo_finch": {
+   "kind": "debuted",
+   "xfv_grade": 60.0,
+   "xfv_grade_at_debut": 60.0,
+   "consensus_fv": 62.0
+  },
+  "benji_ortiz": {
+   "kind": "debuted",
+   "xfv_grade": 35.0,
+   "xfv_grade_at_debut": 35.0,
+   "consensus_fv": 37.0
+  },
+  "dario_lane": {
+   "kind": "debuted",
+   "xfv_grade": 45.0,
+   "xfv_grade_at_debut": 45.0,
+   "consensus_fv": 47.0
+  },
+  "enzo_pike": {
+   "kind": "debuted",
+   "xfv_grade": 60.0,
+   "xfv_grade_at_debut": 60.0,
+   "consensus_fv": 62.0
+  },
+  "tomas_kessler": {
+   "kind": "debuted",
+   "xfv_grade": 55.0,
+   "xfv_grade_at_debut": 55.0,
+   "consensus_fv": 57.0
+  },
+  "will_schott": {
+   "kind": "debuted",
+   "xfv_grade": 20.0,
+   "xfv_grade_at_debut": 20.0,
+   "consensus_fv": 22.0
+  },
+  "dylan_cross": {
+   "kind": "debuted",
+   "xfv_grade": 55.0,
+   "xfv_grade_at_debut": 55.0,
+   "consensus_fv": 57.0
+  },
+  "hal_munro": {
+   "kind": "debuted",
+   "xfv_grade": 50.0,
+   "xfv_grade_at_debut": 50.0,
+   "consensus_fv": 52.0
+  }
+ }
+}

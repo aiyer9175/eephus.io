@@ -1,0 +1,100 @@
+{
+ "generated_at": "2026-10-05T06:00:00+00:00",
+ "seasons": [
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "history": {
+  "2021": {
+   "season": 2021,
+   "fielders": []
+  },
+  "2022": {
+   "season": 2022,
+   "fielders": []
+  },
+  "2023": {
+   "season": 2023,
+   "fielders": []
+  },
+  "2024": {
+   "season": 2024,
+   "fielders": []
+  },
+  "2025": {
+   "season": 2025,
+   "n_qualified": 6,
+   "fielders": [
+    {
+     "mlbam": 900001,
+     "name": "Kade Morrow",
+     "team": "DET",
+     "pos": "SS",
+     "inn": 391.5,
+     "dem_plus": 111,
+     "dem_plus_raw": null,
+     "def_runs": 2.8,
+     "qualified": true
+    },
+    {
+     "mlbam": 900002,
+     "name": "Yoan Alvarado",
+     "team": "HOU",
+     "pos": "DH",
+     "inn": 1006.2,
+     "dem_plus": 105,
+     "dem_plus_raw": null,
+     "def_runs": 1.2,
+     "qualified": true
+    },
+    {
+     "mlbam": 900003,
+     "name": "Bo Whitt",
+     "team": "KC",
+     "pos": "SS",
+     "inn": 593.5,
+     "dem_plus": 104,
+     "dem_plus_raw": null,
+     "def_runs": 1.1,
+     "qualified": true
+    },
+    {
+     "mlbam": 900004,
+     "name": "Ozzie Tanaka",
+     "team": "LAA",
+     "pos": "TWP",
+     "inn": 610.8,
+     "dem_plus": 138,
+     "dem_plus_raw": null,
+     "def_runs": 9.5,
+     "qualified": true
+    },
+    {
+     "mlbam": 900005,
+     "name": "Arlo Finch",
+     "team": "BOS",
+     "pos": "LF",
+     "inn": 723.5,
+     "dem_plus": 117,
+     "dem_plus_raw": null,
+     "def_runs": 4.4,
+     "qualified": true
+    },
+    {
+     "mlbam": 900006,
+     "name": "Benji Ortiz",
+     "team": "NYY",
+     "pos": "RF",
+     "inn": 352.8,
+     "dem_plus": 81,
+     "dem_plus_raw": null,
+     "def_runs": -4.7,
+     "qualified": true
+    }
+   ]
+  }
+ }
+}
