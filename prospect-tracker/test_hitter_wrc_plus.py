@@ -287,7 +287,7 @@ def test_column_is_labelled_as_published():
     js = MLBSTATS_JS.read_text(encoding="utf-8")
     cols = js.split("var HITTER_COLS = [")[1].split("\n  ];")[0]
     wrc = cols.split('{ key: "wrc_plus"')[1].split("\n    { key:")[0]
-    assert "PUBLISHED, NOT COMPUTED HERE" in wrc
+    assert "Published, not computed here" in wrc
     assert "the industry's published number, not one of ours" in js
     board = _board()
     if board.get("wrc_plus"):

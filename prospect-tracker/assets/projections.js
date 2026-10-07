@@ -711,7 +711,7 @@
   function primeTagFor(m) {
     const pr = warShownPrime(m);
     if (pr == null) return "";
-    return `<span class="proj-tag proj-tag-prospect" title="Prime ${fmtWar(pr)}: the same P(bucket|FV)-weighted path reconciled to the PRIME anchor, so it carries the same bust probability. Talent, not what a club collects -- the board column and every priced number stay on the expected value.">prime ${fmtWar(pr)}</span>`;
+    return `<span class="proj-tag proj-tag-prospect" title="Prime ${fmtWar(pr)}: P(bucket|FV)-weighted path reconciled to the prime anchor, same bust probability. Talent, not club value; board and prices use expected value.">prime ${fmtWar(pr)}</span>`;
   }
   // ONE PLACE, EVERY WIDTH, EVERY VIEW. site.css hides .proj-sub-tag-pros at
   // >= 700px in the prospect view because "the prospect set shows eFV and ETA
@@ -795,7 +795,7 @@
     const banner = document.getElementById("proj-banner");
     if (!root || !DATA) return;
     if (state.player) { renderPlayer(state.player); return; }
-    if (DATA.partial) { root.innerHTML = pxState("loading", "Loading projections&hellip;"); return; }
+    if (DATA.partial) { root.innerHTML = pxState("loading", "Loading projections."); return; }
     if (state.cmp.length === 2) { renderCompare(); return; }
     if (state.view === "teams") { renderTeams(); return; }
     if (state.view === "accountability") { renderAccountability(); return; }
@@ -921,7 +921,7 @@
       };
     }
     if (!rows.length) {
-      root.innerHTML = `<div class="state-message">This view is temporarily unavailable. Check back shortly.</div>`;
+      root.innerHTML = pxState("unmeasured", "Team Outlook not built yet on this deploy; the nightly build writes it.");
       return;
     }
     // Org-dashboard columns (the retired /teams/ page, merged here
@@ -1148,7 +1148,7 @@
     </tr>`;
     }).join("");
     const note = nowMode
-      ? `Current (${curSeason}) slate <span class="eephus-beta" title="Newly launched; blend and odds may shift">β beta</span>: Bayesian blend of the roster-talent prior, actual record and Pythagorean record (RS/RA); the prior fades as games are played. Playoff odds: Monte Carlo over ${DATA.mc_schedule_source === "balanced_fallback" ? "a balanced-schedule ESTIMATE (live schedule unavailable)" : "the live remaining schedule"}. SOS: log5 opponent talent over unplayed games (1 = hardest). Does not change the projection board.`
+      ? `Current (${curSeason}) slate <span class="eephus-beta">β beta</span>: Bayesian blend of the roster-talent prior, actual record and Pythagorean record (RS/RA); the prior fades as games are played. Playoff odds: Monte Carlo over ${DATA.mc_schedule_source === "balanced_fallback" ? "a balanced-schedule estimate (live schedule unavailable)" : "the live remaining schedule"}. SOS: log5 opponent talent over unplayed games (1 = hardest). Does not change the projection board.`
       : `${hasControl ? `Core control: WAR-weighted share of each org's projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} production under contract, or projected controlled by age where no contract is on file; the sparkline is controlled WAR per season.` : ""}${hasFarm ? " Farm columns come from the PROSPX org models." : ""}`;
     // Sortable header: click to sort by it, click again to flip direction.
     // The active column shows a ▲/▼ arrow reflecting the effective direction.
@@ -1164,7 +1164,7 @@
       : "";
     const header = nowMode
       ? `<thead><tr><th>#</th>${sth("team", "Team")}${sth("nowPct", "Record", `Actual ${curSeason} record + win%`)}${sth("pythag", "Pythag", "Pythagorean win% from run differential (exp 1.83)")}${sth("blend", "Proj W-L", "Bayesian blend of talent prior + actual + Pythag -> projected full-season record")}${sth("playoff", "Playoff odds", "Monte-Carlo division/wildcard/playoff probability")}${sth("sos", "Rem SOS", "Remaining strength of schedule via log5 (rank 1 = hardest)")}</tr></thead>`
-      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR", "Sum of each rostered veteran's champion mean year-1 WAR (the Marcel path /fa/ prices on; quantile points are never summed) plus arrived prospects. Top projected names print the proj_lgbm_v1 path, so a player's figure there can differ from his share of this sum.")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
+      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR", "Sum of each rostered veteran's year-1 champion mean WAR (the Marcel path /fa/ prices; quantile points never summed) plus arrived prospects. Top projected prints the quantile-head path, so a name there can differ from his share here.")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
     // The Current slate keeps its note above the table (it says what changes
     // under the reader); the projected slate's column notes fold under it.
     const noteTop = nowMode ? `<div class="fa-note proj-teams-note">${note}</div>` : "";
@@ -1378,7 +1378,7 @@
     }
     const models = acct.models || [];
     if (!models.length) {
-      root.innerHTML = `<div class="state-message">This view is temporarily unavailable. Check back shortly.</div>`;
+      root.innerHTML = pxState("unmeasured", "Model Accountability not built yet on this deploy; the nightly build writes it.");
       if (window.EEPHUS_GL && banner) window.EEPHUS_GL.wire(banner);
       return;
     }
@@ -1512,7 +1512,7 @@
         ? `Guaranteed salary on file; this season prices ${wTail != null ? `${fmtWar(wTail)} WAR` : "the WAR"} on the champion (Marcel) aging curve chained from the ${first + H - 1} WAR, past the five seasons the board prints${bTail}`
         : src === "class_closure" ? "Arbitration year implied by the last class token on the board, not listed by Spotrac yet"
         : src === "arb_ladder" ? (tok.toUpperCase().indexOf("PRE") === 0
-            ? "Pre arbitration season at the CBA league minimum - a rule, not a prediction"
+            ? "Pre-arbitration season at the CBA league minimum: a rule, not a prediction"
             : "Projected arbitration award")
         : "Guaranteed salary on file";
       cells.push(`<span class="proj-sp-c ${cls}" title="${esc(tip)}"><span class="sp-y">${esc(yr)}</span>`
@@ -1800,7 +1800,7 @@
       // survives a CSV. Empty on a veteran row, which has no prime path.
       + `<th class="pc-csv" hidden data-export-text="Prime ${H}y WAR (prospects, talent anchor)"></th>`
       + th("sur", "Surplus", "pc-sur",
-          `Veterans: production value minus salary over the club control window, through ${first + H - 1} at most - contracted dollars where a contract exists, the league minimum for pre-arbitration seasons, the projected award for arbitration seasons. A guarantee that runs past ${first + H - 1} is priced through its last season, those seasons on the champion (Marcel) aging curve chained from the ${first + H - 1} WAR; an unsigned season past ${first + H - 1} carries no price. Prospects: the eFV surplus the Trade Machine board serves, over the 7-season valuation window from their ETA.`, "Surplus")
+          `Veterans: value minus salary over the club control window through ${first + H - 1}; a guarantee past ${first + H - 1} prices to its end on the champion (Marcel) aging curve; an unsigned season past ${first + H - 1} carries no price. Prospects: eFV surplus, 7 seasons from ETA.`, "Surplus")
       + seasons.map((s, t) => th("y" + t,
           `<span class="proj-sr-sm">${String(s).slice(0, 2)}</span>${String(s).slice(2)}`
             + (state.cells === "war" ? "" : `<span class="proj-th-unit">${esc(cellLbl)}</span>`),
@@ -1858,9 +1858,9 @@
       // tooltip names both and the cell prints the second one under the first.
       const primeTot = warShownPrime(m);
       const totTip = (isPros
-        ? `Sum of the in-window seasons shown, on the expected path -- the path surplus prices${primeTot != null ? `. Prime ${fmtWar(primeTot)} is the same P(bucket|FV)-weighted path reconciled to the PRIME anchor: talent, not what a club collects, and no dollar reads it` : ""}`
+        ? `Sum of the in-window seasons shown, on the expected path: the path surplus prices${primeTot != null ? `. Prime ${fmtWar(primeTot)} is the same P(bucket|FV)-weighted path reconciled to the prime anchor: talent, not what a club collects, and no dollar reads it` : ""}`
         : `Expected path, which is also what surplus prices${m.warTotalPTH != null ? `; if he holds his playing time, ${fmtWar(m.warTotalPTH)}` : ""}`)
-        + (isPros ? ". Colour ranks the per-season average against the PROSPECT pool"
+        + (isPros ? ". Colour ranks the per-season average against the prospect pool"
                   : ". Colour ranks the per-season average of the seasons shown");
       const sv = surOf(m);
       const _tlS = isPros ? null : horizonTail(m);
@@ -2016,7 +2016,7 @@
       + keyLad.cuts.map((c, i) => `<span class="tk-${EephusTiers.TIERS[i]}">${keyFmt(c)}</span>`).join("<i>/</i>")
       + `<i>/</i><span class="tk-${EephusTiers.TIERS[5]}">${keyTail}${keyFmt(keyLad.cuts[4])}</span></div>`;
     const table = `<div class="proj-board-wrap"><table class="proj-board-table${pros ? " is-pros" : ""}" data-export data-export-title="MLB Projections">${head}<tbody>${body}</tbody></table>`
-      + (body ? "" : pxState("empty", "No players match.")) + `</div>`;
+      + (body ? "" : pxState("empty", "No players match these filters.")) + `</div>`;
     root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main proj-board-main">` + boardHead + tierKey + tools + table
       + (list.length > state.limit ? `<div class="proj-more-wrap"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : "")
       + warMap + `</div>${projBoardSidebar(list)}</div>`;
@@ -3497,7 +3497,7 @@
     const ev = card && card.mlbam != null ? EVENTS[card.mlbam] : null;
     if (!ev || ev.missing) return "";
     if (ev.failed)
-      return section("timeline", "Timeline", "", `<div class="fa-note">The transaction timeline failed to load.</div>`);
+      return section("timeline", "Timeline", "", `<div class="fa-note">Timeline did not load.</div>`);
     const rows = (ev.rows || []).filter(r => r && r.type);
     const sub = tlIso(ev.through) ? `MLB moves through ${tlDay(String(ev.through).slice(0, 10), true)}` : "";
     if (!rows.length)
@@ -3603,7 +3603,7 @@
     if (back) back.onclick = (e) => { e.preventDefault(); state.player = null; syncToURL(); render(); };
     PAINTED_PLAYER = null;
     if (!(DETAIL && (DETAIL.players || {})[key]) && !(DETAIL && DETAIL.all)) {
-      root.innerHTML = pxState("loading", "Loading player&hellip;");
+      root.innerHTML = pxState("loading", "Loading player.");
       loadCard(key);
       return;
     }
@@ -3698,7 +3698,7 @@
   function cardFailed(key) {
     const root = document.getElementById("proj-rows");
     if (!root || state.player !== key) return;
-    root.innerHTML = pxState("failed", `Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="mlbp-detail-retry" type="button">Retry</button>`);
+    root.innerHTML = pxState("failed", `Player card did not load. The nightly build may be writing it. <button class="chip" id="mlbp-detail-retry" type="button">Retry</button>`);
     const retry = document.getElementById("mlbp-detail-retry");
     if (retry) retry.onclick = () => { if (state.player) renderPlayer(state.player); };
   }
@@ -3878,7 +3878,7 @@
   function loadData() {
     const root = document.getElementById("proj-rows");
     if (!root) return;
-    root.innerHTML = pxState("loading", "Loading projections&hellip;");
+    root.innerHTML = pxState("loading", "Loading projections.");
     // photo_ctx.json rides its OWN chain, not a Promise.all with the board:
     // (a) its failure is non-fatal and must never reach the board's catch, and
     // (b) the projections smoke test drives this file in py_mini_racer with
@@ -3904,7 +3904,7 @@
       })
       .catch(() => {
         if (state.player && PAINTED_PLAYER === state.player) return;
-        root.innerHTML = pxState("failed", `Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="proj-retry" type="button">Retry</button>`);
+        root.innerHTML = pxState("failed", `Projections did not load. The nightly build may be writing it. <button class="chip" id="proj-retry" type="button">Retry</button>`);
         const retry = document.getElementById("proj-retry");
         if (retry) retry.onclick = loadData;
       });

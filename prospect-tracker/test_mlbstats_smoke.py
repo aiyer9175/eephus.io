@@ -132,8 +132,8 @@ def test_fetch_failure_renders_error_state():
     ctx = MiniRacer()
     ctx.eval(_prelude("") + _ERR_FETCH + JS)
     html = ctx.eval("__html['mlbstats-app-root'] || ''")
-    assert "Data failed to load" in html
-    assert "nightly build is mid-run" in html
+    assert "Bullpen board did not load" in html
+    assert "nightly build may be writing it" in html
     assert "mlbstats-retry" in html          # the retry affordance exists
     assert 'role="alert"' in html
 
@@ -145,8 +145,8 @@ def test_null_payload_still_reads_as_not_exported():
                "json:function(){return FT(null);}});};")
     ctx.eval(_prelude("") + ok_null + JS)
     html = ctx.eval("__html['mlbstats-app-root'] || ''")
-    assert "being computed" in html
-    assert "Data failed to load" not in html
+    assert "not built yet on this deploy" in html
+    assert "did not load" not in html
 
 
 # ---------------------------------------------------------------------------
@@ -965,7 +965,7 @@ def test_defense_board_renders_via_section_hash():
     # owner decision 18: Def carries OUR ladder, FanGraphs' positional rides beside it,
     # and the column titles say which is which
     assert "Pos (ours)" in html and "Pos (FG)" in html
-    assert 'title="OUR LADDER.' in html and "not in Def" in html
+    assert 'title="Our ladder.' in html and "not in Def" in html
     assert "-3.4" in html                                 # FanGraphs' positional, shown
     # clickable name: mlbam 111 resolves to the merged card
     assert 'class="mlbstats-name-link"' in html
