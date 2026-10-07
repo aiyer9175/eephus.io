@@ -37,7 +37,10 @@
 # test_mlb_events_dir_ships_in_both_deploy_consumers; and the mlbstats_player/
 # per-player game files of the /mlbstats/ drawer, empty until
 # mlbstats_trends_export.MLBSTATS_DRAWER_LIVE flips, pinned by
-# test_mlbstats_player_dir_ships_in_both_deploy_consumers).
+# test_mlbstats_player_dir_ships_in_both_deploy_consumers; and, since
+# 2026-10-07, the mlb_player_detail/ per-player cards a /projections/#player=
+# page fetches instead of the whole mlb_player_detail.json, pinned by
+# test_mlb_player_detail_shards_ship_in_both_deploy_consumers).
 #
 # 2026-10-07: scores/ is the Scores / Standings page (SCORES_5a_LIVE_FLIP). Only
 # the page ships from here: its game files are written by tools/scores_job.py

@@ -259,3 +259,80 @@ def test_the_accountability_rows_carry_no_dash_banned_word_or_retired_name():
     assert "beat the" not in pros["champion"]
     assert "every challenger lost its pre-registered dual gate" in pros["champion"]
     assert "ranks better than any stat-line model" not in pros["notes"]
+
+
+# ---------------------------------------------------------------------------
+# Bytes (QMLP01, QMLP07, QMLP09)
+# ---------------------------------------------------------------------------
+def test_shards_follow_the_payload_and_a_redirected_data_dir(tmp_path, monkeypatch):
+    """QMLP01: one card per player under DATA_DIR/mlb_player_detail/, with
+    the board scalars the page reads; a player gone from the payload loses
+    its shard."""
+    import mlb_player_export as mpe
+    monkeypatch.setattr(mpe, "DATA_DIR", tmp_path)
+    (tmp_path / "mlb_player_detail").mkdir()
+    (tmp_path / "mlb_player_detail" / "gone_guy.json").write_text("{}", encoding="utf-8")
+    payload = {"generated_at": "2026-10-07", "first_season": 2027, "horizon": 5,
+               "players": {"a_b": {"key": "a_b", "name": "A B"}, "c_d": {"key": "c_d"}}}
+    assert mpe._export_shards(payload) == 2
+    files = sorted(f.name for f in (tmp_path / "mlb_player_detail").iterdir())
+    assert files == ["a_b.json", "c_d.json"]
+    one = json.loads((tmp_path / "mlb_player_detail" / "a_b.json").read_text(encoding="utf-8"))
+    assert one == {"generated_at": "2026-10-07", "first_season": 2027, "horizon": 5,
+                   "key": "a_b", "player": {"key": "a_b", "name": "A B"}}
+
+
+def test_fa_flag_marks_exactly_the_class_members(tmp_path, monkeypatch):
+    """QMLP09: the board row carries the flag player_links.json carried."""
+    import proj_export as pe
+    monkeypatch.setattr(pe, "DATA_DIR", tmp_path)
+    (tmp_path / "fa_class.json").write_text(json.dumps({"members": [{"key": "x"}, {"key": "z"}]}),
+                                            encoding="utf-8")
+    vets = [{"key": "x"}, {"key": "y", "fa": True}, {"key": "z"}]
+    assert pe._stamp_fa_class(vets) == 2
+    assert [v.get("fa") for v in vets] == [True, None, True]
+
+
+def test_the_card_renders_from_its_shard_alone():
+    """QMLP01: with only the shard on offer (no board, no whole set), the
+    card paints on the shard's first_season and horizon."""
+    saved = S._prelude
+
+    def only_shards(hash_, fail_fetch=False):
+        js = saved(hash_, fail_fetch)
+        return js.replace("var fetch=function(url){var p=__payloads[url];",
+                          "delete __payloads['/data/mlb_projections.json'];"
+                          "delete __payloads['/data/mlb_player_detail.json'];"
+                          "var fetch=function(url){var p=__payloads[url];")
+    S._prelude = only_shards
+    try:
+        html = S._render("#player=vet_guy")
+    finally:
+        S._prelude = saved
+    assert "mlbp-hero" in html and "Vet Guy" in html
+
+
+def test_logos_are_asked_for_at_their_drawn_size():
+    """QMLP07: no 500 x 500 master is requested for a 13 to 16 px mark."""
+    assert "teamlogos/mlb/500/${slug}.png\"" not in JS
+    assert "i/teamlogos/mlb/500/${slug}.png&h=${LOGO_PX}&w=${LOGO_PX}" in JS
+    assert "H.teamLogoURL(org, LOGO_PX)" in JS
+
+
+def test_board_and_card_bytes(server):
+    """QMLP01/07/09 on the served page: the board fetches no identity map and
+    no logo master; a card fetches its own shard, not the whole set."""
+    board = json.loads((S.ROOT / "data" / "mlb_projections.json").read_text(encoding="utf-8"))
+    with _page(server) as page:
+        reqs = page._requests
+        assert not any("teamlogos/mlb/500/" in u and "&h=" not in u for u in reqs)
+        if board.get("n_fa") is not None:
+            assert not any("player_links.json" in u for u in reqs)
+    if not (S.ROOT / "data" / "mlb_player_detail" / "juan_soto.json").exists():
+        pytest.skip("per-player shards not built")
+    with _page(server, "#player=juan_soto", wait=".mlbp-hero") as page:
+        reqs = page._requests
+        assert sum("/data/mlb_player_detail/juan_soto.json" in u for u in reqs) == 1
+        assert not any(u.endswith("/data/mlb_player_detail.json") for u in reqs)
+        assert not any("player_links.json" in u for u in reqs)
+        assert page.query_selector("#mlbp-hub .player-hub-strip") is not None

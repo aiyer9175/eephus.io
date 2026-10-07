@@ -153,6 +153,7 @@ jobs:
           [ -d data/franchise_clubs ] && cp -r data/franchise_clubs _site/data/franchise_clubs
           [ -d data/mlb_events ] && cp -r data/mlb_events _site/data/mlb_events
           [ -d data/mlbstats_player ] && cp -r data/mlbstats_player _site/data/mlbstats_player
+          [ -d data/mlb_player_detail ] && cp -r data/mlb_player_detail _site/data/mlb_player_detail
           # Precompress text assets so nginx (gzip_static on) serves the
           # .gz twins - mirrors deploy/nightly-build.sh.
           find _site -type f \( -name '*.json' -o -name '*.js' -o -name '*.css'               -o -name '*.html' -o -name '*.svg' -o -name '*.xml' -o -name '*.txt' \)               -size +1k -exec gzip -9 -k -f {} +

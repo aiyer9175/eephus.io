@@ -87,10 +87,19 @@
     PHI: "phi", PIT: "pit", SDP: "sd", SEA: "sea", SFG: "sf",
     STL: "stl", TBR: "tb", TEX: "tex", TOR: "tor", WSN: "wsh",
   };
+  // QMLP07: every mark here draws at 13 to 16 px, so it is asked for at 32 px
+  // through ESPN's combiner (the shared EEPHUS_HUB size rule, as /fa/ does)
+  // rather than as the 500 x 500 master: 28 board logos were 1.07 MB.
+  const LOGO_PX = 32;
+  function teamLogoSrc(org) {
+    const H = window.EEPHUS_HUB;
+    const viaHub = H && H.teamLogoURL ? H.teamLogoURL(org, LOGO_PX) : "";
+    const slug = ESPN_SLUGS[org] || String(org).toLowerCase();
+    return viaHub || `https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/${slug}.png&h=${LOGO_PX}&w=${LOGO_PX}`;
+  }
   function teamLogo(org) {
     if (!org) return "";
-    const slug = ESPN_SLUGS[org] || String(org).toLowerCase();
-    return `<img class="fa-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" alt="${esc(org)}" loading="lazy" onerror="this.replaceWith('${esc(org)}')">`;
+    return `<img class="fa-logo" src="${esc(teamLogoSrc(org))}" alt="${esc(org)}" loading="lazy" onerror="this.replaceWith('${esc(org)}')">`;
   }
 
   // ===========================================================================
@@ -253,8 +262,13 @@
   // first tab instead of leaving no panel visible.
   const PTABS = ["overview", "hitting", "pitching", "defense", "value", "projection", "scouting", "discussion"];
   let PTAB_FOR = null;
-  let DETAIL = null;            // data/mlb_player_detail.json, lazy
-  let DETAIL_LOADING = false;
+  // Player cards: {players: {key: card}}, filled one shard at a time from
+  // data/mlb_player_detail/<key>.json (QMLP01). The 4.8 MB whole set is read
+  // only when a shard is missing (a deploy that predates the shards).
+  let DETAIL = null;
+  const CARD_LOADING = Object.create(null);
+  let DETAIL_ALL_LOADING = false;
+  let PAINTED_PLAYER = null;    // the card on screen, so a late board does not repaint it
   let FIELDING = null;          // games by position, nightly, keyed by MLBAM id; lazy
   let FIELDING_LOADING = false;
   let PITCHLB = null;           // {byMlbam:{...}} from the /mlbstats/ leaderboards, lazy
@@ -781,6 +795,7 @@
     const banner = document.getElementById("proj-banner");
     if (!root || !DATA) return;
     if (state.player) { renderPlayer(state.player); return; }
+    if (DATA.partial) { root.innerHTML = pxState("loading", "Loading projections&hellip;"); return; }
     if (state.cmp.length === 2) { renderCompare(); return; }
     if (state.view === "teams") { renderTeams(); return; }
     if (state.view === "accountability") { renderAccountability(); return; }
@@ -1418,8 +1433,7 @@
   // failed load removes the image instead of printing the code twice.
   function logoMark(org) {
     if (!org) return "";
-    const slug = ESPN_SLUGS[org] || String(org).toLowerCase();
-    return `<img class="fa-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" alt="" loading="lazy" onerror="this.remove()">`;
+    return `<img class="fa-logo" src="${esc(teamLogoSrc(org))}" alt="" loading="lazy" onerror="this.remove()">`;
   }
 
   // ---- the salary path strip (ask C, 2026-09-16) -----------------------------
@@ -1879,7 +1893,7 @@
         + `<span class="proj-sub-age">age ${age}</span>`
         + (isPros ? "" : `<span class="proj-sub-ct ${ct.cls}" title="${esc(ct.tip)}">${esc(ct.fold)}</span>`)
         + rowTagsHtml(m, pros)
-        + `<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span></span>`;
+        + (DATA.n_fa != null ? faChip(m) : `<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>`) + `</span>`;
       const tail = pros
         ? `<td class="pc-fv"><span title="${m.fv_source === "xfv" ? `Graded on eFV${m.consensus_fv != null ? `; consensus FV ${EEPHUS_HUB.fvCeil(m.consensus_fv)}` : ""}` : "Consensus FV (eFV abstains)"}">${isPros ? (m.fv_source === "xfv" ? Math.round(m.fv) : `FV ${EEPHUS_HUB.fvCeil(m.fv)}`) : EM_DASH}</span></td>`
           + `<td class="pc-eta">${m.eta ?? EM_DASH}</td>`
@@ -2079,14 +2093,15 @@
       if (again && again.focus) again.focus();
     };
     fillRowPhotos(root);
-    if (window.EEPHUS_HUB) {
+    // A payload written before proj_export stamped `fa` (no n_fa) keeps the
+    // identity-map fill; a current one paints the chip with the row and the
+    // board never fetches player_links.json.
+    if (DATA.n_fa == null && window.EEPHUS_HUB) {
       window.EEPHUS_HUB.links().then(L => {
         if (!L) return;
         root.querySelectorAll(".proj-fa-slot[data-fa-key]").forEach(el => {
           const row = (L.byKey || {})[el.dataset.faKey];
-          if (row && row.fa) {
-            el.innerHTML = `<a class="proj-tag proj-fa-chip" href="/fa/#player=${encodeURIComponent(row.key)}" title="In the current FA class: open the market card">$ FA</a>`;
-          }
+          if (row && row.fa) el.innerHTML = faChip({ key: row.key, fa: true });
           el.removeAttribute("data-fa-key");
         });
       });
@@ -2100,6 +2115,11 @@
   // value tiles. Works across sources (vet vs prospect compares fine -
   // warAt aligns both to calendar seasons).
   // ===========================================================================
+  function faChip(m) {
+    return m && m.fa
+      ? `<a class="proj-tag proj-fa-chip" href="/fa/#player=${encodeURIComponent(m.key)}" title="In the current FA class: open the market card">$ FA</a>`
+      : "";
+  }
   function cssKey(k) {
     return (window.CSS && CSS.escape) ? CSS.escape(String(k)) : String(k).replace(/["\\]/g, "\\$&");
   }
@@ -3233,20 +3253,10 @@
     if (bar) bar.innerHTML = `<a class="chip" href="#" id="mlbp-back">← back to projections</a>`;
     const back = document.getElementById("mlbp-back");
     if (back) back.onclick = (e) => { e.preventDefault(); state.player = null; syncToURL(); render(); };
-    if (!DETAIL) {
+    PAINTED_PLAYER = null;
+    if (!(DETAIL && (DETAIL.players || {})[key]) && !(DETAIL && DETAIL.all)) {
       root.innerHTML = pxState("loading", "Loading player&hellip;");
-      if (!DETAIL_LOADING) {
-        DETAIL_LOADING = true;
-        fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
-          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-          .then(d => { DETAIL = d; if (state.player) renderPlayer(state.player); })
-          .catch(() => {
-            DETAIL_LOADING = false;
-            root.innerHTML = pxState("failed", `Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="mlbp-detail-retry" type="button">Retry</button>`);
-            const retry = document.getElementById("mlbp-detail-retry");
-            if (retry) retry.onclick = () => { if (state.player) renderPlayer(state.player); };
-          });
-      }
+      loadCard(key);
       return;
     }
     const p = (DETAIL.players || {})[key];
@@ -3312,6 +3322,7 @@
       <div class="fa-note mlbp-page-foot">${pageFoot(p)}</div>
     </div>`;
     bindMlbpTabs(root, p, key);
+    PAINTED_PLAYER = key;
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
     // Async fills run AFTER the first paint and patch their own slot, so none
     // of them re-renders the page under the reader.
@@ -3320,16 +3331,62 @@
     // Only client-fetch the pitching leaderboards when the skills block was not
     // baked into the payload (older builds); the baked block renders directly.
     if (pitSide && !(p.skills && p.skills.pitch)) ensurePitchingStats();
-    // hub strip (cross-module identity) - lazy, never blocks the paint
+    // Hub strip (cross-module identity). The row is the one
+    // mlb_player_export._export_links writes for this card, built from the
+    // card itself, so the page never downloads the 1.9 MB identity map.
     if (window.EEPHUS_HUB) {
-      window.EEPHUS_HUB.links().then(L => {
-        const row = L && (L.byKey || {})[key];
-        const el = document.getElementById("mlbp-hub");
-        if (el && row && state.player === key) el.innerHTML = window.EEPHUS_HUB.stripHTML(row, "mlb");
-      });
+      const el = document.getElementById("mlbp-hub");
+      const row = { key, mlbam: p.mlbam, fa: !!p.fa, proj: true,
+                    prospx: (p.origin || {}).prospx || null };
+      if (el && window.EEPHUS_HUB.stripHTML) el.innerHTML = window.EEPHUS_HUB.stripHTML(row, "mlb");
       const btn = document.getElementById("mlbp-gfx");
       if (btn) btn.onclick = () => shareMlbCard(p);
     }
+  }
+
+  // One card: its shard, or the whole set when the shard is missing. A card
+  // that lands before the board renders on the board's two scalars it carries.
+  function cardFailed(key) {
+    const root = document.getElementById("proj-rows");
+    if (!root || state.player !== key) return;
+    root.innerHTML = pxState("failed", `Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="mlbp-detail-retry" type="button">Retry</button>`);
+    const retry = document.getElementById("mlbp-detail-retry");
+    if (retry) retry.onclick = () => { if (state.player) renderPlayer(state.player); };
+  }
+  function cardLanded(key, frame) {
+    if (!DATA && frame && frame.first_season != null) {
+      DATA = { first_season: frame.first_season, horizon: frame.horizon,
+               generated_at: frame.generated_at, vets: [], prospects: [], partial: true };
+    }
+    if (state.player === key && DATA) renderPlayer(key);
+  }
+  function loadAllCards(key) {
+    if (DETAIL_ALL_LOADING) return;
+    DETAIL_ALL_LOADING = true;
+    fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(d => {
+        DETAIL = { players: Object.assign((d && d.players) || {}, (DETAIL && DETAIL.players) || {}), all: true };
+        cardLanded(state.player || key, d);
+      })
+      .catch(() => { DETAIL_ALL_LOADING = false; cardFailed(state.player || key); });
+  }
+  function loadCard(key) {
+    if (!key || CARD_LOADING[key] || (DETAIL && DETAIL.players[key])) return;
+    CARD_LOADING[key] = true;
+    fetch(`/data/mlb_player_detail/${encodeURIComponent(key)}.json`, { cache: "no-cache" })
+      .then(r => {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(d => {
+        if (!d || !d.player) { loadAllCards(key); return; }
+        DETAIL = DETAIL || { players: {} };
+        DETAIL.players[key] = d.player;
+        cardLanded(key, d);
+      })
+      .catch(() => { CARD_LOADING[key] = false; cardFailed(key); });
   }
 
   // One-subject card exports go through EEPHUS_HUB.openCard (the shared
@@ -3489,8 +3546,15 @@
     }
     fetch("/data/mlb_projections.json", { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(d => { DATA = d; render(); })
+      .then(d => {
+        DATA = d;
+        // A card painted on its shard's frame stays put; the board only
+        // backs the views the reader has not opened yet.
+        if (state.player && PAINTED_PLAYER === state.player) return;
+        render();
+      })
       .catch(() => {
+        if (state.player && PAINTED_PLAYER === state.player) return;
         root.innerHTML = pxState("failed", `Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="proj-retry" type="button">Retry</button>`);
         const retry = document.getElementById("proj-retry");
         if (retry) retry.onclick = loadData;
@@ -3501,6 +3565,8 @@
     syncFromURL();
     if (!document.getElementById("proj-rows")) return;
     loadData();
+    // A #player= link fetches its card beside the board, not after it.
+    if (state.player) loadCard(state.player);
     window.addEventListener("hashchange", () => { syncFromURL(); render(); });
   }
 

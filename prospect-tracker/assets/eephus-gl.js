@@ -127,8 +127,11 @@
   function qkLoadPlayers() {
     if (_qkPlayers || _qkPlayersLoading) return;
     _qkPlayersLoading = true;
-    fetch("/data/player_links.json", { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
+    // The hub's parsed copy when the page loads it, so a page that already
+    // read the identity map never downloads it a second time (QMLP09).
+    const H = window.EEPHUS_HUB;
+    (H && H.links ? Promise.resolve(H.links())
+      : fetch("/data/player_links.json", { cache: "no-cache" }).then(r => (r.ok ? r.json() : null)))
       .then(L => {
         const rows = [];
         for (const row of Object.values((L && L.byKey) || {})) {
