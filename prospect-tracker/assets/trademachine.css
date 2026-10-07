@@ -316,17 +316,44 @@
 #tradeboard-content:has(> .spinner-wrap) { min-height: 100vh; }
 /* The deal builder draws before the board file arrives; until its script runs
    the mount is empty, so it reserves the height its two empty sides take
-   (measured in Chromium: 182 px side by side, 319 px stacked, 351 px with the
+   (measured in Chromium: 162 px side by side, 299 px stacked, 331 px with the
    44 px touch boxes at 640 and below). */
-#trade-machine:empty { min-height: 182px; }
-@media (max-width: 720px) { #trade-machine:empty { min-height: 319px; } }
-@media (max-width: 640px) { #trade-machine:empty { min-height: 351px; } }
+#trade-machine:empty { min-height: 162px; }
+@media (max-width: 720px) { #trade-machine:empty { min-height: 299px; } }
+@media (max-width: 640px) { #trade-machine:empty { min-height: 331px; } }
 
-/* The board title is a heading (QCLA06): the page had one heading, the h1. It
-   keeps the look of the title line it replaced. */
-.tm-app h2.tm-h2 {
-  display: inline; margin: 0; font: inherit; letter-spacing: inherit;
-  text-transform: inherit; color: inherit;
+/* Section headings (QCLA06 and the display pass, 2026-10-07). The page had one
+   heading, the h1; "Deal builder" and "Trade-value board" are h2s set in the
+   newsprint eyebrow, the label the FA and Projections boards open with. */
+.tm-app h2.tm-eyebrow-h2 { margin: 0; line-height: inherit; font-family: inherit; }
+.tm-app .tm-board-eyebrow { margin-top: 18px; }
+
+/* How this works: the method, folded under the builder (the arbitration and
+   ledger pattern). */
+.tm-app .tm-how { margin: 10px 0 0; max-width: 760px; border-top: 1px solid var(--border-subtle); padding-top: 4px; }
+.tm-app .tm-how > summary { cursor: pointer; color: var(--text-secondary); font-size: 12px; }
+.tm-app .tm-how ul { margin: 6px 0 2px; padding-left: 18px; color: var(--text-secondary); font-size: 11px; line-height: 1.55; }
+.tm-app .tm-how li { margin-bottom: 3px; }
+
+/* One control bar: the filter toggle, the board search and the GFX chip. */
+.tm-app .filter-toggle-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tm-app #tb-search {
+  flex: 1 1 220px; max-width: 340px; padding: 6px 10px; font: inherit; font-size: 12px;
+  border: 1px solid var(--text-tertiary); background: var(--bg-secondary); color: var(--text-primary);
+}
+
+/* Related modules, linked once at the foot of the page. */
+.tm-app .tm-related { margin: 22px 0 0; padding-top: 8px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); }
+
+/* Board club cell links to the club's Franchises page. */
+.tm-app a.tm-org-cell { text-decoration: none; color: inherit; }
+
+/* Sticky header on desktop: the board scrolls inside its own box so the
+   column heads stay put (the /mlbstats/ rule; below 1025 px the page is the
+   only scroll, as there). */
+@media (min-width: 1025px) {
+  #tradeboard-content .tm-board-tablewrap { overflow: auto; max-height: calc(100vh - 210px); }
+  .tm-board-table thead th { position: sticky; top: 0; z-index: 2; }
 }
 
 /* The export chip sits in its own strip above the header row on narrow
@@ -351,4 +378,7 @@
   #trade-machine .tm-hit { min-height: 44px; }
   #trade-machine .tm-x { min-width: 44px; min-height: 44px; }
   #trade-machine .tm-name { padding: 12px 0; }
+  .tm-app a.tm-org-cell { min-height: 44px; min-width: 44px; }
+  .tm-app .tm-how > summary { padding: 12px 0; }
+  .tm-app .tm-related a { display: inline-block; padding: 12px 0; }
 }

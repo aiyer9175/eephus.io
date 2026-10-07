@@ -688,7 +688,7 @@ function renderTradeMachine(opts) {
          </div>
          <div class="tm-balrow">
            <span class="tm-balverdict ${vClass}">${vText}</span>
-           <span class="fa-sub"><span data-gl="surplus_value">surplus</span>: prospect surplus NPV + MLB club control window surplus (guaranteed seasons in full, unsigned seasons through the fifth projected season) · $${BALANCED_THRESHOLD_MM}M dead-band</span>
+           <span class="fa-sub">side totals in <span data-gl="surplus_value">surplus</span> · $${BALANCED_THRESHOLD_MM}M balanced band · basis in How this works</span>
          </div>
          <div class="tm-controls">
            <button class="chip" data-tm-clear type="button">Clear</button>
@@ -697,8 +697,10 @@ function renderTradeMachine(opts) {
          </div>
        </div>`
     : "";
+  // The builder's own title is gone (display pass 2026-10-07): the section
+  // heading above the mount says "Deal builder" and carries the trade_machine
+  // glossary hook the title used to carry.
   el.innerHTML = `<div class="tm-wrap">
-    <div class="detail-title" style="font-size:13px;"><span data-gl="trade_machine">Trade Machine</span></div>
     <div class="tm-grid">${sideHtml("a", "Side A")}${sideHtml("b", "Side B")}</div>
     ${verdict}
     ${_tmCbtHtml()}
@@ -1459,7 +1461,7 @@ function _renderTBRows() {
       <td class="tm-player">${href ? `<a class="fa-player-link" href="${href}">${name}</a>` : name}</td>
       <td class="tm-num tm-dim">${p.age != null ? Number(p.age).toFixed(1) : "-"}</td>
       <td class="tm-dim">${pos}</td>
-      <td><span class="tm-org-cell">${org ? _tmTeamLogo(org, true) : ""}<span class="tm-org-abbr">${org}</span></span></td>
+      <td>${org ? `<a class="tm-org-cell" href="/franchise/#team=${encodeURIComponent(p.org)}" onclick="event.stopPropagation();" title="${org} on Franchises">${_tmTeamLogo(org, true)}<span class="tm-org-abbr">${org}</span></a>` : ""}</td>
       <td class="tm-num tm-dim">${fv}</td>
       <td class="tm-num tm-col-div tm-grade">${grade ? `<span class="tm-grade-chip" style="color:${tvCol};border-color:${tvCol};" title="Trade Value Grade ${grade} (${_tbFmt(tv)} contract-adjusted surplus)">${grade}</span>` : ""}</td>
       <td class="tm-num tm-surplus" style="color:${tvCol};">${_tbFmt(tv)}</td>
@@ -1568,7 +1570,6 @@ function _tbInjectGfxChip() {
   row.insertAdjacentHTML("beforeend", window.EEPHUS_GFX.chipHTML("tm-board-gfx", "Generate GFX"));
   const btn = document.getElementById("tm-board-gfx");
   if (btn) {
-    btn.style.marginLeft = "8px";
     btn.onclick = () => window.EEPHUS_GFX.open(_tmBoardSpec(_tbLastRows));
   }
 }
@@ -1798,6 +1799,9 @@ function _tbShowGroup(playerKey) {
     // first board render replaces it.
     const lw = document.getElementById("tradeboard-content");
     if (lw && window.EephusState) lw.innerHTML = window.EephusState.html("loading", "Loading the trade-value board...");
+    // The section headings carry glossary terms; eephus-gl wires only the
+    // masthead on its own.
+    document.querySelectorAll("#proj-view-trademachine .newsprint-eyebrow").forEach(_tmWireGl);
     // The deal builder needs no data to draw its two empty sides, so it draws
     // now rather than after the board file: drawing it late moved everything
     // under it (QCLP03). A #tm= seed retries on the render after the data.

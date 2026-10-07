@@ -302,3 +302,61 @@ def test_touch_targets_reach_44_px_at_390(server):
           }));
           return out; }""")
         assert small == [], small[:5]
+
+
+# ------------------------------------------------------ display pass ------ #
+
+def test_the_page_opens_on_two_sections_and_folds_its_method():
+    import build_site
+    page = build_site.build_trademachine()
+    # the module sheet precedes the markup it styles (first-paint layout shift)
+    assert page.index("trademachine.css") < page.index('id="proj-view-trademachine"')
+    # two h2 section heads; the builder's carries the trade_machine term
+    assert re.search(r'<h2 class="newsprint-eyebrow-label tm-eyebrow-h2"><span class="g-term" '
+                     r'data-gl="trade_machine">Deal builder</span></h2>', page)
+    assert '<h2 class="newsprint-eyebrow-label tm-eyebrow-h2" id="tm-board-title">Trade-value board</h2>' in page
+    # the method is folded, not deleted: the rental leg's no-floor disclosure stays
+    how = page.split('<details class="tm-how">', 1)[1].split("</details>", 1)[0]
+    assert "<details" not in how and "open" not in page.split('<details class="tm-how"', 1)[1][:10]
+    for must in ("Rental leg:", "No floor: negative means the salary still owed exceeds the production",
+                 "Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted",
+                 "predicts no club's answer"):
+        assert must in how, must
+    assert "tm-ros-note" not in page
+    assert '<nav class="tm-related" aria-label="Related modules">' in page
+    # the controls share one bar
+    bar = page.split('<div class="filter-toggle-row">', 1)[1].split("</div>", 1)[0]
+    assert 'id="tb-search"' in bar and "data-collapse-target" in bar
+
+
+def test_the_fold_reads_a_third_less_and_names_the_module_once(server):
+    with _page(server) as (pg, errors):
+        pg.wait_for_timeout(800)
+        txt = pg.evaluate("""() => {
+          const H = window.innerHeight, main = document.querySelector('main');
+          const w = document.createTreeWalker(main, NodeFilter.SHOW_TEXT); let n = 0; const seen = [];
+          while (w.nextNode()) {
+            const t = w.currentNode, s = (t.textContent || '').trim(); if (!s) continue;
+            const el = t.parentElement; const st = getComputedStyle(el);
+            if (st.display === 'none' || st.visibility === 'hidden') continue;
+            if (el.closest('table, select, script, style, .px-state')) continue;
+            const d = el.closest('details'); if (d && !d.open && !el.closest('summary')) continue;
+            const r = document.createRange(); r.selectNodeContents(t); const b = r.getBoundingClientRect();
+            if (!b.width || b.top >= H || b.bottom <= 0) continue;
+            n += s.split(/\s+/).filter(x => /[A-Za-z0-9$]/.test(x)).length; seen.push(s);
+          }
+          return [n, seen.join(' | ')]; }""")
+        words, seen = txt
+        assert words <= 71, (words, seen)          # 107 before the pass (1280 x 900, light)
+        assert "Rental leg" not in seen and "Bayesian surplus" not in seen
+        assert seen.count("Trade Machine") == 1, seen  # the h1 only (was the h1, an eyebrow and a title)
+        assert not errors, errors
+
+
+def test_no_page_scroll_at_390_and_clubs_link_to_franchises(server):
+    with _page(server, w=390, h=844, touch=True) as (pg, errors):
+        sw = pg.evaluate("[document.documentElement.scrollWidth, window.innerWidth]")
+        assert sw[0] <= sw[1], sw
+        href = pg.get_attribute(".tm-board-table a.tm-org-cell >> nth=0", "href")
+        assert re.fullmatch(r"/franchise/#team=[A-Z]{2,3}", href), href
+        assert not errors, errors
