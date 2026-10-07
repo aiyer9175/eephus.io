@@ -31,6 +31,15 @@ writes exactly data/_labs/awards/frozen_<S>.json once and appends its sha256 to
 data/_labs/awards/freeze_log.json, with the flag either way; data/_labs/ ships
 in neither deploy consumer.
 
+THE RACE (AWARDS_5_RACE; AWARDS_PLAN 4.6). Each season's race block is copied
+from the tracked data/_labs/awards/race_<S>.json (mode wpa_order, written once
+on the dev box by tools/awards_race.py for 2018, 2019 and 2021 to 2026). From
+RULE_PLACE_FIRST (2027) on, a season with no tracked file gets a rule_place
+block built from the nightly vintages: from Opening Day each successful run
+writes .cache/awards_vintages/<date>.json (the Top 10 per award and league on
+the rule; the first write of a date wins; under the preview's awards_vintages
+folder while the flag is False), never a tracked file.
+
 THE ONE NETWORK READ. war_source.stint_frame(side, provider=<display provider>)
 downloads Baseball-Reference's war_daily file through pybaseball (batting goes
 through pybaseball's disk cache; pitching is a live download in every process,
@@ -95,6 +104,20 @@ DATA = ROOT / "data"
 CACHE = ROOT / ".cache"
 LABS = DATA / "_labs" / "awards"
 PREVIEW = CACHE / "awards" / "preview"
+#: The race from 2027 (AWARDS_PLAN 4.6, mode rule_place): from Opening Day of this season
+#: the nightly writes one vintage a date (the Top VINTAGE_TOP per award and league on the
+#: rule, first write of a date wins) under VINTAGES, or under the preview's own
+#: awards_vintages folder while the flag is False, and builds the race block from them on
+#: the machine that runs it. Nothing tracked is written by the nightly: the box's nightly
+#: checkout would revert it; tools/awards_race.py writes the tracked race_<S>.json once on
+#: the dev box after the season closes.
+RULE_PLACE_FIRST = 2027
+VINTAGE_TOP = 10
+VINTAGES = CACHE / "awards_vintages"
+RACE_RULE_LABEL = ("Place on the selection rule among every eligible player, week by week, "
+                   "from the site's nightly records.")
+RACE_RULE_PRODUCER = (".cache/awards_vintages/<date>.json top[<award>_<league>], the "
+                      "exporter's nightly Top 10 on the rule")
 
 SCHEMA = 1
 PRODUCED_BY = "awards_export.py"
@@ -391,6 +414,10 @@ class _Ctx:
         self.registry_doc = inp.data_json("model_registry.json", required=False) or {}
         self.winners = inp.labs_json("award_winners.json", required=False)
         self._worlds: dict = {}
+        #: The rule_place race (2027 on): where the nightly vintages live, and tonight's
+        #: record before it is written (so the race block carries tonight's point).
+        self.vintage_dir: Path | None = None
+        self.pending_vintage: dict | None = None
 
     def rookie_block(self, season: int):
         for blk in self.rookies.get("seasons") or []:
@@ -1083,7 +1110,13 @@ def _through(ctx: _Ctx, S: int, st: dict):
 
 
 def _race(ctx: _Ctx, S: int) -> dict:
+    """The race block: the tracked data/_labs/awards/race_<S>.json when it exists (mode
+    wpa_order, tools/awards_race.py), else from RULE_PLACE_FIRST on the rule_place race
+    built from the nightly vintages on this machine."""
     doc = ctx.inp.labs_json(f"race_{S}.json", required=False)
+    if doc is None and S >= RULE_PLACE_FIRST and ctx.vintage_dir is not None:
+        pending = ctx.pending_vintage if (ctx.pending_vintage or {}).get("season") == S else None
+        doc = rule_place_race(load_vintages(ctx.vintage_dir, S, pending=pending))
     out = {}
     for award in A.AWARDS:
         for lg in A.LEAGUES:
@@ -1139,6 +1172,134 @@ def _shard_doc(ctx: _Ctx, p: dict, *, status: str, generated_at: str) -> dict:
     }
     doc["registry"] = _registry_block(ctx, _registry_ids(doc))
     return doc
+
+
+# --- the rule_place race (2027 on) ----------------------------------------------------------
+
+def vintage_dir(cache_dir=None, preview_dir=None) -> Path:
+    """Where the nightly vintages live: .cache/awards_vintages once the flag is True; while
+    it is False, the preview's own awards_vintages folder (the flag's rule: the exporter
+    writes only under the preview)."""
+    if A.AWARDS_LIVE:
+        return (Path(cache_dir) / "awards_vintages") if cache_dir is not None else VINTAGES
+    if preview_dir is not None:
+        base = Path(preview_dir)
+    elif cache_dir is not None:
+        base = Path(cache_dir) / "awards" / "preview"
+    else:
+        base = PREVIEW
+    return base / "awards_vintages"
+
+
+def vintage_record(cur: dict, *, date: str, war_provider: str, generated_at: str) -> dict:
+    """One night's record: the Top VINTAGE_TOP per award and league on the rule, from the
+    season payload's full ballots (the live files, before any frozen record applies)."""
+    top = {}
+    for (award, lg), full in sorted((cur.get("full") or {}).items(),
+                                    key=lambda kv: (A.AWARDS.index(kv[0][0]), kv[0][1])):
+        top[f"{award}_{lg}"] = [
+            {"id": str(_row_key(r)), "name": r.get("name") or r.get("club"),
+             "rank": int(r["rank"]), "score": r.get("score")}
+            for r in (full.get("top") or [])[:VINTAGE_TOP]]
+    return {"schema": SCHEMA, "produced_by": PRODUCED_BY, "season": int(cur["season"]),
+            "date": date, "through": cur.get("through"), "war_provider": war_provider,
+            "generated_at": generated_at, "top": top}
+
+
+def write_vintage(vdir: Path, record: dict) -> bool:
+    """Write <date>.json once: the first write of a date wins, a later one is a no-op."""
+    path = Path(vdir) / f"{record['date']}.json"
+    if path.exists():
+        return False
+    _write_bytes(path, _dump(record))
+    return True
+
+
+def load_vintages(vdir: Path, S: int, *, pending: dict | None = None) -> list:
+    """The season's vintages on disk, by date, plus tonight's pending record when its date
+    is not on disk yet (the disk's record wins a date: first write wins)."""
+    out = {}
+    d = Path(vdir)
+    if d.exists():
+        for f in sorted(d.glob("*.json")):
+            try:
+                rec = json.loads(f.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if isinstance(rec, dict) and int(rec.get("season") or 0) == int(S) and rec.get("date"):
+                out[str(rec["date"])] = rec
+    if pending and int(pending.get("season") or 0) == int(S) and str(pending["date"]) not in out:
+        out[str(pending["date"])] = pending
+    return [out[k] for k in sorted(out)]
+
+
+def _iso_week(day: str) -> tuple:
+    return tuple(_dt.date.fromisoformat(day).isocalendar()[:2])
+
+
+def rule_place_race(vintages: list) -> dict:
+    """{"MVP_AL": block, ...} in mode rule_place from the nightly vintages. One column per
+    ISO week from the first record to the last; a week's point is the latest record whose
+    data run through that week (its `through`, else its date); a week with no record is
+    listed in `missing` (its Sunday) with null places and values. The three rows are the
+    latest record's Top 3; a place is 1, 2 or 3 among the whole pool, null outside it."""
+    if not vintages:
+        return {}
+    by_week: dict = {}
+    for rec in vintages:
+        day = str(rec.get("through") or rec["date"])[:10]
+        wk = _iso_week(day)
+        cur = by_week.get(wk)
+        if cur is None or str(rec["date"]) > str(cur[1]["date"]):
+            by_week[wk] = (day, rec)
+    first_day = min(day for day, _r in by_week.values())
+    record_starts = min(str(rec.get("through") or rec["date"])[:10] for rec in vintages)
+    last_day = max(day for day, _r in by_week.values())
+    weeks, missing, recs = [], [], []
+    d = _dt.date.fromisoformat(first_day)
+    end = _dt.date.fromisoformat(last_day)
+    while True:
+        wk = tuple(d.isocalendar()[:2])
+        sunday = d + _dt.timedelta(days=6 - d.weekday())
+        if wk in by_week:
+            weeks.append(by_week[wk][0])
+            recs.append(by_week[wk][1])
+        else:
+            weeks.append(sunday.isoformat())
+            missing.append(sunday.isoformat())
+            recs.append(None)
+        if sunday >= end:
+            break
+        d = sunday + _dt.timedelta(days=1)
+    latest = vintages[-1]
+    out = {}
+    for key, rows in (latest.get("top") or {}).items():
+        three = rows[:3]
+        if len(three) < 3:
+            continue
+        places = {r["id"]: [] for r in three}
+        values = {r["id"]: [] for r in three}
+        for rec in recs:
+            idx = {x["id"]: x for x in ((rec or {}).get("top") or {}).get(key) or []}
+            for r in three:
+                x = idx.get(r["id"])
+                rank = int(x["rank"]) if x is not None else None
+                places[r["id"]].append(rank if rank is not None and rank <= 3 else None)
+                values[r["id"]].append(x.get("score") if x is not None else None)
+        out[key] = {
+            "mode": "rule_place", "metric_label": RACE_RULE_LABEL,
+            "producer": RACE_RULE_PRODUCER, "registry": A.SELECTION_REGISTRY,
+            "war_provider": latest.get("war_provider"),
+            "weeks": weeks, "record_starts": record_starts, "missing": missing,
+            "finalists": [{"id": r["id"], "name": r.get("name"), "rule_place": int(r["rank"])}
+                          for r in three],
+            "places": places, "values": values,
+        }
+    return out
+
+
+def _season_started(cur: dict) -> bool:
+    return any((A._num(c.get("gp")) or 0) > 0 for c in cur["world"]["standings"]["clubs"])
 
 
 # --- the vote table --------------------------------------------------------------------------
@@ -1605,6 +1766,7 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
         ctx, labs = _context(season=season, data_dir=data_dir, cache_dir=cache_dir,
                              labs_dir=labs_dir, model_dir=model_dir)
         S = ctx.board_season if season is None else int(season)
+        ctx.vintage_dir = vintage_dir(cache_dir, preview_dir)
         frozen = _frozen_record(ctx, labs, S)
         try:
             cur = _season_payload(ctx, S)
@@ -1614,6 +1776,10 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
         reasons = _refusals(ctx, cur, i1)
         if reasons:
             raise AwardsRefusal("; ".join(reasons))
+        if S >= RULE_PLACE_FIRST and frozen is None and _season_started(cur):
+            ctx.pending_vintage = vintage_record(
+                cur, date=_dt.date.today().isoformat(), war_provider=ctx.provider,
+                generated_at=generated_at)
         copies = _copy_check(ctx, cur)
         if frozen is not None:
             record, sha, entry = frozen
@@ -1712,6 +1878,12 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
                 "out_dir": str(out), "files": {}, "top3": {}, "status": None}
     for name, raw in files.items():
         _write_bytes(out / name, raw)
+    vintage = None
+    if ctx.pending_vintage is not None:
+        wrote = write_vintage(ctx.vintage_dir, ctx.pending_vintage)
+        vintage = str(Path(ctx.vintage_dir) / f"{ctx.pending_vintage['date']}.json")
+        log(f"  awards: vintage {ctx.pending_vintage['date']} "
+            + ("written" if wrote else "already on file (first write wins)"))
     top3 = {f"{a}_{lg}": [r.get("name") for r in blk["top"][:3]]
             for a, by in cur["awards"].items() for lg, blk in by.items()}
     win = ctx.winners or {}
@@ -1721,7 +1893,7 @@ def export(out_dir=Path("data"), season=None, *, log=print, data_dir=None, cache
     log(f"  awards: {msg}; wrote {len(files)} files to {out}")
     return {"ok": True, "reason": None, "message": msg, "n_rows": n_rows, "out_dir": str(out),
             "files": {k: len(v) for k, v in files.items()}, "top3": top3,
-            "status": payload["status"]}
+            "status": payload["status"], "vintage": vintage}
 
 
 def _span(seasons) -> str:
