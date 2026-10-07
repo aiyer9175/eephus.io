@@ -98,29 +98,55 @@ def test_retained_rows_cannot_reach_the_contract_set():
 
 
 def test_served_aavs_are_the_employing_club_obligation():
-    """Pin the two adjudicated figures against the cached pages: Arenado
-    serves at ARI's $5.5M schedule, Castellanos at SD's $304,492 dead row.
-    Skips when the Spotrac cache is absent (it is not committed)."""
+    """Pin the two adjudicated cases against the cached pages. Skips when the
+    Spotrac cache is absent (it is not committed).
+
+    RE-PINNED 2026-10-04 (docs/ARBITRATION_GATE.md section 12). The 2026-10-03
+    refetch is the first with Spotrac's year columns starting at 2027, so the
+    2026 column rolled off. Arenado: the ARI row now reads $6,000,000 (the AAV
+    over the 2027 column; $5.5M over 2026-2027 at section 10), the STL
+    retained row $18,611,113 (was $27,361,111). Castellanos: his 2026-only SD
+    dead row ($304,492 at section 10) is gone, so he has no contract row on SD.
+    The adjudicated rule is unchanged: the employing club's row serves and a
+    retained row never enters the contract set."""
     import spotrac
     from bs4 import BeautifulSoup
-    cases = {
-        "arizona-diamondbacks": ("arenado", 5_500_000),
-        "san-diego-padres": ("castellanos", 304_492),
-    }
-    for slug, (frag, want) in cases.items():
+
+    def _parse(slug, table_ids):
         p = ROOT / ".cache" / f"spotrac_team_{slug}.html"
         if not p.exists():
             pytest.skip("spotrac team cache not present")
         soup = BeautifulSoup(p.read_text("utf-8", errors="replace"),
                              "html.parser")
         rows = []
-        for tid in spotrac.CONTRACT_TABLE_IDS:
+        for tid in table_ids:
             t = soup.find("table", id=tid)
             if t is not None:
                 rows.extend(spotrac._parse_team_contract_table(t, slug))
-        got = [r for r in rows if frag in r["player_key"]]
-        assert got, f"{frag} not found on {slug}"
-        assert got[0]["aav_usd"] == want, (frag, got[0]["aav_usd"], want)
+        return rows
+
+    # Arenado: the employing club's (ARI) row, at the figure the parser reads.
+    ari = [r for r in _parse("arizona-diamondbacks", spotrac.CONTRACT_TABLE_IDS)
+           if "arenado" in r["player_key"]]
+    assert ari, "arenado not found on arizona-diamondbacks"
+    assert ari[0]["aav_usd"] == 6_000_000, ari[0]["aav_usd"]
+    stl_contract = [r for r in _parse("st-louis-cardinals", spotrac.CONTRACT_TABLE_IDS)
+                    if "arenado" in r["player_key"]]
+    assert not stl_contract, "the STL retained row reached the contract set"
+    stl_retained = [r for r in _parse("st-louis-cardinals", spotrac.STATUS_TABLE_IDS)
+                    if "arenado" in r["player_key"]]
+    for r in stl_retained:
+        assert r["aav_usd"] != ari[0]["aav_usd"], "ARI serves the STL retained figure"
+    served = spotrac.build_contracts_by_key(ari + stl_contract)["nolan_arenado"]
+    assert served["team_slug"] == "arizona-diamondbacks"
+
+    # Castellanos: rolled off SD; the PHI retained row still never competes.
+    sd = [r for r in _parse("san-diego-padres", spotrac.CONTRACT_TABLE_IDS)
+          if "castellanos" in r["player_key"]]
+    assert not sd, ("castellanos is back on SD's contract tables: re-pin", sd)
+    phi = [r for r in _parse("philadelphia-phillies", spotrac.CONTRACT_TABLE_IDS)
+           if "castellanos" in r["player_key"]]
+    assert not phi, "the PHI retained row reached the contract set"
 
 
 def test_the_adjudication_is_recorded_where_the_flag_was():

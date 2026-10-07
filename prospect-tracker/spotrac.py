@@ -895,6 +895,22 @@ def build_contracts_by_key(rows: list[dict], keep_alts: bool = False) -> dict[st
     return out
 
 
+def is_status_only(row: dict) -> bool:
+    """True for a contract-table row that carries club-control STATUS but no
+    money: no positive money year and no signed_through. Its ARB / PRE-ARB
+    tokens are wanted (the salary path prices from them through
+    arb_dataset.spotrac_status_by_mlbam); its aav_usd of 0 is not a contract.
+
+    Measured 2026-10-04: since the 2026-10-03 refetch Spotrac's year columns
+    start at 2027, so every player whose only money was his 2026 salary now
+    reads as a status-only row, and 987 of 1,205 contract-table rows are one.
+    The parser keeps aav_usd 0 for them (other readers sum it); the
+    projections join reads this predicate instead."""
+    sal = row.get("salary_by_year") or {}
+    return (row.get("signed_through") is None
+            and not any((v or 0) > 0 for v in sal.values()))
+
+
 def build_org_ifa_spending(signings: list[dict]) -> dict[str, dict[int, dict]]:
     """Aggregate signings into per-org per-year spending totals.
 

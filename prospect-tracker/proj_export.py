@@ -644,6 +644,39 @@ def _resolve_contracts(mlbams, names: dict[int, str], contracts: dict[str, dict]
     return assigned, contested
 
 
+def _join_contract(c: dict, slug_to_org: dict[str, str]) -> dict:
+    """One collapsed Spotrac row as the projections join reads it.
+
+    A STATUS-ONLY row (spotrac.is_status_only: no positive money year, no
+    signed_through) keeps its status_by_year, position and club, carries
+    aav_usd None rather than 0, and is marked status_only so it never counts as
+    a contract for the plain-key award (`_awards_plain_key`). Since the
+    2026-10-03 refetch Spotrac's year columns start at 2027, and a player whose
+    only money was 2026 reads this way; served as a $0 AAV he showed on 716 of
+    1,400 veteran rows."""
+    from spotrac import is_status_only
+    out = {**c, "team_code": slug_to_org.get(c.get("team_slug"))}
+    if is_status_only(c):
+        out["aav_usd"] = None
+        out["status_only"] = True
+    return out
+
+
+def _awards_plain_key(ct: dict | None) -> bool:
+    """May this contract hand a collided name its plain key? Only a PRICED one.
+    A status-only row says which club controls a player, not which of two
+    same-named players is the flagship, so it never moves a plain key."""
+    return bool(ct) and not ct.get("status_only")
+
+
+def _award_winner(rows: list[dict], ct: dict | None) -> dict | None:
+    """The claimant a contested contract is awarded to: the highest projected
+    WAR row, and nobody when the contract is absent or status-only."""
+    if not rows or not _awards_plain_key(ct):
+        return None
+    return max(rows, key=lambda m: m.get("warTotal") or 0.0)
+
+
 def _season_value_usd(war: float, t: int, dpw_level: float) -> float:
     """One projected season priced on the platform's convex tier curve at
     the winter's ex-ante $/WAR level, escalated t seasons out. In unified
@@ -1235,7 +1268,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         if ct:
             _apply_contract(m, ct)
             # A resolved collision winner takes the plain key back (links/joins).
-            if _ambiguous and contracts.get(_nkey) is ct:
+            if _ambiguous and contracts.get(_nkey) is ct and _awards_plain_key(ct):
                 m["key"] = _nkey
         m = _clean(m)
         out.append(m)
@@ -1253,9 +1286,9 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
     _ct_final = dict(_ct_by_mlbam)
     for _ck, rows in _collision_rows.items():
         ct = contracts.get(_ck)
-        if not ct or not rows:
+        winner = _award_winner(rows, ct)
+        if winner is None:
             continue
-        winner = max(rows, key=lambda m: m.get("warTotal") or 0.0)
         _apply_contract(winner, ct)   # mutates the row already in `out`
         if winner.get("mlbam") is not None:
             _ct_final[winner["mlbam"]] = ct
@@ -3374,7 +3407,7 @@ def _build_payload_body() -> dict:
     slug_to_org = {slug: code for code, slug in _SPOTRAC_TEAM_SLUGS.items()}
     contracts = {}
     for key, c in build_contracts_by_key(scrape_all_spotrac_contracts()).items():
-        contracts[key] = {**c, "team_code": slug_to_org.get(c.get("team_slug"))}
+        contracts[key] = _join_contract(c, slug_to_org)
     dpw = _winter_dpw(FIRST_SEASON)
     vets = _veteran_rows(corpus, names, contracts, dpw)
     prospects = _prospect_rows(dpw)
