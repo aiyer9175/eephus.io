@@ -842,3 +842,41 @@ in its own commit, with its own before and after, and C1', C2' and C10' score
 the repaired chain. This section is the registration the C10' response in
 `tools/arb_path_gate.py` names as the repair of the blocking defect on the
 salary leg.
+
+## 12. 2026-10-04: the 2026 Spotrac column roll-off and the section 10 pins
+
+Recorded 2026-10-04. Nothing above this section is edited; section 10 and its
+heading stand as written, and this section records new readings beside them.
+
+**The cause.** The Spotrac refetch of 2026-10-03 is the first whose team-page
+year columns start at 2027: the 2026 column rolled off. Every figure section 10
+pinned was read over a grid that still carried 2026, so the pins moved with the
+input, not with any change to the rule.
+
+**The two adjudicated cases, re-read on the cached pages of 2026-10-03.**
+
+| Player | Section 10 reading | Reading after the roll-off |
+|---|---|---|
+| Nolan Arenado, ARI active row (employing club, serves) | $5,500,000 AAV (2026: 5,000,000 / 2027: 6,000,000) | $6,000,000 AAV over the 2027 column |
+| Nolan Arenado, STL retained row (status table, never competes) | $27,361,111 | $18,611,113 (2027 only) |
+| Nick Castellanos, SD dead row (employing club, served) | $304,492 | no row: his SD obligation was 2026 only |
+| Nick Castellanos, PHI retained row (never competes) | $19,695,508 | no row on the PHI page |
+
+**The rule is unchanged.** The employing club's row serves and a retained row
+never enters the contract set (`spotrac.CONTRACT_TABLE_IDS` excludes
+`dataTable-retained`). `test_arb_gatec_verify.py::
+test_served_aavs_are_the_employing_club_obligation` is re-pinned to the readings
+in the right-hand column: Arenado's ARI AAV equals the figure the parser reads
+now and is not the STL retained figure; Castellanos has no contract row on SD,
+and no PHI row reaches the contract set.
+
+**A second effect of the same roll-off, on the projections join.** A player
+whose only money was his 2026 salary now parses as a status-only row (ARB or
+PRE-ARB tokens, no money year, no signed_through): 987 of the 1,205
+contract-table rows. `proj_export` had served such a row as a $0 AAV (716 of
+1,400 veteran rows against 2 at the step A copy) and counted it as a contract
+for the plain-key award. From 2026-10-04 the join (`proj_export._join_contract`,
+`spotrac.is_status_only`) keeps the row's tokens, club and position, carries no
+AAV, and never lets it move a plain key; the salary path prices those seasons
+from the tokens through the arbitration board, as before. Served surplus did
+not move (no row by more than $1M; none at all on the worktree regen).

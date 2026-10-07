@@ -171,3 +171,81 @@ def test_resolve_cache_hit_untouched_for_normal_players(tmp_path, monkeypatch):
     assert stats.resolve_mlbam_id("konnor_griffin", "Konnor Griffin") == 700000
     # No rewrite happened.
     assert json.loads(cache_file.read_text()) == {"konnor_griffin": 700000}
+
+
+# ---------------------------------------------------------------------------
+# The projections plain-key award (proj_export, 2026-10-04)
+# ---------------------------------------------------------------------------
+# Since the 2026-10-03 refetch Spotrac's year columns start at 2027, so a
+# player whose only money was his 2026 salary now reads as a STATUS-ONLY row
+# (ARB / PRE-ARB tokens, no money year, no signed_through). Counted as a
+# contract, such a row moved three plain keys against the step A copy:
+# jose_fermin from STL 665877 to LAA 820862 and logan_allen onto CLE 671106.
+# A status-only row says which club controls a player, not which of two
+# same-named players is the flagship, so it never moves a plain key.
+
+def _status_only_row(team="los-angeles-angels"):
+    return {"player_key": "jose_fermin", "team_slug": team, "aav_usd": 0,
+            "salary_by_year": {}, "status_by_year": {2027: "PRE-ARB"},
+            "signed_through": None, "position": "RP"}
+
+
+def test_status_only_predicate():
+    import spotrac
+    assert spotrac.is_status_only(_status_only_row())
+    priced = {**_status_only_row(), "salary_by_year": {2027: 800_000},
+              "signed_through": 2027, "aav_usd": 800_000}
+    assert not spotrac.is_status_only(priced)
+
+
+def test_the_join_serves_no_zero_aav_for_a_status_only_row():
+    import proj_export as pe
+    ct = pe._join_contract(_status_only_row(), {"los-angeles-angels": "LAA"})
+    assert ct["aav_usd"] is None and ct["status_only"] is True
+    assert ct["status_by_year"] == {2027: "PRE-ARB"} and ct["team_code"] == "LAA"
+    assert not pe._awards_plain_key(ct)
+    # A priced row passes through with its AAV and no mark.
+    priced = pe._join_contract({**_status_only_row(), "aav_usd": 900_000,
+                                "salary_by_year": {2027: 900_000},
+                                "signed_through": 2027}, {})
+    assert priced["aav_usd"] == 900_000 and "status_only" not in priced
+
+
+def test_a_status_only_row_never_moves_a_plain_key():
+    import proj_export as pe
+    stl = {"key": "jose_fermin__665877", "mlbam": 665877, "warTotal": 0.7}
+    laa = {"key": "jose_fermin__820862", "mlbam": 820862, "warTotal": 1.2}
+    ct = pe._join_contract(_status_only_row(), {"los-angeles-angels": "LAA"})
+    # The contested award hands it to nobody...
+    assert pe._award_winner([stl, laa], ct) is None
+    # ...and a priced contract still goes to the highest projected WAR claimant.
+    priced = pe._join_contract({**_status_only_row(), "aav_usd": 900_000,
+                                "salary_by_year": {2027: 900_000},
+                                "signed_through": 2027}, {})
+    assert pe._awards_plain_key(priced)
+    assert pe._award_winner([stl, laa], priced) is laa
+    assert pe._award_winner([], priced) is None
+    # Both award sites in the veteran builder go through the same predicate.
+    import inspect
+    src = inspect.getsource(pe._veteran_rows)
+    assert "_awards_plain_key(ct)" in src and "_award_winner(rows, ct)" in src
+
+
+def test_served_plain_keys_are_held_by_a_priced_contract():
+    """On the served payload: a name two veterans share keeps its plain key
+    only on a row a PRICED contract reached (it carries `thru`), and no veteran
+    row serves a $0 AAV without a signed season."""
+    from pathlib import Path
+    p = Path(__file__).parent / "data" / "mlb_projections.json"
+    if not p.exists():
+        import pytest
+        pytest.skip("data/mlb_projections.json not built")
+    vets = json.loads(p.read_text("utf-8")).get("vets") or []
+    keys = {v.get("key") for v in vets}
+    bad = [v["key"] for v in vets
+           if v.get("key") and "__" not in v["key"]
+           and any(k and k.startswith(v["key"] + "__") for k in keys)
+           and v.get("thru") is None]
+    assert not bad, bad[:5]
+    zero = [v["key"] for v in vets if v.get("aav") == 0 and v.get("thru") is None]
+    assert not zero, zero[:5]

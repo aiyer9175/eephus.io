@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "generated_at": "2026-10-04T11:59:24+00:00",
- "as_of": "2026-10-04",
+ "generated_at": "2026-10-07T14:52:17+00:00",
+ "as_of": "2026-10-07",
  "model_id": "provisional_v2",
  "producer": "provisional_v2.py (efv_export.regen_all)",
  "port_version": "pg2-port-1",
@@ -14,7 +14,7 @@
   "W6_end": "2027-04-15",
   "W12_end": "2027-10-15"
  },
- "universe": "roster players with a MiLB line in the feature season, age 25 or under, no MLB line, and no label-source opinion dated on or before 2026-10-04",
+ "universe": "roster players with a MiLB line in the feature season, age 25 or under, no MLB line, and no label-source opinion dated on or before 2026-10-07",
  "label_sources": [
   "fangraphs",
   "mlb_pipeline",

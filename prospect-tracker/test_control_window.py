@@ -297,16 +297,38 @@ def test_the_caminero_row_is_the_owners_report_answered():
     dollars move every pass, so nothing here pins one; the STRUCTURE is the
     claim: a guarantee that ends before the control window, a control window
     that reaches the last season the path prices, and a basis that names both
-    halves."""
+    halves.
+
+    RE-PINNED 2026-10-04 (the 2026-10-03 Spotrac refetch, whose year columns
+    start at 2027). Caminero's only guarantee was his 2026 salary, which is now
+    history: his Spotrac row carries PRE-ARB / ARB tokens and no money year, so
+    he has no guarantee at all and his window is the arbitration projection's
+    alone. The structure is therefore asserted, in full, on every served row
+    that still has a guarantee ending before its control end (3 at the re-pin:
+    bryce_miller, cole_ragans, vinnie_pasquantino; 2 after the 2026-10-07
+    refetch, which took bryce_miller's 2027 money off his page), and Caminero
+    is asserted as the roll-off left him."""
+    rows = [v for v in _vets()
+            if v.get("thru") is not None and v.get("ctrlThru") is not None
+            and v["thru"] < v["ctrlThru"]]
+    assert rows, "no served row has a guarantee ending before its control end"
+    for row in rows:
+        assert row.get("salThru") is not None, row["key"]
+        assert row["ctrlThru"] == max(row["thru"], row["salThru"]), row["key"]
+        assert row["ctrlThru"] > row["thru"], ("the owner's report, unrepaired", row["key"])
+        assert row.get("ctrlEst") is True, row["key"]
+        assert row.get("salSrc") == "contract+arb", (row["key"], row.get("salSrc"))
+    print(f"guarantee before control end: {len(rows)} rows "
+          f"({', '.join(sorted(r['key'] for r in rows))})")
     row = next((v for v in _vets() if v["key"] == "junior_caminero"), None)
     if row is None:
         pytest.skip("junior_caminero not on the served board")
-    assert row.get("salThru") is not None and row.get("thru") is not None
-    assert row["ctrlThru"] == max(row["thru"], row["salThru"])
-    assert row["ctrlThru"] > row["thru"], "the owner's report, unrepaired"
+    assert row.get("salSrc") == "arb_projection", row.get("salSrc")
+    assert row.get("thru") is None, "a guarantee came back: re-pin to the structure above"
+    assert row.get("aav") is None, "a status-only Spotrac row served as an AAV"
     assert row.get("ctrlEst") is True
-    assert row.get("salSrc") == "contract+arb"
-    print(f"caminero: guaranteed {row['thru']}, club control {row['ctrlThru']}, "
+    assert row["ctrlThru"] == row["salThru"] == 2030
+    print(f"caminero: no guarantee (2026 rolled off), club control {row['ctrlThru']}, "
           f"basis {row['salSrc']}, surplus {row.get('surTotal')}")
 
 
