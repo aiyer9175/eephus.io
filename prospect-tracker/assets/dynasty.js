@@ -171,6 +171,49 @@
   }
   function sections() { return (S.data && S.data.sections) || {}; }
 
+  // ---- the injury chip (wiring W02, 2026-10-07) ------------------------------
+  // A Dynasty or Call-up Watch row carries the PROSPX card's own il_status
+  // (type and placement date) as `il`, and health_profile's Tommy John surgery
+  // date as `tj`, copied by the exporter off the same timeseries build. Days on
+  // the IL count the way the PROSPX Injured list counts them (whole days since
+  // the placement date, local midnight). DISPLAY ONLY: no score, sort, filter
+  // or tier reads these fields.
+  function daysSince(iso) {
+    if (!iso) return null;
+    var t = new Date(iso + "T00:00:00").getTime();
+    if (isNaN(t)) return null;
+    return Math.max(0, Math.floor((Date.now() - t) / 86400000));
+  }
+  // Whole calendar months since the surgery date.
+  function monthsSince(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+    if (!m) return null;
+    var now = new Date();
+    var n = (now.getFullYear() - Number(m[1])) * 12 + (now.getMonth() + 1 - Number(m[2]));
+    if (now.getDate() < Number(m[3])) n -= 1;
+    return Math.max(0, n);
+  }
+  function injuryChips(d) {
+    var out = "";
+    if (d && d.il) {
+      var days = daysSince(d.il.since);
+      var type = d.il.type ? String(d.il.type) : "";
+      out += '<span class="dyn-inj dyn-inj-il" title="' +
+        esc("On the " + (type ? type + " " : "") + "injured list" +
+          (d.il.since ? " since " + d.il.since : "") +
+          (days != null ? " (" + days + " day" + (days === 1 ? "" : "s") + ")" : "") + ", as on PROSPX") + '">' +
+        esc((type ? type + " " : "") + "IL") + (days != null ? " &middot; " + days + "d" : "") + "</span>";
+    }
+    if (d && d.tj) {
+      var mo = monthsSince(d.tj.date);
+      out += '<span class="dyn-inj dyn-inj-tj" title="' +
+        esc(d.tj.date ? ("Tommy John surgery " + d.tj.date + (mo != null ? ", " + mo + " month" + (mo === 1 ? "" : "s") + " ago" : ""))
+          : "Tommy John surgery on file, date not on file") + '">' +
+        "Post-TJ" + (mo != null ? " &middot; " + mo + " mo" : "") + "</span>";
+    }
+    return out;
+  }
+
   // ---- filter bar (2026-08-16) ----------------------------------------------
   // A VIEW over the served rows, never a re-rank: the diamond keeps the model
   // rank whatever survives the filter. Name is a case-insensitive substring;
@@ -292,7 +335,8 @@
       title: "Sort by name", get: function (d) { return d.name; },
       cell: function (d) {
         return '<div class="dyn-id ff-id"><span class="mlb-name">' + teamLogo(d.org) + " " + nameLink(d.mlbam, d.name) +
-          '</span><span class="mlb-sub">' + esc(d.pos || "") + (d.org ? " &middot; " + esc(d.org) : "") + "</span></div>";
+          '</span><span class="mlb-sub">' + esc(d.pos || "") + (d.org ? " &middot; " + esc(d.org) : "") +
+          injuryChips(d) + "</span></div>";
       } },
     { key: "efv", label: "eFV", term: "xfv", where: "head", track: "72px", strong: true,
       title: "eFV board grade, same as PROSPX, rounded to nearest.",
@@ -566,7 +610,11 @@
       // up, eFV and plus-stats round to nearest.
       var grade = (c.fvE != null) ? String(Math.round(c.fvE))
         : (c.fv != null ? String(Math.ceil(c.fv)) : "-");
-      return '<tr><td class="dyn-nm">' + nameLink(c.mlbam, c.name) + "</td><td>" + esc(c.org) +
+      // The CSV export reads the name alone (data-export-text), not the chip.
+      var chips = injuryChips(c);
+      return '<tr><td class="dyn-nm"' + (chips ? ' data-export-text="' + esc(c.name) + '"' : "") + ">" +
+        nameLink(c.mlbam, c.name) +
+        (chips ? '<span class="dyn-inj-row">' + chips + "</span>" : "") + "</td><td>" + esc(c.org) +
         "</td><td>" + esc(c.pos) + "</td><td>" + esc(c.eta) + '</td><td class="dyn-sc">' + grade + "</td></tr>";
     }).join("");
     return filterBar(null, false) +
@@ -1310,6 +1358,12 @@
     ".dyn-tier{font:600 10px/1 var(--font-retro,monospace);color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border);padding:2px 6px;white-space:nowrap}",
     ".dyn-tier.dyn-tier-elite{color:var(--text-on-accent);background:var(--accent-green);border-color:transparent}",
     ".dyn-tier.dyn-tier-one{color:var(--accent-cyan);border-color:var(--accent-cyan)}",
+    ".dyn-inj{font:600 10px/1 var(--font-retro,monospace);border:1px solid var(--border);color:var(--text-secondary);padding:2px 5px;white-space:nowrap}",
+    ".dyn-inj-il{color:var(--accent-red);border-color:var(--accent-red)}",
+    ".dyn-inj-row{display:inline-flex;flex-wrap:wrap;gap:4px;margin-left:6px;vertical-align:middle}",
+    // On a phone the chip drops under the name so the Call-up Watch table keeps
+    // its width (inline, it pushed the table 40px past a 390px screen).
+    "@media (max-width:640px){.dyn-inj-row{display:flex;margin:3px 0 0}}",
     ".dyn-win{font:600 10px/1 var(--font-retro,monospace);border:1px solid var(--border);padding:1px 4px;white-space:nowrap}",
     ".dyn-win-in{color:var(--accent-green);border-color:var(--accent-green)}",
     ".dyn-win-out{color:var(--text-tertiary)}",
