@@ -51,7 +51,8 @@ happen inside the called module, so this file alone cannot split them).
 | 9e-pre0h. League, Team Stats and drawer payloads (league_teams preview) | mlb_league_series.json, mlb_team_stats.json, mlbstats_player_index.json, mlbstats_trends.json |
 | 9e-pre-wx. Forecast weather capture (dark, armed) | betting_model_eval.json |
 | 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
-| 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, job_heartbeat.json, slate.json, source_backtest.json, xfv_scoreboard_eval.json |
+| 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, job_heartbeat.json, slate.json |
+| 9e-post-scores. Scores / Standings job health (read-only) | source_backtest.json, xfv_scoreboard_eval.json |
 | 9g. eFV scoreboard refresh (xfv_scoreboard_eval.json) | efv_matrix_eval.json, efv_progress.json, model_updates.json, xfv_scoreboard_eval.json |
 | d10. FA signing-window refresh | mlb_projections.json |
 | d10b. FA re-export off fresh projections | - |

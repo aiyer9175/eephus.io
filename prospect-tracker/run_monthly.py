@@ -520,6 +520,12 @@ SCHEDULED_EXPORTS = (
     # raise, or a build with no steal rows, files a red and the committed file
     # stands.
     "mgmt_steal_context",
+    # THE SCORES / STANDINGS JOB (SCORES_5b, step 9e-post-scores). Same shape
+    # and the same reason as the two captures above: tools/scores_job.py runs
+    # on its own */2 cron and exits 0 on every legitimate no-op. Filed off
+    # .cache/scores/ and only on a machine meant to run the job, so a stopped
+    # job prints "!!! INGEST RED: scores_job" where it should be running.
+    "scores_job",
 )
 
 # The Awards board's health row (steps d10h and 6b7f, _export_awards_board,
@@ -680,6 +686,162 @@ def _statsapi_standings_health(season: int, *, log: logging.Logger | None = None
     (record or _record_ingest)("statsapi_standings", ok, int(n or 0), message,
                                scope=str(int(season)), log=log)
     return ok, int(n or 0), message
+
+
+# ===========================================================================
+# THE SCORES / STANDINGS JOB'S HEALTH ROW (SCORES_5b_LAUNCH_NAV_HEALTH)
+# ===========================================================================
+# tools/scores_job.py runs on its own */2 cron (the box) or scheduled task
+# (this machine), outside this pipeline, and exits 0 on every legitimate
+# no-op, so a cron that stopped reads in the log exactly like a quiet night.
+# Step 9e-post-scores files `scores_job` off the job's own store
+# (.cache/scores/, which survives `git checkout -- .`): READ, NEVER IMPORTED,
+# and it writes nothing but this one ingest row. It files ONLY on a machine
+# meant to run the job (EEPHUS_SCORES_HOST=1, set in the box's
+# /etc/eephus.env, or a heartbeat already on disk); elsewhere it files
+# nothing, so a machine without the job never carries a standing red row.
+# The four states are pipeline_ops.md 1.11's as SCORES_PLAN 2.5 amends them:
+# a refusal counts only when the same file stays refused 6 hours or more
+# (the job's per-file counter in state.json), and per-game fetch failures are
+# counted apart from job-level fetch_failed and never turn the row red.
+SCORES_JOB_LABEL = "Scores / Standings job"
+SCORES_HEALTH_STALE_MIN = 60
+SCORES_HEALTH_FETCH_FAILED_SHARE = 0.10
+SCORES_HEALTH_REFUSAL_H = 6.0
+SCORES_HEALTH_WINDOW_H = 24
+
+
+def _scores_store() -> Path:
+    """The job's store, resolved the way tools/scores_job.store_dir() does."""
+    env = os.environ.get("EEPHUS_SCORES_STORE")
+    return Path(env) if env else Path(__file__).resolve().parent / ".cache" / "scores"
+
+
+def _scores_stamp(s):
+    try:
+        dt = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _scores_read_json(path: Path):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _scores_iso(dt) -> str:
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") if dt else "never"
+
+
+def _scores_job_health(*, store: Path | None = None, env=None, now: datetime | None = None,
+                       record=None, log: logging.Logger | None = None):
+    """File the `scores_job` ingest row from the job's heartbeat, the last 24
+    hours of its run logs, its slate and its per-file refusal counter, all
+    read from the store. Returns (ok, n_files_written, message), or None when
+    this machine is not meant to run the job (no row is filed then)."""
+    store = Path(store) if store is not None else _scores_store()
+    env = os.environ if env is None else env
+    hb_path = store / "heartbeat.json"
+    if str(env.get("EEPHUS_SCORES_HOST") or "").strip() != "1" and not hb_path.exists():
+        if log:
+            log.info("scores job health: not a scores host (no EEPHUS_SCORES_HOST=1 "
+                     "and no %s); no row filed", hb_path)
+        return None
+    rec = record or _record_ingest
+    try:
+        now = now or datetime.now(timezone.utc)
+        since = now - timedelta(hours=SCORES_HEALTH_WINDOW_H)
+        hb = _scores_read_json(hb_path) if hb_path.exists() else None
+        last_run = _scores_stamp((hb or {}).get("last_run_utc")) if isinstance(hb, dict) else None
+
+        runs = []
+        for d in sorted({since.date(), now.date()}):
+            try:
+                lines = (store / f"runlog-{d.isoformat()}.jsonl").read_text(
+                    encoding="utf-8").splitlines()
+            except OSError:
+                continue
+            for ln in lines:
+                try:
+                    r = json.loads(ln) if ln.strip() else None
+                except ValueError:
+                    r = None
+                at = _scores_stamp(r.get("at")) if isinstance(r, dict) else None
+                if at is not None and since <= at <= now:
+                    runs.append(r)
+        runs.sort(key=lambda r: str(r.get("at")))
+
+        slate = _scores_read_json(store / "slate.json")
+        games = None
+        if isinstance(slate, dict):
+            games = []
+            for g in slate.get("games") or []:
+                st = _scores_stamp(g.get("start")) if isinstance(g, dict) else None
+                if st is not None and since <= st <= now:
+                    games.append(g)
+
+        state = _scores_read_json(store / "state.json")
+        refused = state.get("refused_files") if isinstance(state, dict) else None
+        long_refused, short_refused = [], 0
+        for name, e in sorted(refused.items() if isinstance(refused, dict) else []):
+            if not isinstance(e, dict):
+                continue
+            s0, s1 = _scores_stamp(e.get("since")), _scores_stamp(e.get("last"))
+            if s0 is None or s1 is None or s1 < since:
+                continue
+            if (s1 - s0).total_seconds() >= SCORES_HEALTH_REFUSAL_H * 3600:
+                long_refused.append(name)
+            else:
+                short_refused += 1
+
+        def _c(r, k):
+            counts = r.get("counts")
+            try:
+                return int((counts.get(k) if isinstance(counts, dict) else 0) or 0)
+            except (TypeError, ValueError):
+                return 0
+        n_runs = len(runs)
+        n_ff = sum(1 for r in runs if r.get("action") == "fetch_failed")
+        n_pf = sum(1 for r in runs if r.get("action") == "publish_failed")
+        n_game_ff = sum(_c(r, "game_fetch_failed") for r in runs)
+        n_written = sum(_c(r, "files_written") for r in runs)
+        n_games = len(games) if games is not None else 0
+        last_reason = next((str(r.get("reason") or "") for r in reversed(runs)
+                            if r.get("action") in ("fetch_failed", "publish_failed", "refused")),
+                           str((hb or {}).get("reason") or "") if isinstance(hb, dict) else "")[:160]
+        head = f"!!! SCORES RED: the {SCORES_JOB_LABEL} (tools/scores_job.py)"
+
+        if not isinstance(hb, dict):
+            msg = (f"{head} has never run on this box (no readable {hb_path}); "
+                   "install the */2 line and run --selfcheck")
+        elif ((last_run is None or (now - last_run) > timedelta(minutes=SCORES_HEALTH_STALE_MIN))
+              and (games is None or games)):
+            msg = (f"{head} stopped at {_scores_iso(last_run)} while the slate lists "
+                   f"{'an unreadable schedule' if games is None else f'{n_games} game(s)'} "
+                   f"in the last 24 h; check the cron line and run --selfcheck")
+        elif ((n_runs and n_ff / n_runs > SCORES_HEALTH_FETCH_FAILED_SHARE)
+              or n_pf or long_refused):
+            msg = (f"{head} is running but failing: {n_ff} of {n_runs} run(s) fetch_failed, "
+                   f"{n_pf} publish_failed, {len(long_refused)} file(s) refused "
+                   f"{SCORES_HEALTH_REFUSAL_H:.0f} h or more"
+                   f"{' (' + ', '.join(long_refused[:3]) + ')' if long_refused else ''}; "
+                   f"last reason: {last_reason or 'none recorded'}")
+        else:
+            msg = (f"{SCORES_JOB_LABEL}: {n_written} file(s) written in 24 h over "
+                   f"{n_games} game(s); {n_runs} run(s), {n_ff} fetch_failed, "
+                   f"{n_game_ff} per-game fetch failure(s), {short_refused} file(s) refused "
+                   f"under {SCORES_HEALTH_REFUSAL_H:.0f} h; last ran {_scores_iso(last_run)}")
+        ok = not msg.startswith("!!!")
+    except Exception as e:                                # noqa: BLE001
+        ok, n_written = False, 0
+        msg = f"!!! SCORES RED: the {SCORES_JOB_LABEL} health read crashed: {e}"
+    rec("scores_job", ok, n_written, msg, log=log)
+    if not ok and log:
+        log.error("%s", msg)
+    return ok, n_written, msg
 
 
 # ===========================================================================
@@ -4342,6 +4504,17 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     _hb.record("betting_learning", ok=False, result=str(_e)[:120])
                 except Exception:
                     pass
+
+        # --- 9e-post-scores. Scores / Standings job health (read-only) -------
+        # SCORES_5b (SCORES_PLAN 2.5, pipeline_ops.md 1.11): the `scores_job`
+        # ingest row, read off .cache/scores/ and never off the job's code;
+        # files nothing on a machine not meant to run the job. Its only write
+        # is the row itself. See _scores_job_health.
+        with _step("9e-post-scores. Scores / Standings job health (read-only)", log):
+            try:
+                _scores_job_health(log=log)
+            except Exception:                            # noqa: BLE001
+                log.exception("daily: scores job health failed - continuing")
 
         # --- 9g. eFV scoreboard refresh (xfv_scoreboard_eval.json) --------
         # The /diamond/ receipts read this artifact and NOTHING regenerated it:

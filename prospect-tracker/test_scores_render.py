@@ -291,10 +291,11 @@ def test_the_flip_serves_the_page_and_a_preview_root_never_writes_the_tree(tmp_p
     assert calls == [] and path == tmp_path / "scores" / "index.html" and path.exists()
     assert build_site.write_scores_page() == str(build_site.ROOT / "scores" / "index.html")
     assert calls == ["scores/index.html"]
-    # the page stays off the nav and off the sitemap until SCORES_5b
+    # SCORES_5b put the page on the nav (one leaf, SC-NAV slot) and in the sitemap;
+    # test_scores_health.py pins the slot, the label and the sitemap row
     hrefs = [c[2] for it in build_site.NAV_ITEMS for c in (it["children"] if isinstance(it, dict) else [it])]
-    assert "/scores/" not in hrefs
-    assert "/scores/" not in build_site.build_sitemap([])
+    assert hrefs.count("/scores/") == 1
+    assert build_site.build_sitemap([]).count("/scores/</loc>") == 1
 
 
 def test_shell_is_a_pure_reader_on_the_ledger_pattern():
