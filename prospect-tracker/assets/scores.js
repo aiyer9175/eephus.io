@@ -132,9 +132,8 @@
     var w = (L.window || {})[date];
     return !!(w && w.live > 0);
   }
-  // scoresStaleState(latest, serverNowMs, viewedDate): plan 2.4, evaluated in
-  // the order S4, S3, S2, S0, S1 (S1 is the default row). serverNowMs is the
-  // Date header of the latest response, else the client clock.
+  // scoresStaleState: plan 2.4, order S4, S3, S2, S0, S1 (S1 default);
+  // serverNowMs is the latest response's Date header, else the client clock.
   function scoresStaleState(L, serverNowMs, viewedDate) {
     if (!validLatest(L)) return { code: "S4", sentence: STALE.S4, live: false };
     var now = isNum(serverNowMs) ? serverNowMs : Date.now();
