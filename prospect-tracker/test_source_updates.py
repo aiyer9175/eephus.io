@@ -225,11 +225,11 @@ def test_section_is_in_the_page_index_and_the_nightly():
     js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
     assert 'data-glossary-view="source-updates">Source Updates</button>' in shell
     assert 'id="source-updates-body"' in shell
-    m = re.search(r"\[((?:\s*\"[a-z0-9-]+\"\s*,?)+)\]\s*\.includes\(v\)", js)
-    assert m and '"source-updates"' in m.group(1)
+    # registered once in the view registry (LIBRARY_3), on the Sources shelf
+    assert '{ id: "source-updates", shelf: "sources", label: "Source Updates", body: "source-updates-body",' in js
     # the Library page index lists the section under the module's own name
     assert '["/glossary/#view=source-updates", _suPageTitle("Source Updates")' in js
-    assert re.search(r'<div class="gl-app" data-module-name="[^"]+">', shell)
+    assert re.search(r'<div class="gl-app" data-module-name="[^"]+" data-display-name="[^"]+">', shell)
     rm = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
     assert '_step("d10g. Source update dates (source_updates.json)"' in rm
     import run_monthly

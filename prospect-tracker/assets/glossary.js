@@ -6,16 +6,17 @@
 // =============================================================================
 // eephus.io unified Glossary & Methodology app (/glossary/)
 // =============================================================================
-// Eight views: Terms (search + group nav + A-Z index + entry cards, with
-// artifact-derived receipt blocks on model entries via _receiptSpecs) ·
-// How to Read (annotated anatomy guide) · Methodology (derivations +
-// the industry-comparison section at #industry-comparison + interactive
-// teaching widgets + PDF export) · Source Comparison (the
-// empirical source-vs-source backtest) · Source Accuracy (the
-// who-grades-which-cohort measurement) · Source Updates (the dates each
-// outlet published a list) · Models & Proofs (the model
-// registry ledger) · Library (index of every standalone page). The
-// authoritative list is the view whitelist in syncFromURL below.
+// Four shelves of views: Reference (Terms: search + group nav + A-Z index +
+// entry cards, with artifact-derived receipt blocks on model entries via
+// _receiptSpecs; How to Read: annotated anatomy guide; Formulas) · Methods
+// (Methodology: derivations + the industry-comparison section at
+// #industry-comparison + interactive teaching widgets + PDF export) ·
+// Evidence (Source Comparison: the empirical source-vs-source backtest;
+// Source Accuracy: the who-grades-which-cohort measurement; Calibration;
+// Models & Proofs: the model registry ledger; links to /models/) · Sources
+// (Source Updates: the dates each outlet published a list; Page Index: every
+// standalone page; a link to /sources/). The authoritative list is VIEWS
+// below, mirrored by build_site.GLOSSARY_VIEWS.
 // The guide/methodology/backtest
 // renderers are PORTED from the retired PROSPX Glossary/Methodology tab
 // (owner decision 2026-06-10); the data source for every definition is
@@ -63,6 +64,48 @@
   // (assets/eephus-state.js) instead of an empty page under the search box.
   let _GL_STATE = "loading";
 
+  // The module's display name (build_site.GLOSSARY_DISPLAY_NAME), read once
+  // from the page root so visible copy never carries a literal module name.
+  // Declared above boot() for the TDZ reason _SACC gives.
+  const LIB_NAME = (() => {
+    const a = document.querySelector(".gl-app");
+    return (a && a.dataset && (a.dataset.displayName || a.dataset.moduleName)) || "page";
+  })();
+
+  // ---- the view registry (LIBRARY_3) ---------------------------------------
+  // ONE ordered list of the shelves' leaves. The URL whitelist (with aliases),
+  // the view -> container map and the render dispatch are generated from it;
+  // build_site.GLOSSARY_VIEWS mirrors it to emit the strip and the containers,
+  // and test_library_section_registry asserts the two lists are equal. An
+  // outbound leaf (href) has no body and is a link in the strip; an unlisted
+  // leaf opens from its URL but stays out of the strip until its task fills it.
+  // One entry per line: the parity test reads this block line by line.
+  const SHELVES = ["reference", "methods", "evidence", "sources"];
+  const VIEWS = [
+    { id: "terms", shelf: "reference", label: "Terms", body: "glossary-rows", render: renderTerms, aliases: [] },
+    { id: "guide", shelf: "reference", label: "How to Read", body: "guide-body", render: renderGuide, aliases: [] },
+    { id: "formulas", shelf: "reference", label: "Formulas", body: "formulas-body", render: () => _renderPendingLeaf("formulas"), aliases: [], unlisted: true },
+    { id: "methodology", shelf: "methods", label: "Methodology", body: "methodology-body", render: renderMethodology, aliases: [] },
+    { id: "source-comparison", shelf: "evidence", label: "Source Comparison", body: "source-comparison-body", render: renderSourceComparison, aliases: [] },
+    { id: "source-accuracy", shelf: "evidence", label: "Source Accuracy", body: "source-accuracy-body", render: renderSourceAccuracy, aliases: [] },
+    { id: "calibration", shelf: "evidence", label: "Calibration", body: "calibration-body", render: () => _renderPendingLeaf("calibration"), aliases: [], unlisted: true },
+    { id: "models", shelf: "evidence", label: "Models & Proofs", body: "models-body", render: renderModels, aliases: [], unlisted: true },
+    { id: "models-ledger", shelf: "evidence", label: "Models", href: "/models/", aliases: [] },
+    { id: "model-updates", shelf: "evidence", label: "Model Updates", href: "/models/updates/", aliases: [] },
+    { id: "source-updates", shelf: "sources", label: "Source Updates", body: "source-updates-body", render: renderSourceUpdates, aliases: [] },
+    { id: "data-sources", shelf: "sources", label: "Data Sources", href: "/sources/", aliases: [] },
+    { id: "index", shelf: "sources", label: "Page Index", body: "index-body", render: renderLibrary, aliases: ["library"] },
+  ];
+  const VIEW_BY_ID = {};   // in-page view id -> registry entry
+  const VIEW_OF = {};      // every accepted #view= value (ids and aliases) -> view id
+  for (const v of VIEWS) {
+    if (!v.body) continue;
+    VIEW_BY_ID[v.id] = v;
+    VIEW_OF[v.id] = v.id;
+    for (const a of v.aliases) VIEW_OF[a] = v.id;
+  }
+  function _viewDef() { return VIEW_BY_ID[_S.view] || VIEW_BY_ID.terms; }
+
   function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -81,8 +124,8 @@
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
     if (p.has("view")) {
-      const v = p.get("view");
-      if (["terms", "guide", "methodology", "source-comparison", "source-accuracy", "source-updates", "models", "library"].includes(v)) _S.view = v;
+      const v = VIEW_OF[p.get("view")];
+      if (v) _S.view = v;
     }
     if (p.has("cat")) _S.cat = p.get("cat");
     if (p.has("q")) _S.q = p.get("q");
@@ -805,19 +848,25 @@
 
   // ---- router ----------------------------------------------------------------
   function render() {
-    const ids = { terms: "glossary-rows", guide: "guide-body",
-                  methodology: "methodology-body", "source-comparison": "source-comparison-body",
-                  "source-accuracy": "source-accuracy-body",
-                  "source-updates": "source-updates-body",
-                  models: "models-body", library: "library-body" };
+    const def = _viewDef();
+    // The strip: aria-current="page" on the active leaf and "true" on its
+    // shelf, one state attribute per chip; only the active shelf's leaf row
+    // shows, and an unlisted leaf shows its chip only while it is current.
     document.querySelectorAll("[data-glossary-view]").forEach(b => {
-      const on = b.dataset.glossaryView === _S.view;
+      const on = b.dataset.glossaryView === def.id;
       b.classList.toggle("active", on);
-      b.setAttribute("aria-pressed", on ? "true" : "false");
+      if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+      if (b.hasAttribute("data-gl-unlisted")) b.hidden = !on;
     });
-    for (const [v, id] of Object.entries(ids)) {
-      const el = document.getElementById(id);
-      if (el) el.style.display = v === _S.view ? "" : "none";
+    document.querySelectorAll("[data-gl-shelf-chip]").forEach(b => {
+      const on = b.dataset.glShelfChip === def.shelf;
+      b.classList.toggle("active", on);
+      if (on) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current");
+    });
+    document.querySelectorAll("[data-gl-leaves]").forEach(r => { r.hidden = r.dataset.glLeaves !== def.shelf; });
+    for (const v of Object.values(VIEW_BY_ID)) {
+      const el = document.getElementById(v.body);
+      if (el) el.style.display = v.id === def.id ? "" : "none";
     }
     const bar = document.getElementById("gl-termbar");
     if (bar) bar.style.display = _S.view === "terms" ? "" : "none";
@@ -827,21 +876,45 @@
       const el = document.getElementById(id);
       if (el) el.style.display = _GL_STATE === "ready" ? "" : "none";
     }
-    if (_GL_STATE !== "ready") { _paintGlState(document.getElementById(ids[_S.view])); return; }
-    if (_S.view === "guide") renderGuide();
-    else if (_S.view === "methodology") renderMethodology();
-    else if (_S.view === "source-comparison") renderSourceComparison();
-    else if (_S.view === "source-accuracy") renderSourceAccuracy();
-    else if (_S.view === "source-updates") renderSourceUpdates();
-    else if (_S.view === "models") renderModels();
-    else if (_S.view === "library") renderLibrary();
-    else renderTerms();
+    if (_GL_STATE !== "ready") { _paintGlState(document.getElementById(def.body)); return; }
+    def.render();
+  }
+
+  // A registered leaf whose content another task fills (Formulas, Calibration):
+  // it opens from its URL and says where that material sits today.
+  function _renderPendingLeaf(id) {
+    const el = document.getElementById(VIEW_BY_ID[id].body);
+    if (!el) return;
+    const where = id === "formulas"
+      ? 'Each formula sits on its own entry under <a href="#view=terms">Terms</a> for now.'
+      : 'The calibration tables sit in <a href="#view=methodology">Methodology</a> for now.';
+    const msg = `${escapeHtml(VIEW_BY_ID[id].label)} is not built yet. ${where}`;
+    const S = window.EephusState;
+    el.innerHTML = S ? S.html("empty", msg, "gl-pending-leaf")
+      : `<div class="state-message gl-pending-leaf" role="status">${msg}</div>`;
+  }
+
+  // On load the active leaf chip is brought into view (the strip wraps, so
+  // this only moves the page when the strip itself sits off screen).
+  function _scrollActiveChip() {
+    const a = document.querySelector('[data-glossary-view][aria-current="page"]');
+    if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest", inline: "nearest" });
   }
 
   function boot() {
     syncFromURL();
     document.querySelectorAll("[data-glossary-view]").forEach(b => {
       b.onclick = () => { _S.view = b.dataset.glossaryView; syncToURL(); render(); };
+    });
+    // A shelf chip opens the shelf's first listed in-page leaf.
+    document.querySelectorAll("[data-gl-shelf-chip]").forEach(b => {
+      b.onclick = () => {
+        const sh = b.dataset.glShelfChip;
+        if (_viewDef().shelf === sh) return;
+        const first = VIEWS.find(v => v.shelf === sh && v.body && !v.unlisted);
+        if (!first) return;
+        _S.view = first.id; syncToURL(); render();
+      };
     });
     const inp = document.getElementById("gl-search");
     if (inp) {
@@ -876,7 +949,7 @@
     if (!el) return;
     const S = window.EephusState;
     if (_GL_STATE === "failed") {
-      const msg = "The Library could not be loaded. Check your connection and try again." +
+      const msg = `The ${escapeHtml(LIB_NAME)} could not be loaded. Check your connection and try again.` +
         '<div style="margin-top:12px;"><button class="chip" type="button" id="gl-load-retry">Retry</button></div>';
       el.innerHTML = S ? S.html("failed", msg, "gl-load-state")
         : `<div class="state-message gl-load-state" role="alert">${msg}</div>`;
@@ -890,7 +963,7 @@
       };
       return;
     }
-    const msg = "Loading the Library...";
+    const msg = `Loading the ${escapeHtml(LIB_NAME)}...`;
     el.innerHTML = S ? S.html("loading", msg, "gl-load-state")
       : `<div class="state-message gl-load-state" role="status">${msg}</div>`;
   }
@@ -1210,7 +1283,7 @@ function _methProseHTML() {
       <li><span class="mc-date">2026-07</span> Cross-source scale normalization: each source's grades are quantile-mapped onto the FanGraphs scale over the players both grade before blending, so a hot or cold outlet is de-biased by the shape of its whole distribution. Per-source grades on the card are unchanged; only the consensus scale is.</li>
       <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017-2020 boards (new-format CSVs) + MLB Pipeline 2017-2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021-2023 (3 base years) to 2017-2023 (7), and the common scored set grew with it. On the larger, further-resolved sample the blend's edge over its best single input is two-legged: it separates future contributors better (the AUC leg resolves), while the ordering gap (Spearman) sits inside the noise floor the backtest can resolve. The live legs, floors, and common-set size render in Source Comparison below.</li>
       <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
-      <li><span class="mc-date">2026-06</span> Glossary reorganized into Glossary / Methodology / Source Comparison; taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
+      <li><span class="mc-date">2026-06</span> The page split into three views (today Terms, Methodology and Source Comparison); taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
       <li><span class="mc-date">2026-06</span> Farm grade tree v40: value-tracking reweight. The org letter is now primarily driven by aggregate risk-adjusted controlled surplus (the Value branch, 65%); Development drops from the top weight to a secondary controllable-skill signal (9%), MLB Production 18%, Acquisition Strategy 8%. This stops the grade from reading as a per-prospect tool-development index decoupled from aggregate farm value.</li>
       <li><span class="mc-date">2026-05</span> Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the 40% top weight.</li>
       <li><span class="mc-date">2026-06</span> Consensus FV moved to ACCURACY-WEIGHTED source blending after a vintage-disciplined A/B beat equal-weight on both Spearman and AUC (weights shrunk toward equal, clamped, frozen per vintage; sources without resolved history stay at 1.0). Reverted 2026-07-25, above: the hardened re-measurement could not resolve the win.</li>
@@ -2043,7 +2116,7 @@ function renderGuide() {
 
   el.innerHTML = `
   <div class="guide-wrap">
-    <p class="guide-intro">Every number on the site resolves to a Library entry. This page labels the elements you'll see on a player card, the FV history chart, and a farm-system page, then shows how the metrics build on one another. Click any underlined term for its definition.</p>
+    <p class="guide-intro">Every number on the site resolves to a ${escapeHtml(LIB_NAME)} entry. This page labels the elements you'll see on a player card, the FV history chart, and a farm-system page, then shows how the metrics build on one another. Click any underlined term for its definition.</p>
 
     <h2 class="meth-h">Anatomy of a player card</h2>
     <div class="guide-anat">${cardAnatomy}</div>
@@ -5655,7 +5728,7 @@ function _libraryGroups() {
       ["/pal/#pitchadd", "Alchemy Lab · Pitch Add", "which pitch each arm should add next"],
       ["/pal/#platoon", "Alchemy Lab · Platoon", "platoon-split profiles and pairings"],
       ["/pal/#prospects", "Alchemy Lab · Prospect Watch", "the pipeline read through the lab's conversion lenses"],
-      ["/glossary/#view=models", "Library · Models & Proofs", "the same ledger as /models/, read inside the Library: every predictive model with its verdict and eval artifact, next to the terms it defines"],
+      ["/glossary/#view=models", _suPageTitle("Models & Proofs"), `the same ledger as /models/, read inside the ${LIB_NAME}: every predictive model with its verdict and eval artifact, next to the terms it defines`],
       ["/glossary/#view=source-updates", _suPageTitle("Source Updates"), "the dates each prospect outlet published a list or changed a live list, newest first, grouped by outlet"],
     ] },
   { title: "Player pages",
@@ -5669,7 +5742,7 @@ function _libraryGroups() {
 }
 
 function renderLibrary() {
-  const el = document.getElementById("library-body");
+  const el = document.getElementById("index-body");
   if (!el) return;
   const group = g => {
     const rows = g.rows.map(([href, name, purpose]) => `<tr>
@@ -5703,11 +5776,9 @@ function renderLibrary() {
 // Hoisted functions only (no const at this depth), for the TDZ reason the
 // Library view gives above.
 function _suPageTitle(section) {
-  // The module's display name rides on the shell (build_site reads it from
-  // NAV_ITEMS), so a rename of the module renames this label with it.
-  const app = document.querySelector(".gl-app");
-  const mod = app && app.dataset ? (app.dataset.moduleName || "") : "";
-  return mod ? `${mod} · ${section}` : section;
+  // LIB_NAME is the display name build_site emits on the shell, so a rename
+  // of the module renames this label with it.
+  return LIB_NAME ? `${LIB_NAME} · ${section}` : section;
 }
 
 function _suSlug(s) {

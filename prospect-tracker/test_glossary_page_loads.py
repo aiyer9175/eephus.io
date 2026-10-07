@@ -17,7 +17,6 @@ Playwright is an OPTIONAL dependency; tests skip cleanly without it."""
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 import pytest
@@ -58,6 +57,17 @@ def _browser_page(browser, page_errors):
     page = browser.new_page()
     page.on("pageerror", lambda err: page_errors.append(err.message))
     return page
+
+
+def _open_view(page, view):
+    """Open a view the way a reader does since LIBRARY_3: its shelf chip, then
+    its leaf chip. An unlisted view (Models & Proofs) opens from its URL."""
+    leaf = page.locator(f'[data-glossary-view="{view}"]')
+    if leaf.get_attribute("data-gl-unlisted") is not None:
+        page.evaluate(f"location.hash = '#view={view}'")
+        return
+    page.click(f'[data-gl-shelf-chip="{leaf.get_attribute("data-gl-shelf")}"]')
+    page.click(f'[data-glossary-view="{view}"]')
 
 
 def test_glossary_data_layer_is_valid():
@@ -126,7 +136,7 @@ def test_all_four_views_render(server, browser):
                               ("models", "models-body"),
                               ("source-comparison", "source-comparison-body"),
                               ("source-accuracy", "source-accuracy-body")]:
-            page.click(f'[data-glossary-view="{view}"]')
+            _open_view(page, view)
             try:
                 page.wait_for_function(
                     "id => { const el = document.getElementById(id);"
@@ -657,86 +667,37 @@ def test_source_accuracy_subtabs_render(server, browser):
     assert cs["selection_model"]["why_not"][:50] in cov
 
 
-def test_view_chips_match_whitelist():
-    """THE MISSING GATE. A view is registered in FOUR places and there was no
-    test that they agree, so a chip without a whitelist entry rendered a dead
-    button while the suite stayed green (the 2026-06-10 Source Comparison
-    lesson, documented at the top of this module). All four are asserted here:
-
-      (a) the URL whitelist in assets/glossary.js syncFromURL
-      (b) the view-id -> container-id map in render()
-      (c) the render() dispatch chain
-      (d) the chip row in the built glossary/index.html
-
-    Pure file parsing, no browser: this must fail on a mismatch even where
-    playwright is absent."""
-    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
-    shell = (ROOT / "glossary" / "index.html").read_text(encoding="utf-8")
-
-    m = re.search(r"\[((?:\s*\"[a-z0-9-]+\"\s*,?)+)\]\s*\.includes\(v\)", js)
-    assert m, "could not find the URL view whitelist in assets/glossary.js"
-    whitelist = set(re.findall(r"\"([a-z0-9-]+)\"", m.group(1)))
-
-    m = re.search(r"const ids = \{(.*?)\};", js, re.S)
-    assert m, "could not find the view -> container id map in assets/glossary.js"
-    id_map = dict(re.findall(r"\"?([a-z0-9-]+)\"?\s*:\s*\"([a-z0-9-]+)\"", m.group(1)))
-
-    chips = set(re.findall(r'data-glossary-view="([a-z0-9-]+)"', shell))
-    assert chips, "the built glossary shell has no view chips"
-
-    assert chips == whitelist, (
-        "view chips and the URL whitelist disagree - a chip with no whitelist "
-        f"entry is a dead button.\n  chips only: {sorted(chips - whitelist)}"
-        f"\n  whitelist only: {sorted(whitelist - chips)}")
-    assert set(id_map) == whitelist, (
-        "the view -> container map and the whitelist disagree.\n"
-        f"  map only: {sorted(set(id_map) - whitelist)}"
-        f"\n  whitelist only: {sorted(whitelist - set(id_map))}")
-    for view, body_id in id_map.items():
-        assert f'id="{body_id}"' in shell, \
-            f"view {view!r} maps to #{body_id}, which the built shell does not contain"
-        # Every non-default view needs its own dispatch arm; terms is the else.
-        if view != "terms":
-            assert f'_S.view === "{view}"' in js, \
-                f"view {view!r} is whitelisted and mounted but never dispatched"
-    # Every non-terms container ships hidden, so the router owns visibility.
-    for view, body_id in id_map.items():
-        if view == "terms":
-            continue
-        assert f'<div id="{body_id}" style="display:none;">' in shell, \
-            f"#{body_id} does not ship hidden; it will render stacked under Terms"
-
-
 def test_library_view_renders(server, browser):
-    """The Library view (2026-08-04): #view=library renders the standalone-page
-    index with all three groups and the recon-verified routes. Registered in
-    all four places (build_site chip row, whitelist, view->body map, dispatch)
-    or it silently hangs - the 2026-06-10 Source Comparison lesson. Skips
-    cleanly while the built shell predates the library-body mount div (the
+    """The Page Index view (2026-08-04; id index since LIBRARY_3): the legacy
+    #view=library alias renders the standalone-page index with all three
+    groups and the recon-verified routes. The view registry (assets/glossary.js
+    VIEWS, mirrored by build_site.GLOSSARY_VIEWS, pinned equal by
+    test_library_section_registry) replaced the four registration points.
+    Skips cleanly while the built shell predates the index-body mount div (the
     orchestrator rebuild republishes it)."""
     page_errors: list[str] = []
     page = _browser_page(browser, page_errors)
     try:
         page.goto(server + "glossary/index.html#view=library", wait_until="load",
                   timeout=15_000)
-        has_shell = page.evaluate("!!document.getElementById('library-body')")
+        has_shell = page.evaluate("!!document.getElementById('index-body')")
         if not has_shell:
             page.close()
             pytest.skip("built glossary shell predates the Library mount div "
                         "(build_site rebuild pending)")
         page.wait_for_function(
-            "() => { const el = document.getElementById('library-body');"
+            "() => { const el = document.getElementById('index-body');"
             " return !!el && el.innerHTML.indexOf('meth-table') !== -1; }",
             timeout=10_000)
-        html = page.evaluate("document.getElementById('library-body').innerHTML")
+        html = page.evaluate("document.getElementById('index-body').innerHTML")
         visible = page.evaluate(
-            "document.getElementById('library-body').style.display !== 'none'")
+            "document.getElementById('index-body').style.display !== 'none'")
     finally:
         if not page.is_closed():
             page.close()
 
     assert not page_errors, "JS errors on library view:\n  " + "\n  ".join(page_errors)
-    assert visible, "#view=library did not unhide the library body"
+    assert visible, "#view=library did not unhide the page index body"
     for group in ("Full pages", "In-module artifact pages", "Player pages"):
         assert group in html, f"library view missing the {group!r} group"
     # Spot-check recon-verified routes from every module family.
