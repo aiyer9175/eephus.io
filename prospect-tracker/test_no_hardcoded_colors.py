@@ -138,3 +138,14 @@ def test_awards_assets_type_no_colour(rel):
     text = (Path(__file__).parent / rel).read_text(encoding="utf-8")
     assert not re.findall(r"#[0-9a-fA-F]{3,8}\b", text)
     assert not re.search(r"\brgba?\(|\bhsla?\(|gradient\(", text)
+
+
+def test_the_awards_gfx_painter_reads_tokens_only():
+    """AWARDS_10: the kind:"awards" painter in eephus-gfx.js types no colour; every paint
+    is palette() or tok() of a site.css token (AWARDS_PLAN 5.16)."""
+    text = (Path(__file__).parent / "assets" / "eephus-gfx.js").read_text(encoding="utf-8")
+    block = text[text.index("// ---- canvas awards renderer"):text.index("// ---- render dispatch")]
+    assert not re.findall(r"#[0-9a-fA-F]{3,8}\b", block)
+    assert not re.search(r"\brgba?\(|\bhsla?\(", block)
+    assert 'tok("--up", P.pos)' in block and 'tok("--down", P.neg)' in block
+    assert 'tok("--bg-header", fg)' in block and 'tok("--text-on-accent", P.bg)' in block

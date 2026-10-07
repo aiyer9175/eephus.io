@@ -50,18 +50,21 @@
 .aw-glyph { display: block; margin-bottom: 2px; }
 
 .aw-jump { display: flex; gap: 6px; margin: 0 0 10px; }
-.aw-app a.aw-chip, .aw-app a.aw-reg { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 10px;
+.aw-app a.aw-chip, .aw-app a.aw-reg, .aw-app .aw-share { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 10px;
   font: 700 12px var(--font-retro-mono); color: var(--text-secondary); background: var(--bg-secondary);
   border: 1px solid var(--border); text-decoration: none; }
-.aw-app a.aw-chip:hover, .aw-app a.aw-reg:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+.aw-app a.aw-chip:hover, .aw-app a.aw-reg:hover, .aw-app .aw-share:hover { color: var(--text-primary); background: var(--bg-tertiary); }
 .aw-app a.aw-reg { font-size: 11px; padding: 2px 6px; }
+/* Share (AWARDS_10): a button in the chip's dress, after the registry chip */
+.aw-app .aw-share { cursor: pointer; }
+.aw-card-h .aw-reg { margin-left: auto; }
 
 /* The award cards: AL left and NL right from 1024 px, one column below. */
 .aw-group { margin: 18px 0 6px; }
 .aw-gh { margin: 0 0 8px; font: 700 15px var(--font-retro-mono); color: var(--text-primary); letter-spacing: .02em; }
 .aw-pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .aw-card { min-width: 0; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); }
-.aw-card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.aw-card-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .aw-card-h h3 { display: flex; align-items: center; gap: 6px; margin: 0; font: 700 14px var(--font-retro-mono);
   color: var(--text-primary); }
 .aw-kicker { margin: 8px 0 2px; font: 700 11px var(--font-retro-mono); color: var(--text-secondary);
@@ -147,6 +150,6 @@
   .aw-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
 }
 @media (pointer: coarse) {
-  .aw-app a.aw-chip, .aw-app a.aw-reg, .aw-app summary, .aw-season select, .aw-hero a,
+  .aw-app a.aw-chip, .aw-app a.aw-reg, .aw-app .aw-share, .aw-app summary, .aw-season select, .aw-hero a,
   .aw-tabs .mlbstats-tab { min-height: 44px; }
 }

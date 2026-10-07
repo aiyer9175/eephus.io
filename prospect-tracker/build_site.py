@@ -5893,7 +5893,8 @@ def _hof_section_row(live: bool) -> str:
 def build_awards(live: bool | None = None) -> str:
     """The /awards/ page of Awards / HoF: the shared head, then one mount that
     assets/awards.js fills from data/awards.json (Selections; My Ballot is the lazy
-    assets/awards-ballot.js chunk, AWARDS_9; Superlatives, Rule and vote and Method
+    assets/awards-ballot.js chunk, AWARDS_9; Share and Save image load eephus-gfx.js
+    on the first press, AWARDS_10; Superlatives, Rule and vote and Method
     land with AWARDS_8). The value
     ruler and the state component ride the shared head block. Not written to the
     published tree while awards_core.AWARDS_LIVE is False (write_awards_page)."""
@@ -5902,14 +5903,19 @@ def build_awards(live: bool | None = None) -> str:
         + _hof_module_head("awards", live) +
         f'<div id="awards-app-root" class="aw-root"{_csv_optin("awards")}'
         f' data-ballot-js="/assets/awards-ballot.js?v={_AWARDS_BALLOT_VER}"'
-        f' data-ballot-css="/assets/awards-ballot.css?v={_AWARDS_BALLOT_CSS_VER}"></div>'
+        f' data-ballot-css="/assets/awards-ballot.css?v={_AWARDS_BALLOT_CSS_VER}"'
+        f' data-gfx-js="/assets/eephus-gfx.js?v={_GFX_VER}"></div>'
         '</div>'
         f'<link rel="stylesheet" href="/assets/awards.css?v={_AWARDS_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/awards.js?v={_AWARDS_VER}" defer></script>'
     )
+    # The module card (AWARDS_10, tools/pixel_brand_src.AWARDS_CARD) is written only
+    # with the flag on, so a flag-off build keeps the shelf's card.
+    image = (f"{SITE_ORIGIN}/assets/og/awards.png" if PIXEL_BRAND and _awards_live(live)
+             else module_share_image("hof"))
     return page("MLB Awards - eephus.io", "hof", body, _AWARDS_DESCRIPTION,
-                url=f"{SITE_ORIGIN}/awards/", image=module_share_image("hof"))
+                url=f"{SITE_ORIGIN}/awards/", image=image)
 
 
 def write_awards_preview(site: Path | None = None) -> Path:

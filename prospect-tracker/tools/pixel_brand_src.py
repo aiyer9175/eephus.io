@@ -181,6 +181,14 @@ MODULES = (
     ("diamond", "Diamond Pass", "/diamond/",
      "The eephus.io paid tier, when it launches. Nothing is gated today."),
 )
+# The Awards card (AWARDS_10; AWARDS_PLAN 3 and 5.16), beside the hof card above,
+# which stays unchanged because it names the shelf page. Drawn with the aw-podium
+# icon; tools/pixel_brand.py writes assets/og/awards.png only while
+# awards_core.AWARDS_LIVE is True, and into the awards preview otherwise.
+AWARDS_CARD = ("awards", "MLB Awards", "/awards/",
+               "The eephus selection for MVP, Cy Young, Rookie and Manager of the Year, superlatives, "
+               "and a ballot of your own.")
+AWARDS_CARD_ICON = "aw-podium"
 DEFAULT_CARD_TAG = "sabermetrics"
 
 # ---------------------------------------------------------------- the branding bundle
