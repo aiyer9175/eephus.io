@@ -126,6 +126,29 @@
   --text-amber:    var(--text-gold);
   --text-violet:   #6B3FB8;
   --text-green:    #1A6B32;
+  /* MLB NEWS FAMILIES (HOME_2; site-pass plan 3.1, LANE_HOME 2.1). Colour
+     names the family of a news row (Prospects, MLB, Free agency, Trades,
+     Injuries); the pictogram names the event and the value carries the
+     number. --wire-<fam> is the page-ground value (this arm and the dark arm
+     below); --wire-<fam>-panel is theme-fixed, for the near-black terminal
+     panel the ticker, the rail and the /news/ feed sit on, whose name ink
+     and quiet text are --wire-panel-ink and --wire-panel-dim. Lowest text
+     ratios measured (LANE_HOME 2.1; test_wire_type_system.py re-measures in
+     the browser): 5.27 light on tertiary paper, 5.41 dark, 8.14 on the
+     panel. Injury is magenta, not red: red beside the trade orange measured a
+     deutan distance of 3.0. Gold stays out (gold means elite FV). */
+  --wire-pro: #1A6B35;
+  --wire-mlb: #0B5F8A;
+  --wire-fa:  #6B3FC0;
+  --wire-trd: #9A4307;
+  --wire-inj: #A0146E;
+  --wire-pro-panel: #6EE7A8;
+  --wire-mlb-panel: #4EE0FF;
+  --wire-fa-panel:  #C39BFF;
+  --wire-trd-panel: #FFA94D;
+  --wire-inj-panel: #FF7AC0;
+  --wire-panel-ink: #E6FBEF;
+  --wire-panel-dim: #8FB89B;
   --border:        #C9C1AE;
   --border-light:  #E2DCC9;
   /* BUGFIX 2026-08-05: --border-subtle was referenced in nine places and DEFINED
@@ -394,6 +417,12 @@
   --text-amber:    var(--accent-gold);
   --text-violet:   var(--neon-violet);
   --text-green:    var(--accent-green);
+  /* MLB News families, dark page ground (the panel values do not move) */
+  --wire-pro: #4FFF9E;
+  --wire-mlb: #4FD9FF;
+  --wire-fa:  #B47CFF;
+  --wire-trd: #FF9D42;
+  --wire-inj: #FF6EB4;
   --border:        #2B2B31;
   --border-light:  #1D1D21;
   --accent-gold:   #FFD700;   /* refractor gold */
@@ -1090,12 +1119,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 .home-ticker .ticker-track span.tk-logo { width: auto; height: auto; vertical-align: baseline; color: #1a1d12; padding: 1px 4px; background: rgba(245,246,238,0.92); filter: none; }
 .home-ticker .ticker-track a:hover { text-decoration: underline; }
-.home-ticker .ticker-track .up { color: #6ee7a8; } .home-ticker .ticker-track .down { color: #ff8a8a; }
-.home-ticker .ticker-track .signing { color: #b47cff; }   /* FA winter wire */
-.home-ticker .ticker-track .glyph { color: inherit; }   /* panel ink (owner answer PX-Q3) */
-.home-ticker .ticker-track .promo { color: #6ee7a8; } .home-ticker .ticker-track .demo { color: #ff8a8a; }
-.home-ticker .ticker-track .il { color: #ffb454; } .home-ticker .ticker-track .debut { color: #4ee0ff; }
-.home-ticker .ticker-track .trade { color: inherit; }   /* panel ink: the arrows carry the type (PX-Q3) */
+/* A ticker item's pictogram and value take its family colour (the MLB News
+   family rules below); an item outside the registry keeps the panel ink. */
+.home-ticker .ticker-track .glyph { color: inherit; }
+.home-ticker .ticker-track .wire-ico { margin-right: 4px; }
+.home-ticker .ticker-track .tk-name { color: var(--wire-panel-ink); }
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* ---- shell grid ---- */
@@ -1209,14 +1237,43 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   width: auto; height: auto; font: 700 8px var(--font-retro-mono);
   color: #1a1d12; padding: 1px 3px; background: rgba(245,246,238,0.92);
 }
-.feed-item .g.up,    .feed-item .feed-val.up,
-.feed-item .g.promo, .feed-item .feed-val.promo { color: #6ee7a8; }
-.feed-item .g.down,  .feed-item .feed-val.down,
-.feed-item .g.demo,  .feed-item .feed-val.demo  { color: #ff8a8a; }
-.feed-item .g.il,    .feed-item .feed-val.il    { color: #ffb454; }
-.feed-item .g.debut, .feed-item .feed-val.debut { color: #4ee0ff; }
-.feed-item .g.trade, .feed-item .feed-val.trade { color: inherit; } /* panel ink, never gold (owner answer PX-Q3) */
-.feed-item .g.signing, .feed-item .feed-val.signing { color: #b47cff; } /* FA winter wire - refractor violet */
+/* ---- MLB News families (HOME_2; LANE_HOME 2.1 to 2.3) ----
+   Every news row carries data-fam (pro, mlb, fa, trd, inj) and data-type (the
+   type code of build_site._WIRE_TYPES). The family sets --wire-c; the row's
+   pictogram (.wire-ico, at the row lead) and its value (.feed-val, .wire-val)
+   read it, and the name stays in ink. Page ground takes --wire-<fam>; the
+   theme-fixed panel (ticker, rail, /news/ feed) takes --wire-<fam>-panel. No
+   colour per event type: the pictogram names the type. */
+[data-fam="pro"] { --wire-c: var(--wire-pro); }
+[data-fam="mlb"] { --wire-c: var(--wire-mlb); }
+[data-fam="fa"]  { --wire-c: var(--wire-fa); }
+[data-fam="trd"] { --wire-c: var(--wire-trd); }
+[data-fam="inj"] { --wire-c: var(--wire-inj); }
+.home-ticker [data-fam="pro"], .sb-feed [data-fam="pro"] { --wire-c: var(--wire-pro-panel); }
+.home-ticker [data-fam="mlb"], .sb-feed [data-fam="mlb"] { --wire-c: var(--wire-mlb-panel); }
+.home-ticker [data-fam="fa"],  .sb-feed [data-fam="fa"]  { --wire-c: var(--wire-fa-panel); }
+.home-ticker [data-fam="trd"], .sb-feed [data-fam="trd"] { --wire-c: var(--wire-trd-panel); }
+.home-ticker [data-fam="inj"], .sb-feed [data-fam="inj"] { --wire-c: var(--wire-inj-panel); }
+[data-fam] > .wire-ico, [data-fam] .feed-val, [data-fam] .wire-val { color: var(--wire-c); }
+.wire-ico { display: inline-flex; flex: none; line-height: 0; }
+.wire-ico .ico { display: block; }
+.otd-row > .wire-ico { align-self: center; }
+/* The family key (the rail head; the /news/ and /history/ chips): each
+   button's mark in its family colour; pressed, the button takes the colour. */
+.sb-feed .wire-key { display: flex; flex-wrap: wrap; gap: 3px; margin: 0 0 8px; }
+.sb-feed .wire-key .wire-chip {
+  display: inline-flex; align-items: center; gap: 3px; cursor: pointer;
+  font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  padding: 3px 4px; color: var(--wire-c); background: transparent;
+  border: 1px solid color-mix(in srgb, var(--wire-c) 40%, transparent);
+}
+.sb-feed .wire-key .wire-chip:hover { border-color: var(--wire-c); }
+.sb-feed .wire-key .wire-chip.active { background: color-mix(in srgb, var(--wire-c) 18%, transparent); border-color: var(--wire-c); }
+.news-app button.wire-chip { display: inline-flex; align-items: center; gap: 5px; }
+.news-app button.wire-chip[data-fam].active { border-color: var(--wire-c); }
+.news-empty { padding: 2rem 1rem; text-align: center; color: var(--text-tertiary); }
+.sb-feed .news-empty { color: var(--wire-panel-dim); }
+.sb-feed #wire-empty { padding: 10px 2px; margin: 0; font-family: var(--font-retro-mono); font-size: 11px; text-align: left; }
 
 /* ---- /news/ expanded Prospect News page ---- */
 .news-app .news-intro { font-size: 13px; line-height: 1.6; color: var(--text-secondary); max-width: 760px; margin: 6px 0 4px; }
@@ -1773,8 +1830,8 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    Static drawings on whole pixels, tokens only. Each one sits beside the
    numbers it draws and never replaces them: the table, the cell and the
    printed grade stay.
-   Wire pictograms (PX-17): the event type's 12 px icon inside the type's own
-   colour; trade takes the panel's ink (owner answer PX-Q3). */
+   Wire pictograms (PX-17): the event type's 12 px icon, now at the row lead
+   in its family colour (HOME_2, the MLB News family rules). */
 .feed-item .feed-val .ico { vertical-align: -2px; margin-right: 3px; }
 .home-ticker .ticker-track .ico { vertical-align: -1px; }
 /* V3 step sparkline (PX-16): one run per board snapshot, dotted grade rules
@@ -3568,7 +3625,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
    card links and the footer links. */
 @media (max-width: 640px) {
   .news-app button.chip, .feed-day-tm, .kicker .see-all, .xmod-link,
-  .eephus-footer-links a, .px-404-rail a {
+  .eephus-footer-links a, .px-404-rail a, .sb-feed .wire-key .wire-chip {
     min-height: 44px; display: inline-flex; align-items: center;
   }
   .eephus-footer-links { row-gap: 0; }

@@ -32,7 +32,7 @@ def _player(key, points):
 
 
 def _fv_dates(events):
-    return {e[4]: e[0] for e in events if e[1] in ("up", "down")}
+    return {e[4]: e[0] for e in events if e[1] in ("grade_up", "grade_down")}
 
 
 def test_fv_item_keeps_its_first_seen_date_across_live_redating(ledger_path):

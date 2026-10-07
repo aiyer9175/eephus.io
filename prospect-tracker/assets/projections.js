@@ -3478,7 +3478,11 @@
     rows.forEach(r => { const f = tlType(r.type).fam; if (!fams.includes(f)) fams.push(f); });
     const order = ["trd", "fa", "mlb", "inj", "pro"];
     const key = order.filter(f => fams.includes(f)).map(f => {
-      const ico = { trd: "ev-trade", fa: "ev-signing", mlb: "franchise", inj: "ev-il", pro: "px-draft" }[f];
+      // The family mark of the MLB News registry (EEPHUS_HUB.wireFamily, HOME_2)
+      // when the hub is loaded; the interim marks otherwise.
+      const H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+      const wf = H && H.wireFamily && H.wireFamily[f];
+      const ico = (wf && wf.mark) || { trd: "ev-trade", fa: "ev-signing", mlb: "franchise", inj: "ev-il", pro: "prospx" }[f];
       return `<span class="mlbp-tl-key-item" data-fam="${f}">${tlIco(ico)}${TL_FAM[f][1]}</span>`;
     }).join("");
     return `<div class="mlbp-tl-strip" aria-hidden="true">`

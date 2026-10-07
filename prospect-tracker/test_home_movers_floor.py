@@ -69,7 +69,7 @@ def test_spotlight_skips_floor_crossings_and_reads_efv():
 
 def test_wire_rows_label_efv_and_name_floor_crossings():
     events = build_site._collect_events(PLAYERS, [], [])
-    vals = {e[4]: e[7] for e in events if e[1] in ("up", "down")}
+    vals = {e[4]: e[7] for e in events if e[1] in ("grade_up", "grade_down")}
     assert vals["real_riser"] == "+4 eFV"
     assert vals["real_faller"] == "-3 eFV"
     assert vals["floor_riser"] == "off eFV floor"

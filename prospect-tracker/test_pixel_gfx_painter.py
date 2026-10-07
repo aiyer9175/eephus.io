@@ -232,6 +232,8 @@ def test_frames_use_the_painter_at_integer_scales():
 def test_news_day_spec_carries_the_pictogram_key():
     import build_site
     js = build_site._NEWS_GFX_JS
-    assert "ico:TYPE[e.typ]?'ev-'+e.typ:''" in js
+    # HOME_2: the sprite key comes from the MLB News registry (ICO)
+    assert "ico:ICO[e.typ]||''" in js and "__WIRE_TYPES__" in js
+    assert '"debut":["MLB debut","pro","ev-debut"]' in build_site._news_gfx_js()
     assert "glyph:e.glyph||''" in js
     assert "val:e.val||''" in js

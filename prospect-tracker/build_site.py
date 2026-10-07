@@ -525,7 +525,65 @@ _PX_SECTION_ICON = {
     "debuts": "px-debuted", "draft": "px-draft", "ifa": "px-intl",
     "overseas": "px-overseas", "timemachine": "px-timemachine", "charts": "px-scatter",
 }
-_WIRE_ICON = {t: f"ev-{t}" for t in ("up", "down", "promo", "demo", "il", "debut", "trade", "signing")}
+# THE MLB NEWS TYPE REGISTRY (HOME_2; site-pass plan 3.1 to 3.3, LANE_HOME
+# 2.1 and 2.2). Colour names the FAMILY, the pictogram names the event inside
+# it, the value text carries the number or the terms. Every news surface reads
+# these two tables: the ticker, the rail, /news/, /history/, the /news/ GFX
+# painter, and through EEPHUS_HUB.wireType and EEPHUS_HUB.wireFamily in
+# assets/eephus-hub.js (test_wire_type_system.py pins the copies equal) the
+# /projections/ timeline strip. A family's colour is its CSS token: --wire-<fam>
+# on page ground, --wire-<fam>-panel on the theme-fixed terminal panel.
+# tag: the key's label. sr: the hidden prefix every row carries. label: the
+# filter chip. mark: the family's pictogram on the key and the chips.
+_WIRE_FAMILIES = {
+    "pro": {"tag": "PRO", "sr": "Prospect:", "label": "Prospects", "mark": "prospx"},
+    "mlb": {"tag": "MLB", "sr": "MLB:", "label": "MLB", "mark": "franchise"},
+    "fa":  {"tag": "FA", "sr": "Free agency:", "label": "Free agency", "mark": "ev-signing"},
+    "trd": {"tag": "TRD", "sr": "Trade:", "label": "Trades", "mark": "ev-trade"},
+    "inj": {"tag": "IL", "sr": "Injury:", "label": "Injuries", "mark": "ev-il"},
+}
+# type code -> fam, ico (pictogram key), val (value label), weight, rail.
+# ico is the interim symbol of plan 3.3 (HOME_7 swaps in the final keys once
+# PX_SYSTEM_SWEEP draws them); ev-draft and ev-intl are ICON_FOR aliases.
+# weight is the rail and ticker order of plan 3.5 item 4 (0: grade moves order
+# by step size; a 60-day IL placement takes 85; a code the plan does not weigh
+# takes 60 when rail-eligible and 40 otherwise). rail: True, False, or "board"
+# (board players only). The selection that applies weight and rail is HOME_3's;
+# today's rail and ticker keep their order. fa_elect is the one code the plan
+# does not list: the /history/ ledger's DFA rows ("declared free agency").
+_WIRE_TYPES = {
+    "grade_up":      {"fam": "pro", "ico": "ev-up", "val": "grade up", "weight": 0, "rail": True},
+    "grade_down":    {"fam": "pro", "ico": "ev-down", "val": "grade down", "weight": 0, "rail": True},
+    "promo":         {"fam": "pro", "ico": "ev-promo", "val": "promotion", "weight": 50, "rail": True},
+    "demo":          {"fam": "pro", "ico": "ev-demo", "val": "demotion", "weight": 50, "rail": True},
+    "debut":         {"fam": "pro", "ico": "ev-debut", "val": "MLB debut", "weight": 95, "rail": True},
+    "draft_sign":    {"fam": "pro", "ico": "ev-draft", "val": "signed", "weight": 50, "rail": "board"},
+    "intl_sign":     {"fam": "pro", "ico": "ev-intl", "val": "IFA signing", "weight": 50, "rail": "board"},
+    "callup":        {"fam": "mlb", "ico": "ev-promo", "val": "contract selected", "weight": 70, "rail": True},
+    "recall":        {"fam": "mlb", "ico": "ev-promo", "val": "recalled", "weight": 40, "rail": False},
+    "optioned":      {"fam": "mlb", "ico": "ev-demo", "val": "optioned", "weight": 40, "rail": False},
+    "dfa":           {"fam": "mlb", "ico": "franchise", "val": "DFA", "weight": 80, "rail": True},
+    "outright":      {"fam": "mlb", "ico": "franchise", "val": "outrighted", "weight": 40, "rail": False},
+    "claim":         {"fam": "mlb", "ico": "franchise", "val": "claimed", "weight": 75, "rail": True},
+    "release":       {"fam": "mlb", "ico": "franchise", "val": "released", "weight": 60, "rail": True},
+    "retire":        {"fam": "mlb", "ico": "franchise", "val": "retired", "weight": 60, "rail": True},
+    "suspend":       {"fam": "mlb", "ico": "franchise", "val": "suspended", "weight": 60, "rail": True},
+    "rule5":         {"fam": "mlb", "ico": "franchise", "val": "Rule 5 pick", "weight": 58, "rail": True},
+    "award":         {"fam": "mlb", "ico": "hof", "val": "award", "weight": 60, "rail": True},
+    "fa_sign":       {"fam": "fa", "ico": "ev-signing", "val": "MLB deal", "weight": 90, "rail": True},
+    "minor_deal":    {"fam": "fa", "ico": "ev-signing", "val": "MiLB deal", "weight": 40, "rail": False},
+    "opt_declined":  {"fam": "fa", "ico": "ev-signing", "val": "option declined", "weight": 45, "rail": True},
+    "opt_exercised": {"fam": "fa", "ico": "ev-signing", "val": "option exercised", "weight": 45, "rail": True},
+    "qo":            {"fam": "fa", "ico": "ev-signing", "val": "QO offered", "weight": 44, "rail": True},
+    "fa_elect":      {"fam": "fa", "ico": "ev-signing", "val": "elected free agency", "weight": 40, "rail": False},
+    "trade":         {"fam": "trd", "ico": "ev-trade", "val": "trade", "weight": 100, "rail": True},
+    "il_place":      {"fam": "inj", "ico": "ev-il", "val": "IL", "weight": 65, "rail": True},
+    "il_return":     {"fam": "inj", "ico": "ev-il", "val": "activated", "weight": 40, "rail": False},
+}
+# The two pictogram keys that are aliases, not drawings (plan 3.3).
+_WIRE_ICON_ALIAS = {"ev-draft": "px-draft", "ev-intl": "px-intl"}
+# type code -> the sprite symbol it draws, derived from the registry.
+_WIRE_ICON = {code: _WIRE_ICON_ALIAS.get(row["ico"], row["ico"]) for code, row in _WIRE_TYPES.items()}
 
 
 def _merge_icon_maps(*maps: dict) -> dict:
@@ -547,6 +605,7 @@ ICON_FOR = _merge_icon_maps(
     {k: k for k in ("models", "parks", "news", "history", "watchlist", "scores")},
     _PX_SECTION_ICON,
     _WIRE_ICON,
+    _WIRE_ICON_ALIAS,
     # The Awards symbols (AWARDS_7): the podium on the module strip and the award
     # cards, the ballot card on the My Ballot tab.
     {k: k for k in ("aw-podium", "aw-ballot")},
@@ -581,11 +640,50 @@ def _masthead_icon(key: str) -> str:
 
 
 def _wire_glyph(typ: str, glyph: str) -> str:
-    """The wire pictogram (PX-17): a known event type draws its 12 px icon,
-    which takes the colour of the type's own span (trade in the panel's ink,
-    owner answer PX-Q3); an unknown type keeps its text glyph. The GFX blob
-    keeps the text glyph for the canvas painter (PX-18)."""
+    """The wire pictogram (PX-17): a registry type draws its 12 px icon; an
+    unknown type keeps its text glyph. The GFX blob keeps the text glyph for
+    the canvas painter's fallback (PX-18)."""
     return _ico(_WIRE_ICON[typ], 12) if typ in _WIRE_ICON else html.escape(glyph or "")
+
+
+def _wire_attrs(typ: str) -> str:
+    """' data-fam="trd" data-type="trade"' for a registry type code, '' for any
+    other: the family the stylesheet colours by and the code a filter reads."""
+    row = _WIRE_TYPES.get(typ)
+    return f' data-fam="{row["fam"]}" data-type="{typ}"' if row else ""
+
+
+def _wire_lead(typ: str) -> str:
+    """The row lead on every news surface (LANE_HOME 2.3): the type's 12 px
+    pictogram, which takes its family colour, then the family's hidden prefix
+    ("Trade: ") so a screen reader hears the family the colour shows. '' for a
+    type outside the registry, whose text glyph stays in its value."""
+    row = _WIRE_TYPES.get(typ)
+    if not row:
+        return ""
+    return (f'<span class="wire-ico">{_ico(_WIRE_ICON[typ], 12)}</span>'
+            f'{_sr(_WIRE_FAMILIES[row["fam"]]["sr"])}')
+
+
+def _wire_key_html(attr: str, fams: tuple = tuple(_WIRE_FAMILIES),
+                   lead: tuple = (), tail: tuple = (), tags: bool = False) -> str:
+    """The family key as a filter bar: one aria-pressed button per family (its
+    mark in the family colour, then the tag or the chip label), with optional
+    `lead` and `tail` (value, label) buttons around them (All, Grades). `attr`
+    names the data attribute the page's filter script reads."""
+    def btn(val: str, inner: str, pressed: bool, fam: str = "", title: str = "") -> str:
+        fa = f' data-fam="{fam}"' if fam else ""
+        tip = f' title="{html.escape(title)}"' if title else ""
+        return (f'<button type="button" class="chip wire-chip{" active" if pressed else ""}"{fa}{tip} '
+                f'aria-pressed="{"true" if pressed else "false"}" {attr}="{val}">{inner}</button>')
+    out = [btn(v, html.escape(lbl), i == 0) for i, (v, lbl) in enumerate(lead)]
+    for f in fams:
+        fam = _WIRE_FAMILIES[f]
+        text = fam["tag"] if tags else fam["label"]
+        out.append(btn(f, f'<span class="wire-ico">{_ico(fam["mark"], 12)}</span>{html.escape(text)}',
+                       False, fam=f, title=fam["label"] if tags else ""))
+    out += [btn(v, html.escape(lbl), False) for v, lbl in tail]
+    return "".join(out)
 
 
 # The pixel state scenes (final-pass plan 5.7, PX-11), byte-equal to the ART
@@ -2145,8 +2243,20 @@ def _load_fa_events_for_wire() -> list:
     just yields no items. Dates are the pipeline's first-seen stamps."""
     return _cached_data_json("fa_class.json").get("events") or []
 
+@functools.lru_cache(maxsize=None)
+def _fa_member_teams() -> dict:
+    """FA class member key -> the club the member comes from (the members
+    block of data/fa_class.json, field "from"), read once per build."""
+    return {m["key"]: m.get("from") for m in (_cached_data_json("fa_class.json").get("members") or [])
+            if isinstance(m, dict) and m.get("key")}
+
+def _fa_member_team(key) -> str | None:
+    """The club of FA class member `key`, or None."""
+    return _fa_member_teams().get(key) or None if key else None
+
 def _collect_events(players: list, graduates: list, fa_events: list | None = None) -> list:
-    # Each event is (date, typ, glyph, ticker_text, key, org, name, val):
+    # Each event is (date, typ, glyph, ticker_text, key, org, name, val);
+    # `typ` is a type code of the MLB News registry (_WIRE_TYPES):
     # `ticker_text` is the one-string form the scrolling WIRE marquee uses;
     # `name`/`val` are the structured halves the sidebar feed lays out as
     # name-left / value-right (PROSPX row idiom - no wrapping, scannable).
@@ -2227,7 +2337,7 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
         il = p.get("il_status") or {}
         if il.get("is_on_il") and il.get("since"):
             il_label = f'{il.get("type", "")} IL'.strip()
-            add(il.get("since"), "il", "✚", f'{nm} to {il_label}', key, org,
+            add(il.get("since"), "il_place", "✚", f'{nm} to {il_label}', key, org,
                 name=nm, val=il_label, weight=70)
     _save_wire_fv_ledger(fv_ledger, {p.get("player_key") for p in players})
     for g in graduates:
@@ -2236,25 +2346,29 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
             name=g.get("player_name") or "", val="debut", weight=100)
     # Free-agency winter events (signings / option resolutions / QOs) from
     # the FA module's export. "fa:"-prefixed keys route to /fa/, never to a
-    # PROSPX player page; the signing org carries the logo.
+    # PROSPX player page; the signing org carries the logo. An option or QO
+    # event carries no club of its own (its payload has no "from"), so it takes
+    # the club its fa_class member row lists (_fa_member_team).
     for e in (fa_events or []):
         nm = e.get("name") or ""
+        club = e.get("from") or _fa_member_team(e.get("key"))
         key = f'fa:{e.get("key", "")}'
         t = e.get("type")
         if t == "signing":
-            terms = ("MiLB deal" if e.get("milb")
+            milb = bool(e.get("milb"))
+            terms = ("MiLB deal" if milb
                      else f'{e.get("years", "?")}y/${(e.get("guar") or 0) / 1e6:.0f}M')
-            add(e.get("date"), "signing", "✎", f'{nm} signs · {e.get("to", "?")} {terms}',
+            add(e.get("date"), "minor_deal" if milb else "fa_sign", "✎", f'{nm} signs · {e.get("to", "?")} {terms}',
                 key, e.get("to"), name=nm, val=terms, weight=95)
         elif t == "option_declined":
-            add(e.get("date"), "signing", "✎", f'{nm} declines option - enters FA class',
-                key, e.get("from"), name=nm, val=_WIRE_VAL_OPT_DECLINED, weight=85)
+            add(e.get("date"), "opt_declined", "✎", f'{nm} declines option - enters FA class',
+                key, club, name=nm, val=_WIRE_VAL_OPT_DECLINED, weight=85)
         elif t == "option_exercised":
-            add(e.get("date"), "signing", "✎", f'{nm} option exercised - off the FA board',
-                key, e.get("from"), name=nm, val=_WIRE_VAL_OPT_EXERCISED, weight=85)
+            add(e.get("date"), "opt_exercised", "✎", f'{nm} option exercised - off the FA board',
+                key, club, name=nm, val=_WIRE_VAL_OPT_EXERCISED, weight=85)
         elif t == "qo_offered":
-            add(e.get("date"), "signing", "✎", f'{nm} receives qualifying offer',
-                key, e.get("from"), name=nm, val="QO offered", weight=84)
+            add(e.get("date"), "qo", "✎", f'{nm} receives qualifying offer',
+                key, club, name=nm, val="QO offered", weight=84)
     # TJStats board movers are intentionally NOT folded into the wire/ticker
     # (owner ask 2026-06-13). tjstats.export_movers still writes the movers
     # sidecar + source events for the consensus; only the wire display drops.
@@ -2273,15 +2387,11 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
             else:
                 val = f'{"+" if up else ""}{step} {unit}'
                 weight = abs(step)
-            add(d8, "up" if up else "down", "▲" if up else "▼",
+            add(d8, "grade_up" if up else "grade_down", "▲" if up else "▼",
                 f'{nm} {"▲" if up else "▼"} {val}', key, org,
                 name=nm, val=val, weight=weight)
     ev.sort(key=lambda e: (e[0], e[8]), reverse=True)
     return [e[:8] for e in ev]
-
-# Event type -> coarse filter category for the /news/ page filter chips.
-_EVENT_CAT = {"debut": "debut", "trade": "trade", "promo": "move", "demo": "move",
-              "il": "il", "up": "fv", "down": "fv", "signing": "signing"}
 
 def _feed_day_header(dt: str, gfx: bool = False) -> str:
     """One thin date header row that deep-links into Time Machine at that date
@@ -2301,18 +2411,27 @@ def _feed_day_header(dt: str, gfx: bool = False) -> str:
             f'<a class="feed-day-tm" href="/prospx/#tab=timemachine&tm={dt}" '
             f'title="Time Machine - the full board as of {dt}">Time Machine →</a></div>')
 
+def _wire_val_html(typ, glyph, val) -> str:
+    """The row's value in its family colour. A registry type's pictogram leads
+    the row (_wire_lead); a type outside the registry keeps its text glyph
+    here."""
+    g = "" if typ in _WIRE_TYPES else _wire_glyph(typ, glyph)
+    return f'<span class="feed-val">{g}{html.escape(val)}</span>'
+
 def _feed_item_html(typ, glyph, text, key, org, name, val, cat: str = "",
                     title: str = "") -> str:
-    """One wire row: logo | name (ellipsized) | colored value chip. The type
-    glyph lives only in the value chip. `cat` (optional) tags the row for the
-    /news/ filter chips; `title` (optional) is the row's basis tooltip.
-    Shared by the homepage feed + the /news/ page."""
+    """One wire row (LANE_HOME 2.3): pictogram in the family colour | hidden
+    family prefix | logo | name in ink (ellipsized) | value in the family
+    colour. data-fam and data-type carry the family and the type code for the
+    stylesheet and the filters. `cat` (optional) adds a data-cat tag; `title`
+    (optional) is the row's basis tooltip. Shared by the homepage feed + the
+    /news/ page."""
     logo = _team_logo(org, "feed-logo") if org else ""
     data_cat = f' data-cat="{html.escape(cat)}"' if cat else ""
     tip = f' title="{html.escape(title)}"' if title else ""
-    return (f'<a class="feed-item" href="{_player_href(key)}"{data_cat}{tip}>'
-            f'{logo}<span class="feed-name">{html.escape(name or text)}</span>'
-            f'<span class="feed-val {typ}">{_wire_glyph(typ, glyph)}{html.escape(val)}</span></a>')
+    return (f'<a class="feed-item" href="{_player_href(key)}"{_wire_attrs(typ)}{data_cat}{tip}>'
+            f'{_wire_lead(typ)}{logo}<span class="feed-name">{html.escape(name or text)}</span>'
+            f'{_wire_val_html(typ, glyph, val)}</a>')
 
 def _news_detail(p: dict, typ: str) -> str:
     """Scouting line under a player's name on the /news/ page: position, age,
@@ -2339,8 +2458,8 @@ def _news_detail(p: dict, typ: str) -> str:
     return _meta(*parts)
 
 def _news_item_html(typ, glyph, text, key, org, name, val, cat, pmap, title: str = "") -> str:
-    """Richer /news/ row: logo | name + scouting line | current-FV chip | event
-    chip. Reuses _feed_item_html's classes so it inherits the wire palette; the
+    """Richer /news/ row: pictogram | hidden family prefix | logo | name +
+    scouting line | current-FV chip | value. Reuses _feed_item_html's classes so it inherits the wire palette; the
     detail line + FV pill are scoped to .news-feed in CSS, so the homepage
     sidebar wire is untouched. `pmap` maps player_key -> record (players +
     graduates); rows with no match (FA signings) degrade to the plain layout."""
@@ -2351,11 +2470,11 @@ def _news_item_html(typ, glyph, text, key, org, name, val, cat, pmap, title: str
     meta = f'<span class="news-meta">{detail}</span>' if detail else ""
     fv = _fv_pill(p) if (p and p.get("fv_close") is not None) else ""
     tip = f' title="{html.escape(title)}"' if title else ""
-    return (f'<a class="feed-item news-item" href="{_player_href(key)}"{data_cat}{tip}>'
-            f'{logo}'
+    return (f'<a class="feed-item news-item" href="{_player_href(key)}"{_wire_attrs(typ)}{data_cat}{tip}>'
+            f'{_wire_lead(typ)}{logo}'
             f'<span class="news-main"><span class="feed-name">{html.escape(name or text)}</span>{meta}</span>'
             f'{fv}'
-            f'<span class="feed-val {typ}">{_wire_glyph(typ, glyph)}{html.escape(val)}</span></a>')
+            f'{_wire_val_html(typ, glyph, val)}</a>')
 
 def _feed_html(events: list, n: int = 12) -> str:
     # Day-grouped wire (homepage sidebar): a thin per-date header carries the
@@ -2371,20 +2490,24 @@ def _feed_html(events: list, n: int = 12) -> str:
     return "".join(out)
 
 def _ticker_html(events: list, n: int = 14) -> str:
-    # Each item is a mouse-clickable link to the player (or spotlights), color-
-    # coded by type. tabindex=-1 keeps it out of the keyboard/AT path - the
-    # ticker is aria-hidden decoration; the sidebar MLB News feed is the
-    # accessible, keyboard-navigable equivalent.
+    # Each item is a mouse-clickable link to the player (or spotlights) in the
+    # row markup of every news surface (LANE_HOME 2.3): the pictogram and the
+    # value in the family colour, the name in the panel ink. A type outside the
+    # registry keeps its one-string text in the ink. tabindex=-1 keeps it out of
+    # the keyboard/AT path - the ticker is aria-hidden decoration; the sidebar
+    # MLB News feed is the accessible, keyboard-navigable equivalent.
     items = []
-    known = ("up", "down", "promo", "demo", "il", "debut", "trade", "signing")
     for dt, typ, glyph, text, key, org, name, val in events[:n]:
-        cls = typ if typ in known else "glyph"
         href = _player_href(key) if key else "/prospx/#tab=spotlights"
         logo = _team_logo(org, "tk-logo") if org else ""
         title = _wire_row_title(dt, key, val)
         tip = f' title="{html.escape(title)}"' if title else ""
-        items.append(f'<a href="{html.escape(href)}" tabindex="-1"{tip}>{logo}'
-                     f'<span class="{cls}">{_wire_glyph(typ, glyph)}</span> {html.escape(text)}</a>')
+        if typ in _WIRE_TYPES and name:
+            body = (f'{_wire_lead(typ)}{logo}<span class="tk-name">{html.escape(name)}</span> '
+                    f'<span class="feed-val">{html.escape(val)}</span>')
+        else:
+            body = f'{logo}<span class="glyph">{_wire_glyph(typ, glyph)}</span> {html.escape(text)}'
+        items.append(f'<a href="{html.escape(href)}" tabindex="-1"{_wire_attrs(typ)}{tip}>{body}</a>')
     if not items:
         items = [f'<span><span class="glyph">◆</span> {NEWS_LABEL} · live</span>']
     return " ".join(items * 2)  # duplicated for seamless scroll
@@ -2404,8 +2527,8 @@ def _news_recent_events(events: list, window_days: int = 30,
 def _news_feed_html(events: list, pmap: dict | None = None) -> str:
     """Day-grouped feed for the standalone /news/ page: a richer row than the
     homepage sidebar (name + scouting line + current-FV chip), windowed to
-    recent activity and tagged with data-cat so the filter chips can show/hide
-    by category. Each day is wrapped in a .news-day block so a filtered-empty
+    recent activity; each row's data-fam and data-type let the filter chips
+    show/hide by family (and the Grades chip by type). Each day is wrapped in a .news-day block so a filtered-empty
     day hides cleanly. `pmap` resolves player_key -> record for the detail."""
     recent = _news_recent_events(events)
     out = []
@@ -2419,21 +2542,27 @@ def _news_feed_html(events: list, pmap: dict | None = None) -> str:
             out.append('<div class="news-day">')
             out.append(_feed_day_header(dt, gfx=True))
             open_day = True
-        out.append(_news_item_html(typ, glyph, text, key, org, name, val,
-                                   _EVENT_CAT.get(typ, ""), pmap,
+        out.append(_news_item_html(typ, glyph, text, key, org, name, val, "", pmap,
                                    title=_wire_row_title(dt, key, val)))
     if open_day:
         out.append("</div>")
     return "".join(out)
 
-# Tiny dependency-free filter for the /news/ chips: toggles row visibility by
-# data-cat and hides any day block left with no visible items (mirrors the
-# glossary/FA static-page chip idiom).
+# Tiny dependency-free filter for the /news/ chips (the family key, HOME_2):
+# "all", a family (rows whose data-fam matches) or "grades" (owner decision
+# M20-4: the grade_up and grade_down rows). Hides any day block left with no
+# visible items and announces the visible count in the polite status line
+# (the QHOA08 pattern; mirrors the glossary/FA static-page chip idiom).
 _NEWS_FILTER_JS = """<script>
 (function(){
   var bar=document.getElementById('news-filter-bar'),feed=document.getElementById('news-feed');
   if(!bar||!feed)return;
   var empty=null;
+  function match(it,f){
+    if(f==='all')return true;
+    if(f==='grades'){var t=it.getAttribute('data-type');return t==='grade_up'||t==='grade_down';}
+    return it.getAttribute('data-fam')===f;
+  }
   bar.addEventListener('click',function(e){
     var b=e.target.closest('[data-news-filter]');if(!b)return;
     var f=b.getAttribute('data-news-filter');
@@ -2442,7 +2571,7 @@ _NEWS_FILTER_JS = """<script>
     feed.querySelectorAll('.news-day').forEach(function(day){
       var any=false;
       day.querySelectorAll('.feed-item').forEach(function(it){
-        var show=(f==='all')||it.getAttribute('data-cat')===f;
+        var show=match(it,f);
         it.style.display=show?'':'none';if(show){any=true;shown++;}
       });
       day.style.display=any?'':'none';
@@ -2450,10 +2579,9 @@ _NEWS_FILTER_JS = """<script>
     if(!empty){
       empty=document.createElement('div');
       empty.className='news-empty';
-      empty.style.cssText='padding:2rem 1rem;text-align:center;color:var(--text-tertiary,#888);';
       feed.appendChild(empty);
     }
-    if(shown===0){empty.textContent='No items in this category.';empty.style.display='';}
+    if(shown===0){empty.textContent='No '+b.textContent.trim()+' rows in this window.';empty.style.display='';}
     else{empty.style.display='none';}
     var st=document.getElementById('news-filter-status');
     if(st)st.textContent=shown+(shown===1?' row':' rows')+' shown';
@@ -2510,13 +2638,19 @@ def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None) -> s
 # painter, PX-18, with the text glyph as its fallback). Both read the embedded data blob and hand off
 # to the shared EEPHUS_GFX engine (same modal the FA / Projections surfaces
 # use). Twitter-card 1200px width; the per-date card grows taller as needed.
+# TYPE, ICO and CLR read the MLB News registry (_WIRE_TYPES, HOME_2), written
+# into the script by _news_gfx_js(): a type's label, its pictogram's sprite key
+# and its family colour as a token pair, the page token on a light frame and
+# the panel token on a dark one (the painter resolves the pair at draw time).
 _NEWS_GFX_JS = """<script>
 (function(){
   var el=document.getElementById('news-gfx-data'),evs=[];
   try{evs=JSON.parse(el?el.textContent:'[]')||[];}catch(e){}
-  var TYPE={debut:'Debut',trade:'Trade',promo:'Promo',demo:'Demo',il:'IL',
-            up:'Grade up',down:'Grade down',signing:'Signing'};
-  var CLR={up:'pos',down:'neg',il:'neg',debut:'accent'};
+  var WT=__WIRE_TYPES__,TYPE={},ICO={},CLR={};
+  Object.keys(WT).forEach(function(k){
+    TYPE[k]=WT[k][0];ICO[k]=WT[k][2];
+    CLR[k]={light:'--wire-'+WT[k][1],dark:'--wire-'+WT[k][1]+'-panel'};
+  });
   var CDN='https://img.mlbstatic.com/mlb-photos/image/upload/';
   // SQUARE face crop, 2026-08-05. renderNewsDay (eephus-gfx.js) draws this into
   // an SxS box with drawImage, which has no object-fit, so a 480x720 source was
@@ -2570,7 +2704,7 @@ _NEWS_GFX_JS = """<script>
       .map(function(e){
         return {name:e.name||'',sub:[e.pos,e.org].filter(Boolean).join(' - '),
                 type:TYPE[e.typ]||e.typ||'',
-                val:e.val||'',glyph:e.glyph||'',ico:TYPE[e.typ]?'ev-'+e.typ:'',c:CLR[e.typ]||null,
+                val:e.val||'',glyph:e.glyph||'',ico:ICO[e.typ]||'',c:CLR[e.typ]||null,
                 shot:shotURL(e),logo:logoURL(e)};
       });
     var dt=new Date(day+'T12:00:00');
@@ -2591,6 +2725,13 @@ _NEWS_GFX_JS = """<script>
   });
 })();
 </script>"""
+
+def _news_gfx_js() -> str:
+    """_NEWS_GFX_JS with the registry written in: code -> [type label, family,
+    sprite key]."""
+    wt = {code: [row["val"][:1].upper() + row["val"][1:], row["fam"], _WIRE_ICON[code]]
+          for code, row in _WIRE_TYPES.items()}
+    return _NEWS_GFX_JS.replace("__WIRE_TYPES__", json.dumps(wt, separators=(",", ":")))
 
 def build_news(data: dict | None = None) -> str:
     """/news/ - the expanded MLB News page: the full recent event feed
@@ -2614,13 +2755,10 @@ def build_news(data: dict | None = None) -> str:
             pmap[g["player_key"]] = g
     feed = _news_feed_html(events, pmap)
     recent = _news_recent_events(events)
-    chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
-                 ("move", "Moves"), ("il", "IL"), ("fv", "Grades"), ("signing", "Signings")]
-    chips = "".join(
-        f'<button type="button" class="chip{" active" if c == "all" else ""}" '
-        f'aria-pressed="{"true" if c == "all" else "false"}" '
-        f'data-news-filter="{c}">{html.escape(lbl)}</button>'
-        for c, lbl in chip_defs)
+    # The family key as the filter bar: All, the five families (each with its
+    # mark), and Grades (owner decision M20-4, DECISIONS_FOR_OWNER.md:515).
+    chips = _wire_key_html("data-news-filter",
+                           lead=(("all", "All"),), tail=(("grades", "Grades"),))
     body = (
         '<div class="news-app">'
         f'<div class="section-head"><h1>{_masthead_icon("news")}{NEWS_LABEL}</h1>'
@@ -2645,7 +2783,7 @@ def build_news(data: dict | None = None) -> str:
         'padding:2px 8px;line-height:1.5;}</style>'
         + _news_gfx_blob(recent, pmap)
         + _NEWS_FILTER_JS
-        + _NEWS_GFX_JS
+        + _news_gfx_js()
         # Shared Generate GFX engine (same two-script injection as /fa/).
         + f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         + f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
@@ -2997,9 +3135,11 @@ def _otd_debut_row(g: dict, d: "date", data_cat: str = "") -> str:
     pos_tail = (" · " + html.escape(pos)) if pos else ""
     cat = f' data-cat="{data_cat}"' if data_cat else ""
     return (
-        f'<a class="otd-row" href="{_player_href(g.get("player_key"))}"{cat}>'
+        f'<a class="otd-row" href="{_player_href(g.get("player_key"))}"{_wire_attrs("debut")}{cat}>'
+        f'{_wire_lead("debut")}'
         f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
-        f'<span class="otd-body" title="{nm} debuted{pos_tail}">{logo} <strong>{nm}</strong> debuted{pos_tail}</span>'
+        f'<span class="otd-body" title="{nm} debuted{pos_tail}">{logo} <strong>{nm}</strong> '
+        f'<span class="wire-val">debuted</span>{pos_tail}</span>'
         f'{_wag_badge(g)}{_fv_pill(g)}</a>'
     )
 
@@ -3015,9 +3155,11 @@ def _otd_trade_row(p: dict, tr: dict, d: "date", data_cat: str = "") -> str:
     pos_tail = (" · " + html.escape(pos)) if pos else ""
     cat = f' data-cat="{data_cat}"' if data_cat else ""
     return (
-        f'<a class="otd-row otd-trade" href="{_player_href(p.get("player_key"))}"{cat}>'
+        f'<a class="otd-row otd-trade" href="{_player_href(p.get("player_key"))}"{_wire_attrs("trade")}{cat}>'
+        f'{_wire_lead("trade")}'
         f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
-        f'<span class="otd-body" title="→ {nm}{pos_tail} traded">{logos} <strong>{nm}</strong>{pos_tail} traded</span>'
+        f'<span class="otd-body" title="→ {nm}{pos_tail} traded">{logos} <strong>{nm}</strong>{pos_tail} '
+        f'<span class="wire-val">traded</span></span>'
         f'{_fv_pill(p)}</a>'
     )
 
@@ -3130,6 +3272,26 @@ _HIST_TX_CODES = ("SGN", "TR", "DFA", "SFA")
 _HIST_TX_VERBS = {"SGN": "signed", "SFA": "signed as a free agent",
                   "DFA": "declared free agency", "TR": "traded"}
 
+
+def _hist_tx_type(code: str, p: dict | None, minor: bool) -> str:
+    """The MLB News type code (_WIRE_TYPES) of one prospects.db ledger row: TR
+    a trade; SFA a free-agent deal, minor_deal when its description names a
+    minor league contract; DFA ("declared free agency") fa_elect; SGN the
+    player's own signing, intl_sign for a player the board acquired as an
+    international free agent and draft_sign otherwise; an SGN of a player off
+    the board is minor_deal, the rule mlb_events.py applies to an SGN of a
+    player in no draft file."""
+    if code == "TR":
+        return "trade"
+    if code == "SFA":
+        return "minor_deal" if minor else "fa_sign"
+    if code == "DFA":
+        return "fa_elect"
+    if not p:
+        return "minor_deal"
+    method = (p.get("acquisition") or {}).get("method")
+    return "intl_sign" if method == "international_fa" else "draft_sign"
+
 # One-pass, once-per-build cache of the prospects.db history ledgers grouped
 # by calendar date. ~175k dated transaction events across 7,471 payloads
 # group in ~0.3s; il_history is tiny. Module-level so a rebuild that calls
@@ -3140,9 +3302,10 @@ def _load_history_db() -> tuple[dict, dict]:
     """Group prospects.db player_transactions (SGN/TR/DFA/SFA only) and
     il_history by MM-DD. STRICTLY read-only (file:...?mode=ro) - the build
     must never write the pipeline's DB. Returns
-    ({mmdd: [(iso_date, code, player_key, team_name), ...]},
+    ({mmdd: [(iso_date, code, player_key, team_name, minor), ...]},
      {mmdd: [(iso_since, player_key, il_type), ...]}); empty dicts when the
-    DB is absent (cold checkouts / CI without a seeded DB)."""
+    DB is absent (cold checkouts / CI without a seeded DB). `minor` is True
+    for a row whose StatsAPI description names a minor league contract."""
     global _HIST_DB_CACHE
     if _HIST_DB_CACHE is not None:
         return _HIST_DB_CACHE
@@ -3172,7 +3335,8 @@ def _load_history_db() -> tuple[dict, dict]:
                             continue
                         seen.add(sig)
                         team = t.get("to_team_name") or t.get("from_team_name") or ""
-                        tx.setdefault(dt[5:10], []).append((dt[:10], code, key, team))
+                        minor = "minor league contract" in str(t.get("description") or "").lower()
+                        tx.setdefault(dt[5:10], []).append((dt[:10], code, key, team, minor))
                 seen.clear()
                 for key, since, il_type in con.execute(
                         "SELECT player_key, since, il_type FROM il_history"):
@@ -3206,9 +3370,9 @@ def _name_from_key(key: str) -> str:
     base = (key or "").split("__")[0]
     return base.replace("_", " ").title()
 
-# /history/ category filter - same tiny dependency-free idiom as the /news/
-# chips (_NEWS_FILTER_JS): toggle .otd-row visibility by data-cat, hide any
-# section left with no visible rows.
+# /history/ family filter - same tiny dependency-free idiom as the /news/
+# chips (_NEWS_FILTER_JS): toggle .otd-row visibility by data-fam, hide any
+# section left with no visible rows, announce the visible count.
 _HIST_FILTER_JS = """<script>
 (function(){
   var bar=document.getElementById('hist-filter-bar'),wrap=document.getElementById('hist-sections');
@@ -3222,7 +3386,7 @@ _HIST_FILTER_JS = """<script>
     wrap.querySelectorAll('.hist-section').forEach(function(sec){
       var any=false;
       sec.querySelectorAll('.otd-row').forEach(function(it){
-        var show=(f==='all')||it.getAttribute('data-cat')===f;
+        var show=(f==='all')||it.getAttribute('data-fam')===f;
         it.style.display=show?'':'none';if(show){any=true;shown++;}
       });
       sec.style.display=any?'':'none';
@@ -3230,10 +3394,9 @@ _HIST_FILTER_JS = """<script>
     if(!empty){
       empty=document.createElement('div');
       empty.className='news-empty';
-      empty.style.cssText='padding:2rem 1rem;text-align:center;color:var(--text-tertiary,#888);';
       wrap.appendChild(empty);
     }
-    if(shown===0){empty.textContent='No items in this category.';empty.style.display='';}
+    if(shown===0){empty.textContent='No '+b.textContent.trim()+' rows on this date.';empty.style.display='';}
     else{empty.style.display='none';}
     var st=document.getElementById('hist-filter-status');
     if(st)st.textContent=shown+(shown===1?' row':' rows')+' shown';
@@ -3307,7 +3470,7 @@ def build_this_day(data: dict | None = None) -> str:
         prom = g.get("fv_close") or ((g.get("debuted_value") or {}).get("wag") or {}).get("regressed_wag") or 0
         debut_cands.append((-float(prom), d, g))
     debut_cands.sort(key=lambda c: c[0])
-    debut_rows = [_otd_debut_row(g, d, data_cat="debut") for _, d, g in debut_cands]
+    debut_rows = [_otd_debut_row(g, d) for _, d, g in debut_cands]
 
     # ---- Trades on this day (exact-dated mlb_api rows only) ----------------
     trade_cands = []
@@ -3322,7 +3485,7 @@ def build_this_day(data: dict | None = None) -> str:
             if _is_anniv(d):
                 trade_cands.append((-float(p.get("fv_close") or 0), d, p, tr))
     trade_cands.sort(key=lambda c: c[0])
-    trade_rows = [_otd_trade_row(p, tr, d, data_cat="trade") for _, d, p, tr in trade_cands]
+    trade_rows = [_otd_trade_row(p, tr, d) for _, d, p, tr in trade_cands]
 
     # ---- Transaction ledger (SGN / SFA / DFA / TR) -------------------------
     tx_all, il_all = _load_history_db()
@@ -3334,22 +3497,22 @@ def build_this_day(data: dict | None = None) -> str:
     tx_today.sort(key=lambda t: (0, -(_primary_fv(pmap[t[2]]) or 0)) if t[2] in pmap else (1, 0))
     TX_CAP = 40
     tx_rows = []
-    for dt, code, key, team in tx_today[:TX_CAP]:
+    for dt, code, key, team, *rest in tx_today[:TX_CAP]:
         p = pmap.get(key)
         nm = html.escape((p or {}).get("player_name") or _name_from_key(key))
         pos = _pos_label((p or {}).get("position"))
         d = date.fromisoformat(dt)
         verb = _HIST_TX_VERBS.get(code, "moved")
         logo = _team_logo(_org_from_team_name(team), "otd-logo")
-        cat = "trade" if code == "TR" else "signing"
+        wt = _hist_tx_type(code, p, bool(rest and rest[0]))
         pos_tail = (" · " + html.escape(pos)) if pos else ""
-        inner = (f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
-                 f'<span class="otd-body" title="{nm} {verb}{pos_tail}">{logo} <strong>{nm}</strong> {verb}'
-                 f'{pos_tail}</span>')
+        inner = (f'{_wire_lead(wt)}<span class="otd-when">{html.escape(_otd_date(d))}</span>'
+                 f'<span class="otd-body" title="{nm} {verb}{pos_tail}">{logo} <strong>{nm}</strong> '
+                 f'<span class="wire-val">{verb}</span>{pos_tail}</span>')
         if p:
-            tx_rows.append(f'<a class="otd-row" href="{_player_href(key)}" data-cat="{cat}">{inner}{_fv_pill(p)}</a>')
+            tx_rows.append(f'<a class="otd-row" href="{_player_href(key)}"{_wire_attrs(wt)}>{inner}{_fv_pill(p)}</a>')
         else:
-            tx_rows.append(f'<div class="otd-row" data-cat="{cat}">{inner}</div>')
+            tx_rows.append(f'<div class="otd-row"{_wire_attrs(wt)}>{inner}</div>')
     if len(tx_today) > TX_CAP:
         tx_rows.append(
             '<div class="otd-more" style="margin:8px 4px;font-family:var(--font-retro-mono);'
@@ -3367,13 +3530,14 @@ def build_this_day(data: dict | None = None) -> str:
         d = date.fromisoformat(dt)
         label = f"{il_type} IL".strip() if il_type else "IL"
         pos_tail = (" · " + html.escape(pos)) if pos else ""
-        inner = (f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
-                 f'<span class="otd-body" title="✚ {nm} placed on the {html.escape(label)}{pos_tail}">'
-                 f'✚ <strong>{nm}</strong> placed on the {html.escape(label)}{pos_tail}</span>')
+        inner = (f'{_wire_lead("il_place")}<span class="otd-when">{html.escape(_otd_date(d))}</span>'
+                 f'<span class="otd-body" title="{nm} placed on the {html.escape(label)}{pos_tail}">'
+                 f'<strong>{nm}</strong> <span class="wire-val">placed on the {html.escape(label)}</span>'
+                 f'{pos_tail}</span>')
         if p:
-            il_rows.append(f'<a class="otd-row" href="{_player_href(key)}" data-cat="il">{inner}{_fv_pill(p)}</a>')
+            il_rows.append(f'<a class="otd-row" href="{_player_href(key)}"{_wire_attrs("il_place")}>{inner}{_fv_pill(p)}</a>')
         else:
-            il_rows.append(f'<div class="otd-row" data-cat="il">{inner}</div>')
+            il_rows.append(f'<div class="otd-row"{_wire_attrs("il_place")}>{inner}</div>')
 
     # ---- assemble ----------------------------------------------------------
     def _section(title: str, rows: list) -> str:
@@ -3393,13 +3557,8 @@ def build_this_day(data: dict | None = None) -> str:
         sections = ('<p class="news-intro">No tracked prospect history on '
                     f'{html.escape(mon_d)}.</p>')
 
-    chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
-                 ("signing", "Signings"), ("il", "IL")]
-    chips = "".join(
-        f'<button type="button" class="chip{" active" if c == "all" else ""}" '
-        f'aria-pressed="{"true" if c == "all" else "false"}" '
-        f'data-hist-filter="{c}">{html.escape(lbl)}</button>'
-        for c, lbl in chip_defs)
+    # The family key as the filter bar (HOME_2): All and the five families.
+    chips = _wire_key_html("data-hist-filter", lead=(("all", "All"),))
 
     body = (
         '<div class="news-app hist-app">'
@@ -4076,6 +4235,47 @@ def _efv_distribution_html(players: list) -> str:
                         svg + legend + caption, full=True)
 
 
+# The rail's family key (HOME_2): five aria-pressed buttons, one per family.
+# Pressing one leaves only that family's rows (data-fam) and the date headers
+# that still have a row; pressing it again shows every row. The polite status
+# line gives the visible count; a family with no row in the rail says so.
+_WIRE_RAIL_JS = '''<script>
+(function () {
+  "use strict";
+  var bar = document.getElementById("wire-key");
+  var feed = document.getElementById("wire-rows");
+  if (!bar || !feed) return;
+  var st = document.getElementById("wire-key-status");
+  var empty = document.getElementById("wire-empty");
+  bar.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-wire-filter]");
+    if (!b) return;
+    var f = b.getAttribute("aria-pressed") === "true" ? "" : b.getAttribute("data-wire-filter");
+    bar.querySelectorAll("[data-wire-filter]").forEach(function (x) {
+      var on = !!f && x === b;
+      x.classList.toggle("active", on);
+      x.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    var shown = 0, day = null, dayAny = false;
+    function closeDay() { if (day) day.style.display = dayAny ? "" : "none"; }
+    Array.prototype.forEach.call(feed.children, function (el) {
+      if (el.classList.contains("feed-day")) { closeDay(); day = el; dayAny = false; return; }
+      if (!el.classList.contains("feed-item")) return;
+      var show = !f || el.getAttribute("data-fam") === f;
+      el.style.display = show ? "" : "none";
+      if (show) { shown++; dayAny = true; }
+    });
+    closeDay();
+    if (empty) {
+      empty.hidden = shown !== 0;
+      if (!shown) empty.textContent = "No " + b.getAttribute("title") + " rows in this list.";
+    }
+    if (st) st.textContent = shown + (shown === 1 ? " row" : " rows") + " shown";
+  });
+})();
+</script>'''
+
+
 _HOME_DRAWER_JS = '''<script>
 /* Homepage sidebar drawer (<=900px): the hamburger in .sb-brand opens the
    search + module list + wire feed; Esc / outside click close it; resizing
@@ -4181,11 +4381,18 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav" aria-label="Modules">{"".join(nav)}</nav></div>'
         # MLB News feed sits high (where the PROSPX sub-nav used to be);
         # the PROSPX sub-nav drops below the spotlight feature.
-        f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><a href="/news/" title="All {NEWS_LABEL}"><span class="blip"></span>{NEWS_LABEL}<span class="feed-head-more">all →</span></a></div>{feed}</div></div>'
+        f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><a href="/news/" title="All {NEWS_LABEL}"><span class="blip"></span>{NEWS_LABEL}<span class="feed-head-more">all →</span></a></div>'
+        # The family key (HOME_2): mark plus tag, a filter over the rows below.
+        f'<div class="filter-bar wire-key" id="wire-key" role="group" aria-label="Filter {NEWS_LABEL} by family">'
+        f'{_wire_key_html("data-wire-filter", tags=True)}</div>'
+        '<div class="visually-hidden" id="wire-key-status" role="status" aria-live="polite"></div>'
+        f'<div class="wire-rows" id="wire-rows">{feed}</div>'
+        '<p class="news-empty" id="wire-empty" hidden></p></div></div>'
         f'{spotlight}'
         f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{_ico("prospx", 12)}PROSPX</div><nav class="sb-subnav" aria-label="PROSPX sections">{sub}</nav></div>'
         '</aside>'
         + _HOME_DRAWER_JS
+        + _WIRE_RAIL_JS
     )
 
     # ---- top wire ticker ----
