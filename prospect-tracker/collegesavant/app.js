@@ -666,7 +666,7 @@ function renderLeaderboard() {
       </select>
       ${qualifierControl(qual)}
       <button class="control-button" type="button" data-reset>Reset</button>
-      <button class="chip egfx-chip" id="cs-lb-gfx" title="Generate a shareable graphic (theme-aware, multiple formats)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>
+      <button class="chip egfx-chip" id="cs-lb-gfx" title="Share graphic of this view"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>
     </section>
     <p class="note-line">${filtered.length.toLocaleString()} hitter${filtered.length === 1 ? "" : "s"}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}: ${escapeHtml(qualifierText(qual))}. CS+ and percentiles compare against the whole ${state.year} pool. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
     <p class="note-line cs-stamp">${escapeHtml(dataStamp())}</p>

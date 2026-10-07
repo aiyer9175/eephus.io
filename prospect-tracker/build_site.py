@@ -1402,7 +1402,7 @@ def _nav(active: str) -> str:
     # back to a system face); same buttons, boxes, labels and aria-labels.
     controls = (
         '<div class="eephus-nav-controls">'
-        '<button class="eephus-nav-ctrl" type="button" data-qk-open aria-label="Quick search (Ctrl+K)" title="Search any term or metric - Ctrl+K / ⌘K">'
+        '<button class="eephus-nav-ctrl" type="button" data-qk-open aria-label="Quick search (Ctrl+K)" title="Search players, terms, metrics (Ctrl+K)">'
         f'{_ico("search", 12)}<span class="eephus-nav-ctrl-label">Search</span></button>'
         '<a class="eephus-nav-ctrl" href="/prospx/#tab=watchlist" aria-label="Watchlist">'
         f'{_ico("watchlist", 12)}<span class="eephus-nav-ctrl-label">Watchlist</span></a>'
@@ -2588,7 +2588,7 @@ _NEWS_FILTER_JS = """<script>
 # inline wire-up below just listens for the click).
 def _gfx_chip_html(chip_id: str) -> str:
     return (f'<button class="chip egfx-chip" id="{chip_id}" type="button" '
-            'title="Generate a shareable graphic (theme-aware, multiple formats)">'
+            'title="Share graphic of this view">'
             '<span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>')
 
 def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None) -> str:
@@ -4529,7 +4529,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     #
     # COLLAPSED UNTIL THE ACCOUNT LAYER IS LIVE. assets/eephus-config.js is
     # absent on the public tree, so eephus-ui.js's LIVE gate has no Supabase
-    # project, mountForumsList paints "Discussion opens at launch" and the
+    # project, mountForumsList paints "Threads open at launch" and the
     # homepage donated a full-width band to a placeholder. The slot is now
     # server-rendered hidden and revealed by the same condition the client
     # gates on (window.EEPHUS_SUPABASE carrying url + anonKey), so the module
