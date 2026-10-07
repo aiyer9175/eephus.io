@@ -159,6 +159,11 @@ WP_FIELDS = ("homeTeamWinProbability,homeTeamWinProbabilityAdded,leverageIndex,a
              "batter,pitcher,id,fullName,count,outs,playEvents,playId,isPitch,"
              "runners,movement,start,end,details,runner,rbi,isOut,postOnFirst,postOnSecond,postOnThird")
 PEOPLE_HYDRATE = "stats(group=[pitching],type=[season])"
+#: The October bracket (SCORES_4b, plan 1.6): one call per idle cycle from the
+#: first postseason date to the last, inside the limiter; series state and
+#: results only (scores_core.build_bracket).
+BRACKET_PATH = "/api/v1/schedule/postseason/series"
+BRACKET_TYPES = ("F", "D", "L", "W")
 #: The served registry rows index.json's registry block carries, and the source
 #: each row's sentence names (plan 4, the labelling rule).
 REGISTRY_IDS = {"scores_mlb_wp": "MLB", "scores_stars_rule": "Eephus rule",
@@ -451,7 +456,8 @@ class Fetcher:
         except (ValueError, UnicodeDecodeError) as e:
             raise FetchError(f"unparseable body: {e}", status=int(status), url=url) from e
 
-    # the five request shapes (each verified with one live GET, 2026-10-03)
+    # the request shapes (each verified with one live GET: the first five on
+    # 2026-10-03, the postseason series on 2026-10-07)
     def schedule(self, start: str, end: str, *, hydrate: bool = True):
         params = {"sportId": 1, "startDate": start, "endDate": end, "gameType": GAME_TYPES}
         if hydrate:
@@ -470,6 +476,9 @@ class Fetcher:
     def people(self, ids):
         return self.get("/api/v1/people", {"personIds": ",".join(str(int(i)) for i in sorted(set(ids))),
                                            "hydrate": PEOPLE_HYDRATE})
+
+    def postseason_series(self, season: int):
+        return self.get(BRACKET_PATH, {"sportId": 1, "season": int(season)})
 
 
 # --------------------------------------------------------------------------- #
@@ -1251,7 +1260,7 @@ class Cycle:
         cat = (self.state.get("catalog") or {}).get(season) or {}
         rel = f"index-{season}.json"
         obj = {"schema": sc.SCHEMA, "season": int(season),
-               "dates": [cat[d] for d in sorted(cat)], "bracket": None}
+               "dates": [cat[d] for d in sorted(cat)], "bracket": (self.state.get("bracket") or {}).get(str(season))}
         prev = self.writer.read(rel)
         if isinstance(prev, dict) and same_content(obj, prev, keys=()):
             return self.writer.disk_rev(rel)
@@ -1527,6 +1536,30 @@ def freeze_game(paths: dict, state: dict, pk: int) -> None:
 # --------------------------------------------------------------------------- #
 # One acting cycle
 # --------------------------------------------------------------------------- #
+def bracket_due(state: dict, games: list[dict], d0: date) -> int | None:
+    """The season whose bracket this idle cycle reads, or None. Due from the
+    first postseason date to the last: a postseason game (BRACKET_TYPES) in
+    this cycle's schedule dated today or earlier, or today inside the last
+    block's first date to its last date plus one day (a night game ends after
+    midnight UTC). Never again once the block reads `done` (the World Series
+    is over and its final state is on file)."""
+    season = d0.year
+    have = (state.get("bracket") or {}).get(str(season)) or {}
+    if have.get("done"):
+        return None
+    today = d0.isoformat()
+    if any(g.get("gameType") in BRACKET_TYPES and str(g.get("officialDate") or "9999") <= today for g in games):
+        return season
+    first, last = have.get("first"), have.get("last")
+    if first and last:
+        try:
+            if first <= today <= (date.fromisoformat(last) + timedelta(days=1)).isoformat():
+                return season
+        except ValueError:
+            return None
+    return None
+
+
 def act(decision: dict, paths: dict, state: dict, slate: dict | None, fetcher: Fetcher, now_fn, *,
         only_date: str | None = None) -> dict:
     """Fetch, build, validate and write for one acting cycle. Returns the
@@ -1600,6 +1633,20 @@ def act(decision: dict, paths: dict, state: dict, slate: dict | None, fetcher: F
                 pass
             except RateLimited as e:
                 mark_backoff(state, now, e.retry_after)
+
+    # 3b. the October bracket: idle cycles only, one call; a failed read keeps
+    # the last block (the season index carries it either way)
+    bseason = bracket_due(state, games, d0) if cycle == "idle" and not only_date else None
+    if (bseason is not None and fetcher.limiter.can_start()
+            and float(state.get("backoff_until") or 0) <= now.timestamp()):
+        try:
+            block = sc.build_bracket(fetcher.postseason_series(bseason), season=bseason)
+            if block is not None:
+                state.setdefault("bracket", {})[str(bseason)] = block
+        except (FetchError, BudgetExhausted):
+            pass
+        except RateLimited as e:
+            mark_backoff(state, now, e.retry_after)
 
     # 4. rebuild queued earlier dates (each: one schedule call, then its finals)
     rebuild_games: list = []

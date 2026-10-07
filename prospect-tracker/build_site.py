@@ -141,6 +141,7 @@ _TEAM_CSS_VER = _asset_ver("assets/team.css")
 # (SCORES_4a, SCORES_4b) get their own stamps when they land.
 _SCORES_VER = _asset_ver("assets/scores.js")
 _SCORES_CSS_VER = _asset_ver("assets/scores.css")
+_SCORES_BRACKET_VER = _asset_ver("assets/scores-bracket.js")   # the lazy bracket chunk (SCORES_4b)
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /models/ - the model accountability hub. Client is filter-only: every row,
 # count and date on that page is server-rendered here at build time, so the
@@ -5555,11 +5556,13 @@ def build_scores() -> str:
     eephus-teampick.js and assets/scores.js, deferred. The shell types no
     number; every number on the page is read by assets/scores.js from the
     job's files. No EEPHUS_DATA_VERS: the job rewrites its files between
-    builds (_data_vers_script refuses scores names)."""
+    builds (_data_vers_script refuses scores names). The mount root carries
+    the stamped path of the lazy bracket chunk (SCORES_4b), which scores.js
+    loads only on #bracket=<season> or for the October rail at 1400 px."""
     body = (
         '<div class="fa-app scores-app">'
         + _scores_module_head("scores")
-        + '<div id="scores-app-root"></div>'
+        + f'<div id="scores-app-root" data-bracket-src="/assets/scores-bracket.js?v={_SCORES_BRACKET_VER}"></div>'
         '</div>'
         f'<link rel="stylesheet" href="/assets/scores.css?v={_SCORES_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'

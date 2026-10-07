@@ -54,7 +54,7 @@ def built():
     season = {"schema": sc.SCHEMA, "season": 2026,
               "dates": [{"d": "2026-05-31", "n": 1, "types": ["R"], "rev": sc.rev_of(date_0531), "flags": []},
                         {"d": "2026-09-29", "n": len(cards_0929), "types": ["F"], "rev": sc.rev_of(date_0929), "flags": []}],
-              "bracket": None}
+              "bracket": sc.build_bracket(load("postseason_series_2026.json"), season=2026)}
     index = {"schema": sc.SCHEMA, "generated_at": GEN,
              "seasons": [{"season": 2026, "rev": sc.rev_of(season), "n_dates": 2}],
              "registry": [{"model_id": "scores_mlb_wp", "verdict": "provisional", "sentence": "MLB, provisional"}],
@@ -265,3 +265,127 @@ def test_live_artifacts_when_present():
                     "(the session temp directory under pytest); the fixture-built half and the job half ran")
     for name, res in sc.validate_files(files).items():
         assert res["ok"], (name, res["refused"])
+
+# --------------------------------------------------------------------------- #
+# The October bracket (SCORES_4b): the season index's `bracket` block, built
+# from the postseason-series fixtures (the sample of 2026-09-30 and the one live
+# read of 2026-10-07). Series state and results only: no probability anywhere.
+# --------------------------------------------------------------------------- #
+BRACKET_KEYS = {"season", "first", "last", "done", "rounds"}
+ROUND_KEYS = {"type", "name", "series"}
+SERIES_KEYS = {"id", "type", "lg", "best_of", "over", "winner_id", "text", "clubs", "games"}
+CLUB_KEYS = {"team_id", "code", "name", "wins"}
+GAME_KEYS = {"pk", "n", "date", "state", "away_id", "home_id", "away_r", "home_r", "winner_id", "if_necessary"}
+
+
+def _series(block):
+    return {s["id"]: s for r in block["rounds"] for s in r["series"]}
+
+
+def test_the_bracket_block_from_the_postseason_fixture():
+    raw = load("postseason_series_2026.json")
+    b = sc.build_bracket(raw, season=2026)
+    assert set(b) == BRACKET_KEYS and b["season"] == 2026 and b["done"] is False
+    assert (b["first"], b["last"]) == ("2026-09-29", "2026-10-31")
+    assert [r["type"] for r in b["rounds"]] == ["F", "D", "L", "W"]
+    assert [r["name"] for r in b["rounds"]] == ["Wild Card Series", "Division Series", "Championship Series",
+                                               "World Series"]
+    assert [[s["id"] for s in r["series"]] for r in b["rounds"]] == [
+        ["F_1", "F_2", "F_3", "F_4"], ["D_1", "D_2", "D_3", "D_4"], ["L_1", "L_2"], ["W_1"]]
+    for r in b["rounds"]:
+        assert set(r) == ROUND_KEYS
+        for s in r["series"]:
+            assert set(s) == SERIES_KEYS and len(s["clubs"]) == 2
+            assert all(set(c) == CLUB_KEYS for c in s["clubs"]) and all(set(g) == GAME_KEYS for g in s["games"])
+    ss = _series(b)
+    # every game the fixture lists, none invented
+    assert sum(len(s["games"]) for s in ss.values()) == raw["totalGames"] == 53
+    f1 = ss["F_1"]
+    assert (f1["lg"], f1["best_of"], f1["over"], f1["text"]) == ("AL", 3, False, "CHW leads 1-0")
+    assert [(c["code"], c["wins"]) for c in f1["clubs"]] == [("HOU", 0), ("CHW", 1)]
+    assert f1["games"][0] == {"pk": 849849, "n": 1, "date": "2026-09-29", "state": "final", "away_id": 145,
+                              "home_id": 117, "away_r": 6, "home_r": 3, "winner_id": 145, "if_necessary": False}
+    assert f1["games"][2]["if_necessary"] is True and f1["games"][2]["away_r"] is None
+    # the warmup game 849841 carries 0-0 in MLB's payload but is not under way: no score printed
+    assert ss["F_3"]["games"][1]["state"] == "pregame" and ss["F_3"]["games"][1]["away_r"] is None
+    # MLB's placeholders: code null, "HOU/CWS" as "Winner of HOU and CWS", the rest verbatim
+    d2 = ss["D_2"]
+    assert d2["clubs"][0] == {"team_id": 114, "code": "CLE", "name": "Cleveland Guardians", "wins": 0}
+    assert d2["clubs"][1] == {"team_id": 5528, "code": None, "name": "Winner of HOU and CWS", "wins": 0}
+    assert d2["text"] == "Game 1: October 3"
+    assert [c["name"] for c in ss["L_2"]["clubs"]] == ["NL Higher Seed", "NL Lower Seed"]
+    assert [c["name"] for c in ss["W_1"]["clubs"]] == ["Higher Seed League Champion", "Lower Seed League Champion"]
+    assert ss["W_1"]["lg"] is None and ss["W_1"]["best_of"] == 7
+    for s in ss.values():
+        for c in s["clubs"]:
+            assert (c["code"] is None) == (c["team_id"] not in sc.CLUB_BY_ID)
+
+
+def test_the_bracket_after_the_wild_card_round_from_the_live_read():
+    b = sc.build_bracket(load("postseason_series_2026-10-07.json"), season=2026)
+    ss = _series(b)
+    assert {k: (s["over"], s["text"], s["winner_id"]) for k, s in ss.items() if s["type"] == "F"} == {
+        "F_1": (True, "CHW wins 2-0", 145), "F_2": (True, "NYY wins 2-0", 147),
+        "F_3": (True, "ATL wins 2-1", 144), "F_4": (True, "SDP wins 2-0", 135)}
+    assert len(ss["F_1"]["games"]) == 2 and len(ss["F_3"]["games"]) == 3
+    assert [ss[k]["text"] for k in ("D_1", "D_2", "D_3", "D_4")] == [
+        "TBR leads 2-0", "CHW leads 2-0", "MIL leads 2-1", "LAD leads 2-1"]
+    assert all(c["code"] for k in ("D_1", "D_2", "D_3", "D_4") for c in ss[k]["clubs"])
+    assert b["done"] is False and b["last"] == "2026-10-31"
+
+
+def _finish(raw, sid, winner_side="home"):
+    """Mark a series' first games final for one side until it clinches; leave
+    its if-necessary games listed and unplayed, as MLB sometimes does."""
+    for s in raw["series"]:
+        if s["series"]["id"] != sid:
+            continue
+        need = max(g["gamesInSeries"] for g in s["games"]) // 2 + 1
+        for g in s["games"][:need]:
+            g["status"] = {"abstractGameState": "Final", "codedGameState": "F", "detailedState": "Final"}
+            for side, tid, name in (("away", 147, "New York Yankees"), ("home", 119, "Los Angeles Dodgers")):
+                g["teams"][side]["team"] = {"id": tid, "name": name}
+                g["teams"][side]["isWinner"] = side == winner_side
+                g["teams"][side]["score"] = 4 if side == winner_side else 1
+        for g in s["games"][need:]:
+            for side, tid, name in (("away", 147, "New York Yankees"), ("home", 119, "Los Angeles Dodgers")):
+                g["teams"][side]["team"] = {"id": tid, "name": name}
+    return raw
+
+
+def test_an_over_series_drops_its_unneeded_games_and_the_finished_bracket_reads_done():
+    raw = load("postseason_series_2026-10-07.json")
+    for s in raw["series"]:
+        _finish(raw, s["series"]["id"])
+    b = sc.build_bracket(raw, season=2026)
+    ss = _series(b)
+    assert all(s["over"] for s in ss.values()) and b["done"] is True
+    w = ss["W_1"]
+    assert w["text"] == "LAD wins 4-0" and w["winner_id"] == 119
+    assert len(w["games"]) == 4 and all(g["state"] == "final" for g in w["games"])
+    assert b["last"] == "2026-10-27"           # the unneeded games 5 to 7 are gone, and their dates
+
+
+def test_placeholder_names_and_an_empty_payload():
+    assert sc.placeholder_name("HOU/CWS") == "Winner of HOU and CWS"
+    assert sc.placeholder_name("SD/CHC") == "Winner of SD and CHC"
+    assert sc.placeholder_name("NL Lower Seed") == "NL Lower Seed"
+    assert sc.placeholder_name(None) == "To be decided"
+    assert sc.build_bracket({"series": []}, season=2026) is None
+    assert sc.build_bracket(load("schedule_states.json"), season=2026) is None
+
+
+def test_the_bracket_carries_no_probability_and_passes_the_validator():
+    for name in ("postseason_series_2026.json", "postseason_series_2026-10-07.json"):
+        b = sc.build_bracket(load(name), season=2026)
+        text = sc.dumps(b)
+        assert "%" not in text and "prob" not in text.lower() and "pct" not in text.lower(), name
+        assert sc.find_forbidden_keys(b) == [] and sc.find_dashes(b) == [] and sc.find_urls(b) == [], name
+        # a season index of a full season of dates plus the bracket stays inside its budget
+        dates = [{"d": f"2026-{m:02d}-{d:02d}", "n": 15, "types": ["R"], "rev": "0123456789abcdef", "flags": []}
+                 for m in range(3, 11) for d in range(1, 32)][:221]
+        doc = {"schema": sc.SCHEMA, "season": 2026, "dates": dates, "bracket": b}
+        res = sc.validate_payload("season_index", doc, name="index-2026.json")
+        assert res["ok"] and res["logged"] == [], (name, res)
+        assert res["bytes"] <= sc.FILE_KINDS["season_index"]["budget"], res["bytes"]
+

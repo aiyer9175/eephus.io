@@ -24,7 +24,11 @@ no link inside another interactive element; 24 px targets, 44 px for strip
 chips, tabs and filters at 390; no player_links.json request on the day view;
 one polite live region; no console errors; the flag (SCORES_LIVE False
 writes no scores/index.html, and publish_paths has no scores line); the
-budgets of plan 8.1, pinned by the constants below.
+budgets of plan 8.1, pinned by the constants below. The October bracket
+(SCORES_4b): #bracket=<season> draws the season index's block through the
+lazy chunk, placeholders unlinked, no percent sign and no data-model-id
+inside it; the chunk loads only on that route or for the October rail at
+1400 px and wider; its mount function needs no page around it.
 """
 from __future__ import annotations
 
@@ -50,6 +54,7 @@ TODAY = "2026-09-30"
 KB = 1024
 SCORES_JS_RAW = 70 * KB
 SCORES_JS_GZIP = 20 * KB
+SCORES_BRACKET_JS_RAW = 12 * KB
 SCORES_CSS_RAW = 20 * KB
 SHELL_RAW = 16 * KB
 COLD_FIRST_PAINT_GZIP = 70 * KB
@@ -78,7 +83,7 @@ def _sched_game(pk, coded):
 # --------------------------------------------------------------------------- #
 # The fixture payloads
 # --------------------------------------------------------------------------- #
-def build_payloads(now: datetime | None = None) -> dict:
+def build_payloads(now: datetime | None = None, bracket: dict | None = None) -> dict:
     """{published path under data/scores/: payload} for a site whose today is
     2026-09-30. Times on the job block are relative to `now` (the server's
     Date header is the stale rule's clock), so the page reads S0. The cards
@@ -144,7 +149,7 @@ def build_payloads(now: datetime | None = None) -> dict:
     date_docs = {d: sc.build_date_file(d, cards, games, generated_at=gen) for d, cards in dates.items()}
     for d, doc in date_docs.items():
         out[f"{d}.json"] = doc
-    season = {"schema": sc.SCHEMA, "season": 2026, "bracket": None,
+    season = {"schema": sc.SCHEMA, "season": 2026, "bracket": bracket,
               "dates": [{"d": d, "n": len(doc["games"]), "types": sorted({c["type"] for c in doc["games"]}),
                          "rev": sc.rev_of(doc), "flags": []} for d, doc in sorted(date_docs.items())]}
     out["index-2026.json"] = season
@@ -284,8 +289,11 @@ def test_shell_is_a_pure_reader_on_the_ledger_pattern():
     for asset, ver in (("scores.css", build_site._SCORES_CSS_VER), ("scores.js", build_site._SCORES_VER),
                        ("eephus-hub.js", build_site._HUB_VER), ("eephus-teampick.js", build_site._TEAMPICK_VER)):
         assert f"/assets/{asset}?v={ver}" in html, asset
-    for absent in ("eephus-diamond.js", "diamond-config.js", "scores-video.js", "scores-bracket.js"):
+    for absent in ("eephus-diamond.js", "diamond-config.js", "scores-video.js"):
         assert absent not in html
+    # the bracket chunk is never a script tag: the mount root names its stamped path for the lazy loader
+    assert f'data-bracket-src="/assets/scores-bracket.js?v={build_site._SCORES_BRACKET_VER}"' in html
+    assert html.count("scores-bracket.js") == 1 and '<script src="/assets/scores-bracket.js' not in html
     assert "<title>MLB Scores - eephus.io</title>" in html
     assert "Scores / Standings" in html and build_site._stage_chip("scores") in html
     assert build_site.MODULE_STAGE["scores"] == (
@@ -321,8 +329,12 @@ def test_budgets_and_the_cold_first_paint():
                                                     sc.dumps(p[f"{TODAY}.json"]).encode()))
     assert owned <= COLD_FIRST_PAINT_GZIP, owned
     assert len(first) > 0
-    # every scores style lives in scores.css; scores.js has no player and no bracket
-    assert "<video" not in js.decode() and "iframe" not in js.decode() and "bracket=" not in js.decode()
+    # every scores style lives in scores.css; scores.js has no player and draws no bracket: it
+    # loads the lazy chunk from the shell's stamped data-bracket-src and hands it the block
+    assert "<video" not in js.decode() and "iframe" not in js.decode()
+    assert "scb-" not in js.decode() and "Winner of" not in js.decode() and "scores-bracket.js" not in js.decode()
+    chunk = _lf(ROOT / "assets" / "scores-bracket.js")
+    assert len(chunk) <= SCORES_BRACKET_JS_RAW, len(chunk)
 
 
 def test_fixture_payloads_pass_the_validator():
@@ -608,3 +620,131 @@ def test_s4_state_when_latest_is_missing(tmp_path, pw):
     site = make_site(tmp_path / "site", payloads)
     with serve_site(site) as base, scores_page(base, pw) as page:
         page.wait_for_function("/Scores are not available right now\\./.test(document.getElementById('scores-app-root').textContent)")
+
+
+# --------------------------------------------------------------------------- #
+# The October bracket (SCORES_4b)
+# --------------------------------------------------------------------------- #
+def _bracket(name="postseason_series_2026.json"):
+    return sc.build_bracket(load(name), season=2026)
+
+
+@pytest.fixture(scope="module")
+def october_site(tmp_path_factory):
+    return make_site(tmp_path_factory.mktemp("scores_october"), build_payloads(bracket=_bracket()))
+
+
+_NO_PROB = """() => { const b = document.querySelector('.sc-bk');
+  return {pct: b.textContent.indexOf('%') >= 0, model: b.querySelectorAll('[data-model-id]').length,
+          futures: Array.from(b.querySelectorAll('a')).filter(a => /betting|futures/i.test(a.getAttribute('href'))).length}; }"""
+
+
+def _chunk_requests(page):
+    return [u for u in page._requests if "/assets/scores-bracket.js" in u]
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+@pytest.mark.parametrize("width", (390, 768, 1024, 1280, 1440))
+def test_the_bracket_view_prints_series_state_and_no_probability(october_site, pw, width, theme):
+    with serve_site(october_site) as base, scores_page(base, pw, width=width, theme=theme, hash_="#bracket=2026") as page:
+        page.wait_for_selector(".sc-bk .scb", timeout=15000)
+        assert page.locator(".sc-bk .scb-round h3").all_inner_texts() == [
+            "Wild Card Series", "Division Series", "Championship Series", "World Series"]
+        assert page.locator(".sc-bk .scb-s").count() == 11
+        assert page.locator("h2").first.inner_text() == "2026 postseason"
+        # MLB's placeholders print unlinked, never as a link
+        unresolved = page.locator('.sc-bk [data-club-nolink="unresolved"]').all_inner_texts()
+        assert "Winner of HOU and CWS" in unresolved and "NL Lower Seed" in unresolved
+        assert page.locator('.sc-bk a[data-club-nolink], .sc-bk a:has-text("Winner of")').count() == 0
+        assert page.locator('.sc-bk a.scb-club[href="/franchise/#team=CHW"]').count() >= 1
+        f1 = page.locator(".sc-bk .scb-s").first.inner_text()
+        assert "CHW leads 1-0" in f1 and "Game 1, September 29: CHW 6, HOU 3" in f1 and "If necessary" in f1
+        # no probability of any kind, no model label, no Futures link (Part 8 8.D row 8)
+        assert page.evaluate(_NO_PROB) == {"pct": False, "model": 0, "futures": 0}
+        assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), "horizontal page scroll"
+        reqs = _chunk_requests(page)
+        assert len(reqs) == 1 and f"?v={build_site._SCORES_BRACKET_VER}" in reqs[0], reqs
+        _no_errors(page)
+
+
+def test_the_chunk_loads_only_on_the_route_or_the_october_rail(october_site, pw):
+    with serve_site(october_site) as base:
+        # September 30 at 1440: no chip, no chunk
+        with scores_page(base, pw, width=1440, hash_=f"#date={TODAY}") as page:
+            _wait_cards(page, 5)
+            assert page.locator('.sc-strip a[href="#bracket=2026"]').count() == 0
+            assert _chunk_requests(page) == [] and page.locator(".scb").count() == 0
+        # October 1 below 1400: the chip, no chunk
+        for width in (390, 1280):
+            with scores_page(base, pw, width=width, hash_="#date=2026-10-01") as page:
+                _wait_cards(page, 4)
+                chip = page.locator('.sc-strip a[href="#bracket=2026"]')
+                assert chip.count() == 1 and chip.inner_text() == "Bracket"
+                if width == 390:
+                    assert chip.bounding_box()["height"] >= 44
+                assert _chunk_requests(page) == [], width
+                _no_errors(page)
+        # October 1 at 1440: the rail leads with the compact bracket
+        with scores_page(base, pw, width=1440, hash_="#date=2026-10-01") as page:
+            page.wait_for_selector(".sc-railslot .scb-compact", timeout=15000)
+            first = page.locator(".sc-railslot > aside").first
+            assert first.get_attribute("aria-label") == "Bracket"
+            assert first.locator('h2 a[href="#bracket=2026"]').count() == 1
+            assert first.locator(".scb-games").count() == 0 and first.locator(".scb-line").count() == 11
+            assert "%" not in first.inner_text() and first.locator("[data-model-id]").count() == 0
+            assert len(_chunk_requests(page)) == 1
+            assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            # the chip opens the full view and the back link returns
+            page.locator('.sc-strip a[href="#bracket=2026"]').click()
+            page.wait_for_selector(".sc-bk .scb:not(.scb-compact)")
+            assert len(_chunk_requests(page)) == 1          # loaded once per page
+            page.locator(".sc-back a").click()
+            _wait_cards(page)
+            _no_errors(page)
+
+
+def test_no_bracket_block_leaves_the_rail_without_it_and_the_view_says_so(site, pw):
+    with serve_site(site) as base:
+        with scores_page(base, pw, width=1440, hash_="#date=2026-10-01") as page:
+            _wait_cards(page, 4)
+            page.wait_for_function("window.EephusScoresBracket && !document.querySelector('.sc-railslot .sc-bk')")
+            assert page.locator('.sc-railslot aside[aria-label="Bracket"]').count() == 0
+            _no_errors(page)
+        with scores_page(base, pw, width=390, hash_="#bracket=2026") as page:
+            page.wait_for_selector(".sc-bk .scb-none")
+            assert page.locator(".sc-bk").inner_text() == "No bracket for this season in these files."
+            _no_errors(page)
+
+
+def test_the_mount_needs_no_page_route_or_fetch(pw):
+    """STANDINGS_4 mounts the chunk unchanged: one function, an element and the block."""
+    import re
+    src = (ROOT / "assets" / "scores-bracket.js").read_text(encoding="utf-8")
+    code = re.sub(r"/\*.*?\*/|//[^\n]*", "", src, flags=re.S)       # the code, without its comments
+    for absent in ("fetch(", "XMLHttpRequest", "location", "hashchange", "#bracket", "data-model-id", "%"):
+        assert absent not in code, absent
+    assert "futures" not in code.lower() and "betting" not in code.lower()
+    browser = pw.chromium.launch()
+    try:
+        page = browser.new_page()
+        reqs = []
+        page.on("request", lambda r: reqs.append(r.url))
+        page.set_content("<!doctype html><div id=m></div><div id=n></div>")
+        page.add_script_tag(content=src)
+        assert page.evaluate("Object.keys(window.EephusScoresBracket)") == ["mount"]
+        drew = page.evaluate("b => window.EephusScoresBracket.mount(document.getElementById('m'), b)",
+                             _bracket("postseason_series_2026-10-07.json"))
+        none = page.evaluate("window.EephusScoresBracket.mount(document.getElementById('n'), null, {compact: 1})")
+        assert drew is True and none is False and reqs == []
+        text = page.inner_text("#m")
+        for want in ("CHW wins 2-0", "ATL wins 2-1", "TBR leads 2-0", "LAD leads 2-1", "Game 2, September 30: BOS 2, NYY 9",
+                     "If necessary"):
+            assert want in text, want
+        assert "%" not in text and page.inner_html("#n") == ""
+        # the clinching club is bold with a screen-reader word; the game link defaults to /scores/
+        assert page.locator("#m .scb-c.is-won strong").count() == 4
+        assert page.locator("#m .scb-c.is-won .sr-only").first.inner_text().strip() == "winner"
+        assert page.locator('#m a[href="/scores/#game=849849"]').count() == 1
+    finally:
+        browser.close()
+
