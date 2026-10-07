@@ -63,6 +63,26 @@ def test_champion_level_is_the_revert(monkeypatch):
         pe._tail_war([5.0] * 5, [3.0] * 7, None)
 
 
+def test_a_two_way_tail_is_the_sum_of_each_sides_chain_not_one_chain_on_the_sum(monkeypatch):
+    """A two-way row's tail is each side's own chain (its war_by_year past the
+    horizon, on its own champion path), summed as `war` is: the served-path
+    carrier. One chain on the summed path and summed champion is a different
+    number whenever the sides age on different curves, so the served check
+    below cannot hold a two-way row to the single-path rule."""
+    monkeypatch.setattr(pe, "TAIL_SEAM", "chained")
+    hit_c = [3.4, 3.0, 2.5, 1.9, 1.36, 0.8, 0.31]
+    pit_c = [2.4, 2.0, 1.6, 1.05, 0.45, 0.01, 0.0]
+    hit = fm.chain_aging_tail([4.1, 4.3, 3.6, 4.2, 3.05], hit_c, 5, 7)
+    pit = fm.chain_aging_tail([1.95, 1.69, 1.22, 0.86, 0.61], pit_c, 5, 7)
+    war_full = [round(a + b, 2) for a, b in zip(hit, pit)]
+    champ = [round(a + b, 2) for a, b in zip(hit_c, pit_c)]
+    tail, how = pe._tail_war(war_full[:5], champ, war_full)
+    assert how == "served_path"
+    assert tail == [round(hit[5] + pit[5], 2), round(hit[6] + pit[6], 2)]
+    one = fm.chain_aging_tail(war_full[:5], champ, 5, 7)[5:]
+    assert abs(one[0] - tail[0]) > 0.1
+
+
 def _served():
     p = ROOT / "data" / "mlb_projections.json"
     if not p.exists():
@@ -71,9 +91,21 @@ def _served():
 
 
 def test_served_tail_has_no_level_step_at_the_seam():
-    """On the served artifact the first tail season sits within
-    0.5 + 0.35 x the 2031 WAR of 2031. The VAL_2 champion-level tail failed
-    this on Soto (4.60 to 1.65), McGonigle (4.12 to 7.36) and Ohtani."""
+    """On the served artifact every tail row's first season IS the chained rule:
+    chain_aging_tail of the served five seasons along the row's champion path
+    (warChamp + warChampTail), within 0.01 (both are printed to 0.01). A
+    two-way row chains each side on its own champion path and sums them (the
+    served-path carrier; the test above), which the served row does not carry
+    per side, so it is held to the carrier count below instead.
+
+    The level-step bound, the first tail season within 0.5 + 0.35 x the 2031
+    WAR of 2031, applies only where the champion's own 2031 to 2032 ratio is at
+    least 0.5 (or undefined, a 2031 champion of 0.05 WAR or less, where the
+    ratio chain decays at most 0.7 a season): a steeper champion decay is the
+    aging curve, not a level step (POSTEPOCH_9_CONTRACT_TAIL_BAND_SEAM; Ohtani,
+    a two-way row, 3.66 to 1.81 on a champion ratio of 0.81 / 1.81). The VAL_2
+    champion-level tail failed the bound on Soto (4.60 to 1.65) and McGonigle
+    (4.12 to 7.36), each on a champion ratio above 0.5."""
     d = _served()
     tail = (d.get("accountability") or {}).get("salary_path", {}).get("contract_tail") or {}
     if not tail.get("enabled"):
@@ -82,13 +114,24 @@ def test_served_tail_has_no_level_step_at_the_seam():
         pytest.skip("seam reverted")
     assert tail.get("seam") == "chained" and tail.get("war_basis") == "chain_aging_tail"
     assert tail.get("seam_served_path", 0) + tail.get("seam_recomputed", 0) == tail["rows"]
-    bad = []
+    H = d["horizon"]
+    bad, off_rule, bounded = [], [], 0
     for v in d["vets"]:
         wt = v.get("warTail")
         if not wt or wt[0] is None:
             continue
-        w5 = float(v["war"][d["horizon"] - 1])
-        if abs(float(wt[0]) - w5) > 0.5 + 0.35 * abs(w5):
-            bad.append((v["key"], w5, wt[0]))
+        w5 = float(v["war"][H - 1])
+        champ = [float(c) for c in list(v["warChamp"]) + list(v.get("warChampTail") or [])]
+        if not v.get("twoWay"):
+            rule = fm.chain_aging_tail([float(w) for w in v["war"][:H]], champ, H, H + 1)[H]
+            if abs(float(wt[0]) - rule) > 0.01 + 1e-9:
+                off_rule.append((v["key"], wt[0], rule))
+        c5 = champ[H - 1]
+        if c5 <= 0.05 or champ[H] / c5 >= 0.5:
+            bounded += 1
+            if abs(float(wt[0]) - w5) > 0.5 + 0.35 * abs(w5):
+                bad.append((v["key"], w5, wt[0]))
         assert all(w is None or w >= 0 for w in wt), v["key"]
+    assert not off_rule, off_rule
+    assert bounded > 0
     assert not bad, bad

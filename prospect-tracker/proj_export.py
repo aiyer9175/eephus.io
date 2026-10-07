@@ -121,7 +121,9 @@ def _tail_band(m: dict, champ_full: list):
     zero floor; combined by the rho rule on a two-way row). Where a carrier is
     missing or does not reproduce the served five seasons it is recomputed with
     chain_aging_tail from the served warP10/warP90 and the champion path at the
-    FA module's anchors (0.6 and 1.4 x), the P10 again without the floor."""
+    FA module's anchors (0.6 and 1.4 x), the P10 again without the floor, the
+    chain's branch decided on the unmultiplied champion (branch_champ) as the
+    point's is, so P10 <= point <= P90 holds on every tail season."""
     if not TAIL_BAND or TAIL_SEAM != "chained":
         return None
     n = len(champ_full)
@@ -135,7 +137,8 @@ def _tail_band(m: dict, champ_full: list):
                 and all(abs(float(full[t]) - float(served[t])) < 0.006 for t in range(HORIZON))):
             full = fm.chain_aging_tail([float(x) for x in served[:HORIZON]],
                                        [mult * float(c) for c in champ_full], HORIZON, n,
-                                       floor=floor)
+                                       floor=floor,
+                                       branch_champ=[float(c) for c in champ_full])
         out.append([float(x) for x in full[HORIZON:n]])
     return out[0], out[1]
 

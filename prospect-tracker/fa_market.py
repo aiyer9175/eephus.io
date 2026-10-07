@@ -403,7 +403,8 @@ FA_PRICING_USE_DEF = False
 
 
 def chain_aging_tail(series: list[float], champ_series: list[float],
-                     horizon: int, n_years: int, floor: bool = True) -> list[float]:
+                     horizon: int, n_years: int, floor: bool = True,
+                     branch_champ: list[float] | None = None) -> list[float]:
     """THE SEAM: extend a `horizon`-season path past its last season along the
     champion's aging curve, chained from that last season's value.
 
@@ -423,11 +424,25 @@ def chain_aging_tail(series: list[float], champ_series: list[float],
     floor=False (owner answer VAL2-Q3-REVIEW (b), 2026-09-30) drops the zero
     floor: a negative last value is carried along the same chain, so a P10
     head below zero stays below zero past the horizon instead of stepping up
-    to 0. The default keeps the floor, so every existing caller is unchanged."""
+    to 0. The default keeps the floor, so every existing caller is unchanged.
+
+    branch_champ (POSTEPOCH_9_CONTRACT_TAIL_BAND_SEAM, 2026-10-07): the
+    UNMULTIPLIED champion path a band caller's champ_series was scaled from
+    (the P10/P90 heads pass 0.6 and 1.4 x the champion). Both 0.05 tests, the
+    anchor's (scale or ratio chain) and each season's ratio-chain test, read
+    it instead of champ_series, so the point and its band take the same branch
+    and the same ratio every season, and P10 <= point <= P90 at the horizon
+    carries into every chained season by construction. The values still come
+    from champ_series; the multiplier cancels in both branches. Before it, a
+    1.4 x anchor of 0.04 (0.056) took the scale branch on a zero champion tail
+    while the point took the ratio chain: a P90 tail of 0.0 under a point of
+    0.08 (kristian_campbell). None (every unmultiplied caller) tests
+    champ_series itself, byte for byte the behaviour before."""
     H = int(horizon)
     lo = (lambda v: max(0.0, v)) if floor else (lambda v: v)
+    gate = champ_series if branch_champ is None else branch_champ
     anchor = champ_series[H - 1]
-    scale = (series[H - 1] / anchor) if anchor > 0.05 else None
+    scale = (series[H - 1] / anchor) if gate[H - 1] > 0.05 else None
     tail = []
     for t in range(H, int(n_years)):
         if scale is not None:
@@ -436,7 +451,7 @@ def chain_aging_tail(series: list[float], champ_series: list[float],
             # champion anchor ~0: decay the h5 value by the champion's
             # year-over-year ratio chain, floored at 0 unless floor=False
             prev = tail[-1] if tail else lo(series[H - 1])
-            r = (champ_series[t] / champ_series[t - 1]) if champ_series[t - 1] > 0.05 else 0.7
+            r = (champ_series[t] / champ_series[t - 1]) if gate[t - 1] > 0.05 else 0.7
             tail.append(lo(prev * min(1.0, r)))
     # + 0.0 turns a rounded -0.0 (an unfloored value just below zero) into 0.0
     return list(series) + [round(v, 2) + 0.0 for v in tail]
@@ -545,17 +560,21 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
               # ~1,100 (right-skew: median < mean). Team roll-ups must sum
               # means - measured 2026-06-12 (team_outlook_eval retro block).
               "war_y1_champ": out["war_y1"],
-              "war_by_year_p10": _extend(ml["war_by_year_p10"],
-                                         [p * 0.6 for p in path]),
+              # The bands decide the chain's branch on the unmultiplied
+              # champion (branch_champ), as the point does.
+              "war_by_year_p10": chain_aging_tail(
+                  ml["war_by_year_p10"], [p * 0.6 for p in path], H,
+                  MAX_PATH_YEARS, branch_champ=path),
               # The same P10 chain without the zero floor (owner answer
               # VAL2-Q3-REVIEW (b)): what proj_export's contract tail range
               # reads, so a negative 2031 P10 carries into the later seasons.
               # Identical to war_by_year_p10 wherever that is above zero.
               "war_by_year_p10_open": chain_aging_tail(
                   ml["war_by_year_p10"], [p * 0.6 for p in path], H,
-                  MAX_PATH_YEARS, floor=False),
-              "war_by_year_p90": _extend(ml["war_by_year_p90"],
-                                         [p * 1.4 for p in path]),
+                  MAX_PATH_YEARS, floor=False, branch_champ=path),
+              "war_by_year_p90": chain_aging_tail(
+                  ml["war_by_year_p90"], [p * 1.4 for p in path], H,
+                  MAX_PATH_YEARS, branch_champ=path),
               "model": proj_ml.MODEL_VERSION}
     # Playing-time-held (if-healthy) display path, carried through for
     # /projections/ only; consumers that price value ignore it.
