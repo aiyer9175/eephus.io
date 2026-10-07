@@ -1457,6 +1457,43 @@ def _lab_should_skip(artifact: Path, label: str, log: logging.Logger,
     return False
 
 
+def _league_teams_payloads(log: logging.Logger, label: str) -> dict:
+    """Plan Part 8 P8.2 (owner asks 13, 14, 15 and 18 of 2026-09-30): the four
+    display-only exporters behind the League, Teams and player-drawer surfaces
+    of /mlbstats/, in their dependency order. league_averages writes the League
+    Averages season panels (the live one, plus any completed season missing)
+    and the over-time series; team_stats_export the Team Stats payload;
+    mlbstats_trends_export the drawer's player-season index file;
+    mlbstats_rolling_export the drawer's per-player game files and their index
+    (it refuses, keeping its last good files, when the play frame's last game
+    date is more than two days behind the boards' last game date).
+
+    While league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE and
+    mlbstats_trends_export.MLBSTATS_DRAWER_LIVE are False every file goes under
+    .cache/league_teams/preview/ and nothing under data/ changes. Each export
+    is best-effort and keeps its last good file; a failure never stops the
+    next one. Returns {name: "ok" | "refused: ..." | "failed"}."""
+    out: dict = {}
+    import league_averages
+    import mlbstats_rolling_export
+    import mlbstats_trends_export
+    import team_stats_export
+    for name, fn in (("league_averages", league_averages.export),
+                     ("team_stats_export", team_stats_export.export),
+                     ("mlbstats_trends_export", mlbstats_trends_export.export),
+                     ("mlbstats_rolling_export", mlbstats_rolling_export.export)):
+        try:
+            res = fn(log=log.info) or {}
+            why = res.get("refused") if isinstance(res, dict) else None
+            out[name] = f"refused: {why}" if why else "ok"
+        except Exception:                               # noqa: BLE001
+            log.exception("%s: %s failed - its last good file stands - continuing",
+                          label, name)
+            out[name] = "failed"
+    log.info("%s: %s", label, ", ".join(f"{k} {v}" for k, v in out.items()))
+    return out
+
+
 def _iso_date_prefix(value: object) -> str | None:
     text = str(value or "").strip()
     if len(text) < 10:
@@ -3820,6 +3857,32 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     pass
                 _record_ingest("mlb_events", False, 0,
                                f"mlb events step raised: {_e}"[:200], "mlb", log)
+
+        # --- 9e-pre0h. League, Team Stats and drawer payloads (dark) --------
+        # Plan Part 8 P8.2 (owner asks 13, 14, 15 and 18; task Q8_11). Runs
+        # _league_teams_payloads: the League Averages panels and series, the
+        # Team Stats payload, the drawer's player-season index file and its
+        # per-player game files, all under .cache/league_teams/preview/ while
+        # their flags are False. Display only, so placed AFTER the 9e-pre
+        # vintage snapshot (no model and no priced cell reads any of it), and
+        # after 9e-pre0e, whose open-season corpus refresh and management board
+        # the game files and the Team Stats tendencies read. Not an epoch
+        # artifact and never on its frozen rebuild list. The label is the next
+        # free 9e-pre0 letter by commit order (9e-pre0d to 9e-pre0g are taken).
+        # `chained` skips the night monthly 6b4l built all four. Never aborts.
+        with _step("9e-pre0h. League, Team Stats and drawer payloads (league_teams preview)", log):
+            # Writes mlb_league_panel_<season>.json, mlb_league_series.json,
+            # mlb_team_stats.json, mlbstats_trends.json, mlbstats_player/ and
+            # mlbstats_player_index.json (the preview directory while dark).
+            if chained:
+                log.info("daily: SKIP 9e-pre0h: monthly 6b4l just built the league, "
+                         "team and drawer payloads (chained)")
+            else:
+                try:
+                    _league_teams_payloads(log, "daily 9e-pre0h")
+                except Exception:
+                    log.exception("daily: league, team and drawer payloads failed - "
+                                  "the previous files stand - continuing")
 
         # --- 9e-pre-wx. Forecast weather capture (DARK; ARMED 2026-09-11) ---
         # docs/diamond-betting.md section 5h. Captures the pregame forecast for
@@ -6967,6 +7030,23 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _be_win.restamp_window_3yr(log=log.info)
             except Exception:
                 log.exception("multi-year window lab failed - continuing")
+
+        # --- 6b4l. League, Team Stats and drawer payloads (dark) -------------
+        # Plan Part 8 P8.2 (task Q8_11): the four exporters of
+        # _league_teams_payloads, after 6b4k because the drawer's index file
+        # reads the window lab's memoised season panels and the four boards
+        # 6b4 to 6b4i just wrote. On a monthly night the chained daily run
+        # skips its 9e-pre0h twin. Writes only under
+        # .cache/league_teams/preview/ while the flags are False, so nothing
+        # the vintage snapshot freezes moves. Additive; never aborts.
+        with _step("6b4l. League, Team Stats and drawer payloads (league_teams preview)", log):
+            # Writes mlb_league_panel_<season>.json, mlb_league_series.json,
+            # mlb_team_stats.json, mlbstats_trends.json, mlbstats_player/ and
+            # mlbstats_player_index.json (the preview directory while dark).
+            try:
+                _league_teams_payloads(log, "6b4l")
+            except Exception:
+                log.exception("league, team and drawer payloads failed - continuing")
 
         # --- 6b5. Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion

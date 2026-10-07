@@ -333,3 +333,22 @@ def test_mlb_events_dir_ships_in_both_deploy_consumers():
     assert "data/mlb_events/" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
     src = (ROOT / "mlb_events.py").read_text(encoding="utf-8")
     assert 'SERVED_DIR = DATA / "mlb_events"' in src, "the writer fills the directory both consumers ship"
+
+
+def test_mlbstats_player_dir_ships_in_both_deploy_consumers():
+    """Q8_11 (2026-10-07): the /mlbstats/ drawer's per-player game files
+    (data/mlbstats_player/<mlbam>.json, written by mlbstats_rolling_export.py
+    once MLBSTATS_DRAWER_LIVE flips) are not a storage._slices_dir shard, so they
+    get the twin of test_slices_dir_shards_ship_in_both_deploy_consumers: both
+    consumers name the directory before the flip, so the flip only writes files.
+    The directory is gitignored."""
+    d = "mlbstats_player"
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert _ships_in_nightly(nightly, d), "deploy/nightly-build.sh never ships /data/mlbstats_player/"
+    wf_path = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf_path.exists():
+        assert _ships_in_workflow(wf_path.read_text(encoding="utf-8"), d), "the CI workflow never copies data/mlbstats_player/"
+    assert "mlbstats_player/" in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8")
+    assert "data/mlbstats_player/" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    src = (ROOT / "mlbstats_rolling_export.py").read_text(encoding="utf-8")
+    assert 'SERVED_DIR = DATA_DIR / "mlbstats_player"' in src, "the writer fills the directory both consumers ship"
