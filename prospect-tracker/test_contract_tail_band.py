@@ -219,10 +219,18 @@ def test_served_tail_band_is_ordered_aligned_and_unfloored():
                 order.append((v["key"], i, lt[i], w, ht[i]))
             assert str(lt[i]) != "-0.0", v["key"]
         # THE STEP the owner removed: a negative 2031 P10 never becomes a 2032
-        # P10 of zero under a positive point.
+        # P10 of zero under a positive point. A chained value that is itself
+        # within half a print step of zero prints as 0.0 with no floor at work
+        # (xander_bogaerts: -0.04 x 0.015 / 0.133 = -0.0045, printed 0.0), so
+        # the step is read where the chain on the served seasons (the scale
+        # branch, else the ratio chain's 0.7) prints below -0.01.
         l5 = v["warP10"][H - 1]
         if l5 is not None and l5 < 0 and wt[0] is not None and wt[0] > 0 and lt[0] >= 0:
-            step.append((v["key"], l5, lt[0], wt[0]))
+            c5 = float(v["warChamp"][H - 1])
+            ct = (v.get("warChampTail") or [None])[0]
+            chained = l5 * float(ct) / c5 if (c5 > 0.05 and ct is not None) else l5 * 0.7
+            if chained < -0.01:
+                step.append((v["key"], l5, lt[0], wt[0]))
     assert not order, order
     assert not step, step
 
