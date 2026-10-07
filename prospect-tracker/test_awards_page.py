@@ -104,3 +104,94 @@ def test_lamp_geometry_is_the_plans():
     assert "p === 1 ? 12 : p === 2 ? 8 : 4" in js
     assert 'shape-rendering="crispEdges"' in js
     assert 'preserveAspectRatio="none"' not in js
+
+
+
+# --- My Ballot (AWARDS_9; AWARDS_PLAN 5.8, 5.14 and 6 rows I14 and I15) -------------------------
+
+BJS = ROOT / "assets" / "awards-ballot.js"
+BCSS = ROOT / "assets" / "awards-ballot.css"
+
+
+def _bjs() -> str:
+    return BJS.read_text(encoding="utf-8")
+
+
+def _served_bytes(p: Path) -> int:
+    """The served file is the git blob, which holds LF line ends; a Windows working tree
+    checks it out with CRLF, so the budget counts the LF bytes."""
+    return len(p.read_bytes().replace(b"\r\n", b"\n"))
+
+
+def test_ballot_budgets_and_no_motion():
+    assert _served_bytes(BJS) <= 35 * 1024, _served_bytes(BJS)
+    assert _served_bytes(BCSS) <= 10 * 1024, _served_bytes(BCSS)
+    css = BCSS.read_text(encoding="utf-8")
+    assert "@keyframes" not in css and not re.search(r"\banimation(-[a-z]+)?\s*:", css)
+    assert "transition" not in css
+    assert "requestAnimationFrame" not in _bjs()
+
+
+def test_ballot_css_is_tokens_only():
+    css = BCSS.read_text(encoding="utf-8")
+    assert not HEX.findall(css), HEX.findall(css)
+    assert "prefers-color-scheme" not in css and "--vt-" not in css
+    for prop in re.findall(r"(?:^|[;{\s])(?:color|fill|stroke|background(?:-color)?)\s*:\s*([^;}]+)", css):
+        v = prop.strip()
+        assert v.startswith(("var(", "none", "inherit", "transparent")), v
+
+
+def test_ballot_loads_lazily_from_stamped_urls():
+    out = B.build_awards(live=True)
+    assert f'data-ballot-js="/assets/awards-ballot.js?v={B._asset_ver("assets/awards-ballot.js")}"' in out
+    assert f'data-ballot-css="/assets/awards-ballot.css?v={B._asset_ver("assets/awards-ballot.css")}"' in out
+    assert '<script src="/assets/awards-ballot.js' not in out, "the chunk is not in the cold paint"
+    js = _js()
+    assert 'root.getAttribute("data-ballot-js")' in js and 'if (s.section === "ballot") { ballot(panel, s); return; }' in js
+    assert "awards_candidates" not in js, "the cold paint never names the candidate file"
+    bjs = _bjs()
+    assert bjs.count("fetch(") == 1 and 'fetch("/data/awards_candidates_" + season + ".json"' in bjs
+
+
+def test_ballot_storage_is_one_key_inside_try():
+    js = _bjs()
+    assert js.count('"eephus.awards.ballot.v1"') == 1
+    for banned in ("sessionStorage", "indexedDB", "document.cookie", "XMLHttpRequest", "sendBeacon", "navigator.send"):
+        assert banned not in js, banned
+    uses = [m.start() for m in re.finditer(r"localStorage\.(getItem|setItem)", js)]
+    assert len(uses) == 2
+    for i in uses:
+        assert "try {" in js[max(0, i - 80):i], "storage access outside try"
+    assert "}, 300);" in js, "written 300 ms after an edit"
+
+
+def test_ballot_link_alphabet_and_ids():
+    js = _bjs()
+    assert "/^[a-z0-9._:,-]+$/" in js
+    assert "toString(36)" in js and "parseInt(tok, 36)" in js
+    assert "/^c[a-z]{2,4}$/" in js, "Manager ids are c plus a club code"
+    assert 'history.replaceState(null, "", "#" + hashOf(s))' in _js()
+
+
+def test_ballot_never_prefills_or_scores():
+    js = _bjs()
+    assert "score_display" in js       # the rule's served number in its own column only
+    for banned in ("agree", "same as", "overlap", "percent of", "suggested"):
+        assert banned not in js.lower(), banned
+    assert "Eephus place" in js and 'role="switch" data-act="${act}"' in js
+    assert "Show the eephus selection" in js
+
+
+def test_ballot_copy_is_the_plans():
+    js = _bjs()
+    for s in ("Loading the candidates.", "The candidates could not load.",
+              "You are viewing a shared ballot. It is not saved in this browser.", "Copy to my ballot",
+              "Keep mine", "Saved in this browser only. Nothing is sent to eephus.io; there is no account behind this page.",
+              "This browser is not saving your ballot (private window or blocked storage).",
+              "Below the rule&#39;s playing-time floor.", "Outside the site&#39;s rookie test.",
+              "Two-way: batting and pitching shown.", "Hitters", "Pitchers", "Show every player",
+              "Above the floor only", "Your slot", "Copy link", "Copy text", "Move up", "Move down", "Remove"):
+        assert s in js, s
+    for unit in ("eWAR v2", "eWAR v3", "fWAR"):
+        assert unit not in js, unit
+    assert "Share" not in js and "eephus-gfx" not in js and "Save image" not in js

@@ -8,8 +8,9 @@
    drift ("Now") after a freeze, the Rookie list outside the rookie test, the
    Manager card's two parts and two management facts, and three disclosures
    (the finalist comparison strip, the race strip and the rule's full ballot).
-   Superlatives, My Ballot, Rule and vote and Method render the unmeasured state
-   until AWARDS_8 and AWARDS_9 land.
+   My Ballot is assets/awards-ballot.js (AWARDS_9), loaded on its first open.
+   Superlatives, Rule and vote and Method render the unmeasured state until
+   AWARDS_8 lands.
 
    Every number is printed from the payload as served (score_display, lead,
    compare values) and every label from its payload field; the client builds no
@@ -222,6 +223,7 @@
       }
     });
     var panel = document.getElementById("aw-panel-" + s.section);
+    if (s.section === "ballot") { ballot(panel, s); return; }
     if (s.section !== "selections") {
       panel.innerHTML = controls(s.section) + stateBox("unmeasured", "This section is being built.");
       return;
@@ -553,37 +555,40 @@
     });
     return out;
   }
-  function compare(doc, A, LG, b) {
+  // `o` (My Ballot, AWARDS_9): {id, cap, keys, G, heads, cell(m, i) -> [value, text], pts(m), noRule}
+  // draws the viewer's 1st to 3rd in the columns; the Selections cards pass none.
+  function compare(doc, A, LG, b, o) {
     var c = b.compare || {}, ms = c.metrics || [], top = b.top.slice(0, 3);
     if (!ms.length) return stateBox("unmeasured", "No comparison metrics are on file for this card.");
-    var G = cmpGeom(), W = G.trk, id = "aw-cc-" + KEY[A] + "-" + LG.toLowerCase();
-    var w = (b.writers || {}), wp = w.status === "final" ? w.rule_place_of_winner : null;
-    var cap = "Compare the three: " + LG + " " + TITLE[A] + ", " + doc.season;
-    var h = '<figure class="aw-cmp" role="group" aria-labelledby="' + id + '">' +
+    var G = (o && o.G) || cmpGeom(), W = G.trk, id = o ? o.id : "aw-cc-" + KEY[A] + "-" + LG.toLowerCase();
+    var w = (b.writers || {}), wp = !o && w.status === "final" ? w.rule_place_of_winner : null;
+    var cap = o ? o.cap : "Compare the three: " + LG + " " + TITLE[A] + ", " + doc.season;
+    var heads = o ? o.heads : top.map(function (r, i) { return (i + 1) + " " + (A === "MOY" ? r.club_code : surname(r.name)); });
+    var h = '<figure class="aw-cmp" role="group" aria-labelledby="' + id + '">' + (o ? o.keys : "") +
       '<div class="aw-cmp-key" title="The metric&#39;s own value ruler, from the pool&#39;s 1st to 99th percentile.">' +
       (T ? T.keyHTML() : "") + "</div>" +
       '<div class="aw-scroll"><table class="aw-cmp-t" style="width:' + (G.lab + W + 8 + 3 * G.num) + 'px"><caption id="' +
       id + '">' + esc(cap) + '</caption><colgroup><col style="width:' + G.lab + 'px"><col style="width:' + (W + 8) +
       'px"><col style="width:' + G.num + 'px"><col style="width:' + G.num + 'px"><col style="width:' + G.num + 'px"></colgroup><thead><tr><th scope="col">Metric</th><th scope="col"><span class="visually-hidden">Value ruler</span></th>' +
-      top.map(function (r, i) {
-        return '<th scope="col" class="aw-n">' + (i + 1) + " " + esc(A === "MOY" ? r.club_code : surname(r.name)) + "</th>";
-      }).join("") + "</tr></thead><tbody>";
+      heads.map(function (t) { return '<th scope="col" class="aw-n">' + esc(t) + "</th>"; }).join("") + "</tr></thead><tbody>";
     ms.forEach(function (m) {
       var d = m.decimals == null ? 1 : m.decimals, vals = m.values || [], pct = m.pct || [];
       h += '<tr data-key="' + esc(m.key) + '"><th scope="row" title="' + esc(m.producer || "") + '">' + esc(m.label) + "</th>" +
-        '<td class="aw-trk">' + track(m, W, wp) + "</td>" + [0, 1, 2].map(function (i) {
-          var s = fmt(vals[i], d);
+        '<td class="aw-trk">' + track(m, W, wp, o && o.pts(m), o && o.noRule) + "</td>" + [0, 1, 2].map(function (i) {
+          var cv = o ? o.cell(m, i) : [vals[i], fmt(vals[i], d)], s = cv[1];
           return s == null ? '<td class="aw-n aw-null" data-v="">-</td>'
-            : '<td class="aw-n ' + ink(vals[i], m.family) + '" data-v="' + esc(s) + '">' + esc(s) + "</td>";
-        }).join("") + "</tr>" +
+            : '<td class="aw-n ' + ink(cv[0], m.family) + '" data-v="' + esc(s) + '">' + esc(s) + "</td>";
+        }).join("") + "</tr>" + (o ? "" :
         '<tr class="aw-pct"><th scope="row" colspan="2">Pool percentile</th>' + [0, 1, 2].map(function (i) {
           var s = fmt(pct[i], 1);
           return '<td class="aw-n" data-v="' + esc(s || "") + '">' + esc(s == null ? "-" : s) + "</td>";
-        }).join("") + "</tr>";
+        }).join("") + "</tr>");
     });
     return h + "</tbody></table></div></figure>";
   }
-  function track(m, W, wp) {
+  // `mine` (My Ballot, AWARDS_9): the viewer's slots 1 to 3 as {n, v, pc}, drawn as
+  // lilac squares; `noRule` leaves out the rule's ink numerals (the ballot's switch).
+  function track(m, W, wp, mine, noRule) {
     var p1 = num(m.p1), p99 = num(m.p99), fam = m.family, s = "", seg = fam ? segs(fam, p1, p99, W) : null;
     var byPct = !seg;
     if (seg) {
@@ -600,12 +605,17 @@
       }
     }
     var marks = [];
-    [0, 1, 2].forEach(function (i) {
+    if (!noRule) [0, 1, 2].forEach(function (i) {
       var x = null;
       if (byPct) { var pc = num((m.pct || [])[i]); if (pc != null) x = pc / 100 * W; }
       else { var v = num((m.values || [])[i]); if (v != null) x = (Math.min(p99, Math.max(p1, v)) - p1) / (p99 - p1) * W; }
       if (x != null) marks.push({ x: Math.round(x), n: i + 1, w: false });
       if (x != null && wp === i + 1) marks.push({ x: Math.round(x), n: "W", w: true });
+    });
+    (mine || []).forEach(function (e) {
+      var x = byPct ? (e.pc == null ? null : e.pc / 100 * W)
+        : (e.v == null ? null : (Math.min(p99, Math.max(p1, e.v)) - p1) / (p99 - p1) * W);
+      if (x != null) marks.push({ x: Math.round(x), n: e.n, w: false, me: true });
     });
     var levels = [];
     marks.forEach(function (mk) {
@@ -618,7 +628,7 @@
     s = s.replace(/y="Y"/g, 'y="' + y + '"');
     marks.forEach(function (mk) {
       var bx = Math.max(0, Math.min(W - 12, mk.x - 6)), by = y - 2 - 12 - mk.lv * 13;
-      s += '<g class="aw-mk' + (mk.w ? " w" : "") + '" data-place="' + mk.n + '"><rect x="' + (bx + (mk.w ? 0.5 : 0)) + '" y="' +
+      s += '<g class="aw-mk' + (mk.w ? " w" : "") + (mk.me ? " me" : "") + '" data-place="' + mk.n + '"><rect x="' + (bx + (mk.w ? 0.5 : 0)) + '" y="' +
         (by + (mk.w ? 0.5 : 0)) + '" width="' + (mk.w ? 11 : 12) + '" height="' + (mk.w ? 11 : 12) + '"/><text x="' + (bx + 6) +
         '" y="' + (by + 10) + '">' + mk.n + "</text></g>";
     });
@@ -688,6 +698,44 @@
         }).join("") + "</tr>";
       }).join("") + "</tbody></table></div></details>";
     return h;
+  }
+
+  // ---- My Ballot (AWARDS_9; AWARDS_PLAN 5.8) ----------------------------------
+  // assets/awards-ballot.js and its stylesheet load on the first My Ballot open
+  // (their stamped URLs ride the mount's data attributes); the chunk fetches the
+  // season's candidate file itself. The hash keeps b only for a shared link.
+  var ballotChunk = null;
+  function ballotLoad() {
+    if (window.EephusAwardsBallot) return null;
+    if (ballotChunk) return ballotChunk;
+    function tag(el, attr, url) {
+      return new Promise(function (ok, no) { el.onload = ok; el.onerror = no; el[attr] = url; document.head.appendChild(el); });
+    }
+    var css = root.getAttribute("data-ballot-css"), js = root.getAttribute("data-ballot-js"), l = document.createElement("link");
+    l.rel = "stylesheet";
+    ballotChunk = Promise.all([css ? tag(l, "href", css).catch(function () { return null; }) : null,
+      js ? tag(document.createElement("script"), "src", js) : Promise.reject(new Error("chunk"))])
+      .then(function () { if (!window.EephusAwardsBallot) throw new Error("chunk"); });
+    ballotChunk.catch(function () { ballotChunk = null; });
+    return ballotChunk;
+  }
+  function ballot(panel, s) {
+    var ctx = { main: main, state: s, docFor: docFor, stateBox: stateBox, controls: controls, compare: compare,
+      esc: esc, ord: ord, surname: surname, live: function () { return state === s; },
+      setHash: function (o) {
+        for (var k in o) s[k] = o[k];
+        try { history.replaceState(null, "", "#" + hashOf(s)); } catch (e) { /* stays */ }
+        lastHash = location.hash;
+      } };
+    var p = ballotLoad();
+    if (!p) { window.EephusAwardsBallot.mount(panel, ctx); return; }
+    panel.innerHTML = controls("ballot") + stateBox("loading", "Loading the candidates.");
+    p.then(function () { if (state === s) window.EephusAwardsBallot.mount(panel, ctx); }, function () {
+      if (state === s) {
+        panel.innerHTML = controls("ballot") + stateBox("failed",
+          'The candidates could not load. <button type="button" class="aw-retry">Retry</button>');
+      }
+    });
   }
 
   // ---- boot -----------------------------------------------------------------

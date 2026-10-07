@@ -28,12 +28,24 @@ or a section has no record; no horizontal page overflow; 44 px targets at a coar
 and 24 px at a fine one; the focus ring colour; text contrast of at least 4.5:1; and no
 console error beyond the aborted off-loopback requests. Screenshots land in --out.
 
-    python tools/awards_render_check.py --port 9141 --out <dir>
+My Ballot (AWARDS_9) against the same fixtures and the candidate files: the chunk and the candidate
+file load only on the first My Ballot open; the ballot lengths and point labels equal ballot_rules;
+a keyboard-only add, move (button and Alt+Up) and remove with the live region's text and focus; the
+sort contract; a reload restores the ballot; a throwing localStorage shows the unavailable note and
+edits work in memory; Copy link (the b alphabet), Copy text and Clear's inline confirm; a shared link
+in a fresh context (banner focus, nothing written until copied, an unknown id dropped and counted, a
+duplicate kept in its first slot, the Replace and Keep mine confirms, Close removing b); the switch
+hiding only the "Eephus place" column and the ink numerals, remembered; no comparison word or
+percentage; past seasons, the frozen fixture and a failing candidate file; and no request carrying
+ballot content across every session (the request log).
+
+    python tools/awards_render_check.py --port 9141 --out <dir> [--preview <dir>] [--only ballot]
 """
 from __future__ import annotations
 
 import argparse
 import copy
+import re
 import datetime as dt
 import json
 import shutil
@@ -53,6 +65,7 @@ WIDTHS = (390, 768, 1024, 1280, 1440)
 THEMES = ("light", "dark")
 #: Data files the shells and the shared runtimes fetch (copied into the temporary site).
 SHARED_DATA = ("glossary.json", "hof_board.json", "search_index.json", "team.json", "watchlist.json")
+ONLY = "all"
 
 
 # --- fixtures ---------------------------------------------------------------------------------
@@ -139,6 +152,14 @@ def make_fixtures() -> dict:
 
     stale = copy.deepcopy(live)
     stale["generated_at"] = (now - dt.timedelta(hours=60)).isoformat()
+    # My Ballot's candidate files (AWARDS_9); the 2022 fixture's Manager rule is blocked, so its
+    # Manager pools are dropped too.
+    for p in sorted(PREVIEW.glob("awards_candidates_20[0-9][0-9].json")):
+        doc = _load(p)
+        if doc["season"] == 2022:
+            for k in ("al-moy", "nl-moy"):
+                doc["pools"].pop(k, None)
+        shards[p.name] = doc
     return {"live": dict(shards, **{"awards.json": live}),
             "frozen": dict(shards, **{"awards.json": frozen}),
             "stale": dict(shards, **{"awards.json": stale})}
@@ -347,7 +368,10 @@ def run(port: int, out: Path) -> dict:
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             try:
-                _run_all(browser, base, site, fixtures, out, report)
+                if ONLY in ("all", "selections"):
+                    _run_all(browser, base, site, fixtures, out, report)
+                if ONLY in ("all", "ballot"):
+                    _run_ballot(browser, base, site, fixtures, out, report)
             finally:
                 browser.close()
     finally:
@@ -383,6 +407,9 @@ def _page(ctx, log: list):
     page.on("console", lambda m: log.append(("console", m.type, m.text)) if m.type == "error" else None)
     page.on("pageerror", lambda e: log.append(("pageerror", "error", str(e))))
     page.on("response", lambda r: log.append(("http", str(r.status), r.url)) if r.status >= 400 else None)
+    # a loopback request that never got a response (a reset connection) is a failure too
+    page.on("requestfailed", lambda r: log.append(("http", "failed", r.url))
+            if urlparse(r.url).hostname in ("127.0.0.1", "localhost") else None)
     page._aw_aborted = aborted
     return page
 
@@ -620,11 +647,431 @@ def _run_all(browser, base, site, fixtures, out, report):
     ctx.close()
 
 
+# --- My Ballot (AWARDS_9; AWARDS_PLAN 5.8, 6 row I14's ballot items) ------------------------------
+
+BALLOT_URL = "/awards/#section=ballot"
+LS_KEY = "eephus.awards.ballot.v1"
+B_ALPHABET = re.compile(r"^[a-z0-9._:,-]+$")
+UNAVAILABLE = ("This browser is not saving your ballot (private window or blocked storage). It lasts until you "
+               "leave the page; copy the link to keep it.")
+BALLOT_TARGETS_JS = r"""
+() => {
+  const bad = [], coarse = matchMedia("(pointer: coarse)").matches, min = coarse ? 44 : 24;
+  document.querySelectorAll(".aw-b button, .aw-b-chk, .aw-b-qw input, .aw-b [role=option]").forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height || el.closest("[hidden]")) return;
+    if (r.height < min - 0.5) bad.push("ballot target " + (el.textContent || el.tagName).trim().slice(0, 30) + " is " + r.height.toFixed(1) + " px tall");
+  });
+  document.querySelectorAll(".aw-b-tbl th[scope=row]").forEach((th, i) => {
+    if (i > 3) return;
+    const bg = getComputedStyle(th).backgroundColor;
+    if (!/^rgb\(/.test(bg)) bad.push("sticky name column is not opaque: " + bg);
+  });
+  return bad;
+}
+"""
+# The switch hides only the "Eephus place" column and the ink numerals (and their legend).
+SWITCH_JS = r"""
+() => {
+  const p = document.getElementById("aw-panel-ballot").cloneNode(true);
+  const n = {sel: p.querySelectorAll(".aw-b-sel").length, ink: p.querySelectorAll(".aw-mk:not(.me)").length,
+             mine: p.querySelectorAll(".aw-mk.me").length,
+             place: Array.from(p.querySelectorAll(".aw-b-tbl thead th")).filter((t) => t.textContent.trim() === "Eephus place").length};
+  p.querySelectorAll(".aw-b-sel, .aw-mk:not(.me), .aw-b-sw").forEach((e) => e.remove());
+  return {n, text: p.textContent.replace(/\s+/g, " ").trim()};
+}
+"""
+
+
+def _ord(n: int) -> str:
+    return f"{n}{'th' if 11 <= n % 100 <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
+
+
+def _b36(n) -> str:
+    n, out = int(n), ""
+    while True:
+        n, r = divmod(n, 36)
+        out = "0123456789abcdefghijklmnopqrstuvwxyz"[r] + out
+        if not n:
+            return out
+
+
+def _ballot_rows_check(page, rules: dict) -> list:
+    bad = []
+    keys = page.eval_on_selector_all('#aw-b-chooser [role="tab"]', "(els) => els.map((e) => e.dataset.key)")
+    if len(keys) != 8:
+        bad.append(f"chooser tabs {len(keys)}")
+    for key in keys:
+        page.click(f"#aw-b-t{key}")
+        page.wait_for_selector(f'#aw-b-t{key}[aria-selected="true"]')
+        if page.eval_on_selector_all('#aw-b-chooser [aria-selected="true"]', "(e) => e.length") != 1:
+            bad.append(f"{key}: more than one selected tab")
+        r = rules[key.split("-")[1].upper()]
+        cnt = page.text_content(f"#aw-b-t{key} span") or ""
+        if not cnt.endswith(f"/{r['n']}"):
+            bad.append(f"{key}: chooser count {cnt!r}")
+        if page.get_attribute("#aw-b-panel", "aria-labelledby") != f"aw-b-t{key}":
+            bad.append(f"{key}: tabpanel aria-labelledby")
+        labels = page.eval_on_selector_all("#aw-b-panel .aw-b-slot .aw-b-sl", "(els) => els.map((e) => e.textContent)")
+        want = [f"{_ord(i + 1)} · {pts} pts" for i, pts in enumerate(r["points"])]
+        if labels != want:
+            bad.append(f"{key}: slot labels {labels} != {want}")
+    page.click("#aw-b-tal-mvp")
+    return bad
+
+
+def _open_ballot(page, base: str, path: str = BALLOT_URL):
+    page.goto(base + path, wait_until="networkidle")
+    page.wait_for_selector("#aw-b-panel .aw-slots, #aw-b-panel .px-state, .aw-b-banner", timeout=15000)
+
+
+def _storage(page):
+    return page.evaluate(f"() => {{ try {{ return localStorage.getItem({LS_KEY!r}); }} catch (e) {{ return 'THROWS'; }} }}")
+
+
+def _slot_ids(page, n=3):
+    return page.eval_on_selector_all("#aw-b-panel .aw-b-slot", f"(els) => els.slice(0, {n}).map((e) => e.dataset.id || null)")
+
+
+def _fill_three(page) -> list:
+    ids = page.eval_on_selector_all('#aw-b-table [data-act="add"]', "(els) => els.slice(0, 3).map((e) => e.dataset.id)")
+    for i in ids:
+        page.click(f'#aw-b-table [data-act="add"][data-id="{i}"]')
+    return ids
+
+
+def _copied(page, act: str) -> str:
+    page.click(f'[data-act="{act}"]')
+    page.wait_for_timeout(300)
+    ta = page.query_selector("#aw-b-out textarea")
+    return ta.input_value() if ta else page.evaluate("() => navigator.clipboard.readText()")
+
+
+def _run_ballot(browser, base, site, fixtures, out, report):
+    live = fixtures["live"]["awards.json"]
+    rules = live["ballot_rules"]
+    S = live["season"]
+    net: list = []
+
+    def watch(page):
+        page.on("request", lambda r: net.append((r.method, r.url, r.post_data)))
+
+    def live_txt(page):
+        return (page.text_content("#aw-b-live") or "").replace(" ", "").strip()
+
+    # 0. Selections alone never loads the ballot chunk or a candidate file.
+    write_fixture(site, fixtures["live"])
+    ctx = _context(browser, 1280, "light")
+    log: list = []
+    page = _page(ctx, log)
+    watch(page)
+    page.goto(f"{base}/awards/", wait_until="networkidle")
+    _wait_app(page)
+    res = {"bad": [f"cold paint requested {u}" for _m, u, _p in net if "awards-ballot" in u or "awards_candidates" in u]}
+    _record(report, "ballot_lazy_load", res, _errors(log, page._aw_aborted))
+    ctx.close()
+
+    # 1. Every width and theme on the live fixture: lengths, points, layout, targets, contrast.
+    for w in WIDTHS:
+        for theme in THEMES:
+            ctx = _context(browser, w, theme)
+            log = []
+            page = _page(ctx, log)
+            watch(page)
+            _open_ballot(page, base)
+            name = f"ballot_live_{w}_{theme}"
+            res = {"bad": []}
+            if theme == "light" and w in (390, 1280):
+                res["bad"] += _ballot_rows_check(page, rules)
+            ids = _fill_three(page)
+            page.click(f'#aw-b-table [data-act="drawer"][data-id="{ids[0]}"]')
+            page.wait_for_selector("#aw-b-dw")
+            lay = page.evaluate(LAYOUT_JS)
+            res["bad"] += lay["bad"] + page.evaluate(BALLOT_TARGETS_JS)
+            res.update({"contrast_worst": lay["worst"], "contrast_worst_at": lay["worstWhat"]})
+            txt = page.text_content("#aw-panel-ballot") or ""
+            if "%" in txt or re.search(r"\b(match(es|ed)?|agree\w*|overlap\w*|same as)\b", txt, re.I):
+                res["bad"].append("the ballot panel prints a comparison word or a percentage")
+            page.evaluate("() => document.querySelector('.aw-b').scrollIntoView()")
+            shot = out / f"{name}.png"
+            page.screenshot(path=str(shot))
+            report["screens"].append(shot.name)
+            if w in (390, 1280):
+                rs = out / f"{name}_right.png"
+                page.query_selector(".aw-b-right").screenshot(path=str(rs))
+                report["screens"].append(rs.name)
+            _record(report, name, res, _errors(log, page._aw_aborted))
+            ctx.close()
+
+    # 2. Keyboard only: add, move and remove with the live region's text; the sort contract;
+    #    reload restores; the switch hides only its two things and is remembered.
+    ctx = _context(browser, 390, "light")
+    log = []
+    page = _page(ctx, log)
+    watch(page)
+    _open_ballot(page, base)
+    res = {"bad": []}
+    first = live["awards"]["MVP"]["AL"]["top"][0]
+    who, mid = first["name"], str(first["mlbam"])
+    page.focus('[data-act="choose"][data-slot="0"]')
+    page.keyboard.press("Enter")
+    if page.evaluate("() => document.activeElement.id") != "aw-b-q":
+        res["bad"].append("Choose 1st place did not move focus to the search")
+    page.keyboard.type(who.split()[-1][:3])
+    page.keyboard.press("ArrowDown")
+    page.keyboard.press("Enter")
+    if live_txt(page) != f"{who} added to 1st on your AL MVP ballot.":
+        res["bad"].append(f"add announced {live_txt(page)!r}")
+    if _slot_ids(page, 1) != [mid]:
+        res["bad"].append("the keyboard add did not land in 1st")
+    page.focus('.aw-b-slot[data-slot="0"] [data-act="down"]')
+    page.keyboard.press("Enter")
+    if live_txt(page) != f"{who} moved to 2nd." or _slot_ids(page, 2) != [None, mid]:
+        res["bad"].append(f"Move down announced {live_txt(page)!r}")
+    act = page.evaluate("() => [document.activeElement.dataset.act, document.activeElement.dataset.slot]")
+    if act != ["up", "1"]:
+        res["bad"].append(f"focus after Move down is {act}")
+    page.keyboard.press("Alt+ArrowUp")
+    if live_txt(page) != f"{who} moved to 1st." or _slot_ids(page, 1) != [mid]:
+        res["bad"].append(f"Alt+Up announced {live_txt(page)!r}")
+    page.focus('.aw-b-slot[data-slot="0"] [data-act="rm"]')
+    page.keyboard.press("Enter")
+    if live_txt(page) != f"{who} removed.":
+        res["bad"].append(f"Remove announced {live_txt(page)!r}")
+    act = page.evaluate("() => [document.activeElement.dataset.act, document.activeElement.dataset.slot]")
+    if act != ["choose", "0"]:
+        res["bad"].append(f"focus after Remove is {act}")
+    page.focus('#aw-b-table [data-act="sort"][data-k="name"]')
+    page.keyboard.press("Enter")
+    if page.evaluate("() => document.activeElement.dataset.k") != "name":
+        res["bad"].append("focus left the pressed sort button")
+    if page.get_attribute('#aw-b-table th:has([data-k="name"])', "aria-sort") != "ascending":
+        res["bad"].append("aria-sort on the sorted th")
+    if page.evaluate("() => document.querySelectorAll('[aria-sort]:not(th)').length"):
+        res["bad"].append("aria-sort outside a th")
+    if (page.text_content("#aw-b-sortst") or "").strip() != "Sorted by Name, A to Z.":
+        res["bad"].append(f"the sort status line reads {page.text_content('#aw-b-sortst')!r}")
+    if page.get_attribute("#aw-b-count", "role") != "status":
+        res["bad"].append("the count line is not role=status")
+    ids = _fill_three(page)
+    page.wait_for_timeout(450)
+    page.reload(wait_until="networkidle")
+    page.wait_for_selector("#aw-b-panel .aw-slots")
+    if _slot_ids(page) != ids:
+        res["bad"].append(f"reload restored {_slot_ids(page)}, wanted {ids}")
+    stored = json.loads(_storage(page) or "{}")
+    if stored.get("v") != 1 or stored.get("seasons", {}).get(str(S), {}).get("al-mvp", [])[:3] != ids:
+        res["bad"].append("the stored value is not the v1 shape")
+    before = page.evaluate(SWITCH_JS)
+    page.click('[data-act="sel"]')
+    after = page.evaluate(SWITCH_JS)
+    if not (before["n"]["sel"] and before["n"]["ink"] and before["n"]["place"] == 1 and before["n"]["mine"]):
+        res["bad"].append(f"switch on draws no selection elements {before['n']}")
+    if after["n"]["sel"] or after["n"]["ink"] or after["n"]["place"] or after["n"]["mine"] != before["n"]["mine"]:
+        res["bad"].append(f"switch off left {after['n']}")
+    if before["text"] != after["text"]:
+        res["bad"].append("the switch changed something besides the Eephus place column and the ink numerals")
+    page.wait_for_timeout(450)
+    page.reload(wait_until="networkidle")
+    page.wait_for_selector("#aw-b-panel .aw-slots")
+    if page.get_attribute('[data-act="sel"]', "aria-checked") != "false":
+        res["bad"].append("the switch is not remembered")
+    page.evaluate("() => document.querySelector('.aw-b-right').scrollIntoView()")
+    page.screenshot(path=str(out / "ballot_switch_off_390_light.png"))
+    report["screens"].append("ballot_switch_off_390_light.png")
+    page.click('[data-act="sel"]')
+    page.wait_for_timeout(450)
+    _record(report, "ballot_keyboard_sort_reload_switch", res, _errors(log, page._aw_aborted))
+    ctx.close()
+
+    # 3. Storage that throws: the unavailable note, and edits work in memory.
+    ctx = _context(browser, 390, "dark")
+    ctx.add_init_script("Object.defineProperty(window, 'localStorage', {get() { throw new Error('blocked'); }});")
+    log = []
+    page = _page(ctx, log)
+    watch(page)
+    _open_ballot(page, base)
+    res = {"bad": []}
+    if (page.text_content("#aw-b-save") or "").strip() != UNAVAILABLE:
+        res["bad"].append("the unavailable note is not shown")
+    ids3 = _fill_three(page)
+    page.wait_for_timeout(450)
+    if _slot_ids(page) != ids3:
+        res["bad"].append("edits do not work in memory without storage")
+    page.evaluate("() => document.querySelector('.aw-b').scrollIntoView()")
+    page.screenshot(path=str(out / "ballot_storage_unavailable_390_dark.png"))
+    report["screens"].append("ballot_storage_unavailable_390_dark.png")
+    _record(report, "ballot_storage_unavailable", res, _errors(log, page._aw_aborted))
+    ctx.close()
+
+    # 4. Copy link, Copy text and Clear's inline confirm.
+    ctx = _context(browser, 1280, "light")
+    ctx.grant_permissions(["clipboard-read", "clipboard-write"], origin=base)
+    log = []
+    page = _page(ctx, log)
+    watch(page)
+    _open_ballot(page, base)
+    res = {"bad": []}
+    ids = _fill_three(page)
+    page.click("#aw-b-tnl-cy")
+    cy = _fill_three(page)
+    link = _copied(page, "link")
+    b = link.split("&b=", 1)[1] if "&b=" in link else ""
+    if not b or not B_ALPHABET.match(b) or not link.startswith(f"{base}/awards/#section=ballot&season={S}&b="):
+        res["bad"].append(f"the copied link reads {link!r}")
+    text = _copied(page, "text").replace("\r\n", "\n")
+    if not text.startswith(f"My {S} NL Cy Young ballot\n1. ") or "&b=nl-cy:" not in text:
+        res["bad"].append(f"the copied text reads {text[:80]!r}")
+    page.click('[data-act="clear"]')
+    if "Clear your NL Cy Young ballot?" not in (page.text_content("#aw-b-confirm") or ""):
+        res["bad"].append("Clear shows no inline confirm")
+    page.click('[data-act="clear-no"]')
+    if _slot_ids(page) != cy:
+        res["bad"].append("Keep cleared the ballot")
+    page.click('[data-act="clear"]')
+    page.click('[data-act="clear-yes"]')
+    if _slot_ids(page) != [None, None, None]:
+        res["bad"].append("Clear did not empty the ballot")
+    _record(report, "ballot_exports_clear", res, _errors(log, page._aw_aborted))
+    ctx.close()
+
+    # 5. A shared link in a fresh context: banner with focus, nothing written until copied, the
+    #    unknown id dropped and counted, the duplicate kept in its first slot; then the confirms.
+    crafted = f"al-mvp:{_b36(ids[0])}.{_b36(ids[0])}.zzzzzz,nl-cy:{_b36(cy[0])}"
+    path = f"/awards/#section=ballot&season={S}&b={crafted}"
+    ctx = _context(browser, 390, "light")
+    log = []
+    page = _page(ctx, log)
+    watch(page)
+    _open_ballot(page, base, path)
+    res = {"bad": []}
+    page.wait_for_timeout(450)
+    if not page.query_selector(".aw-b-banner"):
+        res["bad"].append("the shared link shows no banner")
+    if page.evaluate("() => document.activeElement.id") != "aw-b-shared":
+        res["bad"].append("the banner did not take focus")
+    if _storage(page) is not None:
+        res["bad"].append("opening a shared link wrote to storage")
+    btxt = page.text_content(".aw-b-banner") or ""
+    if f"1 name in this link is not on the {S} candidate list and was left out." not in btxt:
+        res["bad"].append(f"the dropped count reads {btxt!r}")
+    if page.eval_on_selector_all(".aw-b-sb li", "(els) => els.map((e) => e.value)") != [1, 1]:
+        res["bad"].append("the duplicate did not keep its first slot only")
+    page.screenshot(path=str(out / "ballot_shared_banner_390_light.png"))
+    report["screens"].append("ballot_shared_banner_390_light.png")
+    page.click('[data-act="sh-copy"]')
+    page.wait_for_timeout(450)
+    st = json.loads(_storage(page) or "{}").get("seasons", {}).get(str(S), {})
+    if (st.get("al-mvp") or [None, 1])[:2] != [str(ids[0]), None] or (st.get("nl-cy") or [None])[0] != str(cy[0]):
+        res["bad"].append(f"Copy to my ballot wrote {st}")
+    if "b=" in page.evaluate("() => location.hash") or page.query_selector(".aw-b-banner"):
+        res["bad"].append("the banner or b stayed after the copy")
+    page.goto(base + path, wait_until="networkidle")
+    page.wait_for_selector(".aw-b-banner")
+    page.click('[data-act="sh-copy"]')
+    q1 = page.text_content(".aw-b-ask") or ""
+    page.screenshot(path=str(out / "ballot_shared_confirm_390_light.png"))
+    report["screens"].append("ballot_shared_confirm_390_light.png")
+    page.click('[data-act="sh-yes"]')
+    q2 = page.text_content(".aw-b-ask") or ""
+    page.click('[data-act="sh-no"]')
+    if "Replace your AL MVP ballot?" not in q1 or "Replace your NL Cy Young ballot?" not in q2:
+        res["bad"].append(f"the inline confirms read {q1!r} then {q2!r}")
+    page.goto(base + path, wait_until="networkidle")
+    page.wait_for_selector(".aw-b-banner")
+    page.click('[data-act="sh-close"]')
+    if "b=" in page.evaluate("() => location.hash") or page.query_selector(".aw-b-banner"):
+        res["bad"].append("Close left b in the hash or the banner on the page")
+    _record(report, "ballot_shared_link", res, _errors(log, page._aw_aborted))
+    ctx.close()
+
+    # 6. Past seasons (no race record; a blocked Manager rule) and the frozen fixture.
+    for season, key in ((2023, "al-mvp"), (2022, "al-moy")):
+        for theme in THEMES:
+            ctx = _context(browser, 390, theme)
+            log = []
+            page = _page(ctx, log)
+            watch(page)
+            _open_ballot(page, base, f"/awards/#section=ballot&season={season}&award={key[3:]}&lg={key[:2]}")
+            res = {"bad": []}
+            if season == 2022 and not page.query_selector("#aw-b-panel .px-state.is-unmeasured"):
+                res["bad"].append("the blocked Manager season shows no unmeasured state")
+            if season == 2023:
+                _fill_three(page)
+            res["bad"] += page.evaluate(LAYOUT_JS)["bad"]
+            shot = out / f"ballot_season{season}_390_{theme}.png"
+            page.evaluate("() => document.querySelector('.aw-b').scrollIntoView()")
+            page.screenshot(path=str(shot))
+            report["screens"].append(shot.name)
+            _record(report, f"ballot_season{season}_{theme}", res, _errors(log, page._aw_aborted))
+            ctx.close()
+    write_fixture(site, fixtures["frozen"])
+    for w in (390, 1280):
+        ctx = _context(browser, w, "dark")
+        log = []
+        page = _page(ctx, log)
+        watch(page)
+        _open_ballot(page, base)
+        _fill_three(page)
+        res = {"bad": [] if "Ink box: the eephus selection" in (page.text_content(".aw-b-keys") or "")
+               else ["the frozen fixture's legend does not name the eephus selection"]}
+        res["bad"] += page.evaluate(LAYOUT_JS)["bad"]
+        shot = out / f"ballot_frozen_{w}_dark.png"
+        page.evaluate("() => document.querySelector('.aw-b').scrollIntoView()")
+        page.screenshot(path=str(shot))
+        report["screens"].append(shot.name)
+        _record(report, f"ballot_frozen_{w}", res, _errors(log, page._aw_aborted))
+        ctx.close()
+    write_fixture(site, fixtures["live"])
+
+    # 7. The candidate file fails (500), then Retry.
+    ctx = _context(browser, 390, "dark")
+    log = []
+    page = _page(ctx, log)
+    fail = {"on": True}
+    page.route("**/data/awards_candidates_*.json", lambda r: r.fulfill(status=500, body="no") if fail["on"] else r.continue_())
+    page.goto(f"{base}{BALLOT_URL}", wait_until="networkidle")
+    page.wait_for_selector("#aw-panel-ballot .px-state.is-failed")
+    res = {"bad": []}
+    if "The candidates could not load." not in (page.text_content("#aw-panel-ballot .px-state.is-failed") or ""):
+        res["bad"].append("the candidate failure sentence")
+    if page.get_attribute("#aw-panel-ballot .px-state.is-failed", "role") != "alert":
+        res["bad"].append("the failed state is not role=alert")
+    page.screenshot(path=str(out / "ballot_failed_390_dark.png"))
+    report["screens"].append("ballot_failed_390_dark.png")
+    fail["on"] = False
+    page.click('[data-act="retry"]')
+    page.wait_for_selector("#aw-b-panel .aw-slots")
+    _record(report, "ballot_failed_retry", res, [e for e in _errors(log, page._aw_aborted) if "awards_candidates" not in e])
+    ctx.close()
+
+    # 8. No request carried ballot content in any session above (route interception log).
+    res = {"bad": []}
+    marks = [str(i) for i in ids + cy] + [_b36(i) for i in ids + cy]
+    for method, u, post in net:
+        if method != "GET" or post:
+            res["bad"].append(f"{method} {u} carried a body")
+        q = u.split("#")[0]
+        qs = q.split("?", 1)[1] if "?" in q else ""
+        seg = q.split("?")[0].rstrip("/").rsplit("/", 1)[-1]
+        if "b=" in qs or "-mvp" in q or "-cy:" in q or seg in marks or any(m in qs.split("&") for m in marks):
+            res["bad"].append(f"a request carries ballot content: {u}")
+    report["n_requests_logged"] = len(net)
+    _record(report, "ballot_no_request_carries_content", res, [])
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--port", type=int, default=9141)
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--preview", type=Path, default=None,
+                    help="read the fixture payloads from this copy of .cache/awards/preview/")
+    ap.add_argument("--only", choices=("all", "selections", "ballot"), default="all")
     a = ap.parse_args(argv)
+    global PREVIEW, ONLY
+    if a.preview:
+        PREVIEW = a.preview
+    ONLY = a.only
     if not (PREVIEW / "awards.json").exists():
         print(f"no preview payload at {PREVIEW}: run awards_export.py first (flag False writes there)")
         return 2
@@ -634,7 +1081,7 @@ def main(argv=None) -> int:
         print(f"  {'FAIL' if c['bad'] else 'ok  '} {c['name']}{extra}")
     print(f"{len(rep['screens'])} screenshots in {a.out}; {len(rep['failures'])} failures")
     for f in rep["failures"][:80]:
-        print("   ", f)
+        print("   ", f.encode("ascii", "replace").decode())
     return 1 if rep["failures"] else 0
 
 
