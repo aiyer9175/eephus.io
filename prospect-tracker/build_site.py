@@ -2625,8 +2625,13 @@ def build_news(data: dict | None = None) -> str:
         f'<div class="section-head"><h1>{_masthead_icon("news")}{NEWS_LABEL}</h1>'
         '<span class="section-sub">debuts, trades, level moves, IL, eFV changes, FA signings and options</span>'
         f'{_gfx_chip_html("news-gfx-chip")}</div>'
-        f'<p class="news-intro">The {_gl("wire_ticker", "wire")}, last ~30 days, newest first. '
-        'Grade rows show eFV moves of 2 or more; a row reading &quot;to eFV floor&quot; or &quot;off eFV floor&quot; is the player reaching or leaving the model floor, not a re-grade. A date header opens Time Machine on that date.</p>'
+        f'<p class="news-intro">The {_gl("wire_ticker", "wire")}, last 30 days, newest first.</p>'
+        '<details class="news-how"><summary>How this works</summary><ul>'
+        '<li>Grade rows are eFV moves of 2 or more.</li>'
+        '<li>&quot;to eFV floor&quot; and &quot;off eFV floor&quot; mark a player reaching or leaving '
+        'the model floor, not a re-grade.</li>'
+        '<li>A dashed grade is a player no source has graded yet; &quot;floor&quot; is the eFV floor.</li>'
+        '</ul></details>'
         '<div class="filter-bar" id="news-filter-bar" role="group" aria-labelledby="news-filter-label">'
         f'<span class="filter-label" id="news-filter-label">Filter</span>{chips}</div>'
         '<div class="visually-hidden" id="news-filter-status" role="status" aria-live="polite"></div>'
@@ -3399,14 +3404,16 @@ def build_this_day(data: dict | None = None) -> str:
         '<div class="news-app hist-app">'
         f'<div class="section-head"><h1>{_masthead_icon("history")}Today in Prospect History - {html.escape(mon_d)}</h1>'
         '<span class="section-sub">debut anniversaries, trades, signings &amp; IL moves on this calendar date</span></div>'
-        f'<p class="news-intro">Exact calendar-date matches from past seasons.{_hist_spans(tx_all, il_all)} '
-        f'Debut rows carry {_gl("wag", "WAG")}{_wag_gate_clause()}.</p>'
+        '<p class="news-intro">Past seasons on this exact date.</p>'
+        '<details class="news-how"><summary>How this works</summary><ul>'
+        f'<li>{_hist_spans(tx_all, il_all).strip() or "Ledgers read from prospects.db."}</li>'
+        f'<li>Debut rows carry {_gl("wag", "WAG")}{_wag_gate_clause()}.</li>'
+        '<li>No eFV-move section: grade history is stamped at model re-run dates, '
+        'not the day a grade changed.</li></ul></details>'
         '<div class="filter-bar" id="hist-filter-bar" role="group" aria-labelledby="hist-filter-label">'
         f'<span class="filter-label" id="hist-filter-label">Filter</span>{chips}</div>'
         '<div class="visually-hidden" id="hist-filter-status" role="status" aria-live="polite"></div>'
         f'<div id="hist-sections" style="max-width:760px;">{sections}</div>'
-        '<p class="news-intro" style="font-size:11px;">No eFV-move section: grade history is stamped '
-        'at model re-run dates, not the day a grade changed.</p>'
         '</div>'
         + _HIST_FILTER_JS
     )
@@ -3572,6 +3579,21 @@ def _tm_seed_key(p: dict) -> str:
 
 
 _FA_OFF_BOARD = ("signed", "option_exercised")
+
+
+def _park_window_label(pf: dict, year: int) -> str:
+    """'2024-2026 window' and, when the file was built inside the window's last
+    season, the date its games run through (milb_park_factors.json was built
+    2026-07-23, so its 2026 leg is a partial season)."""
+    lab = f"{year - 2}-{year} window"
+    built = str(pf.get("generated_at") or "")[:10]
+    try:
+        b = date.fromisoformat(built)
+    except ValueError:
+        return lab
+    if b.year == year and b.month < 11:
+        lab += f", {year} through {b.strftime('%b')} {b.day}"
+    return lab
 
 
 def _cross_module_strip() -> str:
@@ -3802,7 +3824,7 @@ def _cross_module_strip() -> str:
             for v, f in top)
         if rows:
             cards.append((f'{_ico("parks", 16)}Park Factors', '/parks/',
-                          f'MiLB venues that add the most offense ({year} window)', rows))
+                          f'MiLB venues that add the most offense ({_park_window_label(pf, year)})', rows))
     except (OSError, ValueError, KeyError, TypeError):
         pass
     # Model Accountability - the verdict split, counted off the registry at build
@@ -5684,8 +5706,7 @@ def build_parks() -> str:
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("parks")}MiLB Park Factors {_stage_chip("parks")}</h1></div>'
         f'<span class="section-sub">Run and home-run {_gl("milb_park_factor", "park factors")} for every '
-        'affiliated venue, Triple-A through the DSL: home vs road scoring, league-centered, shrunk toward '
-        'neutral by sample. Display only: no model reads them.</span></div>'
+        'affiliated venue, Triple-A to the DSL. Display only: no model reads them.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Park Factors sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-parksection="board" role="tab" aria-selected="true">Venue Board</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-parksection="leagues" role="tab" aria-selected="false">League Spread</button>'

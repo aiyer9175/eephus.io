@@ -1220,6 +1220,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* ---- /news/ expanded Prospect News page ---- */
 .news-app .news-intro { font-size: 13px; line-height: 1.6; color: var(--text-secondary); max-width: 760px; margin: 6px 0 4px; }
+/* How this works on /news/ and /history/: the reading rules, folded. */
+.news-app .news-how { margin: 4px 0 8px; max-width: 760px; }
+.news-app .news-how > summary { cursor: pointer; color: var(--text-secondary); font-size: 12px; }
+.news-app .news-how ul { margin: 6px 0 2px; padding-left: 18px; color: var(--text-secondary); font-size: 12px; line-height: 1.55; }
+@media (max-width: 640px) { .news-app .news-how > summary { padding: 12px 0; } }
 .news-app .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0 14px; }
 .news-app .filter-label { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary); margin-right: 4px; }
 .news-app button.chip { font-family: var(--font-retro); font-size: 12px; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); }

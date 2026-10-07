@@ -262,3 +262,26 @@ def test_footer_rail_and_cards_use_one_name_per_destination():
     assert B.PAGE_LABELS["/team/"] == dict((h, lab) for _k, lab, h in B.nav_leaves())["/team/"]
     assert ">About<" not in foot and ">This Day<" not in foot
     assert "Model Ledger" not in B._cross_module_strip()
+
+
+# ---- display pass: ledes stay one line, disclosures fold, nothing is lost ---
+
+def test_news_and_history_fold_their_reading_rules_without_dropping_them():
+    news = (ROOT / "news" / "index.html").read_text(encoding="utf-8")
+    hist = (ROOT / "history" / "index.html").read_text(encoding="utf-8")
+    for h in (news, hist):
+        assert '<details class="news-how"><summary>How this works</summary>' in h
+    how = news.split('<details class="news-how">', 1)[1].split("</details>", 1)[0]
+    assert "eFV moves of 2 or more" in how and "not a re-grade" in how
+    how = hist.split('<details class="news-how">', 1)[1].split("</details>", 1)[0]
+    assert "IL placements from" in how and 'data-gl="wag"' in how and "model re-run dates" in how
+
+
+def test_park_window_names_its_seasons_and_a_partial_last_season():
+    import build_site as B
+    assert B._park_window_label({"generated_at": "2026-07-23"}, 2026) == "2024-2026 window, 2026 through Jul 23"
+    assert B._park_window_label({"generated_at": "2026-11-20"}, 2026) == "2024-2026 window"
+    assert B._park_window_label({"generated_at": "2027-02-01"}, 2026) == "2024-2026 window"
+    js = (ROOT / "assets" / "parks.js").read_text(encoding="utf-8")
+    assert '(state.season - 2) + "-" + state.season + " window"' in js
+    assert "function partialNote(year)" in js and '" games through "' in js
