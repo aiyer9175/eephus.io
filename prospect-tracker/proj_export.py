@@ -3225,8 +3225,8 @@ def _accountability_block() -> dict:
     # here because this block is where the payload publishes what it did and
     # did not reach. Empty on a payload built without veterans.
     keep = ("model_id", "summary", "surface", "predicts", "champion",
-            "baseline", "metric", "verdict", "notes", "eval_artifact",
-            "last_checked", "artifact_age_days", "stale")
+            "baseline", "metric", "verdict", "remeasure_pending", "notes",
+            "eval_artifact", "last_checked", "artifact_age_days", "stale")
     models = []
     for mid, label in _ACCOUNTABILITY_MODELS:
         m = by_id.get(mid)
@@ -3367,6 +3367,26 @@ def _stamp_contract_club(vets: list[dict]) -> int:
     return n
 
 
+def _stamp_fa_class(vets: list[dict]) -> int:
+    """QMLP09: `fa: true` on exactly the veteran rows whose key is a member
+    of data/fa_class.json, the test mlb_player_export uses for the identity
+    map's `fa` flag. The board reads it for its '$ FA' chip instead of
+    fetching the 1.9 MB player_links.json at boot. Absent on every other row.
+    Returns the number of rows stamped (published as n_fa)."""
+    try:
+        fa = json.loads((DATA_DIR / "fa_class.json").read_text(encoding="utf-8"))
+        keys = {m.get("key") for m in fa.get("members") or [] if m.get("key")}
+    except (OSError, ValueError):
+        keys = set()
+    n = 0
+    for v in vets:
+        v.pop("fa", None)
+        if v.get("key") in keys:
+            v["fa"] = True
+            n += 1
+    return n
+
+
 def _team_basis_block(vets: list[dict]) -> dict:
     """The disclosure for the club every veteran row is counted under, read
     from the census _vet_club kept while the rows were built."""
@@ -3434,6 +3454,7 @@ def _build_payload_body() -> dict:
     # Audit-only payer field (M23-2): after every consumer above has read the
     # rows, so nothing in this build can price or roll up on it.
     _stamp_contract_club(vets)
+    n_fa = _stamp_fa_class(vets)
     cfg = vf._config()
     if vf.dpw_path_active() and "dollars_per_war_inflation" not in cfg:
         raise vf.DpwPathError("dollars_per_war_inflation absent in unified $/WAR path mode")
@@ -3465,6 +3486,9 @@ def _build_payload_body() -> dict:
         "dpw_infl": _dpw_infl,
         "dpw_reanchor": re_anchor or None,
         "n_vets": len(vets), "n_prospects": len(prospects),
+        # Veteran rows carrying fa: true (current FA class members). Its
+        # presence tells the board the rows carry the flag.
+        "n_fa": n_fa,
         # Where each veteran's `team` came from (resolve_current_club), and how
         # many rows sit on a club other than their Spotrac contract club.
         "team_basis": _team_basis_block(vets),

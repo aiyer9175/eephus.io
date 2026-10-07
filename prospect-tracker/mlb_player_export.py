@@ -39,9 +39,11 @@ Will Cahoon's model via data/swing_plus.json).
              REM+/RIV+/SEM+, leverage (skills.lev) and the Defense board's
              DEM+ with published defensive runs (skills.def).
 
-Artifact: data/mlb_player_detail.json (single sidecar, lazy-fetched by
-assets/projections.js on first player view). Wired into run_monthly
-after proj_export.
+Artifacts: data/mlb_player_detail.json (the whole set, read by the Trade
+Machine and the Python consumers) and data/mlb_player_detail/<key>.json, one
+card per player with the board's first_season and horizon, which a
+/projections/#player= page fetches at boot instead of the whole set (QMLP01).
+Wired into run_monthly after proj_export.
 
 Run: python mlb_player_export.py
 """
@@ -72,6 +74,7 @@ log = logging.getLogger(__name__)
 ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
 OUT_PATH = DATA_DIR / "mlb_player_detail.json"
+SHARD_DIRNAME = "mlb_player_detail"   # data/mlb_player_detail/<key>.json
 CACHE_DIR = ROOT / ".cache" / "savant_mlb"
 
 CAREER_FROM = 2014
@@ -173,7 +176,9 @@ def _statcast_block(mlbam: int, is_pitcher: bool, year: int) -> dict | None:
         # Deserved power + luck (HITTER-SIDE display only; xwOBA-allowed vs FIP was
         # tested and rejected for the pitcher models, so no pitcher claim here).
         # xSLG is a Savant column; xISO = xSLG - xBA (deserved isolated power);
-        # Luck = actual minus deserved wOBA (positive = outperformed the contact).
+        # Luck = deserved minus actual wOBA (positive = the contact deserved
+        # more), the sign the xHEM+ glossary entry and /mlbstats/ luck_gap use.
+        # Its pct ranks that same gap, so a high pct is a large positive gap.
         if not is_pitcher:
             add("xSLG", ex_by, me_ex, "est_slg", "{:.3f}")
             if me_ex is not None:
@@ -187,12 +192,12 @@ def _statcast_block(mlbam: int, is_pitcher: bool, year: int) -> dict | None:
                         "pct": _pct_rank(xiso_pool, xslg - xba)})
                 woba, xwoba = _f(me_ex.get("woba")), _f(me_ex.get("est_woba"))
                 if woba is not None and xwoba is not None:
-                    luck_pool = [w - x for w, x in
+                    luck_pool = [x - w for w, x in
                                  ((_f(r.get("woba")), _f(r.get("est_woba"))) for r in ex_by.values())
                                  if w is not None and x is not None]
                     out["metrics"].append({
-                        "label": "Luck (wOBA-xwOBA)", "value": "{:+.3f}".format(woba - xwoba),
-                        "pct": _pct_rank(luck_pool, woba - xwoba)})
+                        "label": "Luck (xwOBA-wOBA)", "value": "{:+.3f}".format(xwoba - woba),
+                        "pct": _pct_rank(luck_pool, xwoba - woba)})
         return out if out["metrics"] else None
     return None
 
@@ -536,7 +541,7 @@ def _skill_index() -> dict[int, dict]:
             "xhemPlus": r.get("xhem_plus"), "tier": r.get("tier"),
             # luckGap (the board's luck_gap) is no longer baked: it is xwOBA
             # minus wOBA in wOBA points since 2026-09-24, the card's Statcast
-            # block already carries Savant's wOBA-xwOBA row, and the xHEM+
+            # block already carries Savant's xwOBA-wOBA row, and the xHEM+
             # tile's "vs HEM+" note is computed client-side from the two dots.
             "qualified": bool(r.get("qualified")),
             # Baked 2026-07-30 (Lane B): every one of these was computed and served
@@ -691,6 +696,7 @@ def _card_skills(sk: dict | None, is_pit: bool, two_way: bool) -> dict:
 
 def build_payload() -> dict:
     proj = json.loads((DATA_DIR / "mlb_projections.json").read_text(encoding="utf-8"))
+    frame = {"first_season": proj.get("first_season"), "horizon": proj.get("horizon")}
     fa = json.loads((DATA_DIR / "fa_class.json").read_text(encoding="utf-8"))
     members = {m["key"]: m for m in fa.get("members") or []}
     swing = {}
@@ -873,6 +879,9 @@ def build_payload() -> dict:
             p["aaaStuffSeason"] = st["season"]
     return {
         "generated_at": date.today().isoformat(),
+        # The board scalars a card reads (the projection's first season and
+        # horizon), so a per-player shard renders without the board payload.
+        **frame,
         "n_players": len(players),
         "coverage": {"career": n_car, "statcast": n_sc, "arsenal": n_ar,
                      "swing_plus": sum(1 for p in players.values()
@@ -890,7 +899,7 @@ def build_payload() -> dict:
                      "scout": sum(1 for p in players.values() if p.get("scout"))},
         "notes": [
             "career: MLB season lines (StatsAPI) + per-season WAR on war_source provider ewar_v2, the displayed WAR (eWAR v2: FIP-repriced pitching within role; batting side equal to bWAR until the SDR defense drop); war_bwar = the bWAR input where it differs at 1dp, absent means equal; war_fwar = FanGraphs' published WAR (MLB StatsAPI sabermetrics feed), a reference beside the displayed eWAR v2; absent means no published value",
-            "statcast: Savant leaderboard percentiles within the season's qualified pool; pitcher contact metrics invert (suppression = good)",
+            "statcast: Savant leaderboard percentiles within the season's pool (contact board 25+ batted balls; expected-stats board unfloored); pitcher contact metrics invert (suppression = good); hitter Luck = xwOBA minus wOBA",
             "swing_plus: Will Cahoon's model, MLB bat tracking 2024+ only; swingPlusSeasons = per-season slices (low_n under 180 swings)",
             "aaa_stuff_plus: in-house AAA pitch-quality model (stuff_plus_aaa.py), ex-PROSPX pitchers' latest tracked AAA season",
             "skills: HEM+ (hitters), REM+/RIV+/SEM+ (pitchers) from the MLB Stats leaderboards, joined by MLBAM",
@@ -1049,10 +1058,39 @@ def _export_position_games() -> None:
 _PAYLOAD_SOFT_BUDGET = 6 * 1024 * 1024   # 6MB - lazy-fetched on first player view
 
 
+def _shard_dir() -> Path:
+    # A function, not a module constant, so a test that redirects DATA_DIR
+    # redirects the shards with it.
+    return DATA_DIR / SHARD_DIRNAME
+
+
+def _export_shards(payload: dict) -> int:
+    """data/mlb_player_detail/<key>.json: one card per player, carrying the
+    payload's generated_at, first_season and horizon beside it. Shards of
+    players no longer in the payload are removed, so the directory is always
+    exactly the payload's players. Returns the number written."""
+    out_dir = _shard_dir()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    head = {k: payload.get(k) for k in ("generated_at", "first_season", "horizon")}
+    names = set()
+    for key, p in payload["players"].items():
+        name = f"{key}.json"
+        names.add(name)
+        (out_dir / name).write_text(
+            json.dumps({**head, "key": key, "player": p}, separators=(",", ":")),
+            encoding="utf-8")
+    for f in out_dir.glob("*.json"):
+        if f.name not in names:
+            f.unlink()
+    return len(names)
+
+
 def export() -> int:
     payload = build_payload()
     raw = json.dumps(payload, separators=(",", ":"))
     OUT_PATH.write_text(raw, encoding="utf-8")
+    n_shards = _export_shards(payload)
+    log.info("mlb player detail: %d per-player shards under data/%s/", n_shards, SHARD_DIRNAME)
     _export_links(payload)
     _export_position_games()
     if len(raw) > _PAYLOAD_SOFT_BUDGET:

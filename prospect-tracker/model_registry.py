@@ -59,6 +59,10 @@ SUMMARY_MAX_WORDS = 30
 PROVISIONAL_KINDS = ("shipped_partial_measurement", "measured_not_adopted",
                      "measurement_only", "data_blocked_stub",
                      "inherits_parent_gate")
+# OPTIONAL row field `remeasure_pending` (2026-10-07, QMLC01): a non-empty
+# reader string for a row whose gate numbers were measured on something other
+# than the bundle that serves today. Pages that print the verdict print this
+# beside it; the verdict itself stays the owner's call.
 # Evals older than this (vs today) get a stale flag at refresh time —
 # advisory only; expensive gates run pre-merge, not on a clock.
 #
@@ -97,6 +101,9 @@ def validate(reg: dict | None = None) -> list[str]:
         pk = m.get("provisional_kind")
         if pk is not None and pk not in PROVISIONAL_KINDS:
             problems.append(f"{mid}: bad provisional_kind {pk!r}")
+        rp = m.get("remeasure_pending")
+        if rp is not None and not (isinstance(rp, str) and rp.strip()):
+            problems.append(f"{mid}: remeasure_pending must be a non-empty string")
         art = m.get("eval_artifact")
         if m.get("verdict") == "validated" and not art:
             problems.append(f"{mid}: validated without an eval artifact")

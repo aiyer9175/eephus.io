@@ -90,7 +90,7 @@ DETAIL = json.dumps({"players": {
                     "war": 5.1}],
         "sc": {"season": 2025, "metrics": [
             {"label": "xwOBA", "value": ".390", "pct": 95},
-            {"label": "Luck (wOBA-xwOBA)", "value": "+0.031", "pct": 99}]},
+            {"label": "Luck (xwOBA-wOBA)", "value": "+0.031", "pct": 99}]},
         "skills": {
             "hem": {"season": 2026, "hemPlus": 113, "xhemPlus": 108,
                     "wrcPlus": 121, "qualified": True, "pa": 610, "warPaPlus": 113,
@@ -159,6 +159,11 @@ def _prelude(hash_: str, fail_fetch: bool = False) -> str:
         "var __payloads={'/data/mlb_projections.json':BOARD,"
         "'/data/mlb_player_detail.json':DETAIL,"
         "'/data/mlb_position_games.json':FIELDING};"
+        # The per-player shards mlb_player_export writes (QMLP01): one card plus
+        # the board's first_season and horizon, as the page fetches them.
+        "for(var __k in DETAIL.players){__payloads['/data/mlb_player_detail/'+encodeURIComponent(__k)+'.json']="
+        "{generated_at:'2026-06-30',first_season:BOARD.first_season,horizon:BOARD.horizon,"
+        "key:__k,player:DETAIL.players[__k]};}"
         "var fetch=function(url){var p=__payloads[url];"
         "if(p===undefined)return {then:function(){return this;},"
         "catch:function(cb){cb(new Error('HTTP 404'));return this;}};"

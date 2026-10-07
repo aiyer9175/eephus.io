@@ -124,6 +124,9 @@ data/mlb_events/
 # <mlbam>.json), written by mlbstats_rolling_export.py once MLBSTATS_DRAWER_LIVE
 # is on; regenerated nightly by run_daily step 9e-pre0h.
 data/mlbstats_player/
+# QMLP01 - one MLB player card per file (data/mlb_player_detail/<key>.json),
+# written beside data/mlb_player_detail.json by mlb_player_export.py.
+data/mlb_player_detail/
 # FanGraphs CSV drop folder — user-supplied exports + processed archive
 data/fangraphs_imports/
 # Baseball America drop folder - owner-supplied board pastes + processed archive.

@@ -354,6 +354,25 @@ def test_mlbstats_player_dir_ships_in_both_deploy_consumers():
     assert 'SERVED_DIR = DATA_DIR / "mlbstats_player"' in src, "the writer fills the directory both consumers ship"
 
 
+def test_mlb_player_detail_shards_ship_in_both_deploy_consumers():
+    """QMLP01 (2026-10-07): a /projections/#player= page fetches one card from
+    data/mlb_player_detail/<key>.json (written by mlb_player_export.py beside
+    the whole set) instead of the 4.8 MB mlb_player_detail.json, so both
+    consumers ship the directory. It is gitignored."""
+    d = "mlb_player_detail"
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    assert _ships_in_nightly(nightly, d), "deploy/nightly-build.sh never ships /data/mlb_player_detail/"
+    wf_path = ROOT.parent / ".github" / "workflows" / "deploy-prospect-tracker.yml"
+    if wf_path.exists():
+        assert _ships_in_workflow(wf_path.read_text(encoding="utf-8"), d), "the CI workflow never copies data/mlb_player_detail/"
+    assert "mlb_player_detail/" in (ROOT / "deploy" / "publish_paths.txt").read_text(encoding="utf-8")
+    assert "data/mlb_player_detail/" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    src = (ROOT / "mlb_player_export.py").read_text(encoding="utf-8")
+    assert 'SHARD_DIRNAME = "mlb_player_detail"' in src, "the writer fills the directory both consumers ship"
+    js = (ROOT / "assets" / "projections.js").read_text(encoding="utf-8")
+    assert "fetch(`/data/mlb_player_detail/${encodeURIComponent(key)}.json`" in js
+
+
 def test_the_scores_page_ships_and_its_data_does_not():
     """SCORES_5a_LIVE_FLIP (2026-10-07): scores/ is in the manifest, and
     neither deploy consumer names a /data/scores rule. The job writes its own

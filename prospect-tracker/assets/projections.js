@@ -87,10 +87,19 @@
     PHI: "phi", PIT: "pit", SDP: "sd", SEA: "sea", SFG: "sf",
     STL: "stl", TBR: "tb", TEX: "tex", TOR: "tor", WSN: "wsh",
   };
+  // QMLP07: every mark here draws at 13 to 16 px, so it is asked for at 32 px
+  // through ESPN's combiner (the shared EEPHUS_HUB size rule, as /fa/ does)
+  // rather than as the 500 x 500 master: 28 board logos were 1.07 MB.
+  const LOGO_PX = 32;
+  function teamLogoSrc(org) {
+    const H = window.EEPHUS_HUB;
+    const viaHub = H && H.teamLogoURL ? H.teamLogoURL(org, LOGO_PX) : "";
+    const slug = ESPN_SLUGS[org] || String(org).toLowerCase();
+    return viaHub || `https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/${slug}.png&h=${LOGO_PX}&w=${LOGO_PX}`;
+  }
   function teamLogo(org) {
     if (!org) return "";
-    const slug = ESPN_SLUGS[org] || String(org).toLowerCase();
-    return `<img class="fa-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" alt="${esc(org)}" loading="lazy" onerror="this.replaceWith('${esc(org)}')">`;
+    return `<img class="fa-logo" src="${esc(teamLogoSrc(org))}" alt="${esc(org)}" loading="lazy" onerror="this.replaceWith('${esc(org)}')">`;
   }
 
   // ===========================================================================
@@ -253,8 +262,13 @@
   // first tab instead of leaving no panel visible.
   const PTABS = ["overview", "hitting", "pitching", "defense", "value", "projection", "scouting", "discussion"];
   let PTAB_FOR = null;
-  let DETAIL = null;            // data/mlb_player_detail.json, lazy
-  let DETAIL_LOADING = false;
+  // Player cards: {players: {key: card}}, filled one shard at a time from
+  // data/mlb_player_detail/<key>.json (QMLP01). The 4.8 MB whole set is read
+  // only when a shard is missing (a deploy that predates the shards).
+  let DETAIL = null;
+  const CARD_LOADING = Object.create(null);
+  let DETAIL_ALL_LOADING = false;
+  let PAINTED_PLAYER = null;    // the card on screen, so a late board does not repaint it
   let FIELDING = null;          // games by position, nightly, keyed by MLBAM id; lazy
   let FIELDING_LOADING = false;
   let PITCHLB = null;           // {byMlbam:{...}} from the /mlbstats/ leaderboards, lazy
@@ -647,10 +661,12 @@
     const ticks = (lo, hi) => Array.from({ length: 6 }, (_, i) => lo + (hi - lo) * i / 5);
     const grid = ticks(x0, x1).map(v => `<line x1="${px(v).toFixed(1)}" y1="${PAD}" x2="${px(v).toFixed(1)}" y2="${H - PAD}" stroke="var(--border-light)" stroke-width="0.5"/><text x="${px(v).toFixed(1)}" y="${H - PAD + 14}" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">${_axFmt(ax, v)}</text>`).join("")
       + ticks(y0, y1).map(v => `<line x1="${PAD}" y1="${py(v).toFixed(1)}" x2="${W - PAD}" y2="${py(v).toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5"/><text x="${PAD - 6}" y="${(py(v) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${_axFmt(ay, v)}</text>`).join("");
+    // Dots are pointer shortcuts (tabindex -1): a keyboard reaches every
+    // player through the board rows, not through 1,400 stops inside a role=img.
     const dots = pts.map(({ m, x, y }) => {
       const c = CONTRACT_DOT_COLORS[contractStatus(m).key] || "var(--text-tertiary)";
       const href = m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`;
-      return `<a href="${href}"><circle cx="${px(x).toFixed(1)}" cy="${py(y).toFixed(1)}" r="3.5" fill="${c}" fill-opacity="0.7" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - ${esc(ax.label)} ${_axFmt(ax, x)} · ${esc(ay.label)} ${_axFmt(ay, y)}</title></circle></a>`;
+      return `<a href="${href}" tabindex="-1"><circle cx="${px(x).toFixed(1)}" cy="${py(y).toFixed(1)}" r="3.5" fill="${c}" fill-opacity="0.7" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - ${esc(ax.label)} ${_axFmt(ax, x)} · ${esc(ay.label)} ${_axFmt(ay, y)}</title></circle></a>`;
     }).join("");
     return `<svg viewBox="0 0 ${W} ${H}" class="proj-warmap-svg" role="img" aria-label="${esc(ay.label)} versus ${esc(ax.label)} scatter">
       <text x="${PAD}" y="20" font-size="11" font-weight="700" fill="var(--text-secondary)">${pts.length} players · ${esc(ay.label)} vs ${esc(ax.label)}</text>
@@ -779,18 +795,23 @@
     const banner = document.getElementById("proj-banner");
     if (!root || !DATA) return;
     if (state.player) { renderPlayer(state.player); return; }
+    if (DATA.partial) { root.innerHTML = pxState("loading", "Loading projections&hellip;"); return; }
     if (state.cmp.length === 2) { renderCompare(); return; }
     if (state.view === "teams") { renderTeams(); return; }
     if (state.view === "accountability") { renderAccountability(); return; }
     const first = DATA.first_season;
     const teams = [...new Set((DATA.vets || []).map(m => m.team).filter(Boolean))].sort();
 
+    const last = first + (DATA.horizon || 5) - 1;
     banner.innerHTML = `<div class="fa-note fa-sources">
-      ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${DATA.n_vets} veterans (proj_lgbm_v1 on the <span data-gl="fa_projection_engine">FA projection engine</span>; /fa/ prices on its Marcel champion)
-      &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
-      &middot; priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.pricing_basis ? `, each season at its own level on the one written path (escalator ${(DATA.pricing_basis.g_ref * 100).toFixed(2)}%/yr, discounted at ${(DATA.pricing_basis.nominal_rate * 100).toFixed(2)}%)` : (DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons")}
-      &middot; WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window, unsigned seasons through ${first + (DATA.horizon || 5) - 1} at most and a longer guarantee through its last season on the champion aging curve chained from the ${first + (DATA.horizon || 5) - 1} WAR
-      &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
+      ${first}-${last} projected <span data-gl="war">WAR</span> (fWAR basis) &middot; ${DATA.n_vets} veterans, ${DATA.n_prospects} prospects
+      &middot; <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.generated_at ? ` &middot; data as of ${esc(String(DATA.generated_at))}` : ""}
+      &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
+      <details class="proj-how"><summary class="fa-sub">How this works</summary><div class="fa-note">
+      Veterans: proj_lgbm_v1 on the <span data-gl="fa_projection_engine">FA projection engine</span>; /fa/ prices on its Marcel champion.
+      Prospects: <span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA.
+      Priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.pricing_basis ? `, each season at its own level on the one written path (escalator ${(DATA.pricing_basis.g_ref * 100).toFixed(2)}%/yr, discounted at ${(DATA.pricing_basis.nominal_rate * 100).toFixed(2)}%)` : (DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons")}.
+      WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window, unsigned seasons through ${last} at most and a longer guarantee through its last season on the champion aging curve chained from the ${last} WAR.</div></details>`;
     const gfxBtn = document.getElementById("proj-board-gfx");
     if (gfxBtn) gfxBtn.onclick = () => {
       if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(_projBoardSpec(sortRows(rows()).slice(0, 50)));
@@ -889,11 +910,10 @@
     // Banner + GFX button track the Team Outlook view (the Players banner is
     // rebuilt in render()), so Generate GFX exports the team board you're on.
     if (banner) {
-      const bControl = rows.some(r => r.lockedPct != null);
-      const frame = `${DATA.first_season} projected roster <span data-gl="war">WAR</span> (fWAR basis) &rarr; wins`
-        + (bControl ? ` &middot; core control = share of projected WAR under contract or an age proxy` : "");
+      const frame = `${DATA.first_season} projected roster <span data-gl="war">WAR</span> (fWAR basis) to wins at the 47.7 replacement baseline`
+        + ` &middot; <span data-gl="forward_gate">forward gate</span> on Model Accountability`;
       banner.innerHTML = `<div class="fa-note fa-sources">
-        ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${frame}
+        ${frame}${DATA.generated_at ? ` &middot; data as of ${esc(String(DATA.generated_at))}` : ""}
         &middot; <button class="chip egfx-chip" id="proj-teams-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
       const tgfx = document.getElementById("proj-teams-gfx");
       if (tgfx) tgfx.onclick = () => {
@@ -1129,7 +1149,7 @@
     }).join("");
     const note = nowMode
       ? `Current (${curSeason}) slate <span class="eephus-beta" title="Newly launched; blend and odds may shift">β beta</span>: Bayesian blend of the roster-talent prior, actual record and Pythagorean record (RS/RA); the prior fades as games are played. Playoff odds: Monte Carlo over ${DATA.mc_schedule_source === "balanced_fallback" ? "a balanced-schedule ESTIMATE (live schedule unavailable)" : "the live remaining schedule"}. SOS: log5 opponent talent over unplayed games (1 = hardest). Does not change the projection board.`
-      : `${DATA.first_season} projected roster <span data-gl="war">WAR</span> (fWAR basis) to wins at the 47.7 replacement baseline; <span data-gl="forward_gate">forward gate</span> on Model Accountability.${hasControl ? ` Core control: WAR-weighted share of each org's projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} production under contract, or projected controlled by age where no contract is on file; the sparkline is controlled WAR per season.` : ""}${hasFarm ? " Farm columns come from the PROSPX org models." : ""}`;
+      : `${hasControl ? `Core control: WAR-weighted share of each org's projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} production under contract, or projected controlled by age where no contract is on file; the sparkline is controlled WAR per season.` : ""}${hasFarm ? " Farm columns come from the PROSPX org models." : ""}`;
     // Sortable header: click to sort by it, click again to flip direction.
     // The active column shows a ▲/▼ arrow reflecting the effective direction.
     const _arrow = (key) => state.teamSort === key
@@ -1145,10 +1165,15 @@
     const header = nowMode
       ? `<thead><tr><th>#</th>${sth("team", "Team")}${sth("nowPct", "Record", `Actual ${curSeason} record + win%`)}${sth("pythag", "Pythag", "Pythagorean win% from run differential (exp 1.83)")}${sth("blend", "Proj W-L", "Bayesian blend of talent prior + actual + Pythag -> projected full-season record")}${sth("playoff", "Playoff odds", "Monte-Carlo division/wildcard/playoff probability")}${sth("sos", "Rem SOS", "Remaining strength of schedule via log5 (rank 1 = hardest)")}</tr></thead>`
       : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR", "Sum of each rostered veteran's champion mean year-1 WAR (the Marcel path /fa/ prices on; quantile points are never summed) plus arrived prospects. Top projected names print the proj_lgbm_v1 path, so a player's figure there can differ from his share of this sum.")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
-    root.innerHTML = `${modeChips}<div class="fa-note proj-teams-note">${note}</div>
+    // The Current slate keeps its note above the table (it says what changes
+    // under the reader); the projected slate's column notes fold under it.
+    const noteTop = nowMode ? `<div class="fa-note proj-teams-note">${note}</div>` : "";
+    const noteFold = (!nowMode && note.trim())
+      ? `<details class="proj-how"><summary class="fa-sub">How this works</summary><div class="fa-note proj-teams-note">${note}</div></details>` : "";
+    root.innerHTML = `${modeChips}${noteTop}
       <table class="detail-table proj-table">
       ${header}
-      <tbody>${body}</tbody></table>`;
+      <tbody>${body}</tbody></table>${noteFold}`;
     root.querySelectorAll("[data-team-sort]").forEach(h => h.onclick = () => {
       const k = h.dataset.teamSort;
       if (state.teamSort === k) state.teamDir = state.teamDir === -1 ? 1 : -1;
@@ -1251,7 +1276,7 @@
   // Veteran WAR paths - the touched-once 2022-24 holdout, champion vs baseline
   // per horizon (MAE + bias + P10-P90 coverage). Holdout labels mature only
   // through h4, so the table runs as deep as the artifact reports.
-  function vetHorizonsTable(vh) {
+  function vetHorizonsTable(vh, pending) {
     const ch = (vh && vh.champion && vh.champion.horizons) || [];
     if (!ch.length) return "";
     const bl = (vh.baseline && vh.baseline.horizons) || [];
@@ -1273,9 +1298,9 @@
         <th title="Baseline MAE" class="fa-sub">Baseline</th>
         <th title="Mean error, actual minus predicted">Bias</th>
         <th title="Share of actuals inside the P10-P90 band (target ~80%)"><span data-gl="p10_p90_bands">Coverage</span></th>
-        <th title="Baseline coverage" class="fa-sub">Baseline</th></tr></thead>
+        <th title="Baseline coverage" class="fa-sub">Baseline cov.</th></tr></thead>
       <tbody>${rows}</tbody></table>
-      <div class="fa-sub proj-acct-foot">${esc(vh.frame || "")} Champion ${esc((vh.champion || {}).model || "")} vs prior baseline ${esc((vh.baseline || {}).model || "")}.</div>`;
+      <div class="fa-sub proj-acct-foot">${esc(vh.frame || "")} Champion ${esc((vh.champion || {}).model || "")} vs prior baseline ${esc((vh.baseline || {}).model || "")}${pending ? `: ${esc(pending)}` : ""}.</div>`;
   }
 
   // Prospect post-ETA paths - forward-chained debut cohorts: the FV-only
@@ -1348,7 +1373,7 @@
       const acctGfxChip = ((acct.models || []).length && window.EEPHUS_GFX)
         ? ` &middot; ${window.EEPHUS_GFX.chipHTML("proj-acct-gfx", "Generate GFX")}` : "";
       banner.innerHTML = `<div class="fa-note fa-sources">
-        Held-out <span data-gl="backtest">backtests</span> and registry <span data-gl="model_verdict">verdicts</span>
+        Registry <span data-gl="model_verdict">verdicts</span> and held-out <span data-gl="backtest">backtests</span> as committed, not recomputed
         ${lastChecked(acct) ? `&middot; verdicts last checked ${esc(lastChecked(acct))}` : ""}${acct.generated_at ? ` &middot; as of ${esc(String(acct.generated_at))}` : ""}${acctGfxChip}</div>`;
     }
     const models = acct.models || [];
@@ -1358,14 +1383,15 @@
       return;
     }
     const bt = acct.backtests || {};
-    const tableFor = (art) => {
+    const tableFor = (art, m) => {
       if (art === "data/team_outlook_eval.json") return teamWinsTable(bt[art]);
-      if (art === "data/proj_horizon_eval.json") return vetHorizonsTable(bt[art]);
+      if (art === "data/proj_horizon_eval.json") return vetHorizonsTable(bt[art], m.remeasure_pending);
       if (art === "data/prospect_path_eval.json") return prospectPathsTable(bt[art]);
       return "";
     };
     const legend = (acct.verdict_enum || []).map(v =>
-      VERDICT_META[v] ? `<span class="proj-acct-legend-item">${verdictBadge(v)} <span class="fa-sub">${esc(VERDICT_DESC[v] || "")}</span></span>` : "").join("");
+      VERDICT_META[v] ? `<span class="proj-acct-legend-item">${verdictBadge(v)} <span class="fa-sub">${esc(VERDICT_DESC[v] || "")}</span></span>` : "")
+      .filter(Boolean).join(`<span class="fa-sub" aria-hidden="true"> &middot; </span>`);
     const glHref = `/glossary/#cat=${encodeURIComponent("Platform & Methodology")}`;
     const cards = models.map(m => {
       const fresh = m.last_checked
@@ -1373,23 +1399,22 @@
         : "";
       return `<div class="mlbp-section proj-acct-card">
         <div class="proj-acct-head">
-          <span class="mlbp-section-title">${esc(m.label)}</span>${verdictBadge(m.verdict)}
+          <span class="mlbp-section-title">${esc(m.label)}</span> ${verdictBadge(m.verdict)}${m.remeasure_pending ? ` <span class="fa-sub proj-acct-pending">${esc(m.remeasure_pending)}</span>` : ""}
         </div>
         ${m.summary ? `<div class="fa-note proj-acct-summary">${esc(m.summary)}</div>` : ""}
         <div class="fa-sub proj-acct-predicts">${esc(m.predicts || "")}</div>
-        <div class="proj-acct-meta">
+        <details class="proj-how"><summary class="fa-sub">Champion, baseline and metric</summary><div class="proj-acct-meta">
           <strong>Champion</strong> ${esc(m.champion || "?")}<br>
           <strong>Baseline</strong> <span class="fa-sub">${esc(m.baseline || "?")}</span><br>
           <strong>Metric</strong> <span class="fa-sub">${esc(m.metric || "?")}</span>
-        </div>
-        ${tableFor(m.eval_artifact)}
+        </div></details>
+        ${tableFor(m.eval_artifact, m)}
         ${m.notes ? `<details class="proj-acct-notes"><summary class="fa-sub">Lab log</summary><div class="fa-note">${esc(m.notes)}</div></details>` : ""}
         ${fresh ? `<div class="fa-sub proj-acct-fresh">${fresh} &middot; <a href="${glHref}">methodology in the Library</a></div>` : ""}
       </div>`;
     }).join("");
     root.innerHTML = `<div class="mlbp-page">
-      <div class="fa-note proj-block-note">Verdicts from the model registry, refreshed monthly. Receipts are read from the committed eval artifacts, not recomputed.</div>
-      <div class="proj-acct-legend">${legend}</div>
+      <details class="proj-how"><summary class="fa-sub">What the verdicts mean</summary><div class="proj-acct-legend">${legend}</div></details>
       ${cards}</div>`;
     const agfx = document.getElementById("proj-acct-gfx");
     if (agfx) agfx.onclick = () => {
@@ -1415,8 +1440,7 @@
   // failed load removes the image instead of printing the code twice.
   function logoMark(org) {
     if (!org) return "";
-    const slug = ESPN_SLUGS[org] || String(org).toLowerCase();
-    return `<img class="fa-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" alt="" loading="lazy" onerror="this.remove()">`;
+    return `<img class="fa-logo" src="${esc(teamLogoSrc(org))}" alt="" loading="lazy" onerror="this.remove()">`;
   }
 
   // ---- the salary path strip (ask C, 2026-09-16) -----------------------------
@@ -1876,7 +1900,7 @@
         + `<span class="proj-sub-age">age ${age}</span>`
         + (isPros ? "" : `<span class="proj-sub-ct ${ct.cls}" title="${esc(ct.tip)}">${esc(ct.fold)}</span>`)
         + rowTagsHtml(m, pros)
-        + `<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span></span>`;
+        + (DATA.n_fa != null ? faChip(m) : `<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>`) + `</span>`;
       const tail = pros
         ? `<td class="pc-fv"><span title="${m.fv_source === "xfv" ? `Graded on eFV${m.consensus_fv != null ? `; consensus FV ${EEPHUS_HUB.fvCeil(m.consensus_fv)}` : ""}` : "Consensus FV (eFV abstains)"}">${isPros ? (m.fv_source === "xfv" ? Math.round(m.fv) : `FV ${EEPHUS_HUB.fvCeil(m.fv)}`) : EM_DASH}</span></td>`
           + `<td class="pc-eta">${m.eta ?? EM_DASH}</td>`
@@ -1917,7 +1941,7 @@
     }).join("");
 
     const _wm = projWarMap(list);
-    const _axSel = (id, cur) => `<select id="${id}" class="proj-select proj-select-ax">
+    const _axSel = (id, cur, name) => `<select id="${id}" class="proj-select proj-select-ax" aria-label="${name}">
       ${Object.entries(SCATTER_AXES).map(([k, ax]) => `<option value="${k}"${cur === k ? " selected" : ""}>${esc(ax.label)}</option>`).join("")}</select>`;
     const _ay = (SCATTER_AXES[state.sy] || SCATTER_AXES.warY1).label;
     const _ax2 = (SCATTER_AXES[state.sx] || SCATTER_AXES.age).label;
@@ -1928,16 +1952,12 @@
       </div>`;
     const warMap = _wm ? `<details class="proj-warmap"><summary>Scatter &middot; ${esc(_ay)} vs ${esc(_ax2)} (current filters &middot; pick any axes)</summary>
       <div class="proj-warmap-axes">
-        <span>Y</span>${_axSel("proj-sy", state.sy)}<span>X</span>${_axSel("proj-sx", state.sx)}
+        <label for="proj-sy">Y</label>${_axSel("proj-sy", state.sy, "Y axis")}<label for="proj-sx">X</label>${_axSel("proj-sx", state.sx, "X axis")}
       </div>
       ${warMapLegend}
       <div class="proj-warmap-wrap" data-export-chart data-export-title="${esc(_ay)} vs ${esc(_ax2)}">${_wm}</div></details>` : "";
     function projBoardSidebar(curr) {
-      const stampMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Data freshness and scope">Scope</div>
-        ${DATA.generated_at ? `<div class="fa-rail-row"><span>data as of</span><span class="fa-rail-num">${esc(String(DATA.generated_at))}</span></div>` : ""}
-        <div class="fa-rail-row"><span>veterans</span><span class="fa-rail-num">${DATA.n_vets}</span></div>
-        <div class="fa-rail-row"><span>prospects</span><span class="fa-rail-num">${DATA.n_prospects}</span></div>
-        <div class="fa-rail-row"><span data-gl="winter_dpw">$/WAR</span><span class="fa-rail-num">${money(DATA.dpw_usd)}</span></div></div>`;
+      // No Scope module: the lede above the board carries the same four facts.
       const warTot = m => warShown(m) ?? -99;
       const topWar = curr.slice().sort((a, b) => warTot(b) - warTot(a)).slice(0, 6);
       const warRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num">${fmtWar(warTot(m))}</span></div>`;
@@ -1952,7 +1972,7 @@
       const supply = Object.entries(groups).sort((a, b) => b[1] - a[1])
         .map(([g, n]) => `<div class="fa-rail-row"><span>${esc(g)}</span><span class="fa-rail-num">${n}</span></div>`).join("");
       const supplyMod = supply ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="Current filtered pool by position group">Pool supply</div>${supply}</div>` : "";
-      return `<aside class="fa-board-rail">${stampMod}${warMod}${surMod}${supplyMod}</aside>`;
+      return `<aside class="fa-board-rail">${warMod}${surMod}${supplyMod}</aside>`;
     }
     // Sort vocabulary: one table for the eyebrow cue, the picker and its
     // reverse button. The cue is the only on-screen sign of a sort whose column
@@ -2062,19 +2082,29 @@
       if (i >= 0) state.cmp.splice(i, 1);
       else { state.cmp.push(k); if (state.cmp.length > 2) state.cmp.shift(); }
       syncToURL();
-      if (state.cmp.length === 2) render(); else renderTable();
+      if (state.cmp.length === 2) { render(); return; }
+      renderTable();
+      // The re-render replaced the button; keep focus on it, not on <body>.
+      const again = root.querySelector(`[data-cmp-key="${cssKey(k)}"]`);
+      if (again && again.focus) again.focus();
     });
     const clr = root.querySelector("[data-cmp-clear]");
-    if (clr) clr.onclick = () => { state.cmp = []; syncToURL(); renderTable(); };
+    if (clr) clr.onclick = () => {
+      const was = state.cmp[0];
+      state.cmp = []; syncToURL(); renderTable();
+      const again = was && root.querySelector(`[data-cmp-key="${cssKey(was)}"]`);
+      if (again && again.focus) again.focus();
+    };
     fillRowPhotos(root);
-    if (window.EEPHUS_HUB) {
+    // A payload written before proj_export stamped `fa` (no n_fa) keeps the
+    // identity-map fill; a current one paints the chip with the row and the
+    // board never fetches player_links.json.
+    if (DATA.n_fa == null && window.EEPHUS_HUB) {
       window.EEPHUS_HUB.links().then(L => {
         if (!L) return;
         root.querySelectorAll(".proj-fa-slot[data-fa-key]").forEach(el => {
           const row = (L.byKey || {})[el.dataset.faKey];
-          if (row && row.fa) {
-            el.innerHTML = `<a class="proj-tag proj-fa-chip" href="/fa/#player=${encodeURIComponent(row.key)}" title="In the current FA class: open the market card">$ FA</a>`;
-          }
+          if (row && row.fa) el.innerHTML = faChip({ key: row.key, fa: true });
           el.removeAttribute("data-fa-key");
         });
       });
@@ -2088,6 +2118,14 @@
   // value tiles. Works across sources (vet vs prospect compares fine -
   // warAt aligns both to calendar seasons).
   // ===========================================================================
+  function faChip(m) {
+    return m && m.fa
+      ? `<a class="proj-tag proj-fa-chip" href="/fa/#player=${encodeURIComponent(m.key)}" title="In the current FA class: open the market card">$ FA</a>`
+      : "";
+  }
+  function cssKey(k) {
+    return (window.CSS && CSS.escape) ? CSS.escape(String(k)) : String(k).replace(/["\\]/g, "\\$&");
+  }
   function findRow(key) {
     return (DATA.vets || []).concat(DATA.prospects || []).find(m => m.key === key) || null;
   }
@@ -2300,13 +2338,17 @@
   const currentCard = () => (state.player && DETAIL && (DETAIL.players || {})[state.player]) || null;
 
   // ---- shared visual components ----------------------------------------------
-  // Savant percentile rows. Luck (wOBA minus xwOBA) is not a skill percentile:
-  // painted on the percentile colours, the hitter whose results ran furthest
-  // ahead of his contact reads as elite, so it keeps its number on a neutral chip.
+  // Savant percentile rows. Luck (xwOBA minus wOBA) is not a skill percentile:
+  // painted on the percentile colours, the hitter whose contact ran furthest
+  // ahead of his results reads as elite, so it keeps its number on a neutral chip.
   // Colour (owner ask 2026-10-01): one colour per bar and chip from the shared
   // percentile gradient (EephusTiers.pctColor), carried inline as --pct so the
   // stylesheet paints the fill and the chip from it; the pctClass step stays on
   // both as the fallback a browser without color-mix paints instead.
+  // The pools mlb_player_export pulls: the contact leaderboard at 25+ batted
+  // balls, the expected-stats leaderboard with no floor. Neither is a
+  // qualified pool.
+  const SAVANT_POOL = "vs Savant leaderboards (contact: 25+ batted balls; expected stats: no floor)";
   function sliders(sc, sid) {
     if (!sc || !sc.metrics || !sc.metrics.length) return "";
     const isLuck = m => /^luck/i.test(String(m.label || ""));
@@ -2324,7 +2366,7 @@
     const luck = sc.metrics.find(isLuck);
     const luckHTML = luck
       ? `<div class="mlbp-luck"><span class="mlbp-luck-label">${esc(luck.label)}</span><span class="mlbp-luck-val">${esc(luck.value)}</span></div>` : "";
-    return section(sid, "Statcast Percentiles", `${esc(String(sc.season))} · vs qualified MLB pool`, rows + luckHTML);
+    return section(sid, "Statcast Percentiles", `${esc(String(sc.season))} · ${SAVANT_POOL}`, rows + luckHTML);
   }
   // Dot ruler for one scale family: every index on it shares the axis, the
   // centre line is 100 and the shaded band is the family's neutral zone.
@@ -2553,12 +2595,19 @@
   }
 
   // ---- hitting ---------------------------------------------------------------
+  // .262 style: three places, no leading zero. pct1: one place and a % sign.
+  function rate3(v) {
+    return v == null || !Number.isFinite(Number(v)) ? EM_DASH : Number(v).toFixed(3).replace(/^0(?=\.)/, "");
+  }
+  function pct1(v) {
+    return v == null || !Number.isFinite(Number(v)) ? EM_DASH : Number(v).toFixed(1) + "%";
+  }
   function arsenalTable(ar, extra) {
     const table = (ar && ar.length)
       ? `<table class="detail-table"><thead><tr><th>Pitch</th><th>Usage</th><th title="Savant pitcher run value per 100 pitches, pitcher view: positive = runs saved">RV/100</th><th>Whiff%</th><th>BA against</th></tr></thead>
       <tbody>${ar.map(a => `<tr><td>${esc(a.pitch || "")}</td><td>${a.usage != null ? a.usage.toFixed(1) + "%" : EM_DASH}</td>
         <td class="${a.rv100 != null && a.rv100 > 0 ? "proj-pos" : a.rv100 < 0 ? "proj-neg" : ""}">${a.rv100 != null ? a.rv100.toFixed(1) : EM_DASH}</td>
-        <td>${a.whiff != null ? a.whiff.toFixed(1) + "%" : EM_DASH}</td><td>${a.ba != null ? String(a.ba) : EM_DASH}</td></tr>`).join("")}</tbody></table>` : "";
+        <td>${a.whiff != null ? a.whiff.toFixed(1) + "%" : EM_DASH}</td><td>${rate3(a.ba)}</td></tr>`).join("")}</tbody></table>` : "";
     const tiles = extra ? `<div class="mlbp-tiles mlbp-tiles-left">${extra}</div>` : "";
     if (!table && !tiles) return "";
     return section("pitching-arsenal", "Pitch Arsenal", "usage · run value /100 (positive = runs saved) · whiff%", `<div class="mlbp-table-wrap">${table}</div>${tiles}`);
@@ -2571,6 +2620,7 @@
   // reference column after eWAR, shown only when a row on this table has a
   // published value; a row without one prints the null marker. eWAR stays the
   // site's WAR: the reference column never sorts, sums or bands anything.
+  const IP_TIP = "Innings pitched in baseball notation: .1 and .2 are one and two outs";
   function seasonLines(rows, isPit, sid, sub) {
     const c = rows || [];
     if (!c.length) return "";
@@ -2580,11 +2630,11 @@
     const warTd = r => `<td>${r.war != null ? fmtWar(r.war) : EM_DASH}</td>`
       + (hasFg ? `<td class="mlbp-fgwar">${r.war_fwar != null ? fmtWar(r.war_fwar) : EM_DASH}</td>` : "");
     const head = isPit
-      ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th>" + warTh
+      ? `<th>Year</th><th title="${IP_TIP}">IP</th><th>ERA</th><th>K%</th><th>BB%</th>` + warTh
       : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th>" + warTh;
     const body = c.slice().reverse().map(r => isPit
-      ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td>${warTd(r)}</tr>`
-      : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.iso != null ? String(r.iso).replace(/^0(?=\.)/, "") : EM_DASH}</td>${warTd(r)}</tr>`).join("");
+      ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${pct1(r.kPct)}</td><td>${pct1(r.bbPct)}</td>${warTd(r)}</tr>`
+      : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${pct1(r.bbPct)}</td><td>${pct1(r.kPct)}</td><td>${rate3(r.iso)}</td>${warTd(r)}</tr>`).join("");
     return section(sid, "Season lines", sub,
       `<div class="mlbp-table-wrap"><table class="detail-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
   }
@@ -2606,7 +2656,7 @@
     const note = [h.pa != null ? `${h.pa} PA` : "", h.qualified ? "qualified" : "",
       h.pwoba != null ? `${term("pwoba", "pWOBA")} ${Number(h.pwoba).toFixed(3).replace(/^0(?=\.)/, "")}` : ""].filter(Boolean);
     note.push(`<a class="fa-player-link" href="/mlbstats/#section=hitters">MLB Stats &rarr;</a>`);
-    return section("hitting-index", "Offense index", `${h.season ? esc(String(h.season)) + " · " : ""}100 = average qualified hitter`,
+    return section("hitting-index", "Offense index", `${h.season ? esc(String(h.season)) + " · " : ""}100 = PA-weighted average of 50+ PA hitters`,
       ruler + `<div class="fa-sub mlbp-index-note">${note.join(" · ")}</div>`);
   }
   function swingTiles(p) {
@@ -2719,6 +2769,15 @@
       warIpPlus3yr: r.war_ip_plus_3yr, gmli: r.gmli, gmli3yr: r.gmli_3yr,
       saves: r.saves, holds: r.holds, wpa: r.wpa, sd: r.sd, md: r.md, gs: r.gs, ipPerGs: r.ip_per_gs };
   }
+  // Decimal innings (174.333) in the baseball notation the season lines use
+  // (174.1): the digit after the point counts outs.
+  function ipThirds(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return EM_DASH;
+    let whole = Math.floor(n + 1e-9), outs = Math.round((n - whole) * 3);
+    if (outs >= 3) { whole += 1; outs = 0; }
+    return `${whole}.${outs}`;
+  }
   // Starters and relievers are separate pools; their indexes never share an axis.
   function pitchingIndexBlock(p) {
     const s = pitchSkill(p);
@@ -2731,7 +2790,7 @@
         { label: "SEM+ 3yr", v: s.semPlus3yr, gl: "sem_plus_3yr" }], "run");
     if (!ruler) return "";
     const line = [esc(s.role || (rel ? "reliever" : "starter")),
-      s.ip != null ? `${esc(String(s.ip))} IP` : "",
+      s.ip != null ? `${ipThirds(s.ip)} IP` : "",
       !rel && s.gs != null ? `${esc(String(s.gs))} GS` : "",
       !rel && s.ipPerGs != null ? `${Number(s.ipPerGs).toFixed(1)} IP/GS` : "",
       rel && (s.saves != null || s.holds != null) ? `${s.saves || 0} SV / ${s.holds || 0} HLD` : "",
@@ -3182,7 +3241,7 @@
     const sk = p.skills || {};
     return [
       `${term("fa_projection_engine", "Projection engine")} proj_lgbm_v1, bands = its P10 / P90 quantile heads`,
-      "Statcast percentiles vs the season's qualified MLB pool",
+      `Statcast percentiles ${SAVANT_POOL}`,
       p.swingPlus != null ? "Swing+ (MLB bat tracking 2024+)" : "",
       p.aaaStuffPlus != null ? "aStuff+: in-house AAA pitch model, latest tracked AAA season" : "",
       sk.def ? "Fielding, framing and positional runs: FanGraphs, via MLB StatsAPI" : "",
@@ -3197,20 +3256,10 @@
     if (bar) bar.innerHTML = `<a class="chip" href="#" id="mlbp-back">← back to projections</a>`;
     const back = document.getElementById("mlbp-back");
     if (back) back.onclick = (e) => { e.preventDefault(); state.player = null; syncToURL(); render(); };
-    if (!DETAIL) {
+    PAINTED_PLAYER = null;
+    if (!(DETAIL && (DETAIL.players || {})[key]) && !(DETAIL && DETAIL.all)) {
       root.innerHTML = pxState("loading", "Loading player&hellip;");
-      if (!DETAIL_LOADING) {
-        DETAIL_LOADING = true;
-        fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
-          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-          .then(d => { DETAIL = d; if (state.player) renderPlayer(state.player); })
-          .catch(() => {
-            DETAIL_LOADING = false;
-            root.innerHTML = pxState("failed", `Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="mlbp-detail-retry" type="button">Retry</button>`);
-            const retry = document.getElementById("mlbp-detail-retry");
-            if (retry) retry.onclick = () => { if (state.player) renderPlayer(state.player); };
-          });
-      }
+      loadCard(key);
       return;
     }
     const p = (DETAIL.players || {})[key];
@@ -3266,7 +3315,7 @@
         ${photo}
         <div class="mlbp-hero-main">
           <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
-          <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${esc(p.team)}` : " · FA"} · ${contract}</div>
+          <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${franchiseHref(p.team) ? `<a class="fa-player-link" href="${esc(franchiseHref(p.team))}">${esc(p.team)}</a>` : esc(p.team)}` : " · FA"} · ${contract}</div>
           ${originLine}
           <div class="mlbp-hero-actions"><button class="chip egfx-chip" id="mlbp-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}">&#8646; Trade Machine</a>` : ""}</div>
         </div>
@@ -3276,6 +3325,7 @@
       <div class="fa-note mlbp-page-foot">${pageFoot(p)}</div>
     </div>`;
     bindMlbpTabs(root, p, key);
+    PAINTED_PLAYER = key;
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
     // Async fills run AFTER the first paint and patch their own slot, so none
     // of them re-renders the page under the reader.
@@ -3284,16 +3334,62 @@
     // Only client-fetch the pitching leaderboards when the skills block was not
     // baked into the payload (older builds); the baked block renders directly.
     if (pitSide && !(p.skills && p.skills.pitch)) ensurePitchingStats();
-    // hub strip (cross-module identity) - lazy, never blocks the paint
+    // Hub strip (cross-module identity). The row is the one
+    // mlb_player_export._export_links writes for this card, built from the
+    // card itself, so the page never downloads the 1.9 MB identity map.
     if (window.EEPHUS_HUB) {
-      window.EEPHUS_HUB.links().then(L => {
-        const row = L && (L.byKey || {})[key];
-        const el = document.getElementById("mlbp-hub");
-        if (el && row && state.player === key) el.innerHTML = window.EEPHUS_HUB.stripHTML(row, "mlb");
-      });
+      const el = document.getElementById("mlbp-hub");
+      const row = { key, mlbam: p.mlbam, fa: !!p.fa, proj: true,
+                    prospx: (p.origin || {}).prospx || null };
+      if (el && window.EEPHUS_HUB.stripHTML) el.innerHTML = window.EEPHUS_HUB.stripHTML(row, "mlb");
       const btn = document.getElementById("mlbp-gfx");
       if (btn) btn.onclick = () => shareMlbCard(p);
     }
+  }
+
+  // One card: its shard, or the whole set when the shard is missing. A card
+  // that lands before the board renders on the board's two scalars it carries.
+  function cardFailed(key) {
+    const root = document.getElementById("proj-rows");
+    if (!root || state.player !== key) return;
+    root.innerHTML = pxState("failed", `Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="mlbp-detail-retry" type="button">Retry</button>`);
+    const retry = document.getElementById("mlbp-detail-retry");
+    if (retry) retry.onclick = () => { if (state.player) renderPlayer(state.player); };
+  }
+  function cardLanded(key, frame) {
+    if (!DATA && frame && frame.first_season != null) {
+      DATA = { first_season: frame.first_season, horizon: frame.horizon,
+               generated_at: frame.generated_at, vets: [], prospects: [], partial: true };
+    }
+    if (state.player === key && DATA) renderPlayer(key);
+  }
+  function loadAllCards(key) {
+    if (DETAIL_ALL_LOADING) return;
+    DETAIL_ALL_LOADING = true;
+    fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(d => {
+        DETAIL = { players: Object.assign((d && d.players) || {}, (DETAIL && DETAIL.players) || {}), all: true };
+        cardLanded(state.player || key, d);
+      })
+      .catch(() => { DETAIL_ALL_LOADING = false; cardFailed(state.player || key); });
+  }
+  function loadCard(key) {
+    if (!key || CARD_LOADING[key] || (DETAIL && DETAIL.players[key])) return;
+    CARD_LOADING[key] = true;
+    fetch(`/data/mlb_player_detail/${encodeURIComponent(key)}.json`, { cache: "no-cache" })
+      .then(r => {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(d => {
+        if (!d || !d.player) { loadAllCards(key); return; }
+        DETAIL = DETAIL || { players: {} };
+        DETAIL.players[key] = d.player;
+        cardLanded(key, d);
+      })
+      .catch(() => { CARD_LOADING[key] = false; cardFailed(key); });
   }
 
   // One-subject card exports go through EEPHUS_HUB.openCard (the shared
@@ -3427,7 +3523,7 @@
       headshotURL: headshotURL(p.mlbam, 132),
       url: `eephus.io/projections/#player=${p.key}`,
       filename: `eephus-${p.key}-mlb-card.png`,
-      caption: "eephus projection engine (proj_lgbm_v1) · bands = P10-P90 · Statcast percentiles vs qualified MLB pool",
+      caption: "eephus projection engine (proj_lgbm_v1) · bands = P10-P90 · Statcast percentiles vs Savant leaderboards",
     });
   }
 
@@ -3453,8 +3549,15 @@
     }
     fetch("/data/mlb_projections.json", { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(d => { DATA = d; render(); })
+      .then(d => {
+        DATA = d;
+        // A card painted on its shard's frame stays put; the board only
+        // backs the views the reader has not opened yet.
+        if (state.player && PAINTED_PLAYER === state.player) return;
+        render();
+      })
       .catch(() => {
+        if (state.player && PAINTED_PLAYER === state.player) return;
         root.innerHTML = pxState("failed", `Data failed to load. If it persists, the nightly build is mid-run. <button class="chip" id="proj-retry" type="button">Retry</button>`);
         const retry = document.getElementById("proj-retry");
         if (retry) retry.onclick = loadData;
@@ -3465,6 +3568,8 @@
     syncFromURL();
     if (!document.getElementById("proj-rows")) return;
     loadData();
+    // A #player= link fetches its card beside the board, not after it.
+    if (state.player) loadCard(state.player);
     window.addEventListener("hashchange", () => { syncFromURL(); render(); });
   }
 

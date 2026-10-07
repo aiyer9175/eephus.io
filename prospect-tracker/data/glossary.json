@@ -6517,7 +6517,7 @@
    ],
    "priority": 50,
    "definition": "Expected isolated power: deserved extra-base power, computed as xSLG minus xBA, so it isolates the power a hitter's contact earned from the singles.",
-   "methodology": "xISO = xSLG - xBA, both from Savant's contact-quality model (exit velocity + launch angle): the deserved-power analog of ISO (SLG - AVG). Shown on MLB player cards as a percentile against the qualified-hitter pool, beside the Luck tile (actual wOBA minus xwOBA).",
+   "methodology": "xISO = xSLG - xBA, both from Savant's contact-quality model (exit velocity + launch angle): the deserved-power analog of ISO (SLG - AVG). Shown on MLB player cards as a percentile against the Savant expected-stats pool, beside the Luck chip (xwOBA minus wOBA, the xHEM+ sign).",
    "shelf": "industry",
    "origin": "Baseball Savant (MLB Statcast), Tom Tango and the Statcast team; our card value is a percentile reconstruction from the tracking inputs available."
   },
