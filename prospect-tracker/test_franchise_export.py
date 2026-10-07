@@ -334,7 +334,8 @@ def test_a_feed_flag_on_a_second_place_club_yields_exactly_one_disagreement_row(
     assert rows["PHI"][fe.SEASON_NOW]["div_champ"] is False
     assert rows["PHI"][fe.SEASON_NOW]["clinched"] is True
     assert set(rows["PHI"][fe.SEASON_NOW]) == {"w", "l", "rs", "ra", "rd", "rank", "gp", "pct",
-                                               "clinched", "div_champ", "division_id"}
+                                               "clinched", "div_champ", "division_id",
+                                               "league_id", "xw", "xl", "one_run", "extra_inning"}
 
 
 def test_served_champions_are_one_rank_one_club_per_division_and_the_rows_disclose_the_feed(d, clubs):
