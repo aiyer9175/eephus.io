@@ -666,25 +666,76 @@ def test_box_rows_carry_wpa_and_pli(gf849845):
 
 
 def test_box_rows_carry_pitch_rates_that_reconcile(gf849845, g849845):
-    """Owner ask 2026-10-07: pitches per plate appearance for batters, per
-    inning for pitchers. A club's batters saw exactly the pitches the other
-    club's pitchers threw (MLB's pitch events against its boxscore counts)."""
+    """Owner ask 2026-10-07: P/AB (pitches seen per at-bat) for batters, P/IP
+    for pitchers. A club's batters saw exactly the pitches the other club's
+    pitchers threw (MLB's pitch events against its boxscore counts)."""
     box = gf849845["box"]
     for bat_side, pit_side in (("home", "away"), ("away", "home")):
         seen = sum(r["pit"] for r in box[bat_side]["batting"])
         thrown = sum(r["pc"] for r in box[pit_side]["pitching"])
         assert seen == thrown, (bat_side, seen, thrown)
+    # the boxscore's batting lines carry no pitch count, so pitches seen come
+    # from the pitch events; its pitching lines carry numberOfPitches
+    for side in ("away", "home"):
+        for e in g849845["box"]["teams"][side]["players"].values():
+            st = e.get("stats") or {}
+            assert "numberOfPitches" not in (st.get("batting") or {})
+            if st.get("pitching"):
+                assert isinstance(st["pitching"].get("numberOfPitches"), int)
     harper = next(r for r in box["away"]["batting"] if r["name"] == "Bryce Harper")
-    assert harper["pit"] == 20 and harper["p_pa"] == 5.0
+    assert harper["pit"] == 20 and harper["ab"] == 4 and harper["p_ab"] == 5.0
+    schwarber = next(r for r in box["away"]["batting"] if r["name"] == "Kyle Schwarber")
+    assert schwarber["pit"] == 19 and schwarber["ab"] == 3 and schwarber["p_ab"] == 6.3  # a walk adds no AB
     sale = next(r for r in box["home"]["pitching"] if r["name"] == "Chris Sale")
     assert sale["pc"] == 95 and sale["outs"] == 19 and sale["p_ip"] == 15.0
     hicklen = next(r for r in box["home"]["batting"] if r["name"] == "Brewer Hicklen")
-    assert hicklen["p_pa"] is None  # no plate appearance: no rate
+    assert hicklen["ab"] == 0 and hicklen["p_ab"] is None  # no at-bat: no rate
+    assert all("p_pa" not in r for side in ("away", "home") for r in box[side]["batting"])
     # a read without pitch events prints no count rather than a short one
     bare = [dict(e, playEvents=None) for e in g849845["wp"]]
     assert sc.pitches_seen(bare) is None
-    assert all(r["pit"] is None and r["p_pa"] is None
+    assert all(r["pit"] is None and r["p_ab"] is None
                for r in sc.box_rows(g849845["box"], bare)["home"]["batting"])
+
+
+def _pa(ab_index, half, batter, pitcher, pitches):
+    ev = [{"isPitch": True} for _ in range(pitches)] + [{"isPitch": False}]
+    return {"atBatIndex": ab_index, "about": {"isComplete": True, "halfInning": half, "inning": 1},
+            "matchup": {"batter": {"id": batter, "fullName": f"B {batter}"},
+                        "pitcher": {"id": pitcher, "fullName": f"P {pitcher}"}},
+            "playEvents": ev}
+
+
+def test_pitch_rates_on_a_zero_ab_batter_and_a_zero_out_pitcher():
+    """The exporter math on a small fixture game: a batter whose only trip was
+    a walk (1 PA, 0 AB) and a pitcher who recorded no out carry no rate; the
+    others divide exactly, half up; a batting line that does carry
+    numberOfPitches is read before the pitch events."""
+    def player(pid, bat=None, pit=None):
+        return {"person": {"id": pid, "fullName": f"N {pid}"}, "position": {"abbreviation": "P" if pit else "LF"},
+                "stats": {"batting": bat or {}, "pitching": pit or {}}}
+    box = {"teams": {
+        "away": {"batters": ["ID1", "ID2", "ID3"], "pitchers": [], "players": {
+            "ID1": player(1, bat={"atBats": 0, "plateAppearances": 1, "baseOnBalls": 1}),
+            "ID2": player(2, bat={"atBats": 3, "plateAppearances": 3}),
+            "ID3": player(3, bat={"atBats": 2, "plateAppearances": 2, "numberOfPitches": 11})}},
+        "home": {"batters": [], "pitchers": ["ID10", "ID11", "ID12"], "players": {
+            "ID10": player(10, pit={"outs": 7, "battersFaced": 4, "numberOfPitches": 17}),
+            "ID11": player(11, pit={"outs": 0, "battersFaced": 2, "numberOfPitches": 9}),
+            "ID12": player(12, pit={"outs": 2, "battersFaced": 1})}}}}
+    wp = [_pa(0, "top", 1, 10, 6), _pa(1, "top", 2, 10, 4), _pa(2, "top", 2, 11, 3),
+          _pa(3, "top", 2, 11, 3), _pa(4, "top", 3, 10, 2)]
+    rows = sc.box_rows(box, wp)
+    bat = {r["id"]: r for r in rows["away"]["batting"]}
+    assert (bat[1]["pit"], bat[1]["ab"], bat[1]["p_ab"]) == (6, 0, None)      # walk only: a dash
+    assert (bat[2]["pit"], bat[2]["ab"], bat[2]["p_ab"]) == (10, 3, 3.3)      # 10 / 3 = 3.33
+    assert (bat[3]["pit"], bat[3]["ab"], bat[3]["p_ab"]) == (11, 2, 5.5)      # the boxscore count wins over 2 events
+    pit = {r["id"]: r for r in rows["home"]["pitching"]}
+    assert (pit[10]["pc"], pit[10]["outs"], pit[10]["p_ip"]) == (17, 7, 7.3)  # 17 x 3 / 7 = 7.29
+    assert (pit[11]["pc"], pit[11]["outs"], pit[11]["p_ip"]) == (9, 0, None)  # no out: a dash
+    assert pit[12]["p_ip"] is None                                            # no pitch count on the line
+    # half up on an exact tie: 15 pitches over 4 AB is 3.75 -> 3.8
+    assert sc._per(15, 4) == 3.8 and sc._per(5, 0) is None
 
 
 def test_debuts_from_the_feed(g849845, lg):

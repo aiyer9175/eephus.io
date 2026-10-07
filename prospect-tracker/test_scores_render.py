@@ -19,7 +19,7 @@ measure (every card at or above its slot's min-height, no card's content
 taller than its floor, so a poll within a state changes no height, and a
 live-to-final swap moves no card below); a late game waits for its notice;
 12 innings scroll inside the line score; the chart's role, label, table twin,
-pointer crosshair (a tap pins it) and keys; P/PA and P/IP in the box score;
+pointer crosshair (a tap pins it) and keys; P/AB and P/IP in the box score;
 no link inside another interactive element; 24 px targets, 44 px for strip
 chips, tabs and filters at 390; no player_links.json request on the day view;
 one polite live region; no console errors; the flag (SCORES_LIVE False
@@ -525,7 +525,18 @@ def test_box_score_prints_pitch_rates_from_the_game_file(site, pw):
     with serve_site(site) as base, scores_page(base, pw, width=1280, hash_="#game=849845&tab=box") as page:
         page.wait_for_selector(".sc-box")
         heads = page.locator(".sc-box thead").all_inner_texts()
-        assert any("P/PA" in h for h in heads) and any("P/IP" in h for h in heads)
+        assert any("P/AB" in h for h in heads) and any("P/IP" in h for h in heads)
+        assert not any("P/PA" in h for h in heads)
+        # each header is a Library term and right-aligned like the stat cells
+        gl = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+        ids = {e["id"] for e in gl["entries"]}
+        for slug in ("pitches_per_ab", "pitches_per_ip"):
+            th = page.locator(f'.sc-box th:has([data-gl="{slug}"])').first
+            assert slug in ids and th.evaluate("e => getComputedStyle(e).textAlign") == "right"
+        row = page.locator(".sc-box tbody tr", has_text="Kyle Schwarber").first
+        assert row.locator("td").nth(6).inner_text() == "6.3"  # 19 pitches over 3 AB
+        row = page.locator(".sc-box tbody tr", has_text="Brewer Hicklen").first
+        assert row.locator("td").nth(0).inner_text() == "0" and row.locator("td").nth(6).inner_text() == "-"
         row = page.locator(".sc-box tbody tr", has_text="Chris Sale").first.inner_text()
         assert "\t15.0\t" in row or " 15.0 " in row, row
         row = page.locator(".sc-box tbody tr", has_text="Bryce Harper").first.inner_text()
