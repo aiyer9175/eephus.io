@@ -110,7 +110,7 @@
 
   function moduleBadges(e) {
     const LBL = { prospx: "PROSPX", fa: "MLB FA", foundations: "FOUNDATIONS",
-                  platform: "PLATFORM", franchise: "FRANCHISES" };
+                  platform: "PLATFORM", franchise: "FRANCHISES", scores: "SCORES / STANDINGS" };
     return (e.module || []).map(m =>
       `<span class="gl-mod gl-mod--${m}">${LBL[m] || m.toUpperCase()}</span>`).join("");
   }

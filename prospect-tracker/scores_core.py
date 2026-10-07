@@ -44,10 +44,10 @@ family (Scores / Standings, STANDINGS_1_CORE_RULES) can register its own file
 kinds and budgets through `register_file_kind` and reuse the file-independent
 rules through `validate_payload`.
 
-The module flag `SCORES_LIVE` defaults to False: while it is False nothing
-scores-related is served, the job writes only under `.cache/scores/preview/`,
-and no page, publish path, registry row or glossary entry exists. Only the
-flip task turns it on.
+The module flag `SCORES_LIVE` is True from the flip (SCORES_5a_LIVE_FLIP,
+2026-10-07). Set back to False, nothing scores-related is served: the job
+writes only under `.cache/scores/preview/` and build_site writes only the
+preview copy of the page.
 """
 from __future__ import annotations
 
@@ -61,8 +61,8 @@ import re
 # Flags and frozen literals
 # --------------------------------------------------------------------------- #
 
-#: Class 2 module flag (Part 8 8.A). False until SCORES_5a_LIVE_FLIP.
-SCORES_LIVE = False
+#: Class 2 module flag (Part 8 8.A). True from SCORES_5a_LIVE_FLIP.
+SCORES_LIVE = True
 
 #: Video embed default (plan 6.7). The job also reads an override from outside
 #: the repo; the effective value is published as `index.json.rules.video.embed`.

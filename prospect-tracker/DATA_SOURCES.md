@@ -190,7 +190,9 @@ between the sentinels.
   unreachable). No auth, but any schema or availability change breaks the
   daily path first.
 - MLB StatsAPI for the MLB Scores job (`tools/scores_job.py`, behind
-  `scores_core.SCORES_LIVE`, default off): every payload carries StatsAPI's
+  `scores_core.SCORES_LIVE`, on from the SCORES_5a flip of 2026-10-07; the
+  public page has files once the box job is installed, deploy/WEBMASTER.md
+  section 10): every payload carries StatsAPI's
   terms line, verbatim: "Copyright 2026 MLB Advanced Media, L.P.  Use of any
   content on this page acknowledges agreement to the terms posted here
   http://gdx.mlb.com/components/copyright.txt" (that page reads "Only

@@ -92,3 +92,17 @@ def test_readme_routes_block_in_sync():
     end = text.index(gen.README_ROUTES_END) + len(gen.README_ROUTES_END)
     assert text[begin:end] == gen.render_readme_routes(), (
         "README.md routes block is out of sync - run `python tools/gen_audit_docs.py`")
+
+
+def test_the_site_map_lists_the_scores_page():
+    """SCORES_5a_LIVE_FLIP (2026-10-07): main() writes /scores/ by literal, so
+    the generated site map and README routes list it with its route note, and
+    the registry doc carries its three rows."""
+    gen = _gen()
+    site_map = gen.render_one("SITE_MAP.md")
+    row = next(ln for ln in site_map.splitlines() if ln.startswith("| `/scores/` |"))
+    assert "`build_site.build_scores()`" in row and "Scores / Standings" in row
+    assert "| `/scores/` | Scores / Standings" in gen.render_readme_routes()
+    reg = gen.render_one("MODEL_REGISTRY.md")
+    for mid in ("scores_mlb_wp", "scores_stars_rule", "scores_biggest_plays_rule"):
+        assert f"`{mid}`" in reg, mid

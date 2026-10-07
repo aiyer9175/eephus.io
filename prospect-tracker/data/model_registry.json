@@ -5515,6 +5515,47 @@
    "artifact_age_days": 21
   },
   {
+   "model_id": "scores_mlb_wp",
+   "summary": "MLB's live win probability, shown as MLB serves it and never refitted: Brier 0.157516 against 0.249754 for the base rate on 1,448,965 regular-season plays. Provisional.",
+   "surface": "/scores/ live cards, the win probability chart, swings in Biggest plays and the play log, and per-player WPA and pLI in the box score",
+   "predicts": "P(home team wins) after each plate appearance, in game: MLB's live model read from the StatsAPI winProbability feed, displayed verbatim, never refitted",
+   "champion": "MLB StatsAPI winProbability homeTeamWinProbability (external), no fallback: a plate appearance MLB gives no value for is a gap",
+   "baseline": "the home-win base rate, and win_expectancy_state (team-blind) on the same plays",
+   "metric": "Brier on the regular-season play corpus: data/win_expectancy.json calibration.feed_brier beside calibration.brier and calibration.brier_base_rate_only",
+   "eval_artifact": "data/win_expectancy.json",
+   "verdict": "provisional",
+   "notes": "SCORES_5a_LIVE_FLIP 2026-10-07, the first commit that serves /scores/. A source number, not ours: the page shows MLB's value as the feed serves it and the site measures it without fitting it. It starts every game at 50 percent, so it is not a pregame forecast; inside a game it moves with the situation and, by the site's own check, also carries some team strength (the artifact's calibration.feed_note: its within-cell standard deviation of 0.04). Measured on regular seasons only; no postseason game is in the check. The summary's figures are the artifact's calibration.feed_brier (0.157516) and calibration.brier_base_rate_only (0.249754) on its n_plays_fit (1,448,965) plays; win_expectancy_state scores calibration.brier (0.157678) on the same plays. No fallback: a plate appearance the feed gives no value for is a gap in the chart, and the house model is not shown in its place (its own surface serves nothing).",
+   "last_checked": "2026-10-07",
+   "stale": false,
+   "artifact_age_days": 26
+  },
+  {
+   "model_id": "scores_stars_rule",
+   "summary": "Stars of the Game on final /scores/ games: a published ranking rule (stars_v1) over MLB's win probability added, descriptive by design, no forward claim. Provisional.",
+   "surface": "/scores/ Stars of the Game on final games",
+   "predicts": "nothing: a DESCRIPTIVE ranking rule (stars_v1) over MLB's per-play win probability added and each workhorse pitcher's runs prevented",
+   "champion": "stars_v1 as frozen in the Scores design (15-out workhorse term with non-negative WPA, first star from the winning club, 95 percent coverage)",
+   "baseline": "n/a - descriptive by design, a rule and not a model (leverage_board precedent)",
+   "metric": "descriptive; no forward gate by design (realized WPA is an outcome, not a forecast); identity checks asserted in the tests",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "SCORES_5a_LIVE_FLIP 2026-10-07. Realized value, not skill; never ranked across games or seasons. The first star comes from the winning club and can score below the second (the game file then carries first_star_note). Frozen from this first public serve: any change is stars_v2, dated, with a same-day note."
+  },
+  {
+   "model_id": "scores_biggest_plays_rule",
+   "summary": "Biggest plays on /scores/: a published ranking (bp_v1) of plate appearances by MLB's win probability swing, descriptive by design, no forward claim. Provisional.",
+   "surface": "/scores/ game cards, the game view and the day rail",
+   "predicts": "nothing: a DESCRIPTIVE ranking (bp_v1) of plate appearances by MLB's win probability swing",
+   "champion": "completed plate appearances with an MLB value and a swing of at least 0.03, ordered by the size of the swing, then leverage index, then the earlier plate appearance; five in the game view ('so far' while live), the top one on a final card, five across the date in the day rail",
+   "baseline": "n/a - descriptive",
+   "metric": "descriptive; no forward gate by design",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "provisional_kind": "measurement_only",
+   "notes": "SCORES_5a_LIVE_FLIP 2026-10-07. MLB values only; a missing value never enters it; withheld under 95 percent MLB coverage."
+  },
+  {
    "model_id": "mwar_running_game",
    "summary": "Provisional, descriptive only: the league steals second at 75.00% vs a 75.03% break-even; the gate finds no repeatable manager signal. Nothing attributed.",
    "surface": "Nothing served: the gate found the family a null, so any /management/ page ships descriptive only, sorted by attempt volume",

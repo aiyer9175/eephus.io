@@ -38,6 +38,11 @@
 # per-player game files of the /mlbstats/ drawer, empty until
 # mlbstats_trends_export.MLBSTATS_DRAWER_LIVE flips, pinned by
 # test_mlbstats_player_dir_ships_in_both_deploy_consumers).
+#
+# 2026-10-07: scores/ is the Scores / Standings page (SCORES_5a_LIVE_FLIP). Only
+# the page ships from here: its game files are written by tools/scores_job.py
+# into their own directory on the box behind their own nginx location
+# (deploy/README.md), so neither consumer copies them from the app tree.
 index.html
 404.html
 robots.txt
@@ -72,6 +77,7 @@ projections
 prospx
 redraft
 report
+scores
 sources
 team
 teams
