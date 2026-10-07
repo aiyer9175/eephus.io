@@ -542,8 +542,10 @@ def _apply_proj_override(path: dict, pv: dict, class_year: int,
         seq = [max(0.0, float(v)) for v in seq]   # fm._decay_path floors at 0
         cur[:len(seq)] = seq
         if champ is not None and len(champ) >= len(cur) > len(seq):
+            # branch_champ: the band decides the chain's branch on the
+            # unmultiplied champion, as the point does (mult 1.0: unchanged).
             full = fm.chain_aging_tail(seq, [mult * c for c in champ], len(seq),
-                                       len(cur), floor=floor)
+                                       len(cur), floor=floor, branch_champ=champ)
             cur[len(seq):] = full[len(seq):len(cur)]
             return
         ratio = _decay_ratio(seq)

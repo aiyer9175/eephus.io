@@ -97,6 +97,77 @@ def test_the_ml_path_ships_the_open_p10_carrier_beside_the_floored_one():
     assert '"war_by_year_p10_open": chain_aging_tail(' in src and "floor=False" in src
 
 
+# ---------------------------------------- the branch is decided once a row --
+# POSTEPOCH_9_CONTRACT_TAIL_BAND_SEAM: the 0.05 tests read the UNMULTIPLIED
+# champion (branch_champ), so the point and its band take one branch and one
+# ratio per season, and P10 <= point <= P90 at 2031 holds on every tail season.
+_CAMPBELL_CHAMP = [0.16, 0.16, 0.12, 0.09, 0.04, 0.0, 0.0, 0.0]
+
+
+def test_the_p90_band_takes_the_points_branch_on_a_near_zero_anchor():
+    point = fm.chain_aging_tail([0.08, 0.19, 0.22, 0.13, 0.11], _CAMPBELL_CHAMP, 5, 8)
+    assert point[5:] == [0.08, 0.05, 0.04]          # the ratio chain, 0.7 a season
+    head = [0.76, 0.79, 1.63, 0.93, 1.03]
+    p90_mult = [1.4 * c for c in _CAMPBELL_CHAMP]
+    # the old branch read the 1.4 x anchor (0.056 > 0.05): the scale branch on
+    # a zero champion tail, a P90 of 0.0 under the point
+    assert fm.chain_aging_tail(head, p90_mult, 5, 8)[5:] == [0.0, 0.0, 0.0]
+    hi = fm.chain_aging_tail(head, p90_mult, 5, 8, branch_champ=_CAMPBELL_CHAMP)
+    assert hi[5:] == [0.72, 0.5, 0.35]
+    lo = fm.chain_aging_tail([-0.37, -0.34, -0.14, -0.12, -0.03],
+                             [0.6 * c for c in _CAMPBELL_CHAMP], 5, 8, floor=False,
+                             branch_champ=_CAMPBELL_CHAMP)
+    assert lo[5:] == [-0.02, -0.01, -0.01]
+    assert all(a <= w <= b for a, w, b in zip(lo[5:], point[5:], hi[5:]))
+
+
+def test_the_ratio_chain_test_reads_the_unmultiplied_champion_each_season():
+    champ = [1.0, 1.0, 1.0, 1.0, 0.04, 0.07, 0.01, 0.0]
+    point = fm.chain_aging_tail([1.0, 1.0, 1.0, 1.0, 0.5], champ, 5, 8)
+    assert point[5:] == [0.35, 0.05, 0.03]
+    p10_mult = [0.6 * c for c in champ]
+    # 0.6 x 0.07 = 0.042 took 0.7 where the point took 0.01 / 0.07: a P10 of
+    # 0.2 above a point of 0.05
+    old = fm.chain_aging_tail([1.0, 1.0, 1.0, 1.0, 0.4], p10_mult, 5, 8, floor=False)
+    assert old[6] > point[6]
+    lo = fm.chain_aging_tail([1.0, 1.0, 1.0, 1.0, 0.4], p10_mult, 5, 8, floor=False,
+                             branch_champ=champ)
+    assert lo[5:] == [0.28, 0.04, 0.03]
+    assert all(a <= w for a, w in zip(lo[5:], point[5:]))
+
+
+def test_an_unmultiplied_caller_is_byte_identical_with_or_without_branch_champ():
+    champs = ([3.0, 2.8, 2.6, 2.4, 2.0, 1.5, 1.0, 0.0], _CAMPBELL_CHAMP,
+              [1.0, 1.0, 1.0, 1.0, 0.04, 0.07, 0.01, 0.0],
+              [0.5, 0.3, 0.1, 0.05, 0.05, 0.06, 0.0, 0.0])
+    heads = ([5.0, 4.8, 4.6, 4.4, 4.0], [0.5, 0.2, 0.0, -0.1, -0.4],
+             [0.08, 0.19, 0.22, 0.13, 0.11])
+    for c in champs:
+        for h in heads:
+            for fl in (True, False):
+                assert (fm.chain_aging_tail(h, c, 5, 8, floor=fl)
+                        == fm.chain_aging_tail(h, c, 5, 8, floor=fl, branch_champ=c))
+
+
+def test_the_ml_path_bands_pass_the_unmultiplied_champion():
+    import inspect
+    src = inspect.getsource(fm.contract_war_path)
+    assert src.count("branch_champ=path") == 3
+
+
+def test_tail_band_recompute_keeps_the_band_around_the_point(monkeypatch):
+    monkeypatch.setattr(pe, "TAIL_SEAM", "chained")
+    monkeypatch.setattr(pe, "TAIL_BAND", True)
+    monkeypatch.setattr(pe, "TAIL_BAND_P10_FLOOR", False)
+    war = [0.08, 0.19, 0.22, 0.13, 0.11]
+    m = {"warP10": [-0.37, -0.34, -0.14, -0.12, -0.03],
+         "warP90": [0.76, 0.79, 1.63, 0.93, 1.03]}
+    lo, hi = pe._tail_band(m, _CAMPBELL_CHAMP)
+    point, _ = pe._tail_war(war, _CAMPBELL_CHAMP, None)
+    assert hi == [0.72, 0.5, 0.35] and lo == [-0.02, -0.01, -0.01]
+    assert all(a <= w <= b for a, w, b in zip(lo, point, hi))
+
+
 # ------------------------------------------------------ the trade range ----
 def _season_value(war, t, dpw):
     # $10M a win, $0 at or below zero WAR (the platform kernel's WAR <= 0 rule)
