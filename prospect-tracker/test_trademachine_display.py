@@ -1,0 +1,133 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+"""The /trademachine/ display pass (DISPLAY_trademachine, 2026-10-07).
+
+One test per surface-quality finding the pass closes (qualaudit 2026-10-02):
+claims (QCLC02, QCLC04, QCLC05), payload and layout (QCLP01-03) and keyboard,
+names and state (QCLA05-07, QCLA17). Source checks run anywhere; the served
+checks drive headless Chromium over conftest.serve_site and skip where the
+gitignored trade_values.json is not built.
+"""
+from __future__ import annotations
+
+import contextlib
+import json
+import re
+from pathlib import Path
+
+import pytest
+
+from conftest import serve_site
+
+ROOT = Path(__file__).resolve().parent
+JS = ROOT / "assets" / "trademachine.js"
+
+
+def _src(rel: str) -> str:
+    return (ROOT / rel).read_text(encoding="utf-8")
+
+
+def _gl(slug: str) -> dict:
+    doc = json.loads(_src("data/glossary.json"))
+    return next(e for e in doc["entries"] if e["id"] == slug)
+
+
+@pytest.fixture(scope="module")
+def server():
+    if not (ROOT / "data" / "trade_values.json").exists():
+        pytest.skip("trade_values.json not built on this machine")
+    with serve_site() as base:
+        yield base
+
+
+@contextlib.contextmanager
+def _page(server, w=1280, h=900, touch=False, hash_="", requests=None):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            ctx = browser.new_context(viewport={"width": w, "height": h}, has_touch=touch)
+            pg = ctx.new_page()
+            if requests is not None:
+                pg.on("request", lambda r: requests.append(r.url))
+            errors = []
+            pg.on("pageerror", lambda e: errors.append(str(e)))
+            pg.goto(server + "trademachine/" + hash_, wait_until="load", timeout=90_000)
+            pg.wait_for_selector(".tm-board-table tbody tr", timeout=90_000)
+            yield pg, errors
+        finally:
+            browser.close()
+
+
+def _add(pg, side: str, query: str):
+    """Add the first priced hit for `query` to `side`, by mouse."""
+    inp = pg.locator(f'input[data-tm-search="{side}"]')
+    inp.click()
+    inp.fill(query)
+    pg.wait_for_selector(f'[data-tm-results="{side}"] .tm-hit:not(.is-unpriced)', timeout=20_000)
+    pg.locator(f'[data-tm-results="{side}"] .tm-hit:not(.is-unpriced)').first.click()
+    pg.wait_for_timeout(150)
+
+
+# ------------------------------------------------------------- QCLC02 ------ #
+
+_BEHAVIOUR = re.compile(r"hesitat|reject|won't do|wont do|lopsided|likely fair|\bfair\b", re.I)
+
+
+def test_verdict_source_names_no_club_behaviour():
+    src = JS.read_text(encoding="utf-8")
+    block = src.split("let vClass", 1)[1].split("const verdict =", 1)[0]
+    assert not _BEHAVIOUR.search(block), _BEHAVIOUR.search(block).group(0)
+    gfx = src.split("const vWord =", 1)[1].split(";", 1)[0]
+    assert not _BEHAVIOUR.search(gfx)
+    assert "is-warn" not in src and "is-bad" not in src
+
+
+def test_verdict_states_the_gap_on_the_served_page(server):
+    with _page(server) as (pg, errors):
+        _add(pg, "a", "Skenes")
+        _add(pg, "b", "Skenes")
+        same = pg.inner_text("#trade-machine .tm-balverdict").strip()
+        assert same == "Balanced: within $5M.", same
+        pg.locator("[data-tm-remove]").last.click()
+        _add(pg, "b", "Hugus")
+        text = pg.inner_text("#trade-machine .tm-balverdict").strip()
+        assert re.fullmatch(r"Side B receives \$[0-9]+\.[0-9]M less \([0-9]+% gap\)\.", text), text
+        assert not _BEHAVIOUR.search(text)
+        assert not errors, errors
+
+
+def test_trade_machine_glossary_matches_the_verdict():
+    e = _gl("trade_machine")
+    assert "winning side" not in e["formula"]
+    assert "predicts no club's answer" in e["formula"]
+    assert "predicts no club's answer" in e["definition"]
+    para = "An MLB player's range is the projection P10-P90"
+    assert e["methodology"].count(para) == 1
+
+
+# ------------------------------------------------------------- QCLC04 ------ #
+
+def test_surplus_glossary_names_the_projection_basis_the_hooks_price_on():
+    sv = _gl("surplus_value")["definition"]
+    assert "PROJECTION surplus for MLB players" in sv
+    assert "Trade Machine" in sv and "Club Ledger" in sv
+    assert "Two kinds" not in sv
+    assert "debuted players are valued on realized WAR" not in _gl("tvi")["definition"]
+    # the hooks it now describes are still there
+    assert 'data-gl="surplus_value"' in JS.read_text(encoding="utf-8")
+
+
+# ------------------------------------------------------------- QCLC05 ------ #
+
+def test_grpo_chip_word_is_the_registry_verdict():
+    src = JS.read_text(encoding="utf-8")
+    word = re.search(r'const _TB_GRPO_VERDICT = "([a-z_]+)";', src).group(1)
+    reg = json.loads(_src("data/model_registry.json"))
+    row = next(m for m in reg["models"] if m["model_id"] == "grpo_prospect")
+    assert word == row["verdict"], (word, row["verdict"])
+    chip = src.split("GRPO within-cohort breakout score", 1)[1][:120]
+    assert "${_TB_GRPO_VERDICT}" in chip

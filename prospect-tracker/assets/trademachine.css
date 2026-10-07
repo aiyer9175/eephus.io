@@ -274,9 +274,8 @@
 /* active filter chip -> cyan (cohesive with the view tabs), keep the iridescent underline */
 .tm-app button.chip.active { border-color: var(--accent-cyan); }
 
-/* evaluator grader verdict colors + Clear/Copy controls */
-.tm-balverdict.is-warn { color: var(--neon-amber); }
-.tm-balverdict.is-bad { color: var(--down); }
+/* Clear/Copy controls. The verdict is descriptive since QCLC02, so it has no
+   warn or reject colour: balanced reads green, every other gap reads in ink. */
 .tm-controls { display: flex; gap: 8px; margin-top: 9px; }
 
 /* pagination strip (the relocation lost this CSS -> the pager rendered as big

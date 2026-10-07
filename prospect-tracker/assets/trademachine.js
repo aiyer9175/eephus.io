@@ -608,16 +608,17 @@ function renderTradeMachine() {
   const lead = dA >= dB ? "A" : "B";
   const behind = lead === "A" ? "B" : "A";
   const pct = diff / Math.max(1, Math.abs(dA), Math.abs(dB)) * 100;
-  // Graduated accept/reject grader (merged in from the old Mock Trade Builder), in the
-  // evaluator's "receives" framing: the side that RECEIVES less value is the one giving up
-  // the edge, so it is the side that hesitates / rejects.
-  let vClass = "is-bal", vText = "";
-  if (!bothSides) { vText = "Add players to both sides for a verdict."; vClass = ""; }
-  else if (diff < BALANCED_THRESHOLD_MM) { vText = `✓ Likely fair: both sides within $${BALANCED_THRESHOLD_MM}M.`; vClass = "is-bal"; }
-  else if (pct < 15) { vText = `✓ Fair: Side ${lead} +$${diff.toFixed(1)}M (${pct.toFixed(0)}% edge).`; vClass = "is-bal"; }
-  else if (pct < 40) { vText = `⚠ Side ${behind} may hesitate: $${diff.toFixed(1)}M short (${pct.toFixed(0)}% gap).`; vClass = "is-warn"; }
-  else if (pct < 70) { vText = `✗ Side ${behind} likely rejects: $${diff.toFixed(1)}M gap (${pct.toFixed(0)}%).`; vClass = "is-bad"; }
-  else { vText = `✗✗ Lopsided: Side ${behind} won't do this (${pct.toFixed(0)}% gap).`; vClass = "is-bad"; }
+  // The verdict DESCRIBES the gap; it does not predict what a club does (QCLC02,
+  // 2026-10-07). The old grader printed "may hesitate" (15-40% gap), "likely
+  // rejects" (40-70%) and "won't do this" (70%+), tiers with no receipt: the
+  // registry row trade_machine_surplus is provisional with no win claims and
+  // its eval artifact does not ship. The $5M balanced band is the
+  // one rule the glossary documents, and it stays. In the "receives" framing
+  // the side that RECEIVES less value is the one named.
+  let vClass = "", vText = "";
+  if (!bothSides) { vText = "Add players to both sides for a verdict."; }
+  else if (diff < BALANCED_THRESHOLD_MM) { vText = `Balanced: within $${BALANCED_THRESHOLD_MM}M.`; vClass = "is-bal"; }
+  else { vText = `Side ${behind} receives $${diff.toFixed(1)}M less (${pct.toFixed(0)}% gap).`; }
   const verdict = have
     ? `<div class="tm-verdict">
          <div class="tm-balbar" title="value split A vs B">
@@ -699,9 +700,9 @@ function renderTradeMachine() {
       value: `${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M`,
       neg: !((x.mm || 0) >= 0),
     });
-    const vWord = vClass === "is-warn" ? "Hesitate"
-      : vClass === "is-bad" ? (pct >= 70 ? "Lopsided" : "Reject")
-      : "Fair";
+    // Descriptive, like the line it captions: balanced, or which side
+    // receives more and by what share of the larger side.
+    const vWord = vClass === "is-bal" ? "Balanced" : `Side ${lead} +${pct.toFixed(0)}%`;
     window.EEPHUS_HUB.openCard({
       template: "deal",
       data: {
@@ -732,6 +733,12 @@ let _tbData   = null;   // also exposed as window._tbData for renderPlayerDetail
 // 404 - track it so a chip click can say so honestly instead of silently
 // doing nothing. Never add a fallback fetch to the excluded full file.
 let _tbGrpoState = "pending";   // "pending" | "ready" | "unavailable"
+// The registry's word for the GRPO breakout model (row grpo_prospect), printed
+// on the breakout chip. The audit of 2026-10-02 (QCLC05) caught the chip
+// saying "provisional" while the row said "unvalidated"; the 30-day forward
+// read moved the row to provisional the same day. A test pins this constant
+// to the registry row so the two cannot drift again.
+const _TB_GRPO_VERDICT = "provisional";
 let _tbPool   = "all";
 let _tbTier   = "all";
 let _tbPos    = "all";
@@ -1358,7 +1365,7 @@ function _renderTBRows() {
       const grpoBord = grpoSc >= 0.70 ? "var(--neon-green)" : "var(--neon-amber)";
       signals += ` <button class="chip" style="padding:1px 5px;font-size:9px;color:${grpoCol};border-color:${grpoBord};"
         onclick="event.stopPropagation();_tbShowGroup('${escapeHtml(p.player_key||'')}');"
-        title="GRPO within-cohort breakout score ${(grpoSc*100).toFixed(0)}% (provisional; does not move the surplus). Click for the profile group.">
+        title="GRPO within-cohort breakout score ${(grpoSc*100).toFixed(0)}% (${_TB_GRPO_VERDICT}; does not move the surplus). Click for the profile group.">
         ▲${(grpoSc*100).toFixed(0)}
       </button>`;
     }
