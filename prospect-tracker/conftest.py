@@ -582,6 +582,8 @@ _SIDECAR_GLOBS = (
     "data/fantasy_rank.json",
     "data/fantasy_rank_eval.json",
     ".cache/fantasy_rank_model.json",
+    # Part 8 W04: the Dynasty lens Next to be graded.
+    "data/fantasy_next_graded.json",
     # PV-02: the retained served provisional grade (untracked snapshots plus
     # the durable digest copy) and its tracked digest.
     ".cache/provisional_history/**/*",
@@ -916,6 +918,9 @@ _SIDECAR_WRITE_TARGETS = (
     ("fantasy_rank", "RANK_PATH", "data/fantasy_rank.json"),
     ("fantasy_rank", "MODEL_CACHE", ".cache/fantasy_rank_model.json"),
     ("fantasy_rank", "EVAL_PATH", "data/fantasy_rank_eval.json"),
+    # Part 8 W04 (2026-10-07): fantasy_export's third output, the Dynasty
+    # lens Next to be graded, resolved at call time (_export_next_graded).
+    ("fantasy_export", "NEXT_GRADED_PATH", "data/fantasy_next_graded.json"),
     # LIBRARY_11: the Model Updates record and its durable copy. Both resolve
     # at call time (model_updates._resolve), so a test that names no path
     # writes the mirror.

@@ -36,6 +36,7 @@ from __future__ import annotations
 import functools
 import json
 import logging
+import math
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -1158,6 +1159,247 @@ def _dynasty_prospects(ts: dict | None, season: int, xfv: dict | None = None,
     return rows
 
 
+# ---- the Dynasty lens "Next to be graded" (Part 8 wiring W04, 2026-10-07) --
+# The third output of this exporter, a sidecar the Dynasty lens loads only when
+# it is opened. It lists the prospects no label source has graded, in the order
+# of the PROSPX section "Not yet graded by any source", and carries the chance
+# of a first grade by the W12 window end (provisional_v2 p_any_w12, the field
+# the section orders on) and nothing else a reader could take for a grade: the model has no skill on the level of the
+# first grade (provisional_track_eval, leg served_backdated), so no expected
+# FV, production grade or eFV rides on a row. Every figure the lens copy
+# prints is copied here from that artifact at build time ("claim").
+#
+# THE ORDER IS PROSPX'S, NOT A COPY OF ITS IDEA. prospx boardCmp puts every
+# graded row first and orders the section by provSectionCmp: the W12 chance
+# descending, rows the model does not cover last, then efvRankValue (the raw
+# xfv_grade, consensus FV, -1) and the fvCmpDesc chain, whose first term after
+# the grade is board_sort_key (sentinel -1e9). The lens serves the covered rows
+# in that order. The chain's later terms (the '+' flag, the tiebreaker score,
+# the name) are not reproduced here, so the served list stops before the first
+# row that ties its neighbour on the three shared terms: every served place is
+# then decided by terms both readers compute the same way.
+NEXT_GRADED_PATH = DATA_DIR / "fantasy_next_graded.json"
+NEXT_GRADED_N = 200
+_NO_BOARD_SORT_KEY = -1e9
+# The only per-row keys the sidecar may carry (test_dynasty_next_graded pins
+# it): no grade of any kind.
+# The W6 chance is left off on purpose: the two heads are recalibrated one by
+# one, and on the 2026-10-07 build 81 of the 200 served rows carried a larger
+# chance by the April window end than by the October one, a pair no reader
+# can square.
+NEXT_GRADED_ROW_KEYS = ("n", "key", "mlbam", "name", "org", "pos", "lvl", "age", "p12")
+
+
+def _finite(v) -> float | None:
+    """prospx _provNum: a finite number, else None ("" and None are None)."""
+    if v is None or v == "" or isinstance(v, bool):
+        return None
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f if math.isfinite(f) else None
+
+
+def _js_id(v) -> str | None:
+    """String(mlbam) as the browser writes it: 828808 and 828808.0 both read
+    "828808", so the provisional_v2 join matches prospx provV2Of."""
+    if v is None:
+        return None
+    if isinstance(v, float) and v.is_integer():
+        return str(int(v))
+    return str(v)
+
+
+def _prov_section_pool(ts: dict, ung: dict | None, xfv_by: dict) -> list[dict]:
+    """Every member of the PROSPX section, as prospx builds it: the board
+    actives inProvSection admits (not debuted, and source_graded false or a
+    provisional flag) plus the provisional-only rows of the ungraded eFV file
+    that are not a board row's twin (prospx _dedupeProvPool, by player_key).
+    Empty when the served payload has the section off, which is what prospx
+    does."""
+    if not isinstance(ts, dict) or not (ts.get("prov_section") or {}).get("on"):
+        return []
+    graded = [p for p in (ts.get("players") or []) if isinstance(p, dict) and p.get("player_key")]
+    keys = {p["player_key"] for p in graded}
+    out: list[dict] = []
+    for p in graded:
+        if p.get("status") == "debuted" or p.get("debut_date"):
+            continue
+        if not (p.get("_is_provisional") or p.get("source_graded") is False):
+            continue
+        out.append({"key": p["player_key"], "mlbam": p.get("mlbam_id"),
+                    "name": p.get("player_name"), "org": p.get("org"),
+                    "pos": p.get("position"), "efv": xfv_by.get(p["player_key"]),
+                    "fv_close": p.get("fv_close")})
+    by_player = ((ung or {}).get("by_player") or {}) if isinstance(ung, dict) else {}
+    for pk, e in by_player.items():
+        if pk in keys or not isinstance(e, dict):
+            continue
+        out.append({"key": pk, "mlbam": e.get("mlbam_id"),
+                    "name": e.get("player_name") or e.get("name") or pk,
+                    "org": e.get("org"), "pos": e.get("position"), "efv": e,
+                    "fv_close": None})
+    return out
+
+
+def _section_terms(r: dict) -> tuple[float, float]:
+    """prospx efvRankValue and efvBoardSortKey for one section member. Order
+    keys only: neither is written to the sidecar or shown."""
+    x = r.get("efv") if isinstance(r.get("efv"), dict) else {}
+    g = _finite(x.get("xfv_grade"))
+    if g is None:
+        g = _finite(r.get("fv_close"))
+    if g is None:
+        g = -1.0
+    k = _finite(x.get("board_sort_key"))
+    return g, (k if k is not None else _NO_BOARD_SORT_KEY)
+
+
+def _next_graded_claim(track: dict | None) -> dict | None:
+    """The figures the lens copy prints, copied from the provisional track
+    record: the spent retrospective of the served production grade (who was
+    graded next, and the level of that grade) and the open prospective window
+    of the newest freeze. Raw values; the client only rounds."""
+    if not isinstance(track, dict):
+        return None
+    latest = set((track.get("latest") or {}).values())
+    rows = [r for r in (track.get("rows") or [])
+            if isinstance(r, dict) and (not latest or r.get("run_id") in latest)]
+    out: dict = {"source": "data/provisional_track_eval.json",
+                 "generated_at": track.get("generated_at"), "retro": None, "forward": None}
+    spent = [r for r in rows if r.get("leg") == "served_backdated" and r.get("verdict_readable")]
+    if spent:
+        r = max(spent, key=lambda r: str(r.get("as_of") or ""))
+        a = ((r.get("result") or {}).get("ANY") or {})
+        sel = a.get("selection") or {}
+        lev = ((a.get("level") or {}).get("grade") or {})
+        out["retro"] = {
+            "run_id": r.get("run_id"), "frozen_at": r.get("frozen_at"),
+            "scored_through": r.get("scored_through"), "n": a.get("n"),
+            "graded": a.get("graded_in_window"),
+            "auc": (sel.get("grade") or {}).get("auc"),
+            "auc_null_level": (sel.get("null_level_rank") or {}).get("auc"),
+            "spearman": lev.get("spearman"), "mae": lev.get("mae"),
+            "mae_null": lev.get("mae_null_const"), "null_const": lev.get("null_const")}
+    pros = [r for r in rows if r.get("leg") == "prospective"]
+    if pros:
+        newest = max(str(r.get("frozen_at") or "") for r in pros)
+        first = min((r for r in pros if str(r.get("frozen_at") or "") == newest),
+                    key=lambda r: str(r.get("window_end") or "9999"))
+        res = first.get("result") or {}
+        out["forward"] = {
+            "run_id": first.get("run_id"), "frozen_at": first.get("frozen_at"),
+            "n_rows": res.get("n_rows"), "window_end": first.get("window_end"),
+            "graded": (res.get("ANY") or {}).get("graded_in_window"),
+            "scored_through": first.get("scored_through"),
+            "verdict_readable": bool(first.get("verdict_readable"))}
+    return out
+
+
+def _next_graded(ts: dict | None, *, v2: dict | None = None, ung: dict | None = None,
+                 xfv: dict | None = None, track: dict | None = None,
+                 n: int | None = None) -> dict | None:
+    """The "Next to be graded" payload, or None when the chance model or the
+    board payload is missing (the client then says the list is not built)."""
+    v2 = v2 if v2 is not None else _load_json("provisional_v2.json")
+    if not isinstance(ts, dict) or not isinstance(v2, dict):
+        return None
+    ung = ung if ung is not None else _load_json("xfv_ungraded.json")
+    xfv = xfv if xfv is not None else _load_json("xfv.json")
+    track = track if track is not None else _load_json("provisional_track_eval.json")
+    n = NEXT_GRADED_N if n is None else int(n)
+    by: dict = {}
+    for r in v2.get("rows") or []:
+        if isinstance(r, dict) and r.get("mlbam") is not None:
+            by[_js_id(r["mlbam"])] = r
+    xfv_by = (xfv or {}).get("by_player") if isinstance(xfv, dict) else None
+    pool = _prov_section_pool(ts, ung, xfv_by if isinstance(xfv_by, dict) else {})
+    covered = []
+    for r in pool:
+        v = by.get(_js_id(r.get("mlbam"))) if r.get("mlbam") is not None else None
+        p12 = _finite((v or {}).get("p_any_w12"))
+        if p12 is None:
+            continue
+        g, k = _section_terms(r)
+        covered.append((p12, g, k, r, v))
+    covered.sort(key=lambda t: (-t[0], -t[1], -t[2]))
+    cap, cut = min(n, len(covered)), "cap"
+    for i in range(cap):
+        if i + 1 < len(covered) and covered[i][:3] == covered[i + 1][:3]:
+            cap, cut = i, "tie"
+            break
+    rows = []
+    for i, (p12, _g, _k, r, v) in enumerate(covered[:cap]):
+        rows.append({"n": i + 1, "key": r["key"], "mlbam": r.get("mlbam"),
+                     "name": r.get("name"), "org": r.get("org"), "pos": r.get("pos"),
+                     "lvl": v.get("level"), "age": _finite(v.get("age")), "p12": p12})
+    sec = ts.get("prov_section") or {}
+    names: list[str] = []
+    src_names = {}
+    if isinstance(track, dict):
+        src_names = ((track.get("by_player") or {}).get("source_names") or {})
+    for s in (v2.get("label_sources") or sec.get("label_sources") or []):
+        nm = src_names.get(s) or s
+        if nm not in names:
+            names.append(nm)
+    anchor = v2.get("anchor") or {}
+
+    def _meta_at(doc):
+        return ((doc.get("meta") or {}).get("generated_at")) if isinstance(doc, dict) else None
+
+    return {
+        "schema": 1,
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "lens": "Next to be graded",
+        "model_id": v2.get("model_id"),
+        # The order is prospx's section order (see the block comment above);
+        # the sidecar names it and carries no prose of its own, so nothing a
+        # reader sees is written here outside the client's linted copy.
+        "order": "prospx_section",
+        "inputs": {"timeseries": ts.get("generated_at"),
+                   "provisional_v2": v2.get("generated_at"),
+                   "xfv_ungraded": _meta_at(ung), "xfv": _meta_at(xfv),
+                   "provisional_track_eval": (track.get("generated_at")
+                                              if isinstance(track, dict) else None)},
+        "windows": {"W6": anchor.get("W6_end"), "W12": anchor.get("W12_end")},
+        "label_sources": names,
+        "section": {"title": sec.get("title") or "Not yet graded by any source",
+                    "n_section": len(pool), "n_model": len(covered),
+                    "n_served": len(rows), "cut": cut},
+        "claim": _next_graded_claim(track),
+        "rows": rows,
+    }
+
+
+def _export_next_graded(payload: dict | None, log=print) -> None:
+    """Write the lens sidecar. Best-effort: a failure or an unbuildable payload
+    keeps the previous file served and never fails the corpus."""
+    if not isinstance(payload, dict):
+        return
+    try:
+        blob = _json_blob(payload, "fantasy_next_graded")
+        if blob is None:
+            return
+        Path(NEXT_GRADED_PATH).parent.mkdir(parents=True, exist_ok=True)
+        Path(NEXT_GRADED_PATH).write_text(blob, encoding="utf-8")
+        if callable(log):
+            sec = payload.get("section") or {}
+            log(f"fantasy: Next to be graded {sec.get('n_served')} of "
+                f"{sec.get('n_model')} covered rows ({sec.get('n_section')} in the "
+                f"PROSPX section, cut {sec.get('cut')})")
+    except Exception:                                        # noqa: BLE001
+        logging.getLogger("fantasy_export").exception(
+            "fantasy: Next to be graded write failed - previous file kept")
+
+
+def export_next_graded(log=print) -> dict | None:
+    """Rebuild only the lens sidecar off the served files (no fetch, no corpus)."""
+    payload = _next_graded(_load_json("timeseries.json"))
+    _export_next_graded(payload, log)
+    return payload
+
+
 def _start_score(p: dict, opp_org: str | None, teams_ctx: dict) -> dict | None:
     """Expected FGP for ONE start: per-start ROS points scaled by the opponent's
     offense (weaker offense → better streamer).
@@ -1422,6 +1664,15 @@ def build_sections(payload: dict) -> dict:
     sections["callup_watch"] = _callup_watch(ts)
     season = payload.get("season") or datetime.now(timezone.utc).year
     sections["dynasty"] = _dynasty_prospects(ts, season)
+    # The Next to be graded sidecar rides the same parsed timeseries. It is not
+    # a section of this payload (the callers pop it and write it beside the
+    # corpus), so the corpus budget never carries it.
+    try:
+        payload["_next_graded"] = _next_graded(ts)
+    except Exception:                                        # noqa: BLE001
+        logging.getLogger("fantasy_export").exception(
+            "fantasy: Next to be graded build failed - previous file kept")
+        payload["_next_graded"] = None
     return sections
 
 
@@ -1866,11 +2117,13 @@ def refresh_live(log=print) -> int:
     else:
         payload.get("schedule", {}).pop("stale_schedule", None)
     payload["sections"] = build_sections(payload)
+    next_graded = payload.pop("_next_graded", None)
     payload["schedule_refreshed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     blob = _json_blob(payload, "fantasy_export")
     if blob is None:
         return 0                    # already logged + RED; the old file stands
     OUT_PATH.write_text(blob, encoding="utf-8")
+    _export_next_graded(next_graded, log)
     # The Fantasy Rank's prospect leg follows the board it was just rebuilt
     # from (the MLB leg waits for the monthly corpus, cached by export()).
     try:
@@ -1905,6 +2158,7 @@ def export(log=print, *, limit: int | None = None) -> int:
     rank_inputs = payload.pop("_rank_inputs", None)
     _attach_schedule(payload)
     payload["sections"] = build_sections(payload)
+    next_graded = payload.pop("_next_graded", None)
     blob = _json_blob(payload, "fantasy_export")
     if blob is None:
         # The monthly corpus is the source of truth for /redraft/, /dynasty/,
@@ -1931,6 +2185,7 @@ def export(log=print, *, limit: int | None = None) -> int:
                          f"the {n_prev}-player file")
     DATA_DIR.mkdir(exist_ok=True)
     OUT_PATH.write_text(blob, encoding="utf-8")
+    _export_next_graded(next_graded, log)
     _export_rank(rank_inputs, payload, log)
     if callable(log):
         what = ("full-season " + str(payload.get("target_season"))
@@ -1976,6 +2231,11 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     ap = argparse.ArgumentParser(description="Build data/fantasy.json (ROS projections + scoring).")
     ap.add_argument("--limit", type=int, default=None, help="cap players (fast partial verify)")
+    ap.add_argument("--next-graded", action="store_true",
+                    help="rebuild only the Dynasty Next to be graded sidecar off the served files")
     args = ap.parse_args()
+    if args.next_graded:
+        export_next_graded(log=print)
+        raise SystemExit(0)
     n = export(log=print, limit=args.limit)
     print(f"wrote {OUT_PATH} ({n} players)")
