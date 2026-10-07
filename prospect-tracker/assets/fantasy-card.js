@@ -265,7 +265,9 @@
       " " + chips + "</div>" +
       (href
         ? '<a class="fc-out" href="' + esc(href) + '">Full MLB card</a>'
-        : '<span class="fc-out fc-out-off" title="No merged MLB card in player_links yet.">No MLB card yet</span>') +
+        : (HOST && typeof HOST.linksPending === "function" && HOST.linksPending())
+          ? ""
+          : '<span class="fc-out fc-out-off" title="No merged MLB card in player_links yet.">No MLB card yet</span>') +
       "</div>";
   }
   function scoreBlock(rec) {
@@ -642,7 +644,17 @@
   // the card decides whether that is an open, a close or a no-op.
   function sync(mlbam) {
     if (mlbam == null || mlbam === "") { close(); return; }
-    if (String(mlbam) === S.id) { paint(); return; }
+    // A repaint replaces the panel, so focus that was inside it goes back to
+    // Close instead of dropping to the document (the lazy links leg lands
+    // after the card is open).
+    if (String(mlbam) === S.id) {
+      var a = null;
+      try { a = document.activeElement; } catch (e) { a = null; }
+      var had = !!(S.node && a && (a === document.body || (S.node.contains && S.node.contains(a))));
+      paint();
+      if (had) focusCard();
+      return;
+    }
     open(mlbam);
   }
   function isOpen() { return S.id != null; }

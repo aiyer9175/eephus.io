@@ -17,6 +17,8 @@ One pin per finding the pass fixed:
   QREC03  the Dynasty "Star" column printed the star BUCKET share under the
           Star Odds name and link; it is labelled and linked as the bucket.
   QREC12  a season-over DFS payload prints no old-slate banner or chip.
+  QREP15  no board downloads player_links at boot (the card asks on open), and
+          the off-season Redraft landing opens on the first tab with rows.
 
 The source guards always run; the rendered half needs playwright.
 """
@@ -131,6 +133,35 @@ def test_a_past_slate_that_is_not_season_over_still_flags():
     html = c.eval('__go("#section=slate")')
     assert "This is the 2020-10-01 slate, not today's." in html, html[:400]
     assert "old slate" in c.eval("__html['dfs-banner'] || ''")
+
+
+# ---- QREP15 -----------------------------------------------------------------
+# player_links (about 1.9 MB) feeds only the card's outbound link, so no board
+# asks for it at boot; the card asks on open. The off-season Redraft landing is
+# the first tab with rows, not the empty Streamers line.
+@pytest.mark.parametrize("name", ["redraft.js", "dynasty.js", "dfs.js"])
+def test_links_sidecar_is_asked_for_on_a_card_not_at_boot(name):
+    src = _src(name)
+    on_data = src.split("function onData(")[1].split("\n  function ")[0]
+    if name == "dfs.js":
+        assert "!cardable() && window.EEPHUS_HUB" in on_data, "dfs boots the sidecar only off /fantasy/"
+    else:
+        assert "EEPHUS_HUB.links()" not in on_data, name
+    sync = src.split("function syncCard(")[1].split("\n  function ")[0]
+    assert "wantLinks()" in sync, name
+    assert "linksPending: function () { return LINKS_ASKED && !LINKS_DONE; }" in src, name
+
+
+def test_card_says_nothing_about_the_mlb_link_while_it_loads():
+    src = _src("fantasy-card.js")
+    assert 'HOST.linksPending === "function" && HOST.linksPending())' in src
+    assert "No MLB card yet" in src
+
+
+def test_offseason_landing_is_the_first_tab_with_rows():
+    src = _src("redraft.js")
+    assert '[["streamers", "daily_streamers"], ["two_start", "two_start"], ["ros_sp", "ros_sp"]' in src
+    assert 'isNextSeason() && !hashParam(hostHash(), "section", SECTIONS.join("|"))' in src
 
 
 # ---- rendered ---------------------------------------------------------------
@@ -251,5 +282,40 @@ def test_rendered_card_is_modal(server, width, theme):
             page.wait_for_function("() => document.querySelector('.fc-wrap').hasAttribute('hidden')")
             assert page.evaluate("() => document.activeElement.getAttribute('data-qa-open')") == "1"
             assert page.evaluate("() => document.querySelectorAll('[inert]').length") == 0
+        finally:
+            browser.close()
+
+
+def test_rendered_landing_and_dfs_skip_the_links_sidecar(server):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+    import json
+    corpus = json.loads((ROOT / "data" / "fantasy.json").read_text(encoding="utf-8"))
+    sec = corpus.get("sections") or {}
+    offseason = corpus.get("mode") == "next_season" and not (sec.get("daily_streamers") or [])
+    with sync_playwright() as p:
+        browser = _browser(p)
+        try:
+            for route in ("fantasy/", "fantasy/#m=dfs&section=slate"):
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                got: list[str] = []
+                page.on("request", lambda r: got.append(r.url))
+                page.goto(server + route, wait_until="load", timeout=90_000)
+                page.wait_for_load_state("networkidle", timeout=60_000)
+                page.wait_for_timeout(800)
+                assert not [u for u in got if "player_links" in u], (route, got)
+                if route == "fantasy/" and offseason and (sec.get("ros_sp") or []):
+                    assert "section=ros_sp" in page.evaluate("() => location.hash"), route
+                page.close()
+            page = browser.new_page(viewport={"width": 1280, "height": 900})
+            got = []
+            page.on("request", lambda r: got.append(r.url))
+            _dynasty(page, server)
+            page.focus('#dynasty-app-root a.dyn-name-link[href*="player="]')
+            page.keyboard.press("Enter")
+            page.wait_for_function("() => !!document.querySelector('.fc-panel')", timeout=30_000)
+            page.wait_for_load_state("networkidle", timeout=60_000)
+            assert [u for u in got if "player_links" in u], "the card did not ask for the links sidecar"
+            assert page.evaluate("() => document.querySelector('.fc-panel').contains(document.activeElement)")
         finally:
             browser.close()

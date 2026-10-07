@@ -1216,13 +1216,25 @@
     return out;
   }
   function card() { return window.EEPHUS_FANTASY_CARD || null; }
-  function syncCard() { var C = card(); if (C) C.sync(S.player); }
+  // THE LINKS SIDECAR IS READ ON A CARD, NOT AT BOOT (audit QREP15).
+  // player_links (about 1.9 MB) feeds only the card's outbound "Full MLB card"
+  // link, so it is asked for the first time a card opens; until it lands the
+  // card says nothing about that link rather than "No MLB card yet".
+  var LINKS_ASKED = false, LINKS_DONE = false;
+  function wantLinks() {
+    if (LINKS || LINKS_ASKED || !S.player || !(window.EEPHUS_HUB && EEPHUS_HUB.links)) return;
+    LINKS_ASKED = true;
+    EEPHUS_HUB.links().then(function (L) { LINKS = L || null; LINKS_DONE = true; syncCard(); },
+                            function () { LINKS_DONE = true; syncCard(); });
+  }
+  function syncCard() { var C = card(); if (C) { wantLinks(); C.sync(S.player); } }
   function attachCard() {
     var C = card();
     if (!C) return;
     C.attach({
       payload: function () { return S.data; },
       links: function () { return LINKS; },
+      linksPending: function () { return LINKS_ASKED && !LINKS_DONE; },
       scoreLine: cardScoreLine,
       onClose: function () { S.player = null; writeHash(); }
     });
@@ -1238,6 +1250,15 @@
   function notReady() {
     var r = root();
     if (r) r.innerHTML = '<div class="rd-note">Rest-of-season projections are not built yet (nightly build).</div>';
+  }
+  function landingSection(d) {
+    var sec = d.sections || {};
+    var order = [["streamers", "daily_streamers"], ["two_start", "two_start"], ["ros_sp", "ros_sp"],
+                 ["ros_rp", "ros_rp"], ["ros_hitter", "ros_hitter"]];
+    for (var i = 0; i < order.length; i++) {
+      if ((sec[order[i][1]] || []).length) return order[i][0];
+    }
+    return "streamers";
   }
   function onData(d) {
     if (!d || !d.players) { notReady(); return; }
@@ -1271,6 +1292,13 @@
         if (/^ROS /.test(t.textContent)) t.textContent = t.textContent.replace(/^ROS /, d.target_season + " ");
       });
     }
+    // THE OFF-SEASON LANDING (audit QREP15). With no section in the address
+    // and no streamers to list (next-season mode), the board opens on the first
+    // tab in order that has rows instead of on an empty-state line. A link that
+    // names a section still gets that section.
+    if (isNextSeason() && !hashParam(hostHash(), "section", SECTIONS.join("|"))) {
+      S.section = landingSection(d);
+    }
     // Deep-link restore between the defaults and the first paint, so a restored
     // section or format renders once rather than flashing the default first.
     readHash();
@@ -1278,12 +1306,6 @@
     renderSelector(); wireTabs(); syncTabs(); renderSection();
     writeHash();
     syncCard();
-    if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
-      // The BOARD no longer needs the links sidecar: every name opens the
-      // in-page card, which is the only surface carrying the outbound link to
-      // the merged MLB page. So its arrival repaints the card, not 350 rows.
-      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; syncCard(); });
-    }
   }
   // The lamp loader goes up before the payload is asked for, so a held or slow
   // load shows the loading kind rather than an empty root.

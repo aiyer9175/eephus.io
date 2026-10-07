@@ -1182,13 +1182,25 @@
   // round. No score line: the league-format port lives in assets/redraft.js and
   // a second copy here would be a second implementation nobody is comparing.
   function card() { return window.EEPHUS_FANTASY_CARD || null; }
-  function syncCard() { var C = card(); if (C) C.sync(S.player); }
+  // THE LINKS SIDECAR IS READ ON A CARD, NOT AT BOOT (audit QREP15).
+  // player_links (about 1.9 MB) feeds only the card's outbound "Full MLB card"
+  // link, so it is asked for the first time a card opens; until it lands the
+  // card says nothing about that link rather than "No MLB card yet".
+  var LINKS_ASKED = false, LINKS_DONE = false;
+  function wantLinks() {
+    if (LINKS || LINKS_ASKED || !S.player || !(window.EEPHUS_HUB && EEPHUS_HUB.links)) return;
+    LINKS_ASKED = true;
+    EEPHUS_HUB.links().then(function (L) { LINKS = L || null; LINKS_DONE = true; syncCard(); },
+                            function () { LINKS_DONE = true; syncCard(); });
+  }
+  function syncCard() { var C = card(); if (C) { wantLinks(); C.sync(S.player); } }
   function attachCard() {
     var C = card();
     if (!C) return;
     C.attach({
       payload: function () { return S.data; },
       links: function () { return LINKS; },
+      linksPending: function () { return LINKS_ASKED && !LINKS_DONE; },
       keeperRound: breakEvenRound,
       onClose: function () { S.player = null; writeHash(); }
     });
@@ -1231,11 +1243,6 @@
     renderSection();
     writeHash();
     syncCard();
-    if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
-      // The board reads no links now: names open the in-page card, and the card
-      // is what carries the outbound link to the merged MLB page.
-      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; syncCard(); });
-    }
   }
   // The lamp loader goes up before the payload is asked for, so a held or slow
   // load shows the loading kind rather than an empty root.
