@@ -209,7 +209,10 @@
 @media (max-width: 720px) {
   #tradeboard-content { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   #tradeboard-content table { min-width: 620px; }
-  .tm-org-abbr { display: none; }   /* the logo carries the team on small screens */
+  /* The logo carries the team on small screens. The code stays in the
+     accessibility tree (clipped, not display:none): the logo beside it is
+     decorative (alt="") since QCLA07, so the code is what a reader hears. */
+  .tm-org-abbr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   /* The group panel is a SIBLING of #tradeboard-content, so the overflow rule
      above never reached the 9- and 4-column tables that trademachine.js
      renders into it. They got their own scroller rather than panning the
@@ -274,9 +277,8 @@
 /* active filter chip -> cyan (cohesive with the view tabs), keep the iridescent underline */
 .tm-app button.chip.active { border-color: var(--accent-cyan); }
 
-/* evaluator grader verdict colors + Clear/Copy controls */
-.tm-balverdict.is-warn { color: var(--neon-amber); }
-.tm-balverdict.is-bad { color: var(--down); }
+/* Clear/Copy controls. The verdict is descriptive since QCLC02, so it has no
+   warn or reject colour: balanced reads green, every other gap reads in ink. */
 .tm-controls { display: flex; gap: 8px; margin-top: 9px; }
 
 /* pagination strip (the relocation lost this CSS -> the pager rendered as big
@@ -305,3 +307,81 @@
 .proj-viewbtn{appearance:none;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);font:inherit;font-size:14px;font-weight:600;padding:8px 14px;cursor:pointer;margin-bottom:-1px;}
 .proj-viewbtn:hover{color:var(--text-primary);}
 .proj-viewbtn.active{color:var(--text-primary);border-bottom-color:var(--neon-cyan);}
+
+/* QCLP03 (2026-10-07): the board's loader held a 66 px box with the footer
+   right under it, so the first board render pushed the footer off screen
+   (CLS 0.57). The box keeps a viewport of room while it loads, so the board
+   arrives below the fold. */
+#tradeboard-content:has(> .px-state.is-loading),
+#tradeboard-content:has(> .spinner-wrap) { min-height: 100vh; }
+/* The deal builder draws before the board file arrives; until its script runs
+   the mount is empty, so it reserves the height its two empty sides take
+   (measured in Chromium: 162 px side by side, 299 px stacked, 331 px with the
+   44 px touch boxes at 640 and below). */
+#trade-machine:empty { min-height: 162px; }
+@media (max-width: 720px) { #trade-machine:empty { min-height: 299px; } }
+@media (max-width: 640px) { #trade-machine:empty { min-height: 331px; } }
+
+/* Section headings (QCLA06 and the display pass, 2026-10-07). The page had one
+   heading, the h1; "Deal builder" and "Trade-value board" are h2s set in the
+   newsprint eyebrow, the label the FA and Projections boards open with. */
+.tm-app h2.tm-eyebrow-h2 { margin: 0; line-height: inherit; font-family: inherit; }
+.tm-app .tm-board-eyebrow { margin-top: 18px; }
+
+/* How this works: the method, folded under the builder (the arbitration and
+   ledger pattern). */
+.tm-app .tm-how { margin: 10px 0 0; max-width: 760px; border-top: 1px solid var(--border-subtle); padding-top: 4px; }
+.tm-app .tm-how > summary { cursor: pointer; color: var(--text-secondary); font-size: 12px; }
+.tm-app .tm-how ul { margin: 6px 0 2px; padding-left: 18px; color: var(--text-secondary); font-size: 11px; line-height: 1.55; }
+.tm-app .tm-how li { margin-bottom: 3px; }
+
+/* One control bar: the filter toggle, the board search and the GFX chip. */
+.tm-app .filter-toggle-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tm-app #tb-search {
+  flex: 1 1 220px; max-width: 340px; min-height: 34px; padding: 6px 10px; font: inherit; font-size: 12px;
+  border: 1px solid var(--text-tertiary); background: var(--bg-secondary); color: var(--text-primary);
+}
+/* 16 px on a touch screen, the size below which iOS zooms on focus (the
+   touch-pass rule above, which this ID rule would otherwise outrank). */
+@media (pointer: coarse) { .tm-app #tb-search { font-size: 16px; } }
+
+/* Related modules, linked once at the foot of the page. */
+.tm-app .tm-related { margin: 22px 0 0; padding-top: 8px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); }
+
+/* Board club cell links to the club's Franchises page. */
+.tm-app a.tm-org-cell { text-decoration: none; color: inherit; }
+
+/* Sticky header on desktop: the board scrolls inside its own box so the
+   column heads stay put (the /mlbstats/ rule; below 1025 px the page is the
+   only scroll, as there). */
+@media (min-width: 1025px) {
+  #tradeboard-content .tm-board-tablewrap { overflow: auto; max-height: calc(100vh - 210px); }
+  .tm-board-table thead th { position: sticky; top: 0; z-index: 2; }
+}
+
+/* The export chip sits in its own strip above the header row on narrow
+   screens, so it no longer covers the header cell under it (QCLA06: at 390
+   it took the Surplus and Age headers' focus point). */
+@media (max-width: 720px) {
+  #tradeboard-content .tm-board-tablewrap { padding-top: 30px; }
+}
+
+/* Touch targets at 640 px and below (QCLA07): 44 px on the row link, the
+   sort headers, the pager, the filter toggle and chips, the export chip, the
+   CSV button, the search boxes and the builder's controls. */
+@media (max-width: 640px) {
+  .tm-board-table td.tm-player a { display: inline-block; padding: 14px 0; }
+  .tm-board-table thead th { height: 44px; }
+  .tm-app .pg-chip, .tm-app .pg-nav { min-height: 44px; min-width: 44px; }
+  .tm-app .filter-toggle, .tm-app button.chip, .tm-app select.chip { min-height: 44px; }
+  .tm-app .eph-csv-btn { min-height: 44px; }
+  #tradeboard-content .tm-board-tablewrap { padding-top: 52px; }
+  #tradeboard-content .eephus-export-chip { width: 44px; height: 44px; }
+  #trade-machine .tm-search, .tm-app #tb-search { min-height: 44px; }
+  #trade-machine .tm-hit { min-height: 44px; }
+  #trade-machine .tm-x { min-width: 44px; min-height: 44px; }
+  #trade-machine .tm-name { padding: 12px 0; }
+  .tm-app a.tm-org-cell { min-height: 44px; min-width: 44px; }
+  .tm-app .tm-how > summary { padding: 12px 0; }
+  .tm-app .tm-related a { display: inline-block; padding: 12px 0; }
+}

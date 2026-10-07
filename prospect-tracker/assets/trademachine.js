@@ -33,8 +33,15 @@
     const clicked = btn.closest(".pg-strip");
     const before = Array.from(document.querySelectorAll(".pg-strip"));
     const idx = clicked ? before.indexOf(clicked) : -1;
+    const hadFocus = btn.contains(document.activeElement) || document.activeElement === document.body;
     state.pages.tradeboard = n;
     _renderTBRows();
+    // The pager is rebuilt; a keyboard reader keeps their place on the new
+    // current page in the same strip (QCLA07).
+    const now = document.querySelectorAll(".pg-strip");
+    const cur = (idx >= 0 && idx < now.length ? now[idx] : now[0]);
+    const curChip = cur && cur.querySelector('.pg-chip[aria-current="page"]');
+    if (hadFocus && curChip) curChip.focus({ preventScroll: true });
     requestAnimationFrame(() => {
       const after = document.querySelectorAll(".pg-strip");
       const t = (idx >= 0 && idx < after.length) ? after[idx] : after[0];
@@ -88,7 +95,7 @@ function renderPaginationStrip(currentPage, totalItems, pageSize, dataKey) {
   const chips = pages.map(p =>
     p === "…"
       ? `<span class="pg-ellipsis">…</span>`
-      : `<button class="pg-chip${p === cur ? " active" : ""}" data-${dataKey}-page="${p}" type="button">${p}</button>`
+      : `<button class="pg-chip${p === cur ? " active" : ""}" data-${dataKey}-page="${p}" type="button" aria-label="Page ${p}"${p === cur ? ' aria-current="page"' : ""}>${p}</button>`
   ).join("");
   const lo = (cur - 1) * pageSize + 1;
   const hi = Math.min(cur * pageSize, totalItems);
@@ -107,20 +114,19 @@ function escapeHtml(s) {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
 }
-// ORG abbreviation -> ESPN logo slug (same map as projections.js / build_site / prospx).
-const _TM_ESPN_SLUGS = {
-  ARI: "ari", ATH: "ath", ATL: "atl", BAL: "bal", BOS: "bos",
-  CHC: "chc", CHW: "chw", CIN: "cin", CLE: "cle", COL: "col",
-  DET: "det", HOU: "hou", KCR: "kc", LAA: "laa", LAD: "lad",
-  MIA: "mia", MIL: "mil", MIN: "min", NYM: "nym", NYY: "nyy",
-  PHI: "phi", PIT: "pit", SDP: "sd", SEA: "sea", SFG: "sf",
-  STL: "stl", TBR: "tb", TEX: "tex", TOR: "tor", WSN: "wsh",
-};
-function _tmTeamLogo(org) {
+// Club logo through the hub's one builder (QCLP02, 2026-10-07). This module
+// built its own URL to the 500 x 500 ESPN master and drew it at 15 to 16 px:
+// the board pulled 29 of them, about 1.1 MB, a third of the page's wire. The
+// hub asks ESPN's combiner for the mark at twice the drawn size (32 px here),
+// and owns the code-to-slug map this file used to copy. `decorative` gives
+// alt="" where the club code is printed beside the mark, so a screen reader
+// does not hear it twice (QCLA07); a mark standing alone keeps alt = code.
+const _TM_LOGO_PX = 32;
+function _tmTeamLogo(org, decorative) {
   if (!org) return "";
-  const slug = _TM_ESPN_SLUGS[org] || String(org).toLowerCase();
-  return `<img class="tm-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" `
-       + `alt="${escapeHtml(org)}" loading="lazy" onerror="this.style.display='none'">`;
+  const hub = window.EEPHUS_HUB;
+  if (hub && hub.teamLogo) return hub.teamLogo(org, "tm-logo", { size: _TM_LOGO_PX, decorative: !!decorative });
+  return "";
 }
 // Surplus $M -> board tier. The SAME cuts the board's tier filter and the
 // server's bayes_trade_value._platform_tier use (Elite $40M+ / High $20-40M /
@@ -176,14 +182,29 @@ function _tmFvText(xfvGrade, consensusFv) {
 
 const _TM = { a: [], b: [], detail: null, detailLoading: false };
 
+// The MLB player detail file (about 4.8 MB) is read ONLY when the evaluator
+// needs an MLB price (QCLP01, 2026-10-07): the first focus or keystroke in an
+// Add player box, or a #tm=mlb: seed. It was fetched at boot with both sides
+// empty, the largest download on the page, for four fields per player. Until
+// it lands, MLB search answers from the board's own prices.
 function _tmEnsureDetail() {
   if (_TM.detail || _TM.detailLoading) return;
   _TM.detailLoading = true;
   fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
-    .then(j => { _TM.detail = (j && j.players) || {};
-      if (state.section === "trademachine" || state.section === "tradeboard") renderTradeMachine(); })
-    .catch(() => { _TM.detail = {}; });
+    .then(j => { _TM.detail = (j && j.players) || {}; _tmDetailArrived(); })
+    .catch(() => { _TM.detail = {}; _tmDetailArrived(); });
+}
+// A waiting #tm=mlb: seed, or an MLB asset whose CBT line needs its contract,
+// takes a full re-render (it keeps the reader's place in the search box). With
+// neither, the open searches refresh in place so typing is not interrupted.
+function _tmDetailArrived() {
+  if (state.section !== "trademachine" && state.section !== "tradeboard") return;
+  const hasMlb = _TM.a.concat(_TM.b).some(x => x && x.kind === "mlb");
+  if (!_TM.seeded || hasMlb) { renderTradeMachine(); return; }
+  document.querySelectorAll("#trade-machine [data-tm-search]").forEach(inp => {
+    if (inp.value && typeof inp.oninput === "function") inp.oninput();
+  });
 }
 
 // What acquiring this player is worth, in raw dollars. `surTotal` (2026-08-03)
@@ -234,7 +255,7 @@ function _tmSeedFromURL() {
       sub: [p.position || "", p.org || "", _tmFvText(p.xfv_grade, p.fv_close)].filter(Boolean).join(" · "),
       mm: sv }); _TM.seeded = true; }
   } else if (kind === "mlb") {
-    if (!_TM.detail) return;                 // detail still loading; seed on the re-render
+    if (!_TM.detail) { _tmEnsureDetail(); return; }   // seed on the re-render when it lands
     const d = _TM.detail[key];
     const pv = d ? _tmProjValue(d.proj) : null;
     if (pv != null) {
@@ -532,7 +553,7 @@ function _tmCbtHtml() {
     if (!side) return "";
     const lines = _tmCbtLines(side, cbt).map(l =>
       `<div class="tm-cbt-line">${escapeHtml(l.text)}</div>`).join("");
-    return `<div class="tm-cbt-side"><div class="tm-cbt-club">${_tmTeamLogo(who.club)} Side ${label}: ${escapeHtml(who.club)}</div>${lines}</div>`;
+    return `<div class="tm-cbt-side"><div class="tm-cbt-club">${_tmTeamLogo(who.club, true)} Side ${label}: ${escapeHtml(who.club)}</div>${lines}</div>`;
   };
   const src = cbt.source || {};
   const srcBits = [src.payroll, src.thresholds, src.calendar].filter(Boolean).map(escapeHtml).join("; ");
@@ -553,10 +574,50 @@ const BALANCED_THRESHOLD_MM = 5;
 // DE-DUP 2026-07-23; it prefers the GFX modal, falls back to the direct
 // shareCard download).
 
-function renderTradeMachine() {
+// KEYBOARD PLACE (QCLA05, 2026-10-07). The builder is rebuilt on every change,
+// so the focused control was destroyed and focus fell to <body>: after adding a
+// player by keyboard the next Tab restarted at the wordmark. The render now
+// records which side's control held focus (and what was typed) and gives it
+// back: after an add or a remove, that side's Add player box; after an async
+// re-render, the same box with the same text and caret.
+function _tmFocusPlace(el) {
+  const ae = document.activeElement;
+  if (!ae || !el.contains(ae)) return null;
+  if (ae.matches("[data-tm-search]")) {
+    return { side: ae.dataset.tmSearch, value: ae.value, s: ae.selectionStart, e: ae.selectionEnd };
+  }
+  for (const a of ["data-tm-clear", "data-tm-copy", "data-tm-gfx"]) {
+    if (ae.hasAttribute(a)) return { sel: `[${a}]` };
+  }
+  const host = ae.closest("[data-tm-side]");
+  return host ? { side: host.dataset.tmSide, value: "" } : null;
+}
+function _tmRestoreFocus(el, place) {
+  if (!place) return;
+  if (place.sel) { const c = el.querySelector(place.sel); if (c) c.focus(); return; }
+  const inp = el.querySelector(`[data-tm-search="${place.side}"]`);
+  if (!inp) return;
+  inp.value = place.value || "";
+  inp.focus();
+  if (place.s != null) { try { inp.setSelectionRange(place.s, place.e); } catch (e) { /* type=search */ } }
+  if (inp.value && typeof inp.oninput === "function") inp.oninput();
+}
+// One polite status region, written by build_site beside the mount so it is in
+// the page before anything changes (a region re-created on each render is not
+// reliably announced). It reads the change, both totals and the verdict.
+function _tmAnnounce(what, vText) {
+  const live = document.getElementById("tm-live");
+  if (!live) return;
+  const tot = side => _tmTotal(_TM[side]);
+  const money = v => `${v >= 0 ? "$" : "-$"}${Math.abs(v).toFixed(1)}M`;
+  live.textContent = `${what} Side A receives ${money(tot("a"))}, Side B receives ${money(tot("b"))}. ${vText || ""}`.trim();
+}
+
+function renderTradeMachine(opts) {
   const el = document.getElementById("trade-machine");
   if (!el) return;
-  _tmEnsureDetail();
+  opts = opts || {};
+  const place = opts.focusSide ? { side: opts.focusSide, value: "" } : _tmFocusPlace(el);
   _tmSeedFromURL();
   const sideHtml = (side, label) => {
     const list = _TM[side].map((x, i) => {
@@ -584,13 +645,13 @@ function renderTradeMachine() {
         ${rosChip}
         ${g ? `<span class="tm-grade-chip" style="color:${gc};border-color:${gc};" title="Trade Value Grade ${g} (contract-adjusted surplus)">${g}</span>` : ""}
         <span class="tm-val" style="color:${_tmValColor(x.mm)};">${(x.mm || 0) >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M</span>
-        <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove">×</button>
+        <button class="tm-x" data-tm-remove="${side}:${i}" type="button" title="Remove" aria-label="Remove ${escapeHtml(x.name)} from ${label}">×</button>
       </div>`;
     }).join("");
     const tot = _tmTotal(_TM[side]);
-    return `<div class="tm-side">
+    return `<div class="tm-side" data-tm-side="${side}">
       <div class="tm-side-head"><span>${label} receives</span> <span class="tm-total" style="color:${_tmValColor(tot)};">$${tot.toFixed(1)}M</span></div>
-      <input class="tm-search" type="search" placeholder="Add player (prospect or MLB)…" data-tm-search="${side}" autocomplete="off">
+      <input class="tm-search" type="search" placeholder="Add player (prospect or MLB)…" data-tm-search="${side}" autocomplete="off" aria-label="Add a player to ${label} (prospect or MLB)">
       <div class="tm-results" data-tm-results="${side}"></div>
       ${list || '<div class="tm-empty">no players yet</div>'}
     </div>`;
@@ -608,16 +669,17 @@ function renderTradeMachine() {
   const lead = dA >= dB ? "A" : "B";
   const behind = lead === "A" ? "B" : "A";
   const pct = diff / Math.max(1, Math.abs(dA), Math.abs(dB)) * 100;
-  // Graduated accept/reject grader (merged in from the old Mock Trade Builder), in the
-  // evaluator's "receives" framing: the side that RECEIVES less value is the one giving up
-  // the edge, so it is the side that hesitates / rejects.
-  let vClass = "is-bal", vText = "";
-  if (!bothSides) { vText = "Add players to both sides for a verdict."; vClass = ""; }
-  else if (diff < BALANCED_THRESHOLD_MM) { vText = `✓ Likely fair: both sides within $${BALANCED_THRESHOLD_MM}M.`; vClass = "is-bal"; }
-  else if (pct < 15) { vText = `✓ Fair: Side ${lead} +$${diff.toFixed(1)}M (${pct.toFixed(0)}% edge).`; vClass = "is-bal"; }
-  else if (pct < 40) { vText = `⚠ Side ${behind} may hesitate: $${diff.toFixed(1)}M short (${pct.toFixed(0)}% gap).`; vClass = "is-warn"; }
-  else if (pct < 70) { vText = `✗ Side ${behind} likely rejects: $${diff.toFixed(1)}M gap (${pct.toFixed(0)}%).`; vClass = "is-bad"; }
-  else { vText = `✗✗ Lopsided: Side ${behind} won't do this (${pct.toFixed(0)}% gap).`; vClass = "is-bad"; }
+  // The verdict DESCRIBES the gap; it does not predict what a club does (QCLC02,
+  // 2026-10-07). The old grader printed "may hesitate" (15-40% gap), "likely
+  // rejects" (40-70%) and "won't do this" (70%+), tiers with no receipt: the
+  // registry row trade_machine_surplus is provisional with no win claims and
+  // its eval artifact does not ship. The $5M balanced band is the
+  // one rule the glossary documents, and it stays. In the "receives" framing
+  // the side that RECEIVES less value is the one named.
+  let vClass = "", vText = "";
+  if (!bothSides) { vText = "Add players to both sides for a verdict."; }
+  else if (diff < BALANCED_THRESHOLD_MM) { vText = `Balanced: within $${BALANCED_THRESHOLD_MM}M.`; vClass = "is-bal"; }
+  else { vText = `Side ${behind} receives $${diff.toFixed(1)}M less (${pct.toFixed(0)}% gap).`; }
   const verdict = have
     ? `<div class="tm-verdict">
          <div class="tm-balbar" title="value split A vs B">
@@ -626,7 +688,7 @@ function renderTradeMachine() {
          </div>
          <div class="tm-balrow">
            <span class="tm-balverdict ${vClass}">${vText}</span>
-           <span class="fa-sub"><span data-gl="surplus_value">surplus</span>: prospect surplus NPV + MLB club control window surplus (guaranteed seasons in full, unsigned seasons through the fifth projected season) · $${BALANCED_THRESHOLD_MM}M dead-band</span>
+           <span class="fa-sub">side totals in <span data-gl="surplus_value">surplus</span> · $${BALANCED_THRESHOLD_MM}M balanced band · basis in How this works</span>
          </div>
          <div class="tm-controls">
            <button class="chip" data-tm-clear type="button">Clear</button>
@@ -635,15 +697,20 @@ function renderTradeMachine() {
          </div>
        </div>`
     : "";
+  // The builder's own title is gone (display pass 2026-10-07): the section
+  // heading above the mount says "Deal builder" and carries the trade_machine
+  // glossary hook the title used to carry.
   el.innerHTML = `<div class="tm-wrap">
-    <div class="detail-title" style="font-size:13px;"><span data-gl="trade_machine">Trade Machine</span></div>
     <div class="tm-grid">${sideHtml("a", "Side A")}${sideHtml("b", "Side B")}</div>
     ${verdict}
     ${_tmCbtHtml()}
   </div>`;
   _tmWireGl(el);
+  if (opts.announce) _tmAnnounce(opts.announce, bothSides ? vText : "");
   el.querySelectorAll("[data-tm-search]").forEach(inp => {
+    inp.addEventListener("focus", _tmEnsureDetail);
     inp.oninput = () => {
+      _tmEnsureDetail();
       const side = inp.dataset.tmSearch;
       const res = el.querySelector(`[data-tm-results="${side}"]`);
       const hits = _tmSearch(inp.value);
@@ -663,19 +730,20 @@ function renderTradeMachine() {
       const b = e.target.closest("[data-tm-add]");
       if (!b || !res._hits) return;
       const [side, i] = b.dataset.tmAdd.split(":");
-      _TM[side].push(res._hits[Number(i)]);
-      renderTradeMachine();
+      const hit = res._hits[Number(i)];
+      _TM[side].push(hit);
+      renderTradeMachine({ focusSide: side, announce: `${hit.name} added to Side ${side.toUpperCase()}.` });
     };
   });
   el.querySelectorAll("[data-tm-remove]").forEach(b => {
     b.onclick = () => {
       const [side, i] = b.dataset.tmRemove.split(":");
-      _TM[side].splice(Number(i), 1);
-      renderTradeMachine();
+      const gone = _TM[side].splice(Number(i), 1)[0];
+      renderTradeMachine({ focusSide: side, announce: `${gone ? gone.name : "Player"} removed from Side ${side.toUpperCase()}.` });
     };
   });
   const clearB = el.querySelector("[data-tm-clear]");
-  if (clearB) clearB.onclick = () => { _TM.a = []; _TM.b = []; renderTradeMachine(); };
+  if (clearB) clearB.onclick = () => { _TM.a = []; _TM.b = []; renderTradeMachine({ focusSide: "a", announce: "Both sides cleared." }); };
   const copyB = el.querySelector("[data-tm-copy]");
   if (copyB) copyB.onclick = () => {
     const fmt = side => _TM[side].map(x =>
@@ -699,9 +767,9 @@ function renderTradeMachine() {
       value: `${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M`,
       neg: !((x.mm || 0) >= 0),
     });
-    const vWord = vClass === "is-warn" ? "Hesitate"
-      : vClass === "is-bad" ? (pct >= 70 ? "Lopsided" : "Reject")
-      : "Fair";
+    // Descriptive, like the line it captions: balanced, or which side
+    // receives more and by what share of the larger side.
+    const vWord = vClass === "is-bal" ? "Balanced" : `Side ${lead} +${pct.toFixed(0)}%`;
     window.EEPHUS_HUB.openCard({
       template: "deal",
       data: {
@@ -720,6 +788,8 @@ function renderTradeMachine() {
       caption: vText,
     });
   };
+  // Last, so the handlers above are wired when the box takes focus back.
+  _tmRestoreFocus(el, place);
 }
 
 // ─── Trade Board ──────────────────────────────────────────────────────────────
@@ -731,7 +801,13 @@ let _tbData   = null;   // also exposed as window._tbData for renderPlayerDetail
 // panel renders. Until a deployment's pipeline has emitted it, the fetch can
 // 404 - track it so a chip click can say so honestly instead of silently
 // doing nothing. Never add a fallback fetch to the excluded full file.
-let _tbGrpoState = "pending";   // "pending" | "ready" | "unavailable"
+let _tbGrpoState = "idle";   // "idle" | "pending" | "ready" | "unavailable"
+// The registry's word for the GRPO breakout model (row grpo_prospect), printed
+// on the breakout chip. The audit of 2026-10-02 (QCLC05) caught the chip
+// saying "provisional" while the row said "unvalidated"; the 30-day forward
+// read moved the row to provisional the same day. A test pins this constant
+// to the registry row so the two cannot drift again.
+const _TB_GRPO_VERDICT = "provisional";
 let _tbPool   = "all";
 let _tbTier   = "all";
 let _tbPos    = "all";
@@ -945,13 +1021,25 @@ function _tbTh(label, col, cls, title, noActiveMark, term) {
   const classes = ["tm-sortable", cls, active ? "tm-sorted" : ""].filter(Boolean).join(" ");
   const tt = (title ? title + " · " : "") + "click to sort";
   const ariaSort = active ? (sdir === "asc" ? "ascending" : "descending") : "none";
-  const text = term ? _tmGl(label, term) : label;
-  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}" scope="col" tabindex="0" aria-sort="${ariaSort}">${text}${arrow}</th>`;
+  // The term inside a sort header is NOT its own Tab stop (QCLA06): the header
+  // is the control, and a focusable span inside it was an extra stop inside a
+  // control. tabindex=-1 keeps the hover definition; the header carries the
+  // definition for a screen reader through aria-describedby (eephus-gl writes
+  // the gl-def-<slug> node when the glossary loads).
+  const text = term ? `<span class="g-term" data-gl="${term}" tabindex="-1">${label}</span>` : label;
+  const desc = term ? ` aria-describedby="gl-def-${term}"` : "";
+  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}" scope="col" tabindex="0" aria-sort="${ariaSort}"${desc}>${text}${arrow}</th>`;
 }
 // Column header click: toggle direction if already sorted by it, else pick a
 // sensible default (text asc, numeric desc).
-function _tbSortByCol(col) {
+function _tbSortByCol(col, fromTh) {
   const [scol, sdir] = _tbSortParts();
+  // The board is rebuilt below, so the header that took the click or the Enter
+  // is gone; focus goes back to the header in the same place (QCLA06; Grade
+  // and Surplus share the surplus column, so the place is the index).
+  const ths = Array.from(document.querySelectorAll("#tradeboard-content th[data-tb-sortcol]"));
+  const at = fromTh ? ths.indexOf(fromTh) : -1;
+  const hadFocus = !!(fromTh && fromTh.contains(document.activeElement));
   // First click default: ascending for text + age (youngest first is the useful
   // default on a prospect board); descending for value-like columns (best first).
   const dir = (scol === col) ? (sdir === "asc" ? "desc" : "asc")
@@ -965,6 +1053,10 @@ function _tbSortByCol(col) {
   _tbSyncSortSelect();
   resetPage("tradeboard");
   _renderTBRows();
+  if (at >= 0 && hadFocus) {
+    const back = document.querySelectorAll("#tradeboard-content th[data-tb-sortcol]")[at];
+    if (back) back.focus();
+  }
 }
 function _tbPopulateSelectFilters() {
   if (!_tbData) return;
@@ -1224,7 +1316,7 @@ function _renderTBRows() {
   let html = `<div style="margin:6px 0 4px;color:var(--text-secondary);font-size:11px;">${rows.length} players · ${escapeHtml(_tbData.generated_at || "")}</div>
   ${_crunchBanner}
   ${topPager}
-  <div class="tm-board-tablewrap mlbstats-scroll"><table class="stats-table tm-board-table">
+  <div class="tm-board-tablewrap mlbstats-scroll"><table class="stats-table tm-board-table" aria-labelledby="tm-board-title">
   <thead><tr>
     <th class="mlbstats-col-rank">#</th>
     ${_tbTh("Player", "name")}
@@ -1358,7 +1450,7 @@ function _renderTBRows() {
       const grpoBord = grpoSc >= 0.70 ? "var(--neon-green)" : "var(--neon-amber)";
       signals += ` <button class="chip" style="padding:1px 5px;font-size:9px;color:${grpoCol};border-color:${grpoBord};"
         onclick="event.stopPropagation();_tbShowGroup('${escapeHtml(p.player_key||'')}');"
-        title="GRPO within-cohort breakout score ${(grpoSc*100).toFixed(0)}% (provisional; does not move the surplus). Click for the profile group.">
+        title="GRPO within-cohort breakout score ${(grpoSc*100).toFixed(0)}% (${_TB_GRPO_VERDICT}; does not move the surplus). Click for the profile group.">
         ▲${(grpoSc*100).toFixed(0)}
       </button>`;
     }
@@ -1369,7 +1461,7 @@ function _renderTBRows() {
       <td class="tm-player">${href ? `<a class="fa-player-link" href="${href}">${name}</a>` : name}</td>
       <td class="tm-num tm-dim">${p.age != null ? Number(p.age).toFixed(1) : "-"}</td>
       <td class="tm-dim">${pos}</td>
-      <td><span class="tm-org-cell">${org ? _tmTeamLogo(org) : ""}<span class="tm-org-abbr">${org}</span></span></td>
+      <td>${org ? `<a class="tm-org-cell" href="/franchise/#team=${encodeURIComponent(p.org)}" onclick="event.stopPropagation();" title="${org} on Franchises">${_tmTeamLogo(org, true)}<span class="tm-org-abbr">${org}</span></a>` : ""}</td>
       <td class="tm-num tm-dim">${fv}</td>
       <td class="tm-num tm-col-div tm-grade">${grade ? `<span class="tm-grade-chip" style="color:${tvCol};border-color:${tvCol};" title="Trade Value Grade ${grade} (${_tbFmt(tv)} contract-adjusted surplus)">${grade}</span>` : ""}</td>
       <td class="tm-num tm-surplus" style="color:${tvCol};">${_tbFmt(tv)}</td>
@@ -1388,9 +1480,9 @@ function _renderTBRows() {
   _tmWireGl(wrap);
   // Sortable column headers (the table is rebuilt each render, so rewire here).
   wrap.querySelectorAll("th[data-tb-sortcol]").forEach(th => {
-    th.addEventListener("click", () => _tbSortByCol(th.dataset.tbSortcol));
+    th.addEventListener("click", () => { th.focus(); _tbSortByCol(th.dataset.tbSortcol, th); });
     th.addEventListener("keydown", e => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); _tbSortByCol(th.dataset.tbSortcol); }
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); _tbSortByCol(th.dataset.tbSortcol, th); }
     });
   });
 }
@@ -1478,12 +1570,19 @@ function _tbInjectGfxChip() {
   row.insertAdjacentHTML("beforeend", window.EEPHUS_GFX.chipHTML("tm-board-gfx", "Generate GFX"));
   const btn = document.getElementById("tm-board-gfx");
   if (btn) {
-    btn.style.marginLeft = "8px";
     btn.onclick = () => window.EEPHUS_GFX.open(_tmBoardSpec(_tbLastRows));
   }
 }
 
 // ── Filter chip wiring (called once after first load) ──────────────────────
+// One chip per group is on; its state is in aria-pressed as well as the
+// .active class, so a screen reader hears it (QCLA07).
+function _tbPress(btn) {
+  btn.closest(".filter-group").querySelectorAll(".chip").forEach(b => {
+    b.classList.toggle("active", b === btn);
+    b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+  });
+}
 function _tbWireFilters() {
   // The Trade Machine view scaffold root (was #tradeboard-section in PROSPX; the
   // relocation renamed it, which silently broke every filter -- sec was null here).
@@ -1492,19 +1591,19 @@ function _tbWireFilters() {
 
   sec.querySelectorAll("[data-tb-pool]").forEach(btn => btn.addEventListener("click", () => {
     _tbPool = btn.dataset.tbPool;
-    btn.closest(".filter-group").querySelectorAll(".chip").forEach(b => b.classList.toggle("active", b===btn));
+    _tbPress(btn);
     resetPage("tradeboard");
     _renderTBRows();
   }));
   sec.querySelectorAll("[data-tb-tier]").forEach(btn => btn.addEventListener("click", () => {
     _tbTier = btn.dataset.tbTier;
-    btn.closest(".filter-group").querySelectorAll(".chip").forEach(b => b.classList.toggle("active", b===btn));
+    _tbPress(btn);
     resetPage("tradeboard");
     _renderTBRows();
   }));
   sec.querySelectorAll("[data-tb-pos]").forEach(btn => btn.addEventListener("click", () => {
     _tbPos = btn.dataset.tbPos;
-    btn.closest(".filter-group").querySelectorAll(".chip").forEach(b => b.classList.toggle("active", b===btn));
+    _tbPress(btn);
     resetPage("tradeboard");
     _renderTBRows();
   }));
@@ -1530,6 +1629,23 @@ function _tbWireFilters() {
 // the same position × level × age_tier × power_tier cluster.
 // The GRPO model ranks them by within-group breakout probability, so this is
 // effectively a "next Jesús Made" finder for any player.
+// The group sidecar (about 3.6 MB) is read on the FIRST chip click, not at
+// boot (QCLP01, 2026-10-07): only this panel reads it. Before a deployment's
+// pipeline has emitted it the fetch can 404, an expected outcome, so it is
+// marked unavailable and the panel says so.
+let _tbGrpoWant = null;   // the chip clicked while the sidecar was loading
+function _tbEnsureGrpo() {
+  if (_tbGrpoState !== "idle") return;
+  _tbGrpoState = "pending";
+  fetch(DATA_BASE + "grpo_public.json", { cache: "no-cache" })
+    .then(r => r.ok ? r.json() : null)
+    .then(g => {
+      if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
+      else { _tbGrpoState = "unavailable"; }
+    })
+    .catch(() => { _tbGrpoState = "unavailable"; })
+    .then(() => { const k = _tbGrpoWant; _tbGrpoWant = null; if (k) _tbShowGroup(k); });
+}
 function _tbShowGroup(playerKey) {
   if (!_tbData) return;
   const panel = document.getElementById("tb-group-panel");
@@ -1537,14 +1653,18 @@ function _tbShowGroup(playerKey) {
   const body  = document.getElementById("tb-group-body");
   if (!panel || !title || !body) return;
 
+  if (_tbGrpoState === "idle" || _tbGrpoState === "pending") {
+    _tbGrpoWant = playerKey;
+    _tbEnsureGrpo();
+  }
   const pScore = (_tbData.all_scores || {})[playerKey];
   if (!pScore) {
-    // Honest degrade: the group sidecar may still be loading, or this
-    // deployment does not publish it at all - say so instead of a dead click.
+    // Honest degrade: the group sidecar is loading (the panel fills itself
+    // when it lands), or this deployment does not publish it at all.
     title.textContent = "GRPO profile group";
     body.innerHTML = `<div style="color:var(--text-secondary);font-size:12px;">${
       _tbGrpoState === "pending"
-        ? "Group data is still loading. Try the chip again in a moment."
+        ? "Group data is still loading."
         : "Profile-group data is unavailable; the breakout score on the chip stands."
     }</div>`;
     panel.style.display = "block";
@@ -1679,6 +1799,13 @@ function _tbShowGroup(playerKey) {
     // first board render replaces it.
     const lw = document.getElementById("tradeboard-content");
     if (lw && window.EephusState) lw.innerHTML = window.EephusState.html("loading", "Loading the trade-value board...");
+    // The section headings carry glossary terms; eephus-gl wires only the
+    // masthead on its own.
+    document.querySelectorAll("#proj-view-trademachine .newsprint-eyebrow").forEach(_tmWireGl);
+    // The deal builder needs no data to draw its two empty sides, so it draws
+    // now rather than after the board file: drawing it late moved everything
+    // under it (QCLP03). A #tm= seed retries on the render after the data.
+    renderTradeMachine();
     fetch(DATA_BASE + "trade_values.json", { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(d => {
@@ -1692,19 +1819,9 @@ function _tbShowGroup(playerKey) {
         _renderTBRows();
         _tbWireFilters();
         _tbInjectGfxChip();     // "Generate GFX" chip beside the board filters
-        renderTradeMachine();   // also fetches MLB detail + seeds from #tm=
-        // GRPO group-panel data lives in the slim public sidecar; merge it so the
-        // ▲## breakout chip's _tbShowGroup() can resolve. Non-blocking: the board is
-        // already rendered. Before a deployment's first pipeline run emits the
-        // sidecar, this 404s - an expected outcome, not an error - so mark it
-        // unavailable and degrade in the panel.
-        fetch(DATA_BASE + "grpo_public.json", { cache: "no-cache" })
-          .then(r => r.ok ? r.json() : null)
-          .then(g => {
-            if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
-            else { _tbGrpoState = "unavailable"; }
-          })
-          .catch(() => { _tbGrpoState = "unavailable"; });
+        renderTradeMachine();   // seeds from #tm= (an MLB seed fetches the detail file)
+        // GRPO group-panel data is fetched on the first breakout-chip click
+        // (_tbEnsureGrpo), not here.
         // The Club Ledger's CBT slice for the evaluator's CBT block (M27-4).
         // Non-blocking and optional: without it the block simply does not show.
         fetch(DATA_BASE + "trade_cbt.json", { cache: "no-cache" })

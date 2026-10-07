@@ -4266,43 +4266,50 @@ def build_fa() -> str:
 # the mercy of the formatter. It rides the TRADE BOARD wrapper, not the
 # deal-builder mount above it: the board is the surface with the table.
 _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
-    <span class="newsprint-eyebrow-label">Trade Machine</span>
+    <h2 class="newsprint-eyebrow-label tm-eyebrow-h2"><span class="g-term" data-gl="trade_machine">Deal builder</span></h2>
   </div>
   <div id="trade-machine"></div>
-  <div class="tm-ros-note" style="margin:10px 0 2px;max-width:760px;color:var(--text-secondary);font-size:11px;line-height:1.55;">
-    <strong>Rental leg:</strong> remaining season fraction &times; full-season surplus (projected WAR value minus salary). No floor: negative means the salary still owed exceeds the production.
+  <div id="tm-live" class="visually-hidden" role="status" aria-live="polite"></div>
+  <details class="tm-how"><summary>How this works</summary><ul>
+    <li><strong>One currency.</strong> Each player carries the surplus the rest of the site prints: a prospect's eFV surplus NPV, an MLB player's club control window surplus (guaranteed seasons in full, unsigned seasons through the fifth projected season).</li>
+    <li><strong>Rental leg:</strong> remaining season fraction &times; full-season surplus (projected WAR value minus salary). No floor: negative means the salary still owed exceeds the production.</li>
+    <li><strong>Verdict.</strong> Gap = |Side A &minus; Side B| over the larger side. Under $5M reads balanced; otherwise it names the side that receives less. It predicts no club's answer.</li>
+    <li><strong>Board.</strong> Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted. A row's tooltip names its range and the basis of the range.</li>
+  </ul></details>
+  <div class="newsprint-eyebrow tm-board-eyebrow">
+    <h2 class="newsprint-eyebrow-label tm-eyebrow-h2" id="tm-board-title">Trade-value board</h2>
   </div>
-  <div class="trademachine-board-head detail-title" style="margin:18px 0 4px;font-size:13px;">Trade-value board <span class="detail-title-sub">Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted</span></div>
   <div class="filter-toggle-row">
     <button class="filter-toggle" type="button" data-collapse-target="tradeboard-filter-bar" aria-expanded="false" title="Show / hide Trade Board filters">
       <span class="filter-toggle-label">Filter &amp; Sort</span>
       <span class="filter-toggle-arrow" aria-hidden="true">&#9662;</span>
     </button>
+    <input id="tb-search" type="search" placeholder="Search player name..." aria-label="Search the trade-value board by player name" autocomplete="off" spellcheck="false">
   </div>
   <div id="tradeboard-filter-bar" class="filter-bar collapsible-filter-bar">
     <div class="filter-group"><span class="filter-label">Pool</span>
-      <button class="chip active" data-tb-pool="all" type="button">All</button>
-      <button class="chip" data-tb-pool="milb" type="button">MiLB</button>
-      <button class="chip" data-tb-pool="mlb" type="button">MLB</button>
+      <button class="chip active" data-tb-pool="all" type="button" aria-pressed="true">All</button>
+      <button class="chip" data-tb-pool="milb" type="button" aria-pressed="false">MiLB</button>
+      <button class="chip" data-tb-pool="mlb" type="button" aria-pressed="false">MLB</button>
     </div>
     <div class="filter-group"><span class="filter-label">Tier</span>
-      <button class="chip active" data-tb-tier="all" type="button">All tiers</button>
-      <button class="chip" data-tb-tier="elite" type="button">Elite ($40M+)</button>
-      <button class="chip" data-tb-tier="high" type="button">High ($20-40M)</button>
-      <button class="chip" data-tb-tier="mid" type="button">Mid ($8-20M)</button>
+      <button class="chip active" data-tb-tier="all" type="button" aria-pressed="true">All tiers</button>
+      <button class="chip" data-tb-tier="elite" type="button" aria-pressed="false">Elite ($40M+)</button>
+      <button class="chip" data-tb-tier="high" type="button" aria-pressed="false">High ($20-40M)</button>
+      <button class="chip" data-tb-tier="mid" type="button" aria-pressed="false">Mid ($8-20M)</button>
     </div>
     <div class="filter-group"><span class="filter-label">Position</span>
-      <button class="chip active" data-tb-pos="all" type="button">All</button>
-      <button class="chip" data-tb-pos="C" type="button">C</button>
-      <button class="chip" data-tb-pos="1B" type="button">1B</button>
-      <button class="chip" data-tb-pos="2B" type="button">2B</button>
-      <button class="chip" data-tb-pos="SS" type="button">SS</button>
-      <button class="chip" data-tb-pos="3B" type="button">3B</button>
-      <button class="chip" data-tb-pos="LF" type="button">LF</button>
-      <button class="chip" data-tb-pos="CF" type="button">CF</button>
-      <button class="chip" data-tb-pos="RF" type="button">RF</button>
-      <button class="chip" data-tb-pos="SP" type="button">SP</button>
-      <button class="chip" data-tb-pos="RP" type="button">RP</button>
+      <button class="chip active" data-tb-pos="all" type="button" aria-pressed="true">All</button>
+      <button class="chip" data-tb-pos="C" type="button" aria-pressed="false">C</button>
+      <button class="chip" data-tb-pos="1B" type="button" aria-pressed="false">1B</button>
+      <button class="chip" data-tb-pos="2B" type="button" aria-pressed="false">2B</button>
+      <button class="chip" data-tb-pos="SS" type="button" aria-pressed="false">SS</button>
+      <button class="chip" data-tb-pos="3B" type="button" aria-pressed="false">3B</button>
+      <button class="chip" data-tb-pos="LF" type="button" aria-pressed="false">LF</button>
+      <button class="chip" data-tb-pos="CF" type="button" aria-pressed="false">CF</button>
+      <button class="chip" data-tb-pos="RF" type="button" aria-pressed="false">RF</button>
+      <button class="chip" data-tb-pos="SP" type="button" aria-pressed="false">SP</button>
+      <button class="chip" data-tb-pos="RP" type="button" aria-pressed="false">RP</button>
     </div>
     <div class="filter-group"><span class="filter-label">Org</span>
       <select class="chip" id="tb-org-filter" data-team-picker title="Filter Trade Board by organization"><option value="all">All orgs</option></select>
@@ -4322,17 +4329,15 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
       </select>
     </div>
   </div>
-  <div style="padding:8px 0 4px;">
-    <input id="tb-search" type="search" placeholder="Search player name..." style="width:100%;max-width:340px;padding:7px 10px;border-radius:6px;border:1px solid var(--text-tertiary);background:var(--bg-secondary);color:var(--text-primary);" autocomplete="off" spellcheck="false">
-  </div>
   <div id="tb-group-panel" style="display:none;margin:8px 0;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <span id="tb-group-title" style="font-weight:700;font-size:13px;"></span>
-      <button onclick="document.getElementById('tb-group-panel').style.display='none';" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;">&#10005;</button>
+      <button type="button" aria-label="Close the profile group" onclick="document.getElementById('tb-group-panel').style.display='none';" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;">&#10005;</button>
     </div>
     <div id="tb-group-body"></div>
   </div>
-  <div id="tradeboard-content" data-csv-export="trade-board"><div class="spinner-wrap"><span class="spinner"></span></div></div>""")
+  <div id="tradeboard-content" data-csv-export="trade-board"><div class="spinner-wrap"><span class="spinner"></span></div></div>
+  <nav class="tm-related" aria-label="Related modules">Related: <a href="/projections/">MLB Projections</a> &middot; <a href="/prospx/">PROSPX</a> &middot; <a href="/ledger/">Club Ledger</a> &middot; <a href="/arbitration/">Arbitration</a></nav>""")
 
 # Legacy redirect shim for /projections/: the Trade Machine used to live here as
 # a #view=trademachine tab. It is now its own top-level module at /trademachine/,
@@ -4638,18 +4643,20 @@ def build_trademachine() -> str:
     mlb_projections.json data. Was formerly a #view=trademachine tab inside MLB
     Projections."""
     body = (
+        # The module stylesheet comes BEFORE the markup it styles: written after
+        # it, Chromium painted the builder and board heads once unstyled and then
+        # moved them when the sheet landed (a 0.31 layout shift at 390 px).
+        f'<link rel="stylesheet" href="/assets/trademachine.css?v={_TM_CSS_VER}">'
         # id="proj-view-trademachine" is kept for trademachine.js, which scopes its
         # filter + collapse wiring to that id; .tm-app carries the standalone theming.
         '<div class="fa-app proj-app tm-app" id="proj-view-trademachine">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles"><h1>{_masthead_icon("trademachine")}Trade Machine '
         f'{_stage_chip("trademachine")}</h1></div>'
-        f'<span class="section-sub">{_gl("surplus_value", "surplus")} in one currency: prospects on eFV, '
-        'MLB players on projections or, where no projection prices a debuted player, on his locked '
-        'prospect eFV backgrade (registry row xfv_backgrade, provisional), '
-        'then the Bayesian trade-value board</span></div>'
+        f'<span class="section-sub">One currency of {_gl("surplus_value", "surplus")}: '
+        'prospects on eFV, MLB players on projections, and a debuted player no projection prices on his '
+        'locked eFV backgrade (registry row xfv_backgrade, provisional)</span></div>'
         + _TRADE_MACHINE_BODY +
         '</div>'
-        f'<link rel="stylesheet" href="/assets/trademachine.css?v={_TM_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-teampick.js?v={_TEAMPICK_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
