@@ -2835,7 +2835,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   letter-spacing: 0.1em; padding: 2px 5px; border: 1px solid var(--border); }
 .gl-app .gl-shelf--ark { border-color: var(--accent-cyan); color: var(--accent-cyan); }
 .gl-app .gl-shelf--industry { border-color: var(--text-tertiary); color: var(--text-tertiary); }
-.gl-app .gl-shelf--foundation { border-color: var(--border); color: var(--text-tertiary); opacity: 0.85; }
+.gl-app .gl-shelf--foundation { border-color: var(--border); color: var(--text-secondary); }
 .gl-app .gl-origin { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; line-height: 1.45; }
 .gl-app .gl-def { margin-top: 4px; font-size: 12.5px; color: var(--text-primary); line-height: 1.45; }
 .gl-app .gl-meth p { margin: 0 0 8px; font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
@@ -2884,7 +2884,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .gl-app .gl-verdict--validated { color: var(--accent-green); border-color: var(--accent-green); }
 .gl-app .gl-verdict--provisional { color: var(--text-gold); border-color: var(--accent-gold); }
 .gl-app .gl-verdict--unvalidated { color: var(--accent-red); border-color: var(--accent-red); }
-.gl-app .gl-verdict--deprecated { color: var(--text-tertiary); border-color: var(--border); opacity: 0.85; }
+.gl-app .gl-verdict--deprecated { color: var(--text-secondary); border-color: var(--border); }
 .gl-app .gl-model-summary { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
   color: var(--text-primary); margin: 8px 0; }
 .gl-app .gl-model-filters { margin-top: 6px; }
@@ -2957,7 +2957,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .gl-app .arch-node-sub { font-family: var(--font-sans); font-size: 9px; font-weight: 500;
       letter-spacing: 0.02em; color: var(--text-tertiary); margin-top: 1px; }
 .gl-app .arch-node-col { display: flex; flex-direction: column; gap: 5px; }
-.gl-app .arch-arrow { display: flex; align-items: center; color: var(--neon-cyan);
+.gl-app .arch-arrow { display: flex; align-items: center; color: var(--text-cyan);
       font-size: 18px; font-weight: 700; }
 @media (max-width: 640px) {.gl-app .arch-flow { flex-direction: column; align-items: stretch; }.gl-app .arch-arrow { justify-content: center; transform: rotate(90deg); height: 18px; }.gl-app .guide-anat-vis { flex-basis: 96px; }
     }
@@ -3049,7 +3049,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
       color: var(--text-secondary); padding: 6px 0 6px 0; border-bottom: 1px dotted var(--border-light);
       display: grid; grid-template-columns: 64px 1fr; gap: 12px; }
 .gl-app .meth-changelog .mc-date { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
-      color: var(--neon-cyan); letter-spacing: 0.02em; }
+      color: var(--text-cyan); letter-spacing: 0.02em; }
 .gl-app .meth-eg-card { border: 1px solid var(--border); border-left: 3px solid var(--neon-amber);
       background: var(--bg-secondary); padding: 11px 14px; margin: 8px 0 14px; max-width: 860px; }
 .gl-app .meth-eg-title { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;

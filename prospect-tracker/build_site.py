@@ -6433,11 +6433,11 @@ def build_glossary() -> str:
         '<span class="section-sub">terms, derivations, and each model\'s track record</span></div>'
         f"{intro}"
         '<div class="filter-bar"><span class="gl-microlabel">View</span>'
-        '<button class="chip active" data-glossary-view="terms">Terms</button>'
-        '<button class="chip" data-glossary-view="guide">How to Read</button>'
-        '<button class="chip" data-glossary-view="methodology">Methodology</button>'
-        '<button class="chip" data-glossary-view="models">Models &amp; Proofs</button>'
-        '<button class="chip" data-glossary-view="source-comparison">Source Comparison</button>'
+        '<button class="chip active" aria-pressed="true" data-glossary-view="terms">Terms</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="guide">How to Read</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="methodology">Methodology</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="models">Models &amp; Proofs</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="source-comparison">Source Comparison</button>'
         # C-A4 (2026-08-10). FOUR registration points and a chip is only one of
         # them: the view name must also be in the URL whitelist
         # (assets/glossary.js syncFromURL), the view -> container id map, and
@@ -6445,11 +6445,11 @@ def build_glossary() -> str:
         # while the suite stays green. That is the 2026-06-10 Source Comparison
         # lesson; test_glossary_page_loads.test_view_chips_match_whitelist now
         # asserts all four agree.
-        '<button class="chip" data-glossary-view="source-accuracy">Source Accuracy</button>'
-        '<button class="chip" data-glossary-view="source-updates">Source Updates</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="source-accuracy">Source Accuracy</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="source-updates">Source Updates</button>'
         # The page-index view keeps its key and URL (#view=library); its chip
         # reads "Page Index" now that the module itself is the Library.
-        '<button class="chip" data-glossary-view="library">Page Index</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="library">Page Index</button>'
         # Outbound link (not a view toggle) to the full attribution page, so the
         # Data Sources & Attribution page is reachable from this section, not just
         # the footer. The trailing arrow signals it navigates away.
