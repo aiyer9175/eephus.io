@@ -10,13 +10,20 @@ While the flag is False: the exporter writes nothing under data/ except exactly
 data/_labs/awards/frozen_<S>.json and data/_labs/awards/freeze_log.json, both by --freeze;
 every other file lands under .cache/awards/preview/; deploy/publish_paths.txt,
 data/glossary.json and data/model_registry.json carry no awards entry; and run_monthly's
-watched tuple holds no awards_export row. The page part (no awards/index.html, /hof/
-byte-identical except stamps) lands with AWARDS_7. The fixture world is
+watched tuple holds no awards_export row. The fixture world is
 test_fixtures/awards/export/ (see test_awards_export.py); no test touches the network.
+
+The page part (AWARDS_7_PAGE_SELECTIONS): with the flag False build_site writes no
+awards/index.html (the page renders only into the preview folder), /hof/ equals its
+committed bytes except asset stamps, and the shared head draws no strip; with the flag True
+the strip carries aria-current on the page it sits on and /hof/'s section row moves to the
+underline tab row with the same ARIA.
 """
 from __future__ import annotations
 
+import inspect
 import json
+import re
 import shutil
 import socket
 from pathlib import Path
@@ -25,6 +32,7 @@ import pytest
 
 import awards_core as A
 import awards_export as E
+import build_site as B
 
 ROOT = Path(__file__).resolve().parent
 FIX = ROOT / "test_fixtures" / "awards" / "export"
@@ -142,3 +150,75 @@ def test_the_watched_tuple_gains_awards_export_only_inside_the_flag_branch():
     assert "from awards_core import AWARDS_LIVE as _AWARDS_LIVE" in src[j:k]
     # the window scan test_mgmt_export relies on
     assert '"mgmt_export"' in src[i:i + 3200]
+
+
+# --- the page part (AWARDS_7) ----------------------------------------------------------------
+
+_STAMP = re.compile(r'\?v=[0-9a-f]+|VER="[0-9a-f]+"')
+
+
+def _unstamped(text: str) -> str:
+    return _STAMP.sub("", text)
+
+
+def test_with_the_flag_false_build_site_writes_no_awards_page(tmp_path, monkeypatch):
+    assert A.AWARDS_LIVE is False
+    wrote = []
+    monkeypatch.setattr(B, "_write", lambda rel, content: wrote.append(rel))
+    monkeypatch.setattr(B, "AWARDS_PREVIEW_SITE", tmp_path / "site")
+    monkeypatch.setattr("builtins.print", lambda *a, **k: None)
+    B.write_awards_page()
+    assert wrote == []
+    page = tmp_path / "site" / "awards" / "index.html"
+    assert page.exists(), "the preview copy is the only /awards/ render while the flag is False"
+    assert not (ROOT / "awards" / "index.html").exists()
+    src = inspect.getsource(B.main)
+    assert "write_awards_page()" in src and 'build_awards()' not in src
+
+
+def test_with_the_flag_false_hof_is_its_committed_bytes_except_stamps():
+    assert A.AWARDS_LIVE is False
+    served = (ROOT / "hof" / "index.html").read_text(encoding="utf-8")
+    built = B.build_hof()
+    assert _unstamped(built) == _unstamped(served)
+    assert "hof-modstrip" not in built and "Awards / HoF" not in built
+    assert '<div class="mlbstats-sectionnav" role="tablist" aria-label="Hall of Fame sections">' in built
+    head = B._hof_module_head("hof")
+    assert "<h1>" in head and "Hall of Fame" in head and "<nav" not in head
+
+
+def test_with_the_flag_true_the_strip_marks_the_current_page(monkeypatch, tmp_path):
+    monkeypatch.setattr(A, "AWARDS_LIVE", True)
+    wrote = []
+    monkeypatch.setattr(B, "_write", lambda rel, content: wrote.append((rel, content)))
+    assert B.write_awards_page() == "awards/index.html"
+    assert [w[0] for w in wrote] == ["awards/index.html"]
+    aw, hof = wrote[0][1], B.build_hof()
+    for page, cur, other in ((aw, "/awards/", "/hof/"), (hof, "/hof/", "/awards/")):
+        nav = re.search(r'<nav class="mlbstats-sectionnav hof-modstrip" aria-label="Awards / HoF">(.*?)</nav>',
+                        page, re.S)
+        assert nav, "the module strip"
+        links = re.findall(r"<a ([^>]*)>", nav.group(1))
+        assert len(links) == 2
+        on = [a for a in links if 'aria-current="page"' in a]
+        assert len(on) == 1 and f'href="{cur}"' in on[0] and "active" in on[0]
+        assert any(f'href="{other}"' in a and "aria-current" not in a for a in links)
+        assert re.search(r"<h1><svg class=\"ico\" width=\"32\"[^>]*>.*?</svg>Awards / HoF <span class=\"eephus-beta\"", page)
+    assert "#i-aw-podium" in aw and "#i-hof" in aw
+    row = re.search(r'<div class="mlbstats-tabs" role="tablist" aria-label="Hall of Fame sections">(.*?)</div>', hof)
+    assert row, "the /hof/ section row moves to the underline tab row"
+    tabs = re.findall(r'<button type="button" class="mlbstats-tab( active)?" data-hofsection="(\w+)" '
+                      r'role="tab" aria-selected="(true|false)">', row.group(1))
+    assert [t[1] for t in tabs] == ["board", "franchises", "blocked", "method"]
+    assert [t[2] for t in tabs] == ["true", "false", "false", "false"] and tabs[0][0] == " active"
+    assert "mlbstats-sectionbtn" not in row.group(1)
+
+
+def test_the_awards_shell():
+    out = B.build_awards(live=True)
+    assert "<title>MLB Awards - eephus.io</title>" in out
+    assert out.count('id="awards-app-root"') == 1 and 'data-csv-export="awards"' in out
+    assert f'/assets/awards.js?v={B._asset_ver("assets/awards.js")}' in out
+    assert f'/assets/awards.css?v={B._asset_ver("assets/awards.css")}' in out
+    assert B._AWARDS_SUB in out and B._AWARDS_DESCRIPTION.split(":")[0] in out
+    assert "Share" not in out, "no Share control until AWARDS_10"

@@ -1,0 +1,152 @@
+/* =============================================================================
+   eephus.io - /awards/, the Awards section of Awards / HoF (AWARDS_7)
+   Tokens only: no hex, no theme media query, no animation. The dark values come
+   from site.css [data-theme="dark"]; the one theme rule here swaps the
+   scoreboard ink, because dark --text-on-accent is near-black on the dark band.
+   Places are told by numeral and border weight, never by medal hues.
+   ========================================================================== */
+.aw-app { --aw-hero-ink: var(--text-on-accent); }
+[data-theme="dark"] .aw-app { --aw-hero-ink: var(--text-primary); }
+.aw-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.aw-f-elite { fill: var(--vt-elite); }
+.aw-f-great { fill: var(--vt-great); }
+.aw-f-good { fill: var(--vt-good); }
+.aw-f-above { fill: var(--vt-above); }
+.aw-f-avg { fill: var(--vt-avg); }
+.aw-f-below { fill: var(--vt-below); }
+.aw-f-poor { fill: var(--vt-poor); }
+.aw-f-ink { fill: var(--text-primary); }
+.aw-f-down { fill: var(--down); }
+.aw-f-off { fill: var(--border); }
+
+.aw-app :focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+.aw-app td :focus-visible, .aw-hero a:focus-visible { outline-offset: -2px; }
+.aw-tabs { scroll-snap-type: x proximity; }
+.aw-tabs .mlbstats-tab { scroll-snap-align: start; display: inline-flex; align-items: center; gap: 6px; min-height: 24px; }
+.aw-panel { min-width: 0; }
+
+.aw-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 10px 0 6px; }
+.aw-season { display: inline-flex; align-items: center; gap: 8px; font: 700 12px var(--font-retro-mono);
+  color: var(--text-secondary); }
+.aw-season select { font: 700 12px var(--font-retro-mono); color: var(--text-primary); background: var(--bg-secondary);
+  border: 1px solid var(--border); padding: 4px 8px; min-height: 28px; }
+.aw-stamp { margin: 4px 0 12px; font: 12px var(--font-retro); color: var(--text-secondary); line-height: 1.45; }
+.aw-note { margin: 6px 0; font-size: 12px; color: var(--text-tertiary); }
+
+/* The scoreboard hero: the ballpark board on the header band. */
+.aw-hero { width: 100%; max-width: 640px; margin: 8px auto 14px; border-collapse: collapse; table-layout: fixed;
+  background: var(--bg-header); color: var(--aw-hero-ink); font-family: var(--font-retro-mono); }
+.aw-hero caption { caption-side: top; text-align: left; padding: 8px 6px 4px; font: 700 12px var(--font-retro-mono);
+  color: var(--aw-hero-ink); background: var(--bg-header); }
+.aw-hero th, .aw-hero td { padding: 6px 6px; text-align: left; vertical-align: top; overflow: hidden;
+  border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
+.aw-hero thead th, .aw-hero thead td { border-top: 0; font-size: 11px; font-weight: 700; }
+.aw-hero thead td, .aw-hero tbody th { width: 48px; }
+.aw-hero tbody th { font-size: 12px; font-weight: 400; }
+.aw-hero a { display: block; min-height: 24px; color: inherit; text-decoration: none; }
+.aw-hero-n { display: block; font: 700 14px var(--font-retro-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aw-hero-c { display: block; font-size: 11px; }
+.aw-hero-off { font-size: 11px; }
+.aw-glyph { display: block; margin-bottom: 2px; }
+
+.aw-jump { display: flex; gap: 6px; margin: 0 0 10px; }
+.aw-app a.aw-chip, .aw-app a.aw-reg { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 10px;
+  font: 700 12px var(--font-retro-mono); color: var(--text-secondary); background: var(--bg-secondary);
+  border: 1px solid var(--border); text-decoration: none; }
+.aw-app a.aw-chip:hover, .aw-app a.aw-reg:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+.aw-app a.aw-reg { font-size: 11px; padding: 2px 6px; }
+
+/* The award cards: AL left and NL right from 1024 px, one column below. */
+.aw-group { margin: 18px 0 6px; }
+.aw-gh { margin: 0 0 8px; font: 700 15px var(--font-retro-mono); color: var(--text-primary); letter-spacing: .02em; }
+.aw-pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.aw-card { min-width: 0; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); }
+.aw-card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.aw-card-h h3 { display: flex; align-items: center; gap: 6px; margin: 0; font: 700 14px var(--font-retro-mono);
+  color: var(--text-primary); }
+.aw-kicker { margin: 8px 0 2px; font: 700 11px var(--font-retro-mono); color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: .04em; }
+.aw-rule { margin: 0 0 8px; font-size: 12px; line-height: 1.45; color: var(--text-secondary); }
+
+/* The lamp ladder. Lamps start at x = 32 px on every row and card. */
+.aw-ladder { list-style: none; margin: 0; padding: 0; }
+.aw-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; column-gap: 8px; align-items: start;
+  min-height: 44px; padding: 6px 0 4px; border-top: 1px solid var(--border-light); }
+.aw-row:first-child { border-top: 0; }
+.aw-place { box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;
+  border: 1px solid var(--border); font: 700 12px var(--font-retro-mono); color: var(--text-primary); }
+.aw-place.p1 { border: 2px solid var(--text-primary); }
+.aw-who { min-width: 0; }
+.aw-app a.aw-name { font: 700 13px var(--font-retro); color: var(--text-primary); text-decoration: none; }
+.aw-app a.aw-name:hover { text-decoration: underline; }
+.aw-app a.aw-px { margin-left: 4px; font: 700 10px var(--font-retro-mono); color: var(--accent-navy); text-decoration: none; }
+.aw-sub, .aw-drift { display: block; font-size: 11px; color: var(--text-secondary); }
+.aw-val { font: 13px var(--font-retro-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap;
+  color: var(--text-primary); }
+.aw-num { font-weight: 700; }
+.aw-unit { font-size: 11px; color: var(--text-secondary); }
+.aw-lamps { display: block; grid-column: 2 / 4; margin-top: 4px; }
+.aw-zero { fill: var(--text-secondary); }
+.aw-ticks { margin: 0 0 6px 32px; }
+.aw-ticks svg { display: block; overflow: visible; }
+.aw-ticks rect { fill: var(--border); }
+.aw-ticks text { font: 10px var(--font-retro-mono); fill: var(--text-tertiary); }
+.aw-lead, .aw-fact, .aw-writers { margin: 6px 0; font-size: 12px; line-height: 1.45; color: var(--text-primary); }
+.aw-writers { color: var(--text-secondary); }
+
+/* Disclosures. */
+.aw-d, .aw-excl { margin-top: 6px; border-top: 1px solid var(--border-light); }
+.aw-app summary { display: flex; align-items: center; min-height: 24px; padding: 6px 0; cursor: pointer;
+  font: 700 12px var(--font-retro-mono); color: var(--text-primary); }
+.aw-app summary::before { content: "+"; display: inline-block; width: 14px; color: var(--text-secondary); }
+.aw-app details[open] > summary::before { content: "-"; }
+.aw-app summary::-webkit-details-marker { display: none; }
+.aw-excl ul { margin: 2px 0 6px; padding-left: 16px; font-size: 12px; color: var(--text-secondary); }
+.aw-full { list-style: none; margin: 2px 0 6px; padding: 0; font-size: 12px; color: var(--text-primary); }
+.aw-full li { padding: 3px 0; border-bottom: 1px solid var(--border-light); }
+.aw-fp { display: inline-block; min-width: 26px; font: 700 12px var(--font-retro-mono); }
+
+/* The comparison strip and its numbers, one table. */
+.aw-scroll { max-width: 100%; overflow-x: auto; }
+.aw-cmp { margin: 4px 0 6px; }
+.aw-cmp-key { margin: 0 0 4px; }
+.aw-cmp-t, .aw-wt { border-collapse: collapse; font: 12px var(--font-retro-mono); }
+.aw-cmp-t { table-layout: fixed; }
+.aw-cmp-t caption, .aw-wt caption { padding: 0 0 4px; text-align: left; font-size: 11px; color: var(--text-tertiary); }
+.aw-cmp-t th, .aw-cmp-t td { padding: 2px 4px; text-align: left; vertical-align: bottom; }
+.aw-cmp-t thead th { font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aw-cmp-t th[scope="row"] { font-weight: 400; font-size: 11px; color: var(--text-secondary); overflow-wrap: anywhere; }
+.aw-cmp-t .aw-n { text-align: right; font-variant-numeric: tabular-nums; }
+.aw-cmp-t thead th.aw-n { text-align: right; }
+.aw-trk svg { display: block; }
+.aw-pct th[scope="row"], .aw-pct td { padding-top: 0; font-size: 10px; color: var(--text-tertiary); white-space: nowrap; }
+.aw-null { color: var(--text-dim); }
+.aw-mk rect { fill: var(--text-primary); }
+.aw-mk text { font: 700 10px var(--font-retro-mono); fill: var(--bg-secondary); text-anchor: middle; }
+.aw-mk.w rect { fill: none; stroke: var(--text-primary); stroke-width: 1; }
+.aw-mk.w text { fill: var(--text-primary); }
+
+/* The race strip. */
+.aw-race { display: block; margin: 6px 0 2px; }
+.aw-race text { font: 10px var(--font-retro-mono); fill: var(--text-tertiary); }
+.aw-race .aw-rlab { fill: var(--text-primary); }
+.aw-rl { fill: var(--accent-cyan); }
+.aw-ro { fill: var(--border); }
+.aw-rm { fill: var(--border-light); }
+.aw-rs { stroke: var(--text-tertiary); stroke-width: 1; stroke-dasharray: 2 2; }
+.aw-wt th, .aw-wt td { padding: 3px 8px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border-light); }
+.aw-wt thead th { font-size: 11px; color: var(--text-secondary); }
+.aw-wt th[scope="row"], .aw-cmp-t th[scope="row"] { position: sticky; left: 0; z-index: 1; background: var(--bg-secondary);
+  box-shadow: 1px 0 0 var(--border-light); }
+
+@media (max-width: 767px) {
+  .aw-jump { position: sticky; top: 0; z-index: 3; padding: 6px 0; overflow-x: auto; background: var(--bg-primary); }
+  .aw-jump > * { flex: none; }
+}
+@media (min-width: 1024px) {
+  .aw-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+}
+@media (pointer: coarse) {
+  .aw-app a.aw-chip, .aw-app a.aw-reg, .aw-app summary, .aw-season select, .aw-hero a,
+  .aw-tabs .mlbstats-tab { min-height: 44px; }
+}

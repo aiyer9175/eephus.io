@@ -286,3 +286,26 @@ def test_verdict_hits_finds_the_plan_words_the_ban_list_and_dashes():
     assert A.verdict_hits("blocked and locked") == []            # whole words only
     assert A.verdict_hits("xwoba_minus_woba") == []
     assert len(A.VERDICT_WORDS) == 45
+
+
+# --- the page strings (AWARDS_7_PAGE_SELECTIONS) ---------------------------------------------
+
+def test_the_page_strings_are_clean():
+    """assets/awards.js and assets/awards.css whole (comments included), the /awards/ shell's
+    body, its sub line and its meta description: no dash, no BAN word, no verdict word and
+    no 'luck'. The /hof/ shelf's own copy is outside this page."""
+    import build_site as B
+
+    out = B.build_awards(live=True)
+    i = out.index('<div class="fa-app mlbstats-app aw-app">')
+    j = out.index('<link rel="stylesheet" href="/assets/awards.css')
+    texts = {
+        "assets/awards.js": (ROOT / "assets" / "awards.js").read_text(encoding="utf-8"),
+        "assets/awards.css": (ROOT / "assets" / "awards.css").read_text(encoding="utf-8"),
+        "the /awards/ shell": out[i:j],
+        "sub line": B._AWARDS_SUB, "meta description": B._AWARDS_DESCRIPTION,
+    }
+    for where, text in texts.items():
+        _clean(text, where)
+    assert "Not a forecast of the writers' vote." in B._AWARDS_SUB
+    assert B._AWARDS_DESCRIPTION.endswith("Not a forecast of the vote.")
