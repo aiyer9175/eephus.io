@@ -39,6 +39,12 @@ def test_verdicts_are_honest():
             assert m["eval_artifact"], f"{m['model_id']}: validated without artifact"
         if m["verdict"] == "unvalidated":
             assert not m["eval_artifact"], f"{m['model_id']}: has artifact, not unvalidated"
+        # QMLC01 (X01-09): a validated row whose own lab log says its gates are
+        # UNMEASURED on what serves must carry the disclosure pages print
+        # beside the badge.
+        if m["verdict"] == "validated" and "UNMEASURED" in (m.get("notes") or ""):
+            assert m.get("remeasure_pending"), (
+                f"{m['model_id']}: validated, notes say UNMEASURED, no remeasure_pending")
 
 
 def test_known_models_are_registered():

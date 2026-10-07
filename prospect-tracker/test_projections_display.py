@@ -173,3 +173,89 @@ def test_board_keyboard_reach(server):
         }""")
         assert info["dots"] > 100 and info["stops"] == 0
         assert info["sy"] >= 1 and info["sx"] >= 1
+
+
+# ---------------------------------------------------------------------------
+# Luck sign (QMLC03), accountability disclosures (QMLC01, QMLC08, QMLC12)
+# ---------------------------------------------------------------------------
+def test_card_luck_is_xwoba_minus_woba_like_the_glossary_and_mlbstats(monkeypatch):
+    """QMLC03: Soto read -0.026 on the card and +0.026 on /mlbstats/. The
+    card now computes the glossary's sign (xwOBA minus wOBA)."""
+    import mlb_player_export as mpe
+    ex = [{"player_id": "1", "woba": "0.380", "est_woba": "0.411", "est_ba": ".290", "est_slg": ".570"},
+          {"player_id": "2", "woba": "0.330", "est_woba": "0.320", "est_ba": ".250", "est_slg": ".400"},
+          {"player_id": "3", "woba": "0.300", "est_woba": "0.300", "est_ba": ".240", "est_slg": ".380"}]
+    monkeypatch.setattr(mpe, "_savant", lambda kind, y, side="batter": ex if kind == "expected" else [])
+    block = mpe._statcast_block(1, False, 2026)
+    luck = [m for m in block["metrics"] if m["label"].startswith("Luck")]
+    assert luck == [{"label": "Luck (xwOBA-wOBA)", "value": "+0.031", "pct": 83}]
+    g = json.loads((S.ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    xhem = next(e for e in g["entries"] if e.get("id") == "xhem_plus")
+    assert "Luck = Savant xwOBA minus wOBA" in xhem["definition"]
+    xiso = next(e for e in g["entries"] if e.get("id") == "xiso")
+    assert "xwOBA minus wOBA" in xiso["methodology"] and "actual wOBA minus xwOBA" not in xiso["methodology"]
+
+
+ACCT_ROWS = ("fa_war_paths_decay", "mlb_projections_prospects", "team_win_projections",
+             "prospect_surplus")
+
+
+def _registry_rows():
+    reg = json.loads((S.ROOT / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    return {m["model_id"]: m for m in reg["models"]}
+
+
+def test_the_accountability_rows_proj_export_publishes_are_the_ones_pinned_here():
+    import proj_export
+    assert tuple(mid for mid, _ in proj_export._ACCOUNTABILITY_MODELS) == ACCT_ROWS
+    import inspect
+    assert '"remeasure_pending"' in inspect.getsource(proj_export._accountability_block)
+
+
+def test_veteran_paths_card_prints_the_remeasure_disclosure_from_the_registry():
+    """QMLC01: the registry row carries the disclosure, and the card prints it
+    beside the badge and under the holdout table (read, not typed)."""
+    row = _registry_rows()["fa_war_paths_decay"]
+    pending = row["remeasure_pending"]
+    assert pending == "measured on the pre-repair labels; not re-measured on the served bundle"
+    assert pending not in JS
+    board = json.loads(S.BOARD)
+    board["accountability"] = {
+        "verdict_enum": ["validated", "provisional", "unvalidated", "deprecated"],
+        "models": [{"label": "Veteran WAR paths", "model_id": "fa_war_paths_decay",
+                    "verdict": "validated", "remeasure_pending": pending,
+                    "eval_artifact": "data/proj_horizon_eval.json"}],
+        "backtests": {"data/proj_horizon_eval.json": {
+            "frame": "2022-2024 holdout",
+            "champion": {"model": "proj_lgbm_v1", "horizons": [{"h": 1, "mae": 0.54, "bias": -0.1, "coverage": 0.81}]},
+            "baseline": {"model": "marcel_decay_v2", "horizons": [{"h": 1, "mae": 0.62, "coverage": 0.67}]}}}}
+    saved = S.BOARD
+    S.BOARD = json.dumps(board)
+    try:
+        html = S._render("#view=accountability")
+    finally:
+        S.BOARD = saved
+    assert html.count(pending) == 2
+    assert 'proj-acct-pending' in html
+
+
+def test_the_accountability_rows_carry_no_dash_banned_word_or_retired_name():
+    """QMLC08 + QMLC12: what the card prints from these rows passes the
+    owner's copy rules; the champion line no longer says it beat a challenger
+    the table shows with the lower MAE."""
+    import sys
+    sys.path.insert(0, str(S.ROOT / "tools"))
+    from copy_lint import BAN_RE
+    rows = _registry_rows()
+    for mid in ACCT_ROWS:
+        for k, v in rows[mid].items():
+            if not isinstance(v, str):
+                continue
+            assert not re.search(r"\w -- \w", v), f"{mid}.{k}: ' -- ' used as a dash"
+            assert not re.search(r"\bxFV\b", v), f"{mid}.{k}: retired name xFV"
+            hit = BAN_RE.search(v)
+            assert not hit, f"{mid}.{k}: banned word {hit.group()!r}"
+    pros = rows["mlb_projections_prospects"]
+    assert "beat the" not in pros["champion"]
+    assert "every challenger lost its pre-registered dual gate" in pros["champion"]
+    assert "ranks better than any stat-line model" not in pros["notes"]

@@ -3225,8 +3225,8 @@ def _accountability_block() -> dict:
     # here because this block is where the payload publishes what it did and
     # did not reach. Empty on a payload built without veterans.
     keep = ("model_id", "summary", "surface", "predicts", "champion",
-            "baseline", "metric", "verdict", "notes", "eval_artifact",
-            "last_checked", "artifact_age_days", "stale")
+            "baseline", "metric", "verdict", "remeasure_pending", "notes",
+            "eval_artifact", "last_checked", "artifact_age_days", "stale")
     models = []
     for mid, label in _ACCOUNTABILITY_MODELS:
         m = by_id.get(mid)

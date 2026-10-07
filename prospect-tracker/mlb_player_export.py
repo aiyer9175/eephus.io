@@ -173,7 +173,9 @@ def _statcast_block(mlbam: int, is_pitcher: bool, year: int) -> dict | None:
         # Deserved power + luck (HITTER-SIDE display only; xwOBA-allowed vs FIP was
         # tested and rejected for the pitcher models, so no pitcher claim here).
         # xSLG is a Savant column; xISO = xSLG - xBA (deserved isolated power);
-        # Luck = actual minus deserved wOBA (positive = outperformed the contact).
+        # Luck = deserved minus actual wOBA (positive = the contact deserved
+        # more), the sign the xHEM+ glossary entry and /mlbstats/ luck_gap use.
+        # Its pct ranks that same gap, so a high pct is a large positive gap.
         if not is_pitcher:
             add("xSLG", ex_by, me_ex, "est_slg", "{:.3f}")
             if me_ex is not None:
@@ -187,12 +189,12 @@ def _statcast_block(mlbam: int, is_pitcher: bool, year: int) -> dict | None:
                         "pct": _pct_rank(xiso_pool, xslg - xba)})
                 woba, xwoba = _f(me_ex.get("woba")), _f(me_ex.get("est_woba"))
                 if woba is not None and xwoba is not None:
-                    luck_pool = [w - x for w, x in
+                    luck_pool = [x - w for w, x in
                                  ((_f(r.get("woba")), _f(r.get("est_woba"))) for r in ex_by.values())
                                  if w is not None and x is not None]
                     out["metrics"].append({
-                        "label": "Luck (wOBA-xwOBA)", "value": "{:+.3f}".format(woba - xwoba),
-                        "pct": _pct_rank(luck_pool, woba - xwoba)})
+                        "label": "Luck (xwOBA-wOBA)", "value": "{:+.3f}".format(xwoba - woba),
+                        "pct": _pct_rank(luck_pool, xwoba - woba)})
         return out if out["metrics"] else None
     return None
 
@@ -536,7 +538,7 @@ def _skill_index() -> dict[int, dict]:
             "xhemPlus": r.get("xhem_plus"), "tier": r.get("tier"),
             # luckGap (the board's luck_gap) is no longer baked: it is xwOBA
             # minus wOBA in wOBA points since 2026-09-24, the card's Statcast
-            # block already carries Savant's wOBA-xwOBA row, and the xHEM+
+            # block already carries Savant's xwOBA-wOBA row, and the xHEM+
             # tile's "vs HEM+" note is computed client-side from the two dots.
             "qualified": bool(r.get("qualified")),
             # Baked 2026-07-30 (Lane B): every one of these was computed and served

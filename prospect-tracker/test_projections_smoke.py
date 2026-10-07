@@ -90,7 +90,7 @@ DETAIL = json.dumps({"players": {
                     "war": 5.1}],
         "sc": {"season": 2025, "metrics": [
             {"label": "xwOBA", "value": ".390", "pct": 95},
-            {"label": "Luck (wOBA-xwOBA)", "value": "+0.031", "pct": 99}]},
+            {"label": "Luck (xwOBA-wOBA)", "value": "+0.031", "pct": 99}]},
         "skills": {
             "hem": {"season": 2026, "hemPlus": 113, "xhemPlus": 108,
                     "wrcPlus": 121, "qualified": True, "pa": 610, "warPaPlus": 113,

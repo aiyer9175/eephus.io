@@ -1253,7 +1253,7 @@
   // Veteran WAR paths - the touched-once 2022-24 holdout, champion vs baseline
   // per horizon (MAE + bias + P10-P90 coverage). Holdout labels mature only
   // through h4, so the table runs as deep as the artifact reports.
-  function vetHorizonsTable(vh) {
+  function vetHorizonsTable(vh, pending) {
     const ch = (vh && vh.champion && vh.champion.horizons) || [];
     if (!ch.length) return "";
     const bl = (vh.baseline && vh.baseline.horizons) || [];
@@ -1277,7 +1277,7 @@
         <th title="Share of actuals inside the P10-P90 band (target ~80%)"><span data-gl="p10_p90_bands">Coverage</span></th>
         <th title="Baseline coverage" class="fa-sub">Baseline cov.</th></tr></thead>
       <tbody>${rows}</tbody></table>
-      <div class="fa-sub proj-acct-foot">${esc(vh.frame || "")} Champion ${esc((vh.champion || {}).model || "")} vs prior baseline ${esc((vh.baseline || {}).model || "")}.</div>`;
+      <div class="fa-sub proj-acct-foot">${esc(vh.frame || "")} Champion ${esc((vh.champion || {}).model || "")} vs prior baseline ${esc((vh.baseline || {}).model || "")}${pending ? `: ${esc(pending)}` : ""}.</div>`;
   }
 
   // Prospect post-ETA paths - forward-chained debut cohorts: the FV-only
@@ -1360,9 +1360,9 @@
       return;
     }
     const bt = acct.backtests || {};
-    const tableFor = (art) => {
+    const tableFor = (art, m) => {
       if (art === "data/team_outlook_eval.json") return teamWinsTable(bt[art]);
-      if (art === "data/proj_horizon_eval.json") return vetHorizonsTable(bt[art]);
+      if (art === "data/proj_horizon_eval.json") return vetHorizonsTable(bt[art], m.remeasure_pending);
       if (art === "data/prospect_path_eval.json") return prospectPathsTable(bt[art]);
       return "";
     };
@@ -1376,7 +1376,7 @@
         : "";
       return `<div class="mlbp-section proj-acct-card">
         <div class="proj-acct-head">
-          <span class="mlbp-section-title">${esc(m.label)}</span>${verdictBadge(m.verdict)}
+          <span class="mlbp-section-title">${esc(m.label)}</span>${verdictBadge(m.verdict)}${m.remeasure_pending ? ` <span class="fa-sub proj-acct-pending">${esc(m.remeasure_pending)}</span>` : ""}
         </div>
         ${m.summary ? `<div class="fa-note proj-acct-summary">${esc(m.summary)}</div>` : ""}
         <div class="fa-sub proj-acct-predicts">${esc(m.predicts || "")}</div>
@@ -1385,7 +1385,7 @@
           <strong>Baseline</strong> <span class="fa-sub">${esc(m.baseline || "?")}</span><br>
           <strong>Metric</strong> <span class="fa-sub">${esc(m.metric || "?")}</span>
         </div>
-        ${tableFor(m.eval_artifact)}
+        ${tableFor(m.eval_artifact, m)}
         ${m.notes ? `<details class="proj-acct-notes"><summary class="fa-sub">Lab log</summary><div class="fa-note">${esc(m.notes)}</div></details>` : ""}
         ${fresh ? `<div class="fa-sub proj-acct-fresh">${fresh} &middot; <a href="${glHref}">methodology in the Library</a></div>` : ""}
       </div>`;
@@ -2315,9 +2315,9 @@
   const currentCard = () => (state.player && DETAIL && (DETAIL.players || {})[state.player]) || null;
 
   // ---- shared visual components ----------------------------------------------
-  // Savant percentile rows. Luck (wOBA minus xwOBA) is not a skill percentile:
-  // painted on the percentile colours, the hitter whose results ran furthest
-  // ahead of his contact reads as elite, so it keeps its number on a neutral chip.
+  // Savant percentile rows. Luck (xwOBA minus wOBA) is not a skill percentile:
+  // painted on the percentile colours, the hitter whose contact ran furthest
+  // ahead of his results reads as elite, so it keeps its number on a neutral chip.
   // Colour (owner ask 2026-10-01): one colour per bar and chip from the shared
   // percentile gradient (EephusTiers.pctColor), carried inline as --pct so the
   // stylesheet paints the fill and the chip from it; the pctClass step stays on
