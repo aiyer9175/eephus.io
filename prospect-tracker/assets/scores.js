@@ -3,15 +3,9 @@
  * Proprietary and confidential
  * Written by Noah J. Dengler (@ARKNDJL), 2026 */
 
-/* /scores/ - Scores / Standings, the scores page (SCORES_3, behind
-   scores_core.SCORES_LIVE). A pure reader of the job's files under
-   /data/scores/: it joins, sorts and formats what the job wrote and compares
-   times for the stale rule; it computes no number of its own.
-
-   FETCH RULES: plan 2.3 (no-cache; a file only when its rev moves). The
-   player links and the video chunk load in the game view; the bracket
-   chunk on #bracket=<season> or in October in the rail at 1400 px.
-   LABELLING: plan 4 (data-model-id with the registry sentence). */
+/* /scores/ (SCORES_3, behind scores_core.SCORES_LIVE): a pure reader of the
+   job's files under /data/scores/; it computes no number of its own. Fetch:
+   plan 2.3; video and bracket chunks load lazily. Labels: plan 4. */
 (function () {
   "use strict";
 
@@ -19,7 +13,7 @@
   var POLL_LIVE_S = 45, POLL_IDLE_S = 300, BACKOFF = [45, 90, 180, 300];
   var ANNOUNCE_GAP_MS = 15000;
   var MAX_CHART_POINTS = 130;
-  // The AL's MLBAM team ids (the AL / NL filter joins on the id).
+  // AL team ids.
   var AL_IDS = [108, 110, 111, 114, 116, 117, 118, 133, 136, 139, 140, 141, 142, 145, 147];
   var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August",
     "September", "October", "November", "December"];
@@ -33,14 +27,14 @@
     S4: "Scores are not available right now."
   };
 
-  // ------------------------------------------------------------------ helpers
+  // ---- helpers
   function esc(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
   function isNum(x) { return typeof x === "number" && isFinite(x); }
   function ms(iso) { var t = Date.parse(iso || ""); return isNaN(t) ? null : t; }
-  // Thousandths to a whole percent, half up (scores_core.round_half_up).
+  // Thousandths to a percent, half up.
   function pct(th) { return isNum(th) ? Math.floor(th / 10 + 0.5) : null; }
   function signed(th) {
     if (!isNum(th)) return "";
@@ -56,7 +50,7 @@
     return ((h % 12) || 12) + ":" + (m < 10 ? "0" : "") + m + (h < 12 ? " AM" : " PM");
   }
   function monthDay(t) { var d = new Date(t); return MONTHS[d.getMonth()] + " " + d.getDate(); }
-  // YYYY-MM-DD at UTC noon, so no zone moves it.
+  // UTC noon.
   function dayOf(ds) { return new Date(ds + "T12:00:00Z"); }
   function longDate(ds) {
     var d = dayOf(ds);
@@ -92,7 +86,7 @@
     var m = Math.floor(sec / 60), s = sec % 60;
     return m + ":" + (s < 10 ? "0" : "") + s;
   }
-  // Rates as the job rounded them; a P/AB or P/IP over 0 AB or 0 outs is a dash.
+  // Rates as the job rounded them.
   function f1(x) { return isNum(x) ? x.toFixed(1) : "-"; }
   function f2(x) { return isNum(x) ? x.toFixed(2) : ""; }
   function comma(n) { return isNum(n) ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ""; }
@@ -112,7 +106,7 @@
     return (on.length === 1 ? "Runner on " : "Runners on ") + on.join(" and ");
   }
 
-  // ------------------------------------------------------------ stale rule
+  // ---- stale rule
   function validLatest(L) {
     return !!(L && typeof L === "object" && L.schema === 1 && typeof L.generated_at === "string" &&
       L.job && typeof L.job === "object" && typeof L.today === "string" &&
@@ -125,8 +119,7 @@
     var w = (L.window || {})[date];
     return !!(w && w.live > 0);
   }
-  // Plan 2.4: rows S4, S3, S2, S0, S1 in order (S1 the default); server time
-  // from the Date header, else the client clock.
+  // Plan 2.4: S4, S3, S2, S0, S1 (default).
   function scoresStaleState(L, serverNowMs, viewedDate) {
     if (!validLatest(L)) return { code: "S4", sentence: STALE.S4, live: false };
     var now = isNum(serverNowMs) ? serverNowMs : Date.now();
@@ -147,7 +140,7 @@
     return { code: "S1", sentence: (live ? STALE.S1L : STALE.S1).replace("{t}", clock(asOf)), live: live, at: asOf };
   }
 
-  // ---------------------------------------------------------------- routes
+  // ---- routes
   function parseRoute(hash) {
     var h = String(hash || "").replace(/^#/, ""), q = {};
     h.split("&").forEach(function (kv) {
@@ -184,8 +177,8 @@
     return "#" + p.join("&");
   }
 
-  // ---------------------------------------------------------------- loader
-  // One loader per page; every request carries cache: "no-cache".
+  // ---- loader
+  // One loader per page.
   function makeLoader(fetchFn, clientNow) {
     clientNow = clientNow || function () { return Date.now(); };
     var S = { latest: null, index: null, indexRev: null, seasons: {}, dates: {}, games: {},
@@ -266,13 +259,13 @@
       dateRev: dateRev };
   }
 
-  // ------------------------------------------------------------ registry
+  // ---- registry
   function regRow(ix, id) {
     var rows = (ix && ix.registry) || [];
     for (var i = 0; i < rows.length; i++) if (rows[i] && rows[i].model_id === id) return rows[i];
     return null;
   }
-  // An element holding model numbers: data-model-id plus its visible chip.
+  // data-model-id plus its chip.
   function labelled(ix, id, inner, tag, cls) {
     var row = regRow(ix, id);
     if (!row) return "";
@@ -280,14 +273,14 @@
     return "<" + tag + ' class="sc-model' + (cls ? " " + cls : "") + '" data-model-id="' + esc(id) + '">' +
       inner + ' <span class="sc-src">' + esc(row.sentence) + "</span></" + tag + ">";
   }
-  // The leading club's MLB win probability, from the home value.
+  // Leader's MLB win probability.
   function wpLead(card, homeTh) {
     if (!isNum(homeTh) || !card) return null;
     if (homeTh >= 500) return { code: card.home.code || card.home.short, pct: pct(homeTh) };
     return { code: card.away.code || card.away.short, pct: pct(1000 - homeTh) };
   }
 
-  // ---------------------------------------------------------------- links
+  // ---- links
   var LINKS = null;
   function clubLink(side) {
     var hub = window.EEPHUS_HUB, c = null;
@@ -306,7 +299,7 @@
     return esc(name);
   }
 
-  // ---------------------------------------------------------------- cards
+  // ---- cards
   function reasonText(r) { return r ? lower(r) : ""; }
   function stateLine(c, stale) {
     var r = reasonText(c.reason), n = (c.line || []).length;
@@ -472,8 +465,8 @@
     return "off";
   }
 
-  // ------------------------------------------------------------ the chart
-  // MLB's home win probability per plate appearance, at the frame's width (plan 1.5).
+  // ---- the chart
+  // MLB home win probability per PA (plan 1.5).
   function chartModel(g) {
     var ser = (g.wp && g.wp.series) || [], step = 1;
     if (ser.length > MAX_CHART_POINTS) step = Math.ceil(ser.length / MAX_CHART_POINTS);
@@ -591,7 +584,7 @@
     if (pinned) show(idx);
   }
 
-  // ------------------------------------------------------------ game view
+  // ---- game view
   function lineScore(c) {
     return '<div class="sc-line sc-line-wide">' + teamsTable(c).replace('<div class="sc-line">', "").replace(/<\/div>$/, "") + "</div>";
   }
@@ -772,7 +765,7 @@
     return t;
   }
 
-  // ------------------------------------------------------------ the app
+  // ---- the app
   function store(key, val) {
     try {
       if (val === undefined) return window.localStorage.getItem(key);
