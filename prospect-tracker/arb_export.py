@@ -13,7 +13,7 @@
 CONVENTIONS THAT ARE LOAD-BEARING
   * Dollars are WHOLE INTEGERS rounded to the nearest $1,000. Never 4.2.
   * Service time is a STRING ("5.043"). A float lies about .043 being 43/1000.
-  * The five honesty flags are ONE BITFIELD, not five booleans.
+  * The six honesty flags are ONE BITFIELD, not six booleans.
   * Both payloads carry a field_key block, because a two-letter key with no
     legend is a private format.
   * data/cba_rules.json and data/contract_options.json are on
@@ -49,6 +49,7 @@ F_CLASS_EST = 2       # step came from the weakest source (debut heuristic)
 F_NO_SALARY = 4       # no salary on file for that season
 F_CARRY_FWD = 8       # season is past the 2026-12-01 CBA expiry
 F_PRORATED = 16       # 2020, paid at 60/162 of contract
+F_ORDER_FIX = 32      # a Spotrac status ran against service order and was repaired
 
 CBA_EXPIRES = "2026-12-01"
 
@@ -186,6 +187,51 @@ def _number_bare_arb(ladder: list, base: dict) -> list:
     return out
 
 
+def _class_falls(ladder: list) -> bool:
+    """True when the arbitration class drops from one rung to a later one.
+    Service time only accrues, so a later season can never sit in a lower
+    class than an earlier one."""
+    top = None
+    for _y, tok in ladder:
+        st, _ = _token_step(tok)
+        if st is None:
+            continue
+        if top is not None and st < top:
+            return True
+        top = st if top is None else max(top, st)
+    return False
+
+
+def _repair_status_order(raw: list, ladder: list, base: dict) -> tuple[list, bool]:
+    """Repair a ladder whose arbitration class falls (POSTEPOCH_8, 2026-10-07).
+
+    The one case on disk: Blas Castano (680604, COL) after the 2026-10 Spotrac
+    refetch. His contract-table row carries a 2027 arbitration estimate pill
+    ("$1,000,000", "ARB", no step) and a 2028 PRE-ARB pill, under a header that
+    reads 2027 to 2031, so the parser maps both cells to the right season and
+    the contradiction is Spotrac's own. _number_bare_arb then numbered the bare
+    rung ARB 1, and the board priced an arb-1 award ahead of a league-minimum
+    season. The repair the evidence supports: when the latest panel row shows
+    no arbitration-eligible service (no arbitration step, no Super Two), the
+    later PRE-ARB is believed and every earlier rung Spotrac left as a bare
+    "ARB" becomes PRE-ARB. A numbered Spotrac rung is never rewritten. Returns
+    (ladder, repaired); a conflict this rule cannot settle is left as served
+    and logged, so the ladder-order test names it."""
+    if not _class_falls(ladder):
+        return ladder, False
+    eligible = bool(base.get("arb_year")) or base.get("super_two") is True
+    last_pre = max((i for i, (_y, tok) in enumerate(ladder) if tok == "PRE-ARB"),
+                   default=None)
+    if not eligible and last_pre is not None:
+        out = [(y, "PRE-ARB") if i < last_pre and raw[i][1] == "ARB" else (y, tok)
+               for i, (y, tok) in enumerate(ladder)]
+        if not _class_falls(out):
+            return out, True
+    _log.warning("arb_export: status order falls for %s and no rule repairs it: %s",
+                 base.get("mlbam"), ladder)
+    return ladder, False
+
+
 def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
                 s1=None, s2=None, defl=None, banded=None) -> dict:
     """The projections board: every player with remaining arbitration years,
@@ -231,7 +277,11 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
         base = by_player.get(mlbam)
         if not base:
             continue
+        raw_ladder = ladder
         ladder = _number_bare_arb(ladder, base)
+        # Ladder-order guard: the arbitration class may not fall along the
+        # ladder, because service time only accrues.
+        ladder, order_fixed = _repair_status_order(raw_ladder, ladder, base)
         pw = proj.get(mlbam)
         prior = base.get("salary")
         steps = []
@@ -348,7 +398,7 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
             # a surface; both exist to let a lab say how old its evidence is.
             "svy": base.get("season") if base.get("service_time") else None,
             "c": _token_step(ladder[0][1])[0],
-            "e": _flags(base, season),
+            "e": _flags(base, season) | (F_ORDER_FIX if order_fixed else 0),
             "yl": len(ladder),
             "l": steps,
             "tot": total or None,
@@ -369,7 +419,9 @@ def build_board(panel_rows, model_doc, metrics, dpw, *, season: int,
                   "0 pre-arb, 1..4 arbitration year"),
             "e": ("flag bits: 1 step not from published service time, "
                   "2 step from the debut heuristic, 4 no salary on file, "
-                  "8 past the CBA expiry, 16 2020 prorated"),
+                  "8 past the CBA expiry, 16 2020 prorated, "
+                  "32 status order repaired (a Spotrac status that put a "
+                  "later season in a lower arbitration class was rewritten)"),
             "yl": "club-control years remaining",
             "l": "ladder, one tuple per remaining season: [season, proj_usd, lo_usd, hi_usd, token]",
             "tot": ("sum of the ladder, usd: projected arbitration rungs plus "
