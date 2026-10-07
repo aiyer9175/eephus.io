@@ -100,7 +100,7 @@
 
       /* Semantic accents (variable names kept for inline-JS compatibility).
          Mapped to muted, ink-on-paper baseball-card values. */
-      --neon-green: #1F7A3A; /* forest green - up */
+      --neon-green: #1A6B32; /* forest green - up; 4.61:1 or better on its pill tints (QPRA12) */
       --neon-magenta: #B91C1C; /* brick red - down */
       --neon-cyan: #0E2B4D; /* navy - link / accent */
       --neon-amber: #C9A227; /* card gold - highlight */
@@ -159,8 +159,8 @@
       --fv-40-bg: #BDB9A5;  --fv-40-fg: #36352E;  --fv-40-bd: #686358;  /* stone */
       --fv-35-bg: #B0AE9F;  --fv-35-fg: #333330;  --fv-35-bd: #645F55;  /* gray-tan */
       --fv-30-bg: #A1A097;  --fv-30-fg: #303030;  --fv-30-bd: #5F5A50;  /* cool gray */
-      --fv-25-bg: #92928B;  --fv-25-fg: #FBF8F0;  --fv-25-bd: #5A554B;  /* slate (light text) */
-      --fv-20-bg: #82817C; --fv-20-fg: #FBF8F0; --fv-20-bd: #555047; /* muted slate - recedes */
+      --fv-25-bg: #72716C;  --fv-25-fg: #FBF8F0;  --fv-25-bd: #5A554B;  /* slate (light text) */
+      --fv-20-bg: #63625D; --fv-20-fg: #FBF8F0; --fv-20-bd: #555047; /* muted slate - recedes */
 
       --level-very-young-bg: #DEEAD7;  --level-very-young-fg: #244B22;
       --level-young-bg:      #D9E5EE;  --level-young-fg:      #1F3F66;
@@ -170,9 +170,16 @@
       --level-too-old-bg:    #F8D6D1;  --level-too-old-fg:    #871B16;
       --level-mlb-bg:        #0E2B4D;  --level-mlb-fg:        #FBF8F0;
 
-      --up:    #1F7A3A;
+      --up:    #1A6B32;
       --down:  #B91C1C;
       --grad:  #6B4FA8;
+      /* Reading inks the light paper needs where the accent itself is too pale
+         (QPRA08, QPRA10, QPRA12); the dark block keeps the neon values. */
+      --age-young-ink: #2F6690;
+      --eta-near-ink:  #367230;
+      --eta-far-ink:   #9A5410;
+      --tool-s1: #B91C1C; --tool-s2: #6B3FB8; --tool-s3: #0B6B74; --tool-s4: #7D5F08;
+      --tool-s5: #1A6B32; --tool-s6: #A3238A; --tool-s7: #9A5410;
 
       /* Named accent tokens - each row variant gets its own semantic
          color slot so cross-section accent changes happen here, not
@@ -357,6 +364,11 @@
       --up:    #4FFF9E;
       --down:  #FF6B7A;
       --grad:  #B47CFF;
+      --age-young-ink: #5B9FD1;
+      --eta-near-ink:  #4FA64A;
+      --eta-far-ink:   #C97A1B;
+      --tool-s1: #FF6B7A; --tool-s2: #B47CFF; --tool-s3: #4FD9FF; --tool-s4: #FFD700;
+      --tool-s5: #4FFF9E; --tool-s6: #FF6FE0; --tool-s7: #FFAB4F;
 
       /* FV tiers - refractor rainbow (replaces the warm gold ramp).
          80=gold, 70=magenta, 65=purple, 60=cyan, 55=mint, 50-20 dim
@@ -368,7 +380,7 @@
       --fv-60-bg: #4FD9FF;  --fv-60-fg: #02181F;  --fv-60-bd: #1AB0E0;
       --fv-55-bg: #4FFF9E;  --fv-55-fg: #021A0B;  --fv-55-bd: #1AE070;
       --fv-50-bg: #B8C5D8;  --fv-50-fg: #0F1420;  --fv-50-bd: #8B95AB;
-      --fv-45-bg: #6B7A8F;  --fv-45-fg: #E8EEF5;  --fv-45-bd: #4A5468;
+      --fv-45-bg: #5C6A80;  --fv-45-fg: #E8EEF5;  --fv-45-bd: #4A5468;
       --fv-40-bg: #4A5468;  --fv-40-fg: #E8EEF5;  --fv-40-bd: #353C4E;
       --fv-35-bg: #3A4254;  --fv-35-fg: #D0D8E8;  --fv-35-bd: #2A3142;
       --fv-30-bg: #2E3548;  --fv-30-fg: #B8C5D8;  --fv-30-bd: #232A3A;
@@ -1134,7 +1146,6 @@
       font-weight: 800;
       width: 38px;
       flex-shrink: 0;
-      opacity: 0.7;
     }
     .filter-label {
       font-family: var(--font-sans);
@@ -1547,7 +1558,7 @@
       font-variant-numeric:tabular-nums; color:var(--text-primary); }
     .split-table tbody tr:hover td { background:var(--bg-secondary); }
     .split-rowlabel { font-family:var(--font-sans); font-weight:600; color:var(--text-primary); }
-    .split-sub { color:var(--text-tertiary); opacity:0.6; }
+    .split-sub { color:var(--text-tertiary); }
     .split-delta { display:block; font-size:9px; font-weight:600; margin-top:1px; }
     .split-plus-pos { color:var(--up); } .split-plus-neg { color:var(--down); }
     .split-custom { display:flex; flex-wrap:wrap; gap:10px 16px; align-items:flex-end; margin-bottom:10px;
@@ -1929,6 +1940,17 @@
       outline-offset: 2px;
       border-radius: 3px;
     }
+    .col-header .sort-header:focus-visible,
+    .debut-header .sort-header:focus-visible,
+    .spotlight-header .sort-header:focus-visible { outline-color: var(--col-header-fg); }
+    /* QPRA03: the row's player name is its link. */
+    .row-name-link { color: inherit; text-decoration: none; }
+    .row-name-link:hover { text-decoration: underline; }
+    .row-name-link:focus-visible { outline: 2px solid var(--neon-cyan); outline-offset: 2px; }
+    /* QPRP02: #content always holds at least one viewport, so the footer never
+       paints inside the first screen while the loader (or a section's own
+       loading line) is up and then jumps 7,600px when the board mounts. */
+    #content { min-height: 100vh; }
     /* v29 - Active sort column shows a direction-specific arrow (▲ asc
        / ▼ desc) sourced from the `data-sort-dir` attribute that
        syncSortHeaderActive() stamps onto the active header. Lets the
@@ -3384,7 +3406,6 @@
     }
     .tool-grade-pill .tg-code {
       font-weight: 600;
-      opacity: 0.85;
     }
     .tool-grade-pill .tg-val {
       font-weight: 700;
@@ -3545,7 +3566,6 @@
       font-family: var(--font-sans);
       font-weight: 500;
       font-size: 10px;
-      opacity: 0.78;
     }
 
     /* === MiLB cell ================================================ */
@@ -3662,10 +3682,10 @@
        current-year (anchors as 'ready now'); softer leaf-green for +1;
        cyan/gold/orange for +2/+3/+4; gray once we're 5+ years out. */
     .eta-now      { color: var(--neon-green); font-weight: 700; }
-    .eta-near     { color: #4FA64A; }
+    .eta-near     { color: var(--eta-near-ink); }
     .eta-close    { color: var(--neon-cyan); }
-    .eta-mid      { color: var(--neon-amber); }
-    .eta-far      { color: #C97A1B; }
+    .eta-mid      { color: var(--text-gold); }
+    .eta-far      { color: var(--eta-far-ink); }
     .eta-very-far { color: var(--text-tertiary); }
 
     /* === Detail panel ============================================= */
@@ -6474,8 +6494,8 @@
        per-source comparison panel. Subtle by default, accent on hover. */
     .src-attr-link {
       font-family: var(--font-sans); font-size: 10px;
-      color: var(--text-tertiary); text-decoration: none;
-      white-space: nowrap; opacity: 0.85;
+      color: var(--text-secondary); text-decoration: none;
+      white-space: nowrap;
     }
     .src-attr-link:hover { color: var(--neon-cyan, var(--accent-cyan)); opacity: 1; text-decoration: underline; }
     /* Prominent source-page CTA at the top of the FanGraphs writeup body -
@@ -6746,7 +6766,6 @@
     .detail-chip-ribbon .ribbon-sc-lbl {
       font-size: 9px;
       letter-spacing: 0.04em;
-      opacity: 0.85;
     }
     .detail-chip-ribbon .ribbon-sc-val {
       font-variant-numeric: tabular-nums;
@@ -8860,6 +8879,19 @@
          watch button's 44px target there. */
       .row-actions .compare-add-btn.is-compact,
       .row-actions .row-expand-btn { width: 44px; height: 44px; }
+      /* QPRA11: chips, sort headers, the org picker, the Debuted row buttons and
+         the card's back link, source toggle and meta links reach 44px too. */
+      button.chip { min-width: 44px; }
+      .org-picker-trigger, .back-link, .tm-src-toggle, .efv-claim-chip {
+        min-height: 44px; display: inline-flex; align-items: center;
+      }
+      /* Sort headers are grid items (some hidden by .desktop-only), so they take
+         the height only; their display stays the grid's. */
+      .col-header .sort-header, .debut-header .sort-header { min-height: 44px; align-content: center; }
+      .debut-row .compare-add-btn.is-compact,
+      .spotlight-row .compare-add-btn.is-compact { width: 44px; height: 44px; }
+      .detail-page-header .compare-add-btn { min-height: 44px; }
+      .detail-page-header .player-display-meta a { display: inline-block; padding: 14px 0; margin: -14px 0; }
 
       /* --- Dense tables → horizontally scrollable so columns never squish
          below legible size. display:block keeps an anonymous table inside
@@ -9055,7 +9087,7 @@
   <!-- position:relative re-anchors the absolute .global-controls rail to this
        masthead (not the page), so it sits below the eephus.io site nav. -->
   <header class="header" style="position: relative;">
-    <h1>
+    <h1 aria-label="PROSPX beta">
       <!-- v30 - Baseball badge logo. Cream face + dark outline read as
            a vintage Topps-card baseball; the seam arc is painted with
            the same cardinal → gold → green → navy gradient used on the
@@ -9063,7 +9095,7 @@
            CSS gradients aren't required on `stroke`). The stitching
            dashes overlay the seam to evoke a real ball without
            cluttering the silhouette. -->
-      <svg class="h1-logo" viewBox="0 0 44 44" role="img" aria-label="PROSPX baseball logo" style="cursor:pointer;" title="Back to MiLB Prospects" onclick="goToProspectsBoard()">
+      <svg class="h1-logo" viewBox="0 0 44 44" aria-hidden="true" focusable="false" style="cursor:pointer;" title="Back to MiLB Prospects" onclick="goToProspectsBoard()">
         <defs>
           <linearGradient id="ball-seam-gradient" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%"   stop-color="#B91C1C"/>
@@ -9089,7 +9121,7 @@
         </g>
       </svg>
       <span class="h1-title" style="cursor:pointer;" title="Back to MiLB Prospects" onclick="goToProspectsBoard()">PROSPX<span class="h1-rule" aria-hidden="true"></span></span>
-      <span class="eephus-beta h1-stage" title="PROSPX is in beta">&beta; beta</span>
+      <span class="eephus-beta h1-stage" title="PROSPX is in beta"><span aria-hidden="true">&beta; </span>beta</span>
       <!-- @MLBPROSPX lives in the title space the beta tag vacated (the badge
            moved to the eephus.io wordmark). Opens in a new tab. -->
       <a class="eph-xlink eph-xlink--mast eph-xlink--live" href="https://x.com/MLBPROSPX" target="_blank" rel="noopener noreferrer" aria-label="Follow @MLBPROSPX on X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="eph-xlink-handle">@MLBPROSPX</span></a>
@@ -9109,12 +9141,15 @@
     </div>
   </header>
 
-  <div id="content">
+  <main id="content">
     <!-- The boot loader is the pixel state component's loading kind (final-pass
          plan 5.7, PX-12), written statically because it paints before any
          script runs; assets/eephus-state.js draws the same markup. -->
     <div class="px-state is-loading" role="status" aria-live="polite"><span class="px-lob" aria-hidden="true"><i></i><svg width="92" height="36" viewBox="0 0 46 18" shape-rendering="crispEdges"><rect class="f" x="0" y="15" width="2" height="2" style="animation-delay:-1.6s"/><rect class="f" x="4" y="11" width="2" height="2" style="animation-delay:-1.5s"/><rect class="f" x="7" y="7" width="2" height="2" style="animation-delay:-1.4s"/><rect class="f" x="11" y="5" width="2" height="2" style="animation-delay:-1.3s"/><rect class="f" x="15" y="3" width="2" height="2" style="animation-delay:-1.2s"/><rect class="f" x="18" y="1" width="2" height="2" style="animation-delay:-1.1s"/><rect class="f r" x="22" y="1" width="2" height="2" style="animation-delay:-1.0s"/><rect class="f" x="26" y="1" width="2" height="2" style="animation-delay:-0.9s"/><rect class="f" x="29" y="3" width="2" height="2" style="animation-delay:-0.8s"/><rect class="f" x="33" y="5" width="2" height="2" style="animation-delay:-0.7s"/><rect class="f" x="37" y="7" width="2" height="2" style="animation-delay:-0.6s"/><rect class="f" x="40" y="11" width="2" height="2" style="animation-delay:-0.5s"/><rect class="f" x="44" y="15" width="2" height="2" style="animation-delay:-0.4s"/><rect class="f" x="44" y="16" width="2" height="2" style="animation-delay:-0.3s"/><rect class="f" x="44" y="15" width="2" height="2" style="animation-delay:-0.2s"/><rect class="f" x="44" y="15" width="2" height="2" style="animation-delay:-0.1s"/></svg></span><div class="px-state-msg">Loading prospect data…</div></div>
-  </div>
+  </main>
+  <!-- QPRA13: one persistent polite region; the sync pass mirrors the result
+       count into it so filter, search and sort changes are announced. -->
+  <div id="px-live" class="visually-hidden" role="status" aria-live="polite"></div>
 
 </div>
 
@@ -9122,7 +9157,7 @@
      below) + side panel. Pinned prospects/farms persist in localStorage
      so refresh / sharing keeps the comparison alive. Up to 3 items
      side-by-side. The chip auto-hides when the cart is empty. -->
-<div class="gfx-overlay" id="gfx-overlay" role="dialog" aria-label="Generate graphic">
+<div class="gfx-overlay" id="gfx-overlay" role="dialog" aria-modal="true" aria-label="Generate graphic">
   <div class="gfx-modal">
     <div class="gfx-modal-head">
       <span class="gfx-modal-title">Generate graphic</span>
@@ -9224,7 +9259,7 @@
   </div>
 </div>
 
-<aside class="compare-panel" id="compare-panel" role="dialog" aria-label="Compare">
+<aside class="compare-panel" id="compare-panel" role="dialog" aria-modal="true" aria-label="Compare">
   <div class="compare-head">
     <div class="compare-title">Compare</div>
     <button class="compare-close" id="compare-close" type="button" aria-label="Close">×</button>
@@ -9284,7 +9319,7 @@
        this button so the user lands on the list without scrolling past
        80px of filter chrome. Hidden on desktop via CSS. -->
   <div class="filter-toggle-row">
-    <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false">
+    <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false" aria-controls="filter-bar">
       <span class="filter-toggle-label">Filters</span>
       <span class="filter-toggle-count" id="filter-toggle-count"></span>
       <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
@@ -9436,7 +9471,7 @@
             <option value="delivery">Delivery</option>
           </optgroup>
         </select>
-        <select class="chip" id="tool-filter-min">
+        <select class="chip" id="tool-filter-min" aria-label="Minimum tool grade">
           <option value="0">≥ any</option>
           <option value="50">≥ 50</option>
           <option value="55">≥ 55</option>
@@ -11909,7 +11944,7 @@ function fvBadgeSingleMarkHTML(player) {
     ? "Thinly sourced - no scouting source has graded this prospect yet; the grade is a production-only leading indicator from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards)."
     : "Thinly sourced - only one published grade across this player's history (single observation). Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.";
   // Inner span so the "~" (which sits high in its em-box) can be optically centered in the chip.
-  return `<span class="fv-single-mark" title="${tip}"><span>~</span></span>`;
+  return `<span class="fv-single-mark" title="${tip}"><span aria-hidden="true">~</span><span class="visually-hidden">thinly sourced</span></span>`;
 }
 
 // v14 - Returns " is-breakout" when the prospect carries the active-
@@ -12295,7 +12330,7 @@ function healthBadgeHTML(p) {
   // is smaller / more dense so the indicator can live inline with the
   // player name + Tool grade pill without crowding.
   const _glyph = (tier, tip, aria) =>
-    `<span class="health-glyph is-${tier}" title="${tip}" aria-label="${aria}"><span class="health-glyph-plus">+</span></span>`;
+    `<span class="health-glyph is-${tier}" role="img" title="${tip}" aria-label="${aria}"><span class="health-glyph-plus" aria-hidden="true">+</span></span>`;
 
   const il = p.il_status || {};
   if (il.is_on_il) {
@@ -14122,6 +14157,7 @@ function goToPlayer(key) {
   const p = new URLSearchParams();
   p.set("player", key);
   _pushHash(p);
+  _pxFocusSoon("#content .detail-page-header .player-display-name");
 }
 function goToDraftee(key) {
   const p = new URLSearchParams();
@@ -17205,8 +17241,8 @@ function _prospectDetailSidebarCards(p, activeTab) {
       { key: "FV sources", value: sourceCount || " - " },
       spread != null ? { key: "FV spread", value: spread.toFixed(1), valColor: spread >= 10 ? "var(--neon-violet)" : "var(--text-primary)" } : null,
       (p.tools || {}).composite_overall != null ? { key: "Tool comp", value: Math.round(p.tools.composite_overall) } : null,
-      fvBadgeBreakoutClass(p) ? { key: "Breakout", value: "★ flagged", valColor: "#7FFFD4" } : null,
-      fvBadgeUpsideClass(p) ? { key: "Upside", value: "^ flagged", valColor: "var(--upside-pink)" } : null,
+      fvBadgeBreakoutClass(p) ? { key: "Breakout", value: "★ flagged", valColor: "var(--up)" } : null,
+      fvBadgeUpsideClass(p) ? { key: "Upside", value: "^ flagged", valColor: "var(--text-primary)" } : null,
     ].filter(Boolean);
     return [
       { type: "leaderboard", title: `Toolsiest · ${pos} peers`, rows: peers },
@@ -22023,8 +22059,8 @@ function renderInjured() {
   const _ilTypePalette = (type) => {
     const t = String(type || "").toLowerCase();
     if (t.startsWith("7"))  return { bg: "rgba(31,122,58,0.12)",  fg: "var(--up)",         bd: "var(--up)" };
-    if (t.startsWith("10")) return { bg: "rgba(232,165,31,0.10)", fg: "#d9b14b",           bd: "#d9b14b" };
-    if (t.startsWith("15")) return { bg: "rgba(232,165,31,0.16)", fg: "var(--neon-amber)", bd: "var(--neon-amber)" };
+    if (t.startsWith("10")) return { bg: "rgba(232,165,31,0.10)", fg: "var(--text-gold)", bd: "var(--neon-amber)" };
+    if (t.startsWith("15")) return { bg: "rgba(232,165,31,0.16)", fg: "var(--text-gold)", bd: "var(--neon-amber)" };
     if (t.startsWith("60")) return { bg: "rgba(203,55,55,0.14)",  fg: "var(--down)",       bd: "var(--down)" };
     return { bg: "var(--bg-tertiary)", fg: "var(--text-secondary)", bd: "var(--border)" };
   };
@@ -25147,7 +25183,7 @@ function _renderWarRoom(host) {
       </tr>`;
     }).join("");
     host.innerHTML = head
-      + `<div class="fa-note" style="margin:6px 0;">${picks.length} picks in · updated ${escapeHtml(String(d.generated_at || ""))}. Reach/steal = our board rank minus the pick number; slot surplus = the historical value of that pick slot; implied surplus = the FanGraphs 2026 tier value for the pick's FV and role minus the bonus (actual once signed, otherwise the expected slot).</div>`
+      + `<div class="fa-note" aria-live="polite" style="margin:6px 0;">${picks.length} picks in · updated ${escapeHtml(String(d.generated_at || ""))}. Reach/steal = our board rank minus the pick number; slot surplus = the historical value of that pick slot; implied surplus = the FanGraphs 2026 tier value for the pick's FV and role minus the bonus (actual once signed, otherwise the expected slot).</div>`
       + `<table class="detail-table"><thead><tr>
           <th>#</th><th>Team</th><th>Player</th><th>Our board</th><th>Reach / steal</th><th>Slot surplus</th><th>Exp 6yr WAR</th><th>Bonus</th><th title="FanGraphs 2026 tier value for the pick's FV and role minus the bonus (actual once signed, otherwise the expected slot)">Implied surplus</th>
         </tr></thead><tbody>${rows}</tbody></table>`;
@@ -25157,7 +25193,12 @@ function _renderWarRoom(host) {
     if (state.section !== "draft" || state.draftView !== "war-room") {
       clearInterval(_warRoom.timer); _warRoom.timer = null; return;
     }
-    _loadWarRoom(() => { if (state.draftView === "war-room") _renderWarRoom(host); });
+    _loadWarRoom(() => {
+      if (state.draftView !== "war-room") return;
+      _renderWarRoom(host);
+      const note = host.querySelector(".fa-note"), live = document.getElementById("px-live");
+      if (note && live) live.textContent = note.textContent.split(".")[0];
+    });
   }, 60000);
 }
 
@@ -28834,7 +28875,7 @@ function _playerOriginHTML(p) {
   if (!bits.length) return "";
   return '<div class="player-display-meta player-origin" style="margin-top:3px;font-size:var(--fs-sm);color:var(--text-tertiary);">'
     + '<span style="text-transform:uppercase;letter-spacing:.06em;font-size:10px;font-weight:700;">Origin</span> '
-    + bits.filter(Boolean).join(' <span style="opacity:.5;">·</span> ') + '</div>';
+    + bits.filter(Boolean).join(' <span aria-hidden="true">·</span> ') + '</div>';
 }
 
 let _collegeSort = { key: null, dir: -1 };
@@ -32754,7 +32795,7 @@ function provReceiptHTML(p) {
   } else {
     txt += "; no first grade inside the window";
   }
-  return `<div class="prov-receipt" style="margin-top:8px;padding:6px 9px;border-left:2px solid var(--border);background:var(--bg-tertiary);border-radius:3px;font-family:var(--font-mono);font-size:10.5px;color:var(--text-secondary);line-height:1.45;" title="The production grade frozen on that date, and the first label-source opinion after it (provisional track record). The freeze is committed and never rewritten.">${escapeHtml(txt)}.</div>`;
+  return `<div class="prov-receipt" style="margin-top:8px;padding:6px 9px;border-left:2px solid var(--border);background:var(--bg-tertiary);border-radius:3px;font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--text-secondary);line-height:1.45;" title="The production grade frozen on that date, and the first label-source opinion after it (provisional track record). The freeze is committed and never rewritten.">${escapeHtml(txt)}.</div>`;
 }
 // THE SAME PLAYER WAS ON THE BOARD TWICE. 2,636 keys carry BOTH a graded row (the
 // fabricated FV-35 performance anchor, which the outcome curve maps to its floor for
@@ -34963,7 +35004,7 @@ function handednessChipPairHTML(p, overrideColor = null) {
   const handColor = side => {
     if (overrideColor) return overrideColor;
     return side === "L" ? "var(--neon-violet)"
-         : side === "R" ? "var(--neon-amber)"
+         : side === "R" ? "var(--text-gold)"
          : side === "S" ? "var(--neon-cyan)"
          : "var(--text-tertiary)";
   };
@@ -38559,7 +38600,7 @@ function dollarDvmColor(v) {
   if (v >= 115) return "var(--up)";
   if (v >= 105) return "var(--neon-cyan)";
   if (v >= 95)  return "var(--text-secondary)";
-  if (v >= 85)  return "var(--neon-amber)";
+  if (v >= 85)  return "var(--text-gold)";
   return "var(--down)";
 }
 function dollarDvmTooltip(v) {
@@ -38711,17 +38752,20 @@ document.addEventListener("click", (e) => {
   if (btn.dataset.playerTab) {
     state.playerTab = btn.dataset.playerTab;
     syncToURL(); render();
+    _pxFocusSoon("#content .detail-tab.active");
     return;
   }
   if (btn.dataset.farmTab) {
     state.farmTab = btn.dataset.farmTab;
     syncToURL(); render();
+    _pxFocusSoon("#content .detail-tab.active");
     return;
   }
   if (btn.dataset.prospectTab) {
     // Shared by both draft + overseas detail pages.
     state.prospectTab = btn.dataset.prospectTab;
     syncToURL(); render();
+    _pxFocusSoon("#content .detail-tab.active");
     return;
   }
   // Pagination chip - find which page key fired.
@@ -39294,7 +39338,21 @@ function mountOrgPicker(mountId, stateKey, allLabel, onChange) {
   trigger.addEventListener("click", (e) => { e.stopPropagation(); if (panel.hidden) open(); else close(); });
   search.addEventListener("click", (e) => e.stopPropagation());
   search.addEventListener("input", () => _filterOrgPickerOptions(mount, search.value));
-  search.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); trigger.focus(); } });
+  trigger.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowDown" || !panel.hidden) return;
+    e.preventDefault(); open();
+  });
+  panel.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); trigger.focus(); return; }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    const opts = [...panel.querySelectorAll(".org-picker-option")].filter(o => o.style.display !== "none");
+    if (!opts.length) return;
+    e.preventDefault();
+    const i = opts.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") (opts[i + 1] || opts[0]).focus();
+    else if (i <= 0) search.focus();
+    else opts[i - 1].focus();
+  });
   panel.addEventListener("click", (e) => {
     const opt = e.target.closest(".org-picker-option");
     if (!opt) return;
@@ -39356,9 +39414,9 @@ function _ageHeatColor(age) {
   if (age == null || !isFinite(age)) return "var(--text-tertiary)";
   const delta = age - _poolMeanAge();
   if (delta <= -1.5) return "var(--neon-cyan)"; // very young - cool blue
-  if (delta < -0.4) return "#5b9fd1"; // young-ish - tan-blue
+  if (delta < -0.4) return "var(--age-young-ink)"; // young-ish - tan-blue
   if (delta <   0.4) return "var(--text-secondary)";  // neutral
-  if (delta <= 1.5) return "var(--neon-amber)"; // older-ish - warm amber
+  if (delta <= 1.5) return "var(--text-gold)"; // older-ish - warm amber
   return "var(--down)"; // very old - red
 }
 
@@ -39953,21 +40011,21 @@ function _toolHistoryChart(p) {
   // for visual consistency.
   const TOOLS = isPit
     ? [
-        ["fb",  "FB",  "#FF6B7A"],   // red
-        ["sl",  "SL",  "#B47CFF"],   // violet
-        ["cb",  "CB",  "#4FD9FF"],   // cyan
-        ["ch",  "CH",  "#FFD700"],   // gold
-        ["cmd", "CMD", "#4FFF9E"],   // mint
-        ["ct",  "CT",  "#FF6FE0"],   // magenta
+        ["fb",  "FB",  "var(--tool-s1)"],   // red
+        ["sl",  "SL",  "var(--tool-s2)"],   // violet
+        ["cb",  "CB",  "var(--tool-s3)"],   // cyan
+        ["ch",  "CH",  "var(--tool-s4)"],   // gold
+        ["cmd", "CMD", "var(--tool-s5)"],   // mint
+        ["ct",  "CT",  "var(--tool-s6)"],   // magenta
       ]
     : [
-        ["hit",       "HIT",  "#FF6B7A"],
-        ["pwr",       "PWR",  "#B47CFF"],
-        ["speed",     "SPD",  "#4FD9FF"],
-        ["field",     "FLD",  "#FFD700"],
-        ["throw",     "ARM",  "#4FFF9E"],
-        ["pitch_sel", "PSEL", "#FF6FE0"],
-        ["bat_ctrl",  "BCT",  "#FFAB4F"],
+        ["hit",       "HIT",  "var(--tool-s1)"],
+        ["pwr",       "PWR",  "var(--tool-s2)"],
+        ["speed",     "SPD",  "var(--tool-s3)"],
+        ["field",     "FLD",  "var(--tool-s4)"],
+        ["throw",     "ARM",  "var(--tool-s5)"],
+        ["pitch_sel", "PSEL", "var(--tool-s6)"],
+        ["bat_ctrl",  "BCT",  "var(--tool-s7)"],
       ];
 
   // For each tool, build (date, grade) series from points whose
@@ -40106,8 +40164,8 @@ function _toolHistoryChart(p) {
   const legendItems = TOOLS.filter(([tk]) => series[tk]).map(([tk, lbl, color]) => {
     const latest = series[tk][series[tk].length - 1];
     return `<span style="display:inline-flex;align-items:baseline;gap:4px;font-size:10px;font-family:var(--font-mono);color:var(--text-secondary);margin-right:10px;">
-      <span style="display:inline-block;width:10px;height:2px;background:${color};vertical-align:middle;border-radius:1px;"></span>
-      <span style="color:${color};font-weight:700;">${escapeHtml(lbl)}</span>
+      <span aria-hidden="true" style="display:inline-block;width:10px;height:3px;background:${color};vertical-align:middle;"></span>
+      <span style="color:var(--text-primary);font-weight:700;">${escapeHtml(lbl)}</span>
       <span style="color:var(--text-tertiary);">${fvCeil(latest.v)}</span>
     </span>`;
   }).join("");
@@ -48705,7 +48763,7 @@ function makeFvTape(points) {
   let rsiChip = "";
   if (rsi != null) {
     const rsiState = rsi >= 70 ? "overbought" : rsi <= 30 ? "oversold" : "neutral";
-    const rsiCol = rsi >= 70 ? "var(--neon-amber)" : rsi <= 30 ? "var(--neon-cyan)" : "var(--text-secondary)";
+    const rsiCol = rsi >= 70 ? "var(--text-gold)" : rsi <= 30 ? "var(--neon-cyan)" : "var(--text-secondary)";
     rsiChip = chip("RSI", `${rsi}`, rsiCol, `Relative strength of grade changes (${rsiState}); a momentum gauge, not a projection`);
   }
   const volChip = vol != null ? chip("VOL", vol.toFixed(1), "var(--text-secondary)", "Realized volatility: standard deviation across sources on the latest grade") : "";
@@ -49020,7 +49078,7 @@ function renderPlayerDetail(key) {
   const statusPill = p.status === "debuted"
     ? `<span class="debut-pill" style="background:var(--bg-tertiary);color:var(--grad);">Debuted ${p.debut_date || ""}</span>`
     : ilNow
-      ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border-color:var(--accent-il);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
+      ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--text-gold);border-color:var(--accent-il);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
       : "";
 
   // Post-Tommy John chip. The health_profile.tj_surgery_date is set
@@ -50315,7 +50373,7 @@ function renderPlayerDetail(key) {
       let spreadTag = "";
       if (spread && spread >= 5) {
         const strong = spread >= 10;
-        const color = strong ? "var(--neon-amber)" : "rgba(255,191,0,0.7)";
+        const color = strong ? "var(--text-gold)" : "var(--text-secondary)";
         spreadTag = `<span style="font-size:9px;color:${color};margin-left:4px;" title="Source spread ${spread} grade-points">±${Math.round(spread)}</span>`;
       }
       const dualMark = key === "speed" ? dualMarkerHTML : "";
@@ -50961,7 +51019,7 @@ function renderPlayerDetail(key) {
         ? `${s.label} - ${nCycles} cycle${nCycles === 1 ? "" : "s"} on file (latest ${latestBySrc[s.key].date})`
         : `${s.label} - no report on file (no long-form scouting prose ingested from this source yet)`;
       const countTag = nCycles > 1 ? ` <span class="sr-tab-count">${nCycles}</span>` : "";
-      return `<button class="${cls}" data-sr-source="${escapeHtml(s.key)}" ${disabled} title="${escapeHtml(title)}" type="button">${escapeHtml(s.label)}${countTag}</button>`;
+      return `<button class="${cls}" role="tab" aria-selected="${has && s.key === defaultSrc ? "true" : "false"}" data-sr-source="${escapeHtml(s.key)}" ${disabled} title="${escapeHtml(title)}" type="button">${escapeHtml(s.label)}${countTag}</button>`;
     }).join("");
     const bodies = SOURCES.map(s => {
       const list = entriesBySrc[s.key];
@@ -55355,6 +55413,151 @@ function observeLazyCharts() {
   });
 }
 
+// QPRA03: the player name inside a row becomes <a href="#player=KEY">, so the row
+// needs no button role (a 4,000-character name with three nested buttons). Returns
+// true when the row has a name to carry the link.
+function _pxRowNameLink(row) {
+  if (!row.dataset.key) return false;
+  const nm = row.querySelector(".player-name");
+  if (!nm) return false;
+  if (nm.querySelector("a.row-name-link")) return true;
+  const tn = [...nm.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+  if (!tn) return false;
+  const a = document.createElement("a");
+  a.className = "row-name-link";
+  a.href = "#player=" + encodeURIComponent(row.dataset.key);
+  tn.replaceWith(a);
+  a.appendChild(tn);
+  row.removeAttribute("role");
+  row.removeAttribute("tabindex");
+  return true;
+}
+// Focus a control the next render paints (the card name heading, the pressed tab).
+// The card re-renders as its sidecars land, so for 3 s any drop back to <body>
+// is caught and the same control takes focus again.
+function _pxFocusSoon(sel) {
+  const until = Date.now() + 3000;
+  const tick = () => {
+    const el = document.querySelector(sel), ae = document.activeElement;
+    if (el && (!ae || ae === document.body || !ae.isConnected)) el.focus({ preventScroll: true });
+    if (Date.now() < until) setTimeout(tick, 120);
+  };
+  requestAnimationFrame(tick);
+}
+// QPRA04 / QPRA05 / QPRA06 / QPRA13: one pass, run after every #content change
+// (class flips included), states the active section and detail tab, names each
+// filter group and its selects, sets aria-pressed on toggle chips, marks the card
+// name and section heads as headings, titles the document after the open card and
+// mirrors the result count into the live region.
+let _pxA11yQueued = false, _pxA11ySeq = 0, _pxLiveLast = "";
+const _PX_TITLE = document.title;
+function _pxIsToggleChip(b) {
+  if (b.id || b.classList.contains("reset-chip")) return false;
+  return [...b.attributes].some(a => a.name.startsWith("data-") && a.name !== "data-reset-page");
+}
+function _pxA11ySync() {
+  _pxA11yQueued = false;
+  const root = document.getElementById("content");
+  if (!root) return;
+  root.querySelectorAll(".section-tab, .detail-tab").forEach(t => {
+    if (t.classList.contains("active")) t.setAttribute("aria-current", "page");
+    else t.removeAttribute("aria-current");
+  });
+  root.querySelectorAll(".filter-group").forEach(g => {
+    if (!g.hasAttribute("role")) g.setAttribute("role", "group");
+    const lab = g.querySelector(":scope > .filter-label");
+    if (lab) {
+      if (!lab.id) lab.id = "px-fl-" + (++_pxA11ySeq);
+      if (!g.hasAttribute("aria-labelledby")) g.setAttribute("aria-labelledby", lab.id);
+      g.querySelectorAll("select").forEach(s => {
+        if (!s.hasAttribute("aria-label") && !s.hasAttribute("aria-labelledby")) s.setAttribute("aria-labelledby", lab.id);
+      });
+    }
+    g.querySelectorAll("button.chip").forEach(b => {
+      if (_pxIsToggleChip(b)) b.setAttribute("aria-pressed", b.classList.contains("active") ? "true" : "false");
+    });
+  });
+  root.querySelectorAll("div.player-display-name").forEach(h => {
+    h.setAttribute("role", "heading"); h.setAttribute("aria-level", "2");
+    if (!h.hasAttribute("tabindex")) h.setAttribute("tabindex", "-1");
+  });
+  root.querySelectorAll("div.detail-title").forEach(h => {
+    if (!h.hasAttribute("role")) { h.setAttribute("role", "heading"); h.setAttribute("aria-level", "3"); }
+  });
+  decorateA11yRows();
+  const nm = (state.view && state.view.type && state.view.type !== "list")
+    ? root.querySelector(".detail-page-header .player-display-name") : null;
+  const name = nm ? nm.textContent.replace(/\s+/g, " ").trim() : "";
+  document.title = name ? `${name} - PROSPX - eephus.io` : _PX_TITLE;
+  const live = document.getElementById("px-live"), cnt = root.querySelector(".pg-count");
+  const said = cnt ? cnt.textContent.trim() : "";
+  if (live && said && said !== _pxLiveLast) { _pxLiveLast = said; live.textContent = said; }
+}
+function _pxQueueA11y() {
+  if (_pxA11yQueued) return;
+  _pxA11yQueued = true;
+  requestAnimationFrame(_pxA11ySync);
+}
+// QPRA03: the GFX dialog and the compare panel are modal. Opening moves focus to the
+// close button, Tab cycles inside, Escape closes, and focus goes back to the opener.
+const _PX_DIALOGS = [
+  { id: "gfx-overlay",   openCls: "is-open", first: "#gfx-close",     close: () => closeGfxModal() },
+  { id: "compare-panel", openCls: "open",    first: "#compare-close", close: () => document.getElementById("compare-panel").classList.remove("open") },
+];
+const _pxDlgOpener = {};
+function _pxOpenDialog() {
+  for (const d of _PX_DIALOGS) {
+    const el = document.getElementById(d.id);
+    if (el && el.classList.contains(d.openCls)) return { d, el };
+  }
+  return null;
+}
+function _pxFocusables(el) {
+  return [...el.querySelectorAll('a[href],button:not([disabled]),select:not([disabled]),input:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+    .filter(x => x.getClientRects().length > 0);
+}
+function _pxWireA11y() {
+  _PX_DIALOGS.forEach(d => {
+    const el = document.getElementById(d.id);
+    if (!el) return;
+    let was = el.classList.contains(d.openCls);
+    new MutationObserver(() => {
+      const now = el.classList.contains(d.openCls);
+      if (now === was) return;
+      was = now;
+      if (now) {
+        const a = document.activeElement;
+        _pxDlgOpener[d.id] = (a && a !== document.body && !el.contains(a)) ? a : null;
+        setTimeout(() => {
+          const f = el.querySelector(d.first);
+          if (f && !el.contains(document.activeElement)) f.focus();
+        }, 0);
+      } else {
+        const o = _pxDlgOpener[d.id];
+        _pxDlgOpener[d.id] = null;
+        if (o && o.isConnected && (el.contains(document.activeElement) || document.activeElement === document.body)) o.focus();
+      }
+    }).observe(el, { attributes: true, attributeFilter: ["class"] });
+  });
+  document.addEventListener("keydown", (e) => {
+    const o = _pxOpenDialog();
+    if (!o) return;
+    if (e.key === "Escape") { e.preventDefault(); o.d.close(); return; }
+    if (e.key !== "Tab") return;
+    const f = _pxFocusables(o.el);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (!o.el.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  const root = document.getElementById("content");
+  if (root) new MutationObserver(_pxQueueA11y).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+  _pxQueueA11y();
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", _pxWireA11y);
+else _pxWireA11y();
+
 // Phase 4 a11y: every list/grid row that the delegated click handler
 // treats as activatable also needs tabindex + role so keyboard users
 // can tab to it, AND a screen reader announces it as a button. We do
@@ -55363,6 +55566,7 @@ function observeLazyCharts() {
 var A11Y_CLICK_CONTROLS = ".g-term[data-term], tr.psh-fold-row, .overview-tile[onclick]";
 function decorateA11yRows() {
   document.querySelectorAll(".player-row[data-key], .spotlight-row[data-key], .debut-row[data-key], .farm-row[data-org], .pos-depth-card[data-key]").forEach(row => {
+    if (_pxRowNameLink(row)) return;
     if (!row.hasAttribute("tabindex")) row.setAttribute("tabindex", "0");
     if (!row.hasAttribute("role"))     row.setAttribute("role", "button");
   });
@@ -57163,8 +57367,10 @@ function attachHandlers() {
       const card = srTab.closest(".scouting-reports-card");
       if (!card) return;
       const src = srTab.dataset.srSource;
-      card.querySelectorAll(".sr-tab").forEach(t =>
-        t.classList.toggle("is-active", t === srTab));
+      card.querySelectorAll(".sr-tab").forEach(t => {
+        t.classList.toggle("is-active", t === srTab);
+        t.setAttribute("aria-selected", t === srTab ? "true" : "false");
+      });
       card.querySelectorAll(".sr-body").forEach(b =>
         b.classList.toggle("is-hidden", b.dataset.srBody !== src));
       return;
@@ -57327,6 +57533,12 @@ function attachHandlers() {
       });
       return;
     }
+    // A row's name link opens the card in this tab; a modified click opens a new one.
+    const nameLink = e.target.closest("a.row-name-link");
+    if (nameLink) {
+      if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+      e.preventDefault();
+    }
     const row = e.target.closest("[data-key], [data-org]");
     if (!row) return;
     if (row.dataset.key)      goToPlayer(row.dataset.key);
@@ -57435,6 +57647,12 @@ function attachHandlers() {
     sectionTabsToggle.addEventListener("click", () => {
       const open = sectionTabsBar.classList.toggle("is-open");
       sectionTabsToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    sectionTabsBar.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || !sectionTabsBar.classList.contains("is-open")) return;
+      e.stopPropagation();
+      closeSectionTabs();
+      sectionTabsToggle.focus();
     });
     document.querySelectorAll(".section-tab").forEach(btn => {
       btn.addEventListener("click", () => {
