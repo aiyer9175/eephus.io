@@ -159,6 +159,7 @@ _AWARDS_BALLOT_CSS_VER = _asset_ver("assets/awards-ballot.css")
 # count and date on that page is server-rendered here at build time, so the
 # surface still tells the truth with JavaScript off.
 _ACCT_HUB_VER = _asset_ver("assets/accountability.js")
+_ACCT_HUB_CSS_VER = _asset_ver("assets/accountability.css")
 # Diamond section (2026-08-05): one config script, five module apps, and the
 # Diamond Pass client. The five module apps are owned by their own lanes. A
 # file that is not on disk yet hashes to "1" here rather than raising, so the
@@ -6369,6 +6370,8 @@ def build_models() -> str:
         for k, lab, n in filters)
 
     body = (
+        # Linked ahead of the markup so the tiles paint as a grid (QREP05).
+        f'<link rel="stylesheet" href="/assets/accountability.css?v={_ACCT_HUB_CSS_VER}">'
         f'<div class="fa-app mlbstats-app acct-app" data-acct-stale-days="{model_registry.STALE_DAYS}">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("models")}Model Accountability</h1></div>'
