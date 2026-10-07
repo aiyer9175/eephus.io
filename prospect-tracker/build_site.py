@@ -142,6 +142,9 @@ _TEAM_CSS_VER = _asset_ver("assets/team.css")
 # (SCORES_4a, SCORES_4b) get their own stamps when they land.
 _SCORES_VER = _asset_ver("assets/scores.js")
 _SCORES_CSS_VER = _asset_ver("assets/scores.css")
+# The lazy video chunk (SCORES_4a): scores.js loads it on the first game-view
+# open from the mount root's data-vv stamp, never as a tag in the shell.
+_SCORES_VIDEO_VER = _asset_ver("assets/scores-video.js")
 _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /awards/ - the Awards section of Awards / HoF (AWARDS_7), behind awards_core.AWARDS_LIVE.
 _AWARDS_VER = _asset_ver("assets/awards.js")
@@ -5566,7 +5569,7 @@ def build_scores() -> str:
     body = (
         '<div class="fa-app scores-app">'
         + _scores_module_head("scores")
-        + '<div id="scores-app-root"></div>'
+        + f'<div id="scores-app-root" data-vv="{_SCORES_VIDEO_VER}"></div>'
         '</div>'
         f'<link rel="stylesheet" href="/assets/scores.css?v={_SCORES_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'

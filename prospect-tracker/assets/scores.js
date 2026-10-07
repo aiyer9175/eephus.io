@@ -4,22 +4,20 @@
  * Written by Noah J. Dengler (@ARKNDJL), 2026 */
 
 /* /scores/ - Scores / Standings, the scores page (SCORES_3, behind
-   scores_core.SCORES_LIVE). A pure reader of the scores job's files under
-   /data/scores/: this file joins, sorts and formats what the job wrote, and
-   compares times for the stale rule; it computes no number of its own.
+   scores_core.SCORES_LIVE). A pure reader of the job's files under
+   /data/scores/: it joins, sorts and formats what the job wrote and compares
+   times for the stale rule; it computes no number of its own.
 
-   FETCH RULES (plan 2.3). The small polled file every job.poll_live_s while a
-   game on the viewed date is live and the tab is visible, job.poll_idle_s
-   otherwise, none while hidden, doubling backoff on errors. The index once per
-   load and again when the polled file's index_rev moves; the season index for
-   the season in view; a date or game file only when its rev moves, requested
-   as <file>?v=<rev>. Every scores request carries cache: "no-cache". The
-   player link corpus loads only once a game view opens.
+   FETCH RULES (plan 2.3): the polled file every job.poll_live_s while a game
+   on the viewed date is live and the tab is visible, else job.poll_idle_s,
+   none while hidden, backing off on errors; the index when index_rev moves;
+   date, season and game files only when their rev moves, as <file>?v=<rev>;
+   every request with cache: "no-cache"; the player links and the video chunk
+   (assets/scores-video.js) only once a game view opens.
 
-   LABELLING (plan 4). Every model number sits inside an element carrying
-   data-model-id whose visible chip reads the index registry block's sentence
-   ("MLB, provisional"); a number whose row is absent from that block is not
-   drawn. No team colours: tokens only. */
+   LABELLING (plan 4): every model number sits in a data-model-id element whose
+   chip reads the registry block's sentence ("MLB, provisional"); a number with
+   no row there is not drawn. Tokens only, no team colours. */
 (function () {
   "use strict";
 
@@ -193,8 +191,7 @@
   }
 
   // ---------------------------------------------------------------- loader
-  // One loader per page. fetchFn(url, opts) returns a promise (or thenable)
-  // of a Response; every request it makes carries cache: "no-cache".
+  // One loader per page; fetchFn(url, opts) resolves to a Response.
   function makeLoader(fetchFn, clientNow) {
     clientNow = clientNow || function () { return Date.now(); };
     var S = { latest: null, index: null, indexRev: null, seasons: {}, dates: {}, games: {},
@@ -609,11 +606,10 @@
     if (!g.plays_big || !g.plays_big.length) return '<p class="sc-dim">' + esc(g.plays_big_reason || "No plate appearance moved win probability 3 points or more yet.") + "</p>";
     var rows = g.plays_big.map(function (b) {
       var s = b.situation || {}, lead = s.lead === 0 ? "tied" : s.lead > 0 ? b.bat_team + " leads by " + s.lead : b.bat_team + " trails by " + (-s.lead);
-      var clip = b.clip && g.clips && g.clips[b.clip] && isNum(g.clips[b.clip].dur_s) ? ' <span class="sc-chip">Video ' + mmss(g.clips[b.clip].dur_s) + "</span>" : "";
       return '<li class="sc-big" data-ab="' + b.ab + '"><span class="sc-rank">' + b.rank + '</span><div>' +
         '<p class="sc-dim">' + esc(half3(b.half) + " " + b.inning + ", " + outsText(s.outs || 0) + ", " + basesText(s.bases) + ", " + lead) + "</p>" +
         "<p>" + esc(b.text) + "</p><p>" + esc(b.bat_team) + " " + pct(b.before) + "% to " + pct(b.after) + "% (" + signed(b.swing) + ")" +
-        (isNum(b.li) ? ", LI " + b.li.toFixed(2) : "") + clip + "</p></div></li>";
+        (isNum(b.li) ? ", LI " + b.li.toFixed(2) : "") + "</p>" + vslot("big", b.ab) + "</div></li>";
     }).join("");
     return labelled(ix, "scores_mlb_wp", '<ol class="sc-bigs">' + rows + "</ol>", "div", "sc-block-num");
   }
@@ -623,7 +619,7 @@
     var rows = g.stars.map(function (s) {
       return '<li><span class="sc-rank">' + s.rank + "</span><div><p><b>" + player(s.id, s.name) + "</b> " + esc(s.team) +
         ", " + esc(signed3(s.score)) + (s.basis === "runs" ? " (runs prevented)" : " (win probability added)") + "</p>" +
-        '<p class="sc-dim">' + esc(s.why || "") + "</p></div></li>";
+        '<p class="sc-dim">' + esc(s.why || "") + "</p>" + vslot("star", s.id) + "</div></li>";
     }).join("");
     var note = g.first_star_note ? '<p class="sc-note">First star: top player on the winning team.</p>' : "";
     return head + labelled(ix, "scores_stars_rule", '<ol class="sc-stars">' + rows + "</ol>" + note, "div", "sc-block-num");
@@ -650,7 +646,7 @@
     var o = "<h3>Win probability</h3><p class=\"sc-dim\">MLB's model, after each plate appearance" + (live ? ", so far" : "") + "</p>" + chart;
     o += "<h3>Biggest plays</h3><p class=\"sc-dim\">The five plate appearances that moved win probability most" + (live ? ", so far" : "") + "</p>";
     o += regRow(ix, "scores_biggest_plays_rule") ? labelled(ix, "scores_biggest_plays_rule", bigRows(g, ix, live), "div", "sc-rule") : bigRows(g, ix, live);
-    if (g.card.state === "final") o += starsBlock(g, ix);
+    if (g.card.state === "final") o += starsBlock(g, ix) + vslot("game", 0);
     o += scoringBlock(g, ix);
     return o;
   }
@@ -708,11 +704,10 @@
         var rev = (p.reviews || []).map(function (r) {
           return (r.by ? r.by + " " : "") + (r.kind ? lower(r.kind) + " " : "") + "review, call " + (r.overturned ? "overturned" : "stands");
         }).join(". ");
-        var clip = p.clip && g.clips && g.clips[p.clip] && isNum(g.clips[p.clip].dur_s) ? ' <span class="sc-chip">Video ' + mmss(g.clips[p.clip].dur_s) + "</span>" : "";
-        return '<li class="sc-pa" id="sc-pa-' + p.ab + '" tabindex="-1"' + (p.ab === focusAb ? ' data-focus="1"' : "") + "><p>" + esc(p.text) + clip + "</p>" +
+        return '<li class="sc-pa" id="sc-pa-' + p.ab + '" tabindex="-1"' + (p.ab === focusAb ? ' data-focus="1"' : "") + "><p>" + esc(p.text) + "</p>" +
           '<p class="sc-dim">' + esc(outsText(p.outs) + ", " + basesText(p.bases) + ". " + (c.away.code || c.away.short) + " " + p.away + ", " +
           home + " " + p.home + ".") + (isNum(p.wp) ? " " + esc(home + " " + pct(p.wp) + "%") + (isNum(p.swing) ? " (" + esc(signed(p.swing)) + ")" : "") : "") +
-          (isNum(p.li) ? ", LI " + p.li.toFixed(2) : "") + (rev ? ". " + esc(rev) + "." : "") + "</p></li>";
+          (isNum(p.li) ? ", LI " + p.li.toFixed(2) : "") + (rev ? ". " + esc(rev) + "." : "") + "</p>" + vslot("pa", p.ab) + "</li>";
       }).join("");
       var open = focusAb == null || gr.rows.some(function (p) { return p.ab === focusAb; });
       return "<details class=\"sc-half\"" + (open ? " open" : "") + "><summary>" + esc((gr.half === "bottom" ? "Bottom " : "Top ") + ordinal(gr.inning)) +
@@ -720,6 +715,7 @@
     }).join("");
     return labelled(ix, "scores_mlb_wp", o, "div", "sc-block-num");
   }
+  function vslot(m, k) { return '<div class="sc-v" data-m="' + m + '" data-k="' + k + '"></div>'; }
   function lineupsTab(g) {
     var c = g.card, L = g.lineups || {};
     return ["away", "home"].map(function (side) {
@@ -1047,8 +1043,19 @@
         paintGame(card, g, nav);
       });
     }
+    var V = null, VP = null;
+    function video(g) {
+      VP = VP || new Promise(function (ok, no) {
+        var s = document.createElement("script");
+        s.src = "/assets/scores-video.js?v=" + (root.getAttribute("data-vv") || "");
+        s.onload = function () { ok(V = window.EephusScoresVideo); }; s.onerror = no;
+        document.head.appendChild(s);
+      });
+      VP.then(function (v) { if (app.game === g) v.mount(root, g, L.state.index, app.route.play); }, function () {});
+    }
     function paintGame(c, g, nav) {
       var ix = L.state.index, r = app.route;
+      if (!nav && V && V.isOpen(root)) { V.held(root, g, function () { paintGame(c, g, false); }); stamp(); return; }
       var tabs = tabsFor(c, !!g), tab = r.tab;
       if (!tab || !tabs.some(function (t) { return t[0] === tab; })) tab = tabs[0][0];
       var A = c.away, H = c.home, mine = mineSet();
@@ -1081,6 +1088,7 @@
       stamp();
       var fr = root.querySelector(".sc-wp-frame");
       if (fr && g) { fr._pin = pinned; mountChart(root, g, c.state !== "final"); }
+      if (g) video(g);
       if (nav) {
         var f = r.play != null ? root.querySelector('[data-focus="1"]') : null;
         (f || root.querySelector(".sc-game-h")).focus();

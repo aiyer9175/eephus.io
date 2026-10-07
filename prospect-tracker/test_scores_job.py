@@ -63,9 +63,11 @@ class FakeAPI:
     request takes (it advances the fake clock, never the real one); a request
     whose cost passes its deadline raises TimeoutError, as urllib does."""
 
-    def __init__(self, clock: FakeClock, schedule, *, wp=None, box=None, feed=None, people=None, cost=0.1):
+    def __init__(self, clock: FakeClock, schedule, *, wp=None, box=None, feed=None, people=None, cost=0.1,
+                 content=None):
         self.clock, self.schedule = clock, schedule
         self.wp, self.box, self.feed = dict(wp or {}), dict(box or {}), dict(feed or {})
+        self.content = dict(content or {})          # SCORES_4a: /game/{pk}/content
         self.people = people if people is not None else {"people": []}
         self.cost = cost
         self.calls: list[tuple[str, float]] = []
@@ -78,7 +80,7 @@ class FakeAPI:
             self.clock.t += timeout
             raise TimeoutError(f"fake timeout after {timeout}")
         self.clock.t += cost
-        m = re.search(r"/game/(\d+)/(winProbability|boxscore|feed/live)", url)
+        m = re.search(r"/game/(\d+)/(winProbability|boxscore|feed/live|content)", url)
         if "/api/v1/schedule" in url:
             st = self.status.get(("schedule", None))
             if st:
@@ -88,7 +90,8 @@ class FakeAPI:
         if "/api/v1/people" in url:
             return 200, {}, json.dumps(self.people).encode("utf-8")
         if m:
-            pk, kind = int(m.group(1)), {"winProbability": "wp", "boxscore": "box", "feed/live": "feed"}[m.group(2)]
+            pk, kind = int(m.group(1)), {"winProbability": "wp", "boxscore": "box", "feed/live": "feed",
+                                         "content": "content"}[m.group(2)]
             st = self.status.get((kind, pk)) or self.status.get((kind, None))
             if st:
                 return st[0], st[1], b""
@@ -109,6 +112,8 @@ class FakeAPI:
             return [u for u in out if "/feed/live" in u]
         if kind == "schedule":
             return [u for u in out if "/schedule" in u]
+        if kind == "content":
+            return [u for u in out if u.endswith("/content")]
         return out
 
 

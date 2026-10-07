@@ -394,6 +394,23 @@ The job also keeps `.cache/scores/` (its slate, state, heartbeat, run logs and
 work files) and `logs/scores-job.log`; it writes no tracked file, nothing under
 `data/`, nothing in the webroot, and never touches the nightly's lock.
 
-**The kill switch for embedded video** (once SCORES_4a lands):
-`touch /opt/eephus/scores/EMBED_OFF` takes effect at the next cron tick; remove
-the file to restore.
+**The kill switch for embedded video** (SCORES_4a; SCORES_PLAN.md 6.7). The
+constant `SCORES_EMBED_VIDEO = True` in scores_core.py is only the default:
+every run the job also reads two overrides from outside the repo and publishes
+the effective value as index.json `rules.video.embed`. A change is due work, so
+the next tick rewrites index.json and open pages pick it up through
+latest.json's `index_rev`.
+
+| Path | Who | Reaches viewers |
+|---|---|---|
+| `touch /opt/eephus/scores/EMBED_OFF` (remove the file to restore) | the webmaster, on the box | the next cron tick, at most about 2 minutes, plus one page poll (45 s live, 300 s idle) |
+| `EEPHUS_SCORES_EMBED=0` added to the scores cron line before `$PY` | the webmaster, on the box | the next cron tick, as above |
+| a committed `SCORES_EMBED_VIDEO = False` | a writer, then the owner's push and beta sync, then the 03:10 ET nightly pull | about a day, needing two people |
+| a hand edit of the tracked constant on the box | nobody | never: the nightly's `git checkout -- .` reverts it |
+
+While embedding is off every clip renders as its "Watch on MLB.com" link and no
+player frame can open. The job also turns embedding off by itself whenever the
+served `assets/diamond-config.js` reads `gating: true` and
+`scores_core.SCORES_EMBED_RECONFIRMED` holds no date (owner answer SC-PAID (a)):
+the owner re-confirms S8-1 before the Diamond gate opens. Locally the flag file
+is `.cache/scores/EMBED_OFF`.

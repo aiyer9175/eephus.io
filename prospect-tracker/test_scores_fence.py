@@ -173,8 +173,55 @@ def test_a_recorded_run_fetches_statsapi_only_and_writes_only_its_own_store(env,
         assert not job._inside(p, env["tmp"] / "house"), p
     for u, _t in api.calls + api2.calls:
         assert u.startswith("https://statsapi.mlb.com/api/"), u
-        for media in ("mlb-cuts-diamond", "bdata-producedclips", "img.mlbstatic", "streamable", "/content"):
+        # SCORES_4a reads /game/{pk}/content on statsapi; a media, poster or
+        # frame URL is stored for the page and never requested by the job
+        for media in ("mlb-cuts-diamond", "bdata-producedclips", "img.mlbstatic", "streamable", "mlb.com/video"):
             assert media not in u, u
+
+
+def _payload_strings(obj, path=""):
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            yield from _payload_strings(v, f"{path}.{k}" if path else str(k))
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            yield from _payload_strings(v, f"{path}[{i}]")
+    elif isinstance(obj, str):
+        yield path, obj
+
+
+def test_media_and_embed_urls_live_only_inside_clip_objects(env):
+    """SCORES_4a: on a recorded run with content reads, every media, poster,
+    frame or MLB.com video URL in any written payload sits inside a game file's
+    clip object (the one gameday link and index.json's copyright line apart),
+    and no highBit, trickplay or portrait rendition appears anywhere."""
+    from test_scores_clips import pickoff_item
+    import copy as _copy
+    clock = FakeClock()
+    content = _copy.deepcopy(load("content_849845.json"))
+    content["highlights"]["highlights"]["items"].append(pickoff_item())
+    api = FakeAPI(clock, schedule_of(*base_games()), content={849845: content,
+                                                              849846: load("content_849846_live.json")},
+                  **base_payloads())
+    seed_state(env, week_date="2026-09-30")
+    assert run_once(env, api, clock)["exit"] == 0
+    media = re.compile(r"mlb-cuts-diamond|bdata-producedclips|img\.mlbstatic|streamable\.com|mlb\.com/video|"
+                       r"\.mp4|\.m3u8|\.vtt", re.I)
+    seen = 0
+    for p in env["out"].rglob("*.json"):
+        doc = json.loads(p.read_text(encoding="utf-8"))
+        rel = p.relative_to(env["out"]).as_posix()
+        for path, s in _payload_strings(doc):
+            for bad in ("highbit", "trickplay", "portrait", "16000k"):
+                assert bad not in s.lower(), (rel, path)
+            if not media.search(s):
+                continue
+            if rel == "index.json" and path.startswith("rules.video."):
+                assert "/" not in s, (rel, path, s)            # bare host names, never a URL
+                continue
+            assert rel.startswith("games/") and path.startswith("clips."), (rel, path, s)
+            seen += 1
+    assert seen > 40, seen
 
 
 def test_the_job_reads_the_served_board_nowhere_yet():

@@ -127,6 +127,13 @@ REBUILD_MAX_DATES = 5
 REBUILD_MAX_TRIES = 3         # a past date MLB still lists as unplayed is rebuilt at most this often
 GIVE_UP_FAILS = 6             # a game whose reads fail this often leaves the due queue
 FINAL_REFRESH_WITHIN_S = 86400
+#: Content (SCORES_4a, plan 6.6): while live, a read when a top-five play has
+#: no result clip, its plate appearance ended at least 90 s ago and the last
+#: read is at least 240 s old; otherwise every 600 s. At Final, +60 and +180
+#: minutes and in the finalize cycle with the other final reads.
+CONTENT_AFTER_PA_S = 90
+CONTENT_LIVE_MIN_S = 240
+CONTENT_LIVE_EVERY_S = 600
 RUNLOG_KEEP_DAYS = 14
 
 # --------------------------------------------------------------------------- #
@@ -471,6 +478,11 @@ class Fetcher:
         return self.get("/api/v1/people", {"personIds": ",".join(str(int(i)) for i in sorted(set(ids))),
                                            "hydrate": PEOPLE_HYDRATE})
 
+    def content(self, pk: int):
+        """The game's content (SCORES_4a; plan 6.1). `/content` ignores
+        `fields=`, so every call costs the full payload (plan 6.6)."""
+        return self.get(f"/api/v1/game/{int(pk)}/content")
+
 
 # --------------------------------------------------------------------------- #
 # The lock: an OS advisory lock the OS releases when the process exits
@@ -681,14 +693,38 @@ def lg_for(constants: dict, season: int) -> dict | None:
     return constants[str(pick)] if pick is not None else None
 
 
-def embed_effective(out: Path) -> bool:
-    """The video embed switch (plan 6.7): the module constant, the
-    EEPHUS_SCORES_EMBED=0 override and the EMBED_OFF file in OUT."""
+def served_diamond_config() -> Path:
+    """The SERVED assets/diamond-config.js ($EEPHUS_WEBROOT/assets/ when set)."""
+    web = os.environ.get("EEPHUS_WEBROOT")
+    return (Path(web) if web else ROOT) / "assets" / "diamond-config.js"
+
+
+def embed_status(out: Path) -> tuple[bool, str]:
+    """The video embed switch (plan 6.7) and why: the module constant
+    SCORES_EMBED_VIDEO is only the default; every run also reads the override
+    EEPHUS_SCORES_EMBED=0 from the environment (the crontab line) and the flag
+    file EMBED_OFF in OUT or in the store (/opt/eephus/scores/EMBED_OFF on the
+    box, .cache/scores/EMBED_OFF here). The SC-PAID fail-safe: embedding is off
+    whenever the served assets/diamond-config.js reads `gating: true` and
+    scores_core.SCORES_EMBED_RECONFIRMED holds no ISO date."""
     if not sc.SCORES_EMBED_VIDEO:
-        return False
+        return False, "SCORES_EMBED_VIDEO is False"
     if os.environ.get("EEPHUS_SCORES_EMBED", "").strip() == "0":
-        return False
-    return not (Path(out) / EMBED_OFF_NAME).exists()
+        return False, "EEPHUS_SCORES_EMBED=0"
+    for d in (Path(out), store_dir()):
+        if (d / EMBED_OFF_NAME).exists():
+            return False, f"{EMBED_OFF_NAME} in {d}"
+    try:
+        cfg = served_diamond_config().read_text(encoding="utf-8")
+    except OSError:
+        cfg = ""
+    if sc.diamond_gating_on(cfg) and not sc.embed_reconfirmed():
+        return False, "the Diamond gate reads on and S8-1 is not re-confirmed (SC-PAID fail-safe)"
+    return True, "on"
+
+
+def embed_effective(out: Path) -> bool:
+    return embed_status(out)[0]
 
 
 # --------------------------------------------------------------------------- #
@@ -953,7 +989,7 @@ def plan_tasks(games: list[dict], state: dict, now: datetime, cycle: str, tick: 
     """The per-game calls this cycle wants, live work first, each group oldest
     updated first so a starved game goes first on the next tick."""
     t = now.timestamp()
-    live_wp, live_box, finals, refresh = [], [], [], []
+    live_wp, live_box, live_content, finals, refresh = [], [], [], [], []
     by_pk = {int(g["gamePk"]): g for g in games}
     for pk, g in by_pk.items():
         gs = (state.get("games") or {}).get(str(pk)) or {}
@@ -969,17 +1005,19 @@ def plan_tasks(games: list[dict], state: dict, now: datetime, cycle: str, tick: 
                 live_wp.append({"pk": pk, "calls": ["wp"], "why": "live", "order": upd})
             if t - float(gs.get("box_epoch") or 0) >= BOX_INTERVAL_S:
                 live_box.append({"pk": pk, "calls": ["box"], "why": "live_box", "order": upd})
+            if content_due(gs, t):
+                live_content.append({"pk": pk, "calls": ["content"], "why": "live_content", "order": upd})
         elif st == "final" and not gs.get("final_built"):
-            finals.append({"pk": pk, "calls": ["wp", "box", "feed"], "why": "final", "order": upd})
+            finals.append({"pk": pk, "calls": ["wp", "box", "feed", "content"], "why": "final", "order": upd})
     for pk, m in final_refresh_due(state, now):
         if pk in by_pk:
-            refresh.append({"pk": pk, "calls": ["wp", "box"], "why": f"final_refresh_{m}", "minutes": m,
+            refresh.append({"pk": pk, "calls": ["wp", "box", "content"], "why": f"final_refresh_{m}", "minutes": m,
                             "order": float(((state.get("games") or {}).get(str(pk)) or {}).get("updated_epoch") or 0)})
     pend = state.get("pending") or {}
     roll = {int(x) for x in pend.get("rollover") or []}
     fin = [int(x) for x in pend.get("finalize") or [] if int(x) in by_pk]
     groups = []
-    for grp in (live_wp, live_box, finals, refresh):
+    for grp in (live_wp, live_box, live_content, finals, refresh):
         grp.sort(key=lambda x: (0 if x["pk"] in roll else 1, x["order"], x["pk"]))
         groups.extend(grp)
     planned = {x["pk"] for x in finals}
@@ -987,8 +1025,20 @@ def plan_tasks(games: list[dict], state: dict, now: datetime, cycle: str, tick: 
         gs = (state.get("games") or {}).get(str(pk)) or {}
         if pk in planned or gs.get("frozen") or float(gs.get("backoff_until") or 0) > t:
             continue
-        groups.append({"pk": pk, "calls": ["wp", "box", "feed"], "why": "finalize", "order": 0})
+        groups.append({"pk": pk, "calls": ["wp", "box", "feed", "content"], "why": "finalize", "order": 0})
     return groups
+
+
+def content_due(gs: dict, t: float) -> bool:
+    """Plan 6.6 for a live game: a read when a top-five play has no result
+    clip, its plate appearance ended at least 90 s ago (`content_due_at`, set
+    when the game file is built) and the last read is at least 240 s old;
+    otherwise every 600 s."""
+    last = float(gs.get("content_epoch") or 0)
+    due_at = gs.get("content_due_at")
+    if due_at is not None and t >= float(due_at) and t - last >= CONTENT_LIVE_MIN_S:
+        return True
+    return t - last >= CONTENT_LIVE_EVERY_S
 
 
 def mark_backoff(state: dict, now: datetime, retry_after: float | None) -> None:
@@ -1036,6 +1086,16 @@ def run_tasks(tasks: list[dict], fetcher: Fetcher, state: dict, paths: dict, now
                 elif call == "feed":
                     work["feed"] = trim_feed(fetcher.feed(pk))
                     work["feed_at"] = iso(now_fn())
+                elif call == "content":
+                    # a failed content read leaves the game's other reads and its
+                    # last clip set alone: the page shows what the last read held
+                    try:
+                        work["content"] = sc.trim_content(fetcher.content(pk))
+                        work["content_at"] = iso(now_fn())
+                    except FetchError as e:
+                        counts["content_fetch_failed"] = counts.get("content_fetch_failed", 0) + 1
+                        log.warning("scores_job: content read for %s failed: %s", pk, e)
+                    _gstate(state, pk)["content_epoch"] = now_fn().timestamp()
             except BudgetExhausted:
                 ok = False
                 rolled.append(pk)
@@ -1051,7 +1111,7 @@ def run_tasks(tasks: list[dict], fetcher: Fetcher, state: dict, paths: dict, now
                 counts["game_fetch_failed"] = counts.get("game_fetch_failed", 0) + 1
                 mark_game_failure(state, pk, now_fn(), f"{call}: {e}")
                 break
-        if any(k in work for k in ("wp", "box", "feed")):
+        if any(k in work for k in ("wp", "box", "feed", "content")):
             work["pk"] = pk
             write_json_plain(work_path(paths, pk), work)
         gs = _gstate(state, pk)
@@ -1109,7 +1169,17 @@ def parse_people(doc) -> dict:
     return out
 
 
-def build_game(g: dict, work: dict, served: dict, people: dict, gen: str) -> dict | None:
+def clips_pending(g: dict, gs: dict, now: datetime) -> bool:
+    """A missing clip may still post while the game is not final and within
+    24 hours of the final (plan 6.5, F3)."""
+    if not sc.is_final(g.get("status")):
+        return True
+    f = parse_stamp(gs.get("final_seen_at"))
+    return f is None or now.timestamp() - f.timestamp() < sc.CLIP_PENDING_S
+
+
+def build_game(g: dict, work: dict, served: dict, people: dict, gen: str, *, pending: bool = True,
+               clip_log: dict | None = None) -> dict | None:
     season = sc._int(g.get("season"), 0) or sc._int(str(g.get("officialDate") or "")[:4], 0)
     lg = lg_for(served["constants"], season)
     if lg is None:
@@ -1117,7 +1187,22 @@ def build_game(g: dict, work: dict, served: dict, people: dict, gen: str) -> dic
                     g.get("gamePk"))
         return None
     return sc.build_game_file(g, work.get("wp"), work.get("box"), lg,
-                              generated_at=gen, feed=work.get("feed"), people=people)
+                              generated_at=gen, feed=work.get("feed"), people=people,
+                              content=work.get("content"), clips_pending=pending, seen_at=work.get("content_at"),
+                              clip_log=clip_log)
+
+
+def content_due_at(wp, gf: dict) -> float | None:
+    """The instant a live game's next content read is wanted early: 90 s after
+    the end of the earliest top-five plate appearance that has no result clip
+    (its `about.endTime`); None when every top-five play has one."""
+    ends = {}
+    for p in sc.complete_elements(wp):
+        dt = parse_stamp((p.get("about") or {}).get("endTime"))
+        if dt is not None:
+            ends[sc._ab(p)] = dt.timestamp()
+    want = [ends[b["ab"]] for b in gf.get("plays_big") or [] if not b.get("clip") and b["ab"] in ends]
+    return (min(want) + CONTENT_AFTER_PA_S) if want else None
 
 
 #: Hook for tests: a callable (gf) -> gf applied to each built game file.
@@ -1135,6 +1220,7 @@ class Cycle:
         self.refused_dates: dict = {}
         self.stale_games: dict = {}
         self.game_cards: dict = {}
+        self.clips: dict = {}
 
     # --- game files ---
     def game_file(self, g: dict) -> dict | None:
@@ -1154,9 +1240,20 @@ class Cycle:
         work = read_work(self.paths, pk)
         if not work.get("wp"):
             return prev.get("card") if isinstance(prev, dict) else None
-        gf = build_game(g, work, self.served, people_map(self.state), self.gen)
+        clip_log: dict = {}
+        gf = build_game(g, work, self.served, people_map(self.state), self.gen,
+                        pending=clips_pending(g, gs, self.now_fn()), clip_log=clip_log)
         if gf is None:
             return prev.get("card") if isinstance(prev, dict) else None
+        if clip_log:
+            self.clips[str(pk)] = clip_log
+            if clip_log.get("new_media_host"):
+                log.warning("scores_job: new_media_host %s on game %s", clip_log["new_media_host"], pk)
+        gsw = _gstate(self.state, pk)
+        if sc.game_state(g.get("status"))[0] in ("live", "delayed"):
+            gsw["content_due_at"] = content_due_at(work.get("wp"), gf)
+        else:
+            gsw.pop("content_due_at", None)
         if GAME_FILE_HOOK is not None:
             gf = GAME_FILE_HOOK(gf)
         if isinstance(prev, dict) and same_content(gf, prev):
@@ -1277,15 +1374,16 @@ class Cycle:
             rev = self.season_index(season)
             seasons.append({"season": int(season), "rev": rev,
                             "n_dates": len((self.state.get("catalog") or {}).get(season) or {})})
-        embed = embed_effective(self.paths["out"])
+        embed, why = embed_status(self.paths["out"])
         self.state["embed"] = embed
+        self.state["embed_reason"] = why
         obj = {"schema": sc.SCHEMA, "generated_at": self.gen, "seasons": seasons,
                "registry": self.served["registry"],
                "accuracy": {"mlb_wp": dict(self.served["accuracy"], pregame_values=self.pregame_values())},
                "rules": {"stars": {"rule": sc.STARS_RULE, "min_outs": sc.MIN_OUTS, "min_coverage": sc.MIN_COVERAGE,
                                    "first_star_winner": sc.FIRST_STAR_WINNER},
                          "plays": {"rule": sc.PLAYS_RULE, "min_swing": sc.MIN_SWING, "n": sc.N_BIG_PLAYS},
-                         "video": {"embed": embed, "branch": None, "video_hosts": list(sc.VIDEO_HOSTS),
+                         "video": {"embed": embed, "branch": sc.VIDEO_BRANCH, "video_hosts": list(sc.VIDEO_HOSTS),
                                    "caption_hosts": list(sc.CAPTION_HOSTS), "poster_host": sc.POSTER_HOST,
                                    "frame_host": sc.FRAME_HOST}},
                "copyright": self.state.get("copyright") or f"Copyright MLB Advanced Media, L.P. {sc.MLB_TERMS_URL}"}
@@ -1417,9 +1515,14 @@ def append_runlog(paths: dict, result: dict, now: datetime) -> None:
     try:
         p = paths["runlog_dir"] / f"runlog-{utc_date(now).isoformat()}.jsonl"
         p.parent.mkdir(parents=True, exist_ok=True)
-        line = json.dumps({"at": iso(now), "action": result.get("action"), "exit": result.get("exit"),
-                           "requests": result.get("requests", 0), "counts": result.get("counts"),
-                           "reason": (result.get("reason") or "")[:300]}, separators=(",", ":"), sort_keys=True)
+        rec = {"at": iso(now), "action": result.get("action"), "exit": result.get("exit"),
+               "requests": result.get("requests", 0), "counts": result.get("counts"),
+               "reason": (result.get("reason") or "")[:300]}
+        if result.get("clips"):
+            # per game (plan 6.6): clips matched, with captions, rows at F1
+            # and F3 among the biggest plays, and any new_media_host
+            rec["clips"] = result["clips"]
+        line = json.dumps(rec, separators=(",", ":"), sort_keys=True)
         with open(p, "a", encoding="utf-8") as fh:
             fh.write(line + "\n")
     except Exception:                                     # noqa: BLE001
@@ -1519,7 +1622,8 @@ def freeze_game(paths: dict, state: dict, pk: int) -> None:
     gs = _gstate(state, pk)
     gs["frozen"] = True
     w = read_work(paths, pk)
-    keep = {k: w.get(k) for k in ("pk", "date", "season", "wp_at", "box_at", "feed_at") if w.get(k) is not None}
+    keep = {k: w.get(k) for k in ("pk", "date", "season", "wp_at", "box_at", "feed_at", "content_at")
+            if w.get(k) is not None}
     keep["frozen"] = True
     write_json_plain(work_path(paths, pk), keep)
 
@@ -1742,6 +1846,8 @@ def act(decision: dict, paths: dict, state: dict, slate: dict | None, fetcher: F
     counts["rolled_over"] = len(ran["rolled"])
     result.update(counts=counts, job_state=latest["job"]["state"], dates=dates_written,
                   requests=fetcher.limiter.n, last_publish=cyc.gen if lres["ok"] else None)
+    if cyc.clips:
+        result["clips"] = cyc.clips
     if not lres["ok"] or not idx["ok"]:
         result.update(action="refused", exit=2,
                       reason=f"latest.json or index.json refused: {(lres.get('refused') or idx.get('refused'))[:2]}")
@@ -1903,6 +2009,13 @@ def backfill(a: str, b: str, *, paths: dict, now_fn=_utcnow, adapter=None, lock:
                         feed = fetcher.feed(pk)
                     work.update(wp=wp, box=fetcher.boxscore(pk), feed=trim_feed(feed),
                                 wp_at=iso(now_fn()), box_at=iso(now_fn()), feed_at=iso(now_fn()))
+                    # the game's clips (SCORES_4a): a failed content read leaves
+                    # the game without clips, never without its file
+                    try:
+                        work.update(content=sc.trim_content(fetcher.content(pk)), content_at=iso(now_fn()))
+                    except FetchError as e:
+                        counts["content_failed"] = counts.get("content_failed", 0) + 1
+                        log.warning("scores_job: backfill content read for %s failed: %s", pk, e)
                 except FetchError as e:
                     counts["failed"] += 1
                     mark_game_failure(state, pk, now_fn(), str(e))
@@ -2027,7 +2140,7 @@ def plan_tasks_from_rows(rows: list[dict], state: dict, now: datetime) -> list[d
         if r.get("state") in ("live", "delayed"):
             out.append({"pk": r["pk"], "calls": ["wp"], "why": "live"})
         elif r.get("state") == "final" and not gs.get("final_built"):
-            out.append({"pk": r["pk"], "calls": ["wp", "box", "feed"], "why": "final"})
+            out.append({"pk": r["pk"], "calls": ["wp", "box", "feed", "content"], "why": "final"})
     return out
 
 
