@@ -39,7 +39,16 @@ hiding only the "Eephus place" column and the ink numerals, remembered; no compa
 percentage; past seasons, the frozen fixture and a failing candidate file; and no request carrying
 ballot content across every session (the request log).
 
-    python tools/awards_render_check.py --port 9141 --out <dir> [--preview <dir>] [--only ballot]
+Share cards (AWARDS_10, --only gfx): the engine loads only on a Share press; one Share chip per card
+with a rule plus the hero's; the podium (an AL MVP and an NL Manager card), the slate, the superlative
+seam (one injected chip per picture kind) and My Ballot's Save image each render in Twitter, Wide and
+Portrait, light and dark, at 2x, with an untainted toDataURL; the words each card draws (read back
+through fillText) carry the payload's names and values and no dash, BAN or verdict word; the ballot
+card carries "Choices mine." and no selection, Portrait carries every filled ballot and Twitter only
+the active one; a blocked Manager rule has no chip and the slate prints "Not published". The PNGs land
+in --out as gfx_*.png.
+
+    python tools/awards_render_check.py --port 9141 --out <dir> [--preview <dir>] [--only ballot|gfx]
 """
 from __future__ import annotations
 
@@ -299,7 +308,7 @@ LAYOUT_JS = r"""
   const se = document.scrollingElement;
   if (se.scrollWidth > window.innerWidth) bad.push("horizontal overflow " + se.scrollWidth + " > " + window.innerWidth);
   const coarse = matchMedia("(pointer: coarse)").matches, min = coarse ? 44 : 24;
-  const sel = '.aw-tabs [role="tab"], .hof-modstrip a, .aw-app a.aw-chip, .aw-app summary, .aw-season select, .mlbstats-tabs [role="tab"]';
+  const sel = '.aw-tabs [role="tab"], .hof-modstrip a, .aw-app a.aw-chip, .aw-app .aw-share, .aw-app summary, .aw-season select, .mlbstats-tabs [role="tab"]';
   document.querySelectorAll(sel).forEach((el) => {
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height) return;
@@ -372,6 +381,8 @@ def run(port: int, out: Path) -> dict:
                     _run_all(browser, base, site, fixtures, out, report)
                 if ONLY in ("all", "ballot"):
                     _run_ballot(browser, base, site, fixtures, out, report)
+                if ONLY in ("all", "gfx"):
+                    _run_gfx(browser, base, site, fixtures, out, report)
             finally:
                 browser.close()
     finally:
@@ -1060,13 +1071,250 @@ def _run_ballot(browser, base, site, fixtures, out, report):
     _record(report, "ballot_no_request_carries_content", res, [])
 
 
+# --- Share cards (AWARDS_10; AWARDS_PLAN 5.16) ----------------------------------------------------
+
+#: Every canvas text call is logged so a card's words can be read back (fillText wraps once).
+FILLTEXT_INIT = r"""
+(() => {
+  const f = CanvasRenderingContext2D.prototype.fillText;
+  window.__ft = [];
+  CanvasRenderingContext2D.prototype.fillText = function (t, x, y, m) {
+    window.__ft.push(String(t));
+    return f.call(this, t, x, y, m);
+  };
+})();
+"""
+GFX_FORMATS = {"twitter": (1200, 675), "wide": (1600, 900), "portrait": (1080, 1350)}
+#: Draw one mode in the open modal at a format and theme; return its size, text and PNG.
+GFX_RENDER_JS = r"""
+async ([fmt, theme]) => {
+  const prev = document.getElementById("egfx-preview");
+  const old = prev.querySelector("canvas");
+  window.__ft = [];
+  const sf = document.getElementById("egfx-format"), st = document.getElementById("egfx-theme");
+  sf.value = fmt; sf.dispatchEvent(new Event("change"));
+  st.value = theme; st.dispatchEvent(new Event("change"));
+  for (let i = 0; i < 200; i++) {
+    const c = prev.querySelector("canvas");
+    if (c && c !== old && !prev.classList.contains("is-busy")) break;
+    await new Promise((r) => setTimeout(r, 25));
+  }
+  const c = prev.querySelector("canvas");
+  if (!c) return {err: (prev.textContent || "no canvas").trim()};
+  let url = null, err = null;
+  try { url = c.toDataURL("image/png"); } catch (e) { err = String(e); }
+  return {w: c.width, h: c.height, url, err, text: window.__ft.slice(),
+          fmtShown: getComputedStyle(document.querySelector(".egfx-ctrl-format")).display !== "none",
+          countShown: getComputedStyle(document.querySelector(".egfx-ctrl-count")).display !== "none"};
+}
+"""
+GFX_CLOSE_JS = "() => { const x = document.querySelector('#egfx-overlay .egfx-x'); if (x) x.click(); }"
+
+
+def _gfx_words(texts: list) -> list:
+    """Copy rule hits in a card's text: dashes, copy_lint's BAN words, the plan's verdict words."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import awards_core as A
+    import copy_lint
+    bad = []
+    for t in texts:
+        if chr(0x2014) in t or chr(0x2013) in t:
+            bad.append(f"dash in {t!r}")
+        if copy_lint.BAN_RE.search(t):
+            bad.append(f"banned word in {t!r}")
+        if A.verdict_hits(t):
+            bad.append(f"verdict word in {t!r}")
+    return bad
+
+
+def _gfx_matrix(page, name: str, out: Path, report: dict, want: list, forbid: list = ()) -> list:
+    """Every format (Twitter, Wide, Portrait) in both themes: size, an untainted toDataURL, the words."""
+    import base64
+    bad = []
+    for fmt, (W, H) in GFX_FORMATS.items():
+        for theme in THEMES:
+            r = page.evaluate(GFX_RENDER_JS, [fmt, theme])
+            tag = f"{name} {fmt} {theme}"
+            if r.get("err") or not r.get("url"):
+                bad.append(f"{tag}: no image ({r.get('err')})")
+                continue
+            if (r["w"], r["h"]) != (2 * W, 2 * H):
+                bad.append(f"{tag}: canvas {r['w']} x {r['h']} != {2 * W} x {2 * H}")
+            if not r["fmtShown"] or r["countShown"]:
+                bad.append(f"{tag}: the Format control must show and Show must hide")
+            text = " | ".join(r["text"])
+            for w in want:
+                if w not in text:
+                    bad.append(f"{tag}: card lacks {w!r}")
+            for w in forbid:
+                if w.lower() in text.lower():
+                    bad.append(f"{tag}: card carries {w!r}")
+            bad += [f"{tag}: {b}" for b in _gfx_words(r["text"])]
+            png = out / f"gfx_{name}_{fmt}_{theme}.png"
+            png.write_bytes(base64.b64decode(r["url"].split(",", 1)[1]))
+            report["screens"].append(png.name)
+    return bad
+
+
+def _gfx_open(page, selector: str) -> list:
+    page.click(selector)
+    page.wait_for_selector("#egfx-overlay.is-open #egfx-preview canvas", timeout=20000)
+    return []
+
+
+def _run_gfx(browser, base, site, fixtures, out, report):
+    # 1. Share chips and the four modes on the live and frozen fixtures, at 390 and 1280.
+    for fx in ("live", "frozen"):
+        write_fixture(site, fixtures[fx])
+        doc = fixtures[fx]["awards.json"]
+        for w in (390, 1280):
+            ctx = _context(browser, w, "light")
+            ctx.add_init_script(FILLTEXT_INIT)
+            log: list = []
+            page = _page(ctx, log)
+            net: list = []
+            page.on("request", lambda r: net.append(r.url))
+            page.goto(f"{base}/awards/", wait_until="networkidle")
+            _wait_app(page)
+            name = f"gfx_{fx}_{w}"
+            res = {"bad": []}
+            if any("eephus-gfx.js" in u for u in net):
+                res["bad"].append("the GFX engine loaded before a Share press")
+            chips = page.eval_on_selector_all("[data-aw-share]", "(els) => els.map((e) => e.dataset.awShare + ':' + "
+                                              "(e.dataset.award || '') + ':' + (e.dataset.lg || ''))")
+            want_chips = 1 + sum(1 for A in doc["awards"] for L in doc["awards"][A]
+                                 if not doc["rules"][A].get("blocked_on") and doc["awards"][A][L].get("top"))
+            if len(chips) != want_chips:
+                res["bad"].append(f"share chips {len(chips)} != {want_chips}")
+            lay = page.evaluate(LAYOUT_JS)
+            res["bad"] += lay["bad"]
+            # podium: AL MVP
+            res["bad"] += _gfx_open(page, '[data-aw-share="podium"][data-award="mvp"][data-lg="al"]')
+            if not any("eephus-gfx.js" in u for u in net):
+                res["bad"].append("Share did not load the GFX engine")
+            ov = page.evaluate("() => document.scrollingElement.scrollWidth - window.innerWidth")
+            if ov > 0:
+                res["bad"].append(f"modal open: horizontal overflow {ov} px")
+            blk, rule = doc["awards"]["MVP"]["AL"], doc["rules"]["MVP"]
+            want = [r["name"] for r in blk["top"][:3]] + [f"{float(r['score_display']):.{rule['decimals']}f} {rule['unit']}"
+                                                          for r in blk["top"][:3]]
+            if w == 1280:
+                res["bad"] += _gfx_matrix(page, f"{fx}_podium_mvp_al", out, report, want)
+            else:
+                r0 = page.evaluate(GFX_RENDER_JS, ["twitter", "light"])
+                if r0.get("err") or not r0.get("url"):
+                    res["bad"].append(f"podium at 390: {r0.get('err')}")
+                page.screenshot(path=str(out / f"{name}_modal.png"))
+                report["screens"].append(f"{name}_modal.png")
+            page.evaluate(GFX_CLOSE_JS)
+            # podium: a Manager card (club rows) and the slate
+            if w == 1280:
+                res["bad"] += _gfx_open(page, '[data-aw-share="podium"][data-award="moy"][data-lg="nl"]')
+                res["bad"] += _gfx_matrix(page, f"{fx}_podium_moy_nl", out, report,
+                                          [doc["awards"]["MOY"]["NL"]["top"][0]["club_code"]])
+                page.evaluate(GFX_CLOSE_JS)
+                res["bad"] += _gfx_open(page, '[data-aw-share="slate"]')
+                cap = doc.get("selection_caption") or ""
+                res["bad"] += _gfx_matrix(page, f"{fx}_slate", out, report, [cap] if cap else [])
+                page.evaluate(GFX_CLOSE_JS)
+                # superlatives: the seam AWARDS_8's cards will carry, one chip per picture kind
+                for sl in ("prospect_above", "next_drop", "glove", "contact_ahead", "pitching_changes"):
+                    s = next((x for x in doc.get("superlatives") or [] if x["id"] == sl), None)
+                    if not s or s.get("blocked_on") or not s.get("rows"):
+                        continue
+                    page.evaluate("(sl) => document.getElementById('awards-app-root').insertAdjacentHTML('beforeend', "
+                                  "'<button type=\"button\" class=\"aw-share\" id=\"aw-test-sl\" data-aw-share=\"superlative\" "
+                                  "data-sl=\"' + sl + '\">Share</button>')", sl)
+                    res["bad"] += _gfx_open(page, "#aw-test-sl")
+                    want_s = [s["title"]] + [str(r["value_display"]) for r in s["rows"][:5]] + [s["rows"][0]["name"]]
+                    if fx == "live" or sl in ("glove", "pitching_changes"):
+                        res["bad"] += _gfx_matrix(page, f"{fx}_superlative_{sl}", out, report, want_s)
+                    page.evaluate(GFX_CLOSE_JS)
+                    page.evaluate("() => document.getElementById('aw-test-sl').remove()")
+            _record(report, name, res, _errors(log, page._aw_aborted))
+            ctx.close()
+
+    # 2. Past seasons: 2023 (no race) and 2022 (Manager blocked: no Manager chip, "Not published").
+    write_fixture(site, fixtures["live"])
+    for S in (2023, 2022):
+        doc = fixtures["live"][f"awards_{S}.json"]
+        ctx = _context(browser, 1280, "dark")
+        ctx.add_init_script(FILLTEXT_INIT)
+        log = []
+        page = _page(ctx, log)
+        page.goto(f"{base}/awards/#season={S}", wait_until="networkidle")
+        page.wait_for_selector(".aw-hero", timeout=15000)
+        res = {"bad": []}
+        moy = page.query_selector_all('[data-aw-share="podium"][data-award="moy"]')
+        if S == 2022 and moy:
+            res["bad"].append("a blocked Manager rule still carries a Share chip")
+        res["bad"] += _gfx_open(page, '[data-aw-share="slate"]')
+        r = page.evaluate(GFX_RENDER_JS, ["wide", "dark"])
+        if r.get("err") or not r.get("url"):
+            res["bad"].append(f"slate {S}: {r.get('err')}")
+        elif S == 2022 and "Not published" not in r["text"]:
+            res["bad"].append("2022 slate lacks Not published for the blocked Manager rule")
+        if r.get("text") and not any(f"/awards/#season={S}" in t for t in r["text"]):
+            res["bad"].append(f"{S} slate link lacks the season")
+        res["bad"] += _gfx_matrix(page, f"season{S}_slate", out, report, [])
+        page.evaluate(GFX_CLOSE_JS)
+        _record(report, f"gfx_season{S}", res, _errors(log, page._aw_aborted))
+        ctx.close()
+
+    # 3. My Ballot's Save image: the viewer's card, never the selection.
+    for w in (390, 1280):
+        ctx = _context(browser, w, "light")
+        ctx.add_init_script(FILLTEXT_INIT)
+        log = []
+        page = _page(ctx, log)
+        _open_ballot(page, base)
+        res = {"bad": []}
+        note = (page.text_content("#aw-b-save") or "").strip()
+        if not note.endswith("To keep it, copy the link or save the image."):
+            res["bad"].append(f"save note reads {note!r}")
+        page.click('[data-act="img"]')
+        page.wait_for_timeout(400)
+        if page.query_selector("#egfx-overlay.is-open"):
+            res["bad"].append("Save image opened on an empty ballot")
+        if "ballot is empty" not in (page.text_content("#aw-b-live") or ""):
+            res["bad"].append("an empty Save image does not say so")
+        ids = _fill_three(page)
+        names = page.eval_on_selector_all("#aw-b-panel .aw-b-slot .aw-b-who", "(els) => els.map((e) => e.textContent)")
+        res["bad"] += _gfx_open(page, '[data-act="img"]')
+        forbid = ["eephus selection", "Current leaders", "Eephus place", "the rule"]
+        want = ["Choices mine. Numbers from eephus.io.", "1st · 14 pts"] + names
+        if w == 1280:
+            res["bad"] += _gfx_matrix(page, "ballot_al_mvp", out, report, want, forbid)
+            page.evaluate(GFX_CLOSE_JS)
+            # a second filled ballot: Portrait draws both, Twitter only the active one
+            page.click("#aw-b-tnl-cy")
+            page.wait_for_selector('#aw-b-tnl-cy[aria-selected="true"]')
+            _fill_three(page)
+            res["bad"] += _gfx_open(page, '[data-act="img"]')
+            rp = page.evaluate(GFX_RENDER_JS, ["portrait", "light"])
+            if not any("AL MVP" in t for t in rp.get("text", [])) or not any("NL Cy Young" in t for t in rp.get("text", [])):
+                res["bad"].append("the Portrait ballot card does not carry every filled ballot")
+            rt = page.evaluate(GFX_RENDER_JS, ["twitter", "light"])
+            if any("AL MVP" in t for t in rt.get("text", [])):
+                res["bad"].append("the Twitter ballot card carries a second ballot")
+            res["bad"] += _gfx_matrix(page, "ballot_two", out, report, ["Choices mine. Numbers from eephus.io."], forbid)
+        else:
+            r0 = page.evaluate(GFX_RENDER_JS, ["twitter", "dark"])
+            if r0.get("err") or "Choices mine. Numbers from eephus.io." not in " ".join(r0.get("text", [])):
+                res["bad"].append("ballot card at 390")
+            page.screenshot(path=str(out / f"gfx_ballot_{w}_modal.png"))
+            report["screens"].append(f"gfx_ballot_{w}_modal.png")
+        _record(report, f"gfx_ballot_{w}", res, _errors(log, page._aw_aborted))
+        ctx.close()
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--port", type=int, default=9141)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--preview", type=Path, default=None,
                     help="read the fixture payloads from this copy of .cache/awards/preview/")
-    ap.add_argument("--only", choices=("all", "selections", "ballot"), default="all")
+    ap.add_argument("--only", choices=("all", "selections", "ballot", "gfx"), default="all")
     a = ap.parse_args(argv)
     global PREVIEW, ONLY
     if a.preview:

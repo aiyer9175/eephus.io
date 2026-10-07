@@ -290,6 +290,28 @@ def test_verdict_hits_finds_the_plan_words_the_ban_list_and_dashes():
 
 # --- the page strings (AWARDS_7_PAGE_SELECTIONS) ---------------------------------------------
 
+def _gfx_block() -> str:
+    text = (ROOT / "assets" / "eephus-gfx.js").read_text(encoding="utf-8")
+    return text[text.index("// ---- canvas awards renderer"):text.index("// ---- render dispatch")]
+
+
+def test_the_gfx_strings_are_clean_and_the_ballot_card_names_no_selection():
+    """AWARDS_10 (AWARDS_PLAN 5.16): every string the awards cards type, in the painter and
+    in the spec builders of awards.js and the ballot chunk, passes the copy rules; the ballot
+    card carries 'Choices mine.' and the painter's ballot branch names no selection."""
+    block = _gfx_block()
+    js = (ROOT / "assets" / "awards.js").read_text(encoding="utf-8")
+    share = js[js.index("// ---- share cards (AWARDS_10"):js.index("// ---- boot")]
+    for where, text in (("painter", block), ("awards.js share", share)):
+        for s in re.findall(r'"([^"\n]*)"', text):
+            _clean(s, where)
+    assert '"Choices mine. Numbers from eephus.io."' in block
+    ballot = block[block.index("} else if (ball) {"):]
+    assert "selection" not in ballot.lower() and "top" not in re.findall(r"a\.(\w+)", ballot)
+    assert '"Data: MLB, FanGraphs, Baseball-Reference via eephus.io"' in share
+    assert "eWAR" not in share and "fWAR" not in share, "WAR units come from the rule's unit field"
+
+
 def test_the_page_strings_are_clean():
     """assets/awards.js, assets/awards.css and the My Ballot chunk and stylesheet (AWARDS_9)
     whole (comments included), the /awards/ shell's
@@ -305,6 +327,7 @@ def test_the_page_strings_are_clean():
         "assets/awards.css": (ROOT / "assets" / "awards.css").read_text(encoding="utf-8"),
         "assets/awards-ballot.js": (ROOT / "assets" / "awards-ballot.js").read_text(encoding="utf-8"),
         "assets/awards-ballot.css": (ROOT / "assets" / "awards-ballot.css").read_text(encoding="utf-8"),
+        "the GFX awards painter (AWARDS_10)": _gfx_block(),
         "the /awards/ shell": out[i:j],
         "sub line": B._AWARDS_SUB, "meta description": B._AWARDS_DESCRIPTION,
     }

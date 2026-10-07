@@ -28,9 +28,10 @@
 //                   tiles + ranked horizontal accuracy bar panels, the eFV bar
 //                   accented. Pure text/vector, no remote images, so the
 //                   export canvas is taint-free by construction.
+//   kind:"awards" -> the /awards/ share cards (AWARDS_10, renderAwards).
 //
 //   EEPHUS_GFX.open(spec)   spec = {
-//     kind:"board"|"card"|"newsday"|"sourcecomp", module, accentToken?, title,
+//     kind:"board"|"card"|"newsday"|"sourcecomp"|"awards", module, accentToken?, title,
 //     subtitle?, url, filenameBase, caption?, icon? (a board's pixel icon key;
 //     default: the page's route, e.g. "fa" on /fa/),
 //     board?: { columns:[{label, frac, narrowFrac?, align?, wideOnly?}],
@@ -683,6 +684,134 @@
     return c;
   }
 
+  // ---- canvas awards renderer (kind:"awards", AWARDS_10) ---------------------
+  // AWARDS_PLAN 5.16: spec.aw (built by assets/awards.js from what its page
+  // prints) in mode podium, slate, superlative or ballot (the viewer's own; it
+  // never carries the eephus selection). No remote image, so never tainted.
+  function renderAwards(spec, fmt, acc) {
+    var W = fmt.w, H = fmt.h, PAD = Math.round(W * 0.033), uw = W - 2 * PAD, a = spec.aw || {};
+    var c = document.createElement("canvas");
+    c.width = W * SCALE; c.height = H * SCALE;
+    var g = c.getContext("2d");
+    g.scale(SCALE, SCALE);
+    var P = palette(acc), fg = P.fg, sub = P.sub, X = pxPainter(), R = a.rows || [];
+    var up = tok("--up", P.pos), dn = tok("--down", P.neg), ball = a.mode === "ballot";
+    var multi = ball && H > W && (a.ballots || []).length > 1;
+    // al: 0 left, .5 centre, 1 right
+    function tx(t, x, y, f, col, max, al) {
+      g.font = f + "px " + P.MONO; g.fillStyle = col || fg;
+      t = fitTxt(g, t, max || uw);
+      var w = g.measureText(t).width;
+      g.fillText(t, x - w * (al || 0), y);
+      return w;
+    }
+    function box(x, y, s, col, lw) { g.strokeStyle = col; g.lineWidth = lw; g.strokeRect(x + lw / 2, y + lw / 2, s - lw, s - lw); }
+    g.fillStyle = P.bg; g.fillRect(0, 0, W, H);
+    brandHead(g, P, PAD, 50);
+    tx(String(spec.module || "").toUpperCase(), PAD + 196, 50, "700 22", P.accent, uw / 3);
+    tx(new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), W - PAD, 50, 15, sub, 200, 1);
+    var rp = g.createLinearGradient(PAD, 0, W - PAD, 0);
+    P.ramp.forEach(function (s) { rp.addColorStop(s[0], s[1]); });
+    g.fillStyle = rp; g.fillRect(PAD, 66, uw, 3);
+    var t0 = PAD;
+    if (X && spec.icon && X.hasIcon(spec.icon)) t0 += X.pxIcon(g, spec.icon, PAD, 84, 2, fg) + 12;
+    tx(multi ? a.allTitle : spec.title, t0, 108, "700 " + (W < 1200 ? 28 : 34), fg, W - PAD - t0);
+    g.font = "15px " + P.MONO;
+    var sl = a.sub ? wrap2(g, a.sub, uw) : [];
+    sl.forEach(function (t, i) { tx(t, PAD, 134 + 20 * i, 15, sub); });
+    if (ball) a.stamp = "Choices mine. Numbers from eephus.io.";
+    var stl = a.stamp ? wrap2(g, a.stamp, uw) : [], top = 152 + 20 * sl.length, bot = H - 78 - 22 * stl.length, bh = bot - top, i, q;
+
+    if (a.mode === "podium") {
+      // 2-1-3; lamps 12 px at a 16 px pitch on the zero baseline; 1st boxed in 2 px
+      var vs = R.map(function (r) { return +r.v || 0; }).concat(0);
+      var hi = Math.max.apply(null, vs), lo = Math.min.apply(null, vs), cw = Math.min(260, uw / 3 - 24);
+      var gp = Math.min(48, uw / 3 - cw), yT = top + 34, yB = bot - 96, k = (yB - yT) / ((hi - lo) || 1), y0 = yT + hi * k;
+      [1, 0, 2].forEach(function (j, s) {
+        var r = R[j];
+        if (!r) return;
+        var x = W / 2 + (s - 1) * (cw + gp) - cw / 2, v = +r.v || 0, h = Math.round(Math.abs(v) * k), m = x + cw / 2;
+        g.fillStyle = v < 0 ? dn : tok(r.ink || "--text-primary", fg);
+        for (q = 0; q < h - 4; q += 16) g.fillRect(x, v < 0 ? y0 + 4 + q : y0 - 4 - q - Math.min(12, h - 4 - q), cw, Math.min(12, h - 4 - q));
+        tx(r.t + " " + (a.unit || ""), m, (v < 0 ? y0 : y0 - h) - 10, "700 20", fg, cw + gp, 0.5);
+        box(m - 16, yB + 10, 32, j ? P.line : fg, j ? 1 : 2);
+        tx(r.p, m, yB + 33, "700 18", fg, 28, 0.5);
+        tx(r.n, m, yB + 66, "700 18", fg, cw + gp - 8, 0.5);
+        tx(r.c, m, yB + 88, 14, sub, cw + gp - 8, 0.5);
+      });
+      g.fillStyle = fg; g.fillRect(PAD, y0, uw, 2);
+    } else if (a.mode === "slate") {
+      // the hero on the band
+      var ink = P.dark ? fg : tok("--text-on-accent", P.bg), pw = Math.min(uw, 1000), px = (W - pw) / 2;
+      var ph = Math.min(bh, pw * 0.75), py = top + (bh - ph) / 2, hw = pw * 0.24, cw2 = (pw - hw) / 2, rh = (ph - 44) / 4;
+      g.fillStyle = tok("--bg-header", fg); g.fillRect(px, py, pw, ph);
+      ["AL", "NL"].forEach(function (l, j) { tx(l, px + hw + j * cw2 + 16, py + 30, "700 16", ink, cw2); });
+      R.forEach(function (r, j) {
+        var y = py + 44 + j * rh, f = Math.min(30, Math.round(rh * 0.3));
+        g.fillStyle = P.line; g.fillRect(px + 12, y, pw - 24, 1);
+        tx(r.a, px + 16, y + rh / 2 + 6, 16, ink, hw - 24);
+        (r.cells || []).forEach(function (e, s) {
+          var x = px + hw + s * cw2 + 16;
+          if (e.off) { tx(e.n, x, y + rh / 2 + 6, 14, ink, cw2 - 28); return; }
+          tx(e.n, x, y + rh / 2, "700 " + f, ink, cw2 - 28);
+          tx(e.c, x, y + rh / 2 + f / 2 + 10, 14, ink, cw2 - 28);
+        });
+      });
+    } else if (a.mode === "superlative") {
+      // dumbbell (hollow "from", filled "to") or a lamp bar from 0 or 100
+      var base = a.pic === "index" ? 100 : 0, ds = [], rh2 = Math.min(H > W ? 110 : 64, (bh - 30) / Math.max(5, R.length));
+      R.forEach(function (r) { ds.push.apply(ds, a.pic === "dumbbell" ? [+r.f, +r.to] : [+r.v, base]); });
+      var mn = Math.min.apply(null, ds), mx = Math.max.apply(null, ds);
+      var nx = PAD + 44, nw = uw * 0.3, sx = nx + nw + 20, sw = W - PAD - 160 - sx, y1 = top + (bh - 30 - R.length * rh2) / 2;
+      var sc = function (v) { return sx + (v - mn) / ((mx - mn) || 1) * sw; };
+      R.forEach(function (r, j) {
+        var m = y1 + (j + 0.5) * rh2, v = +r.v, b0 = sc(base), b1 = sc(v), x1 = sc(+r.f), x2 = sc(+r.to);
+        tx(String(r.r), PAD, m + 6, "700 18", fg, 40);
+        tx(r.n, nx, m - 3, "700 17", fg, nw);
+        tx(r.c, nx, m + 16, 13, sub, nw);
+        g.fillStyle = r.ink ? tok(r.ink, fg) : v < base ? dn : up;
+        if (a.pic === "dumbbell") {
+          g.fillRect(Math.min(x1, x2), m - 1, Math.abs(x2 - x1), 2);
+          g.fillStyle = P.bg; g.fillRect(x1 - 4, m - 4, 8, 8);
+          box(x1 - 4, m - 4, 8, fg, 2);
+          g.fillStyle = fg; g.fillRect(x2 - 4, m - 4, 8, 8);
+        } else {
+          for (q = 0, i = Math.round(Math.abs(b1 - b0) / 8); q < Math.max(1, i); q++) g.fillRect(b1 < b0 ? b0 - 8 * q - 6 : b0 + 8 * q, m - 6, 6, 12);
+        }
+        tx(String(r.t), W - PAD, m + 6, "700 18", fg, 150, 1);
+        if (j < R.length - 1) { g.fillStyle = P.line; g.fillRect(PAD, y1 + (j + 1) * rh2, uw, 1); }
+      });
+      var ay = y1 + R.length * rh2 + 4;
+      g.fillStyle = sub; g.fillRect(sx, ay, sw, 1);
+      if (a.pic !== "dumbbell") g.fillRect(sc(base), y1, 1, ay - y1);
+      tx(mn.toFixed(a.dec || 0), sx, ay + 18, 12, sub, 90);
+      tx(mx.toFixed(a.dec || 0), sx + sw, ay + 18, 12, sub, 90, 1);
+    } else if (ball) {
+      // every filled ballot when taller than wide
+      var bs = multi ? a.ballots : (a.ballots || []).slice(0, 1), cols = [[], []], cnt = [0, 0], nc = multi ? 2 : 1;
+      bs.forEach(function (b) { var j = nc > 1 && cnt[1] < cnt[0] ? 1 : 0; cols[j].push(b); cnt[j] += b.rows.length + (multi ? 1.5 : 0); });
+      var mc = Math.max(cnt[0], cnt[1], 1), lh = Math.min(H > W ? 64 : 44, bh / mc), w3 = (uw - 32 * (nc - 1)) / nc;
+      var f3 = Math.min(H > W ? 24 : 18, Math.round(lh * 0.45));
+      cols.forEach(function (cl, j) {
+        var y = top + (bh - lh * mc) / 2, x = PAD + j * (w3 + 32);
+        cl.forEach(function (b) {
+          if (multi) { tx(b.h, x, y + lh, "700 " + f3, fg, w3); y += lh * 1.5; }
+          b.rows.forEach(function (s) {
+            tx(s.l, x, y + lh * 0.65, f3, sub, w3 * 0.3);
+            tx(s.n || "-", x + w3 * 0.32, y + lh * 0.65, (s.n ? "700 " : "") + f3, s.n ? fg : sub, w3 * 0.68);
+            y += lh;
+          });
+        });
+      });
+    }
+
+    stl.forEach(function (t, j) { tx(t, PAD, H - 74 - 22 * (stl.length - 1 - j), 13, sub); });
+    if (a.credit && !ball) tx(a.credit, PAD, H - 52, 13, sub);
+    tx((multi ? a.allUrl : spec.url) || "eephus.io", PAD, H - 26, "700 16", fg, uw - 120);
+    tx("eephus.io", W - PAD, H - 26, "700 13", sub, 120, 1);
+    return c;
+  }
+
   // ---- render dispatch -------------------------------------------------------
   // Canvas text does NOT wait for a webfont. `g.font = "700 26px PixelMplus12"`
   // silently falls back to the next family in the stack if the face has not
@@ -741,6 +870,7 @@
       // Fixed Twitter-card geometry; format control is hidden.
       return renderSourceComp(_spec);
     }
+    if (_spec.kind === "awards") return renderAwards(_spec, fmt, accentToken());
     if (_spec.kind === "draw" && typeof _spec.draw === "function") {
       // The caller owns the geometry (a Masthead card is 300 x 420 at 2x).
       return await _spec.draw({ scale: SCALE, palette: palette(accentToken()), px: X });
@@ -823,7 +953,7 @@
     var noBoard = _spec.kind === "card" || _spec.kind === "newsday" || _spec.kind === "sourcecomp" ||
       _spec.kind === "draw";
     ov.querySelector(".egfx-ctrl-format").style.display = noBoard ? "none" : "";
-    ov.querySelector(".egfx-ctrl-count").style.display = noBoard ? "none" : "";
+    ov.querySelector(".egfx-ctrl-count").style.display = (noBoard || _spec.kind === "awards") ? "none" : "";
     ov.querySelector("#egfx-format").value = _opts.format;
     ov.querySelector("#egfx-theme").value = _opts.theme;
     var counts = (_spec.board && _spec.board.counts) || [10, 25, 50];
@@ -938,5 +1068,8 @@
   }
 
   window.EEPHUS_GFX = { open: open, close: close, chipHTML: chipHTML, FORMATS: FORMATS,
-    ACCENTS: ACCENTS, tok: tok, palette: palette, forceTheme: forceTheme, SCALE: SCALE };
+    ACCENTS: ACCENTS, tok: tok, palette: palette, forceTheme: forceTheme, SCALE: SCALE,
+    drawAwards: function (spec, format) {
+      return renderAwards(spec, FORMATS[format] || FORMATS.twitter, spec.accentToken || "--accent-lilac");
+    } };
 })();

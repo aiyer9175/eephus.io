@@ -278,10 +278,23 @@ def text_rows(s, bold=True, ls=0, dot_from=None):
     return grid
 
 
+def awards_live() -> bool:
+    """awards_core.AWARDS_LIVE, read at call time (the Awards card's gate, AWARDS_10)."""
+    sys.path.insert(0, str(ROOT))
+    import awards_core
+    return bool(awards_core.AWARDS_LIVE)
+
+
+def card_modules():
+    """The module cards build() writes: SRC.MODULES, plus the Awards card while its flag is on."""
+    return SRC.MODULES + ((SRC.AWARDS_CARD,) if awards_live() else ())
+
+
 def used_chars():
     """Every character each face draws, for glyphs.json."""
-    bold = set(SRC.TEXT) | set(SRC.DEFAULT_CARD_TAG) | {c for _, t, _, _ in SRC.MODULES for c in t}
-    reg = set("eephus.io") | {c for _, _, r, line in SRC.MODULES for c in r + line}
+    mods = card_modules()
+    bold = set(SRC.TEXT) | set(SRC.DEFAULT_CARD_TAG) | {c for _, t, _, _ in mods for c in t}
+    reg = set("eephus.io") | {c for _, _, r, line in mods for c in r + line}
     reg |= {c for c in "".join(_SHEET_LABELS)}
     bold |= set("PROSPX")                                  # the PROSPX banner title
     reg |= {c for t in SRC.BANNER_TAGS.values() for c in t}
@@ -707,7 +720,7 @@ def rule_png(width, h, theme, style):
     return im
 
 
-def og_card(style, seams, key=None, title=None, line=None, route="", bits=None):
+def og_card(style, seams, key=None, title=None, line=None, route="", bits=None, icon=None):
     W, H = SRC.CARD_W, SRC.CARD_H
     img = field(W, H)
     sub = hx(tok("text-secondary", "dark"))
@@ -722,7 +735,7 @@ def og_card(style, seams, key=None, title=None, line=None, route="", bits=None):
         img.alpha_composite(url, ((W - url.width) // 2, H - 64))
         return img.convert("RGB")
     lock = to_png(compose(SRC.STRIKES["og_small"], style, seams), "dark")
-    ic = icon_png(key, 8, "dark", bits)
+    ic = icon_png(icon or key, 8, "dark", bits)
     st = 6 if len(title) * 36 < W - 64 - ic.width - 96 else 5
     tx = text_png(st, title, hx(tok("text-primary", "dark")))
     iy = 214
@@ -733,9 +746,17 @@ def og_card(style, seams, key=None, title=None, line=None, route="", bits=None):
     ty = iy + (ic.height - 12 * st) // 2
     img.alpha_composite(tx, (64 + ic.width + 32, ty))
     img.alpha_composite(rule_png(tx.width - st, st, "dark", style), (64 + ic.width + 32, ty + 14 * st))
-    ln = text_png(2, line, sub, bold=False)
-    assert 64 + ln.width <= W - 64, f"card line too wide for {key}: {ln.width} px"
-    img.alpha_composite(ln, (64, iy + ic.height + 40))
+    # A line wider than the card wraps once at a word (only the Awards card's does).
+    words, parts = line.split(), [line]
+    if text_png(2, line, sub, bold=False).width > W - 128:
+        for k in range(len(words) - 1, 0, -1):
+            if text_png(2, " ".join(words[:k]), sub, bold=False).width <= W - 128:
+                parts = [" ".join(words[:k]), " ".join(words[k:])]
+                break
+    for j, part in enumerate(parts):
+        ln = text_png(2, part, sub, bold=False)
+        assert 64 + ln.width <= W - 64, f"card line too wide for {key}: {ln.width} px"
+        img.alpha_composite(ln, (64, iy + ic.height + 40 + 36 * j))
     img.alpha_composite(text_png(2, "eephus.io" + route, sub, bold=False), (64, H - 64))
     return img.convert("RGB")
 
@@ -1006,8 +1027,9 @@ def build(out: Path, style: str = SRC.STYLE, seams: str = SRC.SEAMS):
     put_img(I + "share-default.png", og_card(style, seams))
     bits = icons()
     if bits:
-        for key, title, route, line in SRC.MODULES:
-            put_img(OG_DIR + f"{key}.png", og_card(style, seams, key, title, line, route, bits))
+        for key, title, route, line in card_modules():
+            put_img(OG_DIR + f"{key}.png", og_card(style, seams, key, title, line, route, bits,
+                                                   SRC.AWARDS_CARD_ICON if key == "awards" else None))
 
     # The export bundle (PB-09 / BR-09): branding/marks, animated, social, icons.
     M, A, S = "branding/marks/", "branding/animated/", "branding/social/"
@@ -1106,7 +1128,19 @@ def main(argv=None) -> int:
         return 1 if bad else 0
     res = build(Path(a.out), a.style, a.seams)
     print(f"{len(res)} outputs, {sum(res.values()):,} bytes")
+    if not awards_live():
+        print(f"  held {OG_DIR}awards.png (AWARDS_LIVE False); preview {awards_card_preview()}")
     return 0
+
+
+def awards_card_preview(dest: Path | None = None) -> Path:
+    """The Awards card (AWARDS_10) into the awards preview site, never assets/og/,
+    for render checks while awards_core.AWARDS_LIVE is False."""
+    out = (dest or ROOT / ".cache" / "awards" / "preview" / "site") / OG_DIR / "awards.png"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    key, title, route, line = SRC.AWARDS_CARD
+    og_card(SRC.STYLE, SRC.SEAMS, key, title, line, route, icons(), SRC.AWARDS_CARD_ICON).save(out)
+    return out
 
 
 if __name__ == "__main__":

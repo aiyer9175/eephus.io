@@ -74,9 +74,16 @@ def test_the_state_sentences_are_the_plans():
         assert s in js, s
 
 
-def test_no_share_control_until_awards_10():
+def test_share_renders_only_when_the_shell_names_the_engine():
+    """AWARDS_10: Share is a chip only when the mount carries data-gfx-js, and the engine
+    loads on the first press (never in the cold paint)."""
     js = _js()
-    assert "Share" not in js and "eephus-gfx" not in js
+    assert 'var GFX = root.getAttribute("data-gfx-js")' in js
+    assert "return GFX ? '<button type=\"button\" class=\"aw-share\"" in js
+    out = B.build_awards(live=True)
+    assert f'data-gfx-js="/assets/eephus-gfx.js?v={B._asset_ver("assets/eephus-gfx.js")}"' in out
+    assert '<script src="/assets/eephus-gfx.js' not in out, "the engine is not in the cold paint"
+    assert 'kind: "awards"' in js and "drawAwards" in js
 
 
 def test_no_war_unit_is_typed_in_the_client():
@@ -194,4 +201,8 @@ def test_ballot_copy_is_the_plans():
         assert s in js, s
     for unit in ("eWAR v2", "eWAR v3", "fWAR"):
         assert unit not in js, unit
-    assert "Share" not in js and "eephus-gfx" not in js and "Save image" not in js
+    # AWARDS_10: Save image renders only when the page carries the engine (cx.gfx), and the
+    # save note names the image only then; the chunk never names the engine itself.
+    assert '(cx.gfx ? btn("img", "Save image") : "")' in js
+    assert 'NOTE.ok + (cx.gfx ? " or save the image." : ".")' in js
+    assert "eephus-gfx" not in js and "EEPHUS_GFX" not in js

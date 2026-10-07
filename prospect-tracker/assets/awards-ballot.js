@@ -1,6 +1,4 @@
-/* eephus.io - /awards/ My Ballot (AWARDS_9; AWARDS_PLAN 5.8), loaded by assets/awards.js on its first open.
-   A ballot starts empty, is never filled from the selection, and is never scored, graded, counted or
-   coloured against anyone. One localStorage key; the link carries ids only; no request carries a ballot. */
+/* eephus.io /awards/ My Ballot (AWARDS_9, AWARDS_PLAN 5.8): never filled from, scored or counted against anyone. */
 (() => {
 "use strict";
 var LS = "eephus.awards.ballot.v1";
@@ -9,7 +7,7 @@ var AWD = { mvp: "MVP", cy: "CY", roy: "ROY", moy: "MOY" };
 var FULL = { MVP: "MVP", CY: "Cy Young", ROY: "Rookie of the Year", MOY: "Manager of the Year" };
 var NOTE = {
   ok: "Saved in this browser only. Nothing is sent to eephus.io; there is no account behind this page. " +
-    "A private window or clearing site data erases it. To keep it, copy the link.",
+    "A private window or clearing site data erases it. To keep it, copy the link",
   no: "This browser is not saving your ballot (private window or blocked storage). It lasts until you " +
     "leave the page; copy the link to keep it."
 };
@@ -30,7 +28,7 @@ var shared = null, cx = null, P = null, S = null, C = null, D = null, M = null, 
       store.seasons = j.seasons;
       if (typeof j.showSelection === "boolean") store.showSelection = j.showSelection;
     }
-  } catch (e) { /* a parse failure starts empty; the stored value stays until the first edit */ }
+  } catch (e) { /* starts empty; the stored value stays until an edit */ }
 })();
 function save() {
   clearTimeout(timer);
@@ -61,6 +59,7 @@ function btn(act, label, extra, cls) { return `<button class="aw-b-btn${cls ? " 
 function sw(act, on, label) { return `<button class="aw-b-sw" role="switch" data-act="${act}" aria-checked="${on}">${label}</button>`; }
 function sub(a) { return `<span class="aw-b-sub">${esc(a.filter(Boolean).join(DOT))}</span>`; }
 var ST = (kind, msg) => cx.stateBox(kind, msg);
+var none = () => say(`Your ${title(ui.active)} ballot is empty.`);
 function say(msg) { var n = el("live"); if (n) n.textContent = msg + (n.textContent === msg ? "\u00a0" : ""); }
 var moy = k => awardOf(k) === "MOY";
 var who = k => moy(k) ? "club" : "player";
@@ -114,7 +113,7 @@ function decOf(k, key) {
   if (M.dec[key] == null) M.dec[key] = C.pools[k] && C.pools[k].rows.some(x => num(x.v[key]) % 1) ? 2 : 0;
   return M.dec[key];
 }
-// A score on the rule's own ballot prints its served score_display.
+// a score on the rule's ballot prints its score_display
 function show(k, r, key) {
   var t = key === "score" && M.top[k] && M.top[k][r.id];
   return fmt(t ? t.score_display : r.v[key], decOf(k, key));
@@ -204,7 +203,7 @@ function render() {
       return `<button role="tab" class="aw-b-chip${on ? " active" : ""}" id="aw-b-t${x}" aria-controls="aw-b-panel" aria-selected="${on}" ` +
         `tabindex="${on ? 0 : -1}" data-key="${x}">${lgOf(x)} ${FULL[awardOf(x)].replace(" of the Year", "")} <span></span></button>`;
     }).join("") + `</div><div class="aw-b-panel" id="aw-b-panel" role="tabpanel" tabindex="0" aria-labelledby="aw-b-t${k}"></div>` +
-    `<div class="aw-b-actions">${btn("link", "Copy link") + btn("text", "Copy text") + btn("clear", "Clear")}</div>` +
+    `<div class="aw-b-actions">${btn("link", "Copy link") + btn("text", "Copy text") + (cx.gfx ? btn("img", "Save image") : "") + btn("clear", "Clear")}</div>` +
     '<div id="aw-b-confirm"></div><div id="aw-b-out"></div><p class="aw-b-save" id="aw-b-save"></p>' +
     '<p class="visually-hidden" id="aw-b-live" role="status" aria-live="polite"></p></div><div class="aw-b-right">' +
     (C.pools[k] ? '<div class="aw-b-find"><label id="aw-b-ql" for="aw-b-q"></label><div class="aw-b-qw"><input id="aw-b-q" type="text" ' +
@@ -229,7 +228,7 @@ function paintAll() {
   el("strip").innerHTML = strip();
   paintTable();
 }
-function paintNote() { var n = el("save"); if (n) n.textContent = storage === "ok" ? NOTE.ok : NOTE.no; }
+function paintNote() { var n = el("save"); if (n) n.textContent = storage === "ok" ? NOTE.ok + (cx.gfx ? " or save the image." : ".") : NOTE.no; }
 function filters() {
   var k = ui.active, A = awardOf(k), h = '<div class="aw-b-filters">';
   if (A === "MVP") {
@@ -379,7 +378,7 @@ function setActive(k) {
   focus("#aw-b-t" + k);
 }
 
-// the comparison strip: the viewer's 1st to 3rd as lilac squares
+// the comparison strip: the viewer's 1st to 3rd in lilac
 function strip() {
   var k = ui.active, A = awardOf(k), rl = (D.rules || {})[A] || {}, sel = store.showSelection, a = slots(k);
   var b = !rl.blocked_on && D.awards && D.awards[A] && D.awards[A][lgOf(k)], mine = [0, 1, 2].map(i => row(k, a[i]));
@@ -517,7 +516,7 @@ function clip(text, ok, what) {
 function copyText() {
   var k = ui.active, lines = [`My ${S} ${title(k)} ballot`];
   slots(k).forEach((id, i) => { var r = row(k, id); if (id != null) lines.push((i + 1) + ". " + (r ? label(k, r) : id)); });
-  if (lines.length === 1) return say(`Your ${title(k)} ballot is empty.`);
+  if (lines.length === 1) return none();
   lines.push(url(enc(k)));
   clip(lines.join("\n"), "Ballot text copied.", "Ballot text");
 }
@@ -578,8 +577,10 @@ var ACT = {
   sel: sel,
   link: () => { var b = enc(); if (b) clip(url(b), "Link copied.", "Link"); else say(`Your ${S} ballots are empty, so there is no link to copy.`); },
   text: copyText,
+  img: t => has(slots(ui.active)) ? cx.share(S, ui.active, KEYS.map(k => [k, slots(k).map(id => (id = row(k, id)) && label(k, id))]),
+    url(enc(ui.active)), url(enc()), t) : none(),
   clear: () => {
-    if (!filled(slots(ui.active))) return say(`Your ${title(ui.active)} ballot is empty.`);
+    if (!filled(slots(ui.active))) return none();
     ui.confirm = true; paintConfirm(); focus('[data-act="clear-yes"]');
   },
   "clear-no": () => { ui.confirm = false; paintConfirm(); focus('[data-act="clear"]'); },

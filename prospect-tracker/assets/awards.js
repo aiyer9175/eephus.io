@@ -9,6 +9,9 @@
    Manager card's two parts and two management facts, and three disclosures
    (the finalist comparison strip, the race strip and the rule's full ballot).
    My Ballot is assets/awards-ballot.js (AWARDS_9), loaded on its first open.
+   Share (each card, the hero, and the superlatives' seam) and My Ballot's Save
+   image open the shared GFX modal's awards cards (AWARDS_10), rendered only
+   when the shell names the engine, which loads on the first press.
    Superlatives, Rule and vote and Method render the unmeasured state until
    AWARDS_8 lands.
 
@@ -198,6 +201,8 @@
     root.addEventListener("click", function (e) {
       var r = e.target.closest && e.target.closest(".aw-retry");
       if (r) { delete shards[state.season]; apply(state, false); }
+      var sh = e.target.closest && e.target.closest("[data-aw-share]");
+      if (sh) share(sh);
     });
   }
   function merge(o) {
@@ -280,6 +285,9 @@
     return r && r.unit ? r.unit : "";
   }
   function stampLine(doc) {
+    return '<p class="aw-stamp" role="status">' + esc(stampText(doc)) + "</p>";
+  }
+  function stampText(doc) {
     var st = doc.stamp || {}, status = doc.status, out = "";
     var through = dateLong(st.through);
     if (status === "closed") {
@@ -296,8 +304,9 @@
     if (status === "live" && isFinite(g) && Date.now() - g > STALE_MS) {
       out += " Last updated " + dateLong(doc.generated_at) + "; numbers may be out of date.";
     }
-    return '<p class="aw-stamp" role="status">' + esc(out) + "</p>";
+    return out;
   }
+  function kicker(doc) { return doc.status === "live" ? "Current leaders on the rule" : "The eephus selection"; }
   function caption(doc) {
     if (doc === main && main.selection_caption) return main.selection_caption;
     return (doc.status === "live" ? "Current leaders on the rule, " : "The eephus selection, 1st place, ") + doc.season;
@@ -364,7 +373,7 @@
   function jump() {
     return '<nav class="aw-jump" aria-label="Awards on this page">' + AWARDS.map(function (A) {
       return '<a class="aw-chip" href="' + esc(linkTo(KEY[A], null)) + '">' + SHORT[A] + "</a>";
-    }).join("") + "</nav>";
+    }).join("") + shareChip("slate", "", "Share the eight 1st places as an image") + "</nav>";
   }
 
   function card(doc, A, LG) {
@@ -373,17 +382,19 @@
     var full = LEAGUE[LG] + " " + (rule.name || TITLE[A]);
     var reg = rule.registry && (doc.registry || main.registry || {})[rule.registry];
     var verdict = reg && reg.verdict ? reg.verdict : "not yet registered";
+    var b = block(doc, A, LG);
     var h = '<article class="aw-card" id="aw-c-' + id + '" aria-labelledby="aw-cn-' + id + '">' +
       '<header class="aw-card-h"><h3 title="' + esc(full) + '">' + ico("aw-podium", 16) + LG + " " + TITLE[A] + "</h3>" +
       '<span id="aw-cn-' + id + '" hidden>' + esc(full) + "</span>" +
       (rule.registry ? '<a class="aw-reg" href="/models/#' + esc(rule.registry) + '" title="' +
-        esc("Registry row " + rule.registry + ": " + verdict + ".") + '">' + esc(verdict) + "</a>" : "") + "</header>";
-    var b = block(doc, A, LG);
+        esc("Registry row " + rule.registry + ": " + verdict + ".") + '">' + esc(verdict) + "</a>" : "") +
+      (b ? shareChip("podium", ' data-award="' + KEY[A] + '" data-lg="' + LG.toLowerCase() + '"',
+        "Share " + LG + " " + TITLE[A] + " as an image") : "") + "</header>";
     if (!b) {
       var why = rule.blocked_on || ("No rule is published for " + (rule.name || TITLE[A]) + " in " + doc.season + ".");
       return h + stateBox("unmeasured", esc(why)) + "</article>";
     }
-    h += '<p class="aw-kicker">' + (doc.status === "live" ? "Current leaders on the rule" : "The eephus selection") + "</p>";
+    h += '<p class="aw-kicker">' + kicker(doc) + "</p>";
     h += '<p class="aw-rule">' + [rule.label, rule.floor_label, rule.tie_label, rule.two_way_label, rule.eligibility_label]
       .filter(Boolean).map(esc).join(" ") + "</p>";
     h += ladder(doc, A, LG, b, rule);
@@ -721,7 +732,7 @@
   }
   function ballot(panel, s) {
     var ctx = { main: main, state: s, docFor: docFor, stateBox: stateBox, controls: controls, compare: compare,
-      esc: esc, ord: ord, surname: surname, live: function () { return state === s; },
+      esc: esc, ord: ord, surname: surname, live: function () { return state === s; }, gfx: !!GFX, share: shareBallot,
       setHash: function (o) {
         for (var k in o) s[k] = o[k];
         try { history.replaceState(null, "", "#" + hashOf(s)); } catch (e) { /* stays */ }
@@ -736,6 +747,95 @@
           'The candidates could not load. <button type="button" class="aw-retry">Retry</button>');
       }
     });
+  }
+
+  // ---- share cards (AWARDS_10; AWARDS_PLAN 5.16) -----------------------------
+  // Each card is built from the numbers this page prints; the ballot card from
+  // the viewer's own slots only, never the selection. A superlative card
+  // (AWARDS_8) carries shareChip("superlative", ' data-sl="<id>"', label).
+  var GFX = root.getAttribute("data-gfx-js"), gfxChunk = null;
+  var CREDIT = "Data: MLB, FanGraphs, Baseball-Reference via eephus.io";
+  function shareChip(mode, attrs, label) {
+    return GFX ? '<button type="button" class="aw-share" data-aw-share="' + mode + '"' + attrs + ' aria-label="' +
+      esc(label) + '">Share</button>' : "";
+  }
+  function gfxLoad() {
+    if (window.EEPHUS_GFX && window.EEPHUS_GFX.drawAwards) return Promise.resolve();
+    if (!gfxChunk) {
+      gfxChunk = new Promise(function (ok, no) {
+        var t = document.createElement("script");
+        t.onload = ok; t.onerror = no; t.src = GFX; document.head.appendChild(t);
+      }).then(function () { if (!window.EEPHUS_GFX || !window.EEPHUS_GFX.drawAwards) throw new Error("gfx"); });
+      gfxChunk.catch(function () { gfxChunk = null; });
+    }
+    return gfxChunk;
+  }
+  function bare(u) { return String(u).replace(/^https?:\/\//, "").replace(/#$/, ""); }
+  function shareOpen(mode, title, url, aw, btn) {
+    aw.mode = mode;
+    gfxLoad().then(function () {
+      window.EEPHUS_GFX.open({ kind: "awards", module: "Awards", accentToken: "--accent-lilac", aw: aw,
+        format: mode === "slate" ? "wide" : "twitter", icon: mode === "ballot" ? "aw-ballot" : "aw-podium",
+        title: title, url: bare(url), filenameBase: "eephus-awards-" + mode });
+    }, function () { if (btn) btn.textContent = "Could not load"; });
+  }
+  function cardUrl(doc, o) {
+    var s = { section: "selections", season: doc.season, award: null, lg: null, sl: null, b: null };
+    for (var k in o) s[k] = o[k];
+    return "eephus.io/awards/#" + hashOf(s);
+  }
+  function share(el) {
+    var m = el.getAttribute("data-aw-share"), doc = docFor(state.season), A = BY_KEY[el.getAttribute("data-award")];
+    var LG = String(el.getAttribute("data-lg") || "").toUpperCase(), b, s;
+    if (!doc || doc.then) return;
+    var st = { stamp: stampText(doc), credit: CREDIT };
+    if (m === "podium" && (b = block(doc, A, LG))) {
+      var rule = doc.rules[A], pl = places(b.top), d = rule.decimals == null ? 1 : rule.decimals, k = kicker(doc);
+      st.sub = rule.label; st.unit = rule.unit;
+      st.rows = b.top.slice(0, 3).map(function (r, i) {
+        var v = num(r.score_display), t = tierOf(v, rule.family);
+        return { p: (pl[i].tie ? "T" : "") + pl[i].n, n: rowName(r), c: r.club_code, t: fmt(v, d), v: v,
+          ink: t ? "--vt-" + t : "--text-primary" };
+      });
+      shareOpen(m, LG + " " + TITLE[A] + ": " + k.charAt(0).toLowerCase() + k.slice(1) + ", " + doc.season,
+        cardUrl(doc, { award: KEY[A], lg: LG.toLowerCase() }), st, el);
+    } else if (m === "slate") {
+      st.rows = AWARDS.map(function (A2) {
+        return { a: SHORT[A2], cells: LGS.map(function (L2) {
+          var b2 = block(doc, A2, L2), f = b2 ? firsts(b2) : [], tie = f.length > 1;
+          return b2 ? { n: f.map(function (r) { return (tie ? "T " : "") + (A2 === "MOY" ? rowName(r) : surname(r.name)); })
+            .join(" / "), c: f.map(function (r) { return r.club_code; }).join(" / ") } : { n: "Not published", off: 1 };
+        }) };
+      });
+      shareOpen(m, caption(doc), cardUrl(doc, {}), st, el);
+    } else if (m === "superlative") {
+      s = (doc.superlatives || []).filter(function (x) { return x.id === el.getAttribute("data-sl"); })[0];
+      if (!s || s.blocked_on || !(s.rows || []).length) return;
+      st.sub = s.definition; st.stamp = s.frame_label || st.stamp;
+      st.pic = s.kind === "index" || s.kind === "signed" ? s.kind : "dumbbell";
+      st.dec = (String(s.rows[0].value_display).split(".")[1] || "").length;
+      st.rows = s.rows.slice(0, 5).map(function (r) {
+        var t = s.kind === "index" ? tierOf(r.value, s.family) : "";
+        return { r: r.rank, n: r.name, c: r.club_code, t: r.value_display, v: r.value, f: r.from, to: r.to,
+          ink: t ? "--vt-" + t : null };
+      });
+      shareOpen(m, s.title, cardUrl(doc, { section: "superlatives", sl: s.id }), st, el);
+    }
+  }
+  // My Ballot's Save image (the chunk passes [key, [label or null per slot]]
+  // for the eight ballots): the active ballot leads, then every other filled one.
+  function shareBallot(S, k, list, url1, urlAll, btn) {
+    var bs = [];
+    list.forEach(function (x) {
+      var pts = ((main.ballot_rules || {})[BY_KEY[x[0].slice(3)]] || {}).points || [];
+      if (x[0] !== k && !x[1].some(Boolean)) return;
+      var b = { h: "My " + S + " " + x[0].slice(0, 2).toUpperCase() + " " + TITLE[BY_KEY[x[0].slice(3)]] + " ballot",
+        rows: x[1].map(function (n, i) {
+          return { l: ord(i + 1) + " \u00b7 " + pts[i] + " pts", n: n };
+        }) };
+      if (x[0] === k) bs.unshift(b); else bs.push(b);
+    });
+    shareOpen("ballot", bs[0].h, url1, { ballots: bs, allTitle: "My " + S + " ballots", allUrl: bare(urlAll) }, btn);
   }
 
   // ---- boot -----------------------------------------------------------------
