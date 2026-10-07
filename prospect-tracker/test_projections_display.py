@@ -336,3 +336,40 @@ def test_board_and_card_bytes(server):
         assert not any(u.endswith("/data/mlb_player_detail.json") for u in reqs)
         assert not any("player_links.json" in u for u in reqs)
         assert page.query_selector("#mlbp-hub .player-hub-strip") is not None
+
+
+# ---------------------------------------------------------------------------
+# Display pass: one-line ledes, method folded, no duplicated scope
+# ---------------------------------------------------------------------------
+def test_board_lede_is_one_line_and_the_method_is_folded():
+    out = S._render_all("")
+    banner = out.get("proj-banner", "")
+    lede, _, fold = banner.partition('<details class="proj-how">')
+    assert fold, "the method is folded under How this works"
+    assert "How this works" in fold and "expected value" in fold and "Marcel champion" in fold
+    assert "expected value" not in lede and "Marcel" not in lede
+    assert "(fWAR basis)" in lede and "data as of" in lede
+    assert ">Scope<" not in out.get("proj-rows", ""), "the rail no longer repeats the lede"
+
+
+def test_team_outlook_folds_its_column_notes_under_the_table():
+    board = json.loads(S.BOARD)
+    board["team_outlook"] = [{"team": "NYY", "war": 40.0, "wins": 90.0, "lockedPct": 0.7}]
+    saved = S.BOARD
+    S.BOARD = json.dumps(board)
+    try:
+        out = S._render_all("#view=teams")
+    finally:
+        S.BOARD = saved
+    rows = out.get("proj-rows", "")
+    assert rows.index("</table>") < rows.index("How this works") < rows.index("Core control:")
+    assert "47.7 replacement baseline" in out.get("proj-banner", "")
+
+
+def test_masthead_sub_is_trimmed_and_keeps_its_glossary_hooks():
+    import build_site
+    html = build_site.build_projections()
+    sub = html.split('<span class="section-sub">', 1)[1].split("</span></div>", 1)[0]
+    assert 'data-gl="ewar"' in sub and 'data-gl="proj_buckets"' in sub
+    words = [w for w in re.sub(r"<[^>]+>", "", sub).split() if re.search(r"[A-Za-z]", w)]
+    assert len(words) <= 15, words   # was 29 before the 2026-10-07 display pass

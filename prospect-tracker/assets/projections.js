@@ -802,12 +802,16 @@
     const first = DATA.first_season;
     const teams = [...new Set((DATA.vets || []).map(m => m.team).filter(Boolean))].sort();
 
+    const last = first + (DATA.horizon || 5) - 1;
     banner.innerHTML = `<div class="fa-note fa-sources">
-      ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${DATA.n_vets} veterans (proj_lgbm_v1 on the <span data-gl="fa_projection_engine">FA projection engine</span>; /fa/ prices on its Marcel champion)
-      &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
-      &middot; priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.pricing_basis ? `, each season at its own level on the one written path (escalator ${(DATA.pricing_basis.g_ref * 100).toFixed(2)}%/yr, discounted at ${(DATA.pricing_basis.nominal_rate * 100).toFixed(2)}%)` : (DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons")}
-      &middot; WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window, unsigned seasons through ${first + (DATA.horizon || 5) - 1} at most and a longer guarantee through its last season on the champion aging curve chained from the ${first + (DATA.horizon || 5) - 1} WAR
-      &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
+      ${first}-${last} projected <span data-gl="war">WAR</span> (fWAR basis) &middot; ${DATA.n_vets} veterans, ${DATA.n_prospects} prospects
+      &middot; <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.generated_at ? ` &middot; data as of ${esc(String(DATA.generated_at))}` : ""}
+      &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
+      <details class="proj-how"><summary class="fa-sub">How this works</summary><div class="fa-note">
+      Veterans: proj_lgbm_v1 on the <span data-gl="fa_projection_engine">FA projection engine</span>; /fa/ prices on its Marcel champion.
+      Prospects: <span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA.
+      Priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)}${DATA.pricing_basis ? `, each season at its own level on the one written path (escalator ${(DATA.pricing_basis.g_ref * 100).toFixed(2)}%/yr, discounted at ${(DATA.pricing_basis.nominal_rate * 100).toFixed(2)}%)` : (DATA.dpw_infl ? `, escalating ${(DATA.dpw_infl * 100).toFixed(1)}%/yr` : ", flat across seasons")}.
+      WAR shown: <strong>expected value</strong>, the same path <span data-gl="surplus_value">surplus</span> prices over the club control window, unsigned seasons through ${last} at most and a longer guarantee through its last season on the champion aging curve chained from the ${last} WAR.</div></details>`;
     const gfxBtn = document.getElementById("proj-board-gfx");
     if (gfxBtn) gfxBtn.onclick = () => {
       if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(_projBoardSpec(sortRows(rows()).slice(0, 50)));
@@ -906,11 +910,10 @@
     // Banner + GFX button track the Team Outlook view (the Players banner is
     // rebuilt in render()), so Generate GFX exports the team board you're on.
     if (banner) {
-      const bControl = rows.some(r => r.lockedPct != null);
-      const frame = `${DATA.first_season} projected roster <span data-gl="war">WAR</span> (fWAR basis) &rarr; wins`
-        + (bControl ? ` &middot; core control = share of projected WAR under contract or an age proxy` : "");
+      const frame = `${DATA.first_season} projected roster <span data-gl="war">WAR</span> (fWAR basis) to wins at the 47.7 replacement baseline`
+        + ` &middot; <span data-gl="forward_gate">forward gate</span> on Model Accountability`;
       banner.innerHTML = `<div class="fa-note fa-sources">
-        ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${frame}
+        ${frame}${DATA.generated_at ? ` &middot; data as of ${esc(String(DATA.generated_at))}` : ""}
         &middot; <button class="chip egfx-chip" id="proj-teams-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
       const tgfx = document.getElementById("proj-teams-gfx");
       if (tgfx) tgfx.onclick = () => {
@@ -1146,7 +1149,7 @@
     }).join("");
     const note = nowMode
       ? `Current (${curSeason}) slate <span class="eephus-beta" title="Newly launched; blend and odds may shift">β beta</span>: Bayesian blend of the roster-talent prior, actual record and Pythagorean record (RS/RA); the prior fades as games are played. Playoff odds: Monte Carlo over ${DATA.mc_schedule_source === "balanced_fallback" ? "a balanced-schedule ESTIMATE (live schedule unavailable)" : "the live remaining schedule"}. SOS: log5 opponent talent over unplayed games (1 = hardest). Does not change the projection board.`
-      : `${DATA.first_season} projected roster <span data-gl="war">WAR</span> (fWAR basis) to wins at the 47.7 replacement baseline; <span data-gl="forward_gate">forward gate</span> on Model Accountability.${hasControl ? ` Core control: WAR-weighted share of each org's projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} production under contract, or projected controlled by age where no contract is on file; the sparkline is controlled WAR per season.` : ""}${hasFarm ? " Farm columns come from the PROSPX org models." : ""}`;
+      : `${hasControl ? `Core control: WAR-weighted share of each org's projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} production under contract, or projected controlled by age where no contract is on file; the sparkline is controlled WAR per season.` : ""}${hasFarm ? " Farm columns come from the PROSPX org models." : ""}`;
     // Sortable header: click to sort by it, click again to flip direction.
     // The active column shows a ▲/▼ arrow reflecting the effective direction.
     const _arrow = (key) => state.teamSort === key
@@ -1162,10 +1165,15 @@
     const header = nowMode
       ? `<thead><tr><th>#</th>${sth("team", "Team")}${sth("nowPct", "Record", `Actual ${curSeason} record + win%`)}${sth("pythag", "Pythag", "Pythagorean win% from run differential (exp 1.83)")}${sth("blend", "Proj W-L", "Bayesian blend of talent prior + actual + Pythag -> projected full-season record")}${sth("playoff", "Playoff odds", "Monte-Carlo division/wildcard/playoff probability")}${sth("sos", "Rem SOS", "Remaining strength of schedule via log5 (rank 1 = hardest)")}</tr></thead>`
       : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR", "Sum of each rostered veteran's champion mean year-1 WAR (the Marcel path /fa/ prices on; quantile points are never summed) plus arrived prospects. Top projected names print the proj_lgbm_v1 path, so a player's figure there can differ from his share of this sum.")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under contract, or projected controlled by age where no contract is on file. Not the club control window; that is on the players board.`) : ""}${showWindow ? sth("window", `<span data-gl="window_alignment">Window</span>`, "Farm arrival vs the controlled-core window; negative = aligned") : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net prospect surplus NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
-    root.innerHTML = `${modeChips}<div class="fa-note proj-teams-note">${note}</div>
+    // The Current slate keeps its note above the table (it says what changes
+    // under the reader); the projected slate's column notes fold under it.
+    const noteTop = nowMode ? `<div class="fa-note proj-teams-note">${note}</div>` : "";
+    const noteFold = (!nowMode && note.trim())
+      ? `<details class="proj-how"><summary class="fa-sub">How this works</summary><div class="fa-note proj-teams-note">${note}</div></details>` : "";
+    root.innerHTML = `${modeChips}${noteTop}
       <table class="detail-table proj-table">
       ${header}
-      <tbody>${body}</tbody></table>`;
+      <tbody>${body}</tbody></table>${noteFold}`;
     root.querySelectorAll("[data-team-sort]").forEach(h => h.onclick = () => {
       const k = h.dataset.teamSort;
       if (state.teamSort === k) state.teamDir = state.teamDir === -1 ? 1 : -1;
@@ -1365,7 +1373,7 @@
       const acctGfxChip = ((acct.models || []).length && window.EEPHUS_GFX)
         ? ` &middot; ${window.EEPHUS_GFX.chipHTML("proj-acct-gfx", "Generate GFX")}` : "";
       banner.innerHTML = `<div class="fa-note fa-sources">
-        Held-out <span data-gl="backtest">backtests</span> and registry <span data-gl="model_verdict">verdicts</span>
+        Registry <span data-gl="model_verdict">verdicts</span> and held-out <span data-gl="backtest">backtests</span> as committed, not recomputed
         ${lastChecked(acct) ? `&middot; verdicts last checked ${esc(lastChecked(acct))}` : ""}${acct.generated_at ? ` &middot; as of ${esc(String(acct.generated_at))}` : ""}${acctGfxChip}</div>`;
     }
     const models = acct.models || [];
@@ -1391,23 +1399,22 @@
         : "";
       return `<div class="mlbp-section proj-acct-card">
         <div class="proj-acct-head">
-          <span class="mlbp-section-title">${esc(m.label)}</span>${verdictBadge(m.verdict)}${m.remeasure_pending ? ` <span class="fa-sub proj-acct-pending">${esc(m.remeasure_pending)}</span>` : ""}
+          <span class="mlbp-section-title">${esc(m.label)}</span> ${verdictBadge(m.verdict)}${m.remeasure_pending ? ` <span class="fa-sub proj-acct-pending">${esc(m.remeasure_pending)}</span>` : ""}
         </div>
         ${m.summary ? `<div class="fa-note proj-acct-summary">${esc(m.summary)}</div>` : ""}
         <div class="fa-sub proj-acct-predicts">${esc(m.predicts || "")}</div>
-        <div class="proj-acct-meta">
+        <details class="proj-how"><summary class="fa-sub">Champion, baseline and metric</summary><div class="proj-acct-meta">
           <strong>Champion</strong> ${esc(m.champion || "?")}<br>
           <strong>Baseline</strong> <span class="fa-sub">${esc(m.baseline || "?")}</span><br>
           <strong>Metric</strong> <span class="fa-sub">${esc(m.metric || "?")}</span>
-        </div>
+        </div></details>
         ${tableFor(m.eval_artifact, m)}
         ${m.notes ? `<details class="proj-acct-notes"><summary class="fa-sub">Lab log</summary><div class="fa-note">${esc(m.notes)}</div></details>` : ""}
         ${fresh ? `<div class="fa-sub proj-acct-fresh">${fresh} &middot; <a href="${glHref}">methodology in the Library</a></div>` : ""}
       </div>`;
     }).join("");
     root.innerHTML = `<div class="mlbp-page">
-      <div class="fa-note proj-block-note">Verdicts from the model registry, refreshed monthly. Receipts are read from the committed eval artifacts, not recomputed.</div>
-      <div class="proj-acct-legend">${legend}</div>
+      <details class="proj-how"><summary class="fa-sub">What the verdicts mean</summary><div class="proj-acct-legend">${legend}</div></details>
       ${cards}</div>`;
     const agfx = document.getElementById("proj-acct-gfx");
     if (agfx) agfx.onclick = () => {
@@ -1950,11 +1957,7 @@
       ${warMapLegend}
       <div class="proj-warmap-wrap" data-export-chart data-export-title="${esc(_ay)} vs ${esc(_ax2)}">${_wm}</div></details>` : "";
     function projBoardSidebar(curr) {
-      const stampMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Data freshness and scope">Scope</div>
-        ${DATA.generated_at ? `<div class="fa-rail-row"><span>data as of</span><span class="fa-rail-num">${esc(String(DATA.generated_at))}</span></div>` : ""}
-        <div class="fa-rail-row"><span>veterans</span><span class="fa-rail-num">${DATA.n_vets}</span></div>
-        <div class="fa-rail-row"><span>prospects</span><span class="fa-rail-num">${DATA.n_prospects}</span></div>
-        <div class="fa-rail-row"><span data-gl="winter_dpw">$/WAR</span><span class="fa-rail-num">${money(DATA.dpw_usd)}</span></div></div>`;
+      // No Scope module: the lede above the board carries the same four facts.
       const warTot = m => warShown(m) ?? -99;
       const topWar = curr.slice().sort((a, b) => warTot(b) - warTot(a)).slice(0, 6);
       const warRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num">${fmtWar(warTot(m))}</span></div>`;
@@ -1969,7 +1972,7 @@
       const supply = Object.entries(groups).sort((a, b) => b[1] - a[1])
         .map(([g, n]) => `<div class="fa-rail-row"><span>${esc(g)}</span><span class="fa-rail-num">${n}</span></div>`).join("");
       const supplyMod = supply ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="Current filtered pool by position group">Pool supply</div>${supply}</div>` : "";
-      return `<aside class="fa-board-rail">${stampMod}${warMod}${surMod}${supplyMod}</aside>`;
+      return `<aside class="fa-board-rail">${warMod}${surMod}${supplyMod}</aside>`;
     }
     // Sort vocabulary: one table for the eyebrow cue, the picker and its
     // reverse button. The cue is the only on-screen sign of a sort whose column
@@ -3312,7 +3315,7 @@
         ${photo}
         <div class="mlbp-hero-main">
           <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
-          <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${esc(p.team)}` : " · FA"} · ${contract}</div>
+          <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${franchiseHref(p.team) ? `<a class="fa-player-link" href="${esc(franchiseHref(p.team))}">${esc(p.team)}</a>` : esc(p.team)}` : " · FA"} · ${contract}</div>
           ${originLine}
           <div class="mlbp-hero-actions"><button class="chip egfx-chip" id="mlbp-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}">&#8646; Trade Machine</a>` : ""}</div>
         </div>

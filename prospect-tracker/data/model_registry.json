@@ -1414,7 +1414,7 @@
    "model_id": "fa_war_paths_decay",
    "summary": "Validated, pending re-measure: the gates (h1 MAE 0.557 vs 0.627) ran on labels doubled for two-way players, repaired 2026-09-18; none re-measured since.",
    "surface": "/fa/ + /projections/ multi-year paths",
-   "predicts": "WAR horizons 2-5 via regressed-rate aging decay + pitcher profile cohorts",
+   "predicts": "WAR horizons 1-5: proj_lgbm_v1 quantile heads on the decay path; /fa/ prices the decay path itself",
    "champion": "proj_lgbm_v1 (LightGBM quantile heads, champion-stacked; h6+ extrapolates champion decay)",
    "baseline": "marcel_decay_v2 (retained as stack feature + fallback + h6+ shape)",
    "metric": "h1-5 MAE/bias/star-slice/tail-ratio + band coverage/pinball",
