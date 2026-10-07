@@ -37,7 +37,14 @@
   }
 
   // ---- data layer ------------------------------------------------------------
-  // CACHING. data/glossary.json is ~366KB and every surface on the site loads
+  // TWO FILES (QHOP02, 2026-10-07). The full corpus is about 515 KB and only
+  // /glossary/ and PROSPX read its long fields (methodology, formula, example,
+  // visual, seeAlso). Every other page reads a term's name and short line, so
+  // it fetches data/glossary_index.json (id, term, definition, aliases,
+  // category, module, priority; written by build_site.write_glossary_index),
+  // and only when the page has a term, a module calls wire(), or the reader
+  // opens the palette or a tooltip. A missing index falls back to the full file.
+  // CACHING. data/glossary.json is ~515KB and every surface on the site loads
   // this file, so its fetch is the heaviest recurring transfer we make. It used
   // to run with cache:"no-cache", which forces a revalidation round trip on
   // EVERY page view and re-downloads the whole payload whenever the build
@@ -47,17 +54,18 @@
   // it from cache until the file actually changes and the changed file lands
   // under a url no cache has seen. Same freshness, one transfer per version.
   //
-  // The eager fetch STAYS. Deferring it to first tooltip/palette use would be a
-  // bigger byte win, but PROSPX reads window.EEPHUS_GLOSSARY synchronously
-  // (_resolveGlossaryTerm on its inline .g-term popovers, and two label
-  // builders), so a lazy map would render those paths empty. Do not make this
-  // lazy without giving those call sites an async entry point first.
+  // The eager fetch of the FULL file stays on /glossary/ and PROSPX: PROSPX
+  // reads window.EEPHUS_GLOSSARY synchronously (_resolveGlossaryTerm on its
+  // inline .g-term popovers, and two label builders), so a lazy map would
+  // render those paths empty there.
   //
   // Pages that do not carry the global (the hand-authored ones, which get their
   // <script> tags from restamp_hand_authored_pages and never see build_site's
   // inline block) fall back to the unversioned url - still under default HTTP
   // caching, so still cheaper than the forced revalidation it replaces.
-  function glossaryURL() {
+  const FULL = window.EEPHUS_GL_FULL === true
+    || /^\/(glossary|library|prospx)(\/|$)/.test(location.pathname || "");
+  function glossaryURL(file) {
     var v = null;
     try {
       v = window.EEPHUS_GL_DATA_VER || null;
@@ -68,16 +76,23 @@
         if (m) v = m[1];
       }
     } catch (e) { v = null; }
-    return "/data/glossary.json" + (v ? "?v=" + encodeURIComponent(v) : "");
+    // The index is a pure function of glossary.json, so the full file's
+    // content hash versions both urls.
+    return "/data/" + file + (v ? "?v=" + encodeURIComponent(v) : "");
   }
 
-  // The url is fixed once here: document.currentScript is only set while this
-  // file first runs, so a later reload() must not call glossaryURL() again.
-  const GL_URL = glossaryURL();
+  // The urls are fixed once here: document.currentScript is only set while
+  // this file first runs, so a later reload() must not call glossaryURL() again.
+  const GL_URL = glossaryURL("glossary.json");
+  const GL_INDEX_URL = glossaryURL("glossary_index.json");
+  let _loadStarted = false;
+  function fetchJSON(url) {
+    return fetch(url).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+  }
   function load() {
+    _loadStarted = true;
     window.EEPHUS_GLOSSARY_FAILED = false;
-    fetch(GL_URL)
-      .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    (FULL ? fetchJSON(GL_URL) : fetchJSON(GL_INDEX_URL).catch(() => fetchJSON(GL_URL)))
       .then(d => {
         const map = {};
         for (const e of d.entries || []) {
@@ -103,7 +118,9 @@
         window.dispatchEvent(new Event("eephus-glossary-failed"));
       });
   }
-  load();
+  // Start the fetch once, on first need (the full file at once on FULL pages).
+  function ensureLoaded() { if (!_loadStarted) load(); }
+  if (FULL) load();
 
   function resolve(q) {
     const map = window.EEPHUS_GLOSSARY || {};
@@ -117,33 +134,52 @@
   }
 
   // ---- site-wide player index (lazy; first palette open) ----------------------
-  // data/player_links.json carries name/team/pos for every MLB player AND
-  // every active PROSPX prospect, so the palette finds players from any page.
+  // data/player_search.json (mlb_player_export.write_player_search) carries
+  // key/name/team/pos/prospx for every MLB player AND every active PROSPX
+  // prospect, so the palette finds players from any page. It is the five
+  // fields of player_links.json's byKey the palette reads, without the byMlbam
+  // copy (QHOP06); a deploy without it falls back to player_links.json.
   // On PROSPX itself the app registers richer prospect search via
   // EEPHUS_QK_EXTRA - there the built-in source only serves NON-prospect rows
   // (vets), so the two sources never duplicate a player.
   let _qkPlayers = null, _qkPlayersLoading = false;
 
+  function qkRowsFromLinks(L) {
+    return Object.values((L && L.byKey) || {}).map(r => r && [r.key, r.name, r.team, r.pos, r.prospx]);
+  }
+  function qkRowsFromSearch(S) {
+    if (!S || !Array.isArray(S.rows)) throw new Error("no rows");
+    const f = S.fields || [], at = k => f.indexOf(k);
+    const ix = ["key", "name", "team", "pos", "prospx"].map(at);
+    return S.rows.map(r => ix.map(i => (i < 0 ? "" : r[i])));
+  }
   function qkLoadPlayers() {
     if (_qkPlayers || _qkPlayersLoading) return;
     _qkPlayersLoading = true;
-    // The hub's parsed copy when the page loads it, so a page that already
-    // read the identity map never downloads it a second time (QMLP09).
+    // The hub's parsed copy when the page has ALREADY asked for the identity
+    // map, so a page that read it never downloads player data twice (QMLP09).
     const H = window.EEPHUS_HUB;
-    (H && H.links ? Promise.resolve(H.links())
-      : fetch("/data/player_links.json", { cache: "no-cache" }).then(r => (r.ok ? r.json() : null)))
-      .then(L => {
+    const viaLinks = () => fetch("/data/player_links.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null)).then(qkRowsFromLinks);
+    (H && H.links && H.linksStarted && H.linksStarted()
+      ? Promise.resolve(H.links()).then(qkRowsFromLinks)
+      : fetch("/data/player_search.json", { cache: "no-cache" })
+          .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+          .then(qkRowsFromSearch)
+          .catch(viaLinks))
+      .then(list => {
         const rows = [];
-        for (const row of Object.values((L && L.byKey) || {})) {
-          if (!row || !row.name) continue;
+        for (const row of list || []) {
+          if (!row || !row[1]) continue;
+          const [key, name, team, pos, prospx] = row;
           rows.push({
-            name: row.name,
-            search: String(row.name).toLowerCase(),
-            sub: [row.pos, row.team].filter(Boolean).join(" · "),
-            prospx: row.prospx || null,
-            href: row.prospx
-              ? "/prospx/#player=" + encodeURIComponent(row.prospx)
-              : "/projections/#player=" + encodeURIComponent(row.key),
+            name: name,
+            search: String(name).toLowerCase(),
+            sub: [pos, team].filter(Boolean).join(" · "),
+            prospx: prospx || null,
+            href: prospx
+              ? "/prospx/#player=" + encodeURIComponent(prospx)
+              : "/projections/#player=" + encodeURIComponent(key),
           });
         }
         _qkPlayers = rows;
@@ -182,9 +218,13 @@
     if (ov) return ov;
     ov = document.createElement("div");
     ov.id = "qk-overlay"; ov.className = "qk-overlay";
+    // Combobox pattern (QHOA04): the input owns a listbox of option rows,
+    // names the active one through aria-activedescendant, and a polite status
+    // line reads the result count.
     ov.innerHTML = `<div class="qk-modal" role="dialog" aria-modal="true" aria-label="Quick search">
-      <input id="qk-input" class="qk-input" type="text" placeholder="Search players, terms, metrics…" autocomplete="off" spellcheck="false" aria-label="Quick search">
-      <div id="qk-results" class="qk-results"></div>
+      <input id="qk-input" class="qk-input" type="text" placeholder="Search players, terms, metrics…" autocomplete="off" spellcheck="false" aria-label="Quick search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="qk-results">
+      <div id="qk-results" class="qk-results" role="listbox" aria-label="Results"></div>
+      <div id="qk-status" class="gl-srdef" role="status" aria-live="polite"></div>
       <div class="qk-foot"><span><b>↵</b> open</span><span><b>↑ ↓</b> move</span><span><b>esc</b> close</span></div>
     </div>`;
     document.body.appendChild(ov);
@@ -204,6 +244,7 @@
   function qkOpen() {
     const ov = qkEnsure();
     _qkPrevFocus = document.activeElement;   // restore on close
+    ensureLoaded();    // the term index, when the page had no term to load it
     qkLoadPlayers();   // lazy: the player index fetches on first open only
     ov.classList.add("is-open");
     const inp = ov.querySelector("#qk-input");
@@ -257,19 +298,29 @@
     qkRender(q);
   }
 
+  function qkStatus(txt) {
+    const s = document.getElementById("qk-status");
+    if (s && s.textContent !== txt) s.textContent = txt;
+  }
   function qkRender(q) {
     const el = document.getElementById("qk-results");
+    const inp = document.getElementById("qk-input");
     if (!el) return;
+    if (!q || q.length < 2 || !_qkResults.length) {
+      if (inp) { inp.setAttribute("aria-expanded", "false"); inp.removeAttribute("aria-activedescendant"); }
+    }
     if (!q || q.length < 2) {
       el.innerHTML = `<div class="qk-empty">Type 2+ characters - any player, metric, term, or model concept.</div>`;
+      qkStatus("");
       return;
     }
     if (!_qkResults.length) {
       el.innerHTML = `<div class="qk-empty">No match - <a href="/glossary/">view the full Library</a></div>`;
+      qkStatus("No results");
       return;
     }
     el.innerHTML = _qkResults.map((r, i) => `
-      <div class="qk-row${i === _qkActive ? " is-active" : ""}" data-qk-i="${i}">
+      <div class="qk-row${i === _qkActive ? " is-active" : ""}" data-qk-i="${i}" id="qk-opt-${i}" role="option" aria-selected="${i === _qkActive}">
         <div class="qk-row-h"><span class="qk-row-name">${esc(r.label)}</span>
         <span class="qk-row-tag${r.type === "term" ? "" : " qk-row-tag-p"}">${esc(r.type === "term" ? "term" : (r.kind || ""))}</span></div>
         ${r.sub ? `<div class="qk-row-sub">${esc(r.sub)}</div>` : ""}
@@ -278,10 +329,18 @@
       n.onclick = () => qkChoose(+n.dataset.qkI);
       n.onmousemove = () => { _qkActive = +n.dataset.qkI; qkPaint(); };
     });
+    if (inp) inp.setAttribute("aria-expanded", "true");
+    qkPaint();
+    const n = _qkResults.length;
+    qkStatus(n + (n === 1 ? " result" : " results"));
   }
   function qkPaint() {
-    document.querySelectorAll(".qk-row").forEach((n, i) =>
-      n.classList.toggle("is-active", i === _qkActive));
+    document.querySelectorAll(".qk-row").forEach((n, i) => {
+      n.classList.toggle("is-active", i === _qkActive);
+      n.setAttribute("aria-selected", i === _qkActive ? "true" : "false");
+    });
+    const inp = document.getElementById("qk-input");
+    if (inp && _qkResults.length) inp.setAttribute("aria-activedescendant", "qk-opt-" + _qkActive);
   }
   function qkMove(d) {
     if (!_qkResults.length) return;
@@ -381,20 +440,29 @@
     tipCancelHide();
     _tipFor = span;
   }
+  // A term reached before the glossary is in shows once it lands.
+  function tipShowReady(span) {
+    ensureLoaded();
+    if (READY) { tipShow(span); return; }
+    window.addEventListener("eephus-glossary-ready", () => {
+      if (span === document.activeElement || span.matches(":hover")) tipShow(span);
+    }, { once: true });
+  }
   document.addEventListener("mouseover", e => {
     const span = e.target.closest("[data-gl]");
     if (!span) return;
+    ensureLoaded();
     tipCancelHide();                                   // re-entering the term aborts a pending close
     clearTimeout(_tipShowTimer);
     // 300 ms hover delay, with or without Reduce Motion (owner, 2026-10-01).
-    _tipShowTimer = setTimeout(() => tipShow(span), 300);
+    _tipShowTimer = setTimeout(() => tipShowReady(span), 300);
   });
   document.addEventListener("mouseout", e => {
     if (e.target.closest && e.target.closest("[data-gl]")) tipScheduleHide();
   });
   document.addEventListener("focusin", e => {
     const span = e.target.closest && e.target.closest("[data-gl]");
-    if (span) tipShow(span);
+    if (span) tipShowReady(span);
   });
   document.addEventListener("focusout", () => tipScheduleHide());
   // Escape closes an open term tooltip, whether hover or focus opened it
@@ -402,7 +470,19 @@
   document.addEventListener("keydown", e => {
     if (e.key === "Escape" && _tipFor) tipHide();
   });
-  window.addEventListener("scroll", () => { if (_tipFor) tipHide(); }, { passive: true });
+  // A scroll closes a hover tooltip. A tooltip opened by keyboard focus stays
+  // with its term while the term is on screen: Tab onto a term below the fold
+  // scrolls the page, and that scroll closed the tooltip it had just opened
+  // (QHOA05).
+  window.addEventListener("scroll", () => {
+    if (!_tipFor) return;
+    const span = _tipFor;
+    if (span === document.activeElement) {
+      const r = span.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < window.innerHeight) { tipShow(span); return; }
+    }
+    tipHide();
+  }, { passive: true });
   // Touch devices can't hover, so the mouseover/focus tooltips above never
   // fire and term definitions were unreachable. On no-hover (touch) devices
   // only, tapping a [data-gl] term toggles its tooltip; tapping elsewhere
@@ -412,7 +492,7 @@
     if (!noHover) return;
     const span = e.target.closest && e.target.closest("[data-gl]");
     if (span) {
-      if (_tipFor === span) tipHide(); else tipShow(span);
+      if (_tipFor === span) tipHide(); else tipShowReady(span);
     } else if (_tipFor && !(e.target.closest && e.target.closest("#gl-tip"))) {
       tipHide();
     }
@@ -421,6 +501,9 @@
   // Screen readers get the definition inline: one hidden div per term,
   // referenced by every span for that term via aria-describedby.
   function wire(root) {
+    const host = root || document;
+    if (!READY && host.querySelector && !host.querySelector("[data-gl]")) return;
+    ensureLoaded();
     const scan = () => {
       (root || document).querySelectorAll("[data-gl]").forEach(span => {
         const slug = resolve(span.dataset.gl);
@@ -447,6 +530,16 @@
   // wire on it (audit QCLA18: /management/, /trademachine/, /hof/ and
   // /arbitration/ never did). wire() waits for the glossary when it is not in.
   try { document.querySelectorAll(".section-head").forEach(h => wire(h)); } catch (e) { /* optional */ }
+  // Every other server-rendered term too: the editorial pages (/, /news/,
+  // /history/) never called wire, so their terms had no aria-describedby
+  // (QHOA05). A page with no term fetches nothing here.
+  try { wire(document); } catch (e) { /* optional */ }
+  // The palette re-runs its search when the term index lands after it opened.
+  window.addEventListener("eephus-glossary-ready", () => {
+    const ov = document.getElementById("qk-overlay");
+    const inp = document.getElementById("qk-input");
+    if (ov && inp && ov.classList.contains("is-open")) qkSearch(inp.value);
+  });
 
   window.EEPHUS_GL = { open: qkOpen, wire, resolve, reload: load };
 })();

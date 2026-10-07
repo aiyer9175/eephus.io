@@ -98,6 +98,30 @@ _GLAPP_VER = _asset_ver("assets/glossary.js")
 # restamp_hand_authored_pages() rewrites `/assets/x.js?v=<hash>` wholesale on
 # the hand-authored pages, so any extra param on that URL would be stripped.
 _GL_DATA_VER = _asset_ver("data/glossary.json")
+
+# The slim term index every page but /glossary/ and PROSPX reads (QHOP02).
+# eephus-gl.js reads a term's name, short line, aliases, category, module and
+# priority off it; the long fields stay in data/glossary.json for the two
+# pages that render them. A pure function of glossary.json, so _GL_DATA_VER
+# versions its url too. Written by main(); gitignored, rebuilt by every build.
+GL_INDEX_FIELDS = ("id", "term", "definition", "aliases", "category", "module", "priority")
+
+
+def glossary_index_doc() -> dict:
+    doc = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    return {"source": "data/glossary.json", "groups": doc.get("groups") or {},
+            "entries": [{k: e[k] for k in GL_INDEX_FIELDS if k in e}
+                        for e in doc.get("entries") or []]}
+
+
+def write_glossary_index(path: Path | None = None) -> Path:
+    out = path or (ROOT / "data" / "glossary_index.json")
+    text = json.dumps(glossary_index_doc(), ensure_ascii=False, separators=(",", ":"))
+    if not out.exists() or out.read_text(encoding="utf-8") != text:
+        out.write_text(text, encoding="utf-8")
+    return out
+
+
 _PROJ_VER = _asset_ver("assets/projections.js")
 _MLBSTATS_VER = _asset_ver("assets/mlbstats.js")
 _PAL_VER = _asset_ver("assets/pal.js")
@@ -7806,6 +7830,7 @@ def main() -> None:
 
     data = load_site_data()
     print(" data layer:", "loaded" if data else "MISSING (run run_monthly) - modules will be empty")
+    write_glossary_index()
 
     _write("index.html", build_home(articles, data))
     _write("news/index.html", build_news(data))

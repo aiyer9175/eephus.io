@@ -52,6 +52,13 @@ data/player_links.json
 data/mlb_position_games.json
 data/mlb_trade_players.json
 data/overseas_timeseries.json
+# Derived term index (QHOP02, 2026-10-07): build_site.write_glossary_index
+# rewrites it from data/glossary.json on every build (nightly and CI run
+# build_site.py), so tracking it would only add a merge conflict per glossary edit.
+data/glossary_index.json
+# Slim quick-search index (QHOP06): mlb_player_export.write_player_search,
+# beside player_links.json in the same d9b2 step.
+data/player_search.json
 # Source-vs-source backtest output (regenerated each monthly run; powers the
 # Methodology & Track Record tab). Generated artifact, like timeseries.json.
 data/source_backtest.json
