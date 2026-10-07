@@ -35,7 +35,8 @@
    check, command) and fall through per-glyph to the next family. That is not a
    regression: on Apple those characters already render from the fallback today,
    because the whole stack does.
-   Still not preloaded, but the download is no longer Apple-only: --font-logo
+   Preloaded from every page head since 2026-10-07 (build_site.FONT_PRELOAD,
+   QHOP03), and the download is no longer Apple-only: --font-logo
    leads with this face, and the wordmark is on every page, so a Windows visitor
    now fetches these two files too. Retiring the 10.8KB DotGothic16 subset that
    used to carry the logo roughly pays for the pair.

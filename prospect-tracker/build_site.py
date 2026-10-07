@@ -640,6 +640,30 @@ THEME_INIT = (
     'function eephusToggleTheme(){try{var c=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";'
     'document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}}</script>'
 )
+# QHOP03 (2026-10-07): both PixelMplus12 faces load with font-display: swap,
+# and with no preload the wider pixel face landed after first paint and
+# rewrapped the page (CLS 0.27 on /history/, 0.15 on /404.html with the woff2
+# held 400 ms). Preloading them from the head puts the face in before layout.
+# The three hand pages get the same two lines from restamp_hand_authored_pages.
+FONT_PRELOAD = (
+    '<link rel="preload" href="/assets/fonts/pixelmplus12-regular.woff2" as="font" type="font/woff2" crossorigin>\n'
+    '<link rel="preload" href="/assets/fonts/pixelmplus12-bold.woff2" as="font" type="font/woff2" crossorigin>'
+)
+_FONT_PRELOAD_RE = re.compile(r'(\n([ \t]*)<meta name="viewport"[^>]*>)')
+
+
+def _ensure_font_preload(text: str) -> str:
+    """Insert FONT_PRELOAD after a hand page's viewport meta, once."""
+    if 'pixelmplus12-regular.woff2" as="font"' in text:
+        return text
+    m = _FONT_PRELOAD_RE.search(text)
+    if not m:
+        return text
+    ind = m.group(2)
+    lines = "".join(f"\n{ind}{ln}" for ln in FONT_PRELOAD.split("\n"))
+    return text[:m.end()] + lines + text[m.end():]
+
+
 THEME_BTN = (
     '<button type="button" class="home-theme-toggle" data-theme-toggle onclick="eephusToggleTheme()" aria-label="Toggle dark mode">'
     f'<span class="lbl-dark">{_ico("theme-dark", 12)}Dark</span>'
@@ -1327,6 +1351,7 @@ def page(title: str, active: str, body: str, description: str = "",
 <meta name="description" content="{desc}">
 {social}
 {FAVICON_LINKS}
+{FONT_PRELOAD}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 <script src="/assets/eephus-nav.js?v={_NAV_VER}" defer></script>
 <script src="/assets/eephus-tiers.js?v={_TIERS_VER}" defer></script>
@@ -1483,6 +1508,19 @@ ESPN_SLUGS = {
     "STL": "stl", "TBR": "tb",  "TEX": "tex", "TOR": "tor", "WSN": "wsh",
 }
 
+# LOGO SIZE (QHOP01, 2026-10-07). Every editorial logo was the 500 x 500
+# master PNG (9 to 46 KB) drawn at 15 to 24 px: / pulled 746 KB of them and
+# /news/ 1.1 MB. They now come through ESPN's resizing combiner at twice the
+# drawn size, the rule eephus-hub.js set for the module pages (QCLP05): the
+# 24 px row mark at 48 px, the 15 to 17 px feed, ticker and history marks at
+# the hub's own 34 px, so those share one cached URL with every hub logo.
+_TEAM_LOGO_PX = {"row-logo": 48}
+
+
+def _team_logo_url(slug: str, px: int) -> str:
+    return f"https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/{slug}.png&h={px}&w={px}"
+
+
 def _team_logo(org: str | None, cls: str = "row-logo") -> str:
     """Clean ESPN CDN team logo (falls back to the ORG abbreviation chip).
     `cls` lets callers reuse it at other sizes (e.g. the ticker's tk-logo)."""
@@ -1490,7 +1528,8 @@ def _team_logo(org: str | None, cls: str = "row-logo") -> str:
         return ""
     o = html.escape(org)
     slug = ESPN_SLUGS.get(org, org.lower())
-    return (f'<img class="{cls}" src="https://a.espncdn.com/i/teamlogos/mlb/500/{slug}.png" alt="{o}" loading="lazy" '
+    src = html.escape(_team_logo_url(slug, _TEAM_LOGO_PX.get(cls) or _club_logo_px()))
+    return (f'<img class="{cls}" src="{src}" alt="{o}" loading="lazy" '
             f"onerror=\"this.outerHTML='<span class=&quot;{cls}&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
 
 
@@ -1505,6 +1544,13 @@ def _team_logo(org: str | None, cls: str = "row-logo") -> str:
 _CLUB_ROW_RE = re.compile(r'\["([A-Z]{3})", "([a-z]+)", "([^"]+)", (\d+)((?:, "[A-Z]+")*)\]')
 _CLUB_OLD_RE = re.compile(r'"([a-z. ]+)": "([A-Z]{3})"')
 _CLUB_LOGO_PX_RE = re.compile(r"var LOGO_PX = (\d+);")
+
+
+@functools.lru_cache(maxsize=1)
+def _club_logo_px() -> int:
+    """The hub's default logo size (eephus-hub.js LOGO_PX)."""
+    js = (ROOT / "assets" / "eephus-hub.js").read_text(encoding="utf-8")
+    return int(_CLUB_LOGO_PX_RE.search(js).group(1))
 
 
 @functools.lru_cache(maxsize=1)
@@ -2784,6 +2830,7 @@ def page_home(title: str, inner: str, description: str = "") -> str:
 <meta name="description" content="{desc}">
 {social}
 {FAVICON_LINKS}
+{FONT_PRELOAD}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 {ACCOUNT_CSS_LINK}
 </head>
@@ -7812,7 +7859,7 @@ def restamp_hand_authored_pages() -> None:
             print(f"  skipped {rel} (absent)")
             continue
         original = path.read_text(encoding="utf-8")
-        stamped = pixel_brand_hand_nav(_restamp_html(original))
+        stamped = _ensure_font_preload(pixel_brand_hand_nav(_restamp_html(original)))
         if PIXEL_BRAND:
             stamped = pixel_brand_hand_og(stamped, rel)
         if stamped != original:

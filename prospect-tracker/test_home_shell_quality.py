@@ -80,3 +80,30 @@ def test_the_palette_player_index_is_the_five_fields_of_by_key(tmp_path, monkeyp
     assert doc["rows"] == [["juan_soto", "Juan Soto", "NYM", "RF", ""]]
     assert json.loads((tmp_path / "player_search.json").read_text(encoding="utf-8")) == doc
     assert 'fetch("/data/player_search.json"' in GL and "H.linksStarted && H.linksStarted()" in GL
+
+
+# ---- QHOP01: editorial logos come resized, not as 500 px masters ------------
+
+def test_editorial_logos_come_through_the_combiner_at_twice_their_drawn_size():
+    import build_site as B
+    assert "mlb/500/nym.png&amp;h=48&amp;w=48" in B._team_logo("NYM")
+    for cls in ("feed-logo", "otd-logo", "tk-logo"):
+        assert "mlb/500/nym.png&amp;h=34&amp;w=34" in B._team_logo("NYM", cls)
+    for page in ("index.html", "news/index.html", "history/index.html"):
+        html = (ROOT / page).read_text(encoding="utf-8")
+        assert not re.search(r'src="https://a\.espncdn\.com/i/teamlogos/mlb/500/[a-z]+\.png"', html), page
+
+
+# ---- QHOP03: both webfont faces are preloaded from every head ---------------
+
+def test_every_head_preloads_both_webfont_faces():
+    import build_site as B
+    heads = [B.page("t", "", "<p>x</p>"), B.page_home("t", "<main></main>")]
+    heads += [(ROOT / p).read_text(encoding="utf-8") for p in B.HAND_AUTHORED_PAGES]
+    for h in heads:
+        head = h.split("</head>", 1)[0]
+        for face in ("regular", "bold"):
+            assert (f'<link rel="preload" href="/assets/fonts/pixelmplus12-{face}.woff2" '
+                    'as="font" type="font/woff2" crossorigin>') in head
+    t = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    assert B._ensure_font_preload(t) == t, "the hand-page insertion is idempotent"
