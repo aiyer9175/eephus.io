@@ -360,3 +360,34 @@ def test_no_page_scroll_at_390_and_clubs_link_to_franchises(server):
         href = pg.get_attribute(".tm-board-table a.tm-org-cell >> nth=0", "href")
         assert re.fullmatch(r"/franchise/#team=[A-Z]{2,3}", href), href
         assert not errors, errors
+
+
+# ------------------------------------------------------------- QCLA17 ------ #
+
+def test_skip_link_nav_name_menu_keys_and_drawer_focus(server):
+    css = _src("assets/site.css")
+    caret = css.split(".eephus-nav .eephus-nav-group .nav-caret {", 1)[1].split("}", 1)[0]
+    assert "opacity: 1" in caret            # was .55: 2.52:1 / 3.81:1 in light
+    with _page(server) as (pg, errors):
+        pg.keyboard.press("Tab")
+        assert pg.evaluate("document.activeElement.className") == "skip-link"
+        pg.keyboard.press("Enter")
+        assert pg.evaluate("document.activeElement.tagName") == "MAIN"
+        assert pg.get_attribute("nav.eephus-links", "aria-label") == "Site"
+        pg.locator("details.eephus-nav-group summary").first.focus()
+        pg.keyboard.press("ArrowDown")
+        first = pg.evaluate("document.activeElement.textContent")
+        pg.keyboard.press("ArrowDown")
+        second = pg.evaluate("document.activeElement.textContent")
+        assert first != second and pg.evaluate("!!document.activeElement.closest('.eephus-nav-menu')")
+        pg.keyboard.press("Escape")
+        assert pg.evaluate("document.activeElement.tagName") == "SUMMARY"
+        assert not errors, errors
+    with _page(server, w=390, h=844, touch=True) as (pg, errors):
+        pg.locator(".eephus-nav-toggle").focus()
+        pg.keyboard.press("Enter")
+        pg.wait_for_timeout(150)
+        assert pg.evaluate("!!document.activeElement.closest('.eephus-links')"), "focus stayed on the toggle"
+        pg.keyboard.press("Escape")
+        assert pg.evaluate("document.activeElement.className") == "eephus-nav-toggle"
+        assert not errors, errors

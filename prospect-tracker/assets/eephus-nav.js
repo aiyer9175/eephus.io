@@ -18,7 +18,13 @@
 //   4. PHONES (<=640px): a hamburger toggle is injected into the nav bar; the
 //      link strip is hidden until the toggle opens it as a vertical panel
 //      ([data-nav-open] on the header). Esc / outside click close it, and
-//      resizing across the breakpoint resets the state.
+//      resizing across the breakpoint resets the state. Opening it moves focus
+//      to its first link: the links come BEFORE the toggle in the DOM, so the
+//      next Tab used to skip the panel and land in main (QCLA17);
+//   5. KEYBOARD (QCLA17, 2026-10-07): a "Skip to content" link is the page's
+//      first Tab stop, the link strip is named "Site", and inside an open
+//      dropdown (role=menu) the arrow keys, Home and End move between items,
+//      ArrowDown on a group's summary opening it at its first item.
 // Idempotent and dependency-free; safe to load on pages with no group nav.
 (function () {
   "use strict";
@@ -164,10 +170,65 @@
     b.setAttribute("aria-label", "Open navigation menu");
     b.innerHTML = '<span aria-hidden="true">☰</span>';
     b.addEventListener("click", function () {
-      setNavOpen(h, !h.hasAttribute("data-nav-open"));
+      var open = !h.hasAttribute("data-nav-open");
+      setNavOpen(h, open);
+      if (open) {
+        var first = links.querySelector("a, summary");
+        if (first) first.focus();
+      }
     });
     h.appendChild(b);
   }
+
+  // ---- keyboard: skip link, nav name, menu arrows ---------------------------
+  // Injected here so every page that loads this runtime gets them, the
+  // hand-authored pages included, with no change to their markup.
+  function ensureSkipLink() {
+    if (document.querySelector("a.skip-link")) return;
+    var main = document.querySelector("main");
+    if (!main || !document.body) return;
+    if (!main.id) main.id = "main";
+    if (!main.hasAttribute("tabindex")) main.setAttribute("tabindex", "-1");
+    var a = document.createElement("a");
+    a.className = "skip-link";
+    a.href = "#" + main.id;
+    a.textContent = "Skip to content";
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      main.focus();
+      try { main.scrollIntoView(); } catch (err) { /* old engines */ }
+    });
+    document.body.insertBefore(a, document.body.firstChild);
+  }
+  function nameNav() {
+    var links = document.querySelector("header.eephus-nav .eephus-links");
+    if (links && !links.hasAttribute("aria-label")) links.setAttribute("aria-label", "Site");
+  }
+  function menuItems(d) {
+    return Array.prototype.slice.call(d.querySelectorAll(".eephus-nav-menu a"));
+  }
+  document.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k !== "ArrowDown" && k !== "ArrowUp" && k !== "Home" && k !== "End") return;
+    var t = e.target;
+    var d = t && t.closest ? t.closest("details.eephus-nav-group") : null;
+    if (!d) return;
+    var items = menuItems(d);
+    if (!items.length) return;
+    if (t.tagName === "SUMMARY") {
+      if (k !== "ArrowDown") return;
+      e.preventDefault();
+      if (!d.open) d.setAttribute("open", "");
+      items[0].focus();
+      return;
+    }
+    var i = items.indexOf(t);
+    if (i < 0) return;
+    e.preventDefault();
+    var n = k === "Home" ? 0 : k === "End" ? items.length - 1
+      : (i + (k === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+    items[n].focus();
+  });
 
   // Crossing the breakpoint resets state: leaving phone widths closes the
   // panel (desktop shows the horizontal strip); entering them clears any
@@ -194,7 +255,14 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" || e.key === "Esc") {
+      // Focus inside an open dropdown goes back to its summary, not to <body>.
+      var ae = document.activeElement;
+      var inGroup = ae && ae.closest ? ae.closest("details.eephus-nav-group[open]") : null;
       openGroups().forEach(function (d) { d.removeAttribute("open"); });
+      if (inGroup && ae.tagName !== "SUMMARY") {
+        var sm = inGroup.querySelector("summary");
+        if (sm) sm.focus();
+      }
       var h = navHeader();
       if (h && h.hasAttribute("data-nav-open")) {
         setNavOpen(h, false);
@@ -205,6 +273,8 @@
   });
 
   function init() {
+    ensureSkipLink();
+    nameNav();
     ensureNavToggle();
     // Collapse first (that is what arms the CSS clamp), then measure. The
     // `title`-attribute mitigation this replaced is deliberately NOT kept: a

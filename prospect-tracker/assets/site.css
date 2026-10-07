@@ -685,12 +685,23 @@
 .eephus-nav .eephus-nav-group > summary:focus-visible {
   background: var(--bg-tertiary); color: var(--text-primary);
 }
+/* The caret is a control's only open/closed mark, so it takes the full ink of
+   its label (QCLA17: at .55 it read 2.52:1 and 3.81:1 in light, under the
+   3:1 a non-text mark needs on the inactive groups). */
 .eephus-nav .eephus-nav-group .nav-caret {
-  font-size: 8px; opacity: .55; margin-left: 1px; line-height: 1;
+  font-size: 8px; opacity: 1; margin-left: 1px; line-height: 1;
   transition: transform .12s, opacity .12s;
 }
 .eephus-nav .eephus-nav-group > summary:hover .nav-caret,
-.eephus-nav .eephus-nav-group[open] .nav-caret { opacity: .9; }
+.eephus-nav .eephus-nav-group[open] .nav-caret { opacity: 1; }
+/* Skip link (QCLA17): eephus-nav.js puts it first in <body>; it stays off
+   screen until it takes keyboard focus. */
+.skip-link {
+  position: absolute; left: 8px; top: -200px; z-index: 1000;
+  padding: 10px 14px; background: var(--bg-secondary); color: var(--text-primary);
+  border: 2px solid var(--accent-cyan); font-weight: 700; text-decoration: none;
+}
+.skip-link:focus, .skip-link:focus-visible { top: 8px; }
 .eephus-nav .eephus-nav-group[open] .nav-caret { transform: rotate(180deg); }
 .eephus-nav .eephus-nav-group.is-active > summary { color: var(--text-primary); font-weight: 700; }
 .eephus-nav .eephus-nav-menu {
