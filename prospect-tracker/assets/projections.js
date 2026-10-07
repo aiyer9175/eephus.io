@@ -59,6 +59,14 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+  // The club's Franchises href through the hub's one club resolver
+  // (EEPHUS_HUB.clubHref): "" for a code that is not one of the 30 clubs. The
+  // literal shape is the fallback only where the hub is absent.
+  function franchiseHref(code) {
+    const H = typeof window !== "undefined" ? window.EEPHUS_HUB : null;
+    if (H && H.clubHref) return H.clubHref(code);
+    return code ? `/franchise/#team=${encodeURIComponent(code)}` : "";
+  }
   // The pixel state box (assets/eephus-state.js, final-pass plan 5.7 PX-12):
   // loading, empty, unmeasured or failed, around a message this file escapes.
   // The bare box is the fallback for a test harness that loads this file alone.
@@ -1087,7 +1095,8 @@
       const topCell = f.topProspect
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(f.topProspect.key || "")}">${esc(f.topProspect.name)}</a> <span class="fa-sub">FV ${esc(String(f.topProspect.fv || "?"))}</span>`
         : EM_DASH;
-      const openCell = `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}">farm</a> · <a href="/prospx/#farm-org=${encodeURIComponent(r.team)}&ftab=tendencies" title="Open the Org Tendencies tab">tendencies</a> · <a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a> · <a href="/franchise/#team=${encodeURIComponent(r.team)}" title="Open the club on Franchises">franchise</a>`;
+      const frHref = franchiseHref(r.team);
+      const openCell = `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}">farm</a> · <a href="/prospx/#farm-org=${encodeURIComponent(r.team)}&ftab=tendencies" title="Open the Org Tendencies tab">tendencies</a> · <a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a>${frHref ? ` · <a href="${esc(frHref)}" title="Open the club on Franchises">franchise</a>` : ""}`;
       const w = Math.round(r.wins);
       const wl = `${w}-${162 - w}`;
       const wlTip = r.depthWar != null

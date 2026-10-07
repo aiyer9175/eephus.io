@@ -58,7 +58,7 @@ def _served():
     return fe.load(ART)      # the board joined with its 30 club files (QCLP10)
 
 
-def _render(view="club", team="", hash_="", payload=None, tiers=True, tree="canopy"):
+def _render(view="club", team="", hash_="", payload=None, tiers=True, tree="canopy", hub="", with_hash=False):
     js = JS.replace('state = { view: "club", team: "", tree: "canopy", sec: "", treeSet: false',
                     'state = { view: "%s", team: "%s", tree: "%s", sec: "", treeSet: %s'
                     % (view, team, tree, "true" if tree != "canopy" else "false"), 1)
@@ -81,8 +81,9 @@ def _render(view="club", team="", hash_="", payload=None, tiers=True, tree="cano
     %s
     """ % (json.dumps(payload or _served()), json.dumps(hash_), TIERS_STUB if tiers else "")
     ctx = MiniRacer()
-    ctx.eval(prelude + js)
-    return ctx.eval("__html['franchise-app-root'] || ''"), ctx.eval("__html['franchise-masthead:text'] || ''")
+    ctx.eval(prelude + hub + js)
+    out = ctx.eval("__html['franchise-app-root'] || ''"), ctx.eval("__html['franchise-masthead:text'] || ''")
+    return out + (ctx.eval("location.hash"),) if with_hash else out
 
 
 # --------------------------------------------------------------------------
@@ -139,7 +140,8 @@ def test_hash_reader_is_anchored_and_validates_the_code():
     assert 'VIEW_RE = /(?:^#|[#&])view=(board|club)\\b/' in JS
     assert 'TREE_RE = /(?:^#|[#&])tree=(hidden|canopy|full)\\b/' in JS
     assert 'SEC_RE = /(?:^#|[#&])sec=([a-z_]+)\\b/' in JS
-    assert "clubOf(t[1])" in JS and "Object.prototype.hasOwnProperty.call(CLUBS" in JS
+    assert "clubOf(code)" in JS and "Object.prototype.hasOwnProperty.call(CLUBS" in JS
+    assert "var code = t ? canonCode(t[1])" in JS, "an alias goes through the hub's club resolver first"
     d = _served()
     def mast(html):
         m = re.search(r'<div class="fr-mast-name">([^<]*)</div>', html)
@@ -155,6 +157,20 @@ def test_hash_reader_is_anchored_and_validates_the_code():
     assert mast(html3) == first["name"], "the key is anchored to a separator"
     html4, _ = _render("board", hash_="#view=board")
     assert 'class="fr-board"' in html4
+
+
+def test_an_alias_in_the_hash_lands_on_its_own_club():
+    """Q9_05: #team=CWS once rendered the first club on the board (Arizona).
+    With the hub loaded the alias resolves through EEPHUS_HUB.club and the hash
+    is rewritten to the canonical code; without the hub nothing guesses."""
+    d = _served()
+    name = {c["code"]: c["name"] for c in d["clubs"]}
+    hub = (ROOT / "assets" / "eephus-hub.js").read_text(encoding="utf-8")
+    for alias, code in (("CWS", "CHW"), ("KC", "KCR"), ("OAK", "ATH"), ("AZ", "ARI"), ("WSH", "WSN")):
+        html, _, hash_ = _render("club", hash_="#team=" + alias, hub=hub, with_hash=True)
+        m = re.search(r'<div class="fr-mast-name">([^<]*)</div>', html)
+        assert m and m.group(1) == name[code], (alias, m and m.group(1))
+        assert "team=" + code in hash_ and "team=" + alias + "&" not in hash_ + "&", (alias, hash_)
 
 
 def test_tree_branch_specs_come_from_the_payload_not_the_js():
@@ -324,8 +340,13 @@ def test_arbitration_router_accepts_the_team_narrowing():
 
 
 def test_back_links_from_projections_and_prospx_and_the_native_picker():
-    assert 'href="/franchise/#team=${encodeURIComponent(r.team)}"' in (ROOT / "assets" / "projections.js").read_text(encoding="utf-8")
-    assert 'href="/franchise/#team=${escapeHtml(org.org)}"' in (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    # Both back-links build their href through the hub's one club resolver
+    # (EEPHUS_HUB.clubHref, Q9_05); test_club_resolver.py pins what it returns.
+    proj = (ROOT / "assets" / "projections.js").read_text(encoding="utf-8")
+    px = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    assert "const frHref = franchiseHref(r.team);" in proj and "if (H && H.clubHref) return H.clubHref(code);" in proj
+    assert '<a href="${esc(frHref)}" title="Open the club on Franchises">franchise</a>' in proj
+    assert 'href="${escapeHtml(clubFranchiseHref(org.org))}"' in px and "if (H && H.clubHref) return H.clubHref(x);" in px
     html, _ = _render("club", team="LAD")
     assert '<select id="fr-club" class="eephus-select"' in html
 

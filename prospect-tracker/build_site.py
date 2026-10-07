@@ -1458,6 +1458,107 @@ def _team_logo(org: str | None, cls: str = "row-logo") -> str:
     return (f'<img class="{cls}" src="https://a.espncdn.com/i/teamlogos/mlb/500/{slug}.png" alt="{o}" loading="lazy" '
             f"onerror=\"this.outerHTML='<span class=&quot;{cls}&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
 
+
+# ---- club links (owner ask 9): the server mirror of EEPHUS_HUB.clubHref ----
+# ONE table: the rows are read from assets/eephus-hub.js (_CLUB_ROWS and
+# _CLUB_OLD_NAMES), so the two sides cannot drift. Exact keys only: the 30
+# codes, the aliases (AZ CWS KC SD SF TB WSH OAK FLA), exact full and former
+# names, and MLBAM ids through trades.canonical_org_from_id. Never
+# trades.canonical_org (it passes any short uppercase string, so "TEX" the
+# Texas League survives, and token-searches prose) and never
+# _org_from_team_name (a nickname suffix matcher).
+_CLUB_ROW_RE = re.compile(r'\["([A-Z]{3})", "([a-z]+)", "([^"]+)", (\d+)((?:, "[A-Z]+")*)\]')
+_CLUB_OLD_RE = re.compile(r'"([a-z. ]+)": "([A-Z]{3})"')
+_CLUB_LOGO_PX_RE = re.compile(r"var LOGO_PX = (\d+);")
+
+
+@functools.lru_cache(maxsize=1)
+def _club_table() -> dict:
+    js = (ROOT / "assets" / "eephus-hub.js").read_text(encoding="utf-8")
+    rows_block = js[js.index("var _CLUB_ROWS"):js.index("var _CLUB_OLD_NAMES")]
+    old_block = js[js.index("var _CLUB_OLD_NAMES"):js.index("};", js.index("var _CLUB_OLD_NAMES"))]
+    # The hub's _logoSrc at its default size (LOGO_PX), so a logo matches byte for byte.
+    px = int(_CLUB_LOGO_PX_RE.search(js).group(1))
+    rows = []
+    for code, slug, name, mlbam, al in _CLUB_ROW_RE.findall(rows_block):
+        rows.append({"code": code, "slug": slug, "name": name, "id": int(mlbam),
+                     "aliases": re.findall(r'"([A-Z]+)"', al),
+                     "logo": f"https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/{slug}.png&h={px}&w={px}"})
+    if len(rows) != 30:
+        raise RuntimeError(f"eephus-hub.js _CLUB_ROWS parsed to {len(rows)} rows, not 30")
+    by_code = {}
+    for r in rows:
+        by_code[r["code"]] = r
+        for a in r["aliases"]:
+            by_code[a] = r
+    by_name = {r["name"].lower(): r for r in rows}
+    for n, c in _CLUB_OLD_RE.findall(old_block):
+        by_name[n] = by_code[c]
+    return {"rows": rows, "by_code": by_code, "by_name": by_name,
+            "codes": frozenset(r["code"] for r in rows)}
+
+
+def _club_code(x) -> str | None:
+    """The canonical club code for a club mention, or None (never a guess)."""
+    if x is None or isinstance(x, bool):
+        return None
+    t = _club_table()
+    if isinstance(x, float):
+        if x != x or not x.is_integer():
+            return None
+        x = int(x)
+    if isinstance(x, int):
+        s = str(x)
+    else:
+        s = str(x).strip()
+    if not s:
+        return None
+    if s.isascii() and s.isdigit():
+        import trades
+        got = trades.canonical_org_from_id(int(s))
+        return got if got in t["codes"] else None
+    r = t["by_code"].get(s.upper()) or t["by_name"].get(s.lower())
+    return r["code"] if r else None
+
+
+def _club_href(x, ctx: str = "franchise") -> str:
+    """'' when x is not one of the 30 clubs; ctx 'farm' -> the PROSPX farm page."""
+    code = _club_code(x)
+    if not code:
+        return ""
+    return ("/prospx/#farm-org=" if ctx == "farm" else "/franchise/#team=") + code
+
+
+def _esc_hub(s) -> str:
+    """EEPHUS_HUB.esc, byte for byte (& < > and the double quote)."""
+    return (str("" if s is None else s).replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;").replace('"', "&quot;"))
+
+
+def _club_link(x, text: str = "code", logo: bool = False, ctx: str = "franchise", stop: bool = False) -> str:
+    """The server twin of EEPHUS_HUB.clubLinkHTML: the same markup for the same input."""
+    code = _club_code(x)
+    t = "code" if text is None else str(text)
+    if not code:
+        raw = ("" if x is None else str(x)) if t in ("code", "name") else t
+        return f'<span data-club-nolink="unresolved">{_esc_hub(raw)}</span>' if raw else ""
+    r = _club_table()["by_code"][code]
+    label = code if t == "code" else r["name"] if t == "name" else t
+    if not label and not logo:
+        label = code
+    farm = ctx == "farm"
+    title = r["name"] + (": farm system" if farm else ": franchise overview")
+    logo_only = bool(logo) and not label
+    img = ""
+    if logo:
+        onerr = f"this.outerHTML='<span>{code}</span>'" if logo_only else "this.remove()"
+        img = (f'<img class="club-link-logo" src="{_esc_hub(r["logo"])}" alt="{_esc_hub(r["name"]) if logo_only else ""}" '
+               f'loading="lazy" onerror="{onerr}">')
+    return (f'<a class="club-link{" club-link--logo-only" if logo_only else ""}" '
+            f'href="{_club_href(code, "farm" if farm else "franchise")}" data-club="{code}" title="{_esc_hub(title)}"'
+            + (' onclick="event.stopPropagation()"' if stop else "") + ">"
+            + img + (f"<span>{_esc_hub(label)}</span>" if label else "") + "</a>")
+
 # Round HALF-UP (ties toward +infinity) - the JS `Math.round` convention.
 # THE ONE ROUNDER for every eFV number this file prints or steps. Python's
 # built-in round() is banker's (half-to-EVEN): round(64.5)==64 while
