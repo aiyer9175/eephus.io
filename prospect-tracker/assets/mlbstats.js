@@ -1394,7 +1394,7 @@
         + '</label><label class="mlbstats-ctl">to ' + sel("hi", hi) + "</label></span>"
       : "";
     return '<div class="mlbstats-seasons mlbstats-roles mlbstats-range" role="group" aria-label="Years">'
-      + '<span class="mlbstats-roles-lbl">Years</span>' + out.join("") + picker + "</div>";
+      + '<span class="mlbstats-roles-lbl">' + gloss("Years", "range") + "</span>" + out.join("") + picker + "</div>";
   }
   function applyRange(spec) {
     var p = String(spec || "").split(":"), sec = p[0], id = p[1];
@@ -2376,7 +2376,7 @@
           body += nameCell(r, opts && opts.nameExtra ? opts.nameExtra(r) : "");
           return;
         }
-        if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + esc(r.team || EM_DASH) + "</td>"; return; }
+        if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + teamLink(r.team) + "</td>"; return; }
         if (c.cell) { body += td + c.cell(r) + "</td>"; return; }
         var v = getVal(c, r);
         // An absent value reads as the site-wide null marker rather than a
@@ -2400,6 +2400,16 @@
       + (span ? ' data-mlbpage="' + esc(key) + '" data-mlbpage-total="' + total + '"' : "") + ">"
       + '<caption class="visually-hidden">' + esc(TABLE_LABEL[board] || "MLB Stats leaderboard") + "</caption>"
       + head + body + "</table>";
+  }
+  // A team board's club cell opens that club's Franchises page (display pass:
+  // every club name links where a page exists). A code that is not one of the
+  // thirty prints as text, never a guessed link.
+  function teamLink(team) {
+    var H = (typeof window !== "undefined") && window.EEPHUS_HUB;
+    var c = null, href = "";
+    try { c = H && H.club ? H.club(team) : null; href = c && H.clubHref ? H.clubHref(c.code) : ""; } catch (e) { href = ""; }
+    return href ? '<a class="mlbstats-name-link" href="' + esc(href) + '" title="' + esc(c.name + ": franchise overview")
+      + '">' + esc(team) + "</a>" : esc(team || EM_DASH);
   }
   // The accessible name of each board's table, a hidden caption (QMLA17): a
   // screen reader's table list read "table, table" with nothing to tell the
@@ -6058,6 +6068,7 @@
       if (el) { if (k === name) el.removeAttribute("hidden"); else el.setAttribute("hidden", "hidden"); }
     });
     markFit(document.getElementById(sects[name]));
+    fitNav();
     if (name === "starters") initStarters();
     else if (name === "hitters") initHitters();
     else if (name === "leverage") initLeverage();
@@ -6100,6 +6111,92 @@
       });
     });
   }
+
+  // ---- the phone section menu (site pass, 2026-10-02) ------------------------
+  // At 390 px the six tabs need 485 px of a 358 px strip, so Defense and
+  // Leverage sat behind a sideways swipe, and the sections still to come will
+  // lengthen the strip. At 640 px and below, the tabs that do not fit move
+  // into a More menu; the active tab always stays on the strip. The menu sits
+  // beside the tablist, not in it, so the tablist owns tabs only.
+  function navParts() {
+    var nav = document.querySelector(".mlbx .mlbstats-sectionnav");
+    if (!nav) return null;
+    var row = nav.parentNode;
+    if (!row.classList.contains("mlbx-navrow")) {
+      row = document.createElement("div");
+      row.className = "mlbx-navrow";
+      nav.parentNode.insertBefore(row, nav);
+      row.appendChild(nav);
+      var more = document.createElement("div");
+      more.className = "mlbx-navmore";
+      more.innerHTML = '<button type="button" class="mlbstats-sectionbtn mlbx-navmore-btn" aria-expanded="false"'
+        + ' aria-controls="mlbx-navmenu">More</button><div class="mlbx-navmenu" id="mlbx-navmenu"'
+        + ' role="group" aria-label="More sections" hidden></div>';
+      row.appendChild(more);
+    }
+    return { row: row, nav: nav, btn: row.querySelector(".mlbx-navmore-btn"),
+             menu: row.querySelector(".mlbx-navmenu") };
+  }
+  function navMenu(open, focusBtn) {
+    var p = navParts();
+    if (!p) return;
+    p.menu.hidden = !open;
+    p.btn.setAttribute("aria-expanded", String(!!open));
+    if (open) { var first = p.menu.querySelector("button"); if (first) first.focus(); }
+    else if (focusBtn) p.btn.focus();
+  }
+  function fitNav() {
+    try {
+      if (!window.matchMedia) return;
+      var phone = window.matchMedia("(max-width: 640px)").matches;
+      var p = (phone || document.querySelector(".mlbx-navrow")) ? navParts() : null;
+      if (!p) return;
+      var tabs = Array.prototype.slice.call(p.nav.querySelectorAll("[data-mlbsection]"));
+      tabs.forEach(function (b) { b.classList.remove("is-over"); });
+      p.row.classList.remove("has-more");
+      if (!p.menu.hidden) navMenu(false);
+      if (!phone || p.nav.scrollWidth <= p.nav.clientWidth + 1) return;
+      p.row.classList.add("has-more");
+      for (var i = tabs.length - 1; i >= 0 && p.nav.scrollWidth > p.nav.clientWidth + 1; i--) {
+        if (!tabs[i].classList.contains("active")) tabs[i].classList.add("is-over");
+      }
+      p.menu.innerHTML = tabs.filter(function (b) { return b.classList.contains("is-over"); }).map(function (b) {
+        return '<button type="button" class="mlbx-navitem" data-mlbnavto="' + esc(b.getAttribute("data-mlbsection"))
+          + '">' + esc(b.textContent) + "</button>";
+      }).join("");
+    } catch (e) { /* the strip still scrolls */ }
+  }
+  try {
+    document.addEventListener("click", function (e) {
+      var t = e.target && e.target.closest ? e.target : null;
+      if (!t) return;
+      var item = t.closest("[data-mlbnavto]");
+      if (item) {
+        var to = item.getAttribute("data-mlbnavto");
+        navMenu(false);
+        showSection(to);
+        writeHash();
+        var tab = document.querySelector('.mlbstats-sectionbtn[data-mlbsection="' + to + '"]');
+        if (tab) tab.focus();
+        return;
+      }
+      if (t.closest(".mlbx-navmore-btn")) {
+        var p = navParts();
+        if (p) navMenu(p.menu.hidden);
+        return;
+      }
+      if (document.querySelector(".mlbx-navmenu:not([hidden])") && !t.closest(".mlbx-navmore")) navMenu(false);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && document.querySelector(".mlbx-navmenu:not([hidden])")) navMenu(false, true);
+    });
+    var navTimer = null;
+    window.addEventListener("resize", function () {
+      if (navTimer) clearTimeout(navTimer);
+      navTimer = setTimeout(fitNav, 120);
+    });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNav);
+  } catch (e) { /* no document events */ }
 
   function init() {
     readHash();

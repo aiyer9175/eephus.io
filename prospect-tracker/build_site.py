@@ -4686,12 +4686,12 @@ def build_mlbstats() -> str:
         '<div class="fa-app mlbstats-app mlbx">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("mlbstats")}MLB Stats {_stage_chip("mlbstats")}</h1></div>'
-        f'<span class="section-sub">Every player by {_gl("ewar", "eWAR")}, then hitters '
-        f'({_gl("hem_plus", "HEM+")}), starters ({_gl("sem_plus", "SEM+")}), relievers '
-        f'({_gl("rem_plus", "REM+")}), fielders ({_gl("dem_plus", "DEM+")}) and leverage '
-        f'({_gl("wpa", "WPA")}), with team rollups. One season or a '
-        f'{_gl("range", "year range")}. '
-        '100 is league average on every + scale.</span></div>'
+        # One line: each board's number once, and the scale. The tabs under it
+        # name the boards, and the year-range term rides the Years label of
+        # every board's own control (display pass 2026-10-07).
+        f'<span class="section-sub">{_gl("ewar", "eWAR")}, {_gl("hem_plus", "HEM+")}, '
+        f'{_gl("sem_plus", "SEM+")}, {_gl("rem_plus", "REM+")}, {_gl("dem_plus", "DEM+")} and '
+        f'{_gl("wpa", "WPA")} leaderboards. 100 is league average on every + scale.</span></div>'
         # Section nav (built as a tablist; sections join here as they ship).
         # Short labels: the section is the noun, "Leaderboards" was the noise,
         # and the phone strip reads at a glance (2026-09-11 overhaul, wave 2).

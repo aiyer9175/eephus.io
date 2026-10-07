@@ -211,3 +211,63 @@ def test_the_pager_turns_pages_and_csv_keeps_every_row(browser, server):
         assert page.evaluate(shown) == total
     finally:
         ctx.close()
+
+
+# ---------------------------------------------------------------- display and copy
+def test_the_team_board_links_each_club_to_its_franchise_page():
+    js = views._war_prelude("#section=war&wview=teams").replace(
+        "teamLogo:function(){return '';},",
+        "teamLogo:function(){return '';},"
+        "club:function(x){return {code:x,name:'Club '+x};},"
+        "clubHref:function(x){return '/franchise/#team='+x;},")
+    ctx = MiniRacer()
+    ctx.eval(js + views.JS)
+    html = ctx.eval("__html['mlbstats-war-root'] || ''")
+    assert ('<a class="mlbstats-name-link" href="/franchise/#team=CHC" title="Club CHC: franchise overview">'
+            'CHC</a>') in html
+
+
+def test_the_masthead_lede_is_one_short_line_and_keeps_every_hook():
+    shell = (ROOT / "mlbstats" / "index.html").read_text(encoding="utf-8")
+    m = re.search(r'<span class="section-sub">(.*?)</span></div>', shell, re.S)
+    assert m, "no lede"
+    text = re.sub(r"<[^>]+>", "", m.group(1))
+    words = [w for w in text.split() if re.search(r"[A-Za-z0-9]", w)]
+    assert len(words) <= 16, (len(words), text)
+    for slug in ("ewar", "hem_plus", "sem_plus", "rem_plus", "dem_plus", "wpa"):
+        assert 'data-gl="%s"' % slug in m.group(1), slug
+    # The year-range hook moved to the Years label of every board's control.
+    js = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
+    assert 'gloss("Years", "range")' in js
+
+
+def test_the_phone_section_menu(browser, server):
+    """At 390 the six tabs needed 485 px of a 358 px strip."""
+    ctx = _context(browser, 390, 844, is_mobile=True, has_touch=True)
+    try:
+        page = ctx.new_page()
+        _open(page, server)
+        nav = page.evaluate("""() => { const n = document.querySelector('.mlbstats-sectionnav');
+          return {sw: n.scrollWidth, cw: n.clientWidth, page: document.documentElement.scrollWidth,
+                  more: getComputedStyle(document.querySelector('.mlbx-navmore')).display}; }""")
+        assert nav["sw"] <= nav["cw"] + 1 and nav["page"] <= 390, nav
+        assert nav["more"] != "none", nav
+        page.click(".mlbx-navmore-btn")
+        items = page.evaluate("[...document.querySelectorAll('.mlbx-navmenu [data-mlbnavto]')]"
+                              ".map(b => b.getAttribute('data-mlbnavto'))")
+        assert "leverage" in items, items
+        page.keyboard.press("Escape")
+        assert page.evaluate("document.querySelector('.mlbx-navmenu').hidden") is True
+        assert "mlbx-navmore-btn" in page.evaluate("document.activeElement.className")
+        page.click(".mlbx-navmore-btn")
+        page.click(".mlbx-navmenu [data-mlbnavto='leverage']")
+        page.wait_for_selector("#mlbstats-leverage-root table.mlbstats-table", timeout=20000)
+        assert page.evaluate("location.hash").startswith("#section=leverage")
+        assert page.evaluate("getComputedStyle(document.querySelector("
+                             "'.mlbstats-sectionbtn[data-mlbsection=\"leverage\"]')).display") != "none"
+        # The desktop strip never shows More.
+        page.set_viewport_size({"width": 1280, "height": 900})
+        page.wait_for_timeout(400)
+        assert page.evaluate("getComputedStyle(document.querySelector('.mlbx-navmore')).display") == "none"
+    finally:
+        ctx.close()

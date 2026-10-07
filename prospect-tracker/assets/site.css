@@ -2548,6 +2548,25 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-secondary); }
 .mlbx .mlbx-pager-n { font-variant-numeric: tabular-nums; margin-right: auto; }
 .mlbx .mlbx-pager button.chip[disabled] { opacity: .45; cursor: default; }
+/* The phone section menu (assets/mlbstats.js fitNav). The row is built by
+   the script around the shell's tablist; below 641 px the tabs that do not fit
+   carry .is-over and move into More. Desktop never shows More. */
+.mlbx .mlbx-navrow { display: flex; align-items: flex-start; gap: 4px; }
+.mlbx .mlbx-navrow > .mlbstats-sectionnav { flex: 1 1 auto; min-width: 0; }
+.mlbx .mlbx-navmore { display: none; position: relative; flex: none; margin: 14px 0 6px; }
+.mlbx .mlbx-navrow.has-more .mlbx-navmore { display: block; }
+.mlbx .mlbx-navrow.has-more > .mlbstats-sectionnav { -webkit-mask-image: none; mask-image: none; }
+.mlbx .mlbx-navrow.has-more .mlbstats-sectionbtn.is-over { display: none; }
+.mlbx .mlbx-navmore-btn::after { content: ""; display: inline-block; margin-left: 6px; vertical-align: middle;
+  border-top: 4px solid currentColor; border-left: 3px solid transparent; border-right: 3px solid transparent; }
+.mlbx .mlbx-navmenu { position: absolute; right: 0; top: 100%; z-index: 30; min-width: 160px; margin-top: 2px;
+  display: flex; flex-direction: column; background: var(--bg-secondary); border: 1px solid var(--border); }
+.mlbx .mlbx-navmenu[hidden] { display: none; }
+.mlbx .mlbx-navitem { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; text-align: left; cursor: pointer; color: var(--text-secondary); background: transparent;
+  border: 0; border-bottom: 1px solid var(--border-light); padding: 12px 14px; min-height: 44px; }
+.mlbx .mlbx-navitem:last-child { border-bottom: 0; }
+.mlbx .mlbx-navitem:hover, .mlbx .mlbx-navitem:focus-visible { color: var(--text-primary); background: var(--bg-tertiary); }
 /* The per-season line behind a total. It WRAPS and each item can shrink to
    nothing, so the child cell's min-content width never pushes the table wider
    than its own columns - which is the one way an expander could break the fit
