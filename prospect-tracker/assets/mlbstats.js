@@ -1993,13 +1993,19 @@
     try { renderWar(); } finally { warCaretFrom = null; }
     var root = document.getElementById("mlbstats-war-root");
     var carets = root ? root.querySelectorAll(".mlbx-caret[data-mlbexpand]") : [];
+    var back = null;
     for (var i = 0; i < carets.length; i++) {
       var c = carets[i];
       if (c.getAttribute("data-mlbexpand") !== id) continue;
       void c.offsetWidth;
       c.classList.toggle("is-open", !was);
       c.setAttribute("aria-expanded", String(!was));
+      if (!back) back = c;
     }
+    // The render replaced the button the reader pressed, so focus fell to
+    // <body> and the next Tab went to Download CSV above the board (QMLA05).
+    // Put it back on the same row's caret, as bindSortKeys does for a header.
+    if (back) { try { back.focus({ preventScroll: true }); } catch (e) { back.focus(); } }
   }
   function warTableOpts() {
     return {
@@ -2171,9 +2177,10 @@
       // activated by Enter/Space via bindSortKeys. No role=button: aria-sort is
       // honoured only on a columnheader, and the button role replaced the th's
       // own, so no screen reader heard the sort (census X06-06).
+      // Every header is a column header (QMLA17: Pos and Also on had none).
       var a11y = sortable
         ? ' scope="col" tabindex="0" aria-sort="' + ((c.key === sort.key) ? (sort.asc ? "ascending" : "descending") : "none") + '"'
-        : "";
+        : ' scope="col"';
       var nw = (allv && String(c.label).indexOf(" ") < 0) ? " mlbstats-nw" : "";
       head += '<th class="mlbstats-col-' + c.key + sorted + p.cls + nw + '"' + title + a11y + ' data-col="' + c.key
         + '" data-export-text="' + esc(c.exportLabel || c.label) + '"' + (p.off ? " data-export-skip" : "") + '>' + lbl + "</th>";
@@ -2207,8 +2214,21 @@
       if (opts && opts.child) body += opts.child(r, plan.length);
     });
     body += "</tbody>";
-    return '<table class="mlbstats-table' + (allv ? " mlbstats-cv-all" : "") + '">' + head + body + "</table>";
+    return '<table class="mlbstats-table' + (allv ? " mlbstats-cv-all" : "") + '">'
+      + '<caption class="visually-hidden">' + esc(TABLE_LABEL[board] || "MLB Stats leaderboard") + "</caption>"
+      + head + body + "</table>";
   }
+  // The accessible name of each board's table, a hidden caption (QMLA17): a
+  // screen reader's table list read "table, table" with nothing to tell the
+  // boards apart.
+  var TABLE_LABEL = {
+    war: "Overall eWAR leaderboard", warteam: "Team eWAR",
+    hit: "Hitters leaderboard", hitteam: "Team offense",
+    sp: "Starters leaderboard", spteam: "Team rotations",
+    rel: "Relievers leaderboard", relteam: "Team bullpens",
+    def: "Fielders leaderboard", defteam: "Team defense",
+    levbat: "Leverage leaderboard, hitters", levsp: "Leverage leaderboard, pitchers",
+  };
 
   // player_links map (mlbam -> merged-card key), preloaded once at init so
   // nameCell can link synchronously. Names resolve to the merged MLB player card

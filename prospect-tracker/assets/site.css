@@ -2532,6 +2532,16 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 .mlbx button.mlbx-caret.is-open::before { transform: rotate(90deg) translateX(1px); }
 .mlbx button.mlbx-caret:hover { color: var(--text-primary); }
+/* QMLA08: the caret is a 9 x 13 px box. Under a finger, a transparent overlay
+   grows the tap to 44 x 44 without moving a pixel, the .proj-cmp-btn pattern.
+   It reaches left over the rank number and right over the logo, never the
+   name link. */
+@media (pointer: coarse) {
+  .mlbx button.mlbx-caret { position: relative; }
+  .mlbx button.mlbx-caret::after { content: ""; position: absolute; inset: -15px -12px -16px -23px; }
+}
+/* QMLA17: a header that does not sort (Pos, Also on) does not promise a click. */
+.mlbx .mlbstats-table th[data-col]:not([tabindex]) { cursor: default; }
 /* The per-season line behind a total. It WRAPS and each item can shrink to
    nothing, so the child cell's min-content width never pushes the table wider
    than its own columns - which is the one way an expander could break the fit
