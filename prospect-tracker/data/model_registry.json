@@ -2388,7 +2388,7 @@
   {
    "model_id": "provisional_first_grade",
    "summary": "Partly measured: on the spent retrospective, selection AUC 0.826 vs 0.615 null, but no level skill (MAE 6.21 vs 4.54 constant). Windows close 2027-04-15 and 2027-10-15.",
-   "surface": "Measurement of the served provisional grade against the first source grade; shown on Library Source Comparison and the PROSPX card",
+   "surface": "Measurement of the served provisional grade against the first source grade; shown on Library Source Comparison, the PROSPX card and the /fantasy/ Dynasty lens Next to be graded",
    "predicts": "For ungraded roster players: whether a source grades them in the window, and the first FV it assigns",
    "champion": "the incumbent served xfv_ungraded grade, frozen 2026-09-25 in data/provisional_freeze/FREEZE_provisional_2026-09-25.json (column grade). Challenger, frozen in the same file and not served: the PG2 FULL candidate (p_g6, p_g12, fv_fg_pred on 4,163 rows)",
    "baseline": "The freeze's per-set median first FV constant, the level-rank and younger nulls, and the recalibrated incumbent",
@@ -2404,7 +2404,7 @@
   {
    "model_id": "provisional_v2",
    "summary": "Partly measured, development read: backcast AUC 0.863 vs 0.630 null for any first grade within 12 months; verdicts come only from committed freezes at window end.",
-   "surface": "PROSPX section 'Not yet graded by any source', ordered by P(graded in 12 months); backcast table on Library Source Comparison",
+   "surface": "PROSPX section 'Not yet graded by any source', ordered by P(graded in 12 months); the /fantasy/ Dynasty lens Next to be graded (the same order and chance, no grade); backcast table on Library Source Comparison",
    "predicts": "For ungraded players 25 or under: P(a source first grades them within 6 or 12 months), and that first FV",
    "champion": "the PG2 FULL candidate as ported: LightGBM per side with the fixed PG2 params (300 trees, learning rate 0.03, 15 leaves, seed 7) on age-level, pedigree, pre-draft rank, level-relative MiLB production and AAA Statcast, one head per set and window, trained on every closed and captured anchor of the same type, with one logit intercept shift per head; T2 ridge (alpha 10) per source",
    "baseline": "Timing: the level-rank and younger nulls, and a constant at the realized rate; level: the training-mean first FV",

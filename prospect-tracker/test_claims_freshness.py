@@ -1617,3 +1617,47 @@ def test_fa_floor_copy_discloses_the_zero_floor():
     js = _read_text("assets/fa.js")
     assert "season P10, floored at 0 WAR" in js
     assert len(formula.split("\n")) == len(set(formula.split("\n"))), "duplicate formula line"
+
+def test_next_to_be_graded_lens_prints_only_the_track_record_figures():
+    """Part 8 W04 (2026-10-07). The Dynasty lens Next to be graded prints the
+    AUC against its level-rank null, the counts, the freeze date and size, the
+    window end and the level-skill figures, all from the claim block the
+    exporter copies out of data/provisional_track_eval.json. Each printed
+    figure must equal the artifact's own value on the row the block names, and
+    the block must be the one the current artifact yields."""
+    side_p = ROOT / "data" / "fantasy_next_graded.json"
+    if not side_p.exists():
+        pytest.skip("the Next to be graded sidecar is not built in this tree")
+    import fantasy_export as fe
+    side = _read_json("data/fantasy_next_graded.json")
+    track = _read_json("data/provisional_track_eval.json")
+    claim = side.get("claim") or {}
+    assert claim == fe._next_graded_claim(track), "the lens claim block is stale against the artifact"
+    rows = {r["run_id"]: r for r in track.get("rows") or []}
+    retro, fwd = claim.get("retro") or {}, claim.get("forward") or {}
+    assert retro and fwd, claim
+    a = rows[retro["run_id"]]["result"]["ANY"]
+    assert retro["auc"] == a["selection"]["grade"]["auc"]
+    assert retro["auc_null_level"] == a["selection"]["null_level_rank"]["auc"]
+    assert (retro["n"], retro["graded"]) == (a["n"], a["graded_in_window"])
+    lev = a["level"]["grade"]
+    assert (retro["spearman"], retro["mae"], retro["mae_null"], retro["null_const"]) == (
+        lev["spearman"], lev["mae"], lev["mae_null_const"], lev["null_const"])
+    assert retro["frozen_at"] == rows[retro["run_id"]]["frozen_at"]
+    f = rows[fwd["run_id"]]
+    assert (fwd["frozen_at"], fwd["window_end"], fwd["n_rows"], fwd["graded"]) == (
+        f["frozen_at"], f["window_end"], f["result"]["n_rows"], f["result"]["ANY"]["graded_in_window"])
+
+
+def test_next_to_be_graded_copy_types_no_figure():
+    """The lens copy functions in assets/dynasty.js carry no typed decimal and
+    no typed date: every figure in them is read from the payload."""
+    src = _read_text("assets/dynasty.js")
+    for name in ("nextTrackHTML", "renderNextGraded"):
+        m = re.search(r"^  function %s\([^)]*\) \{.*?\n  \}\n" % name, src, re.S | re.M)
+        assert m, name
+        code = "\n".join(ln for ln in m.group(0).split("\n") if not ln.lstrip().startswith("//"))
+        assert not re.findall(r"(?<![\w.#-])\d+\.\d+(?![\w.])", code), name
+        assert not re.search(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", code), name
+        for n in ("0.826", "0.615", "6.21", "4.54", "6,066", "5,631"):
+            assert n not in code, (name, n)

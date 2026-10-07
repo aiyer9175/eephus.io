@@ -46,7 +46,8 @@ SIDECAR = {"dynasty": "/data/fantasy.json", "redraft": "/data/fantasy.json",
 # corpus and read by Dynasty alone, so it is Dynasty's own payload, not a
 # second corpus; it loads only when its tab or the keeper's All players pool
 # is opened.
-OWN_EXTRA = {"dynasty": [("RANK_URL", "/data/fantasy_rank.json")]}
+OWN_EXTRA = {"dynasty": [("RANK_URL", "/data/fantasy_rank.json"),
+                         ("NEXT_URL", "/data/fantasy_next_graded.json")]}
 # The shared player-card overlay. It is not a board CLIENT (it fetches no
 # corpus and owns no payload; the host hands it one), so it stays out of
 # JS_FILES and its own contract is pinned separately. It IS held to the same

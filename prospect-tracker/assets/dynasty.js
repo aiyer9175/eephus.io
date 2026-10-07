@@ -27,12 +27,19 @@
   // fetched only when the Fantasy Rank tab or the keeper's All players pool
   // is opened, so a reader of the prospect board never downloads it.
   var RANK_URL = "/data/fantasy_rank.json";
+  // NEXT TO BE GRADED (Part 8 wiring W04, 2026-10-07): the prospects no label
+  // source has graded, in the order of the PROSPX section "Not yet graded by
+  // any source", with the chance of a first grade. Written by fantasy_export
+  // beside the corpus and fetched only when the lens is opened.
+  var NEXT_URL = "/data/fantasy_next_graded.json";
   var S = { data: null, section: "dynasty", lens: "board", keeper: null, player: null,
             q: "", org: null, eta: null, tier: null,
             fmt: "fgp", pool: "prospects", kind: null,
-            rank: null, rankLoading: false, rankErr: null };
-  var SORT = { dynasty: { key: "rank", asc: true }, fantasy_rank: { key: "rank", asc: true } };
-  var SORT_DEFAULTS = { dynasty: { key: "rank", asc: true } };
+            rank: null, rankLoading: false, rankErr: null,
+            next: null, nextLoading: false, nextErr: null };
+  var SORT = { dynasty: { key: "rank", asc: true }, fantasy_rank: { key: "rank", asc: true },
+               next: { key: "n", asc: true } };
+  var SORT_DEFAULTS = { dynasty: { key: "rank", asc: true }, next: { key: "n", asc: true } };
   var FMT_IDS = ["fgp", "sabr", "5x5", "4x4"];
   var POINTS_FMT = { fgp: 1, sabr: 1 };
   var LINKS = null;
@@ -506,7 +513,10 @@
     { id: "contend", label: "Contending", sort: { key: "eta", asc: true },
       note: "Sorted by ETA, nearest first. Ranks unchanged." },
     { id: "rebuild", label: "Rebuilding", sort: { key: "star", asc: false },
-      note: "Sorted by the star (Elite) bucket share, highest first. Ranks unchanged." }
+      note: "Sorted by the star (Elite) bucket share, highest first. Ranks unchanged." },
+    // Not a sort of the board: its own rows (renderNextGraded).
+    { id: "next", label: "Next to be graded", sort: { key: "rank", asc: true },
+      note: "Prospects no source has graded yet, by the chance of a first grade. Not the board." }
   ];
   function lensById(id) {
     var out = LENSES[0];
@@ -523,6 +533,7 @@
       '<span class="dyn-lens-note">' + esc(l.note) + "</span></div>";
   }
   function renderBoard() {
+    if (isNext()) return renderNextGraded();
     var list = sections().dynasty || [];
     if (!list.length) {
       return '<div class="dyn-note">No dynasty rows yet; they fill on the nightly build. Nothing is broken.</div>';
@@ -576,6 +587,153 @@
       "<th>" + glossLbl({ label: "ETA", term: "eta" }) + "</th>" +
       "<th>" + glossLbl({ label: "eFV", term: "xfv" }) + "</th></tr></thead><tbody>" +
       rows + "</tbody></table></div>" + gateNote(list.length, shown.length);
+  }
+
+  // ---- the Next to be graded lens -------------------------------------------
+  // Its own rows, never the board's: prospects no label source has graded, in
+  // the order the PROSPX section "Not yet graded by any source" prints them,
+  // each with the chance of a first grade by the window end. The model behind
+  // the chance has no skill on the LEVEL of that first grade, so no grade of
+  // any kind is shown here. Every figure in the copy below is read from the
+  // payload's claim block, which the exporter copies from the provisional
+  // track record at build time; this file only rounds.
+  function isNext() { return isBoard() && S.lens === "next"; }
+  function nextRows() { return (S.next && S.next.rows) || []; }
+  function loadNext() {
+    if (S.next || S.nextLoading) return;
+    S.nextLoading = true;
+    S.nextErr = null;
+    var sync = true;
+    load(NEXT_URL).then(function (d) {
+      S.next = (d && d.rows) ? d : { rows: [] };
+      S.nextLoading = false;
+      if (!sync) renderSection();
+    }).catch(function (e) {
+      S.nextLoading = false;
+      S.nextErr = String((e && e.message) || e);
+      if (!sync) renderSection();
+    });
+    sync = false;
+  }
+  // "2027-10-15" -> "Oct 15, 2027", by hand so no time zone moves the day.
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function isoDay(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+    if (!m) return iso ? String(iso) : "";
+    return (MON[Number(m[2]) - 1] || m[2]) + " " + Number(m[3]) + ", " + m[1];
+  }
+  function isoMonth(iso) {
+    var m = /^(\d{4})-(\d{2})/.exec(String(iso || ""));
+    return m ? (MON[Number(m[2]) - 1] || m[2]) + " " + m[1] : "";
+  }
+  function grouped(v) {
+    if (v == null || isNaN(v)) return "-";
+    return String(Math.round(Number(v))).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  // A chance as PROSPX prints it: nearest whole percent, "<1%" below half a point.
+  function chanceTxt(v) {
+    if (v == null || isNaN(v)) return "-";
+    var pc = Number(v) * 100;
+    return pc < 0.5 ? "<1%" : Math.round(pc) + "%";
+  }
+  function orList(names) {
+    var n = (names || []).filter(function (x) { return !!x; });
+    if (!n.length) return "any label source";
+    return n.length === 1 ? n[0] : n.slice(0, -1).join(", ") + " or " + n[n.length - 1];
+  }
+  function nextEnd() { return ((S.next && S.next.windows) || {}).W12 || null; }
+  function prospxHref(key) { return "/prospx/#player=" + encodeURIComponent(key); }
+  var NEXT_COLS = [
+    { key: "n", label: "#", where: "head", track: "38px", kind: "rank", asc: true,
+      title: "Place in the PROSPX section Not yet graded by any source. Sorting does not renumber it.",
+      get: function (d) { return d.n; } },
+    { key: "name", label: "Prospect", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
+      title: "Sort by name", get: function (d) { return d.name; },
+      cell: function (d) {
+        return '<div class="dyn-id ff-id"><span class="mlb-name">' + teamLogo(d.org) + ' <a class="dyn-name-link" href="' +
+          esc(prospxHref(d.key)) + '">' + esc(d.name) + '</a></span><span class="mlb-sub">' + esc(d.pos || "") +
+          (d.org ? " &middot; " + esc(d.org) : "") + "</span></div>";
+      } },
+    { key: "p12", label: function () { var e = nextEnd(); return e ? "By " + isoMonth(e) : "Chance"; },
+      where: "head", track: "96px", strong: true,
+      title: "Chance of a first grade from any label source by the window end, the order PROSPX uses",
+      get: function (d) { return d.p12; }, cell: function (d) { return esc(chanceTxt(d.p12)); } },
+    { key: "lvl", label: "Level", where: "tape", text: true, asc: true,
+      title: "Level in the feature season", get: function (d) { return d.lvl; } },
+    { key: "age", label: "Age", where: "tape", asc: true,
+      title: "Age in the feature season", get: function (d) { return d.age; }, fmt: f0 }
+  ];
+  function passNext(d) {
+    if (S.q && normQ(d.name).indexOf(normQ(S.q)) < 0) return false;
+    if (S.org && String(d.org || "").toUpperCase() !== S.org) return false;
+    return true;
+  }
+  // The track record, one sentence per leg, every figure from the claim block.
+  function nextTrackHTML(c) {
+    var out = [];
+    var f = c && c.forward;
+    if (f && f.frozen_at && f.window_end) {
+      out.push(f.verdict_readable
+        ? "A freeze of " + grouped(f.n_rows) + " players taken " + esc(isoDay(f.frozen_at)) +
+          " closed its first window " + esc(isoDay(f.window_end)) + "; the result is on the Source Comparison page."
+        : "This chance has no closed window yet. A freeze of " + grouped(f.n_rows) + " players taken " +
+          esc(isoDay(f.frozen_at)) + " is scored forward: its first window closes " + esc(isoDay(f.window_end)) +
+          (f.graded != null && f.scored_through
+            ? ", and " + grouped(f.graded) + " of them had drawn a first grade through " + esc(isoDay(f.scored_through))
+            : "") + ".");
+    }
+    var r = c && c.retro;
+    if (r && r.auc != null && r.auc_null_level != null && r.frozen_at && r.scored_through) {
+      var s = "The production grade PROSPX served on " + esc(isoDay(r.frozen_at)) +
+        " ordered who drew a first grade by " + esc(isoDay(r.scored_through)) + " at AUC " + num(r.auc, 3) +
+        ", against " + num(r.auc_null_level, 3) + " for ordering by level (" + grouped(r.graded) +
+        " first grades among " + grouped(r.n) + " players)";
+      if (r.spearman != null && r.mae != null && r.mae_null != null) {
+        s += (Number(r.mae) >= Number(r.mae_null) ? ", and had no skill on the grade itself" : "; on the grade itself") +
+          ": Spearman " + num(r.spearman, 3) + ", and a miss of " + num(r.mae, 2) + " FV on average against " +
+          num(r.mae_null, 2) + " for a flat " + (r.null_const != null ? Math.ceil(Number(r.null_const)) : "constant");
+      }
+      out.push(s + ".");
+    }
+    return out.length ? out.join(" ") : "The track record is not in this build.";
+  }
+  function renderNextGraded() {
+    var inlineLens = lensHost() ? "" : renderLensBar();
+    if (!S.next) {
+      loadNext();
+      if (!S.next) {
+        return inlineLens + (S.nextErr
+          ? pxState("failed", "<strong>The Next to be graded list failed to load.</strong> " + esc(S.nextErr), "dyn-error")
+          : pxState("loading", "Loading the Next to be graded list."));
+      }
+    }
+    var N = S.next, all = nextRows(), sec = N.section || {};
+    if (!all.length) {
+      return inlineLens + '<div class="dyn-note">No Next to be graded rows in this build; they fill on the ' +
+        "nightly build. Nothing is broken.</div>";
+    }
+    var end = nextEnd();
+    var lede = '<div class="dyn-note">Never-graded prospects, ordered by the chance of a first grade from ' +
+      esc(orList(N.label_sources)) + (end ? " by " + esc(isoDay(end)) : "") + ": the first " +
+      grouped(sec.n_served) + " of the " + grouped(sec.n_section) + " rows in the PROSPX section <b>" +
+      esc(sec.title || "Not yet graded by any source") + "</b>, in its order. A chance of a first grade, " +
+      "not a grade.</div>";
+    var outside = Math.max(0, (sec.n_section || 0) - (sec.n_model || 0));
+    var how = '<details class="fh-how"><summary>Track record and method</summary><p>' +
+      nextTrackHTML(N.claim) + "</p><p>The chance is the number PROSPX prints on the player's page. " +
+      grouped(outside) + (outside === 1 ? " row of the section sits" : " rows of the section sit") +
+      " outside the model's coverage, at the end of the PROSPX section, and " +
+      (outside === 1 ? "is" : "are") + " not listed here. " +
+      '<a class="dyn-name-link" href="/glossary/#view=source-comparison">Source Comparison</a></p></details>';
+    var rows = all.filter(passNext);
+    return inlineLens + lede + how + filterBar(all, true, rows.length) +
+      renderCards(rows, NEXT_COLS, SORT.next, {
+        rankOf: function (d) { return d.n; },
+        stripeOf: function () { return "var(--accent-cyan)"; },
+        hrefOf: function (d) { return prospxHref(d.key); },
+        empty: filtersOn() ? "No prospect matches the current filter." : "No rows in this build.",
+        emptyKind: filtersOn() ? "empty" : "unmeasured"
+      });
   }
 
   // ---- the Fantasy Rank ------------------------------------------------------
@@ -924,8 +1082,8 @@
   // The Fantasy Rank tab, and the keeper on its All players pool, read the
   // rank sidecar and take the format control.
   function usesRank() { return S.section === "fantasy_rank" || (S.section === "keeper" && S.pool === "all"); }
-  function activeCols() { return S.section === "fantasy_rank" ? frCols() : DYN_COLS; }
-  function activeSort() { return S.section === "fantasy_rank" ? SORT.fantasy_rank : SORT.dynasty; }
+  function activeCols() { return S.section === "fantasy_rank" ? frCols() : (isNext() ? NEXT_COLS : DYN_COLS); }
+  function activeSort() { return S.section === "fantasy_rank" ? SORT.fantasy_rank : (isNext() ? SORT.next : SORT.dynasty); }
   function renderSection() {
     var r = root();
     if (!r) return;
@@ -934,7 +1092,8 @@
     else if (S.section === "keeper") html = renderKeeper();
     else if (S.section === "fantasy_rank") html = renderRankBoard();
     else html = renderBoard();
-    if (isBoard() && window.EEPHUS_GFX && EEPHUS_GFX.chipHTML) {
+    // The share card draws the board, so the Next to be graded lens carries none.
+    if (isBoard() && !isNext() && window.EEPHUS_GFX && EEPHUS_GFX.chipHTML) {
       html = '<div class="dyn-tools">' + EEPHUS_GFX.chipHTML("dyn-gfx", "Generate GFX") + "</div>" + html;
     }
     r.innerHTML = html;
@@ -955,6 +1114,8 @@
         S.lens = b.getAttribute("data-dynlens");
         var l = lensById(S.lens);
         SORT.dynasty = { key: l.sort.key, asc: l.sort.asc };
+        // The lens has no ETA or tier, so those two board filters drop with it.
+        if (S.lens === "next") { S.eta = null; S.tier = null; SORT.next = { key: "n", asc: true }; }
         renderSection();
         writeHash();
       });
@@ -1075,7 +1236,7 @@
 
   // ---- hash router ----------------------------------------------------------
   //   #section=dynasty|callups|keeper   ("board" is accepted as an alias)
-  //   #lens=board|contend|rebuild
+  //   #lens=board|contend|rebuild|next   (next: its own rows, sort over NEXT_COLS)
   //   #sort=<column>.<a|d>
   //   #q= #team= #eta= #tier=   the filter bar (2026-08-16); team is the org
   //                             code, and org / eta / tier all validate against
@@ -1112,13 +1273,21 @@
       S.lens = l;
       var lz = lensById(l);
       SORT.dynasty = { key: lz.sort.key, asc: lz.sort.asc };
+      if (l === "next") SORT.next = { key: "n", asc: true };
+    } else if (S.lens !== "board") {
+      // boardHash leaves the board lens out, so a hash without one means the
+      // board: Back from a lens returns to it rather than keeping the lens.
+      S.lens = "board";
+      SORT.dynasty = { key: LENSES[0].sort.key, asc: LENSES[0].sort.asc };
     }
     var v = hashParam(h, "sort", "[A-Za-z0-9_]+\\.[ad]");
     if (v) {
-      var i = v.lastIndexOf("."), k = v.slice(0, i), c = colByKey(DYN_COLS, k);
+      var nx = (S.section === "dynasty" && S.lens === "next");
+      var i = v.lastIndexOf("."), k = v.slice(0, i), c = colByKey(nx ? NEXT_COLS : DYN_COLS, k);
       if (c && c.get) {
-        SORT.dynasty.key = k;
-        SORT.dynasty.asc = (v.slice(i + 1) === "a");
+        var st0 = nx ? SORT.next : SORT.dynasty;
+        st0.key = k;
+        st0.asc = (v.slice(i + 1) === "a");
       }
     }
     // The filter half, validated against the SERVED board rows so a stale hash
@@ -1147,7 +1316,7 @@
   function boardHash() {
     var parts = ["section=" + S.section];
     if (S.lens !== "board") parts.push("lens=" + S.lens);
-    var st = SORT.dynasty, d = SORT_DEFAULTS.dynasty;
+    var st = isNext() ? SORT.next : SORT.dynasty, d = isNext() ? SORT_DEFAULTS.next : SORT_DEFAULTS.dynasty;
     if (st.key && !(st.key === d.key && !!st.asc === !!d.asc)) {
       parts.push("sort=" + st.key + "." + (st.asc ? "a" : "d"));
     }
