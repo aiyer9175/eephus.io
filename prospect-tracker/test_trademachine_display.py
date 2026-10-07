@@ -200,3 +200,105 @@ def test_the_loader_holds_a_viewport_and_the_builder_its_height(server):
         finally:
             b.close()
     assert cls < 0.1, cls   # 0.569 before the fix (qualaudit median of 3)
+
+
+# ------------------------------------------------------------- QCLA05 ------ #
+
+def test_adding_by_keyboard_keeps_the_place_and_says_what_changed(server):
+    with _page(server) as (pg, errors):
+        inp = pg.locator('input[data-tm-search="a"]')
+        inp.focus()
+        pg.keyboard.type("Skenes")
+        pg.wait_for_selector('[data-tm-results="a"] .tm-hit:not(.is-unpriced)', timeout=20_000)
+        # results may refresh once when the detail file lands; tab from the box
+        pg.wait_for_timeout(1500)
+        pg.locator('input[data-tm-search="a"]').focus()
+        pg.keyboard.press("Tab")
+        assert pg.evaluate("document.activeElement.classList.contains('tm-hit')")
+        pg.keyboard.press("Enter")
+        pg.wait_for_timeout(200)
+        active = pg.evaluate("document.activeElement.getAttribute('data-tm-search')")
+        assert active == "a", "focus fell out of the builder after the add"
+        live = pg.locator("#tm-live")
+        assert live.get_attribute("role") == "status" and live.get_attribute("aria-live") == "polite"
+        said = live.inner_text()
+        assert "added to Side A." in said and "Side A receives $" in said, said
+        # remove by keyboard: focus returns to the same side's box
+        pg.locator('[data-tm-remove^="a:"]').first.focus()
+        pg.keyboard.press("Enter")
+        pg.wait_for_timeout(200)
+        assert pg.evaluate("document.activeElement.getAttribute('data-tm-search')") == "a"
+        assert "removed from Side A." in pg.locator("#tm-live").inner_text()
+        assert not errors, errors
+
+
+# ------------------------------------------------------------- QCLA06 ------ #
+
+def test_sorting_by_keyboard_keeps_focus_on_the_header(server):
+    with _page(server) as (pg, errors):
+        pg.locator('th[data-tb-sortcol="age"]').focus()
+        pg.keyboard.press("Enter")
+        pg.wait_for_timeout(200)
+        got = pg.evaluate("[document.activeElement.tagName, document.activeElement.dataset.tbSortcol,"
+                          " document.activeElement.getAttribute('aria-sort')]")
+        assert got == ["TH", "age", "ascending"], got
+        # no Tab stop nested inside a sort header; the term rides aria-describedby
+        nested = pg.eval_on_selector_all(
+            "th[data-tb-sortcol] *",
+            "els => els.filter(e => e.tabIndex >= 0 || e.matches('a,button,input,select')).length")
+        assert nested == 0
+        assert pg.get_attribute('th[data-tb-sortcol="fv"]', "aria-describedby") == "gl-def-fv"
+        # the table is named by the board heading, an h2
+        lab = pg.get_attribute(".tm-board-table", "aria-labelledby")
+        assert pg.evaluate(f"document.getElementById('{lab}').tagName") == "H2"
+        assert not errors, errors
+
+
+def test_the_export_chip_clears_the_header_row_at_390(server):
+    with _page(server, w=390, h=844, touch=True) as (pg, _e):
+        pg.wait_for_selector("#tradeboard-content .eephus-export-chip", state="attached", timeout=20_000)
+        hits = pg.evaluate("""() => {
+          const out = [];
+          document.querySelectorAll('th[data-tb-sortcol]').forEach(th => {
+            th.scrollIntoView({block: 'center', inline: 'nearest'});
+            const b = th.getBoundingClientRect();
+            const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+            if (hit && !th.contains(hit)) out.push(th.dataset.tbSortcol);
+          });
+          return out; }""")
+        assert hits == [], hits
+
+
+# ------------------------------------------------------------- QCLA07 ------ #
+
+def test_filter_chips_pager_and_boxes_carry_state_and_names(server):
+    with _page(server) as (pg, errors):
+        chips = pg.eval_on_selector_all(
+            "[data-tb-pool],[data-tb-tier],[data-tb-pos]", "els => els.map(e => e.getAttribute('aria-pressed'))")
+        assert chips and all(c in ("true", "false") for c in chips)
+        assert chips.count("true") == 3
+        pg.locator(".filter-toggle").first.click()
+        pg.locator('[data-tb-pool="mlb"]').click()
+        pressed = pg.eval_on_selector_all("[data-tb-pool]", "els => els.map(e => e.getAttribute('aria-pressed'))")
+        assert pressed == ["false", "false", "true"], pressed
+        cur = pg.eval_on_selector_all('.pg-chip[aria-current="page"]', "els => els.map(e => e.textContent)")
+        assert cur and set(cur) == {"1"}
+        assert pg.get_attribute(".pg-chip >> nth=1", "aria-label").startswith("Page ")
+        for sel in ('input[data-tm-search="a"]', 'input[data-tm-search="b"]', "#tb-search"):
+            assert pg.get_attribute(sel, "aria-label"), sel
+        assert not errors, errors
+
+
+def test_touch_targets_reach_44_px_at_390(server):
+    with _page(server, w=390, h=844, touch=True) as (pg, _e):
+        pg.wait_for_selector("#tradeboard-content .eephus-export-chip", state="attached", timeout=20_000)
+        small = pg.evaluate("""() => {
+          const sel = ['.tm-board-table td.tm-player a', 'th[data-tb-sortcol]', '.pg-chip', '.pg-nav',
+                       '#tradeboard-content .eephus-export-chip', '.filter-toggle', 'input.tm-search', '#tb-search'];
+          const out = [];
+          sel.forEach(s => document.querySelectorAll(s).forEach(e => {
+            const b = e.getBoundingClientRect();
+            if (b.width && (b.height < 44 || b.width < 24)) out.push([s, Math.round(b.width), Math.round(b.height)]);
+          }));
+          return out; }""")
+        assert small == [], small[:5]

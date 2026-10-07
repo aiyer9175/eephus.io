@@ -4144,10 +4144,11 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     <span class="newsprint-eyebrow-label">Trade Machine</span>
   </div>
   <div id="trade-machine"></div>
+  <div id="tm-live" class="visually-hidden" role="status" aria-live="polite"></div>
   <div class="tm-ros-note" style="margin:10px 0 2px;max-width:760px;color:var(--text-secondary);font-size:11px;line-height:1.55;">
     <strong>Rental leg:</strong> remaining season fraction &times; full-season surplus (projected WAR value minus salary). No floor: negative means the salary still owed exceeds the production.
   </div>
-  <div class="trademachine-board-head detail-title" style="margin:18px 0 4px;font-size:13px;">Trade-value board <span class="detail-title-sub">Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted</span></div>
+  <div class="trademachine-board-head detail-title" style="margin:18px 0 4px;font-size:13px;"><h2 class="tm-h2" id="tm-board-title">Trade-value board</h2> <span class="detail-title-sub">Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted</span></div>
   <div class="filter-toggle-row">
     <button class="filter-toggle" type="button" data-collapse-target="tradeboard-filter-bar" aria-expanded="false" title="Show / hide Trade Board filters">
       <span class="filter-toggle-label">Filter &amp; Sort</span>
@@ -4156,28 +4157,28 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
   </div>
   <div id="tradeboard-filter-bar" class="filter-bar collapsible-filter-bar">
     <div class="filter-group"><span class="filter-label">Pool</span>
-      <button class="chip active" data-tb-pool="all" type="button">All</button>
-      <button class="chip" data-tb-pool="milb" type="button">MiLB</button>
-      <button class="chip" data-tb-pool="mlb" type="button">MLB</button>
+      <button class="chip active" data-tb-pool="all" type="button" aria-pressed="true">All</button>
+      <button class="chip" data-tb-pool="milb" type="button" aria-pressed="false">MiLB</button>
+      <button class="chip" data-tb-pool="mlb" type="button" aria-pressed="false">MLB</button>
     </div>
     <div class="filter-group"><span class="filter-label">Tier</span>
-      <button class="chip active" data-tb-tier="all" type="button">All tiers</button>
-      <button class="chip" data-tb-tier="elite" type="button">Elite ($40M+)</button>
-      <button class="chip" data-tb-tier="high" type="button">High ($20-40M)</button>
-      <button class="chip" data-tb-tier="mid" type="button">Mid ($8-20M)</button>
+      <button class="chip active" data-tb-tier="all" type="button" aria-pressed="true">All tiers</button>
+      <button class="chip" data-tb-tier="elite" type="button" aria-pressed="false">Elite ($40M+)</button>
+      <button class="chip" data-tb-tier="high" type="button" aria-pressed="false">High ($20-40M)</button>
+      <button class="chip" data-tb-tier="mid" type="button" aria-pressed="false">Mid ($8-20M)</button>
     </div>
     <div class="filter-group"><span class="filter-label">Position</span>
-      <button class="chip active" data-tb-pos="all" type="button">All</button>
-      <button class="chip" data-tb-pos="C" type="button">C</button>
-      <button class="chip" data-tb-pos="1B" type="button">1B</button>
-      <button class="chip" data-tb-pos="2B" type="button">2B</button>
-      <button class="chip" data-tb-pos="SS" type="button">SS</button>
-      <button class="chip" data-tb-pos="3B" type="button">3B</button>
-      <button class="chip" data-tb-pos="LF" type="button">LF</button>
-      <button class="chip" data-tb-pos="CF" type="button">CF</button>
-      <button class="chip" data-tb-pos="RF" type="button">RF</button>
-      <button class="chip" data-tb-pos="SP" type="button">SP</button>
-      <button class="chip" data-tb-pos="RP" type="button">RP</button>
+      <button class="chip active" data-tb-pos="all" type="button" aria-pressed="true">All</button>
+      <button class="chip" data-tb-pos="C" type="button" aria-pressed="false">C</button>
+      <button class="chip" data-tb-pos="1B" type="button" aria-pressed="false">1B</button>
+      <button class="chip" data-tb-pos="2B" type="button" aria-pressed="false">2B</button>
+      <button class="chip" data-tb-pos="SS" type="button" aria-pressed="false">SS</button>
+      <button class="chip" data-tb-pos="3B" type="button" aria-pressed="false">3B</button>
+      <button class="chip" data-tb-pos="LF" type="button" aria-pressed="false">LF</button>
+      <button class="chip" data-tb-pos="CF" type="button" aria-pressed="false">CF</button>
+      <button class="chip" data-tb-pos="RF" type="button" aria-pressed="false">RF</button>
+      <button class="chip" data-tb-pos="SP" type="button" aria-pressed="false">SP</button>
+      <button class="chip" data-tb-pos="RP" type="button" aria-pressed="false">RP</button>
     </div>
     <div class="filter-group"><span class="filter-label">Org</span>
       <select class="chip" id="tb-org-filter" data-team-picker title="Filter Trade Board by organization"><option value="all">All orgs</option></select>
@@ -4198,12 +4199,12 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     </div>
   </div>
   <div style="padding:8px 0 4px;">
-    <input id="tb-search" type="search" placeholder="Search player name..." style="width:100%;max-width:340px;padding:7px 10px;border-radius:6px;border:1px solid var(--text-tertiary);background:var(--bg-secondary);color:var(--text-primary);" autocomplete="off" spellcheck="false">
+    <input id="tb-search" type="search" placeholder="Search player name..." aria-label="Search the trade-value board by player name" style="width:100%;max-width:340px;padding:7px 10px;border-radius:6px;border:1px solid var(--text-tertiary);background:var(--bg-secondary);color:var(--text-primary);" autocomplete="off" spellcheck="false">
   </div>
   <div id="tb-group-panel" style="display:none;margin:8px 0;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <span id="tb-group-title" style="font-weight:700;font-size:13px;"></span>
-      <button onclick="document.getElementById('tb-group-panel').style.display='none';" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;">&#10005;</button>
+      <button type="button" aria-label="Close the profile group" onclick="document.getElementById('tb-group-panel').style.display='none';" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;">&#10005;</button>
     </div>
     <div id="tb-group-body"></div>
   </div>

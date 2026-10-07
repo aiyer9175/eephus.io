@@ -316,6 +316,39 @@
 #tradeboard-content:has(> .spinner-wrap) { min-height: 100vh; }
 /* The deal builder draws before the board file arrives; until its script runs
    the mount is empty, so it reserves the height its two empty sides take
-   (measured in Chromium: 182 px side by side, 319 px stacked). */
+   (measured in Chromium: 182 px side by side, 319 px stacked, 351 px with the
+   44 px touch boxes at 640 and below). */
 #trade-machine:empty { min-height: 182px; }
 @media (max-width: 720px) { #trade-machine:empty { min-height: 319px; } }
+@media (max-width: 640px) { #trade-machine:empty { min-height: 351px; } }
+
+/* The board title is a heading (QCLA06): the page had one heading, the h1. It
+   keeps the look of the title line it replaced. */
+.tm-app h2.tm-h2 {
+  display: inline; margin: 0; font: inherit; letter-spacing: inherit;
+  text-transform: inherit; color: inherit;
+}
+
+/* The export chip sits in its own strip above the header row on narrow
+   screens, so it no longer covers the header cell under it (QCLA06: at 390
+   it took the Surplus and Age headers' focus point). */
+@media (max-width: 720px) {
+  #tradeboard-content .tm-board-tablewrap { padding-top: 30px; }
+}
+
+/* Touch targets at 640 px and below (QCLA07): 44 px on the row link, the
+   sort headers, the pager, the filter toggle and chips, the export chip, the
+   CSV button, the search boxes and the builder's controls. */
+@media (max-width: 640px) {
+  .tm-board-table td.tm-player a { display: inline-block; padding: 14px 0; }
+  .tm-board-table thead th { height: 44px; }
+  .tm-app .pg-chip, .tm-app .pg-nav { min-height: 44px; min-width: 44px; }
+  .tm-app .filter-toggle, .tm-app button.chip, .tm-app select.chip { min-height: 44px; }
+  .tm-app .eph-csv-btn { min-height: 44px; }
+  #tradeboard-content .tm-board-tablewrap { padding-top: 52px; }
+  #tradeboard-content .eephus-export-chip { width: 44px; height: 44px; }
+  #trade-machine .tm-search, .tm-app #tb-search { min-height: 44px; }
+  #trade-machine .tm-hit { min-height: 44px; }
+  #trade-machine .tm-x { min-width: 44px; min-height: 44px; }
+  #trade-machine .tm-name { padding: 12px 0; }
+}

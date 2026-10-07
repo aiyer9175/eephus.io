@@ -33,8 +33,15 @@
     const clicked = btn.closest(".pg-strip");
     const before = Array.from(document.querySelectorAll(".pg-strip"));
     const idx = clicked ? before.indexOf(clicked) : -1;
+    const hadFocus = btn.contains(document.activeElement) || document.activeElement === document.body;
     state.pages.tradeboard = n;
     _renderTBRows();
+    // The pager is rebuilt; a keyboard reader keeps their place on the new
+    // current page in the same strip (QCLA07).
+    const now = document.querySelectorAll(".pg-strip");
+    const cur = (idx >= 0 && idx < now.length ? now[idx] : now[0]);
+    const curChip = cur && cur.querySelector('.pg-chip[aria-current="page"]');
+    if (hadFocus && curChip) curChip.focus({ preventScroll: true });
     requestAnimationFrame(() => {
       const after = document.querySelectorAll(".pg-strip");
       const t = (idx >= 0 && idx < after.length) ? after[idx] : after[0];
@@ -88,7 +95,7 @@ function renderPaginationStrip(currentPage, totalItems, pageSize, dataKey) {
   const chips = pages.map(p =>
     p === "…"
       ? `<span class="pg-ellipsis">…</span>`
-      : `<button class="pg-chip${p === cur ? " active" : ""}" data-${dataKey}-page="${p}" type="button">${p}</button>`
+      : `<button class="pg-chip${p === cur ? " active" : ""}" data-${dataKey}-page="${p}" type="button" aria-label="Page ${p}"${p === cur ? ' aria-current="page"' : ""}>${p}</button>`
   ).join("");
   const lo = (cur - 1) * pageSize + 1;
   const hi = Math.min(cur * pageSize, totalItems);
@@ -567,9 +574,50 @@ const BALANCED_THRESHOLD_MM = 5;
 // DE-DUP 2026-07-23; it prefers the GFX modal, falls back to the direct
 // shareCard download).
 
-function renderTradeMachine() {
+// KEYBOARD PLACE (QCLA05, 2026-10-07). The builder is rebuilt on every change,
+// so the focused control was destroyed and focus fell to <body>: after adding a
+// player by keyboard the next Tab restarted at the wordmark. The render now
+// records which side's control held focus (and what was typed) and gives it
+// back: after an add or a remove, that side's Add player box; after an async
+// re-render, the same box with the same text and caret.
+function _tmFocusPlace(el) {
+  const ae = document.activeElement;
+  if (!ae || !el.contains(ae)) return null;
+  if (ae.matches("[data-tm-search]")) {
+    return { side: ae.dataset.tmSearch, value: ae.value, s: ae.selectionStart, e: ae.selectionEnd };
+  }
+  for (const a of ["data-tm-clear", "data-tm-copy", "data-tm-gfx"]) {
+    if (ae.hasAttribute(a)) return { sel: `[${a}]` };
+  }
+  const host = ae.closest("[data-tm-side]");
+  return host ? { side: host.dataset.tmSide, value: "" } : null;
+}
+function _tmRestoreFocus(el, place) {
+  if (!place) return;
+  if (place.sel) { const c = el.querySelector(place.sel); if (c) c.focus(); return; }
+  const inp = el.querySelector(`[data-tm-search="${place.side}"]`);
+  if (!inp) return;
+  inp.value = place.value || "";
+  inp.focus();
+  if (place.s != null) { try { inp.setSelectionRange(place.s, place.e); } catch (e) { /* type=search */ } }
+  if (inp.value && typeof inp.oninput === "function") inp.oninput();
+}
+// One polite status region, written by build_site beside the mount so it is in
+// the page before anything changes (a region re-created on each render is not
+// reliably announced). It reads the change, both totals and the verdict.
+function _tmAnnounce(what, vText) {
+  const live = document.getElementById("tm-live");
+  if (!live) return;
+  const tot = side => _tmTotal(_TM[side]);
+  const money = v => `${v >= 0 ? "$" : "-$"}${Math.abs(v).toFixed(1)}M`;
+  live.textContent = `${what} Side A receives ${money(tot("a"))}, Side B receives ${money(tot("b"))}. ${vText || ""}`.trim();
+}
+
+function renderTradeMachine(opts) {
   const el = document.getElementById("trade-machine");
   if (!el) return;
+  opts = opts || {};
+  const place = opts.focusSide ? { side: opts.focusSide, value: "" } : _tmFocusPlace(el);
   _tmSeedFromURL();
   const sideHtml = (side, label) => {
     const list = _TM[side].map((x, i) => {
@@ -597,13 +645,13 @@ function renderTradeMachine() {
         ${rosChip}
         ${g ? `<span class="tm-grade-chip" style="color:${gc};border-color:${gc};" title="Trade Value Grade ${g} (contract-adjusted surplus)">${g}</span>` : ""}
         <span class="tm-val" style="color:${_tmValColor(x.mm)};">${(x.mm || 0) >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M</span>
-        <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove">×</button>
+        <button class="tm-x" data-tm-remove="${side}:${i}" type="button" title="Remove" aria-label="Remove ${escapeHtml(x.name)} from ${label}">×</button>
       </div>`;
     }).join("");
     const tot = _tmTotal(_TM[side]);
-    return `<div class="tm-side">
+    return `<div class="tm-side" data-tm-side="${side}">
       <div class="tm-side-head"><span>${label} receives</span> <span class="tm-total" style="color:${_tmValColor(tot)};">$${tot.toFixed(1)}M</span></div>
-      <input class="tm-search" type="search" placeholder="Add player (prospect or MLB)…" data-tm-search="${side}" autocomplete="off">
+      <input class="tm-search" type="search" placeholder="Add player (prospect or MLB)…" data-tm-search="${side}" autocomplete="off" aria-label="Add a player to ${label} (prospect or MLB)">
       <div class="tm-results" data-tm-results="${side}"></div>
       ${list || '<div class="tm-empty">no players yet</div>'}
     </div>`;
@@ -656,6 +704,7 @@ function renderTradeMachine() {
     ${_tmCbtHtml()}
   </div>`;
   _tmWireGl(el);
+  if (opts.announce) _tmAnnounce(opts.announce, bothSides ? vText : "");
   el.querySelectorAll("[data-tm-search]").forEach(inp => {
     inp.addEventListener("focus", _tmEnsureDetail);
     inp.oninput = () => {
@@ -679,19 +728,20 @@ function renderTradeMachine() {
       const b = e.target.closest("[data-tm-add]");
       if (!b || !res._hits) return;
       const [side, i] = b.dataset.tmAdd.split(":");
-      _TM[side].push(res._hits[Number(i)]);
-      renderTradeMachine();
+      const hit = res._hits[Number(i)];
+      _TM[side].push(hit);
+      renderTradeMachine({ focusSide: side, announce: `${hit.name} added to Side ${side.toUpperCase()}.` });
     };
   });
   el.querySelectorAll("[data-tm-remove]").forEach(b => {
     b.onclick = () => {
       const [side, i] = b.dataset.tmRemove.split(":");
-      _TM[side].splice(Number(i), 1);
-      renderTradeMachine();
+      const gone = _TM[side].splice(Number(i), 1)[0];
+      renderTradeMachine({ focusSide: side, announce: `${gone ? gone.name : "Player"} removed from Side ${side.toUpperCase()}.` });
     };
   });
   const clearB = el.querySelector("[data-tm-clear]");
-  if (clearB) clearB.onclick = () => { _TM.a = []; _TM.b = []; renderTradeMachine(); };
+  if (clearB) clearB.onclick = () => { _TM.a = []; _TM.b = []; renderTradeMachine({ focusSide: "a", announce: "Both sides cleared." }); };
   const copyB = el.querySelector("[data-tm-copy]");
   if (copyB) copyB.onclick = () => {
     const fmt = side => _TM[side].map(x =>
@@ -736,6 +786,8 @@ function renderTradeMachine() {
       caption: vText,
     });
   };
+  // Last, so the handlers above are wired when the box takes focus back.
+  _tmRestoreFocus(el, place);
 }
 
 // ─── Trade Board ──────────────────────────────────────────────────────────────
@@ -967,13 +1019,25 @@ function _tbTh(label, col, cls, title, noActiveMark, term) {
   const classes = ["tm-sortable", cls, active ? "tm-sorted" : ""].filter(Boolean).join(" ");
   const tt = (title ? title + " · " : "") + "click to sort";
   const ariaSort = active ? (sdir === "asc" ? "ascending" : "descending") : "none";
-  const text = term ? _tmGl(label, term) : label;
-  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}" scope="col" tabindex="0" aria-sort="${ariaSort}">${text}${arrow}</th>`;
+  // The term inside a sort header is NOT its own Tab stop (QCLA06): the header
+  // is the control, and a focusable span inside it was an extra stop inside a
+  // control. tabindex=-1 keeps the hover definition; the header carries the
+  // definition for a screen reader through aria-describedby (eephus-gl writes
+  // the gl-def-<slug> node when the glossary loads).
+  const text = term ? `<span class="g-term" data-gl="${term}" tabindex="-1">${label}</span>` : label;
+  const desc = term ? ` aria-describedby="gl-def-${term}"` : "";
+  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}" scope="col" tabindex="0" aria-sort="${ariaSort}"${desc}>${text}${arrow}</th>`;
 }
 // Column header click: toggle direction if already sorted by it, else pick a
 // sensible default (text asc, numeric desc).
-function _tbSortByCol(col) {
+function _tbSortByCol(col, fromTh) {
   const [scol, sdir] = _tbSortParts();
+  // The board is rebuilt below, so the header that took the click or the Enter
+  // is gone; focus goes back to the header in the same place (QCLA06; Grade
+  // and Surplus share the surplus column, so the place is the index).
+  const ths = Array.from(document.querySelectorAll("#tradeboard-content th[data-tb-sortcol]"));
+  const at = fromTh ? ths.indexOf(fromTh) : -1;
+  const hadFocus = !!(fromTh && fromTh.contains(document.activeElement));
   // First click default: ascending for text + age (youngest first is the useful
   // default on a prospect board); descending for value-like columns (best first).
   const dir = (scol === col) ? (sdir === "asc" ? "desc" : "asc")
@@ -987,6 +1051,10 @@ function _tbSortByCol(col) {
   _tbSyncSortSelect();
   resetPage("tradeboard");
   _renderTBRows();
+  if (at >= 0 && hadFocus) {
+    const back = document.querySelectorAll("#tradeboard-content th[data-tb-sortcol]")[at];
+    if (back) back.focus();
+  }
 }
 function _tbPopulateSelectFilters() {
   if (!_tbData) return;
@@ -1246,7 +1314,7 @@ function _renderTBRows() {
   let html = `<div style="margin:6px 0 4px;color:var(--text-secondary);font-size:11px;">${rows.length} players · ${escapeHtml(_tbData.generated_at || "")}</div>
   ${_crunchBanner}
   ${topPager}
-  <div class="tm-board-tablewrap mlbstats-scroll"><table class="stats-table tm-board-table">
+  <div class="tm-board-tablewrap mlbstats-scroll"><table class="stats-table tm-board-table" aria-labelledby="tm-board-title">
   <thead><tr>
     <th class="mlbstats-col-rank">#</th>
     ${_tbTh("Player", "name")}
@@ -1410,9 +1478,9 @@ function _renderTBRows() {
   _tmWireGl(wrap);
   // Sortable column headers (the table is rebuilt each render, so rewire here).
   wrap.querySelectorAll("th[data-tb-sortcol]").forEach(th => {
-    th.addEventListener("click", () => _tbSortByCol(th.dataset.tbSortcol));
+    th.addEventListener("click", () => { th.focus(); _tbSortByCol(th.dataset.tbSortcol, th); });
     th.addEventListener("keydown", e => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); _tbSortByCol(th.dataset.tbSortcol); }
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); _tbSortByCol(th.dataset.tbSortcol, th); }
     });
   });
 }
@@ -1506,6 +1574,14 @@ function _tbInjectGfxChip() {
 }
 
 // ── Filter chip wiring (called once after first load) ──────────────────────
+// One chip per group is on; its state is in aria-pressed as well as the
+// .active class, so a screen reader hears it (QCLA07).
+function _tbPress(btn) {
+  btn.closest(".filter-group").querySelectorAll(".chip").forEach(b => {
+    b.classList.toggle("active", b === btn);
+    b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+  });
+}
 function _tbWireFilters() {
   // The Trade Machine view scaffold root (was #tradeboard-section in PROSPX; the
   // relocation renamed it, which silently broke every filter -- sec was null here).
@@ -1514,19 +1590,19 @@ function _tbWireFilters() {
 
   sec.querySelectorAll("[data-tb-pool]").forEach(btn => btn.addEventListener("click", () => {
     _tbPool = btn.dataset.tbPool;
-    btn.closest(".filter-group").querySelectorAll(".chip").forEach(b => b.classList.toggle("active", b===btn));
+    _tbPress(btn);
     resetPage("tradeboard");
     _renderTBRows();
   }));
   sec.querySelectorAll("[data-tb-tier]").forEach(btn => btn.addEventListener("click", () => {
     _tbTier = btn.dataset.tbTier;
-    btn.closest(".filter-group").querySelectorAll(".chip").forEach(b => b.classList.toggle("active", b===btn));
+    _tbPress(btn);
     resetPage("tradeboard");
     _renderTBRows();
   }));
   sec.querySelectorAll("[data-tb-pos]").forEach(btn => btn.addEventListener("click", () => {
     _tbPos = btn.dataset.tbPos;
-    btn.closest(".filter-group").querySelectorAll(".chip").forEach(b => b.classList.toggle("active", b===btn));
+    _tbPress(btn);
     resetPage("tradeboard");
     _renderTBRows();
   }));
