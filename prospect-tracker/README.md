@@ -28,6 +28,7 @@ linked from those pages or redirect. Full inventory with payloads: `SITE_MAP.md`
 | `/prospx/` | PROSPX | hand-maintained `prospx/index.html` (single-file app) |
 | `/collegesavant/` | CollegeSavant | hand-maintained `collegesavant/index.html` + `collegesavant/app.js` |
 | `/franchise/` | Franchises (MLB Modules) | `build_site.build_franchise()` + `assets/eephus-teampick.js`, `assets/franchise.js` |
+| `/scores/` | Scores / Standings (MLB Modules) | `build_site.build_scores()` + `assets/eephus-teampick.js`, `assets/scores-bracket.js`, `assets/scores.js` |
 | `/fa/` | Free Agency (MLB Modules) | `build_site.build_fa()` + `assets/fa.js` |
 | `/projections/` | Projections (MLB Modules) | `build_site.build_projections()` + `assets/eephus-teampick.js`, `assets/projections.js` |
 | `/mlbstats/` | MLB Stats (MLB Modules) | `build_site.build_mlbstats()` + `assets/eephus-teampick.js`, `assets/mlbstats.js` |
@@ -57,7 +58,6 @@ linked from those pages or redirect. Full inventory with payloads: `SITE_MAP.md`
 | `/parks/` | Park factors | `build_site.build_parks()` + `assets/parks.js` |
 | `/redraft/` | Redirect to /fantasy/#m=redraft | `build_site.build_redraft()` |
 | `/report/` | Report a bug | `build_site.build_bug_report()` |
-| `/scores/` | Scores / Standings (off the nav until SCORES_5b) | `build_site.build_scores()` + `assets/eephus-teampick.js`, `assets/scores-bracket.js`, `assets/scores.js` |
 | `/sources/` | Sources and data | `build_site.build_sources()` |
 | `/teams/` | Redirect to /projections/#view=teams | `build_site.build_teams_redirect()` |
 

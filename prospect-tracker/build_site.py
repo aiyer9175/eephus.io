@@ -391,6 +391,12 @@ NAV_ITEMS = [
         # copies carry the same entry in the same slot
         # (test_collegesavant_nav_in_sync).
         ("franchise",   "Franchises",  "/franchise/"),
+        # Scores / Standings (SCORES_5b; owner answer SC-NAV, second in the
+        # group directly after Franchises; renamed from "MLB Scores" by the
+        # 2026-10-02 Standings plan). One leaf: /standings/ passes
+        # active="scores". The hand-kept static copies carry the same entry in
+        # the same slot (test_collegesavant_nav_in_sync).
+        ("scores",      "Scores / Standings", "/scores/"),
         ("fa",          "Free Agency", "/fa/"),
         ("projections", "Projections", "/projections/"),
         ("mlbstats",    "MLB Stats",   "/mlbstats/"),
@@ -7061,6 +7067,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/arbitration/", "daily", "0.8"),
         ("/ledger/", "daily", "0.7"),
         ("/franchise/", "daily", "0.7"),
+        ("/scores/", "hourly", "0.8"),
         # /dynasty/, /redraft/ and /dfs/ are redirect stubs into /fantasy/ and
         # carry meta robots=noindex, so they are deliberately absent here (same
         # treatment as /teams/). Their content is one crawlable page.

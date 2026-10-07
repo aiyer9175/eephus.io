@@ -204,7 +204,7 @@ _ROUTE_NOTES = {
     "hof/index.html": "Hall of Fame: career WAR / WAR7 / JAWS for every ten-season player, reproduced from Baseball-Reference's own daily WAR file, in three bands (eligible, active, not yet eligible) with the ballot record joined. No Hall line and no snub list; each dark section names its blocker, and Franchises credits every inductee to one franchise under the owner's 2026-09-25 rule.",
     "management/index.html": "In-Game Management: every stolen-base attempt since 2018 priced against win probability with a league-average runner. NO per-club plus metric, because the gate battery returned a BOUNDED null (split-half 0.069 inside a permutation band, detection floor 0.0005 wins per attempt). Ships the league result, the club STYLE board, and the run-expectancy and half-inning-start reference tables.",
     "franchise/index.html": "Franchises: the org-level grade tree per club (Franchise Index = weighted mean of ROSTER / OUTLOOK / FARM branch scores, re-standardised across 30 clubs, descriptive) with twelve sections that re-serve every module's numbers for the club on their own scales; no HoF tile, no pennants, no decision-quality grade.",
-    "scores/index.html": "Scores / Standings: MLB games by date, a pure reader of the files tools/scores_job.py writes to /data/scores/ (MLB's live win probability shown as MLB serves it, Biggest plays with MLB's video, box scores, and Stars of the Game by the published stars_v1 rule); off the nav and the sitemap until SCORES_5b.",
+    "scores/index.html": "Scores / Standings: MLB games by date, a pure reader of the files tools/scores_job.py writes to /data/scores/ (MLB's live win probability shown as MLB serves it, Biggest plays with MLB's video, box scores, and Stars of the Game by the published stars_v1 rule); in the nav after Franchises and in the sitemap since SCORES_5b.",
     "models/index.html": "Model Accountability hub: data/model_registry.json rendered server-side, with freshness and the ledger's own gaps counted; assets/accountability.js only filters what is already in the DOM",
     "glossary/index.html": "Library: unified glossary + methodology / model accountability",
     "library/index.html": "redirect stub: the Library's name resolves to /glossary/ (hash-preserving)",
@@ -365,7 +365,6 @@ _UNNAVED_PAGE_NAMES = {
     "/franchises/": "Redirect to /franchise/",
     "/sources/": "Sources and data",
     "/report/": "Report a bug",
-    "/scores/": "Scores / Standings (off the nav until SCORES_5b)",
     "/404.html": "Not-found page",
 }
 
