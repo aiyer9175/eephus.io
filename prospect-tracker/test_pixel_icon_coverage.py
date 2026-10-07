@@ -130,13 +130,13 @@ def home() -> str:
 
 
 def test_rail_draws_16px_module_icons_and_12px_tab_icons(home):
-    nav = re.search(r'<nav class="sb-nav">(.*?)</nav>', home, re.S).group(1)
+    nav = re.search(r'<nav class="sb-nav"[^>]*>(.*?)</nav>', home, re.S).group(1)
     links = re.findall(r'<a href="([^"]+)"[^>]*>(.*?)</a>', nav, re.S)
     by_href = {h: k for k, _l, h in B.nav_leaves()}
     assert len(links) == len(by_href)
     for href, inner in links:
         assert _icons(inner) == [(16, _sym(by_href[href]))], href
-    sub = re.search(r'<nav class="sb-subnav">(.*?)</nav>', home, re.S).group(1)
+    sub = re.search(r'<nav class="sb-subnav"[^>]*>(.*?)</nav>', home, re.S).group(1)
     subs = re.findall(r'<a href="([^"]+)">(.*?)</a>', sub, re.S)
     assert len(subs) == len(B.PROSPX_SUBNAV)
     for href, inner in subs:

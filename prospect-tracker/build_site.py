@@ -98,6 +98,30 @@ _GLAPP_VER = _asset_ver("assets/glossary.js")
 # restamp_hand_authored_pages() rewrites `/assets/x.js?v=<hash>` wholesale on
 # the hand-authored pages, so any extra param on that URL would be stripped.
 _GL_DATA_VER = _asset_ver("data/glossary.json")
+
+# The slim term index every page but /glossary/ and PROSPX reads (QHOP02).
+# eephus-gl.js reads a term's name, short line, aliases, category, module and
+# priority off it; the long fields stay in data/glossary.json for the two
+# pages that render them. A pure function of glossary.json, so _GL_DATA_VER
+# versions its url too. Written by main(); gitignored, rebuilt by every build.
+GL_INDEX_FIELDS = ("id", "term", "definition", "aliases", "category", "module", "priority")
+
+
+def glossary_index_doc() -> dict:
+    doc = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
+    return {"source": "data/glossary.json", "groups": doc.get("groups") or {},
+            "entries": [{k: e[k] for k in GL_INDEX_FIELDS if k in e}
+                        for e in doc.get("entries") or []]}
+
+
+def write_glossary_index(path: Path | None = None) -> Path:
+    out = path or (ROOT / "data" / "glossary_index.json")
+    text = json.dumps(glossary_index_doc(), ensure_ascii=False, separators=(",", ":"))
+    if not out.exists() or out.read_text(encoding="utf-8") != text:
+        out.write_text(text, encoding="utf-8")
+    return out
+
+
 _PROJ_VER = _asset_ver("assets/projections.js")
 _MLBSTATS_VER = _asset_ver("assets/mlbstats.js")
 _PAL_VER = _asset_ver("assets/pal.js")
@@ -614,9 +638,38 @@ THEME_INIT = (
     '<script>(function(){try{var t=localStorage.getItem("prospect-tracker.theme");'
     'if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";'
     'document.documentElement.setAttribute("data-theme",t);}catch(e){}})();'
+    # QHOA10: every [data-theme-toggle] carries aria-pressed (true = dark), set
+    # once the buttons exist and again on every toggle.
+    'function eephusThemeSync(){try{var d=document.documentElement.getAttribute("data-theme")==="dark"?"true":"false";'
+    'document.querySelectorAll("[data-theme-toggle]").forEach(function(b){b.setAttribute("aria-pressed",d);});}catch(e){}}'
+    'document.addEventListener("DOMContentLoaded",eephusThemeSync);'
     'function eephusToggleTheme(){try{var c=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";'
-    'document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}}</script>'
+    'document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}eephusThemeSync();}</script>'
 )
+# QHOP03 (2026-10-07): both PixelMplus12 faces load with font-display: swap,
+# and with no preload the wider pixel face landed after first paint and
+# rewrapped the page (CLS 0.27 on /history/, 0.15 on /404.html with the woff2
+# held 400 ms). Preloading them from the head puts the face in before layout.
+# The three hand pages get the same two lines from restamp_hand_authored_pages.
+FONT_PRELOAD = (
+    '<link rel="preload" href="/assets/fonts/pixelmplus12-regular.woff2" as="font" type="font/woff2" crossorigin>\n'
+    '<link rel="preload" href="/assets/fonts/pixelmplus12-bold.woff2" as="font" type="font/woff2" crossorigin>'
+)
+_FONT_PRELOAD_RE = re.compile(r'(\n([ \t]*)<meta name="viewport"[^>]*>)')
+
+
+def _ensure_font_preload(text: str) -> str:
+    """Insert FONT_PRELOAD after a hand page's viewport meta, once."""
+    if 'pixelmplus12-regular.woff2" as="font"' in text:
+        return text
+    m = _FONT_PRELOAD_RE.search(text)
+    if not m:
+        return text
+    ind = m.group(2)
+    lines = "".join(f"\n{ind}{ln}" for ln in FONT_PRELOAD.split("\n"))
+    return text[:m.end()] + lines + text[m.end():]
+
+
 THEME_BTN = (
     '<button type="button" class="home-theme-toggle" data-theme-toggle onclick="eephusToggleTheme()" aria-label="Toggle dark mode">'
     f'<span class="lbl-dark">{_ico("theme-dark", 12)}Dark</span>'
@@ -694,21 +747,32 @@ BUG_FORM_URL = ""
 # this one constant; the URL stays /news/.
 NEWS_LABEL = "MLB News"
 
+# ONE NAME PER DESTINATION (QHOC11). The footer said About for the page the
+# nav calls Masthead and This Day for Today in Prospect History, and the home
+# card said Model Ledger (easily read as the Club Ledger) for Model
+# Accountability. Nav leaves keep their NAV_ITEMS label; the three pages with
+# no nav row are named here, and every surface that links them reads this map.
+PAGE_LABELS = {h: lab for _k, lab, h in nav_leaves()}
+PAGE_LABELS.update({"/history/": "Today in Prospect History",
+                    "/models/": "Model Accountability",
+                    "/news/": NEWS_LABEL})
+
+
 def _footer() -> str:
     """The shared page footer: identity line left, useful links right.
     Every editorial surface and the homepage emit the same block."""
     year = date.today().year
     links = (
-        f'<a href="/team/">About</a>'
+        f'<a href="/team/">{PAGE_LABELS["/team/"]}</a>'
         f'<a href="/news/">{NEWS_LABEL}</a>'
         # /history/ (Today in Prospect History) is a full generated surface but
         # carried NO nav entry anywhere - its only inbound link was the homepage
         # module's "See all" kicker, so it was unreachable from every other page.
-        f'<a href="/history/">This Day</a>'
+        f'<a href="/history/">{PAGE_LABELS["/history/"]}</a>'
         f'<a href="/parks/">Park Factors</a>'
         # The model ledger carries no nav row (the nav has three hand-maintained
         # static copies), so the footer is its primary address on every page.
-        f'<a href="/models/">Model Accountability</a>'
+        f'<a href="/models/">{PAGE_LABELS["/models/"]}</a>'
         f'<a href="/sources/">Data Sources</a>'
         # The artifact catalog (what we publish, on what cadence, how stable)
         # is the second half of /sources/. It gets its own footer link because
@@ -1304,6 +1368,7 @@ def page(title: str, active: str, body: str, description: str = "",
 <meta name="description" content="{desc}">
 {social}
 {FAVICON_LINKS}
+{FONT_PRELOAD}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 <script src="/assets/eephus-nav.js?v={_NAV_VER}" defer></script>
 <script src="/assets/eephus-tiers.js?v={_TIERS_VER}" defer></script>
@@ -1354,6 +1419,12 @@ ORG_NAMES = {
 # 20-80 consensus scale; the grade surplus is priced on) - prefer it here so the
 # homepage Top Prospects grade matches the PROSPX board and /projections/, with
 # the realized grade, then the raw grade, as legacy fallbacks.
+# Players whose served grade is the provisional map's production read (the
+# xfv grade_basis provisional_capped or xfv_ungraded), filled by
+# _load_xfv_grades. PROSPX calls that number the production grade (QHOC04).
+_EFV_PROD_KEYS: set = set()
+
+
 def _load_xfv_grades() -> dict:
     try:
         doc = json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8"))
@@ -1386,6 +1457,8 @@ def _load_xfv_grades() -> dict:
             g = rec.get("xfv_grade_quantile")
         if isinstance(g, (int, float)):
             out[key] = float(g)
+            if rec.get("xfv_ungraded") or rec.get("grade_basis") == "provisional_capped":
+                _EFV_PROD_KEYS.add(key)
     return out
 _EFV_GRADES = _load_xfv_grades()
 
@@ -1460,6 +1533,19 @@ ESPN_SLUGS = {
     "STL": "stl", "TBR": "tb",  "TEX": "tex", "TOR": "tor", "WSN": "wsh",
 }
 
+# LOGO SIZE (QHOP01, 2026-10-07). Every editorial logo was the 500 x 500
+# master PNG (9 to 46 KB) drawn at 15 to 24 px: / pulled 746 KB of them and
+# /news/ 1.1 MB. They now come through ESPN's resizing combiner at twice the
+# drawn size, the rule eephus-hub.js set for the module pages (QCLP05): the
+# 24 px row mark at 48 px, the 15 to 17 px feed, ticker and history marks at
+# the hub's own 34 px, so those share one cached URL with every hub logo.
+_TEAM_LOGO_PX = {"row-logo": 48}
+
+
+def _team_logo_url(slug: str, px: int) -> str:
+    return f"https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/{slug}.png&h={px}&w={px}"
+
+
 def _team_logo(org: str | None, cls: str = "row-logo") -> str:
     """Clean ESPN CDN team logo (falls back to the ORG abbreviation chip).
     `cls` lets callers reuse it at other sizes (e.g. the ticker's tk-logo)."""
@@ -1467,7 +1553,8 @@ def _team_logo(org: str | None, cls: str = "row-logo") -> str:
         return ""
     o = html.escape(org)
     slug = ESPN_SLUGS.get(org, org.lower())
-    return (f'<img class="{cls}" src="https://a.espncdn.com/i/teamlogos/mlb/500/{slug}.png" alt="{o}" loading="lazy" '
+    src = html.escape(_team_logo_url(slug, _TEAM_LOGO_PX.get(cls) or _club_logo_px()))
+    return (f'<img class="{cls}" src="{src}" alt="{o}" loading="lazy" '
             f"onerror=\"this.outerHTML='<span class=&quot;{cls}&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
 
 
@@ -1482,6 +1569,13 @@ def _team_logo(org: str | None, cls: str = "row-logo") -> str:
 _CLUB_ROW_RE = re.compile(r'\["([A-Z]{3})", "([a-z]+)", "([^"]+)", (\d+)((?:, "[A-Z]+")*)\]')
 _CLUB_OLD_RE = re.compile(r'"([a-z. ]+)": "([A-Z]{3})"')
 _CLUB_LOGO_PX_RE = re.compile(r"var LOGO_PX = (\d+);")
+
+
+@functools.lru_cache(maxsize=1)
+def _club_logo_px() -> int:
+    """The hub's default logo size (eephus-hub.js LOGO_PX)."""
+    js = (ROOT / "assets" / "eephus-hub.js").read_text(encoding="utf-8")
+    return int(_CLUB_LOGO_PX_RE.search(js).group(1))
 
 
 @functools.lru_cache(maxsize=1)
@@ -1617,9 +1711,37 @@ def _fv_tier_class(label: str) -> str:
     return "fv-pill"
 
 
+def _sr(text: str) -> str:
+    """Words a screen reader hears and the page does not show (QHOA13): the
+    unit in front of a bare number. Absolutely positioned, so it takes no
+    flex or grid slot."""
+    return f'<span class="visually-hidden">{html.escape(text)} </span>'
+
+
 def _fv_pill(p: dict) -> str:
+    """The grade pill on editorial rows. Two eFV states are labelled, as on the
+    PROSPX card: a grade on the eFV floor reads "floor" (QHOC07), and a player no
+    source has graded wears a dashed pill whose title names the number, the
+    production grade where the provisional map produced it (QHOC04)."""
     label = _fv_label(p)
-    return f'<span class="{_fv_tier_class(label)}">{html.escape(label)}</span>'
+    key = p.get("player_key")
+    if _EFV_GRADES.get(key) is None:
+        return f'{_sr("FV")}<span class="{_fv_tier_class(label)}">{html.escape(label)}</span>'
+    m = re.match(r"-?\d+", label.strip())
+    if m and int(m.group()) <= _EFV_FLOOR:
+        return (f'{_sr("eFV")}<span class="fv-pill fv-floor" '
+                'title="eFV floor: no projection">floor</span>')
+    if p.get("source_graded") is False:
+        if key in _EFV_PROD_KEYS:
+            word = "production grade"
+            tip = (f"Production grade {label}: today's map value from his translated MiLB "
+                   "stats. No source has graded him, so he has no board rank.")
+        else:
+            word = "eFV"
+            tip = f"eFV {label}: no source has graded him yet, so he has no board rank."
+        return (f'{_sr(word)}<span class="{_fv_tier_class(label)} fv-prod" '
+                f'title="{html.escape(tip)}">{html.escape(label)}</span>')
+    return f'{_sr("eFV")}<span class="{_fv_tier_class(label)}">{html.escape(label)}</span>'
 
 def _meta(*parts) -> str:
     return html.escape(" · ".join(str(x) for x in parts if x))
@@ -1824,15 +1946,15 @@ def _row_mover(p: dict, d: int) -> str:
     rank = p.get("overall_rank")
     rank_html = f'<span class="row-rank">{rank}</span>' if rank else '<span class="row-rank"></span>'
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'{rank_html}{_team_logo(p.get("org"))}'
+            f'{_sr("rank") if rank else ""}{rank_html}{_team_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>'
-            f'{spark_html}{_fv_pill(p)}'
+            f'{spark_html}{_fv_pill(p)}{_sr("change")}'
             f'<span class="row-delta {"up" if up else "down"}">{"▲" if up else "▼"} {"+" if up else ""}{d}</span></a>')
 
 def _row_top(p: dict, rank: int) -> str:
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'<span class="row-rank">{rank}</span>{_team_logo(p.get("org"))}'
+            f'{_sr("rank")}<span class="row-rank">{rank}</span>{_team_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>{_fv_pill(p)}</a>')
 
@@ -1927,7 +2049,7 @@ def _row_grad(g: dict) -> str:
         except ValueError:
             pass
     return (f'<a class="row-link" href="{_player_href(g.get("player_key"))}">'
-            f'{rank_html}{date_html}{_team_logo(g.get("org"))}'
+            f'{_sr("rank") if rank else ""}{rank_html}{date_html}{_team_logo(g.get("org"))}'
             f'<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(g.get("position")))}</span>{_fv_pill(g)}</a>')
 
@@ -1963,7 +2085,7 @@ def _recent_trades_html(players: list, n: int = 5) -> str:
                  f'{_team_logo(tr.get("to_org"), "otd-logo")}</span>')
         rows.append(
             f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'{rank_html}{logos}'
+            f'{_sr("rank") if rank else ""}{rank_html}{logos}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>'
             f'<span class="row-meta">{dt[5:7]}/{dt[8:10]}</span>'
@@ -1982,10 +2104,10 @@ def _row_farm(o: dict, rank: int) -> str:
     gcls = " gold" if str(grade).startswith("A") else ""
     name = ORG_NAMES.get(o.get("org"), o.get("org") or " - ")
     return (f'<a class="row-link" href="/prospx/#farm-org={html.escape(o.get("org") or "")}">'
-            f'<span class="row-rank">{rank}</span>{_team_logo(o.get("org"))}'
+            f'{_sr("rank")}<span class="row-rank">{rank}</span>{_team_logo(o.get("org"))}'
             f'<span class="row-name">{html.escape(name)}</span>'
             f'<span class="row-meta">{o.get("count", "")} prospects</span>'
-            f'<span class="fv-pill{gcls}">{html.escape(str(grade))}</span></a>')
+            f'{_sr("farm grade")}<span class="fv-pill{gcls}">{html.escape(str(grade))}</span></a>')
 
 # One mass re-grade (a single source dropping a 17-player international list)
 # would otherwise fill the entire 12/14-item wire by itself; cap FV items per
@@ -2315,7 +2437,7 @@ _NEWS_FILTER_JS = """<script>
   bar.addEventListener('click',function(e){
     var b=e.target.closest('[data-news-filter]');if(!b)return;
     var f=b.getAttribute('data-news-filter');
-    bar.querySelectorAll('[data-news-filter]').forEach(function(x){x.classList.toggle('active',x===b);});
+    bar.querySelectorAll('[data-news-filter]').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b?'true':'false');});
     var shown=0;
     feed.querySelectorAll('.news-day').forEach(function(day){
       var any=false;
@@ -2333,6 +2455,8 @@ _NEWS_FILTER_JS = """<script>
     }
     if(shown===0){empty.textContent='No items in this category.';empty.style.display='';}
     else{empty.style.display='none';}
+    var st=document.getElementById('news-filter-status');
+    if(st)st.textContent=shown+(shown===1?' row':' rows')+' shown';
   });
 })();
 </script>"""
@@ -2493,7 +2617,8 @@ def build_news(data: dict | None = None) -> str:
     chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
                  ("move", "Moves"), ("il", "IL"), ("fv", "Grades"), ("signing", "Signings")]
     chips = "".join(
-        f'<button class="chip{" active" if c == "all" else ""}" '
+        f'<button type="button" class="chip{" active" if c == "all" else ""}" '
+        f'aria-pressed="{"true" if c == "all" else "false"}" '
         f'data-news-filter="{c}">{html.escape(lbl)}</button>'
         for c, lbl in chip_defs)
     body = (
@@ -2501,9 +2626,16 @@ def build_news(data: dict | None = None) -> str:
         f'<div class="section-head"><h1>{_masthead_icon("news")}{NEWS_LABEL}</h1>'
         '<span class="section-sub">debuts, trades, level moves, IL, eFV changes, FA signings and options</span>'
         f'{_gfx_chip_html("news-gfx-chip")}</div>'
-        f'<p class="news-intro">The {_gl("wire_ticker", "wire")}, last ~30 days, newest first. '
-        'Grade rows show eFV moves of 2 or more; a row reading &quot;to eFV floor&quot; or &quot;off eFV floor&quot; is the player reaching or leaving the model floor, not a re-grade. A date header opens Time Machine on that date.</p>'
-        f'<div class="filter-bar" id="news-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
+        f'<p class="news-intro">The {_gl("wire_ticker", "wire")}, last 30 days, newest first.</p>'
+        '<details class="news-how"><summary>How this works</summary><ul>'
+        '<li>Grade rows are eFV moves of 2 or more.</li>'
+        '<li>&quot;to eFV floor&quot; and &quot;off eFV floor&quot; mark a player reaching or leaving '
+        'the model floor, not a re-grade.</li>'
+        '<li>A dashed grade is a player no source has graded yet; &quot;floor&quot; is the eFV floor.</li>'
+        '</ul></details>'
+        '<div class="filter-bar" id="news-filter-bar" role="group" aria-labelledby="news-filter-label">'
+        f'<span class="filter-label" id="news-filter-label">Filter</span>{chips}</div>'
+        '<div class="visually-hidden" id="news-filter-status" role="status" aria-live="polite"></div>'
         f'<div class="sb-feed news-feed" id="news-feed">{feed}</div>'
         '</div>'
         # Page-scoped sizing for the per-date GFX chips (site.css owns the base
@@ -2673,6 +2805,10 @@ def _spotlight_html(players: list, spotlights: dict | None = None) -> str:
             if not p or not line:
                 continue
             why = (e or {}).get("why") or "Hot sample"
+            # spotlights.py tags every hot-bucket entry "Breakout"; the word is
+            # only true of a player whose breakout_flag is set (QHOC05).
+            if why == "Breakout" and not p.get("breakout_flag"):
+                why = "Hot sample"
             slots.append((
                 "Spotlight - Hot Sample", p,
                 # .row-delta is flex:none + min-width:46px + text-align:right,
@@ -2761,10 +2897,12 @@ def page_home(title: str, inner: str, description: str = "") -> str:
 <meta name="description" content="{desc}">
 {social}
 {FAVICON_LINKS}
+{FONT_PRELOAD}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 {ACCOUNT_CSS_LINK}
 </head>
 <body class="eephus-page eephus-home">
+<a class="skip-link" href="#main">Skip to content</a>
 {inner}
 {_footer()}
 {ACCOUNT_SCRIPTS}
@@ -2838,7 +2976,7 @@ def _wag_badge(g: dict) -> str:
     sign = "+" if wag_r > 0 else ""           # negatives carry their own '-'; zero unsigned
     return (f'<span class="otd-wag row-delta {cls}" '
             f'title="WAR Above Grade - career WAR/yr vs the player\'s FV-implied expectation">'
-            f'{sign}{wag_r:.1f} WAG</span>')
+            f'{sign}{wag_r:.1f} WAG{_sr(", WAR Above Grade")}</span>')
 
 
 def _otd_date(d: "date") -> str:
@@ -2973,7 +3111,7 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
     )
     return (
         '<section class="home-module otd-module">'
-        '<div class="kicker"><h2>Today in Prospect History</h2>'
+        f'<div class="kicker"><h2>{PAGE_LABELS["/history/"]}</h2>'
         '<a class="see-all" href="/history/">See all →</a></div>'
         + "".join(rows) + trades_block +
         '</section>'
@@ -3079,7 +3217,7 @@ _HIST_FILTER_JS = """<script>
   bar.addEventListener('click',function(e){
     var b=e.target.closest('[data-hist-filter]');if(!b)return;
     var f=b.getAttribute('data-hist-filter');
-    bar.querySelectorAll('[data-hist-filter]').forEach(function(x){x.classList.toggle('active',x===b);});
+    bar.querySelectorAll('[data-hist-filter]').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b?'true':'false');});
     var shown=0;
     wrap.querySelectorAll('.hist-section').forEach(function(sec){
       var any=false;
@@ -3097,15 +3235,38 @@ _HIST_FILTER_JS = """<script>
     }
     if(shown===0){empty.textContent='No items in this category.';empty.style.display='';}
     else{empty.style.display='none';}
+    var st=document.getElementById('hist-filter-status');
+    if(st)st.textContent=shown+(shown===1?' row':' rows')+' shown';
   });
 })();
 </script>"""
+
+def _hist_spans(tx_all: dict, il_all: dict) -> str:
+    """' Transactions from 2010, IL placements from 2017.' off the ledgers
+    themselves (QHOC06: the copy said 2019 over rows from 2015)."""
+    tx = min((t[0][:4] for rows in tx_all.values() for t in rows), default=None)
+    il = min((t[0][:4] for rows in il_all.values() for t in rows), default=None)
+    parts = ([f"Transactions from {tx}"] if tx else []) + ([f"IL placements from {il}"] if il else [])
+    return (" " + ", ".join(parts) + ".") if parts else ""
+
+
+def _wag_gate_clause() -> str:
+    """' once the player is past 200 PA or 80 IP', read from the WAG model's own
+    meaningful_exposure (value_framework_config.yaml), the gate _wag_badge honours."""
+    try:
+        y = (ROOT / "value_framework_config.yaml").read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    m = re.search(r"meaningful_exposure:\s*\{hitter_pa:\s*(\d+),\s*pitcher_ip:\s*(\d+)\}", y)
+    return f" once the player is past {m.group(1)} PA or {m.group(2)} IP" if m else ""
+
 
 def build_this_day(data: dict | None = None) -> str:
     """/history/ - Today in Prospect History as a full page: every debut
     anniversary and prospect trade landing on today's exact calendar date
     (past seasons only), plus the prospects.db transaction ledger (signings /
-    free agency, 2019+) and IL placements (2017+) for the same MM-DD.
+    free agency) and IL placements for the same MM-DD; the intro prints the
+    first year each ledger holds, read from prospects.db at build time.
 
     Big eFV moves are DELIBERATELY not a section: data/xfv_history.json dates
     grade changes at model snapshot re-runs (over half of all |delta| >= 3
@@ -3235,7 +3396,8 @@ def build_this_day(data: dict | None = None) -> str:
     chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
                  ("signing", "Signings"), ("il", "IL")]
     chips = "".join(
-        f'<button class="chip{" active" if c == "all" else ""}" '
+        f'<button type="button" class="chip{" active" if c == "all" else ""}" '
+        f'aria-pressed="{"true" if c == "all" else "false"}" '
         f'data-hist-filter="{c}">{html.escape(lbl)}</button>'
         for c, lbl in chip_defs)
 
@@ -3243,12 +3405,16 @@ def build_this_day(data: dict | None = None) -> str:
         '<div class="news-app hist-app">'
         f'<div class="section-head"><h1>{_masthead_icon("history")}Today in Prospect History - {html.escape(mon_d)}</h1>'
         '<span class="section-sub">debut anniversaries, trades, signings &amp; IL moves on this calendar date</span></div>'
-        '<p class="news-intro">Exact calendar-date matches from past seasons. Transactions from 2019, '
-        f'IL placements from 2017. Debut rows carry {_gl("wag", "WAG")}.</p>'
-        f'<div class="filter-bar" id="hist-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
+        '<p class="news-intro">Past seasons on this exact date.</p>'
+        '<details class="news-how"><summary>How this works</summary><ul>'
+        f'<li>{_hist_spans(tx_all, il_all).strip() or "Ledgers read from prospects.db."}</li>'
+        f'<li>Debut rows carry {_gl("wag", "WAG")}{_wag_gate_clause()}.</li>'
+        '<li>No eFV-move section: grade history is stamped at model re-run dates, '
+        'not the day a grade changed.</li></ul></details>'
+        '<div class="filter-bar" id="hist-filter-bar" role="group" aria-labelledby="hist-filter-label">'
+        f'<span class="filter-label" id="hist-filter-label">Filter</span>{chips}</div>'
+        '<div class="visually-hidden" id="hist-filter-status" role="status" aria-live="polite"></div>'
         f'<div id="hist-sections" style="max-width:760px;">{sections}</div>'
-        '<p class="news-intro" style="font-size:11px;">No eFV-move section: grade history is stamped '
-        'at model re-run dates, not the day a grade changed.</p>'
         '</div>'
         + _HIST_FILTER_JS
     )
@@ -3387,7 +3553,7 @@ def _scatter_teaser(players: list | None = None) -> str:
         pts = "".join(
             f'<circle cx="{8 + ((a - a_lo) / a_span) * 134:.0f}" '
             f'cy="{42 - ((f - f_lo) / f_span) * 36:.0f}" r="2.2" '
-            f'style="fill:var(--accent-{"gold" if f >= 50 else "green"});opacity:0.85;"/>'
+            f'style="fill:var(--{"text-gold" if f >= 50 else "accent-green"});opacity:0.85;"/>'
             for a, f in pts_data)
         cap = (f'{len(pts_data)} prospects sampled across the graded board: '
                f'age {a_lo:.1f}-{a_hi:.1f} on x, '
@@ -3414,6 +3580,21 @@ def _tm_seed_key(p: dict) -> str:
 
 
 _FA_OFF_BOARD = ("signed", "option_exercised")
+
+
+def _park_window_label(pf: dict, year: int) -> str:
+    """'2024-2026 window' and, when the file was built inside the window's last
+    season, the date its games run through (milb_park_factors.json was built
+    2026-07-23, so its 2026 leg is a partial season)."""
+    lab = f"{year - 2}-{year} window"
+    built = str(pf.get("generated_at") or "")[:10]
+    try:
+        b = date.fromisoformat(built)
+    except ValueError:
+        return lab
+    if b.year == year and b.month < 11:
+        lab += f", {year} through {b.strftime('%b')} {b.day}"
+    return lab
 
 
 def _cross_module_strip() -> str:
@@ -3644,7 +3825,7 @@ def _cross_module_strip() -> str:
             for v, f in top)
         if rows:
             cards.append((f'{_ico("parks", 16)}Park Factors', '/parks/',
-                          f'MiLB venues that add the most offense ({year} window)', rows))
+                          f'MiLB venues that add the most offense ({_park_window_label(pf, year)})', rows))
     except (OSError, ValueError, KeyError, TypeError):
         pass
     # Model Accountability - the verdict split, counted off the registry at build
@@ -3662,11 +3843,15 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{tally.get(key, 0)}</span></a>'
             for key, lab, sub in (
                 ("validated", "Validated", "beat their stated baseline"),
-                ("deprecated", "Deprecated", "measured, failed, retired"),
-                ("unvalidated", "Unvalidated", "serving, not yet gated")))
+                ("provisional", "Provisional", "partly measured"),
+                ("unvalidated", "Unvalidated", "serving, not yet gated"),
+                ("deprecated", "Deprecated", "measured, failed, retired")))
         if tally:
-            cards.append((f'{_ico("models", 16)}Model Ledger', '/models/',
-                          f'{sum(tally.values())} models with a predictive claim',
+            # QHOC03: the head counts registry rows, every verdict listed under
+            # it (provisional was missing, and some rows are datasets or
+            # pre-registered tests rather than models).
+            cards.append((f'{_ico("models", 16)}{PAGE_LABELS["/models/"]}', '/models/',
+                          f'{sum(tally.values())} registry rows by verdict',
                           rows))
     except (OSError, ValueError, KeyError, TypeError):
         pass
@@ -3993,12 +4178,12 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         # avatar control into any .eephus-nav-controls, including this sidebar slot.
         '<div class="sb-account eephus-nav-controls"></div>'
         f'{search}'
-        f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav">{"".join(nav)}</nav></div>'
+        f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav" aria-label="Modules">{"".join(nav)}</nav></div>'
         # MLB News feed sits high (where the PROSPX sub-nav used to be);
         # the PROSPX sub-nav drops below the spotlight feature.
         f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><a href="/news/" title="All {NEWS_LABEL}"><span class="blip"></span>{NEWS_LABEL}<span class="feed-head-more">all →</span></a></div>{feed}</div></div>'
         f'{spotlight}'
-        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{_ico("prospx", 12)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
+        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{_ico("prospx", 12)}PROSPX</div><nav class="sb-subnav" aria-label="PROSPX sections">{sub}</nav></div>'
         '</aside>'
         + _HOME_DRAWER_JS
     )
@@ -4007,7 +4192,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # Decorative scrolling marquee - duplicates the accessible MLB News feed
     # in the sidebar, so it's hidden from assistive tech (aria-hidden) to avoid
     # reading the same items twice / announcing a moving region.
-    ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><a href="/news/"><span class="blip"></span>{NEWS_LABEL}</a></span>'
+    ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><a href="/news/" tabindex="-1"><span class="blip"></span>{NEWS_LABEL}</a></span>'
               f'<div class="ticker-track">{_ticker_html(events)}</div></div>')
 
     # ---- masthead ----
@@ -4045,7 +4230,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         lead = (
             '<article class="lead-story no-img">'
             '<div><div class="lead-kicker">Latest</div>'
-            f'<h1>{html.escape(latest["title"])}</h1>'
+            f'<h2>{html.escape(latest["title"])}</h2>'
             f'<div class="byline">{_byline(latest, link_handle=False)}</div>'
             f'<p class="excerpt">{html.escape(latest.get("summary", ""))}</p>'
             f'<a class="read" href="/articles/{latest["slug"]}/">Read the full story →</a></div>'
@@ -4162,7 +4347,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         'else r();})();</script>'
     )
     main = (
-        '<main class="home-main">'
+        '<main class="home-main" id="main" tabindex="-1">'
         f'{masthead}{callout}{lead}{secondary}'
         # 2-col grid, paired by row: [This Day | Top Movers] (today's activity),
         # [Top Prospects | Farm] (rankings), [Recent Graduates | Recent Trades]
@@ -5534,8 +5719,7 @@ def build_parks() -> str:
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("parks")}MiLB Park Factors {_stage_chip("parks")}</h1></div>'
         f'<span class="section-sub">Run and home-run {_gl("milb_park_factor", "park factors")} for every '
-        'affiliated venue, Triple-A through the DSL: home vs road scoring, league-centered, shrunk toward '
-        'neutral by sample. Display only: no model reads them.</span></div>'
+        'affiliated venue, Triple-A to the DSL. Display only: no model reads them.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Park Factors sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-parksection="board" role="tab" aria-selected="true">Venue Board</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-parksection="leagues" role="tab" aria-selected="false">League Spread</button>'
@@ -7070,14 +7254,14 @@ def build_404() -> str:
     no dead ends: home link + the module rail + the palette hint. The rail is
     read off nav_leaves() so a module added to NAV_ITEMS lands here too (the
     hand-typed list had stopped at seven modules and missed ten)."""
-    rail = " · ".join(f'<a href="{h}">{html.escape(l)}</a>'
-                      for k, l, h in nav_leaves() if k != "home")
+    rail = "".join(f'<a href="{h}">{html.escape(l)}</a>'
+                   for k, l, h in nav_leaves() if k != "home")
     body = (
         '<div class="section-head"><h1>404: page not found</h1>'
         '<span class="section-sub">it does not exist, or it moved</span></div>'
         f'<div class="px-404">{_PX_404_ART}</div>'
         '<div class="gl-intro">'
-        f'<p><a href="/">Home</a> · {rail}</p>'
+        f'<nav class="px-404-rail" aria-label="Modules"><a href="/">Home</a>{rail}</nav>'
         '<p>Player search: <strong>Ctrl+K</strong> (⌘K on Mac).</p>'
         '</div>'
     )
@@ -7803,7 +7987,7 @@ def restamp_hand_authored_pages() -> None:
             print(f"  skipped {rel} (absent)")
             continue
         original = path.read_text(encoding="utf-8")
-        stamped = pixel_brand_hand_nav(_restamp_html(original))
+        stamped = _ensure_font_preload(pixel_brand_hand_nav(_restamp_html(original)))
         if PIXEL_BRAND:
             stamped = pixel_brand_hand_og(stamped, rel)
         if stamped != original:
@@ -7821,6 +8005,7 @@ def main() -> None:
 
     data = load_site_data()
     print(" data layer:", "loaded" if data else "MISSING (run run_monthly) - modules will be empty")
+    write_glossary_index()
 
     _write("index.html", build_home(articles, data))
     _write("news/index.html", build_news(data))

@@ -1077,8 +1077,32 @@ def _export_links(payload: dict) -> None:
            "byKey": by_key, "byMlbam": by_mlbam}
     (DATA_DIR / "player_links.json").write_text(
         json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    write_player_search(out)
     log.info("player links: %d keys (%d active prospects merged), %d mlbam-joined",
              len(by_key), n_prospects, len(by_mlbam))
+
+
+PLAYER_SEARCH_FIELDS = ("key", "name", "team", "pos", "prospx")
+
+
+def write_player_search(links: dict | None = None) -> dict:
+    """data/player_search.json - the quick-search palette's own index (QHOP06).
+
+    The palette (assets/eephus-gl.js) reads five fields of each byKey row, but
+    used to download all of player_links.json for them, byMlbam included (a
+    second copy of nearly every row). This writes those five fields as one
+    array per row beside player_links.json, in the same step and from the same
+    rows. Called with no argument it reads the player_links.json already on
+    disk, so the index can be rebuilt without re-running the export."""
+    if links is None:
+        links = json.loads((DATA_DIR / "player_links.json").read_text(encoding="utf-8"))
+    rows = [[row.get(k) or "" for k in PLAYER_SEARCH_FIELDS]
+            for row in (links.get("byKey") or {}).values() if row and row.get("name")]
+    doc = {"generated_at": links.get("generated_at"), "fields": list(PLAYER_SEARCH_FIELDS),
+           "rows": rows}
+    (DATA_DIR / "player_search.json").write_text(
+        json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    return doc
 
 
 def build_position_games() -> dict:

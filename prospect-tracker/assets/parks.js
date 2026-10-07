@@ -128,6 +128,16 @@
     if (state.season === null || years[state.season] !== 1) state.season = SEASONS[0] || null;
   }
 
+  // " (2026 games through Jul 23)" when the file was built inside the window's
+  // last season: the factors then rest on a partial schedule for that year.
+  function partialNote(year) {
+    var g = String((DATA && DATA.generated_at) || "");
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(g);
+    if (!m || Number(m[1]) !== year || Number(m[2]) >= 11) return "";
+    var mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"][Number(m[2]) - 1];
+    return " (" + year + " games through " + mon + " " + Number(m[3]) + ")";
+  }
+
   // A board row for one venue on the 3-season window ending at `year`, or null
   // when the venue has no games in that window (the artifact simply omits the
   // key, which is the honest answer: a park with no recent games has no recent
@@ -330,11 +340,11 @@
         + '<div class="pk-tile-sub">' + esc(sub) + "</div></div>";
     }
     return '<div class="pk-tiles">'
-      + tile("Venues rated", String(rows.length), "3-season window, as of " + state.season)
+      + tile("Venues rated", String(rows.length), (state.season - 2) + "-" + state.season + " window")
       + tile("Most offense", f3(hot.run), hot.venue + " (" + hot.level + ")", "pk-hot")
       + tile("Least offense", f3(cold.run), cold.venue + " (" + cold.level + ")", "pk-cold")
       + (hrTop ? tile("Most home runs", f3(hrTop.hr), hrTop.venue + " (" + hrTop.level + ")", "pk-hot") : "")
-      + tile("Spread (SD)", spread === null ? "-" : f3(spread), "across the filtered set")
+      + tile("Spread (SD)", spread === null ? "-" : f3(spread), "filtered set")
       + "</div>";
   }
 
@@ -422,13 +432,11 @@
         + '<div class="mlbstats-empty">No venue carries a factor for ' + esc(String(state.season))
         + " as a window end.</div>";
     }
-    var note = "Three-season factor, " + (state.season - 2) + " to " + state.season
-      + ", weighted by home games; venues with no games in that span are omitted. Ranked on "
-      + "the window only: single seasons miss the stability bar (see Method).";
+    var note = (state.season - 2) + " to " + state.season + partialNote(state.season)
+      + ", home-game weighted; venues with no games in it are left out. Ranked on the window (see Method).";
     return tiles(rows)
       + controls(rows.length, all.length)
-      + '<div class="mlbstats-note">' + esc(note)
-      + " Click a row for each season.</div>"
+      + '<div class="mlbstats-note">' + esc(note) + "</div>"
       + viz(rows)
       + (rows.length
           ? '<div class="mlbstats-scroll">' + boardTable(rows) + "</div>"

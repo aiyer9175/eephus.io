@@ -34,6 +34,9 @@
     }
     return _linksPromise;
   }
+  // Whether a reader on this page has already asked for the identity map, so
+  // the quick-search palette reuses it instead of fetching its slim index.
+  function linksStarted() { return !!_linksPromise; }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -906,5 +909,5 @@
     return (mm < 0 ? "-" : "") + "$" + Math.abs(mm).toFixed(d) + "M";
   }
 
-  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, teamLogoURL, club, clubs, clubHref, clubLinkHTML, histogram, scatter, lineChart, spark, niceTicks, fvCeil, money, dash, DASH };
+  window.EEPHUS_HUB = { links, linksStarted, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, teamLogoURL, club, clubs, clubHref, clubLinkHTML, histogram, scatter, lineChart, spark, niceTicks, fvCeil, money, dash, DASH };
 })();
