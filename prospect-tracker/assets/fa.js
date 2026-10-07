@@ -87,9 +87,24 @@
     PHI: "phi", PIT: "pit", SDP: "sd", SEA: "sea", SFG: "sf",
     STL: "stl", TBR: "tb", TEX: "tex", TOR: "tor", WSN: "wsh",
   };
+  // QMLP08: the mark is drawn at 13 to 16 px, so it is asked for at 32 px
+  // through ESPN's combiner (the shared EEPHUS_HUB size rule) rather than as the
+  // 500 x 500 master, which was 27 files and 1.05 MB, about half the page.
+  const FA_LOGO_PX = 32;
+  function teamLogoSrc(org) {
+    const H = typeof window !== "undefined" && window.EEPHUS_HUB;
+    const viaHub = H && H.teamLogoURL ? H.teamLogoURL(org, FA_LOGO_PX) : "";
+    return viaHub || "https://a.espncdn.com/combiner/i?img=/i/teamlogos/mlb/500/"
+      + `${ESPN_SLUGS[org]}.png&h=${FA_LOGO_PX}&w=${FA_LOGO_PX}`;
+  }
   function teamLogo(org) {
     if (!org || !ESPN_SLUGS[org]) return "";
-    return `<img class="fa-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${ESPN_SLUGS[org]}.png" alt="${esc(org)}" loading="lazy" onerror="this.remove()">`;
+    return `<img class="fa-logo" src="${esc(teamLogoSrc(org))}" alt="${esc(org)}" loading="lazy" onerror="this.remove()">`;
+  }
+  // A club code that prints as text links to the club's Franchises page.
+  function clubLink(org) {
+    if (!org || !ESPN_SLUGS[org]) return esc(org || "");
+    return `<a class="fa-club-link" href="/franchise/#team=${encodeURIComponent(org)}">${esc(org)}</a>`;
   }
 
   // Deal verdict chip - the plain-English read of Deal+ (band edges are the
@@ -296,8 +311,13 @@
     const chips = document.getElementById("fa-view-chips");
     const banner = document.getElementById("fa-banner");
     if (!rows) return;
-    chips.innerHTML = VIEWS.map(([k, label]) =>
-      `<button class="chip${state.view === k ? " active" : ""}" data-fa-view="${k}">${label}</button>`).join("")
+    // The view pills are tabs over #fa-rows (X06-23): one tablist, exactly one
+    // tab selected. The Library link and the winter group sit outside it.
+    chips.innerHTML = `<span class="fa-view-tabs" role="tablist" aria-label="Free Agency views">`
+      + VIEWS.map(([k, label]) => {
+        const on = state.view === k;
+        return `<button type="button" class="chip${on ? " active" : ""}" data-fa-view="${k}" role="tab" aria-selected="${on}" aria-controls="fa-rows">${label}</button>`;
+      }).join("") + `</span>`
       + ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Free Agency")}" title="Free Agency terms in the Library"><span class="chip-glyph" aria-hidden="true">§</span>Library</a>`;
     chips.querySelectorAll("[data-fa-view]").forEach(b => b.onclick = () => {
       state.view = b.dataset.faView; state.player = null; syncToURL(); render();
@@ -310,7 +330,7 @@
     const wchips = winters.map(y => {
       const label = y ? `${y - 1}-${String(y).slice(2)}` : `${curYear - 1}-${String(curYear).slice(2)}`;
       const on = (state.classYear || null) === y;
-      return `<button class="chip${on ? " active" : ""}" data-fa-class="${y || ""}" title="${y ? "Projected future class (no signings yet)" : "The current winter (default)"}">${label}${y ? "" : " ·"}</button>`;
+      return `<button type="button" class="chip${on ? " active" : ""}" data-fa-class="${y || ""}" aria-pressed="${on}" title="${y ? "Projected future class (no signings yet)" : "The current winter (default)"}">${label}${y ? "" : " ·"}</button>`;
     }).join("");
     const wrap = document.createElement("span");
     wrap.style.cssText = "margin-left:14px;display:inline-flex;gap:4px;align-items:center;";
@@ -320,10 +340,18 @@
       state.classYear = Number(b.dataset.faClass) || null;
       state.player = null; syncToURL(); render();
     });
+    // QMLP04: tall views hold one viewport while they load (site.css .fa-hold).
+    rows.classList.toggle("fa-hold", !state.player && state.view !== "tracker");
     rows.innerHTML = pxState("loading", "Loading free-agency data&hellip;");
     const clsName = state.classYear ? `fa_class_${state.classYear}` : "fa_class";
+    // QMLP12: only the Archive view reads fa_archive (its table, rail and GFX
+    // caption), so every other view paints without waiting on its 326 KB and
+    // fetches it once the page is idle.
+    const needArchive = state.view === "archive" && !state.player;
     try {
-      await Promise.all([load(clsName), load("fa_archive"), load("fa_meta")]);
+      const want = [load(clsName), load("fa_meta")];
+      if (needArchive) want.push(load("fa_archive"));
+      await Promise.all(want);
     } catch (e) {
       if (state.classYear) {
         rows.innerHTML = `<div class="state-message">The ${state.classYear - 1}-${String(state.classYear).slice(2)} class is not exported yet. <a href="#" onclick="location.hash='';return false;">Back to the current class</a>.</div>`;
@@ -341,11 +369,12 @@
       rows.innerHTML = `<div class="state-message">Free-agency data not exported yet.</div>`;
       return;
     }
+    _faPhotoLegacy = !cls.members.some(m => m.mlbam);
     const futureNote = state.classYear
       ? `<div class="fa-cba-note">&#9432; ${state.classYear - 1}-${String(state.classYear).slice(2)} is a projected class: contract-expiry members with option and QO statuses, priced at that winter's ex-ante <span data-gl="winter_dpw">$/WAR</span>. No signings yet.</div>`
       : "";
     banner.innerHTML = futureNote + (cls.cba_carry_forward
-      ? `<div class="fa-cba-note">&#9888; CBA rules past 2026-12-01 are <span data-gl="cba_carry_forward">carried forward</span>: this winter's thresholds and QO values are not yet bargained.</div>`
+      ? `<div class="fa-cba-note">&#9888; CBA past 2026-12-01 <span data-gl="cba_carry_forward">carried forward</span>: thresholds and QO values not yet bargained.</div>`
       : "") + freshnessLine(meta);
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(banner);
     if (state.player) { renderPlayer(rows, cls, state.player); }
@@ -357,6 +386,10 @@
     // Term spans ([data-gl]) get tooltip + aria wiring from the shared
     // glossary runtime; definitions come from the unified data layer.
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
+    if (!needArchive && !D.fa_archive) {
+      const later = window.requestIdleCallback || (fn => window.setTimeout(fn, 1500));
+      later(() => { load("fa_archive").catch(() => { /* the Archive view retries on open */ }); });
+    }
   }
 
   function statusChip(m) {
@@ -422,8 +455,18 @@
   // on .proj-id in site.css). On the board card it is a grid RAIL beside the
   // name instead; the tracker and fits TABLES keep it inline, where there is no
   // line-box budget to protect.
+  // QMLP10: the class payload carries each resolved member's mlbam, so the
+  // headshot is drawn with the row. A payload written before the field existed
+  // (no member carries one) keeps the old async fill from the links map.
+  let _faPhotoLegacy = false;
   function rowPhoto(m) {
-    return `<span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span>`;
+    if (m.mlbam) {
+      // .fa-row-headshot is 24x24.
+      return `<span class="fa-row-photo"><img class="fa-row-headshot" loading="lazy" src="${faHeadshotURL(m.mlbam, 24)}" alt="" onerror="this.remove()"></span>`;
+    }
+    return _faPhotoLegacy
+      ? `<span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span>`
+      : `<span class="fa-row-photo"></span>`;
   }
   function playerLink(m, opts) {
     // title carries the full name: at phone widths the shared .mlb-name box
@@ -460,11 +503,11 @@
       + `${FA_FACE_CROP},w_${w},h_${h},q_auto:best/v1/people/${mlbam}/headshot/67/current`;
   }
 
-  // Board-row headshots: filled async from the cross-module links map
-  // (FA rows carry no mlbam locally). One pass per render; rows whose
-  // identity didn't resolve keep the empty placeholder (no layout shift).
+  // Legacy board-row headshots: filled async from the cross-module links map,
+  // only for a payload whose members carry no mlbam. One pass per render; rows
+  // whose identity didn't resolve keep the empty placeholder (no layout shift).
   function fillRowPhotos(scope) {
-    if (!window.EEPHUS_HUB) return;
+    if (!_faPhotoLegacy || !window.EEPHUS_HUB) return;
     window.EEPHUS_HUB.links().then(L => {
       if (!L) return;
       (scope || document).querySelectorAll(".fa-row-photo[data-photo-key]").forEach(el => {
@@ -494,6 +537,13 @@
       return gen ? `<div class="fa-note fa-sources">${gen}</div>` : "";
     }
     const stale = d => (Date.now() - new Date(d + "T00:00:00").getTime()) / 864e5 > 14;
+    // Every source checked on one day and none stale: one date, with the
+    // per-source list kept in the title.
+    const dates = Object.values(src);
+    if (dates.every(d => d === dates[0]) && !stale(dates[0])) {
+      const each = Object.keys(src).join(", ");
+      return `<div class="fa-note fa-sources" title="Sources (${esc(each)}) last checked successfully ${esc(String(dates[0]))}, not the page build date. A quiet market counts as checked; a source that stopped parsing does not.">${meta.generated_at ? `as of ${esc(String(meta.generated_at))} &middot; ` : ""}sources ${esc(String(dates[0]))}</div>`;
+    }
     const parts = Object.entries(src).map(([k, d]) =>
       `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last confirmed ${d}, more than 14 days ago.">&#9888; stale</span>` : ""}`);
     return `<div class="fa-note fa-sources" title="Date each source was last checked successfully, not the page build date. A quiet market counts as checked; a source that stopped parsing does not.">${gen ? gen + " &middot; " : ""}sources: ${parts.join(" &middot; ")}</div>`;
@@ -708,6 +758,7 @@
   // first, which is what the printed rank numbers mean. # (rank) resolves to
   // the same key, so the two agree.
   const boardState = { sort: "projGuar", dir: -1, type: "all", pos: "all", verdict: "all", hand: "all" };
+  let faFiltersOpen = false;   // the phone filter drawer
 
   // ---- board sorting ---------------------------------------------------------
   // Every key the retired card head and "Sort tape" carried keeps working, plus
@@ -986,7 +1037,6 @@
     members = faSortRows(members);
     const sortKey = boardState.sort;
     const arrow = boardState.dir < 0 ? "&#9662;" : "&#9652;";
-    const sortName = FA_SORT_LBL[sortKey] || FA_SORT_LBL.projGuar;
 
     // A real <th scope="col"> carrying aria-sort (valid on a columnheader)
     // around a native <button>: Enter and Space with no keydown shim, one tab
@@ -1021,7 +1071,7 @@
       + ` &middot; <span data-gl="contract_surplus">surplus</span> &middot; <span data-gl="deal_plus">Deal+</span>`;
     const headEyebrow = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">${cls.class_year - 1}-${String(cls.class_year).slice(2)} Class Board</span>
-      <span class="newsprint-eyebrow-meta">${members.length} shown of ${cls.members.length} &middot; sorted by ${esc(sortName)} ${arrow} &middot; winter <span data-gl="winter_dpw">$/WAR</span> (ex-ante) ${money(cls.dpw_usd)}, ${cls.pricing_basis ? `each season at its own level on the one written path (escalator ${(cls.pricing_basis.g_ref * 100).toFixed(2)}%/yr, discounted at ${(cls.pricing_basis.nominal_rate * 100).toFixed(2)}%)` : `escalating ${((cls.dpw_infl ?? 0.05) * 100).toFixed(1)}%/yr`} &middot; ${gl} &middot; <button class="chip egfx-chip" id="fa-gfx-btn" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></span>
+      <span class="newsprint-eyebrow-meta">${members.length} of ${cls.members.length} &middot; winter <span data-gl="winter_dpw">$/WAR</span> (ex-ante) ${money(cls.dpw_usd)}, ${cls.pricing_basis ? `each season at its own level on the one written path (escalator ${(cls.pricing_basis.g_ref * 100).toFixed(2)}%/yr, discounted at ${(cls.pricing_basis.nominal_rate * 100).toFixed(2)}%)` : `<span title="Escalating ${((cls.dpw_infl ?? 0.05) * 100).toFixed(1)}% a year">+${((cls.dpw_infl ?? 0.05) * 100).toFixed(1)}%/yr</span>`} &middot; ${gl}</span>
     </div>`;
     const nUfa = cls.members.filter(m => !isOption(m)).length;
     const nOpt = cls.members.length - nUfa;
@@ -1043,11 +1093,15 @@
     // the picker always shows what the board is actually doing.
     const extraOpt = FA_PICK_KEYS.indexOf(sortKey) >= 0 ? ""
       : `<option value="${esc(sortKey)}" selected>${esc(FA_SORT_LBL[sortKey] || sortKey)}</option>`;
+    // One control row: sort, the phone filter drawer toggle, the share chip.
+    const nFilt = ["type", "pos", "verdict", "hand"].filter(k => boardState[k] !== "all").length;
     const tools = `<div class="fa-board-tools"><span class="fa-sort-pick"><label for="fa-sort-sel">Sort</label>
       <select id="fa-sort-sel" class="fa-select">${FA_PICK_KEYS.map(k =>
         `<option value="${k}"${sortKey === k ? " selected" : ""}>${esc(FA_SORT_LBL[k] || k)}</option>`).join("")}${extraOpt}</select>
-      <button type="button" class="chip" id="fa-sort-dir" aria-label="Reverse sort">${arrow} ${dirWord}</button></span></div>`;
-    const filterBar = `<div class="fa-filter-bar">
+      <button type="button" class="chip" id="fa-sort-dir" aria-label="Reverse sort">${arrow} ${dirWord}</button></span>
+      <button type="button" class="chip fa-filter-toggle" id="fa-filter-toggle" aria-controls="fa-filter-bar" aria-expanded="${faFiltersOpen}">Filters${nFilt ? ` &middot; ${nFilt}` : ""}</button>
+      <button type="button" class="chip egfx-chip" id="fa-gfx-btn" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
+    const filterBar = `<div class="fa-filter-bar${faFiltersOpen ? " is-open" : ""}" id="fa-filter-bar">
       <span class="filter-label">Type</span>
       ${fchip("type", "all", "All", boardState.type === "all")}
       ${fchip("type", "ufa", `UFA &middot; ${nUfa}`, boardState.type === "ufa")}
@@ -1066,7 +1120,7 @@
       + (body ? "" : pxState("empty", "No free agents match these filters.")) + `</div>`;
 
     rows.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main fa-board-tmain">`
-      + headEyebrow + filterBar + tools + table + valMap
+      + headEyebrow + tools + filterBar + table + valMap
       + `</div>${boardRail(cls)}</div>`;
 
     // ---- wiring --------------------------------------------------------------
@@ -1091,6 +1145,15 @@
       if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
       const again = document.getElementById("fa-pos-sel");
       if (again && again.focus) again.focus();
+    };
+    // Phone filter drawer (CSS hides the bar under 600px unless it is open).
+    // The open state is module-level so a sort or a filter keeps it open.
+    const ftog = document.getElementById("fa-filter-toggle");
+    if (ftog) ftog.onclick = () => {
+      faFiltersOpen = !faFiltersOpen;
+      ftog.setAttribute("aria-expanded", String(faFiltersOpen));
+      const bar = document.getElementById("fa-filter-bar");
+      if (bar) bar.classList.toggle("is-open", faFiltersOpen);
     };
     rows.querySelectorAll("[data-ffilter]").forEach(b => b.onclick = () => {
       boardState[b.dataset.ffilter] = b.dataset.fval;
@@ -1150,9 +1213,10 @@
   }
 
   // Value map: a log-log scatter of rational value (y) vs predicted price (x).
-  // The dashed diagonal is fair value (rational == price); points ABOVE are
-  // value (projected underpaid), BELOW are overpay - colored by verdict so the
-  // cloud reads at a glance. Honors the current board filters. Click -> player.
+  // The dashed diagonal is fair value (rational == price); a point above it has
+  // rational value over its price. Colour is the verdict chip (Deal+ banded by
+  // terciles), which is a different cut from the line. Honors the current
+  // board filters. Click -> player.
   function faValueMap(members) {
     const pts = members.filter(m => (m.projGuar || 0) > 0 && (m.rational || 0) > 0);
     if (pts.length < 4) return "";
@@ -1172,13 +1236,20 @@
       <text x="${PAD - 6}" y="${(py(t) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-tertiary)">$${t}M</text>`).join("");
     const diag = `<line x1="${px(lo).toFixed(1)}" y1="${py(lo).toFixed(1)}" x2="${px(hi).toFixed(1)}" y2="${py(hi).toFixed(1)}" stroke="var(--text-tertiary)" stroke-dasharray="5,4" stroke-width="1"/>`;
     const vcol = { value: "var(--accent-green)", market: "var(--text-secondary)", overpay: "var(--accent-red)" };
+    // QMLC10: the line is rational value = price, and a dot's colour is its
+    // verdict, which is cut on Deal+ terciles, so a MARKET dot can sit just
+    // under the line. The legend names both rules; the band basis is read
+    // off the artifact like the chip tooltip.
+    const edges = ((D.fa_meta || {}).gate2 || {}).verdict_edges || {};
+    const bandWhere = edges.band_mode === "group" ? "within position group" : "corpus-wide";
     const dots = pts.map(m => {
       const x = px(m.projGuar / 1e6), y = py(m.rational / 1e6);
       const c = vcol[m.verdict] || "var(--text-tertiary)";
       return `<a href="#${faHash()}player=${encodeURIComponent(m.key || "")}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${c}" fill-opacity="0.72" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - price ${money(m.projGuar)} · value ${money(m.rational)} · ${m.verdict || "?"}</title></circle></a>`;
     }).join("");
     return `<svg viewBox="0 0 ${W} ${H}" class="fa-valmap-svg" role="img" aria-label="Rational value versus predicted price scatter">
-      <text x="${PAD}" y="20" font-size="11" font-weight="700" fill="var(--text-secondary)">${pts.length} priced free agents · above the line = value, below = overpay</text>
+      <text x="${PAD}" y="18" font-size="11" font-weight="700" fill="var(--text-secondary)">${pts.length} priced free agents · above the line: rational value over price</text>
+      <text x="${PAD}" y="33" font-size="10" fill="var(--text-tertiary)">colour: verdict (Deal+ band ${bandWhere})</text>
       <text x="${W / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)">predicted price (projGuarantee)</text>
       <text x="14" y="${H / 2}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)" transform="rotate(-90 14 ${H / 2})">rational value</text>
       ${grid}${diag}
@@ -1313,9 +1384,12 @@
         <a href="#${faHash()}view=fits&team=${encodeURIComponent(r.o)}" class="fa-player-link"${r.o === team ? ' aria-current="true"' : ""}>${esc(r.o)}</a>
         <span class="fa-rail-num" title="${r.n} scored fits">${r.v.toFixed(2)}</span></div>`).join("");
     const t = (meta && meta.teams && meta.teams[team]) || {};
-    const blocked = (t.blocked || []).slice(0, 8).map(b =>
+    // Every blocked slot, with the incumbent's WAR: this module is the one
+    // place the Fits view lists them (the "Not buying" line above the table
+    // repeated it and was removed).
+    const blocked = (t.blocked || []).map(b =>
       `<div class="fa-rail-row"><span class="fa-block fa-block-${b.t}" title="${b.t === "mlb" ? "MLB incumbent already producing at the slot" : "PROSPX prospect (FV >= 50, near ETA)"}">${esc(b.pos)}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>
-        <span class="fa-rail-num">${esc(b.n)}</span></div>`).join("");
+        <span class="fa-rail-num">${esc(b.n)}${b.w != null ? ` <span class="fa-sub" title="WAR">${formatMetric(b.w, "war")}</span>` : ""}</span></div>`).join("");
     if (!active && !blocked) return "";   // nothing to say, so no sticky column
     return `<aside class="fa-board-rail">
       ${railMod("Most active clubs", active, "Mean fit of each club's top five fits")}
@@ -1413,14 +1487,14 @@
     const evs = cls.events || [];
     const signed = cls.members.filter(m => m.status === "signed");
     if (!evs.length && !signed.length) {
-      rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker</span>
-        <span class="newsprint-eyebrow-meta">preseason: live from the first observed event</span></div>
-        <div class="state-message">
-          <div class="state-message-title">The ${cls.class_year - 1}-${String(cls.class_year).slice(2)} winter has not opened</div>
-          <div class="state-message-body">Signings, option decisions and qualifying offers appear as the
-          daily pipeline first sees them; dates are observation stamps (Spotrac publishes none).
-          The Class Board carries the projected market: ${cls.n_projected} of ${cls.n_members} members projected.</div>
-        </div>`;
+      // Not opened yet: the shared unmeasured state (PX-11), never a tracker
+      // faked out of projections. The opening is the first observed event, so
+      // no date is stamped here (no season-state helper serves one yet).
+      rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker</span></div>`
+        + pxState("unmeasured", `<strong>The ${cls.class_year - 1}-${String(cls.class_year).slice(2)} winter has not opened.</strong>
+          Signings, option decisions and qualifying offers appear on the day the pipeline first sees them
+          (<span data-gl="first_seen_dates">first-seen dates</span>). <a href="#${faHash()}view=board">Class Board</a>:
+          ${cls.n_projected} of ${cls.n_members} projected.`, "fa-tracker-closed");
       return;
     }
     const spent = signed.reduce((s, m) => s + (m.signedGuar || 0), 0);
@@ -1443,7 +1517,7 @@
         return `<tr>
           <td>${m.signedDate || EM_DASH}</td>
           <td>${playerLink(m)} <span class="fa-sub">${esc(m.pos || "")}</span>${m.qoAccepted ? ' <span title="Accepted the qualifying offer">QO accepted</span>' : ""}</td>
-          <td>${teamLogo(m.from)}${esc(m.from || "")} &rarr; ${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</td>
+          <td>${teamLogo(m.from)}${clubLink(m.from)} &rarr; ${teamLogo(m.signedTo)}${clubLink(m.signedTo)}</td>
           <td>${actual}</td>
           <td title="Pre-winter prediction, frozen">${pred}</td>
           <td title="Actual guarantee minus predicted (positive = market paid above model)">${dGuar}</td>
@@ -1654,7 +1728,7 @@
         <span id="fa-hero-photo"></span>
         <div class="mlbp-hero-main">
           <div class="mlbp-name">${teamLogo(m.from)}<h2>${esc(m.name)}</h2></div>
-          <div class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? "age " + Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")}${handLabel(m) ? " &middot; " + esc(handLabel(m)) : ""} &middot; ${statusChip(m)}</div>
+          <div class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? "age " + Math.floor(m.age) : "?"} &middot; ${clubLink(m.from)}${handLabel(m) ? " &middot; " + esc(handLabel(m)) : ""} &middot; ${statusChip(m)}</div>
           <div style="margin-top:8px;"><button class="chip egfx-chip" id="fa-player-gfx" title="Shareable graphic"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
         </div>
         <div class="mlbp-tiles">
@@ -1667,24 +1741,33 @@
       ${m.note ? `<div class="fa-cba-note">&#8251; ${esc(m.note)}</div>` : ""}
       ${strip}${tabBody}`;
     bindFaCardTabs(rows, m);
-    // hub strip + headshot (cross-module identity via player_links.json) -
-    // lazy, never blocks the card paint; FA rows carry no mlbam locally.
+    // Headshot and stat line from the member's own mlbam (QMLP10). A member
+    // without one falls back to the links map, which the card fetches anyway
+    // for the hub strip; the board never does.
+    const fillIdentity = mlbam => {
+      if (!mlbam) return;
+      // Fill the stat line FIRST: it is the only block here that is content
+      // rather than chrome, and a headshot failure must not take it down.
+      fillCurrentLine(mlbam);
+      const ph = document.getElementById("fa-hero-photo");
+      if (ph) {
+        // .mlbp-headshot is 96x96.
+        ph.outerHTML = `<img class="mlbp-headshot" src="${faHeadshotURL(mlbam, 96)}" alt="" onerror="this.style.visibility='hidden'">`;
+      }
+    };
+    if (m.mlbam) fillIdentity(m.mlbam);
+    const gbtn = document.getElementById("fa-player-gfx");
+    if (gbtn) gbtn.onclick = () => sharePlayerCard(m, m.mlbam ? { mlbam: m.mlbam } : null);
+    // Hub strip (cross-module identity via player_links.json): fetched when a
+    // card opens, never blocks the card paint.
     if (window.EEPHUS_HUB) {
       window.EEPHUS_HUB.links().then(L => {
         const row = L && (L.byKey || {})[m.key];
-        // Fill the stat line FIRST: it is the only block here that is content
-        // rather than chrome, and a hub-strip/headshot failure must not take it
-        // down with it.
-        if (row && row.mlbam) fillCurrentLine(row.mlbam);
+        if (!m.mlbam && row && row.mlbam) fillIdentity(row.mlbam);
         const hub = document.getElementById("fa-hub");
         if (hub && row) hub.innerHTML = window.EEPHUS_HUB.stripHTML(row, "fa");
-        const ph = document.getElementById("fa-hero-photo");
-        if (ph && row && row.mlbam) {
-          // .mlbp-headshot is 96x96.
-          ph.outerHTML = `<img class="mlbp-headshot" src="${faHeadshotURL(row.mlbam, 96)}" alt="" onerror="this.style.visibility='hidden'">`;
-        }
         const btn = document.getElementById("fa-player-gfx");
-        if (btn) btn.onclick = () => sharePlayerCard(m, row);
+        if (btn && row && !m.mlbam) btn.onclick = () => sharePlayerCard(m, row);
       });
     }
   }
@@ -1833,17 +1916,13 @@
         <td>${m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : EM_DASH}</td>
         <td>${verdictChip(m)}</td>
       </tr>`).join("");
-    const blockedLine = (t.blocked || []).length
-      ? `<div class="fa-note" title="MLB = contracted incumbent at the slot; PX = near-ETA PROSPX prospect (FV ≥ 50)">Not buying: ${t.blocked.map(b =>
-          `<span class="fa-block fa-block-${b.t}">${esc(b.pos)} - ${esc(b.n)}${b.w != null ? ` (${formatMetric(b.w, "war")} WAR)` : ""}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")}</div>` : "";
     const fitsGfx = (window.EEPHUS_GFX && list.length)
       ? ` &middot; ${window.EEPHUS_GFX.chipHTML("fa-fits-gfx")}` : "";
-    const fitsMain = `${blockedLine}
-      <table class="detail-table fa-fits-table">
+    const fitsMain = `<table class="detail-table fa-fits-table">
       <thead><tr><th>Player</th><th><span data-gl="fit_components">Fit</span></th><th title="WAR gap over the incumbent at the position">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV (habitual taxpayers keep a floor)">Afford</th><th title="Park factor fit (smallest weight)">Park</th><th title="Biggest deal ever vs this price, last-3-winter outlay, $100M-deal count">Behavior</th><th title="PX = near-ETA PROSPX prospect, MLB = contracted incumbent">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>
       <tbody>${body || `<tr><td colspan="10">No scored fits for ${state.team} in this class.</td></tr>`}</tbody></table>`;
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Team</span>${chips}</div>
-      <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${teamLogo(state.team)}${state.team} fits</span>
+      <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${teamLogo(state.team)}${clubLink(state.team)} fits</span>
       <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w ${t.baseSrc === "mlb_projections" ? "(projected)" : "(contracted core)"} &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}${fitsGfx}</span></div>
       ${railLayout(fitsMain, fitsRail(byOrg, meta, state.team))}`;
     rows.querySelectorAll("[data-fa-team]").forEach(b => b.onclick = () => {
@@ -1881,7 +1960,7 @@
     const w = winters.find(x => x.year === state.winter);
     const body = w.signings.map(s => `<tr${s.milb ? ' class="fa-dim"' : ""}>
         <td><strong>${esc(s.name)}</strong> <span class="fa-sub">${esc(s.pos || "")}</span>${s.qo ? ' <span title="Received a qualifying offer">QO</span>' : ""}</td>
-        <td>${esc(s.from || "")} &rarr; ${teamLogo(s.to)}${esc(s.to || "")}</td>
+        <td>${clubLink(s.from)} &rarr; ${teamLogo(s.to)}${clubLink(s.to)}</td>
         <td>${s.years ?? EM_DASH}</td>
         <td>${s.milb ? "MiLB deal" : money(s.guar)}</td>
         <td>${money(s.aav)}</td>
@@ -1917,17 +1996,28 @@
     // M04-03: every gate table says when it was measured and on which WAR
     // basis, and says so plainly when that is not the basis the board prices
     // on today. The Gate 2 artifact of 2026-08-19 names no basis at all.
+    // The lag sentence prints once: a second lagging gate says so in four
+    // words instead of repeating it.
+    let lagSaid = false;
     const gateBasis = g => {
       const when = g.generated_at ? String(g.generated_at).slice(0, 10) : null;
       const now = meta.war_provider || null;
       const on = g.war_provider ? `on the ${esc(g.war_provider)} WAR label` : "on a WAR label the artifact does not name";
-      const lag = now && g.war_provider !== now
-        ? ` The board prices on ${esc(now)} today, so this table does not describe the prices on the board; a re-run on the current label is owed.`
-        : "";
+      const lags = !!now && g.war_provider !== now;
+      const lag = !lags ? ""
+        : lagSaid ? ` Also not ${esc(now)}: re-run owed.`
+        : ` The board prices on ${esc(now)}, so this table does not describe its prices: a re-run on the current label is owed.`;
+      if (lags) lagSaid = true;
       return `<div class="fa-note">Measured${when ? " " + esc(when) : ""} ${on}.${lag}</div>`;
     };
+    // M04-23: the artifacts' metric keys, read as words (war30 is WAR over
+    // player-seasons at age 30 and up, fa_backtest.py). An unknown key prints
+    // as itself.
+    const METRIC_LBL = { war: "WAR", wrc_plus: "wRC+", fip: "FIP", war30: "WAR, age 30+",
+      guarantee: "Guarantee", aav: "AAV", years: "Length (years)",
+      mega_guarantee: "Guarantee, deals of $100M+" };
     const pooledRows = (pooled, fmt) => Object.entries(pooled).map(([k, v]) =>
-      `<tr><td>${esc(k)}</td><td>${fmt(v.mae_model)}</td><td>${fmt(v.mae_base)}</td><td>${v.n}</td><td>${v.mae_model < v.mae_base ? "&#10003; beats baseline" : "&#10007; behind baseline"}</td></tr>`).join("");
+      `<tr><td title="${esc(k)}">${esc(METRIC_LBL[k] || k)}</td><td>${fmt(v.mae_model)}</td><td>${fmt(v.mae_base)}</td><td>${v.n}</td><td>${v.mae_model < v.mae_base ? "&#10003; beats baseline" : "&#10007; behind baseline"}</td></tr>`).join("");
     // Three miss categories, each its own ranked list / Err column. One table,
     // swapped by the small in-section tabs below; default is guarantee.
     const MISS_TABS = [
@@ -1952,7 +2042,7 @@
       `<button class="chip${t[0] === missTab[0] ? " active" : ""}" data-mtab="${t[0]}">${t[1]}</button>`).join("");
     rows.innerHTML = `
       <div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Model Accountability</span>
-      <span class="newsprint-eyebrow-meta"><span data-gl="fa_gates">Gate 1 and Gate 2</span>, read from the committed eval artifacts, misses included &middot; ${meta.cba ? meta.cba.unverified_records + " CBA records pending owner verification" : ""}</span></div>
+      <span class="newsprint-eyebrow-meta"><span data-gl="fa_gates">Gate 1 and Gate 2</span> from the committed eval artifacts, misses included${meta.cba ? ` &middot; ${meta.cba.unverified_records} CBA records await owner verification` : ""}</span></div>
       ${g1 ? `<h3>Gate 1: projection engine (${g1.pass ? "PASSED" : "FAILING"})</h3>
       <div class="fa-note">train &le; N-1, predict N, held-out seasons ${g1.targets ? g1.targets.join(", ") : ""} &middot; <span data-gl="proj_buckets">P10-P90</span> coverage ${g1.coverage_p10_p90 != null ? g1.coverage_p10_p90.toFixed(3) : "?"} (target 0.75-0.85)</div>
       ${gateBasis(g1)}

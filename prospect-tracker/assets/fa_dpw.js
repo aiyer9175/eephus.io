@@ -66,6 +66,9 @@
   text-align:right;white-space:nowrap;}
 #${ROOT_ID} th:first-child,#${ROOT_ID} td:first-child{text-align:left;}
 #${ROOT_ID} .dpw-partial{color:var(--text-tertiary);}
+#${ROOT_ID}:has(> .px-state.is-loading){min-height:100vh;}
+#${ROOT_ID} .dpw-how{margin:-.4rem 0 1rem;max-width:72ch;}
+#${ROOT_ID} .dpw-how > summary{cursor:pointer;font-size:.8rem;color:var(--text-secondary);}
 `;
 
   function ensureStyle() {
@@ -306,17 +309,21 @@
       <h2 class="dpw-head">FA $/WAR by winter</h2>
       <p class="dpw-lede">Implied <span data-gl="winter_dpw">$/WAR</span>: each winter's
         <span data-gl="deferral_npv">deferral-adjusted</span> guarantees over the discounted
-        WAR its signings were projected to deliver. This is the one written series, rewritten
-        each night before anything is priced: the class board, /projections/, prospect surplus,
-        the Archive and the Club Ledger all read it.</p>
-      ${pricingNote(PRICING, head)}
+        WAR its signings were projected to deliver.</p>
+      <details class="dpw-how"><summary>How this works</summary>
+        <p class="dpw-note">One written series, rewritten nightly; the class board, /projections/,
+          prospect surplus, the Archive and the Club Ledger read it. Method
+          ${esc((DATA && DATA.method) || "fa_signings_implied_v1")}, model
+          ${esc((DATA && DATA.model_version) || "?")}; thin winters are dropped from the implied series.</p>
+        ${pricingNote(PRICING, head)}
+      </details>
 
       <div class="dpw-panel">
         <h3>Implied vs realized</h3>
         <p class="dpw-note">Realized: money paid over ${REALIZED_WAR === "bwar" ? "bWAR"
           : `<span data-gl="ewar">eWAR</span>`} banked
-          to date${REALIZED_WAR === "bwar" ? " (the realized ledger predates the eWAR label and has not been rebuilt)" : ""}. Recent winters have unfinished terms and are not comparable to old ones;
-          points under 90% elapsed are hollow.</p>
+          to date${REALIZED_WAR === "bwar" ? " (ledger built before the eWAR label, not rebuilt)" : ""}. Unfinished
+          recent terms are not comparable to old ones; hollow points are under 90% elapsed.</p>
         <div class="dpw-legend">${legend}</div>
         ${lineChart(series, { xs, aria: "Implied and realized dollars per WAR by winter" })}
       </div>
@@ -342,9 +349,6 @@
           <thead><tr><th>Winter</th><th>Deals</th><th>Spend</th><th>QO</th>
             <th>Implied $/WAR</th>${pser ? "<th>Board pricing</th>" : ""}<th>Realized $/WAR</th><th>Elapsed</th></tr></thead>
           <tbody>${rows}</tbody></table></div>
-        <p class="dpw-note">Method ${esc((DATA && DATA.method) || "fa_signings_implied_v1")},
-          model ${esc((DATA && DATA.model_version) || "?")}. Thin winters are dropped from
-          the implied series.</p>
       </div>`;
     // aria wiring for the [data-gl] spans; the tooltip itself is delegated.
     try { if (window.EEPHUS_GL && window.EEPHUS_GL.wire) window.EEPHUS_GL.wire(root); }
