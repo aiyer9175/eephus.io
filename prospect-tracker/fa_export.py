@@ -764,6 +764,10 @@ def _build_fa_class_payload_body(class_year: int = CLASS_YEAR) -> dict:
             row["player_name"], range(class_year - 4, class_year))
         drop = None if mlbam else why
         if mlbam:
+            # QMLP10: the board draws each row's headshot from this id at
+            # paint time, so /fa/ no longer fetches the 1.9 MB player_links
+            # map at boot just to look the id up again.
+            m["mlbam"] = int(mlbam)
             ident[side]["ok"] += 1
             seasons = by_player[side].get(mlbam) or {}
             hist = [seasons[t] for t in (class_year - 1, class_year - 2, class_year - 3)
