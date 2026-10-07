@@ -128,11 +128,12 @@ def test_px_viz_rules_live_outside_the_prospx_style(style_block):
 
 
 # ---------------------------------------------------------------------------
-# I15 (AWARDS_PLAN 6, AWARDS_7): the /awards/ stylesheet and client type no
+# I15 (AWARDS_PLAN 6, AWARDS_7, AWARDS_9): the /awards/ stylesheets and clients type no
 # colour; every paint is a site.css token, so both themes resolve them.
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("rel", ["assets/awards.css", "assets/awards.js"])
+@pytest.mark.parametrize("rel", ["assets/awards.css", "assets/awards.js",
+                                 "assets/awards-ballot.css", "assets/awards-ballot.js"])
 def test_awards_assets_type_no_colour(rel):
     text = (Path(__file__).parent / rel).read_text(encoding="utf-8")
     assert not re.findall(r"#[0-9a-fA-F]{3,8}\b", text)

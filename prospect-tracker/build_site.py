@@ -146,6 +146,10 @@ _HOF_CSS_VER = _asset_ver("assets/hof.css")
 # /awards/ - the Awards section of Awards / HoF (AWARDS_7), behind awards_core.AWARDS_LIVE.
 _AWARDS_VER = _asset_ver("assets/awards.js")
 _AWARDS_CSS_VER = _asset_ver("assets/awards.css")
+# My Ballot (AWARDS_9): the lazy chunk and its stylesheet, loaded by awards.js on the
+# first My Ballot open from the stamped URLs on the mount's data attributes.
+_AWARDS_BALLOT_VER = _asset_ver("assets/awards-ballot.js")
+_AWARDS_BALLOT_CSS_VER = _asset_ver("assets/awards-ballot.css")
 # /models/ - the model accountability hub. Client is filter-only: every row,
 # count and date on that page is server-rendered here at build time, so the
 # surface still tells the truth with JavaScript off.
@@ -5780,14 +5784,17 @@ def _hof_section_row(live: bool) -> str:
 
 def build_awards(live: bool | None = None) -> str:
     """The /awards/ page of Awards / HoF: the shared head, then one mount that
-    assets/awards.js fills from data/awards.json (Selections; Superlatives, My
-    Ballot, Rule and vote and Method land with AWARDS_8 and AWARDS_9). The value
+    assets/awards.js fills from data/awards.json (Selections; My Ballot is the lazy
+    assets/awards-ballot.js chunk, AWARDS_9; Superlatives, Rule and vote and Method
+    land with AWARDS_8). The value
     ruler and the state component ride the shared head block. Not written to the
     published tree while awards_core.AWARDS_LIVE is False (write_awards_page)."""
     body = (
         '<div class="fa-app mlbstats-app aw-app">'
         + _hof_module_head("awards", live) +
-        f'<div id="awards-app-root" class="aw-root"{_csv_optin("awards")}></div>'
+        f'<div id="awards-app-root" class="aw-root"{_csv_optin("awards")}'
+        f' data-ballot-js="/assets/awards-ballot.js?v={_AWARDS_BALLOT_VER}"'
+        f' data-ballot-css="/assets/awards-ballot.css?v={_AWARDS_BALLOT_CSS_VER}"></div>'
         '</div>'
         f'<link rel="stylesheet" href="/assets/awards.css?v={_AWARDS_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'

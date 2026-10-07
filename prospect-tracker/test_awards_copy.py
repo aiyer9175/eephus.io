@@ -291,7 +291,8 @@ def test_verdict_hits_finds_the_plan_words_the_ban_list_and_dashes():
 # --- the page strings (AWARDS_7_PAGE_SELECTIONS) ---------------------------------------------
 
 def test_the_page_strings_are_clean():
-    """assets/awards.js and assets/awards.css whole (comments included), the /awards/ shell's
+    """assets/awards.js, assets/awards.css and the My Ballot chunk and stylesheet (AWARDS_9)
+    whole (comments included), the /awards/ shell's
     body, its sub line and its meta description: no dash, no BAN word, no verdict word and
     no 'luck'. The /hof/ shelf's own copy is outside this page."""
     import build_site as B
@@ -302,6 +303,8 @@ def test_the_page_strings_are_clean():
     texts = {
         "assets/awards.js": (ROOT / "assets" / "awards.js").read_text(encoding="utf-8"),
         "assets/awards.css": (ROOT / "assets" / "awards.css").read_text(encoding="utf-8"),
+        "assets/awards-ballot.js": (ROOT / "assets" / "awards-ballot.js").read_text(encoding="utf-8"),
+        "assets/awards-ballot.css": (ROOT / "assets" / "awards-ballot.css").read_text(encoding="utf-8"),
         "the /awards/ shell": out[i:j],
         "sub line": B._AWARDS_SUB, "meta description": B._AWARDS_DESCRIPTION,
     }
