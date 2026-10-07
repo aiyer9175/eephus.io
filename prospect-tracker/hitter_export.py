@@ -40,6 +40,7 @@ from pathlib import Path
 from typing import Optional
 
 import hem_plus
+import pitch_rates_boards
 from hem_plus import Hitter
 from bullpen_export import (_team_abbrev_map, _num, score_war_rate,
                             stamp_team_war, stamp_history_war,
@@ -117,6 +118,9 @@ def load_season_hitting(season: int) -> list[dict]:
             # lineup cards read it to keep pitchers off the bench and to name a
             # DH, which the fielding-innings feed cannot see.
             "primary_pos": (r.get("position") or {}).get("abbreviation"),
+            # Pitches seen (0 new calls). Read only by the P/PA columns, which
+            # ship behind pitch_rates.SERVE_PITCH_RATES.
+            "NP": st.get("numberOfPitches"),
         })
     _warn_unresolved_teams(n_unresolved, len(out), tmap, f"hitting {season}")
     # Owner decision 2026-08-05: team charts follow the current roster, not the
@@ -144,8 +148,21 @@ def build_hitters(rows: list[dict]) -> list[Hitter]:
             sb=_num(r.get("SB")) or 0.0, cs=_num(r.get("CS")) or 0.0,
             rbi=_num(r.get("RBI")) or 0.0, r=_num(r.get("R")) or 0.0,
             primary_pos=r.get("primary_pos") or None,
+            np=_num(r.get("NP")),
         ))
     return out
+
+
+def _np_pos_by_id(hitters: list[Hitter]) -> tuple[dict, dict]:
+    """{mlbam: pitches seen} and {mlbam: primary position} off the Hitter
+    records, for the P/PA join (pitch_rates_boards)."""
+    np_by_id, pos_by_id = {}, {}
+    for h in hitters:
+        if h.mlbam is None:
+            continue
+        np_by_id[int(h.mlbam)] = h.np
+        pos_by_id[int(h.mlbam)] = h.primary_pos
+    return np_by_id, pos_by_id
 
 
 # --------------------------------------------------------------------------- #
@@ -1268,6 +1285,19 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         f"{lc_meta['n_platoon_options']['vr']} ({lc_meta['n_withheld_by_floor']} "
         f"withheld by the split-PA floor); {lc_meta['n_regulars_out']} regulars out")
 
+    # P/PA AND PAR (owner asks 17 and 20), dark while SERVE_PITCH_RATES is False:
+    # with the flag off no key below is written and the board is byte-identical.
+    pr_block = None
+    if pitch_rates_boards.serving():
+        pr_ctx = pitch_rates_boards.season_context(season)
+        np_by_id, pos_by_id = _np_pos_by_id(hitters)
+        pr_n = pitch_rates_boards.stamp_hitter_rows(scored["hitters"], np_by_id, pr_ctx)
+        pr_t = pitch_rates_boards.stamp_hitter_teams(teams, scored["hitters"], np_by_id,
+                                                     pos_by_id, pr_ctx)
+        pr_block = pitch_rates_boards.payload_block(pr_ctx, "hit", today, pr_n, pr_t)
+        log(f"  hitters: P/PA stamped on {pr_n['stamped']} of {pr_n['rows']} hitters, "
+            f"{pr_t} lineups")
+
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "verdict": _verdict(), "backtest": _backtest(),
@@ -1311,6 +1341,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         "team_rollup": rollup_meta,
         "pool": scored["pool"], "hitters": scored["hitters"], "teams": teams,
     }
+    if pr_block is not None:
+        # Anchors, counts, season and basis of the P/PA columns (flag on only).
+        payload[pitch_rates_boards.PAYLOAD_KEY] = pr_block
     n = len(scored["hitters"])
     log(f"  hitters: {n} hitters ({scored['pool'].get('n_qualified', 0)} qualified), "
         f"{len(teams)} team offenses")
@@ -1345,13 +1378,15 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     hist = {}
     basis_rows: list[dict] = []
     ewar_join: dict[str, dict] = {}
+    pr_seasons: dict[str, dict] = {}
     for y in seasons:
         log(f"  hitter-history: {y}...")
         rows = load_season_hitting(y)
         if not rows:
             log(f"  hitter-history: no data for {y}; skipping")
             continue
-        scored = hem_plus.score_pool(build_hitters(rows))
+        season_hitters = build_hitters(rows)
+        scored = hem_plus.score_pool(season_hitters)
         qual = [s for s in scored["hitters"] if s.get("qualified")]
         basis_rows.extend(basis_rows_for(qual, rows))
         board = [{k: s.get(k) for k in _HISTORY_FIELDS} for s in qual]
@@ -1359,6 +1394,12 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         # an uncovered hitter carries no key rather than a null.
         ewar_join[str(y)] = stamp_history_war(board, y, side="bat",
                                               label="hitter-history", log=log)
+        # P/PA and PAR, a season fact against that season's own anchor (flag on only).
+        if pitch_rates_boards.serving():
+            pr_ctx = pitch_rates_boards.season_context(y)
+            pr_n = pitch_rates_boards.stamp_hitter_rows(
+                board, _np_pos_by_id(season_hitters)[0], pr_ctx)
+            pr_seasons[str(y)] = pitch_rates_boards.history_season(pr_ctx, "hit", pr_n)
         board.sort(key=lambda s: (s.get("hem_plus") or -999), reverse=True)
         hist[str(y)] = {"season": y, "n_qualified": len(board), "hitters": board}
         log(f"  hitter-history: {y} -> {len(board)} qualified")
@@ -1377,6 +1418,9 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
            else {}),
         "history": hist,
     }
+    if pitch_rates_boards.serving():
+        payload[pitch_rates_boards.PAYLOAD_KEY] = pitch_rates_boards.history_block(
+            pr_seasons, date.today().isoformat())
     if write and hist:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = out_path.with_suffix(".json.tmp")

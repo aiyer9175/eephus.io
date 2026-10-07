@@ -42,6 +42,7 @@ from pathlib import Path
 from typing import Optional
 
 import feed_cache  # hardened, 429-retrying requests session
+import pitch_rates_boards
 import rem_plus
 from rem_plus import Reliever
 from war_source import safe_ewar_vintage as _war_source_vintage
@@ -1789,6 +1790,18 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         log(f"  bullpen: active-roster filter kept {len(active_ids)} rostered ids, "
             f"dropped {n_off} off-roster arms from depth ladders")
 
+    # P/IP AND PAR ON THE RELIEF LINE (owner asks 17 and 20), dark while
+    # SERVE_PITCH_RATES is False: with the flag off no key below is written and
+    # the board is byte-identical.
+    pr_block = None
+    if pitch_rates_boards.serving():
+        pr_ctx = pitch_rates_boards.season_context(season)
+        pr_n = pitch_rates_boards.stamp_pitcher_rows(scored["relievers"], pr_ctx, "rp")
+        pr_t = pitch_rates_boards.stamp_pitcher_teams(teams, scored["relievers"], pr_ctx, "rp")
+        pr_block = pitch_rates_boards.payload_block(pr_ctx, "rp", today, pr_n, pr_t)
+        log(f"  bullpen: P/IP stamped on {pr_n['stamped']} of {pr_n['rows']} relievers "
+            f"({pr_n['season_line_fallback']} on the season line), {pr_t} pens")
+
     payload = {
         "generated_at": today,
         "season": season,
@@ -1828,6 +1841,9 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         "relievers": scored["relievers"],
         "teams": teams,
     }
+    if pr_block is not None:
+        # Anchors, counts, season and basis of the P/IP columns (flag on only).
+        payload[pitch_rates_boards.PAYLOAD_KEY] = pr_block
 
     n = len(scored["relievers"])
     log(f"  bullpen: {n} relievers ({scored['pool'].get('n_qualified', 0)} qualified), "
@@ -1869,6 +1885,7 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     basis_rows: list[dict] = []
     ewar_join: dict[str, dict] = {}
     swstr_join: dict[str, dict] = {}
+    pr_seasons: dict[str, dict] = {}
     for y in seasons:
         log(f"  bullpen-history: {y}...")
         rows = load_season_pitching(y)
@@ -1902,6 +1919,12 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         # does not cover, and absent-means-absent is this column's whole rule.
         ewar_join[str(y)] = stamp_history_war(board, y, side="pit",
                                               label="bullpen-history", log=log)
+        # P/IP and PAR on the relief line, a season fact against that season's
+        # own anchor (flag on only). Not in _HISTORY_FIELDS: appended keys.
+        if pitch_rates_boards.serving():
+            pr_ctx = pitch_rates_boards.season_context(y)
+            pr_n = pitch_rates_boards.stamp_pitcher_rows(board, pr_ctx, "rp")
+            pr_seasons[str(y)] = pitch_rates_boards.history_season(pr_ctx, "rp", pr_n)
         board.sort(key=lambda r: (r.get("rem_plus") or -999), reverse=True)
         hist[str(y)] = {
             "season": y,
@@ -1940,6 +1963,9 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
                          "per_season": swstr_join},
         "history": hist,
     }
+    if pitch_rates_boards.serving():
+        payload[pitch_rates_boards.PAYLOAD_KEY] = pitch_rates_boards.history_block(
+            pr_seasons, date.today().isoformat())
     if write and hist:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = out_path.with_suffix(".json.tmp")

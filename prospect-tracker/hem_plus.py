@@ -131,6 +131,9 @@ class Hitter:
     # 'TWP', ...). Read for the bench only: it drops pitchers and names a DH,
     # which the fielding-innings feed cannot see. Never enters HEM+.
     primary_pos: Optional[str] = None
+    # Pitches seen on the season line (StatsAPI numberOfPitches). Read only by
+    # the board's P/PA columns (pitch_rates_boards); never enters HEM+.
+    np: Optional[float] = None
     # computed
     rates: dict = field(default_factory=dict)
     woba_skill: Optional[float] = None

@@ -178,3 +178,14 @@ def test_the_market_line_is_absent_when_the_regate_artifact_is(tmp_path, monkeyp
     bt = be._backtest()
     if bt:
         assert bt["market_rho"] is None and bt["market_n"] is None
+
+
+@pytest.mark.skipif(not DATA.exists(), reason="bullpen_leaderboards.json not generated")
+def test_pitch_rate_keys_follow_the_serve_flag():
+    """P/IP, P/BF and PAR on the relief line (plan Part 8, PM-03). With no
+    pitch_rates block (SERVE_PITCH_RATES off) no reliever row or team carries a
+    pitch-rate key; with one, every row and team carries all of them, PAR is the
+    nearest point of 100 x rate / anchor, and the clubs' team PAR averages 100."""
+    import pitch_rates_boards
+    d = json.loads(DATA.read_text(encoding="utf-8"))
+    assert pitch_rates_boards.check_board(d, "rp") == []

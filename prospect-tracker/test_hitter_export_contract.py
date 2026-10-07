@@ -261,3 +261,12 @@ def test_luck_gap_is_xwoba_minus_woba_in_woba_points():
     with_hem = [r for r in rows if r.get("hem_plus") is not None]
     rho = _spearman([r["luck_gap"] for r in with_hem], [r["hem_plus"] for r in with_hem])
     assert rho < 0.2, f"luck_gap tracks HEM+ upward (Spearman {rho:+.3f})"
+
+
+def test_pitch_rate_keys_follow_the_serve_flag():
+    """P/IP, P/BF, P/PA and PAR (plan Part 8, PM-03). With no pitch_rates block
+    (SERVE_PITCH_RATES off) no hitter row or team carries a pitch-rate key; with
+    one, every row and team carries all of them, PAR is the nearest point of
+    100 x rate / anchor, and the clubs' team PAR averages 100."""
+    import pitch_rates_boards
+    assert pitch_rates_boards.check_board(_doc(), "hit") == []

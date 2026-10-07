@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Optional
 
 import sem_plus
+import pitch_rates_boards
 from sem_plus import Starter
 # reuse the reliever board's StatsAPI loader (season pitching) and the shared
 # WAR-rate machinery (bullpen_export is the base of the /mlbstats/ export chain)
@@ -361,6 +362,19 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                 two_way_card_only.get("starters") or [], season,
                 side="pit", denom_key="ip")
 
+    # P/IP AND PAR ON THE STARTS LINE (owner asks 17 and 20), dark while
+    # SERVE_PITCH_RATES is False: with the flag off no key below is written and
+    # the board is byte-identical. ip_per_gs is never touched; the starts-only
+    # length rides as sp_ip_per_gs.
+    pr_block = None
+    if pitch_rates_boards.serving():
+        pr_ctx = pitch_rates_boards.season_context(season)
+        pr_n = pitch_rates_boards.stamp_pitcher_rows(scored["starters"], pr_ctx, "sp")
+        pr_t = pitch_rates_boards.stamp_pitcher_teams(teams, scored["starters"], pr_ctx, "sp")
+        pr_block = pitch_rates_boards.payload_block(pr_ctx, "sp", today, pr_n, pr_t)
+        log(f"  starters: P/IP stamped on {pr_n['stamped']} of {pr_n['rows']} starters "
+            f"({pr_n['season_line_fallback']} on the season line), {pr_t} rotations")
+
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "verdict": _verdict(), "backtest": _backtest(),
@@ -407,6 +421,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # flag False it is the card-only score of the pre-2026-09-11 board.
         "two_way_card_only": two_way_card_only,
     }
+    if pr_block is not None:
+        # Anchors, counts, season and basis of the P/IP columns (flag on only).
+        payload[pitch_rates_boards.PAYLOAD_KEY] = pr_block
     n = len(scored["starters"])
     log(f"  starters: {n} starters ({scored['pool'].get('n_qualified', 0)} qualified), "
         f"{len(teams)} rotations")
@@ -437,6 +454,7 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     hist = {}
     basis_rows: list[dict] = []
     ewar_join: dict[str, dict] = {}
+    pr_seasons: dict[str, dict] = {}
     for y in seasons:
         log(f"  starter-history: {y}...")
         rows = load_season_pitching(y)
@@ -451,6 +469,12 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         # starter carries no key rather than a null (see the bullpen twin).
         ewar_join[str(y)] = stamp_history_war(board, y, side="pit",
                                               label="starter-history", log=log)
+        # P/IP and PAR on the starts line, a season fact against that season's
+        # own anchor (flag on only). Not in _HISTORY_FIELDS: appended keys.
+        if pitch_rates_boards.serving():
+            pr_ctx = pitch_rates_boards.season_context(y)
+            pr_n = pitch_rates_boards.stamp_pitcher_rows(board, pr_ctx, "sp")
+            pr_seasons[str(y)] = pitch_rates_boards.history_season(pr_ctx, "sp", pr_n)
         board.sort(key=lambda s: (s.get("sem_plus") or -999), reverse=True)
         hist[str(y)] = {"season": y, "n_qualified": len(board), "starters": board}
         log(f"  starter-history: {y} -> {len(board)} qualified")
@@ -469,6 +493,9 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
            else {}),
         "history": hist,
     }
+    if pitch_rates_boards.serving():
+        payload[pitch_rates_boards.PAYLOAD_KEY] = pitch_rates_boards.history_block(
+            pr_seasons, date.today().isoformat())
     if write and hist:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = out_path.with_suffix(".json.tmp")
