@@ -25,11 +25,12 @@
   var TURN_MS = 260;   // the .24s turn in team.css, plus one frame
 
   function cards() {
-    return Array.prototype.slice.call(document.querySelectorAll(".tc-card:not(.is-unnamed)"));
+    return Array.prototype.slice.call(document.querySelectorAll(".tc-card:not(.is-unnamed):not(.no-back)"));
   }
 
   function turn(card, toBack, moveFocus) {
-    if (!card || card.classList.contains("is-unnamed")) return;
+    // A one-sided card (.no-back: nothing to show on a back) never turns.
+    if (!card || card.classList.contains("is-unnamed") || card.classList.contains("no-back")) return;
     if (card.classList.contains("is-flipped") === !!toBack) return;
     // Alternate the two identical keyframe names so a second turn restarts
     // the animation instead of inheriting the finished one.
