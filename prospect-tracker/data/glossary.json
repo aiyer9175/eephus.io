@@ -1,5 +1,5 @@
 {
- "version": "2026-10-03",
+ "version": "2026-10-07",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -29,6 +29,7 @@
    "id": "tool",
    "term": "Tool",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -57,6 +58,7 @@
    "id": "o_tool",
    "term": "O-Tool",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -83,6 +85,7 @@
    "id": "d_tool",
    "term": "D-Tool",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -111,6 +114,7 @@
    "id": "breakout_indicator",
    "term": "Breakout Indicator",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -137,6 +141,7 @@
    "id": "upside_indicator",
    "term": "Upside Indicator",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -161,6 +166,7 @@
    "id": "cs_plus",
    "term": "CS+ (CollegeSavant+)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "collegesavant"
    ],
@@ -185,6 +191,7 @@
    "id": "single_a_equivalent",
    "term": "Projected Single-A (college translation)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "collegesavant"
    ],
@@ -209,6 +216,7 @@
    "id": "statcast_plus",
    "term": "Statcast+ (SC+)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -234,6 +242,7 @@
    "id": "tiebreaker_score",
    "term": "Tiebreaker Score (TBS)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -261,6 +270,7 @@
    "id": "rps_plus",
    "term": "RPS+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -284,6 +294,7 @@
    "id": "dvm_plus",
    "term": "DvM+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -310,6 +321,7 @@
    "id": "tool_delta",
    "term": "Tool Δ",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -335,6 +347,7 @@
    "id": "tools_dvm_plus",
    "term": "ToolDvM+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -362,6 +375,7 @@
    "id": "tool_specific_dvm_plus",
    "term": "HitDvM+ / PowerDvM+ / …",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -398,6 +412,7 @@
    "id": "hit_plus",
    "term": "HIT+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -425,6 +440,7 @@
    "id": "iso_plus",
    "term": "ISO+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -451,6 +467,7 @@
    "id": "pwr_plus",
    "term": "POW+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -480,6 +497,7 @@
    "id": "pd_plus",
    "term": "PD+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -508,6 +526,7 @@
    "id": "stf_plus",
    "term": "pStuff+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -536,6 +555,7 @@
    "id": "stuff_plus_aaa",
    "term": "AAA Stuff+ (aStuff+)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -561,6 +581,7 @@
    "id": "stuff_grade_plus",
    "term": "FVStuff+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -587,6 +608,7 @@
    "id": "tvi",
    "term": "Sur+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -619,6 +641,7 @@
    "id": "wag",
    "term": "WAG",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -644,6 +667,7 @@
    "id": "warwag",
    "term": "WARWAG",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -670,6 +694,7 @@
    "id": "value_framework",
    "term": "Value Framework",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -699,6 +724,7 @@
    "id": "dpw_tier",
    "term": "$/WAR (tiered)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -727,6 +753,7 @@
    "id": "fv_to_war_table",
    "term": "FV → WAR ranges",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -756,6 +783,7 @@
    "id": "bust_prob",
    "term": "Success probability",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -783,6 +811,7 @@
    "id": "dollars_per_fv",
    "term": "$/FV-pt",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -811,6 +840,7 @@
    "id": "fv_per_m_pool",
    "term": "FV per $M (pool)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -839,6 +869,7 @@
    "id": "surplus_per_fv_pt",
    "term": "Surplus / FV-pt",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -865,6 +896,7 @@
    "id": "sp",
    "term": "SP",
    "category": "definition",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -888,6 +920,7 @@
    "id": "rp",
    "term": "RP",
    "category": "definition",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -911,6 +944,7 @@
    "id": "sirp",
    "term": "SIRP",
    "category": "definition",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -934,6 +968,7 @@
    "id": "mirp",
    "term": "MIRP",
    "category": "definition",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -958,6 +993,7 @@
    "id": "fv",
    "term": "FV",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -983,6 +1019,7 @@
    "id": "twenty_eighty",
    "term": "20-80 scale",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -1004,6 +1041,7 @@
    "id": "hit_tool",
    "term": "Hit tool",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -1024,6 +1062,7 @@
    "id": "game_power",
    "term": "Game Power",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -1045,6 +1084,7 @@
    "id": "raw_power",
    "term": "Raw Power",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -1064,6 +1104,7 @@
    "id": "speed_tool",
    "term": "Run",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -1086,6 +1127,7 @@
    "id": "field_tool",
    "term": "Field",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -1106,6 +1148,7 @@
    "id": "throw_tool",
    "term": "Throw",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -1125,6 +1168,7 @@
    "id": "debut_rule",
    "term": "Debut rule",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -1147,6 +1191,7 @@
    "id": "wrc_plus",
    "term": "wRC+",
    "category": "hitter-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1169,6 +1214,7 @@
    "id": "ops",
    "term": "OPS",
    "category": "hitter-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1190,6 +1236,7 @@
    "id": "iso",
    "term": "ISO",
    "category": "hitter-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1209,6 +1256,7 @@
    "id": "avg",
    "term": "AVG",
    "category": "hitter-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1227,6 +1275,7 @@
    "id": "obp",
    "term": "OBP",
    "category": "hitter-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1245,6 +1294,7 @@
    "id": "slg",
    "term": "SLG",
    "category": "hitter-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1263,6 +1313,7 @@
    "id": "bb_pct",
    "term": "BB%",
    "category": "hitter-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1285,6 +1336,7 @@
    "id": "k_pct",
    "term": "K%",
    "category": "hitter-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1307,6 +1359,7 @@
    "id": "era",
    "term": "ERA",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1327,6 +1380,7 @@
    "id": "fip",
    "term": "FIP",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1350,6 +1404,7 @@
    "id": "whip",
    "term": "WHIP",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1368,6 +1423,7 @@
    "id": "xfip",
    "term": "xFIP",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1386,6 +1442,7 @@
    "id": "fip_minus",
    "term": "FIP-",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1407,6 +1464,7 @@
    "id": "k_per_9",
    "term": "K/9",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1426,6 +1484,7 @@
    "id": "bb_per_9",
    "term": "BB/9",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1445,6 +1504,7 @@
    "id": "hr_per_9",
    "term": "HR/9",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1464,6 +1524,7 @@
    "id": "k_pct_pitcher",
    "term": "K% (pitcher)",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1486,6 +1547,7 @@
    "id": "bb_pct_pitcher",
    "term": "BB% (pitcher)",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1508,6 +1570,7 @@
    "id": "war",
    "term": "WAR",
    "category": "general-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -1531,6 +1594,7 @@
    "id": "ewar",
    "term": "eephusWAR (eWAR)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx",
     "projections",
@@ -1564,6 +1628,7 @@
    "id": "consensus_fv",
    "term": "Consensus FV",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -1586,6 +1651,7 @@
    "id": "stock",
    "term": "Stock",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -1609,6 +1675,7 @@
    "id": "farm_rank",
    "term": "Farm rank",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -1628,6 +1695,7 @@
    "id": "eta",
    "term": "ETA",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -1648,6 +1716,7 @@
    "id": "shrinkage",
    "term": "Single-instance shrinkage",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -1670,6 +1739,7 @@
    "id": "wide_spread",
    "term": "Wide-spread indicator",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -1690,6 +1760,7 @@
    "id": "surplus_value",
    "term": "Surplus value",
    "category": "financial",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -1714,6 +1785,7 @@
    "id": "salary_path",
    "term": "Salary path",
    "category": "financial",
+   "section": "Site & Methods",
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io.",
    "module": [
@@ -1734,6 +1806,7 @@
    "id": "club_control_window",
    "term": "Club control window",
    "category": "mlb-rules",
+   "section": "Site & Methods",
    "shelf": "foundation",
    "module": [
     "platform",
@@ -1762,6 +1835,7 @@
    "id": "aav",
    "term": "AAV",
    "category": "financial",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -1781,6 +1855,7 @@
    "id": "bonus_pool",
    "term": "Bonus pool",
    "category": "financial",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -1797,6 +1872,7 @@
    "id": "slot_value",
    "term": "Slot value",
    "category": "financial",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -1815,6 +1891,7 @@
    "id": "mlb",
    "term": "MLB",
    "category": "level",
+   "section": "Prospects",
    "module": [
     "foundations"
    ],
@@ -1830,6 +1907,7 @@
    "id": "aaa",
    "term": "AAA",
    "category": "level",
+   "section": "Prospects",
    "module": [
     "foundations"
    ],
@@ -1849,6 +1927,7 @@
    "id": "aa",
    "term": "AA",
    "category": "level",
+   "section": "Prospects",
    "module": [
     "foundations"
    ],
@@ -1868,6 +1947,7 @@
    "id": "a_plus",
    "term": "A+",
    "category": "level",
+   "section": "Prospects",
    "module": [
     "foundations"
    ],
@@ -1888,6 +1968,7 @@
    "id": "a",
    "term": "A",
    "category": "level",
+   "section": "Prospects",
    "module": [
     "foundations"
    ],
@@ -1909,6 +1990,7 @@
    "id": "cpx",
    "term": "CPX",
    "category": "level",
+   "section": "Prospects",
    "module": [
     "foundations"
    ],
@@ -1929,6 +2011,7 @@
    "id": "dsl",
    "term": "DSL",
    "category": "level",
+   "section": "Prospects",
    "module": [
     "foundations"
    ],
@@ -1950,6 +2033,7 @@
    "id": "ifa",
    "term": "IFA",
    "category": "status",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -1971,6 +2055,7 @@
    "id": "post_tj",
    "term": "Post-TJ",
    "category": "status",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -1990,6 +2075,7 @@
    "id": "on_il",
    "term": "On IL",
    "category": "status",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2011,6 +2097,7 @@
    "id": "fastball_grade",
    "term": "Fastball",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2032,6 +2119,7 @@
    "id": "slider_grade",
    "term": "Slider",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2053,6 +2141,7 @@
    "id": "curveball_grade",
    "term": "Curveball",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2074,6 +2163,7 @@
    "id": "changeup_grade",
    "term": "Changeup",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2094,6 +2184,7 @@
    "id": "command_grade",
    "term": "Command",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2114,6 +2205,7 @@
    "id": "cutter_grade",
    "term": "Cutter",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2134,6 +2226,7 @@
    "id": "pitch_sel",
    "term": "Pitch Selection",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2156,6 +2249,7 @@
    "id": "bat_ctrl",
    "term": "Bat Control",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2176,6 +2270,7 @@
    "id": "rule_5_draft",
    "term": "Rule 5 Draft",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2196,6 +2291,7 @@
    "id": "rule_4_draft",
    "term": "Rule 4 Draft",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2218,6 +2314,7 @@
    "id": "forty_man_roster",
    "term": "40-man roster",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2239,6 +2336,7 @@
    "id": "options",
    "term": "Options",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2260,6 +2358,7 @@
    "id": "service_time",
    "term": "Service time",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2280,6 +2379,7 @@
    "id": "arbitration",
    "term": "Arbitration",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2301,6 +2401,7 @@
    "id": "pre_arbitration",
    "term": "Pre-arb",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2323,6 +2424,7 @@
    "id": "super_two",
    "term": "Super Two",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2344,6 +2446,7 @@
    "id": "service_time_manipulation",
    "term": "Service-time manipulation",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2364,6 +2467,7 @@
    "id": "free_agency",
    "term": "Free agency",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2387,6 +2491,7 @@
    "id": "qualifying_offer",
    "term": "Qualifying Offer (QO)",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2407,6 +2512,7 @@
    "id": "compensation_pick",
    "term": "Compensation pick",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2430,6 +2536,7 @@
    "id": "outright_assignment",
    "term": "Outrighted",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2452,6 +2559,7 @@
    "id": "dfa",
    "term": "DFA",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2472,6 +2580,7 @@
    "id": "mlb_debut",
    "term": "MLB debut",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2491,6 +2600,7 @@
    "id": "signing_bonus",
    "term": "Signing bonus",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2512,6 +2622,7 @@
    "id": "il_10_15_60",
    "term": "IL types (10/15/60-day)",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2534,6 +2645,7 @@
    "id": "two_way_player",
    "term": "Two-way player",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2555,6 +2667,7 @@
    "id": "present_vs_future_grades",
    "term": "Present vs Future grades",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2575,6 +2688,7 @@
    "id": "complex_league",
    "term": "Complex league",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -2597,6 +2711,7 @@
    "id": "stock_arrow",
    "term": "Stock arrow",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2620,6 +2735,7 @@
    "id": "fv_badge",
    "term": "FV badge",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2642,6 +2758,7 @@
    "id": "fv_rarity",
    "term": "FV Rarity",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2664,6 +2781,7 @@
    "id": "tool_pill",
    "term": "Tool pill",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2686,6 +2804,7 @@
    "id": "rps_plus_pill",
    "term": "RPS+ pill",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2705,6 +2824,7 @@
    "id": "wide_spread_mark",
    "term": "Wide-spread mark (W)",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2727,6 +2847,7 @@
    "id": "single_source_mark",
    "term": "Single-source mark (1)",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2751,6 +2872,7 @@
    "id": "il_chip",
    "term": "IL chip",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2771,6 +2893,7 @@
    "id": "post_tj_chip",
    "term": "Post-TJ chip",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2790,6 +2913,7 @@
    "id": "latest_pill",
    "term": "LATEST pill",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2810,6 +2934,7 @@
    "id": "stale_pill",
    "term": "STALE pill",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2827,6 +2952,7 @@
    "id": "green_flag",
    "term": "Green flag",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2847,6 +2973,7 @@
    "id": "red_flag",
    "term": "Red flag",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2866,6 +2993,7 @@
    "id": "fg_only_badge",
    "term": "FG superscript",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2882,6 +3010,7 @@
    "id": "heat_badge",
    "term": "Heat badge",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2898,6 +3027,7 @@
    "id": "surprise_badge",
    "term": "Surprise badge",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2913,6 +3043,7 @@
    "id": "arc_badge",
    "term": "Arc badge",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2928,6 +3059,7 @@
    "id": "farm_report_card",
    "term": "Farm grade tree",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2958,6 +3090,7 @@
    "id": "farm_tiebreaker",
    "term": "Farm tiebreaker score",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -2984,6 +3117,7 @@
    "id": "farm_grade_acquisition_strategy",
    "term": "Acquisition Strategy",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3009,6 +3143,7 @@
    "id": "farm_grade_development",
    "term": "Development",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3032,6 +3167,7 @@
    "id": "farm_grade_financial",
    "term": "Value (OrgSur+)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3062,6 +3198,7 @@
    "id": "farm_grade_mlb_production",
    "term": "MLB Production",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3089,6 +3226,7 @@
    "id": "mlb_production_boom_pct",
    "term": "Boom Rate",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3114,6 +3252,7 @@
    "id": "mlb_production_bust_pct",
    "term": "Bust Rate",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3136,6 +3275,7 @@
    "id": "mlb_production_top_grads",
    "term": "Top-3 Grad WAR/yr",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3159,6 +3299,7 @@
    "id": "mlb_production_conviction",
    "term": "Conviction",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3181,6 +3322,7 @@
    "id": "fin_draft_pool_efficiency",
    "term": "Draft Pool Efficiency",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3207,6 +3349,7 @@
    "id": "fin_ifa_roi",
    "term": "IFA ROI",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3231,6 +3374,7 @@
    "id": "sur_plus",
    "term": "OrgSur+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx",
     "franchise"
@@ -3260,6 +3404,7 @@
    "id": "draft_ceiling_hits",
    "term": "Draft Ceiling Hits",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3282,6 +3427,7 @@
    "id": "trade_war_delta",
    "term": "Trade WAR Delta",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3304,6 +3450,7 @@
    "id": "waiver_hit_rate",
    "term": "Waiver Hit Rate",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3325,6 +3472,7 @@
    "id": "trade",
    "term": "Trade",
    "category": "transactions",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -3346,6 +3494,7 @@
    "id": "waiver_claim",
    "term": "Waiver claim",
    "category": "transactions",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -3370,6 +3519,7 @@
    "id": "farm_grade_talent_translation",
    "term": "Talent Translation",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3393,6 +3543,7 @@
    "id": "farm_grade_financial_roi",
    "term": "Financial ROI",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3417,6 +3568,7 @@
    "id": "farm_grade_tools_quality",
    "term": "Tool Quality",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3440,6 +3592,7 @@
    "id": "farm_grade_intl_depth",
    "term": "International Depth",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3462,6 +3615,7 @@
    "id": "farm_grade_readiness",
    "term": "Readiness",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3482,6 +3636,7 @@
    "id": "farm_grade_health_burden",
    "term": "Health Burden",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3506,6 +3661,7 @@
    "id": "farm_il_pct_current",
    "term": "On IL now (farm)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3529,6 +3685,7 @@
    "id": "overseas_posting_class",
    "term": "Overseas posting class",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -3552,6 +3709,7 @@
    "id": "draft_comp_pick",
    "term": "Competitive-balance pick (1A / 1B)",
    "category": "mlb-rules",
+   "section": "Value & Contracts",
    "module": [
     "foundations"
    ],
@@ -3572,6 +3730,7 @@
    "id": "eta_half_season",
    "term": "ETA half-season adjustment",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -3593,6 +3752,7 @@
    "id": "spotlight_age_cap",
    "term": "Spotlight age cap",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -3615,6 +3775,7 @@
    "id": "exit_velocity",
    "term": "Exit Velocity (EV)",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "foundations",
     "prospx"
@@ -3643,6 +3804,7 @@
    "id": "barrel_pct",
    "term": "Barrel%",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "foundations",
     "prospx"
@@ -3672,6 +3834,7 @@
    "id": "hard_hit_pct",
    "term": "Hard-Hit%",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "foundations",
     "prospx"
@@ -3699,6 +3862,7 @@
    "id": "chase_pct",
    "term": "Chase% (O-Swing)",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "foundations",
     "mlbstats",
@@ -3730,6 +3894,7 @@
    "id": "whiff_pct",
    "term": "Whiff%",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "foundations",
     "mlbstats"
@@ -3757,6 +3922,7 @@
    "id": "z_contact_pct",
    "term": "Z-Contact%",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "foundations",
     "mlbstats",
@@ -3786,6 +3952,7 @@
    "id": "csw_pct",
    "term": "CSW%",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -3811,6 +3978,7 @@
    "id": "spin_rate",
    "term": "Spin Rate",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -3834,6 +4002,7 @@
    "id": "extension",
    "term": "Extension",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -3855,6 +4024,7 @@
    "id": "sprint_speed",
    "term": "Sprint Speed",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -3877,6 +4047,7 @@
    "id": "k_bb_pct",
    "term": "K-BB%",
    "category": "standard-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations"
    ],
@@ -3903,6 +4074,7 @@
    "id": "ops_plus",
    "term": "OPS+ (vs level)",
    "category": "standard-stat",
+   "section": "Players & Stats",
    "module": [
     "foundations",
     "prospx"
@@ -3933,6 +4105,7 @@
    "id": "fin_war_per_m",
    "term": "WAR per $M",
    "category": "farm",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3959,6 +4132,7 @@
    "id": "fin_contract_surplus",
    "term": "Grad-Contract Surplus",
    "category": "farm",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -3984,6 +4158,7 @@
    "id": "fin_dollar_dvm",
    "term": "Org $DvM+",
    "category": "farm",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -4011,6 +4186,7 @@
    "id": "time_machine",
    "term": "Time Machine",
    "category": "site-feature",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4034,6 +4210,7 @@
    "id": "generate_gfx",
    "term": "Generate GFX",
    "category": "site-feature",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4058,6 +4235,7 @@
    "id": "scatterplots",
    "term": "Scatterplots",
    "category": "site-feature",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4082,6 +4260,7 @@
    "id": "watchlist",
    "term": "Watchlist",
    "category": "site-feature",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4103,6 +4282,7 @@
    "id": "spotlights",
    "term": "Spotlights",
    "category": "site-feature",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4132,6 +4312,7 @@
    "id": "rarity_tiers",
    "term": "Rarity tiers",
    "category": "site-feature",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4159,6 +4340,7 @@
    "id": "quick_search",
    "term": "Quick search (⌘K)",
    "category": "site-feature",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4182,6 +4364,7 @@
    "id": "m_guarantee",
    "term": "projGuarantee",
    "category": "fa",
+   "section": "Value & Contracts",
    "module": [
     "fa"
    ],
@@ -4205,6 +4388,7 @@
    "id": "m_aav",
    "term": "projAAV",
    "category": "fa",
+   "section": "Value & Contracts",
    "module": [
     "fa"
    ],
@@ -4226,6 +4410,7 @@
    "id": "m_years",
    "term": "projLength",
    "category": "fa",
+   "section": "Value & Contracts",
    "module": [
     "fa"
    ],
@@ -4248,6 +4433,7 @@
    "id": "deal_plus",
    "term": "Deal verdict (Deal+)",
    "category": "fa",
+   "section": "Value & Contracts",
    "module": [
     "fa"
    ],
@@ -4275,6 +4461,7 @@
    "id": "contract_surplus",
    "term": "Contract Surplus ($)",
    "category": "fa",
+   "section": "Value & Contracts",
    "module": [
     "fa"
    ],
@@ -4299,6 +4486,7 @@
    "id": "downside_war",
    "term": "Downside WAR",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "downside WAR",
     "CVaR",
@@ -4321,16 +4509,22 @@
    "id": "p_enter",
    "term": "P(enter)",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "P(enter)",
-    "probability of entering the class"
+    "probability of entering the class",
+    "enter probability",
+    "exercise probability"
    ],
    "priority": 72,
    "definition": "The probability a player reaches free agency at all. It is 100% when a contract simply expires, and lower for the option family, where membership stays probabilistic until the option resolves.",
-   "methodology": "Band-priced options read the option price against the predicted AAV band (v2); mutual and conditional options keep explicit v1 priors. The source is carried per row in enterProbSrc.",
+   "methodology": "Single-party options (club option, player option, opt-out) use the market model's band distribution (v2): a log-normal interpolated from the empirical residual bands (mu = log point estimate, sigma = P10-P90 span / (2 x 1.2816)), and P(enter) is the tail probability of the market against the strike. Strike and market number must be the same kind of quantity: club and player options strike one season's salary against projected AAV; an opt-out strikes the remaining guarantee against the projected multi-year guarantee. Mutual options keep a fixed empirical prior (both sides cannot want to exercise at once); conditional options carry a documented unknown prior. The v1 $-gap logistic (fa_class, config-documented) is the heuristic these paths replaced. Decision-level validation waits on historical option-decision data; the 2026-27 winter's logged events are the first live test. The source is carried per row in enterProbSrc.",
+   "formula": "player-held (opt-out / player option): P(enter) = 1 - Phi((ln K - mu) / sigma); club option: P(enter) = Phi((ln K - mu) / sigma)\nmu = ln(point estimate), sigma = (ln P90 - ln P10) / (2 x 1.2816); K = the strike (one season's salary for options, the remaining guarantee for opt-outs)\nmutual option: fixed empirical prior; conditional: documented prior; no anchor -> no number",
+   "example": "A $20M club option on a player priced at $14M AAV (P10 $9M, P90 $22M): the club likely declines, P(enter) near 0.85. As a $20M player option he keeps the money: near 0.15.",
    "seeAlso": [
     "m_guarantee",
-    "deal_plus"
+    "deal_plus",
+    "cba_carry_forward"
    ],
    "module": [
     "fa"
@@ -4342,6 +4536,7 @@
    "id": "team_fit",
    "term": "Team fit",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "team fit",
     "fit score"
@@ -4362,6 +4557,7 @@
    "id": "qo_tax",
    "term": "QO pick tax",
    "category": "fa",
+   "section": "Value & Contracts",
    "module": [
     "fa"
    ],
@@ -4385,6 +4581,7 @@
    "id": "rational_value",
    "term": "Rational value",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "rational value",
     "NPV value"
@@ -4409,6 +4606,7 @@
    "id": "p10_p90_bands",
    "term": "P10-P90 bands",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "bands",
     "percentile bands"
@@ -4426,32 +4624,10 @@
    "origin": "Arkmetric, original to eephus.io."
   },
   {
-   "id": "enter_prob",
-   "term": "P(enter)",
-   "category": "fa",
-   "aliases": [
-    "enter probability",
-    "exercise probability"
-   ],
-   "priority": 67,
-   "definition": "Probability that an option-holding player reaches the free-agent class. Single-party options are priced from the market model's own band distribution; mutual options carry a fixed empirical prior; rows with no market anchor show no number.",
-   "methodology": "Single-party options (club option, player option, opt-out) use the market model's band distribution (v2): a log-normal interpolated from the empirical residual bands (mu = log point estimate, sigma = P10-P90 span / (2 x 1.2816)), and P(enter) is the tail probability of the market against the strike. Strike and market number must be the same kind of quantity: club and player options strike one season's salary against projected AAV; an opt-out strikes the remaining guarantee against the projected multi-year guarantee. Mutual options keep a fixed empirical prior (both sides cannot want to exercise at once); conditional options carry a documented unknown prior. The v1 $-gap logistic (fa_class, config-documented) is the heuristic these paths replaced. Decision-level validation waits on historical option-decision data; the 2026-27 winter's logged events are the first live test.",
-   "formula": "player-held (opt-out / player option): P(enter) = 1 - Phi((ln K - mu) / sigma); club option: P(enter) = Phi((ln K - mu) / sigma)\nmu = ln(point estimate), sigma = (ln P90 - ln P10) / (2 x 1.2816); K = the strike (one season's salary for options, the remaining guarantee for opt-outs)\nmutual option: fixed empirical prior; conditional: documented prior; no anchor -> no number",
-   "example": "A $20M club option on a player priced at $14M AAV (P10 $9M, P90 $22M): the club likely declines, P(enter) near 0.85. As a $20M player option he keeps the money: near 0.15.",
-   "seeAlso": [
-    "m_guarantee",
-    "cba_carry_forward"
-   ],
-   "module": [
-    "fa"
-   ],
-   "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
-  },
-  {
    "id": "cba_carry_forward",
    "term": "CBA carry-forward",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "carry-forward",
     "carry forward"
@@ -4471,6 +4647,7 @@
    "id": "winter_dpw",
    "term": "$/WAR (winter, ex-ante)",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "winter $/WAR",
     "dollars per WAR"
@@ -4493,6 +4670,7 @@
    "id": "thin_platform",
    "term": "Thin platform",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "thin platform year"
    ],
@@ -4512,6 +4690,7 @@
    "id": "fit_components",
    "term": "Team-fit components",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "need",
     "window",
@@ -4538,6 +4717,7 @@
    "id": "first_seen_dates",
    "term": "First-seen dates",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "observation stamps"
    ],
@@ -4556,6 +4736,7 @@
    "id": "fa_gates",
    "term": "Gate 1 / Gate 2",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "hard gates",
     "backtest gates"
@@ -4576,6 +4757,7 @@
    "id": "nearest_comps",
    "term": "Nearest comps",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "comps",
     "contract comps"
@@ -4596,6 +4778,7 @@
    "id": "fa_projection_engine",
    "term": "FA projection engine",
    "category": "fa",
+   "section": "Value & Contracts",
    "aliases": [
     "Marcel",
     "aging curves"
@@ -4620,6 +4803,7 @@
    "id": "era_minus",
    "term": "ERA-",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "aliases": [
     "ERA minus",
     "ERA- lvl"
@@ -4643,6 +4827,7 @@
    "id": "woba",
    "term": "wOBA",
    "category": "hitter-stat",
+   "section": "Players & Stats",
    "aliases": [
     "weighted on-base average"
    ],
@@ -4662,6 +4847,7 @@
    "id": "module_stages",
    "term": "Module stages (α / β)",
    "category": "site-feature",
+   "section": "Site & Methods",
    "aliases": [
     "alpha",
     "beta",
@@ -4680,6 +4866,7 @@
    "id": "wire_ticker",
    "term": "WIRE",
    "category": "site-feature",
+   "section": "Site & Methods",
    "aliases": [
     "prospect wire",
     "ticker"
@@ -4700,6 +4887,7 @@
    "id": "active_pool",
    "term": "Active prospect pool",
    "category": "methodology",
+   "section": "Site & Methods",
    "aliases": [
     "active pool"
    ],
@@ -4719,6 +4907,7 @@
    "id": "proj_buckets",
    "term": "Probability buckets (floor / mean / ceiling)",
    "category": "fa",
+   "section": "Value & Contracts",
    "module": [
     "fa",
     "platform"
@@ -4746,6 +4935,7 @@
    "id": "mlb_projections",
    "term": "MLB Projections (module)",
    "category": "site-feature",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4771,6 +4961,7 @@
    "id": "model_accountability",
    "term": "Model Accountability",
    "category": "site-feature",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4795,6 +4986,7 @@
    "id": "model_verdict",
    "term": "Model verdict",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4820,6 +5012,7 @@
    "id": "backtest",
    "term": "Backtest (forward-chained)",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4845,6 +5038,7 @@
    "id": "holdout",
    "term": "Holdout season",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4868,6 +5062,7 @@
    "id": "forward_gate",
    "term": "Forward gate",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4891,6 +5086,7 @@
    "id": "mae",
    "term": "MAE (mean absolute error)",
    "category": "general-stat",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -4914,6 +5110,7 @@
    "id": "org_tendencies",
    "term": "Organization Tendencies",
    "category": "site-feature",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -4939,6 +5136,7 @@
    "id": "draft_overperformance",
    "term": "Draft Overperformance",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -4962,6 +5160,7 @@
    "id": "deferral_npv",
    "term": "Deferral-adjusted NPV",
    "category": "fa",
+   "section": "Value & Contracts",
    "module": [
     "fa"
    ],
@@ -4985,6 +5184,7 @@
    "id": "swing_plus",
    "term": "Swing+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx",
     "projections",
@@ -5007,6 +5207,7 @@
    "id": "collegesavant",
    "term": "CollegeSavant",
    "category": "site-feature",
+   "section": "Prospects",
    "module": [
     "collegesavant"
    ],
@@ -5027,6 +5228,7 @@
    "id": "xfv",
    "term": "eephusFV (eFV)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -5054,6 +5256,7 @@
    "id": "xfv_tools",
    "term": "Tool eFV",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -5077,6 +5280,7 @@
    "id": "xfv_ungraded",
    "term": "Production grade (provisional eFV)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -5106,6 +5310,7 @@
    "id": "krp_plus",
    "term": "KRP+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -5133,6 +5338,7 @@
    "id": "trade_machine",
    "term": "Trade Machine",
    "category": "site-feature",
+   "section": "Value & Contracts",
    "module": [
     "trademachine"
    ],
@@ -5160,6 +5366,7 @@
    "id": "milb_translation",
    "term": "Proj first-MLB K% / BB%",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -5187,6 +5394,7 @@
    "id": "rem_plus",
    "term": "REM+ (Reliever Evaluation Metric +)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5213,6 +5421,7 @@
    "id": "bullpen_plus",
    "term": "Bullpen+",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5236,6 +5445,7 @@
    "id": "rotation_plus",
    "term": "Rotation+",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5260,6 +5470,7 @@
    "id": "offense_plus",
    "term": "Offense+",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5284,6 +5495,7 @@
    "id": "hem_plus_vs_hand",
    "term": "vs-hand HEM+",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5309,6 +5521,7 @@
    "id": "platoon_option",
    "term": "Platoon option",
    "category": "indicators",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5333,6 +5546,7 @@
    "id": "rng_plus",
    "term": "Rng+ (sprint-speed range index)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -5357,6 +5571,7 @@
    "id": "gmli",
    "term": "gmLI (Game-entry Leverage Index)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5379,6 +5594,7 @@
    "id": "gmli_3yr",
    "term": "gmLI 3yr (three-year deployment leverage)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5404,6 +5620,7 @@
    "id": "riv_plus",
    "term": "RIV+ (Reliever Impact Value)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5430,6 +5647,7 @@
    "id": "rem_plus_3yr",
    "term": "REM+ 3yr (three-year skill)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5455,6 +5673,7 @@
    "id": "sem_plus",
    "term": "SEM+ (Starter Evaluation Metric)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5481,6 +5700,7 @@
    "id": "hem_plus",
    "term": "HEM+ (Hitter Evaluation Metric)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5507,6 +5727,7 @@
    "id": "hem_plus_3yr",
    "term": "HEM+ (3yr)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5532,6 +5753,7 @@
    "id": "war_pa_plus_adj",
    "term": "WAR/PA+ (sample-adjusted)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5557,6 +5779,7 @@
    "id": "war_ip_plus_sp_adj",
    "term": "WAR/IP+ (starter pool, sample-adjusted)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5581,6 +5804,7 @@
    "id": "war_ip_plus_rp_adj",
    "term": "WAR/IP+ (reliever pool, sample-adjusted)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5605,6 +5829,7 @@
    "id": "war_pa_plus",
    "term": "WAR/PA+",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5633,6 +5858,7 @@
    "id": "war_pa_plus_3yr",
    "term": "WAR/PA+ (3yr)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5660,6 +5886,7 @@
    "id": "war_ip_plus_sp",
    "term": "WAR/IP+ (starter pool)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5687,6 +5914,7 @@
    "id": "war_ip_plus_sp_3yr",
    "term": "WAR/IP+ (starter pool, 3yr)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5712,6 +5940,7 @@
    "id": "war_ip_plus_rp",
    "term": "WAR/IP+ (reliever pool)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5738,6 +5967,7 @@
    "id": "war_ip_plus_rp_3yr",
    "term": "WAR/IP+ (reliever pool, 3yr)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5763,6 +5993,7 @@
    "id": "xhem_plus",
    "term": "xHEM+ (Deserved Offense)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5789,6 +6020,7 @@
    "id": "fwdhem_plus",
    "term": "xHEM+ Blend (Forward Offense)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5815,6 +6047,7 @@
    "id": "pwoba",
    "term": "pWOBA (Projected wOBA)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5843,6 +6076,7 @@
    "id": "sem_plus_3yr",
    "term": "SEM+ 3yr (three-year starter skill)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5868,6 +6102,7 @@
    "id": "wpa",
    "term": "WPA (Win Probability Added)",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5891,6 +6126,7 @@
    "id": "wpa_li",
    "term": "WPA/LI (context-neutral wins)",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5912,6 +6148,7 @@
    "id": "leverage_index",
    "term": "Leverage Index (LI)",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5932,6 +6169,7 @@
    "id": "shutdowns_meltdowns",
    "term": "Shutdowns and Meltdowns (SD / MD)",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5953,6 +6191,7 @@
    "id": "reliever_roles",
    "term": "Bullpen roles (Closer, Setup, Middle, Long)",
    "category": "definition",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -5976,6 +6215,7 @@
    "id": "rp_sp_fit",
    "term": "RP->SP FIT (reliever to starter)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -6000,6 +6240,7 @@
    "id": "sp_rp_fit",
    "term": "SP->RP FIT (starter to reliever)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -6024,6 +6265,7 @@
    "id": "pal_conversion",
    "term": "Alchemy Lab",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -6049,6 +6291,7 @@
    "id": "arsenal_depth",
    "term": "Arsenal depth",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -6069,6 +6312,7 @@
    "id": "tto_penalty",
    "term": "Times-through-order penalty (TTOP)",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -6090,6 +6334,7 @@
    "id": "role_velo_delta",
    "term": "Role velocity delta",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -6111,6 +6356,7 @@
    "id": "putaway_pitch",
    "term": "Putaway pitch",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -6130,6 +6376,7 @@
    "id": "platoon_split",
    "term": "Platoon split",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -6149,6 +6396,7 @@
    "id": "versa",
    "term": "Versa (Positional Versatility)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6169,6 +6417,7 @@
    "id": "draft_stock_plus",
    "term": "DS+ (Draft Stock+)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6189,6 +6438,7 @@
    "id": "reverse_platoon",
    "term": "Reverse-Platoon Index",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -6214,6 +6464,7 @@
    "id": "starter_shape",
    "term": "Starter Shape",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "pal"
    ],
@@ -6237,6 +6488,7 @@
    "id": "xwoba",
    "term": "xwOBA",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6261,6 +6513,7 @@
    "id": "babip",
    "term": "BABIP",
    "category": "hitter-stat",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6282,6 +6535,7 @@
    "id": "vaa",
    "term": "VAA",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6304,6 +6558,7 @@
    "id": "window_alignment",
    "term": "Window Alignment",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx",
     "platform"
@@ -6331,6 +6586,7 @@
    "id": "risk_adjusted_surplus",
    "term": "Risk-adjusted Surplus (Sortino)",
    "category": "custom-index",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -6357,6 +6613,7 @@
    "id": "fv_tape",
    "term": "FV Tape",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6384,6 +6641,7 @@
    "id": "draft_war_room",
    "term": "Draft War Room",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6411,6 +6669,7 @@
    "id": "prospect_greeks",
    "term": "Prospect Greeks",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6436,6 +6695,7 @@
    "id": "star_odds",
    "term": "Star Odds",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6462,6 +6722,7 @@
    "id": "opt_pct",
    "term": "PLUS% (Upgrade Option)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6489,6 +6750,7 @@
    "id": "xslg",
    "term": "xSLG",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6507,6 +6769,7 @@
    "id": "xiso",
    "term": "xISO",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6525,6 +6788,7 @@
    "id": "xrem_plus",
    "term": "xREM+ (Deserved Run Prevention)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -6551,6 +6815,7 @@
    "id": "xsem_plus",
    "term": "xSEM+ (Deserved Run Prevention)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -6577,6 +6842,7 @@
    "id": "ifa_dollars_per_fv",
    "term": "$/FV signed (IFA efficiency)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6601,6 +6867,7 @@
    "id": "roster_crunch",
    "term": "Crunch Index",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx",
     "platform"
@@ -6626,6 +6893,7 @@
    "id": "pli",
    "term": "pLI (average Leverage Index)",
    "category": "industry-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -6651,6 +6919,7 @@
    "id": "pitches_per_ab",
    "term": "P/AB (pitches per at-bat)",
    "category": "hitter-stat",
+   "section": "Players & Stats",
    "module": [
     "scores"
    ],
@@ -6674,6 +6943,7 @@
    "id": "pitches_per_ip",
    "term": "P/IP (pitches per inning pitched)",
    "category": "pitcher-stat",
+   "section": "Players & Stats",
    "module": [
     "scores"
    ],
@@ -6697,6 +6967,7 @@
    "id": "mlb_win_probability",
    "term": "MLB win probability",
    "category": "general-stat",
+   "section": "Players & Stats",
    "module": [
     "scores"
    ],
@@ -6720,6 +6991,7 @@
    "id": "stars_of_the_game",
    "term": "Stars of the Game",
    "category": "site-feature",
+   "section": "Players & Stats",
    "module": [
     "scores"
    ],
@@ -6743,6 +7015,7 @@
    "id": "biggest_plays",
    "term": "Biggest plays",
    "category": "site-feature",
+   "section": "Players & Stats",
    "module": [
     "scores"
    ],
@@ -6765,6 +7038,7 @@
    "id": "abs_challenge",
    "term": "ABS challenge",
    "category": "mlb-rules",
+   "section": "Players & Stats",
    "module": [
     "scores"
    ],
@@ -6781,6 +7055,7 @@
    "id": "clutch",
    "term": "Clutch (timing above a context-neutral base)",
    "category": "industry-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -6805,6 +7080,7 @@
    "id": "s_xline",
    "term": "S-XLINE",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6831,6 +7107,7 @@
    "id": "advancement_pace_plus",
    "term": "Advancement Pace+",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6855,6 +7132,7 @@
    "id": "def_home_chip",
    "term": "Defensive home chip",
    "category": "indicators",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6881,6 +7159,7 @@
    "id": "collegesavant_stuff_plus",
    "term": "College Stuff+ (CollegeSavant)",
    "category": "custom-index",
+   "section": "Prospects",
    "module": [
     "collegesavant"
    ],
@@ -6904,6 +7183,7 @@
    "id": "statcast_alevel_signal",
    "term": "A-ball Tracked Signal (Whiff, FB Velo)",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6933,6 +7213,7 @@
    "id": "archetype_comps",
    "term": "Archetype comps",
    "category": "scouting",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -6958,6 +7239,7 @@
    "id": "milb_park_factor",
    "term": "MiLB Park Factor (Run PF / HR PF)",
    "category": "general-stat",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -6984,6 +7266,7 @@
    "id": "normalized_source_grade",
    "term": "Normalized source grade",
    "category": "methodology",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -7011,6 +7294,7 @@
    "id": "arb_award_model",
    "term": "Arbitration Award Model",
    "category": "Valuation",
+   "section": "Value & Contracts",
    "module": [
     "arbitration"
    ],
@@ -7030,6 +7314,7 @@
    "id": "arb_market_residual",
    "term": "Over/Under vs the Arbitration Market",
    "category": "Valuation",
+   "section": "Value & Contracts",
    "module": [
     "arbitration"
    ],
@@ -7049,6 +7334,7 @@
    "id": "jaws",
    "term": "JAWS",
    "category": "industry",
+   "section": "Hall of Fame",
    "module": [
     "hof"
    ],
@@ -7072,6 +7358,7 @@
    "id": "war7",
    "term": "WAR7",
    "category": "industry",
+   "section": "Hall of Fame",
    "module": [
     "hof"
    ],
@@ -7094,6 +7381,7 @@
    "id": "war_ink",
    "term": "WAR ink",
    "category": "custom-index",
+   "section": "Hall of Fame",
    "module": [
     "hof"
    ],
@@ -7116,6 +7404,7 @@
    "id": "committee_horizon",
    "term": "Committee horizon",
    "category": "method",
+   "section": "Hall of Fame",
    "module": [
     "hof"
    ],
@@ -7135,6 +7424,7 @@
    "id": "skill_fip",
    "term": "Skill FIP (sample-shrunk FIP)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -7160,6 +7450,7 @@
    "id": "dem_plus",
    "term": "DEM+ (Defense Evaluation Metric)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -7191,6 +7482,7 @@
    "id": "team_dem_plus",
    "term": "Team DEM+",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -7213,6 +7505,7 @@
    "id": "dem_plus_3yr",
    "term": "DEM+ (3yr)",
    "category": "custom-index",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -7233,6 +7526,7 @@
    "id": "fielding_runs",
    "term": "Fielding runs (FanGraphs)",
    "category": "general-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -7256,6 +7550,7 @@
    "id": "framing_runs",
    "term": "Framing runs",
    "category": "general-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -7280,6 +7575,7 @@
    "id": "positional_adjustment",
    "term": "Positional adjustment",
    "category": "general-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -7302,6 +7598,7 @@
    "id": "def_runs",
    "term": "Def runs",
    "category": "general-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats",
     "projections"
@@ -7328,6 +7625,7 @@
    "id": "value_ruler",
    "term": "Value ruler",
    "category": "site-feature",
+   "section": "Site & Methods",
    "module": [
     "platform"
    ],
@@ -7358,6 +7656,7 @@
    "id": "range",
    "term": "Year range",
    "category": "site-feature",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -7385,6 +7684,7 @@
    "id": "bat_600",
    "term": "Bat/600",
    "category": "general-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -7408,6 +7708,7 @@
    "id": "pitch_200",
    "term": "Pitch/200",
    "category": "general-stat",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -7431,6 +7732,7 @@
    "id": "decision_value",
    "term": "Decision value (DV)",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7456,6 +7758,7 @@
    "id": "execution_residual",
    "term": "Execution residual (ER)",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7477,6 +7780,7 @@
    "id": "realized_mwpa",
    "term": "Realized mWPA (realized value of a decision)",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "management",
     "franchise"
@@ -7506,6 +7810,7 @@
    "id": "dvs",
    "term": "Decision value above state (DVS)",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7530,6 +7835,7 @@
    "id": "steal_break_even",
    "term": "Steal break-even (p*)",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7555,6 +7861,7 @@
    "id": "win_expectancy",
    "term": "Win expectancy (WE)",
    "category": "general-stat",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7579,6 +7886,7 @@
    "id": "run_expectancy",
    "term": "Run expectancy (RE24)",
    "category": "general-stat",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7601,6 +7909,7 @@
    "id": "hook_z",
    "term": "Hook z (style z-score)",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7626,6 +7935,7 @@
    "id": "pen_z",
    "term": "Pen z (style z-score)",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7650,6 +7960,7 @@
    "id": "bench_z",
    "term": "Bench z (style z-score)",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7674,6 +7985,7 @@
    "id": "ibb_z",
    "term": "IBB z (style z-score)",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7698,6 +8010,7 @@
    "id": "visit_z",
    "term": "Visit z (style z-score)",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7722,6 +8035,7 @@
    "id": "li_at_decision",
    "term": "LI at decision (mean leverage at decision)",
    "category": "general-stat",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7745,6 +8059,7 @@
    "id": "manager_agent",
    "term": "Manager agent (club-season until the ledger lands)",
    "category": "methodology",
+   "section": "Clubs",
    "module": [
     "management"
    ],
@@ -7767,6 +8082,7 @@
    "id": "cbt_payroll",
    "term": "CBT payroll",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -7792,6 +8108,7 @@
    "id": "payroll_allocations",
    "term": "Payroll allocations",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -7817,6 +8134,7 @@
    "id": "cbt_bracket",
    "term": "CBT bracket",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -7841,6 +8159,7 @@
    "id": "computed_cbt_bill",
    "term": "Computed CBT bill",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -7865,6 +8184,7 @@
    "id": "payor_tier",
    "term": "Payor tier",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "ledger",
     "franchise"
@@ -7891,6 +8211,7 @@
    "id": "dead_money",
    "term": "Dead money",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -7914,6 +8235,7 @@
    "id": "retained_salary",
    "term": "Retained salary",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -7937,6 +8259,7 @@
    "id": "contract_dollars_on_file",
    "term": "Contract dollars on file",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -7961,6 +8284,7 @@
    "id": "arb_exposure",
    "term": "Arbitration exposure",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -7985,6 +8309,7 @@
    "id": "payroll_horizon",
    "term": "Payroll horizon",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -8007,6 +8332,7 @@
    "id": "cost_plus",
    "term": "Cost+",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -8031,6 +8357,7 @@
    "id": "controlled_surplus",
    "term": "Controlled surplus",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -8055,6 +8382,7 @@
    "id": "implied_ifa_pool",
    "term": "Implied IFA pool",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -8078,6 +8406,7 @@
    "id": "pick_war",
    "term": "Pick WAR",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -8101,6 +8430,7 @@
    "id": "realized_contract_value",
    "term": "Realized contract value",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger",
     "franchise"
@@ -8126,6 +8456,7 @@
    "id": "franchise_index",
    "term": "Franchise Index",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "franchise"
    ],
@@ -8151,6 +8482,7 @@
    "id": "franchise_branch_score",
    "term": "Branch score",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "franchise"
    ],
@@ -8177,6 +8509,7 @@
    "id": "season_record",
    "term": "Season record",
    "category": "standard-stat",
+   "section": "Clubs",
    "module": [
     "franchise"
    ],
@@ -8201,6 +8534,7 @@
    "id": "locked_pct",
    "term": "Core under control",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "franchise",
     "projections",
@@ -8227,6 +8561,7 @@
    "id": "leverage_deploy_plus",
    "term": "Leverage deployment index",
    "category": "custom-index",
+   "section": "Clubs",
    "module": [
     "franchise",
     "mlbstats"
@@ -8253,6 +8588,7 @@
    "id": "cbt_space",
    "term": "Cap space (CBT)",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "franchise",
     "ledger"
@@ -8279,6 +8615,7 @@
    "id": "park_factor",
    "term": "Park factor",
    "category": "industry-stat",
+   "section": "Clubs",
    "module": [
     "franchise",
     "fa"
@@ -8304,6 +8641,7 @@
    "id": "pythag_pct",
    "term": "Pythagorean winning percentage",
    "category": "industry-stat",
+   "section": "Clubs",
    "module": [
     "franchise",
     "projections",
@@ -8330,6 +8668,7 @@
    "id": "farm_dollar",
    "term": "Farm dollar",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],
@@ -8357,6 +8696,7 @@
    "id": "debuted_value",
    "term": "Debuted player value",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "ledger",
     "prospx"
@@ -8385,6 +8725,7 @@
    "id": "arb_award_band",
    "term": "Arbitration award band",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger",
     "arbitration"
@@ -8411,6 +8752,7 @@
    "id": "acquisition_cost_basis",
    "term": "Cost basis",
    "category": "financial",
+   "section": "Clubs",
    "module": [
     "ledger",
     "prospx"
@@ -8438,6 +8780,7 @@
    "id": "bet_edge",
    "term": "Edge",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "edge",
     "model edge"
@@ -8460,6 +8803,7 @@
    "id": "vig",
    "term": "Vig",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "vigorish",
     "juice",
@@ -8482,6 +8826,7 @@
    "id": "devig",
    "term": "De-vig",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "de-vig",
     "devig",
@@ -8506,6 +8851,7 @@
    "id": "fair_line",
    "term": "Fair line",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "fair price",
     "fair odds"
@@ -8526,6 +8872,7 @@
    "id": "implied_probability",
    "term": "Implied probability",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "implied prob",
     "break-even rate"
@@ -8546,6 +8893,7 @@
    "id": "ev_per_unit",
    "term": "EV per unit",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "expected value",
     "EV/u"
@@ -8567,6 +8915,7 @@
    "id": "betting_unit",
    "term": "Unit",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "unit",
     "1u",
@@ -8588,6 +8937,7 @@
    "id": "kelly_criterion",
    "term": "Kelly",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "Kelly criterion",
     "quarter Kelly",
@@ -8611,6 +8961,7 @@
    "id": "moneyline",
    "term": "Moneyline",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "money line",
     "ML",
@@ -8632,6 +8983,7 @@
    "id": "runline",
    "term": "Runline",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "run line",
     "spread"
@@ -8653,6 +9005,7 @@
    "id": "total_line",
    "term": "Total",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "over/under",
     "the total"
@@ -8674,6 +9027,7 @@
    "id": "parlay",
    "term": "Parlay",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "accumulator",
     "same-game parlay",
@@ -8695,6 +9049,7 @@
    "id": "clv",
    "term": "Closing line value",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "CLV",
     "beat the close"
@@ -8715,6 +9070,7 @@
    "id": "provisional_pick",
    "term": "Provisional pick",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "provisional pick"
    ],
@@ -8736,6 +9092,7 @@
    "id": "postseason_bracket_sim",
    "term": "Postseason bracket simulator",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "postseason bracket simulator",
     "bracket simulator",
@@ -8760,6 +9117,7 @@
    "id": "policy_floor",
    "term": "Policy floor",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "provisional floor",
     "minimum edge"
@@ -8782,6 +9140,7 @@
    "id": "brier_score",
    "term": "Brier score",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "Brier"
    ],
@@ -8803,6 +9162,7 @@
    "id": "reliability_curve",
    "term": "Reliability curve",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "calibration curve",
     "reliability diagram"
@@ -8823,6 +9183,7 @@
    "id": "run_dispersion",
    "term": "Run-dispersion correction",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "dispersion correction",
     "run dispersion"
@@ -8845,6 +9206,7 @@
    "id": "shadow_ledger",
    "term": "Shadow ledger",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "paper ledger",
     "paper bets"
@@ -8866,6 +9228,7 @@
    "id": "validation_clocks",
    "term": "Validation clocks",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "gates",
     "clock A",
@@ -8889,6 +9252,7 @@
    "id": "vintage_grading",
    "term": "Vintage mode",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "vintage",
     "vintage backtest"
@@ -8911,6 +9275,7 @@
    "id": "benchmark_ladder",
    "term": "Benchmark ladder",
    "category": "betting",
+   "section": "Diamond",
    "aliases": [
     "benchmarks"
    ],
@@ -8931,6 +9296,7 @@
    "id": "dfs_points_per_1k",
    "term": "Points per $1k",
    "category": "fantasy",
+   "section": "Diamond",
    "module": [
     "fantasy"
    ],
@@ -8950,6 +9316,7 @@
    "id": "dfs_start_rate",
    "term": "Start rate",
    "category": "fantasy",
+   "section": "Diamond",
    "module": [
     "fantasy"
    ],
@@ -8969,6 +9336,7 @@
    "id": "dfs_matchup_multiplier",
    "term": "Matchup multiplier",
    "category": "fantasy",
+   "section": "Diamond",
    "module": [
     "fantasy"
    ],
@@ -8990,6 +9358,7 @@
    "id": "implied_team_total",
    "term": "Implied team total",
    "category": "fantasy",
+   "section": "Diamond",
    "module": [
     "fantasy",
     "betting"
@@ -9013,6 +9382,7 @@
    "id": "swstr_pct",
    "term": "SwStr%",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -9038,6 +9408,7 @@
    "id": "f_strike_pct",
    "term": "F-Strike%",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -9062,6 +9433,7 @@
    "id": "fb_velo",
    "term": "FB velo",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "mlbstats",
     "prospx"
@@ -9085,6 +9457,7 @@
    "id": "sweet_spot_pct",
    "term": "Sweet spot%",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -9109,6 +9482,7 @@
    "id": "pull_pct",
    "term": "Pull%",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -9131,6 +9505,7 @@
    "id": "catcher_blocking",
    "term": "Catcher blocking",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -9155,6 +9530,7 @@
    "id": "catcher_throwing",
    "term": "Catcher throwing",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -9179,6 +9555,7 @@
    "id": "pop_time",
    "term": "Pop time",
    "category": "statcast",
+   "section": "Players & Stats",
    "module": [
     "mlbstats"
    ],
@@ -9201,6 +9578,7 @@
    "id": "statcast_tracked_parks",
    "term": "Statcast (tracked parks)",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -9226,6 +9604,7 @@
    "id": "sb",
    "term": "SB",
    "category": "hitter-stat",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -9247,6 +9626,7 @@
    "id": "z_swing_pct",
    "term": "Z-Swing%",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -9271,6 +9651,7 @@
    "id": "p90_ev",
    "term": "90th EV",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -9294,6 +9675,7 @@
    "id": "max_ev",
    "term": "Max EV",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -9318,6 +9700,7 @@
    "id": "pull_air_pct",
    "term": "Pull-air%",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -9341,6 +9724,7 @@
    "id": "fb_ivb",
    "term": "FB IVB",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -9365,6 +9749,7 @@
    "id": "prospx_lb_qualified",
    "term": "Leaderboard qualifier",
    "category": "site-feature",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -9386,6 +9771,7 @@
    "id": "xwoba_est",
    "term": "Est. xwOBA (PROSPX)",
    "category": "statcast",
+   "section": "Prospects",
    "module": [
     "prospx"
    ],
@@ -9413,6 +9799,7 @@
    "id": "fa_dollar_share",
    "term": "FA $ share",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger",
     "franchise"
@@ -9439,6 +9826,7 @@
    "id": "fa_spend_bands",
    "term": "Guarantee band mix",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger",
     "franchise"
@@ -9463,6 +9851,7 @@
    "id": "fa_resign_share",
    "term": "Re-sign share",
    "category": "fa",
+   "section": "Clubs",
    "module": [
     "ledger"
    ],

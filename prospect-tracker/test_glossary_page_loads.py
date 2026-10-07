@@ -717,13 +717,17 @@ def test_deep_link_expands_and_highlights_term(server, browser):
         page.goto(server + "glossary/index.html#g=wag", wait_until="load",
                   timeout=15_000)
         page.wait_for_selector("#g-wag.is-highlighted", timeout=10_000)
+        # LIBRARY_4: at this width the index row is selected and the full read
+        # (method, formula, example) sits in the right pane.
         opened = page.evaluate(
-            "!!document.querySelector('#g-wag details[open]')")
+            "(() => { const a = document.querySelector('#gl-entry .gl-entry-card');"
+            " return !!a && a.dataset.slug === 'wag' && !!a.querySelector('.gl-meth')"
+            " && !!a.querySelector('.gp-formula'); })()")
     finally:
         page.close()
 
     assert not page_errors, "JS errors on deep link:\n  " + "\n  ".join(page_errors)
-    assert opened, "#g=wag arrived collapsed — direct anchors must open the full read"
+    assert opened, "#g=wag arrived without its full read; direct anchors must open it"
 
 
 def test_quick_search_palette_finds_terms(server, browser):

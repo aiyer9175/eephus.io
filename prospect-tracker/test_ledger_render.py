@@ -1212,7 +1212,7 @@ def test_the_options_calendar_prints_terms_and_prices_only_where_fa_priced_them(
     for k in ("options_decision_rule", "options_p_exercise_basis", "options_value_basis", "options_not_summed", "options_later"):
         assert OPT_COPY[k] in blk, k
     assert html.count("data-csv-primary") == 1, "the contract ledger stays the club CSV"
-    assert 'data-gl="enter_prob"' in blk
+    assert 'data-gl="p_enter"' in blk
 
 
 def test_the_options_calendar_says_so_when_a_club_has_none_and_reads_its_columns_by_name():

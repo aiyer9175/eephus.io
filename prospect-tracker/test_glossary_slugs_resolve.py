@@ -46,6 +46,13 @@ def _sources():
     return [f for f in files if f.exists()]
 
 
+def _slug_aliases() -> dict[str, str]:
+    """eephus-gl.js SLUG_ALIASES: a merged entry's retired slug -> its keeper."""
+    js = (ROOT / "assets" / "eephus-gl.js").read_text(encoding="utf-8")
+    m = re.search(r"const SLUG_ALIASES = \{([^}]*)\};", js)
+    return dict(re.findall(r'([a-z0-9_]+):\s*"([a-z0-9_]+)"', m.group(1))) if m else {}
+
+
 def _resolver():
     g = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
     keys = set()
@@ -53,7 +60,10 @@ def _resolver():
         keys.add(e["id"].lower())
         keys.add(str(e.get("term") or "").lower())
         keys.update(str(a).lower() for a in (e.get("aliases") or []))
-    return keys, {e["id"] for e in g["entries"]}
+    ids = {e["id"] for e in g["entries"]}
+    # A retired slug resolves the way eephus-gl.js resolve() reads it.
+    keys.update(old for old, keep in _slug_aliases().items() if keep in ids)
+    return keys, ids
 
 
 def test_every_referenced_glossary_slug_resolves():

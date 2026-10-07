@@ -6836,7 +6836,7 @@ GLOSSARY_SHELVES = (
 GLOSSARY_VIEWS = (
     {"id": "terms", "shelf": "reference", "label": "Terms", "body": "glossary-rows"},
     {"id": "guide", "shelf": "reference", "label": "How to Read", "body": "guide-body"},
-    {"id": "formulas", "shelf": "reference", "label": "Formulas", "body": "formulas-body", "listed": False},
+    {"id": "formulas", "shelf": "reference", "label": "Formulas", "body": "formulas-body"},
     {"id": "methodology", "shelf": "methods", "label": "Methodology", "body": "methodology-body"},
     {"id": "source-comparison", "shelf": "evidence", "label": "Source Comparison", "body": "source-comparison-body"},
     {"id": "source-accuracy", "shelf": "evidence", "label": "Source Accuracy", "body": "source-accuracy-body"},
@@ -6945,6 +6945,7 @@ def build_glossary() -> str:
         '<input id="gl-search" class="gl-search" type="search" placeholder="Search terms, abbreviations, definitions…"'
         f' aria-label="Search {html.escape(GLOSSARY_DISPLAY_NAME)} terms">'
         '<div class="filter-bar" id="gl-cats"></div>'
+        '<div id="gl-prov" role="group" aria-label="Provenance"></div>'
         '<div id="gl-az"></div>'
         '</div>'
         f"{_glossary_bodies()}"
