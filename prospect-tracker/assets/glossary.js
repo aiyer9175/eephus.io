@@ -6,9 +6,10 @@
 // =============================================================================
 // eephus.io unified Glossary & Methodology app (/glossary/)
 // =============================================================================
-// Four shelves of views: Reference (Terms: search + group nav + A-Z index +
-// entry cards, with artifact-derived receipt blocks on model entries via
-// _receiptSpecs; How to Read: annotated anatomy guide; Formulas) · Methods
+// Four shelves of views: Reference (Terms: seven term shelves, a provenance
+// filter, A-Z, the index beside the selected entry, with artifact-derived
+// receipt blocks on model entries via _receiptSpecs; How to Read: annotated
+// anatomy guide; Formulas: every formula by shelf) · Methods
 // (Methodology: derivations + the industry-comparison section at
 // #industry-comparison + interactive teaching widgets + PDF export) ·
 // Evidence (Source Comparison: the empirical source-vs-source backtest;
@@ -25,13 +26,15 @@
   "use strict";
 
   const _S = { view: "terms", cat: "all", q: "", term: null,
-               backtest: null, btLoading: false, cards: false };
+               backtest: null, btLoading: false, cards: false,
+               // Terms view (LIBRARY_4): provenance and module filters, the
+               // A-Z initial, the selected entry and the rows opened in place.
+               prov: "all", mod: null, letter: null, sel: null, open: new Set(), secCounts: null };
   // Report Cards v0: inline champion-vs-baseline proof charts on the Models &
   // Proofs cards. Dark by default pre-launch; opt in with #cards=1 for owner
   // preview. Flip _CARDS_DEFAULT to true at launch.
   const _CARDS_DEFAULT = true;   // surfaced: proof charts on by default (#cards=0 to hide)
   let GL = {};         // legacy-shaped map: slug -> {name, short, long, ...}
-  let GROUPS = {};     // category -> display group
   // Models & Proofs view state. Declared up top (module scope, before boot
   // runs) so the lazy fetch guard is always initialized, mirroring the
   // _S.registry/_S.backtest lazy-load pattern the other views use.
@@ -84,7 +87,7 @@
   const VIEWS = [
     { id: "terms", shelf: "reference", label: "Terms", body: "glossary-rows", render: renderTerms, aliases: [] },
     { id: "guide", shelf: "reference", label: "How to Read", body: "guide-body", render: renderGuide, aliases: [] },
-    { id: "formulas", shelf: "reference", label: "Formulas", body: "formulas-body", render: () => _renderPendingLeaf("formulas"), aliases: [], unlisted: true },
+    { id: "formulas", shelf: "reference", label: "Formulas", body: "formulas-body", render: renderFormulas, aliases: [] },
     { id: "methodology", shelf: "methods", label: "Methodology", body: "methodology-body", render: renderMethodology, aliases: [] },
     { id: "source-comparison", shelf: "evidence", label: "Source Comparison", body: "source-comparison-body", render: renderSourceComparison, aliases: [] },
     { id: "source-accuracy", shelf: "evidence", label: "Source Accuracy", body: "source-accuracy-body", render: renderSourceAccuracy, aliases: [] },
@@ -127,7 +130,11 @@
       const v = VIEW_OF[p.get("view")];
       if (v) _S.view = v;
     }
-    if (p.has("cat")) _S.cat = p.get("cat");
+    // #cat= takes a section or an old display group (_applyCat maps it);
+    // #prov= and #mod= narrow by provenance and module.
+    if (p.has("cat")) _applyCat(p.get("cat"));
+    if (p.has("prov")) _S.prov = p.get("prov") || "all";
+    if (p.has("mod")) _S.mod = p.get("mod") || null;
     if (p.has("q")) _S.q = p.get("q");
     _S.cards = p.has("cards") ? p.get("cards") !== "0" : _CARDS_DEFAULT;
     _S.term = p.get("g") || null;
@@ -137,40 +144,140 @@
     const p = new URLSearchParams();
     if (_S.view !== "terms") p.set("view", _S.view);
     if (_S.cat !== "all") p.set("cat", _S.cat);
+    if (_S.prov !== "all") p.set("prov", _S.prov);
+    if (_S.mod) p.set("mod", _S.mod);
     if (_S.q) p.set("q", _S.q);
-    if (_S.term) p.set("g", _S.term);
+    const g = _S.term || (_S.view === "terms" ? _S.sel : null);
+    if (g) p.set("g", g);
     const h = p.toString();
     history.replaceState(null, "", h ? "#" + h : location.pathname);
   }
 
-  // ---- Terms view ------------------------------------------------------------
-  function groupOrder() {
-    const seen = [];
-    for (const g of Object.values(GROUPS)) if (!seen.includes(g)) seen.push(g);
-    return seen;
+  // ---- Terms view (LIBRARY_4: seven term shelves, two panes) ----------------
+  // Every entry carries `section`, one of SECTIONS (tools/glossary_sections.py
+  // sets it from the entry's first module). The index groups by section, then
+  // by the section's sub-groups; the provenance chip is a second filter row and
+  // the A-Z strip filters the index to one initial. At 900 px and wider the
+  // index sits left with the search above it and the selected entry reads on
+  // the right; narrower, each row is one line that expands in place.
+  const SECTIONS = ["Prospects", "Players & Stats", "Value & Contracts", "Clubs",
+                    "Site & Methods", "Diamond", "Hall of Fame"];
+  // The sprite symbol drawn beside each section heading.
+  const SECTION_ICON = { "Prospects": "prospx", "Players & Stats": "mlbstats",
+    "Value & Contracts": "fa", "Clubs": "ledger", "Site & Methods": "models",
+    "Diamond": "diamond", "Hall of Fame": "hof" };
+  // Sub-group headings in display order (Hall of Fame lists its four terms
+  // under the section heading alone).
+  const SUBGROUPS = {
+    "Prospects": ["eFV and grades", "Scouting", "Badges", "Farm", "Levels"],
+    "Players & Stats": ["Hitting", "Pitching", "Statcast", "WAR family", "Alchemy Lab", "Scores / Standings"],
+    "Value & Contracts": ["Surplus and $/WAR", "Free agency", "Arbitration", "Rules and transactions", "Trade Machine"],
+    "Clubs": ["Franchise", "Club Ledger", "In-Game Management"],
+    "Site & Methods": ["Platform features", "Model verdicts"],
+    "Diamond": ["Betting", "Fantasy"],
+    "Hall of Fame": [""],
+  };
+  // Old #cat= values (the retired display groups) -> [section, module, provenance].
+  const LEGACY_CAT = {
+    "Free Agency": ["Value & Contracts", "fa", null],
+    "Platform & Methodology": ["Site & Methods", null, null],
+    "Arkmetrics": ["all", null, "ark"],
+    "Statistical Foundations": ["Players & Stats", null, null],
+    "Statcast & Tracking": ["Players & Stats", null, null],
+    "MLB Rules & Transactions": ["Value & Contracts", null, null],
+    "Prospect Grades & Scouting": ["Prospects", null, null],
+    "Badges & Indicators": ["Prospects", null, null],
+    "Levels & Leagues": ["Prospects", null, null],
+    "Betting & Markets": ["Diamond", "betting", null],
+    "Fantasy & DFS": ["Diamond", "fantasy", null],
+    "industry": ["Hall of Fame", null, null],
+    "method": ["Hall of Fame", null, null],
+  };
+  const PROVENANCE = [["ark", "ARKMETRIC", "eephus.io original"],
+                      ["industry", "INDUSTRY", "external metric, credited"],
+                      ["foundation", "FOUNDATION", "shared concept or standard stat"]];
+  const MOD_LABEL = { prospx: "PROSPX", fa: "MLB FA", foundations: "FOUNDATIONS",
+                      platform: "PLATFORM", franchise: "FRANCHISES", scores: "SCORES / STANDINGS" };
+
+  function entrySection(e) { return SECTIONS.includes(e.section) ? e.section : "Site & Methods"; }
+
+  const _FARM_IDS = new Set(["sur_plus", "fv_per_m_pool", "ifa_dollars_per_fv", "draft_ceiling_hits",
+                             "draft_overperformance", "waiver_hit_rate", "trade_war_delta"]);
+  const _PITCH_RE = /^(x?sem_plus|x?rem_plus|riv_plus|bullpen_plus|rotation_plus|gmli|skill_fip|reliever_roles|k_bb_pct)/;
+  const _DPW_IDS = new Set(["winter_dpw", "contract_surplus", "rational_value", "deferral_npv"]);
+  function subGroup(slug, e, sec) {
+    const cat = e.category, m0 = (e.module || [])[0];
+    if (sec === "Prospects") {
+      if (cat === "level") return "Levels";
+      if (cat === "indicators" || cat === "status") return "Badges";
+      if (cat === "farm" || /^(farm_|fin_|mlb_production_)/.test(slug) || _FARM_IDS.has(slug)) return "Farm";
+      if (["scouting", "definition", "statcast", "hitter-stat"].includes(cat)) return "Scouting";
+      return "eFV and grades";
+    }
+    if (sec === "Players & Stats") {
+      if (m0 === "pal") return "Alchemy Lab";
+      if (m0 === "scores") return "Scores / Standings";
+      if (cat === "statcast") return "Statcast";
+      if (cat === "general-stat" || cat === "industry-stat" || /^war|dem_plus/.test(slug)) return "WAR family";
+      if (cat === "pitcher-stat" || _PITCH_RE.test(slug)) return "Pitching";
+      return "Hitting";
+    }
+    if (sec === "Value & Contracts") {
+      if (m0 === "arbitration" || cat === "Valuation" || slug === "arbitration") return "Arbitration";
+      if (m0 === "trademachine") return "Trade Machine";
+      if (cat === "financial" || _DPW_IDS.has(slug)) return "Surplus and $/WAR";
+      if (m0 === "fa") return "Free agency";
+      return "Rules and transactions";
+    }
+    if (sec === "Clubs") {
+      if (m0 === "franchise") return "Franchise";
+      if (m0 === "management") return "In-Game Management";
+      return "Club Ledger";
+    }
+    if (sec === "Site & Methods") {
+      return (cat === "methodology" || cat === "general-stat") ? "Model verdicts" : "Platform features";
+    }
+    if (sec === "Diamond") return m0 === "fantasy" ? "Fantasy" : "Betting";
+    return "";
   }
-  function entryGroup(e) { return GROUPS[e.category] || e.category; }
+
+  // The pixel sprite's versioned url, read from an icon the page already draws.
+  function _spriteURL() {
+    const u = document.querySelector('use[href*="/assets/eephus-icons.svg"]');
+    return u ? String(u.getAttribute("href")).split("#")[0] : "/assets/eephus-icons.svg";
+  }
+  function _secIcon(sec) {
+    const k = SECTION_ICON[sec];
+    return k ? `<svg class="ico gl-sec-ico" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="${_spriteURL()}#i-${k}"/></svg>` : "";
+  }
+
+  // Two panes at 900 px and wider (site.css carries the same breakpoint).
+  function _wide() { return !!(window.matchMedia && window.matchMedia("(min-width: 900px)").matches); }
+
+  // Translate an old #cat= value into the section, module and provenance filters.
+  function _applyCat(v) {
+    _S.mod = null; _S.prov = "all";
+    if (!v || v === "all" || SECTIONS.includes(v)) { _S.cat = v || "all"; return; }
+    const m = LEGACY_CAT[v];
+    if (m) { _S.cat = m[0]; _S.mod = m[1]; _S.prov = m[2] || "all"; return; }
+    _S.cat = "all";
+  }
 
   function moduleBadges(e) {
-    const LBL = { prospx: "PROSPX", fa: "MLB FA", foundations: "FOUNDATIONS",
-                  platform: "PLATFORM", franchise: "FRANCHISES", scores: "SCORES / STANDINGS" };
     return (e.module || []).map(m =>
-      `<span class="gl-mod gl-mod--${m}">${LBL[m] || m.toUpperCase()}</span>`).join("");
+      `<span class="gl-mod gl-mod--${m}">${MOD_LABEL[m] || m.toUpperCase()}</span>`).join("");
   }
 
   // Provenance chip: distinguishes our own models from borrowed industry
   // metrics and shared foundations, so a reader always knows what is ours.
   function shelfBadge(e) {
-    const S = { ark: ["ARKMETRIC", "eephus.io original"],
-                industry: ["INDUSTRY", "external metric, credited"],
-                foundation: ["FOUNDATION", "shared concept or standard stat"] };
-    const s = S[e.shelf];
-    return s ? `<span class="gl-shelf gl-shelf--${e.shelf}" title="${s[1]}">${s[0]}</span>` : "";
+    const s = PROVENANCE.find(p => p[0] === e.shelf);
+    return s ? `<span class="gl-shelf gl-shelf--${e.shelf}" title="${s[2]}">${s[1]}</span>` : "";
   }
 
-  function entryCard(slug, e, expanded) {
-    const altNames = (e.aliases || []).filter(a => a !== e.name && a.includes(" "));
-    const fullName = altNames.length ? altNames.sort((a, b) => b.length - a.length)[0] : "";
+  // The full read of one entry: method, formula, example, origin, visual,
+  // receipt slot and See also. Shared by the right pane and an opened row.
+  function _entryParts(slug, e) {
     const more = [];
     if (e.long) more.push(`<div class="gl-meth">${e.long.split("\n\n").map(p => `<p>${escapeHtml(p)}</p>`).join("")}</div>`);
     if (e.formula) more.push(`<div class="gp-formula">${escapeHtml(e.formula)}</div>`);
@@ -182,106 +289,304 @@
       if (viz) more.push(`<div class="gl-microlabel" style="margin-top:8px;">Visualization</div><div class="glossary-visual">${viz}</div>`);
     }
     // Receipt block (2026-08-19): model entries seeded in _receiptSpecs carry
-    // an artifact-derived receipt inside the +methodology fold. The slot is
-    // empty here on purpose: the artifact is fetched lazily on the FIRST
-    // expand (_wireReceipts), so a page of collapsed cards costs zero fetches.
+    // an artifact-derived receipt. The slot is filled when the entry is read
+    // (_wireReceipts), so a page of closed rows costs zero fetches.
     if (_receiptSpecs()[slug]) {
       more.push(`<div class="gl-receipt-slot" data-receipt="${escapeHtml(slug)}"></div>`);
     }
     const rel = (e.related || []).filter(r => GL[r]).map(r =>
       `<a class="gl-rel" href="#g=${escapeHtml(r)}">${escapeHtml(GL[r].name)}</a>`).join("");
     if (rel) more.push(`<div class="gl-relrow"><span class="gl-microlabel">See also</span>${rel}</div>`);
-    const moreHtml = more.length
-      ? `<details class="gp-more"${expanded ? " open" : ""}><summary>+ methodology</summary><div class="gp-more-body">${more.join("")}</div></details>` : "";
-    return `<div class="glossary-card" id="g-${escapeHtml(slug)}">
+    return more.join("");
+  }
+
+  function _fullName(e) {
+    const alt = (e.aliases || []).filter(a => a !== e.name && a.includes(" "));
+    return alt.length ? alt.sort((a, b) => b.length - a.length)[0] : "";
+  }
+
+  // The right pane's read of the selected entry.
+  function _entryPane(slug, e) {
+    const sec = entrySection(e), sub = subGroup(slug, e, sec), fn = _fullName(e);
+    return `<article class="gl-entry-card" data-slug="${escapeHtml(slug)}">
+      <div class="gl-entry-where">${_secIcon(sec)}${escapeHtml(sec)}${sub ? " · " + escapeHtml(sub) : ""}</div>
       <div class="gl-card-head">
-        <span class="gp-term">${escapeHtml(e.name)}</span>
-        ${fullName ? `<span class="gl-fullname">(${escapeHtml(fullName)})</span>` : ""}
+        <h2 class="gp-term">${escapeHtml(e.name)}</h2>
+        ${fn ? `<span class="gl-fullname">(${escapeHtml(fn)})</span>` : ""}
         <span class="gl-badges">${shelfBadge(e)}${moduleBadges(e)}</span>
       </div>
       <div class="gl-def">${escapeHtml(e.short)}</div>
-      ${moreHtml}</div>`;
+      <div class="gl-entry-body">${_entryParts(slug, e)}</div>
+    </article>`;
+  }
+
+  // The right pane before a term is chosen: the shelves with their counts.
+  function _entryOverview(counts, total) {
+    const rows = SECTIONS.map(s => `<li><button class="gl-ov-sec" type="button" data-gl-ov="${escapeHtml(s)}">${_secIcon(s)}<span>${escapeHtml(s)}</span><span class="gl-count">${counts[s] || 0}</span></button>
+      <span class="gl-ov-subs">${SUBGROUPS[s].filter(Boolean).map(escapeHtml).join(", ")}</span></li>`).join("");
+    return `<div class="gl-entry-overview">
+      <p class="gl-entry-lede">${total} terms on ${SECTIONS.length} shelves. Pick a term in the index to read its definition, method, formula and example here.</p>
+      <ul class="gl-ov-list">${rows}</ul></div>`;
+  }
+
+  // One index row: the provenance dot, the name and the short definition
+  // (clipped to two lines on a phone, hidden beside the right pane).
+  function _row(slug, e) {
+    const open = _S.open.has(slug), sel = _S.sel === slug;
+    const prov = PROVENANCE.find(p => p[0] === e.shelf);
+    return `<div class="glossary-card gl-row${open ? " is-open" : ""}${sel ? " is-selected" : ""}" id="g-${escapeHtml(slug)}" data-slug="${escapeHtml(slug)}">
+      <button class="gl-row-head" type="button" aria-expanded="${open ? "true" : "false"}"${sel ? ' aria-current="true"' : ""}>
+        <span class="gl-dot gl-dot--${escapeHtml(e.shelf || "none")}" title="${prov ? prov[1] : ""}" aria-hidden="true"></span>
+        <span class="gl-row-name">${escapeHtml(e.name)}</span>
+        <span class="gl-row-def">${escapeHtml(e.short)}</span>
+      </button>
+      <div class="gl-row-body"${open ? "" : " hidden"}>${open ? `<div class="gl-badges gl-row-badges">${shelfBadge(e)}${moduleBadges(e)}</div>${_entryParts(slug, e)}` : ""}</div>
+    </div>`;
+  }
+
+  function _initial(e) {
+    const c = (e.name[0] || "#").toUpperCase();
+    return /[A-Z]/.test(c) ? c : "#";
+  }
+
+  // The panes are drawn once; later renders repaint the index and the entry
+  // only, so the search box (moved into the index head) keeps its focus.
+  function _termsShell(root) {
+    if (root.querySelector(".gl-terms")) return;
+    root.innerHTML = `<div class="gl-terms">
+      <div class="gl-index-pane"><div class="gl-index-head"><div class="gl-index-note" id="gl-index-note" aria-live="polite"></div></div>
+        <nav class="gl-index" id="gl-index" aria-label="Term index"></nav></div>
+      <section class="gl-entry-pane" id="gl-entry" aria-label="Selected term"></section></div>`;
+    const inp = document.getElementById("gl-search");
+    if (inp) root.querySelector(".gl-index-head").prepend(inp);
+    root.querySelector("#gl-index").addEventListener("click", ev => {
+      const head = ev.target.closest(".gl-row-head");
+      if (!head) return;
+      const slug = head.closest(".gl-row").dataset.slug;
+      if (_wide()) _selectTerm(slug, false);
+      else _toggleRow(slug);
+    });
+    root.querySelector("#gl-index-note").addEventListener("click", ev => {
+      if (!ev.target.closest("[data-gl-mod-clear]")) return;
+      _S.mod = null; syncToURL(); render();
+    });
+    root.querySelector("#gl-entry").addEventListener("click", ev => {
+      const b = ev.target.closest("[data-gl-ov]");
+      if (!b) return;
+      _S.cat = b.dataset.glOv; syncToURL(); render();
+    });
+  }
+
+  function _paintEntry() {
+    const pane = document.getElementById("gl-entry");
+    if (!pane) return;
+    // Below the breakpoint the pane is not shown and rows open in place.
+    if (!_wide()) { pane.innerHTML = ""; return; }
+    const e = _S.sel && GL[_S.sel];
+    if (e) {
+      pane.innerHTML = _entryPane(_S.sel, e);
+      _wireReceipts(pane);
+    } else {
+      pane.innerHTML = _entryOverview(_S.secCounts || {}, Object.keys(GL).length);
+    }
+  }
+
+  function _selectTerm(slug, fromURL) {
+    _S.sel = slug;
+    syncToURL();
+    document.querySelectorAll("#gl-index .gl-row").forEach(r => {
+      const on = r.dataset.slug === slug;
+      r.classList.toggle("is-selected", on);
+      const h = r.querySelector(".gl-row-head");
+      if (on) h.setAttribute("aria-current", "true"); else h.removeAttribute("aria-current");
+    });
+    _paintEntry();
+    const pane = document.getElementById("gl-entry");
+    if (!fromURL && pane && pane.getBoundingClientRect().top < 0) pane.scrollIntoView({ block: "start" });
+  }
+
+  function _toggleRow(slug) {
+    if (_S.open.has(slug)) _S.open.delete(slug); else _S.open.add(slug);
+    const row = document.getElementById("g-" + slug);
+    if (!row || !GL[slug]) return;
+    row.outerHTML = _row(slug, GL[slug]);
+    const fresh = document.getElementById("g-" + slug);
+    if (fresh && _S.open.has(slug)) _wireReceipts(fresh);
   }
 
   function renderTerms() {
     const root = document.getElementById("glossary-rows");
+    _termsShell(root);
     const q = (_S.q || "").toLowerCase().trim();
-    const groups = groupOrder();
-    // group filter chips with counts
-    const counts = { all: 0 };
-    const byGroup = new Map(groups.map(g => [g, []]));
+    // An entry reached by #g= must be on the index: filters that hide it clear.
+    // A retired slug resolves through eephus-gl.js (enter_prob opens p_enter).
+    if (_S.term && !GL[_S.term]) {
+      const G = window.EEPHUS_GL;
+      const c = G && G.canon ? G.canon(_S.term) : null;
+      _S.term = c && GL[c] ? c : null;
+    }
+    if (_S.term) {
+      const t = GL[_S.term];
+      if ((_S.cat !== "all" && entrySection(t) !== _S.cat) || (_S.prov !== "all" && t.shelf !== _S.prov)
+          || (_S.mod && !(t.module || []).includes(_S.mod)) || (_S.letter && _initial(t) !== _S.letter)) {
+        _S.cat = "all"; _S.prov = "all"; _S.mod = null; _S.letter = null;
+      }
+    }
+    const items = [];
     for (const [slug, e] of Object.entries(GL)) {
-      const grp = entryGroup(e);
-      if (q) {
+      if (q && !(_S.term === slug)) {
         const hay = (e.name + " " + (e.aliases || []).join(" ") + " " +
                      e.short + " " + (e.long || "")).toLowerCase();
         if (!hay.includes(q)) continue;
       }
-      // Tolerate unknown categories: lazily create the bucket so a stray
-      // category surfaces in its own chip instead of vanishing. Increments
-      // live inside the bucketing path so counts can never exceed what renders.
-      if (!byGroup.has(grp)) byGroup.set(grp, []);
-      byGroup.get(grp).push([slug, e]);
-      counts.all++;
-      counts[grp] = (counts[grp] || 0) + 1;
+      if (_S.mod && !(e.module || []).includes(_S.mod)) continue;
+      items.push({ slug, e, sec: entrySection(e), prov: e.shelf, ini: _initial(e) });
     }
-    // Union the defined group order with any orphan groups discovered above.
-    const allGroups = groups.concat([...byGroup.keys()].filter(g => !groups.includes(g)));
-    const chips = [`<button class="chip${_S.cat === "all" ? " active" : ""}" data-gl-cat="all">All <span class="gl-count">${counts.all}</span></button>`]
-      .concat(allGroups.map(g =>
-        `<button class="chip${_S.cat === g ? " active" : ""}" data-gl-cat="${escapeHtml(g)}">${escapeHtml(g)} <span class="gl-count">${counts[g] || 0}</span></button>`));
-    document.getElementById("gl-cats").innerHTML = chips.join("");
+    // Facet counts: each row of chips counts what the other filters leave.
+    const secCounts = { all: 0 }, provCounts = { all: 0 }, letters = new Set();
+    for (const it of items) {
+      const okSec = _S.cat === "all" || it.sec === _S.cat;
+      const okProv = _S.prov === "all" || it.prov === _S.prov;
+      const okL = !_S.letter || it.ini === _S.letter;
+      if (okProv && okL) { secCounts.all++; secCounts[it.sec] = (secCounts[it.sec] || 0) + 1; }
+      if (okSec && okL) { provCounts.all++; provCounts[it.prov] = (provCounts[it.prov] || 0) + 1; }
+      if (okSec && okProv) letters.add(it.ini);
+    }
+    _S.secCounts = secCounts;
+    const pressed = on => ` aria-pressed="${on ? "true" : "false"}"`;
+    document.getElementById("gl-cats").innerHTML =
+      [`<button class="chip${_S.cat === "all" ? " active" : ""}" type="button"${pressed(_S.cat === "all")} data-gl-cat="all">All <span class="gl-count">${secCounts.all}</span></button>`]
+      .concat(SECTIONS.map(s =>
+        `<button class="chip gl-sec-chip${_S.cat === s ? " active" : ""}" type="button"${pressed(_S.cat === s)} data-gl-cat="${escapeHtml(s)}">${_secIcon(s)}${escapeHtml(s)} <span class="gl-count">${secCounts[s] || 0}</span></button>`))
+      .join("");
     document.querySelectorAll("[data-gl-cat]").forEach(b => b.onclick = () => {
       _S.cat = b.dataset.glCat; syncToURL(); render();
     });
-    // entries: alphabetical within the active scope
-    const active = _S.cat === "all" ? allGroups : [_S.cat];
-    const flat = [];
-    for (const g of active) {
-      for (const [slug, e] of (byGroup.get(g) || [])) flat.push([slug, e, g]);
+    // On a phone the chip bar swipes sideways: keep the active section in view.
+    const cats = document.getElementById("gl-cats"), act = cats.querySelector(".chip.active");
+    if (act && cats.scrollWidth > cats.clientWidth) cats.scrollLeft = Math.max(0, act.offsetLeft - cats.offsetLeft - 8);
+    const prov = document.getElementById("gl-prov");
+    if (prov) {
+      prov.innerHTML = `<span class="gl-microlabel gl-prov-label">Provenance</span>` +
+        [["all", "ANY", "every provenance"]].concat(PROVENANCE).map(([k, lbl, ttl]) =>
+          `<button class="chip gl-prov-chip${_S.prov === k ? " active" : ""}" type="button"${pressed(_S.prov === k)} data-gl-prov="${k}" title="${ttl}">${k === "all" ? "" : `<span class="gl-dot gl-dot--${k}" aria-hidden="true"></span>`}${lbl} <span class="gl-count">${provCounts[k] || 0}</span></button>`).join("");
+      prov.querySelectorAll("[data-gl-prov]").forEach(b => b.onclick = () => {
+        _S.prov = b.dataset.glProv; syncToURL(); render();
+      });
     }
-    flat.sort((a, b) => a[1].name.localeCompare(b[1].name, "en", { sensitivity: "base" }));
-    // A-Z index strip (inactive letters dimmed, never hidden)
-    const present = new Set(flat.map(([, e]) => (e.name[0] || "#").toUpperCase()));
+    // A-Z strip: one initial at a time narrows the index (inactive letters
+    // dimmed, never hidden); the active letter again clears it.
     const az = ["#"].concat("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")).map(L => {
-      const has = L === "#" ? [...present].some(c => !/[A-Z]/.test(c)) : present.has(L);
-      return has ? `<a href="#" data-gl-az="${L}">${L}</a>` : `<span class="gl-az-off">${L}</span>`;
+      const on = _S.letter === L;
+      return letters.has(L) || on
+        ? `<a href="#" data-gl-az="${L}"${on ? ' class="active" aria-current="true"' : ""}>${L}</a>`
+        : `<span class="gl-az-off">${L}</span>`;
     }).join("");
     document.getElementById("gl-az").innerHTML = az;
     document.querySelectorAll("[data-gl-az]").forEach(a => a.onclick = ev => {
       ev.preventDefault();
       const L = a.dataset.glAz;
-      const hit = flat.find(([, e]) => {
-        const c = (e.name[0] || "#").toUpperCase();
-        return L === "#" ? !/[A-Z]/.test(c) : c === L;
-      });
-      if (hit) document.getElementById("g-" + hit[0])?.scrollIntoView({ block: "start" });
+      _S.letter = _S.letter === L ? null : L;
+      render();
     });
-    let lastLetter = null;
-    const parts = [];
-    for (const [slug, e] of flat) {
-      const c = (e.name[0] || "#").toUpperCase();
-      const letter = /[A-Z]/.test(c) ? c : "#";
-      if (letter !== lastLetter) {
-        parts.push(`<div class="glossary-cat-heading">${letter}</div>`);
-        lastLetter = letter;
-      }
-      // Hybrid expansion: collapsed by default, expanded when arrived via
-      // a direct #g= anchor (the reader asked for THIS entry's full read).
-      parts.push(entryCard(slug, e, _S.term === slug));
+    // The index: section heading (icon, count), sub-group heading, rows A to Z.
+    const shown = items.filter(it => (_S.cat === "all" || it.sec === _S.cat)
+      && (_S.prov === "all" || it.prov === _S.prov) && (!_S.letter || it.ini === _S.letter));
+    const bySec = new Map();
+    for (const it of shown) {
+      if (!bySec.has(it.sec)) bySec.set(it.sec, new Map());
+      const sub = subGroup(it.slug, it.e, it.sec);
+      const m = bySec.get(it.sec);
+      if (!m.has(sub)) m.set(sub, []);
+      m.get(sub).push(it);
     }
-    root.innerHTML = parts.join("") || `<div class="state-message">No terms match.</div>`;
-    _wireReceipts(root);
+    const parts = [];
+    for (const sec of SECTIONS) {
+      const m = bySec.get(sec);
+      if (!m) continue;
+      const n = [...m.values()].reduce((a, l) => a + l.length, 0);
+      parts.push(`<div class="glossary-cat-heading gl-sec-head" data-gl-sec="${escapeHtml(sec)}">${_secIcon(sec)}<span>${escapeHtml(sec)}</span><span class="gl-count">${n}</span></div>`);
+      const order = SUBGROUPS[sec].concat([...m.keys()].filter(k => !SUBGROUPS[sec].includes(k)));
+      for (const sub of order) {
+        const list = m.get(sub);
+        if (!list) continue;
+        if (sub) parts.push(`<div class="gl-sub-head">${escapeHtml(sub)} <span class="gl-count">${list.length}</span></div>`);
+        list.sort((a, b) => a.e.name.localeCompare(b.e.name, "en", { sensitivity: "base" }));
+        for (const it of list) parts.push(_row(it.slug, it.e));
+      }
+    }
+    const idx = document.getElementById("gl-index");
+    idx.innerHTML = parts.join("") || `<div class="state-message">No terms match.</div>`;
+    _wireReceipts(idx);
+    const note = document.getElementById("gl-index-note");
+    if (note) {
+      note.innerHTML = `${shown.length} of ${Object.keys(GL).length} terms` +
+        (_S.mod ? ` · ${escapeHtml(MOD_LABEL[_S.mod] || _S.mod.toUpperCase())} terms only <button class="gl-linkbtn" type="button" data-gl-mod-clear>Show every module</button>` : "");
+    }
+    if (_S.sel && !GL[_S.sel]) _S.sel = null;
+    // A #g= arrival: select the entry (wide) or open its row (narrow), scroll
+    // the index to it and flash it once.
     if (_S.term) {
-      const card = document.getElementById("g-" + _S.term);
-      if (card) {
+      const slug = _S.term;
+      _S.term = null;
+      _S.sel = slug;
+      if (!_wide()) {
+        _S.open.add(slug);
+        const row = document.getElementById("g-" + slug);
+        if (row) { row.outerHTML = _row(slug, GL[slug]); _wireReceipts(document.getElementById("g-" + slug)); }
+      }
+      _paintEntry();
+      const row = document.getElementById("g-" + slug);
+      if (row) {
+        row.classList.add("is-selected");
+        const h = row.querySelector(".gl-row-head");
+        if (h) h.setAttribute("aria-current", "true");
         requestAnimationFrame(() => {
-          card.scrollIntoView({ behavior: "smooth", block: "start" });
-          card.classList.add("is-highlighted");
+          if (_wide()) {
+            idx.scrollTop = Math.max(0, row.offsetTop - idx.offsetTop - idx.clientHeight / 3);
+            const pane = document.querySelector(".gl-terms");
+            if (pane) pane.scrollIntoView({ block: "start" });
+          } else {
+            row.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+          row.classList.add("is-highlighted");
         });
       }
-      _S.term = null;
+    } else {
+      _paintEntry();
     }
+  }
+
+  // ---- Formulas view (LIBRARY_4) ---------------------------------------------
+  // Every entry whose formula is a non-blank string, by section, in the
+  // site's monospace; each name opens its entry under Terms. No new data.
+  function renderFormulas() {
+    const el = document.getElementById("formulas-body");
+    if (!el) return;
+    const bySec = new Map(SECTIONS.map(s => [s, []]));
+    let n = 0;
+    for (const [slug, e] of Object.entries(GL)) {
+      if (typeof e.formula !== "string" || !e.formula.trim()) continue;
+      bySec.get(entrySection(e)).push([slug, e]);
+      n++;
+    }
+    const nav = SECTIONS.filter(s => bySec.get(s).length).map(s =>
+      `<button class="chip gl-sec-chip" type="button" data-gl-fx-jump="${escapeHtml(s)}">${_secIcon(s)}${escapeHtml(s)} <span class="gl-count">${bySec.get(s).length}</span></button>`).join("");
+    const secs = SECTIONS.filter(s => bySec.get(s).length).map(s => {
+      const list = bySec.get(s).sort((a, b) => a[1].name.localeCompare(b[1].name, "en", { sensitivity: "base" }));
+      return `<section class="gl-fx-sec" data-gl-fx-sec="${escapeHtml(s)}">
+        <h3 class="glossary-cat-heading gl-sec-head">${_secIcon(s)}<span>${escapeHtml(s)}</span><span class="gl-count">${list.length}</span></h3>
+        <dl class="gl-fx-list">${list.map(([slug, e]) =>
+          `<div class="gl-fx-row" data-fx-slug="${escapeHtml(slug)}"><dt><a class="gl-fx-term" href="#g=${escapeHtml(slug)}">${escapeHtml(e.name)}</a></dt><dd><pre class="gl-fx-pre">${escapeHtml(e.formula)}</pre></dd></div>`).join("")}</dl>
+      </section>`;
+    }).join("");
+    el.innerHTML = `<div class="gl-fx">
+      <p class="gl-fx-lede">${n} entries carry a formula, grouped by shelf. Each name opens its full entry under Terms.</p>
+      <div class="filter-bar gl-fx-nav">${nav}</div>${secs}</div>`;
+    el.querySelectorAll("[data-gl-fx-jump]").forEach(b => b.onclick = () => {
+      const t = el.querySelector(`[data-gl-fx-sec="${b.dataset.glFxJump}"]`);
+      if (t) t.scrollIntoView({ block: "start" });
+    });
   }
 
   // ==== RECEIPT BLOCKS (2026-08-19) ==========================================
@@ -872,7 +1177,7 @@
     if (bar) bar.style.display = _S.view === "terms" ? "" : "none";
     // The group chips and A-Z strip stay hidden until the terms exist, so a
     // loading or failed page shows no empty bordered bar above the state box.
-    for (const id of ["gl-cats", "gl-az"]) {
+    for (const id of ["gl-cats", "gl-prov", "gl-az"]) {
       const el = document.getElementById(id);
       if (el) el.style.display = _GL_STATE === "ready" ? "" : "none";
     }
@@ -880,14 +1185,12 @@
     def.render();
   }
 
-  // A registered leaf whose content another task fills (Formulas, Calibration):
-  // it opens from its URL and says where that material sits today.
+  // A registered leaf whose content another task fills (Calibration): it
+  // opens from its URL and says where that material sits today.
   function _renderPendingLeaf(id) {
     const el = document.getElementById(VIEW_BY_ID[id].body);
     if (!el) return;
-    const where = id === "formulas"
-      ? 'Each formula sits on its own entry under <a href="#view=terms">Terms</a> for now.'
-      : 'The calibration tables sit in <a href="#view=methodology">Methodology</a> for now.';
+    const where = 'The calibration tables sit in <a href="#view=methodology">Methodology</a> for now.';
     const msg = `${escapeHtml(VIEW_BY_ID[id].label)} is not built yet. ${where}`;
     const S = window.EephusState;
     el.innerHTML = S ? S.html("empty", msg, "gl-pending-leaf")
@@ -925,9 +1228,13 @@
       });
     }
     window.addEventListener("hashchange", () => { syncFromURL(); render(); });
+    // Crossing the two-pane breakpoint redraws the Terms view in the other layout.
+    const mq = window.matchMedia && window.matchMedia("(min-width: 900px)");
+    if (mq && mq.addEventListener) mq.addEventListener("change", () => {
+      if (_S.view === "terms" && _GL_STATE === "ready") render();
+    });
     const start = () => {
       GL = window.EEPHUS_GLOSSARY || {};
-      GROUPS = window.EEPHUS_GLOSSARY_GROUPS || {};
       _GL_STATE = "ready";
       render();
     };

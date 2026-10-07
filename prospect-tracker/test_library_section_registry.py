@@ -151,8 +151,10 @@ def test_the_strip_carries_one_state_attribute_per_chip():
         row = re.search(rf'data-gl-leaves="{sid}"[^>]*>(.*?)</div>', strip).group(1)
         shown = len(re.findall(r'<button (?![^>]*\bhidden\b)[^>]*data-glossary-view=', row)) + row.count("<a ")
         assert int(n) == shown, sid
-    # unlisted leaves ship hidden until they are current
-    for v in ("formulas", "calibration", "models"):
+    # unlisted leaves ship hidden until they are current (Formulas is listed
+    # since LIBRARY_4 filled it)
+    assert re.search(r'<button class="chip" type="button" data-gl-shelf="reference" data-glossary-view="formulas">', strip)
+    for v in ("calibration", "models"):
         assert re.search(rf'data-gl-unlisted hidden data-gl-shelf="[a-z]+" data-glossary-view="{v}"', strip), v
     # only the active shelf's leaf row shows
     assert re.findall(r'data-gl-leaves="([a-z]+)">', strip) == ["reference"]

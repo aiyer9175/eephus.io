@@ -2991,6 +2991,85 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   .gl-app .gl-strip .chip { min-height: 44px; }
   .gl-app .gl-strip .gl-shelf-chip { flex: 1 1 0; min-width: 0; padding: 4px 6px; flex-direction: column; gap: 2px; line-height: 1.1; }
 }
+/* Terms view (LIBRARY_4): seven term shelves. Section chips, then the
+   provenance row, then A-Z; the index carries the search and, from 900 px,
+   sits sticky on the left beside the selected entry. Narrower, each row is
+   one line (name and a two-line definition) that opens in place. */
+.gl-app .gl-sec-chip, .gl-app .gl-prov-chip { display: inline-flex; align-items: center; gap: 5px; }
+.gl-app .gl-sec-ico { flex: none; image-rendering: pixelated; }
+.gl-app #gl-prov { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 0 0 8px; padding: 6px 10px;
+  background: var(--bg-secondary); border: 1px solid var(--border); }
+.gl-app .gl-prov-label { margin-right: 4px; }
+.gl-app .gl-dot { display: inline-block; flex: none; width: 8px; height: 8px; border: 1px solid var(--border); }
+.gl-app .gl-dot--ark { background: var(--accent-cyan); border-color: var(--accent-cyan); }
+.gl-app .gl-dot--industry { background: var(--bg-primary); border-color: var(--text-tertiary); }
+.gl-app .gl-dot--foundation { background: var(--text-secondary); border-color: var(--text-secondary); }
+.gl-app #gl-az a.active { color: var(--text-primary); background: var(--bg-tertiary); font-weight: 700; }
+.gl-app .gl-index-head { display: flex; flex-direction: column; gap: 6px; padding: 0 0 8px; }
+.gl-app .gl-index-head input.gl-search { max-width: none; }
+.gl-app .gl-index-note { font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-secondary); }
+.gl-app .gl-linkbtn { font: inherit; color: var(--accent-cyan); background: none; border: none; padding: 0 2px;
+  cursor: pointer; text-decoration: underline; }
+.gl-app .gl-sec-head { display: flex; align-items: center; gap: 6px; }
+.gl-app .gl-sec-head .gl-count { margin-left: auto; }
+.gl-app .gl-sub-head { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-secondary); margin: 10px 0 4px; }
+.gl-app .glossary-card.gl-row { padding: 0; margin-bottom: 4px; }
+.gl-app .gl-row-head { display: grid; grid-template-columns: 10px minmax(0, 1fr); column-gap: 8px; row-gap: 2px;
+  align-items: baseline; width: 100%; min-height: 44px; padding: 8px 10px; text-align: left; cursor: pointer;
+  background: none; border: none; color: var(--text-primary); font: inherit; }
+.gl-app .gl-row-name { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.gl-app .gl-row-def { grid-column: 2; font-size: 12px; line-height: 1.4; color: var(--text-secondary);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.gl-app .gl-row.is-open .gl-row-def { display: block; -webkit-line-clamp: unset; color: var(--text-primary); }
+.gl-app .gl-row-body { padding: 0 10px 10px 28px; }
+.gl-app .gl-row-badges { margin: 0 0 6px; }
+.gl-app .gl-row-head:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: -2px; }
+.gl-app .gl-entry-pane { display: none; }
+.gl-app .gl-entry-card .gp-term { font-family: var(--font-retro-mono); font-size: 18px; margin: 0; color: var(--text-primary); }
+.gl-app .gl-entry-where { display: flex; align-items: center; gap: 6px; font-family: var(--font-retro-mono); font-size: 11px;
+  color: var(--text-secondary); margin-bottom: 6px; }
+.gl-app .gl-entry-body { margin-top: 10px; }
+.gl-app .gl-entry-lede { font-size: 13px; line-height: 1.55; color: var(--text-secondary); margin: 0 0 12px; }
+.gl-app .gl-ov-list { list-style: none; margin: 0; padding: 0; }
+.gl-app .gl-ov-list li { padding: 8px 0; border-top: 1px solid var(--border-light); }
+.gl-app .gl-ov-sec { display: flex; align-items: center; gap: 8px; width: 100%; font: inherit; font-weight: 700; font-size: 13px;
+  color: var(--text-primary); background: none; border: none; padding: 2px 0; cursor: pointer; text-align: left; }
+.gl-app .gl-ov-sec .gl-count { margin-left: auto; }
+.gl-app .gl-ov-subs { display: block; font-size: 11.5px; color: var(--text-secondary); padding-left: 24px; }
+@media (min-width: 900px) {
+  .gl-app .gl-terms { display: grid; grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .gl-app .gl-index-pane { position: sticky; top: 8px; display: flex; flex-direction: column;
+    max-height: calc(100vh - 16px); border: 1px solid var(--border); background: var(--bg-secondary); padding: 8px; }
+  .gl-app .gl-index { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-right: 4px; }
+  .gl-app .gl-index .gl-sec-head { margin: 12px 0 4px; }
+  .gl-app .gl-index .gl-sec-head:first-child { margin-top: 0; }
+  .gl-app .glossary-card.gl-row { margin-bottom: 0; border: none; background: none; }
+  .gl-app .gl-row-head { min-height: 0; padding: 3px 6px; grid-template-columns: 8px minmax(0, 1fr); }
+  .gl-app .gl-row-name { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
+  .gl-app .gl-row-def, .gl-app .gl-row-body { display: none; }
+  .gl-app .gl-row-head:hover .gl-row-name { color: var(--text-primary); }
+  .gl-app .gl-row.is-selected .gl-row-head { background: var(--bg-tertiary); box-shadow: inset 3px 0 0 var(--accent-gold); }
+  .gl-app .gl-row.is-selected .gl-row-name { color: var(--text-primary); font-weight: 700; }
+  .gl-app .gl-entry-pane { display: block; border: 1px solid var(--border); background: var(--bg-secondary);
+    padding: 14px 18px; min-height: 320px; }
+  .gl-app .gl-entry-pane .gl-meth p { font-size: 13px; }
+}
+/* Formulas leaf (LIBRARY_4): every non-blank formula by shelf, monospace. */
+.gl-app .gl-fx-lede { font-size: 13px; line-height: 1.55; color: var(--text-secondary); margin: 4px 0 8px; }
+.gl-app .gl-fx-list { margin: 0; }
+.gl-app .gl-fx-row { padding: 6px 0; border-top: 1px solid var(--border-light); }
+.gl-app .gl-fx-row dt { margin: 0 0 4px; }
+.gl-app .gl-fx-row dd { margin: 0; min-width: 0; }
+.gl-app .gl-fx-term { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700; color: var(--accent-cyan); text-decoration: none; }
+.gl-app .gl-fx-term:hover { text-decoration: underline; }
+.gl-app .gl-fx-pre { font-family: var(--font-retro-mono); font-size: 11px; line-height: 1.5; margin: 0; padding: 6px 8px;
+  white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg-primary); border: 1px solid var(--border-light);
+  color: var(--text-primary); }
+@media (min-width: 900px) {
+  .gl-app .gl-fx-row { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px; align-items: start; }
+  .gl-app .gl-fx-row dt { margin: 4px 0 0; }
+}
 /* === Models & Proofs view === */
 /* Verdict pill: theme-aware via the shared accent tokens, so it reads on both
    the light cream and the dark refractor themes. */

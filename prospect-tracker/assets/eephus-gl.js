@@ -100,7 +100,8 @@
                         aliases: e.aliases || [], category: e.category,
                         priority: e.priority, formula: e.formula, example: e.example,
                         visual_html: e.visual, related: e.seeAlso || [],
-                        module: e.module || [], shelf: e.shelf, origin: e.origin };
+                        module: e.module || [], shelf: e.shelf, origin: e.origin,
+                        section: e.section };
         }
         window.EEPHUS_GLOSSARY = map;
         window.EEPHUS_GLOSSARY_GROUPS = d.groups || {};
@@ -122,9 +123,16 @@
   function ensureLoaded() { if (!_loadStarted) load(); }
   if (FULL) load();
 
+  // Retired slugs that still resolve: a merged entry keeps its old #g= and
+  // data-gl links working (LIBRARY_4: enter_prob folded into p_enter).
+  const SLUG_ALIASES = { enter_prob: "p_enter" };
+  function canon(slug) {
+    return Object.prototype.hasOwnProperty.call(SLUG_ALIASES, slug) ? SLUG_ALIASES[slug] : slug;
+  }
   function resolve(q) {
     const map = window.EEPHUS_GLOSSARY || {};
     if (map[q]) return q;
+    if (map[canon(q)]) return canon(q);
     const lq = String(q || "").toLowerCase();
     for (const [slug, e] of Object.entries(map)) {
       if (e.name.toLowerCase() === lq) return slug;
@@ -543,5 +551,5 @@
     if (ov && inp && ov.classList.contains("is-open")) qkSearch(inp.value);
   });
 
-  window.EEPHUS_GL = { open: qkOpen, wire, resolve, reload: load };
+  window.EEPHUS_GL = { open: qkOpen, wire, resolve, canon, reload: load };
 })();

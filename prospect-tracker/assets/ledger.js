@@ -1097,7 +1097,7 @@
   }
   function optTable(rows, withClub) {
     var head = "<tr>" + (withClub ? "<th>Club</th>" : "") + '<th class="lo-txt">Player</th><th class="lo-txt">Type</th>' +
-      '<th class="lc-col-hide lo-txt">Holder</th><th>At stake</th><th class="lc-col-hide lo-txt">Basis</th><th class="lc-col-hide lo-left">Decision</th><th>' + gl("P(exercise)", "enter_prob") + "</th>" +
+      '<th class="lc-col-hide lo-txt">Holder</th><th>At stake</th><th class="lc-col-hide lo-txt">Basis</th><th class="lc-col-hide lo-left">Decision</th><th>' + gl("P(exercise)", "p_enter") + "</th>" +
       '<th class="lc-col-hide">Option value</th><th class="lc-col-hide lo-txt">Why no price</th></tr>';
     var body = rows.map(function (x) {
       var o = optCells(x.r);

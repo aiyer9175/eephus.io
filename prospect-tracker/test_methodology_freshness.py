@@ -191,7 +191,7 @@ MODEL_GLOSSARY = {
     "fa_rational_value": ["rational_value", "contract_surplus"],
     "fa_dpw_series": ["winter_dpw", "dpw_tier"],
     "fa_team_fit": ["fit_components"],
-    "fa_penter": ["enter_prob"],
+    "fa_penter": ["p_enter"],
     "fa_qo_pick_tax": ["qo_tax"],
     "mlb_projections_vets": ["mlb_projections"],
     "mlb_projections_prospects": ["mlb_projections", "proj_buckets"],

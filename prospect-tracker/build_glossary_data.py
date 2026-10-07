@@ -489,6 +489,15 @@ def _write_payload(out: Path, payload: dict) -> None:
     out.write_bytes(text.replace("\n", eol).encode("utf-8"))
 
 
+def _sectioned(e: dict, groups: dict) -> dict:
+    """The entry with its term shelf (`section`, LIBRARY_4) placed after
+    `category`, by the one rule in tools/glossary_sections.py."""
+    import sys
+    sys.path.insert(0, str(ROOT / "tools"))
+    from glossary_sections import _insert_after, section_for
+    return _insert_after(e, "category", "section", section_for(e, groups))
+
+
 def merge_prospx_lb(path: Path | None = None) -> dict:
     """Add the PROSPX Leaderboards vocabulary to the EXISTING data/glossary.json.
 
@@ -505,7 +514,7 @@ def merge_prospx_lb(path: Path | None = None) -> dict:
     for e in PROSPX_LB_ENTRIES:
         if e["id"] in by_id:
             continue
-        e = json.loads(json.dumps(e))
+        e = _sectioned(json.loads(json.dumps(e)), payload.get("groups") or GROUPS)
         entries.append(e)
         by_id[e["id"]] = e
         added.append(e["id"])
@@ -644,6 +653,7 @@ def merge_betting(path: Path | None = None) -> dict:
         if e["id"] in have:
             continue
         e = {**e, "module": e.get("module") or [e.get("category") or "betting"]}
+        e = _sectioned(e, {**GROUPS, **(payload.get("groups") or {})})
         payload.setdefault("entries", []).append(e)
         added.append(e["id"])
     groups = payload.setdefault("groups", {})
