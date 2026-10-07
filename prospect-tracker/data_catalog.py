@@ -380,6 +380,29 @@ ARTIFACTS = (
                  "all six boards."),
     },
     {
+        "file": "mlb_league_panel_*.json", "group": "mlb",
+        "title": "League Averages, one season",
+        "what": ("One row per player-season (2000 on) with the counts, own hand, age, "
+                 "role and served index values, plus the pooled League value and the "
+                 "player distribution of every group the League tab filters by."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_league_averages_export.py",
+        "note": ("Served once league_averages.MLBSTATS_LEAGUE_TEAMS_LIVE is True; until "
+                 "then league_averages.py writes it under .cache/league_teams/preview/. "
+                 "Completed seasons are written once; the live season nightly."),
+    },
+    {
+        "file": "mlb_league_series.json", "group": "mlb",
+        "title": "League Averages over time",
+        "what": ("Every League Averages statistic by season, 2000 on, for the fixed "
+                 "over-time cells (positions, own hand, age bands, roles, leagues, the "
+                 "role-innings cells and the club mean and SD)."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_league_averages_export.py",
+        "note": ("Served with the season panels under the same flag. League Trends reads "
+                 "it by series_ref and never re-pools it."),
+    },
+    {
         "file": "pal.json", "group": "mlb",
         "title": "Alchemy Lab conversions",
         "what": "Reliever to starter and starter to reliever fits, with pitch-mix change history.",
