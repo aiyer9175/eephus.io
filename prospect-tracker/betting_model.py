@@ -7428,6 +7428,28 @@ def _market_fair_probs(dates_needed: set, kind: str) -> dict:
     return out
 
 
+def _market_gap_ci(window: list[dict], matched: dict, model_per_game: dict,
+                   ys: dict, m_pks: list) -> dict:
+    """LIBRARY_14: the paired interval on the model's Brier improvement over a
+    market tier on that tier's captured games (the tier's Brier minus the
+    model's, so positive means the model is better), slate-clustered: a
+    slate's games read one capture and are drawn together. A measurement on
+    the same games as the same_games block; it prices nothing."""
+    import numpy as np
+    import gap_intervals as gi
+    slate = {g["game_pk"]: g.get("date") for g in window}
+    y = np.array([ys[pk] for pk in m_pks], float)
+    sq_model = (np.array([model_per_game[pk] for pk in m_pks], float) - y) ** 2
+    sq_market = (np.array([matched[pk] for pk in m_pks], float) - y) ** 2
+
+    def gaps(idx):
+        return {"brier": float(sq_market[idx].mean() - sq_model[idx].mean())}
+
+    return gi.paired_cluster_interval(
+        [slate.get(pk) for pk in m_pks], gaps, seed=gi.SEED, ndigits=5,
+        cluster="slate (game date): a slate's games read one capture and are drawn together")
+
+
 def _benchmarks_block(games: list[dict], vintage_block: dict,
                       model_per_game: dict) -> dict:
     """The pre-registered four-tier ladder on the vintage EVAL window
@@ -7541,6 +7563,8 @@ def _benchmarks_block(games: list[dict], vintage_block: dict,
                        "slate, home fair probability averaged across books "
                        "posting a two-sided h2h market"),
         }
+        tiers[name]["gap_ci_model_vs_market"] = _market_gap_ci(
+            window, matched, model_per_game, ys, m_pks)
     out.update({
         "status": "ran",
         "window": {"split_date": vintage_block.get("split_date"), "n": n,

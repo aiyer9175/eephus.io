@@ -1185,9 +1185,9 @@ def _ols(xs, ys):
     return my - slope * mx, slope
 
 
-def gate_team_wins(model: dict, first: int, last: int) -> dict:
-    """GATE 1 - the standard WAR validity test. Team-season WAR against actual
-    team wins, eWAR and bWAR on IDENTICAL rows."""
+def _team_season_points(model: dict, first: int, last: int) -> list[dict]:
+    """One point per team-season with standings on disk: summed eWAR and bWAR
+    over identical rows, the record and the replacement level."""
     stand = standings(range(first, last + 1))
     tot: dict[tuple[int, str], dict] = defaultdict(lambda: {"e": 0.0, "b": 0.0})
     for r in model["rows"]:
@@ -1205,6 +1205,13 @@ def gate_team_wins(model: dict, first: int, last: int) -> dict:
         pts.append({"season": season, "team": team, "wins": rec["w"],
                     "games": games, "ewar": v["e"], "bwar": v["b"],
                     "repl": REPLACEMENT_WINS * games / FULL_SEASON_GAMES})
+    return pts
+
+
+def gate_team_wins(model: dict, first: int, last: int) -> dict:
+    """GATE 1 - the standard WAR validity test. Team-season WAR against actual
+    team wins, eWAR and bWAR on IDENTICAL rows."""
+    pts = _team_season_points(model, first, last)
     if not pts:
         return {"n": 0, "note": "no standings on disk for this window"}
 
@@ -1393,6 +1400,34 @@ def gate_pitcher_persistence(model: dict, min_ip: float = 50.0) -> dict:
     this year's FIP-priced value predict NEXT year's actual runs prevented
     better than this year's actual runs prevented does?
     """
+    pairs = _persistence_pairs(model, min_ip)
+    if len(pairs) < 30:
+        return {"n_pairs": len(pairs), "note": "too few pairs to measure"}
+    r_e = _pearson([p["e0"] for p in pairs], [p["e1"] for p in pairs])
+    r_b = _pearson([p["b0"] for p in pairs], [p["b1"] for p in pairs])
+    r_fore_e = _pearson([p["e0"] for p in pairs], [p["b1"] for p in pairs])
+    r_fore_b = _pearson([p["b0"] for p in pairs], [p["b1"] for p in pairs])
+    r_war_e = _pearson([p["ew0"] for p in pairs], [p["ew1"] for p in pairs])
+    r_war_b = _pearson([p["bw0"] for p in pairs], [p["bw1"] for p in pairs])
+    return {
+        "n_pairs": len(pairs), "min_ip": min_ip,
+        "units": "runs above average per 9 IP",
+        "self_r_ewar_fip": round(r_e, 4), "self_r_bwar_ra": round(r_b, 4),
+        "forecast_next_year_actual_runs": {
+            "from_ewar_fip": round(r_fore_e, 4),
+            "from_bwar_ra": round(r_fore_b, 4),
+            "reading": "correlation of season-y value with season-(y+1) ACTUAL "
+                       "runs above average (B-Ref runs-allowed basis)",
+        },
+        "season_war_self_r": {"ewar": round(r_war_e, 4), "bwar": round(r_war_b, 4)},
+        "verdict": ("FIP persists better" if r_e > r_b else
+                    "runs-allowed persists better" if r_e < r_b else "tie"),
+    }
+
+
+def _persistence_pairs(model: dict, min_ip: float = 50.0) -> list[dict]:
+    """Consecutive pitcher-season pairs, both seasons over `min_ip` and fully
+    FIP-priced, in runs above average per 9 IP on both bases."""
     agg: dict[tuple[int, int], dict] = defaultdict(lambda: {"ip": 0.0, "e": 0.0, "b": 0.0,
                                                             "ew": 0.0, "bw": 0.0, "cov": True})
     for r in model["rows"]:
@@ -1419,30 +1454,51 @@ def gate_pitcher_persistence(model: dict, min_ip: float = 50.0) -> dict:
             "e0": 9.0 * a["e"] / a["ip"], "e1": 9.0 * nxt["e"] / nxt["ip"],
             "b0": 9.0 * a["b"] / a["ip"], "b1": 9.0 * nxt["b"] / nxt["ip"],
             "ew0": a["ew"], "ew1": nxt["ew"], "bw0": a["bw"], "bw1": nxt["bw"],
-            "season": season,
+            "season": season, "mid": mid,
         })
+    return pairs
+
+
+def team_wins_gap_ci(model: dict, first: int, last: int) -> dict | None:
+    """LIBRARY_14: the paired interval on gate 1's gap, eWAR's r with team wins
+    minus bWAR's, team-clustered (a franchise's seasons are drawn together)."""
+    import numpy as np
+    import gap_intervals as gi
+    pts = _team_season_points(model, first, last)
+    if not pts:
+        return None
+    e = np.array([p["ewar"] for p in pts], float)
+    b = np.array([p["bwar"] for p in pts], float)
+    w = np.array([p["wins"] for p in pts], float)
+
+    def gaps(idx):
+        re_, rb_ = gi.pearson(e[idx], w[idx]), gi.pearson(b[idx], w[idx])
+        return {"r": None if re_ is None or rb_ is None else re_ - rb_}
+
+    return gi.paired_cluster_interval(
+        [_fold_team(p["team"]) for p in pts], gaps, seed=gi.SEED,
+        cluster="team (franchise): a club's seasons are drawn together")
+
+
+def persistence_gap_ci(model: dict, min_ip: float = 50.0) -> dict | None:
+    """LIBRARY_14: the paired interval on gate 2's gap, the year-to-year r of
+    FIP-based pitching minus that of runs-allowed pitching, player-clustered
+    (a pitcher's season pairs are drawn together)."""
+    import numpy as np
+    import gap_intervals as gi
+    pairs = _persistence_pairs(model, min_ip)
     if len(pairs) < 30:
-        return {"n_pairs": len(pairs), "note": "too few pairs to measure"}
-    r_e = _pearson([p["e0"] for p in pairs], [p["e1"] for p in pairs])
-    r_b = _pearson([p["b0"] for p in pairs], [p["b1"] for p in pairs])
-    r_fore_e = _pearson([p["e0"] for p in pairs], [p["b1"] for p in pairs])
-    r_fore_b = _pearson([p["b0"] for p in pairs], [p["b1"] for p in pairs])
-    r_war_e = _pearson([p["ew0"] for p in pairs], [p["ew1"] for p in pairs])
-    r_war_b = _pearson([p["bw0"] for p in pairs], [p["bw1"] for p in pairs])
-    return {
-        "n_pairs": len(pairs), "min_ip": min_ip,
-        "units": "runs above average per 9 IP",
-        "self_r_ewar_fip": round(r_e, 4), "self_r_bwar_ra": round(r_b, 4),
-        "forecast_next_year_actual_runs": {
-            "from_ewar_fip": round(r_fore_e, 4),
-            "from_bwar_ra": round(r_fore_b, 4),
-            "reading": "correlation of season-y value with season-(y+1) ACTUAL "
-                       "runs above average (B-Ref runs-allowed basis)",
-        },
-        "season_war_self_r": {"ewar": round(r_war_e, 4), "bwar": round(r_war_b, 4)},
-        "verdict": ("FIP persists better" if r_e > r_b else
-                    "runs-allowed persists better" if r_e < r_b else "tie"),
-    }
+        return None
+    e0, e1 = (np.array([p[k] for p in pairs], float) for k in ("e0", "e1"))
+    b0, b1 = (np.array([p[k] for p in pairs], float) for k in ("b0", "b1"))
+
+    def gaps(idx):
+        re_, rb_ = gi.pearson(e0[idx], e1[idx]), gi.pearson(b0[idx], b1[idx])
+        return {"r": None if re_ is None or rb_ is None else re_ - rb_}
+
+    return gi.paired_cluster_interval(
+        [p["mid"] for p in pairs], gaps, seed=gi.SEED,
+        cluster="player (mlbam): a pitcher's season pairs are drawn together")
 
 
 def gate_coverage(model: dict) -> dict:
@@ -1679,6 +1735,14 @@ def evaluate(model: dict, model_unshrunk: dict | None = None,
         "accounting_league_sum": gate_league_sum(windowed),
         "face_validity": face_validity(windowed),
     }
+    # LIBRARY_14: each gate's paired interval sits beside the points it was
+    # measured on, on the same windowed rows. Nothing above reads it.
+    g1_ci = team_wins_gap_ci(windowed, first, last)
+    if g1_ci is not None:
+        ev["gate_1_team_wins"]["gap_ci_vs_bwar"] = g1_ci
+    g2_ci = persistence_gap_ci(windowed)
+    if g2_ci is not None:
+        ev["gate_2_pitcher_persistence"]["gap_ci_vs_bwar_ra"] = g2_ci
     if arms:
         att = {"why": "the two component swaps run one at a time, so a gate "
                       "movement is attributable to a component and not to "

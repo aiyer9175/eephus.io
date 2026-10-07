@@ -502,9 +502,32 @@ def _fit_linear_calibration(pairs: list[tuple[float, float]]) -> dict | None:
     return {"a": round(a, 4), "b": round(b, 4), "n": n}
 
 
+def _gap_ci_vs_challenger(base_pairs, chall_pairs, keys) -> dict:
+    """LIBRARY_14: the paired interval on the served FV-only path's gap over
+    the MiLB-stats ridge on the same out-of-sample rows: Spearman as served
+    minus ridge, MAE as ridge minus served, so positive means the served path
+    is better. Player-clustered (one row per player here, so each draw is a
+    plain row bootstrap). Both arms are held fixed: nothing is refit."""
+    import numpy as np
+    import gap_intervals as gi
+    obs = np.array([o for _, o in base_pairs], float)
+    p_b = np.array([p for p, _ in base_pairs], float)
+    p_c = np.array([p for p, _ in chall_pairs], float)
+    e_b, e_c = np.abs(p_b - obs), np.abs(p_c - obs)
+
+    def gaps(idx):
+        sb, sc = gi.spearman(p_b[idx], obs[idx]), gi.spearman(p_c[idx], obs[idx])
+        return {"spearman": None if sb is None or sc is None else sb - sc,
+                "mae": float(e_c[idx].mean() - e_b[idx].mean())}
+
+    return gi.paired_cluster_interval(keys, gaps, seed=gi.SEED,
+                                      cluster="player (player_key)")
+
+
 def run(persist: bool = True) -> dict:
     rows, acct = build_cohort()
     chall_pairs, base_pairs, lgbm_pairs = [], [], []
+    pair_keys = []          # the player behind each chall/base pair (LIBRARY_14)
     cal_pairs = []          # forward-chained CALIBRATED baseline pairs
     ical_pairs = []         # candidate #2: intercept-only, min-train-n
     ical_base_pairs = []    # the RAW baseline on the SAME rows (fair compare)
@@ -524,6 +547,7 @@ def run(persist: bool = True) -> dict:
         ic_shift = (sum(r["baseline"] - r["target"] for r in train) / ic_n
                     if ic_n >= 250 else None)
         yr_c, yr_b, yr_g, yr_k, yr_i, yr_ib = [], [], [], [], [], []
+        yr_keys = []
         for is_pit in (False, True):
             side_train = [r for r in train if r["is_pit"] == is_pit]
             model = _fit_ridge(side_train, _KEYS[is_pit])
@@ -534,6 +558,7 @@ def run(persist: bool = True) -> dict:
                 if model is not None:
                     yr_c.append((_predict(model, r["feats"]), r["target"]))
                     yr_b.append((r["baseline"], r["target"]))
+                    yr_keys.append(r["player_key"])
                 if gbm is not None:
                     import warnings as _w
                     import numpy as np
@@ -550,6 +575,7 @@ def run(persist: bool = True) -> dict:
                     yr_ib.append((r["baseline"], r["target"]))
         chall_pairs.extend(yr_c)
         base_pairs.extend(yr_b)
+        pair_keys.extend(yr_keys)
         lgbm_pairs.extend(yr_g)
         cal_pairs.extend(yr_k)
         ical_pairs.extend(yr_i)
@@ -616,6 +642,8 @@ def run(persist: bool = True) -> dict:
         },
         "challenger_pooled_oos": chall,
         "baseline_pooled_oos": base,
+        "baseline_gap_ci_vs_challenger": _gap_ci_vs_challenger(
+            base_pairs, chall_pairs, pair_keys) if base_pairs else None,
         "lgbm_challenger_pooled_oos": lgbm,
         "baseline_calibrated_pooled_oos": cal_fc,
         "baseline_intercept_only_pooled_oos": ical_fc,

@@ -172,6 +172,24 @@ def _served_intercepts() -> dict[str, float]:
         return {}
 
 
+def _holdout_gap_ci(served: dict, prior: dict, act_wins: dict) -> dict:
+    """LIBRARY_14: the paired interval on the served win vector's holdout MAE
+    improvement over prior-season wins carried forward (prior minus served, so
+    positive means the served vector is better). Team-clustered, one row per
+    club; the recentered wins are held as computed, nothing is refit."""
+    import numpy as np
+    import gap_intervals as gi
+    orgs = sorted(act_wins)
+    act = np.array([float(act_wins[o]) for o in orgs])
+    e_s = np.abs(np.array([served[o] for o in orgs], float) - act)
+    e_p = np.abs(np.array([prior[o] for o in orgs], float) - act)
+
+    def gaps(idx):
+        return {"mae": float(e_p[idx].mean() - e_s[idx].mean())}
+
+    return gi.paired_cluster_interval(orgs, gaps, seed=gi.SEED, cluster="team (org)")
+
+
 def _team_tables(rows, teams, standings):
     """Per-season team scoring for every calibration variant."""
     out = []
@@ -244,6 +262,9 @@ def _team_tables(rows, teams, standings):
         for name, w in variants.items():
             pairs = [(w[o], float(act_wins[o])) for o in act_wins]
             row[name] = {"mae": round(_mae(pairs), 2), "r": round(_r(pairs) or 0, 3)}
+        if target == holdout:
+            row["_gap_ci"] = _holdout_gap_ci(variants["served_recentered"],
+                                             variants["baseline_prior_wins"], act_wins)
         out.append(row)
     return out, {f"{s}:{b}": round(v, 3) for (s, b), v in sorted(intercepts.items())}
 
@@ -290,6 +311,7 @@ def run(persist: bool = True) -> dict:
 
     team_rows, intercepts = _team_tables(rows, teams, standings)
     holdout = next((t for t in team_rows if t["is_holdout"]), None)
+    holdout_gap = holdout.pop("_gap_ci", None) if holdout else None
     ship_cohort = bool(holdout
                        and holdout["cohort_recentered"]["mae"] < holdout["recentered"]["mae"])
 
@@ -317,6 +339,7 @@ def run(persist: bool = True) -> dict:
                 "today, which the challenger-vs-incumbent comparison does not. A "
                 "served arm that matches 'recentered' means the vector is doing "
                 "nothing; worse means it is actively costing wins."),
+            "holdout_gap_ci_vs_prior_wins": holdout_gap,
         },
     }
     if persist:

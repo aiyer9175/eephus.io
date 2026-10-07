@@ -333,7 +333,12 @@
       "baseline": 0.222,
       "better": "lower",
       "baseline_label": "de-vigged opening market",
-      "n": 461
+      "n": 461,
+      "gap_ci": {
+       "lo": -0.0356,
+       "hi": -0.0098
+      },
+      "resolvable": false
      }
     ],
     "derived_from": {
@@ -349,7 +354,11 @@
       {
        "champion": "benchmarks.tiers.market_open_devig.same_games.model",
        "baseline": "benchmarks.tiers.market_open_devig.brier",
-       "n": "benchmarks.tiers.market_open_devig.n"
+       "n": "benchmarks.tiers.market_open_devig.n",
+       "gap_ci": {
+        "lo": "benchmarks.tiers.market_open_devig.gap_ci_model_vs_market.brier.lo95",
+        "hi": "benchmarks.tiers.market_open_devig.gap_ci_model_vs_market.brier.hi95"
+       }
       }
      ]
     }
@@ -929,7 +938,11 @@
       "baseline": 1.977,
       "better": "lower",
       "baseline_label": "naive level-to-years table",
-      "stat": "MAE, years"
+      "stat": "MAE, years",
+      "gap_ci": {
+       "lo": 0.5,
+       "hi": 0.587
+      }
      },
      {
       "label": "Within one year",
@@ -937,7 +950,11 @@
       "baseline": 0.379,
       "better": "higher",
       "baseline_label": "naive level-to-years table",
-      "stat": "within 1 year"
+      "stat": "within 1 year",
+      "gap_ci": {
+       "lo": 0.184,
+       "hi": 0.224
+      }
      }
     ],
     "derived_from": {
@@ -946,11 +963,19 @@
      "headline": [
       {
        "champion": "champion_on_baseline_rows.mae",
-       "baseline": "baseline_naive_level_table.mae"
+       "baseline": "baseline_naive_level_table.mae",
+       "gap_ci": {
+        "lo": "champion_on_baseline_rows.gap_ci_vs_naive.mae.lo95",
+        "hi": "champion_on_baseline_rows.gap_ci_vs_naive.mae.hi95"
+       }
       },
       {
        "champion": "champion_on_baseline_rows.within_1y",
-       "baseline": "baseline_naive_level_table.within_1y"
+       "baseline": "baseline_naive_level_table.within_1y",
+       "gap_ci": {
+        "lo": "champion_on_baseline_rows.gap_ci_vs_naive.within_1y.lo95",
+        "hi": "champion_on_baseline_rows.gap_ci_vs_naive.within_1y.hi95"
+       }
       }
      ]
     }
@@ -1077,7 +1102,12 @@
       "baseline": 0.8803,
       "better": "higher",
       "baseline_label": "bWAR",
-      "n": 300
+      "n": 300,
+      "gap_ci": {
+       "lo": -0.0361,
+       "hi": -0.0075
+      },
+      "resolvable": false
      },
      {
       "label": "Pitcher value, year to year (r)",
@@ -1086,7 +1116,11 @@
       "baseline": 0.1768,
       "better": "higher",
       "baseline_label": "bWAR on runs allowed",
-      "n": 1677
+      "n": 1677,
+      "gap_ci": {
+       "lo": 0.1367,
+       "hi": 0.232
+      }
      }
     ],
     "derived_from": {
@@ -1095,12 +1129,20 @@
       {
        "champion": "gate_1_team_wins.ewar.r",
        "baseline": "gate_1_team_wins.bwar.r",
-       "n": "gate_1_team_wins.n_team_seasons"
+       "n": "gate_1_team_wins.n_team_seasons",
+       "gap_ci": {
+        "lo": "gate_1_team_wins.gap_ci_vs_bwar.r.lo95",
+        "hi": "gate_1_team_wins.gap_ci_vs_bwar.r.hi95"
+       }
       },
       {
        "champion": "gate_2_pitcher_persistence.self_r_ewar_fip",
        "baseline": "gate_2_pitcher_persistence.self_r_bwar_ra",
-       "n": "gate_2_pitcher_persistence.n_pairs"
+       "n": "gate_2_pitcher_persistence.n_pairs",
+       "gap_ci": {
+        "lo": "gate_2_pitcher_persistence.gap_ci_vs_bwar_ra.r.lo95",
+        "hi": "gate_2_pitcher_persistence.gap_ci_vs_bwar_ra.r.hi95"
+       }
       }
      ]
     }

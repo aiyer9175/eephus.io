@@ -137,6 +137,34 @@ def _load() -> tuple[dict, dict, dict]:
     return listings, cw, bio
 
 
+def _gap_ci_vs_count(org_rows: list[tuple]) -> dict:
+    """LIBRARY_14: the paired interval on the gap between the surplus-mass
+    ranking and the prospect-count baseline, each the mean over vintages of
+    its per-vintage Spearman with realized output (surplus minus count, so
+    positive means the financial core ranks better). Team-clustered: an org
+    is drawn with all its vintages, which are the same club's farm."""
+    import numpy as np
+    import gap_intervals as gi
+    vy = np.array([r[1] for r in org_rows])
+    sur = np.array([r[2] for r in org_rows], float)
+    cnt = np.array([r[3] for r in org_rows], float)
+    real = np.array([r[4] for r in org_rows], float)
+
+    def gaps(idx):
+        rs, rc = [], []
+        for y in VINTAGE_YEARS:
+            sel = idx[vy[idx] == y]
+            a, b = gi.spearman(sur[sel], real[sel]), gi.spearman(cnt[sel], real[sel])
+            if a is not None:
+                rs.append(a)
+            if b is not None:
+                rc.append(b)
+        return {"spearman": float(np.mean(rs) - np.mean(rc)) if rs and rc else None}
+
+    return gi.paired_cluster_interval([r[0] for r in org_rows], gaps, seed=gi.SEED,
+                                      cluster="team (org): a club is drawn with every vintage")
+
+
 def run(persist: bool = True) -> dict:
     listings, cw, bio = _load()
     by_org_vintage: dict[tuple, list] = defaultdict(list)
@@ -146,6 +174,7 @@ def run(persist: bool = True) -> dict:
 
     per_vintage: dict[int, dict] = {}
     pooled: dict[str, list[float]] = defaultdict(list)
+    org_rows: list[tuple] = []      # (org, vintage, surplus, count, realized)
     for vy in VINTAGE_YEARS:
         orgs = sorted({org for (org, y) in by_org_vintage if y == vy})
         preds: dict[str, dict[str, float]] = {}
@@ -177,6 +206,8 @@ def run(persist: bool = True) -> dict:
             realized[org] = round(real, 1)
         common = [o for o in preds if o in realized]
         ys = [realized[o] for o in common]
+        org_rows += [(o, vy, preds[o]["sum_surplus_mm"], preds[o]["count"],
+                      realized[o]) for o in common]
         row = {"n_orgs": len(common),
                "spearman": {k: _spearman([preds[o][k] for o in common], ys)
                             for k in ("sum_surplus_mm", "sum_expected_war",
@@ -203,6 +234,7 @@ def run(persist: bool = True) -> dict:
         },
         "per_vintage": {str(k): v for k, v in per_vintage.items()},
         "mean_spearman": mean_rho,
+        "mean_spearman_gap_ci_vs_count": _gap_ci_vs_count(org_rows) if org_rows else None,
         "verdict": {
             "financial_core_beats_count": beats,
             "summary": ("the surplus-mass ranking out-predicts the "
