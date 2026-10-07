@@ -69,12 +69,14 @@ def test_sample_chip_text_uses_text_tokens():
 
 # ---- QREA18 -------------------------------------------------------------
 def test_view_and_section_chips_carry_pressed_state():
+    # LIBRARY_3 replaced the view chips' aria-pressed with aria-current="page"
+    # on the active leaf (one state attribute per chip, never both).
     import build_site as B
     shell = B.build_glossary()
     chips = re.findall(r'<button class="chip[^"]*"([^>]*)data-glossary-view="([a-z-]+)"', shell)
-    assert chips and all("aria-pressed=" in attrs for attrs, _v in chips)
-    assert [v for attrs, v in chips if 'aria-pressed="true"' in attrs] == ["terms"]
-    assert 'b.setAttribute("aria-pressed", on ? "true" : "false");' in GLJS
+    assert chips and not any("aria-pressed=" in attrs for attrs, _v in chips)
+    assert [v for attrs, v in chips if 'aria-current="page"' in attrs] == ["terms"]
+    assert 'if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");' in GLJS
     assert 'aria-pressed="${_SACC_TAB === k ? "true" : "false"}" data-sacc-tab=' in GLJS
 
 
@@ -170,7 +172,7 @@ def test_rendered_ledger_notes_and_pressed_chips(browser):
             out = page.evaluate("""() => ({
               text: document.getElementById('source-comparison-body').innerText,
               pressed: [...document.querySelectorAll('[data-glossary-view]')]
-                .filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.glossaryView)})""")
+                .filter(b => b.getAttribute('aria-current') === 'page').map(b => b.dataset.glossaryView)})""")
         finally:
             page.close()
     assert not errs, errs

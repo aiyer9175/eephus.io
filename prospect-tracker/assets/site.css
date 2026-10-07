@@ -2908,8 +2908,22 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
    separate page rather than toggling a view, so it never carries .active. */
 .gl-app a.chip { font-family: var(--font-retro); font-size: 12px; padding: 4px 10px; text-decoration: none;
   border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); }
-.gl-app a.chip.gl-chip-out { margin-left: auto; }
 .gl-app a.chip:hover { color: var(--text-primary); border-color: var(--accent-gold); }
+/* The Library strip (LIBRARY_3): the shelf chips, then the active shelf's
+   leaves. Both rows wrap; they never take the one-line swipe the phone
+   .filter-bar rule gives, so no chip sits off screen at 390. */
+.gl-app .gl-strip { margin: 8px 0; background: var(--bg-secondary); border: 1px solid var(--border); }
+.gl-app .gl-strip-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 8px 10px; }
+.gl-app .gl-strip-row.gl-leaves { border-top: 1px solid var(--border-light); }
+.gl-app .gl-strip .chip { display: inline-flex; align-items: center; justify-content: center; line-height: 1.25; }
+.gl-app .gl-strip-row[hidden], .gl-app .gl-strip .chip[hidden] { display: none; }
+.gl-app .gl-shelf-chip { gap: 6px; }
+.gl-app .gl-shelf-n { font-family: var(--font-retro-mono); font-size: 10px; padding: 0 4px; border: 1px solid var(--border); }
+.gl-app .gl-shelf-chip.active .gl-shelf-n { border-color: var(--accent-gold); }
+@media (max-width: 640px) {
+  .gl-app .gl-strip .chip { min-height: 44px; }
+  .gl-app .gl-strip .gl-shelf-chip { flex: 1 1 0; min-width: 0; padding: 4px 6px; flex-direction: column; gap: 2px; line-height: 1.1; }
+}
 /* === Models & Proofs view === */
 /* Verdict pill: theme-aware via the shared accent tokens, so it reads on both
    the light cream and the dark refractor themes. */

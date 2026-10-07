@@ -6422,6 +6422,110 @@ def build_models() -> str:
                 "its baseline, and the eval artifact behind it, failed models included.",
                 url=f"{SITE_ORIGIN}/models/")
 
+# The Library's shelves and leaves (LIBRARY_3, plan section 3.1), in strip
+# order. This is the Python half of ONE view registry: VIEWS in
+# assets/glossary.js carries the same ids, shelves, labels, bodies, hrefs,
+# aliases and listed flags, and test_library_section_registry asserts the two
+# are equal. The client generates its URL whitelist, body map and dispatch
+# from VIEWS; this side emits the strip and the body containers. A view is
+# therefore added in exactly these two lists (the 2026-06-10 Source Comparison
+# lesson was a chip registered in one place of four).
+#   body:    the container id an in-page view paints into (None: outbound leaf)
+#   href:    the page an outbound leaf links to; the leaf is left out of the
+#            strip while that page is not built, so the strip has no dead link
+#   aliases: older #view= values that open the view
+#   listed:  False keeps a leaf out of the strip until its task fills it; the
+#            view still opens from its URL and shows its chip while current
+GLOSSARY_SHELVES = (
+    ("reference", "Reference"),
+    ("methods", "Methods"),
+    ("evidence", "Evidence"),
+    ("sources", "Sources"),
+)
+GLOSSARY_VIEWS = (
+    {"id": "terms", "shelf": "reference", "label": "Terms", "body": "glossary-rows"},
+    {"id": "guide", "shelf": "reference", "label": "How to Read", "body": "guide-body"},
+    {"id": "formulas", "shelf": "reference", "label": "Formulas", "body": "formulas-body", "listed": False},
+    {"id": "methodology", "shelf": "methods", "label": "Methodology", "body": "methodology-body"},
+    {"id": "source-comparison", "shelf": "evidence", "label": "Source Comparison", "body": "source-comparison-body"},
+    {"id": "source-accuracy", "shelf": "evidence", "label": "Source Accuracy", "body": "source-accuracy-body"},
+    {"id": "calibration", "shelf": "evidence", "label": "Calibration", "body": "calibration-body", "listed": False},
+    # The in-page registry view stays a normal view (and keeps its URL) until
+    # LIBRARY_7 forwards it; the strip lists the /models/ ledger instead.
+    {"id": "models", "shelf": "evidence", "label": "Models & Proofs", "body": "models-body", "listed": False},
+    {"id": "models-ledger", "shelf": "evidence", "label": "Models", "href": "/models/"},
+    {"id": "model-updates", "shelf": "evidence", "label": "Model Updates", "href": "/models/updates/"},
+    {"id": "source-updates", "shelf": "sources", "label": "Source Updates", "body": "source-updates-body"},
+    {"id": "data-sources", "shelf": "sources", "label": "Data Sources", "href": "/sources/"},
+    {"id": "index", "shelf": "sources", "label": "Page Index", "body": "index-body", "aliases": ("library",)},
+)
+
+
+def _glossary_leaf_shown(v: dict) -> bool:
+    """A leaf is in the strip when it is listed and, for an outbound leaf, its
+    page is built (the page's index.html exists under the module root)."""
+    if v.get("listed", True) is False:
+        return False
+    href = v.get("href")
+    return not href or (ROOT / href.strip("/") / "index.html").is_file()
+
+
+def _glossary_strip(active: str = "terms") -> str:
+    """The Library's two-row strip: the shelf chips (each with its count of
+    leaves in the strip), then one leaf row per shelf with only the active
+    shelf's row shown. The active leaf carries aria-current="page" and the
+    active shelf aria-current="true"; assets/glossary.js moves both. An
+    outbound leaf is a link with the trailing arrow, never a toggle."""
+    views = {v["id"]: v for v in GLOSSARY_VIEWS}
+    cur_shelf = views[active]["shelf"]
+    shelves, rows = [], []
+    for sid, slabel in GLOSSARY_SHELVES:
+        leaves = [v for v in GLOSSARY_VIEWS if v["shelf"] == sid]
+        n = sum(1 for v in leaves if _glossary_leaf_shown(v))
+        on = sid == cur_shelf
+        shelves.append(
+            f'<button class="chip gl-shelf-chip{" active" if on else ""}" type="button"'
+            f'{" aria-current=" + chr(34) + "true" + chr(34) if on else ""} data-gl-shelf-chip="{sid}">'
+            f'<span class="gl-shelf-name">{html.escape(slabel)}</span>'
+            f'<span class="gl-shelf-n">{n}</span></button>')
+        chips = []
+        for v in leaves:
+            label = html.escape(v["label"])
+            if v.get("href"):
+                if _glossary_leaf_shown(v):
+                    chips.append(f'<a class="chip gl-chip-out" href="{v["href"]}"'
+                                 f' data-gl-leaf="{v["id"]}">{label} →</a>')
+                continue
+            cur = v["id"] == active
+            unlisted = v.get("listed", True) is False
+            chips.append(
+                f'<button class="chip{" active" if cur else ""}" type="button"'
+                f'{(" data-gl-unlisted" + ("" if cur else " hidden")) if unlisted else ""}'
+                f'{" aria-current=" + chr(34) + "page" + chr(34) if cur else ""}'
+                f' data-gl-shelf="{sid}" data-glossary-view="{v["id"]}">{label}</button>')
+        rows.append(
+            f'<div class="gl-strip-row gl-leaves" role="group" aria-label="{html.escape(slabel)}"'
+            f' data-gl-leaves="{sid}"{"" if on else " hidden"}>{"".join(chips)}</div>')
+    return (f'<nav class="gl-strip" aria-label="{html.escape(GLOSSARY_DISPLAY_NAME)} sections">'
+            '<div class="gl-strip-row gl-shelves" role="group" aria-label="Shelves">'
+            f'{"".join(shelves)}</div>{"".join(rows)}</nav>')
+
+
+def _glossary_bodies(active: str = "terms") -> str:
+    """One container per in-page view, from GLOSSARY_VIEWS. Every container
+    but the default view's ships hidden so the client router owns visibility;
+    the Terms rows come last, under the search bar."""
+    out, last = [], ""
+    for v in GLOSSARY_VIEWS:
+        if not v.get("body"):
+            continue
+        if v["id"] == active:
+            last = f'<div id="{v["body"]}"></div>'
+        else:
+            out.append(f'<div id="{v["body"]}" style="display:none;"></div>')
+    return "".join(out) + last
+
+
 def build_glossary() -> str:
     """The /glossary/ unified Glossary & Methodology module - the canonical
     definition layer's page. Static shell + assets/glossary.js; definitions
@@ -6440,46 +6544,19 @@ def build_glossary() -> str:
     # client labels a section with the module's current name, never a literal.
     _gl_name = next(lbl for key, lbl, _ in nav_leaves() if key == "glossary")
     body = (
-        f'<div class="gl-app" data-module-name="{html.escape(_gl_name)}">'
+        f'<div class="gl-app" data-module-name="{html.escape(_gl_name)}"'
+        f' data-display-name="{html.escape(GLOSSARY_DISPLAY_NAME)}">'
         f'<div class="section-head"><h1>{_masthead_icon("glossary")}{GLOSSARY_DISPLAY_NAME}</h1>'
         '<span class="section-sub">terms, derivations, and each model\'s track record</span></div>'
         f"{intro}"
-        '<div class="filter-bar"><span class="gl-microlabel">View</span>'
-        '<button class="chip active" aria-pressed="true" data-glossary-view="terms">Terms</button>'
-        '<button class="chip" aria-pressed="false" data-glossary-view="guide">How to Read</button>'
-        '<button class="chip" aria-pressed="false" data-glossary-view="methodology">Methodology</button>'
-        '<button class="chip" aria-pressed="false" data-glossary-view="models">Models &amp; Proofs</button>'
-        '<button class="chip" aria-pressed="false" data-glossary-view="source-comparison">Source Comparison</button>'
-        # C-A4 (2026-08-10). FOUR registration points and a chip is only one of
-        # them: the view name must also be in the URL whitelist
-        # (assets/glossary.js syncFromURL), the view -> container id map, and
-        # the render() dispatch chain, or the chip renders as a dead button
-        # while the suite stays green. That is the 2026-06-10 Source Comparison
-        # lesson; test_glossary_page_loads.test_view_chips_match_whitelist now
-        # asserts all four agree.
-        '<button class="chip" aria-pressed="false" data-glossary-view="source-accuracy">Source Accuracy</button>'
-        '<button class="chip" aria-pressed="false" data-glossary-view="source-updates">Source Updates</button>'
-        # The page-index view keeps its key and URL (#view=library); its chip
-        # reads "Page Index" now that the module itself is the Library.
-        '<button class="chip" aria-pressed="false" data-glossary-view="library">Page Index</button>'
-        # Outbound link (not a view toggle) to the full attribution page, so the
-        # Data Sources & Attribution page is reachable from this section, not just
-        # the footer. The trailing arrow signals it navigates away.
-        '<a class="chip gl-chip-out" href="/sources/">Data Sources &amp; Attribution →</a>'
-        '</div>'
+        f"{_glossary_strip()}"
         '<div id="gl-termbar">'
-        '<input id="gl-search" class="gl-search" type="search" placeholder="Search terms, abbreviations, definitions…" aria-label="Search Library terms">'
+        '<input id="gl-search" class="gl-search" type="search" placeholder="Search terms, abbreviations, definitions…"'
+        f' aria-label="Search {html.escape(GLOSSARY_DISPLAY_NAME)} terms">'
         '<div class="filter-bar" id="gl-cats"></div>'
         '<div id="gl-az"></div>'
         '</div>'
-        '<div id="guide-body" style="display:none;"></div>'
-        '<div id="methodology-body" style="display:none;"></div>'
-        '<div id="models-body" style="display:none;"></div>'
-        '<div id="source-comparison-body" style="display:none;"></div>'
-        '<div id="source-accuracy-body" style="display:none;"></div>'
-        '<div id="source-updates-body" style="display:none;"></div>'
-        '<div id="library-body" style="display:none;"></div>'
-        '<div id="glossary-rows"></div>'
+        f"{_glossary_bodies()}"
         '</div>'
         # Shared GFX engine (hub + gfx, the FA / news inject pattern): powers
         # the Source Comparison "Generate GFX" share card. Loaded BEFORE
