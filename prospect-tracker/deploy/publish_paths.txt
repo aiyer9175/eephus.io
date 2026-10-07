@@ -34,7 +34,10 @@
 # fetches on demand, pinned by test_franchise_clubs_ship_in_both_deploy_consumers;
 # and the mlb_events/ per-player MLB transaction files, empty until mlb_events.py's
 # MLB_EVENTS_LIVE flips, pinned by
-# test_mlb_events_dir_ships_in_both_deploy_consumers).
+# test_mlb_events_dir_ships_in_both_deploy_consumers; and the mlbstats_player/
+# per-player game files of the /mlbstats/ drawer, empty until
+# mlbstats_trends_export.MLBSTATS_DRAWER_LIVE flips, pinned by
+# test_mlbstats_player_dir_ships_in_both_deploy_consumers).
 index.html
 404.html
 robots.txt

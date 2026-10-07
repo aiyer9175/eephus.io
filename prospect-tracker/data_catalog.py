@@ -415,6 +415,46 @@ ARTIFACTS = (
                  "written to a preview directory off the webroot."),
     },
     {
+        "file": "mlbstats_trends.json", "group": "mlb",
+        "title": "Player index by season",
+        "what": ("Every player's HEM+, SEM+ or REM+, DEM+ and batter WPA by season, "
+                 "2016 on, with the season's plate appearances, innings or position: "
+                 "the trend lines of the /mlbstats/ player drawer."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mlbstats_trends_export.py",
+        "note": ("Read from the window lab's season panels, the live boards and the "
+                 "qualified history files; refused when a lab panel and a history file "
+                 "disagree on a shared player-season. Served once "
+                 "mlbstats_trends_export.MLBSTATS_DRAWER_LIVE is True; until then it is "
+                 "written under .cache/league_teams/preview/."),
+    },
+    {
+        "file": "mlbstats_player_index.json", "group": "mlb",
+        "title": "Player game files (index)",
+        "what": ("Which live-board players have a game file, how far the play-by-play "
+                 "frame reaches (covers_through) against the boards' last game, and how "
+                 "the summed games reconcile with each board."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mlbstats_rolling_export.py",
+        "note": ("The game files are refused, keeping the last good ones, only when "
+                 "the frame's last game date is more than two days behind the boards' "
+                 "last game date: game dates, never build stamps. Served with the "
+                 "drawer flag."),
+    },
+    {
+        "file": "mlbstats_player/*.json", "group": "mlb",
+        "title": "Player game files",
+        "what": ("One file per live-board player: raw counts game by game (hitters "
+                 "PA, AB, H, 2B, 3B, HR, BB, HBP, SF, SO, pitches; pitchers GS, BF, "
+                 "outs, SO, BB, ER, pitches, entry LI), in first-pitch order, for the "
+                 "drawer's rolling windows."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_mlbstats_rolling_export.py",
+        "note": ("Built from mlbstats_games.player_game_frame, with the plate "
+                 "appearance charged as the official scorer charged it. Gitignored; "
+                 "shipped by both deploy consumers once the drawer flag is on."),
+    },
+    {
         "file": "pal.json", "group": "mlb",
         "title": "Alchemy Lab conversions",
         "what": "Reliever to starter and starter to reliever fits, with pitch-mix change history.",

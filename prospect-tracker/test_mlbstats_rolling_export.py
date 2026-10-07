@@ -178,3 +178,84 @@ def test_the_flag_is_dark_and_writes_only_the_preview_directory():
     assert R.SERVED_DIR == R.DATA_DIR / R.SHARD_DIR_NAME
     assert not (R.DATA_DIR / R.INDEX_NAME).exists(), "mlbstats_player_index.json shipped early"
     assert not any(R.SERVED_DIR.glob("*.json")), "mlbstats_player/*.json shipped early"
+
+
+# --------------------------------------------------------------------------- #
+# the pipeline wiring (run_monthly 9e-pre0h and 6b4l)
+# --------------------------------------------------------------------------- #
+ROOT = Path(__file__).resolve().parent
+NL = chr(10)
+
+
+def test_the_nightly_step_runs_after_the_vintage_snapshot():
+    """9e-pre0h is display only: after the 9e-pre vintage snapshot (nothing the
+    validation clock freezes may wait on it) and after 9e-pre0e, whose corpus
+    refresh the game files read; skipped when the monthly 6b4l just ran. The
+    label is the next free 9e-pre0 letter by commit order (8.D row 3), pinned."""
+    src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    start = src.index("def run_daily(")
+    daily = src[start:src.index(NL + "def ", start + 10)]
+    i_snap = daily.index('_step("9e-pre. Leaderboard vintage snapshot')
+    i_mgmt = daily.index('_step("9e-pre0e. In-Game Management nightly')
+    i_new = daily.index('_step("9e-pre0h. League, Team Stats and drawer payloads')
+    assert i_snap < i_mgmt < i_new < daily.index('_step("9e-pre-wx. Forecast weather capture')
+    body = daily[i_new:daily.index("# --- 9e-pre-wx.", i_new)]
+    assert "if chained:" in body and "SKIP 9e-pre0h" in body
+    assert "_league_teams_payloads(log, " in body
+    assert src.count('_step("9e-pre0h.') == 1
+    for taken in ("9e-pre0d", "9e-pre0e", "9e-pre0f", "9e-pre0g"):
+        assert src.count(f'_step("{taken}.') == 1, taken
+    mon = src[src.index(NL + "def main("):]
+    i_k = mon.index('_step("6b4k.')
+    i_l = mon.index('_step("6b4l. League, Team Stats')
+    assert i_k < i_l < mon.index('_step("6b5.')
+    assert src.count('_step("6b4l.') == 1
+
+
+def test_the_helper_runs_the_four_exporters_in_order():
+    src = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
+    i = src.index("def _league_teams_payloads(")
+    helper = src[i:src.index(NL + "def ", i + 10)]
+    order = [helper.index(f'("{n}", ') for n in ("league_averages", "team_stats_export",
+                                                 "mlbstats_trends_export",
+                                                 "mlbstats_rolling_export")]
+    assert order == sorted(order)
+    assert "log.exception(" in helper, "one failed export must not stop the next"
+
+
+def test_one_failed_export_does_not_stop_the_next(monkeypatch):
+    import logging
+
+    import league_averages
+    import run_monthly
+    import team_stats_export
+    calls = []
+
+    def boom(**_k):
+        calls.append("league_averages")
+        raise RuntimeError("a dead feed")
+
+    def ok(name, res):
+        def fn(**_k):
+            calls.append(name)
+            return res
+        return fn
+    monkeypatch.setattr(league_averages, "export", boom)
+    monkeypatch.setattr(team_stats_export, "export", ok("team_stats_export", {"refused": None}))
+    monkeypatch.setattr(T, "export", ok("mlbstats_trends_export", {"refused": None}))
+    monkeypatch.setattr(R, "export", ok("mlbstats_rolling_export", {"refused": "stale"}))
+    out = run_monthly._league_teams_payloads(logging.getLogger("test"), "t")
+    assert calls == ["league_averages", "team_stats_export", "mlbstats_trends_export",
+                     "mlbstats_rolling_export"]
+    assert out == {"league_averages": "failed", "team_stats_export": "ok",
+                   "mlbstats_trends_export": "ok", "mlbstats_rolling_export": "refused: stale"}
+
+
+def test_nothing_here_is_on_the_epoch_frozen_rebuild_list():
+    gate = (ROOT / "docs" / "efv-2026-09-17" / "FWAR_LABEL_EPOCH_GATE.md").read_text(encoding="utf-8")
+    sec = gate[gate.index("## 7. The rebuild"):]
+    end = sec.find(NL + "## 8")
+    sec = sec if end < 0 else sec[:end]
+    for name in ("mlbstats_trends", "mlbstats_player", "mlbstats_rolling", "mlbstats_games",
+                 "9e-pre0h", "6b4l"):
+        assert name not in sec, name
