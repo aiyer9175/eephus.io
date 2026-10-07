@@ -811,7 +811,9 @@
                   "source-updates": "source-updates-body",
                   models: "models-body", library: "library-body" };
     document.querySelectorAll("[data-glossary-view]").forEach(b => {
-      b.classList.toggle("active", b.dataset.glossaryView === _S.view);
+      const on = b.dataset.glossaryView === _S.view;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
     });
     for (const [v, id] of Object.entries(ids)) {
       const el = document.getElementById(id);
@@ -1197,6 +1199,10 @@ function _methProseHTML() {
     <h2 class="meth-h">Methodology changelog</h2>
     <ul class="meth-changelog">
       <li><span class="mc-date">2026-10-03</span> The fWAR label epoch: the TRAINING label behind eFV, the FV-to-WAR anchors, the projections, the draft slot curve, star odds, WAG and the arbitration model moved from eWAR v2 to published fWAR, frozen per season (FanGraphs' WAR adopted wholesale: its 57/43 replacement split, its league pool and positional ladder, Statcast fielding with framing inside it). The DISPLAYED WAR stays eWAR v2. The move buys one currency across the label, the FanGraphs FV-to-WAR tables and the $/WAR kernel; it is a change of definition by owner decision, and no accuracy gain is claimed from it.</li>
+      <li><span class="mc-date">2026-09-30</span> The org promotion multipliers left the served ETA: in the keep-or-remove gate (list vintage 2024) the two arms gave the same debut year on all 503 scored rows, so the multipliers had not earned a place and the served call passes no org tendency. Receipt: block <code>org_timing_gate_2026_09_25</code> of <a href="/data/eta_eval.json"><code>data/eta_eval.json</code></a>; registry row <code>eta</code>; gate <code>docs/eta-2026-09-25/ETA_FG_BLEND_GATE.md</code> section 7.</li>
+      <li><span class="mc-date">2026-09-25</span> eFV V2 serves the board (owner decision DS-02): consensus percentile plus admitted skill and timing drivers within each side and list year, labelled as tying the consensus until a reserved read says otherwise. Receipt: registry row <code>efv_v2</code> (provisional); gate <code>docs/efv-v2/EFV_V2_GATE.md</code>.</li>
+      <li><span class="mc-date">2026-09-25</span> The head-to-head headline moved to the timing-pinned vintage-matched frame vm2, where eFV's consensus input is the raters' own preseason read (owner answer FP3-1); vm1 stays in the ledger as superseded history. eFV against each source is now one Holm-corrected family (FP3-3), and a cell carries a verdict only when it survives the correction. Receipt: registry row <code>xfv_headtohead_frame</code>; <a href="/data/source_backtest.json"><code>data/source_backtest.json</code></a> (<code>accuracy.head_to_head_verdict</code>, <code>accuracy.head_to_head_vs_sources</code>); <a href="/data/efv_progress.json"><code>data/efv_progress.json</code></a>.</li>
+      <li><span class="mc-date">2026-09-04</span> The eWAR label epoch: site-wide WAR and every model labelled, anchored or priced in WAR (the eFV label, the FV outcome anchors, WAG, surplus, arbitration, farm grades, the projections) moved from bWAR to eWAR v2 together, by owner basis decision. Measured on identical rows, the swap did not improve eFV: hitters equivalent (+0.00006), pitchers undecided (-0.01823, permutation p 0.0635). Receipt: registry row <code>xfv_ewar_label_epoch</code>; gate <code>docs/efv-2026-09-03/EWAR_LABEL_EPOCH_GATE.md</code> part 9.</li>
       <li><span class="mc-date">2026-07-31</span> Surplus moved to an EXPECTED-VALUE objective (calibration isotonic-real-v6-evframe): the correction map is now a count-weighted isotonic (PAVA) fit on resolved-cohort bin means, targeting the conditional mean instead of the median. The $0 floor on bottom-tier prospects is gone; the board total moved up while the ordering did not. The map deliberately loses the old median-objective MAE gate and that loss is committed, not hidden.</li>
       <li><span class="mc-date">2026-07-30</span> The eFV headline grade's outcome-implied FV mapping re-keyed to the recalibrated empirical FV→WAR anchors, so the grade and the dollars read off the same curve.</li>
       <li><span class="mc-date">2026-07-29/30</span> Valuation recalibration: sub-45 anchors repaired, the board-scale re-expression turned off, and <code>clemens_2026</code> (the published FanGraphs / Ben Clemens 2026 framework, checksummed anchors, <code>fa_implied</code> disabled) made the default production valuation set.</li>
@@ -1997,7 +2003,7 @@ function renderGuide() {
       "The photo's border/effect tier (shine → foil → chrome → holo → legendary) is keyed to FV, so rarity reads at a glance and matches the prospect list."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">HIT 60 · PWR 65 · …</span>`, "twenty_eighty",
       "Per-tool 20-80 scouting grades. 50 is MLB-average; each ±10 is roughly one standard deviation. These feed the composite and, ultimately, FV."),
-    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-violet);">$DvM+ 110</span>`, "dvm_plus",
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-violet);">$DvM+ 110</span>`, "dvm_plus",
       "A wRC+-style index of organizational development applied to the player's surplus dollars - 100 is league mean, +10 ≈ one SD."),
     anat(`<span class="g-term" data-gl="rps_plus" style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">RPS+ 118</span>`, "rps_plus",
       "Level-anchored rate performance vs the player's own age × position cohort. 100 = cohort mean."),
@@ -2020,14 +2026,14 @@ function renderGuide() {
       "The dashed violet line is the tool-composite trajectory - the mean per-tool grade at each snapshot, plotted on the FV scale. When it rises alongside the FV curve the tools are backing the grade; when FV climbs while it stays flat, the bump is scout-narrative-driven rather than tool-supported. It's the per-snapshot signal behind ToolDvM+."),
     anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--up);">◆</span>`, "debut_rule",
       "A debut marker flags when the player crossed the rookie-eligibility threshold and graduated off the prospect board."),
-    anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--neon-amber);">⇄</span>`, "trade",
+    anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--text-gold);">⇄</span>`, "trade",
       "Trade markers stamp cross-org moves at the FV the league assigned on the trade date."),
   ].join("");
 
   const farmAnatomy = [
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);">A+ tree</span>`, "farm_report_card",
       "The org letter grade is a weighted tree, value-led: a Value branch (aggregate risk-adjusted surplus), then MLB Production, Development, and Acquisition Strategy, each built from auditable leaves."),
-    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-violet);">DvM+ 112</span>`, "dvm_plus",
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-violet);">DvM+ 112</span>`, "dvm_plus",
       "Development vs Mean - how fast the org grows the FV of prospects it already had (acquisitions nullified), 100 = league mean."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">ToolDvM+ 108</span>`, "tools_dvm_plus",
       "The same development idea applied per tool, weighted by what each position needs."),
@@ -2268,7 +2274,7 @@ function _methInteractivesHTML() {
     <div class="gx-card-title">The 20-80 scale as a distribution</div>
     <div class="gx-card-body gx-2col">
       <div>
-        <label class="gx-label">Grade <b id="gx-grade-val">60</b></label>
+        <label class="gx-label" for="gx-grade-in">Grade <b id="gx-grade-val">60</b></label>
         <input id="gx-grade-in" class="gx-range" type="range" min="20" max="80" step="1" value="60" oninput="_gx2080()">
         <div id="gx-grade-svg"></div>
       </div>
@@ -2299,7 +2305,7 @@ function _methInteractivesHTML() {
     <div class="gx-card-title">Surplus value calculator - FV to dollars, step by step</div>
     <div class="gx-card-body gx-2col">
       <div>
-        <label class="gx-label">FV <b id="gx-surplus-fvval">55</b></label>
+        <label class="gx-label" for="gx-surplus-fv">FV <b id="gx-surplus-fvval">55</b></label>
         <input id="gx-surplus-fv" class="gx-range" type="range" min="35" max="80" step="1" value="55" oninput="_gxSurplus()">
         <label class="gx-label" style="margin-top:10px;display:block;">Side
           <select id="gx-surplus-side" class="gx-num" style="width:auto;" onchange="_gxSurplus()">
@@ -3384,14 +3390,14 @@ function _methSideCalibration() {
   return `<div class="source-comp-wrap" id="side-calibration">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Pitchers and hitters &middot; graded against what they became</div>
     <h2 class="meth-h">Does a grade mean the same thing for a pitcher as for a hitter?</h2>
-    <p class="meth-note">eFV carries far fewer pitchers near the top of its board than the public lists do. That is a real difference and it is worth asking who is right, so we asked the only question that can answer it: <strong>at the same grade, what did each side actually produce?</strong> Nothing here compares one source's grade to another's. The reference throughout is realized first-six-year WAR on ${_saccN(basis.n)} resolved prospects, with players who never reached the majors carried at zero so survivors are not the only thing being scored.</p>
+    <p class="meth-note">Each row reads <strong>what each side produced at the same grade</strong>. Nothing here compares one source's grade to another's. The reference throughout is realized first-six-year WAR on ${_saccN(basis.n)} resolved prospects, with players who never reached the majors carried at zero so survivors are not the only thing being scored.</p>
     <div class="table-scroll-x"><table class="meth-table">
       <thead><tr><th>Grade band</th><th>Hitters n</th><th>Their WAR</th><th>Pitchers n</th><th>Their WAR</th><th>Gap</th><th>95% interval</th></tr></thead>
       <tbody>${rows.join("")}</tbody>
     </table></div>
     <p class="meth-note">Only the bands that resolve are listed; every other cell sits inside its own noise and is published as unresolved in <a href="/data/xfv_side_calibration_eval.json" target="_blank" rel="noopener">the artifact</a>.</p>
-    <p class="meth-verdict">The consensus grades pitchers <strong>too high at the top</strong>, measured against outcomes: at consensus FV 55 the hitters produced ${f2((cons["55"] || {}).mean_war_hit)} WAR and the pitchers ${f2((cons["55"] || {}).mean_war_pit)}. That is not a bust-rate story, because almost every player in both cells reached the majors. So eFV carrying fewer top-end pitchers is the more accurate reading of value, not a blind spot. In the other direction, eFV's own FV 45 band <strong>under-grades</strong> pitchers by a measurable margin, and that is a real defect on our side of the ledger rather than the industry's.</p>
-    <p class="meth-note">The model's pitcher forecast itself is close to unbiased${(f.P && f.P.bias_pred_minus_real != null) ? ` (${f2(f.P.bias_pred_minus_real)} WAR against ${f2((f.H || {}).bias_pred_minus_real)} for hitters)` : ""}: it correctly expects pitchers to produce less, and one shared value curve then grades them lower. The low pitcher count is that curve spending a real difference, not a broken forecast. Method and the pre-registered decision rule: <code>docs/efv-2026-08-12/SIDE_CALIBRATION_GATE.md</code>.</p>
+    <p class="meth-verdict">The consensus grades pitchers <strong>too high at the top</strong>, measured against outcomes: at consensus FV 55 the hitters produced ${f2((cons["55"] || {}).mean_war_hit)} WAR and the pitchers ${f2((cons["55"] || {}).mean_war_pit)}. That is not a bust-rate story, because almost every player in both cells reached the majors. The eFV V2 board starts from the consensus grade on each side and keeps its per-side order unless an admitted driver moves it, so this side gap now sits in the consensus V2 reads. The eFV rows measure the v1 grade map${j.generated_at ? ` as of ${escapeHtml(String(j.generated_at).slice(0, 10))}` : ""}: its FV 45 band <strong>under-grades</strong> pitchers by a measurable margin.</p>
+    <p class="meth-note">The v1 pitcher forecast itself is close to unbiased${(f.P && f.P.bias_pred_minus_real != null) ? ` (${f2(f.P.bias_pred_minus_real)} WAR against ${f2((f.H || {}).bias_pred_minus_real)} for hitters)` : ""}: it expects pitchers to produce less, and one shared value curve then grades them lower. Method and the pre-registered decision rule: <code>docs/efv-2026-08-12/SIDE_CALIBRATION_GATE.md</code>.</p>
   </div>`;
 }
 
@@ -3603,9 +3609,26 @@ function _progIsCorrection(prog, r) {
   return !!(r && (trig.includes(r.trigger) || fc.includes(r.trigger)));
 }
 
-// "harness correction", "data correction" or "frame change", from the row's own trigger.
+// "scoring correction", "data correction" or "frame change", from the row's own
+// trigger. The raw trigger of a scoring-code correction reads "harness_correction"
+// in the ledger, which stays untouched; the page names it in site copy.
 function _progCorrectionName(r) {
-  return String((r && r.trigger) || "correction").replace(/_/g, " ");
+  const t = String((r && r.trigger) || "correction");
+  return (t === "harness_correction" ? "scoring correction" : t).replace(/_/g, " ");
+}
+
+// A row's note as the page prints it. The ledger keeps every row as written; two
+// display-time readings apply (audit QREC06): a scoring-code correction opens
+// "Scoring correction" in site copy, and a note written before the headline frame
+// changed, saying the frame would become the headline on a condition, is marked
+// as written and given the date the headline frame's own note carries.
+function _progNoteText(prog, r) {
+  let n = String((r && r.note) || "");
+  n = n.replace(/^Harness correction\b/, "Scoring correction");
+  const hf = prog && prog.frames && prog.headline_frame && prog.frames[prog.headline_frame];
+  const m = /headline since (\d{4}-\d{2}-\d{2})/.exec((hf && hf.note) || "");
+  if (m) n = n.replace(/becomes the headline once [^;.]+/g, p => `${p} (as written; headline since ${m[1]})`);
+  return n;
 }
 
 function _progConsLeg(r) {
@@ -3687,14 +3710,14 @@ function _methProgressLedger(prog, bt) {
     : ` <span class="sacc-chip-ok">verified ${escapeHtml(String(row.last_verified_at || row.date || "").slice(0, 10))}</span>`;
   const resolvable = row.resolvable === true;
   const corrTxt = _progIsCorrection(prog, row)
-    ? ` <span class="sacc-chip-warn" title="${escapeHtml(row.note || "")}">${escapeHtml(_progCorrectionName(row))}, not model progress</span>` : "";
+    ? ` <span class="sacc-chip-warn" title="${escapeHtml(_progNoteText(prog, row))}">${escapeHtml(_progCorrectionName(row))}, not model progress</span>` : "";
   // A headline candidate (EV-01 vm2) prints on its own line, in the neutral
   // style: it is not the claim until the owner has seen it.
   const cand = _progLatestCandidate(prog);
   let candTxt = "";
   if (cand) {
     const crt = cand.raters || {}, cleg = _progConsLeg(cand) || {};
-    candTxt = `<p class="meth-window"><strong>${escapeHtml(_progFrameLabel(prog, cand.frame))}, ${escapeHtml(cand.date || "")} <span class="sacc-chip-warn">${escapeHtml(String(cand.role || "").replace(/_/g, " "))}</span>:</strong> n ${Number(cand.n || 0).toLocaleString()}, ${escapeHtml(_progModelName(cand))} ${_progFmt((crt.efv || {}).spearman, 3)} against PROSPX consensus ${_progFmt((crt.prospx_consensus || {}).spearman, 3)}, delta ${_progSigned(cleg.delta, 4)}${Array.isArray(cleg.ci95) ? `, 95% CI ${_progCi(cleg.ci95, 3)}` : ""}: <span class="sacc-verdict-null">${escapeHtml(cand.verdict || "")}</span>.${_progIsCorrection(prog, cand) ? ` <span class="sacc-chip-warn">${escapeHtml(_progCorrectionName(cand))}, not model progress</span>` : ""} ${escapeHtml(cand.note || "")}</p>`;
+    candTxt = `<p class="meth-window"><strong>${escapeHtml(_progFrameLabel(prog, cand.frame))}, ${escapeHtml(cand.date || "")} <span class="sacc-chip-warn">${escapeHtml(String(cand.role || "").replace(/_/g, " "))}</span>:</strong> n ${Number(cand.n || 0).toLocaleString()}, ${escapeHtml(_progModelName(cand))} ${_progFmt((crt.efv || {}).spearman, 3)} against PROSPX consensus ${_progFmt((crt.prospx_consensus || {}).spearman, 3)}, delta ${_progSigned(cleg.delta, 4)}${Array.isArray(cleg.ci95) ? `, 95% CI ${_progCi(cleg.ci95, 3)}` : ""}: <span class="sacc-verdict-null">${escapeHtml(cand.verdict || "")}</span>.${_progIsCorrection(prog, cand) ? ` <span class="sacc-chip-warn">${escapeHtml(_progCorrectionName(cand))}, not model progress</span>` : ""} ${escapeHtml(_progNoteText(prog, cand))}</p>`;
   }
   return `<div class="meth-chart scx-progress-head">
     <div class="meth-chart-title">eFV progress ledger <span class="meth-sub">the dated record of eFV against PROSPX consensus and the industry</span></div>
@@ -3833,7 +3856,7 @@ function _methProgressChart(prog) {
       ${marks}${ticks}
     </svg>
     <div class="meth-legend">${legend}</div>
-    <p class="meth-note">A point above zero is eFV ordering realized WAR better than the consensus on the same players. Inside the shaded band the difference is smaller than this sample can resolve, so no point inside it is a lead or a deficit. Rows backfilled from the committed history carry no interval, because one cannot be recomputed from a committed number. Tilted frames are never plotted.${_progRows(prog).some(r => r.role === "superseded") ? ` Rows of a frame that has lost the headline, ${escapeHtml(_progFrameLabel(prog, "vm"))}, are marked superseded in the table below and are not plotted.` : ""}${hasCorr ? " An open triangle is the same model specification rescored after a correction (to the scoring harness or to the rows) or read on the frame that now carries the headline, so the step it shows is not progress." : ""}</p>
+    <p class="meth-note">A point above zero is eFV ordering realized WAR better than the consensus on the same players. Inside the shaded band the difference is smaller than this sample can resolve, so no point inside it is a lead or a deficit. Rows backfilled from the committed history carry no interval, because one cannot be recomputed from a committed number. Tilted frames are never plotted.${_progRows(prog).some(r => r.role === "superseded") ? ` Rows of a frame that has lost the headline, ${escapeHtml(_progFrameLabel(prog, "vm"))}, are marked superseded in the table below and are not plotted.` : ""}${hasCorr ? " An open triangle is the same model specification rescored after a correction (to the scoring code or to the rows) or read on the frame that now carries the headline, so the step it shows is not progress." : ""}</p>
   </div>`;
 }
 
@@ -3885,7 +3908,7 @@ function _progRowHtml(prog, r) {
     ${_progEfvCell(r)}${_progRaterCell(r, "prospx_consensus")}${_progRaterCell(r, "mlb_pipeline")}${_progRaterCell(r, "fangraphs")}
     <td>${deltaCell}</td><td>${floorCell}</td>
     <td><span class="${verdictCls}">${escapeHtml(r.verdict || "-")}</span></td>
-    <td class="meth-sub">${escapeHtml(r.note || "")}</td>
+    <td class="meth-sub">${escapeHtml(_progNoteText(prog, r))}</td>
   </tr>`;
 }
 
@@ -5326,7 +5349,7 @@ function renderSourceAccuracy() {
   }
   const shell = inner => {
     const chips = _SACC_TABS.map(([k, lbl]) =>
-      `<button class="chip${_SACC_TAB === k ? " active" : ""}" type="button" data-sacc-tab="${escapeHtml(k)}">${escapeHtml(lbl)}</button>`).join("");
+      `<button class="chip${_SACC_TAB === k ? " active" : ""}" type="button" aria-pressed="${_SACC_TAB === k ? "true" : "false"}" data-sacc-tab="${escapeHtml(k)}">${escapeHtml(lbl)}</button>`).join("");
     return `<div class="source-comp-wrap sacc-wrap">
       <div class="source-comp-eyebrow"><span class="scx-dot"></span>Source accuracy by cohort &middot; zero weights ship</div>
       <h2 class="meth-h">Who is better on which kind of prospect?</h2>

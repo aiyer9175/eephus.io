@@ -881,7 +881,9 @@ def _js_ctx():
 def test_client_recomputes_artifact_age_against_the_readers_clock():
     ctx = _js_ctx()
     st = json.loads(ctx.eval("__vis()"))
-    assert st["styles"] == 1, "the client must inject exactly one stylesheet"
+    # QREP05 (2026-10-07): the page links assets/accountability.css ahead of its
+    # markup; a sheet injected by this deferred client moved the tiles after paint.
+    assert st["styles"] == 0, "the client must inject no stylesheet"
     ages = {t[0]: t for t in st["times"]}
     assert ages["2026-08-01"][1].endswith("d"), "a dated artifact got no age"
     assert ages["2026-08-01"][2] is False, "a recent artifact was flagged stale"

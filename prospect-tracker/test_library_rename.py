@@ -74,7 +74,7 @@ def test_glossary_page_masthead_title_and_meta_read_library():
     desc = re.search(r'<meta name="description" content="([^"]*)"', out).group(1)
     assert desc.startswith("The eephus.io Library:")
     # the page-index view keeps its key and URL; its chip no longer repeats the module name
-    assert '<button class="chip" data-glossary-view="library">Page Index</button>' in out
+    assert '<button class="chip" aria-pressed="false" data-glossary-view="library">Page Index</button>' in out
     assert _src("glossary/index.html").count("<title>Library - eephus.io</title>") == 1
 
 

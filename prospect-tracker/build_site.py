@@ -159,6 +159,7 @@ _AWARDS_BALLOT_CSS_VER = _asset_ver("assets/awards-ballot.css")
 # count and date on that page is server-rendered here at build time, so the
 # surface still tells the truth with JavaScript off.
 _ACCT_HUB_VER = _asset_ver("assets/accountability.js")
+_ACCT_HUB_CSS_VER = _asset_ver("assets/accountability.css")
 # Diamond section (2026-08-05): one config script, five module apps, and the
 # Diamond Pass client. The five module apps are owned by their own lanes. A
 # file that is not on disk yet hashes to "1" here rather than raising, so the
@@ -6369,6 +6370,8 @@ def build_models() -> str:
         for k, lab, n in filters)
 
     body = (
+        # Linked ahead of the markup so the tiles paint as a grid (QREP05).
+        f'<link rel="stylesheet" href="/assets/accountability.css?v={_ACCT_HUB_CSS_VER}">'
         f'<div class="fa-app mlbstats-app acct-app" data-acct-stale-days="{model_registry.STALE_DAYS}">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("models")}Model Accountability</h1></div>'
@@ -6430,11 +6433,11 @@ def build_glossary() -> str:
         '<span class="section-sub">terms, derivations, and each model\'s track record</span></div>'
         f"{intro}"
         '<div class="filter-bar"><span class="gl-microlabel">View</span>'
-        '<button class="chip active" data-glossary-view="terms">Terms</button>'
-        '<button class="chip" data-glossary-view="guide">How to Read</button>'
-        '<button class="chip" data-glossary-view="methodology">Methodology</button>'
-        '<button class="chip" data-glossary-view="models">Models &amp; Proofs</button>'
-        '<button class="chip" data-glossary-view="source-comparison">Source Comparison</button>'
+        '<button class="chip active" aria-pressed="true" data-glossary-view="terms">Terms</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="guide">How to Read</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="methodology">Methodology</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="models">Models &amp; Proofs</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="source-comparison">Source Comparison</button>'
         # C-A4 (2026-08-10). FOUR registration points and a chip is only one of
         # them: the view name must also be in the URL whitelist
         # (assets/glossary.js syncFromURL), the view -> container id map, and
@@ -6442,11 +6445,11 @@ def build_glossary() -> str:
         # while the suite stays green. That is the 2026-06-10 Source Comparison
         # lesson; test_glossary_page_loads.test_view_chips_match_whitelist now
         # asserts all four agree.
-        '<button class="chip" data-glossary-view="source-accuracy">Source Accuracy</button>'
-        '<button class="chip" data-glossary-view="source-updates">Source Updates</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="source-accuracy">Source Accuracy</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="source-updates">Source Updates</button>'
         # The page-index view keeps its key and URL (#view=library); its chip
         # reads "Page Index" now that the module itself is the Library.
-        '<button class="chip" data-glossary-view="library">Page Index</button>'
+        '<button class="chip" aria-pressed="false" data-glossary-view="library">Page Index</button>'
         # Outbound link (not a view toggle) to the full attribution page, so the
         # Data Sources & Attribution page is reachable from this section, not just
         # the footer. The trailing arrow signals it navigates away.

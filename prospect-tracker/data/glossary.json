@@ -226,7 +226,7 @@
     "rps_plus",
     "breakout_indicator"
    ],
-   "visual": "<span class=\"driver-tag is-good\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--up);background:rgba(31,122,58,0.15);color:var(--up);font-family:var(--font-mono);\">SC+ 122</span><span class=\"driver-tag is-neutral\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--neon-amber);background:rgba(255,215,0,0.15);color:var(--neon-amber);font-family:var(--font-mono);margin-left:4px;\">SC+ 101</span><span class=\"driver-tag is-bad\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--down);background:rgba(185,28,28,0.12);color:var(--down);font-family:var(--font-mono);margin-left:4px;\">SC+ 84</span>",
+   "visual": "<span class=\"driver-tag is-good\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--up);background:rgba(31,122,58,0.15);color:var(--text-green);font-family:var(--font-mono);\">SC+ 122</span><span class=\"driver-tag is-neutral\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--neon-amber);background:rgba(255,215,0,0.15);color:var(--text-gold);font-family:var(--font-mono);margin-left:4px;\">SC+ 101</span><span class=\"driver-tag is-bad\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--down);background:rgba(185,28,28,0.12);color:var(--down);font-family:var(--font-mono);margin-left:4px;\">SC+ 84</span>",
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
   },
@@ -2763,7 +2763,7 @@
     "on_il",
     "il_10_15_60"
    ],
-   "visual": "<span class=\"il-tag\" style=\"display:inline-block;padding:2px 6px;border:1px solid var(--neon-amber);color:var(--neon-amber);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);\">10-day IL · 14d</span>",
+   "visual": "<span class=\"il-tag\" style=\"display:inline-block;padding:2px 6px;border:1px solid var(--neon-amber);color:var(--text-gold);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);\">10-day IL · 14d</span>",
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
   },
@@ -2782,7 +2782,7 @@
    "seeAlso": [
     "post_tj"
    ],
-   "visual": "<span style=\"display:inline-block;padding:2px 6px;border:1px solid var(--neon-violet);color:var(--neon-violet);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);font-weight:700;\">Post-TJ · 2024-09-03</span>",
+   "visual": "<span style=\"display:inline-block;padding:2px 6px;border:1px solid var(--neon-violet);color:var(--text-violet);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);font-weight:700;\">Post-TJ · 2024-09-03</span>",
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
   },
@@ -2802,7 +2802,7 @@
    "seeAlso": [
     "tool"
    ],
-   "visual": "<span style=\"font-size:11px;color:var(--text-primary);font-family:var(--font-mono);\">2025-07-31</span><span style=\"display:inline-block;padding:1px 5px;font-size:9px;letter-spacing:0.04em;background:var(--neon-cyan);color:var(--bg-primary);border-radius:2px;font-weight:700;\">LATEST</span><span style=\"font-size:11px;color:var(--text-tertiary);\">FanGraphs 2025 Updated</span>",
+   "visual": "<span style=\"font-size:11px;color:var(--text-primary);font-family:var(--font-mono);\">2025-07-31</span><span style=\"display:inline-block;padding:1px 5px;font-size:9px;letter-spacing:0.04em;background:var(--text-cyan);color:var(--bg-primary);border-radius:2px;font-weight:700;\">LATEST</span><span style=\"font-size:11px;color:var(--text-tertiary);\">FanGraphs 2025 Updated</span>",
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
   },
@@ -2819,7 +2819,7 @@
    "priority": 32,
    "definition": "Amber pill on the per-source history header when a source's latest publication is >365 days old.",
    "methodology": "A stale source still counts in the consensus (its last grade stands until refreshed); the pill marks the input as aging. Sources go stale when an outlet stops covering a prospect.",
-   "visual": "<span style=\"font-size:12px;color:var(--text-secondary);font-weight:600;\">MLB Pipeline</span><span style=\"font-size:9px;color:var(--neon-amber);font-family:var(--font-mono);\">STALE</span><span style=\"font-size:11px;color:var(--text-tertiary);\">(last published 484 days ago)</span>",
+   "visual": "<span style=\"font-size:12px;color:var(--text-secondary);font-weight:600;\">MLB Pipeline</span><span style=\"font-size:9px;color:var(--text-gold);font-family:var(--font-mono);\">STALE</span><span style=\"font-size:11px;color:var(--text-tertiary);\">(last published 484 days ago)</span>",
    "shelf": "ark",
    "origin": "Arkmetric, original to eephus.io."
   },
