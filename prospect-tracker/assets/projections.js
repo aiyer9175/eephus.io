@@ -647,10 +647,12 @@
     const ticks = (lo, hi) => Array.from({ length: 6 }, (_, i) => lo + (hi - lo) * i / 5);
     const grid = ticks(x0, x1).map(v => `<line x1="${px(v).toFixed(1)}" y1="${PAD}" x2="${px(v).toFixed(1)}" y2="${H - PAD}" stroke="var(--border-light)" stroke-width="0.5"/><text x="${px(v).toFixed(1)}" y="${H - PAD + 14}" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">${_axFmt(ax, v)}</text>`).join("")
       + ticks(y0, y1).map(v => `<line x1="${PAD}" y1="${py(v).toFixed(1)}" x2="${W - PAD}" y2="${py(v).toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5"/><text x="${PAD - 6}" y="${(py(v) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${_axFmt(ay, v)}</text>`).join("");
+    // Dots are pointer shortcuts (tabindex -1): a keyboard reaches every
+    // player through the board rows, not through 1,400 stops inside a role=img.
     const dots = pts.map(({ m, x, y }) => {
       const c = CONTRACT_DOT_COLORS[contractStatus(m).key] || "var(--text-tertiary)";
       const href = m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`;
-      return `<a href="${href}"><circle cx="${px(x).toFixed(1)}" cy="${py(y).toFixed(1)}" r="3.5" fill="${c}" fill-opacity="0.7" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - ${esc(ax.label)} ${_axFmt(ax, x)} · ${esc(ay.label)} ${_axFmt(ay, y)}</title></circle></a>`;
+      return `<a href="${href}" tabindex="-1"><circle cx="${px(x).toFixed(1)}" cy="${py(y).toFixed(1)}" r="3.5" fill="${c}" fill-opacity="0.7" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - ${esc(ax.label)} ${_axFmt(ax, x)} · ${esc(ay.label)} ${_axFmt(ay, y)}</title></circle></a>`;
     }).join("");
     return `<svg viewBox="0 0 ${W} ${H}" class="proj-warmap-svg" role="img" aria-label="${esc(ay.label)} versus ${esc(ax.label)} scatter">
       <text x="${PAD}" y="20" font-size="11" font-weight="700" fill="var(--text-secondary)">${pts.length} players · ${esc(ay.label)} vs ${esc(ax.label)}</text>
@@ -1273,7 +1275,7 @@
         <th title="Baseline MAE" class="fa-sub">Baseline</th>
         <th title="Mean error, actual minus predicted">Bias</th>
         <th title="Share of actuals inside the P10-P90 band (target ~80%)"><span data-gl="p10_p90_bands">Coverage</span></th>
-        <th title="Baseline coverage" class="fa-sub">Baseline</th></tr></thead>
+        <th title="Baseline coverage" class="fa-sub">Baseline cov.</th></tr></thead>
       <tbody>${rows}</tbody></table>
       <div class="fa-sub proj-acct-foot">${esc(vh.frame || "")} Champion ${esc((vh.champion || {}).model || "")} vs prior baseline ${esc((vh.baseline || {}).model || "")}.</div>`;
   }
@@ -1365,7 +1367,8 @@
       return "";
     };
     const legend = (acct.verdict_enum || []).map(v =>
-      VERDICT_META[v] ? `<span class="proj-acct-legend-item">${verdictBadge(v)} <span class="fa-sub">${esc(VERDICT_DESC[v] || "")}</span></span>` : "").join("");
+      VERDICT_META[v] ? `<span class="proj-acct-legend-item">${verdictBadge(v)} <span class="fa-sub">${esc(VERDICT_DESC[v] || "")}</span></span>` : "")
+      .filter(Boolean).join(`<span class="fa-sub" aria-hidden="true"> &middot; </span>`);
     const glHref = `/glossary/#cat=${encodeURIComponent("Platform & Methodology")}`;
     const cards = models.map(m => {
       const fresh = m.last_checked
@@ -1917,7 +1920,7 @@
     }).join("");
 
     const _wm = projWarMap(list);
-    const _axSel = (id, cur) => `<select id="${id}" class="proj-select proj-select-ax">
+    const _axSel = (id, cur, name) => `<select id="${id}" class="proj-select proj-select-ax" aria-label="${name}">
       ${Object.entries(SCATTER_AXES).map(([k, ax]) => `<option value="${k}"${cur === k ? " selected" : ""}>${esc(ax.label)}</option>`).join("")}</select>`;
     const _ay = (SCATTER_AXES[state.sy] || SCATTER_AXES.warY1).label;
     const _ax2 = (SCATTER_AXES[state.sx] || SCATTER_AXES.age).label;
@@ -1928,7 +1931,7 @@
       </div>`;
     const warMap = _wm ? `<details class="proj-warmap"><summary>Scatter &middot; ${esc(_ay)} vs ${esc(_ax2)} (current filters &middot; pick any axes)</summary>
       <div class="proj-warmap-axes">
-        <span>Y</span>${_axSel("proj-sy", state.sy)}<span>X</span>${_axSel("proj-sx", state.sx)}
+        <label for="proj-sy">Y</label>${_axSel("proj-sy", state.sy, "Y axis")}<label for="proj-sx">X</label>${_axSel("proj-sx", state.sx, "X axis")}
       </div>
       ${warMapLegend}
       <div class="proj-warmap-wrap" data-export-chart data-export-title="${esc(_ay)} vs ${esc(_ax2)}">${_wm}</div></details>` : "";
@@ -2062,10 +2065,19 @@
       if (i >= 0) state.cmp.splice(i, 1);
       else { state.cmp.push(k); if (state.cmp.length > 2) state.cmp.shift(); }
       syncToURL();
-      if (state.cmp.length === 2) render(); else renderTable();
+      if (state.cmp.length === 2) { render(); return; }
+      renderTable();
+      // The re-render replaced the button; keep focus on it, not on <body>.
+      const again = root.querySelector(`[data-cmp-key="${cssKey(k)}"]`);
+      if (again && again.focus) again.focus();
     });
     const clr = root.querySelector("[data-cmp-clear]");
-    if (clr) clr.onclick = () => { state.cmp = []; syncToURL(); renderTable(); };
+    if (clr) clr.onclick = () => {
+      const was = state.cmp[0];
+      state.cmp = []; syncToURL(); renderTable();
+      const again = was && root.querySelector(`[data-cmp-key="${cssKey(was)}"]`);
+      if (again && again.focus) again.focus();
+    };
     fillRowPhotos(root);
     if (window.EEPHUS_HUB) {
       window.EEPHUS_HUB.links().then(L => {
@@ -2088,6 +2100,9 @@
   // value tiles. Works across sources (vet vs prospect compares fine -
   // warAt aligns both to calendar seasons).
   // ===========================================================================
+  function cssKey(k) {
+    return (window.CSS && CSS.escape) ? CSS.escape(String(k)) : String(k).replace(/["\\]/g, "\\$&");
+  }
   function findRow(key) {
     return (DATA.vets || []).concat(DATA.prospects || []).find(m => m.key === key) || null;
   }
@@ -2307,6 +2322,10 @@
   // percentile gradient (EephusTiers.pctColor), carried inline as --pct so the
   // stylesheet paints the fill and the chip from it; the pctClass step stays on
   // both as the fallback a browser without color-mix paints instead.
+  // The pools mlb_player_export pulls: the contact leaderboard at 25+ batted
+  // balls, the expected-stats leaderboard with no floor. Neither is a
+  // qualified pool.
+  const SAVANT_POOL = "vs Savant leaderboards (contact: 25+ batted balls; expected stats: no floor)";
   function sliders(sc, sid) {
     if (!sc || !sc.metrics || !sc.metrics.length) return "";
     const isLuck = m => /^luck/i.test(String(m.label || ""));
@@ -2324,7 +2343,7 @@
     const luck = sc.metrics.find(isLuck);
     const luckHTML = luck
       ? `<div class="mlbp-luck"><span class="mlbp-luck-label">${esc(luck.label)}</span><span class="mlbp-luck-val">${esc(luck.value)}</span></div>` : "";
-    return section(sid, "Statcast Percentiles", `${esc(String(sc.season))} · vs qualified MLB pool`, rows + luckHTML);
+    return section(sid, "Statcast Percentiles", `${esc(String(sc.season))} · ${SAVANT_POOL}`, rows + luckHTML);
   }
   // Dot ruler for one scale family: every index on it shares the axis, the
   // centre line is 100 and the shaded band is the family's neutral zone.
@@ -2553,12 +2572,19 @@
   }
 
   // ---- hitting ---------------------------------------------------------------
+  // .262 style: three places, no leading zero. pct1: one place and a % sign.
+  function rate3(v) {
+    return v == null || !Number.isFinite(Number(v)) ? EM_DASH : Number(v).toFixed(3).replace(/^0(?=\.)/, "");
+  }
+  function pct1(v) {
+    return v == null || !Number.isFinite(Number(v)) ? EM_DASH : Number(v).toFixed(1) + "%";
+  }
   function arsenalTable(ar, extra) {
     const table = (ar && ar.length)
       ? `<table class="detail-table"><thead><tr><th>Pitch</th><th>Usage</th><th title="Savant pitcher run value per 100 pitches, pitcher view: positive = runs saved">RV/100</th><th>Whiff%</th><th>BA against</th></tr></thead>
       <tbody>${ar.map(a => `<tr><td>${esc(a.pitch || "")}</td><td>${a.usage != null ? a.usage.toFixed(1) + "%" : EM_DASH}</td>
         <td class="${a.rv100 != null && a.rv100 > 0 ? "proj-pos" : a.rv100 < 0 ? "proj-neg" : ""}">${a.rv100 != null ? a.rv100.toFixed(1) : EM_DASH}</td>
-        <td>${a.whiff != null ? a.whiff.toFixed(1) + "%" : EM_DASH}</td><td>${a.ba != null ? String(a.ba) : EM_DASH}</td></tr>`).join("")}</tbody></table>` : "";
+        <td>${a.whiff != null ? a.whiff.toFixed(1) + "%" : EM_DASH}</td><td>${rate3(a.ba)}</td></tr>`).join("")}</tbody></table>` : "";
     const tiles = extra ? `<div class="mlbp-tiles mlbp-tiles-left">${extra}</div>` : "";
     if (!table && !tiles) return "";
     return section("pitching-arsenal", "Pitch Arsenal", "usage · run value /100 (positive = runs saved) · whiff%", `<div class="mlbp-table-wrap">${table}</div>${tiles}`);
@@ -2571,6 +2597,7 @@
   // reference column after eWAR, shown only when a row on this table has a
   // published value; a row without one prints the null marker. eWAR stays the
   // site's WAR: the reference column never sorts, sums or bands anything.
+  const IP_TIP = "Innings pitched in baseball notation: .1 and .2 are one and two outs";
   function seasonLines(rows, isPit, sid, sub) {
     const c = rows || [];
     if (!c.length) return "";
@@ -2580,11 +2607,11 @@
     const warTd = r => `<td>${r.war != null ? fmtWar(r.war) : EM_DASH}</td>`
       + (hasFg ? `<td class="mlbp-fgwar">${r.war_fwar != null ? fmtWar(r.war_fwar) : EM_DASH}</td>` : "");
     const head = isPit
-      ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th>" + warTh
+      ? `<th>Year</th><th title="${IP_TIP}">IP</th><th>ERA</th><th>K%</th><th>BB%</th>` + warTh
       : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th>" + warTh;
     const body = c.slice().reverse().map(r => isPit
-      ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td>${warTd(r)}</tr>`
-      : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.iso != null ? String(r.iso).replace(/^0(?=\.)/, "") : EM_DASH}</td>${warTd(r)}</tr>`).join("");
+      ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${pct1(r.kPct)}</td><td>${pct1(r.bbPct)}</td>${warTd(r)}</tr>`
+      : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${pct1(r.bbPct)}</td><td>${pct1(r.kPct)}</td><td>${rate3(r.iso)}</td>${warTd(r)}</tr>`).join("");
     return section(sid, "Season lines", sub,
       `<div class="mlbp-table-wrap"><table class="detail-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
   }
@@ -2606,7 +2633,7 @@
     const note = [h.pa != null ? `${h.pa} PA` : "", h.qualified ? "qualified" : "",
       h.pwoba != null ? `${term("pwoba", "pWOBA")} ${Number(h.pwoba).toFixed(3).replace(/^0(?=\.)/, "")}` : ""].filter(Boolean);
     note.push(`<a class="fa-player-link" href="/mlbstats/#section=hitters">MLB Stats &rarr;</a>`);
-    return section("hitting-index", "Offense index", `${h.season ? esc(String(h.season)) + " · " : ""}100 = average qualified hitter`,
+    return section("hitting-index", "Offense index", `${h.season ? esc(String(h.season)) + " · " : ""}100 = PA-weighted average of 50+ PA hitters`,
       ruler + `<div class="fa-sub mlbp-index-note">${note.join(" · ")}</div>`);
   }
   function swingTiles(p) {
@@ -2719,6 +2746,15 @@
       warIpPlus3yr: r.war_ip_plus_3yr, gmli: r.gmli, gmli3yr: r.gmli_3yr,
       saves: r.saves, holds: r.holds, wpa: r.wpa, sd: r.sd, md: r.md, gs: r.gs, ipPerGs: r.ip_per_gs };
   }
+  // Decimal innings (174.333) in the baseball notation the season lines use
+  // (174.1): the digit after the point counts outs.
+  function ipThirds(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return EM_DASH;
+    let whole = Math.floor(n + 1e-9), outs = Math.round((n - whole) * 3);
+    if (outs >= 3) { whole += 1; outs = 0; }
+    return `${whole}.${outs}`;
+  }
   // Starters and relievers are separate pools; their indexes never share an axis.
   function pitchingIndexBlock(p) {
     const s = pitchSkill(p);
@@ -2731,7 +2767,7 @@
         { label: "SEM+ 3yr", v: s.semPlus3yr, gl: "sem_plus_3yr" }], "run");
     if (!ruler) return "";
     const line = [esc(s.role || (rel ? "reliever" : "starter")),
-      s.ip != null ? `${esc(String(s.ip))} IP` : "",
+      s.ip != null ? `${ipThirds(s.ip)} IP` : "",
       !rel && s.gs != null ? `${esc(String(s.gs))} GS` : "",
       !rel && s.ipPerGs != null ? `${Number(s.ipPerGs).toFixed(1)} IP/GS` : "",
       rel && (s.saves != null || s.holds != null) ? `${s.saves || 0} SV / ${s.holds || 0} HLD` : "",
@@ -3182,7 +3218,7 @@
     const sk = p.skills || {};
     return [
       `${term("fa_projection_engine", "Projection engine")} proj_lgbm_v1, bands = its P10 / P90 quantile heads`,
-      "Statcast percentiles vs the season's qualified MLB pool",
+      `Statcast percentiles ${SAVANT_POOL}`,
       p.swingPlus != null ? "Swing+ (MLB bat tracking 2024+)" : "",
       p.aaaStuffPlus != null ? "aStuff+: in-house AAA pitch model, latest tracked AAA season" : "",
       sk.def ? "Fielding, framing and positional runs: FanGraphs, via MLB StatsAPI" : "",
@@ -3427,7 +3463,7 @@
       headshotURL: headshotURL(p.mlbam, 132),
       url: `eephus.io/projections/#player=${p.key}`,
       filename: `eephus-${p.key}-mlb-card.png`,
-      caption: "eephus projection engine (proj_lgbm_v1) · bands = P10-P90 · Statcast percentiles vs qualified MLB pool",
+      caption: "eephus projection engine (proj_lgbm_v1) · bands = P10-P90 · Statcast percentiles vs Savant leaderboards",
     });
   }
 
