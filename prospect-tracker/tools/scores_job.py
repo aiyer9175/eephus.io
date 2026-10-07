@@ -35,6 +35,13 @@ and is counted apart (`game_fetch_failed`). The job never calls the house
 getters `feed_cache.get_game_feed` or `mlb_leverage.get_win_probability` and
 never writes `.cache/game_feeds`, `.cache/win_prob` or `.cache/win_prob_post`.
 
+THE PREGAME BLOCK (SCORES_6). A Preview game's date-file card carries `pre`:
+values copied, never computed, from the served Sports Betting board through
+scores_core's key-path allowlist (its preview slice once the served Diamond
+gate reads on) and from the served SEM+, management, fantasy, park and eFV
+files. The card is rebuilt from the schedule without it once the game leaves
+Preview, and the validator refuses it on any other state.
+
 THE EPOCH. While `../_pre_epoch_fwar_2026-10/` exists and part 9 of
 `docs/efv-2026-09-17/FWAR_LABEL_EPOCH_GATE.md` has no step Z entry, the job
 exits 0 with action `epoch_hold` before any request or write except its
@@ -174,7 +181,20 @@ BRACKET_TYPES = ("F", "D", "L", "W")
 #: The served registry rows index.json's registry block carries, and the source
 #: each row's sentence names (plan 4, the labelling rule).
 REGISTRY_IDS = {"scores_mlb_wp": "MLB", "scores_stars_rule": "Eephus rule",
-                "scores_biggest_plays_rule": "Eephus rule"}
+                "scores_biggest_plays_rule": "Eephus rule",
+                # SCORES_6: the pregame block's sources (plan 4); the model row's
+                # sentence also carries the board's own state ("unvalidated")
+                "betting_game_prob": "Eephus model", "sem_plus": "MLB Stats SEM+",
+                "efv_v2": "PROSPX eFV", "mgmt_board_export": "In-Game Management"}
+
+#: SCORES_6 served reads (plan 9): the board through scores_core's key-path
+#: allowlist (the preview slice once the served Diamond gate reads on), and
+#: the files whose values the pregame block copies. data/xfv.json (9.4 MB) and
+#: the link table are parsed only when their mtimes move; the joined map is
+#: kept in state.json.
+BOARD_NAMES = {"full": "betting.json", "preview": "betting_preview.json"}
+PRE_SOURCES = {"sem": "starter_leaderboards.json", "hook": "management_board.json", "fantasy": "fantasy.json",
+               "park": "fa_meta.json", "xfv": "xfv.json", "links": "player_links.json"}
 
 #: Actions that mean the job could not do its job; exit 2.
 LOUD_ACTIONS = ("fetch_failed", "refused", "publish_failed", "bad_out")
@@ -684,10 +704,64 @@ def served_blocks(state: dict, *, current_season: int) -> dict:
     if isinstance(seasons, dict) and seasons:
         keep["constants"] = {str(k): {"lg_ra9": v.get("lg_ra9"), "rpw": v.get("rpw")}
                              for k, v in seasons.items() if isinstance(v, dict) and v.get("lg_ra9") and v.get("rpw")}
-    return {"registry": keep.get("registry") or [],
+    # SCORES_6: the board is read fresh on every acting cycle and never carried
+    # forward (a failed read shows no model number rather than an old one)
+    board, kind = served_board()
+    registry = [dict(r) for r in keep.get("registry") or []]
+    state_word = ((board or {}).get("file") or {}).get("status.model")
+    for r in registry:
+        if r["model_id"] == "betting_game_prob" and isinstance(state_word, str) and state_word:
+            r["sentence"] = f"{REGISTRY_IDS['betting_game_prob']}, {state_word}, {r['verdict']}"
+    return {"registry": registry, "board": board, "board_kind": kind,
             "accuracy": keep.get("accuracy") or {"feed_brier": None, "base_rate_brier": None, "n_plays": None,
                                                  "seasons": [], "artifact_generated_at": None},
             "constants": keep.get("constants") or {}}
+
+
+def served_board() -> tuple[dict | None, str]:
+    """The served board read through scores_core's allowlist, and which file:
+    the full board while the served assets/diamond-config.js reads gating
+    false, the preview slice (the gate's seam) once it reads true."""
+    try:
+        cfg = served_diamond_config().read_text(encoding="utf-8")
+    except OSError:
+        cfg = ""
+    kind = "preview" if sc.diamond_gating_on(cfg) else "full"
+    return sc.board_extract(read_served(BOARD_NAMES[kind])), kind
+
+
+def _mtimes(names) -> list | None:
+    try:
+        return [(served_data_dir() / n).stat().st_mtime for n in names]
+    except OSError:
+        return None
+
+
+def efv_map_cached(state: dict) -> dict:
+    """{mlbam: xfv_grade} for eFV v2 prospects, re-read from the served
+    data/xfv.json and the link table only when either file's mtime moves;
+    otherwise the map kept in state.json."""
+    keep = state.get("xfv") or {}
+    mt = _mtimes((PRE_SOURCES["xfv"], PRE_SOURCES["links"]))
+    if mt is None or keep.get("mtimes") == mt:
+        return keep.get("map") or {}
+    xfv, links = read_served(PRE_SOURCES["xfv"]), read_served(PRE_SOURCES["links"])
+    if not isinstance(xfv, dict) or not isinstance(links, dict):
+        return keep.get("map") or {}
+    m = sc.efv_map(xfv, links)
+    state["xfv"] = {"mtimes": mt, "map": m}
+    return m
+
+
+def pregame_context(state: dict, served: dict) -> dict:
+    """The served reads a Preview card's `pre` block copies from (plan 9)."""
+    two, pks = sc.fantasy_maps(read_served(PRE_SOURCES["fantasy"]))
+    return {"board": served.get("board"), "board_kind": served.get("board_kind") or "full",
+            "sem": sc.sem_map(read_served(PRE_SOURCES["sem"])),
+            "hook": sc.hook_map(read_served(PRE_SOURCES["hook"])),
+            "two_start": two, "dfs_pks": pks,
+            "park": sc.park_map(read_served(PRE_SOURCES["park"])),
+            "efv": efv_map_cached(state)}
 
 
 def lg_for(constants: dict, season: int) -> dict | None:
@@ -1230,6 +1304,17 @@ class Cycle:
         self.stale_games: dict = {}
         self.game_cards: dict = {}
         self.clips: dict = {}
+        self._pre: dict | None = None
+
+    def pre_ctx(self) -> dict:
+        """The pregame reads, once per cycle and only when a Preview card needs them."""
+        if self._pre is None:
+            try:
+                self._pre = pregame_context(self.state, self.served)
+            except Exception as e:  # noqa: BLE001 - a bad served file never stops the scores
+                log.warning("scores_job: pregame context unavailable: %s", e)
+                self._pre = {}
+        return self._pre
 
     # --- game files ---
     def game_file(self, g: dict) -> dict | None:
@@ -1313,6 +1398,10 @@ class Cycle:
             if card is None:
                 card = sc.build_card(g, generated_at=self.gen, people=people)
             card = json.loads(json.dumps(card))
+            if sc.pre_open(g):
+                pre = sc.pre_block(g, card, self.pre_ctx())
+                if pre:
+                    card["pre"] = pre
             gs = (self.state.get("games") or {}).get(str(pk)) or {}
             card["stale_since"] = self.stale_games.get(pk) or gs.get("stale_since")
             old = prev_cards.get(pk)

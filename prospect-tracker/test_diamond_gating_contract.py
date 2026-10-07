@@ -57,6 +57,9 @@ CLIENTS = {
     "redraft": ASSETS / "redraft.js",
     "dfs": ASSETS / "dfs.js",
     "betting": ASSETS / "betting.js",
+    # SCORES_6: /scores/ prints the board's pregame model number only when the
+    # Diamond check allows it, and re-renders when membership resolves
+    "scores": ASSETS / "scores.js",
 }
 
 

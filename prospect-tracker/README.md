@@ -28,7 +28,7 @@ linked from those pages or redirect. Full inventory with payloads: `SITE_MAP.md`
 | `/prospx/` | PROSPX | hand-maintained `prospx/index.html` (single-file app) |
 | `/collegesavant/` | CollegeSavant | hand-maintained `collegesavant/index.html` + `collegesavant/app.js` |
 | `/franchise/` | Franchises (MLB Modules) | `build_site.build_franchise()` + `assets/eephus-teampick.js`, `assets/franchise.js` |
-| `/scores/` | Scores / Standings (MLB Modules) | `build_site.build_scores()` + `assets/eephus-teampick.js`, `assets/scores-bracket.js`, `assets/scores.js` |
+| `/scores/` | Scores / Standings (MLB Modules) | `build_site.build_scores()` + `assets/eephus-teampick.js`, `assets/scores-bracket.js`, `assets/scores-pregame.js`, `assets/scores.js` |
 | `/fa/` | Free Agency (MLB Modules) | `build_site.build_fa()` + `assets/fa.js` |
 | `/projections/` | Projections (MLB Modules) | `build_site.build_projections()` + `assets/eephus-teampick.js`, `assets/projections.js` |
 | `/mlbstats/` | MLB Stats (MLB Modules) | `build_site.build_mlbstats()` + `assets/eephus-teampick.js`, `assets/mlbstats.js` |

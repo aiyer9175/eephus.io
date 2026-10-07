@@ -35,6 +35,8 @@ path is passed in by the caller (the scores job, SCORES_2). The module holds:
      validator of plan 8.5 (every rule but the on-disk ones, which the job adds);
   9. clubs by MLBAM team id through a 30-entry literal pinned by a test to
      `trades.canonical_org_from_id` and to the 30 codes of the franchise board.
+  10. the pregame block of a Preview card (SCORES_6, section 8c): values the
+     job copies from served files through allowlists, never computed here.
 
 Every win-probability quantity (`wp_home`, `before`, `after`, `swing`, a star's
 `score`, `pregame_home`, `unattributed_home`, box WPA) is an integer in
@@ -1782,6 +1784,253 @@ def build_date_file(date: str, cards: list[dict], game_files: dict | None, *, ge
 
 
 # --------------------------------------------------------------------------- #
+# 8c. The pregame context (SCORES_6_PREGAME_CONTEXT; plan 4, 9 and 10; owner
+# answer SC-MODEL: model only, cards and game). For a Preview game only, the
+# job copies values from served files into the card's `pre` block; nothing
+# here computes a number, and every copied value is byte-equal to its source.
+# A card that leaves Preview is rebuilt from the schedule without the block,
+# and the validator refuses a `pre` block on any other state (rule 12).
+# --------------------------------------------------------------------------- #
+#: The key-path allowlist over the served Sports Betting board (plan 9). The
+#: job reads these paths and no other; a test records every key it touches.
+BOARD_ROW_LISTS = ("team_bets", "games")
+BOARD_ROW_PATHS = ("game_pk", "model.p_home", "model.p_away", "home.probable.mlbam", "away.probable.mlbam")
+BOARD_FILE_PATHS = ("generated_at", "slate_date", "model.version", "status.model",
+                    "status.model_registry_verdict", "status.model_verdict_sentence", "status.stale_board")
+#: Game types the page prints the model for. The board has priced the
+#: postseason since 2026-10-01 (INT-A1), but the owner's SC-MODEL answer shows
+#: nothing before Opening Day 2027, so the page keeps the regular season.
+PRE_GAME_TYPES = ("R",)
+#: Keys a `pre` block may carry; the validator refuses any other (rule 12).
+PRE_KEYS = frozenset({"model", "away", "home", "park_runs", "dfs", "lineups", "efv"})
+PRE_MODEL_KEYS = frozenset({"p_home", "p_away", "version", "state", "verdict", "sentence", "board_at",
+                            "slate_date", "stale_board", "board"})
+PRE_SIDE_KEYS = frozenset({"sem_plus", "sem_season", "hook_median_pitches", "hook_season", "two_start"})
+#: The absent states the page prints a sentence for (plan 10).
+PRE_ABSENT = ("starter", "season")
+PRE_STATES = ("scheduled", "pregame", "delayed")
+
+
+def _dig(obj, path: str):
+    cur = obj
+    for k in path.split("."):
+        if not isinstance(cur, dict):
+            return None
+        cur = cur.get(k)
+    return cur
+
+
+def _id_or_none(x) -> int | None:
+    if x is None or isinstance(x, bool):
+        return None
+    try:
+        return int(x)
+    except (TypeError, ValueError):
+        return None
+
+
+def board_extract(board) -> dict | None:
+    """The served board read through the allowlist: `{file: {path: value},
+    rows: {game_pk: {path: value}}}`, BOARD_FILE_PATHS once and
+    BOARD_ROW_PATHS per row of the BOARD_ROW_LISTS lists, nothing else."""
+    if not isinstance(board, dict):
+        return None
+    out = {"file": {p: _dig(board, p) for p in BOARD_FILE_PATHS}, "rows": {}}
+    for key in BOARD_ROW_LISTS:
+        rows = board.get(key)
+        for r in rows if isinstance(rows, list) else []:
+            vals = {p: _dig(r, p) for p in BOARD_ROW_PATHS}
+            pk = vals["game_pk"]
+            if isinstance(pk, int) and not isinstance(pk, bool) and pk not in out["rows"]:
+                out["rows"][pk] = vals
+    return out
+
+
+def pre_open(game: dict) -> bool:
+    """A game takes a `pre` block only while MLB reads it Preview."""
+    st = game.get("status") or {}
+    return str(st.get("abstractGameState") or "") == "Preview" and game_state(st)[0] in PRE_STATES
+
+
+def _probable_id(game: dict, side: str) -> int | None:
+    return _id_or_none((((game.get("teams") or {}).get(side) or {}).get("probablePitcher") or {}).get("id"))
+
+
+def _plain(s) -> bool:
+    return isinstance(s, str) and bool(s) and not any(d in s for d in _DASHES)
+
+
+def pre_model(game: dict, ext: dict | None, *, board: str = "full") -> dict | None:
+    """The model block for one Preview game: the board's two probabilities and
+    its once-per-file labels, copied; `{"absent": "starter"}` when a listed
+    starter differs from the live schedule's (null equals null only);
+    `{"absent": "season"}` off the regular season; None (nothing at all) when
+    the board is stale, missing, on another slate or lacks the game."""
+    if not ext:
+        return None
+    f = ext.get("file") or {}
+    if f.get("status.stale_board") is not False:
+        return None
+    if str(game.get("gameType") or "") not in PRE_GAME_TYPES:
+        return {"absent": "season"}
+    row = (ext.get("rows") or {}).get(_int(game.get("gamePk"), -1))
+    if row is None or f.get("slate_date") != game.get("officialDate"):
+        return None
+    for side in ("away", "home"):
+        if _probable_id(game, side) != _id_or_none(row.get(f"{side}.probable.mlbam")):
+            return {"absent": "starter"}
+    ph, pa = row.get("model.p_home"), row.get("model.p_away")
+    if not all(isinstance(x, (int, float)) and not isinstance(x, bool) and 0 <= x <= 1 for x in (ph, pa)):
+        return None
+    labels = [f.get(p) for p in ("status.model", "status.model_registry_verdict", "status.model_verdict_sentence",
+                                 "model.version", "generated_at", "slate_date")]
+    if not all(_plain(s) for s in labels):
+        return None
+    return {"p_home": ph, "p_away": pa, "version": f["model.version"], "state": f["status.model"],
+            "verdict": f["status.model_registry_verdict"], "sentence": f["status.model_verdict_sentence"],
+            "board_at": f["generated_at"], "slate_date": f["slate_date"], "stale_board": False, "board": board}
+
+
+def sem_map(doc) -> dict:
+    """{mlbam: (sem_plus, season)} from the served starter leaderboards."""
+    out = {}
+    season = _int((doc or {}).get("season"), 0) if isinstance(doc, dict) else 0
+    for r in ((doc or {}).get("starters") or []) if isinstance(doc, dict) else []:
+        pid, v = _id_or_none((r or {}).get("mlbam")), (r or {}).get("sem_plus")
+        if pid is not None and isinstance(v, (int, float)) and not isinstance(v, bool) and season:
+            out.setdefault(pid, (v, season))
+    return out
+
+
+def hook_map(doc) -> dict:
+    """{(club, season): hook_median_pitches} from the served management
+    board's club rows (`clubs.rows`, at or above its games floor). Only the
+    keys club, season, games and hook_median_pitches are read."""
+    clubs = (doc or {}).get("clubs") if isinstance(doc, dict) else None
+    if not isinstance(clubs, dict):
+        return {}
+    floor = _int(clubs.get("games_floor"), 0)
+    out = {}
+    for r in clubs.get("rows") or []:
+        v = (r or {}).get("hook_median_pitches")
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and _int(r.get("games"), 0) >= floor:
+            out[(r.get("club"), _int(r.get("season"), 0))] = v
+    return out
+
+
+def fantasy_maps(doc) -> tuple[dict, set]:
+    """(two_start {mlbam: {dates, n, projected}}, the game_pks on the fantasy
+    slate) from the served fantasy payload; both are regular season only."""
+    if not isinstance(doc, dict):
+        return {}, set()
+    two = {}
+    for r in ((doc.get("sections") or {}).get("two_start") or []):
+        pid, n = _id_or_none((r or {}).get("mlbam")), _int((r or {}).get("n_starts"), 0)
+        legs = [x for x in (r.get("legs") or []) if isinstance(x, dict)]
+        if pid is not None and n >= 2:
+            two[pid] = {"dates": [x.get("date") for x in legs], "n": n,
+                        "projected": any(bool(x.get("projected")) for x in legs)}
+    pks = {_int(g.get("game_pk"), -1) for g in ((doc.get("schedule") or {}).get("games") or []) if isinstance(g, dict)}
+    pks.discard(-1)
+    return two, pks
+
+
+def park_map(doc) -> dict:
+    """{club: runs} from the served FA meta's three-season park factors
+    (Baseball Savant); never the by-hand split."""
+    pf = (doc or {}).get("park_factors") if isinstance(doc, dict) else None
+    out = {}
+    for club, row in (pf or {}).items() if isinstance(pf, dict) else []:
+        v = (row or {}).get("runs") if isinstance(row, dict) else None
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            out[club] = v
+    return out
+
+
+def efv_map(xfv, links) -> dict:
+    """{str(mlbam): xfv_grade} for the active prospects PROSPX grades on the
+    eFV v2 basis (model id efv_v2), joined through the served player link
+    table (mlbam to the PROSPX key); never consensus FV."""
+    by_player = (xfv or {}).get("by_player") if isinstance(xfv, dict) else None
+    by_mlbam = (links or {}).get("byMlbam") if isinstance(links, dict) else None
+    if not isinstance(by_player, dict) or not isinstance(by_mlbam, dict):
+        return {}
+    out = {}
+    for mid, row in by_mlbam.items():
+        key = (row or {}).get("prospx") if isinstance(row, dict) else None
+        x = by_player.get(key) if key else None
+        g = (x or {}).get("xfv_grade")
+        if (isinstance(x, dict) and x.get("kind") == "active" and x.get("grade_basis") == "efv_v2"
+                and isinstance(g, (int, float)) and not isinstance(g, bool) and _id_or_none(mid) is not None):
+            out[str(int(mid))] = g
+    return out
+
+
+def pre_block(game: dict, card: dict, ctx: dict | None) -> dict | None:
+    """The `pre` block of a Preview card (plan 8.2), or None. `ctx` holds the
+    served reads: `board` (board_extract), `board_kind` ("full" or "preview"),
+    `sem`, `hook`, `two_start`, `dfs_pks`, `park` and `efv`."""
+    if not pre_open(game):
+        return None
+    ctx = ctx or {}
+    pre: dict = {}
+    m = pre_model(game, ctx.get("board"), board=ctx.get("board_kind") or "full")
+    if m is not None:
+        pre["model"] = m
+    season = _int(game.get("season"), 0) or _int(str(game.get("officialDate") or "")[:4], 0)
+    regular = str(game.get("gameType") or "") == "R"
+    for side in ("away", "home"):
+        code, pid, s = (card.get(side) or {}).get("code"), _probable_id(game, side), {}
+        sem = (ctx.get("sem") or {}).get(pid) if pid is not None else None
+        if sem:
+            s["sem_plus"], s["sem_season"] = sem
+        hook = (ctx.get("hook") or {}).get((code, season)) if code else None
+        if hook is not None:
+            s["hook_median_pitches"], s["hook_season"] = hook, season
+        two = (ctx.get("two_start") or {}).get(pid) if regular and pid is not None else None
+        if two and game.get("officialDate") in two["dates"]:
+            s["two_start"] = {"n": two["n"], "projected": two["projected"]}
+        if s:
+            pre[side] = s
+    home = (card.get("home") or {}).get("code")
+    park = (ctx.get("park") or {}).get(home) if home else None
+    if park is not None:
+        pre["park_runs"] = park
+    if regular and _int(game.get("gamePk"), -1) in (ctx.get("dfs_pks") or set()):
+        pre["dfs"] = True
+    lu = _lineups(game, None)
+    if lu["away"] or lu["home"]:
+        pre["lineups"] = lu
+        ef = ctx.get("efv") or {}
+        grades = {str(p["id"]): ef[str(p["id"])] for side in ("away", "home") for p in lu[side] if str(p["id"]) in ef}
+        if grades:
+            pre["efv"] = grades
+    return pre or None
+
+
+def _check_pre(card: dict, out: list) -> None:
+    """Rule 12 (SCORES_6): a `pre` block rides on a Preview card only and
+    carries only its allowlisted keys."""
+    pre = card.get("pre")
+    if pre is None:
+        return
+    if card.get("state") not in PRE_STATES or card.get("sit") or card.get("wp") is not None:
+        out.append(("12", "pre block on a game that left Preview"))
+        return
+    if not isinstance(pre, dict) or set(pre) - PRE_KEYS:
+        out.append(("12", "pre block carries a key outside its allowlist"))
+        return
+    m = pre.get("model")
+    if m is not None and not (set(m) <= PRE_MODEL_KEYS or (set(m) == {"absent"} and m["absent"] in PRE_ABSENT)):
+        out.append(("12", "pre.model carries a key outside its allowlist"))
+    if m is not None and "absent" not in m and m.get("stale_board") is not False:
+        out.append(("12", "pre.model copied from a stale board"))
+    for side in ("away", "home"):
+        if side in pre and not (isinstance(pre[side], dict) and set(pre[side]) <= PRE_SIDE_KEYS):
+            out.append(("12", f"pre.{side} carries a key outside its allowlist"))
+
+
+# --------------------------------------------------------------------------- #
 # 8b. The October bracket (SCORES_4b; plan 1.6). Series state and results
 # only, from /api/v1/schedule/postseason/series: no probability of any kind
 # (Part 8 8.D row 8) and nothing the page would have to compute.
@@ -2114,6 +2363,7 @@ def _check_card(card: dict, out: list, notes: list) -> None:
             out.append(("2", f"{side} innings sum {sum(vals)} differs from runs {r}"))
     if card.get("state") != "final" and card.get("star") is not None:
         out.append(("3", "star on a game that is not final"))
+    _check_pre(card, out)
 
 
 def _check_stars(gf: dict, out: list) -> None:
@@ -2361,4 +2611,7 @@ __all__ = [
     "VIDEO_BRANCH", "SPORTSBOOK_TAGS", "parse_duration", "pick_file", "trim_content", "clip_object",
     "event_label", "join_clips", "attach_clips", "diamond_gating_on", "embed_reconfirmed",
     "BRACKET_ROUNDS", "placeholder_name", "build_bracket",
+    "BOARD_ROW_LISTS", "BOARD_ROW_PATHS", "BOARD_FILE_PATHS", "PRE_GAME_TYPES", "PRE_KEYS", "PRE_ABSENT",
+    "board_extract", "pre_open", "pre_model", "sem_map", "hook_map", "fantasy_maps", "park_map", "efv_map",
+    "pre_block",
 ]

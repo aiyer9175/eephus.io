@@ -12,6 +12,15 @@ only fetch host is statsapi.mlb.com; every write lands under the job's store or
 its OUT and never under data/, .cache/win_prob, .cache/win_prob_post or
 .cache/game_feeds; neither deploy consumer names /data/scores. Hermetic: the
 recorded run uses test_scores_job's fake StatsAPI and temp directories.
+
+SCORES_6 (the pregame block): the job reads the served Sports Betting board
+through a key-path allowlist pinned here and recorded key by key; every copied
+value is byte-equal to the board's; a Preview card alone carries the block,
+and it is gone once the game leaves Preview; a stale board copies no model
+number; the served Diamond gate switches the read to the preview slice; no
+forbidden key, no key containing dv or decision, rides in a pre block; the
+management read touches no decision key; data/xfv.json is parsed only when its
+mtime moves.
 """
 from __future__ import annotations
 
@@ -21,7 +30,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -225,8 +234,249 @@ def test_media_and_embed_urls_live_only_inside_clip_objects(env):
     assert seen > 40, seen
 
 
-def test_the_job_reads_the_served_board_nowhere_yet():
-    # SCORES_6 adds the key-path allowlist; until then the job names no board file
-    text = (ROOT / "tools" / "scores_job.py").read_text(encoding="utf-8")
-    for s in ("betting.json", "betting_preview.json", "xfv.json", "management_board"):
+# --------------------------------------------------------------------------- #
+# SCORES_6: the pregame block
+# --------------------------------------------------------------------------- #
+import copy  # noqa: E402
+
+import scores_core as sc  # noqa: E402
+from test_scores_render import EFV_ID, pregame_payloads, pregame_served, regular_season_game  # noqa: E402
+
+ALLOW_ROW = ("game_pk", "model.p_home", "model.p_away", "home.probable.mlbam", "away.probable.mlbam")
+ALLOW_FILE = ("generated_at", "slate_date", "model.version", "status.model", "status.model_registry_verdict",
+              "status.model_verdict_sentence", "status.stale_board")
+#: 23:08Z on the fixture date: well after NOW (21:40Z), so the game is Preview.
+PRE_START = "2026-09-30T23:08:00Z"
+
+
+class Rec(dict):
+    """A dict that records every key read through it, with its dotted path."""
+
+    def __init__(self, data, path, log):
+        super().__init__()
+        self._p, self._log = path, log
+        for k, v in data.items():
+            dict.__setitem__(self, k, _rec(v, f"{path}.{k}" if path else k, log))
+
+    def get(self, k, default=None):
+        self._log.add(f"{self._p}.{k}" if self._p else k)
+        return dict.get(self, k, default)
+
+    def __getitem__(self, k):
+        self._log.add(f"{self._p}.{k}" if self._p else k)
+        return dict.__getitem__(self, k)
+
+
+def _rec(v, path, log):
+    if isinstance(v, dict):
+        return Rec(v, path, log)
+    if isinstance(v, list):
+        return [_rec(x, f"{path}[]", log) for x in v]
+    return v
+
+
+def _prefixes(paths):
+    out = set()
+    for p in paths:
+        parts = p.split(".")
+        out.update(".".join(parts[:i]) for i in range(1, len(parts) + 1))
+    return out
+
+
+def test_the_board_allowlist_is_pinned_and_no_other_key_is_read():
+    assert sc.BOARD_ROW_PATHS == ALLOW_ROW and sc.BOARD_FILE_PATHS == ALLOW_FILE
+    assert sc.BOARD_ROW_LISTS == ("team_bets", "games")
+    board = load_board()
+    log: set = set()
+    ext = sc.board_extract(Rec(board, "", log))
+    allowed = _prefixes(ALLOW_FILE) | set(sc.BOARD_ROW_LISTS)
+    for lst in sc.BOARD_ROW_LISTS:
+        allowed |= {f"{lst}[].{p}" for p in _prefixes(ALLOW_ROW)}
+    assert log and log <= allowed, sorted(log - allowed)
+    for decoy in ("moneyline", "market", "pick_of_the_day", "record", "slot_lock", "dugout_context", "odds_captured_at",
+                  "odds_kind", "odds_slate", "lam_home", "fair_total", "coefficients"):
+        assert not any(decoy in k for k in log), decoy
+    # every value byte-equal to the board's
+    row = board["team_bets"][0]
+    got = ext["rows"][row["game_pk"]]
+    assert json.dumps(got["model.p_home"]) == json.dumps(row["model"]["p_home"])
+    assert json.dumps(got["model.p_away"]) == json.dumps(row["model"]["p_away"])
+    assert ext["file"]["status.model_verdict_sentence"] == board["status"]["model_verdict_sentence"]
+
+
+def load_board():
+    return load("betting_board.json")
+
+
+def _serve(ev, served: dict, *, gating: bool | None = None) -> None:
+    for name, doc in served.items():
+        (ev["web"] / "data" / name).write_text(json.dumps(doc), encoding="utf-8")
+    reg = json.loads((ev["web"] / "data" / "model_registry.json").read_text(encoding="utf-8"))
+    have = {m["model_id"] for m in reg["models"]}
+    for mid, verdict in (("betting_game_prob", "provisional"), ("sem_plus", "validated"), ("efv_v2", "provisional"),
+                         ("mgmt_board_export", "provisional")):
+        if mid not in have:
+            reg["models"].append({"model_id": mid, "verdict": verdict})
+    (ev["web"] / "data" / "model_registry.json").write_text(json.dumps(reg), encoding="utf-8")
+    if gating is not None:
+        (ev["web"] / "assets").mkdir(exist_ok=True)
+        (ev["web"] / "assets" / "diamond-config.js").write_text(
+            "// the served gate\nwindow.EEPHUS_DIAMOND = { gating: %s, price_usd_month: 15 };\n"
+            % ("true" if gating else "false"), encoding="utf-8")
+
+
+def _pregame_games(status=None):
+    g = regular_season_game(900010, PRE_START)
+    if status:
+        g["status"] = status
+    return [_game(849845, "F"), _game(849846, "I"), g]
+
+
+def _date_cards(ev, d="2026-09-30"):
+    doc = json.loads((ev["out"] / f"{d}.json").read_text(encoding="utf-8"))
+    return {c["pk"]: c for c in doc["games"]}, doc
+
+
+def test_a_recorded_run_copies_the_board_byte_for_byte_onto_the_preview_card_only(env):
+    served = pregame_served()
+    _serve(env, served)
+    clock = FakeClock()
+    api = FakeAPI(clock, schedule_of(*_pregame_games()), **base_payloads())
+    seed_state(env, week_date="2026-09-30")
+    assert run_once(env, api, clock)["exit"] == 0
+    cards, doc = _date_cards(env)
+    assert sc.validate_payload("date", doc, name="2026-09-30.json")["ok"]
+    pre = cards[900010]["pre"]
+    board = served["betting.json"]
+    row = next(r for r in board["team_bets"] if r["game_pk"] == 900010)
+    for k in ("p_home", "p_away"):
+        assert json.dumps(pre["model"][k]) == json.dumps(row["model"][k]), k
+    for k, src in (("sentence", "model_verdict_sentence"), ("state", "model"), ("verdict", "model_registry_verdict")):
+        assert pre["model"][k] == board["status"][src], k
+    assert (pre["model"]["version"], pre["model"]["board_at"], pre["model"]["slate_date"]) == (
+        board["model"]["version"], board["generated_at"], board["slate_date"])
+    assert pre["model"]["stale_board"] is False and pre["model"]["board"] == "full"
+    # the other copies, each equal to its served value
+    assert pre["home"]["sem_plus"] == served["starter_leaderboards.json"]["starters"][0]["sem_plus"]
+    assert pre["home"]["hook_median_pitches"] == 87.5 and pre["park_runs"] == 102
+    assert pre["efv"] == {str(EFV_ID): 51.5}
+    # no live or final card carries a pre block, and the index labels the model with the board's state
+    assert "pre" not in cards[849846]
+    assert all("pre" not in c for c in _date_cards(env, "2026-09-29")[0].values())
+    gf = json.loads((env["out"] / "games" / "849846.json").read_text(encoding="utf-8"))
+    assert "pre" not in gf["card"]
+    idx = json.loads((env["out"] / "index.json").read_text(encoding="utf-8"))
+    sentences = {r["model_id"]: r["sentence"] for r in idx["registry"]}
+    assert sentences["betting_game_prob"] == "Eephus model, unvalidated, provisional"
+    assert sentences["sem_plus"] == "MLB Stats SEM+, validated"
+    assert sentences["efv_v2"] == "PROSPX eFV, provisional"
+    assert sentences["mgmt_board_export"] == "In-Game Management, provisional"
+    # the game starts: the next cycle rebuilds the card without the block
+    live = {"abstractGameState": "Live", "codedGameState": "I", "detailedState": "In Progress", "statusCode": "I"}
+    api2 = FakeAPI(clock, schedule_of(*_pregame_games(status=live)), **base_payloads())
+    assert run_once(env, api2, clock, now=NOW + timedelta(seconds=240))["exit"] == 0
+    cards2, _doc = _date_cards(env)
+    assert "pre" not in cards2[900010]
+
+
+def test_a_stale_board_copies_no_model_number(env):
+    served = pregame_served()
+    served["betting.json"]["status"]["stale_board"] = True
+    _serve(env, served)
+    clock = FakeClock()
+    api = FakeAPI(clock, schedule_of(*_pregame_games()), **base_payloads())
+    seed_state(env, week_date="2026-09-30")
+    assert run_once(env, api, clock)["exit"] == 0
+    cards, _doc = _date_cards(env)
+    assert "model" not in cards[900010].get("pre", {})
+    # and a starter the board did not price, a postseason game, another slate
+    ext = sc.board_extract(load_board())
+    g = regular_season_game(900010, PRE_START)
+    assert sc.pre_model(g, ext)["p_home"] == 0.53012
+    g2 = copy.deepcopy(g)
+    g2["teams"]["home"]["probablePitcher"] = {"id": 1, "fullName": "Someone Else"}
+    assert sc.pre_model(g2, ext) == {"absent": "starter"}
+    g3 = copy.deepcopy(g)
+    g3["teams"]["away"].pop("probablePitcher")
+    assert sc.pre_model(g3, ext) == {"absent": "starter"}            # null equals null only
+    g4 = dict(g, gameType="F")
+    assert sc.pre_model(g4, ext) == {"absent": "season"}
+    assert sc.pre_model(dict(g, officialDate="2026-10-01"), ext) is None
+    assert sc.pre_model(dict(g, gamePk=1), ext) is None
+
+
+@pytest.mark.parametrize("gating", [False, True])
+def test_the_served_diamond_gate_switches_the_read_to_the_preview_slice(env, monkeypatch, gating):
+    served = pregame_served()
+    full = served["betting.json"]
+    preview = copy.deepcopy(full)
+    preview["team_bets"] = preview["team_bets"][:1]
+    served["betting_preview.json"] = preview
+    _serve(env, served, gating=gating)
+    reads = []
+    real = job.read_served
+    monkeypatch.setattr(job, "read_served", lambda name: (reads.append(name), real(name))[1])
+    clock = FakeClock()
+    api = FakeAPI(clock, schedule_of(*_pregame_games()), **base_payloads())
+    seed_state(env, week_date="2026-09-30")
+    assert run_once(env, api, clock)["exit"] == 0
+    cards, _doc = _date_cards(env)
+    want, other = ("betting_preview.json", "betting.json") if gating else ("betting.json", "betting_preview.json")
+    assert want in reads and other not in reads
+    assert cards[900010]["pre"]["model"]["board"] == ("preview" if gating else "full")
+
+
+def test_the_validator_refuses_a_pre_block_off_preview_or_off_its_allowlist():
+    p = pregame_payloads()
+    doc = p["2026-09-30.json"]
+    assert sc.validate_payload("date", doc, name="2026-09-30.json")["ok"]
+    for c in doc["games"]:
+        assert sc.find_forbidden_keys(c.get("pre") or {}) == []
+        for path, key, _v in sc._walk(c.get("pre") or {}):
+            assert key is None or ("dv" not in str(key).lower() and "decision" not in str(key).lower()), path
+    bad = pregame_payloads(inject_live=True)["2026-09-30.json"]
+    res = sc.validate_payload("date", bad, name="2026-09-30.json")
+    assert not res["ok"] and any(r == "12" for r, _m in res["refused"]), res["refused"]
+    extra = copy.deepcopy(doc)
+    card = next(c for c in extra["games"] if c["pk"] == 900010)
+    card["pre"]["model"]["moneyline_fair"] = 0.5
+    assert any(r == "12" for r, _m in sc.validate_payload("date", extra, name="2026-09-30.json")["refused"])
+    stale = copy.deepcopy(doc)
+    card = next(c for c in stale["games"] if c["pk"] == 900010)
+    card["pre"]["model"]["stale_board"] = True
+    assert any(r == "12" for r, _m in sc.validate_payload("date", stale, name="2026-09-30.json")["refused"])
+
+
+def test_the_management_read_touches_no_decision_key():
+    log: set = set()
+    hooks = sc.hook_map(Rec(pregame_served()["management_board.json"], "", log))
+    assert hooks[("ATL", 2026)] == 87.5 and ("PHI", 2025) in hooks
+    assert log <= {"clubs", "clubs.games_floor", "clubs.rows", "clubs.rows[].hook_median_pitches", "clubs.rows[].games",
+                   "clubs.rows[].club", "clubs.rows[].season"}, log
+    assert not any("dv" in k or "decision" in k for k in log)
+
+
+def test_xfv_is_parsed_only_when_its_mtime_moves(env, monkeypatch):
+    _serve(env, pregame_served())
+    reads = []
+    real = job.read_served
+    monkeypatch.setattr(job, "read_served", lambda name: (reads.append(name), real(name))[1])
+    state: dict = {}
+    assert job.efv_map_cached(state) == {str(EFV_ID): 51.5}
+    assert job.efv_map_cached(state) == {str(EFV_ID): 51.5}
+    assert reads.count("xfv.json") == 1 and reads.count("player_links.json") == 1
+    path = env["web"] / "data" / "xfv.json"
+    st = path.stat()
+    os.utime(path, (st.st_atime, st.st_mtime + 60))
+    assert job.efv_map_cached(state) == {str(EFV_ID): 51.5}
+    assert reads.count("xfv.json") == 2
+    # the map rides in state.json between invocations
+    assert json.loads(json.dumps(state))["xfv"]["map"] == {str(EFV_ID): 51.5}
+
+
+def test_the_job_names_no_board_key_outside_the_allowlist():
+    text = _code_only(ROOT / "tools" / "scores_job.py")
+    for s in ("moneyline", "market_fair_prob", "pick_of_the_day", "odds_captured_at", "odds_slate", "runline",
+              "slot_lock", "dugout_context", "park_factors_by_hand", "consensus_fv"):
         assert s not in text, s
+    assert text.count("betting.json") == 1 and text.count("betting_preview.json") == 1
