@@ -736,12 +736,6 @@ FEEDBACK_MAILTO = (
     "mailto:arkndjl@gmail.com?subject=eephus.io%20beta%20feedback"
 )
 
-# Google Form embed for the /report/ "Report a bug" page. Owner: paste the
-# embeddable form URL here (the .../viewform?embedded=true variant from the
-# form's Send > <> embed dialog). Left empty, /report/ shows an on-theme
-# placeholder card plus the mailto fallback until the form is wired up.
-BUG_FORM_URL = ""
-
 # Display name of the /news/ event feed (owner rename 2026-10-02). The rail
 # head, ticker tag, footer link, /news/ h1 and title and the GFX cards read
 # this one constant; the URL stays /news/.
@@ -4387,12 +4381,32 @@ def build_articles_index(articles: list[dict]) -> str:
 def build_forums_index() -> str:
     """The /forums/ index - the third content pillar. The thread list is hydrated
     client-side by eephus-ui.js (#eph-forums-index): bump / Hot ordering, most
-    recently active first. Static shell gives SEO + first paint + a nav home."""
+    recently active first. Static shell gives SEO + first paint + a nav home.
+
+    Until the account layer is configured (REDESIGN_home_shell, 2026-10-07)
+    the page shows one 'unmeasured' state card, not the empty Active / Hot
+    list with its preview flag. The list mount stays in the page, hidden, and
+    the same condition the homepage Forums slot gates on (window.EEPHUS_SUPABASE
+    carrying url + anonKey) swaps the card for the list, so configuring the
+    accounts needs no rebuild."""
+    state = _px_state(
+        "unmeasured",
+        "<strong>Forums are not open yet.</strong> They open when accounts go live; "
+        "each prospect, farm system and article will carry its own thread.",
+        "eph-forums-closed")
     body = (
         f'<div class="section-head"><h1>{_masthead_icon("forums")}Forums '
         f'{_stage_chip("forums")}</h1>'
         '<span class="section-sub">Discussion across prospects, farm systems, and articles</span></div>'
-        '<div class="eph-forums-index-page"><div id="eph-forums-index"></div></div>'
+        '<div class="eph-forums-index-page">'
+        f'<div id="eph-forums-closed">{state}</div>'
+        '<div id="eph-forums-live" hidden><div id="eph-forums-index"></div></div></div>'
+        '<script>(function(){function r(){try{var c=window.EEPHUS_SUPABASE;'
+        'if(c&&c.url&&c.anonKey){var l=document.getElementById("eph-forums-live"),'
+        's=document.getElementById("eph-forums-closed");'
+        'if(l)l.removeAttribute("hidden");if(s)s.hidden=true;}}catch(e){}}'
+        'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",r);'
+        'else r();})();</script>'
     )
     return page("Forums - eephus.io", "forums", body,
                 "Community discussion across prospects, farm systems, and articles on eephus.io.",
@@ -6928,23 +6942,6 @@ def _team_card(m: dict, group: dict, team: dict) -> str:
     stats = (f'<div class="tc-stats"><ul class="tc-badges" aria-label="{e_name}: credits">{"".join(chips)}</ul>'
              f'{more}</div>') if chips else '<div class="tc-stats"></div>'
     group_line = f'{_ico(group.get("icon") or "team", 12)}<span>{html.escape(group["label"])}</span>'
-    front = (
-        '<div class="tc-face tc-front">'
-        f'<div class="tc-top"><span class="tc-no">No. {no}</span>'
-        f'<span class="tc-set">{html.escape(team.get("set", ""))}</span></div>'
-        f'<div class="tc-photo">{mono}{img}{plate}</div>'
-        f'<div class="tc-nameplate"><h3 class="tc-name">{e_name}</h3></div>'
-        f'<p class="tc-pos">{pos}</p>'
-        f'<p class="tc-team">{group_line}</p>'
-        f'{stats}'
-        '<div class="tc-foot">'
-        f'<button class="tc-btn tc-flipbtn" type="button" data-flip="back" '
-        f'aria-label="Turn {e_name}\'s card to the back">{_ico("b-flip", 12)}<span>Back</span></button>'
-        f'<button class="tc-btn tc-gfx" type="button" data-gfx hidden '
-        f'aria-label="Share {e_name}\'s card as an image">Share</button>'
-        '</div></div>'
-    )
-
     # ---- back
     rows = []
     for b in badges:
@@ -6973,20 +6970,44 @@ def _team_card(m: dict, group: dict, team: dict) -> str:
         files = f", {n:,} source file{'s' if n != 1 else ''}" if n else ""
         vitals.append(f"<dt>Code mark</dt><dd>{html.escape(mark)}{files}</dd>")
     vit = f'<dl class="tc-vitals">{"".join(vitals)}</dl>' if vitals else ""
+    back_body = f'{table}{bio}{vit}{_team_socials(m)}'
+    # REDESIGN_home_shell (2026-10-07): a member with nothing for the back
+    # (no credit, no record line, no vitals, no link) gets a one-sided card:
+    # no back face and no turn control, never a back that only says the
+    # record is to come. team.js skips .no-back cards when it turns the set.
+    has_back = bool(back_body)
+    flip = (f'<button class="tc-btn tc-flipbtn" type="button" data-flip="back" '
+            f'aria-label="Turn {e_name}\'s card to the back">{_ico("b-flip", 12)}<span>Back</span></button>'
+            if has_back else "")
+    front = (
+        '<div class="tc-face tc-front">'
+        f'<div class="tc-top"><span class="tc-no">No. {no}</span>'
+        f'<span class="tc-set">{html.escape(team.get("set", ""))}</span></div>'
+        f'<div class="tc-photo">{mono}{img}{plate}</div>'
+        f'<div class="tc-nameplate"><h3 class="tc-name">{e_name}</h3></div>'
+        f'<p class="tc-pos">{pos}</p>'
+        f'<p class="tc-team">{group_line}</p>'
+        f'{stats}'
+        '<div class="tc-foot">'
+        f'{flip}'
+        f'<button class="tc-btn tc-gfx" type="button" data-gfx hidden '
+        f'aria-label="Share {e_name}\'s card as an image">Share</button>'
+        '</div></div>'
+    )
     back = (
         '<div class="tc-face tc-back">'
         f'<div class="tc-back-head"><span class="tc-no">No. {no}</span>'
         f'<span class="tc-back-name">{e_name}</span>'
         f'<span class="tc-back-pos">{pos}</span></div>'
         f'<div class="tc-back-body" tabindex="0" role="region" aria-label="{e_name}: credits and record">'
-        f'{table}{bio}{vit}{_team_socials(m)}</div>'
+        f'{back_body}</div>'
         '<div class="tc-foot">'
         f'<span class="tc-setname">{html.escape(team.get("set", ""))} · No. {no}</span>'
         f'<button class="tc-btn tc-flipbtn" type="button" data-flip="front" '
         f'aria-label="Turn {e_name}\'s card to the front">{_ico("b-flip", 12)}<span>Front</span></button>'
         '</div></div>'
-    )
-    cls = "tc-card" + (" is-owner" if owner else "")
+    ) if has_back else ""
+    cls = "tc-card" + (" is-owner" if owner else "") + ("" if has_back else " no-back")
     badge_keys = ",".join(b["key"] for b in badges)
     return (f'<li class="tc-slot"><article class="{cls}" id="member-{html.escape(key)}" '
             f'data-member="{html.escape(key)}" data-no="{no}" data-badges="{html.escape(badge_keys)}" '
@@ -7046,17 +7067,21 @@ def build_team() -> str:
         '<div class="team-follow"><span class="team-follow-label">Follow</span>'
         f'{_x_link("eephus_io")}{_x_link("MLBPROSPX")}{_discord_link()}</div>'
     )
+    # A set with no card back (every member one-sided) drops the turn line
+    # and the 'Show card backs' toggle with it (REDESIGN_home_shell).
+    any_back = any('tc-face tc-back' in s for s in sections)
+    turn_line = " Turn a card over for the full record." if any_back else ""
     mission = (
-        '<p class="team-mission">The people who build, run and write eephus.io. Every module and '
+        f'<p class="team-mission">The people who build, run and write eephus.io. Every module and '
         'system on the site carries its builder&#39;s badge here, and this page is the only place '
-        'the site keeps its credits. Turn a card over for the full record.</p>'
+        f'the site keeps its credits.{turn_line}</p>'
         '<p class="team-mission">Building on the data? Every model artifact is public JSON, '
         'catalogued on <a href="/sources/#api">the public data page</a>.</p>'
     )
     toolbar = (
         '<div class="tc-toolbar"><button class="tc-btn tc-flipall" type="button" aria-pressed="false">'
         f'{_ico("b-flip", 16)}<span>Show card backs</span></button></div>'
-    )
+    ) if any_back else ""
     body = (
         f'<div class="section-head"><h1>{_masthead_icon("team")}Masthead</h1>'
         '<span class="section-sub">who builds, runs and writes the site</span></div>'
@@ -7152,7 +7177,8 @@ def _sources_api_section() -> str:
         blocks.append(
             f'<div class="section-head"><h2>{html.escape(label)}</h2>'
             f'<span class="section-sub">{n} file{"" if n == 1 else "s"}</span></div>'
-            f'<div class="article-grid">{cards}</div>')
+            f'<details class="src-fold"><summary>Show the {n} file{"" if n == 1 else "s"}</summary>'
+            f'<div class="article-grid">{cards}</div></details>')
     return (
         '<div class="section-head" id="api"><h2>The data we publish</h2>'
         '<span class="section-sub">contents, cadence and stability of every served artifact</span></div>'
@@ -7204,6 +7230,129 @@ def _name_series(names) -> str:
     return ", ".join(names[:-1]) + " and " + names[-1]
 
 
+# /sources/ table and folds. Scoped here rather than in assets/site.css (a
+# shared file other lanes edit); every colour is a theme token.
+_SOURCES_STYLE = (
+    '<style>'
+    '.src-table-wrap{overflow-x:auto;margin:0 0 16px;}'
+    '.src-table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.45;}'
+    '.src-table th,.src-table td{padding:8px 10px;border-bottom:1px solid var(--border-light);'
+    'text-align:left;vertical-align:top;}'
+    '.src-table thead th{font-family:var(--font-retro-mono);font-size:10px;font-weight:700;'
+    'letter-spacing:.04em;text-transform:uppercase;color:var(--text-tertiary);}'
+    '.src-table tbody th{font-weight:700;white-space:nowrap;}'
+    '.src-table td{color:var(--text-secondary);}'
+    '.src-table .src-none{color:var(--text-tertiary);}'
+    '.src-fold{margin:0 0 20px;}'
+    '.src-fold>summary{cursor:pointer;padding:10px 0;color:var(--text-secondary);font-size:13px;}'
+    '.src-fold[open]>summary{margin-bottom:8px;}'
+    '@media (max-width:640px){.src-table{font-size:12px;}.src-table th,.src-table td{padding:8px 6px;}'
+    '.src-table tbody th{white-space:normal;}}'
+    '</style>'
+)
+
+
+def _source_slug(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+# The upstreams /sources/ credits, one dict per source (REDESIGN_home_shell,
+# 2026-10-07). The table at the top of the page and the per-source notes under
+# it both read this list, so adding or retiring a source is one edit here.
+# take and cadence are the short table cells (cadence from the pipeline phases
+# in DATA_SOURCES.md); use is the full note; terms is the publisher's own terms,
+# licence or copyright page, opened on 2026-10-07, or None where we could not
+# open one (no link on the home page, or the site refuses scripted requests).
+# test_sources_attribution.py holds every ingest host to a row here (census
+# X07-08, 2026-09-25, added MLB Trade Rumors, The Odds API and Open-Meteo).
+SOURCE_ROWS = [
+    {"name": "FanGraphs", "url": "https://www.fangraphs.com/",
+     "take": "Rankings, FV and tool grades, reports; league stats, park factors",
+     "cadence": "Monthly (CSV drops)",
+     "terms": "https://www.fangraphs.com/about/terms-of-service", "terms_label": "Terms",
+     "use": ("Prospect rankings, FV grades, tool grades, and prospect and draft scouting reports "
+             "(one of the seven PROSPX consensus inputs); league stats and park factors.")},
+    {"name": "MLB Pipeline", "url": "https://www.mlb.com/prospects",
+     "take": "Rankings, grades, reports; draft pools and slot values",
+     "cadence": "Daily",
+     "terms": "https://www.mlb.com/official-information/terms-of-use", "terms_label": "Terms",
+     "use": ("Prospect rankings, grades, and prospect and draft scouting reports (consensus "
+             "input); draft bonus pools and slot values.")},
+    {"name": "Baseball America", "url": "https://www.baseballamerica.com/",
+     "take": "Rankings, grades, reports",
+     "cadence": "Each published list",
+     "terms": None, "terms_label": None,
+     "use": ("Prospect rankings, grades, and prospect and draft scouting reports (consensus input).")},
+    {"name": "ESPN", "url": "https://www.espn.com/mlb/",
+     "take": "Rankings, reports; club logo images",
+     "cadence": "Each published list",
+     "terms": "https://disneytermsofuse.com/english/", "terms_label": "Terms",
+     "use": ("Prospect rankings and scouting reports (consensus input); the club logo images "
+             "on team pickers and boards load from ESPN's image server (the logos are the "
+             "clubs' trademarks).")},
+    {"name": "The Athletic", "url": "https://www.nytimes.com/athletic/",
+     "take": "Rankings",
+     "cadence": "Each published list",
+     "terms": None, "terms_label": None,
+     "use": ("Prospect rankings (consensus input).")},
+    {"name": "Just Baseball", "url": "https://www.justbaseball.com/",
+     "take": "Rankings, reports",
+     "cadence": "Daily",
+     "terms": None, "terms_label": None,
+     "use": ("Prospect rankings and scouting reports (consensus input).")},
+    {"name": "TJStats", "url": "https://x.com/TJStats",
+     "take": "Rankings, movers wire",
+     "cadence": "Daily",
+     "terms": "https://x.com/en/tos", "terms_label": "Terms (X)",
+     "use": ("Prospect rankings (consensus input) and movers wire.")},
+    {"name": "MLB Stats API / Baseball Savant", "url": "https://baseballsavant.mlb.com/",
+     "take": "Game logs, transactions, rosters, Statcast, headshots; live scores and video",
+     "cadence": "Daily; live during games",
+     "terms": "http://gdx.mlb.com/components/copyright.txt", "terms_label": "Copyright notice",
+     "use": ("Game logs, transactions, rosters, the sabermetrics feed (league wOBA constants; the "
+             "fielding and framing runs behind DEM+), Statcast tracking data (pitch, batted-ball "
+             "and zone metrics), and player headshots via MLB static media; on the Scores / "
+             "Standings page, live scores, win probability, box scores and highlight video "
+             "played in MLB's own embedded player.")},
+    {"name": "Baseball-Reference", "url": "https://www.baseball-reference.com/",
+     "take": "war_daily (bWAR), historical player pages",
+     "cadence": "Daily",
+     "terms": "https://www.sports-reference.com/termsofuse.html", "terms_label": "Terms",
+     "use": ("war_daily (bWAR): the run frame the served eWAR is built on and the source the Hall "
+             "of Fame board reproduces, plus historical player pages.")},
+    {"name": "pybaseball", "url": "https://github.com/jldbc/pybaseball",
+     "take": "The Python toolkit behind the Statcast, FanGraphs and Baseball-Reference pulls",
+     "cadence": "With those pulls",
+     "terms": "https://github.com/jldbc/pybaseball/blob/master/LICENSE", "terms_label": "License (MIT)",
+     "use": ("Open-source Python toolkit used to pull Statcast, FanGraphs, and "
+             "Baseball-Reference data programmatically.")},
+    {"name": "Spotrac", "url": "https://www.spotrac.com/",
+     "take": "Contracts, payrolls, free-agent classes, international signings",
+     "cadence": "Monthly",
+     "terms": None, "terms_label": None,
+     "use": ("Contracts, payrolls, free-agent classes, and international signing trackers.")},
+    {"name": "MLB Trade Rumors", "url": "https://www.mlbtraderumors.com/",
+     "take": "Arbitration projections and results (comparator)",
+     "cadence": "By hand, cached",
+     "terms": None, "terms_label": None,
+     "use": ("Arbitration salary projections (Matt Swartz's model) and the arbitration "
+             "results tracker: the comparator /arbitration/ scores its own model against, "
+             "and a record of settled salaries the arbitration dataset reads.")},
+    {"name": "The Odds API", "url": "https://the-odds-api.com/",
+     "take": "Moneylines, run lines, totals",
+     "cadence": "Daily (open and close)",
+     "terms": "https://the-odds-api.com/terms-and-conditions.html", "terms_label": "Terms",
+     "use": ("Sportsbook moneylines, run lines and totals for the /betting/ board, and the "
+             "game lines /fantasy/ DFS pricing reads.")},
+    {"name": "Open-Meteo", "url": "https://open-meteo.com/",
+     "take": "Game-time weather forecasts (not shown yet)",
+     "cadence": "Nightly",
+     "terms": "https://open-meteo.com/en/terms", "terms_label": "Terms",
+     "use": ("Game-time weather forecasts, captured nightly for a pre-registered betting "
+             "candidate; no page shows them yet. Weather data by Open-Meteo.com (CC BY 4.0).")},
+]
+
+
 def build_sources() -> str:
     """/sources/ - data sources and attribution, plus the published-data catalog.
 
@@ -7213,61 +7362,37 @@ def build_sources() -> str:
     the same question: which artifacts the platform PUBLISHES, on what cadence,
     and how stable each one is. See _sources_api_section for why the catalog
     lives on this route."""
-    rows = [
-        ("FanGraphs", "https://www.fangraphs.com/",
-         "Prospect rankings, FV grades, tool grades, and prospect and draft scouting reports "
-         "(one of the seven PROSPX consensus inputs); league stats and park factors."),
-        ("MLB Pipeline", "https://www.mlb.com/prospects",
-         "Prospect rankings, grades, and prospect and draft scouting reports (consensus "
-         "input); draft bonus pools and slot values."),
-        ("Baseball America", "https://www.baseballamerica.com/",
-         "Prospect rankings, grades, and prospect and draft scouting reports (consensus input)."),
-        ("ESPN", "https://www.espn.com/mlb/",
-         "Prospect rankings and scouting reports (consensus input); the club logo images "
-         "on team pickers and boards load from ESPN's image server (the logos are the "
-         "clubs' trademarks)."),
-        ("The Athletic", "https://www.nytimes.com/athletic/",
-         "Prospect rankings (consensus input)."),
-        ("Just Baseball", "https://www.justbaseball.com/",
-         "Prospect rankings and scouting reports (consensus input)."),
-        ("TJStats", "https://x.com/TJStats",
-         "Prospect rankings (consensus input) and movers wire."),
-        ("MLB Stats API / Baseball Savant", "https://baseballsavant.mlb.com/",
-         "Game logs, transactions, rosters, the sabermetrics feed (league wOBA constants; the "
-         "fielding and framing runs behind DEM+), Statcast tracking data (pitch, batted-ball "
-         "and zone metrics), and player headshots via MLB static media; on the Scores / "
-         "Standings page, live scores, win probability, box scores and highlight video "
-         "played in MLB's own embedded player."),
-        ("Baseball-Reference", "https://www.baseball-reference.com/",
-         "war_daily (bWAR): the run frame the served eWAR is built on and the source the Hall "
-         "of Fame board reproduces, plus historical player pages."),
-        ("pybaseball", "https://github.com/jldbc/pybaseball",
-         "Open-source Python toolkit used to pull Statcast, FanGraphs, and "
-         "Baseball-Reference data programmatically."),
-        ("Spotrac", "https://www.spotrac.com/",
-         "Contracts, payrolls, free-agent classes, and international signing trackers."),
-        # Census X07-08 (2026-09-25): three upstreams the platform reads that
-        # this list never named. test_sources_attribution.py holds every
-        # external host in the ingest modules to a row here.
-        ("MLB Trade Rumors", "https://www.mlbtraderumors.com/",
-         "Arbitration salary projections (Matt Swartz's model) and the arbitration "
-         "results tracker: the comparator /arbitration/ scores its own model against, "
-         "and a record of settled salaries the arbitration dataset reads."),
-        ("The Odds API", "https://the-odds-api.com/",
-         "Sportsbook moneylines, run lines and totals for the /betting/ board, and the "
-         "game lines /fantasy/ DFS pricing reads."),
-        ("Open-Meteo", "https://open-meteo.com/",
-         "Game-time weather forecasts, captured nightly for a pre-registered betting "
-         "candidate; no page shows them yet. Weather data by Open-Meteo.com (CC BY 4.0)."),
-    ]
+    def _terms(s: dict) -> str:
+        if not s.get("terms"):
+            return '<span class="src-none">none linked</span>'
+        return (f'<a href="{html.escape(s["terms"])}" target="_blank" rel="noopener noreferrer">'
+                f'{html.escape(s.get("terms_label") or "Terms")}</a>')
+
+    trs = "".join(
+        f'<tr><th scope="row"><a href="#src-{_source_slug(s["name"])}">{html.escape(s["name"])}</a></th>'
+        f'<td>{html.escape(s["take"])}</td><td>{html.escape(s["cadence"])}</td>'
+        f'<td>{_terms(s)}</td></tr>'
+        for s in SOURCE_ROWS)
+    table = (
+        '<div class="src-table-wrap"><table class="src-table">'
+        '<caption class="visually-hidden">Data sources: what we take, how often, and the '
+        'publisher&#39;s terms</caption>'
+        '<thead><tr><th scope="col">Source</th><th scope="col">What we take</th>'
+        '<th scope="col">Cadence</th><th scope="col">Terms</th></tr></thead>'
+        f'<tbody>{trs}</tbody></table></div>')
     cards = "".join(
-        f'<div class="card source-card"><h3><a href="{html.escape(url)}" target="_blank" '
-        f'rel="noopener noreferrer">{html.escape(name)}</a></h3><p>{html.escape(use)}</p></div>'
-        for name, url, use in rows
+        f'<div class="card source-card" id="src-{_source_slug(s["name"])}"><h3><a href="{html.escape(s["url"])}" '
+        f'target="_blank" rel="noopener noreferrer">{html.escape(s["name"])}</a></h3>'
+        f'<p>{html.escape(s["use"])}</p></div>'
+        for s in SOURCE_ROWS
     )
     body = (
         '<div class="section-head"><h1>Data: sources, attribution and what we publish</h1>'
         '<span class="section-sub">upstreams we read, artifacts we publish</span></div>'
+        # The table leads (REDESIGN_home_shell); the attribution lede follows it.
+        '<div class="section-head"><h2>Where the data comes from</h2>'
+        f'<span class="section-sub">{len(SOURCE_ROWS)} sources</span></div>'
+        f'{_SOURCES_STYLE}{table}'
         '<div class="gl-intro">'
         "<p>PROSPX grades are a consensus of seven industry sources. A player's card shows "
         "each source's own FV grade beside the consensus, and excerpts of the scouting "
@@ -7282,9 +7407,16 @@ def build_sources() -> str:
         '<a href="mailto:arkndjl@gmail.com">arkndjl@gmail.com</a>.</p>'
         '<p>Building on the data: <a href="#api">the data we publish</a>.</p>'
         "</div>"
-        '<div class="section-head"><h2>Where the data comes from</h2></div>'
-        f'<div class="article-grid">{cards}</div>'
+        '<details class="src-fold" id="src-notes"><summary>What each source supplies, in full</summary>'
+        f'<div class="article-grid">{cards}</div></details>'
         f'{_sources_api_section()}'
+        # A link into a folded block (#src-<source> from the table, or an old
+        # deep link) opens the fold it lands in.
+        '<script>(function(){function o(){try{var h=location.hash.slice(1);if(!h)return;'
+        'var e=document.getElementById(h);var d=e&&e.closest("details");'
+        'if(d&&!d.open){d.open=true;e.scrollIntoView();}}catch(x){}}'
+        'window.addEventListener("hashchange",o);'
+        'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",o);else o();})();</script>'
     )
     return page("Data Sources, Attribution & the Public Data - eephus.io", "", body,
                 "Every data source behind eephus.io - prospect ranking inputs, Statcast and "
@@ -7295,30 +7427,28 @@ def build_sources() -> str:
 
 def build_bug_report() -> str:
     """/report/ - the "Report a bug" destination linked from every footer.
-    Embeds the owner's Google Form when BUG_FORM_URL is set; otherwise shows
-    an on-theme placeholder card with the mailto fallback so the page is never
-    a dead end during the Open Beta."""
-    intro = (
-        '<div class="gl-intro"><p>Say what happened and which section; the form has a '
-        'section picker.</p></div>'
-    ) if BUG_FORM_URL else ""
-    if BUG_FORM_URL:
-        form = (
-            f'<iframe src="{html.escape(BUG_FORM_URL)}" width="100%" height="820" '
-            'style="border:0" title="Report a bug form">Loading the form...</iframe>'
-        )
-    else:
-        form = (
-            '<div class="card">'
-            '<h3>The form is not configured yet</h3>'
-            '<p>Email the details, with the section, to '
-            '<a href="' + FEEDBACK_MAILTO + '">arkndjl@gmail.com</a>.</p>'
-            '</div>'
-        )
+
+    A plain page (REDESIGN_home_shell, 2026-10-07): the address and what to
+    put in the message. The Google Form embed it once waited for was never
+    configured, so the page served an empty form shell; there is no form
+    here now, and a form, if one comes, is a new decision rather than a
+    constant left blank."""
+    include = (
+        ("The page", "the address in the bar, or the module and tab."),
+        ("The steps", "what you clicked or typed, in order, and what you expected to see."),
+        ("What you saw", "the wrong number, the error message, or a screenshot."),
+        ("Your browser", "its name and version, and the device or screen width."),
+    )
+    items = "".join(f"<li><strong>{html.escape(k)}</strong>: {html.escape(v)}</li>"
+                    for k, v in include)
     body = (
         '<div class="section-head"><h1>Report a bug</h1>'
         '<span class="section-sub">tell us what broke and where</span></div>'
-        f'{intro}{form}'
+        '<div class="card report-plain">'
+        '<p>Email <a href="' + FEEDBACK_MAILTO + '">arkndjl@gmail.com</a> with:</p>'
+        f'<ul style="margin:8px 0;padding-left:20px;line-height:1.6;">{items}</ul>'
+        '<p>One bug per message keeps each one easy to track.</p>'
+        '</div>'
     )
     return page("Report a bug - eephus.io", "", body,
                 "Report a bug on eephus.io - tell us what happened and which section "
