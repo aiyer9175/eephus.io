@@ -265,7 +265,9 @@
       " " + chips + "</div>" +
       (href
         ? '<a class="fc-out" href="' + esc(href) + '">Full MLB card</a>'
-        : '<span class="fc-out fc-out-off" title="No merged MLB card in player_links yet.">No MLB card yet</span>') +
+        : (HOST && typeof HOST.linksPending === "function" && HOST.linksPending())
+          ? ""
+          : '<span class="fc-out fc-out-off" title="No merged MLB card in player_links yet.">No MLB card yet</span>') +
       "</div>";
   }
   function scoreBlock(rec) {
@@ -458,7 +460,8 @@
         chip(gl("eFV", "xfv"), d.efv == null ? "-" : String(Math.round(d.efv))) +
         chip("Tier", esc(d.tier || "-")) +
         chip(gl("ETA", "eta"), esc(d.eta || "-")) +
-        chip(gl("Star", "star_odds"), d.star == null ? null : num(d.star, 0) + "%", "fc-good") +
+        // The star (Elite) bucket share, not the published Star Odds (audit QREC03).
+        chip(gl("Star bucket", "bust_prob"), d.star == null ? null : num(d.star, 0) + "%", "fc-good") +
         chip(gl("Bust", "bust_prob"), d.bust == null ? null : num(d.bust, 0) + "%", "fc-bad") +
         chip(gl("Surplus", "surplus_value"), d.surplus == null ? null : "$" + num(d.surplus, 0) + "M") +
         chip("Outlook", (band[0] != null && band[1] != null)
@@ -582,6 +585,7 @@
     n.removeAttribute("hidden");
     try { S.lastFocus = document.activeElement; } catch (e) { S.lastFocus = null; }
     paint();
+    holdPage(true);
     focusCard();
     // The lazy legs. Each is fetched on the first card of the session that
     // needs it, then cached, so the second card costs nothing and a reader who
@@ -599,10 +603,39 @@
     var x = (n && n.querySelector) ? n.querySelector(".fc-x") : null;
     if (x && x.focus) x.focus();
   }
+  // THE PAGE BEHIND AN OPEN CARD IS INERT (audit QREA08). aria-modal alone
+  // let Tab walk out of the panel into the header and the board under the
+  // backdrop. The page's own header, main and footer take inert while the card
+  // is open and lose it before focus goes back to the opener; the glossary
+  // tooltip and the quick search are body children outside these three, so a
+  // term inside the card still opens over it.
+  function holdPage(on) {
+    var els = [];
+    try { els = document.querySelectorAll("body > header, body > main, body > footer"); } catch (e) { els = []; }
+    for (var i = 0; i < (els ? els.length : 0); i++) {
+      if (on) els[i].setAttribute("inert", "");
+      else els[i].removeAttribute("inert");
+    }
+  }
+  // Tab and Shift+Tab wrap inside the panel, so focus never lands on the
+  // document body between the last control and the first.
+  function trapTab(e) {
+    var n = S.node;
+    var p = (n && n.querySelector) ? n.querySelector(".fc-panel") : null;
+    if (!p || !p.querySelectorAll) return;
+    var f = [].filter.call(p.querySelectorAll(
+      'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'),
+      function (el) { return !el.disabled && el.getClientRects().length > 0; });
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1], a = document.activeElement;
+    if (e.shiftKey && (a === first || !p.contains(a))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (a === last || !p.contains(a))) { e.preventDefault(); first.focus(); }
+  }
   function close() {
     if (S.id == null) return;
     S.id = null;
     if (S.node) S.node.setAttribute("hidden", "hidden");
+    holdPage(false);
     if (HOST && typeof HOST.onClose === "function") HOST.onClose();
     if (S.lastFocus && S.lastFocus.focus) { try { S.lastFocus.focus(); } catch (e) { /* gone */ } }
     S.lastFocus = null;
@@ -611,13 +644,24 @@
   // the card decides whether that is an open, a close or a no-op.
   function sync(mlbam) {
     if (mlbam == null || mlbam === "") { close(); return; }
-    if (String(mlbam) === S.id) { paint(); return; }
+    // A repaint replaces the panel, so focus that was inside it goes back to
+    // Close instead of dropping to the document (the lazy links leg lands
+    // after the card is open).
+    if (String(mlbam) === S.id) {
+      var a = null;
+      try { a = document.activeElement; } catch (e) { a = null; }
+      var had = !!(S.node && a && (a === document.body || (S.node.contains && S.node.contains(a))));
+      paint();
+      if (had) focusCard();
+      return;
+    }
     open(mlbam);
   }
   function isOpen() { return S.id != null; }
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && S.id != null) close();
+    else if (e.key === "Tab" && S.id != null) trapTab(e);
   });
 
   // ---- styles (theme tokens only) -------------------------------------------

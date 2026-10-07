@@ -499,6 +499,9 @@
   }
   function staleInfo() {
     var d = S.data || {};
+    // The season is over: no later slate is due, so a past slate date is not
+    // a missed run and the season-over panel is the whole story (audit QREC12).
+    if (d.empty_reason_kind === "season_over") return null;
     if (d.stale_slate) {
       return { date: d.slate_date,
                reason: d.stale_reason ||
@@ -619,8 +622,8 @@
   var EMPTY_KINDS = {
     no_games_scheduled: { head: "No games today", bad: false,
       tail: "Nothing is broken. The page rebuilds daily." },
-    season_over: { head: "The season is over", bad: false,
-      tail: "The board returns with the schedule." },
+    // No tail: the payload's own sentence already says when slates return.
+    season_over: { head: "The season is over", bad: false, tail: "" },
     schedule_unavailable: { head: "We could not verify today's slate", bad: true,
       tail: "Pipeline outage: the schedule feed did not answer, so nothing is published " +
             "for today." },
@@ -1707,10 +1710,21 @@
   // renders every other block and simply omits that one.
   function card() { return window.EEPHUS_FANTASY_CARD || null; }
   function cardable() { return !!(host() && card()); }
+  // THE LINKS SIDECAR IS READ ON A CARD, NOT AT BOOT (audit QREP15).
+  // player_links (about 1.9 MB) feeds only the card's outbound "Full MLB card"
+  // link, so it is asked for the first time a card opens; until it lands the
+  // card says nothing about that link rather than "No MLB card yet".
+  var LINKS_ASKED = false, LINKS_DONE = false;
+  function wantLinks() {
+    if (LINKS || LINKS_ASKED || !S.player || !(window.EEPHUS_HUB && EEPHUS_HUB.links)) return;
+    LINKS_ASKED = true;
+    EEPHUS_HUB.links().then(function (L) { LINKS = L || null; LINKS_DONE = true; syncCard(); },
+                            function () { LINKS_DONE = true; syncCard(); });
+  }
   function syncCard() {
     var C = card();
     if (!C) return;
-    if (S.player) ensureCorpus();
+    if (S.player) { ensureCorpus(); wantLinks(); }
     C.sync(S.player);
   }
   function attachCard() {
@@ -1719,6 +1733,7 @@
     C.attach({
       payload: function () { return CORPUS; },
       links: function () { return LINKS; },
+      linksPending: function () { return LINKS_ASKED && !LINKS_DONE; },
       onClose: function () { S.player = null; writeHash(); }
     });
   }
@@ -1774,11 +1789,11 @@
     renderSelector(); wireTabs(); syncTabs(); renderSection();
     writeHash();
     syncCard();
-    if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
-      // The links sidecar is only the card's outbound "Full MLB card" leg once
-      // the card is reachable, but the boards still fall back to it off
-      // /fantasy/, so its arrival repaints both.
-      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); syncCard(); });
+    if (!LINKS && !cardable() && window.EEPHUS_HUB && EEPHUS_HUB.links) {
+      // Off /fantasy/ (no card host) the boards' names fall back to the
+      // /projections/ link, which needs the sidecar at boot. On /fantasy/ every
+      // name opens the card, which asks for it on open (wantLinks).
+      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); });
     }
   }
   // The lamp loader goes up before the payload is asked for, so a held or slow

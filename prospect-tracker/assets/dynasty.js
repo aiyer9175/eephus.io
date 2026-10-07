@@ -307,8 +307,11 @@
         var cls = d.tier === "Elite" ? " dyn-tier-elite" : (d.tier === "Tier 1" ? " dyn-tier-one" : "");
         return '<span class="dyn-tier' + cls + '">' + esc(d.tier) + "</span>";
       } },
-    { key: "star", label: "Star", term: "star_odds", where: "tape",
-      title: "P(star outcome)",
+    // The star BUCKET share (xfv p_bucket.star), not the published Star Odds
+    // tier value the star_odds entry defines (audit QREC03), so it is named
+    // and linked as the bucket.
+    { key: "star", label: "Star bucket", term: "bust_prob", where: "tape",
+      title: "Share of the star (Elite) outcome bucket",
       get: function (d) { return d.star; },
       cell: function (d) { return d.star == null ? "-" : num(d.star, 0) + "%"; } },
     { key: "bust", label: "Bust", term: "bust_prob", where: "tape", asc: true,
@@ -377,11 +380,17 @@
   // A div-bar toggle button, not a table head: no aria-sort (read only on a
   // columnheader or rowheader). The active chip carries .is-sorted (its paint in
   // assets/site.css), aria-pressed and visually hidden sort text (census M24-4).
+  // The glossary hook rides the chip itself (audit QREA09): a .g-term span with
+  // its own data-gl inside the chip was a second Tab stop nested in a button.
+  // eephus-gl wire() gives the chip its aria-describedby and opens the
+  // definition on hover and focus; the inner span keeps only the underline.
   function sortBtn(c, st) {
     var on = st.key === c.key;
     return '<span role="button" tabindex="0" data-dynsort="' + esc(c.key) + '"' +
       (on ? ' class="is-sorted"' : "") + ' aria-pressed="' + (on ? "true" : "false") + '"' +
-      (c.title ? ' title="' + esc(c.title) + '"' : "") + ">" + glossLbl(c) +
+      (c.term ? ' data-gl="' + esc(c.term) + '"' : "") +
+      (c.title ? ' title="' + esc(c.title) + '"' : "") + ">" +
+      (c.term ? '<span class="g-term">' + esc(labelOf(c)) + "</span>" : esc(labelOf(c))) +
       (on ? (st.asc ? " ▴" : " ▾") +
         '<span class="visually-hidden">, sorted ' + (st.asc ? "ascending" : "descending") + "</span>" : "") +
       "</span>";
@@ -497,7 +506,7 @@
     { id: "contend", label: "Contending", sort: { key: "eta", asc: true },
       note: "Sorted by ETA, nearest first. Ranks unchanged." },
     { id: "rebuild", label: "Rebuilding", sort: { key: "star", asc: false },
-      note: "Sorted by star odds, highest first. Ranks unchanged." }
+      note: "Sorted by the star (Elite) bucket share, highest first. Ranks unchanged." }
   ];
   function lensById(id) {
     var out = LENSES[0];
@@ -525,8 +534,8 @@
     // The blend disclosure stays: the rank is a stated convention over gated
     // upstream legs (fantasy_export._dynasty_prospects), never a fit.
     var intro = '<div class="dyn-note">Rank: ' + glossLbl({ label: "eFV", term: "xfv" }) + " first, then " +
-      glossLbl({ label: "star odds", term: "star_odds" }) + " (up), " + glossLbl({ label: "bust odds", term: "bust_prob" }) +
-      " (down), ETA proximity and surplus. A display ranking over served eFV numbers, not a separate model.</div>";
+      "the " + glossLbl({ label: "star (Elite) bucket share", term: "bust_prob" }) + " (up), bust share (down), " +
+      "ETA proximity and surplus. A display ranking over served eFV numbers, not a separate model.</div>";
     var rows = filterRows(list);
     return intro + inlineLens + filterBar(list, true, rows.length) +
       renderCards(rows, DYN_COLS, SORT.dynasty, {
@@ -612,8 +621,7 @@
       return '<button type="button" class="dyn-lensbtn' + (on ? " active" : "") + '" data-dynfmt="' +
         id + '" aria-pressed="' + (on ? "true" : "false") + '">' + esc(fmtLabel(id)) + "</button>";
     }).join("");
-    return '<div class="dyn-lensbar"><span class="dyn-lens-lbl">Format</span>' + btns +
-      '<span class="dyn-lens-note">The Fantasy Rank re-ranks in the format you pick.</span></div>';
+    return '<div class="dyn-lensbar"><span class="dyn-lens-lbl">Format</span>' + btns + "</div>";
   }
   function frCols() {
     var seasons = (S.rank && S.rank.seasons) || [];
@@ -697,13 +705,14 @@
         "Nothing is broken.</div>";
     }
     var R = S.rank;
-    var intro = '<div class="dyn-note">' + (R.basis || []).map(esc).join(" ") +
-      " A /fantasy/ rank on projected fantasy value only: it reads no WAR and does not reorder " +
-      "/projections/. " + esc(fmtLabel(S.fmt)) + ": " +
+    var intro = '<div class="dyn-note">' + esc(fmtLabel(S.fmt)) + ": " +
       ((R.n_ranked && R.n_ranked[S.fmt] != null) ? R.n_ranked[S.fmt] : all.length) +
       " players clear replacement over the horizon; listed are the top " + esc(R.serve_top_n || 400) +
-      " in any format and every Dynasty Board prospect.</div>" +
-      '<div class="dyn-note">' + backtestNote(R.backtest) + "</div>";
+      " in any format and every Dynasty Board prospect. " + backtestNote(R.backtest) + "</div>" +
+      '<details class="fh-how"><summary>How this works</summary><p>' +
+      (R.basis || []).map(esc).join(" ") +
+      " A /fantasy/ rank on projected fantasy value only: it reads no WAR and does not reorder " +
+      "/projections/.</p></details>";
     var rows = all.filter(function (d) {
       if (S.kind && d.kind !== S.kind) return false;
       if (S.q && normQ(d.name).indexOf(normQ(S.q)) < 0) return false;
@@ -752,16 +761,24 @@
         : "This verdict answers a prospects-only draft, ranked on the Dynasty Board.") +
       "</span></div>";
   }
+  // The keeper result line under the form: the one number the calculator
+  // exists for. The method sits in How this works (display pass 2026-10-07).
+  function keeperCost(k) {
+    return '<div class="dyn-note">With ' + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
+      " keeper costs pick <b>" + costPick() + "</b> of that draft.</div>";
+  }
   function renderKeeperAll(k, form) {
-    var explain =
-      '<div class="dyn-note">Pick spent against Fantasy Rank in a draft that holds MLB players and ' +
-      "prospects, in " + esc(fmtLabel(S.fmt)) + ". No dynasty dollar curve is fit, so no dollar value is " +
-      "shown. With " + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
-      " keeper costs pick <b>" + costPick() + "</b> of that draft. Settings stay in this browser.</div>";
+    var explain = form + keeperCost(k) +
+      '<details class="fh-how"><summary>How this works</summary><p>' +
+      "Pick spent against Fantasy Rank in a draft that holds MLB players and prospects, in " +
+      esc(fmtLabel(S.fmt)) + ". No dynasty dollar curve is fit, so no dollar value is shown. " +
+      "Edge = pick spent minus Fantasy Rank; positive means keep in a draft of MLB players and " +
+      "prospects. Keep by: earliest round where edge is 0 or more. Settings stay in this browser." +
+      "</p></details>";
     if (!S.rank) {
       loadRank();
       if (!S.rank) {
-        return poolBar() + explain + form + (S.rankErr
+        return poolBar() + explain + (S.rankErr
           ? pxState("failed", "<strong>The Fantasy Rank failed to load.</strong> " + esc(S.rankErr), "dyn-error")
           : pxState("loading", "Loading the Fantasy Rank."));
       }
@@ -771,13 +788,13 @@
                eta: d.eta, rank: d.rk[S.fmt], value: d.v ? d.v[S.fmt] : null };
     });
     if (!list.length) {
-      return poolBar() + explain + form + '<div class="dyn-note">No Fantasy Rank rows in this build. ' +
+      return poolBar() + explain + '<div class="dyn-note">No Fantasy Rank rows in this build. ' +
         "The pick math above still updates.</div>";
     }
     if (S.q) {
       list = list.filter(function (d) { return normQ(d.name).indexOf(normQ(S.q)) >= 0; });
       if (!list.length) {
-        return poolBar() + explain + form + filterBar(null, false) +
+        return poolBar() + explain + filterBar(null, false) +
           '<div class="dyn-note">No player matches the name filter.</div>';
       }
     }
@@ -795,9 +812,7 @@
         (v.keep ? "keep" : "let go") + " (" + (v.edge >= 0 ? "+" : "") + esc(v.edge) + ")</td>" +
         "</tr>";
     }).join("");
-    return poolBar() + explain + form + filterBar(null, false) +
-      '<div class="dyn-note">Edge = pick spent minus Fantasy Rank; positive means keep in a draft of ' +
-      "MLB players and prospects. Keep by: earliest round where edge is 0 or more.</div>" +
+    return poolBar() + explain + filterBar(null, false) +
       '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th><th class="dyn-nm">Player</th><th>Pos</th>' +
       "<th>Type</th><th>Value</th>" +
@@ -822,23 +837,24 @@
     // pick 54 overall", which read as the main draft, where a prospect goes far
     // later than his prospect rank; no combined MLB-plus-prospect rank is served
     // here, so the page states the basis instead of implying the other one.
-    var explain = poolBar() +
-      '<div class="dyn-note">Pick spent against board rank in a prospects-only draft (a farm or minors ' +
-      "draft). The board ranks prospects only, so in a draft that also holds MLB players a prospect goes " +
-      "later than his board rank; the All players pool above answers that draft on the Fantasy Rank. " +
-      "No dynasty dollar curve is fit, so no " +
-      "dollar value is shown. With " + k.teams + " teams and pick " + k.slot + ", a round " + k.round +
-      " keeper costs pick <b>" + costPick() + "</b> of that draft. The window only marks whether the ETA " +
-      "lands inside it; the verdict does not read it. Settings stay in this browser.</div>";
+    var explain = poolBar() + form + keeperCost(k) +
+      '<details class="fh-how"><summary>How this works</summary><p>' +
+      "Pick spent against board rank in a prospects-only draft (a farm or minors draft). The board " +
+      "ranks prospects only, so in a draft that also holds MLB players a prospect goes later than his " +
+      "board rank; the All players pool above answers that draft on the Fantasy Rank. No dynasty " +
+      "dollar curve is fit, so no dollar value is shown. The window only marks whether the ETA lands " +
+      "inside it; the verdict does not read it. Edge = pick spent minus board rank; positive means " +
+      "keep in a prospects-only draft. Keep by: earliest round where edge is 0 or more. Settings stay " +
+      "in this browser.</p></details>";
     if (!list.length) {
-      return explain + form + '<div class="dyn-note">No board rows yet. The pick math above still updates.</div>';
+      return explain + '<div class="dyn-note">No board rows yet. The pick math above still updates.</div>';
     }
     // Name search narrows BEFORE the 150-row cap, so a keeper deep on the
     // board is findable rather than cut off by the cap.
     if (S.q) {
       list = list.filter(function (d) { return normQ(d.name).indexOf(normQ(S.q)) >= 0; });
       if (!list.length) {
-        return explain + form + filterBar(null, false) +
+        return explain + filterBar(null, false) +
           '<div class="dyn-note">No prospect matches the name filter.</div>';
       }
     }
@@ -864,9 +880,7 @@
         (v.keep ? "keep" : "let go") + " (" + (v.edge >= 0 ? "+" : "") + esc(v.edge) + ")</td>" +
         "</tr>";
     }).join("");
-    return explain + form + filterBar(null, false) +
-      '<div class="dyn-note">Edge = pick spent minus board rank; positive means keep in a prospects-only ' +
-      "draft. Keep by: earliest round where edge is 0 or more.</div>" +
+    return explain + filterBar(null, false) +
       '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th><th class="dyn-nm">Prospect</th><th>Pos</th>' +
       "<th>" + glossLbl({ label: "eFV", term: "xfv" }) + "</th>" +
@@ -893,7 +907,7 @@
       board: {
         columns: [{ label: "#", frac: 0.07, align: "right" }, { label: "Prospect", frac: 0.4 },
                   { label: "eFV", frac: 0.13, align: "right" }, { label: "ETA", frac: 0.13, align: "right" },
-                  { label: "Star", frac: 0.13, align: "right" }, { label: "Surplus", frac: 0.14, align: "right" }],
+                  { label: "Star bucket", frac: 0.13, align: "right" }, { label: "Surplus", frac: 0.14, align: "right" }],
         rows: list.map(function (d) {
           return { cells: [{ t: d.rank }, { t: d.name || "-", sub: d.org || undefined },
                            { t: f0(d.efv), c: "accent" }, { t: d.eta || "-" },
@@ -1173,13 +1187,25 @@
   // round. No score line: the league-format port lives in assets/redraft.js and
   // a second copy here would be a second implementation nobody is comparing.
   function card() { return window.EEPHUS_FANTASY_CARD || null; }
-  function syncCard() { var C = card(); if (C) C.sync(S.player); }
+  // THE LINKS SIDECAR IS READ ON A CARD, NOT AT BOOT (audit QREP15).
+  // player_links (about 1.9 MB) feeds only the card's outbound "Full MLB card"
+  // link, so it is asked for the first time a card opens; until it lands the
+  // card says nothing about that link rather than "No MLB card yet".
+  var LINKS_ASKED = false, LINKS_DONE = false;
+  function wantLinks() {
+    if (LINKS || LINKS_ASKED || !S.player || !(window.EEPHUS_HUB && EEPHUS_HUB.links)) return;
+    LINKS_ASKED = true;
+    EEPHUS_HUB.links().then(function (L) { LINKS = L || null; LINKS_DONE = true; syncCard(); },
+                            function () { LINKS_DONE = true; syncCard(); });
+  }
+  function syncCard() { var C = card(); if (C) { wantLinks(); C.sync(S.player); } }
   function attachCard() {
     var C = card();
     if (!C) return;
     C.attach({
       payload: function () { return S.data; },
       links: function () { return LINKS; },
+      linksPending: function () { return LINKS_ASKED && !LINKS_DONE; },
       keeperRound: breakEvenRound,
       onClose: function () { S.player = null; writeHash(); }
     });
@@ -1222,11 +1248,6 @@
     renderSection();
     writeHash();
     syncCard();
-    if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
-      // The board reads no links now: names open the in-page card, and the card
-      // is what carries the outbound link to the merged MLB page.
-      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; syncCard(); });
-    }
   }
   // The lamp loader goes up before the payload is asked for, so a held or slow
   // load shows the loading kind rather than an empty root.

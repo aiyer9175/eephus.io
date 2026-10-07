@@ -487,12 +487,18 @@
   // chip says its state in visually hidden text, is aria-pressed, and is styled
   // by .is-sorted in assets/site.css (census M24-4). The arrow stays one text run
   // with the label: splitting it into its own span moved the next chip 0.016px.
+  // The glossary hook rides the chip itself (audit QREA09): a .g-term span with
+  // its own data-gl inside the chip was a second Tab stop nested in a button.
+  // eephus-gl wire() gives the chip its aria-describedby and opens the
+  // definition on hover and focus; the inner span keeps only the underline.
   function sortBtn(c, st) {
     if (!c.get) return "<span>" + glossLbl(c) + "</span>";
     var on = st.key === c.key;
     return '<span role="button" tabindex="0" data-rdsort="' + esc(c.key) + '"' +
       (on ? ' class="is-sorted"' : "") + ' aria-pressed="' + (on ? "true" : "false") + '"' +
-      (c.title ? ' title="' + esc(c.title) + '"' : "") + ">" + glossLbl(c) +
+      (c.term ? ' data-gl="' + esc(c.term) + '"' : "") +
+      (c.title ? ' title="' + esc(c.title) + '"' : "") + ">" +
+      (c.term ? '<span class="g-term">' + esc(labelOf(c)) + "</span>" : esc(labelOf(c))) +
       (on ? (st.asc ? " ▴" : " ▾") +
         '<span class="visually-hidden">, sorted ' + (st.asc ? "ascending" : "descending") + "</span>" : "") +
       "</span>";
@@ -755,12 +761,14 @@
     // gap regresses rather than persists, so the note states the gap direction
     // and stops. No luck causality in the headers.
     return filterBar(null) +
-      '<div class="rd-note">Screen on expected-stat gaps in wOBA points: hitters ' + gl("xwOBA", "xwoba") +
-      " minus " + gl("wOBA", "woba") + ", pitchers " + gl("wOBA", "woba") + " minus " +
-      gl("xwOBA", "xwoba") + " allowed. One column per side. Positive: results behind " +
-      "the expected stats; negative: ahead. Whether a gap closes or persists is unmeasured. " +
-      "mech trend: a 5+ point move in per-season " + gl("Swing+", "swing_plus") +
-      ", context only, not in the ranking.</div>" +
+      '<div class="rd-note">A screen on expected-stat gaps, in wOBA points. ' +
+      "Whether a gap closes or persists is unmeasured.</div>" +
+      '<details class="fh-how"><summary>How this works</summary><p>' +
+      "Hitters: " + gl("xwOBA", "xwoba") + " minus " + gl("wOBA", "woba") + ". Pitchers: " +
+      gl("wOBA", "woba") + " minus " + gl("xwOBA", "xwoba") + " allowed. One column per side. " +
+      "Positive: results behind the expected stats; negative: ahead. mech trend: a 5+ point move " +
+      "in per-season " + gl("Swing+", "swing_plus") + ", context only, not in the ranking." +
+      "</p></details>" +
       '<div class="rd-cols">' + col(sec.buy_low, "Buy-Low (behind x-stats)", "rd-pos", "buy-low") +
       col(sec.sell_high, "Sell-High (ahead of x-stats)", "rd-neg", "sell-high") + "</div>";
   }
@@ -1210,13 +1218,25 @@
     return out;
   }
   function card() { return window.EEPHUS_FANTASY_CARD || null; }
-  function syncCard() { var C = card(); if (C) C.sync(S.player); }
+  // THE LINKS SIDECAR IS READ ON A CARD, NOT AT BOOT (audit QREP15).
+  // player_links (about 1.9 MB) feeds only the card's outbound "Full MLB card"
+  // link, so it is asked for the first time a card opens; until it lands the
+  // card says nothing about that link rather than "No MLB card yet".
+  var LINKS_ASKED = false, LINKS_DONE = false;
+  function wantLinks() {
+    if (LINKS || LINKS_ASKED || !S.player || !(window.EEPHUS_HUB && EEPHUS_HUB.links)) return;
+    LINKS_ASKED = true;
+    EEPHUS_HUB.links().then(function (L) { LINKS = L || null; LINKS_DONE = true; syncCard(); },
+                            function () { LINKS_DONE = true; syncCard(); });
+  }
+  function syncCard() { var C = card(); if (C) { wantLinks(); C.sync(S.player); } }
   function attachCard() {
     var C = card();
     if (!C) return;
     C.attach({
       payload: function () { return S.data; },
       links: function () { return LINKS; },
+      linksPending: function () { return LINKS_ASKED && !LINKS_DONE; },
       scoreLine: cardScoreLine,
       onClose: function () { S.player = null; writeHash(); }
     });
@@ -1232,6 +1252,15 @@
   function notReady() {
     var r = root();
     if (r) r.innerHTML = '<div class="rd-note">Rest-of-season projections are not built yet (nightly build).</div>';
+  }
+  function landingSection(d) {
+    var sec = d.sections || {};
+    var order = [["streamers", "daily_streamers"], ["two_start", "two_start"], ["ros_sp", "ros_sp"],
+                 ["ros_rp", "ros_rp"], ["ros_hitter", "ros_hitter"]];
+    for (var i = 0; i < order.length; i++) {
+      if ((sec[order[i][1]] || []).length) return order[i][0];
+    }
+    return "streamers";
   }
   function onData(d) {
     if (!d || !d.players) { notReady(); return; }
@@ -1265,6 +1294,13 @@
         if (/^ROS /.test(t.textContent)) t.textContent = t.textContent.replace(/^ROS /, d.target_season + " ");
       });
     }
+    // THE OFF-SEASON LANDING (audit QREP15). With no section in the address
+    // and no streamers to list (next-season mode), the board opens on the first
+    // tab in order that has rows instead of on an empty-state line. A link that
+    // names a section still gets that section.
+    if (isNextSeason() && !hashParam(hostHash(), "section", SECTIONS.join("|"))) {
+      S.section = landingSection(d);
+    }
     // Deep-link restore between the defaults and the first paint, so a restored
     // section or format renders once rather than flashing the default first.
     readHash();
@@ -1272,12 +1308,6 @@
     renderSelector(); wireTabs(); syncTabs(); renderSection();
     writeHash();
     syncCard();
-    if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
-      // The BOARD no longer needs the links sidecar: every name opens the
-      // in-page card, which is the only surface carrying the outbound link to
-      // the merged MLB page. So its arrival repaints the card, not 350 rows.
-      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; syncCard(); });
-    }
   }
   // The lamp loader goes up before the payload is asked for, so a held or slow
   // load shows the loading kind rather than an empty root.

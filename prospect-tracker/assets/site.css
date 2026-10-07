@@ -4096,7 +4096,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .mlb-metric { font-family: var(--font-retro-mono, ui-monospace, monospace);
               font-variant-numeric: tabular-nums; text-align: right; }
 .mlb-metric-label { display: block; font-size: 10px; letter-spacing: .06em;
-                    text-transform: uppercase; opacity: .6; font-family: inherit; }
+                    text-transform: uppercase; color: var(--text-secondary); font-family: inherit; }
 
 /* The tape itself: a horizontal band of season / band chips. */
 .mlb-tape-inner { display: flex; gap: 4px; align-items: stretch; flex-wrap: nowrap;
@@ -4109,7 +4109,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   font-variant-numeric: tabular-nums; font-size: 11.5px; text-align: center;
   white-space: nowrap;
 }
-.mlb-chip b { display: block; font-size: 10px; font-weight: 600; opacity: .6;
+.mlb-chip b { display: block; font-size: 10px; font-weight: 600; color: var(--text-secondary);
               letter-spacing: .04em; font-family: inherit; }
 /* Swipe affordance for the tape, the same one .mlb-sortbar and .mlbstats-tabs
    already carry (see the phone chip-row block near the end of this sheet).
@@ -4294,6 +4294,16 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .mlb-sortbar [role="button"].is-sorted {
   color: var(--text-primary); border-color: var(--accent-cyan); opacity: 1;
   position: relative;  /* holds the chip's .visually-hidden sort text */
+}
+/* The /fantasy/ chips carry their glossary hook on the chip (audit QREA09), so
+   wire() marks the chip .g-term; only the label span keeps the underline. On a
+   phone each chip is a 44 px tap target. */
+.ff-sortbar [role="button"][data-gl],
+.ff-card-head [role="button"][data-gl] { text-decoration: none; }
+@media (max-width: 640px) {
+  .ff-sortbar [role="button"],
+  .ff-card-head [role="button"] { min-height: 44px; min-width: 44px; display: inline-flex;
+                                  align-items: center; justify-content: center; }
 }
 
 @media (max-width: 720px) {
