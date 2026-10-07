@@ -4918,8 +4918,8 @@ def build_fantasy() -> str:
         "redraft-board", True)
     dynasty = _fantasy_panel(
         "dynasty",
-        f"Dynasty and keeper value: prospects ranked on {_gl('xfv', 'eFV')}, blended with star "
-        "odds, bust risk, ETA and surplus. The board ranks prospects only. Call-up Watch flags who "
+        f"Dynasty and keeper value: prospects ranked on {_gl('xfv', 'eFV')}, blended with the "
+        "star (Elite) bucket share, bust risk, ETA and surplus. The board ranks prospects only. Call-up Watch flags who "
         "is next. Fantasy Rank ranks MLB players and prospects on projected fantasy value in your "
         "format, not on WAR. The keeper calculator compares a rank with the pick a keeper costs, "
         "in a prospects-only draft or, on its All players pool, a draft of both.",

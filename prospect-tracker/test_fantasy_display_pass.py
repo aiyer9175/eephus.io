@@ -14,6 +14,8 @@ One pin per finding the pass fixed:
           focusable element sits inside it, and at 390 px it is a 44 px target.
   QREA10  the board's small labels and the module tab subtitles take a token
           colour, not opacity, and read at 4.5:1 or better in both themes.
+  QREC03  the Dynasty "Star" column printed the star BUCKET share under the
+          Star Odds name and link; it is labelled and linked as the bucket.
 
 The source guards always run; the rendered half needs playwright.
 """
@@ -80,6 +82,25 @@ def test_card_source_holds_the_page_and_wraps_tab():
     # close() releases the page BEFORE it hands focus back to the opener
     close = src.split("function close() {")[1].split("\n  }")[0]
     assert close.index("holdPage(false)") < close.index("S.lastFocus.focus()")
+
+
+# ---- QREC03 -----------------------------------------------------------------
+# The column prints xfv p_bucket["star"] (fantasy_export, star = p_bucket star),
+# the share of the five-bucket star outcome. star_odds defines the published
+# Star Odds tier value, a different number, so the label, the tooltip and the
+# glossary link name the bucket.
+def test_star_column_names_the_bucket_it_prints():
+    dyn, card = _src("dynasty.js"), _src("fantasy-card.js")
+    for name, src in (("dynasty.js", dyn), ("fantasy-card.js", card)):
+        assert '"star_odds"' not in src, name
+        assert "P(star outcome)" not in src, name
+    col = dyn.split('{ key: "star",')[1].split("} },")[0]
+    assert 'label: "Star bucket"' in col and 'term: "bust_prob"' in col, col
+    assert 'title: "Share of the star (Elite) outcome bucket"' in col, col
+    assert "return d.star;" in col          # the served number is unchanged
+    assert 'gl("Star bucket", "bust_prob")' in card
+    assert "star (Elite) bucket share" in dyn
+    assert "Sorted by star odds" not in dyn
 
 
 # ---- rendered ---------------------------------------------------------------

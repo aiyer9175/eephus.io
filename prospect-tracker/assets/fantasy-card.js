@@ -458,7 +458,8 @@
         chip(gl("eFV", "xfv"), d.efv == null ? "-" : String(Math.round(d.efv))) +
         chip("Tier", esc(d.tier || "-")) +
         chip(gl("ETA", "eta"), esc(d.eta || "-")) +
-        chip(gl("Star", "star_odds"), d.star == null ? null : num(d.star, 0) + "%", "fc-good") +
+        // The star (Elite) bucket share, not the published Star Odds (audit QREC03).
+        chip(gl("Star bucket", "bust_prob"), d.star == null ? null : num(d.star, 0) + "%", "fc-good") +
         chip(gl("Bust", "bust_prob"), d.bust == null ? null : num(d.bust, 0) + "%", "fc-bad") +
         chip(gl("Surplus", "surplus_value"), d.surplus == null ? null : "$" + num(d.surplus, 0) + "M") +
         chip("Outlook", (band[0] != null && band[1] != null)

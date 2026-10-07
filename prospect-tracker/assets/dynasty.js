@@ -307,8 +307,11 @@
         var cls = d.tier === "Elite" ? " dyn-tier-elite" : (d.tier === "Tier 1" ? " dyn-tier-one" : "");
         return '<span class="dyn-tier' + cls + '">' + esc(d.tier) + "</span>";
       } },
-    { key: "star", label: "Star", term: "star_odds", where: "tape",
-      title: "P(star outcome)",
+    // The star BUCKET share (xfv p_bucket.star), not the published Star Odds
+    // tier value the star_odds entry defines (audit QREC03), so it is named
+    // and linked as the bucket.
+    { key: "star", label: "Star bucket", term: "bust_prob", where: "tape",
+      title: "Share of the star (Elite) outcome bucket",
       get: function (d) { return d.star; },
       cell: function (d) { return d.star == null ? "-" : num(d.star, 0) + "%"; } },
     { key: "bust", label: "Bust", term: "bust_prob", where: "tape", asc: true,
@@ -503,7 +506,7 @@
     { id: "contend", label: "Contending", sort: { key: "eta", asc: true },
       note: "Sorted by ETA, nearest first. Ranks unchanged." },
     { id: "rebuild", label: "Rebuilding", sort: { key: "star", asc: false },
-      note: "Sorted by star odds, highest first. Ranks unchanged." }
+      note: "Sorted by the star (Elite) bucket share, highest first. Ranks unchanged." }
   ];
   function lensById(id) {
     var out = LENSES[0];
@@ -531,8 +534,8 @@
     // The blend disclosure stays: the rank is a stated convention over gated
     // upstream legs (fantasy_export._dynasty_prospects), never a fit.
     var intro = '<div class="dyn-note">Rank: ' + glossLbl({ label: "eFV", term: "xfv" }) + " first, then " +
-      glossLbl({ label: "star odds", term: "star_odds" }) + " (up), " + glossLbl({ label: "bust odds", term: "bust_prob" }) +
-      " (down), ETA proximity and surplus. A display ranking over served eFV numbers, not a separate model.</div>";
+      "the " + glossLbl({ label: "star (Elite) bucket share", term: "bust_prob" }) + " (up), bust share (down), " +
+      "ETA proximity and surplus. A display ranking over served eFV numbers, not a separate model.</div>";
     var rows = filterRows(list);
     return intro + inlineLens + filterBar(list, true, rows.length) +
       renderCards(rows, DYN_COLS, SORT.dynasty, {
@@ -899,7 +902,7 @@
       board: {
         columns: [{ label: "#", frac: 0.07, align: "right" }, { label: "Prospect", frac: 0.4 },
                   { label: "eFV", frac: 0.13, align: "right" }, { label: "ETA", frac: 0.13, align: "right" },
-                  { label: "Star", frac: 0.13, align: "right" }, { label: "Surplus", frac: 0.14, align: "right" }],
+                  { label: "Star bucket", frac: 0.13, align: "right" }, { label: "Surplus", frac: 0.14, align: "right" }],
         rows: list.map(function (d) {
           return { cells: [{ t: d.rank }, { t: d.name || "-", sub: d.org || undefined },
                            { t: f0(d.efv), c: "accent" }, { t: d.eta || "-" },
