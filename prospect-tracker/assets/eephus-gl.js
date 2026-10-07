@@ -516,7 +516,9 @@
           const d = document.createElement("div");
           d.id = did; d.className = "gl-srdef";
           d.textContent = e.name + ": " + e.short;
-          document.body.appendChild(d);
+          // Inside main when there is one, so the hidden text sits in a
+          // landmark (axe region) like the term that points at it.
+          (document.querySelector("main") || document.body).appendChild(d);
         }
         span.setAttribute("aria-describedby", did);
       });

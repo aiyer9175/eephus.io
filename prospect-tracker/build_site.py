@@ -637,8 +637,13 @@ THEME_INIT = (
     '<script>(function(){try{var t=localStorage.getItem("prospect-tracker.theme");'
     'if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";'
     'document.documentElement.setAttribute("data-theme",t);}catch(e){}})();'
+    # QHOA10: every [data-theme-toggle] carries aria-pressed (true = dark), set
+    # once the buttons exist and again on every toggle.
+    'function eephusThemeSync(){try{var d=document.documentElement.getAttribute("data-theme")==="dark"?"true":"false";'
+    'document.querySelectorAll("[data-theme-toggle]").forEach(function(b){b.setAttribute("aria-pressed",d);});}catch(e){}}'
+    'document.addEventListener("DOMContentLoaded",eephusThemeSync);'
     'function eephusToggleTheme(){try{var c=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";'
-    'document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}}</script>'
+    'document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}eephusThemeSync();}</script>'
 )
 # QHOP03 (2026-10-07): both PixelMplus12 faces load with font-display: swap,
 # and with no preload the wider pixel face landed after first paint and
@@ -1686,9 +1691,17 @@ def _fv_tier_class(label: str) -> str:
     return "fv-pill"
 
 
+def _sr(text: str) -> str:
+    """Words a screen reader hears and the page does not show (QHOA13): the
+    unit in front of a bare number. Absolutely positioned, so it takes no
+    flex or grid slot."""
+    return f'<span class="visually-hidden">{html.escape(text)} </span>'
+
+
 def _fv_pill(p: dict) -> str:
     label = _fv_label(p)
-    return f'<span class="{_fv_tier_class(label)}">{html.escape(label)}</span>'
+    unit = "eFV" if _EFV_GRADES.get(p.get("player_key")) is not None else "FV"
+    return f'{_sr(unit)}<span class="{_fv_tier_class(label)}">{html.escape(label)}</span>'
 
 def _meta(*parts) -> str:
     return html.escape(" · ".join(str(x) for x in parts if x))
@@ -1893,15 +1906,15 @@ def _row_mover(p: dict, d: int) -> str:
     rank = p.get("overall_rank")
     rank_html = f'<span class="row-rank">{rank}</span>' if rank else '<span class="row-rank"></span>'
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'{rank_html}{_team_logo(p.get("org"))}'
+            f'{_sr("rank") if rank else ""}{rank_html}{_team_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>'
-            f'{spark_html}{_fv_pill(p)}'
+            f'{spark_html}{_fv_pill(p)}{_sr("change")}'
             f'<span class="row-delta {"up" if up else "down"}">{"▲" if up else "▼"} {"+" if up else ""}{d}</span></a>')
 
 def _row_top(p: dict, rank: int) -> str:
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'<span class="row-rank">{rank}</span>{_team_logo(p.get("org"))}'
+            f'{_sr("rank")}<span class="row-rank">{rank}</span>{_team_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>{_fv_pill(p)}</a>')
 
@@ -1996,7 +2009,7 @@ def _row_grad(g: dict) -> str:
         except ValueError:
             pass
     return (f'<a class="row-link" href="{_player_href(g.get("player_key"))}">'
-            f'{rank_html}{date_html}{_team_logo(g.get("org"))}'
+            f'{_sr("rank") if rank else ""}{rank_html}{date_html}{_team_logo(g.get("org"))}'
             f'<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(g.get("position")))}</span>{_fv_pill(g)}</a>')
 
@@ -2032,7 +2045,7 @@ def _recent_trades_html(players: list, n: int = 5) -> str:
                  f'{_team_logo(tr.get("to_org"), "otd-logo")}</span>')
         rows.append(
             f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'{rank_html}{logos}'
+            f'{_sr("rank") if rank else ""}{rank_html}{logos}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(_pos_label(p.get("position")))}</span>'
             f'<span class="row-meta">{dt[5:7]}/{dt[8:10]}</span>'
@@ -2051,10 +2064,10 @@ def _row_farm(o: dict, rank: int) -> str:
     gcls = " gold" if str(grade).startswith("A") else ""
     name = ORG_NAMES.get(o.get("org"), o.get("org") or " - ")
     return (f'<a class="row-link" href="/prospx/#farm-org={html.escape(o.get("org") or "")}">'
-            f'<span class="row-rank">{rank}</span>{_team_logo(o.get("org"))}'
+            f'{_sr("rank")}<span class="row-rank">{rank}</span>{_team_logo(o.get("org"))}'
             f'<span class="row-name">{html.escape(name)}</span>'
             f'<span class="row-meta">{o.get("count", "")} prospects</span>'
-            f'<span class="fv-pill{gcls}">{html.escape(str(grade))}</span></a>')
+            f'{_sr("farm grade")}<span class="fv-pill{gcls}">{html.escape(str(grade))}</span></a>')
 
 # One mass re-grade (a single source dropping a 17-player international list)
 # would otherwise fill the entire 12/14-item wire by itself; cap FV items per
@@ -2384,7 +2397,7 @@ _NEWS_FILTER_JS = """<script>
   bar.addEventListener('click',function(e){
     var b=e.target.closest('[data-news-filter]');if(!b)return;
     var f=b.getAttribute('data-news-filter');
-    bar.querySelectorAll('[data-news-filter]').forEach(function(x){x.classList.toggle('active',x===b);});
+    bar.querySelectorAll('[data-news-filter]').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b?'true':'false');});
     var shown=0;
     feed.querySelectorAll('.news-day').forEach(function(day){
       var any=false;
@@ -2402,6 +2415,8 @@ _NEWS_FILTER_JS = """<script>
     }
     if(shown===0){empty.textContent='No items in this category.';empty.style.display='';}
     else{empty.style.display='none';}
+    var st=document.getElementById('news-filter-status');
+    if(st)st.textContent=shown+(shown===1?' row':' rows')+' shown';
   });
 })();
 </script>"""
@@ -2562,7 +2577,8 @@ def build_news(data: dict | None = None) -> str:
     chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
                  ("move", "Moves"), ("il", "IL"), ("fv", "Grades"), ("signing", "Signings")]
     chips = "".join(
-        f'<button class="chip{" active" if c == "all" else ""}" '
+        f'<button type="button" class="chip{" active" if c == "all" else ""}" '
+        f'aria-pressed="{"true" if c == "all" else "false"}" '
         f'data-news-filter="{c}">{html.escape(lbl)}</button>'
         for c, lbl in chip_defs)
     body = (
@@ -2572,7 +2588,9 @@ def build_news(data: dict | None = None) -> str:
         f'{_gfx_chip_html("news-gfx-chip")}</div>'
         f'<p class="news-intro">The {_gl("wire_ticker", "wire")}, last ~30 days, newest first. '
         'Grade rows show eFV moves of 2 or more; a row reading &quot;to eFV floor&quot; or &quot;off eFV floor&quot; is the player reaching or leaving the model floor, not a re-grade. A date header opens Time Machine on that date.</p>'
-        f'<div class="filter-bar" id="news-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
+        '<div class="filter-bar" id="news-filter-bar" role="group" aria-labelledby="news-filter-label">'
+        f'<span class="filter-label" id="news-filter-label">Filter</span>{chips}</div>'
+        '<div class="visually-hidden" id="news-filter-status" role="status" aria-live="polite"></div>'
         f'<div class="sb-feed news-feed" id="news-feed">{feed}</div>'
         '</div>'
         # Page-scoped sizing for the per-date GFX chips (site.css owns the base
@@ -2835,6 +2853,7 @@ def page_home(title: str, inner: str, description: str = "") -> str:
 {ACCOUNT_CSS_LINK}
 </head>
 <body class="eephus-page eephus-home">
+<a class="skip-link" href="#main">Skip to content</a>
 {inner}
 {_footer()}
 {ACCOUNT_SCRIPTS}
@@ -2908,7 +2927,7 @@ def _wag_badge(g: dict) -> str:
     sign = "+" if wag_r > 0 else ""           # negatives carry their own '-'; zero unsigned
     return (f'<span class="otd-wag row-delta {cls}" '
             f'title="WAR Above Grade - career WAR/yr vs the player\'s FV-implied expectation">'
-            f'{sign}{wag_r:.1f} WAG</span>')
+            f'{sign}{wag_r:.1f} WAG{_sr(", WAR Above Grade")}</span>')
 
 
 def _otd_date(d: "date") -> str:
@@ -3149,7 +3168,7 @@ _HIST_FILTER_JS = """<script>
   bar.addEventListener('click',function(e){
     var b=e.target.closest('[data-hist-filter]');if(!b)return;
     var f=b.getAttribute('data-hist-filter');
-    bar.querySelectorAll('[data-hist-filter]').forEach(function(x){x.classList.toggle('active',x===b);});
+    bar.querySelectorAll('[data-hist-filter]').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b?'true':'false');});
     var shown=0;
     wrap.querySelectorAll('.hist-section').forEach(function(sec){
       var any=false;
@@ -3167,6 +3186,8 @@ _HIST_FILTER_JS = """<script>
     }
     if(shown===0){empty.textContent='No items in this category.';empty.style.display='';}
     else{empty.style.display='none';}
+    var st=document.getElementById('hist-filter-status');
+    if(st)st.textContent=shown+(shown===1?' row':' rows')+' shown';
   });
 })();
 </script>"""
@@ -3305,7 +3326,8 @@ def build_this_day(data: dict | None = None) -> str:
     chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
                  ("signing", "Signings"), ("il", "IL")]
     chips = "".join(
-        f'<button class="chip{" active" if c == "all" else ""}" '
+        f'<button type="button" class="chip{" active" if c == "all" else ""}" '
+        f'aria-pressed="{"true" if c == "all" else "false"}" '
         f'data-hist-filter="{c}">{html.escape(lbl)}</button>'
         for c, lbl in chip_defs)
 
@@ -3315,7 +3337,9 @@ def build_this_day(data: dict | None = None) -> str:
         '<span class="section-sub">debut anniversaries, trades, signings &amp; IL moves on this calendar date</span></div>'
         '<p class="news-intro">Exact calendar-date matches from past seasons. Transactions from 2019, '
         f'IL placements from 2017. Debut rows carry {_gl("wag", "WAG")}.</p>'
-        f'<div class="filter-bar" id="hist-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
+        '<div class="filter-bar" id="hist-filter-bar" role="group" aria-labelledby="hist-filter-label">'
+        f'<span class="filter-label" id="hist-filter-label">Filter</span>{chips}</div>'
+        '<div class="visually-hidden" id="hist-filter-status" role="status" aria-live="polite"></div>'
         f'<div id="hist-sections" style="max-width:760px;">{sections}</div>'
         '<p class="news-intro" style="font-size:11px;">No eFV-move section: grade history is stamped '
         'at model re-run dates, not the day a grade changed.</p>'
@@ -3457,7 +3481,7 @@ def _scatter_teaser(players: list | None = None) -> str:
         pts = "".join(
             f'<circle cx="{8 + ((a - a_lo) / a_span) * 134:.0f}" '
             f'cy="{42 - ((f - f_lo) / f_span) * 36:.0f}" r="2.2" '
-            f'style="fill:var(--accent-{"gold" if f >= 50 else "green"});opacity:0.85;"/>'
+            f'style="fill:var(--{"text-gold" if f >= 50 else "accent-green"});opacity:0.85;"/>'
             for a, f in pts_data)
         cap = (f'{len(pts_data)} prospects sampled across the graded board: '
                f'age {a_lo:.1f}-{a_hi:.1f} on x, '
@@ -4063,12 +4087,12 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         # avatar control into any .eephus-nav-controls, including this sidebar slot.
         '<div class="sb-account eephus-nav-controls"></div>'
         f'{search}'
-        f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav">{"".join(nav)}</nav></div>'
+        f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav" aria-label="Modules">{"".join(nav)}</nav></div>'
         # MLB News feed sits high (where the PROSPX sub-nav used to be);
         # the PROSPX sub-nav drops below the spotlight feature.
         f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><a href="/news/" title="All {NEWS_LABEL}"><span class="blip"></span>{NEWS_LABEL}<span class="feed-head-more">all →</span></a></div>{feed}</div></div>'
         f'{spotlight}'
-        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{_ico("prospx", 12)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
+        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{_ico("prospx", 12)}PROSPX</div><nav class="sb-subnav" aria-label="PROSPX sections">{sub}</nav></div>'
         '</aside>'
         + _HOME_DRAWER_JS
     )
@@ -4077,7 +4101,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # Decorative scrolling marquee - duplicates the accessible MLB News feed
     # in the sidebar, so it's hidden from assistive tech (aria-hidden) to avoid
     # reading the same items twice / announcing a moving region.
-    ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><a href="/news/"><span class="blip"></span>{NEWS_LABEL}</a></span>'
+    ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><a href="/news/" tabindex="-1"><span class="blip"></span>{NEWS_LABEL}</a></span>'
               f'<div class="ticker-track">{_ticker_html(events)}</div></div>')
 
     # ---- masthead ----
@@ -4115,7 +4139,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         lead = (
             '<article class="lead-story no-img">'
             '<div><div class="lead-kicker">Latest</div>'
-            f'<h1>{html.escape(latest["title"])}</h1>'
+            f'<h2>{html.escape(latest["title"])}</h2>'
             f'<div class="byline">{_byline(latest, link_handle=False)}</div>'
             f'<p class="excerpt">{html.escape(latest.get("summary", ""))}</p>'
             f'<a class="read" href="/articles/{latest["slug"]}/">Read the full story →</a></div>'
@@ -4232,7 +4256,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         'else r();})();</script>'
     )
     main = (
-        '<main class="home-main">'
+        '<main class="home-main" id="main" tabindex="-1">'
         f'{masthead}{callout}{lead}{secondary}'
         # 2-col grid, paired by row: [This Day | Top Movers] (today's activity),
         # [Top Prospects | Farm] (rankings), [Recent Graduates | Recent Trades]
@@ -7126,14 +7150,14 @@ def build_404() -> str:
     no dead ends: home link + the module rail + the palette hint. The rail is
     read off nav_leaves() so a module added to NAV_ITEMS lands here too (the
     hand-typed list had stopped at seven modules and missed ten)."""
-    rail = " · ".join(f'<a href="{h}">{html.escape(l)}</a>'
-                      for k, l, h in nav_leaves() if k != "home")
+    rail = "".join(f'<a href="{h}">{html.escape(l)}</a>'
+                   for k, l, h in nav_leaves() if k != "home")
     body = (
         '<div class="section-head"><h1>404: page not found</h1>'
         '<span class="section-sub">it does not exist, or it moved</span></div>'
         f'<div class="px-404">{_PX_404_ART}</div>'
         '<div class="gl-intro">'
-        f'<p><a href="/">Home</a> · {rail}</p>'
+        f'<nav class="px-404-rail" aria-label="Modules"><a href="/">Home</a>{rail}</nav>'
         '<p>Player search: <strong>Ctrl+K</strong> (⌘K on Mac).</p>'
         '</div>'
     )

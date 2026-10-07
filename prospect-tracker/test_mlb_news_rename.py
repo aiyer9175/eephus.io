@@ -54,7 +54,8 @@ def test_homepage_rail_and_ticker():
     html = _read("index.html")
     assert OLD not in html
     assert 'title="All MLB News"><span class="blip"></span>MLB News<' in html
-    assert '<span class="ticker-tag"><a href="/news/"><span class="blip"></span>MLB News</a></span>' in html
+    # tabindex=-1 since QHOA06: the ticker is aria-hidden, so its tag leaves the Tab order
+    assert '<span class="ticker-tag"><a href="/news/" tabindex="-1"><span class="blip"></span>MLB News</a></span>' in html
 
 
 def test_news_page_head():

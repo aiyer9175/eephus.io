@@ -107,3 +107,83 @@ def test_every_head_preloads_both_webfont_faces():
                     'as="font" type="font/woff2" crossorigin>') in head
     t = (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
     assert B._ensure_font_preload(t) == t, "the hand-page insertion is idempotent"
+
+
+# ---- QHOA06 / QHOA07 / QHOA11 / QHOA12 / QHOA13: homepage markup ------------
+
+def _home_html() -> str:
+    return (ROOT / "index.html").read_text(encoding="utf-8")
+
+
+def test_the_ticker_news_tag_is_out_of_the_tab_order_like_its_items():
+    h = _home_html()
+    tick = h[h.index('<div class="home-ticker" aria-hidden="true">'):h.index('<div class="ticker-track">')]
+    assert '<a href="/news/" tabindex="-1">' in tick
+
+
+def test_the_homepage_opens_on_a_skip_link_to_its_main_column():
+    h = _home_html()
+    body = h.split('<body class="eephus-page eephus-home">', 1)[1].lstrip()
+    assert body.startswith('<a class="skip-link" href="#main">Skip to content</a>')
+    assert '<main class="home-main" id="main" tabindex="-1">' in h
+
+
+def test_the_homepage_has_one_h1_and_named_rail_landmarks():
+    h = _home_html()
+    assert h.count("<h1") == 1, "the wordmark is the page's one h1; the lead story is an h2"
+    assert '<nav class="sb-nav" aria-label="Modules">' in h
+    assert '<nav class="sb-subnav" aria-label="PROSPX sections">' in h
+    assert ".lead-story h1, .lead-story h2 {" in (ROOT / "assets" / "site.css").read_text(encoding="utf-8")
+
+
+def test_scatter_gold_dots_use_the_gold_ink_token():
+    import build_site as B
+    pts = [{"player_key": f"p{i}", "age": 18 + i, "fv_close": 40 + 2 * i} for i in range(10)]
+    svg = B._scatter_teaser(pts)
+    assert "fill:var(--text-gold)" in svg and "fill:var(--accent-gold)" not in svg
+
+
+def test_module_rows_name_their_numbers_for_screen_readers():
+    import build_site as B
+    p = {"player_key": "zz_nobody", "player_name": "A B", "org": "NYM", "position": "SS",
+         "fv_close": 45, "overall_rank": 7}
+    top = B._row_top(p, 7)
+    assert '<span class="visually-hidden">rank </span><span class="row-rank">7</span>' in top
+    assert '<span class="visually-hidden">FV </span><span class="fv-pill">' in top
+    assert '<span class="visually-hidden">change </span><span class="row-delta' in B._row_mover(p, 3)
+    g = {"debuted_value": {"wag": {"regressed_wag": 0.5}}}
+    assert "WAG<span class=\"visually-hidden\">, WAR Above Grade </span>" in B._wag_badge(g)
+
+
+# ---- QHOA08: filter chips are a labelled group of toggle buttons ------------
+
+def test_filter_chips_expose_pressed_state_and_announce_the_count():
+    for page, k in (("news/index.html", "news"), ("history/index.html", "hist")):
+        h = (ROOT / page).read_text(encoding="utf-8")
+        assert f'id="{k}-filter-bar" role="group" aria-labelledby="{k}-filter-label"' in h
+        assert f'aria-pressed="true" data-{k}-filter="all"' in h
+        assert f'id="{k}-filter-status" role="status" aria-live="polite"' in h
+        assert "x.setAttribute('aria-pressed',x===b?'true':'false')" in h
+        assert f"getElementById('{k}-filter-status')" in h
+
+
+# ---- QHOA09: 44 px targets at phone width -----------------------------------
+
+def test_phone_targets_on_the_home_group_are_44_px():
+    css = (ROOT / "assets" / "site.css").read_text(encoding="utf-8").replace("\r\n", "\n")
+    block = css.split("/* 44 px touch targets at phone width on the home and shell pages (QHOA09):", 1)[1]
+    block = block.split("\n}\n", 1)[0]
+    for sel in (".news-app button.chip", ".feed-day-tm", ".kicker .see-all", ".xmod-link",
+                ".eephus-footer-links a", ".px-404-rail a"):
+        assert sel in block, sel
+    assert "min-height: 44px" in block
+    assert '<nav class="px-404-rail" aria-label="Modules">' in (ROOT / "404.html").read_text(encoding="utf-8")
+
+
+# ---- QHOA10: theme toggles expose their state -------------------------------
+
+def test_theme_toggles_carry_aria_pressed():
+    import build_site as B
+    assert 'b.setAttribute("aria-pressed",d)' in B.THEME_INIT
+    assert 'document.addEventListener("DOMContentLoaded",eephusThemeSync)' in B.THEME_INIT
+    assert "eephusThemeSync();}</script>" in B.THEME_INIT

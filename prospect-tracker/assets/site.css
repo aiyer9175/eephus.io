@@ -1395,7 +1395,7 @@ a:focus-visible > .eephus-wordmark-px .wm-bh { animation: wm-drop-h 240ms step-e
 .lead-story { display: grid; grid-template-columns: 1.4fr 1fr; gap: 26px; padding: 8px 0 22px; border-bottom: 1px solid var(--border); }
 .lead-story.no-img { grid-template-columns: 1fr; }
 .lead-story .lead-kicker { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-red); }
-.lead-story h1 { font-family: var(--font-retro-mono); font-size: clamp(1.7rem, 3.5vw, 2.6rem); line-height: 1.08; margin: 8px 0 10px; letter-spacing: .01em; }
+.lead-story h1, .lead-story h2 { font-family: var(--font-retro-mono); font-size: clamp(1.7rem, 3.5vw, 2.6rem); line-height: 1.08; margin: 8px 0 10px; letter-spacing: .01em; }
 .lead-story .byline { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px; }
 .lead-story .excerpt { font-size: 1.02rem; line-height: 1.6; color: var(--text-secondary); }
 .lead-story .read { display: inline-block; margin-top: 12px; font-family: var(--font-retro); font-weight: 700; font-size: 13px; color: var(--accent-navy); text-decoration: none; }
@@ -3499,6 +3499,22 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .visually-hidden { position: absolute !important; width: 1px; height: 1px;
   padding: 0; margin: -1px; border: 0; overflow: hidden;
   clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+
+/* The rail's Time Machine links: a 24 px hit box at every width (WCAG 2.5.8),
+   vertical padding on an inline box, so the row does not move. */
+.sb-feed .feed-day-tm { padding: 6px 0; }
+/* 404 module rail (QHOA09): a wrapped run of links, a 44 px row on phones. */
+.px-404-rail { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 12px; }
+/* 44 px touch targets at phone width on the home and shell pages (QHOA09):
+   filter and GFX chips, Time Machine and see-all links, the Across eephus.io
+   card links and the footer links. */
+@media (max-width: 640px) {
+  .news-app button.chip, .feed-day-tm, .kicker .see-all, .xmod-link,
+  .eephus-footer-links a, .px-404-rail a {
+    min-height: 44px; display: inline-flex; align-items: center;
+  }
+  .eephus-footer-links { row-gap: 0; }
+}
 
 /* ---- Generate GFX modal (shared: Free Agency, Projections) ---- */
 .egfx-overlay {
