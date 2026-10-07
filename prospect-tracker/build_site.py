@@ -5214,8 +5214,7 @@ def build_betting() -> str:
         f'<div class="section-head section-head--byline"><div class="section-head-titles">'
         f'<h1>{_masthead_icon("betting")}Sports Betting {_stage_chip("betting")}</h1></div>'
         f'<span class="section-sub">Model probability vs the {_gl("devig", "de-vigged")} book price. '
-        'Each published pick records its timestamp, book, odds and a flat one-unit stake; the '
-        'record is append-only and '
+        'The public record is append-only, one unit per pick, '
         + (f'graded against the {_gl("clv", "closing line")}.' if _betting_serve_clv()
            else "graded on realized results.")
         + '</span>'
@@ -5227,19 +5226,30 @@ def build_betting() -> str:
         # state it reports ("no close snapshot has ever been captured, so no
         # pick on this page can ever be CLV-graded") is true on every tab, and a
         # strip that lived inside the section would only be true on one of them.
+        # QREP04 (2026-10-07): betting.js paints the feed strip and the section
+        # after the payload lands, so the shell reserves both slots before
+        # first paint. Without this the strip pushed the tabs down and the
+        # section grew from the loader past the footer: CLS 0.31 to 0.67.
+        # The legal card's compact type lives here too, not in betting.js, so
+        # it is in place at first paint and cannot move the tabs later. Its
+        # words are unchanged; it took 312 px of a 390 px phone's first screen.
+        '<style>#betting-feedhealth:empty{min-height:37px}#betting-section{min-height:70vh;display:flow-root}'
+        '.betting-app .betting-disclaimer{padding:12px 16px}.betting-app .betting-disclaimer h3{margin:0 0 4px}'
+        '.betting-app .betting-disclaimer p{font-size:13px;line-height:1.5}'
+        '@media (max-width:640px){#betting-feedhealth:empty{min-height:54px}}</style>'
         '<div id="betting-feedhealth"></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Sports Betting sections">'
-        '<button type="button" class="mlbstats-sectionbtn active" data-bettingsection="potd" role="tab" aria-selected="true">Pick of the Day</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="teams" role="tab" aria-selected="false">Team Bets</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="props" role="tab" aria-selected="false">Player Props</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="parlays" role="tab" aria-selected="false">Parlays</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="calculators" role="tab" aria-selected="false">Calculators</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="record" role="tab" aria-selected="false">The Record</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="validation" role="tab" aria-selected="false">Validation</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="futures" role="tab" aria-selected="false">Futures</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="mybets" role="tab" aria-selected="false">My Bets</button>'
+        '<button type="button" class="mlbstats-sectionbtn active" data-bettingsection="potd" role="tab" id="bt-tab-potd" aria-controls="betting-section" aria-selected="true">Pick of the Day</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="teams" role="tab" id="bt-tab-teams" aria-controls="betting-section" aria-selected="false">Team Bets</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="props" role="tab" id="bt-tab-props" aria-controls="betting-section" aria-selected="false">Player Props</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="parlays" role="tab" id="bt-tab-parlays" aria-controls="betting-section" aria-selected="false">Parlays</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="calculators" role="tab" id="bt-tab-calculators" aria-controls="betting-section" aria-selected="false">Calculators</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="record" role="tab" id="bt-tab-record" aria-controls="betting-section" aria-selected="false">The Record</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="validation" role="tab" id="bt-tab-validation" aria-controls="betting-section" aria-selected="false">Validation</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="futures" role="tab" id="bt-tab-futures" aria-controls="betting-section" aria-selected="false">Futures</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="mybets" role="tab" id="bt-tab-mybets" aria-controls="betting-section" aria-selected="false">My Bets</button>'
         '</div>'
-        '<div id="betting-section" class="mlbstats-section">'
+        '<div id="betting-section" class="mlbstats-section" role="tabpanel" aria-labelledby="bt-tab-potd">'
         '<div id="betting-banner"></div>'
         f'<div id="betting-app-root"{_csv_optin("betting-board")}></div>'
         '</div>'

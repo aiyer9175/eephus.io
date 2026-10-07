@@ -243,7 +243,15 @@
     var e = LINKS && LINKS.byMlbam && LINKS.byMlbam[String(mlbam)];
     return (e && e.key) ? ("/projections/#player=" + e.key) : null;
   }
+  // QREP03 (2026-10-07): the player link map is the largest file this page
+  // can fetch (1.88 MB), and only the Team Bets game cards and the Props tables
+  // print a player name. nameLink() notes that a name was printed; the
+  // section render asks for the link map only then, and re-renders once when
+  // it lands. Futures, Record, Validation, Calculators and My Bets never
+  // fetch it.
+  var NAMES_PRINTED = false;
   function nameLink(mlbam, name) {
+    if (mlbam != null) NAMES_PRINTED = true;
     var h = hrefFor(mlbam);
     return h ? '<a class="bt-link" href="' + esc(h) + '">' + esc(name) + "</a>" : esc(name);
   }
@@ -380,10 +388,19 @@
       try { saved = JSON.parse(localStorage.getItem(btSortStoreKey(key)) || "null"); }
       catch (e) { saved = null; }
       var def = table.getAttribute("data-default-sort");
+      var by = table.getAttribute("data-sorted-by");
       if (saved && saved.col != null && ths[saved.col]) btSortTable(table, +saved.col, saved.dir, key, true);
       else if (def) {
         var parts = String(def).split(":");
         if (ths[+parts[0]]) btSortTable(table, +parts[0], parts[1] || "desc", key, true);
+      } else if (by) {
+        // QREA19 (2026-10-07): rows that arrive already ordered by a column
+        // say so (aria-sort and the arrow) without being moved.
+        var bp = String(by).split(":"), bth = ths[+bp[0]];
+        if (bth) {
+          bth.setAttribute("aria-sort", bp[1] === "asc" ? "ascending" : "descending");
+          bth.classList.add("is-sorted");
+        }
       }
     });
   }
@@ -683,7 +700,7 @@
       esc(mode) + "</span>";
   }
 
-  function validationPanel() {
+  function validationPanel(onValidationTab) {
     var v = vstate();
     var rows = ['<div class="bt-panel-hd">Is the model validated?</div>'];
     if (!v) {
@@ -698,12 +715,24 @@
     var vin = v.vintage || {}, cov = v.coverage || {}, gate = v.gate || {};
     var need = vin.min_graded_games_for_min_edge;
 
+    // QREC04 (2026-10-07): the "No." names WHAT is contaminated. The old line
+    // ("Headline numbers come from the contaminated mode") sat one screen
+    // below the vintage headline and read as a verdict on it, while the mode
+    // it names is the served board's season-to-date fit.
+    var hmode = v.headline_mode || "contaminated";
+    var notYet = hmode === "contaminated"
+      ? "The board's served prices come from the season-to-date fit (<strong>" +
+        esc(hmode) + "</strong> mode), which cannot validate; the vintage backtest " +
+        (onValidationTab ? "above" : "on the Validation tab") +
+        " grades the method out of sample and is what the gates read." +
+        (modeMeaning(v, "contaminated")
+          ? " Contaminated mode: " + esc(modeMeaning(v, "contaminated")) : "")
+      : "Headline numbers come from the <strong>" + esc(hmode) +
+        "</strong> mode, which cannot validate. " + esc(modeMeaning(v, "contaminated"));
     rows.push("<p><strong>" + (v.validated ? "Yes." : "No.") + "</strong> " +
       (v.validated
         ? "The vintage mode cleared every gate below; the headline numbers come from it."
-        : "Headline numbers come from the <strong>" +
-          esc(v.headline_mode || "contaminated") + "</strong> mode, which cannot validate. " +
-          esc(modeMeaning(v, "contaminated"))) + "</p>");
+        : notYet) + "</p>");
 
     if ((v.mode_meaning || {}).vintage) {
       rows.push("<p><strong>" + gl("Vintage mode", "vintage_grading") + ".</strong> " +
@@ -1121,10 +1150,60 @@
   // behind, which is the one outcome the module was built to prevent.
   function provBadge(m) {
     if (!m || m.provisional === false) return "";
-    return '<span class="bt-tag bt-tag-warn bt-prov" title="' +
-      esc("Cleared a policy floor, not a measured threshold. The model is " +
-          "unvalidated.") + '">provisional</span>';
+    return tipTag("bt-tag bt-tag-warn bt-prov", "provisional",
+      "Cleared a policy floor, not a measured threshold. The model is unvalidated.");
   }
+
+  // A TAG WHOSE EXPLANATION A KEYBOARD OR TOUCH READER CAN REACH (QREA07,
+  // 2026-10-07). The provisional and postseason tags kept their sentence in a
+  // title attribute on a span nobody could focus, so only a mouse hover ever
+  // showed it. The tag now takes focus (tab or tap), shows the same sentence
+  // under itself while focused, and points aria-describedby at a hidden node
+  // holding it. The title stays for the mouse. The hidden nodes live outside
+  // the section markup (wireTips builds them), so the rendered section text
+  // and every count of a label in it are unchanged.
+  function tipId(tip) {
+    var h = 5381, s = String(tip);
+    for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+    return "bt-tip-" + h.toString(36);
+  }
+  function tipTag(cls, label, tip) {
+    return '<span class="' + cls + ' bt-tipped" tabindex="0" title="' + esc(tip) +
+      '" data-tip="' + esc(tip) + '" aria-describedby="' + tipId(tip) + '">' +
+      esc(label) + "</span>";
+  }
+  function wireTips(root) {
+    try {
+      if (!root || !root.querySelectorAll || !document.createElement) return;
+      var tags = root.querySelectorAll(".bt-tipped[data-tip]");
+      if (!tags.length) return;
+      var box = el("bt-tipdesc");
+      if (!box) {
+        box = document.createElement("div");
+        box.id = "bt-tipdesc";
+        box.className = "visually-hidden";
+        document.body.appendChild(box);
+      }
+      Array.prototype.forEach.call(tags, function (t) {
+        var id = t.getAttribute("aria-describedby");
+        if (!id || el(id)) return;
+        var d = document.createElement("span");
+        d.id = id;
+        d.textContent = t.getAttribute("data-tip");
+        box.appendChild(d);
+      });
+    } catch (e) { /* the description is enrichment; the tag still renders */ }
+  }
+  // The focused tip stays on screen at 390: shift it left by however far it
+  // would run past the right gutter.
+  if (document.addEventListener) document.addEventListener("focusin", function (e) {
+    var t = e.target;
+    if (!t || !t.classList || !t.classList.contains("bt-tipped")) return;
+    var r = t.getBoundingClientRect();
+    var w = Math.min(260, window.innerWidth - 32);
+    var dx = Math.min(0, window.innerWidth - 16 - (r.left + w));
+    t.style.setProperty("--bt-tip-dx", dx + "px");
+  });
 
   // The sentence a reader who does not know what a de-vigged probability is can
   // still act on. Built entirely from served fields; it computes nothing.
@@ -2522,6 +2601,11 @@
     return (v > 0 ? "+" : "") + v;
   }
 
+  // DISPLAY PASS (2026-10-07): above the board the reader gets the as-of line
+  // and the no-market sentence; what a capture would cost, why the price
+  // column is not called fair, what the intervals are and what the win totals
+  // condition on moved into the collapsed "How this board works" block below
+  // it. The no-market sentence still precedes the table.
   function renderFutures() {
     // The shared lamp states (assets/eephus-state.js): loading while the board
     // fetch is out, failed (role=alert) when it rejects. The bracket fetch
@@ -2533,7 +2617,12 @@
     }
     var nm = FUT.no_market;
     var ov = bracketOverlay(), on = !!(ov && ov.on);
-    var rows = (on ? brSort(ov, FUT.clubs) : FUT.clubs).map(function (c) {
+    var ordered = on ? brSort(ov, FUT.clubs) : FUT.clubs;
+    // Announce the World Series order only when the rows really have it.
+    var wsDesc = on || ordered.every(function (c, i) {
+      return i === 0 || (c.wsPct || 0) <= (ordered[i - 1].wsPct || 0);
+    });
+    var rows = ordered.map(function (c) {
       function p3(v) { return (v === null || v === undefined) ? "" : (v * 100).toFixed(1) + "%"; }
       var mc = c.mcWs || {};
       return "<tr>" +
@@ -2563,16 +2652,20 @@
         brStamp(ov)) +
       '<p class="bt-note"><strong>There is no market on this board.</strong> ' +
       esc(nm.what_is_missing) + "</p>" +
-      '<p class="bt-note">' + esc(nm.what_would_have_to_happen) + " " +
-      esc(nm.and_then_still_not_an_edge) + "</p>" +
-      '<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr>' +
+      '<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"' +
+      (wsDesc ? ' data-sorted-by="8:desc"' : "") + "><thead><tr>" +
       '<th class="bt-l">Club</th><th>Record</th><th>Proj W</th><th>Win band</th>' +
       "<th>Division</th><th>Playoffs</th><th>Bye</th><th>" + (on ? esc(ov.b.columns.pennant) : "Pennant") + "</th>" +
       "<th>" + (on ? esc(ov.b.columns.ws) : "World Series") + "</th><th>WS interval</th><th>Model price (implied)</th>" +
       "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      // The method notes, every word kept, one click below the board.
+      '<details class="bt-details"><summary class="bt-details-sum">How this board works</summary>' +
+      '<div class="bt-details-body">' +
+      '<p class="bt-note">' + esc(nm.what_would_have_to_happen) + " " +
+      esc(nm.and_then_still_not_an_edge) + "</p>" +
       '<p class="bt-note">' + esc(FUT.why_the_price_column_is_not_called_fair) + "</p>" +
       '<p class="bt-note">' + esc(FUT.what_the_intervals_are) + "</p>" +
-      '<p class="bt-note">' + esc(FUT.win_total_basis) + "</p>" +
+      '<p class="bt-note">' + esc(FUT.win_total_basis) + "</p></div></details>" +
       // O12 (owner answer "Both, disclosed"): the one-line changelog for the fWAR label epoch.
       '<p class="bt-note">Changelog, 2026-10-03: the projected win totals now come from projections retrained on published fWAR (the fWAR label epoch). That is a change of definition, not a claim of better accuracy.</p>' +
       // THE FORWARD RECORD, STATED AT ITS TRUE LENGTH. The paragraph above says
@@ -2599,7 +2692,7 @@
     // heading and its own gates sub-heading, and a third label here repeated
     // the second one word for word.
     var out = [honestResult(), clocksPanel()];
-    out.push(validationPanel());
+    out.push(validationPanel(true));
     // Beside the vintage Brier and the skill t, because it qualifies them
     // (owner decision 2026-09-18).
     out.push(basisPanel());
@@ -3403,9 +3496,9 @@
   function postseasonTag(r) {
     var lbl = postseasonLabel(r);
     if (!lbl) return "";
-    return ' <span class="bt-tag bt-tag-warn bt-post" title="' +
-      esc((r.series ? r.series + ": " : "") + "the model was fitted and graded " +
-        "on regular-season games only") + '">' + esc(lbl) + "</span>";
+    return " " + tipTag("bt-tag bt-tag-warn bt-post", lbl,
+      (r.series ? r.series + ": " : "") + "the model was fitted and graded " +
+        "on regular-season games only");
   }
 
   function gameCard(b) {
@@ -3418,17 +3511,16 @@
     // BET1: a best-value badge on a total that leans with the whole slate
     // carries the lean, so the badge cannot be read without it.
     if (best && best.total_level_caveat) {
-      badge += ' <span class="bt-tag bt-tag-warn bt-totlean" title="' +
-        esc(best.total_level_caveat) + '">slate lean</span>';
+      badge += " " + tipTag("bt-tag bt-tag-warn bt-totlean", "slate lean",
+        best.total_level_caveat);
     }
     // UNPRICED IS A STATE, NOT AN OMISSION. The board carries the game and says
     // which filter left it without prices, because a game that vanished off the
     // page reads as a game that is not being played.
     if (st.odds_feed === "ok" && !b.odds_event_id && !b.market) {
-      badge += ' <span class="bt-tag bt-tag-warn bt-unpriced" title="' +
-        esc("The candidate odds event was in progress or too far from first pitch.") +
-        '">unpriced: no pre-game odds event within ' + matchWindowText(st) +
-        " of first pitch</span>";
+      badge += " " + tipTag("bt-tag bt-tag-warn bt-unpriced",
+        "unpriced: no pre-game odds event within " + matchWindowText(st) + " of first pitch",
+        "The candidate odds event was in progress or too far from first pitch.");
     }
     // A POSTSEASON CARD SAYS SO IN WORDS (owner decision 2026-10-01). The label
     // is the server's string, carried on the card, so the page and the record
@@ -4114,8 +4206,8 @@
 
   function renderMyBets() {
     return '<div class="bt-panel"><div class="bt-panel-hd">My bets</div>' +
-      "<p>Your log, separate from the public record. It works signed out (stored in this " +
-      "browser) and syncs to your account once you sign in.</p>" +
+      "<p>Your log, separate from the public record. It works signed out and syncs to your " +
+      "account once you sign in.</p>" +
       '<div id="bt-bet-form" class="bt-betform"></div></div>' +
       '<div id="bt-bets-out"></div>';
   }
@@ -4271,6 +4363,7 @@
     var root = el("betting-app-root");
     if (!root) return;
     var html;
+    NAMES_PRINTED = false;
     switch (S.section) {
       case "teams": html = renderTeam(); break;
       case "props": html = renderProps(); break;
@@ -4287,9 +4380,15 @@
         esc(S.error) + ". The nightly build may be mid-run. " +
         '<button type="button" id="bt-retry" class="bt-btn">retry</button>', "bt-error") + html;
     }
-    // The share chip rides the two board sections only; there is nothing to
-    // share about a calculator.
-    if (S.section === "teams" || S.section === "potd") html = '<div class="bt-toolbar">' + gfxChip() + "</div>" + html;
+    // ONE CONTROL BAR (2026-10-07). The share chip rides the two board
+    // sections only; there is nothing to share about a calculator. The bar is
+    // on every section with a table so the CSV control, which eephus-csv.js
+    // adds about 250 ms after the paint, floats into a row that is already
+    // there instead of pushing the section down (QREP04).
+    if (S.section !== "calculators") {
+      html = '<div class="bt-toolbar">' +
+        ((S.section === "teams" || S.section === "potd") ? gfxChip() : "") + "</div>" + html;
+    }
     root.innerHTML = html;
     var rb = el("bt-retry"); if (rb) rb.addEventListener("click", boot);
     if (S.section === "calculators") wireCalc();
@@ -4301,9 +4400,17 @@
     // markup is in the DOM. wire() is idempotent and cheap on a container this
     // size, so it runs on every paint rather than only on the first.
     wireGl(root);
+    wireTips(root);
     // Every table in the section becomes sortable (owner ask 2026-09-05); the
     // wiring is idempotent per table, so a re-paint never double-binds.
     wireSortableTables(root);
+    if (NAMES_PRINTED && !LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
+      EEPHUS_HUB.links().then(function (L) {
+        if (LINKS || !L) return;
+        LINKS = L;
+        renderSection();
+      });
+    }
   }
 
   // The shell ships the tabs, but the module injects any it is missing so a
@@ -4320,6 +4427,8 @@
       b.setAttribute("data-bettingsection", id);
       b.setAttribute("role", "tab");
       b.setAttribute("aria-selected", "false");
+      b.setAttribute("aria-controls", "betting-section");
+      b.id = "bt-tab-" + id;
       b.textContent = SECTION_LABELS[id] || id;
       nav.appendChild(b);
     });
@@ -4336,7 +4445,11 @@
       var on = id === S.section;
       b.classList.toggle("active", on);
       b.setAttribute("aria-selected", on ? "true" : "false");
+      // QREA19: one tab stop for the tab list; the arrows move inside it.
+      b.setAttribute("tabindex", on ? "0" : "-1");
     });
+    var panel = el("betting-section");
+    if (panel && panel.setAttribute) panel.setAttribute("aria-labelledby", "bt-tab-" + S.section);
   }
   function wireTabs() {
     document.querySelectorAll(".mlbstats-sectionbtn[data-bettingsection]").forEach(function (b) {
@@ -4345,6 +4458,21 @@
       b.addEventListener("click", function () {
         S.section = b.getAttribute("data-bettingsection");
         syncTabs(); renderSection(); writeHash();
+      });
+      // QREA19 (2026-10-07): the WAI-ARIA tabs pattern. Left and Right move
+      // to the neighbouring tab and open it, Home and End to the ends.
+      b.addEventListener("keydown", function (e) {
+        var k = e.key;
+        if (k !== "ArrowRight" && k !== "ArrowLeft" && k !== "Home" && k !== "End") return;
+        var tabs = Array.prototype.slice.call(
+          document.querySelectorAll(".mlbstats-sectionbtn[data-bettingsection]"));
+        var i = tabs.indexOf(b), n = tabs.length;
+        if (i < 0 || !n) return;
+        e.preventDefault();
+        var j = k === "Home" ? 0 : k === "End" ? n - 1
+          : (i + (k === "ArrowRight" ? 1 : -1) + n) % n;
+        tabs[j].click();
+        if (tabs[j].focus) tabs[j].focus();
       });
     });
   }
@@ -4408,9 +4536,6 @@
       S.data = d || null;
       S.error = (d && d.n_games != null) ? null : "the payload arrived empty";
       paintAll();
-      if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
-        EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); });
-      }
     }).catch(function (e) {
       S.data = null;
       S.error = String((e && e.message) || e);
@@ -4452,7 +4577,15 @@
     ".bt-chip-ok{color:var(--accent-green,#3a9);border-color:var(--accent-green,#3a9)}",
     ".bt-chip-warn{color:var(--text-primary);border-color:var(--accent-gold,#a80);border-width:1.5px}",
     ".bt-chip-stage{color:var(--accent-lilac,#a8f);border-color:var(--accent-lilac,#a8f)}",
-    ".bt-toolbar{display:flex;justify-content:flex-end;margin:6px 0}",
+    // A plain block, not a flex box: a flex box would narrow beside the CSV
+    // float when it lands and slide the share chip (a layout shift); right
+    // aligned inline content does not move.
+    ".bt-toolbar{display:block;text-align:right;min-height:28px;line-height:28px;margin:6px 0}",
+    ".bt-toolbar > *{vertical-align:middle;line-height:normal}",
+    // The CSV control (eephus-csv.js puts it first in the root) floats into
+    // the toolbar row, so the two controls share one bar. It floats LEFT so
+    // the reading order (CSV, then share) matches the tab order.
+    "#betting-app-root > .eph-csv-bar{float:left;margin:2px 8px 0 0}",
     ".bt-subhd{font:700 12px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 6px}",
     ".bt-panel{border:1px solid var(--border,#333);background:var(--bg-secondary);padding:12px;margin:10px 0}",
     ".bt-panel-hd{font:700 13px/1.2 var(--font-retro,monospace);color:var(--text-primary);margin-bottom:8px}",
@@ -4563,7 +4696,10 @@
       + "color:var(--text-secondary);border:0;cursor:pointer}",
     ".bt-seg-btn + .bt-seg-btn{border-left:1px solid var(--border,#333)}",
     ".bt-seg-btn:hover{background:var(--bg-tertiary);color:var(--text-primary)}",
-    ".bt-seg-btn.is-on{background:var(--accent-cyan,#2aa);color:var(--bg-primary)}",
+    // QREA21 (2026-10-07): 11 px cream on --accent-cyan measured 4.35:1 in
+    // light. --text-cyan is the text-grade teal (5.87:1 under --text-on-accent);
+    // in dark both resolve to the refractor pair, unchanged in hue.
+    ".bt-seg-btn.is-on{background:var(--text-cyan);color:var(--text-on-accent)}",
     ".bt-seg-btn:focus-visible{outline:2px solid var(--accent-cyan,#2aa);outline-offset:-2px}",
     // A leg that clears the served floor is tinted, not recoloured: the text
     // must keep its own contrast, so this is a background wash only.
@@ -4700,6 +4836,21 @@
     ".bt-dugout-src{font-size:11px;color:var(--text-tertiary);margin-top:6px}",
     ".bt-dugout-link{display:inline-block;margin-top:6px;font-size:12px}",
     ".bt-dugout-dark{border-left-color:var(--border,#333)}",
+    // ---- display pass 2026-10-07 -------------------------------------------
+    // QREA07: a focused tag shows its own sentence under itself (tab or tap).
+    ".bt-tipped{position:relative;cursor:help}",
+    ".bt-tipped:focus{outline:2px solid var(--accent-cyan);outline-offset:2px}",
+    ".bt-tipped:focus::after{content:attr(data-tip);position:absolute;left:var(--bt-tip-dx,0);top:calc(100% + 6px);z-index:6;" +
+      "box-sizing:border-box;width:max-content;max-width:min(260px,calc(100vw - 32px));white-space:normal;text-transform:none;letter-spacing:0;" +
+      "text-align:left;font:400 12px/1.4 var(--font-retro,monospace);padding:6px 8px;background:var(--bg-primary);" +
+      "color:var(--text-primary);border:1px solid var(--border)}",
+    // QREA21: the book name in a highlighted row measured 4.35:1 in dark.
+    ".bt-table tr.bt-bestrow .bt-dim{color:var(--text-secondary)}",
+    // QREA21: the share chip glyph sat at opacity .8 (4.32:1 in light).
+    ".betting-app .egfx-chip-glyph{opacity:1}",
+    // The game card's team line wraps its tags at 390 instead of pushing the
+    // page sideways.
+    ".bt-game-teams{flex-wrap:wrap;min-width:0}",
     // ---- <= 640px ----------------------------------------------------------
     // A SEPARATE TIER, ADDED BELOW THE 720px RULE RATHER THAN REPLACING IT, so
     // nothing between 641 and 720 moves. Everything here is about a 390px
