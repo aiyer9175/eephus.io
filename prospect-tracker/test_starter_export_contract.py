@@ -173,3 +173,12 @@ def test_pool_contributors_are_a_subset_of_the_board():
     d = _doc()
     assert d["pool"]["n"] <= len(d["starters"])
     assert all((r.get("ip") or 0) > 0 for r in _pool_rows(d))
+
+
+def test_pitch_rate_keys_follow_the_serve_flag():
+    """P/IP, P/BF, P/PA and PAR (plan Part 8, PM-03). With no pitch_rates block
+    (SERVE_PITCH_RATES off) no starter row or team carries a pitch-rate key; with
+    one, every row and team carries all of them, PAR is the nearest point of
+    100 x rate / anchor, and the clubs' team PAR averages 100."""
+    import pitch_rates_boards
+    assert pitch_rates_boards.check_board(_doc(), "sp") == []
